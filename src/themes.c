@@ -1565,8 +1565,7 @@ static void thmLoad(const char *themePath)
         }
     }
 
-    if (themePath)
-        validateGUIElems(themePath, themeConfig, newT);
+    validateGUIElems(themePath, themeConfig, newT);
 
     newT->itemsList = newT->gamesItemsList;
 

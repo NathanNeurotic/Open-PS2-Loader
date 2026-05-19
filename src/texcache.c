@@ -21,7 +21,6 @@ typedef struct load_image_request
     volatile int abortRequested;
     unsigned char priority;
     GSTEXTURE texture;
-    GSTEXTURE displacedTexture;
     char *value;
 } load_image_request_t;
 
@@ -210,7 +209,6 @@ static void cacheFreeRequest(load_image_request_t *req)
         return;
 
     cacheReleaseTexture(&req->texture);
-    cacheReleaseTexture(&req->displacedTexture);
     free(req);
 }
 
@@ -422,7 +420,7 @@ static int cacheShouldDeferInteractiveArtOnInput(const item_list_t *list, const 
 {
     int effectiveMode = cacheGetEffectiveMode(list, value);
 
-    if (list != NULL && list->mode == MMCE_MODE && effectiveMode == MMCE_MODE)
+    if (list != NULL && effectiveMode == MMCE_MODE)
         return cacheIsNavigationActive();
 
     return 0;
@@ -466,7 +464,7 @@ static int cacheShouldDebounceMmceInteractiveLocked(int effectiveMode, const cha
 static int cacheGetLoadThreadPriority(const load_image_request_t *req)
 {
     if (req != NULL && req->list != NULL) {
-        if (req->list->mode == MMCE_MODE && req->effectiveMode == MMCE_MODE)
+        if (req->effectiveMode == MMCE_MODE)
             return CACHE_MMCE_LOAD_THREAD_PRIORITY;
 
         if (req->list->mode == APP_MODE)
@@ -1334,21 +1332,20 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     int loadingEntryId = -1;
     int rtime = guiFrameId;
     int wakeWorker = 0;
+    int releaseDisplacedTexture = 0;
+    GSTEXTURE displacedTexture;
 
     if (cache == NULL || cache->destroying || value == NULL || value[0] == '\0')
         return NULL;
+
+    cacheResetTextureState(&displacedTexture);
 
     cacheLock();
     effectiveMode = cacheGetEffectiveMode(list, value);
 
     if (*cacheId == -2) {
-        if (*UID == gCacheGeneration) {
-            cacheUnlock();
-            return NULL;
-        }
-
-        *cacheId = -1;
-        *UID = -1;
+        cacheUnlock();
+        return NULL;
     }
 
     if (*cacheId != -1) {
@@ -1386,7 +1383,7 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
                     return result;
                 case CACHE_ENTRY_FAILED:
                     *cacheId = -2;
-                    *UID = gCacheGeneration;
+                    *UID = -1;
                     cacheUnlock();
                     return NULL;
                 default:
@@ -1460,7 +1457,7 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
         return NULL;
     }
 
-    if (priority == CACHE_REQ_PRIORITY_INTERACTIVE && list != NULL && list->mode == MMCE_MODE && effectiveMode == MMCE_MODE) {
+    if (priority == CACHE_REQ_PRIORITY_INTERACTIVE && list != NULL && effectiveMode == MMCE_MODE) {
         cacheDropQueuedInteractiveMmceDifferentValueLocked(value);
 
         if ((gArtCurrentReq != NULL && cacheIsAbortableMmceRequest(gArtCurrentReq) && strcmp(gArtCurrentReq->value, value) != 0) &&
@@ -1515,7 +1512,6 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
 
     memset(req, 0, sizeof(load_image_request_t));
     cacheResetTextureState(&req->texture);
-    cacheResetTextureState(&req->displacedTexture);
 
     req->cache = cache;
     req->entry = oldestEntry;
@@ -1527,7 +1523,8 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     strcpy(req->value, value);
     req->cacheUID = cache->nextUID;
 
-    req->displacedTexture = oldestEntry->texture;
+    displacedTexture = oldestEntry->texture;
+    releaseDisplacedTexture = displacedTexture.Mem != NULL;
     cacheResetTextureState(&oldestEntry->texture);
     oldestEntry->qr = NULL;
     oldestEntry->primeFrame = -1;
@@ -1543,6 +1540,9 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     cache->activeRequests++;
     cacheEnqueueRequestLocked(req);
     cacheUnlock();
+
+    if (releaseDisplacedTexture)
+        cacheReleaseTexture(&displacedTexture);
 
     cacheWakeWorker();
 
