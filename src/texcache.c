@@ -48,6 +48,7 @@ enum {
 #define CACHE_SLOW_MODE_INTERACTIVE_DELAY 4
 #define CACHE_MMCE_INTERACTIVE_MAX_DELAY  12
 #define CACHE_MMCE_INTERACTIVE_DEBOUNCE   2
+#define CACHE_MMCE_NON_COVER_IDLE_DELAY   30
 #define CACHE_APP_INTERACTIVE_MAX_DELAY   4
 #define CACHE_APP_PREFETCH_DELAY          10
 #define CACHE_PRIME_IDLE_DELAY            12
@@ -305,6 +306,11 @@ static int cacheShouldPreferLoadedVictim(const image_cache_t *cache, unsigned ch
 {
     return cache != NULL && priority == CACHE_REQ_PRIORITY_INTERACTIVE && effectiveMode == MMCE_MODE &&
            cache->suffix != NULL && strcmp(cache->suffix, "COV") == 0;
+}
+
+static int cacheIsNonCoverMmceArt(const image_cache_t *cache, int effectiveMode)
+{
+    return effectiveMode == MMCE_MODE && cache != NULL && cache->suffix != NULL && strcmp(cache->suffix, "COV") != 0;
 }
 
 static int cacheGetEffectiveMode(const item_list_t *list, const char *value)
@@ -1332,20 +1338,21 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     int loadingEntryId = -1;
     int rtime = guiFrameId;
     int wakeWorker = 0;
-    int releaseDisplacedTexture = 0;
-    GSTEXTURE displacedTexture;
 
     if (cache == NULL || cache->destroying || value == NULL || value[0] == '\0')
         return NULL;
-
-    cacheResetTextureState(&displacedTexture);
 
     cacheLock();
     effectiveMode = cacheGetEffectiveMode(list, value);
 
     if (*cacheId == -2) {
-        cacheUnlock();
-        return NULL;
+        if (*UID == gCacheGeneration) {
+            cacheUnlock();
+            return NULL;
+        }
+
+        *cacheId = -1;
+        *UID = -1;
     }
 
     if (*cacheId != -1) {
@@ -1383,7 +1390,7 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
                     return result;
                 case CACHE_ENTRY_FAILED:
                     *cacheId = -2;
-                    *UID = -1;
+                    *UID = gCacheGeneration;
                     cacheUnlock();
                     return NULL;
                 default:
@@ -1400,6 +1407,13 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
             cacheShouldDebounceMmceInteractiveLocked(effectiveMode, value)) {
             cacheUnlock();
             return NULL;
+        }
+
+        if (cacheIsNonCoverMmceArt(cache, effectiveMode)) {
+            if (cacheHasPendingInteractiveArtLocked() || guiInactiveFrames < CACHE_MMCE_NON_COVER_IDLE_DELAY) {
+                cacheUnlock();
+                return NULL;
+            }
         }
 
         {
@@ -1523,13 +1537,20 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     strcpy(req->value, value);
     req->cacheUID = cache->nextUID;
 
-    displacedTexture = oldestEntry->texture;
-    releaseDisplacedTexture = displacedTexture.Mem != NULL;
-    cacheResetTextureState(&oldestEntry->texture);
-    oldestEntry->qr = NULL;
-    oldestEntry->primeFrame = -1;
-    oldestEntry->lastUsed = -1;
-    oldestEntry->UID = 0;
+    /* Release the displaced texture using the SAME GSTEXTURE pointer
+     * that gsKit_TexManager_bind registered (&oldestEntry->texture).
+     * Earlier variants of this code copied the GSTEXTURE struct into
+     * either a stack local or a req->displacedTexture heap field and
+     * called gsKit_TexManager_free on that copy.  PS2SDK keys its LL
+     * lookup by GSTEXTURE pointer identity, so neither address ever
+     * matched the registered entry: VRAM was silently leaked while
+     * EE RAM was correctly freed.  Across many APPS/MMCE cover
+     * navigations the leaks accumulated until gsKit's internal LRU
+     * evicted other live textures (e.g. the theme background) to make
+     * room, producing the purple/vertical artifacting reported on
+     * APPS and MMCE pages.  cacheClearItem() is the established
+     * release pattern used by every other site in this file. */
+    cacheClearItem(oldestEntry, 1);
     oldestEntry->qr = req;
     oldestEntry->state = CACHE_ENTRY_QUEUED;
     oldestEntry->UID = cache->nextUID;
@@ -1540,9 +1561,6 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     cache->activeRequests++;
     cacheEnqueueRequestLocked(req);
     cacheUnlock();
-
-    if (releaseDisplacedTexture)
-        cacheReleaseTexture(&displacedTexture);
 
     cacheWakeWorker();
 
