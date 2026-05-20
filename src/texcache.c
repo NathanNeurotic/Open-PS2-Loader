@@ -48,7 +48,6 @@ enum {
 #define CACHE_SLOW_MODE_INTERACTIVE_DELAY 4
 #define CACHE_MMCE_INTERACTIVE_MAX_DELAY  12
 #define CACHE_MMCE_INTERACTIVE_DEBOUNCE   2
-#define CACHE_MMCE_NON_COVER_IDLE_DELAY   30
 #define CACHE_APP_INTERACTIVE_MAX_DELAY   4
 #define CACHE_APP_PREFETCH_DELAY          10
 #define CACHE_PRIME_IDLE_DELAY            12
@@ -306,11 +305,6 @@ static int cacheShouldPreferLoadedVictim(const image_cache_t *cache, unsigned ch
 {
     return cache != NULL && priority == CACHE_REQ_PRIORITY_INTERACTIVE && effectiveMode == MMCE_MODE &&
            cache->suffix != NULL && strcmp(cache->suffix, "COV") == 0;
-}
-
-static int cacheIsNonCoverMmceArt(const image_cache_t *cache, int effectiveMode)
-{
-    return effectiveMode == MMCE_MODE && cache != NULL && cache->suffix != NULL && strcmp(cache->suffix, "COV") != 0;
 }
 
 static int cacheGetEffectiveMode(const item_list_t *list, const char *value)
@@ -1407,13 +1401,6 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
             cacheShouldDebounceMmceInteractiveLocked(effectiveMode, value)) {
             cacheUnlock();
             return NULL;
-        }
-
-        if (cacheIsNonCoverMmceArt(cache, effectiveMode)) {
-            if (cacheHasPendingInteractiveArtLocked() || guiInactiveFrames < CACHE_MMCE_NON_COVER_IDLE_DELAY) {
-                cacheUnlock();
-                return NULL;
-            }
         }
 
         {
