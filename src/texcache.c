@@ -8,6 +8,7 @@
 #include "include/renderman.h"
 
 #include <kernel.h>
+#include <ps2sdkapi.h>
 
 typedef struct load_image_request
 {
