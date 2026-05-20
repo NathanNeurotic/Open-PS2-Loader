@@ -7,7 +7,9 @@
 #include "include/util.h"
 #include "include/renderman.h"
 
+#include <delaythread.h>
 #include <kernel.h>
+#include <ps2sdkapi.h>
 
 typedef struct load_image_request
 {
@@ -154,6 +156,11 @@ static void cacheRestoreCallerPriority(int savedPriority)
 {
     if (savedPriority >= 0)
         ChangeThreadPriority(GetThreadId(), savedPriority);
+}
+
+static void cacheWaitForWorkerTick(void)
+{
+    DelayThread(1000);
 }
 
 static void cacheRegister(image_cache_t *cache)
@@ -571,7 +578,7 @@ static void cacheInvalidateEntryLocked(cache_entry_t *entry, int freeTxt, int pr
             cacheClearItem(entry, freeTxt);
             break;
         case CACHE_ENTRY_LOADING:
-            if (cacheIsAbortableMmceRequest(req))
+            if (req != NULL)
                 req->abortRequested = 1;
             else {
                 entry->qr = NULL;
@@ -631,7 +638,7 @@ static void cacheInvalidateInteractiveRequestsLocked(void)
                         cacheClearItem(entry, 1);
                         break;
                     case CACHE_ENTRY_LOADING:
-                        if (cacheIsAbortableMmceRequest(req))
+                        if (req != NULL)
                             req->abortRequested = 1;
                         else {
                             entry->qr = NULL;
@@ -689,7 +696,7 @@ static int cacheWaitForAllRequestsTimed(int timeoutTicks)
             return 1;
         }
 
-        delay(1);
+        cacheWaitForWorkerTick();
         if (timeoutTicks > 0)
             timeoutTicks--;
     }
@@ -712,7 +719,7 @@ static void cacheWaitForCacheRequests(image_cache_t *cache)
         if (!pending)
             break;
 
-        delay(1);
+        cacheWaitForWorkerTick();
     }
 
     cacheRestoreCallerPriority(savedPriority);
@@ -975,7 +982,7 @@ void cacheEnd(int forceStop)
 
     savedPriority = cacheLowerCallerPriority();
     for (int i = 0; gArtRunning && i < waitTicks; i++)
-        delay(1);
+        cacheWaitForWorkerTick();
     cacheRestoreCallerPriority(savedPriority);
 
     if (gArtRunning && gArtThreadId >= 0 && forceStop) {
@@ -1167,7 +1174,7 @@ int cacheAbortMmceImageLoadsTimed(int timeoutTicks)
             return 1;
         }
 
-        delay(1);
+        cacheWaitForWorkerTick();
         if (timeoutTicks > 0)
             timeoutTicks--;
     }
