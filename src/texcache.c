@@ -7,6 +7,7 @@
 #include "include/util.h"
 #include "include/renderman.h"
 
+#include <delaythread.h>
 #include <kernel.h>
 #include <ps2sdkapi.h>
 
