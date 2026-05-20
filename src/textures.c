@@ -338,6 +338,9 @@ static void texReadFileFunction(png_structp pngPtr, png_bytep data, png_size_t l
         int available;
         int chunk;
 
+        if (texLoadAbortRequested())
+            png_error(pngPtr, "png read aborted");
+
         if (reader->position >= reader->length) {
             reader->length = read(reader->fd, reader->buffer, sizeof(reader->buffer));
             reader->position = 0;
