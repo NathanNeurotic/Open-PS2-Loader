@@ -14,6 +14,9 @@ static inline struct atlas_allocation_t *allocNew(int x, int y, size_t width, si
 {
     struct atlas_allocation_t *al = (struct atlas_allocation_t *)malloc(sizeof(struct atlas_allocation_t));
 
+    if (al == NULL)
+        return NULL;
+
     al->x = x;
     al->y = y;
     al->w = width;
@@ -49,6 +52,11 @@ static inline void allocFree(struct atlas_allocation_t *alloc)
 
 static inline struct atlas_allocation_t *allocPlace(struct atlas_allocation_t *alloc, size_t width, size_t height)
 {
+    // Guard against a NULL node (e.g. a leaf left NULL by an allocNew OOM failure
+    // that we then recurse into).
+    if (alloc == NULL)
+        return NULL;
+
     // do we fit?
     if (!ALLOC_FITS(alloc, width, height))
         return NULL;
@@ -86,6 +94,9 @@ atlas_t *atlasNew(size_t width, size_t height, u8 psm)
 {
     atlas_t *atlas = (atlas_t *)malloc(sizeof(atlas_t));
 
+    if (atlas == NULL)
+        return NULL;
+
     atlas->allocation = allocNew(0, 0, width, height);
 
     atlas->surface.Width = width;
@@ -103,6 +114,15 @@ atlas_t *atlasNew(size_t width, size_t height, u8 psm)
     atlas->surface.Clut = NULL;
     atlas->surface.VramClut = 0;
     atlas->surface.ClutStorageMode = GS_CLUT_STORAGE_CSM1;
+
+    // Bail out on OOM rather than dereferencing a NULL allocation tree or
+    // memset-ing through a NULL surface buffer.
+    if (atlas->allocation == NULL || atlas->surface.Mem == NULL) {
+        allocFree(atlas->allocation);
+        free(atlas->surface.Mem);
+        free(atlas);
+        return NULL;
+    }
 
     // zero out the atlas surface
     memset(atlas->surface.Mem, 0x0, txtsize);
@@ -169,7 +189,7 @@ static void atlasCopyData(atlas_t *atlas, struct atlas_allocation_t *al, size_t 
 
 struct atlas_allocation_t *atlasPlace(atlas_t *atlas, size_t width, size_t height, const void *surface)
 {
-    if (!surface)
+    if (!surface || !atlas)
         return NULL;
 
     struct atlas_allocation_t *al = allocPlace(atlas->allocation, width + 1, height + 1);

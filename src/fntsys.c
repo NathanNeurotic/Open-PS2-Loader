@@ -351,6 +351,9 @@ static atlas_t *fntNewAtlas()
 {
     atlas_t *atl = atlasNew(ATLAS_WIDTH, ATLAS_HEIGHT, GS_PSM_T8);
 
+    if (atl == NULL)
+        return NULL;
+
     atl->surface.ClutPSM = GS_PSM_CT32;
     atl->surface.Clut = fontClut.Clut;
 

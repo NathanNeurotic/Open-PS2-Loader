@@ -119,15 +119,19 @@ void PrepareGSM(char *cmdline, struct GsmConfig_t *config)
     k576p_fix = 0;
     kGsDxDyOffsetSupported = 0;
     if ((fd = open("rom0:ROMVER", O_RDONLY)) >= 0) {
-        // Read ROM version
-        read(fd, romver, sizeof(romver));
+        // Read ROM version, leaving room for a terminator; rom0:ROMVER is not
+        // guaranteed to contain a NUL within the buffer.
+        int romverLen = read(fd, romver, sizeof(romver) - 1);
+        if (romverLen < 0)
+            romverLen = 0;
+        romver[romverLen] = '\0';
         close(fd);
 
         strncpy(romverNum, romver, 4);
         romverNum[4] = '\0';
 
         // ROMVER string format: VVVVRTYYYYMMDD\n
-        pROMDate = &romver[strlen(romver) - 9];
+        pROMDate = (strlen(romver) >= 9) ? &romver[strlen(romver) - 9] : romver;
 
         /* Enable 576P add-on code for v2.00 and earlier. Note that the earlier PSX models already seem to support the 576P mode, despite being older than the SCPH-70000 series.
            1. The PSX (v1.80) has the same GS as the SCPH-75000 (v2.20), which is also shared with one of the SCPH-70000 (v2.00) models.

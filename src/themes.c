@@ -1394,6 +1394,11 @@ static void thmFree(theme_t *theme)
         for (id = 0; id < THM_MAX_FONTS; ++id)
             fntRelease(theme->fonts[id]);
 
+        // The loading icon is stored outside the four managed element lists, so
+        // free it explicitly (endBasic) to avoid leaking it on every theme reload.
+        if (theme->loadingIcon)
+            theme->loadingIcon->endElem(theme->loadingIcon);
+
         free(theme);
     }
 }
