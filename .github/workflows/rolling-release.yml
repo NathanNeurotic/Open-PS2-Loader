@@ -1,0 +1,127 @@
+name: Rolling Release
+
+# Continuously publishes the current master build to a single "rolling" pre-release
+# so it can be pulled directly from GitHub at a stable URL as development progresses.
+#
+# Deliberately additive and self-contained:
+#   * Publishes ONLY to the "rolling" tag / pre-release (created on first run).
+#   * Does NOT modify the curated tagged releases, the existing "latest" pre-release
+#     managed by compilation.yml, or any branch. It only uploads release assets.
+#   * Build runs inside the ps2max/dev container (same image as the main CI build);
+#     publishing runs on the host runner, which ships the gh CLI.
+#
+# After the first run, pull the always-current main build from:
+#   https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/OPNPS2LD.ELF
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Only one rolling publish at a time; newer pushes supersede in-flight runs.
+concurrency:
+  group: rolling-release
+  cancel-in-progress: true
+
+jobs:
+  build-rolling:
+    runs-on: ubuntu-latest
+    container: ps2max/dev:v20250725-2
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Mark workspace safe and fetch history
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --prune --unshallow || true
+
+      - name: Get version
+        id: ver
+        run: echo "version=$(make oplversion)" >> "$GITHUB_OUTPUT"
+
+      - name: Build (make clean release)
+        run: make --trace clean release
+
+      - name: Detailed changelog
+        run: sh ./make_changelog.sh
+
+      - name: Stage rolling assets
+        run: |
+          set -eu
+          mkdir -p rolling
+          # Every release ELF produced by `make release`.
+          cp OPNPS2LD-*.ELF rolling/ 2>/dev/null || true
+          # Stable, version-agnostic name so a script can always fetch the same URL.
+          MAIN_ELF="OPNPS2LD-${{ steps.ver.outputs.version }}.ELF"
+          if [ ! -f "$MAIN_ELF" ]; then
+            MAIN_ELF="$(ls OPNPS2LD-*.ELF 2>/dev/null | head -n1)"
+          fi
+          if [ -n "${MAIN_ELF:-}" ] && [ -f "$MAIN_ELF" ]; then
+            cp -f "$MAIN_ELF" rolling/OPNPS2LD.ELF
+          fi
+          [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
+          echo "Staged rolling assets:"
+          ls -la rolling
+
+      - name: Upload rolling assets
+        uses: actions/upload-artifact@v6
+        with:
+          name: rolling-assets
+          path: rolling
+          if-no-files-found: error
+
+  publish-rolling:
+    needs: build-rolling
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OPL_VERSION: ${{ needs.build-rolling.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Download rolling assets
+        uses: actions/download-artifact@v8
+        with:
+          name: rolling-assets
+          path: rolling
+
+      - name: Build release notes
+        run: |
+          {
+            printf 'Rolling build of master (not a stable release).\n\n'
+            printf 'Version: %s\n' "$OPL_VERSION"
+            printf 'Commit: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA"
+            printf 'Built: %s UTC\n' "$(date -u '+%Y-%m-%d %H:%M')"
+            printf 'Run: %s/%s/actions/runs/%s\n\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf 'Stable asset OPNPS2LD.ELF always tracks the latest master build.\n'
+            printf 'This pre-release is independent of the tagged releases and the "latest" pre-release.\n'
+          } > notes.md
+          cat notes.md
+
+      - name: Publish or update the rolling pre-release
+        run: |
+          set -eu
+          if gh release view rolling >/dev/null 2>&1; then
+            echo "Updating existing rolling pre-release"
+            gh release edit rolling --title "Rolling (master)" --notes-file notes.md --prerelease
+            gh release upload rolling rolling/* --clobber
+          else
+            echo "Creating rolling pre-release"
+            gh release create rolling rolling/* \
+              --title "Rolling (master)" \
+              --notes-file notes.md \
+              --prerelease \
+              --target "$GITHUB_SHA"
+          fi
