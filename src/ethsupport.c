@@ -509,6 +509,10 @@ static int ethUpdateGameList(item_list_t *itemList)
         if (count > 0) {
             free(ethGames);
             ethGames = (base_game_info_t *)malloc(sizeof(base_game_info_t) * count);
+            // On allocation failure, skip population so the loop below never
+            // dereferences NULL; ethGameCount is then set to 0 after the loop.
+            if (ethGames == NULL)
+                count = 0;
             for (i = 0; i < count; i++) {
                 LOG("ETHSUPPORT Share found: %s\n", sharelist[i].ShareName);
                 base_game_info_t *g = &ethGames[i];

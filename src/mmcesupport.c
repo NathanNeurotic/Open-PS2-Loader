@@ -431,8 +431,15 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         settings->port = 2;
     else if (gMMCESlot == 1)
         settings->port = 3;
-    else if (gMMCESlot == 2)
-        settings->port = mmceDetectSlot();
+    else if (gMMCESlot == 2) {
+        int detectedPort = mmceDetectSlot();
+        if (detectedPort < 0) {
+            // Neither slot responded; abort rather than forward port -1 to the IOP.
+            LOG("MMCE slot lost, aborting launch\n");
+            return;
+        }
+        settings->port = detectedPort;
+    }
 
     int iso_file = fileXioOpen(partname, 0x1, 0666);
     if (iso_file < 0) {

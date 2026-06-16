@@ -331,9 +331,11 @@ static int addAppsLegacyList(struct app_info_linked **appsLinkedList)
     cur = configApps->head;
     while (cur != NULL) {
         if (*appsLinkedList == NULL) {
-            *appsLinkedList = malloc(sizeof(struct app_info_linked));
-            app = *appsLinkedList;
-            app->next = NULL;
+            app = malloc(sizeof(struct app_info_linked));
+            if (app != NULL) {
+                app->next = NULL;
+                *appsLinkedList = app;
+            }
         } else {
             app = malloc(sizeof(struct app_info_linked));
             if (app != NULL) {
@@ -388,9 +390,11 @@ static int appScanCallback(const char *path, config_set_t *appConfig, void *arg)
 
     if (configGetStr(appConfig, APP_CONFIG_TITLE, &title) != 0 && configGetStr(appConfig, APP_CONFIG_BOOT, &boot) != 0) {
         if (*appsLinkedList == NULL) {
-            *appsLinkedList = malloc(sizeof(struct app_info_linked));
-            app = *appsLinkedList;
-            app->next = NULL;
+            app = malloc(sizeof(struct app_info_linked));
+            if (app != NULL) {
+                app->next = NULL;
+                *appsLinkedList = app;
+            }
         } else {
             app = malloc(sizeof(struct app_info_linked));
             if (app != NULL) {
@@ -571,9 +575,13 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
     if (strncmp(filename, oldPrefix, strlen(oldPrefix)) == 0) {
         size_t oldPrefixLen = strlen(oldPrefix);
         size_t newPrefixLen = strlen(newPrefix);
-        memmove(filename + newPrefixLen, filename + oldPrefixLen, strlen(filename) - oldPrefixLen + 1);
-
-        memcpy(filename, newPrefix, newPrefixLen);
+        // The expansion grows the string by (newPrefixLen - oldPrefixLen) bytes; only
+        // shift if the result plus its NUL still fits, to avoid a stack overflow when
+        // filename is already at its maximum length.
+        if (strlen(filename) + (newPrefixLen - oldPrefixLen) < sizeof(filename)) {
+            memmove(filename + newPrefixLen, filename + oldPrefixLen, strlen(filename) - oldPrefixLen + 1);
+            memcpy(filename, newPrefix, newPrefixLen);
+        }
     }
 
     // If legacy apps state mass? find the first connected mass device with the corresponding filename and set the unit number for launch.
