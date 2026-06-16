@@ -382,6 +382,8 @@ int hookDmac_request(u32 channel, void *addr, u32 size, u32 count, int dir)
         case 11: // sio2in
             // may have to copy the dma buffer, but isn't a problem right now
             temp_packet = _SysAlloc(sizeof(Sio2Packet));
+            if (temp_packet == NULL) // IOP heap exhausted: skip capture rather than deref NULL
+                return 0;
             temp_packet->wrmaddr = addr;
             temp_packet->wrwords = size;
             temp_packet->wrcount = count;

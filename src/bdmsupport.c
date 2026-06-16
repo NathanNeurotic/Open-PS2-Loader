@@ -883,7 +883,8 @@ void bdmInitDevicesData()
 
             // Setup the per-device data.
             bdm_device_data_t *pDeviceData = (bdm_device_data_t *)malloc(sizeof(bdm_device_data_t));
-            memset(pDeviceData, 0, sizeof(bdm_device_data_t));
+            if (pDeviceData != NULL) // guard the memset on OOM; bdmShutdown tolerates a NULL priv
+                memset(pDeviceData, 0, sizeof(bdm_device_data_t));
             pDeviceSupport->priv = pDeviceData;
         }
     }
