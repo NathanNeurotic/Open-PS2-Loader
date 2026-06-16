@@ -257,7 +257,8 @@ static int parse_buf(const char *buf)
 
     while (*buf) {
         /* Scanner */
-        int len = chr_idx(buf, LF);
+        int lfIdx = chr_idx(buf, LF);
+        int len = lfIdx;
         if (len < 0)
             len = strlen(buf);
         else if (len > CHEAT_LINE_MAX)
@@ -300,7 +301,9 @@ static int parse_buf(const char *buf)
             }
         }
         linenumber++;
-        buf += len + 1;
+        // Advance past the LF only when one was found. On the final line without a
+        // trailing newline, stop at the NUL rather than reading one byte past it.
+        buf += (lfIdx < 0) ? len : len + 1;
     }
 
     return 0;

@@ -44,6 +44,8 @@ static int strToColor(const char *string, unsigned char *color)
     while (*string) {
         int fh = fromHex(*string);
         if (fh >= 0) {
+            if (n >= 3)
+                break; // never write past the caller's 3-byte color[] (RGB)
             color[n] = color[n] * 16 + fh;
         } else {
             break;

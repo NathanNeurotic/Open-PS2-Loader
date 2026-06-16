@@ -187,7 +187,7 @@ static void drawStaticText(struct menu_list *menu, struct submenu_list *item, co
 
 static void initStaticText(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
 {
-    const char *value;
+    const char *value = NULL; // configGetStr leaves this untouched if the key is absent
     char elemProp[64];
 
     snprintf(elemProp, sizeof(elemProp), "%s_value", name);
@@ -301,7 +301,7 @@ static void drawAttributeText(struct menu_list *menu, struct submenu_list *item,
 
 static void initAttributeText(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
 {
-    const char *attribute;
+    const char *attribute = NULL; // configGetStr leaves this untouched if the key is absent
     char elemProp[64];
 
     snprintf(elemProp, sizeof(elemProp), "%s_attribute", name);
@@ -431,7 +431,10 @@ static image_texture_t *initImageTexture(const char *themePath, config_set_t *th
 
 static image_texture_t *initImageInternalTexture(config_set_t *themeConfig, const char *name)
 {
-    image_texture_t *texture = (image_texture_t *)malloc(sizeof(image_texture_t));
+    // calloc so the embedded source GSTEXTURE is zeroed: if texLookupInternalTexId
+    // fails below, freeImageTexture() reads texture->source.Mem/.Clut and must not
+    // see uninitialized garbage (which it would rmUnloadTexture()/free()).
+    image_texture_t *texture = (image_texture_t *)calloc(1, sizeof(image_texture_t));
     texture->name = NULL;
     int result;
 

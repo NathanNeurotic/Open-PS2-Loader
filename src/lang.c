@@ -112,20 +112,28 @@ static int lngReadEntry(int index, const char *path, const char *separator, cons
             sprintf(currLang->filePath, "%s%s%s", path, separator, name);
 
             // extract name for this language (will be used for the English translation)
+            // Expect "lang_<name>.lng" (5-char prefix + name + ".lng"); guard a
+            // malformed short name so `length` cannot underflow into a huge
+            // malloc/memcpy and an out-of-bounds name[length-1] write.
             length = strlen(name) - 5 - 4 + 1;
-            currLang->name = (char *)malloc(length * sizeof(char));
-            memcpy(currLang->name, name + 5, length);
-            currLang->name[length - 1] = '\0';
+            if (length < 1) {
+                free(currLang->filePath);
+                currLang->filePath = NULL;
+            } else {
+                currLang->name = (char *)malloc(length * sizeof(char));
+                memcpy(currLang->name, name + 5, length);
+                currLang->name[length - 1] = '\0';
 
-            /*file_buffer_t* fileBuffer = openFileBuffer(currLang->filePath, 1, 1024);
-            if (fileBuffer) {
-                // read localized name of language from file
-                if (readLineContext(fileBuffer, &currLang->name))
-                    readLineContext(fileBuffer, &currLang->fontName);
-                closeFileBuffer(fileBuffer);
-            }*/
+                /*file_buffer_t* fileBuffer = openFileBuffer(currLang->filePath, 1, 1024);
+                if (fileBuffer) {
+                    // read localized name of language from file
+                    if (readLineContext(fileBuffer, &currLang->name))
+                        readLineContext(fileBuffer, &currLang->fontName);
+                    closeFileBuffer(fileBuffer);
+                }*/
 
-            index++;
+                index++;
+            }
         }
     }
     return index;

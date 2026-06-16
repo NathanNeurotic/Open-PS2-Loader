@@ -313,6 +313,12 @@ static int scanForISO(char *path, char type, struct game_list_t **glist)
             if (format <= 0 || NameLen > ISO_GAME_NAME_MAX)
                 continue; // Skip files that cannot be supported properly.
 
+            // d_name is filesystem-provided and can exceed what fits in fullpath
+            // (NameLen bounds the stripped name, not the raw d_name plus the path
+            // prefix); guard the total length so the strcpy cannot overflow fullpath[256].
+            if (base_path_len + 1 + strlen(dirent->d_name) >= sizeof(fullpath))
+                continue;
+
             strcpy(fullpath + base_path_len + 1, dirent->d_name);
 
             struct game_list_t *next = malloc(sizeof(struct game_list_t));
@@ -838,7 +844,10 @@ void sbCreateFolders(const char *path, int createDiscImgFolders)
 
 int sbLoadCheats(const char *path, const char *file)
 {
-    char cheatfile[64];
+    // 64 was too small for BDM device prefixes (up to BDM_PREFIX_MAX) plus
+    // "CHT/<file>.cht", silently truncating and failing to load cheats. Match the
+    // 256-byte path convention used elsewhere in this file.
+    char cheatfile[256];
     int cheatMode = 0;
 
     if (GetCheatsEnabled()) {

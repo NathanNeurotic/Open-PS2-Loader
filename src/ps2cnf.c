@@ -83,6 +83,13 @@ int ps2cnfGetBootFile(const char *path, char *bootfile)
     size = ftell(fd);
     rewind(fd);
 
+    if (size < 0) {
+        // ftell() failed: a negative size would become a huge size_t in fread and
+        // system_cnf[size] below would be an out-of-bounds write.
+        fclose(fd);
+        LOG("Can't size %s\n", path);
+        return EIO;
+    }
     if (size >= CNF_LEN_MAX)
         size = CNF_LEN_MAX - 1;
 
