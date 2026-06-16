@@ -134,6 +134,8 @@ static int configKeyValidate(const char *key)
 static struct config_value_t *allocConfigItem(const char *key, const char *val)
 {
     struct config_value_t *it = (struct config_value_t *)malloc(sizeof(struct config_value_t));
+    if (it == NULL)
+        return NULL;
     strncpy(it->key, key, sizeof(it->key));
     it->key[sizeof(it->key) - 1] = '\0';
     strncpy(it->val, val, sizeof(it->val));
@@ -150,8 +152,11 @@ static void addConfigValue(config_set_t *configSet, const char *key, const char 
         configSet->head = allocConfigItem(key, val);
         configSet->tail = configSet->head;
     } else {
-        configSet->tail->next = allocConfigItem(key, val);
-        configSet->tail = configSet->tail->next;
+        struct config_value_t *it = allocConfigItem(key, val);
+        if (it != NULL) {
+            configSet->tail->next = it;
+            configSet->tail = it;
+        }
     }
 }
 

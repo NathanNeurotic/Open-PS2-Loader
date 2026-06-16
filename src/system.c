@@ -475,7 +475,14 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
     size_ioprp_image = size_IOPRP_img + size_cdvdman_irx + size_cdvdfsv_irx + size_eesync_irx + 256;
     LOG("IOPRP image size calculated: %d\n", size_ioprp_image);
     ioprp_image = malloc(size_ioprp_image);
-    size_ioprp_image = patch_IOPRP_image(ioprp_image, cdvdman_irx, size_cdvdman_irx);
+    if (ioprp_image == NULL) {
+        // Avoid patch_IOPRP_image writing through a NULL pointer; an OOM here
+        // fails the launch regardless.
+        LOG("IOPRP image allocation failed (%d bytes)\n", size_ioprp_image);
+        size_ioprp_image = 0;
+    } else {
+        size_ioprp_image = patch_IOPRP_image(ioprp_image, cdvdman_irx, size_cdvdman_irx);
+    }
     LOG("IOPRP image size actual:     %d\n", size_ioprp_image);
 
     modcount = 0;

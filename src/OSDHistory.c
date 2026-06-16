@@ -263,9 +263,12 @@ int AddHistoryRecord(const char *name)
     return SaveHistoryFile(path, HistoryEntries);
 }
 
-static void GetBootFilename(const char *bootpath, char *filename)
+static void GetBootFilename(const char *bootpath, char *filename, size_t filenameSize)
 { // Extract filename from the full path to the file on the CD/DVD.
     int i, length;
+
+    if (filenameSize == 0)
+        return;
 
     filename[0] = '\0';
     for (i = length = strlen(bootpath); i > 0; i--) {
@@ -273,6 +276,11 @@ static void GetBootFilename(const char *bootpath, char *filename)
             if (length > 2 && bootpath[length - 1] == '1' && bootpath[length - 2] == ';')
                 length -= 2;
             length -= (i + 1);
+            // Bound to the destination buffer so a long boot path cannot overflow it.
+            if (length < 0)
+                length = 0;
+            if (length >= (int)filenameSize)
+                length = (int)filenameSize - 1;
             strncpy(filename, &bootpath[i + 1], length);
             filename[length] = '\0';
             break;
@@ -280,7 +288,8 @@ static void GetBootFilename(const char *bootpath, char *filename)
     }
 
     if (i == 0) { // The boot path contains only the filename.
-        strcpy(filename, bootpath);
+        strncpy(filename, bootpath, filenameSize - 1);
+        filename[filenameSize - 1] = '\0';
     }
 }
 
@@ -288,6 +297,6 @@ int AddHistoryRecordUsingFullPath(const char *path)
 {
     char filename[17];
 
-    GetBootFilename(path, filename);
+    GetBootFilename(path, filename, sizeof(filename));
     return AddHistoryRecord(filename);
 }

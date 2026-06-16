@@ -2121,7 +2121,7 @@ static void autoLaunchHDDGame(char *argv[])
     gAutoLaunchGame = malloc(sizeof(hdl_game_info_t));
     memset(gAutoLaunchGame, 0, sizeof(hdl_game_info_t));
 
-    snprintf(gAutoLaunchGame->startup, sizeof(gAutoLaunchGame->startup), argv[1]);
+    snprintf(gAutoLaunchGame->startup, sizeof(gAutoLaunchGame->startup), "%s", argv[1]);
     gAutoLaunchGame->start_sector = strtoul(argv[2], NULL, 0);
     snprintf(gOPLPart, sizeof(gOPLPart), "hdd0:%s", argv[3]);
 
@@ -2142,8 +2142,14 @@ static void autoLaunchBDMGame(char *argv[])
     gAutoLaunchBDMGame = malloc(sizeof(base_game_info_t));
     memset(gAutoLaunchBDMGame, 0, sizeof(base_game_info_t));
 
-    int nameLen;
+    int nameLen = 0;
     int format = isValidIsoName(argv[1], &nameLen);
+    // Bound the extracted name length to the destination field so a long or
+    // malformed ISO filename cannot overflow gAutoLaunchBDMGame->name.
+    if (nameLen < 0)
+        nameLen = 0;
+    if (nameLen > (int)sizeof(gAutoLaunchBDMGame->name) - 1)
+        nameLen = (int)sizeof(gAutoLaunchBDMGame->name) - 1;
     if (format == GAME_FORMAT_OLD_ISO) {
         strncpy(gAutoLaunchBDMGame->name, &argv[1][GAME_STARTUP_MAX], nameLen);
         gAutoLaunchBDMGame->name[nameLen] = '\0';
@@ -2156,7 +2162,7 @@ static void autoLaunchBDMGame(char *argv[])
         gAutoLaunchBDMGame->extension[sizeof(gAutoLaunchBDMGame->extension) - 1] = '\0';
     }
 
-    snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), argv[2]);
+    snprintf(gAutoLaunchBDMGame->startup, sizeof(gAutoLaunchBDMGame->startup), "%s", argv[2]);
 
     if (strcasecmp("DVD", argv[3]) == 0)
         gAutoLaunchBDMGame->media = SCECdPS2DVD;

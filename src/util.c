@@ -202,8 +202,14 @@ void *readFile(char *path, int align, int *size)
             LOG("UTIL ReadFile: Failed allocation of %d bytes", realSize);
             *size = 0;
         } else {
-            read(fd, buffer, realSize);
+            int rd = read(fd, buffer, realSize);
             close(fd);
+            if (rd != (int)realSize) {
+                LOG("UTIL ReadFile: short read %d of %d bytes\n", rd, realSize);
+                free(buffer);
+                *size = 0;
+                return NULL;
+            }
             *size = realSize;
         }
     }
