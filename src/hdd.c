@@ -319,10 +319,16 @@ int hddGetPartitionInfo(const char *name, apa_sub_t *parts)
             parts[0].start = header->start;
             parts[0].length = header->length;
 
-            for (i = 0; i < header->nsub; i++)
+            // Clamp the on-disk sub-partition count to the caller's parts[APA_MAXSUB+1]
+            // array; a corrupt or foreign APA header could otherwise overflow it.
+            int nsub = header->nsub;
+            if (nsub > APA_MAXSUB)
+                nsub = APA_MAXSUB;
+
+            for (i = 0; i < nsub; i++)
                 parts[1 + i] = header->subs[i];
 
-            result = header->nsub + 1;
+            result = nsub + 1;
         } else
             result = -EIO;
     }
