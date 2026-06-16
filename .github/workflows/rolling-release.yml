@@ -183,26 +183,47 @@ jobs:
           name: rolling-assets-ps2dev-latest
           path: rolling
 
+      - name: Name assets with the build version
+        run: |
+          set -eu
+          # Apply ONE authoritative version (from the pinned build, which resolves
+          # full git history) to BOTH toolchains. The source commit is identical, so
+          # the only difference is the -ps2dev-latest suffix; this also sidesteps the
+          # ps2dev-latest container's short/"dirty" git describe. Each build becomes a
+          # single file whose name carries both the product name and the version.
+          VER="${OPL_VERSION:-}"
+          if [ -z "$VER" ]; then
+            VER="rolling-${GITHUB_SHA}"
+          fi
+          echo "VERSIONED_BASE=OPNPS2LD-${VER}" >> "$GITHUB_ENV"
+          if [ -f rolling/OPNPS2LD.ELF ]; then
+            mv -f rolling/OPNPS2LD.ELF "rolling/OPNPS2LD-${VER}.ELF"
+          fi
+          if [ -f rolling/OPNPS2LD-ps2dev-latest.ELF ]; then
+            mv -f rolling/OPNPS2LD-ps2dev-latest.ELF "rolling/OPNPS2LD-${VER}-ps2dev-latest.ELF"
+          fi
+          echo "Renamed assets:"
+          ls -la rolling
+
       - name: Build release notes
         run: |
           set -eu
           HAS_LATEST=no
-          [ -f rolling/OPNPS2LD-ps2dev-latest.ELF ] && HAS_LATEST=yes
+          [ -f "rolling/${VERSIONED_BASE}-ps2dev-latest.ELF" ] && HAS_LATEST=yes
           {
             printf 'Rolling build of master (not a stable release).\n\n'
             printf 'Version: %s\n' "$OPL_VERSION"
             printf 'Commit: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA"
             printf 'Built: %s UTC\n' "$(date -u '+%Y-%m-%d %H:%M')"
             printf 'Run: %s/%s/actions/runs/%s\n\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-            printf 'Toolchain builds:\n'
-            printf '  - OPNPS2LD.ELF                -> ps2max/dev (pinned) toolchain\n'
+            printf 'Toolchain builds (one file each, the filename includes the version):\n'
+            printf '  - %s.ELF                -> ps2max/dev (pinned) toolchain\n' "$VERSIONED_BASE"
             if [ "$HAS_LATEST" = yes ]; then
-              printf '  - OPNPS2LD-ps2dev-latest.ELF  -> ps2dev/ps2dev:latest toolchain\n'
+              printf '  - %s-ps2dev-latest.ELF  -> ps2dev/ps2dev:latest toolchain\n' "$VERSIONED_BASE"
             else
               printf '  - ps2dev/ps2dev:latest build FAILED this run (pinned build only)\n'
             fi
-            printf '\nBoth stable asset names always track the latest master build.\n'
-            printf 'This pre-release is independent of the tagged releases and the "latest" pre-release.\n'
+            printf '\nUpdated on every push to master. Independent of the tagged releases and the "latest" pre-release.\n'
           } > notes.md
           echo "ps2dev-latest present: $HAS_LATEST"
           cat notes.md
