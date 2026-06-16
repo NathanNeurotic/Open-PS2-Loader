@@ -621,8 +621,10 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
         // Get fragment list
         int iFragCount = fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, (void *)&settings->frags[iTotalFragCount], sizeof(bd_fragment_t) * (BDM_MAX_FRAGS - iTotalFragCount));
-        if (iFragCount > BDM_MAX_FRAGS) {
-            // Too many fragments
+        if (iFragCount < 0 || iFragCount > BDM_MAX_FRAGS - iTotalFragCount) {
+            // Negative (ioctl error) or more fragments than the remaining frags[] slots.
+            // A negative value would underflow the u8 iTotalFragCount and corrupt the next
+            // iteration's destination offset and size.
             close(fd);
             sbUnprepare(&settings->common);
             guiMsgBox(_l(_STR_ERR_FRAGMENTED), 0, NULL);
@@ -826,9 +828,11 @@ static void bdmShutdown(item_list_t *itemList)
     snprintf(path, sizeof(path), "mass%d:", itemList->mode);
 
     // As required by some (typically 2.5") HDDs, issue the SCSI STOP UNIT command to avoid causing an emergency park.
-    fileXioDevctl(pDeviceData->bdmDeviceRoot[0] != '\0' ? pDeviceData->bdmDeviceRoot : path, USBMASS_DEVCTL_STOP_ALL, NULL, 0, NULL, 0);
+    // pDeviceData may be NULL here (shutdown without init, or a second deinit pass after priv was freed below),
+    // so guard the dereference and fall back to the constructed mass%d: path.
+    fileXioDevctl((pDeviceData != NULL && pDeviceData->bdmDeviceRoot[0] != '\0') ? pDeviceData->bdmDeviceRoot : path, USBMASS_DEVCTL_STOP_ALL, NULL, 0, NULL, 0);
 
-    if (itemList->enabled) {
+    if (itemList->enabled && pDeviceData != NULL) {
         LOG("BDMSUPPORT Shutdown free data\n");
 
         // Free device data.

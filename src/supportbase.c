@@ -201,7 +201,11 @@ static int updateISOGameList(const char *path, const struct game_cache_list *cac
 
             for (i = 0; i < count; i++) {
                 for (j = 0; j < cache->count; j++) {
-                    if (strncmp(cache->games[i].name, game->gameinfo.name, ISO_GAME_NAME_MAX + 1) == 0 && strncmp(cache->games[i].extension, game->gameinfo.extension, ISO_GAME_EXTENSION_MAX + 1) == 0)
+                    // Index the cache with j (the inner loop var), not i: i ranges over the
+                    // freshly-scanned directory count, which can exceed cache->count and read
+                    // past the cache array; it also broke change-detection by comparing the
+                    // cache entry at the list position instead of searching the cache.
+                    if (strncmp(cache->games[j].name, game->gameinfo.name, ISO_GAME_NAME_MAX + 1) == 0 && strncmp(cache->games[j].extension, game->gameinfo.extension, ISO_GAME_EXTENSION_MAX + 1) == 0)
                         break;
                 }
 

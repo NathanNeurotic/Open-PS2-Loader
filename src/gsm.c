@@ -106,6 +106,11 @@ void PrepareGSM(char *cmdline, struct GsmConfig_t *config)
     int k576p_fix, kGsDxDyOffsetSupported, fd, FIELD_fix;
     char romver[16], romverNum[5], *pROMDate;
 
+    // Clamp the externally-sourced video-mode index before it indexes predef_vmode[]
+    // below; gGSMVMode comes from a user-editable config and is otherwise unbounded.
+    if (gGSMVMode < 0 || gGSMVMode >= (int)(sizeof(predef_vmode) / sizeof(predef_vmode[0])))
+        gGSMVMode = 0;
+
 #ifdef _DTL_T10000
     if (predef_vmode[gGSMVMode].mode == GS_MODE_DTV_576P) // There is no 576P code implemented for development TOOLs.
         gGSMVMode = 2;                                    // Change to PAL instead.

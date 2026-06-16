@@ -368,23 +368,24 @@ static void freeImageTexture(image_texture_t *texture)
 
 static image_texture_t *initImageTexture(const char *themePath, config_set_t *themeConfig, const char *name, const char *imgName, int isOverlay)
 {
-    image_texture_t *texture = (image_texture_t *)malloc(sizeof(image_texture_t));
+    // calloc so omitted overlay coordinate keys default to 0 instead of
+    // uninitialized heap garbage that would feed rmDrawOverlayPixmap.
+    image_texture_t *texture = (image_texture_t *)calloc(1, sizeof(image_texture_t));
     texture->name = NULL;
 
     int texId = -1;
     int result = 0;
 
+    // Propagate the actual load result so a missing/corrupt texture takes the
+    // free-and-return-NULL path below instead of becoming a live element whose
+    // source.Mem is NULL (the empty `if (...) ;` previously discarded it).
     if (themePath) {
         char path[256];
         snprintf(path, sizeof(path), "%s%s", themePath, imgName);
-        if (texDiscoverLoad(&texture->source, path, texId) >= 0)
-            ;
-        result = 1;
+        result = (texDiscoverLoad(&texture->source, path, texId) >= 0);
     } else {
         texId = texLookupInternalTexId(imgName);
-        if (texLoadInternal(&texture->source, texId) >= 0)
-            ;
-        result = 1;
+        result = (texLoadInternal(&texture->source, texId) >= 0);
     }
 
     if (result) {
@@ -1081,7 +1082,9 @@ static void validateItemsList(const char *themePath, config_set_t *themeConfig, 
             while (decoratorElem) {
                 if (decoratorElem->type == ELEM_TYPE_GAME_IMAGE) {
                     mutable_image_t *gameImage = (mutable_image_t *)decoratorElem->extended;
-                    if (!strcmp(itemsList->decorator, gameImage->cache->suffix)) {
+                    // A GAME_IMAGE element can have cache == NULL (no _pattern); guard before
+                    // dereferencing ->suffix, matching drawGameImage and the other cache users.
+                    if (gameImage->cache && !strcmp(itemsList->decorator, gameImage->cache->suffix)) {
                         // if user want to cache less than displayed items, then disable itemslist icons, if not would load constantly
                         if (gameImage->cache->count >= itemsList->displayedItems)
                             itemsList->decoratorImage = gameImage;
