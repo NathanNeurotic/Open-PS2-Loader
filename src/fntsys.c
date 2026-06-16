@@ -779,8 +779,10 @@ void fntFitString(int id, char *string, size_t width)
                 psp = sp;
             } else {
                 // no prev. space to hijack, must break after the word
-                // this will mean overflowed text...
-                *sp = '\n';
+                // this will mean overflowed text... but don't overwrite the
+                // string's terminator if the word ended at end-of-string
+                if (osp != '\0')
+                    *sp = '\n';
                 cw = 0;
             }
         } else {
@@ -788,6 +790,11 @@ void fntFitString(int id, char *string, size_t width)
             *sp = osp;
             psp = sp;
         }
+
+        // If the word ended at the string's NUL, stop: advancing str past the
+        // terminator would read one byte beyond the string.
+        if (osp == '\0')
+            break;
 
         cw += spacewidth;
         str = ++sp;

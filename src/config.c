@@ -82,15 +82,18 @@ static int splitAssignment(char *line, char *key, size_t keymax, char *val, size
     char *eqpos = strchr(line, '=');
 
     if (eqpos) {
-        // copy the name and the value
-        size_t keylen = min(keymax, eqpos - line);
+        // copy the key and value, reserving room for the NUL terminator so an
+        // exactly-buffer-length key/val cannot be left unterminated (OOB read)
+        size_t keylen = min(keymax - 1, (size_t)(eqpos - line));
 
         strncpy(key, line, keylen);
+        key[keylen] = '\0';
 
         eqpos++;
 
-        size_t vallen = min(valmax, strlen(line) - (eqpos - line));
+        size_t vallen = min(valmax - 1, (size_t)(strlen(line) - (eqpos - line)));
         strncpy(val, eqpos, vallen);
+        val[vallen] = '\0';
     }
 
     return (int)eqpos;

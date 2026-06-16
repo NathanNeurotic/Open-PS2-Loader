@@ -51,19 +51,19 @@ static const char *CNFGetKey(const char *line, char *key)
         return (const char *)-1;
     }
 
-    for (i = 0; i < CNF_PATH_LEN_MAX && *line != '\0'; i++) {
+    // Reserve one byte for the terminator: filling key to CNF_PATH_LEN_MAX graphic
+    // chars previously left it without a NUL, so callers read past the buffer.
+    for (i = 0; i < CNF_PATH_LEN_MAX - 1 && *line != '\0'; i++) {
         if (isgraph((int)*line)) {
             *key = *line;
             line++;
             key++;
         } else if (isspace((int)*line)) {
-            *key = '\0';
             break;
-        } else if (*line == '\0') { // Unexpected end of file. This check exists, along with the other similar check above.
-            return (const char *)-1;
         }
     }
 
+    *key = '\0'; // always NUL-terminate, regardless of how the loop exited
     return line;
 }
 

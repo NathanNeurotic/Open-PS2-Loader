@@ -64,17 +64,25 @@ int ioRegisterHandler(int type, io_request_handler_t handler)
 {
     WaitSema(gProcSemaId);
 
-    if (handler == NULL)
+    // Every early return below must release gProcSemaId, otherwise a registration
+    // failure leaves the semaphore held and deadlocks the entire I/O subsystem.
+    if (handler == NULL) {
+        SignalSema(gProcSemaId);
         return IO_ERR_INVALID_HANDLER;
+    }
 
-    if (gHandlerCount >= MAX_IO_HANDLERS)
+    if (gHandlerCount >= MAX_IO_HANDLERS) {
+        SignalSema(gProcSemaId);
         return IO_ERR_TOO_MANY_HANDLERS;
+    }
 
     int i;
 
     for (i = 0; i < gHandlerCount; ++i) {
-        if (gRequestHandlers[i].type == type)
+        if (gRequestHandlers[i].type == type) {
+            SignalSema(gProcSemaId);
             return IO_ERR_DUPLICIT_HANDLER;
+        }
     }
 
     gRequestHandlers[gHandlerCount].type = type;

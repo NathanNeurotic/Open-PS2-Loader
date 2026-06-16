@@ -165,8 +165,13 @@ static int sfxLoad(struct sfxEffect *sfxData, audsrv_adpcm_t *sfx)
 {
     int ret;
 
-    // Calculate duration based on number of samples
-    sfxData->duration_ms = sfxCalculateSoundDuration(((u32 *)sfxData->buffer)[3]);
+    // Calculate duration based on number of samples. The sample count lives at
+    // u32 offset 3 (bytes 12-15); guard against a SFX file shorter than that
+    // header so we don't read past the buffer.
+    if (sfxData->size >= (int)(4 * sizeof(u32)))
+        sfxData->duration_ms = sfxCalculateSoundDuration(((u32 *)sfxData->buffer)[3]);
+    else
+        sfxData->duration_ms = 0;
     // Estimate duration based on filesize, if the ADPCM header was 0
     if (sfxData->duration_ms == 0)
         sfxData->duration_ms = sfxData->size / 47;
