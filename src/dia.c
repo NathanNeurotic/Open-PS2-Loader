@@ -79,6 +79,10 @@ int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title)
         if ((mask_buffer = malloc(maxLen)) != NULL) {
             memset(mask_buffer, '*', len);
             mask_buffer[len] = '\0';
+        } else {
+            // Allocation failed: fall back to showing the text rather than
+            // rendering through a NULL mask buffer.
+            hide_text = 0;
         }
     } else {
         mask_buffer = NULL;

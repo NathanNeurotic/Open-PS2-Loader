@@ -1015,11 +1015,10 @@ void cacheEnd(int forceStop)
         return;
     }
 
-    if (gArtSemaId >= 0) {
-        DeleteSema(gArtSemaId);
-        gArtSemaId = -1;
-    }
-
+    /* Run the final cleanup under the real lock, THEN delete the semaphore.
+     * Deleting it first makes cacheLock()/cacheUnlock() no-ops, leaving this
+     * "Locked" cleanup running unlocked (safe today only because the worker
+     * thread has already exited here). */
     cacheLock();
     if (gArtCurrentReq != NULL) {
         load_image_request_t *req = gArtCurrentReq;
@@ -1036,6 +1035,11 @@ void cacheEnd(int forceStop)
     }
     cacheResetRequestTrackingLocked();
     cacheUnlock();
+
+    if (gArtSemaId >= 0) {
+        DeleteSema(gArtSemaId);
+        gArtSemaId = -1;
+    }
 
     gArtThreadId = -1;
 }

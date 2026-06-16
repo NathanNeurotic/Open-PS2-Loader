@@ -75,7 +75,9 @@ static code_t make_code(const char *s)
     int i = 0;
 
     while (*s) {
-        if (isxdigit((int)*s))
+        // Reserve room for the terminator so a line with more hex digits than
+        // CODE_DIGITS cannot overflow digits[].
+        if (isxdigit((int)*s) && i < CODE_DIGITS - 1)
             digits[i++] = *s;
         s++;
     }
