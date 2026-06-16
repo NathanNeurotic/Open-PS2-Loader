@@ -35,10 +35,11 @@ Invoke-WebRequest -Uri "https://github.com/NathanNeurotic/Open-PS2-Loader/releas
 gh release download rolling --repo NathanNeurotic/Open-PS2-Loader --clobber
 ```
 
-The `rolling` release also carries the versioned ELFs
-(`OPNPS2LD-<version>.ELF` and `OPNPS2LD-<version>-ps2dev-latest.ELF`) and the
-`DETAILED_CHANGELOG`. The release notes show the source commit, version, build
-time, the CI run that produced it, and whether the bleeding-edge build succeeded.
+Those two stable ELFs and the `DETAILED_CHANGELOG` are the only assets the
+workflow publishes (every prior run's assets are wiped first, so nothing stale
+accumulates; GitHub's auto "Source code" archives are added separately). The
+release notes show the source commit, version, build time, the CI run that
+produced it, and whether the bleeding-edge build succeeded.
 
 ## How it updates
 

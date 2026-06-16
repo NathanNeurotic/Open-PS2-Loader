@@ -61,16 +61,18 @@ jobs:
         run: |
           set -eu
           mkdir -p rolling
-          # Every release ELF produced by `make release`.
-          cp OPNPS2LD-*.ELF rolling/ 2>/dev/null || true
-          # Stable, version-agnostic name so a script can always fetch the same URL.
+          # Publish ONLY the stable, version-agnostic name. Versioned filenames
+          # embed the commit, so they change every run and pile up as stale
+          # assets -- confusing on a rolling channel.
           MAIN_ELF="OPNPS2LD-${{ steps.ver.outputs.version }}.ELF"
           if [ ! -f "$MAIN_ELF" ]; then
             MAIN_ELF="$(ls OPNPS2LD-*.ELF 2>/dev/null | head -n1)"
           fi
-          if [ -n "${MAIN_ELF:-}" ] && [ -f "$MAIN_ELF" ]; then
-            cp -f "$MAIN_ELF" rolling/OPNPS2LD.ELF
+          if [ -z "${MAIN_ELF:-}" ] || [ ! -f "$MAIN_ELF" ]; then
+            echo "No OPNPS2LD ELF produced by the pinned build" >&2
+            exit 1
           fi
+          cp -f "$MAIN_ELF" rolling/OPNPS2LD.ELF
           [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
           echo "Staged pinned rolling assets:"
           ls -la rolling
@@ -136,21 +138,13 @@ jobs:
         run: |
           set -eu
           mkdir -p rolling
-          VERSION="$(make oplversion)"
-          # Suffix each release ELF so it cannot collide with the pinned build's
-          # identically-named ELFs in the shared rolling release.
-          for f in OPNPS2LD-*.ELF; do
-            [ -f "$f" ] || continue
-            cp -f "$f" "rolling/${f%.ELF}-ps2dev-latest.ELF"
-          done
-          # Stable, version-agnostic name for the bleeding-edge build.
-          MAIN_ELF="OPNPS2LD-${VERSION}.ELF"
-          if [ ! -f "$MAIN_ELF" ]; then
-            MAIN_ELF="$(ls OPNPS2LD-*.ELF 2>/dev/null | head -n1)"
+          # Publish ONLY the stable, version-agnostic name for the bleeding-edge build.
+          MAIN_ELF="$(ls OPNPS2LD-*.ELF 2>/dev/null | head -n1)"
+          if [ -z "${MAIN_ELF:-}" ] || [ ! -f "$MAIN_ELF" ]; then
+            echo "No OPNPS2LD ELF produced by the ps2dev-latest build" >&2
+            exit 1
           fi
-          if [ -n "${MAIN_ELF:-}" ] && [ -f "$MAIN_ELF" ]; then
-            cp -f "$MAIN_ELF" rolling/OPNPS2LD-ps2dev-latest.ELF
-          fi
+          cp -f "$MAIN_ELF" rolling/OPNPS2LD-ps2dev-latest.ELF
           echo "Staged ps2dev-latest rolling assets:"
           ls -la rolling
 
@@ -220,6 +214,12 @@ jobs:
           set -eu
           if gh release view rolling >/dev/null 2>&1; then
             echo "Updating existing rolling pre-release"
+            # Remove every existing asset first so renamed/stale builds from prior
+            # runs cannot accumulate; then upload the current fixed-name set.
+            for asset in $(gh release view rolling --json assets --jq '.assets[].name'); do
+              echo "Deleting old asset: $asset"
+              gh release delete-asset rolling "$asset" --yes || true
+            done
             gh release edit rolling --title "Rolling (master)" --notes-file notes.md --prerelease
             gh release upload rolling rolling/* --clobber
           else
