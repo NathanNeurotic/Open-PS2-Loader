@@ -1158,11 +1158,21 @@ int bdmFindPartition(char *target, const char *name, int write)
     int i, fd;
     char path[256];
 
+    /* Probe massN:/<prefix>/<name> on each BDM device for the config file, and
+     * return the matching device directory prefix in target so configInit()/
+     * configSetMove() can compose "<target>/<filename>".  The format strings
+     * MUST carry %d/%s specifiers: the previous version used literal "mass0:/"
+     * strings with leftover varargs, which the compiler silently discards, so
+     * the loop never iterated devices and the prefix/filename were never
+     * appended (BDM per-device config load/save was non-functional and only
+     * ever touched mass0's root).  gBDMPrefix is a bounded folder name
+     * (char[32]) and target buffers are 64 bytes, so the device-prefix writes
+     * cannot overflow. */
     for (i = 0; i < MAX_BDM_DEVICES; i++) {
         if (gBDMPrefix[0] != '\0')
-            sprintf(path, "mass0:/", i, gBDMPrefix, name);
+            snprintf(path, sizeof(path), "mass%d:/%s/%s", i, gBDMPrefix, name);
         else
-            sprintf(path, "mass0:", i, name);
+            snprintf(path, sizeof(path), "mass%d:/%s", i, name);
         if (write)
             fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0666);
         else
@@ -1170,16 +1180,16 @@ int bdmFindPartition(char *target, const char *name, int write)
 
         if (fd >= 0) {
             if (gBDMPrefix[0] != '\0')
-                sprintf(target, "mass0:/", i, gBDMPrefix);
+                sprintf(target, "mass%d:/%s", i, gBDMPrefix);
             else
-                sprintf(target, "mass0:", i);
+                sprintf(target, "mass%d:", i);
             close(fd);
             return 1;
         }
     }
 
     if (gBDMPrefix[0] != '\0')
-        sprintf(target, "mass0:/", gBDMPrefix);
+        sprintf(target, "mass0:/%s", gBDMPrefix);
     else
         sprintf(target, "mass0:");
     return 0;

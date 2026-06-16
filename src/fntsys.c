@@ -159,6 +159,11 @@ static int fntPrepareGlyphCachePage(font_t *font, int pageid)
     // allocate the page
     font->glyphCache[pageid] = malloc(sizeof(fnt_glyph_cache_entry_t) * GLYPH_CACHE_PAGE_SIZE);
 
+    // Report failure instead of writing through NULL below and returning success;
+    // callers already handle a 0 return (see the realloc failure path above).
+    if (font->glyphCache[pageid] == NULL)
+        return 0;
+
     int i;
     for (i = 0; i < GLYPH_CACHE_PAGE_SIZE; ++i) {
         font->glyphCache[pageid][i].isValid = 0;

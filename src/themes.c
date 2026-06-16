@@ -227,11 +227,23 @@ static void drawGameCountText(struct menu_list *menu, struct submenu_list *item,
 
 static void initGameCountText(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
 {
-    int length = 60;
-    char *countStr = (char *)malloc(length * sizeof(char));
-    memset(countStr, 0, length * sizeof(char));
+    /* drawGameCountText() snprintf()s up to 60 bytes into mutableText->value.
+     * initMutableText() sizes value from strlen(seed)+1, so seeding with an
+     * empty string previously produced a 1-byte buffer that the 60-byte
+     * snprintf overran (and the separate 60-byte countStr was leaked).  Seed
+     * with "" then replace value with a correctly sized 60-byte buffer. */
+    mutable_text_t *mutableText = initMutableText(themePath, themeConfig, theme, name, ELEM_TYPE_ATTRIBUTE_TEXT, elem, "", NULL, DISPLAY_ALWAYS, SIZING_NONE);
+    elem->extended = mutableText;
 
-    elem->extended = initMutableText(themePath, themeConfig, theme, name, ELEM_TYPE_ATTRIBUTE_TEXT, elem, countStr, NULL, DISPLAY_ALWAYS, SIZING_NONE);
+    if (mutableText != NULL) {
+        char *countStr = (char *)malloc(60);
+        if (countStr != NULL) {
+            countStr[0] = '\0';
+            free(mutableText->value);
+            mutableText->value = countStr;
+        }
+    }
+
     elem->endElem = &endMutableText;
     elem->drawElem = &drawGameCountText;
 }

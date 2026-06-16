@@ -96,17 +96,23 @@ static int splitAssignment(char *line, char *key, size_t keymax, char *val, size
     return (int)eqpos;
 }
 
-static int parsePrefix(char *line, char *prefix)
+static int parsePrefix(char *line, char *prefix, size_t prefixSize)
 {
-    // find "=".
-    // If found, the text before is key, after is val.
-    // Otherwise malformed string is encountered
+    // find ":".
+    // If found, the text before is the prefix.
+    // Otherwise a malformed string is encountered.
     char *colpos = strchr(line, ':');
 
     if (colpos && colpos != line) {
-        // copy the name and the value
-        strncpy(prefix, line, colpos - line);
-        prefix[colpos - line] = 0;
+        // copy the prefix, bounded to the destination buffer so a long
+        // pre-colon segment in a user-editable config file cannot overflow it
+        size_t n = (size_t)(colpos - line);
+        if (prefixSize == 0)
+            return 0;
+        if (n >= prefixSize)
+            n = prefixSize - 1;
+        memcpy(prefix, line, n);
+        prefix[n] = 0;
 
         return 1;
     } else {
@@ -415,7 +421,16 @@ static int configReadLegacyIP(void)
     if (fd >= 0) {
         char ipconfig[256];
         int size = getFileSize(fd);
-        read(fd, &ipconfig, size);
+        // Bound the read to the stack buffer: the file size is untrusted and a
+        // file larger than ipconfig[] would otherwise smash the stack.
+        if (size < 0)
+            size = 0;
+        if (size >= (int)sizeof(ipconfig))
+            size = sizeof(ipconfig) - 1;
+        int rd = read(fd, ipconfig, size);
+        if (rd < 0)
+            rd = 0;
+        ipconfig[rd] = '\0';
         close(fd);
 
         sscanf(ipconfig, "%d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d", &ps2_ip[0], &ps2_ip[1], &ps2_ip[2], &ps2_ip[3],
@@ -497,7 +512,7 @@ static int configReadFileBuffer(file_buffer_t *fileBuffer, config_set_t *configS
             } else {
                 configSetStr(configSet, key, val);
             }
-        } else if (parsePrefix(line, prefix)) {
+        } else if (parsePrefix(line, prefix, sizeof(prefix))) {
             // prefix is set, that's about it
         } else {
             LOG("CONFIG Malformed file '%s' line %d: '%s'\n", configSet->filename, lineno, line);

@@ -280,8 +280,11 @@ static int parse_buf(const char *buf)
                 /* Parser */
                 code = parse_line(line, linenumber);
                 if (!(code.addr == 0 && code.val == 0)) {
-                    // Only add the cheat entry if we have a valid cheat name in temp_name
-                    if (cheat_index < MAX_CODES && temp_name[0] != NUL) {
+                    // Only add the cheat entry if we have a valid cheat name in temp_name.
+                    // Check the POST-increment index: cheat_index is pre-incremented below,
+                    // so testing "cheat_index < MAX_CODES" let the index reach MAX_CODES and
+                    // write gCheats[MAX_CODES], one past the end of the array.
+                    if (cheat_index + 1 < MAX_CODES && temp_name[0] != NUL) {
                         cheat_index++; // Move to the next cheat entry
                         strncpy(gCheats[cheat_index].name, temp_name, CHEAT_NAME_MAX);
                         gCheats[cheat_index].name[CHEAT_NAME_MAX] = NUL;

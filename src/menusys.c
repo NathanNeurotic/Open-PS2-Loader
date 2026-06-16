@@ -82,10 +82,25 @@ static s32 menuListSemaId = -1;
 static ee_sema_t menuSema;
 
 #define MENU_MMCE_CONFIG_IDLE_FRAMES 20
+#define MENU_APP_CONFIG_IDLE_FRAMES  1
 
 static void menuInvalidateArtSelection(void)
 {
     cacheAdvanceGeneration();
+}
+
+static int menuCanRequestItemConfig(item_list_t *list)
+{
+    if (list != NULL && list->mode == APP_MODE)
+        return guiInactiveFrames >= MENU_APP_CONFIG_IDLE_FRAMES;
+
+    if (cacheHasPendingInteractiveArt())
+        return 0;
+
+    if (list != NULL && list->mode == MMCE_MODE)
+        return guiInactiveFrames >= MENU_MMCE_CONFIG_IDLE_FRAMES;
+
+    return 1;
 }
 
 static void menuAdvanceArtSelectionOnMove(void)
@@ -216,7 +231,9 @@ static void _menuRequestConfig()
             itemConfig = NULL;
         }
         item_list_t *list = selected_item->item->userdata;
-        if (itemConfigId == -1 || guiInactiveFrames >= list->delay) {
+        int configIdleFrames = list->mode == APP_MODE ? MENU_APP_CONFIG_IDLE_FRAMES : list->delay;
+
+        if (itemConfigId == -1 || guiInactiveFrames >= configIdleFrames) {
             itemConfigId = selected_item->item->current->item.id;
             shouldQueueLoad = 1;
         }
@@ -1062,11 +1079,17 @@ static void menuRenderElements(theme_elems_t *elems, int allowItemConfig, config
     theme_element_t *elem = elems->first;
     item_list_t *list = selected_item != NULL && selected_item->item != NULL ? selected_item->item->userdata : NULL;
 
-    if (allowItemConfig && elems->needsItemConfig && !cacheHasPendingInteractiveArt() &&
-        (list == NULL || list->mode != MMCE_MODE || guiInactiveFrames >= MENU_MMCE_CONFIG_IDLE_FRAMES))
+    if (allowItemConfig && elems->needsItemConfig && menuCanRequestItemConfig(list))
         _menuRequestConfig();
 
     WaitSema(menuSemaId);
+
+    /* _menuRequestConfig() may have configFree()'d and NULLed itemConfig on the
+     * frame the selection changed.  The caller captured renderConfig from
+     * itemConfig BEFORE that call, so using it now would be a use-after-free.
+     * Re-read the live pointer under the lock; the draw path tolerates NULL. */
+    if (allowItemConfig)
+        renderConfig = itemConfig;
 
     while (elem) {
         if (elem->drawElem)
