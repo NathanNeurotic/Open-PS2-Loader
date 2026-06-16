@@ -205,7 +205,11 @@ void sysReset()
 #endif
 #endif
 
+    // The IOP was just rebooted: its DEV9 modules and refcount are gone, so reset
+    // both bookkeeping vars together. Leaving dev9InitCount stale inflates the
+    // refcount across resets, so sysShutdownDev9() would never power DEV9 off.
     dev9Initialized = 0;
+    dev9InitCount = 0;
     while (!SifIopSync())
         ;
 
