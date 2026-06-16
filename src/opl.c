@@ -1819,6 +1819,10 @@ static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected)
     clearMenuGameList(mod);
 }
 
+// Max delay(1) ticks (~ms) to drain the IO worker during exit/poweroff teardown
+// before proceeding anyway; bounded because the IOP is reset/powered off right after.
+#define EXIT_IO_DRAIN_TICKS 1000
+
 void deinit(int exception, int modeSelected)
 {
     /* Cut launch/exit latency by stopping queued art I/O before globally
@@ -1827,10 +1831,19 @@ void deinit(int exception, int modeSelected)
     cacheAbortMmceImageLoadsTimed(0);
     (void)cacheCancelPendingImageLoadsTimed(0);
 
-    // block all io ops, wait for the ones still running to finish
-    ioBlockOps(1);
+    // block all io ops, wait for the ones still running to finish.
+    // For the terminal teardown modes (exit = IO_MODE_SELECTED_ALL,
+    // poweroff = IO_MODE_SELECTED_NONE) cap the drain: those paths reset the IOP
+    // (LoadExecPS2) or power the machine off immediately afterward, so a request
+    // stuck on a removed/slow device must not hang teardown forever. The launch
+    // path (a specific mode) keeps the unbounded wait so its IOP state stays clean.
+    int terminalTeardown = (modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
+    if (terminalTeardown)
+        ioBlockOpsTimed(1, EXIT_IO_DRAIN_TICKS);
+    else
+        ioBlockOps(1);
     guiExecDeferredOps();
-    cacheEnd(modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
+    cacheEnd(terminalTeardown);
 
 #ifdef PADEMU
     ds34usb_reset();

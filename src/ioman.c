@@ -357,7 +357,7 @@ int ioPrintf(const char *format, ...)
     return ret;
 }
 
-int ioBlockOps(int block)
+int ioBlockOpsTimed(int block, int timeoutTicks)
 {
     ee_thread_status_t status;
     int ThreadID;
@@ -369,10 +369,18 @@ int ioBlockOps(int block)
         int haveStatus = (ReferThreadStatus(ThreadID, &status) == 0);
         ChangeThreadPriority(ThreadID, 90);
 
-        // wait for all io to finish
+        // Wait for the in-flight IO handler(s) to finish. timeoutTicks < 0 waits
+        // unbounded (default); a non-negative value caps the wait. Callers that
+        // are tearing the system down (exit/poweroff) pass a bound so a request
+        // stuck on a removed/slow device cannot hang teardown forever -- safe
+        // there because the IOP is reset/powered off immediately afterward.
         while (ioHasPendingRequests()) {
+            if (timeoutTicks == 0)
+                break;
             delay(1);
-        };
+            if (timeoutTicks > 0)
+                timeoutTicks--;
+        }
 
         // Only restore the saved priority if ReferThreadStatus actually filled it.
         if (haveStatus)
@@ -384,4 +392,10 @@ int ioBlockOps(int block)
     }
 
     return IO_OK;
+}
+
+int ioBlockOps(int block)
+{
+    // Unbounded wait (historical behavior) for all non-teardown callers.
+    return ioBlockOpsTimed(block, -1);
 }
