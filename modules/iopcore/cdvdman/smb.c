@@ -319,7 +319,14 @@ negotiate_retry:
     server_specs.MaxBufferSize = NPRsp->MaxBufferSize;
     server_specs.MaxMpxCount = NPRsp->MaxMpxCount;
     server_specs.SessionKey = NPRsp->SessionKey;
-    memcpy(server_specs.EncryptionKey, &NPRsp->ByteField[0], NPRsp->KeyLength);
+    // KeyLength is a u8 from the untrusted server; clamp it so a value > 8 cannot
+    // overflow server_specs.EncryptionKey[8] into the adjacent struct fields.
+    {
+        u8 keyLen = NPRsp->KeyLength;
+        if (keyLen > sizeof(server_specs.EncryptionKey))
+            keyLen = sizeof(server_specs.EncryptionKey);
+        memcpy(server_specs.EncryptionKey, &NPRsp->ByteField[0], keyLen);
+    }
     memcpy(server_specs.PrimaryDomainServerName, &NPRsp->ByteField[NPRsp->KeyLength], sizeof(server_specs.PrimaryDomainServerName));
     strncpy(server_specs.Username, Username, sizeof(server_specs.Username));
     server_specs.Username[sizeof(server_specs.Username) - 1] = '\0';
