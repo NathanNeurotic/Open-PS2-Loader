@@ -79,6 +79,10 @@ static int gCacheGeneration = 1;
 static load_image_request_t *gArtCurrentReq = NULL;
 static int gMmceInteractiveDebounceUntilFrame = -1;
 static char gMmceInteractiveDebounceValue[64];
+/* Navigation-active snapshot. getKey() mutates GUI-thread-only pad-repeat state,
+ * so the art worker thread must not call it; the GUI thread refreshes this flag
+ * (via cacheIsNavigationActive) each frame and the worker reads the snapshot. */
+static volatile int gNavInputActive = 0;
 
 static load_image_request_t *gArtInteractiveReqList = NULL;
 static load_image_request_t *gArtInteractiveReqEnd = NULL;
@@ -215,7 +219,13 @@ static void cacheFreeRequest(load_image_request_t *req)
     if (req == NULL)
         return;
 
-    cacheReleaseTexture(&req->texture);
+    /* req->texture is only ever decoded into EE RAM and struct-copied into the
+     * cache entry on success; it is never bound to VRAM via the TexManager.
+     * Free EE RAM only -- calling gsKit_TexManager_free (rmUnloadTexture) here
+     * would run on the art worker thread and race the GUI thread's per-frame
+     * TexManager list mutation. */
+    texFree(&req->texture);
+    cacheResetTextureState(&req->texture);
     free(req);
 }
 
@@ -419,8 +429,17 @@ static int cacheShouldDiscardCompletedRequestLocked(load_image_request_t *req)
 
 static int cacheIsNavigationActive(void)
 {
-    return getKey(KEY_LEFT) || getKey(KEY_RIGHT) || getKey(KEY_UP) ||
-           getKey(KEY_DOWN) || getKey(KEY_L1) || getKey(KEY_R1);
+    /* getKey() mutates shared pad-repeat state, so only the GUI thread may call
+     * it. The art worker (which reaches here via cacheShouldDeferInteractiveArtOnInput
+     * while dequeuing) reads the most recent GUI-thread snapshot instead. The GUI
+     * thread evaluates this every frame while drawing the MMCE cover, keeping the
+     * snapshot fresh. */
+    if (gArtThreadId >= 0 && GetThreadId() == gArtThreadId)
+        return gNavInputActive;
+
+    gNavInputActive = (getKey(KEY_LEFT) || getKey(KEY_RIGHT) || getKey(KEY_UP) ||
+                       getKey(KEY_DOWN) || getKey(KEY_L1) || getKey(KEY_R1));
+    return gNavInputActive;
 }
 
 static int cacheShouldDeferInteractiveArtOnInput(const item_list_t *list, const char *value)
