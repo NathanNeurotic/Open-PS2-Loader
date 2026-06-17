@@ -92,6 +92,9 @@ static void endMutableText(theme_element_t *elem)
         if (mutableText->alias)
             free(mutableText->alias);
 
+        if (mutableText->wrappedValue)
+            free(mutableText->wrappedValue);
+
         free(mutableText);
     }
 
@@ -103,6 +106,7 @@ static mutable_text_t *initMutableText(const char *themePath, config_set_t *them
     mutable_text_t *mutableText = (mutable_text_t *)malloc(sizeof(mutable_text_t));
     mutableText->currentConfigId = 0;
     mutableText->currentValue = NULL;
+    mutableText->wrappedValue = NULL;
     mutableText->alias = NULL;
 
     char elemProp[64];
@@ -259,8 +263,25 @@ static void drawAttributeText(struct menu_list *menu, struct submenu_list *item,
             mutableText->currentConfigId = config->uid;
             mutableText->currentValue = NULL;
             if (configGetStr(config, mutableText->value, (const char **)&mutableText->currentValue)) {
-                if (mutableText->sizingMode == SIZING_WRAP)
-                    fntFitString(elem->font, mutableText->currentValue, elem->width);
+                if ((mutableText->sizingMode == SIZING_WRAP) && mutableText->currentValue) {
+                    // Word-wrap a private copy, not the config's own stored string.
+                    // configGetStr() hands back a pointer straight into the config
+                    // buffer (it->val); fntFitString() inserts '\n's in place, so
+                    // wrapping currentValue directly would bake the line breaks into
+                    // the stored value. Those then get written back to the .cfg on the
+                    // next settings save, corrupting the field (issue #44). Copying
+                    // first keeps the on-screen wrapping while leaving the value intact.
+                    free(mutableText->wrappedValue);
+                    mutableText->wrappedValue = NULL;
+                    size_t len = strlen(mutableText->currentValue) + 1;
+                    char *wrapped = (char *)malloc(len);
+                    if (wrapped) {
+                        memcpy(wrapped, mutableText->currentValue, len);
+                        fntFitString(elem->font, wrapped, elem->width);
+                        mutableText->wrappedValue = wrapped;
+                        mutableText->currentValue = wrapped;
+                    }
+                }
             }
         }
         if (mutableText->currentValue) {

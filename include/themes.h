@@ -56,6 +56,7 @@ typedef struct
 
     u32 currentConfigId;
     char *currentValue;
+    char *wrappedValue; // owned, word-wrapped copy of currentValue for SIZING_WRAP (issue #44)
 } mutable_text_t;
 
 typedef struct
