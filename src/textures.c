@@ -182,6 +182,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {R1_ICON, "R1", &R1_png},
     {R2_ICON, "R2", &R2_png},
     {R3_ICON, "R3", &R3_png}, */
+    {SETTINGS_BG, "settings_bg", NULL}, // NULL: no embedded default yet -- theme-supplied via use_settings_bg
     {COVER_DEFAULT, "cover", &cover_png},
     {DISC_DEFAULT, "disc", &disc_png},
     {SCREEN_DEFAULT, "screen", &screen_png},

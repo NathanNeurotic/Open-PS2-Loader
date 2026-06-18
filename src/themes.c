@@ -876,7 +876,8 @@ static void initCoverflow(const char *themePath, config_set_t *themeConfig, them
 
     if (mutableImage && mutableImage->cache) {
         elem->drawElem = &drawCoverFlow;
-        theme->coverflow = elem;
+        if (!theme->coverflow)
+            theme->coverflow = elem; // first coverflow element = the "coverflow active" flag
     } else
         LOG("THEMES Coverflow %s: NO cache, elem disabled !!\n", name);
 }
@@ -1536,12 +1537,11 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_BDM_INDEX, screenWidth >> 1, 355, ALIGN_CENTER, DIM_UNDEF, DIM_UNDEF, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
                 elem->drawElem = &drawBDMIndex;
             } else if (!strcmp(elementsType[ELEM_TYPE_COVERFLOW], type)) {
-                // GAME_IMAGE-backed (COV cache) so initMutableImage/findDuplicate work unchanged;
-                // only one coverflow element per theme. Default cover ~5:7 box-art, centered.
-                if (!theme->coverflow) {
-                    elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_GAME_IMAGE, screenWidth >> 1, screenHeight >> 1, ALIGN_CENTER, 150, 210, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
-                    initCoverflow(themePath, themeConfig, theme, elem, name);
-                }
+                // GAME_IMAGE-backed (COV cache) so initMutableImage/findDuplicate work unchanged.
+                // Allow one per list (e.g. a games "main" coverflow + an "appsMain" coverflow,
+                // like wOPL); initCoverflow points gTheme->coverflow at the FIRST as the active flag.
+                elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_GAME_IMAGE, screenWidth >> 1, screenHeight >> 1, ALIGN_CENTER, 150, 210, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
+                initCoverflow(themePath, themeConfig, theme, elem, name);
             }
 
             if (elem) {
@@ -1867,6 +1867,15 @@ static void thmLoad(const char *themePath)
     if (!themePath)
         for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
             thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
+
+    // Optional settings/menu background (guiDrawBGSettings draws it instead of the plasma).
+    // Theme-supplied only for now: a disk theme opts in with use_settings_bg=1 and ships its
+    // own settings_bg.png. No embedded default yet (internalDefault[SETTINGS_BG] is NULL), so
+    // the built-in <OPL>/<Coverflow> themes leave the slot empty and keep the plasma.
+    if (themePath) {
+        if (configGetInt(themeConfig, "use_settings_bg", &intValue) && intValue)
+            thmLoadResource(&newT->textures[SETTINGS_BG], SETTINGS_BG, themePath, GS_PSM_CT32, 0);
+    }
 
     cacheCancelPendingImageLoads();
     gTheme = newT;

@@ -1398,6 +1398,20 @@ static int cdirection(unsigned char a, unsigned char b)
         return 1;
 }
 
+// Optional settings/menu background: if the active theme supplies a SETTINGS_BG texture
+// (theme cfg use_settings_bg=1, or a future embedded default), draw it full-screen behind
+// dialogs/menus and return 1; otherwise return 0 so callers fall back to guiDrawBGPlasma().
+// Dormant by default -- the SETTINGS_BG slot is empty unless a theme provides the image.
+int guiDrawBGSettings(void)
+{
+    GSTEXTURE *bg = thmGetTexture(SETTINGS_BG);
+    if (bg) {
+        rmDrawPixmap(bg, 0, 0, ALIGN_NONE, screenWidth, screenHeight, SCALING_NONE, gDefaultCol, 0);
+        return 1;
+    }
+    return 0;
+}
+
 void guiDrawBGPlasma()
 {
     int x, y;
