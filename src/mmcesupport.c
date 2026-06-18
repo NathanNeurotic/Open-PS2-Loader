@@ -336,6 +336,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int vmc_size_mb;
     int vmc_id, size_mcemu_irx = 0;
     int vmc_fd;
+    int vmc_fds[2] = {-1, -1}; // track VMC fds to close on the Neutrino handoff path (B3)
     mmce_vmc_infos_t mmce_vmc_infos;
     vmc_superblock_t vmc_superblock;
 
@@ -355,6 +356,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
                 vmc_fd = fileXioOpen(vmc_path, 0x3, 0666);
                 if (vmc_fd >= 0) {
+                    vmc_fds[vmc_id] = vmc_fd;
                     mmce_vmc_infos.fd = fileXioIoctl2(vmc_fd, 0x80, NULL, 0, NULL, 0);
                     mmce_vmc_infos.active = 1;
                 }
@@ -459,6 +461,12 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (coreLoader) {
         char mmcePartname[256];
         snprintf(mmcePartname, sizeof(mmcePartname), "%s", partname); // defensive copy across the deinit teardown (partname is a stack buffer, not freed by deinit)
+        // Neutrino bypasses OPL's mcemu, so the VMC fds opened above go unused on
+        // this path — close them instead of leaking until the IOP reset (B3).
+        if (vmc_fds[0] >= 0)
+            fileXioClose(vmc_fds[0]);
+        if (vmc_fds[1] >= 0)
+            fileXioClose(vmc_fds[1]);
         deinit(NO_EXCEPTION, MMCE_MODE);
         sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath);
         return;
