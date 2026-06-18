@@ -1148,7 +1148,13 @@ static void guiRenderGreeting(int alpha)
     u64 mycolor = GS_SETREG_RGBA(0x1C, 0x1C, 0x1C, alpha);
     rmDrawRect(0, 0, screenWidth, screenHeight, mycolor);
 
-    GSTEXTURE *logo = thmGetTexture(LOGO_PICTURE);
+    // If the theme/build ships animated boot-logo frames (logo0..logoN), cycle
+    // them at the loading-icon cadence; otherwise use the single LOGO_PICTURE.
+    int logoTex = LOGO_PICTURE;
+    if (gTheme->logoFrameCount >= 1)
+        logoTex = LOGO0_PICTURE + (guiFrameId >> 1) % gTheme->logoFrameCount;
+
+    GSTEXTURE *logo = thmGetTexture(logoTex);
     if (logo) {
         mycolor = GS_SETREG_RGBA(0x80, 0x80, 0x80, alpha);
         rmDrawPixmap(logo, screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, logo->Width, logo->Height, SCALING_RATIO, mycolor);
@@ -1457,22 +1463,30 @@ void guiDrawSubMenuHints(void)
 static int endIntro = 0; // Break intro loop and start 'Last Played Auto Start' countdown
 static void guiDrawOverlays()
 {
-    // are there any pending operations?
-    int pending = ioHasPendingRequests();
     static int busyAlpha = 0x00; // Fully transparant
 
-    if (!pending) {
-        // Fade out
-        if (busyAlpha > 0x00)
-            busyAlpha -= 0x02;
-    } else {
-        // Fade in
-        if (busyAlpha < 0x80)
-            busyAlpha += 0x02;
-    }
+    // are there any pending operations?
+    int pending = ioHasPendingRequests();
 
-    if (busyAlpha > 0x00)
-        guiDrawBusy(busyAlpha);
+    // During the boot intro, when an animated boot logo is shown, suppress the
+    // loading spinner -- the animated logo is the boot activity indicator there.
+    // The spinner is used normally everywhere else (and on boot for themes/builds
+    // without animated logo frames, so a slow boot still shows activity).
+    int showBusy = endIntro || (gTheme->logoFrameCount < 1);
+    if (showBusy) {
+        if (!pending) {
+            // Fade out
+            if (busyAlpha > 0x00)
+                busyAlpha -= 0x02;
+        } else {
+            // Fade in
+            if (busyAlpha < 0x80)
+                busyAlpha += 0x02;
+        }
+
+        if (busyAlpha > 0x00)
+            guiDrawBusy(busyAlpha);
+    }
 
 #ifdef __DEBUG
     char text[20];

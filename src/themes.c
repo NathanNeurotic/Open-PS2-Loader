@@ -1625,6 +1625,18 @@ static void thmLoad(const char *themePath)
     // LOGO, loaded here to avoid flickering during startup with device in AUTO + theme set
     texLoadInternal(&newT->textures[LOGO_PICTURE], LOGO_PICTURE);
 
+    // Optional animated boot-logo frames (embedded build assets logo0..logo6).
+    // Count the contiguous frames that actually load; guiRenderGreeting() cycles
+    // them on the boot splash. Zero when none are embedded -> single LOGO_PICTURE.
+    newT->logoFrameCount = 0;
+    for (i = LOGO0_PICTURE; i <= LOGO6_PICTURE; i++) {
+        texLoadInternal(&newT->textures[i], i);
+        if (newT->textures[i].Mem != NULL)
+            newT->logoFrameCount++;
+        else
+            break;
+    }
+
     // First start with busy icon
     const char *themePath_temp = themePath;
     int customBusy = 0;
