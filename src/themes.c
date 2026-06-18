@@ -32,6 +32,14 @@ static const char **guiThemesNames = NULL;
 // Global data
 theme_t *gTheme;
 
+// Coverflow render-mode state (externs in themes.h; defaults match wOPL 3/30/200/0).
+// The anim statics + <time.h> land in Commit C alongside drawCoverFlow.
+#define COVERFLOW_MAX 5
+int gCoverflowCount = 3;        // 3 or 5 only (clamped on load AND at draw)
+int gCoverflowCenterScale = 30; // px added to the center cover (UI 0/15/30/45)
+int gCoverflowAnimSpeed = 200;  // ms (UI 0/100/200/400; 0 = instant, no anim)
+int gCoverflowDimCovers = 0;    // bool
+
 enum ELEM_ATTRIBUTE_TYPE {
     ELEM_TYPE_ATTRIBUTE_TEXT = 0,
     ELEM_TYPE_STATIC_TEXT,
@@ -50,6 +58,7 @@ enum ELEM_ATTRIBUTE_TYPE {
     ELEM_TYPE_LOADING_ICON,
     ELEM_TYPE_BDM_INDEX,
     ELEM_TYPE_GAME_COUNT_TEXT,
+    ELEM_TYPE_COVERFLOW,
     ELEM_TYPE_COUNT
 };
 
@@ -78,7 +87,8 @@ static const char *elementsType[ELEM_TYPE_COUNT] = {
     "InfoHintText",
     "LoadingIcon",
     "BdmIndex",
-    "GameCountText"};
+    "GameCountText",
+    "Coverflow"};
 
 // Common functions for Text ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1537,6 +1547,8 @@ static void thmLoad(const char *themePath)
     newT->itemsList = NULL;
     newT->gamesItemsList = NULL;
     newT->appsItemsList = NULL;
+    newT->coverflow = NULL;
+    newT->coverflowCoverOffset = 0;
     newT->loadingIcon = NULL;
     newT->loadingIconCount = LOAD7_ICON - LOAD0_ICON + 1;
 

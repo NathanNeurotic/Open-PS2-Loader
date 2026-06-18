@@ -81,6 +81,7 @@ typedef struct theme_element
     short scaled;
     u64 color;
     int font;
+    int reflection;
 
     void *extended;
 
@@ -121,6 +122,9 @@ typedef struct theme
     theme_elems_t appsInfoElems;
     theme_element_t *appsItemsList;
 
+    theme_element_t *coverflow;
+    int coverflowCoverOffset;
+
     int gameCacheCount;
 
     theme_element_t *itemsList;
@@ -132,6 +136,9 @@ typedef struct theme
 } theme_t;
 
 extern theme_t *gTheme;
+
+extern int gCoverflowCount, gCoverflowCenterScale, gCoverflowAnimSpeed, gCoverflowDimCovers;
+void thmTriggerCoverflowAnim(int dir);
 
 void thmInit(void);
 void thmReinit(const char *path);

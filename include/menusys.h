@@ -57,7 +57,7 @@ typedef struct menu_item
     void *userdata;
 
     /// submenu, selection and page start (only used in static mode)
-    struct submenu_list *submenu, *current, *pagestart;
+    struct submenu_list *submenu, *current, *pagestart, *last;
 
     short remindLast;
 
