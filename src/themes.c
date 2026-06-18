@@ -11,6 +11,9 @@
 #include "include/sound.h"
 #include "include/texcache.h"
 
+#include <time.h>
+#include <math.h>
+
 #define MENU_POS_V               50
 #define HINT_HEIGHT              32
 #define DECORATOR_SIZE           20
@@ -33,12 +36,16 @@ static const char **guiThemesNames = NULL;
 theme_t *gTheme;
 
 // Coverflow render-mode state (externs in themes.h; defaults match wOPL 3/30/200/0).
-// The anim statics + <time.h> land in Commit C alongside drawCoverFlow.
 #define COVERFLOW_MAX 5
 int gCoverflowCount = 3;        // 3 or 5 only (clamped on load AND at draw)
 int gCoverflowCenterScale = 30; // px added to the center cover (UI 0/15/30/45)
 int gCoverflowAnimSpeed = 200;  // ms (UI 0/100/200/400; 0 = instant, no anim)
 int gCoverflowDimCovers = 0;    // bool
+
+// Coverflow slide animation (cubic ease-out); armed by thmTriggerCoverflowAnim().
+static int cfIsAnimating = 0;
+static int cfAnimDirection = 0;
+static clock_t cfAnimStartTime = 0;
 
 enum ELEM_ATTRIBUTE_TYPE {
     ELEM_TYPE_ATTRIBUTE_TEXT = 0,
@@ -707,6 +714,167 @@ static void initGameImage(const char *themePath, config_set_t *themeConfig, them
         LOG("THEMES GameImage %s: NO pattern, elem disabled !!\n", name);
 }
 
+// Coverflow ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Our fork carries no FAV/APP element+source redirection (a wOPL feature we don't port),
+// so the source list is always the active menu's userdata and the element passes through
+// unchanged. Kept as helpers to mirror wOPL's draw shape and document the stub.
+static void *thmGetItemSource(struct menu_list *menu, struct submenu_list *item)
+{
+    return menu->item->userdata;
+}
+
+static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem)
+{
+    return elem;
+}
+
+// Arms a slide animation in direction dir (+1 next / -1 prev). No-op (instant move) when
+// animation speed is 0. Called from menusys.c via the themes.h extern.
+void thmTriggerCoverflowAnim(int dir)
+{
+    if (gCoverflowAnimSpeed <= 0)
+        return;
+    cfIsAnimating = 1;
+    cfAnimDirection = dir;
+    cfAnimStartTime = clock();
+}
+
+static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
+{
+    if (!item)
+        return; // empty list -> nothing to draw
+
+    mutable_image_t *img = (mutable_image_t *)thmGetElemForItem(menu, item, elem)->extended;
+    if (!img)
+        return;
+    item_list_t *sourceList = (item_list_t *)thmGetItemSource(menu, item);
+
+    // Defensive clamp: never trust the global at the draw site (conf.cfg may be hand-edited
+    // to e.g. 7 -> covers[] OOB). coverCount is the ONLY index bound below.
+    int coverCount = (gCoverflowCount == 5) ? 5 : 3;
+    int centerIndex = coverCount / 2;
+
+    // Layout (widescreen-aware, div-guarded).
+    int origCoverWidth = elem->width;
+    int coverWidth = gWideScreen ? rmWideScale(elem->width) : elem->width;
+    int maxCoverWidth = (screenWidth - (coverCount - 1) * 10) / coverCount;
+    if (coverWidth > maxCoverWidth)
+        coverWidth = maxCoverWidth;
+    if (coverWidth <= 0)
+        return;
+    int coverHeight = (origCoverWidth > 0) ? (elem->height * coverWidth / origCoverWidth) : elem->height;
+
+    int coverSpacing = (screenWidth - coverCount * coverWidth) / (coverCount + 1);
+    if (coverSpacing < 0)
+        coverSpacing = 0;
+    if (gWideScreen)
+        coverSpacing = rmWideScale(coverSpacing);
+    int coverDistance = coverWidth + coverSpacing;
+    int basePosX = (screenWidth - (coverCount * coverWidth + (coverCount - 1) * coverSpacing)) / 2 + coverWidth / 2 + coverWidth * gTheme->coverflowCoverOffset / 256;
+
+    // Build the visible window: covers[centerIndex] is the selection; fan out both sides,
+    // wrapping last<->first. The left wrap reads menu->item->last (full lifecycle wired in
+    // Commit E) -- single-game/exhausted lists break out before dereferencing a stale ptr.
+    struct submenu_list *covers[COVERFLOW_MAX];
+    int i;
+    for (i = 0; i < COVERFLOW_MAX; i++)
+        covers[i] = NULL;
+    covers[centerIndex] = item;
+
+    struct submenu_list *walk = item;
+    for (i = centerIndex - 1; i >= 0; i--) {
+        struct submenu_list *prev = walk->prev ? walk->prev : menu->item->last;
+        if (!prev || prev == walk || prev == item)
+            break;
+        covers[i] = prev;
+        walk = prev;
+    }
+
+    walk = item;
+    for (i = centerIndex + 1; i < coverCount; i++) {
+        struct submenu_list *next = walk->next ? walk->next : menu->item->submenu;
+        if (!next || next == walk || next == item)
+            break;
+        covers[i] = next;
+        walk = next;
+    }
+
+    // Slide animation (cubic ease-out). clock() wrap is clamped to snap-complete.
+    // NOTE: the slide/shrink sign convention is HW-tunable polish (one sign flip).
+    float eased = 1.0f;
+    int animOffset = 0;
+    if (gCoverflowAnimSpeed <= 0) {
+        cfIsAnimating = 0;
+    } else if (cfIsAnimating) {
+        clock_t durTicks = (clock_t)(gCoverflowAnimSpeed * (CLOCKS_PER_SEC / 1000.0f));
+        if (durTicks <= 0)
+            durTicks = 1;
+        clock_t elapsed = clock() - cfAnimStartTime;
+        if (elapsed < 0)
+            elapsed = durTicks; // clock wrap -> finish now
+        float t = (float)elapsed / (float)durTicks;
+        if (t >= 1.0f) {
+            t = 1.0f;
+            cfIsAnimating = 0;
+        }
+        eased = 1.0f - powf(1.0f - t, 3.0f);
+        animOffset = (int)(cfAnimDirection * coverDistance * (eased - 1.0f));
+    }
+    int leavingIndex = centerIndex + cfAnimDirection; // neighbour swapping with center
+
+    for (i = 0; i < coverCount; i++) {
+        if (!covers[i])
+            continue;
+
+        GSTEXTURE *texture = getGameImageTexture(img->cache, sourceList, &covers[i]->item);
+        if (!texture || !texture->Mem)
+            texture = img->defaultTexture ? &img->defaultTexture->source : thmGetTexture(COVER_DEFAULT);
+        if (!texture || !texture->Mem)
+            continue;
+
+        // Center grows; the leaving neighbour shrinks. leavingIndex is bounds-checked into
+        // [0,coverCount) BEFORE it indexes covers[] (audit fix).
+        int scaleAdd = 0;
+        if (i == centerIndex)
+            scaleAdd = (int)(gCoverflowCenterScale * eased);
+        else if (cfIsAnimating && leavingIndex >= 0 && leavingIndex < coverCount && i == leavingIndex)
+            scaleAdd = (int)(gCoverflowCenterScale * (1.0f - eased));
+
+        int drawW = coverWidth + scaleAdd;
+        int drawH = (coverWidth > 0) ? (coverHeight * drawW / coverWidth) : coverHeight;
+        int posX = basePosX + i * coverDistance + animOffset;
+
+        u64 coverColor = (gCoverflowDimCovers && i != centerIndex) ? GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x40) : gDefaultCol;
+
+        if (img->overlayTexture) {
+            // Scale the inlay (cover) corner offsets to the drawn overlay size so the case
+            // window tracks the cover at every scale. HW-verify alignment with real case art.
+            image_texture_t *ov = img->overlayTexture;
+            int sw = (elem->width > 0) ? elem->width : 1;   // div-guard (hand-edited theme)
+            int sh = (elem->height > 0) ? elem->height : 1; // div-guard (hand-edited theme)
+            rmDrawOverlayPixmap(&ov->source, posX, elem->posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor,
+                                texture, ov->upperLeft_x * drawW / sw, ov->upperLeft_y * drawH / sh, ov->upperRight_x * drawW / sw, ov->upperRight_y * drawH / sh,
+                                ov->lowerLeft_x * drawW / sw, ov->lowerLeft_y * drawH / sh, ov->lowerRight_x * drawW / sw, ov->lowerRight_y * drawH / sh, elem->reflection);
+        } else {
+            rmDrawPixmap(texture, posX, elem->posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
+        }
+    }
+}
+
+static void initCoverflow(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
+{
+    mutable_image_t *mutableImage = initMutableImage(themePath, themeConfig, theme, name, elem->type, "COV", 10, NULL, NULL);
+    elem->extended = mutableImage;
+    elem->endElem = &endMutableImage;
+
+    if (mutableImage && mutableImage->cache) {
+        elem->drawElem = &drawCoverFlow;
+        theme->coverflow = elem;
+    } else
+        LOG("THEMES Coverflow %s: NO cache, elem disabled !!\n", name);
+}
+
 // AttributeImage ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
@@ -788,6 +956,7 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     theme_element_t *elem = (theme_element_t *)malloc(sizeof(theme_element_t));
 
     elem->type = type;
+    elem->reflection = 0;
     elem->extended = NULL;
     elem->drawElem = NULL;
     elem->endElem = &endBasic;
@@ -859,6 +1028,10 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
         if (intValue > 0 && intValue < THM_MAX_FONTS)
             elem->font = theme->fonts[intValue];
     }
+
+    snprintf(elemProp, sizeof(elemProp), "%s_reflection", name);
+    if (configGetInt(themeConfig, elemProp, &intValue))
+        elem->reflection = intValue ? 1 : 0;
 
     return elem;
 }
@@ -1356,6 +1529,13 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
             } else if (!strcmp(elementsType[ELEM_TYPE_BDM_INDEX], type)) {
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_BDM_INDEX, screenWidth >> 1, 355, ALIGN_CENTER, DIM_UNDEF, DIM_UNDEF, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
                 elem->drawElem = &drawBDMIndex;
+            } else if (!strcmp(elementsType[ELEM_TYPE_COVERFLOW], type)) {
+                // GAME_IMAGE-backed (COV cache) so initMutableImage/findDuplicate work unchanged;
+                // only one coverflow element per theme. Default cover ~5:7 box-art, centered.
+                if (!theme->coverflow) {
+                    elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_GAME_IMAGE, screenWidth >> 1, screenHeight >> 1, ALIGN_CENTER, 150, 210, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
+                    initCoverflow(themePath, themeConfig, theme, elem, name);
+                }
             }
 
             if (elem) {
@@ -1583,6 +1763,9 @@ static void thmLoad(const char *themePath)
 
     if (configGetColor(themeConfig, "sel_text_color", color))
         newT->selTextColor = GS_SETREG_RGBA(color[0], color[1], color[2], 0x80);
+
+    if (configGetInt(themeConfig, "coverflow_cover_offset", &intValue))
+        newT->coverflowCoverOffset = intValue;
 
     // before loading the element definitions, we have to have the fonts prepared
     // for that, we load the fonts and a translation table
