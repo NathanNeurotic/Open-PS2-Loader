@@ -151,6 +151,11 @@ void guiGameHandleDeferedIO(int *ptr, struct UIItem *ui, int type, void *data);
  */
 void guiRenderTextScreen(const char *message);
 
+/** Renders a single boot-splash (greeting) frame, used as the boot loading screen
+ *  so the menu is not drawn before it is ready.
+ */
+void guiRenderGreetingScreen(void);
+
 void guiWarning(const char *text, int count);
 
 int guiConfirmVideoMode(void);
