@@ -92,6 +92,7 @@ static void clearIOModuleT(opl_io_module_t *mod)
     mod->menuItem.icon_id = -1;
     mod->menuItem.current = NULL;
     mod->menuItem.submenu = NULL;
+    mod->menuItem.last = NULL; // coverflow wrap tail (device re-init must not leave it dangling)
     mod->menuItem.pagestart = NULL;
     mod->menuItem.remindLast = 0;
     mod->menuItem.refresh = NULL;
@@ -361,6 +362,7 @@ static void initMenuForListSupport(opl_io_module_t *mod)
     mod->subMenu = NULL;
 
     mod->menuItem.submenu = NULL;
+    mod->menuItem.last = NULL; // coverflow wrap tail
     mod->menuItem.current = NULL;
     mod->menuItem.pagestart = NULL;
     mod->menuItem.remindLast = 0;
@@ -389,6 +391,7 @@ static void clearMenuGameList(opl_io_module_t *mdl)
 
         submenuDestroy(&mdl->subMenu);
         mdl->menuItem.submenu = NULL;
+        mdl->menuItem.last = NULL; // coverflow wrap tail (list clear/refresh must reset it)
         mdl->menuItem.current = NULL;
         mdl->menuItem.pagestart = NULL;
         mdl->menuItem.remindLast = 0;

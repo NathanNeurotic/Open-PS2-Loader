@@ -1053,6 +1053,8 @@ static void guiHandleOp(struct gui_update_t *item)
 
         case GUI_OP_APPEND_MENU:
             result = submenuAppendItem(item->menu.subMenu, item->submenu.icon_id, item->submenu.text, item->submenu.id, item->submenu.text_id);
+            // coverflow wrap tail: submenuAppendItem always returns the new tail
+            item->menu.menu->last = result;
             if (!item->menu.menu->submenu) { // first subitem in list
                 item->menu.menu->submenu = result;
                 if (!item->submenu.selected) {
@@ -1082,12 +1084,20 @@ static void guiHandleOp(struct gui_update_t *item)
             item->menu.menu->submenu = NULL;
             item->menu.menu->current = NULL;
             item->menu.menu->pagestart = NULL;
+            item->menu.menu->last = NULL; // coverflow wrap tail
             cacheAdvanceGeneration();
             break;
 
         case GUI_OP_SORT:
             submenuSort(item->menu.subMenu);
             item->menu.menu->submenu = *item->menu.subMenu;
+
+            { // recompute the coverflow wrap tail after the sort reorders the list
+                submenu_list_t *tail = item->menu.menu->submenu;
+                while (tail && tail->next)
+                    tail = tail->next;
+                item->menu.menu->last = tail;
+            }
 
             if (!item->menu.menu->remindLast)
                 item->menu.menu->current = item->menu.menu->submenu;
