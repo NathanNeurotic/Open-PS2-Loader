@@ -635,6 +635,7 @@ static void diaResetValue(struct UIItem *item)
         case UI_STRING:
         case UI_PASSWORD:
             strncpy(item->stringvalue.text, item->stringvalue.def, sizeof(item->stringvalue.text));
+            item->stringvalue.text[sizeof(item->stringvalue.text) - 1] = '\0';
             return;
         default:
             return;
@@ -688,13 +689,18 @@ static int diaHandleInput(struct UIItem *item, int *modified)
     } else if ((item->type == UI_STRING) || (item->type == UI_PASSWORD)) {
         char tmp[32];
         strncpy(tmp, item->stringvalue.text, sizeof(tmp));
+        tmp[sizeof(tmp) - 1] = '\0';
 
         if (item->stringvalue.handler) {
-            if (item->stringvalue.handler(tmp, sizeof(tmp)))
+            if (item->stringvalue.handler(tmp, sizeof(tmp))) {
                 strncpy(item->stringvalue.text, tmp, sizeof(item->stringvalue.text));
+                item->stringvalue.text[sizeof(item->stringvalue.text) - 1] = '\0';
+            }
         } else {
-            if (diaShowKeyb(tmp, sizeof(tmp), item->type == UI_PASSWORD, NULL))
+            if (diaShowKeyb(tmp, sizeof(tmp), item->type == UI_PASSWORD, NULL)) {
                 strncpy(item->stringvalue.text, tmp, sizeof(item->stringvalue.text));
+                item->stringvalue.text[sizeof(item->stringvalue.text) - 1] = '\0';
+            }
         }
 
         return 0;
@@ -1034,6 +1040,8 @@ int diaGetString(struct UIItem *ui, int id, char *value, int length)
 
     if ((item->type == UI_STRING) || (item->type == UI_PASSWORD)) {
         strncpy(value, item->stringvalue.text, length);
+        if (length > 0)
+            value[length - 1] = '\0';
         return 1;
     }
 
