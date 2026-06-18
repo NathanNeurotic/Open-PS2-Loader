@@ -572,6 +572,11 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
     }
 }
 
+// Vertical scroll offset for config dialogs taller than the screen. Reset to 0 when a dialog
+// opens (diaExecuteDialog); diaRenderUI shifts rendering up by it and re-clamps it each frame
+// so the focused item is always brought on-screen (cursor-follow). Stays 0 when content fits.
+static int diaScrollOffset = 0;
+
 /// renders whole ui screen (for given dialog setup)
 void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFocus)
 {
@@ -581,9 +586,10 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     int x0 = 20;
     int y0 = 20;
 
-    // render all items
+    // render all items (shifted up by the scroll offset for tall dialogs)
     struct UIItem *rc = ui;
-    int x = x0, y = y0, hmax = 0;
+    int x = x0, y = y0 - diaScrollOffset, hmax = 0;
+    int curTop = y0, curBot = y0; // rendered extent of the focused row, for cursor-follow scroll
 
     while (rc->type != UI_TERMINATOR) {
         int w = 0, h = 0;
@@ -598,6 +604,11 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
         }
 
         diaRenderItem(x, y, rc, rc == cur, haveFocus, &w, &h);
+
+        if (rc == cur) {
+            curTop = y;
+            curBot = y + h;
+        }
 
         if (w > 0)
             x += w + UI_SPACING_V;
@@ -614,6 +625,22 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
         }
 
         rc++;
+    }
+
+    // Cursor-follow scroll: re-clamp the offset so the focused row stays on-screen, above the
+    // bottom hint bar. Self-correcting each frame; remains 0 for dialogs that fit (no scroll).
+    if (cur != NULL) {
+        int visibleBottom = gTheme->usedHeight - 40;
+        // Only scroll when a real viewport exists; guards degenerate small-usedHeight themes
+        // where visibleBottom <= y0 would let the two edge corrections fight (jitter).
+        if (visibleBottom > y0) {
+            if (curTop < y0)
+                diaScrollOffset -= (y0 - curTop);
+            else if (curBot > visibleBottom)
+                diaScrollOffset += (curBot - visibleBottom);
+        }
+        if (diaScrollOffset < 0)
+            diaScrollOffset = 0;
     }
 
     if ((cur != NULL) && (!haveFocus) && (cur->hintId != -1)) {
@@ -892,6 +919,8 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
     // slower controls for dialogs
     setButtonDelay(KEY_UP, DIA_SCROLL_SPEED);
     setButtonDelay(KEY_DOWN, DIA_SCROLL_SPEED);
+
+    diaScrollOffset = 0; // start each dialog scrolled to the top
 
     // okay, we have the first selectable item
     // we can proceed with rendering etc. etc.
