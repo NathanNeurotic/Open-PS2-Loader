@@ -1155,6 +1155,19 @@ static void guiRenderGreeting(int alpha)
     }
 }
 
+// Draw one standalone boot-splash frame: the same greeting guiIntroLoop() shows,
+// at full opacity. Used as the boot "loading" screen instead of
+// guiRenderTextScreen(), whose guiShow() call would render the not-yet-ready main
+// menu (empty lists, no device selected) as a garbled landing page before the
+// intro splash. This keeps the OPL logo on screen across the config load so boot
+// shows the splash, never a half-drawn menu.
+void guiRenderGreetingScreen(void)
+{
+    guiStartFrame();
+    guiRenderGreeting(0x80);
+    guiEndFrame();
+}
+
 static float mix(float a, float b, float t)
 {
     return a + (b - a) * t;

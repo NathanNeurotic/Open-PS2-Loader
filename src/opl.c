@@ -2022,7 +2022,10 @@ static void init(void)
         padStatus = startPads();
     readPads();
     if (!getKeyPressed(KEY_START)) {
-        guiRenderTextScreen(_l(_STR_LOADING_SETTINGS));
+        // Show the boot splash (not guiRenderTextScreen(), which calls guiShow()
+        // and would draw the not-yet-ready main menu as a garbled landing page
+        // before the intro splash) while the config loads.
+        guiRenderGreetingScreen();
         _loadConfig(); // only try to restore config if emergency key is not being pressed
     } else {
         LOG("--- SKIPPING OPL CONFIG LOADING\n");
