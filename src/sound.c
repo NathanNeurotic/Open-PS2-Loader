@@ -44,9 +44,6 @@ extern unsigned int size_bd_connect_adp;
 extern unsigned char bd_disconnect_adp[];
 extern unsigned int size_bd_disconnect_adp;
 
-extern unsigned char bgm_ogg[];
-extern unsigned int size_bgm_ogg;
-
 struct sfxEffect
 {
     const char *name;
@@ -303,79 +300,6 @@ static u8 bgmIoThreadStack[BGM_THREAD_STACK_SIZE] __attribute__((aligned(16)));
 
 static OggVorbis_File *vorbisFile;
 
-typedef struct
-{
-    const unsigned char *data;
-    size_t size;
-    size_t offset;
-} bgm_embedded_source_t;
-
-static bgm_embedded_source_t bgmEmbeddedSource;
-
-static size_t bgmReadEmbedded(void *ptr, size_t size, size_t nmemb, void *datasource)
-{
-    bgm_embedded_source_t *source = datasource;
-    size_t requested, available, bytesToCopy;
-
-    if (size == 0 || nmemb == 0)
-        return 0;
-
-    requested = size * nmemb;
-    available = (source->offset < source->size) ? (source->size - source->offset) : 0;
-    bytesToCopy = requested < available ? requested : available;
-
-    if (bytesToCopy > 0) {
-        memcpy(ptr, &source->data[source->offset], bytesToCopy);
-        source->offset += bytesToCopy;
-    }
-
-    return bytesToCopy / size;
-}
-
-static int bgmSeekEmbedded(void *datasource, ogg_int64_t offset, int whence)
-{
-    bgm_embedded_source_t *source = datasource;
-    ogg_int64_t target;
-
-    switch (whence) {
-        case SEEK_SET:
-            target = offset;
-            break;
-        case SEEK_CUR:
-            target = (ogg_int64_t)source->offset + offset;
-            break;
-        case SEEK_END:
-            target = (ogg_int64_t)source->size + offset;
-            break;
-        default:
-            return -1;
-    }
-
-    if (target < 0 || target > (ogg_int64_t)source->size)
-        return -1;
-
-    source->offset = (size_t)target;
-    return 0;
-}
-
-static int bgmCloseEmbedded(void *datasource)
-{
-    (void)datasource;
-    return 0;
-}
-
-static long bgmTellEmbedded(void *datasource)
-{
-    bgm_embedded_source_t *source = datasource;
-    return (long)source->offset;
-}
-
-static const ov_callbacks gBgmEmbeddedCallbacks = {
-    bgmReadEmbedded,
-    bgmSeekEmbedded,
-    bgmCloseEmbedded,
-    bgmTellEmbedded,
-};
 
 static void bgmThread(void *arg)
 {
@@ -489,16 +413,9 @@ static int bgmLoad(void)
         }
     }
 
-    bgmEmbeddedSource.data = bgm_ogg;
-    bgmEmbeddedSource.size = size_bgm_ogg;
-    bgmEmbeddedSource.offset = 0;
-
-    if (ov_open_callbacks(&bgmEmbeddedSource, vorbisFile, NULL, 0, gBgmEmbeddedCallbacks) == 0) {
-        LOG("BGM: Loaded embedded fallback BGM.\n");
-        return 0;
-    }
-
-    LOG("BGM: Failed to load any background music source.\n");
+    // No embedded fallback BGM (removed to save ~324 KB); BGM plays only when a
+    // theme provides sound/bgm.ogg or a BGM path is configured.
+    LOG("BGM: No theme or configured BGM available.\n");
     free(vorbisFile);
     vorbisFile = NULL;
 
