@@ -441,6 +441,29 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         settings->port = detectedPort;
     }
 
+    // Per-game Neutrino core: gate BEFORE opening iso_file so no fd is leaked on
+    // the Neutrino path (game is still valid here for the format check).
+    int coreLoader = 0;
+    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    const char *neutrinoPath = NULL;
+    if (coreLoader) {
+        neutrinoPath = sbFileExists(NEUTRINO_PATH) ? NEUTRINO_PATH : (sbFileExists(NEUTRINO_ALT_PATH) ? NEUTRINO_ALT_PATH : NULL);
+        if (game->format == GAME_FORMAT_USBLD || !strcmp(game->extension, ".zso")) {
+            guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
+            coreLoader = 0;
+        } else if (neutrinoPath == NULL) {
+            guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+            coreLoader = 0;
+        }
+    }
+    if (coreLoader) {
+        char mmcePartname[256];
+        snprintf(mmcePartname, sizeof(mmcePartname), "%s", partname); // defensive copy across the deinit teardown (partname is a stack buffer, not freed by deinit)
+        deinit(NO_EXCEPTION, MMCE_MODE);
+        sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath);
+        return;
+    }
+
     int iso_file = fileXioOpen(partname, 0x1, 0666);
     if (iso_file < 0) {
         LOG("Failed to open iso, aborting\n");

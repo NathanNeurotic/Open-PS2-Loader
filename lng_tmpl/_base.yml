@@ -346,6 +346,12 @@ gui_strings:
   string: Game ID
 - label: DMA_MODE
   string: DMA Mode
+- label: CORE_LOADER
+  string: Loader Core
+- label: NEUTRINO_BAD_FORMAT
+  string: Neutrino does not support this file format, launching with <OPL> core
+- label: NEUTRINO_NOT_FOUND
+  string: Neutrino ELF not found, launching with <OPL> core
 - label: VSYNC
   string: V-Sync
 - label: MODE1

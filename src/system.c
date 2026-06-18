@@ -28,6 +28,9 @@
 #include "include/pggsm.h"
 #include "include/cheatman.h"
 #include "include/xparam.h"
+#include "include/iosupport.h"
+#include <stdlib.h>
+#include <elf-loader.h>
 
 #ifdef PADEMU
 #include <libds34bt.h>
@@ -804,6 +807,115 @@ void sysPrintEECoreConfig(struct EECoreConfig_t *config)
     LOG("Compat Mask = 0x%02x\n", config->_CompatMask);
 }
 #endif
+
+// --- Neutrino external-core launch (per-game $CoreLoader) --------------------
+// Maps an OPL block-device driver token to Neutrino's -bsd backend name. Uses
+// exact strcmp per token (NOT a strncmp prefix test): a prefix test matches
+// "sdc" against "sd" first and mis-maps MX4SIO to ilink. Mirrors our hardened
+// bdmDriverIs*/bdmGetTypedPathForDriver. Returns "unsupported" for anything
+// Neutrino cannot back (e.g. eth/smb), which the caller treats as a hard stop.
+static const char *getDeviceName(const char *driver)
+{
+    if (driver == NULL)
+        return "unsupported";
+    if (!strcmp(driver, "usb"))
+        return "usb";
+    if (!strcmp(driver, "ilink") || !strcmp(driver, "sd"))
+        return "ilink";
+    if (!strcmp(driver, "mx4sio") || !strcmp(driver, "sdc"))
+        return "mx4sio";
+    if (!strcmp(driver, "ata"))
+        return "ata";
+    if (!strcmp(driver, "apa"))
+        return "apa";
+    if (!strcmp(driver, "mmce"))
+        return "mmce";
+    return "unsupported";
+}
+
+// Re-encodes the OPL compatmask into Neutrino's -gc concatenated-digit format.
+// Conservative phase-1 set: forward only OPL bits 1,2,3,5 (our bit 7 is Unused,
+// so it is never emitted as a bogus '7'). result[] is sized off COMPAT_MODE_COUNT
+// and every append is bounds-guarded so widening the set later cannot overflow.
+// NOTE: Neutrino's -gc numbering is Neutrino's own, not OPL's bitmask semantics;
+// the OPL<->Neutrino correspondence must be hardware-verified before widening.
+static int convertCompatmaskToModes(int compatmask)
+{
+    char result[COMPAT_MODE_COUNT + 2];
+    int pos = 0;
+
+    if ((compatmask & COMPAT_MODE_1) && pos < (int)sizeof(result) - 1)
+        result[pos++] = '1';
+    if ((compatmask & COMPAT_MODE_2) && pos < (int)sizeof(result) - 1)
+        result[pos++] = '2';
+    if ((compatmask & COMPAT_MODE_3) && pos < (int)sizeof(result) - 1)
+        result[pos++] = '3';
+    if ((compatmask & COMPAT_MODE_5) && pos < (int)sizeof(result) - 1)
+        result[pos++] = '5';
+
+    result[pos] = '\0';
+    return atoi(result);
+}
+
+// Hand the game off to an external Neutrino ELF instead of OPL's embedded core.
+// Hardened vs the wOPL original: NULL-guarded; an "unsupported" device aborts
+// (never launches -bsd=unsupported); DISTINCT argv buffers (wOPL reused ONE
+// buffer for both -bsd=ata and -bsdfs=hdl, clobbering -bsd=ata on HDD); argv[8]
+// with per-append bounds guards (wOPL's argv[6] was exactly full).
+void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath)
+{
+    if (neutrinoPath == NULL || driver == NULL || path == NULL) {
+        LOG("[NEUTRINO] null arg, abort\n");
+        return;
+    }
+
+    const char *deviceName = getDeviceName(driver);
+    if (!strcmp(deviceName, "unsupported")) {
+        LOG("[NEUTRINO] unsupported device '%s', abort\n", driver);
+        return;
+    }
+
+    char bsd[16];
+    char bsdfs[16];
+    char filePath[256];
+    char compatModes[32];
+    char *argv[8];
+    int argc = 0;
+    const int argvMax = (int)(sizeof(argv) / sizeof(argv[0]));
+
+    if (!strcmp(deviceName, "apa")) {
+        snprintf(bsd, sizeof(bsd), "-bsd=ata");
+        if (argc < argvMax)
+            argv[argc++] = bsd;
+        snprintf(bsdfs, sizeof(bsdfs), "-bsdfs=hdl");
+        if (argc < argvMax)
+            argv[argc++] = bsdfs;
+        snprintf(filePath, sizeof(filePath), "-dvd=hdl:%s", path);
+        if (argc < argvMax)
+            argv[argc++] = filePath;
+    } else {
+        snprintf(bsd, sizeof(bsd), "-bsd=%s", deviceName);
+        if (argc < argvMax)
+            argv[argc++] = bsd;
+        snprintf(filePath, sizeof(filePath), "-dvd=%s", path);
+        if (argc < argvMax)
+            argv[argc++] = filePath;
+    }
+
+    snprintf(compatModes, sizeof(compatModes), "-gc=%d", convertCompatmaskToModes(compatmask));
+    if (argc < argvMax)
+        argv[argc++] = compatModes;
+
+    if (gEnableDebug && argc < argvMax)
+        argv[argc++] = "-dbc";
+
+    if (EnablePS2Logo && argc < argvMax)
+        argv[argc++] = "-logo";
+
+    LOG("[NEUTRINO] elf=%s %s %s %s argc=%d\n", neutrinoPath, bsd, filePath, compatModes, argc);
+
+    LoadELFFromFileWithPartition(neutrinoPath, "", argc, argv);
+}
 
 void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdvdman_irx, void **cdvdman_irx, int size_mcemu_irx, void **mcemu_irx, int EnablePS2Logo, unsigned int compatflags)
 {

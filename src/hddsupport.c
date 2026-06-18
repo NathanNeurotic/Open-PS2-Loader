@@ -539,6 +539,10 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int dmaType = 0, dmaMode = 7, compatMode = 0;
     configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatMode);
     configGetInt(configSet, CONFIG_ITEM_DMA, &dmaMode);
+    int coreLoader = 0;
+    int isZSO = 0;
+    char apaPart[APA_IDMAX + 1];
+    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     if (dmaMode < 3)
         dmaType = 0x20;
     else {
@@ -590,6 +594,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     settings->common.layer1_start = 0; // cdvdman will read it from APA header
     hddReadSectors(game->start_sector + OPL_HDD_MODE_PS2LOGO_OFFSET, 1, IOBuffer);
     if (*(u32 *)IOBuffer == ZSO_MAGIC) {
+        isZSO = 1;
         probed_fd = 0;
         probed_lba = game->start_sector + OPL_HDD_MODE_PS2LOGO_OFFSET;
         ziso_init((ZISO_header *)IOBuffer, *(u32 *)((u8 *)IOBuffer + sizeof(ZISO_header)));
@@ -597,6 +602,21 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         u32 maxLBA = *(u32 *)(IOBuffer + 80);
         if (maxLBA > 0 && maxLBA < ziso_total_block) {   // dual layer check
             settings->common.layer1_start = maxLBA - 16; // adjust second layer start
+        }
+    }
+
+    // Per-game Neutrino core: copy partition_name into a local BEFORE deinit —
+    // deinit / free(gAutoLaunchGame) below free `game`; reading it after is UAF.
+    const char *neutrinoPath = NULL;
+    if (coreLoader) {
+        snprintf(apaPart, sizeof(apaPart), "%s", game->partition_name);
+        neutrinoPath = sbFileExists(NEUTRINO_PATH) ? NEUTRINO_PATH : (sbFileExists(NEUTRINO_ALT_PATH) ? NEUTRINO_ALT_PATH : NULL);
+        if (isZSO) {
+            guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
+            coreLoader = 0;
+        } else if (neutrinoPath == NULL) {
+            guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+            coreLoader = 0;
         }
     }
 
@@ -610,6 +630,13 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
         fileXioUmount("pfs0:");
         fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+    }
+
+    // Neutrino core: hand off using the apaPart copy (game is freed above).
+    if (coreLoader) {
+        LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
+        sysLaunchNeutrino("apa", apaPart, compatMode, EnablePS2Logo, neutrinoPath);
+        return;
     }
 
     settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_DEV9;

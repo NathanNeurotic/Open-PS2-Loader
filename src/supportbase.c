@@ -532,6 +532,17 @@ u32 sbGetISO9660MaxLBA(const char *path)
     return maxLBA;
 }
 
+int sbFileExists(const char *path)
+{
+    if (path == NULL)
+        return 0;
+    int fd = open(path, O_RDONLY, 0666);
+    if (fd < 0)
+        return 0;
+    close(fd);
+    return 1;
+}
+
 int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset)
 {
     int result = -1, fd;
