@@ -122,6 +122,12 @@ enum UI_ITEMS {
     GSMCFG_GSMYOFFSET,
     GSMCFG_GSMFIELDFIX,
 
+    UICFG_COVERFLOW_BUTTON,
+    COVERFLOW_CFG_COUNT,
+    COVERFLOW_CFG_SCALE,
+    COVERFLOW_CFG_ANIM,
+    COVERFLOW_CFG_DIM,
+
     COMPAT_DMA = 100,
     COMPAT_ALTSTARTUP,
     COMPAT_GAMEID,
@@ -237,5 +243,6 @@ extern struct UIItem diaBlockDevicesConfig[];
 
 extern struct UIItem diaOSDConfig[];
 extern struct UIItem diaMMCEConfig[];
+extern struct UIItem diaCoverflowConfig[];
 
 #endif

@@ -730,3 +730,23 @@ gui_strings:
   string: Neutrino does not support this file format, launching with <OPL> core
 - label: NEUTRINO_NOT_FOUND
   string: Neutrino ELF not found, launching with <OPL> core
+- label: COVERFLOW_SETTINGS
+  string: Coverflow Settings
+- label: COVERFLOW_COUNT
+  string: Cover Count
+- label: COVERFLOW_SCALE
+  string: Center Scale
+- label: COVERFLOW_ANIM
+  string: Animation Speed
+- label: COVERFLOW_DIM
+  string: Dim Side Covers
+- label: NONE
+  string: "None"
+- label: SMALL
+  string: Small
+- label: LARGE
+  string: Large
+- label: OFF
+  string: "Off"
+- label: NORMAL
+  string: Normal

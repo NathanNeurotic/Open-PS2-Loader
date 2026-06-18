@@ -120,6 +120,10 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_DEFAULT_BGM_PATH     "default_bgm_path"
 #define CONFIG_OPL_XSENSITIVITY         "x_sensitivity"
 #define CONFIG_OPL_YSENSITIVITY         "y_sensitivity"
+#define CONFIG_OPL_COVERFLOW_COUNT      "coverflow_count"
+#define CONFIG_OPL_COVERFLOW_SCALE      "coverflow_scale"
+#define CONFIG_OPL_COVERFLOW_ANIM       "coverflow_anim"
+#define CONFIG_OPL_COVERFLOW_DIM        "coverflow_dim"
 
 // Network config keys
 #define CONFIG_NET_ETH_LINKM          "eth_linkmode"
