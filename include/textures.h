@@ -41,6 +41,7 @@ enum INTERNAL_TEXTURE {
     R1_ICON,
     R2_ICON,
     R3_ICON, */
+    SETTINGS_BG, // optional settings/menu background (use_settings_bg theme flag; see guiDrawBGSettings)
     COVER_DEFAULT,
     DISC_DEFAULT,
     SCREEN_DEFAULT,

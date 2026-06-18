@@ -1868,6 +1868,15 @@ static void thmLoad(const char *themePath)
         for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
             thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
 
+    // Optional settings/menu background (guiDrawBGSettings draws it instead of the plasma).
+    // Theme-supplied only for now: a disk theme opts in with use_settings_bg=1 and ships its
+    // own settings_bg.png. No embedded default yet (internalDefault[SETTINGS_BG] is NULL), so
+    // the built-in <OPL>/<Coverflow> themes leave the slot empty and keep the plasma.
+    if (themePath) {
+        if (configGetInt(themeConfig, "use_settings_bg", &intValue) && intValue)
+            thmLoadResource(&newT->textures[SETTINGS_BG], SETTINGS_BG, themePath, GS_PSM_CT32, 0);
+    }
+
     cacheCancelPendingImageLoads();
     gTheme = newT;
     thmFree(curT);
