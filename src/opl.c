@@ -1999,6 +1999,22 @@ static void init(void)
     configInit(NULL);
 
     rmInit();
+
+    // The language/theme/menu init below reads assets from the boot device and can
+    // take a noticeable moment, during which the GS would otherwise keep displaying
+    // the leftover framebuffer left in VRAM by the BIOS/launcher (garbage window).
+    // gsKit only clears one of the two double buffers at init, so the other can be
+    // shown as garbage until normal rendering cycles it. Draw a few empty frames
+    // through OPL's own render path now -- rmEndFrame() flips and toggles the
+    // active buffer, so a couple of passes clear BOTH framebuffers to black -- so
+    // the screen is black from here until the first real screen (the loading text
+    // / intro splash) is drawn, instead of showing garbage while we load.
+    int blankFrame;
+    for (blankFrame = 0; blankFrame < 3; blankFrame++) {
+        rmStartFrame();
+        rmEndFrame();
+    }
+
     lngInit();
     thmInit();
     guiInit();

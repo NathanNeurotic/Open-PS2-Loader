@@ -228,27 +228,6 @@ int rmSetMode(int force)
         if (hires) {
             gsKit_hires_init_screen(gsGlobal, rm_mode_table[vmode].passes);
         } else {
-            // Shrink garbage window W2. On a GUI-triggered re-rmSetMode() (video
-            // mode change) the display is already ON over the old framebuffer;
-            // disabling the read circuits first (PMODE write-only -> safe to WRITE,
-            // never read-back) keeps the old framebuffer from being shown while
-            // gsKit reallocates VRAM. On first boot the display is already off from
-            // opl.c, so this write is a harmless no-op there.
-            //
-            // IMPORTANT: this does NOT fully close W2. gsKit_init_screen() resets
-            // the GS, writes its own complete PMODE (re-enabling the read circuits)
-            // and points DISPFB at freshly-allocated, UNCLEARED ScreenBuffer[0].
-            // So between gsKit_init_screen() returning and the first gsKit_sync_flip()
-            // below, the display is ON over an uncleared buffer for ~1 vsync. We do
-            // not eliminate that window because doing so would require a second,
-            // independent PMODE writer (re-writing gsKit's computed value from its
-            // in-RAM shadows) -- gsKit is pulled from PS2SDK at build time and is
-            // not vendored here, so its struct layout and PMODE computation cannot
-            // be verified in-tree, and a divergent re-write risks a permanently
-            // black display. We therefore delegate display re-enable solely to
-            // gsKit_init_screen() (as the original code always did) and truncate
-            // W2's effect by clearing BOTH buffers immediately below.
-            *(volatile u64 *)0x12000000 = 0; // GS PMODE = display read circuits off
             gsKit_init_screen(gsGlobal);
             gsKit_mode_switch(gsGlobal, GS_ONESHOT);
         }
@@ -261,27 +240,8 @@ int rmSetMode(int force)
             gsKit_hires_sync(gsGlobal);
             gsKit_hires_flip(gsGlobal);
         } else {
-            // Clear BOTH double-buffered framebuffers, not just one. gsKit_init_screen()
-            // above left the display ON over the uncleared draw buffer (the residual
-            // W2 window). The first clear+flip blacks out and displays the current
-            // draw buffer; the second clear+flip blacks out the other buffer so the
-            // first real buffer swap in rmEndFrame() cannot reveal uncleared VRAM
-            // (the residual button-hint icons / white bar / pink line). gsKit_clear()
-            // writes the active draw buffer and gsKit_sync_flip() swaps it in and
-            // advances the draw pointer, so two iterations cover both ScreenBuffer[0]
-            // and ScreenBuffer[1].
-            //
-            // The second clear+flip is gated on DoubleBuffering: with a single buffer
-            // there is no second buffer to clear, and the extra flip would only
-            // re-display the same (already black) buffer. This also ties correctness
-            // to exactly two display buffers -- if a future change enables triple
-            // buffering, this loop count must grow to match (see rmEndFrame()).
             gsKit_clear(gsGlobal, gColBlack);
             gsKit_sync_flip(gsGlobal);
-            if (gsGlobal->DoubleBuffering == GS_SETTING_ON) {
-                gsKit_clear(gsGlobal, gColBlack);
-                gsKit_sync_flip(gsGlobal);
-            }
         }
 
         LOG("RENDERMAN New vmode: %d, %d x %d\n", vmode, gsGlobal->Width, gsGlobal->Height);
