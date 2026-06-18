@@ -877,8 +877,8 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
 
     char bsd[16];
     char bsdfs[16];
-    char filePath[256];
-    char compatModes[32];
+    char filePath[288];        // "-dvd=hdl:" (9) + up to a 255-char path + NUL — avoid truncation (B2)
+    char compatModes[32] = ""; // stays empty when no compat modes are forwarded (B1)
     char *argv[8];
     int argc = 0;
     const int argvMax = (int)(sizeof(argv) / sizeof(argv[0]));
@@ -902,9 +902,15 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
             argv[argc++] = filePath;
     }
 
-    snprintf(compatModes, sizeof(compatModes), "-gc=%d", convertCompatmaskToModes(compatmask));
-    if (argc < argvMax)
-        argv[argc++] = compatModes;
+    // Only forward -gc when at least one compat mode is set: Neutrino treats
+    // -gc=0 as an explicit mode (IOP fast reads), NOT a no-op, so passing it for
+    // a game with no OPL modes selected would force unwanted behavior (B1).
+    int gcModes = convertCompatmaskToModes(compatmask);
+    if (gcModes > 0) {
+        snprintf(compatModes, sizeof(compatModes), "-gc=%d", gcModes);
+        if (argc < argvMax)
+            argv[argc++] = compatModes;
+    }
 
     if (gEnableDebug && argc < argvMax)
         argv[argc++] = "-dbc";

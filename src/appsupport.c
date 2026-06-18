@@ -600,6 +600,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
     if (fd >= 0) {
         int mode, argc = 0;
         char partition[128];
+        char altStartup[256];
         char *argv[1];
         close(fd);
 
@@ -614,7 +615,11 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             snprintf(partition, sizeof(partition), "%s:", gOPLPart);
 
         if (configGetStr(configSet, CONFIG_ITEM_ALTSTARTUP, &argv1) != 0) {
-            argv[0] = (char *)argv1;
+            // Copy before deinit(): argv1 points into the config heap which
+            // deinit() -> configEnd() frees just below; passing it to the loader
+            // afterward would be a use-after-free (A6).
+            snprintf(altStartup, sizeof(altStartup), "%s", argv1);
+            argv[0] = altStartup;
             argc = 1;
         }
 
