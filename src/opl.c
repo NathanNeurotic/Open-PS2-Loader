@@ -2265,6 +2265,27 @@ int main(int argc, char *argv[])
 
     ChangeThreadPriority(GetThreadId(), 31);
 
+    // Hide the leftover framebuffer left by the BIOS/launcher (garbage window W1).
+    // These GS privileged registers are WRITE-ONLY on real hardware, so we only
+    // ever WRITE them (never read-back): writing BGCOLOR=0 forces a black border
+    // and writing PMODE=0 disables the display read circuits (EN1/EN2=0), so the
+    // GS stops fetching the stale framebuffer across reset()/IOP reload. This is
+    // the first GS access, so nothing is shown until rmInit() brings the display
+    // back up over a cleared framebuffer.
+    //
+    // Re-enabling the display is delegated entirely to gsKit_init_screen() in
+    // rmSetMode(), which performs a GS reset and writes its own complete PMODE
+    // (computed from gsGlobal, never a read-back). We therefore never save or
+    // restore a PMODE/BGCOLOR value of our own. NOTE: the existing (working) boot
+    // already relied on gsKit_init_screen() being the sole thing that turns the
+    // display on (no other PMODE write existed and OPL boots), so writing PMODE=0
+    // here adds no new dependency; it only blanks the stale W1 framebuffer first.
+    // The GS reset inside gsKit_init_screen() also zeroes BGCOLOR again, so the
+    // BGCOLOR=0 write only matters for the brief pre-reset() W1 span. The matching
+    // blank for the rmInit window (W2) lives in renderman.c rmSetMode().
+    *(volatile u64 *)0x120000E0 = 0; // GS BGCOLOR = black
+    *(volatile u64 *)0x12000000 = 0; // GS PMODE   = display read circuits off
+
     // reset, load modules
     reset();
     ResetDeckardXParams();
