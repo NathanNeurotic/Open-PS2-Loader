@@ -1774,19 +1774,26 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
 
 void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data)
 {
+    // Free the shared IOP/fileXio channel before running the deferred IO. The
+    // cover-art worker's queued and in-flight reads otherwise tie up that single
+    // channel, so a config write (e.g. the last-played save on game launch) queues
+    // behind them and the screen freezes on "Saving config..." after browsing the
+    // list (issue #45 -- confirmed on hardware: disabling cover art avoids it).
+    // Cancel queued cover loads, abort a slow in-flight MMCE read, and drain. The
+    // drain returns as soon as the art queue is empty (cacheWaitForAllRequestsTimed
+    // early-exits when nothing is queued/active), so this adds no delay in the
+    // common case; the timeout only bounds a genuinely stuck read.
+    cacheAbortMmceImageLoadsTimed(500);
+    cacheCancelPendingImageLoadsTimed(500);
+
     if (ioPutRequest(type, data) != IO_OK) {
         *ptr = 0;
         return;
     }
 
-    // Lower our (GUI thread) priority while busy-waiting for the IO worker so the
-    // lower-priority cover-art worker can be scheduled to reach a yield point and
-    // release the single shared IOP/fileXio channel. Otherwise the GUI spinning
-    // here at its normal priority starves that worker, so a deferred op contending
-    // with an in-flight cover read on the same device -- e.g. an HDD config save
-    // ("Saving config...") after browsing the list -- can never complete and the
-    // screen freezes forever (issue #45). Priority is restored before returning,
-    // so normal rendering is unaffected and the completion handshake is unchanged.
+    // Belt-and-suspenders: lower our (GUI thread) priority while busy-waiting so
+    // any art work that slips in afterwards can still reach a yield point and
+    // release the channel. Restored before returning; the handshake is unchanged.
     int savedPriority = cacheLowerCallerPriority();
 
     while (*ptr)
