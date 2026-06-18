@@ -685,6 +685,7 @@ reselect_video_mode:
     diaSetInt(diaUIConfig, UICFG_XOFF, gXOff);
     diaSetInt(diaUIConfig, UICFG_YOFF, gYOff);
     diaSetInt(diaUIConfig, UICFG_OVERSCAN, gOverscan);
+    diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL);
     guiUIUpdater(1);
 
     int ret = diaExecuteDialog(diaUIConfig, -1, 1, guiUIUpdater);
@@ -718,6 +719,11 @@ reselect_video_mode:
 
         if (gEnableBGM && !isBgmPlaying())
             bgmStart();
+    }
+
+    if (ret == UICFG_COVERFLOW_BUTTON) {
+        guiShowCoverflowConfig();
+        goto reselect_video_mode;
     }
 
     if (previousVMode != gVMode) {
@@ -956,6 +962,53 @@ void guiShowAudioConfig(void)
     diaSetString(diaAudioConfig, CFG_DEFAULT_BGM_PATH, gDefaultBGMPath);
 
     diaExecuteDialog(diaAudioConfig, -1, 1, guiAudioUpdater);
+}
+
+void guiShowCoverflowConfig(void)
+{
+    int value;
+    int i;
+
+    // Map index<->stored value: scale 0/15/30/45 is linear (idx*15); anim 0/100/200/400 is a lookup.
+    static const int animValues[] = {0, 100, 200, 400};
+
+    const char *coverCounts[] = {"3", "5", NULL};
+    const char *centerScales[] = {_l(_STR_NONE), _l(_STR_SMALL), _l(_STR_MEDIUM), _l(_STR_LARGE), NULL};
+    const char *animSpeeds[] = {_l(_STR_OFF), _l(_STR_FAST), _l(_STR_NORMAL), _l(_STR_SLOW), NULL};
+
+    diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_COUNT, coverCounts);
+    diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_SCALE, centerScales);
+    diaSetEnum(diaCoverflowConfig, COVERFLOW_CFG_ANIM, animSpeeds);
+
+    diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_COUNT, (gCoverflowCount == 5) ? 1 : 0);
+
+    int scaleIdx = gCoverflowCenterScale / 15;
+    if (scaleIdx < 0)
+        scaleIdx = 0;
+    else if (scaleIdx > 3)
+        scaleIdx = 3;
+    diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_SCALE, scaleIdx);
+
+    // default to Normal (200ms) if the stored value isn't one of the table entries
+    int animIdx = 2;
+    for (i = 0; i < 4; i++)
+        if (animValues[i] == gCoverflowAnimSpeed)
+            animIdx = i;
+    diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_ANIM, animIdx);
+
+    diaSetInt(diaCoverflowConfig, COVERFLOW_CFG_DIM, gCoverflowDimCovers ? 1 : 0);
+
+    int result = diaExecuteDialog(diaCoverflowConfig, -1, 1, NULL);
+    if (result) {
+        if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_COUNT, &value))
+            gCoverflowCount = (value == 1) ? 5 : 3;
+        if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_SCALE, &value))
+            gCoverflowCenterScale = ((value >= 0 && value <= 3) ? value : 0) * 15;
+        if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_ANIM, &value))
+            gCoverflowAnimSpeed = animValues[(value >= 0 && value <= 3) ? value : 2];
+        if (diaGetInt(diaCoverflowConfig, COVERFLOW_CFG_DIM, &value))
+            gCoverflowDimCovers = value ? 1 : 0;
+    }
 }
 
 void guiShowControllerConfig(void)
