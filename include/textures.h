@@ -95,6 +95,16 @@ enum INTERNAL_TEXTURE {
     VMODE_NTSC,
     VMODE_PAL,
     LOGO_PICTURE,
+    // Optional animated boot-logo frames (embedded build assets). When present
+    // they are cycled on the boot splash like the loading icon; when absent the
+    // single LOGO_PICTURE is used. Keep contiguous (animation indexes LOGO0+n).
+    LOGO0_PICTURE,
+    LOGO1_PICTURE,
+    LOGO2_PICTURE,
+    LOGO3_PICTURE,
+    LOGO4_PICTURE,
+    LOGO5_PICTURE,
+    LOGO6_PICTURE,
     CASE_OVERLAY,
     APPS_CASE_OVERLAY,
 

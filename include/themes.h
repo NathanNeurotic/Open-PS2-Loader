@@ -126,6 +126,7 @@ typedef struct theme
     theme_element_t *itemsList;
     theme_element_t *loadingIcon;
     int loadingIconCount;
+    int logoFrameCount; // count of contiguous animated boot-logo frames (0 = use single LOGO_PICTURE)
 
     GSTEXTURE textures[TEXTURES_COUNT];
     int fonts[THM_MAX_FONTS]; //!< Storage of font handles for removal once not needed

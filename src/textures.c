@@ -230,6 +230,16 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {VMODE_NTSC, "Vmode_ntsc", &Vmode_ntsc_png},
     {VMODE_PAL, "Vmode_pal", &Vmode_pal_png},
     {LOGO_PICTURE, "logo", &logo_png},
+    // Animated boot-logo frames. Embedded pointers are NULL until the gfx assets
+    // (logo0.png..logo6.png) are added to PNG_ASSETS; the named entries keep the
+    // texId->name table valid and let a theme supply its own frames meanwhile.
+    {LOGO0_PICTURE, "logo0", NULL},
+    {LOGO1_PICTURE, "logo1", NULL},
+    {LOGO2_PICTURE, "logo2", NULL},
+    {LOGO3_PICTURE, "logo3", NULL},
+    {LOGO4_PICTURE, "logo4", NULL},
+    {LOGO5_PICTURE, "logo5", NULL},
+    {LOGO6_PICTURE, "logo6", NULL},
     {CASE_OVERLAY, "case", &case_png},
     {APPS_CASE_OVERLAY, "apps_case", &apps_case_png},
 };
