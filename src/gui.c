@@ -1465,15 +1465,15 @@ static void guiDrawOverlays()
 {
     static int busyAlpha = 0x00; // Fully transparant
 
+    // are there any pending operations?
+    int pending = ioHasPendingRequests();
+
     // During the boot intro, when an animated boot logo is shown, suppress the
     // loading spinner -- the animated logo is the boot activity indicator there.
     // The spinner is used normally everywhere else (and on boot for themes/builds
     // without animated logo frames, so a slow boot still shows activity).
     int showBusy = endIntro || (gTheme->logoFrameCount < 1);
     if (showBusy) {
-        // are there any pending operations?
-        int pending = ioHasPendingRequests();
-
         if (!pending) {
             // Fade out
             if (busyAlpha > 0x00)
