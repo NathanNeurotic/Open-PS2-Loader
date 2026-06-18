@@ -9,7 +9,7 @@
 
 // Network Config Menu
 struct UIItem diaNetConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NETCONFIG}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NETCONFIG}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SHOW_ADVANCED_OPTS}}},
@@ -137,7 +137,7 @@ struct UIItem diaNetConfig[] = {
 
 // Block Devices Settings Menu
 struct UIItem diaBlockDevicesConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_BLOCKDEVICE_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_BLOCKDEVICE_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"USB", -1}}},
@@ -169,7 +169,7 @@ struct UIItem diaBlockDevicesConfig[] = {
 
 // Settings Menu
 struct UIItem diaConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DEBUG}}},
@@ -270,7 +270,7 @@ struct UIItem diaConfig[] = {
 
 // Display Settings Menu
 struct UIItem diaUIConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_GFX_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_GFX_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_THEME}}},
@@ -360,7 +360,7 @@ struct UIItem diaUIConfig[] = {
 
 // Per-Game Modes Menu
 struct UIItem diaCompatConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_COMPAT_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_COMPAT_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_CORE_LOADER}}},
@@ -423,7 +423,7 @@ struct UIItem diaCompatConfig[] = {
 
 // Per-Game VMC Menu
 struct UIItem diaVMCConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_VMC_SCREEN}}},
+    {UI_HEADER, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_VMC_SCREEN}}},
     {UI_SPLITTER},
 
     // VMC
@@ -449,7 +449,7 @@ struct UIItem diaVMCConfig[] = {
 
 // Per-Game Game Settings > VMC Menu
 struct UIItem diaVMC[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_VMC_SCREEN}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_VMC_SCREEN}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_NAME}}},
@@ -486,7 +486,7 @@ struct UIItem diaVMC[] = {
 
 // Per-Game Game Settings > GSM Menu (--Bat--)
 struct UIItem diaGSConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_GSM_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_GSM_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
@@ -529,7 +529,7 @@ struct UIItem diaGSConfig[] = {
 
 // Per Game Settings > Cheat Menu --Bat--
 struct UIItem diaCheatConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CHEAT_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CHEAT_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
@@ -557,7 +557,7 @@ struct UIItem diaCheatConfig[] = {
 
 #ifdef PADEMU
 struct UIItem diaPadEmuConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_PADEMU_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_PADEMU_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -50, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
@@ -633,7 +633,7 @@ struct UIItem diaPadEmuConfig[] = {
     {UI_TERMINATOR}};
 
 struct UIItem diaPadEmuInfo[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_BTINFO}}}, {UI_SPACER},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_BTINFO}}}, {UI_SPACER},
 
     {UI_SPLITTER},
     {UI_LABEL, 0, 1, 1, -1, -45, 0, {.label = {"VID:", -1}}},
@@ -810,7 +810,7 @@ struct UIItem diaPadEmuInfo[] = {
     {UI_TERMINATOR}};
 
 struct UIItem diaPadMacroConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_PADMACRO_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_PADMACRO_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -50, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
@@ -860,7 +860,7 @@ struct UIItem diaPadMacroConfig[] = {
 
 // About Menu
 struct UIItem diaAbout[] = {
-    {UI_LABEL, ABOUT_TITLE, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_HEADER, ABOUT_TITLE, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
     {UI_SPLITTER},
 
     // Coders
@@ -930,7 +930,7 @@ struct UIItem diaAbout[] = {
 
 // Network Update Menu
 struct UIItem diaNetCompatUpdate[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NET_UPDATE}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NET_UPDATE}}},
     {UI_SPLITTER},
 
     {UI_LABEL, NETUPD_OPT_UPD_ALL_LBL, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NET_UPDATE_ALL}}},
@@ -955,7 +955,7 @@ struct UIItem diaNetCompatUpdate[] = {
 
 // Parental Lock Config Menu
 struct UIItem diaParentalLockConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_PARENLOCKCONFIG}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_PARENLOCKCONFIG}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PARENLOCK_PASSWORD}}},
@@ -972,7 +972,7 @@ struct UIItem diaParentalLockConfig[] = {
 
 // Audio Settings Menu
 struct UIItem diaAudioConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_AUDIO_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_AUDIO_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SFX}}},
@@ -1018,7 +1018,7 @@ struct UIItem diaAudioConfig[] = {
 
 // Controller Settings Menu
 struct UIItem diaControllerConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CONTROLLER_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CONTROLLER_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SCROLLING}}},
@@ -1055,7 +1055,7 @@ struct UIItem diaControllerConfig[] = {
     {UI_TERMINATOR}};
 
 struct UIItem diaCoverflowConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_COVERFLOW_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_COVERFLOW_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_COUNT}}},
@@ -1085,7 +1085,7 @@ struct UIItem diaCoverflowConfig[] = {
     {UI_TERMINATOR}};
 
 struct UIItem diaOSDConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OSD_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OSD_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
@@ -1123,7 +1123,7 @@ struct UIItem diaOSDConfig[] = {
 
 // MMCE Settings Menu
 struct UIItem diaMMCEConfig[] = {
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MMCE_SETTINGS}}},
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MMCE_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCEMODE}}},

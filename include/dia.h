@@ -15,6 +15,10 @@ typedef enum {
     UI_SPACER,
     // A string label
     UI_LABEL,
+    // Same as a label but drawn in the accent (selected-text) colour to look like a header.
+    // Placed between UI_LABEL and UI_OK on purpose: that keeps it non-controllable
+    // (diaIsControllable: type >= UI_OK) and visibility-guarded (the type >= UI_LABEL checks).
+    UI_HEADER,
     // Ok button
     UI_OK, // Just a shortcut for BUTTON with OK label and id 1!
     // Universal button (display's label, returns id on X)

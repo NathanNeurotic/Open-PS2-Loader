@@ -434,6 +434,9 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
         case UI_TERMINATOR:
             return;
 
+        case UI_HEADER:
+            // header: same layout as a label, just rendered in the accent (selected-text) colour
+            txtcol = gTheme->selTextColor;
         case UI_BUTTON:
         case UI_LABEL: {
             // width is text length in pixels...
@@ -1126,7 +1129,7 @@ int diaSetLabel(struct UIItem *ui, int id, const char *text)
     if (!item)
         return 0;
 
-    if ((item->type == UI_LABEL) || (item->type == UI_BUTTON)) {
+    if ((item->type == UI_LABEL) || (item->type == UI_BUTTON) || (item->type == UI_HEADER)) {
         item->label.text = text;
         return 1;
     }
