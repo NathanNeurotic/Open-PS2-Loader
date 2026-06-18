@@ -2265,6 +2265,20 @@ int main(int argc, char *argv[])
 
     ChangeThreadPriority(GetThreadId(), 31);
 
+    // Blank the GS display output during the upcoming IOP reset + module-load
+    // window, so the leftover framebuffer (BIOS / launcher / emulator) is not
+    // shown as garbage before OPL's splash. PMODE (GS reg 0x12000000) bits
+    // EN1/EN2 enable the display read circuits; clearing them stops any VRAM
+    // from being fetched. BGCOLOR (0x120000E0) is zeroed so the blanked screen
+    // is black rather than whatever colour was left in that register. These are
+    // EE-side GS registers and SifIopReset only reboots the IOP, so they persist;
+    // gsKit_init_screen() in init()'s rmInit() re-programs PMODE with the correct
+    // read-circuit config after clearing the framebuffer. Unlike a full early
+    // rmInit() this draws nothing and sets up no gsKit/DMA state, so it cannot
+    // end up displaying uninitialised VRAM.
+    *(volatile u64 *)0x120000E0 = 0; // GS BGCOLOR = black
+    *(volatile u64 *)0x12000000 = 0; // GS PMODE   = display read circuits off
+
     // reset, load modules
     reset();
     ResetDeckardXParams();
