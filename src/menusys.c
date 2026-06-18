@@ -809,6 +809,9 @@ static void menuNextV()
         selected_item->item->current = cur->next;
         sfxPlay(SFX_CURSOR);
         menuAdvanceArtSelectionOnMove();
+        // coverflow slide animation; the wrap branch below stays instant
+        if (gTheme->coverflow)
+            thmTriggerCoverflowAnim(1);
 
         // if the current item is beyond the page start, move the page start one page down
         cur = selected_item->item->pagestart;
@@ -841,6 +844,9 @@ static void menuPrevV()
         }
 
         menuAdvanceArtSelectionOnMove();
+        // coverflow slide animation; the wrap branch below stays instant
+        if (gTheme->coverflow)
+            thmTriggerCoverflowAnim(-1);
     } else { // wrap to end
         menuLastPage();
     }
@@ -1118,16 +1124,51 @@ void menuRenderMain(void)
     }
 }
 
+// Coverflow rotates the nav axis on the MAIN screen only: Left/Right step through the
+// carousel (a vertical list move) while Up/Down switch device menus. Non-coverflow themes
+// behave exactly as before. The info screen is intentionally NOT rotated (menuHandleInputInfo).
+static void menuNavigateLeft()
+{
+    if (gTheme->coverflow)
+        menuPrevV();
+    else
+        menuPrevH();
+}
+
+static void menuNavigateRight()
+{
+    if (gTheme->coverflow)
+        menuNextV();
+    else
+        menuNextH();
+}
+
+static void menuNavigateUp()
+{
+    if (gTheme->coverflow)
+        menuPrevH();
+    else
+        menuPrevV();
+}
+
+static void menuNavigateDown()
+{
+    if (gTheme->coverflow)
+        menuNextH();
+    else
+        menuNextV();
+}
+
 void menuHandleInputMain()
 {
     if (getKey(KEY_LEFT)) {
-        menuPrevH();
+        menuNavigateLeft();
     } else if (getKey(KEY_RIGHT)) {
-        menuNextH();
+        menuNavigateRight();
     } else if (getKey(KEY_UP)) {
-        menuPrevV();
+        menuNavigateUp();
     } else if (getKey(KEY_DOWN)) {
-        menuNextV();
+        menuNavigateDown();
     } else if (getKeyOn(KEY_CROSS)) {
         selected_item->item->execCross(selected_item->item);
     } else if (getKeyOn(KEY_TRIANGLE)) {
