@@ -35,6 +35,7 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_VMC          "$VMC"
 #define CONFIG_ITEM_COMPAT       "$Compatibility"
 #define CONFIG_ITEM_DMA          "$DMA"
+#define CONFIG_ITEM_CORE_LOADER  "$CoreLoader"
 #define CONFIG_ITEM_DNAS         "$DNAS"
 #define CONFIG_ITEM_CONFIGSOURCE "$ConfigSource"
 
