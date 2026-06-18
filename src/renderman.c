@@ -240,7 +240,25 @@ int rmSetMode(int force)
             gsKit_hires_sync(gsGlobal);
             gsKit_hires_flip(gsGlobal);
         } else {
+            // gsKit_init_screen() clears only the active DRAW buffer; with double
+            // buffering the DISPLAYED buffer keeps whatever leftover VRAM was there
+            // (the boot / mode-change "garbage"), and it is never cleared here:
+            // gsKit_sync_flip() skips its buffer toggle while FirstFrame is set
+            // (see gsKit gsCore.c), so a plain clear+flip just clears the same
+            // buffer twice. Clear BOTH double buffers explicitly -- clear the
+            // active one, switch the draw target to the other the way
+            // gsKit_setactive() derives it from ActiveBuffer, clear that one too,
+            // then restore the original active buffer so the following flip and all
+            // later rendering behave exactly as before. We are in GS_ONESHOT mode
+            // here, so each gsKit_clear() is drawn immediately.
             gsKit_clear(gsGlobal, gColBlack);
+            if (gsGlobal->DoubleBuffering == GS_SETTING_ON) {
+                gsGlobal->ActiveBuffer ^= 1;
+                gsKit_setactive(gsGlobal);
+                gsKit_clear(gsGlobal, gColBlack);
+                gsGlobal->ActiveBuffer ^= 1;
+                gsKit_setactive(gsGlobal);
+            }
             gsKit_sync_flip(gsGlobal);
         }
 
