@@ -138,8 +138,11 @@ static void cacheUnlock(void)
  *
  * Returns the caller's original priority (to be passed to cacheRestoreCallerPriority),
  * or -1 if the priority was already low enough / could not be determined.
+ *
+ * Non-static: also used by gui.c's guiHandleDeferedIO() so the GUI thread does not
+ * starve the art worker while busy-waiting for a deferred IO op (issue #45).
  */
-static int cacheLowerCallerPriority(void)
+int cacheLowerCallerPriority(void)
 {
     ee_thread_status_t status;
     int callerPriority = -1;
@@ -156,7 +159,7 @@ static int cacheLowerCallerPriority(void)
     return callerPriority;
 }
 
-static void cacheRestoreCallerPriority(int savedPriority)
+void cacheRestoreCallerPriority(int savedPriority)
 {
     if (savedPriority >= 0)
         ChangeThreadPriority(GetThreadId(), savedPriority);

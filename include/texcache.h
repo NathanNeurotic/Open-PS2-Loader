@@ -96,6 +96,15 @@ void cachePrimeReadyTexture(void);
  */
 int cacheHasPendingArt(void);
 
+/** Lower the calling thread's priority below the art worker (so it can be
+ *  scheduled to release shared IOP/fileXio resources) and restore it afterwards.
+ *  cacheLowerCallerPriority() returns the prior priority (or -1 if unchanged) to
+ *  pass back to cacheRestoreCallerPriority(). Used around busy-waits such as
+ *  guiHandleDeferedIO() to avoid starving the worker (issue #45).
+ */
+int cacheLowerCallerPriority(void);
+void cacheRestoreCallerPriority(int savedPriority);
+
 /** Returns nonzero while any interactive art request is queued or actively decoding.
  */
 int cacheHasPendingInteractiveArt(void);

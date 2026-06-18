@@ -1765,8 +1765,20 @@ void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data)
         return;
     }
 
+    // Lower our (GUI thread) priority while busy-waiting for the IO worker so the
+    // lower-priority cover-art worker can be scheduled to reach a yield point and
+    // release the single shared IOP/fileXio channel. Otherwise the GUI spinning
+    // here at its normal priority starves that worker, so a deferred op contending
+    // with an in-flight cover read on the same device -- e.g. an HDD config save
+    // ("Saving config...") after browsing the list -- can never complete and the
+    // screen freezes forever (issue #45). Priority is restored before returning,
+    // so normal rendering is unaffected and the completion handshake is unchanged.
+    int savedPriority = cacheLowerCallerPriority();
+
     while (*ptr)
         guiRenderTextScreen(message);
+
+    cacheRestoreCallerPriority(savedPriority);
 }
 
 void guiGameHandleDeferedIO(int *ptr, struct UIItem *ui, int type, void *data)
