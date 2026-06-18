@@ -8,6 +8,10 @@ name: Rolling Release
 #   * ps2max/dev (pinned)      -> OPNPS2LD.ELF                 (primary / stable toolchain)
 #   * ps2dev/ps2dev:latest     -> OPNPS2LD-ps2dev-latest.ELF   (bleeding-edge toolchain)
 #
+# A source snapshot (OPNPS2LD-<version>-src.zip) of the exact built commit is also
+# published, so every rolling build is self-preserving: testers can restore and
+# rebuild precisely what they ran, even if history is later rewritten.
+#
 # Deliberately additive and self-contained:
 #   * Publishes ONLY to the "rolling" tag / pre-release (created on first run).
 #   * Does NOT modify the curated tagged releases, the existing "latest" pre-release
@@ -205,6 +209,26 @@ jobs:
           echo "Renamed assets:"
           ls -la rolling
 
+      - name: Archive source snapshot
+        run: |
+          set -eu
+          # Bundle the exact source that produced these ELFs so the rolling build
+          # is self-preserving: a tester can always restore and rebuild this precise
+          # commit later, even if history is rewritten or a branch disappears.
+          # git archive snapshots only TRACKED files at HEAD (== the built commit);
+          # generated files (e.g. the gitignored lang_autogen.h) are intentionally
+          # excluded because the build regenerates them. The project has no
+          # submodules, so HEAD is the complete source tree. --prefix gives a clean
+          # top-level folder on extraction. --format=zip uses git's built-in zip
+          # writer (no external tooling needed).
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git archive --format=zip \
+            --prefix="${VERSIONED_BASE}-src/" \
+            -o "rolling/${VERSIONED_BASE}-src.zip" \
+            HEAD
+          echo "Source snapshot:"
+          ls -la "rolling/${VERSIONED_BASE}-src.zip"
+
       - name: Build release notes
         run: |
           set -eu
@@ -223,6 +247,8 @@ jobs:
             else
               printf '  - ps2dev/ps2dev:latest build FAILED this run (pinned build only)\n'
             fi
+            printf '\nSource snapshot (for preservation / offline rebuild of this exact commit):\n'
+            printf '  - %s-src.zip\n' "$VERSIONED_BASE"
             printf '\nUpdated on every push to master. Independent of the tagged releases and the "latest" pre-release.\n'
           } > notes.md
           echo "ps2dev-latest present: $HAS_LATEST"
