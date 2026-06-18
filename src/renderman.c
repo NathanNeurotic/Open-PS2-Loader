@@ -363,15 +363,35 @@ void rmDrawQuad(rm_quad_t *q)
     order++;
 }
 
-void rmDrawPixmap(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, short scaled, u64 color)
+// Coverflow mirror: one alpha-graded, vertically-flipped sprite below the quad.
+// Dormant unless a caller passes reflection != 0 (only drawCoverFlow does).
+// HW-verify the alpha falloff + inverted-V sampling when coverflow first drives it.
+static void rmDrawReflection(GSTEXTURE *txt, rm_quad_t *q)
+{
+    int reflH = (q->br.y - q->ul.y) / 4;
+    if (reflH <= 0)
+        return;
+    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+    gsKit_TexManager_bind(gsGlobal, txt);
+    gsKit_prim_sprite_texture(gsGlobal, txt,
+                              q->ul.x + fRenderXOff, q->br.y + fRenderYOff,
+                              q->ul.u, q->br.v,
+                              q->br.x + fRenderXOff, q->br.y + reflH + fRenderYOff,
+                              q->br.u, q->ul.v, order, GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x20));
+    order++;
+}
+
+void rmDrawPixmap(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, short scaled, u64 color, int reflection)
 {
     rm_quad_t quad;
     rmSetupQuad(txt, x, y, aligned, w, h, scaled, color, &quad);
     rmDrawQuad(&quad);
+    if (reflection)
+        rmDrawReflection(txt, &quad);
 }
 
 void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w, int h, short scaled, u64 color,
-                         GSTEXTURE *inlay, int ulx, int uly, int urx, int ury, int blx, int bly, int brx, int bry)
+                         GSTEXTURE *inlay, int ulx, int uly, int urx, int ury, int blx, int bly, int brx, int bry, int reflection)
 {
     rm_quad_t quad;
     rmSetupQuad(overlay, x, y, aligned, w, h, scaled, color, &quad);
@@ -398,10 +418,12 @@ void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w,
                             quad.ul.x + blx + fRenderXOff, quad.ul.y + bly + fRenderYOff,
                             0.0f, inlay->Height,
                             quad.ul.x + brx + fRenderXOff, quad.ul.y + bry + fRenderYOff,
-                            inlay->Width, inlay->Height, order, gDefaultCol);
+                            inlay->Width, inlay->Height, order, color);
     order++;
 
     rmDrawQuad(&quad);
+    if (reflection)
+        rmDrawReflection(overlay, &quad);
 }
 
 void rmDrawRect(int x, int y, int w, int h, u64 color)

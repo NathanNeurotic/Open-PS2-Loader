@@ -1138,7 +1138,7 @@ static void guiDrawBusy(int alpha)
         GSTEXTURE *texture = thmGetTexture(LOAD0_ICON + (guiFrameId >> 1) % gTheme->loadingIconCount);
         if (texture && texture->Mem) {
             u64 mycolor = GS_SETREG_RGBA(0x80, 0x80, 0x80, alpha);
-            rmDrawPixmap(texture, gTheme->loadingIcon->posX, gTheme->loadingIcon->posY, gTheme->loadingIcon->aligned, gTheme->loadingIcon->width, gTheme->loadingIcon->height, gTheme->loadingIcon->scaled, mycolor);
+            rmDrawPixmap(texture, gTheme->loadingIcon->posX, gTheme->loadingIcon->posY, gTheme->loadingIcon->aligned, gTheme->loadingIcon->width, gTheme->loadingIcon->height, gTheme->loadingIcon->scaled, mycolor, 0);
         }
     }
 }
@@ -1157,7 +1157,7 @@ static void guiRenderGreeting(int alpha)
     GSTEXTURE *logo = thmGetTexture(logoTex);
     if (logo) {
         mycolor = GS_SETREG_RGBA(0x80, 0x80, 0x80, alpha);
-        rmDrawPixmap(logo, screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, logo->Width, logo->Height, SCALING_RATIO, mycolor);
+        rmDrawPixmap(logo, screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, logo->Width, logo->Height, SCALING_RATIO, mycolor, 0);
     }
 }
 
@@ -1373,7 +1373,7 @@ void guiDrawBGPlasma()
 
     pery = ymax;
     rmInvalidateTexture(&gBackgroundTex);
-    rmDrawPixmap(&gBackgroundTex, 0, 0, ALIGN_NONE, screenWidth, screenHeight, SCALING_NONE, gDefaultCol);
+    rmDrawPixmap(&gBackgroundTex, 0, 0, ALIGN_NONE, screenWidth, screenHeight, SCALING_NONE, gDefaultCol, 0);
 }
 
 int guiDrawIconAndText(int iconId, int textId, int font, int x, int y, u64 color)
@@ -1388,7 +1388,7 @@ int guiDrawIconAndText(int iconId, int textId, int font, int x, int y, u64 color
 
     if (iconTex && iconTex->Mem) {
         y += h >> 1;
-        rmDrawPixmap(iconTex, x, y, ALIGN_VCENTER, w, h, SCALING_RATIO, gDefaultCol);
+        rmDrawPixmap(iconTex, x, y, ALIGN_VCENTER, w, h, SCALING_RATIO, gDefaultCol, 0);
         x += rmWideScale(w) + 2;
     } else {
         // HACK: font is aligned to VCENTER, the default height icon height is 20
