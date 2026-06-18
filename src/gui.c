@@ -235,7 +235,9 @@ void guiCheckNotifications(int checkTheme, int checkLang)
 {
     if (gEnableNotifications) {
         if (checkTheme) {
-            if (thmGetGuiValue() != 0)
+            // Only disk themes have a path to announce; built-ins (<OPL>, <Coverflow>) return
+            // NULL from thmGetFilePath -> no popup (and no NULL deref in guiShowNotifications).
+            if (thmGetFilePath(thmGetGuiValue()) != NULL)
                 showThmPopup = 1;
         }
 

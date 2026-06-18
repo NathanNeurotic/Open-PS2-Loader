@@ -203,9 +203,9 @@ int sfxInit(int bootSnd)
 
     // Check default theme is not current theme
     int themeID = thmGetGuiValue();
-    if (themeID != 0) {
+    char *thmPath = thmGetFilePath(themeID);
+    if (thmPath != NULL) { // NULL for <OPL> + the built-in <Coverflow> -> use default sfx
         // Get theme path for sfx
-        char *thmPath = thmGetFilePath(themeID);
         snprintf(sound_path, sizeof(sound_path), "%ssound", thmPath);
 
         // Check for custom sfx folder
@@ -376,8 +376,8 @@ static int bgmLoad(void)
     memset(vorbisFile, 0, sizeof(OggVorbis_File));
 
     themeID = thmGetGuiValue();
-    if (themeID != 0) {
-        char *thmPath = thmGetFilePath(themeID);
+    char *thmPath = thmGetFilePath(themeID);
+    if (thmPath != NULL) { // NULL for <OPL> + the built-in <Coverflow> -> no theme BGM folder
         snprintf(bgmPath, sizeof(bgmPath), "%ssound/bgm.ogg", thmPath);
         FILE *bgmFile = fopen(bgmPath, "rb");
         if (bgmFile != NULL) {

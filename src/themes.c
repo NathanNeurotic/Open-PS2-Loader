@@ -21,8 +21,14 @@
 
 extern const char conf_theme_OPL_cfg;
 extern u16 size_conf_theme_OPL_cfg;
+extern const char theme_coverflow_cfg;
+extern u16 size_theme_coverflow_cfg;
 
 theme_t *gTheme;
+
+// Set transiently around thmLoad(NULL) to load the embedded coverflow theme instead of
+// the default OPL theme (the built-in "<Coverflow>" entry in the theme list).
+static int gLoadCoverflowBuiltin = 0;
 
 static int screenWidth;
 static int screenHeight;
@@ -1736,7 +1742,10 @@ static void thmLoad(const char *themePath)
     if (!themePath) {
         // No theme specified. Prepare and load the default theme.
         themeConfig = configAlloc(0, NULL, NULL);
-        configReadBuffer(themeConfig, &conf_theme_OPL_cfg, size_conf_theme_OPL_cfg);
+        if (gLoadCoverflowBuiltin)
+            configReadBuffer(themeConfig, &theme_coverflow_cfg, size_theme_coverflow_cfg);
+        else
+            configReadBuffer(themeConfig, &conf_theme_OPL_cfg, size_conf_theme_OPL_cfg);
     } else {
         snprintf(path, sizeof(path), "%sconf_theme.cfg", themePath);
         themeConfig = configAlloc(0, NULL, path);
@@ -1869,8 +1878,8 @@ static void thmRebuildGuiNames(void)
     if (guiThemesNames)
         free(guiThemesNames);
 
-    // build the themes name list
-    guiThemesNames = (const char **)malloc((nThemes + 2) * sizeof(char **));
+    // build the themes name list (+1 default internal, +1 built-in coverflow, +1 NULL)
+    guiThemesNames = (const char **)malloc((nThemes + 3) * sizeof(char **));
 
     // add default internal
     guiThemesNames[0] = "<OPL>";
@@ -1880,7 +1889,9 @@ static void thmRebuildGuiNames(void)
         guiThemesNames[i + 1] = themes[i].name;
     }
 
-    guiThemesNames[nThemes + 1] = NULL;
+    // built-in coverflow theme occupies the slot right after the disk themes
+    guiThemesNames[nThemes + 1] = "<Coverflow>";
+    guiThemesNames[nThemes + 2] = NULL;
 }
 
 int thmAddElements(char *path, const char *separator, int forceRefresh)
@@ -1953,7 +1964,14 @@ int thmSetGuiValue(int themeID, int reload)
 {
     if (themeID != -1) {
         if (guiThemeID != themeID || reload) {
-            thmLoad(themeID != 0 ? themes[themeID - 1].filePath : NULL);
+            if (themeID == nThemes + 1) {
+                // built-in coverflow theme: load the embedded buffer via thmLoad(NULL).
+                // Checked BEFORE the themes[themeID - 1] access below (which would be OOB).
+                gLoadCoverflowBuiltin = 1;
+                thmLoad(NULL);
+                gLoadCoverflowBuiltin = 0;
+            } else
+                thmLoad(themeID != 0 ? themes[themeID - 1].filePath : NULL);
 
             guiThemeID = themeID;
             return 1;
@@ -1971,6 +1989,8 @@ int thmGetGuiValue(void)
 int thmFindGuiID(const char *theme)
 {
     if (theme) {
+        if (strcasecmp(theme, "<Coverflow>") == 0)
+            return nThemes + 1; // built-in coverflow theme
         int i = 0;
         for (; i < nThemes; i++) {
             if (strcasecmp(themes[i].name, theme) == 0)
@@ -1987,6 +2007,12 @@ const char **thmGetGuiList(void)
 
 char *thmGetFilePath(int themeID)
 {
+    // Disk themes occupy IDs 1..nThemes. The built-ins (<OPL> = 0, <Coverflow> = nThemes+1)
+    // and any out-of-range ID have no on-disk path -> return NULL so callers fall back to
+    // the default/internal assets instead of indexing themes[] out of bounds.
+    if (themeID <= 0 || themeID > nThemes)
+        return NULL;
+
     theme_file_t *currTheme = &themes[themeID - 1];
     char *path = currTheme->filePath;
 
