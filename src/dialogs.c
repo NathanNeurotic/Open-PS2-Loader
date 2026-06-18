@@ -361,6 +361,11 @@ struct UIItem diaCompatConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_COMPAT_SETTINGS}}},
     {UI_SPLITTER},
 
+    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_CORE_LOADER}}},
+    {UI_SPACER},
+    {UI_ENUM, COMPAT_LOADER, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_SPLITTER},
+
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODE1}}},
     {UI_SPACER},
     {UI_BOOL, COMPAT_MODE_BASE, 1, 1, _STR_HINT_MODE1, -10, 0, {.intvalue = {0, 0}}},
