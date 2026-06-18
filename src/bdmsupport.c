@@ -718,6 +718,22 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         settings->hddIsLBA48 = pDeviceData->bdmHddIsLBA48;
     }
 
+    // Per-game Neutrino core: resolve the external ELF + reject unsupported
+    // formats here, while `game` is still valid (deinit below frees it).
+    int coreLoader = 0;
+    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    const char *neutrinoPath = NULL;
+    if (coreLoader) {
+        neutrinoPath = sbFileExists(NEUTRINO_PATH) ? NEUTRINO_PATH : (sbFileExists(NEUTRINO_ALT_PATH) ? NEUTRINO_ALT_PATH : NULL);
+        if (game->format == GAME_FORMAT_USBLD || !strcmp(game->extension, ".zso")) {
+            guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
+            coreLoader = 0;
+        } else if (neutrinoPath == NULL) {
+            guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+            coreLoader = 0;
+        }
+    }
+
     if (gAutoLaunchBDMGame == NULL)
         deinit(NO_EXCEPTION, itemList->mode); // CAREFUL: deinit will call bdmCleanUp, so bdmGames/game will be freed
     else {
@@ -728,6 +744,13 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
         free(gAutoLaunchDeviceData);
         gAutoLaunchDeviceData = NULL;
+    }
+
+    // Neutrino core: hand off with the stack-resident partname + driver token
+    // (both survive the deinit above; `game` does not and is not used here).
+    if (coreLoader) {
+        sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, EnablePS2Logo, neutrinoPath);
+        return;
     }
 
     LOG("bdm pre sysLaunchLoaderElf\n");
