@@ -1,14 +1,17 @@
 ![logo](https://github.com/user-attachments/assets/bdf46f3c-a749-4128-a4c3-e0f968a31897)
-# Open PS2 Loader
+# RiptOPL
+**An opinionated [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**
 <br>
-Copyright 2013, Ifcaro & jimmikaelkael<br>
+Based on Open PS2 Loader · Copyright 2013, Ifcaro & jimmikaelkael<br>
 Licensed under Academic Free License version 3.0<br>
 Review the LICENSE file for further details.<br><br>
 
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/ps2homebrew/Open-PS2-Loader/total?style=plastic&logo=github&logoSize=auto&label=Total%20Downloads&labelColor=navy&color=skyblue)
-[![CI](https://github.com/ps2homebrew/Open-PS2-Loader/actions/workflows/compilation.yml/badge.svg?branch=master)](https://github.com/ps2homebrew/Open-PS2-Loader/actions/workflows/compilation.yml)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/581556b20d6b4dbf8e8af2232c89d60c)](https://app.codacy.com/gh/ps2homebrew/Open-PS2-Loader/dashboard?utm_source=gh&utm_medium=referral&utm_content=ps2homebrew/Open-PS2-Loader&utm_campaign=Badge_grade)
+[![CI](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/compilation.yml/badge.svg?branch=master)](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/compilation.yml)
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/NathanNeurotic/Open-PS2-Loader/total?style=plastic&logo=github&logoSize=auto&label=Total%20Downloads&labelColor=navy&color=skyblue)
+[![Latest release](https://img.shields.io/github/v/release/NathanNeurotic/Open-PS2-Loader?style=plastic&logo=github&label=Latest%20Release&labelColor=navy&color=skyblue&include_prereleases)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases)
 [![Discord](https://img.shields.io/discord/1275875800318476381?style=flat&logo=Discord)](https://tinyurl.com/PS2SPACE)
+
+> **What is RiptOPL?** A downstream fork of Open PS2 Loader with a built-in cover-art **Coverflow** theme (default), a **Favourites** tab, per-game **Neutrino** external-core launching, a consolidated **Device Settings** hub, DualSense support, and ready-to-use opinionated defaults. Its settings live in their own **`conf_riptopl.cfg`** so they never collide with official OPL or wOPL installed on the same memory card — while artwork, themes, VMCs and **favourites stay shared**. See **[This Fork's Additions](#this-forks-additions)**. For the canonical project, use [ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader).
 ## Contents
 
 - [Introduction](#introduction) · [Quick Start](#quick-start) · [Major Features Overview](#major-features-overview) · [Release Types](#release-types) · [How to Use](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) · [SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD Server](#nbd-server) · [ZSO Format](#zso-format) · [PS3 BC](#ps3-bc) · [Frequent Issues](#frequent-issues)
@@ -92,6 +95,11 @@ This build layers several features on top of upstream OPL:
   cover count, and aspect-correct covers in both 4:3 and widescreen. Tune it live under
   **Coverflow Settings** (shown while the Coverflow theme is active). Authoring details
   and every theme value live in the **[Theme Engine reference](docs/THEME_ENGINE.md)**.
+- **Favourites tab:** press **R3** on any game to star it; a virtual **Favourites** page
+  (alongside the device tabs, switched on in **Device Settings**) gathers your starred games
+  from every device into one list, and a star marks favourited titles everywhere. Favourites
+  are stored in a shared `favourites.bin`, and RiptOPL will **import an existing uOPL / wOPL
+  favourites file** if it finds one — so your favourites carry over from those builds.
 - **Neutrino external core (per-game):** hand a game off to an external `neutrino.elf`
   instead of OPL's built-in core, chosen per title, with custom launch flags you can set
   globally and per-game. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
@@ -105,6 +113,10 @@ This build layers several features on top of upstream OPL:
   widescreen, cover art, notifications, sound effects + boot sound, USB, delete/rename, and
   the PS2 logo, with the device tabs in **Manual** mode. Video mode stays **Auto**. Change
   any of it under Settings.
+- **Private settings, shared data:** RiptOPL saves its master config as **`conf_riptopl.cfg`**
+  (not `conf_opl.cfg`), so it can sit on the same memory card as official OPL or wOPL without
+  either build clobbering the other's settings. Everything else under the `OPL/` folder —
+  artwork, themes, VMCs, per-game configs, and **favourites** — stays **shared** between builds.
 
 ## Acknowledgements
 

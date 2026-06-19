@@ -20,7 +20,7 @@ static u32 currentUID = 0;
 static config_set_t configFiles[CONFIG_INDEX_COUNT];
 static char legacyNetConfigPath[256] = "mc?:SYS-CONF/IPCONFIG.DAT";
 static const char *configFilenames[CONFIG_INDEX_COUNT] = {
-    "conf_opl.cfg",
+    "conf_riptopl.cfg", // RiptOPL master config (renamed from conf_opl.cfg to keep our settings separate from official OPL / wOPL)
     "conf_last.cfg",
     "conf_apps.cfg",
     "conf_network.cfg",

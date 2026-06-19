@@ -61,7 +61,7 @@ per-game**, so a game can extend the global set.
 ### Global default args — applies to every Neutrino launch
 
 **Settings → General Settings → Neutrino Launch Args** (config key `neutrino_args` in
-`conf_opl.cfg`).
+`conf_riptopl.cfg`).
 
 ### Per-game args — applies to one title
 
