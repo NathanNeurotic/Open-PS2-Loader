@@ -1862,8 +1862,17 @@ void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data)
     // drain returns as soon as the art queue is empty (cacheWaitForAllRequestsTimed
     // early-exits when nothing is queued/active), so this adds no delay in the
     // common case; the timeout only bounds a genuinely stuck read.
-    cacheAbortMmceImageLoadsTimed(500);
-    cacheCancelPendingImageLoadsTimed(500);
+    int abortOk = cacheAbortMmceImageLoadsTimed(500);
+    int cancelOk = cacheCancelPendingImageLoadsTimed(500);
+    if (!abortOk || !cancelOk) {
+        // A cover-art read did not drain within the timeout -- most likely a slow
+        // (not dead) storage device. We still issue the deferred IO below: bailing
+        // here would silently drop a valid config save on a merely-slow card, and
+        // could not unwedge a genuinely stuck IOP RPC channel anyway. Logged so a
+        // true hardware hang is diagnosable rather than a silent freeze on the
+        // unbounded wait below (Codex audit, Medium 1).
+        LOG("guiHandleDeferedIO: art drain timed out; deferred IO may stall on stuck storage\n");
+    }
 
     if (ioPutRequest(type, data) != IO_OK) {
         *ptr = 0;

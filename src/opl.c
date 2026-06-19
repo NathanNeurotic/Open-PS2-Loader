@@ -1047,6 +1047,17 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_DIM, &gCoverflowDimCovers);
             // clamp count to {3,5} on load -- defends a hand-edited conf.cfg
             gCoverflowCount = (gCoverflowCount == 5) ? 5 : 3;
+            // clamp the remaining coverflow values too -- a hand-edited conf.cfg
+            // otherwise feeds unbounded ints into signed render math (Codex audit, Low 1)
+            if (gCoverflowCenterScale < 0)
+                gCoverflowCenterScale = 0;
+            else if (gCoverflowCenterScale > 1000)
+                gCoverflowCenterScale = 1000;
+            if (gCoverflowAnimSpeed < 0)
+                gCoverflowAnimSpeed = 0;
+            else if (gCoverflowAnimSpeed > 5000)
+                gCoverflowAnimSpeed = 5000;
+            gCoverflowDimCovers = gCoverflowDimCovers ? 1 : 0;
 
             if (!(getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS))) {
                 configGetInt(configOPL, CONFIG_OPL_VMODE, &gVMode);
