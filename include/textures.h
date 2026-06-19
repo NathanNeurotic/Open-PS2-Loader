@@ -39,8 +39,10 @@ enum INTERNAL_TEXTURE {
     L2_ICON,
     L3_ICON,
     R1_ICON,
-    R2_ICON,
-    R3_ICON, */
+    R2_ICON, */
+    R3_ICON,     // re-enabled for the Favourites "R3 = Favourite" hint
+    FAV_ICON,    // Favourites tab icon
+    FAV_MARK,    // star drawn next to favourited items
     SETTINGS_BG, // optional settings/menu background (use_settings_bg theme flag; see guiDrawBGSettings)
     COVER_DEFAULT,
     DISC_DEFAULT,

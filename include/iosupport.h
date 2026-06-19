@@ -19,6 +19,7 @@ enum IO_MODES {
     HDD_MODE,
     APP_MODE,
     MMCE_MODE,
+    FAV_MODE,
 
     MODE_COUNT
 };

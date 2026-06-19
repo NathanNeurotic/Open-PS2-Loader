@@ -1183,6 +1183,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         submenu_list_t *ps = menu->item->pagestart;
         int others = 0;
         u64 color;
+        int textEndX = 0;
         while (ps && (others++ < itemsList->displayedItems)) {
             if (ps == item)
                 color = gTheme->selTextColor;
@@ -1208,9 +1209,16 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                     if (itemsList->decoratorImage->defaultTexture)
                         rmDrawPixmap(&itemsList->decoratorImage->defaultTexture->source, posX, posY, elem->aligned, DECORATOR_SIZE, DECORATOR_SIZE, elem->scaled, gDefaultCol, 0);
                 }
-                fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, submenuItemGetText(&ps->item), color);
+                textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, submenuItemGetText(&ps->item), color);
             } else
-                fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, submenuItemGetText(&ps->item), color);
+                textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, submenuItemGetText(&ps->item), color);
+
+            // Favourites: draw a small star just after the item text.
+            if (ps->item.favourited) {
+                GSTEXTURE *favTex = thmGetTexture(FAV_MARK);
+                if (favTex != NULL && favTex->Mem != NULL)
+                    rmDrawPixmap(favTex, textEndX + 4, posY, elem->aligned, MENU_ITEM_HEIGHT, MENU_ITEM_HEIGHT, elem->scaled, gDefaultCol, 0);
+            }
 
             posY += MENU_ITEM_HEIGHT;
             ps = ps->next;

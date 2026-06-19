@@ -17,6 +17,7 @@
 #include "include/config.h"
 #include "include/system.h"
 #include "include/ethsupport.h"
+#include "include/favsupport.h"
 #include "include/compatupd.h"
 #include "include/pggsm.h"
 #include "include/cheatman.h"
@@ -820,6 +821,7 @@ void guiShowDeviceConfig(void)
     diaSetEnum(diaDeviceConfig, CFG_HDDMODE, deviceModes);
     diaSetEnum(diaDeviceConfig, CFG_ETHMODE, deviceModes);
     diaSetEnum(diaDeviceConfig, CFG_APPMODE, deviceModes);
+    diaSetEnum(diaDeviceConfig, CFG_FAVMODE, deviceModes);
 
     int deviceModeIndex = guiIoModeToDeviceType(gDefaultDevice);
     diaSetInt(diaDeviceConfig, CFG_DEFDEVICE, deviceModeIndex);
@@ -827,6 +829,7 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_HDDMODE, gHDDStartMode);
     diaSetInt(diaDeviceConfig, CFG_ETHMODE, gETHStartMode);
     diaSetInt(diaDeviceConfig, CFG_APPMODE, gAPPStartMode);
+    diaSetInt(diaDeviceConfig, CFG_FAVMODE, gFAVStartMode);
 
     // Block devices (inlined; interlocked with the APA HDD mode)
     diaSetInt(diaDeviceConfig, CFG_ENABLEUSB, gEnableUSB);
@@ -869,6 +872,7 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_HDDMODE, &gHDDStartMode);
         diaGetInt(diaDeviceConfig, CFG_ETHMODE, &gETHStartMode);
         diaGetInt(diaDeviceConfig, CFG_APPMODE, &gAPPStartMode);
+        diaGetInt(diaDeviceConfig, CFG_FAVMODE, &gFAVStartMode);
 
         diaGetInt(diaDeviceConfig, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
@@ -1107,7 +1111,7 @@ static void guiHandleOp(struct gui_update_t *item)
             break;
 
         case GUI_OP_APPEND_MENU:
-            result = submenuAppendItem(item->menu.subMenu, item->submenu.icon_id, item->submenu.text, item->submenu.id, item->submenu.text_id);
+            result = submenuAppendItem(item->menu.subMenu, item->submenu.icon_id, item->submenu.text, item->submenu.id, item->submenu.text_id, item->submenu.owner);
             // coverflow wrap tail: submenuAppendItem always returns the new tail
             item->menu.menu->last = result;
             if (!item->menu.menu->submenu) { // first subitem in list
