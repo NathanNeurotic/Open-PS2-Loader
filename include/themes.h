@@ -82,6 +82,7 @@ typedef struct theme_element
     u64 color;
     int font;
     int reflection;
+    int reflectionOffset; // Coverflow: vertical px shift of the mirror (theme key reflection_offset; -up / +down)
 
     void *extended;
 

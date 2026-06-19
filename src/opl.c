@@ -180,6 +180,7 @@ int gPadMacroSettings;
 #endif
 int gScrollSpeed;
 char gExitPath[256];
+char gNeutrinoArgs[256]; // extra command-line flags appended to every Neutrino launch
 int gEnableDebug;
 int gPS2Logo;
 int gDefaultDevice;
@@ -1077,6 +1078,8 @@ static void _loadConfig()
 
             if (configGetStr(configOPL, CONFIG_OPL_THEME, &temp))
                 themeID = thmFindGuiID(temp);
+            else
+                themeID = thmFindGuiID("<Coverflow>"); // fork default: boot into the Coverflow theme when no theme is saved
 
             if (configGetStr(configOPL, CONFIG_OPL_LANGUAGE, &temp))
                 langID = lngFindGuiID(temp);
@@ -1121,6 +1124,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_BOOT_SND_VOLUME, &gBootSndVolume);
             configGetInt(configOPL, CONFIG_OPL_BGM_VOLUME, &gBGMVolume);
             configGetStrCopy(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath, sizeof(gDefaultBGMPath));
+            configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
         }
     }
 
@@ -1330,6 +1334,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_BOOT_SND_VOLUME, gBootSndVolume);
         configSetInt(configOPL, CONFIG_OPL_BGM_VOLUME, gBGMVolume);
         configSetStr(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath);
+        configSetStr(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs);
         configSetInt(configOPL, CONFIG_OPL_XSENSITIVITY, gXSensitivity);
         configSetInt(configOPL, CONFIG_OPL_YSENSITIVITY, gYSensitivity);
 
@@ -1954,24 +1959,25 @@ static void setDefaults(void)
     gHDDSpindown = 20;
     gScrollSpeed = 1;
     gExitPath[0] = '\0';
+    gNeutrinoArgs[0] = '\0';
     gDefaultDevice = APP_MODE;
     gAutosort = 1;
     gAutoRefresh = 0;
     gEnableDebug = 0;
-    gPS2Logo = 0;
+    gPS2Logo = 1;
     gHDDGameListCache = 0;
-    gEnableWrite = 0;
+    gEnableWrite = 1;
     gRememberLastPlayed = 0;
     gAutoStartLastPlayed = 9;
     gSelectButton = KEY_CIRCLE; // Default to Japan.
     gMMCEPrefix[0] = '\0';
     gBDMPrefix[0] = '\0';
     gETHPrefix[0] = '\0';
-    gEnableNotifications = 0;
-    gEnableArt = 0;
-    gWideScreen = 0;
-    gEnableSFX = 0;
-    gEnableBootSND = 0;
+    gEnableNotifications = 1;
+    gEnableArt = 1;
+    gWideScreen = 1;
+    gEnableSFX = 1;
+    gEnableBootSND = 1;
     gEnableBGM = 0;
     gSFXVolume = 80;
     gBootSndVolume = 80;
@@ -1980,11 +1986,11 @@ static void setDefaults(void)
     gXSensitivity = 1;
     gYSensitivity = 1;
 
-    gBDMStartMode = START_MODE_DISABLED;
-    gHDDStartMode = START_MODE_DISABLED;
-    gETHStartMode = START_MODE_DISABLED;
-    gAPPStartMode = START_MODE_DISABLED;
-    gMMCEStartMode = START_MODE_DISABLED;
+    gBDMStartMode = START_MODE_MANUAL;
+    gHDDStartMode = START_MODE_MANUAL;
+    gETHStartMode = START_MODE_MANUAL;
+    gAPPStartMode = START_MODE_MANUAL;
+    gMMCEStartMode = START_MODE_MANUAL;
 
     gMMCESlot = 2; //Default to first Auto slot
     gMMCEIGRSlot = 3;
@@ -1992,7 +1998,7 @@ static void setDefaults(void)
     gMMCEAckWaitCycles = 0;
     gMMCEUseAlarms = 0;
 
-    gEnableUSB = 0;
+    gEnableUSB = 1;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
     gEnableBdmHDD = 0;

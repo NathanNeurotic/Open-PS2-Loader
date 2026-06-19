@@ -66,6 +66,7 @@ static union
 
 static char hexid[32];
 static char altStartup[32];
+static char neutrinoArgs[256]; // per-game Neutrino extra flags (UI edits up to 31 chars; cfg may hold more)
 static char vmc1[32];
 static char vmc2[32];
 static char hexDiscID[15];
@@ -1097,6 +1098,12 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     else
         configRemoveKey(configSet, CONFIG_ITEM_ALTSTARTUP);
 
+    diaGetString(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrinoArgs, sizeof(neutrinoArgs));
+    if (neutrinoArgs[0] != '\0')
+        result = configSetStr(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoArgs);
+    else
+        configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_ARGS);
+
     /// VMC ///
     configSetVMC(configSet, vmc1, 0);
     configSetVMC(configSet, vmc2, 1);
@@ -1495,6 +1502,10 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
     altStartup[0] = '\0';
     configGetStrCopy(configSet, CONFIG_ITEM_ALTSTARTUP, altStartup, sizeof(altStartup));
     diaSetString(diaCompatConfig, COMPAT_ALTSTARTUP, altStartup);
+
+    neutrinoArgs[0] = '\0';
+    configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoArgs, sizeof(neutrinoArgs));
+    diaSetString(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrinoArgs);
 
     /// VMC ///
     vmc1[0] = '\0';

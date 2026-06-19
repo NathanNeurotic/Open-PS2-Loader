@@ -488,6 +488,7 @@ void guiShowConfig()
     diaSetInt(diaConfig, CFG_DEBUG, gEnableDebug);
     diaSetInt(diaConfig, CFG_PS2LOGO, gPS2Logo);
     diaSetString(diaConfig, CFG_EXITTO, gExitPath);
+    diaSetString(diaConfig, CFG_NEUTRINO_ARGS, gNeutrinoArgs);
     diaSetInt(diaConfig, CFG_ENWRITEOP, gEnableWrite);
     diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
     diaSetInt(diaConfig, CFG_AUTOSTARTLAST, gAutoStartLastPlayed);
@@ -499,6 +500,7 @@ void guiShowConfig()
         diaGetInt(diaConfig, CFG_DEBUG, &gEnableDebug);
         diaGetInt(diaConfig, CFG_PS2LOGO, &gPS2Logo);
         diaGetString(diaConfig, CFG_EXITTO, gExitPath, sizeof(gExitPath));
+        diaGetString(diaConfig, CFG_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
         diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
         diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);

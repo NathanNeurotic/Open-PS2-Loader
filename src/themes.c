@@ -758,10 +758,18 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     int coverCount = (gCoverflowCount == 5) ? 5 : 3;
     int centerIndex = coverCount / 2;
 
-    // Layout (widescreen-aware, div-guarded).
+    // Layout in virtual 640x480 space (div-guarded). SCALING_RATIO + the panel apply
+    // the widescreen/PAR correction at draw time (rmSetupQuad: w * iAspectWidth >> 2),
+    // exactly like the stock ItemCover path. We must NOT pre-apply rmWideScale here or
+    // the cover gets the aspect factor twice and warps when widescreen is toggled.
     int origCoverWidth = elem->width;
-    int coverWidth = gWideScreen ? rmWideScale(elem->width) : elem->width;
+    int coverWidth = elem->width;
     int maxCoverWidth = (screenWidth - (coverCount - 1) * 10) / coverCount;
+    // Widescreen draws each cover at 3/4 width (SCALING_RATIO), leaving spare screen, so
+    // allow ~10% larger covers in 16:9. This scales SIZE only -- the cover's authored W:H
+    // is untouched, so aspect immunity holds; 4:3 keeps the tight 3-up maximum.
+    if (gWideScreen)
+        maxCoverWidth = maxCoverWidth * 11 / 10;
     if (coverWidth > maxCoverWidth)
         coverWidth = maxCoverWidth;
     if (coverWidth <= 0)
@@ -771,10 +779,21 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     int coverSpacing = (screenWidth - coverCount * coverWidth) / (coverCount + 1);
     if (coverSpacing < 0)
         coverSpacing = 0;
-    if (gWideScreen)
-        coverSpacing = rmWideScale(coverSpacing);
     int coverDistance = coverWidth + coverSpacing;
     int basePosX = (screenWidth - (coverCount * coverWidth + (coverCount - 1) * coverSpacing)) / 2 + coverWidth / 2 + coverWidth * gTheme->coverflowCoverOffset / 256;
+
+    int sw = (elem->width > 0) ? elem->width : 1;   // div-guard (hand-edited theme)
+    int sh = (elem->height > 0) ? elem->height : 1; // div-guard (hand-edited theme)
+    // Auto-center the VISIBLE cover (the case frame box) inside the padded element: the case
+    // art's frame can sit off-center (e.g. apps_case frame = top-left 186 of 256), which would
+    // shift the carousel up/left. Recenter from the overlay corners so the frame -- and its
+    // mirror, which tracks the same quad -- stays centered. No overlay (plain pixmap) => no shift.
+    int recenterX = 0, recenterY = 0;
+    if (img->overlayTexture) {
+        image_texture_t *ovc = img->overlayTexture;
+        recenterX = sw / 2 - (ovc->upperLeft_x + ovc->upperRight_x) / 2;
+        recenterY = sh / 2 - (ovc->upperLeft_y + ovc->lowerLeft_y) / 2;
+    }
 
     // Build the visible window: covers[centerIndex] is the selection; fan out both sides,
     // wrapping last<->first. The left wrap reads menu->item->last (full lifecycle wired in
@@ -826,6 +845,8 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     }
     int leavingIndex = centerIndex + cfAnimDirection; // neighbour swapping with center
 
+    rmSetReflectionYOffset(elem->reflectionOffset); // theme reflection_offset; reset after the loop
+
     for (i = 0; i < coverCount; i++) {
         if (!covers[i])
             continue;
@@ -846,7 +867,8 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
 
         int drawW = coverWidth + scaleAdd;
         int drawH = (coverWidth > 0) ? (coverHeight * drawW / coverWidth) : coverHeight;
-        int posX = basePosX + i * coverDistance + animOffset;
+        int posX = basePosX + i * coverDistance + animOffset + recenterX * drawW / sw;
+        int posY = elem->posY + recenterY * drawH / sh;
 
         u64 coverColor = (gCoverflowDimCovers && i != centerIndex) ? GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x40) : gDefaultCol;
 
@@ -854,15 +876,15 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
             // Scale the inlay (cover) corner offsets to the drawn overlay size so the case
             // window tracks the cover at every scale. HW-verify alignment with real case art.
             image_texture_t *ov = img->overlayTexture;
-            int sw = (elem->width > 0) ? elem->width : 1;   // div-guard (hand-edited theme)
-            int sh = (elem->height > 0) ? elem->height : 1; // div-guard (hand-edited theme)
-            rmDrawOverlayPixmap(&ov->source, posX, elem->posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor,
+            rmDrawOverlayPixmap(&ov->source, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor,
                                 texture, ov->upperLeft_x * drawW / sw, ov->upperLeft_y * drawH / sh, ov->upperRight_x * drawW / sw, ov->upperRight_y * drawH / sh,
                                 ov->lowerLeft_x * drawW / sw, ov->lowerLeft_y * drawH / sh, ov->lowerRight_x * drawW / sw, ov->lowerRight_y * drawH / sh, elem->reflection);
         } else {
-            rmDrawPixmap(texture, posX, elem->posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
+            rmDrawPixmap(texture, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
         }
     }
+
+    rmSetReflectionYOffset(0); // don't leak the offset to any other reflection draw
 }
 
 static void initCoverflow(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
@@ -961,6 +983,7 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
 
     elem->type = type;
     elem->reflection = 0;
+    elem->reflectionOffset = 0;
     elem->extended = NULL;
     elem->drawElem = NULL;
     elem->endElem = &endBasic;
@@ -1036,6 +1059,10 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     snprintf(elemProp, sizeof(elemProp), "%s_reflection", name);
     if (configGetInt(themeConfig, elemProp, &intValue))
         elem->reflection = intValue ? 1 : 0;
+
+    snprintf(elemProp, sizeof(elemProp), "%s_reflection_offset", name);
+    if (configGetInt(themeConfig, elemProp, &intValue))
+        elem->reflectionOffset = intValue;
 
     return elem;
 }

@@ -723,7 +723,9 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int coreLoader = 0;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     const char *neutrinoPath = NULL;
+    char neutrinoExtraArgs[256] = ""; // per-game Neutrino flags; copied before deinit frees configSet's owner
     if (coreLoader) {
+        configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         neutrinoPath = sbFileExists(NEUTRINO_PATH) ? NEUTRINO_PATH : (sbFileExists(NEUTRINO_ALT_PATH) ? NEUTRINO_ALT_PATH : NULL);
         if (game->format == GAME_FORMAT_USBLD || !strcmp(game->extension, ".zso")) {
             guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
@@ -749,7 +751,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // Neutrino core: hand off with the stack-resident partname + driver token
     // (both survive the deinit above; `game` does not and is not used here).
     if (coreLoader) {
-        sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, EnablePS2Logo, neutrinoPath);
+        sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs);
         return;
     }
 
