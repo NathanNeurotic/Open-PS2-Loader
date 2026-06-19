@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <io_common.h>
-#include <fileXio_rpc.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "include/opl.h"
 #include "include/iosupport.h"
@@ -78,8 +78,8 @@ static void favGetFilePath(char *out, int outSize)
 
 // ---- explicit little-endian scalar IO (never raw-struct) ----------------------
 
-static int rdBytes(int fd, void *buf, int n) { return fileXioRead(fd, buf, n) == n; }
-static int wrBytes(int fd, const void *buf, int n) { return fileXioWrite(fd, (void *)buf, n) == n; }
+static int rdBytes(int fd, void *buf, int n) { return read(fd, buf, n) == n; }
+static int wrBytes(int fd, const void *buf, int n) { return write(fd, (void *)buf, n) == n; }
 
 static int rdU16(int fd, u16 *v)
 {
@@ -127,7 +127,7 @@ static fav_raw_t *favReadFile(int *outCount)
     *outCount = 0;
     favGetFilePath(path, sizeof(path));
 
-    int fd = fileXioOpen(path, FIO_O_RDONLY);
+    int fd = open(path, O_RDONLY);
     if (fd < 0)
         return NULL;
 
@@ -135,11 +135,11 @@ static fav_raw_t *favReadFile(int *outCount)
     u16 ver = 0, cnt = 0;
     if (!rdU32(fd, &magic) || !rdU16(fd, &ver) || !rdU16(fd, &cnt) || magic != FAV_MAGIC || ver != FAV_VERSION) {
         LOG("FAV reject header magic=%08x ver=%d\n", (unsigned)magic, ver);
-        fileXioClose(fd);
+        close(fd);
         return NULL;
     }
     if (cnt == 0) {
-        fileXioClose(fd);
+        close(fd);
         return NULL;
     }
     if (cnt > FAV_MAX_ITEMS)
@@ -147,7 +147,7 @@ static fav_raw_t *favReadFile(int *outCount)
 
     fav_raw_t *recs = (fav_raw_t *)calloc(cnt, sizeof(fav_raw_t));
     if (recs == NULL) {
-        fileXioClose(fd);
+        close(fd);
         return NULL;
     }
 
@@ -170,7 +170,7 @@ static fav_raw_t *favReadFile(int *outCount)
         recs[got].text_id = (int)tid;
         got++;
     }
-    fileXioClose(fd);
+    close(fd);
 
     if (got == 0) {
         free(recs);
@@ -186,7 +186,7 @@ static void favWriteFile(fav_raw_t *recs, int count)
     char path[256];
     favGetFilePath(path, sizeof(path));
 
-    int fd = fileXioOpen(path, FIO_O_WRONLY | FIO_O_CREAT | FIO_O_TRUNC, 0666);
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
     if (fd < 0) {
         LOG("FAV write open failed: %s\n", path);
         return;
@@ -202,7 +202,7 @@ static void favWriteFile(fav_raw_t *recs, int count)
         ok = wrU16(fd, (u16)recs[i].mode) && wrU32(fd, (u32)recs[i].id) && wrU32(fd, (u32)recs[i].icon_id) &&
              wrU32(fd, (u32)recs[i].text_id) && wrU16(fd, (u16)tlen) && wrBytes(fd, recs[i].text, tlen);
     }
-    fileXioClose(fd);
+    close(fd);
     if (!ok)
         LOG("FAV write incomplete\n");
 }
