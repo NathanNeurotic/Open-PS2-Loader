@@ -239,10 +239,9 @@ extern struct UIItem diaAbout[];
 extern struct UIItem diaVMC[];
 extern struct UIItem diaNetCompatUpdate[];
 extern struct UIItem diaParentalLockConfig[];
-extern struct UIItem diaBlockDevicesConfig[];
 
 extern struct UIItem diaOSDConfig[];
-extern struct UIItem diaMMCEConfig[];
 extern struct UIItem diaCoverflowConfig[];
+extern struct UIItem diaDeviceConfig[];
 
 #endif

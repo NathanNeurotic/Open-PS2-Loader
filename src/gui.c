@@ -440,25 +440,6 @@ void guiShowNetCompatUpdateSingle(int id, item_list_t *support, config_set_t *co
     }
 }
 
-static void guiShowBlockDeviceConfig(void)
-{
-    int ret;
-
-    diaSetInt(diaBlockDevicesConfig, CFG_ENABLEUSB, gEnableUSB);
-    diaSetInt(diaBlockDevicesConfig, CFG_ENABLEILK, gEnableILK);
-    diaSetInt(diaBlockDevicesConfig, CFG_ENABLEMX4SIO, gEnableMX4SIO);
-    diaSetEnabled(diaBlockDevicesConfig, CFG_ENABLEBDMHDD, !gHDDStartMode);
-    diaSetInt(diaBlockDevicesConfig, CFG_ENABLEBDMHDD, gEnableBdmHDD);
-
-    ret = diaExecuteDialog(diaBlockDevicesConfig, -1, 1, NULL);
-    if (ret) {
-        diaGetInt(diaBlockDevicesConfig, CFG_ENABLEUSB, &gEnableUSB);
-        diaGetInt(diaBlockDevicesConfig, CFG_ENABLEILK, &gEnableILK);
-        diaGetInt(diaBlockDevicesConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
-        diaGetInt(diaBlockDevicesConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
-    }
-}
-
 static int guiUpdater(int modified)
 {
     int showAutoStartLast;
@@ -467,9 +448,6 @@ static int guiUpdater(int modified)
         diaGetInt(diaConfig, CFG_LASTPLAYED, &showAutoStartLast);
         diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, showAutoStartLast);
         diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, showAutoStartLast);
-
-        diaGetInt(diaConfig, CFG_BDMMODE, &gBDMStartMode);
-        diaSetVisible(diaConfig, BLOCKDEVICE_BUTTON, gBDMStartMode);
     }
     return 0;
 }
@@ -507,66 +485,24 @@ int guiIoModeToDeviceType(int ioMode)
 
 void guiShowConfig()
 {
-    // configure the enumerations
-    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), NULL};
-    const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
-
-    diaSetEnum(diaConfig, CFG_DEFDEVICE, deviceNames);
-    diaSetEnum(diaConfig, CFG_BDMMODE, deviceModes);
-    diaSetEnum(diaConfig, CFG_HDDMODE, deviceModes);
-    diaSetEnum(diaConfig, CFG_ETHMODE, deviceModes);
-    diaSetEnum(diaConfig, CFG_APPMODE, deviceModes);
-
-    diaSetInt(diaConfig, CFG_BDMCACHE, bdmCacheSize);
-    diaSetInt(diaConfig, CFG_HDDCACHE, hddCacheSize);
-    diaSetInt(diaConfig, CFG_SMBCACHE, smbCacheSize);
-
     diaSetInt(diaConfig, CFG_DEBUG, gEnableDebug);
     diaSetInt(diaConfig, CFG_PS2LOGO, gPS2Logo);
-    diaSetInt(diaConfig, CFG_HDDGAMELISTCACHE, gHDDGameListCache);
     diaSetString(diaConfig, CFG_EXITTO, gExitPath);
     diaSetInt(diaConfig, CFG_ENWRITEOP, gEnableWrite);
-    diaSetInt(diaConfig, CFG_HDDSPINDOWN, gHDDSpindown);
-    diaSetString(diaConfig, CFG_BDMPREFIX, gBDMPrefix);
-    diaSetString(diaConfig, CFG_ETHPREFIX, gETHPrefix);
     diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
     diaSetInt(diaConfig, CFG_AUTOSTARTLAST, gAutoStartLastPlayed);
     diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, gRememberLastPlayed);
     diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, gRememberLastPlayed);
 
-    int deviceModeIndex = guiIoModeToDeviceType(gDefaultDevice);
-    diaSetInt(diaConfig, CFG_DEFDEVICE, deviceModeIndex);
-    diaSetInt(diaConfig, CFG_BDMMODE, gBDMStartMode);
-    diaSetVisible(diaConfig, BLOCKDEVICE_BUTTON, gBDMStartMode);
-    diaSetEnabled(diaConfig, CFG_HDDMODE, !gEnableBdmHDD);
-    diaSetInt(diaConfig, CFG_HDDMODE, gHDDStartMode);
-    diaSetInt(diaConfig, CFG_ETHMODE, gETHStartMode);
-    diaSetInt(diaConfig, CFG_APPMODE, gAPPStartMode);
-
     int ret = diaExecuteDialog(diaConfig, -1, 1, &guiUpdater);
     if (ret) {
         diaGetInt(diaConfig, CFG_DEBUG, &gEnableDebug);
         diaGetInt(diaConfig, CFG_PS2LOGO, &gPS2Logo);
-        diaGetInt(diaConfig, CFG_HDDGAMELISTCACHE, &gHDDGameListCache);
         diaGetString(diaConfig, CFG_EXITTO, gExitPath, sizeof(gExitPath));
         diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
-        diaGetInt(diaConfig, CFG_HDDSPINDOWN, &gHDDSpindown);
-        diaGetString(diaConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
-        diaGetString(diaConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
         diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);
         DisableCron = 1; // Disable Auto Start Last Played counter (we don't want to call it right after enable it on GUI)
-        diaGetInt(diaConfig, CFG_DEFDEVICE, &deviceModeIndex);
-        gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
-        diaGetInt(diaConfig, CFG_HDDMODE, &gHDDStartMode);
-        diaGetInt(diaConfig, CFG_ETHMODE, &gETHStartMode);
-        diaGetInt(diaConfig, CFG_APPMODE, &gAPPStartMode);
-        diaGetInt(diaConfig, CFG_BDMCACHE, &bdmCacheSize);
-        diaGetInt(diaConfig, CFG_HDDCACHE, &hddCacheSize);
-        diaGetInt(diaConfig, CFG_SMBCACHE, &smbCacheSize);
-
-        if (ret == BLOCKDEVICE_BUTTON)
-            guiShowBlockDeviceConfig();
 
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
@@ -852,49 +788,111 @@ void guiShowNetConfig(void)
     }
 }
 
-void guiShowMMCEConfig()
+static int guiDeviceUpdater(int modified)
 {
-    int ret;
+    if (modified) {
+        int hddMode, bdmHdd;
+        diaGetInt(diaDeviceConfig, CFG_HDDMODE, &hddMode);
+        diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &bdmHdd);
+        // BDM HDD (GPT/MBR) and the APA HDD mode are mutually exclusive; keep the
+        // two interlocked live now that both live on the same page.
+        diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !bdmHdd);
+        diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, hddMode == 0);
+    }
+
+    return 0;
+}
+
+void guiShowDeviceConfig(void)
+{
+    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), NULL};
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
     const char *deviceSlots[] = {"0", "1", _l(_STR_AUTO), NULL};
     const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
     const char *deviceOnOff[] = {"OFF", "ON", NULL};
     const char *deviceIGRSlots[] = {"NONE", "0", "1", "BOTH", NULL};
 
-    diaSetEnum(diaMMCEConfig, CFG_MMCEMODE, deviceModes);
-    diaSetInt(diaMMCEConfig, CFG_MMCEMODE, gMMCEStartMode);
+    // Devices & modes
+    diaSetEnum(diaDeviceConfig, CFG_DEFDEVICE, deviceNames);
+    diaSetEnum(diaDeviceConfig, CFG_BDMMODE, deviceModes);
+    diaSetEnum(diaDeviceConfig, CFG_HDDMODE, deviceModes);
+    diaSetEnum(diaDeviceConfig, CFG_ETHMODE, deviceModes);
+    diaSetEnum(diaDeviceConfig, CFG_APPMODE, deviceModes);
 
-    diaSetEnum(diaMMCEConfig, CFG_MMCESLOT, deviceSlots);
-    diaSetInt(diaMMCEConfig, CFG_MMCESLOT, gMMCESlot);
+    int deviceModeIndex = guiIoModeToDeviceType(gDefaultDevice);
+    diaSetInt(diaDeviceConfig, CFG_DEFDEVICE, deviceModeIndex);
+    diaSetInt(diaDeviceConfig, CFG_BDMMODE, gBDMStartMode);
+    diaSetInt(diaDeviceConfig, CFG_HDDMODE, gHDDStartMode);
+    diaSetInt(diaDeviceConfig, CFG_ETHMODE, gETHStartMode);
+    diaSetInt(diaDeviceConfig, CFG_APPMODE, gAPPStartMode);
 
-    diaSetEnum(diaMMCEConfig, CFG_MMCEIGRSLOT, deviceIGRSlots);
-    diaSetInt(diaMMCEConfig, CFG_MMCEIGRSLOT, gMMCEIGRSlot);
+    // Block devices (inlined; interlocked with the APA HDD mode)
+    diaSetInt(diaDeviceConfig, CFG_ENABLEUSB, gEnableUSB);
+    diaSetInt(diaDeviceConfig, CFG_ENABLEILK, gEnableILK);
+    diaSetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, gEnableMX4SIO);
+    diaSetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, gEnableBdmHDD);
+    diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, !gHDDStartMode);
+    diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !gEnableBdmHDD);
 
-    diaSetEnum(diaMMCEConfig, CFG_MMCE_WAIT_CYCLES, deviceAckWaitCycles);
-    diaSetInt(diaMMCEConfig, CFG_MMCE_WAIT_CYCLES, gMMCEAckWaitCycles);
+    // Prefix paths
+    diaSetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix);
+    diaSetString(diaDeviceConfig, CFG_ETHPREFIX, gETHPrefix);
+    diaSetString(diaDeviceConfig, CFG_MMCEPREFIX, gMMCEPrefix);
 
-    diaSetEnum(diaMMCEConfig, CFG_MMCE_USE_ALARMS, deviceOnOff);
-    diaSetInt(diaMMCEConfig, CFG_MMCE_USE_ALARMS, gMMCEUseAlarms);
+    // Cache & storage
+    diaSetInt(diaDeviceConfig, CFG_HDDSPINDOWN, gHDDSpindown);
+    diaSetInt(diaDeviceConfig, CFG_HDDGAMELISTCACHE, gHDDGameListCache);
+    diaSetInt(diaDeviceConfig, CFG_BDMCACHE, bdmCacheSize);
+    diaSetInt(diaDeviceConfig, CFG_HDDCACHE, hddCacheSize);
+    diaSetInt(diaDeviceConfig, CFG_SMBCACHE, smbCacheSize);
 
-    diaSetString(diaMMCEConfig, CFG_MMCEPREFIX, gMMCEPrefix);
+    // MMCE
+    diaSetEnum(diaDeviceConfig, CFG_MMCEMODE, deviceModes);
+    diaSetInt(diaDeviceConfig, CFG_MMCEMODE, gMMCEStartMode);
+    diaSetEnum(diaDeviceConfig, CFG_MMCESLOT, deviceSlots);
+    diaSetInt(diaDeviceConfig, CFG_MMCESLOT, gMMCESlot);
+    diaSetEnum(diaDeviceConfig, CFG_MMCEIGRSLOT, deviceIGRSlots);
+    diaSetInt(diaDeviceConfig, CFG_MMCEIGRSLOT, gMMCEIGRSlot);
+    diaSetEnum(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, deviceAckWaitCycles);
+    diaSetInt(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, gMMCEAckWaitCycles);
+    diaSetEnum(diaDeviceConfig, CFG_MMCE_USE_ALARMS, deviceOnOff);
+    diaSetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, gMMCEUseAlarms);
+    diaSetInt(diaDeviceConfig, CFG_MMCEGAMEID, gMMCEEnableGameID);
 
-    diaSetInt(diaMMCEConfig, CFG_MMCEGAMEID, gMMCEEnableGameID);
-
-    ret = diaExecuteDialog(diaMMCEConfig, -1, 1, NULL);
+    int ret = diaExecuteDialog(diaDeviceConfig, -1, 1, &guiDeviceUpdater);
     if (ret) {
-        diaGetInt(diaMMCEConfig, CFG_MMCEMODE, &gMMCEStartMode);
-        diaGetInt(diaMMCEConfig, CFG_MMCESLOT, &gMMCESlot);
-        diaGetInt(diaMMCEConfig, CFG_MMCEGAMEID, &gMMCEEnableGameID);
-        diaGetInt(diaMMCEConfig, CFG_MMCEIGRSLOT, &gMMCEIGRSlot);
+        diaGetInt(diaDeviceConfig, CFG_DEFDEVICE, &deviceModeIndex);
+        gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
+        diaGetInt(diaDeviceConfig, CFG_BDMMODE, &gBDMStartMode);
+        diaGetInt(diaDeviceConfig, CFG_HDDMODE, &gHDDStartMode);
+        diaGetInt(diaDeviceConfig, CFG_ETHMODE, &gETHStartMode);
+        diaGetInt(diaDeviceConfig, CFG_APPMODE, &gAPPStartMode);
 
-        diaGetInt(diaMMCEConfig, CFG_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
-        diaGetInt(diaMMCEConfig, CFG_MMCE_USE_ALARMS, &gMMCEUseAlarms);
+        diaGetInt(diaDeviceConfig, CFG_ENABLEUSB, &gEnableUSB);
+        diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
+        diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
+        diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
 
-        diaGetString(diaMMCEConfig, CFG_MMCEPREFIX, gMMCEPrefix, sizeof(gMMCEPrefix));
+        diaGetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
+        diaGetString(diaDeviceConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
+        diaGetString(diaDeviceConfig, CFG_MMCEPREFIX, gMMCEPrefix, sizeof(gMMCEPrefix));
+
+        diaGetInt(diaDeviceConfig, CFG_HDDSPINDOWN, &gHDDSpindown);
+        diaGetInt(diaDeviceConfig, CFG_HDDGAMELISTCACHE, &gHDDGameListCache);
+        diaGetInt(diaDeviceConfig, CFG_BDMCACHE, &bdmCacheSize);
+        diaGetInt(diaDeviceConfig, CFG_HDDCACHE, &hddCacheSize);
+        diaGetInt(diaDeviceConfig, CFG_SMBCACHE, &smbCacheSize);
+
+        diaGetInt(diaDeviceConfig, CFG_MMCEMODE, &gMMCEStartMode);
+        diaGetInt(diaDeviceConfig, CFG_MMCESLOT, &gMMCESlot);
+        diaGetInt(diaDeviceConfig, CFG_MMCEIGRSLOT, &gMMCEIGRSlot);
+        diaGetInt(diaDeviceConfig, CFG_MMCEGAMEID, &gMMCEEnableGameID);
+        diaGetInt(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
+        diaGetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, &gMMCEUseAlarms);
+
+        applyConfig(-1, -1, 0);
+        menuReinitMainMenu();
     }
-
-    applyConfig(-1, -1, 0);
-    menuReinitMainMenu();
 }
 
 void guiShowParentalLockConfig(void)

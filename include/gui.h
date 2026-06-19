@@ -133,7 +133,7 @@ void guiShowAudioConfig();
 void guiShowControllerConfig();
 void guiShowCoverflowConfig(void);
 void guiShowNetConfig();
-void guiShowMMCEConfig();
+void guiShowDeviceConfig(void);
 void guiShowParentalLockConfig();
 
 void guiCheckNotifications(int checkTheme, int checkLang);

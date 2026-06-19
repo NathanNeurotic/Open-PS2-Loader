@@ -22,6 +22,7 @@
 
 enum MENU_IDs {
     MENU_SETTINGS = 0,
+    MENU_DEVICE_SETTINGS,
     MENU_GFX_SETTINGS,
     MENU_AUDIO_SETTINGS,
     MENU_CONTROLLER_SETTINGS,
@@ -30,7 +31,6 @@ enum MENU_IDs {
     MENU_NET_CONFIG,
     MENU_NET_UPDATE,
     MENU_START_NBD,
-    MENU_MMCE_SETTINGS,
     MENU_ABOUT,
     MENU_SAVE_CHANGES,
     MENU_EXIT,
@@ -343,7 +343,8 @@ static void menuInitMainMenu(void)
         submenuDestroy(&mainMenu);
 
     // initialize the menu
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_SETTINGS, _STR_SETTINGS);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_SETTINGS, _STR_GENERAL_SETTINGS);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_DEVICE_SETTINGS, _STR_DEVICE_SETTINGS);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_GFX_SETTINGS, _STR_GFX_SETTINGS);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_AUDIO_SETTINGS, _STR_AUDIO_SETTINGS);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_CONTROLLER_SETTINGS, _STR_CONTROLLER_SETTINGS);
@@ -352,7 +353,6 @@ static void menuInitMainMenu(void)
     submenuAppendItem(&mainMenu, -1, NULL, MENU_NET_CONFIG, _STR_NETCONFIG);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_NET_UPDATE, _STR_NET_UPDATE);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_START_NBD, _STR_STARTNBD);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_MMCE_SETTINGS, _STR_MMCE_SETTINGS);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_ABOUT, _STR_ABOUT);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_SAVE_CHANGES, _STR_SAVE_CHANGES);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_EXIT, _STR_EXIT);
@@ -1023,6 +1023,9 @@ void menuHandleInputMenu()
         if (id == MENU_SETTINGS) {
             if (menuCheckParentalLock() == 0)
                 guiShowConfig();
+        } else if (id == MENU_DEVICE_SETTINGS) {
+            if (menuCheckParentalLock() == 0)
+                guiShowDeviceConfig();
         } else if (id == MENU_GFX_SETTINGS) {
             if (menuCheckParentalLock() == 0)
                 guiShowUIConfig();
@@ -1047,9 +1050,6 @@ void menuHandleInputMenu()
         } else if (id == MENU_START_NBD) {
             if (menuCheckParentalLock() == 0)
                 handleLwnbdSrv();
-        } else if (id == MENU_MMCE_SETTINGS) {
-            if (menuCheckParentalLock() == 0)
-                guiShowMMCEConfig();
         } else if (id == MENU_ABOUT) {
             guiShowAbout();
         } else if (id == MENU_SAVE_CHANGES) {
