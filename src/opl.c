@@ -2008,7 +2008,7 @@ static void setDefaults(void)
     gVMode = 0;
     gXOff = 0;
     gYOff = 0;
-    gOverscan = 0;
+    gOverscan = 100;
 
     setDefaultColors();
 
