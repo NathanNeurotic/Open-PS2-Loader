@@ -1773,8 +1773,16 @@ static void thmLoad(const char *themePath)
     if (configGetColor(themeConfig, "sel_text_color", color))
         newT->selTextColor = GS_SETREG_RGBA(color[0], color[1], color[2], 0x80);
 
-    if (configGetInt(themeConfig, "coverflow_cover_offset", &intValue))
+    if (configGetInt(themeConfig, "coverflow_cover_offset", &intValue)) {
+        // clamp -- this feeds coverWidth * offset / 256 in drawCoverFlow; an
+        // unbounded value from an untrusted theme .cfg would signed-overflow that
+        // multiply (Codex audit, Low 1). The range is far wider than any real theme.
+        if (intValue < -1024)
+            intValue = -1024;
+        else if (intValue > 1024)
+            intValue = 1024;
         newT->coverflowCoverOffset = intValue;
+    }
 
     // before loading the element definitions, we have to have the fonts prepared
     // for that, we load the fonts and a translation table

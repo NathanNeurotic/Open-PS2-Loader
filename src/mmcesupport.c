@@ -438,6 +438,12 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (detectedPort < 0) {
             // Neither slot responded; abort rather than forward port -1 to the IOP.
             LOG("MMCE slot lost, aborting launch\n");
+            // Close the VMC fds opened above so a failed launch does not leak them
+            // back to the menu across repeated attempts (Codex audit, Medium 2).
+            if (vmc_fds[0] >= 0)
+                fileXioClose(vmc_fds[0]);
+            if (vmc_fds[1] >= 0)
+                fileXioClose(vmc_fds[1]);
             return;
         }
         settings->port = detectedPort;
@@ -475,6 +481,11 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int iso_file = fileXioOpen(partname, 0x1, 0666);
     if (iso_file < 0) {
         LOG("Failed to open iso, aborting\n");
+        // Same VMC-fd leak guard as the slot-lost path above (Codex audit, Medium 2).
+        if (vmc_fds[0] >= 0)
+            fileXioClose(vmc_fds[0]);
+        if (vmc_fds[1] >= 0)
+            fileXioClose(vmc_fds[1]);
         return;
     }
 
