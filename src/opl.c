@@ -402,6 +402,18 @@ static void clearMenuGameList(opl_io_module_t *mdl)
     }
 }
 
+// Favourites accessors (see opl.h): keep list_support[] file-static, but let favsupport.c
+// reach the FAV module + clear its list through these thin wrappers.
+opl_io_module_t *oplGetModule(int mode)
+{
+    return &list_support[mode];
+}
+
+void menuClearGameList(opl_io_module_t *mdl)
+{
+    clearMenuGameList(mdl);
+}
+
 void initSupport(item_list_t *itemList, int mode, int force_reinit)
 {
     opl_io_module_t *mod = &list_support[mode];
@@ -689,6 +701,7 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
             gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
             gup->submenu.text_id = -1;
             gup->submenu.selected = 0;
+            gup->submenu.owner = (void *)mdl->support; // producing list; Favourites proxies back to it
 
             if (gRememberLastPlayed && temp && strcmp(temp, mdl->support->itemGetStartup(mdl->support, i)) == 0) {
                 gup->submenu.selected = 1; // Select Last Played Game

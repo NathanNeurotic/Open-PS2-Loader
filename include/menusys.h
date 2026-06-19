@@ -22,6 +22,11 @@ typedef struct submenu_item
 
     int *cache_id;
     int *cache_uid;
+
+    /// back-pointer to the producing item_list_t (Favourites proxies to it); NULL otherwise
+    void *owner;
+    /// 1 when the item is marked as a favourite (a star is drawn next to it)
+    int favourited;
 } submenu_item_t;
 
 typedef struct submenu_list
@@ -71,6 +76,9 @@ typedef struct menu_item
 
     void (*execSquare)(struct menu_item *curMenu);
 
+    /// Favourites toggle (R3); NULL when the mode has no FAV action
+    void (*fav)(struct menu_item *curMenu);
+
     /// hint list
     struct menu_hint_item *hints;
 } menu_item_t;
@@ -91,7 +99,8 @@ void menuInitAppMenu(void);
 void menuAppendItem(menu_item_t *item);
 
 void submenuRebuildCache(submenu_list_t *submenu);
-submenu_list_t *submenuAppendItem(submenu_list_t **submenu, int icon_id, char *text, int id, int text_id);
+submenu_list_t *submenuAppendItem(submenu_list_t **submenu, int icon_id, char *text, int id, int text_id, void *owner);
+submenu_list_t *submenuFindItemByIdAndText(submenu_list_t *submenu, int id, const char *text);
 void submenuRemoveItem(submenu_list_t **submenu, int id);
 void submenuDestroy(submenu_list_t **submenu);
 void submenuSort(submenu_list_t **submenu);

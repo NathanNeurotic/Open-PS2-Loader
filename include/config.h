@@ -97,6 +97,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_HDD_MODE             "hdd_mode"
 #define CONFIG_OPL_ETH_MODE             "eth_mode"
 #define CONFIG_OPL_APP_MODE             "app_mode"
+#define CONFIG_OPL_FAV_MODE             "fav_mode"
 #define CONFIG_OPL_MMCE_MODE            "mmce_mode"
 #define CONFIG_OPL_BDM_CACHE            "bdm_cache"
 #define CONFIG_OPL_HDD_CACHE            "hdd_cache"

@@ -343,20 +343,20 @@ static void menuInitMainMenu(void)
         submenuDestroy(&mainMenu);
 
     // initialize the menu
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_SETTINGS, _STR_GENERAL_SETTINGS);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_DEVICE_SETTINGS, _STR_DEVICE_SETTINGS);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_GFX_SETTINGS, _STR_GFX_SETTINGS);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_AUDIO_SETTINGS, _STR_AUDIO_SETTINGS);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_CONTROLLER_SETTINGS, _STR_CONTROLLER_SETTINGS);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_OSD_LANGUAGE_SETTINGS, _STR_OSD_SETTINGS);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_PARENTAL_LOCK, _STR_PARENLOCKCONFIG);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_NET_CONFIG, _STR_NETCONFIG);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_NET_UPDATE, _STR_NET_UPDATE);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_START_NBD, _STR_STARTNBD);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_ABOUT, _STR_ABOUT);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_SAVE_CHANGES, _STR_SAVE_CHANGES);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_EXIT, _STR_EXIT);
-    submenuAppendItem(&mainMenu, -1, NULL, MENU_POWER_OFF, _STR_POWEROFF);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_SETTINGS, _STR_GENERAL_SETTINGS, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_DEVICE_SETTINGS, _STR_DEVICE_SETTINGS, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_GFX_SETTINGS, _STR_GFX_SETTINGS, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_AUDIO_SETTINGS, _STR_AUDIO_SETTINGS, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_CONTROLLER_SETTINGS, _STR_CONTROLLER_SETTINGS, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_OSD_LANGUAGE_SETTINGS, _STR_OSD_SETTINGS, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_PARENTAL_LOCK, _STR_PARENLOCKCONFIG, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_NET_CONFIG, _STR_NETCONFIG, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_NET_UPDATE, _STR_NET_UPDATE, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_START_NBD, _STR_STARTNBD, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_ABOUT, _STR_ABOUT, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_SAVE_CHANGES, _STR_SAVE_CHANGES, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_EXIT, _STR_EXIT, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_POWER_OFF, _STR_POWEROFF, NULL);
 
     mainMenuCurrent = mainMenu;
 }
@@ -372,21 +372,21 @@ void menuInitGameMenu(void)
         submenuDestroy(&gameMenu);
 
     // initialize the menu
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_COMPAT_SETTINGS, _STR_COMPAT_SETTINGS);
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_CHEAT_SETTINGS, _STR_CHEAT_SETTINGS);
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_GSM_SETTINGS, _STR_GSCONFIG);
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_VMC_SETTINGS, _STR_VMC_SCREEN);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_COMPAT_SETTINGS, _STR_COMPAT_SETTINGS, NULL);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_CHEAT_SETTINGS, _STR_CHEAT_SETTINGS, NULL);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_GSM_SETTINGS, _STR_GSCONFIG, NULL);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_VMC_SETTINGS, _STR_VMC_SCREEN, NULL);
 #ifdef PADEMU
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_PADEMU_SETTINGS, _STR_PADEMUCONFIG);
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_PADMACRO_SETTINGS, _STR_PADMACROCONFIG);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_PADEMU_SETTINGS, _STR_PADEMUCONFIG, NULL);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_PADMACRO_SETTINGS, _STR_PADMACROCONFIG, NULL);
 #endif
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_OSD_LANGUAGE_SETTINGS, _STR_OSD_SETTINGS);
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_SAVE_CHANGES, _STR_SAVE_CHANGES);
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_TEST_CHANGES, _STR_TEST);
-    submenuAppendItem(&gameMenu, -1, NULL, GAME_REMOVE_CHANGES, _STR_REMOVE_ALL_SETTINGS);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_OSD_LANGUAGE_SETTINGS, _STR_OSD_SETTINGS, NULL);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_SAVE_CHANGES, _STR_SAVE_CHANGES, NULL);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_TEST_CHANGES, _STR_TEST, NULL);
+    submenuAppendItem(&gameMenu, -1, NULL, GAME_REMOVE_CHANGES, _STR_REMOVE_ALL_SETTINGS, NULL);
     if (gEnableWrite) {
-        submenuAppendItem(&gameMenu, -1, NULL, GAME_RENAME_GAME, _STR_RENAME);
-        submenuAppendItem(&gameMenu, -1, NULL, GAME_DELETE_GAME, _STR_DELETE);
+        submenuAppendItem(&gameMenu, -1, NULL, GAME_RENAME_GAME, _STR_RENAME, NULL);
+        submenuAppendItem(&gameMenu, -1, NULL, GAME_DELETE_GAME, _STR_DELETE, NULL);
     }
 
     gameMenuCurrent = gameMenu;
@@ -398,8 +398,8 @@ void menuInitAppMenu(void)
         submenuDestroy(&appMenu);
 
     // initialize the menu
-    submenuAppendItem(&appMenu, -1, NULL, 0, _STR_RENAME);
-    submenuAppendItem(&appMenu, -1, NULL, 1, _STR_DELETE);
+    submenuAppendItem(&appMenu, -1, NULL, 0, _STR_RENAME, NULL);
+    submenuAppendItem(&appMenu, -1, NULL, 1, _STR_DELETE, NULL);
 
     appMenuCurrent = appMenu;
 }
@@ -542,7 +542,7 @@ void submenuRebuildCache(submenu_list_t *submenu)
     }
 }
 
-static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int text_id)
+static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int text_id, void *owner)
 {
     submenu_list_t *it = (submenu_list_t *)malloc(sizeof(submenu_list_t));
 
@@ -554,15 +554,17 @@ static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int tex
     it->item.id = id;
     it->item.cache_id = NULL;
     it->item.cache_uid = NULL;
+    it->item.owner = owner;
+    it->item.favourited = 0;
     submenuRebuildCache(it);
 
     return it;
 }
 
-submenu_list_t *submenuAppendItem(submenu_list_t **submenu, int icon_id, char *text, int id, int text_id)
+submenu_list_t *submenuAppendItem(submenu_list_t **submenu, int icon_id, char *text, int id, int text_id, void *owner)
 {
     if (*submenu == NULL) {
-        *submenu = submenuAllocItem(icon_id, text, id, text_id);
+        *submenu = submenuAllocItem(icon_id, text, id, text_id, owner);
         return *submenu;
     }
 
@@ -573,13 +575,27 @@ submenu_list_t *submenuAppendItem(submenu_list_t **submenu, int icon_id, char *t
         cur = cur->next;
 
     // create new item
-    submenu_list_t *newitem = submenuAllocItem(icon_id, text, id, text_id);
+    submenu_list_t *newitem = submenuAllocItem(icon_id, text, id, text_id, owner);
 
     // link
     cur->next = newitem;
     newitem->prev = cur;
 
     return newitem;
+}
+
+// Linear search by id + text. Favourites uses this to locate the source-list item so the
+// favourited flag (star) stays in sync on both the FAV copy and the source copy. Both text
+// args are NULL-guarded before strcmp.
+submenu_list_t *submenuFindItemByIdAndText(submenu_list_t *submenu, int id, const char *text)
+{
+    submenu_list_t *cur = submenu;
+    while (cur) {
+        if (cur->item.id == id && text && cur->item.text && !strcmp(cur->item.text, text))
+            return cur;
+        cur = cur->next;
+    }
+    return NULL;
 }
 
 static void submenuDestroyItem(submenu_list_t *submenu)
