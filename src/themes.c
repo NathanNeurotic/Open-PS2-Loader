@@ -826,6 +826,8 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     }
     int leavingIndex = centerIndex + cfAnimDirection; // neighbour swapping with center
 
+    rmSetReflectionYOffset(elem->reflectionOffset); // theme reflection_offset; reset after the loop
+
     for (i = 0; i < coverCount; i++) {
         if (!covers[i])
             continue;
@@ -863,6 +865,8 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
             rmDrawPixmap(texture, posX, elem->posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
         }
     }
+
+    rmSetReflectionYOffset(0); // don't leak the offset to any other reflection draw
 }
 
 static void initCoverflow(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
@@ -961,6 +965,7 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
 
     elem->type = type;
     elem->reflection = 0;
+    elem->reflectionOffset = 0;
     elem->extended = NULL;
     elem->drawElem = NULL;
     elem->endElem = &endBasic;
@@ -1036,6 +1041,10 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     snprintf(elemProp, sizeof(elemProp), "%s_reflection", name);
     if (configGetInt(themeConfig, elemProp, &intValue))
         elem->reflection = intValue ? 1 : 0;
+
+    snprintf(elemProp, sizeof(elemProp), "%s_reflection_offset", name);
+    if (configGetInt(themeConfig, elemProp, &intValue))
+        elem->reflectionOffset = intValue;
 
     return elem;
 }

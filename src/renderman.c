@@ -363,6 +363,15 @@ void rmDrawQuad(rm_quad_t *q)
     order++;
 }
 
+// Vertical offset (px) applied to the coverflow reflection; set per-element by drawCoverFlow
+// from the theme's reflection_offset. 0 = flush under the cover, negative = up, positive = down.
+static int gReflectionYOff = 0;
+
+void rmSetReflectionYOffset(int yoff)
+{
+    gReflectionYOff = yoff;
+}
+
 // Coverflow mirror: one alpha-graded, vertically-flipped sprite below the quad.
 // Dormant unless a caller passes reflection != 0 (only drawCoverFlow does).
 // HW-verify the alpha falloff + inverted-V sampling when coverflow first drives it.
@@ -371,12 +380,13 @@ static void rmDrawReflection(GSTEXTURE *txt, rm_quad_t *q)
     int reflH = (q->br.y - q->ul.y) / 4;
     if (reflH <= 0)
         return;
+    float ry = q->br.y + gReflectionYOff;
     gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
     gsKit_TexManager_bind(gsGlobal, txt);
     gsKit_prim_sprite_texture(gsGlobal, txt,
-                              q->ul.x + fRenderXOff, q->br.y + fRenderYOff,
+                              q->ul.x + fRenderXOff, ry + fRenderYOff,
                               q->ul.u, q->br.v,
-                              q->br.x + fRenderXOff, q->br.y + reflH + fRenderYOff,
+                              q->br.x + fRenderXOff, ry + reflH + fRenderYOff,
                               q->br.u, q->ul.v, order, GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x20));
     order++;
 }
