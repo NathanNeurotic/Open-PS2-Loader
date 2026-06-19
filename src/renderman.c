@@ -372,27 +372,47 @@ void rmSetReflectionYOffset(int yoff)
     gReflectionYOff = yoff;
 }
 
-// Coverflow mirror: one alpha-graded, vertically-flipped sprite below the cover.
+// Coverflow mirror: a vertically-flipped, alpha-faded reflection below the cover.
 // bottomY = the cover's VISIBLE bottom in screen space; botV = the texture-v of that
 // visible bottom. For an overlay (case art) these track the FRAME, not the padded
 // element, so the case's transparent bottom padding is never mirrored into a gap and
 // the mirror sits flush under the cover regardless of widescreen/PAR. reflection_offset
 // (gReflectionYOff) is left as an optional fine-tune knob on top. Dormant unless a
 // caller passes reflection != 0 (only drawCoverFlow does).
+//
+// gsKit sprites are single-color, so the alpha gradient is built from N stacked strips
+// whose alpha falls off linearly to 0 with distance from the cover -- a real reflection
+// fade instead of a flat, "pasted-on second box".
 static void rmDrawReflection(GSTEXTURE *txt, rm_quad_t *q, float bottomY, float botV)
 {
     int reflH = (bottomY - q->ul.y) / 4;
     if (reflH <= 0)
         return;
     float ry = bottomY + gReflectionYOff;
+
     gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
     gsKit_TexManager_bind(gsGlobal, txt);
-    gsKit_prim_sprite_texture(gsGlobal, txt,
-                              q->ul.x + fRenderXOff, ry + fRenderYOff,
-                              q->ul.u, botV,
-                              q->br.x + fRenderXOff, ry + reflH + fRenderYOff,
-                              q->br.u, q->ul.v, order, GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x20));
-    order++;
+
+    const int strips = 12;
+    const int topAlpha = 0x30; // gsKit modulate alpha right under the cover; fades to 0
+    int s;
+    for (s = 0; s < strips; s++) {
+        int a = topAlpha * (strips - 1 - s) / (strips - 1);
+        if (a <= 0)
+            break;
+        // Strip s spans [s, s+1]/strips of the reflection height; v runs botV (waterline)
+        // -> ul.v (cover top) so the cover is mirrored vertically as it fades out.
+        float y0 = ry + (float)reflH * s / strips;
+        float y1 = ry + (float)reflH * (s + 1) / strips;
+        float v0 = botV + (q->ul.v - botV) * s / strips;
+        float v1 = botV + (q->ul.v - botV) * (s + 1) / strips;
+        gsKit_prim_sprite_texture(gsGlobal, txt,
+                                  q->ul.x + fRenderXOff, y0 + fRenderYOff,
+                                  q->ul.u, v0,
+                                  q->br.x + fRenderXOff, y1 + fRenderYOff,
+                                  q->br.u, v1, order, GS_SETREG_RGBA(0x80, 0x80, 0x80, a));
+        order++;
+    }
 }
 
 void rmDrawPixmap(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, short scaled, u64 color, int reflection)
