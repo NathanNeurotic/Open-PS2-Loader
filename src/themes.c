@@ -765,6 +765,11 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     int origCoverWidth = elem->width;
     int coverWidth = elem->width;
     int maxCoverWidth = (screenWidth - (coverCount - 1) * 10) / coverCount;
+    // Widescreen draws each cover at 3/4 width (SCALING_RATIO), leaving spare screen, so
+    // allow ~10% larger covers in 16:9. This scales SIZE only -- the cover's authored W:H
+    // is untouched, so aspect immunity holds; 4:3 keeps the tight 3-up maximum.
+    if (gWideScreen)
+        maxCoverWidth = maxCoverWidth * 11 / 10;
     if (coverWidth > maxCoverWidth)
         coverWidth = maxCoverWidth;
     if (coverWidth <= 0)

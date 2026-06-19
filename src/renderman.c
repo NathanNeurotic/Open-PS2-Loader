@@ -372,20 +372,24 @@ void rmSetReflectionYOffset(int yoff)
     gReflectionYOff = yoff;
 }
 
-// Coverflow mirror: one alpha-graded, vertically-flipped sprite below the quad.
-// Dormant unless a caller passes reflection != 0 (only drawCoverFlow does).
-// HW-verify the alpha falloff + inverted-V sampling when coverflow first drives it.
-static void rmDrawReflection(GSTEXTURE *txt, rm_quad_t *q)
+// Coverflow mirror: one alpha-graded, vertically-flipped sprite below the cover.
+// bottomY = the cover's VISIBLE bottom in screen space; botV = the texture-v of that
+// visible bottom. For an overlay (case art) these track the FRAME, not the padded
+// element, so the case's transparent bottom padding is never mirrored into a gap and
+// the mirror sits flush under the cover regardless of widescreen/PAR. reflection_offset
+// (gReflectionYOff) is left as an optional fine-tune knob on top. Dormant unless a
+// caller passes reflection != 0 (only drawCoverFlow does).
+static void rmDrawReflection(GSTEXTURE *txt, rm_quad_t *q, float bottomY, float botV)
 {
-    int reflH = (q->br.y - q->ul.y) / 4;
+    int reflH = (bottomY - q->ul.y) / 4;
     if (reflH <= 0)
         return;
-    float ry = q->br.y + gReflectionYOff;
+    float ry = bottomY + gReflectionYOff;
     gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
     gsKit_TexManager_bind(gsGlobal, txt);
     gsKit_prim_sprite_texture(gsGlobal, txt,
                               q->ul.x + fRenderXOff, ry + fRenderYOff,
-                              q->ul.u, q->br.v,
+                              q->ul.u, botV,
                               q->br.x + fRenderXOff, ry + reflH + fRenderYOff,
                               q->br.u, q->ul.v, order, GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x20));
     order++;
@@ -397,7 +401,7 @@ void rmDrawPixmap(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, sho
     rmSetupQuad(txt, x, y, aligned, w, h, scaled, color, &quad);
     rmDrawQuad(&quad);
     if (reflection)
-        rmDrawReflection(txt, &quad);
+        rmDrawReflection(txt, &quad, quad.br.y, quad.br.v); // plain pixmap: the whole texture is the cover
 }
 
 void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w, int h, short scaled, u64 color,
@@ -405,6 +409,7 @@ void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w,
 {
     rm_quad_t quad;
     rmSetupQuad(overlay, x, y, aligned, w, h, scaled, color, &quad);
+    int origBly = bly, origBry = bry; // unscaled inlay lower corners (element/texture space) for the reflection
     ulx = X_SCALE(ulx * iAspectWidth) >> 2;
     urx = X_SCALE(urx * iAspectWidth) >> 2;
     blx = X_SCALE(blx * iAspectWidth) >> 2;
@@ -432,8 +437,15 @@ void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w,
     order++;
 
     rmDrawQuad(&quad);
-    if (reflection)
-        rmDrawReflection(overlay, &quad);
+    if (reflection) {
+        // Anchor the mirror to the cover's VISIBLE bottom (the inlay's lower corner), not
+        // the padded element bottom, and sample only the frame's texture rows -- so the
+        // case art's transparent bottom padding can't open a gap above the reflection.
+        int coverBottomOff = (bly > bry) ? bly : bry;              // scaled, screen space
+        int frameBottom = (origBly > origBry) ? origBly : origBry; // unscaled, element space
+        float botV = (h > 0) ? (float)frameBottom * overlay->Height / h : overlay->Height;
+        rmDrawReflection(overlay, &quad, quad.ul.y + coverBottomOff, botV);
+    }
 }
 
 void rmDrawRect(int x, int y, int w, int h, u64 color)
