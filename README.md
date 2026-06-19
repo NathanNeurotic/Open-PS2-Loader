@@ -106,6 +106,32 @@ This build layers several features on top of upstream OPL:
   the PS2 logo, with the device tabs in **Manual** mode. Video mode stays **Auto**. Change
   any of it under Settings.
 
+## Acknowledgements
+
+This fork stands entirely on the shoulders of the PS2 homebrew community. **None of this
+would exist without the [ps2homebrew](https://github.com/ps2homebrew) team** and their many
+years of open-source work on Open PS2 Loader and the PS2SDK — kept free, open, and readable
+so that people like us can study it, learn from it, and build on it. Every feature in this
+fork began as *their* code and *their* ideas. We are deeply grateful that this work was
+shared openly; it is the only reason a fork like this is even possible.
+
+With special and sincere thanks to:
+
+- **Wolf3s** and **KrahJohlito** — the driving force behind **uOPL / wOPL**, where much of
+  this fork's modern functionality originated. The Neutrino external-core loader and MMCE
+  work (Wolf3s) and the Coverflow and Favourites interfaces (KrahJohlito) are all
+  reimplementations of features *they* designed and pioneered. We learned an enormous amount
+  reading their code, and this fork is as much a tribute to it as anything else. Thank you.
+- **Berion** — for the artwork and theme design that has shaped how OPL *looks* for years.
+  The visual language this fork builds on owes a great deal to that craft.
+- **Ifcaro** and **jimmikaelkael** — the original Open PS2 Loader authors — and every
+  contributor across OPL's long history.
+
+If you want the canonical, actively-maintained project, it lives at
+**[ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader)** — please
+support it. This fork is a downstream labor of love, not a replacement, and it exists only
+because that upstream work is open for everyone to learn from.
+
 
 <details>
   <summary> <b> Release types </b> </summary>
