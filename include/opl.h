@@ -189,6 +189,8 @@ extern int gPadMacroSettings;
 extern int gScrollSpeed;
 // Exit path
 extern char gExitPath[256];
+// Extra command-line flags appended to every Neutrino launch
+extern char gNeutrinoArgs[256];
 // Enable Debug Colors
 extern int gEnableDebug;
 

@@ -734,6 +734,10 @@ gui_strings:
   string: Neutrino does not support this file format, launching with <OPL> core
 - label: NEUTRINO_NOT_FOUND
   string: Neutrino ELF not found, launching with <OPL> core
+- label: NEUTRINO_ARGS
+  string: Neutrino Launch Args
+- label: HINT_NEUTRINO_ARGS
+  string: Extra Neutrino flags, space-separated (e.g. -mt=dvd). Global applies to all games; per-game adds on top.
 - label: COVERFLOW_SETTINGS
   string: Coverflow Settings
 - label: COVERFLOW_COUNT

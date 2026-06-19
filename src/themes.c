@@ -758,9 +758,12 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     int coverCount = (gCoverflowCount == 5) ? 5 : 3;
     int centerIndex = coverCount / 2;
 
-    // Layout (widescreen-aware, div-guarded).
+    // Layout in virtual 640x480 space (div-guarded). SCALING_RATIO + the panel apply
+    // the widescreen/PAR correction at draw time (rmSetupQuad: w * iAspectWidth >> 2),
+    // exactly like the stock ItemCover path. We must NOT pre-apply rmWideScale here or
+    // the cover gets the aspect factor twice and warps when widescreen is toggled.
     int origCoverWidth = elem->width;
-    int coverWidth = gWideScreen ? rmWideScale(elem->width) : elem->width;
+    int coverWidth = elem->width;
     int maxCoverWidth = (screenWidth - (coverCount - 1) * 10) / coverCount;
     if (coverWidth > maxCoverWidth)
         coverWidth = maxCoverWidth;
@@ -771,8 +774,6 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     int coverSpacing = (screenWidth - coverCount * coverWidth) / (coverCount + 1);
     if (coverSpacing < 0)
         coverSpacing = 0;
-    if (gWideScreen)
-        coverSpacing = rmWideScale(coverSpacing);
     int coverDistance = coverWidth + coverSpacing;
     int basePosX = (screenWidth - (coverCount * coverWidth + (coverCount - 1) * coverSpacing)) / 2 + coverWidth / 2 + coverWidth * gTheme->coverflowCoverOffset / 256;
 

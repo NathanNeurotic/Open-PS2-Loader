@@ -857,12 +857,32 @@ static int convertCompatmaskToModes(int compatmask)
     return atoi(result);
 }
 
+// Split a whitespace-separated argument string into individual argv entries appended
+// after the auto-built ones. `buf` receives a bounded mutable copy of `src`, and the
+// tokens point into it, so `buf` must stay live until the argv is consumed. Returns
+// the updated argc; never exceeds argvMax.
+static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bufSize, const char *src)
+{
+    if (src == NULL || src[0] == '\0')
+        return argc;
+
+    snprintf(buf, bufSize, "%s", src);
+
+    char *tok = strtok(buf, " \t");
+    while (tok != NULL && argc < argvMax) {
+        argv[argc++] = tok;
+        tok = strtok(NULL, " \t");
+    }
+    return argc;
+}
+
 // Hand the game off to an external Neutrino ELF instead of OPL's embedded core.
 // Hardened vs the wOPL original: NULL-guarded; an "unsupported" device aborts
 // (never launches -bsd=unsupported); DISTINCT argv buffers (wOPL reused ONE
-// buffer for both -bsd=ata and -bsdfs=hdl, clobbering -bsd=ata on HDD); argv[8]
-// with per-append bounds guards (wOPL's argv[6] was exactly full).
-void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath)
+// buffer for both -bsd=ata and -bsdfs=hdl, clobbering -bsd=ata on HDD); argv[32]
+// with per-append bounds guards (wOPL's argv[6] was exactly full). User-supplied
+// flags (global gNeutrinoArgs + the per-game extraArgs) are tokenized and appended last.
+void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
@@ -879,7 +899,9 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     char bsdfs[16];
     char filePath[288];        // "-dvd=hdl:" (9) + up to a 255-char path + NUL — avoid truncation (B2)
     char compatModes[32] = ""; // stays empty when no compat modes are forwarded (B1)
-    char *argv[8];
+    char globalArgsBuf[256];   // mutable copy of gNeutrinoArgs for tokenizing (tokens point in)
+    char extraArgsBuf[256];    // mutable copy of the per-game extraArgs for tokenizing
+    char *argv[32];            // auto args (max ~6) + tokenized user flags
     int argc = 0;
     const int argvMax = (int)(sizeof(argv) / sizeof(argv[0]));
 
@@ -917,6 +939,11 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
 
     if (EnablePS2Logo && argc < argvMax)
         argv[argc++] = "-logo";
+
+    // Append user-supplied Neutrino flags: global defaults first, then the per-game
+    // string (so a game can extend the global set). Both are tokenized on whitespace.
+    argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs);
+    argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs);
 
     LOG("[NEUTRINO] elf=%s %s %s %s argc=%d\n", neutrinoPath, bsd, filePath, compatModes, argc);
 

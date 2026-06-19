@@ -454,7 +454,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int coreLoader = 0;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     const char *neutrinoPath = NULL;
+    char neutrinoExtraArgs[256] = ""; // per-game Neutrino flags; copied before deinit teardown
     if (coreLoader) {
+        configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         neutrinoPath = sbFileExists(NEUTRINO_PATH) ? NEUTRINO_PATH : (sbFileExists(NEUTRINO_ALT_PATH) ? NEUTRINO_ALT_PATH : NULL);
         if (game->format == GAME_FORMAT_USBLD || !strcmp(game->extension, ".zso")) {
             guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
@@ -474,7 +476,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
         deinit(NO_EXCEPTION, MMCE_MODE);
-        sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath);
+        sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs);
         return;
     }
 
