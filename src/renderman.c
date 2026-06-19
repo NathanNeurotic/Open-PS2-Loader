@@ -394,7 +394,7 @@ static void rmDrawReflection(GSTEXTURE *txt, rm_quad_t *q, float bottomY, float 
     gsKit_TexManager_bind(gsGlobal, txt);
 
     const int strips = 12;
-    const int topAlpha = 0x27; // gsKit modulate alpha right under the cover (~20% below the original); fades to 0
+    const int topAlpha = 0x23; // gsKit modulate alpha right under the cover (reduced again, ~27% below original); fades to 0
     int s;
     for (s = 0; s < strips; s++) {
         int a = topAlpha * (strips - 1 - s) / (strips - 1);
