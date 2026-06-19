@@ -49,6 +49,7 @@ extern void *R3_png; */
 extern void *cover_png;
 extern void *disc_png;
 extern void *screen_png;
+extern void *incebtion_png;
 extern void *ip_png;
 extern void *coverapp_png;
 extern void *missing_png;
@@ -186,9 +187,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {COVER_DEFAULT, "cover", &cover_png},
     {DISC_DEFAULT, "disc", &disc_png},
     {SCREEN_DEFAULT, "screen", &screen_png},
-    // incebtion.png removed (orphan asset, never drawn): NULL embedded default so
-    // the 77 KB PNG is no longer linked in. Enum/name kept to avoid a texId shift.
-    {INCEBTION_PICTURE, "incebtion", NULL},
+    {INCEBTION_PICTURE, "incebtion", &incebtion_png}, // default theme background (conf_theme_OPL.cfg: default=incebtion)
     {IP_PICTURE, "ip", &ip_png},
     {COVERAPP_DEFAULT, "coverapp", &coverapp_png},
     {MISSING_PICTURE, "missing", &missing_png},
