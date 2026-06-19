@@ -36,6 +36,10 @@ IGS ?= $(EXTRA_FEATURES)
 #Enables/disables pad emulator
 PADEMU ?= 1
 
+#Enables/disables experimental PS5 DualSense (USB) support in the pad emulator. UNVALIDATED --
+#needs real DS5 hardware to test, so it is OFF by default and never affects the default build.
+DUALSENSE ?= 0
+
 #Enables/disables building of an edition of OPL that will support the DTL-T10000 (SDK v2.3+)
 DTL_T10000 ?= 0
 
@@ -571,7 +575,7 @@ modules/ds34usb/ee/libds34usb.a: modules/ds34usb/ee
 	$(MAKE) -C $<
 
 modules/ds34usb/iop/ds34usb.irx: modules/ds34usb/iop
-	$(MAKE) -C $<
+	$(MAKE) -C $< DUALSENSE=$(DUALSENSE)
 
 $(EE_ASM_DIR)ds34usb.c: modules/ds34usb/iop/ds34usb.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
