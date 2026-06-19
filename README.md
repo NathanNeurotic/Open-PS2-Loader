@@ -75,13 +75,36 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 - **MMCE support:** OPL supports MMCE devices using the Memory Card Mass Storage protocol for SD-based loading through the Memory Card slot.
 - **MX4SIO support:** OPL supports MX4SIO adapters for SD-based loading through the Memory Card slot. See the **USB/MMCE/MX4SIO/iLink** section for filesystem and layout guidance.
 - **Internal HDD exFAT support:** Internal HDD loading supports exFAT in addition to APA/PFS, including GPT partitioning for large disks. See the **HDD** section for formatting and fragmentation guidance.
-- **Themes:** Place theme assets in the `THM` folder, then select and apply themes from OPL settings.
+- **Themes:** Place theme assets in the `THM` folder, then select and apply themes from OPL settings. This fork ships a built-in **`<Coverflow>`** cover-carousel theme (the default) — see the [Theme Engine reference](docs/THEME_ENGINE.md) to author your own themes.
 - **Cheats / PS2RD:** OPL supports PS2RD `.cht` cheat files from the `CHT` folder, with both auto-apply and launch-time selection modes.
 - **Pad emulation (DS3/DS4):** Builds that include PADEMU allow DualShock 3 and DualShock 4 pad emulation support.
 - **GSM (video mode handling):** Builds that include GSM allow game video mode handling/overrides for display compatibility.
 - **VMC (Virtual Memory Cards):** Create and use VMC images (8MB to 64MB) via the `VMC` folder and per-game options.
 - **Per-game settings workflow:** Highlight a game, open **Game Settings**, adjust options (such as compatibility modes, cheats, GSM, PADEMU, and VMC), then save so settings persist per title.
 - **App launching (APPS + config methods):** OPL can launch homebrew ELFs using either `conf_apps.cfg` entries or per-app `title.cfg` metadata in `APPS` subfolders.
+
+### This Fork's Additions
+
+This build layers several features on top of upstream OPL:
+
+- **`<Coverflow>` theme (built-in, and the default):** a centered cover-art carousel for
+  the game/app list, with an alpha-faded reflection, animated scrolling, a configurable
+  cover count, and aspect-correct covers in both 4:3 and widescreen. Tune it live under
+  **Coverflow Settings** (shown while the Coverflow theme is active). Authoring details
+  and every theme value live in the **[Theme Engine reference](docs/THEME_ENGINE.md)**.
+- **Neutrino external core (per-game):** hand a game off to an external `neutrino.elf`
+  instead of OPL's built-in core, chosen per title, with custom launch flags you can set
+  globally and per-game. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
+- **Device Settings hub:** the old "Settings" page is now **General Settings**, and a new
+  **Device Settings** page consolidates the per-device options, cache sizes, Block-Devices
+  (BDM) settings, and all MMCE settings in one place (replacing the separate MMCE and
+  Block Devices pages).
+- **DualSense / DualShock 5 (USB):** optional controller support, compiled in with
+  `make DUALSENSE=1`.
+- **Ready-to-use defaults:** a fresh install boots with sensible options already enabled —
+  widescreen, cover art, notifications, sound effects + boot sound, USB, delete/rename, and
+  the PS2 logo, with the device tabs in **Manual** mode. Video mode stays **Auto**. Change
+  any of it under Settings.
 
 
 <details>
