@@ -38,9 +38,6 @@ static int nThemes = 0;
 static theme_file_t themes[THM_MAX_FILES];
 static const char **guiThemesNames = NULL;
 
-// Global data
-theme_t *gTheme;
-
 // Coverflow render-mode state (externs in themes.h; defaults match wOPL 3/30/200/0).
 #define COVERFLOW_MAX 5
 int gCoverflowCount = 3;        // 3 or 5 only (clamped on load AND at draw)

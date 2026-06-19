@@ -61,6 +61,10 @@ gui_strings:
   string: Exit
 - label: SETTINGS
   string: Settings
+- label: GENERAL_SETTINGS
+  string: General Settings
+- label: DEVICE_SETTINGS
+  string: Device Settings
 - label: MENU
   string: Menu
 - label: BDM_GAMES
