@@ -361,6 +361,9 @@ static void itemExecTriangle(struct menu_item *curMenu)
 // source list it adds/removes and updates the star. The reload runs via the single deferred path.
 static void itemExecFav(struct menu_item *curMenu)
 {
+    if (!gFAVStartMode) // Favourites disabled -> R3 is a no-op (no hidden writes)
+        return;
+
     if (!curMenu->current)
         return;
 
@@ -373,11 +376,11 @@ static void itemExecFav(struct menu_item *curMenu)
     if (support->mode == FAV_MODE) {
         favRemoveByIndex(it->id);
     } else if (it->favourited) {
-        it->favourited = 0;
-        removeFavouriteByIdAndText(it->id, it->text);
+        if (removeFavouriteByIdAndText(support->mode, it->id, it->text))
+            it->favourited = 0; // only clear the star once the store write succeeded
     } else {
-        it->favourited = 1;
-        addFavouriteItem(support->mode, it->id, it->icon_id, it->text_id, it->text);
+        if (addFavouriteItem(support->mode, it->id, it->icon_id, it->text_id, it->text))
+            it->favourited = 1; // only show the star once the store write succeeded
     }
 
     sfxPlay(SFX_CONFIRM);

@@ -18,9 +18,11 @@ item_list_t *favGetObject(int initOnly);
 // itemExecTriangle so a FAV item exposes the same Options menu as its source would.
 unsigned char favGetFlags(item_list_t *itemList);
 
-// R3-toggle helpers (called from opl.c). add/remove rewrite favourites.bin.
-void addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *text);
-void removeFavouriteByIdAndText(int id, const char *text);
+// R3-toggle helpers (called from opl.c). add/remove rewrite favourites.bin and return 1 on a
+// successful write, 0 on failure (so the caller won't set a lying star). add returns 1 if the
+// item is already present. removeFavouriteByIdAndText matches mode (BDM-lenient) + id + text.
+int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *text);
+int removeFavouriteByIdAndText(int mode, int id, const char *text);
 
 // Remove the favourite at FAV-list index favIndex (R3 pressed on the Favourites tab).
 void favRemoveByIndex(int favIndex);

@@ -499,11 +499,15 @@ jobs:
         if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
         run: |
           set -eu
-          # Publish SHA256 of every release asset (bundles + ELF) for restoration/archival.
+          # Publish SHA256 of EVERY uploaded asset -- versioned bundles, the stable-alias
+          # bundles, and the ELF -- so any download (including the bare-name aliases) is verifiable.
           sha256sum \
             OPNPS2LD-${{ env.OPL_VERSION }}.7z \
             OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z \
             OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z \
+            OPNPS2LD.7z \
+            OPNPS2LD-VARIANTS.7z \
+            OPNPS2LD-LANGS.7z \
             OPNPS2LD.ELF \
             > SHA256SUMS.txt
           cat SHA256SUMS.txt

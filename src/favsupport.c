@@ -181,7 +181,7 @@ static fav_raw_t *favReadFile(int *outCount)
 }
 
 // Write a raw-record array back out (explicit scalar fields; pointers never persisted).
-static void favWriteFile(fav_raw_t *recs, int count)
+static int favWriteFile(fav_raw_t *recs, int count)
 {
     char path[256];
     favGetFilePath(path, sizeof(path));
@@ -189,7 +189,7 @@ static void favWriteFile(fav_raw_t *recs, int count)
     int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
     if (fd < 0) {
         LOG("FAV write open failed: %s\n", path);
-        return;
+        return 0;
     }
     if (count > FAV_MAX_ITEMS)
         count = FAV_MAX_ITEMS;
@@ -205,6 +205,7 @@ static void favWriteFile(fav_raw_t *recs, int count)
     close(fd);
     if (!ok)
         LOG("FAV write incomplete\n");
+    return ok;
 }
 
 // ---- in-memory array lifecycle ------------------------------------------------
@@ -308,6 +309,14 @@ static int favGetItemCount(item_list_t *itemList) { return favCount; }
 
 static int favValidIndex(int id) { return (favArray != NULL && id >= 0 && id < favCount); }
 
+// Guard the stored source id against the owner's CURRENT count -- the source list may have
+// shrunk / re-scanned since the favourite was validated, so re-check before every proxy call
+// to avoid indexing the owner's game array out of bounds.
+static int favOwnerHasId(item_list_t *o, int id)
+{
+    return (o != NULL && o->itemGetCount != NULL && id >= 0 && id < o->itemGetCount(o));
+}
+
 static char *favGetItemName(item_list_t *itemList, int id)
 {
     return favValidIndex(id) ? favArray[id].text : "";
@@ -323,7 +332,7 @@ static char *favGetItemStartup(item_list_t *itemList, int id)
     if (!favValidIndex(id))
         return "";
     item_list_t *o = favArray[id].owner;
-    if (o == NULL || o->itemGetStartup == NULL)
+    if (o == NULL || o->itemGetStartup == NULL || !favOwnerHasId(o, favArray[id].id))
         return "";
     return o->itemGetStartup(o, favArray[id].id);
 }
@@ -333,7 +342,7 @@ static config_set_t *favGetConfig(item_list_t *itemList, int id)
     if (!favValidIndex(id))
         return NULL;
     item_list_t *o = favArray[id].owner;
-    if (o == NULL || o->itemGetConfig == NULL)
+    if (o == NULL || o->itemGetConfig == NULL || !favOwnerHasId(o, favArray[id].id))
         return NULL;
     return o->itemGetConfig(o, favArray[id].id);
 }
@@ -343,7 +352,7 @@ static void favLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
     if (!favValidIndex(id))
         return;
     item_list_t *o = favArray[id].owner;
-    if (o == NULL || o->itemLaunch == NULL)
+    if (o == NULL || o->itemLaunch == NULL || !favOwnerHasId(o, favArray[id].id))
         return;
     o->itemLaunch(o, favArray[id].id, configSet);
 }
@@ -356,7 +365,7 @@ static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char
         return -1;
     for (int i = 0; i < favCount; i++) {
         item_list_t *o = favArray[i].owner;
-        if (o == NULL || o->itemGetStartup == NULL || o->itemGetImage == NULL)
+        if (o == NULL || o->itemGetStartup == NULL || o->itemGetImage == NULL || !favOwnerHasId(o, favArray[i].id))
             continue;
         char *s = o->itemGetStartup(o, favArray[i].id);
         if (s != NULL && strcmp(s, value) == 0)
@@ -397,33 +406,60 @@ unsigned char favGetFlags(item_list_t *itemList)
     return 0;
 }
 
+// VMC check proxy: itemCheckVMC is device-context (no id), so forward to the current FAV
+// item's SOURCE device. Without this, the game-Options VMC menu would call a NULL callback.
+static int favCheckVMC(item_list_t *itemList, char *name, int createSize)
+{
+    opl_io_module_t *mod = oplGetModule(FAV_MODE);
+    if (mod == NULL || mod->menuItem.current == NULL)
+        return -1;
+    int id = mod->menuItem.current->item.id;
+    if (!favValidIndex(id))
+        return -1;
+    item_list_t *o = favArray[id].owner;
+    if (o == NULL || o->itemCheckVMC == NULL)
+        return -1;
+    return o->itemCheckVMC(o, name, createSize);
+}
+
+// Two modes "match" for favourite identity if equal, OR both in the BDM range
+// (USB/iLink/MX4SIO/ATA slots are interchangeable -- a BDM favourite can move slots).
+static int favModesMatch(int a, int b)
+{
+    int aBdm = (a >= BDM_MODE && a <= BDM_MODE_LAST);
+    int bBdm = (b >= BDM_MODE && b <= BDM_MODE_LAST);
+    if (aBdm && bBdm)
+        return 1;
+    return a == b;
+}
+
 // ---- public toggle / refresh API ----------------------------------------------
 
-void addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *text)
+int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *text)
 {
     if (text == NULL || text[0] == '\0')
-        return;
+        return 0;
 
     int count = 0;
     fav_raw_t *recs = favReadFile(&count); // may be NULL (empty / new file)
 
-    // Skip if already present (same mode + id + text).
+    // Already present (same mode + id + text) -> treat as success (the star stays set).
     for (int i = 0; i < count; i++) {
         if (recs[i].mode == mode && recs[i].id == id && strcmp(recs[i].text, text) == 0) {
             free(recs);
-            return;
+            return 1;
         }
     }
 
     int newCount = count + 1;
     if (newCount > FAV_MAX_ITEMS) {
         free(recs);
-        return;
+        return 0;
     }
     fav_raw_t *out = (fav_raw_t *)calloc(newCount, sizeof(fav_raw_t));
     if (out == NULL) {
         free(recs);
-        return;
+        return 0;
     }
     for (int i = 0; i < count; i++)
         out[i] = recs[i];
@@ -433,25 +469,29 @@ void addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *te
     out[count].text_id = text_id;
     snprintf(out[count].text, FAV_TEXT_MAX, "%s", text);
 
-    favWriteFile(out, newCount);
+    int ok = favWriteFile(out, newCount);
     free(out);
     free(recs);
+    return ok;
 }
 
-void removeFavouriteByIdAndText(int id, const char *text)
+int removeFavouriteByIdAndText(int mode, int id, const char *text)
 {
     int count = 0;
     fav_raw_t *recs = favReadFile(&count);
     if (recs == NULL)
-        return;
+        return 0;
 
     int survivors = 0;
     for (int i = 0; i < count; i++) {
-        if (!(recs[i].id == id && text != NULL && strcmp(recs[i].text, text) == 0))
+        // Match on id + text + mode (BDM-lenient) so a same-titled favourite in a different
+        // device mode is NOT collaterally deleted.
+        if (!(recs[i].id == id && text != NULL && strcmp(recs[i].text, text) == 0 && favModesMatch(recs[i].mode, mode)))
             recs[survivors++] = recs[i]; // compact in place (single buffer)
     }
-    favWriteFile(recs, survivors); // survivors may be 0 -> writes a header-only (empty) file
+    int ok = favWriteFile(recs, survivors); // survivors may be 0 -> writes a header-only (empty) file
     free(recs);
+    return ok;
 }
 
 void favRemoveByIndex(int favIndex)
@@ -469,7 +509,7 @@ void favRemoveByIndex(int favIndex)
         if (src != NULL)
             src->item.favourited = 0;
     }
-    removeFavouriteByIdAndText(srcId, txt);
+    removeFavouriteByIdAndText(srcMode, srcId, txt);
 }
 
 void loadFavourites(void)
@@ -490,4 +530,4 @@ item_list_t *favGetObject(int initOnly)
 static item_list_t favItemList = {
     FAV_MODE, -1, 0, 0, MENU_MIN_INACTIVE_FRAMES, FAV_MODE_UPDATE_DELAY, NULL, NULL, &favGetTextId, NULL, &favInit, &favNeedsUpdate, &favUpdateItemList,
     &favGetItemCount, NULL, &favGetItemName, &favGetItemNameLength, &favGetItemStartup, &favDeleteItem, &favRenameItem, &favLaunchItem,
-    &favGetConfig, &favGetImage, &favCleanUp, &favShutdown, NULL, &favGetIconId};
+    &favGetConfig, &favGetImage, &favCleanUp, &favShutdown, &favCheckVMC, &favGetIconId};
