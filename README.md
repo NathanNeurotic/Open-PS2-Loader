@@ -118,10 +118,10 @@ shared openly; it is the only reason a fork like this is even possible.
 With special and sincere thanks to:
 
 - **Wolf3s** and **KrahJohlito** — the driving force behind **uOPL / wOPL**, where much of
-  this fork's modern functionality originated. The Neutrino external-core loader and MMCE
-  work (Wolf3s) and the Coverflow and Favourites interfaces (KrahJohlito) are all
-  reimplementations of features *they* designed and pioneered. We learned an enormous amount
-  reading their code, and this fork is as much a tribute to it as anything else. Thank you.
+  this fork's modern functionality originated. The Neutrino external-core loader, the MMCE
+  work, and the Coverflow and Favourites interfaces are all reimplementations of features
+  they designed and pioneered together. We learned an enormous amount reading their code, and
+  this fork is as much a tribute to it as anything else. Thank you both.
 - **Berion** — for the artwork and theme design that has shaped how OPL *looks* for years.
   The visual language this fork builds on owes a great deal to that craft.
 - **Ifcaro** and **jimmikaelkael** — the original Open PS2 Loader authors — and every
