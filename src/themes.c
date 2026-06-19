@@ -782,6 +782,19 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     int coverDistance = coverWidth + coverSpacing;
     int basePosX = (screenWidth - (coverCount * coverWidth + (coverCount - 1) * coverSpacing)) / 2 + coverWidth / 2 + coverWidth * gTheme->coverflowCoverOffset / 256;
 
+    int sw = (elem->width > 0) ? elem->width : 1;   // div-guard (hand-edited theme)
+    int sh = (elem->height > 0) ? elem->height : 1; // div-guard (hand-edited theme)
+    // Auto-center the VISIBLE cover (the case frame box) inside the padded element: the case
+    // art's frame can sit off-center (e.g. apps_case frame = top-left 186 of 256), which would
+    // shift the carousel up/left. Recenter from the overlay corners so the frame -- and its
+    // mirror, which tracks the same quad -- stays centered. No overlay (plain pixmap) => no shift.
+    int recenterX = 0, recenterY = 0;
+    if (img->overlayTexture) {
+        image_texture_t *ovc = img->overlayTexture;
+        recenterX = sw / 2 - (ovc->upperLeft_x + ovc->upperRight_x) / 2;
+        recenterY = sh / 2 - (ovc->upperLeft_y + ovc->lowerLeft_y) / 2;
+    }
+
     // Build the visible window: covers[centerIndex] is the selection; fan out both sides,
     // wrapping last<->first. The left wrap reads menu->item->last (full lifecycle wired in
     // Commit E) -- single-game/exhausted lists break out before dereferencing a stale ptr.
@@ -854,7 +867,8 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
 
         int drawW = coverWidth + scaleAdd;
         int drawH = (coverWidth > 0) ? (coverHeight * drawW / coverWidth) : coverHeight;
-        int posX = basePosX + i * coverDistance + animOffset;
+        int posX = basePosX + i * coverDistance + animOffset + recenterX * drawW / sw;
+        int posY = elem->posY + recenterY * drawH / sh;
 
         u64 coverColor = (gCoverflowDimCovers && i != centerIndex) ? GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x40) : gDefaultCol;
 
@@ -862,13 +876,11 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
             // Scale the inlay (cover) corner offsets to the drawn overlay size so the case
             // window tracks the cover at every scale. HW-verify alignment with real case art.
             image_texture_t *ov = img->overlayTexture;
-            int sw = (elem->width > 0) ? elem->width : 1;   // div-guard (hand-edited theme)
-            int sh = (elem->height > 0) ? elem->height : 1; // div-guard (hand-edited theme)
-            rmDrawOverlayPixmap(&ov->source, posX, elem->posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor,
+            rmDrawOverlayPixmap(&ov->source, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor,
                                 texture, ov->upperLeft_x * drawW / sw, ov->upperLeft_y * drawH / sh, ov->upperRight_x * drawW / sw, ov->upperRight_y * drawH / sh,
                                 ov->lowerLeft_x * drawW / sw, ov->lowerLeft_y * drawH / sh, ov->lowerRight_x * drawW / sw, ov->lowerRight_y * drawH / sh, elem->reflection);
         } else {
-            rmDrawPixmap(texture, posX, elem->posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
+            rmDrawPixmap(texture, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
         }
     }
 
