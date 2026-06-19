@@ -53,8 +53,6 @@ extern void *incebtion_png;
 extern void *ip_png;
 extern void *coverapp_png;
 extern void *missing_png;
-extern void *no_Device_png;
-extern void *no_Rating_png;
 extern void *screens_png;
 
 extern void *ELF_png;
@@ -69,13 +67,6 @@ extern void *Aspect_s_png;
 extern void *Aspect_w_png;
 extern void *Aspect_w1_png;
 extern void *Aspect_w2_png;
-extern void *Device_1_png;
-extern void *Device_2_png;
-extern void *Device_3_png;
-extern void *Device_4_png;
-extern void *Device_5_png;
-extern void *Device_6_png;
-extern void *Device_all_png;
 extern void *Rating_0_png;
 extern void *Rating_1_png;
 extern void *Rating_2_png;
@@ -106,9 +97,6 @@ extern void *logo0_png;
 extern void *logo1_png;
 extern void *logo2_png;
 extern void *logo3_png;
-extern void *logo4_png;
-extern void *logo5_png;
-extern void *logo6_png;
 extern void *case_png;
 extern void *apps_case_png;
 
@@ -191,8 +179,9 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {IP_PICTURE, "ip", &ip_png},
     {COVERAPP_DEFAULT, "coverapp", &coverapp_png},
     {MISSING_PICTURE, "missing", &missing_png},
-    {NO_DEVICE_PICTURE, "no_Device", &no_Device_png},
-    {NO_RATING_PICTURE, "no_Rating", &no_Rating_png},
+    // no_Device fallback dropped with the device indicator; not embedded.
+    {NO_DEVICE_PICTURE, "no_Device", NULL},
+    {NO_RATING_PICTURE, "no_Rating", &Rating_0_png}, // byte-identical to Rating_0: share the embedded blob (name kept for theme default=no_Rating + disk override)
     {SCREENS_OVERLAY, "screens", &screens_png},
     {ELF_FORMAT, "ELF", &ELF_png},
     {HDL_FORMAT, "HDL", &HDL_png},
@@ -206,13 +195,15 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {ASPECT_WIDE, "Aspect_w", &Aspect_w_png},
     {ASPECT_WIDE1, "Aspect_w1", &Aspect_w1_png},
     {ASPECT_WIDE2, "Aspect_w2", &Aspect_w2_png},
-    {DEVICE_1, "Device_1", &Device_1_png},
-    {DEVICE_2, "Device_2", &Device_2_png},
-    {DEVICE_3, "Device_3", &Device_3_png},
-    {DEVICE_4, "Device_4", &Device_4_png},
-    {DEVICE_5, "Device_5", &Device_5_png},
-    {DEVICE_6, "Device_6", &Device_6_png},
-    {DEVICE_ALL, "Device_all", &Device_all_png},
+    // Device-indicator icons removed from the embedded themes' info page, so no longer
+    // embedded (dropped from PNG_ASSETS). Enum + name kept (texId is positional), data NULL.
+    {DEVICE_1, "Device_1", NULL},
+    {DEVICE_2, "Device_2", NULL},
+    {DEVICE_3, "Device_3", NULL},
+    {DEVICE_4, "Device_4", NULL},
+    {DEVICE_5, "Device_5", NULL},
+    {DEVICE_6, "Device_6", NULL},
+    {DEVICE_ALL, "Device_all", NULL},
     {RATING_0, "Rating_0", &Rating_0_png},
     {RATING_1, "Rating_1", &Rating_1_png},
     {RATING_2, "Rating_2", &Rating_2_png},
@@ -243,9 +234,11 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {LOGO1_PICTURE, "logo1", &logo1_png},
     {LOGO2_PICTURE, "logo2", &logo2_png},
     {LOGO3_PICTURE, "logo3", &logo3_png},
-    {LOGO4_PICTURE, "logo4", &logo4_png},
-    {LOGO5_PICTURE, "logo5", &logo5_png},
-    {LOGO6_PICTURE, "logo6", &logo6_png},
+    // logo4/5/6 are byte-identical to logo3/2/1 (the boot animation ping-pongs 0..3..0):
+    // share the embedded blob -- names kept so a disk theme can still override by filename.
+    {LOGO4_PICTURE, "logo4", &logo3_png},
+    {LOGO5_PICTURE, "logo5", &logo2_png},
+    {LOGO6_PICTURE, "logo6", &logo1_png},
     {CASE_OVERLAY, "case", &case_png},
     {APPS_CASE_OVERLAY, "apps_case", &apps_case_png},
 };
