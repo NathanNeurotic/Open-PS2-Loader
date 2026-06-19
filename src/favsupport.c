@@ -257,7 +257,22 @@ static item_list_t *favResolve(int mode, int id, const char *text, int *outMode)
 
 static int favGetTextId(item_list_t *itemList) { return _STR_FAV; }
 static int favGetIconId(item_list_t *itemList) { return FAV_ICON; }
-static int favNeedsUpdate(item_list_t *itemList) { return 0; }
+
+// The FAV list is rebuilt on demand only. favForceUpdate is raised by loadFavourites (initial
+// boot, every source-list change, and each R3 toggle) and consumed exactly once here, so the
+// deferred-update driver (menuDeferredUpdate -> updateMenuFromGameList) actually runs
+// favUpdateItemList. Starting at 1 makes the FIRST deferred pass populate the tab; a
+// self-clearing one-shot -- never a constant 1 -- avoids a per-frame rebuild storm.
+static int favForceUpdate = 1;
+
+static int favNeedsUpdate(item_list_t *itemList)
+{
+    if (favForceUpdate) {
+        favForceUpdate = 0;
+        return 1;
+    }
+    return 0;
+}
 
 static void favInit(item_list_t *itemList)
 {
@@ -398,6 +413,13 @@ unsigned char favGetFlags(item_list_t *itemList)
     int id = mod->menuItem.current->item.id;
     if (!favValidIndex(id))
         return 0;
+    // Prefer the SOURCE list's live flags so dynamic capabilities are forwarded -- e.g. a BDM
+    // device backed by ATA only sets MODE_FLAG_COMPAT_DMA on itemList->flags after its scan, so
+    // re-deriving from mode alone would hide the DMA compat option for ATA-backed favourites.
+    item_list_t *o = favArray[id].owner;
+    if (o != NULL)
+        return o->flags;
+    // Fallback by resolved mode if the owner pointer is somehow absent.
     int m = favArray[id].mode;
     if (m == APP_MODE)
         return MODE_FLAG_NO_COMPAT | MODE_FLAG_NO_UPDATE;
@@ -514,9 +536,11 @@ void favRemoveByIndex(int favIndex)
 
 void loadFavourites(void)
 {
-    // Cheap + idempotent: clear the FAV list and schedule the single canonical rebuild.
-    // The actual file read happens once, inside favUpdateItemList.
-    menuClearGameList(oplGetModule(FAV_MODE));
+    // Mark the FAV list stale and schedule its single canonical rebuild. The clear + re-append
+    // happen together inside the deferred updateMenuFromGameList (favNeedsUpdate consumes the
+    // one-shot), so we must NOT clear here: an eager clear on every source refresh would blank
+    // the tab (and reset its cursor) even when the favourites set did not change.
+    favForceUpdate = 1;
     ioPutRequest(IO_MENU_UPDATE_DEFFERED, &favItemList.mode);
 }
 

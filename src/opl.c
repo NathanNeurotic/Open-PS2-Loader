@@ -308,7 +308,10 @@ static void itemExecRefresh(struct menu_item *curMenu)
     item_list_t *support = curMenu->userdata;
 
     if (support && support->enabled) {
-        ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
+        if (support->mode == FAV_MODE)
+            loadFavourites(); // re-read favourites.bin: raises the FAV one-shot + schedules the rebuild
+        else
+            ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
         sfxPlay(SFX_CONFIRM);
     }
 }
@@ -439,16 +442,12 @@ static void clearMenuGameList(opl_io_module_t *mdl)
     }
 }
 
-// Favourites accessors (see opl.h): keep list_support[] file-static, but let favsupport.c
-// reach the FAV module + clear its list through these thin wrappers.
+// Favourites accessor (see opl.h): keep list_support[] file-static, but let favsupport.c
+// reach the FAV module through this thin wrapper. (The FAV list is cleared via the normal
+// deferred updateMenuFromGameList path, so no separate clear wrapper is needed.)
 opl_io_module_t *oplGetModule(int mode)
 {
     return &list_support[mode];
-}
-
-void menuClearGameList(opl_io_module_t *mdl)
-{
-    clearMenuGameList(mdl);
 }
 
 void initSupport(item_list_t *itemList, int mode, int force_reinit)
@@ -772,7 +771,9 @@ void menuDeferredUpdate(void *data)
         updateMenuFromGameList(mod);
 
         // If other modes have been updated, then the apps list should be updated too.
-        if (mod->support->mode != APP_MODE)
+        // Exclude FAV: a FAV rebuild marking apps dirty would re-trigger the FAV resync below
+        // (an apps refresh calls loadFavourites), looping forever once favNeedsUpdate fires.
+        if (mod->support->mode != APP_MODE && mod->support->mode != FAV_MODE)
             shouldAppsUpdate = 1;
 
         // A source-list refresh may expose newly-loaded items to validate favourites
