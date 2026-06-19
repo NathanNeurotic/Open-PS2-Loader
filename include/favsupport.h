@@ -18,6 +18,10 @@ item_list_t *favGetObject(int initOnly);
 // itemExecTriangle so a FAV item exposes the same Options menu as its source would.
 unsigned char favGetFlags(item_list_t *itemList);
 
+// Source device mode of the FAV item at FAV-list index id, or -1 if out of range. Used by the
+// theme engine to draw APP favourites with the apps element (proper art box + overlay).
+int favGetItemSourceMode(int id);
+
 // R3-toggle helpers (called from opl.c). add/remove rewrite favourites.bin and return 1 on a
 // successful write, 0 on failure (so the caller won't set a lying star). add returns 1 if the
 // item is already present. removeFavouriteByIdAndText matches mode (BDM-lenient) + id + text.

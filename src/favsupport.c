@@ -324,6 +324,14 @@ static int favGetItemCount(item_list_t *itemList) { return favCount; }
 
 static int favValidIndex(int id) { return (favArray != NULL && id >= 0 && id < favCount); }
 
+// Source device mode (APP_MODE / HDD_MODE / BDM range / ...) of the FAV item at FAV-list index
+// id, or -1 if id is out of range. Lets the theme engine redirect e.g. an APP favourite to the
+// apps element (correct art folder + case overlay) instead of the game cover element.
+int favGetItemSourceMode(int id)
+{
+    return favValidIndex(id) ? favArray[id].mode : -1;
+}
+
 // Guard the stored source id against the owner's CURRENT count -- the source list may have
 // shrunk / re-scanned since the favourite was validated, so re-check before every proxy call
 // to avoid indexing the owner's game array out of bounds.
