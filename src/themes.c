@@ -1061,8 +1061,15 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
         elem->reflection = intValue ? 1 : 0;
 
     snprintf(elemProp, sizeof(elemProp), "%s_reflection_offset", name);
-    if (configGetInt(themeConfig, elemProp, &intValue))
+    if (configGetInt(themeConfig, elemProp, &intValue)) {
+        // Clamp to a sane band: an offset beyond a screen height only draws strips off-canvas
+        // (wasted work), and a hand-edited extreme should not push the reflection into nowhere.
+        if (intValue < -1024)
+            intValue = -1024;
+        else if (intValue > 1024)
+            intValue = 1024;
         elem->reflectionOffset = intValue;
+    }
 
     return elem;
 }

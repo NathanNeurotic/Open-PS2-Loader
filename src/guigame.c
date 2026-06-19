@@ -10,6 +10,7 @@
 #include "include/pad.h"
 #include "include/config.h"
 #include "include/ethsupport.h"
+#include "include/favsupport.h"
 #include "include/compatupd.h"
 #include "include/cheatman.h"
 #include "include/system.h"
@@ -944,11 +945,19 @@ void guiGameSavePadMacroGlobalConfig(config_set_t *configGame)
 }
 #endif
 
+// A FAV item must expose its SOURCE's flags (e.g. HDD DMA support), not the FAV list's (0).
+static unsigned char gameEffectiveFlags(item_list_t *support)
+{
+    if (support == NULL)
+        return 0;
+    return (support->mode == FAV_MODE) ? favGetFlags(support) : support->flags;
+}
+
 void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configSet)
 {
     int i;
 
-    if (support->flags & MODE_FLAG_COMPAT_DMA) {
+    if (gameEffectiveFlags(support) & MODE_FLAG_COMPAT_DMA) {
         const char *dmaModes[] = {"MDMA 0", "MDMA 1", "MDMA 2", "UDMA 0", "UDMA 1", "UDMA 2", "UDMA 3", "UDMA 4", NULL};
         diaSetEnum(diaCompatConfig, COMPAT_DMA, dmaModes);
     } else {
@@ -999,7 +1008,7 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
         compatMode |= (mdpart ? 1 : 0) << i;
     }
 
-    if (support->flags & MODE_FLAG_COMPAT_DMA) {
+    if (gameEffectiveFlags(support) & MODE_FLAG_COMPAT_DMA) {
         diaGetInt(diaCompatConfig, COMPAT_DMA, &dmaMode);
         if (dmaMode != 7)
             result = configSetInt(configSet, CONFIG_ITEM_DMA, dmaMode);
@@ -1469,7 +1478,7 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
         snprintf(configSource, sizeof(configSource), _l(_STR_DOWNLOADED_DEFAULTS));
 
     dmaMode = 7; // defaulting to UDMA 4
-    if (support->flags & MODE_FLAG_COMPAT_DMA) {
+    if (gameEffectiveFlags(support) & MODE_FLAG_COMPAT_DMA) {
         configGetInt(configSet, CONFIG_ITEM_DMA, &dmaMode);
         diaSetInt(diaCompatConfig, COMPAT_DMA, dmaMode);
     } else

@@ -245,10 +245,9 @@ typedef struct
     submenu_list_t *subMenu;
 } opl_io_module_t;
 
-// Favourites accessors: expose the (file-static) module table + a non-static list-clear so
-// favsupport.c can drive the FAV module without de-static-ing list_support.
+// Favourites accessor: expose the (file-static) module table so favsupport.c can reach the
+// FAV module without de-static-ing list_support.
 opl_io_module_t *oplGetModule(int mode);
-void menuClearGameList(opl_io_module_t *mdl);
 
 /*
 BLURT output char blurttext[128];
