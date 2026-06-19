@@ -229,6 +229,20 @@ jobs:
           echo "Source snapshot:"
           ls -la "rolling/${VERSIONED_BASE}-src.zip"
 
+      - name: Compute SHA256 checksums
+        run: |
+          set -eu
+          # Publish SHA256 of every binary + the source snapshot so each rolling build is
+          # verifiable for restoration/archival. SHA256SUMS.txt is uploaded as a release
+          # asset and the same hashes are listed in the release notes below.
+          cd rolling
+          : > SHA256SUMS.txt
+          for f in *.ELF *-src.zip; do
+            if [ -f "$f" ]; then sha256sum "$f" >> SHA256SUMS.txt; fi
+          done
+          echo "SHA256SUMS.txt:"
+          cat SHA256SUMS.txt
+
       - name: Build release notes
         run: |
           set -eu
@@ -249,6 +263,10 @@ jobs:
             fi
             printf '\nSource snapshot (for preservation / offline rebuild of this exact commit):\n'
             printf '  - %s-src.zip\n' "$VERSIONED_BASE"
+            printf '\nSHA256 (also published as SHA256SUMS.txt):\n'
+            printf '```\n'
+            cat rolling/SHA256SUMS.txt
+            printf '```\n'
             printf '\nUpdated on every push to master. Independent of the tagged releases and the "latest" pre-release.\n'
           } > notes.md
           echo "ps2dev-latest present: $HAS_LATEST"
