@@ -7,6 +7,7 @@
 #include "include/opl.h"
 #include "include/menusys.h"
 #include "include/iosupport.h"
+#include "include/favsupport.h"
 #include "include/renderman.h"
 #include "include/fntsys.h"
 #include "include/lang.h"
@@ -125,6 +126,20 @@ static void menuRenameGame(submenu_list_t **submenu)
 
     item_list_t *support = selected_item->item->userdata;
 
+    // Favourites: rename is blocked from the FAV tab and on any favourited source item.
+    if (support && support->mode == FAV_MODE) {
+        char text[128];
+        snprintf(text, sizeof(text), _l(_STR_FAV_MSG), _l(_STR_RENAME));
+        guiMsgBox(text, 0, NULL);
+        return;
+    }
+    if (selected_item->item->current->item.favourited) {
+        char text[128];
+        snprintf(text, sizeof(text), _l(_STR_FAV_PERSISTENCE_MSG), _l(_STR_RENAME));
+        guiMsgBox(text, 0, NULL);
+        return;
+    }
+
     if (support) {
         if (support->itemRename) {
             if (menuCheckParentalLock() == 0) {
@@ -158,6 +173,20 @@ static void menuDeleteGame(submenu_list_t **submenu)
         return;
 
     item_list_t *support = selected_item->item->userdata;
+
+    // Favourites: delete is blocked from the FAV tab and on any favourited source item.
+    if (support && support->mode == FAV_MODE) {
+        char text[128];
+        snprintf(text, sizeof(text), _l(_STR_FAV_MSG), _l(_STR_DELETE));
+        guiMsgBox(text, 0, NULL);
+        return;
+    }
+    if (selected_item->item->current->item.favourited) {
+        char text[128];
+        snprintf(text, sizeof(text), _l(_STR_FAV_PERSISTENCE_MSG), _l(_STR_DELETE));
+        guiMsgBox(text, 0, NULL);
+        return;
+    }
 
     if (support) {
         if (support->itemDelete) {
@@ -1092,7 +1121,7 @@ void menuHandleInputMenu()
 
     if (getKeyOn(KEY_START) || getKeyOn(gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE)) {
         // Check if there is anything to show the user, at all.
-        if (gAPPStartMode || gETHStartMode || gBDMStartMode || gHDDStartMode || gMMCEStartMode) {
+        if (gAPPStartMode || gETHStartMode || gBDMStartMode || gHDDStartMode || gMMCEStartMode || gFAVStartMode) {
             guiSwitchScreen(GUI_SCREEN_MAIN);
             refreshMenuPosition();
         }
@@ -1208,6 +1237,9 @@ void menuHandleInputMain()
         menuFirstPage();
     } else if (getKeyOn(KEY_R2)) { // end
         menuLastPage();
+    } else if (getKeyOn(KEY_R3)) { // toggle favourite
+        if (selected_item->item->fav)
+            selected_item->item->fav(selected_item->item);
     }
 
     // Last Played Auto Start

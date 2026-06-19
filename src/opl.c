@@ -35,6 +35,7 @@
 #include "include/cheatman.h"
 #include "include/sound.h"
 #include "include/xparam.h"
+#include "include/favsupport.h"
 
 // FIXME: We should not need this function.
 //        Use newlib's 'stat' to get GMT time.
@@ -250,6 +251,9 @@ void moduleUpdateMenuInternal(opl_io_module_t *mod, int themeChanged, int langCh
             menuAddHint(&mod->menuItem, _STR_OPTIONS, TRIANGLE_ICON);
 
         menuAddHint(&mod->menuItem, _STR_REFRESH, SELECT_ICON);
+
+        if (gFAVStartMode)
+            menuAddHint(&mod->menuItem, _STR_FAV_HINT, R3_ICON);
     }
 
     // refresh Cache
@@ -335,7 +339,9 @@ static void itemExecTriangle(struct menu_item *curMenu)
     item_list_t *support = curMenu->userdata;
 
     if (support) {
-        if (!(support->flags & MODE_FLAG_NO_COMPAT)) {
+        // FAV items report their source's flags dynamically so the Options menu matches.
+        unsigned char flags = (support->mode == FAV_MODE) ? favGetFlags(support) : support->flags;
+        if (!(flags & MODE_FLAG_NO_COMPAT)) {
             if (menuCheckParentalLock() == 0) {
                 menuInitGameMenu();
                 guiSwitchScreen(GUI_SCREEN_GAME_MENU);
@@ -349,6 +355,33 @@ static void itemExecTriangle(struct menu_item *curMenu)
         }
     } else
         guiMsgBox("NULL Support object. Please report", 0, NULL);
+}
+
+// R3: toggle the highlighted item's favourite state. On the Favourites tab it removes; on a
+// source list it adds/removes and updates the star. The reload runs via the single deferred path.
+static void itemExecFav(struct menu_item *curMenu)
+{
+    if (!curMenu->current)
+        return;
+
+    item_list_t *support = curMenu->userdata;
+    if (!support)
+        return;
+
+    submenu_item_t *it = &curMenu->current->item;
+
+    if (support->mode == FAV_MODE) {
+        favRemoveByIndex(it->id);
+    } else if (it->favourited) {
+        it->favourited = 0;
+        removeFavouriteByIdAndText(it->id, it->text);
+    } else {
+        it->favourited = 1;
+        addFavouriteItem(support->mode, it->id, it->icon_id, it->text_id, it->text);
+    }
+
+    sfxPlay(SFX_CONFIRM);
+    ioPutRequest(IO_CUSTOM_SIMPLEACTION, &loadFavourites);
 }
 
 static void initMenuForListSupport(opl_io_module_t *mod)
@@ -373,6 +406,7 @@ static void initMenuForListSupport(opl_io_module_t *mod)
     mod->menuItem.execTriangle = &itemExecTriangle;
     mod->menuItem.execSquare = &itemExecSquare;
     mod->menuItem.execCircle = &itemExecCircle;
+    mod->menuItem.fav = &itemExecFav;
 
     mod->menuItem.hints = NULL;
 
@@ -430,6 +464,8 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
         startMode = gAPPStartMode;
     else if (mode == MMCE_MODE)
         startMode = gMMCEStartMode;
+    else if (mode == FAV_MODE)
+        startMode = gFAVStartMode;
 
     if (startMode) {
         if (!mod->support) {
@@ -457,6 +493,7 @@ static void initAllSupport(int force_reinit)
     initSupport(ethGetObject(0), ETH_MODE, force_reinit || (gNetworkStartup >= ERROR_ETH_SMB_CONN));
     initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     initSupport(appGetObject(0), APP_MODE, force_reinit);
+    initSupport(favGetObject(0), FAV_MODE, force_reinit);
 }
 
 static void deinitAllSupport(int exception, int modeSelected)
@@ -734,6 +771,11 @@ void menuDeferredUpdate(void *data)
         // If other modes have been updated, then the apps list should be updated too.
         if (mod->support->mode != APP_MODE)
             shouldAppsUpdate = 1;
+
+        // A source-list refresh may expose newly-loaded items to validate favourites
+        // against. Re-sync the FAV tab (cheap/idempotent; skipped when FAV is disabled).
+        if (gFAVStartMode && mod->support->mode != FAV_MODE)
+            loadFavourites();
     }
 }
 
@@ -1121,6 +1163,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ETH_MODE, &gETHStartMode);
             configGetInt(configOPL, CONFIG_OPL_APP_MODE, &gAPPStartMode);
             configGetInt(configOPL, CONFIG_OPL_MMCE_MODE, &gMMCEStartMode);
+            configGetInt(configOPL, CONFIG_OPL_FAV_MODE, &gFAVStartMode);
             configGetInt(configOPL, CONFIG_OPL_MMCE_SLOT, &gMMCESlot);
             configGetInt(configOPL, CONFIG_OPL_MMCEIGR_SLOT, &gMMCEIGRSlot);
             configGetInt(configOPL, CONFIG_OPL_MMCE_GAMEID, &gMMCEEnableGameID);
@@ -1328,6 +1371,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_ETH_MODE, gETHStartMode);
         configSetInt(configOPL, CONFIG_OPL_APP_MODE, gAPPStartMode);
         configSetInt(configOPL, CONFIG_OPL_MMCE_MODE, gMMCEStartMode);
+        configSetInt(configOPL, CONFIG_OPL_FAV_MODE, gFAVStartMode);
         configSetInt(configOPL, CONFIG_OPL_MMCE_SLOT, gMMCESlot);
         configSetInt(configOPL, CONFIG_OPL_MMCEIGR_SLOT, gMMCEIGRSlot);
         configSetInt(configOPL, CONFIG_OPL_MMCE_GAMEID, gMMCEEnableGameID);
@@ -2004,6 +2048,7 @@ static void setDefaults(void)
     gETHStartMode = START_MODE_MANUAL;
     gAPPStartMode = START_MODE_MANUAL;
     gMMCEStartMode = START_MODE_MANUAL;
+    gFAVStartMode = START_MODE_MANUAL;
 
     gMMCESlot = 2; //Default to first Auto slot
     gMMCEIGRSlot = 3;
