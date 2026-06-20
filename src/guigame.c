@@ -1592,6 +1592,8 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
 
     int neutrinoVideo = 0;
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
+    if (neutrinoVideo < 0 || neutrinoVideo > 3)
+        neutrinoVideo = 0; // sanitize a corrupt/out-of-range cfg value (valid: 0=Off .. 3=1080i)
     diaSetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideo);
 
     /// VMC ///

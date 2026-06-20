@@ -524,7 +524,15 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
         }
 
         case UI_ENUM: {
-            const char *tv = item->intvalue.enumvalues[item->intvalue.current];
+            // Guard against a corrupt/out-of-range stored index (e.g. a hand-edited cfg): count the
+            // NULL-terminated options, then index with a clamped copy so we never read past the array.
+            int ecount = 0;
+            while (item->intvalue.enumvalues[ecount] != NULL)
+                ecount++;
+            int eidx = item->intvalue.current;
+            if (eidx < 0 || eidx >= ecount)
+                eidx = 0;
+            const char *tv = (ecount > 0) ? item->intvalue.enumvalues[eidx] : NULL;
 
             if (!tv)
                 tv = _l(_STR_NO_ITEMS);
@@ -738,6 +746,14 @@ static int diaHandleInput(struct UIItem *item, int *modified)
 
         return 0;
     } else if (item->type == UI_ENUM) {
+        // Snap a corrupt/out-of-range current index back into range before indexing the
+        // NULL-terminated enumvalues[] (count first so we never read past the terminator).
+        int ecount = 0;
+        while (item->intvalue.enumvalues[ecount] != NULL)
+            ecount++;
+        if (item->intvalue.current < 0 || item->intvalue.current >= ecount)
+            item->intvalue.current = 0;
+
         int cur = item->intvalue.current;
 
         if (item->intvalue.enumvalues[cur] == NULL) {
