@@ -57,6 +57,9 @@ int sbProbeISO9660_64(const char *path, base_game_info_t *game, u32 layer1_offse
 
 int sbFileExists(const char *path);
 
+// First existing Neutrino core ELF among the known mc0/mc1 install locations, or NULL.
+const char *sbResolveNeutrinoPath(void);
+
 int sbLoadCheats(const char *path, const char *file);
 
 #endif

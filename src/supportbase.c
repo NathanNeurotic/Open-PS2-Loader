@@ -543,6 +543,28 @@ int sbFileExists(const char *path)
     return 1;
 }
 
+// Resolve the Neutrino core ELF: probe the install locations users actually use (folder-case
+// and leading-slash variants on mc0/mc1) and return the first that exists, or NULL. Centralised
+// so the bdm + mmce launch paths stay in sync.
+const char *sbResolveNeutrinoPath(void)
+{
+    static const char *candidates[] = {
+        NEUTRINO_PATH,     // mc0:NEUTRINO/neutrino.elf
+        NEUTRINO_ALT_PATH, // mc1:NEUTRINO/neutrino.elf
+        "mc0:/neutrino/neutrino.elf",
+        "mc1:/neutrino/neutrino.elf",
+        "mc0:/neutrino/NEUTRINO.ELF",
+        "mc1:/neutrino/NEUTRINO.ELF",
+        "mc0:NEUTRINO/NEUTRINO.ELF",
+        "mc1:/NEUTRINO/NEUTRINO.ELF",
+    };
+    for (int i = 0; i < (int)(sizeof(candidates) / sizeof(candidates[0])); i++) {
+        if (sbFileExists(candidates[i]))
+            return candidates[i];
+    }
+    return NULL;
+}
+
 int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset)
 {
     int result = -1, fd;
