@@ -121,6 +121,9 @@ IMPORT_BIN2C(mx4sio_bd_irx);
 IMPORT_BIN2C(smap_irx);
 
 IMPORT_BIN2C(smap_udpbd_irx);
+IMPORT_BIN2C(udpfs_smap_irx);
+IMPORT_BIN2C(udpfs_ministack_irx);
+IMPORT_BIN2C(udpfs_bd_irx);
 
 IMPORT_BIN2C(smap_ingame_irx);
 

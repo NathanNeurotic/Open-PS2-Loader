@@ -1,0 +1,4 @@
+Vendored from rickgaiser/neutrino iop/smap/, pinned to commit
+06188cce7cd07d2a158cb4b2646c5719fc16a565. SMAP NIC driver for the UDPFS transport chain.
+See ../udpfs_bd/ORIGIN.txt for the full UDPFS provenance + local changes (PS2SDK Makefile,
+mprintf.h, clang-format).

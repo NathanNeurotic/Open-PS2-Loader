@@ -82,7 +82,7 @@ FRONTEND_OBJS = pad.o xparam.o fntsys.o renderman.o menusys.o OSDHistory.o syste
 IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o bdmevent.o \
 		bdm.o bdmfs_fatfs.o usbmass_bd.o iLinkman.o IEEE1394_bd.o mx4sio_bd.o \
 		ps2atad.o hdpro_atad.o poweroff.o ps2hdd.o xhdd.o genvmc.o lwnbdsvr.o \
-		ps2dev9.o smsutils.o ps2ip.o smap.o smap_udpbd.o isofs.o nbns-iop.o \
+		ps2dev9.o smsutils.o ps2ip.o smap.o smap_udpbd.o udpfs_smap.o udpfs_ministack.o udpfs_bd.o isofs.o nbns-iop.o \
 		sio2man.o padman.o mcman.o mcserv.o mmceman.o mmcedrv.o mmceigr.o \
 		httpclient-iop.o netman.o ps2ips.o \
 		bdm_mcemu.o mmce_mcemu.o hdd_mcemu.o smb_mcemu.o \
@@ -333,6 +333,10 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/smap-ingame clean
 	echo " -smap_udpbd"
 	$(MAKE) -C modules/network/smap_udpbd clean
+	echo " -udpfs (smap/ministack/bd)"
+	$(MAKE) -C modules/network/udpfs_smap clean
+	$(MAKE) -C modules/network/udpfs_ministack clean
+	$(MAKE) -C modules/network/udpfs_bd clean
 	echo " -smbinit"
 	$(MAKE) -C modules/network/smbinit clean
 	echo " -nbns"
@@ -659,6 +663,24 @@ modules/network/smap_udpbd/smap_udpbd.irx: modules/network/smap_udpbd
 	$(MAKE) -C $<
 
 $(EE_ASM_DIR)smap_udpbd.c: modules/network/smap_udpbd/smap_udpbd.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+modules/network/udpfs_smap/udpfs_smap.irx: modules/network/udpfs_smap
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)udpfs_smap.c: modules/network/udpfs_smap/udpfs_smap.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+modules/network/udpfs_ministack/udpfs_ministack.irx: modules/network/udpfs_ministack
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)udpfs_ministack.c: modules/network/udpfs_ministack/udpfs_ministack.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+modules/network/udpfs_bd/udpfs_bd.irx: modules/network/udpfs_bd
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)udpfs_bd.c: modules/network/udpfs_bd/udpfs_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)smap.c: $(PS2SDK)/iop/irx/smap.irx | $(EE_ASM_DIR)
