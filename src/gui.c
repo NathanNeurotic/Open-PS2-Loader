@@ -491,6 +491,7 @@ void guiShowConfig()
     diaSetInt(diaConfig, CFG_PS2LOGO, gPS2Logo);
     diaSetString(diaConfig, CFG_EXITTO, gExitPath);
     diaSetString(diaConfig, CFG_NEUTRINO_ARGS, gNeutrinoArgs);
+    diaSetString(diaConfig, CFG_NEUTRINO_PATH, gNeutrinoPath);
     diaSetString(diaConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
 
     // BDMA (BDMAssault exFAT driver) equip. MODE reflects what's ACTUALLY on the card (read the
@@ -521,6 +522,14 @@ void guiShowConfig()
             diaGetString(diaConfig, CFG_NEUTRINO_ARGS, tmpArgs, sizeof(tmpArgs));
             if (strncmp(tmpArgs, gNeutrinoArgs, 31) != 0)
                 snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", tmpArgs);
+        }
+        {
+            // Same truncation guard as the args field above: the UI field is char[32], so only
+            // adopt the typed value when it changed (preserves a longer cfg-set neutrino.elf path).
+            char tmpNPath[sizeof(gNeutrinoPath)];
+            diaGetString(diaConfig, CFG_NEUTRINO_PATH, tmpNPath, sizeof(tmpNPath));
+            if (strncmp(tmpNPath, gNeutrinoPath, 31) != 0)
+                snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", tmpNPath);
         }
         {
             // The dialog field is char[32]; only adopt the typed value if it actually changed, so

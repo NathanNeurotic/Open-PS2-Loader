@@ -768,6 +768,10 @@ gui_strings:
   string: Neutrino Video
 - label: HINT_NEUTRINO_VIDEO
   string: Force Neutrino's GS output video mode (-gsm). Off keeps the game's default.
+- label: NEUTRINO_PATH
+  string: Neutrino ELF Path
+- label: HINT_NEUTRINO_PATH
+  string: Full path to neutrino.elf (e.g. mc0:NEUTRINO/neutrino.elf). Blank = auto-detect on mc0/mc1.
 - label: POPSTARTER_PATH
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH

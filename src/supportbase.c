@@ -548,6 +548,11 @@ int sbFileExists(const char *path)
 // so the bdm + mmce launch paths stay in sync.
 const char *sbResolveNeutrinoPath(void)
 {
+    // A user-set path (General Settings -> Neutrino ELF Path) wins when it exists; otherwise
+    // fall back to the mc0:/mc1: auto-detect candidates below.
+    if (gNeutrinoPath[0] != '\0' && sbFileExists(gNeutrinoPath))
+        return gNeutrinoPath;
+
     static const char *candidates[] = {
         NEUTRINO_PATH,     // mc0:NEUTRINO/neutrino.elf
         NEUTRINO_ALT_PATH, // mc1:NEUTRINO/neutrino.elf
