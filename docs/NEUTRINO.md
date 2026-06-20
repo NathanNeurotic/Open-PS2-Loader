@@ -19,6 +19,12 @@ of these paths (OPL checks them in order):
 If neither exists when you launch a game set to the Neutrino core, OPL shows a warning and
 falls back to the `<OPL>` core for that launch.
 
+You can also point OPL at a **custom location** via **Settings → General Settings → Neutrino
+ELF Path**. When that field is set and the file exists it takes **priority** over the table
+above; leave it blank to use the auto-detection (which also checks a few lowercase /
+`NEUTRINO.ELF` spelling variants on `mc0:`/`mc1:`). For a path longer than the on-screen
+31-character editor, set `neutrino_path` in `conf_riptopl.cfg` directly.
+
 ## 2. Pick the core per game
 
 1. Highlight a game and open **Game Settings → Compatibility Settings**.
