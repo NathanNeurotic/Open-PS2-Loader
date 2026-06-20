@@ -35,7 +35,8 @@ enum MENU_IDs {
     MENU_ABOUT,
     MENU_SAVE_CHANGES,
     MENU_EXIT,
-    MENU_POWER_OFF
+    MENU_POWER_OFF,
+    MENU_LAUNCH_PS2_DISC
 };
 
 enum GAME_MENU_IDs {
@@ -372,6 +373,7 @@ static void menuInitMainMenu(void)
         submenuDestroy(&mainMenu);
 
     // initialize the menu
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_LAUNCH_PS2_DISC, _STR_LAUNCH_PS2_DISC, NULL);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_SETTINGS, _STR_GENERAL_SETTINGS, NULL);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_DEVICE_SETTINGS, _STR_DEVICE_SETTINGS, NULL);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_GFX_SETTINGS, _STR_GFX_SETTINGS, NULL);
@@ -1065,7 +1067,10 @@ void menuHandleInputMenu()
 
         sfxPlay(SFX_CONFIRM);
 
-        if (id == MENU_SETTINGS) {
+        if (id == MENU_LAUNCH_PS2_DISC) {
+            if (sysLaunchDisc() < 0) // success never returns; <0 means no/!PS2 disc -> stay in OPL
+                guiMsgBox(_l(_STR_DISC_LAUNCH_ERR), 0, NULL);
+        } else if (id == MENU_SETTINGS) {
             if (menuCheckParentalLock() == 0)
                 guiShowConfig();
         } else if (id == MENU_DEVICE_SETTINGS) {
