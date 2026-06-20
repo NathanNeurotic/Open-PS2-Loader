@@ -9,9 +9,11 @@ IOP_INCS := -Iinclude -Isrc
 IOP_OBJS = exports.o main.o smap.o xfer.o imports.o
 
 # exports.o is first (for iopfixup, above), so the generated obj/build-exports.c is the FIRST build
-# step. ps2dev:latest's Makefile.iopglobal gives the real .o rules an order-only obj/ prereq but not
-# these generated sources, so under -j build-exports.c can be written before obj/ exists ("can't
-# create obj/build-exports.c: nonexistent directory"). Give them the same prereq. Keep on re-vendor.
+# step. ps2dev:latest's Makefile.iopglobal mkdir's obj/ inside the build-imports.c recipe (:96) but
+# NOT inside build-exports.c (:106), so when build-exports.c runs first obj/ doesn't exist yet.
+# Provide an explicit obj/ rule + make both generated sources order-only depend on it. Keep on re-vendor.
+$(IOP_OBJS_DIR):
+	mkdir -p $@
 $(IOP_OBJS_DIR)build-exports.c $(IOP_OBJS_DIR)build-imports.c: | $(IOP_OBJS_DIR)
 
 all:: $(IOP_BIN)
