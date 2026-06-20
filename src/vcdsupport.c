@@ -13,6 +13,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h> // mkdir (POSIX, used like util.c / OSDHistory.c)
 
 #include "include/opl.h"    // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
 #include "include/system.h" // POPS_FOLDER
@@ -300,4 +301,150 @@ int vcdSafeWriteFile(const char *dstPath, const void *buf, int len)
     if (rc != 0)
         unlink(dstPath);
     return rc;
+}
+
+// ---- BDMA (BDMAssault exFAT driver) equip -------------------------------------------
+// POPStarter loads its block-device driver from mc?:/POPSTARTER/{usbd.irx,usbhdfsd.irx}. We let the
+// user EQUIP one of three exFAT variants (or FAT32 = none) by copying THEIR OWN files from a source
+// device's POPS/ folder -- RiptOPL embeds nothing. "BDMA MODE" picks the variant; "BDMA SOURCE"
+// picks which device family to read the loose variant files from (named usbd.irx.<suffix>, the
+// POPSLoader convention). The equip fires when either setting changes (opl.c), goes through the
+// free-space-gated safe-copy, and records the equipped variant in mc?:/POPSTARTER/bdma_config.txt so
+// the settings UI can reflect what's actually installed. (POPSLoader itself is a Lua loader that
+// embeds its modules; there's no shared marker file to mirror, so we use the user's release-spec
+// name bdma_config.txt with the variant suffix as its single-token contents.)
+
+// MODE -> variant suffix on the loose source files (usbd.irx.<suffix>) AND the marker token.
+static const char *vcdBdmaSuffix[VCD_BDMA_MODE_COUNT] = {"fat32", "usbexfat", "mx4sio", "mmce"};
+// The two driver files POPStarter loads, equipped onto the MC WITHOUT the .<suffix>.
+static const char *vcdBdmaModule[2] = {"usbd.irx", "usbhdfsd.irx"};
+
+#define VCD_BDMA_MARKER "bdma_config.txt"
+
+// Resolve the memory-card POPSTARTER folder (where the modules live). Prefer an existing
+// mc?:/POPSTARTER; if neither card has one, default to mc0 and create it. Always returns 1.
+static int vcdResolvePopstarterMc(char *out, int outSize)
+{
+    static const char *cards[2] = {"mc0:/POPSTARTER", "mc1:/POPSTARTER"};
+    for (int i = 0; i < 2; i++) {
+        DIR *d = opendir(cards[i]);
+        if (d != NULL) {
+            closedir(d);
+            snprintf(out, outSize, "%s", cards[i]);
+            return 1;
+        }
+    }
+    snprintf(out, outSize, "%s", cards[0]);
+    mkdir(out, 0777); // first-time setup: create mc0:/POPSTARTER
+    return 1;
+}
+
+// Write the equipped-state marker mc?:/POPSTARTER/bdma_config.txt = the variant token.
+static void vcdWriteBdmaMarker(const char *mcDir, int mode)
+{
+    if (mode < 0 || mode >= VCD_BDMA_MODE_COUNT)
+        return;
+    char path[96];
+    snprintf(path, sizeof(path), "%s/%s", mcDir, VCD_BDMA_MARKER);
+    const char *tok = vcdBdmaSuffix[mode];
+    vcdSafeWriteFile(path, tok, (int)strlen(tok));
+}
+
+int vcdReadBdmaMode(void)
+{
+    char mcDir[64];
+    vcdResolvePopstarterMc(mcDir, sizeof(mcDir));
+    char path[96];
+    snprintf(path, sizeof(path), "%s/%s", mcDir, VCD_BDMA_MARKER);
+    int fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return VCD_BDMA_FAT32; // no marker -> no exFAT modules -> FAT32 is the safe default
+    char buf[32];
+    int r = read(fd, buf, sizeof(buf) - 1);
+    close(fd);
+    if (r <= 0)
+        return VCD_BDMA_FAT32;
+    buf[r] = '\0';
+    while (r > 0 && (buf[r - 1] == '\n' || buf[r - 1] == '\r' || buf[r - 1] == ' ' || buf[r - 1] == '\t'))
+        buf[--r] = '\0'; // trim trailing whitespace/newline
+    for (int m = 0; m < VCD_BDMA_MODE_COUNT; m++) {
+        if (strcmp(buf, vcdBdmaSuffix[m]) == 0)
+            return m;
+    }
+    return VCD_BDMA_FAT32;
+}
+
+// Candidate source device prefixes for a BDMA SOURCE family (each ends in '/'). USB and MX4SIO both
+// live in the BDM massN namespace (OPL can't split them by path); MMCE has its own.
+static int vcdBdmaSourcePrefixes(int source, const char *out[], int maxOut)
+{
+    static const char *mass[8] = {"mass0:/", "mass1:/", "mass2:/", "mass3:/",
+                                  "mass4:/", "mass5:/", "mass6:/", "mass7:/"};
+    static const char *mmce[2] = {"mmce0:/", "mmce1:/"};
+    int n = 0;
+    if (source == VCD_BDMA_SRC_MMCE) {
+        for (int i = 0; i < 2 && n < maxOut; i++)
+            out[n++] = mmce[i];
+    } else { // USB or MX4SIO -> the mass namespace
+        for (int i = 0; i < 8 && n < maxOut; i++)
+            out[n++] = mass[i];
+    }
+    return n;
+}
+
+int vcdEquipBdma(int source, int mode)
+{
+    if (mode < 0 || mode >= VCD_BDMA_MODE_COUNT || source < 0 || source >= VCD_BDMA_SRC_COUNT)
+        return -1;
+
+    char mcDir[64];
+    vcdResolvePopstarterMc(mcDir, sizeof(mcDir));
+
+    char dst0[96], dst1[96];
+    snprintf(dst0, sizeof(dst0), "%s/%s", mcDir, vcdBdmaModule[0]);
+    snprintf(dst1, sizeof(dst1), "%s/%s", mcDir, vcdBdmaModule[1]);
+
+    if (mode == VCD_BDMA_FAT32) {
+        // FAT32 fallback: remove the exFAT modules so POPStarter uses its built-in driver.
+        unlink(dst0);
+        unlink(dst1);
+        vcdWriteBdmaMarker(mcDir, mode);
+        return 0;
+    }
+
+    // Find the source device whose POPS/ holds BOTH variant files for this mode.
+    const char *cands[8];
+    int nc = vcdBdmaSourcePrefixes(source, cands, 8);
+    const char *suffix = vcdBdmaSuffix[mode];
+    char src0[96], src1[96];
+    int found = 0;
+    for (int i = 0; i < nc; i++) {
+        snprintf(src0, sizeof(src0), "%sPOPS/%s.%s", cands[i], vcdBdmaModule[0], suffix);
+        snprintf(src1, sizeof(src1), "%sPOPS/%s.%s", cands[i], vcdBdmaModule[1], suffix);
+        int f0 = open(src0, O_RDONLY);
+        if (f0 < 0)
+            continue;
+        close(f0);
+        int f1 = open(src1, O_RDONLY);
+        if (f1 < 0)
+            continue;
+        close(f1);
+        found = 1;
+        break;
+    }
+    if (!found)
+        return -4; // the chosen SOURCE has neither variant file in its POPS/
+
+    // Copy both through the free-space-gated safe-copy. If usbd.irx fits but usbhdfsd.irx won't,
+    // we've already replaced usbd.irx -- acceptable (re-equip fixes it) and the card is never
+    // corrupted (each write is space-gated + truncation-safe).
+    int r = vcdSafeCopyFile(src0, dst0);
+    if (r != 0)
+        return r; // -2 (no space) / -3 (IO)
+    r = vcdSafeCopyFile(src1, dst1);
+    if (r != 0)
+        return r;
+
+    vcdWriteBdmaMarker(mcDir, mode);
+    return 0;
 }

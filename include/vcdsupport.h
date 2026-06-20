@@ -65,4 +65,26 @@ int vcdSafeCopyFile(const char *srcPath, const char *dstPath);
 // Write a buffer to dstPath under the same gate: 0 ok, -2 MC too full, -3 IO error (partial removed).
 int vcdSafeWriteFile(const char *dstPath, const void *buf, int len);
 
+// ---- BDMA (BDMAssault exFAT driver) equip -----------------------------------------
+// "BDMA MODE": which block-device driver variant POPStarter loads from mc?:/POPSTARTER/.
+enum {
+    VCD_BDMA_FAT32 = 0, // none -- remove the exFAT modules (POPStarter's built-in FAT32 driver)
+    VCD_BDMA_USBEXFAT,  // USB exFAT
+    VCD_BDMA_MX4SIO,    // MX4SIO exFAT
+    VCD_BDMA_MMCE,      // MMCE exFAT
+    VCD_BDMA_MODE_COUNT
+};
+// "BDMA SOURCE": which device family holds the user-provided variant files in its POPS/ folder.
+enum {
+    VCD_BDMA_SRC_USB = 0, // scan mass0-7
+    VCD_BDMA_SRC_MX4SIO,  // scan mass0-7 (MX4SIO mounts in the BDM mass namespace)
+    VCD_BDMA_SRC_MMCE,    // scan mmce0-1
+    VCD_BDMA_SRC_COUNT
+};
+// Equip the chosen variant (copy from SOURCE's POPS/, or remove for FAT32) + write the marker.
+//   0 ok, -1 bad args, -2 MC too full, -3 IO error, -4 source variant files not found.
+int vcdEquipBdma(int source, int mode);
+// Read the equipped variant from mc?:/POPSTARTER/bdma_config.txt (VCD_BDMA_FAT32 if absent).
+int vcdReadBdmaMode(void);
+
 #endif
