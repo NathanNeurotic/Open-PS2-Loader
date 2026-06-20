@@ -831,6 +831,19 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             sbBuildVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, &neutrinoVmc);
     }
 
+    // UDPBD has no embedded cdvdman fallback: every BDM_*_MODE below is local-storage only, so a
+    // udp game with coreLoader cleared (Neutrino missing/bad-format -- already warned above) would
+    // otherwise deinit into a no-op launch (black screen). Abort cleanly here while the GUI is up.
+    if (!coreLoader && bdmDriverIsUDPBD(bdmCurrentDriver)) {
+        if (gAutoLaunchBDMGame != NULL) {
+            free(gAutoLaunchBDMGame);
+            gAutoLaunchBDMGame = NULL;
+            free(gAutoLaunchDeviceData);
+            gAutoLaunchDeviceData = NULL;
+        }
+        return;
+    }
+
     if (gAutoLaunchBDMGame == NULL)
         deinit(NO_EXCEPTION, itemList->mode); // CAREFUL: deinit will call bdmCleanUp, so bdmGames/game will be freed
     else {
