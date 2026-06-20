@@ -769,6 +769,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
             coreLoader = 0;
         }
+
+        // VMC -> neutrino (#47): forward any per-game VMC as -mc0/-mc1, built into the stack-resident
+        // args before deinit frees configSet / pDeviceData.
+        if (coreLoader)
+            sbAppendVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
     }
 
     if (gAutoLaunchBDMGame == NULL)

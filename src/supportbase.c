@@ -855,6 +855,30 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     return config;
 }
 
+// Append neutrino "-mc0="/"-mc1=" VMC args from the per-game config to argsBuf (issue #47: pass an
+// OPL-configured VMC to neutrino on launch). vmcPrefix is the device path prefix ending in its
+// separator (e.g. "mass0:/" or "mmce0:/"); the VMC file lives at <vmcPrefix>VMC/<name>.bin -- the
+// same location OPL's own mcemu uses. Call BEFORE deinit() frees the config/device data; argsBuf is
+// the stack-resident neutrino-args buffer. Unconfigured slots are skipped.
+void sbAppendVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, char *argsBuf, int argsBufSize)
+{
+    int slot;
+    char vmcName[32];
+
+    if (configSet == NULL || vmcPrefix == NULL || argsBuf == NULL)
+        return;
+
+    for (slot = 0; slot < 2; slot++) {
+        vmcName[0] = '\0';
+        configGetVMC(configSet, vmcName, sizeof(vmcName), slot);
+        if (vmcName[0] != '\0') {
+            int len = (int)strlen(argsBuf);
+            if (len < argsBufSize - 1)
+                snprintf(argsBuf + len, argsBufSize - len, " -mc%d=%sVMC/%s.bin", slot, vmcPrefix, vmcName);
+        }
+    }
+}
+
 static void sbCreateFoldersFromList(const char *path, const char **folders)
 {
     int i;

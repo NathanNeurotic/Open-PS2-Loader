@@ -48,6 +48,8 @@ void sbCreatePath(const base_game_info_t *game, char *path, const char *prefix, 
 void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id);
 void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id, char *newname);
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep);
+// Append neutrino -mc0/-mc1 VMC args (from the per-game config) for vmcPrefix's device. Call before deinit.
+void sbAppendVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, char *argsBuf, int argsBufSize);
 void sbCreateFolders(const char *path, int createDiscImgFolders);
 
 // ISO9660 filesystem management functions.
