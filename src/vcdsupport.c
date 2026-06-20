@@ -85,7 +85,21 @@ static char vcdSep(const char *devPrefix)
 
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
 {
-    if (devPrefix == NULL || out == NULL || outSize <= 0)
+    if (out == NULL || outSize <= 0)
+        return 0;
+
+    // A custom POPSTARTER.ELF path from General Settings wins -- but ONLY if it actually exists;
+    // otherwise we quietly fall back to the per-device <dev>/POPS/POPSTARTER.ELF.
+    if (gPopstarterPath[0] != '\0') {
+        int cfd = open(gPopstarterPath, O_RDONLY);
+        if (cfd >= 0) {
+            close(cfd);
+            snprintf(out, outSize, "%s", gPopstarterPath);
+            return 1;
+        }
+    }
+
+    if (devPrefix == NULL)
         return 0;
     snprintf(out, outSize, "%s%s%cPOPSTARTER.ELF", devPrefix, POPS_FOLDER, vcdSep(devPrefix));
     int fd = open(out, O_RDONLY);

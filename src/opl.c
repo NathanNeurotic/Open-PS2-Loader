@@ -182,7 +182,8 @@ int gPadMacroSettings;
 #endif
 int gScrollSpeed;
 char gExitPath[256];
-char gNeutrinoArgs[256]; // extra command-line flags appended to every Neutrino launch
+char gNeutrinoArgs[256];   // extra command-line flags appended to every Neutrino launch
+char gPopstarterPath[256]; // custom POPSTARTER.ELF path; "" -> fall back to <device>/POPS/POPSTARTER.ELF
 int gEnableDebug;
 int gPS2Logo;
 int gDefaultDevice;
@@ -1202,6 +1203,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_BGM_VOLUME, &gBGMVolume);
             configGetStrCopy(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath, sizeof(gDefaultBGMPath));
             configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
+            configGetStrCopy(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath, sizeof(gPopstarterPath));
         }
     }
 
@@ -1413,6 +1415,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_BGM_VOLUME, gBGMVolume);
         configSetStr(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs);
+        configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         configSetInt(configOPL, CONFIG_OPL_XSENSITIVITY, gXSensitivity);
         configSetInt(configOPL, CONFIG_OPL_YSENSITIVITY, gYSensitivity);
 
@@ -2038,6 +2041,7 @@ static void setDefaults(void)
     gScrollSpeed = 1;
     gExitPath[0] = '\0';
     gNeutrinoArgs[0] = '\0';
+    gPopstarterPath[0] = '\0';
     gDefaultDevice = APP_MODE;
     gAutosort = 1;
     gAutoRefresh = 0;

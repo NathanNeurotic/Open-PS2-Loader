@@ -191,6 +191,7 @@ extern int gScrollSpeed;
 extern char gExitPath[256];
 // Extra command-line flags appended to every Neutrino launch
 extern char gNeutrinoArgs[256];
+extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (General Settings); "" = per-device default
 // Enable Debug Colors
 extern int gEnableDebug;
 
