@@ -81,6 +81,27 @@ jobs:
           echo "Staged pinned rolling assets:"
           ls -la rolling
 
+      - name: Build variants (EXTRA_FEATURES x PADEMU)
+        run: |
+          set -eu
+          # All the OTHER build versions for the "RIPTOPL VARIANTS" zip: the EXTRA_FEATURES x PADEMU
+          # matrix (NOT_PACKED, matching compilation.yml). Runs AFTER staging so the cleans below
+          # can't wipe the already-saved main ELF. Best-effort per variant -- one failing config must
+          # not sink the whole rolling publish.
+          mkdir -p rolling/variants
+          VER="${{ steps.ver.outputs.version }}"
+          for pad in PADEMU=0 PADEMU=1; do
+            for ex in EXTRA_FEATURES=0 EXTRA_FEATURES=1; do
+              make clean >/dev/null 2>&1 || true
+              if make --trace $pad $ex NOT_PACKED=1 && [ -f opl.elf ]; then
+                mv opl.elf "rolling/variants/RIPTOPL-${VER}-pademu${pad#PADEMU=}-extra${ex#EXTRA_FEATURES=}.ELF"
+              else
+                echo "WARN: variant '$pad $ex' failed to build; skipping it"
+              fi
+            done
+          done
+          echo "Built variants:"; ls -la rolling/variants || true
+
       - name: Upload pinned rolling assets
         uses: actions/upload-artifact@v6
         with:
@@ -250,18 +271,28 @@ jobs:
         run: |
           set -eu
           # Full installable package the user copies to a memory card / device:
-          #   APP_RIPTOPL/RIPTOPL.ELF  -- the loader (the pinned build, renamed; the loose
-          #                               OPNPS2LD ELFs above are kept for direct download).
-          #   POPSTARTER/              -- POPSTARTER's SMB network stack (popsmb/) + bdma_config.txt
-          #                               preset to fat32; copied to mc?:/POPSTARTER/.
-          #   POPS/                    -- POPSTARTER.ELF + the BDMA exFAT driver variants + the patch
-          #                               (vendored from POPSLoader); copied to <device>:/POPS/.
-          #   neutrino_*.7z            -- the official latest Neutrino core build (rickgaiser/neutrino),
-          #                               bundled unmodified so the prerequisite ships with the release.
+          #   APP_RIPTOPL/RIPTOPL.ELF         -- the DEFAULT loader = the ps2dev:latest (cutting-edge)
+          #                                      build (falls back to the pinned build if latest failed).
+          #   APP_RIPTOPL-OLDSDK/RIPTOPL.ELF  -- the pinned/stable (older-SDK) build, for compatibility.
+          #   POPSTARTER/                     -- SMB network stack (popsmb/) + bdma_config.txt=fat32.
+          #   POPS/                           -- POPSTARTER.ELF + BDMA variants + patch (from POPSLoader).
+          #   neutrino_*.7z                   -- the official latest Neutrino core (rickgaiser/neutrino).
           PKG=riptopl_pkg
           rm -rf "$PKG"
           mkdir -p "$PKG/APP_RIPTOPL" "$PKG/POPSTARTER" "$PKG/POPS"
-          cp -f "rolling/${VERSIONED_BASE}.ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
+          # Both SDK ELFs: ps2dev:latest is the default; pinned ("old SDK") goes in its own folder.
+          LATEST_ELF="rolling/${VERSIONED_BASE}-ps2dev-latest.ELF"
+          PINNED_ELF="rolling/${VERSIONED_BASE}.ELF"
+          if [ -f "$LATEST_ELF" ]; then
+            cp -f "$LATEST_ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
+            if [ -f "$PINNED_ELF" ]; then
+              mkdir -p "$PKG/APP_RIPTOPL-OLDSDK"
+              cp -f "$PINNED_ELF" "$PKG/APP_RIPTOPL-OLDSDK/RIPTOPL.ELF"
+            fi
+          else
+            # ps2dev:latest unavailable this run -> the pinned build becomes the default.
+            cp -f "$PINNED_ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
+          fi
           cp -f popsmb/* "$PKG/POPSTARTER/"
           cp -f pops/* "$PKG/POPS/"
           # neutrino_*.7z (package root) -- the official latest pre-release of the Neutrino core, so
@@ -285,12 +316,29 @@ jobs:
           (
             cd "$PKG"
             zip -r -X "../rolling/${ZIP}" APP_RIPTOPL POPSTARTER POPS >/dev/null
+            if [ -d APP_RIPTOPL-OLDSDK ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-OLDSDK >/dev/null; fi
             for f in neutrino_*.7z; do # add the bundled Neutrino archive at the zip root if present
               if [ -f "$f" ]; then zip -X "../rolling/${ZIP}" "$f" >/dev/null; fi
             done
           )
           echo "Built rolling/${ZIP}:"
           unzip -l "rolling/${ZIP}"
+
+      - name: Pack RIPTOPL VARIANTS
+        run: |
+          set -eu
+          # All the other build versions (the EXTRA_FEATURES x PADEMU matrix from the pinned job) ->
+          # one "RIPTOPL VARIANTS" zip. Remove the loose dir afterward so the final
+          # 'gh release upload rolling/*' doesn't choke on a subdirectory.
+          if [ -d rolling/variants ] && [ -n "$(ls -A rolling/variants 2>/dev/null)" ]; then
+            VARZIP="RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip"
+            (cd rolling/variants && zip -r -X "../${VARZIP}" . >/dev/null)
+            echo "Packed rolling/${VARZIP}:"
+            unzip -l "rolling/${VARZIP}"
+          else
+            echo "No variants present; skipping RIPTOPL VARIANTS zip."
+          fi
+          rm -rf rolling/variants 2>/dev/null || true
 
       - name: Build release notes
         run: |
@@ -309,6 +357,13 @@ jobs:
               printf '  - %s-ps2dev-latest.ELF  -> ps2dev/ps2dev:latest toolchain\n' "$VERSIONED_BASE"
             else
               printf '  - ps2dev/ps2dev:latest build FAILED this run (pinned build only)\n'
+            fi
+            printf '\nRIPTOPL package (RIPTOPL-*.zip) ships BOTH SDK builds:\n'
+            printf '  - APP_RIPTOPL/RIPTOPL.ELF        = ps2dev:latest (cutting-edge) -- the default\n'
+            printf '  - APP_RIPTOPL-OLDSDK/RIPTOPL.ELF = ps2max/dev pinned (older SDK) -- compatibility fallback\n'
+            if [ -f "rolling/RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip" ]; then
+              printf '\nRIPTOPL VARIANTS (RIPTOPL-VARIANTS-*.zip): all the other build configs\n'
+              printf '  (EXTRA_FEATURES x PADEMU, NOT_PACKED) for advanced users.\n'
             fi
             printf '\nBundled Neutrino core (required by the Neutrino launch mode), from the official repo:\n'
             printf '  https://github.com/rickgaiser/neutrino\n'
