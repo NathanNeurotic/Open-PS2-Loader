@@ -60,6 +60,7 @@ extern void *screens_png;
 extern void *ELF_png;
 extern void *HDL_png;
 extern void *ISO_png;
+extern void *VCD_png;
 extern void *ZSO_png;
 extern void *UL_png;
 extern void *APPS_png;
@@ -169,9 +170,9 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {DOWN_ICON, "down", &down_png},
     {L1_ICON, "L1", &L1_png},
     {L2_ICON, "L2", &L2_png},
-    {L3_ICON, "L3", &L3_png},
     {R1_ICON, "R1", &R1_png},
     {R2_ICON, "R2", &R2_png}, */
+    {L3_ICON, "L3", &L3_png},
     {R3_ICON, "R3", &R3_png},
     {FAV_ICON, "fav", &fav_png},
     {FAV_MARK, "fav_mark", &fav_mark_png},
@@ -190,6 +191,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {ELF_FORMAT, "ELF", &ELF_png},
     {HDL_FORMAT, "HDL", &HDL_png},
     {ISO_FORMAT, "ISO", &ISO_png},
+    {VCD_FORMAT, "VCD", &VCD_png},
     {ZSO_FORMAT, "ZSO", &ZSO_png},
     {UL_FORMAT, "UL", &UL_png},
     {APP_MEDIA, "APP", &APPS_png},

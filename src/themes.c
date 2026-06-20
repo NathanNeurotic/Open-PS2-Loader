@@ -2017,9 +2017,12 @@ static void thmLoad(const char *themePath)
     for (i = BDM_ICON; i <= START_ICON; i++)
         thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault);
 
-    /* Not customizable icons - currently unused.
-    for (i = L1_ICON; i <= R3_ICON; i++)
-        thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1); */
+    // Control-hint glyphs + Favourites tab icon/star: internal defaults only (theme-independent).
+    // Contiguous L3_ICON..FAV_MARK in the enum -> the VCD L3 hint (L3_ICON), the Favourites R3 hint
+    // (R3_ICON), the FAV tab icon (FAV_ICON) and the favourited-item star (FAV_MARK). Previously the
+    // loop was commented out, so the R3/fav icons silently never loaded (thmGetTexture returned NULL).
+    for (i = L3_ICON; i <= FAV_MARK; i++)
+        thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
 
     if (!themePath)
         for (i = ELF_FORMAT; i <= VMODE_PAL; i++)

@@ -259,6 +259,10 @@ void moduleUpdateMenuInternal(opl_io_module_t *mod, int themeChanged, int langCh
 
         if (gFAVStartMode)
             menuAddHint(&mod->menuItem, _STR_FAV_HINT, R3_ICON);
+
+        // L3 toggles the device's disc list <-> its VCD (PS1-via-POPSTARTER) list.
+        if (vcdModeSupported(mod->support->mode))
+            menuAddHint(&mod->menuItem, _STR_VCD, L3_ICON);
     }
 
     // refresh Cache

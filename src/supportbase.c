@@ -843,6 +843,8 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
             configSetStr(config, CONFIG_ITEM_FORMAT, "ISO");
         else if (!strcmp(game->extension, ".zso"))
             configSetStr(config, CONFIG_ITEM_FORMAT, "ZSO");
+        else if (!strcasecmp(game->extension, ".VCD"))
+            configSetStr(config, CONFIG_ITEM_FORMAT, "VCD"); // VCD listing -> the VCD format glyph
     } else if (game->format == GAME_FORMAT_USBLD)
         configSetStr(config, CONFIG_ITEM_FORMAT, "UL");
 

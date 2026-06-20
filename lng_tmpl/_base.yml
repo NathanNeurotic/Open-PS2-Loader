@@ -748,6 +748,8 @@ gui_strings:
   string: Also save these IP + SMB share values to POPSTARTER's own IPCONFIG.DAT / SMBCONFIG.DAT on the memory card (for VCD-over-SMB).
 - label: POPSTARTER_NET_ERR
   string: Couldn't write POPSTARTER network config to the memory card.
+- label: VCD
+  string: VCD
 - label: VCD_ON
   string: Showing VCD games
 - label: VCD_OFF

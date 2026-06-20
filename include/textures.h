@@ -37,9 +37,9 @@ enum INTERNAL_TEXTURE {
     DOWN_ICON,
     L1_ICON,
     L2_ICON,
-    L3_ICON,
     R1_ICON,
     R2_ICON, */
+    L3_ICON,     // re-enabled for the VCD "L3 = toggle VCD view" hint
     R3_ICON,     // re-enabled for the Favourites "R3 = Favourite" hint
     FAV_ICON,    // Favourites tab icon
     FAV_MARK,    // star drawn next to favourited items
@@ -57,6 +57,7 @@ enum INTERNAL_TEXTURE {
     ELF_FORMAT,
     HDL_FORMAT,
     ISO_FORMAT,
+    VCD_FORMAT, // VCD (PS1-via-POPSTARTER) format glyph -- the VCD equivalent of ISO
     ZSO_FORMAT,
     UL_FORMAT,
     APP_MEDIA,
