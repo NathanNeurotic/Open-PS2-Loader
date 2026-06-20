@@ -9,13 +9,12 @@
 */
 
 #include <stdio.h>
-#include <string.h>
-#include <strings.h>
 #include <stdlib.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <dirent.h>
 
+#include "include/opl.h"    // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
 #include "include/system.h" // POPS_FOLDER
 #include "include/vcdsupport.h"
 
