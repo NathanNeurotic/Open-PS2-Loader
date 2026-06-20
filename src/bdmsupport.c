@@ -3,6 +3,7 @@
 #include "include/gui.h"
 #include "include/supportbase.h"
 #include "include/bdmsupport.h"
+#include "include/vcdsupport.h"
 #include "include/util.h"
 #include "include/themes.h"
 #include "include/textures.h"
@@ -388,6 +389,13 @@ static int bdmNeedsUpdate(item_list_t *itemList)
         pDeviceData->FoldersCreated = 1;
     }
 
+    // VCD view: force a rescan once on toggle (dirty), then skip the disc-folder heuristics while
+    // this device is showing its VCD list (it refreshes on toggle / manual refresh only).
+    if (vcdConsumeDirty(itemList->mode))
+        return 1;
+    if (vcdViewActive(itemList->mode))
+        return 0;
+
     sprintf(path, "%sCD", pDeviceData->bdmPrefix);
     if (stat(path, &st) != 0)
         st.st_mtime = 0;
@@ -428,7 +436,10 @@ static int bdmUpdateGameList(item_list_t *itemList)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
-    sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
+    if (vcdViewActive(itemList->mode))
+        pDeviceData->bdmGameCount = vcdFillGameList(pDeviceData->bdmPrefix, &pDeviceData->bdmGames);
+    else
+        sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
     return pDeviceData->bdmGameCount;
 }
 
@@ -506,6 +517,28 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     } else {
         pDeviceData = gAutoLaunchDeviceData;
         game = gAutoLaunchBDMGame;
+    }
+
+    // VCD view: this device is showing PS1 VCDs -> hand off to POPSTARTER instead of the disc /
+    // Neutrino path below (which is entirely disc-specific). Menu-launch only; build the selector
+    // + resolve the ELF on stack BEFORE deinit() frees the game list.
+    if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
+        char vcdName[VCD_NAME_MAX];
+        char vcdPrefix[64];
+        char vcdElf[256];
+        char vcdSelector[320];
+        snprintf(vcdName, sizeof(vcdName), "%s", game->name);
+        snprintf(vcdPrefix, sizeof(vcdPrefix), "%s", pDeviceData->bdmPrefix);
+        if (vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+            return;
+        if (!vcdResolvePopstarter(vcdPrefix, vcdElf, sizeof(vcdElf))) {
+            guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+            return;
+        }
+        vcdBuildSelector(vcdPrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
+        deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the VCD device mounted across the IOP reset
+        sysLaunchPopstarter(vcdElf, vcdSelector, "");
+        return;
     }
 
     char vmc_name[32], vmc_path[256], have_error = 0;

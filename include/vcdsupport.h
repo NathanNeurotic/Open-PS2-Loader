@@ -13,6 +13,7 @@
 #define __VCDSUPPORT_H
 
 #include "include/iosupport.h"
+#include "include/supportbase.h" // base_game_info_t (for vcdFillGameList)
 
 #define VCD_NAME_MAX  256  // VCD basename without ".VCD" (incl NUL); becomes the selector game name
 #define VCD_ID_MAX    16   // extracted PS1 disc ID, e.g. "SCUS_123.45"
@@ -38,5 +39,19 @@ int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize);
 
 // Build the POPSTARTER argv[0] selector "<devPrefix>POPS/<prefix><name>.ELF" into out.
 void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *name, char *out, int outSize);
+
+// ---- per-device VCD view (L3 toggle) ----------------------------------------------
+// Does this device class get a VCD view? (BDM range for now; MMCE/ETH added in a later stage.)
+int vcdModeSupported(int mode);
+// Is the given device mode currently showing its VCD list (vs its disc list)?
+int vcdViewActive(int mode);
+// Flip the VCD view for a mode + mark it dirty so the owning support's NeedsUpdate forces a rescan.
+void vcdToggleView(int mode);
+// Returns 1 exactly once after a toggle (and clears the flag) -- call from the support's NeedsUpdate.
+int vcdConsumeDirty(int mode);
+
+// Fill a base_game_info_t list (memalign'd like sbReadList; frees *outGames first) from
+// <devPrefix>POPS/*.VCD. Returns the count. name = VCD basename, startup = PS1 id (or "" = no art).
+int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames);
 
 #endif

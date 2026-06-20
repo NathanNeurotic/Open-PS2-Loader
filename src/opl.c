@@ -36,6 +36,7 @@
 #include "include/sound.h"
 #include "include/xparam.h"
 #include "include/favsupport.h"
+#include "include/vcdsupport.h"
 
 // FIXME: We should not need this function.
 //        Use newlib's 'stat' to get GMT time.
@@ -390,6 +391,21 @@ static void itemExecFav(struct menu_item *curMenu)
     ioPutRequest(IO_CUSTOM_SIMPLEACTION, &loadFavourites);
 }
 
+// L3: toggle the device's list between its disc games and its VCD (PS1-via-POPSTARTER) list. Only
+// device classes that have a VCD view (vcdModeSupported) respond. vcdToggleView marks the mode
+// dirty; the deferred update + the support's NeedsUpdate (vcdConsumeDirty) then force the rescan.
+static void itemExecToggleView(struct menu_item *curMenu)
+{
+    item_list_t *support = curMenu->userdata;
+    if (!support || !vcdModeSupported(support->mode))
+        return;
+
+    vcdToggleView(support->mode);
+    sfxPlay(SFX_CONFIRM);
+    guiWarning(vcdViewActive(support->mode) ? _l(_STR_VCD_ON) : _l(_STR_VCD_OFF), 2);
+    ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
+}
+
 static void initMenuForListSupport(opl_io_module_t *mod)
 {
     mod->menuItem.icon_id = mod->support->itemIconId(mod->support);
@@ -413,6 +429,7 @@ static void initMenuForListSupport(opl_io_module_t *mod)
     mod->menuItem.execSquare = &itemExecSquare;
     mod->menuItem.execCircle = &itemExecCircle;
     mod->menuItem.fav = &itemExecFav;
+    mod->menuItem.toggleView = &itemExecToggleView;
 
     mod->menuItem.hints = NULL;
 

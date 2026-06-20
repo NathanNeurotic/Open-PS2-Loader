@@ -1240,6 +1240,9 @@ void menuHandleInputMain()
     } else if (getKeyOn(KEY_R3)) { // toggle favourite
         if (selected_item->item->fav)
             selected_item->item->fav(selected_item->item);
+    } else if (getKeyOn(KEY_L3)) { // toggle VCD view (disc list <-> POPS/*.VCD)
+        if (selected_item->item->toggleView)
+            selected_item->item->toggleView(selected_item->item);
     }
 
     // Last Played Auto Start

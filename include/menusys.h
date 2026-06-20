@@ -79,6 +79,9 @@ typedef struct menu_item
     /// Favourites toggle (R3); NULL when the mode has no FAV action
     void (*fav)(struct menu_item *curMenu);
 
+    /// VCD-view toggle (L3); NULL when the mode has no VCD view
+    void (*toggleView)(struct menu_item *curMenu);
+
     /// hint list
     struct menu_hint_item *hints;
 } menu_item_t;

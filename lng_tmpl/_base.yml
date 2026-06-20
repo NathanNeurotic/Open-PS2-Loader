@@ -736,6 +736,10 @@ gui_strings:
   string: Neutrino ELF not found, launching with <OPL> core
 - label: POPSTARTER_NOT_FOUND
   string: Missing POPSTARTER.ELF
+- label: VCD_ON
+  string: Showing VCD games
+- label: VCD_OFF
+  string: Showing disc games
 - label: NEUTRINO_ARGS
   string: Neutrino Launch Args
 - label: HINT_NEUTRINO_ARGS

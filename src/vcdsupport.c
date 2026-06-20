@@ -93,3 +93,64 @@ void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *nam
         return;
     snprintf(out, outSize, "%s%s/%s%s.ELF", devPrefix ? devPrefix : "", POPS_FOLDER, prefix ? prefix : "", name ? name : "");
 }
+
+// ---- per-device VCD view state ------------------------------------------------
+
+static unsigned char vcdView[MODE_COUNT];  // 1 = this mode is showing its VCD list
+static unsigned char vcdDirty[MODE_COUNT]; // 1 = view just toggled -> force one rescan
+
+int vcdModeSupported(int mode)
+{
+    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST); // BDM only for now (MMCE / ETH added later)
+}
+
+int vcdViewActive(int mode)
+{
+    return (mode >= 0 && mode < MODE_COUNT) ? vcdView[mode] : 0;
+}
+
+void vcdToggleView(int mode)
+{
+    if (mode < 0 || mode >= MODE_COUNT)
+        return;
+    vcdView[mode] = vcdView[mode] ? 0 : 1;
+    vcdDirty[mode] = 1;
+}
+
+int vcdConsumeDirty(int mode)
+{
+    if (mode < 0 || mode >= MODE_COUNT || !vcdDirty[mode])
+        return 0;
+    vcdDirty[mode] = 0;
+    return 1;
+}
+
+int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)
+{
+    if (outGames == NULL)
+        return 0;
+    free(*outGames); // symmetric with sbReadList: free the old list before reallocating
+    *outGames = NULL;
+
+    vcd_entry_t *vcds = NULL;
+    int n = vcdScanDir(devPrefix, &vcds);
+    if (n <= 0)
+        return 0;
+
+    base_game_info_t *games = (base_game_info_t *)memalign(64, n * sizeof(base_game_info_t));
+    if (games == NULL) {
+        free(vcds);
+        return 0;
+    }
+    memset(games, 0, n * sizeof(base_game_info_t));
+    for (int i = 0; i < n; i++) {
+        snprintf(games[i].name, sizeof(games[i].name), "%s", vcds[i].name);
+        snprintf(games[i].startup, sizeof(games[i].startup), "%s", vcds[i].gameId); // "" -> no art lookup
+        snprintf(games[i].extension, sizeof(games[i].extension), ".VCD");
+        games[i].parts = 1;
+        games[i].format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
+    }
+    free(vcds);
+    *outGames = games;
+    return n;
+}
