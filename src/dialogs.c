@@ -125,6 +125,11 @@ struct UIItem diaNetConfig[] = {
     {UI_PASSWORD, NETCFG_SHARE_PASSWORD, 1, 1, _STR_HINT_GUEST, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_WRITE_POPSTARTER_NET}}},
+    {UI_SPACER},
+    {UI_BOOL, NETCFG_WRITE_POPSTARTER, 1, 1, _STR_HINT_WRITE_POPSTARTER_NET, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     // buttons
     {UI_BREAK},
     {UI_BUTTON, NETCFG_OK, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},

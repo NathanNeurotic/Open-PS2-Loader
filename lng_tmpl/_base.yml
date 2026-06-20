@@ -738,6 +738,12 @@ gui_strings:
   string: Missing POPSTARTER.ELF
 - label: POPSTARTER_SMB_MISSING
   string: Missing POPSTARTER SMB requirements
+- label: WRITE_POPSTARTER_NET
+  string: Write POPSTARTER Network Config
+- label: HINT_WRITE_POPSTARTER_NET
+  string: Also save these IP + SMB share values to POPSTARTER's own IPCONFIG.DAT / SMBCONFIG.DAT on the memory card (for VCD-over-SMB).
+- label: POPSTARTER_NET_ERR
+  string: Couldn't write POPSTARTER network config to the memory card.
 - label: VCD_ON
   string: Showing VCD games
 - label: VCD_OFF

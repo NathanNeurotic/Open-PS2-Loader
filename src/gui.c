@@ -790,6 +790,7 @@ void guiShowNetConfig(void)
     diaSetString(diaNetConfig, NETCFG_SHARE_NAME, gPCShareName);
     diaSetString(diaNetConfig, NETCFG_SHARE_USERNAME, gPCUserName);
     diaSetString(diaNetConfig, NETCFG_SHARE_PASSWORD, gPCPassword);
+    diaSetInt(diaNetConfig, NETCFG_WRITE_POPSTARTER, gWritePopstarterNet);
     diaSetInt(diaNetConfig, NETCFG_ETHOPMODE, gETHOpMode);
 
     // Update the spacer item between the OK and reconnect buttons (See dialogs.c).
@@ -824,6 +825,23 @@ void guiShowNetConfig(void)
         diaGetString(diaNetConfig, NETCFG_SHARE_NAME, gPCShareName, sizeof(gPCShareName));
         diaGetString(diaNetConfig, NETCFG_SHARE_USERNAME, gPCUserName, sizeof(gPCUserName));
         diaGetString(diaNetConfig, NETCFG_SHARE_PASSWORD, gPCPassword, sizeof(gPCPassword));
+        diaGetInt(diaNetConfig, NETCFG_WRITE_POPSTARTER, &gWritePopstarterNet);
+
+        // POPSTARTER needs the same IP/share data we just collected, so when the user opts in we
+        // mirror it into POPSTARTER's own config files (mc?:/POPSTARTER/IPCONFIG.DAT + SMBCONFIG.DAT)
+        // instead of asking twice. Opt-in (default off) so non-POPSTARTER users never touch the card;
+        // the write is free-space-gated + truncation-safe, so a failure can't corrupt the card.
+        if (gWritePopstarterNet) {
+            char ipcfg[64], smbcfg[96];
+            snprintf(ipcfg, sizeof(ipcfg), "%d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d",
+                     ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3],
+                     ps2_netmask[0], ps2_netmask[1], ps2_netmask[2], ps2_netmask[3],
+                     ps2_gateway[0], ps2_gateway[1], ps2_gateway[2], ps2_gateway[3]);
+            snprintf(smbcfg, sizeof(smbcfg), "%d.%d.%d.%d:%d %s",
+                     pc_ip[0], pc_ip[1], pc_ip[2], pc_ip[3], gPCPort, gPCShareName);
+            if (vcdWritePopstarterNet(ipcfg, smbcfg) != 0)
+                guiMsgBox(_l(_STR_POPSTARTER_NET_ERR), 0, NULL);
+        }
 
         if (result == NETCFG_RECONNECT && gNetworkStartup < ERROR_ETH_SMB_CONN)
             gNetworkStartup = ERROR_ETH_SMB_LOGON;

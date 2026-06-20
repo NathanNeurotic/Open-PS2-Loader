@@ -475,3 +475,20 @@ int vcdSmbModulesPresent(void)
     }
     return 0;
 }
+
+int vcdWritePopstarterNet(const char *ipconfig, const char *smbconfig)
+{
+    char mcDir[64];
+    vcdResolvePopstarterMc(mcDir, sizeof(mcDir)); // creates mc0:/POPSTARTER if neither card has it
+    char path[96];
+    int r1 = 0, r2 = 0;
+    if (ipconfig != NULL) {
+        snprintf(path, sizeof(path), "%s/IPCONFIG.DAT", mcDir);
+        r1 = vcdSafeWriteFile(path, ipconfig, (int)strlen(ipconfig));
+    }
+    if (smbconfig != NULL) {
+        snprintf(path, sizeof(path), "%s/SMBCONFIG.DAT", mcDir);
+        r2 = vcdSafeWriteFile(path, smbconfig, (int)strlen(smbconfig));
+    }
+    return (r1 != 0) ? r1 : r2; // surface the first failure (-2 card full / -3 IO)
+}

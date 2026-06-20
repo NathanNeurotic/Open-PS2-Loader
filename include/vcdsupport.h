@@ -91,4 +91,8 @@ int vcdReadBdmaMode(void);
 // Gate SMB/ETH VCD launches on this -- we don't install these from the ELF.
 int vcdSmbModulesPresent(void);
 
+// Write POPSTARTER's IPCONFIG.DAT + SMBCONFIG.DAT into mc?:/POPSTARTER/ (caller formats the lines)
+// through the free-space-gated safe-write. 0 ok, -2 card full, -3 IO error. NULL skips that file.
+int vcdWritePopstarterNet(const char *ipconfig, const char *smbconfig);
+
 #endif
