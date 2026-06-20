@@ -457,7 +457,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     char neutrinoExtraArgs[256] = ""; // per-game Neutrino flags; copied before deinit teardown
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
-        neutrinoPath = sbFileExists(NEUTRINO_PATH) ? NEUTRINO_PATH : (sbFileExists(NEUTRINO_ALT_PATH) ? NEUTRINO_ALT_PATH : NULL);
+        neutrinoPath = sbResolveNeutrinoPath();
         if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
             // isValidIsoName() admits .zso case-insensitively and game->extension is stored
             // verbatim, so an upper/mixed-case ".ZSO" must reject here too (Neutrino can't run it).
