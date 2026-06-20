@@ -938,7 +938,7 @@ static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bu
 // buffer for both -bsd=ata and -bsdfs=hdl, clobbering -bsd=ata on HDD); argv[32]
 // with per-append bounds guards (wOPL's argv[6] was exactly full). User-supplied
 // flags (global gNeutrinoArgs + the per-game extraArgs) are tokenized and appended last.
-void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs)
+void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, const neutrino_vmc_args_t *vmcArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
@@ -996,12 +996,30 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     if (EnablePS2Logo && argc < argvMax)
         argv[argc++] = "-logo";
 
+    // VMC slots (#47): emit each configured "-mcN=...bin" as its OWN argv entry. These come from
+    // sbBuildVmcNeutrinoArgs (caller storage, alive across the launch) and must NOT pass through the
+    // whitespace tokenizer below -- a VMC name with a space would otherwise be split into two args
+    // and Neutrino would receive a truncated, unopenable card path (silent no-mount).
+    if (vmcArgs != NULL) {
+        int slot;
+        for (slot = 0; slot < NEUTRINO_VMC_SLOTS; slot++) {
+            if (vmcArgs->arg[slot][0] != '\0' && argc < argvMax)
+                argv[argc++] = (char *)vmcArgs->arg[slot];
+        }
+    }
+
     // Append user-supplied Neutrino flags: global defaults first, then the per-game
     // string (so a game can extend the global set). Both are tokenized on whitespace.
     argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs);
     argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs);
 
-    LOG("[NEUTRINO] elf=%s %s %s %s argc=%d\n", neutrinoPath, bsd, filePath, compatModes, argc);
+    // Log the FULL argv (not just bsd/dvd/compat) so the VMC -mc args are verifiable on hardware (#47).
+    LOG("[NEUTRINO] elf=%s argc=%d\n", neutrinoPath, argc);
+    {
+        int i;
+        for (i = 0; i < argc; i++)
+            LOG("[NEUTRINO]   argv[%d]=%s\n", i, argv[i]);
+    }
 
     LoadELFFromFileWithPartition(neutrinoPath, "", argc, argv);
 }

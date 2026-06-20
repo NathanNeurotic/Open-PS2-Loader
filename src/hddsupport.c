@@ -637,7 +637,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // Neutrino core: hand off using the apaPart copy (game is freed above).
     if (coreLoader) {
         LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
-        sysLaunchNeutrino("apa", apaPart, compatMode, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs);
+        sysLaunchNeutrino("apa", apaPart, compatMode, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
         return;
     }
 

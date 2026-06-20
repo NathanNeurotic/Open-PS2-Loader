@@ -860,26 +860,34 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     return config;
 }
 
-// Append neutrino "-mc0="/"-mc1=" VMC args from the per-game config to argsBuf (issue #47: pass an
-// OPL-configured VMC to neutrino on launch). vmcPrefix is the device path prefix ending in its
-// separator (e.g. "mass0:/" or "mmce0:/"); the VMC file lives at <vmcPrefix>VMC/<name>.bin -- the
-// same location OPL's own mcemu uses. Call BEFORE deinit() frees the config/device data; argsBuf is
-// the stack-resident neutrino-args buffer. Unconfigured slots are skipped.
-void sbAppendVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, char *argsBuf, int argsBufSize)
+// Resolve the per-game VMC slots ($VMC_0/$VMC_1) into discrete Neutrino "-mcN=<prefix>VMC/<name>.bin"
+// arg strings (issue #47: pass an OPL-configured VMC to Neutrino on launch). vmcPrefix is the device
+// path prefix ending in its separator (e.g. "mass0:/" or "mmce0:/"); the VMC file lives at
+// <vmcPrefix>VMC/<name>.bin -- the same location OPL's own mcemu uses, and the same path scheme as
+// the already-working -dvd arg. Each configured slot becomes its OWN argv entry in sysLaunchNeutrino,
+// so a VMC name containing a space is delivered to Neutrino intact instead of being shredded by the
+// whitespace args tokenizer (the root cause of #47). Unconfigured slots are left empty. Call BEFORE
+// deinit() frees the config/device data; vmcArgs is caller-owned storage that must outlive the launch.
+void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, neutrino_vmc_args_t *vmcArgs)
 {
     int slot;
     char vmcName[32];
 
-    if (configSet == NULL || vmcPrefix == NULL || argsBuf == NULL)
+    if (vmcArgs == NULL)
+        return;
+    for (slot = 0; slot < NEUTRINO_VMC_SLOTS; slot++)
+        vmcArgs->arg[slot][0] = '\0';
+
+    if (configSet == NULL || vmcPrefix == NULL)
         return;
 
-    for (slot = 0; slot < 2; slot++) {
+    for (slot = 0; slot < NEUTRINO_VMC_SLOTS; slot++) {
         vmcName[0] = '\0';
         configGetVMC(configSet, vmcName, sizeof(vmcName), slot);
         if (vmcName[0] != '\0') {
-            int len = (int)strlen(argsBuf);
-            if (len < argsBufSize - 1)
-                snprintf(argsBuf + len, argsBufSize - len, " -mc%d=%sVMC/%s.bin", slot, vmcPrefix, vmcName);
+            int n = snprintf(vmcArgs->arg[slot], sizeof(vmcArgs->arg[slot]), "-mc%d=%sVMC/%s.bin", slot, vmcPrefix, vmcName);
+            if (n >= (int)sizeof(vmcArgs->arg[slot])) // truncated -> Neutrino would get an unopenable path; flag it for HW logs
+                LOG("[NEUTRINO] VMC slot %d path truncated (%d bytes); card may not mount\n", slot, n);
         }
     }
 }

@@ -1,6 +1,8 @@
 #ifndef __SUPPORT_BASE_H
 #define __SUPPORT_BASE_H
 
+struct neutrino_vmc_args; // full definition in include/system.h (pointer use only here)
+
 #define UL_GAME_NAME_MAX       32
 #define ISO_GAME_NAME_MAX      160
 #define ISO_GAME_EXTENSION_MAX 4
@@ -49,7 +51,7 @@ void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int 
 void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id, char *newname);
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep);
 // Append neutrino -mc0/-mc1 VMC args (from the per-game config) for vmcPrefix's device. Call before deinit.
-void sbAppendVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, char *argsBuf, int argsBufSize);
+void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, struct neutrino_vmc_args *vmcArgs);
 void sbCreateFolders(const char *path, int createDiscImgFolders);
 
 // ISO9660 filesystem management functions.

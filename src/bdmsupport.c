@@ -760,7 +760,8 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int coreLoader = 0;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     const char *neutrinoPath = NULL;
-    char neutrinoExtraArgs[256] = ""; // per-game Neutrino flags; copied before deinit frees configSet's owner
+    char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit frees configSet's owner
+    neutrino_vmc_args_t neutrinoVmc = {0}; // per-game VMC -mc args; resolved before deinit, lives on this stack frame across the launch (#47)
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         neutrinoPath = sbResolveNeutrinoPath();
@@ -774,10 +775,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             coreLoader = 0;
         }
 
-        // VMC -> neutrino (#47): forward any per-game VMC as -mc0/-mc1, built into the stack-resident
-        // args before deinit frees configSet / pDeviceData.
+        // VMC -> neutrino (#47): resolve any per-game VMC into discrete -mc0/-mc1 argv entries
+        // (NOT the whitespace-tokenized extra-args buffer, which would split a spaced VMC name),
+        // before deinit frees configSet / pDeviceData.
         if (coreLoader)
-            sbAppendVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
+            sbBuildVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, &neutrinoVmc);
     }
 
     if (gAutoLaunchBDMGame == NULL)
@@ -795,7 +797,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // Neutrino core: hand off with the stack-resident partname + driver token
     // (both survive the deinit above; `game` does not and is not used here).
     if (coreLoader) {
-        sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs);
+        sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, &neutrinoVmc);
         return;
     }
 

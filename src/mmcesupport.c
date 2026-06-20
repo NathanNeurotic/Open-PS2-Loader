@@ -486,7 +486,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int coreLoader = 0;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     const char *neutrinoPath = NULL;
-    char neutrinoExtraArgs[256] = ""; // per-game Neutrino flags; copied before deinit teardown
+    char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit teardown
+    neutrino_vmc_args_t neutrinoVmc = {0}; // per-game VMC -mc args; resolved before deinit, lives on this stack frame across the launch (#47)
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         neutrinoPath = sbResolveNeutrinoPath();
@@ -500,9 +501,10 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             coreLoader = 0;
         }
 
-        // VMC -> neutrino (#47): forward any per-game VMC as -mc0/-mc1 (mmcePrefix ends in '/').
+        // VMC -> neutrino (#47): resolve any per-game VMC into discrete -mc0/-mc1 argv entries
+        // (mmcePrefix ends in '/'); not the whitespace-tokenized extra-args buffer (spaced names).
         if (coreLoader)
-            sbAppendVmcNeutrinoArgs(configSet, mmcePrefix, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
+            sbBuildVmcNeutrinoArgs(configSet, mmcePrefix, &neutrinoVmc);
     }
     if (coreLoader) {
         char mmcePartname[256];
@@ -514,7 +516,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
         deinit(NO_EXCEPTION, MMCE_MODE);
-        sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs);
+        sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, &neutrinoVmc);
         return;
     }
 

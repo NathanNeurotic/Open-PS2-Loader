@@ -26,7 +26,20 @@ int sysInitDECI2(void);
 
 void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdvdman_irx, void **cdvdman_irx, int size_mcemu_irx, void **mcemu_irx, int EnablePS2Logo, unsigned int compatflags);
 
-void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs);
+#define NEUTRINO_VMC_SLOTS 2
+
+// Fully-formed Neutrino "-mcN=<prefix>VMC/<name>.bin" args, one per VMC slot, resolved by the
+// device support layer (sbBuildVmcNeutrinoArgs) BEFORE deinit frees the per-game config. Carried
+// into sysLaunchNeutrino and emitted as DISCRETE argv[] entries -- never whitespace-tokenized -- so
+// a VMC whose name contains a space survives intact (issue #47: VMC not mounting under Neutrino).
+typedef struct neutrino_vmc_args
+{
+    // "-mcN=<prefix>VMC/<name>.bin"; "" => slot unconfigured / skipped. Sized for the worst case:
+    // "-mcN=" + bdmPrefix (BDM_PREFIX_MAX=96) + "VMC/" + 31-char VMC name + ".bin" + NUL = ~140.
+    char arg[NEUTRINO_VMC_SLOTS][160];
+} neutrino_vmc_args_t;
+
+void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, const neutrino_vmc_args_t *vmcArgs);
 
 // Launch an external POPSTARTER.ELF for a PS1 VCD. selector = the argv[0] "<POPS>/<prefix><name>.ELF"
 // token; partition = "" for non-HDD. Caller deinit()s with UNMOUNT_EXCEPTION first (see system.c).
