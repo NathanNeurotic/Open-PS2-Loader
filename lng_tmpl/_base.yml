@@ -764,6 +764,10 @@ gui_strings:
   string: Neutrino Launch Args
 - label: HINT_NEUTRINO_ARGS
   string: Extra Neutrino flags, space-separated (e.g. -mt=dvd). Global applies to all games; per-game adds on top. Prefix a flag with $ to disable it without deleting.
+- label: NEUTRINO_VIDEO
+  string: Neutrino Video
+- label: HINT_NEUTRINO_VIDEO
+  string: Force Neutrino's GS output video mode (-gsm). Off keeps the game's default.
 - label: POPSTARTER_PATH
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH

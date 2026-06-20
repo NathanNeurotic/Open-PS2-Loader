@@ -609,8 +609,10 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // deinit / free(gAutoLaunchGame) below free `game`; reading it after is UAF.
     const char *neutrinoPath = NULL;
     char neutrinoExtraArgs[256] = ""; // per-game Neutrino flags; copied before deinit frees `game`
+    int neutrinoVideo = 0;            // per-game Neutrino -gsm video mode; copied before deinit
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
+        configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
         snprintf(apaPart, sizeof(apaPart), "%s", game->partition_name);
         neutrinoPath = sbFileExists(NEUTRINO_PATH) ? NEUTRINO_PATH : (sbFileExists(NEUTRINO_ALT_PATH) ? NEUTRINO_ALT_PATH : NULL);
         if (isZSO) {
@@ -637,7 +639,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // Neutrino core: hand off using the apaPart copy (game is freed above).
     if (coreLoader) {
         LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
-        sysLaunchNeutrino("apa", apaPart, compatMode, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
+        sysLaunchNeutrino("apa", apaPart, compatMode, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
         return;
     }
 

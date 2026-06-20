@@ -944,7 +944,7 @@ static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bu
 // buffer for both -bsd=ata and -bsdfs=hdl, clobbering -bsd=ata on HDD); argv[32]
 // with per-append bounds guards (wOPL's argv[6] was exactly full). User-supplied
 // flags (global gNeutrinoArgs + the per-game extraArgs) are tokenized and appended last.
-void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, const neutrino_vmc_args_t *vmcArgs)
+void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, const neutrino_vmc_args_t *vmcArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
@@ -1001,6 +1001,13 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
 
     if (EnablePS2Logo && argc < argvMax)
         argv[argc++] = "-logo";
+
+    // Per-game Neutrino video mode (-gsm): 1=fp1 (240p), 2=fp2 (480p), 3=1080ix1 (1080i).
+    // 0/out-of-range = no -gsm (Neutrino's default 480i/576i). See guigame.c COMPAT_NEUTRINO_VIDEO.
+    if (neutrinoVideo >= 1 && neutrinoVideo <= 3 && argc < argvMax) {
+        static const char *const gsmTokens[] = {"", "-gsm=fp1", "-gsm=fp2", "-gsm=1080ix1"};
+        argv[argc++] = (char *)gsmTokens[neutrinoVideo];
+    }
 
     // VMC slots (#47): emit each configured "-mcN=...bin" as its OWN argv entry. These come from
     // sbBuildVmcNeutrinoArgs (caller storage, alive across the launch) and must NOT pass through the

@@ -967,6 +967,7 @@ static void guiGameSetCoreAwareState(void)
     diaGetInt(diaCompatConfig, COMPAT_LOADER, &neutrino);
 
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrino);  // Neutrino-only field
+    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrino); // Neutrino-only -gsm video mode
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_DL_DEFAULTS, !neutrino);   // OPL compat-bitmask downloader
@@ -993,6 +994,9 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
 
     const char *loaders[] = {"<OPL>", "Neutrino", NULL};
     diaSetEnum(diaCompatConfig, COMPAT_LOADER, loaders);
+
+    const char *neutrinoVideoModes[] = {"Off", "240p", "480p", "1080i", NULL};
+    diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideoModes);
 
     // UDPBD games have no OPL core backend -- they always launch via Neutrino
     // (bdmsupport.c forces it). Lock the selector to Neutrino so the screen matches;
@@ -1158,6 +1162,15 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
             else
                 configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_ARGS);
         }
+    }
+
+    {
+        int neutrinoVideo = 0;
+        diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, &neutrinoVideo);
+        if (neutrinoVideo != 0)
+            result = configSetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, neutrinoVideo);
+        else
+            configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_VIDEO);
     }
 
     /// VMC ///
@@ -1576,6 +1589,10 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
     neutrinoArgs[0] = '\0';
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoArgs, sizeof(neutrinoArgs));
     diaSetString(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrinoArgs);
+
+    int neutrinoVideo = 0;
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
+    diaSetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideo);
 
     /// VMC ///
     vmc1[0] = '\0';

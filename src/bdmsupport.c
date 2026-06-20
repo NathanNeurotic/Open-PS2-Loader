@@ -821,9 +821,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         coreLoader = 1;
     const char *neutrinoPath = NULL;
     char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit frees configSet's owner
+    int neutrinoVideo = 0;                 // per-game Neutrino -gsm video mode; copied before deinit
     neutrino_vmc_args_t neutrinoVmc = {0}; // per-game VMC -mc args; resolved before deinit, lives on this stack frame across the launch (#47)
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
+        configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
         neutrinoPath = sbResolveNeutrinoPath();
         if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
             // isValidIsoName() admits .zso case-insensitively and game->extension is stored
@@ -870,7 +872,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // Neutrino core: hand off with the stack-resident partname + driver token
     // (both survive the deinit above; `game` does not and is not used here).
     if (coreLoader) {
-        sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, &neutrinoVmc);
+        sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, &neutrinoVmc);
         return;
     }
 

@@ -487,9 +487,11 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     const char *neutrinoPath = NULL;
     char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit teardown
+    int neutrinoVideo = 0;                 // per-game Neutrino -gsm video mode; copied before deinit
     neutrino_vmc_args_t neutrinoVmc = {0}; // per-game VMC -mc args; resolved before deinit, lives on this stack frame across the launch (#47)
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
+        configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
         neutrinoPath = sbResolveNeutrinoPath();
         if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
             // isValidIsoName() admits .zso case-insensitively and game->extension is stored
@@ -516,7 +518,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
         deinit(NO_EXCEPTION, MMCE_MODE);
-        sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, &neutrinoVmc);
+        sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, &neutrinoVmc);
         return;
     }
 
