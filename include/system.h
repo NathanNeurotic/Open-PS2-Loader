@@ -27,6 +27,10 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 
 void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs);
 
+// Launch an external POPSTARTER.ELF for a PS1 VCD. selector = the argv[0] "<POPS>/<prefix><name>.ELF"
+// token; partition = "" for non-HDD. Caller deinit()s with UNMOUNT_EXCEPTION first (see system.c).
+void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const char *partition);
+
 int sysExecElf(const char *path);
 int sysLoadModuleBuffer(void *buffer, int size, int argc, char *argv);
 int sysCheckMC(void);

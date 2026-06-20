@@ -950,6 +950,24 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     LoadELFFromFileWithPartition(neutrinoPath, "", argc, argv);
 }
 
+// Hand off to an external POPSTARTER.ELF to boot a PS1 VCD. The caller resolves the per-device
+// POPSTARTER.ELF path + builds the argv[0] selector ("<POPS>/<XX.|SB.><name>.ELF", which
+// POPSTARTER itself re-derives the matching .VCD from), copies both to stack buffers, and
+// deinit()s the owning device with UNMOUNT_EXCEPTION BEFORE calling this -- the same contract as
+// sysLaunchNeutrino (so the VCD-holding device stays mounted across the IOP reset).
+void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const char *partition)
+{
+    if (popstarterElf == NULL || selector == NULL) {
+        LOG("[POPS] null arg, abort\n");
+        return;
+    }
+
+    char *argv[1];
+    argv[0] = (char *)selector;
+    LOG("[POPS] elf=%s argv0=%s part=%s\n", popstarterElf, selector, partition ? partition : "");
+    LoadELFFromFileWithPartition(popstarterElf, partition ? partition : "", 1, argv);
+}
+
 void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdvdman_irx, void **cdvdman_irx, int size_mcemu_irx, void **mcemu_irx, int EnablePS2Logo, unsigned int compatflags)
 {
     unsigned int modules, ModuleStorageSize;
