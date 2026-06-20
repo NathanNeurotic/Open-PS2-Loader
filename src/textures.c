@@ -41,9 +41,9 @@ extern void *up_png;
 extern void *down_png;
 extern void *L1_png;
 extern void *L2_png;
-extern void *L3_png;
 extern void *R1_png;
 extern void *R2_png; */
+extern void *L3_png;
 extern void *R3_png;
 extern void *fav_png;
 extern void *fav_mark_png;
