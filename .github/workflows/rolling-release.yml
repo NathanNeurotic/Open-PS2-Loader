@@ -256,18 +256,39 @@ jobs:
           #                               preset to fat32; copied to mc?:/POPSTARTER/.
           #   POPS/                    -- POPSTARTER.ELF + the BDMA exFAT driver variants + the patch
           #                               (vendored from POPSLoader); copied to <device>:/POPS/.
+          #   neutrino_*.7z            -- the official latest Neutrino core build (rickgaiser/neutrino),
+          #                               bundled unmodified so the prerequisite ships with the release.
           PKG=riptopl_pkg
           rm -rf "$PKG"
           mkdir -p "$PKG/APP_RIPTOPL" "$PKG/POPSTARTER" "$PKG/POPS"
           cp -f "rolling/${VERSIONED_BASE}.ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
           cp -f popsmb/* "$PKG/POPSTARTER/"
           cp -f pops/* "$PKG/POPS/"
+          # neutrino_*.7z (package root) -- the official latest pre-release of the Neutrino core, so
+          # that prerequisite ships with every release. Best-effort: a fetch failure still publishes
+          # the rest. The archive is bundled UNMODIFIED (clean attribution); the user extracts it and
+          # copies neutrino.elf to mc?:/neutrino/. Always credited/linked in the release notes below.
+          NEUTRINO_VER=""
+          if gh release download latest --repo rickgaiser/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
+            NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"
+            NEUTRINO_VER="$(printf '%s' "$NEUTRINO_ARCHIVE" | sed -e 's/^neutrino_//' -e 's/\.7z$//')"
+            echo "Bundled neutrino: $NEUTRINO_ARCHIVE"
+          else
+            echo "WARN: could not fetch neutrino latest pre-release; package omits it this run"
+          fi
+          echo "NEUTRINO_VER=${NEUTRINO_VER}" >> "$GITHUB_ENV"
           REL="${OPL_VERSION:-rolling}"
           # <SHA256>: first 16 hex of the RIPTOPL.ELF SHA256 (integrity + uniqueness; full hash is
           # in SHA256SUMS-style listing inside the zip is overkill, the short tag suffices).
           SHA="$(sha256sum "$PKG/APP_RIPTOPL/RIPTOPL.ELF" | cut -c1-16)"
           ZIP="RIPTOPL-${SDK_VER}-${REL}-${SHA}.zip"
-          (cd "$PKG" && zip -r -X "../rolling/${ZIP}" APP_RIPTOPL POPSTARTER POPS >/dev/null)
+          (
+            cd "$PKG"
+            zip -r -X "../rolling/${ZIP}" APP_RIPTOPL POPSTARTER POPS >/dev/null
+            for f in neutrino_*.7z; do # add the bundled Neutrino archive at the zip root if present
+              if [ -f "$f" ]; then zip -X "../rolling/${ZIP}" "$f" >/dev/null; fi
+            done
+          )
           echo "Built rolling/${ZIP}:"
           unzip -l "rolling/${ZIP}"
 
@@ -289,6 +310,15 @@ jobs:
             else
               printf '  - ps2dev/ps2dev:latest build FAILED this run (pinned build only)\n'
             fi
+            printf '\nBundled Neutrino core (required by the Neutrino launch mode), from the official repo:\n'
+            printf '  https://github.com/rickgaiser/neutrino\n'
+            if [ -n "${NEUTRINO_VER:-}" ]; then
+              printf '  Included build: %s -- bundled UNMODIFIED in the RIPTOPL package root (neutrino_*.7z);\n' "$NEUTRINO_VER"
+              printf '  extract it and copy neutrino.elf to mc?:/neutrino/.\n'
+            else
+              printf '  (Could not fetch Neutrino this run -- please grab the latest build from the link above.)\n'
+            fi
+            printf '  Neutrino is the work of its authors; RiptOPL only bundles the official build for convenience.\n'
             printf '\nSource snapshot (for preservation / offline rebuild of this exact commit):\n'
             printf '  - %s-src.zip\n' "$VERSIONED_BASE"
             printf '\nSHA256 (also published as SHA256SUMS.txt):\n'
