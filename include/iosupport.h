@@ -74,10 +74,10 @@ enum ERROR_CODE {
 #define COMPAT_MODE_4 0x08 // Skip Videos: Apply 0 (zero) file size to PSS videos and also skip Bink (.BIK) ones
 #define COMPAT_MODE_5 0x10 // Emulate DVD-DL
 #define COMPAT_MODE_6 0x20 // Disable IGR
-#define COMPAT_MODE_7 0x40 // Unused
+#define COMPAT_MODE_7 0x40 // Neutrino only: -gc=7 (IOP: fix game buffer overrun); no OPL ee-core effect
 #define COMPAT_MODE_8 0x80 // Unused
 
-#define COMPAT_MODE_COUNT 6 // only count modes in use
+#define COMPAT_MODE_COUNT 7 // count modes in use (Mode 7 is Neutrino-only, greyed under the OPL core)
 
 #define OPL_MOD_STORAGE 0x00097000 //(default) Address of the module storage region
 

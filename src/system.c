@@ -892,8 +892,9 @@ static const char *getDeviceName(const char *driver)
 }
 
 // Re-encodes the OPL compatmask into Neutrino's -gc concatenated-digit format.
-// Conservative phase-1 set: forward only OPL bits 1,2,3,5 (our bit 7 is Unused,
-// so it is never emitted as a bogus '7'). result[] is sized off COMPAT_MODE_COUNT
+// Forwards OPL bits 1,2,3,5 plus Mode 7 (COMPAT_MODE_7) -- a Neutrino-only flag with
+// no OPL ee-core effect (greyed under the OPL core) that emits -gc=7 "fix game buffer
+// overrun". result[] is sized off COMPAT_MODE_COUNT
 // and every append is bounds-guarded so widening the set later cannot overflow.
 // NOTE: Neutrino's -gc numbering is Neutrino's own, not OPL's bitmask semantics;
 // the OPL<->Neutrino correspondence must be hardware-verified before widening.
@@ -910,6 +911,8 @@ static int convertCompatmaskToModes(int compatmask)
         result[pos++] = '3';
     if ((compatmask & COMPAT_MODE_5) && pos < (int)sizeof(result) - 1)
         result[pos++] = '5';
+    if ((compatmask & COMPAT_MODE_7) && pos < (int)sizeof(result) - 1)
+        result[pos++] = '7'; // Neutrino "IOP: fix game buffer overrun"; greyed under the OPL core
 
     result[pos] = '\0';
     return atoi(result);

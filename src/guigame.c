@@ -970,6 +970,7 @@ static void guiGameSetCoreAwareState(void)
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrino); // Neutrino-only -gsm video mode
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
+    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 6, neutrino);  // Mode 7 -gc=7 fix buffer overrun: Neutrino only
     diaSetEnabled(diaCompatConfig, COMPAT_DL_DEFAULTS, !neutrino);   // OPL compat-bitmask downloader
 }
 

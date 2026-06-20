@@ -270,6 +270,8 @@ gui_strings:
   string: Emulate DVD-DL
 - label: HINT_MODE6
   string: Disable IGR
+- label: HINT_MODE7
+  string: Neutrino only -- fix games that overrun an IOP buffer (-gc=7)
 - label: HINT_VMC_SIZE
   string: Changing the size will reformat the VMC.
 - label: CREATE
@@ -368,6 +370,8 @@ gui_strings:
   string: Mode 5
 - label: MODE6
   string: Mode 6
+- label: MODE7
+  string: Mode 7
 - label: GSCONFIG
   string: Configure GSM
 - label: ETH_OPMODE
