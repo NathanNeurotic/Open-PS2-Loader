@@ -9,6 +9,7 @@
 #include "include/textures.h"
 #include "include/ioman.h"
 #include "include/system.h"
+#include "include/ethsupport.h" // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
 #include "include/sound.h"
@@ -27,6 +28,7 @@ static int iLinkManModLoaded = 0;
 static int ieee1394ModLoaded = 0;
 static int mx4sioModLoaded = 0;
 static int hddModLoaded = 0;
+static int udpbdModLoaded = 0;
 static s32 bdmLoadModuleLock;
 int bdmDeviceModeStarted;
 
@@ -58,6 +60,11 @@ static int bdmDriverIsATA(const char *driverName)
     return driverName != NULL && strcmp(driverName, "ata") == 0;
 }
 
+static int bdmDriverIsUDPBD(const char *driverName)
+{
+    return driverName != NULL && strcmp(driverName, "udp") == 0;
+}
+
 static int bdmDetermineDeviceType(const char *driverName)
 {
     if (bdmDriverIsUSB(driverName))
@@ -68,6 +75,8 @@ static int bdmDetermineDeviceType(const char *driverName)
         return BDM_TYPE_SDC;
     if (bdmDriverIsATA(driverName))
         return BDM_TYPE_ATA;
+    if (bdmDriverIsUDPBD(driverName))
+        return BDM_TYPE_UDPBD;
 
     return BDM_TYPE_UNKNOWN;
 }
@@ -215,6 +224,26 @@ static int bdmLoadOptionalModule(const char *name, void *module, int moduleSize)
     return result;
 }
 
+// Like bdmLoadOptionalModule, but passes IOP module args (arglen = byte length of the packed,
+// NUL-terminated args buffer). smap_udpbd requires an "ip=A.B.C.D" arg; the base loader passes none.
+static int bdmLoadOptionalModuleArgs(const char *name, void *module, int moduleSize, int arglen, char *args)
+{
+    int result;
+
+    LOG("[%s]:\n", name);
+    result = sysLoadModuleBuffer(module, moduleSize, arglen, args);
+    if (result < 0)
+        LOG("%s failed to load: %d\n", name, result);
+
+    return result;
+}
+
+// Exposed for ethsupport's NIC mutual-exclusion: UDPBD and the SMB stack both own the SMAP adapter.
+int bdmIsUDPBDLoaded(void)
+{
+    return udpbdModLoaded;
+}
+
 static void bdmEventHandler(void *packet, void *opt)
 {
     BdmGeneration++;
@@ -229,6 +258,8 @@ static int bdmShouldQueueModuleLoad(void)
     if (gEnableMX4SIO && !mx4sioModLoaded)
         return 1;
     if (gEnableBdmHDD && !hddModLoaded)
+        return 1;
+    if (gEnableUDPBD && !udpbdModLoaded)
         return 1;
 
     return 0;
@@ -266,6 +297,17 @@ static void bdmLoadBlockDeviceModules(void)
         hddLoadModules();
 
         hddModLoaded = 1;
+    }
+
+    // UDPBD network block device. NIC-exclusive with the SMB/ETH stack (both register "SMAP_driver"),
+    // so only load it when SMB isn't up. dev9 is refcounted (shared with ATA-HDD). smap_udpbd needs
+    // the PS2's static IP as an "ip=" module arg -- its ministack has no DHCP client.
+    if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded()) {
+        char ipArg[24];
+        sysInitDev9();
+        snprintf(ipArg, sizeof(ipArg), "ip=%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
+        if (bdmLoadOptionalModuleArgs("SMAP_UDPBD", &smap_udpbd_irx, size_smap_udpbd_irx, (int)strlen(ipArg) + 1, ipArg) >= 0)
+            udpbdModLoaded = 1;
     }
 
     SignalSema(bdmLoadModuleLock);
@@ -351,6 +393,9 @@ static int bdmNeedsUpdate(item_list_t *itemList)
                 break;
             case BDM_TYPE_ATA:
                 deviceEnabled = gEnableBdmHDD;
+                break;
+            case BDM_TYPE_UDPBD:
+                deviceEnabled = gEnableUDPBD;
                 break;
             default:
                 shouldApplyVisibility = 0;
@@ -759,6 +804,10 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // formats here, while `game` is still valid (deinit below frees it).
     int coreLoader = 0;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    // UDPBD has no embedded cdvdman backend -- it can ONLY boot via the external Neutrino core.
+    // Force it on here (while the GUI is up); if Neutrino is missing the block below warns + clears it.
+    if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
+        coreLoader = 1;
     const char *neutrinoPath = NULL;
     char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit frees configSet's owner
     neutrino_vmc_args_t neutrinoVmc = {0}; // per-game VMC -mc args; resolved before deinit, lives on this stack frame across the launch (#47)

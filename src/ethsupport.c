@@ -12,6 +12,7 @@
 #include "include/system.h"
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
+#include "include/bdmsupport.h" // bdmIsUDPBDLoaded() for the SMB<->UDPBD NIC interlock
 #include "modules/iopcore/common/cdvd_config.h"
 
 #define NEWLIB_PORT_AWARE
@@ -271,9 +272,21 @@ static void ethInitSMB(void)
     }
 }
 
+int ethGetModulesLoaded(void)
+{
+    return ethModulesLoaded;
+}
+
 static int ethLoadModules(void)
 {
     LOG("ETHSUPPORT LoadModules\n");
+
+    // UDPBD owns the single SMAP NIC ("SMAP_driver" modname); refuse to bring up the SMB stack on top
+    // of it. The Device-hub UI already interlocks the two; this is the runtime backstop.
+    if (bdmIsUDPBDLoaded()) {
+        LOG("ETHSUPPORT: UDPBD active -- not loading the SMB NIC stack\n");
+        return -1;
+    }
 
     if (!ethModulesLoaded) {
         ethModulesLoaded = 1;

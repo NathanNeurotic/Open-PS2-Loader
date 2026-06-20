@@ -25,6 +25,7 @@ typedef struct
 #define BDM_TYPE_ILINK   1
 #define BDM_TYPE_SDC     2
 #define BDM_TYPE_ATA     3
+#define BDM_TYPE_UDPBD   4
 
 typedef struct
 {
@@ -58,4 +59,5 @@ int bdmHDDIsPresent(u32 timeoutMs);
 int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName, int massDeviceIndex, int massSlot);
 
 int bdmFindPartition(char *target, const char *name, int write);
+int bdmIsUDPBDLoaded(void); // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)
 #endif

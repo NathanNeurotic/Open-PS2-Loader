@@ -886,6 +886,8 @@ static const char *getDeviceName(const char *driver)
         return "apa";
     if (!strcmp(driver, "mmce"))
         return "mmce";
+    if (!strcmp(driver, "udp"))
+        return "udpbd"; // UDPBD network block device -> Neutrino -bsd=udpbd
     return "unsupported";
 }
 
