@@ -65,6 +65,10 @@ gui_strings:
   string: General Settings
 - label: DEVICE_SETTINGS
   string: Device Settings
+- label: LAUNCH_PS2_DISC
+  string: Launch PS2 Disc
+- label: DISC_LAUNCH_ERR
+  string: No PS2 disc in the drive.
 - label: MENU
   string: Menu
 - label: BDM_GAMES

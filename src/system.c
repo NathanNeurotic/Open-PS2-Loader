@@ -376,6 +376,62 @@ void sysExecExit(void)
     exit(0);
 }
 
+// Boot the physical PS2 disc in the drive. The boot ELF name (SLXX_NNN.NN) is derived from the
+// disc key via sceCdReadKey(0x004B) -- the same low-level command sysGetDiscID already uses -- so
+// NO cdrom0: filesystem access (and no extra IOP modules) is needed. Always boots through
+// rom0:PS2LOGO (which performs the disc region/auth check). PS2 discs only. Returns a negative
+// code (and stays in OPL) on failure; on success it tears OPL down and never returns.
+// Key->name derivation mirrors PS2BBL's PS2GetBootFile (non-China path).
+int sysLaunchDisc(void)
+{
+    u8 key[16];
+    char boot[16], path[64];
+    char *args[1];
+    u32 k32;
+    int type;
+
+    if (sceCdStatus() == SCECdErOPENS) // tray open
+        return -1;
+
+    while (sceCdGetDiskType() == SCECdDETCT) // wait for the drive to identify the disc
+        ;
+
+    type = sceCdGetDiskType();
+    if (type != SCECdPS2DVD && type != SCECdPS2CD) // no disc / not a PS2 game disc
+        return -2;
+
+    sceCdDiskReady(0);
+
+    if (sceCdReadKey(0, 0, 0x004B, key) == 0 || sceCdGetError() != 0) // disc key unreadable
+        return -3;
+
+    boot[11] = '\0';
+    k32 = (key[4] >> 3) | (key[14] >> 3 << 5) | ((key[0] & 0x7F) << 10);
+    boot[10] = '0' + (k32 % 10);
+    boot[9] = '0' + (k32 / 10 % 10);
+    boot[8] = '.';
+    boot[7] = '0' + (k32 / 10 / 10 % 10);
+    boot[6] = '0' + (k32 / 10 / 10 / 10 % 10);
+    boot[5] = '0' + (k32 / 10 / 10 / 10 / 10 % 10);
+    boot[4] = '_';
+    boot[3] = (key[0] >> 7) | ((key[1] & 0x3F) << 1);
+    boot[2] = (key[1] >> 6) | ((key[2] & 0x1F) << 2);
+    boot[1] = (key[2] >> 5) | ((key[3] & 0xF) << 3);
+    boot[0] = ((key[4] & 0x7) << 4) | (key[3] >> 4);
+
+    if (boot[0] < 'A' || boot[0] > 'Z') // sanity: a real boot name starts with a letter (e.g. 'S')
+        return -3;
+
+    snprintf(path, sizeof(path), "cdrom0:\\%s;1", boot);
+    LOG("[DISC] booting %s\n", path);
+
+    deinit(NO_EXCEPTION, IO_MODE_SELECTED_ALL); // tear OPL down (mirrors sysExecExit)
+
+    args[0] = path;
+    LoadExecPS2("rom0:PS2LOGO", 1, args); // logo performs the disc region/auth check
+    return 0;                             // unreachable on success
+}
+
 // Module bits
 #define CORE_IRX_USB    0x01
 #define CORE_IRX_ETH    0x02
