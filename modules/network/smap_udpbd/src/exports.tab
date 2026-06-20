@@ -1,4 +1,4 @@
-void _retonly(){};
+void _retonly(); /* defined AFTER the table so it is not a value-0 .text symbol (ps2dev iopfixup) */
 
 DECLARE_EXPORT_TABLE(smap, 1, 1)
 	DECLARE_EXPORT(_retonly)
@@ -6,3 +6,5 @@ DECLARE_EXPORT_TABLE(smap, 1, 1)
 	DECLARE_EXPORT(_retonly)
 	DECLARE_EXPORT(_retonly)
 END_EXPORT_TABLE
+
+void _retonly(){};
