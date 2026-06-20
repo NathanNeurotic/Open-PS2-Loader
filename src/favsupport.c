@@ -56,12 +56,13 @@ static char *favStrdup(const char *s)
 
 // ---- on-disk path -------------------------------------------------------------
 
-// favourites.bin lives next to conf_opl.cfg (same OPL config dir, whatever device that is).
+// favourites.bin lives next to the master config in the SHARED OPL config dir (not renamed to
+// riptopl) so favourites carry across OPL / uOPL / wOPL -- only our settings file is private.
 static void favGetFilePath(char *out, int outSize)
 {
     config_set_t *cfg = configGetByType(CONFIG_OPL);
-    const char *fn = (cfg != NULL && cfg->filename != NULL) ? cfg->filename : "mc0:OPL/conf_opl.cfg";
-    const char *base = "conf_opl.cfg";
+    const char *fn = (cfg != NULL && cfg->filename != NULL) ? cfg->filename : "mc0:OPL/conf_riptopl.cfg";
+    const char *base = "conf_riptopl.cfg";
     int len = (int)strlen(fn);
     int blen = (int)strlen(base);
     if (len >= blen && strcmp(fn + len - blen, base) == 0) {
@@ -119,6 +120,83 @@ typedef struct
     char text[FAV_TEXT_MAX];
 } fav_raw_t;
 
+// Little-endian signed 32-bit from a byte buffer (for the foreign-format import below).
+static int rdS32le(const u8 *b)
+{
+    return (int)((u32)b[0] | ((u32)b[1] << 8) | ((u32)b[2] << 16) | ((u32)b[3] << 24));
+}
+
+// Translate a uOPL/wOPL IO_MODES value to ours. Their enum differs: they have only 5 BDM slots
+// (0..4) then ETH=5, HDD=6, APP=7, FAV=8, MMCE=9; we have 8 BDM slots then ETH=8, HDD=9,
+// APP=10, MMCE=11, FAV=12. Without this, a foreign ETH/HDD/APP favourite (5/6/7) would be read
+// as one of OUR BDM slots and silently fail to resolve. BDM slots pass through unchanged --
+// favResolve re-matches a BDM favourite across all of our slots by id+text anyway.
+static int favMapWoplMode(int m)
+{
+    switch (m) {
+        case 5:
+            return ETH_MODE;
+        case 6:
+            return HDD_MODE;
+        case 7:
+            return APP_MODE;
+        case 8:
+            return FAV_MODE; // favourite of the FAV tab itself; favResolve will reject it
+        case 9:
+            return MMCE_MODE;
+        default:
+            return m; // 0..4 are BDM slots in both schemes; anything else passes through
+    }
+}
+
+// Import a uOPL/wOPL favourites.bin (read-only). Their format is a header-less stream of
+// records, each = a raw 32-byte submenu_item_t (we trust only icon_id@0, text_id@8, id@12; the
+// on-disk text/cache/owner POINTERS are garbage and ignored), then int text_len, then the text
+// bytes, then a short owner-mode. uOPL and wOPL share this exact layout. We never WRITE it --
+// our own writes use the hardened OFAV format -- so this is a one-way carry-over that lets
+// favourites set in those builds appear in RiptOPL. Returns NULL on empty/corrupt input.
+#define WOPL_FAV_STRUCT_SIZE 32 // sizeof(submenu_item_t) on the EE: 8 x 4-byte fields
+static fav_raw_t *favReadWoplFile(int fd, int *outCount)
+{
+    *outCount = 0;
+    fav_raw_t *recs = (fav_raw_t *)calloc(FAV_MAX_ITEMS, sizeof(fav_raw_t));
+    if (recs == NULL)
+        return NULL;
+
+    int got = 0;
+    while (got < FAV_MAX_ITEMS) {
+        u8 st[WOPL_FAV_STRUCT_SIZE];
+        u32 tlen = 0;
+        u16 mode = 0;
+        if (!rdBytes(fd, st, WOPL_FAV_STRUCT_SIZE))
+            break; // clean EOF (or short tail) -> stop, keep what we have
+        if (!rdU32(fd, &tlen))
+            break;
+        if (tlen == 0 || tlen > FAV_TEXT_MAX) {
+            LOG("FAV import: bad text_len=%u (not uOPL/wOPL format?), aborting\n", (unsigned)tlen);
+            break; // desync / foreign struct size / corruption -> stop
+        }
+        if (!rdBytes(fd, recs[got].text, tlen))
+            break;
+        recs[got].text[tlen - 1] = '\0'; // tlen includes the NUL; force-terminate
+        if (!rdU16(fd, &mode))
+            break;
+        recs[got].icon_id = rdS32le(st + 0);
+        recs[got].text_id = rdS32le(st + 8);
+        recs[got].id = rdS32le(st + 12);
+        recs[got].mode = favMapWoplMode((int)(short)mode); // owner mode (signed short on disk) -> our IO_MODES
+        got++;
+    }
+
+    if (got == 0) {
+        free(recs);
+        return NULL;
+    }
+    LOG("FAV imported %d favourite(s) from uOPL/wOPL format\n", got);
+    *outCount = got;
+    return recs;
+}
+
 // Read + bounds-check the whole file into a heap array of raw records. Returns NULL (and
 // *outCount = 0) on any error/corruption. Caller frees the array.
 static fav_raw_t *favReadFile(int *outCount)
@@ -133,8 +211,18 @@ static fav_raw_t *favReadFile(int *outCount)
 
     u32 magic = 0;
     u16 ver = 0, cnt = 0;
-    if (!rdU32(fd, &magic) || !rdU16(fd, &ver) || !rdU16(fd, &cnt) || magic != FAV_MAGIC || ver != FAV_VERSION) {
-        LOG("FAV reject header magic=%08x ver=%d\n", (unsigned)magic, ver);
+    int hdrOk = rdU32(fd, &magic) && rdU16(fd, &ver) && rdU16(fd, &cnt);
+    if (!hdrOk || magic != FAV_MAGIC) {
+        // No OFAV header -> this may be a uOPL/wOPL favourites.bin in the shared OPL dir.
+        // Rewind and import it read-only so favourites carry over from those builds.
+        LOG("FAV: no OFAV header (magic=%08x) -- attempting uOPL/wOPL import\n", (unsigned)magic);
+        lseek(fd, 0, SEEK_SET);
+        fav_raw_t *imported = favReadWoplFile(fd, outCount);
+        close(fd);
+        return imported;
+    }
+    if (ver != FAV_VERSION) {
+        LOG("FAV reject: unsupported OFAV version %d\n", ver);
         close(fd);
         return NULL;
     }
@@ -323,6 +411,14 @@ static int favUpdateItemList(item_list_t *itemList)
 static int favGetItemCount(item_list_t *itemList) { return favCount; }
 
 static int favValidIndex(int id) { return (favArray != NULL && id >= 0 && id < favCount); }
+
+// Source device mode (APP_MODE / HDD_MODE / BDM range / ...) of the FAV item at FAV-list index
+// id, or -1 if id is out of range. Lets the theme engine redirect e.g. an APP favourite to the
+// apps element (correct art folder + case overlay) instead of the game cover element.
+int favGetItemSourceMode(int id)
+{
+    return favValidIndex(id) ? favArray[id].mode : -1;
+}
 
 // Guard the stored source id against the owner's CURRENT count -- the source list may have
 // shrunk / re-scanned since the favourite was validated, so re-check before every proxy call

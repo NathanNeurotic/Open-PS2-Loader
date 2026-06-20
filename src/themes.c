@@ -10,6 +10,7 @@
 #include "include/pad.h"
 #include "include/sound.h"
 #include "include/texcache.h"
+#include "include/favsupport.h"
 
 #include <time.h>
 #include <math.h>
@@ -664,15 +665,25 @@ static void prefetchAdjacentGameImages(image_cache_t *cache, void *support, stru
     }
 }
 
+// Favourites element redirection (defined in the Coverflow section below; used by both draw
+// paths so an APP favourite renders with the apps element, not the game cover element).
+static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem);
+
 static void drawGameImage(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
-    mutable_image_t *gameImage = (mutable_image_t *)elem->extended;
     if (item) {
-        item_list_t *list;
-        GSTEXTURE *texture;
-        list = (item_list_t *)menu->item->userdata;
+        item_list_t *list = (item_list_t *)menu->item->userdata;
 
-        texture = getGameImageTexture(gameImage->cache, menu->item->userdata, &item->item);
+        // On the Favourites tab an APP favourite draws with the theme's apps element (its own
+        // dimensions, case overlay and art folder); games and every other tab use elem as-is.
+        // The texture lookup stays on menu->item->userdata (favList) so favGetImage proxies by
+        // the FAV index -- only the element (geometry + cache + overlay) is redirected.
+        struct theme_element *drawElem = thmGetElemForItem(menu, item, elem);
+        mutable_image_t *gameImage = (mutable_image_t *)drawElem->extended;
+        if (gameImage == NULL)
+            return;
+
+        GSTEXTURE *texture = getGameImageTexture(gameImage->cache, menu->item->userdata, &item->item);
 
         if (gameImage->cache != NULL && gameImage->cache->suffix != NULL && strcmp(gameImage->cache->suffix, "COV") == 0 &&
             canPrefetchAdjacentGameImages(gameImage->cache, list, texture)) {
@@ -691,13 +702,14 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
         }
 
         if (gameImage->overlayTexture) {
-            rmDrawOverlayPixmap(&gameImage->overlayTexture->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol,
+            rmDrawOverlayPixmap(&gameImage->overlayTexture->source, drawElem->posX, drawElem->posY, drawElem->aligned, drawElem->width, drawElem->height, drawElem->scaled, gDefaultCol,
                                 texture, gameImage->overlayTexture->upperLeft_x, gameImage->overlayTexture->upperLeft_y, gameImage->overlayTexture->upperRight_x, gameImage->overlayTexture->upperRight_y,
                                 gameImage->overlayTexture->lowerLeft_x, gameImage->overlayTexture->lowerLeft_y, gameImage->overlayTexture->lowerRight_x, gameImage->overlayTexture->lowerRight_y, 0);
         } else
-            rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
+            rmDrawPixmap(texture, drawElem->posX, drawElem->posY, drawElem->aligned, drawElem->width, drawElem->height, drawElem->scaled, gDefaultCol, 0);
 
     } else if (elem->type == ELEM_TYPE_BACKGROUND) {
+        mutable_image_t *gameImage = (mutable_image_t *)elem->extended;
         if (gameImage->defaultTexture)
             rmDrawPixmap(&gameImage->defaultTexture->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
         else
@@ -719,17 +731,47 @@ static void initGameImage(const char *themePath, config_set_t *themeConfig, them
 
 // Coverflow ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Our fork carries no FAV/APP element+source redirection (a wOPL feature we don't port),
-// so the source list is always the active menu's userdata and the element passes through
-// unchanged. Kept as helpers to mirror wOPL's draw shape and document the stub.
+// Source list used for a submenu item's TEXTURE lookup. Always the active menu's userdata --
+// including the Favourites tab: our FAV items carry a FAV-array index (not the source id), and
+// favGetImage / favGetItemStartup proxy by that index, so the lookup must stay on favList.
 static void *thmGetItemSource(struct menu_list *menu, struct submenu_list *item)
 {
     return menu->item->userdata;
 }
 
+// Find a game-image / coverflow element in a list by its cover-cache suffix (e.g. "COV").
+static theme_element_t *thmFindElemBySuffix(theme_elems_t *elems, const char *suffix)
+{
+    if (suffix == NULL)
+        return NULL;
+    for (theme_element_t *e = elems->first; e != NULL; e = e->next) {
+        if (e->type != ELEM_TYPE_GAME_IMAGE && e->type != ELEM_TYPE_COVERFLOW)
+            continue;
+        mutable_image_t *eimg = (mutable_image_t *)e->extended;
+        if (eimg != NULL && eimg->cache != NULL && eimg->cache->suffix != NULL && strcmp(eimg->cache->suffix, suffix) == 0)
+            return e;
+    }
+    return NULL;
+}
+
+// Element to DRAW a submenu item with. On the Favourites tab an APP_MODE favourite renders with
+// the theme's apps element (its own dimensions + case overlay + art folder), matched to the
+// default element by cache suffix; if the theme defines no matching apps element we fall back to
+// the default. Games and every non-FAV tab pass through unchanged (returns the default element).
 static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem)
 {
-    return elem;
+    if (item == NULL || elem == NULL)
+        return elem;
+    item_list_t *menuList = (item_list_t *)menu->item->userdata;
+    if (menuList == NULL || menuList->mode != FAV_MODE)
+        return elem;
+    if (favGetItemSourceMode(item->item.id) != APP_MODE)
+        return elem;
+    mutable_image_t *img = (mutable_image_t *)elem->extended;
+    if (img == NULL || img->cache == NULL)
+        return elem;
+    theme_element_t *appsElem = thmFindElemBySuffix(&gTheme->appsMainElems, img->cache->suffix);
+    return (appsElem != NULL) ? appsElem : elem;
 }
 
 // Arms a slide animation in direction dir (+1 next / -1 prev). No-op (instant move) when
@@ -748,9 +790,8 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     if (!item)
         return; // empty list -> nothing to draw
 
-    mutable_image_t *img = (mutable_image_t *)thmGetElemForItem(menu, item, elem)->extended;
-    if (!img)
-        return;
+    if (elem->extended == NULL)
+        return; // coverflow element disabled (no cover cache)
     item_list_t *sourceList = (item_list_t *)thmGetItemSource(menu, item);
 
     // Defensive clamp: never trust the global at the draw site (conf.cfg may be hand-edited
@@ -782,18 +823,10 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     int coverDistance = coverWidth + coverSpacing;
     int basePosX = (screenWidth - (coverCount * coverWidth + (coverCount - 1) * coverSpacing)) / 2 + coverWidth / 2 + coverWidth * gTheme->coverflowCoverOffset / 256;
 
-    int sw = (elem->width > 0) ? elem->width : 1;   // div-guard (hand-edited theme)
-    int sh = (elem->height > 0) ? elem->height : 1; // div-guard (hand-edited theme)
-    // Auto-center the VISIBLE cover (the case frame box) inside the padded element: the case
-    // art's frame can sit off-center (e.g. apps_case frame = top-left 186 of 256), which would
-    // shift the carousel up/left. Recenter from the overlay corners so the frame -- and its
-    // mirror, which tracks the same quad -- stays centered. No overlay (plain pixmap) => no shift.
-    int recenterX = 0, recenterY = 0;
-    if (img->overlayTexture) {
-        image_texture_t *ovc = img->overlayTexture;
-        recenterX = sw / 2 - (ovc->upperLeft_x + ovc->upperRight_x) / 2;
-        recenterY = sh / 2 - (ovc->upperLeft_y + ovc->lowerLeft_y) / 2;
-    }
+    // Carousel cover SIZE/aspect comes from the coverflow element (uniform across covers). The
+    // per-cover frame-inset recenter is computed inside the loop from each cover's OWN element +
+    // overlay -- the Favourites tab can mix game and app cases (different frame insets), so a
+    // single shared recenter would shift the odd one out.
 
     // Build the visible window: covers[centerIndex] is the selection; fan out both sides,
     // wrapping last<->first. The left wrap reads menu->item->last (full lifecycle wired in
@@ -851,9 +884,20 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
         if (!covers[i])
             continue;
 
-        GSTEXTURE *texture = getGameImageTexture(img->cache, sourceList, &covers[i]->item);
+        // Per-cover element redirect: on the FAV tab an APP favourite uses the apps element (art
+        // folder + case overlay); games and other tabs pass through to the coverflow element. The
+        // texture lookup stays on sourceList (favList) so favGetImage proxies by the FAV index --
+        // only the cache + overlay are redirected; frame-inset math uses THIS cover's own dims.
+        theme_element_t *coverElem = thmGetElemForItem(menu, covers[i], elem);
+        mutable_image_t *cimg = (mutable_image_t *)coverElem->extended;
+        if (!cimg)
+            continue;
+        int csw = (coverElem->width > 0) ? coverElem->width : 1;   // div-guard
+        int csh = (coverElem->height > 0) ? coverElem->height : 1; // div-guard
+
+        GSTEXTURE *texture = getGameImageTexture(cimg->cache, sourceList, &covers[i]->item);
         if (!texture || !texture->Mem)
-            texture = img->defaultTexture ? &img->defaultTexture->source : thmGetTexture(COVER_DEFAULT);
+            texture = cimg->defaultTexture ? &cimg->defaultTexture->source : thmGetTexture(COVER_DEFAULT);
         if (!texture || !texture->Mem)
             continue;
 
@@ -867,18 +911,28 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
 
         int drawW = coverWidth + scaleAdd;
         int drawH = (coverWidth > 0) ? (coverHeight * drawW / coverWidth) : coverHeight;
-        int posX = basePosX + i * coverDistance + animOffset + recenterX * drawW / sw;
-        int posY = elem->posY + recenterY * drawH / sh;
+
+        // Auto-center the VISIBLE cover (case frame box) from THIS cover's overlay corners: the
+        // frame can sit off-center (e.g. apps_case = top-left 186 of 256). No overlay => no shift.
+        int recenterX = 0, recenterY = 0;
+        if (cimg->overlayTexture) {
+            image_texture_t *ovc = cimg->overlayTexture;
+            recenterX = csw / 2 - (ovc->upperLeft_x + ovc->upperRight_x) / 2;
+            recenterY = csh / 2 - (ovc->upperLeft_y + ovc->lowerLeft_y) / 2;
+        }
+
+        int posX = basePosX + i * coverDistance + animOffset + recenterX * drawW / csw;
+        int posY = elem->posY + recenterY * drawH / csh;
 
         u64 coverColor = (gCoverflowDimCovers && i != centerIndex) ? GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x40) : gDefaultCol;
 
-        if (img->overlayTexture) {
+        if (cimg->overlayTexture) {
             // Scale the inlay (cover) corner offsets to the drawn overlay size so the case
             // window tracks the cover at every scale. HW-verify alignment with real case art.
-            image_texture_t *ov = img->overlayTexture;
+            image_texture_t *ov = cimg->overlayTexture;
             rmDrawOverlayPixmap(&ov->source, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor,
-                                texture, ov->upperLeft_x * drawW / sw, ov->upperLeft_y * drawH / sh, ov->upperRight_x * drawW / sw, ov->upperRight_y * drawH / sh,
-                                ov->lowerLeft_x * drawW / sw, ov->lowerLeft_y * drawH / sh, ov->lowerRight_x * drawW / sw, ov->lowerRight_y * drawH / sh, elem->reflection);
+                                texture, ov->upperLeft_x * drawW / csw, ov->upperLeft_y * drawH / csh, ov->upperRight_x * drawW / csw, ov->upperRight_y * drawH / csh,
+                                ov->lowerLeft_x * drawW / csw, ov->lowerLeft_y * drawH / csh, ov->lowerRight_x * drawW / csw, ov->lowerRight_y * drawH / csh, elem->reflection);
         } else {
             rmDrawPixmap(texture, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
         }

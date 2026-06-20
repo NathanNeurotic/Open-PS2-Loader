@@ -891,7 +891,7 @@ static int checkLoadConfigBDM(int types)
     int bdm_result;
 
     // Check BDM devices first (mass:/massX:/mmce:/mx4sio: etc).
-    bdm_result = bdmFindPartition(path, "conf_opl.cfg", 0);
+    bdm_result = bdmFindPartition(path, "conf_riptopl.cfg", 0);
 
     if (bdm_result) {
         configEnd();
@@ -970,7 +970,7 @@ static int checkLoadConfigBDMHDD(int types)
 
     // Bounded wait so BDM-on-HDD can be detected without long black-screen stalls.
     if (hddLoadModules() >= 0 && bdmHDDIsPresent(500)) {
-        if (bdmFindPartition(path, "conf_opl.cfg", 0)) {
+        if (bdmFindPartition(path, "conf_riptopl.cfg", 0)) {
             configEnd();
             configInit(path);
             value = configReadMulti(types);
@@ -993,7 +993,7 @@ static int checkLoadConfigHDD(int types)
     hddLoadModules();
     hddLoadSupportModules();
 
-    snprintf(path, sizeof(path), "%sconf_opl.cfg", gHDDPrefix);
+    snprintf(path, sizeof(path), "%sconf_riptopl.cfg", gHDDPrefix);
     value = open(path, O_RDONLY);
     if (value >= 0) {
         close(value);
@@ -1233,7 +1233,7 @@ static int trySaveConfigBDM(int types)
     int bdm_result;
 
     // Check BDM devices first (mass:/massX:/mmce:/mx4sio: etc).
-    bdm_result = bdmFindPartition(path, "conf_opl.cfg", 1);
+    bdm_result = bdmFindPartition(path, "conf_riptopl.cfg", 1);
 
     if (bdm_result) {
         configSetMove(path);
@@ -1268,7 +1268,7 @@ static int trySaveConfigBDMHDD(int types)
 
     // Bounded wait so save can target BDM-on-HDD without long stalls.
     if (hddLoadModules() >= 0 && bdmHDDIsPresent(500)) {
-        if (bdmFindPartition(path, "conf_opl.cfg", 1)) {
+        if (bdmFindPartition(path, "conf_riptopl.cfg", 1)) {
             configSetMove(path);
             return configWriteMulti(types);
         }
