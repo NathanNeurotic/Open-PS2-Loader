@@ -135,6 +135,7 @@ extern int gEnableUSB;
 extern int gEnableILK;
 extern int gEnableMX4SIO;
 extern int gEnableBdmHDD;
+extern int gEnableUDPBD; // UDPBD network block device (smap_udpbd); NIC-exclusive with the SMB/ETH stack
 
 extern int gAutosort;
 extern int gAutoRefresh;

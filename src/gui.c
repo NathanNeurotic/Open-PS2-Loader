@@ -904,6 +904,10 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, gEnableBdmHDD);
     diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, !gHDDStartMode);
     diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !gEnableBdmHDD);
+    // UDPBD shares the single Ethernet NIC with the SMB/ETH stack -- interlock them like BDM-HDD<->APA-HDD.
+    diaSetInt(diaDeviceConfig, CFG_ENABLEUDPBD, gEnableUDPBD);
+    diaSetEnabled(diaDeviceConfig, CFG_ENABLEUDPBD, !gETHStartMode);
+    diaSetEnabled(diaDeviceConfig, CFG_ETHMODE, !gEnableUDPBD);
 
     // Prefix paths
     diaSetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix);
@@ -945,6 +949,7 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
         diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
+        diaGetInt(diaDeviceConfig, CFG_ENABLEUDPBD, &gEnableUDPBD);
 
         diaGetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
         diaGetString(diaDeviceConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
