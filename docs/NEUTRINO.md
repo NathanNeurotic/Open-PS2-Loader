@@ -54,6 +54,7 @@ settings:
 | `-gc=<modes>` | only if the game has OPL compatibility modes set |
 | `-dbc` | only if **Debug Colors** is enabled |
 | `-logo` | only if **PS2 Logo** is enabled |
+| `-gsm=<mode>` | only if a per-game **Neutrino Video** mode is set (Compatibility screen) |
 
 On top of those, you can pass **extra Neutrino flags** (e.g. media-type or video tweaks)
 in two places. Both are **appended after** the auto-built arguments; **global first, then
@@ -117,18 +118,23 @@ options the selected core actually honors (Neutrino ignores most of OPL's embedd
 features — see the mapping below).
 
 When a game's core is **Neutrino**:
-- **Compatibility screen:** the **Neutrino Launch Args** field is editable; OPL compat **mode 4
-  (Skip Videos)** and **mode 6 (Disable IGR)** are greyed — they're OPL ee-core features with
-  **no Neutrino equivalent** (Neutrino has no in-game reset, and no PSS/BIK video-skip), so OPL
-  never forwards them. **DL Defaults** is greyed too (it pulls OPL-bitmask data that doesn't map
-  to `-gc`). Modes 1/2/3/5 *do* map to Neutrino's `-gc`.
+- **Compatibility screen:** the **Neutrino Launch Args** field is editable, and a **Neutrino
+  Video** picker (Off / 240p / 480p / 1080i) appears beside it — it maps to Neutrino's `-gsm`
+  (`fp1` / `fp2` / `1080ix1`; Off emits nothing) and is the Neutrino-side stand-in for the hidden
+  OPL GSM panel. OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
+  they're OPL ee-core features with **no Neutrino equivalent** (Neutrino has no in-game reset, and
+  no PSS/BIK video-skip), so OPL never forwards them. **DL Defaults** is greyed too (it pulls
+  OPL-bitmask data that doesn't map to `-gc`). Modes 1/2/3/5 *do* map to `-gc`.
 - **GSM, Cheats, PADEMU, OSD Language** panels are OPL-core-only; opening one shows
-  *"not used with the Neutrino core"* instead of editing dead options.
+  *"not used with the Neutrino core"* instead of editing dead options (use the Neutrino Video
+  picker above for video forcing).
 - **VMC** and **Compatibility** stay available — both are honored under Neutrino (VMC via
   `-mc0`/`-mc1` on block devices).
+- **UDPBD games** have no OPL core backend, so the **Loader Core selector is locked to Neutrino**
+  for them (they always launch via Neutrino regardless).
 
-When a game's core is **`<OPL>`** the screen is unchanged from classic OPL, except the
-Neutrino Args field is greyed (it's never read on the OPL path).
+When a game's core is **`<OPL>`** the screen is unchanged from classic OPL, except the Neutrino
+Args field and Neutrino Video picker are greyed (never read on the OPL path).
 
 > What Neutrino honors per game: the storage backend + image (`-bsd`/`-dvd`, automatic),
 > compat subset (`-gc`), VMC (`-mc0`/`-mc1`), `-logo`, and the free-text **Neutrino Launch
