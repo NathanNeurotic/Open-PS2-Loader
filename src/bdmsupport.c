@@ -806,7 +806,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     // UDPBD has no embedded cdvdman backend -- it can ONLY boot via the external Neutrino core.
     // Force it on here (while the GUI is up); if Neutrino is missing the block below warns + clears it.
-    if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
+    if (bdmDriverIsUDPBD(bdmCurrentDriver))
         coreLoader = 1;
     const char *neutrinoPath = NULL;
     char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit frees configSet's owner

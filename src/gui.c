@@ -867,6 +867,15 @@ static int guiDeviceUpdater(int modified)
         // two interlocked live now that both live on the same page.
         diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !bdmHdd);
         diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, hddMode == 0);
+
+        // UDPBD shares the single Ethernet NIC with the SMB/ETH stack -- interlock the
+        // two live as well, mirroring the BDM-HDD<->APA-HDD pair above (the static setup
+        // in guiShowDeviceConfig only greys at dialog-open, not on each in-dialog edit).
+        int ethMode, udpbd;
+        diaGetInt(diaDeviceConfig, CFG_ETHMODE, &ethMode);
+        diaGetInt(diaDeviceConfig, CFG_ENABLEUDPBD, &udpbd);
+        diaSetEnabled(diaDeviceConfig, CFG_ENABLEUDPBD, ethMode == 0);
+        diaSetEnabled(diaDeviceConfig, CFG_ETHMODE, !udpbd);
     }
 
     return 0;
