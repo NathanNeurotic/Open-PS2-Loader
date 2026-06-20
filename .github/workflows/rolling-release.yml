@@ -337,31 +337,16 @@ jobs:
           HAS_LATEST=no
           [ -f "rolling/${VERSIONED_BASE}-ps2dev-latest.ELF" ] && HAS_LATEST=yes
           {
-            printf 'Rolling build of master (not a stable release).\n\n'
+            printf 'RiptOPL -- rolling build of master (not a stable release).\n\n'
             printf 'Version: %s\n' "$OPL_VERSION"
             printf 'Commit: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA"
             printf 'Built: %s UTC\n' "$(date -u '+%Y-%m-%d %H:%M')"
-            printf 'Run: %s/%s/actions/runs/%s\n\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-            printf 'Toolchain builds (one file each, the filename includes the version):\n'
-            printf '  - %s.ELF                -> ps2max/dev (pinned) toolchain\n' "$VERSIONED_BASE"
-            if [ "$HAS_LATEST" = yes ]; then
-              printf '  - %s-ps2dev-latest.ELF  -> ps2dev/ps2dev:latest toolchain\n' "$VERSIONED_BASE"
-            else
-              printf '  - ps2dev/ps2dev:latest build FAILED this run (pinned build only)\n'
-            fi
-            printf '\nRIPTOPL package (RIPTOPL-*.zip) ships BOTH SDK builds:\n'
-            printf '  - APP_RIPTOPL/RIPTOPL.ELF        = ps2dev:latest (cutting-edge) -- the default\n'
-            printf '  - APP_RIPTOPL-OLDSDK/RIPTOPL.ELF = ps2max/dev pinned (older SDK) -- compatibility fallback\n'
-            if [ -f "rolling/RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip" ]; then
-              printf '\nRIPTOPL VARIANTS (RIPTOPL-VARIANTS-*.zip): the EXTRA_FEATURES x PADEMU build\n'
-              printf '  configs (NOT_PACKED), each in both SDK flavours (standard = ps2dev:latest, plus\n'
-              printf '  -OLDSDK = pinned).\n'
-            fi
-            if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
-              printf '\nRIPTOPL DEBUG (RIPTOPL-DEBUG-*.zip): the debug builds (iopcore/ingame/eesio/ppctty\n'
-              printf '  /DTL_T10000), each in both SDK flavours (standard + -OLDSDK). For diagnostics.\n'
-            fi
-            printf '\nBundled Neutrino core (required by the Neutrino launch mode), from the official repo:\n'
+            printf 'Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf '\n## Get started\n'
+            printf 'Grab **RIPTOPL-*.zip** and extract it. Use **APP_RIPTOPL/RIPTOPL.ELF** (built with ps2dev:latest).\n'
+            printf 'If a game will not boot on your console, try the **APP_RIPTOPL-OLDSDK/** copy (pinned older SDK).\n'
+            printf '\n## Bundled Neutrino core\n'
+            printf 'Required for the per-game Neutrino launch mode. From the official repo:\n'
             printf '  https://github.com/rickgaiser/neutrino\n'
             if [ -n "${NEUTRINO_VER:-}" ]; then
               printf '  Included build: %s -- bundled UNMODIFIED in the RIPTOPL package root (neutrino_*.7z);\n' "$NEUTRINO_VER"
@@ -370,8 +355,36 @@ jobs:
               printf '  (Could not fetch Neutrino this run -- please grab the latest build from the link above.)\n'
             fi
             printf '  Neutrino is the work of its authors; RiptOPL only bundles the official build for convenience.\n'
-            printf '\nSource snapshot (for preservation / offline rebuild of this exact commit):\n'
-            printf '  - %s-src.zip\n' "$VERSIONED_BASE"
+            printf '\n## In this build\n'
+            printf -- '- External Neutrino core option: per-game core selector + global/per-game launch args\n'
+            printf -- '- Coverflow cover-art render mode (default theme)\n'
+            printf -- '- Favourites tab (R3 toggles a game; star marker)\n'
+            printf -- '- PS1 / VCD via POPSTARTER as a per-device view (L3)\n'
+            printf -- '- Device Settings hub\n'
+            printf -- '- Per-game VMC shared with Neutrino on writable BDM (honours OPL VMC groups)\n'
+            printf -- '- Visual GameID barcode for Pixel FX / RetroGEM / PS2Digital (Device Settings, OFF by default)\n'
+            printf -- '- Neutrino args: prefix a flag with $ to disable it without deleting; "Test launch" boots without saving\n'
+            printf -- '- DualSense / DS5 USB controller support\n'
+            printf '\n## Needs testing -- please report from real hardware\n'
+            printf -- '- GameID barcode: enable it in Device Settings, then confirm your Pixel FX / RetroGEM /\n'
+            printf -- '  PS2Digital auto-loads the per-game profile (the HDMI latch is hardware-only -- not emulator-testable).\n'
+            printf -- '- VMC -> Neutrino: confirm your save mounts when launching via Neutrino on USB / exFAT / MX4SIO.\n'
+            printf -- '  (Neutrino cannot yet write a VMC to internal HDD APA/PFS -- upstream neutrino#132 -- so VMC\n'
+            printf -- '  sharing is block-device only for now.)\n'
+            printf '\n## Other downloads\n'
+            if [ -f "rolling/RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip" ]; then
+              printf -- '- RIPTOPL-VARIANTS-*.zip: EXTRA_FEATURES x PADEMU build configs, both SDK flavours\n'
+            fi
+            if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
+              printf -- '- RIPTOPL-DEBUG-*.zip: debug builds (iopcore/ingame/eesio/ppctty/DTL_T10000), both SDKs -- diagnostics\n'
+            fi
+            printf -- '- %s.ELF: bare loader, ps2max/dev pinned toolchain\n' "$VERSIONED_BASE"
+            if [ "$HAS_LATEST" = yes ]; then
+              printf -- '- %s-ps2dev-latest.ELF: bare loader, ps2dev:latest toolchain\n' "$VERSIONED_BASE"
+            else
+              printf -- '- (ps2dev:latest build FAILED this run -- pinned bare loader only)\n'
+            fi
+            printf -- '- %s-src.zip: source snapshot to rebuild this exact commit\n' "$VERSIONED_BASE"
             printf '\nSHA256 (also published as SHA256SUMS.txt):\n'
             printf '```\n'
             cat rolling/SHA256SUMS.txt
