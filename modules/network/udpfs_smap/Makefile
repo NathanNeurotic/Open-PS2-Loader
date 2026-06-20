@@ -8,6 +8,12 @@ IOP_INCS := -Iinclude -Isrc
 # ps2dev:latest iopfixup doesn't reject _retonly as a value-0 .text symbol. Keep on re-vendor.
 IOP_OBJS = exports.o main.o smap.o xfer.o imports.o
 
+# exports.o is first (for iopfixup, above), so the generated obj/build-exports.c is the FIRST build
+# step. ps2dev:latest's Makefile.iopglobal gives the real .o rules an order-only obj/ prereq but not
+# these generated sources, so under -j build-exports.c can be written before obj/ exists ("can't
+# create obj/build-exports.c: nonexistent directory"). Give them the same prereq. Keep on re-vendor.
+$(IOP_OBJS_DIR)build-exports.c $(IOP_OBJS_DIR)build-imports.c: | $(IOP_OBJS_DIR)
+
 all:: $(IOP_BIN)
 
 clean::
