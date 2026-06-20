@@ -54,4 +54,15 @@ int vcdConsumeDirty(int mode);
 // <devPrefix>POPS/*.VCD. Returns the count. name = VCD basename, startup = PS1 id (or "" = no art).
 int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames);
 
+// ---- safe memory-card copy (free-space gated) -------------------------------------
+// Used by the BDMA/SMB module equip + the POPSTARTER config writers so a full or interrupted
+// write can never wreck the card. Every write onto mc?:/POPSTARTER/ must go through these.
+
+// Room for `needBytes` (+ safety margin) on `path`'s card? 1 = yes, 0 = no, -1 = not an MC / can't tell.
+int vcdMcHasSpace(const char *path, int needBytes);
+// Copy srcPath -> dstPath: 0 ok, -1 src missing, -2 MC too full (nothing written), -3 IO error (partial removed).
+int vcdSafeCopyFile(const char *srcPath, const char *dstPath);
+// Write a buffer to dstPath under the same gate: 0 ok, -2 MC too full, -3 IO error (partial removed).
+int vcdSafeWriteFile(const char *dstPath, const void *buf, int len);
+
 #endif

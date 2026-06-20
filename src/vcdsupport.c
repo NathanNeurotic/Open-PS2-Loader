@@ -177,3 +177,127 @@ int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)
     *outGames = games;
     return n;
 }
+
+// ---- safe memory-card copy (free-space gated) ---------------------------------------
+// Equipping BDMA / SMB modules COPIES files onto mc?:/POPSTARTER/, and writing the small config
+// markers (bdma_config.txt, IPCONFIG.DAT, SMBCONFIG.DAT) does the same. Filling a card to zero or
+// leaving a half-written module there can wreck a user's POPSTARTER setup, so EVERY such write goes
+// through these helpers: we refuse up front unless the destination card reports enough free space
+// (plus a margin), and we delete any partially-written file on a short write. POSIX IO only.
+
+#define VCD_MC_CLUSTER  1024        // PS2 memory-card cluster size; mcGetInfo "free" is in clusters
+#define VCD_COPY_MARGIN (16 * 1024) // leave >=16 KiB head-room so we never pack the card to 0
+#define VCD_COPY_CHUNK  (16 * 1024) // copy buffer (heap, not stack)
+
+// Free bytes on the memory card backing `path` ("mc0:"/"mc1:"), or -1 if it isn't a usable PS2 MC.
+static int vcdMcFreeBytes(const char *path)
+{
+    if (path == NULL || (path[0] != 'm' && path[0] != 'M') || (path[1] != 'c' && path[1] != 'C'))
+        return -1;                       // not a memory-card path
+    int port = (path[2] == '1') ? 1 : 0; // "mc1:" -> slot 1, anything else -> slot 0
+    int type = 0, freeClusters = -1, format = 0, result = -1;
+    mcGetInfo(port, 0, &type, &freeClusters, &format);
+    mcSync(0, NULL, &result); // mcGetInfo is async; the vars are valid after the sync
+    if (type != sceMcTypePS2 || format != MC_FORMATTED || freeClusters < 0)
+        return -1; // no PS2 card / unformatted / query failed
+    return freeClusters * VCD_MC_CLUSTER;
+}
+
+// Room for `needBytes` (+ margin) on `path`'s card? 1 = yes, 0 = no, -1 = not an MC / can't tell.
+// Callers writing to an MC must treat 0 as "do NOT write"; -1 means the gate doesn't apply.
+int vcdMcHasSpace(const char *path, int needBytes)
+{
+    int freeB = vcdMcFreeBytes(path);
+    if (freeB < 0)
+        return -1;
+    return (freeB >= needBytes + VCD_COPY_MARGIN) ? 1 : 0;
+}
+
+// Copy srcPath -> dstPath, but only after confirming the destination card can hold it.
+//   0  success      -1  source missing/unreadable
+//  -2  MC too full (NOTHING written)   -3  write/IO error (partial dst removed)
+int vcdSafeCopyFile(const char *srcPath, const char *dstPath)
+{
+    if (srcPath == NULL || dstPath == NULL)
+        return -1;
+
+    int sfd = open(srcPath, O_RDONLY);
+    if (sfd < 0)
+        return -1;
+    int srcSize = lseek(sfd, 0, SEEK_END);
+    lseek(sfd, 0, SEEK_SET);
+    if (srcSize < 0) {
+        close(sfd);
+        return -1;
+    }
+
+    // Free-space gate: only blocks when the destination IS a memory card and it won't fit.
+    if (vcdMcHasSpace(dstPath, srcSize) == 0) {
+        close(sfd);
+        return -2;
+    }
+
+    char *buf = (char *)malloc(VCD_COPY_CHUNK);
+    if (buf == NULL) {
+        close(sfd);
+        return -3;
+    }
+    int dfd = open(dstPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (dfd < 0) {
+        free(buf);
+        close(sfd);
+        return -3;
+    }
+
+    int rc = 0, r;
+    while ((r = read(sfd, buf, VCD_COPY_CHUNK)) > 0) {
+        int off = 0;
+        while (off < r) {
+            int w = write(dfd, buf + off, r - off);
+            if (w <= 0) {
+                rc = -3;
+                break;
+            }
+            off += w;
+        }
+        if (rc != 0)
+            break;
+    }
+    if (r < 0)
+        rc = -3;
+
+    close(dfd);
+    close(sfd);
+    free(buf);
+    if (rc != 0)
+        unlink(dstPath); // never leave a truncated module/config behind
+    return rc;
+}
+
+// Write `len` bytes from `buf` to dstPath, gated by the same MC free-space check.
+//   0 success   -2 MC too full (nothing written)   -3 write/IO error (partial dst removed)
+int vcdSafeWriteFile(const char *dstPath, const void *buf, int len)
+{
+    if (dstPath == NULL || len < 0 || (buf == NULL && len > 0))
+        return -3;
+    if (vcdMcHasSpace(dstPath, len) == 0)
+        return -2;
+
+    int dfd = open(dstPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (dfd < 0)
+        return -3;
+    const char *p = (const char *)buf;
+    int off = 0, rc = 0;
+    while (off < len) {
+        int w = write(dfd, p + off, len - off);
+        if (w <= 0) {
+            rc = -3;
+            break;
+        }
+        off += w;
+    }
+    close(dfd);
+    if (rc != 0)
+        unlink(dstPath);
+    return rc;
+}
