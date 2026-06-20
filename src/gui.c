@@ -922,6 +922,7 @@ void guiShowDeviceConfig(void)
     diaSetEnum(diaDeviceConfig, CFG_MMCE_USE_ALARMS, deviceOnOff);
     diaSetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, gMMCEUseAlarms);
     diaSetInt(diaDeviceConfig, CFG_MMCEGAMEID, gMMCEEnableGameID);
+    diaSetInt(diaDeviceConfig, CFG_APPLYGAMEID, gApplyGameID);
 
     int ret = diaExecuteDialog(diaDeviceConfig, -1, 1, &guiDeviceUpdater);
     if (ret) {
@@ -952,6 +953,7 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_MMCESLOT, &gMMCESlot);
         diaGetInt(diaDeviceConfig, CFG_MMCEIGRSLOT, &gMMCEIGRSlot);
         diaGetInt(diaDeviceConfig, CFG_MMCEGAMEID, &gMMCEEnableGameID);
+        diaGetInt(diaDeviceConfig, CFG_APPLYGAMEID, &gApplyGameID);
         diaGetInt(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
         diaGetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, &gMMCEUseAlarms);
 
@@ -1983,6 +1985,111 @@ void guiRenderTextScreen(const char *message)
     guiDrawOverlays();
 
     guiEndFrame();
+}
+
+// ---- Visual GameID barcode (Pixel FX / RetroGEM / PS2Digital HDMI auto-profile) ----
+// Renders the CosmicScale "GameID" barcode just before a game is handed to its core, so an HDMI
+// scaler can auto-load that game's per-title display profile. Encoding is the canonical CosmicScale
+// scheme (start word 0xA5 / end word 0xD5 / length byte / additive 0x100-sum checksum), drawn with
+// rmDrawRect exactly as CosmicScale's own OPL fork does. Gated behind gApplyGameID (default OFF) --
+// the pattern is meaningless to non-GameID displays, and the actual HDMI latch is only verifiable on
+// real GameID hardware (experimental until a tester confirms).
+
+#define GAMEID_HOLD_FRAMES 45 // ~0.75s @ 60fps -- enough stable frames for a scaler to sample
+
+// Normalise a startup id into the serial the GameID device expects: drop a POPS "XX."/"SB." prefix and
+// a trailing ".elf"/".ELF", cap at 11 chars (e.g. "SLUS_200.02"). Copied VERBATIM (no case fold) to
+// stay byte-identical to CosmicScale's HW-validated guiSetGameId; retail serials are already uppercase.
+static void gameIDCleanSerial(const char *startup, char *out, int outSize)
+{
+    int i = 0, len;
+    const char *src = startup;
+
+    out[0] = '\0';
+    if (src == NULL)
+        return;
+
+    if (!strncmp(src, "XX.", 3) || !strncmp(src, "SB.", 3))
+        src += 3;
+
+    while (src[i] != '\0' && i < outSize - 1) {
+        out[i] = src[i];
+        i++;
+    }
+    out[i] = '\0';
+
+    len = (int)strlen(out);
+    if (len >= 4 && !strcasecmp(&out[len - 4], ".elf"))
+        out[len - 4] = '\0';
+    if (strlen(out) > 11)
+        out[11] = '\0';
+}
+
+// Build the GameID packet from a cleaned serial; returns its length in bytes.
+static int gameIDBuildPacket(u8 *data, const char *serial)
+{
+    int n = 0, i, sum = 0, crcpos;
+    int gidlen = (int)strlen(serial);
+    if (gidlen > 11)
+        gidlen = 11;
+
+    data[n++] = 0xA5;       // start / detect word
+    data[n++] = 0x00;       // address offset
+    crcpos = n++;           // checksum placeholder (data[2])
+    data[n++] = (u8)gidlen; // payload length
+    for (i = 0; i < gidlen; i++)
+        data[n++] = (u8)serial[i];
+    data[n++] = 0x00;
+    data[n++] = 0xD5; // end word
+    data[n++] = 0x00; // padding
+
+    for (i = 3; i < n; i++) // additive 8-bit checksum over {length byte .. end}
+        sum += data[i];
+    data[crcpos] = (u8)(0x100 - (sum & 0xFF));
+    return n;
+}
+
+// Draw the barcode once: per data bit (MSB-first) a magenta clock column + a cyan(1)/yellow(0) column.
+static void gameIDDrawBars(const char *startup)
+{
+    u8 data[32];
+    char serial[16];
+    int data_len, i, ii, xstart, ystart;
+
+    gameIDCleanSerial(startup, serial, sizeof(serial));
+    if (serial[0] == '\0')
+        return;
+
+    data_len = gameIDBuildPacket(data, serial);
+    xstart = (screenWidth / 2) - (data_len * 8); // centered horizontally
+    ystart = screenHeight - ((screenHeight / 8) * 2 + 20);
+
+    for (i = 0; i < data_len; i++) {
+        for (ii = 7; ii >= 0; ii--) {
+            int x = xstart + (i * 16 + (7 - ii) * 2);
+            rmDrawRect(x, ystart, 1, 2, GS_SETREG_RGBA(0xFF, 0x00, 0xFF, 0x80)); // magenta clock col
+            rmDrawRect(x + 1, ystart, 1, 2,
+                       ((data[i] >> ii) & 1) ? GS_SETREG_RGBA(0x00, 0xFF, 0xFF, 0x80) // cyan = 1
+                                               :
+                                               GS_SETREG_RGBA(0xFF, 0xFF, 0x00, 0x80)); // yellow = 0
+        }
+    }
+}
+
+void guiShowGameID(const char *startup)
+{
+    int frame;
+
+    if (!gApplyGameID || startup == NULL || startup[0] == '\0')
+        return;
+
+    // Hold the barcode on a clean black field for a few frames so an HDMI scaler can latch it.
+    for (frame = 0; frame < GAMEID_HOLD_FRAMES; frame++) {
+        guiStartFrame();
+        rmDrawRect(0, 0, screenWidth, screenHeight, GS_SETREG_RGBA(0x00, 0x00, 0x00, 0x80));
+        gameIDDrawBars(startup);
+        guiEndFrame();
+    }
 }
 
 void guiWarning(const char *text, int count)

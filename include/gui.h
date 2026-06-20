@@ -154,6 +154,11 @@ void guiGameHandleDeferedIO(int *ptr, struct UIItem *ui, int type, void *data);
  */
 void guiRenderTextScreen(const char *message);
 
+/** Display the visual GameID barcode (CosmicScale scheme) for Pixel FX / RetroGEM / PS2Digital
+ *  HDMI auto-profiles. No-op unless gApplyGameID is set. Call just before launching a game.
+ */
+void guiShowGameID(const char *startup);
+
 /** Renders a single boot-splash (greeting) frame, used as the boot loading screen
  *  so the menu is not drawn before it is ready.
  */

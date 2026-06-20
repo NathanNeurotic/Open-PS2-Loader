@@ -146,6 +146,7 @@ int gMMCESlot;
 int gMMCEAckWaitCycles;
 int gMMCEUseAlarms;
 int gMMCEEnableGameID;
+int gApplyGameID;
 int gEnableUSB;
 int gEnableILK;
 int gEnableMX4SIO;
@@ -291,6 +292,9 @@ static void itemExecSelect(struct menu_item *curMenu)
         if (support->enabled) {
             if (curMenu->current) {
                 config_set_t *configSet = menuLoadConfigDirect();
+                // Flash the GameID barcode (Pixel FX/RetroGEM HDMI auto-profile) before handoff; this
+                // single menu chokepoint covers both the Neutrino and OPL-native cores. No-op when off.
+                guiShowGameID(support->itemGetStartup(support, curMenu->current->item.id));
                 support->itemLaunch(support, curMenu->current->item.id, configSet);
             }
         } else {
@@ -1196,6 +1200,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_MMCE_SLOT, &gMMCESlot);
             configGetInt(configOPL, CONFIG_OPL_MMCEIGR_SLOT, &gMMCEIGRSlot);
             configGetInt(configOPL, CONFIG_OPL_MMCE_GAMEID, &gMMCEEnableGameID);
+            configGetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, &gApplyGameID);
             configGetInt(configOPL, CONFIG_OPL_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
             configGetInt(configOPL, CONFIG_OPL_MMCE_USE_ALARMS, &gMMCEUseAlarms);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_USB, &gEnableUSB);
@@ -1407,6 +1412,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_MMCE_SLOT, gMMCESlot);
         configSetInt(configOPL, CONFIG_OPL_MMCEIGR_SLOT, gMMCEIGRSlot);
         configSetInt(configOPL, CONFIG_OPL_MMCE_GAMEID, gMMCEEnableGameID);
+        configSetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, gApplyGameID);
         configSetInt(configOPL, CONFIG_OPL_MMCE_WAIT_CYCLES, gMMCEAckWaitCycles);
         configSetInt(configOPL, CONFIG_OPL_MMCE_USE_ALARMS, gMMCEUseAlarms);
         configSetInt(configOPL, CONFIG_OPL_BDM_CACHE, bdmCacheSize);
@@ -2092,6 +2098,7 @@ static void setDefaults(void)
     gMMCESlot = 2; //Default to first Auto slot
     gMMCEIGRSlot = 3;
     gMMCEEnableGameID = 1;
+    gApplyGameID = 0; // visual GameID barcode OFF by default (only meaningful to Pixel FX/RetroGEM HDMI displays)
     gMMCEAckWaitCycles = 0;
     gMMCEUseAlarms = 0;
 

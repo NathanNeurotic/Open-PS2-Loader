@@ -128,6 +128,7 @@ extern int smbCacheSize;
 extern int gMMCESlot;
 extern int gMMCEIGRSlot;
 extern int gMMCEEnableGameID; //Send GameID on game launch
+extern int gApplyGameID;      // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gMMCEAckWaitCycles;
 extern int gMMCEUseAlarms;
 extern int gEnableUSB;
