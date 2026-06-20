@@ -1375,6 +1375,19 @@ void menuRenderGameMenu()
     guiDrawSubMenuHints();
 }
 
+// Core-aware game menu: the Neutrino core ignores OPL's GSM, Cheats, PADEMU and
+// OSD-language settings (see docs/NEUTRINO.md), so opening those panels for a
+// Neutrino game would only edit dead options. Returns 1 when the selected game's
+// Loader Core is Neutrino. (VMC and Compatibility stay available -- both are
+// honored under Neutrino.)
+static int gameMenuCoreIsNeutrino(void)
+{
+    int coreLoader = 0;
+    if (itemConfig != NULL)
+        configGetInt(itemConfig, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    return coreLoader;
+}
+
 void menuHandleInputGameMenu()
 {
     if (!gameMenu)
@@ -1409,19 +1422,34 @@ void menuHandleInputGameMenu()
         if (menuID == GAME_COMPAT_SETTINGS) {
             guiGameShowCompatConfig(selected_item->item->current->item.id, selected_item->item->userdata, itemConfig);
         } else if (menuID == GAME_CHEAT_SETTINGS) {
-            guiGameShowCheatConfig();
+            if (gameMenuCoreIsNeutrino())
+                guiMsgBox(_l(_STR_NEUTRINO_SETTING_NA), 0, NULL);
+            else
+                guiGameShowCheatConfig();
         } else if (menuID == GAME_GSM_SETTINGS) {
-            guiGameShowGSConfig();
+            if (gameMenuCoreIsNeutrino())
+                guiMsgBox(_l(_STR_NEUTRINO_SETTING_NA), 0, NULL);
+            else
+                guiGameShowGSConfig();
         } else if (menuID == GAME_VMC_SETTINGS) {
             guiGameShowVMCMenu(selected_item->item->current->item.id, selected_item->item->userdata);
 #ifdef PADEMU
         } else if (menuID == GAME_PADEMU_SETTINGS) {
-            guiGameShowPadEmuConfig(0);
+            if (gameMenuCoreIsNeutrino())
+                guiMsgBox(_l(_STR_NEUTRINO_SETTING_NA), 0, NULL);
+            else
+                guiGameShowPadEmuConfig(0);
         } else if (menuID == GAME_PADMACRO_SETTINGS) {
-            guiGameShowPadMacroConfig(0);
+            if (gameMenuCoreIsNeutrino())
+                guiMsgBox(_l(_STR_NEUTRINO_SETTING_NA), 0, NULL);
+            else
+                guiGameShowPadMacroConfig(0);
 #endif
         } else if (menuID == GAME_OSD_LANGUAGE_SETTINGS) {
-            guiGameShowOSDLanguageConfig(0);
+            if (gameMenuCoreIsNeutrino())
+                guiMsgBox(_l(_STR_NEUTRINO_SETTING_NA), 0, NULL);
+            else
+                guiGameShowOSDLanguageConfig(0);
         } else if (menuID == GAME_SAVE_CHANGES) {
             if (guiGameSaveConfig(itemConfig, selected_item->item->userdata))
                 configSetInt(itemConfig, CONFIG_ITEM_CONFIGSOURCE, CONFIG_SOURCE_USER);

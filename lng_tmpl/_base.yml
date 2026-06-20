@@ -742,6 +742,8 @@ gui_strings:
   string: Neutrino ELF not found, launching with <OPL> core
 - label: UDPBD_NEEDS_STATIC_IP
   string: UDPBD needs a static PS2 IP. Set one in Network Config (DHCP is currently on).
+- label: NEUTRINO_SETTING_NA
+  string: This setting is not used with the Neutrino core.
 - label: POPSTARTER_NOT_FOUND
   string: Missing POPSTARTER.ELF
 - label: POPSTARTER_SMB_MISSING
