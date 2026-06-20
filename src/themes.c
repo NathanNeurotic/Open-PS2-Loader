@@ -555,6 +555,8 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
     findDuplicate(theme->infoElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
     findDuplicate(theme->appsMainElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
     findDuplicate(theme->appsInfoElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
+    findDuplicate(theme->favsMainElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
+    findDuplicate(theme->favsInfoElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
 
     if (cachePattern && !mutableImage->cache) {
         if (type == ELEM_TYPE_ATTRIBUTE_IMAGE)
@@ -754,10 +756,13 @@ static theme_element_t *thmFindElemBySuffix(theme_elems_t *elems, const char *su
     return NULL;
 }
 
-// Element to DRAW a submenu item with. On the Favourites tab an APP_MODE favourite renders with
-// the theme's apps element (its own dimensions + case overlay + art folder), matched to the
-// default element by cache suffix; if the theme defines no matching apps element we fall back to
-// the default. Games and every non-FAV tab pass through unchanged (returns the default element).
+// Element to DRAW a submenu item with. The Favourites screen as a whole renders with the theme's
+// favs family (menuRenderMain switches the element set per mode); the VCD view and the Apps tab
+// render with the apps family the same way. This per-item hook adds ONE extra redirect on top: an
+// APP-source favourite redirects its COVER to the apps element (matched by cache suffix) so a
+// favourited app keeps its app box even when the theme defines no distinct favsMain cover. Non-app
+// favourites and every other screen pass through unchanged -- the element already comes from the
+// correct family. Single chokepoint for both drawGameImage and the coverflow carousel.
 static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem)
 {
     if (item == NULL || elem == NULL)
@@ -1442,6 +1447,12 @@ static int isDecoratorCoverImage(theme_t *theme, mutable_image_t *gameImage)
             return 1;
     }
 
+    if (theme->favsItemsList != NULL && theme->favsItemsList->extended != NULL) {
+        itemsList = (items_list_t *)theme->favsItemsList->extended;
+        if (itemsList->decoratorImage == gameImage)
+            return 1;
+    }
+
     return 0;
 }
 
@@ -1509,6 +1520,8 @@ static void splitDecoratorCoverCache(theme_t *theme, theme_element_t *list)
     replaceSharedCoverCache(theme, &theme->infoElems, sourceCache, replacementCache, &replacementAssigned);
     replaceSharedCoverCache(theme, &theme->appsMainElems, sourceCache, replacementCache, &replacementAssigned);
     replaceSharedCoverCache(theme, &theme->appsInfoElems, sourceCache, replacementCache, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->favsMainElems, sourceCache, replacementCache, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->favsInfoElems, sourceCache, replacementCache, &replacementAssigned);
 
     if (!replacementAssigned)
         cacheDestroyCache(replacementCache);
@@ -1523,7 +1536,8 @@ static void clampSelectedCoverCaches(theme_t *theme, theme_elems_t *elems)
             mutable_image_t *gameImage = (mutable_image_t *)elem->extended;
 
             if (gameImage != NULL && gameImage->cache != NULL && gameImage->cache->suffix != NULL && strcmp(gameImage->cache->suffix, "COV") == 0 &&
-                !isDecoratorCoverCache(theme->gamesItemsList, gameImage->cache) && !isDecoratorCoverCache(theme->appsItemsList, gameImage->cache)) {
+                !isDecoratorCoverCache(theme->gamesItemsList, gameImage->cache) && !isDecoratorCoverCache(theme->appsItemsList, gameImage->cache) &&
+                !isDecoratorCoverCache(theme->favsItemsList, gameImage->cache)) {
                 gameImage->cache->allowPrime = 0;
             }
         }
@@ -1537,20 +1551,25 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     // 1. check we have a valid Background elements
     validateBackgroundElems(themePath, themeConfig, theme, &theme->mainElems, &theme->infoElems);
     validateBackgroundElems(themePath, themeConfig, theme, &theme->appsMainElems, &theme->appsInfoElems);
+    validateBackgroundElems(themePath, themeConfig, theme, &theme->favsMainElems, &theme->favsInfoElems);
 
     // 2. check we have a valid ItemsList element, and link its decorator to the target element
     validateItemsList(themePath, themeConfig, theme, theme->gamesItemsList, &theme->mainElems);
     validateItemsList(themePath, themeConfig, theme, theme->appsItemsList, &theme->appsMainElems);
+    validateItemsList(themePath, themeConfig, theme, theme->favsItemsList, &theme->favsMainElems);
 
     // Items-list decorator covers need their own cache; sharing with selected covers defeats MMCE cover clamping.
     splitDecoratorCoverCache(theme, theme->gamesItemsList);
     splitDecoratorCoverCache(theme, theme->appsItemsList);
+    splitDecoratorCoverCache(theme, theme->favsItemsList);
 
     // Selected-cover caches do not need history unless a real items list decorator uses them.
     clampSelectedCoverCaches(theme, &theme->mainElems);
     clampSelectedCoverCaches(theme, &theme->infoElems);
     clampSelectedCoverCaches(theme, &theme->appsMainElems);
     clampSelectedCoverCaches(theme, &theme->appsInfoElems);
+    clampSelectedCoverCaches(theme, &theme->favsMainElems);
+    clampSelectedCoverCaches(theme, &theme->favsInfoElems);
 }
 
 static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, const char *type, const char *name)
@@ -1607,6 +1626,10 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                     elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 42, 42, ALIGN_NONE, 400, 360, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                     initItemsList(themePath, themeConfig, theme, elem, name, NULL);
                     theme->appsItemsList = elem;
+                } else if (!theme->favsItemsList) {
+                    elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 42, 42, ALIGN_NONE, 400, 360, SCALING_RATIO, theme->textColor, theme->fonts[0]);
+                    initItemsList(themePath, themeConfig, theme, elem, name, NULL);
+                    theme->favsItemsList = elem;
                 }
             } else if (!strcmp(elementsType[ELEM_TYPE_ITEM_ICON], type)) {
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_GAME_IMAGE, 0, 0, ALIGN_CENTER, 64, 64, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
@@ -1691,6 +1714,8 @@ static void thmFree(theme_t *theme)
         freeGUIElems(&theme->infoElems);
         freeGUIElems(&theme->appsMainElems);
         freeGUIElems(&theme->appsInfoElems);
+        freeGUIElems(&theme->favsMainElems);
+        freeGUIElems(&theme->favsInfoElems);
 
         // free textures
         GSTEXTURE *texture;
@@ -1822,10 +1847,15 @@ static void thmLoad(const char *themePath)
     newT->appsMainElems.last = NULL;
     newT->appsInfoElems.first = NULL;
     newT->appsInfoElems.last = NULL;
+    newT->favsMainElems.first = NULL;
+    newT->favsMainElems.last = NULL;
+    newT->favsInfoElems.first = NULL;
+    newT->favsInfoElems.last = NULL;
     newT->gameCacheCount = 0;
     newT->itemsList = NULL;
     newT->gamesItemsList = NULL;
     newT->appsItemsList = NULL;
+    newT->favsItemsList = NULL;
     newT->coverflow = NULL;
     newT->coverflowCoverOffset = 0;
     newT->loadingIcon = NULL;
@@ -1898,6 +1928,20 @@ static void thmLoad(const char *themePath)
         }
     }
 
+    // Favourites family: favsMain<j> override, else fall back to main<j> (identical to appsMain).
+    // Runs after appsMain so a favsMain ItemsList claims the 3rd slot (favsItemsList), and before
+    // the info passes so an info ItemsList never steals it.
+    for (j = 0; j < i; j++) {
+        snprintf(path, sizeof(path), "favsMain%d", j);
+
+        if (addGUIElem(themePath, themeConfig, newT, &newT->favsMainElems, NULL, path))
+            continue;
+        else {
+            snprintf(path, sizeof(path), "main%d", j);
+            addGUIElem(themePath, themeConfig, newT, &newT->favsMainElems, NULL, path);
+        }
+    }
+
     i = 1;
     snprintf(path, sizeof(path), "info0");
     while (addGUIElem(themePath, themeConfig, newT, &newT->infoElems, NULL, path))
@@ -1911,6 +1955,18 @@ static void thmLoad(const char *themePath)
         else {
             snprintf(path, sizeof(path), "info%d", j);
             addGUIElem(themePath, themeConfig, newT, &newT->appsInfoElems, NULL, path);
+        }
+    }
+
+    // Favourites info family: favsInfo<j> override, else info<j> (identical to appsInfo).
+    for (j = 0; j < i; j++) {
+        snprintf(path, sizeof(path), "favsInfo%d", j);
+
+        if (addGUIElem(themePath, themeConfig, newT, &newT->favsInfoElems, NULL, path))
+            continue;
+        else {
+            snprintf(path, sizeof(path), "info%d", j);
+            addGUIElem(themePath, themeConfig, newT, &newT->favsInfoElems, NULL, path);
         }
     }
 

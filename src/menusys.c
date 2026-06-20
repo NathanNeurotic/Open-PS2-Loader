@@ -8,6 +8,7 @@
 #include "include/menusys.h"
 #include "include/iosupport.h"
 #include "include/favsupport.h"
+#include "include/vcdsupport.h" // vcdViewActive -- VCD view renders with the apps element family
 #include "include/renderman.h"
 #include "include/fntsys.h"
 #include "include/lang.h"
@@ -1161,7 +1162,16 @@ void menuRenderMain(void)
     int allowItemConfig = !(list != NULL && list->mode == MMCE_MODE);
     config_set_t *renderConfig = allowItemConfig ? itemConfig : NULL;
 
-    if (list->mode == APP_MODE) {
+    if (list->mode == FAV_MODE) {
+        // Favourites render with the theme's favs family (favsMain*); falls back to the game
+        // elements when the theme defines no favsMain override.
+        menuRenderElements(&gTheme->favsMainElems, allowItemConfig, renderConfig);
+        gTheme->itemsList = gTheme->favsItemsList;
+    } else if (vcdViewActive(list->mode)) {
+        // Every VCD listing uses the app-sized display + frame (the apps family).
+        menuRenderElements(&gTheme->appsMainElems, allowItemConfig, renderConfig);
+        gTheme->itemsList = gTheme->appsItemsList;
+    } else if (list->mode == APP_MODE) {
         menuRenderElements(&gTheme->appsMainElems, allowItemConfig, renderConfig);
         gTheme->itemsList = gTheme->appsItemsList;
     } else {
@@ -1259,7 +1269,13 @@ void menuRenderInfo(void)
 {
     item_list_t *list = selected_item->item->userdata;
 
-    if (list->mode == APP_MODE) {
+    if (list->mode == FAV_MODE) {
+        menuRenderElements(&gTheme->favsInfoElems, 1, itemConfig);
+        gTheme->itemsList = gTheme->favsItemsList;
+    } else if (vcdViewActive(list->mode)) {
+        menuRenderElements(&gTheme->appsInfoElems, 1, itemConfig);
+        gTheme->itemsList = gTheme->appsItemsList;
+    } else if (list->mode == APP_MODE) {
         menuRenderElements(&gTheme->appsInfoElems, 1, itemConfig);
         gTheme->itemsList = gTheme->appsItemsList;
     } else {

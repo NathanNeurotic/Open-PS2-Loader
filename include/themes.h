@@ -123,6 +123,12 @@ typedef struct theme
     theme_elems_t appsInfoElems;
     theme_element_t *appsItemsList;
 
+    // Favourites view: a third element family parsed exactly like appsMain*/appsInfo* (favsMain<N> /
+    // favsInfo<N>, each falling back to main<N>/info<N>). The FAV screen renders these via menusys.
+    theme_elems_t favsMainElems;
+    theme_elems_t favsInfoElems;
+    theme_element_t *favsItemsList;
+
     theme_element_t *coverflow;
     int coverflowCoverOffset;
 
