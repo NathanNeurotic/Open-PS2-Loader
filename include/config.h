@@ -175,6 +175,9 @@ void configMove(config_set_t *configSet, const char *fileName);
 void configEnd();
 config_set_t *configAlloc(int type, config_set_t *configSet, char *fileName);
 void configFree(config_set_t *configSet);
+// Deep-copy a config set into a fresh standalone (heap) set, NOT registered in configFiles[].
+// Used for transient "test launch" so dialog edits never touch the live config. Free with configFree().
+config_set_t *configClone(config_set_t *src);
 config_set_t *configGetByType(int type);
 int configSetStr(config_set_t *configSet, const char *key, const char *value);
 int configGetStr(config_set_t *configSet, const char *key, const char **value);

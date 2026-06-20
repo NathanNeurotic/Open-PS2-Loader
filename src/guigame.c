@@ -1200,8 +1200,22 @@ void guiGameRemoveSettings(config_set_t *configSet)
 
 void guiGameTestSettings(int id, item_list_t *support, config_set_t *configSet)
 {
-    guiGameSaveConfig(configSet, support);
-    support->itemLaunch(support, id, configSet);
+    // Test launch: apply the in-dialog edits to a throwaway CLONE and boot from that, so the live
+    // per-game config is never modified -- "Test" must not persist. (The old code wrote the edits
+    // straight into the live configSet, which could later be flushed to disk by an unrelated Save.)
+    // itemLaunch only returns on a launch FAILURE; on success it tears OPL down / reboots, so the
+    // clone is freed only on the return (failure) path. Per-game keys go to the clone; the few
+    // GLOBAL-source settings still touch the in-RAM global config, matching pre-existing behavior.
+    config_set_t *testConfig = configClone(configSet);
+    if (testConfig == NULL) {
+        // Out of memory: fall back to the original behavior rather than refusing to test.
+        guiGameSaveConfig(configSet, support);
+        support->itemLaunch(support, id, configSet);
+        return;
+    }
+    guiGameSaveConfig(testConfig, support);
+    support->itemLaunch(support, id, testConfig);
+    configFree(testConfig);
 }
 
 static void guiGameLoadGSMConfig(config_set_t *configSet, config_set_t *configGame)

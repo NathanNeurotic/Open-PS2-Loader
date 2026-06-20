@@ -280,6 +280,28 @@ void configFree(config_set_t *configSet)
     free(configSet);
 }
 
+// Deep-copy src into a fresh standalone (heap) config set. The clone is NOT registered in
+// configFiles[] (configAlloc with a NULL set just mallocs one) and gets its own uid, so it is
+// invisible to configGetByType and can be launched from + configFree()d without disturbing the
+// live config. Faithfully copies every entry, including the runtime '#'-prefixed keys (Format/
+// Startup/Size) the launch path needs. Returns NULL on OOM.
+config_set_t *configClone(config_set_t *src)
+{
+    if (src == NULL)
+        return NULL;
+
+    config_set_t *dst = configAlloc(src->type, NULL, src->filename);
+    if (dst == NULL)
+        return NULL;
+
+    struct config_value_t *it;
+    for (it = src->head; it != NULL; it = it->next)
+        addConfigValue(dst, it->key, it->val);
+
+    dst->modified = 0;
+    return dst;
+}
+
 config_set_t *configGetByType(int type)
 {
     int index = 0;
