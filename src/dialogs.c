@@ -165,6 +165,16 @@ struct UIItem diaConfig[] = {
     {UI_STRING, CFG_POPSTARTER_PATH, 1, 1, _STR_HINT_POPSTARTER_PATH, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_SOURCE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_BDMASOURCE, 1, 1, _STR_HINT_BDMA_SOURCE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_MODE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_BDMAMODE, 1, 1, _STR_HINT_BDMA_MODE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_WRITE}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENWRITEOP, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},

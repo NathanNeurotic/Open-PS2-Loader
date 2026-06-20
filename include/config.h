@@ -83,6 +83,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_PS2LOGO              "ps2logo"
 #define CONFIG_OPL_NEUTRINO_ARGS        "neutrino_args"
 #define CONFIG_OPL_POPSTARTER_PATH      "popstarter_path"
+#define CONFIG_OPL_BDMA_SOURCE          "bdma_source"
 #define CONFIG_OPL_HDD_GAME_LIST_CACHE  "hdd_game_list_cache"
 #define CONFIG_OPL_EXIT_PATH            "exit_path"
 #define CONFIG_OPL_AUTO_SORT            "autosort"

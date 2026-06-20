@@ -748,6 +748,34 @@ gui_strings:
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH
   string: Custom POPSTARTER.ELF path; quietly falls back to the device POPS folder if blank/missing. Keyboard caps at 31 chars; longer paths via conf_riptopl.cfg.
+- label: BDMA_SOURCE
+  string: BDMA Source
+- label: HINT_BDMA_SOURCE
+  string: Device whose POPS folder holds your BDMAssault driver files (usbd.irx.* / usbhdfsd.irx.*).
+- label: BDMA_MODE
+  string: BDMA Mode
+- label: HINT_BDMA_MODE
+  string: exFAT block-device driver POPSTARTER loads. Changing it copies the modules to the card; FAT32 = none (built-in driver).
+- label: BDMA_SRC_USB
+  string: USB
+- label: BDMA_SRC_MX4SIO
+  string: MX4SIO
+- label: BDMA_SRC_MMCE
+  string: MMCE
+- label: BDMA_MODE_FAT32
+  string: USB (FAT32)
+- label: BDMA_MODE_USBEXFAT
+  string: USB (exFAT)
+- label: BDMA_MODE_MX4SIO
+  string: MX4SIO (exFAT)
+- label: BDMA_MODE_MMCE
+  string: MMCE (exFAT)
+- label: BDMA_ERR_SRC
+  string: BDMA module files not found on the source device.
+- label: BDMA_ERR_SPACE
+  string: Not enough memory card space for the BDMA modules.
+- label: BDMA_ERR_IO
+  string: Error writing the BDMA modules to the memory card.
 - label: COVERFLOW_SETTINGS
   string: Coverflow Settings
 - label: COVERFLOW_COUNT

@@ -16,6 +16,7 @@
 #include "include/util.h"
 #include "include/config.h"
 #include "include/system.h"
+#include "include/vcdsupport.h" // BDMA equip (vcdEquipBdma/vcdReadBdmaMode + VCD_BDMA_* enums)
 #include "include/ethsupport.h"
 #include "include/favsupport.h"
 #include "include/compatupd.h"
@@ -491,6 +492,17 @@ void guiShowConfig()
     diaSetString(diaConfig, CFG_EXITTO, gExitPath);
     diaSetString(diaConfig, CFG_NEUTRINO_ARGS, gNeutrinoArgs);
     diaSetString(diaConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
+
+    // BDMA (BDMAssault exFAT driver) equip. MODE reflects what's ACTUALLY on the card (read the
+    // mc?:/POPSTARTER/ marker), so the menu is honest even if POPSLoader or a prior session set it.
+    const char *bdmaSourceStrs[] = {_l(_STR_BDMA_SRC_USB), _l(_STR_BDMA_SRC_MX4SIO), _l(_STR_BDMA_SRC_MMCE), NULL};
+    const char *bdmaModeStrs[] = {_l(_STR_BDMA_MODE_FAT32), _l(_STR_BDMA_MODE_USBEXFAT), _l(_STR_BDMA_MODE_MX4SIO), _l(_STR_BDMA_MODE_MMCE), NULL};
+    gBdmaMode = vcdReadBdmaMode();
+    diaSetEnum(diaConfig, CFG_BDMASOURCE, bdmaSourceStrs);
+    diaSetEnum(diaConfig, CFG_BDMAMODE, bdmaModeStrs);
+    diaSetInt(diaConfig, CFG_BDMASOURCE, gBdmaSource);
+    diaSetInt(diaConfig, CFG_BDMAMODE, gBdmaMode);
+
     diaSetInt(diaConfig, CFG_ENWRITEOP, gEnableWrite);
     diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
     diaSetInt(diaConfig, CFG_AUTOSTARTLAST, gAutoStartLastPlayed);
@@ -510,6 +522,26 @@ void guiShowConfig()
             diaGetString(diaConfig, CFG_POPSTARTER_PATH, tmpPop, sizeof(tmpPop));
             if (strncmp(tmpPop, gPopstarterPath, 31) != 0)
                 snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", tmpPop);
+        }
+        {
+            // Equip BDMA modules only when SOURCE or MODE actually changed (the equip copies
+            // files to the memory card). vcdEquipBdma is free-space-gated + truncation-safe, so a
+            // failure never corrupts the card; report it and resync MODE to what's really equipped.
+            int oldSrc = gBdmaSource, oldMode = gBdmaMode; // baselines (MODE = card's actual state)
+            int newSrc = oldSrc, newMode = oldMode;
+            diaGetInt(diaConfig, CFG_BDMASOURCE, &newSrc);
+            diaGetInt(diaConfig, CFG_BDMAMODE, &newMode);
+            if (newSrc != oldSrc || newMode != oldMode) {
+                int er = vcdEquipBdma(newSrc, newMode);
+                if (er == -4)
+                    guiMsgBox(_l(_STR_BDMA_ERR_SRC), 0, NULL);
+                else if (er == -2)
+                    guiMsgBox(_l(_STR_BDMA_ERR_SPACE), 0, NULL);
+                else if (er == -3)
+                    guiMsgBox(_l(_STR_BDMA_ERR_IO), 0, NULL);
+                gBdmaMode = vcdReadBdmaMode(); // MODE = what is now actually equipped
+            }
+            gBdmaSource = newSrc; // remember the source preference regardless of equip outcome
         }
         diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
