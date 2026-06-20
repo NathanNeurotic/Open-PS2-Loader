@@ -59,5 +59,6 @@ int bdmHDDIsPresent(u32 timeoutMs);
 int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName, int massDeviceIndex, int massSlot);
 
 int bdmFindPartition(char *target, const char *name, int write);
-int bdmIsUDPBDLoaded(void); // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)
+int bdmIsUDPBDLoaded(void);                  // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)
+int bdmSupportIsUDPBD(item_list_t *support); // 1 if this support is the UDPBD block device (its games are Neutrino-only)
 #endif

@@ -244,6 +244,17 @@ int bdmIsUDPBDLoaded(void)
     return udpbdModLoaded;
 }
 
+// True when this support's device is the UDPBD block device (its games are Neutrino-only).
+// Returns 0 for non-BDM supports (incl. FAV-wrapped items, which have no source lookup here).
+int bdmSupportIsUDPBD(item_list_t *support)
+{
+    if (support == NULL || support->priv == NULL)
+        return 0;
+    if (support->mode < BDM_MODE || support->mode > BDM_MODE_LAST)
+        return 0;
+    return ((bdm_device_data_t *)support->priv)->bdmDeviceType == BDM_TYPE_UDPBD;
+}
+
 static void bdmEventHandler(void *packet, void *opt)
 {
     BdmGeneration++;

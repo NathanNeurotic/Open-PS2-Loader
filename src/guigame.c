@@ -11,6 +11,7 @@
 #include "include/config.h"
 #include "include/ethsupport.h"
 #include "include/favsupport.h"
+#include "include/bdmsupport.h"
 #include "include/compatupd.h"
 #include "include/cheatman.h"
 #include "include/system.h"
@@ -992,6 +993,16 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
 
     const char *loaders[] = {"<OPL>", "Neutrino", NULL};
     diaSetEnum(diaCompatConfig, COMPAT_LOADER, loaders);
+
+    // UDPBD games have no OPL core backend -- they always launch via Neutrino
+    // (bdmsupport.c forces it). Lock the selector to Neutrino so the screen matches;
+    // re-enable it for every other device (the dialog struct is reused across games).
+    if (bdmSupportIsUDPBD(support)) {
+        diaSetInt(diaCompatConfig, COMPAT_LOADER, 1);
+        diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
+    } else {
+        diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 1);
+    }
 
     guiGameSetCoreAwareState(); // apply the initial grey-out before the dialog is drawn
     int result = diaExecuteDialog(diaCompatConfig, -1, 1, &guiGameCompatUpdater);

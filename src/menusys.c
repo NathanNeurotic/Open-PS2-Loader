@@ -8,6 +8,7 @@
 #include "include/menusys.h"
 #include "include/iosupport.h"
 #include "include/favsupport.h"
+#include "include/bdmsupport.h"
 #include "include/vcdsupport.h" // vcdViewActive -- VCD view renders with the apps element family
 #include "include/renderman.h"
 #include "include/fntsys.h"
@@ -1385,6 +1386,9 @@ static int gameMenuCoreIsNeutrino(void)
     int coreLoader = 0;
     if (itemConfig != NULL)
         configGetInt(itemConfig, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    // UDPBD games are Neutrino-only even while $CoreLoader is still its OPL default.
+    if (!coreLoader && selected_item != NULL && selected_item->item != NULL)
+        coreLoader = bdmSupportIsUDPBD(selected_item->item->userdata);
     return coreLoader;
 }
 
