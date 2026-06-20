@@ -296,6 +296,9 @@ static int mmceGetGameNameLength(item_list_t *itemList, int id)
 
 static char *mmceGetGameStartup(item_list_t *itemList, int id)
 {
+    // VCD view keys per-game data (CFG/art) off the VCD filename, not a disc ID (see sbPopulateConfig).
+    if (vcdViewActive(itemList->mode))
+        return mmceGames[id].name;
     return mmceGames[id].startup;
 }
 

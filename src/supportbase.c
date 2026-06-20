@@ -804,7 +804,12 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     char path[256];
     struct stat st;
 
-    snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, game->startup);
+    // VCD listings have no reliable disc ID, so their per-game data (CFG + cover art) is keyed by
+    // the VCD FILENAME, not the startup ID (game->name, the full basename -- the user names the
+    // .cfg/art to match the .VCD file). Everything else keys by the disc ID as before.
+    const char *cfgKey = (!strcasecmp(game->extension, ".VCD")) ? game->name : game->startup;
+
+    snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, cfgKey);
     config_set_t *config = configAlloc(0, NULL, path);
     configRead(config); // Does not matter if the config file could be loaded or not.
 
@@ -850,7 +855,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
 
     configSetStr(config, CONFIG_ITEM_MEDIA, game->media == SCECdPS2CD ? "CD" : "DVD");
 
-    configSetStr(config, CONFIG_ITEM_STARTUP, game->startup);
+    configSetStr(config, CONFIG_ITEM_STARTUP, cfgKey); // VCD: keyed by filename (see cfgKey above)
 
     return config;
 }

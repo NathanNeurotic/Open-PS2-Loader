@@ -569,6 +569,9 @@ static int ethGetGameNameLength(item_list_t *itemList, int id)
 
 static char *ethGetGameStartup(item_list_t *itemList, int id)
 {
+    // VCD view keys per-game data (CFG/art) off the VCD filename, not a disc ID (see sbPopulateConfig).
+    if (vcdViewActive(itemList->mode))
+        return ethGames[id].name;
     return ethGames[id].startup;
 }
 

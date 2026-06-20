@@ -475,6 +475,10 @@ static char *bdmGetGameStartup(item_list_t *itemList, int id)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
+    // VCD view: identity is the filename, not a disc ID -> per-game data (CFG/art) keys off the
+    // VCD name (matches sbPopulateConfig).
+    if (vcdViewActive(itemList->mode))
+        return pDeviceData->bdmGames[id].name;
     return pDeviceData->bdmGames[id].startup;
 }
 
