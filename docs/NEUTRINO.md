@@ -109,3 +109,28 @@ the menu (there is no `<OPL>` fallback for UDPBD).
    The two are interlocked live in the Device Settings page (turning one on greys the other).
 
 UDPBD reuses the IP set in Network Config; there are **no UDPBD-specific network fields**.
+
+## 5. Core-aware per-game settings
+
+The per-game settings adapt to the **Loader Core** chosen for that title, so you only see
+options the selected core actually honors (Neutrino ignores most of OPL's embedded-core
+features — see the mapping below).
+
+When a game's core is **Neutrino**:
+- **Compatibility screen:** the **Neutrino Launch Args** field is editable; OPL compat **mode 4
+  (Skip Videos)** and **mode 6 (Disable IGR)** are greyed — they're OPL ee-core features with
+  **no Neutrino equivalent** (Neutrino has no in-game reset, and no PSS/BIK video-skip), so OPL
+  never forwards them. **DL Defaults** is greyed too (it pulls OPL-bitmask data that doesn't map
+  to `-gc`). Modes 1/2/3/5 *do* map to Neutrino's `-gc`.
+- **GSM, Cheats, PADEMU, OSD Language** panels are OPL-core-only; opening one shows
+  *"not used with the Neutrino core"* instead of editing dead options.
+- **VMC** and **Compatibility** stay available — both are honored under Neutrino (VMC via
+  `-mc0`/`-mc1` on block devices).
+
+When a game's core is **`<OPL>`** the screen is unchanged from classic OPL, except the
+Neutrino Args field is greyed (it's never read on the OPL path).
+
+> What Neutrino honors per game: the storage backend + image (`-bsd`/`-dvd`, automatic),
+> compat subset (`-gc`), VMC (`-mc0`/`-mc1`), `-logo`, and the free-text **Neutrino Launch
+> Args** (the catch-all for everything else, with `$`-disable). Cheats, GSM hacks, IGR/IGS,
+> PADEMU and OSD-language are OPL-embedded-core features with no Neutrino equivalent.

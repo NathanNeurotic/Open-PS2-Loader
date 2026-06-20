@@ -955,9 +955,10 @@ static unsigned char gameEffectiveFlags(item_list_t *support)
 
 // Core-aware per-game settings: grey the rows the *other* core ignores, so the
 // Compatibility screen only offers what the selected Loader Core actually honors.
-// Under Neutrino, OPL compat mode 4 (Skip Videos) and mode 6 (Disable IGR) are
-// dropped at -gc conversion (system.c convertCompatmaskToModes) and DL-Defaults
-// pulls OPL-bitmask data that does not map to -gc; under the OPL core, the Neutrino
+// OPL compat mode 4 (Skip Videos) and mode 6 (Disable IGR) are OPL ee-core features
+// with no Neutrino equivalent (Neutrino has no IGR and no PSS/BIK video-skip), so
+// convertCompatmaskToModes (system.c) forwards only bits 1/2/3/5 as -gc; DL-Defaults
+// pulls OPL-bitmask data that does not map to -gc. Under the OPL core, the Neutrino
 // Args field is never read. See docs/NEUTRINO.md for the full capability mapping.
 static void guiGameSetCoreAwareState(void)
 {
