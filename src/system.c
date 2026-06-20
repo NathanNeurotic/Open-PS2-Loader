@@ -926,7 +926,11 @@ static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bu
 
     char *tok = strtok(buf, " \t");
     while (tok != NULL && argc < argvMax) {
-        argv[argc++] = tok;
+        // A leading '$' marks a user-disabled flag (NHDDL convention): keep it in the
+        // args field for easy re-enabling, but don't forward it to Neutrino. Neutrino
+        // flags are all '-'-prefixed, so '$' never collides with a real argument.
+        if (tok[0] != '$')
+            argv[argc++] = tok;
         tok = strtok(NULL, " \t");
     }
     return argc;
