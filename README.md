@@ -103,6 +103,11 @@ This build layers several features on top of upstream OPL:
 - **Neutrino external core (per-game):** hand a game off to an external `neutrino.elf`
   instead of OPL's built-in core, chosen per title, with custom launch flags you can set
   globally and per-game. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
+- **UDPBD network boot (Neutrino):** stream games from a PC over the LAN as a network block
+  device — they show up as a **UDPBD Games** list with full covers and per-game settings, just
+  like a local drive. UDPBD launches via Neutrino, is **off by default**, shares the network
+  adapter with SMB (one or the other), and needs a static PS2 IP. See the UDPBD section of
+  **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-udpbd-network-boot-neutrino-only)**.
 - **Device Settings hub:** the old "Settings" page is now **General Settings**, and a new
   **Device Settings** page consolidates the per-device options, cache sizes, Block-Devices
   (BDM) settings, and all MMCE settings in one place (replacing the separate MMCE and
