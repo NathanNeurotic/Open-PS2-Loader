@@ -127,7 +127,9 @@ When a game's core is **Neutrino**:
 - **Compatibility screen:** the **Neutrino Launch Args** field is editable, and a **Neutrino
   Video** picker (Off / 240p / 480p / 1080i) appears beside it — it maps to Neutrino's `-gsm`
   (`fp1` / `fp2` / `1080ix1`; Off emits nothing) and is the Neutrino-side stand-in for the hidden
-  OPL GSM panel. OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
+  OPL GSM panel. The picker is the *default*: a manual `-gsm` typed into **Launch Args** takes
+  precedence (OPL emits only one `-gsm`, since Neutrino aborts on a duplicate/malformed value).
+  OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
   they're OPL ee-core features with **no Neutrino equivalent** (Neutrino has no in-game reset, and
   no PSS/BIK video-skip), so OPL never forwards them. **DL Defaults** is greyed too (it pulls
   OPL-bitmask data that doesn't map to `-gc`). Modes 1/2/3/5 *do* map to `-gc`.

@@ -1002,9 +1002,13 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     if (EnablePS2Logo && argc < argvMax)
         argv[argc++] = "-logo";
 
-    // Per-game Neutrino video mode (-gsm): 1=fp1 (240p), 2=fp2 (480p), 3=1080ix1 (1080i).
-    // 0/out-of-range = no -gsm (Neutrino's default 480i/576i). See guigame.c COMPAT_NEUTRINO_VIDEO.
-    if (neutrinoVideo >= 1 && neutrinoVideo <= 3 && argc < argvMax) {
+    // Per-game Neutrino video mode (-gsm): 1=fp1 (240p), 2=fp2 (480p), 3=1080ix1 (1080i); 0/out-of-range
+    // = no -gsm. Neutrino is LAST-wins on -gsm and ABORTS the boot on a malformed value, so emit exactly
+    // ONE: skip the structured token when the user already typed a -gsm into the global or per-game args,
+    // letting that explicit value win (precedence confirmed vs rickgaiser/neutrino ee/loader/src/main.c).
+    int userHasGsm = (strstr(gNeutrinoArgs, "-gsm=") != NULL) ||
+                     (extraArgs != NULL && strstr(extraArgs, "-gsm=") != NULL);
+    if (neutrinoVideo >= 1 && neutrinoVideo <= 3 && !userHasGsm && argc < argvMax) {
         static const char *const gsmTokens[] = {"", "-gsm=fp1", "-gsm=fp2", "-gsm=1080ix1"};
         argv[argc++] = (char *)gsmTokens[neutrinoVideo];
     }
