@@ -614,6 +614,8 @@ gui_strings:
   string: iLink Games
 - label: MX4SIO_GAMES
   string: MX4SIO Games
+- label: UDPBD_GAMES
+  string: UDPBD Games
 - label: PADMACROCONFIG
   string: Configure PADMACRO
 - label: PADMACRO_SETTINGS

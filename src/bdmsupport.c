@@ -913,6 +913,8 @@ static int bdmGetTextId(item_list_t *itemList)
         mode = _STR_MX4SIO_GAMES;
     else if (bdmDriverIsATA(pDeviceData->bdmDriver))
         mode = _STR_HDD_GAMES;
+    else if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
+        mode = _STR_UDPBD_GAMES;
 
     return mode;
 }
