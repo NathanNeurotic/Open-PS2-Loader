@@ -15,8 +15,9 @@ SMB/ETH stack) -- so UDPBD and SMB are mutually exclusive on the single Ethernet
 Built by our root Makefile via the standard PS2SDK IOP recipe (mirrors how we build
 modules/network/SMSUTILS and modules/network/smap-ingame).
 
-LOCAL CHANGE vs upstream: src/exports.tab + this dir's Makefile were adjusted so the module
-builds under ps2dev:latest's stricter iopfixup -- exports.o is listed FIRST in IOP_OBJS and
-_retonly is defined AFTER the export table (otherwise iopfixup rejects _retonly as a value-0
-.text symbol). Source logic is otherwise unmodified. To update: re-vendor the iop/smap_udpbd/
-tree from a newer NHDDL commit, bump the pin above, and re-apply these two ordering tweaks.
+LOCAL CHANGE vs upstream: src/exports.tab was reduced to an EMPTY export table. Upstream NHDDL
+declared a vestigial "smap" table of 4 _retonly stubs, which left _retonly as a value-0 .text
+symbol that ps2dev:latest's stricter iopfixup rejects. Nothing in RiptOPL imports a "smap"
+library from this module, so exporting nothing is safe and self-contained. Module logic is
+otherwise unmodified. To update: re-vendor the iop/smap_udpbd/ tree from a newer NHDDL commit,
+bump the pin above, and re-empty exports.tab.
