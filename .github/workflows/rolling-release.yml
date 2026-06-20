@@ -81,26 +81,9 @@ jobs:
           echo "Staged pinned rolling assets:"
           ls -la rolling
 
-      - name: Build variants (EXTRA_FEATURES x PADEMU)
-        run: |
-          set -eu
-          # All the OTHER build versions for the "RIPTOPL VARIANTS" zip: the EXTRA_FEATURES x PADEMU
-          # matrix (NOT_PACKED, matching compilation.yml). Runs AFTER staging so the cleans below
-          # can't wipe the already-saved main ELF. Best-effort per variant -- one failing config must
-          # not sink the whole rolling publish.
-          mkdir -p rolling/variants
-          VER="${{ steps.ver.outputs.version }}"
-          for pad in PADEMU=0 PADEMU=1; do
-            for ex in EXTRA_FEATURES=0 EXTRA_FEATURES=1; do
-              make clean >/dev/null 2>&1 || true
-              if make --trace $pad $ex NOT_PACKED=1 && [ -f opl.elf ]; then
-                mv opl.elf "rolling/variants/RIPTOPL-${VER}-pademu${pad#PADEMU=}-extra${ex#EXTRA_FEATURES=}.ELF"
-              else
-                echo "WARN: variant '$pad $ex' failed to build; skipping it"
-              fi
-            done
-          done
-          echo "Built variants:"; ls -la rolling/variants || true
+      - name: Build variant + debug extras (pinned = OLDSDK)
+        # Runs AFTER staging so the per-build `make clean` can't wipe the saved main ELF.
+        run: sh ./.github/scripts/build_rolling_extras.sh "-OLDSDK"
 
       - name: Upload pinned rolling assets
         uses: actions/upload-artifact@v6
@@ -172,6 +155,10 @@ jobs:
           cp -f "$MAIN_ELF" rolling/OPNPS2LD-ps2dev-latest.ELF
           echo "Staged ps2dev-latest rolling assets:"
           ls -la rolling
+
+      - name: Build variant + debug extras (ps2dev:latest = standard)
+        # Best-effort like the rest of this bleeding-edge job; runs after staging the main ELF.
+        run: sh ./.github/scripts/build_rolling_extras.sh ""
 
       - name: Upload ps2dev-latest rolling assets
         uses: actions/upload-artifact@v6
@@ -324,21 +311,25 @@ jobs:
           echo "Built rolling/${ZIP}:"
           unzip -l "rolling/${ZIP}"
 
-      - name: Pack RIPTOPL VARIANTS
+      - name: Pack RIPTOPL VARIANTS + DEBUG zips
         run: |
           set -eu
-          # All the other build versions (the EXTRA_FEATURES x PADEMU matrix from the pinned job) ->
-          # one "RIPTOPL VARIANTS" zip. Remove the loose dir afterward so the final
-          # 'gh release upload rolling/*' doesn't choke on a subdirectory.
-          if [ -d rolling/variants ] && [ -n "$(ls -A rolling/variants 2>/dev/null)" ]; then
-            VARZIP="RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip"
-            (cd rolling/variants && zip -r -X "../${VARZIP}" . >/dev/null)
-            echo "Packed rolling/${VARZIP}:"
-            unzip -l "rolling/${VARZIP}"
-          else
-            echo "No variants present; skipping RIPTOPL VARIANTS zip."
-          fi
-          rm -rf rolling/variants 2>/dev/null || true
+          # The EXTRA_FEATURES x PADEMU variants and the debug builds (each in BOTH SDK flavours:
+          # standard = ps2dev:latest, plus -OLDSDK = pinned) -> two separate release zips. Remove the
+          # loose dirs afterward so the final 'gh release upload rolling/*' stays file-only.
+          REL="${OPL_VERSION:-rolling}"
+          for kind in variants debug; do
+            up="$(echo "$kind" | tr '[:lower:]' '[:upper:]')"
+            if [ -d "rolling/$kind" ] && [ -n "$(ls -A "rolling/$kind" 2>/dev/null)" ]; then
+              ZN="RIPTOPL-${up}-${REL}.zip"
+              (cd "rolling/$kind" && zip -r -X "../${ZN}" . >/dev/null)
+              echo "Packed rolling/${ZN}:"
+              unzip -l "rolling/${ZN}"
+            else
+              echo "No $kind builds present; skipping RIPTOPL ${up} zip."
+            fi
+            rm -rf "rolling/$kind" 2>/dev/null || true
+          done
 
       - name: Build release notes
         run: |
@@ -362,8 +353,13 @@ jobs:
             printf '  - APP_RIPTOPL/RIPTOPL.ELF        = ps2dev:latest (cutting-edge) -- the default\n'
             printf '  - APP_RIPTOPL-OLDSDK/RIPTOPL.ELF = ps2max/dev pinned (older SDK) -- compatibility fallback\n'
             if [ -f "rolling/RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip" ]; then
-              printf '\nRIPTOPL VARIANTS (RIPTOPL-VARIANTS-*.zip): all the other build configs\n'
-              printf '  (EXTRA_FEATURES x PADEMU, NOT_PACKED) for advanced users.\n'
+              printf '\nRIPTOPL VARIANTS (RIPTOPL-VARIANTS-*.zip): the EXTRA_FEATURES x PADEMU build\n'
+              printf '  configs (NOT_PACKED), each in both SDK flavours (standard = ps2dev:latest, plus\n'
+              printf '  -OLDSDK = pinned).\n'
+            fi
+            if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
+              printf '\nRIPTOPL DEBUG (RIPTOPL-DEBUG-*.zip): the debug builds (iopcore/ingame/eesio/ppctty\n'
+              printf '  /DTL_T10000), each in both SDK flavours (standard + -OLDSDK). For diagnostics.\n'
             fi
             printf '\nBundled Neutrino core (required by the Neutrino launch mode), from the official repo:\n'
             printf '  https://github.com/rickgaiser/neutrino\n'
