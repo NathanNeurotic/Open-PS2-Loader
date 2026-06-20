@@ -75,11 +75,19 @@ int vcdScanDir(const char *devPrefix, vcd_entry_t **outList)
     return count;
 }
 
+// POPStarter path separator for a device prefix: '\\' for SMB (ethPrefix ends in '\\'), else '/'.
+// Auto-detected from the prefix's trailing char so one code path serves both mass/mmce and SMB.
+static char vcdSep(const char *devPrefix)
+{
+    int n = (devPrefix != NULL) ? (int)strlen(devPrefix) : 0;
+    return (n > 0 && devPrefix[n - 1] == '\\') ? '\\' : '/';
+}
+
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
 {
     if (devPrefix == NULL || out == NULL || outSize <= 0)
         return 0;
-    snprintf(out, outSize, "%s%s/POPSTARTER.ELF", devPrefix, POPS_FOLDER);
+    snprintf(out, outSize, "%s%s%cPOPSTARTER.ELF", devPrefix, POPS_FOLDER, vcdSep(devPrefix));
     int fd = open(out, O_RDONLY);
     if (fd < 0)
         return 0;
@@ -91,7 +99,8 @@ void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *nam
 {
     if (out == NULL || outSize <= 0)
         return;
-    snprintf(out, outSize, "%s%s/%s%s.ELF", devPrefix ? devPrefix : "", POPS_FOLDER, prefix ? prefix : "", name ? name : "");
+    const char *dp = devPrefix ? devPrefix : "";
+    snprintf(out, outSize, "%s%s%c%s%s.ELF", dp, POPS_FOLDER, vcdSep(dp), prefix ? prefix : "", name ? name : "");
 }
 
 // ---- per-device VCD view state ------------------------------------------------
@@ -101,7 +110,7 @@ static unsigned char vcdDirty[MODE_COUNT]; // 1 = view just toggled -> force one
 
 int vcdModeSupported(int mode)
 {
-    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST) || mode == MMCE_MODE; // ETH/SMB added in 2d
+    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST) || mode == MMCE_MODE || mode == ETH_MODE;
 }
 
 int vcdViewActive(int mode)

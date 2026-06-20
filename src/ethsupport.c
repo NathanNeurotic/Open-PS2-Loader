@@ -3,6 +3,7 @@
 #include "include/gui.h"
 #include "include/supportbase.h"
 #include "include/ethsupport.h"
+#include "include/vcdsupport.h"
 #include "include/util.h"
 #include "include/renderman.h"
 #include "include/themes.h"
@@ -454,6 +455,13 @@ static int ethNeedsUpdate(item_list_t *itemList)
 
     result = 0;
 
+    // VCD view: force a rescan once on toggle; once a share is selected, the VCD list refreshes on
+    // toggle only (skip disc heuristics). With no share yet, fall through so the share list updates.
+    if (vcdConsumeDirty(itemList->mode))
+        return 1;
+    if (gPCShareName[0] && vcdViewActive(itemList->mode))
+        return 0;
+
     if (ethULSizePrev == -2)
         result = 1;
 
@@ -490,7 +498,9 @@ static int ethUpdateGameList(item_list_t *itemList)
         if (gNetworkStartup != 0)
             return 0;
 
-        if ((sbReadList(&ethGames, ethPrefix, &ethULSizePrev, &ethGameCount)) < 0) {
+        if (vcdViewActive(itemList->mode)) {
+            ethGameCount = vcdFillGameList(ethPrefix, &ethGames);
+        } else if ((sbReadList(&ethGames, ethPrefix, &ethULSizePrev, &ethGameCount)) < 0) {
             gNetworkStartup = ERROR_ETH_SMB_LISTGAMES;
             ethDisplayErrorStatus();
         }
@@ -584,6 +594,26 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     struct cdvdman_settings_smb *settings;
     u32 layer1_start, layer1_offset;
     unsigned short int layer1_part;
+
+    // VCD view (SMB): hand off to POPSTARTER with the SB. prefix (smb: paths use '\', auto-detected
+    // by vcdSep). Only once a share is selected; build the selector + resolve the ELF on stack
+    // BEFORE deinit() frees ethGames. ethPrefix is static.
+    if (gPCShareName[0] && game != NULL && vcdViewActive(itemList->mode)) {
+        char vcdName[VCD_NAME_MAX];
+        char vcdElf[256];
+        char vcdSelector[320];
+        snprintf(vcdName, sizeof(vcdName), "%s", game->name);
+        if (vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+            return;
+        if (!vcdResolvePopstarter(ethPrefix, vcdElf, sizeof(vcdElf))) {
+            guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+            return;
+        }
+        vcdBuildSelector(ethPrefix, VCD_PREFIX_SMB, vcdName, vcdSelector, sizeof(vcdSelector));
+        deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the SMB mount alive across the IOP reset
+        sysLaunchPopstarter(vcdElf, vcdSelector, "");
+        return;
+    }
 
     if (!gPCShareName[0]) {
         memcpy(gPCShareName, game->name, sizeof(gPCShareName));
