@@ -946,6 +946,7 @@ void guiShowDeviceConfig(void)
 
     int ret = diaExecuteDialog(diaDeviceConfig, -1, 1, &guiDeviceUpdater);
     if (ret) {
+        int udpbdWasEnabled = gEnableUDPBD;
         diaGetInt(diaDeviceConfig, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(diaDeviceConfig, CFG_BDMMODE, &gBDMStartMode);
@@ -977,6 +978,12 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_APPLYGAMEID, &gApplyGameID);
         diaGetInt(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
         diaGetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, &gMMCEUseAlarms);
+
+        // UDPBD's ministack has no DHCP client; with DHCP enabled, ps2_ip[] is never refreshed
+        // (the SMB/ETH stack that would acquire a lease can't run -- UDPBD requires ETH disabled),
+        // so the network mount fails silently. Warn at opt-in to set a static PS2 IP.
+        if (gEnableUDPBD && !udpbdWasEnabled && ps2_ip_use_dhcp)
+            guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
 
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
