@@ -167,6 +167,9 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OPL_VERSION: ${{ needs.build-rolling-pinned.outputs.version }}
+      # Pinned ps2sdk/toolchain tag used for the RIPTOPL package name. Bump alongside the
+      # build-rolling-pinned container (ps2max/dev:...).
+      SDK_VER: "v20250725-2"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -242,6 +245,31 @@ jobs:
           done
           echo "SHA256SUMS.txt:"
           cat SHA256SUMS.txt
+
+      - name: Build RIPTOPL release package
+        run: |
+          set -eu
+          # Full installable package the user copies to a memory card / device:
+          #   APP_RIPTOPL/RIPTOPL.ELF  -- the loader (the pinned build, renamed; the loose
+          #                               OPNPS2LD ELFs above are kept for direct download).
+          #   POPSTARTER/              -- POPSTARTER's SMB network stack (popsmb/) + bdma_config.txt
+          #                               preset to fat32; copied to mc?:/POPSTARTER/.
+          #   POPS/                    -- POPSTARTER.ELF + the BDMA exFAT driver variants + the patch
+          #                               (vendored from POPSLoader); copied to <device>:/POPS/.
+          PKG=riptopl_pkg
+          rm -rf "$PKG"
+          mkdir -p "$PKG/APP_RIPTOPL" "$PKG/POPSTARTER" "$PKG/POPS"
+          cp -f "rolling/${VERSIONED_BASE}.ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
+          cp -f popsmb/* "$PKG/POPSTARTER/"
+          cp -f pops/* "$PKG/POPS/"
+          REL="${OPL_VERSION:-rolling}"
+          # <SHA256>: first 16 hex of the RIPTOPL.ELF SHA256 (integrity + uniqueness; full hash is
+          # in SHA256SUMS-style listing inside the zip is overkill, the short tag suffices).
+          SHA="$(sha256sum "$PKG/APP_RIPTOPL/RIPTOPL.ELF" | cut -c1-16)"
+          ZIP="RIPTOPL-${SDK_VER}-${REL}-${SHA}.zip"
+          (cd "$PKG" && zip -r -X "../rolling/${ZIP}" APP_RIPTOPL POPSTARTER POPS >/dev/null)
+          echo "Built rolling/${ZIP}:"
+          unzip -l "rolling/${ZIP}"
 
       - name: Build release notes
         run: |
