@@ -1,0 +1,17 @@
+Vendored from NHDDL (https://github.com/pcm720/nhddl) iop/smap_udpbd/
+Pinned to commit 821b6c9b4a19678d33a4166fd2abdd0034dcaba2.
+
+Upstream origin: rickgaiser/neutrino UDPBD. Protocol: SUDPBDv2 -- the PS2 client and the
+PC-side udpbd-server MUST speak the same protocol version.
+
+This is the IOP-side SMAP NIC driver + mini IP stack + UDPBD block-device driver. It lets
+RiptOPL mount a PC-served network block device as massN: so games can be launched over the
+LAN via the external Neutrino core (-bsd=udpbd). It is a pure BDM block driver
+(bdm_connect_bd) that plugs into the same bdm.irx + bdmfs_fatfs.irx stack OPL already loads;
+it presents driver token "udp" and takes a single module arg: ip=<A.B.C.D> (the PS2's static
+IP). It registers IOP module name "SMAP_driver" -- the SAME name as PS2SDK smap.irx (OPL's
+SMB/ETH stack) -- so UDPBD and SMB are mutually exclusive on the single Ethernet adapter.
+
+Built UNMODIFIED by our root Makefile via the standard PS2SDK IOP recipe (mirrors how we
+build modules/network/SMSUTILS and modules/network/smap-ingame). To update: re-vendor the
+iop/smap_udpbd/ tree from a newer NHDDL commit and bump the pin above.
