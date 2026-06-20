@@ -25,3 +25,12 @@ clang-format (.clang-format, clang-format 12) to satisfy the CI-format-check wor
 lints every .c/.h in the tree (exclude: none). This is whitespace-only; module logic is
 unmodified. To update: re-vendor the iop/smap_udpbd/ tree from a newer NHDDL commit, bump the
 pin above, re-empty exports.tab, and re-run clang-format on the sources before committing.
+
+LOCAL CHANGE vs upstream: security-audit hardening (re-apply after re-vendoring):
+  - src/udpbd.c _cmd_read_rdma(): bound the wire-controlled `size` against g_read_size (the bytes
+    still expected) BEFORE the dev9 DMA, mirroring the existing MTU check. Upstream only bounded
+    `size` against the MTU, so a single oversized/out-of-order RDMA reply could DMA past the
+    destination buffer and underflow the unsigned g_read_size (the completion test then never
+    fires). This is an OOB-write guard against a malicious/buggy server or a spoofed LAN reply.
+  - src/imports.lst: added I_bzero (smap.c:571 calls bzero; upstream relied on the compiler
+    inlining the constant-size call at -O2, which is fragile at -O0 / future toolchains).

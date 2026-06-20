@@ -339,6 +339,18 @@ static inline void _cmd_read_rdma(struct SUDPBDv2_Header *hdr)
         return;
     }
 
+    // Reject a reply larger than the bytes still expected: `size` is wire-controlled and only
+    // bounded by the MTU above, NOT by the destination buffer. A single oversized/out-of-order
+    // RDMA packet would otherwise DMA past g_buffer_act and underflow the unsigned g_read_size so
+    // the completion test (g_read_size == 0) below never fires. RiptOPL hardening vs upstream NHDDL.
+    if (size > g_read_size) {
+        g_read_size = 0;
+        g_errno = 3;
+        M_DEBUG("%s: oversized payload %d > remaining\n", __func__, size);
+        SetEventFlag(g_ev_done, 2);
+        return;
+    }
+
     // Workaround for older SPEED chips, limit block sizze to 128 bytes
     if (g_limit_dma_block_size == 1) {
         while (bt.block_shift > 5) {

@@ -270,8 +270,8 @@ static int bdmShouldQueueModuleLoad(void)
         return 1;
     if (gEnableBdmHDD && !hddModLoaded)
         return 1;
-    if (gEnableUDPBD && !udpbdModLoaded)
-        return 1;
+    if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded())
+        return 1; // mirror the load gate -- if the SMB NIC is up, UDPBD can't load, so stop re-queueing
 
     return 0;
 }
@@ -849,6 +849,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // otherwise deinit into a no-op launch (black screen). Abort cleanly here while the GUI is up.
     if (!coreLoader && bdmDriverIsUDPBD(bdmCurrentDriver)) {
         if (gAutoLaunchBDMGame != NULL) {
+            miniDeinit(configSet); // mirror the normal autolaunch teardown (ioEnd/configEnd + frees configSet)
             free(gAutoLaunchBDMGame);
             gAutoLaunchBDMGame = NULL;
             free(gAutoLaunchDeviceData);
