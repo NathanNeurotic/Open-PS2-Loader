@@ -448,3 +448,30 @@ int vcdEquipBdma(int source, int mode)
     vcdWriteBdmaMarker(mcDir, mode);
     return 0;
 }
+
+// ---- SMB requirements guard ---------------------------------------------------------
+// Launching a VCD over SMB needs POPSTARTER's network IRX in mc?:/POPSTARTER/. We don't install
+// these from the ELF (they ship in the release POPSTARTER/ folder for the user to copy), so before
+// an SMB/ETH VCD launch we confirm they're present and soft-refuse otherwise.
+static const char *vcdSmbModule[4] = {"smbman.irx", "ps2ip.irx", "ps2smap.irx", "ps2dev9.irx"};
+
+int vcdSmbModulesPresent(void)
+{
+    static const char *cards[2] = {"mc0:/POPSTARTER", "mc1:/POPSTARTER"};
+    for (int c = 0; c < 2; c++) {
+        int all = 1;
+        for (int i = 0; i < 4; i++) {
+            char path[96];
+            snprintf(path, sizeof(path), "%s/%s", cards[c], vcdSmbModule[i]);
+            int fd = open(path, O_RDONLY);
+            if (fd < 0) {
+                all = 0;
+                break;
+            }
+            close(fd);
+        }
+        if (all)
+            return 1; // this card has the complete SMB stack
+    }
+    return 0;
+}

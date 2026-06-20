@@ -87,4 +87,8 @@ int vcdEquipBdma(int source, int mode);
 // Read the equipped variant from mc?:/POPSTARTER/bdma_config.txt (VCD_BDMA_FAT32 if absent).
 int vcdReadBdmaMode(void);
 
+// Are POPSTARTER's SMB network modules (smbman/ps2ip/ps2smap/ps2dev9) present on a card? 1 = yes.
+// Gate SMB/ETH VCD launches on this -- we don't install these from the ELF.
+int vcdSmbModulesPresent(void);
+
 #endif

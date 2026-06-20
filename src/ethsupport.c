@@ -609,6 +609,11 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
             guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
             return;
         }
+        // POPSTARTER needs its SMB network IRX on the card to read a VCD over the network.
+        if (!vcdSmbModulesPresent()) {
+            guiMsgBox(_l(_STR_POPSTARTER_SMB_MISSING), 0, NULL);
+            return;
+        }
         vcdBuildSelector(ethPrefix, VCD_PREFIX_SMB, vcdName, vcdSelector, sizeof(vcdSelector));
         deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the SMB mount alive across the IOP reset
         sysLaunchPopstarter(vcdElf, vcdSelector, "");

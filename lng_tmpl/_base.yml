@@ -736,6 +736,8 @@ gui_strings:
   string: Neutrino ELF not found, launching with <OPL> core
 - label: POPSTARTER_NOT_FOUND
   string: Missing POPSTARTER.ELF
+- label: POPSTARTER_SMB_MISSING
+  string: Missing POPSTARTER SMB requirements
 - label: VCD_ON
   string: Showing VCD games
 - label: VCD_OFF
