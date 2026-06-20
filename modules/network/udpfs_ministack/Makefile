@@ -1,5 +1,6 @@
 IOP_BIN := udpfs_ministack.irx
 
+IOP_SRC_DIR := src/
 IOP_OBJS_DIR := obj/
 IOP_CFLAGS += -mno-check-zero-division
 IOP_INCS := -Iinclude -Isrc -I../udpfs_smap/include
