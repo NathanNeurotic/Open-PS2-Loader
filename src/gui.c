@@ -514,7 +514,14 @@ void guiShowConfig()
         diaGetInt(diaConfig, CFG_DEBUG, &gEnableDebug);
         diaGetInt(diaConfig, CFG_PS2LOGO, &gPS2Logo);
         diaGetString(diaConfig, CFG_EXITTO, gExitPath, sizeof(gExitPath));
-        diaGetString(diaConfig, CFG_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
+        {
+            // The dialog field is char[32]; only adopt the typed value if it actually changed, so
+            // opening+saving General Settings never truncates a longer args string stored via the cfg.
+            char tmpArgs[sizeof(gNeutrinoArgs)];
+            diaGetString(diaConfig, CFG_NEUTRINO_ARGS, tmpArgs, sizeof(tmpArgs));
+            if (strncmp(tmpArgs, gNeutrinoArgs, 31) != 0)
+                snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", tmpArgs);
+        }
         {
             // The dialog field is char[32]; only adopt the typed value if it actually changed, so
             // opening+saving General Settings never truncates a longer path stored via the cfg.

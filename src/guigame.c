@@ -1107,11 +1107,21 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     else
         configRemoveKey(configSet, CONFIG_ITEM_ALTSTARTUP);
 
-    diaGetString(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrinoArgs, sizeof(neutrinoArgs));
-    if (neutrinoArgs[0] != '\0')
-        result = configSetStr(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoArgs);
-    else
-        configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_ARGS);
+    // The dialog field is char[32] but the cfg may hold a longer args string. Only rewrite the key when
+    // the visible (<=31-char) field actually changed vs the PERSISTED value, so opening+saving Options
+    // never truncates a longer per-game args string that was hand-edited into the cfg. (Compare against a
+    // fresh re-read, not neutrinoArgs, which already holds the truncated field value after load.)
+    {
+        char tmpArgs[32], origArgs[sizeof(neutrinoArgs)];
+        diaGetString(diaCompatConfig, COMPAT_NEUTRINO_ARGS, tmpArgs, sizeof(tmpArgs));
+        configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, origArgs, sizeof(origArgs));
+        if (strncmp(tmpArgs, origArgs, 31) != 0) {
+            if (tmpArgs[0] != '\0')
+                result = configSetStr(configSet, CONFIG_ITEM_NEUTRINO_ARGS, tmpArgs);
+            else
+                configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_ARGS);
+        }
+    }
 
     /// VMC ///
     configSetVMC(configSet, vmc1, 0);

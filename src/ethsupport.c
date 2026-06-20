@@ -811,10 +811,11 @@ static void ethShutdown(item_list_t *itemList)
     }
 
     // UI may have initialized modules outside of ETH mode, so deinitialize regardless of the enabled status.
+    int ethWasLoaded = ethModulesLoaded; // capture BEFORE ethDeinitModules() clears ethModulesLoaded
     ethDeinitModules();
 
     // Only shut down dev9 from here, if it was initialized from here before.
-    if (ethModulesLoaded)
+    if (ethWasLoaded)
         sysShutdownDev9();
 }
 

@@ -192,7 +192,7 @@ void configPrepareNotifications(char *prefix)
 {
     char *colpos;
 
-    snprintf(cfgDevice, sizeof(cfgDevice), prefix);
+    snprintf(cfgDevice, sizeof(cfgDevice), "%s", prefix); // prefix is caller/config data, never a format string
 
     if ((colpos = strchr(cfgDevice, ':')) != NULL)
         *(colpos + 1) = '\0';

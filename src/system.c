@@ -472,7 +472,7 @@ static unsigned int addIopPatch(const char *mode_str, const char *startup, irxpt
     for (i = 0; iop_patch_list[i].game != NULL; i++) {
         p = &iop_patch_list[i];
 
-        if (!strcmp(p->game, startup) && (p->mode[0] == '\0' || !strcmp(p->mode, startup))) {
+        if (!strcmp(p->game, startup) && (p->mode[0] == '\0' || !strcmp(p->mode, mode_str))) {
             tab->info = (*(p->module_size)) | SET_OPL_MOD_ID(OPL_MODULE_ID_IOP_PATCH);
             tab->ptr = (void *)p->module;
             return 1;
