@@ -1277,9 +1277,9 @@ void menuRenderInfo(void)
     if (list->mode == FAV_MODE) {
         menuRenderElements(&gTheme->favsInfoElems, 1, itemConfig);
         gTheme->itemsList = gTheme->favsItemsList;
-    } else if (vcdViewActive(list->mode)) {
-        menuRenderElements(&gTheme->appsInfoElems, 1, itemConfig);
-        gTheme->itemsList = gTheme->appsItemsList;
+        // NOTE: VCD view has no info-screen branch on purpose -- VCDs carry game-style metadata
+        // (per-game CFG keyed by the PS1 ID, read by sbPopulateConfig), so they fall through to the
+        // GAME info layout below (rich Title/Genre/cover) even though the LIST uses the app box.
     } else if (list->mode == APP_MODE) {
         menuRenderElements(&gTheme->appsInfoElems, 1, itemConfig);
         gTheme->itemsList = gTheme->appsItemsList;
