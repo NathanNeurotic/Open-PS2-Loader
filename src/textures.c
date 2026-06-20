@@ -151,6 +151,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {MMCE_ICON, "mmce", &mmce_png},
     {HDD_ICON, "hdd", &hdd_png},
     {ETH_ICON, "eth", &eth_png},
+    {UDP_ICON, "udp_bd", &eth_png}, // no embedded udp_bd yet: fall back to the eth icon (same network meaning); a theme can still supply udp_bd.png, and dropping gfx/udp_bd.png + PNG_ASSETS later just swaps &eth_png -> &udp_bd_png
     {APP_ICON, "app", &app_png},
     {INDEX_0, "Index_0", &Index_0_png},
     {INDEX_1, "Index_1", &Index_1_png},

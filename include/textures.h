@@ -18,6 +18,7 @@ enum INTERNAL_TEXTURE {
     MMCE_ICON,
     HDD_ICON,
     ETH_ICON,
+    UDP_ICON, // UDPBD device icon; theme override name "udp_bd", embedded fallback = eth_png (network)
     APP_ICON,
     INDEX_0,
     INDEX_1,

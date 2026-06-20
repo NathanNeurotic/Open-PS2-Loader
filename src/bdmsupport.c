@@ -933,6 +933,8 @@ static int bdmGetIconId(item_list_t *itemList)
         mode = MX4SIO_ICON;
     else if (bdmDriverIsATA(pDeviceData->bdmDriver))
         mode = HDD_BD_ICON;
+    else if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
+        mode = UDP_ICON;
 
     return mode;
 }
