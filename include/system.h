@@ -6,6 +6,8 @@
 #define NEUTRINO_PATH     "mc0:NEUTRINO/neutrino.elf"
 #define NEUTRINO_ALT_PATH "mc1:NEUTRINO/neutrino.elf"
 
+#define POPS_FOLDER "POPS" // per-device PS1/POPSTARTER folder: <dev>/POPS/POPSTARTER.ELF + *.VCD
+
 #define SYS_LOAD_MC_MODULES   0x01
 #define SYS_LOAD_USB_MODULES  0x02
 #define SYS_LOAD_ISOFS_MODULE 0x04
