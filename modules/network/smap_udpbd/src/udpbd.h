@@ -5,26 +5,27 @@
 #include <stdint.h>
 
 
-#define UDPBD_SERVER_PORT     0xBDBD
-#define UDPBD_CLIENT_PORT     0xBDBE
+#define UDPBD_SERVER_PORT 0xBDBD
+#define UDPBD_CLIENT_PORT 0xBDBE
 
-#define UDPBD_CMD_INFO        0x00 // client -> server
-#define UDPBD_CMD_INFO_REPLY  0x01 // server -> client
-#define UDPBD_CMD_READ        0x02 // client -> server
-#define UDPBD_CMD_READ_RDMA   0x03 // server -> client
-#define UDPBD_CMD_WRITE       0x04 // client -> server
-#define UDPBD_CMD_WRITE_RDMA  0x05 // client -> server
-#define UDPBD_CMD_WRITE_DONE  0x06 // server -> client
+#define UDPBD_CMD_INFO       0x00 // client -> server
+#define UDPBD_CMD_INFO_REPLY 0x01 // server -> client
+#define UDPBD_CMD_READ       0x02 // client -> server
+#define UDPBD_CMD_READ_RDMA  0x03 // server -> client
+#define UDPBD_CMD_WRITE      0x04 // client -> server
+#define UDPBD_CMD_WRITE_RDMA 0x05 // client -> server
+#define UDPBD_CMD_WRITE_DONE 0x06 // server -> client
 
 
-#define UDPBD_MAX_SECTOR_READ  512 // 512 sectors of 512 bytes = 256KiB
+#define UDPBD_MAX_SECTOR_READ 512 // 512 sectors of 512 bytes = 256KiB
 
 
 /*
  * UDPBD v2
  */
 
-struct SUDPBDv2_Header { // 2 bytes - Must be a "(multiple of 4) + 2" for RDMA on the PS2 !
+struct SUDPBDv2_Header
+{ // 2 bytes - Must be a "(multiple of 4) + 2" for RDMA on the PS2 !
     union
     {
         uint16_t cmd16;
@@ -44,14 +45,16 @@ struct SUDPBDv2_Header { // 2 bytes - Must be a "(multiple of 4) + 2" for RDMA o
  * - client: InfoRequest
  * - server: InfoReply
  */
-struct SUDPBDv2_InfoRequest {
-	struct SUDPBDv2_Header hdr;
+struct SUDPBDv2_InfoRequest
+{
+    struct SUDPBDv2_Header hdr;
 } __attribute__((__packed__));
 
-struct SUDPBDv2_InfoReply {
-	struct SUDPBDv2_Header hdr;
-	uint32_t sector_size;
-	uint32_t sector_count;
+struct SUDPBDv2_InfoReply
+{
+    struct SUDPBDv2_Header hdr;
+    uint32_t sector_size;
+    uint32_t sector_count;
 } __attribute__((__packed__));
 
 /*
@@ -64,15 +67,17 @@ struct SUDPBDv2_InfoReply {
  * - client: RDMA (1 or more packets)
  * - server: WriteDone
  */
-struct SUDPBDv2_RWRequest {
-	struct SUDPBDv2_Header hdr;
-	uint32_t sector_nr;
-	uint16_t sector_count;
+struct SUDPBDv2_RWRequest
+{
+    struct SUDPBDv2_Header hdr;
+    uint32_t sector_nr;
+    uint16_t sector_count;
 } __attribute__((__packed__));
 
-struct SUDPBDv2_WriteDone {
-	struct SUDPBDv2_Header hdr;
-	int32_t result;
+struct SUDPBDv2_WriteDone
+{
+    struct SUDPBDv2_Header hdr;
+    int32_t result;
 } __attribute__((__packed__));
 
 /*
@@ -85,8 +90,8 @@ union block_type
     uint32_t bt;
     struct
     {
-        uint32_t block_shift :  4; // 0..7: blocks_size = 1U << (block_shift+2); min=0=4bytes, max=7=512bytes
-        uint32_t block_count :  9; // 1..366 blocks
+        uint32_t block_shift : 4; // 0..7: blocks_size = 1U << (block_shift+2); min=0=4bytes, max=7=512bytes
+        uint32_t block_count : 9; // 1..366 blocks
         uint32_t spare       : 19;
     };
 };
@@ -104,8 +109,9 @@ union block_type
 #define UDP_MAX_PAYLOAD  1472
 #define RDMA_MAX_PAYLOAD (UDP_MAX_PAYLOAD - sizeof(struct SUDPBDv2_Header) - sizeof(union block_type)) // 1466
 
-struct SUDPBDv2_RDMA {
-	struct SUDPBDv2_Header hdr;
+struct SUDPBDv2_RDMA
+{
+    struct SUDPBDv2_Header hdr;
     union block_type bt;
     uint8_t data[RDMA_MAX_PAYLOAD];
 } __attribute__((__packed__));

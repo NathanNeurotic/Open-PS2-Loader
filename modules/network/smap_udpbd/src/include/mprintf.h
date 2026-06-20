@@ -13,8 +13,11 @@
 #define M_PRINTF(fmt, ...) \
     printf(MODNAME ": " fmt, ##__VA_ARGS__)
 
-#define M_DEBUG(fmt, ...) \
-    do { if (DEBUG_VAL) M_PRINTF(fmt, ##__VA_ARGS__); } while (0)
+#define M_DEBUG(fmt, ...)                 \
+    do {                                  \
+        if (DEBUG_VAL)                    \
+            M_PRINTF(fmt, ##__VA_ARGS__); \
+    } while (0)
 
 
 #endif

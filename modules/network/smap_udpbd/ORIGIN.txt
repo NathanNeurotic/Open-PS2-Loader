@@ -18,6 +18,10 @@ modules/network/SMSUTILS and modules/network/smap-ingame).
 LOCAL CHANGE vs upstream: src/exports.tab was reduced to an EMPTY export table. Upstream NHDDL
 declared a vestigial "smap" table of 4 _retonly stubs, which left _retonly as a value-0 .text
 symbol that ps2dev:latest's stricter iopfixup rejects. Nothing in RiptOPL imports a "smap"
-library from this module, so exporting nothing is safe and self-contained. Module logic is
-otherwise unmodified. To update: re-vendor the iop/smap_udpbd/ tree from a newer NHDDL commit,
-bump the pin above, and re-empty exports.tab.
+library from this module, so exporting nothing is safe and self-contained.
+
+LOCAL CHANGE vs upstream: the src/*.c and src/*.h files were reformatted with the repo's
+clang-format (.clang-format, clang-format 12) to satisfy the CI-format-check workflow, which
+lints every .c/.h in the tree (exclude: none). This is whitespace-only; module logic is
+unmodified. To update: re-vendor the iop/smap_udpbd/ tree from a newer NHDDL commit, bump the
+pin above, re-empty exports.tab, and re-run clang-format on the sources before committing.

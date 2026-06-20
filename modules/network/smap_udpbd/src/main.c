@@ -19,14 +19,14 @@ extern struct irx_export_table _exp_smap __attribute__((section("data")));
 uint32_t parse_ip(const char *sIP)
 {
     int cp = 0;
-    uint32_t part[4] = {0,0,0,0};
+    uint32_t part[4] = {0, 0, 0, 0};
 
-    while(*sIP != 0) {
-        if(*sIP == '.') {
+    while (*sIP != 0) {
+        if (*sIP == '.') {
             cp++;
             if (cp >= 4)
                 return 0; // Too many dots
-        } else if(*sIP >= '0' && *sIP <= '9') {
+        } else if (*sIP >= '0' && *sIP <= '9') {
             part[cp] = (part[cp] * 10) + (*sIP - '0');
             if (part[cp] > 255)
                 return 0; // Too big number
@@ -58,7 +58,7 @@ int _start(int argc, char *argv[])
         return MODULE_NO_RESIDENT_END;
     }
 
-    for (i=1; i<argc; i++) {
+    for (i = 1; i < argc; i++) {
         M_DEBUG("argv[%d] = %s\n", i, argv[i]);
         if (!strncmp(argv[i], "ip=", 3)) {
             uint32_t ip = parse_ip(&argv[i][3]);
