@@ -953,6 +953,30 @@ static unsigned char gameEffectiveFlags(item_list_t *support)
     return (support->mode == FAV_MODE) ? favGetFlags(support) : support->flags;
 }
 
+// Core-aware per-game settings: grey the rows the *other* core ignores, so the
+// Compatibility screen only offers what the selected Loader Core actually honors.
+// Under Neutrino, OPL compat mode 4 (Skip Videos) and mode 6 (Disable IGR) are
+// dropped at -gc conversion (system.c convertCompatmaskToModes) and DL-Defaults
+// pulls OPL-bitmask data that does not map to -gc; under the OPL core, the Neutrino
+// Args field is never read. See docs/NEUTRINO.md for the full capability mapping.
+static void guiGameSetCoreAwareState(void)
+{
+    int neutrino = 0;
+    diaGetInt(diaCompatConfig, COMPAT_LOADER, &neutrino);
+
+    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrino);  // Neutrino-only field
+    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
+    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
+    diaSetEnabled(diaCompatConfig, COMPAT_DL_DEFAULTS, !neutrino);   // OPL compat-bitmask downloader
+}
+
+static int guiGameCompatUpdater(int modified)
+{
+    if (modified)
+        guiGameSetCoreAwareState();
+    return 0;
+}
+
 void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configSet)
 {
     int i;
@@ -968,7 +992,8 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     const char *loaders[] = {"<OPL>", "Neutrino", NULL};
     diaSetEnum(diaCompatConfig, COMPAT_LOADER, loaders);
 
-    int result = diaExecuteDialog(diaCompatConfig, -1, 1, NULL);
+    guiGameSetCoreAwareState(); // apply the initial grey-out before the dialog is drawn
+    int result = diaExecuteDialog(diaCompatConfig, -1, 1, &guiGameCompatUpdater);
     if (result) {
         compatMode = 0;
         for (i = 0; i < COMPAT_MODE_COUNT; ++i) {
