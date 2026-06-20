@@ -3,6 +3,7 @@
 #include "include/gui.h"
 #include "include/supportbase.h"
 #include "include/mmcesupport.h"
+#include "include/vcdsupport.h"
 #include "include/util.h"
 #include "include/themes.h"
 #include "include/textures.h"
@@ -212,6 +213,12 @@ static int mmceNeedsUpdate(item_list_t *itemList)
 
     mmceGameList.updateDelay = MENU_UPD_DELAY_NOUPDATE;
 
+    // VCD view: force a rescan once on toggle, then skip the disc heuristics while showing VCDs.
+    if (vcdConsumeDirty(itemList->mode))
+        return 1;
+    if (vcdViewActive(itemList->mode))
+        return 0;
+
     if (mmceULSizePrev == -2)
         result = 1;
 
@@ -260,7 +267,10 @@ static int mmceUpdateGameList(item_list_t *itemList)
     if (mmcePrefix[0] == '\0')
         return mmceGameCount;
 
-    sbReadList(&mmceGames, mmcePrefix, &mmceULSizePrev, &mmceGameCount);
+    if (vcdViewActive(itemList->mode))
+        mmceGameCount = vcdFillGameList(mmcePrefix, &mmceGames);
+    else
+        sbReadList(&mmceGames, mmcePrefix, &mmceULSizePrev, &mmceGameCount);
     return mmceGameCount;
 }
 
@@ -318,6 +328,25 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         game = &mmceGames[id];
     else
         game = gAutoLaunchBDMGame;
+
+    // VCD view: hand off to POPSTARTER instead of the disc path below. Menu-launch only; build the
+    // selector + resolve the ELF on stack BEFORE deinit() frees mmceGames. mmcePrefix is static.
+    if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
+        char vcdName[VCD_NAME_MAX];
+        char vcdElf[256];
+        char vcdSelector[320];
+        snprintf(vcdName, sizeof(vcdName), "%s", game->name);
+        if (vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+            return;
+        if (!vcdResolvePopstarter(mmcePrefix, vcdElf, sizeof(vcdElf))) {
+            guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+            return;
+        }
+        vcdBuildSelector(mmcePrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
+        deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the MMCE device mounted across the IOP reset
+        sysLaunchPopstarter(vcdElf, vcdSelector, "");
+        return;
+    }
 
     if (!cacheAbortMmceImageLoadsTimed(MMCE_ART_ABORT_WAIT_TICKS)) {
         cacheEnd(1);

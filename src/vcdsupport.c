@@ -101,7 +101,7 @@ static unsigned char vcdDirty[MODE_COUNT]; // 1 = view just toggled -> force one
 
 int vcdModeSupported(int mode)
 {
-    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST); // BDM only for now (MMCE / ETH added later)
+    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST) || mode == MMCE_MODE; // ETH/SMB added in 2d
 }
 
 int vcdViewActive(int mode)
