@@ -310,15 +310,25 @@ static void bdmLoadBlockDeviceModules(void)
         hddModLoaded = 1;
     }
 
-    // UDPBD network block device. NIC-exclusive with the SMB/ETH stack (both register "SMAP_driver"),
-    // so only load it when SMB isn't up. dev9 is refcounted (shared with ATA-HDD). smap_udpbd needs
-    // the PS2's static IP as an "ip=" module arg -- its ministack has no DHCP client.
+    // Network block device (UDPBD or UDPFS, picked by gNetBootProtocol). NIC-exclusive with the SMB/ETH
+    // stack (smap registers "SMAP_driver"), so only load when SMB isn't up. dev9 is refcounted (shared
+    // with ATA-HDD). Both need the PS2's static IP as an "ip=" arg -- the ministack has no DHCP client.
     if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded()) {
         char ipArg[24];
         sysInitDev9();
         snprintf(ipArg, sizeof(ipArg), "ip=%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
-        if (bdmLoadOptionalModuleArgs("SMAP_UDPBD", &smap_udpbd_irx, size_smap_udpbd_irx, (int)strlen(ipArg) + 1, ipArg) >= 0)
-            udpbdModLoaded = 1;
+        if (gNetBootProtocol == NET_BOOT_UDPFS) {
+            // UDPFS: a 3-IRX chain loaded in dependency order -- smap (exports to ministack + bd), then
+            // ministack (gets the ip= arg, exports to bd), then udpfs_bd (registers the "udp" BDM device).
+            if (bdmLoadOptionalModule("UDPFS_SMAP", &udpfs_smap_irx, size_udpfs_smap_irx) >= 0 &&
+                bdmLoadOptionalModuleArgs("UDPFS_MINISTACK", &udpfs_ministack_irx, size_udpfs_ministack_irx, (int)strlen(ipArg) + 1, ipArg) >= 0 &&
+                bdmLoadOptionalModule("UDPFS_BD", &udpfs_bd_irx, size_udpfs_bd_irx) >= 0)
+                udpbdModLoaded = 1;
+        } else {
+            // UDPBD: the self-contained smap_udpbd monolith (smap + ministack + udpbd in one irx).
+            if (bdmLoadOptionalModuleArgs("SMAP_UDPBD", &smap_udpbd_irx, size_smap_udpbd_irx, (int)strlen(ipArg) + 1, ipArg) >= 0)
+                udpbdModLoaded = 1;
+        }
     }
 
     SignalSema(bdmLoadModuleLock);
