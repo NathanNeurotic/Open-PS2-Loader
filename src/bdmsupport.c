@@ -440,6 +440,14 @@ static int bdmNeedsUpdate(item_list_t *itemList)
             pOwner->menuItem.visible = 0;
     }
 
+    // VCD view: an L3 toggle marks the mode dirty but does NOT bump BdmGeneration or reset
+    // bdmULSizePrev, so consume the dirty flag BEFORE the device-tick cache gate below (mirrors how
+    // mmceNeedsUpdate checks it first). Otherwise a device already scanned this BdmGeneration -- which
+    // every USB stick is, the moment its ISO list loads -- short-circuits at the gate and never
+    // rescans, leaving the VCD (PS1/POPSTARTER) list permanently empty on USB/BDM while MMCE worked.
+    if (vcdConsumeDirty(itemList->mode))
+        return 1;
+
     if (pDeviceData->bdmDeviceTick == BdmGeneration) {
         if (pOwner != NULL && pOwner->menuItem.visible == 0)
             return 0;
@@ -467,10 +475,9 @@ static int bdmNeedsUpdate(item_list_t *itemList)
         pDeviceData->FoldersCreated = 1;
     }
 
-    // VCD view: force a rescan once on toggle (dirty), then skip the disc-folder heuristics while
-    // this device is showing its VCD list (it refreshes on toggle / manual refresh only).
-    if (vcdConsumeDirty(itemList->mode))
-        return 1;
+    // VCD view: while this device shows its VCD list, skip the disc-folder heuristics (it refreshes on
+    // L3 toggle / manual refresh only). The toggle's forced rescan is consumed ABOVE the device-tick
+    // gate (see vcdConsumeDirty near the top) so the per-generation cache can't swallow it.
     if (vcdViewActive(itemList->mode))
         return 0;
 
