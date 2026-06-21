@@ -94,6 +94,9 @@ static int eecoreInit(int argc, char **argv)
         EnableCheats();
     }
 
+    if (config->gImage)
+        LinkImage();
+
     if (config->EnableGSMOp) {
         UpdateGSMParams(
             config->GsmConfig.interlace,

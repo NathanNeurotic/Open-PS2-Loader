@@ -27,6 +27,59 @@
 #include "include/cheat_api.h"
 #include "coreconfig.h"
 
+/*-----------------------------------------------------------*/
+/* Prebuilt PS2RD cheat-image (.img): copy + apply at boot   */
+/*-----------------------------------------------------------*/
+static unsigned gImage[MAX_IMAGEWORDS];
+
+// Pull the image from the OPL-provided config buffer into the local working copy.
+static void CopyImage(void)
+{
+    USE_LOCAL_EECORE_CONFIG;
+    for (unsigned i = 0; i < MAX_IMAGEWORDS; ++i)
+        gImage[i] = config->gImage[i];
+}
+
+// Apply the image: a header [Offset0, CountWords0, CountEntries] (Offset0 must already hold CountWords0
+// in memory as a sanity gate), then CountEntries entries of [Offset, CountWords, data...] written to
+// game memory. HARDENING: walk p with an explicit upper bound (pEnd) so a malformed/oversized image can
+// never read past gImage (the original walked p unbounded -- an OOB read). Abort cleanly on any overrun.
+void LinkImage(void)
+{
+    unsigned CountEntries, CountWords, Offset;
+    unsigned *p = gImage;
+    unsigned *pEnd = gImage + MAX_IMAGEWORDS;
+
+    CopyImage();
+
+    if (p >= pEnd)
+        return;
+    Offset = *p++;
+    if (!Offset)
+        return;
+    if (p >= pEnd)
+        return;
+    CountWords = *p++;
+    if (*(u32 *)(Offset) != CountWords)
+        return;
+    if (p >= pEnd)
+        return;
+    CountEntries = *p++;
+    while (CountEntries--) {
+        if (p >= pEnd)
+            return;
+        Offset = *p++;
+        if (p >= pEnd)
+            return;
+        CountWords = *p++;
+        for (; CountWords--; Offset += 4) {
+            if (p >= pEnd)
+                return;
+            *(u32 *)(Offset) = *p++;
+        }
+    }
+}
+
 /*---------------------------------*/
 /* Setup PS2RD Cheat Engine params */
 /*---------------------------------*/

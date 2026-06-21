@@ -46,6 +46,7 @@ struct EECoreConfig_t
     unsigned char g_ps2_ETHOpMode;
 
     u32 *gCheatList; // Store hooks/codes addr+val pairs
+    u32 *gImage;     // Prebuilt PS2RD cheat image (.img) patch words, or NULL
 
     void *eeloadCopy;
     void *initUserMemory;

@@ -1184,6 +1184,8 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     } else
         config->gCheatList = NULL;
 
+    config->gImage = GetImageEnabled() ? (u32 *)GetImage() : NULL;
+
     sprintf(config->g_ps2_ip, "%u.%u.%u.%u", local_ip_address[0], local_ip_address[1], local_ip_address[2], local_ip_address[3]);
     sprintf(config->g_ps2_netmask, "%u.%u.%u.%u", local_netmask[0], local_netmask[1], local_netmask[2], local_netmask[3]);
     sprintf(config->g_ps2_gateway, "%u.%u.%u.%u", local_gateway[0], local_gateway[1], local_gateway[2], local_gateway[3]);
