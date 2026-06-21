@@ -18,6 +18,7 @@
 #include "include/system.h"
 #include "include/vcdsupport.h" // BDMA equip (vcdEquipBdma/vcdReadBdmaMode + VCD_BDMA_* enums)
 #include "include/ethsupport.h"
+#include "include/bdmsupport.h" // bdmForceDeviceRefresh() -- re-show a latched-hidden BDM tab after a device-enable toggle
 #include "include/favsupport.h"
 #include "include/compatupd.h"
 #include "include/pggsm.h"
@@ -1000,6 +1001,11 @@ void guiShowDeviceConfig(void)
         // so the network mount fails silently. Warn at opt-in to set a static PS2 IP.
         if (gEnableUDPBD && !udpbdWasEnabled && ps2_ip_use_dhcp)
             guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
+
+        // A BDM tab can be latched hidden (bdmNeedsUpdate force-hides it when its enable flag reads 0,
+        // then short-circuits until the device generation bumps). Re-evaluate device visibility now so
+        // re-enabling a device here brings its tab back without a physical replug.
+        bdmForceDeviceRefresh();
 
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();

@@ -61,4 +61,8 @@ int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName,
 int bdmFindPartition(char *target, const char *name, int write);
 int bdmIsUDPBDLoaded(void);                  // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)
 int bdmSupportIsUDPBD(item_list_t *support); // 1 if this support is the UDPBD block device (its games are Neutrino-only)
+
+// Re-evaluate every BDM device's presence + page visibility on the next refresh (bumps the latch
+// generation). Call after a device-enable toggle so a latched-hidden tab re-shows without a replug.
+void bdmForceDeviceRefresh(void);
 #endif

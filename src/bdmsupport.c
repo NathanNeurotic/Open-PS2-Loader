@@ -261,6 +261,17 @@ static void bdmEventHandler(void *packet, void *opt)
     BdmGeneration++;
 }
 
+// Bump the device generation the per-device refresh latch keys off, exactly as a real hotplug event
+// (bdmEventHandler) does. This invalidates every device's bdmDeviceTick so the next bdmNeedsUpdate
+// pass re-evaluates presence + page visibility instead of short-circuiting on the latch. Called when
+// the user applies Device Settings, so a BDM page that was force-hidden while its enable flag read 0
+// (e.g. an exFAT ATA tab, or a UDPBD tab) re-shows as soon as the device is re-enabled and present --
+// without needing a physical replug.
+void bdmForceDeviceRefresh(void)
+{
+    BdmGeneration++;
+}
+
 static int bdmShouldQueueModuleLoad(void)
 {
     if (gEnableUSB && !iUSBModLoaded)
