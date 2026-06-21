@@ -34,6 +34,10 @@ typedef struct
 // vcd_entry_t array the caller frees (NULL/0 on none/error). POSIX dir IO only (newlib-port rule).
 int vcdScanDir(const char *devPrefix, vcd_entry_t **outList);
 
+// Like vcdScanDir but scans `dirPath` DIRECTLY (no POPS/ subfolder) -- for the APA/PFS HDD where each
+// __.POPS* partition holds its .VCD at the mounted root (e.g. dirPath = "pfs0:/").
+int vcdScanDirRoot(const char *dirPath, vcd_entry_t **outList);
+
 // Build "<devPrefix>POPS/POPSTARTER.ELF" into out; returns 1 if that file exists, else 0.
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize);
 

@@ -31,20 +31,13 @@ static void vcdExtractGameId(const char *name, char *idOut, int idSize)
     }
 }
 
-int vcdScanDir(const char *devPrefix, vcd_entry_t **outList)
+// Core scan: opendir `dirPath` and collect *.VCD basenames into a fresh vcd_entry_t list. POSIX dir
+// IO only (newlib-port rule). Shared by vcdScanDir (POPS subfolder) and vcdScanDirRoot (path as-is).
+static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
 {
-    if (outList == NULL)
-        return 0;
-    *outList = NULL;
-    if (devPrefix == NULL)
-        return 0;
-
-    char dirPath[256];
-    snprintf(dirPath, sizeof(dirPath), "%s%s", devPrefix, POPS_FOLDER); // "<prefix>POPS" (prefix ends in '/')
-
     DIR *dir = opendir(dirPath);
     if (dir == NULL)
-        return 0; // no POPS folder on this device -> no VCDs
+        return 0; // no such folder -> no VCDs
 
     vcd_entry_t *list = (vcd_entry_t *)calloc(VCD_MAX_ITEMS, sizeof(vcd_entry_t));
     if (list == NULL) {
@@ -74,6 +67,33 @@ int vcdScanDir(const char *devPrefix, vcd_entry_t **outList)
     }
     *outList = list;
     return count;
+}
+
+int vcdScanDir(const char *devPrefix, vcd_entry_t **outList)
+{
+    if (outList == NULL)
+        return 0;
+    *outList = NULL;
+    if (devPrefix == NULL)
+        return 0;
+
+    char dirPath[256];
+    snprintf(dirPath, sizeof(dirPath), "%s%s", devPrefix, POPS_FOLDER); // "<prefix>POPS" (prefix ends in '/')
+
+    return vcdScanOpenDir(dirPath, outList);
+}
+
+// Scan a directory path DIRECTLY (no POPS/ subfolder) for *.VCD -- used for the APA/PFS HDD, where
+// each __.POPS* partition holds its .VCD at the mounted root (caller passes e.g. "pfs0:/").
+int vcdScanDirRoot(const char *dirPath, vcd_entry_t **outList)
+{
+    if (outList == NULL)
+        return 0;
+    *outList = NULL;
+    if (dirPath == NULL)
+        return 0;
+
+    return vcdScanOpenDir(dirPath, outList);
 }
 
 // POPStarter path separator for a device prefix: '\\' for SMB (ethPrefix ends in '\\'), else '/'.
