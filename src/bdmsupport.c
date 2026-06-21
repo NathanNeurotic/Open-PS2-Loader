@@ -821,10 +821,14 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             dmaType = 0x20;
         else {
             dmaType = 0x40;
-            if (pDeviceData->ataHighestUDMAMode > 0)
+            dmaMode -= 3;
+            // Use the user's configured UDMA mode, only CLAMPED to the drive's max -- don't FORCE the
+            // highest, which is unstable on some drives/SATA adapters (wOPL 0f7443e, KrahJohlito). NB:
+            // RiptOPL already avoids the worse scan-time UDMA push -- bdmResolveLBA_UDMA only queries
+            // (never sets) the mode and caps it to UDMA 4 -- so the reported exFAT-HDD corruption from a
+            // max-UDMA scan does not apply here; this just respects a user's lower-DMA stability choice.
+            if (pDeviceData->ataHighestUDMAMode > 0 && dmaMode > pDeviceData->ataHighestUDMAMode)
                 dmaMode = pDeviceData->ataHighestUDMAMode;
-            else
-                dmaMode -= 3;
         }
 
         hddSetTransferMode(dmaType, dmaMode);
