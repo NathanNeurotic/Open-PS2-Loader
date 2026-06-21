@@ -119,6 +119,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_ENABLE_MX4SIO        "enable_mx4sio"
 #define CONFIG_OPL_ENABLE_BDMHDD        "enable_bdm_hdd"
 #define CONFIG_OPL_ENABLE_UDPBD         "enable_udpbd"
+#define CONFIG_OPL_NET_BOOT_PROTOCOL    "net_boot_protocol"
 #define CONFIG_OPL_SWAP_SEL_BUTTON      "swap_select_btn"
 #define CONFIG_OPL_PARENTAL_LOCK_PWD    "parental_lock_password"
 #define CONFIG_OPL_SFX                  "enable_sfx"

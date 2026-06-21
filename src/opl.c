@@ -152,6 +152,7 @@ int gEnableILK;
 int gEnableMX4SIO;
 int gEnableBdmHDD;
 int gEnableUDPBD;
+int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (transport when gEnableUDPBD is on)
 int gAutosort;
 int gAutoRefresh;
 int gEnableNotifications;
@@ -1210,6 +1211,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, &gEnableBdmHDD);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
+            configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
             configGetInt(configOPL, CONFIG_OPL_SFX, &gEnableSFX);
             configGetInt(configOPL, CONFIG_OPL_BOOT_SND, &gEnableBootSND);
             configGetInt(configOPL, CONFIG_OPL_BGM, &gEnableBGM);
@@ -1427,6 +1429,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, gEnableMX4SIO);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, gEnableUDPBD);
+        configSetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, gNetBootProtocol);
         configSetInt(configOPL, CONFIG_OPL_SFX, gEnableSFX);
         configSetInt(configOPL, CONFIG_OPL_BOOT_SND, gEnableBootSND);
         configSetInt(configOPL, CONFIG_OPL_BGM, gEnableBGM);
@@ -2114,6 +2117,7 @@ static void setDefaults(void)
     gEnableMX4SIO = 0;
     gEnableBdmHDD = 0;
     gEnableUDPBD = 0; // OFF by default: needs a PC-side UDPBD server, and is NIC-exclusive with SMB
+    gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)
 
     frameCounter = 0;
 

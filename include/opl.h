@@ -136,6 +136,13 @@ extern int gEnableILK;
 extern int gEnableMX4SIO;
 extern int gEnableBdmHDD;
 extern int gEnableUDPBD; // UDPBD network block device (smap_udpbd); NIC-exclusive with the SMB/ETH stack
+// Network-boot transport chosen when gEnableUDPBD is on. Both register the "udp" BDM token and are
+// NIC-exclusive with SMB; they differ in wire protocol + which IOP module(s) OPL loads to list games.
+enum {
+    NET_BOOT_UDPBD = 0, // smap_udpbd monolith (SUDPBDv2); Neutrino launch -bsd=udpbd
+    NET_BOOT_UDPFS = 1, // udpfs smap+ministack+udpfs_bd chain (UDPRDMA); Neutrino launch -bsd=udpfsbd
+};
+extern int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS
 
 extern int gAutosort;
 extern int gAutoRefresh;
