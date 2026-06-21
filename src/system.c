@@ -887,7 +887,9 @@ static const char *getDeviceName(const char *driver)
     if (!strcmp(driver, "mmce"))
         return "mmce";
     if (!strcmp(driver, "udp"))
-        return "udpbd"; // UDPBD network block device -> Neutrino -bsd=udpbd
+        // Both transports register the "udp" BDM token; gNetBootProtocol picks the Neutrino backing
+        // store: -bsd=udpbd (smap_udpbd / SUDPBDv2) vs -bsd=udpfsbd (the udpfs_bd UDPRDMA toml).
+        return (gNetBootProtocol == NET_BOOT_UDPFS) ? "udpfsbd" : "udpbd";
     return "unsupported";
 }
 

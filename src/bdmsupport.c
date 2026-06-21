@@ -825,8 +825,9 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // formats here, while `game` is still valid (deinit below frees it).
     int coreLoader = 0;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
-    // UDPBD has no embedded cdvdman backend -- it can ONLY boot via the external Neutrino core.
-    // Force it on here (while the GUI is up); if Neutrino is missing the block below warns + clears it.
+    // UDPBD/UDPFS have no embedded cdvdman backend -- the "udp" BDM device (either transport) can ONLY
+    // boot via the external Neutrino core. Force it on here (while the GUI is up); if Neutrino is missing
+    // the block below warns + clears it.
     if (bdmDriverIsUDPBD(bdmCurrentDriver))
         coreLoader = 1;
     const char *neutrinoPath = NULL;
