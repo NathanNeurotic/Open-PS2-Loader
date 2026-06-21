@@ -468,7 +468,10 @@ static int hddUpdateGameList(item_list_t *itemList)
     hdl_games_list_t hddGamesNew;
     int ret;
 
-    if (((ret = hddLoadGameListCache(&hddGames)) != 0) || (hddForceUpdate)) {
+    // Force a live APA scan not only when the cache fails to load (ret != 0) or a prior build asked for it
+    // (hddForceUpdate), but ALSO when the cache loaded EMPTY (count 0). A missing/empty/stale games.bin
+    // otherwise left the first HDD page blank until a second manual refresh (provato's HW report).
+    if (((ret = hddLoadGameListCache(&hddGames)) != 0) || (hddForceUpdate) || (hddGames.count == 0)) {
         hddGamesNew.count = 0;
         hddGamesNew.games = NULL;
         ret = hddGetHDLGamelist(&hddGamesNew);
