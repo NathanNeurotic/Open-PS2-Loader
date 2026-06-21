@@ -25,6 +25,11 @@ above; leave it blank to use the auto-detection (which also checks a few lowerca
 `NEUTRINO.ELF` spelling variants on `mc0:`/`mc1:`). For a path longer than the on-screen
 31-character editor, set `neutrino_path` in `conf_riptopl.cfg` directly.
 
+> **Network boot is the exception:** the UDPBD / UDPFS feature (§4) ships its **own bundled
+> Neutrino** (a `neutrino_*.7z` inside the release's installable package, pre-populated with the
+> UDPFS config). The per-game Neutrino use described in this section still needs you to supply
+> `neutrino.elf` at the paths above.
+
 ## 2. Pick the core per game
 
 1. Highlight a game and open **Game Settings → Compatibility Settings**.
@@ -46,6 +51,10 @@ above; leave it blank to use the auto-detection (which also checks a few lowerca
 | Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) |
 
 Unsupported cases fall back to the `<OPL>` core automatically with an on-screen warning.
+
+> **PS1 games are a separate path.** PlayStation 1 titles (`*.VCD`, shown via the **L3 "VCD"
+> per-device view**) always boot through **POPSTARTER.ELF** — never OPL's core and never Neutrino
+> — so the per-game Loader Core selector is locked/inert for them. See **[VCD.md](VCD.md)**.
 
 ## 3. Launch arguments
 

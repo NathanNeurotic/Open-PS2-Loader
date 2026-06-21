@@ -14,7 +14,7 @@ Review the LICENSE file for further details.<br><br>
 > **What is RiptOPL?** A downstream fork of Open PS2 Loader with a built-in cover-art **Coverflow** theme (default), a **Favourites** tab, per-game **Neutrino** external-core launching, a consolidated **Device Settings** hub, DualSense support, and ready-to-use opinionated defaults. Its settings live in their own **`conf_riptopl.cfg`** so they never collide with official OPL or wOPL installed on the same memory card — while artwork, themes, VMCs and **favourites stay shared**. See **[This Fork's Additions](#this-forks-additions)**. For the canonical project, use [ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader).
 ## Contents
 
-- [Introduction](#introduction) · [Quick Start](#quick-start) · [Major Features Overview](#major-features-overview) · [Release Types](#release-types) · [How to Use](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) · [SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD Server](#nbd-server) · [ZSO Format](#zso-format) · [PS3 BC](#ps3-bc) · [Frequent Issues](#frequent-issues)
+- [Introduction](#introduction) · [Quick Start](#quick-start) · [Major Features Overview](#major-features-overview) · [Releases](#releases) · [How to Use](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) · [SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD Server](#nbd-server) · [ZSO Format](#zso-format) · [PS3 BC](#ps3-bc) · [Frequent Issues](#frequent-issues)
 
 ## Introduction
 
@@ -30,6 +30,10 @@ It supports six categories of devices:
 4. iLink (SBP2 compliant storage devices via IEEE 1394);
 5. SMBv1 shares;
 6. ATA/IDE HDDs, including internal exFAT configurations (MBR/GPT).
+
+Plus an optional **network-block-device boot** (UDPBD / UDPFS, via Neutrino) that streams games
+from a PC over the LAN as their own game list — off by default and mutually exclusive with SMB.
+See [This Fork's Additions](#this-forks-additions).
 
 All of the devices mentioned above support multiple file formats, including:
 
@@ -57,12 +61,12 @@ For an updated compatibility list, you can visit the OPL-CL site at:\
 
 - [ ] A PlayStation 2 or backward-compatible PlayStation 3.
 - [ ] One storage option: USB drive, MMCE or MX4SIO SD setup, iLink storage, SMB network share, or internal HDD (APA/PFS or exFAT).
-- [ ] The latest Open PS2 Loader (OPL) ELF binary.
+- [ ] A RiptOPL build (`RIPTOPL.ELF`) — a tagged `v*` release for stability, or the `rolling` pre-release for the latest features.
 - [ ] Optional: network access (recommended for SMB and remote file management).
 
 ### Minimal startup path
 
-1. Download the latest OPL release build.
+1. Download a RiptOPL build (tagged `v*` or `rolling`) from the [Releases](https://github.com/NathanNeurotic/Open-PS2-Loader/releases) page.
 2. Copy the `RIPTOPL.ELF` file to your launch method (FMCB, FHDB, or equivalent).
 3. Prepare your storage with the expected OPL folders: `DVD`, `CD`, `CFG`, `ART`, `VMC`, and other mode-specific directories as needed.
 4. Open OPL settings and enable the device mode you plan to use.
@@ -105,13 +109,29 @@ This build layers several features on top of upstream OPL:
   globally and per-game. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
 - **UDPBD network boot (Neutrino):** stream games from a PC over the LAN as a network block
   device — they show up as a **UDPBD Games** list with full covers and per-game settings, just
-  like a local drive. UDPBD launches via Neutrino, is **off by default**, shares the network
-  adapter with SMB (one or the other), and needs a static PS2 IP. See the UDPBD section of
-  **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-udpbd-network-boot-neutrino-only)**.
+  like a local drive. UDPBD launches via Neutrino, is **off by default**, is mutually exclusive
+  with SMB (they share the one network adapter), and needs a static PS2 IP. See the network-boot
+  section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--udpbd--udpfs-neutrino-only)**.
+- **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
+  alongside UDPBD. A **Net Boot Protocol** picker under **Device Settings** chooses **UDPBD** or
+  **UDPFS**; UDPFS launches via `-bsd=udpfsbd` with a bundled `bsd-udpfsbd.toml`, and its PC
+  server (`udpfs_server.py`) ships *inside* the bundled Neutrino archive — match the server to the
+  protocol you pick. Same static-IP and SMB-exclusivity rules as UDPBD.
+- **PS1 games via POPSTARTER (VCD view):** press **L3** on a device page to switch between your
+  PS2 discs and a list of PS1 `*.VCD` games on the same device — it's a *view*, not a separate tab.
+  A **Default game view** setting (**Both** / **ISO** / **VCD**, default **Both**) can lock a page
+  to one type, and Favourites follow the active view. PS1 titles boot through **POPSTARTER** only
+  (never OPL's core, never Neutrino — the Loader Core selector is inert for them). Works on USB /
+  MMCE / MX4SIO / iLink / SMB **and the internal HDD** (APA `__.POPS*` partitions). See
+  **[docs/VCD.md](docs/VCD.md)**.
+- **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —
+  under Neutrino it greys the panels Neutrino ignores (GSM, Cheats, PADEMU, OSD Language and the
+  OPL-only compat modes) and offers a structured **Neutrino Video** picker (Off / 240p / 480p /
+  1080i) plus a Neutrino-only **Mode 7** (`-gc=7`). See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
 - **Device Settings hub:** the old "Settings" page is now **General Settings**, and a new
   **Device Settings** page consolidates the per-device options, cache sizes, Block-Devices
-  (BDM) settings, and all MMCE settings in one place (replacing the separate MMCE and
-  Block Devices pages).
+  (BDM) settings, all MMCE settings, the network-boot controls (the UDPBD/UDPFS toggle + the
+  **Net Boot Protocol** picker, interlocked with SMB), and the Favourites tab toggle in one place.
 - **DualSense / DualShock 5 (USB):** optional controller support, compiled in with
   `make DUALSENSE=1`.
 - **Ready-to-use defaults:** a fresh install boots with sensible options already enabled —
@@ -150,23 +170,23 @@ support it. This fork is a downstream labor of love, not a replacement, and it e
 because that upstream work is open for everyone to learn from.
 
 
-<details>
-  <summary> <b> Release types </b> </summary>
-<p>
+## Releases
 
-Open PS2 Loader bundle included several types of the same OPL version. These
-types come with more or fewer features included.
+RiptOPL ships **one full-feature build** — GSM video-mode handling, in-game
+screenshots (IGS), DS3/DS4 pad emulation (PADEMU), VMC, PS2RD cheats and parental
+controls are all included in the standard ELF (no upstream-style per-feature variants).
+DualSense / DualShock 5 (USB) support is the one optional extra, compiled in with
+`make DUALSENSE=1`.
 
-| Type (can be a combination) | Description                                                                             |
-| --------------------------- | --------------------------------------------------------------------------------------- |
-| `Release`                   | Full-feature build for most users: includes GSM video mode/scaling compatibility tooling (video-mode fixes/overrides), in-game screenshots (IGS), DS3/DS4 pad emulation, VMC support, PS2RD cheats, and parental controls. |
-| `DTL_T10000`                | OPL for TOOLs (DevKit PS2)                                                              |
-| `IGS`                       | Adds in-game screenshot capture so you can save screenshots while playing.              |
-| `PADEMU`                    | Adds DualShock 3/DualShock 4 controller emulation support on compatible setups.         |
-| `RTL`                       | OPL with the right to left language support.                                            |
+There are two release channels:
 
-</p>
-</details>
+| Channel | What it is |
+| --- | --- |
+| **Rolling pre-release** (the `rolling` tag) | Continuously rebuilt from `master` on every push — the bleeding edge. Each build publishes a full installable package zip (`RIPTOPL-<sdk>-<rel>-<sha>.zip`, with the bundled Neutrino core), the bare loader ELFs, a source snapshot, `SHA256SUMS.txt`, and a language pack. May be unstable. |
+| **Tagged releases** (`v*` tags) | Curated, known-good versions cut from a tag. Use these for stability. |
+
+See **[ROLLING_RELEASE.md](ROLLING_RELEASE.md)** for exactly what the rolling release
+contains and how to pull it.
 
 <details>
   <summary> <b> How to use </b> </summary>
@@ -363,7 +383,7 @@ For example, to use `hdl_dump` to install a game to the HDD:
 
 To use the NBD server in OPL:
 
-  * Use the latest release or pre-release from the [Releases](https://github.com/ps2homebrew/Open-PS2-Loader/releases) page if you need newer NBD fixes.
+  * Use the latest release or pre-release from the [Releases](https://github.com/NathanNeurotic/Open-PS2-Loader/releases) page if you need newer NBD fixes.
   * Ensure OPL is configured with an IP address (either static or DHCP).
   * Open the menu and select "Start NBD server". Once it's ready, it should update the screen to say "NBD Server running..."
   * Now you can connect with any of the following NBD clients.
