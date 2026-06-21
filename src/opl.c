@@ -265,8 +265,9 @@ void moduleUpdateMenuInternal(opl_io_module_t *mod, int themeChanged, int langCh
         if (gFAVStartMode)
             menuAddHint(&mod->menuItem, _STR_FAV_HINT, R3_ICON);
 
-        // L3 toggles the device's disc list <-> its VCD (PS1-via-POPSTARTER) list.
-        if (vcdModeSupported(mod->support->mode))
+        // L3 toggles the device's disc list <-> its VCD (PS1-via-POPSTARTER) list -- only under the
+        // "Both" default-view setting; ISO/VCD lock the page, so the toggle and its hint go away.
+        if (vcdModeSupported(mod->support->mode) && gDefaultGameView == GAME_VIEW_BOTH)
             menuAddHint(&mod->menuItem, _STR_VCD, L3_ICON);
     }
 
@@ -415,6 +416,8 @@ static void itemExecToggleView(struct menu_item *curMenu)
     item_list_t *support = curMenu->userdata;
     if (!support || !vcdModeSupported(support->mode))
         return;
+    if (gDefaultGameView != GAME_VIEW_BOTH)
+        return; // the global default-view setting locks the page to one type -> L3 is inert
 
     vcdToggleView(support->mode);
     sfxPlay(SFX_CONFIRM);
