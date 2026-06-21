@@ -21,6 +21,7 @@
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioIoctl, fileXioDevctl
 #include <delaythread.h>
+#include <sys/stat.h> // mkdir() -- create the config folder before a BDM save probe
 
 static int iUSBModLoaded = 0;
 static int iLinkModLoaded = 0;
@@ -1340,9 +1341,23 @@ int bdmFindPartition(char *target, const char *name, int write)
             snprintf(path, sizeof(path), "mass%d:/%s/%s", i, gBDMPrefix, name);
         else
             snprintf(path, sizeof(path), "mass%d:/%s", i, name);
-        if (write)
-            fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0666);
-        else
+        if (write) {
+            /* O_CREAT makes the config FILE but never the gBDMPrefix FOLDER.  On a freshly
+             * formatted drive (e.g. an exFAT HDD whose OPL folder doesn't exist yet) the very
+             * first save would therefore fail with the folder absent, and only start working
+             * once sbCreateFolders() happened to create it on a later device refresh -- exactly
+             * the "save errored, then saved fine after a try or two" symptom.  Create the prefix
+             * directory up front (mkdir is a harmless no-op when it already exists) so the first
+             * save succeeds.  Probe with O_CREAT but WITHOUT O_TRUNC: this open only tests for a
+             * writable device, so it must never truncate an existing config -- configWrite()
+             * truncates when it actually commits the data. */
+            if (gBDMPrefix[0] != '\0') {
+                char dir[256];
+                snprintf(dir, sizeof(dir), "mass%d:/%s", i, gBDMPrefix);
+                mkdir(dir, 0777);
+            }
+            fd = open(path, O_WRONLY | O_CREAT, 0666);
+        } else
             fd = open(path, O_RDONLY);
 
         if (fd >= 0) {
