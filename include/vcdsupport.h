@@ -45,7 +45,7 @@ int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize);
 void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *name, char *out, int outSize);
 
 // ---- per-device VCD view (L3 toggle) ----------------------------------------------
-// Does this device class get a VCD view? (BDM range for now; MMCE/ETH added in a later stage.)
+// Does this device class get a VCD view? (BDM range, MMCE, ETH, and the APA/PFS HDD.)
 int vcdModeSupported(int mode);
 // Is the given device mode currently showing its VCD list (vs its disc list)?
 int vcdViewActive(int mode);

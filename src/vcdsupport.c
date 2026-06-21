@@ -145,7 +145,7 @@ static unsigned char vcdDirty[MODE_COUNT]; // 1 = view just toggled -> force one
 
 int vcdModeSupported(int mode)
 {
-    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST) || mode == MMCE_MODE || mode == ETH_MODE;
+    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST) || mode == MMCE_MODE || mode == ETH_MODE || mode == HDD_MODE;
 }
 
 int vcdViewActive(int mode)
