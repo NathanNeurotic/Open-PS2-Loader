@@ -2116,7 +2116,7 @@ static void setDefaults(void)
     gEnableILK = 0;
     gEnableMX4SIO = 0;
     gEnableBdmHDD = 0;
-    gEnableUDPBD = 0; // OFF by default: needs a PC-side UDPBD server, and is NIC-exclusive with SMB
+    gEnableUDPBD = 0;                  // OFF by default: needs a PC-side UDPBD server, and is NIC-exclusive with SMB
     gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)
 
     frameCounter = 0;
