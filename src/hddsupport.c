@@ -538,6 +538,28 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     hdl_game_info_t *game;
     struct cdvdman_settings_hdd *settings;
 
+    // HDD VCD view: hand off to POPSTARTER instead of the HDL/Neutrino path below. Menu-launch only
+    // (HDD-VCD autolaunch is out of scope). POPSTARTER's argv[0] is just the VCD name -- that name is
+    // all it needs to find <name>.VCD; the __.POPS* partition the VCD lives on is passed OUT OF BAND so
+    // POPSTARTER self-mounts it after the loader's IOP reset. HW-VALIDATE: POPSTARTER's exact HDD
+    // selector/partition contract is hardware-testable -- POPSLoader proved the shape with a vendored
+    // loader; we use the stock ps2sdk loader, the same one the shipping USB/MMCE/SMB VCD launch uses.
+    if (gAutoLaunchGame == NULL && vcdViewActive(itemList->mode)) {
+        char vcdName[VCD_NAME_MAX], vcdElf[256], vcdSelector[320], vcdPart[64];
+        snprintf(vcdName, sizeof(vcdName), "%s", hddVcdGames[id].name);
+        if (vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+            return;
+        if (!vcdResolvePopstarter(gHDDPrefix, vcdElf, sizeof(vcdElf))) {
+            guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+            return;
+        }
+        snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", vcdName);   // POPSTARTER's argv[0] = the name
+        snprintf(vcdPart, sizeof(vcdPart), "hdd0:%s:", hddVcdParts[id]); // self-mount target, hdd0:PART:
+        deinit(UNMOUNT_EXCEPTION, itemList->mode);
+        sysLaunchPopstarter(vcdElf, vcdSelector, vcdPart);
+        return;
+    }
+
     if (gAutoLaunchGame == NULL)
         game = &hddGames.games[id];
     else
