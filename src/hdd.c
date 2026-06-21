@@ -270,6 +270,77 @@ void hddFreeHDLGamelist(hdl_games_list_t *game_list)
 }
 
 //-------------------------------------------------------------------------
+static int hddPopsNameCompare(const void *a, const void *b)
+{
+    return strcmp((const char *)a, (const char *)b);
+}
+
+// Enumerate the __.POPS / __.POPS0..9 APA partitions (the HDD PS1/VCD store). Walks the APA partition
+// table with the same fileXioDopen("hdd0:")/fileXioDread primitive as hddGetHDLGamelist, but keeps
+// each distinct MAIN partition whose label starts with "__.POPS" instead of the HDL games. The result
+// is qsort'd by label so __.POPS sorts before __.POPS0..9 deterministically (APA on-disk order is not
+// relied on -- matches POPSLoader's stable partition order).
+int hddGetPopsPartitionList(hdd_pops_list_t *list)
+{
+    iox_dirent_t dirent;
+    int fd, i, count = 0;
+    char(*names)[APA_IDMAX + 1] = NULL;
+
+    list->count = 0;
+    list->names = NULL;
+
+    if ((fd = fileXioDopen("hdd0:")) < 0)
+        return 0;
+
+    while (fileXioDread(fd, &dirent) > 0) {
+        if (strncmp(dirent.name, "__.POPS", 7) != 0)
+            continue; // not a PS1/VCD partition
+        if (dirent.stat.attr & APA_FLAG_SUB)
+            continue; // main partition only (skip sub-partitions)
+
+        int dup = 0;
+        for (i = 0; i < count; i++) {
+            if (!strncmp(names[i], dirent.name, APA_IDMAX)) {
+                dup = 1;
+                break;
+            }
+        }
+        if (dup)
+            continue;
+
+        char(*grown)[APA_IDMAX + 1] = realloc(names, (count + 1) * sizeof(*names));
+        if (grown == NULL)
+            break; // OOM: keep what we already collected
+        names = grown;
+        strncpy(names[count], dirent.name, APA_IDMAX);
+        names[count][APA_IDMAX] = '\0';
+        count++;
+    }
+    fileXioDclose(fd);
+
+    if (count == 0) {
+        free(names);
+        return 0;
+    }
+
+    qsort(names, count, sizeof(*names), hddPopsNameCompare);
+
+    list->names = names;
+    list->count = count;
+    return count;
+}
+
+//-------------------------------------------------------------------------
+void hddFreePopsPartitionList(hdd_pops_list_t *list)
+{
+    if (list != NULL) {
+        free(list->names);
+        list->names = NULL;
+        list->count = 0;
+    }
+}
+
+//-------------------------------------------------------------------------
 int hddSetHDLGameInfo(hdl_game_info_t *ginfo)
 {
     if (hddReadSectors(ginfo->start_sector, 2, IOBuffer) != 0)
