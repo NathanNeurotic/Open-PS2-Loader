@@ -711,8 +711,10 @@ reselect_video_mode:
         diaGetInt(diaUIConfig, UICFG_OVERSCAN, &gOverscan);
         int previousGameView = gDefaultGameView;
         diaGetInt(diaUIConfig, UICFG_GAMEVIEW, &gDefaultGameView);
-        if (gDefaultGameView != previousGameView)
+        if (gDefaultGameView != previousGameView) {
             vcdMarkAllDirty(); // rebuild every VCD-capable page so the new default view takes effect
+            loadFavourites();  // re-resolve the Favourites tab against the now-locked source lists
+        }
 
         if (ret == UICFG_RESETCOL)
             setDefaultColors();
