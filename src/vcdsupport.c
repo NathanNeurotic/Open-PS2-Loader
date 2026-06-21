@@ -15,8 +15,9 @@
 #include <unistd.h>
 #include <sys/stat.h> // mkdir (POSIX, used like util.c / OSDHistory.c)
 
-#include "include/opl.h"    // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
-#include "include/system.h" // POPS_FOLDER
+#include "include/opl.h"      // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
+#include "include/system.h"   // POPS_FOLDER
+#include "include/textures.h" // texDiscoverLoad (VCD cover-art fallback)
 #include "include/vcdsupport.h"
 
 // Extract the PS1 disc ID (SXXX_NNN.NN) from a VCD basename matching "SXXX_NNN.NN.Title"
@@ -185,6 +186,32 @@ void vcdMarkAllDirty(void)
     for (int m = 0; m < MODE_COUNT; m++)
         if (vcdModeSupported(m))
             vcdDirty[m] = 1;
+}
+
+// 3-level cover/icon fallback for VCD (PS1) games, so one art file can serve OPL and POPSLoader:
+//   (1) OPL ART keyed by the PS1 disc id  -> <dev>ART/<SXXX_NNN.NN>_<suffix>.png  (interoperable serial)
+//   (2) OPL ART keyed by the VCD basename -> <dev>ART/<name>_<suffix>.png         (long-standing behaviour)
+//   (3) POPSLoader layout next to the .VCD -> <dev><popsDir>/<name>.png            (no _suffix; POPSLoader's)
+// Returns the first texDiscoverLoad hit (>= 0), else the last miss. popsDir == NULL skips step (3).
+// `sep` is '/' for local/MMCE/HDD prefixes and '\\' for SMB (ethPrefix) -- mirror the caller's getImage.
+int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const char *value, const char *suffix, const char *popsDir, GSTEXTURE *tex)
+{
+    char path[256];
+    char discId[VCD_ID_MAX];
+    int r = -1;
+
+    vcdExtractGameId(value, discId, sizeof(discId));
+    if (discId[0] != '\0') {
+        snprintf(path, sizeof(path), "%s%s%c%s_%s", devPrefix, artFolder, sep, discId, suffix);
+        if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
+            return r;
+    }
+    snprintf(path, sizeof(path), "%s%s%c%s_%s", devPrefix, artFolder, sep, value, suffix);
+    r = texDiscoverLoad(tex, path, -1);
+    if (r >= 0 || popsDir == NULL)
+        return r;
+    snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, popsDir, sep, value);
+    return texDiscoverLoad(tex, path, -1);
 }
 
 int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)

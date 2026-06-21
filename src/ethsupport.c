@@ -777,6 +777,12 @@ static config_set_t *ethGetConfig(item_list_t *itemList, int id)
 static int ethGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)
 {
     char path[256];
+
+    // VCD (PS1) covers: fall back disc-id -> filename -> POPSLoader's next-to-VCD <share>\POPS\<name>.png.
+    // SMB paths use a backslash separator.
+    if (isRelative && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO")))
+        return vcdLoadArt(ethPrefix, '\\', folder, value, suffix, "POPS", resultTex);
+
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s\\%s_%s", ethPrefix, folder, value, suffix);
     else
