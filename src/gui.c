@@ -885,6 +885,7 @@ static int guiDeviceUpdater(int modified)
         diaGetInt(diaDeviceConfig, CFG_ENABLEUDPBD, &udpbd);
         diaSetEnabled(diaDeviceConfig, CFG_ENABLEUDPBD, ethMode == 0);
         diaSetEnabled(diaDeviceConfig, CFG_ETHMODE, !udpbd);
+        diaSetEnabled(diaDeviceConfig, CFG_NETBOOTPROTOCOL, udpbd); // protocol picker only when network boot is on
     }
 
     return 0;
@@ -898,6 +899,7 @@ void guiShowDeviceConfig(void)
     const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
     const char *deviceOnOff[] = {"OFF", "ON", NULL};
     const char *deviceIGRSlots[] = {"NONE", "0", "1", "BOTH", NULL};
+    const char *netBootProtocols[] = {"UDPBD", "UDPFS", NULL};
 
     // Devices & modes
     diaSetEnum(diaDeviceConfig, CFG_DEFDEVICE, deviceNames);
@@ -926,6 +928,10 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_ENABLEUDPBD, gEnableUDPBD);
     diaSetEnabled(diaDeviceConfig, CFG_ENABLEUDPBD, !gETHStartMode);
     diaSetEnabled(diaDeviceConfig, CFG_ETHMODE, !gEnableUDPBD);
+    // Network-boot transport picker (UDPBD vs UDPFS); only meaningful while network boot is on.
+    diaSetEnum(diaDeviceConfig, CFG_NETBOOTPROTOCOL, netBootProtocols);
+    diaSetInt(diaDeviceConfig, CFG_NETBOOTPROTOCOL, gNetBootProtocol);
+    diaSetEnabled(diaDeviceConfig, CFG_NETBOOTPROTOCOL, gEnableUDPBD);
 
     // Prefix paths
     diaSetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix);
@@ -969,6 +975,7 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
         diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
         diaGetInt(diaDeviceConfig, CFG_ENABLEUDPBD, &gEnableUDPBD);
+        diaGetInt(diaDeviceConfig, CFG_NETBOOTPROTOCOL, &gNetBootProtocol);
 
         diaGetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
         diaGetString(diaDeviceConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
