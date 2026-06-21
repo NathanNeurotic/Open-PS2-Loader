@@ -153,10 +153,12 @@ shared openly; it is the only reason a fork like this is even possible.
 
 RiptOPL is a **direct agglomeration** of the wider OPL family, bringing together features, code,
 and ideas from [rickgaiser's OPL](https://github.com/rickgaiser/Open-PS2-Loader),
+[neutrino](https://github.com/rickgaiser/neutrino),
 [sOPL](https://github.com/mystyq/Stable-Open-PS2-Loader), [uOPL](https://github.com/Wolf3s/uOPL),
 [wOPL](https://github.com/KrahJohlito/wOPL), [OPL DB](https://github.com/Jay-Jay-OPL/OPL-Daily-Builds),
 [POPSLoader](https://github.com/NathanNeurotic/POPSLoader),
-[OPL RetroGEM ID by CosmicScale](https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM), and
+[OPL RetroGEM ID by CosmicScale](https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM),
+[nhddl](https://github.com/pcm720/nhddl), and
 [official OPL](https://github.com/ps2homebrew/Open-PS2-Loader).
 
 With special and sincere thanks to:
