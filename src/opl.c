@@ -158,6 +158,7 @@ int gAutoRefresh;
 int gEnableNotifications;
 int gEnableArt;
 int gWideScreen;
+int gDefaultGameView;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
 int gYOff;
@@ -1133,6 +1134,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_NOTIFICATIONS, &gEnableNotifications);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, &gEnableArt);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
+            configGetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, &gDefaultGameView);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_COUNT, &gCoverflowCount);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_SCALE, &gCoverflowCenterScale);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_ANIM, &gCoverflowAnimSpeed);
@@ -1387,6 +1389,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_ENABLE_NOTIFICATIONS, gEnableNotifications);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, gEnableArt);
         configSetInt(configOPL, CONFIG_OPL_WIDESCREEN, gWideScreen);
+        configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_COUNT, gCoverflowCount);
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_SCALE, gCoverflowCenterScale);
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_ANIM, gCoverflowAnimSpeed);
@@ -2088,6 +2091,7 @@ static void setDefaults(void)
     gEnableNotifications = 1;
     gEnableArt = 1;
     gWideScreen = 1;
+    gDefaultGameView = GAME_VIEW_BOTH;
     gEnableSFX = 1;
     gEnableBootSND = 1;
     gEnableBGM = 0;

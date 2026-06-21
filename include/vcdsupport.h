@@ -49,6 +49,8 @@ int vcdViewActive(int mode);
 void vcdToggleView(int mode);
 // Returns 1 exactly once after a toggle (and clears the flag) -- call from the support's NeedsUpdate.
 int vcdConsumeDirty(int mode);
+// Mark all VCD-capable modes dirty (one rescan each) -- used when the global default-view setting changes.
+void vcdMarkAllDirty(void);
 
 // Fill a base_game_info_t list (memalign'd like sbReadList; frees *outGames first) from
 // <devPrefix>POPS/*.VCD. Returns the count. name = VCD basename, startup = PS1 id (or "" = no art).

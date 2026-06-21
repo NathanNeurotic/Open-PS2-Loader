@@ -685,6 +685,9 @@ reselect_video_mode:
     diaSetInt(diaUIConfig, UICFG_YOFF, gYOff);
     diaSetInt(diaUIConfig, UICFG_OVERSCAN, gOverscan);
     diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL);
+    const char *gameViewNames[] = {"Both", "ISO", "VCD", NULL};
+    diaSetEnum(diaUIConfig, UICFG_GAMEVIEW, gameViewNames);
+    diaSetInt(diaUIConfig, UICFG_GAMEVIEW, gDefaultGameView);
     guiUIUpdater(1);
 
     int ret = diaExecuteDialog(diaUIConfig, -1, 1, guiUIUpdater);
@@ -706,6 +709,10 @@ reselect_video_mode:
         diaGetInt(diaUIConfig, UICFG_XOFF, &gXOff);
         diaGetInt(diaUIConfig, UICFG_YOFF, &gYOff);
         diaGetInt(diaUIConfig, UICFG_OVERSCAN, &gOverscan);
+        int previousGameView = gDefaultGameView;
+        diaGetInt(diaUIConfig, UICFG_GAMEVIEW, &gDefaultGameView);
+        if (gDefaultGameView != previousGameView)
+            vcdMarkAllDirty(); // rebuild every VCD-capable page so the new default view takes effect
 
         if (ret == UICFG_RESETCOL)
             setDefaultColors();

@@ -130,13 +130,22 @@ int vcdModeSupported(int mode)
 
 int vcdViewActive(int mode)
 {
-    return (mode >= 0 && mode < MODE_COUNT) ? vcdView[mode] : 0;
+    if (mode < 0 || mode >= MODE_COUNT || !vcdModeSupported(mode))
+        return 0;
+    // The global default-view setting overrides the per-device L3 toggle when locked to one type.
+    if (gDefaultGameView == GAME_VIEW_ISO)
+        return 0; // locked to the ISO/disc list
+    if (gDefaultGameView == GAME_VIEW_VCD)
+        return 1;         // locked to the VCD (PS1) list
+    return vcdView[mode]; // GAME_VIEW_BOTH: per-device L3 toggle (defaults to ISO)
 }
 
 void vcdToggleView(int mode)
 {
     if (mode < 0 || mode >= MODE_COUNT)
         return;
+    if (gDefaultGameView != GAME_VIEW_BOTH)
+        return; // globally locked to one type -> the L3 toggle is disabled
     vcdView[mode] = vcdView[mode] ? 0 : 1;
     vcdDirty[mode] = 1;
 }
@@ -147,6 +156,15 @@ int vcdConsumeDirty(int mode)
         return 0;
     vcdDirty[mode] = 0;
     return 1;
+}
+
+// Mark every VCD-capable mode for one rescan -- call after the global default-view setting changes so
+// each device page rebuilds its list (ISO <-> VCD) on its next refresh.
+void vcdMarkAllDirty(void)
+{
+    for (int m = 0; m < MODE_COUNT; m++)
+        if (vcdModeSupported(m))
+            vcdDirty[m] = 1;
 }
 
 int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)

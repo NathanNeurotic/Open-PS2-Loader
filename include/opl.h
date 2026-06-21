@@ -149,6 +149,13 @@ extern int gAutoRefresh;
 extern int gEnableNotifications;
 extern int gEnableArt;
 extern int gWideScreen;
+// Default game-list view for VCD-capable device pages (+ Favourites, later).
+enum {
+    GAME_VIEW_BOTH = 0, // both lists reachable via the per-device L3 toggle (default)
+    GAME_VIEW_ISO,      // lock every VCD-capable page to its ISO/disc list
+    GAME_VIEW_VCD       // lock every VCD-capable page to its VCD (PS1) list
+};
+extern int gDefaultGameView;
 extern int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 extern int gXOff;
 extern int gYOff;
