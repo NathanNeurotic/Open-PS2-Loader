@@ -4,6 +4,7 @@
 #include "include/gui.h"
 #include "include/supportbase.h"
 #include "include/hddsupport.h"
+#include "include/vcdsupport.h" // HDD VCD view: vcdScanDirRoot/vcdViewActive + vcd_entry_t
 #include "include/util.h"
 #include "include/themes.h"
 #include "include/textures.h"
@@ -35,6 +36,12 @@ static unsigned char hddSupportModulesLoaded = 0;
 
 static char *hddPrefix = "pfs0:";
 static hdl_games_list_t hddGames;
+
+// HDD VCD view: PS1 .VCD games gathered from the __.POPS* APA partitions. hddVcdParts is index-
+// parallel to hddVcdGames -- it records which partition each VCD lives on (for the launch handoff).
+static base_game_info_t *hddVcdGames = NULL;
+static int hddVcdGameCount = 0;
+static char (*hddVcdParts)[APA_IDMAX + 1] = NULL;
 
 // forward declaration
 static item_list_t hddGameList;
@@ -364,14 +371,100 @@ item_list_t *hddGetObject(int initOnly)
     return &hddGameList;
 }
 
+// ---- HDD VCD view (PS1 .VCD on the __.POPS* APA partitions) -------------------------------
+
+static void hddFreeVcdGameList(void)
+{
+    free(hddVcdGames);
+    hddVcdGames = NULL;
+    free(hddVcdParts);
+    hddVcdParts = NULL;
+    hddVcdGameCount = 0;
+}
+
+// Build the HDD VCD game list by scanning every present __.POPS* APA partition. Each is mounted
+// read-only on pfs0:, its root scanned for *.VCD, and the results appended to hddVcdGames, with the
+// owning partition label kept index-parallel in hddVcdParts (so the launch path knows which partition
+// to hand POPSTARTER). The default OPL data-partition mount is restored at the end -- pfs0: is the
+// single shared slot, so the rest of HDD mode breaks if we leave it pointed elsewhere. Returns the count.
+static int hddBuildVcdGameList(void)
+{
+    hdd_pops_list_t parts;
+    int total = 0;
+
+    hddFreeVcdGameList();
+
+    if (hddGetPopsPartitionList(&parts) <= 0)
+        return 0; // no __.POPS* partitions; pfs0: was not touched here
+
+    for (int p = 0; p < parts.count; p++) {
+        char mountSrc[64];
+        snprintf(mountSrc, sizeof(mountSrc), "hdd0:%s", parts.names[p]);
+
+        fileXioUmount(hddPrefix);
+        if (fileXioMount(hddPrefix, mountSrc, FIO_MT_RDONLY) < 0)
+            continue; // can't mount this partition -> skip it
+
+        vcd_entry_t *vcds = NULL;
+        int n = vcdScanDirRoot("pfs0:/", &vcds);
+        fileXioUmount(hddPrefix);
+        if (n <= 0) {
+            free(vcds);
+            continue;
+        }
+
+        base_game_info_t *grownGames = realloc(hddVcdGames, (total + n) * sizeof(base_game_info_t));
+        if (grownGames == NULL) {
+            free(vcds);
+            break;
+        }
+        hddVcdGames = grownGames;
+        char(*grownParts)[APA_IDMAX + 1] = realloc(hddVcdParts, (total + n) * sizeof(*hddVcdParts));
+        if (grownParts == NULL) {
+            free(vcds);
+            break;
+        }
+        hddVcdParts = grownParts;
+
+        for (int i = 0; i < n; i++) {
+            base_game_info_t *g = &hddVcdGames[total + i];
+            memset(g, 0, sizeof(base_game_info_t));
+            snprintf(g->name, sizeof(g->name), "%s", vcds[i].name);
+            snprintf(g->startup, sizeof(g->startup), "%s", vcds[i].gameId); // PS1 id (or "" = no art)
+            snprintf(g->extension, sizeof(g->extension), ".VCD");
+            g->parts = 1;
+            g->format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
+            snprintf(hddVcdParts[total + i], APA_IDMAX + 1, "%s", parts.names[p]);
+        }
+        free(vcds);
+        total += n;
+    }
+
+    hddFreePopsPartitionList(&parts);
+
+    // Restore the default OPL data-partition mount (the loop left pfs0: unmounted).
+    fileXioUmount(hddPrefix);
+    fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
+
+    hddVcdGameCount = total;
+    return total;
+}
+
 static int hddNeedsUpdate(item_list_t *itemList)
 { /* Auto refresh is disabled by setting HDD_MODE_UPDATE_DELAY to MENU_UPD_DELAY_NOUPDATE, within hddsupport.h.
        Hence any update request would be issued by the user, which should be taken as an explicit request to re-scan the HDD. */
+    if (vcdConsumeDirty(itemList->mode))
+        return 1; // L3 toggle / default-view change -> force one rescan
+    if (vcdViewActive(itemList->mode))
+        return 0; // in VCD view: skip the HDL re-scan churn
     return 1;
 }
 
 static int hddUpdateGameList(item_list_t *itemList)
 {
+    if (vcdViewActive(itemList->mode))
+        return hddBuildVcdGameList();
+
     hdl_games_list_t hddGamesNew;
     int ret;
 
@@ -393,37 +486,42 @@ static int hddUpdateGameList(item_list_t *itemList)
 
 static int hddGetGameCount(item_list_t *itemList)
 {
-    return hddGames.count;
+    return vcdViewActive(itemList->mode) ? hddVcdGameCount : (int)hddGames.count;
 }
 
 static void *hddGetGame(item_list_t *itemList, int id)
 {
-    return (void *)&hddGames.games[id];
+    return vcdViewActive(itemList->mode) ? (void *)&hddVcdGames[id] : (void *)&hddGames.games[id];
 }
 
 static char *hddGetGameName(item_list_t *itemList, int id)
 {
-    return hddGames.games[id].name;
+    return vcdViewActive(itemList->mode) ? hddVcdGames[id].name : hddGames.games[id].name;
 }
 
 static int hddGetGameNameLength(item_list_t *itemList, int id)
 {
-    return HDL_GAME_NAME_MAX + 1;
+    return vcdViewActive(itemList->mode) ? VCD_NAME_MAX : (HDL_GAME_NAME_MAX + 1);
 }
 
 static char *hddGetGameStartup(item_list_t *itemList, int id)
 {
-    return hddGames.games[id].startup;
+    // VCD view keys per-game CFG/art off the VCD filename (game->name), not a disc id.
+    return vcdViewActive(itemList->mode) ? hddVcdGames[id].name : hddGames.games[id].startup;
 }
 
 static void hddDeleteGame(item_list_t *itemList, int id)
 {
+    if (vcdViewActive(itemList->mode))
+        return; // a VCD is not an HDL partition -- no delete in VCD view
     hddDeleteHDLGame(&hddGames.games[id]);
     hddForceUpdate = 1;
 }
 
 static void hddRenameGame(item_list_t *itemList, int id, char *newName)
 {
+    if (vcdViewActive(itemList->mode))
+        return; // a VCD is not an HDL partition -- no rename in VCD view
     hdl_game_info_t *game = &hddGames.games[id];
     strcpy(game->name, newName);
     hddSetHDLGameInfo(&hddGames.games[id]);
@@ -697,6 +795,7 @@ static void hddCleanUp(item_list_t *itemList, int exception)
 
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
+        hddFreeVcdGameList();
 
         if ((exception & UNMOUNT_EXCEPTION) == 0)
             fileXioUmount(hddPrefix);
@@ -722,6 +821,7 @@ static void hddShutdown(item_list_t *itemList)
 
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
+        hddFreeVcdGameList();
         fileXioUmount(hddPrefix);
     }
 
