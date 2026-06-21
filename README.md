@@ -63,7 +63,7 @@ For an updated compatibility list, you can visit the OPL-CL site at:\
 ### Minimal startup path
 
 1. Download the latest OPL release build.
-2. Copy the `OPNPS2LD.ELF` file to your launch method (FMCB, FHDB, or equivalent).
+2. Copy the `RIPTOPL.ELF` file to your launch method (FMCB, FHDB, or equivalent).
 3. Prepare your storage with the expected OPL folders: `DVD`, `CD`, `CFG`, `ART`, `VMC`, and other mode-specific directories as needed.
 4. Open OPL settings and enable the device mode you plan to use.
 5. Launch one test game, then save settings so OPL reuses your configuration.
@@ -278,7 +278,7 @@ My App Name=mass:APPS/MYAPP.ELF
 let's use OPL itself as an example:
 
 ```
-OPL=mass:APPS/OPNPS2LD.ELF
+OPL=mass:APPS/RIPTOPL.ELF
 ```
 
 With this method, ELFs do not need to be in `APPS`, but keeping them there can make your setup easier to manage.
@@ -308,7 +308,7 @@ Using OPL again as an example:
 
 ```
 title=Open PS2 Loader
-boot=OPNPS2LD.ELF
+boot=RIPTOPL.ELF
 ```
 
 In this method, both the ELF and `title.cfg` must be in the same folder under `APPS`.

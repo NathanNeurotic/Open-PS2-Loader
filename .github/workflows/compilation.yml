@@ -32,9 +32,9 @@ jobs:
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD
+          name: RIPTOPL
           path: |
-            OPNPS2LD-*.ELF
+            RIPTOPL-*.ELF
 
       - name: Upload release artifact info
         if: ${{ success() }}
@@ -99,9 +99,9 @@ jobs:
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-ps2dev-latest
+          name: RIPTOPL-ps2dev-latest
           path: |
-            OPNPS2LD-*.ELF
+            RIPTOPL-*.ELF
 
       - name: Upload release artifact info (ps2dev-latest)
         if: ${{ success() }}
@@ -137,7 +137,7 @@ jobs:
       - name: Compile -> make ${{ matrix.extra }} ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
         run: |
           make --trace ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
-          mv opl.elf OPNPS2LD-${{ env.OPL_VERSION }}-${{ matrix.pademu }}-${{ matrix.extra }}.ELF
+          mv opl.elf RIPTOPL-${{ env.OPL_VERSION }}-${{ matrix.pademu }}-${{ matrix.extra }}.ELF
 
       - name: Create detailed changelog
         run: sh ./make_changelog.sh
@@ -145,8 +145,8 @@ jobs:
       - name: Upload variants artifact ELF
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-VARIANTS ${{ matrix.pademu }} ${{ matrix.extra }}
-          path: OPNPS2LD*.ELF
+          name: RIPTOPL-VARIANTS ${{ matrix.pademu }} ${{ matrix.extra }}
+          path: RIPTOPL*.ELF
 
 
   build-variants-ps2dev-latest:
@@ -202,7 +202,7 @@ jobs:
       - name: Compile -> make ${{ matrix.extra }} ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
         run: |
           make --trace ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
-          mv opl.elf OPNPS2LD-${{ env.OPL_VERSION }}-${{ matrix.pademu }}-${{ matrix.extra }}.ELF
+          mv opl.elf RIPTOPL-${{ env.OPL_VERSION }}-${{ matrix.pademu }}-${{ matrix.extra }}.ELF
 
       - name: Create detailed changelog
         run: sh ./make_changelog.sh
@@ -210,8 +210,8 @@ jobs:
       - name: Upload variants artifact ELF (ps2dev-latest)
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-VARIANTS-ps2dev-latest ${{ matrix.pademu }} ${{ matrix.extra }}
-          path: OPNPS2LD*.ELF
+          name: RIPTOPL-VARIANTS-ps2dev-latest ${{ matrix.pademu }} ${{ matrix.extra }}
+          path: RIPTOPL*.ELF
 
   merge-variants:
     runs-on: ubuntu-latest
@@ -220,14 +220,14 @@ jobs:
       - name: Download variant artifacts
         uses: actions/download-artifact@v8
         with:
-          pattern: OPNPS2LD-VARIANTS PADEMU=*
+          pattern: RIPTOPL-VARIANTS PADEMU=*
           path: merged-variants
           merge-multiple: true
 
       - name: Re-upload merged variants
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-VARIANTS
+          name: RIPTOPL-VARIANTS
           path: merged-variants
 
 
@@ -238,14 +238,14 @@ jobs:
       - name: Download variant artifacts (ps2dev-latest)
         uses: actions/download-artifact@v8
         with:
-          pattern: OPNPS2LD-VARIANTS-ps2dev-latest*
+          pattern: RIPTOPL-VARIANTS-ps2dev-latest*
           path: merged-variants-ps2dev-latest
           merge-multiple: true
 
       - name: Re-upload merged variants (ps2dev-latest)
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-VARIANTS-ps2dev-latest
+          name: RIPTOPL-VARIANTS-ps2dev-latest
           path: merged-variants-ps2dev-latest
 
   build-lang:
@@ -269,9 +269,9 @@ jobs:
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-LANGS
+          name: RIPTOPL-LANGS
           path: |
-            OPNPS2LD-LANGS-*.zip
+            RIPTOPL-LANGS-*.zip
 
 
   build-lang-ps2dev-latest:
@@ -325,9 +325,9 @@ jobs:
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-LANGS-ps2dev-latest
+          name: RIPTOPL-LANGS-ps2dev-latest
           path: |
-            OPNPS2LD-LANGS-*.zip
+            RIPTOPL-LANGS-*.zip
 
   build-debug:
     strategy:
@@ -380,7 +380,7 @@ jobs:
       - name: Re-upload merged debug artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-DEBUG
+          name: RIPTOPL-DEBUG
           path: merged-debug
 
 
@@ -458,7 +458,7 @@ jobs:
       - name: Re-upload merged debug artifacts (ps2dev-latest)
         uses: actions/upload-artifact@v6
         with:
-          name: OPNPS2LD-DEBUG-ps2dev-latest
+          name: RIPTOPL-DEBUG-ps2dev-latest
           path: merged-debug-ps2dev-latest
 
   release:
@@ -485,15 +485,15 @@ jobs:
       - name: Prepare artifacts for release
         run: |
           echo packing release of OPL ${{ env.OPL_VERSION }}
-          cp INFO/* OPNPS2LD/
-          cp INFO/* OPNPS2LD-VARIANTS/
-          7z a -t7z OPNPS2LD-${{ env.OPL_VERSION }}.7z OPNPS2LD/*
-          7z a -t7z OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z OPNPS2LD-VARIANTS/*
-          7z a -t7z OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z OPNPS2LD-LANGS/*
-          cp -f OPNPS2LD-${{ env.OPL_VERSION }}.7z OPNPS2LD.7z
-          cp -f OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z OPNPS2LD-VARIANTS.7z
-          cp -f OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z OPNPS2LD-LANGS.7z
-          cp -f OPNPS2LD/OPNPS2LD-${{ env.OPL_VERSION }}.ELF OPNPS2LD.ELF
+          cp INFO/* RIPTOPL/
+          cp INFO/* RIPTOPL-VARIANTS/
+          7z a -t7z RIPTOPL-${{ env.OPL_VERSION }}.7z RIPTOPL/*
+          7z a -t7z RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z RIPTOPL-VARIANTS/*
+          7z a -t7z RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z RIPTOPL-LANGS/*
+          cp -f RIPTOPL-${{ env.OPL_VERSION }}.7z RIPTOPL.7z
+          cp -f RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z RIPTOPL-VARIANTS.7z
+          cp -f RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z RIPTOPL-LANGS.7z
+          cp -f RIPTOPL/RIPTOPL-${{ env.OPL_VERSION }}.ELF RIPTOPL.ELF
 
       - name: Compute SHA256 checksums
         if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
@@ -502,13 +502,13 @@ jobs:
           # Publish SHA256 of EVERY uploaded asset -- versioned bundles, the stable-alias
           # bundles, and the ELF -- so any download (including the bare-name aliases) is verifiable.
           sha256sum \
-            OPNPS2LD-${{ env.OPL_VERSION }}.7z \
-            OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z \
-            OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z \
-            OPNPS2LD.7z \
-            OPNPS2LD-VARIANTS.7z \
-            OPNPS2LD-LANGS.7z \
-            OPNPS2LD.ELF \
+            RIPTOPL-${{ env.OPL_VERSION }}.7z \
+            RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z \
+            RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z \
+            RIPTOPL.7z \
+            RIPTOPL-VARIANTS.7z \
+            RIPTOPL-LANGS.7z \
+            RIPTOPL.ELF \
             > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
@@ -519,24 +519,24 @@ jobs:
 
           if [ "$EXISTS" -eq 1 ]; then
             gh release upload latest \
-              OPNPS2LD-${{ env.OPL_VERSION }}.7z \
-              OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z \
-              OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z \
-              OPNPS2LD.7z \
-              OPNPS2LD-VARIANTS.7z \
-              OPNPS2LD-LANGS.7z \
-              OPNPS2LD.ELF \
+              RIPTOPL-${{ env.OPL_VERSION }}.7z \
+              RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z \
+              RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z \
+              RIPTOPL.7z \
+              RIPTOPL-VARIANTS.7z \
+              RIPTOPL-LANGS.7z \
+              RIPTOPL.ELF \
               SHA256SUMS.txt \
               --clobber
           else
             gh release create latest \
-              OPNPS2LD-${{ env.OPL_VERSION }}.7z \
-              OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z \
-              OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z \
-              OPNPS2LD.7z \
-              OPNPS2LD-VARIANTS.7z \
-              OPNPS2LD-LANGS.7z \
-              OPNPS2LD.ELF \
+              RIPTOPL-${{ env.OPL_VERSION }}.7z \
+              RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z \
+              RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z \
+              RIPTOPL.7z \
+              RIPTOPL-VARIANTS.7z \
+              RIPTOPL-LANGS.7z \
+              RIPTOPL.ELF \
               SHA256SUMS.txt \
               --title "latest" \
               --notes "" \
@@ -552,13 +552,13 @@ jobs:
           fi
 
           gh release create "${{ github.ref_name }}" \
-            OPNPS2LD-${{ env.OPL_VERSION }}.7z \
-            OPNPS2LD-VARIANTS-${{ env.OPL_VERSION }}.7z \
-            OPNPS2LD-LANGS-${{ env.OPL_VERSION }}.7z \
-            OPNPS2LD.7z \
-            OPNPS2LD-VARIANTS.7z \
-            OPNPS2LD-LANGS.7z \
-            OPNPS2LD.ELF \
+            RIPTOPL-${{ env.OPL_VERSION }}.7z \
+            RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z \
+            RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z \
+            RIPTOPL.7z \
+            RIPTOPL-VARIANTS.7z \
+            RIPTOPL-LANGS.7z \
+            RIPTOPL.ELF \
             SHA256SUMS.txt \
             --title "${{ env.OPL_VERSION }}" \
             --notes "" \
@@ -568,10 +568,10 @@ jobs:
 #        if: github.ref == 'refs/heads/master' && env.USERNAME != null
 #        uses: Difegue/action-megacmd@master
 #        with:
-#          args: put -c OPNPS2LD.7z /OPL/Pre-Release/${{ env.OPL_VERSION }}/run_${{ github.run_number }}/
+#          args: put -c RIPTOPL.7z /OPL/Pre-Release/${{ env.OPL_VERSION }}/run_${{ github.run_number }}/
 #
 #      - name: Upload release to Mega
 #        if: startsWith(github.ref, 'refs/tags/v') && env.USERNAME != null
 #        uses: Difegue/action-megacmd@master
 #        with:
-#          args: put -c OPNPS2LD.7z /OPL/Release/${{ env.OPL_VERSION }}/
+#          args: put -c RIPTOPL.7z /OPL/Release/${{ env.OPL_VERSION }}/

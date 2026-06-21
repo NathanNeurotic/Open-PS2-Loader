@@ -29,9 +29,9 @@ jobs:
       if: ${{ success() }}
       uses: actions/upload-artifact@v6
       with:
-        name: OPNPS2LD-ps2dev-latest
+        name: RIPTOPL-ps2dev-latest
         path: |
-          OPNPS2LD-*.ELF
+          RIPTOPL-*.ELF
 
     - name: Upload release artifact info
       if: ${{ success() }}
@@ -67,7 +67,7 @@ jobs:
     - name: Compile -> make ${{ matrix.extra }} ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
       run: |
         make --trace ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
-        mv opl.elf OPNPS2LD-${{ env.OPL_VERSION }}-${{ matrix.pademu }}-${{ matrix.extra }}.ELF
+        mv opl.elf RIPTOPL-${{ env.OPL_VERSION }}-${{ matrix.pademu }}-${{ matrix.extra }}.ELF
 
     - name: Create detailed changelog
       run: sh ./make_changelog.sh
@@ -75,8 +75,8 @@ jobs:
     - name: Upload variants artifact ELF
       uses: actions/upload-artifact@v6
       with:
-        name: OPNPS2LD-VARIANTS-ps2dev-latest ${{ matrix.pademu }} ${{ matrix.extra }}
-        path: OPNPS2LD*.ELF
+        name: RIPTOPL-VARIANTS-ps2dev-latest ${{ matrix.pademu }} ${{ matrix.extra }}
+        path: RIPTOPL*.ELF
 
   merge-variants:
     runs-on: ubuntu-latest
@@ -85,8 +85,8 @@ jobs:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v6
         with:
-          name: OPNPS2LD-VARIANTS-ps2dev-latest
-          pattern: OPNPS2LD-VARIANTS-ps2dev-latest*
+          name: RIPTOPL-VARIANTS-ps2dev-latest
+          pattern: RIPTOPL-VARIANTS-ps2dev-latest*
           delete-merged: true
 
   build-lang:
@@ -110,9 +110,9 @@ jobs:
       if: ${{ success() }}
       uses: actions/upload-artifact@v6
       with:
-        name: OPNPS2LD-LANGS-ps2dev-latest
+        name: RIPTOPL-LANGS-ps2dev-latest
         path: |
-          OPNPS2LD-LANGS-*.zip
+          RIPTOPL-LANGS-*.zip
 
   build-debug:
     strategy:
@@ -151,6 +151,6 @@ jobs:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v6
         with:
-          name: OPNPS2LD-DEBUG-ps2dev-latest
+          name: RIPTOPL-DEBUG-ps2dev-latest
           pattern: opl-*
           delete-merged: true

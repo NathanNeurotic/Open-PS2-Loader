@@ -5,10 +5,10 @@ name: Rolling Release
 #
 # Builds with BOTH toolchains, matching compilation.yml, so a regression in either
 # is visible from the rolling channel:
-#   * ps2max/dev (pinned)      -> OPNPS2LD.ELF                 (primary / stable toolchain)
-#   * ps2dev/ps2dev:latest     -> OPNPS2LD-ps2dev-latest.ELF   (bleeding-edge toolchain)
+#   * ps2max/dev (pinned)      -> RIPTOPL.ELF                 (primary / stable toolchain)
+#   * ps2dev/ps2dev:latest     -> RIPTOPL-ps2dev-latest.ELF   (bleeding-edge toolchain)
 #
-# A source snapshot (OPNPS2LD-<version>-src.zip) of the exact built commit is also
+# A source snapshot (RIPTOPL-<version>-src.zip) of the exact built commit is also
 # published, so every rolling build is self-preserving: testers can restore and
 # rebuild precisely what they ran, even if history is later rewritten.
 #
@@ -68,15 +68,15 @@ jobs:
           # Publish ONLY the stable, version-agnostic name. Versioned filenames
           # embed the commit, so they change every run and pile up as stale
           # assets -- confusing on a rolling channel.
-          MAIN_ELF="OPNPS2LD-${{ steps.ver.outputs.version }}.ELF"
+          MAIN_ELF="RIPTOPL-${{ steps.ver.outputs.version }}.ELF"
           if [ ! -f "$MAIN_ELF" ]; then
-            MAIN_ELF="$(ls OPNPS2LD-*.ELF 2>/dev/null | head -n1)"
+            MAIN_ELF="$(ls RIPTOPL-*.ELF 2>/dev/null | head -n1)"
           fi
           if [ -z "${MAIN_ELF:-}" ] || [ ! -f "$MAIN_ELF" ]; then
-            echo "No OPNPS2LD ELF produced by the pinned build" >&2
+            echo "No RIPTOPL ELF produced by the pinned build" >&2
             exit 1
           fi
-          cp -f "$MAIN_ELF" rolling/OPNPS2LD.ELF
+          cp -f "$MAIN_ELF" rolling/RIPTOPL.ELF
           [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
           echo "Staged pinned rolling assets:"
           ls -la rolling
@@ -147,12 +147,12 @@ jobs:
           set -eu
           mkdir -p rolling
           # Publish ONLY the stable, version-agnostic name for the bleeding-edge build.
-          MAIN_ELF="$(ls OPNPS2LD-*.ELF 2>/dev/null | head -n1)"
+          MAIN_ELF="$(ls RIPTOPL-*.ELF 2>/dev/null | head -n1)"
           if [ -z "${MAIN_ELF:-}" ] || [ ! -f "$MAIN_ELF" ]; then
-            echo "No OPNPS2LD ELF produced by the ps2dev-latest build" >&2
+            echo "No RIPTOPL ELF produced by the ps2dev-latest build" >&2
             exit 1
           fi
-          cp -f "$MAIN_ELF" rolling/OPNPS2LD-ps2dev-latest.ELF
+          cp -f "$MAIN_ELF" rolling/RIPTOPL-ps2dev-latest.ELF
           echo "Staged ps2dev-latest rolling assets:"
           ls -la rolling
 
@@ -210,12 +210,12 @@ jobs:
           if [ -z "$VER" ]; then
             VER="rolling-${GITHUB_SHA}"
           fi
-          echo "VERSIONED_BASE=OPNPS2LD-${VER}" >> "$GITHUB_ENV"
-          if [ -f rolling/OPNPS2LD.ELF ]; then
-            mv -f rolling/OPNPS2LD.ELF "rolling/OPNPS2LD-${VER}.ELF"
+          echo "VERSIONED_BASE=RIPTOPL-${VER}" >> "$GITHUB_ENV"
+          if [ -f rolling/RIPTOPL.ELF ]; then
+            mv -f rolling/RIPTOPL.ELF "rolling/RIPTOPL-${VER}.ELF"
           fi
-          if [ -f rolling/OPNPS2LD-ps2dev-latest.ELF ]; then
-            mv -f rolling/OPNPS2LD-ps2dev-latest.ELF "rolling/OPNPS2LD-${VER}-ps2dev-latest.ELF"
+          if [ -f rolling/RIPTOPL-ps2dev-latest.ELF ]; then
+            mv -f rolling/RIPTOPL-ps2dev-latest.ELF "rolling/RIPTOPL-${VER}-ps2dev-latest.ELF"
           fi
           echo "Renamed assets:"
           ls -la rolling

@@ -12,8 +12,8 @@ both the product name and the version (no duplicate bare-name file):
 
 | Asset | Toolchain |
 |---|---|
-| `OPNPS2LD-<version>.ELF` | `ps2max/dev` (pinned) — primary |
-| `OPNPS2LD-<version>-ps2dev-latest.ELF` | `ps2dev/ps2dev:latest` — bleeding-edge |
+| `RIPTOPL-<version>.ELF` | `ps2max/dev` (pinned) — primary |
+| `RIPTOPL-<version>-ps2dev-latest.ELF` | `ps2dev/ps2dev:latest` — bleeding-edge |
 
 `<version>` is the pinned build's `git describe` (e.g. `v1.2.0-Beta-2559-bb25a00`);
 the same version is applied to both files since they are the same source commit.
@@ -30,7 +30,7 @@ gh release download rolling --repo NathanNeurotic/Open-PS2-Loader \
   --pattern '*-ps2dev-latest.ELF' --clobber
 ```
 
-(The pinned build is the `OPNPS2LD-<version>.ELF` without the `-ps2dev-latest`
+(The pinned build is the `RIPTOPL-<version>.ELF` without the `-ps2dev-latest`
 suffix; grabbing all assets is simplest since the release only holds the two.)
 
 Or download from the release page: <https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling>
