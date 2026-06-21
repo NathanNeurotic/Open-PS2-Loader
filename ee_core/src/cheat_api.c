@@ -28,29 +28,20 @@
 #include "coreconfig.h"
 
 /*-----------------------------------------------------------*/
-/* Prebuilt PS2RD cheat-image (.img): copy + apply at boot   */
+/* Prebuilt PS2RD cheat-image (.img): apply at boot          */
 /*-----------------------------------------------------------*/
-static unsigned gImage[MAX_IMAGEWORDS];
-
-// Pull the image from the OPL-provided config buffer into the local working copy.
-static void CopyImage(void)
-{
-    USE_LOCAL_EECORE_CONFIG;
-    for (unsigned i = 0; i < MAX_IMAGEWORDS; ++i)
-        gImage[i] = config->gImage[i];
-}
-
-// Apply the image: a header [Offset0, CountWords0, CountEntries] (Offset0 must already hold CountWords0
-// in memory as a sanity gate), then CountEntries entries of [Offset, CountWords, data...] written to
-// game memory. HARDENING: walk p with an explicit upper bound (pEnd) so a malformed/oversized image can
-// never read past gImage (the original walked p unbounded -- an OOB read). Abort cleanly on any overrun.
+// Apply the OPL-provided image: a header [Offset0, CountWords0, CountEntries] (Offset0 must already hold
+// CountWords0 in memory as a sanity gate), then CountEntries entries of [Offset, CountWords, data...]
+// written to memory. Read config->gImage DIRECTLY -- it is valid here, exactly like config->gCheatList
+// (which SetupCheats also reads straight from config) -- with NO local copy, because a 4 KB local buffer
+// overflows the ee_core's tight .bss/ram84 region. HARDENING: walk p against an explicit pEnd so a
+// malformed/oversized image can never read past MAX_IMAGEWORDS (an OOB read). Abort on any overrun.
 void LinkImage(void)
 {
+    USE_LOCAL_EECORE_CONFIG;
     unsigned CountEntries, CountWords, Offset;
-    unsigned *p = gImage;
-    unsigned *pEnd = gImage + MAX_IMAGEWORDS;
-
-    CopyImage();
+    u32 *p = config->gImage;
+    u32 *pEnd = config->gImage + MAX_IMAGEWORDS;
 
     if (p >= pEnd)
         return;
