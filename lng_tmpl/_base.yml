@@ -422,6 +422,10 @@ gui_strings:
   string: Auto Select Cheats
 - label: CHEATMODESELECT
   string: Select Game Cheats
+- label: ENABLEIMAGE
+  string: PS2RD Cheat Image
+- label: HINT_ENABLEIMAGE
+  string: Apply a prebuilt PS2RD .img patch to your game.
 - label: ERR_CHEATS_LOAD_FAILED
   string: 'Error: failed to load cheat file.'
 - label: NO_CHEATS_FOUND

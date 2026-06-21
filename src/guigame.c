@@ -41,6 +41,7 @@ static int GSMFIELDFix;
 
 static int EnableCheat;
 static int CheatMode;
+static int EnableImage; // PS2RD prebuilt cheat-image (.img) $EnableImage toggle
 
 static int forceGlobalOSDLanguage;
 
@@ -441,6 +442,7 @@ static void guiGameSetCheatSettingsState(void)
 
     diaGetInt(diaCheatConfig, CHTCFG_ENABLECHEAT, &EnableCheat);
     diaGetInt(diaCheatConfig, CHTCFG_CHEATMODE, &CheatMode);
+    diaGetInt(diaCheatConfig, CHTCFG_ENABLEIMAGE, &EnableImage);
     diaSetEnabled(diaCheatConfig, CHTCFG_CHEATMODE, EnableCheat);
 }
 
@@ -1121,6 +1123,7 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     diaGetInt(diaCheatConfig, CHTCFG_CHEATSOURCE, &gCheatSource);
     diaGetInt(diaCheatConfig, CHTCFG_ENABLECHEAT, &EnableCheat);
     diaGetInt(diaCheatConfig, CHTCFG_CHEATMODE, &CheatMode);
+    diaGetInt(diaCheatConfig, CHTCFG_ENABLEIMAGE, &EnableImage);
 
     if (gCheatSource == SETTINGS_PERGAME) {
         result = configSetInt(configSet, CONFIG_ITEM_CHEATSSOURCE, gCheatSource);
@@ -1133,9 +1136,15 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
             result = configSetInt(configSet, CONFIG_ITEM_CHEATMODE, CheatMode);
         else
             configRemoveKey(configSet, CONFIG_ITEM_CHEATMODE);
+
+        if (EnableImage != 0)
+            result = configSetInt(configSet, CONFIG_ITEM_ENABLEIMAGE, EnableImage);
+        else
+            configRemoveKey(configSet, CONFIG_ITEM_ENABLEIMAGE);
     } else if (gCheatSource == SETTINGS_GLOBAL) {
         configSetInt(configGame, CONFIG_ITEM_ENABLECHEAT, EnableCheat);
         configSetInt(configGame, CONFIG_ITEM_CHEATMODE, CheatMode);
+        configSetInt(configGame, CONFIG_ITEM_ENABLEIMAGE, EnableImage);
     }
 
 #ifdef PADEMU
@@ -1197,6 +1206,7 @@ void guiGameRemoveGlobalSettings(config_set_t *configGame)
         // Cheats
         configRemoveKey(configGame, CONFIG_ITEM_ENABLECHEAT);
         configRemoveKey(configGame, CONFIG_ITEM_CHEATMODE);
+        configRemoveKey(configGame, CONFIG_ITEM_ENABLEIMAGE);
 
         // GSM
         configRemoveKey(configGame, CONFIG_ITEM_ENABLEGSM);
@@ -1242,6 +1252,7 @@ void guiGameRemoveSettings(config_set_t *configSet)
         configRemoveKey(configSet, CONFIG_ITEM_CHEATSSOURCE);
         configRemoveKey(configSet, CONFIG_ITEM_ENABLECHEAT);
         configRemoveKey(configSet, CONFIG_ITEM_CHEATMODE);
+        configRemoveKey(configSet, CONFIG_ITEM_ENABLEIMAGE);
 
         // OSD Language
         configRemoveKey(configSet, CONFIG_ITEM_OSD_SETTINGS_LANGID);
@@ -1330,11 +1341,13 @@ static void guiGameLoadCheatsConfig(config_set_t *configSet, config_set_t *confi
 {
     EnableCheat = 0;
     CheatMode = 0;
+    EnableImage = 0;
 
     // set global settings.
     gCheatSource = 0;
     configGetInt(configGame, CONFIG_ITEM_ENABLECHEAT, &EnableCheat);
     configGetInt(configGame, CONFIG_ITEM_CHEATMODE, &CheatMode);
+    configGetInt(configGame, CONFIG_ITEM_ENABLEIMAGE, &EnableImage);
 
     // override global with per-game settings if available and selected.
     configGetInt(configSet, CONFIG_ITEM_CHEATSSOURCE, &gCheatSource);
@@ -1343,12 +1356,15 @@ static void guiGameLoadCheatsConfig(config_set_t *configSet, config_set_t *confi
             EnableCheat = 0;
         if (!configGetInt(configSet, CONFIG_ITEM_CHEATMODE, &CheatMode))
             CheatMode = 0;
+        if (!configGetInt(configSet, CONFIG_ITEM_ENABLEIMAGE, &EnableImage))
+            EnableImage = 0;
     }
 
     // set gui settings.
     diaSetInt(diaCheatConfig, CHTCFG_CHEATSOURCE, gCheatSource);
     diaSetInt(diaCheatConfig, CHTCFG_ENABLECHEAT, EnableCheat);
     diaSetInt(diaCheatConfig, CHTCFG_CHEATMODE, CheatMode);
+    diaSetInt(diaCheatConfig, CHTCFG_ENABLEIMAGE, EnableImage);
 }
 
 #ifdef PADEMU

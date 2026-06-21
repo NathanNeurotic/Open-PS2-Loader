@@ -663,6 +663,11 @@ struct UIItem diaCheatConfig[] = {
     {UI_ENUM, CHTCFG_CHEATMODE, 1, 1, _STR_HINT_CHEATMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLEIMAGE}}},
+    {UI_SPACER},
+    {UI_BOOL, CHTCFG_ENABLEIMAGE, 1, 1, _STR_HINT_ENABLEIMAGE, 0, 0, {.intvalue = {1, 1}}},
+    {UI_BREAK},
+
     // buttons
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
     {UI_BREAK},
