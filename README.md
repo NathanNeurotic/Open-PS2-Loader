@@ -152,6 +152,14 @@ so that people like us can study it, learn from it, and build on it. Every featu
 fork began as *their* code and *their* ideas. We are deeply grateful that this work was
 shared openly; it is the only reason a fork like this is even possible.
 
+RiptOPL is a **direct agglomeration** of the wider OPL family, bringing together features, code,
+and ideas from [rickgaiser's OPL](https://github.com/rickgaiser/Open-PS2-Loader),
+[sOPL](https://github.com/mystyq/Stable-Open-PS2-Loader), [uOPL](https://github.com/Wolf3s/uOPL),
+[wOPL](https://github.com/KrahJohlito/wOPL), [OPL DB](https://github.com/Jay-Jay-OPL/OPL-Daily-Builds),
+[POPSLoader](https://github.com/NathanNeurotic/POPSLoader),
+[OPL RetroGEM ID by CosmicScale](https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM), and
+[official OPL](https://github.com/ps2homebrew/Open-PS2-Loader).
+
 With special and sincere thanks to:
 
 - **Wolf3s** and **KrahJohlito** — the driving force behind **uOPL / wOPL**, where much of
