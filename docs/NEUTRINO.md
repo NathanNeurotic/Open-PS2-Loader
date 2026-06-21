@@ -40,7 +40,7 @@ above; leave it blank to use the auto-detection (which also checks a few lowerca
 | USB / iLink / MX4SIO / internal ATA (BDM) | ✅ |
 | Internal HDD (APA → HDL) | ✅ |
 | MMCE | ✅ |
-| UDPBD (network block device) | ✅ **required** — no OPL core, Neutrino only (see §4) |
+| UDPBD / UDPFS (network block device) | ✅ **required** — no OPL core, Neutrino only (see §4) |
 | SMB / ETH | ❌ (falls back to `<OPL>`) |
 | USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) |
 | Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) |
@@ -54,7 +54,7 @@ settings:
 
 | Auto argument | When |
 |---|---|
-| `-bsd=<usb\|ilink\|mx4sio\|ata\|mmce\|udpbd>` | always (the storage backend) |
+| `-bsd=<usb\|ilink\|mx4sio\|ata\|mmce\|udpbd\|udpfsbd>` | always (the storage backend) |
 | `-bsdfs=hdl` | internal HDD (APA) only |
 | `-dvd=<path>` / `-dvd=hdl:<partition>` | always (the game image/partition) |
 | `-gc=<modes>` | only if the game has OPL compatibility modes set |
@@ -90,7 +90,7 @@ Arguments are space-separated, e.g.:
 For the full list of flags Neutrino accepts, see the
 [Neutrino documentation](https://github.com/rickgaiser/neutrino).
 
-## 4. UDPBD network boot (Neutrino-only)
+## 4. Network boot — UDPBD / UDPFS (Neutrino-only)
 
 **UDPBD** streams games from a PC over the LAN as a network *block device* (Rick Gaiser's
 [udpbd](https://github.com/rickgaiser/udpbd) protocol). It appears in OPL as its own
@@ -110,12 +110,29 @@ the menu (there is no `<OPL>` fallback for UDPBD).
 
 ### Enable it
 
-1. **Device Settings → UDPBD (Network)** → On. The default is **Off**.
-2. UDPBD and the SMB/ETH stack share the single PS2 network adapter, so they are **mutually
-   exclusive** — enabling UDPBD requires the Ethernet (SMB) device mode set to **Disabled**.
-   The two are interlocked live in the Device Settings page (turning one on greys the other).
+1. **Device Settings → Network Boot** → On. The default is **Off**.
+2. **Device Settings → Net Boot Protocol** → **UDPBD** or **UDPFS** (see below). Defaults to
+   **UDPBD** for back-compat; the picker is greyed until Network Boot is on.
+3. Network boot and the SMB/ETH stack share the single PS2 network adapter, so they are
+   **mutually exclusive** — enabling it requires the Ethernet (SMB) device mode set to
+   **Disabled**. The two are interlocked live in Device Settings (turning one on greys the other).
 
-UDPBD reuses the IP set in Network Config; there are **no UDPBD-specific network fields**.
+Both protocols reuse the IP set in Network Config; there are **no protocol-specific network fields**.
+
+### UDPFS — the UDPRDMA protocol
+
+**UDPFS** is Neutrino's newer network transport (Rick Gaiser's UDPRDMA). RiptOPL uses its
+**block-device** mode, so on the OPL side it behaves *identically* to UDPBD — same **UDPBD Games**
+list, covers, per-game settings, static-IP requirement, and SMB mutual-exclusion — but it speaks a
+different wire protocol and needs a **different PC server**:
+
+- **PC server:** **`udpfs_server.py`**, which ships *inside* the bundled Neutrino archive
+  (`udpfs_server/` in the release's `neutrino_*.7z`). UDPBD's `udpbd-server` will **not** talk to
+  UDPFS and vice-versa — match the server to the protocol you pick.
+- **Launch:** OPL launches UDPFS games with **`-bsd=udpfsbd`**. Neutrino ships `udpfs_bd.irx` but
+  has no stock `-bsd` token for it, so RiptOPL **auto-places `config/bsd-udpfsbd.toml`** into the
+  bundled Neutrino archive — no manual setup. (If you assembled Neutrino yourself, copy RiptOPL's
+  `neutrino/bsd-udpfsbd.toml` into your `mc?:/neutrino/config/`.)
 
 ## 5. Core-aware per-game settings
 

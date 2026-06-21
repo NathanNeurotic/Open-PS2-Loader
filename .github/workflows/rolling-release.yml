@@ -284,13 +284,27 @@ jobs:
           cp -f pops/* "$PKG/POPS/"
           # neutrino_*.7z (package root) -- the official latest pre-release of the Neutrino core, so
           # that prerequisite ships with every release. Best-effort: a fetch failure still publishes
-          # the rest. The archive is bundled UNMODIFIED (clean attribution); the user extracts it and
-          # copies neutrino.elf to mc?:/neutrino/. Always credited/linked in the release notes below.
+          # the rest. RiptOPL adds ONLY config/bsd-udpfsbd.toml into the archive (so UDPFS works on
+          # extraction, no manual copy); otherwise it is the official build. The user extracts it and
+          # copies neutrino.elf (+ config/ + modules/) to mc?:/neutrino/. Credited in the notes below.
           NEUTRINO_VER=""
           if gh release download latest --repo rickgaiser/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
             NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"
             NEUTRINO_VER="$(printf '%s' "$NEUTRINO_ARCHIVE" | sed -e 's/^neutrino_//' -e 's/\.7z$//')"
             echo "Bundled neutrino: $NEUTRINO_ARCHIVE"
+            # Neutrino ships udpfs_bd.irx but has no built-in -bsd token for it (only a commented
+            # alternative in bsd-udpbd.toml). RiptOPL launches UDPFS via -bsd=udpfsbd, which needs this
+            # config; config/ is at the archive root, so 7z-add it (merges into config/, no re-pack).
+            SEVENZ="$(command -v 7z || command -v 7za || true)"
+            if [ -z "$SEVENZ" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full && SEVENZ="$(command -v 7z || command -v 7za)"; fi
+            NEUT_ABS="$(cd "$PKG" && pwd)/$NEUTRINO_ARCHIVE"
+            TMPN="$(mktemp -d)" && mkdir -p "$TMPN/config" && cp neutrino/bsd-udpfsbd.toml "$TMPN/config/bsd-udpfsbd.toml"
+            if [ -n "$SEVENZ" ] && ( cd "$TMPN" && "$SEVENZ" a "$NEUT_ABS" config/bsd-udpfsbd.toml >/dev/null ); then
+              echo "Placed config/bsd-udpfsbd.toml into $NEUTRINO_ARCHIVE (UDPFS)."
+            else
+              echo "ERROR: failed to inject bsd-udpfsbd.toml into $NEUTRINO_ARCHIVE" >&2
+            fi
+            rm -rf "$TMPN"
           else
             echo "WARN: could not fetch neutrino latest pre-release; package omits it this run"
           fi
@@ -349,8 +363,9 @@ jobs:
             printf 'Required for the per-game Neutrino launch mode. From the official repo:\n'
             printf '  https://github.com/rickgaiser/neutrino\n'
             if [ -n "${NEUTRINO_VER:-}" ]; then
-              printf '  Included build: %s -- bundled UNMODIFIED in the RIPTOPL package root (neutrino_*.7z);\n' "$NEUTRINO_VER"
-              printf '  extract it and copy neutrino.elf to mc?:/neutrino/.\n'
+              printf '  Included build: %s in the RIPTOPL package root (neutrino_*.7z) -- RiptOPL adds only\n' "$NEUTRINO_VER"
+              printf '  config/bsd-udpfsbd.toml (for UDPFS); otherwise the official build. Extract it and\n'
+              printf '  copy neutrino.elf (+ config/ + modules/) to mc?:/neutrino/.\n'
             else
               printf '  (Could not fetch Neutrino this run -- please grab the latest build from the link above.)\n'
             fi
