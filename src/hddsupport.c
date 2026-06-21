@@ -43,12 +43,6 @@ static base_game_info_t *hddVcdGames = NULL;
 static int hddVcdGameCount = 0;
 static char (*hddVcdParts)[APA_IDMAX + 1] = NULL;
 
-// POPSLoader keeps HDD PS1 covers on the __common partition at POPS/ART/<name>.png -- a DIFFERENT
-// partition than the OPL data slot (gHDDPrefix). We mount it RDONLY once on a second pfs slot during the
-// VCD rescan (hddBuildVcdGameList, on the IO thread) and cache the prefix here; hddGetImage then reads it
-// from the art-cache worker thread WITHOUT mounting (mounting there would race the single pfs0:). "" = none.
-static char hddCommonArtPrefix[8] = "";
-
 // forward declaration
 static item_list_t hddGameList;
 
@@ -452,13 +446,6 @@ static int hddBuildVcdGameList(void)
     fileXioUmount(hddPrefix);
     fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
 
-    // Mount __common RDONLY on a second pfs slot ONCE for the POPSLoader cover fallback (hddGetImage reads
-    // pfs1:POPS/ART/<name>.png). Left mounted across rescans so the art worker never races a remount -- it
-    // only READS pfs1:. After the pfs0: restore so a pfs1: failure can't strand pfs0:. Absent __common
-    // (older/odd HDD) -> prefix stays "" and the POPSLoader step is simply skipped.
-    if (hddCommonArtPrefix[0] == '\0' && fileXioMount("pfs1:", "hdd0:__common", FIO_MT_RDONLY) == 0)
-        strcpy(hddCommonArtPrefix, "pfs1:");
-
     hddVcdGameCount = total;
     return total;
 }
@@ -808,17 +795,11 @@ static int hddGetImage(item_list_t *itemList, char *folder, int isRelative, char
 {
     char path[256];
 
-    // VCD (PS1) covers: fall back disc-id -> filename in the OPL ART folder, then to POPSLoader's HDD
-    // layout -- the cover on the __common partition at POPS/ART/<name>.png (mounted RDONLY on pfs1: by
-    // hddBuildVcdGameList). The art worker only READS pfs1: here; it never mounts (that stays on the IO thread).
-    if (isRelative && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO"))) {
-        int r = vcdLoadArt(gHDDPrefix, '/', folder, value, suffix, NULL, resultTex);
-        if (r < 0 && hddCommonArtPrefix[0] != '\0') {
-            snprintf(path, sizeof(path), "%sPOPS/ART/%s", hddCommonArtPrefix, value); // texDiscoverLoad appends ".png"
-            r = texDiscoverLoad(resultTex, path, -1);
-        }
-        return r;
-    }
+    // VCD (PS1) covers: fall back disc-id -> filename in the OPL ART folder. POPSLoader's HDD layout keeps
+    // art on the __common partition (POPS/ART/<name>.png), a different partition than gHDDPrefix, so that
+    // step is a follow-up -- pass NULL to skip it rather than probe the wrong partition.
+    if (isRelative && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO")))
+        return vcdLoadArt(gHDDPrefix, '/', folder, value, suffix, NULL, resultTex);
 
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s/%s_%s", gHDDPrefix, folder, value, suffix);
@@ -846,11 +827,8 @@ static void hddCleanUp(item_list_t *itemList, int exception)
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
 
-        if ((exception & UNMOUNT_EXCEPTION) == 0) {
+        if ((exception & UNMOUNT_EXCEPTION) == 0)
             fileXioUmount(hddPrefix);
-            fileXioUmount("pfs1:"); // the __common cover slot (mounted by hddBuildVcdGameList)
-            hddCommonArtPrefix[0] = '\0';
-        }
     }
 
     // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
@@ -875,8 +853,6 @@ static void hddShutdown(item_list_t *itemList)
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
         fileXioUmount(hddPrefix);
-        fileXioUmount("pfs1:"); // the __common cover slot (mounted by hddBuildVcdGameList)
-        hddCommonArtPrefix[0] = '\0';
     }
 
     // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
