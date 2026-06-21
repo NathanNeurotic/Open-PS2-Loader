@@ -382,40 +382,56 @@ static int texShouldUseMemoryReader(const char *filePath)
 
 static int texStageExternalFileIntoMemory(int fd, void **buffer)
 {
-    int fileSize;
     int bytesRead = 0;
+    int capacity;
     unsigned char *fileBuffer;
 
     if (buffer == NULL)
         return ERR_BAD_FILE;
 
-    fileSize = lseek(fd, 0, SEEK_END);
-    if (fileSize <= 0 || lseek(fd, 0, SEEK_SET) < 0)
-        return ERR_BAD_FILE;
-
-    fileBuffer = malloc(fileSize);
+    // Do NOT size the file with lseek(SEEK_END) first: the MMCE newlib device (mmceman) does not
+    // support SEEK_END, so it returned <= 0 and EVERY MMCE cover failed here with ERR_BAD_FILE (ISO
+    // and VCD alike) while USB -- which streams via read() only -- worked. Grow a heap buffer as we
+    // read the file sequentially (read()-only, the same access the working USB reader uses) and stop
+    // at EOF, so no up-front file length is needed. We keep the bulk-into-RAM staging (the reason this
+    // path exists: MMCE streaming reads during decode are unreliable) -- only the size probe changes.
+    capacity = TEX_MMCE_STAGE_READ_SIZE * 16; // 64 KB; doubles on demand for larger covers
+    fileBuffer = malloc(capacity);
     if (fileBuffer == NULL)
         return ERR_BAD_FILE;
 
-    while (bytesRead < fileSize) {
-        int chunkSize = fileSize - bytesRead;
+    for (;;) {
         int result;
-
-        if (chunkSize > TEX_MMCE_STAGE_READ_SIZE)
-            chunkSize = TEX_MMCE_STAGE_READ_SIZE;
 
         if (texLoadAbortRequested()) {
             free(fileBuffer);
             return ERR_LOAD_ABORTED;
         }
 
-        result = read(fd, fileBuffer + bytesRead, chunkSize);
-        if (result <= 0) {
+        if (capacity - bytesRead < TEX_MMCE_STAGE_READ_SIZE) {
+            unsigned char *grown = realloc(fileBuffer, capacity * 2);
+            if (grown == NULL) {
+                free(fileBuffer);
+                return ERR_BAD_FILE;
+            }
+            fileBuffer = grown;
+            capacity *= 2;
+        }
+
+        result = read(fd, fileBuffer + bytesRead, TEX_MMCE_STAGE_READ_SIZE);
+        if (result < 0) {
             free(fileBuffer);
             return ERR_BAD_FILE;
         }
+        if (result == 0)
+            break; // EOF -- the whole file is staged
 
         bytesRead += result;
+    }
+
+    if (bytesRead == 0) {
+        free(fileBuffer);
+        return ERR_BAD_FILE; // empty file -> not a valid PNG
     }
 
     *buffer = fileBuffer;
