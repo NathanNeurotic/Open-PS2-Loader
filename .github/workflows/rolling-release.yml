@@ -78,6 +78,14 @@ jobs:
           fi
           cp -f "$MAIN_ELF" rolling/RIPTOPL.ELF
           [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
+          # Standalone language pack (lang_*.lng + their non-Latin fonts, which are NOT embedded in the
+          # ELF) -- build it off the just-built lng/ and stage it so 'rolling' carries it too (it used to
+          # ship only on the now-removed "latest" release). Soft-fail so a LANGS hiccup can't break rolling.
+          if ./lng_pack.sh && ls RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
+            cp -f RIPTOPL-LANGS-*.zip rolling/
+          else
+            echo "WARN: language pack not produced this run"
+          fi
           echo "Staged pinned rolling assets:"
           ls -la rolling
 
@@ -400,11 +408,14 @@ jobs:
               printf -- '- (ps2dev:latest build FAILED this run -- pinned bare loader only)\n'
             fi
             printf -- '- %s-src.zip: source snapshot to rebuild this exact commit\n' "$VERSIONED_BASE"
+            if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
+              printf -- '- RIPTOPL-LANGS-*.zip: extra UI language files (.lng + non-Latin fonts) -- copy into your OPL folder\n'
+            fi
             printf '\nSHA256 (also published as SHA256SUMS.txt):\n'
             printf '```\n'
             cat rolling/SHA256SUMS.txt
             printf '```\n'
-            printf '\nUpdated on every push to master. Independent of the tagged releases and the "latest" pre-release.\n'
+            printf '\nUpdated on every push to master. This is the single rolling channel; stable builds are the v* tagged releases.\n'
           } > notes.md
           echo "ps2dev-latest present: $HAS_LATEST"
           cat notes.md

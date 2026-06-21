@@ -496,7 +496,7 @@ jobs:
           cp -f RIPTOPL/RIPTOPL-${{ env.OPL_VERSION }}.ELF RIPTOPL.ELF
 
       - name: Compute SHA256 checksums
-        if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           set -eu
           # Publish SHA256 of EVERY uploaded asset -- versioned bundles, the stable-alias
@@ -512,36 +512,9 @@ jobs:
             > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
-      - name: Create or update prerelease
-        if: github.ref == 'refs/heads/master'
-        run: |
-          gh release view latest >/dev/null 2>&1 && EXISTS=1 || EXISTS=0
-
-          if [ "$EXISTS" -eq 1 ]; then
-            gh release upload latest \
-              RIPTOPL-${{ env.OPL_VERSION }}.7z \
-              RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z \
-              RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z \
-              RIPTOPL.7z \
-              RIPTOPL-VARIANTS.7z \
-              RIPTOPL-LANGS.7z \
-              RIPTOPL.ELF \
-              SHA256SUMS.txt \
-              --clobber
-          else
-            gh release create latest \
-              RIPTOPL-${{ env.OPL_VERSION }}.7z \
-              RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z \
-              RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z \
-              RIPTOPL.7z \
-              RIPTOPL-VARIANTS.7z \
-              RIPTOPL-LANGS.7z \
-              RIPTOPL.ELF \
-              SHA256SUMS.txt \
-              --title "latest" \
-              --notes "" \
-              --prerelease
-          fi
+      # NOTE: the master rolling prerelease is published solely by rolling-release.yml (tag "rolling").
+      # This workflow no longer creates/updates a "latest" release on master -- it just builds (CI) +
+      # uploads run artifacts, and cuts a per-version release on a v* tag below.
 
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/v')
