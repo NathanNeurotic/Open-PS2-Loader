@@ -74,7 +74,6 @@ For an updated compatibility list, you can visit the OPL-CL site at:\
 
 For detailed setup steps, jump to the README sections for **USB/MMCE/MX4SIO/iLink**, **SMB**, **HDD**, **APPS**, and **Frequent Issues**.
 
-
 ### Major Features Overview
 
 This section is a fast feature map to improve discoverability of core OPL capabilities and reduce setup friction for first-time and returning users.
@@ -177,7 +176,6 @@ If you want the canonical, actively-maintained project, it lives at
 support it. This fork is a downstream labor of love, not a replacement, and it exists only
 because that upstream work is open for everyone to learn from.
 
-
 ## Releases
 
 RiptOPL ships **one full-feature build** — GSM video-mode handling, in-game
@@ -196,9 +194,7 @@ There are two release channels:
 See **[ROLLING_RELEASE.md](ROLLING_RELEASE.md)** for exactly what the rolling release
 contains and how to pull it.
 
-<details>
-  <summary> <b> How to use </b> </summary>
-<p>
+## How to use
 
 OPL uses the following directory tree structure across HDD, SMB, and
 USB modes:
@@ -225,12 +221,7 @@ All partitions created by OPL will be 128Mb (it is not recommended to enlarge pa
 	
 HDDs are also able to be formatted as exFAT to avoid the 2TB limitation.  Please see below in the `HDD` section for more details on this configuration.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> USB/MMCE/MX4SIO/iLink </b> </summary>
-<p>
+## USB/MMCE/MX4SIO/iLink
 
 Supported file systems:
 exFAT (since OPL v1.2.0 beta - rev1880) and FAT32, both use the MBR partition table. This section applies to MMCE and MX4SIO SD setups, USB storage, and iLink SBP2 storage.
@@ -244,24 +235,14 @@ If you choose to use the FAT32 file system, games larger than 4gb must use USBEx
 We do **not** recommend using any defrag programs. The best way for defragmenting - copy all files to pc, format USB, copy all files back.
 Repeat it once you faced defragmenting problem again.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> SMB </b> </summary>
-<p>
+## SMB
 
 For loading games by SMB protocol, you need to share a folder (ex: PS2SMB)
 on the host machine or NAS device and make sure that it has full read and
 write permissions. USB Advance/Extreme format is optional - \*.ISO images
 are supported using the folder structure above.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> HDD </b> </summary>
-<p>
+## HDD
 	
 For PS2, 48-bit LBA internal HDDs are supported. The HDD can be formatted as:
 
@@ -271,12 +252,7 @@ For PS2, 48-bit LBA internal HDDs are supported. The HDD can be formatted as:
 	- Files should be added contiguously or synchronously to avoid fragmentation. For example, drag and drop files one at a time, or ensure that files are added sequentially.
 	- When formatting drives for the exFAT filesystem, please make sure the `Allocation unit size` is set to `Default`.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> APPS </b> </summary>
-<p>
+## APPS
 
 There are two supported methods for adding apps to OPL. Keep both available and choose the one that fits your setup:
 
@@ -314,7 +290,6 @@ With this method, ELFs do not need to be in `APPS`, but keeping them there can m
 The `conf_apps.cfg` file must be in the OPL folder on your Memory Card,\
 or at the root of the storage device.
 
-
 ### title.cfg method
 
 This method uses one `title.cfg` per app folder, with two required lines:
@@ -343,12 +318,7 @@ In this method, both the ELF and `title.cfg` must be in the same folder under `A
 
 > NOTE: In both methods, pay close attention to file names because, as already mentioned, OPL is case-sensitive.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> Cheats </b> </summary>
-<p>
+## Cheats
 
 OPL accepts `.cht` files in PS2RD format. Each cheat file corresponds to a specific game and must be stored in the `CHT` directory on your device.
 Cheats are structured as hexadecimal codes, with proper headers as descriptions to identify their function.
@@ -362,12 +332,7 @@ This mode will enable and apply all cheat codes in your `.cht` file to your game
   * Select Game Cheats:  
 When enabled a cheat selection menu will appear when you launch a game. You can navigate the menu and disable undesired cheats for this launch session. Master Codes cannot be disabled as they are required for any other cheats to be applied.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> NBD Server </b> </summary>
-<p>
+## NBD Server
 
 OPL now uses an [NBD](https://en.wikipedia.org/wiki/Network_block_device) server to share the internal hard drive, instead of HDL server.
 NBD is [formally documented](https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md) and developed as a collaborative open standard.
@@ -470,12 +435,7 @@ wnbd-client.exe unmap hdd0
 
 Not supported.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> ZSO Format </b> </summary>
-<p>
+## ZSO Format
 
 As of version 1.2.0, compressed ISO files in ZSO format is supported by OPL.
 
@@ -501,41 +461,21 @@ python ziso.py -c 0 "input.zso" "output.iso"
 You can copy ZSO files to the same folder as your ISOs and they will be detected by OPL.
 To install onto internal HDD, you can use the latest version of HDL-Dump.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> PS3 BC </b> </summary>
-<p>
+## PS3 BC
 
 Currently, supported only [PS3 Backward Compatible](https://www.psdevwiki.com/ps3/PS2_Compatibility#PS2-Compatibility) (BC) versions. So only [COK-001](https://www.psdevwiki.com/ps3/COK-00x#COK-001) and [COK-002/COK-002W](https://www.psdevwiki.com/ps3/COK-00x#COK-002) boards are supported. USB, SMB, HDD modes are supported.
 
 To run OPL, you need an entry point for running PS2 titles. You can use everything (Swapmagic PS2, for example), but custom firmware with the latest Cobra is preferred. Note: only CFW supports HDD mode.
 
-</p>
-</details>
-
-<details>
-  <summary> <b> Some notes for DEVS </b> </summary>
-<p>
+## Some notes for DEVS
 
 Open PS2 Loader needs the [**latest PS2SDK**](https://github.com/ps2dev/ps2sdk)
 
-</p>
-</details>
-
-<details>
-  <summary> <b> OPL Archive </b> </summary>
-<p>
+## OPL Archive
 
 Since 05/07/2021 every OPL build dispatched to the release section of this repository will be uploaded to a [mega account](https://mega.nz/folder/Ndwi1bAK#oLWNhH_g-h0p4BoT4c556A). You can access the archive by clicking the mega badge on top of this readme
 
-</p>
-</details>
-
-<details>
-  <summary> <b> Frequent Issues </b> </summary>
-<p>
+## Frequent Issues
 
 ### OPL Freezes on logo or grey screen
 
@@ -562,5 +502,3 @@ For GSM/video-mode mistakes, use the same recovery combo above: hold __`Triangle
 
 If your issue is still unresolved, report it here: <https://www.psx-place.com/threads/open-ps2-loader-game-bug-reports.19401/>.
 
-</p>
-</details>
