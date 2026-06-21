@@ -32,6 +32,9 @@ static int gCheatMode;   // Cheat Mode - 0 Enable all cheats, 1 Cheats selected 
 static u32 gCheatList[MAX_CHEATLIST]; // Store hooks/codes addr+val pairs
 cheat_entry_t gCheats[MAX_CODES];
 
+static int gEnableImage;           // Prebuilt PS2RD cheat image (.img) - 0 Off, 1 On
+static u32 gImage[MAX_IMAGEWORDS]; // The loaded .img patch words (zeroed when none/failed)
+
 void InitCheatsConfig(config_set_t *configSet)
 {
     config_set_t *configGame = configGetByType(CONFIG_GAME);
@@ -40,16 +43,19 @@ void InitCheatsConfig(config_set_t *configSet)
     gCheatSource = 0;
     gEnableCheat = 0;
     gCheatMode = 0;
+    gEnableImage = 0;
 
     if (configGetInt(configSet, CONFIG_ITEM_CHEATSSOURCE, &gCheatSource)) {
         // Load the rest of the per-game CHEAT configuration if CHEAT is enabled.
         if (configGetInt(configSet, CONFIG_ITEM_ENABLECHEAT, &gEnableCheat) && gEnableCheat) {
             configGetInt(configSet, CONFIG_ITEM_CHEATMODE, &gCheatMode);
         }
+        configGetInt(configSet, CONFIG_ITEM_ENABLEIMAGE, &gEnableImage);
     } else {
         if (configGetInt(configGame, CONFIG_ITEM_ENABLECHEAT, &gEnableCheat) && gEnableCheat) {
             configGetInt(configGame, CONFIG_ITEM_CHEATMODE, &gCheatMode);
         }
+        configGetInt(configGame, CONFIG_ITEM_ENABLEIMAGE, &gEnableImage);
     }
 }
 
@@ -61,6 +67,32 @@ int GetCheatsEnabled(void)
 const u32 *GetCheatsList(void)
 {
     return gCheatList;
+}
+
+int GetImageEnabled(void)
+{
+    return gEnableImage;
+}
+
+const u32 *GetImage(void)
+{
+    return gImage;
+}
+
+// Load a prebuilt PS2RD cheat image (.img) into gImage. memset FIRST so a missing/short/failed load
+// leaves a clean zeroed image (the ee_core LinkImage then no-ops on the leading zero word). POSIX IO
+// only (newlib rule). Over-size files truncate to MAX_IMAGEWORDS; the ee_core bounds-checks on apply.
+int LoadImage(const char *filename)
+{
+    int fd, len;
+
+    memset(gImage, 0, sizeof(gImage));
+    fd = open(filename, O_RDONLY);
+    if (fd < 0)
+        return -1;
+    len = read(fd, gImage, sizeof(gImage));
+    close(fd);
+    return (len < 0) ? -1 : 0;
 }
 
 /*

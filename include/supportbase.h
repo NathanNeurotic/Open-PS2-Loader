@@ -65,5 +65,6 @@ int sbFileExists(const char *path);
 const char *sbResolveNeutrinoPath(void);
 
 int sbLoadCheats(const char *path, const char *file);
+int sbLoadImage(const char *path, const char *file);
 
 #endif

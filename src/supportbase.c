@@ -910,7 +910,7 @@ static void sbCreateFoldersFromList(const char *path, const char **folders)
 
 void sbCreateFolders(const char *path, int createDiscImgFolders)
 {
-    const char *basicFolders[] = {"CFG", "THM", "LNG", "ART", "VMC", "CHT", "APPS", NULL};
+    const char *basicFolders[] = {"CFG", "THM", "LNG", "ART", "VMC", "CHT", "IMG", "APPS", NULL};
     const char *discImgFolders[] = {"CD", "DVD", NULL};
 
     sbCreateFoldersFromList(path, basicFolders);
@@ -941,4 +941,23 @@ int sbLoadCheats(const char *path, const char *file)
     }
 
     return cheatMode;
+}
+
+// Load a prebuilt PS2RD cheat image from <path>IMG/<file>.img, gated by the per-game $EnableImage.
+// Mirrors sbLoadCheats; uses a 256-byte path (NOT wOPL's 64, which truncates BDM prefixes). 0 ok, -1 fail.
+int sbLoadImage(const char *path, const char *file)
+{
+    char imgfile[256];
+
+    if (!GetImageEnabled())
+        return 0;
+
+    snprintf(imgfile, sizeof(imgfile), "%sIMG/%s.img", path, file);
+    LOG("Loading Cheat Image %s\n", imgfile);
+    if (LoadImage(imgfile) < 0) {
+        LOG("Error: failed to load cheat image\n");
+        return -1;
+    }
+    LOG("Cheat image found\n");
+    return 0;
 }

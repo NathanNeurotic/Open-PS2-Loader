@@ -708,6 +708,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         } else
             LOG("Cheats error\n");
     }
+    sbLoadImage(gHDDPrefix, game->startup);
 
     settings = (struct cdvdman_settings_hdd *)((u8 *)irx + i);
 

@@ -701,6 +701,7 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
                 guiWarning(_l(_STR_ERR_CHEATS_LOAD_FAILED), 10);
         }
     }
+    sbLoadImage(ethPrefix, game->startup);
 
     settings = (struct cdvdman_settings_smb *)((u8 *)(&smb_cdvdman_irx) + i);
 

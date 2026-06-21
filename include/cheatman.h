@@ -39,6 +39,7 @@
 #define MAX_HOOKS      5
 #define MAX_CODES      250
 #define MAX_CHEATLIST  (MAX_HOOKS * 2 + MAX_CODES * 2)
+#define MAX_IMAGEWORDS 1024 // prebuilt PS2RD cheat image (.img): up to 4 KB of u32 patch words
 #define CHEAT_NAME_MAX 128
 
 /* Some character defines */
@@ -74,5 +75,11 @@ int GetCheatsEnabled(void);
 const u32 *GetCheatsList(void);
 int load_cheats(const char *cheatfile);
 void set_cheats_list(void);
+
+// Prebuilt PS2RD cheat image (.img): a binary patch list applied directly at boot, parallel to the
+// text .cht codes. Gated per-game by $EnableImage (default OFF).
+int GetImageEnabled(void);
+const u32 *GetImage(void);
+int LoadImage(const char *filename);
 
 #endif /* _CHEATMAN_H_ */
