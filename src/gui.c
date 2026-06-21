@@ -680,6 +680,7 @@ reselect_video_mode:
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(diaUIConfig, UICFG_COVERART, gEnableArt);
     diaSetInt(diaUIConfig, UICFG_WIDESCREEN, gWideScreen);
+    diaSetInt(diaUIConfig, CFG_APPLYGAMEID, gApplyGameID); // RetroGEM/Pixel FX GameID barcode (moved from Device Settings)
     diaSetInt(diaUIConfig, UICFG_VMODE, gVMode);
     diaSetInt(diaUIConfig, UICFG_XOFF, gXOff);
     diaSetInt(diaUIConfig, UICFG_YOFF, gYOff);
@@ -705,6 +706,7 @@ reselect_video_mode:
         diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(diaUIConfig, UICFG_COVERART, &gEnableArt);
         diaGetInt(diaUIConfig, UICFG_WIDESCREEN, &gWideScreen);
+        diaGetInt(diaUIConfig, CFG_APPLYGAMEID, &gApplyGameID);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
         diaGetInt(diaUIConfig, UICFG_XOFF, &gXOff);
         diaGetInt(diaUIConfig, UICFG_YOFF, &gYOff);
@@ -967,7 +969,6 @@ void guiShowDeviceConfig(void)
     diaSetEnum(diaDeviceConfig, CFG_MMCE_USE_ALARMS, deviceOnOff);
     diaSetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, gMMCEUseAlarms);
     diaSetInt(diaDeviceConfig, CFG_MMCEGAMEID, gMMCEEnableGameID);
-    diaSetInt(diaDeviceConfig, CFG_APPLYGAMEID, gApplyGameID);
 
     int ret = diaExecuteDialog(diaDeviceConfig, -1, 1, &guiDeviceUpdater);
     if (ret) {
@@ -1001,7 +1002,6 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_MMCESLOT, &gMMCESlot);
         diaGetInt(diaDeviceConfig, CFG_MMCEIGRSLOT, &gMMCEIGRSlot);
         diaGetInt(diaDeviceConfig, CFG_MMCEGAMEID, &gMMCEEnableGameID);
-        diaGetInt(diaDeviceConfig, CFG_APPLYGAMEID, &gApplyGameID);
         diaGetInt(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
         diaGetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, &gMMCEUseAlarms);
 
