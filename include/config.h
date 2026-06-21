@@ -20,6 +20,14 @@ enum CONFIG_INDEX {
 #define CONFIG_GAME    (1 << CONFIG_INDEX_GAME)
 #define CONFIG_ALL     0xFF
 
+// RiptOPL master settings file. Renamed conf_riptopl.cfg -> settings_riptopl.cfg: clearer, and
+// namespaced so it won't collide with another app's generic settings.cfg if they ever share a
+// folder (e.g. a future $appdir "sidecar" config). configRead() falls back to the legacy name so
+// existing installs keep their settings -- the next save writes the new name (auto-migration).
+// Keep both as plain string literals so callers can string-concatenate them.
+#define CONFIG_OPL_FILENAME        "settings_riptopl.cfg"
+#define CONFIG_OPL_FILENAME_LEGACY "conf_riptopl.cfg"
+
 #define CONFIG_SOURCE_DEFAULT 0
 #define CONFIG_SOURCE_USER    1
 #define CONFIG_SOURCE_DLOAD   2 // Downloaded from the network

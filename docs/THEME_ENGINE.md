@@ -262,7 +262,7 @@ appsMain2:
 
 ### Global Coverflow tuning (NOT in the theme)
 
-These live in **`conf_riptopl.cfg`** and are exposed in the **Coverflow Settings** menu (shown
+These live in **`settings_riptopl.cfg`** and are exposed in the **Coverflow Settings** menu (shown
 while a Coverflow theme is active). They apply to *any* Coverflow theme:
 
 | Setting / key | Values | Effect |

@@ -783,7 +783,7 @@ gui_strings:
 - label: POPSTARTER_PATH
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH
-  string: Custom POPSTARTER.ELF path; quietly falls back to the device POPS folder if blank/missing. Keyboard caps at 31 chars; longer paths via conf_riptopl.cfg.
+  string: Custom POPSTARTER.ELF path; quietly falls back to the device POPS folder if blank/missing. Keyboard caps at 31 chars; longer paths via settings_riptopl.cfg.
 - label: BDMA_SOURCE
   string: BDMA Source
 - label: HINT_BDMA_SOURCE

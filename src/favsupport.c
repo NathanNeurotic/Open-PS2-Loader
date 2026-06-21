@@ -61,8 +61,8 @@ static char *favStrdup(const char *s)
 static void favGetFilePath(char *out, int outSize)
 {
     config_set_t *cfg = configGetByType(CONFIG_OPL);
-    const char *fn = (cfg != NULL && cfg->filename != NULL) ? cfg->filename : "mc0:OPL/conf_riptopl.cfg";
-    const char *base = "conf_riptopl.cfg";
+    const char *fn = (cfg != NULL && cfg->filename != NULL) ? cfg->filename : "mc0:OPL/" CONFIG_OPL_FILENAME;
+    const char *base = CONFIG_OPL_FILENAME;
     int len = (int)strlen(fn);
     int blen = (int)strlen(base);
     if (len >= blen && strcmp(fn + len - blen, base) == 0) {

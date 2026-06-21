@@ -23,7 +23,7 @@ You can also point OPL at a **custom location** via **Settings → General Setti
 ELF Path**. When that field is set and the file exists it takes **priority** over the table
 above; leave it blank to use the auto-detection (which also checks a few lowercase /
 `NEUTRINO.ELF` spelling variants on `mc0:`/`mc1:`). For a path longer than the on-screen
-31-character editor, set `neutrino_path` in `conf_riptopl.cfg` directly.
+31-character editor, set `neutrino_path` in `settings_riptopl.cfg` directly.
 
 > **Network boot is the exception:** the UDPBD / UDPFS feature (§4) ships its **own bundled
 > Neutrino** (a `neutrino_*.7z` inside the release's installable package, pre-populated with the
@@ -78,7 +78,7 @@ per-game**, so a game can extend the global set.
 ### Global default args — applies to every Neutrino launch
 
 **Settings → General Settings → Neutrino Launch Args** (config key `neutrino_args` in
-`conf_riptopl.cfg`).
+`settings_riptopl.cfg`).
 
 ### Per-game args — applies to one title
 

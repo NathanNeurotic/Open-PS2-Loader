@@ -20,7 +20,7 @@ static u32 currentUID = 0;
 static config_set_t configFiles[CONFIG_INDEX_COUNT];
 static char legacyNetConfigPath[256] = "mc?:SYS-CONF/IPCONFIG.DAT";
 static const char *configFilenames[CONFIG_INDEX_COUNT] = {
-    "conf_riptopl.cfg", // RiptOPL master config (renamed from conf_opl.cfg to keep our settings separate from official OPL / wOPL)
+    CONFIG_OPL_FILENAME, // RiptOPL master settings (settings_riptopl.cfg; legacy conf_riptopl.cfg auto-migrated on read -- see configRead)
     "conf_last.cfg",
     "conf_apps.cfg",
     "conf_network.cfg",
@@ -569,10 +569,32 @@ int configReadBuffer(config_set_t *configSet, const void *buffer, int size)
     return ret;
 }
 
+// RiptOPL master config was renamed conf_riptopl.cfg -> settings_riptopl.cfg. Given the built
+// "<dir>/settings_riptopl.cfg" path, produce its legacy "<dir>/conf_riptopl.cfg" sibling so an
+// existing install's settings still load (read-fallback); the next save writes the new name.
+static void configBuildLegacyOplPath(const char *path, char *out, int outSize)
+{
+    const char *slash = strrchr(path, '/');
+    if (slash != NULL)
+        snprintf(out, outSize, "%.*s%s", (int)(slash - path) + 1, path, CONFIG_OPL_FILENAME_LEGACY);
+    else
+        snprintf(out, outSize, "%s", CONFIG_OPL_FILENAME_LEGACY);
+}
+
 int configRead(config_set_t *configSet)
 {
     int ret;
     file_buffer_t *fileBuffer = openFileBuffer(configSet->filename, O_RDONLY, 0, 4096);
+    if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL) {
+        // Migration: existing installs have the legacy conf_riptopl.cfg, not settings_riptopl.cfg.
+        // Read the legacy file from the same dir so settings aren't lost; the next save writes the
+        // new name. configSet->filename stays the new name, so configWrite migrates transparently.
+        char legacyPath[256];
+        configBuildLegacyOplPath(configSet->filename, legacyPath, sizeof(legacyPath));
+        fileBuffer = openFileBuffer(legacyPath, O_RDONLY, 0, 4096);
+        if (fileBuffer != NULL)
+            LOG("CONFIG migrating settings from legacy %s\n", legacyPath);
+    }
     if (!fileBuffer) {
         LOG("CONFIG No file %s.\n", configSet->filename);
         configSet->modified = 0;

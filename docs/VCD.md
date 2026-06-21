@@ -47,7 +47,7 @@ title and POPSTARTER finds the matching `*.VCD`.
 By default RiptOPL looks for `POPSTARTER.ELF` in each device's `POPS` folder. To use one
 specific copy everywhere, set **Settings → General Settings → POPSTARTER.ELF Path**.
 (Like the other path fields, the on-screen editor caps at 31 characters; for a longer
-path, set `popstarter_path` in `conf_riptopl.cfg` directly.)
+path, set `popstarter_path` in `settings_riptopl.cfg` directly.)
 
 ## 4. Where to put your VCD files
 
