@@ -403,12 +403,21 @@ static void diaDrawHint(int text_id)
     int x, y;
     char *text = _l(text_id);
 
-    x = screenWidth - rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text)) - 10;
-    y = gTheme->usedHeight - 62;
+    // Right-anchor the box, but clamp so a long hint can't start off the left edge (the start was
+    // unreadable -- #48). Then wrap the text inside the box width and grow the box to fit so it
+    // never overruns either edge; keep the box just above the bottom hint bar (usedHeight - 32).
+    int textW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text));
+    x = screenWidth - textW - 10;
+    if (x < 10)
+        x = 10;
+    int innerW = screenWidth - x - 10;
+    int lines = (innerW > 0 && textW > innerW) ? ((textW + innerW - 1) / innerW) : 1;
+    int boxH = lines * MENU_ITEM_HEIGHT + 10;
+    y = gTheme->usedHeight - 32 - boxH;
 
     // render hint on the lower side of the screen.
-    rmDrawRect(x, y, screenWidth - x, MENU_ITEM_HEIGHT + 10, gColDarker);
-    fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, 0, 0, text, gTheme->textColor);
+    rmDrawRect(x, y, screenWidth - x, boxH, gColDarker);
+    fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, innerW, boxH - 5, text, gTheme->textColor);
 }
 
 /// renders an ui item (either selected or not)
@@ -598,6 +607,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     struct UIItem *rc = ui;
     int x = x0, y = y0 - diaScrollOffset, hmax = 0;
     int curTop = y0, curBot = y0; // rendered extent of the focused row, for cursor-follow scroll
+    int contentBottom = y0;       // lowest rendered pixel (screen-space), for the maxScroll upper clamp
 
     while (rc->type != UI_TERMINATOR) {
         int w = 0, h = 0;
@@ -623,6 +633,9 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
 
         hmax = (h > hmax) ? h : hmax;
 
+        if (y + h > contentBottom)
+            contentBottom = y + h; // track content bottom (screen-space) for the maxScroll clamp
+
         if (diaShouldBreakLineAfter(rc)) {
             x = x0;
 
@@ -639,6 +652,12 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     // bottom hint bar. Self-correcting each frame; remains 0 for dialogs that fit (no scroll).
     if (cur != NULL) {
         int visibleBottom = gTheme->usedHeight - 40;
+        // Upper bound: never scroll past the content's bottom. contentBottom is screen-space, so undo
+        // the current offset to get the content-space extent. Without this, when the cursor lands on
+        // the trailing OK row the offset could over-shoot and stay stuck shifted up (#48).
+        int maxScroll = (contentBottom + diaScrollOffset) - visibleBottom;
+        if (maxScroll < 0)
+            maxScroll = 0;
         // Only scroll when a real viewport exists; guards degenerate small-usedHeight themes
         // where visibleBottom <= y0 would let the two edge corrections fight (jitter).
         if (visibleBottom > y0) {
@@ -647,6 +666,8 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             else if (curBot > visibleBottom)
                 diaScrollOffset += (curBot - visibleBottom);
         }
+        if (diaScrollOffset > maxScroll)
+            diaScrollOffset = maxScroll;
         if (diaScrollOffset < 0)
             diaScrollOffset = 0;
     }

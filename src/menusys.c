@@ -904,9 +904,18 @@ static void menuPrevV()
 static void menuNextPage()
 {
     submenu_list_t *cur = selected_item->item->pagestart;
+    int displayed = ((items_list_t *)gTheme->itemsList->extended)->displayedItems;
 
-    if (cur && cur->next) {
-        int itms = ((items_list_t *)gTheme->itemsList->extended)->displayedItems + 1;
+    // Probe to the item one row past the bottom of the current page. If the end comes first, the
+    // whole list already fits on screen -> R1 is a no-op (don't over-scroll a sub-page list, which
+    // previously collapsed it to just the last item -- #48).
+    submenu_list_t *probe = cur;
+    int n = displayed;
+    while (n-- && probe)
+        probe = probe->next;
+
+    if (cur && probe) {
+        int itms = displayed + 1;
         sfxPlay(SFX_CURSOR);
 
         while (--itms && cur->next)
@@ -915,8 +924,6 @@ static void menuNextPage()
         selected_item->item->current = cur;
         selected_item->item->pagestart = selected_item->item->current;
         menuInvalidateArtSelection();
-    } else { // wrap to start
-        menuFirstPage();
     }
 }
 

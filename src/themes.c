@@ -277,6 +277,10 @@ static void initGameCountText(const char *themePath, config_set_t *themeConfig, 
 
 static void drawAttributeText(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
+    // No current item (e.g. the last favourite was removed -> empty list): clear, don't redraw the
+    // stale cached value. Mirrors drawGameImage's `if (item)` guard so the description clears (#48).
+    if (item == NULL)
+        return;
     mutable_text_t *mutableText = (mutable_text_t *)elem->extended;
     if (config) {
         if (mutableText->currentConfigId != config->uid) {
@@ -964,6 +968,10 @@ static void initCoverflow(const char *themePath, config_set_t *themeConfig, them
 
 static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
+    // No current item (empty list): clear, don't redraw the stale cached image -- same guard as
+    // drawAttributeText/drawGameImage (#48). Also correct for the per-game #Media icon.
+    if (item == NULL)
+        return;
     mutable_image_t *attributeImage = (mutable_image_t *)elem->extended;
     if (config) {
         if (attributeImage->currentConfigId != config->uid) {
