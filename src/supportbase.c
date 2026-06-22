@@ -549,14 +549,20 @@ int sbFileExists(const char *path)
 // so the bdm + mmce launch paths stay in sync.
 const char *sbResolveNeutrinoPath(void)
 {
-    // Neutrino Device (General Settings): a specific memory card overrides everything -- build
-    // <card>:/neutrino/neutrino.elf and probe the folder-case / leading-slash / .ELF spelling
-    // variants for just that card; return the first that exists (or NULL if that card has none).
-    const char *card = NULL;
-    if (gNeutrinoDevice == NEUTRINO_DEV_MC0)
-        card = "mc0";
-    else if (gNeutrinoDevice == NEUTRINO_DEV_MC1)
-        card = "mc1";
+    // Neutrino Device (General Settings): a specific device root overrides everything -- build
+    // <root>:/neutrino/neutrino.elf and probe the folder-case / leading-slash / .ELF spelling
+    // variants for just that root; return the first that exists (or NULL if that root has none).
+    // gNeutrinoDevice indexes this table (0 = Auto); it MUST stay in sync with neutrinoDevStrs[]
+    // (the General Settings picker in gui.c).
+    static const char *roots[] = {
+        NULL, // Auto
+        "mc0", "mc1",
+        "mass0", "mass1", "mass2", "mass3", "mass4", "mass5", "mass6", "mass7",
+        "mmce0", "mmce1",
+    };
+    const char *card = (gNeutrinoDevice > 0 && gNeutrinoDevice < (int)(sizeof(roots) / sizeof(roots[0])))
+                           ? roots[gNeutrinoDevice]
+                           : NULL;
     if (card != NULL) {
         static const char *forms[] = {
             "%s:NEUTRINO/neutrino.elf",

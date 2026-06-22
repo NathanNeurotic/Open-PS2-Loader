@@ -491,7 +491,9 @@ void guiShowConfig()
     diaSetInt(diaConfig, CFG_DEBUG, gEnableDebug);
     diaSetInt(diaConfig, CFG_PS2LOGO, gPS2Logo);
     diaSetString(diaConfig, CFG_EXITTO, gExitPath);
-    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "mc0", "mc1", NULL};
+    // Neutrino lives at <root>:/neutrino/neutrino.elf on ANY device -- offer the common roots.
+    // MUST stay in sync with the roots[] table in sbResolveNeutrinoPath() (supportbase.c).
+    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "mc0", "mc1", "mass0", "mass1", "mass2", "mass3", "mass4", "mass5", "mass6", "mass7", "mmce0", "mmce1", NULL};
     diaSetEnum(diaConfig, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
     diaSetInt(diaConfig, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);
     diaSetString(diaConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
