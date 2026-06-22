@@ -779,6 +779,20 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 static config_set_t *hddGetConfig(item_list_t *itemList, int id)
 {
     char path[256];
+
+    // VCD (PS1) view: `id` indexes hddVcdGames, NOT hddGames (which stays at its zero/ISO-view state --
+    // {games=NULL,count=0} on a PS1-only HDD). Mirror the other VCD-aware accessors and key the per-game
+    // CFG off the VCD basename, instead of dereferencing &hddGames.games[id] off a NULL base (crash).
+    if (vcdViewActive(itemList->mode)) {
+        base_game_info_t *g = &hddVcdGames[id];
+        snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, g->name);
+        config_set_t *vcdConfig = configAlloc(0, NULL, path);
+        configRead(vcdConfig);
+        configSetStr(vcdConfig, CONFIG_ITEM_NAME, g->name);
+        configSetStr(vcdConfig, CONFIG_ITEM_STARTUP, g->name);
+        return vcdConfig;
+    }
+
     hdl_game_info_t *game = &hddGames.games[id];
 
     snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, game->startup);

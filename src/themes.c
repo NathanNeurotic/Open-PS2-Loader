@@ -2051,8 +2051,8 @@ static void thmLoad(const char *themePath)
 
     newT->itemsList = newT->gamesItemsList;
 
-    configFree(themeConfig);
-
+    // NOTE: themeConfig is freed AFTER the texture-load section below -- the use_settings_bg lookup near
+    // the end still reads it. Freeing here was a use-after-free (configGetInt on freed memory).
     LOG("THEMES Number of cache: %d\n", newT->gameCacheCount);
     LOG("THEMES Used height: %d\n", newT->usedHeight);
 
@@ -2113,6 +2113,8 @@ static void thmLoad(const char *themePath)
         if (configGetInt(themeConfig, "use_settings_bg", &intValue) && intValue)
             thmLoadResource(&newT->textures[SETTINGS_BG], SETTINGS_BG, themePath, GS_PSM_CT32, 0);
     }
+
+    configFree(themeConfig); // all themeConfig reads are done now (last was use_settings_bg above)
 
     cacheCancelPendingImageLoads();
     gTheme = newT;

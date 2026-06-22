@@ -1374,9 +1374,11 @@ static void guiHandleDeferredOps(void)
 
         gCompletedOps++;
     }
-    SignalSema(gSemaId);
-
+    // Clear the now-dangling tail pointer INSIDE the lock. The drain loop freed every node and emptied
+    // gUpdateList; doing this AFTER SignalSema let an IO-thread guiDeferUpdate slip in (rebuild the list,
+    // set gUpdateEnd) only to have it clobbered here -> the next enqueue's gUpdateEnd->next was a NULL deref.
     gUpdateEnd = NULL;
+    SignalSema(gSemaId);
 }
 
 void guiExecDeferredOps(void)
