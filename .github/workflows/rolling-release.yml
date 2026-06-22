@@ -26,14 +26,17 @@ on:
   push:
     branches:
       - master
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
-# Only one rolling publish at a time; newer pushes supersede in-flight runs.
+# Per-ref: master pushes still supersede each other (rolling), but a v* tag release runs in its
+# own group, so a new master push can't cancel an in-flight release cut (or vice versa).
 concurrency:
-  group: rolling-release
+  group: rolling-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -359,7 +362,11 @@ jobs:
           HAS_LATEST=no
           [ -f "rolling/${VERSIONED_BASE}-ps2dev-latest.ELF" ] && HAS_LATEST=yes
           {
-            printf 'RiptOPL -- rolling build of master (not a stable release).\n\n'
+            if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+              printf 'RiptOPL %s -- tagged release.\n\n' "$OPL_VERSION"
+            else
+              printf 'RiptOPL -- rolling build of master (not a stable release).\n\n'
+            fi
             printf 'Version: %s\n' "$OPL_VERSION"
             printf 'Commit: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA"
             printf 'Built: %s UTC\n' "$(date -u '+%Y-%m-%d %H:%M')"
@@ -422,24 +429,33 @@ jobs:
           echo "Assets to publish:"
           ls -la rolling
 
-      - name: Publish or update the rolling pre-release
+      - name: Publish (rolling on master, curated release on a v* tag)
         run: |
           set -eu
-          if gh release view rolling >/dev/null 2>&1; then
-            echo "Updating existing rolling pre-release"
+          # The ref decides the publish target: a v* tag cuts the curated per-version release
+          # (full, unless an -rc pre-release); master/dispatch updates the single rolling channel.
+          # Either path publishes the SAME staged asset set, so packaging can never diverge again.
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            TAG="${GITHUB_REF_NAME}"; TITLE="${GITHUB_REF_NAME}"; TARGET=""
+            case "${GITHUB_REF}" in *-rc*) PREREL="--prerelease";; *) PREREL="";; esac
+          else
+            TAG="rolling"; TITLE="Rolling (master)"; PREREL="--prerelease"; TARGET="--target $GITHUB_SHA"
+          fi
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Updating existing release: $TAG"
             # Remove every existing asset first so renamed/stale builds from prior
             # runs cannot accumulate; then upload the current fixed-name set.
-            for asset in $(gh release view rolling --json assets --jq '.assets[].name'); do
+            for asset in $(gh release view "$TAG" --json assets --jq '.assets[].name'); do
               echo "Deleting old asset: $asset"
-              gh release delete-asset rolling "$asset" --yes || true
+              gh release delete-asset "$TAG" "$asset" --yes || true
             done
-            gh release edit rolling --title "Rolling (master)" --notes-file notes.md --prerelease
-            gh release upload rolling rolling/* --clobber
+            gh release edit "$TAG" --title "$TITLE" --notes-file notes.md $PREREL
+            gh release upload "$TAG" rolling/* --clobber
           else
-            echo "Creating rolling pre-release"
-            gh release create rolling rolling/* \
-              --title "Rolling (master)" \
+            echo "Creating release: $TAG"
+            gh release create "$TAG" rolling/* \
+              --title "$TITLE" \
               --notes-file notes.md \
-              --prerelease \
-              --target "$GITHUB_SHA"
+              $PREREL \
+              $TARGET
           fi

@@ -512,12 +512,12 @@ jobs:
             > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
-      # NOTE: the master rolling prerelease is published solely by rolling-release.yml (tag "rolling").
-      # This workflow no longer creates/updates a "latest" release on master -- it just builds (CI) +
-      # uploads run artifacts, and cuts a per-version release on a v* tag below.
+      # NOTE: ALL release publishing -- the master "rolling" prerelease AND the per-version v* tag
+      # release -- is now handled by rolling-release.yml with identical packaging. This workflow only
+      # builds (CI) + uploads run artifacts; the v* release-cut below is retired (if: false).
 
       - name: Create release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: false # retired -- rolling-release.yml now cuts v* releases (unified packaging)
         run: |
           PRERELEASE_FLAG=""
           if [[ "${GITHUB_REF}" == *"-rc"* ]]; then
