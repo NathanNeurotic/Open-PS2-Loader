@@ -49,7 +49,8 @@ whether the bleeding-edge build succeeded.
 
 [`.github/workflows/rolling-release.yml`](.github/workflows/rolling-release.yml):
 
-- Triggers on every push to `master`, and on manual **Run workflow** (workflow_dispatch).
+- Triggers on every push to `master` (updates `rolling`), on every `v*` **tag** push (cuts a
+  curated per-version release with identical packaging), and on manual **Run workflow** (workflow_dispatch).
 - Builds with both toolchains — `ps2max/dev` (pinned) and `ps2dev/ps2dev:latest`
   (bleeding-edge) — the same images as the main CI build.
 - The `ps2dev/ps2dev:latest` build is best-effort (`continue-on-error`): if it breaks,
@@ -58,17 +59,18 @@ whether the bleeding-edge build succeeded.
 - Publishes/updates the single `rolling` pre-release from the host runner.
 - `concurrency` cancels superseded in-flight runs, so the release reflects the newest push.
 
-## Isolation
+## One pipeline, two channels
 
-The rolling channel is deliberately additive:
+This workflow is the **single** place release packaging lives. The pushed ref picks the target:
 
-- Publishes **only** to the `rolling` tag / pre-release.
-- Never modifies the curated `v*` tagged releases (cut by `compilation.yml` only on a
-  `v*` tag) or any branch — it only uploads release assets.
+- **`master` push** → updates the `rolling` pre-release (the development channel).
+- **`v*` tag push** → cuts the **curated per-version release** for that tag (a full release; an
+  `-rc*` tag stays a pre-release). It publishes the **identical** asset set as rolling — same `.zip`
+  installable bundle, both toolchains, `src.zip`, `SHA256SUMS` — so the two channels can't drift.
 
-`compilation.yml` no longer publishes anything on a `master` push; its `release` job only
-cuts a per-version release on a `v*` tag. So `rolling` is the single channel that tracks
-`master`.
+`compilation.yml` no longer cuts releases (its release step is retired); on `master` it only runs
+CI + uploads run artifacts. Per-ref `concurrency` keeps a `master` push and a tag release from
+cancelling each other.
 
 ## Not a stable release
 
