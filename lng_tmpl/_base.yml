@@ -786,6 +786,24 @@ gui_strings:
   string: Neutrino Device
 - label: HINT_NEUTRINO_DEVICE
   string: Memory card holding neutrino.elf (in a NEUTRINO/ or neutrino/ folder). Auto scans mc0 then mc1.
+- label: NARGS_QB
+  string: Quick Boot (-qb)
+- label: NARGS_CWD
+  string: Working Dir (-cwd)
+- label: NARGS_CFG
+  string: Config (-cfg)
+- label: NARGS_ELF
+  string: Boot ELF (-elf)
+- label: NARGS_ATA0
+  string: ATA0 Image (-ata0)
+- label: NARGS_ATA0ID
+  string: ATA0 ID (-ata0id)
+- label: NARGS_ATA1
+  string: ATA1 Image (-ata1)
+- label: NARGS_EXTRA
+  string: Extra Args
+- label: NARGS_AUTO_NOTE
+  string: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
 - label: POPSTARTER_PATH
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH

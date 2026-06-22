@@ -64,6 +64,22 @@ int sbFileExists(const char *path);
 // First existing Neutrino core ELF among the known mc0/mc1 install locations, or NULL.
 const char *sbResolveNeutrinoPath(void);
 
+// Structured view of the USER-settable Neutrino launch flags (the catch-all "Launch Args" box).
+// The flags OPL emits itself (-bsd/-dvd/-gc/-gsm/-mc/-dbc/-logo) are NOT represented here.
+typedef struct {
+    int qb;          // -qb (quick-boot)
+    char cwd[64];    // -cwd=
+    char cfg[64];    // -cfg=
+    char elf[64];    // -elf=
+    char ata0[64];   // -ata0=
+    char ata0id[64]; // -ata0id=
+    char ata1[64];   // -ata1=
+    char extra[64];  // unrecognised/free tokens, space-joined; "--b ..." preserved at the tail
+} neutrino_args_t;
+// Parse an args string into the struct; assemble it back in a Neutrino-accepted order (--b last).
+void neutrinoArgsParse(const char *in, neutrino_args_t *na);
+void neutrinoArgsAssemble(const neutrino_args_t *na, char *out, int outSize);
+
 int sbLoadCheats(const char *path, const char *file);
 int sbLoadImage(const char *path, const char *file);
 

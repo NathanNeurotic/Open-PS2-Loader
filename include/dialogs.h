@@ -141,6 +141,15 @@ enum UI_ITEMS {
     COVERFLOW_CFG_ANIM,
     COVERFLOW_CFG_DIM,
 
+    NARGS_QB,
+    NARGS_CWD,
+    NARGS_CFG,
+    NARGS_ELF,
+    NARGS_ATA0,
+    NARGS_ATA0ID,
+    NARGS_ATA1,
+    NARGS_EXTRA,
+
     COMPAT_DMA = 100,
     COMPAT_ALTSTARTUP,
     COMPAT_GAMEID,
@@ -257,6 +266,7 @@ extern struct UIItem diaParentalLockConfig[];
 
 extern struct UIItem diaOSDConfig[];
 extern struct UIItem diaCoverflowConfig[];
+extern struct UIItem diaNeutrinoArgs[];
 extern struct UIItem diaDeviceConfig[];
 
 #endif

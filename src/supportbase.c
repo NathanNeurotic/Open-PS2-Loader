@@ -16,6 +16,7 @@
 #include <fileXio_rpc.h> // fileXioMount("iso:", ***), fileXioUmount("iso:")
 #include <io_common.h>   // FIO_MT_RDONLY
 #include <ps2sdkapi.h>   // lseek64
+#include <string.h>      // strtok/strncmp/strlen/memset (Neutrino args parse)
 
 #include "../modules/isofs/zso.h"
 
@@ -594,6 +595,84 @@ const char *sbResolveNeutrinoPath(void)
             return candidates[i];
     }
     return NULL;
+}
+
+// ---- Neutrino launch-args parse / assemble (the "Launch Args" picker) ----------------
+// naAppend joins a token onto out with a single separating space; naAppendKV joins "<key><val>".
+static void naAppend(char *out, int outSize, const char *tok)
+{
+    int len = (int)strlen(out);
+    if (len >= outSize - 1) // already full (or malformed) -- nothing more fits
+        return;
+    if (len > 0)
+        out[len++] = ' ';
+    snprintf(out + len, outSize - len, "%s", tok);
+}
+
+static void naAppendKV(char *out, int outSize, const char *key, const char *val)
+{
+    char tmp[96];
+    snprintf(tmp, sizeof(tmp), "%s%s", key, val);
+    naAppend(out, outSize, tmp);
+}
+
+void neutrinoArgsParse(const char *in, neutrino_args_t *na)
+{
+    memset(na, 0, sizeof(*na));
+    if (in == NULL)
+        return;
+
+    char buf[256];
+    snprintf(buf, sizeof(buf), "%s", in);
+
+    int breakSeen = 0;
+    char *tok = strtok(buf, " \t");
+    while (tok != NULL) {
+        if (breakSeen || strcmp(tok, "--b") == 0) {
+            breakSeen = 1; // --b and everything after it is for the ELF: keep verbatim, in order
+            naAppend(na->extra, sizeof(na->extra), tok);
+        } else if (strcmp(tok, "-qb") == 0) {
+            na->qb = 1;
+        } else if (strncmp(tok, "-cwd=", 5) == 0) {
+            snprintf(na->cwd, sizeof(na->cwd), "%s", tok + 5);
+        } else if (strncmp(tok, "-cfg=", 5) == 0) {
+            snprintf(na->cfg, sizeof(na->cfg), "%s", tok + 5);
+        } else if (strncmp(tok, "-elf=", 5) == 0) {
+            snprintf(na->elf, sizeof(na->elf), "%s", tok + 5);
+        } else if (strncmp(tok, "-ata0id=", 8) == 0) {
+            snprintf(na->ata0id, sizeof(na->ata0id), "%s", tok + 8);
+        } else if (strncmp(tok, "-ata0=", 6) == 0) {
+            snprintf(na->ata0, sizeof(na->ata0), "%s", tok + 6);
+        } else if (strncmp(tok, "-ata1=", 6) == 0) {
+            snprintf(na->ata1, sizeof(na->ata1), "%s", tok + 6);
+        } else {
+            naAppend(na->extra, sizeof(na->extra), tok); // unknown/future flag -> preserved
+        }
+        tok = strtok(NULL, " \t");
+    }
+}
+
+void neutrinoArgsAssemble(const neutrino_args_t *na, char *out, int outSize)
+{
+    if (out == NULL || outSize <= 0)
+        return;
+    out[0] = '\0';
+    if (na->qb)
+        naAppend(out, outSize, "-qb");
+    if (na->cwd[0])
+        naAppendKV(out, outSize, "-cwd=", na->cwd);
+    if (na->cfg[0])
+        naAppendKV(out, outSize, "-cfg=", na->cfg);
+    if (na->elf[0])
+        naAppendKV(out, outSize, "-elf=", na->elf);
+    if (na->ata0[0])
+        naAppendKV(out, outSize, "-ata0=", na->ata0);
+    if (na->ata0id[0])
+        naAppendKV(out, outSize, "-ata0id=", na->ata0id);
+    if (na->ata1[0])
+        naAppendKV(out, outSize, "-ata1=", na->ata1);
+    if (na->extra[0]) // extra (may hold "--b ...") goes LAST so the break + ELF args stay at the tail
+        naAppend(out, outSize, na->extra);
 }
 
 int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset)

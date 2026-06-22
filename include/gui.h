@@ -133,6 +133,7 @@ void guiShowUIConfig();
 void guiShowAudioConfig();
 void guiShowControllerConfig();
 void guiShowCoverflowConfig(void);
+void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize);
 void guiShowNetConfig();
 void guiShowDeviceConfig(void);
 void guiShowParentalLockConfig();
