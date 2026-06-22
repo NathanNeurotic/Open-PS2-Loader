@@ -1,0 +1,125 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home · RiptOPL Docs</title>
+<meta name="description" content="RiptOPL — an opinionated Open PS2 Loader fork. Cover-art Coverflow, Favourites, per-game Neutrino, a Device Settings hub, every storage backend (USB/MMCE/MX4SIO/iLink/SMB/HDD-APA/HDD-exFAT/UDPBD), PS1 via POPSTARTER, and a deep theme engine.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html" class="active"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content"><div class="hero">
+<h1>RiptOPL <span class="g">Documentation</span></h1>
+<p class="lead">An opinionated fork of <b>Open PS2 Loader</b> aiming to be the "definitive build" — a cover-art
+<b>Coverflow</b> menu by default, a <b>Favourites</b> tab, per-game <b>Neutrino</b> external-core launching, a
+consolidated <b>Device Settings</b> hub, PS1 support via POPSTARTER, and every storage backend the PS2 can reach.</p>
+<div class="btn-row">
+  <a class="btn" href="getting-started.html">🚀 New here? Launch your first game</a>
+  <a class="btn ghost" href="#sections">Browse the full reference</a>
+</div>
+<div class="stat-row"><div class="stat"><b>8</b><span>storage backends</span></div><div class="stat"><b>31</b><span>UI languages</span></div><div class="stat"><b>2</b><span>loader cores (OPL + Neutrino)</span></div><div class="stat"><b>PS1+PS2</b><span>game support</span></div></div>
+</div>
+
+<div class="callout info"><div class="h">ℹ New to OPL? Read this first</div>Open PS2 Loader (OPL) is a 100% open-source
+game/app loader for the PS2 and backward-compatible PS3. <b>RiptOPL</b> is a downstream fork with opinionated
+defaults and extra features layered on top. Its settings live in their own <code>settings_riptopl.cfg</code> so it
+never collides with stock OPL or wOPL on the same memory card — while artwork, themes, VMCs and <b>favourites stay
+shared</b>. The <a href="getting-started.html"><b>Getting Started</b></a> guide walks you through your first game;
+the sections below are the deep reference. For the canonical project, see
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</div>
+
+<h2 id="additions">What RiptOPL adds on top of OPL</h2>
+<ul class="checklist">
+<li><b>Coverflow theme (default)</b> — a centered cover-art carousel with reflection, animated scrolling, a
+configurable cover count, and aspect-correct covers in 4:3 and widescreen. Tunable live under <b>Coverflow Settings</b>.</li>
+<li><b>Favourites tab</b> — press <b>R3</b> to star any game; a virtual Favourites page gathers starred games from
+every device. Imports an existing uOPL / wOPL <code>favourites.bin</code>.</li>
+<li><b>Neutrino external core (per-game)</b> — hand a game to an external <code>neutrino.elf</code> instead of OPL's
+built-in core, with a <b>Device</b> picker and a structured <b>Launch Args</b> screen.</li>
+<li><b>Network boot</b> — stream games from a PC over the LAN as their own list via <b>UDPBD</b> or <b>UDPFS</b> (Neutrino).</li>
+<li><b>PS1 games via POPSTARTER</b> — a per-device <b>L3</b> "VCD" view lists your PS1 <code>*.VCD</code> games, including
+from an <b>exFAT</b> drive (BDMAssault) and the internal HDD.</li>
+<li><b>Device Settings hub</b> — one page for per-device options, cache sizes, Block-Device (BDM) settings, all MMCE
+settings, network-boot controls, and the Favourites toggle.</li>
+<li><b>Ready-to-use defaults</b> — widescreen, cover art, notifications, sound + boot sound, USB and the PS2 logo are
+on out of the box; DualSense/DualShock 5 (USB) is an optional build.</li>
+</ul>
+
+<h2 id="sections">Full reference</h2>
+<p class="lead">Jump straight in, or use the search box up top to find any device, setting, or theme key instantly.</p>
+<div class="grid">
+<a class="tile" href="getting-started.html"><span class="em">🚀</span><b>Getting Started</b><span>First game, end-to-end</span></a>
+<a class="tile" href="usb.html"><span class="em">🔌</span><b>USB / MX4SIO / iLink</b><span>FAT32 &amp; exFAT mass devices</span></a>
+<a class="tile" href="mmce.html"><span class="em">🧩</span><b>MMCE</b><span>SD2PSX / MemCard PRO2</span></a>
+<a class="tile" href="smb.html"><span class="em">🌐</span><b>SMB</b><span>Network share</span></a>
+<a class="tile" href="hdd.html"><span class="em">💽</span><b>Internal HDD</b><span>APA/PFS &amp; exFAT (BDMA)</span></a>
+<a class="tile" href="network-boot.html"><span class="em">📡</span><b>Network Boot</b><span>UDPBD &amp; UDPFS</span></a>
+<a class="tile" href="ps1-vcd.html"><span class="em">💿</span><b>PS1 Games</b><span>VCD view + POPSTARTER</span></a>
+<a class="tile" href="neutrino.html"><span class="em">⚛️</span><b>Neutrino Core</b><span>Device + Args pickers</span></a>
+<a class="tile" href="coverflow.html"><span class="em">🎴</span><b>Coverflow</b><span>The default theme</span></a>
+<a class="tile" href="favourites.html"><span class="em">⭐</span><b>Favourites</b><span>R3 to star</span></a>
+<a class="tile" href="themes.html"><span class="em">🎨</span><b>Theme Engine</b><span>Author your own themes</span></a>
+<a class="tile" href="settings.html"><span class="em">🔧</span><b>Settings Reference</b><span>Every menu &amp; option</span></a>
+</div>
+
+<details class="deep"><summary>What's the difference between OPL, RiptOPL, and wOPL?</summary>
+<p><b>Open PS2 Loader (OPL)</b> is the canonical, community-maintained loader at
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>. <b>wOPL</b> (KrahJohlito) and
+<b>uOPL</b> (Wolf3s) are forks where much of the modern Coverflow / Favourites / Neutrino work originated. <b>RiptOPL</b>
+is a downstream "agglomeration" fork that brings those features together with opinionated defaults and additional device
+support, while staying compatible with stock OPL on the same memory card (separate <code>settings_riptopl.cfg</code>,
+shared art/themes/VMC/favourites). It is a labor of love, <b>not</b> a replacement for upstream — please support the
+canonical project.</p></details>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family (rickgaiser, neutrino, sOPL,
+  uOPL, wOPL, POPSLoader, and many others — see <a href="credits.html">Credits &amp; Sources</a>).</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project — that lives at
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

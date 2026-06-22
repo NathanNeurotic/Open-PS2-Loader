@@ -1,0 +1,247 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>USB / MX4SIO / iLink · RiptOPL Docs</title>
+<meta name="description" content="FAT32/exFAT mass devices: USB, MX4SIO SD, and iLink.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html" class="active"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>USB / MX4SIO / iLink</h1>
+<p class="lead">USB mass storage, MX4SIO SD cards (via memory-card slot adapter), and iLink (SBP2 over IEEE 1394)
+are OPL's three <b>BDM mass-device transports</b>. They share the same filesystem rules, folder layout, and
+Device Settings controls — all three mount into the <code>massN:</code> namespace and are handled by the
+Block Device Manager (BDM).</p>
+
+<div class="callout info"><div class="h">i USB is on by default</div>
+RiptOPL ships with <b>USB enabled</b> out of the box. iLink and MX4SIO are off by default; turn them on
+individually in <b>Device Settings</b> once you have the hardware connected.</div>
+
+<h2 id="hardware">The three transports</h2>
+
+<h3>USB</h3>
+<p>Standard USB mass storage (the <code>usb</code> BDM driver). Any USB 1.1-compatible flash drive or hard
+drive works. The PS2's USB controller is USB 1.1 — real-world throughput is roughly 3–4 MB/s, which is enough
+for DVD-speed game streaming. High-speed USB 2.0 drives are compatible and will simply run at 1.1 speeds.</p>
+<p>Enable toggle in Device Settings: <b>USB → On/Off</b>.</p>
+
+<h3>MX4SIO</h3>
+<p>The MX4SIO adapter plugs into the memory-card slot (SIO2 bus) and accepts a standard SD or microSD card.
+OPL registers it under the <code>sdc</code> / <code>mx4sio</code> BDM driver name. From OPL's perspective
+the card behaves identically to a USB drive — same folder layout, same filesystem requirements, same per-game
+settings — but it connects through the memory-card port rather than USB.</p>
+<p>Enable toggle in Device Settings: <b>MX4SIO → On/Off</b>.</p>
+
+<div class="callout info"><div class="h">i MX4SIO and MMCE are different</div>
+MX4SIO mounts the SD card directly as a FAT32/exFAT block device (games in <code>DVD/</code> and
+<code>CD/</code> folders). MMCE (SD2PSX, MemCard PRO2) emulates a memory card and also carries an OPL game
+volume — they use different IOP drivers and separate enable toggles. See <a href="mmce.html">MMCE</a>.</div>
+
+<h3>iLink (IEEE 1394 / FireWire)</h3>
+<p>iLink uses the SBP-2 protocol over the PS2's IEEE 1394 (FireWire) port. The BDM driver names for iLink
+devices are <code>sd</code> / <code>ilink</code>. Supported storage includes SBP-2 compliant hard drives and
+enclosures. This interface is only present on fat PS2 models that include the iLink port; slim PS2
+models do not have an iLink port.</p>
+<p>Enable toggle in Device Settings: <b>iLink → On/Off</b>.</p>
+
+<h2 id="filesystems">Supported filesystems</h2>
+<p>All three transports support <b>FAT32</b> and <b>exFAT</b>, both on an <b>MBR</b> partition table. GPT
+is not supported for BDM mass devices (GPT <em>is</em> supported for the exFAT internal HDD — see
+<a href="hdd.html">Internal HDD</a>).</p>
+
+<table data-sortable>
+<thead><tr><th>Filesystem</th><th>Max file size</th><th>Max volume size</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>FAT32</td><td>4 GB − 1 byte</td><td>~2 TB</td><td>Games &gt;4 GB require USBExtreme (.ul) split format</td></tr>
+<tr><td>exFAT</td><td>Unlimited</td><td>Unlimited</td><td>Available since OPL v1.2.0 beta rev1880; MBR partition table</td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">i exFAT allocation unit size</div>
+When formatting a drive as exFAT, leave <b>Allocation unit size</b> at the <b>Default</b> value in your
+format tool. Choosing a non-default cluster size can cause compatibility issues.</div>
+
+<h2 id="folder-layout">Folder layout</h2>
+<p>OPL expects the following directory structure at the root of the drive (or inside the optional
+<a href="#prefix">BDM Prefix</a> subfolder). OPL creates these folders automatically the first time it runs
+with the device enabled.</p>
+
+<pre>
+DVD/        PS2 DVD5/DVD9 ISO and ZSO images (also supports &gt;4 GB on exFAT)
+CD/         PS2 CD-ROM ISO images (blue-bottom discs)
+POPS/       PS1 VCD game images (*.VCD) — listed under the L3 VCD view
+CFG/        Per-game configuration files
+ART/        Cover art images
+VMC/        Virtual Memory Card images
+THM/        Theme assets
+LNG/        Language files
+CHT/        PS2RD cheat files (.cht)
+APPS/       Homebrew ELF files
+</pre>
+
+<div class="callout info"><div class="h">i PS1 games on USB / MX4SIO / iLink</div>
+Put your <code>*.VCD</code> files in the <code>POPS/</code> folder. Press <b>L3</b> on the device's game page
+to toggle the VCD (PS1) view. See <a href="ps1-vcd.html">PS1 Games (VCD)</a> for the full setup — you will
+also need POPSTARTER on the same device.</div>
+
+<h2 id="fragmentation">Fragmentation</h2>
+<p>OPL's BDM driver supports <b>up to 64 fragments</b> per file (since OPL v1.2.0 beta rev1893). Games with
+more than 64 fragments will fail to load. Normal use rarely exceeds this limit, but drives that have been
+filled incrementally over a long time — especially FAT32 drives — can accumulate heavy fragmentation.</p>
+
+<p>The recommended fix is simple and permanent:</p>
+<div class="steps">
+  <div class="step"><h3>Copy files off</h3>
+  <p>Copy all game files and OPL folders from the drive to a folder on your PC.</p></div>
+  <div class="step"><h3>Format the drive</h3>
+  <p>Format the drive fresh (FAT32 or exFAT, MBR, default allocation unit size). Do not use a third-party
+  defragmenter — they rearrange data on-disk but the PS2's IOP driver works at the block level and the
+  results are unpredictable.</p></div>
+  <div class="step"><h3>Copy files back in order</h3>
+  <p>Copy your game files back one at a time, or in one sequential batch, rather than in parallel. Copying
+  files sequentially ensures each file is laid down contiguously. You only need to redo this when
+  fragmentation becomes a problem again.</p></div>
+</div>
+
+<h2 id="usbextreme">USBExtreme format (.ul) for FAT32 and large games</h2>
+<p>FAT32 limits individual files to just under 4 GB. DVD9 games (dual-layer discs) are commonly 6–8 GB —
+larger than FAT32 can hold in a single file. The USBExtreme (also called USB Advance) format splits these
+games across multiple files named with a <code>.ul</code>-style scheme and an index file.</p>
+
+<p>OPL reads both plain <code>.ISO</code> files and USBExtreme split sets from the <code>DVD/</code> folder.
+If your drive is formatted exFAT you can use plain <code>.ISO</code> or <code>.ZSO</code> files for
+all games regardless of size. If your drive is FAT32, use USBExtreme for any game over ~4 GB.</p>
+
+<ul class="checklist">
+  <li>Use <b>OPLUtil</b> or <b>USBUtil</b> on PC to split an ISO into USBExtreme format.</li>
+  <li>The split files and their index belong in the <code>DVD/</code> folder.</li>
+  <li>OPL detects USBExtreme sets automatically — no extra setting needed.</li>
+  <li>ZSO (compressed ISO) is also supported on both FAT32 and exFAT. See <a href="zso.html">ZSO Format</a>.</li>
+</ul>
+
+<h2 id="device-settings">Enabling devices in Device Settings</h2>
+<p>Open <b>Device Settings</b> (from the main OPL menu). The relevant controls for this page are:</p>
+
+<table data-sortable>
+<thead><tr><th>Setting</th><th>What it does</th><th>Default</th></tr></thead>
+<tbody>
+<tr><td><b>BDM Start Mode</b></td><td>Off / Manual / Auto — controls when OPL scans for mass devices</td><td>Manual</td></tr>
+<tr><td><b>USB</b></td><td>Enable/disable the USB mass storage driver</td><td>On</td></tr>
+<tr><td><b>iLink</b></td><td>Enable/disable the IEEE 1394 SBP-2 driver</td><td>Off</td></tr>
+<tr><td><b>MX4SIO</b></td><td>Enable/disable the MX4SIO SD driver</td><td>Off</td></tr>
+<tr><td><b>BDM Cache</b></td><td>Read-ahead cache size in sectors (0–32, default 16)</td><td>16</td></tr>
+<tr><td><b>BDM Prefix</b></td><td>Optional subfolder inside the drive root where OPL looks for its folders</td><td>(empty)</td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">i Start Mode: Manual vs Auto</div>
+<b>Manual</b> (the default) means OPL loads the BDM driver at boot but does not show the game list until
+you navigate to it — the device is scanned on demand. <b>Auto</b> scans immediately on boot. <b>Off</b>
+skips the driver entirely; use this if you have no mass devices attached and want the fastest possible boot.</div>
+
+<h2 id="prefix">BDM Prefix</h2>
+<p>The <b>BDM Prefix</b> field lets you store your OPL folder tree inside a subfolder of the drive rather
+than at the drive root. For example, setting the prefix to <code>OPL</code> tells RiptOPL to look for
+<code>DVD/</code>, <code>CD/</code>, <code>CFG/</code>, etc. inside <code>mass0:/OPL/</code> rather than
+directly at <code>mass0:/</code>.</p>
+
+<p>The same prefix applies to all BDM mass devices (USB, MX4SIO, iLink, exFAT HDD). Leave it empty to use
+the drive root, which is the most common setup.</p>
+
+<h2 id="multiple-devices">Multiple devices at once</h2>
+<p>OPL can enumerate up to 8 BDM slots (<code>mass0:</code> through <code>mass7:</code>). Each connected
+device occupies one slot. If you have a USB drive in <code>mass0:</code> and an MX4SIO card in
+<code>mass1:</code>, both appear as separate game lists (with the slot number shown in the tab label). You
+do not need to configure them separately — one <b>BDM Mode</b> and one <b>BDM Prefix</b> applies to all
+slots.</p>
+
+<h2 id="troubleshooting">Common issues</h2>
+
+<details class="deep"><summary>Drive is not detected / game list is empty</summary>
+<ul>
+  <li>Confirm the correct transport is enabled in <b>Device Settings</b> (USB / iLink / MX4SIO).</li>
+  <li>Check that <b>BDM Mode</b> is not set to <b>Disabled</b>.</li>
+  <li>Make sure the drive uses an <b>MBR</b> partition table (not GPT) and is formatted FAT32 or exFAT.</li>
+  <li>Verify the folder structure — games must be in <code>DVD/</code> or <code>CD/</code> (case-sensitive).
+  If you set a BDM Prefix, games must be under that subfolder.</li>
+  <li>Try re-seating the drive or adapter, then return to the game list and press <b>Triangle → Refresh</b>.</li>
+</ul>
+</details>
+
+<details class="deep"><summary>Game freezes or fails to load (fragmentation)</summary>
+<p>The 64-fragment limit is the most common cause of load failures on FAT32 drives that have been filled
+over time. Copy all files to PC, format the drive, and copy them back sequentially. See
+<a href="#fragmentation">Fragmentation</a> above.</p>
+</details>
+
+<details class="deep"><summary>FAT32 drive cannot hold a large game</summary>
+<p>DVD9 games over ~4 GB cannot be stored as a single ISO on FAT32. Use USBExtreme format (split via
+OPLUtil / USBUtil) or reformat the drive as exFAT and use plain ISO files.</p>
+</details>
+
+<details class="deep"><summary>MX4SIO not detected</summary>
+<p>MX4SIO uses the memory-card port. Make sure <b>MX4SIO</b> is enabled in Device Settings. Note that
+MX4SIO and a physical memory card (or MMCE device) cannot share the same slot simultaneously.</p>
+</details>
+
+<details class="deep"><summary>iLink not detected</summary>
+<p>iLink is only available on larger PS2 models. Slim PS2 (PS2 Slim / 7000x and later) do not have the
+iLink port. If your model has the port, make sure <b>iLink</b> is enabled in Device Settings and the drive
+is SBP-2 compliant.</p>
+</details>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

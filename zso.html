@@ -1,0 +1,187 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ZSO Format · RiptOPL Docs</title>
+<meta name="description" content="Compressed ISO (ZSO): create, use, and detect.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html" class="active"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>ZSO Format</h1>
+<p class="lead">ZSO is a compressed variant of the standard ISO disc image. OPL decompresses each sector
+on the fly using LZ4, so the PS2 sees a normal disc — but your storage device holds a smaller file.
+Support was added in OPL 1.2.0 and works across all storage backends that use OPL's built-in core.</p>
+
+<div class="callout info"><div class="h">ℹ Neutrino does not support ZSO</div>
+If a game is configured to launch via the <a href="neutrino.html">Neutrino core</a> but its image is a
+<code>.zso</code> file, OPL shows an on-screen warning. For most backends (USB, MX4SIO, iLink, MMCE,
+SMB, and the internal HDD) it then falls back to its own built-in core and the game still launches —
+just via the OPL core instead of Neutrino. <b>Exception:</b> for games sourced from <a href="network-boot.html">UDPBD or UDPFS</a>
+the launch is aborted entirely rather than falling back, because those network transports have no
+built-in OPL core — Neutrino is their only launch path. To use Neutrino for a game on any backend you
+must first decompress the image back to <code>.iso</code> (see below).
+</div>
+
+<h2 id="requirements">Requirements</h2>
+<p>ZSO conversion is done on your PC before copying files to the PS2's storage device. You need:</p>
+<ul class="checklist">
+  <li><b>Python 3</b> — any recent 3.x release.</li>
+  <li><b>lz4 Python library</b> — install once with <code>pip install lz4</code>.</li>
+  <li><b>ziso.py</b> — included in the <code>pc/</code> folder of the OPL source repository.</li>
+</ul>
+
+<h2 id="compress">Compressing an ISO to ZSO</h2>
+<p>Pass <code>-c 2</code> to compress. The <code>2</code> selects high-compression mode (LZ4 HC), which
+gives the best ratio. Values 1–12 all compress; values above 1 use LZ4 high-compression. Compression
+level 1 uses standard LZ4 (faster, slightly larger output).</p>
+
+<pre>python ziso.py -c 2 "input.iso" "output.zso"</pre>
+
+<p>The script prints a running percentage and a final summary showing the compressed size and
+compression ratio. Blocks that do not compress well (within 5% of the original size) are stored
+uncompressed inside the ZSO file automatically — no manual tuning needed.</p>
+
+<h3>Optional flags</h3>
+<table data-sortable>
+  <thead><tr><th>Flag</th><th>Default</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td><code>-c &lt;1–12&gt;</code></td><td>required</td><td>Compression level. 1 = standard LZ4, 2–12 = LZ4 high-compression.</td></tr>
+    <tr><td><code>-c 0</code></td><td>—</td><td>Decompress a ZSO back to ISO.</td></tr>
+    <tr><td><code>-b &lt;size&gt;</code></td><td>2048</td><td>Block size in bytes. Must be a multiple of 2048. Default matches a CD/DVD sector.</td></tr>
+    <tr><td><code>-m</code></td><td>off</td><td>Enable multiprocessing — uses all CPU cores; significantly faster on large ISOs.</td></tr>
+    <tr><td><code>-t &lt;percent&gt;</code></td><td>95</td><td>Compression threshold. If a compressed block is larger than this percentage of the original, it is stored uncompressed.</td></tr>
+    <tr><td><code>-a &lt;align&gt;</code></td><td>0</td><td>Padding alignment. 0 = smallest output (slower seek). 6 = faster random access (slightly larger file).</td></tr>
+    <tr><td><code>-h</code></td><td>—</td><td>Print usage help.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="decompress">Decompressing a ZSO back to ISO</h2>
+<p>Pass <code>-c 0</code> to decompress. This is the only way to use the image with Neutrino or any
+other tool that does not understand the ZSO container.</p>
+
+<pre>python ziso.py -c 0 "input.zso" "output.iso"</pre>
+
+<h2 id="using-zso">Using ZSO files on your PS2</h2>
+
+<h3>USB, MMCE, MX4SIO, iLink, and SMB</h3>
+<p>Place the <code>.zso</code> file in the same folder as your ISOs — OPL scans for both
+<code>.iso</code> and <code>.zso</code> extensions in the same directory sweep. No extra
+configuration is required; OPL detects the ZSO magic header at launch time and initialises the
+LZ4 decompressor automatically.</p>
+
+<div class="callout info"><div class="h">ℹ File naming</div>
+ZSO files follow the same naming conventions as ISO files. A game named
+<code>SLES_123.45.GameTitle.zso</code> (OPL legacy GameID format) or a free-form name ending in
+<code>.zso</code> are both recognised. The extension comparison is case-insensitive, so
+<code>.ZSO</code> and <code>.zso</code> are treated identically by the file scanner.
+</div>
+
+<h3>Internal HDD (APA)</h3>
+<p>Use the latest version of <a href="https://github.com/APA-OPL/hdl-dump" target="_blank" rel="noopener">HDL-Dump</a>
+to install a ZSO image to the internal HDD in the same way you would install a plain ISO. The APA
+partition will contain the compressed data; OPL reads the ZSO magic from the partition header and
+initialises the decompressor before any sector reads.</p>
+
+<h3>Internal HDD (exFAT / BDM)</h3>
+<p>Copy the <code>.zso</code> file to the mass storage area of the exFAT drive exactly as you would
+a plain ISO. OPL's BDM path scans for <code>.iso</code> and <code>.zso</code> together.</p>
+
+<h2 id="neutrino-limitation">Neutrino and ZSO</h2>
+<p>The Neutrino external core does not implement ZSO decompression. When a game is set to use
+Neutrino in per-game settings and the image is a <code>.zso</code> file, OPL detects this before
+launch and:</p>
+<ul class="checklist">
+  <li>Displays a brief on-screen warning.</li>
+  <li>For USB, MX4SIO, iLink, MMCE, SMB, and the internal HDD: overrides the core selection back to the built-in OPL core for that launch.</li>
+  <li>Launches the game normally using OPL — <b>except</b> for <a href="network-boot.html">UDPBD/UDPFS</a> games, where the launch is cancelled instead, since those transports have no built-in OPL core to fall back to.</li>
+</ul>
+<p>The per-game Neutrino setting is not permanently changed — it will still show as enabled next
+time you open per-game settings. To use Neutrino for the game permanently, decompress the image
+to ISO first (see <a href="#decompress">above</a>), then copy the <code>.iso</code> in place of
+the <code>.zso</code>.</p>
+<p>The same fallback applies on the <a href="hdd.html">internal HDD</a>: a ZSO partition that has
+Neutrino selected will fall back to OPL with a warning.</p>
+
+<h2 id="quick-reference">Quick reference</h2>
+<table data-sortable>
+  <thead><tr><th>Task</th><th>Command</th></tr></thead>
+  <tbody>
+    <tr><td>Install dependency</td><td><code>pip install lz4</code></td></tr>
+    <tr><td>Compress ISO → ZSO</td><td><code>python ziso.py -c 2 game.iso game.zso</code></td></tr>
+    <tr><td>Compress, multicore</td><td><code>python ziso.py -c 2 -m game.iso game.zso</code></td></tr>
+    <tr><td>Decompress ZSO → ISO</td><td><code>python ziso.py -c 0 game.zso game.iso</code></td></tr>
+    <tr><td>HDD install</td><td>Use HDL-Dump (same as ISO)</td></tr>
+  </tbody>
+</table>
+
+<details class="deep"><summary>How does the on-the-fly decompression work?</summary>
+<p>A ZSO file starts with a 24-byte header (magic <code>ZISO</code>, total uncompressed size,
+block size, version, and alignment). Following the header is an index table — one 32-bit entry
+per 2048-byte sector — that stores the file offset of each compressed block. The MSB of each
+index entry is a "plain" flag: when set, that block is stored uncompressed (it did not meet the
+compression threshold).</p>
+<p>OPL's IOP-side ZSO module reads the header and index table at mount time. On every sector
+read request from cdvdman, it looks up the block offset in the index, reads the compressed bytes,
+and decompresses them with LZ4 into a per-sector buffer before handing the data to the EE.
+Because LZ4 decompression is fast, the impact on load times is typically small — and the smaller
+file size can reduce seek times on slower devices, partially offsetting the decompression cost.</p>
+<p>For images larger than 2 GB, the script automatically sets the alignment field so that block
+offsets shifted by the alignment value still fit in the 31-bit non-flag portion of each index
+entry.</p>
+</details>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

@@ -1,0 +1,211 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Getting Started · RiptOPL Docs</title>
+<meta name="description" content="Launch your first PS2 game with RiptOPL, end to end.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html" class="active"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Getting Started</h1>
+<p class="lead">From nothing to your first game running — pick a storage device, place your files, enable the device, and launch. The whole process takes about ten minutes.</p>
+
+<div class="callout info"><div class="h">ℹ Already installed RiptOPL?</div>
+If <code>RIPTOPL.ELF</code> is already on your PS2 and booting, skip ahead to
+<a href="#pick-a-device">Pick a device</a>. If you still need to get the ELF onto your console, start with
+<a href="install.html">Install &amp; First Boot</a> first.</div>
+
+<h2 id="what-you-need">What you need</h2>
+
+<ul class="checklist">
+  <li>A PlayStation 2 (any model) or a backward-compatible PlayStation 3.</li>
+  <li>A way to launch homebrew ELFs — Free McBoot (FMCB), Free HD Boot (FHDB), a modchip, or equivalent.</li>
+  <li>At least one storage option: USB drive, MMCE / MX4SIO SD card, iLink storage, SMB network share, or an internal HDD.</li>
+  <li>A RiptOPL build — download <code>RIPTOPL.ELF</code> from the <a href="releases.html">Releases</a> page. Use a tagged <code>v*</code> release for stability, or the <code>rolling</code> pre-release for the latest features.</li>
+  <li>At least one PS2 game image in ISO or ZSO format.</li>
+</ul>
+
+<details class="deep"><summary>Which release should I download?</summary>
+<p>The <b>rolling</b> pre-release is rebuilt from <code>master</code> on every push and always includes the bundled Neutrino core. It may occasionally be unstable. Tagged <b>v*</b> releases are manually cut, known-good snapshots. Either way, the full installable package zip (<code>RIPTOPL-&lt;sdk&gt;-&lt;rel&gt;-&lt;sha&gt;.zip</code>) contains the ELF, the bundled Neutrino archive, and a language pack — download the zip rather than a bare ELF if you intend to use Neutrino or per-game language overrides. See <a href="releases.html">Releases</a> for details.</p>
+</details>
+
+<h2 id="pick-a-device">Pick a device</h2>
+
+<p>RiptOPL supports eight storage backends. Choose whichever matches your hardware:</p>
+
+<table data-sortable>
+<thead><tr><th>Device</th><th>What it needs</th><th>Where to go next</th></tr></thead>
+<tbody>
+<tr><td><b>USB</b></td><td>USB drive formatted FAT32 or exFAT, plugged into the PS2's USB port</td><td><a href="usb.html">USB / MX4SIO / iLink</a></td></tr>
+<tr><td><b>MX4SIO</b></td><td>MX4SIO adapter + SD card in the memory-card slot (FAT32 or exFAT)</td><td><a href="usb.html">USB / MX4SIO / iLink</a></td></tr>
+<tr><td><b>MMCE</b></td><td>SD2PSX, MemCard PRO2, or compatible MMCE device in the memory-card slot</td><td><a href="mmce.html">MMCE</a></td></tr>
+<tr><td><b>iLink</b></td><td>IEEE 1394 (FireWire) SBP2 storage device</td><td><a href="usb.html">USB / MX4SIO / iLink</a></td></tr>
+<tr><td><b>SMB</b></td><td>A network share on a PC or NAS (SMBv1); PS2 needs a network adapter</td><td><a href="smb.html">SMB</a></td></tr>
+<tr><td><b>Internal HDD (APA)</b></td><td>Internal ATA HDD formatted with APA/PFS — classic PS2 HDD setup</td><td><a href="hdd.html">Internal HDD</a></td></tr>
+<tr><td><b>Internal HDD (exFAT)</b></td><td>Internal ATA HDD formatted exFAT — BDM path, same folder layout as USB</td><td><a href="hdd.html">Internal HDD</a></td></tr>
+<tr><td><b>Network boot (UDPBD / UDPFS)</b></td><td>PS2 network adapter + a PC running the server; requires Neutrino</td><td><a href="network-boot.html">Network Boot</a></td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">ℹ Simplest first-time choice</div>
+A USB drive is the fastest path to a first working game. Format it FAT32 (or exFAT for drives over 32 GB), plug it in, and follow the steps below.</div>
+
+<h2 id="folder-structure">The OPL folder structure</h2>
+
+<p>All folder-based devices — USB, MX4SIO, MMCE, iLink, SMB, and an exFAT HDD — share the same directory layout under a root <code>OPL/</code> folder (or at the root of the device, depending on your setup). <b>RiptOPL creates these folders automatically</b> the first time it boots and you enable a device — you do not need to create them by hand.</p>
+
+<pre>
+DVD/        PS2 DVD games (ISO, ZSO, or USBExtreme ul.* split files)
+CD/         PS2 CD games (ISO, ZSO — blue-bottom discs)
+ART/        Cover art images (game-id_COV.png, game-id_ICO.png, etc.)
+CFG/        Per-game configuration files (saved by OPL automatically)
+VMC/        Virtual Memory Card images (8 MB – 64 MB .bin files)
+THM/        Theme folders
+LNG/        Translation files
+CHT/        PS2RD cheat files (.cht)
+IMG/         PS2RD prebuilt cheat image files (game-id.img)
+APPS/       Homebrew ELF applications
+</pre>
+
+<div class="callout info"><div class="h">ℹ APA/PFS HDD is different</div>
+An APA-formatted internal HDD stores games as HDLoader partitions, <b>not</b> as files in <code>DVD/</code> or <code>CD/</code>. The <code>CFG/</code>, <code>ART/</code>, <code>VMC/</code>, <code>THM/</code>, <code>CHT/</code>, <code>LNG/</code>, and <code>APPS/</code> folders still apply, but they live under <code>hdd0:__common/OPL/</code>. See <a href="hdd.html">Internal HDD</a> for the full workflow.</div>
+
+<h3>Supported game image formats</h3>
+<ul class="checklist">
+  <li><b>ISO</b> — standard disc image. Works on all devices. Games over 4 GB require exFAT (FAT32 has a 4 GB file size limit).</li>
+  <li><b>ZSO</b> — compressed ISO. Saves space; transparent to OPL at launch. See <a href="zso.html">ZSO Format</a>.</li>
+  <li><b>USBExtreme / ul.*</b> — split multi-file format used to store games larger than 4 GB on FAT32 drives. Handled automatically by OPL; no special steps at launch time.</li>
+  <li><b>HDLoader partitions</b> — APA/PFS HDD only; installed with hdl-dump or OPL's NBD server.</li>
+</ul>
+
+<h2 id="walk-through">Walk-through: USB to first launch</h2>
+
+<p>These steps use USB as the example — the pattern is identical for every folder-based device.</p>
+
+<div class="steps">
+
+<div class="step">
+<h3>1. Prepare the drive</h3>
+<p>Format your USB drive as <b>FAT32</b> (for drives up to 32 GB) or <b>exFAT</b> (larger drives or games over 4 GB). Use the default allocation unit size when formatting exFAT. Create a <code>DVD</code> folder at the root of the drive (or let OPL create it on first boot), then copy your game ISO into it:</p>
+<pre>
+USB root
+└── DVD/
+    └── My Game Title.iso
+</pre>
+<p>For games larger than 4 GB on a FAT32 drive, use USBExtreme / USBUtil to split them into <code>ul.*</code> files in <code>DVD/</code> instead. On exFAT you can use a plain ISO regardless of size.</p>
+</div>
+
+<div class="step">
+<h3>2. Plug in and boot RiptOPL</h3>
+<p>Connect the USB drive to the PS2's USB port, then launch <code>RIPTOPL.ELF</code> from your homebrew launcher (FMCB, FHDB, or equivalent). RiptOPL boots directly into the <b>Coverflow</b> game list. The first boot also creates any missing OPL folders on the drive automatically.</p>
+</div>
+
+<div class="step">
+<h3>3. Enable USB in Device Settings</h3>
+<p>RiptOPL ships with USB enabled by default. If your game list is empty, confirm USB is on:</p>
+<ol>
+  <li>Press <b>Start</b> to open the main menu.</li>
+  <li>Navigate to <b>Device Settings</b>.</li>
+  <li>Ensure <b>USB Games</b> is set to <b>On</b>.</li>
+  <li>Press <b>Cross</b> to confirm and return (on Japanese consoles, Circle confirms — the confirm button follows the console's regional convention).</li>
+</ol>
+<p>The game list refreshes and your title should now appear in the Coverflow carousel.</p>
+</div>
+
+<div class="step">
+<h3>4. Launch a test game</h3>
+<p>Scroll to your game in the Coverflow list (left / right on the D-pad or left stick), then press <b>Cross</b> to launch it. OPL loads the game using its built-in OPL core by default. If the game boots successfully, you are done.</p>
+<p>If the game freezes or does not boot, open <b>Game Settings</b> for that title (highlight it, press <b>Triangle</b>) and try enabling compatibility modes one at a time. See <a href="per-game-settings.html">Per-game Settings</a> for a full explanation of the compatibility flags.</p>
+</div>
+
+<div class="step">
+<h3>5. Save your settings</h3>
+<p>After a successful launch, go back to the main menu (press <b>Start</b>) and choose <b>Save Changes</b>. This writes <code>settings_riptopl.cfg</code> to your storage device so RiptOPL remembers your configuration on every subsequent boot.</p>
+<div class="callout info"><div class="h">ℹ Where the config file lives</div>
+RiptOPL saves its master config as <code>settings_riptopl.cfg</code> — distinct from upstream OPL's <code>conf_opl.cfg</code>. Both builds can share the same memory card or storage device without overwriting each other's settings. Art, themes, VMCs, per-game configs, and favourites in the shared <code>OPL/</code> folders are visible to all OPL builds.</div>
+</div>
+
+</div>
+
+<h2 id="next-steps">Where to go next</h2>
+
+<p>You have a working game. Here are the most common things to set up next:</p>
+
+<div class="grid">
+  <a class="tile" href="usb.html"><span class="em">🔌</span><b>USB / MX4SIO / iLink</b><span>Filesystem tips, fragmentation, large drives</span></a>
+  <a class="tile" href="mmce.html"><span class="em">🧩</span><b>MMCE</b><span>SD2PSX and MemCard PRO2 setup</span></a>
+  <a class="tile" href="smb.html"><span class="em">🌐</span><b>SMB</b><span>Stream games from a PC share</span></a>
+  <a class="tile" href="hdd.html"><span class="em">💽</span><b>Internal HDD</b><span>APA/PFS and exFAT HDD setup</span></a>
+  <a class="tile" href="network-boot.html"><span class="em">📡</span><b>Network Boot</b><span>UDPBD and UDPFS over LAN</span></a>
+  <a class="tile" href="coverflow.html"><span class="em">🎴</span><b>Coverflow</b><span>Tune the default cover-art theme</span></a>
+  <a class="tile" href="per-game-settings.html"><span class="em">🎚️</span><b>Per-game Settings</b><span>Compat modes, Neutrino, VMC, cheats</span></a>
+  <a class="tile" href="ps1-vcd.html"><span class="em">💿</span><b>PS1 Games</b><span>POPSTARTER VCD setup</span></a>
+</div>
+
+<details class="deep"><summary>Can I use RiptOPL alongside stock OPL or wOPL on the same memory card?</summary>
+<p>Yes. RiptOPL saves its master config as <b><code>settings_riptopl.cfg</code></b> — not <code>conf_opl.cfg</code> — so the two builds never overwrite each other's settings. Everything else in the shared <code>OPL/</code> folder (artwork, themes, VMCs, per-game configs in <code>CFG/</code>, and <code>favourites.bin</code>) is shared between all OPL-family builds. RiptOPL will also auto-import an existing uOPL / wOPL <code>favourites.bin</code> on first run.</p>
+</details>
+
+<details class="deep"><summary>Do I need Neutrino to play games?</summary>
+<p>No. RiptOPL ships with OPL's built-in core, which handles the vast majority of PS2 games without any extra setup. Neutrino is an optional external core you can assign per game for titles that benefit from it — for example, those that need its compatibility modes or network-boot features (UDPBD / UDPFS). See <a href="neutrino.html">Neutrino Core</a> for details. Neutrino is bundled inside the release zip and does not need to be downloaded separately.</p>
+</details>
+
+<details class="deep"><summary>My game list is empty after enabling a device. What do I check?</summary>
+<p>First confirm the game files are in the correct folder on the device: <code>DVD/</code> for DVD images, <code>CD/</code> for CD images. OPL is <b>case-sensitive</b> — <code>dvd</code> is not the same as <code>DVD</code>. Also check that the image extension is <code>.iso</code> or <code>.zso</code>, and that the drive is plugged in before RiptOPL boots. For FAT32 drives, games over 4 GB must be in USBExtreme format. See <a href="troubleshooting.html">Troubleshooting</a> for further diagnostic steps.</p>
+</details>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

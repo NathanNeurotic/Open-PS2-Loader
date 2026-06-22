@@ -1,0 +1,327 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Settings Reference · RiptOPL Docs</title>
+<meta name="description" content="Every settings menu and option, by screen.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html" class="active"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Settings Reference</h1>
+<p class="lead">Every settings screen in RiptOPL, grouped by menu. The tables list each option exactly as it
+appears in the UI, with its values and a brief description. Options that open a sub-screen are marked
+<b>[sub-screen]</b>. Options that exist only in per-game context are on the
+<a href="per-game-settings.html">Per-game Settings</a> page.</p>
+
+<div class="callout info"><div class="h">i Where settings live</div>All global settings are saved to
+<code>settings_riptopl.cfg</code> in the OPL folder on the memory card (or the device the config was
+loaded from). RiptOPL uses its own file so it never collides with stock OPL or wOPL on the same card.
+Artwork, themes, VMC files and <code>favourites.bin</code> remain shared.</div>
+
+<h2 id="general-settings">General Settings</h2>
+<p>Reached via <b>Settings &rarr; General Settings</b>. Contains launch-path helpers, global Neutrino
+configuration, PS1/BDMA plumbing, and housekeeping options.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Debug Colors</td><td>Off / On</td><td>Draws colored debug overlays on the screen. For developers; leave off in normal use.</td></tr>
+<tr><td>PS2 Logo</td><td>Off / On</td><td>Shows the regional PS2 logo animation before launching a game (only when the disc signature matches the console region).</td></tr>
+<tr><td>IGR Path</td><td>text (path)</td><td>Path to a custom ELF that is loaded instead of returning to the browser on an in-game reset (IGR). Leave blank to return to the browser. Hint: <em>Boots custom ELF after an IGR.</em></td></tr>
+<tr><td>Neutrino Launch Args</td><td>[sub-screen]</td><td>Opens the structured global <a href="neutrino.html">Neutrino Args</a> editor. Flags set here apply to every game that uses the Neutrino core unless overridden per-game. Prefix a flag with <code>$</code> to disable it without deleting it.</td></tr>
+<tr><td>Neutrino Device</td><td>Auto / mc0 / mc1 / mass0&ndash;7 / mmce0 / mmce1</td><td>Which device to scan for <code>neutrino.elf</code>. <em>Auto</em> scans mc0 then mc1. Choose a specific device if your ELF is on USB or MMCE. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
+<tr><td>POPSTARTER.ELF Path</td><td>text (path)</td><td>Custom path to <code>POPSTARTER.ELF</code> (up to 31 characters in the UI; longer paths can be set directly in <code>settings_riptopl.cfg</code>). Blank silently falls back to the device POPS folder. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>BDMA Source</td><td>USB / MX4SIO / MMCE</td><td>Which device holds the BDMAssault driver files (<code>usbd.irx.*</code>, <code>usbhdfsd.irx.*</code>). Only relevant when playing PS1 games from an exFAT drive. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>BDMA Mode</td><td>USB (FAT32) / USB (exFAT) / MX4SIO (exFAT) / MMCE (exFAT) / HDD (exFAT)</td><td>Block-device driver POPSTARTER loads for exFAT media. Changing this copies the appropriate modules to the memory card. FAT32 uses the built-in driver (no copy needed). See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>Write Operations</td><td>Off / On</td><td>Enables write access to storage media. Required for VMC creation and some other write operations. Disable if you want a read-only mode.</td></tr>
+<tr><td>Remember Last Played Game</td><td>Off / On</td><td>Remembers and pre-selects the last launched game on the next boot.</td></tr>
+<tr><td>Auto Start <em>(seconds)</em></td><td>0&ndash;9</td><td>Auto-launches the last played game after the specified number of seconds. Visible only when <em>Remember Last Played Game</em> is on. 0 disables the countdown.</td></tr>
+</tbody>
+</table>
+
+<details class="deep"><summary>Setting the Neutrino ELF path longer than 31 characters</summary>
+<p>The in-UI <em>Neutrino Device</em> picker covers the common locations automatically. If you need a
+fully custom path (e.g. <code>mass0:NEUTRINO/neutrino.elf</code>) you can set the
+<code>neutrino_path</code> key directly in <code>settings_riptopl.cfg</code>. The auto-detect logic in
+<code>sbResolveNeutrinoPath()</code> gives this value priority when the file exists.</p>
+</details>
+
+<h2 id="device-settings">Device Settings</h2>
+<p>Reached via <b>Settings &rarr; Device Settings</b>. A single consolidated hub for every storage device,
+start mode, prefix path, cache size, MMCE configuration, and network-boot options. The screen has four
+visual sections separated by splitters.</p>
+
+<h3 id="device-enable-modes">Device enable &amp; Start Modes</h3>
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Default Menu</td><td>BDM Games / ETH Games / HDD Games / Apps / MMCE</td><td>Which tab is shown first on boot.</td></tr>
+<tr><td>BDM Start Mode</td><td>Off / Manual / Auto</td><td>Block-Device Manager (USB, MX4SIO, iLink) startup mode. <em>Auto</em> starts immediately; <em>Manual</em> waits for you to press Start; <em>Off</em> disables the whole BDM subsystem.</td></tr>
+<tr><td>USB</td><td>Off / On</td><td>Enables the USB mass-storage driver. Disabling frees IOP RAM. See <a href="usb.html">USB / MX4SIO / iLink</a>.</td></tr>
+<tr><td>iLink</td><td>Off / On</td><td>Enables the iLink (IEEE 1394) mass-storage driver.</td></tr>
+<tr><td>MX4SIO</td><td>Off / On</td><td>Enables the MX4SIO SPI adapter driver.</td></tr>
+<tr><td>HDD (GPT/MBR)</td><td>Off / On</td><td>Enables the BDM path for exFAT / GPT / MBR hard-drive access (shows as an HDD Games tab per slot). Mutually exclusive with the APA HDD Start Mode below — enabling one greys the other.</td></tr>
+<tr><td>HDD (APA) Start Mode</td><td>Off / Manual / Auto</td><td>OPL's native APA/PFS HDD mode. Mutually exclusive with HDD (GPT/MBR) above. See <a href="hdd.html">Internal HDD</a>.</td></tr>
+<tr><td>ETH Start Mode</td><td>Off / Manual / Auto</td><td>SMB network share mode. Mutually exclusive with Network Boot below — enabling one greys the other.</td></tr>
+<tr><td>Network Boot</td><td>Off / On</td><td>Enables streaming games over the LAN via UDPBD or UDPFS. Mutually exclusive with ETH Start Mode. Requires a static PS2 IP (DHCP is not supported). See <a href="network-boot.html">Network Boot</a>.</td></tr>
+<tr><td>Net Boot Protocol</td><td>UDPBD / UDPFS</td><td>Selects the transport used when Network Boot is on. <em>UDPBD</em> uses the SUDPBDv2 monolithic driver; <em>UDPFS</em> uses the UDPRDMA smap+ministack+udpfs_bd chain. Greyed out when Network Boot is off. See <a href="network-boot.html">Network Boot</a>.</td></tr>
+<tr><td>Applications Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for the Apps tab.</td></tr>
+<tr><td>Favourites Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for the Favourites tab. Set to <em>Off</em> to hide the Favourites tab entirely. See <a href="favourites.html">Favourites</a>.</td></tr>
+<tr><td>MMCE Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for MMCE (SD2PSX / MemCard PRO2) game loading. See <a href="mmce.html">MMCE</a>.</td></tr>
+</tbody>
+</table>
+
+<h3 id="prefix-paths">Prefix Paths</h3>
+<p>Prefix paths are prepended to game filenames when scanning a device. Useful when games are stored in a
+subfolder rather than the device root.</p>
+<table data-sortable>
+<thead><tr><th>Option</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>BDM Prefix Path</td><td>Subfolder path prepended when listing BDM (USB / MX4SIO / iLink / HDD-exFAT) games. Example: <code>PS2/</code>.</td></tr>
+<tr><td>ETH Prefix Path</td><td>Subfolder path prepended when listing SMB share games.</td></tr>
+<tr><td>MMCE Prefix Path</td><td>Subfolder path prepended when listing MMCE games.</td></tr>
+</tbody>
+</table>
+
+<h3 id="cache-storage">Cache &amp; Storage</h3>
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Automatic HDD Spin Down</td><td>0&ndash;20 (minutes)</td><td>Spins down the internal HDD after this many minutes of inactivity. 0 disables spin-down.</td></tr>
+<tr><td>Cache Game List (HDD)</td><td>Off / On</td><td>Caches the APA/HDD game list to speed up subsequent launches.</td></tr>
+<tr><td>BDM Cache</td><td>0&ndash;32</td><td>Read-ahead cache size in sectors for BDM devices (USB, MX4SIO, iLink, HDD-exFAT). Default 16. Larger values improve streaming but consume more IOP RAM.</td></tr>
+<tr><td>HDD Cache</td><td>0&ndash;32</td><td>Read-ahead cache size for the APA/PFS HDD path. Default 8.</td></tr>
+<tr><td>SMB Cache</td><td>0&ndash;32</td><td>Read-ahead cache size for the SMB/ETH path. Default 16.</td></tr>
+</tbody>
+</table>
+
+<h3 id="mmce-settings">MMCE Settings</h3>
+<p>Settings for SD2PSX / MemCard PRO2 adapters. See <a href="mmce.html">MMCE</a> for full detail.</p>
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>MMCE Slot</td><td>0 / 1 / Auto</td><td>Which memory-card slot the MMCE adapter is in.</td></tr>
+<tr><td>IGR Bootcard Slot(s)</td><td>NONE / 0 / 1 / BOTH</td><td>Slot(s) to which the "switch to bootcard" command is sent on in-game reset (IGR).</td></tr>
+<tr><td>Send GameID on Launch</td><td>Off / On</td><td>Sends the Game ID to the MMCE adapter when a game is launched (for adapters that can auto-switch profiles by game ID).</td></tr>
+<tr><td>Wait cycles after /ACK low</td><td>0&ndash;5</td><td>Extra wait cycles inserted after the SPI /ACK signal goes low. Lower values may improve performance at the cost of stability on some adapters.</td></tr>
+<tr><td>Use timeout alarms</td><td>OFF / ON</td><td>Enables MMCE timeout alarms. Turning this off may improve performance but a timeout will then cause a freeze rather than a graceful error.</td></tr>
+</tbody>
+</table>
+
+<h2 id="display-settings">Display Settings</h2>
+<p>Reached via <b>Settings &rarr; Display Settings</b>. Controls the visual appearance, video mode, and
+cover-art behavior.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Theme</td><td><em>list of installed themes</em></td><td>Active theme. The default is <em>Coverflow</em>. Themes are scanned from <code>thm/</code> on each device. See <a href="themes.html">Theme Engine</a>.</td></tr>
+<tr><td>Language</td><td><em>list of installed languages</em></td><td>UI language. Languages are scanned from <code>lang/</code> folders. 31 languages ship internally; extra <code>*.lng</code> files extend the list.</td></tr>
+<tr><td>Automatic Sorting</td><td>Off / On</td><td>Alphabetically sorts the game list automatically. When off, games appear in the order they are discovered.</td></tr>
+<tr><td>Automatic Refresh</td><td>Off / On</td><td>Periodically re-scans for newly plugged-in devices and adds their games without requiring a manual refresh.</td></tr>
+<tr><td>Cover Art</td><td>Off / On</td><td>Enables cover-art display. When off, no cover images are loaded even if present.</td></tr>
+<tr><td>Default game view</td><td>Both / ISO / VCD</td><td>Controls which game list is shown by default on VCD-capable device tabs. <em>Both</em> keeps the per-device L3 toggle active (defaults to ISO). <em>ISO</em> locks every tab to disc games. <em>VCD</em> locks every tab to PS1 games. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>Notifications</td><td>Off / On</td><td>Shows brief on-screen notifications when a config, theme, or language file is loaded, or when a storage partition is mounted.</td></tr>
+<tr><td>Coverflow Settings</td><td>[sub-screen]</td><td>Opens the <a href="#coverflow-settings">Coverflow Settings</a> sub-screen. See below.</td></tr>
+<tr><td>Text Color</td><td>color picker</td><td>Color of normal UI text.</td></tr>
+<tr><td>Selected Color</td><td>color picker</td><td>Color of selected/highlighted UI text.</td></tr>
+<tr><td>Dialog Color</td><td>color picker</td><td>Background tint of dialog boxes.</td></tr>
+<tr><td>Background Color</td><td>color picker</td><td>Background color of the main UI.</td></tr>
+<tr><td>Reset Colors</td><td>[button]</td><td>Resets all four color pickers to the current theme defaults.</td></tr>
+<tr><td>Video Mode</td><td>Default / PAL / NTSC / VESA / etc.</td><td>Forces a specific output video mode for the OPL UI. Default uses the console's region setting. Does not affect game launch video mode (see GSM in per-game settings).</td></tr>
+<tr><td>H-POS</td><td>&minus;300&ndash;300</td><td>Horizontal screen offset adjustment.</td></tr>
+<tr><td>V-POS</td><td>&minus;300&ndash;300</td><td>Vertical screen offset adjustment.</td></tr>
+<tr><td>Overscan</td><td>0&ndash;100</td><td>Overscan compensation adjustment (shrinks the rendered area inward).</td></tr>
+<tr><td>Widescreen</td><td>Off / On</td><td>Scales the UI to a 16:9 aspect ratio. On by default in RiptOPL.</td></tr>
+<tr><td>Show GameID Barcode (Pixel FX)</td><td>Off / On</td><td>Renders a visual Game ID barcode overlay compatible with Pixel FX devices. See <a href="per-game-settings.html">Per-game Settings</a> for Game ID configuration.</td></tr>
+</tbody>
+</table>
+
+<h3 id="coverflow-settings">Coverflow Settings</h3>
+<p>Sub-screen opened from the <em>Coverflow Settings</em> button in Display Settings. Tunable live while the
+Coverflow theme is active. See <a href="coverflow.html">Coverflow</a> for full detail.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Cover Count</td><td>None / Small / Normal / Large</td><td>How many side covers are visible left and right of the centered cover. <em>None</em> shows only the center cover; <em>Large</em> fills more of the screen.</td></tr>
+<tr><td>Center Scale</td><td>None / Small / Normal / Large</td><td>How much the center cover is enlarged relative to the side covers.</td></tr>
+<tr><td>Animation Speed</td><td>None / Slow / Normal / Fast</td><td>Speed of the sliding animation when scrolling through the carousel.</td></tr>
+<tr><td>Dim Side Covers</td><td>Off / On</td><td>Darkens the covers to the left and right of the centered selection.</td></tr>
+</tbody>
+</table>
+
+<h2 id="audio-settings">Audio Settings</h2>
+<p>Reached via <b>Settings &rarr; Audio Settings</b>.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Sound Effects</td><td>Off / On</td><td>Enables UI navigation sound effects. On by default in RiptOPL.</td></tr>
+<tr><td>Boot Sound</td><td>Off / On</td><td>Plays a boot sound when OPL starts. On by default in RiptOPL.</td></tr>
+<tr><td>Background Music</td><td>Off / On</td><td>Enables background music streaming. The music file is set by the active theme or the <em>Default Theme Music</em> path below.</td></tr>
+<tr><td>Sound Effects Volume</td><td>0&ndash;100</td><td>Volume of UI sound effects.</td></tr>
+<tr><td>Boot Sound Volume</td><td>0&ndash;100</td><td>Volume of the boot sound.</td></tr>
+<tr><td>Background Music Volume</td><td>0&ndash;100</td><td>Volume of background music.</td></tr>
+<tr><td>Default Theme Music</td><td>text (path)</td><td>Path to a music file to stream when the active theme has no BGM of its own. Leave blank to use the theme's default. Hint: <em>Set path to stream music for internal theme.</em></td></tr>
+</tbody>
+</table>
+
+<h2 id="controller-settings">Controller Settings</h2>
+<p>Reached via <b>Settings &rarr; Controller Settings</b>. Controls navigation behavior and optionally opens
+the PADEMU (DualShock 3/4 USB or Bluetooth) and PADMACRO sub-screens when those features are compiled in.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Scrolling Speed</td><td>Slow / Medium / Fast</td><td>Speed of analog-stick and D-pad list scrolling in the UI.</td></tr>
+<tr><td>Select Button</td><td>Cross / Circle</td><td>Which face button confirms a selection. Regional preference; Japanese convention uses Circle.</td></tr>
+<tr><td>Analog X-Axis Sensitivity</td><td>Low / Normal / High</td><td>Sensitivity of the left analog stick's horizontal axis for list navigation.</td></tr>
+<tr><td>Analog Y-Axis Sensitivity</td><td>Low / Normal / High</td><td>Sensitivity of the left analog stick's vertical axis for list navigation.</td></tr>
+<tr><td>Configure PADEMU</td><td>[sub-screen]</td><td>Opens global pad-emulator settings for DualShock 3/4 USB or Bluetooth. Options include enable/disable, mode (USB/BT), Multitap emulation, port assignment, vibration, and device pairing. Compiled into the standard RiptOPL ELF by default.</td></tr>
+<tr><td>Configure PADMACRO</td><td>[sub-screen]</td><td>Opens analog slowdown, axis invert, and turbo-button-speed settings. Compiled into the standard RiptOPL ELF by default.</td></tr>
+</tbody>
+</table>
+
+<h2 id="osd-settings">OSD Settings</h2>
+<p>Reached from the per-game menu via <b>Game Settings &rarr; OSD</b>. Overrides the PS2 console OSD language
+and video configuration for a specific game. <em>Settings Mode</em> controls whether changes are saved
+globally or per-game.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Settings Mode</td><td>Global / Per Game</td><td>Whether the OSD overrides apply to all games or just this one.</td></tr>
+<tr><td>Enable</td><td>Off / On</td><td>Activates the OSD overrides below. When off, the console defaults are used.</td></tr>
+<tr><td>OSD Language</td><td>Japanese / English / French / Spanish / German / Italian / Dutch / Portuguese / Russian / Korean / Traditional Chinese / Simplified Chinese</td><td>Forces a custom language in the PS2 system configuration handed to the game. Only active when Enable is on.</td></tr>
+<tr><td>Screen Size</td><td>Full Screen / &hellip;</td><td>Forces TV aspect ratio in the PS2 system configuration.</td></tr>
+<tr><td>Video Mode</td><td>System Default / &hellip;</td><td>Forces a video output mode in the PS2 system configuration.</td></tr>
+</tbody>
+</table>
+
+<h2 id="parental-lock">Parental Lock Settings</h2>
+<p>Reached via <b>Settings &rarr; Parental Lock Settings</b>. Sets a password that must be entered before
+changing settings. Leave the password blank to disable the parental lock entirely.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Parental Lock Password</td><td>Text password. Leave blank to disable. The master override password bypasses any forgotten lock (ask in the community forums). An invalid password (e.g. the master password itself entered as a new password) is rejected.</td></tr>
+</tbody>
+</table>
+
+<h2 id="network-settings">Network Settings</h2>
+<p>Reached via <b>Settings &rarr; Network Settings</b>. Configures the PS2 IP address and the SMB server.
+An <em>Advanced Options</em> toggle reveals Ethernet link-mode controls.</p>
+
+<h3 id="network-ps2-ip">PS2 Network</h3>
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Advanced Options</td><td>Off / On</td><td>Shows the Ethernet Link Mode selector when on.</td></tr>
+<tr><td>Ethernet Link Mode</td><td>100Mbit Full-duplex / 100Mbit Half-duplex / 10Mbit Full-duplex / 10Mbit Half-duplex</td><td>Forces a specific NIC link speed and duplex. Visible only when Advanced Options is on.</td></tr>
+<tr><td>IP Address Type</td><td>Static / DHCP</td><td>How the PS2 acquires its network address. <strong>UDPBD and UDPFS require Static</strong> — they do not use the ETH/SMB stack, so DHCP is never resolved when Network Boot is active.</td></tr>
+<tr><td>IP Address</td><td>four octets</td><td>The PS2's static IP address.</td></tr>
+<tr><td>Mask</td><td>four octets</td><td>Subnet mask.</td></tr>
+<tr><td>Gateway</td><td>four octets</td><td>Default gateway.</td></tr>
+<tr><td>DNS Server</td><td>four octets</td><td>DNS server address.</td></tr>
+</tbody>
+</table>
+
+<h3 id="network-smb">SMB Server</h3>
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td>Address Type</td><td>IP / NetBIOS</td><td>Whether the server is addressed by IP or by NetBIOS name.</td></tr>
+<tr><td>Address</td><td>text or four octets</td><td>Server IP or NetBIOS hostname.</td></tr>
+<tr><td>Port</td><td>0&ndash;65353 (default 445)</td><td>SMB port. 445 is the standard Windows share port.</td></tr>
+<tr><td>Share</td><td>text (default <code>PS2SMB</code>)</td><td>Share name on the server. Leave blank to list available shares.</td></tr>
+<tr><td>User</td><td>text (default <code>GUEST</code>)</td><td>SMB username.</td></tr>
+<tr><td>Password</td><td>text</td><td>SMB password. Leave blank for guest authentication.</td></tr>
+<tr><td>Write POPSTARTER Network Config</td><td>Off / On</td><td>Also saves the IP and SMB share values to POPSTARTER's own <code>IPCONFIG.DAT</code> / <code>SMBCONFIG.DAT</code> on the memory card when settings are saved. Required for PS1 VCD playback over SMB.</td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">i Reconnect button</div>After changing network settings you can press the
+<b>Reconnect</b> button to apply them immediately without closing the dialog. This re-attempts the SMB
+connection from the login stage.</div>
+
+<h2 id="per-game-reference">Per-game Settings (quick reference)</h2>
+<p>Per-game settings are opened by pressing <b>Triangle</b> on any game and choosing <b>Game Settings</b>.
+The sub-screens are documented in full on the <a href="per-game-settings.html">Per-game Settings</a> page.
+Here is a map of every sub-screen:</p>
+
+<ul class="checklist">
+<li><b>Game Settings (main)</b> — Loader Core, OPL compat Modes 1–7, DMA Mode, Game ID, Custom ELF, Neutrino Args (per-game), Neutrino Video. See <a href="per-game-settings.html">Per-game Settings</a> and <a href="neutrino.html">Neutrino Core</a>.</li>
+<li><b>Configure VMC</b> — VMC Slot 1 and Slot 2 assignment, VMC file creation and deletion. See <a href="vmc.html">VMC</a>.</li>
+<li><b>GSM Settings</b> — GSM Selector (on/off), forced video mode (V-POS, H-POS), Emulate FIELD Flipping. Global or per-game. OPL core only.</li>
+<li><b>Cheat Settings</b> — PS2RD Cheat Engine on/off, mode (Auto Select / Select Game Cheats), PS2RD Cheat Image on/off. Global or per-game. See <a href="cheats.html">Cheats</a>.</li>
+<li><b>OSD Settings</b> — OSD language, screen size, video mode override. Global or per-game. See <a href="#osd-settings">OSD Settings</a> above.</li>
+<li><b>Configure PADEMU</b> — pad emulator, mode, multitap, port, vibration, Bluetooth pairing.</li>
+<li><b>Configure PADMACRO</b> — analog slowdown, axis invert, turbo speed.</li>
+</ul>
+
+<details class="deep"><summary>Which settings are greyed out under the Neutrino core?</summary>
+<p>OPL-only features are unavailable when a game is set to use the Neutrino core. In the per-game
+<b>Game Settings</b> screen the following are greyed (shown with a <em>"Not used with Neutrino"</em>
+hint): Modes 4 and 6 (Skip Videos and Disable IGR), DL Defaults, GSM Settings, Cheat Settings, PADEMU / PADMACRO. Modes 1/2/3/5 stay active because they map directly to Neutrino's <code>-gc=</code> flag. Mode 7 is Neutrino-only and is
+available (passes <code>-gc=7</code> to Neutrino). DMA Mode, Game ID, Custom ELF, and VMC settings
+remain active regardless of core. See <a href="per-game-settings.html">Per-game Settings</a>.</p>
+</details>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

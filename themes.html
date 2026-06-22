@@ -1,0 +1,707 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Theme Engine · RiptOPL Docs</title>
+<meta name="description" content="Author RiptOPL/OPL themes: full element + property reference with examples.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html" class="active"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Theme Engine</h1>
+<p class="lead">A RiptOPL/OPL theme is a folder of images, fonts and one text file — <code>conf_theme.cfg</code> —
+that lays out the whole UI on a virtual <b>640×480</b> canvas. This page is the complete authoring
+reference: every block family, every element type, every property and value token the parser in
+<code>src/themes.c</code> actually understands, including this fork's <b>Coverflow</b> carousel and the
+<b>two-layer overlay</b> system. Nothing here is invented — if a key isn't listed, the engine ignores it.</p>
+
+<div class="callout info"><div class="h">i Mental model</div>A theme is a flat, ordered list of
+<b>elements</b>. Each element has a <code>type=</code> and a handful of position/size properties. OPL draws
+them back-to-front in file order, scales the 640×480 canvas to the real video mode, and (with
+<code>scaled=1</code>) corrects for widescreen and the PS2's non-square pixels automatically. Anything a
+theme doesn't supply falls back to OPL's embedded default assets.</div>
+
+<h2 id="file-structure">1 · File &amp; folder structure</h2>
+<p>Themes live in the <code>THM</code> support folder. Each theme is its <em>own</em> sub-folder whose name
+<b>must start with <code>thm_</code></b>; the loader strips that prefix to form the name you see in the theme
+picker. Inside the folder, all the artwork/fonts sit alongside a single <code>conf_theme.cfg</code>.</p>
+<pre>THM/
+  thm_MyTheme/
+    conf_theme.cfg      ← the layout (this page)
+    incebtion.png       ← background, fonts, case art, screenshots… (any names you reference)
+    case.png
+    myfont.ttf</pre>
+<p>RiptOPL also ships two <b>built-in</b> themes you can study as references without copying any files:
+the classic <code>&lt;OPL&gt;</code> theme and this fork's default <code>&lt;Coverflow&gt;</code> theme.
+Their sources are <code>misc/conf_theme_OPL.cfg</code> and <code>misc/theme_coverflow.cfg</code> in the
+repository — both are reproduced and annotated lower down.</p>
+
+<p><code>conf_theme.cfg</code> is a plain key/value file with exactly two kinds of line:</p>
+<ul class="checklist">
+<li><b>Global (top-level) properties</b> — bare <code>key=value</code> lines, written before any block.</li>
+<li><b>Element blocks</b> — a <code>blockname:</code> header line followed by indented <code>key=value</code> lines.</li>
+</ul>
+<pre># lines beginning with '#' are comments — comment a whole block to disable it
+bg_color=#182580          # a global property
+
+main0:                    # an element block
+    type=Background
+    pattern=BG</pre>
+<div class="callout info"><div class="h">i Block keys are flattened</div>Internally a block property
+<code>foo</code> under block <code>main0</code> is read as the key <code>main0_foo</code>. You almost always
+write the indented form above, but knowing this explains the flat tables in §3–§4 — every "property" is just a
+<code>&lt;block&gt;_&lt;property&gt;</code> key.</div>
+
+<h2 id="block-families">2 · Block families &amp; the contiguous-numbering rule</h2>
+<p>Element block names carry a <b>family prefix</b> plus an index — e.g. <code>main0</code>, <code>main1</code>,
+<code>appsMain2</code>, <code>vcdInfo3</code>. Each family targets one screen/view. The base families are
+<code>main&lt;N&gt;</code> (the games <b>list/menu</b> page) and <code>info&lt;N&gt;</code> (the game
+<b>info</b> page). On top of those, this fork adds three <b>per-slot override</b> families. For every slot
+<code>N</code> the engine looks for the family's block; if it's <em>absent</em> it falls back down a fixed
+chain — so you override only what differs and inherit the rest.</p>
+
+<table data-sortable>
+<thead><tr><th>Family (main / info)</th><th>Drawn on</th><th>Per-slot fallback chain</th></tr></thead>
+<tbody>
+<tr><td><code>main0…</code> / <code>info0…</code></td><td>The <b>games</b> list / info — the base layout</td><td><em>(none — this is the base)</em></td></tr>
+<tr><td><code>appsMain0…</code> / <code>appsInfo0…</code></td><td>The <b>apps</b> device list / info</td><td>→ <code>mainN</code> / <code>infoN</code></td></tr>
+<tr><td><code>favsMain0…</code> / <code>favsInfo0…</code></td><td>The <b>Favourites</b> tab list / info</td><td>→ <code>mainN</code> / <code>infoN</code></td></tr>
+<tr><td><code>vcdMain0…</code> / <code>vcdInfo0…</code></td><td>A device's <b>PS1 / VCD</b> view (toggle with <b>L3</b>)</td><td>main: → <code>appsMainN</code> → <code>mainN</code> · info: → <code>infoN</code></td></tr>
+</tbody>
+</table>
+
+<p>The parser reads as many base <code>main&lt;N&gt;</code> blocks as you define, then for each slot
+<code>0…N</code> resolves every family against that chain. Practically:</p>
+<ul class="checklist">
+<li>A theme with <em>only</em> <code>main*</code>/<code>info*</code> blocks looks identical on the games, apps,
+Favourites and PS1 views — every family inherits the base.</li>
+<li>Define <code>appsMain5</code> to give the <b>apps</b> cover its own (square) box while games keep their
+portrait box; everything else still inherits <code>main*</code>.</li>
+<li>The <b>VCD/PS1</b> main family falls back to <code>appsMain</code> <em>before</em> <code>main</code>, so a
+PS1 disc with no <code>vcdMain</code> blocks automatically uses the square apps box (jewel-case art is square),
+while <code>vcdInfo</code> falls back to the rich game <code>info</code> page.</li>
+</ul>
+
+<div class="callout info"><div class="h">⚠ Contiguous-numbering rule</div>Blocks are read <b>in order from 0
+and the engine stops at the first gap.</b> If you define <code>main0</code>, <code>main1</code>,
+<code>main3</code> (skipping <code>main2</code>), then <code>main3</code> is <b>never read</b>. When you delete
+a block, <b>renumber</b> the ones after it so there are no holes. The same applies inside each <code>info*</code>
+sequence. (A commented-out block counts as a deletion — re-number around it.)</div>
+
+<details class="deep"><summary>Why does a <code>Background</code> have to be element 0?</summary>
+The first element of a list <b>must</b> be the <code>Background</code> (the engine inserts a default plasma
+background if you forget). Likewise only the first <code>ItemsList</code> becomes the games list, the second the
+apps list, the third the Favourites list — so order matters beyond just draw order. The PS1/VCD view reuses the
+games list, so it never needs its own <code>ItemsList</code>.</details>
+
+<h2 id="global-properties">3 · Global properties</h2>
+<p>These go at the <em>top</em> of the file, outside any block.</p>
+
+<h3>Colours (<code>#RRGGBB</code>)</h3>
+<table data-sortable>
+<thead><tr><th>Key</th><th>Applies to</th></tr></thead>
+<tbody>
+<tr><td><code>bg_color</code></td><td>Plasma / background tint</td></tr>
+<tr><td><code>text_color</code></td><td>Default element text colour</td></tr>
+<tr><td><code>ui_text_color</code></td><td>UI text (menus, buttons, hints)</td></tr>
+<tr><td><code>sel_text_color</code></td><td>Selected-item text colour</td></tr>
+</tbody>
+</table>
+<p>Colours are 8 bits per channel in hex; alpha is fixed internally (the parser sets it for you).</p>
+
+<h3>Fonts</h3>
+<table data-sortable>
+<thead><tr><th>Key</th><th>Value</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>default_font</code></td><td>font file path</td><td>The theme's main font; falls back to the built-in font if the file is missing.</td></tr>
+<tr><td><code>font1</code> … <code>font15</code></td><td>font file path</td><td>Extra fonts; each defaults to <code>default_font</code> if not set.</td></tr>
+<tr><td><code>default_font_size</code></td><td>int (px)</td><td>Size for the default font (defaults to the system default if ≤ 0).</td></tr>
+<tr><td><code>font1_size</code> … <code>font15_size</code></td><td>int (px)</td><td>Per-font sizes.</td></tr>
+</tbody>
+</table>
+<p>Reference a font from an element with <code>font=N</code> (0 = default). <code>font1=builtin</code> is
+not a real token: the parser builds the path <code>&lt;theme&gt;/builtin</code>, that file doesn't exist, so the
+load fails and the slot falls back to the embedded default font. The <code>&lt;Coverflow&gt;</code> theme relies
+on this file-not-found fallback (and for the built-in <code>&lt;Coverflow&gt;</code> the font keys aren't parsed at
+all, since font loading is skipped for buffer-loaded built-in themes).</p>
+
+<h3>Other global keys</h3>
+<table data-sortable>
+<thead><tr><th>Key</th><th>Value</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>use_default</code></td><td>0 / 1</td><td>Use OPL's embedded default assets for anything the theme omits (default 1).</td></tr>
+<tr><td><code>use_real_height</code></td><td>0 / 1</td><td>Lay out against the real screen height instead of the virtual 480.</td></tr>
+<tr><td><code>use_settings_bg</code></td><td>0 / 1</td><td>Load the theme's own <code>settings_bg.png</code> behind the settings menus instead of the plasma. Theme-supplied only — there is no embedded default, so the built-in themes leave the plasma in place.</td></tr>
+<tr><td><code>coverflow_cover_offset</code></td><td>int (clamped −1024…1024, default 0)</td><td>Horizontal nudge for the Coverflow carousel (see §9).</td></tr>
+</tbody>
+</table>
+<div class="callout info"><div class="h">i Not a real key</div>You may see <code>plasma_blend_color=</code> in
+the shipped <code>theme_coverflow.cfg</code>. The current parser does <b>not</b> read it — the plasma blend uses
+<code>bg_color</code>. It's a harmless leftover; don't rely on it.</div>
+
+<h2 id="common-properties">4 · Common element properties</h2>
+<p>Every element block starts with <code>type=&lt;ElementType&gt;</code> (see §5). Almost all of them also
+accept these positioning/appearance properties:</p>
+<table data-sortable>
+<thead><tr><th>Property</th><th>Type</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>x</code></td><td>int or <code>POS_MID</code></td><td>Horizontal position. <b>Negative = measured from the right edge.</b> <code>POS_MID</code> = horizontal centre.</td></tr>
+<tr><td><code>y</code></td><td>int or <code>POS_MID</code></td><td>Vertical position. <b>Negative = measured from the bottom edge.</b> <code>POS_MID</code> = vertical centre.</td></tr>
+<tr><td><code>width</code></td><td>int or <code>DIM_INF</code></td><td><code>DIM_INF</code> = full screen width.</td></tr>
+<tr><td><code>height</code></td><td>int or <code>DIM_INF</code></td><td><code>DIM_INF</code> = full screen height.</td></tr>
+<tr><td><code>aligned</code></td><td>0 / 1</td><td><code>0</code> = anchor top-left; <code>1</code> = centre the element on (x, y).</td></tr>
+<tr><td><code>scaled</code></td><td>0 / 1</td><td><code>0</code> = raw pixels; <code>1</code> = ratio-correct (handles widescreen + pixel aspect). Use <code>1</code> for images you want undistorted.</td></tr>
+<tr><td><code>color</code></td><td><code>#RRGGBB</code></td><td>Text/tint colour. Defaults to <code>text_color</code>.</td></tr>
+<tr><td><code>font</code></td><td>0 … 15</td><td>Font index (see §3). Default 0.</td></tr>
+<tr><td><code>reflection</code></td><td>0 / 1</td><td>Draw a mirrored, alpha-faded reflection beneath the element (used by <code>Coverflow</code>). Default 0.</td></tr>
+<tr><td><code>reflection_offset</code></td><td>int (clamped −1024…1024)</td><td>Shift the reflection vertically (e.g. to clear a case base).</td></tr>
+<tr><td><code>enabled</code></td><td>0 / 1</td><td>Set <code>0</code> to skip the element without deleting the block. Default 1.</td></tr>
+</tbody>
+</table>
+<p><b>Value tokens:</b> <code>POS_MID</code> and <code>DIM_INF</code> (above), and <code>#RRGGBB</code> for
+colours. Negative <code>x</code>/<code>y</code> anchor to the right/bottom edge — let those and the tokens do the
+work instead of hard-coding resolution-specific numbers.</p>
+
+<h2 id="element-types">5 · Element types</h2>
+<p>Set with <code>type=</code>. Elements marked <b>(item)</b> redraw whenever you move the selection.</p>
+<table data-sortable>
+<thead><tr><th><code>type=</code></th><th>Renders</th></tr></thead>
+<tbody>
+<tr><td><code>Background</code></td><td>Full-screen background. With <code>pattern=BG</code> it draws the plasma; with a <code>default=</code> image it draws that. Must be the first element of its list (auto-added if you omit it).</td></tr>
+<tr><td><code>StaticImage</code></td><td>A fixed image from <code>default=</code> (supports overlays).</td></tr>
+<tr><td><code>StaticText</code></td><td>Fixed text from <code>value=</code>.</td></tr>
+<tr><td><code>AttributeText</code> <b>(item)</b></td><td>Game metadata text — see <code>attribute=</code> in §6.</td></tr>
+<tr><td><code>GameCountText</code> <b>(item)</b></td><td>The number of items in the current list.</td></tr>
+<tr><td><code>GameImage</code> <b>(item)</b></td><td>Dynamic art from <code>pattern=</code> (cover / screenshot / icon …) with a <code>default=</code> fallback.</td></tr>
+<tr><td><code>AttributeImage</code> <b>(item)</b></td><td>A badge image chosen by a game attribute — see §6.</td></tr>
+<tr><td><code>MenuIcon</code></td><td>The current device/menu icon.</td></tr>
+<tr><td><code>MenuText</code></td><td>The current menu name, with left/right arrows when there are sibling menus.</td></tr>
+<tr><td><code>ItemsList</code> <b>(item)</b></td><td>The scrolling list of games/apps. First one = games list, second = apps, third = Favourites. Auto-added if omitted.</td></tr>
+<tr><td><code>ItemIcon</code> <b>(item)</b></td><td>A per-item icon element (a <code>GameImage</code> bound to the <code>ICO</code> cache).</td></tr>
+<tr><td><code>ItemCover</code> <b>(item)</b></td><td>The selected item's cover (a <code>GameImage</code> bound to the <code>COV</code> cache), with optional overlay.</td></tr>
+<tr><td><code>ItemText</code> <b>(item)</b></td><td>The selected item's startup filename.</td></tr>
+<tr><td><code>HintText</code></td><td>Button hints for the list screen.</td></tr>
+<tr><td><code>InfoHintText</code></td><td>Button hints for the info screen.</td></tr>
+<tr><td><code>LoadingIcon</code></td><td>The animated loading spinner (only one per theme).</td></tr>
+<tr><td><code>BdmIndex</code></td><td>The block-device (BDM) mode indicator — shows which mass device slot is active.</td></tr>
+<tr><td><code>Coverflow</code> <b>(item)</b></td><td><b>This fork:</b> a centred cover-art carousel (see §9).</td></tr>
+</tbody>
+</table>
+
+<h3>Text-element extras</h3>
+<table data-sortable>
+<thead><tr><th>Property</th><th>Used by</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>value</code></td><td><code>StaticText</code></td><td>The literal string to show.</td></tr>
+<tr><td><code>attribute</code></td><td><code>AttributeText</code>, <code>AttributeImage</code></td><td>The metadata key (§6).</td></tr>
+<tr><td><code>display</code></td><td>text</td><td><code>0</code> = always show label + value; <code>1</code> = only when the value exists; <code>2</code> = value only (no label).</td></tr>
+<tr><td><code>wrap</code></td><td>text</td><td><code>1</code> = word-wrap within <code>width</code>/<code>height</code>.</td></tr>
+<tr><td><code>title</code></td><td><code>AttributeText</code></td><td>Override the auto-localised label for the attribute.</td></tr>
+</tbody>
+</table>
+
+<h3>List extras</h3>
+<table data-sortable>
+<thead><tr><th>Property</th><th>Used by</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>decorator</code></td><td><code>ItemsList</code></td><td>A <code>GameImage</code> <code>pattern</code> name (e.g. <code>ICO</code>) to draw as a small per-row icon next to each entry.</td></tr>
+</tbody>
+</table>
+
+<h2 id="image-overlay">6 · Image &amp; overlay properties (incl. the two-layer system)</h2>
+<p>Image-type elements (<code>StaticImage</code>, <code>GameImage</code>, <code>Background</code>,
+<code>AttributeImage</code>, <code>ItemCover</code>, <code>Coverflow</code>) add these:</p>
+<table data-sortable>
+<thead><tr><th>Property</th><th>Type</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>default</code></td><td>asset name</td><td>The image to draw / fall back to (a built-in name from §8, or a file in the theme folder).</td></tr>
+<tr><td><code>pattern</code></td><td>cache suffix</td><td>For dynamic art: <code>COV</code> (cover), <code>SCR</code> / <code>SCR2</code> (screenshots), <code>ICO</code> (icon), <code>BG</code> (background), …</td></tr>
+<tr><td><code>count</code></td><td>int</td><td>Number of cache slots for <code>pattern</code> (the engine forces a minimum of 2 for <code>COV</code>).</td></tr>
+<tr><td><code>overlay</code></td><td>asset name</td><td>An optional frame drawn <em>around</em> the image (a case / bezel). This is <b>layer 1</b>.</td></tr>
+<tr><td><code>overlay_ulx</code>, <code>overlay_uly</code></td><td>int</td><td>Upper-left corner of the inlaid art inside the overlay.</td></tr>
+<tr><td><code>overlay_urx</code>, <code>overlay_ury</code></td><td>int</td><td>Upper-right corner.</td></tr>
+<tr><td><code>overlay_llx</code>, <code>overlay_lly</code></td><td>int</td><td>Lower-left corner.</td></tr>
+<tr><td><code>overlay_lrx</code>, <code>overlay_lry</code></td><td>int</td><td>Lower-right corner.</td></tr>
+<tr><td><code>overlay2</code></td><td>asset name</td><td>An optional <b>second</b> overlay (layer 2) painted over <code>overlay</code>. It shares the element's position/size and takes <b>no corners of its own</b>.</td></tr>
+</tbody>
+</table>
+
+<p>The four overlay corners describe where the <em>inner</em> art sits within the overlay frame, in the
+element's own coordinate space (relative to <code>width</code>/<code>height</code>). They scale with the drawn
+element, so the cover window tracks the art at any size. Omitted corner keys default to <code>0</code>.</p>
+
+<div class="callout info"><div class="h">i The two-layer overlay (RiptOPL)</div>The draw order is
+<b>cover → <code>overlay</code> → <code>overlay2</code></b>. A single asymmetric frame would force the cover
+off-centre; splitting the frame into two layers over a <em>centred</em> cover avoids that shift. The fork's
+graphics use it as: the cover, then <code>case</code> (the transparent plastic / case frame, layer 1), then
+<code>case_overlay</code> (foliage / decoration, layer 2). Both layers are de-duplicated across every element
+that names the same asset, so re-using a layer costs no extra VRAM. <code>overlay2</code> is drawn as a plain
+pixmap over the cover composite — it never takes corner coordinates.</div>
+
+<h2 id="attributes">7 · <code>attribute=</code> values</h2>
+<h3>AttributeText (metadata text)</h3>
+<p>For <code>type=AttributeText</code>, set <code>attribute=</code> to a metadata key. The label is
+auto-localised (override it with <code>title=</code>):</p>
+<table data-sortable>
+<thead><tr><th><code>attribute=</code></th><th>Shows</th></tr></thead>
+<tbody>
+<tr><td><code>Title</code></td><td>Game title</td></tr>
+<tr><td><code>Genre</code></td><td>Genre</td></tr>
+<tr><td><code>Developer</code></td><td>Developer / publisher</td></tr>
+<tr><td><code>Release</code></td><td>Release date</td></tr>
+<tr><td><code>Description</code></td><td>Long description (use <code>wrap=1</code> + a <code>width</code>/<code>height</code> box)</td></tr>
+<tr><td><code>#Size</code></td><td>Install size — the value is auto-suffixed with <code>MiB</code></td></tr>
+</tbody>
+</table>
+
+<h3>AttributeImage (badge chosen by the game's value)</h3>
+<p>For <code>type=AttributeImage</code>, set <code>attribute=</code> to one of the keys below. The engine reads
+the game's current value for that attribute and looks up a texture for it (a built-in name or a theme file). For
+the slash-separated families it builds the name as <code>&lt;attribute&gt;_&lt;value&gt;</code>; for the simple
+console/disc axes the value <em>is</em> the texture name (<code>PS1</code>, <code>PS2</code>, <code>CD</code>,
+<code>DVD</code>, <code>ELF</code>, <code>ISO</code> …). A <code>default=</code> gives the fallback badge.</p>
+<table data-sortable>
+<thead><tr><th><code>attribute=</code></th><th>Axis</th><th>Example values / textures</th></tr></thead>
+<tbody>
+<tr><td><code>#Media</code></td><td>Disc type</td><td><code>CD</code>, <code>DVD</code>, <code>APP</code></td></tr>
+<tr><td><code>#Format</code></td><td>Image format</td><td><code>ISO</code>, <code>ZSO</code>, <code>UL</code>, <code>ELF</code>, <code>HDL</code>, <code>VCD</code></td></tr>
+<tr><td><code>#System</code></td><td>Console (FR #49)</td><td><code>PS1</code>, <code>PS2</code></td></tr>
+<tr><td><code>Vmode</code></td><td>Video mode</td><td><code>Vmode_ntsc</code>, <code>Vmode_pal</code>, <code>Vmode_multi</code></td></tr>
+<tr><td><code>Aspect</code></td><td>Aspect ratio</td><td><code>Aspect_s</code>, <code>Aspect_w</code>, <code>Aspect_w1</code>, <code>Aspect_w2</code></td></tr>
+<tr><td><code>Scan</code></td><td>Scan mode</td><td><code>Scan_480i</code>, <code>Scan_480p</code>, <code>Scan_720p</code>, <code>Scan_1080i</code>, …</td></tr>
+<tr><td><code>Players</code></td><td>Player count</td><td><code>Players_1</code>, <code>Players_2</code>, …</td></tr>
+<tr><td><code>Rating</code></td><td>Rating</td><td><code>Rating_0</code> … <code>Rating_5</code></td></tr>
+</tbody>
+</table>
+<div class="callout info"><div class="h">i <code>#System</code> on the main page</div>FR #49 surfaces the console
+(<code>#System</code> → PS1/PS2) and disc (<code>#Media</code> → CD/DVD) badges. A PS1 disc launched via the L3
+VCD view reports <code>#System=PS1</code> and <code>#Media=CD</code>. The default <code>&lt;Coverflow&gt;</code>
+theme places both glyphs in the bottom-right corner of the <em>main</em> page, not just the info page.</div>
+
+<h2 id="default-assets">8 · Built-in <code>default=</code> asset names</h2>
+<p>You can point <code>default=</code> or <code>overlay=</code> at any of OPL's embedded textures — no file
+needed. (For a theme folder, a same-named file overrides the built-in.)</p>
+<table data-sortable>
+<thead><tr><th>Group</th><th>Names</th></tr></thead>
+<tbody>
+<tr><td>Covers / art</td><td><code>cover</code>, <code>coverapp</code>, <code>disc</code>, <code>screen</code>, <code>screens</code> (screenshot overlay), <code>missing</code></td></tr>
+<tr><td>Case overlays</td><td><code>case</code> (shared frame, layer 1), <code>case_overlay</code> (layer 2, over <code>case</code>), <code>apps_case</code> (legacy apps-only frame)</td></tr>
+<tr><td>Device icons</td><td><code>usb</code>, <code>mmce</code>, <code>hdd</code>, <code>eth</code>, <code>app</code>, <code>usb_bd</code>, <code>ilk_bd</code>, <code>m4s_bd</code>, <code>hdd_bd</code></td></tr>
+<tr><td>BDM indicators</td><td><code>Index_0</code> … <code>Index_4</code></td></tr>
+<tr><td>Buttons</td><td><code>cross</code>, <code>circle</code>, <code>triangle</code>, <code>square</code>, <code>left</code>, <code>right</code>, <code>select</code>, <code>start</code></td></tr>
+<tr><td>Loading frames</td><td><code>load0</code> … <code>load7</code></td></tr>
+<tr><td>Boot logo</td><td><code>logo</code>, <code>logo0</code> … <code>logo6</code> (animated frames)</td></tr>
+<tr><td>Backgrounds</td><td><code>incebtion</code> (default theme bg), <code>ip</code></td></tr>
+<tr><td>Format icons</td><td><code>ELF</code>, <code>HDL</code>, <code>ISO</code>, <code>ZSO</code>, <code>UL</code></td></tr>
+<tr><td>Media / console</td><td><code>APP</code>, <code>CD</code>, <code>DVD</code>, <code>PS1</code>, <code>PS2</code></td></tr>
+<tr><td>Aspect / Scan / Vmode / Rating</td><td>the badge sets listed in §7</td></tr>
+</tbody>
+</table>
+<p><code>settings_bg</code> is theme-supplied only (no embedded default). Legacy <code>Device_*</code> indicators
+were removed in this fork — use the device icons and <code>Index_*</code> above.</p>
+
+<h2 id="coverflow">9 · The Coverflow element</h2>
+<p><code>type=Coverflow</code> (this fork) renders the game/app list as a centred cover carousel with a
+reflection and slide animation. It behaves like a <code>GameImage</code> — it uses the same <code>COV</code>
+cover cache and <code>overlay</code>/corner system — but draws 3 or 5 covers fanned out around the selection.
+The <em>first</em> <code>Coverflow</code> element the parser sees flags the theme as "Coverflow active", which
+unlocks the live <b>Coverflow Settings</b> menu.</p>
+
+<h3>Per-theme properties (in <code>conf_theme.cfg</code>)</h3>
+<table data-sortable>
+<thead><tr><th>Property</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td><code>default</code></td><td>Fallback cover when a game's art is missing (e.g. <code>cover</code>, or <code>coverapp</code> for the apps list).</td></tr>
+<tr><td><code>overlay</code> + <code>overlay_*</code> corners</td><td>The case art drawn around each cover (e.g. <code>case</code>). The corners place the cover <em>inside</em> the case window; the engine auto-centres the visible frame and keeps it aspect-correct in both 4:3 and 16:9.</td></tr>
+<tr><td><code>overlay2</code></td><td>The second case layer (e.g. <code>case_overlay</code>), drawn over each cover composite.</td></tr>
+<tr><td><code>reflection</code></td><td><code>1</code> to draw the mirrored reflection below each cover. Tune with <code>reflection_offset</code>.</td></tr>
+<tr><td><code>x</code>, <code>y</code>, <code>width</code>, <code>height</code></td><td>Carousel position and per-cover size. <code>width</code>/<code>height</code> should match your case art's pixel size so the overlay corners line up; they also set the box <b>aspect</b>.</td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">⚠ Don't double-correct widescreen</div>The carousel applies the
+widescreen / pixel-aspect correction itself at draw time, exactly like the stock cover path. Author your covers'
+aspect via the element's <code>width</code>:<code>height</code> only — never try to pre-stretch them. Games use a
+PS2-case <b>portrait</b> box (184×256); apps and PS1/VCD covers use a <b>square</b> box (184×184) to match their
+square art. Define a <code>vcdMain</code> Coverflow block to give PS1 covers their own square element; omit it and
+PS1 games reuse <code>appsMain</code> (see §2).</div>
+
+<p>A minimal three-family Coverflow setup (the shape the fork's <code>&lt;Coverflow&gt;</code> theme uses):</p>
+<pre>main2:
+    type=Coverflow
+    default=cover
+    reflection=1
+    y=197
+    width=184
+    height=256        # portrait PS2 case
+    overlay=case
+    overlay2=case_overlay
+    overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
+    overlay_llx=0    overlay_lly=256  overlay_lrx=184  overlay_lry=256
+appsMain2:
+    type=Coverflow
+    default=coverapp
+    reflection=1
+    y=239
+    width=184
+    height=184        # square apps box
+    overlay=case
+    overlay2=case_overlay
+    overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
+    overlay_llx=0    overlay_lly=184  overlay_lrx=184  overlay_lry=184
+vcdMain2:
+    type=Coverflow
+    default=cover
+    reflection=1
+    y=239
+    width=184
+    height=184        # square PS1 jewel-case box
+    overlay=case
+    overlay2=case_overlay
+    overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
+    overlay_llx=0    overlay_lly=184  overlay_lrx=184  overlay_lry=184</pre>
+
+<h3>Global Coverflow tuning (NOT in the theme)</h3>
+<p>These live in <code>settings_riptopl.cfg</code> and are exposed in the <b>Coverflow Settings</b> menu (shown
+while a Coverflow theme is active). They apply to <em>any</em> Coverflow theme and are clamped on load:</p>
+<table data-sortable>
+<thead><tr><th>Config key</th><th>Values</th><th>Effect</th></tr></thead>
+<tbody>
+<tr><td><code>coverflow_count</code></td><td>3 or 5</td><td>Number of covers shown (anything else is forced to 3).</td></tr>
+<tr><td><code>coverflow_scale</code></td><td>px (0…1000)</td><td>How much the centre cover grows over the side covers.</td></tr>
+<tr><td><code>coverflow_anim</code></td><td>ms (0…5000)</td><td>Slide-animation duration; <code>0</code> = instant, no animation.</td></tr>
+<tr><td><code>coverflow_dim</code></td><td>0 / 1</td><td>Dim the non-centre covers.</td></tr>
+</tbody>
+</table>
+<p>The per-theme horizontal nudge <code>coverflow_cover_offset</code> is the one Coverflow knob that <em>does</em>
+live in the theme (a global key — see §3). For the in-menu walkthrough of these settings, see
+<a href="coverflow.html">Coverflow</a>.</p>
+
+<h2 id="coordinates">10 · Coordinates &amp; scaling</h2>
+<div class="steps">
+<div class="step"><h3>Author on 640×480</h3><p>All positions/sizes are written for a virtual 640×480 canvas. OPL
+scales that to the active video mode at draw time — you never hard-code 480p vs. 1080i numbers.</p></div>
+<div class="step"><h3>Use <code>scaled=1</code> for undistorted art</h3><p>With <code>scaled=1</code>, image
+<em>widths</em> are corrected for widescreen and the PS2's non-square pixels, so a square stays square in both
+4:3 and 16:9. Positions are <em>not</em> aspect-scaled, so layouts simply fill the wider screen naturally.</p></div>
+<div class="step"><h3>Anchor to edges, not pixels</h3><p>Negative <code>x</code>/<code>y</code> anchor to the
+right/bottom edge; <code>POS_MID</code> centres; <code>DIM_INF</code> fills. Prefer these over magic numbers so
+a layout survives resolution changes.</p></div>
+</div>
+
+<h2 id="worked-examples">11 · Worked examples</h2>
+
+<h3>An info-page metadata label</h3>
+<pre>info3:
+    type=AttributeText
+    attribute=Title       # the game's title…
+    color=#ffffff
+    display=0             # 0 = always show "Title: <value>"
+    aligned=0            # anchor top-left at (x,y)
+    x=33
+    y=70</pre>
+<p>Switch <code>display=2</code> to drop the "Title: " label and print the value alone; add
+<code>wrap=1</code> with a <code>width</code>/<code>height</code> box for a long <code>Description</code>.</p>
+
+<h3>A framed cover with the two-layer case</h3>
+<pre>main5:
+    type=ItemCover         # selected game's cover, COV cache
+    default=cover         # fallback when art is missing
+    x=-128                # 128px in from the right edge
+    y=240
+    overlay=case          # layer 1: plastic case frame
+    overlay2=case_overlay # layer 2: foliage/decoration, over the cover
+    overlay_ulx=0    overlay_uly=0
+    overlay_urx=184  overlay_ury=0
+    overlay_llx=0    overlay_lly=256   # cover window = full 184×256 of the frame
+    overlay_lrx=184  overlay_lry=256</pre>
+
+<h3>A screenshot with a bezel overlay</h3>
+<pre>info14:
+    type=GameImage
+    pattern=SCR           # first screenshot cache
+    default=screen
+    x=189
+    y=-150               # 150px up from the bottom
+    scaled=1             # any non-zero = ratio-correct (same as 1)
+    width=200
+    height=150
+    overlay=screens       # 1px inset bezel around the shot
+    overlay_ulx=1    overlay_uly=1    overlay_urx=199  overlay_ury=1
+    overlay_llx=1    overlay_lly=149  overlay_lrx=199  overlay_lry=149</pre>
+
+<h2 id="complete-sample">12 · A complete, annotated sample theme</h2>
+<p>This is the shipped default <code>&lt;OPL&gt;</code> theme (<code>misc/conf_theme_OPL.cfg</code>), annotated.
+It is a full, valid <code>conf_theme.cfg</code> — copy it into <code>THM/thm_MyTheme/</code>, edit, and you have
+a working theme. Note the contiguous numbering and the single <code>appsMain5</code> override that swaps the
+games' portrait cover box for the apps' square one.</p>
+<pre># ── Global colours ───────────────────────────────────────────────
+bg_color=#182580          # plasma tint
+sel_text_color=#ffffff    # selected list row
+text_color=#324d9e        # default text
+ui_text_color=#00FFFF     # menus / hints
+
+# ── Games LIST page (main*) ──────────────────────────────────────
+main0:                    # element 0 MUST be the Background
+    type=Background
+    pattern=BG            # plasma background
+main1:
+    type=StaticImage
+    default=incebtion     # embedded background art
+    aligned=0
+    scaled=0
+    width=DIM_INF         # fill the screen
+    height=DIM_INF
+main2:
+    type=StaticImage
+    default=ip            # small corner image
+    x=-132               # 132px in from the right
+    y=20
+    aligned=0
+    width=16
+    height=16
+main3:
+    type=MenuIcon         # current device icon
+    x=0
+    y=0
+    aligned=0
+    scaled=0
+    width=DIM_INF
+    height=DIM_INF
+main4:
+    type=ItemsList        # the scrolling game list (first ItemsList = games)
+    x=30
+    y=70
+    aligned=0
+    width=400
+    height=350
+main5:
+    type=ItemCover        # selected cover, with the two-layer case frame
+    default=cover
+    x=-128
+    y=240
+    overlay=case          # layer 1 (plastic case)
+    overlay2=case_overlay # layer 2 (over the cover)
+    overlay_ulx=0    overlay_uly=0
+    overlay_urx=184  overlay_ury=0
+    overlay_llx=0    overlay_lly=256   # portrait 184×256 window
+    overlay_lrx=184  overlay_lry=256
+appsMain5:                # APPS override of slot 5: square cover box
+    type=ItemCover
+    default=coverapp
+    x=-128
+    y=-198               # 198px up from the bottom
+    overlay=case
+    overlay2=case_overlay
+    overlay_ulx=0    overlay_uly=0
+    overlay_urx=184  overlay_ury=0
+    overlay_llx=0    overlay_lly=185   # square 184×185 window
+    overlay_lrx=184  overlay_lry=185
+main6:
+    type=LoadingIcon      # animated spinner (one per theme)
+    x=-320
+    y=-240
+main7:
+    type=BdmIndex         # active mass-device slot indicator
+    x=7
+    y=-35
+    width=4
+    height=32
+
+# ── Game INFO page (info*) ───────────────────────────────────────
+info0:
+    type=Background
+    pattern=BG
+info1:
+    type=StaticImage
+    default=incebtion
+    aligned=0
+    scaled=0
+    width=DIM_INF
+    height=DIM_INF
+info2:
+    type=StaticImage
+    default=ip
+    x=-132
+    y=20
+    aligned=0
+    width=16
+    height=16
+info3:
+    type=AttributeText    # Title:
+    attribute=Title
+    color=#ffffff
+    display=0
+    aligned=0
+    x=33
+    y=70
+info4:
+    type=AttributeText    # Developer:
+    attribute=Developer
+    color=#ffffff
+    display=0
+    aligned=0
+    x=33
+    y=89
+info5:
+    type=AttributeText    # Size: (auto-suffixed " MiB")
+    attribute=#Size
+    color=#ffffff
+    display=0
+    aligned=0
+    x=33
+    y=108
+info6:
+    type=AttributeText    # word-wrapped description box
+    attribute=Description
+    display=0
+    color=#ffffff
+    aligned=0
+    x=33
+    y=127
+    width=590
+    height=60
+    wrap=1
+info7:
+    type=AttributeImage   # disc badge (CD/DVD/APP)
+    attribute=#Media
+    default=APP
+    width=32
+    height=16
+    x=55
+    y=-252
+info8:
+    type=AttributeImage   # format badge (ISO/ELF/…)
+    attribute=#Format
+    default=ELF
+    width=32
+    height=16
+    x=86
+    y=-252
+info9:
+    type=AttributeImage   # video-mode badge
+    attribute=Vmode
+    default=missing
+    width=32
+    height=16
+    x=117
+    y=-252
+info10:
+    type=AttributeImage   # aspect badge
+    attribute=Aspect
+    default=missing
+    width=32
+    height=16
+    x=148
+    y=-252
+info11:
+    type=AttributeImage   # scan-mode badge
+    attribute=Scan
+    default=missing
+    width=32
+    height=16
+    x=179
+    y=-252
+info12:
+    type=AttributeImage   # players badge
+    attribute=Players
+    default=missing
+    width=32
+    height=16
+    x=210
+    y=-252
+info13:
+    type=AttributeImage   # rating badge
+    attribute=Rating
+    default=no_Rating
+    x=-76
+    y=-252
+    width=128
+    height=16
+info14:
+    type=GameImage        # screenshot 1, with a 1px bezel overlay
+    pattern=SCR
+    default=screen
+    x=189
+    y=-150
+    scaled=2              # any non-zero = ratio-correct (same as 1)
+    width=200
+    height=150
+    overlay=screens
+    overlay_ulx=1    overlay_uly=1    overlay_urx=199  overlay_ury=1
+    overlay_llx=1    overlay_lly=149  overlay_lrx=199  overlay_lry=149
+info15:
+    type=GameImage        # screenshot 2
+    pattern=SCR2
+    default=screen
+    x=-191
+    y=-150
+    width=200
+    height=150
+    overlay=screens
+    overlay_ulx=1    overlay_uly=1    overlay_urx=199  overlay_ury=1
+    overlay_llx=1    overlay_lly=149  overlay_lrx=199  overlay_lry=149</pre>
+
+<h2 id="see-also">See also</h2>
+<div class="grid">
+<a class="tile" href="coverflow.html"><span class="em">🎴</span><b>Coverflow</b><span>The default theme &amp; its live settings</span></a>
+<a class="tile" href="ps1-vcd.html"><span class="em">💿</span><b>PS1 / VCD view</b><span>Where the vcdMain family is used</span></a>
+<a class="tile" href="favourites.html"><span class="em">⭐</span><b>Favourites</b><span>The favsMain/favsInfo family</span></a>
+<a class="tile" href="settings.html"><span class="em">🔧</span><b>Settings Reference</b><span>Selecting &amp; applying a theme</span></a>
+<a class="tile" href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span><b>POPStarter docs ↗</b><span>PS1 internals: config table, IGR, cheats, multi-disc</span></a>
+</div>
+  </main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

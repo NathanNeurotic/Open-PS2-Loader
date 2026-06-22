@@ -1,0 +1,258 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Credits &amp; Sources · RiptOPL Docs</title>
+<meta name="description" content="The people and projects RiptOPL is built on.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html" class="active"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Credits &amp; Sources</h1>
+<p class="lead">RiptOPL is a downstream fork of <b>Open PS2 Loader</b> — a labor of love, not a replacement for upstream.
+Every feature in this fork began as someone else's code and someone else's ideas.
+This page names the people and projects it stands on.</p>
+
+<div class="callout info"><div class="h">ℹ Downstream, not canonical</div>
+The canonical, actively-maintained project lives at
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader"><b>ps2homebrew/Open-PS2-Loader</b></a>.
+If you want the reference build, go there. This fork exists only because that upstream work
+is open for everyone to study, learn from, and build on. Please support the canonical project.
+</div>
+
+<h2 id="foundation">The Foundation: ps2homebrew &amp; PS2SDK</h2>
+
+<p>None of this would exist without the <a href="https://github.com/ps2homebrew"><b>ps2homebrew</b></a> team
+and their many years of open-source work on Open PS2 Loader and the
+<a href="https://github.com/ps2dev/ps2sdk">PS2SDK</a>.
+The toolchain, the IOP module ecosystem, the network stack, the HDD drivers, the memory-card protocol,
+the pad-emulation IRX chain — all of it was built, maintained, and kept free and open so that
+people could study and extend it. Every feature in RiptOPL is built on that foundation.</p>
+
+<p>Original Open PS2 Loader authors: <b>Ifcaro</b> and <b>jimmikaelkael</b> (copyright 2009).
+Core OPL development has been carried on by Ifcaro, volca, jimmikaelkael, polo35, izdubar,
+hominem.te.esse, SP193, and many contributors listed in the
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader/blob/master/CREDITS">CREDITS</a> file.</p>
+
+<h2 id="opl-family">The OPL Family RiptOPL Draws From</h2>
+
+<p>RiptOPL is a direct agglomeration of the wider OPL family. The following projects each
+contributed code, ideas, or directly-ported features:</p>
+
+<table data-sortable>
+<thead><tr><th>Project</th><th>Author(s)</th><th>What came from it</th><th>Source</th></tr></thead>
+<tbody>
+<tr>
+  <td><b>rickgaiser's OPL</b></td>
+  <td>rickgaiser</td>
+  <td>Various enhancements and modernisations used as a base</td>
+  <td><a href="https://github.com/rickgaiser/Open-PS2-Loader">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>Neutrino</b></td>
+  <td>rickgaiser</td>
+  <td>The external EE/IOP game-loader core; UDPBD and UDPFS block-device transports; the bundled IRX chain</td>
+  <td><a href="https://github.com/rickgaiser/neutrino">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>sOPL</b> (Stable OPL)</td>
+  <td>mystyq</td>
+  <td>Stability fixes and polish fed into the shared lineage</td>
+  <td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>uOPL</b></td>
+  <td>Wolf3s</td>
+  <td>Neutrino launcher integration; MMCE improvements; early Favourites groundwork</td>
+  <td><a href="https://github.com/Wolf3s/uOPL">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>wOPL</b></td>
+  <td>KrahJohlito</td>
+  <td>Coverflow cover-art carousel; Favourites tab and <code>favourites.bin</code> format; per-game Neutrino args; PS2RD cheat-image loader</td>
+  <td><a href="https://github.com/KrahJohlito/wOPL">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>OPL Daily Builds (OPL DB)</b></td>
+  <td>Jay-Jay-OPL / community</td>
+  <td>Build-pipeline patterns and 10th-Anniversary extras</td>
+  <td><a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>POPSLoader</b></td>
+  <td>NathanNeurotic &amp; contributors</td>
+  <td>PS1/POPSTARTER launch chain; VCD listing; cover-art and GameID metadata integration</td>
+  <td><a href="https://github.com/NathanNeurotic/POPSLoader">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>OPL RetroGEM ID</b></td>
+  <td>CosmicScale</td>
+  <td>Visual GameID barcode display</td>
+  <td><a href="https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>nhddl</b></td>
+  <td>pcm720</td>
+  <td>Reference implementation for Neutrino HDD launching and argument conventions</td>
+  <td><a href="https://github.com/pcm720/nhddl">GitHub</a></td>
+</tr>
+<tr>
+  <td><b>Open PS2 Loader (canonical)</b></td>
+  <td>ps2homebrew team</td>
+  <td>The project this fork is based on; every OPL feature RiptOPL inherits</td>
+  <td><a href="https://github.com/ps2homebrew/Open-PS2-Loader">GitHub</a></td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="special-thanks">Special Thanks</h2>
+
+<p>Beyond the repositories above, these individuals deserve particular recognition for contributions
+that directly shaped this fork.</p>
+
+<div class="steps">
+
+<div class="step">
+<h3>Wolf3s &amp; KrahJohlito — uOPL / wOPL</h3>
+<p>The driving force behind <b>uOPL</b> and <b>wOPL</b>, where the modern OPL experience was invented.
+The Neutrino external-core launcher, the Coverflow interface, and the Favourites tab are all
+reimplementations of features they designed and pioneered together. Reading their code taught
+this fork an enormous amount. RiptOPL is as much a tribute to their work as anything else.</p>
+</div>
+
+<div class="step">
+<h3>bbsan2k — MMCE Protocol</h3>
+<p>Author of the <b>MMCE (Memory Card Mass Storage)</b> protocol that makes SD-card game loading
+through the PS2's memory-card slot possible. OPL's entire MMCE device path — and everything
+this fork builds on top of it — traces directly back to that work.</p>
+</div>
+
+<div class="step">
+<h3>saildot4k — BDMA-ATA / exFAT HDD</h3>
+<p>Contributor of <b>BDMA-ATA</b> (exFAT internal-HDD block-device support via BDMAssault),
+plus the fixes, feedback, and ongoing oversight that shaped this fork's block-device work.
+Getting exFAT HDD right — for both PS2 and PS1 titles — would not have happened without that
+collaboration.</p>
+</div>
+
+<div class="step">
+<h3>Berion — Artwork &amp; Theme Design</h3>
+<p>Responsible for the UI design and artwork that has defined how OPL looks for years. The
+visual language this fork builds on — icon style, layout sensibility, theme conventions —
+owes a great deal to that craft. Berion is credited as UI designer in the original OPL
+CREDITS file.</p>
+</div>
+
+<div class="step">
+<h3>Ifcaro &amp; jimmikaelkael — OPL Origins</h3>
+<p>The <b>original Open PS2 Loader authors</b> (copyright 2009). Without their decision to write
+OPL in the open — and license it under the Academic Free License — none of the downstream
+work described on this page would have been possible. Everything starts here.</p>
+</div>
+
+</div>
+
+<h2 id="other-credits">Other Credits (from the OPL CREDITS file)</h2>
+
+<p>The full OPL CREDITS file records many more contributors. Selected entries relevant to
+RiptOPL's codebase:</p>
+
+<ul class="checklist">
+<li><b>misfire</b> — NETLOG module and other contributions</li>
+<li><b>Eugene Plotnikov</b> — SMSUTILS, SMSMAP &amp; SMSTCPIP modules</li>
+<li><b>Marcus R. Brown</b> — DEV9, ATAD modules and derived code used in cdvdman</li>
+<li><b>icyson55</b> — OPL-CL project / network update support</li>
+<li><b>fjtrujy</b> — CI/CD implementation using Docker and GitHub Actions</li>
+<li><b>Eric Young</b> — DES algorithm used in the SMB code</li>
+<li><b>ps2dev team</b> — USB, Network, and PS2HDD modules via PS2SDK</li>
+<li>Quality assurance over OPL's history: RandQalan, yoshi314, EP, LocalH, lee4, El_Patas,
+ShaolinAssassin, algol, gledson999, jolek, zero35, and many others</li>
+</ul>
+
+<p>For the complete list, see the
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader/blob/master/CREDITS">CREDITS</a>
+file in the canonical OPL repository.</p>
+
+<h2 id="ps1-note">A Note on PS1 Emulation</h2>
+
+<div class="callout info"><div class="h">ℹ POPS is Sony's emulator</div>
+PS1 game support in RiptOPL (and all OPL forks) runs through <b>POPS</b> — Sony's own
+PS1 emulator built into PS2 firmware — combined with the open-source <b>POPSTARTER</b>
+launcher. POPS itself is not distributed here, and its use depends on your console's firmware.
+For the deep reference on PS1 / POPSTARTER internals — the 32-byte config table, IGR, cheats,
+multi-disc, and storage — see the sister site:
+<a href="https://nathanneurotic.github.io/POPSLoader/"><b>POPStarter docs</b></a>.
+</div>
+
+<h2 id="license">License</h2>
+
+<p>Open PS2 Loader, and this fork, are licensed under the
+<b>Academic Free License version 3.0</b>. Review the
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/master/LICENSE">LICENSE</a>
+file in the repository for the full terms.</p>
+
+<details class="deep"><summary>Why a fork at all, rather than contributing upstream?</summary>
+<p>RiptOPL was built primarily as a personal "definitive build" — opinionated defaults, a
+Coverflow-first UI, and features ported from uOPL/wOPL assembled in one place for testers
+without strong opinions about which fork to run. The intent was never to compete with or
+fragment the upstream project. Contributing features back upstream is always welcome; the
+fork format was simply the fastest path to a working, testable build with all the desired
+pieces together. The canonical project at
+<a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>
+is where the community's energy should go for long-term development.</p>
+</details>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

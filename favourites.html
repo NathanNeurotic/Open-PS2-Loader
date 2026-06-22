@@ -1,0 +1,192 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Favourites · RiptOPL Docs</title>
+<meta name="description" content="Star games with R3; one Favourites page across all devices.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html" class="active"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Favourites</h1>
+<p class="lead">Press <b>R3</b> on any game or app to star it. A virtual <b>Favourites</b> page gathers every starred
+title from every connected device into one list — no matter which drive it lives on.</p>
+
+<div class="callout info"><div class="h">ℹ Favourites Start Mode is Manual by default</div>
+The Favourites tab ships enabled in <b>Manual</b> mode under <b>Device Settings → Favourites Start Mode</b>.
+Leave it on <b>Manual</b> to show the tab and control it yourself, switch it to <b>Auto</b> to have OPL manage it
+the same way it manages other device tabs, or set it to <b>Off</b> to hide the tab and disable R3 entirely.</div>
+
+<h2 id="quick-start">Quick start</h2>
+<div class="steps">
+  <div class="step">
+    <h3>Enable the Favourites tab</h3>
+    <p>Open <b>Settings → Device Settings</b> and set <b>Favourites Start Mode</b> to <b>Manual</b> (or <b>Auto</b>).
+    Save settings. A <b>Favourites</b> tab now appears alongside your device pages.</p>
+  </div>
+  <div class="step">
+    <h3>Star a game</h3>
+    <p>Navigate to any game or app on any device page — USB, HDD, SMB, MMCE, anywhere. Highlight the title and
+    press <b>R3</b> (click the right analogue stick). A small star icon appears next to the title name to confirm
+    it is starred. Press R3 again on the same title to remove the star.</p>
+  </div>
+  <div class="step">
+    <h3>Open the Favourites page</h3>
+    <p>Switch to the <b>Favourites</b> tab. Every starred game you have, across all connected devices, appears here
+    in one list. Cover art, per-game settings, Options — everything works exactly as it does on the source device
+    page.</p>
+  </div>
+  <div class="step">
+    <h3>Launch normally</h3>
+    <p>Select a title on the Favourites page and press <b>Cross</b> to launch it. The game boots through the same
+    path it would on its source device (OPL core or Neutrino, depending on your per-game settings).</p>
+  </div>
+</div>
+
+<h2 id="how-it-works">How it works</h2>
+<p>The Favourites page is a virtual aggregator — it does not copy or move games. Each entry is a live proxy to the
+original item on its source device list. Launching, cover art lookups, per-game config, and the Options/Info menu
+all forward to the source device as if you had selected the game there directly.</p>
+
+<ul class="checklist">
+  <li>Stars are visible everywhere: a small star mark is drawn next to the title on both the source device page and
+  the Favourites page.</li>
+  <li>If a device is disconnected (USB drive unplugged, SMB share unreachable, etc.) its starred titles are hidden
+  from the Favourites list but are not lost — they reappear automatically when the device becomes available again.</li>
+  <li>BDM devices (USB, MX4SIO, iLink) can move between bus slots; RiptOPL re-matches the item by game ID and title
+  across all slots, so a favourite does not break just because a drive appeared on a different port.</li>
+  <li>Rename and Delete are blocked on favourited titles and on any game accessed through the Favourites page.
+  Un-star the game first if you need to rename or delete it.</li>
+</ul>
+
+<h2 id="persistence">Persistence and compatibility</h2>
+<p>Starred games are stored in <code>favourites.bin</code>, written into the same shared OPL config directory as
+your artwork, themes, and VMCs — typically <code>mc0:/OPL/</code> or the root of whichever device holds your OPL
+config.</p>
+
+<div class="callout info"><div class="h">ℹ Shared with uOPL and wOPL</div>
+<code>favourites.bin</code> sits in the <b>shared OPL folder</b>, not in the RiptOPL-private settings area. If you
+have an existing <code>favourites.bin</code> written by <b>uOPL</b> or <b>wOPL</b>, RiptOPL will read it
+automatically on first boot and carry your starred games over. Your favourites will then be saved in RiptOPL's own
+versioned <code>OFAV</code> format on the next write. That OFAV format is RiptOPL's own — uOPL and wOPL cannot read it back, so the carry-over is one-way only.</div>
+
+<p>The on-disk format uses an <code>OFAV</code> magic header, a version number, and an explicit record count,
+followed by one record per favourite. Every field is written as an explicit scalar (no raw struct dumps), and the
+reader validates the header, version, record count, and every text-length field before accepting a file — a
+corrupt or truncated <code>favourites.bin</code> is rejected cleanly rather than causing a crash or out-of-bounds
+read.</p>
+
+<table data-sortable>
+  <thead><tr><th>Field</th><th>Value / limit</th></tr></thead>
+  <tbody>
+    <tr><td>File name</td><td><code>favourites.bin</code> (shared OPL config dir)</td></tr>
+    <tr><td>Format magic</td><td><code>OFAV</code> (0x4641464F, little-endian)</td></tr>
+    <tr><td>Format version</td><td>1</td></tr>
+    <tr><td>Maximum favourites</td><td>512 entries</td></tr>
+    <tr><td>Maximum title length</td><td>255 characters + NUL (256 bytes)</td></tr>
+    <tr><td>Import from uOPL / wOPL</td><td>Automatic, read-only (one-way carry-over)</td></tr>
+  </tbody>
+</table>
+
+<h2 id="device-settings">Device Settings options</h2>
+<p>Favourites has one option in <b>Settings → Device Settings</b>:</p>
+
+<table data-sortable>
+  <thead><tr><th>Setting</th><th>Values</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Favourites Start Mode</b></td>
+      <td>Off / Manual / Auto</td>
+      <td><b>Off</b> hides the tab and disables R3 entirely. <b>Manual</b> (default) shows the tab but does not
+      auto-start into it. <b>Auto</b> behaves like Auto mode on a regular device tab.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout info"><div class="h">ℹ R3 only works when Favourites Start Mode is on</div>
+When Favourites Start Mode is set to <b>Off</b>, pressing R3 does nothing — no star is set and nothing is written
+to disk. Enable the tab first.</div>
+
+<h2 id="theme-support">Theme support</h2>
+<p>The Favourites page renders using the <code>favsMain</code> element family (which falls back to the regular
+game-list <code>main</code> family when the theme defines no <code>favsMain</code> override). The star mark drawn beside favourited titles in any list uses the embedded <code>fav_mark</code>
+texture. Themes can override the appearance of the Favourites tab icon via the <code>fav</code> texture slot.</p>
+
+<p>App favourites (items sourced from the Apps tab) are handled specially: they use the <b>apps</b> theme element
+family (correct art box geometry and case overlay) rather than the game-cover family, so a favourited app looks right
+even on the Favourites page.</p>
+
+<p>For full details on element families and texture slots, see the <a href="themes.html">Theme Engine</a> reference.</p>
+
+<details class="deep"><summary>What happens to a favourite when a device is not connected?</summary>
+<p>The record stays in <code>favourites.bin</code> — it is never deleted just because the source device is absent.
+When you open the Favourites tab, RiptOPL tries to resolve each stored entry against the currently loaded device
+lists. Any entry whose device is not available (drive unplugged, share offline, etc.) is simply hidden from the
+visible list. The moment that device is connected and its game list loads, the entry becomes visible again
+automatically — no action needed on your part.</p></details>
+
+<details class="deep"><summary>Can I favourite a PS1 (VCD) game?</summary>
+<p>Yes. PS1 titles shown in the VCD view (accessed with L3 on a device page) can be starred with R3 just like PS2
+games. They appear in the Favourites list and launch through POPSTARTER the same way they do from their source
+device. See <a href="ps1-vcd.html">PS1 Games (VCD)</a> for how the VCD view works.</p></details>
+
+<details class="deep"><summary>Can I favourite a Neutrino-backed game?</summary>
+<p>Yes. Neutrino per-game settings are stored in the game's own per-game config file, not in the Favourites list.
+A favourited game that is set to use Neutrino will still launch via Neutrino when opened from the Favourites page,
+because the launch path proxies to the source device entry with all its settings intact.</p></details>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

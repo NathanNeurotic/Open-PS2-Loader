@@ -1,0 +1,192 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VMC · RiptOPL Docs</title>
+<meta name="description" content="Virtual Memory Cards: create, size, assign per game.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html" class="active"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Virtual Memory Cards (VMC)</h1>
+<p class="lead">OPL can emulate a PS2 Memory Card using an image file stored on your game drive. This lets games save without a physical card — or lets you keep one save-file set per game rather than sharing a single real card.</p>
+
+<div class="callout info"><div class="h">ℹ What is a VMC?</div>
+A Virtual Memory Card (VMC) is a <code>.bin</code> file that the IOP mcemu driver presents to the game as if it were a real Memory Card in slot 1 or slot 2. The PS2's kernel, and every game that reads from the card, sees an ordinary Memory Card — no special game support is required.
+</div>
+
+<h2 id="storage">Where VMC files live</h2>
+<p>VMC images are stored in a <code>VMC/</code> subfolder on the <em>same device</em> as the game being launched. The path depends on your storage backend:</p>
+
+<table data-sortable>
+<thead><tr><th>Device</th><th>VMC folder path</th></tr></thead>
+<tbody>
+<tr><td>USB / MX4SIO / iLink / MMCE / exFAT HDD (BDM)</td><td><code>&lt;drive root&gt;/VMC/</code></td></tr>
+<tr><td>SMB (network share)</td><td><code>&lt;share root&gt;\VMC\</code></td></tr>
+<tr><td>Internal HDD (APA/PFS)</td><td><code>pfs0:VMC/</code> (default <code>+OPL</code> partition) or <code>pfs0:OPL/VMC/</code> (custom non-<code>+</code> partition). OPL reads <code>hdd0:__common/OPL/conf_hdd.cfg</code> to discover the working partition; the default is <code>hdd0:+OPL</code>.</td></tr>
+</tbody>
+</table>
+
+<p>The folder must exist before OPL can create a VMC image inside it. On most devices this folder is created automatically when OPL first sets up its directory structure. If the <b>Configure VMC</b> screen reports an error locating the file, check that the <code>VMC/</code> folder is present on the drive.</p>
+
+<div class="callout info"><div class="h">ℹ File naming</div>
+Each VMC image is a plain file named <code>&lt;name&gt;.bin</code> — for example <code>MySaves_0.bin</code>. The name you type in the Configure VMC dialog is the base name without extension. OPL appends <code>.bin</code> automatically when reading or creating the file.
+</div>
+
+<h2 id="sizes">Supported sizes</h2>
+<p>OPL supports four VMC sizes, matching the storage capacities of real PS2 Memory Cards and common third-party variants:</p>
+
+<table data-sortable>
+<thead><tr><th>Size label</th><th>Equivalent capacity</th></tr></thead>
+<tbody>
+<tr><td><code>8 Mb</code></td><td>8 MB — standard Sony Memory Card (most common)</td></tr>
+<tr><td><code>16 Mb</code></td><td>16 MB</td></tr>
+<tr><td><code>32 Mb</code></td><td>32 MB</td></tr>
+<tr><td><code>64 Mb</code></td><td>64 MB — maximum supported</td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">ℹ Size labels use "Mb" notation</div>
+The UI displays sizes as <b>8 Mb</b>, <b>16 Mb</b>, <b>32 Mb</b>, <b>64 Mb</b> — this is the notation OPL inherited from upstream. These correspond to megabyte image file sizes (8 MB file, 16 MB file, etc.). Use 8 Mb unless a specific game is known to need more space.
+</div>
+
+<h2 id="assigning">Assigning a VMC to a game</h2>
+<p>Each game can have up to two VMC images — one for Memory Card slot 1 and one for slot 2. The assignment is stored in the per-game config (<code>CFG/&lt;GAMEID&gt;.cfg</code> as the <code>$VMC_0</code> and <code>$VMC_1</code> keys).</p>
+
+<div class="steps">
+<div class="step"><h3>Open Game Settings</h3>
+<p>Highlight a game in the list, then press <b>Triangle</b> to open its options and choose <b>Game Settings</b> (or whichever menu entry leads to per-game options on your theme).</p>
+</div>
+<div class="step"><h3>Enter the VMC screen</h3>
+<p>Inside Game Settings, select <b>Configure VMC</b>. You will see two sections: <b>VMC Slot 1</b> and <b>VMC Slot 2</b>. Each slot shows the currently assigned VMC name (blank if none) and two action buttons.</p>
+</div>
+<div class="step"><h3>Choose or configure the VMC</h3>
+<p>Press the name button next to a slot to open the <b>Configure VMC</b> dialog for that slot. Here you can type a name, choose a size, create or modify the image file, and check its status. See the <a href="#configure-vmc-screen">Configure VMC screen</a> section below for the full walkthrough.</p>
+</div>
+<div class="step"><h3>Use Generic or Reset</h3>
+<p>If no custom VMC name has been assigned, the action button reads <b>Use Generic</b> — pressing it assigns a shared generic VMC (<code>generic_0.bin</code> or <code>generic_1.bin</code>) for that slot. If a VMC is already assigned, the button reads <b>Reset</b>, which clears the assignment without deleting the image file.</p>
+</div>
+<div class="step"><h3>Save</h3>
+<p>Return to Game Settings and save. The VMC assignment is written to the per-game config and takes effect on the next launch of that game.</p>
+</div>
+</div>
+
+<h2 id="configure-vmc-screen">The Configure VMC screen</h2>
+<p>This dialog manages a single VMC image file. It contains the following fields:</p>
+
+<table data-sortable>
+<thead><tr><th>Field</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><b>Name</b></td><td>The base filename (no extension). OPL pre-fills a suggested name derived from the game's title ID; you can change it to any name you like. A name can be up to 31 characters.</td></tr>
+<tr><td><b>Size</b></td><td>Dropdown: <code>8 Mb</code> / <code>16 Mb</code> / <code>32 Mb</code> / <code>64 Mb</code>. This is the size that will be written when you create or modify the file. If a file already exists at the correct size it is shown as valid; if the file exists but the size does not match it is shown as invalid.</td></tr>
+<tr><td><b>Status</b></td><td>Read-only. One of: <b>VMC file exists.</b> (valid, ready to use), <b>Invalid VMC file, size is incorrect.</b> (file found but wrong size — must be resized or a new file created), or <b>VMC file needs to be created.</b> (no file found at that name yet).</td></tr>
+<tr><td><b>Progress</b></td><td>A 0–100% progress bar that fills while a VMC is being created or reformatted. It is driven by the IOP <code>genvmc</code> module in real time.</td></tr>
+<tr><td><b>Create / Modify / Abort / OK</b></td><td>The primary action button. Its label changes based on state: <b>Create</b> (no file yet), <b>Modify</b> (a valid VMC file already exists — reformats only if you change the size before pressing it), <b>Abort</b> (creation in progress — cancels it), or <b>OK</b> (creation complete — dismisses the dialog).</td></tr>
+<tr><td><b>Delete</b></td><td>Permanently deletes the VMC image file from the drive after a confirmation prompt. Only visible when a file exists.</td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">ℹ Reformat warning</div>
+If you change the <b>Size</b> of an already-existing VMC image and press <b>Modify</b>, OPL will reformat the file. The UI shows the warning <em>"Changing the size will reformat the VMC."</em> This wipes all saves stored in that image. Back up any saves you need before resizing.
+</div>
+
+<h2 id="creation-process">How image creation works</h2>
+<p>When you press <b>Create</b> (or <b>Modify</b>), OPL loads the <code>genvmc</code> IOP module and hands it the target path and size. The module formats the image in the background, writing a valid PS2 Memory Card superblock and cluster structure. The Progress bar updates live while this happens. Creation of an 8 MB VMC typically takes a few seconds on USB; larger sizes take proportionally longer.</p>
+<p>Once the progress bar reaches 100% the button label changes to <b>OK</b>. Pressing OK confirms the new or updated VMC and returns you to the VMC slot picker.</p>
+
+<h2 id="fragmentation">Fragmentation warning</h2>
+<p>VMC images on FAT32 or exFAT drives can become fragmented if the file was not written contiguously. OPL checks for fragmentation at launch time. If the assigned VMC file is fragmented, you will see:</p>
+<pre>VMC %s file is fragmented. Continue with Memory Card in slot %d?</pre>
+<p>Answering <b>Yes</b> allows the game to launch using the physical Memory Card in that slot instead. To resolve fragmentation permanently, delete the VMC image and recreate it on a freshly formatted or less-full drive, or copy the image off the drive and back again after the drive has been defragmented.</p>
+
+<div class="callout info"><div class="h">ℹ HDD VMC fragmentation</div>
+VMC images on an internal APA/PFS HDD are stored inside the PFS filesystem and are not subject to FAT-style fragmentation — the fragmentation warning will not appear for HDD-based VMCs.
+</div>
+
+<h2 id="access-errors">Access errors at launch</h2>
+<p>If a VMC file cannot be opened at game launch — for example, because the file is missing or the drive is not ready — OPL shows:</p>
+<pre>Error accessing VMC %s. Continue with the Memory Card in slot %d?</pre>
+<p>Answering <b>Yes</b> tells OPL to fall back to the physical Memory Card in that slot (if present). Answering <b>No</b> aborts the launch.</p>
+
+<h2 id="neutrino-vmc">VMC with the Neutrino core</h2>
+<p>When a game is launched via <a href="neutrino.html">Neutrino</a>, VMC images are passed differently. Instead of the IOP mcemu module, Neutrino receives a <code>-mc0=&lt;path&gt;</code> and/or <code>-mc1=&lt;path&gt;</code> argument pointing at the <code>.bin</code> file. RiptOPL builds these arguments from the same per-game <code>$VMC_0</code> / <code>$VMC_1</code> config keys — so if you have assigned a VMC via Game Settings it will be handed to Neutrino automatically on launch.</p>
+
+<ul class="checklist">
+<li><b>USB, iLink, MX4SIO, exFAT HDD (BDM), and MMCE</b> — VMC is passed to Neutrino via <code>-mcN=</code> argument. Fully supported.</li>
+<li><b>SMB</b> — not supported for Neutrino VMC (SMB transport is separate from BDM).</li>
+<li><b>Internal HDD (APA)</b> — HDD VMC-to-Neutrino is currently deferred; Neutrino will use whatever card is physically present.</li>
+</ul>
+
+<div class="callout info"><div class="h">ℹ VMC names with spaces</div>
+Earlier OPL builds had a bug where VMC filenames containing spaces were truncated at launch because the args string was split on whitespace. RiptOPL delivers each <code>-mcN=</code> argument as a discrete argv entry, so spaces in VMC names are safe.
+</div>
+
+<h2 id="vmc-groups">Automatic name suggestion (VMC groups)</h2>
+<p>When you open the Configure VMC dialog for a game that has no VMC assigned yet, OPL pre-fills the Name field with a suggested filename based on the game's title ID. For a large set of well-known game series (sports franchises, annual releases, and others that share save data across entries), OPL maps the title ID to a shared group ID so that all entries in the series point at the same VMC image by default — letting a FIFA 2004 save be visible in FIFA 2005, for example.</p>
+<p>You are free to rename the VMC to anything you prefer. The suggestion is just a starting point; the actual filename written to disk is whatever name you confirm in the dialog.</p>
+
+<h2 id="shared-vmc">Sharing VMCs across devices and builds</h2>
+<p>VMC image files are plain binary files and are not tied to any particular OPL build. A VMC created in RiptOPL can be read by stock OPL, wOPL, or uOPL — and vice versa — as long as the image is stored at the path those builds expect. Artwork, themes, VMCs, and favourites are shared between RiptOPL and other OPL variants on the same drive.</p>
+
+<details class="deep"><summary>Can I use a real Memory Card dump as a VMC?</summary>
+<p>In principle, a raw Memory Card dump in the correct PS2 format (valid superblock, matching size) should work as a VMC image — but this depends on how the dump was made. Tools that produce a bit-for-bit dump of the card's flash layout are compatible. Dumps made by software that reconstructs a logical filesystem may not match the expected superblock format that OPL validates. The safest approach is to create a fresh VMC in OPL and use a save manager (such as MyMC or OPL itself via the built-in transfer feature, if available) to copy individual saves into it.</p>
+</details>
+
+<details class="deep"><summary>Can I assign the same VMC file to multiple games?</summary>
+<p>Yes. Because the Name field is free-form, you can type the same filename for multiple games — they will all read and write the same <code>.bin</code> file. This is equivalent to plugging the same physical Memory Card into the slot for every game. Useful if you want a shared pool of saves, but be aware that all games will see each other's save data and could potentially overwrite it if they use the same directory name on the card.</p>
+</details>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

@@ -1,0 +1,189 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NBD Server · RiptOPL Docs</title>
+<meta name="description" content="Share the internal HDD over the network (NBD).">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html" class="active"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>NBD Server</h1>
+<p class="lead">RiptOPL can turn the PS2 into an <a href="https://en.wikipedia.org/wiki/Network_block_device">NBD (Network Block Device)</a> server, exposing the internal HDD to any PC on your LAN. The implementation is based on <a href="https://github.com/bignaux/lwNBD">lwNBD</a> — a formally-documented, open-standard NBD protocol stack. Once connected, the drive appears to the host OS the same way it would if physically attached, so any tool that works directly on the drive (including <code>hdl_dump</code> and <code>pfs-shell</code>) works identically over NBD.</p>
+
+<div class="callout info"><div class="h">ℹ NBD replaces the old HDL server</div>
+OPL used to ship an HDL server for remote HDD access. NBD supersedes it. The protocol is an open standard (<a href="https://github.com/NetworkBlockDevice/nbd/blob/master/doc/proto.md">NBD protocol spec</a>); any compliant NBD client will work.
+</div>
+
+<h2 id="prerequisites">Prerequisites</h2>
+<ul class="checklist">
+  <li>An internal HDD installed in the PS2 (original or HDD OSD-format is fine; APA layout).</li>
+  <li>A network adapter and Ethernet cable — the same adapter used for SMB or network boot.</li>
+  <li>RiptOPL configured with an IP address: either a static IP or DHCP, set under <b>Network Config</b> in the main menu. The PS2's IP address is what you will connect to.</li>
+  <li>An NBD client installed on the host PC (see the per-OS sections below).</li>
+</ul>
+
+<div class="callout info"><div class="h">ℹ Read-only vs read-write</div>
+The NBD server exports the drive as <b>read-only</b> when the <b>Write Operations</b> option is off in RiptOPL's settings, and as <b>read-write</b> when it is on. Write Operations is the same toggle that controls rename/delete in the game lists. Be careful with write access: direct block-level writes bypass all filesystem safety checks.
+</div>
+
+<h2 id="starting-the-server">Starting the server</h2>
+<div class="steps">
+  <div class="step">
+    <h3>Open the main menu</h3>
+    <p>From any game list, press <b>Triangle</b> to open the main menu.</p>
+  </div>
+  <div class="step">
+    <h3>Select "Start NBD Server"</h3>
+    <p>Scroll to <b>Start NBD Server</b> and confirm. RiptOPL will display <em>"NBD Server starting…"</em> while it loads the network and ATA modules, then <em>"NBD Server running…"</em> once the server is live.</p>
+  </div>
+  <div class="step">
+    <h3>Connect from your PC</h3>
+    <p>Use one of the client options below (Linux <code>nbd-client</code>, Linux/WSL2 <code>nbdfuse</code>, or Windows <code>wnbd</code>) to mount the drive. macOS is not supported.</p>
+  </div>
+  <div class="step">
+    <h3>Disconnect and exit</h3>
+    <p>Disconnect the client first, then dismiss the "NBD Server running…" message box on the PS2. RiptOPL will display <em>"NBD Server unloading…"</em> and then return to the normal menu.</p>
+  </div>
+</div>
+
+<div class="callout info"><div class="h">ℹ Audio is suspended while the server runs</div>
+RiptOPL mutes the audio library while the NBD server is active and restores it when the server is dismissed. This is expected behaviour.
+</div>
+
+<h2 id="export-name">Export name</h2>
+<p>The NBD server exports a single device. By default the export name is <code>hdd0</code>. You can override this by setting <code>nbd_default_export</code> in <code>conf_network.cfg</code> (the network configuration file stored alongside your other config files on your boot device). Leave it blank or omit the key to keep the default <code>hdd0</code>.</p>
+<pre>nbd_default_export=hdd0</pre>
+<p>When listing available exports (see the client sections below), the server will report whatever name is configured here.</p>
+
+<h2 id="nbd-client-linux">nbd-client (Linux)</h2>
+<p>Supported on: <b>Linux</b>, and <a href="https://github.com/microsoft/WSL/issues/5968">Windows with WSL using a custom kernel</a> that includes NBD support.</p>
+<p><code>nbd-client</code> requires the <code>nbd</code> kernel module. Load it if it is not already present:</p>
+<pre>sudo modprobe nbd</pre>
+<p>List the available exports (replace the IP with your PS2's IP):</p>
+<pre>nbd-client -l 192.168.1.45</pre>
+<p>Connect the drive to a block device node (you may need <code>sudo</code>, or membership in the <code>disk</code> group):</p>
+<pre>nbd-client 192.168.1.45 /dev/nbd1</pre>
+<p>Disconnect:</p>
+<pre>nbd-client -d /dev/nbd1</pre>
+<p>Once connected, <code>/dev/nbd1</code> behaves like a directly-attached disk. Partition tools, <code>hdl_dump</code>, <code>pfs-shell</code>, and hex editors all work against it.</p>
+
+<h2 id="nbdfuse-linux-wsl2">nbdfuse (Linux / WSL2)</h2>
+<p>Supported on: <b>Linux</b> and <b>Windows with WSL2</b>. <code>nbdfuse</code> and <code>nbdinfo</code> are part of <a href="https://gitlab.com/nbdkit/libnbd">libnbd</a>; install the <code>libnbd-bin</code> package on Debian/Ubuntu or the equivalent on your distro.</p>
+<p>List available exports:</p>
+<pre>nbdinfo --list nbd://192.168.1.45</pre>
+<p>Mount the drive as a file (the directory must exist first):</p>
+<pre>mkdir ps2
+nbdfuse ps2/ nbd://192.168.1.45 &amp;</pre>
+<p>The drive appears as a raw disk image file inside the <code>ps2/</code> directory. Unmount:</p>
+<pre>umount ps2</pre>
+
+<h2 id="wnbd-windows">wnbd (Windows)</h2>
+<p>Supported on: <b>Windows</b>. Download and install <a href="https://cloudbase.it/ceph-for-windows/">WNBD (Cloudbase Solutions)</a>, then reboot. Open an elevated <b>PowerShell</b> (Run as Administrator).</p>
+<p>Connect (the first argument is a label you choose; the second is the PS2's IP):</p>
+<pre>wnbd-client.exe map hdd0 192.168.1.22</pre>
+<p>The drive will appear in Disk Management as a new disk. Disconnect:</p>
+<pre>wnbd-client.exe unmap hdd0</pre>
+
+<h2 id="macos">macOS</h2>
+<p>macOS is <b>not supported</b>. There is no NBD client available for macOS that is compatible with the lwNBD server.</p>
+
+<h2 id="hdl-dump-workflow">Using hdl_dump over NBD</h2>
+<p>Once the drive is connected via any of the clients above, <code>hdl_dump</code> treats the exposed block device (or file) the same as a local drive. A typical workflow to install a game image to the PS2's HDD:</p>
+<div class="steps">
+  <div class="step">
+    <h3>Connect the NBD client</h3>
+    <p>Follow the steps for your OS above. Note which device node or mount path you are using (e.g. <code>/dev/nbd1</code>).</p>
+  </div>
+  <div class="step">
+    <h3>Run hdl_dump</h3>
+    <p>Pass the device path as the target. For example, to inject a DVD image:</p>
+    <pre>hdl_dump inject_dvd ps2/nbd "Test Game" ./TEST.ISO</pre>
+    <p>Replace <code>ps2/nbd</code> with the actual block device or mount path for your setup.</p>
+  </div>
+  <div class="step">
+    <h3>Disconnect</h3>
+    <p>Disconnect the NBD client, then dismiss the server on the PS2.</p>
+  </div>
+</div>
+
+<div class="callout info"><div class="h">ℹ Other tools</div>
+<code>pfs-shell</code> (from the ps2sdk tool set) and even a hex editor work the same way — any tool that operates on a raw block device or disk image will work once the drive is mounted via NBD.
+</div>
+
+<details class="deep"><summary>What happens internally when the server starts?</summary>
+<p>Selecting <b>Start NBD Server</b> calls <code>handleLwnbdSrv()</code> in <code>src/opl.c</code>. This function:</p>
+<ol>
+  <li>Suspends the audio library (<code>audioEnd()</code>).</li>
+  <li>Blocks pending I/O operations and waits for them to finish.</li>
+  <li>Unloads the gamepad drivers.</li>
+  <li>Loads the Ethernet modules via <code>ethLoadInitModules()</code> (the same path used for SMB / network boot).</li>
+  <li>Loads <code>ps2atad.irx</code> for low-level ATA access, then <code>lwnbdsvr.irx</code> — the lwNBD IOP module — passing a small config struct that sets the export name (defaulting to <code>hdd0</code> if <code>nbd_default_export</code> is blank) and the read-only flag (derived from <code>gEnableWrite</code>).</li>
+  <li>Displays "NBD Server running…" and blocks until the user dismisses the message box.</li>
+  <li>On dismissal, <code>unloadLwnbdSvr()</code> tears down the Ethernet modules and calls <code>reset()</code> to return OPL to its normal state.</li>
+</ol>
+<p>The lwNBD source is vendored from <a href="https://github.com/bignaux/lwNBD">github.com/bignaux/lwNBD</a> at a pinned commit, downloaded by <code>download_lwNBD.sh</code> into <code>modules/network/lwNBD/</code> at build time.</p>
+</details>
+
+<h2 id="related">Related pages</h2>
+<div class="grid">
+  <a class="tile" href="hdd.html"><span class="em">💽</span><b>Internal HDD</b><span>APA/PFS &amp; exFAT (BDMA) setup</span></a>
+  <a class="tile" href="network-boot.html"><span class="em">📡</span><b>Network Boot</b><span>Stream games over LAN via UDPBD/UDPFS</span></a>
+  <a class="tile" href="smb.html"><span class="em">🌐</span><b>SMB</b><span>Share a PC folder as a game source</span></a>
+  <a class="tile" href="settings.html"><span class="em">🔧</span><b>Settings Reference</b><span>All settings including Write Operations</span></a>
+</div>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

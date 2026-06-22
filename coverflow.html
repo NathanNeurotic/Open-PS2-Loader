@@ -1,0 +1,203 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coverflow · RiptOPL Docs</title>
+<meta name="description" content="The built-in cover-carousel theme (the default).">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html" class="active"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Coverflow</h1>
+<p class="lead">RiptOPL's default theme — a centered cover-art carousel with an alpha-faded
+reflection, animated scrolling between titles, and aspect-correct cover frames in both 4:3
+and widescreen. It is a <b>built-in theme</b>: no files to copy, active out of the box.</p>
+
+<div class="callout info"><div class="h">ℹ Built-in, not a THM folder theme</div>
+<code>&lt;Coverflow&gt;</code> is compiled into RiptOPL and appears in the theme list alongside
+any custom <code>THM/</code> themes you add. You can switch to a different theme in
+<b>Display Settings → Theme</b> and switch back at any time. The <b>Coverflow Settings</b>
+button only appears in <b>Display Settings</b> while a Coverflow-based theme is active.
+</div>
+
+<h2 id="how-it-works">How it works</h2>
+<p>When the <code>&lt;Coverflow&gt;</code> theme is active, the game list view shows a row of
+cover-art images centred on the screen. The currently selected title sits at the centre; side
+covers fan out to the left and right. Below each cover a mirrored, alpha-faded reflection is
+drawn automatically. Scrolling left or right slides the entire carousel with a smooth animation;
+the selection lands on the new title when the animation completes.</p>
+
+<p>Covers are drawn inside a <b>two-layer frame</b>: a plastic-case layer (<code>case</code>)
+sits over the raw cover art, and a second overlay layer (<code>case_overlay</code>) sits over
+that, keeping the frame visually aligned regardless of cover art dimensions. The engine
+keeps the frame <b>aspect-correct</b> automatically in both 4:3 and widescreen — it does
+<b>not</b> apply an extra widescreen scale on top of what the PS2 already does, so covers
+never warp when widescreen is toggled.</p>
+
+<p>The element type driving the carousel is <code>type=Coverflow</code>. The built-in theme
+defines three variants of this element:</p>
+
+<table data-sortable>
+  <thead><tr><th>Block</th><th>Used for</th><th>Box size</th><th>Default cover</th></tr></thead>
+  <tbody>
+    <tr><td><code>main2</code></td><td>PS2 games</td><td>184 × 256 px (portrait)</td><td><code>cover</code></td></tr>
+    <tr><td><code>appsMain2</code></td><td>Apps</td><td>184 × 184 px (square)</td><td><code>coverapp</code></td></tr>
+    <tr><td><code>vcdMain2</code></td><td>PS1 / VCD games</td><td>184 × 184 px (square)</td><td><code>cover</code></td></tr>
+  </tbody>
+</table>
+
+<p>Apps and PS1 covers use a square box so the frame matches their square art; PS2 games use the
+taller portrait box that matches a standard PS2 case.</p>
+
+<h2 id="coverflow-settings">Coverflow Settings</h2>
+<p>Open <b>Display Settings</b> and press the <b>Coverflow Settings</b> button (it appears only
+when a Coverflow theme is active). Four options are available:</p>
+
+<table data-sortable>
+  <thead><tr><th>Setting</th><th>Options</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Cover Count</b></td>
+      <td>3 / 5</td>
+      <td>Number of covers shown simultaneously. <b>3</b> = one centre + one each side;
+      <b>5</b> = one centre + two each side.</td>
+    </tr>
+    <tr>
+      <td><b>Center Scale</b></td>
+      <td>None / Small / Medium / Large</td>
+      <td>How much the centre cover grows relative to the side covers. <b>None</b> = all covers the same size.</td>
+    </tr>
+    <tr>
+      <td><b>Animation Speed</b></td>
+      <td>Off / Fast / Normal / Slow</td>
+      <td>Duration of the slide animation when the selection changes. <b>Off</b> = instant snap
+      (0 ms); <b>Fast</b> = 100 ms; <b>Normal</b> = 200 ms; <b>Slow</b> = 400 ms.</td>
+    </tr>
+    <tr>
+      <td><b>Dim Side Covers</b></td>
+      <td>On / Off</td>
+      <td>When on, non-centre covers are drawn darker to focus attention on the selected title.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>These settings are saved to <code>settings_riptopl.cfg</code> under the keys
+<code>coverflow_count</code>, <code>coverflow_scale</code>, <code>coverflow_anim</code>, and
+<code>coverflow_dim</code>. They apply to <em>any</em> theme that uses a
+<code>type=Coverflow</code> element — not just the built-in one.</p>
+
+<h2 id="cover-art">Cover art</h2>
+<p>The carousel pulls cover art from the <code>ART/</code> folder on the active storage device
+(same folder used by all OPL themes). Name your art files by Game ID:</p>
+
+<pre>ART/
+  SLUS_012.34_COV.png   ← cover art (used by Coverflow)
+  SLUS_012.34_SCR.png   ← screenshot 1 (shown on the info page)
+  SLUS_012.34_SCR2.png  ← screenshot 2</pre>
+
+<p>If no matching cover is found the carousel shows the built-in <code>cover</code> placeholder
+instead. Art is loaded into a shared texture cache. The cache is pre-sized internally (the
+built-in carousel uses a fixed slot count) and is not user-configurable.</p>
+
+<div class="callout info"><div class="h">ℹ Art is shared across OPL builds</div>
+Because all OPL-family builds use the same <code>ART/</code> folder layout, artwork you already
+have for stock OPL, uOPL, or wOPL works with RiptOPL's Coverflow carousel without any changes.
+</div>
+
+<h2 id="theme-authoring">Authoring a Coverflow theme</h2>
+<p>You can create your own theme that uses the <code>type=Coverflow</code> element — custom
+background, fonts, colors, and overlay art, with the same live settings above. See
+<a href="themes.html">Theme Engine</a> for the full authoring reference, including:</p>
+
+<ul class="checklist">
+  <li>The <code>type=Coverflow</code> element properties (<code>default</code>, <code>overlay</code>,
+  <code>overlay2</code>, <code>reflection</code>, <code>width</code>/<code>height</code>,
+  overlay corners)</li>
+  <li>The global <code>coverflow_cover_offset</code> key for horizontal nudging of the whole carousel</li>
+  <li>Block family prefixes (<code>appsMain*</code>, <code>vcdMain*</code>, <code>favsMain*</code>)
+  for per-view overrides</li>
+  <li>The two-layer overlay system (<code>overlay</code> + <code>overlay2</code>) used by the
+  built-in case frame</li>
+</ul>
+
+<p>The built-in theme's source, <code>misc/theme_coverflow.cfg</code> in the repository, is a
+complete working reference you can copy and modify.</p>
+
+<h2 id="cfg-reference">Config key reference</h2>
+<p>The Coverflow Settings are stored in <code>settings_riptopl.cfg</code>. For completeness,
+the underlying keys and their value ranges:</p>
+
+<table data-sortable>
+  <thead><tr><th>Config key</th><th>Type</th><th>Values</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><code>coverflow_count</code></td><td>int</td><td>3 or 5</td><td>Visible covers in the carousel</td></tr>
+    <tr><td><code>coverflow_scale</code></td><td>int</td><td>0 / 15 / 30 / 45</td><td>Centre-cover grow amount (0 = None, 15 = Small, 30 = Medium, 45 = Large)</td></tr>
+    <tr><td><code>coverflow_anim</code></td><td>int (ms)</td><td>0 / 100 / 200 / 400</td><td>Slide duration (0 = Off, 100 = Fast, 200 = Normal, 400 = Slow)</td></tr>
+    <tr><td><code>coverflow_dim</code></td><td>bool</td><td>0 / 1</td><td>Dim non-centre covers</td></tr>
+  </tbody>
+</table>
+
+<details class="deep"><summary>Where does the per-theme horizontal nudge live?</summary>
+<p>The <code>coverflow_cover_offset</code> key is a <b>theme-level global property</b> — it lives
+inside the theme's <code>conf_theme.cfg</code>, not in <code>settings_riptopl.cfg</code>. It shifts
+the entire carousel left or right (range −1024 to 1024, default 0). The built-in
+<code>&lt;Coverflow&gt;</code> theme sets it to <code>0</code>. If you author a custom theme and
+need to reposition the carousel horizontally, set this in your <code>conf_theme.cfg</code> — it does
+not appear in the Coverflow Settings menu.</p>
+</details>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

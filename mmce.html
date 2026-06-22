@@ -1,0 +1,246 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MMCE · RiptOPL Docs</title>
+<meta name="description" content="Memory Card Mass-storage: SD2PSX / MemCard PRO2.">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html" class="active"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favourites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>MMCE (SD2PSX / MemCard PRO2)</h1>
+<p class="lead">MMCE — <b>Memory Card Mass Storage Emulation</b> — lets OPL load PS2 games from an SD card inserted
+into a device (SD2PSX or MemCard PRO2) sitting in the PS2's memory-card slot. The protocol was created by
+<b>bbsan2k</b>; OPL's MMCE driver builds directly on that work. The device mounts as <code>mmce0:</code> or
+<code>mmce1:</code> and uses the same folder layout as USB.</p>
+
+<div class="callout info"><div class="h">ℹ MMCE vs MX4SIO</div>
+Both SD2PSX and MemCard PRO2 appear in OPL as MMCE devices (the bbsan2k protocol). <b>MX4SIO</b> is a different
+SD-in-memory-card-slot adapter that uses a separate OPL driver and mounts into the BDM <code>massN:</code>
+namespace alongside USB. If your adapter does not expose the MMCE protocol, see the
+<a href="usb.html">USB / MX4SIO / iLink</a> page instead.
+</div>
+
+<h2 id="quick-start">Quick start</h2>
+<div class="steps">
+<div class="step"><h3>Prepare the SD card</h3>
+<p>Format the SD card as <b>FAT32</b> or <b>exFAT</b> with an MBR partition table. Create the standard OPL folder
+tree at the card root: <code>DVD/</code>, <code>CD/</code>, <code>ART/</code>, <code>CFG/</code>, <code>VMC/</code>,
+<code>THM/</code>, <code>CHT/</code>, <code>APPS/</code>. Copy PS2 game ISOs into <code>DVD/</code> (DVD-format
+titles) or <code>CD/</code> (CD-format titles). Defragment game files — ideally copy to PC, reformat, copy back.
+Up to 64 fragments per file are tolerated since OPL v1.2.0 beta rev1893, but contiguous files are strongly
+preferred for reliability.</p></div>
+
+<div class="step"><h3>Seat the device and boot</h3>
+<p>Insert the SD2PSX or MemCard PRO2 (with the SD card loaded) into a memory-card slot. Boot the PS2 and launch
+RiptOPL. OPL will detect the MMCE device automatically when MMCE Start Mode is set to <b>Auto</b>.</p></div>
+
+<div class="step"><h3>Enable MMCE in Device Settings</h3>
+<p>Open <b>Device Settings</b> from the RiptOPL main menu. Find the <b>MMCE Start Mode</b> option and set it to
+<b>Auto</b> (detects and mounts on boot) or <b>Manual</b> (shows the MMCE tab but only mounts when you navigate
+to it). Save settings. The <b>MMCE Games</b> tab appears in the game list once the device is detected.</p></div>
+
+<div class="step"><h3>Launch a game</h3>
+<p>Navigate to the <b>MMCE Games</b> tab, select a title, and press the confirm button. Cover art, per-game
+settings, VMC, and cheats all work identically to USB.</p></div>
+</div>
+
+<h2 id="folder-layout">Folder layout</h2>
+<p>MMCE uses the same folder structure as USB and other folder-based devices. OPL creates any missing folders
+automatically on first launch.</p>
+<table data-sortable>
+<thead><tr><th>Folder</th><th>Contents</th></tr></thead>
+<tbody>
+<tr><td><code>DVD/</code></td><td>PS2 DVD-format game ISOs / ZSOs</td></tr>
+<tr><td><code>CD/</code></td><td>PS2 CD-format game ISOs / ZSOs</td></tr>
+<tr><td><code>POPS/</code></td><td>PS1 <code>*.VCD</code> files + <code>POPSTARTER.ELF</code></td></tr>
+<tr><td><code>ART/</code></td><td>Cover art images</td></tr>
+<tr><td><code>CFG/</code></td><td>Per-game config files</td></tr>
+<tr><td><code>VMC/</code></td><td>Virtual memory card images</td></tr>
+<tr><td><code>THM/</code></td><td>Themes</td></tr>
+<tr><td><code>CHT/</code></td><td>Cheat files</td></tr>
+<tr><td><code>APPS/</code></td><td>Homebrew ELFs</td></tr>
+<tr><td><code>LNG/</code></td><td>Language packs</td></tr>
+</tbody>
+</table>
+<p>The device prefix is <code>mmce0:/</code> (slot 0) or <code>mmce1:/</code> (slot 1). In
+<code>conf_apps.cfg</code>, reference ELFs on the MMCE card as <code>mmce:APPS/MYAPP.ELF</code>.</p>
+
+<h2 id="device-settings">Device Settings</h2>
+<p>All MMCE options live in <b>Device Settings</b> (the consolidated hub reached from the RiptOPL main menu).
+The MMCE section is near the bottom of that page under the <b>MMCE Settings</b> heading.</p>
+
+<h3 id="start-mode">MMCE Start Mode</h3>
+<p>Controls when OPL loads the MMCE driver and shows the MMCE Games tab.</p>
+<table data-sortable>
+<thead><tr><th>Value</th><th>Behaviour</th></tr></thead>
+<tbody>
+<tr><td><b>Off</b></td><td>MMCE driver not loaded; no MMCE tab.</td></tr>
+<tr><td><b>Manual</b></td><td>Tab is shown; driver loads when you navigate to the MMCE tab for the first time. Default.</td></tr>
+<tr><td><b>Auto</b></td><td>Driver loads at boot and the tab is shown immediately if a device is detected.</td></tr>
+</tbody>
+</table>
+
+<h3 id="slot">MMCE Slot</h3>
+<p>Selects which memory-card slot the MMCE device occupies.</p>
+<table data-sortable>
+<thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><b>0</b></td><td>Memory-card slot 1 (port 2 internally); fixed.</td></tr>
+<tr><td><b>1</b></td><td>Memory-card slot 2 (port 3 internally); fixed.</td></tr>
+<tr><td><b>Auto</b></td><td>OPL probes both slots and uses the first one that responds. Default.</td></tr>
+</tbody>
+</table>
+
+<h3 id="prefix-path">MMCE Prefix Path</h3>
+<p>An optional sub-path appended after the device root before OPL looks for game folders. Useful when your SD card
+serves multiple purposes and you want to keep OPL files in a subdirectory — for example, setting the prefix to
+<code>OPL</code> causes OPL to look for games in <code>mmce0:/OPL/DVD/</code> instead of
+<code>mmce0:/DVD/</code>. Leave blank (the default) to use the root of the SD card.</p>
+
+<h2 id="igr">IGR Bootcard Slot(s)</h2>
+<p>MMCE devices support <b>In-Game Reset (IGR)</b> — they can send a "switch to bootcard" command to the device on
+reset, allowing you to return to your boot exploit (e.g. FMCB) rather than the PS2 BIOS when you press the reset
+button inside a game.</p>
+<p>The <b>IGR Bootcard Slot(s)</b> setting controls which slot receives the IGR command when the console resets.</p>
+<table data-sortable>
+<thead><tr><th>Value</th><th>Behaviour</th></tr></thead>
+<tbody>
+<tr><td><b>NONE</b></td><td>No IGR command sent on reset (MMCE IGR disabled).</td></tr>
+<tr><td><b>0</b></td><td>Send the switch-to-bootcard command to slot 0 (memory-card slot 1) on reset.</td></tr>
+<tr><td><b>1</b></td><td>Send the switch-to-bootcard command to slot 1 (memory-card slot 2) on reset.</td></tr>
+<tr><td><b>BOTH</b></td><td>Send the command to both slots on reset. Default (3 internally).</td></tr>
+</tbody>
+</table>
+<div class="callout info"><div class="h">ℹ IGR only works when MMCE mode is enabled</div>
+The MMCE IGR module (<code>mmceigr.irx</code>) is loaded alongside the MMCE driver on reset whenever IGR Bootcard
+Slot(s) is set to anything other than <b>NONE</b>. If MMCE Start Mode is Off but you still want IGR, set the
+Slot(s) value — OPL will load the MMCE driver at launch specifically to support it.
+</div>
+
+<h2 id="advanced-settings">Advanced MMCE Settings</h2>
+<p>These settings tune the low-level timing and locking behaviour of the MMCE driver. The defaults (all 0 / OFF)
+are correct for the vast majority of SD2PSX and MemCard PRO2 hardware. Adjust them only if you are experiencing
+instability or timeouts.</p>
+
+<h3 id="wait-cycles">Wait Cycles after /ACK low</h3>
+<p>Extra wait cycles inserted after the MMCE /ACK line goes low, giving slower SD cards or cards with marginal
+signal quality more time to settle before the driver continues. Values: <b>0</b> (default) through <b>5</b>.
+Lower values may improve performance but can cause instabilities; increase if you see read errors or hangs.</p>
+
+<h3 id="use-alarms">Use Timeout Alarms</h3>
+<p>When <b>ON</b>, the driver uses hardware alarm interrupts to implement MMCE operation timeouts. When <b>OFF</b>
+(the default), timeouts are handled without alarms — which may marginally improve performance, but means a genuine
+MMCE timeout can result in a hard freeze rather than a graceful error. Turn this <b>ON</b> if your card occasionally
+hangs to convert those freezes into recoverable timeout errors.</p>
+
+<h2 id="ps1-vcd">PS1 games on MMCE</h2>
+<p>MMCE supports the PS1 VCD view exactly like USB. Place <code>*.VCD</code> files and <code>POPSTARTER.ELF</code>
+in the <code>POPS/</code> folder on the SD card. Press <b>L3</b> on the MMCE Games tab to switch between the PS2
+game list and the PS1 VCD list. See <a href="ps1-vcd.html">PS1 Games (VCD)</a> for the full setup walkthrough,
+including the Default game view lock and cover-art fallback chain.</p>
+
+<p>MMCE is also a supported BDMA source for the exFAT POPSTARTER equip (BDMA Mode → <b>MMCE (exFAT)</b>),
+meaning POPSTARTER can read BDMA module files from the MMCE card when you use an exFAT-formatted SD.</p>
+
+<h2 id="neutrino">Neutrino on MMCE</h2>
+<p>Per-game <a href="neutrino.html">Neutrino</a> is fully supported for games stored on MMCE. When a game's
+Loader Core is set to Neutrino, OPL hands the launch to <code>neutrino.elf</code>. Neutrino itself can be stored
+on the MMCE card at <code>mmce0:/neutrino/neutrino.elf</code> (or <code>mmce1:/</code>) — select
+<b>mmce0</b> or <b>mmce1</b> in the Neutrino ELF Path device picker under General Settings. Auto does not search MMCE — it only probes mc0: and mc1: — so a neutrino.elf stored on an MMCE card requires picking <b>mmce0</b> or <b>mmce1</b> explicitly.</p>
+
+<div class="callout info"><div class="h">ℹ USBExtreme (.ul) and ZSO on MMCE</div>
+USBExtreme multi-chunk format (<code>ul.*</code>) and ZSO compressed images are both supported on MMCE, subject
+to the same rules as USB. ZSO is only compatible with OPL's built-in core — Neutrino cannot launch ZSO files.
+See <a href="zso.html">ZSO Format</a> for details.
+</div>
+
+<h2 id="notes">Notes &amp; tips</h2>
+<ul class="checklist">
+<li>MMCE and the built-in memory-card emulation on the same device share the memory-card slot. If your SD2PSX
+or MemCard PRO2 is also acting as a virtual memory card, OPL can still use it as a game source — the drivers
+co-exist.</li>
+<li>Game files should be <b>defragmented</b>. The easiest method: copy all files to PC, reformat the SD card,
+copy all files back. Up to 64 fragments per file are supported, but performance degrades with fragmentation.</li>
+<li>If games larger than 4 GB must fit on a FAT32-formatted card, use the USBExtreme split format (tools:
+OPLUtil, USBUtil).</li>
+<li>Cover art, per-game settings, VMC, and cheats work identically to USB — OPL looks in the same relative
+folders under the MMCE root (or the Prefix Path subdirectory if set).</li>
+<li>The config file (<code>settings_riptopl.cfg</code>) can be stored on the MMCE card. OPL probes MMCE before
+BDM devices during config discovery, so an MMCE-resident config is found reliably.</li>
+<li>MMCE is <b>not</b> MX4SIO. If your adapter uses the MX4SIO driver (rather than the bbsan2k MMCE protocol),
+it mounts as <code>massN:</code> via BDM — enable it with the USB/MX4SIO toggle in Device Settings, not the
+MMCE Start Mode. See <a href="usb.html">USB / MX4SIO / iLink</a>.</li>
+</ul>
+
+<details class="deep"><summary>What is the MMCE protocol and how does it differ from MX4SIO?</summary>
+<p>MMCE (Memory Card Mass Storage Emulation) is a protocol created by <b>bbsan2k</b> for SD-card adapters that
+plug into the PS2's memory-card slot. The device presents itself as a mass-storage device to a dedicated IOP
+driver (<code>mmcedrv.irx</code>) using a custom command set that OPL speaks natively. The SD2PSX and MemCard
+PRO2 both implement this protocol.</p>
+<p><b>MX4SIO</b> is a different, older SD-in-memory-card adapter (four-bit SPI) that is driven by a BDM block
+device module and mounts into the <code>massN:</code> namespace shared with USB and iLink. The two protocols are
+entirely distinct — each requires its own driver, and the device you own determines which one to enable in OPL.</p>
+</details>
+
+<details class="deep"><summary>Why does OPL probe MMCE before BDM during config load?</summary>
+<p>The config-discovery order in RiptOPL checks both memory cards first (mc0/mc1), then the device OPL booted from (only if it booted from BDM or an APA HDD), then MMCE, then BDM (USB, MX4SIO, iLink), then exFAT (BDM) HDD, then APA HDD. MMCE is tried before BDM because in
+practice users who boot from an MMCE card want their config found there, and MMCE devices tend to respond
+quickly. If no config is found on any device, OPL falls back to defaults and creates a new config on the first
+save.</p>
+</details>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. PS1 emulation is Sony's POPS,
+  which is <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>
