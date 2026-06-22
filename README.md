@@ -169,6 +169,8 @@ With special and sincere thanks to:
   work, and the Coverflow and Favourites interfaces are all reimplementations of features
   they designed and pioneered together. We learned an enormous amount reading their code, and
   this fork is as much a tribute to it as anything else. Thank you both.
+- **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
+  feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
 - **Berion** — for the artwork and theme design that has shaped how OPL *looks* for years.
   The visual language this fork builds on owes a great deal to that craft.
 - **Ifcaro** and **jimmikaelkael** — the original Open PS2 Loader authors — and every
