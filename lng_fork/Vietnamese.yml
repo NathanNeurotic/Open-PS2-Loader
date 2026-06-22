@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Yêu thích
   FAV_MSG: '%s không được phép trong Menu Yêu thích.'
   FAV_PERSISTENCE_MSG: '%s không được phép khi mục đang được đánh dấu yêu thích.'
+  NEUTRINO_DEVICE: Thiết bị Neutrino
+  HINT_NEUTRINO_DEVICE: Thiết bị chứa neutrino.elf (trong thư mục NEUTRINO/ hoặc neutrino/). Tự động quét mc0 rồi mc1.
+  NARGS_QB: Khởi động nhanh (-qb)
+  NARGS_CWD: Thư mục làm việc (-cwd)
+  NARGS_CFG: Cấu hình (-cfg)
+  NARGS_ELF: ELF khởi động (-elf)
+  NARGS_ATA0: Ảnh ATA0 (-ata0)
+  NARGS_ATA0ID: ID ATA0 (-ata0id)
+  NARGS_ATA1: Ảnh ATA1 (-ata1)
+  NARGS_EXTRA: Tham số bổ sung
+  NARGS_AUTO_NOTE: 'Tự động: -bsd -dvd -gc -gsm -mc -dbc -logo'

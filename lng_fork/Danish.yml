@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Favorit
   FAV_MSG: '%s er ikke tilladt via Favoritmenuen.'
   FAV_PERSISTENCE_MSG: '%s er ikke tilladt, mens elementet er markeret som favorit.'
+  NEUTRINO_DEVICE: Neutrino-enhed
+  HINT_NEUTRINO_DEVICE: Enhed med neutrino.elf (i en NEUTRINO/ eller neutrino/ mappe). Auto søger mc0 og derefter mc1.
+  NARGS_QB: Hurtig start (-qb)
+  NARGS_CWD: Arbejdsmappe (-cwd)
+  NARGS_CFG: Konfig (-cfg)
+  NARGS_ELF: Start-ELF (-elf)
+  NARGS_ATA0: ATA0-billede (-ata0)
+  NARGS_ATA0ID: ATA0-id (-ata0id)
+  NARGS_ATA1: ATA1-billede (-ata1)
+  NARGS_EXTRA: Ekstra argumenter
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

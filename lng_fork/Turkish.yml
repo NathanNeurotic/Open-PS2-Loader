@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Favori
   FAV_MSG: '%s Favoriler Menüsünden erişilemiyor.'
   FAV_PERSISTENCE_MSG: '%s, öğe favori olarak işaretliyken kullanılamaz.'
+  NEUTRINO_DEVICE: Neutrino Cihazı
+  HINT_NEUTRINO_DEVICE: neutrino.elf dosyasını barındıran cihaz (NEUTRINO/ veya neutrino/ klasöründe). Otomatik olarak önce mc0, sonra mc1 taranır.
+  NARGS_QB: Hızlı Başlatma (-qb)
+  NARGS_CWD: Çalışma Dizini (-cwd)
+  NARGS_CFG: Yapılandırma (-cfg)
+  NARGS_ELF: Önyükleme ELF (-elf)
+  NARGS_ATA0: ATA0 Görüntüsü (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1 Görüntüsü (-ata1)
+  NARGS_EXTRA: Ekstra Parametreler
+  NARGS_AUTO_NOTE: 'Otomatik: -bsd -dvd -gc -gsm -mc -dbc -logo'

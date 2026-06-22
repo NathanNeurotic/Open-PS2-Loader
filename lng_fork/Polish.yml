@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Ulubiona
   FAV_MSG: '%s nie jest dozwolone w Menu ulubionych.'
   FAV_PERSISTENCE_MSG: '%s nie jest dozwolone, gdy element jest oznaczony jako ulubiony.'
+  NEUTRINO_DEVICE: Urządzenie Neutrino
+  HINT_NEUTRINO_DEVICE: Urządzenie zawierające neutrino.elf (w folderze NEUTRINO/ lub neutrino/). Auto skanuje mc0, potem mc1.
+  NARGS_QB: Szybki rozruch (-qb)
+  NARGS_CWD: Katalog roboczy (-cwd)
+  NARGS_CFG: Konfiguracja (-cfg)
+  NARGS_ELF: ELF rozruchowy (-elf)
+  NARGS_ATA0: Obraz ATA0 (-ata0)
+  NARGS_ATA0ID: ID ATA0 (-ata0id)
+  NARGS_ATA1: Obraz ATA1 (-ata1)
+  NARGS_EXTRA: Dodatkowe argumenty
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

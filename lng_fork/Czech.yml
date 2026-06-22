@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Oblíbená
   FAV_MSG: '%s není povolen v nabídce Oblíbených.'
   FAV_PERSISTENCE_MSG: '%s není povoleno, dokud je položka označena jako oblíbená.'
+  NEUTRINO_DEVICE: Neutrino Zařízení
+  HINT_NEUTRINO_DEVICE: Zařízení obsahující neutrino.elf (ve složce NEUTRINO/ nebo neutrino/). Auto prohledá nejprve mc0, poté mc1.
+  NARGS_QB: Rychlý start (-qb)
+  NARGS_CWD: Pracovní adresář (-cwd)
+  NARGS_CFG: Konfigurace (-cfg)
+  NARGS_ELF: Spouštěcí ELF (-elf)
+  NARGS_ATA0: Obraz ATA0 (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: Obraz ATA1 (-ata1)
+  NARGS_EXTRA: Extra Args
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

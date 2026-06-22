@@ -74,3 +74,14 @@ translations:
   FAV_HINT: 즐겨찾기
   FAV_MSG: '%s은(는) 즐겨찾기 메뉴에서 허용되지 않습니다.'
   FAV_PERSISTENCE_MSG: '%s은(는) 즐겨찾기로 표시된 항목에서 허용되지 않습니다.'
+  NEUTRINO_DEVICE: Neutrino 장치
+  HINT_NEUTRINO_DEVICE: neutrino.elf이 있는 장치 (NEUTRINO/ 또는 neutrino/ 폴더). 자동은 mc0 후 mc1을 순서대로 검색합니다.
+  NARGS_QB: 빠른 부팅 (-qb)
+  NARGS_CWD: 작업 디렉터리 (-cwd)
+  NARGS_CFG: 설정 파일 (-cfg)
+  NARGS_ELF: 부팅 ELF (-elf)
+  NARGS_ATA0: ATA0 이미지 (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1 이미지 (-ata1)
+  NARGS_EXTRA: 추가 인수
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

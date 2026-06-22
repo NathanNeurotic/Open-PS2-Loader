@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Αγαπημένο
   FAV_MSG: '%s δεν επιτρέπεται μέσω Μενού Αγαπημένων.'
   FAV_PERSISTENCE_MSG: '%s δεν επιτρέπεται ενώ το στοιχείο είναι σημειωμένο ως αγαπημένο.'
+  NEUTRINO_DEVICE: Συσκευή Neutrino
+  HINT_NEUTRINO_DEVICE: Συσκευή που περιέχει το neutrino.elf (στον φάκελο NEUTRINO/ ή neutrino/). Αυτόματη σάρωση σε mc0 και μετά mc1.
+  NARGS_QB: Γρήγορη Εκκίνηση (-qb)
+  NARGS_CWD: Φάκελος Εργασίας (-cwd)
+  NARGS_CFG: Ρύθμιση (-cfg)
+  NARGS_ELF: ELF Εκκίνησης (-elf)
+  NARGS_ATA0: Εικόνα ATA0 (-ata0)
+  NARGS_ATA0ID: ID ATA0 (-ata0id)
+  NARGS_ATA1: Εικόνα ATA1 (-ata1)
+  NARGS_EXTRA: Επιπλέον Ορίσματα
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

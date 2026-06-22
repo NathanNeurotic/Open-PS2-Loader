@@ -785,7 +785,7 @@ gui_strings:
 - label: NEUTRINO_DEVICE
   string: Neutrino Device
 - label: HINT_NEUTRINO_DEVICE
-  string: Memory card holding neutrino.elf (in a NEUTRINO/ or neutrino/ folder). Auto scans mc0 then mc1.
+  string: Device holding neutrino.elf (in a NEUTRINO/ or neutrino/ folder). Auto scans mc0 then mc1.
 - label: NARGS_QB
   string: Quick Boot (-qb)
 - label: NARGS_CWD

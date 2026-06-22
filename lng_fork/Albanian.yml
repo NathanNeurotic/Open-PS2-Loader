@@ -74,3 +74,14 @@ translations:
   FAV_HINT: E preferuar
   FAV_MSG: '%s nuk lejohet nëpërmjet Menysë së Të Preferuarave.'
   FAV_PERSISTENCE_MSG: '%s nuk lejohet ndërkohë që elementi është shënuar si i preferuar.'
+  NEUTRINO_DEVICE: Pajisja Neutrino
+  HINT_NEUTRINO_DEVICE: Pajisja që mban neutrino.elf (në një dosje NEUTRINO/ ose neutrino/). Zbulimi automatik skanon mc0 dhe pastaj mc1.
+  NARGS_QB: Nisje e Shpejtë (-qb)
+  NARGS_CWD: Drejtoria e Punës (-cwd)
+  NARGS_CFG: Konfigurimi (-cfg)
+  NARGS_ELF: ELF i Nisjes (-elf)
+  NARGS_ATA0: Imazhi ATA0 (-ata0)
+  NARGS_ATA0ID: ID ATA0 (-ata0id)
+  NARGS_ATA1: Imazhi ATA1 (-ata1)
+  NARGS_EXTRA: Argumente Shtesë
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

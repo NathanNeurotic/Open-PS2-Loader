@@ -74,3 +74,14 @@ translations:
   FAV_HINT: 最愛
   FAV_MSG: '%s 不允許透過最愛選單操作。'
   FAV_PERSISTENCE_MSG: '%s 在項目標記為最愛時不可使用。'
+  NEUTRINO_DEVICE: Neutrino 裝置
+  HINT_NEUTRINO_DEVICE: 存放 neutrino.elf 的裝置（位於 NEUTRINO/ 或 neutrino/ 資料夾）。Auto 模式依序掃描 mc0 再掃描 mc1。
+  NARGS_QB: 快速開機 (-qb)
+  NARGS_CWD: 工作目錄 (-cwd)
+  NARGS_CFG: 設定檔 (-cfg)
+  NARGS_ELF: 開機 ELF (-elf)
+  NARGS_ATA0: ATA0 映像 (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1 映像 (-ata1)
+  NARGS_EXTRA: 額外參數
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

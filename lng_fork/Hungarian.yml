@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Kedvenc
   FAV_MSG: '%s nem érhető el a Kedvencek menün keresztül.'
   FAV_PERSISTENCE_MSG: '%s nem engedélyezett, amíg az elem kedvencként van jelölve.'
+  NEUTRINO_DEVICE: Neutrino eszköz
+  HINT_NEUTRINO_DEVICE: A neutrino.elf fájlt tartalmazó eszköz (NEUTRINO/ vagy neutrino/ mappában). Az Auto először mc0-t, majd mc1-et keres.
+  NARGS_QB: Gyors indítás (-qb)
+  NARGS_CWD: Munkakönyvtár (-cwd)
+  NARGS_CFG: Konfiguráció (-cfg)
+  NARGS_ELF: Rendszertöltő ELF (-elf)
+  NARGS_ATA0: ATA0 kép (-ata0)
+  NARGS_ATA0ID: ATA0 azonosító (-ata0id)
+  NARGS_ATA1: ATA1 kép (-ata1)
+  NARGS_EXTRA: Extra argumentumok
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

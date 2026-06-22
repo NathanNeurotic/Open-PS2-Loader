@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Favorit
   FAV_MSG: '%s är inte tillåtet via Favoritmenyn.'
   FAV_PERSISTENCE_MSG: '%s är inte tillåtet medan objektet är markerat som favorit.'
+  NEUTRINO_DEVICE: Neutrino-enhet
+  HINT_NEUTRINO_DEVICE: Enhet som innehåller neutrino.elf (i en NEUTRINO/- eller neutrino/-mapp). Auto söker igenom mc0 sedan mc1.
+  NARGS_QB: Snabbstart (-qb)
+  NARGS_CWD: Arbetskatalog (-cwd)
+  NARGS_CFG: Konfiguration (-cfg)
+  NARGS_ELF: Start-ELF (-elf)
+  NARGS_ATA0: ATA0-avbild (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1-avbild (-ata1)
+  NARGS_EXTRA: Extra argument
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

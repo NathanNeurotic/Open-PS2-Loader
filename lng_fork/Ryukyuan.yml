@@ -74,3 +74,14 @@ translations:
   FAV_HINT: お気に入り
   FAV_MSG: '%s はお気に入りメニューから起動できやびらん。'
   FAV_PERSISTENCE_MSG: '%s はお気に入りに登録中、この操作はできやびらん。'
+  NEUTRINO_DEVICE: Neutrino 機器
+  HINT_NEUTRINO_DEVICE: neutrino.elf を持つ機器（NEUTRINO/ または neutrino/ フォルダー内）。自動検索は mc0 から mc1 の順に行ゅん。
+  NARGS_QB: クイック起動 (-qb)
+  NARGS_CWD: 作業ディレクトリ (-cwd)
+  NARGS_CFG: 設定ファイル (-cfg)
+  NARGS_ELF: 起動 ELF (-elf)
+  NARGS_ATA0: ATA0 イメージ (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1 イメージ (-ata1)
+  NARGS_EXTRA: 追加引数
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

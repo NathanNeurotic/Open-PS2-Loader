@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Favoriet
   FAV_MSG: '%s is niet toegestaan via het favorietenmenu.'
   FAV_PERSISTENCE_MSG: '%s is niet toegestaan terwijl het item als favoriet is gemarkeerd.'
+  NEUTRINO_DEVICE: Neutrino-apparaat
+  HINT_NEUTRINO_DEVICE: Apparaat met neutrino.elf (in een NEUTRINO/- of neutrino/-map). Auto scant eerst mc0, dan mc1.
+  NARGS_QB: Snel opstarten (-qb)
+  NARGS_CWD: Werkmap (-cwd)
+  NARGS_CFG: Configuratie (-cfg)
+  NARGS_ELF: Opstart-ELF (-elf)
+  NARGS_ATA0: ATA0-image (-ata0)
+  NARGS_ATA0ID: ATA0-ID (-ata0id)
+  NARGS_ATA1: ATA1-image (-ata1)
+  NARGS_EXTRA: Extra argumenten
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

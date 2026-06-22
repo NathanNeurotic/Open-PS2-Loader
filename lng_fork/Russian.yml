@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Избранное
   FAV_MSG: '%s не разрешён в меню избранного.'
   FAV_PERSISTENCE_MSG: '%s недоступно, пока элемент отмечен как избранный.'
+  NEUTRINO_DEVICE: Устройство Neutrino
+  HINT_NEUTRINO_DEVICE: 'Устройство, на котором находится neutrino.elf (в папке NEUTRINO/ или neutrino/). Автопоиск: сначала mc0, затем mc1.'
+  NARGS_QB: Быстрый запуск (-qb)
+  NARGS_CWD: Рабочая папка (-cwd)
+  NARGS_CFG: Конфигурация (-cfg)
+  NARGS_ELF: Загрузочный ELF (-elf)
+  NARGS_ATA0: Образ ATA0 (-ata0)
+  NARGS_ATA0ID: ID ATA0 (-ata0id)
+  NARGS_ATA1: Образ ATA1 (-ata1)
+  NARGS_EXTRA: Дополнительные аргументы
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

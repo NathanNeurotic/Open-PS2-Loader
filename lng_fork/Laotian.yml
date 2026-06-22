@@ -74,3 +74,14 @@ translations:
   FAV_HINT: ລາຍການໂປດ
   FAV_MSG: '%s ບໍ່ອະນຸຍາດຜ່ານເມນູລາຍການໂປດ.'
   FAV_PERSISTENCE_MSG: '%s ບໍ່ສາມາດໃຊ້ໄດ້ຂະນະທີ່ລາຍການຖືກໝາຍເປັນລາຍການໂປດ.'
+  NEUTRINO_DEVICE: ອຸປະກອນ Neutrino
+  HINT_NEUTRINO_DEVICE: ອຸປະກອນທີ່ມີ neutrino.elf (ໃນໂຟລເດີ NEUTRINO/ ຫຼື neutrino/). ອັດຕະໂນມັດສະແກນ mc0 ແລ້ວ mc1.
+  NARGS_QB: Quick Boot (-qb)
+  NARGS_CWD: Working Dir (-cwd)
+  NARGS_CFG: Config (-cfg)
+  NARGS_ELF: Boot ELF (-elf)
+  NARGS_ATA0: ATA0 Image (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1 Image (-ata1)
+  NARGS_EXTRA: Args ເພີ່ມເຕີມ
+  NARGS_AUTO_NOTE: 'ອັດຕະໂນມັດ: -bsd -dvd -gc -gsm -mc -dbc -logo'

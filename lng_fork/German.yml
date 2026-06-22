@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Favorit
   FAV_MSG: '%s ist über das Favoritenmenü nicht erlaubt.'
   FAV_PERSISTENCE_MSG: '%s ist nicht erlaubt, solange das Element als Favorit markiert ist.'
+  NEUTRINO_DEVICE: Neutrino Gerät
+  HINT_NEUTRINO_DEVICE: Gerät, das neutrino.elf enthält (in einem NEUTRINO/- oder neutrino/-Ordner). Auto durchsucht zuerst mc0, dann mc1.
+  NARGS_QB: Schnellstart (-qb)
+  NARGS_CWD: Arbeitsverzeichnis (-cwd)
+  NARGS_CFG: Konfiguration (-cfg)
+  NARGS_ELF: Start-ELF (-elf)
+  NARGS_ATA0: ATA0 Image (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1 Image (-ata1)
+  NARGS_EXTRA: Weitere Argumente
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

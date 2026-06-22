@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Paborito
   FAV_MSG: '%s ay hindi pinapayagan sa Favourites Menu.'
   FAV_PERSISTENCE_MSG: '%s ay hindi pinapayagan habang naka-marka ang item bilang paborito.'
+  NEUTRINO_DEVICE: Neutrino Device
+  HINT_NEUTRINO_DEVICE: Device na naglalaman ng neutrino.elf (sa loob ng NEUTRINO/ o neutrino/ folder). Ang Auto ay nagsa-scan muna sa mc0 pagkatapos mc1.
+  NARGS_QB: Quick Boot (-qb)
+  NARGS_CWD: Working Dir (-cwd)
+  NARGS_CFG: Config (-cfg)
+  NARGS_ELF: Boot ELF (-elf)
+  NARGS_ATA0: ATA0 Image (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1 Image (-ata1)
+  NARGS_EXTRA: Karagdagang Args
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

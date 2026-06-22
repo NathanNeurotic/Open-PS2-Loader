@@ -74,3 +74,14 @@ translations:
   FAV_HINT: Favorit
   FAV_MSG: '%s nu este permis prin Meniul de Favorite.'
   FAV_PERSISTENCE_MSG: '%s nu este permis cât timp elementul este marcat ca favorit.'
+  NEUTRINO_DEVICE: Dispozitiv Neutrino
+  HINT_NEUTRINO_DEVICE: Dispozitivul care conține neutrino.elf (într-un dosar NEUTRINO/ sau neutrino/). Auto scanează mai întâi mc0, apoi mc1.
+  NARGS_QB: Pornire Rapidă (-qb)
+  NARGS_CWD: Dosar de Lucru (-cwd)
+  NARGS_CFG: Configurare (-cfg)
+  NARGS_ELF: ELF de Pornire (-elf)
+  NARGS_ATA0: Imagine ATA0 (-ata0)
+  NARGS_ATA0ID: ID ATA0 (-ata0id)
+  NARGS_ATA1: Imagine ATA1 (-ata1)
+  NARGS_EXTRA: Argumente Suplimentare
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

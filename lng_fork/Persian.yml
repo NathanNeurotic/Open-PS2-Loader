@@ -74,3 +74,14 @@ translations:
   FAV_HINT: علاقه‌مندی
   FAV_MSG: '%s از طریق منوی علاقه‌مندی‌ها مجاز نیست.'
   FAV_PERSISTENCE_MSG: '%s در حالی که آیتم به عنوان علاقه‌مندی علامت‌گذاری شده، مجاز نیست.'
+  NEUTRINO_DEVICE: دستگاه Neutrino
+  HINT_NEUTRINO_DEVICE: دستگاهی که neutrino.elf را در پوشه NEUTRINO/ یا neutrino/ نگه می‌دارد. Auto ابتدا mc0 سپس mc1 را اسکن می‌کند.
+  NARGS_QB: راه‌اندازی سریع (-qb)
+  NARGS_CWD: پوشه کاری (-cwd)
+  NARGS_CFG: پیکربندی (-cfg)
+  NARGS_ELF: ELF بوت (-elf)
+  NARGS_ATA0: تصویر ATA0 (-ata0)
+  NARGS_ATA0ID: شناسه ATA0 (-ata0id)
+  NARGS_ATA1: تصویر ATA1 (-ata1)
+  NARGS_EXTRA: آرگومان‌های اضافی
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'

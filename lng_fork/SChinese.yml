@@ -74,3 +74,14 @@ translations:
   FAV_HINT: 收藏
   FAV_MSG: '%s 不允许通过收藏夹菜单访问。'
   FAV_PERSISTENCE_MSG: '%s 在该项目被标记为收藏时不可用。'
+  NEUTRINO_DEVICE: Neutrino 设备
+  HINT_NEUTRINO_DEVICE: 存放 neutrino.elf 的设备（位于 NEUTRINO/ 或 neutrino/ 文件夹）。自动依次扫描 mc0 和 mc1。
+  NARGS_QB: 快速启动 (-qb)
+  NARGS_CWD: 工作目录 (-cwd)
+  NARGS_CFG: 配置文件 (-cfg)
+  NARGS_ELF: 启动 ELF (-elf)
+  NARGS_ATA0: ATA0 镜像 (-ata0)
+  NARGS_ATA0ID: ATA0 ID (-ata0id)
+  NARGS_ATA1: ATA1 镜像 (-ata1)
+  NARGS_EXTRA: 额外参数
+  NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
