@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Általános beállítások
+  DEVICE_SETTINGS: Eszközbeállítások
+  LAUNCH_PS2_DISC: PS2 lemez indítása
+  DISC_LAUNCH_ERR: Nincs PS2 lemez a meghajtóban.
+  DEFAULT: Alapértelmezett
+  HINT_MODE7: Csak Neutrino -- javítja az IOP puffertúlcsordulást okozó játékokat (-gc=7)
+  MODE7: 7. mód
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Előre elkészített PS2RD .img javítás alkalmazása a játékra.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE indítási mód
+  MMCE_PREFIX: MMCE előtag elérési út
+  MMCE_SLOT: MMCE foglalat
+  MMCEIGR_SLOT: IGR rendszerkártya foglalat(ok)
+  HINT_MMCEIGR_SLOT: A rendszerkártya-váltás parancs a kiválasztott foglalat(ok)ra kerül elküldésre IGR-kor
+  MMCE_ADVANCED: Speciális
+  MMCE_SETTINGS: MMCE beállítások
+  MMCE_SEMA: Szemafor sorba állítási módszer zárolása
+  HINT_MMCE_SEMA: A THFIFO javíthatja a kompatibilitást, de ronthatja a teljesítményt
+  MMCE_WAIT_CYCLES: Várakozási ciklusok /ACK alacsony után
+  HINT_MMCE_WAIT_CYCLES: Az alacsonyabb értékek javíthatják a teljesítményt, de instabilitást okozhatnak
+  MMCE_USE_ALARMS: Időtúllépési riasztások használata
+  HINT_MMCE_USE_ALARMS: A KI beállítás javíthatja a teljesítményt, de MMCE időtúllépés esetén lefagyást okozhat
+  CORE_LOADER: Betöltő mag
+  NEUTRINO_BAD_FORMAT: A Neutrino nem támogatja ezt a fájlformátumot, indítás <OPL> maggal
+  NEUTRINO_NOT_FOUND: A Neutrino ELF nem található, indítás <OPL> maggal
+  UDPBD_NEEDS_STATIC_IP: Az UDPBD statikus PS2 IP-t igényel. Állítsd be a Hálózati konfigurációban (a DHCP jelenleg be van kapcsolva).
+  NEUTRINO_SETTING_NA: Ez a beállítás nem használható a Neutrino maggal.
+  POPSTARTER_NOT_FOUND: Hiányzó POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Hiányzó POPSTARTER SMB követelmények
+  WRITE_POPSTARTER_NET: POPSTARTER hálózati konfiguráció írása
+  HINT_WRITE_POPSTARTER_NET: Az IP + SMB megosztási értékek mentése a POPSTARTER saját IPCONFIG.DAT / SMBCONFIG.DAT fájljaiba a memóriakártyán (SMB-n keresztüli VCD-hez).
+  POPSTARTER_NET_ERR: Nem sikerült a POPSTARTER hálózati konfigurációt a memóriakártyára írni.
+  VCD: VCD
+  VCD_ON: VCD játékok megjelenítése
+  VCD_OFF: Lemezes játékok megjelenítése
+  NEUTRINO_ARGS: Neutrino indítási argumentumok
+  HINT_NEUTRINO_ARGS: 'Extra Neutrino jelzők, szóközzel elválasztva (pl. -mt=dvd). A globális minden játékra vonatkozik; a játékonkénti hozzáadódik. Egy jelző elé írj $ jelet a letiltásához törlés nélkül.'
+  NEUTRINO_VIDEO: Neutrino videó
+  HINT_NEUTRINO_VIDEO: A Neutrino GS kimeneti videómódjának kényszerítése (-gsm). Ki = a játék alapértelmezettje marad.
+  NEUTRINO_PATH: Neutrino ELF elérési út
+  HINT_NEUTRINO_PATH: 'Teljes elérési út a neutrino.elf fájlhoz (pl. mc0:NEUTRINO/neutrino.elf). Üresen = automatikus keresés mc0/mc1-en.'
+  POPSTARTER_PATH: POPSTARTER.ELF elérési út
+  HINT_POPSTARTER_PATH: Egyéni POPSTARTER.ELF elérési út; üresen/hiányzóan az eszköz POPS mappájára vált vissza. A billentyűzet 31 karakterre korlátoz; hosszabb elérési utak a settings_riptopl.cfg-n keresztül adhatók meg.
+  BDMA_SOURCE: BDMA forrás
+  HINT_BDMA_SOURCE: Az az eszköz, amelynek POPS mappájában találhatók a BDMAssault illesztőprogram fájlok (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA mód
+  HINT_BDMA_MODE: exFAT blokkeszköz-illesztőprogram, amelyet a POPSTARTER betölt. A módosítás a modulokat a kártyára másolja; FAT32 = nincs (beépített illesztőprogram).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: A BDMA modulfájlok nem találhatók a forráseszközön.
+  BDMA_ERR_SPACE: Nincs elegendő hely a memóriakártyán a BDMA modulokhoz.
+  BDMA_ERR_IO: Hiba a BDMA modulok memóriakártyára írása közben.
+  COVERFLOW_SETTINGS: Coverflow beállítások
+  COVERFLOW_COUNT: Borítók száma
+  COVERFLOW_SCALE: Középső méretezés
+  COVERFLOW_ANIM: Animáció sebessége
+  COVERFLOW_DIM: Oldalsó borítók halványítása
+  NONE: Egyik sem
+  SMALL: Kicsi
+  LARGE: Nagy
+  NORMAL: Normál
+  FAV: Kedvencek
+  FAVMODE: Kedvencek indítási mód
+  FAV_HINT: Kedvenc
+  FAV_MSG: '%s nem érhető el a Kedvencek menün keresztül.'
+  FAV_PERSISTENCE_MSG: '%s nem engedélyezett, amíg az elem kedvencként van jelölve.'

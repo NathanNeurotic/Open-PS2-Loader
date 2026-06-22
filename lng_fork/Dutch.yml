@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Algemene instellingen
+  DEVICE_SETTINGS: Apparaatinstellingen
+  LAUNCH_PS2_DISC: PS2-schijf starten
+  DISC_LAUNCH_ERR: Geen PS2-schijf in het station.
+  DEFAULT: Standaard
+  HINT_MODE7: Alleen Neutrino -- herstel spellen die een IOP-buffer overschrijden (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat-image
+  HINT_ENABLEIMAGE: Pas een voorgebouwde PS2RD .img-patch toe op je spel.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE startmodus
+  MMCE_PREFIX: MMCE voorvoegselpad
+  MMCE_SLOT: MMCE-slot
+  MMCEIGR_SLOT: IGR-opstartkaartslot(s)
+  HINT_MMCEIGR_SLOT: Bij IGR wordt de schakelaarcommand naar het/de geselecteerde slot(s) gestuurd
+  MMCE_ADVANCED: Geavanceerd
+  MMCE_SETTINGS: MMCE-instellingen
+  MMCE_SEMA: Vergrendeling Sema-wachtrijmethode
+  HINT_MMCE_SEMA: THFIFO kan de compatibiliteit verbeteren maar de prestaties verslechteren
+  MMCE_WAIT_CYCLES: Wachtcycli na /ACK laag
+  HINT_MMCE_WAIT_CYCLES: Lagere waarden kunnen de prestaties verbeteren maar instabiliteit veroorzaken
+  MMCE_USE_ALARMS: Gebruik time-outalarms
+  HINT_MMCE_USE_ALARMS: UIT kan prestaties verbeteren maar MMCE-time-outs kunnen bevriezingen veroorzaken
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Neutrino ondersteunt dit bestandsformaat niet; gestart met <OPL>-kern
+  NEUTRINO_NOT_FOUND: Neutrino ELF niet gevonden; gestart met <OPL>-kern
+  UDPBD_NEEDS_STATIC_IP: UDPBD vereist een statisch PS2-IP. Stel dit in bij Netwerkconfiguratie (DHCP is momenteel ingeschakeld).
+  NEUTRINO_SETTING_NA: Deze instelling wordt niet gebruikt met de Neutrino-kern.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF ontbreekt
+  POPSTARTER_SMB_MISSING: POPSTARTER SMB-vereisten ontbreken
+  WRITE_POPSTARTER_NET: POPSTARTER-netwerkconfiguratie schrijven
+  HINT_WRITE_POPSTARTER_NET: Sla ook deze IP- en SMB-sharewaarden op in POPSTARTER's eigen IPCONFIG.DAT / SMBCONFIG.DAT op de geheugenkaart (voor VCD via SMB).
+  POPSTARTER_NET_ERR: Kan POPSTARTER-netwerkconfiguratie niet naar de geheugenkaart schrijven.
+  VCD: VCD
+  VCD_ON: VCD-spellen worden getoond
+  VCD_OFF: Schijfspellen worden getoond
+  NEUTRINO_ARGS: Neutrino opstartargumenten
+  HINT_NEUTRINO_ARGS: Extra Neutrino-vlaggen, spatie-gescheiden (bijv. -mt=dvd). Globaal geldt voor alle spellen; per spel wordt bovenop toegevoegd. Prefix een vlag met $ om hem te deactiveren zonder te verwijderen.
+  NEUTRINO_VIDEO: Neutrino Video
+  HINT_NEUTRINO_VIDEO: Forceer Neutrino's GS-uitvoervideomodus (-gsm). Uit behoudt de standaard van het spel.
+  NEUTRINO_PATH: Neutrino ELF-pad
+  HINT_NEUTRINO_PATH: Volledig pad naar neutrino.elf (bijv. mc0:NEUTRINO/neutrino.elf). Leeg = automatisch zoeken op mc0/mc1.
+  POPSTARTER_PATH: POPSTARTER.ELF-pad
+  HINT_POPSTARTER_PATH: Aangepast POPSTARTER.ELF-pad; valt stil terug op de POPS-map van het apparaat indien leeg/ontbrekend. Toetsenbord beperkt tot 31 tekens; langere paden via settings_riptopl.cfg.
+  BDMA_SOURCE: BDMA-bron
+  HINT_BDMA_SOURCE: Apparaat waarvan de POPS-map de BDMAssault-stuurprogrammabestanden bevat (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA-modus
+  HINT_BDMA_MODE: exFAT-blokapparaatstuurprogramma dat POPSTARTER laadt. Wijzigen kopieert de modules naar de kaart; FAT32 = geen (ingebouwd stuurprogramma).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: BDMA-modulebestanden niet gevonden op het bronapparaat.
+  BDMA_ERR_SPACE: Onvoldoende geheugenkaartruimte voor de BDMA-modules.
+  BDMA_ERR_IO: Fout bij schrijven van de BDMA-modules naar de geheugenkaart.
+  COVERFLOW_SETTINGS: Coverflow-instellingen
+  COVERFLOW_COUNT: Aantal hoezen
+  COVERFLOW_SCALE: Middenschaal
+  COVERFLOW_ANIM: Animatiesnelheid
+  COVERFLOW_DIM: Zijhoezen dimmen
+  NONE: Geen
+  SMALL: Klein
+  LARGE: Groot
+  NORMAL: Normaal
+  FAV: Favorieten
+  FAVMODE: Favorieten startmodus
+  FAV_HINT: Favoriet
+  FAV_MSG: '%s is niet toegestaan via het favorietenmenu.'
+  FAV_PERSISTENCE_MSG: '%s is niet toegestaan terwijl het item als favoriet is gemarkeerd.'

@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Pangkalahatang Mga Setting
+  DEVICE_SETTINGS: Mga Setting ng Device
+  LAUNCH_PS2_DISC: I-launch ang PS2 Disc
+  DISC_LAUNCH_ERR: Walang PS2 disc sa drive.
+  DEFAULT: Default
+  HINT_MODE7: Neutrino lamang -- ayusin ang mga laro na lumagpas sa IOP buffer (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Mag-apply ng prebuilt na PS2RD .img patch sa iyong laro.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE Start Mode
+  MMCE_PREFIX: MMCE Prefix Path
+  MMCE_SLOT: MMCE Slot
+  MMCEIGR_SLOT: IGR Bootcard Slot(s)
+  HINT_MMCEIGR_SLOT: Ang utos na lumipat sa bootcard ay ipapadala sa napiling slot(s) sa IGR
+  MMCE_ADVANCED: Advanced
+  MMCE_SETTINGS: MMCE Settings
+  MMCE_SEMA: Lock Sema Enqueuing Method
+  HINT_MMCE_SEMA: Maaaring makatulong ang THFIFO sa compatibility ngunit makakapagpabagal ng performance
+  MMCE_WAIT_CYCLES: Maghintay ng cycles pagkatapos ng /ACK low
+  HINT_MMCE_WAIT_CYCLES: Ang mas mababang halaga ay maaaring mapabuti ang performance ngunit maaaring magdulot ng kawalang-tatag
+  MMCE_USE_ALARMS: Gumamit ng timeout alarms
+  HINT_MMCE_USE_ALARMS: Ang OFF ay maaaring makatulong sa performance ngunit maaaring maging sanhi ng MMCE timeout na mag-freeze
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Hindi sinusuportahan ng Neutrino ang format na ito, inilulunsad gamit ang <OPL> core
+  NEUTRINO_NOT_FOUND: Hindi nahanap ang Neutrino ELF, inilulunsad gamit ang <OPL> core
+  UDPBD_NEEDS_STATIC_IP: Kailangan ng UDPBD ng static na PS2 IP. Itakda sa Network Config (naka-on ang DHCP ngayon).
+  NEUTRINO_SETTING_NA: Hindi ginagamit ang setting na ito sa Neutrino core.
+  POPSTARTER_NOT_FOUND: Nawawala ang POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Nawawala ang mga kinakailangan ng POPSTARTER para sa SMB
+  WRITE_POPSTARTER_NET: I-save ang POPSTARTER Network Config
+  HINT_WRITE_POPSTARTER_NET: I-save din ang mga IP + SMB share na ito sa sariling IPCONFIG.DAT / SMBCONFIG.DAT ng POPSTARTER sa memory card (para sa VCD-over-SMB).
+  POPSTARTER_NET_ERR: Hindi nasulat ang POPSTARTER network config sa memory card.
+  VCD: VCD
+  VCD_ON: Ipinapakita ang mga VCD game
+  VCD_OFF: Ipinapakita ang mga disc game
+  NEUTRINO_ARGS: Neutrino Launch Args
+  HINT_NEUTRINO_ARGS: Karagdagang Neutrino flags, pinaghiwalay ng espasyo (hal. -mt=dvd). Ang Global ay naaangkop sa lahat ng laro; ang per-game ay nadaragdag pa. Lagyan ng $ prefix ang isang flag para i-disable nang hindi binubura.
+  NEUTRINO_VIDEO: Neutrino Video
+  HINT_NEUTRINO_VIDEO: Pilitin ang GS output video mode ng Neutrino (-gsm). Ang Off ay pinapanatili ang default ng laro.
+  NEUTRINO_PATH: Neutrino ELF Path
+  HINT_NEUTRINO_PATH: 'Buong path patungo sa neutrino.elf (hal. mc0:NEUTRINO/neutrino.elf). Blangko = auto-detect sa mc0/mc1.'
+  POPSTARTER_PATH: POPSTARTER.ELF Path
+  HINT_POPSTARTER_PATH: Custom na POPSTARTER.ELF path; bumabalik sa POPS folder ng device kung blangko/nawawala. Ang keyboard ay limitado sa 31 chars; mas mahabang paths sa pamamagitan ng settings_riptopl.cfg.
+  BDMA_SOURCE: BDMA Source
+  HINT_BDMA_SOURCE: Device na ang POPS folder ay naglalaman ng iyong BDMAssault driver files (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA Mode
+  HINT_BDMA_MODE: exFAT block-device driver na inilulunsad ng POPSTARTER. Ang pagbabago nito ay nagkokopya ng mga module sa card; FAT32 = wala (built-in driver).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Hindi nahanap ang mga BDMA module file sa source device.
+  BDMA_ERR_SPACE: Hindi sapat ang espasyo ng memory card para sa mga BDMA module.
+  BDMA_ERR_IO: Error sa pagsulat ng mga BDMA module sa memory card.
+  COVERFLOW_SETTINGS: Coverflow Settings
+  COVERFLOW_COUNT: Bilang ng Cover
+  COVERFLOW_SCALE: Center Scale
+  COVERFLOW_ANIM: Bilis ng Animation
+  COVERFLOW_DIM: Dimimin ang Mga Side Cover
+  NONE: Wala
+  SMALL: Maliit
+  LARGE: Malaki
+  NORMAL: Normal
+  FAV: Mga Paborito
+  FAVMODE: Favourites Start Mode
+  FAV_HINT: Paborito
+  FAV_MSG: '%s ay hindi pinapayagan sa Favourites Menu.'
+  FAV_PERSISTENCE_MSG: '%s ay hindi pinapayagan habang naka-marka ang item bilang paborito.'

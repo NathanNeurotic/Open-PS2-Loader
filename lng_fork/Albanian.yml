@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Cilësimet e Përgjithshme
+  DEVICE_SETTINGS: Cilësimet e Pajisjes
+  LAUNCH_PS2_DISC: Nisja e Diskut PS2
+  DISC_LAUNCH_ERR: Nuk ka disk PS2 në lexues.
+  DEFAULT: Parazgjedhje
+  HINT_MODE7: Vetëm Neutrino -- rregullon lojërat që tejkalojnë një bufer IOP (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: Imazhi i Mashtrimit PS2RD
+  HINT_ENABLEIMAGE: Zbato një patch të parandërtuar PS2RD .img në lojën tënde.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: Modaliteti i Nisjes MMCE
+  MMCE_PREFIX: Shtegu i Prefiksit MMCE
+  MMCE_SLOT: Foleja MMCE
+  MMCEIGR_SLOT: Foleja/et e Kartës IGR
+  HINT_MMCEIGR_SLOT: Komanda e kalimit në kartë do t'i dërgohet folejeve të zgjedhura gjatë IGR
+  MMCE_ADVANCED: Të Avancuara
+  MMCE_SETTINGS: Cilësimet MMCE
+  MMCE_SEMA: Metoda e Radhës së Bllokimit Sema
+  HINT_MMCE_SEMA: THFIFO mund të ndihmojë me përputhshmërinë por të përkeqësojë performancën
+  MMCE_WAIT_CYCLES: Ciklet e pritjes pas /ACK të ulët
+  HINT_MMCE_WAIT_CYCLES: Vlerat më të ulëta mund të përmirësojnë performancën por shkaktojnë paqëndrueshmëri
+  MMCE_USE_ALARMS: Përdor alarme me afat kohor
+  HINT_MMCE_USE_ALARMS: OFF mund të ndihmojë performancën por mund të shkaktojë ngecje nga afatet kohore MMCE
+  CORE_LOADER: Bërthama e Ngarkuesit
+  NEUTRINO_BAD_FORMAT: Neutrino nuk e mbështet këtë format skedari, niset me bërthamën <OPL>
+  NEUTRINO_NOT_FOUND: ELF i Neutrino nuk u gjet, niset me bërthamën <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD kërkon një IP statike të PS2. Vendoseni në Konfigurimin e Rrjetit (DHCP është aktiv).
+  NEUTRINO_SETTING_NA: Kjo cilësim nuk përdoret me bërthamën Neutrino.
+  POPSTARTER_NOT_FOUND: Mungon POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Mungojnë kërkesat SMB të POPSTARTER
+  WRITE_POPSTARTER_NET: Shkruaj Konfigurimin e Rrjetit POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Ruaj gjithashtu këto vlera IP + SMB në IPCONFIG.DAT / SMBCONFIG.DAT të POPSTARTER në kartën e memories (për VCD mbi SMB).
+  POPSTARTER_NET_ERR: Nuk u shkrua konfigurimi i rrjetit POPSTARTER në kartën e memories.
+  VCD: VCD
+  VCD_ON: Po shfaq lojërat VCD
+  VCD_OFF: Po shfaq lojërat e diskut
+  NEUTRINO_ARGS: Argumente të Nisjes Neutrino
+  HINT_NEUTRINO_ARGS: Flamurë shtesë Neutrino, të ndarë me hapësira (p.sh. -mt=dvd). Globale zbatohet për të gjitha lojërat; për-lojë shtohet sipër. Parashtro një flamur me $ për ta çaktivizuar pa fshirë.
+  NEUTRINO_VIDEO: Video Neutrino
+  HINT_NEUTRINO_VIDEO: Detyro modalitetin e videos GS të Neutrino (-gsm). Joaktive mban parazgjedhjen e lojës.
+  NEUTRINO_PATH: Shtegu ELF i Neutrino
+  HINT_NEUTRINO_PATH: Shtegu i plotë drejt neutrino.elf (p.sh. mc0:NEUTRINO/neutrino.elf). Bosh = zbulim automatik në mc0/mc1.
+  POPSTARTER_PATH: Shtegu POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Shtegu i personalizuar POPSTARTER.ELF; kthehet pa zhurmë te dosja POPS e pajisjes nëse është bosh/mungon. Tastiera kufizohet në 31 karaktere; shtegje më të gjata nëpërmjet settings_riptopl.cfg.
+  BDMA_SOURCE: Burimi BDMA
+  HINT_BDMA_SOURCE: Pajisja dosja POPS e së cilës mban skedarët e drejtuesit BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Modaliteti BDMA
+  HINT_BDMA_MODE: Drejtuesi i pajisjes bllok exFAT që ngarkon POPSTARTER. Ndryshimi i tij kopjon modulet në kartë; FAT32 = asnjë (drejtues i integruar).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Skedarët e modulit BDMA nuk u gjetën në pajisjen burimore.
+  BDMA_ERR_SPACE: Hapësirë e pamjaftueshme në kartën e memories për modulet BDMA.
+  BDMA_ERR_IO: Gabim gjatë shkrimit të moduleve BDMA në kartën e memories.
+  COVERFLOW_SETTINGS: Cilësimet Coverflow
+  COVERFLOW_COUNT: Numri i Kopertinave
+  COVERFLOW_SCALE: Shkalla Qendrore
+  COVERFLOW_ANIM: Shpejtësia e Animacionit
+  COVERFLOW_DIM: Errëso Kopertinат Anësore
+  NONE: Asnjë
+  SMALL: I vogël
+  LARGE: I madh
+  NORMAL: Normal
+  FAV: Të Preferuarat
+  FAVMODE: Modaliteti i Nisjes së Të Preferuarave
+  FAV_HINT: E preferuar
+  FAV_MSG: '%s nuk lejohet nëpërmjet Menysë së Të Preferuarave.'
+  FAV_PERSISTENCE_MSG: '%s nuk lejohet ndërkohë që elementi është shënuar si i preferuar.'

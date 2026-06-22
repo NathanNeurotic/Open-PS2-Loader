@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Ustawienia ogólne
+  DEVICE_SETTINGS: Ustawienia urządzenia
+  LAUNCH_PS2_DISC: Uruchom dysk PS2
+  DISC_LAUNCH_ERR: Brak dysku PS2 w napędzie.
+  DEFAULT: Domyślny
+  HINT_MODE7: Tylko Neutrino -- naprawia gry powodujące przepełnienie bufora IOP (-gc=7)
+  MODE7: Tryb 7
+  ENABLEIMAGE: Obraz cheatów PS2RD
+  HINT_ENABLEIMAGE: Zastosuj gotową łatkę PS2RD .img do swojej gry.
+  UDPBD_GAMES: Gry UDPBD
+  MMCE: MMCE
+  MMCE_GAMES: Gry MMCE
+  MMCEMODE: Tryb startowy MMCE
+  MMCE_PREFIX: Ścieżka prefiksu MMCE
+  MMCE_SLOT: Gniazdo MMCE
+  MMCEIGR_SLOT: Gniazdo(a) karty startowej IGR
+  HINT_MMCEIGR_SLOT: Polecenie przełączenia na kartę startową zostanie wysłane do wybranych gniazd przy IGR
+  MMCE_ADVANCED: Zaawansowane
+  MMCE_SETTINGS: Ustawienia MMCE
+  MMCE_SEMA: Metoda kolejkowania blokady semaforów
+  HINT_MMCE_SEMA: THFIFO może poprawić zgodność, ale pogorszyć wydajność
+  MMCE_WAIT_CYCLES: Cykle oczekiwania po /ACK niskim
+  HINT_MMCE_WAIT_CYCLES: Niższe wartości mogą poprawić wydajność, ale powodować niestabilność
+  MMCE_USE_ALARMS: Używaj alarmów timeout
+  HINT_MMCE_USE_ALARMS: WYŁ może poprawić wydajność, ale może powodować zamrożenie przy timeoutach MMCE
+  CORE_LOADER: Rdzeń programu ładującego
+  NEUTRINO_BAD_FORMAT: Neutrino nie obsługuje tego formatu pliku, uruchamianie przez rdzeń <OPL>
+  NEUTRINO_NOT_FOUND: Nie znaleziono ELF Neutrino, uruchamianie przez rdzeń <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD wymaga statycznego IP dla PS2. Ustaw je w Konfiguracji sieci (DHCP jest aktualnie włączone).
+  NEUTRINO_SETTING_NA: To ustawienie nie jest używane z rdzeniem Neutrino.
+  POPSTARTER_NOT_FOUND: Brak POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Brak wymagań SMB dla POPSTARTER
+  WRITE_POPSTARTER_NET: Zapisz konfigurację sieciową POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Zapisz również wartości IP + udziału SMB do własnych plików IPCONFIG.DAT / SMBCONFIG.DAT POPSTARTERa na karcie pamięci (dla VCD przez SMB).
+  POPSTARTER_NET_ERR: Nie można zapisać konfiguracji sieciowej POPSTARTER na kartę pamięci.
+  VCD: VCD
+  VCD_ON: Wyświetlanie gier VCD
+  VCD_OFF: Wyświetlanie gier z dysku
+  NEUTRINO_ARGS: Argumenty uruchamiania Neutrino
+  HINT_NEUTRINO_ARGS: Dodatkowe flagi Neutrino, oddzielone spacjami (np. -mt=dvd). Globalne dotyczą wszystkich gier; dla gry dodawane na wierzch. Poprzedź flagę $ aby ją wyłączyć bez usuwania.
+  NEUTRINO_VIDEO: Wideo Neutrino
+  HINT_NEUTRINO_VIDEO: Wymuś tryb wyjścia wideo GS Neutrino (-gsm). Wył. zachowuje domyślny tryb gry.
+  NEUTRINO_PATH: Ścieżka ELF Neutrino
+  HINT_NEUTRINO_PATH: Pełna ścieżka do neutrino.elf (np. mc0:NEUTRINO/neutrino.elf). Puste = automatyczne wykrycie na mc0/mc1.
+  POPSTARTER_PATH: 'Ścieżka POPSTARTER.ELF'
+  HINT_POPSTARTER_PATH: Niestandardowa ścieżka POPSTARTER.ELF; przy pustej/brakującej cofa się do folderu POPS urządzenia. Klawiatura ograniczona do 31 znaków; dłuższe ścieżki przez settings_riptopl.cfg.
+  BDMA_SOURCE: Źródło BDMA
+  HINT_BDMA_SOURCE: Urządzenie, w którego folderze POPS znajdują się pliki sterownika BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Tryb BDMA
+  HINT_BDMA_MODE: Sterownik urządzenia blokowego exFAT ładowany przez POPSTARTER. Zmiana kopiuje moduły na kartę; FAT32 = brak (wbudowany sterownik).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Nie znaleziono plików modułu BDMA na urządzeniu źródłowym.
+  BDMA_ERR_SPACE: Za mało miejsca na karcie pamięci dla modułów BDMA.
+  BDMA_ERR_IO: Błąd zapisu modułów BDMA na kartę pamięci.
+  COVERFLOW_SETTINGS: Ustawienia Coverflow
+  COVERFLOW_COUNT: Liczba okładek
+  COVERFLOW_SCALE: Skala środkowa
+  COVERFLOW_ANIM: Prędkość animacji
+  COVERFLOW_DIM: Przyciemnij boczne okładki
+  NONE: Brak
+  SMALL: Małe
+  LARGE: Duże
+  NORMAL: Normalne
+  FAV: Ulubione
+  FAVMODE: Tryb startowy ulubionych
+  FAV_HINT: Ulubiona
+  FAV_MSG: '%s nie jest dozwolone w Menu ulubionych.'
+  FAV_PERSISTENCE_MSG: '%s nie jest dozwolone, gdy element jest oznaczony jako ulubiony.'

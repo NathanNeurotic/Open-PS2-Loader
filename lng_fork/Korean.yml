@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: 일반 설정
+  DEVICE_SETTINGS: 장치 설정
+  LAUNCH_PS2_DISC: PS2 디스크 실행
+  DISC_LAUNCH_ERR: 드라이브에 PS2 디스크가 없습니다.
+  DEFAULT: 기본값
+  HINT_MODE7: Neutrino 전용 -- IOP 버퍼 오버런 게임 수정 (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD 치트 이미지
+  HINT_ENABLEIMAGE: 게임에 미리 빌드된 PS2RD .img 패치를 적용합니다.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE 게임
+  MMCEMODE: MMCE 시작 모드
+  MMCE_PREFIX: MMCE 접두 경로
+  MMCE_SLOT: MMCE 슬롯
+  MMCEIGR_SLOT: IGR 부트카드 슬롯
+  HINT_MMCEIGR_SLOT: IGR 시 선택된 슬롯으로 부트카드 전환 명령이 전송됩니다
+  MMCE_ADVANCED: 고급
+  MMCE_SETTINGS: MMCE 설정
+  MMCE_SEMA: 잠금 세마 큐잉 방식
+  HINT_MMCE_SEMA: THFIFO는 호환성에 도움이 될 수 있지만 성능이 저하될 수 있습니다
+  MMCE_WAIT_CYCLES: /ACK 로우 후 대기 사이클
+  HINT_MMCE_WAIT_CYCLES: 낮은 값은 성능을 향상시킬 수 있지만 불안정을 초래할 수 있습니다
+  MMCE_USE_ALARMS: 타임아웃 알람 사용
+  HINT_MMCE_USE_ALARMS: OFF는 성능에 도움이 될 수 있지만 MMCE 타임아웃 시 프리즈를 유발할 수 있습니다
+  CORE_LOADER: 로더 코어
+  NEUTRINO_BAD_FORMAT: Neutrino는 이 파일 형식을 지원하지 않아 <OPL> 코어로 실행합니다
+  NEUTRINO_NOT_FOUND: Neutrino ELF를 찾을 수 없어 <OPL> 코어로 실행합니다
+  UDPBD_NEEDS_STATIC_IP: UDPBD는 고정 PS2 IP가 필요합니다. 네트워크 설정에서 지정하세요 (현재 DHCP 사용 중).
+  NEUTRINO_SETTING_NA: 이 설정은 Neutrino 코어에서 사용되지 않습니다.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF 파일이 없습니다
+  POPSTARTER_SMB_MISSING: POPSTARTER SMB 요구 파일이 없습니다
+  WRITE_POPSTARTER_NET: POPSTARTER 네트워크 설정 저장
+  HINT_WRITE_POPSTARTER_NET: IP + SMB 공유 값을 메모리 카드의 POPSTARTER용 IPCONFIG.DAT / SMBCONFIG.DAT에도 저장합니다 (SMB 경유 VCD용).
+  POPSTARTER_NET_ERR: 메모리 카드에 POPSTARTER 네트워크 설정을 쓸 수 없습니다.
+  VCD: VCD
+  VCD_ON: VCD 게임 표시 중
+  VCD_OFF: 디스크 게임 표시 중
+  NEUTRINO_ARGS: Neutrino 실행 인수
+  HINT_NEUTRINO_ARGS: '추가 Neutrino 플래그, 공백으로 구분 (예: -mt=dvd). 전역은 모든 게임에 적용; 게임별은 추가됩니다. 플래그 앞에 $를 붙이면 삭제 없이 비활성화됩니다.'
+  NEUTRINO_VIDEO: Neutrino 비디오
+  HINT_NEUTRINO_VIDEO: Neutrino의 GS 출력 비디오 모드를 강제 설정합니다 (-gsm). Off는 게임 기본값을 유지합니다.
+  NEUTRINO_PATH: Neutrino ELF 경로
+  HINT_NEUTRINO_PATH: 'neutrino.elf의 전체 경로 (예: mc0:NEUTRINO/neutrino.elf). 비워두면 mc0/mc1에서 자동 감지합니다.'
+  POPSTARTER_PATH: POPSTARTER.ELF 경로
+  HINT_POPSTARTER_PATH: 사용자 지정 POPSTARTER.ELF 경로; 비어 있거나 없으면 장치 POPS 폴더로 자동 대체됩니다. 키보드 입력 31자 제한; 긴 경로는 settings_riptopl.cfg를 통해 설정하세요.
+  BDMA_SOURCE: BDMA 소스
+  HINT_BDMA_SOURCE: BDMAssault 드라이버 파일 (usbd.irx.* / usbhdfsd.irx.*)이 있는 POPS 폴더의 장치를 선택합니다.
+  BDMA_MODE: BDMA 모드
+  HINT_BDMA_MODE: POPSTARTER가 로드하는 exFAT 블록 장치 드라이버. 변경 시 모듈이 카드에 복사됩니다; FAT32 = 없음 (내장 드라이버).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: 소스 장치에서 BDMA 모듈 파일을 찾을 수 없습니다.
+  BDMA_ERR_SPACE: 메모리 카드에 BDMA 모듈을 저장할 공간이 부족합니다.
+  BDMA_ERR_IO: 메모리 카드에 BDMA 모듈을 쓰는 중 오류가 발생했습니다.
+  COVERFLOW_SETTINGS: Coverflow 설정
+  COVERFLOW_COUNT: 커버 개수
+  COVERFLOW_SCALE: 중앙 크기
+  COVERFLOW_ANIM: 애니메이션 속도
+  COVERFLOW_DIM: 측면 커버 어둡게
+  NONE: 없음
+  SMALL: 작게
+  LARGE: 크게
+  NORMAL: 보통
+  FAV: 즐겨찾기
+  FAVMODE: 즐겨찾기 시작 모드
+  FAV_HINT: 즐겨찾기
+  FAV_MSG: '%s은(는) 즐겨찾기 메뉴에서 허용되지 않습니다.'
+  FAV_PERSISTENCE_MSG: '%s은(는) 즐겨찾기로 표시된 항목에서 허용되지 않습니다.'

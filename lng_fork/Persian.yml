@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: تنظیمات کلی
+  DEVICE_SETTINGS: تنظیمات دستگاه
+  LAUNCH_PS2_DISC: اجرای دیسک PS2
+  DISC_LAUNCH_ERR: دیسک PS2 در درایو نیست.
+  DEFAULT: پیش‌فرض
+  HINT_MODE7: فقط Neutrino -- رفع مشکل بازی‌هایی که بافر IOP را پر می‌کنند (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: تصویر چیت PS2RD
+  HINT_ENABLEIMAGE: اعمال پچ پیش‌ساخته PS2RD .img روی بازی.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: حالت شروع MMCE
+  MMCE_PREFIX: مسیر پیشوند MMCE
+  MMCE_SLOT: اسلات MMCE
+  MMCEIGR_SLOT: اسلات(های) کارت بوت IGR
+  HINT_MMCEIGR_SLOT: دستور سوییچ به کارت بوت در IGR به اسلات(های) انتخاب‌شده ارسال می‌شود
+  MMCE_ADVANCED: پیشرفته
+  MMCE_SETTINGS: تنظیمات MMCE
+  MMCE_SEMA: روش صف‌بندی قفل Sema
+  HINT_MMCE_SEMA: THFIFO ممکن است سازگاری را بهبود دهد اما عملکرد را کاهش دهد
+  MMCE_WAIT_CYCLES: چرخه‌های انتظار پس از پایین آمدن /ACK
+  HINT_MMCE_WAIT_CYCLES: مقادیر کمتر ممکن است عملکرد را بهبود دهند اما ناپایداری ایجاد کنند
+  MMCE_USE_ALARMS: استفاده از آلارم‌های تایم‌اوت
+  HINT_MMCE_USE_ALARMS: خاموش ممکن است عملکرد را بهبود دهد اما تایم‌اوت MMCE می‌تواند باعث فریز شود
+  CORE_LOADER: هسته لودر
+  NEUTRINO_BAD_FORMAT: Neutrino از این فرمت فایل پشتیبانی نمی‌کند، اجرا با هسته <OPL>
+  NEUTRINO_NOT_FOUND: Neutrino ELF پیدا نشد، اجرا با هسته <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD نیاز به IP ثابت PS2 دارد. در تنظیمات شبکه تنظیم کنید (DHCP در حال حاضر روشن است).
+  NEUTRINO_SETTING_NA: این تنظیم با هسته Neutrino استفاده نمی‌شود.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF پیدا نشد
+  POPSTARTER_SMB_MISSING: پیش‌نیازهای SMB برای POPSTARTER موجود نیست
+  WRITE_POPSTARTER_NET: نوشتن تنظیمات شبکه POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: 'مقادیر IP + SMB را در IPCONFIG.DAT / SMBCONFIG.DAT مربوط به POPSTARTER روی کارت حافظه ذخیره کنید (برای VCD از طریق SMB).'
+  POPSTARTER_NET_ERR: نوشتن تنظیمات شبکه POPSTARTER روی کارت حافظه ناموفق بود.
+  VCD: VCD
+  VCD_ON: نمایش بازی‌های VCD
+  VCD_OFF: نمایش بازی‌های دیسک
+  NEUTRINO_ARGS: آرگومان‌های اجرای Neutrino
+  HINT_NEUTRINO_ARGS: فلگ‌های اضافی Neutrino، جداشده با فاصله (مثلاً -mt=dvd). کلی روی همه بازی‌ها اعمال می‌شود؛ هر بازی می‌تواند فلگ اضافه کند. پیشوند $ فلگ را بدون حذف غیرفعال می‌کند.
+  NEUTRINO_VIDEO: ویدیوی Neutrino
+  HINT_NEUTRINO_VIDEO: تعیین اجباری حالت ویدیوی خروجی GS در Neutrino (-gsm). خاموش = حالت پیش‌فرض بازی.
+  NEUTRINO_PATH: مسیر Neutrino ELF
+  HINT_NEUTRINO_PATH: مسیر کامل به neutrino.elf (مثلاً mc0:NEUTRINO/neutrino.elf). خالی = تشخیص خودکار روی mc0/mc1.
+  POPSTARTER_PATH: 'مسیر POPSTARTER.ELF'
+  HINT_POPSTARTER_PATH: مسیر سفارشی POPSTARTER.ELF؛ در صورت خالی/نبودن به پوشه POPS دستگاه برمی‌گردد. صفحه‌کلید حداکثر ۳۱ کاراکتر؛ مسیرهای طولانی‌تر از طریق settings_riptopl.cfg.
+  BDMA_SOURCE: منبع BDMA
+  HINT_BDMA_SOURCE: دستگاهی که پوشه POPS آن فایل‌های درایور BDMAssault را دارد (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: حالت BDMA
+  HINT_BDMA_MODE: درایور بلاک‌دیوایس exFAT که POPSTARTER بارگذاری می‌کند. تغییر آن ماژول‌ها را به کارت کپی می‌کند؛ FAT32 = بدون ماژول (درایور داخلی).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: فایل‌های ماژول BDMA روی دستگاه منبع پیدا نشد.
+  BDMA_ERR_SPACE: فضای کافی روی کارت حافظه برای ماژول‌های BDMA وجود ندارد.
+  BDMA_ERR_IO: خطا در نوشتن ماژول‌های BDMA روی کارت حافظه.
+  COVERFLOW_SETTINGS: تنظیمات Coverflow
+  COVERFLOW_COUNT: تعداد کاور
+  COVERFLOW_SCALE: مقیاس مرکز
+  COVERFLOW_ANIM: سرعت انیمیشن
+  COVERFLOW_DIM: کم‌نور کردن کاورهای کناری
+  NONE: هیچ‌کدام
+  SMALL: کوچک
+  LARGE: بزرگ
+  NORMAL: معمولی
+  FAV: علاقه‌مندی‌ها
+  FAVMODE: حالت شروع علاقه‌مندی‌ها
+  FAV_HINT: علاقه‌مندی
+  FAV_MSG: '%s از طریق منوی علاقه‌مندی‌ها مجاز نیست.'
+  FAV_PERSISTENCE_MSG: '%s در حالی که آیتم به عنوان علاقه‌مندی علامت‌گذاری شده، مجاز نیست.'

@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Общие настройки
+  DEVICE_SETTINGS: Настройки устройства
+  LAUNCH_PS2_DISC: Запуск диска PS2
+  DISC_LAUNCH_ERR: Диск PS2 не найден в приводе.
+  DEFAULT: По умолчанию
+  HINT_MODE7: Только Neutrino -- исправляет игры с переполнением буфера IOP (-gc=7)
+  MODE7: Режим 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Применить готовый патч PS2RD .img к игре.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: Игры MMCE
+  MMCEMODE: Режим запуска MMCE
+  MMCE_PREFIX: Путь префикса MMCE
+  MMCE_SLOT: Слот MMCE
+  MMCEIGR_SLOT: Слот(ы) загрузочной карты IGR
+  HINT_MMCEIGR_SLOT: Команда переключения на загрузочную карту будет отправлена в выбранный слот(ы) при IGR
+  MMCE_ADVANCED: Дополнительно
+  MMCE_SETTINGS: Настройки MMCE
+  MMCE_SEMA: Метод блокировки очереди семафора
+  HINT_MMCE_SEMA: THFIFO может улучшить совместимость, но снизить производительность
+  MMCE_WAIT_CYCLES: Циклы ожидания после /ACK low
+  HINT_MMCE_WAIT_CYCLES: Меньшие значения могут улучшить производительность, но вызвать нестабильность
+  MMCE_USE_ALARMS: Использовать таймеры ожидания
+  HINT_MMCE_USE_ALARMS: OFF может улучшить производительность, но таймауты MMCE могут вызывать зависания
+  CORE_LOADER: Ядро загрузчика
+  NEUTRINO_BAD_FORMAT: Neutrino не поддерживает этот формат файла, запуск через ядро <OPL>
+  NEUTRINO_NOT_FOUND: ELF Neutrino не найден, запуск через ядро <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD требует статический IP PS2. Задайте его в сетевых настройках (DHCP сейчас включён).
+  NEUTRINO_SETTING_NA: Этот параметр не используется с ядром Neutrino.
+  POPSTARTER_NOT_FOUND: Отсутствует POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Отсутствуют необходимые SMB-файлы для POPSTARTER
+  WRITE_POPSTARTER_NET: Записать сетевую конфигурацию POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Также сохранить значения IP + SMB в IPCONFIG.DAT / SMBCONFIG.DAT POPSTARTER на карте памяти (для VCD через SMB).
+  POPSTARTER_NET_ERR: Не удалось записать сетевую конфигурацию POPSTARTER на карту памяти.
+  VCD: VCD
+  VCD_ON: Показаны VCD-игры
+  VCD_OFF: Показаны дисковые игры
+  NEUTRINO_ARGS: Аргументы запуска Neutrino
+  HINT_NEUTRINO_ARGS: Дополнительные флаги Neutrino через пробел (напр. -mt=dvd). Глобальные применяются ко всем играм; игровые добавляются поверх. Префикс $ отключает флаг без удаления.
+  NEUTRINO_VIDEO: Видео Neutrino
+  HINT_NEUTRINO_VIDEO: Принудительный видеорежим GS для Neutrino (-gsm). Off сохраняет настройки игры.
+  NEUTRINO_PATH: Путь к ELF Neutrino
+  HINT_NEUTRINO_PATH: Полный путь к neutrino.elf (напр. mc0:NEUTRINO/neutrino.elf). Пусто = автопоиск на mc0/mc1.
+  POPSTARTER_PATH: Путь к POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Нестандартный путь к POPSTARTER.ELF; при пустом/отсутствующем значении используется папка POPS устройства. Клавиатура ограничена 31 символом; более длинные пути — через settings_riptopl.cfg.
+  BDMA_SOURCE: Источник BDMA
+  HINT_BDMA_SOURCE: Устройство, в папке POPS которого находятся файлы драйвера BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Режим BDMA
+  HINT_BDMA_MODE: Драйвер блочного устройства exFAT, загружаемый POPSTARTER. При смене модули копируются на карту; FAT32 = без модулей (встроенный драйвер).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Файлы модуля BDMA не найдены на исходном устройстве.
+  BDMA_ERR_SPACE: Недостаточно места на карте памяти для модулей BDMA.
+  BDMA_ERR_IO: Ошибка записи модулей BDMA на карту памяти.
+  COVERFLOW_SETTINGS: Настройки Coverflow
+  COVERFLOW_COUNT: Количество обложек
+  COVERFLOW_SCALE: Масштаб центра
+  COVERFLOW_ANIM: Скорость анимации
+  COVERFLOW_DIM: Затемнение боковых обложек
+  NONE: Нет
+  SMALL: Малый
+  LARGE: Большой
+  NORMAL: Нормальный
+  FAV: Избранное
+  FAVMODE: Режим запуска избранного
+  FAV_HINT: Избранное
+  FAV_MSG: '%s не разрешён в меню избранного.'
+  FAV_PERSISTENCE_MSG: '%s недоступно, пока элемент отмечен как избранный.'

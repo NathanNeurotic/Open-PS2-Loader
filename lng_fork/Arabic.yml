@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: الإعدادات العامة
+  DEVICE_SETTINGS: إعدادات الجهاز
+  LAUNCH_PS2_DISC: تشغيل قرص PS2
+  DISC_LAUNCH_ERR: لا يوجد قرص PS2 في المحرك.
+  DEFAULT: افتراضي
+  HINT_MODE7: Neutrino فقط -- إصلاح الألعاب التي تتجاوز مخزن IOP (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: صورة غش PS2RD
+  HINT_ENABLEIMAGE: تطبيق تصحيح PS2RD .img مسبق البناء على لعبتك.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: وضع بدء MMCE
+  MMCE_PREFIX: مسار بادئة MMCE
+  MMCE_SLOT: فتحة MMCE
+  MMCEIGR_SLOT: فتحة (فتحات) بطاقة بدء IGR
+  HINT_MMCEIGR_SLOT: سيتم إرسال أمر التبديل إلى بطاقة البدء للفتحة (الفتحات) المحددة عند IGR
+  MMCE_ADVANCED: متقدم
+  MMCE_SETTINGS: إعدادات MMCE
+  MMCE_SEMA: طريقة قائمة انتظار Lock Sema
+  HINT_MMCE_SEMA: قد يساعد THFIFO في التوافق لكنه قد يضعف الأداء
+  MMCE_WAIT_CYCLES: دورات الانتظار بعد /ACK منخفض
+  HINT_MMCE_WAIT_CYCLES: القيم المنخفضة قد تحسن الأداء لكنها قد تسبب عدم الاستقرار
+  MMCE_USE_ALARMS: استخدام منبهات المهلة
+  HINT_MMCE_USE_ALARMS: قد يساعد الإيقاف على الأداء لكنه قد يتسبب في تجميد MMCE عند انتهاء المهلة
+  CORE_LOADER: نواة المُشغِّل
+  NEUTRINO_BAD_FORMAT: 'Neutrino لا يدعم هذا التنسيق، يتم التشغيل بنواة <OPL>'
+  NEUTRINO_NOT_FOUND: 'لم يُعثر على Neutrino ELF، يتم التشغيل بنواة <OPL>'
+  UDPBD_NEEDS_STATIC_IP: يتطلب UDPBD عنوان IP ثابتاً لـ PS2. عيّنه في إعدادات الشبكة (DHCP مفعّل حالياً).
+  NEUTRINO_SETTING_NA: هذا الإعداد غير مستخدم مع نواة Neutrino.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF مفقود
+  POPSTARTER_SMB_MISSING: متطلبات POPSTARTER SMB مفقودة
+  WRITE_POPSTARTER_NET: كتابة إعدادات شبكة POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: احفظ قيم IP + SMB أيضاً في IPCONFIG.DAT / SMBCONFIG.DAT الخاصة بـ POPSTARTER على بطاقة الذاكرة (لـ VCD عبر SMB).
+  POPSTARTER_NET_ERR: تعذّرت كتابة إعدادات شبكة POPSTARTER على بطاقة الذاكرة.
+  VCD: VCD
+  VCD_ON: عرض ألعاب VCD
+  VCD_OFF: عرض ألعاب الأقراص
+  NEUTRINO_ARGS: وسيطات تشغيل Neutrino
+  HINT_NEUTRINO_ARGS: أعلام Neutrino إضافية مفصولة بمسافة (مثال -mt=dvd). العامة تُطبَّق على جميع الألعاب؛ الخاصة بالعبة تُضاف فوقها. ضع $ قبل العلم لتعطيله دون حذفه.
+  NEUTRINO_VIDEO: فيديو Neutrino
+  HINT_NEUTRINO_VIDEO: 'فرض وضع فيديو GS لـ Neutrino (-gsm). إيقاف يبقي الإعداد الافتراضي للعبة.'
+  NEUTRINO_PATH: مسار Neutrino ELF
+  HINT_NEUTRINO_PATH: 'المسار الكامل لـ neutrino.elf (مثال mc0:NEUTRINO/neutrino.elf). فارغ = اكتشاف تلقائي على mc0/mc1.'
+  POPSTARTER_PATH: 'مسار POPSTARTER.ELF'
+  HINT_POPSTARTER_PATH: مسار POPSTARTER.ELF مخصص؛ يعود تلقائياً إلى مجلد POPS في الجهاز إذا كان فارغاً أو مفقوداً. لوحة المفاتيح محدودة بـ 31 حرفاً؛ المسارات الأطول عبر settings_riptopl.cfg.
+  BDMA_SOURCE: مصدر BDMA
+  HINT_BDMA_SOURCE: الجهاز الذي يحتوي مجلد POPS على ملفات مشغّل BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: وضع BDMA
+  HINT_BDMA_MODE: مشغّل كتلة exFAT الذي يُحمِّله POPSTARTER. تغييره ينسخ الوحدات إلى البطاقة؛ FAT32 = لا شيء (مشغّل مدمج).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: لم تُوجد ملفات وحدة BDMA على الجهاز المصدر.
+  BDMA_ERR_SPACE: مساحة بطاقة الذاكرة غير كافية لوحدات BDMA.
+  BDMA_ERR_IO: خطأ في كتابة وحدات BDMA على بطاقة الذاكرة.
+  COVERFLOW_SETTINGS: إعدادات Coverflow
+  COVERFLOW_COUNT: عدد الأغلفة
+  COVERFLOW_SCALE: مقياس المركز
+  COVERFLOW_ANIM: سرعة الحركة
+  COVERFLOW_DIM: تعتيم الأغلفة الجانبية
+  NONE: لا شيء
+  SMALL: صغير
+  LARGE: كبير
+  NORMAL: عادي
+  FAV: المفضلة
+  FAVMODE: وضع بدء المفضلة
+  FAV_HINT: مفضلة
+  FAV_MSG: '%s غير مسموح به عبر قائمة المفضلة.'
+  FAV_PERSISTENCE_MSG: '%s غير مسموح به بينما العنصر محدد كمفضلة.'

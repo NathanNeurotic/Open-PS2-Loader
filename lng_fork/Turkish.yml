@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Genel Ayarlar
+  DEVICE_SETTINGS: Cihaz Ayarları
+  LAUNCH_PS2_DISC: PS2 Diski Başlat
+  DISC_LAUNCH_ERR: Sürücüde PS2 diski yok.
+  DEFAULT: Varsayılan
+  HINT_MODE7: Yalnızca Neutrino -- IOP arabelleğini aşan oyunları düzeltir (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Hile Görüntüsü
+  HINT_ENABLEIMAGE: Oyununuza önceden derlenmiş bir PS2RD .img yaması uygulayın.
+  UDPBD_GAMES: UDPBD Oyunları
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Oyunları
+  MMCEMODE: MMCE Başlangıç Modu
+  MMCE_PREFIX: MMCE Önek Yolu
+  MMCE_SLOT: MMCE Yuvası
+  MMCEIGR_SLOT: IGR Önyükleme Kartı Yuvası
+  HINT_MMCEIGR_SLOT: IGR'de seçili yuvalara önyükleme kartı komutu gönderilir
+  MMCE_ADVANCED: Gelişmiş
+  MMCE_SETTINGS: MMCE Ayarları
+  MMCE_SEMA: Kilit Sema Sıralama Yöntemi
+  HINT_MMCE_SEMA: THFIFO uyumluluğu artırabilir ancak performansı düşürebilir
+  MMCE_WAIT_CYCLES: /ACK düşüşünden sonra bekleme döngüleri
+  HINT_MMCE_WAIT_CYCLES: Düşük değerler performansı artırabilir ancak kararsızlığa yol açabilir
+  MMCE_USE_ALARMS: Zaman aşımı alarmlarını kullan
+  HINT_MMCE_USE_ALARMS: KAPALI performansı artırabilir ancak MMCE zaman aşımları donmalara neden olabilir
+  CORE_LOADER: Yükleyici Çekirdeği
+  NEUTRINO_BAD_FORMAT: Neutrino bu dosya biçimini desteklemiyor, <OPL> çekirdeğiyle başlatılıyor
+  NEUTRINO_NOT_FOUND: Neutrino ELF bulunamadı, <OPL> çekirdeğiyle başlatılıyor
+  UDPBD_NEEDS_STATIC_IP: UDPBD sabit bir PS2 IP adresi gerektirir. Ağ Ayarlarından belirleyin (DHCP şu an açık).
+  NEUTRINO_SETTING_NA: Bu ayar Neutrino çekirdeğiyle kullanılmaz.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF eksik
+  POPSTARTER_SMB_MISSING: POPSTARTER SMB gereksinimleri eksik
+  WRITE_POPSTARTER_NET: POPSTARTER Ağ Yapılandırmasını Yaz
+  HINT_WRITE_POPSTARTER_NET: Bu IP + SMB paylaşım değerlerini hafıza kartındaki POPSTARTER'ın IPCONFIG.DAT / SMBCONFIG.DAT dosyalarına da kaydet (SMB üzerinden VCD için).
+  POPSTARTER_NET_ERR: POPSTARTER ağ yapılandırması hafıza kartına yazılamadı.
+  VCD: VCD
+  VCD_ON: VCD oyunları gösteriliyor
+  VCD_OFF: Disk oyunları gösteriliyor
+  NEUTRINO_ARGS: Neutrino Başlatma Parametreleri
+  HINT_NEUTRINO_ARGS: 'Ekstra Neutrino bayrakları, boşlukla ayrılmış (ör. -mt=dvd). Global tüm oyunlara uygulanır; oyun başına üstüne eklenir. Bir bayrağı silmeden devre dışı bırakmak için $ öneki ekleyin.'
+  NEUTRINO_VIDEO: Neutrino Video
+  HINT_NEUTRINO_VIDEO: "Neutrino'nun GS çıkış video modunu zorla (-gsm). Kapalı = oyunun varsayılanını kullan."
+  NEUTRINO_PATH: Neutrino ELF Yolu
+  HINT_NEUTRINO_PATH: neutrino.elf için tam yol (ör. mc0:NEUTRINO/neutrino.elf). Boş = mc0/mc1 üzerinde otomatik algıla.
+  POPSTARTER_PATH: POPSTARTER.ELF Yolu
+  HINT_POPSTARTER_PATH: Özel POPSTARTER.ELF yolu; boş/eksikse cihazın POPS klasörüne geri döner. Klavye 31 karakterle sınırlıdır; daha uzun yollar için settings_riptopl.cfg kullanın.
+  BDMA_SOURCE: BDMA Kaynağı
+  HINT_BDMA_SOURCE: BDMAssault sürücü dosyalarını (usbd.irx.* / usbhdfsd.irx.*) barındıran POPS klasörünün bulunduğu cihaz.
+  BDMA_MODE: BDMA Modu
+  HINT_BDMA_MODE: POPSTARTER'ın yüklediği exFAT blok aygıtı sürücüsü. Değiştirmek modülleri karta kopyalar; FAT32 = yok (yerleşik sürücü).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: BDMA modül dosyaları kaynak cihazda bulunamadı.
+  BDMA_ERR_SPACE: Hafıza kartında BDMA modülleri için yeterli alan yok.
+  BDMA_ERR_IO: BDMA modülleri hafıza kartına yazılırken hata oluştu.
+  COVERFLOW_SETTINGS: Coverflow Ayarları
+  COVERFLOW_COUNT: Kapak Sayısı
+  COVERFLOW_SCALE: Merkez Ölçeği
+  COVERFLOW_ANIM: Animasyon Hızı
+  COVERFLOW_DIM: Yan Kapakları Karart
+  NONE: Yok
+  SMALL: Küçük
+  LARGE: Büyük
+  NORMAL: Normal
+  FAV: Favoriler
+  FAVMODE: Favoriler Başlangıç Modu
+  FAV_HINT: Favori
+  FAV_MSG: '%s Favoriler Menüsünden erişilemiyor.'
+  FAV_PERSISTENCE_MSG: '%s, öğe favori olarak işaretliyken kullanılamaz.'

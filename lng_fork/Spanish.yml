@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Configuración general
+  DEVICE_SETTINGS: Configuración de dispositivo
+  LAUNCH_PS2_DISC: Lanzar disco PS2
+  DISC_LAUNCH_ERR: No hay disco PS2 en la unidad.
+  DEFAULT: Por defecto
+  HINT_MODE7: Solo Neutrino -- corrige juegos que desbordan un búfer IOP (-gc=7)
+  MODE7: Modo 7
+  ENABLEIMAGE: Imagen de trucos PS2RD
+  HINT_ENABLEIMAGE: Aplica un parche .img precompilado de PS2RD a tu juego.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: Modo de inicio MMCE
+  MMCE_PREFIX: Ruta de prefijo MMCE
+  MMCE_SLOT: Ranura MMCE
+  MMCEIGR_SLOT: Ranura(s) de arranque IGR
+  HINT_MMCEIGR_SLOT: El comando de cambio a tarjeta de arranque se enviará a la(s) ranura(s) seleccionada(s) en IGR
+  MMCE_ADVANCED: Avanzado
+  MMCE_SETTINGS: Configuración MMCE
+  MMCE_SEMA: Método de encolado de semáforo de bloqueo
+  HINT_MMCE_SEMA: THFIFO puede mejorar la compatibilidad pero empeorar el rendimiento
+  MMCE_WAIT_CYCLES: Ciclos de espera tras /ACK bajo
+  HINT_MMCE_WAIT_CYCLES: Valores más bajos pueden mejorar el rendimiento pero causar inestabilidades
+  MMCE_USE_ALARMS: Usar alarmas de tiempo de espera
+  HINT_MMCE_USE_ALARMS: OFF puede mejorar el rendimiento pero puede causar que los tiempos de espera de MMCE provoquen bloqueos
+  CORE_LOADER: Núcleo del cargador
+  NEUTRINO_BAD_FORMAT: Neutrino no soporta este formato de archivo, lanzando con núcleo <OPL>
+  NEUTRINO_NOT_FOUND: ELF de Neutrino no encontrado, lanzando con núcleo <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD necesita una IP estática en PS2. Configúrala en Red (DHCP está activo).
+  NEUTRINO_SETTING_NA: Esta configuración no se usa con el núcleo Neutrino.
+  POPSTARTER_NOT_FOUND: Falta POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Faltan requisitos SMB de POPSTARTER
+  WRITE_POPSTARTER_NET: Escribir configuración de red de POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: También guarda estos valores de IP + recurso SMB en el propio IPCONFIG.DAT / SMBCONFIG.DAT de POPSTARTER en la tarjeta de memoria (para VCD por SMB).
+  POPSTARTER_NET_ERR: No se pudo escribir la configuración de red de POPSTARTER en la tarjeta de memoria.
+  VCD: VCD
+  VCD_ON: Mostrando juegos VCD
+  VCD_OFF: Mostrando juegos de disco
+  NEUTRINO_ARGS: Argumentos de lanzamiento de Neutrino
+  HINT_NEUTRINO_ARGS: Flags adicionales de Neutrino separados por espacios (ej. -mt=dvd). Global se aplica a todos los juegos; por juego se añade encima. Prefija un flag con $ para desactivarlo sin borrarlo.
+  NEUTRINO_VIDEO: Vídeo de Neutrino
+  HINT_NEUTRINO_VIDEO: Fuerza el modo de vídeo GS de Neutrino (-gsm). Apagado mantiene el predeterminado del juego.
+  NEUTRINO_PATH: Ruta del ELF de Neutrino
+  HINT_NEUTRINO_PATH: Ruta completa a neutrino.elf (ej. mc0:NEUTRINO/neutrino.elf). En blanco = detección automática en mc0/mc1.
+  POPSTARTER_PATH: 'Ruta de POPSTARTER.ELF'
+  HINT_POPSTARTER_PATH: Ruta personalizada de POPSTARTER.ELF; usa la carpeta POPS del dispositivo si está en blanco o falta. El teclado admite hasta 31 caracteres; rutas más largas mediante settings_riptopl.cfg.
+  BDMA_SOURCE: Fuente BDMA
+  HINT_BDMA_SOURCE: Dispositivo cuya carpeta POPS contiene los archivos del controlador BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Modo BDMA
+  HINT_BDMA_MODE: Controlador de dispositivo de bloque exFAT que carga POPSTARTER. Cambiarlo copia los módulos a la tarjeta; FAT32 = ninguno (controlador integrado).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Archivos de módulo BDMA no encontrados en el dispositivo fuente.
+  BDMA_ERR_SPACE: Espacio insuficiente en la tarjeta de memoria para los módulos BDMA.
+  BDMA_ERR_IO: Error al escribir los módulos BDMA en la tarjeta de memoria.
+  COVERFLOW_SETTINGS: Configuración de Coverflow
+  COVERFLOW_COUNT: Cantidad de carátulas
+  COVERFLOW_SCALE: Escala central
+  COVERFLOW_ANIM: Velocidad de animación
+  COVERFLOW_DIM: Atenuar carátulas laterales
+  NONE: Ninguno
+  SMALL: Pequeño
+  LARGE: Grande
+  NORMAL: Normal
+  FAV: Favoritos
+  FAVMODE: Modo de inicio de favoritos
+  FAV_HINT: Favorito
+  FAV_MSG: '%s no está permitido en el menú de favoritos.'
+  FAV_PERSISTENCE_MSG: '%s no está permitido mientras el elemento está marcado como favorito.'

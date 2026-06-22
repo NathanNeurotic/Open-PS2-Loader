@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: ການຕັ້ງຄ່າທົ່ວໄປ
+  DEVICE_SETTINGS: ການຕັ້ງຄ່າອຸປະກອນ
+  LAUNCH_PS2_DISC: ເປີດແຜ່ນ PS2
+  DISC_LAUNCH_ERR: ບໍ່ມີແຜ່ນ PS2 ໃນໄດ.
+  DEFAULT: ຄ່າເລີ່ມຕົ້ນ
+  HINT_MODE7: Neutrino ເທົ່ານັ້ນ -- ແກ້ໄຂເກມທີ່ overrun IOP buffer (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: ນຳໃຊ້ patch PS2RD .img ທີ່ສ້າງໄວ້ລ່ວງໜ້າກັບເກມຂອງທ່ານ.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: ໂໝດເລີ່ມຕົ້ນ MMCE
+  MMCE_PREFIX: ເສັ້ນທາງ MMCE Prefix
+  MMCE_SLOT: ຊ່ອງ MMCE
+  MMCEIGR_SLOT: ຊ່ອງ IGR Bootcard
+  HINT_MMCEIGR_SLOT: ຄຳສັ່ງສະລັບ bootcard ຈະຖືກສົ່ງໄປຍັງຊ່ອງທີ່ເລືອກເມື່ອ IGR
+  MMCE_ADVANCED: ຂັ້ນສູງ
+  MMCE_SETTINGS: ການຕັ້ງຄ່າ MMCE
+  MMCE_SEMA: ວິທີ Lock Sema Enqueuing
+  HINT_MMCE_SEMA: THFIFO ອາດຊ່ວຍຄວາມເຂົ້າກັນໄດ້ແຕ່ຫຼຸດປະສິດທິພາບ
+  MMCE_WAIT_CYCLES: Wait cycles ຫຼັງ /ACK ຕ່ຳ
+  HINT_MMCE_WAIT_CYCLES: ຄ່າຕ່ຳອາດປັບປຸງປະສິດທິພາບແຕ່ເກີດຄວາມບໍ່ໝັ້ນຄົງໄດ້
+  MMCE_USE_ALARMS: ໃຊ້ timeout alarms
+  HINT_MMCE_USE_ALARMS: ປິດອາດຊ່ວຍປະສິດທິພາບແຕ່ອາດເຮັດໃຫ້ MMCE timeout ຄ້າງ
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Neutrino ບໍ່ຮອງຮັບຮູບແບບໄຟລ໌ນີ້, ເປີດດ້ວຍ <OPL> core
+  NEUTRINO_NOT_FOUND: ບໍ່ພົບ Neutrino ELF, ເປີດດ້ວຍ <OPL> core
+  UDPBD_NEEDS_STATIC_IP: UDPBD ຕ້ອງການ IP ຄົງທີ່ຂອງ PS2. ຕັ້ງໃນ Network Config (DHCP ເປີດຢູ່ຕອນນີ້).
+  NEUTRINO_SETTING_NA: ການຕັ້ງຄ່ານີ້ບໍ່ໃຊ້ກັບ Neutrino core.
+  POPSTARTER_NOT_FOUND: ບໍ່ພົບ POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: ຂາດຄວາມຕ້ອງການ SMB ສຳລັບ POPSTARTER
+  WRITE_POPSTARTER_NET: ບັນທຶກ POPSTARTER Network Config
+  HINT_WRITE_POPSTARTER_NET: ບັນທຶກຄ່າ IP + SMB share ນີ້ໄປຍັງ IPCONFIG.DAT / SMBCONFIG.DAT ຂອງ POPSTARTER ໃນ memory card (ສຳລັບ VCD ຜ່ານ SMB).
+  POPSTARTER_NET_ERR: ບໍ່ສາມາດບັນທຶກ network config ຂອງ POPSTARTER ລົງ memory card.
+  VCD: VCD
+  VCD_ON: ກຳລັງສະແດງເກມ VCD
+  VCD_OFF: ກຳລັງສະແດງເກມ disc
+  NEUTRINO_ARGS: Neutrino Launch Args
+  HINT_NEUTRINO_ARGS: "flags Neutrino ເພີ່ມເຕີມ, ຄັ່ນດ້ວຍຍະຫວ່າງ (ເຊັ່ນ -mt=dvd). Global ໃຊ້ກັບທຸກເກມ; ຕໍ່ເກມເພີ່ມໄລຍ. ໃສ່ $ ໜ້າ flag ເພື່ອປິດໂດຍບໍ່ລຶບ."
+  NEUTRINO_VIDEO: Neutrino Video
+  HINT_NEUTRINO_VIDEO: ບັງຄັບໂໝດວີດີໂອ GS output ຂອງ Neutrino (-gsm). ປິດຮັກສາຄ່າເລີ່ມຕົ້ນຂອງເກມ.
+  NEUTRINO_PATH: ເສັ້ນທາງ Neutrino ELF
+  HINT_NEUTRINO_PATH: ເສັ້ນທາງເຕັມໄປຫາ neutrino.elf (ເຊັ່ນ mc0:NEUTRINO/neutrino.elf). ວ່າງ = ຊອກຫາອັດຕະໂນມັດໃນ mc0/mc1.
+  POPSTARTER_PATH: ເສັ້ນທາງ POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: ເສັ້ນທາງ POPSTARTER.ELF ກຳນົດເອງ; ໃຊ້ໂຟລເດີ POPS ຂອງອຸປະກອນໂດຍອັດຕະໂນມັດຖ້າຫາກວ່າງ/ບໍ່ພົບ. Keyboard ຈຳກັດ 31 ຕົວອັກສອນ; ເສັ້ນທາງຍາວກວ່ານັ້ນຜ່ານ settings_riptopl.cfg.
+  BDMA_SOURCE: ແຫຼ່ງ BDMA
+  HINT_BDMA_SOURCE: ອຸປະກອນທີ່ໂຟລເດີ POPS ມີໄຟລ໌ driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA Mode
+  HINT_BDMA_MODE: driver block-device exFAT ທີ່ POPSTARTER ໂຫຼດ. ການປ່ຽນແປງຈະສຳເນົາ module ໄປຍັງ card; FAT32 = ບໍ່ມີ (driver ໃນຕົວ).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: ບໍ່ພົບໄຟລ໌ BDMA module ໃນອຸປະກອນຕົ້ນທາງ.
+  BDMA_ERR_SPACE: ບໍ່ມີພື້ນທີ່ memory card ພໍສຳລັບ BDMA modules.
+  BDMA_ERR_IO: ເກີດຂໍ້ຜິດພາດໃນການຂຽນ BDMA modules ລົງ memory card.
+  COVERFLOW_SETTINGS: ການຕັ້ງຄ່າ Coverflow
+  COVERFLOW_COUNT: ຈຳນວນ Cover
+  COVERFLOW_SCALE: ຂະໜາດກາງ
+  COVERFLOW_ANIM: ຄວາມໄວ Animation
+  COVERFLOW_DIM: ມືດ Cover ດ້ານຂ້າງ
+  NONE: ບໍ່ມີ
+  SMALL: ນ້ອຍ
+  LARGE: ໃຫຍ່
+  NORMAL: ປົກກະຕິ
+  FAV: ລາຍການໂປດ
+  FAVMODE: ໂໝດເລີ່ມຕົ້ນລາຍການໂປດ
+  FAV_HINT: ລາຍການໂປດ
+  FAV_MSG: '%s ບໍ່ອະນຸຍາດຜ່ານເມນູລາຍການໂປດ.'
+  FAV_PERSISTENCE_MSG: '%s ບໍ່ສາມາດໃຊ້ໄດ້ຂະນະທີ່ລາຍການຖືກໝາຍເປັນລາຍການໂປດ.'

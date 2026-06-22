@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Pengaturan Umum
+  DEVICE_SETTINGS: Pengaturan Perangkat
+  LAUNCH_PS2_DISC: Jalankan Disc PS2
+  DISC_LAUNCH_ERR: Tidak ada disc PS2 di drive.
+  DEFAULT: Default
+  HINT_MODE7: Hanya Neutrino -- perbaiki game yang melampaui buffer IOP (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Terapkan patch PS2RD .img yang sudah dibuat ke game Anda.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: Mode Mulai MMCE
+  MMCE_PREFIX: Path Prefix MMCE
+  MMCE_SLOT: Slot MMCE
+  MMCEIGR_SLOT: Slot Bootcard IGR
+  HINT_MMCEIGR_SLOT: Perintah beralih ke bootcard akan dikirim ke slot yang dipilih saat IGR
+  MMCE_ADVANCED: Lanjutan
+  MMCE_SETTINGS: Pengaturan MMCE
+  MMCE_SEMA: Metode Antrian Kunci Sema
+  HINT_MMCE_SEMA: THFIFO dapat membantu kompatibilitas tetapi menurunkan performa
+  MMCE_WAIT_CYCLES: Siklus tunggu setelah /ACK rendah
+  HINT_MMCE_WAIT_CYCLES: Nilai lebih rendah dapat meningkatkan performa tetapi menyebabkan ketidakstabilan
+  MMCE_USE_ALARMS: Gunakan alarm timeout
+  HINT_MMCE_USE_ALARMS: OFF dapat membantu performa tetapi dapat menyebabkan timeout MMCE berujung freeze
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Neutrino tidak mendukung format file ini, menjalankan dengan core <OPL>
+  NEUTRINO_NOT_FOUND: ELF Neutrino tidak ditemukan, menjalankan dengan core <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD membutuhkan IP PS2 statis. Atur di Konfigurasi Jaringan (DHCP sedang aktif).
+  NEUTRINO_SETTING_NA: Pengaturan ini tidak digunakan dengan core Neutrino.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF tidak ditemukan
+  POPSTARTER_SMB_MISSING: Persyaratan SMB POPSTARTER tidak terpenuhi
+  WRITE_POPSTARTER_NET: Tulis Konfigurasi Jaringan POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Simpan juga nilai IP + SMB share ini ke IPCONFIG.DAT / SMBCONFIG.DAT milik POPSTARTER di kartu memori (untuk VCD lewat SMB).
+  POPSTARTER_NET_ERR: Gagal menulis konfigurasi jaringan POPSTARTER ke kartu memori.
+  VCD: VCD
+  VCD_ON: Menampilkan game VCD
+  VCD_OFF: Menampilkan game disc
+  NEUTRINO_ARGS: Argumen Launch Neutrino
+  HINT_NEUTRINO_ARGS: 'Flag Neutrino tambahan, dipisah spasi (misal -mt=dvd). Global berlaku untuk semua game; per-game ditambahkan di atasnya. Awali flag dengan $ untuk menonaktifkan tanpa menghapus.'
+  NEUTRINO_VIDEO: Video Neutrino
+  HINT_NEUTRINO_VIDEO: Paksa mode video output GS Neutrino (-gsm). Off mempertahankan default game.
+  NEUTRINO_PATH: Path ELF Neutrino
+  HINT_NEUTRINO_PATH: Path lengkap ke neutrino.elf (misal mc0:NEUTRINO/neutrino.elf). Kosong = deteksi otomatis di mc0/mc1.
+  POPSTARTER_PATH: Path POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Path POPSTARTER.ELF kustom; otomatis kembali ke folder POPS perangkat jika kosong/tidak ada. Keyboard maks 31 karakter; path lebih panjang via settings_riptopl.cfg.
+  BDMA_SOURCE: Sumber BDMA
+  HINT_BDMA_SOURCE: Perangkat yang folder POPS-nya menyimpan file driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Mode BDMA
+  HINT_BDMA_MODE: Driver blok-perangkat exFAT yang dimuat POPSTARTER. Mengubahnya menyalin modul ke kartu; FAT32 = tidak ada (driver bawaan).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: File modul BDMA tidak ditemukan di perangkat sumber.
+  BDMA_ERR_SPACE: Ruang kartu memori tidak cukup untuk modul BDMA.
+  BDMA_ERR_IO: Kesalahan saat menulis modul BDMA ke kartu memori.
+  COVERFLOW_SETTINGS: Pengaturan Coverflow
+  COVERFLOW_COUNT: Jumlah Cover
+  COVERFLOW_SCALE: Skala Tengah
+  COVERFLOW_ANIM: Kecepatan Animasi
+  COVERFLOW_DIM: Redupkan Cover Samping
+  NONE: Tidak Ada
+  SMALL: Kecil
+  LARGE: Besar
+  NORMAL: Normal
+  FAV: Favorit
+  FAVMODE: Mode Mulai Favorit
+  FAV_HINT: Favorit
+  FAV_MSG: '%s tidak diizinkan melalui Menu Favorit.'
+  FAV_PERSISTENCE_MSG: '%s tidak diizinkan selama item ditandai sebagai favorit.'

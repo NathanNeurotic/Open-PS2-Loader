@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Definições Gerais
+  DEVICE_SETTINGS: Definições de Dispositivo
+  LAUNCH_PS2_DISC: Lançar Disco PS2
+  DISC_LAUNCH_ERR: Nenhum disco PS2 na unidade.
+  DEFAULT: Predefinição
+  HINT_MODE7: Apenas Neutrino -- corrige jogos que ultrapassam um buffer IOP (-gc=7)
+  MODE7: Modo 7
+  ENABLEIMAGE: Imagem de Cheats PS2RD
+  HINT_ENABLEIMAGE: Aplica um patch .img PS2RD pré-compilado ao seu jogo.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: Modo de Arranque MMCE
+  MMCE_PREFIX: Caminho de Prefixo MMCE
+  MMCE_SLOT: Slot MMCE
+  MMCEIGR_SLOT: Slot(s) de Bootcard IGR
+  HINT_MMCEIGR_SLOT: O comando para mudar para bootcard será enviado ao(s) slot(s) selecionado(s) no IGR
+  MMCE_ADVANCED: Avançado
+  MMCE_SETTINGS: Definições MMCE
+  MMCE_SEMA: Método de Fila de Sema de Bloqueio
+  HINT_MMCE_SEMA: THFIFO pode ajudar na compatibilidade mas piorar o desempenho
+  MMCE_WAIT_CYCLES: Ciclos de espera após /ACK baixo
+  HINT_MMCE_WAIT_CYCLES: Valores mais baixos podem melhorar o desempenho mas causar instabilidades
+  MMCE_USE_ALARMS: Usar alarmes de tempo limite
+  HINT_MMCE_USE_ALARMS: DESLIGADO pode ajudar o desempenho mas pode causar bloqueios por tempo limite MMCE
+  CORE_LOADER: Núcleo do Carregador
+  NEUTRINO_BAD_FORMAT: Neutrino não suporta este formato de ficheiro, a lançar com núcleo <OPL>
+  NEUTRINO_NOT_FOUND: ELF Neutrino não encontrado, a lançar com núcleo <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD requer um IP PS2 estático. Defina um nas Definições de Rede (DHCP está ativo).
+  NEUTRINO_SETTING_NA: Esta definição não é usada com o núcleo Neutrino.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF em falta
+  POPSTARTER_SMB_MISSING: Requisitos SMB do POPSTARTER em falta
+  WRITE_POPSTARTER_NET: Gravar Config de Rede do POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Guarda também estes valores de IP + partilha SMB nos ficheiros IPCONFIG.DAT / SMBCONFIG.DAT do POPSTARTER no cartão de memória (para VCD via SMB).
+  POPSTARTER_NET_ERR: Não foi possível gravar a configuração de rede do POPSTARTER no cartão de memória.
+  VCD: VCD
+  VCD_ON: A mostrar jogos VCD
+  VCD_OFF: A mostrar jogos de disco
+  NEUTRINO_ARGS: Args de Lançamento Neutrino
+  HINT_NEUTRINO_ARGS: Flags extra do Neutrino, separadas por espaço (ex. -mt=dvd). Global aplica-se a todos os jogos; por jogo acrescenta. Prefixe uma flag com $ para desativá-la sem apagar.
+  NEUTRINO_VIDEO: Vídeo Neutrino
+  HINT_NEUTRINO_VIDEO: Força o modo de vídeo GS do Neutrino (-gsm). Desligado mantém a predefinição do jogo.
+  NEUTRINO_PATH: Caminho do ELF Neutrino
+  HINT_NEUTRINO_PATH: Caminho completo para neutrino.elf (ex. mc0:NEUTRINO/neutrino.elf). Vazio = deteção automática em mc0/mc1.
+  POPSTARTER_PATH: Caminho de POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Caminho personalizado para POPSTARTER.ELF; usa silenciosamente a pasta POPS do dispositivo se vazio/ausente. Teclado limitado a 31 caracteres; caminhos mais longos via settings_riptopl.cfg.
+  BDMA_SOURCE: Fonte BDMA
+  HINT_BDMA_SOURCE: Dispositivo cuja pasta POPS contém os ficheiros do driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Modo BDMA
+  HINT_BDMA_MODE: Driver de dispositivo de bloco exFAT que o POPSTARTER carrega. Alterá-lo copia os módulos para o cartão; FAT32 = nenhum (driver integrado).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Ficheiros de módulo BDMA não encontrados no dispositivo de origem.
+  BDMA_ERR_SPACE: Espaço insuficiente no cartão de memória para os módulos BDMA.
+  BDMA_ERR_IO: Erro ao gravar os módulos BDMA no cartão de memória.
+  COVERFLOW_SETTINGS: Definições de Coverflow
+  COVERFLOW_COUNT: Número de Capas
+  COVERFLOW_SCALE: Escala Central
+  COVERFLOW_ANIM: Velocidade de Animação
+  COVERFLOW_DIM: Escurecer Capas Laterais
+  NONE: Nenhum
+  SMALL: Pequeno
+  LARGE: Grande
+  NORMAL: Normal
+  FAV: Favoritos
+  FAVMODE: Modo de Arranque de Favoritos
+  FAV_HINT: Favorito
+  FAV_MSG: '%s não é permitido no Menu de Favoritos.'
+  FAV_PERSISTENCE_MSG: '%s não é permitido enquanto o item estiver marcado como favorito.'

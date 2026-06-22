@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Cài đặt chung
+  DEVICE_SETTINGS: Cài đặt thiết bị
+  LAUNCH_PS2_DISC: Khởi động đĩa PS2
+  DISC_LAUNCH_ERR: Không có đĩa PS2 trong ổ đĩa.
+  DEFAULT: Mặc định
+  HINT_MODE7: Chỉ dành cho Neutrino -- sửa lỗi game tràn bộ nhớ IOP (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: Hình ảnh cheat PS2RD
+  HINT_ENABLEIMAGE: Áp dụng bản vá PS2RD .img dựng sẵn cho game của bạn.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: Chế độ khởi động MMCE
+  MMCE_PREFIX: Đường dẫn tiền tố MMCE
+  MMCE_SLOT: Khe cắm MMCE
+  MMCEIGR_SLOT: Khe cắm bootcard IGR
+  HINT_MMCEIGR_SLOT: Lệnh chuyển sang bootcard sẽ được gửi đến khe đã chọn khi IGR
+  MMCE_ADVANCED: Nâng cao
+  MMCE_SETTINGS: Cài đặt MMCE
+  MMCE_SEMA: Phương thức xếp hàng Lock Sema
+  HINT_MMCE_SEMA: THFIFO có thể cải thiện tương thích nhưng giảm hiệu năng
+  MMCE_WAIT_CYCLES: Chu kỳ chờ sau /ACK thấp
+  HINT_MMCE_WAIT_CYCLES: Giá trị thấp hơn có thể cải thiện hiệu năng nhưng gây mất ổn định
+  MMCE_USE_ALARMS: Dùng cảnh báo hết giờ
+  HINT_MMCE_USE_ALARMS: TẮT có thể cải thiện hiệu năng nhưng khi MMCE hết giờ có thể bị đóng băng
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Neutrino không hỗ trợ định dạng này, khởi động bằng lõi <OPL>
+  NEUTRINO_NOT_FOUND: Không tìm thấy Neutrino ELF, khởi động bằng lõi <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD cần IP tĩnh cho PS2. Đặt trong Cấu hình mạng (DHCP đang bật).
+  NEUTRINO_SETTING_NA: Cài đặt này không dùng với lõi Neutrino.
+  POPSTARTER_NOT_FOUND: Thiếu POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Thiếu yêu cầu SMB cho POPSTARTER
+  WRITE_POPSTARTER_NET: Ghi cấu hình mạng POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Cũng lưu các giá trị IP + SMB vào IPCONFIG.DAT / SMBCONFIG.DAT của POPSTARTER trên thẻ nhớ (dành cho VCD qua SMB).
+  POPSTARTER_NET_ERR: Không thể ghi cấu hình mạng POPSTARTER vào thẻ nhớ.
+  VCD: VCD
+  VCD_ON: Đang hiển thị game VCD
+  VCD_OFF: Đang hiển thị game đĩa
+  NEUTRINO_ARGS: Tham số khởi động Neutrino
+  HINT_NEUTRINO_ARGS: Cờ Neutrino bổ sung, cách nhau bằng dấu cách (vd. -mt=dvd). Toàn cục áp dụng cho tất cả game; riêng game cộng thêm. Thêm $ trước cờ để tắt mà không xóa.
+  NEUTRINO_VIDEO: Video Neutrino
+  HINT_NEUTRINO_VIDEO: Buộc chế độ video GS của Neutrino (-gsm). Tắt giữ mặc định của game.
+  NEUTRINO_PATH: Đường dẫn Neutrino ELF
+  HINT_NEUTRINO_PATH: Đường dẫn đầy đủ tới neutrino.elf (vd. mc0:NEUTRINO/neutrino.elf). Để trống = tự tìm trên mc0/mc1.
+  POPSTARTER_PATH: Đường dẫn POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Đường dẫn tùy chỉnh POPSTARTER.ELF; tự dùng thư mục POPS trên thiết bị nếu để trống/thiếu. Bàn phím giới hạn 31 ký tự; đường dài hơn qua settings_riptopl.cfg.
+  BDMA_SOURCE: Nguồn BDMA
+  HINT_BDMA_SOURCE: Thiết bị có thư mục POPS chứa các tệp driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Chế độ BDMA
+  HINT_BDMA_MODE: Driver thiết bị khối exFAT mà POPSTARTER tải. Thay đổi sẽ sao chép module vào thẻ; FAT32 = không cần (driver tích hợp sẵn).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Không tìm thấy tệp module BDMA trên thiết bị nguồn.
+  BDMA_ERR_SPACE: Thẻ nhớ không đủ dung lượng cho module BDMA.
+  BDMA_ERR_IO: Lỗi khi ghi module BDMA vào thẻ nhớ.
+  COVERFLOW_SETTINGS: Cài đặt Coverflow
+  COVERFLOW_COUNT: Số lượng bìa
+  COVERFLOW_SCALE: Tỉ lệ trung tâm
+  COVERFLOW_ANIM: Tốc độ hoạt ảnh
+  COVERFLOW_DIM: Làm tối bìa bên
+  NONE: Không có
+  SMALL: Nhỏ
+  LARGE: Lớn
+  NORMAL: Bình thường
+  FAV: Yêu thích
+  FAVMODE: Chế độ khởi động Yêu thích
+  FAV_HINT: Yêu thích
+  FAV_MSG: '%s không được phép trong Menu Yêu thích.'
+  FAV_PERSISTENCE_MSG: '%s không được phép khi mục đang được đánh dấu yêu thích.'

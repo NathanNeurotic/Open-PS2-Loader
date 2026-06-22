@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: 一般設定
+  DEVICE_SETTINGS: 裝置設定
+  LAUNCH_PS2_DISC: 啟動 PS2 光碟
+  DISC_LAUNCH_ERR: 光碟機中沒有 PS2 光碟。
+  DEFAULT: 預設
+  HINT_MODE7: 僅限 Neutrino — 修正導致 IOP 緩衝區溢位的遊戲 (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD 金手指映像
+  HINT_ENABLEIMAGE: 為遊戲套用預建的 PS2RD .img 補丁。
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE 啟動模式
+  MMCE_PREFIX: MMCE 前置路徑
+  MMCE_SLOT: MMCE 插槽
+  MMCEIGR_SLOT: IGR 開機卡插槽
+  HINT_MMCEIGR_SLOT: IGR 時，切換開機卡指令將發送至所選插槽
+  MMCE_ADVANCED: 進階
+  MMCE_SETTINGS: MMCE 設定
+  MMCE_SEMA: 鎖定 Sema 排隊方式
+  HINT_MMCE_SEMA: THFIFO 可能提升相容性，但會降低效能
+  MMCE_WAIT_CYCLES: /ACK 低電位後等待週期數
+  HINT_MMCE_WAIT_CYCLES: 較低的值可能提升效能，但可能造成不穩定
+  MMCE_USE_ALARMS: 使用逾時警報
+  HINT_MMCE_USE_ALARMS: 關閉可能提升效能，但 MMCE 逾時時可能造成當機
+  CORE_LOADER: 核心載入器
+  NEUTRINO_BAD_FORMAT: Neutrino 不支援此檔案格式，改以 <OPL> 核心啟動
+  NEUTRINO_NOT_FOUND: 找不到 Neutrino ELF，改以 <OPL> 核心啟動
+  UDPBD_NEEDS_STATIC_IP: UDPBD 需要靜態 PS2 IP。請在網路設定中指定（目前已啟用 DHCP）。
+  NEUTRINO_SETTING_NA: 此設定不適用於 Neutrino 核心。
+  POPSTARTER_NOT_FOUND: 找不到 POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: POPSTARTER SMB 相依檔案不存在
+  WRITE_POPSTARTER_NET: 寫入 POPSTARTER 網路設定
+  HINT_WRITE_POPSTARTER_NET: 同時將 IP 及 SMB 共享值儲存至記憶卡上 POPSTARTER 自身的 IPCONFIG.DAT / SMBCONFIG.DAT（用於 VCD over SMB）。
+  POPSTARTER_NET_ERR: 無法將 POPSTARTER 網路設定寫入記憶卡。
+  VCD: VCD
+  VCD_ON: 顯示 VCD 遊戲
+  VCD_OFF: 顯示光碟遊戲
+  NEUTRINO_ARGS: Neutrino 啟動參數
+  HINT_NEUTRINO_ARGS: 額外的 Neutrino 旗標，以空格分隔（例如 -mt=dvd）。全域設定套用至所有遊戲；個別遊戲設定疊加於其上。在旗標前加 $ 可停用而不刪除。
+  NEUTRINO_VIDEO: Neutrino 影像
+  HINT_NEUTRINO_VIDEO: 強制指定 Neutrino 的 GS 輸出影像模式 (-gsm)。關閉則保留遊戲預設值。
+  NEUTRINO_PATH: Neutrino ELF 路徑
+  HINT_NEUTRINO_PATH: neutrino.elf 的完整路徑（例如 mc0:NEUTRINO/neutrino.elf）。留空則自動在 mc0/mc1 偵測。
+  POPSTARTER_PATH: POPSTARTER.ELF 路徑
+  HINT_POPSTARTER_PATH: 自訂 POPSTARTER.ELF 路徑；留空或找不到時自動改用裝置 POPS 資料夾。鍵盤輸入上限 31 字元；較長路徑請透過 settings_riptopl.cfg 設定。
+  BDMA_SOURCE: BDMA 來源
+  HINT_BDMA_SOURCE: 存放 BDMAssault 驅動程式檔案 (usbd.irx.* / usbhdfsd.irx.*) 之 POPS 資料夾所在裝置。
+  BDMA_MODE: BDMA 模式
+  HINT_BDMA_MODE: POPSTARTER 載入的 exFAT 區塊裝置驅動程式。變更時會將模組複製至記憶卡；FAT32 = 無（使用內建驅動程式）。
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: 在來源裝置上找不到 BDMA 模組檔案。
+  BDMA_ERR_SPACE: 記憶卡空間不足，無法存放 BDMA 模組。
+  BDMA_ERR_IO: 將 BDMA 模組寫入記憶卡時發生錯誤。
+  COVERFLOW_SETTINGS: Coverflow 設定
+  COVERFLOW_COUNT: 封面數量
+  COVERFLOW_SCALE: 中央縮放
+  COVERFLOW_ANIM: 動畫速度
+  COVERFLOW_DIM: 暗化側邊封面
+  NONE: 無
+  SMALL: 小
+  LARGE: 大
+  NORMAL: 正常
+  FAV: 最愛
+  FAVMODE: 最愛啟動模式
+  FAV_HINT: 最愛
+  FAV_MSG: '%s 不允許透過最愛選單操作。'
+  FAV_PERSISTENCE_MSG: '%s 在項目標記為最愛時不可使用。'

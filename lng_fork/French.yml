@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Paramètres généraux
+  DEVICE_SETTINGS: Paramètres des périphériques
+  LAUNCH_PS2_DISC: Lancer un disque PS2
+  DISC_LAUNCH_ERR: Aucun disque PS2 dans le lecteur.
+  DEFAULT: Défaut
+  HINT_MODE7: Neutrino uniquement -- corrige les jeux qui débordent un tampon IOP (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: Image de triche PS2RD
+  HINT_ENABLEIMAGE: Applique un patch PS2RD .img précompilé à votre jeu.
+  UDPBD_GAMES: Jeux UDPBD
+  MMCE: MMCE
+  MMCE_GAMES: Jeux MMCE
+  MMCEMODE: Mode de démarrage MMCE
+  MMCE_PREFIX: Chemin préfixe MMCE
+  MMCE_SLOT: Slot MMCE
+  MMCEIGR_SLOT: Slot(s) IGR Bootcard
+  HINT_MMCEIGR_SLOT: La commande de basculement vers la bootcard sera envoyée au(x) slot(s) sélectionné(s) lors d'un IGR
+  MMCE_ADVANCED: Avancé
+  MMCE_SETTINGS: Paramètres MMCE
+  MMCE_SEMA: Méthode de file d'attente du sémaphore
+  HINT_MMCE_SEMA: THFIFO peut améliorer la compatibilité mais dégrader les performances
+  MMCE_WAIT_CYCLES: Cycles d'attente après /ACK bas
+  HINT_MMCE_WAIT_CYCLES: Des valeurs plus faibles peuvent améliorer les performances mais provoquer des instabilités
+  MMCE_USE_ALARMS: Utiliser les alarmes de délai
+  HINT_MMCE_USE_ALARMS: 'OFF peut améliorer les performances mais provoquer des blocages en cas de timeout MMCE'
+  CORE_LOADER: Noyau de chargement
+  NEUTRINO_BAD_FORMAT: Neutrino ne supporte pas ce format de fichier, lancement avec le noyau <OPL>
+  NEUTRINO_NOT_FOUND: ELF Neutrino introuvable, lancement avec le noyau <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD nécessite une IP PS2 statique. Configurez-en une dans la Config réseau (DHCP est actuellement activé).
+  NEUTRINO_SETTING_NA: Ce paramètre n'est pas utilisé avec le noyau Neutrino.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF manquant
+  POPSTARTER_SMB_MISSING: Prérequis SMB de POPSTARTER manquants
+  WRITE_POPSTARTER_NET: Écrire la config réseau POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Enregistre également les valeurs IP + partage SMB dans IPCONFIG.DAT / SMBCONFIG.DAT de POPSTARTER sur la carte mémoire (pour VCD via SMB).
+  POPSTARTER_NET_ERR: Impossible d'écrire la config réseau POPSTARTER sur la carte mémoire.
+  VCD: VCD
+  VCD_ON: Affichage des jeux VCD
+  VCD_OFF: Affichage des jeux disque
+  NEUTRINO_ARGS: Arguments de lancement Neutrino
+  HINT_NEUTRINO_ARGS: Options Neutrino supplémentaires, séparées par des espaces (ex. -mt=dvd). Global s'applique à tous les jeux ; par jeu s'ajoute en plus. Préfixez un paramètre avec $ pour le désactiver sans le supprimer.
+  NEUTRINO_VIDEO: Vidéo Neutrino
+  HINT_NEUTRINO_VIDEO: Force le mode vidéo GS de Neutrino (-gsm). Désactivé conserve le mode par défaut du jeu.
+  NEUTRINO_PATH: Chemin ELF Neutrino
+  HINT_NEUTRINO_PATH: Chemin complet vers neutrino.elf (ex. mc0:NEUTRINO/neutrino.elf). Vide = détection automatique sur mc0/mc1.
+  POPSTARTER_PATH: Chemin POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Chemin personnalisé pour POPSTARTER.ELF ; utilise le dossier POPS du périphérique si vide/absent. Le clavier est limité à 31 caractères ; chemins plus longs via settings_riptopl.cfg.
+  BDMA_SOURCE: Source BDMA
+  HINT_BDMA_SOURCE: Périphérique dont le dossier POPS contient les fichiers pilotes BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Mode BDMA
+  HINT_BDMA_MODE: Pilote de bloc exFAT chargé par POPSTARTER. Le modifier copie les modules sur la carte ; FAT32 = aucun (pilote intégré).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Fichiers modules BDMA introuvables sur le périphérique source.
+  BDMA_ERR_SPACE: Espace insuffisant sur la carte mémoire pour les modules BDMA.
+  BDMA_ERR_IO: Erreur lors de l'écriture des modules BDMA sur la carte mémoire.
+  COVERFLOW_SETTINGS: Paramètres Coverflow
+  COVERFLOW_COUNT: Nombre de jaquettes
+  COVERFLOW_SCALE: Échelle centrale
+  COVERFLOW_ANIM: Vitesse d'animation
+  COVERFLOW_DIM: Assombrir les jaquettes latérales
+  NONE: Aucun
+  SMALL: Petit
+  LARGE: Grand
+  NORMAL: Normal
+  FAV: Favoris
+  FAVMODE: Mode de démarrage des favoris
+  FAV_HINT: Favori
+  FAV_MSG: '%s n''est pas accessible depuis le menu Favoris.'
+  FAV_PERSISTENCE_MSG: '%s n''est pas autorisé lorsque l''élément est marqué comme favori.'

@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Общи настройки
+  DEVICE_SETTINGS: Настройки на устройство
+  LAUNCH_PS2_DISC: Стартиране на PS2 диск
+  DISC_LAUNCH_ERR: Няма PS2 диск в устройството.
+  DEFAULT: По подразбиране
+  HINT_MODE7: Само за Neutrino -- поправя игри, препълващи IOP буфер (-gc=7)
+  MODE7: Режим 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Прилага предварително изграден PS2RD .img пач към играта.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: Режим на стартиране на MMCE
+  MMCE_PREFIX: Префикс на пътя за MMCE
+  MMCE_SLOT: MMCE слот
+  MMCEIGR_SLOT: IGR слот(ове) за зареждане
+  HINT_MMCEIGR_SLOT: Командата за превключване към зареждащата карта ще бъде изпратена до избрания(те) слот(ове) при IGR
+  MMCE_ADVANCED: Разширени
+  MMCE_SETTINGS: Настройки на MMCE
+  MMCE_SEMA: Метод на заключване на семафорната опашка
+  HINT_MMCE_SEMA: THFIFO може да подобри съвместимостта, но да влоши производителността
+  MMCE_WAIT_CYCLES: Изчакващи цикли след /ACK ниско
+  HINT_MMCE_WAIT_CYCLES: По-ниските стойности могат да подобрят производителността, но да причинят нестабилност
+  MMCE_USE_ALARMS: Използване на аварийни таймери
+  HINT_MMCE_USE_ALARMS: ИЗКЛ може да подобри производителността, но може да причини замразяване при MMCE таймаут
+  CORE_LOADER: Ядро на зареждача
+  NEUTRINO_BAD_FORMAT: Neutrino не поддържа този файлов формат, стартиране с ядро <OPL>
+  NEUTRINO_NOT_FOUND: Neutrino ELF не е намерен, стартиране с ядро <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD изисква статично PS2 IP. Задайте го в Мрежова конфигурация (DHCP е включен).
+  NEUTRINO_SETTING_NA: Тази настройка не се използва с ядрото Neutrino.
+  POPSTARTER_NOT_FOUND: Липсва POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Липсват изисквания на POPSTARTER за SMB
+  WRITE_POPSTARTER_NET: Запис на мрежова конфигурация на POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Записва стойностите на IP + SMB споделяне в собствените IPCONFIG.DAT / SMBCONFIG.DAT на POPSTARTER на картата с памет (за VCD по SMB).
+  POPSTARTER_NET_ERR: Неуспешен запис на мрежовата конфигурация на POPSTARTER в картата с памет.
+  VCD: VCD
+  VCD_ON: Показване на VCD игри
+  VCD_OFF: Показване на дискови игри
+  NEUTRINO_ARGS: Аргументи за стартиране на Neutrino
+  HINT_NEUTRINO_ARGS: Допълнителни флагове на Neutrino, разделени с интервал (напр. -mt=dvd). Глобалните се прилагат за всички игри; за отделна игра се добавят отгоре. Поставете $ пред флаг, за да го деактивирате без изтриване.
+  NEUTRINO_VIDEO: Neutrino видео
+  HINT_NEUTRINO_VIDEO: Принудителен видео режим на GS изхода на Neutrino (-gsm). Изкл запазва настройката на играта.
+  NEUTRINO_PATH: Път до Neutrino ELF
+  HINT_NEUTRINO_PATH: Пълен път до neutrino.elf (напр. mc0:NEUTRINO/neutrino.elf). Празно = автоматично намиране на mc0/mc1.
+  POPSTARTER_PATH: Път до POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Потребителски път до POPSTARTER.ELF; при празно/липсващо тихо се връща към папката POPS на устройството. Клавиатурата е ограничена до 31 знака; по-дълги пътища чрез settings_riptopl.cfg.
+  BDMA_SOURCE: BDMA Източник
+  HINT_BDMA_SOURCE: Устройство, чиято папка POPS съдържа файловете на драйвера BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA Режим
+  HINT_BDMA_MODE: exFAT блок-устройство драйвер, зареждан от POPSTARTER. Промяната копира модулите в картата; FAT32 = без (вграден драйвер).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: BDMA модулните файлове не са намерени на изходното устройство.
+  BDMA_ERR_SPACE: Недостатъчно място на картата с памет за BDMA модулите.
+  BDMA_ERR_IO: Грешка при запис на BDMA модулите в картата с памет.
+  COVERFLOW_SETTINGS: Настройки на Coverflow
+  COVERFLOW_COUNT: Брой корици
+  COVERFLOW_SCALE: Мащаб на центъра
+  COVERFLOW_ANIM: Скорост на анимацията
+  COVERFLOW_DIM: Затъмняване на страничните корици
+  NONE: Никой
+  SMALL: Малък
+  LARGE: Голям
+  NORMAL: Нормален
+  FAV: Любими
+  FAVMODE: Режим на стартиране на любими
+  FAV_HINT: Любима
+  FAV_MSG: '%s не е разрешено в менюто с любими.'
+  FAV_PERSISTENCE_MSG: '%s не е разрешено, докато елементът е маркиран като любим.'

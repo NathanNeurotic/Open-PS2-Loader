@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Opće postavke
+  DEVICE_SETTINGS: Postavke uređaja
+  LAUNCH_PS2_DISC: Pokretanje PS2 diska
+  DISC_LAUNCH_ERR: Nema PS2 diska u pogonu.
+  DEFAULT: Zadano
+  HINT_MODE7: Samo Neutrino -- popravak igara koje prekoračuju IOP međuspremnik (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Primijeni gotovu PS2RD .img zakrpu na svoju igru.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE Način pokretanja
+  MMCE_PREFIX: MMCE Predputanja
+  MMCE_SLOT: MMCE Utor
+  MMCEIGR_SLOT: IGR Utor kartice za pokretanje
+  HINT_MMCEIGR_SLOT: Naredba za prelaz na bootcard šalje se odabranom utoru/utorima pri IGR
+  MMCE_ADVANCED: Napredno
+  MMCE_SETTINGS: MMCE Postavke
+  MMCE_SEMA: Metoda zaključavanja Sema reda
+  HINT_MMCE_SEMA: THFIFO može poboljšati kompatibilnost ali narušiti performanse
+  MMCE_WAIT_CYCLES: Ciklusi čekanja nakon /ACK low
+  HINT_MMCE_WAIT_CYCLES: Niže vrijednosti mogu poboljšati performanse ali uzrokovati nestabilnosti
+  MMCE_USE_ALARMS: Koristi alarme vremenskog ograničenja
+  HINT_MMCE_USE_ALARMS: ISKLJ. može pomoći performansama ali može uzrokovati zamrzavanje pri MMCE timeoutu
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Neutrino ne podržava ovaj format datoteke, pokretanje s jezgrom <OPL>
+  NEUTRINO_NOT_FOUND: Neutrino ELF nije pronađen, pokretanje s jezgrom <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD zahtijeva statičku PS2 IP adresu. Postavite je u mrežnoj konfiguraciji (DHCP je trenutno uključen).
+  NEUTRINO_SETTING_NA: Ova postavka se ne koristi s Neutrino jezgrom.
+  POPSTARTER_NOT_FOUND: Nedostaje POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Nedostaju POPSTARTER SMB preduvjeti
+  WRITE_POPSTARTER_NET: Spremi POPSTARTER mrežnu konfiguraciju
+  HINT_WRITE_POPSTARTER_NET: Spremi ove IP + SMB vrijednosti i u POPSTARTER-ove IPCONFIG.DAT / SMBCONFIG.DAT na memorijskoj kartici (za VCD-over-SMB).
+  POPSTARTER_NET_ERR: Nije moguće zapisati POPSTARTER mrežnu konfiguraciju na memorijsku karticu.
+  VCD: VCD
+  VCD_ON: Prikazuju se VCD igre
+  VCD_OFF: Prikazuju se disk igre
+  NEUTRINO_ARGS: Neutrino Argumenti pokretanja
+  HINT_NEUTRINO_ARGS: Dodatne Neutrino zastavice, odvojene razmacima (npr. -mt=dvd). Globalno vrijedi za sve igre; po igri dodaje na vrh. Prefiks zastavice s $ onemogućuje je bez brisanja.
+  NEUTRINO_VIDEO: Neutrino Video
+  HINT_NEUTRINO_VIDEO: Prisili Neutrino GS izlazni video način (-gsm). Isklj. zadržava zadano igre.
+  NEUTRINO_PATH: Neutrino ELF Putanja
+  HINT_NEUTRINO_PATH: Puna putanja do neutrino.elf (npr. mc0:NEUTRINO/neutrino.elf). Prazno = automatsko otkrivanje na mc0/mc1.
+  POPSTARTER_PATH: POPSTARTER.ELF Putanja
+  HINT_POPSTARTER_PATH: Prilagođena POPSTARTER.ELF putanja; tiho se vraća na POPS mapu uređaja ako je prazna/nedostaje. Tipkovnica ograničena na 31 znak; dulje putanje putem settings_riptopl.cfg.
+  BDMA_SOURCE: BDMA Izvor
+  HINT_BDMA_SOURCE: Uređaj čija POPS mapa sadrži vaše BDMAssault upravljačke datoteke (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA Način
+  HINT_BDMA_MODE: exFAT upravljački program blok-uređaja koji POPSTARTER učitava. Promjenom se moduli kopiraju na karticu; FAT32 = nije potrebno (ugrađeni upravljački program).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: BDMA datoteke modula nisu pronađene na izvornom uređaju.
+  BDMA_ERR_SPACE: Nema dovoljno prostora na memorijskoj kartici za BDMA module.
+  BDMA_ERR_IO: Greška pri zapisivanju BDMA modula na memorijsku karticu.
+  COVERFLOW_SETTINGS: Coverflow Postavke
+  COVERFLOW_COUNT: Broj naslovnica
+  COVERFLOW_SCALE: Razmjer središta
+  COVERFLOW_ANIM: Brzina animacije
+  COVERFLOW_DIM: Zatamni bočne naslovnice
+  NONE: Nijedno
+  SMALL: Malo
+  LARGE: Veliko
+  NORMAL: Normalno
+  FAV: Favoriti
+  FAVMODE: Favoriti Način pokretanja
+  FAV_HINT: Favorit
+  FAV_MSG: '%s nije dopušteno kroz izbornik Favorita.'
+  FAV_PERSISTENCE_MSG: '%s nije dopušteno dok je stavka označena kao favorit.'

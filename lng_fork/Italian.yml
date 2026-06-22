@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Impostazioni Generali
+  DEVICE_SETTINGS: Impostazioni Dispositivo
+  LAUNCH_PS2_DISC: Avvia Disco PS2
+  DISC_LAUNCH_ERR: Nessun disco PS2 nel lettore.
+  DEFAULT: Default
+  HINT_MODE7: Solo Neutrino -- corregge giochi che superano un buffer IOP (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: Immagine Cheat PS2RD
+  HINT_ENABLEIMAGE: Applica una patch PS2RD .img precompilata al tuo gioco.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: Modalità Avvio MMCE
+  MMCE_PREFIX: Percorso Prefisso MMCE
+  MMCE_SLOT: Slot MMCE
+  MMCEIGR_SLOT: Slot Bootcard IGR
+  HINT_MMCEIGR_SLOT: Il comando di cambio bootcard verrà inviato agli slot selezionati all'IGR
+  MMCE_ADVANCED: Avanzate
+  MMCE_SETTINGS: Impostazioni MMCE
+  MMCE_SEMA: Metodo di Accodamento Lock Sema
+  HINT_MMCE_SEMA: THFIFO può migliorare la compatibilità ma ridurre le prestazioni
+  MMCE_WAIT_CYCLES: Cicli di attesa dopo /ACK basso
+  HINT_MMCE_WAIT_CYCLES: Valori più bassi possono migliorare le prestazioni ma causare instabilità
+  MMCE_USE_ALARMS: Usa allarmi di timeout
+  HINT_MMCE_USE_ALARMS: OFF può migliorare le prestazioni ma i timeout MMCE possono causare blocchi
+  CORE_LOADER: Core Loader
+  NEUTRINO_BAD_FORMAT: Neutrino non supporta questo formato, avvio con core <OPL>
+  NEUTRINO_NOT_FOUND: ELF Neutrino non trovato, avvio con core <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD richiede un IP statico PS2. Impostalo nella Config di Rete (DHCP attualmente attivo).
+  NEUTRINO_SETTING_NA: Questa impostazione non è usata con il core Neutrino.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF mancante
+  POPSTARTER_SMB_MISSING: Requisiti SMB per POPSTARTER mancanti
+  WRITE_POPSTARTER_NET: Scrivi Config di Rete POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Salva anche i valori IP + condivisione SMB nei file IPCONFIG.DAT / SMBCONFIG.DAT di POPSTARTER sulla memory card (per VCD via SMB).
+  POPSTARTER_NET_ERR: Impossibile scrivere la config di rete POPSTARTER sulla memory card.
+  VCD: VCD
+  VCD_ON: Mostra giochi VCD
+  VCD_OFF: Mostra giochi da disco
+  NEUTRINO_ARGS: Argomenti Avvio Neutrino
+  HINT_NEUTRINO_ARGS: Flag extra Neutrino, separati da spazio (es. -mt=dvd). Globale si applica a tutti i giochi; per-gioco si aggiunge. Anteponi $ a un flag per disabilitarlo senza eliminarlo.
+  NEUTRINO_VIDEO: Video Neutrino
+  HINT_NEUTRINO_VIDEO: Forza la modalità video GS di Neutrino (-gsm). Off mantiene il default del gioco.
+  NEUTRINO_PATH: Percorso ELF Neutrino
+  HINT_NEUTRINO_PATH: Percorso completo di neutrino.elf (es. mc0:NEUTRINO/neutrino.elf). Vuoto = rilevamento automatico su mc0/mc1.
+  POPSTARTER_PATH: Percorso POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Percorso personalizzato POPSTARTER.ELF; usa la cartella POPS del dispositivo se vuoto/mancante. La tastiera accetta max 31 caratteri; percorsi più lunghi via settings_riptopl.cfg.
+  BDMA_SOURCE: Sorgente BDMA
+  HINT_BDMA_SOURCE: Dispositivo la cui cartella POPS contiene i file driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Modalità BDMA
+  HINT_BDMA_MODE: Driver block-device exFAT caricato da POPSTARTER. Cambiarlo copia i moduli sulla card; FAT32 = nessuno (driver integrato).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: File modulo BDMA non trovati sul dispositivo sorgente.
+  BDMA_ERR_SPACE: Spazio insufficiente sulla memory card per i moduli BDMA.
+  BDMA_ERR_IO: Errore durante la scrittura dei moduli BDMA sulla memory card.
+  COVERFLOW_SETTINGS: Impostazioni Coverflow
+  COVERFLOW_COUNT: Numero Cover
+  COVERFLOW_SCALE: Scala Centrale
+  COVERFLOW_ANIM: Velocità Animazione
+  COVERFLOW_DIM: Oscura Cover Laterali
+  NONE: Nessuno
+  SMALL: Piccolo
+  LARGE: Grande
+  NORMAL: Normale
+  FAV: Preferiti
+  FAVMODE: Modalità Avvio Preferiti
+  FAV_HINT: Preferito
+  FAV_MSG: '%s non consentito nel Menu Preferiti.'
+  FAV_PERSISTENCE_MSG: '%s non è consentito mentre l''elemento è contrassegnato come preferito.'

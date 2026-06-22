@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Generelle indstillinger
+  DEVICE_SETTINGS: Enhedsindstillinger
+  LAUNCH_PS2_DISC: Start PS2-disk
+  DISC_LAUNCH_ERR: Ingen PS2-disk i drevet.
+  DEFAULT: Standard
+  HINT_MODE7: Kun Neutrino -- ret spil der overskrider en IOP-buffer (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat-billede
+  HINT_ENABLEIMAGE: Anvend et færdigbygget PS2RD .img-patch på dit spil.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE-spil
+  MMCEMODE: MMCE-starttilstand
+  MMCE_PREFIX: MMCE-præfiksti
+  MMCE_SLOT: MMCE-slot
+  MMCEIGR_SLOT: IGR-opstartskortstik(s)
+  HINT_MMCEIGR_SLOT: Skift til bootcard-kommando sendes til det/de valgte slot(s) ved IGR
+  MMCE_ADVANCED: Avanceret
+  MMCE_SETTINGS: MMCE-indstillinger
+  MMCE_SEMA: Lås sema-kømetode
+  HINT_MMCE_SEMA: THFIFO kan hjælpe kompatibilitet, men forringe ydeevne
+  MMCE_WAIT_CYCLES: Ventetakter efter /ACK lav
+  HINT_MMCE_WAIT_CYCLES: Lavere værdier kan forbedre ydeevne, men medføre ustabilitet
+  MMCE_USE_ALARMS: Brug timeout-alarmer
+  HINT_MMCE_USE_ALARMS: FRA kan hjælpe ydeevne, men MMCE-timeouts kan medføre frysninger
+  CORE_LOADER: Loader-kerne
+  NEUTRINO_BAD_FORMAT: Neutrino understøtter ikke dette filformat, starter med <OPL>-kernen
+  NEUTRINO_NOT_FOUND: Neutrino ELF ikke fundet, starter med <OPL>-kernen
+  UDPBD_NEEDS_STATIC_IP: UDPBD kræver en statisk PS2 IP. Indstil én i Netværkskonfiguration (DHCP er aktivt).
+  NEUTRINO_SETTING_NA: Denne indstilling bruges ikke med Neutrino-kernen.
+  POPSTARTER_NOT_FOUND: Mangler POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Mangler POPSTARTER SMB-forudsætninger
+  WRITE_POPSTARTER_NET: Skriv POPSTARTER-netværkskonfig
+  HINT_WRITE_POPSTARTER_NET: Gem også disse IP + SMB-delingsværdier til POPSTARTERs egne IPCONFIG.DAT / SMBCONFIG.DAT på hukommelseskortet (til VCD over SMB).
+  POPSTARTER_NET_ERR: Kunne ikke skrive POPSTARTER-netværkskonfig til hukommelseskortet.
+  VCD: VCD
+  VCD_ON: Viser VCD-spil
+  VCD_OFF: Viser diskspil
+  NEUTRINO_ARGS: Neutrino-startargumenter
+  HINT_NEUTRINO_ARGS: 'Ekstra Neutrino-flag, mellemrumsadskilt (f.eks. -mt=dvd). Global gælder alle spil; per spil tilføjes ovenpå. Præfiks et flag med $ for at deaktivere det uden at slette det.'
+  NEUTRINO_VIDEO: Neutrino-video
+  HINT_NEUTRINO_VIDEO: Tving Neutrinos GS-outputvideotilstand (-gsm). Fra bevarer spillets standard.
+  NEUTRINO_PATH: Neutrino ELF-sti
+  HINT_NEUTRINO_PATH: Fuld sti til neutrino.elf (f.eks. mc0:NEUTRINO/neutrino.elf). Tom = auto-søg på mc0/mc1.
+  POPSTARTER_PATH: POPSTARTER.ELF-sti
+  HINT_POPSTARTER_PATH: Brugerdefineret POPSTARTER.ELF-sti; falder stille tilbage til enhedens POPS-mappe hvis tom/manglende. Tastatur begrænset til 31 tegn; længere stier via settings_riptopl.cfg.
+  BDMA_SOURCE: BDMA-kilde
+  HINT_BDMA_SOURCE: Enhed hvis POPS-mappe indeholder dine BDMAssault-driverfiler (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA-tilstand
+  HINT_BDMA_MODE: exFAT-blokenhedsdriveren POPSTARTER indlæser. Ændring kopierer modulerne til kortet; FAT32 = ingen (indbygget driver).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: BDMA-modulfiler ikke fundet på kildeenheden.
+  BDMA_ERR_SPACE: Ikke nok hukommelseskortplads til BDMA-modulerne.
+  BDMA_ERR_IO: Fejl ved skrivning af BDMA-moduler til hukommelseskortet.
+  COVERFLOW_SETTINGS: Coverflow-indstillinger
+  COVERFLOW_COUNT: Coverantal
+  COVERFLOW_SCALE: Centersskala
+  COVERFLOW_ANIM: Animationshastighed
+  COVERFLOW_DIM: Dæmp sidecovers
+  NONE: Ingen
+  SMALL: Lille
+  LARGE: Stor
+  NORMAL: Normal
+  FAV: Favoritter
+  FAVMODE: Favorit-starttilstand
+  FAV_HINT: Favorit
+  FAV_MSG: '%s er ikke tilladt via Favoritmenuen.'
+  FAV_PERSISTENCE_MSG: '%s er ikke tilladt, mens elementet er markeret som favorit.'

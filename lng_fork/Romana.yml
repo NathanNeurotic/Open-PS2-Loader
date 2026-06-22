@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Setări Generale
+  DEVICE_SETTINGS: Setări Dispozitiv
+  LAUNCH_PS2_DISC: Lansează Disc PS2
+  DISC_LAUNCH_ERR: Niciun disc PS2 în unitate.
+  DEFAULT: Implicit
+  HINT_MODE7: Doar Neutrino -- corectează jocuri care depășesc un buffer IOP (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: Imagine Cheat PS2RD
+  HINT_ENABLEIMAGE: Aplică un patch PS2RD .img pregătit pentru jocul tău.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: Mod Pornire MMCE
+  MMCE_PREFIX: Cale Prefix MMCE
+  MMCE_SLOT: Slot MMCE
+  MMCEIGR_SLOT: Slot(uri) Bootcard IGR
+  HINT_MMCEIGR_SLOT: Comanda de comutare la bootcard va fi trimisă la slotul(urile) selectat(e) la IGR
+  MMCE_ADVANCED: Avansat
+  MMCE_SETTINGS: Setări MMCE
+  MMCE_SEMA: Metodă Blocare Coadă Sema
+  HINT_MMCE_SEMA: THFIFO poate ajuta compatibilitatea dar poate reduce performanța
+  MMCE_WAIT_CYCLES: Cicluri de așteptare după /ACK jos
+  HINT_MMCE_WAIT_CYCLES: Valorile mai mici pot îmbunătăți performanța dar pot cauza instabilități
+  MMCE_USE_ALARMS: Folosește alarme timeout
+  HINT_MMCE_USE_ALARMS: OFF poate ajuta performanța dar poate cauza blocări la timeout MMCE
+  CORE_LOADER: Nucleu Loader
+  NEUTRINO_BAD_FORMAT: Neutrino nu suportă acest format de fișier, lansare cu nucleul <OPL>
+  NEUTRINO_NOT_FOUND: ELF Neutrino negăsit, lansare cu nucleul <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD necesită un IP static pentru PS2. Setați unul în Config Rețea (DHCP este activ).
+  NEUTRINO_SETTING_NA: Această setare nu este folosită cu nucleul Neutrino.
+  POPSTARTER_NOT_FOUND: Lipsește POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Lipsesc cerințele SMB pentru POPSTARTER
+  WRITE_POPSTARTER_NET: Scrie Config Rețea POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Salvează și valorile IP + SMB în IPCONFIG.DAT / SMBCONFIG.DAT proprii ale POPSTARTER pe cardul de memorie (pentru VCD prin SMB).
+  POPSTARTER_NET_ERR: Nu s-a putut scrie configurația de rețea POPSTARTER pe cardul de memorie.
+  VCD: VCD
+  VCD_ON: Se afișează jocuri VCD
+  VCD_OFF: Se afișează jocuri disc
+  NEUTRINO_ARGS: Argumente Lansare Neutrino
+  HINT_NEUTRINO_ARGS: Indicatori Neutrino suplimentari, separați prin spațiu (ex. -mt=dvd). Global se aplică tuturor jocurilor; per-joc se adaugă în plus. Prefixați un indicator cu $ pentru a-l dezactiva fără a-l șterge.
+  NEUTRINO_VIDEO: Video Neutrino
+  HINT_NEUTRINO_VIDEO: Forțează modul video de ieșire GS al Neutrino (-gsm). Off păstrează implicit-ul jocului.
+  NEUTRINO_PATH: Cale ELF Neutrino
+  HINT_NEUTRINO_PATH: Calea completă spre neutrino.elf (ex. mc0:NEUTRINO/neutrino.elf). Gol = detectare automată pe mc0/mc1.
+  POPSTARTER_PATH: Cale POPSTARTER.ELF
+  HINT_POPSTARTER_PATH: Cale personalizată POPSTARTER.ELF; revine automat la dosarul POPS al dispozitivului dacă e gol/lipsă. Tastatura e limitată la 31 de caractere; căi mai lungi prin settings_riptopl.cfg.
+  BDMA_SOURCE: Sursă BDMA
+  HINT_BDMA_SOURCE: Dispozitivul al cărui dosar POPS conține fișierele driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: Mod BDMA
+  HINT_BDMA_MODE: Driver dispozitiv bloc exFAT pe care POPSTARTER îl încarcă. Schimbarea lui copiază modulele pe card; FAT32 = niciunul (driver încorporat).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Fișierele modul BDMA nu au fost găsite pe dispozitivul sursă.
+  BDMA_ERR_SPACE: Spațiu insuficient pe cardul de memorie pentru modulele BDMA.
+  BDMA_ERR_IO: Eroare la scrierea modulelor BDMA pe cardul de memorie.
+  COVERFLOW_SETTINGS: Setări Coverflow
+  COVERFLOW_COUNT: Număr Coperte
+  COVERFLOW_SCALE: Scară Centru
+  COVERFLOW_ANIM: Viteză Animație
+  COVERFLOW_DIM: Estompează Coperte Laterale
+  NONE: Niciunul
+  SMALL: Mic
+  LARGE: Mare
+  NORMAL: Normal
+  FAV: Favorite
+  FAVMODE: Mod Pornire Favorite
+  FAV_HINT: Favorit
+  FAV_MSG: '%s nu este permis prin Meniul de Favorite.'
+  FAV_PERSISTENCE_MSG: '%s nu este permis cât timp elementul este marcat ca favorit.'

@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Kinatibuk-ang mga Setting
+  DEVICE_SETTINGS: mga Setting sa Device
+  LAUNCH_PS2_DISC: I-launch ang PS2 Disc
+  DISC_LAUNCH_ERR: Walay PS2 disc sa drive.
+  DEFAULT: Default
+  HINT_MODE7: Neutrino ra -- ayohon ang mga laro nga misobra sa IOP buffer (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Mag-apply og prebuilt nga PS2RD .img patch sa imong laro.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE Start Mode
+  MMCE_PREFIX: MMCE Prefix Path
+  MMCE_SLOT: MMCE Slot
+  MMCEIGR_SLOT: IGR Bootcard Slot(s)
+  HINT_MMCEIGR_SLOT: Ang switch to bootcard cmd ipadala sa piniling slot(s) sa IGR
+  MMCE_ADVANCED: Advanced
+  MMCE_SETTINGS: MMCE Settings
+  MMCE_SEMA: Lock Sema Enqueuing Method
+  HINT_MMCE_SEMA: Ang THFIFO mahimong makatulong sa compatibility apan makahubad sa performance
+  MMCE_WAIT_CYCLES: Wait cycles human sa /ACK low
+  HINT_MMCE_WAIT_CYCLES: Ang mas ubos nga kantidad mahimong makapabilis apan makaingon og kawalay-lig-on
+  MMCE_USE_ALARMS: Gamiton ang timeout alarms
+  HINT_MMCE_USE_ALARMS: Ang OFF mahimong makatulong sa performance apan ang MMCE timeouts mahimong mag-freeze
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Dili suportahan sa Neutrino kining file format, i-launch gamit ang <OPL> core
+  NEUTRINO_NOT_FOUND: Wala makita ang Neutrino ELF, i-launch gamit ang <OPL> core
+  UDPBD_NEEDS_STATIC_IP: Kinahanglan og static nga PS2 IP ang UDPBD. I-set sa Network Config (naka-on ang DHCP karon).
+  NEUTRINO_SETTING_NA: Kining setting dili gigamit sa Neutrino core.
+  POPSTARTER_NOT_FOUND: Nawala ang POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Kulang ang mga POPSTARTER SMB nga kinahanglanon
+  WRITE_POPSTARTER_NET: I-sulat ang POPSTARTER Network Config
+  HINT_WRITE_POPSTARTER_NET: I-save usab kining IP + SMB share nga mga kantidad sa kaugalingon nga IPCONFIG.DAT / SMBCONFIG.DAT sa POPSTARTER sa memory card (para sa VCD-over-SMB).
+  POPSTARTER_NET_ERR: Dili ma-sulat ang POPSTARTER network config sa memory card.
+  VCD: VCD
+  VCD_ON: Gipakita ang VCD games
+  VCD_OFF: Gipakita ang disc games
+  NEUTRINO_ARGS: Neutrino Launch Args
+  HINT_NEUTRINO_ARGS: Dugang Neutrino flags, gibulag og espasyo (hal. -mt=dvd). Global alang sa tanan nga laro; per-game dugang pa. Ibutang ang $ sa unahan sa flag aron ma-disable nga dili pa ma-delete.
+  NEUTRINO_VIDEO: Neutrino Video
+  HINT_NEUTRINO_VIDEO: Puwersahon ang GS output video mode sa Neutrino (-gsm). Ang Off magpadayon sa default sa laro.
+  NEUTRINO_PATH: Neutrino ELF Path
+  HINT_NEUTRINO_PATH: Buong path ngadto sa neutrino.elf (hal. mc0:NEUTRINO/neutrino.elf). Blangko = auto-detect sa mc0/mc1.
+  POPSTARTER_PATH: POPSTARTER.ELF Path
+  HINT_POPSTARTER_PATH: Custom nga POPSTARTER.ELF path; mobalik sa POPS folder sa device kung blangko/wala. Ang keyboard limitado sa 31 chars; mas taas nga paths pinaagi sa settings_riptopl.cfg.
+  BDMA_SOURCE: BDMA Source
+  HINT_BDMA_SOURCE: Device nga ang POPS folder nagdala sa imong BDMAssault driver files (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA Mode
+  HINT_BDMA_MODE: exFAT block-device driver nga i-load sa POPSTARTER. Ang pagbag-o nag-kopya sa mga module sa card; FAT32 = wala (built-in driver).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Wala makita ang BDMA module files sa source device.
+  BDMA_ERR_SPACE: Dili igo ang espasyo sa memory card para sa BDMA modules.
+  BDMA_ERR_IO: Error sa pagsulat sa BDMA modules sa memory card.
+  COVERFLOW_SETTINGS: Coverflow Settings
+  COVERFLOW_COUNT: Ihap sa Cover
+  COVERFLOW_SCALE: Sentro nga Scale
+  COVERFLOW_ANIM: Tulin sa Animation
+  COVERFLOW_DIM: I-dim ang mga Palibot nga Cover
+  NONE: Wala
+  SMALL: Gamay
+  LARGE: Dako
+  NORMAL: Normal
+  FAV: Mga Paborito
+  FAVMODE: Favourites Start Mode
+  FAV_HINT: Paborito
+  FAV_MSG: '%s dili pwede sa Favourites Menu.'
+  FAV_PERSISTENCE_MSG: '%s dili pwede samtang ang item gimarkahan nga paborito.'

@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Obecná nastavení
+  DEVICE_SETTINGS: Nastavení zařízení
+  LAUNCH_PS2_DISC: Spustit PS2 disk
+  DISC_LAUNCH_ERR: V mechanice není žádný PS2 disk.
+  DEFAULT: Výchozí
+  HINT_MODE7: Pouze Neutrino -- oprava her přetékajících IOP buffer (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Aplikovat předpřipravený PS2RD .img patch na vaši hru.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE Startovní režim
+  MMCE_PREFIX: MMCE Předpona cesty
+  MMCE_SLOT: MMCE Slot
+  MMCEIGR_SLOT: IGR Bootcard Slot(y)
+  HINT_MMCEIGR_SLOT: Příkaz přepnutí na bootcard bude odeslán do vybraného slotu při IGR
+  MMCE_ADVANCED: Pokročilé
+  MMCE_SETTINGS: MMCE Nastavení
+  MMCE_SEMA: Metoda zámku Sema fronty
+  HINT_MMCE_SEMA: THFIFO může pomoci s kompatibilitou, ale zhoršit výkon
+  MMCE_WAIT_CYCLES: Čekací cykly po /ACK low
+  HINT_MMCE_WAIT_CYCLES: Nižší hodnoty mohou zlepšit výkon, ale způsobit nestabilitu
+  MMCE_USE_ALARMS: Použít časové limity alarmů
+  HINT_MMCE_USE_ALARMS: OFF může zlepšit výkon, ale MMCE timeouty mohou způsobit zamrznutí
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Neutrino nepodporuje tento formát souboru, spouštím s jádrem <OPL>
+  NEUTRINO_NOT_FOUND: Neutrino ELF nenalezeno, spouštím s jádrem <OPL>
+  UDPBD_NEEDS_STATIC_IP: UDPBD vyžaduje statickou IP PS2. Nastavte ji v Síťové konfiguraci (DHCP je zapnuto).
+  NEUTRINO_SETTING_NA: Toto nastavení se s jádrem Neutrino nepoužívá.
+  POPSTARTER_NOT_FOUND: Chybí POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: Chybí požadavky POPSTARTER SMB
+  WRITE_POPSTARTER_NET: Zapsat síťovou konfiguraci POPSTARTER
+  HINT_WRITE_POPSTARTER_NET: Uložit také tyto hodnoty IP + SMB sdílení do vlastních souborů POPSTARTER IPCONFIG.DAT / SMBCONFIG.DAT na paměťové kartě (pro VCD přes SMB).
+  POPSTARTER_NET_ERR: Nepodařilo se zapsat síťovou konfiguraci POPSTARTER na paměťovou kartu.
+  VCD: VCD
+  VCD_ON: Zobrazuji VCD hry
+  VCD_OFF: Zobrazuji diskové hry
+  NEUTRINO_ARGS: Neutrino Spouštěcí Args
+  HINT_NEUTRINO_ARGS: 'Extra příznaky Neutrino, oddělené mezerami (např. -mt=dvd). Globální platí pro všechny hry; na hru se přidá navíc. Prefix příznaku $ ho zakáže bez smazání.'
+  NEUTRINO_VIDEO: Neutrino Video
+  HINT_NEUTRINO_VIDEO: 'Vynutit výstupní video režim GS Neutrino (-gsm). Vypnuto ponechá výchozí nastavení hry.'
+  NEUTRINO_PATH: Neutrino ELF Cesta
+  HINT_NEUTRINO_PATH: Úplná cesta k neutrino.elf (např. mc0:NEUTRINO/neutrino.elf). Prázdné = automatická detekce na mc0/mc1.
+  POPSTARTER_PATH: POPSTARTER.ELF Cesta
+  HINT_POPSTARTER_PATH: Vlastní cesta k POPSTARTER.ELF; pokud je prázdná/chybí, použije složku POPS na zařízení. Klávesnice max. 31 znaků; delší cesty přes settings_riptopl.cfg.
+  BDMA_SOURCE: BDMA Zdroj
+  HINT_BDMA_SOURCE: Zařízení, jehož složka POPS obsahuje soubory ovladače BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA Režim
+  HINT_BDMA_MODE: Ovladač blokového zařízení exFAT, který POPSTARTER načte. Změna zkopíruje moduly na kartu; FAT32 = žádný (vestavěný ovladač).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: Soubory modulu BDMA nenalezeny na zdrojovém zařízení.
+  BDMA_ERR_SPACE: Na paměťové kartě není dostatek místa pro moduly BDMA.
+  BDMA_ERR_IO: Chyba při zápisu modulů BDMA na paměťovou kartu.
+  COVERFLOW_SETTINGS: Nastavení Coverflow
+  COVERFLOW_COUNT: Počet obalů
+  COVERFLOW_SCALE: Měřítko středu
+  COVERFLOW_ANIM: Rychlost animace
+  COVERFLOW_DIM: Ztmavit boční obaly
+  NONE: Žádný
+  SMALL: Malý
+  LARGE: Velký
+  NORMAL: Normální
+  FAV: Oblíbené
+  FAVMODE: Oblíbené Startovní režim
+  FAV_HINT: Oblíbená
+  FAV_MSG: '%s není povolen v nabídce Oblíbených.'
+  FAV_PERSISTENCE_MSG: '%s není povoleno, dokud je položka označena jako oblíbená.'

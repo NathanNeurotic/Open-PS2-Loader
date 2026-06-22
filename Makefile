@@ -135,6 +135,7 @@ EE_OBJS_DIR = obj/
 EE_ASM_DIR = asm/
 LNG_SRC_DIR = lng_src/
 LNG_TMPL_DIR = lng_tmpl/
+LNG_FORK_DIR = lng_fork/
 LNG_DIR = lng/
 PNG_ASSETS_DIR = gfx/
 MMCE_ASSETS_DIR = thirdparty/mmce
@@ -889,6 +890,7 @@ download_cfla:
 	./download_cfla.sh
 
 $(TRANSLATIONS_LNG): $(LNG_DIR)lang_%.lng: $(LNG_SRC_DIR)%.yml $(BASE_LANGUAGE) $(LANG_COMPILER)
+	@if [ -f $(LNG_FORK_DIR)$*.yml ]; then python3 $(LANG_COMPILER) --overlay_translation_yml --base $(BASE_LANGUAGE) --translation $< --overlay $(LNG_FORK_DIR)$*.yml; fi
 	python3 $(LANG_COMPILER) --make_lng --base $(BASE_LANGUAGE) --translation $< $@
 
 $(TRANSLATIONS_YML): %.yml: $(BASE_LANGUAGE) $(LANG_COMPILER)

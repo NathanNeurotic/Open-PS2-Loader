@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: 常规设置
+  DEVICE_SETTINGS: 设备设置
+  LAUNCH_PS2_DISC: 启动 PS2 光盘
+  DISC_LAUNCH_ERR: 驱动器中没有 PS2 光盘。
+  DEFAULT: 默认
+  HINT_MODE7: 仅限 Neutrino —— 修复溢出 IOP 缓冲区的游戏 (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD 金手指镜像
+  HINT_ENABLEIMAGE: 为游戏应用预构建的 PS2RD .img 补丁。
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE 启动模式
+  MMCE_PREFIX: MMCE 前缀路径
+  MMCE_SLOT: MMCE 卡槽
+  MMCEIGR_SLOT: IGR 启动卡槽
+  HINT_MMCEIGR_SLOT: 触发 IGR 时，切换到启动卡的命令将发送至所选卡槽
+  MMCE_ADVANCED: 高级
+  MMCE_SETTINGS: MMCE 设置
+  MMCE_SEMA: 锁信号量排队方式
+  HINT_MMCE_SEMA: THFIFO 可能提升兼容性，但会降低性能
+  MMCE_WAIT_CYCLES: /ACK 低电平后等待周期数
+  HINT_MMCE_WAIT_CYCLES: 较低值可能提升性能，但可能导致不稳定
+  MMCE_USE_ALARMS: 使用超时报警
+  HINT_MMCE_USE_ALARMS: 关闭可能提升性能，但 MMCE 超时时可能导致死机
+  CORE_LOADER: 核心加载器
+  NEUTRINO_BAD_FORMAT: Neutrino 不支持此文件格式，将使用 <OPL> 核心启动
+  NEUTRINO_NOT_FOUND: 未找到 Neutrino ELF，将使用 <OPL> 核心启动
+  UDPBD_NEEDS_STATIC_IP: UDPBD 需要静态 PS2 IP。请在网络配置中设置（当前已启用 DHCP）。
+  NEUTRINO_SETTING_NA: 此设置不适用于 Neutrino 核心。
+  POPSTARTER_NOT_FOUND: 缺少 POPSTARTER.ELF
+  POPSTARTER_SMB_MISSING: 缺少 POPSTARTER SMB 所需文件
+  WRITE_POPSTARTER_NET: 写入 POPSTARTER 网络配置
+  HINT_WRITE_POPSTARTER_NET: 同时将 IP 和 SMB 共享值保存到存储卡上 POPSTARTER 的 IPCONFIG.DAT / SMBCONFIG.DAT（用于 VCD over SMB）。
+  POPSTARTER_NET_ERR: 无法将 POPSTARTER 网络配置写入存储卡。
+  VCD: VCD
+  VCD_ON: 正在显示 VCD 游戏
+  VCD_OFF: 正在显示光盘游戏
+  NEUTRINO_ARGS: Neutrino 启动参数
+  HINT_NEUTRINO_ARGS: 额外的 Neutrino 标志，以空格分隔（如 -mt=dvd）。全局参数适用于所有游戏；单游戏参数在此基础上追加。在标志前加 $ 可禁用而不删除。
+  NEUTRINO_VIDEO: Neutrino 视频
+  HINT_NEUTRINO_VIDEO: 强制设置 Neutrino 的 GS 输出视频模式 (-gsm)。关闭则保留游戏默认值。
+  NEUTRINO_PATH: Neutrino ELF 路径
+  HINT_NEUTRINO_PATH: neutrino.elf 的完整路径（如 mc0:NEUTRINO/neutrino.elf）。留空则自动在 mc0/mc1 上检测。
+  POPSTARTER_PATH: POPSTARTER.ELF 路径
+  HINT_POPSTARTER_PATH: 自定义 POPSTARTER.ELF 路径；留空或缺失时自动回退至设备 POPS 文件夹。键盘输入上限 31 字符；更长路径请通过 settings_riptopl.cfg 设置。
+  BDMA_SOURCE: BDMA 来源
+  HINT_BDMA_SOURCE: 存放 BDMAssault 驱动文件（usbd.irx.* / usbhdfsd.irx.*）的 POPS 文件夹所在设备。
+  BDMA_MODE: BDMA 模式
+  HINT_BDMA_MODE: POPSTARTER 加载的 exFAT 块设备驱动。更改后会将模块复制到存储卡；FAT32 = 无（使用内置驱动）。
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: 在来源设备上未找到 BDMA 模块文件。
+  BDMA_ERR_SPACE: 存储卡空间不足，无法存放 BDMA 模块。
+  BDMA_ERR_IO: 将 BDMA 模块写入存储卡时出错。
+  COVERFLOW_SETTINGS: Coverflow 设置
+  COVERFLOW_COUNT: 封面数量
+  COVERFLOW_SCALE: 中心缩放
+  COVERFLOW_ANIM: 动画速度
+  COVERFLOW_DIM: 暗化侧边封面
+  NONE: 无
+  SMALL: 小
+  LARGE: 大
+  NORMAL: 普通
+  FAV: 收藏夹
+  FAVMODE: 收藏夹启动模式
+  FAV_HINT: 收藏
+  FAV_MSG: '%s 不允许通过收藏夹菜单访问。'
+  FAV_PERSISTENCE_MSG: '%s 在该项目被标记为收藏时不可用。'

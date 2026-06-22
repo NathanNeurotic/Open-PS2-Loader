@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: 一般設定
+  DEVICE_SETTINGS: 機器設定
+  LAUNCH_PS2_DISC: PS2 ディスク起動
+  DISC_LAUNCH_ERR: ドライブにPS2ディスクがあらんむん。
+  DEFAULT: デフォルト
+  HINT_MODE7: Neutrino 専用 -- IOP バッファーをあふれゆるゲームを修正(-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD チートイメージ
+  HINT_ENABLEIMAGE: ゲームにPS2RD .img パッチを当てゅん。
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE ゲーム
+  MMCEMODE: MMCE 起動モード
+  MMCE_PREFIX: MMCE プレフィックスパス
+  MMCE_SLOT: MMCE スロット
+  MMCEIGR_SLOT: IGR ブートカードスロット
+  HINT_MMCEIGR_SLOT: IGR 時、選択したスロットにブートカードコマンドを送ゆん
+  MMCE_ADVANCED: 詳細
+  MMCE_SETTINGS: MMCE 設定
+  MMCE_SEMA: ロックセマエンキュー方式
+  HINT_MMCE_SEMA: THFIFO は互換性向上に役立つが、パフォーマンスが落ちゅる場合あん
+  MMCE_WAIT_CYCLES: /ACK ロー後の待機サイクル
+  HINT_MMCE_WAIT_CYCLES: 値を小さくすればパフォーマンス向上するが、不安定になゆる場合あん
+  MMCE_USE_ALARMS: タイムアウトアラームを使用
+  HINT_MMCE_USE_ALARMS: OFF にすればパフォーマンス向上するが、MMCE タイムアウト時にフリーズすることあん
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Neutrino はこのファイル形式に対応しとらん、<OPL> コアで起動すん
+  NEUTRINO_NOT_FOUND: Neutrino ELF が見つからん、<OPL> コアで起動すん
+  UDPBD_NEEDS_STATIC_IP: UDPBD には静的PS2 IPが必要やん。ネットワーク設定で指定しみそーれ（DHCP 有効中）。
+  NEUTRINO_SETTING_NA: この設定は Neutrino コアでは使わんむん。
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF が見つからん
+  POPSTARTER_SMB_MISSING: POPSTARTER の SMB 要件が足らん
+  WRITE_POPSTARTER_NET: POPSTARTER ネットワーク設定を書き込む
+  HINT_WRITE_POPSTARTER_NET: IP と SMB 共有の値をメモリーカード上の POPSTARTER 用 IPCONFIG.DAT / SMBCONFIG.DAT にも保存すん（VCD-over-SMB 向け）。
+  POPSTARTER_NET_ERR: POPSTARTER ネットワーク設定をメモリーカードに書き込めんかた。
+  VCD: VCD
+  VCD_ON: VCD ゲームを表示中
+  VCD_OFF: ディスクゲームを表示中
+  NEUTRINO_ARGS: Neutrino 起動引数
+  HINT_NEUTRINO_ARGS: 'Neutrino 追加フラグをスペース区切りで入力（例: -mt=dvd）。グローバルは全ゲームに適用、ゲーム別は追加分。フラグの前に $ を付けると削除せずに無効化できゅん。'
+  NEUTRINO_VIDEO: Neutrino ビデオ
+  HINT_NEUTRINO_VIDEO: Neutrino の GS 出力ビデオモードを強制指定(-gsm)。Off でゲームのデフォルトを維持すん。
+  NEUTRINO_PATH: Neutrino ELF パス
+  HINT_NEUTRINO_PATH: 'neutrino.elf のフルパス（例: mc0:NEUTRINO/neutrino.elf）。空白の場合は mc0/mc1 を自動検索すん。'
+  POPSTARTER_PATH: POPSTARTER.ELF パス
+  HINT_POPSTARTER_PATH: カスタム POPSTARTER.ELF パス。空白・未検出の場合はデバイスの POPS フォルダーに自動フォールバックすん。キーボードは31文字まで、長いパスは settings_riptopl.cfg で設定可。
+  BDMA_SOURCE: BDMA ソース
+  HINT_BDMA_SOURCE: BDMAssault ドライバーファイル（usbd.irx.* / usbhdfsd.irx.*）を持つデバイス。
+  BDMA_MODE: BDMA モード
+  HINT_BDMA_MODE: POPSTARTER が読み込む exFAT ブロックデバイスドライバー。変更するとモジュールをカードにコピーすん。FAT32 = 組み込みドライバー（コピーなし）。
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: ソースデバイスに BDMA モジュールファイルが見つからん。
+  BDMA_ERR_SPACE: BDMA モジュールを保存するメモリーカードの空き容量が足らん。
+  BDMA_ERR_IO: BDMA モジュールのメモリーカードへの書き込みにエラーが発生したん。
+  COVERFLOW_SETTINGS: Coverflow 設定
+  COVERFLOW_COUNT: カバー表示数
+  COVERFLOW_SCALE: 中央スケール
+  COVERFLOW_ANIM: アニメーション速度
+  COVERFLOW_DIM: サイドカバーを暗くすん
+  NONE: なし
+  SMALL: 小
+  LARGE: 大
+  NORMAL: 標準
+  FAV: お気に入り
+  FAVMODE: お気に入り起動モード
+  FAV_HINT: お気に入り
+  FAV_MSG: '%s はお気に入りメニューから起動できやびらん。'
+  FAV_PERSISTENCE_MSG: '%s はお気に入りに登録中、この操作はできやびらん。'

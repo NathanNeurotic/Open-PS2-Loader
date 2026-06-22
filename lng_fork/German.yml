@@ -1,0 +1,76 @@
+translations:
+  GENERAL_SETTINGS: Allgemeine Einstellungen
+  DEVICE_SETTINGS: Geräteeinstellungen
+  LAUNCH_PS2_DISC: PS2 Disc starten
+  DISC_LAUNCH_ERR: Keine PS2 Disc im Laufwerk.
+  DEFAULT: Standard
+  HINT_MODE7: Nur Neutrino -- behebt Spiele, die einen IOP-Puffer überschreiben (-gc=7)
+  MODE7: Mode 7
+  ENABLEIMAGE: PS2RD Cheat Image
+  HINT_ENABLEIMAGE: Einen vorgefertigten PS2RD .img Patch auf das Spiel anwenden.
+  UDPBD_GAMES: UDPBD Games
+  MMCE: MMCE
+  MMCE_GAMES: MMCE Games
+  MMCEMODE: MMCE Startmodus
+  MMCE_PREFIX: MMCE Pfadpräfix
+  MMCE_SLOT: MMCE Slot
+  MMCEIGR_SLOT: IGR Bootcard Slot(s)
+  HINT_MMCEIGR_SLOT: Der Befehl zum Wechsel zur Bootcard wird beim IGR an die gewählten Slot(s) gesendet
+  MMCE_ADVANCED: Erweitert
+  MMCE_SETTINGS: MMCE Einstellungen
+  MMCE_SEMA: Sema-Einreihungsmethode sperren
+  HINT_MMCE_SEMA: THFIFO kann die Kompatibilität verbessern, aber die Leistung verringern
+  MMCE_WAIT_CYCLES: Wartezyklen nach /ACK low
+  HINT_MMCE_WAIT_CYCLES: Niedrigere Werte können die Leistung verbessern, aber Instabilitäten verursachen
+  MMCE_USE_ALARMS: Timeout-Alarme verwenden
+  HINT_MMCE_USE_ALARMS: AUS kann die Leistung verbessern, aber MMCE-Timeouts können zu Einfrieren führen
+  CORE_LOADER: Loader Core
+  NEUTRINO_BAD_FORMAT: Neutrino unterstützt dieses Dateiformat nicht, Start mit <OPL> Core
+  NEUTRINO_NOT_FOUND: Neutrino ELF nicht gefunden, Start mit <OPL> Core
+  UDPBD_NEEDS_STATIC_IP: UDPBD benötigt eine statische PS2 IP. In der Netzwerkkonfiguration festlegen (DHCP ist aktiv).
+  NEUTRINO_SETTING_NA: Diese Einstellung wird mit dem Neutrino Core nicht verwendet.
+  POPSTARTER_NOT_FOUND: POPSTARTER.ELF fehlt
+  POPSTARTER_SMB_MISSING: POPSTARTER SMB-Voraussetzungen fehlen
+  WRITE_POPSTARTER_NET: POPSTARTER Netzwerkkonfiguration schreiben
+  HINT_WRITE_POPSTARTER_NET: Diese IP- und SMB-Freigabewerte auch in POPSTARTER's eigene IPCONFIG.DAT / SMBCONFIG.DAT auf der Speicherkarte schreiben (für VCD über SMB).
+  POPSTARTER_NET_ERR: POPSTARTER-Netzwerkkonfiguration konnte nicht auf die Speicherkarte geschrieben werden.
+  VCD: VCD
+  VCD_ON: VCD-Spiele werden angezeigt
+  VCD_OFF: Disc-Spiele werden angezeigt
+  NEUTRINO_ARGS: Neutrino Startargumente
+  HINT_NEUTRINO_ARGS: 'Zusätzliche Neutrino-Flags, durch Leerzeichen getrennt (z.B. -mt=dvd). Global gilt für alle Spiele; pro Spiel wird obendrauf addiert. Flag mit $ präfixieren, um es ohne Löschen zu deaktivieren.'
+  NEUTRINO_VIDEO: Neutrino Video
+  HINT_NEUTRINO_VIDEO: Neutrinos GS-Ausgabe-Videomodus erzwingen (-gsm). Aus behält den Standard des Spiels.
+  NEUTRINO_PATH: Neutrino ELF Pfad
+  HINT_NEUTRINO_PATH: Vollständiger Pfad zu neutrino.elf (z.B. mc0:NEUTRINO/neutrino.elf). Leer = automatische Erkennung auf mc0/mc1.
+  POPSTARTER_PATH: POPSTARTER.ELF Pfad
+  HINT_POPSTARTER_PATH: Benutzerdefinierter POPSTARTER.ELF Pfad; fällt auf den POPS-Ordner des Geräts zurück, wenn leer/fehlend. Tastatur auf 31 Zeichen begrenzt; längere Pfade über settings_riptopl.cfg.
+  BDMA_SOURCE: BDMA Quelle
+  HINT_BDMA_SOURCE: Gerät, dessen POPS-Ordner die BDMAssault-Treiberdateien enthält (usbd.irx.* / usbhdfsd.irx.*).
+  BDMA_MODE: BDMA Modus
+  HINT_BDMA_MODE: exFAT Block-Gerätetreiber, den POPSTARTER lädt. Bei Änderung werden die Module auf die Karte kopiert; FAT32 = keiner (integrierter Treiber).
+  BDMA_SRC_USB: USB
+  BDMA_SRC_MX4SIO: MX4SIO
+  BDMA_SRC_MMCE: MMCE
+  BDMA_MODE_FAT32: USB (FAT32)
+  BDMA_MODE_USBEXFAT: USB (exFAT)
+  BDMA_MODE_MX4SIO: MX4SIO (exFAT)
+  BDMA_MODE_MMCE: MMCE (exFAT)
+  BDMA_MODE_ATA: HDD (exFAT)
+  BDMA_ERR_SRC: BDMA-Moduldateien nicht auf dem Quellgerät gefunden.
+  BDMA_ERR_SPACE: Nicht genügend Speicherplatz auf der Speicherkarte für die BDMA-Module.
+  BDMA_ERR_IO: Fehler beim Schreiben der BDMA-Module auf die Speicherkarte.
+  COVERFLOW_SETTINGS: Coverflow Einstellungen
+  COVERFLOW_COUNT: Cover-Anzahl
+  COVERFLOW_SCALE: Mittlere Skalierung
+  COVERFLOW_ANIM: Animationsgeschwindigkeit
+  COVERFLOW_DIM: Seitliche Cover abdunkeln
+  NONE: Keine
+  SMALL: Klein
+  LARGE: Groß
+  NORMAL: Normal
+  FAV: Favoriten
+  FAVMODE: Favoriten-Startmodus
+  FAV_HINT: Favorit
+  FAV_MSG: '%s ist über das Favoritenmenü nicht erlaubt.'
+  FAV_PERSISTENCE_MSG: '%s ist nicht erlaubt, solange das Element als Favorit markiert ist.'
