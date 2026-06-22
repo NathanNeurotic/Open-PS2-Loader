@@ -96,7 +96,7 @@ EECORE_OBJS = ee_core.o ioprp.o util.o \
 		ingame_smstcpip.o smap_ingame.o smbman.o smbinit.o
 
 PNG_ASSETS = load0 load1 load2 load3 load4 load5 load6 load7 usb usb_bd ilk_bd \
-	m4s_bd hdd_bd mmce hdd eth app cross triangle circle square select start left right \
+	m4s_bd hdd_bd mmce hdd eth udp_bd udp_fs app cross triangle circle square select start left right \
 	cover disc screen incebtion ip coverapp missing screens \
 	ELF HDL ISO VCD ZSO UL APPS CD DVD Aspect_s Aspect_w Aspect_w1 \
 	Aspect_w2 Rating_0 \

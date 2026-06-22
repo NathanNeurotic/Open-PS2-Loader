@@ -18,7 +18,7 @@ enum INTERNAL_TEXTURE {
     MMCE_ICON,
     HDD_ICON,
     ETH_ICON,
-    UDP_ICON, // UDPBD device icon; theme override name "udp_bd", embedded fallback = eth_png (network)
+    UDP_ICON, // UDPBD network-boot device icon (theme override "udp_bd", embedded udp_bd_png)
     APP_ICON,
     INDEX_0,
     INDEX_1,
@@ -116,6 +116,8 @@ enum INTERNAL_TEXTURE {
     PS2_SYSTEM, // #System console glyph (PS2)
     // second overlay layer (b2 "foliage") drawn over the case (b1) -- graphics-team two-layer frame
     CASE_OVERLAY2,
+    // UDPFS network-boot device icon (theme override "udp_fs", embedded udp_fs_png); UDPBD uses UDP_ICON
+    UDPFS_ICON,
 
     TEXTURES_COUNT
 };

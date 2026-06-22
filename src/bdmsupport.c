@@ -988,7 +988,7 @@ static int bdmGetIconId(item_list_t *itemList)
     else if (bdmDriverIsATA(pDeviceData->bdmDriver))
         mode = HDD_BD_ICON;
     else if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
-        mode = UDP_ICON;
+        mode = (gNetBootProtocol == NET_BOOT_UDPFS) ? UDPFS_ICON : UDP_ICON;
 
     return mode;
 }

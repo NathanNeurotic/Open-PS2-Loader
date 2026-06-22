@@ -21,6 +21,8 @@ extern void *hdd_bd_png;
 extern void *mmce_png;
 extern void *hdd_png;
 extern void *eth_png;
+extern void *udp_bd_png;
+extern void *udp_fs_png;
 extern void *app_png;
 extern void *Index_0_png;
 extern void *Index_1_png;
@@ -154,7 +156,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {MMCE_ICON, "mmce", &mmce_png},
     {HDD_ICON, "hdd", &hdd_png},
     {ETH_ICON, "eth", &eth_png},
-    {UDP_ICON, "udp_bd", &eth_png}, // no embedded udp_bd yet: fall back to the eth icon (same network meaning); a theme can still supply udp_bd.png, and dropping gfx/udp_bd.png + PNG_ASSETS later just swaps &eth_png -> &udp_bd_png
+    {UDP_ICON, "udp_bd", &udp_bd_png},
     {APP_ICON, "app", &app_png},
     {INDEX_0, "Index_0", &Index_0_png},
     {INDEX_1, "Index_1", &Index_1_png},
@@ -254,6 +256,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {PS1_SYSTEM, "PS1", &PS1_png}, // #System console glyphs (FR #49); names match the #System values
     {PS2_SYSTEM, "PS2", &PS2_png},
     {CASE_OVERLAY2, "case_overlay", &case_overlay_png}, // b2 foliage layer (two-layer frame)
+    {UDPFS_ICON, "udp_fs", &udp_fs_png},
 };
 
 int texLookupInternalTexId(const char *name)
