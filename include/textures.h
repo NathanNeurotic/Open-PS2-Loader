@@ -112,6 +112,8 @@ enum INTERNAL_TEXTURE {
     LOGO6_PICTURE,
     CASE_OVERLAY,
     APPS_CASE_OVERLAY,
+    PS1_SYSTEM, // #System console glyph (PS1) -- FR #49
+    PS2_SYSTEM, // #System console glyph (PS2)
 
     TEXTURES_COUNT
 };

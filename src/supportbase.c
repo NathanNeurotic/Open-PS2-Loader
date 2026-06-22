@@ -858,7 +858,11 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     } else if (game->format == GAME_FORMAT_USBLD)
         configSetStr(config, CONFIG_ITEM_FORMAT, "UL");
 
-    configSetStr(config, CONFIG_ITEM_MEDIA, game->media == SCECdPS2CD ? "CD" : "DVD");
+    // #System = the console (PS1 for POPSTARTER/VCD discs, PS2 otherwise); #Media = the disc type.
+    // A PS1 disc is always a CD, so report "CD" rather than the game->media default of DVD (FR #49).
+    int isPS1 = !strcasecmp(game->extension, ".VCD");
+    configSetStr(config, CONFIG_ITEM_SYSTEM, isPS1 ? "PS1" : "PS2");
+    configSetStr(config, CONFIG_ITEM_MEDIA, isPS1 ? "CD" : (game->media == SCECdPS2CD ? "CD" : "DVD"));
 
     configSetStr(config, CONFIG_ITEM_STARTUP, cfgKey); // VCD: keyed by filename (see cfgKey above)
 
