@@ -400,24 +400,60 @@ static int diaShouldBreakLineAfter(struct UIItem *ui)
 
 static void diaDrawHint(int text_id)
 {
-    int x, y;
     char *text = _l(text_id);
 
-    // Right-anchor the box, but clamp so a long hint can't start off the left edge (the start was
-    // unreadable -- #48). Then wrap the text inside the box width and grow the box to fit so it
-    // never overruns either edge; keep the box just above the bottom hint bar (usedHeight - 32).
-    int textW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text));
-    x = screenWidth - textW - 10;
+    // Size the box to the hint, but never wider than (almost) the full screen, and clamp the left
+    // edge so the start is always on-screen (a long hint used to start off the left edge -- #48).
+    int boxW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text)) + 10;
+    if (boxW > screenWidth - 20)
+        boxW = screenWidth - 20;
+    int x = screenWidth - boxW - 10;
     if (x < 10)
         x = 10;
-    int innerW = screenWidth - x - 10;
-    int lines = (innerW > 0 && textW > innerW) ? ((textW + innerW - 1) / innerW) : 1;
+    int innerW = boxW - 10;
+
+    // fntRenderString does NOT word-wrap: it lays the string on ONE line and clips at the box edge
+    // (only an explicit '\n' starts a new line). So pre-wrap here -- greedily pack words up to innerW,
+    // inserting '\n' between lines. Without this a long hint (e.g. the Neutrino args hint) rendered as
+    // a single clipped, unreadable line that ran off the box -- the remaining #48 hint complaint.
+    char wrapped[384];
+    int wlen = 0, lineW = 0, lines = 1;
+    int spaceW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], " "));
+    const char *p = text;
+    while (*p) {
+        while (*p == ' ') // skip runs of spaces; we re-insert our own single separators
+            p++;
+        if (!*p)
+            break;
+        char word[96];
+        int k = 0;
+        while (*p && *p != ' ' && k < (int)sizeof(word) - 1)
+            word[k++] = *p++;
+        word[k] = '\0';
+        int wordW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], word));
+
+        if (lineW > 0 && (lineW + spaceW + wordW) > innerW) { // word doesn't fit -> new line
+            if (wlen < (int)sizeof(wrapped) - 1)
+                wrapped[wlen++] = '\n';
+            lines++;
+            lineW = 0;
+        } else if (lineW > 0) { // same line -> re-insert the separating space
+            if (wlen < (int)sizeof(wrapped) - 1)
+                wrapped[wlen++] = ' ';
+            lineW += spaceW;
+        }
+        for (int i = 0; i < k && wlen < (int)sizeof(wrapped) - 1; i++)
+            wrapped[wlen++] = word[i];
+        lineW += wordW;
+    }
+    wrapped[wlen] = '\0';
+
     int boxH = lines * MENU_ITEM_HEIGHT + 10;
-    y = gTheme->usedHeight - 32 - boxH;
+    int y = gTheme->usedHeight - 32 - boxH;
 
     // render hint on the lower side of the screen.
-    rmDrawRect(x, y, screenWidth - x, boxH, gColDarker);
-    fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, innerW, boxH - 5, text, gTheme->textColor);
+    rmDrawRect(x, y, boxW, boxH, gColDarker);
+    fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, innerW, boxH - 5, wrapped, gTheme->textColor);
 }
 
 /// renders an ui item (either selected or not)
