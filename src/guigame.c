@@ -70,7 +70,7 @@ static union
 
 static char hexid[32];
 static char altStartup[32];
-static char neutrinoArgs[256]; // per-game Neutrino extra flags (UI edits up to 31 chars; cfg may hold more)
+static char neutrinoArgs[256]; // per-game Neutrino extra flags (edited via the structured args sub-screen)
 static char vmc1[32];
 static char vmc2[32];
 static char hexDiscID[15];
@@ -1019,7 +1019,15 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     }
 
     guiGameSetCoreAwareState(); // apply the initial grey-out before the dialog is drawn
-    int result = diaExecuteDialog(diaCompatConfig, -1, 1, &guiGameCompatUpdater);
+    int result;
+reshow_compat:
+    result = diaExecuteDialog(diaCompatConfig, -1, 1, &guiGameCompatUpdater);
+    if (result == COMPAT_NEUTRINO_ARGS) {
+        // the "Neutrino Launch Args" button -> open the structured args sub-screen on the per-game
+        // args buffer, then re-enter the Compatibility dialog (mirrors guiShowConfig for the global).
+        guiShowNeutrinoArgsConfig(neutrinoArgs, sizeof(neutrinoArgs));
+        goto reshow_compat;
+    }
     if (result) {
         compatMode = 0;
         for (i = 0; i < COMPAT_MODE_COUNT; ++i) {
@@ -1165,17 +1173,15 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     else
         configRemoveKey(configSet, CONFIG_ITEM_ALTSTARTUP);
 
-    // The dialog field is char[32] but the cfg may hold a longer args string. Only rewrite the key when
-    // the visible (<=31-char) field actually changed vs the PERSISTED value, so opening+saving Options
-    // never truncates a longer per-game args string that was hand-edited into the cfg. (Compare against a
-    // fresh re-read, not neutrinoArgs, which already holds the truncated field value after load.)
+    // neutrinoArgs holds the FULL per-game args string (loaded from the cfg, edited via the structured
+    // sub-screen behind the COMPAT_NEUTRINO_ARGS button) -- there is no UI truncation anymore, so just
+    // compare the whole buffer against the persisted value and rewrite/clear the key when it changed.
     {
-        char tmpArgs[32], origArgs[sizeof(neutrinoArgs)];
-        diaGetString(diaCompatConfig, COMPAT_NEUTRINO_ARGS, tmpArgs, sizeof(tmpArgs));
+        char origArgs[sizeof(neutrinoArgs)];
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, origArgs, sizeof(origArgs));
-        if (strncmp(tmpArgs, origArgs, 31) != 0) {
-            if (tmpArgs[0] != '\0')
-                result = configSetStr(configSet, CONFIG_ITEM_NEUTRINO_ARGS, tmpArgs);
+        if (strcmp(neutrinoArgs, origArgs) != 0) {
+            if (neutrinoArgs[0] != '\0')
+                result = configSetStr(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoArgs);
             else
                 configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_ARGS);
         }
@@ -1610,9 +1616,11 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
     configGetStrCopy(configSet, CONFIG_ITEM_ALTSTARTUP, altStartup, sizeof(altStartup));
     diaSetString(diaCompatConfig, COMPAT_ALTSTARTUP, altStartup);
 
+    // Per-game Neutrino args live in the neutrinoArgs buffer, edited via the structured sub-screen
+    // opened by the COMPAT_NEUTRINO_ARGS button. The dialog item is a UI_BUTTON (no stringvalue), so
+    // there is nothing to diaSetString here -- loading the buffer is all that's needed.
     neutrinoArgs[0] = '\0';
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoArgs, sizeof(neutrinoArgs));
-    diaSetString(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrinoArgs);
 
     int neutrinoVideo = 0;
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
