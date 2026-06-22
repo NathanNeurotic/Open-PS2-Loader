@@ -160,13 +160,13 @@ PlayStation 1 titles (<code>*.VCD</code>) always boot through <b>POPSTARTER.ELF<
 <p>Arguments are space-separated. Example:</p>
 <pre>-mt=dvd -gsm=1</pre>
 
-<div class="callout info"><div class="h">ℹ 31-character on-screen editor limit</div>
-OPL's in-app text field holds up to 31 visible characters. If you need a longer argument string, edit <code>$NeutrinoArgs</code> (or <code>neutrino_args</code>) directly in the config file — OPL reads and forwards the full string at launch even though the editor truncates the display. Saving via the UI only rewrites the key if the field content actually changed, so a hand-edited long value is preserved when you open and close the dialog without touching that field.
+<div class="callout info"><div class="h">ℹ Editing long argument strings</div>
+Both the global and per-game Neutrino Launch Args open a <b>structured sub-screen</b> (see below) whose individual fields each hold up to 31 visible characters. If you need a longer value in a single field, edit <code>neutrino_args</code> (global, in <code>settings_riptopl.cfg</code>) or <code>$NeutrinoArgs</code> (per game, in the game's <code>.cfg</code>) directly — OPL reads and forwards the full string at launch. The editor preserves every field you do not touch at its full stored length, so opening and closing the dialog never truncates a hand-edited value.
 </div>
 
 <h3 id="args-subscreen">Structured Neutrino Args sub-screen</h3>
 
-<p>The <b>global</b> Neutrino Launch Args entry (<b>Settings &rarr; General Settings &rarr; Neutrino Launch Args</b>) is a button that opens a companion sub-screen. The sub-screen breaks the argument string into named fields, reassembles them in a valid canonical order, and writes the result back as a single flat string. (The <em>per-game</em> Neutrino Launch Args field in Compatibility Settings is a plain text box only &mdash; the structured sub-screen is not yet wired up there.)</p>
+<p>Both the <b>global</b> Neutrino Launch Args entry (<b>Settings &rarr; General Settings &rarr; Neutrino Launch Args</b>) and the <b>per-game</b> field (<b>Game Settings &rarr; Compatibility Settings &rarr; Neutrino Launch Args</b>) are buttons that open the <em>same</em> companion sub-screen. It breaks the argument string into named fields — Quick Boot (<code>-qb</code>), Working Dir (<code>-cwd</code>), Config (<code>-cfg</code>), Boot ELF (<code>-elf</code>), ATA0 Image (<code>-ata0</code>), ATA0 ID (<code>-ata0id</code>), ATA1 Image (<code>-ata1</code>), plus a free-form <b>Extra</b> field — reassembles them in a valid canonical order with <code>--b</code> kept last, and writes the result back as a single flat string: the global into <code>neutrino_args</code>, the per-game value into <code>$NeutrinoArgs</code> (each game edited independently).</p>
 
 <table data-sortable>
 <thead><tr><th>Field</th><th>Argument emitted</th><th>Notes</th></tr></thead>

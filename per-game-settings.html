@@ -100,11 +100,13 @@ you and returns to the menu — there is no fallback.
 <p>These two fields appear on the Compatibility screen and are only active when the Loader Core is set to
 <b>Neutrino</b> (they are greyed under <code>&lt;OPL&gt;</code>).</p>
 <ul class="checklist">
-  <li><b>Neutrino Launch Args</b> — free-text field for extra Neutrino flags appended after the auto-built
-  arguments. Config key: <code>$NeutrinoArgs</code>. Space-separated, e.g. <code>-mt=dvd</code>. The
-  on-screen editor holds 31 characters; for longer strings, edit <code>$NeutrinoArgs</code> in the
-  <code>.cfg</code> file directly — OPL forwards the full value at launch. A global default can also be set
-  in <b>Settings → General Settings → Neutrino Launch Args</b>; per-game args are appended after it.</li>
+  <li><b>Neutrino Launch Args</b> — a button that opens the same <b>structured args sub-screen</b> as the
+  global setting: named fields (Quick Boot, Working Dir, Config, Boot ELF, ATA0 / ATA0 ID / ATA1 image, plus
+  a free-form Extra field) reassembled in a valid order with <code>--b</code> last. Stored in config key
+  <code>$NeutrinoArgs</code> as a single flat string (e.g. <code>-mt=dvd</code>). Each sub-field holds 31
+  visible characters; for a longer single value, edit <code>$NeutrinoArgs</code> in the <code>.cfg</code>
+  directly — OPL forwards the full value at launch. A global default is set in <b>Settings → General
+  Settings → Neutrino Launch Args</b>; per-game args are appended after it.</li>
   <li><b>Neutrino Video</b> — structured picker for Neutrino's <code>-gsm</code> video-mode flag.
   Config key: <code>$NeutrinoVideo</code>.</li>
 </ul>
@@ -315,7 +317,7 @@ If the settings turn out to work, follow up with <b>Save Changes</b>.</p>
 by the per-game settings screen are:</p>
 <pre>$Compatibility    compatibility mode bitmask (integer)
 $CoreLoader       0 = &lt;OPL&gt;, 1 = Neutrino
-$NeutrinoArgs     free-text Neutrino launch arguments
+$NeutrinoArgs     Neutrino launch arguments (set via the structured sub-screen)
 $NeutrinoVideo    0=Off, 1=240p, 2=480p, 3=1080i
 $VMC_0            VMC name for slot 1
 $VMC_1            VMC name for slot 2
