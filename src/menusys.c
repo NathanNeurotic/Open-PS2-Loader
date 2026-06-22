@@ -941,9 +941,12 @@ static void menuPrevPage()
         selected_item->item->current = cur;
         selected_item->item->pagestart = selected_item->item->current;
         menuInvalidateArtSelection();
-    } else { // wrap to end
-        menuLastPage();
     }
+    // else: already on the first page -> no action. Page scroll CLAMPS at the
+    // boundary (like R1/menuNextPage), it does not wrap. The old wrap called
+    // menuLastPage(), which on a multi-page list flung L1 to the LAST page and on
+    // a single-page list jumped the SELECTION to the last item -- both reported in
+    // issue #48 (the prior #48 fix only clamped R1, leaving this L1 wrap behind).
 }
 
 void menuSetSelectedItem(menu_item_t *item)

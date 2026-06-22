@@ -596,6 +596,9 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
 // Vertical scroll offset for config dialogs taller than the screen. Reset to 0 when a dialog
 // opens (diaExecuteDialog); diaRenderUI shifts rendering up by it and re-clamps it each frame
 // so the focused item is always brought on-screen (cursor-follow). Stays 0 when content fits.
+// Defined further down; the cursor-follow scroll below needs it to detect "focus on the first control".
+static struct UIItem *diaGetFirstControl(struct UIItem *ui);
+
 static int diaScrollOffset = 0;
 
 /// renders whole ui screen (for given dialog setup)
@@ -664,7 +667,13 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             maxScroll = 0;
         // Only scroll when a real viewport exists; guards degenerate small-usedHeight themes
         // where visibleBottom <= y0 would let the two edge corrections fight (jitter).
-        if (visibleBottom > y0) {
+        if (cur == diaGetFirstControl(ui)) {
+            // Focus is on the FIRST navigable control: nothing selectable sits above it, only the
+            // non-focusable header/title rows. Snap to the very top so the page title is visible,
+            // instead of merely pulling the first control up to y0 and leaving the title clipped
+            // off the top of the viewport (#48: page stays stuck shifted down at the first element).
+            diaScrollOffset = 0;
+        } else if (visibleBottom > y0) {
             if (curTop < y0)
                 diaScrollOffset -= (y0 - curTop);
             else if (curBot > visibleBottom)
