@@ -103,7 +103,6 @@ extern void *logo1_png;
 extern void *logo2_png;
 extern void *logo3_png;
 extern void *case_png;
-extern void *apps_case_png;
 extern void *PS1_png;
 extern void *PS2_png;
 extern void *case_overlay_png;
@@ -252,7 +251,9 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {LOGO5_PICTURE, "logo5", &logo2_png},
     {LOGO6_PICTURE, "logo6", &logo1_png},
     {CASE_OVERLAY, "case", &case_png},
-    {APPS_CASE_OVERLAY, "apps_case", &apps_case_png},
+    // apps_case retired -- both built-in themes now use case + case_overlay; aliased to case so an
+    // external theme that still names overlay=apps_case keeps a frame (no separate bitmap embedded).
+    {APPS_CASE_OVERLAY, "apps_case", &case_png},
     {PS1_SYSTEM, "PS1", &PS1_png}, // #System console glyphs (FR #49); names match the #System values
     {PS2_SYSTEM, "PS2", &PS2_png},
     {CASE_OVERLAY2, "case_overlay", &case_overlay_png}, // b2 foliage layer (two-layer frame)
