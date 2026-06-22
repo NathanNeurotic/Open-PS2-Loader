@@ -492,12 +492,13 @@ void guiShowConfig()
     diaSetInt(diaConfig, CFG_PS2LOGO, gPS2Logo);
     diaSetString(diaConfig, CFG_EXITTO, gExitPath);
     diaSetString(diaConfig, CFG_NEUTRINO_ARGS, gNeutrinoArgs);
-    diaSetString(diaConfig, CFG_NEUTRINO_PATH, gNeutrinoPath);
+    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "mc0", "mc1", NULL};
+    diaSetEnum(diaConfig, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
+    diaSetInt(diaConfig, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);
     diaSetString(diaConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
     // These path fields auto-resolve a built-in default when blank, so show a dim "Default"
     // placeholder rather than "<not set>" -- the empty value (and thus the fallback) is kept.
     diaSetShowDefaultWhenEmpty(diaConfig, CFG_EXITTO, 1);
-    diaSetShowDefaultWhenEmpty(diaConfig, CFG_NEUTRINO_PATH, 1);
     diaSetShowDefaultWhenEmpty(diaConfig, CFG_POPSTARTER_PATH, 1);
 
     // BDMA (BDMAssault exFAT driver) equip. MODE reflects what's ACTUALLY on the card (read the
@@ -529,14 +530,7 @@ void guiShowConfig()
             if (strncmp(tmpArgs, gNeutrinoArgs, 31) != 0)
                 snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", tmpArgs);
         }
-        {
-            // Same truncation guard as the args field above: the UI field is char[32], so only
-            // adopt the typed value when it changed (preserves a longer cfg-set neutrino.elf path).
-            char tmpNPath[sizeof(gNeutrinoPath)];
-            diaGetString(diaConfig, CFG_NEUTRINO_PATH, tmpNPath, sizeof(tmpNPath));
-            if (strncmp(tmpNPath, gNeutrinoPath, 31) != 0)
-                snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", tmpNPath);
-        }
+        diaGetInt(diaConfig, CFG_NEUTRINO_DEVICE, &gNeutrinoDevice);
         {
             // The dialog field is char[32]; only adopt the typed value if it actually changed, so
             // opening+saving General Settings never truncates a longer path stored via the cfg.

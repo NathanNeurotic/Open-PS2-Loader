@@ -548,8 +548,34 @@ int sbFileExists(const char *path)
 // so the bdm + mmce launch paths stay in sync.
 const char *sbResolveNeutrinoPath(void)
 {
-    // A user-set path (General Settings -> Neutrino ELF Path) wins when it exists; otherwise
-    // fall back to the mc0:/mc1: auto-detect candidates below.
+    // Neutrino Device (General Settings): a specific memory card overrides everything -- build
+    // <card>:/neutrino/neutrino.elf and probe the folder-case / leading-slash / .ELF spelling
+    // variants for just that card; return the first that exists (or NULL if that card has none).
+    const char *card = NULL;
+    if (gNeutrinoDevice == NEUTRINO_DEV_MC0)
+        card = "mc0";
+    else if (gNeutrinoDevice == NEUTRINO_DEV_MC1)
+        card = "mc1";
+    if (card != NULL) {
+        static const char *forms[] = {
+            "%s:NEUTRINO/neutrino.elf",
+            "%s:/neutrino/neutrino.elf",
+            "%s:/NEUTRINO/neutrino.elf",
+            "%s:/neutrino/NEUTRINO.ELF",
+            "%s:/NEUTRINO/NEUTRINO.ELF",
+            "%s:NEUTRINO/NEUTRINO.ELF",
+        };
+        static char built[64];
+        for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
+            snprintf(built, sizeof(built), forms[i], card);
+            if (sbFileExists(built))
+                return built;
+        }
+        return NULL;
+    }
+
+    // Auto: a legacy custom path (settings_riptopl.cfg "neutrino_path") wins when it exists;
+    // otherwise fall back to the mc0:/mc1: auto-detect candidates below.
     if (gNeutrinoPath[0] != '\0' && sbFileExists(gNeutrinoPath))
         return gNeutrinoPath;
 

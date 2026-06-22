@@ -165,9 +165,9 @@ struct UIItem diaConfig[] = {
     {UI_STRING, CFG_NEUTRINO_ARGS, 1, 1, _STR_HINT_NEUTRINO_ARGS, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_PATH}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_DEVICE}}},
     {UI_SPACER},
-    {UI_STRING, CFG_NEUTRINO_PATH, 1, 1, _STR_HINT_NEUTRINO_PATH, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_ENUM, CFG_NEUTRINO_DEVICE, 1, 1, _STR_HINT_NEUTRINO_DEVICE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_PATH}}},

@@ -208,6 +208,8 @@ extern char gExitPath[256];
 // Extra command-line flags appended to every Neutrino launch
 extern char gNeutrinoArgs[256];
 extern char gNeutrinoPath[256];   // custom neutrino.elf path (General Settings); "" = mc0:/mc1: auto-detect
+enum { NEUTRINO_DEV_AUTO = 0, NEUTRINO_DEV_MC0, NEUTRINO_DEV_MC1 }; // Neutrino Device picker values
+extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
 extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (General Settings); "" = per-device default
 extern int gBdmaSource;           // BDMA SOURCE device family (VCD_BDMA_SRC_*); persisted in conf
 extern int gBdmaMode;             // BDMA MODE mirrored from the mc?:/POPSTARTER/ marker (VCD_BDMA_*)

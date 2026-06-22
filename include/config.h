@@ -95,6 +95,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_PS2LOGO              "ps2logo"
 #define CONFIG_OPL_NEUTRINO_ARGS        "neutrino_args"
 #define CONFIG_OPL_NEUTRINO_PATH        "neutrino_path"
+#define CONFIG_OPL_NEUTRINO_DEVICE      "neutrino_device"
 #define CONFIG_OPL_POPSTARTER_PATH      "popstarter_path"
 #define CONFIG_OPL_BDMA_SOURCE          "bdma_source"
 #define CONFIG_OPL_WRITE_POPS_NET       "write_popstarter_net"

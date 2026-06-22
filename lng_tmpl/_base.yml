@@ -782,6 +782,10 @@ gui_strings:
   string: Neutrino ELF Path
 - label: HINT_NEUTRINO_PATH
   string: Full path to neutrino.elf (e.g. mc0:NEUTRINO/neutrino.elf). Blank = auto-detect on mc0/mc1.
+- label: NEUTRINO_DEVICE
+  string: Neutrino Device
+- label: HINT_NEUTRINO_DEVICE
+  string: Memory card holding neutrino.elf (in a NEUTRINO/ or neutrino/ folder). Auto scans mc0 then mc1.
 - label: POPSTARTER_PATH
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH
