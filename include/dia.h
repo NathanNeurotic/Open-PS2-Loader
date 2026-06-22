@@ -44,8 +44,6 @@ struct UIItem
     int id; // id of this item
     unsigned char enabled;
     unsigned char visible;
-    // UI_STRING: render a dim "Default" when blank (for fields with a built-in fallback)
-    unsigned char showDefaultWhenEmpty;
     short int hintId;     // shown if not NULL
     short int fixedWidth; // 0: no fixed width, >0: width in pixels, <0: width in %
     short int fixedHeight;
@@ -84,6 +82,11 @@ struct UIItem
             unsigned char b;
         } colourvalue;
     };
+
+    // Placed AFTER the union: dialogs.c's UI widgets use positional initializers that stop at the
+    // union, so a field here stays default-0 (no initializer breakage) and is set at runtime via
+    // diaSetShowDefaultWhenEmpty(). UI_STRING: render a dim "Default" when blank (fallback fields).
+    unsigned char showDefaultWhenEmpty;
 };
 
 /// Dialog display
