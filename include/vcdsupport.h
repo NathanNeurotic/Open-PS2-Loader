@@ -84,6 +84,7 @@ enum {
     VCD_BDMA_USBEXFAT,  // USB exFAT
     VCD_BDMA_MX4SIO,    // MX4SIO exFAT
     VCD_BDMA_MMCE,      // MMCE exFAT
+    VCD_BDMA_ATA,       // internal ATA HDD exFAT (BDMAssault)
     VCD_BDMA_MODE_COUNT
 };
 // "BDMA SOURCE": which device family holds the user-provided variant files in its POPS/ folder.

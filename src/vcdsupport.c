@@ -380,7 +380,7 @@ int vcdSafeWriteFile(const char *dstPath, const void *buf, int len)
 // name bdma_config.txt with the variant suffix as its single-token contents.)
 
 // MODE -> variant suffix on the loose source files (usbd.irx.<suffix>) AND the marker token.
-static const char *vcdBdmaSuffix[VCD_BDMA_MODE_COUNT] = {"fat32", "usbexfat", "mx4sio", "mmce"};
+static const char *vcdBdmaSuffix[VCD_BDMA_MODE_COUNT] = {"fat32", "usbexfat", "mx4sio", "mmce", "ata"};
 // The two driver files POPStarter loads, equipped onto the MC WITHOUT the .<suffix>.
 static const char *vcdBdmaModule[2] = {"usbd.irx", "usbhdfsd.irx"};
 

@@ -498,7 +498,7 @@ void guiShowConfig()
     // BDMA (BDMAssault exFAT driver) equip. MODE reflects what's ACTUALLY on the card (read the
     // mc?:/POPSTARTER/ marker), so the menu is honest even if POPSLoader or a prior session set it.
     const char *bdmaSourceStrs[] = {_l(_STR_BDMA_SRC_USB), _l(_STR_BDMA_SRC_MX4SIO), _l(_STR_BDMA_SRC_MMCE), NULL};
-    const char *bdmaModeStrs[] = {_l(_STR_BDMA_MODE_FAT32), _l(_STR_BDMA_MODE_USBEXFAT), _l(_STR_BDMA_MODE_MX4SIO), _l(_STR_BDMA_MODE_MMCE), NULL};
+    const char *bdmaModeStrs[] = {_l(_STR_BDMA_MODE_FAT32), _l(_STR_BDMA_MODE_USBEXFAT), _l(_STR_BDMA_MODE_MX4SIO), _l(_STR_BDMA_MODE_MMCE), _l(_STR_BDMA_MODE_ATA), NULL};
     gBdmaMode = vcdReadBdmaMode();
     diaSetEnum(diaConfig, CFG_BDMASOURCE, bdmaSourceStrs);
     diaSetEnum(diaConfig, CFG_BDMAMODE, bdmaModeStrs);

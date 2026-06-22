@@ -70,15 +70,22 @@ copies the right pair onto your memory card when you change the setting:
 
 - **BDMA MODE** — which driver variant POPSTARTER should use: `USB (FAT32)` (none —
   removes the exFAT modules so POPSTARTER falls back to its built-in FAT32 driver),
-  `USB (exFAT)`, `MX4SIO (exFAT)`, or `MMCE (exFAT)`.
+  `USB (exFAT)`, `MX4SIO (exFAT)`, `MMCE (exFAT)`, or `HDD (exFAT)` (the internal ATA
+  HDD via BDMAssault).
 - **BDMA SOURCE** — which device holds the module files in its `POPS` folder: `USB`,
-  `MX4SIO`, or `MMCE`.
+  `MX4SIO`, or `MMCE`. (`USB` scans the whole BDM mass namespace, so it also picks up the
+  files from an internal exFAT HDD.)
 
 When you change either setting, RiptOPL copies the chosen variant's modules from the
 SOURCE device's `POPS` folder onto `mc?:/POPSTARTER/` and records the equipped state in a
 marker file there (compatible with POPSLoader). Nothing is embedded in the loader — you
 provide the module files, so there is no ELF bloat. SMB is network-only, so the BDMA
 equip does not apply to it.
+
+The internal **exFAT HDD** (enable *BDM HDD* in Device Settings) mounts as a normal BDM
+block device, so its PS1 games in `massN:/POPS/` list and launch through the same VCD view
+(press **L3**) as USB/MX4SIO — there's no separate page. Equip the `HDD (exFAT)` BDMA mode
+so POPSTARTER itself can read them off the exFAT volume.
 
 ## 6. PS1 over SMB — network config mirror
 

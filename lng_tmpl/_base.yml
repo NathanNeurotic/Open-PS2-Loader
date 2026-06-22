@@ -806,6 +806,8 @@ gui_strings:
   string: MX4SIO (exFAT)
 - label: BDMA_MODE_MMCE
   string: MMCE (exFAT)
+- label: BDMA_MODE_ATA
+  string: HDD (exFAT)
 - label: BDMA_ERR_SRC
   string: BDMA module files not found on the source device.
 - label: BDMA_ERR_SPACE
