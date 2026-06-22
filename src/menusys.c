@@ -1181,9 +1181,11 @@ void menuRenderMain(void)
         menuRenderElements(&gTheme->favsMainElems, allowItemConfig, renderConfig);
         gTheme->itemsList = gTheme->favsItemsList;
     } else if (vcdViewActive(list->mode)) {
-        // Every VCD listing uses the app-sized display + frame (the apps family).
-        menuRenderElements(&gTheme->appsMainElems, allowItemConfig, renderConfig);
-        gTheme->itemsList = gTheme->appsItemsList;
+        // VCD/PS1 listings render with the vcd family (vcdMain*). Each slot falls back at parse time
+        // to appsMain* (square box) then main*, so a theme with no vcdMain still gets the square VCD
+        // look. VCD is a view, not a tab -- the list reuses the device's own (game) list.
+        menuRenderElements(&gTheme->vcdMainElems, allowItemConfig, renderConfig);
+        gTheme->itemsList = gTheme->gamesItemsList;
     } else if (list->mode == APP_MODE) {
         menuRenderElements(&gTheme->appsMainElems, allowItemConfig, renderConfig);
         gTheme->itemsList = gTheme->appsItemsList;
@@ -1285,9 +1287,12 @@ void menuRenderInfo(void)
     if (list->mode == FAV_MODE) {
         menuRenderElements(&gTheme->favsInfoElems, 1, itemConfig);
         gTheme->itemsList = gTheme->favsItemsList;
-        // NOTE: VCD view has no info-screen branch on purpose -- VCDs carry game-style metadata
-        // (per-game CFG keyed by the PS1 ID, read by sbPopulateConfig), so they fall through to the
-        // GAME info layout below (rich Title/Genre/cover) even though the LIST uses the app box.
+    } else if (vcdViewActive(list->mode)) {
+        // VCD info uses the vcd family (vcdInfo*). Each slot falls back at parse time to info* (the
+        // GAME info layout), so VCDs keep their rich game-style metadata page (per-game CFG keyed by
+        // the PS1 ID, read by sbPopulateConfig) unless the theme overrides it with vcdInfo blocks.
+        menuRenderElements(&gTheme->vcdInfoElems, 1, itemConfig);
+        gTheme->itemsList = gTheme->gamesItemsList;
     } else if (list->mode == APP_MODE) {
         menuRenderElements(&gTheme->appsInfoElems, 1, itemConfig);
         gTheme->itemsList = gTheme->appsItemsList;

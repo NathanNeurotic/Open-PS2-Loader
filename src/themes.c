@@ -578,6 +578,8 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
     findDuplicate(theme->appsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
     findDuplicate(theme->favsMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
     findDuplicate(theme->favsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->vcdMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->vcdInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
 
     if (cachePattern && !mutableImage->cache) {
         if (type == ELEM_TYPE_ATTRIBUTE_IMAGE)
@@ -1560,6 +1562,8 @@ static void splitDecoratorCoverCache(theme_t *theme, theme_element_t *list)
     replaceSharedCoverCache(theme, &theme->appsInfoElems, sourceCache, replacementCache, &replacementAssigned);
     replaceSharedCoverCache(theme, &theme->favsMainElems, sourceCache, replacementCache, &replacementAssigned);
     replaceSharedCoverCache(theme, &theme->favsInfoElems, sourceCache, replacementCache, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->vcdMainElems, sourceCache, replacementCache, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->vcdInfoElems, sourceCache, replacementCache, &replacementAssigned);
 
     if (!replacementAssigned)
         cacheDestroyCache(replacementCache);
@@ -1590,6 +1594,7 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     validateBackgroundElems(themePath, themeConfig, theme, &theme->mainElems, &theme->infoElems);
     validateBackgroundElems(themePath, themeConfig, theme, &theme->appsMainElems, &theme->appsInfoElems);
     validateBackgroundElems(themePath, themeConfig, theme, &theme->favsMainElems, &theme->favsInfoElems);
+    validateBackgroundElems(themePath, themeConfig, theme, &theme->vcdMainElems, &theme->vcdInfoElems);
 
     // 2. check we have a valid ItemsList element, and link its decorator to the target element
     validateItemsList(themePath, themeConfig, theme, theme->gamesItemsList, &theme->mainElems);
@@ -1608,6 +1613,8 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     clampSelectedCoverCaches(theme, &theme->appsInfoElems);
     clampSelectedCoverCaches(theme, &theme->favsMainElems);
     clampSelectedCoverCaches(theme, &theme->favsInfoElems);
+    clampSelectedCoverCaches(theme, &theme->vcdMainElems);
+    clampSelectedCoverCaches(theme, &theme->vcdInfoElems);
 }
 
 static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, const char *type, const char *name)
@@ -1754,6 +1761,8 @@ static void thmFree(theme_t *theme)
         freeGUIElems(&theme->appsInfoElems);
         freeGUIElems(&theme->favsMainElems);
         freeGUIElems(&theme->favsInfoElems);
+        freeGUIElems(&theme->vcdMainElems);
+        freeGUIElems(&theme->vcdInfoElems);
 
         // free textures
         GSTEXTURE *texture;
@@ -1889,6 +1898,10 @@ static void thmLoad(const char *themePath)
     newT->favsMainElems.last = NULL;
     newT->favsInfoElems.first = NULL;
     newT->favsInfoElems.last = NULL;
+    newT->vcdMainElems.first = NULL;
+    newT->vcdMainElems.last = NULL;
+    newT->vcdInfoElems.first = NULL;
+    newT->vcdInfoElems.last = NULL;
     newT->gameCacheCount = 0;
     newT->itemsList = NULL;
     newT->gamesItemsList = NULL;
@@ -1980,6 +1993,20 @@ static void thmLoad(const char *themePath)
         }
     }
 
+    // VCD/PS1 view main family: vcdMain<j> override, else fall back to appsMain<j> (the square box),
+    // else main<j>. The apps fallback means a theme that defines no vcdMain still gets the square VCD
+    // look it had before this family existed. No ItemsList slot (VCD reuses gamesItemsList).
+    for (j = 0; j < i; j++) {
+        snprintf(path, sizeof(path), "vcdMain%d", j);
+        if (addGUIElem(themePath, themeConfig, newT, &newT->vcdMainElems, NULL, path))
+            continue;
+        snprintf(path, sizeof(path), "appsMain%d", j);
+        if (addGUIElem(themePath, themeConfig, newT, &newT->vcdMainElems, NULL, path))
+            continue;
+        snprintf(path, sizeof(path), "main%d", j);
+        addGUIElem(themePath, themeConfig, newT, &newT->vcdMainElems, NULL, path);
+    }
+
     i = 1;
     snprintf(path, sizeof(path), "info0");
     while (addGUIElem(themePath, themeConfig, newT, &newT->infoElems, NULL, path))
@@ -2005,6 +2032,18 @@ static void thmLoad(const char *themePath)
         else {
             snprintf(path, sizeof(path), "info%d", j);
             addGUIElem(themePath, themeConfig, newT, &newT->favsInfoElems, NULL, path);
+        }
+    }
+
+    // VCD/PS1 view info family: vcdInfo<j> override, else fall back to info<j>.
+    for (j = 0; j < i; j++) {
+        snprintf(path, sizeof(path), "vcdInfo%d", j);
+
+        if (addGUIElem(themePath, themeConfig, newT, &newT->vcdInfoElems, NULL, path))
+            continue;
+        else {
+            snprintf(path, sizeof(path), "info%d", j);
+            addGUIElem(themePath, themeConfig, newT, &newT->vcdInfoElems, NULL, path);
         }
     }
 

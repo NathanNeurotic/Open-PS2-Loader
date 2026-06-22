@@ -38,11 +38,27 @@ mostly just write the indented form above.
 
 ### Block families
 
-| Family | Drawn on | Notes |
+Element names carry a **family prefix** + an index (`<family>Main<N>` / `<family>Info<N>`). Each
+family targets one screen/view and is a **per-slot override** of the base `mainN`/`infoN`: for every
+slot the engine looks for the family's block and, if it's absent, falls back down a chain — so you
+override only what differs and inherit the rest.
+
+| Family (main / info) | Drawn on | Per-slot fallback chain |
 |---|---|---|
-| `main0`, `main1`, `main2`, … | The **game/app list** screen | The main browser layout. |
-| `appsMain0`, `appsMain1`, … | The **apps** screen | Per-slot **override** of `mainN`. If `appsMainN` is absent for a slot, the matching `mainN` is used. |
-| `info0`, `info1`, … | The **game info** screen | The details/metadata page. (`appsInfoN` overrides per slot, same as above.) |
+| `main0…` / `info0…` | The **games** list / info — the base layout | *(none — this is the base)* |
+| `appsMain0…` / `appsInfo0…` | The **apps** device list / info | → `mainN` / `infoN` |
+| `favsMain0…` / `favsInfo0…` | The **Favourites** tab list / info | → `mainN` / `infoN` |
+| `vcdMain0…` / `vcdInfo0…` | A device's **PS1/VCD view** (toggle with **L3**) list / info | main: → `appsMainN` → `mainN`  ·  info: → `infoN` |
+
+**The VCD family** (new in this fork) lets PS1/VCD games have their own look. When a device is
+switched to its PS1 `*.VCD` list (press **L3**), its covers render from `vcdMain*` and the info page
+from `vcdInfo*`. Because each `vcdMain` slot falls back to `appsMain` — a **square** box, matching
+PS1 jewel-case art — before `main`, a theme that defines *no* `vcdMain` blocks still shows PS1 games
+in the square apps box. So you only add `vcdMain` blocks to make PS1 covers *differ* from apps;
+`vcdInfo` falls back to the game `info` layout, preserving the rich PS1 metadata page.
+
+> All four families share the cover-art cache (deduplicated by `pattern`) and a VCD view reuses the
+> device's own list element, so adding a family costs no extra VRAM unless you give it distinct art.
 
 ### ⚠ Contiguous numbering rule
 
@@ -267,10 +283,22 @@ appsMain2:
 	overlay2=case_overlay
 	overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
 	overlay_llx=0    overlay_lly=184  overlay_lrx=184  overlay_lry=184
+vcdMain2:
+	type=Coverflow
+	default=cover
+	reflection=1
+	y=239
+	width=184
+	height=184
+	overlay=case
+	overlay2=case_overlay
+	overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
+	overlay_llx=0    overlay_lly=184  overlay_lrx=184  overlay_lry=184
 ```
 
-Apps (and PS1/VCD) covers share the games frame but use a **square** element so the box matches
-their square art, while games stay PS2-case **portrait**. The element `width`/`height` set the box
+Apps and PS1/VCD covers share the games frame but use a **square** element so the box matches
+their square art, while games stay PS2-case **portrait**. The `vcdMain2` block above gives PS1/VCD
+covers their own square element; omit it and PS1 games reuse `appsMain2` (see *Block families*). The element `width`/`height` set the box
 aspect; the overlay corners (full-canvas of those dims) let the cover fill it.
 
 ### Global Coverflow tuning (NOT in the theme)

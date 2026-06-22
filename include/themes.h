@@ -134,6 +134,12 @@ typedef struct theme
     theme_elems_t favsInfoElems;
     theme_element_t *favsItemsList;
 
+    // VCD/PS1 view: a fourth element family parsed like favsMain*/favsInfo* (vcdMain<N> /
+    // vcdInfo<N>, each falling back to main<N>/info<N>). Rendered when a device is in the L3
+    // VCD view; reuses gamesItemsList (no separate ItemsList slot).
+    theme_elems_t vcdMainElems;
+    theme_elems_t vcdInfoElems;
+
     theme_element_t *coverflow;
     int coverflowCoverOffset;
 
