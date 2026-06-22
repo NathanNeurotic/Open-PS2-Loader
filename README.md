@@ -203,13 +203,13 @@ contains and how to pull it.
 
 ## How to use
 
-OPL uses the following directory tree structure across HDD, SMB, and
-USB modes:
+OPL uses the following directory tree structure across all supported devices —
+USB, MMCE, MX4SIO, iLink, SMB, and the internal HDD:
 
 | Folder | Description                                          | Modes       |
 | ------ | ---------------------------------------------------- | ----------- |
-| `CD`   | for games on CD media - i.e. blue-bottom discs       | USB and SMB |
-| `DVD`  | for DVD5 and DVD9 images (if filesystem supports +4gb files) | USB and SMB |
+| `CD`   | for games on CD media - i.e. blue-bottom discs       | All folder devices¹ |
+| `DVD`  | for DVD5 and DVD9 images (if filesystem supports +4gb files) | All folder devices¹ |
 | `VMC`  | Virtual Memory Card images (headline save feature): stored in `VMC/`, typically 8MB to 64MB, then assigned per game via **Game Settings** | all         |
 | `CFG`  | for saving per-game configuration files              | all         |
 | `ART`  | for game art images                                  | all         |
@@ -217,6 +217,8 @@ USB modes:
 | `LNG`  | for translation support                              | all         |
 | `CHT`  | for cheats files                                     | all         |
 | `APPS`  | for ELF files                                       | all         |
+
+¹ **Folder-based devices** — USB, MMCE, MX4SIO, iLink, SMB, and the **exFAT** (BDM) HDD — keep games as files in the `CD`/`DVD` folders. The **APA/PFS** HDD instead stores games as HDLoader partitions (no `CD`/`DVD` folders), while still using `CFG`/`ART`/`VMC`/`THM`/`CHT`/`LNG`/`APPS` under `hdd0:__common/OPL/`.
 
 Per-game settings are stored per title in the `CFG` context. Typical use cases include compatibility toggles, video options (GSM), cheat toggles, and assigning a VMC file from the `VMC` folder to that game.
 
@@ -278,7 +280,7 @@ To begin:
 
 1. Create a text file called `conf_apps.cfg`.
 2. In this file, put the name you want to appear in the list of apps, followed by the "=" sign.
-3. Add the device prefix and ELF path (for example `mass:` for USB, `mc:` for Memory Card), then the file path to the ELF.
+3. Add the device prefix and ELF path (for example `mass:` for USB/MX4SIO/iLink/exFAT-HDD, `mmce:` for MMCE, `mc:` for the Memory Card, or `hdd0:`/`pfs0:` for the APA HDD), then the file path to the ELF.
 
 > NOTE: Enter the exact path and exact letter case. OPL is case-sensitive.
 
