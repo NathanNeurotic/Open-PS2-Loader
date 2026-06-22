@@ -42,6 +42,11 @@ typedef struct
 
     image_texture_t *overlayTexture;
     int overlayTextureLinked;
+
+    // Second overlay layer drawn ON TOP of overlayTexture (the cover composite): the "foliage"
+    // pass over the "plastic" frame, so a box needs no off-centre window shift (graphics-team FR).
+    image_texture_t *overlayTexture2;
+    int overlayTexture2Linked;
 } mutable_image_t;
 
 typedef struct

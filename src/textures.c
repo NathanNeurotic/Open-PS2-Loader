@@ -104,6 +104,7 @@ extern void *case_png;
 extern void *apps_case_png;
 extern void *PS1_png;
 extern void *PS2_png;
+extern void *case_overlay_png;
 
 // Not related to screen size, just to limit at some point
 static int maxSize = 720 * 512 * 4;
@@ -252,6 +253,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {APPS_CASE_OVERLAY, "apps_case", &apps_case_png},
     {PS1_SYSTEM, "PS1", &PS1_png}, // #System console glyphs (FR #49); names match the #System values
     {PS2_SYSTEM, "PS2", &PS2_png},
+    {CASE_OVERLAY2, "case_overlay", &case_overlay_png}, // b2 foliage layer (two-layer frame)
 };
 
 int texLookupInternalTexId(const char *name)

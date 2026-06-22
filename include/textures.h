@@ -114,6 +114,7 @@ enum INTERNAL_TEXTURE {
     APPS_CASE_OVERLAY,
     PS1_SYSTEM, // #System console glyph (PS1) -- FR #49
     PS2_SYSTEM, // #System console glyph (PS2)
+    CASE_OVERLAY2, // second overlay layer (b2 "foliage") drawn over the case (b1) -- graphics-team two-layer frame
 
     TEXTURES_COUNT
 };

@@ -127,10 +127,17 @@ Image-type elements (`StaticImage`, `GameImage`, `Background`, `AttributeImage`,
 | `overlay_urx`,`overlay_ury` | int | Upper-right corner. |
 | `overlay_llx`,`overlay_lly` | int | Lower-left corner. |
 | `overlay_lrx`,`overlay_lry` | int | Lower-right corner. |
+| `overlay2` | asset name | An optional **second** overlay painted over `overlay`. Shares the element position/size; takes no corners of its own. |
 
 The overlay corners describe where the *inner* art sits within the overlay frame, in the
 element's own coordinate space (i.e. relative to `width`/`height`). They scale with the drawn
 element, so the window tracks the art at any size.
+
+`overlay2` stacks a second layer in the draw order **cover → `overlay` → `overlay2`**. Use it to
+split a frame into parts that sit over a *centred* cover (e.g. a transparent plastic case in
+`overlay` and foliage/decoration in `overlay2`), avoiding the off-centre window shift a single
+asymmetric overlay would otherwise need. Both layers are shared across elements that name the same
+asset, so a second layer costs no extra VRAM when reused.
 
 ---
 
@@ -205,7 +212,7 @@ The engine looks up an image named `<attribute>_<value>` (built-in or theme file
 You can point `default=`/`overlay=` at any of OPL's embedded textures (no file needed):
 
 - **Covers / art:** `cover`, `coverapp`, `disc`, `screen`, `screens` (overlay), `missing`
-- **Case overlays:** `case` (games), `apps_case` (apps)
+- **Case overlays:** `case` (the shared frame, layer 1), `case_overlay` (layer 2, drawn over `case`), `apps_case` (legacy apps-only frame)
 - **Device icons:** `usb`, `mmce`, `hdd`, `eth`, `app`, `usb_bd`, `ilk_bd`, `m4s_bd`, `hdd_bd`
 - **BDM indicators:** `Index_0` … `Index_4`
 - **Buttons:** `cross`, `circle`, `triangle`, `square`, `left`, `right`, `select`, `start`
@@ -243,22 +250,28 @@ main2:
 	default=cover
 	reflection=1
 	y=197
-	width=256
+	width=184
 	height=256
 	overlay=case
-	overlay_ulx=0    overlay_uly=0    overlay_urx=186  overlay_ury=0
-	overlay_llx=0    overlay_lly=256  overlay_lrx=186  overlay_lry=256
+	overlay2=case_overlay
+	overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
+	overlay_llx=0    overlay_lly=256  overlay_lrx=184  overlay_lry=256
 appsMain2:
 	type=Coverflow
 	default=coverapp
 	reflection=1
 	y=239
-	width=256
-	height=256
-	overlay=apps_case
-	overlay_ulx=0    overlay_uly=0    overlay_urx=186  overlay_ury=0
-	overlay_llx=0    overlay_lly=186  overlay_lrx=186  overlay_lry=186
+	width=184
+	height=184
+	overlay=case
+	overlay2=case_overlay
+	overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
+	overlay_llx=0    overlay_lly=184  overlay_lrx=184  overlay_lry=184
 ```
+
+Apps (and PS1/VCD) covers share the games frame but use a **square** element so the box matches
+their square art, while games stay PS2-case **portrait**. The element `width`/`height` set the box
+aspect; the overlay corners (full-canvas of those dims) let the cover fill it.
 
 ### Global Coverflow tuning (NOT in the theme)
 

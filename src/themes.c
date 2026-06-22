@@ -362,7 +362,7 @@ static void initAttributeText(const char *themePath, config_set_t *themeConfig, 
 
 // Common functions for Image ///////////////////////////////////////////////////////////////////////////////////////////////
 
-static void findDuplicate(theme_element_t *first, const char *cachePattern, const char *defaultTexture, const char *overlayTexture, mutable_image_t *target)
+static void findDuplicate(theme_element_t *first, const char *cachePattern, const char *defaultTexture, const char *overlayTexture, const char *overlayTexture2, mutable_image_t *target)
 {
     theme_element_t *elem = first;
     while (elem) {
@@ -385,6 +385,12 @@ static void findDuplicate(theme_element_t *first, const char *cachePattern, cons
                 target->overlayTexture = source->overlayTexture;
                 target->overlayTextureLinked = 1;
                 LOG("THEMES Re-using the overlay texture for %s\n", overlayTexture);
+            }
+
+            if (overlayTexture2 && source->overlayTexture2 && !strcmp(overlayTexture2, source->overlayTexture2->name)) {
+                target->overlayTexture2 = source->overlayTexture2;
+                target->overlayTexture2Linked = 1;
+                LOG("THEMES Re-using the overlay2 texture for %s\n", overlayTexture2);
             }
         }
 
@@ -512,6 +518,9 @@ static void endMutableImage(struct theme_element *elem)
         if (mutableImage->overlayTexture && !mutableImage->overlayTextureLinked)
             freeImageTexture(mutableImage->overlayTexture);
 
+        if (mutableImage->overlayTexture2 && !mutableImage->overlayTexture2Linked)
+            freeImageTexture(mutableImage->overlayTexture2);
+
         free(mutableImage);
     }
 
@@ -530,6 +539,8 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
     mutableImage->defaultTextureLinked = 0;
     mutableImage->overlayTexture = NULL;
     mutableImage->overlayTextureLinked = 0;
+    mutableImage->overlayTexture2 = NULL;
+    mutableImage->overlayTexture2Linked = 0;
 
     char elemProp[64];
 
@@ -555,12 +566,18 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
         configGetStr(themeConfig, elemProp, &overlayTexture);
     }
 
-    findDuplicate(theme->mainElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
-    findDuplicate(theme->infoElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
-    findDuplicate(theme->appsMainElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
-    findDuplicate(theme->appsInfoElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
-    findDuplicate(theme->favsMainElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
-    findDuplicate(theme->favsInfoElems.first, cachePattern, defaultTexture, overlayTexture, mutableImage);
+    const char *overlayTexture2 = NULL;
+    if (type != ELEM_TYPE_BACKGROUND) {
+        snprintf(elemProp, sizeof(elemProp), "%s_overlay2", name);
+        configGetStr(themeConfig, elemProp, &overlayTexture2);
+    }
+
+    findDuplicate(theme->mainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->infoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->appsMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->appsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
 
     if (cachePattern && !mutableImage->cache) {
         if (type == ELEM_TYPE_ATTRIBUTE_IMAGE)
@@ -579,6 +596,11 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
     if (overlayTexture && !mutableImage->overlayTexture)
         mutableImage->overlayTexture = initImageTexture(themePath, themeConfig, name, overlayTexture, 1);
 
+    // overlay2 is drawn over the cover composite (plain rmDrawPixmap), so it needs no cover-window
+    // corners -- load it as a plain texture (isOverlay=0).
+    if (overlayTexture2 && !mutableImage->overlayTexture2)
+        mutableImage->overlayTexture2 = initImageTexture(themePath, themeConfig, name, overlayTexture2, 0);
+
     return mutableImage;
 }
 
@@ -591,6 +613,8 @@ static void drawStaticImage(struct menu_list *menu, struct submenu_list *item, c
         rmDrawOverlayPixmap(&staticImage->overlayTexture->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol,
                             &staticImage->defaultTexture->source, staticImage->overlayTexture->upperLeft_x, staticImage->overlayTexture->upperLeft_y, staticImage->overlayTexture->upperRight_x, staticImage->overlayTexture->upperRight_y,
                             staticImage->overlayTexture->lowerLeft_x, staticImage->overlayTexture->lowerLeft_y, staticImage->overlayTexture->lowerRight_x, staticImage->overlayTexture->lowerRight_y, 0);
+        if (staticImage->overlayTexture2)
+            rmDrawPixmap(&staticImage->overlayTexture2->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
     } else
         rmDrawPixmap(&staticImage->defaultTexture->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
 }
@@ -711,6 +735,8 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
             rmDrawOverlayPixmap(&gameImage->overlayTexture->source, drawElem->posX, drawElem->posY, drawElem->aligned, drawElem->width, drawElem->height, drawElem->scaled, gDefaultCol,
                                 texture, gameImage->overlayTexture->upperLeft_x, gameImage->overlayTexture->upperLeft_y, gameImage->overlayTexture->upperRight_x, gameImage->overlayTexture->upperRight_y,
                                 gameImage->overlayTexture->lowerLeft_x, gameImage->overlayTexture->lowerLeft_y, gameImage->overlayTexture->lowerRight_x, gameImage->overlayTexture->lowerRight_y, 0);
+            if (gameImage->overlayTexture2)
+                rmDrawPixmap(&gameImage->overlayTexture2->source, drawElem->posX, drawElem->posY, drawElem->aligned, drawElem->width, drawElem->height, drawElem->scaled, gDefaultCol, 0);
         } else
             rmDrawPixmap(texture, drawElem->posX, drawElem->posY, drawElem->aligned, drawElem->width, drawElem->height, drawElem->scaled, gDefaultCol, 0);
 
@@ -942,6 +968,8 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
             rmDrawOverlayPixmap(&ov->source, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor,
                                 texture, ov->upperLeft_x * drawW / csw, ov->upperLeft_y * drawH / csh, ov->upperRight_x * drawW / csw, ov->upperRight_y * drawH / csh,
                                 ov->lowerLeft_x * drawW / csw, ov->lowerLeft_y * drawH / csh, ov->lowerRight_x * drawW / csw, ov->lowerRight_y * drawH / csh, elem->reflection);
+            if (cimg->overlayTexture2)
+                rmDrawPixmap(&cimg->overlayTexture2->source, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
         } else {
             rmDrawPixmap(texture, posX, posY, ALIGN_CENTER, drawW, drawH, SCALING_RATIO, coverColor, elem->reflection);
         }
@@ -1005,6 +1033,8 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
                         rmDrawOverlayPixmap(&attributeImage->overlayTexture->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol,
                                             texture, attributeImage->overlayTexture->upperLeft_x, attributeImage->overlayTexture->upperLeft_y, attributeImage->overlayTexture->upperRight_x, attributeImage->overlayTexture->upperRight_y,
                                             attributeImage->overlayTexture->lowerLeft_x, attributeImage->overlayTexture->lowerLeft_y, attributeImage->overlayTexture->lowerRight_x, attributeImage->overlayTexture->lowerRight_y, 0);
+                        if (attributeImage->overlayTexture2)
+                            rmDrawPixmap(&attributeImage->overlayTexture2->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
                     } else
                         rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
 
