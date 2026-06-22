@@ -165,10 +165,12 @@ and ideas from [rickgaiser's OPL](https://github.com/rickgaiser/Open-PS2-Loader)
 With special and sincere thanks to:
 
 - **Wolf3s** and **KrahJohlito** — the driving force behind **uOPL / wOPL**, where much of
-  this fork's modern functionality originated. The Neutrino external-core loader, the MMCE
-  work, and the Coverflow and Favourites interfaces are all reimplementations of features
-  they designed and pioneered together. We learned an enormous amount reading their code, and
-  this fork is as much a tribute to it as anything else. Thank you both.
+  this fork's modern functionality originated. The Neutrino external-core loader and the
+  Coverflow and Favourites interfaces are all reimplementations of features they designed and
+  pioneered together. We learned an enormous amount reading their code, and this fork is as
+  much a tribute to it as anything else. Thank you both.
+- **bbsan2k** — for the **MMCE (Memory Card Mass Storage) protocol** that makes SD-via-memory-card
+  loading through the PS2's memory-card slot possible. OPL's MMCE support builds directly on it.
 - **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
 - **Berion** — for the artwork and theme design that has shaped how OPL *looks* for years.
