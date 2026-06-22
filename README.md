@@ -80,7 +80,7 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 
 - **MMCE support:** OPL supports MMCE devices using the Memory Card Mass Storage protocol for SD-based loading through the Memory Card slot.
 - **MX4SIO support:** OPL supports MX4SIO adapters for SD-based loading through the Memory Card slot. See the **USB/MMCE/MX4SIO/iLink** section for filesystem and layout guidance.
-- **Internal HDD exFAT support:** Internal HDD loading supports exFAT in addition to APA/PFS, including GPT partitioning for large disks. See the **HDD** section for formatting and fragmentation guidance.
+- **Internal HDD exFAT support:** the internal ATA HDD can be loaded as **exFAT** — mounted through the Block Device Manager (BDMAssault / "BDMA") into the same `massN:` namespace as USB/MX4SIO — in addition to APA/PFS, including GPT partitioning for large disks, for PS2 **and** PS1 (POPSTARTER) games. See the **HDD** section for formatting, the BDMA equip, and fragmentation guidance.
 - **Themes:** Place theme assets in the `THM` folder, then select and apply themes from OPL settings. This fork ships a built-in **`<Coverflow>`** cover-carousel theme (the default) — see the [Theme Engine reference](docs/THEME_ENGINE.md) to author your own themes.
 - **Cheats / PS2RD:** OPL supports PS2RD `.cht` cheat files from the `CHT` folder, with both auto-apply and launch-time selection modes.
 - **Pad emulation (DS3/DS4):** Builds that include PADEMU allow DualShock 3 and DualShock 4 pad emulation support.
@@ -121,7 +121,8 @@ This build layers several features on top of upstream OPL:
   A **Default game view** setting (**Both** / **ISO** / **VCD**, default **Both**) can lock a page
   to one type, and Favourites follow the active view. PS1 titles boot through **POPSTARTER** only
   (never OPL's core, never Neutrino — the Loader Core selector is inert for them). Works on USB /
-  MMCE / MX4SIO / iLink / SMB **and the internal HDD** (APA `__.POPS*` partitions). See
+  MMCE / MX4SIO / iLink / SMB **and the internal HDD** — both APA (`__.POPS*` partitions) and
+  **exFAT** (BDMA; PS1 games in `massN:/POPS/`). See
   **[docs/VCD.md](docs/VCD.md)**.
 - **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —
   under Neutrino it greys the panels Neutrino ignores (GSM, Cheats, PADEMU, OSD Language and the
@@ -251,8 +252,10 @@ For PS2, 48-bit LBA internal HDDs are supported. The HDD can be formatted as:
 - APA partitioning with PFS filesystem (up to 2TB)
 	- OPL will create the `+OPL` partition on the HDD.  To avoid this, you can create a text file at the location `hdd0:__common:pfs:OPL/conf_hdd.txt` that contains the preferred partition name (for example `__common`).
 - MBR partitioning (up to 2TB) or GPT partitioning (unlimited) with the exFAT filesystem
+	- Enable **BDM HDD** in **Device Settings**. The exFAT HDD then mounts through the Block Device Manager (BDMAssault / "BDMA") into the shared `massN:` namespace — the same path as USB/MX4SIO — and appears as an **HDD (exFAT)** games list with the HDD icon.
 	- Files should be added contiguously or synchronously to avoid fragmentation. For example, drag and drop files one at a time, or ensure that files are added sequentially.
 	- When formatting drives for the exFAT filesystem, please make sure the `Allocation unit size` is set to `Default`.
+	- **PS1 games:** PS1 `*.VCD` titles in the HDD's `POPS/` folder list under the **L3** VCD view like any other device. To boot them, equip **BDMA Mode → HDD (exFAT)** in **General Settings** so POPSTARTER can read the exFAT volume. See **[docs/VCD.md](docs/VCD.md)**.
 
 ## APPS
 
