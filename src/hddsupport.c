@@ -738,7 +738,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
         snprintf(apaPart, sizeof(apaPart), "%s", game->partition_name);
-        neutrinoPath = sbFileExists(NEUTRINO_PATH) ? NEUTRINO_PATH : (sbFileExists(NEUTRINO_ALT_PATH) ? NEUTRINO_ALT_PATH : NULL);
+        neutrinoPath = sbResolveNeutrinoPath(); // honor a custom Neutrino ELF path + all mc0/mc1 spelling variants (parity with BDM/MMCE; HDD used to probe only the two macros)
         if (isZSO) {
             guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
             coreLoader = 0;
