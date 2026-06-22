@@ -44,6 +44,8 @@ struct UIItem
     int id; // id of this item
     unsigned char enabled;
     unsigned char visible;
+    // UI_STRING: render a dim "Default" when blank (for fields with a built-in fallback)
+    unsigned char showDefaultWhenEmpty;
     short int hintId;     // shown if not NULL
     short int fixedWidth; // 0: no fixed width, >0: width in pixels, <0: width in %
     short int fixedHeight;
@@ -89,6 +91,7 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
 void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFocus);
 int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title);
 void diaSetEnabled(struct UIItem *ui, int id, int enabled);
+void diaSetShowDefaultWhenEmpty(struct UIItem *ui, int id, int show);
 void diaSetVisible(struct UIItem *ui, int id, int visible);
 void diaSetItemType(struct UIItem *ui, int id, UIItemType type);
 int diaGetInt(struct UIItem *ui, int id, int *value);

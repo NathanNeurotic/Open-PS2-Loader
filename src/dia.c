@@ -504,6 +504,10 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
         case UI_STRING: {
             if (strlen(item->stringvalue.text))
                 *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, item->stringvalue.text, txtcol) - x;
+            else if (item->showDefaultWhenEmpty)
+                // Field has a built-in fallback when blank -- show a dim "Default" so it reads as
+                // intentional, not unset. The stored value stays empty, so the fallback still fires.
+                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, _l(_STR_DEFAULT), GS_SETREG_RGBA(0x60, 0x60, 0x60, 0x80)) - x;
             else
                 *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, _l(_STR_NOT_SET), txtcol) - x;
             break;
@@ -1050,6 +1054,16 @@ void diaSetEnabled(struct UIItem *ui, int id, int enabled)
         return;
 
     item->enabled = enabled;
+}
+
+void diaSetShowDefaultWhenEmpty(struct UIItem *ui, int id, int show)
+{
+    struct UIItem *item = diaFindByID(ui, id);
+
+    if (!item)
+        return;
+
+    item->showDefaultWhenEmpty = show;
 }
 
 void diaSetVisible(struct UIItem *ui, int id, int visible)

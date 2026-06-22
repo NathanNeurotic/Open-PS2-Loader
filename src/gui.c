@@ -494,6 +494,11 @@ void guiShowConfig()
     diaSetString(diaConfig, CFG_NEUTRINO_ARGS, gNeutrinoArgs);
     diaSetString(diaConfig, CFG_NEUTRINO_PATH, gNeutrinoPath);
     diaSetString(diaConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
+    // These path fields auto-resolve a built-in default when blank, so show a dim "Default"
+    // placeholder rather than "<not set>" -- the empty value (and thus the fallback) is kept.
+    diaSetShowDefaultWhenEmpty(diaConfig, CFG_EXITTO, 1);
+    diaSetShowDefaultWhenEmpty(diaConfig, CFG_NEUTRINO_PATH, 1);
+    diaSetShowDefaultWhenEmpty(diaConfig, CFG_POPSTARTER_PATH, 1);
 
     // BDMA (BDMAssault exFAT driver) equip. MODE reflects what's ACTUALLY on the card (read the
     // mc?:/POPSTARTER/ marker), so the menu is honest even if POPSLoader or a prior session set it.
@@ -1086,6 +1091,7 @@ void guiShowAudioConfig(void)
     diaSetInt(diaAudioConfig, CFG_BOOT_SND_VOLUME, gBootSndVolume);
     diaSetInt(diaAudioConfig, CFG_BGM_VOLUME, gBGMVolume);
     diaSetString(diaAudioConfig, CFG_DEFAULT_BGM_PATH, gDefaultBGMPath);
+    diaSetShowDefaultWhenEmpty(diaAudioConfig, CFG_DEFAULT_BGM_PATH, 1); // blank -> the theme's own bgm
 
     diaExecuteDialog(diaAudioConfig, -1, 1, guiAudioUpdater);
 }

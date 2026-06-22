@@ -226,6 +226,8 @@ gui_strings:
   string: Password
 - label: NOT_SET
   string: <not set>
+- label: DEFAULT
+  string: Default
 - label: ADDRESS_TYPE
   string: Address Type
 - label: ADDR_TYPE_IP
