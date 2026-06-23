@@ -15,10 +15,10 @@
 #include <unistd.h>
 #include <sys/stat.h> // mkdir (POSIX, used like util.c / OSDHistory.c)
 
-#include "include/opl.h"      // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
-#include "include/system.h"   // POPS_FOLDER
-#include "include/textures.h" // texDiscoverLoad (VCD cover-art fallback)
-#include "include/ioman.h"    // LOG (BDMA equip probe trace)
+#include "include/opl.h"        // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
+#include "include/system.h"     // POPS_FOLDER
+#include "include/textures.h"   // texDiscoverLoad (VCD cover-art fallback)
+#include "include/ioman.h"      // LOG (BDMA equip probe trace)
 #include "include/bdmsupport.h" // BDM_TYPE_* + bdmGetDeviceRootByType (BDMA source differentiation)
 #include "include/vcdsupport.h"
 
@@ -487,9 +487,8 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         cands[nc++] = "mmce0:/";
         cands[nc++] = "mmce1:/";
     } else {
-        int wantType = (source == VCD_BDMA_SRC_MX4SIO) ? BDM_TYPE_SDC
-                       : (source == VCD_BDMA_SRC_HDD)  ? BDM_TYPE_ATA
-                                                       : BDM_TYPE_USB;
+        int wantType = (source == VCD_BDMA_SRC_MX4SIO) ? BDM_TYPE_SDC : (source == VCD_BDMA_SRC_HDD) ? BDM_TYPE_ATA :
+                                                                                                       BDM_TYPE_USB;
         if (bdmGetDeviceRootByType(wantType, bdmRoot, sizeof(bdmRoot)))
             cands[nc++] = bdmRoot;
     }
