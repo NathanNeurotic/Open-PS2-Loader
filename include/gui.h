@@ -165,6 +165,10 @@ void guiShowGameID(const char *startup);
  */
 void guiRenderGreetingScreen(void);
 
+/** Sets the boot-splash status line shown under the logo by guiRenderGreeting() during boot.
+ *  Pass NULL to clear. Main-thread / boot-time only. (#297) */
+void guiSetBootStatus(const char *status);
+
 void guiWarning(const char *text, int count);
 
 int guiConfirmVideoMode(void);

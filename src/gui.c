@@ -54,6 +54,11 @@ static int showLngPopup;
 
 static clock_t popupTimer;
 
+// Boot-splash status line (#297, fork-native): set via guiSetBootStatus(), drawn under the logo by
+// guiRenderGreeting() during the boot splash / intro fade. Main-thread / boot-time only.
+static char gBootStatus[64] = {0};
+static int gBootStatusActive = 0;
+
 // forward decl.
 static void guiShow();
 
@@ -1405,6 +1410,19 @@ static void guiDrawBusy(int alpha)
     }
 }
 
+// Boot-splash status line setter (#297). Pass NULL to clear. Main-thread / boot-time only; the field
+// is read only by guiRenderGreeting on the same thread, so no locking is needed.
+void guiSetBootStatus(const char *status)
+{
+    if (status == NULL) {
+        gBootStatus[0] = '\0';
+        gBootStatusActive = 0;
+        return;
+    }
+    snprintf(gBootStatus, sizeof(gBootStatus), "%s", status);
+    gBootStatusActive = 1;
+}
+
 static void guiRenderGreeting(int alpha)
 {
     u64 mycolor = GS_SETREG_RGBA(0x1C, 0x1C, 0x1C, alpha);
@@ -1421,6 +1439,15 @@ static void guiRenderGreeting(int alpha)
         mycolor = GS_SETREG_RGBA(0x80, 0x80, 0x80, alpha);
         rmDrawPixmap(logo, screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, logo->Width, logo->Height, SCALING_RATIO, mycolor, 0);
     }
+
+    // Fork-native boot info (#297): the RiptOPL version + a live status line, faded with the splash.
+    // Reuses gTheme->fonts[0] (always-loaded built-in) and the same OPL_VERSION the About dialog shows.
+    u64 infoColor = GS_SETREG_RGBA(0x80, 0x80, 0x80, alpha);
+    char verLine[48];
+    snprintf(verLine, sizeof(verLine), "RiptOPL %s", OPL_VERSION);
+    fntRenderString(gTheme->fonts[0], screenWidth >> 1, (gTheme->usedHeight >> 1) + 80, ALIGN_CENTER, 0, 0, verLine, infoColor);
+    if (gBootStatusActive && gBootStatus[0] != '\0')
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight - 40, ALIGN_CENTER, 0, 0, gBootStatus, infoColor);
 }
 
 // Draw one standalone boot-splash frame: the same greeting guiIntroLoop() shows,
@@ -2384,6 +2411,16 @@ void guiManageCheats(void)
                 gCheats[selectedCheat].enabled = !gCheats[selectedCheat].enabled;
         }
 
+        if (getKeyOn(KEY_SQUARE)) {
+            // Disable All: clear every cheat's enabled flag in one press. Skip the mastercode (the
+            // per-cheat toggle can't touch it either -- it is the engine enabler, not a cheat).
+            for (int i = 0; i < cheatCount; i++) {
+                if (!(strncasecmp(gCheats[i].name, "mastercode", 10) == 0 || strncasecmp(gCheats[i].name, "master code", 11) == 0))
+                    gCheats[i].enabled = 0;
+            }
+            sfxPlay(SFX_CURSOR);
+        }
+
         if (getKeyOn(KEY_START))
             terminate = 1;
 
@@ -2419,6 +2456,7 @@ void guiManageCheats(void)
         }
 
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_SELECT, gTheme->fonts[0], 70, 417, gTheme->selTextColor);
+        guiDrawIconAndText(SQUARE_ICON, _STR_DISABLE_ALL, gTheme->fonts[0], 270, 417, gTheme->selTextColor);
         guiDrawIconAndText(START_ICON, _STR_RUN, gTheme->fonts[0], 500, 417, gTheme->selTextColor);
 
         guiEndFrame();

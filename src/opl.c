@@ -528,11 +528,25 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
     }
 }
 
+// Boot-splash status (#297): true only across init()'s synchronous boot device-load, so the
+// in-initAllSupport greeting redraws fire ONLY during boot -- not on a post-boot settings refresh
+// (which runs on the IO thread with the menu showing; an ungated redraw would flash the boot logo).
+static int gBootInProgress = 0;
+
 static void initAllSupport(int force_reinit)
 {
+    guiSetBootStatus(_l(_STR_BOOT_SCANNING_BDM));
+    if (gBootInProgress)
+        guiRenderGreetingScreen();
     bdmEnumerateDevices();
     initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
+    guiSetBootStatus(_l(_STR_BOOT_SCANNING_NET));
+    if (gBootInProgress)
+        guiRenderGreetingScreen();
     initSupport(ethGetObject(0), ETH_MODE, force_reinit || (gNetworkStartup >= ERROR_ETH_SMB_CONN));
+    guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
+    if (gBootInProgress)
+        guiRenderGreetingScreen();
     initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
@@ -2196,16 +2210,21 @@ static void init(void)
     while (!padStatus)
         padStatus = startPads();
     readPads();
+    gBootInProgress = 1; // gate the in-initAllSupport greeting redraws to the boot pass only (#297)
     if (!getKeyPressed(KEY_START)) {
         // Show the boot splash (not guiRenderTextScreen(), which calls guiShow()
         // and would draw the not-yet-ready main menu as a garbled landing page
         // before the intro splash) while the config loads.
+        guiSetBootStatus(_l(_STR_BOOT_LOADING_CONFIG));
         guiRenderGreetingScreen();
         _loadConfig(); // only try to restore config if emergency key is not being pressed
     } else {
         LOG("--- SKIPPING OPL CONFIG LOADING\n");
         applyConfig(-1, -1, 0);
     }
+    guiSetBootStatus(_l(_STR_BOOT_READY));
+    guiRenderGreetingScreen();
+    gBootInProgress = 0;
 
 
     // queue deffered init of sound effects, which will take place after the preceding initialization steps within the queue are complete.
