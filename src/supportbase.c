@@ -1023,7 +1023,8 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     configSetStr(config, CONFIG_ITEM_MEDIA, isPS1 ? "CD" : (game->media == SCECdPS2CD ? "CD" : "DVD"));
     // #DiscType = a single combined console+media token so a theme can show ONE disc glyph that tells
     // PS1-CD from PS2-CD apart (both report #Media=CD, indistinguishable by #Media alone) -- issue #49.
-    // A theme uses AttributeImage attribute=#DiscType + #DiscType_PS1CD.png / _PS2CD.png / _PS2DVD.png.
+    // A disk theme uses AttributeImage attribute=#DiscType + the cover-art naming <value>_<suffix>.png:
+    // PS1CD_#DiscType.png / PS2CD_#DiscType.png / PS2DVD_#DiscType.png (value first, NOT #DiscType_*).
     configSetStr(config, CONFIG_ITEM_DISCTYPE, isPS1 ? "PS1CD" : (game->media == SCECdPS2CD ? "PS2CD" : "PS2DVD"));
 
     configSetStr(config, CONFIG_ITEM_STARTUP, cfgKey); // VCD: keyed by filename (see cfgKey above)

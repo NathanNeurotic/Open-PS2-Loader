@@ -212,22 +212,59 @@ with a `MiB` suffix). Labels are auto-localized; override with `title=`.
 
 ### AttributeImage (badge chosen by value)
 
-The engine looks up an image named `<attribute>_<value>` (built-in or theme file):
+A per-game **attribute** picks which glyph to draw. Where that glyph comes from depends on the theme:
 
-| `attribute=` | Looks up | Examples |
-|---|---|---|
-| `Media` | `Media_<v>` | `Media_CD`, `Media_DVD`, `Media_APP` |
-| `Format` | `Format_<v>` | `Format_ISO`, `Format_ELF`, `Format_HDL` |
-| `Vmode` | `Vmode_<v>` | `Vmode_ntsc`, `Vmode_pal`, `Vmode_multi` |
-| `Aspect` | `Aspect_<v>` | `Aspect_s`, `Aspect_w`, `Aspect_w1`, `Aspect_w2` |
-| `Scan` | `Scan_<v>` | `Scan_480i`, `Scan_480p`, `Scan_720p`, `Scan_1080i`, … |
-| `Players` | `Players_<v>` | `Players_1`, `Players_2`, … |
-| `Rating` | `Rating_<v>` | `Rating_0` … `Rating_5` |
+* **Built-in `<OPL>` theme** (no theme folder) — draws the *embedded* glyph whose internal name equals
+  the value, e.g. `#System=PS2` → the built-in `PS2`, `#Media=CD` → `CD`, `#Format=ISO` → `ISO`.
+  Attributes with no embedded glyph (e.g. `#DiscType`) draw nothing on the built-in theme.
+* **Disk theme** — loads **`<value>_<attribute>.png`** from the theme folder — *value first, then the
+  attribute* (the same `<name>_<suffix>` shape cover art uses, e.g. `<id>_COV.png`). So `#System=PS2`
+  → `PS2_#System.png`, `#Media=CD` → `CD_#Media.png`, `#DiscType=PS2DVD` → `PS2DVD_#DiscType.png`.
 
-**`#DiscType`** *(issue #49)* — a combined console + media attribute with values **`PS1CD`**, **`PS2CD`**,
-**`PS2DVD`**. PS1-CD and PS2-CD both report `#Media=CD`, so a single `#Media` glyph can't tell them apart;
-an `AttributeImage` with `attribute=#DiscType` resolves one glyph per disc kind (same lookup as the
-attributes above). There are no built-in `#DiscType` glyphs — a theme supplies its own.
+> ⚠️ The disk-theme file is **`<value>_<attribute>`**, *not* `<attribute>_<value>`. `PS2DVD_#DiscType.png`
+> is correct; `#DiscType_PS2DVD.png` is never read. (The `#` is a literal character in the filename.)
+
+Metadata attributes OPL sets automatically per game:
+
+| `attribute=` | Value(s) OPL sets | Built-in glyph | Disk-theme file |
+|---|---|---|---|
+| `#System` | `PS1`, `PS2` | `PS1`, `PS2` | `PS1_#System.png`, `PS2_#System.png` |
+| `#Media` | `CD`, `DVD` | `CD`, `DVD`, `APP` | `CD_#Media.png`, `DVD_#Media.png` |
+| `#Format` | `ISO`, `ZSO`, `VCD`, `UL`, `ELF`, `HDL` | same names | `ISO_#Format.png`, `VCD_#Format.png`, … |
+| `#DiscType` | `PS1CD`, `PS2CD`, `PS2DVD` | *(none — supply your own)* | `PS1CD_#DiscType.png`, `PS2CD_#DiscType.png`, `PS2DVD_#DiscType.png` |
+| `#Size` | a byte count *(use with `AttributeText`, renders as `… MiB`)* | — | — |
+
+Compatibility attributes whose value is *already* a full glyph name — `Vmode`, `Aspect`, `Scan`,
+`Players`, `Rating` (e.g. `Vmode_ntsc`, `Aspect_w`, `Scan_480p`, `Rating_3`) — follow the same rules:
+the built-in theme draws the matching embedded glyph, a disk theme uses `<value>_<attribute>.png`.
+
+#### `#DiscType` worked example *(issue #49)*
+
+`#System` says PS1 vs PS2 and `#Media` says CD vs DVD, but PS1-CD and PS2-CD both report `#Media=CD`, so
+one `#Media` glyph can't tell them apart. `#DiscType` collapses console + media into a single token so a
+theme can show **one** disc glyph per kind. There are no built-in `#DiscType` glyphs — a disk theme
+supplies its own. In your theme's `conf_theme.cfg`, add an element to the page you want it on. The
+`mainN` / `infoN` indices must be **contiguous** (the parser stops at the first gap), so use the next
+free number — if your theme already has `main0`…`main8`, add `main9`:
+
+```
+main9:
+	type=AttributeImage
+	attribute=#DiscType
+	x=55
+	y=-252
+	width=32
+	height=16
+```
+
+Then drop three PNGs **in the theme folder, next to `conf_theme.cfg`**:
+
+* `PS1CD_#DiscType.png`
+* `PS2CD_#DiscType.png`
+* `PS2DVD_#DiscType.png`
+
+(Position with `x`/`y`/`width`/`height` — negative `x`/`y` anchor from the right/bottom edge. Copy the
+coordinates from a neighbouring `AttributeImage` such as the `#Media` badge to line it up.)
 
 ---
 
