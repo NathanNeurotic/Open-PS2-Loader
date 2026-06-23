@@ -554,7 +554,7 @@ int sbFileExists(const char *path)
 // Resolve the Neutrino core ELF: probe the install locations users actually use (folder-case
 // and leading-slash variants on mc0/mc1) and return the first that exists, or NULL. Centralised
 // so the bdm + mmce launch paths stay in sync.
-const char *sbResolveNeutrinoPath(void)
+const char *sbResolveNeutrinoPath(const char *activePrefix)
 {
     // Neutrino Device (General Settings): a specific device root overrides everything -- build
     // <root>:/neutrino/neutrino.elf and probe the folder-case / leading-slash / .ELF spelling
@@ -599,6 +599,39 @@ const char *sbResolveNeutrinoPath(void)
     // otherwise fall back to the mc0:/mc1: auto-detect candidates below.
     if (gNeutrinoPath[0] != '\0' && sbFileExists(gNeutrinoPath))
         return gNeutrinoPath;
+
+    // PR #300: in AUTO, probe the ACTIVE game device for a co-located neutrino.elf BEFORE the mc0/mc1
+    // fallbacks, so a neutrino.elf dropped next to the games (USB/MMCE) just works with zero config.
+    // sbFileExists() uses POSIX open(), which reaches mc/mass/mmce (the same path art loads through);
+    // callers pass only a POSIX-reachable prefix (HDD passes NULL -- raw APA is not open()-reachable).
+    if (activePrefix != NULL && activePrefix[0] != '\0') {
+        char devRoot[64]; // bare device-root token, e.g. "mass0:" (everything up to & incl. ':')
+        const char *colon = strchr(activePrefix, ':');
+        size_t rootLen = (colon != NULL) ? (size_t)(colon - activePrefix + 1) : 0;
+        if (rootLen > 0 && rootLen < sizeof(devRoot)) {
+            memcpy(devRoot, activePrefix, rootLen);
+            devRoot[rootLen] = '\0';
+        } else {
+            devRoot[0] = '\0';
+        }
+        const char *bases[2] = {activePrefix, devRoot}; // (A) the games-folder prefix, (B) the device root
+        static const char *forms[] = {
+            "%sNEUTRINO/neutrino.elf",
+            "%sneutrino/neutrino.elf",
+            "%sNEUTRINO/NEUTRINO.ELF",
+            "%sneutrino/NEUTRINO.ELF",
+        };
+        static char probe[160];
+        for (int b = 0; b < 2; b++) {
+            if (bases[b] == NULL || bases[b][0] == '\0')
+                continue;
+            for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
+                snprintf(probe, sizeof(probe), forms[i], bases[b]);
+                if (sbFileExists(probe))
+                    return probe;
+            }
+        }
+    }
 
     static const char *candidates[] = {
         NEUTRINO_PATH,     // mc0:NEUTRINO/neutrino.elf

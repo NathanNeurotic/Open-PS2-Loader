@@ -12,6 +12,7 @@
 #include "include/system.h"
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
+#include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
 #include "modules/iopcore/common/cdvd_config.h"
 
 #define NEWLIB_PORT_AWARE
@@ -738,7 +739,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
         snprintf(apaPart, sizeof(apaPart), "%s", game->partition_name);
-        neutrinoPath = sbResolveNeutrinoPath(); // honor a custom Neutrino ELF path + all mc0/mc1 spelling variants (parity with BDM/MMCE; HDD used to probe only the two macros)
+        neutrinoPath = sbResolveNeutrinoPath(NULL); // #300: HDD passes NULL -- the raw APA root isn't POSIX-open-reachable and a pfs0: co-location probe is a single-shared-slot risk (L3-freeze saga), so HDD keeps the custom-path + mc0/mc1 + Device-picker resolution only
         if (isZSO) {
             guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
             coreLoader = 0;
@@ -747,6 +748,10 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             coreLoader = 0;
         }
     }
+
+    // MMCE cross-device game-id (#261): push the HDL disc id to a present MMCE card before the HDD
+    // teardown (self-probes mmce0/mmce1; no-ops if no card / feature off). Read `game` before deinit.
+    mmceSendGameID(game->startup);
 
     if (gAutoLaunchGame == NULL) {
         // Neutrino: keep the device that holds neutrino.elf mounted across the teardown

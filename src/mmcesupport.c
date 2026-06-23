@@ -41,7 +41,7 @@ static base_game_info_t *mmceGames;
 static item_list_t mmceGameList;
 static void mmceGetDeviceRoot(char *root, size_t size);
 
-static int mmceSendGameID(const char *startup)
+int mmceSendGameID(const char *startup)
 {
     char mmceDevice[sizeof(mmcePrefix)];
 
@@ -49,8 +49,18 @@ static int mmceSendGameID(const char *startup)
         return 0;
 
     mmceGetDeviceRoot(mmceDevice, sizeof(mmceDevice));
-    if (mmceDevice[0] == '\0')
-        return 0;
+    // Use the resolved slot only if a card is actually present there; otherwise -- no slot resolved
+    // (MMCE tab off, the common cross-device case), OR a configured/stale gMMCESlot that is now empty
+    // -- probe both slots so a card in EITHER slot still gets the game-id for per-game folder switching
+    // on a cross-device (USB/HDD/SMB) launch (#261). The same 0x1 device-present devctl mmceDetectSlot uses.
+    if (mmceDevice[0] == '\0' || fileXioDevctl(mmceDevice, 0x1, NULL, 0, NULL, 0) == -1) {
+        if (fileXioDevctl("mmce0:/", 0x1, NULL, 0, NULL, 0) != -1)
+            snprintf(mmceDevice, sizeof(mmceDevice), "mmce0:/");
+        else if (fileXioDevctl("mmce1:/", 0x1, NULL, 0, NULL, 0) != -1)
+            snprintf(mmceDevice, sizeof(mmceDevice), "mmce1:/");
+        else
+            return 0; // no MMCE card present -> graceful no-op
+    }
 
     if (fileXioDevctl(mmceDevice, 0x8, (void *)startup, (strlen(startup) + 1), NULL, 0) < 0)
         return 0;
@@ -500,7 +510,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
-        neutrinoPath = sbResolveNeutrinoPath();
+        neutrinoPath = sbResolveNeutrinoPath(mmcePrefix); // #300: AUTO also probes this MMCE card for a co-located neutrino.elf
         if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
             // isValidIsoName() admits .zso case-insensitively and game->extension is stored
             // verbatim, so an upper/mixed-case ".ZSO" must reject here too (Neutrino can't run it).

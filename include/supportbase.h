@@ -60,8 +60,11 @@ int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset);
 
 int sbFileExists(const char *path);
 
-// First existing Neutrino core ELF among the known mc0/mc1 install locations, or NULL.
-const char *sbResolveNeutrinoPath(void);
+// First existing Neutrino core ELF, or NULL. In AUTO mode (gNeutrinoDevice==0): custom gNeutrinoPath
+// -> the active game's device (activePrefix, so a neutrino.elf next to the games is found with zero
+// config) -> mc0/mc1 install spots. An explicit Device picker ignores activePrefix. Pass NULL when no
+// game device applies / the prefix is not POSIX-open-reachable (e.g. raw APA HDD) (#300).
+const char *sbResolveNeutrinoPath(const char *activePrefix);
 
 // Structured view of the USER-settable Neutrino launch flags (the catch-all "Launch Args" box).
 // The flags OPL emits itself (-bsd/-dvd/-gc/-gsm/-mc/-dbc/-logo) are NOT represented here.

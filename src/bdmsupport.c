@@ -10,6 +10,7 @@
 #include "include/ioman.h"
 #include "include/system.h"
 #include "include/ethsupport.h" // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
+#include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
 #include "include/sound.h"
@@ -876,7 +877,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
-        neutrinoPath = sbResolveNeutrinoPath();
+        neutrinoPath = sbResolveNeutrinoPath(pDeviceData->bdmPrefix); // #300: AUTO also probes this USB/mass device for a co-located neutrino.elf
         if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
             // isValidIsoName() admits .zso case-insensitively and game->extension is stored
             // verbatim, so an upper/mixed-case ".ZSO" must reject here too (Neutrino can't run it).
@@ -907,6 +908,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         }
         return;
     }
+
+    // MMCE cross-device game-id (#261): push the disc id to a present SD2PSX/MemCard PRO2 (either slot)
+    // so it switches its per-game folder, even though this game is not on the MMCE. Self-probes +
+    // no-ops if no card answers / feature off. Must run BEFORE deinit frees `game`.
+    mmceSendGameID(game->startup);
 
     if (gAutoLaunchBDMGame == NULL) {
         // Neutrino: keep the device that holds neutrino.elf MOUNTED across the teardown
