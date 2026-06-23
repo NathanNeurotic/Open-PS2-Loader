@@ -272,7 +272,7 @@
   {
     "title": "PS1 games on exFAT HDD (BDMA equip)",
     "cat": "devices",
-    "text": "Put *.VCD files in the POPS/ folder on the exFAT HDD. To boot them, set General Settings → BDMA Mode → HDD (exFAT) so RiptOPL copies the BDMAssault modules POPSTARTER needs onto the memory card.",
+    "text": "Put *.VCD files in the POPS/ folder on the exFAT HDD. To boot them, set General Settings → BDMA Mode → HDD (exFAT) and BDMA Source → Internal HDD, so RiptOPL identifies the drive by its ata driver and copies the BDMAssault modules POPSTARTER needs onto the memory card.",
     "url": "hdd.html#exfat-ps1"
   },
   {

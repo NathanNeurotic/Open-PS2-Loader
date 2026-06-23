@@ -173,9 +173,12 @@ RiptOPL embeds none of the BDMA modules (no ELF bloat). The module files must be
 
 <h3>BDMA Source</h3>
 <p>Selects which device RiptOPL reads the module files from (the device whose <code>POPS/</code>
-folder holds the variant you want to equip): <b>USB</b>, <b>MX4SIO</b>, or <b>MMCE</b>. The
-<b>USB</b> source scans the full BDM mass-device namespace, so it also picks up files from an
-internally attached exFAT HDD.</p>
+folder holds the variant you want to equip): <b>USB</b>, <b>MX4SIO</b>, <b>MMCE</b>, or
+<b>Internal HDD</b>. RiptOPL identifies the device by its block-device <em>driver</em>
+(<code>usb</code> / <code>mx4sio</code> / <code>ata</code> / <code>mmce</code>) and reads from that
+specific device, so pick the one your module files actually sit on. For an internally attached exFAT
+HDD choose <b>Internal HDD</b> — RiptOPL reads it from its <code>ata0:</code> root (the same volume
+wLaunchELF shows), so its <code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code> are found.</p>
 
 <p>SMB is network-only, so the BDMA equip does not apply to it.</p>
 
@@ -184,7 +187,7 @@ internally attached exFAT HDD.</p>
   <div class="step">
     <h3>Place module files</h3>
     <p>Copy the appropriate BDMA variant's module files into the <code>POPS/</code> folder of the
-    device you will select as the Source (USB, MX4SIO, or MMCE).</p>
+    device you will select as the Source (USB, MX4SIO, MMCE, or the internal HDD).</p>
   </div>
   <div class="step">
     <h3>Set BDMA Source</h3>

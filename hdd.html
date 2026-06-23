@@ -219,10 +219,11 @@ In <code>conf_apps.cfg</code>, use <code>mass:</code> as the device prefix (the 
 <p>Put your <code>*.VCD</code> files in the drive's <code>POPS/</code> folder alongside
 <code>POPSTARTER.ELF</code>. Press <b>L3</b> on the HDD Games tab to switch to the VCD view.</p>
 <p>POPSTARTER's stock driver only reads FAT32. To boot PS1 games from the exFAT HDD, you must equip the
-<b>HDD (exFAT)</b> BDMA driver modules: go to <b>General Settings → BDMA Mode</b> and select
-<b>HDD (exFAT)</b>. RiptOPL copies the correct BDMAssault module pair from your BDMA source device onto
-<code>mc?:/POPSTARTER/</code>. You supply the module files (in the <code>POPS/</code> folder on your BDMA source
-device); RiptOPL copies them for you when you change the setting.</p>
+<b>HDD (exFAT)</b> BDMA driver modules: go to <b>General Settings</b>, set <b>BDMA Mode</b> to
+<b>HDD (exFAT)</b> and <b>BDMA Source</b> to <b>Internal HDD</b> (the source identifies your drive by its
+<code>ata</code> driver and reads its <code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code>).
+RiptOPL copies the correct BDMAssault module pair onto <code>mc?:/POPSTARTER/</code> for you when you change
+the setting.</p>
 <p>See <a href="ps1-vcd.html#exfat-bdma">PS1 Games (VCD) — exFAT BDMA equip</a> for the complete walkthrough,
 including the BDMA Source setting.</p>
 
