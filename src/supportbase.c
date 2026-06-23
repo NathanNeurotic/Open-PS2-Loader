@@ -563,13 +563,20 @@ const char *sbResolveNeutrinoPath(void)
     // (the General Settings picker in gui.c).
     static const char *roots[] = {
         NULL, // Auto
-        "mc0", "mc1",
-        "mass0", "mass1", "mass2", "mass3", "mass4", "mass5", "mass6", "mass7",
-        "mmce0", "mmce1",
+        "mc0",
+        "mc1",
+        "mass0",
+        "mass1",
+        "mass2",
+        "mass3",
+        "mass4",
+        "mass5",
+        "mass6",
+        "mass7",
+        "mmce0",
+        "mmce1",
     };
-    const char *card = (gNeutrinoDevice > 0 && gNeutrinoDevice < (int)(sizeof(roots) / sizeof(roots[0])))
-                           ? roots[gNeutrinoDevice]
-                           : NULL;
+    const char *card = (gNeutrinoDevice > 0 && gNeutrinoDevice < (int)(sizeof(roots) / sizeof(roots[0]))) ? roots[gNeutrinoDevice] : NULL;
     if (card != NULL) {
         static const char *forms[] = {
             "%s:NEUTRINO/neutrino.elf",

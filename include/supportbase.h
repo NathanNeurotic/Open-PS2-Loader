@@ -65,7 +65,8 @@ const char *sbResolveNeutrinoPath(void);
 
 // Structured view of the USER-settable Neutrino launch flags (the catch-all "Launch Args" box).
 // The flags OPL emits itself (-bsd/-dvd/-gc/-gsm/-mc/-dbc/-logo) are NOT represented here.
-typedef struct {
+typedef struct
+{
     int qb;          // -qb (quick-boot)
     char cwd[64];    // -cwd=
     char cfg[64];    // -cfg=
