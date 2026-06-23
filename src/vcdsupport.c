@@ -18,6 +18,7 @@
 #include "include/opl.h"      // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
 #include "include/system.h"   // POPS_FOLDER
 #include "include/textures.h" // texDiscoverLoad (VCD cover-art fallback)
+#include "include/ioman.h"    // LOG (BDMA equip probe trace)
 #include "include/vcdsupport.h"
 
 // Extract the PS1 disc ID (SXXX_NNN.NN) from a VCD basename matching "SXXX_NNN.NN.Title"
@@ -469,8 +470,11 @@ static int vcdBdmaSourcePrefixes(int source, const char *out[], int maxOut)
     return n;
 }
 
-int vcdEquipBdma(int source, int mode)
+int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
 {
+    if (diag != NULL && diagSize > 0)
+        diag[0] = '\0';
+
     if (mode < 0 || mode >= VCD_BDMA_MODE_COUNT || source < 0 || source >= VCD_BDMA_SRC_COUNT)
         return -1;
 
@@ -495,22 +499,41 @@ int vcdEquipBdma(int source, int mode)
     const char *suffix = vcdBdmaSuffix[mode];
     char src0[96], src1[96];
     int found = 0;
+    char mounted[128] = ""; // source roots actually mounted right now -- for the not-found diagnostic
     for (int i = 0; i < nc; i++) {
+        // Is this candidate device actually mounted at equip time? opendir() succeeds only if the BDM
+        // device is up -- so the "mounted" list tells us whether the source device (e.g. the internal
+        // exFAT HDD) was even visible to the scan, separating "device not seen" from "files mis-placed".
+        DIR *dp = opendir(cands[i]);
+        if (dp != NULL) {
+            closedir(dp);
+            int ml = (int)strlen(mounted);
+            snprintf(mounted + ml, sizeof(mounted) - ml, "%s%s", ml ? " " : "", cands[i]);
+        }
+
         snprintf(src0, sizeof(src0), "%sPOPS/%s.%s", cands[i], vcdBdmaModule[0], suffix);
         snprintf(src1, sizeof(src1), "%sPOPS/%s.%s", cands[i], vcdBdmaModule[1], suffix);
         int f0 = open(src0, O_RDONLY);
+        LOG("[BDMA] probe %s -> %d\n", src0, f0);
         if (f0 < 0)
             continue;
         close(f0);
         int f1 = open(src1, O_RDONLY);
+        LOG("[BDMA] probe %s -> %d\n", src1, f1);
         if (f1 < 0)
             continue;
         close(f1);
         found = 1;
         break;
     }
-    if (!found)
-        return -4; // the chosen SOURCE has neither variant file in its POPS/
+    if (!found) {
+        LOG("[BDMA] %s.%s + %s.%s not found in any source POPS; mounted source devices: %s\n",
+            vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, mounted[0] ? mounted : "(none)");
+        if (diag != NULL && diagSize > 0)
+            snprintf(diag, diagSize, "Need %s.%s + %s.%s in the source device's POPS folder.\nMounted source devices: %s",
+                     vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, mounted[0] ? mounted : "(none)");
+        return -4; // no scanned SOURCE device had both variant files in its POPS/
+    }
 
     // Copy both through the free-space-gated safe-copy. If usbd.irx fits but usbhdfsd.irx won't,
     // we've already replaced usbd.irx -- acceptable (re-equip fixes it) and the card is never

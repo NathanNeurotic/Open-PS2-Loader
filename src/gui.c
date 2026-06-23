@@ -553,10 +553,16 @@ reshow_config:
             diaGetInt(diaConfig, CFG_BDMASOURCE, &newSrc);
             diaGetInt(diaConfig, CFG_BDMAMODE, &newMode);
             if (newSrc != oldSrc || newMode != oldMode) {
-                int er = vcdEquipBdma(newSrc, newMode);
-                if (er == -4)
-                    guiMsgBox(_l(_STR_BDMA_ERR_SRC), 0, NULL);
-                else if (er == -2)
+                char bdmaDiag[160];
+                int er = vcdEquipBdma(newSrc, newMode, bdmaDiag, sizeof(bdmaDiag));
+                if (er == -4) {
+                    // Append what the equip actually probed (needed files + which source devices were
+                    // mounted) so a tester can screenshot it -- tells us "device not seen" vs "files
+                    // mis-named/placed" in one shot instead of another guess.
+                    char msg[256];
+                    snprintf(msg, sizeof(msg), "%s\n%s", _l(_STR_BDMA_ERR_SRC), bdmaDiag);
+                    guiMsgBox(msg, 0, NULL);
+                } else if (er == -2)
                     guiMsgBox(_l(_STR_BDMA_ERR_SPACE), 0, NULL);
                 else if (er == -3)
                     guiMsgBox(_l(_STR_BDMA_ERR_IO), 0, NULL);
