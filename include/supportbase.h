@@ -50,6 +50,11 @@ void sbCreatePath(const base_game_info_t *game, char *path, const char *prefix, 
 void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id);
 void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id, char *newname);
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep);
+// Set the console/media display attributes a theme's AttributeImage badges resolve against
+// (#System, #Media, #DiscType). ANY itemGetConfig that does NOT go through sbPopulateConfig
+// (e.g. the internal-HDD HDL/VCD path) MUST call this, or those badges silently never render
+// on that device (drawAttributeImage bails at its NULL-value guard). isPS1 -> PS1 (always a CD).
+void sbSetDiscAttributes(config_set_t *config, int isPS1, int isCD);
 // Append neutrino -mc0/-mc1 VMC args (from the per-game config) for vmcPrefix's device. Call before deinit.
 void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, struct neutrino_vmc_args *vmcArgs);
 void sbCreateFolders(const char *path, int createDiscImgFolders);

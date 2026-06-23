@@ -802,11 +802,9 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
         configRead(vcdConfig);
         configSetStr(vcdConfig, CONFIG_ITEM_NAME, g->name);
         configSetStr(vcdConfig, CONFIG_ITEM_STARTUP, g->name);
-        // #System/#DiscType (FR #49) for HDD PS1 discs, mirroring the USB/SMB VCD config: a POPS disc is
-        // always a PS1 CD. Without these the theme's #DiscType / #System AttributeImage badge has no value
-        // to resolve (drawAttributeImage returns at the NULL-value guard) so it never renders on HDD VCDs.
-        configSetStr(vcdConfig, CONFIG_ITEM_SYSTEM, "PS1");
-        configSetStr(vcdConfig, CONFIG_ITEM_DISCTYPE, "PS1CD");
+        // HDD bypasses sbPopulateConfig, so set the #System/#Media/#DiscType badge attributes via the
+        // shared helper (FR #49) -- a POPS disc is always a PS1 CD. Without it those badges never render.
+        sbSetDiscAttributes(vcdConfig, 1, 1);
         return vcdConfig;
     }
 
@@ -819,13 +817,10 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
     configSetStr(config, CONFIG_ITEM_NAME, game->name);
     configSetInt(config, CONFIG_ITEM_SIZE, game->total_size_in_kb >> 10);
     configSetStr(config, CONFIG_ITEM_FORMAT, "HDL");
-    configSetStr(config, CONFIG_ITEM_MEDIA, game->disctype == SCECdPS2CD ? "CD" : "DVD");
-    // #System/#DiscType (FR #49): the BDM/USB/SMB/MMCE transports set these in sbPopulateConfig, but the
-    // internal-HDD HDL path builds its own config and skipped them -- so a theme's #DiscType / #System
-    // AttributeImage badge had no value to resolve on HDD games (drawAttributeImage returns at the
-    // NULL-value guard, drawing nothing). HDL titles are always PS2; reuse game->disctype for CD vs DVD.
-    configSetStr(config, CONFIG_ITEM_SYSTEM, "PS2");
-    configSetStr(config, CONFIG_ITEM_DISCTYPE, game->disctype == SCECdPS2CD ? "PS2CD" : "PS2DVD");
+    // HDD bypasses sbPopulateConfig, so set #System/#Media/#DiscType via the shared helper (FR #49) --
+    // without it a theme's #DiscType / #System AttributeImage badge never rendered on HDD games. HDL
+    // titles are always PS2; reuse game->disctype for the CD-vs-DVD axis.
+    sbSetDiscAttributes(config, 0, game->disctype == SCECdPS2CD);
     configSetStr(config, CONFIG_ITEM_STARTUP, game->startup);
 
     return config;

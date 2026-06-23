@@ -962,6 +962,20 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
     }
 }
 
+// Shared so EVERY transport sets the same console/media badge attributes. The internal-HDD path
+// (hddGetConfig) builds its own config and does NOT call sbPopulateConfig, so it calls this directly --
+// without it, a theme's #DiscType / #System AttributeImage badge has no value to resolve and silently
+// never renders on that device (drawAttributeImage returns at its NULL-value guard). #DiscType is the
+// combined console+media token a theme can map to ONE disc glyph (PS1-CD vs PS2-CD are both #Media=CD,
+// indistinguishable by #Media alone -- issue #49). Disk-theme file naming follows the cover-art
+// <value>_<suffix> shape: PS1CD_#DiscType.png / PS2CD_#DiscType.png / PS2DVD_#DiscType.png.
+void sbSetDiscAttributes(config_set_t *config, int isPS1, int isCD)
+{
+    configSetStr(config, CONFIG_ITEM_SYSTEM, isPS1 ? "PS1" : "PS2");
+    configSetStr(config, CONFIG_ITEM_MEDIA, isCD ? "CD" : "DVD");
+    configSetStr(config, CONFIG_ITEM_DISCTYPE, isPS1 ? "PS1CD" : (isCD ? "PS2CD" : "PS2DVD"));
+}
+
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep)
 {
     char path[256];
@@ -1016,16 +1030,9 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     } else
         configSetStr(config, CONFIG_ITEM_FORMAT, "UL");
 
-    // #System = the console (PS1 for POPSTARTER/VCD discs, PS2 otherwise); #Media = the disc type.
-    // A PS1 disc is always a CD, so report "CD" rather than the game->media default of DVD (FR #49).
+    // #System/#Media/#DiscType badges: a PS1 (POPSTARTER/.VCD) disc is always a CD; PS2 uses game->media.
     int isPS1 = !strcasecmp(game->extension, ".VCD");
-    configSetStr(config, CONFIG_ITEM_SYSTEM, isPS1 ? "PS1" : "PS2");
-    configSetStr(config, CONFIG_ITEM_MEDIA, isPS1 ? "CD" : (game->media == SCECdPS2CD ? "CD" : "DVD"));
-    // #DiscType = a single combined console+media token so a theme can show ONE disc glyph that tells
-    // PS1-CD from PS2-CD apart (both report #Media=CD, indistinguishable by #Media alone) -- issue #49.
-    // A disk theme uses AttributeImage attribute=#DiscType + the cover-art naming <value>_<suffix>.png:
-    // PS1CD_#DiscType.png / PS2CD_#DiscType.png / PS2DVD_#DiscType.png (value first, NOT #DiscType_*).
-    configSetStr(config, CONFIG_ITEM_DISCTYPE, isPS1 ? "PS1CD" : (game->media == SCECdPS2CD ? "PS2CD" : "PS2DVD"));
+    sbSetDiscAttributes(config, isPS1, isPS1 || game->media == SCECdPS2CD);
 
     configSetStr(config, CONFIG_ITEM_STARTUP, cfgKey); // VCD: keyed by filename (see cfgKey above)
 
