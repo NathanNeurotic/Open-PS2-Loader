@@ -678,6 +678,7 @@ reselect_video_mode:
     diaSetInt(diaUIConfig, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(diaUIConfig, UICFG_COVERART, gEnableArt);
+    diaSetInt(diaUIConfig, UICFG_ENABLE_ART_TAR, gEnableArtTar);
     diaSetInt(diaUIConfig, UICFG_WIDESCREEN, gWideScreen);
     diaSetInt(diaUIConfig, CFG_APPLYGAMEID, gApplyGameID); // RetroGEM/Pixel FX GameID barcode (moved from Device Settings)
     diaSetInt(diaUIConfig, UICFG_VMODE, gVMode);
@@ -704,6 +705,7 @@ reselect_video_mode:
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(diaUIConfig, UICFG_COVERART, &gEnableArt);
+        diaGetInt(diaUIConfig, UICFG_ENABLE_ART_TAR, &gEnableArtTar);
         diaGetInt(diaUIConfig, UICFG_WIDESCREEN, &gWideScreen);
         diaGetInt(diaUIConfig, CFG_APPLYGAMEID, &gApplyGameID);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);

@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: ATA1 образ (-ata1)
   NARGS_EXTRA: Допълнителни аргументи
   NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: .tar архив с обложки

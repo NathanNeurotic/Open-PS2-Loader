@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: ATA1 Image (-ata1)
   NARGS_EXTRA: Args ເພີ່ມເຕີມ
   NARGS_AUTO_NOTE: 'ອັດຕະໂນມັດ: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: ແຟ້ມ .tar ຮູບປົກ

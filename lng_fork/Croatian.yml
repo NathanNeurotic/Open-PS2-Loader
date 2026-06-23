@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: ATA1 Slika (-ata1)
   NARGS_EXTRA: Dodatni argumenti
   NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: .tar arhiva omota

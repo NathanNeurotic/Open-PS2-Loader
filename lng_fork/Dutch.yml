@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: ATA1-image (-ata1)
   NARGS_EXTRA: Extra argumenten
   NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: .tar-archief met hoezen

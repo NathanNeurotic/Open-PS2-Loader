@@ -158,6 +158,8 @@ gui_strings:
   string: No controller detected, waiting...
 - label: COVERART
   string: Cover Art
+- label: ENABLE_ART_TAR
+  string: Cover Art .tar Archive
 - label: WIDE_SCREEN
   string: Widescreen
 - label: POWEROFF

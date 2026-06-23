@@ -102,6 +102,12 @@ This build layers several features on top of upstream OPL:
   cover count, and aspect-correct covers in both 4:3 and widescreen. Tune it live under
   **Coverflow Settings** (shown while the Coverflow theme is active). Authoring details
   and every theme value live in the **[Theme Engine reference](docs/THEME_ENGINE.md)**.
+- **Cover-art `.tar` archive (opt-in):** keep all of a device's covers in a single uncompressed
+  **`ART/art.tar`** (entries named `<GAMEID>_<suffix>.png`) instead of thousands of loose files.
+  Enable **Cover Art .tar Archive** under **Display Settings** (default **off**); when on, each
+  cover is read from the archive and *falls back to the loose `.png`* when it isn't there, so the
+  two coexist. A small `art_cache.bin` index written beside the archive lets later boots skip the
+  re-scan. The format matches wOPL/sOPL art packs, so existing `.tar` packs work unchanged.
 - **Favourites tab:** press **R3** on any game to star it; a virtual **Favourites** page
   (alongside the device tabs, switched on in **Device Settings**) gathers your starred games
   from every device into one list, and a star marks favourited titles everywhere. Favourites

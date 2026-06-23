@@ -356,6 +356,27 @@ static void texReadMemFunction(png_structp pngPtr, png_bytep data, png_size_t le
     *PngBufferPtr = (u8 *)(*PngBufferPtr) + length;
 }
 
+// Bounded variant for decoding a PNG out of a fixed-size RAM buffer (e.g. a .tar art entry, which is
+// user-supplied and may be truncated/corrupt). Unlike texReadMemFunction it refuses to read past the
+// buffer: an over-read png_errors -> longjmp into texLoadAll's setjmp cleanup, which frees the texture.
+typedef struct
+{
+    const u8 *ptr;
+    u32 remaining;
+} tex_mem_bounded_t;
+
+static void texReadMemBoundedFunction(png_structp pngPtr, png_bytep data, png_size_t length)
+{
+    tex_mem_bounded_t *r = png_get_io_ptr(pngPtr);
+
+    if (length > r->remaining)
+        png_error(pngPtr, "png read past buffer");
+
+    memcpy(data, r->ptr, length);
+    r->ptr += length;
+    r->remaining -= (u32)length;
+}
+
 static void texReadFileFunction(png_structp pngPtr, png_bytep data, png_size_t length)
 {
     tex_file_reader_t *reader = png_get_io_ptr(pngPtr);
@@ -554,7 +575,7 @@ static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr
     return 0;
 }
 
-static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId)
+static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const void *memBuf, u32 memSize)
 {
     int fd = -1;
     int bitDepth, colorType, interlaceType;
@@ -565,13 +586,20 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId)
     png_rw_ptr readFunction = NULL;
     png_uint_32 pngWidth, pngHeight;
     tex_file_reader_t fileReader;
+    tex_mem_bounded_t memReader;
     void *PngFileBufferPtr;
     void *pFileBuffer = NULL;
     void (*texPngReadRow)(GSTEXTURE * texture, png_bytep rowData, int row);
 
     texPrepare(texture);
 
-    if (filePath) {
+    if (memBuf) {
+        // Decode straight from a RAM buffer (e.g. a .tar art entry) via the bounded memory reader.
+        memReader.ptr = (const u8 *)memBuf;
+        memReader.remaining = memSize;
+        readData = &memReader;
+        readFunction = &texReadMemBoundedFunction;
+    } else if (filePath) {
         if (texShouldUseMemoryReader(filePath)) {
             fd = open(filePath, O_RDONLY, 0);
             if (fd < 0)
@@ -696,12 +724,19 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId)
 
 static int texLoad(GSTEXTURE *texture, const char *filePath)
 {
-    return texLoadAll(texture, filePath, -1);
+    return texLoadAll(texture, filePath, -1, NULL, 0);
 }
 
 int texLoadInternal(GSTEXTURE *texture, int texId)
 {
-    return texLoadAll(texture, NULL, texId);
+    return texLoadAll(texture, NULL, texId, NULL, 0);
+}
+
+// Decode a PNG already resident in a RAM buffer (e.g. a .tar art entry pulled by tarGet). The buffer
+// stays owned by the caller (free it after this returns); the decoded pixels are copied into texture.
+int texLoadFromMemory(GSTEXTURE *texture, const void *buf, u32 size)
+{
+    return texLoadAll(texture, NULL, -1, buf, size);
 }
 
 int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId)

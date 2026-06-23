@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: Obraz ATA1 (-ata1)
   NARGS_EXTRA: Dodatkowe argumenty
   NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: Archiwum .tar okładek

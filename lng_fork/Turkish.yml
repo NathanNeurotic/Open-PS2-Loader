@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: ATA1 Görüntüsü (-ata1)
   NARGS_EXTRA: Ekstra Parametreler
   NARGS_AUTO_NOTE: 'Otomatik: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: Kapak resmi .tar arşivi

@@ -85,6 +85,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_SEL_TEXTCOLOR        "sel_text_color"
 #define CONFIG_OPL_ENABLE_NOTIFICATIONS "enable_notifications"
 #define CONFIG_OPL_ENABLE_COVERART      "enable_coverart"
+#define CONFIG_OPL_ENABLE_ART_TAR       "enable_art_tar"
 #define CONFIG_OPL_WIDESCREEN           "wide_screen"
 #define CONFIG_OPL_DEFAULT_GAME_VIEW    "default_game_view"
 #define CONFIG_OPL_VMODE                "vmode"

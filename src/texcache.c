@@ -7,9 +7,45 @@
 #include "include/util.h"
 #include "include/renderman.h"
 
+#include "include/tar.h"
+
 #include <delaythread.h>
 #include <kernel.h>
 #include <ps2sdkapi.h>
+#include <malloc.h>
+
+// Bridge: load a game's cover art from the ART/art.tar archive (gated by gEnableArtTar). Builds the
+// in-archive entry name (<value>_<suffix>.png -- the same name the loose ART/ file would have), pulls
+// the PNG bytes via the tar engine, and decodes them through the bounded memory path. Returns >= 0 on
+// a hit, -1 on any miss (no tar / entry absent / OOM / bad PNG) so the caller falls back to the loose
+// file. Runs on the art worker thread, like the loose-file load it replaces.
+static int artTarLoadImage(const char *value, const char *suffix, GSTEXTURE *texture)
+{
+    char name[64];
+    TarEntryBase *entry;
+    void *buf;
+    int result;
+
+    if (snprintf(name, sizeof(name), "%s_%s.png", value, suffix) >= (int)sizeof(name))
+        return -1; // longer than an ART entry name can be -> cannot match; use the loose file
+
+    entry = tarFind(TAR_KIND_ART, name);
+    if (entry == NULL)
+        return -1;
+
+    buf = malloc(entry->rawSize);
+    if (buf == NULL)
+        return -1;
+
+    if (tarRead(TAR_KIND_ART, entry, buf, entry->rawSize) != entry->rawSize) {
+        free(buf);
+        return -1;
+    }
+
+    result = texLoadFromMemory(texture, buf, entry->rawSize);
+    free(buf);
+    return result;
+}
 
 typedef struct load_image_request
 {
@@ -858,7 +894,13 @@ static void cacheLoadImage(load_image_request_t *req)
     }
 
     texSetLoadAbortFlag(&req->abortRequested);
-    result = req->list->itemGetImage(req->list, req->cache->prefix, req->cache->isPrefixRelative, req->value, req->cache->suffix, &req->texture, GS_PSM_CT24);
+    // Art .tar (gEnableArtTar, default OFF): try the archive first; on any miss fall back to the loose
+    // ART/<id>_<suffix>.png read. When the toggle is off this is byte-for-byte the original behavior.
+    result = -1;
+    if (gEnableArtTar)
+        result = artTarLoadImage(req->value, req->cache->suffix, &req->texture);
+    if (result < 0)
+        result = req->list->itemGetImage(req->list, req->cache->prefix, req->cache->isPrefixRelative, req->value, req->cache->suffix, &req->texture, GS_PSM_CT24);
     texSetLoadAbortFlag(NULL);
     cacheCompleteRequest(req, result);
     cacheProcessCleanupRequests();

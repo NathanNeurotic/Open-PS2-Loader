@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: ATA1 イメージ (-ata1)
   NARGS_EXTRA: 追加引数
   NARGS_AUTO_NOTE: '自動: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: カバーアートの.tarアーカイブ

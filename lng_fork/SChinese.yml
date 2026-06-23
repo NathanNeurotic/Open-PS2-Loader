@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: ATA1 镜像 (-ata1)
   NARGS_EXTRA: 额外参数
   NARGS_AUTO_NOTE: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: 封面图 .tar 归档

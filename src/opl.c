@@ -157,6 +157,7 @@ int gAutosort;
 int gAutoRefresh;
 int gEnableNotifications;
 int gEnableArt;
+int gEnableArtTar;
 int gWideScreen;
 int gDefaultGameView;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
@@ -1151,6 +1152,7 @@ static void _loadConfig()
             configGetColor(configOPL, CONFIG_OPL_SEL_TEXTCOLOR, gDefaultSelTextColor);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_NOTIFICATIONS, &gEnableNotifications);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, &gEnableArt);
+            configGetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, &gEnableArtTar);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
             configGetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, &gDefaultGameView);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_COUNT, &gCoverflowCount);
@@ -1407,6 +1409,7 @@ static void _saveConfig()
         configSetColor(configOPL, CONFIG_OPL_SEL_TEXTCOLOR, gDefaultSelTextColor);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_NOTIFICATIONS, gEnableNotifications);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, gEnableArt);
+        configSetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, gEnableArtTar);
         configSetInt(configOPL, CONFIG_OPL_WIDESCREEN, gWideScreen);
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_COUNT, gCoverflowCount);
@@ -2111,6 +2114,7 @@ static void setDefaults(void)
     gETHPrefix[0] = '\0';
     gEnableNotifications = 1;
     gEnableArt = 1;
+    gEnableArtTar = 0; // .tar cover-art loader is opt-in (default OFF)
     gWideScreen = 1;
     gDefaultGameView = GAME_VIEW_BOTH;
     gEnableSFX = 1;

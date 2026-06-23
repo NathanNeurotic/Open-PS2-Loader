@@ -133,6 +133,7 @@ enum INTERNAL_TEXTURE {
 
 int texLookupInternalTexId(const char *name);
 int texLoadInternal(GSTEXTURE *texture, int texId);
+int texLoadFromMemory(GSTEXTURE *texture, const void *buf, u32 size);
 int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId);
 void texSetLoadAbortFlag(volatile int *abortRequested);
 void texFree(GSTEXTURE *texture);

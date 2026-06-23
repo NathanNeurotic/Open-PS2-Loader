@@ -85,3 +85,4 @@ translations:
   NARGS_ATA1: Ảnh ATA1 (-ata1)
   NARGS_EXTRA: Tham số bổ sung
   NARGS_AUTO_NOTE: 'Tự động: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  ENABLE_ART_TAR: Kho .tar ảnh bìa
