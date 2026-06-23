@@ -13,7 +13,7 @@ ELFs and supporting files are published alongside it:
 
 | Asset | What it is |
 |---|---|
-| `RIPTOPL-<sdk>-<rel>-<sha>.zip` | **The installable package.** Contains `APP_RIPTOPL/RIPTOPL.ELF` (built with `ps2dev:latest`), `APP_RIPTOPL-OLDSDK/RIPTOPL.ELF` (the pinned/stable toolchain), the `POPSTARTER/` + `POPS/` folders for PS1 support, and the bundled Neutrino core (`neutrino_*.7z`). Extract it and use `APP_RIPTOPL/RIPTOPL.ELF`. |
+| `RIPTOPL-<sdk>-<rel>-<sha>.zip` | **The installable package.** Contains `APP_RIPTOPL/RIPTOPL.ELF` (built with `ps2dev:latest`), `APP_RIPTOPL-OLDSDK/RIPTOPL.ELF` (the pinned/stable toolchain), the `POPSTARTER/` + `POPS/` folders for PS1 support, and the bundled Neutrino core as a ready-to-use `neutrino/` folder (drag-and-drop to `mc?:/`). Extract it and use `APP_RIPTOPL/RIPTOPL.ELF`. |
 | `RIPTOPL-<version>.ELF` | Bare loader, `ps2max/dev` (pinned) toolchain. |
 | `RIPTOPL-<version>-ps2dev-latest.ELF` | Bare loader, `ps2dev/ps2dev:latest` (bleeding-edge) toolchain. |
 | `RIPTOPL-<version>-src.zip` | Source snapshot to rebuild this exact commit. |

@@ -274,7 +274,7 @@ jobs:
           #   APP_RIPTOPL-OLDSDK/RIPTOPL.ELF  -- the pinned/stable (older-SDK) build, for compatibility.
           #   POPSTARTER/                     -- SMB network stack (popsmb/) + bdma_config.txt=fat32.
           #   POPS/                           -- POPSTARTER.ELF + BDMA variants + patch (from POPSLoader).
-          #   neutrino_*.7z                   -- the official latest Neutrino core (rickgaiser/neutrino).
+          #   neutrino/                       -- the official latest Neutrino core (rickgaiser/neutrino), extracted for drag-and-drop.
           PKG=riptopl_pkg
           rm -rf "$PKG"
           mkdir -p "$PKG/APP_RIPTOPL" "$PKG/POPSTARTER" "$PKG/POPS"
@@ -293,29 +293,31 @@ jobs:
           fi
           cp -f popsmb/* "$PKG/POPSTARTER/"
           cp -f pops/* "$PKG/POPS/"
-          # neutrino_*.7z (package root) -- the official latest pre-release of the Neutrino core, so
-          # that prerequisite ships with every release. Best-effort: a fetch failure still publishes
-          # the rest. RiptOPL adds ONLY config/bsd-udpfsbd.toml into the archive (so UDPFS works on
-          # extraction, no manual copy); otherwise it is the official build. The user extracts it and
-          # copies neutrino.elf (+ config/ + modules/) to mc?:/neutrino/. Credited in the notes below.
+          # neutrino/ (package folder) -- the official latest pre-release of the Neutrino core,
+          # EXTRACTED into a plain folder so the user just drag-and-drops it onto the card (no
+          # zip-in-zip). Best-effort: a fetch/extract failure still publishes the rest. The archive
+          # root holds neutrino.elf + config/ + modules/, so the neutrino/ folder copies straight to
+          # mc?:/neutrino/. RiptOPL adds ONLY config/bsd-udpfsbd.toml (UDPFS); else the official build.
           NEUTRINO_VER=""
           if gh release download latest --repo rickgaiser/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
             NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"
             NEUTRINO_VER="$(printf '%s' "$NEUTRINO_ARCHIVE" | sed -e 's/^neutrino_//' -e 's/\.7z$//')"
             echo "Bundled neutrino: $NEUTRINO_ARCHIVE"
-            # Neutrino ships udpfs_bd.irx but has no built-in -bsd token for it (only a commented
-            # alternative in bsd-udpbd.toml). RiptOPL launches UDPFS via -bsd=udpfsbd, which needs this
-            # config; config/ is at the archive root, so 7z-add it (merges into config/, no re-pack).
             SEVENZ="$(command -v 7z || command -v 7za || true)"
             if [ -z "$SEVENZ" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full && SEVENZ="$(command -v 7z || command -v 7za)"; fi
             NEUT_ABS="$(cd "$PKG" && pwd)/$NEUTRINO_ARCHIVE"
-            TMPN="$(mktemp -d)" && mkdir -p "$TMPN/config" && cp neutrino/bsd-udpfsbd.toml "$TMPN/config/bsd-udpfsbd.toml"
-            if [ -n "$SEVENZ" ] && ( cd "$TMPN" && "$SEVENZ" a "$NEUT_ABS" config/bsd-udpfsbd.toml >/dev/null ); then
-              echo "Placed config/bsd-udpfsbd.toml into $NEUTRINO_ARCHIVE (UDPFS)."
+            # Extract into $PKG/neutrino/ and drop the raw .7z. Neutrino ships udpfs_bd.irx but no
+            # built-in -bsd token for it; RiptOPL launches UDPFS via -bsd=udpfsbd, so add that config
+            # next to the others in config/. Require neutrino.elf at the folder root, else omit.
+            if [ -n "$SEVENZ" ] && "$SEVENZ" x -y -o"$PKG/neutrino" "$NEUT_ABS" >/dev/null && [ -e "$PKG/neutrino/neutrino.elf" ]; then
+              mkdir -p "$PKG/neutrino/config" && cp neutrino/bsd-udpfsbd.toml "$PKG/neutrino/config/bsd-udpfsbd.toml"
+              rm -f "$NEUT_ABS"
+              echo "Extracted Neutrino into $PKG/neutrino (added config/bsd-udpfsbd.toml for UDPFS)."
             else
-              echo "ERROR: failed to inject bsd-udpfsbd.toml into $NEUTRINO_ARCHIVE" >&2
+              echo "WARN: could not extract a usable Neutrino (no neutrino.elf at archive root); package omits it this run" >&2
+              rm -rf "$PKG/neutrino" "$NEUT_ABS"
+              NEUTRINO_VER=""
             fi
-            rm -rf "$TMPN"
           else
             echo "WARN: could not fetch neutrino latest pre-release; package omits it this run"
           fi
@@ -329,9 +331,8 @@ jobs:
             cd "$PKG"
             zip -r -X "../rolling/${ZIP}" APP_RIPTOPL POPSTARTER POPS >/dev/null
             if [ -d APP_RIPTOPL-OLDSDK ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-OLDSDK >/dev/null; fi
-            for f in neutrino_*.7z; do # add the bundled Neutrino archive at the zip root if present
-              if [ -f "$f" ]; then zip -X "../rolling/${ZIP}" "$f" >/dev/null; fi
-            done
+            # the extracted neutrino/ folder (drag-and-drop; replaces the old zip-in-zip neutrino_*.7z)
+            if [ -d neutrino ]; then zip -r -X "../rolling/${ZIP}" neutrino >/dev/null; fi
           )
           echo "Built rolling/${ZIP}:"
           unzip -l "rolling/${ZIP}"
@@ -378,11 +379,11 @@ jobs:
             printf 'Required for the per-game Neutrino launch mode. From the official repo:\n'
             printf '  https://github.com/rickgaiser/neutrino\n'
             if [ -n "${NEUTRINO_VER:-}" ]; then
-              printf '  Included build: %s in the RIPTOPL package root (neutrino_*.7z) -- RiptOPL adds only\n' "$NEUTRINO_VER"
-              printf '  config/bsd-udpfsbd.toml (for UDPFS); otherwise the official build. Extract it and\n'
-              printf '  copy neutrino.elf (+ config/ + modules/) to mc?:/neutrino/.\n'
+              printf '  Included build: %s as the neutrino/ folder in the package -- RiptOPL adds only\n' "$NEUTRINO_VER"
+              printf '  config/bsd-udpfsbd.toml (for UDPFS); otherwise the official build. Just copy the\n'
+              printf '  whole neutrino/ folder to mc?:/ (it already holds neutrino.elf + config/ + modules/).\n'
             else
-              printf '  (Could not fetch Neutrino this run -- please grab the latest build from the link above.)\n'
+              printf '  (Could not bundle Neutrino this run -- please grab the latest build from the link above.)\n'
             fi
             printf '  Neutrino is the work of its authors; RiptOPL only bundles the official build for convenience.\n'
             printf '\n## In this build\n'

@@ -26,7 +26,7 @@ above; leave it blank to use the auto-detection (which also checks a few lowerca
 31-character editor, set `neutrino_path` in `settings_riptopl.cfg` directly.
 
 > **Network boot is the exception:** the UDPBD / UDPFS feature (§4) ships its **own bundled
-> Neutrino** (a `neutrino_*.7z` inside the release's installable package, pre-populated with the
+> Neutrino** (a ready-to-use `neutrino/` folder inside the release's installable package, pre-populated with the
 > UDPFS config). The per-game Neutrino use described in this section still needs you to supply
 > `neutrino.elf` at the paths above.
 
@@ -135,12 +135,12 @@ Both protocols reuse the IP set in Network Config; there are **no protocol-speci
 list, covers, per-game settings, static-IP requirement, and SMB mutual-exclusion — but it speaks a
 different wire protocol and needs a **different PC server**:
 
-- **PC server:** **`udpfs_server.py`**, which ships *inside* the bundled Neutrino archive
-  (`udpfs_server/` in the release's `neutrino_*.7z`). UDPBD's `udpbd-server` will **not** talk to
+- **PC server:** **`udpfs_server.py`**, which ships *inside* the bundled Neutrino folder
+  (`neutrino/udpfs_server/` in the release package). UDPBD's `udpbd-server` will **not** talk to
   UDPFS and vice-versa — match the server to the protocol you pick.
 - **Launch:** OPL launches UDPFS games with **`-bsd=udpfsbd`**. Neutrino ships `udpfs_bd.irx` but
   has no stock `-bsd` token for it, so RiptOPL **auto-places `config/bsd-udpfsbd.toml`** into the
-  bundled Neutrino archive — no manual setup. (If you assembled Neutrino yourself, copy RiptOPL's
+  bundled Neutrino folder's `config/` — no manual setup. (If you assembled Neutrino yourself, copy RiptOPL's
   `neutrino/bsd-udpfsbd.toml` into your `mc?:/neutrino/config/`.)
 
 ## 5. Core-aware per-game settings

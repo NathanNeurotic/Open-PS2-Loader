@@ -124,7 +124,7 @@ This build layers several features on top of upstream OPL:
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
   alongside UDPBD. A **Net Boot Protocol** picker under **Device Settings** chooses **UDPBD** or
   **UDPFS**; UDPFS launches via `-bsd=udpfsbd` with a bundled `bsd-udpfsbd.toml`, and its PC
-  server (`udpfs_server.py`) ships *inside* the bundled Neutrino archive — match the server to the
+  server (`udpfs_server.py`) ships *inside* the bundled Neutrino folder — match the server to the
   protocol you pick. Same static-IP and SMB-exclusivity rules as UDPBD.
 - **PS1 games via POPSTARTER (VCD view):** press **L3** on a device page to switch between your
   PS2 discs and a list of PS1 `*.VCD` games on the same device — it's a *view*, not a separate tab.
