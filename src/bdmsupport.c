@@ -627,20 +627,15 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
             return;
         }
-        // The internal exFAT HDD is a massN: mount at OPL runtime, but POPSTARTER (after the IOP
-        // reset that hands off the launch) reaches that same drive as ata0:. We resolved/validated
-        // POPSTARTER.ELF above on the live massN: path; for ATA, hand POPSTARTER the ata0: device
-        // instead -- the selector keeps its XX. BDMA prefix, only the device part differs from the
-        // USB/MX4SIO selector (the "XX." convention itself is device-agnostic). The ELF is re-pointed
-        // only when it's the device default; a user-set custom path (e.g. mc0:/...) is left intact.
-        // Without this, POPSTARTER is aimed at a massN: mount it can't see post-reset -> BOOT.ELF.
-        const char *vcdSelPrefix = vcdPrefix;
-        if (pDeviceData->bdmDeviceType == BDM_TYPE_ATA) {
-            vcdSelPrefix = "ata0:/";
-            if (strncmp(vcdElf, vcdPrefix, strlen(vcdPrefix)) == 0)
-                snprintf(vcdElf, sizeof(vcdElf), "ata0:/%s/POPSTARTER.ELF", POPS_FOLDER);
-        }
-        vcdBuildSelector(vcdSelPrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
+        // Every BDM device -- USB, MX4SIO, and the internal exFAT HDD (BDM_TYPE_ATA) -- is a massN: mount
+        // at OPL runtime, so the ELF and selector BOTH use that one live prefix. OPL opens vcdElf HERE,
+        // BEFORE the IOP reset, from the live massN: mount (kept alive by UNMOUNT_EXCEPTION); OPL never
+        // mounts an ata0: filesystem (it only builds mass%d: paths), so the earlier BDM_TYPE_ATA re-point
+        // to "ata0:/POPS/POPSTARTER.ELF" made LoadELFFromFile fail and return into an already-deinit'd OPL
+        // with no re-init path = black-screen freeze. POPSTARTER only needs the VCD NAME from the selector
+        // to know what to boot; the equipped BDMA modules steer it to the exFAT device after the reset, so
+        // the selector's device prefix is irrelevant -- keep the live massN: one, same as USB/MX4SIO.
+        vcdBuildSelector(vcdPrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
         deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the VCD device mounted across the IOP reset
         sysLaunchPopstarter(vcdElf, vcdSelector, "");
         return;
