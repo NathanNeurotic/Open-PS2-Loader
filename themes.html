@@ -296,28 +296,43 @@ auto-localised (override it with <code>title=</code>):</p>
 </table>
 
 <h3>AttributeImage (badge chosen by the game's value)</h3>
-<p>For <code>type=AttributeImage</code>, set <code>attribute=</code> to one of the keys below. The engine reads
-the game's current value for that attribute and looks up a texture for it (a built-in name or a theme file). For
-the slash-separated families it builds the name as <code>&lt;attribute&gt;_&lt;value&gt;</code>; for the simple
-console/disc axes the value <em>is</em> the texture name (<code>PS1</code>, <code>PS2</code>, <code>CD</code>,
-<code>DVD</code>, <code>ELF</code>, <code>ISO</code> …). A <code>default=</code> gives the fallback badge.</p>
+<p>For <code>type=AttributeImage</code>, set <code>attribute=</code> to one of the keys below. OPL reads the
+game's current value for that attribute; where the glyph comes from depends on the theme:</p>
+<ul>
+<li><b>Built-in <code>&lt;OPL&gt;</code> theme</b> — draws the embedded glyph whose internal name equals the
+value: <code>#System=PS2</code> → <code>PS2</code>, <code>#Media=CD</code> → <code>CD</code>,
+<code>#Format=ISO</code> → <code>ISO</code>. Attributes with no embedded glyph (e.g. <code>#DiscType</code>)
+draw nothing here.</li>
+<li><b>Disk theme</b> — loads <code>&lt;value&gt;_&lt;attribute&gt;.png</code> from the theme folder
+(<em>value first</em>, the same <code>&lt;name&gt;_&lt;suffix&gt;</code> shape as cover art
+<code>&lt;id&gt;_COV.png</code>): <code>PS2_#System.png</code>, <code>CD_#Media.png</code>,
+<code>PS2DVD_#DiscType.png</code>. A <code>default=</code> gives the fallback badge.</li>
+</ul>
+<div class="callout amber"><div class="h">⚠ Disk-theme filename order</div>The file is
+<code>&lt;value&gt;_&lt;attribute&gt;</code>, <em>not</em> <code>&lt;attribute&gt;_&lt;value&gt;</code> —
+<code>PS2DVD_#DiscType.png</code> is correct, <code>#DiscType_PS2DVD.png</code> is never read. The
+<code>#</code> is a literal filename character, and either <code>.png</code> or <code>.PNG</code> loads (the
+loader retries the upper-case extension — needed on the PS2 HDD's case-sensitive <code>pfs</code>). These
+badges are populated on <b>every device</b> — USB/BDM, SMB, MMCE and the internal HDD/HDL (and their PS1/VCD
+lists).</div>
 <table data-sortable>
-<thead><tr><th><code>attribute=</code></th><th>Axis</th><th>Example values / textures</th></tr></thead>
+<thead><tr><th><code>attribute=</code></th><th>Axis</th><th>Value(s) OPL sets</th><th>Disk-theme file</th></tr></thead>
 <tbody>
-<tr><td><code>#Media</code></td><td>Disc type</td><td><code>CD</code>, <code>DVD</code>, <code>APP</code></td></tr>
-<tr><td><code>#Format</code></td><td>Image format</td><td><code>ISO</code>, <code>ZSO</code>, <code>UL</code>, <code>ELF</code>, <code>HDL</code>, <code>VCD</code></td></tr>
-<tr><td><code>#System</code></td><td>Console (FR #49)</td><td><code>PS1</code>, <code>PS2</code></td></tr>
-<tr><td><code>Vmode</code></td><td>Video mode</td><td><code>Vmode_ntsc</code>, <code>Vmode_pal</code>, <code>Vmode_multi</code></td></tr>
-<tr><td><code>Aspect</code></td><td>Aspect ratio</td><td><code>Aspect_s</code>, <code>Aspect_w</code>, <code>Aspect_w1</code>, <code>Aspect_w2</code></td></tr>
-<tr><td><code>Scan</code></td><td>Scan mode</td><td><code>Scan_480i</code>, <code>Scan_480p</code>, <code>Scan_720p</code>, <code>Scan_1080i</code>, …</td></tr>
-<tr><td><code>Players</code></td><td>Player count</td><td><code>Players_1</code>, <code>Players_2</code>, …</td></tr>
-<tr><td><code>Rating</code></td><td>Rating</td><td><code>Rating_0</code> … <code>Rating_5</code></td></tr>
+<tr><td><code>#System</code></td><td>Console (FR #49)</td><td><code>PS1</code>, <code>PS2</code></td><td><code>PS1_#System.png</code>, <code>PS2_#System.png</code></td></tr>
+<tr><td><code>#Media</code></td><td>Disc type</td><td><code>CD</code>, <code>DVD</code> (<code>APP</code> for homebrew)</td><td><code>CD_#Media.png</code>, <code>DVD_#Media.png</code></td></tr>
+<tr><td><code>#DiscType</code></td><td>Console + media (issue #49)</td><td><code>PS1CD</code>, <code>PS2CD</code>, <code>PS2DVD</code></td><td><code>PS1CD_#DiscType.png</code>, <code>PS2CD_#DiscType.png</code>, <code>PS2DVD_#DiscType.png</code></td></tr>
+<tr><td><code>#Format</code></td><td>Image format</td><td><code>ISO</code>, <code>ZSO</code>, <code>UL</code>, <code>ELF</code>, <code>HDL</code>, <code>VCD</code></td><td><code>ISO_#Format.png</code>, …</td></tr>
+<tr><td><code>Vmode</code> / <code>Aspect</code> / <code>Scan</code> / <code>Players</code> / <code>Rating</code></td><td>Compatibility (value <em>is</em> the full glyph name)</td><td><code>Vmode_ntsc</code>, <code>Aspect_w</code>, <code>Scan_480p</code>, <code>Players_2</code>, <code>Rating_3</code>, …</td><td><code>&lt;value&gt;_&lt;attribute&gt;.png</code></td></tr>
 </tbody>
 </table>
-<div class="callout info"><div class="h">i <code>#System</code> on the main page</div>FR #49 surfaces the console
-(<code>#System</code> → PS1/PS2) and disc (<code>#Media</code> → CD/DVD) badges. A PS1 disc launched via the L3
-VCD view reports <code>#System=PS1</code> and <code>#Media=CD</code>. The default <code>&lt;Coverflow&gt;</code>
-theme places both glyphs in the bottom-right corner of the <em>main</em> page, not just the info page.</div>
+<div class="callout info"><div class="h">i <code>#DiscType</code> — one disc glyph per kind</div><code>#System</code>
+says PS1 vs PS2 and <code>#Media</code> says CD vs DVD, but PS1-CD and PS2-CD both report <code>#Media=CD</code>,
+so a single <code>#Media</code> glyph can't tell them apart. <code>#DiscType</code> (issue #49) collapses console
++ media into one token. There are no built-in <code>#DiscType</code> glyphs — supply your own in the theme
+folder (<code>PS1CD_#DiscType.png</code> / <code>PS2CD_#DiscType.png</code> / <code>PS2DVD_#DiscType.png</code>)
+and give the element a <b>contiguous</b> <code>mainN</code>/<code>infoN</code> index (the parser stops at the
+first gap). FR #49 also surfaces <code>#System</code>/<code>#Media</code> on the <em>main</em> page, not just
+the info page.</div>
 
 <h2 id="default-assets">8 · Built-in <code>default=</code> asset names</h2>
 <p>You can point <code>default=</code> or <code>overlay=</code> at any of OPL's embedded textures — no file

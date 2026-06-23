@@ -704,7 +704,7 @@
   {
     "title": "attribute= values",
     "cat": "themes",
-    "text": "AttributeText keys (Title/Genre/Developer/Release/Description/#Size) and AttributeImage badge axes (#Media, #Format, #System PS1/PS2, Vmode, Aspect, Scan, Players, Rating) with their texture-name lookups.",
+    "text": "AttributeText keys (Title/Genre/Developer/Release/Description/#Size) and AttributeImage badge axes (#Media, #Format, #System PS1/PS2, #DiscType PS1CD/PS2CD/PS2DVD, Vmode, Aspect, Scan, Players, Rating). Disk-theme files are <value>_<attribute>.png (value first) on every device incl. the internal HDD; .png or .PNG.",
     "url": "themes.html#attributes"
   },
   {
