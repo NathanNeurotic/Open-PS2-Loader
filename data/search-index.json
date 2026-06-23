@@ -1010,7 +1010,7 @@
   {
     "title": "Credits & Sources",
     "cat": "reference",
-    "text": "The people and projects RiptOPL is built on — from the ps2homebrew foundation and PS2SDK through the wider OPL family (rickgaiser, neutrino, sOPL, uOPL, wOPL, OPL DB, POPSLoader, RetroGEM ID, nhddl) to special thanks for Wolf3s, KrahJohlito, bbsan2k, saildot4k, Berion, Ifcaro, and jimmikaelkael.",
+    "text": "The people and projects RiptOPL is built on — from the ps2homebrew foundation and PS2SDK through the wider OPL family (rickgaiser, neutrino, sOPL, uOPL, wOPL, OPL DB, POPSLoader, RetroGEM ID, nhddl) to special thanks for Wolf3s, KrahJohlito, bbsan2k, saildot4k, Berion, Ifcaro, jimmikaelkael, and tester eliminator1403.",
     "url": "credits.html"
   },
   {
@@ -1028,7 +1028,7 @@
   {
     "title": "Credits: Special Thanks",
     "cat": "reference",
-    "text": "Individual thanks to Wolf3s & KrahJohlito (uOPL/wOPL — Neutrino launcher, Coverflow, Favourites), bbsan2k (MMCE protocol), saildot4k (BDMA-ATA exFAT HDD), Berion (artwork & theme design), and Ifcaro & jimmikaelkael (original OPL authors).",
+    "text": "Individual thanks to Wolf3s & KrahJohlito (uOPL/wOPL — Neutrino launcher, Coverflow, Favourites), bbsan2k (MMCE protocol), saildot4k (BDMA-ATA exFAT HDD), eliminator1403 (testing & feedback), Berion (artwork & theme design), and Ifcaro & jimmikaelkael (original OPL authors).",
     "url": "credits.html#special-thanks"
   },
   {
