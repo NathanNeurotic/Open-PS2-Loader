@@ -1493,6 +1493,12 @@ static int isDecoratorCoverImage(theme_t *theme, mutable_image_t *gameImage)
             return 1;
     }
 
+    if (theme->vcdItemsList != NULL && theme->vcdItemsList->extended != NULL) {
+        itemsList = (items_list_t *)theme->vcdItemsList->extended;
+        if (itemsList->decoratorImage == gameImage)
+            return 1;
+    }
+
     return 0;
 }
 
@@ -1579,13 +1585,78 @@ static void clampSelectedCoverCaches(theme_t *theme, theme_elems_t *elems)
 
             if (gameImage != NULL && gameImage->cache != NULL && gameImage->cache->suffix != NULL && strcmp(gameImage->cache->suffix, "COV") == 0 &&
                 !isDecoratorCoverCache(theme->gamesItemsList, gameImage->cache) && !isDecoratorCoverCache(theme->appsItemsList, gameImage->cache) &&
-                !isDecoratorCoverCache(theme->favsItemsList, gameImage->cache)) {
+                !isDecoratorCoverCache(theme->favsItemsList, gameImage->cache) && !isDecoratorCoverCache(theme->vcdItemsList, gameImage->cache)) {
                 gameImage->cache->allowPrime = 0;
             }
         }
 
         elem = elem->next;
     }
+}
+
+// True if `cache` is referenced by a COV GAME_IMAGE OUTSIDE the vcd family (games/apps/favs main+info).
+// separateVcdCoverCache only acts when the vcd covers' cache is genuinely SHARED with a non-vcd family;
+// if the cache is vcd-private (e.g. a theme with vcd COV covers but no games COV cover), cloning and
+// re-pointing the vcd covers would leave the original cache unreferenced -> a one-time leak. Skip then.
+static int vcdCoverCacheSharedOutsideVcd(theme_t *theme, image_cache_t *cache)
+{
+    theme_elems_t *groups[6] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems,
+                                &theme->appsInfoElems, &theme->favsMainElems, &theme->favsInfoElems};
+    for (int g = 0; g < 6; g++) {
+        theme_element_t *e = groups[g]->first;
+        while (e != NULL) {
+            if (e->type == ELEM_TYPE_GAME_IMAGE) {
+                mutable_image_t *gi = (mutable_image_t *)e->extended;
+                if (gi != NULL && gi->cache == cache)
+                    return 1;
+            }
+            e = e->next;
+        }
+    }
+    return 0;
+}
+
+// Give the L3 VCD/PS1 view its OWN COV cover cache so it never shares cache slots with the games view.
+// The VCD list reuses the device's own game list (identical submenu item ids), and findDuplicate unifies
+// every "COV" GAME_IMAGE cache by suffix -- so without this the VCD covers and the ISO covers collide in
+// one (cache userId, item id)-keyed cache and thrash on every L3 toggle (eliminator1403's no-covers /
+// flash-then-wrong-cover hardware report). splitDecoratorCoverCache only separates DECORATOR covers and
+// no-ops on themes whose items list has no decorator (e.g. the default Coverflow theme), so the selected/
+// carousel cover (vcdMain2) would still share the games cache; this handles that case unconditionally.
+// Clones the COV cache used by the vcd family and re-points its non-decorator COV game-images onto it.
+static void separateVcdCoverCache(theme_t *theme)
+{
+    if (theme == NULL)
+        return;
+
+    image_cache_t *source = NULL;
+    theme_element_t *elem = theme->vcdMainElems.first;
+    while (elem != NULL) {
+        if (elem->type == ELEM_TYPE_GAME_IMAGE) {
+            mutable_image_t *gameImage = (mutable_image_t *)elem->extended;
+            if (gameImage != NULL && gameImage->cache != NULL && gameImage->cache->suffix != NULL &&
+                strcmp(gameImage->cache->suffix, "COV") == 0 && !isDecoratorCoverImage(theme, gameImage)) {
+                source = gameImage->cache; // the COV cache shared with the games view (via findDuplicate)
+                break;
+            }
+        }
+        elem = elem->next;
+    }
+    // Only separate when the cache is genuinely shared with a non-vcd family. If it is vcd-private there
+    // is nothing to separate, and cloning + re-pointing would orphan (leak) the original cache.
+    if (source == NULL || !vcdCoverCacheSharedOutsideVcd(theme, source))
+        return;
+
+    image_cache_t *replacement = cloneImageCache(theme, source);
+    if (replacement == NULL)
+        return;
+
+    int replacementAssigned = 0;
+    replaceSharedCoverCache(theme, &theme->vcdMainElems, source, replacement, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->vcdInfoElems, source, replacement, &replacementAssigned);
+
+    if (!replacementAssigned)
+        cacheDestroyCache(replacement);
 }
 
 static void validateGUIElems(const char *themePath, config_set_t *themeConfig, theme_t *theme)
@@ -1600,11 +1671,17 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     validateItemsList(themePath, themeConfig, theme, theme->gamesItemsList, &theme->mainElems);
     validateItemsList(themePath, themeConfig, theme, theme->appsItemsList, &theme->appsMainElems);
     validateItemsList(themePath, themeConfig, theme, theme->favsItemsList, &theme->favsMainElems);
+    validateItemsList(themePath, themeConfig, theme, theme->vcdItemsList, &theme->vcdMainElems);
 
     // Items-list decorator covers need their own cache; sharing with selected covers defeats MMCE cover clamping.
     splitDecoratorCoverCache(theme, theme->gamesItemsList);
     splitDecoratorCoverCache(theme, theme->appsItemsList);
     splitDecoratorCoverCache(theme, theme->favsItemsList);
+    splitDecoratorCoverCache(theme, theme->vcdItemsList);
+
+    // The L3 VCD view reuses the device's own game list (same item ids), so its selected/carousel covers
+    // must not share a COV cache with the ISO list -- otherwise toggling thrashes the same cache slots.
+    separateVcdCoverCache(theme);
 
     // Selected-cover caches do not need history unless a real items list decorator uses them.
     clampSelectedCoverCaches(theme, &theme->mainElems);
@@ -1675,6 +1752,10 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                     elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 42, 42, ALIGN_NONE, 400, 360, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                     initItemsList(themePath, themeConfig, theme, elem, name, NULL);
                     theme->favsItemsList = elem;
+                } else if (!theme->vcdItemsList) {
+                    elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 42, 42, ALIGN_NONE, 400, 360, SCALING_RATIO, theme->textColor, theme->fonts[0]);
+                    initItemsList(themePath, themeConfig, theme, elem, name, NULL);
+                    theme->vcdItemsList = elem; // 4th slot: the L3 VCD view's own items list (own cover cache)
                 }
             } else if (!strcmp(elementsType[ELEM_TYPE_ITEM_ICON], type)) {
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_GAME_IMAGE, 0, 0, ALIGN_CENTER, 64, 64, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
@@ -1907,6 +1988,7 @@ static void thmLoad(const char *themePath)
     newT->gamesItemsList = NULL;
     newT->appsItemsList = NULL;
     newT->favsItemsList = NULL;
+    newT->vcdItemsList = NULL;
     newT->coverflow = NULL;
     newT->coverflowCoverOffset = 0;
     newT->loadingIcon = NULL;
@@ -1995,7 +2077,8 @@ static void thmLoad(const char *themePath)
 
     // VCD/PS1 view main family: vcdMain<j> override, else fall back to appsMain<j> (the square box),
     // else main<j>. The apps fallback means a theme that defines no vcdMain still gets the square VCD
-    // look it had before this family existed. No ItemsList slot (VCD reuses gamesItemsList).
+    // look it had before this family existed. An ItemsList reached via this fallback claims the 4th
+    // slot (vcdItemsList) in addGUIElem, giving the VCD list its OWN cover cache (separateVcdCoverCache).
     for (j = 0; j < i; j++) {
         snprintf(path, sizeof(path), "vcdMain%d", j);
         if (addGUIElem(themePath, themeConfig, newT, &newT->vcdMainElems, NULL, path))

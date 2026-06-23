@@ -1183,16 +1183,21 @@ void menuRenderMain(void)
         // Favourites render with the theme's favs family (favsMain*); falls back to the game
         // elements when the theme defines no favsMain override.
         menuRenderElements(&gTheme->favsMainElems, allowItemConfig, renderConfig);
-        gTheme->itemsList = gTheme->favsItemsList;
+        // Fall back to the games list (the slot every real theme populates -- the 1st/only ItemsList)
+        // when the theme defines no favs/apps/vcd ItemsList, so gTheme->itemsList stays set: the
+        // scroll/paging code (menuNextV/PrevV/Page) derefs gTheme->itemsList->extended without a NULL check.
+        gTheme->itemsList = gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList;
     } else if (vcdViewActive(list->mode)) {
-        // VCD/PS1 listings render with the vcd family (vcdMain*). Each slot falls back at parse time
-        // to appsMain* (square box) then main*, so a theme with no vcdMain still gets the square VCD
-        // look. VCD is a view, not a tab -- the list reuses the device's own (game) list.
+        // VCD/PS1 listings render with the vcd family (vcdMain*; each slot falls back at parse time to
+        // appsMain* then main*). The VCD list uses its OWN items-list slot (vcdItemsList) so it keeps a
+        // SEPARATE cover cache from the device's ISO list -- the view reuses the device's game list
+        // (same item ids), so a shared cache thrashes on every L3 toggle. Falls back to the games list
+        // when the theme defines no 4th ItemsList (never NULL).
         menuRenderElements(&gTheme->vcdMainElems, allowItemConfig, renderConfig);
-        gTheme->itemsList = gTheme->gamesItemsList;
+        gTheme->itemsList = gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList;
     } else if (list->mode == APP_MODE) {
         menuRenderElements(&gTheme->appsMainElems, allowItemConfig, renderConfig);
-        gTheme->itemsList = gTheme->appsItemsList;
+        gTheme->itemsList = gTheme->appsItemsList ? gTheme->appsItemsList : gTheme->gamesItemsList;
     } else {
         menuRenderElements(&gTheme->mainElems, allowItemConfig, renderConfig);
         gTheme->itemsList = gTheme->gamesItemsList;
@@ -1290,16 +1295,17 @@ void menuRenderInfo(void)
 
     if (list->mode == FAV_MODE) {
         menuRenderElements(&gTheme->favsInfoElems, 1, itemConfig);
-        gTheme->itemsList = gTheme->favsItemsList;
+        gTheme->itemsList = gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList;
     } else if (vcdViewActive(list->mode)) {
-        // VCD info uses the vcd family (vcdInfo*). Each slot falls back at parse time to info* (the
-        // GAME info layout), so VCDs keep their rich game-style metadata page (per-game CFG keyed by
-        // the PS1 ID, read by sbPopulateConfig) unless the theme overrides it with vcdInfo blocks.
+        // VCD info uses the vcd family (vcdInfo*, falling back to info* -- the GAME info layout, so VCDs
+        // keep their rich game-style metadata page unless a theme overrides it). The list uses
+        // vcdItemsList (its own cover cache); falls back to the games list when absent so itemsList is
+        // never NULL.
         menuRenderElements(&gTheme->vcdInfoElems, 1, itemConfig);
-        gTheme->itemsList = gTheme->gamesItemsList;
+        gTheme->itemsList = gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList;
     } else if (list->mode == APP_MODE) {
         menuRenderElements(&gTheme->appsInfoElems, 1, itemConfig);
-        gTheme->itemsList = gTheme->appsItemsList;
+        gTheme->itemsList = gTheme->appsItemsList ? gTheme->appsItemsList : gTheme->gamesItemsList;
     } else {
         menuRenderElements(&gTheme->infoElems, 1, itemConfig);
         gTheme->itemsList = gTheme->gamesItemsList;

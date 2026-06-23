@@ -57,8 +57,11 @@ PS1 jewel-case art — before `main`, a theme that defines *no* `vcdMain` blocks
 in the square apps box. So you only add `vcdMain` blocks to make PS1 covers *differ* from apps;
 `vcdInfo` falls back to the game `info` layout, preserving the rich PS1 metadata page.
 
-> All four families share the cover-art cache (deduplicated by `pattern`) and a VCD view reuses the
-> device's own list element, so adding a family costs no extra VRAM unless you give it distinct art.
+> The games / apps / favs families share one cover-art cache (deduplicated by `pattern`). The **PS1/VCD
+> view keeps its OWN cover cache**: an **L3** view reuses the device's game *list* (same item indices as
+> the ISO list), so a shared cache would thrash covers on every toggle. The VCD family automatically
+> claims its own (4th) `ItemsList` slot and a separate cover cache — one small extra cache; the rest is
+> shared. (A theme needs no extra `ItemsList` block for this; it is auto-claimed via the fallback.)
 
 ### ⚠ Contiguous numbering rule
 
@@ -220,6 +223,11 @@ The engine looks up an image named `<attribute>_<value>` (built-in or theme file
 | `Scan` | `Scan_<v>` | `Scan_480i`, `Scan_480p`, `Scan_720p`, `Scan_1080i`, … |
 | `Players` | `Players_<v>` | `Players_1`, `Players_2`, … |
 | `Rating` | `Rating_<v>` | `Rating_0` … `Rating_5` |
+
+**`#DiscType`** *(issue #49)* — a combined console + media attribute with values **`PS1CD`**, **`PS2CD`**,
+**`PS2DVD`**. PS1-CD and PS2-CD both report `#Media=CD`, so a single `#Media` glyph can't tell them apart;
+an `AttributeImage` with `attribute=#DiscType` resolves one glyph per disc kind (same lookup as the
+attributes above). There are no built-in `#DiscType` glyphs — a theme supplies its own.
 
 ---
 

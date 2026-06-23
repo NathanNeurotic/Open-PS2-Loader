@@ -136,9 +136,13 @@ typedef struct theme
 
     // VCD/PS1 view: a fourth element family parsed like favsMain*/favsInfo* (vcdMain<N> /
     // vcdInfo<N>, each falling back to main<N>/info<N>). Rendered when a device is in the L3
-    // VCD view; reuses gamesItemsList (no separate ItemsList slot).
+    // VCD view. Has its OWN optional ItemsList slot (vcdItemsList, the 4th) so the VCD list keeps a
+    // SEPARATE cover cache from the games list -- the L3 toggle reuses the device's own game list
+    // (same item ids), so a shared cache would thrash every toggle. Falls back to gamesItemsList at
+    // render when the theme defines no 4th ItemsList.
     theme_elems_t vcdMainElems;
     theme_elems_t vcdInfoElems;
+    theme_element_t *vcdItemsList;
 
     theme_element_t *coverflow;
     int coverflowCoverOffset;
