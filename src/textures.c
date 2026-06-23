@@ -616,9 +616,11 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId)
         return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_INFO_STRUCT);
 
     if (setjmp(png_jmpbuf(pngPtr))) {
-        if (texLoadAbortRequested())
-            texFree(texture);
-        return texEnd(pngPtr, infoPtr, pFileBuffer, fd, texLoadAbortRequested() ? ERR_LOAD_ABORTED : ERR_SET_JMP);
+        /* Always free texture->Mem / texture->Clut on any longjmp (decode error or abort).
+           Capture the abort flag once to avoid a TOCTOU between the texFree and the return. */
+        int aborted = texLoadAbortRequested();
+        texFree(texture);
+        return texEnd(pngPtr, infoPtr, pFileBuffer, fd, aborted ? ERR_LOAD_ABORTED : ERR_SET_JMP);
     }
 
     png_set_read_fn(pngPtr, readData, readFunction);

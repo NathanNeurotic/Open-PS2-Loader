@@ -246,9 +246,18 @@ file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned
     int fd = openFile(fpath, mode);
     if (fd >= 0) {
         fileBuffer = (file_buffer_t *)malloc(sizeof(file_buffer_t));
+        if (fileBuffer == NULL) {
+            close(fd);
+            return NULL;
+        }
+        fileBuffer->buffer = (char *)malloc(size * sizeof(char));
+        if (fileBuffer->buffer == NULL) {
+            free(fileBuffer);
+            close(fd);
+            return NULL;
+        }
         fileBuffer->size = size;
         fileBuffer->available = 0;
-        fileBuffer->buffer = (char *)malloc(size * sizeof(char));
         if (mode == O_RDONLY) {
             fileBuffer->lastPtr = NULL;
 
@@ -274,9 +283,15 @@ file_buffer_t *openFileBufferBuffer(short allocResult, const void *buffer, unsig
     file_buffer_t *fileBuffer = NULL;
 
     fileBuffer = (file_buffer_t *)malloc(sizeof(file_buffer_t));
+    if (fileBuffer == NULL)
+        return NULL;
+    fileBuffer->buffer = (char *)malloc((size + 1) * sizeof(char));
+    if (fileBuffer->buffer == NULL) {
+        free(fileBuffer);
+        return NULL;
+    }
     fileBuffer->size = size;
     fileBuffer->available = size;
-    fileBuffer->buffer = (char *)malloc((size + 1) * sizeof(char));
     fileBuffer->lastPtr = fileBuffer->buffer; // O_RDONLY, but with the data in the buffer.
     fileBuffer->allocResult = allocResult;
     fileBuffer->fd = -1;

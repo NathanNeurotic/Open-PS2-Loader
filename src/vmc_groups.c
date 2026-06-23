@@ -440,8 +440,8 @@ static const char *titles_XEBP_100_24[] = {
     "SCES_518.87",
     "SLES_518.87",
     "SLUS_207.57",
-    "SLUS_20754",
-    "SLUS_20824",
+    "SLUS_207.54", /* was SLUS_20754 - missing dot, never matched */
+    "SLUS_208.24", /* was SLUS_20824 - missing dot, never matched */
     "SLUS_208.68",
     "SLUS_207.50",
     "SCES_519.53",
@@ -461,16 +461,16 @@ static const char *titles_XEBP_100_24[] = {
 static const size_t count_XEBP_100_24 = sizeof(titles_XEBP_100_24) / sizeof(titles_XEBP_100_24[0]);
 
 static const char *titles_XEBP_100_25[] = {
-    "SCES_50422",
-    "SLES_50422",
+    "SCES_504.22", /* was SCES_50422 - missing dot, never matched */
+    "SLES_504.22", /* was SLES_50422 - missing dot, never matched */
     "SLUS_202.63",
     "SLPS_250.79",
     "SLUS_202.41"};
 static const size_t count_XEBP_100_25 = sizeof(titles_XEBP_100_25) / sizeof(titles_XEBP_100_25[0]);
 
 static const char *titles_XEBP_100_26[] = {
-    "SCES_51154",
-    "SLES_51154",
+    "SCES_511.54", /* was SCES_51154 - missing dot, never matched */
+    "SLES_511.54", /* was SLES_51154 - missing dot, never matched */
     "SLUS_205.29",
     "SLPS_251.57",
     "SLUS_205.30"};
@@ -495,7 +495,7 @@ static const char *titles_XEBP_100_27[] = {
     "SLKA_252.06",
     "SCES_535.06",
     "SCES_535.07",
-    "SLES-5350",
+    "SLES_535.06", /* was SLES-5350 - dash+no-dot, sandwiched between SCES/SLES_535.06/07 */
     "SLES_535.07",
     "SLPM_661.08",
     "SLUS_212.42",
@@ -611,7 +611,7 @@ static const char *titles_XEBP_100_36[] = {
     "SLES_538.61",
     "SLES_538.62",
     "SLUS_212.99",
-    "SSCES_540.95",
+    "SCES_540.95", /* was SSCES_540.95 - extra leading S, sits above SCES_540.96/97 */
     "SCES_540.96",
     "SCES_540.97",
     "SLES_540.95",

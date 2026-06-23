@@ -1265,6 +1265,11 @@ int guiDeferUpdate(struct gui_update_t *op)
     WaitSema(gSemaId);
 
     struct gui_update_list_t *up = (struct gui_update_list_t *)malloc(sizeof(struct gui_update_list_t));
+    if (!up) {
+        /* OOM: release the semaphore so future callers are not permanently locked out */
+        SignalSema(gSemaId);
+        return -1;
+    }
     up->item = op;
     up->next = NULL;
 
@@ -1676,7 +1681,8 @@ int guiAlignMenuHints(menu_hint_item_t *hint, int font, int width)
 
     for (; hint; hint = hint->next) {
         GSTEXTURE *iconTex = thmGetTexture(hint->icon_id);
-        w = (iconTex->Width * 20) / iconTex->Height;
+        /* thmGetTexture returns NULL when the texture Mem is zero (missing disk-theme icon) */
+        w = iconTex ? (iconTex->Width * 20) / iconTex->Height : 20;
         char *text = _l(hint->text_id);
 
         x -= rmWideScale(w) + 2;
@@ -1698,7 +1704,8 @@ int guiAlignSubMenuHints(int hintCount, int *textID, int *iconID, int font, int 
 
     for (i = 0; i < hintCount; i++) {
         GSTEXTURE *iconTex = thmGetTexture(iconID[i]);
-        w = (iconTex->Width * 20) / iconTex->Height;
+        /* thmGetTexture returns NULL when the texture Mem is zero (missing disk-theme icon) */
+        w = iconTex ? (iconTex->Width * 20) / iconTex->Height : 20;
         char *text = _l(textID[i]);
 
         x -= rmWideScale(w) + 2;
@@ -1972,6 +1979,8 @@ void guiSwitchScreen(int target)
 struct gui_update_t *guiOpCreate(gui_op_type_t type)
 {
     struct gui_update_t *op = (struct gui_update_t *)malloc(sizeof(struct gui_update_t));
+    if (!op)
+        return NULL; /* OOM: callers must check for NULL before writing fields */
     memset(op, 0, sizeof(struct gui_update_t));
     op->type = type;
     return op;

@@ -317,9 +317,11 @@ static void bdmLoadBlockDeviceModules(void)
     if (gEnableBdmHDD && !hddModLoaded) {
         // Load dev9 and atad device drivers.
         LOG("bdmLoadBlockDeviceModules loading hdd drivers...\n");
-        hddLoadModules();
-
-        hddModLoaded = 1;
+        // Only mark loaded on success -- a failure (no HDD/interface) must not
+        // suppress future retries via bdmShouldQueueModuleLoad() (matches the
+        // conditional pattern used for USB/MX4SIO and opl.c's hddLoadModules gate).
+        if (hddLoadModules() >= 0)
+            hddModLoaded = 1;
     }
 
     // Network block device (UDPBD or UDPFS, picked by gNetBootProtocol). NIC-exclusive with the SMB/ETH
@@ -747,12 +749,12 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // Open file
         sbCreatePath(game, partname, pDeviceData->bdmPrefix, "/", i);
         fd = open(partname, O_RDONLY);
-        iop_fd = ps2sdk_get_iop_fd(fd);
         if (fd < 0) {
             sbUnprepare(&settings->common);
             guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
             return;
         }
+        iop_fd = ps2sdk_get_iop_fd(fd); // only valid after confirming fd >= 0
 
         // Get fragment list
         int iFragCount = fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, (void *)&settings->frags[iTotalFragCount], sizeof(bd_fragment_t) * (BDM_MAX_FRAGS - iTotalFragCount));
@@ -1300,7 +1302,13 @@ static int bdmDeviceIsATA(int deviceId)
     if (dir < 0)
         return 0;
 
-    fileXioIoctl2(dir, USBMASS_IOCTL_GET_DRIVERNAME, NULL, 0, &data.bdmDriver, sizeof(data.bdmDriver) - 1);
+    /* Zero the buffer before the ioctl: if the call fails, strcmp would read
+     * uninitialised stack bytes. Pattern mirrors bdmReadDeviceIdentity(). */
+    memset(&data.bdmDriver, 0, sizeof(data.bdmDriver));
+    if (fileXioIoctl2(dir, USBMASS_IOCTL_GET_DRIVERNAME, NULL, 0, &data.bdmDriver, sizeof(data.bdmDriver) - 1) < 0) {
+        fileXioDclose(dir);
+        return 0;
+    }
     fileXioDclose(dir);
 
     return (!strcmp(data.bdmDriver, "ata") && strlen(data.bdmDriver) == 3);

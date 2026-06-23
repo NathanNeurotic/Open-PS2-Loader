@@ -456,9 +456,11 @@ static void initMenuForListSupport(opl_io_module_t *mod)
     moduleUpdateMenuInternal(mod, 0, 0);
 
     struct gui_update_t *mc = guiOpCreate(GUI_OP_ADD_MENU);
-    mc->menu.menu = &mod->menuItem;
-    mc->menu.subMenu = &mod->subMenu;
-    guiDeferUpdate(mc);
+    if (mc) { // guiOpCreate returns NULL on OOM -- skip the deferred op rather than deref NULL
+        mc->menu.menu = &mod->menuItem;
+        mc->menu.subMenu = &mod->subMenu;
+        guiDeferUpdate(mc);
+    }
 }
 
 static void clearMenuGameList(opl_io_module_t *mdl)
@@ -768,6 +770,8 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
         for (i = 0; i < count; ++i) {
 
             gup = guiOpCreate(GUI_OP_APPEND_MENU);
+            if (!gup) // OOM: skip this entry rather than deref NULL
+                continue;
 
             gup->menu.menu = &mdl->menuItem;
             gup->menu.subMenu = &mdl->subMenu;
@@ -789,9 +793,11 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
 
     if (gAutosort) {
         gup = guiOpCreate(GUI_OP_SORT);
-        gup->menu.menu = &mdl->menuItem;
-        gup->menu.subMenu = &mdl->subMenu;
-        guiDeferUpdate(gup);
+        if (gup) { // OOM-safe: skip the sort op rather than deref NULL
+            gup->menu.menu = &mdl->menuItem;
+            gup->menu.subMenu = &mdl->subMenu;
+            guiDeferUpdate(gup);
+        }
     }
 }
 
@@ -2207,12 +2213,15 @@ static void deferredInit(void)
 
     // inform GUI main init part is over
     struct gui_update_t *id = guiOpCreate(GUI_INIT_DONE);
-    guiDeferUpdate(id);
+    if (id)
+        guiDeferUpdate(id);
 
     if (list_support[gDefaultDevice].support) {
         id = guiOpCreate(GUI_OP_SELECT_MENU);
-        id->menu.menu = &list_support[gDefaultDevice].menuItem;
-        guiDeferUpdate(id);
+        if (id) {
+            id->menu.menu = &list_support[gDefaultDevice].menuItem;
+            guiDeferUpdate(id);
+        }
     }
 }
 

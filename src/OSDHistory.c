@@ -104,7 +104,7 @@ int AddOldHistoryFileRecord(const char *path, const struct HistoryEntry *OldHist
     int fd, result;
 
     sprintf(fullpath, "%s/history.old", path);
-    if ((fd = open(fullpath, O_WRONLY | O_APPEND)) >= 0) {
+    if ((fd = open(fullpath, O_WRONLY | O_CREAT | O_APPEND, 0644)) >= 0) { /* O_CREAT: create on first append */
         lseek(fd, 0, SEEK_END);
         result = write(fd, OldHistoryEntry, sizeof(struct HistoryEntry)) == sizeof(struct HistoryEntry) ? 0 : -EIO;
         close(fd);

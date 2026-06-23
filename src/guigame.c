@@ -1166,6 +1166,8 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     diaGetString(diaCompatConfig, COMPAT_GAMEID, hexid, sizeof(hexid));
     if (hexid[0] != '\0')
         result = configSetStr(configSet, CONFIG_ITEM_DNAS, hexid);
+    else
+        configRemoveKey(configSet, CONFIG_ITEM_DNAS); // clear stale GameID when user empties the field
 
     diaGetString(diaCompatConfig, COMPAT_ALTSTARTUP, altStartup, sizeof(altStartup));
     if (altStartup[0] != '\0')

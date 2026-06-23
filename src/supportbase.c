@@ -228,7 +228,8 @@ static int updateISOGameList(const char *path, const struct game_cache_list *cac
                 modified = 1;
             }
         } else {
-            modified = 0;
+            // Directory is empty but cache has entries: evict the stale games.bin.
+            modified = (cache->count > 0) ? 1 : 0;
         }
     } else {
         modified = ((head != NULL) && (count > 0)) ? 1 : 0;
@@ -477,6 +478,13 @@ int sbReadList(base_game_info_t **list, const char *prefix, int *fsize, int *gam
         }
     } else
         count = 0;
+
+    // Free any ISO game_list_t nodes not consumed above (e.g. when the output array alloc failed).
+    while (dlist_head) {
+        struct game_list_t *cur = dlist_head;
+        dlist_head = dlist_head->next;
+        free(cur);
+    }
 
     if (count > 0)
         *gamecount = count;

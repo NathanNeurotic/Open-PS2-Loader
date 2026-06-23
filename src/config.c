@@ -249,8 +249,13 @@ void configEnd()
 
 config_set_t *configAlloc(int type, config_set_t *configSet, char *fileName)
 {
-    if (!configSet)
+    int weAllocated = 0;
+    if (!configSet) {
         configSet = (config_set_t *)malloc(sizeof(config_set_t));
+        if (!configSet) // OOM: can't proceed without the struct
+            return NULL;
+        weAllocated = 1;
+    }
 
     configSet->uid = ++currentUID;
     configSet->type = type;
@@ -259,6 +264,11 @@ config_set_t *configAlloc(int type, config_set_t *configSet, char *fileName)
     if (fileName) {
         int length = strlen(fileName) + 1;
         configSet->filename = (char *)malloc(length * sizeof(char));
+        if (!configSet->filename) { // OOM: clean up and bail
+            if (weAllocated)
+                free(configSet);
+            return NULL;
+        }
         memcpy(configSet->filename, fileName, length);
     } else
         configSet->filename = NULL;
@@ -269,7 +279,11 @@ config_set_t *configAlloc(int type, config_set_t *configSet, char *fileName)
 void configMove(config_set_t *configSet, const char *fileName)
 {
     int length = strlen(fileName) + 1;
-    configSet->filename = realloc(configSet->filename, length);
+    // Use a temporary so a failed realloc doesn't clobber (and leak) the old pointer
+    char *tmp = realloc(configSet->filename, length);
+    if (!tmp)
+        return;
+    configSet->filename = tmp;
     memcpy(configSet->filename, fileName, length);
 }
 

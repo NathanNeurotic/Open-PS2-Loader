@@ -101,22 +101,27 @@ int LoadImage(const char *filename)
 static code_t make_code(const char *s)
 {
     code_t code;
-    u32 address;
-    u32 value;
-    char digits[CODE_DIGITS];
+    u32 address = 0; /* init so a partial sscanf parse is safe */
+    u32 value = 0;
+    char digits[CODE_DIGITS + 1]; /* +1: NUL terminator after all CODE_DIGITS hex chars */
     int i = 0;
 
     while (*s) {
-        // Reserve room for the terminator so a line with more hex digits than
-        // CODE_DIGITS cannot overflow digits[].
-        if (isxdigit((int)*s) && i < CODE_DIGITS - 1)
+        // Collect up to CODE_DIGITS hex chars; digits[] has room for them + NUL.
+        if (isxdigit((int)*s) && i < CODE_DIGITS)
             digits[i++] = *s;
         s++;
     }
 
     digits[i] = '\0';
 
-    sscanf(digits, "%08X %08X", &address, &value);
+    /* digits[] holds only hex chars (no spaces); no space in format string.
+     * Bail on a partial parse (< 2 items) — leaves address=0/value=0. */
+    if (sscanf(digits, "%08X%08X", &address, &value) != 2) {
+        code.addr = 0;
+        code.val = 0;
+        return code;
+    }
 
     // Return Code Address and Value
     code.addr = address;

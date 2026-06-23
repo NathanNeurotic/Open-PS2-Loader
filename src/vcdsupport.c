@@ -290,11 +290,22 @@ int vcdSafeCopyFile(const char *srcPath, const char *dstPath)
     int sfd = open(srcPath, O_RDONLY);
     if (sfd < 0)
         return -1;
-    int srcSize = lseek(sfd, 0, SEEK_END);
-    lseek(sfd, 0, SEEK_SET);
-    if (srcSize < 0) {
-        close(sfd);
-        return -1;
+
+    // Probe source file size for the MC free-space pre-check. MMCE newlib does not support SEEK_END
+    // (mirrors textures.c lines 402-403: it returns -1, causing every MMCE equip to abort here).
+    // If SEEK_END fails, fall back to srcSize=0 -- the pre-check becomes conservative (always passes)
+    // and the write-loop + unlink safety net still catches any actual out-of-space error.
+    int srcSize = 0;
+    {
+        int sz = lseek(sfd, 0, SEEK_END);
+        if (sz >= 0) {
+            if (lseek(sfd, 0, SEEK_SET) < 0) {
+                close(sfd);
+                return -1;
+            }
+            srcSize = sz;
+        }
+        // SEEK_END failed (e.g. MMCE source): leave srcSize=0, no rewind needed (still at start).
     }
 
     // Free-space gate: only blocks when the destination IS a memory card and it won't fit.

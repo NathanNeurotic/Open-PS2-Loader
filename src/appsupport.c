@@ -10,6 +10,7 @@
 #include "include/bdmsupport.h"
 #include "include/ethsupport.h"
 #include "include/hddsupport.h"
+#include "include/texcache.h"
 
 #include <elf-loader.h>
 
@@ -434,6 +435,13 @@ static int appUpdateItemList(item_list_t *itemList)
 {
     struct app_info_linked *appsLinkedList;
     struct app_info_linked *appsLinkedListHead;
+
+    /* Drain any in-flight art worker requests that reference appsList /
+     * appArtLookupTable before freeing them; without this the art worker
+     * thread (gArtThreadId) can race against the free/realloc below via
+     * appGetImage -> appLookupByStartup (use-after-free / data race). */
+    cacheAbortMmceImageLoadsTimed(500);
+    (void)cacheCancelPendingImageLoadsTimed(500);
 
     appFreeList();
 

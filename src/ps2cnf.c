@@ -115,7 +115,9 @@ int ps2cnfGetBootFile(const char *path, char *bootfile)
         return -1;
     }
 
-    if ((pChar = CNFGetToken(pChar, cnf_end, "=")) == (const char *)-1) { // Unexpected EOF
+    /* Also guard NULL (no '=' on the BOOT2 line); NULL here would reach
+     * CNFGetKey and immediately deref a NULL pointer. */
+    if ((pChar = CNFGetToken(pChar, cnf_end, "=")) == NULL || pChar == (const char *)-1) {
         return -1;
     }
 

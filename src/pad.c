@@ -499,9 +499,9 @@ int startPads()
     for (port = 0; port < maxports; ++port) {
         int maxslots = padGetSlotMax(port);
 
-        for (slot = 0; slot < maxslots; ++slot) {
+        for (slot = 0; slot < maxslots && pad_count < MAX_PADS; ++slot) {
 
-            struct pad_data_t *cpad = &pad_data[pad_count];
+            struct pad_data_t *cpad = &pad_data[pad_count]; /* guard: pad_count < MAX_PADS asserted above */
 
             cpad->port = port;
             cpad->slot = slot;

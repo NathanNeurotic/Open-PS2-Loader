@@ -315,9 +315,11 @@ int ioGetPendingRequestCount(void)
 {
     int count = 0;
 
-    struct io_request_t *req = gReqList;
-
+    /* Snapshot gReqList INSIDE the lock: the worker frees nodes under
+     * gProcSemaId, so reading the pointer before acquiring it is a
+     * use-after-free on the very first req->next dereference. */
     WaitSema(gProcSemaId);
+    struct io_request_t *req = gReqList;
 
     while (req) {
         count++;

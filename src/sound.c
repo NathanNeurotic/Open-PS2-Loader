@@ -618,7 +618,11 @@ void audioEnd(void)
         return;
     }
 
-    if (gEnableBGM && isBgmPlaying())
+    /* Stop BGM if it is still running: bgmIsPlaying covers the normal case;
+     * bgmIoThreadRunning/bgmThreadRunning cover the case where a settings-toggle
+     * caused the IO thread to self-exit (setting terminateFlag=1/bgmIsPlaying=0)
+     * but bgmDeinit() was never called, leaking the semaphores and thread handles. */
+    if (isBgmPlaying() || bgmIoThreadRunning || bgmThreadRunning)
         bgmStop();
 
     audsrv_quit();
