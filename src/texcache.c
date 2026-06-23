@@ -97,18 +97,6 @@ static void cacheResetRequestTrackingLocked(void);
 static void cacheWakeWorker(void);
 static void cacheDropQueuedRequestLocked(load_image_request_t *req);
 
-static void cacheReleaseTexture(GSTEXTURE *texture)
-{
-    if (texture == NULL)
-        return;
-
-    if (texture->Mem != NULL)
-        rmUnloadTexture(texture);
-
-    texFree(texture);
-    cacheResetTextureState(texture);
-}
-
 static void cacheNextGenerationLocked(void)
 {
     gCacheGeneration++;
@@ -408,18 +396,6 @@ static int cacheHasActiveInteractiveModeLocked(int mode)
     return gArtCurrentReq != NULL && gArtCurrentReq->priority == CACHE_REQ_PRIORITY_INTERACTIVE && gArtCurrentReq->effectiveMode == mode;
 }
 
-static load_image_request_t *cacheFindQueuedInteractiveModeLocked(int mode)
-{
-    load_image_request_t *req;
-
-    for (req = gArtInteractiveReqList; req != NULL; req = req->next) {
-        if (req->effectiveMode == mode)
-            return req;
-    }
-
-    return NULL;
-}
-
 static int cacheIsAbortableMmceRequest(load_image_request_t *req)
 {
     return req != NULL && req->priority == CACHE_REQ_PRIORITY_INTERACTIVE && req->effectiveMode == MMCE_MODE;
@@ -675,26 +651,6 @@ static void cacheInvalidateInteractiveRequestsLocked(void)
 
         registry = registry->next;
     }
-}
-
-static int cacheHasReadyEntriesLocked(void)
-{
-    cache_registry_entry_t *registry = gCacheRegistry;
-
-    while (registry != NULL) {
-        image_cache_t *cache = registry->cache;
-
-        if (cache != NULL && !cache->destroying) {
-            for (int i = 0; i < cache->count; i++) {
-                if (cache->content[i].state == CACHE_ENTRY_READY || cache->content[i].state == CACHE_ENTRY_PRIMED)
-                    return 1;
-            }
-        }
-
-        registry = registry->next;
-    }
-
-    return 0;
 }
 
 static int cacheWaitForAllRequestsTimed(int timeoutTicks)

@@ -1146,12 +1146,6 @@ static const char *titles_XEBP_100_71[] = {
     "SLPM_626.38"};
 static const size_t count_XEBP_100_71 = sizeof(titles_XEBP_100_71) / sizeof(titles_XEBP_100_71[0]);
 
-static const char *titles_XEBP_100_72[] = {
-    "SLPM_625.25",
-    "SLKA_150.45",
-    "SLPM_626.38"};
-static const size_t count_XEBP_100_72 = sizeof(titles_XEBP_100_72) / sizeof(titles_XEBP_100_72[0]);
-
 static const char *titles_XEBP_100_73[] = {
     "SLPM_651.76",
     "SLPM_652.06"};
@@ -1267,13 +1261,6 @@ static const char *titles_XEBP_000_11[] = {
     "SLPM_650.02",
     "SLPM_650.03"};
 static const size_t count_XEBP_000_11 = sizeof(titles_XEBP_000_11) / sizeof(titles_XEBP_000_11[0]);
-
-static const char *titles_XEBP_000_12[] = {
-    "SLPM_666.02",
-    "SLKA_252.80",
-    "SLKA_252.81",
-    "SLPM_743.01"};
-static const size_t count_XEBP_000_12 = sizeof(titles_XEBP_000_12) / sizeof(titles_XEBP_000_12[0]);
 
 static const char *titles_XEBP_000_13[] = {
     "SLES_820.38",
@@ -1421,7 +1408,6 @@ static const MemoryCardGroup allMemoryCardGroups[] = {
     {"XEBP_100.69", titles_XEBP_100_69, count_XEBP_100_69},
     {"XEBP_100.70", titles_XEBP_100_70, count_XEBP_100_70},
     {"XEBP_100.71", titles_XEBP_100_71, count_XEBP_100_71},
-    {"XEBP_100.72", titles_XEBP_100_72, count_XEBP_100_72},
     {"XEBP_100.73", titles_XEBP_100_73, count_XEBP_100_73},
     {"XEBP_100.74", titles_XEBP_100_74, count_XEBP_100_74},
     {"XEBP_100.75", titles_XEBP_100_75, count_XEBP_100_75},
@@ -1436,7 +1422,6 @@ static const MemoryCardGroup allMemoryCardGroups[] = {
     {"XEBP_000.09", titles_XEBP_000_09, count_XEBP_000_09},
     {"XEBP_000.10", titles_XEBP_000_10, count_XEBP_000_10},
     {"XEBP_000.11", titles_XEBP_000_11, count_XEBP_000_11},
-    {"XEBP_000.12", titles_XEBP_000_12, count_XEBP_000_12},
     {"XEBP_000.13", titles_XEBP_000_13, count_XEBP_000_13},
     {"XEBP_000.14", titles_XEBP_000_14, count_XEBP_000_14},
     {"XEBP_000.15", titles_XEBP_000_15, count_XEBP_000_15},

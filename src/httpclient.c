@@ -11,12 +11,16 @@ static unsigned char RpcRxBuffer[64] ALIGNED(64);
 
 int HttpInit(void)
 {
-    while (SifBindRpc(&SifRpcClient, 0x00001B14, 0) < 0 || SifRpcClient.server == NULL) {
+    int retries;
+
+    for (retries = 0; retries < 1000; retries++) {
+        if (SifBindRpc(&SifRpcClient, 0x00001B14, 0) >= 0 && SifRpcClient.server != NULL)
+            return 0;
         LOG("libhttpclient: bind failed\n");
         nopdelay();
     }
 
-    return 0;
+    return -1;
 }
 
 void HttpDeinit(void)
@@ -73,6 +77,11 @@ int HttpSendGetRequest(s32 HttpSocket, const char *UserAgent, const char *host, 
         result = ((struct HttpClientSendGetResult *)RpcRxBuffer)->result;
         *mode = ((struct HttpClientSendGetResult *)RpcRxBuffer)->mode;
         *out_len = ((struct HttpClientSendGetResult *)RpcRxBuffer)->out_len;
+        /* The IOP DMA'd the HTTP payload into `output` via a separate sceSifSetDma
+         * (see httpclient/main.c). SifCallRpc only manages coherency for RpcRxBuffer,
+         * not for `output`. Invalidate the EE dcache so the caller reads fresh data. */
+        if (!IS_UNCACHED_SEG(output))
+            FlushCache(0);
     }
 
     return result;

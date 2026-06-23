@@ -170,6 +170,7 @@ static void ioWorkerThread(void *arg)
     // delete the semaphores
     DeleteSema(gProcSemaId);
     DeleteSema(gEndSemaId);
+    DeleteSema(gIOPrintfSemaId);
 
     isIORunning = 0;
 

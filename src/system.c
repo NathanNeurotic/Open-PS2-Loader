@@ -175,8 +175,12 @@ void sysShutdownDev9(void)
 
         if (dev9InitCount == 0) { /* Switch off DEV9 once nothing needs it. */
             if (dev9Loaded) {
-                while (fileXioDevctl("dev9x:", DDIOC_OFF, NULL, 0, NULL, 0) < 0) {
-                };
+                int retry = 100;
+                while (retry-- > 0 && fileXioDevctl("dev9x:", DDIOC_OFF, NULL, 0, NULL, 0) < 0) {
+                    ;
+                }
+                if (retry <= 0)
+                    LOG("[DEV9] WARNING: DDIOC_OFF did not acknowledge after 100 retries\n");
             }
         }
     }
@@ -296,7 +300,8 @@ static unsigned int crctab[0x400];
 
 unsigned int USBA_crc32(const char *string)
 {
-    int crc, table, count, byte;
+    int crc, table, count;
+    unsigned char byte;
 
     for (table = 0; table < 256; table++) {
         crc = table << 24;

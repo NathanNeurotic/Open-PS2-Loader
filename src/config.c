@@ -98,7 +98,7 @@ static int splitAssignment(char *line, char *key, size_t keymax, char *val, size
         val[vallen] = '\0';
     }
 
-    return (int)eqpos;
+    return (eqpos != NULL);
 }
 
 static int parsePrefix(char *line, char *prefix, size_t prefixSize)
@@ -479,9 +479,11 @@ static int configReadLegacyIP(void)
         ipconfig[rd] = '\0';
         close(fd);
 
-        sscanf(ipconfig, "%d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d", &ps2_ip[0], &ps2_ip[1], &ps2_ip[2], &ps2_ip[3],
-               &ps2_netmask[0], &ps2_netmask[1], &ps2_netmask[2], &ps2_netmask[3],
-               &ps2_gateway[0], &ps2_gateway[1], &ps2_gateway[2], &ps2_gateway[3]);
+        int n = sscanf(ipconfig, "%d.%d.%d.%d %d.%d.%d.%d %d.%d.%d.%d", &ps2_ip[0], &ps2_ip[1], &ps2_ip[2], &ps2_ip[3],
+                       &ps2_netmask[0], &ps2_netmask[1], &ps2_netmask[2], &ps2_netmask[3],
+                       &ps2_gateway[0], &ps2_gateway[1], &ps2_gateway[2], &ps2_gateway[3]);
+        if (n != 12)
+            return 0;
 
         configSet = &configFiles[CONFIG_INDEX_NETWORK];
 
@@ -551,7 +553,7 @@ static int configReadFileBuffer(file_buffer_t *fileBuffer, config_set_t *configS
             // insert config value
             if (prefix[0]) {
                 // we have a prefix
-                char composedKey[CONFIG_KEY_NAME_LEN];
+                char composedKey[2 * CONFIG_KEY_NAME_LEN];
 
                 snprintf(composedKey, sizeof(composedKey), "%s_%s", prefix, key);
                 configSetStr(configSet, composedKey, val);

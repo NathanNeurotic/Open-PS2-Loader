@@ -289,6 +289,8 @@ void appInit(item_list_t *itemList)
     LOG("APPSUPPORT Init\n");
     appForceUpdate = 1;
     configGetInt(configGetByType(CONFIG_OPL), "app_frames_delay", &appItemList.delay);
+    if (configApps != NULL)
+        configFree(configApps);
     configApps = oplGetLegacyAppsConfig();
     appsList = NULL;
     appItemList.enabled = 1;
@@ -313,8 +315,11 @@ static int appNeedsUpdate(item_list_t *itemList)
     if (oplShouldAppsUpdate())
         update = 1;
 
-    if (update)
+    if (update) {
+        if (configApps != NULL)
+            configFree(configApps);
         configApps = oplGetLegacyAppsConfig();
+    }
 
     return update;
 }
@@ -631,7 +636,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             argc = 1;
         }
 
-        deinit(UNMOUNT_EXCEPTION, mode); // CAREFUL: deinit will call appCleanUp, so configApps/cur will be freed
+        deinit(UNMOUNT_EXCEPTION, mode); // CAREFUL: deinit will call appCleanUp, which frees appsList, appArtLookupTable, and configApps
         LoadELFFromFileWithPartition(filename, partition, argc, argv);
     } else
         guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
@@ -707,6 +712,10 @@ static void appCleanUp(item_list_t *itemList, int exception)
         LOG("APPSUPPORT CleanUp\n");
 
         appFreeList();
+        if (configApps != NULL) {
+            configFree(configApps);
+            configApps = NULL;
+        }
     }
 }
 
@@ -717,6 +726,10 @@ static void appShutdown(item_list_t *itemList)
         LOG("APPSUPPORT Shutdown\n");
 
         appFreeList();
+        if (configApps != NULL) {
+            configFree(configApps);
+            configApps = NULL;
+        }
     }
 }
 

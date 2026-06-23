@@ -126,7 +126,7 @@ static u16 GetTimestamp(void)
 int AddHistoryRecord(const char *name)
 {
     struct HistoryEntry HistoryEntries[MAX_HISTORY_ENTRIES], *NewEntry, OldHistoryEntry;
-    int i, value, LeastUsedRecord, LeastUsedRecordLaunchCount, LeastUsedRecordTimestamp, NewLaunchCount, result, mcType, format;
+    int i, value, LeastUsedRecord, LeastUsedRecordLaunchCount, LeastUsedRecordTimestamp, NewLaunchCount, result, mcType = 0, format = 0;
     u8 BlankSlotList[MAX_HISTORY_ENTRIES];
     int NumBlankSlots, NumSlotsUsed, IsNewRecord;
     char SystemRegionLetter;

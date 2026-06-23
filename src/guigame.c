@@ -576,7 +576,7 @@ static char *hex_to_str(char *str, u16 hex)
 static char *ver_to_str(char *str, u8 ma, u16 mi)
 {
     if (ma > 9)
-        ma = 0;
+        ma = 9;
 
     sprintf(str, "%X.%04X    BT %s", ma, mi, bt_ver_str[ma]);
 
@@ -806,7 +806,7 @@ void guiGameShowPadEmuConfig(int forceGlobal)
         }
 
         if (result == PADCFG_BTINFO) {
-            for (i = PADCFG_FEAT_START; i < PADCFG_FEAT_END + 1; i++)
+            for (i = PADCFG_FEAT_START; i < PADCFG_FEAT_END; i++)
                 diaSetLabel(diaPadEmuInfo, i, _l(_STR_NO));
 
             diaSetLabel(diaPadEmuInfo, PADCFG_VID, _l(_STR_NOT_CONNECTED));
@@ -1509,9 +1509,9 @@ static int guiGameSaveOSDLanguageGameConfig(config_set_t *configSet, int result)
 {
     if (gOSDLanguageSource == SETTINGS_PERGAME) {
         if ((result = configSetInt(configSet, CONFIG_ITEM_OSD_SETTINGS_SOURCE, gOSDLanguageSource)))
-            if ((result = configSetInt(configSet, CONFIG_ITEM_OSD_SETTINGS_ENABLE, gOSDLanguageEnable))) {
-                configSetInt(configSet, CONFIG_ITEM_OSD_SETTINGS_LANGID, gOSDLanguageValue);
-                configSetInt(configSet, CONFIG_ITEM_OSD_SETTINGS_TV_ASP, gOSDTVAspectRatio);
+            if ((result = configSetInt(configSet, CONFIG_ITEM_OSD_SETTINGS_ENABLE, gOSDLanguageEnable)) && gOSDLanguageEnable) {
+                result = configSetInt(configSet, CONFIG_ITEM_OSD_SETTINGS_LANGID, gOSDLanguageValue);
+                result = configSetInt(configSet, CONFIG_ITEM_OSD_SETTINGS_TV_ASP, gOSDTVAspectRatio);
                 result = configSetInt(configSet, CONFIG_ITEM_OSD_SETTINGS_VMODE, gOSDVideOutput);
             }
     } else {

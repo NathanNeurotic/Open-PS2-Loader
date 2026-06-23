@@ -196,8 +196,10 @@ int hddGetHDLGamelist(hdl_games_list_t *game_list)
     if ((fd = fileXioDopen("hdd0:")) >= 0) {
         head = current = NULL;
         count = 0;
+        int saw_hdl = 0;
         while (fileXioDread(fd, &dirent) > 0) {
             if (dirent.stat.mode == HDL_FS_MAGIC) {
+                saw_hdl = 1;
                 if ((pGameEntry = GetGameListRecord(head, dirent.name)) == NULL) {
                     if (head == NULL) {
                         current = head = malloc(sizeof(struct GameDataEntry));
@@ -227,6 +229,9 @@ int hddGetHDLGamelist(hdl_games_list_t *game_list)
         }
 
         fileXioDclose(fd);
+
+        if (saw_hdl && head == NULL)
+            ret = -ENOMEM;
 
         if (head != NULL) {
             if ((game_list->games = malloc(sizeof(hdl_game_info_t) * count)) != NULL) {
@@ -421,7 +426,7 @@ int hddGetFileBlockInfo(const char *name, const apa_sub_t *subs, pfs_blockinfo_t
 
         if (hddReadSectors(lba, sizeof(pfs_inode_t) / 512, inode) == 0) {
             if (inode->number_data < max) {
-                memcpy(blocks, inode->data, max * sizeof(pfs_blockinfo_t));
+                memcpy(blocks, inode->data, inode->number_data * sizeof(pfs_blockinfo_t));
                 result = inode->number_data;
             } else
                 result = -ENOMEM;

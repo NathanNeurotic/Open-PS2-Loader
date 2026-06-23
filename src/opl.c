@@ -2309,6 +2309,10 @@ static void autoLaunchHDDGame(char *argv[])
     miniInit(HDD_MODE);
 
     gAutoLaunchGame = malloc(sizeof(hdl_game_info_t));
+    if (gAutoLaunchGame == NULL) {
+        miniDeinit(NULL);
+        return;
+    }
     memset(gAutoLaunchGame, 0, sizeof(hdl_game_info_t));
 
     snprintf(gAutoLaunchGame->startup, sizeof(gAutoLaunchGame->startup), "%s", argv[1]);
@@ -2330,16 +2334,22 @@ static void autoLaunchBDMGame(char *argv[])
     miniInit(BDM_MODE);
 
     gAutoLaunchBDMGame = malloc(sizeof(base_game_info_t));
+    if (gAutoLaunchBDMGame == NULL) {
+        miniDeinit(NULL);
+        return;
+    }
     memset(gAutoLaunchBDMGame, 0, sizeof(base_game_info_t));
 
     int nameLen = 0;
     int format = isValidIsoName(argv[1], &nameLen);
-    // Bound the extracted name length to the destination field so a long or
-    // malformed ISO filename cannot overflow gAutoLaunchBDMGame->name.
-    if (nameLen < 0)
-        nameLen = 0;
-    if (nameLen > (int)sizeof(gAutoLaunchBDMGame->name) - 1)
-        nameLen = (int)sizeof(gAutoLaunchBDMGame->name) - 1;
+    // Reject unsupported / over-long filenames -- matches supportbase.c:315 scanner pattern.
+    // Using a clamped nameLen as the extension offset would desync from the real suffix position.
+    if (format <= 0 || nameLen < 0 || nameLen > ISO_GAME_NAME_MAX) {
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        miniDeinit(NULL);
+        return;
+    }
     if (format == GAME_FORMAT_OLD_ISO) {
         strncpy(gAutoLaunchBDMGame->name, &argv[1][GAME_STARTUP_MAX], nameLen);
         gAutoLaunchBDMGame->name[nameLen] = '\0';
@@ -2363,6 +2373,12 @@ static void autoLaunchBDMGame(char *argv[])
     gAutoLaunchBDMGame->parts = 1; // ul not supported.
 
     gAutoLaunchDeviceData = malloc(sizeof(bdm_device_data_t));
+    if (gAutoLaunchDeviceData == NULL) {
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        miniDeinit(NULL);
+        return;
+    }
     memset(gAutoLaunchDeviceData, 0, sizeof(bdm_device_data_t));
     gAutoLaunchDeviceData->bdmDeviceType = BDM_TYPE_UNKNOWN;
     gAutoLaunchDeviceData->bdmHddIsLBA48 = -1;

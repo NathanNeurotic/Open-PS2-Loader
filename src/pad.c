@@ -89,7 +89,7 @@ static int waitPadReady(struct pad_data_t *pad)
     return state;
 };
 
-static int initializePad(struct pad_data_t *pad)
+static void initializePad(struct pad_data_t *pad)
 {
     int tmp;
     int modes;
@@ -100,7 +100,7 @@ static int initializePad(struct pad_data_t *pad)
     // is there any device connected to that port?
     if (waitPadReady(pad) == PAD_STATE_DISCONN) {
         LOG("PAD pad %d,%d not connected.\n", pad->port, pad->slot);
-        return 1; // nope, don't waste your time here!
+        return; // nope, don't waste your time here!
     }
 
     // How many different modes can this device operate in?
@@ -126,7 +126,7 @@ static int initializePad(struct pad_data_t *pad)
     // (it has no actuator engines)
     if (modes == 0) {
         LOG("PAD This is a digital controller?\n");
-        return 1;
+        return;
     }
 
     // Verify that the controller has a DUAL SHOCK mode
@@ -139,7 +139,7 @@ static int initializePad(struct pad_data_t *pad)
 
     if (i >= modes) {
         LOG("PAD This is no Dual Shock controller\n");
-        return 1;
+        return;
     }
 
     // If ExId != 0x0 => This controller has actuator engines
@@ -147,7 +147,7 @@ static int initializePad(struct pad_data_t *pad)
     tmp = padInfoMode(pad->port, pad->slot, PAD_MODECUREXID, 0);
     if (tmp == 0) {
         LOG("PAD This is no Dual Shock controller??\n");
-        return 1;
+        return;
     }
 
     LOG("PAD Enabling dual shock functions\n");
@@ -183,8 +183,6 @@ static int initializePad(struct pad_data_t *pad)
     }
 
     waitPadReady(pad);
-
-    return 1;
 }
 
 static void updatePadState(struct pad_data_t *pad, int state)
@@ -290,12 +288,12 @@ static int readPad(struct pad_data_t *pad)
     }
 #endif
     if (padsRead > 0) {
+        newpdata |= readLeftJoy(pad, newpdata);
+
         if (newpdata != 0x0) // something
             rcode = 1;
         else
             rcode = 0;
-
-        newpdata |= readLeftJoy(pad, newpdata);
 
         pad->oldpaddata = pad->paddata;
         pad->paddata = newpdata;
@@ -420,6 +418,9 @@ int getKeyOff(int id)
  */
 int getKeyPressed(int id)
 {
+    if ((id <= 0) || (id >= 17))
+        return 0;
+
     // old v.s. new pad data
     int keyid = keyToPad[id];
 
@@ -475,9 +476,7 @@ static int startPad(struct pad_data_t *pad)
         return 0;
     }
 
-    if (!initializePad(pad)) {
-        return 0;
-    }
+    initializePad(pad);
 
     newState = waitPadReady(pad);
     updatePadState(pad, newState);

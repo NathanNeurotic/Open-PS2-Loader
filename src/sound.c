@@ -99,6 +99,11 @@ static int sfxRead(const char *full_path, struct sfxEffect *sfx)
     }
 
     size = lseek(adpcm, 0, SEEK_END);
+    if (size <= 0) {
+        LOG("SFX: lseek failed or empty file: %s\n", full_path);
+        close(adpcm);
+        return -EIO;
+    }
     lseek(adpcm, 0L, SEEK_SET);
 
     buffer = memalign(64, size);

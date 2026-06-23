@@ -308,10 +308,11 @@ static int ethLoadModules(void)
                     LOG("[PS2IPS]:\n");
                     sysLoadModuleBuffer(&ps2ips_irx, size_ps2ips_irx, 0, NULL);
                     LOG("[HTTPCLIENT]:\n");
-                    sysLoadModuleBuffer(&httpclient_irx, size_httpclient_irx, 0, NULL);
+                    if (sysLoadModuleBuffer(&httpclient_irx, size_httpclient_irx, 0, NULL) >= 0) {
+                        if (HttpInit() < 0)
+                            LOG("ETHSUPPORT: httpclient RPC bind failed; compat update unavailable\n");
+                    }
                     ps2ip_init();
-                    HttpInit();
-
                     LOG("ETHSUPPORT Modules loaded\n");
                     return 0;
                 }
@@ -549,7 +550,11 @@ static int ethUpdateGameList(item_list_t *itemList)
                 g->sizeMB = 0;
             }
             ethGameCount = count;
-        } else if (count < 0) {
+        } else if (count == 0) {
+            free(ethGames);
+            ethGames = NULL;
+            ethGameCount = 0;
+        } else {
             gNetworkStartup = ERROR_ETH_SMB_LISTSHARES;
             ethDisplayErrorStatus();
         }

@@ -1338,7 +1338,7 @@ int bdmHDDIsPresent(u32 timeoutMs)
         return 1;
 
     // 2. try to scan as fast as possible if the previous scan fails...
-    hdd_id = 0;
+    hdd_id = -1;
 
     for (int i = 0; i < MAX_BDM_DEVICES; i++) {
         // find the first inaccessible device - this one should be the HDD once it's mounted (we don't have access to device data at this point yet!)
@@ -1348,7 +1348,11 @@ int bdmHDDIsPresent(u32 timeoutMs)
         }
     }
 
-    if (bdmWaitForDevice(hdd_id, timeoutMs)) {
+    if (hdd_id < 0) {
+        // All slots are already accessible; no inaccessible slot to poll.
+        // Skip the targeted wait and rescan immediately.
+        timedout = 1;
+    } else if (bdmWaitForDevice(hdd_id, timeoutMs)) {
         // double-check to see if this indeed is the HDD, and if it is, we can exit early without stalling any further
         if (bdmDeviceIsATA(hdd_id)) {
             return 1;
@@ -1362,7 +1366,7 @@ int bdmHDDIsPresent(u32 timeoutMs)
     // 3. last resort - time out (if needed) and scan again...
     if (!timedout) {
         // if we haven't timed out already, then we need to wait for the devices to wake up... wait for the timeout...
-        LOG("bdmHDDIsPresent: waiting for timeout before scanning again...\n", hdd_id);
+        LOG("bdmHDDIsPresent: waiting for timeout before scanning again (id %d)...\n", hdd_id);
         DelayThread(timeoutMs * 1000);
     }
 

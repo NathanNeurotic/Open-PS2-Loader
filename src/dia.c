@@ -741,6 +741,7 @@ static void diaResetValue(struct UIItem *item)
     switch (item->type) {
         case UI_INT:
         case UI_BOOL:
+        case UI_ENUM:
             item->intvalue.current = item->intvalue.def;
             return;
         case UI_STRING:
@@ -995,7 +996,7 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
         cur = diaGetFirstControl(ui);
 
     // what? no controllable item? Exit!
-    if (cur == ui)
+    if (!diaIsControllable(cur))
         return -1;
 
     int haveFocus = 0, modified;

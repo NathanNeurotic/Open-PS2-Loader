@@ -561,14 +561,12 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
             continue;
 
         // kerning
-        if (use_kerning && previous) {
-            glyph_index = FT_Get_Char_Index(font->face, codepoint);
-            if (glyph_index) {
-                FT_Get_Kerning(font->face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
-                pen_x += delta.x >> 6;
-            }
-            previous = glyph_index;
+        glyph_index = FT_Get_Char_Index(font->face, codepoint);
+        if (use_kerning && previous && glyph_index) {
+            FT_Get_Kerning(font->face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
+            pen_x += delta.x >> 6;
         }
+        previous = glyph_index;
 
         if (width) {
             if (codepoint == '\n') {
@@ -619,14 +617,12 @@ static void fntRenderSubRTL(font_t *font, const char *startRTL, const char *stri
         if (!glyph)
             continue;
 
-        if (use_kerning && previous) {
-            glyph_index = FT_Get_Char_Index(font->face, codepoint);
-            if (glyph_index) {
-                FT_Get_Kerning(font->face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
-                x -= delta.x >> 6;
-            }
-            previous = glyph_index;
+        glyph_index = FT_Get_Char_Index(font->face, codepoint);
+        if (use_kerning && previous && glyph_index) {
+            FT_Get_Kerning(font->face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
+            x -= delta.x >> 6;
         }
+        previous = glyph_index;
 
         x -= glyph->shx >> 6;
         fntRenderGlyph(glyph, x, y);
@@ -686,14 +682,12 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
 
         // kerning
         delta_x = 0;
-        if (use_kerning && previous) {
-            glyph_index = FT_Get_Char_Index(font->face, codepoint);
-            if (glyph_index) {
-                FT_Get_Kerning(font->face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
-                delta_x = delta.x >> 6;
-            }
-            previous = glyph_index;
+        glyph_index = FT_Get_Char_Index(font->face, codepoint);
+        if (use_kerning && previous && glyph_index) {
+            FT_Get_Kerning(font->face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
+            delta_x = delta.x >> 6;
         }
+        previous = glyph_index;
 
 
         if (width) {
@@ -830,14 +824,12 @@ int fntCalcDimensions(int id, const char *str)
             continue;
 
         // kerning
-        if (use_kerning && previous) {
-            glyph_index = FT_Get_Char_Index(font->face, codepoint);
-            if (glyph_index) {
-                FT_Get_Kerning(font->face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
-                w += delta.x >> 6;
-            }
-            previous = glyph_index;
+        glyph_index = FT_Get_Char_Index(font->face, codepoint);
+        if (use_kerning && previous && glyph_index) {
+            FT_Get_Kerning(font->face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
+            w += delta.x >> 6;
         }
+        previous = glyph_index;
 
         w += glyph->shx >> 6;
     }

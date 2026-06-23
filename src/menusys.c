@@ -493,6 +493,7 @@ void menuEnd()
     }
 
     DeleteSema(menuSemaId);
+    menuSemaId = -1;
     DeleteSema(menuListSemaId);
     menuListSemaId = -1;
 }

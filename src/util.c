@@ -333,6 +333,11 @@ int readFileBuffer(file_buffer_t *fileBuffer, char **outBuf)
                 length = fileBuffer->size - lineSize - 1;
                 // LOG("##### Asking for %d characters to complete buffer\n", length);
                 readSize = read(fileBuffer->fd, fileBuffer->buffer + lineSize, length);
+                if (readSize < 0) {
+                    close(fileBuffer->fd);
+                    fileBuffer->fd = -1;
+                    readSize = 0;
+                }
                 fileBuffer->buffer[lineSize + readSize] = '\0';
 
                 // Search again (from the lastly added chars only), the result will be "analyzed" in next if
@@ -343,7 +348,7 @@ int readFileBuffer(file_buffer_t *fileBuffer, char **outBuf)
                 // LOG("##### %d characters really read, line size now (\\0 not inc.): %d\n", read, lineSize);
 
                 // If buffer not full it means we are at EOF
-                if (fileBuffer->size != lineSize + 1) {
+                if (fileBuffer->fd >= 0 && fileBuffer->size != lineSize + 1) {
                     // LOG("##### Reached EOF\n");
                     close(fileBuffer->fd);
                     fileBuffer->fd = -1;
@@ -520,20 +525,6 @@ int GetSystemRegion(void)
     return ConsoleRegion;
 }
 
-void logfile(char *text)
-{
-    int fd = open("mass:/opl_log.txt", O_APPEND | O_CREAT | O_WRONLY);
-    write(fd, text, strlen(text));
-    close(fd);
-}
-
-void logbuffer(char *path, void *buf, size_t size)
-{
-    int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY);
-    write(fd, buf, size);
-    close(fd);
-}
-
 int CheckPS2Logo(int fd, u32 lba)
 {
     u8 logo[12 * 2048] ALIGNED(64);
@@ -626,7 +617,9 @@ int sysDeleteFolder(const char *folder)
 
             if (dirent->d_type == DT_DIR) {
                 /* Recursive, delete all subfolders */
-                result = sysDeleteFolder(path);
+                int r = sysDeleteFolder(path);
+                if (r < 0)
+                    result = r;
                 free(path);
             } else {
                 free(path);

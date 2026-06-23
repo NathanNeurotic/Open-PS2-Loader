@@ -416,14 +416,15 @@ static int vcdResolvePopstarterMc(char *out, int outSize)
 }
 
 // Write the equipped-state marker mc?:/POPSTARTER/bdma_config.txt = the variant token.
-static void vcdWriteBdmaMarker(const char *mcDir, int mode)
+// Returns 0 on success, or the vcdSafeWriteFile error code (-2 card full / -3 IO).
+static int vcdWriteBdmaMarker(const char *mcDir, int mode)
 {
     if (mode < 0 || mode >= VCD_BDMA_MODE_COUNT)
-        return;
+        return -1;
     char path[96];
     snprintf(path, sizeof(path), "%s/%s", mcDir, VCD_BDMA_MARKER);
     const char *tok = vcdBdmaSuffix[mode];
-    vcdSafeWriteFile(path, tok, (int)strlen(tok));
+    return vcdSafeWriteFile(path, tok, (int)strlen(tok));
 }
 
 int vcdReadBdmaMode(void)
@@ -484,8 +485,8 @@ int vcdEquipBdma(int source, int mode)
         // FAT32 fallback: remove the exFAT modules so POPStarter uses its built-in driver.
         unlink(dst0);
         unlink(dst1);
-        vcdWriteBdmaMarker(mcDir, mode);
-        return 0;
+        int mr = vcdWriteBdmaMarker(mcDir, mode);
+        return (mr != 0) ? mr : 0;
     }
 
     // Find the source device whose POPS/ holds BOTH variant files for this mode.
@@ -521,8 +522,8 @@ int vcdEquipBdma(int source, int mode)
     if (r != 0)
         return r;
 
-    vcdWriteBdmaMarker(mcDir, mode);
-    return 0;
+    int mr = vcdWriteBdmaMarker(mcDir, mode);
+    return (mr != 0) ? mr : 0;
 }
 
 // ---- SMB requirements guard ---------------------------------------------------------

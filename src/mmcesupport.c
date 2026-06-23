@@ -480,6 +480,13 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             return;
         }
         settings->port = detectedPort;
+        // Re-apply trailing-slash normalization: mmceDetectSlot() rewrites
+        // mmcePrefix via sprintf with no slash append, de-normalizing the
+        // value mmceRefreshArtRoots() previously set. sbBuildVmcNeutrinoArgs
+        // (called below) builds "-mcN=<prefix>VMC/<name>.bin" and requires
+        // mmcePrefix to end in '/' -- without this call a non-empty gMMCEPrefix
+        // (e.g. "GAMES") produces the broken path "mmce0:/GAMESVMC/<name>.bin".
+        mmceRefreshArtRoots();
     }
 
     // Per-game Neutrino core: gate BEFORE opening iso_file so no fd is leaked on

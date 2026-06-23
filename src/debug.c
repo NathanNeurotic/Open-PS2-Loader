@@ -12,63 +12,63 @@
 
 static u8 modulesLoaded = 0;
 
-int debugSetActive(void)
+void debugSetActive(void)
 {
 #ifndef _DTL_T10000
     int ret;
 
 #if defined(TTY_UDP) || defined(__DECI2_DEBUG)
     if ((ret = ethLoadInitModules()) != 0)
-        return -1;
+        return;
 #endif
 
 #ifdef __DECI2_DEBUG
     LOG("[DRVTIF]:\n");
     ret = sysLoadModuleBuffer(&drvtif_irx, size_drvtif_irx, 0, NULL);
     if (ret < 0)
-        return -8;
+        return;
 
     LOG("[TIFNET]:\n");
     ret = sysLoadModuleBuffer(&tifinet_irx, size_tifinet_irx, 0, NULL);
     if (ret < 0)
-        return -9;
+        return;
 #elif defined(TTY_UDP)
     LOG("[UDPTTY]:\n");
     ret = sysLoadModuleBuffer(&udptty_irx, size_udptty_irx, 0, NULL);
     if (ret < 0)
-        return -8;
+        return;
 
     LOG("[IOPTRAP]:\n");
     ret = sysLoadModuleBuffer(&ioptrap_irx, size_ioptrap_irx, 0, NULL);
     if (ret < 0)
-        return -9;
+        return;
 
     LOG("[PS2LINK]:\n");
     ret = sysLoadModuleBuffer(&ps2link_irx, size_ps2link_irx, 0, NULL);
     if (ret < 0)
-        return -10;
+        return;
 #elif defined(TTY_PPC_UART)
     LOG("[PPCTTY]:\n");
     ret = sysLoadModuleBuffer(&ppctty_irx, size_ppctty_irx, 0, NULL);
     if (ret < 0)
-        return -8;
+        return;
 
     LOG("[IOPTRAP]:\n");
     ret = sysLoadModuleBuffer(&ioptrap_irx, size_ioptrap_irx, 0, NULL);
     if (ret < 0)
-        return -9;
+        return;
 #endif
 #endif
 
     modulesLoaded = 1;
-
-    return 0;
 }
 
 void debugApplyConfig(void)
 {
 #ifndef _DTL_T10000
+#if defined(TTY_UDP) || defined(__DECI2_DEBUG)
     if (modulesLoaded)
         ethApplyConfig();
+#endif
 #endif
 }

@@ -182,9 +182,9 @@ static inline int is_cmt_str(const char *s)
  * chr_idx - Returns the index within @s of the first occurrence of the
  * specified char @c.  If no such char occurs in @s, then (-1) is returned.
  */
-static size_t chr_idx(const char *s, char c)
+static int chr_idx(const char *s, char c)
 {
-    size_t i = 0;
+    int i = 0;
 
     while (s[i] && (s[i] != c))
         i++;
