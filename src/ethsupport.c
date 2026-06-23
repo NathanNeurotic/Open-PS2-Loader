@@ -12,7 +12,7 @@
 #include "include/system.h"
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
-#include "include/bdmsupport.h" // bdmIsUDPBDLoaded() for the SMB<->UDPBD NIC interlock
+#include "include/bdmsupport.h"  // bdmIsUDPBDLoaded() for the SMB<->UDPBD NIC interlock
 #include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
 #include "modules/iopcore/common/cdvd_config.h"
 

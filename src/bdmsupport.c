@@ -9,7 +9,7 @@
 #include "include/textures.h"
 #include "include/ioman.h"
 #include "include/system.h"
-#include "include/ethsupport.h" // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
+#include "include/ethsupport.h"  // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
 #include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
