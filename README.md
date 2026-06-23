@@ -183,6 +183,8 @@ With special and sincere thanks to:
   loading through the PS2's memory-card slot possible. OPL's MMCE support builds directly on it.
 - **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
+- **eliminator1403** — for dedicated **testing, bug reports, and real-hardware feedback** that
+  has repeatedly caught issues and shaped fixes across this fork. Invaluable QA.
 - **Berion** — for the artwork and theme design that has shaped how OPL *looks* for years.
   The visual language this fork builds on owes a great deal to that craft.
 - **Ifcaro** and **jimmikaelkael** — the original Open PS2 Loader authors — and every
