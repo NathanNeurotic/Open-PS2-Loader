@@ -311,8 +311,8 @@ draw nothing here.</li>
 <div class="callout amber"><div class="h">⚠ Disk-theme filename order</div>The file is
 <code>&lt;value&gt;_&lt;attribute&gt;</code>, <em>not</em> <code>&lt;attribute&gt;_&lt;value&gt;</code> —
 <code>PS2DVD_#DiscType.png</code> is correct, <code>#DiscType_PS2DVD.png</code> is never read. The
-<code>#</code> is a literal filename character, and either <code>.png</code> or <code>.PNG</code> loads (the
-loader retries the upper-case extension — needed on the PS2 HDD's case-sensitive <code>pfs</code>). These
+<code>#</code> is a literal filename character, and the extension must be lower-case <code>.png</code>
+(the PS2 HDD's filesystem is case-sensitive). These
 badges are populated on <b>every device</b> — USB/BDM, SMB, MMCE and the internal HDD/HDL (and their PS1/VCD
 lists).</div>
 <table data-sortable>
