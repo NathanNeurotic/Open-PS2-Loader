@@ -87,11 +87,15 @@ enum {
     VCD_BDMA_ATA,       // internal ATA HDD exFAT (BDMAssault)
     VCD_BDMA_MODE_COUNT
 };
-// "BDMA SOURCE": which device family holds the user-provided variant files in its POPS/ folder.
+// "BDMA SOURCE": which device holds the user-provided variant files in its POPS/ folder. The equip
+// resolves each BDM source to the mounted device whose DRIVER matches (USB / MX4SIO / internal-ATA-HDD),
+// reading from that device's typed root -- so they are differentiated, not blindly scanned. New values
+// are APPENDED so persisted gBdmaSource ints stay stable.
 enum {
-    VCD_BDMA_SRC_USB = 0, // scan mass0-7
-    VCD_BDMA_SRC_MX4SIO,  // scan mass0-7 (MX4SIO mounts in the BDM mass namespace)
-    VCD_BDMA_SRC_MMCE,    // scan mmce0-1
+    VCD_BDMA_SRC_USB = 0, // BDM "usb" driver
+    VCD_BDMA_SRC_MX4SIO,  // BDM "mx4sio"/sdc driver
+    VCD_BDMA_SRC_MMCE,    // mmce0-1
+    VCD_BDMA_SRC_HDD,     // internal exFAT HDD, BDM "ata" driver
     VCD_BDMA_SRC_COUNT
 };
 // Equip the chosen variant (copy from SOURCE's POPS/, or remove for FAT32) + write the marker.

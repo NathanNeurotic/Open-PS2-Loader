@@ -57,6 +57,10 @@ void bdmEnumerateDevices();
 void bdmResolveLBA_UDMA(bdm_device_data_t *pDeviceData);
 int bdmHDDIsPresent(u32 timeoutMs);
 int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName, int massDeviceIndex, int massSlot);
+// Find the mounted BDM device whose driver matches bdmType (BDM_TYPE_*); write its resolved device root
+// with a trailing slash (e.g. "ata0:/") to root. Returns 1 if found. Lets the BDMA equip target a
+// specific transport (USB / MX4SIO / internal-ATA-HDD) by driver instead of blind mass-namespace scans.
+int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen);
 
 int bdmFindPartition(char *target, const char *name, int write);
 int bdmIsUDPBDLoaded(void);                  // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)

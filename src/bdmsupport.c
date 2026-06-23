@@ -214,6 +214,36 @@ int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName,
     return 0;
 }
 
+// Find the mounted BDM device whose driver matches bdmType (BDM_TYPE_*) and write its resolved device
+// root WITH a trailing slash (e.g. "ata0:/" for the internal exFAT HDD, "usb0:/" for USB) to root.
+// Returns 1 if such a device is mounted, 0 otherwise. This lets a caller (the BDMA equip) target a
+// SPECIFIC transport by its driver -- the same differentiation the device pages use -- instead of
+// blindly scanning the generic mass namespace.
+int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen)
+{
+    if (root == NULL || rootLen <= 0)
+        return 0;
+
+    for (int i = 0; i < MAX_BDM_DEVICES; i++) {
+        char path[16], driver[32], resolved[BDM_DEVICE_ROOT_MAX];
+        int devIndex = -1;
+
+        snprintf(path, sizeof(path), "mass%d:/", i);
+        if (bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex) < 0)
+            continue;
+        if (bdmDetermineDeviceType(driver) != bdmType)
+            continue;
+
+        // Resolve to the driver-typed root (e.g. ata0:) -- the differentiated path the device is
+        // actually addressable at; bdmResolveDeviceRoot writes it WITHOUT a trailing slash.
+        bdmResolveDeviceRoot(resolved, sizeof(resolved), driver, devIndex, i);
+        snprintf(root, rootLen, "%s/", resolved);
+        return 1;
+    }
+
+    return 0;
+}
+
 static int bdmLoadOptionalModule(const char *name, void *module, int moduleSize)
 {
     int result;

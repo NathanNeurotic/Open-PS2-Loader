@@ -73,9 +73,11 @@ copies the right pair onto your memory card when you change the setting:
   `USB (exFAT)`, `MX4SIO (exFAT)`, `MMCE (exFAT)`, or `HDD (exFAT)` (the internal ATA
   HDD via BDMAssault).
 - **BDMA SOURCE** — which device holds the module files in its `POPS` folder: `USB`,
-  `MX4SIO`, or `MMCE`. (`USB` scans the whole BDM mass namespace, so it also picks up the
-  files from an internal exFAT HDD — in OPL that drive is a `massN:` device, the same volume
-  wLaunchELF shows as `ata0:`.)
+  `MX4SIO`, `MMCE`, or `Internal HDD`. OPL identifies each device by its block-device **driver**
+  (`usb` / `mx4sio` / `ata` / `mmce`) and reads from that specific device, so pick the one your
+  module files actually sit on. For the internal exFAT HDD choose **`Internal HDD`** — OPL reads it
+  from its `ata0:` root (the same volume/path wLaunchELF shows), so its `POPS/usbd.irx.ata` +
+  `POPS/usbhdfsd.irx.ata` are found.
 
 > **Module file names matter.** The two driver files in that `POPS/` folder must be named for the
 > BDMA **MODE** you pick: **`usbd.irx.<mode>`** and **`usbhdfsd.irx.<mode>`**. For `HDD (exFAT)` that

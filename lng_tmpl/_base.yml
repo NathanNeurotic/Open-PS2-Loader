@@ -824,6 +824,8 @@ gui_strings:
   string: MX4SIO
 - label: BDMA_SRC_MMCE
   string: MMCE
+- label: BDMA_SRC_HDD
+  string: Internal HDD
 - label: BDMA_MODE_FAT32
   string: USB (FAT32)
 - label: BDMA_MODE_USBEXFAT

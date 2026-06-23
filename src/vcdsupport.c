@@ -19,6 +19,7 @@
 #include "include/system.h"   // POPS_FOLDER
 #include "include/textures.h" // texDiscoverLoad (VCD cover-art fallback)
 #include "include/ioman.h"    // LOG (BDMA equip probe trace)
+#include "include/bdmsupport.h" // BDM_TYPE_* + bdmGetDeviceRootByType (BDMA source differentiation)
 #include "include/vcdsupport.h"
 
 // Extract the PS1 disc ID (SXXX_NNN.NN) from a VCD basename matching "SXXX_NNN.NN.Title"
@@ -452,33 +453,6 @@ int vcdReadBdmaMode(void)
     return VCD_BDMA_FAT32;
 }
 
-// Candidate source device prefixes for a BDMA SOURCE family (each ends in '/'). MMCE has its own
-// namespace. The other BDM transports (USB, MX4SIO, iLink, and the internal exFAT HDD) share the
-// generic massN namespace BUT each is ALSO addressable by a DRIVER-TYPED root -- usb0:, mx4sio0:,
-// ata0:, ilink0: -- which is how OPL tells them apart (bdmGetTypedPathForDriver/bdmResolveDeviceRoot).
-// The internal exFAT HDD is the "ata" device, and its POPS lives under ata0: (the same name wLaunchELF
-// shows); the generic massN: alias does NOT reliably reach it, so we must probe the typed roots too --
-// otherwise BDMA "modules not found" fires even when the files are correctly placed on the HDD.
-static int vcdBdmaSourcePrefixes(int source, const char *out[], int maxOut)
-{
-    static const char *mass[8] = {"mass0:/", "mass1:/", "mass2:/", "mass3:/",
-                                  "mass4:/", "mass5:/", "mass6:/", "mass7:/"};
-    static const char *typed[8] = {"ata0:/", "ata1:/", "usb0:/", "usb1:/",
-                                   "mx4sio0:/", "mx4sio1:/", "ilink0:/", "ilink1:/"};
-    static const char *mmce[2] = {"mmce0:/", "mmce1:/"};
-    int n = 0;
-    if (source == VCD_BDMA_SRC_MMCE) {
-        for (int i = 0; i < 2 && n < maxOut; i++)
-            out[n++] = mmce[i];
-    } else { // USB / MX4SIO / internal HDD -> the generic mass namespace AND the driver-typed roots
-        for (int i = 0; i < 8 && n < maxOut; i++)
-            out[n++] = mass[i];
-        for (int i = 0; i < 8 && n < maxOut; i++)
-            out[n++] = typed[i];
-    }
-    return n;
-}
-
 int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
 {
     if (diag != NULL && diagSize > 0)
@@ -502,26 +476,28 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return (mr != 0) ? mr : 0;
     }
 
-    // Find the source device whose POPS/ holds BOTH variant files for this mode. Candidates = the
-    // generic mass0-7 + the driver-typed roots (ata/usb/mx4sio/ilink), so the internal exFAT HDD
-    // (addressed as ata0:) and the other typed devices are all reached.
-    const char *cands[16];
-    int nc = vcdBdmaSourcePrefixes(source, cands, 16);
+    // Resolve the SOURCE device to read the variant files from. BDM sources are DIFFERENTIATED by
+    // driver: identify the mounted device whose driver matches the chosen type (USB / MX4SIO / internal
+    // exFAT HDD) and read from its resolved typed root (e.g. ata0: for the HDD) -- the same device
+    // identity the device pages use -- instead of blindly scanning the mass namespace. MMCE has its own.
+    const char *cands[2];
+    char bdmRoot[BDM_DEVICE_ROOT_MAX + 2];
+    int nc = 0;
+    if (source == VCD_BDMA_SRC_MMCE) {
+        cands[nc++] = "mmce0:/";
+        cands[nc++] = "mmce1:/";
+    } else {
+        int wantType = (source == VCD_BDMA_SRC_MX4SIO) ? BDM_TYPE_SDC
+                       : (source == VCD_BDMA_SRC_HDD)  ? BDM_TYPE_ATA
+                                                       : BDM_TYPE_USB;
+        if (bdmGetDeviceRootByType(wantType, bdmRoot, sizeof(bdmRoot)))
+            cands[nc++] = bdmRoot;
+    }
+
     const char *suffix = vcdBdmaSuffix[mode];
     char src0[96], src1[96];
     int found = 0;
-    char mounted[128] = ""; // source roots actually mounted right now -- for the not-found diagnostic
     for (int i = 0; i < nc; i++) {
-        // Is this candidate device actually mounted at equip time? opendir() succeeds only if the BDM
-        // device is up -- so the "mounted" list tells us whether the source device (e.g. the internal
-        // exFAT HDD) was even visible to the scan, separating "device not seen" from "files mis-placed".
-        DIR *dp = opendir(cands[i]);
-        if (dp != NULL) {
-            closedir(dp);
-            int ml = (int)strlen(mounted);
-            snprintf(mounted + ml, sizeof(mounted) - ml, "%s%s", ml ? " " : "", cands[i]);
-        }
-
         snprintf(src0, sizeof(src0), "%sPOPS/%s.%s", cands[i], vcdBdmaModule[0], suffix);
         snprintf(src1, sizeof(src1), "%sPOPS/%s.%s", cands[i], vcdBdmaModule[1], suffix);
         int f0 = open(src0, O_RDONLY);
@@ -538,12 +514,16 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         break;
     }
     if (!found) {
-        LOG("[BDMA] %s.%s + %s.%s not found in any source POPS; mounted source devices: %s\n",
-            vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, mounted[0] ? mounted : "(none)");
-        if (diag != NULL && diagSize > 0)
-            snprintf(diag, diagSize, "Need %s.%s + %s.%s in the source device's POPS folder.\nMounted source devices: %s",
-                     vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, mounted[0] ? mounted : "(none)");
-        return -4; // no scanned SOURCE device had both variant files in its POPS/
+        LOG("[BDMA] %s.%s + %s.%s not found; source device root: %s\n",
+            vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, nc ? cands[0] : "(no matching device)");
+        if (diag != NULL && diagSize > 0) {
+            if (nc == 0)
+                snprintf(diag, diagSize, "No device matching the selected BDMA source is connected.");
+            else
+                snprintf(diag, diagSize, "Source device %s has no %s.%s + %s.%s in its POPS folder.",
+                         cands[0], vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix);
+        }
+        return -4; // the matched SOURCE device had no variant files in its POPS/ (or none matched)
     }
 
     // Copy both through the free-space-gated safe-copy. If usbd.irx fits but usbhdfsd.irx won't,
