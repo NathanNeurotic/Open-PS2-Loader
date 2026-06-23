@@ -432,8 +432,6 @@ static int appScanCallback(const char *path, config_set_t *appConfig, void *arg)
         LOG("APPSUPPORT item has no boot/title.\n");
         return 1;
     }
-
-    return -1;
 }
 
 static int appUpdateItemList(item_list_t *itemList)

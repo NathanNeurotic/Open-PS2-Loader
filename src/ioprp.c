@@ -99,20 +99,16 @@ static inline void patch_EESYNC(void *image_offset, struct romdir_entry *entryin
 static inline void Align_offsets(void *base_address, unsigned int *offset_in, struct romdir_entry *romdir_in, unsigned int *offset_out, struct romdir_entry *romdir_out)
 {
     /* For ALL modules; Align all addresses to a multiple of 16 */
-    if (offset_in != NULL) {
-        if ((romdir_in->fileSize & 0xF) == 0)
-            *offset_in += romdir_in->fileSize;
-        else
-            *offset_in += (romdir_in->fileSize + 0xF) & ~0xF;
-    }
+    if ((romdir_in->fileSize & 0xF) == 0)
+        *offset_in += romdir_in->fileSize;
+    else
+        *offset_in += (romdir_in->fileSize + 0xF) & ~0xF;
 
-    if (offset_out != NULL) {
-        if ((romdir_out->fileSize & 0xF) == 0)
-            *offset_out += romdir_out->fileSize;
-        else { /* Fill the alignment gap with 0s */
-            register unsigned int new_filesize = (romdir_out->fileSize + 0xF) & ~0xF;
-            memset((void *)((u32)base_address + (*offset_out) + romdir_out->fileSize), 0, new_filesize - romdir_out->fileSize);
-            *offset_out += new_filesize;
-        }
+    if ((romdir_out->fileSize & 0xF) == 0)
+        *offset_out += romdir_out->fileSize;
+    else { /* Fill the alignment gap with 0s */
+        register unsigned int new_filesize = (romdir_out->fileSize + 0xF) & ~0xF;
+        memset((void *)((u32)base_address + (*offset_out) + romdir_out->fileSize), 0, new_filesize - romdir_out->fileSize);
+        *offset_out += new_filesize;
     }
 }

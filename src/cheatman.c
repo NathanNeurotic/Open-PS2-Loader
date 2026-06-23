@@ -384,7 +384,12 @@ static inline char *read_text_file(const char *filename, int maxsize)
     }
 
     if (filesize > 0) {
-        lseek(fd, 0, SEEK_SET);
+        if (lseek(fd, 0, SEEK_SET) != 0) {
+            LOG("%s: Can't seek to start of text file %s\n", __FUNCTION__, filename);
+            free(buf);
+            close(fd);
+            return NULL;
+        }
         if (read(fd, buf, filesize) != filesize) {
             LOG("%s: Can't read from text file %s\n", __FUNCTION__, filename);
             free(buf);

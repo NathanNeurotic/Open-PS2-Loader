@@ -148,20 +148,6 @@ void PrepareGSM(char *cmdline, struct GsmConfig_t *config)
 
     FIELD_fix = gGSMFIELDFix != 0 ? 1 : 0;
 
-    if (cmdline) {
-        sprintf(cmdline, "%hhu %hhu %hhu %llu %llu %hu %u %u %d %d %d", predef_vmode[gGSMVMode].interlace,
-                predef_vmode[gGSMVMode].mode,
-                predef_vmode[gGSMVMode].ffmd,
-                predef_vmode[gGSMVMode].display,
-                predef_vmode[gGSMVMode].syncv,
-                ((predef_vmode[gGSMVMode].ffmd) << 1) | (predef_vmode[gGSMVMode].interlace),
-                (u32)gGSMXOffset,
-                (u32)gGSMYOffset,
-                k576p_fix,
-                kGsDxDyOffsetSupported,
-                FIELD_fix);
-    }
-
     if (config) {
         config->interlace = predef_vmode[gGSMVMode].interlace;
         config->mode = predef_vmode[gGSMVMode].mode;

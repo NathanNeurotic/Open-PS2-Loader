@@ -213,7 +213,7 @@ static int ethInitApplyConfig(void)
         }
     } while (ethApplyNetIFConfig() != 0);
 
-    // Before the network configuration is applied, wait for a valid link status.
+    // Wait for the link to re-establish after applying the NIF link-mode setting.
     if (ethWaitValidNetIFLinkState() != 0) {
         gNetworkStartup = ERROR_ETH_LINK_FAIL;
         return ERROR_ETH_LINK_FAIL;

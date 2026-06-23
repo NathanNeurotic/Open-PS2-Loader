@@ -97,7 +97,7 @@ static FT_Vector delta;
 
 #define GLYPH_CACHE_PAGE_SIZE 256
 
-#define GLYPH_PAGE_OK(font, page) ((pageid <= font->cacheMaxPageID) && (font->glyphCache[page]))
+#define GLYPH_PAGE_OK(font, page) (((page) <= (font)->cacheMaxPageID) && ((font)->glyphCache[page]))
 
 static void fntCacheFlushPage(fnt_glyph_cache_entry_t *page)
 {
@@ -418,6 +418,7 @@ static fnt_glyph_cache_entry_t *fntCacheGlyph(font_t *font, uint32_t gid)
     // not cached but valid. Cache
     if (!font->face) {
         LOG("FNTSYS Face is NULL!\n");
+        return NULL;
     }
 
     int error = FT_Load_Char(font->face, gid, FT_LOAD_RENDER);

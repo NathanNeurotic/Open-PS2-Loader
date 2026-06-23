@@ -21,10 +21,10 @@
 extern int probed_fd;
 extern u32 probed_lba;
 
-extern void *icon_sys;
-extern int size_icon_sys;
-extern void *icon_icn;
-extern int size_icon_icn;
+extern unsigned char icon_sys[];
+extern unsigned int size_icon_sys;
+extern unsigned char icon_icn[];
+extern unsigned int size_icon_icn;
 
 static int mcID = -1;
 
@@ -116,7 +116,7 @@ void checkMCFolder(void)
     if (fd < 0) {
         fd = openFile(path, O_WRONLY | O_CREAT | O_TRUNC);
         if (fd >= 0) {
-            write(fd, &icon_icn, size_icon_icn);
+            write(fd, icon_icn, size_icon_icn);
             close(fd);
         }
     } else {
@@ -128,7 +128,7 @@ void checkMCFolder(void)
     if (fd < 0) {
         fd = openFile(path, O_WRONLY | O_CREAT | O_TRUNC);
         if (fd >= 0) {
-            write(fd, &icon_sys, size_icon_sys);
+            write(fd, icon_sys, size_icon_sys);
             close(fd);
         }
     } else {
@@ -220,14 +220,12 @@ int listDir(char *path, const char *separator, int maxElem,
             int (*readEntry)(int index, const char *path, const char *separator, const char *name, unsigned char d_type))
 {
     int index = 0;
-    char filename[128];
 
     if (checkFile(path, O_RDONLY)) {
         DIR *dir = opendir(path);
         struct dirent *dirent;
         if (dir != NULL) {
             while (index < maxElem && (dirent = readdir(dir)) != NULL) {
-                snprintf(filename, 128, "%s/%s", path, dirent->d_name);
                 index = readEntry(index, path, separator, dirent->d_name, dirent->d_type);
             }
 
@@ -669,7 +667,8 @@ int sysDeleteFolder(const char *folder)
 
         if (result >= 0) {
             result = rmdir(folder);
-            LOG("sysDeleteFolder: failed to rmdir %s: %d\n", folder, result);
+            if (result < 0)
+                LOG("sysDeleteFolder: failed to rmdir %s: %d\n", folder, result);
         }
     }
 

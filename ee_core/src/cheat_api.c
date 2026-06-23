@@ -43,8 +43,6 @@ void LinkImage(void)
     u32 *p = config->gImage;
     u32 *pEnd = config->gImage + MAX_IMAGEWORDS;
 
-    if (p >= pEnd)
-        return;
     Offset = *p++;
     if (!Offset)
         return;

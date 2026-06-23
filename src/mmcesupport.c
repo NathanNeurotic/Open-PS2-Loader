@@ -642,10 +642,3 @@ static item_list_t mmceGameList = {
     &mmceUpdateGameList, &mmceGetGameCount, &mmceGetGame, &mmceGetGameName, &mmceGetGameNameLength, &mmceGetGameStartup, &mmceDeleteGame, &mmceRenameGame,
     &mmceLaunchGame, &mmceGetConfig, &mmceGetImage, &mmceCleanUp, &mmceShutdown, &mmceCheckVMC, &mmceGetIconId};
 
-void mmceInitSemaphore()
-{
-    // Create a semaphore so only one thread can load IOP modules at a time.
-    // if (mmceLoadModuleLock < 0) {
-    //    mmceLoadModuleLock = sbCreateSemaphore();
-    //}
-}

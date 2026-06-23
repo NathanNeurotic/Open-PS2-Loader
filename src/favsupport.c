@@ -562,8 +562,10 @@ int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *tex
     fav_raw_t *recs = favReadFile(&count); // may be NULL (empty / new file)
 
     // Already present (same mode + id + text) -> treat as success (the star stays set).
+    // Use favModesMatch so a BDM favourite that moved slots (e.g. BDM_MODE -> BDM_MODE1) is
+    // recognised as already-present, matching the BDM-lenient logic in removeFavouriteByIdAndText.
     for (int i = 0; i < count; i++) {
-        if (recs[i].mode == mode && recs[i].id == id && strcmp(recs[i].text, text) == 0) {
+        if (favModesMatch(recs[i].mode, mode) && recs[i].id == id && strcmp(recs[i].text, text) == 0) {
             free(recs);
             return 1;
         }

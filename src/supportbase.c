@@ -8,7 +8,6 @@
 #include "modules/iopcore/common/cdvd_config.h"
 #include "include/cheatman.h"
 #include "include/pggsm.h"
-#include "include/cheatman.h"
 #include "include/ps2cnf.h"
 #include "include/gui.h"
 

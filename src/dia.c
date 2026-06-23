@@ -827,13 +827,6 @@ static int diaHandleInput(struct UIItem *item, int *modified)
 
         int cur = item->intvalue.current;
 
-        if (item->intvalue.enumvalues[cur] == NULL) {
-            if (cur > 0)
-                item->intvalue.current--;
-            else
-                return 0;
-        }
-
         if (getKey(KEY_UP) && (item->intvalue.current > 0)) {
             item->intvalue.current--;
             sfxPlay(SFX_CURSOR);

@@ -75,6 +75,14 @@ static inline struct atlas_allocation_t *allocPlace(struct atlas_allocation_t *a
             alloc->leaf2 = allocNew(alloc->x + width, alloc->y, dx, alloc->h);
         }
 
+        // If both remainder leaves failed to allocate the node still appears
+        // free (leaf1==NULL && leaf2==NULL), which would let a future
+        // allocPlace re-use the same x/y region and alias glyph pixels.
+        // Fail the placement cleanly so the caller can try the next atlas.
+        if (alloc->leaf1 == NULL && alloc->leaf2 == NULL) {
+            return NULL;
+        }
+
         return alloc;
     } else {
         // already occupied. Try children

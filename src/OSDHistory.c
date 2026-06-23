@@ -105,7 +105,6 @@ int AddOldHistoryFileRecord(const char *path, const struct HistoryEntry *OldHist
 
     sprintf(fullpath, "%s/history.old", path);
     if ((fd = open(fullpath, O_WRONLY | O_CREAT | O_APPEND, 0644)) >= 0) { /* O_CREAT: create on first append */
-        lseek(fd, 0, SEEK_END);
         result = write(fd, OldHistoryEntry, sizeof(struct HistoryEntry)) == sizeof(struct HistoryEntry) ? 0 : -EIO;
         close(fd);
     } else
@@ -240,7 +239,7 @@ int AddHistoryRecord(const char *name)
         if (NumSlotsUsed != MAX_HISTORY_ENTRIES) {
             if (NumBlankSlots > 0) {
                 // Randomly choose an empty slot.
-                NewEntry = &HistoryEntries[result = BlankSlotList[rand() % NumBlankSlots]];
+                NewEntry = &HistoryEntries[BlankSlotList[rand() % NumBlankSlots]];
             } else {
                 // Copy out the victim record
                 NewEntry = &HistoryEntries[LeastUsedRecord];

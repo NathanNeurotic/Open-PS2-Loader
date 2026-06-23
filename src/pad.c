@@ -288,7 +288,7 @@ static int readPad(struct pad_data_t *pad)
     }
 #endif
     if (padsRead > 0) {
-        newpdata |= readLeftJoy(pad, newpdata);
+        newpdata = readLeftJoy(pad, newpdata);
 
         if (newpdata != 0x0) // something
             rcode = 1;

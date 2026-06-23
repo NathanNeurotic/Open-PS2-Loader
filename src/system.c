@@ -237,7 +237,7 @@ void sysReset()
     }
 
     // clears modules list
-    memset((void *)&g_sysLoadedModBuffer[0], 0, MAX_MODULES * 4);
+    memset(g_sysLoadedModBuffer, 0, sizeof(g_sysLoadedModBuffer));
 
     // load modules
     LOG("[IOMANX]:\n");
@@ -499,7 +499,7 @@ static const modStorageSetting_t mod_storage_location_list[] = {
     {NULL, NULL},                        // Terminator
 };
 
-static void *GetModStorageLocation(const char *startup, unsigned compatFlags)
+static void *GetModStorageLocation(const char *startup)
 {
     const modStorageSetting_t *p;
     int i;
@@ -1105,7 +1105,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #pragma GCC diagnostic pop
 
     modules = 0;
-    ModuleStorage = GetModStorageLocation(filename, compatflags);
+    ModuleStorage = GetModStorageLocation(filename);
 
 #ifdef __DECI2_DEBUG
     modules |= CORE_IRX_DECI2 | CORE_IRX_ETH;

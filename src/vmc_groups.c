@@ -665,14 +665,12 @@ static const char *titles_XEBP_100_38[] = {
     "SLES_546.24",
     "SLES_551.08",
     "SLUS_217.26",
-    "SLES_546.24",
     "SLUS_215.85"};
 static const size_t count_XEBP_100_38 = sizeof(titles_XEBP_100_38) / sizeof(titles_XEBP_100_38[0]);
 
 static const char *titles_XEBP_100_39[] = {
     "SCES_548.45",
     "SLES_548.45",
-    "SLUS_216.62",
     "SLUS_216.62",
     "SLUS_218.03"};
 static const size_t count_XEBP_100_39 = sizeof(titles_XEBP_100_39) / sizeof(titles_XEBP_100_39[0]);
@@ -1026,7 +1024,6 @@ static const char *titles_XEBP_100_60[] = {
     "SLPS_202.50",
     "SCAJ_100.01",
     "SLPS_731.03",
-    "SLPS_731.03",
     "SLPS_256.08",
     "SLPS_256.07",
     "SLPS_732.54"};
@@ -1054,7 +1051,6 @@ static const char *titles_XEBP_100_61[] = {
     "SLPS_734.20",
     "SLPS_734.17",
     "SLUS_206.44",
-    "SLPS_251.69",
     "SLKA_250.41",
     "SLES_522.03"};
 static const size_t count_XEBP_100_61 = sizeof(titles_XEBP_100_61) / sizeof(titles_XEBP_100_61[0]);
@@ -1217,7 +1213,6 @@ static const char *titles_XEBP_000_06[] = {
     "SLES_820.20",
     "SLUS_206.97",
     "SLUS_208.54",
-    "SLES_820.21",
     "SLPM_655.06",
     "SLPM_655.07",
     "SLPM_657.42",
