@@ -948,6 +948,23 @@ static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bu
     return argc;
 }
 
+// True if `args` contains `flag` as an ACTIVE token -- i.e. NOT $-disabled (the leading-$ convention
+// that appendArgTokens strips at dispatch). Lets an auto-emitted flag stay suppressed only by a flag
+// the user is actually forwarding, not by one they turned off with `$`.
+static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
+{
+    if (args == NULL)
+        return 0;
+    size_t flen = strlen(flag);
+    const char *p = args;
+    while ((p = strstr(p, flag)) != NULL) {
+        if (p == args || *(p - 1) != '$')
+            return 1; // an occurrence that is NOT $-disabled -> the user is forwarding this flag
+        p += flen;
+    }
+    return 0;
+}
+
 // Hand the game off to an external Neutrino ELF instead of OPL's embedded core.
 // Hardened vs the wOPL original: NULL-guarded; an "unsupported" device aborts
 // (never launches -bsd=unsupported); DISTINCT argv buffers (wOPL reused ONE
@@ -970,6 +987,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     char bsd[16];
     char bsdfs[16];
     char filePath[288];        // "-dvd=hdl:" (9) + up to a 255-char path + NUL — avoid truncation (B2)
+    char cwdArg[288];          // "-cwd=" + the neutrino.elf install dir (auto; Neutrino finds its config/modules there)
     char compatModes[32] = ""; // stays empty when no compat modes are forwarded (B1)
     char globalArgsBuf[256];   // mutable copy of gNeutrinoArgs for tokenizing (tokens point in)
     char extraArgsBuf[256];    // mutable copy of the per-game extraArgs for tokenizing
@@ -1016,8 +1034,8 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     // = no -gsm. Neutrino is LAST-wins on -gsm and ABORTS the boot on a malformed value, so emit exactly
     // ONE: skip the structured token when the user already typed a -gsm into the global or per-game args,
     // letting that explicit value win (precedence confirmed vs rickgaiser/neutrino ee/loader/src/main.c).
-    int userHasGsm = (strstr(gNeutrinoArgs, "-gsm=") != NULL) ||
-                     (extraArgs != NULL && strstr(extraArgs, "-gsm=") != NULL);
+    int userHasGsm = neutrinoArgHasActiveFlag(gNeutrinoArgs, "-gsm=") ||
+                     neutrinoArgHasActiveFlag(extraArgs, "-gsm=");
     if (neutrinoVideo >= 1 && neutrinoVideo <= 3 && !userHasGsm && argc < argvMax) {
         static const char *const gsmTokens[] = {"", "-gsm=fp1", "-gsm=fp2", "-gsm=1080ix1"};
         argv[argc++] = (char *)gsmTokens[neutrinoVideo];
@@ -1032,6 +1050,23 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
         for (slot = 0; slot < NEUTRINO_VMC_SLOTS; slot++) {
             if (vmcArgs->arg[slot][0] != '\0' && argc < argvMax)
                 argv[argc++] = (char *)vmcArgs->arg[slot];
+        }
+    }
+
+    // Auto -cwd: point Neutrino at the directory holding neutrino.elf so it loads its config / extra
+    // modules relative to its install location, UNLESS the user already supplied one (precedence like
+    // -gsm above). Without it Neutrino launches with no working dir, so a setup that keeps config next
+    // to the ELF would not be found. mc:NEUTRINO/neutrino.elf paths also contain a '/', so this works
+    // for memory-card installs too.
+    int userHasCwd = neutrinoArgHasActiveFlag(gNeutrinoArgs, "-cwd=") ||
+                     neutrinoArgHasActiveFlag(extraArgs, "-cwd=");
+    if (!userHasCwd) {
+        const char *slash = strrchr(neutrinoPath, '/');
+        if (slash != NULL) {
+            int dirLen = (int)(slash - neutrinoPath) + 1; // keep the trailing '/'
+            snprintf(cwdArg, sizeof(cwdArg), "-cwd=%.*s", dirLen, neutrinoPath);
+            if (argc < argvMax)
+                argv[argc++] = cwdArg;
         }
     }
 

@@ -908,9 +908,17 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         return;
     }
 
-    if (gAutoLaunchBDMGame == NULL)
-        deinit(NO_EXCEPTION, itemList->mode); // CAREFUL: deinit will call bdmCleanUp, so bdmGames/game will be freed
-    else {
+    if (gAutoLaunchBDMGame == NULL) {
+        // Neutrino: keep the device that holds neutrino.elf MOUNTED across the teardown
+        // (UNMOUNT_EXCEPTION) so sysLaunchNeutrino's LoadELFFromFile can still read it -- apps launch
+        // the same way. A memory-card-hosted neutrino (oplPath2Mode == -1) survives any deinit, so keep
+        // NO_EXCEPTION there. Without this a mass/MMCE-hosted neutrino.elf is unreachable post-deinit.
+        int neutrinoDevMode = coreLoader ? oplPath2Mode(neutrinoPath) : -1;
+        if (neutrinoDevMode >= 0)
+            deinit(UNMOUNT_EXCEPTION, neutrinoDevMode);
+        else
+            deinit(NO_EXCEPTION, itemList->mode); // CAREFUL: deinit will call bdmCleanUp, so bdmGames/game will be freed
+    } else {
         miniDeinit(configSet);
 
         free(gAutoLaunchBDMGame);

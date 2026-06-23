@@ -748,9 +748,16 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         }
     }
 
-    if (gAutoLaunchGame == NULL)
-        deinit(NO_EXCEPTION, HDD_MODE); // CAREFUL: deinit will call hddCleanUp, so hddGames/game will be freed
-    else {
+    if (gAutoLaunchGame == NULL) {
+        // Neutrino: keep the device that holds neutrino.elf mounted across the teardown
+        // (UNMOUNT_EXCEPTION) so sysLaunchNeutrino's LoadELFFromFile can read it -- apps do the same.
+        // mc-hosted neutrino (oplPath2Mode == -1) survives any deinit, so keep NO_EXCEPTION there.
+        int neutrinoDevMode = coreLoader ? oplPath2Mode(neutrinoPath) : -1;
+        if (neutrinoDevMode >= 0)
+            deinit(UNMOUNT_EXCEPTION, neutrinoDevMode);
+        else
+            deinit(NO_EXCEPTION, HDD_MODE); // CAREFUL: deinit will call hddCleanUp, so hddGames/game will be freed
+    } else {
         miniDeinit(configSet);
 
         free(gAutoLaunchGame);
