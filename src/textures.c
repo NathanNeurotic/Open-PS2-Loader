@@ -758,16 +758,5 @@ int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId)
         snprintf(filePath, sizeof(filePath), "%s.%s", path, "png");
 
     result = texLoad(texture, filePath);
-
-    // Case-tolerant retry for user-supplied art (texId == -1: covers, attribute badges like #DiscType, VCD
-    // art). The PS2 HDD's pfs/ps2fs is case-sensitive, so a theme file saved as ".PNG" (e.g.
-    // PS2DVD_#DiscType.PNG) misses the lowercase ".png" probe above. Retry only on a miss, so the extra
-    // open happens solely when the lowercase file is genuinely absent (cover misses are cached; off the
-    // render path). On a case-insensitive FS the first probe already matched, so this never fires.
-    if (result < 0 && texId == -1) {
-        snprintf(filePath, sizeof(filePath), "%s.%s", path, "PNG");
-        result = texLoad(texture, filePath);
-    }
-
     return (result >= 0) ? 0 : result;
 }

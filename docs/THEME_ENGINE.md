@@ -222,9 +222,8 @@ A per-game **attribute** picks which glyph to draw. Where that glyph comes from 
   → `PS2_#System.png`, `#Media=CD` → `CD_#Media.png`, `#DiscType=PS2DVD` → `PS2DVD_#DiscType.png`.
 
 > ⚠️ The disk-theme file is **`<value>_<attribute>`**, *not* `<attribute>_<value>`. `PS2DVD_#DiscType.png`
-> is correct; `#DiscType_PS2DVD.png` is never read. (The `#` is a literal character in the filename.
-> Either `.png` or `.PNG` works — the loader retries the upper-case extension, which matters on the PS2
-> HDD's case-sensitive `pfs`.)
+> is correct; `#DiscType_PS2DVD.png` is never read. (The `#` is a literal character in the filename, and
+> the extension must be lower-case **`.png`** — the PS2 HDD's filesystem is case-sensitive.)
 
 Metadata attributes OPL sets automatically per game — on **every device** (USB/BDM, SMB, MMCE and the
 internal HDD/HDL, including their PS1/VCD lists):
