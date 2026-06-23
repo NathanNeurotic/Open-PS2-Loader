@@ -452,20 +452,29 @@ int vcdReadBdmaMode(void)
     return VCD_BDMA_FAT32;
 }
 
-// Candidate source device prefixes for a BDMA SOURCE family (each ends in '/'). USB and MX4SIO both
-// live in the BDM massN namespace (OPL can't split them by path); MMCE has its own.
+// Candidate source device prefixes for a BDMA SOURCE family (each ends in '/'). MMCE has its own
+// namespace. The other BDM transports (USB, MX4SIO, iLink, and the internal exFAT HDD) share the
+// generic massN namespace BUT each is ALSO addressable by a DRIVER-TYPED root -- usb0:, mx4sio0:,
+// ata0:, ilink0: -- which is how OPL tells them apart (bdmGetTypedPathForDriver/bdmResolveDeviceRoot).
+// The internal exFAT HDD is the "ata" device, and its POPS lives under ata0: (the same name wLaunchELF
+// shows); the generic massN: alias does NOT reliably reach it, so we must probe the typed roots too --
+// otherwise BDMA "modules not found" fires even when the files are correctly placed on the HDD.
 static int vcdBdmaSourcePrefixes(int source, const char *out[], int maxOut)
 {
     static const char *mass[8] = {"mass0:/", "mass1:/", "mass2:/", "mass3:/",
                                   "mass4:/", "mass5:/", "mass6:/", "mass7:/"};
+    static const char *typed[8] = {"ata0:/", "ata1:/", "usb0:/", "usb1:/",
+                                   "mx4sio0:/", "mx4sio1:/", "ilink0:/", "ilink1:/"};
     static const char *mmce[2] = {"mmce0:/", "mmce1:/"};
     int n = 0;
     if (source == VCD_BDMA_SRC_MMCE) {
         for (int i = 0; i < 2 && n < maxOut; i++)
             out[n++] = mmce[i];
-    } else { // USB or MX4SIO -> the mass namespace
+    } else { // USB / MX4SIO / internal HDD -> the generic mass namespace AND the driver-typed roots
         for (int i = 0; i < 8 && n < maxOut; i++)
             out[n++] = mass[i];
+        for (int i = 0; i < 8 && n < maxOut; i++)
+            out[n++] = typed[i];
     }
     return n;
 }
@@ -493,9 +502,11 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return (mr != 0) ? mr : 0;
     }
 
-    // Find the source device whose POPS/ holds BOTH variant files for this mode.
-    const char *cands[8];
-    int nc = vcdBdmaSourcePrefixes(source, cands, 8);
+    // Find the source device whose POPS/ holds BOTH variant files for this mode. Candidates = the
+    // generic mass0-7 + the driver-typed roots (ata/usb/mx4sio/ilink), so the internal exFAT HDD
+    // (addressed as ata0:) and the other typed devices are all reached.
+    const char *cands[16];
+    int nc = vcdBdmaSourcePrefixes(source, cands, 16);
     const char *suffix = vcdBdmaSuffix[mode];
     char src0[96], src1[96];
     int found = 0;
