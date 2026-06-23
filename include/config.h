@@ -38,7 +38,8 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_SIZE           "#Size"
 #define CONFIG_ITEM_FORMAT         "#Format"
 #define CONFIG_ITEM_MEDIA          "#Media"
-#define CONFIG_ITEM_SYSTEM         "#System" // console axis (PS1/PS2); #Media stays the disc axis (CD/DVD) -- FR #49
+#define CONFIG_ITEM_SYSTEM         "#System"   // console axis (PS1/PS2); #Media stays the disc axis (CD/DVD) -- FR #49
+#define CONFIG_ITEM_DISCTYPE       "#DiscType" // combined console+media token (PS1CD/PS2CD/PS2DVD) so one AttributeImage glyph distinguishes PS1-CD from PS2-CD (both report #Media=CD) -- issue #49
 #define CONFIG_ITEM_STARTUP        "#Startup"
 #define CONFIG_ITEM_ALTSTARTUP     "$AltStartup"
 #define CONFIG_ITEM_VMC            "$VMC"

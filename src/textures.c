@@ -662,11 +662,17 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
     texture->Width = pngWidth;
     texture->Height = pngHeight;
 
-    if (colorType == PNG_COLOR_TYPE_GRAY || bitDepth < 4) {
+    if (colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_GRAY_ALPHA || bitDepth < 4) {
         png_set_expand(pngPtr);
         if (png_get_valid(pngPtr, infoPtr, PNG_INFO_tRNS))
             png_set_tRNS_to_alpha(pngPtr);
     }
+
+    // Grayscale (1ch) and gray+alpha (2ch) PNGs must be promoted to RGB/RGBA: png_set_expand does NOT
+    // change the color type for non-tRNS gray, so without this they fall through the color-type switch
+    // below to ERR_BAD_DEPTH and fail to load (port of wOPL 8a1a583 / issue #225).
+    if (colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
+        png_set_gray_to_rgb(pngPtr);
 
     png_set_filler(pngPtr, 0xff, PNG_FILLER_AFTER);
     png_read_update_info(pngPtr, infoPtr);

@@ -74,7 +74,14 @@ copies the right pair onto your memory card when you change the setting:
   HDD via BDMAssault).
 - **BDMA SOURCE** — which device holds the module files in its `POPS` folder: `USB`,
   `MX4SIO`, or `MMCE`. (`USB` scans the whole BDM mass namespace, so it also picks up the
-  files from an internal exFAT HDD.)
+  files from an internal exFAT HDD — in OPL that drive is a `massN:` device, the same volume
+  wLaunchELF shows as `ata0:`.)
+
+> **Module file names matter.** The two driver files in that `POPS/` folder must be named for the
+> BDMA **MODE** you pick: **`usbd.irx.<mode>`** and **`usbhdfsd.irx.<mode>`**. For `HDD (exFAT)` that
+> is **`usbd.irx.ata`** + **`usbhdfsd.irx.ata`** (other modes use `.usbexfat`, `.mx4sio`, `.mmce`).
+> Plain `usbd.irx` / `usbhdfsd.irx` with **no suffix** are ignored — that is what triggers the
+> *"BDMA module files not found"* message.
 
 When you change either setting, RiptOPL copies the chosen variant's modules from the
 SOURCE device's `POPS` folder onto `mc?:/POPSTARTER/` and records the equipped state in a
