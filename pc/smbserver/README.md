@@ -1,0 +1,95 @@
+# RiptOPL SMBv1 server
+
+A tiny, dependency-free **SMBv1/CIFS server** that Open-PS2-Loader (and forks) can browse and
+load games from — so SMB keeps working even on hosts where the OS has killed SMBv1.
+
+## Why this exists
+
+OPL's network game loading speaks **SMBv1** (`NT LM 0.12`) with **LM/NTLMv1** auth. Windows 11
+(24H2 / 25H2) ships the SMB1 server **off by default** and **removed NTLMv1**, so the old
+"share a folder from Windows" path is effectively dead — and re-enabling it fights Microsoft's
+hardening with no guarantee it works.
+
+This program sidesteps all of that: it **implements SMBv1 itself** and accepts **guest** logons,
+so it does not touch Windows' SMB stack at all. OPL connects to *this* server on a custom TCP
+port — Windows' own SMB2/3 service on port 445 is left completely alone. No Windows SMB1 feature,
+no NTLMv1, no registry edits.
+
+It's pure Python 3 standard library (no `pip install`), so it runs as a bare `.py` with zero
+antivirus false-positives, and works the same on Windows, Linux and macOS.
+
+## Quickstart
+
+```sh
+python smbserver_opl.py --share games=D:/PS2Games
+```
+
+It prints something like:
+
+```
+ RiptOPL SMBv1 server -- listening on 0.0.0.0:1445
+ In OPL  ->  SMB Server IP: 192.168.1.50   Port: 1445   user/pass: blank (guest)
+            Share: games   ->   D:\PS2Games
+ (read-only; pass --writable for VMC-on-SMB)
+```
+
+Then in OPL → **Settings → Network**:
+
+| Field            | Value                                  |
+|------------------|----------------------------------------|
+| Address type     | **IP address** (turn NetBIOS *off*)    |
+| PC IP Address    | the LAN IP the server printed          |
+| **Port**         | **1445** (the printed port)            |
+| Share            | `games`                                |
+| User / Password  | **blank** (guest)                      |
+
+Save, and your network games should populate from the share.
+
+## Options
+
+```
+--share NAME=PATH   a share to export (repeatable), e.g. --share apps=E:/PS2Apps
+--port N            TCP port (default 1445). If it's taken, the server walks forward
+                    and prints the real one — just match OPL's Port field to it.
+--bind ADDR         interface to bind (default 0.0.0.0 = all)
+--writable          allow writes (needed only for VMC-on-SMB); default is read-only
+--take-445          bind the *standard* port 445 instead, by pausing Windows' LanmanServer
+                    (admin; reversible — see below)
+-v                  verbose protocol logging
+```
+
+### Read-only by default
+
+The server is **read-only** unless you pass `--writable`, so it's safe to point straight at a
+games folder. Only enable `--writable` if you use OPL's **VMC-on-SMB** memory-card feature and
+want saves written back to the share.
+
+### `--take-445` (no OPL change needed, but invasive)
+
+If you'd rather not edit OPL's Port field (e.g. an existing setup pinned to 445), `--take-445`
+makes the server sit on the standard port 445. Windows still holds 445 via its own
+**LanmanServer** service, so this **stops LanmanServer** (which turns off Windows' *own* file
+sharing) while the server runs, and **restarts it on exit**. It needs an **Administrator** shell.
+
+It only *stops* the service (never disables it), so even a hard kill self-heals on the next
+reboot. Still — the plain `--port 1445` default is simpler and touches nothing; prefer it unless
+you specifically need 445.
+
+## Status / testing
+
+`selftest.py` is a raw SMB1 client that mimics OPL's exact wire sequence (share-level + plaintext
+guest, the `READ_ANDX` framing, `FIND_FIRST2` listing) and asserts the protocol byte-for-byte:
+
+```sh
+python selftest.py     # spins up the server on a scratch port + temp share, runs 28 checks
+```
+
+The protocol is validated locally against that harness. **Final validation is on real hardware**
+(an actual PS2 running OPL, or PCSX2 with a network adapter) — booting an ISO over the share and
+browsing the menu. If you hit an issue there, run the server with `-v` and capture the output.
+
+## Optional: build a single `.exe`
+
+Power users should just run the `.py`. If you want a double-clickable Windows binary, see
+`build_exe.ps1` (uses Nuitka, not PyInstaller — PyInstaller's bootloader trips antivirus). Code
+signing is the single biggest false-positive reducer.
