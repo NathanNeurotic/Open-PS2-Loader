@@ -612,9 +612,15 @@ static void cacheInvalidateEntryLocked(cache_entry_t *entry, int freeTxt, int pr
             cacheClearItem(entry, freeTxt);
             break;
         case CACHE_ENTRY_LOADING:
-            if (req != NULL)
-                req->abortRequested = 1;
-            else {
+            if (req != NULL) {
+                // Teardown (preserveLoaded==0) aborts everything. But a per-scroll generation advance
+                // (preserveLoaded==1) should only abort slow in-flight MMCE loads -- let a local
+                // BDM/HDD/USB cover or disc icon FINISH and land in cache instead of being cancelled and
+                // re-queued on every scroll step. With one art worker and #DiscType now adding a 2nd
+                // request per game, the blanket abort starved both cover and disc (temperamental loading).
+                if (!preserveLoaded || cacheIsAbortableMmceRequest(req))
+                    req->abortRequested = 1;
+            } else {
                 entry->qr = NULL;
                 cacheClearItem(entry, freeTxt);
             }
