@@ -381,11 +381,16 @@ static void findDuplicate(theme_element_t *first, const char *cachePattern, cons
                 LOG("THEMES Re-using the default texture for %s\n", defaultTexture);
             }
 
-            if (overlayTexture && source->overlayTexture && !strcmp(overlayTexture, source->overlayTexture->name)) {
-                target->overlayTexture = source->overlayTexture;
-                target->overlayTextureLinked = 1;
-                LOG("THEMES Re-using the overlay texture for %s\n", overlayTexture);
-            }
+            // The overlay (cover-window) texture is intentionally NOT shared by name here. Its
+            // per-element cover-window corners (overlay_ulx..lry) are stored ON the image_texture_t,
+            // so reusing the object would make a later element inherit an earlier one's corners --
+            // e.g. the square apps/VCD coverflow (own corners 0..184/0..256-square) inheriting the
+            // games' 184x256 window, which makes the cover IMAGE draw past its frame at the other
+            // page's rectangle size. Each element loads its own overlay (initImageTexture, called
+            // below in initMutableImage) so its own corners are read. The case bitmap is tiny +
+            // paletted; the expensive case_overlay glare (overlay2, no corners, plain pixmap) is
+            // still safely shared just below.
+            (void)overlayTexture;
 
             if (overlayTexture2 && source->overlayTexture2 && !strcmp(overlayTexture2, source->overlayTexture2->name)) {
                 target->overlayTexture2 = source->overlayTexture2;
