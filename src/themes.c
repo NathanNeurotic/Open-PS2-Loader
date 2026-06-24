@@ -845,7 +845,6 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     // the widescreen/PAR correction at draw time (rmSetupQuad: w * iAspectWidth >> 2),
     // exactly like the stock ItemCover path. We must NOT pre-apply rmWideScale here or
     // the cover gets the aspect factor twice and warps when widescreen is toggled.
-    int origCoverWidth = elem->width;
     int coverWidth = elem->width;
     int maxCoverWidth = (screenWidth - (coverCount - 1) * 10) / coverCount;
     // Widescreen draws each cover at 3/4 width (SCALING_RATIO), leaving spare screen, so
@@ -857,7 +856,6 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
         coverWidth = maxCoverWidth;
     if (coverWidth <= 0)
         return;
-    int coverHeight = (origCoverWidth > 0) ? (elem->height * coverWidth / origCoverWidth) : elem->height;
 
     int coverSpacing = (screenWidth - coverCount * coverWidth) / (coverCount + 1);
     if (coverSpacing < 0)
@@ -952,7 +950,12 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
             scaleAdd = (int)(gCoverflowCenterScale * (1.0f - eased));
 
         int drawW = coverWidth + scaleAdd;
-        int drawH = (coverWidth > 0) ? (coverHeight * drawW / coverWidth) : coverHeight;
+        // Height tracks THIS cover's OWN element aspect (csh/csw), so a mixed tab -- Favourites,
+        // which interleaves portrait game covers and square app covers -- honors each cover's shape
+        // instead of stamping the base element's aspect on every cover. Width stays uniform
+        // (coverWidth) for even carousel spacing. On single-type tabs coverElem == elem, so this is
+        // identical to the old coverHeight*drawW/coverWidth. csw is div-guarded >= 1 above.
+        int drawH = csh * drawW / csw;
 
         // Auto-center the VISIBLE cover (case frame box) from THIS cover's overlay corners: the
         // frame can sit off-center (e.g. apps_case = top-left 186 of 256). No overlay => no shift.
