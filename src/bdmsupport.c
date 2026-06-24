@@ -229,13 +229,20 @@ int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen)
         int devIndex = -1;
 
         snprintf(path, sizeof(path), "mass%d:/", i);
-        if (bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex) < 0)
+        // Identify the device by its DRIVER NAME only. Do NOT gate on the full bdmReadDeviceIdentity
+        // return: GET_DEVICE_NUMBER can fail on a perfectly usable device (seen on some USB drives), and
+        // the device pages already tolerate that (they keep the device by driver name, bdmsupport.c
+        // ~1219). Requiring it here made the equip report "no device matching" for a connected source.
+        // On GET_DEVICE_NUMBER failure devIndex stays -1; bdmResolveDeviceRoot then just yields the
+        // generic mass<slot>: root, which is still a valid path to that device's POPS folder.
+        bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex);
+        if (driver[0] == '\0')
             continue;
         if (bdmDetermineDeviceType(driver) != bdmType)
             continue;
 
-        // Resolve to the driver-typed root (e.g. ata0:) -- the differentiated path the device is
-        // actually addressable at; bdmResolveDeviceRoot writes it WITHOUT a trailing slash.
+        // Resolve to the driver-typed root (e.g. ata0:) when the device number is known; otherwise this
+        // falls back to mass<slot>:. Either is a valid path the device is addressable at.
         bdmResolveDeviceRoot(resolved, sizeof(resolved), driver, devIndex, i);
         snprintf(root, rootLen, "%s/", resolved);
         return 1;
