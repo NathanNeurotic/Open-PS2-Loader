@@ -61,6 +61,10 @@ int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName,
 // with a trailing slash (e.g. "ata0:/") to root. Returns 1 if found. Lets the BDMA equip target a
 // specific transport (USB / MX4SIO / internal-ATA-HDD) by driver instead of blind mass-namespace scans.
 int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen);
+// Force-load the BDM transport for bdmType (even if its games toggle is off) and wait up to timeoutMs
+// for a device of that type to mount, so the BDMA equip can read a source device that isn't enabled for
+// games. Returns 1 if a device is present afterwards, 0 otherwise. Idempotent + instant when already up.
+int bdmEnsureSourceModules(int bdmType, u32 timeoutMs);
 
 int bdmFindPartition(char *target, const char *name, int write);
 int bdmIsUDPBDLoaded(void);                  // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)

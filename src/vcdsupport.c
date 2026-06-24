@@ -489,6 +489,10 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     } else {
         int wantType = (source == VCD_BDMA_SRC_MX4SIO) ? BDM_TYPE_SDC : (source == VCD_BDMA_SRC_HDD) ? BDM_TYPE_ATA :
                                                                                                        BDM_TYPE_USB;
+        // The source's transport driver may not be loaded if its device family is OFF for games (you can
+        // keep the BDMA module files on a device you never browse). Force-load it + wait for the device
+        // to mount -- otherwise the source path is dead and nothing can be read from it.
+        bdmEnsureSourceModules(wantType, 2000);
         if (bdmGetDeviceRootByType(wantType, bdmRoot, sizeof(bdmRoot)))
             cands[nc++] = bdmRoot;
     }

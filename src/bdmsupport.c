@@ -1338,6 +1338,62 @@ static int bdmDeviceIsPresent(int deviceId)
     return 0;
 }
 
+// Ensure the BDM transport for a BDMA source type is loaded AND a device of that type is mounted, so
+// the equip can read modules from a source device even when that device family is NOT enabled for games
+// (e.g. BDMA files kept on a USB stick you never browse). Force-loads the driver -- the games tab stays
+// hidden because bdmNeedsUpdate gates page visibility on gEnable* independently -- then waits up to
+// timeoutMs for the just-loaded device to mount. Idempotent + instant when the transport is already up.
+// Returns 1 if a device of the type is present afterwards, 0 otherwise. USB/MX4SIO/internal-ATA-HDD only;
+// MMCE is a separate subsystem with its own namespace + loader.
+int bdmEnsureSourceModules(int bdmType, u32 timeoutMs)
+{
+    int wasLoaded = 1;
+    char root[BDM_DEVICE_ROOT_MAX + 2];
+    u32 start;
+
+    WaitSema(bdmLoadModuleLock);
+    switch (bdmType) {
+        case BDM_TYPE_USB:
+            if (!iUSBModLoaded) {
+                wasLoaded = 0;
+                if (bdmLoadOptionalModule("USBMASS_BD", &usbmass_bd_irx, size_usbmass_bd_irx) >= 0)
+                    iUSBModLoaded = 1;
+            }
+            break;
+        case BDM_TYPE_SDC:
+            if (!mx4sioModLoaded) {
+                wasLoaded = 0;
+                if (bdmLoadOptionalModule("MX4SIO_BD", &mx4sio_bd_irx, size_mx4sio_bd_irx) >= 0)
+                    mx4sioModLoaded = 1;
+            }
+            break;
+        case BDM_TYPE_ATA:
+            if (!hddModLoaded) {
+                wasLoaded = 0;
+                if (hddLoadModules() >= 0)
+                    hddModLoaded = 1;
+            }
+            break;
+        default:
+            SignalSema(bdmLoadModuleLock);
+            return 0;
+    }
+    SignalSema(bdmLoadModuleLock);
+
+    // Already loaded -> any connected device is already mounted, so the first probe returns with no stall
+    // (and if nothing is connected we bail immediately). Just loaded -> poll until the IOP detects and
+    // mounts the device, or timeoutMs elapses.
+    start = GetTimerSystemTime();
+    while (!bdmGetDeviceRootByType(bdmType, root, sizeof(root))) {
+        if (wasLoaded)
+            return 0;
+        if ((GetTimerSystemTime() - start) / (kBUSCLK / 1000) > timeoutMs)
+            return 0;
+        DelayThread(100 * 1000);
+    }
+    return 1;
+}
+
 static int bdmDeviceIsATA(int deviceId)
 {
     char path[16];
