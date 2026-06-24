@@ -15,11 +15,12 @@
 #include <unistd.h>
 #include <sys/stat.h> // mkdir (POSIX, used like util.c / OSDHistory.c)
 
-#include "include/opl.h"        // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
-#include "include/system.h"     // POPS_FOLDER
-#include "include/textures.h"   // texDiscoverLoad (VCD cover-art fallback)
-#include "include/ioman.h"      // LOG (BDMA equip probe trace)
-#include "include/bdmsupport.h" // BDM_TYPE_* + bdmGetDeviceRootByType (BDMA source differentiation)
+#include "include/opl.h"         // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
+#include "include/system.h"      // POPS_FOLDER
+#include "include/textures.h"    // texDiscoverLoad (VCD cover-art fallback)
+#include "include/ioman.h"       // LOG (BDMA equip probe trace)
+#include "include/bdmsupport.h"  // BDM_TYPE_* + bdmGetDeviceRootByType (BDMA source differentiation)
+#include "include/mmcesupport.h" // mmceLoadModules (ensure mmceman for the MMCE BDMA source)
 #include "include/vcdsupport.h"
 
 // Extract the PS1 disc ID (SXXX_NNN.NN) from a VCD basename matching "SXXX_NNN.NN.Title"
@@ -484,8 +485,20 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     char bdmRoot[BDM_DEVICE_ROOT_MAX + 2];
     int nc = 0;
     if (source == VCD_BDMA_SRC_MMCE) {
-        cands[nc++] = "mmce0:/";
-        cands[nc++] = "mmce1:/";
+        // Ensure mmceman is loaded even when MMCE games are off / Manual-not-started -- otherwise mmce0:/
+        // mmce1:/ are dead and nothing can be read. Then offer only slots that actually have a card, so
+        // the not-found diagnostic is honest ("no device" vs "device found, files missing").
+        mmceLoadModules();
+        DIR *m0 = opendir("mmce0:/");
+        if (m0 != NULL) {
+            closedir(m0);
+            cands[nc++] = "mmce0:/";
+        }
+        DIR *m1 = opendir("mmce1:/");
+        if (m1 != NULL) {
+            closedir(m1);
+            cands[nc++] = "mmce1:/";
+        }
     } else {
         int wantType = (source == VCD_BDMA_SRC_MX4SIO) ? BDM_TYPE_SDC : (source == VCD_BDMA_SRC_HDD) ? BDM_TYPE_ATA :
                                                                                                        BDM_TYPE_USB;

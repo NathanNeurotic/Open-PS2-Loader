@@ -170,8 +170,15 @@ void mmceSetPrefix(void)
     mmceRefreshArtRoots();
 }
 
+static int mmceModLoaded = 0;
 void mmceLoadModules(void)
 {
+    // mmceman is a singleton -- loading the IRX buffer twice creates a 2nd instance. Guard so this is
+    // idempotent: mmceInit calls it, and the BDMA equip now also calls it (to wake an MMCE source when
+    // MMCE games are off / Manual-not-started). Set the flag first so a partial load can't double-load.
+    if (mmceModLoaded)
+        return;
+    mmceModLoaded = 1;
     LOG("MMCESUPPORT LoadModules\n");
     LOG("[MMCEMAN]:\n");
     sysLoadModuleBuffer(&mmceman_irx, size_mmceman_irx, 0, NULL);
