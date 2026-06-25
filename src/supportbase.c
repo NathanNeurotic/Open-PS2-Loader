@@ -592,7 +592,11 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
             if (sbFileExists(built))
                 return built;
         }
-        return NULL;
+        // The picked device had no neutrino.elf -- do NOT dead-end here. Fall through to the AUTO
+        // discovery below (legacy custom path -> active game device co-located -> mc0/mc1) so a picker
+        // miss degrades to NHDDL-style cross-device discovery instead of returning NULL (which makes
+        // bdmLaunchGame drop to a native launch that can die to OSDSYS -- issue #51). The chosen device
+        // was already tried FIRST above, so an explicit pick is still honoured when it holds the ELF.
     }
 
     // Auto: a legacy custom path (settings_riptopl.cfg "neutrino_path") wins when it exists;

@@ -48,6 +48,13 @@ int mmceSendGameID(const char *startup)
     if (!gMMCEEnableGameID || startup == NULL || startup[0] == '\0')
         return 0;
 
+    // #261 cross-device launches (a USB/HDD/SMB game with the MMCE holding the card) can reach here on a
+    // cold boot where the MMCE tab was never opened, so its Start Mode (default Manual) never loaded
+    // mmceman. Without mmceman resident the mmce0:/mmce1: devctl probes below all fail and the game-id is
+    // silently dropped -> the card never switches to the per-game folder (issue #51). Self-arm the
+    // transport here; mmceLoadModules() is idempotent (guarded by mmceModLoaded).
+    mmceLoadModules();
+
     mmceGetDeviceRoot(mmceDevice, sizeof(mmceDevice));
     // Use the resolved slot only if a card is actually present there; otherwise -- no slot resolved
     // (MMCE tab off, the common cross-device case), OR a configured/stale gMMCESlot that is now empty
