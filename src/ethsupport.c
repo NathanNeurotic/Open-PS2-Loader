@@ -606,6 +606,29 @@ static void ethRenameGame(item_list_t *itemList, int id, char *newName)
     ethULSizePrev = -2;
 }
 
+// Launch a PS1/.VCD entry BY NAME via POPSTARTER over SMB (view-independent entry point: the in-view
+// menu launch below and the Favourites tab both use it). ethPrefix is static and smb: paths use '\'
+// (auto-detected by vcdSep); UNMOUNT_EXCEPTION keeps the share mounted across the IOP reset.
+static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_t *configSet)
+{
+    char vcdElf[256], vcdSelector[320];
+
+    if (!gPCShareName[0] || vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+        return;
+    if (!vcdResolvePopstarter(ethPrefix, vcdElf, sizeof(vcdElf))) {
+        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        return;
+    }
+    // POPSTARTER needs its SMB network IRX on the card to read a VCD over the network.
+    if (!vcdSmbModulesPresent()) {
+        guiMsgBox(_l(_STR_POPSTARTER_SMB_MISSING), 0, NULL);
+        return;
+    }
+    vcdBuildSelector(ethPrefix, VCD_PREFIX_SMB, vcdName, vcdSelector, sizeof(vcdSelector));
+    deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the SMB mount alive across the IOP reset
+    sysLaunchPopstarter(vcdElf, vcdSelector, "");
+}
+
 static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, compatmask;
@@ -617,28 +640,9 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     u32 layer1_start, layer1_offset;
     unsigned short int layer1_part;
 
-    // VCD view (SMB): hand off to POPSTARTER with the SB. prefix (smb: paths use '\', auto-detected
-    // by vcdSep). Only once a share is selected; build the selector + resolve the ELF on stack
-    // BEFORE deinit() frees ethGames. ethPrefix is static.
+    // VCD view (SMB): hand off to POPSTARTER by name, only once a share is selected.
     if (gPCShareName[0] && game != NULL && vcdViewActive(itemList->mode)) {
-        char vcdName[VCD_NAME_MAX];
-        char vcdElf[256];
-        char vcdSelector[320];
-        snprintf(vcdName, sizeof(vcdName), "%s", game->name);
-        if (vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
-            return;
-        if (!vcdResolvePopstarter(ethPrefix, vcdElf, sizeof(vcdElf))) {
-            guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
-            return;
-        }
-        // POPSTARTER needs its SMB network IRX on the card to read a VCD over the network.
-        if (!vcdSmbModulesPresent()) {
-            guiMsgBox(_l(_STR_POPSTARTER_SMB_MISSING), 0, NULL);
-            return;
-        }
-        vcdBuildSelector(ethPrefix, VCD_PREFIX_SMB, vcdName, vcdSelector, sizeof(vcdSelector));
-        deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the SMB mount alive across the IOP reset
-        sysLaunchPopstarter(vcdElf, vcdSelector, "");
+        ethLaunchVcd(itemList, game->name, configSet);
         return;
     }
 
@@ -861,7 +865,7 @@ static char *ethGetPrefix(item_list_t *itemList)
 static item_list_t ethGameList = {
     ETH_MODE, 1, 0, 0, MENU_MIN_INACTIVE_FRAMES, ETH_MODE_UPDATE_DELAY, NULL, NULL, &ethGetTextId, &ethGetPrefix, &ethInit, &ethNeedsUpdate,
     &ethUpdateGameList, &ethGetGameCount, &ethGetGame, &ethGetGameName, &ethGetGameNameLength, &ethGetGameStartup, &ethDeleteGame, &ethRenameGame,
-    &ethLaunchGame, &ethGetConfig, &ethGetImage, &ethCleanUp, &ethShutdown, &ethCheckVMC, &ethGetIconId};
+    &ethLaunchGame, &ethGetConfig, &ethGetImage, &ethCleanUp, &ethShutdown, &ethCheckVMC, &ethGetIconId, &ethLaunchVcd};
 
 static int ethReadNetConfig(void)
 {

@@ -149,7 +149,10 @@ static unsigned char vcdDirty[MODE_COUNT]; // 1 = view just toggled -> force one
 
 int vcdModeSupported(int mode)
 {
-    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST) || mode == MMCE_MODE || mode == ETH_MODE || mode == HDD_MODE;
+    // FAV_MODE has its own L3 ISO<->VCD view too: the Favourites tab swaps between disc favourites and
+    // PS1/.VCD favourites (favsupport filters its list by vcdViewActive(FAV_MODE)). Its vcdView slot is
+    // independent of any device's, so toggling Favourites never disturbs a device page's view.
+    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST) || mode == MMCE_MODE || mode == ETH_MODE || mode == HDD_MODE || mode == FAV_MODE;
 }
 
 int vcdViewActive(int mode)

@@ -23,6 +23,8 @@
 #include "include/lang.h"
 #include "include/textures.h"
 #include "include/config.h"
+#include "include/supportbase.h" // sbPopulateConfig + base_game_info_t (VCD favourite config)
+#include "include/vcdsupport.h"  // vcdLoadArt / vcdViewActive / vcdConsumeDirty (VCD favourites)
 #include "include/favsupport.h"
 
 int gFAVStartMode;
@@ -36,10 +38,11 @@ typedef struct
 {
     item_list_t *owner; // resolved source list
     int mode;           // resolved source mode (BDM re-matched across slots)
-    int id;             // source item id (validated present in owner's submenu)
+    int id;             // source item id (validated present in owner's submenu; unused for VCD)
     int icon_id;
     int text_id;
-    char *text; // heap copy; owned here
+    int isVcd;  // 1 = a PS1/.VCD favourite -> resolve/render/launch by NAME (text), not by submenu id
+    char *text; // heap copy; owned here (for a VCD favourite this is the .VCD basename / launch name)
 } fav_rec_t;
 
 static fav_rec_t *favArray = NULL;
@@ -117,6 +120,7 @@ typedef struct
     int id;
     int icon_id;
     int text_id;
+    int isVcd; // 1 = PS1/.VCD favourite (OFAV v2+); v1 files / foreign imports default to 0
     char text[FAV_TEXT_MAX];
 } fav_raw_t;
 
@@ -221,7 +225,7 @@ static fav_raw_t *favReadFile(int *outCount)
         close(fd);
         return imported;
     }
-    if (ver != FAV_VERSION) {
+    if (ver != 1 && ver != 2) {
         LOG("FAV reject: unsupported OFAV version %d\n", ver);
         close(fd);
         return NULL;
@@ -243,8 +247,13 @@ static fav_raw_t *favReadFile(int *outCount)
     for (int i = 0; i < (int)cnt; i++) {
         u16 mode = 0, tlen = 0;
         u32 id = 0, icon = 0, tid = 0;
-        if (!rdU16(fd, &mode) || !rdU32(fd, &id) || !rdU32(fd, &icon) || !rdU32(fd, &tid) || !rdU16(fd, &tlen))
+        u8 isVcd = 0;
+        if (!rdU16(fd, &mode) || !rdU32(fd, &id) || !rdU32(fd, &icon) || !rdU32(fd, &tid))
             break; // short read -> stop, keep what we have
+        if (ver >= 2 && !rdBytes(fd, &isVcd, 1))
+            break; // v2 records carry a per-record isVcd byte between text_id and text_len
+        if (!rdU16(fd, &tlen))
+            break;
         if (tlen == 0 || tlen > FAV_TEXT_MAX) {
             LOG("FAV bad text_len=%d, aborting parse\n", tlen);
             break; // cannot resync past an unknown-length field -> stop
@@ -256,6 +265,7 @@ static fav_raw_t *favReadFile(int *outCount)
         recs[got].id = (int)id;
         recs[got].icon_id = (int)icon;
         recs[got].text_id = (int)tid;
+        recs[got].isVcd = (int)isVcd; // v1 files leave this 0 (all ISO favourites)
         got++;
     }
     close(fd);
@@ -287,8 +297,9 @@ static int favWriteFile(fav_raw_t *recs, int count)
         int tlen = (int)strlen(recs[i].text) + 1;
         if (tlen > FAV_TEXT_MAX)
             tlen = FAV_TEXT_MAX;
+        u8 isVcd = recs[i].isVcd ? 1 : 0; // one byte between text_id and text_len (OFAV v2 layout)
         ok = wrU16(fd, (u16)recs[i].mode) && wrU32(fd, (u32)recs[i].id) && wrU32(fd, (u32)recs[i].icon_id) &&
-             wrU32(fd, (u32)recs[i].text_id) && wrU16(fd, (u16)tlen) && wrBytes(fd, recs[i].text, tlen);
+             wrU32(fd, (u32)recs[i].text_id) && wrBytes(fd, &isVcd, 1) && wrU16(fd, (u16)tlen) && wrBytes(fd, recs[i].text, tlen);
     }
     close(fd);
     if (!ok)
@@ -312,9 +323,57 @@ static void favFreeArray(void)
 // Resolve a stored record to a live source list + mark the source item favourited. BDM-range
 // modes are re-matched across all 8 slots (hotplug / different bus). Returns the resolved
 // owner (or NULL if the source isn't loaded / the item is absent).
-static item_list_t *favResolve(int mode, int id, const char *text, int *outMode)
+// Best-effort star for a resolved VCD favourite: if the source device is currently in its VCD view,
+// its submenu IS the VCD list, so light the star on the matching VCD item (by id+text). Misses
+// harmlessly (no star, no change) when the device is in ISO view or the VCD list index has since
+// shifted -- purely cosmetic on the source page; the FAV record + launch are unaffected either way.
+static void favVcdMarkStar(opl_io_module_t *mod, int id, const char *text)
+{
+    if (mod == NULL || mod->support == NULL || !vcdViewActive(mod->support->mode))
+        return;
+    submenu_list_t *src = submenuFindItemByIdAndText(mod->subMenu, id, text);
+    if (src != NULL)
+        src->item.favourited = 1;
+}
+
+static item_list_t *favResolve(int mode, int id, const char *text, int isVcd, int *outMode)
 {
     *outMode = mode;
+
+    // VCD (PS1) favourites resolve by NAME, not by a live submenu id. The source device may be in its
+    // ISO view right now (its submenu/games array holds discs, not VCDs), yet we must still surface +
+    // launch the PS1 favourite. So we only need a loaded device that can launch a VCD (itemLaunchVcd
+    // != NULL); art/config/launch all key off the stored name + the device's prefix (itemGetPrefix).
+    // A device whose VCD list lives off the browse prefix and provides no itemLaunchVcd (APA HDD __.POPS
+    // partitions) is intentionally skipped here -- the common internal exFAT HDD is a BDM massN: device
+    // and is covered through the BDM branch.
+    if (isVcd) {
+        if (mode >= BDM_MODE && mode <= BDM_MODE_LAST) {
+            // Prefer the stored slot; else the first loaded BDM slot (a stick can change slots).
+            opl_io_module_t *mod = oplGetModule(mode);
+            if (mod != NULL && mod->support != NULL && mod->support->itemLaunchVcd != NULL) {
+                favVcdMarkStar(mod, id, text);
+                return mod->support;
+            }
+            for (int m = BDM_MODE; m <= BDM_MODE_LAST; m++) {
+                opl_io_module_t *bm = oplGetModule(m);
+                if (bm != NULL && bm->support != NULL && bm->support->itemLaunchVcd != NULL) {
+                    *outMode = m;
+                    favVcdMarkStar(bm, id, text);
+                    return bm->support;
+                }
+            }
+            return NULL;
+        }
+        if (mode < 0 || mode >= MODE_COUNT)
+            return NULL;
+        opl_io_module_t *mod = oplGetModule(mode);
+        if (mod == NULL || mod->support == NULL || mod->support->itemLaunchVcd == NULL)
+            return NULL;
+        favVcdMarkStar(mod, id, text);
+        return mod->support;
+    }
+
     if (mode >= BDM_MODE && mode <= BDM_MODE_LAST) {
         for (int m = BDM_MODE; m <= BDM_MODE_LAST; m++) {
             opl_io_module_t *mod = oplGetModule(m);
@@ -355,11 +414,15 @@ static int favForceUpdate = 1;
 
 static int favNeedsUpdate(item_list_t *itemList)
 {
+    // Consume the FAV L3 ISO<->VCD dirty flag UNCONDITIONALLY (and first) so a concurrent
+    // favForceUpdate rebuild also clears it -- otherwise a default-view change that raises both would
+    // trigger one redundant byte-identical re-read on the following pass.
+    int viewToggled = vcdConsumeDirty(FAV_MODE);
     if (favForceUpdate) {
         favForceUpdate = 0;
         return 1;
     }
-    return 0;
+    return viewToggled; // L3 toggled the FAV view -> rebuild so the list re-filters
 }
 
 static void favInit(item_list_t *itemList)
@@ -385,9 +448,16 @@ static int favUpdateItemList(item_list_t *itemList)
         return 0;
     }
 
+    // L3 view split: the Favourites tab has its own VCD view (like every device page). In ISO view it
+    // lists the disc favourites; in VCD view it lists the PS1/.VCD favourites. Records for the other
+    // view are skipped this pass (the L3 toggle marks FAV dirty -> a rebuild re-filters).
+    int favVcdView = vcdViewActive(FAV_MODE);
     for (int i = 0; i < rawCount; i++) {
+        if ((recs[i].isVcd ? 1 : 0) != favVcdView)
+            continue;
+
         int resolvedMode = recs[i].mode;
-        item_list_t *owner = favResolve(recs[i].mode, recs[i].id, recs[i].text, &resolvedMode);
+        item_list_t *owner = favResolve(recs[i].mode, recs[i].id, recs[i].text, recs[i].isVcd, &resolvedMode);
         if (owner == NULL)
             continue; // device not loaded / item absent -> hidden (kept in the file)
 
@@ -400,6 +470,7 @@ static int favUpdateItemList(item_list_t *itemList)
         favArray[favCount].id = recs[i].id;
         favArray[favCount].icon_id = recs[i].icon_id;
         favArray[favCount].text_id = recs[i].text_id;
+        favArray[favCount].isVcd = recs[i].isVcd;
         favArray[favCount].text = txt;
         favCount++;
     }
@@ -442,6 +513,8 @@ static char *favGetItemStartup(item_list_t *itemList, int id)
 {
     if (!favValidIndex(id))
         return "";
+    if (favArray[id].isVcd)
+        return favArray[id].text; // VCD favourites key art/launch off the .VCD name, not a submenu id
     item_list_t *o = favArray[id].owner;
     if (o == NULL || o->itemGetStartup == NULL || !favOwnerHasId(o, favArray[id].id))
         return "";
@@ -453,7 +526,26 @@ static config_set_t *favGetConfig(item_list_t *itemList, int id)
     if (!favValidIndex(id))
         return NULL;
     item_list_t *o = favArray[id].owner;
-    if (o == NULL || o->itemGetConfig == NULL || !favOwnerHasId(o, favArray[id].id))
+    if (o == NULL)
+        return NULL;
+    // VCD favourite: the owner's id-based config is the disc list (wrong list / wrong id while the
+    // device is in ISO view). Build the PS1 config straight from the .VCD name + the device prefix,
+    // exactly as sbPopulateConfig keys VCD per-game data by filename -> gives Title + #DiscType badge.
+    if (favArray[id].isVcd) {
+        char *prefix = (o->itemGetPrefix != NULL) ? o->itemGetPrefix(o) : NULL;
+        if (prefix == NULL)
+            return NULL;
+        int pl = (int)strlen(prefix);
+        char sep[2] = {(pl > 0 && prefix[pl - 1] == '\\') ? '\\' : '/', '\0'};
+        base_game_info_t game;
+        memset(&game, 0, sizeof(game));
+        snprintf(game.name, sizeof(game.name), "%s", favArray[id].text);
+        snprintf(game.extension, sizeof(game.extension), ".VCD");
+        game.parts = 1;
+        game.format = GAME_FORMAT_ISO; // matches vcdFillGameList; the .VCD extension drives the PS1 badge
+        return sbPopulateConfig(&game, prefix, sep);
+    }
+    if (o->itemGetConfig == NULL || !favOwnerHasId(o, favArray[id].id))
         return NULL;
     return o->itemGetConfig(o, favArray[id].id);
 }
@@ -463,7 +555,18 @@ static void favLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
     if (!favValidIndex(id))
         return;
     item_list_t *o = favArray[id].owner;
-    if (o == NULL || o->itemLaunch == NULL || !favOwnerHasId(o, favArray[id].id))
+    if (o == NULL)
+        return;
+    // VCD favourite: hand the .VCD name to the owner's POPSTARTER launcher. This is view-independent
+    // (works while the device page is in ISO view), unlike the id-based itemLaunch whose VCD branch is
+    // gated on the device being live in VCD view. favResolve only binds a VCD fav to a device that
+    // provides itemLaunchVcd, so the NULL check below should never fire for a resolved VCD fav.
+    if (favArray[id].isVcd) {
+        if (o->itemLaunchVcd != NULL)
+            o->itemLaunchVcd(o, favArray[id].text, configSet);
+        return;
+    }
+    if (o->itemLaunch == NULL || !favOwnerHasId(o, favArray[id].id))
         return;
     o->itemLaunch(o, favArray[id].id, configSet);
 }
@@ -476,7 +579,26 @@ static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char
         return -1;
     for (int i = 0; i < favCount; i++) {
         item_list_t *o = favArray[i].owner;
-        if (o == NULL || o->itemGetStartup == NULL || o->itemGetImage == NULL || !favOwnerHasId(o, favArray[i].id))
+        if (o == NULL)
+            continue;
+        // VCD favourite: art keys off the .VCD name (== favArray[i].text == value) via the shared
+        // 3-level VCD fallback against the owner's prefix -- mirrors each device's getImage VCD branch
+        // (covers + icons only). Local/MMCE prefixes use '/', SMB ('\\') is auto-detected from the prefix.
+        if (favArray[i].isVcd) {
+            if (strcmp(favArray[i].text, value) != 0)
+                continue;
+            // Same gate the device getImage VCD branches apply: covers/icons keyed RELATIVE to the
+            // device prefix only. An absolute-prefix attribute-image element falls through to -1.
+            if (!isRelative || (strcmp(suffix, "COV") != 0 && strcmp(suffix, "ICO") != 0))
+                return -1;
+            char *prefix = (o->itemGetPrefix != NULL) ? o->itemGetPrefix(o) : NULL;
+            if (prefix == NULL)
+                return -1;
+            int pl = (int)strlen(prefix);
+            char sep = (pl > 0 && prefix[pl - 1] == '\\') ? '\\' : '/';
+            return vcdLoadArt(prefix, sep, folder, value, suffix, "POPS", resultTex);
+        }
+        if (o->itemGetStartup == NULL || o->itemGetImage == NULL || !favOwnerHasId(o, favArray[i].id))
             continue;
         char *s = o->itemGetStartup(o, favArray[i].id);
         if (s != NULL && strcmp(s, value) == 0)
@@ -553,7 +675,7 @@ static int favModesMatch(int a, int b)
 
 // ---- public toggle / refresh API ----------------------------------------------
 
-int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *text)
+int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *text, int isVcd)
 {
     if (text == NULL || text[0] == '\0')
         return 0;
@@ -561,11 +683,12 @@ int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *tex
     int count = 0;
     fav_raw_t *recs = favReadFile(&count); // may be NULL (empty / new file)
 
-    // Already present (same mode + id + text) -> treat as success (the star stays set).
+    // Already present (same mode + id + text + isVcd) -> treat as success (the star stays set).
     // Use favModesMatch so a BDM favourite that moved slots (e.g. BDM_MODE -> BDM_MODE1) is
     // recognised as already-present, matching the BDM-lenient logic in removeFavouriteByIdAndText.
+    // isVcd is part of the identity so a disc favourite and a PS1 favourite never collide.
     for (int i = 0; i < count; i++) {
-        if (favModesMatch(recs[i].mode, mode) && recs[i].id == id && strcmp(recs[i].text, text) == 0) {
+        if (favModesMatch(recs[i].mode, mode) && recs[i].id == id && (recs[i].isVcd ? 1 : 0) == (isVcd ? 1 : 0) && strcmp(recs[i].text, text) == 0) {
             free(recs);
             return 1;
         }
@@ -587,6 +710,7 @@ int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *tex
     out[count].id = id;
     out[count].icon_id = icon_id;
     out[count].text_id = text_id;
+    out[count].isVcd = isVcd ? 1 : 0;
     snprintf(out[count].text, FAV_TEXT_MAX, "%s", text);
 
     int ok = favWriteFile(out, newCount);
@@ -595,7 +719,7 @@ int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *tex
     return ok;
 }
 
-int removeFavouriteByIdAndText(int mode, int id, const char *text)
+int removeFavouriteByIdAndText(int mode, int id, const char *text, int isVcd)
 {
     int count = 0;
     fav_raw_t *recs = favReadFile(&count);
@@ -604,9 +728,9 @@ int removeFavouriteByIdAndText(int mode, int id, const char *text)
 
     int survivors = 0;
     for (int i = 0; i < count; i++) {
-        // Match on id + text + mode (BDM-lenient) so a same-titled favourite in a different
-        // device mode is NOT collaterally deleted.
-        if (!(recs[i].id == id && text != NULL && strcmp(recs[i].text, text) == 0 && favModesMatch(recs[i].mode, mode)))
+        // Match on id + text + mode (BDM-lenient) + isVcd so a same-titled favourite in a different
+        // device mode -- or a disc vs PS1 favourite of the same title -- is NOT collaterally deleted.
+        if (!(recs[i].id == id && text != NULL && strcmp(recs[i].text, text) == 0 && favModesMatch(recs[i].mode, mode) && (recs[i].isVcd ? 1 : 0) == (isVcd ? 1 : 0)))
             recs[survivors++] = recs[i]; // compact in place (single buffer)
     }
     int ok = favWriteFile(recs, survivors); // survivors may be 0 -> writes a header-only (empty) file
@@ -620,16 +744,19 @@ void favRemoveByIndex(int favIndex)
         return;
     int srcMode = favArray[favIndex].mode;
     int srcId = favArray[favIndex].id;
+    int srcIsVcd = favArray[favIndex].isVcd;
     char *txt = favArray[favIndex].text;
 
-    // Clear the star on the source-list copy, then drop the record from the store.
+    // Clear the star on the source-list copy, then drop the record from the store. (For a VCD fav the
+    // live submenu may be the device's disc list right now -> the by-id+text find simply misses, which
+    // is fine -- the record is still removed from the store.)
     opl_io_module_t *mod = oplGetModule(srcMode);
     if (mod != NULL) {
         submenu_list_t *src = submenuFindItemByIdAndText(mod->subMenu, srcId, txt);
         if (src != NULL)
             src->item.favourited = 0;
     }
-    removeFavouriteByIdAndText(srcMode, srcId, txt);
+    removeFavouriteByIdAndText(srcMode, srcId, txt, srcIsVcd);
 }
 
 void loadFavourites(void)

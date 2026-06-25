@@ -7,7 +7,7 @@
 #define FAV_TEXT_MAX          256        // cap on a stored favourite's text length (incl. NUL)
 #define FAV_MAX_ITEMS         512        // cap on records read from favourites.bin
 #define FAV_MAGIC             0x4641464F // 'OFAV' (little-endian on the EE)
-#define FAV_VERSION           1
+#define FAV_VERSION           2          // v2 adds a per-record isVcd byte; v1 is still read (isVcd=0)
 
 // Defined in favsupport.c; consumed by opl.c/gui.c (config load/save/default).
 extern int gFAVStartMode;
@@ -24,9 +24,11 @@ int favGetItemSourceMode(int id);
 
 // R3-toggle helpers (called from opl.c). add/remove rewrite favourites.bin and return 1 on a
 // successful write, 0 on failure (so the caller won't set a lying star). add returns 1 if the
-// item is already present. removeFavouriteByIdAndText matches mode (BDM-lenient) + id + text.
-int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *text);
-int removeFavouriteByIdAndText(int mode, int id, const char *text);
+// item is already present. removeFavouriteByIdAndText matches mode (BDM-lenient) + id + text + isVcd.
+// isVcd = 1 when the favourited item was a PS1/.VCD entry (device was in its L3 VCD view); such
+// favourites resolve + launch as POPSTARTER rather than as a disc image. See favsupport.c.
+int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *text, int isVcd);
+int removeFavouriteByIdAndText(int mode, int id, const char *text, int isVcd);
 
 // Remove the favourite at FAV-list index favIndex (R3 pressed on the Favourites tab).
 void favRemoveByIndex(int favIndex);

@@ -352,6 +352,24 @@ static void mmceRenameGame(item_list_t *itemList, int id, char *newName)
     mmceULSizePrev = -2;
 }
 
+// Launch a PS1/.VCD entry BY NAME via POPSTARTER (view-independent entry point: the in-view menu
+// launch below and the Favourites tab both use it). mmcePrefix is static; UNMOUNT_EXCEPTION keeps the
+// MMCE device mounted across the IOP reset.
+static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_t *configSet)
+{
+    char vcdElf[256], vcdSelector[320];
+
+    if (vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+        return;
+    if (!vcdResolvePopstarter(mmcePrefix, vcdElf, sizeof(vcdElf))) {
+        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        return;
+    }
+    vcdBuildSelector(mmcePrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
+    deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the MMCE device mounted across the IOP reset
+    sysLaunchPopstarter(vcdElf, vcdSelector, "");
+}
+
 void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, index, compatmask = 0;
@@ -370,22 +388,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     else
         game = gAutoLaunchBDMGame;
 
-    // VCD view: hand off to POPSTARTER instead of the disc path below. Menu-launch only; build the
-    // selector + resolve the ELF on stack BEFORE deinit() frees mmceGames. mmcePrefix is static.
+    // VCD view: hand off to POPSTARTER (by name) instead of the disc path below. Menu-launch only.
     if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
-        char vcdName[VCD_NAME_MAX];
-        char vcdElf[256];
-        char vcdSelector[320];
-        snprintf(vcdName, sizeof(vcdName), "%s", game->name);
-        if (vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
-            return;
-        if (!vcdResolvePopstarter(mmcePrefix, vcdElf, sizeof(vcdElf))) {
-            guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
-            return;
-        }
-        vcdBuildSelector(mmcePrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
-        deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the MMCE device mounted across the IOP reset
-        sysLaunchPopstarter(vcdElf, vcdSelector, "");
+        mmceLaunchVcd(itemList, game->name, configSet);
         return;
     }
 
@@ -689,4 +694,4 @@ static char *mmceGetPrefix(item_list_t *itemList)
 static item_list_t mmceGameList = {
     MMCE_MODE, 2, 0, 0, MENU_MIN_INACTIVE_FRAMES, MMCE_MODE_UPDATE_DELAY, NULL, NULL, &mmceGetTextId, &mmceGetPrefix, &mmceInit, &mmceNeedsUpdate,
     &mmceUpdateGameList, &mmceGetGameCount, &mmceGetGame, &mmceGetGameName, &mmceGetGameNameLength, &mmceGetGameStartup, &mmceDeleteGame, &mmceRenameGame,
-    &mmceLaunchGame, &mmceGetConfig, &mmceGetImage, &mmceCleanUp, &mmceShutdown, &mmceCheckVMC, &mmceGetIconId};
+    &mmceLaunchGame, &mmceGetConfig, &mmceGetImage, &mmceCleanUp, &mmceShutdown, &mmceCheckVMC, &mmceGetIconId, &mmceLaunchVcd};

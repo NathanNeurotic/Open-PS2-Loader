@@ -401,12 +401,24 @@ static void itemExecFav(struct menu_item *curMenu)
 
     if (support->mode == FAV_MODE) {
         favRemoveByIndex(it->id);
-    } else if (it->favourited) {
-        if (removeFavouriteByIdAndText(support->mode, it->id, it->text))
-            it->favourited = 0; // only clear the star once the store write succeeded
     } else {
-        if (addFavouriteItem(support->mode, it->id, it->icon_id, it->text_id, it->text))
-            it->favourited = 1; // only show the star once the store write succeeded
+        // A favourite captured while the device page is in its L3 VCD view is a PS1/.VCD favourite;
+        // it resolves + launches as POPSTARTER and lands in the Favourites tab's own VCD view.
+        int isVcd = vcdViewActive(support->mode) ? 1 : 0;
+        // ...but only on a device whose VCD favourites can actually be resolved/launched later
+        // (itemLaunchVcd present). The APA HDD's __.POPS partition model isn't name-resolvable yet, so
+        // storing a VCD favourite there would be permanently hidden + unlaunchable -- make R3 an honest
+        // no-op (no record, no star, no confirm sound) rather than a misleading "saved". Disc favourites
+        // on the same device are unaffected (isVcd == 0 there).
+        if (isVcd && support->itemLaunchVcd == NULL)
+            return;
+        if (it->favourited) {
+            if (removeFavouriteByIdAndText(support->mode, it->id, it->text, isVcd))
+                it->favourited = 0; // only clear the star once the store write succeeded
+        } else {
+            if (addFavouriteItem(support->mode, it->id, it->icon_id, it->text_id, it->text, isVcd))
+                it->favourited = 1; // only show the star once the store write succeeded
+        }
     }
 
     sfxPlay(SFX_CONFIRM);

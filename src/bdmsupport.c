@@ -625,6 +625,26 @@ static void bdmRenameGame(item_list_t *itemList, int id, char *newName)
     pDeviceData->ForceRefresh = 1;
 }
 
+// Launch a PS1/.VCD entry BY NAME via POPSTARTER (the view-independent entry point used by both the
+// in-view menu launch below and the Favourites tab). Every BDM device is a massN: mount at runtime,
+// so the ELF + selector both use the live prefix; UNMOUNT_EXCEPTION keeps it mounted across the reset.
+static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_t *configSet)
+{
+    bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
+    char vcdPrefix[64], vcdElf[256], vcdSelector[320];
+
+    if (pDeviceData == NULL || vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+        return;
+    snprintf(vcdPrefix, sizeof(vcdPrefix), "%s", pDeviceData->bdmPrefix);
+    if (!vcdResolvePopstarter(vcdPrefix, vcdElf, sizeof(vcdElf))) {
+        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        return;
+    }
+    vcdBuildSelector(vcdPrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
+    deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the VCD device mounted across the IOP reset
+    sysLaunchPopstarter(vcdElf, vcdSelector, "");
+}
+
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, fd, iop_fd, index, compatmask = 0;
@@ -648,33 +668,12 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         game = gAutoLaunchBDMGame;
     }
 
-    // VCD view: this device is showing PS1 VCDs -> hand off to POPSTARTER instead of the disc /
-    // Neutrino path below (which is entirely disc-specific). Menu-launch only; build the selector
-    // + resolve the ELF on stack BEFORE deinit() frees the game list.
+    // VCD view: this device is showing PS1 VCDs -> hand off to POPSTARTER (by name) instead of the
+    // disc / Neutrino path below (which is entirely disc-specific). The BDM_TYPE_ATA internal exFAT HDD
+    // still launches off the live massN: prefix, NOT ata0:/ (OPL never mounts an ata0: filesystem -- a
+    // re-point there made LoadELFFromFile fail into an already-deinit'd OPL = black-screen freeze).
     if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
-        char vcdName[VCD_NAME_MAX];
-        char vcdPrefix[64];
-        char vcdElf[256];
-        char vcdSelector[320];
-        snprintf(vcdName, sizeof(vcdName), "%s", game->name);
-        snprintf(vcdPrefix, sizeof(vcdPrefix), "%s", pDeviceData->bdmPrefix);
-        if (vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
-            return;
-        if (!vcdResolvePopstarter(vcdPrefix, vcdElf, sizeof(vcdElf))) {
-            guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
-            return;
-        }
-        // Every BDM device -- USB, MX4SIO, and the internal exFAT HDD (BDM_TYPE_ATA) -- is a massN: mount
-        // at OPL runtime, so the ELF and selector BOTH use that one live prefix. OPL opens vcdElf HERE,
-        // BEFORE the IOP reset, from the live massN: mount (kept alive by UNMOUNT_EXCEPTION); OPL never
-        // mounts an ata0: filesystem (it only builds mass%d: paths), so the earlier BDM_TYPE_ATA re-point
-        // to "ata0:/POPS/POPSTARTER.ELF" made LoadELFFromFile fail and return into an already-deinit'd OPL
-        // with no re-init path = black-screen freeze. POPSTARTER only needs the VCD NAME from the selector
-        // to know what to boot; the equipped BDMA modules steer it to the exFAT device after the reset, so
-        // the selector's device prefix is irrelevant -- keep the live massN: one, same as USB/MX4SIO.
-        vcdBuildSelector(vcdPrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
-        deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the VCD device mounted across the IOP reset
-        sysLaunchPopstarter(vcdElf, vcdSelector, "");
+        bdmLaunchVcd(itemList, game->name, configSet);
         return;
     }
 
@@ -1109,7 +1108,7 @@ static char *bdmGetPrefix(item_list_t *itemList)
 static item_list_t bdmGameList = {
     BDM_MODE, 2, 0, 0, MENU_MIN_INACTIVE_FRAMES, BDM_MODE_UPDATE_DELAY, NULL, NULL, &bdmGetTextId, &bdmGetPrefix, &bdmInit, &bdmNeedsUpdate,
     &bdmUpdateGameList, &bdmGetGameCount, &bdmGetGame, &bdmGetGameName, &bdmGetGameNameLength, &bdmGetGameStartup, &bdmDeleteGame, &bdmRenameGame,
-    &bdmLaunchGame, &bdmGetConfig, &bdmGetImage, &bdmCleanUp, &bdmShutdown, &bdmCheckVMC, &bdmGetIconId};
+    &bdmLaunchGame, &bdmGetConfig, &bdmGetImage, &bdmCleanUp, &bdmShutdown, &bdmCheckVMC, &bdmGetIconId, &bdmLaunchVcd};
 
 void bdmInitSemaphore()
 {
