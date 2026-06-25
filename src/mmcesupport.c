@@ -595,7 +595,12 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     LOG("name: %s\n", game->name);
     LOG("start: %s\n", game->startup);
 
-    mmceSendGameID(game->startup, NULL); // native MMCE launch (the Neutrino-on-MMCE path returned earlier)
+    // Issue #50: do NOT push a launcher GameID on the NATIVE MMCE launch. For a game ON the MMCE, the
+    // in-game card is handled by OPL's mcemu (the VMC fds above), so a SET_GAMEID here is at best
+    // redundant -- and it re-switches the physical card mid-launch, so a game that probes the memory
+    // card early boots before the re-mount finishes and FREEZES (regressed beta 2257 -> 2813; reported by
+    // ramonesfm, SCPH-30001 + PSxMemCard Gen2). The cross-device paths (bdm/hdd/eth) STILL send it,
+    // because there the MMCE can't see the boot device's id and must be told which per-game folder to use.
 
     // mcReset();
     // mcInit(MC_TYPE_XMC);
