@@ -406,10 +406,11 @@ static void itemExecFav(struct menu_item *curMenu)
         // it resolves + launches as POPSTARTER and lands in the Favourites tab's own VCD view.
         int isVcd = vcdViewActive(support->mode) ? 1 : 0;
         // ...but only on a device whose VCD favourites can actually be resolved/launched later
-        // (itemLaunchVcd present). The APA HDD's __.POPS partition model isn't name-resolvable yet, so
-        // storing a VCD favourite there would be permanently hidden + unlaunchable -- make R3 an honest
-        // no-op (no record, no star, no confirm sound) rather than a misleading "saved". Disc favourites
-        // on the same device are unaffected (isVcd == 0 there).
+        // (itemLaunchVcd present). Storing a VCD favourite on a device without it would leave a
+        // permanently-hidden, unlaunchable record, so make R3 an honest no-op (no record, no star, no
+        // confirm sound) rather than a misleading "saved". Every VCD-capable device (BDM/ETH/MMCE/HDD)
+        // implements itemLaunchVcd today -- this is a future-proof backstop. Disc favourites are
+        // unaffected (isVcd == 0 there).
         if (isVcd && support->itemLaunchVcd == NULL)
             return;
         if (it->favourited) {

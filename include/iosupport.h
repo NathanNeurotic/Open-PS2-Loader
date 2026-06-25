@@ -156,10 +156,9 @@ typedef struct _item_list_t
     int (*itemIconId)(item_list_t *itemList);
 
     /// Launch a PS1/.VCD entry BY NAME via POPSTARTER, independent of the device's current ISO/VCD
-    /// view. NULL for devices without a VCD view (and for the APA HDD, whose __.POPS partition model
-    /// is not name-resolvable here). Used by the Favourites tab to launch a VCD favourite while its
-    /// source device page may be in ISO view -- the id-based itemLaunch's VCD branch is gated on the
-    /// device being live in VCD view, which the Favourites tab cannot guarantee.
+    /// view. NULL for devices without a VCD view. Used by the Favourites tab to launch a VCD favourite
+    /// while its source device page may be in ISO view -- the id-based itemLaunch's VCD branch is gated
+    /// on the device being live in VCD view, which the Favourites tab cannot guarantee.
     void (*itemLaunchVcd)(item_list_t *itemList, const char *vcdName, config_set_t *configSet);
 } item_list_t;
 

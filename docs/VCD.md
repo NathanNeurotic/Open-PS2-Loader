@@ -44,10 +44,10 @@ A VCD favourite launches through POPSTARTER straight from the Favourites tab —
 source device page is currently showing its disc list — and carries its PS1 cover art and
 disc badge with it.
 
-This works for VCDs on **USB, MX4SIO, the internal exFAT HDD, SMB, and MMCE**. PS1 favourites
-for games on an **APA-formatted internal HDD** aren't supported yet (R3 there does nothing on a
-VCD), since that layout keeps each PS1 game on its own `__.POPS` partition; the common internal
-exFAT HDD is covered.
+This works on **every device with a VCD view** — USB, MX4SIO, the internal exFAT HDD, SMB, MMCE,
+and the **APA-formatted internal HDD**. (On the APA HDD each PS1 game lives on its own `__.POPS`
+partition, so opening one of its VCD favourites re-scans those partitions to find the game — the
+first launch may take a moment.)
 
 ## 3. How PS1 games launch (POPSTARTER only)
 

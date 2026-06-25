@@ -344,9 +344,8 @@ static item_list_t *favResolve(int mode, int id, const char *text, int isVcd, in
     // ISO view right now (its submenu/games array holds discs, not VCDs), yet we must still surface +
     // launch the PS1 favourite. So we only need a loaded device that can launch a VCD (itemLaunchVcd
     // != NULL); art/config/launch all key off the stored name + the device's prefix (itemGetPrefix).
-    // A device whose VCD list lives off the browse prefix and provides no itemLaunchVcd (APA HDD __.POPS
-    // partitions) is intentionally skipped here -- the common internal exFAT HDD is a BDM massN: device
-    // and is covered through the BDM branch.
+    // A device that provides no itemLaunchVcd is skipped here -- a future-proof backstop, since every
+    // VCD-capable device (BDM/ETH/MMCE/HDD) implements it today.
     if (isVcd) {
         if (mode >= BDM_MODE && mode <= BDM_MODE_LAST) {
             // Prefer the stored slot; else the first loaded BDM slot (a stick can change slots).

@@ -9,6 +9,7 @@
 #include "include/themes.h"
 #include "include/textures.h"
 #include "include/ioman.h"
+#include "include/texcache.h" // cache quiesce before the launch-path VCD partition rescan (freeze guard)
 #include "include/system.h"
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
@@ -532,6 +533,68 @@ static void hddRenameGame(item_list_t *itemList, int id, char *newName)
     hddForceUpdate = 1;
 }
 
+// Index of the VCD whose basename matches vcdName in the current hddVcdGames list, or -1.
+static int hddFindVcdByName(const char *vcdName)
+{
+    for (int i = 0; i < hddVcdGameCount; i++) {
+        if (strcmp(hddVcdGames[i].name, vcdName) == 0)
+            return i;
+    }
+    return -1;
+}
+
+// Shared POPSTARTER handoff for an HDD VCD. POPSTARTER's argv[0] is just the VCD name; the owning
+// __.POPS* partition (`part`) is passed OUT OF BAND so POPSTARTER self-mounts it after the IOP reset.
+// Everything is built on stack BEFORE deinit() frees the VCD list. Used by both the in-view menu launch
+// and the Favourites tab (hddLaunchVcd).
+static void hddDoLaunchVcd(item_list_t *itemList, const char *vcdName, const char *part)
+{
+    char vcdElf[256], vcdSelector[320], vcdPart[64];
+
+    if (vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+        return;
+    if (!vcdResolvePopstarter(gHDDPrefix, vcdElf, sizeof(vcdElf))) {
+        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        return;
+    }
+    snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", vcdName); // POPSTARTER's argv[0] = the name
+    snprintf(vcdPart, sizeof(vcdPart), "hdd0:%s:", part);          // self-mount target, hdd0:PART:
+    deinit(UNMOUNT_EXCEPTION, itemList->mode);
+    sysLaunchPopstarter(vcdElf, vcdSelector, vcdPart);
+}
+
+// Launch an HDD PS1/.VCD entry BY NAME -- the Favourites tab's view-independent entry point. The
+// per-game __.POPS* partition lives in hddVcdParts, which is only populated while the HDD page is in
+// its VCD view; from Favourites it may be empty/stale, so (re)scan via the SAME safe partition walk the
+// VCD view uses (hddBuildVcdGameList mounts each __.POPS on pfs0:, scans, restores pfs0: to the default
+// OPL partition) to resolve name -> partition, then hand off exactly as the in-view launch does.
+static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_t *configSet)
+{
+    if (vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+        return;
+
+    int idx = hddFindVcdByName(vcdName);
+    if (idx < 0) {
+        // Cold path: the per-game __.POPS partition is unknown (hddVcdGames is only built while the HDD
+        // page is in VCD view). hddBuildVcdGameList remounts the single ps2fs slot (pfs0:), and
+        // umounting it while the cache worker holds an open fd reading a cover from pfs0: is the
+        // documented HDD-freeze hazard. The equivalent in-view rescan runs on the IO thread only when no
+        // art/IO is pending (opl.c menuUpdateHook); on the launch path we enforce the same invariant by
+        // quiescing the art + IO workers first, exactly as deinit() does before its own teardown IO.
+        cacheAbortMmceImageLoadsTimed(0);
+        (void)cacheCancelPendingImageLoadsTimed(0);
+        ioBlockOps(1);
+        hddBuildVcdGameList(); // restores pfs0: to the default OPL partition when done
+        ioBlockOps(0);
+        idx = hddFindVcdByName(vcdName);
+    }
+    if (idx < 0) {
+        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        return;
+    }
+    hddDoLaunchVcd(itemList, hddVcdGames[idx].name, hddVcdParts[idx]);
+}
+
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, size_irx = 0;
@@ -549,18 +612,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // selector/partition contract is hardware-testable -- POPSLoader proved the shape with a vendored
     // loader; we use the stock ps2sdk loader, the same one the shipping USB/MMCE/SMB VCD launch uses.
     if (gAutoLaunchGame == NULL && vcdViewActive(itemList->mode)) {
-        char vcdName[VCD_NAME_MAX], vcdElf[256], vcdSelector[320], vcdPart[64];
-        snprintf(vcdName, sizeof(vcdName), "%s", hddVcdGames[id].name);
-        if (vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
-            return;
-        if (!vcdResolvePopstarter(gHDDPrefix, vcdElf, sizeof(vcdElf))) {
-            guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
-            return;
-        }
-        snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", vcdName);   // POPSTARTER's argv[0] = the name
-        snprintf(vcdPart, sizeof(vcdPart), "hdd0:%s:", hddVcdParts[id]); // self-mount target, hdd0:PART:
-        deinit(UNMOUNT_EXCEPTION, itemList->mode);
-        sysLaunchPopstarter(vcdElf, vcdSelector, vcdPart);
+        hddDoLaunchVcd(itemList, hddVcdGames[id].name, hddVcdParts[id]);
         return;
     }
 
@@ -1029,4 +1081,4 @@ static char *hddGetPrefix(item_list_t *itemList)
 static item_list_t hddGameList = {
     HDD_MODE, 0, 0, MODE_FLAG_COMPAT_DMA, MENU_MIN_INACTIVE_FRAMES, HDD_MODE_UPDATE_DELAY, NULL, NULL, &hddGetTextId, &hddGetPrefix, &hddInit, &hddNeedsUpdate, &hddUpdateGameList,
     &hddGetGameCount, &hddGetGame, &hddGetGameName, &hddGetGameNameLength, &hddGetGameStartup, &hddDeleteGame, &hddRenameGame,
-    &hddLaunchGame, &hddGetConfig, &hddGetImage, &hddCleanUp, &hddShutdown, &hddCheckVMC, &hddGetIconId};
+    &hddLaunchGame, &hddGetConfig, &hddGetImage, &hddCleanUp, &hddShutdown, &hddCheckVMC, &hddGetIconId, &hddLaunchVcd};
