@@ -593,6 +593,10 @@ static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char
             char *prefix = (o->itemGetPrefix != NULL) ? o->itemGetPrefix(o) : NULL;
             if (prefix == NULL)
                 return -1;
+            // HDD VCD covers live at the APA partition ROOT /ART/ (mirroring the HDD VCD view), not the
+            // OPL data subfolder its itemGetPrefix points at -- key off the partition root instead.
+            if (favArray[i].mode == HDD_MODE)
+                prefix = "pfs0:/";
             int pl = (int)strlen(prefix);
             char sep = (pl > 0 && prefix[pl - 1] == '\\') ? '\\' : '/';
             return vcdLoadArt(prefix, sep, folder, value, suffix, "POPS", resultTex);

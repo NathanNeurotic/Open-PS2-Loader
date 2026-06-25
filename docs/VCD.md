@@ -79,6 +79,10 @@ cover art and per-game config off that PS1 ID, so PS1 covers load from your `ART
 exactly like PS2 covers. Any other `*.VCD` name is still listed and launched — it just
 won't auto-match art by ID.
 
+> **Internal HDD covers:** VCD covers on the APA HDD load from an **`ART`** folder at the
+> **partition root** (`pfs:/ART/` — i.e. `<your OPL partition>:/ART/`), not the `OPL/ART/`
+> subfolder PS2-HDD covers use. (`PP.*` installs key off the displayed name, e.g. `GAME_COV.png`.)
+
 ## 5. exFAT PS1 support — the BDMA equip
 
 POPSTARTER's stock driver reads FAT32. To boot PS1 games from an **exFAT** drive,
