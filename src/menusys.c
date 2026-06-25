@@ -99,14 +99,13 @@ static int menuCanRequestItemConfig(item_list_t *list)
     if (list != NULL && list->mode == APP_MODE)
         return guiInactiveFrames >= MENU_APP_CONFIG_IDLE_FRAMES;
 
-    // MMCE keeps the per-item config chained behind the cover: its art defers on input and the
-    // cross-device game-id push (#261) switches the physical card, so loading config mid-scroll
-    // would thrash the card. Keep both the pending-art gate and the 20-frame idle gate there.
-    if (list != NULL && list->mode == MMCE_MODE) {
-        if (cacheHasPendingInteractiveArt())
-            return 0;
+    // MMCE keeps its longer 20-frame settle (slow card art that already defers while navigating), but
+    // its per-item config no longer waits for the whole interactive-art set to drain either: the
+    // #261 cross-device game-id push is exit/launch-only (mmceSendGameID is called only from the
+    // bdm/eth/hdd launch paths), so a browse-time config load carries only the cheap metadata badge
+    // values and never switches the card.
+    if (list != NULL && list->mode == MMCE_MODE)
         return guiInactiveFrames >= MENU_MMCE_CONFIG_IDLE_FRAMES;
-    }
 
     // BDM / ETH / HDD / FAV: the per-item config carries only the cheap, metadata-derived
     // #DiscType/#System/#Media badge values -- it must NOT wait for the whole interactive-art set
