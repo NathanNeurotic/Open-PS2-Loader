@@ -20,6 +20,19 @@ antivirus false-positives, and works the same on Windows, Linux and macOS.
 
 ## Quickstart
 
+### Windows — easiest, no terminal
+
+Double-click **`Start-SMB-Server.bat`**. To tell it where your games are, either:
+
+- **drag your PS2 games folder onto the `.bat`**, or
+- open the `.bat` in Notepad and set `GAMES=` to your games folder, or
+- just run it and type the folder path when it asks.
+
+It checks for Python (and points you to the download if it's missing), then starts the
+server and shows your PC's IP and port. Leave the window open while you play.
+
+### Any OS — terminal
+
 ```sh
 python smbserver_opl.py --share games=D:/PS2Games
 ```

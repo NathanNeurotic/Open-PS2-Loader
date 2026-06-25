@@ -1,6 +1,11 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
+# Windows batch launchers must check out (and ship in the release zip) with CRLF so
+# cmd.exe parses labels / goto / if-blocks reliably. eol=crlf forces CRLF on checkout
+# on every platform, including the Linux CI that builds the release package.
+*.bat text eol=crlf
+
 # Custom for Visual Studio
 *.cs   diff=csharp
 

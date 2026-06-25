@@ -300,7 +300,7 @@ jobs:
           # source file must not break the rest of the package.
           if [ -f pc/smbserver/smbserver_opl.py ]; then
             mkdir -p "$PKG/PC-SMB-Server"
-            cp -f pc/smbserver/smbserver_opl.py pc/smbserver/README.md pc/smbserver/build_exe.ps1 "$PKG/PC-SMB-Server/"
+            cp -f pc/smbserver/smbserver_opl.py pc/smbserver/README.md pc/smbserver/build_exe.ps1 pc/smbserver/Start-SMB-Server.bat "$PKG/PC-SMB-Server/"
           else
             echo "WARN: pc/smbserver not found; package omits the PC SMB server this run" >&2
           fi
