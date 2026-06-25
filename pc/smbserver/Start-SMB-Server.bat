@@ -10,8 +10,9 @@ REM  EASIEST: drag your PS2 games folder onto this .bat file.
 REM  OR: set GAMES below to your games folder, then just double-click.
 REM  OR: leave it -- the launcher will ask you for the folder.
 REM
+REM  The share is WRITABLE by default (OPL needs it for per-game settings + VMC saves).
 REM  Advanced (edit the launch line near the bottom if you want these):
-REM    --writable     allow saves (VMC-on-SMB); default is read-only
+REM    --read-only    serve read-only (no saves / no VMC writes)
 REM    --take-445     use the standard port 445 (admin; pauses Windows file sharing)
 REM    add a 2nd share:  --share apps="E:\PS2Apps"
 REM ============================================================================

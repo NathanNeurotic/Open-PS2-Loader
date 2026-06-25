@@ -79,7 +79,7 @@ def parse(msg):
     return cmd, status, tid, uid, wc, params, data, bc
 
 
-def run(port, share, isofile, isodata):
+def run(port, share, isofile, isodata, tmpdir):
     s = socket.create_connection(("127.0.0.1", port), timeout=5)
 
     # --- NEGOTIATE ---
@@ -267,6 +267,25 @@ def run(port, share, isofile, isodata):
     check("QUERY_PATH standard-info success", st == 0, hex(st))
     check("QUERY_PATH standard EOF == filesize", len(td) >= 16 and struct.unpack_from("<Q", td, 8)[0] == len(isodata))
 
+    # --- WRITE_ANDX (writable by default; OPL config + VMC-on-SMB saves) ---
+    op = struct.pack("<BBHHHHHHHI", 0xFF, 0, 0, 0, 0, 1, 0, 0, 0, 0)
+    nbss_send(s, hdr(0x2D, tid=sess_tid, uid=sess_uid) + body(op, b"game.cfg\x00"))
+    cmd, status, tid, uid, wc, params, data, bc = parse(nbss_recv(s))
+    wfid = struct.unpack_from("<H", params, 4)[0]
+    payload = b"OPLWRITE_OK!"
+    data_off = 32 + 1 + 28 + 2  # payload immediately after ByteCount in a 14-word WRITE_ANDX request
+    wp = struct.pack("<BBHHIIHHHHHI", 0xFF, 0, 0, wfid, 0, 0, 0, 0, len(payload) >> 16, len(payload) & 0xFFFF, data_off, 0)
+    nbss_send(s, hdr(0x2F, tid=sess_tid, uid=sess_uid) + bytes([14]) + wp + struct.pack("<H", len(payload)) + payload)
+    cmd, status, tid, uid, wc, params, data, bc = parse(nbss_recv(s))
+    check("WRITE_ANDX status success (writable default)", status == 0, hex(status))
+    wcount = struct.unpack_from("<H", params, 4)[0] if len(params) >= 6 else 0
+    check("WRITE_ANDX reports bytes written", wcount == len(payload), str(wcount))
+    nbss_send(s, hdr(0x04, tid=sess_tid, uid=sess_uid) + body(struct.pack("<HI", wfid, 0), b""))
+    parse(nbss_recv(s))
+    with open(os.path.join(tmpdir, "game.cfg"), "rb") as f:
+        disk = f.read()
+    check("WRITE_ANDX bytes actually hit disk", disk[:len(payload)] == payload, repr(disk[:16]))
+
     s.close()
 
 
@@ -304,7 +323,7 @@ def main():
         except OSError:
             time.sleep(0.1)
     try:
-        run(port, "games", isofile, isodata)
+        run(port, "games", isofile, isodata, tmp)
     finally:
         proc.terminate()
         try:

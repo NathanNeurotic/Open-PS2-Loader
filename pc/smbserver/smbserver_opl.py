@@ -837,8 +837,8 @@ def main(argv=None):
     ap.add_argument("--port", type=int, default=1445,
                     help="TCP port (default 1445; set OPL's SMB Port to match)")
     ap.add_argument("--bind", default="0.0.0.0", help="bind address (default all interfaces)")
-    ap.add_argument("--writable", action="store_true",
-                    help="allow writes (VMC-on-SMB); default is read-only")
+    ap.add_argument("--read-only", action="store_true",
+                    help="serve the share read-only (no saves / no VMC writes); default is writable")
     ap.add_argument("--take-445", action="store_true",
                     help="bind the standard port 445 by pausing Windows LanmanServer (admin; reversible)")
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -856,7 +856,7 @@ def main(argv=None):
     if not shares:
         ap.error("at least one --share NAME=PATH is required")
 
-    server = SmbServer(shares, read_only=not args.writable)
+    server = SmbServer(shares, read_only=args.read_only)
 
     restore = None
     port = args.port
@@ -889,9 +889,11 @@ def main(argv=None):
     print(" In OPL  ->  SMB Server IP: %s   Port: %d   user/pass: blank (guest)" % (ip, bound))
     for name in shares:
         print("            Share: %s   ->   %s%s" % (name, shares[name].root,
-              "" if server.read_only else "   (writable)"))
+              "   (read-only)" if server.read_only else "   (writable)"))
     if server.read_only:
-        print(" (read-only; pass --writable for VMC-on-SMB)")
+        print(" (read-only -- OPL cannot save per-game settings or VMCs to this share)")
+    else:
+        print(" (writable -- OPL can save settings + VMC-on-SMB here; pass --read-only to lock it)")
     print("=" * 64)
 
     try:

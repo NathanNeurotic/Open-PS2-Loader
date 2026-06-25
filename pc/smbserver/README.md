@@ -42,8 +42,8 @@ It prints something like:
 ```
  RiptOPL SMBv1 server -- listening on 0.0.0.0:1445
  In OPL  ->  SMB Server IP: 192.168.1.50   Port: 1445   user/pass: blank (guest)
-            Share: games   ->   D:\PS2Games
- (read-only; pass --writable for VMC-on-SMB)
+            Share: games   ->   D:\PS2Games   (writable)
+ (writable -- OPL can save settings + VMC-on-SMB here; pass --read-only to lock it)
 ```
 
 Then in OPL → **Settings → Network**:
@@ -65,17 +65,18 @@ Save, and your network games should populate from the share.
 --port N            TCP port (default 1445). If it's taken, the server walks forward
                     and prints the real one — just match OPL's Port field to it.
 --bind ADDR         interface to bind (default 0.0.0.0 = all)
---writable          allow writes (needed only for VMC-on-SMB); default is read-only
+--read-only         serve the share read-only (no saves / no VMC writes); default is writable
 --take-445          bind the *standard* port 445 instead, by pausing Windows' LanmanServer
                     (admin; reversible — see below)
 -v                  verbose protocol logging
 ```
 
-### Read-only by default
+### Writable by default
 
-The server is **read-only** unless you pass `--writable`, so it's safe to point straight at a
-games folder. Only enable `--writable` if you use OPL's **VMC-on-SMB** memory-card feature and
-want saves written back to the share.
+The share is **writable** so OPL can do what it normally does over SMB — save per-game settings
+and write **VMC-on-SMB** memory cards back to the folder. It's a guest share on your LAN, so only
+point it at a folder you're comfortable letting the PS2 write to. Pass **`--read-only`** if you
+want a strictly read-only share (browsing + booting games only, no saves).
 
 ### `--take-445` (no OPL change needed, but invasive)
 
