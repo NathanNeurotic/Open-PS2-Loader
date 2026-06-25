@@ -45,9 +45,9 @@ source device page is currently showing its disc list — and carries its PS1 co
 disc badge with it.
 
 This works on **every device with a VCD view** — USB, MX4SIO, the internal exFAT HDD, SMB, MMCE,
-and the **APA-formatted internal HDD**. (On the APA HDD each PS1 game lives on its own `__.POPS`
-partition, so opening one of its VCD favourites re-scans those partitions to find the game — the
-first launch may take a moment.)
+and the **APA-formatted internal HDD**. (On the APA HDD the PS1 games are spread across multiple
+APA partitions, so opening one of its VCD favourites re-scans those partitions to find the game —
+the first launch may take a moment.)
 
 ## 3. How PS1 games launch (POPSTARTER only)
 
@@ -68,7 +68,11 @@ path, set `popstarter_path` in `settings_riptopl.cfg` directly.)
 | Device | Location |
 | --- | --- |
 | USB / MMCE / MX4SIO / iLink / SMB | a **`POPS`** folder at the device root, holding `POPSTARTER.ELF` + your `*.VCD` files |
-| Internal HDD (APA/PFS) | the dedicated **`__.POPS`, `__.POPS0` … `__.POPS9`** APA partitions (each holds its `*.VCD` at the partition root) |
+| Internal HDD (APA/PFS) | two layouts, both listed: a **`__.POPS`, `__.POPS0` … `__.POPS9`** store partition (many `*.VCD` on its root, named per file), and/or **`PP.<name>`** single-game install partitions (one `IMAGE0.VCD` each; shown as `<name>`). `POPSTARTER.ELF` is loaded from a **`POPS`** folder on the **`__common`** partition (then **`+OPL`** as a fallback). |
+
+> The HDD's `XX.*` (BDMA/exFAT) and `SB.*` (SMBv1) launcher partitions point at VCDs that live on
+> an exFAT device or an SMB share — those games appear under the **USB/MX4SIO/MMCE** or **SMB** VCD
+> views, not the internal-HDD one.
 
 If a VCD's filename matches the PS1 disc-ID pattern `SXXX_NNN.NN.Title.VCD`, RiptOPL keys
 cover art and per-game config off that PS1 ID, so PS1 covers load from your `ART` folder
