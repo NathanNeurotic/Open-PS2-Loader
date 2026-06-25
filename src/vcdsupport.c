@@ -573,6 +573,29 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     return (mr != 0) ? mr : 0;
 }
 
+// Auto-equip the device-matching BDMA driver on the VCD launch path (POPSLoader's ApplyBdmaMode parity).
+// POPSTARTER does its OWN SifIopReset, then reloads its block-device drivers from the FIXED memory-card
+// files mc?:/POPSTARTER/usbd.irx + usbhdfsd.irx -- RiptOPL's live mx4sio_bd/ata_bd modules die at that
+// reset. For an exFAT game those two files MUST be the device-matching BDMAssault variant or POPSTARTER
+// can't mount the drive and drops to OSDSYS (the reported MX4SIO failure). `source`/`mode` are the game
+// device's BDMA family. Idempotent: skips the copy when the matching variant is already equipped. If the
+// device has no exFAT variant (FAT32, or none provided) the equip fails -> fall back to FAT32 so POPSTARTER
+// uses its built-in driver instead of a stale/mismatched exFAT pair. Best-effort -- never blocks the launch.
+void vcdEnsureBdmaForLaunch(int source, int mode)
+{
+    char diag[160];
+
+    if (mode <= VCD_BDMA_FAT32 || mode >= VCD_BDMA_MODE_COUNT)
+        return; // FAT32 / invalid -> POPSTARTER's built-in driver, nothing to equip
+    if (vcdReadBdmaMode() == mode)
+        return; // the matching variant is already on the card
+
+    if (vcdEquipBdma(source, mode, diag, sizeof(diag)) != 0) {
+        if (vcdReadBdmaMode() != VCD_BDMA_FAT32)
+            vcdEquipBdma(source, VCD_BDMA_FAT32, diag, sizeof(diag)); // no variant -> clean FAT32 state
+    }
+}
+
 // ---- SMB requirements guard ---------------------------------------------------------
 // Launching a VCD over SMB needs POPSTARTER's network IRX in mc?:/POPSTARTER/. We don't install
 // these from the ELF (they ship in the release POPSTARTER/ folder for the user to copy), so before

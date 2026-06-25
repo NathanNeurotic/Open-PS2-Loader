@@ -366,6 +366,9 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
         return;
     }
     vcdBuildSelector(mmcePrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
+    // POPSTARTER reloads its driver from the MC after its own IOP reset -> ensure the .mmce BDMAssault
+    // variant is equipped first, or it can't mount the MMCE drive (-> OSDSYS).
+    vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_MMCE, VCD_BDMA_MMCE);
     deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the MMCE device mounted across the IOP reset
     sysLaunchPopstarter(vcdElf, vcdSelector, "");
 }

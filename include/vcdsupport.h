@@ -105,6 +105,10 @@ enum {
 int vcdEquipBdma(int source, int mode, char *diag, int diagSize);
 // Read the equipped variant from mc?:/POPSTARTER/bdma_config.txt (VCD_BDMA_FAT32 if absent).
 int vcdReadBdmaMode(void);
+// Auto-equip the BDMA variant matching the game's device (source/mode) on the VCD launch path, so the
+// driver POPSTARTER reloads from the MC after its own IOP reset can mount the drive (else OSDSYS). No-op
+// when already equipped; falls back to FAT32 when the device has no variant. Best-effort. See vcdsupport.c.
+void vcdEnsureBdmaForLaunch(int source, int mode);
 
 // Are POPSTARTER's SMB network modules (smbman/ps2ip/ps2smap/ps2dev9) present on a card? 1 = yes.
 // Gate SMB/ETH VCD launches on this -- we don't install these from the ELF.

@@ -668,7 +668,30 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
         guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
         return;
     }
-    vcdBuildSelector(vcdPrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
+    // POPSTARTER re-mounts MX4SIO under its OWN "mx4sio:" namespace after its reset (POPSLoader parity,
+    // system.lua:5597) -- the live mass<N>: slot won't resolve there. USB / internal-exFAT-HDD keep the
+    // live mass root (POPSTARTER's usbd.irx mounts them as mass:). The ELF itself is still opened from the
+    // live runtime mount above; only the post-reset selector namespace differs.
+    const char *selectorRoot = (pDeviceData->bdmDeviceType == BDM_TYPE_SDC) ? "mx4sio:/" : vcdPrefix;
+    vcdBuildSelector(selectorRoot, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
+
+    // POPSTARTER reloads its block-device driver from the MC after its OWN IOP reset, so equip the
+    // device-matching BDMAssault variant first -- otherwise it can't mount this exFAT drive and drops to
+    // OSDSYS (the reported MX4SIO failure). iLink/UDPBD/unknown have no BDMA variant and are left as-is.
+    switch (pDeviceData->bdmDeviceType) {
+        case BDM_TYPE_USB:
+            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_USBEXFAT);
+            break;
+        case BDM_TYPE_SDC:
+            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_MX4SIO, VCD_BDMA_MX4SIO);
+            break;
+        case BDM_TYPE_ATA:
+            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_HDD, VCD_BDMA_ATA);
+            break;
+        default:
+            break;
+    }
+
     deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the VCD device mounted across the IOP reset
     sysLaunchPopstarter(vcdElf, vcdSelector, "");
 }
