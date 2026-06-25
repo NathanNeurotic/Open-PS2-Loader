@@ -767,8 +767,8 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
         strcpy(filename, game->startup);
     // MMCE cross-device game-id (#261): push the disc id to a present MMCE card before the SMB teardown
     // (self-probes mmce0/mmce1; no-ops if no card / feature off). Read `game` before deinit frees it.
-    mmceSendGameID(game->startup);
-    deinit(NO_EXCEPTION, ETH_MODE); // CAREFUL: deinit will call ethCleanUp, so ethGames/game will be freed
+    mmceSendGameID(game->startup, NULL); // SMB has no Neutrino branch -> nothing to protect
+    deinit(NO_EXCEPTION, ETH_MODE);      // CAREFUL: deinit will call ethCleanUp, so ethGames/game will be freed
 
     settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_DEV9;
     settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_SMAP;

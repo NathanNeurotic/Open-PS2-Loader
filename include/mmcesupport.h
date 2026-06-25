@@ -21,6 +21,9 @@ void mmceLaunchGame(item_list_t *itemList, int fd, config_set_t *configSet);
 // Push the selected game's disc id to a present MMCE card (SD2PSX/MemCard PRO2) for per-game folder
 // switching. Self-probes mmce0:/mmce1: when no MMCE-tab prefix is set, so it works on ALL launch
 // paths (USB/HDD/SMB), not just the MMCE tab. No-ops if the feature is off or no card answers (#261).
-int mmceSendGameID(const char *startup);
+// protectMcPath: on a Neutrino launch, the resolved neutrino.elf path. If it lives on the emulated
+// memory card (mcN:) of the slot we would switch, the switch is skipped so it can't yank the loader
+// out from under sysLaunchNeutrino (NHDDL parity, issue #51). Pass NULL when nothing needs protecting.
+int mmceSendGameID(const char *startup, const char *protectMcPath);
 
 #endif

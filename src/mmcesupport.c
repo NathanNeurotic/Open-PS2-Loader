@@ -41,7 +41,7 @@ static base_game_info_t *mmceGames;
 static item_list_t mmceGameList;
 static void mmceGetDeviceRoot(char *root, size_t size);
 
-int mmceSendGameID(const char *startup)
+int mmceSendGameID(const char *startup, const char *protectMcPath)
 {
     char mmceDevice[sizeof(mmcePrefix)];
 
@@ -67,6 +67,20 @@ int mmceSendGameID(const char *startup)
             snprintf(mmceDevice, sizeof(mmceDevice), "mmce1:/");
         else
             return 0; // no MMCE card present -> graceful no-op
+    }
+
+    // NHDDL-parity guard (#51): never switch the per-game card on a slot whose EMULATED memory card
+    // (mcN:) holds the neutrino.elf we are about to load -- the 0x8 switch moves the mcN: surface and
+    // would yank the loader out from under sysLaunchNeutrino. A neutrino.elf on the MMCE's SD (mmceN:)
+    // is NOT affected by the card switch, so only the mcN: case is guarded.
+    if (protectMcPath != NULL && protectMcPath[0] != '\0') {
+        const char *mc = NULL;
+        if (!strncmp(mmceDevice, "mmce0", 5))
+            mc = "mc0:";
+        else if (!strncmp(mmceDevice, "mmce1", 5))
+            mc = "mc1:";
+        if (mc != NULL && !strncmp(protectMcPath, mc, strlen(mc)))
+            return 0; // neutrino.elf is on this slot's emulated card -- leave the card alone
     }
 
     if (fileXioDevctl(mmceDevice, 0x8, (void *)startup, (strlen(startup) + 1), NULL, 0) < 0)
@@ -581,7 +595,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     LOG("name: %s\n", game->name);
     LOG("start: %s\n", game->startup);
 
-    mmceSendGameID(game->startup);
+    mmceSendGameID(game->startup, NULL); // native MMCE launch (the Neutrino-on-MMCE path returned earlier)
 
     // mcReset();
     // mcInit(MC_TYPE_XMC);
