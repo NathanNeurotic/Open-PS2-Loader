@@ -99,12 +99,22 @@ static int menuCanRequestItemConfig(item_list_t *list)
     if (list != NULL && list->mode == APP_MODE)
         return guiInactiveFrames >= MENU_APP_CONFIG_IDLE_FRAMES;
 
-    if (cacheHasPendingInteractiveArt())
-        return 0;
-
-    if (list != NULL && list->mode == MMCE_MODE)
+    // MMCE keeps the per-item config chained behind the cover: its art defers on input and the
+    // cross-device game-id push (#261) switches the physical card, so loading config mid-scroll
+    // would thrash the card. Keep both the pending-art gate and the 20-frame idle gate there.
+    if (list != NULL && list->mode == MMCE_MODE) {
+        if (cacheHasPendingInteractiveArt())
+            return 0;
         return guiInactiveFrames >= MENU_MMCE_CONFIG_IDLE_FRAMES;
+    }
 
+    // BDM / ETH / HDD / FAV: the per-item config carries only the cheap, metadata-derived
+    // #DiscType/#System/#Media badge values -- it must NOT wait for the whole interactive-art set
+    // (cover + background + overlays) to finish draining. On a cold page the cover shows in ~0.2s
+    // but the rest of that set takes seconds to drain, and cacheHasPendingInteractiveArt() stays
+    // true the whole time -- which used to stall the disc badge for ~5s on a slow single step while
+    // a rapid scroll (prefetch-warmed art) stayed instant (issue #49). The guiInactiveFrames idle
+    // throttle in _menuRequestConfig still serializes the load off the scroll path (no thrash).
     return 1;
 }
 
