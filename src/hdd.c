@@ -280,11 +280,11 @@ static int hddPopsNameCompare(const void *a, const void *b)
     return strcmp((const char *)a, (const char *)b);
 }
 
-// Enumerate the __.POPS / __.POPS0..9 APA partitions (the HDD PS1/VCD store). Walks the APA partition
-// table with the same fileXioDopen("hdd0:")/fileXioDread primitive as hddGetHDLGamelist, but keeps
-// each distinct MAIN partition whose label starts with "__.POPS" instead of the HDL games. The result
-// is qsort'd by label so __.POPS sorts before __.POPS0..9 deterministically (APA on-disk order is not
-// relied on -- matches POPSLoader's stable partition order).
+// Enumerate the HDD's PS1/VCD APA partitions: the "__.POPS"/"__.POPS0..9" multi-VCD store partitions AND
+// the "PP."* single-game installs (one IMAGE0.VCD per partition). Walks the APA partition table with the
+// same fileXioDopen("hdd0:")/fileXioDread primitive as hddGetHDLGamelist, keeping each distinct MAIN
+// partition with either prefix. The result is qsort'd by label for a deterministic order (APA on-disk
+// order is not relied on). The caller (hddBuildVcdGameList) branches on the label prefix.
 int hddGetPopsPartitionList(hdd_pops_list_t *list)
 {
     iox_dirent_t dirent;
@@ -298,8 +298,11 @@ int hddGetPopsPartitionList(hdd_pops_list_t *list)
         return 0;
 
     while (fileXioDread(fd, &dirent) > 0) {
-        if (strncmp(dirent.name, "__.POPS", 7) != 0)
-            continue; // not a PS1/VCD partition
+        // Two HDD-resident PS1/VCD partition shapes: the "__.POPS"* multi-VCD store, and "PP."* single-game
+        // installs (one IMAGE0.VCD per partition, named by the partition label). XX.* (BDMA) / SB.* (SMBv1)
+        // launchers source their VCD off-HDD and are intentionally excluded here.
+        if (strncmp(dirent.name, "__.POPS", 7) != 0 && strncmp(dirent.name, "PP.", 3) != 0)
+            continue; // not an HDD-resident PS1/VCD partition
         if (dirent.stat.attr & APA_FLAG_SUB)
             continue; // main partition only (skip sub-partitions)
 
