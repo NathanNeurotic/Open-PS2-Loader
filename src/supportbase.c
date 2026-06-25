@@ -980,6 +980,18 @@ void sbSetDiscAttributes(config_set_t *config, int isPS1, int isCD)
     configSetStr(config, CONFIG_ITEM_DISCTYPE, isPS1 ? "PS1CD" : (isCD ? "PS2CD" : "PS2DVD"));
 }
 
+// When 0 (the default, used while scrolling the game list) sbPopulateConfig skips the
+// per-game size stat -- over SMB a fresh stat() of an ISO can cost several seconds, and the
+// main page only needs the metadata-derived badges (#DiscType/#Media/#Format), never #Size.
+// The info screen flips this on via menuRequestInfoSize() so #Size still resolves on demand;
+// game->sizeMB is cached after the first resolve, so later scrolls show the size for free.
+static int sbConfigStatSize = 0;
+
+void sbSetConfigStatSize(int enable)
+{
+    sbConfigStatSize = enable;
+}
+
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep)
 {
     char path[256];
@@ -994,8 +1006,8 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     config_set_t *config = configAlloc(0, NULL, path);
     configRead(config); // Does not matter if the config file could be loaded or not.
 
-    // Get game size if not already set
-    if (game->sizeMB == 0) {
+    // Get game size if not already set (deferred off the scroll path; see sbConfigStatSize).
+    if (sbConfigStatSize && game->sizeMB == 0) {
         char gamepath[256];
 
         if (game->format == GAME_FORMAT_ISO) {

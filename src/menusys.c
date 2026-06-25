@@ -7,6 +7,7 @@
 #include "include/opl.h"
 #include "include/menusys.h"
 #include "include/iosupport.h"
+#include "include/supportbase.h" // sbSetConfigStatSize -- defer the #Size stat off the scroll path
 #include "include/favsupport.h"
 #include "include/bdmsupport.h"
 #include "include/vcdsupport.h" // vcdViewActive -- VCD view renders with the apps element family
@@ -236,6 +237,47 @@ static void _menuLoadConfig()
     SignalSema(menuSemaId);
 }
 
+// Opening the info screen needs #Size, which the scroll-time config load deliberately skips
+// (sbConfigStatSize off -> no slow per-game stat while browsing). Rebuild the current item's
+// config once with the size resolved and swap it in, but only if the selection is unchanged --
+// the user may have scrolled away before this IO request ran. game->sizeMB is cached afterwards,
+// so subsequent scrolls/info views show the size with no further stat.
+static void _menuResolveInfoSize()
+{
+    item_list_t *list = NULL;
+    config_set_t *loadedConfig = NULL;
+    int configId = -1;
+
+    WaitSema(menuSemaId);
+    if (selected_item != NULL && selected_item->item != NULL && selected_item->item->current != NULL && itemConfigId >= 0 && itemConfigId == selected_item->item->current->item.id) {
+        list = selected_item->item->userdata;
+        configId = itemConfigId;
+    }
+    SignalSema(menuSemaId);
+
+    if (list == NULL || configId < 0)
+        return;
+
+    sbSetConfigStatSize(1);
+    loadedConfig = list->itemGetConfig(list, configId);
+    sbSetConfigStatSize(0);
+
+    if (loadedConfig == NULL)
+        return;
+
+    WaitSema(menuSemaId);
+    if (selected_item != NULL && selected_item->item != NULL && selected_item->item->current != NULL && itemConfigId == configId && itemConfigId == selected_item->item->current->item.id) {
+        if (itemConfig != NULL)
+            configFree(itemConfig);
+        itemConfig = loadedConfig;
+        loadedConfig = NULL;
+    }
+    SignalSema(menuSemaId);
+
+    if (loadedConfig != NULL)
+        configFree(loadedConfig);
+}
+
 static void _menuSaveConfig()
 {
     int result;
@@ -352,6 +394,12 @@ config_set_t *menuLoadConfigDirect(void)
 {
     actionStatus = 0;
     return menuLoadConfigDirectInternal();
+}
+
+// Queued when the info screen opens: resolve #Size for the current item without blocking the UI.
+void menuRequestInfoSize(void)
+{
+    ioPutRequest(IO_CUSTOM_SIMPLEACTION, &_menuResolveInfoSize);
 }
 
 // we don't want a pop up when transitioning to or refreshing Game Menu gui.

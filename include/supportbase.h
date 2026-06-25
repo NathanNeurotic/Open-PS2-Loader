@@ -50,6 +50,10 @@ void sbCreatePath(const base_game_info_t *game, char *path, const char *prefix, 
 void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id);
 void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id, char *newname);
 config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const char *sep);
+// Enable/disable the per-game size stat inside sbPopulateConfig. Off while scrolling (so the
+// disc/media badges paint instantly even over slow SMB); the info screen turns it on to resolve
+// #Size on demand. See sbConfigStatSize in supportbase.c. (1 = stat, 0 = skip.)
+void sbSetConfigStatSize(int enable);
 // Set the console/media display attributes a theme's AttributeImage badges resolve against
 // (#System, #Media, #DiscType). ANY itemGetConfig that does NOT go through sbPopulateConfig
 // (e.g. the internal-HDD HDL/VCD path) MUST call this, or those badges silently never render

@@ -350,8 +350,11 @@ static void itemExecCircle(struct menu_item *curMenu)
 
 static void itemExecSquare(struct menu_item *curMenu)
 {
-    if (curMenu->current && gTheme->infoElems.first)
+    if (curMenu->current && gTheme->infoElems.first) {
+        // #Size is skipped while scrolling so the badges paint instantly; resolve it now (async).
+        menuRequestInfoSize();
         guiSwitchScreen(GUI_SCREEN_INFO);
+    }
 }
 
 static void itemExecTriangle(struct menu_item *curMenu)
