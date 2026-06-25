@@ -35,6 +35,20 @@ If you don't want to press L3 every time, open **Settings → Display Settings**
 titles appear; while it shows discs, its favourited discs appear. Nothing is lost —
 favourites that don't match the current view simply aren't shown until you switch back.
 
+### Favourite your PS1 games
+
+Press **R3** on a PS1 title (while a page is in its VCD view) to favourite it, exactly as
+you would a disc game. The **Favourites tab has its own L3 toggle**, just like every device
+page: press **L3** there to swap between your **disc favourites** and your **PS1 favourites**.
+A VCD favourite launches through POPSTARTER straight from the Favourites tab — even when the
+source device page is currently showing its disc list — and carries its PS1 cover art and
+disc badge with it.
+
+This works for VCDs on **USB, MX4SIO, the internal exFAT HDD, SMB, and MMCE**. PS1 favourites
+for games on an **APA-formatted internal HDD** aren't supported yet (R3 there does nothing on a
+VCD), since that layout keeps each PS1 game on its own `__.POPS` partition; the common internal
+exFAT HDD is covered.
+
 ## 3. How PS1 games launch (POPSTARTER only)
 
 VCD titles always boot through **`POPSTARTER.ELF`**. They never use OPL's built-in core
