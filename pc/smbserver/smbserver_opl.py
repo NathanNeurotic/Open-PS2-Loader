@@ -817,15 +817,25 @@ def _take_445():
     return restore
 
 
-def _lan_ip():
+def _lan_ips():
+    """All candidate IPv4 addresses, best-guess first. The address the PS2 must use is the one on
+    the SAME subnet as the PS2 -- a VPN / WSL / Hyper-V adapter can outrank the real LAN on the
+    default route, so we list them all instead of guessing a single (possibly wrong) one."""
+    ips = []
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
-        ip = s.getsockname()[0]
+        ips.append(s.getsockname()[0])
         s.close()
-        return ip
     except OSError:
-        return "127.0.0.1"
+        pass
+    try:
+        for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
+            if ip not in ips and not ip.startswith("127."):
+                ips.append(ip)
+    except OSError:
+        pass
+    return ips or ["127.0.0.1"]
 
 
 def main(argv=None):
@@ -883,17 +893,26 @@ def main(argv=None):
         return 2
     lsock.listen(8)
 
-    ip = _lan_ip()
+    ips = _lan_ips()
     print("=" * 64)
     print(" RiptOPL SMBv1 server -- listening on %s:%d" % (args.bind, bound))
-    print(" In OPL  ->  SMB Server IP: %s   Port: %d   user/pass: blank (guest)" % (ip, bound))
+    print(" In OPL set:  SMB Port: %d   |   user/pass: blank (guest)" % bound)
+    if len(ips) == 1:
+        print("              PC IP Address: %s" % ips[0])
+    else:
+        print("              PC IP Address: use the one on the SAME network as your PS2")
+        print("              (usually 192.168.x.x -- NOT a VPN/WSL address):")
+        for ip in ips:
+            print("                  %s" % ip)
     for name in shares:
-        print("            Share: %s   ->   %s%s" % (name, shares[name].root,
+        print("              Share: %s   ->   %s%s" % (name, shares[name].root,
               "   (read-only)" if server.read_only else "   (writable)"))
     if server.read_only:
         print(" (read-only -- OPL cannot save per-game settings or VMCs to this share)")
     else:
         print(" (writable -- OPL can save settings + VMC-on-SMB here; pass --read-only to lock it)")
+    print(" If OPL says connect failed (error 300): use the LAN IP above (not a VPN/WSL one),")
+    print(" and allow TCP %d through Windows Firewall (the launcher .bat does this for you)." % bound)
     print("=" * 64)
 
     try:

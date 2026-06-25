@@ -55,11 +55,15 @@ echo.
 goto askfolder
 
 :run
+REM --- one-time: allow the port through Windows Firewall (you'll see a single admin prompt) ---
+echo   Checking Windows Firewall (a one-time "Yes" admin prompt may appear)...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "if (-not (Get-NetFirewallRule -DisplayName 'RiptOPL SMB Server' -EA SilentlyContinue)) { try { Start-Process powershell -Verb RunAs -ArgumentList '-NoProfile','-Command','New-NetFirewallRule -DisplayName ''RiptOPL SMB Server'' -Direction Inbound -Protocol TCP -LocalPort %PORT% -Action Allow -Profile Private,Domain' -Wait } catch { Write-Host '  (skipped -- if OPL cannot connect, allow TCP %PORT% inbound manually)' } }"
+echo.
 echo   Games folder : %GAMES%
 echo   Port         : %PORT%
 echo.
 echo   In OPL -^> Network settings:
-echo     * PC IP Address : this PC's IP ^(shown below^)
+echo     * PC IP Address : your PC's LAN IP ^(usually 192.168.x.x; see below -- NOT a VPN IP^)
 echo     * SMB Port      : %PORT%
 echo     * Share         : games
 echo     * User / Pass   : leave blank ^(guest^)
