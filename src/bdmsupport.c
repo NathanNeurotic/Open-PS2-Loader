@@ -214,11 +214,13 @@ int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName,
     return 0;
 }
 
-// Find the mounted BDM device whose driver matches bdmType (BDM_TYPE_*) and write its resolved device
-// root WITH a trailing slash (e.g. "ata0:/" for the internal exFAT HDD, "usb0:/" for USB) to root.
-// Returns 1 if such a device is mounted, 0 otherwise. This lets a caller (the BDMA equip) target a
-// SPECIFIC transport by its driver -- the same differentiation the device pages use -- instead of
-// blindly scanning the generic mass namespace.
+// Find the first mounted BDM device whose driver matches bdmType (BDM_TYPE_*) and write its massN:
+// FILESYSTEM root WITH a trailing slash (e.g. "mass0:/") to root. Returns 1 if such a device is mounted,
+// 0 otherwise. Used by bdmEnsureSourceModules as a mount-readiness check for a transport type. (The
+// readable path is ALWAYS massN: -- OPL never mounts a typed ata0:/usb0:/mx4sio0: filesystem; those are
+// block-device identities used only for launch binding, and fileXioDopen on them always fails, so the
+// bdmResolveDeviceRoot typed branch below self-defeats and resolves to massN:.) The BDMA equip itself
+// uses bdmGetDeviceSlotsByType to search EVERY same-type slot, not just the first.
 int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen)
 {
     if (root == NULL || rootLen <= 0)
@@ -241,14 +243,40 @@ int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen)
         if (bdmDetermineDeviceType(driver) != bdmType)
             continue;
 
-        // Resolve to the driver-typed root (e.g. ata0:) when the device number is known; otherwise this
-        // falls back to mass<slot>:. Either is a valid path the device is addressable at.
+        // Resolves to mass<slot>:/ in practice: bdmResolveDeviceRoot's typed-root branch (e.g. ata0:)
+        // only fires for a typed FILESYSTEM device, of which OPL registers none (fileXioDopen on a typed
+        // root always fails), so it falls back to the massN: root -- the readable path callers need.
         bdmResolveDeviceRoot(resolved, sizeof(resolved), driver, devIndex, i);
         snprintf(root, rootLen, "%s/", resolved);
         return 1;
     }
 
     return 0;
+}
+
+// Fill `slots` with the massN: slot index of EVERY mounted device whose driver matches bdmType, up to
+// maxSlots; returns the count. The filesystem root for slot i is "mass<i>:/" (OPL never mounts a typed
+// ata0:/usb0: filesystem -- block-device identities only). The BDMA equip uses this to search a source
+// family that has more than one device of the same type: the variant files may sit on the second one,
+// which bdmGetDeviceRootByType (first-match) would miss.
+int bdmGetDeviceSlotsByType(int bdmType, int *slots, int maxSlots)
+{
+    int n = 0;
+
+    if (slots == NULL || maxSlots <= 0)
+        return 0;
+
+    for (int i = 0; i < MAX_BDM_DEVICES && n < maxSlots; i++) {
+        char path[16], driver[32];
+        int devIndex = -1;
+
+        snprintf(path, sizeof(path), "mass%d:/", i);
+        bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex);
+        if (driver[0] != '\0' && bdmDetermineDeviceType(driver) == bdmType)
+            slots[n++] = i;
+    }
+
+    return n;
 }
 
 static int bdmLoadOptionalModule(const char *name, void *module, int moduleSize)

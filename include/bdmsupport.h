@@ -57,10 +57,14 @@ void bdmEnumerateDevices();
 void bdmResolveLBA_UDMA(bdm_device_data_t *pDeviceData);
 int bdmHDDIsPresent(u32 timeoutMs);
 int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName, int massDeviceIndex, int massSlot);
-// Find the mounted BDM device whose driver matches bdmType (BDM_TYPE_*); write its resolved device root
-// with a trailing slash (e.g. "ata0:/") to root. Returns 1 if found. Lets the BDMA equip target a
-// specific transport (USB / MX4SIO / internal-ATA-HDD) by driver instead of blind mass-namespace scans.
+// Find the first mounted BDM device whose driver matches bdmType (BDM_TYPE_*); write its massN:
+// filesystem root with a trailing slash (e.g. "mass0:/") to root. Returns 1 if found. Mount-readiness
+// check (the readable path is always massN:; typed ata0:/usb0: roots are launch-binding identities only).
 int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen);
+// Fill `slots` with the massN: slot index of EVERY mounted device whose driver matches bdmType (root =
+// "mass<i>:/"), up to maxSlots; returns the count. The BDMA equip searches all same-type slots so a
+// source family with two same-type devices is covered when the files sit on the second.
+int bdmGetDeviceSlotsByType(int bdmType, int *slots, int maxSlots);
 // Force-load the BDM transport for bdmType (even if its games toggle is off) and wait up to timeoutMs
 // for a device of that type to mount, so the BDMA equip can read a source device that isn't enabled for
 // games. Returns 1 if a device is present afterwards, 0 otherwise. Idempotent + instant when already up.

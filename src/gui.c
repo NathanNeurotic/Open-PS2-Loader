@@ -552,7 +552,10 @@ reshow_config:
             int newSrc = oldSrc, newMode = oldMode;
             diaGetInt(diaConfig, CFG_BDMASOURCE, &newSrc);
             diaGetInt(diaConfig, CFG_BDMAMODE, &newMode);
-            if (newSrc != oldSrc || newMode != oldMode) {
+            // Re-equip on any MODE change, and on a SOURCE change only when MODE installs modules. FAT32
+            // mode ignores the source entirely, so a SOURCE-only move while already FAT32 must NOT re-run
+            // the pointless unlink + marker rewrite.
+            if (newMode != oldMode || (newMode != VCD_BDMA_FAT32 && newSrc != oldSrc)) {
                 char bdmaDiag[160];
                 int er = vcdEquipBdma(newSrc, newMode, bdmaDiag, sizeof(bdmaDiag));
                 if (er == -4) {

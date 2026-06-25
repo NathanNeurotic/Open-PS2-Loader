@@ -480,12 +480,15 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return (mr != 0) ? mr : 0;
     }
 
-    // Resolve the SOURCE device to read the variant files from. BDM sources are DIFFERENTIATED by
-    // driver: identify the mounted device whose driver matches the chosen type (USB / MX4SIO / internal
-    // exFAT HDD) and read from its resolved typed root (e.g. ata0: for the HDD) -- the same device
-    // identity the device pages use -- instead of blindly scanning the mass namespace. MMCE has its own.
-    const char *cands[2];
-    char bdmRoot[BDM_DEVICE_ROOT_MAX + 2];
+    // Resolve the SOURCE device(s) to read the variant files from. BDM sources are DIFFERENTIATED by
+    // driver: find EVERY mounted device whose driver matches the chosen type (USB / MX4SIO / internal
+    // exFAT HDD) and read from its massN: FILESYSTEM root -- the same path the device pages browse. OPL
+    // never mounts a typed ata0:/usb0:/mx4sio0: filesystem (those are block-device identities used only
+    // for launch binding), so the readable source path is always massN:/. Searching ALL matching slots,
+    // not just the first, covers a source family with two same-type devices when the variant files sit
+    // on the second one. MMCE has its own mmce0:/mmce1: slots.
+    const char *cands[MAX_BDM_DEVICES];
+    char bdmRoots[MAX_BDM_DEVICES][BDM_DEVICE_ROOT_MAX + 2];
     int nc = 0;
     if (source == VCD_BDMA_SRC_MMCE) {
         // Ensure mmceman is loaded even when MMCE games are off / Manual-not-started -- otherwise mmce0:/
@@ -509,16 +512,21 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         // keep the BDMA module files on a device you never browse). Force-load it + wait for the device
         // to mount -- otherwise the source path is dead and nothing can be read from it.
         bdmEnsureSourceModules(wantType, 2000);
-        if (bdmGetDeviceRootByType(wantType, bdmRoot, sizeof(bdmRoot)))
-            cands[nc++] = bdmRoot;
+        int slots[MAX_BDM_DEVICES];
+        int ns = bdmGetDeviceSlotsByType(wantType, slots, MAX_BDM_DEVICES);
+        for (int j = 0; j < ns && nc < (int)(sizeof(cands) / sizeof(cands[0])); j++) {
+            snprintf(bdmRoots[nc], sizeof(bdmRoots[nc]), "mass%d:/", slots[j]);
+            cands[nc] = bdmRoots[nc];
+            nc++;
+        }
     }
 
     const char *suffix = vcdBdmaSuffix[mode];
     char src0[96], src1[96];
     int found = 0;
     for (int i = 0; i < nc; i++) {
-        snprintf(src0, sizeof(src0), "%sPOPS/%s.%s", cands[i], vcdBdmaModule[0], suffix);
-        snprintf(src1, sizeof(src1), "%sPOPS/%s.%s", cands[i], vcdBdmaModule[1], suffix);
+        snprintf(src0, sizeof(src0), "%s" POPS_FOLDER "/%s.%s", cands[i], vcdBdmaModule[0], suffix);
+        snprintf(src1, sizeof(src1), "%s" POPS_FOLDER "/%s.%s", cands[i], vcdBdmaModule[1], suffix);
         int f0 = open(src0, O_RDONLY);
         LOG("[BDMA] probe %s -> %d\n", src0, f0);
         if (f0 < 0)
@@ -545,15 +553,21 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return -4; // the matched SOURCE device had no variant files in its POPS/ (or none matched)
     }
 
-    // Copy both through the free-space-gated safe-copy. If usbd.irx fits but usbhdfsd.irx won't,
-    // we've already replaced usbd.irx -- acceptable (re-equip fixes it) and the card is never
-    // corrupted (each write is space-gated + truncation-safe).
+    // Copy both through the free-space-gated safe-copy (each write is space-gated + truncation-safe, so
+    // a failure never corrupts an individual file).
     int r = vcdSafeCopyFile(src0, dst0);
     if (r != 0)
-        return r; // -2 (no space) / -3 (IO)
+        return r; // -2 (no space) / -3 (IO); dst0 not yet replaced
     r = vcdSafeCopyFile(src1, dst1);
-    if (r != 0)
+    if (r != 0) {
+        // First module is now the NEW variant but the second failed -> the card holds a mismatched,
+        // half-equipped pair. Roll back to a clean FAT32/no-modules state (drop the lone new module +
+        // write the FAT32 marker) so the marker readback (vcdReadBdmaMode) stays truthful and POPSTARTER
+        // falls back to its built-in driver instead of loading a mismatched pair.
+        unlink(dst0);
+        vcdWriteBdmaMarker(mcDir, VCD_BDMA_FAT32);
         return r;
+    }
 
     int mr = vcdWriteBdmaMarker(mcDir, mode);
     return (mr != 0) ? mr : 0;
