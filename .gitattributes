@@ -1,6 +1,12 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
+# Binary block-device / loader modules shipped to the memory card: POPSTARTER assets + the
+# BDMAssault IRX variants (usbd.irx.<mode> / usbhdfsd.irx.<mode>) + PATCH/ELF. NEVER line-ending
+# normalize these -- a stray CRLF<->LF pass would corrupt the IRX so POPSTARTER fails to load it.
+pops/* binary
+*.irx binary
+
 # Windows batch launchers must check out (and ship in the release zip) with CRLF so
 # cmd.exe parses labels / goto / if-blocks reliably. eol=crlf forces CRLF on checkout
 # on every platform, including the Linux CI that builds the release package.
