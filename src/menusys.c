@@ -395,7 +395,7 @@ config_set_t *menuLoadConfig()
 {
     actionStatus = 1;
     itemConfigId = -1;
-    guiHandleDeferedIO(&actionStatus, _l(_STR_LOADING_SETTINGS), IO_CUSTOM_SIMPLEACTION, &_menuRequestConfig);
+    guiHandleDeferedIO(&actionStatus, _l(_STR_LOADING_SETTINGS), IO_CUSTOM_SIMPLEACTION, &_menuRequestConfig, OPL_DEFERRED_IO_TIMEOUT_MS);
     return itemConfig;
 }
 
@@ -423,7 +423,7 @@ config_set_t *gameMenuLoadConfig(struct UIItem *ui)
 void menuSaveConfig()
 {
     actionStatus = 1;
-    guiHandleDeferedIO(&actionStatus, _l(_STR_SAVING_SETTINGS), IO_CUSTOM_SIMPLEACTION, &_menuSaveConfig);
+    guiHandleDeferedIO(&actionStatus, _l(_STR_SAVING_SETTINGS), IO_CUSTOM_SIMPLEACTION, &_menuSaveConfig, OPL_DEFERRED_IO_TIMEOUT_MS);
 }
 
 static void menuInitMainMenu(void)

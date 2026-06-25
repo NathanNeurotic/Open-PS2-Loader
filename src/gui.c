@@ -2104,7 +2104,7 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
     return terminate - 1;
 }
 
-void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data)
+void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data, int timeoutMs)
 {
     // Free the shared IOP/fileXio channel before running the deferred IO. The
     // cover-art worker's queued and in-flight reads otherwise tie up that single
@@ -2137,8 +2137,28 @@ void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data)
     // release the channel. Restored before returning; the handshake is unchanged.
     int savedPriority = cacheLowerCallerPriority();
 
-    while (*ptr)
+    // Bound the wait when the caller asks (timeoutMs > 0). A deferred IO that never completes -- a
+    // failing HDD/card that wedges the single IOP fileXio channel mid-write -- would otherwise spin
+    // here forever and freeze the GUI on "Saving..." with no escape (reported: config save never
+    // finishing on a flaky HDD). After a timeout far beyond any real config save/load we stop waiting
+    // and clear the status, so the caller falls into its normal failure path (saveConfig -> "Error
+    // saving settings"), exactly like the ioPutRequest-failure branch above. This does NOT recover
+    // the stuck IOP -- the IO worker runs requests one at a time and stays blocked on the wedged one
+    // until reboot -- but a readable error beats an apparent hard lock. Memory-safe: every caller's
+    // *ptr is a file-static int and `data` a file-static handler, so a late write by the still-blocked
+    // IO thread is harmless. timeoutMs <= 0 keeps the original unbounded wait (compat-list update).
+    // clock() is microseconds (CLOCKS_PER_SEC = 1e6); the (clock() - startTick) elapsed form is
+    // single-wrap-safe, unlike an absolute clock()+limit deadline.
+    clock_t startTick = clock();
+    clock_t limitTicks = (clock_t)timeoutMs * (CLOCKS_PER_SEC / 1000);
+    while (*ptr) {
+        if (timeoutMs > 0 && (clock() - startTick) >= limitTicks) {
+            LOG("guiHandleDeferedIO: deferred IO unfinished after %d ms; storage stuck, abandoning wait\n", timeoutMs);
+            *ptr = 0;
+            break;
+        }
         guiRenderTextScreen(message);
+    }
 
     cacheRestoreCallerPriority(savedPriority);
 }
