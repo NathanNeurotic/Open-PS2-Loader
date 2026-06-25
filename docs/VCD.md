@@ -88,9 +88,15 @@ won't auto-match art by ID.
 POPSTARTER's stock driver reads FAT32. To boot PS1 games from an **exFAT** drive,
 POPSTARTER needs extra block-device modules (the BDMAssault / "BDMA" drivers). RiptOPL
 *equips* them for you from **General Settings** — you supply the module files, RiptOPL
-copies the right pair onto your memory card when you change the setting:
+copies the right pair onto your memory card:
 
-- **BDMA MODE** — which driver variant POPSTARTER should use: `USB (FAT32)` (none —
+- **VCD BDMA Apply on Launch** *(default On)* — POPSTARTER does its own IOP reset and reloads
+  its block-device driver from the memory card, so the right exFAT variant must already be on
+  the card or the game drops to OSDSYS. When **On**, RiptOPL equips the variant matching the
+  PS1 game you're launching (read from that game's own device) automatically, right before
+  boot — so an MX4SIO / USB / HDD exFAT game just works with no manual step. Turn it **Off** to
+  manage the driver yourself; that reveals the **BDMA Source** / **BDMA Mode** pickers below.
+- **BDMA MODE** *(manual; shown when Apply-on-Launch is Off)* — which driver variant POPSTARTER should use: `USB (FAT32)` (none —
   removes the exFAT modules so POPSTARTER falls back to its built-in FAT32 driver),
   `USB (exFAT)`, `MX4SIO (exFAT)`, `MMCE (exFAT)`, or `HDD (exFAT)` (the internal ATA
   HDD via BDMAssault).

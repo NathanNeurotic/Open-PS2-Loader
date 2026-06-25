@@ -810,6 +810,10 @@ gui_strings:
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH
   string: Custom POPSTARTER.ELF path; quietly falls back to the device POPS folder if blank/missing. Keyboard caps at 31 chars; longer paths via settings_riptopl.cfg.
+- label: BDMA_APPLY
+  string: VCD BDMA Apply on Launch
+- label: HINT_BDMA_APPLY
+  string: 'On: auto-equip the launched VCD''s matching exFAT driver to the memory card before boot (recommended). Off: manage it yourself with the BDMA Source/Mode pickers below.'
 - label: BDMA_SOURCE
   string: BDMA Source
 - label: HINT_BDMA_SOURCE

@@ -193,6 +193,7 @@ int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans m
 char gPopstarterPath[256]; // custom POPSTARTER.ELF path; "" -> fall back to <device>/POPS/POPSTARTER.ELF
 int gBdmaSource;           // BDMA SOURCE device family (VCD_BDMA_SRC_*) to read exFAT driver variants from
 int gBdmaMode;             // BDMA MODE last reflected from the mc?:/POPSTARTER/ marker (VCD_BDMA_*); not persisted
+int gBdmaApplyOnLaunch;    // auto-equip the launched VCD's matching exFAT driver before boot (1=on, default)
 int gWritePopstarterNet;   // mirror the network settings into POPSTARTER's IPCONFIG/SMBCONFIG on save
 int gEnableDebug;
 int gPS2Logo;
@@ -1276,6 +1277,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &gNeutrinoDevice);
             configGetStrCopy(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath, sizeof(gPopstarterPath));
             configGetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, &gBdmaSource);
+            configGetInt(configOPL, CONFIG_OPL_BDMA_APPLY, &gBdmaApplyOnLaunch);
             configGetInt(configOPL, CONFIG_OPL_WRITE_POPS_NET, &gWritePopstarterNet);
         }
     }
@@ -1497,6 +1499,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, gNeutrinoDevice);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         configSetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, gBdmaSource);
+        configSetInt(configOPL, CONFIG_OPL_BDMA_APPLY, gBdmaApplyOnLaunch);
         configSetInt(configOPL, CONFIG_OPL_WRITE_POPS_NET, gWritePopstarterNet);
         configSetInt(configOPL, CONFIG_OPL_XSENSITIVITY, gXSensitivity);
         configSetInt(configOPL, CONFIG_OPL_YSENSITIVITY, gYSensitivity);
@@ -2128,6 +2131,7 @@ static void setDefaults(void)
     gPopstarterPath[0] = '\0';
     gBdmaSource = VCD_BDMA_SRC_USB;
     gBdmaMode = VCD_BDMA_FAT32;
+    gBdmaApplyOnLaunch = 1; // auto-equip on launch by default (the MX4SIO->OSDSYS fix)
     gWritePopstarterNet = 0;
     gDefaultDevice = APP_MODE;
     gAutosort = 1;

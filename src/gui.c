@@ -451,11 +451,19 @@ void guiShowNetCompatUpdateSingle(int id, item_list_t *support, config_set_t *co
 static int guiUpdater(int modified)
 {
     int showAutoStartLast;
+    int bdmaApply;
 
     if (modified) {
         diaGetInt(diaConfig, CFG_LASTPLAYED, &showAutoStartLast);
         diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, showAutoStartLast);
         diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, showAutoStartLast);
+
+        // Hide the manual BDMA Source/Mode pickers while "VCD BDMA Apply on Launch" is ON (it auto-equips).
+        diaGetInt(diaConfig, CFG_BDMA_APPLY, &bdmaApply);
+        diaSetVisible(diaConfig, CFG_LBL_BDMASOURCE, !bdmaApply);
+        diaSetVisible(diaConfig, CFG_BDMASOURCE, !bdmaApply);
+        diaSetVisible(diaConfig, CFG_LBL_BDMAMODE, !bdmaApply);
+        diaSetVisible(diaConfig, CFG_BDMAMODE, !bdmaApply);
     }
     return 0;
 }
@@ -516,6 +524,13 @@ void guiShowConfig()
     diaSetEnum(diaConfig, CFG_BDMAMODE, bdmaModeStrs);
     diaSetInt(diaConfig, CFG_BDMASOURCE, gBdmaSource);
     diaSetInt(diaConfig, CFG_BDMAMODE, gBdmaMode);
+    // "VCD BDMA Apply on Launch": when ON the launch auto-equips the matching driver, so the manual
+    // SOURCE/MODE pickers are hidden; flipping it OFF (live, via guiUpdater) reveals them.
+    diaSetInt(diaConfig, CFG_BDMA_APPLY, gBdmaApplyOnLaunch);
+    diaSetVisible(diaConfig, CFG_LBL_BDMASOURCE, !gBdmaApplyOnLaunch);
+    diaSetVisible(diaConfig, CFG_BDMASOURCE, !gBdmaApplyOnLaunch);
+    diaSetVisible(diaConfig, CFG_LBL_BDMAMODE, !gBdmaApplyOnLaunch);
+    diaSetVisible(diaConfig, CFG_BDMAMODE, !gBdmaApplyOnLaunch);
 
     diaSetInt(diaConfig, CFG_ENWRITEOP, gEnableWrite);
     diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
@@ -544,6 +559,7 @@ reshow_config:
             if (strncmp(tmpPop, gPopstarterPath, 31) != 0)
                 snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", tmpPop);
         }
+        diaGetInt(diaConfig, CFG_BDMA_APPLY, &gBdmaApplyOnLaunch);
         {
             // Equip BDMA modules only when SOURCE or MODE actually changed (the equip copies
             // files to the memory card). vcdEquipBdma is free-space-gated + truncation-safe, so a

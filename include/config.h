@@ -100,6 +100,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_NEUTRINO_DEVICE      "neutrino_device"
 #define CONFIG_OPL_POPSTARTER_PATH      "popstarter_path"
 #define CONFIG_OPL_BDMA_SOURCE          "bdma_source"
+#define CONFIG_OPL_BDMA_APPLY           "bdma_apply_launch"
 #define CONFIG_OPL_WRITE_POPS_NET       "write_popstarter_net"
 #define CONFIG_OPL_HDD_GAME_LIST_CACHE  "hdd_game_list_cache"
 #define CONFIG_OPL_EXIT_PATH            "exit_path"

@@ -585,6 +585,8 @@ void vcdEnsureBdmaForLaunch(int source, int mode)
 {
     char diag[160];
 
+    if (!gBdmaApplyOnLaunch)
+        return; // user opted to manage the BDMA driver manually (General Settings -> BDMA Source/Mode)
     if (mode <= VCD_BDMA_FAT32 || mode >= VCD_BDMA_MODE_COUNT)
         return; // FAT32 / invalid -> POPSTARTER's built-in driver, nothing to equip
     if (vcdReadBdmaMode() == mode)

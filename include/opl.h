@@ -216,6 +216,7 @@ extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto 
 extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (General Settings); "" = per-device default
 extern int gBdmaSource;           // BDMA SOURCE device family (VCD_BDMA_SRC_*); persisted in conf
 extern int gBdmaMode;             // BDMA MODE mirrored from the mc?:/POPSTARTER/ marker (VCD_BDMA_*)
+extern int gBdmaApplyOnLaunch;    // auto-equip the launched VCD's matching exFAT driver before boot (1=on)
 extern int gWritePopstarterNet;   // mirror network settings into POPSTARTER's IPCONFIG/SMBCONFIG on save
 // Enable Debug Colors
 extern int gEnableDebug;
