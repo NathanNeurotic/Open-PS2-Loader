@@ -275,6 +275,7 @@ jobs:
           #   POPSTARTER/                     -- SMB network stack (popsmb/) + bdma_config.txt=fat32.
           #   POPS/                           -- POPSTARTER.ELF + BDMA variants + patch (from POPSLoader).
           #   neutrino/                       -- the official latest Neutrino core (rickgaiser/neutrino), extracted for drag-and-drop.
+          #   PC-SMB-Server/                  -- HOST-side SMBv1 server (run on the PC), NOT a memory-card folder.
           PKG=riptopl_pkg
           rm -rf "$PKG"
           mkdir -p "$PKG/APP_RIPTOPL" "$PKG/POPSTARTER" "$PKG/POPS"
@@ -293,6 +294,16 @@ jobs:
           fi
           cp -f popsmb/* "$PKG/POPSTARTER/"
           cp -f pops/* "$PKG/POPS/"
+          # PC-SMB-Server/ -- a HOST-side tool (run on your PC, NOT copied to the memory card): a tiny
+          # pure-Python SMBv1 server so OPL's SMB game-loading keeps working on Windows 11 (24H2/25H2
+          # disabled the SMB1 server + removed NTLMv1). See its README for usage. Best-effort: a missing
+          # source file must not break the rest of the package.
+          if [ -f pc/smbserver/smbserver_opl.py ]; then
+            mkdir -p "$PKG/PC-SMB-Server"
+            cp -f pc/smbserver/smbserver_opl.py pc/smbserver/README.md pc/smbserver/build_exe.ps1 "$PKG/PC-SMB-Server/"
+          else
+            echo "WARN: pc/smbserver not found; package omits the PC SMB server this run" >&2
+          fi
           # neutrino/ (package folder) -- the official latest pre-release of the Neutrino core,
           # EXTRACTED into a plain folder so the user just drag-and-drops it onto the card (no
           # zip-in-zip). Best-effort: a fetch/extract failure still publishes the rest. The archive
@@ -330,6 +341,7 @@ jobs:
           (
             cd "$PKG"
             zip -r -X "../rolling/${ZIP}" APP_RIPTOPL POPSTARTER POPS >/dev/null
+            if [ -d PC-SMB-Server ]; then zip -r -X "../rolling/${ZIP}" PC-SMB-Server >/dev/null; fi
             if [ -d APP_RIPTOPL-OLDSDK ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-OLDSDK >/dev/null; fi
             # the extracted neutrino/ folder (drag-and-drop; replaces the old zip-in-zip neutrino_*.7z)
             if [ -d neutrino ]; then zip -r -X "../rolling/${ZIP}" neutrino >/dev/null; fi
@@ -396,12 +408,17 @@ jobs:
             printf -- '- Visual GameID barcode for Pixel FX / RetroGEM / PS2Digital (Device Settings, OFF by default)\n'
             printf -- '- Neutrino args: prefix a flag with $ to disable it without deleting; "Test launch" boots without saving\n'
             printf -- '- DualSense / DS5 USB controller support\n'
+            printf -- '- PC-SMB-Server/: a host-side SMBv1 server you run on your PC so SMB game-loading keeps working\n'
+            printf -- '  on Windows 11 (24H2/25H2 disabled SMB1 + removed NTLMv1). Bypasses Windows SMB entirely.\n'
             printf '\n## Needs testing -- please report from real hardware\n'
             printf -- '- GameID barcode: enable it in Device Settings, then confirm your Pixel FX / RetroGEM /\n'
             printf -- '  PS2Digital auto-loads the per-game profile (the HDMI latch is hardware-only -- not emulator-testable).\n'
             printf -- '- VMC -> Neutrino: confirm your save mounts when launching via Neutrino on USB / exFAT / MX4SIO.\n'
             printf -- '  (Neutrino cannot yet write a VMC to internal HDD APA/PFS -- upstream neutrino#132 -- so VMC\n'
             printf -- '  sharing is block-device only for now.)\n'
+            printf -- '- PC-SMB-Server: run it on your PC (see PC-SMB-Server/README.md), point OPL at its IP + custom\n'
+            printf -- '  port with a blank user/pass. Protocol is validated locally -- confirm an ISO boots and the\n'
+            printf -- '  game list populates over it from real hardware.\n'
             printf '\n## Other downloads\n'
             if [ -f "rolling/RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip" ]; then
               printf -- '- RIPTOPL-VARIANTS-*.zip: EXTRA_FEATURES x PADEMU build configs, both SDK flavours\n'
