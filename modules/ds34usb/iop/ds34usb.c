@@ -415,7 +415,10 @@ static void readReport(u8 *data, int pad)
         else if (ds34pad[pad].type == DS5) {
             struct ds5report *report;
             u8 up = 0, down = 0, left = 0, right = 0;
+            u8 battery_level;
+            u8 power_state;
 
+            // DS5 reports come directly at data[0], no offset needed (differs from DS3)
             report = (struct ds5report *)data;
 
             switch (report->Dpad) {
@@ -494,8 +497,13 @@ static void readReport(u8 *data, int pad)
             ds34pad[pad].data[16] = report->PressureL2; // L2
             ds34pad[pad].data[17] = report->PressureR2; // R2
 
+            // FIXED: Properly extract 4-bit battery and power fields
+            battery_level = report->Battery & 0x0F;  // Battery is 4 bits (0-15)
+            power_state = report->Power & 0x0F;      // Power is 4 bits (0-15)
+
             if (report->PSButton) { // display battery level
-                ds34pad[pad].oldled[0] = (report->Battery * 255) / 15;
+                // Scale 4-bit battery (0-15) to 8-bit (0-255)
+                ds34pad[pad].oldled[0] = (battery_level * 255) / 15;
                 ds34pad[pad].oldled[1] = 0;
                 ds34pad[pad].oldled[2] = 0;
             } else {
@@ -504,7 +512,9 @@ static void readReport(u8 *data, int pad)
                 ds34pad[pad].oldled[2] = rgbled_patterns[pad][1][2];
             }
 
-            if (report->Power != 0xB && report->Usb_plugged) // charging
+            // FIXED: Proper power state check for DS5 (0xB is charging on DS4, DS5 uses different encoding)
+            // For DS5: Power 0x0-0xA = discharging, 0xB = charging
+            if ((power_state == 0xB) || (power_state == 0xA && report->Usb_plugged))
                 ds34pad[pad].oldled[3] = 1;
             else
                 ds34pad[pad].oldled[3] = 0;
@@ -562,13 +572,13 @@ static int LEDRumble(u8 *led, u8 lrum, u8 rrum, int pad)
         usb_buf[1] = 0x03; // EnableRumbleEmulation & RumbleUseRumbleNotHaptics
         usb_buf[2] = 0x17;
 
-        usb_buf[3] = rrum; // light weight
-        usb_buf[4] = lrum; // heavy weight
+        usb_buf[3] = rrum; // light weight (right motor)
+        usb_buf[4] = lrum; // heavy weight (left motor)
 
         usb_buf[39] = 0x07; // AllowLightBrightnessChange & AllowColorLightFadeAnimation & EnableImprovedRumbleEmulation
         usb_buf[42] = 0x80; // LightFadeAnimation
-        usb_buf[43] = 0xFF; // LightBrightness
-        usb_buf[44] = 0x04; // PlayerLight
+        usb_buf[43] = 0xFF; // LightBrightness (max brightness)
+        usb_buf[44] = 0x04; // PlayerLight (player 1)
 
         usb_buf[45] = led[0]; // r
         usb_buf[46] = led[1]; // g
