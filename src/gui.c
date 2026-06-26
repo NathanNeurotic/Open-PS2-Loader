@@ -473,8 +473,13 @@ int guiDeviceTypeToIoMode(int deviceType)
     // Translates an index into deviceNames into an IO mode index used internally.
     if (deviceType == 0)
         return BDM_MODE;
-    else if (deviceType == 1)
+    else if (deviceType == 1) {
+        if (gEnableUDPBD) {
+            int udpbdMode = bdmFindDeviceMode(BDM_TYPE_UDPBD);
+            return udpbdMode >= 0 ? udpbdMode : BDM_MODE;
+        }
         return ETH_MODE;
+    }
     else if (deviceType == 2)
         return HDD_MODE;
     else if (deviceType == 3)
@@ -485,6 +490,11 @@ int guiDeviceTypeToIoMode(int deviceType)
 
 int guiIoModeToDeviceType(int ioMode)
 {
+    if (gEnableUDPBD) {
+        int udpbdMode = bdmFindDeviceMode(BDM_TYPE_UDPBD);
+        if (udpbdMode >= 0 && ioMode == udpbdMode)
+            return 1;
+    }
     if (ioMode >= BDM_MODE && ioMode < ETH_MODE)
         return 0;
     if (ioMode == ETH_MODE)
@@ -936,7 +946,14 @@ static int guiDeviceUpdater(int modified)
 
 void guiShowDeviceConfig(void)
 {
-    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), NULL};
+    const char *deviceNames[] = {
+        _l(_STR_BDM_GAMES),
+        gEnableUDPBD ? (gNetBootProtocol == NET_BOOT_UDPFS ? _l(_STR_UDPFS_GAMES) : _l(_STR_UDPBD_GAMES)) : _l(_STR_NET_GAMES),
+        _l(_STR_HDD_GAMES),
+        _l(_STR_APPS),
+        _l(_STR_MMCE),
+        NULL
+    };
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
     const char *deviceSlots[] = {"0", "1", _l(_STR_AUTO), NULL};
     const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};

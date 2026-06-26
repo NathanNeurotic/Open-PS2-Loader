@@ -513,8 +513,12 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
 
     // Set the start mode flag based on device type.
     int startMode = 0;
-    if (mode >= BDM_MODE && mode < ETH_MODE)
+    if (mode >= BDM_MODE && mode < ETH_MODE) {
         startMode = gBDMStartMode;
+        if (gEnableUDPBD && startMode == START_MODE_DISABLED) {
+            startMode = START_MODE_AUTO;
+        }
+    }
     else if (mode == ETH_MODE)
         startMode = gETHStartMode;
     else if (mode == HDD_MODE)

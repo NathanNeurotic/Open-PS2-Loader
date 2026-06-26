@@ -322,6 +322,18 @@ int bdmSupportIsUDPBD(item_list_t *support)
     return ((bdm_device_data_t *)support->priv)->bdmDeviceType == BDM_TYPE_UDPBD;
 }
 
+int bdmFindDeviceMode(int bdmType)
+{
+    int i;
+    for (i = 0; i < MAX_BDM_DEVICES; i++) {
+        bdm_device_data_t *pDeviceData = bdmDeviceList[i].priv;
+        if (pDeviceData != NULL && pDeviceData->bdmDeviceType == bdmType) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 static void bdmEventHandler(void *packet, void *opt)
 {
     BdmGeneration++;
@@ -470,8 +482,8 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // If we made it here then BDM device mode has been started.
     bdmDeviceModeStarted = 1;
 
-    // If bdm mode is disabled bail out as we don't want to update the visibility state of the device pages.
-    if (gBDMStartMode == START_MODE_DISABLED)
+    // If bdm mode is disabled and network boot is disabled, bail out as we don't want to update the visibility state of the device pages.
+    if (gBDMStartMode == START_MODE_DISABLED && !gEnableUDPBD)
         return 0;
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
@@ -523,8 +535,10 @@ static int bdmNeedsUpdate(item_list_t *itemList)
         return 1;
 
     if (pDeviceData->bdmDeviceTick == BdmGeneration) {
-        if (pOwner != NULL && pOwner->menuItem.visible == 0)
-            return 0;
+        if (pOwner != NULL && pOwner->menuItem.visible == 0) {
+            if (!gEnableUDPBD || (pDeviceData->bdmDeviceType != BDM_TYPE_UNKNOWN && pDeviceData->bdmDeviceType != BDM_TYPE_UDPBD))
+                return 0;
+        }
         if (pDeviceData->bdmULSizePrev != -2)
             return 0;
     }
@@ -1217,6 +1231,9 @@ void bdmInitDevicesData()
 
             if (gBDMStartMode == START_MODE_DISABLED) {
                 pOwner->menuItem.visible = 0;
+                if (gEnableUDPBD) {
+                    ((bdm_device_data_t *)bdmDeviceList[i].priv)->bdmDeviceTick = -1;
+                }
             } else if (gBDMStartMode == START_MODE_MANUAL) {
                 // If BDM has already been started then make the page invisible and reset the bdm tick counter so visibility status is refreshed
                 // according to device state.
@@ -1277,8 +1294,8 @@ int bdmUpdateDeviceData(item_list_t *itemList)
     char path[BDM_DEVICE_ROOT_MAX + 2] = {0};
     int driverResult, deviceResult;
 
-    // If bdm mode is disabled bail out as we don't want to update the visibility state of the device pages.
-    if (gBDMStartMode == START_MODE_DISABLED)
+    // If bdm mode is disabled and network boot is disabled, bail out as we don't want to update the visibility state of the device pages.
+    if (gBDMStartMode == START_MODE_DISABLED && !gEnableUDPBD)
         return 0;
 
     // LOG("bdmUpdateDeviceData: %d\n", itemList->mode);
@@ -1320,6 +1337,15 @@ int bdmUpdateDeviceData(item_list_t *itemList)
             if (deviceResult < 0) {
                 LOG("Mass device: %d driver %s failed to report device number: %d, using %s\n", itemList->mode, pDeviceData->bdmDriver, deviceResult, pDeviceData->bdmDeviceRoot);
             }
+        }
+
+        if (pDeviceData->bdmDeviceType != BDM_TYPE_UDPBD && gBDMStartMode == START_MODE_DISABLED) {
+            // Hide the page because BDM start mode is disabled, and this is not a UDPBD device.
+            if (itemList->owner != NULL) {
+                ((opl_io_module_t *)itemList->owner)->menuItem.visible = 0;
+            }
+            fileXioDclose(dir);
+            return 0;
         }
 
         if (pDeviceData->bdmDeviceType == BDM_TYPE_ATA) {
