@@ -515,7 +515,7 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
     int startMode = 0;
     if (mode >= BDM_MODE && mode < ETH_MODE) {
         startMode = gBDMStartMode;
-        if (gEnableUDPBD && startMode == START_MODE_DISABLED) {
+        if (gEnableUDPBD && startMode == START_MODE_DISABLED && mode == BDM_MODE) {
             startMode = START_MODE_AUTO;
         }
     }

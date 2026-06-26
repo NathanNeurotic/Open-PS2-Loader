@@ -23,6 +23,7 @@
 #include <fileXio_rpc.h> // fileXioIoctl, fileXioDevctl
 #include <delaythread.h>
 #include <sys/stat.h> // mkdir() -- create the config folder before a BDM save probe
+#include <time.h>
 
 static int iUSBModLoaded = 0;
 static int iLinkModLoaded = 0;
@@ -360,8 +361,14 @@ static int bdmShouldQueueModuleLoad(void)
         return 1;
     if (gEnableBdmHDD && !hddModLoaded)
         return 1;
-    if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded())
-        return 1; // mirror the load gate -- if the SMB NIC is up, UDPBD can't load, so stop re-queueing
+    if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded()) {
+        static clock_t last_load_attempt = 0;
+        clock_t now = clock();
+        if (last_load_attempt == 0 || (now - last_load_attempt) > 30 * CLOCKS_PER_SEC) {
+            last_load_attempt = now;
+            return 1;
+        }
+    }
 
     return 0;
 }
