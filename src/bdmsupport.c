@@ -32,6 +32,8 @@ static int ieee1394ModLoaded = 0;
 static int mx4sioModLoaded = 0;
 static int hddModLoaded = 0;
 static int udpbdModLoaded = 0;
+static clock_t bdmLastLoadAttempt = 0;
+static clock_t bdmLastOpenAttempt = 0;
 static s32 bdmLoadModuleLock;
 int bdmDeviceModeStarted;
 
@@ -362,10 +364,8 @@ static int bdmShouldQueueModuleLoad(void)
     if (gEnableBdmHDD && !hddModLoaded)
         return 1;
     if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded()) {
-        static clock_t last_load_attempt = 0;
         clock_t now = clock();
-        if (last_load_attempt == 0 || (now - last_load_attempt) > 30 * CLOCKS_PER_SEC) {
-            last_load_attempt = now;
+        if (bdmLastLoadAttempt == 0 || (now - bdmLastLoadAttempt) > 30 * CLOCKS_PER_SEC) {
             return 1;
         }
     }
@@ -413,27 +413,31 @@ static void bdmLoadBlockDeviceModules(void)
     // stack (smap registers "SMAP_driver"), so only load when SMB isn't up. dev9 is refcounted (shared
     // with ATA-HDD). Both need the PS2's static IP as an "ip=" arg -- the ministack has no DHCP client.
     if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded()) {
-        char ipArg[24];
-        sysInitDev9();
-        snprintf(ipArg, sizeof(ipArg), "ip=%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
-        if (gNetBootProtocol == NET_BOOT_UDPFS) {
-            // UDPFS: a 3-IRX chain loaded in dependency order -- smap (exports to ministack + bd), then
-            // ministack (gets the ip= arg, exports to bd), then udpfs_bd (registers the "udp" BDM device).
-            if (bdmLoadOptionalModule("UDPFS_SMAP", &udpfs_smap_irx, size_udpfs_smap_irx) >= 0 &&
-                bdmLoadOptionalModuleArgs("UDPFS_MINISTACK", &udpfs_ministack_irx, size_udpfs_ministack_irx, (int)strlen(ipArg) + 1, ipArg) >= 0 &&
-                bdmLoadOptionalModule("UDPFS_BD", &udpfs_bd_irx, size_udpfs_bd_irx) >= 0)
-                udpbdModLoaded = 1;
-        } else {
-            // UDPBD: the self-contained smap_udpbd monolith (smap + ministack + udpbd in one irx).
-            if (bdmLoadOptionalModuleArgs("SMAP_UDPBD", &smap_udpbd_irx, size_smap_udpbd_irx, (int)strlen(ipArg) + 1, ipArg) >= 0)
-                udpbdModLoaded = 1;
+        clock_t now = clock();
+        if (bdmLastLoadAttempt == 0 || (now - bdmLastLoadAttempt) > 30 * CLOCKS_PER_SEC) {
+            bdmLastLoadAttempt = now;
+            char ipArg[24];
+            sysInitDev9();
+            snprintf(ipArg, sizeof(ipArg), "ip=%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
+            if (gNetBootProtocol == NET_BOOT_UDPFS) {
+                // UDPFS: a 3-IRX chain loaded in dependency order -- smap (exports to ministack + bd), then
+                // ministack (gets the ip= arg, exports to bd), then udpfs_bd (registers the "udp" BDM device).
+                if (bdmLoadOptionalModule("UDPFS_SMAP", &udpfs_smap_irx, size_udpfs_smap_irx) >= 0 &&
+                    bdmLoadOptionalModuleArgs("UDPFS_MINISTACK", &udpfs_ministack_irx, size_udpfs_ministack_irx, (int)strlen(ipArg) + 1, ipArg) >= 0 &&
+                    bdmLoadOptionalModule("UDPFS_BD", &udpfs_bd_irx, size_udpfs_bd_irx) >= 0)
+                    udpbdModLoaded = 1;
+            } else {
+                // UDPBD: the self-contained smap_udpbd monolith (smap + ministack + udpbd in one irx).
+                if (bdmLoadOptionalModuleArgs("SMAP_UDPBD", &smap_udpbd_irx, size_smap_udpbd_irx, (int)strlen(ipArg) + 1, ipArg) >= 0)
+                    udpbdModLoaded = 1;
+            }
+            // Release the dev9 reference taken above if the load failed -- otherwise a failing/retrying
+            // UDPBD/UDPFS (both gates re-enter on every device refresh while !udpbdModLoaded) inflates the
+            // refcounted dev9InitCount and a later HDD/ETH teardown can never power dev9 down. On success
+            // the reference is intentionally kept (the device stays mounted). Mirrors ETH/HDD pairing.
+            if (!udpbdModLoaded)
+                sysShutdownDev9();
         }
-        // Release the dev9 reference taken above if the load failed -- otherwise a failing/retrying
-        // UDPBD/UDPFS (both gates re-enter on every device refresh while !udpbdModLoaded) inflates the
-        // refcounted dev9InitCount and a later HDD/ETH teardown can never power dev9 down. On success
-        // the reference is intentionally kept (the device stays mounted). Mirrors ETH/HDD pairing.
-        if (!udpbdModLoaded)
-            sysShutdownDev9();
     }
 
     SignalSema(bdmLoadModuleLock);
@@ -464,6 +468,11 @@ void bdmLoadModules(void)
 static void bdmInit(item_list_t *itemList)
 {
     LOG("BDMSUPPORT Init\n");
+
+    if (itemList->mode == 0) {
+        bdmLastLoadAttempt = 0;
+        bdmLastOpenAttempt = 0;
+    }
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
     pDeviceData->bdmULSizePrev = -2;
@@ -1319,11 +1328,22 @@ int bdmUpdateDeviceData(item_list_t *itemList)
 
     // Format the device path and try to open the device.
     snprintf(path, sizeof(path), "mass%d:/", itemList->mode);
+
+    if (gEnableUDPBD && itemList->mode == 0) {
+        clock_t now = clock();
+        if (bdmLastOpenAttempt != 0 && (now - bdmLastOpenAttempt) < 30 * CLOCKS_PER_SEC) {
+            return 0; // Skip attempt during cooldown
+        }
+    }
+
     int dir = fileXioDopen(path);
     // LOG("opendir %s -> %d\n", path, dir);
 
     // If we opened the device and the menu isn't visible (OR is visible but hasn't been initialized ex: manual device start) initialize device info.
     if (dir >= 0 && (visible == 0 || pDeviceData->bdmDeviceRoot[0] == '\0' || pDeviceData->bdmDriver[0] == '\0' || pDeviceData->bdmDeviceType == BDM_TYPE_UNKNOWN)) {
+        if (gEnableUDPBD && itemList->mode == 0) {
+            bdmLastOpenAttempt = 0;
+        }
         snprintf(pDeviceData->bdmDeviceRoot, sizeof(pDeviceData->bdmDeviceRoot), "mass%d:", itemList->mode);
         bdmBuildGamePrefix(pDeviceData->bdmPrefix, sizeof(pDeviceData->bdmPrefix), pDeviceData->bdmDeviceRoot);
         pDeviceData->FoldersCreated = 0;
@@ -1382,6 +1402,9 @@ int bdmUpdateDeviceData(item_list_t *itemList)
         fileXioDclose(dir);
         return 1;
     } else if (dir < 0 && visible == 1) {
+        if (gEnableUDPBD && itemList->mode == 0) {
+            bdmLastOpenAttempt = clock();
+        }
         // Device has been removed, make the menu item invisible. We can't really cleanup resources (like the game list) just yet
         // as we don't know if the data is being used asynchronously.
         if (itemList->owner != NULL) {
@@ -1401,6 +1424,11 @@ int bdmUpdateDeviceData(item_list_t *itemList)
     // No change to the device state detected.
     if (dir >= 0)
         fileXioDclose(dir);
+    else {
+        if (gEnableUDPBD && itemList->mode == 0) {
+            bdmLastOpenAttempt = clock();
+        }
+    }
     return 0;
 }
 
