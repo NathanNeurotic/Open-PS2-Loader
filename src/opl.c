@@ -1265,6 +1265,12 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, &gEnableBdmHDD);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
             configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
+            // UDPBD/UDPFS and the SMB/ETH stack both own the single SMAP adapter; the UI greys one out,
+            // but an imported/hand-edited config can enable BOTH. At boot UDPBD wins (it loads first), so
+            // ETH's load silently fails into a misleading "network startup error". Reconcile here to match
+            // that reality -- UDPBD wins -- so the dropped option is explicit rather than a confusing error.
+            if (gEnableUDPBD && gETHStartMode != START_MODE_DISABLED)
+                gETHStartMode = START_MODE_DISABLED;
             configGetInt(configOPL, CONFIG_OPL_SFX, &gEnableSFX);
             configGetInt(configOPL, CONFIG_OPL_BOOT_SND, &gEnableBootSND);
             configGetInt(configOPL, CONFIG_OPL_BGM, &gEnableBGM);

@@ -111,8 +111,12 @@ the menu (there is no `<OPL>` fallback for UDPBD).
 
 ### Requirements
 
-- A PC-side UDPBD server (e.g. `udpbd-server`) on the same LAN, exporting a FAT/exFAT block
-  device laid out with the usual OPL folders (`CD`, `DVD`, `ART`, `CFG`, …).
+- A PC-side UDPBD server speaking **SUDPBDv2** (e.g. `udpbd-server` from
+  [rickgaiser/udpbd](https://github.com/rickgaiser/udpbd)) on the same LAN, exporting a FAT/exFAT
+  block device laid out with the usual OPL folders (`CD`, `DVD`, `ART`, `CFG`, …). **The
+  `udpfs_server.py` bundled in the Neutrino folder is UDPFS-only and will not serve UDPBD** — for the
+  default UDPBD protocol you must obtain a `udpbd-server` separately, or pick **UDPFS** (whose server
+  ships in the box — see below).
 - A **static** PS2 IP. The UDPBD module has no DHCP client and reuses the address from
   **Settings → Network Config**, so set a static IP there. OPL warns you if DHCP is on at the
   moment you enable UDPBD.
@@ -126,13 +130,19 @@ the menu (there is no `<OPL>` fallback for UDPBD).
    **mutually exclusive** — enabling it requires the Ethernet (SMB) device mode set to
    **Disabled**. The two are interlocked live in Device Settings (turning one on greys the other).
 
-Both protocols reuse the IP set in Network Config; there are **no protocol-specific network fields**.
+Both protocols reuse the IP set in Network Config for the **in-OPL game list**; there are **no
+protocol-specific network fields**.
+
+> **At launch, Neutrino reads its own IP from a toml, not from OPL.** When a game boots, control hands
+> to the external Neutrino, whose `config/bsd-udpbd.toml` / `config/bsd-udpfsbd.toml` hardcode
+> `ip=192.168.1.10`. If your PS2's static IP differs, **edit the `ip=` line in that toml** (under the
+> bundled `neutrino/config/`) to match — otherwise games list fine in OPL but fail to boot.
 
 ### UDPFS — the UDPRDMA protocol
 
 **UDPFS** is Neutrino's newer network transport (Rick Gaiser's UDPRDMA). RiptOPL uses its
-**block-device** mode, so on the OPL side it behaves *identically* to UDPBD — same **UDPBD Games**
-list, covers, per-game settings, static-IP requirement, and SMB mutual-exclusion — but it speaks a
+**block-device** mode, so on the OPL side it behaves *identically* to UDPBD — same network game list
+(labelled **UDPFS Games**), covers, per-game settings, static-IP requirement, and SMB mutual-exclusion — but it speaks a
 different wire protocol and needs a **different PC server**:
 
 - **PC server:** **`udpfs_server.py`**, which ships *inside* the bundled Neutrino folder

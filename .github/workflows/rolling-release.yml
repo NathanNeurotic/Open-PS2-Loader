@@ -394,6 +394,9 @@ jobs:
               printf '  Included build: %s as the neutrino/ folder in the package -- RiptOPL adds only\n' "$NEUTRINO_VER"
               printf '  config/bsd-udpfsbd.toml (for UDPFS); otherwise the official build. Just copy the\n'
               printf '  whole neutrino/ folder to mc?:/ (it already holds neutrino.elf + config/ + modules/).\n'
+              printf '  Network Boot: the bundled udpfs_server.py serves UDPFS only. The default UDPBD\n'
+              printf '  protocol needs a separately-obtained udpbd-server (https://github.com/rickgaiser/udpbd),\n'
+              printf '  or pick UDPFS to use the in-box server.\n'
             else
               printf '  (Could not bundle Neutrino this run -- please grab the latest build from the link above.)\n'
             fi

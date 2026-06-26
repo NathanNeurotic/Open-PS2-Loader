@@ -409,6 +409,12 @@ static void bdmLoadBlockDeviceModules(void)
             if (bdmLoadOptionalModuleArgs("SMAP_UDPBD", &smap_udpbd_irx, size_smap_udpbd_irx, (int)strlen(ipArg) + 1, ipArg) >= 0)
                 udpbdModLoaded = 1;
         }
+        // Release the dev9 reference taken above if the load failed -- otherwise a failing/retrying
+        // UDPBD/UDPFS (both gates re-enter on every device refresh while !udpbdModLoaded) inflates the
+        // refcounted dev9InitCount and a later HDD/ETH teardown can never power dev9 down. On success
+        // the reference is intentionally kept (the device stays mounted). Mirrors ETH/HDD pairing.
+        if (!udpbdModLoaded)
+            sysShutdownDev9();
     }
 
     SignalSema(bdmLoadModuleLock);
@@ -663,6 +669,13 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
 
     if (pDeviceData == NULL || vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
         return;
+    // POPSTARTER does its own IOP reset and reloads its block drivers from the MC -- it can't bring up
+    // the network (udp) block device (no BDMA variant for it), so a PS1 VCD on the udp device would just
+    // drop to OSDSYS. Abort cleanly with a message instead of a dead launch.
+    if (pDeviceData->bdmDeviceType == BDM_TYPE_UDPBD) {
+        guiMsgBox(_l(_STR_VCD_NOT_ON_NET), 0, NULL);
+        return;
+    }
     snprintf(vcdPrefix, sizeof(vcdPrefix), "%s", pDeviceData->bdmPrefix);
     if (!vcdResolvePopstarter(vcdPrefix, vcdElf, sizeof(vcdElf))) {
         guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
@@ -957,13 +970,17 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
         neutrinoPath = sbResolveNeutrinoPath(pDeviceData->bdmPrefix); // #300: AUTO also probes this USB/mass device for a co-located neutrino.elf
+        // The udp (UDPBD/UDPFS) device has no embedded cdvdman backend, so the _STR_NEUTRINO_* warnings'
+        // "...launching with <OPL> core" tail is a false promise there (the launch just aborts below).
+        // Show the network-specific message instead so the user understands the abort.
+        int isUdp = bdmDriverIsUDPBD(bdmCurrentDriver);
         if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
             // isValidIsoName() admits .zso case-insensitively and game->extension is stored
             // verbatim, so an upper/mixed-case ".ZSO" must reject here too (Neutrino can't run it).
-            guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
+            guiWarning(_l(isUdp ? _STR_NET_NEEDS_NEUTRINO : _STR_NEUTRINO_BAD_FORMAT), 6);
             coreLoader = 0;
         } else if (neutrinoPath == NULL) {
-            guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+            guiWarning(_l(isUdp ? _STR_NET_NEEDS_NEUTRINO : _STR_NEUTRINO_NOT_FOUND), 6);
             coreLoader = 0;
         }
 
@@ -1076,7 +1093,7 @@ static int bdmGetTextId(item_list_t *itemList)
     else if (bdmDriverIsATA(pDeviceData->bdmDriver))
         mode = _STR_HDD_GAMES;
     else if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
-        mode = _STR_UDPBD_GAMES;
+        mode = (gNetBootProtocol == NET_BOOT_UDPFS) ? _STR_UDPFS_GAMES : _STR_UDPBD_GAMES; // mirror bdmGetIconId
 
     return mode;
 }
