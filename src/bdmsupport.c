@@ -1108,6 +1108,8 @@ static int bdmGetTextId(item_list_t *itemList)
         mode = _STR_HDD_GAMES;
     else if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
         mode = (gNetBootProtocol == NET_BOOT_UDPFS) ? _STR_UDPFS_GAMES : _STR_UDPBD_GAMES; // mirror bdmGetIconId
+    else if (gEnableUDPBD && gBDMStartMode == START_MODE_DISABLED && itemList->mode == 0)
+        mode = (gNetBootProtocol == NET_BOOT_UDPFS) ? _STR_UDPFS_GAMES : _STR_UDPBD_GAMES;
 
     return mode;
 }
@@ -1127,6 +1129,8 @@ static int bdmGetIconId(item_list_t *itemList)
     else if (bdmDriverIsATA(pDeviceData->bdmDriver))
         mode = HDD_BD_ICON;
     else if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
+        mode = (gNetBootProtocol == NET_BOOT_UDPFS) ? UDPFS_ICON : UDP_ICON;
+    else if (gEnableUDPBD && gBDMStartMode == START_MODE_DISABLED && itemList->mode == 0)
         mode = (gNetBootProtocol == NET_BOOT_UDPFS) ? UDPFS_ICON : UDP_ICON;
 
     return mode;
@@ -1230,9 +1234,11 @@ void bdmInitDevicesData()
             opl_io_module_t *pOwner = (opl_io_module_t *)bdmDeviceList[i].owner;
 
             if (gBDMStartMode == START_MODE_DISABLED) {
-                pOwner->menuItem.visible = 0;
-                if (gEnableUDPBD) {
+                if (gEnableUDPBD && i == 0) {
+                    pOwner->menuItem.visible = 1;
                     ((bdm_device_data_t *)bdmDeviceList[i].priv)->bdmDeviceTick = -1;
+                } else {
+                    pOwner->menuItem.visible = 0;
                 }
             } else if (gBDMStartMode == START_MODE_MANUAL) {
                 // If BDM has already been started then make the page invisible and reset the bdm tick counter so visibility status is refreshed
@@ -1372,8 +1378,12 @@ int bdmUpdateDeviceData(item_list_t *itemList)
         // Device has been removed, make the menu item invisible. We can't really cleanup resources (like the game list) just yet
         // as we don't know if the data is being used asynchronously.
         if (itemList->owner != NULL) {
-            LOG("bdmUpdateDeviceData: setting device %d invisible\n", itemList->mode);
-            ((opl_io_module_t *)itemList->owner)->menuItem.visible = 0;
+            if (pDeviceData->bdmDeviceType == BDM_TYPE_UDPBD || (gEnableUDPBD && gBDMStartMode == START_MODE_DISABLED && itemList->mode == 0)) {
+                // Keep Network Boot page visible always
+            } else {
+                LOG("bdmUpdateDeviceData: setting device %d invisible\n", itemList->mode);
+                ((opl_io_module_t *)itemList->owner)->menuItem.visible = 0;
+            }
         }
 
         pDeviceData->FoldersCreated = 0;
