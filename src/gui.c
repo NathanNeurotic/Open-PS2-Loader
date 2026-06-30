@@ -833,9 +833,11 @@ void guiShowNetConfig(void)
     diaSetEnum(diaNetConfig, NETCFG_ETHOPMODE, ethOpModes);
 
     // upload current values
-    diaSetInt(diaNetConfig, NETCFG_SHOW_ADVANCED_OPTS, 0);
-    diaSetEnabled(diaNetConfig, NETCFG_ETHOPMODE, 0);
-    diaSetEnabled(diaNetConfig, NETCFG_SHARE_PORT, 0);
+    // RiptOPL: open the Network Config with advanced options ON so the SMB Port + ETH op-mode are
+    // immediately editable (was OFF -> both fields greyed until the user toggled advanced on).
+    diaSetInt(diaNetConfig, NETCFG_SHOW_ADVANCED_OPTS, 1);
+    diaSetEnabled(diaNetConfig, NETCFG_ETHOPMODE, 1);
+    diaSetEnabled(diaNetConfig, NETCFG_SHARE_PORT, 1);
 
     diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ps2_ip_use_dhcp);
     diaSetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, gPCShareAddressIsNetBIOS);

@@ -14,7 +14,7 @@ struct UIItem diaNetConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SHOW_ADVANCED_OPTS}}},
     {UI_SPACER},
-    {UI_BOOL, NETCFG_SHOW_ADVANCED_OPTS, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, NETCFG_SHOW_ADVANCED_OPTS, 1, 1, -1, 0, 0, {.intvalue = {1, 0}}}, // RiptOPL: advanced ON by default (port/op-mode editable)
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ETH_OPMODE}}},
@@ -104,7 +104,7 @@ struct UIItem diaNetConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PORT}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_SHARE_PORT, 1, 1, -1, 0, 0, {.intvalue = {445, 445, 0, 65535}}},
+    {UI_INT, NETCFG_SHARE_PORT, 1, 1, -1, 0, 0, {.intvalue = {1000, 1000, 0, 65535}}}, // RiptOPL default SMB port 1000 (was 445)
     {UI_BREAK},
 
     {UI_BREAK},

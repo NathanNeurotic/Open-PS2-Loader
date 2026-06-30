@@ -2181,7 +2181,7 @@ static void setDefaults(void)
     ps2_dns[1] = 168;
     ps2_dns[2] = 0;
     ps2_dns[3] = 1;
-    gPCPort = 445;
+    gPCPort = 1000; // RiptOPL default SMB port (was 445); paired with "advanced options on" so it's freely editable
     gPCShareName[0] = '\0';
     gPCUserName[0] = '\0';
     gPCPassword[0] = '\0';
@@ -2227,8 +2227,8 @@ static void setDefaults(void)
     gYSensitivity = 1;
 
     gBDMStartMode = START_MODE_MANUAL;
-    gHDDStartMode = START_MODE_MANUAL;
-    gETHStartMode = START_MODE_MANUAL;
+    gHDDStartMode = START_MODE_DISABLED; // RiptOPL: APA/PFS HDD OFF by default (was Manual); user opts in
+    gETHStartMode = START_MODE_DISABLED; // RiptOPL: network/SMB OFF by default (was Manual); user opts in
     gAPPStartMode = START_MODE_MANUAL;
     gMMCEStartMode = START_MODE_MANUAL;
     gFAVStartMode = START_MODE_MANUAL;
@@ -2243,7 +2243,7 @@ static void setDefaults(void)
     gEnableUSB = 1;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
-    gEnableBdmHDD = 0;
+    gEnableBdmHDD = 0; // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
     gEnableUDPBD = 0;                  // OFF by default: needs a PC-side UDPBD server, and is NIC-exclusive with SMB
     gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)
 
