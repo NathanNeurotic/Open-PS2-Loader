@@ -36,7 +36,7 @@ static base_game_info_t *mmceGames;
 // otherwise the game boots while the card is still mounting and freezes at its MC check (issue #50,
 // cross-device path). A prior change had collapsed the per-poll gap to a sub-ms nopdelay(), which
 // gutted the wait so it returned in well under a second; a real sleep restores it.
-#define MMCE_GAMEID_WAIT_TICKS    15      // max polls of the card-switch busy bit
+#define MMCE_GAMEID_WAIT_TICKS    15           // max polls of the card-switch busy bit
 #define MMCE_GAMEID_POLL_US       (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
 /* Allow up to 500 ms for the art thread to drain before resorting to
  * TerminateThread.  The MMCE worker checks the abort flag between every
