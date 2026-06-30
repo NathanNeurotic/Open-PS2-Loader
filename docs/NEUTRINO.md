@@ -158,6 +158,15 @@ different wire protocol and needs a **different PC server**:
   bundled Neutrino folder's `config/` — no manual setup. (If you assembled Neutrino yourself, copy RiptOPL's
   `neutrino/bsd-udpfsbd.toml` into your `mc?:/neutrino/config/`.)
 
+> **Why `udpfsbd` and not stock `-bsd=udpfs`?** They select **different drivers**. Stock `-bsd=udpfs`
+> loads Neutrino's **FHI filesystem** chain (`udpfs_ioman` / `udpfs_fhi`, no `i_bdm`), which registers
+> **no `massN:` block device** — and OPL's whole network game list is a `massN:` block scan, so that
+> token would leave the **UDPFS Games** tab **empty**. `-bsd=udpfsbd` loads `udpfs_bd.irx`, which
+> registers the `udp` block device OPL mounts as `massN:` — the same path USB / MX4SIO / iLink / HDD
+> use, and what the list, covers, per-game settings, and fragment-list launch all require. So the
+> bundled `udpfs_server.py` must run in **block mode** (`-b <fat/exFAT image>`), not loose-ISO mode
+> (`-d <dir>`). Stock NHDDL uses the FHI/loose-ISO model; OPL deliberately does not.
+
 ## 5. Core-aware per-game settings
 
 The per-game settings adapt to the **Loader Core** chosen for that title, so you only see
