@@ -104,7 +104,7 @@ struct UIItem diaNetConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PORT}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_SHARE_PORT, 1, 1, -1, 0, 0, {.intvalue = {1000, 1000, 0, 65535}}}, // RiptOPL default SMB port 1000 (was 445)
+    {UI_INT, NETCFG_SHARE_PORT, 1, 1, -1, 0, 0, {.intvalue = {1024, 1024, 0, 65535}}}, // RiptOPL default SMB port 1024 (lowest non-privileged; was 445)
     {UI_BREAK},
 
     {UI_BREAK},

@@ -263,9 +263,19 @@ on the host machine or NAS device and make sure that it has full read and
 write permissions. USB Advance/Extreme format is optional - \*.ISO images
 are supported using the folder structure above.
 
+> **RiptOPL network defaults:** Network/SMB is **off by default** — turn it on under
+> **Device Settings** (and set your IP in **Network Config**) before the **NET Games** tab
+> appears. The default **SMB Port is `1024`** — the lowest non-privileged port, so a server
+> binds it without admin/root. **Network Config** now opens with **advanced options on**, so
+> the **Port** field (and ETH link mode) are editable immediately. If Windows 10/11 has
+> disabled SMB1/NTLMv1, use the bundled pure-Python server in
+> **[`pc/smbserver/`](pc/smbserver/README.md)**, which also defaults to port **1024** so OPL
+> and the server agree out of the box (point OPL at this PC's LAN IP, blank user/pass = guest).
+
 ## HDD
 	
-For PS2, 48-bit LBA internal HDDs are supported. The HDD can be formatted as:
+Both PS2 HDD types are **off by default** in RiptOPL — enable the one you use under **Device
+Settings**. For PS2, 48-bit LBA internal HDDs are supported. The HDD can be formatted as:
 
 - APA partitioning with PFS filesystem (up to 2TB)
 	- OPL will create the `+OPL` partition on the HDD.  To avoid this, you can create a text file at the location `hdd0:__common:pfs:OPL/conf_hdd.txt` that contains the preferred partition name (for example `__common`).
