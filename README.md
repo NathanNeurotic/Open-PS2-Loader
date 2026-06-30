@@ -265,11 +265,11 @@ are supported using the folder structure above.
 
 > **RiptOPL network defaults:** Network/SMB is **off by default** — turn it on under
 > **Device Settings** (and set your IP in **Network Config**) before the **NET Games** tab
-> appears. The default **SMB Port is `1024`** — the lowest non-privileged port, so a server
+> appears. The default **SMB Port is `1111`** — a non-privileged port (>1024), so a server
 > binds it without admin/root. **Network Config** now opens with **advanced options on**, so
 > the **Port** field (and ETH link mode) are editable immediately. If Windows 10/11 has
 > disabled SMB1/NTLMv1, use the bundled pure-Python server in
-> **[`pc/smbserver/`](pc/smbserver/README.md)**, which also defaults to port **1024** so OPL
+> **[`pc/smbserver/`](pc/smbserver/README.md)**, which also defaults to port **1111** so OPL
 > and the server agree out of the box (point OPL at this PC's LAN IP, blank user/pass = guest).
 
 ## HDD

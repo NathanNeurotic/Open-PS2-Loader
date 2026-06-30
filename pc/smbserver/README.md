@@ -40,8 +40,8 @@ python smbserver_opl.py --share games=D:/PS2Games
 It prints something like:
 
 ```
- RiptOPL SMBv1 server -- listening on 0.0.0.0:1024
- In OPL  ->  SMB Server IP: 192.168.1.50   Port: 1024   user/pass: blank (guest)
+ RiptOPL SMBv1 server -- listening on 0.0.0.0:1111
+ In OPL  ->  SMB Server IP: 192.168.1.50   Port: 1111   user/pass: blank (guest)
             Share: games   ->   D:\PS2Games   (writable)
  (writable -- OPL can save settings + VMC-on-SMB here; pass --read-only to lock it)
 ```
@@ -52,7 +52,7 @@ Then in OPL → **Settings → Network**:
 |------------------|----------------------------------------|
 | Address type     | **IP address** (turn NetBIOS *off*)    |
 | PC IP Address    | the LAN IP the server printed          |
-| **Port**         | **1024** (the printed port)            |
+| **Port**         | **1111** (the printed port)            |
 | Share            | `games`                                |
 | User / Password  | **blank** (guest)                      |
 
@@ -62,7 +62,7 @@ Save, and your network games should populate from the share.
 
 ```
 --share NAME=PATH   a share to export (repeatable), e.g. --share apps=E:/PS2Apps
---port N            TCP port (default 1024). If it's taken, the server walks forward
+--port N            TCP port (default 1111). If it's taken, the server walks forward
                     and prints the real one — just match OPL's Port field to it.
 --bind ADDR         interface to bind (default 0.0.0.0 = all)
 --read-only         serve the share read-only (no saves / no VMC writes); default is writable
@@ -86,7 +86,7 @@ makes the server sit on the standard port 445. Windows still holds 445 via its o
 sharing) while the server runs, and **restarts it on exit**. It needs an **Administrator** shell.
 
 It only *stops* the service (never disables it), so even a hard kill self-heals on the next
-reboot. Still — the plain `--port 1024` default is simpler and touches nothing; prefer it unless
+reboot. Still — the plain `--port 1111` default is simpler and touches nothing; prefer it unless
 you specifically need 445.
 
 ## Status / testing

@@ -2181,7 +2181,7 @@ static void setDefaults(void)
     ps2_dns[1] = 168;
     ps2_dns[2] = 0;
     ps2_dns[3] = 1;
-    gPCPort = 1024; // RiptOPL default SMB port (was 445): 1024 = lowest non-privileged port, so the bundled pc/smbserver/ binds it without admin/root; paired with "advanced options on" so it's freely editable
+    gPCPort = 1111; // RiptOPL default SMB port (was 445): 1111 is a non-privileged port (>1024), so the bundled pc/smbserver/ binds it without admin/root; paired with "advanced options on" so it's freely editable
     gPCShareName[0] = '\0';
     gPCUserName[0] = '\0';
     gPCPassword[0] = '\0';

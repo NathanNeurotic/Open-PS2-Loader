@@ -17,7 +17,7 @@ REM    --take-445     use the standard port 445 (admin; pauses Windows file shar
 REM    add a 2nd share:  --share apps="E:\PS2Apps"
 REM ============================================================================
 set "GAMES=D:\PS2Games"
-set "PORT=1024"
+set "PORT=1111"
 REM ============================================================================
 
 REM A folder dragged onto this .bat overrides the GAMES setting above.
