@@ -2243,7 +2243,7 @@ static void setDefaults(void)
     gEnableUSB = 1;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
-    gEnableBdmHDD = 0; // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
+    gEnableBdmHDD = 0;                 // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
     gEnableUDPBD = 0;                  // OFF by default: needs a PC-side UDPBD server, and is NIC-exclusive with SMB
     gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)
 
