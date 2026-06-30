@@ -814,6 +814,10 @@ gui_strings:
   string: Extra Args
 - label: NARGS_AUTO_NOTE
   string: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
+- label: POPSTARTER_DEVICE
+  string: POPSTARTER.ELF Device
+- label: HINT_POPSTARTER_DEVICE
+  string: Device holding POPS/POPSTARTER.ELF for PS1 VCD launches. Default = boot device (cwd) then the VCD's own device. Custom reveals a free-text path.
 - label: POPSTARTER_PATH
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH

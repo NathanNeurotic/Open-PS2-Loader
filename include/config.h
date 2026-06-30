@@ -97,9 +97,10 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_PS2LOGO              "ps2logo"
 #define CONFIG_OPL_NEUTRINO_ARGS        "neutrino_args"
 #define CONFIG_OPL_NEUTRINO_PATH        "neutrino_path"
-#define CONFIG_OPL_NEUTRINO_DEVICE      "neutrino_device"  // legacy device-INDEX (mc0/mass0/mmce0); read-only, migrated
-#define CONFIG_OPL_NEUTRINO_DEVTYPE     "neutrino_devtype" // device-TYPE (NEUTRINO_DEV_*); the live key
-#define CONFIG_OPL_POPSTARTER_PATH      "popstarter_path"
+#define CONFIG_OPL_NEUTRINO_DEVICE      "neutrino_device"   // legacy device-INDEX (mc0/mass0/mmce0); read-only, migrated
+#define CONFIG_OPL_NEUTRINO_DEVTYPE     "neutrino_devtype"  // device-TYPE (NEUTRINO_DEV_*); the live key
+#define CONFIG_OPL_POPSTARTER_PATH      "popstarter_path"   // free-text custom path (used only when device=Custom)
+#define CONFIG_OPL_POPSTARTER_DEVICE    "popstarter_device" // device TYPE holding POPS/POPSTARTER.ELF (POPS_DEV_*)
 #define CONFIG_OPL_BDMA_SOURCE          "bdma_source"
 #define CONFIG_OPL_BDMA_APPLY           "bdma_apply_launch"
 #define CONFIG_OPL_WRITE_POPS_NET       "write_popstarter_net"

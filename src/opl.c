@@ -190,7 +190,8 @@ char gExitPath[256];
 char gNeutrinoArgs[256];   // extra command-line flags appended to every Neutrino launch
 char gNeutrinoPath[256];   // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
 int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy gNeutrinoPath
-char gPopstarterPath[256]; // custom POPSTARTER.ELF path; "" -> fall back to <device>/POPS/POPSTARTER.ELF
+char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
+int gPopstarterDevice;     // POPSTARTER.ELF device (POPS_DEV_*); Default = cwd then VCD device; legacy path -> Custom
 int gBdmaSource;           // BDMA SOURCE device family (VCD_BDMA_SRC_*) to read exFAT driver variants from
 int gBdmaMode;             // BDMA MODE last reflected from the mc?:/POPSTARTER/ marker (VCD_BDMA_*); not persisted
 int gBdmaApplyOnLaunch;    // auto-equip the launched VCD's matching exFAT driver before boot (1=on, default)
@@ -964,7 +965,8 @@ static void writeConfigPathRedirect(const char *path)
 // once in main() from argv[0] (the launcher's boot path), with getcwd() as a backup. Stays empty only
 // when the boot path is undeterminable, in which case _loadConfig/_saveConfig fall back to the legacy
 // discovery as a last-ditch sanity so OPL is never left with no config at all.
-static char gBootDir[256];
+// Non-static: vcdResolvePopstarter() reads it for the POPSTARTER "Default = cwd" resolution tier.
+char gBootDir[256];
 
 static void setBootDir(const char *bootPath)
 {
@@ -1328,6 +1330,10 @@ static void _loadConfig()
                 }
             }
             configGetStrCopy(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath, sizeof(gPopstarterPath));
+            // POPSTARTER device TYPE (POPS_DEV_*). Absent in legacy configs: a non-empty custom
+            // popstarter_path migrates to Custom (honour the old override); otherwise Default (cwd).
+            if (!configGetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, &gPopstarterDevice))
+                gPopstarterDevice = (gPopstarterPath[0] != '\0') ? POPS_DEV_CUSTOM : POPS_DEV_DEFAULT;
             configGetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, &gBdmaSource);
             configGetInt(configOPL, CONFIG_OPL_BDMA_APPLY, &gBdmaApplyOnLaunch);
             configGetInt(configOPL, CONFIG_OPL_WRITE_POPS_NET, &gWritePopstarterNet);
@@ -1550,6 +1556,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice); // device-TYPE (NEUTRINO_DEV_*); the legacy neutrino_device key is left as-is
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
+        configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
         configSetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, gBdmaSource);
         configSetInt(configOPL, CONFIG_OPL_BDMA_APPLY, gBdmaApplyOnLaunch);
         configSetInt(configOPL, CONFIG_OPL_WRITE_POPS_NET, gWritePopstarterNet);
@@ -2186,6 +2193,7 @@ static void setDefaults(void)
     gNeutrinoPath[0] = '\0';
     gNeutrinoDevice = NEUTRINO_DEV_AUTO;
     gPopstarterPath[0] = '\0';
+    gPopstarterDevice = POPS_DEV_DEFAULT;
     gBdmaSource = VCD_BDMA_SRC_USB;
     gBdmaMode = VCD_BDMA_FAT32;
     gBdmaApplyOnLaunch = 1; // auto-equip on launch by default (the MX4SIO->OSDSYS fix)

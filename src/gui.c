@@ -452,6 +452,7 @@ static int guiUpdater(int modified)
 {
     int showAutoStartLast;
     int bdmaApply;
+    int popsDev;
 
     if (modified) {
         diaGetInt(diaConfig, CFG_LASTPLAYED, &showAutoStartLast);
@@ -464,6 +465,11 @@ static int guiUpdater(int modified)
         diaSetVisible(diaConfig, CFG_BDMASOURCE, !bdmaApply);
         diaSetVisible(diaConfig, CFG_LBL_BDMAMODE, !bdmaApply);
         diaSetVisible(diaConfig, CFG_BDMAMODE, !bdmaApply);
+
+        // Reveal the free-text POPSTARTER.ELF Path field only when the device picker is "Custom".
+        diaGetInt(diaConfig, CFG_POPSTARTER_DEVICE, &popsDev);
+        diaSetVisible(diaConfig, CFG_LBL_POPSTARTER_PATH, popsDev == POPS_DEV_CUSTOM);
+        diaSetVisible(diaConfig, CFG_POPSTARTER_PATH, popsDev == POPS_DEV_CUSTOM);
     }
     return 0;
 }
@@ -509,6 +515,11 @@ void guiShowConfig()
     const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", NULL}; // device TYPE holding /neutrino/neutrino.elf (NEUTRINO_DEV_*)
     diaSetEnum(diaConfig, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
     diaSetInt(diaConfig, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);
+    // POPSTARTER.ELF device TYPE holding POPS/POPSTARTER.ELF (POPS_DEV_*). MUST stay in sync with the
+    // resolution switch in vcdResolvePopstarter() (vcdsupport.c). Custom reveals the free-text path below.
+    const char *popsDevStrs[] = {_l(_STR_DEFAULT), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", "Custom", NULL};
+    diaSetEnum(diaConfig, CFG_POPSTARTER_DEVICE, popsDevStrs);
+    diaSetInt(diaConfig, CFG_POPSTARTER_DEVICE, gPopstarterDevice);
     diaSetString(diaConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
     // These path fields auto-resolve a built-in default when blank, so show a dim "Default"
     // placeholder rather than "<not set>" -- the empty value (and thus the fallback) is kept.
@@ -531,6 +542,9 @@ void guiShowConfig()
     diaSetVisible(diaConfig, CFG_BDMASOURCE, !gBdmaApplyOnLaunch);
     diaSetVisible(diaConfig, CFG_LBL_BDMAMODE, !gBdmaApplyOnLaunch);
     diaSetVisible(diaConfig, CFG_BDMAMODE, !gBdmaApplyOnLaunch);
+    // POPSTARTER.ELF Path is the Custom-only escape hatch; seed it hidden unless the picker is Custom.
+    diaSetVisible(diaConfig, CFG_LBL_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
+    diaSetVisible(diaConfig, CFG_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
 
     diaSetInt(diaConfig, CFG_ENWRITEOP, gEnableWrite);
     diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
@@ -551,6 +565,7 @@ reshow_config:
         diaGetInt(diaConfig, CFG_PS2LOGO, &gPS2Logo);
         diaGetString(diaConfig, CFG_EXITTO, gExitPath, sizeof(gExitPath));
         diaGetInt(diaConfig, CFG_NEUTRINO_DEVICE, &gNeutrinoDevice);
+        diaGetInt(diaConfig, CFG_POPSTARTER_DEVICE, &gPopstarterDevice);
         {
             // The dialog field is char[32]; only adopt the typed value if it actually changed, so
             // opening+saving General Settings never truncates a longer path stored via the cfg.

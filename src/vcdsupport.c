@@ -108,18 +108,95 @@ static char vcdSep(const char *devPrefix)
     return (n > 0 && devPrefix[n - 1] == '\\') ? '\\' : '/';
 }
 
+// Probe POPS/POPSTARTER.ELF on a device root given WITHOUT a trailing separator ("mass0", "mc0", "pfs0").
+// Tries "<root>:/POPS/..." then "<root>:POPS/..." and returns 1 with `out` filled on the first hit.
+static int vcdTryPopsAtRoot(const char *root, char *out, int outSize)
+{
+    static const char *forms[] = {"%s:/" POPS_FOLDER "/POPSTARTER.ELF", "%s:" POPS_FOLDER "/POPSTARTER.ELF"};
+    int i;
+    for (i = 0; i < 2; i++) {
+        snprintf(out, outSize, forms[i], root);
+        int fd = open(out, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
 {
     if (out == NULL || outSize <= 0)
         return 0;
 
-    // A custom POPSTARTER.ELF path from General Settings wins -- but ONLY if it actually exists;
-    // otherwise we quietly fall back to the per-device <dev>/POPS/POPSTARTER.ELF.
-    if (gPopstarterPath[0] != '\0') {
+    // POPSTARTER.ELF Device (gPopstarterDevice, General Settings): Custom free-text path | a device TYPE
+    // (mc/usb/mx4sio/mmce/exfat/apa) -> <root>:/POPS/POPSTARTER.ELF | Default -> the boot device (cwd)
+    // then the VCD's own device. Each candidate is open()-probed; a miss falls through to the next tier.
+    // NOTE: this serves the bdm/eth/mmce launch paths; the HDD VCD launch keeps its own freeze-guarded
+    // hddResolveHddPopstarter (the __common/+OPL pfs search), so HDD VCDs always load POPSTARTER off the HDD.
+
+    // CUSTOM: the free-text path wins, if it exists.
+    if (gPopstarterDevice == POPS_DEV_CUSTOM && gPopstarterPath[0] != '\0') {
         int cfd = open(gPopstarterPath, O_RDONLY);
         if (cfd >= 0) {
             close(cfd);
             snprintf(out, outSize, "%s", gPopstarterPath);
+            return 1;
+        }
+        // Custom set but missing -> fall through to Default below.
+    }
+
+    // A specific device TYPE -> resolve its live root, then probe <root>:/POPS/POPSTARTER.ELF.
+    {
+        int bt = -1;
+        switch (gPopstarterDevice) {
+            case POPS_DEV_MC:
+                if (vcdTryPopsAtRoot("mc0", out, outSize) || vcdTryPopsAtRoot("mc1", out, outSize))
+                    return 1;
+                break;
+            case POPS_DEV_MMCE:
+                if (vcdTryPopsAtRoot("mmce0", out, outSize) || vcdTryPopsAtRoot("mmce1", out, outSize))
+                    return 1;
+                break;
+            case POPS_DEV_USB:
+                bt = BDM_TYPE_USB;
+                break;
+            case POPS_DEV_MX4SIO:
+                bt = BDM_TYPE_SDC;
+                break;
+            case POPS_DEV_EXFAT_HDD:
+                bt = BDM_TYPE_ATA;
+                break;
+            case POPS_DEV_APA_HDD:
+                // pfs0: is the already-mounted OPL data partition; a plain open() is safe (no remount).
+                if (vcdTryPopsAtRoot("pfs0", out, outSize))
+                    return 1;
+                break;
+            default:
+                break;
+        }
+        if (bt >= 0) {
+            char root[BDM_DEVICE_ROOT_MAX];
+            if (bdmGetDeviceRootByType(bt, root, sizeof(root))) {
+                char *colon = strchr(root, ':');
+                if (colon)
+                    *colon = '\0'; // "massN:/" -> "massN"
+                if (vcdTryPopsAtRoot(root, out, outSize))
+                    return 1;
+            }
+        }
+        // A TYPE was chosen but its device has no POPSTARTER.ELF -> fall through to Default.
+    }
+
+    // DEFAULT (or any miss above): the boot device (cwd) first, then the VCD's own device.
+    if (gBootDir[0] != '\0') {
+        size_t bl = strlen(gBootDir);
+        const char *joiner = (gBootDir[bl - 1] == '/') ? "" : "/"; // gBootDir ends in ':' or a folder name
+        snprintf(out, outSize, "%s%s%s/POPSTARTER.ELF", gBootDir, joiner, POPS_FOLDER);
+        int fd = open(out, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
             return 1;
         }
     }
