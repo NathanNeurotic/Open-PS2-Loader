@@ -74,30 +74,33 @@ which one the PS2 loads at runtime.</p>
 <tr>
   <td><b>UDPBD</b></td>
   <td>SUDPBDv2</td>
-  <td><code>udpbd-server</code> (rickgaiser/udpbd)</td>
+  <td><code>udpbd-server</code> (<a href="https://github.com/israpps/udpbd-server">israpps</a>) or <a href="https://github.com/pcm720/udpfsd">udpfsd</a></td>
   <td><code>-bsd=udpbd</code></td>
   <td>Single monolithic <code>smap_udpbd.irx</code></td>
 </tr>
 <tr>
   <td><b>UDPFS</b></td>
   <td>UDPRDMA</td>
-  <td><code>udpfs_server.py</code> (inside the bundled Neutrino archive)</td>
+  <td><code>udpfs_server.py</code> (bundled) or <a href="https://github.com/pcm720/udpfsd">udpfsd</a></td>
   <td><code>-bsd=udpfsbd</code></td>
   <td>3-IRX chain: <code>smap → ministack → udpfs_bd</code></td>
 </tr>
 </tbody>
 </table>
 
-<p><b>The two protocols are wire-incompatible.</b> UDPBD's <code>udpbd-server</code> will not
-talk to a UDPFS client and vice-versa — you must run the server that matches the protocol
-selected on the PS2 side.</p>
+<p><b>The two protocols differ on the wire</b> (SUDPBDv2 vs UDPRDMA), so a UDPBD-only
+<code>udpbd-server</code> will not talk to a UDPFS client and vice-versa — run a server that speaks
+the protocol selected on the PS2 side. <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a>
+(a single Go binary, no Python) speaks <b>both</b>, so it works either way.</p>
 
 <details class="deep"><summary>Where is udpfs_server.py?</summary>
 <p>The RiptOPL release package (<code>RIPTOPL-*.zip</code>) includes a bundled Neutrino archive
 (<code>neutrino_*.7z</code>) alongside the ELF. Extracting that archive reveals a
 <code>udpfs_server/</code> directory containing <code>udpfs_server.py</code> — that is the PC
 daemon to run when using UDPFS. UDPBD's <code>udpbd-server</code> is a separate project
-(<a href="https://github.com/rickgaiser/udpbd">rickgaiser/udpbd</a>) not bundled with RiptOPL.</p>
+(<a href="https://github.com/israpps/udpbd-server">israpps/udpbd-server</a>, the canonical CI build)
+not bundled with RiptOPL — or use <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a>, which
+serves both protocols.</p>
 </details>
 
 <details class="deep"><summary>Why does UDPFS need a bsd-udpfsbd.toml?</summary>
@@ -116,8 +119,11 @@ into your <code>mc?:/neutrino/config/</code> folder.</p>
   read the IP set in <b>Settings &rarr; Network Settings</b> and use it directly. If DHCP is
   currently on in Network Settings, RiptOPL warns you when you save Device Settings with Network
   Boot newly enabled.</li>
-  <li><b>PC-side server running on the same LAN</b> — <code>udpbd-server</code> for UDPBD, or
-  <code>udpfs_server.py</code> for UDPFS (see above).</li>
+  <li><b>PC-side server running on the same LAN</b> — <code>udpbd-server</code>
+  (<a href="https://github.com/israpps/udpbd-server">israpps</a>) for UDPBD, <code>udpfs_server.py</code>
+  for UDPFS, or <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a> (a no-Python Go binary that
+  serves both). RiptOPL's own <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a>
+  bundles all of them.</li>
   <li><b>SMB / Ethernet must be disabled.</b> Both protocols load a SMAP NIC driver that occupies
   the single Ethernet adapter; SMB loads its own SMAP driver on the same hardware. They are
   mutually exclusive and interlocked in the Device Settings UI — enabling one greys out the other.</li>
@@ -160,6 +166,10 @@ udpbd-server /path/to/games
 
 # UDPFS
 python3 udpfs_server.py /path/to/games
+
+# Either protocol, no Python — pcm720/udpfsd (download a prebuilt binary)
+udpfsd -fsroot /path/to/games          # Linux/macOS
+udpfsd.exe -fsroot C:\path\to\games    # Windows
 </pre>
 </div>
 <div class="step">
