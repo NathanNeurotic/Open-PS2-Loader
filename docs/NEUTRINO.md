@@ -102,7 +102,7 @@ For the full list of flags Neutrino accepts, see the
 ## 4. Network boot — UDPBD / UDPFS (Neutrino-only)
 
 **UDPBD** streams games from a PC over the LAN as a network *block device* (Rick Gaiser's
-[udpbd](https://github.com/rickgaiser/udpbd) protocol). It appears in OPL as its own
+UDPBD / SUDPBDv2 protocol). It appears in OPL as its own
 **UDPBD Games** list — with covers and per-game settings — exactly like a USB drive, because
 to OPL it *is* just another block device (it mounts `massN:`). It has **no built-in OPL core
 backend**, so UDPBD games **always launch via Neutrino** (`-bsd=udpbd`); OPL forces the
@@ -111,12 +111,14 @@ the menu (there is no `<OPL>` fallback for UDPBD).
 
 ### Requirements
 
-- A PC-side UDPBD server speaking **SUDPBDv2** (e.g. `udpbd-server` from
-  [rickgaiser/udpbd](https://github.com/rickgaiser/udpbd)) on the same LAN, exporting a FAT/exFAT
-  block device laid out with the usual OPL folders (`CD`, `DVD`, `ART`, `CFG`, …). **The
-  `udpfs_server.py` bundled in the Neutrino folder is UDPFS-only and will not serve UDPBD** — for the
-  default UDPBD protocol you must obtain a `udpbd-server` separately, or pick **UDPFS** (whose server
-  ships in the box — see below).
+- A PC-side UDPBD server speaking **SUDPBDv2**, on the same LAN, exporting a FAT/exFAT block device
+  laid out with the usual OPL folders (`CD`, `DVD`, `ART`, `CFG`, …). Good options, in order:
+  **[NathanNeurotic/PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)** — RiptOPL's own
+  one-stop bundle (SMBv1 + UDPBD + UDPFS servers); **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)**
+  — a single prebuilt Go binary that serves **both** UDPBD *and* UDPFS (Windows/macOS/Linux/ARM, no
+  Python); or **[israpps/udpbd-server](https://github.com/israpps/udpbd-server)** — the canonical Rick
+  Gaiser `udpbd-server` (CI-built). The bundled `udpfs_server.py` speaks **UDPFS only**, so for the
+  default UDPBD protocol use one of the above (pcm720/udpfsd covers both).
 - A **static** PS2 IP. The UDPBD module has no DHCP client and reuses the address from
   **Settings → Network Config**, so set a static IP there. OPL warns you if DHCP is on at the
   moment you enable UDPBD.
@@ -145,9 +147,12 @@ protocol-specific network fields**.
 (labelled **UDPFS Games**), covers, per-game settings, static-IP requirement, and SMB mutual-exclusion — but it speaks a
 different wire protocol and needs a **different PC server**:
 
-- **PC server:** **`udpfs_server.py`**, which ships *inside* the bundled Neutrino folder
-  (`neutrino/udpfs_server/` in the release package). UDPBD's `udpbd-server` will **not** talk to
-  UDPFS and vice-versa — match the server to the protocol you pick.
+- **PC server:** the bundled **`udpfs_server.py`** (ships inside the Neutrino folder in the release
+  package; needs Python 3), or — recommended for Windows, low-end hosts, or no-Python setups —
+  **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)**, a single prebuilt Go binary
+  (`udpfsd -fsroot <games-dir>`) that serves both UDPFS *and* UDPBD. The two protocols differ on the
+  wire (SUDPBDv2 vs UDPRDMA), so a UDPBD-only `udpbd-server` will not talk to UDPFS — but pcm720/udpfsd
+  speaks both, so it works whichever protocol you pick.
 - **Launch:** OPL launches UDPFS games with **`-bsd=udpfsbd`**. Neutrino ships `udpfs_bd.irx` but
   has no stock `-bsd` token for it, so RiptOPL **auto-places `config/bsd-udpfsbd.toml`** into the
   bundled Neutrino folder's `config/` — no manual setup. (If you assembled Neutrino yourself, copy RiptOPL's

@@ -123,9 +123,10 @@ This build layers several features on top of upstream OPL:
   section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--udpbd--udpfs-neutrino-only)**.
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
   alongside UDPBD. A **Net Boot Protocol** picker under **Device Settings** chooses **UDPBD** or
-  **UDPFS**; UDPFS launches via `-bsd=udpfsbd` with a bundled `bsd-udpfsbd.toml`, and its PC
-  server (`udpfs_server.py`) ships *inside* the bundled Neutrino folder — match the server to the
-  protocol you pick. Same static-IP and SMB-exclusivity rules as UDPBD.
+  **UDPFS**; UDPFS launches via `-bsd=udpfsbd` with a bundled `bsd-udpfsbd.toml`. Its PC server is
+  the bundled `udpfs_server.py` (Python), or **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** — a
+  prebuilt Go binary (no Python) that serves both UDPBD and UDPFS. Same static-IP and SMB-exclusivity
+  rules as UDPBD.
 - **PS1 games via POPSTARTER (VCD view):** press **L3** on a device page to switch between your
   PS2 discs and a list of PS1 `*.VCD` games on the same device — it's a *view*, not a separate tab.
   A **Default game view** setting (**Both** / **ISO** / **VCD**, default **Both**) can lock a page
