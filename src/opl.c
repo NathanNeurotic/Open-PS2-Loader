@@ -1313,7 +1313,20 @@ static void _loadConfig()
             configGetStrCopy(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath, sizeof(gDefaultBGMPath));
             configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
             configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath, sizeof(gNeutrinoPath));
-            configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &gNeutrinoDevice);
+            // Neutrino Device: prefer the new device-TYPE key; if absent (config predates the picker
+            // change), migrate the legacy device-INDEX value -- 0=Auto, 1/2=mc0/mc1 -> MC, 11/12=
+            // mmce0/mmce1 -> MMCE, 3-10=mass* -> Auto (a bare massN index can't name a driver type).
+            if (!configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, &gNeutrinoDevice)) {
+                int legacyDev = 0;
+                if (configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &legacyDev)) {
+                    if (legacyDev == 1 || legacyDev == 2)
+                        gNeutrinoDevice = NEUTRINO_DEV_MC;
+                    else if (legacyDev == 11 || legacyDev == 12)
+                        gNeutrinoDevice = NEUTRINO_DEV_MMCE;
+                    else
+                        gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+                }
+            }
             configGetStrCopy(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath, sizeof(gPopstarterPath));
             configGetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, &gBdmaSource);
             configGetInt(configOPL, CONFIG_OPL_BDMA_APPLY, &gBdmaApplyOnLaunch);
@@ -1535,7 +1548,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath);
-        configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, gNeutrinoDevice);
+        configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice); // device-TYPE (NEUTRINO_DEV_*); the legacy neutrino_device key is left as-is
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         configSetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, gBdmaSource);
         configSetInt(configOPL, CONFIG_OPL_BDMA_APPLY, gBdmaApplyOnLaunch);

@@ -4,6 +4,7 @@
 #include "include/iosupport.h"
 #include "include/system.h"
 #include "include/supportbase.h"
+#include "include/bdmsupport.h" // bdmGetDeviceRootByType + BDM_TYPE_* for the Neutrino device-TYPE picker
 #include "include/ioman.h"
 #include "modules/iopcore/common/cdvd_config.h"
 #include "include/cheatman.h"
@@ -556,28 +557,45 @@ int sbFileExists(const char *path)
 // so the bdm + mmce launch paths stay in sync.
 const char *sbResolveNeutrinoPath(const char *activePrefix)
 {
-    // Neutrino Device (General Settings): a specific device root overrides everything -- build
-    // <root>:/neutrino/neutrino.elf and probe the folder-case / leading-slash / .ELF spelling
-    // variants for just that root; return the first that exists (or NULL if that root has none).
-    // gNeutrinoDevice indexes this table (0 = Auto); it MUST stay in sync with neutrinoDevStrs[]
-    // (the General Settings picker in gui.c).
-    static const char *roots[] = {
-        NULL, // Auto
-        "mc0",
-        "mc1",
-        "mass0",
-        "mass1",
-        "mass2",
-        "mass3",
-        "mass4",
-        "mass5",
-        "mass6",
-        "mass7",
-        "mmce0",
-        "mmce1",
-    };
-    const char *card = (gNeutrinoDevice > 0 && gNeutrinoDevice < (int)(sizeof(roots) / sizeof(roots[0]))) ? roots[gNeutrinoDevice] : NULL;
-    if (card != NULL) {
+    // Neutrino Device (General Settings): a driver-accurate device TYPE (NEUTRINO_DEV_*) that holds
+    // <root>:/neutrino/neutrino.elf. Resolve the type to its live device-name token(s) -- USB/MX4SIO/
+    // exFAT-HDD via the mounted BDM device, MC/MMCE by slot, APA-HDD via the mounted OPL data partition
+    // (pfs0:) -- then probe each first. The token has NO trailing ':' so the forms[] below add it.
+    char cand[2][BDM_DEVICE_ROOT_MAX];
+    int nCand = 0;
+    switch (gNeutrinoDevice) {
+        case NEUTRINO_DEV_MC:
+            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mc0");
+            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mc1");
+            break;
+        case NEUTRINO_DEV_MMCE:
+            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mmce0");
+            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mmce1");
+            break;
+        case NEUTRINO_DEV_USB:
+        case NEUTRINO_DEV_MX4SIO:
+        case NEUTRINO_DEV_EXFAT_HDD: {
+            int bt = BDM_TYPE_ATA; // NEUTRINO_DEV_EXFAT_HDD
+            if (gNeutrinoDevice == NEUTRINO_DEV_USB)
+                bt = BDM_TYPE_USB;
+            else if (gNeutrinoDevice == NEUTRINO_DEV_MX4SIO)
+                bt = BDM_TYPE_SDC;
+            char bdmRoot[BDM_DEVICE_ROOT_MAX];
+            if (bdmGetDeviceRootByType(bt, bdmRoot, sizeof(bdmRoot))) {
+                char *colon = strchr(bdmRoot, ':'); // "massN:/" -> bare "massN" token
+                if (colon != NULL)
+                    *colon = '\0';
+                snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "%s", bdmRoot);
+            }
+            break;
+        }
+        case NEUTRINO_DEV_APA_HDD:
+            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "pfs0"); // the already-mounted OPL data partition
+            break;
+        default: // AUTO -- no explicit device root
+            break;
+    }
+    if (nCand > 0) {
         static const char *forms[] = {
             "%s:NEUTRINO/neutrino.elf",
             "%s:/neutrino/neutrino.elf",
@@ -587,16 +605,18 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
             "%s:NEUTRINO/NEUTRINO.ELF",
         };
         static char built[64];
-        for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
-            snprintf(built, sizeof(built), forms[i], card);
-            if (sbFileExists(built))
-                return built;
+        for (int c = 0; c < nCand; c++) {
+            for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
+                snprintf(built, sizeof(built), forms[i], cand[c]);
+                if (sbFileExists(built))
+                    return built;
+            }
         }
-        // The picked device had no neutrino.elf -- do NOT dead-end here. Fall through to the AUTO
+        // The picked device TYPE had no neutrino.elf -- do NOT dead-end here. Fall through to the AUTO
         // discovery below (legacy custom path -> active game device co-located -> mc0/mc1) so a picker
         // miss degrades to NHDDL-style cross-device discovery instead of returning NULL (which makes
         // bdmLaunchGame drop to a native launch that can die to OSDSYS -- issue #51). The chosen device
-        // was already tried FIRST above, so an explicit pick is still honoured when it holds the ELF.
+        // was tried FIRST above, so an explicit pick is still honoured when it holds the ELF.
     }
 
     // Auto: a legacy custom path (settings_riptopl.cfg "neutrino_path") wins when it exists;

@@ -209,9 +209,15 @@ extern char gExitPath[256];
 // Extra command-line flags appended to every Neutrino launch
 extern char gNeutrinoArgs[256];
 extern char gNeutrinoPath[256]; // custom neutrino.elf path (General Settings); "" = mc0:/mc1: auto-detect
-enum { NEUTRINO_DEV_AUTO = 0,
-       NEUTRINO_DEV_MC0,
-       NEUTRINO_DEV_MC1 };        // Neutrino Device picker values
+// Neutrino Device picker: a driver-accurate device TYPE that holds <root>:/neutrino/neutrino.elf.
+// (Replaces the old device-INDEX enum mc0/mc1/mass0-7/mmce0/mmce1; legacy ints are migrated on load.)
+enum { NEUTRINO_DEV_AUTO = 0,     // game device, then mc0/mc1 (legacy behaviour)
+       NEUTRINO_DEV_MC,           // mc0: / mc1:
+       NEUTRINO_DEV_USB,          // BDM "usb"        -> the mounted massN:
+       NEUTRINO_DEV_MX4SIO,       // BDM "mx4sio"/sdc -> the mounted massN:
+       NEUTRINO_DEV_MMCE,         // mmce0: / mmce1:
+       NEUTRINO_DEV_EXFAT_HDD,    // BDM "ata" internal exFAT HDD -> the mounted massN:
+       NEUTRINO_DEV_APA_HDD };    // APA HDD: the mounted OPL data partition (pfs0:)
 extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
 extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (General Settings); "" = per-device default
 extern int gBdmaSource;           // BDMA SOURCE device family (VCD_BDMA_SRC_*); persisted in conf
