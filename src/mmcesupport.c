@@ -36,7 +36,8 @@ static base_game_info_t *mmceGames;
 // otherwise the game boots while the card is still mounting and freezes at its MC check (issue #50,
 // cross-device path). A prior change had collapsed the per-poll gap to a sub-ms nopdelay(), which
 // gutted the wait so it returned in well under a second; a real sleep restores it.
-#define MMCE_GAMEID_WAIT_TICKS    15
+#define MMCE_GAMEID_WAIT_TICKS    15      // max polls of the card-switch busy bit
+#define MMCE_GAMEID_POLL_US       (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
 /* Allow up to 500 ms for the art thread to drain before resorting to
  * TerminateThread.  The MMCE worker checks the abort flag between every
  * 4 KB read chunk (~16 ms at typical card speeds), so 500 ms covers
@@ -93,25 +94,27 @@ int mmceSendGameID(const char *startup, const char *protectMcPath)
     if (fileXioDevctl(mmceDevice, 0x8, (void *)startup, (strlen(startup) + 1), NULL, 0) < 0)
         return 0;
 
-    // Send GameID to MMCE and wait until the busy bit clears -- i.e. until the physical card has
-    // finished switching to the per-game folder. Real 500 ms gap per poll (NOT a sub-ms nopdelay), so
-    // the wait actually covers the switch; break the instant it clears (issue #50 cross-device residual).
+    // Wait until the busy bit clears -- i.e. until the physical card has finished switching to the
+    // per-game folder. This runs on the single GUI thread BEFORE deinit, so every millisecond here is a
+    // frozen loading screen. POLL FIRST, sleep only if still busy: a card that switches instantly (the
+    // common case) now costs ~0 ms instead of a guaranteed 500 ms (the old loop slept 500 ms before its
+    // first poll, taxing EVERY cross-device launch -- a regression on slow late-slim MC buses). The total
+    // budget is generous enough (~3 s) to still cover a slow switch before we launch anyway (#50 race),
+    // but no longer the 7.5 s worst case that read as a hard freeze on hardware. Break the instant it clears.
     for (int i = 0; i < MMCE_GAMEID_WAIT_TICKS; i++) {
-        int status;
-
-        DelayThread(500 * 1000); // 500 ms real sleep -- yields the EE so the IOP/device can switch
-
-        status = fileXioDevctl(mmceDevice, 0x2, NULL, 0, NULL, 0);
+        int status = fileXioDevctl(mmceDevice, 0x2, NULL, 0, NULL, 0);
         if (status < 0)
-            break;
+            break; // busy-bit query unsupported/failed -> don't block the launch
 
         if ((status & 1) == 0) {
             LOG("Set MMCE GameID to: %s\n", startup);
-            return 1;
+            return 1; // card finished switching
         }
+
+        DelayThread(MMCE_GAMEID_POLL_US); // still busy -> wait a short interval, then re-poll
     }
 
-    LOG("MMCE GameID switch did not signal ready within %d ms; launching anyway\n", MMCE_GAMEID_WAIT_TICKS * 500);
+    LOG("MMCE GameID switch did not signal ready within %d ms; launching anyway\n", MMCE_GAMEID_WAIT_TICKS * (MMCE_GAMEID_POLL_US / 1000));
     return 1;
 }
 
