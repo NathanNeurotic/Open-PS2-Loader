@@ -20,6 +20,7 @@
 #include <ps2sdkapi.h>
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioIoctl, fileXioDevctl
+#include <delaythread.h> // DelayThread() -- real-sleep gap in the MMCE card-switch wait
 
 static char mmcePrefix[40]; // Contains the full path to the folder where all the games are.
 static char mmceArtPrimary[40];
@@ -29,7 +30,13 @@ static time_t mmceModifiedDVDPrev;
 static int mmceGameCount = 0;
 static base_game_info_t *mmceGames;
 
-#define MMCE_GAMEID_WAIT_TICKS    120
+// Card-switch wait: poll the MMCE busy bit every 500 ms for up to ~7.5 s, matching mmceman's own
+// switch handshake. On a CROSS-DEVICE launch (a USB/HDD/SMB game whose per-game card lives on the
+// MMCE) the 0x8 push physically switches the SD card, and the launch MUST wait for that to finish --
+// otherwise the game boots while the card is still mounting and freezes at its MC check (issue #50,
+// cross-device path). A prior change had collapsed the per-poll gap to a sub-ms nopdelay(), which
+// gutted the wait so it returned in well under a second; a real sleep restores it.
+#define MMCE_GAMEID_WAIT_TICKS    15
 /* Allow up to 500 ms for the art thread to drain before resorting to
  * TerminateThread.  The MMCE worker checks the abort flag between every
  * 4 KB read chunk (~16 ms at typical card speeds), so 500 ms covers
@@ -86,11 +93,13 @@ int mmceSendGameID(const char *startup, const char *protectMcPath)
     if (fileXioDevctl(mmceDevice, 0x8, (void *)startup, (strlen(startup) + 1), NULL, 0) < 0)
         return 0;
 
-    // Send GameID to MMCE and wait until busy bit is clear.
+    // Send GameID to MMCE and wait until the busy bit clears -- i.e. until the physical card has
+    // finished switching to the per-game folder. Real 500 ms gap per poll (NOT a sub-ms nopdelay), so
+    // the wait actually covers the switch; break the instant it clears (issue #50 cross-device residual).
     for (int i = 0; i < MMCE_GAMEID_WAIT_TICKS; i++) {
         int status;
 
-        nopdelay();
+        DelayThread(500 * 1000); // 500 ms real sleep -- yields the EE so the IOP/device can switch
 
         status = fileXioDevctl(mmceDevice, 0x2, NULL, 0, NULL, 0);
         if (status < 0)
@@ -102,6 +111,7 @@ int mmceSendGameID(const char *startup, const char *protectMcPath)
         }
     }
 
+    LOG("MMCE GameID switch did not signal ready within %d ms; launching anyway\n", MMCE_GAMEID_WAIT_TICKS * 500);
     return 1;
 }
 
