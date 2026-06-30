@@ -900,3 +900,5 @@ gui_strings:
   string: Scanning HDD...
 - label: BOOT_READY
   string: Ready.
+- label: NETBOOT_RESTART
+  string: Restart OPL to apply the network boot protocol change.

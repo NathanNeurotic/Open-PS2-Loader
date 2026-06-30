@@ -27,6 +27,11 @@ typedef struct
 #define BDM_TYPE_ATA     3
 #define BDM_TYPE_UDPBD   4
 
+// Network-backed BDM devices (UDPBD/UDPFS) open over the wire, so a single failed presence poll is
+// usually a transient stall, not a real removal. Debounce: hide a NETWORK page only after this many
+// consecutive failed ~1s polls (local USB/SDC/ATA still hide on the first miss = an actual unplug).
+#define BDM_NET_HIDE_MISSES 5
+
 typedef struct
 {
     int massDeviceIndex;                     // Underlying device index backing the block device. This is not the same as the typed-path unit.
@@ -40,6 +45,7 @@ typedef struct
     char bdmDriver[32];
     int bdmDeviceType;      // Type of BDM device, see BDM_TYPE_* above
     int bdmDeviceTick;      // Used alongside BdmGeneration to tell if device data needs to be refreshed
+    int bdmMissCount;       // Consecutive failed presence polls; debounces hiding a network page (BDM_NET_HIDE_MISSES)
     int bdmHddIsLBA48;      // 1 if the HDD supports LBA48, 0 if the HDD only supports LBA28
     int ataHighestUDMAMode; // Highest UDMA mode supported by the HDD
     unsigned char ThemesLoaded;

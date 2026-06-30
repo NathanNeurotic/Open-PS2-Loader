@@ -246,11 +246,16 @@ int udpfs_core_init(void)
 
     M_DEBUG("UDPFS: initializing core\n");
 
-    /* Create UDPRDMA socket */
-    g_socket = udprdma_create(UDPFS_PORT, UDPRDMA_SVC_UDPFS);
+    /* Create the UDPRDMA socket ONCE and reuse it across reconnect attempts. udprdma_destroy() can NOT
+     * release the ministack udp_bind slot (no udp_unbind; the pool is only UDP_MAX_PORTS = 4), so a
+     * destroy+recreate on every retry would leak a slot each cycle and brick UDPFS after a few blips.
+     * On a failed discover we therefore keep the socket bound and just re-discover on the next call. */
     if (g_socket == NULL) {
-        M_DEBUG("UDPFS: failed to create socket\n");
-        return -1;
+        g_socket = udprdma_create(UDPFS_PORT, UDPRDMA_SVC_UDPFS);
+        if (g_socket == NULL) {
+            M_DEBUG("UDPFS: failed to create socket\n");
+            return -1;
+        }
     }
 
     /* Discover server */
@@ -258,8 +263,7 @@ int udpfs_core_init(void)
     ret = udprdma_discover(g_socket, 5000);
     if (ret != UDPRDMA_OK) {
         M_DEBUG("UDPFS: server not found\n");
-        udprdma_destroy(g_socket);
-        g_socket = NULL;
+        /* Keep g_socket bound for the next retry (see above) -- do not destroy/recreate. */
         return -1;
     }
 

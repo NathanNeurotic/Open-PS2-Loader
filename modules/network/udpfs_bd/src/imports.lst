@@ -9,6 +9,9 @@ I_smap_fifo_read
 smap_IMPORTS_end
 
 thbase_IMPORTS_start
+I_CreateThread
+I_StartThread
+I_DelayThread
 I_SetAlarm
 I_CancelAlarm
 I_USec2SysClock

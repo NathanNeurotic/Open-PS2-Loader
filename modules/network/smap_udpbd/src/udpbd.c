@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <bdm.h>
 #include <thevent.h>
+#include <thbase.h> // CreateThread/StartThread/DelayThread (reconnect watchdog)
 #include <stdio.h>
 #include <smapregs.h>
 #include <dmacman.h>
@@ -64,6 +65,7 @@ static unsigned int g_read_size;
 static int32_t g_errno = 0;
 static udp_socket_t *udpbd_socket = NULL;
 static int g_limit_dma_block_size = 0;
+static int g_reconnect_tid = 0; // reconnect watchdog thread id (0 = not started)
 
 
 static unsigned int _udpbd_timeout(void *arg)
@@ -414,10 +416,37 @@ static int udpbd_isr(udp_socket_t *socket, uint16_t pointer, void *arg)
 //
 // Public functions
 //
+// (Re)broadcast a block-device INFO request so we (re)connect to the server. The server answers with
+// UDPBD_CMD_INFO_REPLY, which _cmd_info_reply() turns into a bdm_connect_bd(). Used at init and by the
+// reconnect watchdog so a transient drop or a late-started server recovers without a module reload.
+static void udpbd_send_info(void)
+{
+    udpbd_pkt_t pkt;
+    udp_packet_init((udp_packet_t *)&pkt, IP_ADDR(255, 255, 255, 255), UDPBD_SERVER_PORT);
+    pkt.bd.cmd = UDPBD_CMD_INFO;
+    pkt.bd.cmdid = g_cmdid;
+    pkt.bd.cmdpkt = 0;
+    udp_packet_send(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_Header));
+}
+
+// Reconnect watchdog: while the block device is disconnected -- whether it never connected (server
+// started after the PS2 booted) or was torn down after read failures (a network blip) -- re-request
+// INFO once a second so the device auto-recovers. _cmd_info_reply() ignores duplicate replies once
+// connected, so this is a no-op while healthy. Without it, a single drop killed UDPBD until reboot.
+static int udpbd_reconnect_thread(void *arg)
+{
+    (void)arg;
+    while (1) {
+        DelayThread(1000000); // 1s
+        if (bdm_connected == 0 && udpbd_socket != NULL)
+            udpbd_send_info();
+    }
+    return 0;
+}
+
 int udpbd_init(void)
 {
     USE_SPD_REGS;
-    udpbd_pkt_t pkt;
     iop_event_t EventFlagData;
 
     //M_DEBUG("%s\n", __func__);
@@ -448,12 +477,22 @@ int udpbd_init(void)
     // Bind to UDP socket
     udpbd_socket = udp_bind(UDPBD_CLIENT_PORT, udpbd_isr, NULL);
 
-    // Broadcast request for block device information
-    udp_packet_init((udp_packet_t *)&pkt, IP_ADDR(255, 255, 255, 255), UDPBD_SERVER_PORT);
-    pkt.bd.cmd = UDPBD_CMD_INFO;
-    pkt.bd.cmdid = g_cmdid;
-    pkt.bd.cmdpkt = 0;
-    udp_packet_send(udpbd_socket, (udp_packet_t *)&pkt, sizeof(struct SUDPBDv2_Header));
+    // Request block device information (connect). The reconnect watchdog keeps retrying this until the
+    // server answers, so a server started after the PS2 booted still connects.
+    udpbd_send_info();
+
+    // Start the reconnect watchdog once (udpbd_init may be re-entered on a SMAP re-init).
+    if (g_reconnect_tid <= 0) {
+        iop_thread_t thinfo;
+        thinfo.attr = TH_C;
+        thinfo.option = 0;
+        thinfo.thread = (void *)udpbd_reconnect_thread;
+        thinfo.stacksize = 0x1000;
+        thinfo.priority = 0x20;
+        g_reconnect_tid = CreateThread(&thinfo);
+        if (g_reconnect_tid > 0)
+            StartThread(g_reconnect_tid, NULL);
+    }
 
     return 0;
 }

@@ -21,6 +21,8 @@
 
 /* State */
 static struct block_device g_udpbd;
+static int g_udpfs_connected = 0; // bd registered + UDPRDMA session up
+static int g_udpfs_tid = 0;       // lazy-connect / reconnect watchdog thread id
 
 
 /*
@@ -41,8 +43,11 @@ static int udpfs_bd_read(struct block_device *bd, uint64_t sector, void *buffer,
 
     ret = udpfs_core_bread(BLOCK_DEVICE_HANDLE, sector, buffer, count, bd->sectorSize);
     if (ret < 0) {
-        M_DEBUG("udpfs_bd: read failed\n");
+        // Tear the device down and flag for re-discovery; the watchdog thread reconnects when the
+        // server/network is back (the EE page debounce holds the tab across the brief gap).
+        M_DEBUG("udpfs_bd: read failed, disconnecting for re-discovery\n");
         bdm_disconnect_bd(&g_udpbd);
+        g_udpfs_connected = 0;
         return ret;
     }
 
@@ -67,8 +72,14 @@ static int udpfs_bd_write(struct block_device *bd, uint64_t sector, const void *
         count = bd->sectorCount - sector;
 
     if (udpfs_core_bwrite(BLOCK_DEVICE_HANDLE, sector,
-                          buffer, count, bd->sectorSize) < 0)
+                          buffer, count, bd->sectorSize) < 0) {
+        // Mirror the read path: tear the device down and flag for re-discovery so the watchdog
+        // reconnects, rather than leaving a half-dead bd that reports connected but cannot write.
+        M_DEBUG("udpfs_bd: write failed, disconnecting for re-discovery\n");
+        bdm_disconnect_bd(&g_udpbd);
+        g_udpfs_connected = 0;
         return -EIO;
+    }
 
     return count;
 }
@@ -88,26 +99,24 @@ static int udpfs_bd_stop(struct block_device *bd)
 
 
 /*
- * Initialize UDPFS block device driver
+ * Try once to (re)discover the server, query capacity, and register the block device.
+ * Returns 1 on success (bd connected), 0 if the server isn't reachable yet. Safe to retry indefinitely:
+ * udpfs_core_init() binds the UDPRDMA socket ONCE and reuses it on every retry. We must NOT destroy +
+ * recreate the socket per attempt -- the ministack has no udp_unbind (UDP_MAX_PORTS = 4), so that would
+ * leak a port slot on every blip and deterministically brick UDPFS after a few retries.
  */
-int udpfs_bd_init(void)
+static int udpfs_bd_try_connect(void)
 {
     int ret;
 
-    M_DEBUG("UDPFS BD over UDPRDMA\n");
+    /* Socket is created once and reused; returns <0 while the server isn't reachable (socket kept). */
+    if (udpfs_core_init() < 0)
+        return 0;
 
-    /* Initialize core UDPFS */
-    ret = udpfs_core_init();
-    if (ret < 0) {
-        return -1;
-    }
-
-    /* Get disk capacity via GETSTAT (returns sector count) */
+    /* Get disk capacity via GETSTAT (returns sector count). */
     ret = udpfs_core_get_sector_count(BLOCK_DEVICE_HANDLE);
-    if (ret < 0) {
-        udpfs_core_exit();
-        return -1;
-    }
+    if (ret < 0)
+        return 0; /* keep the bound socket; the watchdog will retry */
 
     /* Setup block device with fixed 512-byte sectors */
     g_udpbd.name = "udp";
@@ -124,8 +133,54 @@ int udpfs_bd_init(void)
 
     /* Connect to BDM */
     bdm_connect_bd(&g_udpbd);
+    g_udpfs_connected = 1;
 
     M_DEBUG("udpfs_bd: ready (sectorSize=%u, sectorCount=%u)\n",
             g_udpbd.sectorSize, g_udpbd.sectorCount);
+    return 1;
+}
+
+/*
+ * Lazy-connect / reconnect watchdog. While disconnected -- whether the server hadn't started yet at
+ * boot, or a read/write tore the session down -- retry discovery so the device (and its OPL page)
+ * appears whenever the server comes up, without a module reload. Cadence: the discovery probe inside
+ * udpfs_bd_try_connect() blocks up to ~5s when the server is absent, then this loop adds a 1s pause,
+ * so a missing server is re-probed roughly every ~6s. No-op while healthy (connected).
+ */
+static int udpfs_bd_watchdog(void *arg)
+{
+    (void)arg;
+    while (1) {
+        if (g_udpfs_connected == 0)
+            udpfs_bd_try_connect();
+        DelayThread(1000000); // 1s
+    }
     return 0;
+}
+
+/*
+ * Initialize UDPFS block device driver. Unlike the original, this does NOT fail closed when the server
+ * isn't up at load time (a UDPFS server is typically hand-started after the PS2 boots): it tries once,
+ * then leaves a watchdog thread retrying so the device appears as soon as the server is reachable.
+ */
+int udpfs_bd_init(void)
+{
+    iop_thread_t thinfo;
+
+    M_DEBUG("UDPFS BD over UDPRDMA (lazy connect)\n");
+
+    udpfs_bd_try_connect();
+
+    if (g_udpfs_tid <= 0) {
+        thinfo.attr = TH_C;
+        thinfo.option = 0;
+        thinfo.thread = (void *)udpfs_bd_watchdog;
+        thinfo.stacksize = 0x1000;
+        thinfo.priority = 0x20;
+        g_udpfs_tid = CreateThread(&thinfo);
+        if (g_udpfs_tid > 0)
+            StartThread(g_udpfs_tid, NULL);
+    }
+
+    return 0; /* always resident; the bd connects lazily via the watchdog */
 }

@@ -1021,6 +1021,7 @@ void guiShowDeviceConfig(void)
     int ret = diaExecuteDialog(diaDeviceConfig, -1, 1, &guiDeviceUpdater);
     if (ret) {
         int udpbdWasEnabled = gEnableUDPBD;
+        int netBootProtocolWas = gNetBootProtocol;
         diaGetInt(diaDeviceConfig, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(diaDeviceConfig, CFG_BDMMODE, &gBDMStartMode);
@@ -1058,6 +1059,12 @@ void guiShowDeviceConfig(void)
         // so the network mount fails silently. Warn at opt-in to set a static PS2 IP.
         if (gEnableUDPBD && !udpbdWasEnabled && ps2_ip_use_dhcp)
             guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
+
+        // Switching the network-boot protocol (UDPBD<->UDPFS) needs a different IOP module chain, but
+        // that chain only loads once per boot (the load latch is not cleared live). If it is already
+        // up, tell the user the switch takes effect after a restart instead of silently doing nothing.
+        if (gNetBootProtocol != netBootProtocolWas && bdmIsUDPBDLoaded())
+            guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
 
         // A BDM tab can be latched hidden (bdmNeedsUpdate force-hides it when its enable flag reads 0,
         // then short-circuits until the device generation bumps). Re-evaluate device visibility now so

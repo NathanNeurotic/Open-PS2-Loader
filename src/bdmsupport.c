@@ -525,7 +525,11 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     if (pDeviceData->bdmDeviceTick == BdmGeneration) {
         if (pOwner != NULL && pOwner->menuItem.visible == 0)
             return 0;
-        if (pDeviceData->bdmULSizePrev != -2)
+        // While a network page is inside its disconnect grace window (bdmMissCount > 0, set by the
+        // presence-poll debounce in bdmUpdateDeviceData), keep re-polling each refresh so the debounce
+        // advances to the hide threshold -- otherwise it would stall at the single disconnect event and
+        // a truly-gone network page would never hide. Local devices always have bdmMissCount == 0 here.
+        if (pDeviceData->bdmULSizePrev != -2 && pDeviceData->bdmMissCount == 0)
             return 0;
     }
     pDeviceData->bdmDeviceTick = BdmGeneration;
@@ -1303,6 +1307,10 @@ int bdmUpdateDeviceData(item_list_t *itemList)
     int dir = fileXioDopen(path);
     // LOG("opendir %s -> %d\n", path, dir);
 
+    // Device reachable this poll -> clear the debounce miss counter (see the hide branch below).
+    if (dir >= 0)
+        pDeviceData->bdmMissCount = 0;
+
     // If we opened the device and the menu isn't visible (OR is visible but hasn't been initialized ex: manual device start) initialize device info.
     if (dir >= 0 && (visible == 0 || pDeviceData->bdmDeviceRoot[0] == '\0' || pDeviceData->bdmDriver[0] == '\0' || pDeviceData->bdmDeviceType == BDM_TYPE_UNKNOWN)) {
         snprintf(pDeviceData->bdmDeviceRoot, sizeof(pDeviceData->bdmDeviceRoot), "mass%d:", itemList->mode);
@@ -1354,6 +1362,15 @@ int bdmUpdateDeviceData(item_list_t *itemList)
         fileXioDclose(dir);
         return 1;
     } else if (dir < 0 && visible == 1) {
+        // Device open failed while the page is showing. For a network-backed device (UDPBD/UDPFS) one
+        // missed poll is usually a transient stall, not a real removal -- debounce so the tab doesn't
+        // flicker away on a blip. Local devices (USB/SDC/ATA) hide on the first miss = a real unplug.
+        int hideThreshold = (pDeviceData->bdmDeviceType == BDM_TYPE_UDPBD) ? BDM_NET_HIDE_MISSES : 1;
+        if (++pDeviceData->bdmMissCount < hideThreshold) {
+            LOG("bdmUpdateDeviceData: device %d miss %d/%d (debounce, keeping page)\n", itemList->mode, pDeviceData->bdmMissCount, hideThreshold);
+            return 0; // within the grace window -- keep the page, re-poll next cycle
+        }
+
         // Device has been removed, make the menu item invisible. We can't really cleanup resources (like the game list) just yet
         // as we don't know if the data is being used asynchronously.
         if (itemList->owner != NULL) {
@@ -1362,6 +1379,7 @@ int bdmUpdateDeviceData(item_list_t *itemList)
         }
 
         pDeviceData->FoldersCreated = 0;
+        pDeviceData->bdmMissCount = 0;
         LOG("Mass device: %d (%d) disconnected\n", itemList->mode, pDeviceData->massDeviceIndex);
         return -1;
     }
