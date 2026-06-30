@@ -113,18 +113,23 @@ setup is needed if you use the release package. If you assembled your own Neutri
 </details>
 
 <details class="deep"><summary>Why <code>-bsd=udpfsbd</code> and not stock <code>-bsd=udpfs</code>?</summary>
-<p>They select <b>different drivers</b>. Stock <code>-bsd=udpfs</code> loads Neutrino's
-<b>FHI filesystem</b> chain (<code>udpfs_ioman</code> / <code>udpfs_fhi</code>, no <code>i_bdm</code>),
-which registers <b>no <code>massN:</code> block device</b>. RiptOPL's entire network game list is a
-<code>massN:</code> block scan — the same code path USB, MX4SIO, iLink and the internal HDD all use —
-so the stock filesystem token would leave the <b>UDPFS Games</b> tab <b>empty</b>.
-<code>-bsd=udpfsbd</code> loads <code>udpfs_bd.irx</code>, which registers the <code>udp</code> block
-device OPL mounts as <code>massN:</code>, giving you the list, covers, per-game settings and
-fragment-list launch.</p>
-<p>This is also why the bundled <code>udpfs_server.py</code> must run in <b>block mode</b>
-(<code>-b &lt;FAT/exFAT image&gt;</code>), not loose-ISO mode (<code>-d &lt;dir&gt;</code>): the PS2 side is a
-block device, so the host must serve a block image. Stock NHDDL uses the filesystem / loose-ISO
-model — RiptOPL deliberately does not, to keep one unified browser across every device.</p>
+<p>The <code>-bsd</code> token is just a <i>config filename</i>: at game boot Neutrino loads
+<code>config/bsd-&lt;token&gt;.toml</code>, and the toml's <b>body</b> picks the IOP driver. Stock Neutrino
+already ships a <code>bsd-udpfs.toml</code> whose body is the <b>FHI filesystem</b> driver
+(<code>udpfs_ioman</code> / <code>udpfs_fhi</code>, no <code>i_bdm</code>, registers no
+<code>massN:</code> block device). RiptOPL needs the <b>block-device</b> body
+(<code>udpfs_bd.irx</code>, <code>i_bdm</code> &rarr; <code>massN:</code>) because the launch hands
+Neutrino <code>-dvd=massN:</code> — a filesystem driver has no <code>massN:</code> device to open, so
+the <i>game</i> would fail to boot.</p>
+<p>So RiptOPL ships that block body under the <b>private name <code>bsd-udpfsbd.toml</code></b> and
+emits <code>-bsd=udpfsbd</code>, <b>specifically so it does not collide with stock's
+<code>bsd-udpfs.toml</code></b> — letting RiptOPL's block-mode UDPFS and stock/NHDDL's filesystem-mode
+UDPFS coexist on one Neutrino install. (The in-OPL <b>UDPFS Games</b> <i>list</i> is built from the
+<code>udpfs_bd</code> block device OPL loads <i>itself</i> in the menu — gated on the protocol picker,
+not the launch token — so the token only affects the game boot, never the list.) That is also why the
+bundled <code>udpfs_server.py</code> must run in <b>block mode</b> (<code>-b &lt;FAT/exFAT image&gt;</code>),
+not loose-ISO mode (<code>-d &lt;dir&gt;</code>). Stock NHDDL uses the filesystem / loose-ISO model; RiptOPL
+deliberately does not.</p>
 </details>
 
 <h2 id="requirements">Requirements</h2>
