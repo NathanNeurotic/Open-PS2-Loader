@@ -87,8 +87,14 @@ int mmceSendGameID(const char *startup, const char *protectMcPath)
             mc = "mc0:";
         else if (!strncmp(mmceDevice, "mmce1", 5))
             mc = "mc1:";
-        if (mc != NULL && !strncmp(protectMcPath, mc, strlen(mc)))
-            return 0; // neutrino.elf is on this slot's emulated card -- leave the card alone
+        if (mc != NULL && !strncmp(protectMcPath, mc, strlen(mc))) {
+            // neutrino.elf is on this slot's emulated card -- switching would pull the loader out from
+            // under sysLaunchNeutrino. Leave the card as-is so the launch still works, but SOFT-FAIL with
+            // a transient notice (was a silent no-op) so the user understands their per-game card folder
+            // wasn't applied this launch -- the only situation GameID + MMCE + neutrino-on-mc can collide.
+            guiWarning(_l(_STR_MMCE_GAMEID_NEUTRINO_SKIP), 6);
+            return 0;
+        }
     }
 
     if (fileXioDevctl(mmceDevice, 0x8, (void *)startup, (strlen(startup) + 1), NULL, 0) < 0)

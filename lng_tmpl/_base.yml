@@ -754,6 +754,8 @@ gui_strings:
   string: Use timeout alarms
 - label: HINT_MMCE_USE_ALARMS
   string: OFF may help performance but can cause MMCE timeouts to result in freezes
+- label: MMCE_GAMEID_NEUTRINO_SKIP
+  string: MMCE GameID not applied -- neutrino.elf is on this card (switching it would unload Neutrino).
 - label: CORE_LOADER
   string: Loader Core
 - label: NEUTRINO_BAD_FORMAT
