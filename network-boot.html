@@ -104,12 +104,27 @@ serves both protocols.</p>
 </details>
 
 <details class="deep"><summary>Why does UDPFS need a bsd-udpfsbd.toml?</summary>
-<p>Neutrino ships <code>udpfs_bd.irx</code> but has no built-in <code>-bsd</code> token for
-it — the stock Neutrino configuration only defines a token for UDPBD. RiptOPL solves this by
-auto-injecting <code>config/bsd-udpfsbd.toml</code> into the bundled Neutrino archive at build
-time, so no manual setup is needed if you use the release package. If you assembled your own
-Neutrino install, copy <code>neutrino/bsd-udpfsbd.toml</code> (from the RiptOPL source tree)
-into your <code>mc?:/neutrino/config/</code> folder.</p>
+<p>Neutrino ships <code>udpfs_bd.irx</code> but has no built-in <code>-bsd</code> token for the
+<i>block-device</i> form of UDPFS. RiptOPL solves this by auto-injecting
+<code>config/bsd-udpfsbd.toml</code> into the bundled Neutrino archive at build time, so no manual
+setup is needed if you use the release package. If you assembled your own Neutrino install, copy
+<code>neutrino/bsd-udpfsbd.toml</code> (from the RiptOPL source tree) into your
+<code>mc?:/neutrino/config/</code> folder.</p>
+</details>
+
+<details class="deep"><summary>Why <code>-bsd=udpfsbd</code> and not stock <code>-bsd=udpfs</code>?</summary>
+<p>They select <b>different drivers</b>. Stock <code>-bsd=udpfs</code> loads Neutrino's
+<b>FHI filesystem</b> chain (<code>udpfs_ioman</code> / <code>udpfs_fhi</code>, no <code>i_bdm</code>),
+which registers <b>no <code>massN:</code> block device</b>. RiptOPL's entire network game list is a
+<code>massN:</code> block scan — the same code path USB, MX4SIO, iLink and the internal HDD all use —
+so the stock filesystem token would leave the <b>UDPFS Games</b> tab <b>empty</b>.
+<code>-bsd=udpfsbd</code> loads <code>udpfs_bd.irx</code>, which registers the <code>udp</code> block
+device OPL mounts as <code>massN:</code>, giving you the list, covers, per-game settings and
+fragment-list launch.</p>
+<p>This is also why the bundled <code>udpfs_server.py</code> must run in <b>block mode</b>
+(<code>-b &lt;FAT/exFAT image&gt;</code>), not loose-ISO mode (<code>-d &lt;dir&gt;</code>): the PS2 side is a
+block device, so the host must serve a block image. Stock NHDDL uses the filesystem / loose-ISO
+model — RiptOPL deliberately does not, to keep one unified browser across every device.</p>
 </details>
 
 <h2 id="requirements">Requirements</h2>
