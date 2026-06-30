@@ -58,10 +58,24 @@ inert label — choosing a core there has no effect on a PS1 game.
 POPSTARTER only needs the VCD's *name* to do its job; RiptOPL hands it the selected
 title and POPSTARTER finds the matching `*.VCD`.
 
-By default RiptOPL looks for `POPSTARTER.ELF` in each device's `POPS` folder. To use one
-specific copy everywhere, set **Settings → General Settings → POPSTARTER.ELF Path**.
-(Like the other path fields, the on-screen editor caps at 31 characters; for a longer
-path, set `popstarter_path` in `settings_riptopl.cfg` directly.)
+Where `POPSTARTER.ELF` is loaded from is set by **Settings → General Settings →
+POPSTARTER.ELF Device** — a driver-accurate picker (matching the Neutrino Device picker):
+
+| Choice | Loads `POPS/POPSTARTER.ELF` from |
+| --- | --- |
+| **Default** | the boot device (where OPL launched, i.e. cwd), then the VCD's own device |
+| Memory Card | `mc0:` / `mc1:` |
+| USB | the mounted USB drive |
+| MX4SIO | the mounted MX4SIO SD card |
+| MMCE | `mmce0:` / `mmce1:` (SD2PSX / MemCard PRO2) |
+| HDD (exFAT) | the mounted exFAT internal HDD |
+| HDD (APA) | the OPL data partition (`pfs0:`) |
+| **Custom** | reveals a free-text path field — your own absolute `POPSTARTER.ELF` path |
+
+The picker covers USB / MMCE / MX4SIO / iLink / SMB VCD launches. PS1 VCDs **on the internal
+HDD** always load `POPSTARTER.ELF` from the HDD (the `__common` then `+OPL` `POPS` folder, as
+below) regardless of this setting. For the **Custom** option the on-screen editor caps at 31
+characters; for a longer path set `popstarter_path` in `settings_riptopl.cfg` directly.
 
 ## 4. Where to put your VCD files
 
