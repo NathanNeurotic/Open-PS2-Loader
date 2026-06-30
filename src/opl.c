@@ -959,6 +959,35 @@ static void writeConfigPathRedirect(const char *path)
     }
 }
 
+// Boot directory (cwd): the device + folder OPL was launched from, e.g. "mass0:/APPS". Settings live
+// HERE, on whatever device booted OPL -- no memory-card default, no multi-device discovery. Derived
+// once in main() from argv[0] (the launcher's boot path), with getcwd() as a backup. Stays empty only
+// when the boot path is undeterminable, in which case _loadConfig/_saveConfig fall back to the legacy
+// discovery as a last-ditch sanity so OPL is never left with no config at all.
+static char gBootDir[256];
+
+static void setBootDir(const char *bootPath)
+{
+    gBootDir[0] = '\0';
+    if (bootPath == NULL || bootPath[0] == '\0')
+        return;
+    const char *slash = strrchr(bootPath, '/');
+    if (slash != NULL) {
+        size_t len = (size_t)(slash - bootPath); // keep the folder, drop the trailing '/' + filename
+        if (len > 0 && len < sizeof(gBootDir)) {
+            memcpy(gBootDir, bootPath, len);
+            gBootDir[len] = '\0';
+        }
+    } else {
+        const char *colon = strrchr(bootPath, ':'); // "mass0:X.ELF" -> device root "mass0:"
+        if (colon != NULL && (size_t)(colon - bootPath) + 1 < sizeof(gBootDir)) {
+            size_t len = (size_t)(colon - bootPath) + 1;
+            memcpy(gBootDir, bootPath, len);
+            gBootDir[len] = '\0';
+        }
+    }
+}
+
 static int checkLoadConfigBDM(int types)
 {
     char path[64];
@@ -1169,7 +1198,11 @@ static void _loadConfig()
     int value, themeID = -1, langID = -1;
     const char *temp;
     int result = configReadMulti(lscstatus);
-    if ((lscstatus & CONFIG_OPL) && !(result & CONFIG_OPL))
+    // Settings come from the boot dir (cwd). Only when the boot path was undeterminable (gBootDir
+    // empty -> configInit fell back to the MC default) do we re-enable the legacy multi-device
+    // discovery as a last-ditch sanity. With a known boot dir there is NO fallback: a missing cwd
+    // config just yields defaults, which the next save writes back to the boot dir.
+    if ((lscstatus & CONFIG_OPL) && !(result & CONFIG_OPL) && gBootDir[0] == '\0')
         result = tryAlternateDevice(lscstatus);
 
     if (lscstatus & CONFIG_OPL) {
@@ -1544,10 +1577,15 @@ static void _saveConfig()
     }
 
     lscret = configWriteMulti(lscstatus);
-    if (lscret <= 0)
-        lscret = trySaveAlternateDevice(lscstatus);
-    if (lscret > 0)
-        writeConfigPathRedirect(configGetDir());
+    // The boot dir (cwd) is the only save target. The alternate-device save + the cwd redirect
+    // pointer are legacy-discovery aids, kept only for the boot-path-undeterminable sanity case
+    // (gBootDir empty); with a known boot dir, settings save there and nowhere else.
+    if (gBootDir[0] == '\0') {
+        if (lscret <= 0)
+            lscret = trySaveAlternateDevice(lscstatus);
+        if (lscret > 0)
+            writeConfigPathRedirect(configGetDir());
+    }
     lscstatus = 0;
 }
 
@@ -2211,7 +2249,7 @@ static void init(void)
 
     padInit(0);
     int padStatus = 0;
-    configInit(NULL);
+    configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd), not a fixed MC default
 
     rmInit();
     lngInit();
@@ -2295,7 +2333,7 @@ static void miniInit(int mode)
     int ret;
 
     setDefaults();
-    configInit(NULL);
+    configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd)
 
     ioInit();
     LOG_ENABLE();
@@ -2531,6 +2569,21 @@ int main(int argc, char *argv[])
     // reset, load modules
     reset();
     ResetDeckardXParams();
+
+    // Settings live in the boot directory (cwd). Resolve it once, before any config init -- the
+    // autolaunch path below calls miniInit() -> configInit(). argv[0] is the launcher's boot path;
+    // getcwd() backs it up. Empty only if both are unusable, in which case configInit falls back to
+    // the memory-card default and the _loadConfig/_saveConfig gates re-enable legacy discovery.
+    setBootDir(argc >= 1 ? argv[0] : NULL);
+    if (gBootDir[0] == '\0') {
+        char cwd[256];
+        if (getcwd(cwd, sizeof(cwd)) != NULL && cwd[0] != '\0') {
+            int n = (int)strlen(cwd);
+            while (n > 0 && cwd[n - 1] == '/') // configInit appends '/', so drop any trailing one
+                cwd[--n] = '\0';
+            snprintf(gBootDir, sizeof(gBootDir), "%s", cwd);
+        }
+    }
 
     if (argc >= 5) {
         /* argv[0] boot path
