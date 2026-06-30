@@ -634,6 +634,8 @@ gui_strings:
   string: Network (UDP) games can only boot via the Neutrino core. Check that neutrino.elf is present and the format is supported.
 - label: VCD_NOT_ON_NET
   string: 'PS1 (.VCD) games can''t be launched over the network device.'
+- label: MX4SIO_PADEMU_WARN
+  string: MX4SIO and pad emulation share the SIO2 bus and the game may fail to boot.
 - label: PADMACROCONFIG
   string: Configure PADMACRO
 - label: PADMACRO_SETTINGS

@@ -825,6 +825,17 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
     if (compatmask < 0) // sbPrepare failed (patch zone not found): `index` is unset -- bail before using
         return;         // it. (The old `if (settings == NULL)` guard was dead: irx + index is never NULL.)
+
+#ifdef PADEMU
+    // MX4SIO reads the SD card over the SIO2 / memory-card bus -- the SAME bus pad emulation hooks
+    // (modules/pademu installs a sio2man hook while pad emulation is enabled). With both active they
+    // contend on SIO2 and the game frequently fails to boot (black screen, issue #53). It is an
+    // inherent shared-bus conflict, not fixable here, so warn instead of leaving a mystery black
+    // screen. sbPrepare() above resolved gEnablePadEmu for this game (global or per-game).
+    if (pDeviceData->bdmDeviceType == BDM_TYPE_SDC && gEnablePadEmu)
+        guiWarning(_l(_STR_MX4SIO_PADEMU_WARN), 6);
+#endif
+
     settings = (struct cdvdman_settings_bdm *)((u8 *)irx + index);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
