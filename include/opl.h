@@ -142,7 +142,21 @@ enum {
     NET_BOOT_UDPBD = 0, // smap_udpbd monolith (SUDPBDv2); Neutrino launch -bsd=udpbd
     NET_BOOT_UDPFS = 1, // udpfs smap+ministack+udpfs_bd chain (UDPRDMA); Neutrino launch -bsd=udpfsbd
 };
-extern int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS
+extern int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived from gNetworkProtocol)
+
+// Unified network-protocol selector. The single NIC (SMAP) carries at most ONE network transport per
+// session, so SMB / UDPBD / UDPFSBD / UDPFS are mutually exclusive by construction -- one enum instead
+// of the old {gETHStartMode, gEnableUDPBD, gNetBootProtocol} trio + interlock. Local devices
+// (USB/HDD/MMCE) are independent and unaffected. gETHStartMode / gEnableUDPBD / gNetBootProtocol are
+// kept as DERIVED shadows so downstream consumers can migrate incrementally.
+enum NETWORK_PROTOCOL {
+    NET_PROTO_OFF = 0,     // no NIC device (SMAP idle) -- fork default
+    NET_PROTO_SMB = 1,     // SMB/ETH stack (== legacy gETHStartMode > DISABLED)
+    NET_PROTO_UDPBD = 2,   // smap_udpbd monolith, -bsd=udpbd    (legacy gEnableUDPBD + NET_BOOT_UDPBD)
+    NET_PROTO_UDPFSBD = 3, // udpfs BLOCK device, -bsd=udpfsbd   (legacy gEnableUDPBD + NET_BOOT_UDPFS) <- today's "UDPFS"
+    NET_PROTO_UDPFS = 4,   // NEW udpfs FILESYSTEM (udpfs_ioman "udpfs:"); add-only, no legacy encoding
+};
+extern int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative; the three above are derived shadows
 
 extern int gAutosort;
 extern int gAutoRefresh;

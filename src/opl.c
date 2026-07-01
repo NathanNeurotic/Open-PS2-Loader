@@ -152,7 +152,8 @@ int gEnableILK;
 int gEnableMX4SIO;
 int gEnableBdmHDD;
 int gEnableUDPBD;
-int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (transport when gEnableUDPBD is on)
+int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived from gNetworkProtocol)
+int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative unified selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
 int gAutosort;
 int gAutoRefresh;
 int gEnableNotifications;
@@ -1300,12 +1301,31 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, &gEnableBdmHDD);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
             configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
-            // UDPBD/UDPFS and the SMB/ETH stack both own the single SMAP adapter; the UI greys one out,
-            // but an imported/hand-edited config can enable BOTH. At boot UDPBD wins (it loads first), so
-            // ETH's load silently fails into a misleading "network startup error". Reconcile here to match
-            // that reality -- UDPBD wins -- so the dropped option is explicit rather than a confusing error.
-            if (gEnableUDPBD && gETHStartMode != START_MODE_DISABLED)
+            // Unified network-protocol selector (single SMAP NIC -> at most one transport per session).
+            // Read the new key if present (authoritative); otherwise DERIVE it from the three legacy keys,
+            // preserving the historical "network BDM wins over SMB" precedence (imported/hand-edited configs
+            // could set both; at boot UDPBD loaded first, so it won). NET_PROTO_UDPFS (filesystem) has no
+            // legacy encoding, so it is only ever reached by an explicit new-format value -- backward-safe.
+            if (!configGetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, &gNetworkProtocol)) {
+                if (gEnableUDPBD)
+                    gNetworkProtocol = (gNetBootProtocol == NET_BOOT_UDPFS) ? NET_PROTO_UDPFSBD : NET_PROTO_UDPBD;
+                else if (gETHStartMode != START_MODE_DISABLED)
+                    gNetworkProtocol = NET_PROTO_SMB;
+                else
+                    gNetworkProtocol = NET_PROTO_OFF;
+            }
+            // Re-derive the legacy shadows from the authoritative selector so downstream consumers
+            // (ethsupport start path, system.c getDeviceName, bdmsupport) stay consistent no matter which
+            // config format was loaded. SMB keeps its prior Auto/Manual start-mode; a fresh SMB pick that
+            // had eth_mode=0 gets Manual. Any non-SMB protocol forces SMB off (preserves UDPBD-wins).
+            gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
+            gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
+            if (gNetworkProtocol == NET_PROTO_SMB) {
+                if (gETHStartMode == START_MODE_DISABLED)
+                    gETHStartMode = START_MODE_MANUAL;
+            } else {
                 gETHStartMode = START_MODE_DISABLED;
+            }
             configGetInt(configOPL, CONFIG_OPL_SFX, &gEnableSFX);
             configGetInt(configOPL, CONFIG_OPL_BOOT_SND, &gEnableBootSND);
             configGetInt(configOPL, CONFIG_OPL_BGM, &gEnableBGM);
@@ -1545,6 +1565,9 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, gEnableUDPBD);
         configSetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, gNetBootProtocol);
+        // Dual-write: the authoritative unified selector PLUS the three legacy keys (derived shadows),
+        // so a config saved by this build still boots correctly on an older OPL that only reads the legacy keys.
+        configSetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, gNetworkProtocol);
         configSetInt(configOPL, CONFIG_OPL_SFX, gEnableSFX);
         configSetInt(configOPL, CONFIG_OPL_BOOT_SND, gEnableBootSND);
         configSetInt(configOPL, CONFIG_OPL_BGM, gEnableBGM);
@@ -2246,6 +2269,7 @@ static void setDefaults(void)
     gEnableBdmHDD = 0;                 // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
     gEnableUDPBD = 0;                  // OFF by default: needs a PC-side UDPBD server, and is NIC-exclusive with SMB
     gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)
+    gNetworkProtocol = NET_PROTO_OFF;  // unified selector: no network device by default (matches the shadows above)
 
     frameCounter = 0;
 
