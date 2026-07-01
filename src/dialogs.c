@@ -254,19 +254,12 @@ struct UIItem diaDeviceConfig[] = {
     {UI_ENUM, CFG_HDDMODE, 1, 1, _STR_HDD_HINT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ETHMODE}}},
+    // Unified network-protocol selector (Off/SMB/UDPFS/UDPFSBD/UDPBD) -- one exclusive enum replaces the
+    // old ETH-start-mode + Network-Boot toggle + Net-Boot-Protocol picker (the single NIC carries one
+    // transport). The legacy CFG_ETHMODE/CFG_ENABLEUDPBD/CFG_NETBOOTPROTOCOL ids are retired placeholders.
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Network Protocol", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_ETHMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Network Boot", -1}}},
-    {UI_SPACER},
-    {UI_BOOL, CFG_ENABLEUDPBD, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Net Boot Protocol", -1}}},
-    {UI_SPACER},
-    {UI_ENUM, CFG_NETBOOTPROTOCOL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_NETPROTOCOL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_APPMODE}}},

@@ -52,8 +52,9 @@ enum UI_ITEMS {
     CFG_ENABLEILK,
     CFG_ENABLEMX4SIO,
     CFG_ENABLEBDMHDD,
-    CFG_ENABLEUDPBD,
-    CFG_NETBOOTPROTOCOL,
+    CFG_ENABLEUDPBD,     // legacy: kept as an unused placeholder (superseded by CFG_NETPROTOCOL)
+    CFG_NETBOOTPROTOCOL, // legacy: kept as an unused placeholder (superseded by CFG_NETPROTOCOL)
+    CFG_NETPROTOCOL,     // unified network-protocol selector (Off/SMB/UDPFS/UDPFSBD/UDPBD)
     CFG_LASTPLAYED,
     CFG_LBL_AUTOSTARTLAST,
     CFG_AUTOSTARTLAST,

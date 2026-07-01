@@ -18,7 +18,8 @@
 #include "include/system.h"
 #include "include/vcdsupport.h" // BDMA equip (vcdEquipBdma/vcdReadBdmaMode + VCD_BDMA_* enums)
 #include "include/ethsupport.h"
-#include "include/bdmsupport.h" // bdmForceDeviceRefresh() -- re-show a latched-hidden BDM tab after a device-enable toggle
+#include "include/udpfssupport.h" // udpfsGetModulesLoaded() -- network-protocol restart-notice check
+#include "include/bdmsupport.h"   // bdmForceDeviceRefresh() -- re-show a latched-hidden BDM tab after a device-enable toggle
 #include "include/favsupport.h"
 #include "include/compatupd.h"
 #include "include/pggsm.h"
@@ -937,15 +938,8 @@ static int guiDeviceUpdater(int modified)
         diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !bdmHdd);
         diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, hddMode == 0);
 
-        // UDPBD shares the single Ethernet NIC with the SMB/ETH stack -- interlock the
-        // two live as well, mirroring the BDM-HDD<->APA-HDD pair above (the static setup
-        // in guiShowDeviceConfig only greys at dialog-open, not on each in-dialog edit).
-        int ethMode, udpbd;
-        diaGetInt(diaDeviceConfig, CFG_ETHMODE, &ethMode);
-        diaGetInt(diaDeviceConfig, CFG_ENABLEUDPBD, &udpbd);
-        diaSetEnabled(diaDeviceConfig, CFG_ENABLEUDPBD, ethMode == 0);
-        diaSetEnabled(diaDeviceConfig, CFG_ETHMODE, !udpbd);
-        diaSetEnabled(diaDeviceConfig, CFG_NETBOOTPROTOCOL, udpbd); // protocol picker only when network boot is on
+        // Network transport is a single exclusive enum (CFG_NETPROTOCOL) now, so the old live
+        // ETH<->UDPBD NIC interlock is gone -- one selector cannot pick two transports at once.
     }
 
     return 0;
@@ -959,13 +953,12 @@ void guiShowDeviceConfig(void)
     const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
     const char *deviceOnOff[] = {"OFF", "ON", NULL};
     const char *deviceIGRSlots[] = {"NONE", "0", "1", "BOTH", NULL};
-    const char *netBootProtocols[] = {"UDPBD", "UDPFS", NULL};
+    const char *netProtocols[] = {"Off", "SMB", "UDPFS", "UDPFSBD", "UDPBD", NULL}; // index == enum NETWORK_PROTOCOL
 
     // Devices & modes
     diaSetEnum(diaDeviceConfig, CFG_DEFDEVICE, deviceNames);
     diaSetEnum(diaDeviceConfig, CFG_BDMMODE, deviceModes);
     diaSetEnum(diaDeviceConfig, CFG_HDDMODE, deviceModes);
-    diaSetEnum(diaDeviceConfig, CFG_ETHMODE, deviceModes);
     diaSetEnum(diaDeviceConfig, CFG_APPMODE, deviceModes);
     diaSetEnum(diaDeviceConfig, CFG_FAVMODE, deviceModes);
 
@@ -973,7 +966,6 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_DEFDEVICE, deviceModeIndex);
     diaSetInt(diaDeviceConfig, CFG_BDMMODE, gBDMStartMode);
     diaSetInt(diaDeviceConfig, CFG_HDDMODE, gHDDStartMode);
-    diaSetInt(diaDeviceConfig, CFG_ETHMODE, gETHStartMode);
     diaSetInt(diaDeviceConfig, CFG_APPMODE, gAPPStartMode);
     diaSetInt(diaDeviceConfig, CFG_FAVMODE, gFAVStartMode);
 
@@ -984,14 +976,10 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, gEnableBdmHDD);
     diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, !gHDDStartMode);
     diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !gEnableBdmHDD);
-    // UDPBD shares the single Ethernet NIC with the SMB/ETH stack -- interlock them like BDM-HDD<->APA-HDD.
-    diaSetInt(diaDeviceConfig, CFG_ENABLEUDPBD, gEnableUDPBD);
-    diaSetEnabled(diaDeviceConfig, CFG_ENABLEUDPBD, !gETHStartMode);
-    diaSetEnabled(diaDeviceConfig, CFG_ETHMODE, !gEnableUDPBD);
-    // Network-boot transport picker (UDPBD vs UDPFS); only meaningful while network boot is on.
-    diaSetEnum(diaDeviceConfig, CFG_NETBOOTPROTOCOL, netBootProtocols);
-    diaSetInt(diaDeviceConfig, CFG_NETBOOTPROTOCOL, gNetBootProtocol);
-    diaSetEnabled(diaDeviceConfig, CFG_NETBOOTPROTOCOL, gEnableUDPBD);
+    // Unified network-protocol selector (Off/SMB/UDPFS/UDPFSBD/UDPBD). One exclusive enum -- no NIC
+    // interlock needed -- and gNetworkProtocol is authoritative (index == value), so no derivation here.
+    diaSetEnum(diaDeviceConfig, CFG_NETPROTOCOL, netProtocols);
+    diaSetInt(diaDeviceConfig, CFG_NETPROTOCOL, gNetworkProtocol);
 
     // Prefix paths
     diaSetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix);
@@ -1020,13 +1008,11 @@ void guiShowDeviceConfig(void)
 
     int ret = diaExecuteDialog(diaDeviceConfig, -1, 1, &guiDeviceUpdater);
     if (ret) {
-        int udpbdWasEnabled = gEnableUDPBD;
-        int netBootProtocolWas = gNetBootProtocol;
+        int netProtocolWas = gNetworkProtocol;
         diaGetInt(diaDeviceConfig, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(diaDeviceConfig, CFG_BDMMODE, &gBDMStartMode);
         diaGetInt(diaDeviceConfig, CFG_HDDMODE, &gHDDStartMode);
-        diaGetInt(diaDeviceConfig, CFG_ETHMODE, &gETHStartMode);
         diaGetInt(diaDeviceConfig, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(diaDeviceConfig, CFG_FAVMODE, &gFAVStartMode);
 
@@ -1034,8 +1020,18 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
         diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
-        diaGetInt(diaDeviceConfig, CFG_ENABLEUDPBD, &gEnableUDPBD);
-        diaGetInt(diaDeviceConfig, CFG_NETBOOTPROTOCOL, &gNetBootProtocol);
+        // Read the unified selector and re-derive the legacy shadows (gEnableUDPBD / gNetBootProtocol /
+        // gETHStartMode) that downstream consumers still read. SMB keeps its live start-mode (a fresh SMB
+        // pick whose eth-mode was off gets Manual); any non-SMB protocol forces the SMB start-mode off.
+        diaGetInt(diaDeviceConfig, CFG_NETPROTOCOL, &gNetworkProtocol);
+        gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
+        gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
+        if (gNetworkProtocol == NET_PROTO_SMB) {
+            if (gETHStartMode == START_MODE_DISABLED)
+                gETHStartMode = START_MODE_MANUAL;
+        } else {
+            gETHStartMode = START_MODE_DISABLED;
+        }
 
         diaGetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
         diaGetString(diaDeviceConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
@@ -1054,16 +1050,18 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
         diaGetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, &gMMCEUseAlarms);
 
-        // UDPBD's ministack has no DHCP client; with DHCP enabled, ps2_ip[] is never refreshed
-        // (the SMB/ETH stack that would acquire a lease can't run -- UDPBD requires ETH disabled),
-        // so the network mount fails silently. Warn at opt-in to set a static PS2 IP.
-        if (gEnableUDPBD && !udpbdWasEnabled && ps2_ip_use_dhcp)
+        // The UDP transports' ministack has no DHCP client; with DHCP on, ps2_ip[] is never refreshed, so
+        // they need a static PS2 IP. Warn when switching TO a UDP protocol (UDPFS/UDPFSBD/UDPBD) from a
+        // non-UDP one while DHCP is on. SMB is exempt (it runs the full ETH stack that acquires a lease).
+        int nowUdp = (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD);
+        int wasUdp = (netProtocolWas == NET_PROTO_UDPFS || netProtocolWas == NET_PROTO_UDPFSBD || netProtocolWas == NET_PROTO_UDPBD);
+        if (nowUdp && !wasUdp && ps2_ip_use_dhcp)
             guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
 
-        // Switching the network-boot protocol (UDPBD<->UDPFS) needs a different IOP module chain, but
-        // that chain only loads once per boot (the load latch is not cleared live). If it is already
-        // up, tell the user the switch takes effect after a restart instead of silently doing nothing.
-        if (gNetBootProtocol != netBootProtocolWas && bdmIsUDPBDLoaded())
+        // Each network transport loads its IOP module chain once per boot (the load latch is not cleared
+        // live). If any network stack is already up and the user changed protocol, the switch takes effect
+        // only after a restart -- say so instead of silently doing nothing.
+        if (gNetworkProtocol != netProtocolWas && (bdmIsUDPBDLoaded() || ethGetModulesLoaded() || udpfsGetModulesLoaded()))
             guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
 
         // A BDM tab can be latched hidden (bdmNeedsUpdate force-hides it when its enable flag reads 0,
