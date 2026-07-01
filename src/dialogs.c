@@ -257,7 +257,7 @@ struct UIItem diaDeviceConfig[] = {
     // Unified network-protocol selector (Off/SMB/UDPFS/UDPFSBD/UDPBD) -- one exclusive enum replaces the
     // old ETH-start-mode + Network-Boot toggle + Net-Boot-Protocol picker (the single NIC carries one
     // transport). The legacy CFG_ETHMODE/CFG_ENABLEUDPBD/CFG_NETBOOTPROTOCOL ids are retired placeholders.
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Network Protocol", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NET_PROTOCOL}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NETPROTOCOL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
