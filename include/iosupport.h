@@ -20,6 +20,7 @@ enum IO_MODES {
     APP_MODE,
     MMCE_MODE,
     FAV_MODE,
+    UDPFS_MODE, // UDPFS network FILESYSTEM device ("udpfs:"); appended last so existing mode values don't shift
 
     MODE_COUNT
 };

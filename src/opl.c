@@ -28,6 +28,7 @@
 #include "include/supportbase.h"
 #include "include/bdmsupport.h"
 #include "include/ethsupport.h"
+#include "include/udpfssupport.h"
 #include "include/hddsupport.h"
 #include "include/appsupport.h"
 #include "include/mmcesupport.h"
@@ -527,6 +528,11 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
         startMode = gMMCEStartMode;
     else if (mode == FAV_MODE)
         startMode = gFAVStartMode;
+    else if (mode == UDPFS_MODE)
+        // The UDPFS filesystem tab lives only while its protocol is selected. It has no Auto/Manual
+        // sub-mode (the unified selector is Off/on); treat "selected" as Manual so the IRX chain + mount
+        // happen when the user enters the tab, mirroring SMB's default start behavior.
+        startMode = (gNetworkProtocol == NET_PROTO_UDPFS) ? START_MODE_MANUAL : START_MODE_DISABLED;
 
     if (startMode) {
         if (!mod->support) {
@@ -563,6 +569,9 @@ static void initAllSupport(int force_reinit)
     if (gBootInProgress)
         guiRenderGreetingScreen();
     initSupport(ethGetObject(0), ETH_MODE, force_reinit || (gNetworkStartup >= ERROR_ETH_SMB_CONN));
+    // UDPFS filesystem shares the single NIC with SMB/UDPBD; its start-mode gate (initSupport) is live
+    // only when gNetworkProtocol == NET_PROTO_UDPFS, so exactly one network tab is ever enabled.
+    initSupport(udpfsGetObject(0), UDPFS_MODE, force_reinit);
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
     if (gBootInProgress)
         guiRenderGreetingScreen();

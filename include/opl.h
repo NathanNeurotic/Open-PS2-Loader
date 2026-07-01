@@ -149,12 +149,15 @@ extern int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, 
 // of the old {gETHStartMode, gEnableUDPBD, gNetBootProtocol} trio + interlock. Local devices
 // (USB/HDD/MMCE) are independent and unaffected. gETHStartMode / gEnableUDPBD / gNetBootProtocol are
 // kept as DERIVED shadows so downstream consumers can migrate incrementally.
+// Display/picker order (index == value): Off / SMB / UDPFS / UDPFSBD / UDPBD. The two modern UDPRDMA
+// options (filesystem, block) sit together; legacy SUDPBDv2 UDPBD is last. Migration uses the named
+// constants, not their ordinal, so this order is free to choose.
 enum NETWORK_PROTOCOL {
     NET_PROTO_OFF = 0,     // no NIC device (SMAP idle) -- fork default
     NET_PROTO_SMB = 1,     // SMB/ETH stack (== legacy gETHStartMode > DISABLED)
-    NET_PROTO_UDPBD = 2,   // smap_udpbd monolith, -bsd=udpbd    (legacy gEnableUDPBD + NET_BOOT_UDPBD)
-    NET_PROTO_UDPFSBD = 3, // udpfs BLOCK device, -bsd=udpfsbd   (legacy gEnableUDPBD + NET_BOOT_UDPFS) <- today's "UDPFS"
-    NET_PROTO_UDPFS = 4,   // NEW udpfs FILESYSTEM (udpfs_ioman "udpfs:"); add-only, no legacy encoding
+    NET_PROTO_UDPFS = 2,   // udpfs FILESYSTEM (udpfs_ioman "udpfs:"); loose ISOs, add-only (no legacy encoding)
+    NET_PROTO_UDPFSBD = 3, // udpfs BLOCK device, -bsd=udpfsbd (UDPRDMA; legacy gEnableUDPBD + NET_BOOT_UDPFS) <- today's "UDPFS"
+    NET_PROTO_UDPBD = 4,   // smap_udpbd monolith, -bsd=udpbd (legacy SUDPBDv2; gEnableUDPBD + NET_BOOT_UDPBD)
 };
 extern int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative; the three above are derived shadows
 
