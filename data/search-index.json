@@ -14,7 +14,7 @@
   {
     "title": "Pick a device",
     "cat": "start",
-    "text": "Overview of all eight supported storage backends (USB, MX4SIO, MMCE, iLink, SMB, APA HDD, exFAT HDD, UDPBD/UDPFS) with links to the per-device setup pages.",
+    "text": "Overview of all eight supported storage backends (USB, MX4SIO, MMCE, iLink, SMB, APA HDD, exFAT HDD, SMB/UDP) with links to the per-device setup pages.",
     "url": "getting-started.html#pick-a-device"
   },
   {
@@ -212,7 +212,7 @@
   {
     "title": "SMB — NIC interlock with Network Boot",
     "cat": "devices",
-    "text": "SMB and Network Boot (UDPBD/UDPFS) both require the PS2's single Ethernet adapter and are mutually exclusive. Switching requires a save and restart; the interlock is enforced in both the Device Settings UI and at runtime.",
+    "text": "SMB and Network Boot (SMB/UDP) both require the PS2's single Ethernet adapter and are mutually exclusive. Switching requires a save and restart; the interlock is enforced in both the Device Settings UI and at runtime.",
     "url": "smb.html#nic-exclusive"
   },
   {
@@ -282,7 +282,7 @@
     "url": "hdd.html#apa-vs-exfat"
   },
   {
-    "title": "Network Boot (UDPBD/UDPFS)",
+    "title": "Network Boot (SMB/UDP)",
     "cat": "devices",
     "text": "Stream PS2 games from a PC over the LAN using UDPBD or UDPFS — both appear as a 'UDPBD Games' list in RiptOPL. Requires Neutrino, a static PS2 IP, and a PC-side server; mutually exclusive with SMB.",
     "url": "network-boot.html"
@@ -315,7 +315,7 @@
     "title": "SMB mutual exclusion",
     "cat": "devices",
     "text": "Network boot and SMB share the single PS2 Ethernet adapter and cannot run simultaneously. Device Settings interlocks the two toggles so only one can be active at a time.",
-    "url": "network-boot.html#smb-exclusion"
+    "url": "network-boot.html#single-nic"
   },
   {
     "title": "Network boot config keys",
@@ -542,7 +542,7 @@
   {
     "title": "Per-game Settings: Loader Core",
     "cat": "features",
-    "text": "The Loader Core picker chooses between OPL's built-in EE core and an external Neutrino ELF, stored per-game as $CoreLoader. UDPBD/UDPFS games are locked to Neutrino.",
+    "text": "The Loader Core picker chooses between OPL's built-in EE core and an external Neutrino ELF, stored per-game as $CoreLoader. SMB/UDP games are locked to Neutrino.",
     "url": "per-game-settings.html#loader-core"
   },
   {
@@ -752,7 +752,7 @@
   {
     "title": "Device Settings",
     "cat": "reference",
-    "text": "Consolidated hub for all storage devices: BDM/HDD/ETH/MMCE start modes, per-device enable toggles (USB/iLink/MX4SIO/HDD-exFAT), Network Boot toggle and UDPBD/UDPFS protocol picker, Favourites Start Mode, prefix paths, cache sizes, and all MMCE options.",
+    "text": "Consolidated hub for all storage devices: BDM/HDD/ETH/MMCE start modes, per-device enable toggles (USB/iLink/MX4SIO/HDD-exFAT), Network Boot toggle and SMB/UDP protocol picker, Favourites Start Mode, prefix paths, cache sizes, and all MMCE options.",
     "url": "settings.html#device-settings"
   },
   {
@@ -902,7 +902,7 @@
   {
     "title": "PS3 BC — Supported storage modes",
     "cat": "reference",
-    "text": "USB and SMB work under any entry point. HDD (APA/PFS) requires CFW with Cobra; MMCE, MX4SIO, iLink, and network boot (UDPBD/UDPFS) are untested.",
+    "text": "USB and SMB work under any entry point. HDD (APA/PFS) requires CFW with Cobra; MMCE, MX4SIO, iLink, and network boot (SMB/UDP) are untested.",
     "url": "ps3-bc.html#supported-modes"
   },
   {
@@ -914,7 +914,7 @@
   {
     "title": "PS3 BC — Known limitations",
     "cat": "reference",
-    "text": "HDD requires CFW; MMCE/MX4SIO/iLink/UDPBD/UDPFS are unverified; Neutrino external core is untested on PS3 BC; GSM behaviour may differ on COK-002/002W.",
+    "text": "HDD requires CFW; MMCE/MX4SIO/iLink/SMB/UDP are unverified; Neutrino external core is untested on PS3 BC; GSM behaviour may differ on COK-002/002W.",
     "url": "ps3-bc.html#limitations"
   },
   {
