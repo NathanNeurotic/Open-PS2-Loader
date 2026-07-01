@@ -1323,6 +1323,12 @@ static void _loadConfig()
                 else
                     gNetworkProtocol = NET_PROTO_OFF;
             }
+            // UDPBD (SUDPBDv2) is retired from the UI -- its modern successor is UDPFSBD (block over the
+            // UDPRDMA/UDPFS transport, Rick's intended udpfs_bd replacement for udpbd.irx). Fold any config
+            // that resolves to UDPBD (a new-key value 4, or the legacy-derived case above) onto UDPFSBD so
+            // the obsolete option disappears cleanly. NB: those users must serve via udpfsd/-b, not udpbd-server.
+            if (gNetworkProtocol == NET_PROTO_UDPBD)
+                gNetworkProtocol = NET_PROTO_UDPFSBD;
             // Re-derive the legacy shadows from the authoritative selector so downstream consumers
             // (ethsupport start path, system.c getDeviceName, bdmsupport) stay consistent no matter which
             // config format was loaded. SMB keeps its prior Auto/Manual start-mode; a fresh SMB pick that

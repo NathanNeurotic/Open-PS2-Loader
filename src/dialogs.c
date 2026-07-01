@@ -254,12 +254,20 @@ struct UIItem diaDeviceConfig[] = {
     {UI_ENUM, CFG_HDDMODE, 1, 1, _STR_HDD_HINT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    // Unified network-protocol selector (Off/SMB/UDPFS/UDPFSBD/UDPBD) -- one exclusive enum replaces the
-    // old ETH-start-mode + Network-Boot toggle + Net-Boot-Protocol picker (the single NIC carries one
+    // Unified network-protocol selector (Off/SMB/UDPFS) -- one exclusive enum replaces the old
+    // ETH-start-mode + Network-Boot toggle + Net-Boot-Protocol picker (the single NIC carries one
     // transport). The legacy CFG_ETHMODE/CFG_ENABLEUDPBD/CFG_NETBOOTPROTOCOL ids are retired placeholders.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NET_PROTOCOL}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NETPROTOCOL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    // UDPFS access mode (shown only when UDPFS is the selected protocol): Files = the udpfs_ioman
+    // filesystem (loose ISOs from a served folder); Image = the udpfs_bd block device (a served disk
+    // image, massN:). The PC server can't be probed live, so the mode is a config-time choice.
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_UDPFS_MODE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_UDPFSMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_APPMODE}}},

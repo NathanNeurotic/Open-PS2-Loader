@@ -54,7 +54,8 @@ enum UI_ITEMS {
     CFG_ENABLEBDMHDD,
     CFG_ENABLEUDPBD,     // legacy: kept as an unused placeholder (superseded by CFG_NETPROTOCOL)
     CFG_NETBOOTPROTOCOL, // legacy: kept as an unused placeholder (superseded by CFG_NETPROTOCOL)
-    CFG_NETPROTOCOL,     // unified network-protocol selector (Off/SMB/UDPFS/UDPFSBD/UDPBD)
+    CFG_NETPROTOCOL,     // unified network-protocol selector (Off/SMB/UDPFS)
+    CFG_UDPFSMODE,       // when UDPFS is selected: Files (udpfs_ioman filesystem) vs Image (udpfs_bd block/massN:)
     CFG_LASTPLAYED,
     CFG_LBL_AUTOSTARTLAST,
     CFG_AUTOSTARTLAST,
