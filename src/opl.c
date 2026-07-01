@@ -2328,8 +2328,14 @@ static void setDefaults(void)
     gMMCEIGRSlot = 3;
     gMMCEEnableGameID = 1;
     gApplyGameID = 0; // visual GameID barcode OFF by default (only meaningful to Pixel FX/RetroGEM HDMI displays)
-    gMMCEAckWaitCycles = 0;
-    gMMCEUseAlarms = 0;
+    // Restore the fork's long-standing known-good MMCE SIO2 pacing (was flipped to 0/0 in 519f520d,
+    // mislabeled "safer" -- 0 cycles + alarms OFF is the aggressive/perf extreme the in-app hints warn
+    // about: lower cycles = "instabilities", alarms OFF = "can cause MMCE timeouts to result in freezes").
+    // 5 + alarms ON is what build 2421 shipped and ran cleanly (incl. FMV/audio) on real hardware; a slow
+    // late-slim SD2PSX loses the very first SIO2 handshake at 0/0 and freezes at the first read. Opinionated
+    // safe default per the fork philosophy -- do NOT re-flip to upstream's 0/0.
+    gMMCEAckWaitCycles = 5;
+    gMMCEUseAlarms = 1;
 
     gEnableUSB = 1;
     gEnableILK = 0;
