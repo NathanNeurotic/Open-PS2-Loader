@@ -1007,7 +1007,10 @@ void guiShowDeviceConfig(void)
     // UDPFS backend. UDPBD is retired (migrated to UDPFSBD on load), so it never appears here.
     int netPickerVal = (gNetworkProtocol == NET_PROTO_OFF) ? 0 : (gNetworkProtocol == NET_PROTO_SMB) ? 1 :
                                                                                                        2; // UDPFS/UDPFSBD -> "UDPFS"
-    int udpfsModeVal = (gNetworkProtocol == NET_PROTO_UDPFS) ? 0 : 1;                                     // Files vs Image
+    // Files is the default for everything EXCEPT an actual block (UDPFSBD) config, so a user switching
+    // Off/SMB -> UDPFS lands on the loose-ISO filesystem (the intended default), not the disk-image
+    // backend. guiDeviceUpdater only reveals this control, never re-seeds it, so the seed must be right.
+    int udpfsModeVal = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? 1 : 0; // Image only for the block config; else Files
     diaSetEnum(diaDeviceConfig, CFG_NETPROTOCOL, netProtocols);
     diaSetInt(diaDeviceConfig, CFG_NETPROTOCOL, netPickerVal);
     diaSetEnum(diaDeviceConfig, CFG_UDPFSMODE, udpfsModes);

@@ -9,8 +9,9 @@
 #include "include/textures.h"
 #include "include/ioman.h"
 #include "include/system.h"
-#include "include/ethsupport.h"  // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
-#include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
+#include "include/ethsupport.h"   // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
+#include "include/udpfssupport.h" // udpfsGetModulesLoaded() -- symmetric backstop vs the udpfs_ioman filesystem stack
+#include "include/mmcesupport.h"  // mmceSendGameID() cross-device game-id (#261)
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
 #include "include/sound.h"
@@ -348,8 +349,8 @@ static int bdmShouldQueueModuleLoad(void)
         return 1;
     if (gEnableBdmHDD && !hddModLoaded)
         return 1;
-    if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded())
-        return 1; // mirror the load gate -- if the SMB NIC is up, UDPBD can't load, so stop re-queueing
+    if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded() && !udpfsGetModulesLoaded())
+        return 1; // mirror the load gate -- if the SMB or udpfs-filesystem NIC is up, the block chain can't load
 
     return 0;
 }
@@ -393,7 +394,7 @@ static void bdmLoadBlockDeviceModules(void)
     // Network block device (UDPBD or UDPFS, picked by gNetBootProtocol). NIC-exclusive with the SMB/ETH
     // stack (smap registers "SMAP_driver"), so only load when SMB isn't up. dev9 is refcounted (shared
     // with ATA-HDD). Both need the PS2's static IP as an "ip=" arg -- the ministack has no DHCP client.
-    if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded()) {
+    if (gEnableUDPBD && !udpbdModLoaded && !ethGetModulesLoaded() && !udpfsGetModulesLoaded()) {
         char ipArg[24];
         sysInitDev9();
         snprintf(ipArg, sizeof(ipArg), "ip=%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
