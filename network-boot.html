@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Network Boot (UDPBD/UDPFS) · RiptOPL Docs</title>
-<meta name="description" content="Stream games from a PC over the LAN via Neutrino.">
+<title>Network Boot (SMB/UDP) · RiptOPL Docs</title>
+<meta name="description" content="Stream games from a PC over the LAN via the single Network Protocol selector — SMB, UDPFS, UDPFSBD, or UDPBD.">
 <link rel="stylesheet" href="assets/style.css">
 </head><body data-base="">
 <header class="topbar">
@@ -27,7 +27,7 @@
     <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
     <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
     <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
-    <a href="network-boot.html" class="active"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="network-boot.html" class="active"><span class="em">📡</span>Network Boot (SMB/UDP)</a>
     <h4>Features</h4>
     <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games (VCD)</a>
     <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
@@ -49,168 +49,250 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
-<h1>Network Boot (UDPBD / UDPFS)</h1>
-<p class="lead">Stream your PS2 game library from a PC over the LAN. Both protocols appear in
-RiptOPL as a <b>UDPBD Games</b> list — exactly like a USB drive, with covers, Favourites, and
-per-game settings — because to OPL the network device is just another block device. Games
-always launch through <a href="neutrino.html">Neutrino</a>; there is no OPL built-in core
-fallback for network boot.</p>
+<h1>Network Boot (SMB / UDP)</h1>
+<p class="lead">Stream your PS2 game library from a PC over the LAN. RiptOPL picks the network
+transport with a <b>single</b> selector — <b>Device Settings &rarr; Network Protocol</b> — offering
+<b>Off / SMB / UDPFS / UDPFSBD / UDPBD</b>. Because the PS2 has one Ethernet adapter, exactly one of
+these is ever active, so the selector is exclusive <i>by construction</i>. The three UDP transports
+each appear in RiptOPL as their own games list — with covers, Favourites, and per-game settings, just
+like a local drive — and always launch through <a href="neutrino.html">Neutrino</a> (there is no OPL
+built-in core fallback for them). SMB is the exception: it is a mounted file share served by OPL's own
+core, and needs no Neutrino.</p>
 
-<div class="callout info"><div class="h">ℹ Off by default</div>
-Network boot is <b>disabled by default</b>. It requires a static PS2 IP, a PC-side server,
-and exclusive use of the Ethernet adapter — it cannot run alongside SMB. Enable it only when
-you have those pieces in place.
+<div class="callout info"><div class="h">ℹ One selector, Off by default</div>
+The old <b>Network Boot</b> ON/OFF toggle, the separate <b>Net Boot Protocol</b> picker, and the live
+SMB-vs-Network-Boot interlock are <b>gone</b> — a single <b>Network Protocol</b> selector replaces all
+three, and it defaults to <b>Off</b> (no network device). Each UDP transport needs a static PS2 IP and
+a matching PC-side server. Pick a protocol only when you have those pieces in place. Local devices
+(USB / internal HDD / MMCE) are independent and browse alongside whichever network protocol you choose.
 </div>
 
-<h2 id="protocols">UDPBD vs UDPFS — which protocol?</h2>
+<h2 id="protocols">The five Network Protocol choices</h2>
 
-<p>RiptOPL supports two network block-device transports. Both serve the same purpose; pick the
-one whose PC server you prefer. The <b>Net Boot Protocol</b> picker in Device Settings selects
-which one the PS2 loads at runtime.</p>
+<p>Set <b>Settings &rarr; Device Settings &rarr; Network Protocol</b> to one of five values. Because
+the PS2 has a single NIC, choosing one automatically excludes the others — no separate enable toggle,
+and no greying interlock to manage.</p>
 
 <table data-sortable>
-<thead><tr><th>Protocol</th><th>Wire format</th><th>PC server</th><th>PS2 Neutrino flag</th><th>IRX chain</th></tr></thead>
+<thead><tr><th>Choice</th><th>Wire protocol</th><th>On the PS2</th><th>PC server</th><th>Core</th></tr></thead>
 <tbody>
 <tr>
-  <td><b>UDPBD</b></td>
-  <td>SUDPBDv2</td>
-  <td><code>udpbd-server</code> (<a href="https://github.com/israpps/udpbd-server">israpps</a>) or <a href="https://github.com/pcm720/udpfsd">udpfsd</a></td>
-  <td><code>-bsd=udpbd</code></td>
-  <td>Single monolithic <code>smap_udpbd.irx</code></td>
+  <td><b>Off</b></td>
+  <td>—</td>
+  <td>no network device (default)</td>
+  <td>—</td>
+  <td>—</td>
+</tr>
+<tr>
+  <td><b>SMB</b></td>
+  <td>SMBv1</td>
+  <td>a mounted file share</td>
+  <td>Samba / <code>smbserver_opl.py</code></td>
+  <td>OPL's <b>own</b> core (not Neutrino)</td>
 </tr>
 <tr>
   <td><b>UDPFS</b></td>
   <td>UDPRDMA</td>
-  <td><code>udpfs_server.py</code> (bundled) or <a href="https://github.com/pcm720/udpfsd">udpfsd</a></td>
-  <td><code>-bsd=udpfsbd</code></td>
-  <td>3-IRX chain: <code>smap → ministack → udpfs_bd</code></td>
+  <td>a <b>filesystem</b> (<code>udpfs:</code>) — loose ISOs in a folder</td>
+  <td><code>udpfs_server.py -d &lt;dir&gt;</code> / <code>udpfsd</code></td>
+  <td>Neutrino only</td>
+</tr>
+<tr>
+  <td><b>UDPFSBD</b></td>
+  <td>UDPRDMA</td>
+  <td>a <b>block device</b> (<code>massN:</code>) — a served disk image</td>
+  <td><code>udpfs_server.py -b &lt;image&gt;</code> / <code>udpfsd</code></td>
+  <td>Neutrino only</td>
+</tr>
+<tr>
+  <td><b>UDPBD</b></td>
+  <td>SUDPBDv2</td>
+  <td>a <b>block device</b> (<code>massN:</code>) — a served disk image</td>
+  <td><code>udpbd-server</code> <i>(external)</i></td>
+  <td>Neutrino only</td>
 </tr>
 </tbody>
 </table>
 
-<p><b>The two protocols differ on the wire</b> (SUDPBDv2 vs UDPRDMA), so a UDPBD-only
-<code>udpbd-server</code> will not talk to a UDPFS client and vice-versa — run a server that speaks
-the protocol selected on the PS2 side. <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a>
-(a single Go binary, no Python) speaks <b>both</b>, so it works either way.</p>
+<p><b>UDPBD</b> is the original one: Rick Gaiser's SUDPBDv2 <i>block device</i> — to OPL it <i>is</i>
+just another block device (it mounts <code>massN:</code>), it has no <code>&lt;OPL&gt;</code> core
+backend, so its games always launch via Neutrino (<code>-bsd=udpbd</code>). <b>UDPFS</b> and
+<b>UDPFSBD</b> are two shapes of the newer <b>UDPRDMA</b> transport (see the comparison below). All
+three UDP transports have <b>no DHCP client</b> and need a <b>static PS2 IP</b>; if
+<code>neutrino.elf</code> is missing at launch, OPL warns and returns to the menu.</p>
+
+<div class="callout amber"><div class="h">⚠ Emulator-validated only</div>
+The UDPRDMA path (both <b>UDPFS</b> and <b>UDPFSBD</b> shapes) is validated on emulator so far —
+real-PS2 confirmation is pending.
+</div>
+
+<h2 id="udpfs-vs-udpfsbd">UDPFS vs UDPFSBD — two shapes of one UDPRDMA transport</h2>
+
+<p><b>UDPFS</b> is Neutrino's newer network transport (Rick Gaiser's <b>UDPRDMA</b>),
+wire-incompatible with UDPBD's SUDPBDv2 (so it needs a different PC server). RiptOPL offers it in
+<b>both</b> shapes Neutrino supports, as two separate selector options:</p>
+
+<table data-sortable>
+<thead><tr><th></th><th>UDPFS (filesystem)</th><th>UDPFSBD (block)</th></tr></thead>
+<tbody>
+<tr><td><b>IOP driver</b></td><td><code>udpfs_ioman.irx</code> &rarr; <code>udpfs:</code></td><td><code>udpfs_bd.irx</code> &rarr; <code>massN:</code></td></tr>
+<tr><td><b>PC serves</b></td><td>a <b>folder of loose ISOs</b></td><td>a <b>FAT/exFAT disk image</b></td></tr>
+<tr><td><b>Server command</b></td><td><code>udpfs_server.py -d &lt;dir&gt;</code></td><td><code>udpfs_server.py -b &lt;image&gt;</code></td></tr>
+<tr><td><b>Neutrino <code>-bsd</code></b></td><td><code>-bsd=udpfs</code> (stock token)</td><td><code>-bsd=udpfsbd</code> (RiptOPL token)</td></tr>
+<tr><td><b>Add a game</b></td><td>drop a file in the folder</td><td>mount the image, copy, unmount</td></tr>
+<tr><td><b>Compression</b></td><td><code>.zso</code>/<code>.cso</code>/<code>.chd</code> via <code>--enable-compression</code></td><td>— (raw sectors only)</td></tr>
+</tbody>
+</table>
+
+<p>Both ride the same UDPRDMA transport and the same servers — <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a>
+(a prebuilt Go binary, serves both) or the bundled <code>udpfs_server.py</code> (Python 3); just pass
+<code>-d</code> for the filesystem or <code>-b</code> for the block image. A UDPBD-only
+<code>udpbd-server</code> (SUDPBDv2) will not talk to either.</p>
+
+<ul class="checklist">
+  <li><b>UDPFS</b> launches with the <b>stock</b> <code>-bsd=udpfs</code>, which loads Neutrino's
+  shipped <code>bsd-udpfs.toml</code> (the FHI filesystem driver, <code>udpfs_ioman</code> /
+  <code>udpfs_fhi</code>). Neutrino opens the game <b>by name</b> (<code>-dvd=udpfs:&lt;path&gt;</code>)
+  — no <code>massN:</code> block device, no fragment list.</li>
+  <li><b>UDPFSBD</b> launches with <code>-bsd=udpfsbd</code>, a <b>RiptOPL-private</b> token:
+  Neutrino ships <code>udpfs_bd.irx</code> but no stock <code>-bsd</code> for it, so RiptOPL
+  auto-places <code>config/bsd-udpfsbd.toml</code> into the bundled Neutrino folder. The private
+  name is deliberate — it avoids colliding with stock's <code>bsd-udpfs.toml</code> (a
+  <i>different</i> driver), so the block config and the stock filesystem config coexist on one
+  install.</li>
+</ul>
+
+<details class="deep"><summary>So why keep both?</summary>
+<p>They're the same protocol but a genuinely different workflow. <b>UDPFS</b> is the lower-friction,
+"modern" model (loose ISOs, drop-in, optional <code>.zso</code>/<code>.cso</code>/<code>.chd</code>
+compression) and matches how NHDDL and pcm720's server are designed. <b>UDPFSBD</b> reuses OPL's
+existing <code>massN:</code> block pipeline (a disk image the PS2 mounts with its own FAT/exFAT
+drivers) — handy if you already keep a block image or want the exact same shape as USB/HDD. Pick
+whichever fits how you store your games. <b>Hardware note:</b> the UDPRDMA path (both shapes) is
+validated on emulator only so far — real-PS2 confirmation is pending.</p>
+</details>
 
 <details class="deep"><summary>Where is udpfs_server.py?</summary>
-<p>The RiptOPL release package (<code>RIPTOPL-*.zip</code>) includes a bundled Neutrino archive
-(<code>neutrino_*.7z</code>) alongside the ELF. Extracting that archive reveals a
-<code>udpfs_server/</code> directory containing <code>udpfs_server.py</code> — that is the PC
-daemon to run when using UDPFS. UDPBD's <code>udpbd-server</code> is a separate project
-(<a href="https://github.com/israpps/udpbd-server">israpps/udpbd-server</a>, the canonical CI build)
-not bundled with RiptOPL — or use <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a>, which
-serves both protocols.</p>
+<p>The RiptOPL release ships Neutrino as a drag-and-drop <code>neutrino/</code> folder in the release
+zip. Its <code>udpfs_server/</code> directory contains <code>udpfs_server.py</code> — the PC daemon to
+run for either UDPFS shape (pass <code>-d &lt;dir&gt;</code> for the filesystem, <code>-b &lt;image&gt;</code>
+for the block image). UDPBD's <code>udpbd-server</code> is a separate project
+(<a href="https://github.com/israpps/udpbd-server">israpps/udpbd-server</a>, the canonical CI build) not
+bundled with RiptOPL — or use <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a>, a single Go
+binary that serves both UDPBD <i>and</i> UDPFS. RiptOPL's own
+<a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a> one-stop bundle collects the
+SMBv1, UDPBD, and UDPFS servers together.</p>
 </details>
 
-<details class="deep"><summary>Why does UDPFS need a bsd-udpfsbd.toml?</summary>
-<p>Neutrino ships <code>udpfs_bd.irx</code> but has no built-in <code>-bsd</code> token for the
-<i>block-device</i> form of UDPFS. RiptOPL solves this by auto-injecting
-<code>config/bsd-udpfsbd.toml</code> into the bundled Neutrino archive at build time, so no manual
-setup is needed if you use the release package. If you assembled your own Neutrino install, copy
-<code>neutrino/bsd-udpfsbd.toml</code> (from the RiptOPL source tree) into your
-<code>mc?:/neutrino/config/</code> folder.</p>
-</details>
-
-<details class="deep"><summary>Why <code>-bsd=udpfsbd</code> and not stock <code>-bsd=udpfs</code>?</summary>
+<details class="deep"><summary>Why does UDPFSBD need a private <code>bsd-udpfsbd.toml</code> when a stock <code>bsd-udpfs.toml</code> exists?</summary>
 <p>The <code>-bsd</code> token is just a <i>config filename</i>: at game boot Neutrino loads
-<code>config/bsd-&lt;token&gt;.toml</code>, and the toml's <b>body</b> picks the IOP driver. Stock Neutrino
-already ships a <code>bsd-udpfs.toml</code> whose body is the <b>FHI filesystem</b> driver
+<code>config/bsd-&lt;token&gt;.toml</code>, and the toml's <b>body</b> picks the IOP driver. Stock
+Neutrino already ships a <code>bsd-udpfs.toml</code> whose body is the <b>FHI filesystem</b> driver
 (<code>udpfs_ioman</code> / <code>udpfs_fhi</code>, no <code>i_bdm</code>, registers no
-<code>massN:</code> block device). RiptOPL needs the <b>block-device</b> body
-(<code>udpfs_bd.irx</code>, <code>i_bdm</code> &rarr; <code>massN:</code>) because the launch hands
-Neutrino <code>-dvd=massN:</code> — a filesystem driver has no <code>massN:</code> device to open, so
-the <i>game</i> would fail to boot.</p>
-<p>So RiptOPL ships that block body under the <b>private name <code>bsd-udpfsbd.toml</code></b> and
-emits <code>-bsd=udpfsbd</code>, <b>specifically so it does not collide with stock's
-<code>bsd-udpfs.toml</code></b> — letting RiptOPL's block-mode UDPFS and stock/NHDDL's filesystem-mode
-UDPFS coexist on one Neutrino install. (The in-OPL <b>UDPFS Games</b> <i>list</i> is built from the
-<code>udpfs_bd</code> block device OPL loads <i>itself</i> in the menu — gated on the protocol picker,
-not the launch token — so the token only affects the game boot, never the list.) That is also why the
-bundled <code>udpfs_server.py</code> must run in <b>block mode</b> (<code>-b &lt;FAT/exFAT image&gt;</code>),
-not loose-ISO mode (<code>-d &lt;dir&gt;</code>). Stock NHDDL uses the filesystem / loose-ISO model; RiptOPL
-deliberately does not.</p>
+<code>massN:</code> block device). The <b>UDPFS</b> option uses that stock token as-is —
+<code>-bsd=udpfs</code>, opening the game <code>-dvd=udpfs:&lt;path&gt;</code> by name.</p>
+<p>The <b>UDPFSBD</b> option needs the <b>block-device</b> body instead (<code>udpfs_bd.irx</code>,
+<code>i_bdm</code> &rarr; <code>massN:</code>) because that launch hands Neutrino
+<code>-dvd=massN:</code>. Neutrino ships <code>udpfs_bd.irx</code> but <b>no built-in <code>-bsd</code>
+token</b> for it, so RiptOPL auto-injects <code>config/bsd-udpfsbd.toml</code> into the bundled
+Neutrino folder at build time and emits <code>-bsd=udpfsbd</code>. The <b>private name is
+deliberate</b> — <code>bsd-udpfsbd.toml</code> will not collide with stock's <code>bsd-udpfs.toml</code>
+(a different driver), so the block config and the stock filesystem config <b>coexist</b> on one
+Neutrino install. If you assembled Neutrino yourself, copy <code>neutrino/bsd-udpfsbd.toml</code> from
+the RiptOPL source tree into your <code>neutrino/config/</code> folder.</p>
 </details>
 
 <h2 id="requirements">Requirements</h2>
 
 <ul class="checklist">
-  <li><b>Static PS2 IP address.</b> The UDPBD and UDPFS IOP modules have no DHCP client — they
-  read the IP set in <b>Settings &rarr; Network Settings</b> and use it directly. If DHCP is
-  currently on in Network Settings, RiptOPL warns you when you save Device Settings with Network
-  Boot newly enabled.</li>
-  <li><b>PC-side server running on the same LAN</b> — <code>udpbd-server</code>
-  (<a href="https://github.com/israpps/udpbd-server">israpps</a>) for UDPBD, <code>udpfs_server.py</code>
-  for UDPFS, or <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a> (a no-Python Go binary that
-  serves both). RiptOPL's own <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a>
-  bundles all of them.</li>
-  <li><b>SMB / Ethernet must be disabled.</b> Both protocols load a SMAP NIC driver that occupies
-  the single Ethernet adapter; SMB loads its own SMAP driver on the same hardware. They are
-  mutually exclusive and interlocked in the Device Settings UI — enabling one greys out the other.</li>
-  <li><b>Neutrino ELF on a memory card</b> (or the custom path). Network-boot games always launch
-  via Neutrino; if <code>neutrino.elf</code> is not found at launch, RiptOPL warns and returns to
-  the menu. See <a href="neutrino.html">Neutrino Core</a> for the install paths.</li>
-  <li><b>Game files laid out with standard OPL folders</b> on the share: <code>CD/</code>,
-  <code>DVD/</code>, <code>ART/</code>, <code>CFG/</code>, etc. — the same structure you would
-  use on a USB drive.</li>
+  <li><b>Static PS2 IP address</b> (UDP transports only). The UDPFS / UDPFSBD / UDPBD IOP modules
+  have no DHCP client — they read the IP set in <b>Settings &rarr; Network Config</b> and use it
+  directly. If DHCP is currently on there, RiptOPL warns you when you select a UDP protocol in Device
+  Settings. (SMB can use DHCP or a static IP; it keeps its own address/port/share/credentials fields
+  on the Network Config page.)</li>
+  <li><b>PC-side server running on the same LAN</b>, speaking the protocol you selected —
+  <code>udpbd-server</code> (<a href="https://github.com/israpps/udpbd-server">israpps</a>) for UDPBD,
+  <code>udpfs_server.py</code> for UDPFS/UDPFSBD, or <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a>
+  (a no-Python Go binary that serves both UDPBD and UDPFS). RiptOPL's own
+  <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a> bundles the SMBv1, UDPBD, and
+  UDPFS servers.</li>
+  <li><b>Neutrino ELF</b> for the UDP transports. UDPFS / UDPFSBD / UDPBD always launch via Neutrino;
+  if <code>neutrino.elf</code> is not found at launch, RiptOPL warns and returns to the menu. The
+  UDP feature ships its <b>own bundled Neutrino</b> (a ready-to-use <code>neutrino/</code> folder in
+  the release zip, pre-populated with the UDPFS config). See <a href="neutrino.html">Neutrino
+  Core</a>. <i>(SMB needs no Neutrino — it uses OPL's own core.)</i></li>
+  <li><b>Neutrino reads its own IP from a toml, not from OPL.</b> When a UDP game boots, control hands
+  to the external Neutrino, whose <code>config/bsd-udpfsbd.toml</code> / <code>config/bsd-udpbd.toml</code>
+  hardcode <code>ip=192.168.1.10</code>. If your PS2's static IP differs, edit the <code>ip=</code> line
+  in that toml (under the bundled <code>neutrino/config/</code>) to match — otherwise games list fine in
+  OPL but fail to boot.</li>
+  <li><b>Game files laid out with standard OPL folders</b> for the block shapes (UDPFSBD / UDPBD)
+  and SMB: <code>CD/</code>, <code>DVD/</code>, <code>ART/</code>, <code>CFG/</code>, etc. — the same
+  structure you would use on a USB drive. (UDPFS instead serves a flat folder of loose ISOs; drop the
+  file in and the game appears.)</li>
 </ul>
 
-<h2 id="enable">Enabling network boot</h2>
+<h2 id="enable">Selecting a network protocol</h2>
 
 <div class="steps">
 <div class="step">
-<h3>Set a static IP on the PS2</h3>
-<p>Go to <b>Settings &rarr; Network Settings</b> and set a fixed IP address, subnet mask, and
-gateway. Turn DHCP <b>off</b>. Both UDPBD and UDPFS read this address at module-load time;
-they have no mechanism to acquire a lease later.</p>
+<h3>Set a static IP on the PS2 (UDP only)</h3>
+<p>For any of the three UDP transports, go to <b>Settings &rarr; Network Config</b> and set a fixed
+IP address, subnet mask, and gateway; turn DHCP <b>off</b>. The UDP IOP modules read this address at
+module-load time and have no way to acquire a lease later. (SMB can stay on DHCP if you prefer.)</p>
 </div>
 <div class="step">
-<h3>Disable SMB / Ethernet</h3>
-<p>In <b>Settings &rarr; Device Settings</b>, confirm the <b>Ethernet (SMB)</b> device mode is
-set to <b>Disabled</b>. The Network Boot toggle is greyed while SMB is active.</p>
-</div>
-<div class="step">
-<h3>Turn Network Boot on</h3>
-<p>In <b>Settings &rarr; Device Settings</b>, set <b>Network Boot</b> to <b>On</b>. The
-<b>Net Boot Protocol</b> picker (defaulting to <b>UDPBD</b>) becomes active — change it to
-<b>UDPFS</b> if that is the protocol you are using. Save settings.</p>
+<h3>Pick your Network Protocol</h3>
+<p>In <b>Settings &rarr; Device Settings</b>, set <b>Network Protocol</b> to one of <b>SMB</b>,
+<b>UDPFS</b>, <b>UDPFSBD</b>, or <b>UDPBD</b> (or <b>Off</b> to disable networking). This one selector
+replaces the old Network Boot toggle + Net Boot Protocol picker; because the PS2 has a single NIC,
+choosing one excludes the others automatically — there is nothing to grey out and no interlock to
+manage. Save settings. When a non-SMB protocol is selected, SMB's server / port / share / credentials
+fields on the Network Config page are hidden automatically.</p>
 </div>
 <div class="step">
 <h3>Start the PC server</h3>
-<p>On the PC, run the server that matches your chosen protocol. Both should listen on all
-interfaces by default; point them at the directory that holds your <code>CD/</code>,
-<code>DVD/</code>, <code>ART/</code>, and <code>CFG/</code> folders.</p>
+<p>On the PC, run the server that matches your chosen protocol. Point it at the folder holding your
+games (a loose-ISO directory for UDPFS, a FAT/exFAT disk image for UDPFSBD/UDPBD, or a share for SMB).</p>
 <pre>
-# UDPBD
+# UDPBD (external server, SUDPBDv2)
 udpbd-server /path/to/games
 
-# UDPFS
-python3 udpfs_server.py /path/to/games
+# UDPFS — filesystem, loose ISOs in a folder
+python3 udpfs_server.py -d /path/to/isos
+python3 udpfs_server.py -d /path/to/isos --enable-compression   # allow .zso/.cso/.chd
 
-# Either protocol, no Python — pcm720/udpfsd (download a prebuilt binary)
-udpfsd -fsroot /path/to/games          # Linux/macOS
-udpfsd.exe -fsroot C:\path\to\games    # Windows
+# UDPFSBD — block device, a served FAT/exFAT image
+python3 udpfs_server.py -b /path/to/games.img
+
+# UDPFS or UDPFSBD, no Python — pcm720/udpfsd (download a prebuilt binary)
+udpfsd -d /path/to/isos            # filesystem (Linux/macOS)
+udpfsd.exe -b C:\path\to\games.img # block image (Windows)
 </pre>
 </div>
 <div class="step">
 <h3>Boot the PS2 and find your games</h3>
-<p>RiptOPL loads the IOP module as soon as it starts and mounts the network block device as
-<code>massN:</code>. Your games appear in a <b>UDPBD Games</b> tab (regardless of which
-protocol is active). Select a game and launch it — Neutrino is invoked automatically.</p>
+<p>RiptOPL loads the IOP module as soon as it starts. UDPFS mounts the <code>udpfs:</code> filesystem;
+UDPFSBD and UDPBD mount the served image as <code>massN:</code>. Your games appear in that protocol's
+own games list. Select a game and launch it — for the UDP transports, Neutrino is invoked automatically;
+SMB boots through OPL's own core.</p>
 </div>
 </div>
 
-<h2 id="neutrino-only">Neutrino-only: no OPL core fallback</h2>
+<h2 id="neutrino-only">Neutrino-only: no OPL core fallback (UDP transports)</h2>
 
-<p>UDPBD and UDPFS have no embedded <code>cdvdman</code> backend, so they cannot use OPL's
-built-in EE core. Every UDPBD game launches via Neutrino, regardless of the per-game
-<b>Loader Core</b> setting. In the per-game Compatibility screen, the Loader Core selector is
-<b>locked to Neutrino</b> for UDPBD/UDPFS games — it cannot be changed to <code>&lt;OPL&gt;</code>.
-If <code>neutrino.elf</code> is missing when a game is launched, OPL shows a warning and
-returns to the menu; it does not attempt an OPL-core fallback.</p>
+<p>UDPFS, UDPFSBD, and UDPBD have no embedded <code>cdvdman</code> backend, so they cannot use OPL's
+built-in EE core. Every UDP game launches via Neutrino, regardless of the per-game <b>Loader Core</b>
+setting. In the per-game Compatibility screen, the Loader Core selector is <b>locked to Neutrino</b>
+for these games — it cannot be changed to <code>&lt;OPL&gt;</code>. If <code>neutrino.elf</code> is
+missing when a game is launched, OPL shows a warning and returns to the menu; it does not attempt an
+OPL-core fallback.</p>
+
+<p><b>SMB is different:</b> it is served by OPL's own core, needs no Neutrino, and behaves like the
+classic OPL network share. See <a href="smb.html">SMB (network share)</a>.</p>
 
 <div class="callout info"><div class="h">ℹ Per-game settings still work</div>
-UDPBD/UDPFS games support the full per-game settings screen in its Neutrino-aware mode:
+UDP-transport games support the full per-game settings screen in its Neutrino-aware mode:
 compat modes 1/2/3/5 (mapped to <code>-gc</code>), mode 7 (fix IOP buffer overrun,
 <code>-gc=7</code>), the Neutrino Video picker (<code>-gsm</code>), VMC, and free-text
 Neutrino Launch Args. OPL-core-only panels (GSM, Cheats, PADEMU, OSD Language) show a
@@ -218,15 +300,17 @@ Neutrino Launch Args. OPL-core-only panels (GSM, Cheats, PADEMU, OSD Language) s
 and <a href="neutrino.html">Neutrino Core</a> for details.
 </div>
 
-<h2 id="smb-exclusion">SMB mutual exclusion</h2>
+<h2 id="single-nic">One NIC, one selector — no interlock to manage</h2>
 
-<p>The PS2 has a single Ethernet adapter (SMAP). Both the SMB/ETH stack and the UDPBD/UDPFS
-stack load a SMAP driver — they cannot coexist. The Device Settings UI enforces this:
-enabling <b>Network Boot</b> greys out the <b>Ethernet (SMB)</b> mode selector, and enabling
-SMB greys out the Network Boot toggle. There is no way to use both at the same time.</p>
+<p>The PS2 has a single Ethernet adapter (SMAP), and every network transport — SMB, UDPFS, UDPFSBD,
+UDPBD — loads a SMAP driver on it. Only one can own the adapter at a time, so RiptOPL exposes them as
+mutually exclusive <b>values of one selector</b> rather than independent toggles. This replaces the old
+model, where a separate <b>Network Boot</b> toggle and an <b>Ethernet (SMB)</b> mode had to be greyed
+against each other by a live interlock. Now you simply choose the one you want — switching between SMB
+and a UDP transport is just changing the Network Protocol value and saving.</p>
 
-<p>If you want to switch between SMB and network boot, disable one, save settings, and enable
-the other.</p>
+<p>Local devices — USB, MX4SIO, iLink, internal HDD (APA / exFAT), and MMCE — are entirely
+independent of this selector and browse alongside whichever network protocol you pick (or none).</p>
 
 <h2 id="config-keys">Config file keys</h2>
 
@@ -235,18 +319,23 @@ the other.</p>
 <table data-sortable>
 <thead><tr><th>Key</th><th>Type</th><th>Default</th><th>Meaning</th></tr></thead>
 <tbody>
-<tr><td><code>enable_udpbd</code></td><td>bool (0/1)</td><td><code>0</code></td><td>Master switch: enable network boot (UDPBD or UDPFS).</td></tr>
-<tr><td><code>net_boot_protocol</code></td><td>int (0/1)</td><td><code>0</code></td><td><code>0</code> = UDPBD, <code>1</code> = UDPFS. Only meaningful when <code>enable_udpbd=1</code>.</td></tr>
+<tr><td><code>network_protocol</code></td><td>int (0–4)</td><td><code>0</code></td><td><b>Authoritative selector.</b> <code>0</code>=Off, <code>1</code>=SMB, <code>2</code>=UDPFS, <code>3</code>=UDPFSBD, <code>4</code>=UDPBD.</td></tr>
+<tr><td><code>enable_udpbd</code></td><td>bool (0/1)</td><td><code>0</code></td><td><b>Legacy back-compat shadow</b> (superseded by <code>network_protocol</code>). Still dual-written: <code>1</code> whenever the protocol is UDPFSBD or UDPBD.</td></tr>
+<tr><td><code>net_boot_protocol</code></td><td>int (0/1)</td><td><code>0</code></td><td><b>Legacy back-compat shadow</b> (superseded). <code>0</code> = UDPBD, <code>1</code> = UDPFS(BD). Only meaningful when the legacy <code>enable_udpbd=1</code>.</td></tr>
+<tr><td><code>eth_mode</code></td><td>int</td><td>—</td><td><b>Legacy back-compat shadow</b> of the old ETH/SMB start mode; the unified selector supersedes it. Still written for older readers.</td></tr>
 </tbody>
 </table>
 
-<p>The PS2 IP address used by the IOP modules is read from the standard Network Settings fields
-(the same ones SMB uses); there are no protocol-specific network keys.</p>
+<p>RiptOPL writes the legacy <code>enable_udpbd</code> / <code>net_boot_protocol</code> / <code>eth_mode</code>
+keys alongside the new one (a dual-write) purely so older builds can still read the config;
+<code>network_protocol</code> is the source of truth. The PS2 IP address used by the UDP IOP modules is
+read from the standard Network Config fields (the same ones SMB uses); there are no protocol-specific
+network keys.</p>
 
 <h2 id="folder-layout">Game folder layout on the server</h2>
 
-<p>The PC server exports a directory that the PS2 mounts as a block device and reads as FAT.
-RiptOPL scans it with the same folder conventions as a USB drive:</p>
+<p>For the <b>block shapes</b> (UDPFSBD / UDPBD) and SMB, the PC server exports a FAT/exFAT volume the
+PS2 reads with the same folder conventions as a USB drive:</p>
 
 <pre>
 mass0:/  (device root — folders sit here directly by default)
@@ -260,10 +349,18 @@ mass0:/  (device root — folders sit here directly by default)
   APPS/        ← homebrew ELF files (optional)
 </pre>
 
-<details class="deep"><summary>Can I use ZSO or UL-format images over network boot?</summary>
-<p>No. Compressed (<code>.zso</code>) and USB Extreme split (<code>.ul</code>) images require
-the OPL built-in core, which is not available for UDPBD/UDPFS games. Only standard ISO images
-work over network boot.</p>
+<p>The <b>UDPFS filesystem</b> shape is simpler: point <code>udpfs_server.py -d</code> (or
+<code>udpfsd -d</code>) at a plain folder of ISOs. Drop a file in and it appears in the UDPFS games
+list — no <code>massN:</code>, no fragment list, and optional <code>.zso</code>/<code>.cso</code>/<code>.chd</code>
+compression when the server runs with <code>--enable-compression</code>.</p>
+
+<details class="deep"><summary>Can I use ZSO or UL-format images over the UDP transports?</summary>
+<p>It depends on the shape. <b>UDPFS</b> (filesystem) supports transparent
+<code>.zso</code>/<code>.cso</code>/<code>.chd</code> compression when the server is started with
+<code>--enable-compression</code> — Neutrino opens the file by name and the server decompresses on the
+fly. The <b>block shapes</b> (<b>UDPFSBD</b> / <b>UDPBD</b>) serve raw sectors only, and USB Extreme
+split (<code>.ul</code>) images require the OPL built-in core, which none of the UDP transports use — so
+on the block shapes, only standard ISO images work.</p>
 </details>
 
 <h2 id="troubleshooting">Troubleshooting</h2>
@@ -272,43 +369,47 @@ work over network boot.</p>
 <thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead>
 <tbody>
 <tr>
-  <td>No "UDPBD Games" tab appears</td>
-  <td>Network Boot is off, SMB is still active, or the IOP module failed to load (no network
-  link at boot).</td>
-  <td>Check Device Settings: Network Boot = On, Ethernet/SMB = Disabled. Verify the PS2 has a
-  physical Ethernet link before power-on.</td>
+  <td>No network games list appears</td>
+  <td>Network Protocol is Off, or the IOP module failed to load (no network link at boot).</td>
+  <td>Check <b>Device Settings &rarr; Network Protocol</b> is set to your chosen transport (not Off).
+  Verify the PS2 has a physical Ethernet link before power-on.</td>
 </tr>
 <tr>
-  <td>"UDPBD needs a static PS2 IP" warning on save</td>
-  <td>DHCP is enabled in Network Settings.</td>
-  <td>Go to <b>Settings &rarr; Network Settings</b>, disable DHCP, and enter a static IP.</td>
+  <td>"needs a static PS2 IP" warning when selecting a UDP protocol</td>
+  <td>DHCP is enabled in Network Config.</td>
+  <td>Go to <b>Settings &rarr; Network Config</b>, disable DHCP, and enter a static IP.</td>
 </tr>
 <tr>
-  <td>Tab appears but game list is empty</td>
-  <td>PC server not running, wrong IP, or wrong protocol selected.</td>
-  <td>Confirm the server is running. Confirm the PS2 IP in Network Settings matches the server's
-  expected client address. Confirm the Net Boot Protocol matches the server binary.</td>
+  <td>List appears but game list is empty</td>
+  <td>PC server not running, wrong IP, or the server speaks a different protocol than selected.</td>
+  <td>Confirm the server is running. Confirm the PS2 IP in Network Config matches the server's
+  expected client address. Confirm the <b>Network Protocol</b> value matches the server binary and mode
+  (<code>-d</code> for UDPFS, <code>-b</code> for UDPFSBD, <code>udpbd-server</code> for UDPBD).</td>
 </tr>
 <tr>
   <td>Game launches but immediately crashes or freezes</td>
-  <td><code>neutrino.elf</code> not found, or server disconnect mid-launch.</td>
-  <td>Verify <code>neutrino.elf</code> exists at <code>mc0:NEUTRINO/neutrino.elf</code> or the
-  custom Neutrino ELF Path. Keep the PC server running throughout play.</td>
+  <td><code>neutrino.elf</code> not found, wrong <code>ip=</code> in the Neutrino toml, or server
+  disconnect mid-launch.</td>
+  <td>Verify <code>neutrino.elf</code> exists (bundled <code>neutrino/</code> folder or the custom
+  Neutrino ELF Path). Check the <code>ip=</code> line in <code>neutrino/config/bsd-udpfsbd.toml</code> /
+  <code>bsd-udpbd.toml</code> matches your PS2's static IP. Keep the PC server running throughout play.</td>
 </tr>
 <tr>
-  <td>UDPFS game fails but UDPBD works</td>
-  <td><code>bsd-udpfsbd.toml</code> missing from the Neutrino config folder.</td>
-  <td>Use the bundled Neutrino archive from the RiptOPL release package (it contains
-  <code>config/bsd-udpfsbd.toml</code> pre-injected). If you installed Neutrino manually,
-  copy <code>neutrino/bsd-udpfsbd.toml</code> from the RiptOPL source into
-  <code>mc?:/neutrino/config/</code>.</td>
+  <td>UDPFSBD game fails but UDPBD works (or vice-versa)</td>
+  <td><code>bsd-udpfsbd.toml</code> missing from the Neutrino config folder, or the server is in the
+  wrong mode for the shape you selected.</td>
+  <td>Use the bundled Neutrino folder from the RiptOPL release (it contains
+  <code>config/bsd-udpfsbd.toml</code> pre-injected). If you installed Neutrino manually, copy
+  <code>neutrino/bsd-udpfsbd.toml</code> from the RiptOPL source into <code>neutrino/config/</code>.
+  Make sure <code>udpfs_server.py</code> runs with <code>-b</code> for UDPFSBD (block) or <code>-d</code>
+  for UDPFS (filesystem).</td>
 </tr>
 </tbody>
 </table>
 
 <p>For further reading see <a href="neutrino.html">Neutrino Core</a> (per-game settings,
-launch args) and <a href="smb.html">SMB (network share)</a> (the alternative network game
-source, which uses the OPL built-in core and does not require Neutrino).</p>
+launch args) and <a href="smb.html">SMB (network share)</a> (the SMB protocol in depth, which uses
+the OPL built-in core and does not require Neutrino).</p>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>
