@@ -892,9 +892,14 @@ static const char *getDeviceName(const char *driver)
     if (!strcmp(driver, "mmce"))
         return "mmce";
     if (!strcmp(driver, "udp"))
-        // Both transports register the "udp" BDM token; gNetBootProtocol picks the Neutrino backing
+        // Both BLOCK transports register the "udp" BDM token; gNetBootProtocol picks the Neutrino backing
         // store: -bsd=udpbd (smap_udpbd / SUDPBDv2) vs -bsd=udpfsbd (the udpfs_bd UDPRDMA toml).
         return (gNetBootProtocol == NET_BOOT_UDPFS) ? "udpfsbd" : "udpbd";
+    if (!strcmp(driver, "udpfs"))
+        // UDPFS *filesystem* device (udpfssupport / udpfs_ioman): the stock Neutrino -bsd token loads
+        // config/bsd-udpfs.toml (the FHI filesystem driver), then opens -dvd=udpfs:<path> by name -- no
+        // massN: block device and no fraglist. Distinct from the "udp" block tokens above.
+        return "udpfs";
     return "unsupported";
 }
 
