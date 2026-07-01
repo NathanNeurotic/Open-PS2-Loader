@@ -630,6 +630,8 @@ gui_strings:
   string: UDPBD Games
 - label: UDPFS_GAMES
   string: UDPFS Games
+- label: UDPFSBD_GAMES
+  string: UDPFSBD Games
 - label: NET_NEEDS_NEUTRINO
   string: Network (UDP) games can only boot via the Neutrino core. Check that neutrino.elf is present and the format is supported.
 - label: VCD_NOT_ON_NET

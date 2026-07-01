@@ -1108,7 +1108,7 @@ static int bdmGetTextId(item_list_t *itemList)
     else if (bdmDriverIsATA(pDeviceData->bdmDriver))
         mode = _STR_HDD_GAMES;
     else if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
-        mode = (gNetBootProtocol == NET_BOOT_UDPFS) ? _STR_UDPFS_GAMES : _STR_UDPBD_GAMES; // mirror bdmGetIconId
+        mode = (gNetBootProtocol == NET_BOOT_UDPFS) ? _STR_UDPFSBD_GAMES : _STR_UDPBD_GAMES; // BLOCK: UDPFSBD vs UDPBD (the udpfs FILESYSTEM tab is _STR_UDPFS_GAMES, a separate device); mirror bdmGetIconId
 
     return mode;
 }
