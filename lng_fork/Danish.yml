@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Anvend VCD BDMA ved start"
   HINT_BDMA_APPLY: "Til: udstyrer automatisk den startede VCD's matchende exFAT-driver på hukommelseskortet før start (anbefales). Fra: håndtér det selv med BDMA-kilde/tilstand-vælgerne nedenfor."
   NETBOOT_RESTART: "Genstart OPL for at anvende ændringen af netværksstartprotokollen."
+  UDPFS_MODE: "UDPFS-adgang"

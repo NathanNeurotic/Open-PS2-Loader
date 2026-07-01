@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Áp dụng VCD BDMA khi khởi chạy"
   HINT_BDMA_APPLY: "Bật: tự động nạp driver exFAT phù hợp của VCD được khởi chạy vào thẻ nhớ trước khi khởi động (khuyến nghị). Tắt: tự quản lý bằng bộ chọn Nguồn/Chế độ BDMA bên dưới."
   NETBOOT_RESTART: "Khởi động lại OPL để áp dụng thay đổi giao thức khởi động mạng."
+  UDPFS_MODE: "Truy cập UDPFS"

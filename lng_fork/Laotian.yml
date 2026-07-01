@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "ນຳໃຊ້ VCD BDMA ຕອນເປີດ"
   HINT_BDMA_APPLY: "ເປີດ: ຕິດຕັ້ງໄດຣເວີ exFAT ທີ່ກົງກັບ VCD ທີ່ເປີດໃສ່ກາດຄວາມຈຳໂດຍອັດຕະໂນມັດກ່ອນບູດ (ແນະນຳ). ປິດ: ຈັດການເອງດ້ວຍຕົວເລືອກ Source/Mode ຂອງ BDMA ຂ້າງລຸ່ມ."
   NETBOOT_RESTART: "ຣີສະຕາດ OPL ເພື່ອນຳໃຊ້ການປ່ຽນໂປຣໂຕຄໍການບູດເຄືອຂ່າຍ."
+  UDPFS_MODE: "ການເຂົ້າເຖິງ UDPFS"

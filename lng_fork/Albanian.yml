@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Zbato VCD BDMA gjatë nisjes"
   HINT_BDMA_APPLY: "Aktiv: pajis automatikisht kartën e memories me drejtuesin përkatës exFAT të VCD-së së nisur para nisjes (rekomandohet). Joaktiv: menaxhoje vetë me zgjedhësit Source/Mode të BDMA më poshtë."
   NETBOOT_RESTART: "Rinis OPL-në për të zbatuar ndryshimin e protokollit të nisjes në rrjet."
+  UDPFS_MODE: "Qasja UDPFS"

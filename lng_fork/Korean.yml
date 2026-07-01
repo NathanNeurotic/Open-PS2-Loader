@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "실행 시 VCD BDMA 적용"
   HINT_BDMA_APPLY: "켜기: 부팅 전에 실행하는 VCD에 맞는 exFAT 드라이버를 메모리 카드에 자동 장착합니다(권장). 끄기: 아래 BDMA 소스/모드 선택기로 직접 관리합니다."
   NETBOOT_RESTART: "네트워크 부팅 프로토콜 변경을 적용하려면 OPL을 다시 시작하세요."
+  UDPFS_MODE: "UDPFS 액세스"

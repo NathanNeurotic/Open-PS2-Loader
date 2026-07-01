@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Başlatmada VCD BDMA Uygula"
   HINT_BDMA_APPLY: "Açık: başlatılan VCD'ye uygun exFAT sürücüsünü önyüklemeden önce hafıza kartına otomatik yerleştir (önerilir). Kapalı: aşağıdaki BDMA Kaynak/Mod seçicileriyle kendiniz yönetin."
   NETBOOT_RESTART: "Ağ önyükleme protokolü değişikliğini uygulamak için OPL'yi yeniden başlatın."
+  UDPFS_MODE: "UDPFS Erişimi"

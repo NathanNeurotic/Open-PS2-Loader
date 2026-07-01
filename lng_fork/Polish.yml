@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Zastosuj VCD BDMA przy starcie"
   HINT_BDMA_APPLY: "Wł.: automatycznie instaluje pasujący sterownik exFAT uruchamianego VCD na karcie pamięci przed startem (zalecane). Wył.: zarządzaj tym samodzielnie za pomocą selektorów Źródło/Tryb BDMA poniżej."
   NETBOOT_RESTART: "Uruchom ponownie OPL, aby zastosować zmianę protokołu uruchamiania sieciowego."
+  UDPFS_MODE: "Dostęp UDPFS"

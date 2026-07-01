@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "起動時に VCD BDMA を適用"
   HINT_BDMA_APPLY: "オン: 起動する VCD に対応する exFAT ドライバを起動前にメモリーカードへ自動装備します（推奨）。オフ: 下の BDMA ソース/モード選択で手動管理します。"
   NETBOOT_RESTART: "ネットワーク起動プロトコルの変更を適用するには OPL を再起動してください。"
+  UDPFS_MODE: "UDPFS アクセス"

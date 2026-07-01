@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Appliquer VCD BDMA au lancement"
   HINT_BDMA_APPLY: "Activé : équipe automatiquement le pilote exFAT correspondant au VCD lancé sur la carte mémoire avant le démarrage (recommandé). Désactivé : gérez-le vous-même avec les sélecteurs Source/Mode BDMA ci-dessous."
   NETBOOT_RESTART: "Redémarrez OPL pour appliquer le changement de protocole de démarrage réseau."
+  UDPFS_MODE: "Accès UDPFS"

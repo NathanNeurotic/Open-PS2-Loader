@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "VCD BDMA alkalmazása indításkor"
   HINT_BDMA_APPLY: "Be: indítás előtt automatikusan felteszi a memóriakártyára az elindított VCD megfelelő exFAT illesztőprogramját (ajánlott). Ki: kezelje kézzel az alábbi BDMA Source/Mode választókkal."
   NETBOOT_RESTART: "Indítsa újra az OPL-t a hálózati indítási protokoll módosításának alkalmazásához."
+  UDPFS_MODE: "UDPFS-hozzáférés"

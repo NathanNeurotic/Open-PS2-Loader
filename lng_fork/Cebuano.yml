@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Ipatuman ang VCD BDMA sa Paglunsad"
   HINT_BDMA_APPLY: "Naka-on: awtomatikong ibutang ang katugbang nga exFAT driver sa gilunsad nga VCD sa memory card sa dili pa mag-boot (girekomenda). Naka-off: dumalaha kini sa imong kaugalingon gamit ang mga pili nga Source/Mode sa BDMA sa ubos."
   NETBOOT_RESTART: "I-restart ang OPL aron ipatuman ang kausaban sa network boot protocol."
+  UDPFS_MODE: "Pag-access sa UDPFS"

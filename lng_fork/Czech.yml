@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Použít VCD BDMA při spuštění"
   HINT_BDMA_APPLY: "Zap.: před spuštěním automaticky nasadí na paměťovou kartu odpovídající ovladač exFAT spouštěného VCD (doporučeno). Vyp.: spravujte ručně pomocí voleb BDMA Source/Mode níže."
   NETBOOT_RESTART: "Restartujte OPL pro použití změny protokolu síťového spouštění."
+  UDPFS_MODE: "Přístup UDPFS"

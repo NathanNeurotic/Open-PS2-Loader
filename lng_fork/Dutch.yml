@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "VCD BDMA toepassen bij starten"
   HINT_BDMA_APPLY: "Aan: rust automatisch de bijpassende exFAT-driver van de gestarte VCD uit op de geheugenkaart vóór het booten (aanbevolen). Uit: beheer dit zelf met de BDMA-bron/modus-kiezers hieronder."
   NETBOOT_RESTART: "Herstart OPL om de wijziging van het netwerk-bootprotocol toe te passen."
+  UDPFS_MODE: "UDPFS-toegang"

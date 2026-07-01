@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Primijeni VCD BDMA pri pokretanju"
   HINT_BDMA_APPLY: "Uklj.: prije pokretanja automatski postavlja na memorijsku karticu odgovarajući exFAT upravljački program pokrenutog VCD-a (preporučeno). Isklj.: upravljajte ručno pomoću izbornika BDMA Source/Mode ispod."
   NETBOOT_RESTART: "Ponovno pokrenite OPL da biste primijenili promjenu protokola mrežnog pokretanja."
+  UDPFS_MODE: "UDPFS pristup"

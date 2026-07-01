@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "啟動時套用 VCD BDMA"
   HINT_BDMA_APPLY: "開啟：啟動前自動將所啟動 VCD 對應的 exFAT 驅動裝載到記憶卡（建議）。關閉：使用下方的 BDMA 來源/模式選擇器自行管理。"
   NETBOOT_RESTART: "重新啟動 OPL 以套用網路啟動協定的變更。"
+  UDPFS_MODE: "UDPFS 存取"

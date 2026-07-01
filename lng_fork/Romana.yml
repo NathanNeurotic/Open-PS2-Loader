@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Aplică VCD BDMA la pornire"
   HINT_BDMA_APPLY: "Pornit: înainte de pornire pune automat pe cardul de memorie driverul exFAT potrivit al VCD-ului lansat (recomandat). Oprit: gestionați manual cu selectoarele BDMA Source/Mode de mai jos."
   NETBOOT_RESTART: "Reporniți OPL pentru a aplica modificarea protocolului de pornire din rețea."
+  UDPFS_MODE: "Acces UDPFS"

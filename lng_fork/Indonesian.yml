@@ -117,3 +117,4 @@ translations:
   BDMA_APPLY: "Terapkan VCD BDMA saat Peluncuran"
   HINT_BDMA_APPLY: "Aktif: otomatis pasang driver exFAT yang cocok dengan VCD yang diluncurkan ke kartu memori sebelum boot (disarankan). Nonaktif: kelola sendiri dengan pemilih Sumber/Mode BDMA di bawah."
   NETBOOT_RESTART: "Mulai ulang OPL untuk menerapkan perubahan protokol boot jaringan."
+  UDPFS_MODE: "Akses UDPFS"
