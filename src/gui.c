@@ -796,16 +796,19 @@ reselect_video_mode:
 static int netConfigUpdater(int modified)
 {
     int showAdvancedOptions, isNetBIOS, isDHCPEnabled, i;
+    // The SMB address fields exist only for the SMB protocol; keep them hidden for any other selection
+    // so a live NetBIOS/IP toggle here cannot resurrect the block guiShowNetConfig hid.
+    int smbSel = (gNetworkProtocol == NET_PROTO_SMB);
 
     if (modified) {
         diaGetInt(diaNetConfig, NETCFG_SHOW_ADVANCED_OPTS, &showAdvancedOptions);
 
         diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &isDHCPEnabled);
         diaGetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, &isNetBIOS);
-        diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, isNetBIOS);
+        diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, smbSel && isNetBIOS);
 
         for (i = 0; i < 4; i++) {
-            diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_0 + i, !isNetBIOS);
+            diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_0 + i, smbSel && !isNetBIOS);
 
             diaSetEnabled(diaNetConfig, NETCFG_PS2_IP_ADDR_0 + i, !isDHCPEnabled);
             diaSetEnabled(diaNetConfig, NETCFG_PS2_NETMASK_0 + i, !isDHCPEnabled);
@@ -814,7 +817,7 @@ static int netConfigUpdater(int modified)
         }
 
         for (i = 0; i < 3; i++)
-            diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_DOT_0 + i, !isNetBIOS);
+            diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_DOT_0 + i, smbSel && !isNetBIOS);
 
         diaSetEnabled(diaNetConfig, NETCFG_SHARE_PORT, showAdvancedOptions);
         diaSetEnabled(diaNetConfig, NETCFG_ETHOPMODE, showAdvancedOptions);
@@ -840,9 +843,26 @@ void guiShowNetConfig(void)
     diaSetEnabled(diaNetConfig, NETCFG_ETHOPMODE, 1);
     diaSetEnabled(diaNetConfig, NETCFG_SHARE_PORT, 1);
 
+    // The SMB-server block (address/port/share/user/password) applies ONLY to the SMB protocol. Hide it
+    // whole -- labels and fields -- for any other selection. The PS2 IP block + ETH op-mode above stay
+    // visible because the UDP transports (UDPFS/UDPFSBD/UDPBD) still need the static PS2 IP + link mode.
+    int smbSel = (gNetworkProtocol == NET_PROTO_SMB);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SMB_SERVER, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_ADDR_TYPE, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_ADDRESS, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_PORT, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_PORT, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_NAME, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_NAME, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_USER, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_USERNAME, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_PASSWORD, smbSel);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_PASSWORD, smbSel);
+
     diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ps2_ip_use_dhcp);
     diaSetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, gPCShareAddressIsNetBIOS);
-    diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, gPCShareAddressIsNetBIOS);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, smbSel && gPCShareAddressIsNetBIOS);
     diaSetInt(diaNetConfig, NETCFG_SHARE_NB_ADDR, gPCShareAddressIsNetBIOS);
     diaSetString(diaNetConfig, NETCFG_SHARE_NB_ADDR, gPCShareNBAddress);
 
@@ -852,7 +872,7 @@ void guiShowNetConfig(void)
         diaSetEnabled(diaNetConfig, NETCFG_PS2_GATEWAY_0 + i, !ps2_ip_use_dhcp);
         diaSetEnabled(diaNetConfig, NETCFG_PS2_DNS_0 + i, !ps2_ip_use_dhcp);
 
-        diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_0 + i, !gPCShareAddressIsNetBIOS);
+        diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_0 + i, smbSel && !gPCShareAddressIsNetBIOS);
         diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_0 + i, ps2_ip[i]);
         diaSetInt(diaNetConfig, NETCFG_PS2_NETMASK_0 + i, ps2_netmask[i]);
         diaSetInt(diaNetConfig, NETCFG_PS2_GATEWAY_0 + i, ps2_gateway[i]);
@@ -861,7 +881,7 @@ void guiShowNetConfig(void)
     }
 
     for (i = 0; i < 3; ++i)
-        diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_DOT_0 + i, !gPCShareAddressIsNetBIOS);
+        diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_DOT_0 + i, smbSel && !gPCShareAddressIsNetBIOS);
 
     diaSetInt(diaNetConfig, NETCFG_SHARE_PORT, gPCPort);
     diaSetString(diaNetConfig, NETCFG_SHARE_NAME, gPCShareName);

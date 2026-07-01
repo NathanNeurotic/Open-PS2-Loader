@@ -125,6 +125,15 @@ enum UI_ITEMS {
     NETCFG_ETHOPMODE,
     NETCFG_RECONNECT,
     NETCFG_OK,
+    // Section labels for the SMB-only block, so it can be hidden whole when the selected network
+    // protocol is not SMB. Appended here to keep the NETCFG_*_0..N consecutive runs above intact.
+    NETCFG_LBL_SMB_SERVER,
+    NETCFG_LBL_SHARE_ADDR_TYPE,
+    NETCFG_LBL_SHARE_ADDRESS,
+    NETCFG_LBL_SHARE_PORT,
+    NETCFG_LBL_SHARE_NAME,
+    NETCFG_LBL_SHARE_USER,
+    NETCFG_LBL_SHARE_PASSWORD,
 
     CHTCFG_CHEATSOURCE,
     CHTCFG_CHEATCFG,

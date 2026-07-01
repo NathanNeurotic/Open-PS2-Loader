@@ -82,15 +82,15 @@ struct UIItem diaNetConfig[] = {
     {UI_SPLITTER},
 
     //  ---- SMB Server ----
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CAT_SMB_SERVER}}},
+    {UI_LABEL, NETCFG_LBL_SMB_SERVER, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CAT_SMB_SERVER}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADDRESS_TYPE}}},
+    {UI_LABEL, NETCFG_LBL_SHARE_ADDR_TYPE, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADDRESS_TYPE}}},
     {UI_SPACER},
     {UI_ENUM, NETCFG_SHARE_ADDR_TYPE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADDRESS}}},
+    {UI_LABEL, NETCFG_LBL_SHARE_ADDRESS, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADDRESS}}},
     {UI_SPACER},
     {UI_STRING, NETCFG_SHARE_NB_ADDR, 1, 0, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_INT, NETCFG_SHARE_IP_ADDR_0, 1, 1, -1, 0, 0, {.intvalue = {192, 192, 0, 255}}},
@@ -102,7 +102,7 @@ struct UIItem diaNetConfig[] = {
     {UI_INT, NETCFG_SHARE_IP_ADDR_3, 1, 1, -1, 0, 0, {.intvalue = {1, 1, 0, 255}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PORT}}},
+    {UI_LABEL, NETCFG_LBL_SHARE_PORT, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PORT}}},
     {UI_SPACER},
     {UI_INT, NETCFG_SHARE_PORT, 1, 1, -1, 0, 0, {.intvalue = {1111, 1111, 0, 65535}}}, // RiptOPL default SMB port 1111 (non-privileged; was 445)
     {UI_BREAK},
@@ -110,17 +110,17 @@ struct UIItem diaNetConfig[] = {
     {UI_BREAK},
 
     //  ---- SMB share name ----
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SHARE}}},
+    {UI_LABEL, NETCFG_LBL_SHARE_NAME, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SHARE}}},
     {UI_SPACER},
     {UI_STRING, NETCFG_SHARE_NAME, 1, 1, _STR_HINT_SHARENAME, 0, 0, {.stringvalue = {"PS2SMB", "PS2SMB", NULL}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_USER}}},
+    {UI_LABEL, NETCFG_LBL_SHARE_USER, 1, 1, -1, -40, 0, {.label = {NULL, _STR_USER}}},
     {UI_SPACER},
     {UI_STRING, NETCFG_SHARE_USERNAME, 1, 1, -1, 0, 0, {.stringvalue = {"GUEST", "GUEST", NULL}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PASSWORD}}},
+    {UI_LABEL, NETCFG_LBL_SHARE_PASSWORD, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PASSWORD}}},
     {UI_SPACER},
     {UI_PASSWORD, NETCFG_SHARE_PASSWORD, 1, 1, _STR_HINT_GUEST, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
