@@ -1649,7 +1649,11 @@ static void _saveConfig()
 
 void applyConfig(int themeID, int langID, int skipDeviceRefresh)
 {
-    if (gDefaultDevice < 0 || gDefaultDevice > MMCE_MODE)
+    if (gDefaultDevice < 0 || gDefaultDevice > FAV_MODE)
+        gDefaultDevice = MMCE_MODE;
+    // Favourites (issue #54) is a valid startup page only while the FAV tab is enabled; otherwise fall
+    // back so a stale "start on Favourites" choice can't boot into a hidden/empty tab.
+    if (gDefaultDevice == FAV_MODE && !gFAVStartMode)
         gDefaultDevice = MMCE_MODE;
 
     guiUpdateScrollSpeed();

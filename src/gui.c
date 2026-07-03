@@ -486,8 +486,10 @@ int guiDeviceTypeToIoMode(int deviceType)
         return HDD_MODE;
     else if (deviceType == 3)
         return APP_MODE;
-    else
+    else if (deviceType == 4)
         return MMCE_MODE;
+    else
+        return FAV_MODE;
 }
 
 int guiIoModeToDeviceType(int ioMode)
@@ -502,6 +504,8 @@ int guiIoModeToDeviceType(int ioMode)
         return 3;
     if (ioMode == MMCE_MODE)
         return 4;
+    if (ioMode == FAV_MODE)
+        return 5;
 
     return 0;
 }
@@ -971,7 +975,7 @@ static int guiDeviceUpdater(int modified)
 
 void guiShowDeviceConfig(void)
 {
-    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), NULL};
+    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), _l(_STR_FAV), NULL};
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
     const char *deviceSlots[] = {"0", "1", _l(_STR_AUTO), NULL};
     const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
