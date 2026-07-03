@@ -75,6 +75,11 @@ int bdmGetDeviceSlotsByType(int bdmType, int *slots, int maxSlots);
 // for a device of that type to mount, so the BDMA equip can read a source device that isn't enabled for
 // games. Returns 1 if a device is present afterwards, 0 otherwise. Idempotent + instant when already up.
 int bdmEnsureSourceModules(int bdmType, u32 timeoutMs);
+// If bootPath starts with a BDM launch-binding identity (usb0:/ilink0:/sd0:/mx4sio0:/sdc0:/ata0:) that
+// fileXio can't open, return its BDM_TYPE_* so the caller can resolve the device's writable massN: root
+// (bdmGetDeviceRootByType). Returns BDM_TYPE_UNKNOWN for readable type-A prefixes (mass/mc/mmce/pfs/hdd/
+// host/cdrom) and the UDPBD network type -- those must be left untouched. Anchored to the leading token.
+int bdmBootIdentityType(const char *bootPath);
 
 int bdmFindPartition(char *target, const char *name, int write);
 int bdmIsUDPBDLoaded(void);                  // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)

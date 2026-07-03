@@ -84,6 +84,41 @@ static int bdmDetermineDeviceType(const char *driverName)
     return BDM_TYPE_UNKNOWN;
 }
 
+// If bootPath begins with a BDM launch-binding block-device IDENTITY (usb0:/ilink0:/sd0:/mx4sio0:/
+// sdc0:/ata0:) return its BDM_TYPE_* -- these prefixes name a device but have NO readable filesystem
+// (fileXioDopen on the typed root always fails, see bdmProbeTypedDeviceRoot); the device is reachable
+// only via its massN: mount, resolvable with bdmGetDeviceRootByType(type). Returns BDM_TYPE_UNKNOWN for
+// everything that must be left ALONE: type-A readable prefixes (mass/mc/mmce/pfs/hdd/host/cdrom) and the
+// UDPBD network type (no local massN: mount, never a boot source). The test is anchored to the leading
+// "<driver><unit>:" segment and strips the trailing unit digits ("ata0" -> "ata"), so it can never
+// substring-match a folder name deeper in the path. Used by opl.c to turn a boot dir that arrived as a
+// launch identity into the device's writable massN: root.
+int bdmBootIdentityType(const char *bootPath)
+{
+    if (bootPath == NULL)
+        return BDM_TYPE_UNKNOWN;
+
+    const char *colon = strchr(bootPath, ':');
+    if (colon == NULL || colon == bootPath)
+        return BDM_TYPE_UNKNOWN; // no "<device>:" segment
+
+    char stem[16];
+    size_t n = (size_t)(colon - bootPath);
+    if (n >= sizeof(stem))
+        return BDM_TYPE_UNKNOWN;
+    memcpy(stem, bootPath, n);
+    stem[n] = '\0';
+    while (n > 0 && stem[n - 1] >= '0' && stem[n - 1] <= '9') // "ata0" -> "ata", "mx4sio0" -> "mx4sio"
+        stem[--n] = '\0';
+
+    int type = bdmDetermineDeviceType(stem);
+    // Only the local block-device identities are resolvable to a massN: mount. UDPBD is network (no
+    // massN:), UNKNOWN covers every readable type-A prefix -- neither must be remapped.
+    if (type == BDM_TYPE_USB || type == BDM_TYPE_ILINK || type == BDM_TYPE_SDC || type == BDM_TYPE_ATA)
+        return type;
+    return BDM_TYPE_UNKNOWN;
+}
+
 static const char *bdmGetTypedPathForDriver(const char *driverName)
 {
     if (bdmDriverIsUSB(driverName))
