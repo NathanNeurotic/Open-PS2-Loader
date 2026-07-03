@@ -488,8 +488,10 @@ int guiDeviceTypeToIoMode(int deviceType)
         return APP_MODE;
     else if (deviceType == 4)
         return MMCE_MODE;
-    else
+    else if (deviceType == 5)
         return FAV_MODE;
+    else
+        return APP_MODE; // safe fallback for unexpected indices: Apps is always present, FAV may be disabled
 }
 
 int guiIoModeToDeviceType(int ioMode)
