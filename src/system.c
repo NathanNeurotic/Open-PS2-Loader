@@ -976,6 +976,64 @@ static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
 // buffer for both -bsd=ata and -bsdfs=hdl, clobbering -bsd=ata on HDD); argv[32]
 // with per-append bounds guards (wOPL's argv[6] was exactly full). User-supplied
 // flags (global gNeutrinoArgs + the per-game extraArgs) are tokenized and appended last.
+// Rewrite the "ip=A.B.C.D" token inside <neutrino dir>/config/bsd-<device>.toml to the PS2's configured
+// static IP. Neutrino's ministack takes its IP from that toml -- hardcoded 192.168.1.10 in the stock and
+// bundled files -- NOT from anything OPL used while browsing, so any mismatch means the UDPFS server's
+// discovery reply never routes back and the game black-screens after a perfectly healthy list. POSIX IO;
+// runs post-deinit (mc/mmce/the game's own device stay mounted; a neutrino.elf on some OTHER stopped BDM
+// device just fails the open). Best-effort: a missing or hand-restructured toml is logged + left alone,
+// so behavior degrades to exactly the old hand-edit contract. Anchored to the stock `"ip=` quoting so a
+// comment mentioning ip= can never be clobbered.
+static void sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *deviceName)
+{
+    static char toml[2048];
+    static char updated[2048 + 20];
+    char tomlPath[288];
+    char newIp[20];
+    int fd, len;
+
+    const char *slash = strrchr(neutrinoPath, '/');
+    if (slash == NULL)
+        return;
+    snprintf(tomlPath, sizeof(tomlPath), "%.*sconfig/bsd-%s.toml", (int)(slash - neutrinoPath) + 1, neutrinoPath, deviceName);
+
+    fd = open(tomlPath, O_RDONLY);
+    if (fd < 0) {
+        LOG("[NEUTRINO] no %s to sync ip= into (%d)\n", tomlPath, fd);
+        return;
+    }
+    len = read(fd, toml, sizeof(toml) - 1);
+    close(fd);
+    if (len <= 0 || len >= (int)sizeof(toml) - 1)
+        return; // empty, unreadable, or larger than any real bsd toml -- leave it alone
+    toml[len] = '\0';
+
+    char *tok = strstr(toml, "\"ip=");
+    if (tok == NULL) {
+        LOG("[NEUTRINO] %s has no \"ip= token -- left as-is\n", tomlPath);
+        return;
+    }
+    char *valStart = tok + 4;
+    char *valEnd = valStart;
+    while (*valEnd == '.' || (*valEnd >= '0' && *valEnd <= '9'))
+        valEnd++;
+
+    snprintf(newIp, sizeof(newIp), "%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
+    if ((int)strlen(newIp) == (int)(valEnd - valStart) && !strncmp(valStart, newIp, strlen(newIp)))
+        return; // already in sync -- don't touch the file
+
+    snprintf(updated, sizeof(updated), "%.*s%s%s", (int)(valStart - toml), toml, newIp, valEnd);
+
+    fd = open(tomlPath, O_WRONLY | O_TRUNC);
+    if (fd < 0) {
+        LOG("[NEUTRINO] cannot rewrite %s (%d) -- ip= left as-is\n", tomlPath, fd);
+        return;
+    }
+    write(fd, updated, strlen(updated));
+    close(fd);
+    LOG("[NEUTRINO] synced %s ip= -> %s\n", tomlPath, newIp);
+}
+
 void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, const neutrino_vmc_args_t *vmcArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
@@ -1074,6 +1132,11 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
                 argv[argc++] = cwdArg;
         }
     }
+
+    // UDPFS launches: Neutrino's ministack reads its IP from the bsd toml, not from OPL's network
+    // config -- sync it so the games that just LISTED over the network also BOOT over it.
+    if (!strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd"))
+        sysSyncNeutrinoUdpfsToml(neutrinoPath, deviceName);
 
     // Append user-supplied Neutrino flags: global defaults first, then the per-game
     // string (so a game can extend the global set). Both are tokenized on whitespace.

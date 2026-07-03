@@ -181,6 +181,9 @@ int gPadEmuSource;
 int gFadeDelay;
 int toggleSfx;
 int showCfgPopup;
+// Boot toasts (rendered by guiShowPopupNotifications alongside showCfgPopup):
+int showNetMigrationPopup; // retired UDPBD was folded to UDPFSBD -- the PC server must change (udpfsd -b)
+int showNetDhcpPopup;      // a UDP transport is selected but IP Type is DHCP -- ministack needs a static IP
 #ifdef PADEMU
 int gEnablePadEmu;
 int gPadEmuSettings;
@@ -1441,9 +1444,14 @@ static void _loadConfig()
             // UDPBD (SUDPBDv2) is retired from the UI -- its modern successor is UDPFSBD (block over the
             // UDPRDMA/UDPFS transport, Rick's intended udpfs_bd replacement for udpbd.irx). Fold any config
             // that resolves to UDPBD (a new-key value 4, or the legacy-derived case above) onto UDPFSBD so
-            // the obsolete option disappears cleanly. NB: those users must serve via udpfsd/-b, not udpbd-server.
-            if (gNetworkProtocol == NET_PROTO_UDPBD)
+            // the obsolete option disappears cleanly. The protocols are WIRE-INCOMPATIBLE (SUDPBDv2 on
+            // 0xBDBD vs UDPRDMA on 0xF5F6): a working udpbd-server setup goes silent after this fold, so
+            // tell the user ONCE what changed and which server to run -- otherwise their games tab just
+            // vanishes with no explanation.
+            if (gNetworkProtocol == NET_PROTO_UDPBD) {
                 gNetworkProtocol = NET_PROTO_UDPFSBD;
+                showNetMigrationPopup = 1;
+            }
             // Re-derive the legacy shadows from the authoritative selector so downstream consumers
             // (ethsupport start path, system.c getDeviceName, bdmsupport) stay consistent no matter which
             // config format was loaded. SMB keeps its prior Auto/Manual start-mode; a fresh SMB pick that
@@ -1531,6 +1539,13 @@ static void _loadConfig()
             configGetStrCopy(configNet, CONFIG_NET_NBD_DEFAULT_EXPORT, gExportName, sizeof(gExportName));
         }
     }
+
+    // A UDP transport binds the ministack to the STATIC PS2 IP fields (it has no DHCP client), so IP
+    // Type = DHCP means whatever stale/default address sits there gets used -- discovery then fails
+    // with an empty games page and no error. The Device-Settings dialog warns only at the moment of
+    // switching protocols; surface it as a boot toast too so an already-configured user sees it.
+    showNetDhcpPopup = (ps2_ip_use_dhcp &&
+                        (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD));
 
     applyConfig(themeID, langID, 0);
 

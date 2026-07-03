@@ -12,8 +12,9 @@
 #include "include/system.h"
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
-#include "include/bdmsupport.h"  // bdmIsUDPBDLoaded() for the SMB<->UDPBD NIC interlock
-#include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
+#include "include/bdmsupport.h"   // bdmIsUDPBDLoaded() for the SMB<->UDPBD NIC interlock
+#include "include/udpfssupport.h" // udpfsGetModulesLoaded() for the SMB<->UDPFS-filesystem NIC interlock
+#include "include/mmcesupport.h"  // mmceSendGameID() cross-device game-id (#261)
 #include "modules/iopcore/common/cdvd_config.h"
 
 #define NEWLIB_PORT_AWARE
@@ -286,6 +287,14 @@ static int ethLoadModules(void)
     // of it. The Device-hub UI already interlocks the two; this is the runtime backstop.
     if (bdmIsUDPBDLoaded()) {
         LOG("ETHSUPPORT: UDPBD active -- not loading the SMB NIC stack\n");
+        return -1;
+    }
+    // Same NIC exclusivity vs the udpfs FILESYSTEM chain (udpfs_smap + ministack). The other two
+    // directions already guard symmetrically (udpfssupport checks eth+bdm, bdmsupport checks
+    // eth+udpfs); without this one an in-session UDPFS->SMB protocol switch could double-drive the
+    // SMAP EMAC with two drivers -- at best SMB fails to start, at worst the IOP wedges.
+    if (udpfsGetModulesLoaded()) {
+        LOG("ETHSUPPORT: UDPFS filesystem NIC active -- not loading the SMB NIC stack\n");
         return -1;
     }
 

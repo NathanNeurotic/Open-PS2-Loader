@@ -112,7 +112,7 @@ and it keeps its own address / port / share / credentials fields.
 |---|---|---|---|---|
 | **Off** | — | no network device (default) | — | — |
 | **SMB** | SMBv1 | a mounted file share | OPL's *own* core (not Neutrino) | Samba / `smbserver_opl.py` |
-| **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Neutrino only | `udpfsd` / `udpfs_server.py` |
+| **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Neutrino only | [`udpfsd`](https://github.com/pcm720/udpfsd) (not bundled — see Requirements) |
 
 Because the PS2 has a **single** network adapter, only ONE of these is active per session — the
 selector is exclusive *by construction* (the old separate ETH start-mode + "Network Boot" toggle +
@@ -121,9 +121,9 @@ HDD / MMCE) are independent and browse alongside whichever network protocol you 
 
 > **UDPBD is retired.** The old SUDPBDv2 `udpbd.irx` protocol is gone from the UI — Rick's `udpfs_bd`
 > is its intended successor (the commented `#file = "udpfs_bd.irx"` line in stock `bsd-udpbd.toml`).
-> Any existing config that resolved to UDPBD **migrates to UDPFS Access = Image on load**; those users
-> just switch their PC server from `udpbd-server` to `udpfsd -b` (or `udpfs_server.py -b`). There is no
-> longer any standalone UDPBD option anywhere.
+> Any existing config that resolved to UDPBD **migrates to UDPFS Access = Image on load** (OPL shows a
+> one-time boot notice when this fires); those users just switch their PC server from `udpbd-server` to
+> `udpfsd -b`. There is no longer any standalone UDPBD option anywhere.
 
 ### UDPFS Access — Files vs Image
 
@@ -134,10 +134,10 @@ FILESYSTEM (`udpfs:`), Image is the `udpfs_bd` BLOCK device (`massN:`).
 | | **Files** (default) | **Image** |
 |---|---|---|
 | IOP driver | `udpfs_ioman.irx` → `udpfs:` (filesystem) | `udpfs_bd.irx` → `massN:` (block device) |
-| PC serves | a **folder of loose ISOs** | a **FAT/exFAT disk image** |
-| Server command | `udpfsd -d <dir>` / `udpfs_server.py -d <dir>` | `udpfsd -b <image>` / `udpfs_server.py -b <image>` |
+| PC serves | a folder containing **`CD/` and `DVD/` subfolders** of ISOs (the standard OPL layout — OPL lists from `<served>/CD` + `<served>/DVD`, NOT from the folder root) | a **FAT/exFAT disk image** |
+| Server command | `udpfsd -d <dir>` | `udpfsd -b <image>` |
 | Launch | by name (`-dvd=udpfs:<name>`, stock `-bsd=udpfs`) — no `massN:`, no fragment list | mounted like a USB drive (`massN:`, fragment-list launch) |
-| Add a game | drop a file in the folder | mount the image, copy, unmount |
+| Add a game | drop it into the served `CD/` or `DVD/` folder | mount the image, copy, unmount |
 | Compression | transparent `.zso`/`.cso`/`.chd` | — (raw sectors only) |
 
 Because both backends bind the same UDPRDMA port and the IOP ministack can load only one per boot, you
@@ -156,25 +156,30 @@ effect** (OPL shows the usual restart-to-apply notice).
 
 ### Requirements
 
-- A **PC-side UDPFS server** on the same LAN, matching the UDPFS Access mode you chose. Good options,
-  in order: **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** — a single prebuilt Go binary (no
-  Python) that serves **both** `-d` (Files) and `-b` (Image); the bundled **`udpfs_server.py`** (Python
-  3, `-d`/`-b`); or the fork's **[NathanNeurotic/PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)**
-  one-stop bundle (SMBv1 + UDPFS servers). The old `udpbd-server` (SUDPBDv2) does **not** work with
-  UDPFS. For the **Image** mode the served FAT/exFAT image is laid out with the usual OPL folders
-  (`CD`, `DVD`, `ART`, `CFG`, …); for **Files** it's just a flat folder of loose ISOs.
+- A **PC-side UDPFS server** on the same LAN, matching the UDPFS Access mode you chose. RiptOPL does
+  **not** bundle one — get **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)**, a single prebuilt Go
+  binary (no Python) that serves **both** `-d` (Files) and `-b` (Image); the fork's
+  **[NathanNeurotic/PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)** one-stop bundle also
+  carries it alongside the SMBv1 server. The old `udpbd-server` (SUDPBDv2) does **not** work with
+  UDPFS. Layout: **Image** mode's served FAT/exFAT image uses the usual OPL folders (`CD`, `DVD`,
+  `ART`, `CFG`, …); **Files** mode's served *directory* needs the same `CD/` + `DVD/` subfolders —
+  OPL never lists ISOs sitting loose at the served root.
 - A **static** PS2 IP. UDPFS has no DHCP client — it reuses the address from **Settings → Network
-  Config**, so set a static IP there. OPL warns you if DHCP is on at the moment you select UDPFS. SMB's
-  server / port / share / credentials fields hide automatically when UDPFS is selected.
+  Config**, so set a static IP there. OPL warns if DHCP is on when you select UDPFS, and repeats the
+  warning as a boot notice while a UDPFS protocol is active with DHCP still on. SMB's server / port /
+  share / credentials fields hide automatically when UDPFS is selected.
+- You can start the server **after** the console: the UDPFS drivers keep re-discovering in the
+  background (both Files and Image), so the games page appears when the server comes up — no reboot.
 - UDPFS is Neutrino-only (no `<OPL>` core fallback); if `neutrino.elf` is missing, OPL warns and
   returns to the menu.
 
 > **At launch, Neutrino reads its own IP from a toml, not from OPL.** When a game boots, control hands
 > to the external Neutrino, which reads the toml for the active mode — **Files** uses the stock
-> `config/bsd-udpfs.toml`; **Image** uses the bundled `config/bsd-udpfsbd.toml`. Both hardcode
-> `ip=192.168.1.10`. If your PS2's static IP differs, **edit the `ip=` line in whichever toml is
-> active** (under the bundled `neutrino/config/`) to match — otherwise games list fine in OPL but fail
-> to boot.
+> `config/bsd-udpfs.toml`; **Image** uses the bundled `config/bsd-udpfsbd.toml`. Both ship hardcoding
+> `ip=192.168.1.10`, which historically meant games *listed* fine in OPL but failed to *boot* on any
+> other subnet. **RiptOPL now rewrites the active toml's `ip=` to your configured PS2 IP at every UDPFS
+> launch**, so no hand-edit is needed; if the toml has been restructured so the `"ip=` token isn't
+> found, OPL logs it and leaves the file alone (the old hand-edit contract applies).
 
 > **Hardware note:** the UDPRDMA path (both Files and Image) is validated on emulator only so far —
 > real-PS2 confirmation is pending.

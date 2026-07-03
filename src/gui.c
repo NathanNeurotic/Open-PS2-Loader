@@ -281,7 +281,7 @@ static void guiShowNotifications(void)
     int y = 10;
     int yadd = 35;
 
-    if (showPartPopup || showThmPopup || showLngPopup || showCfgPopup) {
+    if (showPartPopup || showThmPopup || showLngPopup || showCfgPopup || showNetMigrationPopup || showNetDhcpPopup) {
         if (!popupTimer) {
             popupTimer = clock() + 5000 * (CLOCKS_PER_SEC / 1000);
             sfxPlay(SFX_MESSAGE);
@@ -320,12 +320,26 @@ static void guiShowNotifications(void)
                 *(col_pos + 1) = '\0';
 
             guiRenderNotifications(notification, y);
+            y += yadd;
         }
+
+        // One-time network notices set at config load: the UDPBD->UDPFSBD fold (the PC server must
+        // change -- the wire protocols are incompatible) and a UDP transport left on DHCP (the
+        // ministack has no DHCP client; it binds the static PS2 IP fields as-is).
+        if (showNetMigrationPopup) {
+            guiRenderNotifications(_l(_STR_NET_UDPBD_MIGRATED), y);
+            y += yadd;
+        }
+
+        if (showNetDhcpPopup)
+            guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y);
 
         if (clock() >= popupTimer) {
             guiResetNotifications();
             showPartPopup = 0;
             showCfgPopup = 0;
+            showNetMigrationPopup = 0;
+            showNetDhcpPopup = 0;
         }
     }
 }

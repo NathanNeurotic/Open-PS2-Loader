@@ -205,6 +205,8 @@ extern int gOSDLanguageEnable;
 extern int gOSDLanguageSource;
 
 extern int showCfgPopup;
+extern int showNetMigrationPopup; // boot toast: UDPBD config folded to UDPFSBD (PC server must change)
+extern int showNetDhcpPopup;      // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
 
 #ifdef IGS
 #define IGS_VERSION "0.1"

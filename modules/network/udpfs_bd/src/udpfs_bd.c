@@ -21,12 +21,19 @@
 
 /* State */
 static struct block_device g_udpbd;
-static int g_udpfs_connected = 0; // bd registered + UDPRDMA session up
-static int g_udpfs_tid = 0;       // lazy-connect / reconnect watchdog thread id
+static int g_udpfs_registered = 0; // bd currently registered with BDM
+static int g_udpfs_tid = 0;        // lazy-connect / reconnect watchdog thread id
 
 
 /*
  * Block device read (retry + chunking handled by udpfs_bread)
+ *
+ * On failure just return the error: NO teardown from inside our own bd callback. The BDM/fatfs stack
+ * that issued this read is still on the call stack -- bdm_disconnect_bd() here re-enters it mid-
+ * operation (freeing filesystem state under the caller's feet). A transport-level failure has already
+ * flipped the UDPRDMA session to disconnected, which the watchdog thread observes and handles OUTSIDE
+ * callback context (disconnect bd -> re-discover -> re-register); a server-side error on a healthy
+ * session is just an IO error, not a reason to drop the device.
  */
 static int udpfs_bd_read(struct block_device *bd, uint64_t sector, void *buffer, uint16_t count)
 {
@@ -43,11 +50,7 @@ static int udpfs_bd_read(struct block_device *bd, uint64_t sector, void *buffer,
 
     ret = udpfs_core_bread(BLOCK_DEVICE_HANDLE, sector, buffer, count, bd->sectorSize);
     if (ret < 0) {
-        // Tear the device down and flag for re-discovery; the watchdog thread reconnects when the
-        // server/network is back (the EE page debounce holds the tab across the brief gap).
-        M_DEBUG("udpfs_bd: read failed, disconnecting for re-discovery\n");
-        bdm_disconnect_bd(&g_udpbd);
-        g_udpfs_connected = 0;
+        M_DEBUG("udpfs_bd: read failed (%d); teardown deferred to the watchdog\n", ret);
         return ret;
     }
 
@@ -56,7 +59,7 @@ static int udpfs_bd_read(struct block_device *bd, uint64_t sector, void *buffer,
 
 
 /*
- * Write sectors via shared block I/O helper (zero-copy)
+ * Write sectors via shared block I/O helper (zero-copy). Same no-teardown-in-callback rule as read.
  */
 static int udpfs_bd_write(struct block_device *bd, uint64_t sector, const void *buffer, uint16_t count)
 {
@@ -73,11 +76,7 @@ static int udpfs_bd_write(struct block_device *bd, uint64_t sector, const void *
 
     if (udpfs_core_bwrite(BLOCK_DEVICE_HANDLE, sector,
                           buffer, count, bd->sectorSize) < 0) {
-        // Mirror the read path: tear the device down and flag for re-discovery so the watchdog
-        // reconnects, rather than leaving a half-dead bd that reports connected but cannot write.
-        M_DEBUG("udpfs_bd: write failed, disconnecting for re-discovery\n");
-        bdm_disconnect_bd(&g_udpbd);
-        g_udpfs_connected = 0;
+        M_DEBUG("udpfs_bd: write failed; teardown deferred to the watchdog\n");
         return -EIO;
     }
 
@@ -133,7 +132,7 @@ static int udpfs_bd_try_connect(void)
 
     /* Connect to BDM */
     bdm_connect_bd(&g_udpbd);
-    g_udpfs_connected = 1;
+    g_udpfs_registered = 1;
 
     M_DEBUG("udpfs_bd: ready (sectorSize=%u, sectorCount=%u)\n",
             g_udpbd.sectorSize, g_udpbd.sectorCount);
@@ -141,18 +140,26 @@ static int udpfs_bd_try_connect(void)
 }
 
 /*
- * Lazy-connect / reconnect watchdog. While disconnected -- whether the server hadn't started yet at
- * boot, or a read/write tore the session down -- retry discovery so the device (and its OPL page)
- * appears whenever the server comes up, without a module reload. Cadence: the discovery probe inside
+ * Lazy-connect / reconnect watchdog. Keys off the UDPRDMA session state: while it is down -- the
+ * server hadn't started yet at boot, or a timeout mid-use dropped the session -- first release the
+ * registered bd (HERE, outside any bd callback: doing it inside our own read/write re-enters the
+ * BDM/fatfs stack that is mid-operation), then retry discovery so the device (and its OPL page)
+ * returns whenever the server is back, without a module reload. Cadence: the discovery probe inside
  * udpfs_bd_try_connect() blocks up to ~5s when the server is absent, then this loop adds a 1s pause,
- * so a missing server is re-probed roughly every ~6s. No-op while healthy (connected).
+ * so a missing server is re-probed roughly every ~6s. No-op while the session is healthy.
  */
 static int udpfs_bd_watchdog(void *arg)
 {
     (void)arg;
     while (1) {
-        if (g_udpfs_connected == 0)
+        if (!udpfs_core_is_connected()) {
+            if (g_udpfs_registered) {
+                M_DEBUG("udpfs_bd: session down -- releasing bd for re-discovery\n");
+                bdm_disconnect_bd(&g_udpbd);
+                g_udpfs_registered = 0;
+            }
             udpfs_bd_try_connect();
+        }
         DelayThread(1000000); // 1s
     }
     return 0;

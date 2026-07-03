@@ -14,15 +14,20 @@ RiptOPL loads them in sequence (smap, then ministack with ip=, then udpfs_ioman)
 BLOCK-DEVICE sibling (udpfs_bd, which bdm_connect_bd()s a "udp" massN: device), udpfs_ioman
 registers a real iomanX FILESYSTEM device "udpfs:" via AddDrv() (IOP_DT_FSEXT | IOP_DT_FS).
 OPL browses it with the same opendir/readdir/fileXioMount("iso:") calls it uses for SMB shares
-(no massN:, no fragment list, no disk image -- the PC serves loose ISOs from a directory).
+(no massN:, no fragment list, no disk image -- the PC serves a directory whose CD/ and DVD/
+subfolders hold the ISOs, the standard OPL layout OPL's scanner expects on every device).
 Both variants share udprdma.c + udpfs_core.c (the FEATURE_UDPFS_* #ifdefs select block vs
 filesystem) and are wire-INCOMPATIBLE with UDPBD (SUDPBDv2) -- the PC server is
-udpfs_server.py -d / udpfsd, NOT udpbd-server. UDPFS, UDPBD and SMB are NIC-exclusive (single
+pcm720/udpfsd -d, NOT udpbd-server. UDPFS, UDPBD and SMB are NIC-exclusive (single
 SMAP adapter); RiptOPL's network-protocol selector loads exactly one, so they never co-load.
 This variant carries a distinct MODNAME "UDPFS_IO" (vs udpfs_bd's "UDPFS") so the two udpfs
 IRX can never RegisterLibraryEntries-collide even if a future path tried to co-load them.
 
 LOCAL CHANGES vs upstream (re-apply after re-vendoring):
+  - udpfs_ioman.c: AddDrv registration never fails on a missed first discovery, and a
+    lazy-connect/reconnect watchdog thread (the udpfs_bd pattern) re-discovers the server
+    forever -- upstream's connect-once wrapper left 'udpfs:' permanently dead when the server
+    wasn't reachable within the ~5s load-time window (PHY autonegotiation alone eats ~3s).
   - Build: each module gets a PS2SDK Makefile (Makefile.iopglobal) instead of Neutrino's
     Rules.make; udpfs_ioman builds with -DFEATURE_UDPFS_IOMAN -DUDPRDMA_MAX_SOCKETS=1. The
     src/ tree is shared verbatim with udpfs_bd (same udprdma/udpfs_core/main.c/imports.lst,

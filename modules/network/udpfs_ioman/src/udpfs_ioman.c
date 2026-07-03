@@ -10,6 +10,7 @@
 #include <io_common.h>
 #include <stdio.h>
 #include <string.h>
+#include <thbase.h>
 
 #include "main.h"
 #include "udpfs_core.h"
@@ -26,6 +27,7 @@ typedef struct
 } udpfs_fd_t;
 
 static udpfs_fd_t g_fds[UDPFS_MAX_HANDLES];
+static int g_udpfs_wd_tid = 0; /* lazy-connect / reconnect watchdog thread id */
 
 
 /*
@@ -73,9 +75,32 @@ static int _validate_fd(iomanX_iop_file_t *f, int *fd_idx_out, int32_t *handle_o
  * iomanX device operations
  */
 
+/*
+ * Lazy-connect / reconnect watchdog -- the mirror of udpfs_bd's (1ed7a176), which this filesystem
+ * variant shipped without: while the UDPRDMA session is down -- the server wasn't up yet when the
+ * module loaded (a UDPFS server is typically hand-started after the PS2 boots), the PHY hadn't
+ * finished autonegotiating inside the first 5 s discovery window, or a recv timeout tore the session
+ * down mid-use -- keep re-discovering so 'udpfs:' heals without a reboot. udpfs_core_init() binds the
+ * UDPRDMA socket ONCE and reuses it across retries (the ministack has no udp_unbind; destroy+recreate
+ * would leak one of the 4 port slots per blip), so retrying indefinitely is safe. The EE side re-stats
+ * the device on every list poll, so a healed session repopulates the OPL page for free. Cadence: a
+ * failed discovery blocks ~5 s itself, plus the 1 s pause -> a missing server is probed every ~6 s.
+ */
+static int udpfs_watchdog(void *arg)
+{
+    (void)arg;
+    while (1) {
+        if (!udpfs_core_is_connected())
+            udpfs_core_init();
+        DelayThread(1000000); /* 1s */
+    }
+    return 0;
+}
+
 static int udpfs_init_dev(iomanX_iop_device_t *d)
 {
-    int i, ret;
+    int i;
+    iop_thread_t thinfo;
 
     M_DEBUG("%s()\n", __FUNCTION__);
 
@@ -83,12 +108,25 @@ static int udpfs_init_dev(iomanX_iop_device_t *d)
     for (i = 0; i < UDPFS_MAX_HANDLES; i++)
         g_fds[i].server_handle = -1;
 
-    /* Initialize core UDPFS */
-    ret = udpfs_core_init();
-    if (ret < 0)
-        return -1;
+    /* First connect is best-effort ONLY: this runs inside AddDrv at module load, racing PHY
+     * autonegotiation (the smap driver needs ~3 s before TX even enables) and the user's server
+     * startup. Failing AddDrv here would unregister 'udpfs:' for the whole boot -- the exact
+     * connect-once behavior that made the Files mode look dead on real hardware. Register
+     * unconditionally; the watchdog below (re)connects and every op fails fast (-EIO) until then. */
+    udpfs_core_init();
 
-    M_DEBUG("udpfs: ready\n");
+    if (g_udpfs_wd_tid <= 0) {
+        thinfo.attr = TH_C;
+        thinfo.option = 0;
+        thinfo.thread = (void *)udpfs_watchdog;
+        thinfo.stacksize = 0x1000;
+        thinfo.priority = 0x20;
+        g_udpfs_wd_tid = CreateThread(&thinfo);
+        if (g_udpfs_wd_tid > 0)
+            StartThread(g_udpfs_wd_tid, NULL);
+    }
+
+    M_DEBUG("udpfs: registered (connect %s)\n", udpfs_core_is_connected() ? "up" : "pending");
     return 0;
 }
 
