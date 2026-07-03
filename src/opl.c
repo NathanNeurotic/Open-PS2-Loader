@@ -977,25 +977,45 @@ static void writeConfigPathRedirect(const char *path)
 // discovery as a last-ditch sanity so OPL is never left with no config at all.
 // Non-static: vcdResolvePopstarter() reads it for the POPSTARTER "Default = cwd" resolution tier.
 char gBootDir[256];
+// The booted ELF's own filename (argv[0]'s basename). Not a path -- resolveBootDirToMass() probes for
+// it to verify WHICH mounted massN: slot is the boot device (launcher slot numbering need not match
+// OPL's). Empty when the boot dir came from getcwd() or argv[0] had no filename part.
+static char gBootElfName[64];
+// BDM_TYPE_* of the resolved boot device, BDM_TYPE_UNKNOWN for non-BDM boots. Set by
+// resolveBootDirToMass(); consumed by the _loadConfig flag reconcile and the _saveConfig re-resolve.
+static int gBootDirBdmType = BDM_TYPE_UNKNOWN;
 
 static void setBootDir(const char *bootPath)
 {
     gBootDir[0] = '\0';
+    gBootElfName[0] = '\0';
     if (bootPath == NULL || bootPath[0] == '\0')
         return;
-    const char *slash = strrchr(bootPath, '/');
+
+    // Launchers are not consistent about separators (wLaunchELF variants can hand backslash paths);
+    // normalize to '/' before splitting so the folder/basename split can't misfire.
+    char path[sizeof(gBootDir)];
+    snprintf(path, sizeof(path), "%s", bootPath);
+    for (char *p = path; *p != '\0'; p++) {
+        if (*p == '\\')
+            *p = '/';
+    }
+
+    const char *slash = strrchr(path, '/');
     if (slash != NULL) {
-        size_t len = (size_t)(slash - bootPath); // keep the folder, drop the trailing '/' + filename
+        size_t len = (size_t)(slash - path); // keep the folder, drop the trailing '/' + filename
         if (len > 0 && len < sizeof(gBootDir)) {
-            memcpy(gBootDir, bootPath, len);
+            memcpy(gBootDir, path, len);
             gBootDir[len] = '\0';
+            snprintf(gBootElfName, sizeof(gBootElfName), "%s", slash + 1);
         }
     } else {
-        const char *colon = strrchr(bootPath, ':'); // "mass0:X.ELF" -> device root "mass0:"
-        if (colon != NULL && (size_t)(colon - bootPath) + 1 < sizeof(gBootDir)) {
-            size_t len = (size_t)(colon - bootPath) + 1;
-            memcpy(gBootDir, bootPath, len);
+        const char *colon = strrchr(path, ':'); // "mass0:X.ELF" -> device root "mass0:"
+        if (colon != NULL && (size_t)(colon - path) + 1 < sizeof(gBootDir)) {
+            size_t len = (size_t)(colon - path) + 1;
+            memcpy(gBootDir, path, len);
             gBootDir[len] = '\0';
+            snprintf(gBootElfName, sizeof(gBootElfName), "%s", colon + 1);
         }
     }
 }
@@ -1206,51 +1226,80 @@ static int tryAlternateDevice(int types)
 }
 
 // The launcher can hand OPL a boot path that is a BDM launch-binding IDENTITY (ata0:/usb0:/mx4sio0:/
-// ilink0:/sd0:) -- e.g. booting from an internal exFAT HDD, whose cwd may come through as ata0:. fileXio
-// cannot open such a prefix, so settings both READ back empty (defaults silently loaded) and fail to SAVE
-// ("Error saving settings"). The device's ONLY readable+writable path is its massN: mount, which is not
-// up at setBootDir/main time (BDM transports load after init(), and the semaphore that guards module
-// loading is created there too) -- so we resolve HERE, in the deferred config load, the first point at
-// which massN: is guaranteed mounted. Rewrite the identity to the SAME device's massN: root IN PLACE,
-// preserving the boot folder (ata0:/APPS -> mass0:/APPS): gBootDir stays non-empty and readable, so the
-// read below and every later save target the boot device with NO cross-device (MC) fallback. Type-A
-// prefixes (mass/mc/mmce/pfs/hdd/host) and APA HDD (pfs0:/hdd0:, a different device family) return early,
-// untouched.
+// ilink0:/sd0:) -- e.g. booting from an internal exFAT HDD, whose cwd may come through as ata0: -- OR a
+// massN: path whose driver stack simply isn't loaded yet: at boot time the IOP has NO BDM modules at
+// all (sysReset loads none; the BDM page only loads them on tab entry), so BOTH families are unreadable
+// exactly when settings must load, and the exFAT HDD adds a chicken-and-egg (mounting it needs
+// gEnableBdmHDD, which lives in the unreadable config). Resolve HERE, in the deferred config load --
+// after ioInit()/bdmInitSemaphore(), before the first configReadMulti() -- by force-loading the boot
+// device's stack and rewriting gBootDir to the mounted massN: root, verified against the booted ELF so
+// launcher-vs-OPL slot renumbering can't land settings on the wrong stick. Readable prefixes
+// (mc/mmce/host/pfs) pass through untouched. uLE's APA-HDD "hdd0:<part>:pfs:/..." form and a boot
+// device that never mounts DROP the boot dir so the legacy discovery/alternate-save re-arm (the
+// _loadConfig/_saveConfig gates key on gBootDir[0] == '\0') instead of failing forever.
 static void resolveBootDirToMass(void)
 {
-    int bt = bdmBootIdentityType(gBootDir);
-    if (bt == BDM_TYPE_UNKNOWN)
-        return; // readable/non-BDM boot dir (or empty) -> nothing to remap
+    if (gBootDir[0] == '\0')
+        return;
 
-    char root[BDM_DEVICE_ROOT_MAX + 2]; // "massN:/"
-    bdmEnsureSourceModules(bt, 2000);   // load the transport + bounded-wait for the device (instant if already up)
-    if (!bdmGetDeviceRootByType(bt, root, sizeof(root))) {
-        // The boot device did not mount in time. Drop the dead identity so the existing empty-gBootDir
-        // discovery/alternate-save can still find a home for the config, rather than every read/save
-        // silently failing against an unopenable prefix.
+    // uLE hands APA-HDD boots as "hdd0:<partition>:pfs:/..." -- a launch identity OPL can never open
+    // (OPL's own APA mount is pfs0: on the +OPL partition, a different namespace). Unresolvable: drop
+    // to legacy discovery, whose checkLoadConfigHDD probes the APA config location properly.
+    if (!strncmp(gBootDir, "hdd", 3)) {
+        LOG("BOOT unresolvable APA boot dir %s -> legacy discovery\n", gBootDir);
         gBootDir[0] = '\0';
         configEnd();
         configInit(NULL);
         return;
     }
 
-    size_t rlen = strlen(root);
-    if (rlen > 0 && root[rlen - 1] == '/')
-        root[rlen - 1] = '\0';                    // "massN:/" -> "massN:"
-    const char *tail = strchr(gBootDir, ':') + 1; // bdmBootIdentityType guaranteed a ':' -> "/APPS" | "APPS" | ""
-    char resolved[sizeof(gBootDir)];
-    if (tail[0] == '\0' || tail[0] == '/')
-        snprintf(resolved, sizeof(resolved), "%s%s", root, tail); // "massN:" + "/APPS" or ""
-    else
-        snprintf(resolved, sizeof(resolved), "%s/%s", root, tail); // "massN:" + "/" + "APPS"
-    size_t dl = strlen(resolved);
-    if (dl > 1 && resolved[dl - 1] == '/')
-        resolved[dl - 1] = '\0'; // match setBootDir's no-trailing-slash contract
+    // MMCE boot: the mmceman driver is likewise not loaded at boot time (sysReset loads none of the
+    // device stacks), so mmceN: is unreadable exactly when settings must load. Load it (idempotent)
+    // and give the card a moment to register its filesystem. mmceN: IS the readable namespace, so no
+    // prefix rewrite is needed; if the card never shows, drop to legacy discovery like the BDM case.
+    if (!strncmp(gBootDir, "mmce", 4)) {
+        mmceLoadModules();
+        char devRoot[8];
+        const char *colon = strchr(gBootDir, ':');
+        size_t rootLen = colon ? (size_t)(colon - gBootDir) + 1 : 0;
+        if (rootLen > 0 && rootLen < sizeof(devRoot)) {
+            memcpy(devRoot, gBootDir, rootLen);
+            devRoot[rootLen] = '\0';
+            for (int tries = 0; tries < 10; tries++) { // ~2 s total: the driver detects a present card in ms
+                DIR *dir = opendir(devRoot);
+                if (dir != NULL) {
+                    closedir(dir);
+                    return; // mounted -- the boot dir is readable as-is
+                }
+                delay(1);
+            }
+        }
+        LOG("BOOT MMCE boot device for %s never mounted -> legacy discovery\n", gBootDir);
+        gBootDir[0] = '\0';
+        configEnd();
+        configInit(NULL);
+        return;
+    }
 
-    LOG("BOOT resolved launch identity %s -> %s\n", gBootDir, resolved);
-    snprintf(gBootDir, sizeof(gBootDir), "%s", resolved);
-    configEnd();
-    configInit(gBootDir); // re-point the config sets from the dead identity to the massN: path
+    char before[sizeof(gBootDir)];
+    snprintf(before, sizeof(before), "%s", gBootDir);
+    gBootDirBdmType = BDM_TYPE_UNKNOWN; // classify fresh from the prefix
+    int ret = bdmResolveBootDir(gBootDir, sizeof(gBootDir), gBootElfName, &gBootDirBdmType);
+    if (ret < 0) {
+        // The boot device did not mount in time. Drop the dead identity so the existing empty-gBootDir
+        // discovery/alternate-save can still find a home for the config, rather than every read/save
+        // silently failing against an unopenable prefix.
+        LOG("BOOT boot device for %s never mounted -> legacy discovery\n", before);
+        gBootDir[0] = '\0';
+        configEnd();
+        configInit(NULL);
+        return;
+    }
+    if (ret > 0 && strcmp(before, gBootDir) != 0) {
+        LOG("BOOT resolved boot dir %s -> %s\n", before, gBootDir);
+        configEnd();
+        configInit(gBootDir); // re-point the config sets from the unreadable prefix to the massN: path
+    }
 }
 
 static void _loadConfig()
@@ -1421,6 +1470,16 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, &gBdmaSource);
             configGetInt(configOPL, CONFIG_OPL_BDMA_APPLY, &gBdmaApplyOnLaunch);
             configGetInt(configOPL, CONFIG_OPL_WRITE_POPS_NET, &gWritePopstarterNet);
+        }
+
+        // Booted from the internal exFAT HDD (BDM-ATA): the boot-dir resolver force-loaded the HDD
+        // stack ignoring gEnableBdmHDD, because the flag lives in the very config that was unreadable
+        // until the mount existed (the chicken-and-egg). Reconcile: keep the boot device enabled so its
+        // page shows and the next save persists the flag -- mirrors checkLoadConfigBDMHDD's auto-enable.
+        // Runs whether or not a config file was found (a fresh install has no file and the OFF default).
+        if (gBootDirBdmType == BDM_TYPE_ATA && !gEnableBdmHDD) {
+            gEnableBdmHDD = 1;
+            configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
         }
     }
 
@@ -1684,6 +1743,20 @@ static void _saveConfig()
     }
 
     lscret = configWriteMulti(lscstatus);
+    // Boot-device save retry: BDM slot numbering can change between the boot-time resolve and this
+    // save (a hotplug add/remove renumbers massN:). Re-resolve against the SAME boot device once --
+    // pinned to its known BDM type -- and retry. Never a different device: the cross-device fallback
+    // was explicitly rejected (PR #59); if the boot device is truly gone the save fails visibly.
+    if (lscret <= 0 && gBootDir[0] != '\0' && gBootDirBdmType != BDM_TYPE_UNKNOWN) {
+        char before[sizeof(gBootDir)];
+        snprintf(before, sizeof(before), "%s", gBootDir);
+        if (bdmResolveBootDir(gBootDir, sizeof(gBootDir), gBootElfName, &gBootDirBdmType) > 0 &&
+            strcmp(before, gBootDir) != 0) {
+            LOG("BOOT re-resolved boot dir for save: %s -> %s\n", before, gBootDir);
+            configSetMove(gBootDir); // keep the pending values; re-point the files to the new slot
+            lscret = configWriteMulti(lscstatus);
+        }
+    }
     // The boot dir (cwd) is the only save target. The alternate-device save + the cwd redirect
     // pointer are legacy-discovery aids, kept only for the boot-path-undeterminable sanity case
     // (gBootDir empty); with a known boot dir, settings save there and nowhere else.
@@ -2466,6 +2539,10 @@ static void miniInit(int mode)
         gEnableMX4SIO = 1;
         gEnableBdmHDD = 1;
         bdmLoadModules();
+
+        // Autolaunch reads its per-game config from the boot dir too -- resolve a launch-identity or
+        // not-yet-mounted massN: boot dir before the configReadMulti below, same as the full boot path.
+        resolveBootDirToMass();
 
     } else if (mode == HDD_MODE) {
         hddLoadModules();

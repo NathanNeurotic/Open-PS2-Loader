@@ -873,7 +873,7 @@ void sysPrintEECoreConfig(struct EECoreConfig_t *config)
 // Maps an OPL block-device driver token to Neutrino's -bsd backend name. Uses
 // exact strcmp per token (NOT a strncmp prefix test): a prefix test matches
 // "sdc" against "sd" first and mis-maps MX4SIO to ilink. Mirrors our hardened
-// bdmDriverIs*/bdmGetTypedPathForDriver. Returns "unsupported" for anything
+// bdmDriverIs* matchers. Returns "unsupported" for anything
 // Neutrino cannot back (e.g. eth/smb), which the caller treats as a hard stop.
 static const char *getDeviceName(const char *driver)
 {

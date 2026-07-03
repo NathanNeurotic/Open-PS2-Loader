@@ -84,53 +84,38 @@ static int bdmDetermineDeviceType(const char *driverName)
     return BDM_TYPE_UNKNOWN;
 }
 
-// If bootPath begins with a BDM launch-binding block-device IDENTITY (usb0:/ilink0:/sd0:/mx4sio0:/
-// sdc0:/ata0:) return its BDM_TYPE_* -- these prefixes name a device but have NO readable filesystem
-// (fileXioDopen on the typed root always fails, see bdmProbeTypedDeviceRoot); the device is reachable
-// only via its massN: mount, resolvable with bdmGetDeviceRootByType(type). Returns BDM_TYPE_UNKNOWN for
-// everything that must be left ALONE: type-A readable prefixes (mass/mc/mmce/pfs/hdd/host/cdrom) and the
-// UDPBD network type (no local massN: mount, never a boot source). The test is anchored to the leading
-// "<driver><unit>:" segment and strips the trailing unit digits ("ata0" -> "ata"), so it can never
-// substring-match a folder name deeper in the path. Used by opl.c to turn a boot dir that arrived as a
-// launch identity into the device's writable massN: root.
-int bdmBootIdentityType(const char *bootPath)
+// Parse the leading "<device><unit>:" token of a boot path into its digit-stripped stem ("ata0" ->
+// "ata", "mass1" -> "mass") and unit number (-1 when the token carries no digits, e.g. uLE's "mass:").
+// Anchored to the FIRST ':' so it can never match a folder name deeper in the path. Returns 1 on a
+// well-formed device token, 0 otherwise. Used by bdmResolveBootDir to classify boot directories.
+static int bdmParseBootStem(const char *bootPath, char *stem, size_t stemSize, int *unit)
 {
     if (bootPath == NULL)
-        return BDM_TYPE_UNKNOWN;
+        return 0;
 
     const char *colon = strchr(bootPath, ':');
     if (colon == NULL || colon == bootPath)
-        return BDM_TYPE_UNKNOWN; // no "<device>:" segment
+        return 0; // no "<device>:" segment
 
-    char stem[16];
     size_t n = (size_t)(colon - bootPath);
-    if (n >= sizeof(stem))
-        return BDM_TYPE_UNKNOWN;
+    if (n >= stemSize)
+        return 0;
     memcpy(stem, bootPath, n);
     stem[n] = '\0';
-    while (n > 0 && stem[n - 1] >= '0' && stem[n - 1] <= '9') // "ata0" -> "ata", "mx4sio0" -> "mx4sio"
+
+    *unit = -1;
+    size_t digits = 0;
+    while (n > 0 && stem[n - 1] >= '0' && stem[n - 1] <= '9') { // "ata0" -> "ata", "mx4sio0" -> "mx4sio"
         stem[--n] = '\0';
+        digits++;
+    }
+    if (digits > 0) {
+        *unit = 0;
+        for (const char *d = bootPath + n; *d != ':'; d++)
+            *unit = *unit * 10 + (*d - '0');
+    }
 
-    int type = bdmDetermineDeviceType(stem);
-    // Only the local block-device identities are resolvable to a massN: mount. UDPBD is network (no
-    // massN:), UNKNOWN covers every readable type-A prefix -- neither must be remapped.
-    if (type == BDM_TYPE_USB || type == BDM_TYPE_ILINK || type == BDM_TYPE_SDC || type == BDM_TYPE_ATA)
-        return type;
-    return BDM_TYPE_UNKNOWN;
-}
-
-static const char *bdmGetTypedPathForDriver(const char *driverName)
-{
-    if (bdmDriverIsUSB(driverName))
-        return "usb";
-    if (bdmDriverIsIlink(driverName))
-        return "ilink";
-    if (bdmDriverIsMx4sio(driverName))
-        return "mx4sio";
-    if (bdmDriverIsATA(driverName))
-        return "ata";
-
-    return NULL;
+    return n > 0; // require a non-empty alpha stem ("0:" is not a device token)
 }
 
 static void bdmSetLaunchDeviceBinding(struct cdvdman_settings_bdm *settings, const char *driverName, int deviceIndex)
@@ -171,99 +156,23 @@ static int bdmReadDeviceIdentity(const char *path, char *driverName, int driverN
     return result;
 }
 
-static int bdmProbeTypedDeviceRoot(char *target, int targetLength, const char *typedPath, int unit, const char *driverName, int massDeviceIndex)
-{
-    char probeRoot[BDM_DEVICE_ROOT_MAX];
-    char probePath[BDM_DEVICE_ROOT_MAX + 2];
-    char probeDriver[32];
-    int probeDeviceIndex;
-
-    snprintf(probeRoot, sizeof(probeRoot), "%s%d:", typedPath, unit);
-    snprintf(probePath, sizeof(probePath), "%s/", probeRoot);
-
-    if (bdmReadDeviceIdentity(probePath, probeDriver, sizeof(probeDriver), &probeDeviceIndex) < 0)
-        return 0;
-
-    if (strcmp(probeDriver, driverName) != 0 || probeDeviceIndex != massDeviceIndex)
-        return 0;
-
-    snprintf(target, targetLength, "%s", probeRoot);
-    return 1;
-}
-
-static int bdmGetTypedRootOrdinal(const char *driverName, int massSlot)
-{
-    char path[BDM_DEVICE_ROOT_MAX + 2];
-    char previousDriver[32];
-    int previousDeviceIndex;
-    int ordinal = 0;
-    const char *typedPath = bdmGetTypedPathForDriver(driverName);
-    const char *previousTypedPath;
-
-    if (typedPath == NULL)
-        return -1;
-
-    for (int i = 0; i < massSlot; i++) {
-        snprintf(path, sizeof(path), "mass%d:/", i);
-        if (bdmReadDeviceIdentity(path, previousDriver, sizeof(previousDriver), &previousDeviceIndex) < 0)
-            continue;
-
-        previousTypedPath = bdmGetTypedPathForDriver(previousDriver);
-        if (previousTypedPath != NULL && !strcmp(typedPath, previousTypedPath))
-            ordinal++;
-    }
-
-    return ordinal;
-}
-
-int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName, int massDeviceIndex, int massSlot)
-{
-    int preferredUnit;
-    const char *typedPath;
-
-    snprintf(target, targetLength, "mass%d:", massSlot);
-
-    typedPath = bdmGetTypedPathForDriver(driverName);
-    if (typedPath == NULL) {
-        LOG("BDMSUPPORT Using legacy root %s for driver %s\n", target, driverName);
-        return 0;
-    }
-
-    preferredUnit = bdmGetTypedRootOrdinal(driverName, massSlot);
-    if (preferredUnit >= 0 && preferredUnit < MAX_BDM_DEVICES &&
-        bdmProbeTypedDeviceRoot(target, targetLength, typedPath, preferredUnit, driverName, massDeviceIndex)) {
-        LOG("BDMSUPPORT Resolved mass%d (%s,%d) -> %s\n", massSlot, driverName, massDeviceIndex, target);
-        return 1;
-    }
-
-    for (int i = 0; i < MAX_BDM_DEVICES; i++) {
-        if (i == preferredUnit)
-            continue;
-        if (bdmProbeTypedDeviceRoot(target, targetLength, typedPath, i, driverName, massDeviceIndex)) {
-            LOG("BDMSUPPORT Resolved mass%d (%s,%d) -> %s\n", massSlot, driverName, massDeviceIndex, target);
-            return 1;
-        }
-    }
-
-    snprintf(target, targetLength, "mass%d:", massSlot);
-    LOG("BDMSUPPORT Falling back to legacy root %s for %s device %d\n", target, driverName, massDeviceIndex);
-    return 0;
-}
-
 // Find the first mounted BDM device whose driver matches bdmType (BDM_TYPE_*) and write its massN:
 // FILESYSTEM root WITH a trailing slash (e.g. "mass0:/") to root. Returns 1 if such a device is mounted,
-// 0 otherwise. Used by bdmEnsureSourceModules as a mount-readiness check for a transport type. (The
-// readable path is ALWAYS massN: -- OPL never mounts a typed ata0:/usb0:/mx4sio0: filesystem; those are
-// block-device identities used only for launch binding, and fileXioDopen on them always fails, so the
-// bdmResolveDeviceRoot typed branch below self-defeats and resolves to massN:.) The BDMA equip itself
-// uses bdmGetDeviceSlotsByType to search EVERY same-type slot, not just the first.
+// 0 otherwise. Used by bdmEnsureSourceModules as a mount-readiness check for a transport type.
+// The root is ALWAYS the legacy mass<slot>: mount, NEVER a typed root (ata0:/usb0:/mx4sio0:/ilink0:):
+// on the pinned SDK those are launch-binding identities with no filesystem behind them, and on newer
+// SDKs (ps2sdk 2026-02-26 "typed devices": bdmfs_fatfs registers them as real iomanX filesystems) a
+// typed root here would leak ata0:-rooted paths into consumers that must stay on massN: -- POPSTARTER,
+// the BDMA equip, the boot-dir resolver and the Neutrino pickers all read files through massN: only.
+// Launch binding keeps using the raw driver token via bdmSetLaunchDeviceBinding, which is unaffected.
+// The BDMA equip itself uses bdmGetDeviceSlotsByType to search EVERY same-type slot, not just the first.
 int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen)
 {
     if (root == NULL || rootLen <= 0)
         return 0;
 
     for (int i = 0; i < MAX_BDM_DEVICES; i++) {
-        char path[16], driver[32], resolved[BDM_DEVICE_ROOT_MAX];
+        char path[16], driver[32];
         int devIndex = -1;
 
         snprintf(path, sizeof(path), "mass%d:/", i);
@@ -271,19 +180,13 @@ int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen)
         // return: GET_DEVICE_NUMBER can fail on a perfectly usable device (seen on some USB drives), and
         // the device pages already tolerate that (they keep the device by driver name, bdmsupport.c
         // ~1219). Requiring it here made the equip report "no device matching" for a connected source.
-        // On GET_DEVICE_NUMBER failure devIndex stays -1; bdmResolveDeviceRoot then just yields the
-        // generic mass<slot>: root, which is still a valid path to that device's POPS folder.
         bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex);
         if (driver[0] == '\0')
             continue;
         if (bdmDetermineDeviceType(driver) != bdmType)
             continue;
 
-        // Resolves to mass<slot>:/ in practice: bdmResolveDeviceRoot's typed-root branch (e.g. ata0:)
-        // only fires for a typed FILESYSTEM device, of which OPL registers none (fileXioDopen on a typed
-        // root always fails), so it falls back to the massN: root -- the readable path callers need.
-        bdmResolveDeviceRoot(resolved, sizeof(resolved), driver, devIndex, i);
-        snprintf(root, rootLen, "%s/", resolved);
+        snprintf(root, rootLen, "mass%d:/", i);
         return 1;
     }
 
@@ -1467,46 +1370,71 @@ static int bdmDeviceIsPresent(int deviceId)
     return 0;
 }
 
+// Load the block-device transport driver for one BDM type, IGNORING the gEnable* config gates (the
+// callers exist precisely because the wanted device may not be enabled for games -- or, for the boot-dir
+// resolver, because the config that holds the gates cannot be read until the transport is up). Caller
+// must hold bdmLoadModuleLock. Idempotent. Returns 1 when the transport is (already) loaded, 0 on
+// failure or an unsupported type. MMCE is a separate subsystem with its own namespace + loader.
+static int bdmEnsureTransportLoaded(int bdmType)
+{
+    switch (bdmType) {
+        case BDM_TYPE_USB:
+            if (!iUSBModLoaded && bdmLoadOptionalModule("USBMASS_BD", &usbmass_bd_irx, size_usbmass_bd_irx) >= 0)
+                iUSBModLoaded = 1;
+            return iUSBModLoaded;
+        case BDM_TYPE_SDC:
+            if (!mx4sioModLoaded && bdmLoadOptionalModule("MX4SIO_BD", &mx4sio_bd_irx, size_mx4sio_bd_irx) >= 0)
+                mx4sioModLoaded = 1;
+            return mx4sioModLoaded;
+        case BDM_TYPE_ILINK:
+            if (!iLinkModLoaded) {
+                if (!iLinkManModLoaded && bdmLoadOptionalModule("ILINKMAN", &iLinkman_irx, size_iLinkman_irx) >= 0)
+                    iLinkManModLoaded = 1;
+                if (iLinkManModLoaded && !ieee1394ModLoaded && bdmLoadOptionalModule("IEEE1394_BD", &IEEE1394_bd_irx, size_IEEE1394_bd_irx) >= 0)
+                    ieee1394ModLoaded = 1;
+                iLinkModLoaded = iLinkManModLoaded && ieee1394ModLoaded;
+            }
+            return iLinkModLoaded;
+        case BDM_TYPE_ATA:
+            if (!hddModLoaded && hddLoadModules() >= 0)
+                hddModLoaded = 1;
+            return hddModLoaded;
+        default:
+            return 0;
+    }
+}
+
 // Ensure the BDM transport for a BDMA source type is loaded AND a device of that type is mounted, so
 // the equip can read modules from a source device even when that device family is NOT enabled for games
 // (e.g. BDMA files kept on a USB stick you never browse). Force-loads the driver -- the games tab stays
 // hidden because bdmNeedsUpdate gates page visibility on gEnable* independently -- then waits up to
 // timeoutMs for the just-loaded device to mount. Idempotent + instant when the transport is already up.
-// Returns 1 if a device of the type is present afterwards, 0 otherwise. USB/MX4SIO/internal-ATA-HDD only;
-// MMCE is a separate subsystem with its own namespace + loader.
+// Returns 1 if a device of the type is present afterwards, 0 otherwise.
 int bdmEnsureSourceModules(int bdmType, u32 timeoutMs)
 {
-    int wasLoaded = 1;
+    int wasLoaded;
     char root[BDM_DEVICE_ROOT_MAX + 2];
     u32 start;
 
     WaitSema(bdmLoadModuleLock);
     switch (bdmType) {
         case BDM_TYPE_USB:
-            if (!iUSBModLoaded) {
-                wasLoaded = 0;
-                if (bdmLoadOptionalModule("USBMASS_BD", &usbmass_bd_irx, size_usbmass_bd_irx) >= 0)
-                    iUSBModLoaded = 1;
-            }
+            wasLoaded = iUSBModLoaded;
             break;
         case BDM_TYPE_SDC:
-            if (!mx4sioModLoaded) {
-                wasLoaded = 0;
-                if (bdmLoadOptionalModule("MX4SIO_BD", &mx4sio_bd_irx, size_mx4sio_bd_irx) >= 0)
-                    mx4sioModLoaded = 1;
-            }
+            wasLoaded = mx4sioModLoaded;
+            break;
+        case BDM_TYPE_ILINK:
+            wasLoaded = iLinkModLoaded;
             break;
         case BDM_TYPE_ATA:
-            if (!hddModLoaded) {
-                wasLoaded = 0;
-                if (hddLoadModules() >= 0)
-                    hddModLoaded = 1;
-            }
+            wasLoaded = hddModLoaded;
             break;
         default:
             SignalSema(bdmLoadModuleLock);
             return 0;
     }
+    bdmEnsureTransportLoaded(bdmType);
     SignalSema(bdmLoadModuleLock);
 
     // Already loaded -> any connected device is already mounted, so the first probe returns with no stall
@@ -1521,6 +1449,186 @@ int bdmEnsureSourceModules(int bdmType, u32 timeoutMs)
         DelayThread(100 * 1000);
     }
     return 1;
+}
+
+// True when the booted ELF's own folder exists on mass<slot>: -- the weak boot-device evidence.
+static int bdmBootDirPresent(int slot, const char *tail)
+{
+    char path[288];
+    int dir;
+
+    if (tail[0] == '\0')
+        snprintf(path, sizeof(path), "mass%d:/", slot);
+    else if (tail[0] == '/')
+        snprintf(path, sizeof(path), "mass%d:%s", slot, tail);
+    else
+        snprintf(path, sizeof(path), "mass%d:/%s", slot, tail);
+
+    dir = fileXioDopen(path);
+    if (dir < 0)
+        return 0;
+    fileXioDclose(dir);
+    return 1;
+}
+
+// True when the booted ELF itself exists at <tail>/<elfName> on mass<slot>: -- the definitive
+// boot-device evidence (OPL is running from that very file).
+static int bdmBootElfPresent(int slot, const char *tail, const char *elfName)
+{
+    char path[320];
+    int fd;
+
+    if (tail[0] == '\0' || tail[0] == '/')
+        snprintf(path, sizeof(path), "mass%d:%s/%s", slot, tail, elfName);
+    else
+        snprintf(path, sizeof(path), "mass%d:/%s/%s", slot, tail, elfName);
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return 0;
+    close(fd);
+    return 1;
+}
+
+// Rewrite ONLY the device prefix of the boot dir, preserving the boot folder ("ata0:/APPS" ->
+// "mass1:/APPS"). tail points INTO bootDir, so compose into a local buffer before writing back.
+static void bdmRewriteBootDir(char *bootDir, int bootDirSize, int slot, const char *tail)
+{
+    char resolved[256];
+
+    if (tail[0] == '\0' || tail[0] == '/')
+        snprintf(resolved, sizeof(resolved), "mass%d:%s", slot, tail);
+    else
+        snprintf(resolved, sizeof(resolved), "mass%d:/%s", slot, tail);
+
+    snprintf(bootDir, bootDirSize, "%s", resolved);
+}
+
+// Resolve a boot directory that names a BDM device into that device's mounted massN: filesystem root,
+// force-loading whatever driver stack the boot device needs FIRST. Called from the deferred config
+// load -- after ioInit()/bdmInitSemaphore(), before the first configReadMulti() -- because at boot time
+// the IOP has NO BDM modules at all (sysReset loads none; the BDM page only loads them on tab entry),
+// so a "mass0:/APPS" or "ata0:/APPS" boot dir is unreadable exactly when settings must load. Two input
+// families are handled:
+//   - launch-binding identities (usb0:/ilink0:/sd0:/mx4sio0:/sdc0:/ata0:) -- device names with no
+//     filesystem OPL reads; remapped to the SAME device's massN: mount.
+//   - massN:/mass: -- the right namespace, but the launcher's slot numbering need not match OPL's (and
+//     the device isn't mounted yet); verified/renumbered by probing for the booted ELF itself.
+// elfName (argv[0]'s basename; may be empty for a getcwd()-derived boot dir) anchors the verification:
+// the slot that actually holds <tail>/<elfName> IS the boot device, immune to slot renumbering. The
+// gEnable* config flags are deliberately ignored when loading transports -- the config is precisely
+// what cannot be read yet (the exFAT-HDD chicken-and-egg: mounting it needs gEnableBdmHDD, which lives
+// in the unreadable config); the caller reconciles the flags after the config loads.
+// *ioBdmType is in/out: pass the boot device's BDM_TYPE_* when already known (the save-path re-resolve)
+// to pin the search to that transport, or BDM_TYPE_UNKNOWN to classify from the prefix; on success it
+// holds the resolved device's type.
+// Returns 1 with bootDir rewritten in place on success; 0 when bootDir is not a BDM path (left
+// untouched -- mc/mmce/host/pfs/hdd/... prefixes are not ours); -1 when the boot device never mounted
+// within the budget (bootDir left untouched -- the caller drops it so legacy discovery re-arms).
+int bdmResolveBootDir(char *bootDir, int bootDirSize, const char *elfName, int *ioBdmType)
+{
+    char stem[16];
+    int unit;
+
+    // *ioBdmType is only written on success -- a failed resolve must not erase the caller's knowledge
+    // of the boot device's type (the save-path retry keys on it).
+    int knownType = *ioBdmType;
+
+    if (!bdmParseBootStem(bootDir, stem, sizeof(stem), &unit))
+        return 0;
+
+    int isMass = (strcmp(stem, "mass") == 0);
+    int filterType = isMass ? knownType : bdmDetermineDeviceType(stem);
+    if (!isMass && filterType == BDM_TYPE_UNKNOWN)
+        return 0; // mc/mmce/host/pfs/hdd/cdrom/... -- not a BDM boot path, leave it alone
+    if (filterType == BDM_TYPE_UDPBD)
+        return -1; // network block device: no local mount to resolve at config-load time
+
+    const char *tail = strchr(bootDir, ':') + 1; // "" | "/APPS" | "APPS" (bdmParseBootStem proved the ':')
+    int literalSlot = (isMass && unit >= 0 && unit < MAX_BDM_DEVICES) ? unit : 0;
+    int haveElf = (elfName != NULL && elfName[0] != '\0');
+
+    // Bring-up: the BDM core (bdm.irx + bdmfs_fatfs + hotplug events; idempotent -- every bdmInit calls
+    // it too) plus the transport(s) the boot prefix implies. An untyped massN: names the shared BDM
+    // filesystem, not a transport, so start with the cheap common ones (USB, MX4SIO) and only escalate
+    // to iLink + the ATA stack (iLinkman is known to break PCSX2, where a virtual-USB mass: boot is
+    // possible; ATA means dev9 power + drive spin-up) if nothing turns up holding the boot folder.
+    bdmLoadModules();
+    WaitSema(bdmLoadModuleLock);
+    if (filterType != BDM_TYPE_UNKNOWN) {
+        bdmEnsureTransportLoaded(filterType);
+    } else {
+        bdmEnsureTransportLoaded(BDM_TYPE_USB);
+        bdmEnsureTransportLoaded(BDM_TYPE_SDC);
+    }
+    SignalSema(bdmLoadModuleLock);
+
+    u32 budgetMs = (filterType == BDM_TYPE_ATA) ? 10000 : 3000; // ATA = dev9 power-up + platter spin-up
+    int escalated = (filterType != BDM_TYPE_UNKNOWN);           // typed searches never escalate
+    u32 start = GetTimerSystemTime();
+
+    for (;;) {
+        int matchSlot = -1, fallbackSlot = -1;
+        int matchType = BDM_TYPE_UNKNOWN, fallbackType = BDM_TYPE_UNKNOWN;
+
+        for (int i = 0; i < MAX_BDM_DEVICES; i++) {
+            char path[16], driver[32];
+            int devIndex = -1;
+
+            snprintf(path, sizeof(path), "mass%d:/", i);
+            bdmReadDeviceIdentity(path, driver, sizeof(driver), &devIndex);
+            if (driver[0] == '\0')
+                continue; // slot not mounted (yet)
+
+            int slotType = bdmDetermineDeviceType(driver);
+            if (filterType != BDM_TYPE_UNKNOWN && slotType != filterType)
+                continue; // wrong device family for a typed/pinned search
+
+            if (haveElf && bdmBootElfPresent(i, tail, elfName)) {
+                matchSlot = i; // definitive: the ELF we are running from is right here
+                matchType = slotType;
+                break;
+            }
+            int dirOk = bdmBootDirPresent(i, tail);
+            if (!haveElf && dirOk && (!isMass || i == literalSlot)) {
+                matchSlot = i; // getcwd-derived boot dir: folder presence is the best evidence there is
+                matchType = slotType;
+                break;
+            }
+            if (fallbackSlot < 0 && dirOk && (!isMass || i == literalSlot)) {
+                fallbackSlot = i; // boot folder exists but the ELF probe missed -- hold as weak fallback
+                fallbackType = slotType;
+            }
+        }
+
+        if (matchSlot >= 0) {
+            *ioBdmType = matchType;
+            bdmRewriteBootDir(bootDir, bootDirSize, matchSlot, tail);
+            return 1;
+        }
+
+        if ((GetTimerSystemTime() - start) / (kBUSCLK / 1000) > budgetMs) {
+            if (fallbackSlot >= 0) {
+                *ioBdmType = fallbackType;
+                bdmRewriteBootDir(bootDir, bootDirSize, fallbackSlot, tail);
+                return 1;
+            }
+            if (!escalated) {
+                // Nothing cheap matched a massN: boot dir -- the boot device may be the internal exFAT
+                // HDD handed in massN: form (HDD-OSD launchers do this) or an iLink drive. One
+                // escalation: the remaining transports, with extra budget for ATA spin-up.
+                escalated = 1;
+                WaitSema(bdmLoadModuleLock);
+                bdmEnsureTransportLoaded(BDM_TYPE_ILINK);
+                bdmEnsureTransportLoaded(BDM_TYPE_ATA);
+                SignalSema(bdmLoadModuleLock);
+                budgetMs += 8000;
+                continue;
+            }
+            return -1;
+        }
+        DelayThread(100 * 1000);
+    }
 }
 
 static int bdmDeviceIsATA(int deviceId)

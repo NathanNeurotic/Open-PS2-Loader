@@ -62,10 +62,11 @@ void bdmEnumerateDevices();
 
 void bdmResolveLBA_UDMA(bdm_device_data_t *pDeviceData);
 int bdmHDDIsPresent(u32 timeoutMs);
-int bdmResolveDeviceRoot(char *target, int targetLength, const char *driverName, int massDeviceIndex, int massSlot);
 // Find the first mounted BDM device whose driver matches bdmType (BDM_TYPE_*); write its massN:
 // filesystem root with a trailing slash (e.g. "mass0:/") to root. Returns 1 if found. Mount-readiness
-// check (the readable path is always massN:; typed ata0:/usb0: roots are launch-binding identities only).
+// check. Always the legacy massN: mount, never a typed ata0:/usb0: root -- newer SDKs register typed
+// roots as real filesystems, but every consumer of this path (POPSTARTER, the BDMA equip, the boot-dir
+// resolver, the Neutrino pickers) must stay on massN:.
 int bdmGetDeviceRootByType(int bdmType, char *root, int rootLen);
 // Fill `slots` with the massN: slot index of EVERY mounted device whose driver matches bdmType (root =
 // "mass<i>:/"), up to maxSlots; returns the count. The BDMA equip searches all same-type slots so a
@@ -75,11 +76,15 @@ int bdmGetDeviceSlotsByType(int bdmType, int *slots, int maxSlots);
 // for a device of that type to mount, so the BDMA equip can read a source device that isn't enabled for
 // games. Returns 1 if a device is present afterwards, 0 otherwise. Idempotent + instant when already up.
 int bdmEnsureSourceModules(int bdmType, u32 timeoutMs);
-// If bootPath starts with a BDM launch-binding identity (usb0:/ilink0:/sd0:/mx4sio0:/sdc0:/ata0:) that
-// fileXio can't open, return its BDM_TYPE_* so the caller can resolve the device's writable massN: root
-// (bdmGetDeviceRootByType). Returns BDM_TYPE_UNKNOWN for readable type-A prefixes (mass/mc/mmce/pfs/hdd/
-// host/cdrom) and the UDPBD network type -- those must be left untouched. Anchored to the leading token.
-int bdmBootIdentityType(const char *bootPath);
+// Resolve a boot directory that names a BDM device ("ata0:/APPS", "usb0:/...", "mass0:/APPS", "mass:")
+// to the device's mounted massN: root, force-loading the needed driver stack first (the gEnable* config
+// gates are ignored -- the config is what cannot be read until this succeeds). elfName (argv[0]'s
+// basename; may be empty) verifies the slot: the device holding <bootdir>/<elfName> IS the boot device.
+// *ioBdmType: pass the known boot-device BDM_TYPE_* to pin the search (save-path re-resolve) or
+// BDM_TYPE_UNKNOWN to classify from the prefix; on success it returns the resolved device's type.
+// Returns 1 with bootDir rewritten in place, 0 when bootDir is not a BDM path (untouched), -1 when the
+// boot device never mounted in time (untouched -- caller drops it so legacy discovery re-arms).
+int bdmResolveBootDir(char *bootDir, int bootDirSize, const char *elfName, int *ioBdmType);
 
 int bdmFindPartition(char *target, const char *name, int write);
 int bdmIsUDPBDLoaded(void);                  // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)
