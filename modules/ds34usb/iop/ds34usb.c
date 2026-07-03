@@ -498,8 +498,8 @@ static void readReport(u8 *data, int pad)
             ds34pad[pad].data[17] = report->PressureR2; // R2
 
             // FIXED: Properly extract 4-bit battery and power fields
-            battery_level = report->Battery & 0x0F;  // Battery is 4 bits (0-15)
-            power_state = report->Power & 0x0F;      // Power is 4 bits (0-15)
+            battery_level = report->Battery & 0x0F; // Battery is 4 bits (0-15)
+            power_state = report->Power & 0x0F;     // Power is 4 bits (0-15)
 
             if (report->PSButton) { // display battery level
                 // Scale 4-bit battery (0-15) to 8-bit (0-255)
