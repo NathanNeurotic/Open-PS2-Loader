@@ -144,7 +144,6 @@ PNG_ASSETS_DIR = gfx/
 # on 2026-06-14 and froze native MMCE launches on the pinned SDK. wOPL never hit this because
 # it always took the coordinated SDK-bundled driver.
 MMCE_ASSETS_DIR = $(PS2SDK)/iop/irx
-MMCE_IRX = $(MMCE_ASSETS_DIR)/mmceman.irx $(MMCE_ASSETS_DIR)/mmcedrv.irx $(MMCE_ASSETS_DIR)/mmceigr.irx
 LWNBD_IOP_LINKFILE = $(abspath thirdparty/ps2sdk_iop_linkfile.ld)
 
 MAPFILE = opl.map
@@ -259,7 +258,7 @@ EE_LDFLAGS += -fdata-sections -ffunction-sections -Wl,--gc-sections
 
 .SILENT:
 
-.PHONY: all release debug iopcore_debug eesio_debug ingame_debug deci2_debug debug_ppctty iopcore_ppctty_debug ingame_ppctty_debug clean rebuild pc_tools pc_tools_win32 oplversion format format-check ps2sdk-not-setup download_lng download_lwNBD download_mmce languages
+.PHONY: all release debug iopcore_debug eesio_debug ingame_debug deci2_debug debug_ppctty iopcore_ppctty_debug ingame_ppctty_debug clean rebuild pc_tools pc_tools_win32 oplversion format format-check ps2sdk-not-setup download_lng download_lwNBD languages
 
 ifdef PS2SDK
 
@@ -892,8 +891,6 @@ download_lng:
 	./download_lng.sh
 
 download_lwNBD: modules/network/lwNBD/Makefile
-
-download_mmce: $(MMCE_IRX)
 
 download_cfla:
 	./download_cfla.sh
