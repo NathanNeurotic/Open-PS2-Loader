@@ -1635,10 +1635,14 @@ static void _saveConfig()
     }
 
     lscret = configWriteMulti(lscstatus);
-    // The boot dir (cwd) is the only save target. The alternate-device save + the cwd redirect
-    // pointer are legacy-discovery aids, kept only for the boot-path-undeterminable sanity case
-    // (gBootDir empty); with a known boot dir, settings save there and nowhere else.
-    if (gBootDir[0] == '\0') {
+    // The boot dir (cwd) is the preferred save target, but fall back to a writable device
+    // (trySaveAlternateDevice: MC -> MMCE -> BDM -> BDM-HDD -> HDD) plus a redirect pointer when the
+    // boot dir is undeterminable (gBootDir empty) OR the write to it FAILS. A boot device can be
+    // unwritable: a launch-binding identity (ata0:/usb0:, which fileXio can't open) or a
+    // read-only/flaky exFAT HDD. Without this fallback its settings are silently lost -- "Error saving
+    // settings" when RiptOPL is booted from an internal exFAT HDD (reported by eliminator1403). On
+    // success the redirect makes the next boot load the config from wherever it actually landed.
+    if (gBootDir[0] == '\0' || lscret <= 0) {
         if (lscret <= 0)
             lscret = trySaveAlternateDevice(lscstatus);
         if (lscret > 0)
