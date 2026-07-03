@@ -1205,10 +1205,59 @@ static int tryAlternateDevice(int types)
     return 0;
 }
 
+// The launcher can hand OPL a boot path that is a BDM launch-binding IDENTITY (ata0:/usb0:/mx4sio0:/
+// ilink0:/sd0:) -- e.g. booting from an internal exFAT HDD, whose cwd may come through as ata0:. fileXio
+// cannot open such a prefix, so settings both READ back empty (defaults silently loaded) and fail to SAVE
+// ("Error saving settings"). The device's ONLY readable+writable path is its massN: mount, which is not
+// up at setBootDir/main time (BDM transports load after init(), and the semaphore that guards module
+// loading is created there too) -- so we resolve HERE, in the deferred config load, the first point at
+// which massN: is guaranteed mounted. Rewrite the identity to the SAME device's massN: root IN PLACE,
+// preserving the boot folder (ata0:/APPS -> mass0:/APPS): gBootDir stays non-empty and readable, so the
+// read below and every later save target the boot device with NO cross-device (MC) fallback. Type-A
+// prefixes (mass/mc/mmce/pfs/hdd/host) and APA HDD (pfs0:/hdd0:, a different device family) return early,
+// untouched.
+static void resolveBootDirToMass(void)
+{
+    int bt = bdmBootIdentityType(gBootDir);
+    if (bt == BDM_TYPE_UNKNOWN)
+        return; // readable/non-BDM boot dir (or empty) -> nothing to remap
+
+    char root[BDM_DEVICE_ROOT_MAX + 2]; // "massN:/"
+    bdmEnsureSourceModules(bt, 2000);   // load the transport + bounded-wait for the device (instant if already up)
+    if (!bdmGetDeviceRootByType(bt, root, sizeof(root))) {
+        // The boot device did not mount in time. Drop the dead identity so the existing empty-gBootDir
+        // discovery/alternate-save can still find a home for the config, rather than every read/save
+        // silently failing against an unopenable prefix.
+        gBootDir[0] = '\0';
+        configEnd();
+        configInit(NULL);
+        return;
+    }
+
+    size_t rlen = strlen(root);
+    if (rlen > 0 && root[rlen - 1] == '/')
+        root[rlen - 1] = '\0';                    // "massN:/" -> "massN:"
+    const char *tail = strchr(gBootDir, ':') + 1; // bdmBootIdentityType guaranteed a ':' -> "/APPS" | "APPS" | ""
+    char resolved[sizeof(gBootDir)];
+    if (tail[0] == '\0' || tail[0] == '/')
+        snprintf(resolved, sizeof(resolved), "%s%s", root, tail); // "massN:" + "/APPS" or ""
+    else
+        snprintf(resolved, sizeof(resolved), "%s/%s", root, tail); // "massN:" + "/" + "APPS"
+    size_t dl = strlen(resolved);
+    if (dl > 1 && resolved[dl - 1] == '/')
+        resolved[dl - 1] = '\0'; // match setBootDir's no-trailing-slash contract
+
+    LOG("BOOT resolved launch identity %s -> %s\n", gBootDir, resolved);
+    snprintf(gBootDir, sizeof(gBootDir), "%s", resolved);
+    configEnd();
+    configInit(gBootDir); // re-point the config sets from the dead identity to the massN: path
+}
+
 static void _loadConfig()
 {
     int value, themeID = -1, langID = -1;
     const char *temp;
+    resolveBootDirToMass(); // ata0:/APPS -> mass0:/APPS (boot-device massN:) before the first read
     int result = configReadMulti(lscstatus);
     // Settings come from the boot dir (cwd). Only when the boot path was undeterminable (gBootDir
     // empty -> configInit fell back to the MC default) do we re-enable the legacy multi-device
