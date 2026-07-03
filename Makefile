@@ -138,8 +138,12 @@ LNG_TMPL_DIR = lng_tmpl/
 LNG_FORK_DIR = lng_fork/
 LNG_DIR = lng/
 PNG_ASSETS_DIR = gfx/
-MMCE_ASSETS_DIR = thirdparty/mmce
-MMCE_IRX = $(MMCE_ASSETS_DIR)/mmceman.irx $(MMCE_ASSETS_DIR)/mmcedrv.irx $(MMCE_ASSETS_DIR)/mmceigr.irx
+# Source the MMCE driver from the PS2SDK (as wOPL does) instead of downloading the rolling
+# ps2-mmce/mmceman "latest". The SDK's mmceman is versioned in lockstep with the SDK's sio2man,
+# so it never drifts out of sync -- the independent rolling release refactored its sio2man hook
+# on 2026-06-14 and froze native MMCE launches on the pinned SDK. wOPL never hit this because
+# it always took the coordinated SDK-bundled driver.
+MMCE_ASSETS_DIR = $(PS2SDK)/iop/irx
 LWNBD_IOP_LINKFILE = $(abspath thirdparty/ps2sdk_iop_linkfile.ld)
 
 MAPFILE = opl.map
@@ -254,11 +258,11 @@ EE_LDFLAGS += -fdata-sections -ffunction-sections -Wl,--gc-sections
 
 .SILENT:
 
-.PHONY: all release debug iopcore_debug eesio_debug ingame_debug deci2_debug debug_ppctty iopcore_ppctty_debug ingame_ppctty_debug clean rebuild pc_tools pc_tools_win32 oplversion format format-check ps2sdk-not-setup download_lng download_lwNBD download_mmce languages
+.PHONY: all release debug iopcore_debug eesio_debug ingame_debug deci2_debug debug_ppctty iopcore_ppctty_debug ingame_ppctty_debug clean rebuild pc_tools pc_tools_win32 oplversion format format-check ps2sdk-not-setup download_lng download_lwNBD languages
 
 ifdef PS2SDK
 
-all: download_lng download_lwNBD download_mmce languages
+all: download_lng download_lwNBD languages
 	echo "Building Open PS2 Loader $(OPL_VERSION)..."
 	echo "-Interface"
 ifneq ($(NOT_PACKED),1)
@@ -267,7 +271,7 @@ else
 	$(MAKE) $(EE_BIN)
 endif
 
-release: download_lng download_lwNBD download_mmce languages $(EE_VPKD).ZIP
+release: download_lng download_lwNBD languages $(EE_VPKD).ZIP
 
 debug:
 	$(MAKE) DEBUG=1 all
@@ -431,9 +435,6 @@ $(EE_ASM_DIR)ee_core.c: ee_core/ee_core.elf | $(EE_ASM_DIR)
 
 $(EE_ASM_DIR)udnl.c: $(UDNL_OUT) | $(EE_ASM_DIR)
 	$(BIN2C) $(UDNL_OUT) $@ udnl_irx
-
-$(MMCE_IRX) &: download_mmce.sh
-	bash ./download_mmce.sh
 
 $(EE_ASM_DIR)mmceman.c: $(MMCE_ASSETS_DIR)/mmceman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
@@ -890,8 +891,6 @@ download_lng:
 	./download_lng.sh
 
 download_lwNBD: modules/network/lwNBD/Makefile
-
-download_mmce: $(MMCE_IRX)
 
 download_cfla:
 	./download_cfla.sh
