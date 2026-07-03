@@ -5,8 +5,8 @@ name: Rolling Release
 #
 # Builds with BOTH toolchains, matching compilation.yml, so a regression in either
 # is visible from the rolling channel:
-#   * ps2max/dev (pinned)      -> RIPTOPL.ELF                 (primary / stable toolchain)
-#   * ps2dev/ps2dev:latest     -> RIPTOPL-ps2dev-latest.ELF   (bleeding-edge toolchain)
+#   * ps2dev/ps2dev:latest     -> RIPTOPL.ELF          (PRIMARY / target toolchain)
+#   * ps2max/dev (pinned)      -> RIPTOPL-oldsdk.ELF   (fallback / compatibility toolchain)
 #
 # A source snapshot (RIPTOPL-<version>-src.zip) of the exact built commit is also
 # published, so every rolling build is self-preserving: testers can restore and
@@ -19,8 +19,12 @@ name: Rolling Release
 #   * Builds run inside their toolchain containers; publishing runs on the host
 #     runner, which ships the gh CLI.
 #
-# The bleeding-edge build is best-effort (continue-on-error): if ps2dev/ps2dev:latest
-# breaks, the rolling release still updates with the pinned build.
+# GATING (deliberate, see docs/RECOVERY-2026-07-03.md section 5): ps2dev:latest is the
+# REQUIRED primary -- if it breaks, the publish FAILS loudly instead of silently swapping
+# the pinned build into the default APP_RIPTOPL slot (a silent role swap made rolling zips
+# change toolchain between runs with no user-visible signal, poisoning hardware bug reports).
+# The pinned build is the best-effort fallback shipped alongside as APP_RIPTOPL-OLDSDK.
+# Both ELFs self-identify: the version string carries "-latest" / "-oldsdk" (LOCALVERSION).
 
 on:
   push:
@@ -43,8 +47,8 @@ jobs:
   build-rolling-pinned:
     runs-on: ubuntu-latest
     container: ps2max/dev:v20250725-2
-    outputs:
-      version: ${{ steps.ver.outputs.version }}
+    # Fallback/compatibility toolchain: best-effort, must not block the rolling publish.
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -54,41 +58,28 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
 
-      - name: Get version
-        id: ver
-        run: echo "version=$(make oplversion)" >> "$GITHUB_OUTPUT"
-
       - name: Build (make clean release)
-        run: make --trace clean && make --trace release
+        # LOCALVERSION brands the in-ELF version string ("-oldsdk") so hardware reports
+        # self-identify which toolchain's binary produced them (Makefile appends it).
+        run: make --trace clean && make --trace LOCALVERSION=oldsdk release
 
-      - name: Detailed changelog
-        run: sh ./make_changelog.sh
-
-      - name: Stage rolling assets
+      - name: Stage rolling assets (pinned = OLDSDK)
         run: |
           set -eu
           mkdir -p rolling
           # Publish ONLY the stable, version-agnostic name. Versioned filenames
           # embed the commit, so they change every run and pile up as stale
           # assets -- confusing on a rolling channel.
-          MAIN_ELF="RIPTOPL-${{ steps.ver.outputs.version }}.ELF"
-          if [ ! -f "$MAIN_ELF" ]; then
-            MAIN_ELF="$(ls RIPTOPL-*.ELF 2>/dev/null | head -n1)"
-          fi
+          MAIN_ELF="$(ls RIPTOPL-*.ELF 2>/dev/null | head -n1)"
           if [ -z "${MAIN_ELF:-}" ] || [ ! -f "$MAIN_ELF" ]; then
             echo "No RIPTOPL ELF produced by the pinned build" >&2
             exit 1
           fi
-          cp -f "$MAIN_ELF" rolling/RIPTOPL.ELF
-          [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
-          # Standalone language pack (lang_*.lng + their non-Latin fonts, which are NOT embedded in the
-          # ELF) -- build it off the just-built lng/ and stage it so 'rolling' carries it too (it used to
-          # ship only on the now-removed "latest" release). Soft-fail so a LANGS hiccup can't break rolling.
-          if ./lng_pack.sh && ls RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
-            cp -f RIPTOPL-LANGS-*.zip rolling/
-          else
-            echo "WARN: language pack not produced this run"
-          fi
+          cp -f "$MAIN_ELF" rolling/RIPTOPL-oldsdk.ELF
+          # IRX provenance manifest: hash every prebuilt module consumed from this container's SDK.
+          # A silent SDK-side driver swap (the mmceman class) then shows up as a manifest diff
+          # between runs instead of as a hardware mystery.
+          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-OLDSDK.txt 2>/dev/null || true
           echo "Staged pinned rolling assets:"
           ls -la rolling
 
@@ -106,12 +97,15 @@ jobs:
   build-rolling-ps2dev-latest:
     runs-on: ubuntu-latest
     container: ps2dev/ps2dev:latest
-    # Bleeding-edge toolchain: best-effort, must not block the rolling publish.
-    continue-on-error: true
+    # PRIMARY (target) toolchain: REQUIRED. If this breaks, the publish fails loudly --
+    # never a silent role swap of the pinned build into the default APP_RIPTOPL slot.
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
+      # Dependencies BEFORE checkout: with no git in the container, actions/checkout falls
+      # back to an API tarball (no .git at all) -> `git fetch --unshallow` fails, the Makefile's
+      # `test -d .git` marks the build "-dirty", and the version collapses to an uninformative
+      # "vX.Y.Z-Beta-N-dirty" (exactly what hardware reporters were pasting back at us).
       - name: Install host dependencies (Alpine only)
         run: |
           if command -v apk >/dev/null 2>&1; then
@@ -142,33 +136,53 @@ jobs:
               diffutils
           fi
 
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Mark workspace safe and fetch history
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
 
+      - name: Get version
+        id: ver
+        run: echo "version=$(make oplversion)" >> "$GITHUB_OUTPUT"
+
       - name: Build (make clean release)
-        run: make --trace clean && make --trace release
+        # LOCALVERSION brands the in-ELF version string ("-latest") so hardware reports
+        # self-identify which toolchain's binary produced them (Makefile appends it).
+        run: make --trace clean && make --trace LOCALVERSION=latest release
 
       - name: Detailed changelog
         run: sh ./make_changelog.sh
 
-      - name: Stage rolling assets (ps2dev-latest)
+      - name: Stage rolling assets (ps2dev-latest = primary)
         run: |
           set -eu
           mkdir -p rolling
-          # Publish ONLY the stable, version-agnostic name for the bleeding-edge build.
+          # Publish ONLY the stable, version-agnostic name for the primary build.
           MAIN_ELF="$(ls RIPTOPL-*.ELF 2>/dev/null | head -n1)"
           if [ -z "${MAIN_ELF:-}" ] || [ ! -f "$MAIN_ELF" ]; then
             echo "No RIPTOPL ELF produced by the ps2dev-latest build" >&2
             exit 1
           fi
-          cp -f "$MAIN_ELF" rolling/RIPTOPL-ps2dev-latest.ELF
+          cp -f "$MAIN_ELF" rolling/RIPTOPL.ELF
+          [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
+          # IRX provenance manifest for the primary container's SDK prebuilts (see the pinned job).
+          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST.txt 2>/dev/null || true
+          # Standalone language pack (lang_*.lng + their non-Latin fonts, which are NOT embedded in the
+          # ELF) -- build it off the just-built lng/ and stage it so 'rolling' carries it too. Soft-fail
+          # so a LANGS hiccup can't break rolling.
+          if ./lng_pack.sh && ls RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
+            cp -f RIPTOPL-LANGS-*.zip rolling/
+          else
+            echo "WARN: language pack not produced this run"
+          fi
           echo "Staged ps2dev-latest rolling assets:"
           ls -la rolling
 
       - name: Build variant + debug extras (ps2dev:latest = standard)
-        # Best-effort like the rest of this bleeding-edge job; runs after staging the main ELF.
+        # Runs after staging the main ELF so the per-build `make clean` can't wipe it.
         run: sh ./.github/scripts/build_rolling_extras.sh ""
 
       - name: Upload ps2dev-latest rolling assets
@@ -185,9 +199,9 @@ jobs:
       contents: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OPL_VERSION: ${{ needs.build-rolling-pinned.outputs.version }}
-      # Pinned ps2sdk/toolchain tag used for the RIPTOPL package name. Bump alongside the
-      # build-rolling-pinned container (ps2max/dev:...).
+      OPL_VERSION: ${{ needs.build-rolling-ps2dev-latest.outputs.version }}
+      # Pinned ps2sdk/toolchain tag of the FALLBACK (-OLDSDK) build, referenced in the release
+      # notes. Bump alongside the build-rolling-pinned container (ps2max/dev:...).
       SDK_VER: "v20250725-2"
     steps:
       - name: Checkout
@@ -195,28 +209,28 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Download pinned rolling assets
-        uses: actions/download-artifact@v8
-        with:
-          name: rolling-assets-pinned
-          path: rolling
-
       - name: Download ps2dev-latest rolling assets
-        # Optional: the bleeding-edge build may have failed; publish what we have.
-        continue-on-error: true
+        # The PRIMARY build: required (its job failing already failed the workflow).
         uses: actions/download-artifact@v8
         with:
           name: rolling-assets-ps2dev-latest
           path: rolling
 
+      - name: Download pinned rolling assets
+        # Optional: the pinned fallback build may have failed; publish what we have.
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: rolling-assets-pinned
+          path: rolling
+
       - name: Name assets with the build version
         run: |
           set -eu
-          # Apply ONE authoritative version (from the pinned build, which resolves
-          # full git history) to BOTH toolchains. The source commit is identical, so
-          # the only difference is the -ps2dev-latest suffix; this also sidesteps the
-          # ps2dev-latest container's short/"dirty" git describe. Each build becomes a
-          # single file whose name carries both the product name and the version.
+          # Apply ONE authoritative version (from the primary ps2dev:latest build, which now
+          # resolves full git history) to BOTH toolchains. The source commit is identical, so
+          # the only difference is the -oldsdk suffix. Each build becomes a single file whose
+          # name carries both the product name and the version.
           VER="${OPL_VERSION:-}"
           if [ -z "$VER" ]; then
             VER="rolling-${GITHUB_SHA}"
@@ -225,8 +239,8 @@ jobs:
           if [ -f rolling/RIPTOPL.ELF ]; then
             mv -f rolling/RIPTOPL.ELF "rolling/RIPTOPL-${VER}.ELF"
           fi
-          if [ -f rolling/RIPTOPL-ps2dev-latest.ELF ]; then
-            mv -f rolling/RIPTOPL-ps2dev-latest.ELF "rolling/RIPTOPL-${VER}-ps2dev-latest.ELF"
+          if [ -f rolling/RIPTOPL-oldsdk.ELF ]; then
+            mv -f rolling/RIPTOPL-oldsdk.ELF "rolling/RIPTOPL-${VER}-oldsdk.ELF"
           fi
           echo "Renamed assets:"
           ls -la rolling
@@ -279,18 +293,22 @@ jobs:
           PKG=riptopl_pkg
           rm -rf "$PKG"
           mkdir -p "$PKG/APP_RIPTOPL" "$PKG/POPSTARTER" "$PKG/POPS"
-          # Both SDK ELFs: ps2dev:latest is the default; pinned ("old SDK") goes in its own folder.
-          LATEST_ELF="rolling/${VERSIONED_BASE}-ps2dev-latest.ELF"
-          PINNED_ELF="rolling/${VERSIONED_BASE}.ELF"
-          if [ -f "$LATEST_ELF" ]; then
-            cp -f "$LATEST_ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
-            if [ -f "$PINNED_ELF" ]; then
-              mkdir -p "$PKG/APP_RIPTOPL-OLDSDK"
-              cp -f "$PINNED_ELF" "$PKG/APP_RIPTOPL-OLDSDK/RIPTOPL.ELF"
-            fi
+          # Both SDK ELFs: ps2dev:latest is the REQUIRED default; pinned ("old SDK") is the
+          # optional fallback in its own folder. No silent role swap: if the primary ELF is
+          # missing here the publish FAILS (its build job failing already fails the workflow --
+          # this is the belt-and-braces check).
+          LATEST_ELF="rolling/${VERSIONED_BASE}.ELF"
+          PINNED_ELF="rolling/${VERSIONED_BASE}-oldsdk.ELF"
+          if [ ! -f "$LATEST_ELF" ]; then
+            echo "PRIMARY (ps2dev:latest) ELF missing -- refusing to package a silently-swapped default" >&2
+            exit 1
+          fi
+          cp -f "$LATEST_ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
+          if [ -f "$PINNED_ELF" ]; then
+            mkdir -p "$PKG/APP_RIPTOPL-OLDSDK"
+            cp -f "$PINNED_ELF" "$PKG/APP_RIPTOPL-OLDSDK/RIPTOPL.ELF"
           else
-            # ps2dev:latest unavailable this run -> the pinned build becomes the default.
-            cp -f "$PINNED_ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
+            echo "WARN: pinned fallback build missing this run; package ships the primary only" >&2
           fi
           cp -f popsmb/* "$PKG/POPSTARTER/"
           cp -f pops/* "$PKG/POPS/"
@@ -324,6 +342,13 @@ jobs:
               mkdir -p "$PKG/neutrino/config" && cp neutrino/bsd-udpfsbd.toml "$PKG/neutrino/config/bsd-udpfsbd.toml"
               rm -f "$NEUT_ABS"
               echo "Extracted Neutrino into $PKG/neutrino (added config/bsd-udpfsbd.toml for UDPFS)."
+              # UDPFS Files mode launches with stock -bsd=udpfs, which needs Neutrino's own
+              # config/bsd-udpfs.toml + udpfs modules. The bundle is a MOVING target re-fetched
+              # every publish -- assert the dependency so an upstream re-layout is caught here,
+              # not as a mystery black screen on hardware.
+              if [ ! -e "$PKG/neutrino/config/bsd-udpfs.toml" ]; then
+                echo "WARN: bundled Neutrino has no config/bsd-udpfs.toml -- UDPFS 'Files' launches would fail with this bundle" >&2
+              fi
             else
               echo "WARN: could not extract a usable Neutrino (no neutrino.elf at archive root); package omits it this run" >&2
               rm -rf "$PKG/neutrino" "$NEUT_ABS"
@@ -336,8 +361,10 @@ jobs:
           REL="${OPL_VERSION:-rolling}"
           # <SHA256>: first 16 hex of the RIPTOPL.ELF SHA256 (integrity + uniqueness; full hash is
           # in SHA256SUMS-style listing inside the zip is overkill, the short tag suffices).
+          # The old SDK_VER prefix is gone from the name: it labeled the PINNED toolchain, which is
+          # now only the fallback -- the default ELF is the unpinned ps2dev:latest build.
           SHA="$(sha256sum "$PKG/APP_RIPTOPL/RIPTOPL.ELF" | cut -c1-16)"
-          ZIP="RIPTOPL-${SDK_VER}-${REL}-${SHA}.zip"
+          ZIP="RIPTOPL-${REL}-${SHA}.zip"
           (
             cd "$PKG"
             zip -r -X "../rolling/${ZIP}" APP_RIPTOPL POPSTARTER POPS >/dev/null
@@ -372,8 +399,8 @@ jobs:
       - name: Build release notes
         run: |
           set -eu
-          HAS_LATEST=no
-          [ -f "rolling/${VERSIONED_BASE}-ps2dev-latest.ELF" ] && HAS_LATEST=yes
+          HAS_OLDSDK=no
+          [ -f "rolling/${VERSIONED_BASE}-oldsdk.ELF" ] && HAS_OLDSDK=yes
           {
             if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
               printf 'RiptOPL %s -- tagged release.\n\n' "$OPL_VERSION"
@@ -385,8 +412,11 @@ jobs:
             printf 'Built: %s UTC\n' "$(date -u '+%Y-%m-%d %H:%M')"
             printf 'Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
             printf '\n## Get started\n'
-            printf 'Grab **RIPTOPL-*.zip** and extract it. Use **APP_RIPTOPL/RIPTOPL.ELF** (built with ps2dev:latest).\n'
-            printf 'If a game will not boot on your console, try the **APP_RIPTOPL-OLDSDK/** copy (pinned older SDK).\n'
+            printf 'Grab **RIPTOPL-*.zip** and extract it. Use **APP_RIPTOPL/RIPTOPL.ELF** (built with ps2dev:latest,\n'
+            printf 'the primary toolchain; its version string ends in "-latest").\n'
+            printf 'If something misbehaves on your console, try the **APP_RIPTOPL-OLDSDK/** copy (pinned older SDK,\n'
+            printf 'version ends in "-oldsdk") and REPORT WHICH of the two you ran -- a latest-only failure is an\n'
+            printf 'SDK regression, a both-fail is a RiptOPL bug. That one bit doubles the value of your report.\n'
             printf '\n## Bundled Neutrino core\n'
             printf 'Required for the per-game Neutrino launch mode. From the official repo:\n'
             printf '  https://github.com/rickgaiser/neutrino\n'
@@ -394,9 +424,10 @@ jobs:
               printf '  Included build: %s as the neutrino/ folder in the package -- RiptOPL adds only\n' "$NEUTRINO_VER"
               printf '  config/bsd-udpfsbd.toml (for UDPFS); otherwise the official build. Just copy the\n'
               printf '  whole neutrino/ folder to mc?:/ (it already holds neutrino.elf + config/ + modules/).\n'
-              printf '  Network Boot: the bundled udpfs_server.py serves UDPFS only. For the default UDPBD\n'
-              printf '  protocol use pcm720/udpfsd (https://github.com/pcm720/udpfsd, serves both) or\n'
-              printf '  israpps/udpbd-server (https://github.com/israpps/udpbd-server); or pick UDPFS.\n'
+              printf '  Network games (UDPFS, both Files and Image): run pcm720/udpfsd on the PC\n'
+              printf '  (https://github.com/pcm720/udpfsd -- a single binary, -d for Files, -b for Image).\n'
+              printf '  UDPBD is retired: old UDPBD configs auto-migrate to UDPFS (Image) and the old\n'
+              printf '  udpbd-server no longer applies -- switch the PC side to udpfsd -b.\n'
             else
               printf '  (Could not bundle Neutrino this run -- please grab the latest build from the link above.)\n'
             fi
@@ -429,12 +460,13 @@ jobs:
             if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
               printf -- '- RIPTOPL-DEBUG-*.zip: debug builds (iopcore/ingame/eesio/ppctty/DTL_T10000), both SDKs -- diagnostics\n'
             fi
-            printf -- '- %s.ELF: bare loader, ps2max/dev pinned toolchain\n' "$VERSIONED_BASE"
-            if [ "$HAS_LATEST" = yes ]; then
-              printf -- '- %s-ps2dev-latest.ELF: bare loader, ps2dev:latest toolchain\n' "$VERSIONED_BASE"
+            printf -- '- %s.ELF: bare loader, ps2dev:latest toolchain (primary)\n' "$VERSIONED_BASE"
+            if [ "$HAS_OLDSDK" = yes ]; then
+              printf -- '- %s-oldsdk.ELF: bare loader, ps2max/dev %s pinned toolchain (fallback)\n' "$VERSIONED_BASE" "$SDK_VER"
             else
-              printf -- '- (ps2dev:latest build FAILED this run -- pinned bare loader only)\n'
+              printf -- '- (pinned %s fallback build FAILED this run -- primary bare loader only)\n' "$SDK_VER"
             fi
+            printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module each toolchain consumed\n'
             printf -- '- %s-src.zip: source snapshot to rebuild this exact commit\n' "$VERSIONED_BASE"
             if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
               printf -- '- RIPTOPL-LANGS-*.zip: extra UI language files (.lng + non-Latin fonts) -- copy into your OPL folder\n'
@@ -445,7 +477,7 @@ jobs:
             printf '```\n'
             printf '\nUpdated on every push to master. This is the single rolling channel; stable builds are the v* tagged releases.\n'
           } > notes.md
-          echo "ps2dev-latest present: $HAS_LATEST"
+          echo "oldsdk fallback present: $HAS_OLDSDK"
           cat notes.md
           echo "Assets to publish:"
           ls -la rolling

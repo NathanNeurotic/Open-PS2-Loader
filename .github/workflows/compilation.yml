@@ -52,9 +52,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ps2dev/ps2dev:latest
     steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
+      # Install git BEFORE checkout: without it, actions/checkout falls back to an API
+      # tarball (no .git directory), so git describe fails and the Makefile marks the
+      # build "-dirty" -- the version string then collapses and hardware reports cannot
+      # identify the exact commit/toolchain they ran.
       - name: Install host dependencies (Alpine only)
         run: |
           if command -v apk >/dev/null 2>&1; then
@@ -84,6 +85,10 @@ jobs:
               gawk \
               diffutils
           fi
+
+      - name: git checkout
+        uses: actions/checkout@v6
+
 
       - run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -158,9 +163,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ps2dev/ps2dev:latest
     steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
+      # Install git BEFORE checkout: without it, actions/checkout falls back to an API
+      # tarball (no .git directory), so git describe fails and the Makefile marks the
+      # build "-dirty" -- the version string then collapses and hardware reports cannot
+      # identify the exact commit/toolchain they ran.
       - name: Install host dependencies (Alpine only)
         run: |
           if command -v apk >/dev/null 2>&1; then
@@ -190,6 +196,10 @@ jobs:
               gawk \
               diffutils
           fi
+
+      - name: git checkout
+        uses: actions/checkout@v6
+
 
       - run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -278,9 +288,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ps2dev/ps2dev:latest
     steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
+      # Install git BEFORE checkout: without it, actions/checkout falls back to an API
+      # tarball (no .git directory), so git describe fails and the Makefile marks the
+      # build "-dirty" -- the version string then collapses and hardware reports cannot
+      # identify the exact commit/toolchain they ran.
       - name: Install host dependencies (Alpine only)
         run: |
           if command -v apk >/dev/null 2>&1; then
@@ -310,6 +321,10 @@ jobs:
               gawk \
               diffutils
           fi
+
+      - name: git checkout
+        uses: actions/checkout@v6
+
 
       - run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -392,9 +407,10 @@ jobs:
     runs-on: ubuntu-latest
     container: ps2dev/ps2dev:latest
     steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
+      # Install git BEFORE checkout: without it, actions/checkout falls back to an API
+      # tarball (no .git directory), so git describe fails and the Makefile marks the
+      # build "-dirty" -- the version string then collapses and hardware reports cannot
+      # identify the exact commit/toolchain they ran.
       - name: Install host dependencies (Alpine only)
         run: |
           if command -v apk >/dev/null 2>&1; then
@@ -424,6 +440,10 @@ jobs:
               gawk \
               diffutils
           fi
+
+      - name: git checkout
+        uses: actions/checkout@v6
+
 
       - run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
