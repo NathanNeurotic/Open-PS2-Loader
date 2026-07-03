@@ -1402,6 +1402,23 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, &gApplyGameID);
             configGetInt(configOPL, CONFIG_OPL_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
             configGetInt(configOPL, CONFIG_OPL_MMCE_USE_ALARMS, &gMMCEUseAlarms);
+            // One-time pacing migration: builds 2504..2896 shipped -- and therefore PERSISTED into every
+            // saved config -- the aggressive 0-cycles/alarms-OFF pair that freezes slow MMCE cards at the
+            // first in-game read (alarms OFF removes the driver's only SIO2 timeout). A config carrying
+            // exactly that pair without the marker predates the 5/ON default restore: lift it to the
+            // known-good values once. A user who re-picks 0/0 in Device Settings afterwards keeps it
+            // (the marker persists with the set from here on).
+            {
+                int pacingMigrated = 0;
+                configGetInt(configOPL, CONFIG_OPL_MMCE_PACING_MIGR, &pacingMigrated);
+                if (!pacingMigrated) {
+                    if (gMMCEAckWaitCycles == 0 && gMMCEUseAlarms == 0) {
+                        gMMCEAckWaitCycles = 5;
+                        gMMCEUseAlarms = 1;
+                    }
+                    configSetInt(configOPL, CONFIG_OPL_MMCE_PACING_MIGR, 1);
+                }
+            }
             configGetInt(configOPL, CONFIG_OPL_ENABLE_USB, &gEnableUSB);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, &gEnableILK);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
@@ -1679,6 +1696,9 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, gApplyGameID);
         configSetInt(configOPL, CONFIG_OPL_MMCE_WAIT_CYCLES, gMMCEAckWaitCycles);
         configSetInt(configOPL, CONFIG_OPL_MMCE_USE_ALARMS, gMMCEUseAlarms);
+        // Always stamp the pacing-migration marker: any config saved by this build carries CURRENT,
+        // deliberate pacing values, so the load-time 0/0 lift must never touch them again.
+        configSetInt(configOPL, CONFIG_OPL_MMCE_PACING_MIGR, 1);
         configSetInt(configOPL, CONFIG_OPL_BDM_CACHE, bdmCacheSize);
         configSetInt(configOPL, CONFIG_OPL_HDD_CACHE, hddCacheSize);
         configSetInt(configOPL, CONFIG_OPL_SMB_CACHE, smbCacheSize);

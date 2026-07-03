@@ -131,6 +131,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_APPLY_GAMEID         "apply_gameid"
 #define CONFIG_OPL_MMCE_WAIT_CYCLES     "mmce_wait_cycles"
 #define CONFIG_OPL_MMCE_USE_ALARMS      "mmce_use_alarms"
+#define CONFIG_OPL_MMCE_PACING_MIGR     "mmce_pacing_migrated"
 #define CONFIG_OPL_ENABLE_USB           "enable_usb"
 #define CONFIG_OPL_ENABLE_ILINK         "enable_ilink"
 #define CONFIG_OPL_ENABLE_MX4SIO        "enable_mx4sio"
