@@ -136,6 +136,15 @@ static void bdmBuildGamePrefix(char *target, int targetLength, const char *devic
         snprintf(target, targetLength, "%s", deviceRoot);
 }
 
+// The VCD (PS1/POPSTARTER) view is anchored to the DEVICE ROOT ("mass<N>:/"), never to the gBDMPrefix
+// library folder: POPSTARTER's own BDMA driver always reads <root>/POPS/<name>.VCD, so a prefixed scan
+// ("mass0:<prefix>/POPS") would list VCDs that POPSTARTER can never boot -- they'd all drop to OSDSYS.
+// gBDMPrefix stays a PS2-game-library concept only.
+static void bdmBuildVcdPrefix(char *target, int targetLength, int massSlot)
+{
+    snprintf(target, targetLength, "mass%d:/", massSlot);
+}
+
 static int bdmReadDeviceIdentity(const char *path, char *driverName, int driverNameLength, int *deviceIndex)
 {
     int dir, result;
@@ -538,9 +547,11 @@ static int bdmUpdateGameList(item_list_t *itemList)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
-    if (vcdViewActive(itemList->mode))
-        pDeviceData->bdmGameCount = vcdFillGameList(pDeviceData->bdmPrefix, &pDeviceData->bdmGames);
-    else
+    if (vcdViewActive(itemList->mode)) {
+        char vcdPrefix[BDM_DEVICE_ROOT_MAX + 2];
+        bdmBuildVcdPrefix(vcdPrefix, sizeof(vcdPrefix), itemList->mode); // device root, NOT gBDMPrefix
+        pDeviceData->bdmGameCount = vcdFillGameList(vcdPrefix, &pDeviceData->bdmGames);
+    } else
         sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
     return pDeviceData->bdmGameCount;
 }
@@ -619,7 +630,7 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
         guiMsgBox(_l(_STR_VCD_NOT_ON_NET), 0, NULL);
         return;
     }
-    snprintf(vcdPrefix, sizeof(vcdPrefix), "%s", pDeviceData->bdmPrefix);
+    bdmBuildVcdPrefix(vcdPrefix, sizeof(vcdPrefix), itemList->mode); // device root, NOT gBDMPrefix -- POPSTARTER reads <root>/POPS only
     if (!vcdResolvePopstarter(vcdPrefix, vcdElf, sizeof(vcdElf))) {
         guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
         return;
@@ -631,15 +642,20 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     // POPSTARTER reloads its block-device driver from the MC after its OWN IOP reset, so equip the
     // device-matching BDMAssault variant first -- otherwise it can't mount this exFAT drive and drops to
     // OSDSYS (the reported MX4SIO failure). iLink/UDPBD/unknown have no BDMA variant and are left as-is.
+    // An equip ABORT (0) means a different family's working pair is on the card and couldn't be
+    // replaced; the user was shown the diagnostic, and launching would only end in OSDSYS anyway.
     switch (pDeviceData->bdmDeviceType) {
         case BDM_TYPE_USB:
-            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_USBEXFAT);
+            if (!vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_USBEXFAT))
+                return;
             break;
         case BDM_TYPE_SDC:
-            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_MX4SIO, VCD_BDMA_MX4SIO);
+            if (!vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_MX4SIO, VCD_BDMA_MX4SIO))
+                return;
             break;
         case BDM_TYPE_ATA:
-            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_HDD, VCD_BDMA_ATA);
+            if (!vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_HDD, VCD_BDMA_ATA))
+                return;
             break;
         default:
             break;
@@ -1021,9 +1037,13 @@ static int bdmGetImage(item_list_t *itemList, char *folder, int isRelative, char
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
     // VCD (PS1) covers: fall back disc-id -> filename -> POPSLoader's next-to-VCD <dev>/POPS/<name>.png
-    // so a cover a POPSLoader user already has is found. Local devices use '/'.
-    if (isRelative && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO")))
-        return vcdLoadArt(pDeviceData->bdmPrefix, '/', folder, value, suffix, "POPS", resultTex);
+    // so a cover a POPSLoader user already has is found. Local devices use '/'. Root-anchored like the
+    // VCD scan itself (the POPS layout lives at the device root, outside any gBDMPrefix library folder).
+    if (isRelative && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO"))) {
+        char vcdPrefix[BDM_DEVICE_ROOT_MAX + 2];
+        bdmBuildVcdPrefix(vcdPrefix, sizeof(vcdPrefix), itemList->mode);
+        return vcdLoadArt(vcdPrefix, '/', folder, value, suffix, "POPS", resultTex);
+    }
 
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s/%s_%s", pDeviceData->bdmPrefix, folder, value, suffix);

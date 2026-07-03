@@ -1030,8 +1030,16 @@ static void hddShutdown(item_list_t *itemList)
             hddSetIdleImmediate();
         }
 
-        // Only shut down dev9 from here, if it was initialized from here before.
-        sysShutdownDev9();
+        // Only shut down dev9 from here, if it was initialized from here before -- and only on a
+        // TERMINAL teardown (exit/poweroff). On the launch path this shutdown runs for every
+        // non-selected page, and powering DEV9 off here kills the ATA bus BEFORE bdmLaunchVcd's
+        // post-deinit POPSTARTER.ELF read from the ATA-backed massN: mount -- the elf-loader then
+        // returns into deinit'd OPL: the 4236edf6-class black-screen freeze (PCSX2 masks it; its
+        // emulated DEV9 power-off is inert). ee_core/POPSTARTER reset the IOP right after, so the
+        // launch path needs no power-off. Note the refcount asymmetry this also softens: N
+        // hddLoadModules calls take ONE dev9 reference, but every hddShutdown used to drop it.
+        if (gDeinitTerminal)
+            sysShutdownDev9();
     }
 }
 

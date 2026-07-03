@@ -240,6 +240,9 @@ enum { NEUTRINO_DEV_AUTO = 0,     // game device, then mc0/mc1 (legacy behaviour
 extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
 extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
 extern char gBootDir[256];        // boot directory (cwd) OPL launched from, e.g. "mass0:/APPS"; "" if undeterminable
+extern int gDeinitTerminal;       // 1 while deinit() runs for exit/poweroff, 0 for a game/app LAUNCH teardown.
+                                  // Launch teardown must NOT power shared buses down (dev9: the post-deinit
+                                  // POPSTARTER.ELF read comes off the ATA-backed massN: mount).
 // POPSTARTER.ELF Device picker: where PS1 VCD launches load POPS/POPSTARTER.ELF from. Default tries the
 // boot device (cwd) then the VCD's own device; the 6 TYPEs force a device; Custom uses gPopstarterPath.
 enum { POPS_DEV_DEFAULT = 0,    // cwd (gBootDir) /POPS/, then the VCD's own device (back-compat fallback)

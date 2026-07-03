@@ -2266,8 +2266,16 @@ static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected)
 // before proceeding anyway; bounded because the IOP is reset/powered off right after.
 #define EXIT_IO_DRAIN_TICKS 1000
 
+// 1 while deinit() tears down for exit/poweroff, 0 for a game/app launch. Consumed by device shutdowns
+// that must behave differently on the launch path (hddShutdown keeps DEV9 powered so the post-deinit
+// POPSTARTER.ELF read from the ATA-backed massN: mount still works; ee_core/POPSTARTER reset the IOP
+// themselves, so skipping the power-off on launches leaks nothing).
+int gDeinitTerminal = 0;
+
 void deinit(int exception, int modeSelected)
 {
+    gDeinitTerminal = (modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
+
     /* Cut launch/exit latency by stopping queued art I/O before globally
      * blocking the I/O worker. This avoids waiting for stale cover requests
      * that are no longer needed once we are deinitializing. */
@@ -2280,7 +2288,7 @@ void deinit(int exception, int modeSelected)
     // (LoadExecPS2) or power the machine off immediately afterward, so a request
     // stuck on a removed/slow device must not hang teardown forever. The launch
     // path (a specific mode) keeps the unbounded wait so its IOP state stays clean.
-    int terminalTeardown = (modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
+    int terminalTeardown = gDeinitTerminal;
     if (terminalTeardown)
         ioBlockOpsTimed(1, EXIT_IO_DRAIN_TICKS);
     else
