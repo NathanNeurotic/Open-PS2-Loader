@@ -3,10 +3,11 @@
 #   * the EXTRA_FEATURES x PADEMU x DUALSENSE variant matrix -> rolling/variants/
 #   * the debug configs                          -> rolling/debug/
 #
-# Called by BOTH SDK build jobs in rolling-release.yml. $1 is the SDK suffix appended to each
-# filename: "" for the ps2dev:latest "standard" build, "-OLDSDK" for the pinned build -- so the
-# VARIANTS and DEBUG zips always carry both SDK flavours of every build. $2 is the LOCALVERSION
-# toolchain brand ("latest"/"oldsdk") embedded in each ELF's version string: filenames get renamed
+# Called by EACH SDK build job in rolling-release.yml. $1 is the SDK suffix appended to each
+# filename: "" for the ps2dev:latest "standard" build, "-WOPLSDK" for the wOPL-pinned-container
+# build, "-OLDSDK" for the pinned build -- so the VARIANTS and DEBUG zips carry every SDK flavour
+# of every build. $2 is the LOCALVERSION
+# toolchain brand ("latest"/"woplsdk"/"oldsdk") embedded in each ELF's version string: filenames get renamed
 # and moved to cards, and the debug/variant builds are exactly the ones that show up in bug
 # reports -- the on-screen version must self-identify the toolchain like the main builds do.
 #
