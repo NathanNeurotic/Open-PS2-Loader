@@ -148,6 +148,14 @@ jobs:
         id: ver
         run: echo "version=$(make oplversion)" >> "$GITHUB_OUTPUT"
 
+      - name: Install coherent MMCE driver (latest-only)
+        # This container's SDK ships mmceman pinned to ps2-mmce v2.1.1, which predates the
+        # 2026-06-14 sio2man-compat fix and is desynced from the container's post-refactor
+        # sio2man -- freezing MMCE both in-menu (cover-art reads) and in-game. Rebuild the trio
+        # from ps2-mmce with the fix and install over the SDK prebuilts BEFORE the OPL build
+        # embeds them. See docs/RECOVERY-2026-07-03.md and the script header.
+        run: sh ./.github/scripts/install_coherent_mmce.sh
+
       - name: Build (make clean release)
         # LOCALVERSION brands the in-ELF version string ("-latest") so hardware reports
         # self-identify which toolchain's binary produced them (Makefile appends it).
