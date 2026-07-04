@@ -917,5 +917,3 @@ gui_strings:
   string: UDPFS Access
 - label: MMCE_GAMEID_NEUTRINO_SKIP
   string: MMCE GameID not applied -- neutrino.elf is on this card (switching it would unload Neutrino).
-- label: NET_UDPBD_MIGRATED
-  string: UDPBD is retired -- this config now uses UDPFS (Image). Switch the PC server to 'udpfsd -b'.

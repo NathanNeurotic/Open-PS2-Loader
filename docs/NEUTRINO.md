@@ -102,28 +102,30 @@ For the full list of flags Neutrino accepts, see the
 ## 4. Network boot — the Network Protocol selector
 
 RiptOPL streams games from a PC over the LAN, chosen with a single **Device Settings → Network
-Protocol** selector with just **three** choices — **Off / SMB / UDPFS**. **UDPFS** is the one modern
-network-boot protocol (Rick Gaiser's **UDPRDMA** transport); it appears in OPL as its own games list —
-with covers and per-game settings — just like a local drive, and boots via the external Neutrino core.
-**SMB** is the exception: it's a mounted SMBv1 file share served by OPL's **own** core (no Neutrino),
-and it keeps its own address / port / share / credentials fields.
+Protocol** selector with four choices — **Off / SMB / UDPFS / UDPBD**. **UDPFS** is the modern
+network-boot protocol (Rick Gaiser's **UDPRDMA** transport); **UDPBD** is the older SUDPBDv2 protocol,
+kept for users still running the `udpbd-server`. Both appear in OPL as their own games list — with
+covers and per-game settings — and boot via the external Neutrino core. **SMB** is the exception: it's
+a mounted SMBv1 file share served by OPL's **own** core (no Neutrino), and it keeps its own address /
+port / share / credentials fields.
 
 | Choice | Wire protocol | On the PS2 | Core | PC server |
 |---|---|---|---|---|
 | **Off** | — | no network device (default) | — | — |
 | **SMB** | SMBv1 | a mounted file share | OPL's *own* core (not Neutrino) | Samba / `smbserver_opl.py` |
 | **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Neutrino only | [`udpfsd`](https://github.com/pcm720/udpfsd) (not bundled — see Requirements) |
+| **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino only | [`udpbd-server`](https://github.com/israpps/udpbd-server) |
 
 Because the PS2 has a **single** network adapter, only ONE of these is active per session — the
 selector is exclusive *by construction* (the old separate ETH start-mode + "Network Boot" toggle +
 "Net Boot Protocol" picker, and their live interlock, are all gone). Local devices (USB / internal
 HDD / MMCE) are independent and browse alongside whichever network protocol you pick.
 
-> **UDPBD is retired.** The old SUDPBDv2 `udpbd.irx` protocol is gone from the UI — Rick's `udpfs_bd`
-> is its intended successor (the commented `#file = "udpfs_bd.irx"` line in stock `bsd-udpbd.toml`).
-> Any existing config that resolved to UDPBD **migrates to UDPFS Access = Image on load** (OPL shows a
-> one-time boot notice when this fires); those users just switch their PC server from `udpbd-server` to
-> `udpfsd -b`. There is no longer any standalone UDPBD option anywhere.
+> **UDPBD vs UDPFS — pick by your PC server.** They are **wire-incompatible**: UDPBD speaks SUDPBDv2
+> (port `0xBDBD`, `udpbd-server`), UDPFS speaks UDPRDMA (port `0xF5F6`, `udpfsd`). If you already run
+> the old `udpbd-server`, select **UDPBD** and nothing else changes. If you're setting up fresh, prefer
+> **UDPFS** (it also serves loose ISOs and transparent `.zso`/`.chd` — see below). A config saved as
+> UDPBD stays UDPBD: RiptOPL never silently migrates you off it.
 
 ### UDPFS Access — Files vs Image
 

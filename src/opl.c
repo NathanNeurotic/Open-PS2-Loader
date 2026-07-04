@@ -181,9 +181,8 @@ int gPadEmuSource;
 int gFadeDelay;
 int toggleSfx;
 int showCfgPopup;
-// Boot toasts (rendered by guiShowPopupNotifications alongside showCfgPopup):
-int showNetMigrationPopup; // retired UDPBD was folded to UDPFSBD -- the PC server must change (udpfsd -b)
-int showNetDhcpPopup;      // a UDP transport is selected but IP Type is DHCP -- ministack needs a static IP
+// Boot toast (rendered by guiShowNotifications alongside showCfgPopup):
+int showNetDhcpPopup; // a UDP transport is selected but IP Type is DHCP -- ministack needs a static IP
 #ifdef PADEMU
 int gEnablePadEmu;
 int gPadEmuSettings;
@@ -1441,17 +1440,9 @@ static void _loadConfig()
                 else
                     gNetworkProtocol = NET_PROTO_OFF;
             }
-            // UDPBD (SUDPBDv2) is retired from the UI -- its modern successor is UDPFSBD (block over the
-            // UDPRDMA/UDPFS transport, Rick's intended udpfs_bd replacement for udpbd.irx). Fold any config
-            // that resolves to UDPBD (a new-key value 4, or the legacy-derived case above) onto UDPFSBD so
-            // the obsolete option disappears cleanly. The protocols are WIRE-INCOMPATIBLE (SUDPBDv2 on
-            // 0xBDBD vs UDPRDMA on 0xF5F6): a working udpbd-server setup goes silent after this fold, so
-            // tell the user ONCE what changed and which server to run -- otherwise their games tab just
-            // vanishes with no explanation.
-            if (gNetworkProtocol == NET_PROTO_UDPBD) {
-                gNetworkProtocol = NET_PROTO_UDPFSBD;
-                showNetMigrationPopup = 1;
-            }
+            // UDPBD (SUDPBDv2) is a first-class protocol, NOT folded away: it is wire-incompatible with
+            // UDPRDMA (SUDPBDv2 on 0xBDBD vs UDPFS on 0xF5F6), so users still on the older udpbd-server
+            // must be able to keep it. A saved or legacy-derived NET_PROTO_UDPBD is preserved as-is.
             // Re-derive the legacy shadows from the authoritative selector so downstream consumers
             // (ethsupport start path, system.c getDeviceName, bdmsupport) stay consistent no matter which
             // config format was loaded. SMB keeps its prior Auto/Manual start-mode; a fresh SMB pick that
@@ -1545,7 +1536,8 @@ static void _loadConfig()
     // with an empty games page and no error. The Device-Settings dialog warns only at the moment of
     // switching protocols; surface it as a boot toast too so an already-configured user sees it.
     showNetDhcpPopup = (ps2_ip_use_dhcp &&
-                        (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD));
+                        (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
+                         gNetworkProtocol == NET_PROTO_UDPBD));
 
     applyConfig(themeID, langID, 0);
 

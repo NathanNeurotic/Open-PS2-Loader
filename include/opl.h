@@ -149,17 +149,17 @@ extern int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, 
 // {gETHStartMode, gEnableUDPBD, gNetBootProtocol} trio + interlock. Local devices (USB/HDD/MMCE) are
 // independent. gETHStartMode / gEnableUDPBD / gNetBootProtocol are kept as DERIVED shadows so
 // downstream consumers can migrate incrementally.
-// USER-FACING picker is only Off / SMB / UDPFS -- UDPFS is ONE menu entry with a "UDPFS Access"
+// USER-FACING picker is Off / SMB / UDPFS / UDPBD. UDPFS is ONE menu entry with a "UDPFS Access"
 // sub-mode (Files -> NET_PROTO_UDPFS filesystem / Image -> NET_PROTO_UDPFSBD block), since one udpfs
-// protocol serves both (only one IOP backend can bind port 0xF5F6 per boot). NET_PROTO_UDPBD is
-// RETIRED (migrated to UDPFSBD on load) -- Rick's udpfs_bd is the intended successor to udpbd.irx --
-// but the value is kept for the migration check. Migration uses the named constants, not their ordinal.
+// protocol serves both (only one IOP backend can bind port 0xF5F6 per boot). UDPBD (SUDPBDv2) is a
+// SEPARATE, wire-incompatible protocol (its own server, port 0xBDBD) and stays first-class so users on
+// the older udpbd-server are never stranded -- it is neither hidden nor auto-migrated.
 enum NETWORK_PROTOCOL {
     NET_PROTO_OFF = 0,     // no NIC device (SMAP idle) -- fork default
     NET_PROTO_SMB = 1,     // SMB/ETH stack (== legacy gETHStartMode > DISABLED)
     NET_PROTO_UDPFS = 2,   // udpfs FILESYSTEM (udpfs_ioman "udpfs:"); loose ISOs -- picker "UDPFS", access=Files
     NET_PROTO_UDPFSBD = 3, // udpfs BLOCK device (udpfs_bd -> massN:, UDPRDMA) -- picker "UDPFS", access=Image
-    NET_PROTO_UDPBD = 4,   // RETIRED (smap_udpbd/SUDPBDv2) -- migrated to UDPFSBD on load; kept only for that check
+    NET_PROTO_UDPBD = 4,   // smap_udpbd / SUDPBDv2 monolith -- picker "UDPBD"; server = udpbd-server (0xBDBD)
 };
 extern int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative; the three above are derived shadows
 
@@ -205,8 +205,7 @@ extern int gOSDLanguageEnable;
 extern int gOSDLanguageSource;
 
 extern int showCfgPopup;
-extern int showNetMigrationPopup; // boot toast: UDPBD config folded to UDPFSBD (PC server must change)
-extern int showNetDhcpPopup;      // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
+extern int showNetDhcpPopup; // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
 
 #ifdef IGS
 #define IGS_VERSION "0.1"
