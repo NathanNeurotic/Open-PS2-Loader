@@ -281,7 +281,7 @@ static void guiShowNotifications(void)
     int y = 10;
     int yadd = 35;
 
-    if (showPartPopup || showThmPopup || showLngPopup || showCfgPopup) {
+    if (showPartPopup || showThmPopup || showLngPopup || showCfgPopup || showNetDhcpPopup) {
         if (!popupTimer) {
             popupTimer = clock() + 5000 * (CLOCKS_PER_SEC / 1000);
             sfxPlay(SFX_MESSAGE);
@@ -320,12 +320,19 @@ static void guiShowNotifications(void)
                 *(col_pos + 1) = '\0';
 
             guiRenderNotifications(notification, y);
+            y += yadd;
         }
+
+        // One-time network notice set at config load: a UDP transport left on DHCP (the ministack has
+        // no DHCP client; it binds the static PS2 IP fields as-is, so an unset static IP fails silently).
+        if (showNetDhcpPopup)
+            guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y);
 
         if (clock() >= popupTimer) {
             guiResetNotifications();
             showPartPopup = 0;
             showCfgPopup = 0;
+            showNetDhcpPopup = 0;
         }
     }
 }
@@ -802,19 +809,19 @@ reselect_video_mode:
 static int netConfigUpdater(int modified)
 {
     int showAdvancedOptions, isNetBIOS, isDHCPEnabled, i;
-    // The SMB address fields exist only for the SMB protocol; keep them hidden for any other selection
-    // so a live NetBIOS/IP toggle here cannot resurrect the block guiShowNetConfig hid.
-    int smbSel = (gNetworkProtocol == NET_PROTO_SMB);
 
     if (modified) {
         diaGetInt(diaNetConfig, NETCFG_SHOW_ADVANCED_OPTS, &showAdvancedOptions);
 
         diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &isDHCPEnabled);
         diaGetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, &isNetBIOS);
-        diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, smbSel && isNetBIOS);
+        // The SMB-server block is always shown (it is its own configuration, not tied to the active
+        // protocol -- hiding it made users think fields were removed). The NetBIOS-vs-IP toggle still
+        // picks which address widget shows.
+        diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, isNetBIOS);
 
         for (i = 0; i < 4; i++) {
-            diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_0 + i, smbSel && !isNetBIOS);
+            diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_0 + i, !isNetBIOS);
 
             diaSetEnabled(diaNetConfig, NETCFG_PS2_IP_ADDR_0 + i, !isDHCPEnabled);
             diaSetEnabled(diaNetConfig, NETCFG_PS2_NETMASK_0 + i, !isDHCPEnabled);
@@ -823,7 +830,7 @@ static int netConfigUpdater(int modified)
         }
 
         for (i = 0; i < 3; i++)
-            diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_DOT_0 + i, smbSel && !isNetBIOS);
+            diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_DOT_0 + i, !isNetBIOS);
 
         diaSetEnabled(diaNetConfig, NETCFG_SHARE_PORT, showAdvancedOptions);
         diaSetEnabled(diaNetConfig, NETCFG_ETHOPMODE, showAdvancedOptions);
@@ -849,26 +856,27 @@ void guiShowNetConfig(void)
     diaSetEnabled(diaNetConfig, NETCFG_ETHOPMODE, 1);
     diaSetEnabled(diaNetConfig, NETCFG_SHARE_PORT, 1);
 
-    // The SMB-server block (address/port/share/user/password) applies ONLY to the SMB protocol. Hide it
-    // whole -- labels and fields -- for any other selection. The PS2 IP block + ETH op-mode above stay
-    // visible because the UDP transports (UDPFS/UDPFSBD/UDPBD) still need the static PS2 IP + link mode.
-    int smbSel = (gNetworkProtocol == NET_PROTO_SMB);
-    diaSetVisible(diaNetConfig, NETCFG_LBL_SMB_SERVER, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_ADDR_TYPE, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_ADDRESS, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_PORT, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_SHARE_PORT, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_NAME, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_SHARE_NAME, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_USER, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_SHARE_USERNAME, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_PASSWORD, smbSel);
-    diaSetVisible(diaNetConfig, NETCFG_SHARE_PASSWORD, smbSel);
+    // The SMB-server block (address/port/share/user/password) is ALWAYS shown. It is its own
+    // configuration, independent of the currently-selected network protocol -- gating it on the
+    // protocol made users think the fields had been deleted (and created a chicken-and-egg: you had to
+    // select SMB elsewhere before you could even see where to configure it). The PS2 IP block + ETH
+    // op-mode above are likewise always shown; the UDP transports need the static PS2 IP + link mode.
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SMB_SERVER, 1);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_ADDR_TYPE, 1);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, 1);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_ADDRESS, 1);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_PORT, 1);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_PORT, 1);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_NAME, 1);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_NAME, 1);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_USER, 1);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_USERNAME, 1);
+    diaSetVisible(diaNetConfig, NETCFG_LBL_SHARE_PASSWORD, 1);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_PASSWORD, 1);
 
     diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ps2_ip_use_dhcp);
     diaSetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, gPCShareAddressIsNetBIOS);
-    diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, smbSel && gPCShareAddressIsNetBIOS);
+    diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, gPCShareAddressIsNetBIOS);
     diaSetInt(diaNetConfig, NETCFG_SHARE_NB_ADDR, gPCShareAddressIsNetBIOS);
     diaSetString(diaNetConfig, NETCFG_SHARE_NB_ADDR, gPCShareNBAddress);
 
@@ -878,7 +886,7 @@ void guiShowNetConfig(void)
         diaSetEnabled(diaNetConfig, NETCFG_PS2_GATEWAY_0 + i, !ps2_ip_use_dhcp);
         diaSetEnabled(diaNetConfig, NETCFG_PS2_DNS_0 + i, !ps2_ip_use_dhcp);
 
-        diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_0 + i, smbSel && !gPCShareAddressIsNetBIOS);
+        diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_0 + i, !gPCShareAddressIsNetBIOS);
         diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_0 + i, ps2_ip[i]);
         diaSetInt(diaNetConfig, NETCFG_PS2_NETMASK_0 + i, ps2_netmask[i]);
         diaSetInt(diaNetConfig, NETCFG_PS2_GATEWAY_0 + i, ps2_gateway[i]);
@@ -887,7 +895,7 @@ void guiShowNetConfig(void)
     }
 
     for (i = 0; i < 3; ++i)
-        diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_DOT_0 + i, smbSel && !gPCShareAddressIsNetBIOS);
+        diaSetVisible(diaNetConfig, NETCFG_SHARE_IP_ADDR_DOT_0 + i, !gPCShareAddressIsNetBIOS);
 
     diaSetInt(diaNetConfig, NETCFG_SHARE_PORT, gPCPort);
     diaSetString(diaNetConfig, NETCFG_SHARE_NAME, gPCShareName);
@@ -983,8 +991,8 @@ void guiShowDeviceConfig(void)
     const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
     const char *deviceOnOff[] = {"OFF", "ON", NULL};
     const char *deviceIGRSlots[] = {"NONE", "0", "1", "BOTH", NULL};
-    const char *netProtocols[] = {"Off", "SMB", "UDPFS", NULL}; // one modern UDP option; Files/Image chosen below
-    const char *udpfsModes[] = {"Files", "Image", NULL};        // Files=udpfs_ioman filesystem, Image=udpfs_bd block
+    const char *netProtocols[] = {"Off", "SMB", "UDPFS", "UDPBD", NULL}; // UDPBD kept for users on the older SUDPBDv2 server
+    const char *udpfsModes[] = {"Files", "Image", NULL};                 // Files=udpfs_ioman filesystem, Image=udpfs_bd block
 
     // Devices & modes
     diaSetEnum(diaDeviceConfig, CFG_DEFDEVICE, deviceNames);
@@ -1007,12 +1015,15 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, gEnableBdmHDD);
     diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, !gHDDStartMode);
     diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !gEnableBdmHDD);
-    // Unified network selector: ONE user-facing "UDPFS" (Off/SMB/UDPFS), with a Files/Image sub-mode.
-    // gNetworkProtocol keeps distinct internal values (UDPFS=filesystem/udpfs_ioman, UDPFSBD=block/udpfs_bd)
-    // as the backend discriminators; the picker maps Off/SMB/UDPFS onto them and the sub-mode picks the
-    // UDPFS backend. UDPBD is retired (migrated to UDPFSBD on load), so it never appears here.
-    int netPickerVal = (gNetworkProtocol == NET_PROTO_OFF) ? 0 : (gNetworkProtocol == NET_PROTO_SMB) ? 1 :
-                                                                                                       2; // UDPFS/UDPFSBD -> "UDPFS"
+    // Unified network selector: Off / SMB / UDPFS / UDPBD. gNetworkProtocol keeps distinct internal
+    // values (UDPFS=filesystem/udpfs_ioman, UDPFSBD=block/udpfs_bd, UDPBD=smap_udpbd/SUDPBDv2) as the
+    // backend discriminators; the picker maps them onto Off/SMB/UDPFS/UDPBD and the Files/Image sub-mode
+    // picks the UDPFS backend. UDPBD is retained as a first-class option: the SUDPBDv2 wire protocol is
+    // NOT interchangeable with UDPRDMA, so users on the older udpbd-server must keep selecting it.
+    int netPickerVal = (gNetworkProtocol == NET_PROTO_OFF)   ? 0 :
+                       (gNetworkProtocol == NET_PROTO_SMB)   ? 1 :
+                       (gNetworkProtocol == NET_PROTO_UDPBD) ? 3 :
+                                                               2; // UDPFS/UDPFSBD -> "UDPFS"
     // Files is the default for everything EXCEPT an actual block (UDPFSBD) config, so a user switching
     // Off/SMB -> UDPFS lands on the loose-ISO filesystem (the intended default), not the disk-image
     // backend. guiDeviceUpdater only reveals this control, never re-seeds it, so the seed must be right.
@@ -1069,9 +1080,11 @@ void guiShowDeviceConfig(void)
         int netPickerVal = 0, udpfsModeVal = 0;
         diaGetInt(diaDeviceConfig, CFG_NETPROTOCOL, &netPickerVal);
         diaGetInt(diaDeviceConfig, CFG_UDPFSMODE, &udpfsModeVal);
-        gNetworkProtocol = (netPickerVal == 0) ? NET_PROTO_OFF : (netPickerVal == 1) ? NET_PROTO_SMB :
-                                                             (udpfsModeVal == 1)     ? NET_PROTO_UDPFSBD :
-                                                                                       NET_PROTO_UDPFS;
+        gNetworkProtocol = (netPickerVal == 0) ? NET_PROTO_OFF :
+                           (netPickerVal == 1) ? NET_PROTO_SMB :
+                           (netPickerVal == 3) ? NET_PROTO_UDPBD :
+                           (udpfsModeVal == 1) ? NET_PROTO_UDPFSBD :
+                                                 NET_PROTO_UDPFS;
         gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
         gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
         if (gNetworkProtocol == NET_PROTO_SMB) {
@@ -2062,7 +2075,9 @@ void guiMainLoop(void)
         // Render overlaying gui thingies :)
         guiDrawOverlays();
 
-        if (gEnableNotifications)
+        // The DHCP notice is a FUNCTIONAL one-time warning (a UDP transport bound to a stale DHCP-era
+        // IP just silently finds nothing) -- it bypasses the cosmetic-notifications toggle.
+        if (gEnableNotifications || showNetDhcpPopup)
             guiShowNotifications();
 
         // handle deferred operations

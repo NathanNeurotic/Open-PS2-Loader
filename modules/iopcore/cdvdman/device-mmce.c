@@ -9,7 +9,10 @@
 
 extern struct cdvdman_settings_mmce cdvdman_settings;
 
-uint32_t (*fp_mmcedrv_get_size)(int fd);
+// The driver implements s64 mmcedrv_get_size(int fd) and returns -1 on failure. Declaring the low
+// 32 bits only (as this once did with uint32_t) turns that -1 into 0xFFFFFFFF, which passes a "> 0"
+// validity check -- an ERROR then reads as a huge valid ISO. Keep the full 64-bit signed return.
+int64_t (*fp_mmcedrv_get_size)(int fd);
 int (*fp_mmcedrv_read_sector)(int type, unsigned int sector_start, unsigned int sector_count, void *buffer);
 void (*fp_mmcedrv_config_set)(int setting, int value);
 int (*fp_mmcedrv_read)(int fd, int size, void *ptr);
@@ -17,6 +20,9 @@ int (*fp_mmcedrv_write)(int fd, int size, void *ptr);
 int (*fp_mmcedrv_lseek)(int fd, int offset, int whence);
 
 static int mmce_io_sema;
+// 0 until DeviceFSInit confirmed the device answers for our iso_fd. A failed/timed-out init leaves it
+// 0 so reads fail fast with SCECdErREAD instead of silently wedging the IOP right after the PS2 logo.
+static int mmce_dev_ready;
 
 void DeviceInit(void)
 {
@@ -45,7 +51,7 @@ int DeviceReady(void)
 
 void DeviceFSInit(void)
 {
-    uint64_t iso_size;
+    int64_t iso_size = 0;
 
     // get modload export table
     modinfo_t info;
@@ -70,14 +76,22 @@ void DeviceFSInit(void)
 
     DPRINTF("Waiting for device...\n");
 
-    while (1) {
+    // This runs on the first filesystem access after EVERY IOP reboot -- including the game's own
+    // IOPRP reboot right after the PS2 logo. BOUND the wait: a card that loses our iso_fd across the
+    // reboot, or a wedged transport, must surface as read errors (diagnosable, often a game error
+    // screen) rather than an unbounded silent freeze the user can't tell apart from other hangs.
+    for (int tries = 0; tries < 100; tries++) { // 10 s of 100 ms polls; a healthy card answers in ms
         iso_size = fp_mmcedrv_get_size(cdvdman_settings.iso_fd);
-        if (iso_size > 0)
-            break;
+        if (iso_size > 0) {
+            mmce_dev_ready = 1;
+            DPRINTF("Waiting for device...done! connected to %llu byte iso\n", (long long int)iso_size);
+            return;
+        }
         DelayThread(100 * 1000); // 100ms
     }
 
-    DPRINTF("Waiting for device...done! connected to %llu byte iso\n", (long long int)iso_size);
+    mmce_dev_ready = 0;
+    DPRINTF("Waiting for device...TIMED OUT (last get_size %lld) -- reads will fail fast\n", (long long int)iso_size);
 }
 
 void DeviceLock(void)
@@ -104,6 +118,16 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
 
     DPRINTF("%s(%u, 0x%p, %u)\n", __func__, (unsigned int)lsn, buffer, sectors);
 
+    if (!mmce_dev_ready) {
+        // Init never saw the device. One cheap re-probe per read: a card that came back late (slow SD
+        // re-enumeration across the IOP reboot) recovers here; otherwise fail fast instead of driving
+        // a dead transport.
+        if (fp_mmcedrv_get_size(cdvdman_settings.iso_fd) > 0)
+            mmce_dev_ready = 1;
+        else
+            return SCECdErREAD;
+    }
+
     WaitSema(mmce_io_sema);
     do {
         res = fp_mmcedrv_read_sector(cdvdman_settings.iso_fd, (u32)lsn, sectors, buffer);
@@ -111,8 +135,10 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     } while (res != sectors && retries < 3);
     SignalSema(mmce_io_sema);
 
-    if (retries == 3) {
-        DPRINTF("%s: Failed to read after 3 retires, sector: %u, count: %u, buffer: 0x%p\n", __func__, lsn, sectors, buffer);
+    // Judge the LAST attempt, not the retry counter: a read that succeeds on the 3rd try also leaves
+    // retries == 3, and the old counter check misreported that success as SCECdErREAD.
+    if (res != sectors) {
+        DPRINTF("%s: Failed to read after %d retries, sector: %u, count: %u, buffer: 0x%p\n", __func__, retries, (unsigned int)lsn, sectors, buffer);
         rv = SCECdErREAD;
     }
 

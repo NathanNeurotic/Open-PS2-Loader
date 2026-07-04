@@ -58,6 +58,13 @@ Then in OPL → **Settings → Network**:
 
 Save, and your network games should populate from the share.
 
+> **Upgrading from an older RiptOPL build?** The default port has moved over time
+> (upstream `445` → `1000` → `1024` → **`1111`** today), and a *saved* OPL config keeps
+> whatever port it was saved with — defaults never retro-apply. If SMB stopped connecting
+> right after an update, the fix is one field: set **OPL → Network Config → Port** to match
+> what this server prints at startup (or start the server with `--port <your saved value>`).
+> Each side looks "correctly configured at its own default" — they just have to be the *same*.
+
 ## Options
 
 ```

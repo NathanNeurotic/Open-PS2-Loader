@@ -181,6 +181,8 @@ int gPadEmuSource;
 int gFadeDelay;
 int toggleSfx;
 int showCfgPopup;
+// Boot toast (rendered by guiShowNotifications alongside showCfgPopup):
+int showNetDhcpPopup; // a UDP transport is selected but IP Type is DHCP -- ministack needs a static IP
 #ifdef PADEMU
 int gEnablePadEmu;
 int gPadEmuSettings;
@@ -977,25 +979,45 @@ static void writeConfigPathRedirect(const char *path)
 // discovery as a last-ditch sanity so OPL is never left with no config at all.
 // Non-static: vcdResolvePopstarter() reads it for the POPSTARTER "Default = cwd" resolution tier.
 char gBootDir[256];
+// The booted ELF's own filename (argv[0]'s basename). Not a path -- resolveBootDirToMass() probes for
+// it to verify WHICH mounted massN: slot is the boot device (launcher slot numbering need not match
+// OPL's). Empty when the boot dir came from getcwd() or argv[0] had no filename part.
+static char gBootElfName[64];
+// BDM_TYPE_* of the resolved boot device, BDM_TYPE_UNKNOWN for non-BDM boots. Set by
+// resolveBootDirToMass(); consumed by the _loadConfig flag reconcile and the _saveConfig re-resolve.
+static int gBootDirBdmType = BDM_TYPE_UNKNOWN;
 
 static void setBootDir(const char *bootPath)
 {
     gBootDir[0] = '\0';
+    gBootElfName[0] = '\0';
     if (bootPath == NULL || bootPath[0] == '\0')
         return;
-    const char *slash = strrchr(bootPath, '/');
+
+    // Launchers are not consistent about separators (wLaunchELF variants can hand backslash paths);
+    // normalize to '/' before splitting so the folder/basename split can't misfire.
+    char path[sizeof(gBootDir)];
+    snprintf(path, sizeof(path), "%s", bootPath);
+    for (char *p = path; *p != '\0'; p++) {
+        if (*p == '\\')
+            *p = '/';
+    }
+
+    const char *slash = strrchr(path, '/');
     if (slash != NULL) {
-        size_t len = (size_t)(slash - bootPath); // keep the folder, drop the trailing '/' + filename
+        size_t len = (size_t)(slash - path); // keep the folder, drop the trailing '/' + filename
         if (len > 0 && len < sizeof(gBootDir)) {
-            memcpy(gBootDir, bootPath, len);
+            memcpy(gBootDir, path, len);
             gBootDir[len] = '\0';
+            snprintf(gBootElfName, sizeof(gBootElfName), "%s", slash + 1);
         }
     } else {
-        const char *colon = strrchr(bootPath, ':'); // "mass0:X.ELF" -> device root "mass0:"
-        if (colon != NULL && (size_t)(colon - bootPath) + 1 < sizeof(gBootDir)) {
-            size_t len = (size_t)(colon - bootPath) + 1;
-            memcpy(gBootDir, bootPath, len);
+        const char *colon = strrchr(path, ':'); // "mass0:X.ELF" -> device root "mass0:"
+        if (colon != NULL && (size_t)(colon - path) + 1 < sizeof(gBootDir)) {
+            size_t len = (size_t)(colon - path) + 1;
+            memcpy(gBootDir, path, len);
             gBootDir[len] = '\0';
+            snprintf(gBootElfName, sizeof(gBootElfName), "%s", colon + 1);
         }
     }
 }
@@ -1205,10 +1227,88 @@ static int tryAlternateDevice(int types)
     return 0;
 }
 
+// The launcher can hand OPL a boot path that is a BDM launch-binding IDENTITY (ata0:/usb0:/mx4sio0:/
+// ilink0:/sd0:) -- e.g. booting from an internal exFAT HDD, whose cwd may come through as ata0: -- OR a
+// massN: path whose driver stack simply isn't loaded yet: at boot time the IOP has NO BDM modules at
+// all (sysReset loads none; the BDM page only loads them on tab entry), so BOTH families are unreadable
+// exactly when settings must load, and the exFAT HDD adds a chicken-and-egg (mounting it needs
+// gEnableBdmHDD, which lives in the unreadable config). Resolve HERE, in the deferred config load --
+// after ioInit()/bdmInitSemaphore(), before the first configReadMulti() -- by force-loading the boot
+// device's stack and rewriting gBootDir to the mounted massN: root, verified against the booted ELF so
+// launcher-vs-OPL slot renumbering can't land settings on the wrong stick. Readable prefixes
+// (mc/mmce/host/pfs) pass through untouched. uLE's APA-HDD "hdd0:<part>:pfs:/..." form and a boot
+// device that never mounts DROP the boot dir so the legacy discovery/alternate-save re-arm (the
+// _loadConfig/_saveConfig gates key on gBootDir[0] == '\0') instead of failing forever.
+static void resolveBootDirToMass(void)
+{
+    if (gBootDir[0] == '\0')
+        return;
+
+    // uLE hands APA-HDD boots as "hdd0:<partition>:pfs:/..." -- a launch identity OPL can never open
+    // (OPL's own APA mount is pfs0: on the +OPL partition, a different namespace). Unresolvable: drop
+    // to legacy discovery, whose checkLoadConfigHDD probes the APA config location properly.
+    if (!strncmp(gBootDir, "hdd", 3)) {
+        LOG("BOOT unresolvable APA boot dir %s -> legacy discovery\n", gBootDir);
+        gBootDir[0] = '\0';
+        configEnd();
+        configInit(NULL);
+        return;
+    }
+
+    // MMCE boot: the mmceman driver is likewise not loaded at boot time (sysReset loads none of the
+    // device stacks), so mmceN: is unreadable exactly when settings must load. Load it (idempotent)
+    // and give the card a moment to register its filesystem. mmceN: IS the readable namespace, so no
+    // prefix rewrite is needed; if the card never shows, drop to legacy discovery like the BDM case.
+    if (!strncmp(gBootDir, "mmce", 4)) {
+        mmceLoadModules();
+        char devRoot[8];
+        const char *colon = strchr(gBootDir, ':');
+        size_t rootLen = colon ? (size_t)(colon - gBootDir) + 1 : 0;
+        if (rootLen > 0 && rootLen < sizeof(devRoot)) {
+            memcpy(devRoot, gBootDir, rootLen);
+            devRoot[rootLen] = '\0';
+            for (int tries = 0; tries < 10; tries++) { // ~2 s total: the driver detects a present card in ms
+                DIR *dir = opendir(devRoot);
+                if (dir != NULL) {
+                    closedir(dir);
+                    return; // mounted -- the boot dir is readable as-is
+                }
+                delay(1);
+            }
+        }
+        LOG("BOOT MMCE boot device for %s never mounted -> legacy discovery\n", gBootDir);
+        gBootDir[0] = '\0';
+        configEnd();
+        configInit(NULL);
+        return;
+    }
+
+    char before[sizeof(gBootDir)];
+    snprintf(before, sizeof(before), "%s", gBootDir);
+    gBootDirBdmType = BDM_TYPE_UNKNOWN; // classify fresh from the prefix
+    int ret = bdmResolveBootDir(gBootDir, sizeof(gBootDir), gBootElfName, &gBootDirBdmType);
+    if (ret < 0) {
+        // The boot device did not mount in time. Drop the dead identity so the existing empty-gBootDir
+        // discovery/alternate-save can still find a home for the config, rather than every read/save
+        // silently failing against an unopenable prefix.
+        LOG("BOOT boot device for %s never mounted -> legacy discovery\n", before);
+        gBootDir[0] = '\0';
+        configEnd();
+        configInit(NULL);
+        return;
+    }
+    if (ret > 0 && strcmp(before, gBootDir) != 0) {
+        LOG("BOOT resolved boot dir %s -> %s\n", before, gBootDir);
+        configEnd();
+        configInit(gBootDir); // re-point the config sets from the unreadable prefix to the massN: path
+    }
+}
+
 static void _loadConfig()
 {
     int value, themeID = -1, langID = -1;
     const char *temp;
+    resolveBootDirToMass(); // ata0:/APPS -> mass0:/APPS (boot-device massN:) before the first read
     int result = configReadMulti(lscstatus);
     // Settings come from the boot dir (cwd). Only when the boot path was undeterminable (gBootDir
     // empty -> configInit fell back to the MC default) do we re-enable the legacy multi-device
@@ -1304,6 +1404,23 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, &gApplyGameID);
             configGetInt(configOPL, CONFIG_OPL_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
             configGetInt(configOPL, CONFIG_OPL_MMCE_USE_ALARMS, &gMMCEUseAlarms);
+            // One-time pacing migration: builds 2504..2896 shipped -- and therefore PERSISTED into every
+            // saved config -- the aggressive 0-cycles/alarms-OFF pair that freezes slow MMCE cards at the
+            // first in-game read (alarms OFF removes the driver's only SIO2 timeout). A config carrying
+            // exactly that pair without the marker predates the 5/ON default restore: lift it to the
+            // known-good values once. A user who re-picks 0/0 in Device Settings afterwards keeps it
+            // (the marker persists with the set from here on).
+            {
+                int pacingMigrated = 0;
+                configGetInt(configOPL, CONFIG_OPL_MMCE_PACING_MIGR, &pacingMigrated);
+                if (!pacingMigrated) {
+                    if (gMMCEAckWaitCycles == 0 && gMMCEUseAlarms == 0) {
+                        gMMCEAckWaitCycles = 5;
+                        gMMCEUseAlarms = 1;
+                    }
+                    configSetInt(configOPL, CONFIG_OPL_MMCE_PACING_MIGR, 1);
+                }
+            }
             configGetInt(configOPL, CONFIG_OPL_ENABLE_USB, &gEnableUSB);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, &gEnableILK);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
@@ -1323,12 +1440,9 @@ static void _loadConfig()
                 else
                     gNetworkProtocol = NET_PROTO_OFF;
             }
-            // UDPBD (SUDPBDv2) is retired from the UI -- its modern successor is UDPFSBD (block over the
-            // UDPRDMA/UDPFS transport, Rick's intended udpfs_bd replacement for udpbd.irx). Fold any config
-            // that resolves to UDPBD (a new-key value 4, or the legacy-derived case above) onto UDPFSBD so
-            // the obsolete option disappears cleanly. NB: those users must serve via udpfsd/-b, not udpbd-server.
-            if (gNetworkProtocol == NET_PROTO_UDPBD)
-                gNetworkProtocol = NET_PROTO_UDPFSBD;
+            // UDPBD (SUDPBDv2) is a first-class protocol, NOT folded away: it is wire-incompatible with
+            // UDPRDMA (SUDPBDv2 on 0xBDBD vs UDPFS on 0xF5F6), so users still on the older udpbd-server
+            // must be able to keep it. A saved or legacy-derived NET_PROTO_UDPBD is preserved as-is.
             // Re-derive the legacy shadows from the authoritative selector so downstream consumers
             // (ethsupport start path, system.c getDeviceName, bdmsupport) stay consistent no matter which
             // config format was loaded. SMB keeps its prior Auto/Manual start-mode; a fresh SMB pick that
@@ -1373,6 +1487,16 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_BDMA_APPLY, &gBdmaApplyOnLaunch);
             configGetInt(configOPL, CONFIG_OPL_WRITE_POPS_NET, &gWritePopstarterNet);
         }
+
+        // Booted from the internal exFAT HDD (BDM-ATA): the boot-dir resolver force-loaded the HDD
+        // stack ignoring gEnableBdmHDD, because the flag lives in the very config that was unreadable
+        // until the mount existed (the chicken-and-egg). Reconcile: keep the boot device enabled so its
+        // page shows and the next save persists the flag -- mirrors checkLoadConfigBDMHDD's auto-enable.
+        // Runs whether or not a config file was found (a fresh install has no file and the OFF default).
+        if (gBootDirBdmType == BDM_TYPE_ATA && !gEnableBdmHDD) {
+            gEnableBdmHDD = 1;
+            configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
+        }
     }
 
     if (lscstatus & CONFIG_NETWORK) {
@@ -1406,6 +1530,14 @@ static void _loadConfig()
             configGetStrCopy(configNet, CONFIG_NET_NBD_DEFAULT_EXPORT, gExportName, sizeof(gExportName));
         }
     }
+
+    // A UDP transport binds the ministack to the STATIC PS2 IP fields (it has no DHCP client), so IP
+    // Type = DHCP means whatever stale/default address sits there gets used -- discovery then fails
+    // with an empty games page and no error. The Device-Settings dialog warns only at the moment of
+    // switching protocols; surface it as a boot toast too so an already-configured user sees it.
+    showNetDhcpPopup = (ps2_ip_use_dhcp &&
+                        (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
+                         gNetworkProtocol == NET_PROTO_UDPBD));
 
     applyConfig(themeID, langID, 0);
 
@@ -1519,6 +1651,24 @@ static int trySaveAlternateDevice(int types)
     return 0;
 }
 
+// configWriteMulti SUMS per-set results, and configWrite returns 1 for an UNMODIFIED set without
+// touching the disk -- so a failed write of the master settings can hide behind untouched sibling
+// sets and the save reports success ("Settings saved" toast, no retry). configWrite clears a set's
+// modified flag only when its write actually succeeded, and _saveConfig configSet*s every set it
+// means to save (marking it modified) -- so any REQUESTED set still marked modified after the write
+// IS a failed write. Returns 0 in that case, the raw sum otherwise.
+static int configWriteChecked(int types)
+{
+    int result = configWriteMulti(types);
+    if (result > 0) {
+        for (int bit = 1; bit < (1 << CONFIG_INDEX_COUNT); bit <<= 1) {
+            if ((types & bit) && configGetByType(bit)->modified)
+                return 0;
+        }
+    }
+    return result;
+}
+
 static void _saveConfig()
 {
     char temp[256];
@@ -1571,6 +1721,9 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, gApplyGameID);
         configSetInt(configOPL, CONFIG_OPL_MMCE_WAIT_CYCLES, gMMCEAckWaitCycles);
         configSetInt(configOPL, CONFIG_OPL_MMCE_USE_ALARMS, gMMCEUseAlarms);
+        // Always stamp the pacing-migration marker: any config saved by this build carries CURRENT,
+        // deliberate pacing values, so the load-time 0/0 lift must never touch them again.
+        configSetInt(configOPL, CONFIG_OPL_MMCE_PACING_MIGR, 1);
         configSetInt(configOPL, CONFIG_OPL_BDM_CACHE, bdmCacheSize);
         configSetInt(configOPL, CONFIG_OPL_HDD_CACHE, hddCacheSize);
         configSetInt(configOPL, CONFIG_OPL_SMB_CACHE, smbCacheSize);
@@ -1634,7 +1787,21 @@ static void _saveConfig()
         configPrepareNotifications(gBaseMCDir);
     }
 
-    lscret = configWriteMulti(lscstatus);
+    lscret = configWriteChecked(lscstatus);
+    // Boot-device save retry: BDM slot numbering can change between the boot-time resolve and this
+    // save (a hotplug add/remove renumbers massN:). Re-resolve against the SAME boot device once --
+    // pinned to its known BDM type -- and retry. Never a different device: the cross-device fallback
+    // was explicitly rejected (PR #59); if the boot device is truly gone the save fails visibly.
+    if (lscret <= 0 && gBootDir[0] != '\0' && gBootDirBdmType != BDM_TYPE_UNKNOWN) {
+        char before[sizeof(gBootDir)];
+        snprintf(before, sizeof(before), "%s", gBootDir);
+        if (bdmResolveBootDir(gBootDir, sizeof(gBootDir), gBootElfName, &gBootDirBdmType) > 0 &&
+            strcmp(before, gBootDir) != 0) {
+            LOG("BOOT re-resolved boot dir for save: %s -> %s\n", before, gBootDir);
+            configSetMove(gBootDir); // keep the pending values; re-point the files to the new slot
+            lscret = configWriteChecked(lscstatus);
+        }
+    }
     // The boot dir (cwd) is the only save target. The alternate-device save + the cwd redirect
     // pointer are legacy-discovery aids, kept only for the boot-path-undeterminable sanity case
     // (gBootDir empty); with a known boot dir, settings save there and nowhere else.
@@ -2124,8 +2291,16 @@ static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected)
 // before proceeding anyway; bounded because the IOP is reset/powered off right after.
 #define EXIT_IO_DRAIN_TICKS 1000
 
+// 1 while deinit() tears down for exit/poweroff, 0 for a game/app launch. Consumed by device shutdowns
+// that must behave differently on the launch path (hddShutdown keeps DEV9 powered so the post-deinit
+// POPSTARTER.ELF read from the ATA-backed massN: mount still works; ee_core/POPSTARTER reset the IOP
+// themselves, so skipping the power-off on launches leaks nothing).
+int gDeinitTerminal = 0;
+
 void deinit(int exception, int modeSelected)
 {
+    gDeinitTerminal = (modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
+
     /* Cut launch/exit latency by stopping queued art I/O before globally
      * blocking the I/O worker. This avoids waiting for stale cover requests
      * that are no longer needed once we are deinitializing. */
@@ -2138,7 +2313,7 @@ void deinit(int exception, int modeSelected)
     // (LoadExecPS2) or power the machine off immediately afterward, so a request
     // stuck on a removed/slow device must not hang teardown forever. The launch
     // path (a specific mode) keeps the unbounded wait so its IOP state stays clean.
-    int terminalTeardown = (modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
+    int terminalTeardown = gDeinitTerminal;
     if (terminalTeardown)
         ioBlockOpsTimed(1, EXIT_IO_DRAIN_TICKS);
     else
@@ -2279,8 +2454,14 @@ static void setDefaults(void)
     gMMCEIGRSlot = 3;
     gMMCEEnableGameID = 1;
     gApplyGameID = 0; // visual GameID barcode OFF by default (only meaningful to Pixel FX/RetroGEM HDMI displays)
-    gMMCEAckWaitCycles = 0;
-    gMMCEUseAlarms = 0;
+    // Restore the fork's long-standing known-good MMCE SIO2 pacing (was flipped to 0/0 in 519f520d,
+    // mislabeled "safer" -- 0 cycles + alarms OFF is the aggressive/perf extreme the in-app hints warn
+    // about: lower cycles = "instabilities", alarms OFF = "can cause MMCE timeouts to result in freezes").
+    // 5 + alarms ON is what build 2421 shipped and ran cleanly (incl. FMV/audio) on real hardware; a slow
+    // late-slim SD2PSX loses the very first SIO2 handshake at 0/0 and freezes at the first read. Opinionated
+    // safe default per the fork philosophy -- do NOT re-flip to upstream's 0/0.
+    gMMCEAckWaitCycles = 5;
+    gMMCEUseAlarms = 1;
 
     gEnableUSB = 1;
     gEnableILK = 0;
@@ -2411,6 +2592,10 @@ static void miniInit(int mode)
         gEnableMX4SIO = 1;
         gEnableBdmHDD = 1;
         bdmLoadModules();
+
+        // Autolaunch reads its per-game config from the boot dir too -- resolve a launch-identity or
+        // not-yet-mounted massN: boot dir before the configReadMulti below, same as the full boot path.
+        resolveBootDirToMass();
 
     } else if (mode == HDD_MODE) {
         hddLoadModules();

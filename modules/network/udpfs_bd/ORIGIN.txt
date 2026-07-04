@@ -13,12 +13,17 @@ load chain, exactly as Neutrino ships it:
 RiptOPL loads them in sequence (smap, then ministack with ip=, then udpfs_bd). udpfs_bd
 registers BDM token "udp" via bdm_connect_bd() + mounts massN:, so it rides OPL's existing
 BDM pipeline like UDPBD. UDPFS is wire-INCOMPATIBLE with UDPBD (SUDPBDv2) -- the PC server is
-udpfs_server.py / udpfsd, NOT udpbd-server. UDPFS, UDPBD and SMB are NIC-exclusive (single
+pcm720/udpfsd -b, NOT udpbd-server. UDPFS, UDPBD and SMB are NIC-exclusive (single
 SMAP adapter); RiptOPL's network-boot protocol picker loads exactly one of UDPBD/UDPFS, so
 they never co-load (their MODNAMEs "SMAP"/"ministack"/"UDPFS" vs UDPBD's "SMAP_driver" also
 never collide for that reason).
 
 LOCAL CHANGES vs upstream (re-apply after re-vendoring):
+  - udpfs_bd.c: lazy-connect + reconnect watchdog thread (a UDPFS server is typically
+    hand-started after the PS2 boots), and the read/write callbacks no longer
+    bdm_disconnect_bd() from INSIDE the callback (re-entrant teardown of the calling
+    BDM/fatfs stack) -- the watchdog performs disconnect + re-discovery outside callback
+    context, keyed off the UDPRDMA session state.
   - Build: each module gets a PS2SDK Makefile (Makefile.iopglobal) instead of Neutrino's
     Rules.make; udpfs_bd builds with -DFEATURE_UDPFS_BD -DUDPRDMA_MAX_SOCKETS=1. The other
     udpfs variants (udpfs_fhi.c, udpfs_ioman.c) were dropped (block-device variant only).

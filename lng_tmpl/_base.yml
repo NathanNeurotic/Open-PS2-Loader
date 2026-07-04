@@ -630,12 +630,6 @@ gui_strings:
   string: UDPBD Games
 - label: UDPFS_GAMES
   string: UDPFS Games
-- label: UDPFSBD_GAMES
-  string: UDPFSBD Games
-- label: NET_PROTOCOL
-  string: Network Protocol
-- label: UDPFS_MODE
-  string: UDPFS Access
 - label: NET_NEEDS_NEUTRINO
   string: Network (UDP) games can only boot via the Neutrino core. Check that neutrino.elf is present and the format is supported.
 - label: VCD_NOT_ON_NET
@@ -760,8 +754,6 @@ gui_strings:
   string: Use timeout alarms
 - label: HINT_MMCE_USE_ALARMS
   string: OFF may help performance but can cause MMCE timeouts to result in freezes
-- label: MMCE_GAMEID_NEUTRINO_SKIP
-  string: MMCE GameID not applied -- neutrino.elf is on this card (switching it would unload Neutrino).
 - label: CORE_LOADER
   string: Loader Core
 - label: NEUTRINO_BAD_FORMAT
@@ -910,3 +902,18 @@ gui_strings:
   string: Ready.
 - label: NETBOOT_RESTART
   string: Restart OPL to apply the network boot protocol change.
+# ---------------------------------------------------------------------------------------------------
+# APPEND-ONLY from here on. External lang_*.lng files are consumed purely by LINE POSITION (lang.c):
+# inserting a label anywhere above shifts every later string's ID, and a user's stale language file
+# then shows WRONG TEXT on every shifted line (not an English fallback). New labels go at the END.
+# The four labels below were originally inserted mid-list (builds 2884-2896) and have been moved here
+# to realign stale external packs; rerun the lng_fork overlay to translate the new entries.
+# ---------------------------------------------------------------------------------------------------
+- label: UDPFSBD_GAMES
+  string: UDPFSBD Games
+- label: NET_PROTOCOL
+  string: Network Protocol
+- label: UDPFS_MODE
+  string: UDPFS Access
+- label: MMCE_GAMEID_NEUTRINO_SKIP
+  string: MMCE GameID not applied -- neutrino.elf is on this card (switching it would unload Neutrino).

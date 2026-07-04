@@ -149,17 +149,17 @@ extern int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, 
 // {gETHStartMode, gEnableUDPBD, gNetBootProtocol} trio + interlock. Local devices (USB/HDD/MMCE) are
 // independent. gETHStartMode / gEnableUDPBD / gNetBootProtocol are kept as DERIVED shadows so
 // downstream consumers can migrate incrementally.
-// USER-FACING picker is only Off / SMB / UDPFS -- UDPFS is ONE menu entry with a "UDPFS Access"
+// USER-FACING picker is Off / SMB / UDPFS / UDPBD. UDPFS is ONE menu entry with a "UDPFS Access"
 // sub-mode (Files -> NET_PROTO_UDPFS filesystem / Image -> NET_PROTO_UDPFSBD block), since one udpfs
-// protocol serves both (only one IOP backend can bind port 0xF5F6 per boot). NET_PROTO_UDPBD is
-// RETIRED (migrated to UDPFSBD on load) -- Rick's udpfs_bd is the intended successor to udpbd.irx --
-// but the value is kept for the migration check. Migration uses the named constants, not their ordinal.
+// protocol serves both (only one IOP backend can bind port 0xF5F6 per boot). UDPBD (SUDPBDv2) is a
+// SEPARATE, wire-incompatible protocol (its own server, port 0xBDBD) and stays first-class so users on
+// the older udpbd-server are never stranded -- it is neither hidden nor auto-migrated.
 enum NETWORK_PROTOCOL {
     NET_PROTO_OFF = 0,     // no NIC device (SMAP idle) -- fork default
     NET_PROTO_SMB = 1,     // SMB/ETH stack (== legacy gETHStartMode > DISABLED)
     NET_PROTO_UDPFS = 2,   // udpfs FILESYSTEM (udpfs_ioman "udpfs:"); loose ISOs -- picker "UDPFS", access=Files
     NET_PROTO_UDPFSBD = 3, // udpfs BLOCK device (udpfs_bd -> massN:, UDPRDMA) -- picker "UDPFS", access=Image
-    NET_PROTO_UDPBD = 4,   // RETIRED (smap_udpbd/SUDPBDv2) -- migrated to UDPFSBD on load; kept only for that check
+    NET_PROTO_UDPBD = 4,   // smap_udpbd / SUDPBDv2 monolith -- picker "UDPBD"; server = udpbd-server (0xBDBD)
 };
 extern int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative; the three above are derived shadows
 
@@ -205,6 +205,7 @@ extern int gOSDLanguageEnable;
 extern int gOSDLanguageSource;
 
 extern int showCfgPopup;
+extern int showNetDhcpPopup; // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
 
 #ifdef IGS
 #define IGS_VERSION "0.1"
@@ -240,6 +241,9 @@ enum { NEUTRINO_DEV_AUTO = 0,     // game device, then mc0/mc1 (legacy behaviour
 extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
 extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
 extern char gBootDir[256];        // boot directory (cwd) OPL launched from, e.g. "mass0:/APPS"; "" if undeterminable
+extern int gDeinitTerminal;       // 1 while deinit() runs for exit/poweroff, 0 for a game/app LAUNCH teardown.
+                                  // Launch teardown must NOT power shared buses down (dev9: the post-deinit
+                                  // POPSTARTER.ELF read comes off the ATA-backed massN: mount).
 // POPSTARTER.ELF Device picker: where PS1 VCD launches load POPS/POPSTARTER.ELF from. Default tries the
 // boot device (cwd) then the VCD's own device; the 6 TYPEs force a device; Custom uses gPopstarterPath.
 enum { POPS_DEV_DEFAULT = 0,    // cwd (gBootDir) /POPS/, then the VCD's own device (back-compat fallback)

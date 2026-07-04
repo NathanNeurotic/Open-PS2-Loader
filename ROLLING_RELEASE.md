@@ -13,15 +13,20 @@ ELFs and supporting files are published alongside it:
 
 | Asset | What it is |
 |---|---|
-| `RIPTOPL-<sdk>-<rel>-<sha>.zip` | **The installable package.** Contains `APP_RIPTOPL/RIPTOPL.ELF` (built with `ps2dev:latest`), `APP_RIPTOPL-OLDSDK/RIPTOPL.ELF` (the pinned/stable toolchain), the `POPSTARTER/` + `POPS/` folders for PS1 support, and the bundled Neutrino core as a ready-to-use `neutrino/` folder (drag-and-drop to `mc?:/`). Extract it and use `APP_RIPTOPL/RIPTOPL.ELF`. |
-| `RIPTOPL-<version>.ELF` | Bare loader, `ps2max/dev` (pinned) toolchain. |
-| `RIPTOPL-<version>-ps2dev-latest.ELF` | Bare loader, `ps2dev/ps2dev:latest` (bleeding-edge) toolchain. |
+| `RIPTOPL-<rel>-<sha>.zip` | **The installable package.** Contains `APP_RIPTOPL/RIPTOPL.ELF` (built with `ps2dev:latest`, the **primary** toolchain), `APP_RIPTOPL-OLDSDK/RIPTOPL.ELF` (the pinned fallback toolchain, when its build succeeded), the `POPSTARTER/` + `POPS/` folders for PS1 support, and the bundled Neutrino core as a ready-to-use `neutrino/` folder (drag-and-drop to `mc?:/`). Extract it and use `APP_RIPTOPL/RIPTOPL.ELF`. |
+| `RIPTOPL-<version>.ELF` | Bare loader, `ps2dev/ps2dev:latest` toolchain (**primary**; in-app version ends `-latest`). |
+| `RIPTOPL-<version>-oldsdk.ELF` | Bare loader, `ps2max/dev` (pinned) toolchain (fallback; in-app version ends `-oldsdk`). |
 | `RIPTOPL-<version>-src.zip` | Source snapshot to rebuild this exact commit. |
 | `SHA256SUMS.txt` | SHA256 of every published binary + the source snapshot. |
+| `IRX-MANIFEST*.txt` | SHA256 of every SDK-prebuilt IOP module each toolchain consumed (provenance for silent SDK-side driver swaps). |
 | `RIPTOPL-LANGS-*.zip` | Extra UI language files (`.lng` + non-Latin fonts) — copy into your OPL folder. |
 | `RIPTOPL-VARIANTS-*.zip` / `RIPTOPL-DEBUG-*.zip` | Alternate build configs and debug builds, both toolchains — for testing/diagnostics. |
 
-`<version>` is the pinned build's `git describe` (e.g. `v1.2.0-Beta-2559-bb25a00`).
+`<version>` is the primary (`ps2dev:latest`) build's `git describe` (e.g. `v1.2.0-Beta-2559-bb25a00`).
+
+When something misbehaves on hardware, please retest on the other toolchain's copy and say
+**which of the two you ran** — the in-app version string's `-latest` / `-oldsdk` suffix tells you.
+A latest-only failure points at an SDK regression; a both-fail points at RiptOPL code.
 
 ## Pull the latest build
 
@@ -51,11 +56,12 @@ whether the bleeding-edge build succeeded.
 
 - Triggers on every push to `master` (updates `rolling`), on every `v*` **tag** push (cuts a
   curated per-version release with identical packaging), and on manual **Run workflow** (workflow_dispatch).
-- Builds with both toolchains — `ps2max/dev` (pinned) and `ps2dev/ps2dev:latest`
-  (bleeding-edge) — the same images as the main CI build.
-- The `ps2dev/ps2dev:latest` build is best-effort (`continue-on-error`): if it breaks,
-  the rolling release still updates with the pinned build, and the notes flag that the
-  bleeding-edge build failed.
+- Builds with both toolchains — `ps2dev/ps2dev:latest` (the **primary/target**) and
+  `ps2max/dev` (the pinned fallback) — the same images as the main CI build.
+- The `ps2dev/ps2dev:latest` build is **required**: if it breaks, the publish fails loudly
+  (no silent role swap of the pinned build into the default slot). The pinned build is
+  best-effort (`continue-on-error`); when it fails, the package ships the primary only and
+  the notes say so.
 - Publishes/updates the single `rolling` pre-release from the host runner.
 - `concurrency` cancels superseded in-flight runs, so the release reflects the newest push.
 
