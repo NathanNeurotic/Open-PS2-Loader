@@ -1662,8 +1662,11 @@ static int configWriteChecked(int types)
     int result = configWriteMulti(types);
     if (result > 0) {
         for (int bit = 1; bit < (1 << CONFIG_INDEX_COUNT); bit <<= 1) {
-            if ((types & bit) && configGetByType(bit)->modified)
-                return 0;
+            if (types & bit) {
+                config_set_t *cfg = configGetByType(bit); // NULL only if a requested set was never allocated
+                if (cfg != NULL && cfg->modified)
+                    return 0;
+            }
         }
     }
     return result;
