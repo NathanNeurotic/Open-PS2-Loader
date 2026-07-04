@@ -27,7 +27,9 @@ MMCE_REPO="https://github.com/ps2-mmce/mmceman"
 DEST="$PS2SDK/iop/irx"
 
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+# Clean up on normal exit AND on the signals a CI cancel/timeout sends -- some ash/dash builds don't
+# run the EXIT trap on signal termination, so name them explicitly (harmless where EXIT already covers it).
+trap 'rm -rf "$WORK"' EXIT TERM INT HUP
 echo "== Building coherent MMCE driver from ps2-mmce @ ${MMCE_PIN} =="
 git clone --quiet "$MMCE_REPO" "$WORK/mmceman"
 git -C "$WORK/mmceman" checkout --quiet "$MMCE_PIN"
