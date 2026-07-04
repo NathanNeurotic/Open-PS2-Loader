@@ -691,13 +691,15 @@ int vcdEnsureBdmaForLaunch(int source, int mode)
 
     // A different family's pair is on the card and the replacement failed (-4 source files absent,
     // -2 card full, -3 IO error). Mirror the Settings-screen equip diagnostics instead of silence.
+    // Every abort MUST say something: an unmapped code (-1 = source open/seek failed mid-copy, or a
+    // future value) falls through to the IO-error text rather than a mute launch that "does nothing".
     if (er == -4) {
         char msg[256];
         snprintf(msg, sizeof(msg), "%s\n%s", _l(_STR_BDMA_ERR_SRC), diag);
         guiMsgBox(msg, 0, NULL);
     } else if (er == -2)
         guiMsgBox(_l(_STR_BDMA_ERR_SPACE), 0, NULL);
-    else if (er == -3)
+    else
         guiMsgBox(_l(_STR_BDMA_ERR_IO), 0, NULL);
     return 0;
 }

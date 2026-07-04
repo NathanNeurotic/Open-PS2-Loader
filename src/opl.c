@@ -1659,6 +1659,24 @@ static int trySaveAlternateDevice(int types)
     return 0;
 }
 
+// configWriteMulti SUMS per-set results, and configWrite returns 1 for an UNMODIFIED set without
+// touching the disk -- so a failed write of the master settings can hide behind untouched sibling
+// sets and the save reports success ("Settings saved" toast, no retry). configWrite clears a set's
+// modified flag only when its write actually succeeded, and _saveConfig configSet*s every set it
+// means to save (marking it modified) -- so any REQUESTED set still marked modified after the write
+// IS a failed write. Returns 0 in that case, the raw sum otherwise.
+static int configWriteChecked(int types)
+{
+    int result = configWriteMulti(types);
+    if (result > 0) {
+        for (int bit = 1; bit < (1 << CONFIG_INDEX_COUNT); bit <<= 1) {
+            if ((types & bit) && configGetByType(bit)->modified)
+                return 0;
+        }
+    }
+    return result;
+}
+
 static void _saveConfig()
 {
     char temp[256];
@@ -1777,7 +1795,7 @@ static void _saveConfig()
         configPrepareNotifications(gBaseMCDir);
     }
 
-    lscret = configWriteMulti(lscstatus);
+    lscret = configWriteChecked(lscstatus);
     // Boot-device save retry: BDM slot numbering can change between the boot-time resolve and this
     // save (a hotplug add/remove renumbers massN:). Re-resolve against the SAME boot device once --
     // pinned to its known BDM type -- and retry. Never a different device: the cross-device fallback
@@ -1789,7 +1807,7 @@ static void _saveConfig()
             strcmp(before, gBootDir) != 0) {
             LOG("BOOT re-resolved boot dir for save: %s -> %s\n", before, gBootDir);
             configSetMove(gBootDir); // keep the pending values; re-point the files to the new slot
-            lscret = configWriteMulti(lscstatus);
+            lscret = configWriteChecked(lscstatus);
         }
     }
     // The boot dir (cwd) is the only save target. The alternate-device save + the cwd redirect

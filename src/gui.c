@@ -2076,7 +2076,10 @@ void guiMainLoop(void)
         // Render overlaying gui thingies :)
         guiDrawOverlays();
 
-        if (gEnableNotifications)
+        // The network notices are FUNCTIONAL one-time warnings (a retired protocol's server must
+        // change; a UDP transport bound to a stale DHCP-era IP) -- without them the user's setup
+        // just silently stops working. They bypass the cosmetic-notifications toggle.
+        if (gEnableNotifications || showNetMigrationPopup || showNetDhcpPopup)
             guiShowNotifications();
 
         // handle deferred operations

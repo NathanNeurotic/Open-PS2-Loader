@@ -69,12 +69,16 @@ POPSTARTER.ELF Device** — a driver-accurate picker (matching the Neutrino Devi
 | MX4SIO | the mounted MX4SIO SD card |
 | MMCE | `mmce0:` / `mmce1:` (SD2PSX / MemCard PRO2) |
 | HDD (exFAT) | the mounted exFAT internal HDD |
-| HDD (APA) | the OPL data partition (`pfs0:`) |
+| HDD (APA) | see the note below — APA POPSTARTER only applies to HDD-page launches |
 | **Custom** | reveals a free-text path field — your own absolute `POPSTARTER.ELF` path |
 
 The picker covers USB / MMCE / MX4SIO / iLink / SMB VCD launches. PS1 VCDs **on the internal
-HDD** always load `POPSTARTER.ELF` from the HDD (the `__common` then `+OPL` `POPS` folder, as
-below) regardless of this setting. For the **Custom** option the on-screen editor caps at 31
+APA HDD** always load `POPSTARTER.ELF` from the HDD (the `__common` then `+OPL` `POPS` folder, as
+below) regardless of this setting — and that is also why **HDD (APA)** is inert for launches from
+*other* device pages: those launches unmount `pfs0:` during their own teardown *before* the ELF is
+read, so a `pfs0:` POPSTARTER can never survive them (OPL falls through to **Default** instead of
+freezing on a dead path). Keep your APA copy for HDD-page launches; give the other pages a copy on
+the boot device or the VCD's own device. For the **Custom** option the on-screen editor caps at 31
 characters; for a longer path set `popstarter_path` in `settings_riptopl.cfg` directly.
 
 ## 4. Where to put your VCD files

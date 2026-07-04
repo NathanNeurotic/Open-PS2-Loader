@@ -1029,8 +1029,21 @@ static void sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *devic
         LOG("[NEUTRINO] cannot rewrite %s (%d) -- ip= left as-is\n", tomlPath, fd);
         return;
     }
-    write(fd, updated, strlen(updated));
+    int expected = (int)strlen(updated);
+    int written = write(fd, updated, expected);
     close(fd);
+    if (written != expected) {
+        // O_TRUNC already emptied the file; a short write would leave a mangled toml behind. Best
+        // recovery without atomic-rename support across every PS2 filesystem: put the ORIGINAL
+        // content back so the user is no worse off than before the sync (old hand-edit contract).
+        LOG("[NEUTRINO] short write to %s (%d/%d) -- restoring original toml\n", tomlPath, written, expected);
+        fd = open(tomlPath, O_WRONLY | O_TRUNC);
+        if (fd >= 0) {
+            write(fd, toml, len);
+            close(fd);
+        }
+        return;
+    }
     LOG("[NEUTRINO] synced %s ip= -> %s\n", tomlPath, newIp);
 }
 

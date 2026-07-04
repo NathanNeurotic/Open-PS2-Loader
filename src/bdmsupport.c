@@ -109,7 +109,11 @@ static int bdmParseBootStem(const char *bootPath, char *stem, size_t stemSize, i
         stem[--n] = '\0';
         digits++;
     }
-    if (digits > 0) {
+    // Bound the unit parse: no real device token carries more than 2 digits, and an unbounded
+    // accumulate over launcher-controlled argv[0] bytes would run signed arithmetic into UB on a
+    // mangled path ("mass4294967296:"). Longer runs keep the stem valid but leave unit = -1
+    // ("unspecified"), which the resolver already treats as slot 0 with verification.
+    if (digits > 0 && digits <= 2) {
         *unit = 0;
         for (const char *d = bootPath + n; *d != ':'; d++)
             *unit = *unit * 10 + (*d - '0');
@@ -1434,7 +1438,10 @@ int bdmEnsureSourceModules(int bdmType, u32 timeoutMs)
 {
     int wasLoaded;
     char root[BDM_DEVICE_ROOT_MAX + 2];
-    u32 start;
+    // u64, NOT u32: GetTimerSystemTime() returns a u64 bus-clock count that passes 2^32 after ~29 s of
+    // uptime. Truncating the start into a u32 while subtracting it from the full u64 makes the elapsed
+    // math explode on the first check for any call after that -- the wait budget silently collapses.
+    u64 start;
 
     WaitSema(bdmLoadModuleLock);
     switch (bdmType) {
@@ -1565,7 +1572,9 @@ int bdmResolveBootDir(char *bootDir, int bootDirSize, const char *elfName, int *
         return -1; // network block device: no local mount to resolve at config-load time
 
     const char *tail = strchr(bootDir, ':') + 1; // "" | "/APPS" | "APPS" (bdmParseBootStem proved the ':')
-    int literalSlot = (isMass && unit >= 0 && unit < MAX_BDM_DEVICES) ? unit : 0;
+    // The boot token's unit digit doubles as the scan-order hint for BOTH families: mass1: names the
+    // slot outright, and a typed usb1:/ata1: unit usually tracks same-type enumeration order too.
+    int literalSlot = (unit >= 0 && unit < MAX_BDM_DEVICES) ? unit : 0;
     int haveElf = (elfName != NULL && elfName[0] != '\0');
 
     // Bring-up: the BDM core (bdm.irx + bdmfs_fatfs + hotplug events; idempotent -- every bdmInit calls
@@ -1585,13 +1594,20 @@ int bdmResolveBootDir(char *bootDir, int bootDirSize, const char *elfName, int *
 
     u32 budgetMs = (filterType == BDM_TYPE_ATA) ? 10000 : 3000; // ATA = dev9 power-up + platter spin-up
     int escalated = (filterType != BDM_TYPE_UNKNOWN);           // typed searches never escalate
-    u32 start = GetTimerSystemTime();
+    // u64: GetTimerSystemTime() passes 2^32 bus ticks ~29 s after boot; a u32 start would make every
+    // POST-BOOT resolve (the _saveConfig hotplug retry, a settings reload) compute a bogus huge elapsed
+    // and give up after a single scan instead of waiting the budget out.
+    u64 start = GetTimerSystemTime();
 
     for (;;) {
         int matchSlot = -1, fallbackSlot = -1;
         int matchType = BDM_TYPE_UNKNOWN, fallbackType = BDM_TYPE_UNKNOWN;
 
-        for (int i = 0; i < MAX_BDM_DEVICES; i++) {
+        for (int scan = 0; scan < MAX_BDM_DEVICES; scan++) {
+            // Probe the boot dir's LITERAL slot first, then the rest in order: with duplicate OPL
+            // installs on two same-type devices the ELF probe matches both, and first-match-wins
+            // must prefer the slot the launcher actually named over an arbitrary lower one.
+            int i = (scan == 0) ? literalSlot : (scan <= literalSlot ? scan - 1 : scan);
             char path[16], driver[32];
             int devIndex = -1;
 
