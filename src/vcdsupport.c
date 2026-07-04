@@ -221,8 +221,19 @@ void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *nam
 {
     if (out == NULL || outSize <= 0)
         return;
-    const char *dp = devPrefix ? devPrefix : "";
-    snprintf(out, outSize, "%s%s%c%s%s.ELF", dp, POPS_FOLDER, vcdSep(dp), prefix ? prefix : "", name ? name : "");
+    // POPSTARTER does its OWN SifIopReset + BDMAssault remount BEFORE it reads argv[0], so it resolves
+    // the selector against its post-reset namespace -- the BARE device kind-label (mass:/smb:), NOT
+    // OPL's live unit-numbered mount (mass0:/mmce0:/smb0:) or the SMB share path. Handing it a
+    // unit-numbered path (or backslash-separated SMB path) leaves the sibling <name>.VCD unresolvable
+    // and it black-screens after being reached. Match the maintainer's proven POPSLoader format
+    // (bin/POPSLDR/system.lua): <bare-label>:/POPS/<XX.|SB.><name>.ELF, forward slashes throughout.
+    // RiptOPL mounts every block VCD source (USB/MX4SIO/iLink/exFAT-HDD) through the BDMAssault
+    // usbhdfsd variant, which POPSTARTER re-registers as "mass:" -- and MMCE is translated to mass:
+    // too -- so the ONLY distinction is SMB (SB. prefix, "smb:") vs everything else ("mass:"). The
+    // incoming devPrefix (a live unit-numbered mount) is intentionally NOT used for the string body.
+    (void)devPrefix;
+    const char *root = (prefix != NULL && !strcmp(prefix, VCD_PREFIX_SMB)) ? "smb:" : "mass:";
+    snprintf(out, outSize, "%s/%s/%s%s.ELF", root, POPS_FOLDER, prefix ? prefix : "", name ? name : "");
 }
 
 // ---- per-device VCD view state ------------------------------------------------
