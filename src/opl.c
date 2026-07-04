@@ -541,6 +541,16 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
             mod->support = itemList;
             mod->support->owner = mod;
             initMenuForListSupport(mod);
+        } else {
+            // Re-enable after a prior disable: the support + its menu item already exist (registered on
+            // an earlier enable), so the !mod->support branch above -- the ONLY place that sets
+            // menuItem.visible = 1 -- is skipped. Disabling a mode (else branch below) set visible = 0
+            // but LEFT mod->support non-NULL, so without restoring it here a tab that was ever toggled
+            // off stays hidden for the rest of the session even when re-selected. This is why picking a
+            // network protocol after having switched away from it showed no tab. BDM device tabs escape
+            // this via bdmNeedsUpdate's per-refresh visibility (and bdmInitDevicesData overrides it on
+            // its own path); ETH/UDPFS/MMCE/APP/FAV/HDD have no such hook, so restore it here.
+            mod->menuItem.visible = 1;
         }
 
         if (((force_reinit) && (mod->support->enabled)) || (startMode == START_MODE_AUTO && !mod->support->enabled)) {
