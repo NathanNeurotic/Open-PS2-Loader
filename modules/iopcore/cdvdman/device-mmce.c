@@ -127,17 +127,26 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
 
     DPRINTF("%s(%u, 0x%p, %u)\n", __func__, (unsigned int)lsn, buffer, sectors);
 
+    // Hold mmce_io_sema across the WHOLE function. Every mmcedrv call in this file is serialized through
+    // it -- the VMC path (mmce_read_offset/write_offset) runs on a different IOP thread and drives the
+    // same non-reentrant SIO2 link -- and the late-recovery re-probe below is an mmcedrv call too, so it
+    // must be inside the lock (not before it, which raced a concurrent VMC transaction). Taking it here
+    // also makes the mmce_dev_ready check-and-set atomic. (DeviceLock, the only other taker, is the
+    // shutdown-only barrier in oplShutdown -- never held by a caller of this function, so no deadlock.)
+    WaitSema(mmce_io_sema);
+
     if (!mmce_dev_ready) {
         // Init never saw the device. One cheap re-probe per read: a card that came back late (slow SD
         // re-enumeration across the IOP reboot) recovers here; otherwise fail fast instead of driving
         // a dead transport. Guard the pointer: DeviceFSInit leaves it NULL when mmcedrv wasn't resident
         // (it bails before resolving the exports), and these are zero-init statics on first boot.
-        if (fp_mmcedrv_get_size == NULL || fp_mmcedrv_get_size(cdvdman_settings.iso_fd) <= 0)
+        if (fp_mmcedrv_get_size == NULL || fp_mmcedrv_get_size(cdvdman_settings.iso_fd) <= 0) {
+            SignalSema(mmce_io_sema);
             return SCECdErREAD;
+        }
         mmce_dev_ready = 1;
     }
 
-    WaitSema(mmce_io_sema);
     do {
         res = fp_mmcedrv_read_sector(cdvdman_settings.iso_fd, (u32)lsn, sectors, buffer);
         retries++;
