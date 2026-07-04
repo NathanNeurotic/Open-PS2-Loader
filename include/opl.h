@@ -79,6 +79,10 @@ void menuDeferredUpdate(void *data);
 void moduleUpdateMenu(int mode, int themeChanged, int langChanged);
 void handleLwnbdSrv();
 void deinit(int exception, int modeSelected);
+// deinit with a SECOND kept mode (-1 = none): the Neutrino no-reset handoff needs BOTH the game's
+// device and the neutrino.elf-hosting device mounted, since Neutrino reads its config/modules and
+// the game ISO through our live mounts before doing its own IOP reset.
+void deinitEx(int exception, int modeSelected, int modeSelected2);
 
 // Shutdown minimal services initiated for auto loading.
 void miniDeinit(config_set_t *configSet);

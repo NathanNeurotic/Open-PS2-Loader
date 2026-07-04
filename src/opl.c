@@ -106,7 +106,7 @@ static void clearIOModuleT(opl_io_module_t *mod)
 
 // forward decl
 static void clearMenuGameList(opl_io_module_t *mdl);
-static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected);
+static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected, int modeSelected2);
 static void reset(void);
 static void deferredAudioInit(void);
 
@@ -592,11 +592,11 @@ static void initAllSupport(int force_reinit)
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
 }
 
-static void deinitAllSupport(int exception, int modeSelected)
+static void deinitAllSupport(int exception, int modeSelected, int modeSelected2)
 {
     for (int i = 0; i < MODE_COUNT; i++) {
         if (list_support[i].support != NULL)
-            moduleCleanup(&list_support[i], exception, modeSelected);
+            moduleCleanup(&list_support[i], exception, modeSelected, modeSelected2);
     }
 }
 
@@ -2189,7 +2189,7 @@ static int loadLwnbdSvr(void)
     guiExecDeferredOps();
 
     // Deinitialize all support without shutting down the HDD unit.
-    deinitAllSupport(NO_EXCEPTION, IO_MODE_SELECTED_ALL);
+    deinitAllSupport(NO_EXCEPTION, IO_MODE_SELECTED_ALL, -1);
     clearErrorMessage(); /* At this point, an error might have been displayed (since background tasks were completed).
                             Clear it, otherwise it will get displayed after the server is closed. */
 
@@ -2283,13 +2283,13 @@ static void reset(void)
     mcInit(MC_TYPE_XMC);
 }
 
-static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected)
+static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected, int modeSelected2)
 {
     if (!mod->support)
         return;
 
     // Shutdown if not required anymore.
-    if ((mod->support->mode != modeSelected) && (modeSelected != IO_MODE_SELECTED_ALL)) {
+    if ((mod->support->mode != modeSelected) && (mod->support->mode != modeSelected2) && (modeSelected != IO_MODE_SELECTED_ALL)) {
         if (mod->support->itemShutdown)
             mod->support->itemShutdown(mod->support);
     } else {
@@ -2311,6 +2311,11 @@ static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected)
 int gDeinitTerminal = 0;
 
 void deinit(int exception, int modeSelected)
+{
+    deinitEx(exception, modeSelected, -1);
+}
+
+void deinitEx(int exception, int modeSelected, int modeSelected2)
 {
     gDeinitTerminal = (modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
 
@@ -2340,7 +2345,7 @@ void deinit(int exception, int modeSelected)
 #endif
     unloadPads();
 
-    deinitAllSupport(exception, modeSelected);
+    deinitAllSupport(exception, modeSelected, modeSelected2);
 
     audioEnd();
     ioEnd();

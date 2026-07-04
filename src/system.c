@@ -1164,7 +1164,13 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
             LOG("[NEUTRINO]   argv[%d]=%s\n", i, argv[i]);
     }
 
-    LoadELFFromFileWithPartition(neutrinoPath, "", argc, argv);
+    // Hand off WITHOUT the elf-loader IOP reset (NHDDL parity, vendored elfldr/): Neutrino reads
+    // its config/modules (-cwd) and opens the game ISO through OUR still-mounted devices, and only
+    // then does its own IOP reset -- the old resetting handoff left it a bare SIO2MAN/MCMAN/MCSERV
+    // IOP, so any USB/BDM-hosted neutrino.elf setup black-screened to OSDSYS. The callers keep both
+    // the game device and the neutrino.elf device mounted (deinitEx).
+    if (sysLoadELFKeepIOP(neutrinoPath, "", argc, argv) < 0)
+        LOG("[NEUTRINO] keep-IOP handoff failed for %s\n", neutrinoPath);
 }
 
 // Hand off to an external POPSTARTER.ELF to boot a PS1 VCD. The caller resolves the per-device

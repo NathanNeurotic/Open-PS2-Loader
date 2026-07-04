@@ -45,6 +45,13 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
 // token; partition = "" for non-HDD. Caller deinit()s with UNMOUNT_EXCEPTION first (see system.c).
 void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const char *partition);
 
+// ELF handoff that KEEPS the IOP (drivers + mounts) alive -- NHDDL parity for the Neutrino
+// launch: the vendored elfldr/ child loader SifLoadElf()s the target through OPL's live mounts
+// and never SifIopReset()s (the target resets the IOP itself). Container-independent: works the
+// same on ps2dev:latest and the OLDSDK pin. Returns only on failure (bad path/ELF), like
+// LoadELFFromFileWithPartition. Implemented in elfldr_noreset.c.
+int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, char *argv[]);
+
 int sysExecElf(const char *path);
 int sysLoadModuleBuffer(void *buffer, int size, int argc, char *argv);
 int sysCheckMC(void);

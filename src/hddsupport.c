@@ -876,14 +876,16 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     mmceSendGameID(game->startup, coreLoader ? neutrinoPath : NULL);
 
     if (gAutoLaunchGame == NULL) {
-        // Neutrino: keep the device that holds neutrino.elf mounted across the teardown
-        // (UNMOUNT_EXCEPTION) so sysLaunchNeutrino's LoadELFFromFile can read it -- apps do the same.
-        // mc-hosted neutrino (oplPath2Mode == -1) survives any deinit, so keep NO_EXCEPTION there.
-        int neutrinoDevMode = coreLoader ? oplPath2Mode(neutrinoPath) : -1;
-        if (neutrinoDevMode >= 0)
-            deinit(UNMOUNT_EXCEPTION, neutrinoDevMode);
-        else
+        // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): keep the HDD stack up (NHDDL hands off with
+        // its full ATA stack resident) AND the neutrino.elf device (-cwd config/module reads) across
+        // the teardown. An MC-hosted neutrino needs no exception (-1 second slot). ee_core launches
+        // keep the full teardown: everything they need is embedded before deinit.
+        if (coreLoader) {
+            int neutrinoDevMode = oplPath2Mode(neutrinoPath);
+            deinitEx(UNMOUNT_EXCEPTION, HDD_MODE, neutrinoDevMode); // CAREFUL: itemCleanUp still frees hddGames/game
+        } else {
             deinit(NO_EXCEPTION, HDD_MODE); // CAREFUL: deinit will call hddCleanUp, so hddGames/game will be freed
+        }
     } else {
         miniDeinit(configSet);
 
