@@ -592,13 +592,11 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             fileXioClose(vmc_fds[0]);
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
-        // Keep the device that holds neutrino.elf mounted (UNMOUNT_EXCEPTION) so LoadELFFromFile can
-        // read it post-teardown -- apps do the same. mc-hosted neutrino (mode -1) survives any deinit.
+        // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino opens the mmce-hosted game through
+        // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
+        // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
-        if (neutrinoDevMode >= 0)
-            deinit(UNMOUNT_EXCEPTION, neutrinoDevMode);
-        else
-            deinit(NO_EXCEPTION, MMCE_MODE);
+        deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode);
         sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, &neutrinoVmc);
         return;
     }

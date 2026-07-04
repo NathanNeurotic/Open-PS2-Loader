@@ -315,14 +315,11 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // `game`. Neutrino path forwarded so a Neutrino launch protects the MMCE hand-off timing.
     mmceSendGameID(game->startup, neutrinoPath);
 
-    // Keep the device that holds neutrino.elf MOUNTED across teardown (UNMOUNT_EXCEPTION) so
-    // sysLaunchNeutrino's LoadELFFromFile can still read it; an MC-hosted neutrino (mode -1) survives any
-    // deinit, so NO_EXCEPTION there. Mirrors bdmsupport's Neutrino deinit contract.
+    // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino reads the game through OUR udpfs
+    // filesystem and its config/modules from the neutrino.elf device (-cwd) before its own IOP
+    // reset -- keep BOTH mounted across the teardown. Mirrors bdmsupport's Neutrino deinit contract.
     int neutrinoDevMode = oplPath2Mode(neutrinoPath);
-    if (neutrinoDevMode >= 0)
-        deinit(UNMOUNT_EXCEPTION, neutrinoDevMode);
-    else
-        deinit(NO_EXCEPTION, itemList->mode); // CAREFUL: deinit calls udpfsCleanUp -> udpfsGames/game freed
+    deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode); // CAREFUL: itemCleanUp still frees udpfsGames/game
 
     // Hand off to Neutrino with the udpfs driver token. `partname` (the filesystem game path) + the token
     // survive the deinit above; `game` does not and is not used past this point.
