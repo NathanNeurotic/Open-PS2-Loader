@@ -53,9 +53,18 @@ void DeviceFSInit(void)
 {
     int64_t iso_size = 0;
 
-    // get modload export table
+    // get modload export table. getModInfo returns 0 AND leaves info.exports UNINITIALIZED when the
+    // module isn't resident (ioplib_util.c:94), so reading info.exports[4..9] after a failed lookup
+    // dereferences stack garbage -- a straight IOP crash, indistinguishable from the freezes this file
+    // exists to make diagnosable. If mmcedrv somehow isn't loaded, bail with the fail-fast state so
+    // reads return SCECdErREAD instead. (A NULL check on the resulting pointers would miss this: the
+    // garbage is not necessarily NULL.)
     modinfo_t info;
-    getModInfo("mmcedrv\0", &info);
+    if (!getModInfo("mmcedrv\0", &info)) {
+        mmce_dev_ready = 0;
+        DPRINTF("DeviceFSInit: mmcedrv not resident -- reads will fail fast\n");
+        return;
+    }
 
     //Get func ptrs
     fp_mmcedrv_get_size = (void *)info.exports[4];
@@ -121,11 +130,11 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     if (!mmce_dev_ready) {
         // Init never saw the device. One cheap re-probe per read: a card that came back late (slow SD
         // re-enumeration across the IOP reboot) recovers here; otherwise fail fast instead of driving
-        // a dead transport.
-        if (fp_mmcedrv_get_size(cdvdman_settings.iso_fd) > 0)
-            mmce_dev_ready = 1;
-        else
+        // a dead transport. Guard the pointer: DeviceFSInit leaves it NULL when mmcedrv wasn't resident
+        // (it bails before resolving the exports), and these are zero-init statics on first boot.
+        if (fp_mmcedrv_get_size == NULL || fp_mmcedrv_get_size(cdvdman_settings.iso_fd) <= 0)
             return SCECdErREAD;
+        mmce_dev_ready = 1;
     }
 
     WaitSema(mmce_io_sema);
