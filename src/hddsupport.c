@@ -671,7 +671,8 @@ static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
 // embedded cdvdman core; Neutrino re-derives everything from -bsd=ata -bsdfs=hdl -dvd=hdl:<part>
 // after its own IOP reset. The one probe Neutrino DOES need is the ZSO header check (its hdl
 // backend can't run ZSO) -- a single sector read, kept here.
-// Returns 1 = handled (caller returns); 0 = proceed with the native launch.
+// Returns 1 = handled (handed off; caller returns); 0 = proceed with the native launch (core is
+// OPL, or any Neutrino-side failure -- ZSO, no install, preflight -- since HDL always boots natively).
 static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
 {
     int coreLoader = 0;
@@ -707,8 +708,11 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
         saveConfig(CONFIG_LAST, 0);
     }
 
-    if (sysNeutrinoPreflight("apa", neutrinoPath) < 0) // Δ6 pre-teardown validation
-        return 1;
+    // Δ6 pre-teardown validation. On failure fall back to the native core (same contract as
+    // bdmTryNeutrinoLaunch's non-udp legs): HDL always boots natively, and the native path owns
+    // the autolaunch teardown -- aborting here instead would leak gAutoLaunchGame/configSet.
+    if (sysNeutrinoPreflight("apa", neutrinoPath) < 0)
+        return 0;
 
     // MMCE cross-device game-id (#261); HDD emits no -mc args (VMC->neutrino deferred), mask 0.
     mmceSendGameID(game->startup, neutrinoPath, 0);
