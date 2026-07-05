@@ -552,9 +552,67 @@ int sbFileExists(const char *path)
     return 1;
 }
 
+// Δ1 (NHDDL-parity): a resolved neutrino.elf is only USABLE if its install is complete. Neutrino
+// chdir()s to the elf's dir (our -cwd) then opens config/system.toml; if absent it falls back to a
+// FLAT "system.toml" (SAS layout); if NEITHER loads it returns -1 = black screen post-teardown
+// (neutrino ee/loader/src/main.c:486-505). Mirror that EXACT detection so we never reject a valid
+// install: accept the elf only when config/system.toml OR flat system.toml sits beside it. A stale
+// folder (elf only, no config) is skipped so probing continues to a good install instead of
+// shadowing it. Uses its own buffer so the caller's returned path is untouched.
+static int sbNeutrinoInstallComplete(const char *elfPath)
+{
+    if (elfPath == NULL)
+        return 0;
+    const char *slash = strrchr(elfPath, '/');
+    char probe[320]; // longest caller path (~160) + "/config/system.toml" with headroom -- a TRUNCATED
+                     // probe would miss a real toml and reject a VALID install (PR #81 review)
+    int dirLen;
+
+    if (slash == NULL) // no directory component -- can't derive cwd; don't reject (custom path edge)
+        return 1;
+    dirLen = (int)(slash - elfPath);
+
+    snprintf(probe, sizeof(probe), "%.*s/config/system.toml", dirLen, elfPath);
+    if (sbFileExists(probe))
+        return 1;
+    snprintf(probe, sizeof(probe), "%.*s/system.toml", dirLen, elfPath);
+    return sbFileExists(probe);
+}
+
+// Δ5 (NHDDL-parity visibility): a stale/old neutrino folder winning silently was undiagnosable.
+// LOG the resolved pick + its version.txt (if present, like NHDDL's splash) at the single return
+// point. Returns the path unchanged so call sites read `return sbNeutrinoResolved(path)`.
+static const char *sbNeutrinoResolved(const char *path)
+{
+    if (path == NULL)
+        return NULL;
+    const char *slash = strrchr(path, '/');
+    if (slash != NULL) {
+        char vpath[320], ver[128]; // same headroom rationale as sbNeutrinoInstallComplete's probe
+        int fd;
+        snprintf(vpath, sizeof(vpath), "%.*s/version.txt", (int)(slash - path), path);
+        fd = open(vpath, O_RDONLY, 0666);
+        if (fd >= 0) {
+            int n = read(fd, ver, sizeof(ver) - 1);
+            close(fd);
+            if (n > 0) {
+                char *nl;
+                ver[n] = '\0';
+                nl = strpbrk(ver, "\r\n");
+                if (nl != NULL)
+                    *nl = '\0';
+                LOG("[NEUTRINO] using %s (%s)\n", path, ver);
+                return path;
+            }
+        }
+    }
+    LOG("[NEUTRINO] using %s\n", path);
+    return path;
+}
+
 // Resolve the Neutrino core ELF: probe the install locations users actually use (folder-case
-// and leading-slash variants on mc0/mc1) and return the first that exists, or NULL. Centralised
-// so the bdm + mmce launch paths stay in sync.
+// and leading-slash variants on mc0/mc1) and return the first COMPLETE install (Δ1), or NULL.
+// Centralised so the bdm + mmce launch paths stay in sync.
 const char *sbResolveNeutrinoPath(const char *activePrefix)
 {
     // Neutrino Device (General Settings): a driver-accurate device TYPE (NEUTRINO_DEV_*) that holds
@@ -608,8 +666,8 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
         for (int c = 0; c < nCand; c++) {
             for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
                 snprintf(built, sizeof(built), forms[i], cand[c]);
-                if (sbFileExists(built))
-                    return built;
+                if (sbFileExists(built) && sbNeutrinoInstallComplete(built))
+                    return sbNeutrinoResolved(built);
             }
         }
         // The picked device TYPE had no neutrino.elf -- do NOT dead-end here. Fall through to the AUTO
@@ -620,9 +678,10 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
     }
 
     // Auto: a legacy custom path (settings_riptopl.cfg "neutrino_path") wins when it exists;
-    // otherwise fall back to the mc0:/mc1: auto-detect candidates below.
-    if (gNeutrinoPath[0] != '\0' && sbFileExists(gNeutrinoPath))
-        return gNeutrinoPath;
+    // otherwise fall back to the mc0:/mc1: auto-detect candidates below. A custom path that names
+    // the elf directly (no dir) is honoured as-is (sbNeutrinoInstallComplete returns 1 for it).
+    if (gNeutrinoPath[0] != '\0' && sbFileExists(gNeutrinoPath) && sbNeutrinoInstallComplete(gNeutrinoPath))
+        return sbNeutrinoResolved(gNeutrinoPath);
 
     // PR #300: in AUTO, probe the ACTIVE game device for a co-located neutrino.elf BEFORE the mc0/mc1
     // fallbacks, so a neutrino.elf dropped next to the games (USB/MMCE) just works with zero config.
@@ -651,8 +710,10 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
                 continue;
             for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
                 snprintf(probe, sizeof(probe), forms[i], bases[b]);
-                if (sbFileExists(probe))
-                    return probe;
+                // Δ1: a stale elf-only folder on the ACTIVE game device must NOT shadow a complete
+                // mc0/mc1 install below (the exact "worked once then never" failure) -- skip it.
+                if (sbFileExists(probe) && sbNeutrinoInstallComplete(probe))
+                    return sbNeutrinoResolved(probe);
             }
         }
     }
@@ -668,9 +729,10 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
         "mc1:/NEUTRINO/NEUTRINO.ELF",
     };
     for (int i = 0; i < (int)(sizeof(candidates) / sizeof(candidates[0])); i++) {
-        if (sbFileExists(candidates[i]))
-            return candidates[i];
+        if (sbFileExists(candidates[i]) && sbNeutrinoInstallComplete(candidates[i]))
+            return sbNeutrinoResolved(candidates[i]);
     }
+    LOG("[NEUTRINO] no complete install found (elf without config/system.toml is skipped)\n");
     return NULL;
 }
 
@@ -1100,9 +1162,25 @@ void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, neut
         vmcName[0] = '\0';
         configGetVMC(configSet, vmcName, sizeof(vmcName), slot);
         if (vmcName[0] != '\0') {
-            int n = snprintf(vmcArgs->arg[slot], sizeof(vmcArgs->arg[slot]), "-mc%d=%sVMC/%s.bin", slot, vmcPrefix, vmcName);
-            if (n >= (int)sizeof(vmcArgs->arg[slot])) // truncated -> Neutrino would get an unopenable path; flag it for HW logs
-                LOG("[NEUTRINO] VMC slot %d path truncated (%d bytes); card may not mount\n", slot, n);
+            // Δ2 (NHDDL-parity): Neutrino ABORTS the whole boot when a -mcN VMC file can't be opened
+            // post-reset (no "boot without VMC" fallback -- neutrino fhi_config.c) = black screen. Verify
+            // the .bin exists NOW (mounts are still up; this runs pre-deinit) and skip the arg with a
+            // toast instead of handing Neutrino an unopenable path. The game then boots with its real
+            // card rather than dying. NHDDL never hits this class -- it emits no -mc args at all.
+            char binPath[160]; // matches neutrino_vmc_args_t arg sizing: bdmPrefix(96)+"VMC/"+name(31)+".bin"
+            int b = snprintf(binPath, sizeof(binPath), "%sVMC/%s.bin", vmcPrefix, vmcName);
+            if (b >= (int)sizeof(binPath) || !sbFileExists(binPath)) {
+                LOG("[NEUTRINO] VMC slot %d (%s) not found/oversize -- launching without it\n", slot, vmcName);
+                guiWarning(_l(_STR_NEUTRINO_VMC_MISSING), 6);
+                vmcArgs->arg[slot][0] = '\0';
+                continue;
+            }
+            int n = snprintf(vmcArgs->arg[slot], sizeof(vmcArgs->arg[slot]), "-mc%d=%s", slot, binPath);
+            if (n >= (int)sizeof(vmcArgs->arg[slot])) { // "-mc0=" + path overflowed the arg buffer
+                LOG("[NEUTRINO] VMC slot %d arg truncated (%d bytes) -- launching without it\n", slot, n);
+                guiWarning(_l(_STR_NEUTRINO_VMC_MISSING), 6);
+                vmcArgs->arg[slot][0] = '\0';
+            }
         }
     }
 }
