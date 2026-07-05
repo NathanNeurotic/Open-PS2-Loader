@@ -590,6 +590,13 @@ static void initAllSupport(int force_reinit)
     initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
+
+    // Δ4 (NHDDL parity): arm the MMCE GameID transport HERE -- at boot and on every settings apply --
+    // instead of self-arming inside mmceSendGameID during a launch (an IRX load at the launch's most
+    // fragile moment; issue #51's fix with the timing corrected). Deferred to the IO worker like
+    // udpfsInit's module load; idempotent, and a failure is a harmless LOG at menu time.
+    if (gMMCEEnableGameID)
+        ioPutRequest(IO_CUSTOM_SIMPLEACTION, &mmceArmGameIDTransport);
 }
 
 static void deinitAllSupport(int exception, int modeSelected, int modeSelected2)

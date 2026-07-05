@@ -982,7 +982,8 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // MMCE cross-device game-id (#261): push the disc id to a present SD2PSX/MemCard PRO2 (either slot)
     // so it switches its per-game folder, even though this game is not on the MMCE. Self-probes +
     // no-ops if no card answers / feature off. Must run BEFORE deinit frees `game`.
-    mmceSendGameID(game->startup, coreLoader ? neutrinoPath : NULL);
+    mmceSendGameID(game->startup, coreLoader ? neutrinoPath : NULL,
+                   (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)); // Δ3: -mc-covered slots keep their card
 
     if (gAutoLaunchBDMGame == NULL) {
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino reads its config/modules from the
