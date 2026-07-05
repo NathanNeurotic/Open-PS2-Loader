@@ -665,6 +665,73 @@ static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     hddDoLaunchVcd(itemList, hddVcdGames[idx].name, hddVcdParts[idx]);
 }
 
+// Δ8 (NHDDL parity): the LEAN Neutrino launch path for HDL games -- see bdmTryNeutrinoLaunch's
+// rationale in bdmsupport.c. The native flow's VMC block-chain prompts + mcemu patching, DMA
+// setup, sbPrepare, cheats (with dialogs), PS2RD images and CheckPS2Logo all exist for the
+// embedded cdvdman core; Neutrino re-derives everything from -bsd=ata -bsdfs=hdl -dvd=hdl:<part>
+// after its own IOP reset. The one probe Neutrino DOES need is the ZSO header check (its hdl
+// backend can't run ZSO) -- a single sector read, kept here.
+// Returns 1 = handled (caller returns); 0 = proceed with the native launch.
+static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
+{
+    int coreLoader = 0;
+    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    if (!coreLoader)
+        return 0;
+
+    // ZSO probe (one sector): Neutrino's hdl backend can't run ZSO -- fall back to the native
+    // core, which can. Same read the native path performs for its layer-1 setup.
+    hddReadSectors(game->start_sector + OPL_HDD_MODE_PS2LOGO_OFFSET, 1, IOBuffer);
+    if (*(u32 *)IOBuffer == ZSO_MAGIC) {
+        guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
+        return 0;
+    }
+
+    const char *neutrinoPath = sbResolveNeutrinoPath(NULL); // #300: HDD keeps custom-path + mc0/mc1 + Device-picker resolution (raw APA isn't POSIX-reachable; pfs0 probe = shared-slot risk)
+    if (neutrinoPath == NULL) {
+        guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+        return 0;
+    }
+
+    // Everything Neutrino needs, copied to THIS frame (deinit below frees `game`).
+    int compatMode = 0, neutrinoVideo = 0;
+    char neutrinoExtraArgs[256] = "";
+    char apaPart[APA_IDMAX + 1];
+    configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatMode);
+    configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
+    snprintf(apaPart, sizeof(apaPart), "%s", game->partition_name);
+
+    if (gRememberLastPlayed) {
+        configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
+        saveConfig(CONFIG_LAST, 0);
+    }
+
+    if (sysNeutrinoPreflight("apa", neutrinoPath) < 0) // Δ6 pre-teardown validation
+        return 1;
+
+    // MMCE cross-device game-id (#261); HDD emits no -mc args (VMC->neutrino deferred), mask 0.
+    mmceSendGameID(game->startup, neutrinoPath, 0);
+
+    if (gAutoLaunchGame == NULL) {
+        // Keep-IOP handoff: keep the HDD stack up (NHDDL hands off with its full ATA stack
+        // resident) AND the neutrino.elf device (-cwd config/module reads).
+        int neutrinoDevMode = oplPath2Mode(neutrinoPath);
+        deinitEx(UNMOUNT_EXCEPTION, HDD_MODE, neutrinoDevMode); // CAREFUL: itemCleanUp frees hddGames/game
+    } else {
+        miniDeinit(configSet);
+        free(gAutoLaunchGame);
+        gAutoLaunchGame = NULL;
+        fileXioUmount("pfs0:");
+        fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+    }
+
+    LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
+    // gPS2Logo passes the preference straight through (Neutrino does its own logo work).
+    sysLaunchNeutrino("apa", apaPart, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
+    return 1;
+}
+
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, size_irx = 0;
@@ -690,6 +757,11 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         game = &hddGames.games[id];
     else
         game = gAutoLaunchGame;
+
+    // D8: Neutrino core gets its own lean path FIRST -- everything below is native-core prep it
+    // neither needs nor should be able to die on (see hddTryNeutrinoLaunch).
+    if (hddTryNeutrinoLaunch(game, configSet))
+        return;
 
     apa_sub_t parts[APA_MAXSUB + 1];
     char vmc_name[2][32];
@@ -785,10 +857,6 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int dmaType = 0, dmaMode = 7, compatMode = 0;
     configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatMode);
     configGetInt(configSet, CONFIG_ITEM_DMA, &dmaMode);
-    int coreLoader = 0;
-    int isZSO = 0;
-    char apaPart[APA_IDMAX + 1];
-    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     if (dmaMode < 3)
         dmaType = 0x20;
     else {
@@ -841,7 +909,6 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     settings->common.layer1_start = 0; // cdvdman will read it from APA header
     hddReadSectors(game->start_sector + OPL_HDD_MODE_PS2LOGO_OFFSET, 1, IOBuffer);
     if (*(u32 *)IOBuffer == ZSO_MAGIC) {
-        isZSO = 1;
         probed_fd = 0;
         probed_lba = game->start_sector + OPL_HDD_MODE_PS2LOGO_OFFSET;
         ziso_init((ZISO_header *)IOBuffer, *(u32 *)((u8 *)IOBuffer + sizeof(ZISO_header)));
@@ -852,42 +919,15 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         }
     }
 
-    // Per-game Neutrino core: copy partition_name into a local BEFORE deinit —
-    // deinit / free(gAutoLaunchGame) below free `game`; reading it after is UAF.
-    const char *neutrinoPath = NULL;
-    char neutrinoExtraArgs[256] = ""; // per-game Neutrino flags; copied before deinit frees `game`
-    int neutrinoVideo = 0;            // per-game Neutrino -gsm video mode; copied before deinit
-    if (coreLoader) {
-        configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
-        configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
-        snprintf(apaPart, sizeof(apaPart), "%s", game->partition_name);
-        neutrinoPath = sbResolveNeutrinoPath(NULL); // #300: HDD passes NULL -- the raw APA root isn't POSIX-open-reachable and a pfs0: co-location probe is a single-shared-slot risk (L3-freeze saga), so HDD keeps the custom-path + mc0/mc1 + Device-picker resolution only
-        if (isZSO) {
-            guiWarning(_l(_STR_NEUTRINO_BAD_FORMAT), 6);
-            coreLoader = 0;
-        } else if (neutrinoPath == NULL) {
-            guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
-            coreLoader = 0;
-        }
-    }
+    // D8: Neutrino never reaches this point (hddTryNeutrinoLaunch handled it at the top) --
+    // everything from here on is the NATIVE (embedded cdvdman) launch only.
 
     // MMCE cross-device game-id (#261): push the HDL disc id to a present MMCE card before the HDD
     // teardown (self-probes mmce0/mmce1; no-ops if no card / feature off). Read `game` before deinit.
-    mmceSendGameID(game->startup, coreLoader ? neutrinoPath : NULL, 0); // HDD leg emits no -mc args (VMC->neutrino deferred)
+    mmceSendGameID(game->startup, NULL, 0);
 
     if (gAutoLaunchGame == NULL) {
-        // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): keep the HDD stack up (NHDDL hands off with
-        // its full ATA stack resident) AND the neutrino.elf device (-cwd config/module reads) across
-        // the teardown. An MC-hosted neutrino needs no exception (-1 second slot). ee_core launches
-        // keep the full teardown: everything they need is embedded before deinit.
-        if (coreLoader) {
-            if (sysNeutrinoPreflight("apa", neutrinoPath) < 0) // D6 pre-teardown validation
-                return;
-            int neutrinoDevMode = oplPath2Mode(neutrinoPath);
-            deinitEx(UNMOUNT_EXCEPTION, HDD_MODE, neutrinoDevMode); // CAREFUL: itemCleanUp still frees hddGames/game
-        } else {
-            deinit(NO_EXCEPTION, HDD_MODE); // CAREFUL: deinit will call hddCleanUp, so hddGames/game will be freed
-        }
+        deinit(NO_EXCEPTION, HDD_MODE); // CAREFUL: deinit will call hddCleanUp, so hddGames/game will be freed
     } else {
         miniDeinit(configSet);
 
@@ -896,13 +936,6 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
         fileXioUmount("pfs0:");
         fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
-    }
-
-    // Neutrino core: hand off using the apaPart copy (game is freed above).
-    if (coreLoader) {
-        LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
-        sysLaunchNeutrino("apa", apaPart, compatMode, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
-        return;
     }
 
     settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_DEV9;
