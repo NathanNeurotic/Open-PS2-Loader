@@ -640,23 +640,38 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // (mmceMountVMC). mmceSendGameID waits out the card's busy bit (bounded ~3 s); the
         // MC-hosted-neutrino protect guard is inside the helper (skips + warns when neutrinoPath
         // sits on this slot's mcN:).
-        mmceSendGameID(game->startup, neutrinoPath,
-                       (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)); // Δ3: -mc-covered slots keep their card
-        // NHDDL-parity caveat: NHDDL's neutrino.elf never lives on the MMCE, so it has no reads
-        // left after the switch. Ours can (Auto prefers the game device), and the busy bit can
-        // clear before the card's FILESYSTEM surface is back (Gen2 remounts slowly) -- so when
-        // the loader's next read is from the switched card, wait for its fs to answer a directory
-        // probe (bounded ~5 s; poll-first so a fast card costs ~0 ms).
-        if (neutrinoPath != NULL && !strncmp(neutrinoPath, "mmce", 4)) {
-            char mmceRoot[8];
-            snprintf(mmceRoot, sizeof(mmceRoot), "%.5s:/", neutrinoPath); // "mmceN" + ":/"
-            for (int settle = 0; settle < 25; settle++) {
-                int dfd = fileXioDopen(mmceRoot);
-                if (dfd >= 0) {
-                    fileXioDclose(dfd);
-                    break;
+        int gameIdSwitched = mmceSendGameID(game->startup, neutrinoPath,
+                                            (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)); // Δ3: -mc-covered slots keep their card
+        // Fs-settle after a card switch. The 0x8 devctl physically re-mounts the card, and on Gen2
+        // the busy bit (mmceSendGameID's own wait) can clear before the FILESYSTEM surface is back.
+        // The game on this leg is ALWAYS mmce-hosted, so after any actual switch (gameIdSwitched)
+        // both our own reads below (neutrino.elf load, ISO open for the keep-IOP handoff) AND
+        // Neutrino's own post-reset mmceman read hit the just-switched card. Wait for the SWITCHED
+        // slot's fs to answer a directory probe first. Prior code gated this on an mmce-hosted
+        // neutrino.elf, which MISSED the game-on-MMCE / neutrino-on-USB case entirely: the card
+        // still switched (for the game's per-game folder) but nothing waited (issue #56/#68, lucas:
+        // "neutrino on USB, game from MMCE" froze on some titles). Probe the game's own slot (the
+        // one mmceSendGameID switched) -- covers both-on-MMCE (same slot) too. Poll-first so a fast
+        // card costs ~0 ms; bounded (~5 s) so a dead card can't hang; LOG each outcome so a debug
+        // ELF can distinguish "settling" from "hung" and localise a black screen to OPL vs Neutrino.
+        if (gameIdSwitched) {
+            char mmceRoot[sizeof(mmcePrefix)];
+            mmceGetDeviceRoot(mmceRoot, sizeof(mmceRoot)); // the game's slot ("mmceN:/")
+            if (mmceRoot[0] != '\0') {
+                int settled = 0, settle;
+                for (settle = 0; settle < 25; settle++) {
+                    int dfd = fileXioDopen(mmceRoot);
+                    if (dfd >= 0) {
+                        fileXioDclose(dfd);
+                        settled = 1;
+                        break;
+                    }
+                    DelayThread(200 * 1000);
                 }
-                DelayThread(200 * 1000);
+                if (settled)
+                    LOG("MMCE settle: %s fs surface up after ~%d ms\n", mmceRoot, settle * 200);
+                else
+                    LOG("MMCE settle: %s fs surface not back within ~5000 ms; launching anyway\n", mmceRoot);
             }
         }
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino opens the mmce-hosted game through
