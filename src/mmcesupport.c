@@ -586,6 +586,16 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (coreLoader) {
         char mmcePartname[256];
         snprintf(mmcePartname, sizeof(mmcePartname), "%s", partname); // defensive copy across the deinit teardown (partname is a stack buffer, not freed by deinit)
+        // Neutrino bypasses OPL's mcemu, so the VMC fds opened above go unused on this path --
+        // close them instead of leaking until the IOP reset (B3). Closed BEFORE the GameID push
+        // below (Beta-2947 hardware report): the 0x8 switch physically re-mounts the card, and
+        // closing a handle opened against the PRE-switch filesystem afterwards wedged mmceman --
+        // the GUI froze the instant the GameID appeared on the card. NHDDL's ordering has ZERO
+        // mmce filesystem traffic after its mmceMountVMC; match it as closely as we can.
+        if (vmc_fds[0] >= 0)
+            fileXioClose(vmc_fds[0]);
+        if (vmc_fds[1] >= 0)
+            fileXioClose(vmc_fds[1]);
         // GameID for the NEUTRINO core (issue #68): the native OPL-core launch deliberately does
         // NOT push a launcher GameID (see the issue-#50 note below -- in OPL core the in-game
         // card is OPL's mcemu, and a mid-launch re-switch froze early-MC-probing games). That
@@ -593,16 +603,27 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // REAL emulated-MC surface -- and nothing else ever tells the card which game is
         // starting, so its per-game folder never engaged (USB-hosted games via Neutrino DID work:
         // the cross-device paths all send it). NHDDL does exactly this before launching neutrino
-        // (mmceMountVMC). mmceSendGameID waits out the card's busy bit (bounded ~3 s), so the
-        // #50 mid-launch-switch race does not apply; the MC-hosted-neutrino protect guard is
-        // inside the helper (skips + warns when neutrinoPath sits on this slot's mcN:).
+        // (mmceMountVMC). mmceSendGameID waits out the card's busy bit (bounded ~3 s); the
+        // MC-hosted-neutrino protect guard is inside the helper (skips + warns when neutrinoPath
+        // sits on this slot's mcN:).
         mmceSendGameID(game->startup, neutrinoPath);
-        // Neutrino bypasses OPL's mcemu, so the VMC fds opened above go unused on
-        // this path — close them instead of leaking until the IOP reset (B3).
-        if (vmc_fds[0] >= 0)
-            fileXioClose(vmc_fds[0]);
-        if (vmc_fds[1] >= 0)
-            fileXioClose(vmc_fds[1]);
+        // NHDDL-parity caveat: NHDDL's neutrino.elf never lives on the MMCE, so it has no reads
+        // left after the switch. Ours can (Auto prefers the game device), and the busy bit can
+        // clear before the card's FILESYSTEM surface is back (Gen2 remounts slowly) -- so when
+        // the loader's next read is from the switched card, wait for its fs to answer a directory
+        // probe (bounded ~5 s; poll-first so a fast card costs ~0 ms).
+        if (neutrinoPath != NULL && !strncmp(neutrinoPath, "mmce", 4)) {
+            char mmceRoot[8];
+            snprintf(mmceRoot, sizeof(mmceRoot), "%.5s:/", neutrinoPath); // "mmceN" + ":/"
+            for (int settle = 0; settle < 25; settle++) {
+                int dfd = fileXioDopen(mmceRoot);
+                if (dfd >= 0) {
+                    fileXioDclose(dfd);
+                    break;
+                }
+                DelayThread(200 * 1000);
+            }
+        }
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino opens the mmce-hosted game through
         // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
         // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).
