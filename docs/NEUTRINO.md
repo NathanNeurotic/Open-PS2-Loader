@@ -137,7 +137,7 @@ FILESYSTEM (`udpfs:`), Image is the `udpfs_bd` BLOCK device (`massN:`).
 |---|---|---|
 | IOP driver | `udpfs_ioman.irx` → `udpfs:` (filesystem) | `udpfs_bd.irx` → `massN:` (block device) |
 | PC serves | a folder containing **`CD/` and `DVD/` subfolders** of ISOs (the standard OPL layout — OPL lists from `<served>/CD` + `<served>/DVD`, NOT from the folder root) | a **FAT/exFAT disk image** |
-| Server command | `udpfsd -d <dir>` | `udpfsd -b <image>` |
+| Server command | `udpfsd -fsroot <dir>` | `udpfsd -bdpath <image>` |
 | Launch | by name (`-dvd=udpfs:<name>`, stock `-bsd=udpfs`) — no `massN:`, no fragment list | mounted like a USB drive (`massN:`, fragment-list launch) |
 | Add a game | drop it into the served `CD/` or `DVD/` folder | mount the image, copy, unmount |
 | Compression | transparent `.zso`/`.cso`/`.chd` | — (raw sectors only) |

@@ -1215,9 +1215,13 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
         }
     }
 
-    // UDPFS launches: Neutrino's ministack reads its IP from the bsd toml, not from OPL's network
-    // config -- sync it so the games that just LISTED over the network also BOOT over it.
-    if (!strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd"))
+    // Network launches: Neutrino's ministack reads its IP from the bsd toml, not from OPL's network
+    // config -- sync it so the games that just LISTED over the network also BOOT over it. This MUST
+    // cover udpbd too: the stock bsd-udpbd.toml hardcodes ip=192.168.1.10 with the same args=["ip=...]
+    // quoting the helper anchors on, and Neutrino has NO other IP channel (no CLI/env option; -cfg
+    // loads BEFORE the bsd toml and module re-declaration is last-wins) -- without the sync, UDPBD
+    // games list fine (browse uses ps2_ip) then black-screen on boot for any subnet but 192.168.1.x.
+    if (!strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") || !strcmp(deviceName, "udpbd"))
         sysSyncNeutrinoUdpfsToml(neutrinoPath, deviceName);
 
     // Append user-supplied Neutrino flags: global defaults first, then the per-game
