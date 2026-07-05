@@ -53,8 +53,12 @@ static void wipeUserMem(void)
     }
 }
 
-// argv[0] = path to the target ELF; the full argv is forwarded to it verbatim
-// (the ExecPS2 syscall marshals the strings, so wiping user memory is safe).
+// argv[0] = path of the ELF to LOAD; argv[1..] = the target's FULL argv, forwarded verbatim
+// (argv[1] becomes the target's argv[0]). The caller CONTROLS the target's argv[0]: Neutrino
+// gets its own path (NHDDL convention), POPSTARTER gets the "XX./SB." selector it string-parses
+// to pick its backend -- the stock SDK loader clobbers argv[0] with the load path, which is
+// exactly what sent POPSTARTER down its HDD "__common" route on every non-HDD VCD launch.
+// The ExecPS2 syscall marshals the strings, so wiping user memory is safe.
 int main(int argc, char *argv[])
 {
     static t_ExecData elfdata;
@@ -62,7 +66,7 @@ int main(int argc, char *argv[])
 
     elfdata.epc = 0;
 
-    if (argc < 1)
+    if (argc < 2)
         return -EINVAL;
 
     SifInitRpc(0);
@@ -76,7 +80,7 @@ int main(int argc, char *argv[])
     if (ret == 0 && elfdata.epc != 0) {
         FlushCache(0);
         FlushCache(2);
-        return ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, argc, argv);
+        return ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, argc - 1, &argv[1]);
     } else {
         SifExitRpc();
         return -ENOENT;

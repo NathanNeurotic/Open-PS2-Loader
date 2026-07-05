@@ -1067,9 +1067,15 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     char compatModes[32] = ""; // stays empty when no compat modes are forwarded (B1)
     char globalArgsBuf[256];   // mutable copy of gNeutrinoArgs for tokenizing (tokens point in)
     char extraArgsBuf[256];    // mutable copy of the per-game extraArgs for tokenizing
-    char *argv[32];            // auto args (max ~6) + tokenized user flags
+    char *argv[32];            // target argv[0] + auto args (max ~6) + tokenized user flags
     int argc = 0;
     const int argvMax = (int)(sizeof(argv) / sizeof(argv[0]));
+
+    // Target argv[0] = neutrino.elf's own path (NHDDL convention). sysLoadELFKeepIOP forwards
+    // argv verbatim -- argv[0] included -- so this must be supplied explicitly here (POPSTARTER
+    // launches use the same loader with a selector as argv[0] instead).
+    if (argc < argvMax)
+        argv[argc++] = (char *)neutrinoPath;
 
     if (!strcmp(deviceName, "apa")) {
         snprintf(bsd, sizeof(bsd), "-bsd=ata");
@@ -1188,7 +1194,24 @@ void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const 
     char *argv[1];
     argv[0] = (char *)selector;
     LOG("[POPS] elf=%s argv0=%s part=%s\n", popstarterElf, selector, partition ? partition : "");
-    LoadELFFromFileWithPartition(popstarterElf, partition ? partition : "", 1, argv);
+
+    if (partition != NULL && partition[0] != '\0') {
+        // HDD/APA launches keep the classic resetting loader: the partition-context handoff is
+        // the hardware-proven PP. path, and POPSTARTER's HDD route is the CORRECT one there.
+        LoadELFFromFileWithPartition(popstarterElf, partition, 1, argv);
+        return;
+    }
+
+    // BDMA/SMB: POPSTARTER string-parses ARGV[0] for the XX./SB. selector prefix to pick its
+    // backend. The stock SDK loader CLOBBERS the target's argv[0] with "<partition><filename>"
+    // and shifts the selector to argv[1] -- POPSTARTER then saw a prefixless "POPSTARTER.ELF"
+    // basename, took its HDD route, and died on "__common" (issues #56/#69: PS1 launch failing
+    // on every non-HDD device, regardless of the selector STRING, which PR #66 already fixed).
+    // Hand off via the argv-preserving no-reset loader instead -- POPSLoader parity: its loader
+    // "preserves caller args" and defaults REBOOT_IOP_WHILE_LOADING_POPSTARTER=0; POPSTARTER
+    // does its own IOP reset and reloads its drivers from the MC regardless.
+    if (sysLoadELFKeepIOP(popstarterElf, "", 1, argv) < 0)
+        LOG("[POPS] keep-IOP handoff failed for %s\n", popstarterElf);
 }
 
 void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdvdman_irx, void **cdvdman_irx, int size_mcemu_irx, void **mcemu_irx, int EnablePS2Logo, unsigned int compatflags)

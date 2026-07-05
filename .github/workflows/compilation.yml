@@ -94,10 +94,11 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
 
-      - name: Install coherent MMCE driver (latest-only)
-        # Rebuild mmceman/mmcedrv/mmceigr from ps2-mmce (with the 2026-06-14 sio2man-compat fix)
-        # over the container SDK prebuilts (pinned to the desynced v2.1.1) so the driver matches
-        # the container post-refactor sio2man -- fixes the MMCE menu + in-game freezes. See script.
+      - name: Install menu-coherent mmceman (latest-only)
+        # Rebuild mmceman ONLY from ps2-mmce (with the 2026-06-14 sio2man-compat fix) over the
+        # container SDK prebuilt (pinned to the desynced v2.1.1) -- fixes the MMCE MENU freeze.
+        # The in-game mmcedrv/mmceigr stay the SDK stock prebuilts: same source as the pin, and
+        # the stock binaries are field-proven in-game where our rebuild was not. See script header.
         run: sh ./.github/scripts/install_coherent_mmce.sh
 
       - name: Compile -> make clean release
@@ -215,10 +216,11 @@ jobs:
         run: |
           echo "OPL_VERSION=$(make oplversion)" >> "$GITHUB_ENV"
 
-      - name: Install coherent MMCE driver (latest-only)
-        # Rebuild mmceman/mmcedrv/mmceigr from ps2-mmce (with the 2026-06-14 sio2man-compat fix)
-        # over the container SDK prebuilts (pinned to the desynced v2.1.1) so the driver matches
-        # the container post-refactor sio2man -- fixes the MMCE menu + in-game freezes. See script.
+      - name: Install menu-coherent mmceman (latest-only)
+        # Rebuild mmceman ONLY from ps2-mmce (with the 2026-06-14 sio2man-compat fix) over the
+        # container SDK prebuilt (pinned to the desynced v2.1.1) -- fixes the MMCE MENU freeze.
+        # The in-game mmcedrv/mmceigr stay the SDK stock prebuilts: same source as the pin, and
+        # the stock binaries are field-proven in-game where our rebuild was not. See script header.
         run: sh ./.github/scripts/install_coherent_mmce.sh
 
       - name: Compile -> make ${{ matrix.extra }} ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
@@ -465,10 +467,11 @@ jobs:
         run: |
           echo "OPL_VERSION=$(make oplversion)" >> "$GITHUB_ENV"
 
-      - name: Install coherent MMCE driver (latest-only)
-        # Rebuild mmceman/mmcedrv/mmceigr from ps2-mmce (with the 2026-06-14 sio2man-compat fix)
-        # over the container SDK prebuilts (pinned to the desynced v2.1.1) so the driver matches
-        # the container post-refactor sio2man -- fixes the MMCE menu + in-game freezes. See script.
+      - name: Install menu-coherent mmceman (latest-only)
+        # Rebuild mmceman ONLY from ps2-mmce (with the 2026-06-14 sio2man-compat fix) over the
+        # container SDK prebuilt (pinned to the desynced v2.1.1) -- fixes the MMCE MENU freeze.
+        # The in-game mmcedrv/mmceigr stay the SDK stock prebuilts: same source as the pin, and
+        # the stock binaries are field-proven in-game where our rebuild was not. See script header.
         run: sh ./.github/scripts/install_coherent_mmce.sh
 
       - name: Compile -> make debug

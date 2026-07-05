@@ -1,21 +1,27 @@
 #!/bin/sh
-# Install a COHERENT MMCE driver trio (mmceman/mmcedrv/mmceigr) into the container's
-# $(PS2SDK)/iop/irx, replacing the SDK-provided prebuilts, for the ps2dev/ps2dev:latest build.
+# Install a MENU-coherent mmceman into the container's $(PS2SDK)/iop/irx, replacing the
+# SDK-provided prebuilt, for the ps2dev/ps2dev:latest build. mmcedrv/mmceigr (the IN-GAME
+# modules) are deliberately LEFT AS THE CONTAINER'S STOCK PREBUILTS.
 #
-# WHY: the ps2dev:latest container gets its mmceman/mmcedrv/mmceigr via ps2sdk-ports, pinned to
+# WHY (menu / mmceman): the ps2dev:latest container gets its mmce trio via ps2sdk-ports, pinned to
 # ps2-mmce v2.1.1 (979dd77e, 2026-03-07) -- which PREDATES the 2026-06-14 "Changes to mmceman for
 # ps2sdk sio2man updates" fix (cccc366). The same container's sio2man is the post-May-2026 refactor,
-# so the pinned v2.1.1 driver's sio2man hook is DESYNCED from the runtime sio2man. That mismatch
-# hangs MMCE both in the menu (cover-art reads freeze after the list populates) and in-game (freeze
-# after the PS2 logo): short SIO2 exchanges (dir enumeration) happen to work, sustained transfers
-# (a PNG read, ISO streaming) hit the broken arbitration. The pinned ps2max/dev build is unaffected
-# (its SDK ships a July-2025 mmceman coherent with its July-2025 sio2man), so this is latest-only.
+# so the pinned v2.1.1 mmceman's sio2man hook is DESYNCED from the runtime sio2man: short SIO2
+# exchanges (dir enumeration) happen to work, sustained transfers (cover-art PNG reads) freeze the
+# menu. Rebuilding mmceman from MMCE_PIN (includes cccc366) fixed this -- hardware-confirmed.
 #
-# FIX: build the trio from ps2-mmce @ MMCE_PIN (the "latest" tag db3e93f0, which INCLUDES the
-# sio2man-compat fix) against THIS container's SDK, so the hook matches the container's sio2man,
-# then drop the IRX into $(PS2SDK)/iop/irx. The OPL Makefile's MMCE_ASSETS_DIR already points there,
-# so every subsequent make (ELF, cdvdman/mcemu USE_MMCE modules, variants, debug) embeds the
-# coherent driver with no further changes. Idempotent: safe to run once per job before building.
+# WHY NOT mmcedrv/mmceigr (in-game): mmcedrv drives SIO2 directly (its import table has NO sio2man
+# dependency -- verified by binary import-table parse), and its SOURCE is UNCHANGED between the
+# v2.1.1 pin and MMCE_PIN (`git diff v2.1.1..db3e93f0 -- mmcedrv` is empty). Our repo-Makefile
+# rebuild on the new toolchain produced a DIFFERENT binary (10009 vs 11337 bytes) that FAILED
+# in-game on hardware (issue #56/#68 reports, 2026-07-05: OPL-core MMCE games broken on the
+# "latest" flavour but fine on the "woplsdk" flavour, whose only relevant delta is stock-vs-rebuilt
+# mmcedrv). The stock ports-built binary is field-proven in-game (wOPL ships the byte-identical
+# file). Same source, proven binary: keep stock.
+#
+# The OPL Makefile's MMCE_ASSETS_DIR points at $(PS2SDK)/iop/irx, so every subsequent make (ELF,
+# cdvdman/mcemu USE_MMCE modules, variants, debug) picks this mix up with no further changes.
+# Idempotent: safe to run once per job before building.
 #
 # Pin is an immutable SHA (the "latest" tag is force-moved upstream). Bump deliberately.
 set -eu
@@ -30,26 +36,28 @@ WORK="$(mktemp -d)"
 # Clean up on normal exit AND on the signals a CI cancel/timeout sends -- some ash/dash builds don't
 # run the EXIT trap on signal termination, so name them explicitly (harmless where EXIT already covers it).
 trap 'rm -rf "$WORK"' EXIT TERM INT HUP
-echo "== Building coherent MMCE driver from ps2-mmce @ ${MMCE_PIN} =="
+echo "== Building menu-coherent mmceman from ps2-mmce @ ${MMCE_PIN} =="
 git clone --quiet "$MMCE_REPO" "$WORK/mmceman"
 git -C "$WORK/mmceman" checkout --quiet "$MMCE_PIN"
 
 # Older-SDK make quirk: the per-module obj dir isn't auto-created by every Makefile.iopglobal
-# vintage -- pre-create them so the first compile step doesn't fail on a missing directory.
-mkdir -p "$WORK/mmceman/mmceman/obj" "$WORK/mmceman/mmcedrv/obj" "$WORK/mmceman/mmceigr/obj"
+# vintage -- pre-create it so the first compile step doesn't fail on a missing directory.
+mkdir -p "$WORK/mmceman/mmceman/obj"
 
-make -C "$WORK/mmceman"
+make -C "$WORK/mmceman/mmceman"
 
-installed=0
-for m in mmceman mmcedrv mmceigr; do
-    src="$WORK/mmceman/$m/irx/$m.irx"
-    if [ ! -f "$src" ]; then
-        echo "ERROR: $m.irx was not produced by the ps2-mmce build" >&2
+src="$WORK/mmceman/mmceman/irx/mmceman.irx"
+if [ ! -f "$src" ]; then
+    echo "ERROR: mmceman.irx was not produced by the ps2-mmce build" >&2
+    exit 1
+fi
+cp -f "$src" "$DEST/mmceman.irx"
+echo "  installed mmceman.irx ($(wc -c < "$src") bytes) -> $DEST/"
+for m in mmcedrv mmceigr; do
+    if [ ! -f "$DEST/$m.irx" ]; then
+        echo "ERROR: stock $m.irx missing from the SDK prebuilts" >&2
         exit 1
     fi
-    cp -f "$src" "$DEST/$m.irx"
-    echo "  installed $m.irx ($(wc -c < "$src") bytes) -> $DEST/"
-    installed=$((installed + 1))
+    echo "  keeping STOCK $m.irx ($(wc -c < "$DEST/$m.irx") bytes) in $DEST/ (in-game, field-proven)"
 done
-[ "$installed" -eq 3 ] || { echo "ERROR: expected 3 MMCE IRX, installed $installed" >&2; exit 1; }
-echo "== Coherent MMCE driver installed over the SDK prebuilts =="
+echo "== Menu-coherent mmceman installed; in-game mmcedrv/mmceigr remain the SDK stock prebuilts =="
