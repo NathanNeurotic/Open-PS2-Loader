@@ -381,19 +381,59 @@ void sysExecExit(void)
     exit(0);
 }
 
-// Boot the physical PS2 disc in the drive. The boot ELF name (SLXX_NNN.NN) is derived from the
-// disc key via sceCdReadKey(0x004B) -- the same low-level command sysGetDiscID already uses -- so
-// NO cdrom0: filesystem access (and no extra IOP modules) is needed. Always boots through
-// rom0:PS2LOGO (which performs the disc region/auth check). PS2 discs only. Returns a negative
-// code (and stays in OPL) on failure; on success it tears OPL down and never returns.
-// Key->name derivation mirrors PS2BBL's PS2GetBootFile (non-China path).
+// Parse SYSTEM.CNF text for "BOOT2 = <path>" and copy the path into out. Returns 0 on success.
+// Retail discs are tiny uppercase "KEY = value" files, but stay defensive (PR #75 review): match
+// the key case-insensitively, require the '=' on the SAME line right after the key (a naive
+// strchr could walk across a newline on a malformed file and grab the wrong line's value), and
+// keep scanning past substring hits so a "BOOT2" inside another value can't shadow the real key.
+static int sysParseBoot2(const char *cnf, char *out, int outSize)
+{
+    const char *p = cnf;
+
+    if (outSize <= 0)
+        return -1;
+
+    while (*p != '\0') {
+        if (strncasecmp(p, "BOOT2", 5) == 0) {
+            const char *eq = p + 5;
+            while (*eq == ' ' || *eq == '\t')
+                eq++;
+            if (*eq == '=') {
+                int i = 0;
+                eq++;
+                while (*eq == ' ' || *eq == '\t')
+                    eq++;
+                while (*eq != '\0' && *eq != '\r' && *eq != '\n' && *eq != ' ' && *eq != '\t' && i < outSize - 1)
+                    out[i++] = *eq++;
+                out[i] = '\0';
+                return (i > 0) ? 0 : -1;
+            }
+            p += 5;
+        } else {
+            p++;
+        }
+    }
+    return -1;
+}
+
+// Boot the physical PS2 disc in the drive, always through rom0:PS2LOGO (which performs the disc
+// region/auth check). PS2 discs only. Returns a negative code (and stays in OPL) on failure; on
+// success it tears OPL down and never returns.
+//
+// The boot path comes from the disc's OWN SYSTEM.CNF "BOOT2" line -- full PS2BBL/OSDSYS parity
+// (PS2BBL's PS2DiscBoot execs the BOOT2 value and uses the key-derived name only as a
+// cross-check). The previous revision booted the sceCdReadKey(0x004B)-DERIVED name alone; a
+// key read that returns plausible-but-wrong bytes then produces a nonexistent cdrom0: path, so
+// PS2LOGO shows the logo (the DISC authenticates fine) and falls through to OSDSYS/boot.elf --
+// exactly issue #73's report (SCPH-77001 + FMCB). The derivation is kept as the FALLBACK when
+// SYSTEM.CNF is unreadable, and as a logged cross-check otherwise.
 int sysLaunchDisc(void)
 {
     u8 key[16];
-    char boot[16], path[64];
+    char boot[16], path[64], cnf[1024];
     char *args[1];
     u32 k32;
-    int type;
+    int type, fd, len;
 
     if (sceCdStatus() == SCECdErOPENS) // tray open
         return -1;
@@ -407,27 +447,50 @@ int sysLaunchDisc(void)
 
     sceCdDiskReady(0);
 
-    if (sceCdReadKey(0, 0, 0x004B, key) == 0 || sceCdGetError() != 0) // disc key unreadable
-        return -3;
+    // Primary: the disc's SYSTEM.CNF BOOT2 line (what OSDSYS itself boots).
+    path[0] = '\0';
+    fd = open("cdrom0:\\SYSTEM.CNF;1", O_RDONLY);
+    if (fd >= 0) {
+        len = read(fd, cnf, sizeof(cnf) - 1);
+        close(fd);
+        if (len > 0) {
+            cnf[len] = '\0';
+            if (sysParseBoot2(cnf, path, sizeof(path)) != 0)
+                path[0] = '\0';
+        }
+    }
 
-    boot[11] = '\0';
-    k32 = (key[4] >> 3) | (key[14] >> 3 << 5) | ((key[0] & 0x7F) << 10);
-    boot[10] = '0' + (k32 % 10);
-    boot[9] = '0' + (k32 / 10 % 10);
-    boot[8] = '.';
-    boot[7] = '0' + (k32 / 10 / 10 % 10);
-    boot[6] = '0' + (k32 / 10 / 10 / 10 % 10);
-    boot[5] = '0' + (k32 / 10 / 10 / 10 / 10 % 10);
-    boot[4] = '_';
-    boot[3] = (key[0] >> 7) | ((key[1] & 0x3F) << 1);
-    boot[2] = (key[1] >> 6) | ((key[2] & 0x1F) << 2);
-    boot[1] = (key[2] >> 5) | ((key[3] & 0xF) << 3);
-    boot[0] = ((key[4] & 0x7) << 4) | (key[3] >> 4);
+    // Fallback + cross-check: derive the boot name from the disc key (PS2BBL PS2GetBootFile,
+    // non-China path). Best-effort: if BOOT2 was parsed, a key failure no longer matters.
+    boot[0] = '\0';
+    if (sceCdReadKey(0, 0, 0x004B, key) != 0 && sceCdGetError() == 0) {
+        boot[11] = '\0';
+        k32 = (key[4] >> 3) | (key[14] >> 3 << 5) | ((key[0] & 0x7F) << 10);
+        boot[10] = '0' + (k32 % 10);
+        boot[9] = '0' + (k32 / 10 % 10);
+        boot[8] = '.';
+        boot[7] = '0' + (k32 / 10 / 10 % 10);
+        boot[6] = '0' + (k32 / 10 / 10 / 10 % 10);
+        boot[5] = '0' + (k32 / 10 / 10 / 10 / 10 % 10);
+        boot[4] = '_';
+        boot[3] = (key[0] >> 7) | ((key[1] & 0x3F) << 1);
+        boot[2] = (key[1] >> 6) | ((key[2] & 0x1F) << 2);
+        boot[1] = (key[2] >> 5) | ((key[3] & 0xF) << 3);
+        boot[0] = ((key[4] & 0x7) << 4) | (key[3] >> 4);
+        if (boot[0] < 'A' || boot[0] > 'Z') // sanity: a real boot name starts with a letter
+            boot[0] = '\0';
+    }
 
-    if (boot[0] < 'A' || boot[0] > 'Z') // sanity: a real boot name starts with a letter (e.g. 'S')
-        return -3;
+    if (path[0] == '\0') {
+        if (boot[0] == '\0') // neither source produced a boot path
+            return -3;
+        snprintf(path, sizeof(path), "cdrom0:\\%s;1", boot);
+        LOG("[DISC] SYSTEM.CNF unavailable; using key-derived name\n");
+    } else if (boot[0] != '\0' && strstr(path, boot) == NULL) {
+        // BOOT2 wins (it is what the browser boots); the mismatch is diagnostic gold for #73.
+        LOG("[DISC] key-derived name %s does not match BOOT2 %s -- booting BOOT2\n", boot, path);
+    }
 
-    snprintf(path, sizeof(path), "cdrom0:\\%s;1", boot);
     LOG("[DISC] booting %s\n", path);
 
     deinit(NO_EXCEPTION, IO_MODE_SELECTED_ALL); // tear OPL down (mirrors sysExecExit)
