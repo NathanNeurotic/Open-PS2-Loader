@@ -127,7 +127,9 @@ static int loadElfViaFileXio(const char *path, u32 *entry)
     if (fd < 0)
         return -1;
 
-    if (readAll(fd, &eh, sizeof(eh)) != 0 || _lw((u32)&eh.ident) != ELF_MAGIC || eh.phnum == 0) {
+    // phentsize must match our struct or the per-header stride below reads garbage.
+    if (readAll(fd, &eh, sizeof(eh)) != 0 || _lw((u32)&eh.ident) != ELF_MAGIC || eh.phnum == 0 ||
+        eh.phentsize != sizeof(elf_pheader_t)) {
         fileXioClose(fd);
         return -1;
     }
@@ -140,6 +142,15 @@ static int loadElfViaFileXio(const char *path, u32 *entry)
         }
         if (ph.type != ELF_PT_LOAD || ph.memsz == 0)
             continue;
+        // Defensive bounds: a truncated/half-copied ELF (a real hazard on flaky cards) must fail
+        // CLEANLY here -- into the SifLoadElf fallback / -ENOENT -- not scribble over the kernel
+        // or this loader (below 0x100000) or wrap past the end of RAM. The memsz-vs-RAM test runs
+        // FIRST so the subtraction in the last clause cannot underflow.
+        if (ph.filesz > ph.memsz || (u32)ph.vaddr < 0x100000 ||
+            ph.memsz > (u32)GetMemorySize() || (u32)ph.vaddr > (u32)GetMemorySize() - ph.memsz) {
+            fileXioClose(fd);
+            return -1;
+        }
         if (ph.filesz > 0) {
             if (fileXioLseek(fd, ph.offset, SEEK_SET) < 0 || readAll(fd, ph.vaddr, ph.filesz) != 0) {
                 fileXioClose(fd);
