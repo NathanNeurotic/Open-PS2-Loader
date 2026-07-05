@@ -14,15 +14,20 @@
 # config/modules and the game through those mounts, then performs its own
 # IOP reset.
 #
-# The target is read via fileXio (iomanX) FIRST, falling back to SifLoadElf
-# (rom0:LOADFILE, plain ioman) only if that fails. The ROM LOADFILE cannot
-# see iomanX-ONLY filesystems: mmceman registers its mmceN: device with
-# iomanX and never with ioman (binary import tables: mmceman imports iomanx,
-# while bdmfs_fatfs imports ioman) -- so an MMCE-hosted neutrino.elf probed
-# fine from OPL (fileXio) but SifLoadElf() returned -ENOENT here, black-
-# screening every neutrino-on-MMCE launch. fileXio reaches ioman devices
-# too, so one load path now covers mass/mc/mmce/pfs/smb uniformly -- and it
-# matches how OPL resolved the path in the first place.
+# The target is read via SifLoadElf (rom0:LOADFILE) FIRST, with fileXio
+# (iomanX) as the rescue path. Both are needed:
+#   * LOADFILE cannot see iomanX-ONLY filesystems -- mmceman registers its
+#     mmceN: device with iomanX and never with ioman (binary import tables:
+#     mmceman imports iomanx, bdmfs_fatfs imports ioman) -- so an MMCE-hosted
+#     neutrino.elf probed fine from OPL (fileXio) but SifLoadElf() returned
+#     -ENOENT here. LOADFILE fails CLEANLY on those, and fileXio takes over.
+#   * The SDK's EE fileXio client is a moving target: the 2026-05 snapshot
+#     (the -woplsdk flavour's container) sits between the 2026-06-03 "SIF
+#     binding handling" and 2026-06-17 "cleaner (re-)initialization" fixes,
+#     and its client misloads from a fresh child program -- VCD/POPSTARTER
+#     launches on that flavour bounced to OSDSYS when fileXio was primary.
+#     Keeping the battle-tested LOADFILE first means ioman-visible devices
+#     (mass/mc, i.e. every POPSTARTER launch) never touch the fragile client.
 */
 
 #include <kernel.h>
@@ -190,13 +195,7 @@ int main(int argc, char *argv[])
     // Writeback data cache before loading ELF.
     FlushCache(0);
 
-    if (loadElfViaFileXio(argv[0], &entry) == 0) {
-        FlushCache(0);
-        FlushCache(2);
-        return ExecPS2((void *)entry, NULL, argc - 1, &argv[1]);
-    }
-
-    // Fallback: the classic LOADFILE path (covers an environment without a resident fileXio).
+    // Primary: the classic LOADFILE path (see header -- every ioman-visible device stays on it).
     elfdata.epc = 0;
     SifLoadFileInit();
     ret = SifLoadElf(argv[0], &elfdata);
@@ -205,8 +204,15 @@ int main(int argc, char *argv[])
         FlushCache(0);
         FlushCache(2);
         return ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, argc - 1, &argv[1]);
-    } else {
-        SifExitRpc();
-        return -ENOENT;
     }
+
+    // Rescue: fileXio (iomanX) for the devices LOADFILE cannot see (mmceN:, pfs, ...).
+    if (loadElfViaFileXio(argv[0], &entry) == 0) {
+        FlushCache(0);
+        FlushCache(2);
+        return ExecPS2((void *)entry, NULL, argc - 1, &argv[1]);
+    }
+
+    SifExitRpc();
+    return -ENOENT;
 }
