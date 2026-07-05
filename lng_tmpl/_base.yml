@@ -927,3 +927,7 @@ gui_strings:
   string: Neutrino cannot launch from this device -- launch aborted.
 - label: NEUTRINO_TOML_SYNC_FAILED
   string: Neutrino network config (bsd toml) missing or unwritable -- launch aborted, check the neutrino folder.
+- label: NEUTRINO_TOO_FRAGMENTED
+  string: Too fragmented for Neutrino (%d fragments, limit %d incl. VMCs) -- trying the OPL core instead.
+- label: NEUTRINO_TOO_FRAGMENTED_NET
+  string: Too fragmented for Neutrino (%d fragments, limit %d incl. VMCs) -- defragment on the PC; launch aborted.

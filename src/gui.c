@@ -2402,6 +2402,15 @@ void guiShowGameID(const char *startup)
 
 void guiWarning(const char *text, int count)
 {
+    // Pre-GUI callers exist: autolaunch (miniInit) never runs rmInit/thmInit/guiInit, so
+    // rendering here would draw through a NULL gsGlobal/gTheme. Launch-path helpers shared
+    // between menu and autolaunch (the Δ2/Δ8/Δ9 toasts) rely on this guard instead of each
+    // call site checking the autolaunch globals.
+    if (gTheme == NULL) {
+        LOG("guiWarning (pre-GUI): %s\n", text);
+        return;
+    }
+
     guiStartFrame();
 
     guiShow();
