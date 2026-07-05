@@ -41,6 +41,11 @@ typedef struct neutrino_vmc_args
 
 void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, const neutrino_vmc_args_t *vmcArgs);
 
+// D6 pre-deinit launch pre-flight: validates the driver token and (network transports) syncs the
+// bsd toml ip= while every mount is up and the GUI can still toast. Call BEFORE deinitEx in every
+// Neutrino leg. Returns 0 = proceed; <0 = abort the launch (a toast has already been shown).
+int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath);
+
 // Launch an external POPSTARTER.ELF for a PS1 VCD. selector = the argv[0] "<POPS>/<prefix><name>.ELF"
 // token; partition = "" for non-HDD. Caller deinit()s with UNMOUNT_EXCEPTION first (see system.c).
 void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const char *partition);

@@ -48,7 +48,7 @@ static base_game_info_t *mmceGames;
 // forward declaration
 static item_list_t mmceGameList;
 static void mmceGetDeviceRoot(char *root, size_t size);
-static int mmceModLoaded; // defined next to mmceLoadModules below; read by mmceSendGameID's arm check
+static int mmceModLoaded = 0; // latched by mmceLoadModules; read by mmceSendGameID's arm check
 
 int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMask)
 {
@@ -234,7 +234,6 @@ void mmceSetPrefix(void)
     mmceRefreshArtRoots();
 }
 
-static int mmceModLoaded = 0;
 void mmceLoadModules(void)
 {
     // mmceman is a singleton -- loading the IRX buffer twice creates a 2nd instance. Guard so this is
@@ -663,6 +662,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino opens the mmce-hosted game through
         // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
         // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).
+        if (sysNeutrinoPreflight("mmce", neutrinoPath) < 0) // D6 pre-teardown validation
+            return;
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
         deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode);
         sysLaunchNeutrino("mmce", mmcePartname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, &neutrinoVmc);

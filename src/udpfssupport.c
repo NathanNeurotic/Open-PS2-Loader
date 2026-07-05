@@ -319,6 +319,10 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino reads the game through OUR udpfs
     // filesystem and its config/modules from the neutrino.elf device (-cwd) before its own IOP
     // reset -- keep BOTH mounted across the teardown. Mirrors bdmsupport's Neutrino deinit contract.
+    // D6: pre-teardown validation -- for UDPFS this is where the bsd toml ip= sync now happens
+    // (was post-deinit inside sysLaunchNeutrino); a failure toasts and stays in the menu.
+    if (sysNeutrinoPreflight("udpfs", neutrinoPath) < 0)
+        return;
     int neutrinoDevMode = oplPath2Mode(neutrinoPath);
     deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode); // CAREFUL: itemCleanUp still frees udpfsGames/game
 

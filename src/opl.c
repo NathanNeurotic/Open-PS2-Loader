@@ -2309,7 +2309,11 @@ static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected,
 
 // Max delay(1) ticks (~ms) to drain the IO worker during exit/poweroff teardown
 // before proceeding anyway; bounded because the IOP is reset/powered off right after.
-#define EXIT_IO_DRAIN_TICKS 1000
+#define EXIT_IO_DRAIN_TICKS   1000
+// Δ7: launch-path drain bound (~10 s of delay(1) ticks). Generous -- a healthy slow device drains in
+// well under this -- but finite, so one wedged art read on a dying device can no longer freeze the
+// loading screen forever (the handoff targets IOP-reset themselves; a straggler cannot outlive that).
+#define LAUNCH_IO_DRAIN_TICKS 10000
 
 // 1 while deinit() tears down for exit/poweroff, 0 for a game/app launch. Consumed by device shutdowns
 // that must behave differently on the launch path (hddShutdown keeps DEV9 powered so the post-deinit
@@ -2336,13 +2340,21 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     // For the terminal teardown modes (exit = IO_MODE_SELECTED_ALL,
     // poweroff = IO_MODE_SELECTED_NONE) cap the drain: those paths reset the IOP
     // (LoadExecPS2) or power the machine off immediately afterward, so a request
-    // stuck on a removed/slow device must not hang teardown forever. The launch
-    // path (a specific mode) keeps the unbounded wait so its IOP state stays clean.
+    // stuck on a removed/slow device must not hang teardown forever.
+    // Δ7 (NHDDL parity): the LAUNCH path is now bounded too (longer budget). The old unbounded
+    // wait "so its IOP state stays clean" predates the keep-IOP handoff work: post-#79 the two
+    // excepted mounts stay alive regardless, and Neutrino/POPSTARTER perform their OWN IOP reset
+    // after reading their files -- a straggler request cannot corrupt what gets rebuilt fresh.
+    // Unbounded, it turned one wedged cover read on a dying device into a permanently frozen
+    // loading screen BEFORE the handoff even started. NHDDL has no IO worker to drain at all.
     int terminalTeardown = gDeinitTerminal;
-    if (terminalTeardown)
+    if (terminalTeardown) {
         ioBlockOpsTimed(1, EXIT_IO_DRAIN_TICKS);
-    else
-        ioBlockOps(1);
+    } else {
+        ioBlockOpsTimed(1, LAUNCH_IO_DRAIN_TICKS); // always returns IO_OK -- timeout shows as leftover requests
+        if (ioHasPendingRequests())
+            LOG("deinit: launch IO drain timed out after %d ticks -- proceeding (straggler cannot survive the target's IOP reset)\n", LAUNCH_IO_DRAIN_TICKS);
+    }
     guiExecDeferredOps();
     cacheEnd(terminalTeardown);
 
