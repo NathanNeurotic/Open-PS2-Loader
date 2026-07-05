@@ -669,6 +669,101 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     sysLaunchPopstarter(vcdElf, vcdSelector, "");
 }
 
+// Δ8 (NHDDL parity): the LEAN Neutrino launch path. Everything bdmLaunchGame's native flow
+// prepares -- VMC superblock prompts + mcemu patching, sbPrepare's cdvdman patch, per-part
+// fragment lists (with a hard abort past 64 frags), layer-1 probing, cheats (with dialogs),
+// PS2RD images, ATA DMA setup -- exists for the EMBEDDED cdvdman core; Neutrino re-derives all
+// of it from -bsd/-dvd after its own IOP reset. Paying for that work meant a Neutrino launch
+// could DIE on native-only failures (the fragmented-ISO abort, an interactive cheats dialog
+// mid-launch, a VMC-superblock cancel whose result the launch then ignored). NHDDL's whole
+// pre-handoff is ~3 file operations; this is ours.
+// Returns 1 = handled (handed off, or aborted with the user informed -- caller returns);
+// 0 = proceed with the native launch (core is OPL, or Neutrino unavailable on a non-udp device).
+static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, bdm_device_data_t *pDeviceData, config_set_t *configSet)
+{
+    int coreLoader = 0;
+    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    // UDPBD/UDPFS have no embedded cdvdman backend -- the "udp" BDM device can ONLY boot via
+    // Neutrino, so force the core and treat every Neutrino failure below as a clean abort
+    // (falling through to the native path would deinit into a no-op = black screen).
+    int isUdp = bdmDriverIsUDPBD(pDeviceData->bdmDriver);
+    if (isUdp)
+        coreLoader = 1;
+    if (!coreLoader)
+        return 0;
+
+    // Abort helper contract: on udp the launch is unbootable without Neutrino -- consume the
+    // launch (autolaunch mirrors its normal teardown); on local devices fall back to native.
+    int failResult = isUdp ? 1 : 0;
+
+    if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
+        // isValidIsoName() admits .zso case-insensitively and game->extension is stored verbatim,
+        // so an upper/mixed-case ".ZSO" must reject here too (Neutrino can't run it).
+        guiWarning(_l(isUdp ? _STR_NET_NEEDS_NEUTRINO : _STR_NEUTRINO_BAD_FORMAT), 6);
+        goto fail;
+    }
+
+    const char *neutrinoPath = sbResolveNeutrinoPath(pDeviceData->bdmPrefix); // #300: AUTO probes this device for a co-located install
+    if (neutrinoPath == NULL) {
+        guiWarning(_l(isUdp ? _STR_NET_NEEDS_NEUTRINO : _STR_NEUTRINO_NOT_FOUND), 6);
+        goto fail;
+    }
+
+    // Everything Neutrino actually needs from the config/device, copied to THIS stack frame
+    // (deinit below frees configSet's owner + pDeviceData).
+    int compatmask = 0, neutrinoVideo = 0;
+    char neutrinoExtraArgs[256] = "";
+    neutrino_vmc_args_t neutrinoVmc = {0};
+    char partname[256], bdmCurrentDriver[32];
+    configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatmask); // same source sbPrepare reads; no IRX patch needed
+    configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
+    sbBuildVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, &neutrinoVmc); // Δ2-validated -mc args
+    sbCreatePath(game, partname, pDeviceData->bdmPrefix, "/", 0);            // -dvd target (multi-part was rejected above)
+    snprintf(bdmCurrentDriver, sizeof(bdmCurrentDriver), "%s", pDeviceData->bdmDriver);
+
+    if (gRememberLastPlayed) {
+        configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
+        saveConfig(CONFIG_LAST, 0);
+    }
+
+    // Δ6 preflight (driver token + network toml sync) -- abort stays in a live menu.
+    if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath) < 0)
+        goto fail;
+
+    // MMCE cross-device game-id (#261) with the Δ3 -mc-covered-slot guard. Before deinit (uses game).
+    mmceSendGameID(game->startup, neutrinoPath,
+                   (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0));
+
+    if (gAutoLaunchBDMGame == NULL) {
+        // Keep-IOP handoff: keep BOTH the game device and the neutrino.elf device mounted
+        // (Neutrino reads its -cwd config/modules and the ISO through our mounts pre-reset).
+        int neutrinoDevMode = oplPath2Mode(neutrinoPath);
+        deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode); // CAREFUL: itemCleanUp frees bdmGames/game
+    } else {
+        miniDeinit(configSet);
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        free(gAutoLaunchDeviceData);
+        gAutoLaunchDeviceData = NULL;
+    }
+
+    // gPS2Logo passes the user's preference straight through: Neutrino performs its own logo
+    // read/validation for -logo, so the native path's CheckPS2Logo disc pass is not needed here.
+    sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, &neutrinoVmc);
+    return 1;
+
+fail:
+    if (failResult && gAutoLaunchBDMGame != NULL) {
+        miniDeinit(configSet); // mirror the normal autolaunch teardown (ioEnd/configEnd + frees configSet)
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        free(gAutoLaunchDeviceData);
+        gAutoLaunchDeviceData = NULL;
+    }
+    return failResult;
+}
+
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, fd, iop_fd, index, compatmask = 0;
@@ -700,6 +795,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         bdmLaunchVcd(itemList, game->name, configSet);
         return;
     }
+
+    // Δ8: Neutrino core gets its own lean path FIRST -- everything below is native-core prep it
+    // neither needs nor should be able to die on (see bdmTryNeutrinoLaunch).
+    if (bdmTryNeutrinoLaunch(itemList, game, pDeviceData, configSet))
+        return;
 
     char vmc_name[32], vmc_path[256], have_error = 0;
     int vmc_id, size_mcemu_irx = 0;
@@ -927,80 +1027,17 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         settings->hddIsLBA48 = pDeviceData->bdmHddIsLBA48;
     }
 
-    // Per-game Neutrino core: resolve the external ELF + reject unsupported
-    // formats here, while `game` is still valid (deinit below frees it).
-    int coreLoader = 0;
-    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
-    // UDPBD/UDPFS have no embedded cdvdman backend -- the "udp" BDM device (either transport) can ONLY
-    // boot via the external Neutrino core. Force it on here (while the GUI is up); if Neutrino is missing
-    // the block below warns + clears it.
-    if (bdmDriverIsUDPBD(bdmCurrentDriver))
-        coreLoader = 1;
-    const char *neutrinoPath = NULL;
-    char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit frees configSet's owner
-    int neutrinoVideo = 0;                 // per-game Neutrino -gsm video mode; copied before deinit
-    neutrino_vmc_args_t neutrinoVmc = {0}; // per-game VMC -mc args; resolved before deinit, lives on this stack frame across the launch (#47)
-    if (coreLoader) {
-        configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
-        configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
-        neutrinoPath = sbResolveNeutrinoPath(pDeviceData->bdmPrefix); // #300: AUTO also probes this USB/mass device for a co-located neutrino.elf
-        // The udp (UDPBD/UDPFS) device has no embedded cdvdman backend, so the _STR_NEUTRINO_* warnings'
-        // "...launching with <OPL> core" tail is a false promise there (the launch just aborts below).
-        // Show the network-specific message instead so the user understands the abort.
-        int isUdp = bdmDriverIsUDPBD(bdmCurrentDriver);
-        if (game->format == GAME_FORMAT_USBLD || !strcasecmp(game->extension, ".zso")) {
-            // isValidIsoName() admits .zso case-insensitively and game->extension is stored
-            // verbatim, so an upper/mixed-case ".ZSO" must reject here too (Neutrino can't run it).
-            guiWarning(_l(isUdp ? _STR_NET_NEEDS_NEUTRINO : _STR_NEUTRINO_BAD_FORMAT), 6);
-            coreLoader = 0;
-        } else if (neutrinoPath == NULL) {
-            guiWarning(_l(isUdp ? _STR_NET_NEEDS_NEUTRINO : _STR_NEUTRINO_NOT_FOUND), 6);
-            coreLoader = 0;
-        }
-
-        // VMC -> neutrino (#47): resolve any per-game VMC into discrete -mc0/-mc1 argv entries
-        // (NOT the whitespace-tokenized extra-args buffer, which would split a spaced VMC name),
-        // before deinit frees configSet / pDeviceData.
-        if (coreLoader)
-            sbBuildVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, &neutrinoVmc);
-    }
-
-    // UDPBD has no embedded cdvdman fallback: every BDM_*_MODE below is local-storage only, so a
-    // udp game with coreLoader cleared (Neutrino missing/bad-format -- already warned above) would
-    // otherwise deinit into a no-op launch (black screen). Abort cleanly here while the GUI is up.
-    if (!coreLoader && bdmDriverIsUDPBD(bdmCurrentDriver)) {
-        if (gAutoLaunchBDMGame != NULL) {
-            miniDeinit(configSet); // mirror the normal autolaunch teardown (ioEnd/configEnd + frees configSet)
-            free(gAutoLaunchBDMGame);
-            gAutoLaunchBDMGame = NULL;
-            free(gAutoLaunchDeviceData);
-            gAutoLaunchDeviceData = NULL;
-        }
-        return;
-    }
+    // Δ8: Neutrino never reaches this point (bdmTryNeutrinoLaunch handled it at the top), so
+    // everything from here on is the NATIVE (embedded cdvdman) launch only -- including the udp
+    // impossibility: the udp device is Neutrino-only and its aborts happen inside the helper.
 
     // MMCE cross-device game-id (#261): push the disc id to a present SD2PSX/MemCard PRO2 (either slot)
     // so it switches its per-game folder, even though this game is not on the MMCE. Self-probes +
     // no-ops if no card answers / feature off. Must run BEFORE deinit frees `game`.
-    mmceSendGameID(game->startup, coreLoader ? neutrinoPath : NULL,
-                   (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)); // Δ3: -mc-covered slots keep their card
+    mmceSendGameID(game->startup, NULL, 0);
 
     if (gAutoLaunchBDMGame == NULL) {
-        // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino reads its config/modules from the
-        // neutrino.elf device (-cwd) AND opens the game ISO through OUR mass mount before doing its
-        // own IOP reset -- keep BOTH mounted across the teardown. An MC-hosted neutrino needs no
-        // exception of its own (-1 second slot). ee_core launches keep the full teardown: everything
-        // they need is embedded before deinit.
-        if (coreLoader) {
-            // D6: everything that can fail the launch and is checkable NOW runs pre-teardown --
-            // driver-token validation + (udp transports) the bsd toml ip= sync. Abort = stay in menu.
-            if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath) < 0)
-                return;
-            int neutrinoDevMode = oplPath2Mode(neutrinoPath);
-            deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode); // CAREFUL: itemCleanUp still frees bdmGames/game
-        } else {
-            deinit(NO_EXCEPTION, itemList->mode); // CAREFUL: deinit will call bdmCleanUp, so bdmGames/game will be freed
-        }
+        deinit(NO_EXCEPTION, itemList->mode); // CAREFUL: deinit will call bdmCleanUp, so bdmGames/game will be freed
     } else {
         miniDeinit(configSet);
 
@@ -1009,13 +1046,6 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
         free(gAutoLaunchDeviceData);
         gAutoLaunchDeviceData = NULL;
-    }
-
-    // Neutrino core: hand off with the stack-resident partname + driver token
-    // (both survive the deinit above; `game` does not and is not used here).
-    if (coreLoader) {
-        sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, &neutrinoVmc);
-        return;
     }
 
     LOG("bdm pre sysLaunchLoaderElf\n");
