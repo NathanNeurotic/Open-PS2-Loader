@@ -48,7 +48,7 @@ static base_game_info_t *mmceGames;
 // forward declaration
 static item_list_t mmceGameList;
 static void mmceGetDeviceRoot(char *root, size_t size);
-static int mmceModLoaded; // defined next to mmceLoadModules below; read by mmceSendGameID's arm check
+static int mmceModLoaded = 0; // latched by mmceLoadModules; read by mmceSendGameID's arm check
 
 int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMask)
 {
@@ -234,7 +234,6 @@ void mmceSetPrefix(void)
     mmceRefreshArtRoots();
 }
 
-static int mmceModLoaded = 0;
 void mmceLoadModules(void)
 {
     // mmceman is a singleton -- loading the IRX buffer twice creates a 2nd instance. Guard so this is
