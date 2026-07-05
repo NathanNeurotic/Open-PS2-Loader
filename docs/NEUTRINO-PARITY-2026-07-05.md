@@ -117,4 +117,6 @@ RiptOPL post-#79 already matches 1, 2 (mostly), and the handoff mechanics. The r
 | 9 | Δ9 64-frag budget pre-count (bd-backend devices, ISO+VMCs) | M | new count-only helper reusing `bdmsupport.c` fraglist code, called from Δ8's sub-path | HW: fragmented VMC → toast; clean device boots |
 | 10 | Δ10 optional `-elf=cdrom0:\<startup>;1` (shape-guarded, flagged) | M | `src/system.c` `sysLaunchNeutrino` | HW: per-GameID compat entry with file deps applies pre-reset (udptty log); broad regression boots |
 
+**Status (2026-07-05):** Δ1–Δ7 shipped via PRs #81/#84/#86 (rolling Beta-2965). Δ8 implemented as PR #87 (`bdmTryNeutrinoLaunch`/`hddTryNeutrinoLaunch` early gates; hdd keeps a single-sector ZSO probe → native fallback; udp abort paths owned by the bdm helper). Δ9/Δ10 not started.
+
 **Bottom line:** NHDDL's reliability is not magic — it is (1) one IOP lifetime, (2) a nearly-empty launch path, (3) one VMC mechanism, (4) a validated, user-visible Neutrino pick. RiptOPL already owns (1) post-#79 and has a *better* failure UX and loader than NHDDL. The remaining convergence is: validate what you resolve (Δ1/Δ2/Δ5), stop doing native-core work and risky mutations after the point where the GUI can't report them (Δ6/Δ8), and de-conflict the two VMC mechanisms NHDDL never had to reconcile (Δ3/Δ9).
