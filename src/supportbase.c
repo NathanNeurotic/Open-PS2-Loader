@@ -561,8 +561,11 @@ int sbFileExists(const char *path)
 // shadowing it. Uses its own buffer so the caller's returned path is untouched.
 static int sbNeutrinoInstallComplete(const char *elfPath)
 {
+    if (elfPath == NULL)
+        return 0;
     const char *slash = strrchr(elfPath, '/');
-    char probe[192];
+    char probe[320]; // longest caller path (~160) + "/config/system.toml" with headroom -- a TRUNCATED
+                     // probe would miss a real toml and reject a VALID install (PR #81 review)
     int dirLen;
 
     if (slash == NULL) // no directory component -- can't derive cwd; don't reject (custom path edge)
@@ -581,9 +584,11 @@ static int sbNeutrinoInstallComplete(const char *elfPath)
 // point. Returns the path unchanged so call sites read `return sbNeutrinoResolved(path)`.
 static const char *sbNeutrinoResolved(const char *path)
 {
+    if (path == NULL)
+        return NULL;
     const char *slash = strrchr(path, '/');
     if (slash != NULL) {
-        char vpath[192], ver[128];
+        char vpath[320], ver[128]; // same headroom rationale as sbNeutrinoInstallComplete's probe
         int fd;
         snprintf(vpath, sizeof(vpath), "%.*s/version.txt", (int)(slash - path), path);
         fd = open(vpath, O_RDONLY, 0666);
@@ -1162,7 +1167,7 @@ void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, neut
             // the .bin exists NOW (mounts are still up; this runs pre-deinit) and skip the arg with a
             // toast instead of handing Neutrino an unopenable path. The game then boots with its real
             // card rather than dying. NHDDL never hits this class -- it emits no -mc args at all.
-            char binPath[80];
+            char binPath[160]; // matches neutrino_vmc_args_t arg sizing: bdmPrefix(96)+"VMC/"+name(31)+".bin"
             int b = snprintf(binPath, sizeof(binPath), "%sVMC/%s.bin", vmcPrefix, vmcName);
             if (b >= (int)sizeof(binPath) || !sbFileExists(binPath)) {
                 LOG("[NEUTRINO] VMC slot %d (%s) not found/oversize -- launching without it\n", slot, vmcName);
