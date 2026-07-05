@@ -382,24 +382,38 @@ void sysExecExit(void)
 }
 
 // Parse SYSTEM.CNF text for "BOOT2 = <path>" and copy the path into out. Returns 0 on success.
-// Minimal parser (PS2 retail SYSTEM.CNF is tiny and uppercase); tolerates CR/LF and spacing.
+// Retail discs are tiny uppercase "KEY = value" files, but stay defensive (PR #75 review): match
+// the key case-insensitively, require the '=' on the SAME line right after the key (a naive
+// strchr could walk across a newline on a malformed file and grab the wrong line's value), and
+// keep scanning past substring hits so a "BOOT2" inside another value can't shadow the real key.
 static int sysParseBoot2(const char *cnf, char *out, int outSize)
 {
-    const char *p = strstr(cnf, "BOOT2");
-    int i = 0;
+    const char *p = cnf;
 
-    if (p == NULL)
+    if (outSize <= 0)
         return -1;
-    p = strchr(p, '=');
-    if (p == NULL)
-        return -1;
-    p++;
-    while (*p == ' ' || *p == '\t')
-        p++;
-    while (*p != '\0' && *p != '\r' && *p != '\n' && *p != ' ' && *p != '\t' && i < outSize - 1)
-        out[i++] = *p++;
-    out[i] = '\0';
-    return (i > 0) ? 0 : -1;
+
+    while (*p != '\0') {
+        if (strncasecmp(p, "BOOT2", 5) == 0) {
+            const char *eq = p + 5;
+            while (*eq == ' ' || *eq == '\t')
+                eq++;
+            if (*eq == '=') {
+                int i = 0;
+                eq++;
+                while (*eq == ' ' || *eq == '\t')
+                    eq++;
+                while (*eq != '\0' && *eq != '\r' && *eq != '\n' && *eq != ' ' && *eq != '\t' && i < outSize - 1)
+                    out[i++] = *eq++;
+                out[i] = '\0';
+                return (i > 0) ? 0 : -1;
+            }
+            p += 5;
+        } else {
+            p++;
+        }
+    }
+    return -1;
 }
 
 // Boot the physical PS2 disc in the drive, always through rom0:PS2LOGO (which performs the disc
