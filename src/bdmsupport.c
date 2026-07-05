@@ -992,6 +992,10 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // exception of its own (-1 second slot). ee_core launches keep the full teardown: everything
         // they need is embedded before deinit.
         if (coreLoader) {
+            // D6: everything that can fail the launch and is checkable NOW runs pre-teardown --
+            // driver-token validation + (udp transports) the bsd toml ip= sync. Abort = stay in menu.
+            if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath) < 0)
+                return;
             int neutrinoDevMode = oplPath2Mode(neutrinoPath);
             deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode); // CAREFUL: itemCleanUp still frees bdmGames/game
         } else {

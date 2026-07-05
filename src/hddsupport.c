@@ -881,6 +881,8 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // the teardown. An MC-hosted neutrino needs no exception (-1 second slot). ee_core launches
         // keep the full teardown: everything they need is embedded before deinit.
         if (coreLoader) {
+            if (sysNeutrinoPreflight("apa", neutrinoPath) < 0) // D6 pre-teardown validation
+                return;
             int neutrinoDevMode = oplPath2Mode(neutrinoPath);
             deinitEx(UNMOUNT_EXCEPTION, HDD_MODE, neutrinoDevMode); // CAREFUL: itemCleanUp still frees hddGames/game
         } else {

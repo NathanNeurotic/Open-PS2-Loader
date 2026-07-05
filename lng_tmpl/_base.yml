@@ -923,3 +923,7 @@ gui_strings:
   string: Network block device on -- its tab appears once the PC server answers (udpfsd -bdpath for UDPFS Image, udpbd-server for UDPBD).
 - label: NEUTRINO_VMC_MISSING
   string: Per-game VMC file not found -- launching without it (game uses its real card).
+- label: NEUTRINO_DEV_UNSUPPORTED
+  string: Neutrino cannot launch from this device -- launch aborted.
+- label: NEUTRINO_TOML_SYNC_FAILED
+  string: Neutrino network config (bsd toml) missing or unwritable -- launch aborted, check the neutrino folder.

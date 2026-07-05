@@ -10,6 +10,7 @@
 
 #include "include/opl.h"
 #include "include/gui.h"
+#include "include/lang.h" // _l(_STR_...) -- sysNeutrinoPreflight abort toasts
 #include "include/ethsupport.h"
 #include "include/hddsupport.h"
 #include "include/util.h"
@@ -1042,39 +1043,45 @@ static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
 // Rewrite the "ip=A.B.C.D" token inside <neutrino dir>/config/bsd-<device>.toml to the PS2's configured
 // static IP. Neutrino's ministack takes its IP from that toml -- hardcoded 192.168.1.10 in the stock and
 // bundled files -- NOT from anything OPL used while browsing, so any mismatch means the UDPFS server's
-// discovery reply never routes back and the game black-screens after a perfectly healthy list. POSIX IO;
-// runs post-deinit (mc/mmce/the game's own device stay mounted; a neutrino.elf on some OTHER stopped BDM
-// device just fails the open). Best-effort: a missing or hand-restructured toml is logged + left alone,
-// so behavior degrades to exactly the old hand-edit contract. Anchored to the stock `"ip=` quoting so a
-// comment mentioning ip= can never be clobbered.
-static void sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *deviceName)
+// discovery reply never routes back and the game black-screens after a perfectly healthy list. Δ6: now
+// runs PRE-deinit via sysNeutrinoPreflight (every mount is up, the GUI is alive), so a hard failure can
+// abort to the menu with a toast instead of dying invisibly post-teardown. Anchored to the stock `"ip=`
+// quoting so a comment mentioning ip= can never be clobbered.
+// Returns 0 = OK to launch (synced / already-in-sync / benign leave-alone), <0 = abort the launch:
+// the toml is MISSING (neutrino cannot load its bsd config at all) or was mangled-then-restored (the
+// old ip survives, so the boot would black-screen on any other subnet).
+static int sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *deviceName)
 {
-    static char toml[2048];
-    static char updated[2048 + 20];
+    static char toml[4096]; // Δ6: raised from 2048 -- an annotated toml no longer gets skipped
+    static char updated[4096 + 20];
     char tomlPath[288];
     char newIp[20];
     int fd, len;
 
     const char *slash = strrchr(neutrinoPath, '/');
     if (slash == NULL)
-        return;
+        return 0; // custom flat path -- no dir to anchor on; old hand-edit contract
     snprintf(tomlPath, sizeof(tomlPath), "%.*sconfig/bsd-%s.toml", (int)(slash - neutrinoPath) + 1, neutrinoPath, deviceName);
 
     fd = open(tomlPath, O_RDONLY);
     if (fd < 0) {
-        LOG("[NEUTRINO] no %s to sync ip= into (%d)\n", tomlPath, fd);
-        return;
+        LOG("[NEUTRINO] no %s -- neutrino cannot boot this transport without it\n", tomlPath);
+        return -1; // missing bsd toml = guaranteed post-teardown failure -> abort while GUI is alive
     }
     len = read(fd, toml, sizeof(toml) - 1);
     close(fd);
-    if (len <= 0 || len >= (int)sizeof(toml) - 1)
-        return; // empty, unreadable, or larger than any real bsd toml -- leave it alone
+    if (len <= 0)
+        return -1; // unreadable/empty bsd toml -> same guaranteed failure
+    if (len >= (int)sizeof(toml) - 1) {
+        LOG("[NEUTRINO] %s larger than %d -- ip= left as-is\n", tomlPath, (int)sizeof(toml));
+        return 0; // exotic hand-built toml: proceed on the old hand-edit contract
+    }
     toml[len] = '\0';
 
     char *tok = strstr(toml, "\"ip=");
     if (tok == NULL) {
         LOG("[NEUTRINO] %s has no \"ip= token -- left as-is\n", tomlPath);
-        return;
+        return 0; // hand-restructured toml: the user owns the ip; proceed
     }
     char *valStart = tok + 4;
     char *valEnd = valStart;
@@ -1083,14 +1090,14 @@ static void sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *devic
 
     snprintf(newIp, sizeof(newIp), "%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
     if ((int)strlen(newIp) == (int)(valEnd - valStart) && !strncmp(valStart, newIp, strlen(newIp)))
-        return; // already in sync -- don't touch the file
+        return 0; // already in sync -- don't touch the file
 
     snprintf(updated, sizeof(updated), "%.*s%s%s", (int)(valStart - toml), toml, newIp, valEnd);
 
     fd = open(tomlPath, O_WRONLY | O_TRUNC);
     if (fd < 0) {
         LOG("[NEUTRINO] cannot rewrite %s (%d) -- ip= left as-is\n", tomlPath, fd);
-        return;
+        return 0; // write-protected media: proceed on the old hand-edit contract
     }
     int expected = (int)strlen(updated);
     int written = write(fd, updated, expected);
@@ -1105,9 +1112,37 @@ static void sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *devic
             write(fd, toml, len);
             close(fd);
         }
-        return;
+        return -1; // the OLD ip survives -> the boot would black-screen; abort while GUI is alive
     }
     LOG("[NEUTRINO] synced %s ip= -> %s\n", tomlPath, newIp);
+    return 0;
+}
+
+// Δ6 (NHDDL parity): everything that can FAIL a Neutrino launch and is checkable pre-teardown runs
+// HERE, called by every device leg BEFORE deinitEx -- the GUI is alive for a toast and nothing has
+// been torn down, so a failure is "stay in the menu", not a post-teardown black screen. Returns
+// 0 = proceed; <0 = abort (a toast was shown).
+int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath)
+{
+    if (driver == NULL || neutrinoPath == NULL)
+        return -1;
+
+    const char *deviceName = getDeviceName(driver);
+    if (!strcmp(deviceName, "unsupported")) {
+        LOG("[NEUTRINO] preflight: unsupported device '%s'\n", driver);
+        guiWarning(_l(_STR_NEUTRINO_DEV_UNSUPPORTED), 6);
+        return -1;
+    }
+
+    // Network transports: sync the bsd toml ip= NOW, while the toml's device is mounted and a
+    // failure can still be reported (see sysSyncNeutrinoUdpfsToml for the abort conditions).
+    if (!strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") || !strcmp(deviceName, "udpbd")) {
+        if (sysSyncNeutrinoUdpfsToml(neutrinoPath, deviceName) < 0) {
+            guiWarning(_l(_STR_NEUTRINO_TOML_SYNC_FAILED), 6);
+            return -1;
+        }
+    }
+    return 0;
 }
 
 void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, const neutrino_vmc_args_t *vmcArgs)
@@ -1215,14 +1250,9 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
         }
     }
 
-    // Network launches: Neutrino's ministack reads its IP from the bsd toml, not from OPL's network
-    // config -- sync it so the games that just LISTED over the network also BOOT over it. This MUST
-    // cover udpbd too: the stock bsd-udpbd.toml hardcodes ip=192.168.1.10 with the same args=["ip=...]
-    // quoting the helper anchors on, and Neutrino has NO other IP channel (no CLI/env option; -cfg
-    // loads BEFORE the bsd toml and module re-declaration is last-wins) -- without the sync, UDPBD
-    // games list fine (browse uses ps2_ip) then black-screen on boot for any subnet but 192.168.1.x.
-    if (!strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") || !strcmp(deviceName, "udpbd"))
-        sysSyncNeutrinoUdpfsToml(neutrinoPath, deviceName);
+    // Δ6: the bsd toml ip= sync (network transports) now runs PRE-deinit inside sysNeutrinoPreflight
+    // -- called by every device leg before deinitEx -- so a failure aborts to a live menu with a
+    // toast instead of dying invisibly here, post-teardown. Nothing to do at this point.
 
     // Append user-supplied Neutrino flags: global defaults first, then the per-game
     // string (so a game can extend the global set). Both are tokenized on whitespace.
