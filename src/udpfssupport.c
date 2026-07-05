@@ -313,7 +313,8 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
 
     // MMCE cross-device game-id (#261): push the disc id to a present MMCE card before teardown frees
     // `game`. Neutrino path forwarded so a Neutrino launch protects the MMCE hand-off timing.
-    mmceSendGameID(game->startup, neutrinoPath);
+    mmceSendGameID(game->startup, neutrinoPath,
+                   (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)); // Δ3: -mc-covered slots keep their card
 
     // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino reads the game through OUR udpfs
     // filesystem and its config/modules from the neutrino.elf device (-cwd) before its own IOP

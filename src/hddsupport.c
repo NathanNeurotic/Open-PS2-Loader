@@ -873,7 +873,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
     // MMCE cross-device game-id (#261): push the HDL disc id to a present MMCE card before the HDD
     // teardown (self-probes mmce0/mmce1; no-ops if no card / feature off). Read `game` before deinit.
-    mmceSendGameID(game->startup, coreLoader ? neutrinoPath : NULL);
+    mmceSendGameID(game->startup, coreLoader ? neutrinoPath : NULL, 0); // HDD leg emits no -mc args (VMC->neutrino deferred)
 
     if (gAutoLaunchGame == NULL) {
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): keep the HDD stack up (NHDDL hands off with

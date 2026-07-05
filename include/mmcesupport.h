@@ -24,6 +24,10 @@ void mmceLaunchGame(item_list_t *itemList, int fd, config_set_t *configSet);
 // protectMcPath: on a Neutrino launch, the resolved neutrino.elf path. If it lives on the emulated
 // memory card (mcN:) of the slot we would switch, the switch is skipped so it can't yank the loader
 // out from under sysLaunchNeutrino (NHDDL parity, issue #51). Pass NULL when nothing needs protecting.
-int mmceSendGameID(const char *startup, const char *protectMcPath);
+// vmcSlotMask bit N = "a -mcN Neutrino VMC arg is set for this launch": that slot's MC comes from
+// the VMC FILE, so its physical card is NOT switched (pass 0 on OPL-core paths -- mcemu, unchanged).
+int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMask);
+// Arm the GameID transport at menu/settings time (idempotent; no-op when the feature is off).
+void mmceArmGameIDTransport(void);
 
 #endif

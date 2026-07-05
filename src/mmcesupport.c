@@ -48,33 +48,57 @@ static base_game_info_t *mmceGames;
 // forward declaration
 static item_list_t mmceGameList;
 static void mmceGetDeviceRoot(char *root, size_t size);
+static int mmceModLoaded; // defined next to mmceLoadModules below; read by mmceSendGameID's arm check
 
-int mmceSendGameID(const char *startup, const char *protectMcPath)
+int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMask)
 {
     char mmceDevice[sizeof(mmcePrefix)];
 
     if (!gMMCEEnableGameID || startup == NULL || startup[0] == '\0')
         return 0;
 
-    // #261 cross-device launches (a USB/HDD/SMB game with the MMCE holding the card) can reach here on a
-    // cold boot where the MMCE tab was never opened, so its Start Mode (default Manual) never loaded
-    // mmceman. Without mmceman resident the mmce0:/mmce1: devctl probes below all fail and the game-id is
-    // silently dropped -> the card never switches to the per-game folder (issue #51). Self-arm the
-    // transport here; mmceLoadModules() is idempotent (guarded by mmceModLoaded).
-    mmceLoadModules();
+    // Δ4 (NHDDL parity): do NOT self-arm the transport here. Loading an IRX inside the launch
+    // sequence puts a module load/start at the launch's most fragile moment; the arming now happens
+    // at menu/settings time (mmceArmGameIDTransport, called from initAllSupport whenever the GameID
+    // feature is on), where a failure is a harmless LOG. Preserves the #51 intent -- GameID works
+    // without the MMCE page ever being enabled -- with the risk moved off the launch path. If the
+    // module is not resident by launch time (arm failed / raced), skip gracefully like no-card.
+    if (!mmceModLoaded) {
+        LOG("MMCE GameID: transport not armed -- skipping (menu-time arm failed or pending)\n");
+        return 0;
+    }
 
+    // Candidate order: the configured/resolved slot first, then both slots as fallback -- a card in
+    // EITHER slot still gets the game-id on a cross-device launch (#261). Same 0x1 presence devctl
+    // as mmceDetectSlot. Δ3 (NHDDL parity): a slot whose -mc<slot> Neutrino arg is set gets its MC
+    // from the VMC FILE, not the card's per-game folder -- switching the physical card for it is
+    // moot and only adds the busy/re-mount window, so covered slots are skipped; a card in the
+    // OTHER, uncovered slot still gets the push. vmcSlotMask bit N = "-mcN arg present" (0 = the
+    // OPL-core paths, which use mcemu and keep today's behavior).
     mmceGetDeviceRoot(mmceDevice, sizeof(mmceDevice));
-    // Use the resolved slot only if a card is actually present there; otherwise -- no slot resolved
-    // (MMCE tab off, the common cross-device case), OR a configured/stale gMMCESlot that is now empty
-    // -- probe both slots so a card in EITHER slot still gets the game-id for per-game folder switching
-    // on a cross-device (USB/HDD/SMB) launch (#261). The same 0x1 device-present devctl mmceDetectSlot uses.
-    if (mmceDevice[0] == '\0' || fileXioDevctl(mmceDevice, 0x1, NULL, 0, NULL, 0) == -1) {
-        if (fileXioDevctl("mmce0:/", 0x1, NULL, 0, NULL, 0) != -1)
-            snprintf(mmceDevice, sizeof(mmceDevice), "mmce0:/");
-        else if (fileXioDevctl("mmce1:/", 0x1, NULL, 0, NULL, 0) != -1)
-            snprintf(mmceDevice, sizeof(mmceDevice), "mmce1:/");
-        else
-            return 0; // no MMCE card present -> graceful no-op
+    {
+        const char *cands[3] = {mmceDevice[0] != '\0' ? mmceDevice : NULL, "mmce0:/", "mmce1:/"};
+        int tried[2] = {0, 0};
+        int found = 0;
+        for (int c = 0; c < 3 && !found; c++) {
+            if (cands[c] == NULL || strlen(cands[c]) < 5)
+                continue;
+            int slot = cands[c][4] - '0';
+            if (slot < 0 || slot > 1 || tried[slot])
+                continue;
+            tried[slot] = 1;
+            if ((vmcSlotMask >> slot) & 1) {
+                LOG("MMCE GameID: slot %d covered by a -mc%d VMC arg -- not switching that card\n", slot, slot);
+                continue;
+            }
+            if (fileXioDevctl(cands[c], 0x1, NULL, 0, NULL, 0) != -1) {
+                if (cands[c] != mmceDevice)
+                    snprintf(mmceDevice, sizeof(mmceDevice), "%s", cands[c]);
+                found = 1;
+            }
+        }
+        if (!found)
+            return 0; // no eligible MMCE card present -> graceful no-op
     }
 
     // NHDDL-parity guard (#51): never switch the per-game card on a slot whose EMULATED memory card
@@ -222,6 +246,17 @@ void mmceLoadModules(void)
     LOG("MMCESUPPORT LoadModules\n");
     LOG("[MMCEMAN]:\n");
     sysLoadModuleBuffer(&mmceman_irx, size_mmceman_irx, 0, NULL);
+}
+
+// Δ4 (NHDDL parity): arm the GameID transport OUTSIDE the launch path. NHDDL loads mmceman once at
+// boot; RiptOPL used to self-arm inside mmceSendGameID -- an IRX load/start at the launch's most
+// fragile moment (issue #51's fix, right intent, wrong timing). Called from initAllSupport (boot +
+// every settings apply) via the IO worker, so a wedged load is a harmless LOG at menu time instead
+// of a dead launch. Idempotent (mmceLoadModules latches); no-op when the GameID feature is off.
+void mmceArmGameIDTransport(void)
+{
+    if (gMMCEEnableGameID)
+        mmceLoadModules();
 }
 
 void mmceInit(item_list_t *itemList)
@@ -606,7 +641,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // (mmceMountVMC). mmceSendGameID waits out the card's busy bit (bounded ~3 s); the
         // MC-hosted-neutrino protect guard is inside the helper (skips + warns when neutrinoPath
         // sits on this slot's mcN:).
-        mmceSendGameID(game->startup, neutrinoPath);
+        mmceSendGameID(game->startup, neutrinoPath,
+                       (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)); // Δ3: -mc-covered slots keep their card
         // NHDDL-parity caveat: NHDDL's neutrino.elf never lives on the MMCE, so it has no reads
         // left after the switch. Ours can (Auto prefers the game device), and the busy bit can
         // clear before the card's FILESYSTEM surface is back (Gen2 remounts slowly) -- so when
