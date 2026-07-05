@@ -586,6 +586,17 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (coreLoader) {
         char mmcePartname[256];
         snprintf(mmcePartname, sizeof(mmcePartname), "%s", partname); // defensive copy across the deinit teardown (partname is a stack buffer, not freed by deinit)
+        // GameID for the NEUTRINO core (issue #68): the native OPL-core launch deliberately does
+        // NOT push a launcher GameID (see the issue-#50 note below -- in OPL core the in-game
+        // card is OPL's mcemu, and a mid-launch re-switch froze early-MC-probing games). That
+        // reasoning does NOT extend to Neutrino: it has no mcemu -- the game talks to the card's
+        // REAL emulated-MC surface -- and nothing else ever tells the card which game is
+        // starting, so its per-game folder never engaged (USB-hosted games via Neutrino DID work:
+        // the cross-device paths all send it). NHDDL does exactly this before launching neutrino
+        // (mmceMountVMC). mmceSendGameID waits out the card's busy bit (bounded ~3 s), so the
+        // #50 mid-launch-switch race does not apply; the MC-hosted-neutrino protect guard is
+        // inside the helper (skips + warns when neutrinoPath sits on this slot's mcN:).
+        mmceSendGameID(game->startup, neutrinoPath);
         // Neutrino bypasses OPL's mcemu, so the VMC fds opened above go unused on
         // this path — close them instead of leaking until the IOP reset (B3).
         if (vmc_fds[0] >= 0)
