@@ -921,3 +921,5 @@ gui_strings:
   string: UDPFS on -- open the new UDPFS tab and press Confirm to connect. PC side runs udpfsd -d <games folder>.
 - label: NET_UDPBD_TAB_HINT
   string: Network block device on -- its tab appears once the PC server answers (udpfsd -b for UDPFS Image, udpbd-server for UDPBD).
+- label: NEUTRINO_VMC_MISSING
+  string: Per-game VMC file not found -- launching without it (game uses its real card).
