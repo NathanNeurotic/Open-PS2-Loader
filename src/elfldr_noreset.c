@@ -77,7 +77,13 @@ int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, cha
     void *pdata;
     int i, fd;
 
-    (void)partition; // the Neutrino handoff always passes "" -- no APA-partition context needed
+    (void)partition; // callers pass "" -- no APA-partition context needed on this path
+
+    // argv here is the target's FULL argv -- argv[0] INCLUDED and caller-controlled (Neutrino:
+    // its own path; POPSTARTER: the XX./SB. selector it string-parses). At least argv[0] must
+    // be supplied: the child forwards &argv[1] verbatim, never synthesizing a replacement.
+    if (argc < 1 || argv == NULL || argv[0] == NULL)
+        return -1;
 
     // Probe the target through our still-live mounts so a bad path fails fast in OPL
     // instead of inside the child loader (which can only fall through to OSDSYS).
@@ -85,8 +91,8 @@ int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, cha
         return -1;
     close(fd);
 
-    // argv[0] must be the target path (the child SifLoadElf()s argv[0] and forwards
-    // the whole vector); the ExecPS2 syscall marshals the strings across the jump.
+    // Child contract: argv[0] = load path (SifLoadElf'd), argv[1..] = the target's full argv;
+    // the ExecPS2 syscall marshals the strings across the jump.
     char *new_argv[argc + 1];
     new_argv[0] = (char *)filename;
     for (i = 0; i < argc; i++)
