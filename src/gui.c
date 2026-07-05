@@ -1125,6 +1125,17 @@ void guiShowDeviceConfig(void)
         if (gNetworkProtocol != netProtocolWas && (bdmIsUDPBDLoaded() || ethGetModulesLoaded() || udpfsGetModulesLoaded()))
             guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
 
+        // "Nothing happens" guard (hardware report on Beta-2937): enabling a network protocol gave NO
+        // feedback -- the UDPFS tab joins the ring silently and then waits for a Confirm-press inside
+        // it (Manual start), and the block transports show a tab only once the PC server answers.
+        // Tell the user what to expect + which PC server to run, right at the moment they turn it on.
+        if (gNetworkProtocol != netProtocolWas) {
+            if (gNetworkProtocol == NET_PROTO_UDPFS)
+                guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
+            else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
+                guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
+        }
+
         // A BDM tab can be latched hidden (bdmNeedsUpdate force-hides it when its enable flag reads 0,
         // then short-circuits until the device generation bumps). Re-evaluate device visibility now so
         // re-enabling a device here brings its tab back without a physical replug.

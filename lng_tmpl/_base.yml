@@ -917,3 +917,7 @@ gui_strings:
   string: UDPFS Access
 - label: MMCE_GAMEID_NEUTRINO_SKIP
   string: MMCE GameID not applied -- neutrino.elf is on this card (switching it would unload Neutrino).
+- label: NET_UDPFS_TAB_HINT
+  string: UDPFS on -- open the new UDPFS tab and press Confirm to connect. PC side runs udpfsd -d <games folder>.
+- label: NET_UDPBD_TAB_HINT
+  string: Network block device on -- its tab appears once the PC server answers (udpfsd -b for UDPFS Image, udpbd-server for UDPBD).
