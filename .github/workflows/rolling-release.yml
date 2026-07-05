@@ -543,9 +543,9 @@ jobs:
               printf '  config/bsd-udpfsbd.toml (for UDPFS); otherwise the official build. Just copy the\n'
               printf '  whole neutrino/ folder to mc?:/ (it already holds neutrino.elf + config/ + modules/).\n'
               printf '  Network games (UDPFS, both Files and Image): run pcm720/udpfsd on the PC\n'
-              printf '  (https://github.com/pcm720/udpfsd -- a single binary, -d for Files, -b for Image).\n'
+              printf '  (https://github.com/pcm720/udpfsd -- a single binary: -fsroot <dir> for Files, -bdpath <image> for Image).\n'
               printf '  UDPBD is retired: old UDPBD configs auto-migrate to UDPFS (Image) and the old\n'
-              printf '  udpbd-server no longer applies -- switch the PC side to udpfsd -b.\n'
+              printf '  udpbd-server no longer applies -- switch the PC side to udpfsd -bdpath <image>.\n'
             else
               printf '  (Could not bundle Neutrino this run -- please grab the latest build from the link above.)\n'
             fi
