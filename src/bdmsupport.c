@@ -709,7 +709,7 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, const neutrino_vmc_args_
     }
 
     if (total > NEUTRINO_BDM_MAX_FRAGS) { // == is fine: neutrino packs exactly-full tables
-        char msg[128];
+        char msg[256];                    // headroom for the lng_fork overlay's longer translations
         LOG("[NEUTRINO] frag budget exceeded: %d/%d across ISO + VMCs\n", total, NEUTRINO_BDM_MAX_FRAGS);
         // Match the Δ8 abort-message convention: the udp outcome is a consumed launch, the
         // local outcome is a native-core fallback (which usually boots: OPL's own 64-frag
