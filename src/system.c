@@ -455,9 +455,12 @@ int sysLaunchDisc(void)
         LOG("[DISC] drive reports NODISC -- spinning up and re-checking (#73)\n");
         sceCdStandby();
         sceCdSync(0);
-        for (spin = 0; spin < 20; spin++) {          // ~4 s budget for a cold spin-up + re-detect
-            while (sceCdGetDiskType() == SCECdDETCT) // let it finish identifying after the spin-up
-                ;
+        for (spin = 0; spin < 20; spin++) { // ~4 s budget for a cold spin-up + re-detect
+            // Let it finish identifying after the spin-up, but bounded + yielding: a dirty laser or
+            // damaged disc can stick in DETCT, and a bare spin would hang Launch Disc and peg the CPU.
+            int detecting = 0;
+            while (sceCdGetDiskType() == SCECdDETCT && detecting++ < 50)
+                DelayThread(20 * 1000); // ~1 s cap, yields to other threads
             type = sceCdGetDiskType();
             if (type != SCECdNODISC)
                 break;
