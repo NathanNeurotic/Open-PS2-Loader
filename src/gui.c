@@ -1119,6 +1119,21 @@ void guiShowDeviceConfig(void)
         if (nowUdp && !wasUdp && ps2_ip_use_dhcp)
             guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
 
+        // "Nothing happens" guard (hardware report on Beta-2937): enabling a network protocol gave NO
+        // feedback -- the UDPFS tab joins the ring silently and then waits for a Confirm-press inside
+        // it (Manual start), and the block transports show a tab only once the PC server answers.
+        // Tell the user what to expect + which PC server to run, right at the moment they turn it on.
+        // Shown BEFORE the restart notice below (PR #78 review): when a restart is pending, the restart
+        // message must be the LAST word so the guidance reads as "after that". Suppressing the hint in
+        // the restart case instead would lose it forever -- no protocol-CHANGE event fires on the next
+        // boot, which is exactly the silent-enable hole this guards against.
+        if (gNetworkProtocol != netProtocolWas) {
+            if (gNetworkProtocol == NET_PROTO_UDPFS)
+                guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
+            else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
+                guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
+        }
+
         // Each network transport loads its IOP module chain once per boot (the load latch is not cleared
         // live). If any network stack is already up and the user changed protocol, the switch takes effect
         // only after a restart -- say so instead of silently doing nothing.
