@@ -657,6 +657,14 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (gameIdSwitched) {
             char mmceRoot[sizeof(mmcePrefix)];
             mmceGetDeviceRoot(mmceRoot, sizeof(mmceRoot)); // the game's slot ("mmceN:/")
+            // The game is mmce-hosted here, so its own slot is normally the one mmceSendGameID
+            // switched. But the helper falls back to the OTHER slot when the game's slot has no
+            // card (or is -mc-covered), so stay consistent: if the game's slot isn't present, settle
+            // the other slot instead -- otherwise we'd probe an empty slot for the full ~5 s
+            // (PR #89 review). Same 0x1 presence devctl mmceSendGameID itself uses.
+            if (mmceRoot[0] != '\0' && strlen(mmceRoot) >= 5 &&
+                fileXioDevctl(mmceRoot, 0x1, NULL, 0, NULL, 0) == -1)
+                mmceRoot[4] = (mmceRoot[4] == '0') ? '1' : '0'; // mmce0:/ <-> mmce1:/
             if (mmceRoot[0] != '\0') {
                 int settled = 0, settle;
                 for (settle = 0; settle < 25; settle++) {
