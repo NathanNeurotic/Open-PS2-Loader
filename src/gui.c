@@ -2549,6 +2549,9 @@ void guiManageCheats(void)
     int selectedCheat = 0;
     int visibleCheats = 10; // Maximum number of cheats visible on screen
 
+    if (gCheats == NULL) // defensive: the menu is only reachable after load_cheats, but never deref NULL
+        return;
+
     while (cheatCount < MAX_CODES && strlen(gCheats[cheatCount].name) > 0)
         cheatCount++;
 

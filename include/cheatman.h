@@ -68,7 +68,9 @@ typedef struct
     int enabled;
 } cheat_entry_t;
 
-extern cheat_entry_t gCheats[MAX_CODES];
+// Lazily allocated (~1.03 MB) on the first cheat-file load of the session -- NULL until then.
+// It used to be permanent BSS, held even with cheats off (the default). See load_cheats().
+extern cheat_entry_t *gCheats;
 
 void InitCheatsConfig(config_set_t *configSet);
 int GetCheatsEnabled(void);
