@@ -1229,6 +1229,16 @@ struct UIItem diaNeutrinoArgs[] = {
     {UI_BOOL, NARGS_QB, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_DBC}}},
+    {UI_SPACER},
+    {UI_BOOL, NARGS_DBC, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_LOGO}}},
+    {UI_SPACER},
+    {UI_BOOL, NARGS_LOGO, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_CWD}}},
     {UI_SPACER},
     {UI_STRING, NARGS_CWD, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},

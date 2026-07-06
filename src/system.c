@@ -1230,10 +1230,15 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
             argv[argc++] = compatModes;
     }
 
-    if (gEnableDebug && argc < argvMax)
+    // Global toggles auto-emit -dbc/-logo; the per-game/global args screens now carry them as
+    // structured bools too (forwarded via the tokenizer below), so suppress the auto-emit when the
+    // user's args already hold an active (non-$-disabled) copy -- one flag, emitted once.
+    if (gEnableDebug && argc < argvMax &&
+        !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-dbc") && !neutrinoArgHasActiveFlag(extraArgs, "-dbc"))
         argv[argc++] = "-dbc";
 
-    if (EnablePS2Logo && argc < argvMax)
+    if (EnablePS2Logo && argc < argvMax &&
+        !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-logo") && !neutrinoArgHasActiveFlag(extraArgs, "-logo"))
         argv[argc++] = "-logo";
 
     // Per-game Neutrino video mode (-gsm): 1=fp1 (240p), 2=fp2 (480p), 3=1080ix1 (1080i); 0/out-of-range

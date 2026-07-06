@@ -80,6 +80,8 @@ const char *sbResolveNeutrinoPath(const char *activePrefix);
 typedef struct
 {
     int qb;          // -qb (quick-boot)
+    int dbc;         // -dbc (debug colors) -- per-launch override; the global toggle still auto-emits
+    int logo;        // -logo (PS2 logo)    -- per-launch override; the global toggle still auto-emits
     char cwd[64];    // -cwd=
     char cfg[64];    // -cfg=
     char elf[64];    // -elf=

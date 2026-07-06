@@ -1276,6 +1276,8 @@ void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize)
     neutrinoArgsParse(argsBuf, &na);
 
     diaSetInt(diaNeutrinoArgs, NARGS_QB, na.qb ? 1 : 0);
+    diaSetInt(diaNeutrinoArgs, NARGS_DBC, na.dbc ? 1 : 0);
+    diaSetInt(diaNeutrinoArgs, NARGS_LOGO, na.logo ? 1 : 0);
     diaSetString(diaNeutrinoArgs, NARGS_CWD, na.cwd);
     diaSetString(diaNeutrinoArgs, NARGS_CFG, na.cfg);
     diaSetString(diaNeutrinoArgs, NARGS_ELF, na.elf);
@@ -1289,6 +1291,8 @@ void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize)
     // fields can keep their FULL parsed value instead of the truncated UI copy.
     neutrino_args_t pop;
     diaGetInt(diaNeutrinoArgs, NARGS_QB, &pop.qb);
+    diaGetInt(diaNeutrinoArgs, NARGS_DBC, &pop.dbc);
+    diaGetInt(diaNeutrinoArgs, NARGS_LOGO, &pop.logo);
     diaGetString(diaNeutrinoArgs, NARGS_CWD, pop.cwd, sizeof(pop.cwd));
     diaGetString(diaNeutrinoArgs, NARGS_CFG, pop.cfg, sizeof(pop.cfg));
     diaGetString(diaNeutrinoArgs, NARGS_ELF, pop.elf, sizeof(pop.elf));
@@ -1301,6 +1305,8 @@ void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize)
         neutrino_args_t out;
         char after[256];
         diaGetInt(diaNeutrinoArgs, NARGS_QB, &out.qb);
+        diaGetInt(diaNeutrinoArgs, NARGS_DBC, &out.dbc);
+        diaGetInt(diaNeutrinoArgs, NARGS_LOGO, &out.logo);
         diaGetString(diaNeutrinoArgs, NARGS_CWD, out.cwd, sizeof(out.cwd));
         diaGetString(diaNeutrinoArgs, NARGS_CFG, out.cfg, sizeof(out.cfg));
         diaGetString(diaNeutrinoArgs, NARGS_ELF, out.elf, sizeof(out.elf));
@@ -1312,6 +1318,10 @@ void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize)
         // their FULL parsed value (na) so editing one field never truncates the others to 31 chars.
         if (out.qb != pop.qb)
             na.qb = out.qb;
+        if (out.dbc != pop.dbc)
+            na.dbc = out.dbc;
+        if (out.logo != pop.logo)
+            na.logo = out.logo;
         if (strcmp(out.cwd, pop.cwd) != 0)
             snprintf(na.cwd, sizeof(na.cwd), "%s", out.cwd);
         if (strcmp(out.cfg, pop.cfg) != 0)

@@ -772,6 +772,10 @@ void neutrinoArgsParse(const char *in, neutrino_args_t *na)
             naAppend(na->extra, sizeof(na->extra), tok);
         } else if (strcmp(tok, "-qb") == 0) {
             na->qb = 1;
+        } else if (strcmp(tok, "-dbc") == 0) {
+            na->dbc = 1;
+        } else if (strcmp(tok, "-logo") == 0) {
+            na->logo = 1;
         } else if (strncmp(tok, "-cwd=", 5) == 0) {
             snprintf(na->cwd, sizeof(na->cwd), "%s", tok + 5);
         } else if (strncmp(tok, "-cfg=", 5) == 0) {
@@ -798,6 +802,10 @@ void neutrinoArgsAssemble(const neutrino_args_t *na, char *out, int outSize)
     out[0] = '\0';
     if (na->qb)
         naAppend(out, outSize, "-qb");
+    if (na->dbc)
+        naAppend(out, outSize, "-dbc");
+    if (na->logo)
+        naAppend(out, outSize, "-logo");
     if (na->cwd[0])
         naAppendKV(out, outSize, "-cwd=", na->cwd);
     if (na->cfg[0])
