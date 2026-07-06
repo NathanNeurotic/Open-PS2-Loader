@@ -124,7 +124,7 @@ Do not use a third-party defragmenter on your game drive. They may rearrange clu
 </div>
 
 <div class="callout info"><div class="h">i Same fix for GSM video mode mistakes</div>
-If you saved an incompatible GSM (Game-Sync Mode) override and your screen went dark, the same recovery applies: hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while OPL boots to restore <b>Auto</b> video mode.
+If you saved an incompatible GSM (Graphics Synthesizer Mode) override and your screen went dark, the same recovery applies: hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while OPL boots to restore <b>Auto</b> video mode.
 </div>
 
 <h2 id="bdma-module-not-found">BDMA — "module files not found on source device"</h2>
@@ -140,14 +140,14 @@ If you saved an incompatible GSM (Game-Sync Mode) override and your screen went 
   </div>
   <div class="step">
     <h3>Copy them to the correct location</h3>
-    <p>Place the module files in a <code>POPS/</code> folder at the root of whichever device you have set as the <b>BDMA Source</b> — USB, MX4SIO, or MMCE. The path must be exactly:</p>
+    <p>Place the module files in a <code>POPS/</code> folder at the root of whichever device you have set as the <b>BDMA Source</b> — USB, MX4SIO, MMCE, or Internal HDD. The path must be exactly:</p>
     <pre>POPS/        ← folder at device root
   POPSTARTER.ELF
   &lt;module files for your chosen variant&gt;</pre>
   </div>
   <div class="step">
-    <h3>Note: USB source scans the whole mass namespace</h3>
-    <p>When <b>BDMA Source</b> is set to <b>USB</b>, RiptOPL scans the entire BDM <code>massN:</code> namespace — this includes USB drives, MX4SIO, and the internal exFAT HDD (if <b>BDM HDD</b> is enabled in Device Settings). So if the only drive currently connected with a <code>POPS/</code> folder is the internal HDD, the USB source setting will still find the files there.</p>
+    <h3>Note: the source must match the device's driver</h3>
+    <p>RiptOPL resolves the <b>BDMA Source</b> by its block-device <b>driver</b>, not by scanning the whole <code>massN:</code> namespace. A <b>USB</b> source reads only from slots whose driver is <code>usb</code>; <b>MX4SIO</b> reads only <code>mx4sio</code> slots; <b>Internal HDD</b> reads only the <code>ata</code> (exFAT) HDD. So if your <code>POPS/</code> module folder sits on the internal HDD but the source is set to USB, the files will <b>not</b> be found — set the source to match the driver of the device the files actually live on.</p>
   </div>
   <div class="step">
     <h3>Re-apply the equip</h3>

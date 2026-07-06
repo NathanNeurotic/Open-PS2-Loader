@@ -71,10 +71,12 @@ configuration, PS1/BDMA plumbing, and housekeeping options.</p>
 <tr><td>PS2 Logo</td><td>Off / On</td><td>Shows the regional PS2 logo animation before launching a game (only when the disc signature matches the console region).</td></tr>
 <tr><td>IGR Path</td><td>text (path)</td><td>Path to a custom ELF that is loaded instead of returning to the browser on an in-game reset (IGR). Leave blank to return to the browser. Hint: <em>Boots custom ELF after an IGR.</em></td></tr>
 <tr><td>Neutrino Launch Args</td><td>[sub-screen]</td><td>Opens the structured global <a href="neutrino.html">Neutrino Args</a> editor. Flags set here apply to every game that uses the Neutrino core unless overridden per-game. Prefix a flag with <code>$</code> to disable it without deleting it.</td></tr>
-<tr><td>Neutrino Device</td><td>Auto / mc0 / mc1 / mass0&ndash;7 / mmce0 / mmce1</td><td>Which device to scan for <code>neutrino.elf</code>. <em>Auto</em> scans mc0 then mc1. Choose a specific device if your ELF is on USB or MMCE. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
-<tr><td>POPSTARTER.ELF Path</td><td>text (path)</td><td>Custom path to <code>POPSTARTER.ELF</code> (up to 31 characters in the UI; longer paths can be set directly in <code>settings_riptopl.cfg</code>). Blank silently falls back to the device POPS folder. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
-<tr><td>BDMA Source</td><td>USB / MX4SIO / MMCE</td><td>Which device holds the BDMAssault driver files (<code>usbd.irx.*</code>, <code>usbhdfsd.irx.*</code>). Only relevant when playing PS1 games from an exFAT drive. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
-<tr><td>BDMA Mode</td><td>USB (FAT32) / USB (exFAT) / MX4SIO (exFAT) / MMCE (exFAT) / HDD (exFAT)</td><td>Block-device driver POPSTARTER loads for exFAT media. Changing this copies the appropriate modules to the memory card. FAT32 uses the built-in driver (no copy needed). See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>Neutrino Device</td><td>Auto / Memory Card / USB / MX4SIO / MMCE / HDD (exFAT) / HDD (APA)</td><td>Which device <em>type</em> to scan for <code>&lt;root&gt;:/neutrino/neutrino.elf</code>. <em>Auto</em> probes the active game device first, then a legacy custom path, then mc0 and mc1. Choose a specific type if your ELF is on USB, MMCE, or an HDD. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
+<tr><td>POPSTARTER Device</td><td>Default / Memory Card / USB / MX4SIO / MMCE / HDD (exFAT) / HDD (APA) / Custom</td><td>Which device <em>type</em> holds <code>POPS/POPSTARTER.ELF</code>. <em>Default</em> resolves the launch device automatically. Selecting <em>Custom</em> reveals the free-text <em>POPSTARTER Path</em> field below. SMB PS1 VCDs additionally use an <code>SB.&lt;name&gt;.ELF</code> selector. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>POPSTARTER Path</td><td>text (path)</td><td>Custom path to <code>POPSTARTER.ELF</code> (up to 31 characters in the UI; longer paths can be set directly in <code>settings_riptopl.cfg</code>). Shown only when <em>POPSTARTER Device</em> is set to <em>Custom</em>. Blank silently falls back to the device POPS folder. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>VCD BDMA Apply on Launch</td><td>Off / On</td><td>On by default. When on, launching a PS1 VCD auto-equips its matching exFAT driver to the memory card before boot, and the manual <em>BDMA Source</em> and <em>BDMA Mode</em> pickers below are hidden. Turn it off to manage those pickers yourself. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>BDMA Source</td><td>USB / MX4SIO / MMCE / HDD</td><td>Which device holds the BDMAssault driver files (<code>usbd.irx.*</code>, <code>usbhdfsd.irx.*</code>). Only relevant when playing PS1 games from an exFAT drive. Shown only when <em>VCD BDMA Apply on Launch</em> is Off. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
+<tr><td>BDMA Mode</td><td>USB (FAT32) / USB (exFAT) / MX4SIO (exFAT) / MMCE (exFAT) / HDD (exFAT)</td><td>Block-device driver POPSTARTER loads for exFAT media. Changing this copies the appropriate modules to the memory card. FAT32 uses the built-in driver (no copy needed). Shown only when <em>VCD BDMA Apply on Launch</em> is Off. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
 <tr><td>Write Operations</td><td>Off / On</td><td>Enables write access to storage media. Required for VMC creation and some other write operations. Disable if you want a read-only mode.</td></tr>
 <tr><td>Remember Last Played Game</td><td>Off / On</td><td>Remembers and pre-selects the last launched game on the next boot.</td></tr>
 <tr><td>Auto Start <em>(seconds)</em></td><td>0&ndash;9</td><td>Auto-launches the last played game after the specified number of seconds. Visible only when <em>Remember Last Played Game</em> is on. 0 disables the countdown.</td></tr>
@@ -97,16 +99,15 @@ visual sections separated by splitters.</p>
 <table data-sortable>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td>Default Menu</td><td>BDM Games / ETH Games / HDD Games / Apps / MMCE</td><td>Which tab is shown first on boot.</td></tr>
+<tr><td>Default Menu</td><td>BDM Games / ETH Games / HDD Games / Apps / MMCE / Favourites</td><td>Which tab is shown first on boot.</td></tr>
 <tr><td>BDM Start Mode</td><td>Off / Manual / Auto</td><td>Block-Device Manager (USB, MX4SIO, iLink) startup mode. <em>Auto</em> starts immediately; <em>Manual</em> waits for you to press Start; <em>Off</em> disables the whole BDM subsystem.</td></tr>
 <tr><td>USB</td><td>Off / On</td><td>Enables the USB mass-storage driver. Disabling frees IOP RAM. See <a href="usb.html">USB / MX4SIO / iLink</a>.</td></tr>
 <tr><td>iLink</td><td>Off / On</td><td>Enables the iLink (IEEE 1394) mass-storage driver.</td></tr>
 <tr><td>MX4SIO</td><td>Off / On</td><td>Enables the MX4SIO SPI adapter driver.</td></tr>
 <tr><td>HDD (GPT/MBR)</td><td>Off / On</td><td>Enables the BDM path for exFAT / GPT / MBR hard-drive access (shows as an HDD Games tab per slot). Mutually exclusive with the APA HDD Start Mode below — enabling one greys the other.</td></tr>
 <tr><td>HDD (APA) Start Mode</td><td>Off / Manual / Auto</td><td>OPL's native APA/PFS HDD mode. Mutually exclusive with HDD (GPT/MBR) above. See <a href="hdd.html">Internal HDD</a>.</td></tr>
-<tr><td>ETH Start Mode</td><td>Off / Manual / Auto</td><td>SMB network share mode. Mutually exclusive with Network Boot below — enabling one greys the other.</td></tr>
-<tr><td>Network Boot</td><td>Off / On</td><td>Enables streaming games over the LAN via UDPBD or UDPFS. Mutually exclusive with ETH Start Mode. Requires a static PS2 IP (DHCP is not supported). See <a href="network-boot.html">Network Boot</a>.</td></tr>
-<tr><td>Net Boot Protocol</td><td>UDPBD / UDPFS</td><td>Selects the transport used when Network Boot is on. <em>UDPBD</em> uses the SUDPBDv2 monolithic driver; <em>UDPFS</em> uses the UDPRDMA smap+ministack+udpfs_bd chain. Greyed out when Network Boot is off. See <a href="network-boot.html">Network Boot</a>.</td></tr>
+<tr><td>Network Protocol</td><td>Off / SMB / UDPFS / UDPBD</td><td>Single exclusive picker for the transport carried over the one NIC. Replaces the old ETH-start-mode toggle, Network-Boot toggle, and Net-Boot-Protocol picker. <em>SMB</em> is the classic network-share mode; <em>UDPFS</em> and <em>UDPBD</em> stream games over the LAN and require a static PS2 IP (DHCP is not resolved). <em>UDPBD</em> uses the SUDPBDv2 monolithic driver. See <a href="network-boot.html">Network Boot</a>.</td></tr>
+<tr><td>UDPFS Access</td><td>Files / Image</td><td>Shown only when <em>Network Protocol</em> is set to UDPFS. <em>Files</em> uses the <code>udpfs_ioman</code> filesystem to serve loose ISOs from a folder (<code>-bsd=udpfs</code>); <em>Image</em> uses the <code>udpfs_bd</code> block device to serve a served disk image (<code>-bsd=udpfsbd</code>). See <a href="network-boot.html">Network Boot</a>.</td></tr>
 <tr><td>Applications Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for the Apps tab.</td></tr>
 <tr><td>Favourites Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for the Favourites tab. Set to <em>Off</em> to hide the Favourites tab entirely. See <a href="favourites.html">Favourites</a>.</td></tr>
 <tr><td>MMCE Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for MMCE (SD2PSX / MemCard PRO2) game loading. See <a href="mmce.html">MMCE</a>.</td></tr>
@@ -261,8 +262,8 @@ An <em>Advanced Options</em> toggle reveals Ethernet link-mode controls.</p>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>Advanced Options</td><td>Off / On</td><td>Shows the Ethernet Link Mode selector when on.</td></tr>
-<tr><td>Ethernet Link Mode</td><td>100Mbit Full-duplex / 100Mbit Half-duplex / 10Mbit Full-duplex / 10Mbit Half-duplex</td><td>Forces a specific NIC link speed and duplex. Visible only when Advanced Options is on.</td></tr>
-<tr><td>IP Address Type</td><td>Static / DHCP</td><td>How the PS2 acquires its network address. <strong>UDPBD and UDPFS require Static</strong> — they do not use the ETH/SMB stack, so DHCP is never resolved when Network Boot is active.</td></tr>
+<tr><td>Ethernet Link Mode</td><td>Auto / 100Mbit Full-duplex / 100Mbit Half-duplex / 10Mbit Full-duplex / 10Mbit Half-duplex</td><td>Forces a specific NIC link speed and duplex. <em>Auto</em> auto-negotiates. Visible only when Advanced Options is on.</td></tr>
+<tr><td>IP Address Type</td><td>Static / DHCP</td><td>How the PS2 acquires its network address. <strong>UDPBD and UDPFS require Static</strong> — they do not use the ETH/SMB stack, so DHCP is never resolved when the <em>Network Protocol</em> is set to UDPFS or UDPBD.</td></tr>
 <tr><td>IP Address</td><td>four octets</td><td>The PS2's static IP address.</td></tr>
 <tr><td>Mask</td><td>four octets</td><td>Subnet mask.</td></tr>
 <tr><td>Gateway</td><td>four octets</td><td>Default gateway.</td></tr>
@@ -276,7 +277,7 @@ An <em>Advanced Options</em> toggle reveals Ethernet link-mode controls.</p>
 <tbody>
 <tr><td>Address Type</td><td>IP / NetBIOS</td><td>Whether the server is addressed by IP or by NetBIOS name.</td></tr>
 <tr><td>Address</td><td>text or four octets</td><td>Server IP or NetBIOS hostname.</td></tr>
-<tr><td>Port</td><td>0&ndash;65353 (default 445)</td><td>SMB port. 445 is the standard Windows share port.</td></tr>
+<tr><td>Port</td><td>0&ndash;65535 (default 1111)</td><td>SMB port. RiptOPL defaults to <code>1111</code> (was 445): a non-privileged port so the bundled <code>pc/smbserver</code> binds it without admin/root. Set it to 445 for a standard Windows share.</td></tr>
 <tr><td>Share</td><td>text (default <code>PS2SMB</code>)</td><td>Share name on the server. Leave blank to list available shares.</td></tr>
 <tr><td>User</td><td>text (default <code>GUEST</code>)</td><td>SMB username.</td></tr>
 <tr><td>Password</td><td>text</td><td>SMB password. Leave blank for guest authentication.</td></tr>

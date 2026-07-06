@@ -56,7 +56,7 @@
 {
 "title": "Getting RIPTOPL.ELF onto your PS2",
 "cat": "start",
-"text": "Step-by-step: download the installable zip, copy RIPTOPL.ELF to your FMCB/FHDB launch location, optionally place the Neutrino archive, and prepare your storage device folders.",
+"text": "Step-by-step: download the installable zip, copy RIPTOPL.ELF to your FMCB/FHDB launch location, optionally place the Neutrino folder, and prepare your storage device folders.",
 "url": "install.html#install"
 },
 {
@@ -188,13 +188,13 @@
 {
 "title": "SMB — Configure Network Settings in OPL",
 "cat": "devices",
-"text": "Enter the PS2 IP (static or DHCP), subnet mask, gateway, Ethernet link mode, server address (IP or NetBIOS name), port (default 445), share name (default PS2SMB), username, and password.",
+"text": "Enter the PS2 IP (static or DHCP), subnet mask, gateway, Ethernet link mode, server address (IP or NetBIOS name), port (default 1111), share name (default PS2SMB), username, and password.",
 "url": "smb.html#network-settings"
 },
 {
 "title": "SMB — Enable SMB in Device Settings",
 "cat": "devices",
-"text": "Set SMB/ETH Start Mode to Auto (connect on boot) or Manual (connect on demand) in Device Settings. Interlocked with Network Boot — only one can be active at a time.",
+"text": "Select SMB in the unified Network Protocol picker (Off/SMB/UDPFS/UDPBD) in Device Settings. SMB and the UDP boot protocols share the one NIC — only one can be active at a time.",
 "url": "smb.html#enable-smb"
 },
 {
@@ -422,7 +422,7 @@
 {
 "title": "Neutrino Device picker",
 "cat": "neutrino",
-"text": "Pin Neutrino ELF lookup to a specific device root (mc0, mc1, mass0–mass7, mmce0, mmce1) or leave on Auto to search the mc0/mc1 priority list. OPL probes <device>:NEUTRINO/neutrino.elf and case variants.",
+"text": "Pick the device TYPE that holds neutrino.elf: Auto / Memory Card / USB / MX4SIO / MMCE / HDD (exFAT) / HDD (APA). OPL probes <root>:/neutrino/neutrino.elf on the chosen device type; Auto probes the active game device first, then a legacy custom path, then mc0/mc1.",
 "url": "neutrino.html#neutrino-device"
 },
 {
@@ -758,7 +758,7 @@
 {
 "title": "Device Settings",
 "cat": "reference",
-"text": "Consolidated hub for all storage devices: BDM/HDD/ETH/MMCE start modes, per-device enable toggles (USB/iLink/MX4SIO/HDD-exFAT), Network Boot toggle and SMB/UDP protocol picker, Favourites Start Mode, prefix paths, cache sizes, and all MMCE options.",
+"text": "Consolidated hub for all storage devices: BDM/HDD/MMCE start modes, per-device enable toggles (USB/iLink/MX4SIO/HDD-exFAT), the unified Network Protocol picker (Off/SMB/UDPFS/UDPBD) with a UDPFS Access sub-mode, Favourites Start Mode, prefix paths, cache sizes, and all MMCE options.",
 "url": "settings.html#device-settings"
 },
 {
@@ -944,13 +944,13 @@
 {
 "title": "Releases — Two toolchains, one default",
 "cat": "reference",
-"text": "The default ELF uses ps2dev/ps2dev:latest; a pinned ps2max/dev ELF ships as APP_RIPTOPL-OLDSDK as an instant fallback if a toolchain regression breaks a game.",
+"text": "Three toolchains: the default ELF uses ps2dev/ps2dev:latest; a wOPL-container ELF ships as APP_RIPTOPL-WOPLSDK (stock MMCE drivers) and a pinned ps2max/dev ELF as APP_RIPTOPL-OLDSDK, both instant fallbacks if a toolchain regression breaks a game.",
 "url": "releases.html#two-toolchains"
 },
 {
 "title": "Releases — Bundled Neutrino core",
 "cat": "reference",
-"text": "The installable zip bundles the latest official rickgaiser/neutrino archive with config/bsd-udpfsbd.toml injected so UDPFS works on extraction without a manual copy step.",
+"text": "The installable zip bundles the latest official rickgaiser/neutrino as an already-extracted drag-and-drop neutrino/ folder with config/bsd-udpfsbd.toml injected so UDPFS works without any extract or manual copy step.",
 "url": "releases.html#bundled-neutrino"
 },
 {
@@ -1016,7 +1016,7 @@
 {
 "title": "Credits & Sources",
 "cat": "reference",
-"text": "The people and projects RiptOPL is built on — from the ps2homebrew foundation and PS2SDK through the wider OPL family (rickgaiser, neutrino, sOPL, uOPL, wOPL, OPL DB, POPSLoader, RetroGEM ID, nhddl) to special thanks for Wolf3s, KrahJohlito, bbsan2k, saildot4k, Berion, Ifcaro, jimmikaelkael, and tester eliminator1403.",
+"text": "The people and projects RiptOPL is built on — from the ps2homebrew foundation and PS2SDK through the wider OPL family (rickgaiser, neutrino, sOPL, uOPL, wOPL, OPL DB, POPSLoader, RetroGEM ID, nhddl) to special thanks for Wolf3s, KrahJohlito, bbsan2k, saildot4k, Berion, Ifcaro, jimmikaelkael, and testers eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz, and nuno6573.",
 "url": "credits.html"
 },
 {
@@ -1034,7 +1034,7 @@
 {
 "title": "Credits: Special Thanks",
 "cat": "reference",
-"text": "Individual thanks to Wolf3s & KrahJohlito (uOPL/wOPL — Neutrino launcher, Coverflow, Favourites), bbsan2k (MMCE protocol), saildot4k (BDMA-ATA exFAT HDD), eliminator1403 (testing & feedback), Berion (artwork & theme design), and Ifcaro & jimmikaelkael (original OPL authors).",
+"text": "Individual thanks to Wolf3s & KrahJohlito (uOPL/wOPL — Neutrino launcher, Coverflow, Favourites), bbsan2k (MMCE protocol), saildot4k (BDMA-ATA exFAT HDD), the testers eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz and nuno6573 (testing & feedback), Berion (artwork & theme design), and Ifcaro & jimmikaelkael (original OPL authors).",
 "url": "credits.html#special-thanks"
 },
 {

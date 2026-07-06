@@ -160,20 +160,24 @@ Slot(s) value — OPL will load the MMCE driver at launch specifically to suppor
 </div>
 
 <h2 id="advanced-settings">Advanced MMCE Settings</h2>
-<p>These settings tune the low-level timing and locking behaviour of the MMCE driver. The defaults (all 0 / OFF)
-are correct for the vast majority of SD2PSX and MemCard PRO2 hardware. Adjust them only if you are experiencing
-instability or timeouts.</p>
+<p>These settings tune the low-level timing and locking behaviour of the MMCE driver. RiptOPL ships opinionated
+known-good defaults — <b>Wait Cycles = 5</b> and <b>Use Timeout Alarms = ON</b> — which run cleanly on the vast
+majority of SD2PSX and MemCard PRO2 hardware. The aggressive 0-cycles + alarms-OFF pairing is the perf extreme the
+in-app hints warn about (a slow late-slim SD2PSX can lose the very first SIO2 handshake and freeze at the first
+read), so the fork even has a one-time migration that lifts an existing 0/0 config back to 5/ON. Adjust these only
+if you are experiencing instability or timeouts.</p>
 
 <h3 id="wait-cycles">Wait Cycles after /ACK low</h3>
 <p>Extra wait cycles inserted after the MMCE /ACK line goes low, giving slower SD cards or cards with marginal
-signal quality more time to settle before the driver continues. Values: <b>0</b> (default) through <b>5</b>.
+signal quality more time to settle before the driver continues. Values: <b>0</b> through <b>5</b> (default <b>5</b>).
 Lower values may improve performance but can cause instabilities; increase if you see read errors or hangs.</p>
 
 <h3 id="use-alarms">Use Timeout Alarms</h3>
-<p>When <b>ON</b>, the driver uses hardware alarm interrupts to implement MMCE operation timeouts. When <b>OFF</b>
-(the default), timeouts are handled without alarms — which may marginally improve performance, but means a genuine
-MMCE timeout can result in a hard freeze rather than a graceful error. Turn this <b>ON</b> if your card occasionally
-hangs to convert those freezes into recoverable timeout errors.</p>
+<p>When <b>ON</b> (the default), the driver uses hardware alarm interrupts to implement MMCE operation timeouts.
+When <b>OFF</b>, timeouts are handled without alarms — which may marginally improve performance, but removes the
+driver's only SIO2 timeout, so a genuine MMCE timeout can result in a hard freeze rather than a graceful error.
+Leave this <b>ON</b> (the shipped known-good default) so an occasional card hang converts into a recoverable
+timeout error rather than a freeze.</p>
 
 <h2 id="ps1-vcd">PS1 games on MMCE</h2>
 <p>MMCE supports the PS1 VCD view exactly like USB. Place <code>*.VCD</code> files and <code>POPSTARTER.ELF</code>
@@ -188,7 +192,12 @@ meaning POPSTARTER can read BDMA module files from the MMCE card when you use an
 <p>Per-game <a href="neutrino.html">Neutrino</a> is fully supported for games stored on MMCE. When a game's
 Loader Core is set to Neutrino, OPL hands the launch to <code>neutrino.elf</code>. Neutrino itself can be stored
 on the MMCE card at <code>mmce0:/neutrino/neutrino.elf</code> (or <code>mmce1:/</code>) — select
-<b>mmce0</b> or <b>mmce1</b> in the Neutrino ELF Path device picker under General Settings. Auto does not search MMCE — it only probes mc0: and mc1: — so a neutrino.elf stored on an MMCE card requires picking <b>mmce0</b> or <b>mmce1</b> explicitly.</p>
+<b>MMCE</b> in the Neutrino ELF Path device picker under General Settings. That picker lists device
+<i>types</i> (Auto, Memory Card, USB, MX4SIO, MMCE, HDD (exFAT), HDD (APA)), not per-slot entries, so there is
+no separate <code>mmce0</code>/<code>mmce1</code> choice. <b>Auto</b> also works: it probes the active game device
+for a co-located <code>neutrino/neutrino.elf</code> before falling back to <code>mc0:</code>/<code>mc1:</code>, so a
+neutrino.elf on the MMCE card is found automatically when you launch an MMCE game — an explicit device pick is no
+longer required.</p>
 
 <div class="callout info"><div class="h">ℹ USBExtreme (.ul) and ZSO on MMCE</div>
 USBExtreme multi-chunk format (<code>ul.*</code>) and ZSO compressed images are both supported on MMCE, subject

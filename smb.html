@@ -127,7 +127,7 @@ OPL's embedded SMB client speaks <b>SMBv1</b> only. Modern Windows disables the 
   <tbody>
     <tr><td><b>Address Type</b></td><td><b>IP Address</b> or <b>NetBIOS</b>. For most setups use IP address — it connects directly without name resolution. NetBIOS lets you type a Windows machine name (e.g. <code>MYPC</code>) but requires the PS2 to resolve the name first; if the name lookup fails, OPL cannot connect at all.</td></tr>
     <tr><td><b>Address</b></td><td>Either the server's IPv4 address (e.g. <code>192.168.0.5</code>) or its NetBIOS name (up to 15 characters, e.g. <code>MYPC</code>), depending on Address Type.</td></tr>
-    <tr><td><b>Port</b></td><td>The SMB port. Default and standard is <b>445</b>. Only visible with Show Advanced Options enabled; leave at 445 unless your server is explicitly configured otherwise.</td></tr>
+    <tr><td><b>Port</b></td><td>The SMB port. RiptOPL's default is <b>1111</b> — a non-privileged port (&gt;1024) chosen so the bundled PC SMB server can bind it without admin/root (445 is the industry-standard SMB port but is <em>not</em> this fork's default). Network Settings opens with advanced options on, so the Port field is always visible and immediately editable; leave it at 1111 unless your server is explicitly configured otherwise (the bundled PC SMB server also defaults to 1111).</td></tr>
     <tr><td><b>Share</b></td><td>The share name, e.g. <code>PS2SMB</code>. This is the name you gave the share on the server — not a path. Default is <code>PS2SMB</code>.</td></tr>
     <tr><td><b>User</b></td><td>The username to log on with. Default is <code>GUEST</code>. For a guest/public share leave this as-is. For a password-protected share enter the correct account name.</td></tr>
     <tr><td><b>Password</b></td><td>Leave empty for no-password shares. For password-protected shares OPL will attempt to send a hashed password first; if the server rejects the hash it falls back to plaintext.</td></tr>
@@ -143,19 +143,19 @@ If your share contains more than one OPL layout — for example you have multipl
 
 <h2 id="enable-smb">3. Enable SMB in Device Settings</h2>
 
-<p>Network Settings stores the <em>how</em> (address, credentials). <b>Device Settings</b> stores the <em>whether</em> — open <b>Settings → Device Settings</b> and set <b>ETH Start Mode</b> to <b>Auto</b> or <b>Manual</b>:</p>
+<p>Network Settings stores the <em>how</em> (address, credentials). <b>Device Settings</b> stores the <em>whether</em> — open <b>Settings → Device Settings</b> and set <b>Network Protocol</b> to <b>SMB</b>. RiptOPL replaced the old separate ETH-start-mode selector, Network-Boot toggle, and net-boot-protocol picker with one unified <b>Network Protocol</b> enum:</p>
 
 <table data-sortable>
-  <thead><tr><th>Start Mode</th><th>Behaviour</th></tr></thead>
+  <thead><tr><th>Network Protocol</th><th>Behaviour</th></tr></thead>
   <tbody>
-    <tr><td><b>Off</b></td><td>SMB is not loaded. Use this if you are not using network sharing.</td></tr>
-    <tr><td><b>Auto</b></td><td>OPL connects to the SMB share on startup and shows <b>ETH Games</b> in the tab bar without any extra steps.</td></tr>
-    <tr><td><b>Manual</b></td><td>The <b>ETH Games</b> tab appears in the list but OPL does not connect until you select it. Useful if the server is not always on — boot is faster and you only pay the connection cost when you navigate to SMB.</td></tr>
+    <tr><td><b>Off</b></td><td>No network transport is loaded. Use this if you are not using network sharing or network boot.</td></tr>
+    <tr><td><b>SMB</b></td><td>Loads the SMB (ETH) client. The <b>ETH Games</b> tab appears in the list and OPL connects to the share when you navigate to it (SMB always runs in manual start mode — there is no separate Auto choice). Boot stays fast, and you only pay the connection cost when you enter the SMB tab.</td></tr>
+    <tr><td><b>UDPFS</b> / <b>UDPBD</b></td><td>Selects Network Boot instead of SMB — see <a href="network-boot.html">Network Boot</a>. UDPFS adds a Files/Image sub-mode. Only one network transport can own the single Ethernet adapter, so choosing one of these turns SMB off.</td></tr>
   </tbody>
 </table>
 
 <div class="callout info"><div class="h">ℹ SMB is interlocked with Network Boot</div>
-In Device Settings, <b>ETH Start Mode</b> and <b>Network Boot (UDPBD/UDPFS)</b> are interlocked: enabling Network Boot disables the SMB start-mode selector, and vice versa. Both features require the PS2's single Ethernet adapter; only one can be active at a time. This interlock is enforced both in the UI and at runtime in <code>ethsupport.c</code>.</div>
+Because <b>Network Protocol</b> is a single picker, SMB and Network Boot (UDPBD/UDPFS) are mutually exclusive by construction: selecting <b>SMB</b> rules out UDPBD/UDPFS, and selecting either UDP transport rules out SMB. Both require the PS2's single Ethernet adapter; only one can be active at a time. The interlock is enforced both in the UI and at runtime in <code>ethsupport.c</code>.</div>
 
 <h2 id="folder-layout">4. Game and folder layout</h2>
 
@@ -222,7 +222,7 @@ In Device Settings, <b>ETH Start Mode</b> and <b>Network Boot (UDPBD/UDPFS)</b> 
   <tbody>
     <tr>
       <td>OPL shows "Network startup error: CONN" or similar</td>
-      <td>The PS2 cannot reach the server. Check: server IP is correct, server is on and reachable, SMBv1 is enabled on the server, no firewall blocking port 445, PS2 IP is valid (can ping the server from another device on the same subnet).</td>
+      <td>The PS2 cannot reach the server. Check: server IP is correct, server is on and reachable, SMBv1 is enabled on the server, no firewall blocking the configured SMB port (1111 by default), PS2 IP is valid (can ping the server from another device on the same subnet).</td>
     </tr>
     <tr>
       <td>OPL shows "LOGON" error</td>
@@ -250,7 +250,7 @@ In Device Settings, <b>ETH Start Mode</b> and <b>Network Boot (UDPBD/UDPFS)</b> 
     </tr>
     <tr>
       <td>Windows: share works from PC but PS2 cannot connect</td>
-      <td>Confirm SMBv1 server is enabled in Windows Features. Also check Windows Firewall — the <em>File and Printer Sharing</em> inbound rules must allow TCP port 445. Some security software (antivirus) may block SMBv1 connections even with the feature enabled.</td>
+      <td>Confirm SMBv1 server is enabled in Windows Features. Also check Windows Firewall — an inbound rule must allow the configured SMB port (TCP 1111 by default; if you moved OPL to the standard port, allow TCP 445 via the <em>File and Printer Sharing</em> rules). Some security software (antivirus) may block SMBv1 connections even with the feature enabled.</td>
     </tr>
   </tbody>
 </table>
@@ -271,7 +271,7 @@ In Device Settings, <b>ETH Start Mode</b> and <b>Network Boot (UDPBD/UDPFS)</b> 
     <tr><td><code>smb_share_use_nbns</code></td><td><code>0</code> = IP address mode, <code>1</code> = NetBIOS name mode</td></tr>
     <tr><td><code>smb_share_nb_addr</code></td><td>NetBIOS name of the server (used when <code>smb_share_use_nbns=1</code>)</td></tr>
     <tr><td><code>smb_ip</code></td><td>Server IP address (used when <code>smb_share_use_nbns=0</code>)</td></tr>
-    <tr><td><code>smb_port</code></td><td>SMB TCP port (default <code>445</code>)</td></tr>
+    <tr><td><code>smb_port</code></td><td>SMB TCP port (default <code>1111</code>)</td></tr>
     <tr><td><code>smb_share</code></td><td>Share name (default <code>PS2SMB</code>)</td></tr>
     <tr><td><code>smb_user</code></td><td>Login username (default <code>GUEST</code>)</td></tr>
     <tr><td><code>smb_pass</code></td><td>Password (empty for no-password shares)</td></tr>

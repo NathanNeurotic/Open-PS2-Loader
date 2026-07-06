@@ -177,8 +177,9 @@ folder holds the variant you want to equip): <b>USB</b>, <b>MX4SIO</b>, <b>MMCE<
 <b>Internal HDD</b>. RiptOPL identifies the device by its block-device <em>driver</em>
 (<code>usb</code> / <code>mx4sio</code> / <code>ata</code> / <code>mmce</code>) and reads from that
 specific device, so pick the one your module files actually sit on. For an internally attached exFAT
-HDD choose <b>Internal HDD</b> — RiptOPL reads it from its <code>ata0:</code> root (the same volume
-wLaunchELF shows), so its <code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code> are found.</p>
+HDD choose <b>Internal HDD</b> — RiptOPL reads it from its mounted <code>massN:</code> root (the exFAT
+volume mounted through the BDM mass-device namespace, never a typed <code>ata0:</code> filesystem), so its
+<code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code> are found.</p>
 
 <p>SMB is network-only, so the BDMA equip does not apply to it.</p>
 

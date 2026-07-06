@@ -218,12 +218,17 @@ In <code>conf_apps.cfg</code>, use <code>mass:</code> as the device prefix (the 
 <h3 id="exfat-ps1">PS1 games on exFAT (BDMA equip)</h3>
 <p>Put your <code>*.VCD</code> files in the drive's <code>POPS/</code> folder alongside
 <code>POPSTARTER.ELF</code>. Press <b>L3</b> on the HDD Games tab to switch to the VCD view.</p>
-<p>POPSTARTER's stock driver only reads FAT32. To boot PS1 games from the exFAT HDD, you must equip the
-<b>HDD (exFAT)</b> BDMA driver modules: go to <b>General Settings</b>, set <b>BDMA Mode</b> to
-<b>HDD (exFAT)</b> and <b>BDMA Source</b> to <b>Internal HDD</b> (the source identifies your drive by its
-<code>ata</code> driver and reads its <code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code>).
-RiptOPL copies the correct BDMAssault module pair onto <code>mc?:/POPSTARTER/</code> for you when you change
-the setting.</p>
+<p>POPSTARTER's stock driver only reads FAT32, so booting a PS1 game from the exFAT HDD needs the
+<b>HDD (exFAT)</b> BDMA driver modules equipped. RiptOPL does this <b>automatically by default</b>: the
+<b>VCD BDMA Apply on Launch</b> toggle (in <b>General Settings</b>) ships <b>On</b>, and each time you launch
+a VCD it auto-equips that title's matching exFAT driver pair — copying the correct BDMAssault modules onto
+<code>mc?:/POPSTARTER/</code> for you — right before boot. You do not need to touch anything.</p>
+<div class="callout info"><div class="h">ℹ Manual equip (only after turning auto-equip Off)</div>
+The manual <b>BDMA Source</b> / <b>BDMA Mode</b> pickers are hidden while <b>VCD BDMA Apply on Launch</b> is On.
+If you turn that toggle <b>Off</b> to manage the equip yourself, set <b>BDMA Mode</b> to <b>HDD (exFAT)</b> and
+<b>BDMA Source</b> to <b>Internal HDD</b> (the source identifies your drive by its <code>ata</code> driver and
+reads its <code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code>).
+</div>
 <p>See <a href="ps1-vcd.html#bdma">PS1 Games (VCD) — exFAT BDMA equip</a> for the complete walkthrough,
 including the BDMA Source setting.</p>
 

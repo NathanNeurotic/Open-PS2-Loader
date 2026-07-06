@@ -78,7 +78,7 @@ The <b>Loader Core</b> selector, the <b>Neutrino Device</b> picker, the structur
 
 <h3>Network boot exception</h3>
 
-<p>The <a href="network-boot.html">UDPBD / UDPFS</a> feature ships its <b>own bundled Neutrino</b> (a <code>neutrino_*.7z</code> inside the release's installable package, pre-populated with the UDPFS config). Per-game Neutrino use still needs you to supply <code>neutrino.elf</code> at the paths above.</p>
+<p>The <a href="network-boot.html">UDPBD / UDPFS</a> feature ships its <b>own bundled Neutrino</b> — a drag-and-drop <code>neutrino/</code> folder (<code>neutrino.elf</code> plus <code>config/</code> and <code>modules/</code>) in the release zip, pre-populated with the UDPFS config. Per-game Neutrino use still needs you to supply <code>neutrino.elf</code> at the paths above.</p>
 
 <h2 id="per-game-core">2. Pick the core per game</h2>
 
@@ -118,17 +118,20 @@ PlayStation 1 titles (<code>*.VCD</code>) always boot through <b>POPSTARTER.ELF<
 
 <h2 id="neutrino-device">3. Neutrino Device picker</h2>
 
-<p>Under <b>Settings &rarr; General Settings &rarr; Neutrino Device</b> you can pin Neutrino to a specific storage device root, or leave it on <b>Auto</b>. When a device is chosen, OPL probes <code>&lt;root&gt;:/neutrino/neutrino.elf</code> (plus case variants) on that device only and ignores the memory-card candidates. When set to <b>Auto</b>, OPL falls through the full mc0/mc1 priority list.</p>
+<p>Under <b>Settings &rarr; General Settings &rarr; Neutrino Device</b> you can pin Neutrino to a specific storage device <b>type</b>, or leave it on <b>Auto</b>. This is a device <em>type</em> (not a fixed device-name slot): OPL resolves the chosen type to its live device token(s) at launch — USB / MX4SIO / HDD (exFAT) resolve to <code>massN:</code>, MMCE resolves to <code>mmceN:</code>, and HDD (APA) resolves to a <code>pfs</code> mount. It then probes <code>&lt;root&gt;:/neutrino/neutrino.elf</code> (plus case variants) on that device type only. When set to <b>Auto</b>, OPL first probes the <b>active game device</b> for a co-located <code>neutrino.elf</code>, then honours a legacy custom Neutrino ELF path, and only then falls back to the <code>mc0</code>/<code>mc1</code> candidate list.</p>
 
 <p>Available choices:</p>
 <ul class="checklist">
-<li><b>Auto</b> — checks the mc0/mc1 candidates in priority order (default)</li>
-<li><b>mc0</b> / <b>mc1</b> — memory cards</li>
-<li><b>mass0</b> through <b>mass7</b> — USB mass storage slots</li>
-<li><b>mmce0</b> / <b>mmce1</b> — MMCE devices (SD2PSX, MemCard PRO2, etc.)</li>
+<li><b>Auto</b> — active game device first, then a legacy custom path, then the <code>mc0</code>/<code>mc1</code> candidates (default)</li>
+<li><b>Memory Card</b> — <code>mc0</code> / <code>mc1</code></li>
+<li><b>USB</b> — USB mass storage (resolves to <code>massN:</code>)</li>
+<li><b>MX4SIO</b> — SD-card-over-SIO2 adapter (resolves to <code>massN:</code>)</li>
+<li><b>MMCE</b> — SD2PSX / MemCard PRO2 (resolves to <code>mmceN:</code>)</li>
+<li><b>HDD (exFAT)</b> — internal BDM/exFAT HDD (resolves to <code>massN:</code>)</li>
+<li><b>HDD (APA)</b> — internal APA HDD (resolves to a <code>pfs</code> mount)</li>
 </ul>
 
-<p>In all cases the path searched on the chosen device is <code>&lt;device&gt;:NEUTRINO/neutrino.elf</code> and its capitalisation variants; the leading-slash form <code>&lt;device&gt;:/neutrino/neutrino.elf</code> is also tried.</p>
+<p>In all cases the path searched on the chosen device type is <code>&lt;device&gt;:NEUTRINO/neutrino.elf</code> and its capitalisation variants; the leading-slash form <code>&lt;device&gt;:/neutrino/neutrino.elf</code> is also tried.</p>
 
 <h2 id="launch-args">4. Launch arguments</h2>
 
@@ -137,7 +140,7 @@ PlayStation 1 titles (<code>*.VCD</code>) always boot through <b>POPSTARTER.ELF<
 <table data-sortable>
 <thead><tr><th>Auto-emitted argument</th><th>When emitted</th></tr></thead>
 <tbody>
-<tr><td><code>-bsd=&lt;usb|ilink|mx4sio|ata|mmce|udpbd|udpfsbd&gt;</code></td><td>Always (the storage backend)</td></tr>
+<tr><td><code>-bsd=&lt;usb|ilink|mx4sio|ata|mmce|udpbd|udpfsbd|udpfs&gt;</code></td><td>Always (the storage backend)</td></tr>
 <tr><td><code>-bsdfs=hdl</code></td><td>Internal HDD (APA) only</td></tr>
 <tr><td><code>-dvd=&lt;path&gt;</code> / <code>-dvd=hdl:&lt;partition&gt;</code></td><td>Always (the game image or partition)</td></tr>
 <tr><td><code>-gc=&lt;modes&gt;</code></td><td>Only when OPL compat modes are set for the game</td></tr>

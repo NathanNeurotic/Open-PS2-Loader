@@ -96,19 +96,25 @@ The headline item is a full installable package zip; all other assets are publis
 <tr>
   <td><code>RIPTOPL-&lt;sdk&gt;-&lt;rel&gt;-&lt;sha&gt;.zip</code></td>
   <td><b>The installable package.</b> Contains <code>APP_RIPTOPL/RIPTOPL.ELF</code> (built with
-  <code>ps2dev/ps2dev:latest</code>, the default), <code>APP_RIPTOPL-OLDSDK/RIPTOPL.ELF</code>
-  (the pinned/stable toolchain, as a fallback), the <code>POPSTARTER/</code> and <code>POPS/</code>
-  folders for PS1 support, and the bundled Neutrino core archive (<code>neutrino_*.7z</code> — with
-  <code>config/bsd-udpfsbd.toml</code> injected so UDPFS works on extraction). Extract it and use
-  <code>APP_RIPTOPL/RIPTOPL.ELF</code>.</td>
+  <code>ps2dev/ps2dev:latest</code>, the default), <code>APP_RIPTOPL-WOPLSDK/RIPTOPL.ELF</code>
+  (wOPL's digest-pinned container with stock MMCE drivers) and
+  <code>APP_RIPTOPL-OLDSDK/RIPTOPL.ELF</code> (the pinned/stable toolchain, as a fallback), the
+  <code>POPSTARTER/</code> and <code>POPS/</code> folders for PS1 support, an already-extracted
+  <code>neutrino/</code> folder (drag-and-drop — with <code>config/bsd-udpfsbd.toml</code> injected so
+  UDPFS works), and a host-side <code>PC-SMB-Server/</code> folder (a pure-Python SMBv1 server you run
+  on your PC for Windows 11). Extract it and use <code>APP_RIPTOPL/RIPTOPL.ELF</code>.</td>
 </tr>
 <tr>
   <td><code>RIPTOPL-&lt;version&gt;.ELF</code></td>
-  <td>Bare loader ELF, <code>ps2max/dev</code> pinned toolchain.</td>
+  <td>Bare loader ELF, <code>ps2dev/ps2dev:latest</code> toolchain (primary).</td>
 </tr>
 <tr>
-  <td><code>RIPTOPL-&lt;version&gt;-ps2dev-latest.ELF</code></td>
-  <td>Bare loader ELF, <code>ps2dev/ps2dev:latest</code> bleeding-edge toolchain.</td>
+  <td><code>RIPTOPL-&lt;version&gt;-woplsdk.ELF</code></td>
+  <td>Bare loader ELF, wOPL's digest-pinned <code>ghcr.io/ps2homebrew</code> container with stock MMCE drivers.</td>
+</tr>
+<tr>
+  <td><code>RIPTOPL-&lt;version&gt;-oldsdk.ELF</code></td>
+  <td>Bare loader ELF, <code>ps2max/dev</code> pinned toolchain (fallback).</td>
 </tr>
 <tr>
   <td><code>RIPTOPL-&lt;version&gt;-src.zip</code></td>
@@ -124,12 +130,12 @@ The headline item is a full installable package zip; all other assets are publis
 </tr>
 <tr>
   <td><code>RIPTOPL-VARIANTS-*.zip</code></td>
-  <td>Alternate build configs: the full <code>EXTRA_FEATURES × PADEMU</code> matrix, in both SDK flavours. For testing or diagnostics.</td>
+  <td>Alternate build configs: the full <code>EXTRA_FEATURES × PADEMU × DUALSENSE</code> matrix, in all three SDK flavours. For testing or diagnostics.</td>
 </tr>
 <tr>
   <td><code>RIPTOPL-DEBUG-*.zip</code></td>
   <td>Debug builds (<code>iopcore</code>, <code>ingame</code>, <code>eesio</code>, <code>iopcore_ppctty</code>, <code>ingame_ppctty</code>,
-  <code>DTL_T10000</code> variants), both SDK flavours. For diagnostics only.</td>
+  <code>DTL_T10000</code> variants), all three SDK flavours. For diagnostics only.</td>
 </tr>
 </tbody>
 </table>
@@ -140,13 +146,17 @@ The headline item is a full installable package zip; all other assets are publis
 ELF's SHA256 — a uniqueness tag, not a security guarantee. The full checksums are in
 <code>SHA256SUMS.txt</code>.</p>
 
-<h2 id="two-toolchains">Two toolchains, one default</h2>
+<h2 id="two-toolchains">Three toolchains, one default</h2>
 
-<p>Every build runs under two PS2 toolchains simultaneously:</p>
+<p>Every build runs under three PS2 toolchains simultaneously:</p>
 <ul class="checklist">
   <li><b><code>ps2dev/ps2dev:latest</code></b> — the bleeding-edge toolchain. This is the <b>default ELF</b>
   inside <code>APP_RIPTOPL/RIPTOPL.ELF</code>. It tracks PS2SDK closely and usually produces the
   best binary.</li>
+  <li><b>wOPL's digest-pinned <code>ghcr.io/ps2homebrew</code> container</b> — the SDK wOPL itself
+  builds with, using the container's <b>stock MMCE drivers</b> (no coherent-mmce override). Its output
+  goes into <code>APP_RIPTOPL-WOPLSDK/RIPTOPL.ELF</code>. Use this to compare against a wOPL-toolchain
+  build or if the MMCE driver behaviour matters on your console.</li>
   <li><b><code>ps2max/dev</code> (pinned)</b> — a specific, locked toolchain version. Its output goes
   into <code>APP_RIPTOPL-OLDSDK/RIPTOPL.ELF</code>. Use this if the default ELF has a regression
   on your console.</li>
@@ -158,15 +168,17 @@ The <code>SHA256SUMS.txt</code> covers whichever ELFs were actually produced.</p
 <h2 id="bundled-neutrino">Bundled Neutrino core</h2>
 
 <p>The installable package ships the latest official
-<a href="https://github.com/rickgaiser/neutrino">rickgaiser/neutrino</a> pre-release as
-<code>neutrino_*.7z</code> at the package root. RiptOPL adds only one file into that archive —
-<code>config/bsd-udpfsbd.toml</code> — so UDPFS works on extraction without a manual copy step.
+<a href="https://github.com/rickgaiser/neutrino">rickgaiser/neutrino</a> pre-release as an
+already-extracted <code>neutrino/</code> folder at the package root (holding
+<code>neutrino.elf</code> plus the <code>config/</code> and <code>modules/</code> folders) — no
+zip-in-zip, so you just drag-and-drop it. RiptOPL adds only one file —
+<code>config/bsd-udpfsbd.toml</code> — so UDPFS works out of the box without a manual copy step.
 Everything else is the official Neutrino build, unchanged.</p>
 
-<div class="callout info"><div class="h">ℹ After extracting</div>
-Extract <code>neutrino_*.7z</code> and copy <code>neutrino.elf</code> (plus the <code>config/</code>
-and <code>modules/</code> folders) to <code>mc?:/neutrino/</code>. See
-<a href="neutrino.html">Neutrino Core</a> for the full setup guide.</div>
+<div class="callout info"><div class="h">ℹ Copying it over</div>
+There is nothing to extract: copy the whole <code>neutrino/</code> folder to <code>mc?:/neutrino/</code>
+(<code>neutrino.elf</code> plus the <code>config/</code> and <code>modules/</code> folders are already
+inside). See <a href="neutrino.html">Neutrino Core</a> for the full setup guide.</div>
 
 <h2 id="how-to-pull">How to pull the rolling release</h2>
 
@@ -207,18 +219,22 @@ release packaging lives. The pushed ref picks the publish target:</p>
 release always reflects the freshest commit. A <code>master</code> push and a simultaneous
 <code>v*</code> tag release run in separate concurrency groups and do not cancel each other.</p>
 
-<details class="deep"><summary>Why are there two toolchain builds in the same release?</summary>
+<details class="deep"><summary>Why are there three toolchain builds in the same release?</summary>
 <p>The PS2 toolchain (<code>ps2dev/ps2dev:latest</code>) advances continuously and occasionally
-introduces regressions. Shipping both the bleeding-edge and a pinned build lets you fall back
+introduces regressions. Shipping the bleeding-edge build alongside a pinned build lets you fall back
 instantly without waiting for a fix commit: if a game stops booting, copy
 <code>APP_RIPTOPL-OLDSDK/RIPTOPL.ELF</code> over <code>APP_RIPTOPL/RIPTOPL.ELF</code> on your
-memory card or USB drive and retry. Report the regression upstream so it gets fixed for everyone.
+memory card or USB drive and retry. The third build,
+<code>APP_RIPTOPL-WOPLSDK/RIPTOPL.ELF</code>, comes from wOPL's digest-pinned container with its
+stock MMCE drivers — a diagnostic reference for isolating toolchain- or MMCE-driver-specific
+behaviour. Report the regression upstream so it gets fixed for everyone.
 </p></details>
 
 <details class="deep"><summary>When should I use the VARIANTS or DEBUG zips?</summary>
 <p><b>VARIANTS</b> cover the full cross-product of <code>EXTRA_FEATURES</code> (on/off) ×
-<code>PADEMU</code> (on/off) in both SDK flavours — useful if you want to isolate a
-compatibility difference introduced by one of those build flags. <b>DEBUG</b> builds
+<code>PADEMU</code> (on/off) × <code>DUALSENSE</code> (on/off) in all three SDK flavours — useful
+if you want to isolate a compatibility difference introduced by one of those build flags.
+<b>DEBUG</b> builds
 (<code>iopcore</code>, <code>ingame</code>, <code>eesio</code>, <code>iopcore_ppctty</code>, <code>ingame_ppctty</code>,
 <code>DTL_T10000</code>) emit diagnostic output over a UART/TTY; they are only useful if you
 have the hardware or emulator setup to capture it. Do not use debug builds for normal gaming —
@@ -232,11 +248,14 @@ they are significantly slower.</p></details>
 copy to your memory card or USB drive root:</p>
 <pre>APP_RIPTOPL/
   RIPTOPL.ELF          ← use this (ps2dev:latest, default)
+APP_RIPTOPL-WOPLSDK/
+  RIPTOPL.ELF          ← wOPL-container toolchain, stock MMCE drivers
 APP_RIPTOPL-OLDSDK/
   RIPTOPL.ELF          ← fallback if the default has a regression
 POPSTARTER/            ← SMB network stack + bdma_config.txt
 POPS/                  ← POPSTARTER.ELF and BDMA variants
-neutrino_*.7z          ← official Neutrino core (extract separately)</pre>
+neutrino/              ← official Neutrino core (already extracted, drag-and-drop)
+PC-SMB-Server/         ← host-side SMBv1 server (run on your PC, not the card)</pre>
 </div>
 <div class="step"><h3>Install the ELF via your launch method</h3>
 <p>Copy <code>APP_RIPTOPL/RIPTOPL.ELF</code> to wherever your launch method (FMCB, FHDB, or
@@ -244,10 +263,10 @@ equivalent) expects it. The folder name <code>APP_RIPTOPL</code> is the OPL conv
 homebrew apps stored on your device.</p>
 </div>
 <div class="step"><h3>Set up Neutrino (optional)</h3>
-<p>Extract <code>neutrino_*.7z</code> and copy <code>neutrino.elf</code> plus the
-<code>config/</code> and <code>modules/</code> folders to <code>mc?:/neutrino/</code>.
-Required only if you want per-game Neutrino launching or network boot (UDPBD/UDPFS).
-See <a href="neutrino.html">Neutrino Core</a>.</p>
+<p>The <code>neutrino/</code> folder is already extracted — just copy the whole folder
+(<code>neutrino.elf</code> plus the <code>config/</code> and <code>modules/</code> folders) to
+<code>mc?:/neutrino/</code>. Required only if you want per-game Neutrino launching or network boot
+(UDPBD/UDPFS). See <a href="neutrino.html">Neutrino Core</a>.</p>
 </div>
 <div class="step"><h3>Copy the language pack (optional)</h3>
 <p>If you want a non-default UI language, extract <code>RIPTOPL-LANGS-*.zip</code> and copy its
