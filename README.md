@@ -143,8 +143,8 @@ This build layers several features on top of upstream OPL:
   **Device Settings** page consolidates the per-device options, cache sizes, Block-Devices
   (BDM) settings, all MMCE settings, the network-boot controls (the UDPBD/UDPFS toggle + the
   **Net Boot Protocol** picker, interlocked with SMB), and the Favourites tab toggle in one place.
-- **DualSense / DualShock 5 (USB):** optional controller support, compiled in with
-  `make DUALSENSE=1`.
+- **DualSense / DualShock 5 (USB):** optional controller support -- grab the ready-made
+  `RIPTOPL-<version>-ds5.ELF` from the rolling release, or build with `make DUALSENSE=1`.
 - **Ready-to-use defaults:** a fresh install boots with sensible options already enabled —
   widescreen, cover art, notifications, sound effects + boot sound, USB, delete/rename, and
   the PS2 logo, with the device tabs in **Manual** mode. Video mode stays **Auto**. Change
@@ -226,8 +226,9 @@ because that upstream work is open for everyone to learn from.
 RiptOPL ships **one full-feature build** — GSM video-mode handling, in-game
 screenshots (IGS), DS3/DS4 pad emulation (PADEMU), VMC, PS2RD cheats and parental
 controls are all included in the standard ELF (no upstream-style per-feature variants).
-DualSense / DualShock 5 (USB) support is the one optional extra, compiled in with
-`make DUALSENSE=1`.
+DualSense / DualShock 5 (USB) support is the one optional extra: the rolling release
+ships it prebuilt as the named `RIPTOPL-<version>-ds5.ELF` asset (or build your own
+with `make DUALSENSE=1`).
 
 There are two release channels:
 

@@ -271,6 +271,22 @@ jobs:
           echo "Staged ps2dev-latest rolling assets:"
           ls -la rolling
 
+      - name: Build + stage DualSense (DS5) loader (ps2dev:latest)
+        # HW-validated on a real DualSense (maintainer, 2026-07-06). The DEFAULT ELF stays
+        # DUALSENSE=0 by deliberate choice; DS5 owners grab this named top-level build instead
+        # of digging it out of the VARIANTS zip. LOCALVERSION carries "-latest-ds5" so hardware
+        # reports self-identify.
+        run: |
+          set -eu
+          make --trace clean
+          make --trace LOCALVERSION=latest-ds5 DUALSENSE=1 release
+          DS5_ELF="$(ls RIPTOPL-*.ELF 2>/dev/null | head -n1)"
+          if [ -z "${DS5_ELF:-}" ] || [ ! -f "$DS5_ELF" ]; then
+            echo "No RIPTOPL ELF produced by the DUALSENSE=1 build" >&2
+            exit 1
+          fi
+          cp -f "$DS5_ELF" rolling/RIPTOPL-ds5.ELF
+
       - name: Build variant + debug extras (ps2dev:latest = standard)
         # Runs after staging the main ELF so the per-build `make clean` can't wipe it.
         run: sh ./.github/scripts/build_rolling_extras.sh "" "latest"
@@ -342,6 +358,9 @@ jobs:
           fi
           if [ -f rolling/RIPTOPL-woplsdk.ELF ]; then
             mv -f rolling/RIPTOPL-woplsdk.ELF "rolling/RIPTOPL-${VER}-woplsdk.ELF"
+          fi
+          if [ -f rolling/RIPTOPL-ds5.ELF ]; then
+            mv -f rolling/RIPTOPL-ds5.ELF "rolling/RIPTOPL-${VER}-ds5.ELF"
           fi
           echo "Renamed assets:"
           ls -la rolling
@@ -579,6 +598,9 @@ jobs:
               printf -- '- RIPTOPL-DEBUG-*.zip: debug builds (iopcore/ingame/eesio/ppctty/DTL_T10000), both SDKs -- diagnostics\n'
             fi
             printf -- '- %s.ELF: bare loader, ps2dev:latest toolchain (primary)\n' "$VERSIONED_BASE"
+            if [ -f "rolling/${VERSIONED_BASE}-ds5.ELF" ]; then
+              printf -- '- %s-ds5.ELF: bare loader WITH DualSense (DS5 USB) pad support, ps2dev:latest toolchain\n' "$VERSIONED_BASE"
+            fi
             if [ "$HAS_WOPLSDK" = yes ]; then
               printf -- '- %s-woplsdk.ELF: bare loader, wOPL'"'"'s digest-pinned ghcr.io/ps2homebrew container, stock SDK MMCE drivers\n' "$VERSIONED_BASE"
             else
