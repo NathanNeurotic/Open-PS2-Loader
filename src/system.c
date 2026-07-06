@@ -1196,6 +1196,17 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
         return;
     }
 
+    // HW-confirmed (issue #56, AndrewBento, PSXMemCard Gen2): Neutrino's -logo on the mmce backend
+    // black-screens GAME-DEPENDENTLY ("depends a bit on luck which game") -- and the identical
+    // failure reproduces on NHDDL, so it is a Neutrino/mmce interaction, not this launcher. Every
+    // affected game boots with the logo off, so the GLOBAL PS2-Logo toggle is suppressed for
+    // mmce-hosted games until that is fixed upstream. Deliberate escape hatch: a user-supplied
+    // "-logo" in the global/per-game Neutrino args still passes through the tokenizer untouched.
+    if (EnablePS2Logo && !strcmp(driver, "mmce")) {
+        LOG("[NEUTRINO] -logo suppressed on mmce (issue #56: game-dependent black screens, repro'd on NHDDL)\n");
+        EnablePS2Logo = 0;
+    }
+
     char bsd[16];
     char bsdfs[16];
     char filePath[288];        // "-dvd=hdl:" (9) + up to a 255-char path + NUL — avoid truncation (B2)
