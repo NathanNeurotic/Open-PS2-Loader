@@ -30,7 +30,7 @@ static int gEnableCheat; // Enables PS2RD Cheat Engine - 0 for Off, 1 for On
 static int gCheatMode;   // Cheat Mode - 0 Enable all cheats, 1 Cheats selected by user
 
 static u32 gCheatList[MAX_CHEATLIST]; // Store hooks/codes addr+val pairs
-cheat_entry_t gCheats[MAX_CODES];
+cheat_entry_t *gCheats = NULL;        // lazily allocated in load_cheats (~1.03 MB); reclaims the old permanent BSS
 
 static int gEnableImage;           // Prebuilt PS2RD cheat image (.img) - 0 Off, 1 On
 static u32 gImage[MAX_IMAGEWORDS]; // The loaded .img patch words (zeroed when none/failed)
@@ -412,7 +412,19 @@ int load_cheats(const char *cheatfile)
     char *buf = NULL;
     int ret;
 
-    memset(gCheats, 0, sizeof(gCheats));
+    // Lazy cheat table: MAX_CODES x sizeof(cheat_entry_t) (~1.03 MB) that used to sit in BSS
+    // permanently, held even with cheats off (the default). Allocated on the first cheat-file
+    // load and kept for the session (a successful launch hands off to ExecPS2 anyway; a failed
+    // one reuses the buffer on retry). An allocation failure degrades exactly like an unreadable
+    // cheat file -- the launch legs already toast _STR_ERR_CHEATS_LOAD_FAILED for ret < 0.
+    if (gCheats == NULL) {
+        gCheats = (cheat_entry_t *)malloc(MAX_CODES * sizeof(cheat_entry_t));
+        if (gCheats == NULL) {
+            LOG("%s: cheat table allocation failed (%d bytes)\n", __FUNCTION__, (int)(MAX_CODES * sizeof(cheat_entry_t)));
+            return -1;
+        }
+    }
+    memset(gCheats, 0, MAX_CODES * sizeof(cheat_entry_t));
 
     LOG("%s: Reading cheat file '%s'...\n", __FUNCTION__, cheatfile);
     buf = read_text_file(cheatfile, 0);
@@ -436,8 +448,9 @@ void set_cheats_list(void)
 
     memset((void *)gCheatList, 0, sizeof(gCheatList));
 
-    // Populate the cheat list
-    for (int i = 0; i < MAX_CODES; ++i) {
+    // Populate the cheat list (gCheats == NULL means no cheat file was ever loaded this
+    // session -- fall through so gCheatList still gets its blank terminator below)
+    for (int i = 0; gCheats != NULL && i < MAX_CODES; ++i) {
         if (gCheats[i].enabled) {
             for (int j = 0; j < MAX_CHEATLIST && gCheats[i].codes[j].addr != 0; ++j) {
                 if (cheatCount + 2 <= MAX_CHEATLIST) {
