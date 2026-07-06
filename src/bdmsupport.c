@@ -669,6 +669,58 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     sysLaunchPopstarter(vcdElf, vcdSelector, "");
 }
 
+// Δ9 (NHDDL parity): Neutrino's bd backend packs the ISO and BOTH -mc VMCs into ONE shared
+// 64-entry fragment table (BDM_MAX_FRAGS in neutrino's fhi_bd_config.h; fhi_config.c's
+// backend_bd_add_file_fd errors past it). That packing runs AFTER neutrino's own IOP reset,
+// where its only error output is a debug printf -- from the couch, a black screen. So pre-count
+// the same budget here, while the menu can still explain the abort, using the count-only form
+// of the same ioctl (NULL buffer: bdmfs_fatfs's get_frag_list gates only the WRITE on capacity,
+// the count is unconditional -- it returns the file's TOTAL fragment count and writes nothing).
+// Every device this helper can see is bdmfs_fatfs-backed (mmce/udpfs launches live in their own
+// support files), including both udp block transports (udpbd + udpfsbd depend on i_bdm), so the
+// ioctl is always valid here. NOT OPL's BDM_MAX_FRAGS: same value today, different owner.
+#define NEUTRINO_BDM_MAX_FRAGS 64
+
+static int bdmNeutrinoFragBudgetOk(const char *isoPath, const neutrino_vmc_args_t *vmcArgs, int isUdp)
+{
+    const char *paths[1 + NEUTRINO_VMC_SLOTS];
+    int nPaths = 0, total = 0, i;
+
+    paths[nPaths++] = isoPath;
+    for (i = 0; i < NEUTRINO_VMC_SLOTS; i++) {
+        const char *eq = vmcArgs->arg[i][0] ? strchr(vmcArgs->arg[i], '=') : NULL;
+        if (eq != NULL && eq[1] != '\0')
+            paths[nPaths++] = eq + 1; // "-mcN=<path>"; Δ2 already verified the file exists
+    }
+
+    for (i = 0; i < nPaths; i++) {
+        int fd = open(paths[i], O_RDONLY);
+        if (fd < 0) { // advisory check only: never veto the launch on a probe failure
+            LOG("[NEUTRINO] frag pre-count: open(%s) failed, file skipped\n", paths[i]);
+            continue;
+        }
+        int frags = fileXioIoctl2(ps2sdk_get_iop_fd(fd), USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, NULL, 0);
+        close(fd);
+        if (frags < 0) {
+            LOG("[NEUTRINO] frag pre-count: ioctl(%s) = %d, file skipped\n", paths[i], frags);
+            continue;
+        }
+        total += frags;
+    }
+
+    if (total > NEUTRINO_BDM_MAX_FRAGS) { // == is fine: neutrino packs exactly-full tables
+        char msg[256];                    // headroom for the lng_fork overlay's longer translations
+        LOG("[NEUTRINO] frag budget exceeded: %d/%d across ISO + VMCs\n", total, NEUTRINO_BDM_MAX_FRAGS);
+        // Match the Δ8 abort-message convention: the udp outcome is a consumed launch, the
+        // local outcome is a native-core fallback (which usually boots: OPL's own 64-frag
+        // table holds the ISO only -- VMCs go through mcemu's contiguity check instead).
+        snprintf(msg, sizeof(msg), _l(isUdp ? _STR_NEUTRINO_TOO_FRAGMENTED_NET : _STR_NEUTRINO_TOO_FRAGMENTED), total, NEUTRINO_BDM_MAX_FRAGS);
+        guiWarning(msg, 6);
+        return 0;
+    }
+    return 1;
+}
+
 // Δ8 (NHDDL parity): the LEAN Neutrino launch path. Everything bdmLaunchGame's native flow
 // prepares -- VMC superblock prompts + mcemu patching, sbPrepare's cdvdman patch, per-part
 // fragment lists (with a hard abort past 64 frags), layer-1 probing, cheats (with dialogs),
@@ -721,6 +773,11 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     sbBuildVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, &neutrinoVmc); // Δ2-validated -mc args
     sbCreatePath(game, partname, pDeviceData->bdmPrefix, "/", 0);            // -dvd target (multi-part was rejected above)
     snprintf(bdmCurrentDriver, sizeof(bdmCurrentDriver), "%s", pDeviceData->bdmDriver);
+
+    // Δ9: neutrino only discovers a blown fragment budget after its own IOP reset (debug
+    // printf + exit = black screen). Count it now: udp consumes the launch, local falls native.
+    if (!bdmNeutrinoFragBudgetOk(partname, &neutrinoVmc, isUdp))
+        goto fail;
 
     if (gRememberLastPlayed) {
         configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
