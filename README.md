@@ -191,6 +191,31 @@ With special and sincere thanks to:
 - **Ifcaro** and **jimmikaelkael** — the original Open PS2 Loader authors — and every
   contributor across OPL's long history.
 
+### The wider Open PS2 Loader team
+
+RiptOPL inherits the work of everyone who built Open PS2 Loader over the years. They are
+credited in full in [CREDITS](CREDITS), and named here so this fork never obscures whose
+work it is built on:
+
+- **Core developers** — Ifcaro, volca, jimmikaelkael, polo35, izdubar, hominem.te.esse and
+  SP193, with the original main code based on **Polo**'s HD Project.
+- **Contributing developers** — BatRastard, crazyc, dlanor, doctorxyz, reprep, belek666,
+  Maximus32 and misfire.
+- **Module authors** — **Eugene Plotnikov** (SMSUTILS / SMSMAP / SMSTCPIP), **Marcus R. Brown**
+  (DEV9 / ATAD and the derived cdvdman code), **bbsan2k** (MMCE), **icyson55** (OPL-CL /
+  network update), **Eric Young** (the DES algorithm in the SMB code), and the **ps2dev** team
+  (USB / Network / PS2HDD modules from the PS2SDK).
+- **CI/CD** — **fjtrujy** (Docker + GitHub Actions).
+- **UI & artwork** — **Berion**.
+- **Quality assurance** — RandQalan, yoshi314, EP, LocalH, lee4, El_Patas, ShaolinAssassin,
+  algol, gledson999, jolek and zero35.
+
+### Real-hardware testing (this fork)
+
+Enormous thanks to the testers who run every rolling build on real consoles and file the
+reports that shape the fixes — **eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz
+and nuno6573**.
+
 If you want the canonical, actively-maintained project, it lives at
 **[ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader)** — please
 support it. This fork is a downstream labor of love, not a replacement, and it exists only
