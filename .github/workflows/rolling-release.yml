@@ -257,6 +257,11 @@ jobs:
             exit 1
           fi
           cp -f "$MAIN_ELF" rolling/RIPTOPL.ELF
+          # Issue #102 diagnostic: opl_stripped.elf is the exact UNPACKED input to ps2-packer
+          # (already built as an intermediate of RIPTOPL.ELF). Shipping it lets a tester A/B the
+          # ps2-packer self-decompression stub against the packed ELF: if the unpacked one boots
+          # on a console where the packed default does not, the packer stage is the culprit.
+          [ -f opl_stripped.elf ] && cp -f opl_stripped.elf rolling/RIPTOPL-latest-unpacked.ELF || echo "WARN: opl_stripped.elf missing for the #102 diagnostic"
           [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
           # IRX provenance manifest for the primary container's SDK prebuilts (see the pinned job).
           sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST.txt 2>/dev/null || true
@@ -336,6 +341,9 @@ jobs:
           echo "VERSIONED_BASE=RIPTOPL-${VER}" >> "$GITHUB_ENV"
           if [ -f rolling/RIPTOPL.ELF ]; then
             mv -f rolling/RIPTOPL.ELF "rolling/RIPTOPL-${VER}.ELF"
+          fi
+          if [ -f rolling/RIPTOPL-latest-unpacked.ELF ]; then
+            mv -f rolling/RIPTOPL-latest-unpacked.ELF "rolling/RIPTOPL-${VER}-latest-unpacked.ELF"
           fi
           if [ -f rolling/RIPTOPL-oldsdk.ELF ]; then
             mv -f rolling/RIPTOPL-oldsdk.ELF "rolling/RIPTOPL-${VER}-oldsdk.ELF"
@@ -579,6 +587,9 @@ jobs:
               printf -- '- RIPTOPL-DEBUG-*.zip: debug builds (iopcore/ingame/eesio/ppctty/DTL_T10000), both SDKs -- diagnostics\n'
             fi
             printf -- '- %s.ELF: bare loader, ps2dev:latest toolchain (primary)\n' "$VERSIONED_BASE"
+            if [ -f "rolling/${VERSIONED_BASE}-latest-unpacked.ELF" ]; then
+              printf -- '- %s-latest-unpacked.ELF: UNPACKED primary (no ps2-packer) -- issue #102 boot-regression diagnostic, try if the primary black-screens\n' "$VERSIONED_BASE"
+            fi
             if [ "$HAS_WOPLSDK" = yes ]; then
               printf -- '- %s-woplsdk.ELF: bare loader, wOPL'"'"'s digest-pinned ghcr.io/ps2homebrew container, stock SDK MMCE drivers\n' "$VERSIONED_BASE"
             else
