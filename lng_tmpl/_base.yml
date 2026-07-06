@@ -931,3 +931,7 @@ gui_strings:
   string: Too fragmented for Neutrino (%d fragments, limit %d incl. VMCs) -- trying the OPL core instead.
 - label: NEUTRINO_TOO_FRAGMENTED_NET
   string: Too fragmented for Neutrino (%d fragments, limit %d incl. VMCs) -- defragment on the PC; launch aborted.
+- label: NEUTRINO_GSM_COMP
+  string: Neutrino GSM Compatibility
+- label: HINT_NEUTRINO_GSM_COMP
+  string: Field-flipping fix for games that shake or tear under a forced Neutrino Video mode. Needs a Neutrino Video mode set.

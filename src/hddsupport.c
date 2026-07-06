@@ -695,12 +695,13 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     }
 
     // Everything Neutrino needs, copied to THIS frame (deinit below frees `game`).
-    int compatMode = 0, neutrinoVideo = 0;
+    int compatMode = 0, neutrinoVideo = 0, neutrinoGsmComp = 0;
     char neutrinoExtraArgs[256] = "";
     char apaPart[APA_IDMAX + 1];
     configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatMode);
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
     snprintf(apaPart, sizeof(apaPart), "%s", game->partition_name);
 
     if (gRememberLastPlayed) {
@@ -732,7 +733,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
 
     LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
     // gPS2Logo passes the preference straight through (Neutrino does its own logo work).
-    sysLaunchNeutrino("apa", apaPart, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
+    sysLaunchNeutrino("apa", apaPart, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
     return 1;
 }
 

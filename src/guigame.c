@@ -966,11 +966,15 @@ static unsigned char gameEffectiveFlags(item_list_t *support)
 // Args field is never read. See docs/NEUTRINO.md for the full capability mapping.
 static void guiGameSetCoreAwareState(void)
 {
-    int neutrino = 0;
+    int neutrino = 0, neutrinoVideo = 0;
     diaGetInt(diaCompatConfig, COMPAT_LOADER, &neutrino);
+    diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, &neutrinoVideo);
 
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrino);  // Neutrino-only field
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrino); // Neutrino-only -gsm video mode
+    // The ":c" comp half is only ever emitted alongside a video mode (-gsm=v:c grammar), so it also
+    // greys while Neutrino Video is Off -- the updater re-runs this on every change, keeping it live.
+    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrino && neutrinoVideo != 0);
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 6, neutrino);  // Mode 7 -gc=7 fix buffer overrun: Neutrino only
@@ -999,8 +1003,14 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     const char *loaders[] = {"<OPL>", "Neutrino", NULL};
     diaSetEnum(diaCompatConfig, COMPAT_LOADER, loaders);
 
-    const char *neutrinoVideoModes[] = {"Off", "240p", "480p", "1080i", NULL};
+    // Indices map 1:1 onto system.c's gsmVideoTokens (fp1/fp2/1080ix1/ix2/ix3) -- old configs
+    // stored 0-3, which keep their meaning; x2/x3 are APPENDED so persisted values stay stable.
+    const char *neutrinoVideoModes[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
     diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideoModes);
+    // The ":c" compatibility half of -gsm=v:c -- field-flipping interlace fixes for games that
+    // shake/tear under a forced mode. Ignored (not emitted) while Neutrino Video is Off.
+    const char *neutrinoGsmCompModes[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", NULL};
+    diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrinoGsmCompModes);
 
     // UDPBD games have no OPL core backend -- they always launch via Neutrino
     // (bdmsupport.c forces it). Lock the selector to Neutrino so the screen matches;
@@ -1196,6 +1206,15 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
             result = configSetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, neutrinoVideo);
         else
             configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_VIDEO);
+    }
+
+    {
+        int neutrinoGsmComp = 0;
+        diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
+        if (neutrinoGsmComp != 0)
+            result = configSetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, neutrinoGsmComp);
+        else
+            configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP);
     }
 
     /// VMC ///
@@ -1626,9 +1645,15 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
 
     int neutrinoVideo = 0;
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
-    if (neutrinoVideo < 0 || neutrinoVideo > 3)
-        neutrinoVideo = 0; // sanitize a corrupt/out-of-range cfg value (valid: 0=Off .. 3=1080i)
+    if (neutrinoVideo < 0 || neutrinoVideo > 5)
+        neutrinoVideo = 0; // sanitize a corrupt/out-of-range cfg value (valid: 0=Off .. 5=1080i x3)
     diaSetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideo);
+
+    int neutrinoGsmComp = 0;
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
+    if (neutrinoGsmComp < 0 || neutrinoGsmComp > 3)
+        neutrinoGsmComp = 0; // sanitize (valid: 0=Off .. 3=field-flip type 3)
+    diaSetInt(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrinoGsmComp);
 
     /// VMC ///
     vmc1[0] = '\0';

@@ -33,23 +33,24 @@ enum CONFIG_INDEX {
 #define CONFIG_SOURCE_DLOAD   2 // Downloaded from the network
 
 // Items for per-game config files.
-#define CONFIG_ITEM_NAME           "#Name"
-#define CONFIG_ITEM_LONGNAME       "#LongName"
-#define CONFIG_ITEM_SIZE           "#Size"
-#define CONFIG_ITEM_FORMAT         "#Format"
-#define CONFIG_ITEM_MEDIA          "#Media"
-#define CONFIG_ITEM_SYSTEM         "#System"   // console axis (PS1/PS2); #Media stays the disc axis (CD/DVD) -- FR #49
-#define CONFIG_ITEM_DISCTYPE       "#DiscType" // combined console+media token (PS1CD/PS2CD/PS2DVD) so one AttributeImage glyph distinguishes PS1-CD from PS2-CD (both report #Media=CD) -- issue #49
-#define CONFIG_ITEM_STARTUP        "#Startup"
-#define CONFIG_ITEM_ALTSTARTUP     "$AltStartup"
-#define CONFIG_ITEM_VMC            "$VMC"
-#define CONFIG_ITEM_COMPAT         "$Compatibility"
-#define CONFIG_ITEM_DMA            "$DMA"
-#define CONFIG_ITEM_CORE_LOADER    "$CoreLoader"
-#define CONFIG_ITEM_NEUTRINO_ARGS  "$NeutrinoArgs"
-#define CONFIG_ITEM_NEUTRINO_VIDEO "$NeutrinoVideo"
-#define CONFIG_ITEM_DNAS           "$DNAS"
-#define CONFIG_ITEM_CONFIGSOURCE   "$ConfigSource"
+#define CONFIG_ITEM_NAME             "#Name"
+#define CONFIG_ITEM_LONGNAME         "#LongName"
+#define CONFIG_ITEM_SIZE             "#Size"
+#define CONFIG_ITEM_FORMAT           "#Format"
+#define CONFIG_ITEM_MEDIA            "#Media"
+#define CONFIG_ITEM_SYSTEM           "#System"   // console axis (PS1/PS2); #Media stays the disc axis (CD/DVD) -- FR #49
+#define CONFIG_ITEM_DISCTYPE         "#DiscType" // combined console+media token (PS1CD/PS2CD/PS2DVD) so one AttributeImage glyph distinguishes PS1-CD from PS2-CD (both report #Media=CD) -- issue #49
+#define CONFIG_ITEM_STARTUP          "#Startup"
+#define CONFIG_ITEM_ALTSTARTUP       "$AltStartup"
+#define CONFIG_ITEM_VMC              "$VMC"
+#define CONFIG_ITEM_COMPAT           "$Compatibility"
+#define CONFIG_ITEM_DMA              "$DMA"
+#define CONFIG_ITEM_CORE_LOADER      "$CoreLoader"
+#define CONFIG_ITEM_NEUTRINO_ARGS    "$NeutrinoArgs"
+#define CONFIG_ITEM_NEUTRINO_VIDEO   "$NeutrinoVideo"
+#define CONFIG_ITEM_NEUTRINO_GSMCOMP "$NeutrinoGsmComp" // -gsm ":c" field-flip half (0=off, 1-3=type); only emitted when $NeutrinoVideo is set
+#define CONFIG_ITEM_DNAS             "$DNAS"
+#define CONFIG_ITEM_CONFIGSOURCE     "$ConfigSource"
 
 #define CONFIG_ITEM_OSD_SETTINGS_LANGID "$CustomLanguageValue"
 #define CONFIG_ITEM_OSD_SETTINGS_SOURCE "$CustomLanguageSource"

@@ -488,6 +488,10 @@ struct UIItem diaCompatConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_NEUTRINO_VIDEO}}},
     {UI_SPACER},
     {UI_ENUM, COMPAT_NEUTRINO_VIDEO, 1, 1, _STR_HINT_NEUTRINO_VIDEO, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_NEUTRINO_GSM_COMP}}},
+    {UI_SPACER},
+    {UI_ENUM, COMPAT_NEUTRINO_GSMCOMP, 1, 1, _STR_HINT_NEUTRINO_GSM_COMP, 0, 0, {.intvalue = {0, 0}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODE1}}},
