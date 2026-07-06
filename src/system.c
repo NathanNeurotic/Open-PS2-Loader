@@ -445,15 +445,19 @@ int sysLaunchDisc(void)
 
     type = sceCdGetDiskType();
     // Issue #73 (SCPH-77001 + FMCB): an idle drive spins the disc DOWN and then reports NODISC
-    // even with a game disc loaded, so Launch Disc bailed to the "no disc" message before it could
-    // wake. A tray open/close "fixed" it only because that forces a spin-up + re-detect -- so do the
-    // same in software: on NODISC, kick the drive to standby (spins the disc up; the same call
-    // sysGetDiscID uses before it reads the key) and re-poll the type for a few seconds. A genuinely
-    // empty drive still ends at the -2 bail below, just ~4 s later.
+    // even with a game disc loaded, so Launch Disc bailed to the "no disc" message. A physical
+    // tray open/close revives it because that forces a full mech re-detect. The first software
+    // attempt used sceCdStandby() -- WRONG STATE: standby is what sysGetDiscID issues AFTER a
+    // disc is detected; on a mech that already decided NODISC it never spins the disc up
+    // (HW-confirmed by the reporter: "the disc doesn't start spinning"). The software equivalent
+    // of the tray cycle is a TRAY-CLOSE REQUEST on the already-closed tray, which re-runs the
+    // detect cycle. A genuinely empty drive still ends at the -2 bail below, just ~4 s later.
     if (type == SCECdNODISC) {
         int spin;
-        LOG("[DISC] drive reports NODISC -- spinning up and re-checking (#73)\n");
-        sceCdStandby();
+        u32 traychk = 0;
+        int tr = sceCdTrayReq(SCECdTrayClose, &traychk);
+        (void)tr; // only read by LOG (a no-op in release builds)
+        LOG("[DISC] drive reports NODISC -- tray-close re-detect (#73): req=%d traychk=%lu\n", tr, (unsigned long)traychk);
         sceCdSync(0);
         for (spin = 0; spin < 20; spin++) { // ~4 s budget for a cold spin-up + re-detect
             // Let it finish identifying after the spin-up, but bounded + yielding: a dirty laser or
@@ -466,7 +470,7 @@ int sysLaunchDisc(void)
                 break;
             DelayThread(200 * 1000); // 200 ms between polls
         }
-        LOG("[DISC] after spin-up: type=%d (%d re-polls)\n", type, spin);
+        LOG("[DISC] after tray-close re-detect: type=%d (%d re-polls)\n", type, spin);
     }
 
     if (type != SCECdPS2DVD && type != SCECdPS2CD) // no disc / not a PS2 game disc
