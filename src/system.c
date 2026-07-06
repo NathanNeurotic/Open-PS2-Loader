@@ -1191,9 +1191,13 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     char compatModes[32] = ""; // stays empty when no compat modes are forwarded (B1)
     char globalArgsBuf[256];   // mutable copy of gNeutrinoArgs for tokenizing (tokens point in)
     char extraArgsBuf[256];    // mutable copy of the per-game extraArgs for tokenizing
-    char *argv[32];            // target argv[0] + auto args (max ~6) + tokenized user flags
+    char *argv[16];            // target argv[0] + auto args + tokenized user flags (kernel-budgeted)
     int argc = 0;
-    const int argvMax = (int)(sizeof(argv) / sizeof(argv[0]));
+    // 14, NOT sizeof(argv): the kernel args area holds at most 15 strings per ExecPS2 hop (ps2sdk
+    // exit.c SetArg, SETARG_MAX_ARGS 15 -- and ExecPS2 forwards the UNCLAMPED count, so overflowing
+    // makes the kernel read string bytes as argv pointers). Hop 1 prepends the elfldr child's load
+    // path, spending one slot, so the target argv must stay <= 14 entries.
+    const int argvMax = 14;
 
     // Target argv[0] = neutrino.elf's own path (NHDDL convention). sysLoadELFKeepIOP forwards
     // argv verbatim -- argv[0] included -- so this must be supplied explicitly here (POPSTARTER
@@ -1293,6 +1297,28 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     // string (so a game can extend the global set). Both are tokenized on whitespace.
     argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs);
     argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs);
+
+    // ExecPS2 argv BYTE budget (verified vs ps2sdk exit.c SetArg + the crt0 args struct): each hop
+    // carries its strings in ONE 256-byte pool, every NUL included. Hop 1 packs the child's load
+    // path PLUS this argv -- neutrinoPath is counted TWICE (loadpath and target argv[0]). SetArg's
+    // copy is UNbounded, so exceeding the pool corrupts rather than truncates. Fit by dropping tail
+    // args (user extras sit last; each drop LOGged); the argv[0]/-bsd/-dvd floor must survive or
+    // nothing can boot anyway -- past that, refuse and let the LOG name the overage.
+    {
+        int pool = (int)strlen(neutrinoPath) + 1; // hop-1 child argv[0] = the load path
+        int i;
+        for (i = 0; i < argc; i++)
+            pool += (int)strlen(argv[i]) + 1;
+        while (pool > 256 && argc > 3) {
+            argc--;
+            pool -= (int)strlen(argv[argc]) + 1;
+            LOG("[NEUTRINO] argv pool over 256 bytes -- dropping tail arg: %s\n", argv[argc]);
+        }
+        if (pool > 256) {
+            LOG("[NEUTRINO] argv pool %d bytes even at the core-args floor (256 max) -- refusing handoff\n", pool);
+            return;
+        }
+    }
 
     // Log the FULL argv (not just bsd/dvd/compat) so the VMC -mc args are verifiable on hardware (#47).
     LOG("[NEUTRINO] elf=%s argc=%d\n", neutrinoPath, argc);
