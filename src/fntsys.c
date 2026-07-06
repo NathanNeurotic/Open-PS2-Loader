@@ -527,6 +527,15 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
         } else {
             x -= fntCalcDimensions(id, string) >> 1;
         }
+    } else if (aligned & ALIGN_RIGHT) {
+        // Right-justify: x is the RIGHT edge (theme aligned=2), same width clamp as HCENTER.
+        // renderman.c already right-aligns pixmaps; TEXT lacked the branch, so aligned=2
+        // themes silently rendered left-aligned (wOPL/uOPL theme parity).
+        if (width) {
+            x -= min(fntCalcDimensions(id, string), width);
+        } else {
+            x -= fntCalcDimensions(id, string);
+        }
     }
 
     if (aligned & ALIGN_VCENTER) {
@@ -648,6 +657,15 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
             x -= min(fntCalcDimensions(id, string), width) >> 1;
         } else {
             x -= fntCalcDimensions(id, string) >> 1;
+        }
+    } else if (aligned & ALIGN_RIGHT) {
+        // Right-justify: x is the RIGHT edge (theme aligned=2), same width clamp as HCENTER.
+        // renderman.c already right-aligns pixmaps; TEXT lacked the branch, so aligned=2
+        // themes silently rendered left-aligned (wOPL/uOPL theme parity).
+        if (width) {
+            x -= min(fntCalcDimensions(id, string), width);
+        } else {
+            x -= fntCalcDimensions(id, string);
         }
     }
 
