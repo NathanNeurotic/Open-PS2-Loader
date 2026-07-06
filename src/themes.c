@@ -1139,9 +1139,16 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
         elem->height = h;
 
     snprintf(elemProp, sizeof(elemProp), "%s_aligned", name);
-    if (configGetInt(themeConfig, elemProp, &intValue))
-        elem->aligned = (intValue == 0) ? ALIGN_NONE : ALIGN_CENTER;
-    else
+    if (configGetInt(themeConfig, elemProp, &intValue)) {
+        // 0 = none/left, 2 = right-justified (wOPL/uOPL theme key; used to silently center),
+        // anything else = centered (the long-standing non-zero behavior).
+        if (intValue == 0)
+            elem->aligned = ALIGN_NONE;
+        else if (intValue == 2)
+            elem->aligned = (ALIGN_VCENTER | ALIGN_RIGHT);
+        else
+            elem->aligned = ALIGN_CENTER;
+    } else
         elem->aligned = aligned;
 
     snprintf(elemProp, sizeof(elemProp), "%s_scaled", name);
