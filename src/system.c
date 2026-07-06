@@ -1046,15 +1046,27 @@ static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bu
 // True if `args` contains `flag` as an ACTIVE token -- i.e. NOT $-disabled (the leading-$ convention
 // that appendArgTokens strips at dispatch). Lets an auto-emitted flag stay suppressed only by a flag
 // the user is actually forwarding, not by one they turned off with `$`.
+// Does `args` contain an ACTIVE (non-$-disabled) occurrence of `flag` as its OWN token? `flag` is
+// either an exact switch ("-dbc") or a key prefix ending in '=' ("-gsm="). A raw strstr is not
+// enough: "-dbc" also occurs inside path-valued tokens like -elf=my-dbc-game.elf (PR #96 review),
+// which must NOT count -- so a hit needs a token boundary on BOTH sides (start-of-string or
+// whitespace before; end-of-string or whitespace after, unless the flag itself is a key prefix
+// whose value legitimately continues). This also fixes the same latent false positive for -gsm=.
 static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
 {
     if (args == NULL)
         return 0;
     size_t flen = strlen(flag);
+    int keyPrefix = (flen > 0 && flag[flen - 1] == '=');
     const char *p = args;
     while ((p = strstr(p, flag)) != NULL) {
-        if (p == args || *(p - 1) != '$')
-            return 1; // an occurrence that is NOT $-disabled -> the user is forwarding this flag
+        int disabled = (p > args && *(p - 1) == '$');
+        const char *tokStart = disabled ? p - 1 : p;
+        int startOk = (tokStart == args) || (tokStart[-1] == ' ') || (tokStart[-1] == '\t');
+        char after = p[flen];
+        int endOk = keyPrefix || after == '\0' || after == ' ' || after == '\t';
+        if (startOk && endOk && !disabled)
+            return 1; // a whole-token, non-$-disabled occurrence -> the user is forwarding this flag
         p += flen;
     }
     return 0;
