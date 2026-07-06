@@ -40,6 +40,7 @@
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioInit, fileXioExit, fileXioDevctl
+#include <delaythread.h> // DelayThread() -- inter-poll gap in the Launch Disc spin-up retry (#73)
 
 typedef struct
 {
@@ -443,6 +444,31 @@ int sysLaunchDisc(void)
         ;
 
     type = sceCdGetDiskType();
+    // Issue #73 (SCPH-77001 + FMCB): an idle drive spins the disc DOWN and then reports NODISC
+    // even with a game disc loaded, so Launch Disc bailed to the "no disc" message before it could
+    // wake. A tray open/close "fixed" it only because that forces a spin-up + re-detect -- so do the
+    // same in software: on NODISC, kick the drive to standby (spins the disc up; the same call
+    // sysGetDiscID uses before it reads the key) and re-poll the type for a few seconds. A genuinely
+    // empty drive still ends at the -2 bail below, just ~4 s later.
+    if (type == SCECdNODISC) {
+        int spin;
+        LOG("[DISC] drive reports NODISC -- spinning up and re-checking (#73)\n");
+        sceCdStandby();
+        sceCdSync(0);
+        for (spin = 0; spin < 20; spin++) { // ~4 s budget for a cold spin-up + re-detect
+            // Let it finish identifying after the spin-up, but bounded + yielding: a dirty laser or
+            // damaged disc can stick in DETCT, and a bare spin would hang Launch Disc and peg the CPU.
+            int detecting = 0;
+            while (sceCdGetDiskType() == SCECdDETCT && detecting++ < 50)
+                DelayThread(20 * 1000); // ~1 s cap, yields to other threads
+            type = sceCdGetDiskType();
+            if (type != SCECdNODISC)
+                break;
+            DelayThread(200 * 1000); // 200 ms between polls
+        }
+        LOG("[DISC] after spin-up: type=%d (%d re-polls)\n", type, spin);
+    }
+
     if (type != SCECdPS2DVD && type != SCECdPS2CD) // no disc / not a PS2 game disc
         return -2;
 
