@@ -21,7 +21,7 @@
 #include "include/ioman.h"       // LOG (BDMA equip probe trace)
 #include "include/bdmsupport.h"  // BDM_TYPE_* + bdmGetDeviceRootByType (BDMA source differentiation)
 #include "include/mmcesupport.h" // mmceLoadModules (ensure mmceman for the MMCE BDMA source)
-#include "include/gui.h"         // guiMsgBox (launch-path BDMA equip diagnostics)
+#include "include/gui.h"         // guiWarning (passing toast on a failed launch-path BDMA equip)
 #include "include/lang.h"        // _l + _STR_BDMA_ERR_* (same texts the Settings-screen equip shows)
 #include "include/vcdsupport.h"
 
@@ -667,52 +667,43 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     return (mr != 0) ? mr : 0;
 }
 
-// Auto-equip the device-matching BDMA driver on the VCD launch path (POPSLoader's ApplyBdmaMode parity).
-// POPSTARTER does its OWN SifIopReset, then reloads its block-device drivers from the FIXED memory-card
-// files mc?:/POPSTARTER/usbd.irx + usbhdfsd.irx -- RiptOPL's live mx4sio_bd/ata_bd modules die at that
-// reset. For an exFAT game those two files MUST be the device-matching BDMAssault variant or POPSTARTER
-// can't mount the drive and drops to OSDSYS (the reported MX4SIO failure). `source`/`mode` are the game
-// device's BDMA family. Idempotent: skips the copy when the matching variant is already equipped.
-// Returns 1 when the launch may proceed, 0 when it must be ABORTED: a DIFFERENT family's pair is
-// equipped and could not be replaced. The old fallback silently downgraded the card to FAT32 here,
-// which unlink()s the working pair (collateral: the other device family's VCDs break too) and still
-// boots this game with the wrong driver -> a mystery OSDSYS drop with no message. Keep the pair,
-// surface the same diagnostics the Settings-screen equip shows, and let the user fix the source files.
-int vcdEnsureBdmaForLaunch(int source, int mode)
+// Best-effort auto-equip of the device-matching BDMA driver before a VCD launch (POPSLoader's
+// ApplyBdmaMode parity). POPSTARTER does its OWN SifIopReset, then reloads its block-device drivers
+// from the FIXED memory-card files mc?:/POPSTARTER/usbd.irx + usbhdfsd.irx; equipping copies the
+// device-matching BDMAssault variant pair there so those files fit the game's device. `source`/`mode`
+// are the game device's BDMA family. Idempotent: skips the copy when the matching variant is already
+// equipped.
+//
+// This is CARD PREP, not launch policy. The VCD launch itself is a simple handoff -- resolve
+// POPSTARTER.ELF, hand it the argv[0] selector (XX. / SB. / bare), exec -- and POPSTARTER owns
+// everything after that (maintainer contract, issues #56 review). So this helper NEVER blocks the
+// launch: on any equip failure it keeps whatever pair is on the card (never unlink a working pair as
+// collateral), shows a passing toast with the same diagnostic family the Settings-screen equip uses
+// (so a failed prep is no longer a silent mystery), and the handoff proceeds regardless.
+void vcdEnsureBdmaForLaunch(int source, int mode)
 {
     char diag[160];
 
     if (!gBdmaApplyOnLaunch)
-        return 1; // user opted to manage the BDMA driver manually (General Settings -> BDMA Source/Mode)
+        return; // user opted to manage the BDMA driver manually (General Settings -> BDMA Source/Mode)
     if (mode <= VCD_BDMA_FAT32 || mode >= VCD_BDMA_MODE_COUNT)
-        return 1; // FAT32 / invalid -> POPSTARTER's built-in driver, nothing to equip
+        return; // FAT32 / invalid -> POPSTARTER's built-in driver, nothing to equip
     if (vcdReadBdmaMode() == mode)
-        return 1; // the matching variant is already on the card
+        return; // the matching variant is already on the card
 
     int er = vcdEquipBdma(source, mode, diag, sizeof(diag));
     if (er == 0)
-        return 1;
+        return;
 
-    if (vcdReadBdmaMode() == VCD_BDMA_FAT32) {
-        // Nothing is equipped: POPSTARTER's built-in driver still handles FAT32-formatted media, so the
-        // launch stays best-effort exactly as before (exFAT media surfaces in POPSTARTER, as always).
-        LOG("VCD BDMA equip failed (%d: %s) with clean FAT32 state -- launching with POPSTARTER's built-in driver\n", er, diag);
-        return 1;
-    }
-
-    // A different family's pair is on the card and the replacement failed (-4 source files absent,
-    // -2 card full, -3 IO error). Mirror the Settings-screen equip diagnostics instead of silence.
-    // Every abort MUST say something: an unmapped code (-1 = source open/seek failed mid-copy, or a
-    // future value) falls through to the IO-error text rather than a mute launch that "does nothing".
-    if (er == -4) {
-        char msg[256];
-        snprintf(msg, sizeof(msg), "%s\n%s", _l(_STR_BDMA_ERR_SRC), diag);
-        guiMsgBox(msg, 0, NULL);
-    } else if (er == -2)
-        guiMsgBox(_l(_STR_BDMA_ERR_SPACE), 0, NULL);
+    // Equip failed (-4 source files absent, -2 card full, -3 IO error, -1/other mid-copy). Inform in
+    // passing -- toast the Settings-screen diagnostic family + LOG the full detail -- and launch anyway.
+    LOG("VCD BDMA equip failed (%d: %s) -- launching as-is (card keeps its current driver pair)\n", er, diag);
+    if (er == -4)
+        guiWarning(_l(_STR_BDMA_ERR_SRC), 6);
+    else if (er == -2)
+        guiWarning(_l(_STR_BDMA_ERR_SPACE), 6);
     else
-        guiMsgBox(_l(_STR_BDMA_ERR_IO), 0, NULL);
-    return 0;
+        guiWarning(_l(_STR_BDMA_ERR_IO), 6);
 }
 
 // ---- SMB requirements guard ---------------------------------------------------------

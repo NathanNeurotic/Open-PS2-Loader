@@ -643,23 +643,19 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     // unit-numbered mount -- POPSTARTER remounts under "mass:" after its own IOP reset (see the function).
     vcdBuildSelector(vcdPrefix, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
 
-    // POPSTARTER reloads its block-device driver from the MC after its OWN IOP reset, so equip the
-    // device-matching BDMAssault variant first -- otherwise it can't mount this exFAT drive and drops to
-    // OSDSYS (the reported MX4SIO failure). iLink/UDPBD/unknown have no BDMA variant and are left as-is.
-    // An equip ABORT (0) means a different family's working pair is on the card and couldn't be
-    // replaced; the user was shown the diagnostic, and launching would only end in OSDSYS anyway.
+    // Best-effort card prep: POPSTARTER reloads its block-device driver pair from the MC after its OWN
+    // IOP reset, so try to equip the device-matching BDMAssault variant first. NEVER a launch gate --
+    // the handoff below always proceeds (POPSTARTER owns everything past the exec); a failed equip just
+    // toasts its diagnostic in passing. iLink/UDPBD/unknown have no BDMA variant and are left as-is.
     switch (pDeviceData->bdmDeviceType) {
         case BDM_TYPE_USB:
-            if (!vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_USBEXFAT))
-                return;
+            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_USBEXFAT);
             break;
         case BDM_TYPE_SDC:
-            if (!vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_MX4SIO, VCD_BDMA_MX4SIO))
-                return;
+            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_MX4SIO, VCD_BDMA_MX4SIO);
             break;
         case BDM_TYPE_ATA:
-            if (!vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_HDD, VCD_BDMA_ATA))
-                return;
+            vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_HDD, VCD_BDMA_ATA);
             break;
         default:
             break;

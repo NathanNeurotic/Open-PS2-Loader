@@ -105,12 +105,13 @@ enum {
 int vcdEquipBdma(int source, int mode, char *diag, int diagSize);
 // Read the equipped variant from mc?:/POPSTARTER/bdma_config.txt (VCD_BDMA_FAT32 if absent).
 int vcdReadBdmaMode(void);
-// Auto-equip the BDMA variant matching the game's device (source/mode) on the VCD launch path, so the
-// driver POPSTARTER reloads from the MC after its own IOP reset can mount the drive (else OSDSYS). No-op
-// when already equipped. Returns 1 = launch may proceed (equipped, or clean-FAT32 best-effort), 0 =
-// ABORT: a different family's working pair is equipped and couldn't be replaced -- the user was shown
-// the equip diagnostic, and the pair is deliberately NOT wiped as collateral. See vcdsupport.c.
-int vcdEnsureBdmaForLaunch(int source, int mode);
+// Best-effort auto-equip of the BDMA variant matching the game's device (source/mode) before a VCD
+// launch, so the driver pair POPSTARTER reloads from the MC after its own IOP reset fits the drive.
+// No-op when already equipped. CARD PREP ONLY -- it never blocks the handoff: on any equip failure it
+// keeps the card's current pair (never wiped as collateral), toasts the diagnostic in passing, and the
+// launch proceeds (the VCD launch is a plain POPSTARTER.ELF + argv[0]-selector handoff; POPSTARTER
+// owns everything after the exec). See vcdsupport.c.
+void vcdEnsureBdmaForLaunch(int source, int mode);
 
 // Are POPSTARTER's SMB network modules (smbman/ps2ip/ps2smap/ps2dev9) present on a card? 1 = yes.
 // Gate SMB/ETH VCD launches on this -- we don't install these from the ELF.
