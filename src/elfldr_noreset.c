@@ -100,8 +100,11 @@ int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, cha
     {
         int pool = (int)strlen(filename) + 1;
         int j;
-        for (j = 0; j < argc; j++)
+        for (j = 0; j < argc; j++) {
+            if (argv[j] == NULL)
+                return -1; // a NULL mid-argv would crash SetArg's copy inside ExecPS2 -- refuse here
             pool += (int)strlen(argv[j]) + 1;
+        }
         if (argc + 1 > 15 || pool > 256) {
             LOG("[ELFLDR] argv over the kernel budget (args=%d/15, pool=%d/256) -- refusing handoff\n", argc + 1, pool);
             return -1;
