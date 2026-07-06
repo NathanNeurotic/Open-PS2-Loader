@@ -966,16 +966,19 @@ static unsigned char gameEffectiveFlags(item_list_t *support)
 // Args field is never read. See docs/NEUTRINO.md for the full capability mapping.
 static void guiGameSetCoreAwareState(void)
 {
-    int neutrino = 0;
+    int neutrino = 0, neutrinoVideo = 0;
     diaGetInt(diaCompatConfig, COMPAT_LOADER, &neutrino);
+    diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, &neutrinoVideo);
 
-    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrino);    // Neutrino-only field
-    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrino);   // Neutrino-only -gsm video mode
-    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrino); // Neutrino-only -gsm ":c" field-flip half
-    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino);   // Mode 4 Skip Videos: OPL core only
-    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino);   // Mode 6 Disable IGR: OPL core only
-    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 6, neutrino);    // Mode 7 -gc=7 fix buffer overrun: Neutrino only
-    diaSetEnabled(diaCompatConfig, COMPAT_DL_DEFAULTS, !neutrino);     // OPL compat-bitmask downloader
+    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrino);  // Neutrino-only field
+    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrino); // Neutrino-only -gsm video mode
+    // The ":c" comp half is only ever emitted alongside a video mode (-gsm=v:c grammar), so it also
+    // greys while Neutrino Video is Off -- the updater re-runs this on every change, keeping it live.
+    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrino && neutrinoVideo != 0);
+    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
+    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
+    diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 6, neutrino);  // Mode 7 -gc=7 fix buffer overrun: Neutrino only
+    diaSetEnabled(diaCompatConfig, COMPAT_DL_DEFAULTS, !neutrino);   // OPL compat-bitmask downloader
 }
 
 static int guiGameCompatUpdater(int modified)
