@@ -329,7 +329,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
 
     // Hand off to Neutrino with the udpfs driver token. `partname` (the filesystem game path) + the token
     // survive the deinit above; `game` does not and is not used past this point.
-    sysLaunchNeutrino("udpfs", partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, &neutrinoVmc);
+    sysLaunchNeutrino("udpfs", partname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, &neutrinoVmc);
 }
 
 static config_set_t *udpfsGetConfig(item_list_t *itemList, int id)

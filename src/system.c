@@ -1187,7 +1187,26 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath)
     return 0;
 }
 
-void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, const neutrino_vmc_args_t *vmcArgs)
+// Does `s` look like a retail boot-file name (AAAA_NNN.NN, e.g. SLUS_123.45)? Gates the opt-in
+// -elf=cdrom0: emission below to startups neutrino can actually resolve a GameID from.
+static int sysStartupShapeOk(const char *s)
+{
+    int i;
+    if (s == NULL || strlen(s) != 11 || s[4] != '_' || s[8] != '.')
+        return 0;
+    for (i = 0; i < 4; i++)
+        if (!((s[i] >= 'A' && s[i] <= 'Z') || (s[i] >= '0' && s[i] <= '9')))
+            return 0;
+    for (i = 5; i <= 10; i++) {
+        if (i == 8)
+            continue;
+        if (s[i] < '0' || s[i] > '9')
+            return 0;
+    }
+    return 1;
+}
+
+void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, const neutrino_vmc_args_t *vmcArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
@@ -1290,6 +1309,19 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
         else
             snprintf(gsmArg, sizeof(gsmArg), "-gsm=%s", gsmVideoTokens[neutrinoVideo]);
         argv[argc++] = gsmArg;
+    }
+
+    // Parity Delta-10, OPT-IN via settings_riptopl.cfg "neutrino_elf_arg"=1 (deliberately no UI
+    // row -- experimental): hand neutrino the boot ELF path directly so its per-GameID
+    // config/<GameID>.toml compat lookup can resolve pre-reset. Shape-guarded to AAAA_NNN.NN
+    // startups and skipped when the user already forwards an -elf= (structured field or free
+    // text) -- neutrino must see exactly one.
+    static char elfArg[40]; // outlives argv[] until the ExecPS2 handoff
+    if (gNeutrinoElfArg && sysStartupShapeOk(startup) && argc < argvMax &&
+        !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-elf=") && !neutrinoArgHasActiveFlag(extraArgs, "-elf=")) {
+        snprintf(elfArg, sizeof(elfArg), "-elf=cdrom0:\\%s;1", startup);
+        argv[argc++] = elfArg;
+        LOG("[NEUTRINO] neutrino_elf_arg=1: emitting %s\n", elfArg);
     }
 
     // VMC slots (#47): emit each configured "-mcN=...bin" as its OWN argv entry. These come from

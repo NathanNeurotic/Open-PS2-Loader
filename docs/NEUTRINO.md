@@ -96,6 +96,15 @@ Arguments are space-separated, e.g.:
 > the config file — OPL reads and forwards the full string at launch even though the on-screen
 > editor caps the visible length.
 
+### Experimental: automatic `-elf=` (config key only)
+
+Setting `neutrino_elf_arg = 1` by hand in `settings_riptopl.cfg` (there is deliberately no
+settings-screen row for this) makes every Neutrino launch also pass
+`-elf=cdrom0:\<STARTUP>;1` -- the game's boot-file path -- so Neutrino's per-GameID
+`config/<GameID>.toml` compatibility lookup can resolve before its IOP reset. It is only
+emitted for retail-shaped startups (`AAAA_NNN.NN`) and never when your own args already carry
+an `-elf=`. Off by default; if a launch misbehaves with it on, remove the key and report.
+
 For the full list of flags Neutrino accepts, see the
 [Neutrino documentation](https://github.com/rickgaiser/neutrino).
 

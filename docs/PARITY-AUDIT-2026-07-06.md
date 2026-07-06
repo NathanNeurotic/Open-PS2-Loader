@@ -173,6 +173,21 @@ Ranked by user-visible payoff ÷ effort, black-screen / data-loss risks first. *
 | 14 | **Per-slot VMC enable/disable (`$`-disabled `-mc` token)** | Nicety mirroring NHDDL's disabled-arg convention | LOW | S | `sbBuildVmcNeutrinoArgs` — emit `$-mcN=` when a slot is toggled off |
 | 15 | **`plasma_blend_color` theme key** | Theme authors can't tint the secondary plasma blend | LOW | M | new `CONFIG_OPL_PLAS_BLEND_COLOR` + picker + renderer thread |
 
+### Queue status (2026-07-06, end of day)
+
+Shipped same-day: **#2** `-gsm` picker (PR #94), **#3** argv byte guard — upgraded to the full
+15-string/256-byte kernel budget after source verification (PR #97), **#4** `gCheats` lazy-alloc
+(PR #101), **#5** Δ10 `-elf=` opt-in (`neutrino_elf_arg`, this PR), **#6** 480p recovery (PR #95),
+**#8** DualSense — shipped as the named `-ds5.ELF` rolling asset per maintainer decision, default
+unchanged (PR #100), **#9** per-game `-dbc`/`-logo` (PR #96), **#10** audit reconciliation (PR #91),
+**#12** `-dvd=` free-text double-emit is prevented by the emit-order + last-wins semantics plus the
+#97 budget; **#1** Δ9 shipped as PR #88. **#7 RTC last-played: RETRACTED, not a gap** — all seven
+launch legs write the same key in the same single `CONFIG_LAST` file, so last-write-wins already
+equals newest-wins; NHDDL needs timestamps only because its per-device files can disagree, a
+situation RiptOPL's single-file model cannot enter. Remaining open: **#11** user-selectable
+`-bsdfs`, **#13** persistent cover cache, **#14** per-slot VMC disable, **#15** grammar
+verification (done — folded into #2).
+
 ### Non-goals (do NOT queue — deliberate fork decisions)
 - **Native-core `-qb` quickboot** — `-qb` is Neutrino-only; deliberately not emitted after a menu session (mixed IOP state is what Neutrino's reset exists to erase). Parity doc §4.2.
 - **Dropping `-mc` VMC files** (parity doc §4.3), **libconfig backend migration** (prior decision), **trimming OPL breadth** (PS1/POPS/cheats/PADEMU) to chase NHDDL minimalism, and a **headless pure-forwarder entry** (adds a path, low value for a full launcher — OPL's breadth is the point).

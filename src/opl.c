@@ -194,6 +194,7 @@ char gExitPath[256];
 char gNeutrinoArgs[256];   // extra command-line flags appended to every Neutrino launch
 char gNeutrinoPath[256];   // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
 int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy gNeutrinoPath
+int gNeutrinoElfArg;       // opt-in (settings key only, no UI): auto-emit -elf=cdrom0: on Neutrino launches (parity Delta-10)
 char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
 int gPopstarterDevice;     // POPSTARTER.ELF device (POPS_DEV_*); Default = cwd then VCD device; legacy path -> Custom
 int gBdmaSource;           // BDMA SOURCE device family (VCD_BDMA_SRC_*) to read exFAT driver variants from
@@ -1488,6 +1489,7 @@ static void _loadConfig()
             // Neutrino Device: prefer the new device-TYPE key; if absent (config predates the picker
             // change), migrate the legacy device-INDEX value -- 0=Auto, 1/2=mc0/mc1 -> MC, 11/12=
             // mmce0/mmce1 -> MMCE, 3-10=mass* -> Auto (a bare massN index can't name a driver type).
+            configGetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
             if (!configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, &gNeutrinoDevice)) {
                 int legacyDev = 0;
                 if (configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &legacyDev)) {
@@ -1770,6 +1772,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice); // device-TYPE (NEUTRINO_DEV_*); the legacy neutrino_device key is left as-is
+        configSetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
         configSetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, gBdmaSource);
@@ -2450,6 +2453,7 @@ static void setDefaults(void)
     gNeutrinoArgs[0] = '\0';
     gNeutrinoPath[0] = '\0';
     gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+    gNeutrinoElfArg = 0; // experimental Delta-10 -elf emission stays opt-in
     gPopstarterPath[0] = '\0';
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gBdmaSource = VCD_BDMA_SRC_USB;
