@@ -448,9 +448,14 @@ void set_cheats_list(void)
 
     memset((void *)gCheatList, 0, sizeof(gCheatList));
 
-    // Populate the cheat list (gCheats == NULL means no cheat file was ever loaded this
-    // session -- fall through so gCheatList still gets its blank terminator below)
-    for (int i = 0; gCheats != NULL && i < MAX_CODES; ++i) {
+    // No cheat file was ever loaded this session: the zeroed list above ALREADY carries its
+    // addr=0 terminator, so return instead of re-testing the pointer every loop iteration
+    // (PR #101 review -- LOG in the body forces a reload of the global each pass).
+    if (gCheats == NULL)
+        return;
+
+    // Populate the cheat list
+    for (int i = 0; i < MAX_CODES; ++i) {
         if (gCheats[i].enabled) {
             for (int j = 0; j < MAX_CHEATLIST && gCheats[i].codes[j].addr != 0; ++j) {
                 if (cheatCount + 2 <= MAX_CHEATLIST) {
