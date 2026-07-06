@@ -1171,7 +1171,7 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath)
     return 0;
 }
 
-void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, const neutrino_vmc_args_t *vmcArgs)
+void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, const neutrino_vmc_args_t *vmcArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
@@ -1242,9 +1242,18 @@ void sysLaunchNeutrino(const char *driver, const char *path, int compatmask, int
     // letting that explicit value win (precedence confirmed vs rickgaiser/neutrino ee/loader/src/main.c).
     int userHasGsm = neutrinoArgHasActiveFlag(gNeutrinoArgs, "-gsm=") ||
                      neutrinoArgHasActiveFlag(extraArgs, "-gsm=");
-    if (neutrinoVideo >= 1 && neutrinoVideo <= 3 && !userHasGsm && argc < argvMax) {
-        static const char *const gsmTokens[] = {"", "-gsm=fp1", "-gsm=fp2", "-gsm=1080ix1"};
-        argv[argc++] = (char *)gsmTokens[neutrinoVideo];
+    if (neutrinoVideo >= 1 && neutrinoVideo <= 5 && !userHasGsm && argc < argvMax) {
+        // -gsm=v:c grammar (neutrino main.c parse_gsm_flags): v in {fp1, fp2, 1080ix1, 1080ix2,
+        // 1080ix3}, optional :c in {1,2,3} = field-flipping compatibility type. NEVER emit a bare
+        // ":c" -- an unrecognized -gsm value aborts the whole neutrino boot -- so the comp half is
+        // ignored unless a video mode is set (the GUI hint says as much).
+        static const char *const gsmVideoTokens[] = {"", "fp1", "fp2", "1080ix1", "1080ix2", "1080ix3"};
+        static char gsmArg[24]; // outlives argv[] until the ExecPS2 handoff below
+        if (neutrinoGsmComp >= 1 && neutrinoGsmComp <= 3)
+            snprintf(gsmArg, sizeof(gsmArg), "-gsm=%s:%d", gsmVideoTokens[neutrinoVideo], neutrinoGsmComp);
+        else
+            snprintf(gsmArg, sizeof(gsmArg), "-gsm=%s", gsmVideoTokens[neutrinoVideo]);
+        argv[argc++] = gsmArg;
     }
 
     // VMC slots (#47): emit each configured "-mcN=...bin" as its OWN argv entry. These come from

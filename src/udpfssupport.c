@@ -285,11 +285,12 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // Per-game Neutrino ELF + flags, resolved BEFORE deinit frees configSet's owner.
     const char *neutrinoPath = NULL;
     char neutrinoExtraArgs[256] = "";
-    int neutrinoVideo = 0;
+    int neutrinoVideo = 0, neutrinoGsmComp = 0;
     neutrino_vmc_args_t neutrinoVmc = {0};
 
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
     neutrinoPath = sbResolveNeutrinoPath(udpfsPrefix);
 
     // Format / neutrino availability check: on failure show the network-specific message (the OPL-core
@@ -328,7 +329,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
 
     // Hand off to Neutrino with the udpfs driver token. `partname` (the filesystem game path) + the token
     // survive the deinit above; `game` does not and is not used past this point.
-    sysLaunchNeutrino("udpfs", partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, &neutrinoVmc);
+    sysLaunchNeutrino("udpfs", partname, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, &neutrinoVmc);
 }
 
 static config_set_t *udpfsGetConfig(item_list_t *itemList, int id)
