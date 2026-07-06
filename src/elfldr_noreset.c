@@ -15,6 +15,7 @@
 */
 
 #include <kernel.h>
+#include "include/ioman.h" // LOG (kernel argv-budget refusal trace)
 #include <sifrpc.h>
 #include <string.h>
 #include <fcntl.h>
@@ -90,6 +91,25 @@ int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, cha
     if (filename == NULL || (fd = open(filename, O_RDONLY)) < 0)
         return -1;
     close(fd);
+
+    // Kernel args-area budget, the last line of defense for EVERY keep-IOP handoff (Neutrino and
+    // POPSTARTER): SetArg copies at most 15 strings into ONE 256-byte pool (NULs included) and
+    // ExecPS2 forwards the UNCLAMPED count -- exceeding either limit corrupts rather than
+    // truncates. Callers are expected to fit (sysLaunchNeutrino budgets itself); refuse loudly
+    // here rather than hand the kernel a mangled argv.
+    {
+        int pool = (int)strlen(filename) + 1;
+        int j;
+        for (j = 0; j < argc; j++) {
+            if (argv[j] == NULL)
+                return -1; // a NULL mid-argv would crash SetArg's copy inside ExecPS2 -- refuse here
+            pool += (int)strlen(argv[j]) + 1;
+        }
+        if (argc + 1 > 15 || pool > 256) {
+            LOG("[ELFLDR] argv over the kernel budget (args=%d/15, pool=%d/256) -- refusing handoff\n", argc + 1, pool);
+            return -1;
+        }
+    }
 
     // Child contract: argv[0] = load path (SifLoadElf'd), argv[1..] = the target's full argv;
     // the ExecPS2 syscall marshals the strings across the jump.
