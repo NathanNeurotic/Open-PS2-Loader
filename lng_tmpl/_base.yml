@@ -935,3 +935,7 @@ gui_strings:
   string: Neutrino GSM Compatibility
 - label: HINT_NEUTRINO_GSM_COMP
   string: Field-flipping fix for games that shake or tear under a forced Neutrino Video mode. Needs a Neutrino Video mode set.
+- label: NARGS_DBC
+  string: Debug Colors (-dbc)
+- label: NARGS_LOGO
+  string: PS2 Logo (-logo)
