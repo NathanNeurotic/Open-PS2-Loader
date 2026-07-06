@@ -102,7 +102,7 @@ Examples:  -gsm=fp2     -gsm=fp2:1     -gsm=1080ix2
 ### 2.3 Lower-severity Neutrino settings gaps
 
 - **`-dbc` / `-logo` per-game override (low).** Both are global-only today; NHDDL exposes both as per-title toggles. `-logo` is a per-game region/boot-compat aid, so a global toggle is coarse. Add two `UI_BOOL` rows to `diaNeutrinoArgs`, OR-in with the global auto-emit in `sysLaunchNeutrino` (de-dup so it's emitted once).
-- **User-selectable `-bsdfs=hdl/bd` + `-dvd` prefix (low, M).** Only APA auto-picks `hdl`; there's no way to run an HDL-formatted image on USB/MX4SIO or a raw `-bsdfs=bd` device from the UI. Coupled to the `-dvd` path shape (`hdl:`/`bdfs:` prefixes), so not a pure free-text add — needs a per-game enum feeding the device-shape branch, guarded off for mmce/udpfs (which force `bsdfs=no`).
+- **User-selectable `-bsdfs=hdl/bd` + `-dvd` prefix (low, M).** Only APA auto-picks `hdl`; there's no way to run an HDL-formatted image on USB/MX4SIO or a raw `-bsdfs=bd` device from the UI. Coupled to the `-dvd` path shape (`hdl:`/`bdfs:` prefixes), so not a pure free-text add — needs a per-game enum feeding the device-shape branch, guarded off for mmce/udpfs (those have no filesystem layer: neutrino `main.c` internally forces `sBSDFS="no"` and skips the bsdfs module for them regardless of what's passed, so the picker must not emit a `-bsdfs` there — the valid *driver* values are only `exfat`/`hdl`/`bd`).
 - **`-dvd=esr` / DVD-image emulation (low, M).** No competitor exposes ESR either; niche given RiptOPL's loose-ISO focus. Document as intentionally-unsupported unless a user asks.
 
 ---
