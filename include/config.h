@@ -43,12 +43,14 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_STARTUP          "#Startup"
 #define CONFIG_ITEM_ALTSTARTUP       "$AltStartup"
 #define CONFIG_ITEM_VMC              "$VMC"
+#define CONFIG_ITEM_VMC_DISABLE      "$VMCDisable" // per-slot ("$VMCDisable_0"/"_1"): launch WITHOUT this slot's VMC while keeping its card name configured (Neutrino -mc path only)
 #define CONFIG_ITEM_COMPAT           "$Compatibility"
 #define CONFIG_ITEM_DMA              "$DMA"
 #define CONFIG_ITEM_CORE_LOADER      "$CoreLoader"
 #define CONFIG_ITEM_NEUTRINO_ARGS    "$NeutrinoArgs"
 #define CONFIG_ITEM_NEUTRINO_VIDEO   "$NeutrinoVideo"
 #define CONFIG_ITEM_NEUTRINO_GSMCOMP "$NeutrinoGsmComp" // -gsm ":c" field-flip half (0=off, 1-3=type); only emitted when $NeutrinoVideo is set
+#define CONFIG_ITEM_NEUTRINO_BSDFS   "$NeutrinoBsdfs"   // -bsdfs override (parity-audit #11): 0=Auto, 1=exfat, 2=hdl, 3=bd; block-backed devices only
 #define CONFIG_ITEM_DNAS             "$DNAS"
 #define CONFIG_ITEM_CONFIGSOURCE     "$ConfigSource"
 
@@ -85,6 +87,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_TEXTCOLOR            "text_color"
 #define CONFIG_OPL_UI_TEXTCOLOR         "ui_text_color"
 #define CONFIG_OPL_SEL_TEXTCOLOR        "sel_text_color"
+#define CONFIG_OPL_PLAS_BLEND_COLOR     "plasma_blend_color" // plasma gradient LOW end (parity-audit #15); doubles as the theme-cfg key
 #define CONFIG_OPL_ENABLE_NOTIFICATIONS "enable_notifications"
 #define CONFIG_OPL_ENABLE_COVERART      "enable_coverart"
 #define CONFIG_OPL_ENABLE_ART_TAR       "enable_art_tar"
@@ -227,6 +230,9 @@ void configClear(config_set_t *configSet);
 void configGetVMC(config_set_t *configSet, char *vmc, int length, int slot);
 void configSetVMC(config_set_t *configSet, const char *vmc, int slot);
 void configRemoveVMC(config_set_t *configSet, int slot);
+void configGetVMCDisable(config_set_t *configSet, int slot, int *disabled);
+void configSetVMCDisable(config_set_t *configSet, int slot, int disabled);
+void configRemoveVMCDisable(config_set_t *configSet, int slot);
 
 char *configGetDir(void);
 void configPrepareNotifications(char *prefix);

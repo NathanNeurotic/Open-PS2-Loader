@@ -14,6 +14,7 @@ enum UI_ITEMS {
     UICFG_UICOL,
     UICFG_TXTCOL,
     UICFG_SELCOL,
+    UICFG_PLASCOL, // plasma blend (gradient low end) color picker -- parity-audit #15
     UICFG_RESETCOL,
     UICFG_AUTOSORT,
     UICFG_COVERART,
@@ -175,6 +176,7 @@ enum UI_ITEMS {
     COMPAT_NEUTRINO_ARGS,
     COMPAT_NEUTRINO_VIDEO,
     COMPAT_NEUTRINO_GSMCOMP,
+    COMPAT_NEUTRINO_BSDFS,
 
     COMPAT_LOADFROMDISC_ID,
 
@@ -182,6 +184,8 @@ enum UI_ITEMS {
     COMPAT_VMC2_ACTION_ID,
     COMPAT_VMC1_DEFINE_ID,
     COMPAT_VMC2_DEFINE_ID,
+    COMPAT_VMC1_DISABLE, // UI_BOOL rows (read via diaGetInt, not dialog results -- no _ID/NOEXIT pair needed)
+    COMPAT_VMC2_DISABLE,
 
     VMC_NAME,
     VMC_SIZE,

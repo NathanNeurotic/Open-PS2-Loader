@@ -1170,6 +1170,16 @@ void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, neut
         vmcName[0] = '\0';
         configGetVMC(configSet, vmcName, sizeof(vmcName), slot);
         if (vmcName[0] != '\0') {
+            // Per-slot disable (parity-audit #14): the user toggled this slot off without deleting
+            // its card name. Skipping the -mc emission is the whole mechanism -- the empty arg also
+            // drops the slot from vmcSlotMask, so the MMCE gameID card-switch re-arms for it and the
+            // game sees the real card in that slot.
+            int slotDisabled = 0;
+            configGetVMCDisable(configSet, slot, &slotDisabled);
+            if (slotDisabled) {
+                LOG("[NEUTRINO] VMC slot %d (%s) disabled per-game -- launching without it\n", slot, vmcName);
+                continue;
+            }
             // Δ2 (NHDDL-parity): Neutrino ABORTS the whole boot when a -mcN VMC file can't be opened
             // post-reset (no "boot without VMC" fallback -- neutrino fhi_config.c) = black screen. Verify
             // the .bin exists NOW (mounts are still up; this runs pre-deinit) and skip the arg with a

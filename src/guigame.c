@@ -73,6 +73,8 @@ static char altStartup[32];
 static char neutrinoArgs[256]; // per-game Neutrino extra flags (edited via the structured args sub-screen)
 static char vmc1[32];
 static char vmc2[32];
+static int vmc1Disabled; // per-slot VMC disable (parity-audit #14): keep the card name, skip the Neutrino -mc arg
+static int vmc2Disabled;
 static char hexDiscID[15];
 static char configSource[128];
 
@@ -297,6 +299,8 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
     do {
         diaSetLabel(diaVMCConfig, COMPAT_VMC1_DEFINE, vmc1);
         diaSetLabel(diaVMCConfig, COMPAT_VMC2_DEFINE, vmc2);
+        diaSetInt(diaVMCConfig, COMPAT_VMC1_DISABLE, vmc1Disabled);
+        diaSetInt(diaVMCConfig, COMPAT_VMC2_DISABLE, vmc2Disabled);
 
         if (strlen(vmc1))
             diaSetLabel(diaVMCConfig, COMPAT_VMC1_ACTION, _l(_STR_RESET));
@@ -308,6 +312,9 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
             diaSetLabel(diaVMCConfig, COMPAT_VMC2_ACTION, _l(_STR_USE_GENERIC));
 
         result = diaExecuteDialog(diaVMCConfig, result, 1, NULL);
+        // UI_BOOL state persists across the button-driven do/while re-entries; read it back each pass
+        diaGetInt(diaVMCConfig, COMPAT_VMC1_DISABLE, &vmc1Disabled);
+        diaGetInt(diaVMCConfig, COMPAT_VMC2_DISABLE, &vmc2Disabled);
         if (result == COMPAT_VMC1_DEFINE) {
             if (menuCheckParentalLock() == 0) {
                 if (guiGameShowVMCConfig(id, support, vmc1, 0, 0))
@@ -964,6 +971,12 @@ static unsigned char gameEffectiveFlags(item_list_t *support)
 // convertCompatmaskToModes (system.c) forwards only bits 1/2/3/5 as -gc; DL-Defaults
 // pulls OPL-bitmask data that does not map to -gc. Under the OPL core, the Neutrino
 // Args field is never read. See docs/NEUTRINO.md for the full capability mapping.
+// Device capability for the -bsdfs row: set once per dialog entry in guiGameShowCompatConfig
+// (which has the item_list_t), then AND-ed into the core-aware grey below. Needed because the
+// updater re-runs guiGameSetCoreAwareState on EVERY dialog change with no device handle -- a
+// one-shot diaSetEnabled here would be clobbered (same pattern as the UDPBD loader lock).
+static int bsdfsDeviceCapable = 1;
+
 static void guiGameSetCoreAwareState(void)
 {
     int neutrino = 0, neutrinoVideo = 0;
@@ -975,6 +988,9 @@ static void guiGameSetCoreAwareState(void)
     // The ":c" comp half is only ever emitted alongside a video mode (-gsm=v:c grammar), so it also
     // greys while Neutrino Video is Off -- the updater re-runs this on every change, keeping it live.
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrino && neutrinoVideo != 0);
+    // -bsdfs override: Neutrino-only AND block-backed-device-only (mmce/udpfs have no fs layer;
+    // APA is always hdl). The launch side guards independently -- this grey is just honest UI.
+    diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_BSDFS, neutrino && bsdfsDeviceCapable);
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 6, neutrino);  // Mode 7 -gc=7 fix buffer overrun: Neutrino only
@@ -1011,6 +1027,18 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     // shake/tear under a forced mode. Ignored (not emitted) while Neutrino Video is Off.
     const char *neutrinoGsmCompModes[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", NULL};
     diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrinoGsmCompModes);
+
+    // -bsdfs override (parity-audit #11). Indices map 1:1 onto system.c's bsdfsTokens; the value
+    // strings are Neutrino's literal driver tokens, deliberately untranslated (like the -gsm rows).
+    const char *neutrinoBsdfsModes[] = {"Auto", "exfat", "hdl", "bd", NULL};
+    diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_BSDFS, neutrinoBsdfsModes);
+    // Capability for the row's grey: block-backed devices only. BDM instances (usb/ata-exFAT/
+    // mx4sio/ilink/udpbd/udpfsbd) qualify; mmce/udpfs are fileid backends, APA is forced hdl, and
+    // a VCD (PS1) view never launches through Neutrino at all. FAV proxies the real device, so it
+    // stays enabled and the launch-side guard arbitrates.
+    bsdfsDeviceCapable = (support == NULL) ||
+                         ((support->mode >= BDM_MODE && support->mode <= BDM_MODE6 && !vcdViewActive(support->mode)) ||
+                          support->mode == FAV_MODE);
 
     // UDPBD games have no OPL core backend -- they always launch via Neutrino
     // (bdmsupport.c forces it). Lock the selector to Neutrino so the screen matches;
@@ -1217,9 +1245,20 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
             configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP);
     }
 
+    {
+        int neutrinoBsdfs = 0;
+        diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_BSDFS, &neutrinoBsdfs);
+        if (neutrinoBsdfs != 0)
+            result = configSetInt(configSet, CONFIG_ITEM_NEUTRINO_BSDFS, neutrinoBsdfs);
+        else
+            configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_BSDFS);
+    }
+
     /// VMC ///
     configSetVMC(configSet, vmc1, 0);
     configSetVMC(configSet, vmc2, 1);
+    configSetVMCDisable(configSet, 0, vmc1Disabled); // setter removes the key when 0
+    configSetVMCDisable(configSet, 1, vmc2Disabled);
 
     result = guiGameSaveOSDLanguageGameConfig(configSet, result);
     guiGameSaveOSDLanguageGlobalConfig(configGame);
@@ -1299,6 +1338,8 @@ void guiGameRemoveSettings(config_set_t *configSet)
         // VMC
         configRemoveVMC(configSet, 0);
         configRemoveVMC(configSet, 1);
+        configRemoveVMCDisable(configSet, 0);
+        configRemoveVMCDisable(configSet, 1);
 
         menuSaveConfig();
     }
@@ -1655,10 +1696,21 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
         neutrinoGsmComp = 0; // sanitize (valid: 0=Off .. 3=field-flip type 3)
     diaSetInt(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrinoGsmComp);
 
+    int neutrinoBsdfs = 0;
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_BSDFS, &neutrinoBsdfs);
+    if (neutrinoBsdfs < 0 || neutrinoBsdfs > 3)
+        neutrinoBsdfs = 0; // sanitize (valid: 0=Auto, 1=exfat, 2=hdl, 3=bd)
+    diaSetInt(diaCompatConfig, COMPAT_NEUTRINO_BSDFS, neutrinoBsdfs);
+
     /// VMC ///
     vmc1[0] = '\0';
     configGetVMC(configSet, vmc1, sizeof(vmc1), 0);
 
     vmc2[0] = '\0';
     configGetVMC(configSet, vmc2, sizeof(vmc2), 1);
+
+    vmc1Disabled = 0;
+    configGetVMCDisable(configSet, 0, &vmc1Disabled);
+    vmc2Disabled = 0;
+    configGetVMCDisable(configSet, 1, &vmc2Disabled);
 }

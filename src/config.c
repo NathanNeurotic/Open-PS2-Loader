@@ -731,3 +731,31 @@ void configRemoveVMC(config_set_t *configSet, int slot)
     snprintf(gkey, sizeof(gkey), "%s_%d", CONFIG_ITEM_VMC, slot);
     configRemoveKey(configSet, gkey);
 }
+
+// Per-slot VMC disable (parity-audit #14): the toggle preserves the configured card name
+// ($VMC_N stays) but makes the Neutrino launch skip that slot's -mc arg -- disable-without-delete,
+// the same convention as the $-prefix on free-text args. Absent key == 0 == enabled.
+void configGetVMCDisable(config_set_t *configSet, int slot, int *disabled)
+{
+    char gkey[CONFIG_KEY_NAME_LEN];
+    snprintf(gkey, sizeof(gkey), "%s_%d", CONFIG_ITEM_VMC_DISABLE, slot);
+    configGetInt(configSet, gkey, disabled);
+}
+
+void configSetVMCDisable(config_set_t *configSet, int slot, int disabled)
+{
+    char gkey[CONFIG_KEY_NAME_LEN];
+    if (!disabled) { // default: keep configs clean, store nothing
+        configRemoveVMCDisable(configSet, slot);
+        return;
+    }
+    snprintf(gkey, sizeof(gkey), "%s_%d", CONFIG_ITEM_VMC_DISABLE, slot);
+    configSetInt(configSet, gkey, disabled);
+}
+
+void configRemoveVMCDisable(config_set_t *configSet, int slot)
+{
+    char gkey[CONFIG_KEY_NAME_LEN];
+    snprintf(gkey, sizeof(gkey), "%s_%d", CONFIG_ITEM_VMC_DISABLE, slot);
+    configRemoveKey(configSet, gkey);
+}

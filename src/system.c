@@ -1206,7 +1206,7 @@ static int sysStartupShapeOk(const char *s)
     return 1;
 }
 
-void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, const neutrino_vmc_args_t *vmcArgs)
+void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, const neutrino_vmc_args_t *vmcArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
@@ -1265,10 +1265,36 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
         snprintf(bsd, sizeof(bsd), "-bsd=%s", deviceName);
         if (argc < argvMax)
             argv[argc++] = bsd;
-        snprintf(filePath, sizeof(filePath), "-dvd=%s", path);
+        // Per-game -bsdfs override (parity-audit #11), Auto(0) = today's bytes exactly (no -bsdfs,
+        // bare -dvd). Valid driver values are ONLY exfat/hdl/bd; the -dvd prefix changes in lockstep
+        // (verified vs rickgaiser/neutrino main.c usage: "-bsdfs=hdl -dvd=hdl:..." and
+        // "-bsdfs=bd -dvd=bdfs:..."; exfat is the default fs and takes the bare path unchanged --
+        // any ':'-bearing -dvd value is file-mode, opened through the selected fs). NEVER emitted
+        // for mmce/udpfs: they are fileid backends with no filesystem layer (Neutrino forces
+        // sBSDFS="no" there regardless -- this guard just keeps the argv clean). A user-typed
+        // -bsdfs= wins (skip the structured emit); a user-typed -dvd= also wins on its own because
+        // user tokens are appended after these and Neutrino's arg parse is last-wins.
+        static const char *const bsdfsTokens[] = {"", "exfat", "hdl", "bd"};
+        static const char *const bsdfsDvdPrefix[] = {"", "", "hdl:", "bdfs:"};
+        int fsOverride = 0;
+        if (neutrinoBsdfs >= 1 && neutrinoBsdfs <= 3 &&
+            strcmp(deviceName, "mmce") != 0 && strcmp(deviceName, "udpfs") != 0 &&
+            !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsdfs=") && !neutrinoArgHasActiveFlag(extraArgs, "-bsdfs="))
+            fsOverride = neutrinoBsdfs;
+        if (fsOverride) {
+            snprintf(bsdfs, sizeof(bsdfs), "-bsdfs=%s", bsdfsTokens[fsOverride]);
+            if (argc < argvMax)
+                argv[argc++] = bsdfs;
+        }
+        snprintf(filePath, sizeof(filePath), "-dvd=%s%s", bsdfsDvdPrefix[fsOverride], path);
         if (argc < argvMax)
             argv[argc++] = filePath;
     }
+
+    // Everything up to and including -dvd is the boot-critical core: the pool-fit drop loop below
+    // must never shed these. A fixed floor of 3 silently stopped covering -dvd once the optional
+    // -bsdfs slots in front of it (argv[3]) -- record the real core count instead.
+    const int coreArgc = argc;
 
     // Only forward -gc when at least one compat mode is set: Neutrino treats
     // -gc=0 as an explicit mode (IOP fast reads), NOT a no-op, so passing it for
@@ -1366,14 +1392,15 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     // carries its strings in ONE 256-byte pool, every NUL included. Hop 1 packs the child's load
     // path PLUS this argv -- neutrinoPath is counted TWICE (loadpath and target argv[0]). SetArg's
     // copy is UNbounded, so exceeding the pool corrupts rather than truncates. Fit by dropping tail
-    // args (user extras sit last; each drop LOGged); the argv[0]/-bsd/-dvd floor must survive or
-    // nothing can boot anyway -- past that, refuse and let the LOG name the overage.
+    // args (user extras sit last; each drop LOGged); the boot-critical core (argv[0]/-bsd/
+    // [-bsdfs]/-dvd, counted as coreArgc above) must survive or nothing can boot anyway -- past
+    // that, refuse and let the LOG name the overage.
     {
         int pool = (int)strlen(neutrinoPath) + 1; // hop-1 child argv[0] = the load path
         int i;
         for (i = 0; i < argc; i++)
             pool += (int)strlen(argv[i]) + 1;
-        while (pool > 256 && argc > 3) {
+        while (pool > 256 && argc > coreArgc) {
             argc--;
             pool -= (int)strlen(argv[argc]) + 1;
             LOG("[NEUTRINO] argv pool over 256 bytes -- dropping tail arg: %s\n", argv[argc]);

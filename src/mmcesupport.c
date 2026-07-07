@@ -690,7 +690,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             return;
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
         deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode);
-        sysLaunchNeutrino("mmce", mmcePartname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, &neutrinoVmc);
+        sysLaunchNeutrino("mmce", mmcePartname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, &neutrinoVmc);
         return;
     }
 

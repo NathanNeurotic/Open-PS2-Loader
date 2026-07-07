@@ -20,6 +20,7 @@
 #include <sbv_patches.h>
 #include <libcdvd.h>
 #include <libpad.h>
+#include <sifcmd.h> // BEFORE libmc.h: ps2sdk's 2026-07 libmc.h uses ALIGNED_FOR_SIFDMA (sifcmd-common.h) without including it -- not self-contained; harmless on older SDKs
 #include <libmc.h>
 #include <netman.h>
 #include <ps2ips.h>
@@ -288,6 +289,7 @@ extern int RemainSecs, DisableCron;
 extern clock_t CronStart;
 
 extern unsigned char gDefaultBgColor[3];
+extern unsigned char gDefaultPlasBlendColor[3];
 extern unsigned char gDefaultTextColor[3];
 extern unsigned char gDefaultSelTextColor[3];
 extern unsigned char gDefaultUITextColor[3];

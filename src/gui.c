@@ -643,17 +643,21 @@ static int guiUIUpdater(int modified)
                 diaSetItemType(diaUIConfig, UICFG_UICOL, UI_COLOUR);
                 diaSetItemType(diaUIConfig, UICFG_TXTCOL, UI_COLOUR);
                 diaSetItemType(diaUIConfig, UICFG_SELCOL, UI_COLOUR);
+                diaSetItemType(diaUIConfig, UICFG_PLASCOL, UI_COLOUR);
                 diaSetColor(diaUIConfig, UICFG_BGCOL, gDefaultBgColor);
                 diaSetColor(diaUIConfig, UICFG_UICOL, gDefaultUITextColor);
                 diaSetColor(diaUIConfig, UICFG_TXTCOL, gDefaultTextColor);
                 diaSetColor(diaUIConfig, UICFG_SELCOL, gDefaultSelTextColor);
+                diaSetColor(diaUIConfig, UICFG_PLASCOL, gDefaultPlasBlendColor);
             } else if (temp == thmGetGuiValue()) {
                 // Display the current theme's colours.
                 diaSetItemType(diaUIConfig, UICFG_BGCOL, UI_COLOUR);
                 diaSetItemType(diaUIConfig, UICFG_UICOL, UI_COLOUR);
                 diaSetItemType(diaUIConfig, UICFG_TXTCOL, UI_COLOUR);
                 diaSetItemType(diaUIConfig, UICFG_SELCOL, UI_COLOUR);
+                diaSetItemType(diaUIConfig, UICFG_PLASCOL, UI_COLOUR);
                 diaSetColor(diaUIConfig, UICFG_BGCOL, gTheme->bgColor);
+                diaSetColor(diaUIConfig, UICFG_PLASCOL, gTheme->plasBlendColor); // raw uchar[3] like bgColor -- NOT the U64 form
                 diaSetU64Color(diaUIConfig, UICFG_UICOL, gTheme->uiTextColor);
                 diaSetU64Color(diaUIConfig, UICFG_TXTCOL, gTheme->textColor);
                 diaSetU64Color(diaUIConfig, UICFG_SELCOL, gTheme->selTextColor);
@@ -663,6 +667,7 @@ static int guiUIUpdater(int modified)
                 diaSetItemType(diaUIConfig, UICFG_UICOL, UI_SPACER);
                 diaSetItemType(diaUIConfig, UICFG_TXTCOL, UI_SPACER);
                 diaSetItemType(diaUIConfig, UICFG_SELCOL, UI_SPACER);
+                diaSetItemType(diaUIConfig, UICFG_PLASCOL, UI_SPACER);
             }
 
             // The user cannot adjust the current theme's colours.
@@ -671,6 +676,7 @@ static int guiUIUpdater(int modified)
             diaSetEnabled(diaUIConfig, UICFG_UICOL, temp);
             diaSetEnabled(diaUIConfig, UICFG_TXTCOL, temp);
             diaSetEnabled(diaUIConfig, UICFG_SELCOL, temp);
+            diaSetEnabled(diaUIConfig, UICFG_PLASCOL, temp);
             diaSetEnabled(diaUIConfig, UICFG_RESETCOL, temp);
         }
 
@@ -759,6 +765,7 @@ reselect_video_mode:
             diaGetColor(diaUIConfig, UICFG_UICOL, gDefaultUITextColor);
             diaGetColor(diaUIConfig, UICFG_TXTCOL, gDefaultTextColor);
             diaGetColor(diaUIConfig, UICFG_SELCOL, gDefaultSelTextColor);
+            diaGetColor(diaUIConfig, UICFG_PLASCOL, gDefaultPlasBlendColor);
         }
         diaGetInt(diaUIConfig, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
@@ -1793,14 +1800,23 @@ void guiDrawBGPlasma()
     if (ymax > PLASMA_H)
         ymax = PLASMA_H;
 
+    // plasma_blend_color (parity-audit #15): the gradient's LOW end, historically hardcoded black
+    // (the old expression fper*curbgColor>>8 lerps black->bgColor). Lerp blend->bgColor instead;
+    // the default black collapses to the exact old bytes (all terms non-negative there, and /256 of
+    // a non-negative int is exactly >>8). Signed intermediates: the delta goes negative when the
+    // blend is brighter than the tint -- divide instead of shifting (right-shift of a negative int
+    // is implementation-defined); the result stays in [0,255] without clamping (fper<=256,
+    // |delta|<=255: endpoints land exactly on blend / curbgColor).
+    const unsigned char *blend = gTheme->plasBlendColor;
+
     for (y = pery; y < ymax; y++) {
         for (x = 0; x < PLASMA_W; x++) {
             u32 fper = guiCalcPerlin((float)(2 * x) / PLASMA_W, (float)(2 * y) / PLASMA_H, perz) * 0x80 + 0x80;
 
             *buf = GS_SETREG_RGBA(
-                (u32)(fper * curbgColor[0]) >> 8,
-                (u32)(fper * curbgColor[1]) >> 8,
-                (u32)(fper * curbgColor[2]) >> 8,
+                (u32)(blend[0] + (((int)fper * ((int)curbgColor[0] - (int)blend[0])) / 256)),
+                (u32)(blend[1] + (((int)fper * ((int)curbgColor[1] - (int)blend[1])) / 256)),
+                (u32)(blend[2] + (((int)fper * ((int)curbgColor[2] - (int)blend[2])) / 256)),
                 0x80);
 
             ++buf;

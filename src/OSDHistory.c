@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
+#include <sifcmd.h> // BEFORE libmc.h: ps2sdk's 2026-07 libmc.h uses ALIGNED_FOR_SIFDMA (sifcmd-common.h) without including it -- not self-contained; harmless on older SDKs
 #include <libmc.h>
 #include <libmc-common.h>
 

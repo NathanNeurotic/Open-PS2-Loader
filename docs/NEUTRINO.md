@@ -65,6 +65,7 @@ settings:
 |---|---|
 | `-bsd=<usb\|ilink\|mx4sio\|ata\|mmce\|udpfs\|udpfsbd>` | always (the storage backend) |
 | `-bsdfs=hdl` | internal HDD (APA) only |
+| `-bsdfs=<exfat\|hdl\|bd>` | only if the per-game **Neutrino Filesystem** picker (Compatibility screen) is set off Auto; block-backed devices only (never mmce/udpfs — no filesystem layer there). `hdl`/`bd` also reshape `-dvd` to `hdl:`/`bdfs:`; a hand-typed `-bsdfs=`/`-dvd=` in the args always wins |
 | `-dvd=<path>` / `-dvd=hdl:<partition>` | always (the game image/partition) |
 | `-gc=<modes>` | only if the game has OPL compatibility modes set |
 | `-dbc` | only if **Debug Colors** is enabled |
