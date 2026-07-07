@@ -26,6 +26,24 @@ void _strcpy(char *dst, const char *src)
     strncpy(dst, src, strlen(src) + 1);
 }
 
+/* ee_core is freestanding (-nostdlib, this mini-libc): the 2026-07 ps2sdk's
+   libkernel fio_open.o started calling strlcpy(), so any config that links
+   fioOpen into ee_core (EXTRA_FEATURES/IGS screenshots, DTL_T10000 debug)
+   needs the symbol supplied here. BSD semantics: copy at most size-1 bytes,
+   always NUL-terminate (when size > 0), return strlen(src). Merely unused
+   on older SDKs whose fio_open.o has no such reference. */
+size_t strlcpy(char *dst, const char *src, size_t size)
+{
+    size_t srclen = strlen(src);
+
+    if (size > 0) {
+        size_t copylen = (srclen >= size) ? size - 1 : srclen;
+        memcpy(dst, src, copylen);
+        dst[copylen] = '\0';
+    }
+    return srclen;
+}
+
 /* Do not link to strcat() from libc */
 void _strcat(char *dst, const char *src)
 {
