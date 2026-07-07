@@ -1383,7 +1383,10 @@ static void drawItemText(struct menu_list *menu, struct submenu_list *item, conf
 {
     if (item) {
         item_list_t *support = menu->item->userdata;
-        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, support->itemGetStartup(support, item->item.id), elem->color);
+        // In a VCD view itemGetStartup returns the (full) VCD name, so this is the name caption some
+        // CoverFlow/custom themes use instead of an ItemsList. Apply the same display-only game-ID
+        // hide (no-op for non-VCD views, where this shows the real startup/game-ID). Cosmetic only.
+        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, vcdDisplayName(support->mode, support->itemGetStartup(support, item->item.id)), elem->color);
     }
 }
 
