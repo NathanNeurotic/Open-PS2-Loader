@@ -36,8 +36,10 @@ IGS ?= $(EXTRA_FEATURES)
 #Enables/disables pad emulator
 PADEMU ?= 1
 
-#Enables/disables experimental PS5 DualSense (USB) support in the pad emulator. UNVALIDATED --
-#needs real DS5 hardware to test, so it is OFF by default and never affects the default build.
+#Enables/disables PS5 DualSense (USB) support in the pad emulator. HW-VALIDATED on a real DS5
+#(maintainer, 2026-07-06) but kept OFF in the default build by deliberate choice -- the rolling
+#release ships ready-made DUALSENSE=1 builds as named RIPTOPL-<version>-<SDK>-ds5.ELF assets,
+#one per SDK flavour (WOPLSDK / PS2MAXSDK / PS2DEVLATESTSDK).
 DUALSENSE ?= 0
 
 #Enables/disables building of an edition of OPL that will support the DTL-T10000 (SDK v2.3+)
