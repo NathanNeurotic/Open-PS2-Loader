@@ -11,6 +11,7 @@
 #include "include/sound.h"
 #include "include/texcache.h"
 #include "include/favsupport.h"
+#include "include/vcdsupport.h" // vcdDisplayName -- display-only VCD game-ID prefix hide
 
 #include <time.h>
 #include <math.h>
@@ -1330,9 +1331,9 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                     if (itemsList->decoratorImage->defaultTexture)
                         rmDrawPixmap(&itemsList->decoratorImage->defaultTexture->source, posX, posY, elem->aligned, DECORATOR_SIZE, DECORATOR_SIZE, elem->scaled, gDefaultCol, 0);
                 }
-                textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, submenuItemGetText(&ps->item), color);
+                textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, vcdDisplayName(list ? list->mode : -1, submenuItemGetText(&ps->item)), color);
             } else
-                textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, submenuItemGetText(&ps->item), color);
+                textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, vcdDisplayName(list ? list->mode : -1, submenuItemGetText(&ps->item)), color);
 
             // Favourites: draw a small star just after the item text.
             if (ps->item.favourited) {
@@ -1382,7 +1383,10 @@ static void drawItemText(struct menu_list *menu, struct submenu_list *item, conf
 {
     if (item) {
         item_list_t *support = menu->item->userdata;
-        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, support->itemGetStartup(support, item->item.id), elem->color);
+        // In a VCD view itemGetStartup returns the (full) VCD name, so this is the name caption some
+        // CoverFlow/custom themes use instead of an ItemsList. Apply the same display-only game-ID
+        // hide (no-op for non-VCD views, where this shows the real startup/game-ID). Cosmetic only.
+        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, vcdDisplayName(support->mode, support->itemGetStartup(support, item->item.id)), elem->color);
     }
 }
 

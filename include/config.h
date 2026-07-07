@@ -108,6 +108,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_POPSTARTER_DEVICE    "popstarter_device" // device TYPE holding POPS/POPSTARTER.ELF (POPS_DEV_*)
 #define CONFIG_OPL_BDMA_SOURCE          "bdma_source"
 #define CONFIG_OPL_BDMA_APPLY           "bdma_apply_launch"
+#define CONFIG_OPL_VCD_HIDE_GAMEID      "vcd_hide_gameid" // display-only: hide a leading PS1 game-ID prefix from the VCD list
 #define CONFIG_OPL_WRITE_POPS_NET       "write_popstarter_net"
 #define CONFIG_OPL_HDD_GAME_LIST_CACHE  "hdd_game_list_cache"
 #define CONFIG_OPL_EXIT_PATH            "exit_path"

@@ -37,6 +37,52 @@ static void vcdExtractGameId(const char *name, char *idOut, int idSize)
     }
 }
 
+// Display-only prefix hider (aesthetic setting gVcdHideGameId). Returns the number of leading
+// characters to skip when `name` begins with a STRICT PS1 retail game-ID prefix AAAA_NNN.NN
+// followed by a '.' or '_' separator (= 12 chars, e.g. "SLUS_005.51." / "SCUS_941.63."), and only
+// when there is a non-empty title after it. Returns 0 otherwise, so clean titles are never cut.
+// Stricter than vcdExtractGameId's separator-only test on purpose: this drives what the user SEES,
+// so a false positive would eat a real title. The char checks short-circuit on the NUL, so a
+// name shorter than 12 chars is safe.
+static int vcdGameIdPrefixLen(const char *name)
+{
+    int i;
+    if (name == NULL)
+        return 0;
+    for (i = 0; i < 4; i++) // AAAA (letters/digits)
+        if (!((name[i] >= 'A' && name[i] <= 'Z') || (name[i] >= '0' && name[i] <= '9')))
+            return 0;
+    if (name[4] != '_')
+        return 0;
+    for (i = 5; i <= 7; i++) // NNN
+        if (name[i] < '0' || name[i] > '9')
+            return 0;
+    if (name[8] != '.')
+        return 0;
+    for (i = 9; i <= 10; i++) // NN
+        if (name[i] < '0' || name[i] > '9')
+            return 0;
+    if (name[11] != '.' && name[11] != '_') // trailing separator before the title
+        return 0;
+    if (name[12] == '\0') // nothing after the prefix -- keep the raw name rather than blank it
+        return 0;
+    return 12;
+}
+
+// Render-time display name for the VCD list. PURELY COSMETIC: returns a pointer PAST a leading
+// game-ID prefix when the "hide game ID" option is on AND this is a VCD view AND the name really
+// starts with one; otherwise returns `text` unchanged. The stored name is never modified, so
+// launch selectors, cover-art keys, favourites match-by-name and config keys all keep the full
+// name -- callers MUST use the result for drawing only.
+const char *vcdDisplayName(int mode, const char *text)
+{
+    int n;
+    if (!gVcdHideGameId || text == NULL || !vcdViewActive(mode))
+        return text;
+    n = vcdGameIdPrefixLen(text);
+    return n ? text + n : text;
+}
+
 // Core scan: opendir `dirPath` and collect *.VCD basenames into a fresh vcd_entry_t list. POSIX dir
 // IO only (newlib-port rule). Shared by vcdScanDir (POPS subfolder) and vcdScanDirRoot (path as-is).
 static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)

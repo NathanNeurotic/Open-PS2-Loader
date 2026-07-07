@@ -49,6 +49,10 @@ void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *nam
 int vcdModeSupported(int mode);
 // Is the given device mode currently showing its VCD list (vs its disc list)?
 int vcdViewActive(int mode);
+// Display-only: strip a leading PS1 game-ID prefix from a VCD list name when the gVcdHideGameId
+// setting is on and `mode` is a VCD view; returns `text` unchanged otherwise. COSMETIC -- the
+// result is for on-screen text only, never for launch/art/favourites/config lookups.
+const char *vcdDisplayName(int mode, const char *text);
 // Flip the VCD view for a mode + mark it dirty so the owning support's NeedsUpdate forces a rescan.
 void vcdToggleView(int mode);
 // Returns 1 exactly once after a toggle (and clears the flag) -- call from the support's NeedsUpdate.

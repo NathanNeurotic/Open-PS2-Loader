@@ -951,3 +951,7 @@ gui_strings:
   string: Force Neutrino's block-device filesystem (-bsdfs). Auto = per-device default. hdl/bd are expert options; pair them with a matching -dvd= in the launch args if the auto path shape doesn't fit.
 - label: PLASCOLOR
   string: Plasma Blend Color
+- label: VCD_HIDE_GAMEID
+  string: Hide PS1 Game ID (VCD list)
+- label: HINT_VCD_HIDE_GAMEID
+  string: Cosmetic only -- hide a leading game-ID prefix (e.g. SLUS_005.51.) from PS1/VCD list names. Names without an ID are shown as-is. Does not change launch, cover art, or favourites.

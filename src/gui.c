@@ -552,6 +552,7 @@ void guiShowConfig()
     // "VCD BDMA Apply on Launch": when ON the launch auto-equips the matching driver, so the manual
     // SOURCE/MODE pickers are hidden; flipping it OFF (live, via guiUpdater) reveals them.
     diaSetInt(diaConfig, CFG_BDMA_APPLY, gBdmaApplyOnLaunch);
+    diaSetInt(diaConfig, CFG_VCD_HIDE_GAMEID, gVcdHideGameId);
     diaSetVisible(diaConfig, CFG_LBL_BDMASOURCE, !gBdmaApplyOnLaunch);
     diaSetVisible(diaConfig, CFG_BDMASOURCE, !gBdmaApplyOnLaunch);
     diaSetVisible(diaConfig, CFG_LBL_BDMAMODE, !gBdmaApplyOnLaunch);
@@ -589,6 +590,7 @@ reshow_config:
                 snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", tmpPop);
         }
         diaGetInt(diaConfig, CFG_BDMA_APPLY, &gBdmaApplyOnLaunch);
+        diaGetInt(diaConfig, CFG_VCD_HIDE_GAMEID, &gVcdHideGameId); // display-only; next list draw reflects it, no rebuild needed
         {
             // Equip BDMA modules only when SOURCE or MODE actually changed (the equip copies
             // files to the memory card). vcdEquipBdma is free-space-gated + truncation-safe, so a
