@@ -257,11 +257,6 @@ jobs:
             exit 1
           fi
           cp -f "$MAIN_ELF" rolling/RIPTOPL.ELF
-          # Issue #102 diagnostic: opl_stripped.elf is the exact UNPACKED input to ps2-packer
-          # (already built as an intermediate of RIPTOPL.ELF). Shipping it lets a tester A/B the
-          # ps2-packer self-decompression stub against the packed ELF: if the unpacked one boots
-          # on a console where the packed default does not, the packer stage is the culprit.
-          [ -f opl_stripped.elf ] && cp -f opl_stripped.elf rolling/RIPTOPL-latest-unpacked.ELF || echo "WARN: opl_stripped.elf missing for the #102 diagnostic"
           [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
           # IRX provenance manifest for the primary container's SDK prebuilts (see the pinned job).
           sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST.txt 2>/dev/null || true
@@ -341,9 +336,6 @@ jobs:
           echo "VERSIONED_BASE=RIPTOPL-${VER}" >> "$GITHUB_ENV"
           if [ -f rolling/RIPTOPL.ELF ]; then
             mv -f rolling/RIPTOPL.ELF "rolling/RIPTOPL-${VER}.ELF"
-          fi
-          if [ -f rolling/RIPTOPL-latest-unpacked.ELF ]; then
-            mv -f rolling/RIPTOPL-latest-unpacked.ELF "rolling/RIPTOPL-${VER}-latest-unpacked.ELF"
           fi
           if [ -f rolling/RIPTOPL-oldsdk.ELF ]; then
             mv -f rolling/RIPTOPL-oldsdk.ELF "rolling/RIPTOPL-${VER}-oldsdk.ELF"
@@ -533,16 +525,24 @@ jobs:
             printf 'Commit: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA"
             printf 'Built: %s UTC\n' "$(date -u '+%Y-%m-%d %H:%M')"
             printf 'Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-            printf '\n## Get started\n'
-            printf 'Grab **RIPTOPL-*.zip** and extract it. Use **APP_RIPTOPL/RIPTOPL.ELF** (built with ps2dev:latest,\n'
-            printf 'the primary toolchain; its version string ends in "-latest").\n'
-            printf 'If something misbehaves on your console, try the other flavours and REPORT WHICH ones you ran:\n'
-            printf '  * **APP_RIPTOPL-WOPLSDK/** -- built on the exact digest-pinned SDK container wOPL uses, with\n'
-            printf '    the container'"'"'s STOCK MMCE drivers (version ends "-woplsdk"). MMCE acts up on the default\n'
-            printf '    ELF but not this one? That points at the SDK/driver churn, not RiptOPL code.\n'
-            printf '  * **APP_RIPTOPL-OLDSDK/** -- pinned 2025 SDK (version ends "-oldsdk"), the conservative fallback.\n'
-            printf 'A latest-only failure is an SDK regression; an all-three failure is a RiptOPL bug. Those two\n'
-            printf 'bits triple the value of your report.\n'
+            printf '\n## Get started -- which build should I download?\n'
+            printf 'Grab **RIPTOPL-*.zip** and extract it. It ships three ELFs that differ ONLY by the SDK\n'
+            printf 'toolchain they were built with -- the RiptOPL code in each is identical.\n'
+            printf '\n'
+            printf '**Recommended: APP_RIPTOPL-WOPLSDK/RIPTOPL.ELF or APP_RIPTOPL-OLDSDK/RIPTOPL.ELF.** Both are\n'
+            printf 'built on pinned, known-stable SDK snapshots and boot reliably across consoles.\n'
+            printf '  * **APP_RIPTOPL-WOPLSDK/** -- the exact digest-pinned SDK container wOPL uses, with its\n'
+            printf '    STOCK MMCE drivers (version ends "-woplsdk").\n'
+            printf '  * **APP_RIPTOPL-OLDSDK/** -- pinned 2025 SDK (version ends "-oldsdk"), the conservative choice.\n'
+            printf '\n'
+            printf '**APP_RIPTOPL/RIPTOPL.ELF is the bleeding-edge build** (ps2dev:latest, version ends "-latest").\n'
+            printf 'It tracks the newest SDK toolchain, which moves constantly -- so it can intermittently fail to\n'
+            printf 'boot on some consoles. That is expected volatility of a moving SDK, NOT a RiptOPL bug: if it\n'
+            printf 'black-screens at startup, just use a WOPLSDK or OLDSDK build instead. It exists mainly to catch\n'
+            printf 'upstream SDK regressions early.\n'
+            printf '\n'
+            printf 'Reporting which flavour you ran still triples the value of a bug report: a latest-only failure\n'
+            printf 'is an SDK regression; an all-three failure is a RiptOPL bug.\n'
             printf '\n## Bundled Neutrino core\n'
             printf 'Required for the per-game Neutrino launch mode. From the official repo:\n'
             printf '  https://github.com/rickgaiser/neutrino\n'
@@ -586,17 +586,14 @@ jobs:
             if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
               printf -- '- RIPTOPL-DEBUG-*.zip: debug builds (iopcore/ingame/eesio/ppctty/DTL_T10000), both SDKs -- diagnostics\n'
             fi
-            printf -- '- %s.ELF: bare loader, ps2dev:latest toolchain (primary)\n' "$VERSIONED_BASE"
-            if [ -f "rolling/${VERSIONED_BASE}-latest-unpacked.ELF" ]; then
-              printf -- '- %s-latest-unpacked.ELF: UNPACKED primary (no ps2-packer) -- issue #102 boot-regression diagnostic, try if the primary black-screens\n' "$VERSIONED_BASE"
-            fi
+            printf -- '- %s.ELF: bare loader, ps2dev:latest toolchain (bleeding-edge -- may not boot on all consoles; see "Get started")\n' "$VERSIONED_BASE"
             if [ "$HAS_WOPLSDK" = yes ]; then
-              printf -- '- %s-woplsdk.ELF: bare loader, wOPL'"'"'s digest-pinned ghcr.io/ps2homebrew container, stock SDK MMCE drivers\n' "$VERSIONED_BASE"
+              printf -- '- %s-woplsdk.ELF: bare loader, wOPL'"'"'s digest-pinned ghcr.io/ps2homebrew container, stock SDK MMCE drivers (RECOMMENDED -- pinned, boots reliably)\n' "$VERSIONED_BASE"
             else
               printf -- '- (wOPL-sdk diagnostic build FAILED this run)\n'
             fi
             if [ "$HAS_OLDSDK" = yes ]; then
-              printf -- '- %s-oldsdk.ELF: bare loader, ps2max/dev %s pinned toolchain (fallback)\n' "$VERSIONED_BASE" "$SDK_VER"
+              printf -- '- %s-oldsdk.ELF: bare loader, ps2max/dev %s pinned toolchain (RECOMMENDED fallback -- pinned, boots reliably)\n' "$VERSIONED_BASE" "$SDK_VER"
             else
               printf -- '- (pinned %s fallback build FAILED this run -- primary bare loader only)\n' "$SDK_VER"
             fi

@@ -239,6 +239,14 @@ There are two release channels:
 See **[ROLLING_RELEASE.md](ROLLING_RELEASE.md)** for exactly what the rolling release
 contains and how to pull it.
 
+> **Which rolling build?** The rolling zip ships three loader ELFs that differ only by build
+> toolchain — the RiptOPL code in each is identical. Use **`APP_RIPTOPL-WOPLSDK/`** or
+> **`APP_RIPTOPL-OLDSDK/`**: both are built on pinned, known-stable SDK snapshots and boot
+> reliably. The plain **`APP_RIPTOPL/`** build tracks the bleeding-edge `ps2dev:latest` SDK,
+> which moves constantly and can intermittently fail to boot on some consoles — it exists mainly
+> to catch upstream SDK regressions early. See
+> [Which build should I use?](ROLLING_RELEASE.md#which-build-should-i-use).
+
 ## How to use
 
 OPL uses the following directory tree structure across all supported devices —
