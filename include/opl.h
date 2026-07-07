@@ -288,6 +288,7 @@ extern int RemainSecs, DisableCron;
 extern clock_t CronStart;
 
 extern unsigned char gDefaultBgColor[3];
+extern unsigned char gDefaultPlasBlendColor[3];
 extern unsigned char gDefaultTextColor[3];
 extern unsigned char gDefaultSelTextColor[3];
 extern unsigned char gDefaultUITextColor[3];

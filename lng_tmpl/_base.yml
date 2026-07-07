@@ -949,3 +949,5 @@ gui_strings:
   string: Neutrino Filesystem
 - label: HINT_NEUTRINO_BSDFS
   string: Force Neutrino's block-device filesystem (-bsdfs). Auto = per-device default. hdl/bd are expert options; pair them with a matching -dvd= in the launch args if the auto path shape doesn't fit.
+- label: PLASCOLOR
+  string: Plasma Blend Color

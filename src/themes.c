@@ -1922,6 +1922,7 @@ static int thmLoadResource(GSTEXTURE *texture, int texId, const char *themePath,
 static void thmSetColors(theme_t *theme)
 {
     memcpy(theme->bgColor, gDefaultBgColor, 3);
+    memcpy(theme->plasBlendColor, gDefaultPlasBlendColor, 3);
     theme->textColor = GS_SETREG_RGBA(gDefaultTextColor[0], gDefaultTextColor[1], gDefaultTextColor[2], 0x80);
     theme->uiTextColor = GS_SETREG_RGBA(gDefaultUITextColor[0], gDefaultUITextColor[1], gDefaultUITextColor[2], 0x80);
     theme->selTextColor = GS_SETREG_RGBA(gDefaultSelTextColor[0], gDefaultSelTextColor[1], gDefaultSelTextColor[2], 0x80);
@@ -2033,6 +2034,8 @@ static void thmLoad(const char *themePath)
     }
 
     configGetColor(themeConfig, "bg_color", newT->bgColor);
+    // absent key leaves the thmSetColors default (settings picker value; black out of the box)
+    configGetColor(themeConfig, CONFIG_OPL_PLAS_BLEND_COLOR, newT->plasBlendColor);
 
     unsigned char color[3];
     if (configGetColor(themeConfig, "text_color", color))

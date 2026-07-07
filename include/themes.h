@@ -116,6 +116,7 @@ typedef struct theme
     int usedHeight;
 
     unsigned char bgColor[3];
+    unsigned char plasBlendColor[3]; // plasma gradient LOW end (theme key plasma_blend_color); default black = historical look
     u64 textColor;
     u64 uiTextColor;
     u64 selTextColor;

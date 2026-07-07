@@ -79,7 +79,8 @@ Put these at the top of the file (not inside a block).
 
 | Key | Applies to |
 |---|---|
-| `bg_color` | Plasma/background tint |
+| `bg_color` | Plasma/background tint (the gradient's HIGH end) |
+| `plasma_blend_color` | Plasma gradient's LOW end — historically hardcoded black; omit the key (or use `#000000`) for the classic look |
 | `text_color` | Default element text |
 | `ui_text_color` | UI text (menus, buttons, hints) |
 | `sel_text_color` | Selected-item text |

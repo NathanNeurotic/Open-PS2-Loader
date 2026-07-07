@@ -434,6 +434,11 @@ struct UIItem diaUIConfig[] = {
     {UI_COLOUR, UICFG_BGCOL, 1, 1, -1, -10, 17, {.colourvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_PLASCOLOR}}},
+    {UI_SPACER},
+    {UI_COLOUR, UICFG_PLASCOL, 1, 1, -1, -10, 17, {.colourvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_BUTTON, UICFG_RESETCOL, 1, 1, -1, 0, 0, {.label = {NULL, _STR_RESETCOLOR}}},
     {UI_SPLITTER},
 

@@ -214,6 +214,7 @@ int gAutoStartLastPlayed;
 int RemainSecs, DisableCron;
 clock_t CronStart;
 unsigned char gDefaultBgColor[3];
+unsigned char gDefaultPlasBlendColor[3]; // plasma gradient low end (parity-audit #15); black = historical look
 unsigned char gDefaultTextColor[3];
 unsigned char gDefaultSelTextColor[3];
 unsigned char gDefaultUITextColor[3];
@@ -1341,6 +1342,7 @@ static void _loadConfig()
 
             configGetInt(configOPL, CONFIG_OPL_SCROLLING, &gScrollSpeed);
             configGetColor(configOPL, CONFIG_OPL_BGCOLOR, gDefaultBgColor);
+            configGetColor(configOPL, CONFIG_OPL_PLAS_BLEND_COLOR, gDefaultPlasBlendColor);
             configGetColor(configOPL, CONFIG_OPL_TEXTCOLOR, gDefaultTextColor);
             configGetColor(configOPL, CONFIG_OPL_UI_TEXTCOLOR, gDefaultUITextColor);
             configGetColor(configOPL, CONFIG_OPL_SEL_TEXTCOLOR, gDefaultSelTextColor);
@@ -1705,6 +1707,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_THEME, thmGetValue());
         configSetStr(configOPL, CONFIG_OPL_LANGUAGE, lngGetValue());
         configSetColor(configOPL, CONFIG_OPL_BGCOLOR, gDefaultBgColor);
+        configSetColor(configOPL, CONFIG_OPL_PLAS_BLEND_COLOR, gDefaultPlasBlendColor);
         configSetColor(configOPL, CONFIG_OPL_TEXTCOLOR, gDefaultTextColor);
         configSetColor(configOPL, CONFIG_OPL_UI_TEXTCOLOR, gDefaultUITextColor);
         configSetColor(configOPL, CONFIG_OPL_SEL_TEXTCOLOR, gDefaultSelTextColor);
@@ -2385,6 +2388,10 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
 
 void setDefaultColors(void)
 {
+    // plasma blend low end: BLACK preserves the historical plasma exactly (see guiDrawBGPlasma)
+    gDefaultPlasBlendColor[0] = 0x00;
+    gDefaultPlasBlendColor[1] = 0x00;
+    gDefaultPlasBlendColor[2] = 0x00;
     gDefaultBgColor[0] = 0x28;
     gDefaultBgColor[1] = 0xC5;
     gDefaultBgColor[2] = 0xF9;
