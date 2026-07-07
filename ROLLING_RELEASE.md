@@ -17,6 +17,7 @@ ELFs and supporting files are published alongside it:
 | `RIPTOPL-<version>-WOPLSDK.ELF` | Bare loader, wOPL's digest-pinned `ghcr.io/ps2homebrew` container (**recommended #1**; in-app version ends `-WOPLSDK`). |
 | `RIPTOPL-<version>-PS2MAXSDK.ELF` | Bare loader, `ps2max/dev` (pinned) toolchain (**recommended #2**; in-app version ends `-PS2MAXSDK`). |
 | `RIPTOPL-<version>-PS2DEVLATESTSDK.ELF` | Bare loader, `ps2dev/ps2dev:latest` toolchain (bleeding-edge; in-app version ends `-PS2DEVLATESTSDK`; may not boot on all consoles). |
+| `RIPTOPL-<version>-<SDK>-ds5.ELF` | Same as the bare loader for each SDK flavour, **with DualSense (DS5 USB) pad support** compiled in (`DUALSENSE=1`). One per flavour (`-WOPLSDK-ds5` / `-PS2MAXSDK-ds5` / `-PS2DEVLATESTSDK-ds5`); same reliability order applies. The default builds keep DualSense OFF. Best-effort — a flavour's DS5 build may be absent if it failed that run. |
 | `RIPTOPL-<version>-src.zip` | Source snapshot to rebuild this exact commit. |
 | `SHA256SUMS.txt` | SHA256 of every published binary + the source snapshot. |
 | `IRX-MANIFEST*.txt` | SHA256 of every SDK-prebuilt IOP module each toolchain consumed (provenance for silent SDK-side driver swaps). |
