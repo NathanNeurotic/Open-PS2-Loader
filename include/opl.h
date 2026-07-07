@@ -243,6 +243,7 @@ enum { NEUTRINO_DEV_AUTO = 0,     // game device, then mc0/mc1 (legacy behaviour
        NEUTRINO_DEV_EXFAT_HDD,    // BDM "ata" internal exFAT HDD -> the mounted massN:
        NEUTRINO_DEV_APA_HDD };    // APA HDD: the mounted OPL data partition (pfs0:)
 extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
+extern int gNeutrinoElfArg;       // opt-in (settings key only, no UI): auto-emit -elf=cdrom0:\<startup>;1 on Neutrino launches
 extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
 extern char gBootDir[256];        // boot directory (cwd) OPL launched from, e.g. "mass0:/APPS"; "" if undeterminable
 extern int gDeinitTerminal;       // 1 while deinit() runs for exit/poweroff, 0 for a game/app LAUNCH teardown.

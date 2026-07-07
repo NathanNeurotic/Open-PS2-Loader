@@ -804,7 +804,7 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
 
     // gPS2Logo passes the user's preference straight through: Neutrino performs its own logo
     // read/validation for -logo, so the native path's CheckPS2Logo disc pass is not needed here.
-    sysLaunchNeutrino(bdmCurrentDriver, partname, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, &neutrinoVmc);
+    sysLaunchNeutrino(bdmCurrentDriver, partname, game->startup, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, &neutrinoVmc);
     return 1;
 
 fail:

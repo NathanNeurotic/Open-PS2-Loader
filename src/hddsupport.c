@@ -733,7 +733,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
 
     LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
     // gPS2Logo passes the preference straight through (Neutrino does its own logo work).
-    sysLaunchNeutrino("apa", apaPart, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
+    sysLaunchNeutrino("apa", apaPart, game->startup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
     return 1;
 }
 
