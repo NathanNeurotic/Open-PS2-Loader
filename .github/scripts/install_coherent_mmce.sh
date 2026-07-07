@@ -15,7 +15,7 @@
 # v2.1.1 pin and MMCE_PIN (`git diff v2.1.1..db3e93f0 -- mmcedrv` is empty). Our repo-Makefile
 # rebuild on the new toolchain produced a DIFFERENT binary (10009 vs 11337 bytes) that FAILED
 # in-game on hardware (issue #56/#68 reports, 2026-07-05: OPL-core MMCE games broken on the
-# "latest" flavour but fine on the "woplsdk" flavour, whose only relevant delta is stock-vs-rebuilt
+# "PS2DEVLATESTSDK" flavour but fine on the "WOPLSDK" flavour, whose only relevant delta is stock-vs-rebuilt
 # mmcedrv). The stock ports-built binary is field-proven in-game (wOPL ships the byte-identical
 # file). Same source, proven binary: keep stock.
 #

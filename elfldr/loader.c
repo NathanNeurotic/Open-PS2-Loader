@@ -22,7 +22,7 @@
 #     neutrino.elf probed fine from OPL (fileXio) but SifLoadElf() returned
 #     -ENOENT here. LOADFILE fails CLEANLY on those, and fileXio takes over.
 #   * The SDK's EE fileXio client is a moving target: the 2026-05 snapshot
-#     (the -woplsdk flavour's container) sits between the 2026-06-03 "SIF
+#     (the -WOPLSDK flavour's container) sits between the 2026-06-03 "SIF
 #     binding handling" and 2026-06-17 "cleaner (re-)initialization" fixes,
 #     and its client misloads from a fresh child program -- VCD/POPSTARTER
 #     launches on that flavour bounced to OSDSYS when fileXio was primary.
