@@ -570,6 +570,18 @@ struct UIItem diaVMCConfig[] = {
     {UI_SPACER},
     {UI_BUTTON, COMPAT_VMC2_ACTION, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
     {UI_BREAK},
+    {UI_SPLITTER},
+
+    // Per-slot disable (parity-audit #14): launch without a slot's VMC while keeping its card
+    // configured. Consulted by the Neutrino -mc builder only; OPL-core mcemu ignores it.
+    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_VMC_SLOT1_DISABLE}}},
+    {UI_SPACER},
+    {UI_BOOL, COMPAT_VMC1_DISABLE, 1, 1, _STR_HINT_VMC_SLOT_DISABLE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_VMC_SLOT2_DISABLE}}},
+    {UI_SPACER},
+    {UI_BOOL, COMPAT_VMC2_DISABLE, 1, 1, _STR_HINT_VMC_SLOT_DISABLE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
 
     // buttons
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},

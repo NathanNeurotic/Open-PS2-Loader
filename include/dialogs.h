@@ -182,6 +182,8 @@ enum UI_ITEMS {
     COMPAT_VMC2_ACTION_ID,
     COMPAT_VMC1_DEFINE_ID,
     COMPAT_VMC2_DEFINE_ID,
+    COMPAT_VMC1_DISABLE, // UI_BOOL rows (read via diaGetInt, not dialog results -- no _ID/NOEXIT pair needed)
+    COMPAT_VMC2_DISABLE,
 
     VMC_NAME,
     VMC_SIZE,

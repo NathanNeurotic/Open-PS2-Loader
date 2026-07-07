@@ -73,6 +73,8 @@ static char altStartup[32];
 static char neutrinoArgs[256]; // per-game Neutrino extra flags (edited via the structured args sub-screen)
 static char vmc1[32];
 static char vmc2[32];
+static int vmc1Disabled; // per-slot VMC disable (parity-audit #14): keep the card name, skip the Neutrino -mc arg
+static int vmc2Disabled;
 static char hexDiscID[15];
 static char configSource[128];
 
@@ -297,6 +299,8 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
     do {
         diaSetLabel(diaVMCConfig, COMPAT_VMC1_DEFINE, vmc1);
         diaSetLabel(diaVMCConfig, COMPAT_VMC2_DEFINE, vmc2);
+        diaSetInt(diaVMCConfig, COMPAT_VMC1_DISABLE, vmc1Disabled);
+        diaSetInt(diaVMCConfig, COMPAT_VMC2_DISABLE, vmc2Disabled);
 
         if (strlen(vmc1))
             diaSetLabel(diaVMCConfig, COMPAT_VMC1_ACTION, _l(_STR_RESET));
@@ -308,6 +312,9 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
             diaSetLabel(diaVMCConfig, COMPAT_VMC2_ACTION, _l(_STR_USE_GENERIC));
 
         result = diaExecuteDialog(diaVMCConfig, result, 1, NULL);
+        // UI_BOOL state persists across the button-driven do/while re-entries; read it back each pass
+        diaGetInt(diaVMCConfig, COMPAT_VMC1_DISABLE, &vmc1Disabled);
+        diaGetInt(diaVMCConfig, COMPAT_VMC2_DISABLE, &vmc2Disabled);
         if (result == COMPAT_VMC1_DEFINE) {
             if (menuCheckParentalLock() == 0) {
                 if (guiGameShowVMCConfig(id, support, vmc1, 0, 0))
@@ -1220,6 +1227,8 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     /// VMC ///
     configSetVMC(configSet, vmc1, 0);
     configSetVMC(configSet, vmc2, 1);
+    configSetVMCDisable(configSet, 0, vmc1Disabled); // setter removes the key when 0
+    configSetVMCDisable(configSet, 1, vmc2Disabled);
 
     result = guiGameSaveOSDLanguageGameConfig(configSet, result);
     guiGameSaveOSDLanguageGlobalConfig(configGame);
@@ -1299,6 +1308,8 @@ void guiGameRemoveSettings(config_set_t *configSet)
         // VMC
         configRemoveVMC(configSet, 0);
         configRemoveVMC(configSet, 1);
+        configRemoveVMCDisable(configSet, 0);
+        configRemoveVMCDisable(configSet, 1);
 
         menuSaveConfig();
     }
@@ -1661,4 +1672,9 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
 
     vmc2[0] = '\0';
     configGetVMC(configSet, vmc2, sizeof(vmc2), 1);
+
+    vmc1Disabled = 0;
+    configGetVMCDisable(configSet, 0, &vmc1Disabled);
+    vmc2Disabled = 0;
+    configGetVMCDisable(configSet, 1, &vmc2Disabled);
 }

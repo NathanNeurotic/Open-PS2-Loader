@@ -43,6 +43,7 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_STARTUP          "#Startup"
 #define CONFIG_ITEM_ALTSTARTUP       "$AltStartup"
 #define CONFIG_ITEM_VMC              "$VMC"
+#define CONFIG_ITEM_VMC_DISABLE      "$VMCDisable" // per-slot ("$VMCDisable_0"/"_1"): launch WITHOUT this slot's VMC while keeping its card name configured (Neutrino -mc path only)
 #define CONFIG_ITEM_COMPAT           "$Compatibility"
 #define CONFIG_ITEM_DMA              "$DMA"
 #define CONFIG_ITEM_CORE_LOADER      "$CoreLoader"
@@ -227,6 +228,9 @@ void configClear(config_set_t *configSet);
 void configGetVMC(config_set_t *configSet, char *vmc, int length, int slot);
 void configSetVMC(config_set_t *configSet, const char *vmc, int slot);
 void configRemoveVMC(config_set_t *configSet, int slot);
+void configGetVMCDisable(config_set_t *configSet, int slot, int *disabled);
+void configSetVMCDisable(config_set_t *configSet, int slot, int disabled);
+void configRemoveVMCDisable(config_set_t *configSet, int slot);
 
 char *configGetDir(void);
 void configPrepareNotifications(char *prefix);

@@ -939,3 +939,9 @@ gui_strings:
   string: Debug Colors (-dbc)
 - label: NARGS_LOGO
   string: PS2 Logo (-logo)
+- label: VMC_SLOT1_DISABLE
+  string: Disable VMC 1 (keep card)
+- label: VMC_SLOT2_DISABLE
+  string: Disable VMC 2 (keep card)
+- label: HINT_VMC_SLOT_DISABLE
+  string: Launch without this slot's VMC while keeping its card configured. Neutrino launches only; the game then uses the real card in that slot.
