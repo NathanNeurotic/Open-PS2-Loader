@@ -70,7 +70,7 @@ OPL_VERSION = v$(VERSION).$(SUBVERSION).$(PATCHLEVEL)$(if $(EXTRAVERSION),-$(EXT
 
 ifneq ($(GIT_TAG),)
 ifneq ($(GIT_TAG),latest)
-	# git revision is tagged. Keep the LOCALVERSION toolchain brand (-latest/-oldsdk) here too:
+	# git revision is tagged. Keep the LOCALVERSION toolchain brand (-WOPLSDK/-PS2MAXSDK/-PS2DEVLATESTSDK) here too:
 	# tagged releases ship BOTH toolchains' ELFs, and without the brand their version strings
 	# would be byte-identical -- a hardware report then can't say which binary it ran.
 	OPL_VERSION = $(GIT_TAG)$(if $(DIRTY),$(DIRTY))$(if $(LOCALVERSION),-$(LOCALVERSION))

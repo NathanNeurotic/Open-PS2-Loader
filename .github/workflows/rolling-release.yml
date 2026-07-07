@@ -4,12 +4,14 @@ name: Rolling Release
 # so it can be pulled directly from GitHub at a stable URL as development progresses.
 #
 # Builds with THREE toolchains so a regression in any is visible from the rolling channel
-# (and a hardware failure can be triaged by WHICH flavours reproduce it):
-#   * ps2dev/ps2dev:latest       -> RIPTOPL.ELF           (PRIMARY / target toolchain)
-#   * ghcr.io ps2homebrew@digest -> RIPTOPL-woplsdk.ELF   (wOPL's pinned SDK snapshot, STOCK
-#                                                          MMCE drivers -- the container wOPL
-#                                                          builds with; diagnostic/compat)
-#   * ps2max/dev (pinned)        -> RIPTOPL-oldsdk.ELF    (fallback / compatibility toolchain)
+# (and a hardware failure can be triaged by WHICH flavours reproduce it). Each ships as its own
+# labeled APP_RIPTOPL-<SDK>/ folder + bare ELF; recommended download order is by reliability:
+#   * ghcr.io ps2homebrew@digest -> -WOPLSDK          (wOPL's digest-pinned SDK snapshot, STOCK
+#                                                      MMCE drivers; pinned = RECOMMENDED #1)
+#   * ps2max/dev (pinned)        -> -PS2MAXSDK        (pinned 2025 SDK; RECOMMENDED #2)
+#   * ps2dev/ps2dev:latest       -> -PS2DEVLATESTSDK  (bleeding-edge MOVING tag; ps2sdk drifts
+#                                                      daily and can produce a non-booting binary,
+#                                                      see issue #102 -- least recommended)
 #
 # A source snapshot (RIPTOPL-<version>-src.zip) of the exact built commit is also
 # published, so every rolling build is self-preserving: testers can restore and
@@ -22,12 +24,14 @@ name: Rolling Release
 #   * Builds run inside their toolchain containers; publishing runs on the host
 #     runner, which ships the gh CLI.
 #
-# GATING (deliberate, see docs/RECOVERY-2026-07-03.md section 5): ps2dev:latest is the
-# REQUIRED primary -- if it breaks, the publish FAILS loudly instead of silently swapping
-# the pinned build into the default APP_RIPTOPL slot (a silent role swap made rolling zips
-# change toolchain between runs with no user-visible signal, poisoning hardware bug reports).
-# The pinned build is the best-effort fallback shipped alongside as APP_RIPTOPL-OLDSDK.
-# Both ELFs self-identify: the version string carries "-latest" / "-oldsdk" (LOCALVERSION).
+# GATING: the ps2dev:latest (PS2DEVLATESTSDK) build must COMPILE -- if it fails to build the
+# publish FAILS loudly. All three flavours ship as their own labeled folder
+# (APP_RIPTOPL-WOPLSDK / -PS2MAXSDK / -PS2DEVLATESTSDK) -- there is NO unlabeled default, so a
+# toolchain can never be swapped in silently. Each ELF self-identifies: the version string
+# carries "-WOPLSDK" / "-PS2MAXSDK" / "-PS2DEVLATESTSDK" (LOCALVERSION). Note the compile gate
+# catches BUILD breakage only: ps2dev:latest tracks a MOVING tag whose ps2sdk drifts daily and
+# can yield a green-but-non-booting binary (issue #102), which is why the two pinned flavours
+# are the recommended downloads -- see the release notes "Get started".
 
 on:
   push:
@@ -62,11 +66,11 @@ jobs:
           git fetch --prune --unshallow || true
 
       - name: Build (make clean release)
-        # LOCALVERSION brands the in-ELF version string ("-oldsdk") so hardware reports
+        # LOCALVERSION brands the in-ELF version string ("-PS2MAXSDK") so hardware reports
         # self-identify which toolchain's binary produced them (Makefile appends it).
-        run: make --trace clean && make --trace LOCALVERSION=oldsdk release
+        run: make --trace clean && make --trace LOCALVERSION=PS2MAXSDK release
 
-      - name: Stage rolling assets (pinned = OLDSDK)
+      - name: Stage rolling assets (pinned = PS2MAXSDK)
         run: |
           set -eu
           mkdir -p rolling
@@ -78,17 +82,17 @@ jobs:
             echo "No RIPTOPL ELF produced by the pinned build" >&2
             exit 1
           fi
-          cp -f "$MAIN_ELF" rolling/RIPTOPL-oldsdk.ELF
+          cp -f "$MAIN_ELF" rolling/RIPTOPL-PS2MAXSDK.ELF
           # IRX provenance manifest: hash every prebuilt module consumed from this container's SDK.
           # A silent SDK-side driver swap (the mmceman class) then shows up as a manifest diff
           # between runs instead of as a hardware mystery.
-          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-OLDSDK.txt 2>/dev/null || true
+          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-PS2MAXSDK.txt 2>/dev/null || true
           echo "Staged pinned rolling assets:"
           ls -la rolling
 
-      - name: Build variant + debug extras (pinned = OLDSDK)
+      - name: Build variant + debug extras (pinned = PS2MAXSDK)
         # Runs AFTER staging so the per-build `make clean` can't wipe the saved main ELF.
-        run: sh ./.github/scripts/build_rolling_extras.sh "-OLDSDK" "oldsdk"
+        run: sh ./.github/scripts/build_rolling_extras.sh "-PS2MAXSDK" "PS2MAXSDK"
 
       - name: Upload pinned rolling assets
         uses: actions/upload-artifact@v6
@@ -103,7 +107,7 @@ jobs:
     # stabilised in sdk" -- KrahJohlito, wOPL, 2026-07-04). Deliberately does NOT run
     # install_coherent_mmce.sh: this flavour ships the container's STOCK
     # sio2man/mmceman/mmcedrv/mmceigr, i.e. 100% wOPL provenance. With the default (latest +
-    # coherent-mmce) and -OLDSDK flavours, hardware reports become a three-way discriminator:
+    # coherent-mmce) and -PS2MAXSDK flavours, hardware reports become a three-way discriminator:
     # which flavours reproduce a failure isolates SDK-vs-driver-vs-RiptOPL-code causes.
     container: ghcr.io/ps2homebrew/ps2homebrew@sha256:207523ad98f17fd406afa7dd0c6cfe10730627545cbe45247f0bd73c8a66c376
     # Diagnostic/compat flavour: best-effort, must not block the rolling publish.
@@ -145,9 +149,9 @@ jobs:
           git fetch --prune --unshallow || true
 
       - name: Build (make clean release)
-        # LOCALVERSION brands the in-ELF version string ("-woplsdk") so hardware reports
+        # LOCALVERSION brands the in-ELF version string ("-WOPLSDK") so hardware reports
         # self-identify which toolchain's binary produced them (Makefile appends it).
-        run: make --trace clean && make --trace LOCALVERSION=woplsdk release
+        run: make --trace clean && make --trace LOCALVERSION=WOPLSDK release
 
       - name: Stage rolling assets (wOPL-sdk)
         run: |
@@ -159,7 +163,7 @@ jobs:
             echo "No RIPTOPL ELF produced by the wOPL-sdk build" >&2
             exit 1
           fi
-          cp -f "$MAIN_ELF" rolling/RIPTOPL-woplsdk.ELF
+          cp -f "$MAIN_ELF" rolling/RIPTOPL-WOPLSDK.ELF
           # IRX provenance manifest: this one is the ground truth for "what wOPL actually ships".
           sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-WOPLSDK.txt 2>/dev/null || true
           echo "Staged wOPL-sdk rolling assets:"
@@ -167,7 +171,7 @@ jobs:
 
       - name: Build variant + debug extras (wOPL-sdk)
         # Runs AFTER staging so the per-build `make clean` can't wipe the saved main ELF.
-        run: sh ./.github/scripts/build_rolling_extras.sh "-WOPLSDK" "woplsdk"
+        run: sh ./.github/scripts/build_rolling_extras.sh "-WOPLSDK" "WOPLSDK"
 
       - name: Upload wOPL-sdk rolling assets
         uses: actions/upload-artifact@v6
@@ -179,8 +183,8 @@ jobs:
   build-rolling-ps2dev-latest:
     runs-on: ubuntu-latest
     container: ps2dev/ps2dev:latest
-    # PRIMARY (target) toolchain: REQUIRED. If this breaks, the publish fails loudly --
-    # never a silent role swap of the pinned build into the default APP_RIPTOPL slot.
+    # PS2DEVLATESTSDK (target) toolchain: REQUIRED to COMPILE. If this fails to build, the publish
+    # fails loudly. It ships as its own labeled APP_RIPTOPL-PS2DEVLATESTSDK/ folder (no default slot).
     outputs:
       version: ${{ steps.ver.outputs.version }}
     steps:
@@ -239,9 +243,9 @@ jobs:
         run: sh ./.github/scripts/install_coherent_mmce.sh
 
       - name: Build (make clean release)
-        # LOCALVERSION brands the in-ELF version string ("-latest") so hardware reports
+        # LOCALVERSION brands the in-ELF version string ("-PS2DEVLATESTSDK") so hardware reports
         # self-identify which toolchain's binary produced them (Makefile appends it).
-        run: make --trace clean && make --trace LOCALVERSION=latest release
+        run: make --trace clean && make --trace LOCALVERSION=PS2DEVLATESTSDK release
 
       - name: Detailed changelog
         run: sh ./make_changelog.sh
@@ -257,14 +261,9 @@ jobs:
             exit 1
           fi
           cp -f "$MAIN_ELF" rolling/RIPTOPL.ELF
-          # Issue #102 diagnostic: opl_stripped.elf is the exact UNPACKED input to ps2-packer
-          # (already built as an intermediate of RIPTOPL.ELF). Shipping it lets a tester A/B the
-          # ps2-packer self-decompression stub against the packed ELF: if the unpacked one boots
-          # on a console where the packed default does not, the packer stage is the culprit.
-          [ -f opl_stripped.elf ] && cp -f opl_stripped.elf rolling/RIPTOPL-latest-unpacked.ELF || echo "WARN: opl_stripped.elf missing for the #102 diagnostic"
           [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
           # IRX provenance manifest for the primary container's SDK prebuilts (see the pinned job).
-          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST.txt 2>/dev/null || true
+          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-PS2DEVLATESTSDK.txt 2>/dev/null || true
           # Standalone language pack (lang_*.lng + their non-Latin fonts, which are NOT embedded in the
           # ELF) -- build it off the just-built lng/ and stage it so 'rolling' carries it too. Soft-fail
           # so a LANGS hiccup can't break rolling.
@@ -278,7 +277,7 @@ jobs:
 
       - name: Build variant + debug extras (ps2dev:latest = standard)
         # Runs after staging the main ELF so the per-build `make clean` can't wipe it.
-        run: sh ./.github/scripts/build_rolling_extras.sh "" "latest"
+        run: sh ./.github/scripts/build_rolling_extras.sh "-PS2DEVLATESTSDK" "PS2DEVLATESTSDK"
 
       - name: Upload ps2dev-latest rolling assets
         uses: actions/upload-artifact@v6
@@ -295,8 +294,8 @@ jobs:
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       OPL_VERSION: ${{ needs.build-rolling-ps2dev-latest.outputs.version }}
-      # Pinned ps2sdk/toolchain tag of the FALLBACK (-OLDSDK) build, referenced in the release
-      # notes. Bump alongside the build-rolling-pinned container (ps2max/dev:...).
+      # Pinned ps2sdk/toolchain tag of the FALLBACK (-PS2MAXSDK) build, referenced in the release
+      # notes (the -PS2MAXSDK flavour). Bump alongside the build-rolling-pinned container (ps2max/dev:...).
       SDK_VER: "v20250725-2"
     steps:
       - name: Checkout
@@ -332,24 +331,20 @@ jobs:
           set -eu
           # Apply ONE authoritative version (from the primary ps2dev:latest build, which now
           # resolves full git history) to BOTH toolchains. The source commit is identical, so
-          # the only difference is the -oldsdk suffix. Each build becomes a single file whose
-          # name carries both the product name and the version.
+          # the only difference is the toolchain-brand suffix (-WOPLSDK / -PS2MAXSDK / -PS2DEVLATESTSDK).
           VER="${OPL_VERSION:-}"
           if [ -z "$VER" ]; then
             VER="rolling-${GITHUB_SHA}"
           fi
           echo "VERSIONED_BASE=RIPTOPL-${VER}" >> "$GITHUB_ENV"
           if [ -f rolling/RIPTOPL.ELF ]; then
-            mv -f rolling/RIPTOPL.ELF "rolling/RIPTOPL-${VER}.ELF"
+            mv -f rolling/RIPTOPL.ELF "rolling/RIPTOPL-${VER}-PS2DEVLATESTSDK.ELF"
           fi
-          if [ -f rolling/RIPTOPL-latest-unpacked.ELF ]; then
-            mv -f rolling/RIPTOPL-latest-unpacked.ELF "rolling/RIPTOPL-${VER}-latest-unpacked.ELF"
+          if [ -f rolling/RIPTOPL-PS2MAXSDK.ELF ]; then
+            mv -f rolling/RIPTOPL-PS2MAXSDK.ELF "rolling/RIPTOPL-${VER}-PS2MAXSDK.ELF"
           fi
-          if [ -f rolling/RIPTOPL-oldsdk.ELF ]; then
-            mv -f rolling/RIPTOPL-oldsdk.ELF "rolling/RIPTOPL-${VER}-oldsdk.ELF"
-          fi
-          if [ -f rolling/RIPTOPL-woplsdk.ELF ]; then
-            mv -f rolling/RIPTOPL-woplsdk.ELF "rolling/RIPTOPL-${VER}-woplsdk.ELF"
+          if [ -f rolling/RIPTOPL-WOPLSDK.ELF ]; then
+            mv -f rolling/RIPTOPL-WOPLSDK.ELF "rolling/RIPTOPL-${VER}-WOPLSDK.ELF"
           fi
           echo "Renamed assets:"
           ls -la rolling
@@ -392,37 +387,35 @@ jobs:
         run: |
           set -eu
           # Full installable package the user copies to a memory card / device:
-          #   APP_RIPTOPL/RIPTOPL.ELF          -- the DEFAULT loader = the ps2dev:latest (cutting-edge)
-          #                                       build (falls back to the pinned build if latest failed).
-          #   APP_RIPTOPL-WOPLSDK/RIPTOPL.ELF  -- built on wOPL's digest-pinned SDK container with the
-          #                                       container's STOCK MMCE drivers (no coherent-mmce
-          #                                       override) -- the toolchain wOPL itself builds with.
-          #   APP_RIPTOPL-OLDSDK/RIPTOPL.ELF   -- the pinned/stable (older-SDK) build, for compatibility.
+          #   APP_RIPTOPL-WOPLSDK/RIPTOPL.ELF         -- wOPL's digest-pinned SDK container, STOCK MMCE
+          #                                              drivers (no coherent-mmce override); RECOMMENDED #1.
+          #   APP_RIPTOPL-PS2MAXSDK/RIPTOPL.ELF       -- pinned/stable 2025 ps2max SDK; RECOMMENDED #2.
+          #   APP_RIPTOPL-PS2DEVLATESTSDK/RIPTOPL.ELF -- ps2dev:latest (bleeding-edge MOVING tag; may not
+          #                                              boot, issue #102). No unlabeled default folder.
           #   POPSTARTER/                     -- SMB network stack (popsmb/) + bdma_config.txt=fat32.
           #   POPS/                           -- POPSTARTER.ELF + BDMA variants + patch (from POPSLoader).
           #   neutrino/                       -- the official latest Neutrino core (rickgaiser/neutrino), extracted for drag-and-drop.
           #   PC-SMB-Server/                  -- HOST-side SMBv1 server (run on the PC), NOT a memory-card folder.
           PKG=riptopl_pkg
           rm -rf "$PKG"
-          mkdir -p "$PKG/APP_RIPTOPL" "$PKG/POPSTARTER" "$PKG/POPS"
-          # Both SDK ELFs: ps2dev:latest is the REQUIRED default; pinned ("old SDK") is the
-          # optional fallback in its own folder. No silent role swap: if the primary ELF is
-          # missing here the publish FAILS (its build job failing already fails the workflow --
-          # this is the belt-and-braces check).
-          LATEST_ELF="rolling/${VERSIONED_BASE}.ELF"
-          PINNED_ELF="rolling/${VERSIONED_BASE}-oldsdk.ELF"
+          mkdir -p "$PKG/APP_RIPTOPL-PS2DEVLATESTSDK" "$PKG/POPSTARTER" "$PKG/POPS"
+          # PS2DEVLATESTSDK is the required-to-build flavour (its build job failing already fails
+          # the workflow); the two pinned flavours are best-effort, each in its own labeled folder.
+          # This belt-and-braces check just asserts the PS2DEVLATESTSDK ELF landed before packaging.
+          LATEST_ELF="rolling/${VERSIONED_BASE}-PS2DEVLATESTSDK.ELF"
+          PINNED_ELF="rolling/${VERSIONED_BASE}-PS2MAXSDK.ELF"
           if [ ! -f "$LATEST_ELF" ]; then
-            echo "PRIMARY (ps2dev:latest) ELF missing -- refusing to package a silently-swapped default" >&2
+            echo "PS2DEVLATESTSDK (ps2dev:latest) ELF missing -- its build job failing already fails the workflow" >&2
             exit 1
           fi
-          cp -f "$LATEST_ELF" "$PKG/APP_RIPTOPL/RIPTOPL.ELF"
+          cp -f "$LATEST_ELF" "$PKG/APP_RIPTOPL-PS2DEVLATESTSDK/RIPTOPL.ELF"
           if [ -f "$PINNED_ELF" ]; then
-            mkdir -p "$PKG/APP_RIPTOPL-OLDSDK"
-            cp -f "$PINNED_ELF" "$PKG/APP_RIPTOPL-OLDSDK/RIPTOPL.ELF"
+            mkdir -p "$PKG/APP_RIPTOPL-PS2MAXSDK"
+            cp -f "$PINNED_ELF" "$PKG/APP_RIPTOPL-PS2MAXSDK/RIPTOPL.ELF"
           else
-            echo "WARN: pinned fallback build missing this run; package ships without APP_RIPTOPL-OLDSDK" >&2
+            echo "WARN: pinned fallback build missing this run; package ships without APP_RIPTOPL-PS2MAXSDK" >&2
           fi
-          WOPLSDK_ELF="rolling/${VERSIONED_BASE}-woplsdk.ELF"
+          WOPLSDK_ELF="rolling/${VERSIONED_BASE}-WOPLSDK.ELF"
           if [ -f "$WOPLSDK_ELF" ]; then
             mkdir -p "$PKG/APP_RIPTOPL-WOPLSDK"
             cp -f "$WOPLSDK_ELF" "$PKG/APP_RIPTOPL-WOPLSDK/RIPTOPL.ELF"
@@ -480,16 +473,15 @@ jobs:
           REL="${OPL_VERSION:-rolling}"
           # <SHA256>: first 16 hex of the RIPTOPL.ELF SHA256 (integrity + uniqueness; full hash is
           # in SHA256SUMS-style listing inside the zip is overkill, the short tag suffices).
-          # The old SDK_VER prefix is gone from the name: it labeled the PINNED toolchain, which is
-          # now only the fallback -- the default ELF is the unpinned ps2dev:latest build.
-          SHA="$(sha256sum "$PKG/APP_RIPTOPL/RIPTOPL.ELF" | cut -c1-16)"
+          # SHA is taken from the always-present PS2DEVLATESTSDK ELF purely for a stable unique tag.
+          SHA="$(sha256sum "$PKG/APP_RIPTOPL-PS2DEVLATESTSDK/RIPTOPL.ELF" | cut -c1-16)"
           ZIP="RIPTOPL-${REL}-${SHA}.zip"
           (
             cd "$PKG"
-            zip -r -X "../rolling/${ZIP}" APP_RIPTOPL POPSTARTER POPS >/dev/null
+            zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2DEVLATESTSDK POPSTARTER POPS >/dev/null
             if [ -d PC-SMB-Server ]; then zip -r -X "../rolling/${ZIP}" PC-SMB-Server >/dev/null; fi
             if [ -d APP_RIPTOPL-WOPLSDK ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-WOPLSDK >/dev/null; fi
-            if [ -d APP_RIPTOPL-OLDSDK ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-OLDSDK >/dev/null; fi
+            if [ -d APP_RIPTOPL-PS2MAXSDK ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2MAXSDK >/dev/null; fi
             # the extracted neutrino/ folder (drag-and-drop; replaces the old zip-in-zip neutrino_*.7z)
             if [ -d neutrino ]; then zip -r -X "../rolling/${ZIP}" neutrino >/dev/null; fi
           )
@@ -500,7 +492,7 @@ jobs:
         run: |
           set -eu
           # The EXTRA_FEATURES x PADEMU variants and the debug builds (each in BOTH SDK flavours:
-          # standard = ps2dev:latest, plus -OLDSDK = pinned) -> two separate release zips. Remove the
+          # standard = -PS2DEVLATESTSDK, plus -WOPLSDK and -PS2MAXSDK) -> two separate release zips. Remove the
           # loose dirs afterward so the final 'gh release upload rolling/*' stays file-only.
           REL="${OPL_VERSION:-rolling}"
           for kind in variants debug; do
@@ -519,10 +511,10 @@ jobs:
       - name: Build release notes
         run: |
           set -eu
-          HAS_OLDSDK=no
-          [ -f "rolling/${VERSIONED_BASE}-oldsdk.ELF" ] && HAS_OLDSDK=yes
+          HAS_PS2MAXSDK=no
+          [ -f "rolling/${VERSIONED_BASE}-PS2MAXSDK.ELF" ] && HAS_PS2MAXSDK=yes
           HAS_WOPLSDK=no
-          [ -f "rolling/${VERSIONED_BASE}-woplsdk.ELF" ] && HAS_WOPLSDK=yes
+          [ -f "rolling/${VERSIONED_BASE}-WOPLSDK.ELF" ] && HAS_WOPLSDK=yes
           {
             if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
               printf 'RiptOPL %s -- tagged release.\n\n' "$OPL_VERSION"
@@ -533,16 +525,24 @@ jobs:
             printf 'Commit: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA"
             printf 'Built: %s UTC\n' "$(date -u '+%Y-%m-%d %H:%M')"
             printf 'Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-            printf '\n## Get started\n'
-            printf 'Grab **RIPTOPL-*.zip** and extract it. Use **APP_RIPTOPL/RIPTOPL.ELF** (built with ps2dev:latest,\n'
-            printf 'the primary toolchain; its version string ends in "-latest").\n'
-            printf 'If something misbehaves on your console, try the other flavours and REPORT WHICH ones you ran:\n'
-            printf '  * **APP_RIPTOPL-WOPLSDK/** -- built on the exact digest-pinned SDK container wOPL uses, with\n'
-            printf '    the container'"'"'s STOCK MMCE drivers (version ends "-woplsdk"). MMCE acts up on the default\n'
-            printf '    ELF but not this one? That points at the SDK/driver churn, not RiptOPL code.\n'
-            printf '  * **APP_RIPTOPL-OLDSDK/** -- pinned 2025 SDK (version ends "-oldsdk"), the conservative fallback.\n'
-            printf 'A latest-only failure is an SDK regression; an all-three failure is a RiptOPL bug. Those two\n'
-            printf 'bits triple the value of your report.\n'
+            printf '\n## Get started -- which build should I download?\n'
+            printf 'Grab **RIPTOPL-*.zip** and extract it. It ships three loader folders that differ ONLY by the\n'
+            printf 'SDK toolchain each was built with -- the RiptOPL code in every one is identical. Pick a folder\n'
+            printf 'and copy its RIPTOPL.ELF to your launch method. Recommended in this order (by reliability):\n'
+            printf '\n'
+            printf '  1. **APP_RIPTOPL-WOPLSDK/** -- built on wOPL'"'"'s exact digest-pinned SDK, with STOCK MMCE\n'
+            printf '     drivers (version ends "-WOPLSDK"). Pinned + field-proven: the most reliable choice.\n'
+            printf '  2. **APP_RIPTOPL-PS2MAXSDK/** -- pinned 2025 ps2max/dev SDK (version ends "-PS2MAXSDK").\n'
+            printf '     Also pinned and stable; the conservative fallback.\n'
+            printf '  3. **APP_RIPTOPL-PS2DEVLATESTSDK/** -- built on the ps2dev:latest toolchain (version ends\n'
+            printf '     "-PS2DEVLATESTSDK"). It tracks a MOVING SDK tag that changes constantly, so it can\n'
+            printf '     intermittently fail to boot on some consoles -- expected volatility of a moving SDK, NOT\n'
+            printf '     a RiptOPL bug (see issue #102). Great for catching upstream SDK regressions early; if it\n'
+            printf '     black-screens at startup, use the WOPLSDK or PS2MAXSDK build instead.\n'
+            printf '\n'
+            printf 'When something misbehaves on hardware, please say WHICH flavour you ran (the in-app version\n'
+            printf 'string suffix tells you). A PS2DEVLATESTSDK-only failure points at an SDK regression; an\n'
+            printf 'all-three failure points at RiptOPL code. Those bits triple the value of a report.\n'
             printf '\n## Bundled Neutrino core\n'
             printf 'Required for the per-game Neutrino launch mode. From the official repo:\n'
             printf '  https://github.com/rickgaiser/neutrino\n'
@@ -586,20 +586,17 @@ jobs:
             if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
               printf -- '- RIPTOPL-DEBUG-*.zip: debug builds (iopcore/ingame/eesio/ppctty/DTL_T10000), both SDKs -- diagnostics\n'
             fi
-            printf -- '- %s.ELF: bare loader, ps2dev:latest toolchain (primary)\n' "$VERSIONED_BASE"
-            if [ -f "rolling/${VERSIONED_BASE}-latest-unpacked.ELF" ]; then
-              printf -- '- %s-latest-unpacked.ELF: UNPACKED primary (no ps2-packer) -- issue #102 boot-regression diagnostic, try if the primary black-screens\n' "$VERSIONED_BASE"
-            fi
             if [ "$HAS_WOPLSDK" = yes ]; then
-              printf -- '- %s-woplsdk.ELF: bare loader, wOPL'"'"'s digest-pinned ghcr.io/ps2homebrew container, stock SDK MMCE drivers\n' "$VERSIONED_BASE"
+              printf -- '- %s-WOPLSDK.ELF: bare loader, wOPL'"'"'s digest-pinned ghcr.io/ps2homebrew container, stock SDK MMCE drivers (RECOMMENDED #1 -- pinned, boots reliably)\n' "$VERSIONED_BASE"
             else
-              printf -- '- (wOPL-sdk diagnostic build FAILED this run)\n'
+              printf -- '- (WOPLSDK flavour build FAILED this run)\n'
             fi
-            if [ "$HAS_OLDSDK" = yes ]; then
-              printf -- '- %s-oldsdk.ELF: bare loader, ps2max/dev %s pinned toolchain (fallback)\n' "$VERSIONED_BASE" "$SDK_VER"
+            if [ "$HAS_PS2MAXSDK" = yes ]; then
+              printf -- '- %s-PS2MAXSDK.ELF: bare loader, ps2max/dev %s pinned toolchain (RECOMMENDED #2 -- pinned, boots reliably)\n' "$VERSIONED_BASE" "$SDK_VER"
             else
-              printf -- '- (pinned %s fallback build FAILED this run -- primary bare loader only)\n' "$SDK_VER"
+              printf -- '- (pinned %s PS2MAXSDK build FAILED this run)\n' "$SDK_VER"
             fi
+            printf -- '- %s-PS2DEVLATESTSDK.ELF: bare loader, ps2dev:latest toolchain (bleeding-edge -- moving SDK tag, may not boot on all consoles; see "Get started")\n' "$VERSIONED_BASE"
             printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module each toolchain consumed\n'
             printf -- '- %s-src.zip: source snapshot to rebuild this exact commit\n' "$VERSIONED_BASE"
             if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
@@ -611,8 +608,8 @@ jobs:
             printf '```\n'
             printf '\nUpdated on every push to master. This is the single rolling channel; stable builds are the v* tagged releases.\n'
           } > notes.md
-          echo "oldsdk fallback present: $HAS_OLDSDK"
-          echo "woplsdk flavour present: $HAS_WOPLSDK"
+          echo "PS2MAXSDK flavour present: $HAS_PS2MAXSDK"
+          echo "WOPLSDK flavour present: $HAS_WOPLSDK"
           cat notes.md
           echo "Assets to publish:"
           ls -la rolling

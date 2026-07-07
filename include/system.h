@@ -55,7 +55,7 @@ void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const 
 // target resets the IOP itself). argv is the target's FULL argv, argv[0] INCLUDED and
 // caller-controlled -- unlike LoadELFFromFileWithPartition, which clobbers the target's argv[0]
 // with "<partition><filename>" (that clobber is what broke POPSTARTER's XX./SB. selector).
-// Container-independent: works the same on ps2dev:latest and the OLDSDK pin. Returns only on
+// Container-independent: works the same on ps2dev:latest and the PS2MAXSDK pin. Returns only on
 // failure (bad path/ELF). Implemented in elfldr_noreset.c.
 int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, char *argv[]);
 

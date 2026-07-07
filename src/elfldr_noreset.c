@@ -8,7 +8,7 @@
   black-screens every setup whose neutrino/ folder or game lives on a BDM device.
 
   ps2sdk gained a NoReset entry point in 8890d8b5 (2026-06-30), but neither build container ships
-  it yet (ps2dev:latest probed 2026-07-04 carries a 2026-06-21 SDK; the OLDSDK pin is 2025-07-25),
+  it yet (ps2dev:latest probed 2026-07-04 carries a 2026-06-21 SDK; the PS2MAXSDK pin is 2025-07-25),
   so we vendor the child loader instead (elfldr/loader.c, the NHDDL approach): copy it into
   BIOS-unused memory at 0x84000, ExecPS2 into it with argv[0] = target path, and it SifLoadElf()s
   the target through OPL's still-live mounts -- no IOP reset. Works identically on both SDKs.
