@@ -1291,6 +1291,11 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
             argv[argc++] = filePath;
     }
 
+    // Everything up to and including -dvd is the boot-critical core: the pool-fit drop loop below
+    // must never shed these. A fixed floor of 3 silently stopped covering -dvd once the optional
+    // -bsdfs slots in front of it (argv[3]) -- record the real core count instead.
+    const int coreArgc = argc;
+
     // Only forward -gc when at least one compat mode is set: Neutrino treats
     // -gc=0 as an explicit mode (IOP fast reads), NOT a no-op, so passing it for
     // a game with no OPL modes selected would force unwanted behavior (B1).
@@ -1387,14 +1392,15 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     // carries its strings in ONE 256-byte pool, every NUL included. Hop 1 packs the child's load
     // path PLUS this argv -- neutrinoPath is counted TWICE (loadpath and target argv[0]). SetArg's
     // copy is UNbounded, so exceeding the pool corrupts rather than truncates. Fit by dropping tail
-    // args (user extras sit last; each drop LOGged); the argv[0]/-bsd/-dvd floor must survive or
-    // nothing can boot anyway -- past that, refuse and let the LOG name the overage.
+    // args (user extras sit last; each drop LOGged); the boot-critical core (argv[0]/-bsd/
+    // [-bsdfs]/-dvd, counted as coreArgc above) must survive or nothing can boot anyway -- past
+    // that, refuse and let the LOG name the overage.
     {
         int pool = (int)strlen(neutrinoPath) + 1; // hop-1 child argv[0] = the load path
         int i;
         for (i = 0; i < argc; i++)
             pool += (int)strlen(argv[i]) + 1;
-        while (pool > 256 && argc > 3) {
+        while (pool > 256 && argc > coreArgc) {
             argc--;
             pool -= (int)strlen(argv[argc]) + 1;
             LOG("[NEUTRINO] argv pool over 256 bytes -- dropping tail arg: %s\n", argv[argc]);
