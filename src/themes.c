@@ -11,6 +11,7 @@
 #include "include/sound.h"
 #include "include/texcache.h"
 #include "include/favsupport.h"
+#include "include/vcdsupport.h" // vcdDisplayName -- display-only VCD game-ID prefix hide
 
 #include <time.h>
 #include <math.h>
@@ -1330,9 +1331,9 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                     if (itemsList->decoratorImage->defaultTexture)
                         rmDrawPixmap(&itemsList->decoratorImage->defaultTexture->source, posX, posY, elem->aligned, DECORATOR_SIZE, DECORATOR_SIZE, elem->scaled, gDefaultCol, 0);
                 }
-                textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, submenuItemGetText(&ps->item), color);
+                textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, vcdDisplayName(list ? list->mode : -1, submenuItemGetText(&ps->item)), color);
             } else
-                textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, submenuItemGetText(&ps->item), color);
+                textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, vcdDisplayName(list ? list->mode : -1, submenuItemGetText(&ps->item)), color);
 
             // Favourites: draw a small star just after the item text.
             if (ps->item.favourited) {
