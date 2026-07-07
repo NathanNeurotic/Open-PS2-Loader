@@ -188,6 +188,23 @@ situation RiptOPL's single-file model cannot enter. Remaining open: **#11** user
 `-bsdfs`, **#13** persistent cover cache, **#14** per-slot VMC disable, **#15** grammar
 verification (done — folded into #2).
 
+### Queue close-out (2026-07-06, night — tail batch)
+
+**#11** `-bsdfs` picker, **#14** per-slot VMC disable, and the queue-table **#15**
+`plasma_blend_color` theme key (the status paragraph above mis-numbered #15 as the already-folded
+grammar item — the table row was still open) all shipped in the tail-batch PR. Corrections learned
+while shipping: the `bd` `-dvd` prefix is `bdfs:` and exfat takes the bare path unchanged (verified
+against rickgaiser/neutrino `main.c` usage — its own example runs `bsdfs=bd` on udpbd, so the net
+block devices stay eligible; only mmce/udpfs are excluded); #14's audit phrasing "emit `$-mcN=`"
+would NOT parse — `-mc` args are discrete argv entries that never pass the `$`-stripping tokenizer,
+so the disable is realized as skipped emission (which also clears the slot's `vmcSlotMask` bit and
+re-arms the MMCE gameID switch for that slot).
+
+**#13 persistent cover cache: PARKED by maintainer decision** — the one tail item that writes to
+user storage; requires a design pass first (opt-in default OFF, cache on the boot/config device
+only — never the game device, hard size cap, mtime-keyed invalidation) per the exFAT-corruption
+class of risk. The queue is otherwise EMPTY.
+
 ### Non-goals (do NOT queue — deliberate fork decisions)
 - **Native-core `-qb` quickboot** — `-qb` is Neutrino-only; deliberately not emitted after a menu session (mixed IOP state is what Neutrino's reset exists to erase). Parity doc §4.2.
 - **Dropping `-mc` VMC files** (parity doc §4.3), **libconfig backend migration** (prior decision), **trimming OPL breadth** (PS1/POPS/cheats/PADEMU) to chase NHDDL minimalism, and a **headless pure-forwarder entry** (adds a path, low value for a full launcher — OPL's breadth is the point).
