@@ -39,7 +39,10 @@ typedef struct neutrino_vmc_args
     char arg[NEUTRINO_VMC_SLOTS][160];
 } neutrino_vmc_args_t;
 
-void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, const neutrino_vmc_args_t *vmcArgs);
+// neutrinoBsdfs: per-game -bsdfs override (parity-audit #11), 0=Auto (per-device default),
+// 1=exfat, 2=hdl (-dvd=hdl:), 3=bd (-dvd=bdfs:). Block-backed devices only; ignored (never
+// emitted) for mmce/udpfs, and inert on APA which is always -bsdfs=hdl.
+void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, const neutrino_vmc_args_t *vmcArgs);
 
 // D6 pre-deinit launch pre-flight: validates the driver token and (network transports) syncs the
 // bsd toml ip= while every mount is up and the GUI can still toast. Call BEFORE deinitEx in every

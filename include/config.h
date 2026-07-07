@@ -50,6 +50,7 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_NEUTRINO_ARGS    "$NeutrinoArgs"
 #define CONFIG_ITEM_NEUTRINO_VIDEO   "$NeutrinoVideo"
 #define CONFIG_ITEM_NEUTRINO_GSMCOMP "$NeutrinoGsmComp" // -gsm ":c" field-flip half (0=off, 1-3=type); only emitted when $NeutrinoVideo is set
+#define CONFIG_ITEM_NEUTRINO_BSDFS   "$NeutrinoBsdfs"   // -bsdfs override (parity-audit #11): 0=Auto, 1=exfat, 2=hdl, 3=bd; block-backed devices only
 #define CONFIG_ITEM_DNAS             "$DNAS"
 #define CONFIG_ITEM_CONFIGSOURCE     "$ConfigSource"
 

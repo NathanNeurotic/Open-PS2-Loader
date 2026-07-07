@@ -945,3 +945,7 @@ gui_strings:
   string: Disable VMC 2 (keep card)
 - label: HINT_VMC_SLOT_DISABLE
   string: Launch without this slot's VMC while keeping its card configured. Neutrino launches only; the game then uses the real card in that slot.
+- label: NEUTRINO_BSDFS
+  string: Neutrino Filesystem
+- label: HINT_NEUTRINO_BSDFS
+  string: Force Neutrino's block-device filesystem (-bsdfs). Auto = per-device default. hdl/bd are expert options; pair them with a matching -dvd= in the launch args if the auto path shape doesn't fit.
