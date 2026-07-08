@@ -112,6 +112,12 @@ static void deferredAudioInit(void);
 
 // frame counter
 static unsigned int frameCounter;
+// Per-mode background-rescan throttle (Fix B): the every-frame (updateDelay==0) device rescans
+// enumerate the SIO2/mass bus; space them by a minimum wall-clock interval so they don't run
+// unthrottled when cover art is off (art-pending used to incidentally pace them -- the "art off made
+// MMCE worse" bug). A real device change bypasses the throttle via bdmGetGeneration().
+static clock_t lastBgRescan[MODE_COUNT];
+static unsigned int lastSeenBdmGeneration;
 
 static char errorMessage[256];
 
@@ -891,7 +897,12 @@ void menuDeferredUpdate(void *data)
     }
 }
 
-#define MENU_GENERAL_UPDATE_DELAY 60
+#define MENU_GENERAL_UPDATE_DELAY         60
+// Minimum wall-clock gap between background rescans of the SAME updateDelay==0 device (Fix B). At
+// ~2 s this drops the steady SIO2/mass enumeration rate (and, for MMCE, the slot-probe drip) well
+// below the old every-60-frames cadence, cutting MX4SIO<->mmceman bus contention, while a real
+// device change still refreshes immediately (BdmGeneration bypass below). clock() = microseconds.
+#define MENU_BG_RESCAN_MIN_INTERVAL_TICKS (2 * CLOCKS_PER_SEC)
 
 static void menuUpdateHook()
 {
@@ -919,11 +930,27 @@ static void menuUpdateHook()
         }
     }
 
-    // Schedule updates of all list handlers that are to run every frame, regardless of whether auto refresh is active or not.
+    // Schedule updates of the every-frame (updateDelay==0) list handlers -- all BDM/MX4SIO, and MMCE
+    // while no card is present. These enumerate the SIO2/mass bus, so throttle each to a minimum
+    // wall-clock interval instead of firing every MENU_GENERAL_UPDATE_DELAY frames. That interval used
+    // to be supplied incidentally by cover-art-pending suppressing the whole hook (line above); with
+    // art OFF that never fired, so the rescans ran unthrottled and contended on SIO2 (the "cover art
+    // off made MMCE worse" bug). A genuine BDM device change (hotplug/removal via BdmGeneration, or a
+    // Device-Settings apply) bypasses the throttle so detection stays immediate.
     if (frameCounter % MENU_GENERAL_UPDATE_DELAY == 0) {
+        unsigned int gen = bdmGetGeneration();
+        int genChanged = (gen != lastSeenBdmGeneration);
+        clock_t now = clock();
+        lastSeenBdmGeneration = gen;
         for (i = 0; i < MODE_COUNT; i++) {
-            if ((list_support[i].support && list_support[i].support->enabled) && (list_support[i].support->updateDelay == 0))
-                ioPutRequest(IO_MENU_UPDATE_DEFFERED, &list_support[i].support->mode);
+            if ((list_support[i].support && list_support[i].support->enabled) && (list_support[i].support->updateDelay == 0)) {
+                int mode = list_support[i].support->mode;
+                // elapsed form is single-wrap-safe; zero-initialized timestamp allows one immediate rescan
+                if (genChanged || (now - lastBgRescan[mode]) >= MENU_BG_RESCAN_MIN_INTERVAL_TICKS) {
+                    ioPutRequest(IO_MENU_UPDATE_DEFFERED, &list_support[i].support->mode);
+                    lastBgRescan[mode] = now;
+                }
+            }
         }
     }
 }

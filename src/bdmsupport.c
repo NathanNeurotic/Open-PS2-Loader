@@ -290,6 +290,14 @@ void bdmForceDeviceRefresh(void)
     BdmGeneration++;
 }
 
+// Read-only accessor so the menu hook can detect a real BDM device change (hotplug via bdmEventHandler
+// or a Device-Settings apply) and bypass its background-rescan throttle for immediate detection.
+// Plain single-word read, matching the existing non-atomic BdmGeneration read at bdmNeedsUpdate.
+unsigned int bdmGetGeneration(void)
+{
+    return BdmGeneration;
+}
+
 static int bdmShouldQueueModuleLoad(void)
 {
     if (gEnableUSB && !iUSBModLoaded)
