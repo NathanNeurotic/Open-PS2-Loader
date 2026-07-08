@@ -623,9 +623,38 @@ int configRead(config_set_t *configSet)
     return ret;
 }
 
+// Cap on the pre-write snapshot kept in RAM to roll back a failed save. Real config files are a few
+// KB; this bounds a corrupt/huge on-disk size so a bad stat can never malloc something absurd.
+#define CONFIG_MAX_RESTORE_BYTES (256 * 1024)
+
 int configWrite(config_set_t *configSet)
 {
     if (configSet->modified) {
+        // The write is NON-ATOMIC: openFileBuffer opens with O_TRUNC, emptying the existing good file
+        // BEFORE the new content is flushed. On flaky media (a wedged HDD -- the reported case) the
+        // flush can fail AFTER the truncate, leaving a 0-byte config that reads back as all-defaults
+        // ("configuration appeared WIPED"), and the old code cleared modified + returned success
+        // regardless. PS2 filesystems lack reliable atomic rename (see system.c sysSyncNeutrinoIp), so
+        // snapshot the current on-disk bytes first and restore them if the write fails.
+        char *original = NULL;
+        int originalLen = 0;
+        int rfd = openFile(configSet->filename, O_RDONLY);
+        if (rfd >= 0) {
+            int sz = getFileSize(rfd);
+            if (sz > 0 && sz <= CONFIG_MAX_RESTORE_BYTES) {
+                original = (char *)malloc(sz);
+                if (original != NULL) {
+                    originalLen = read(rfd, original, sz);
+                    if (originalLen != sz) { // partial read -> unusable snapshot, drop it
+                        free(original);
+                        original = NULL;
+                        originalLen = 0;
+                    }
+                }
+            }
+            close(rfd);
+        }
+
         file_buffer_t *fileBuffer = openFileBuffer(configSet->filename, O_WRONLY | O_CREAT | O_TRUNC, 0, 4096);
         if (fileBuffer) {
             char line[512];
@@ -642,11 +671,30 @@ int configWrite(config_set_t *configSet)
                 cur = cur->next;
             }
 
-            closeFileBuffer(fileBuffer);
-            configSet->modified = 0;
+            int writeFailed = (closeFileBuffer(fileBuffer) != 0);
             bgmUnMute();
+
+            if (writeFailed) {
+                // O_TRUNC already emptied the file and the flush failed. Put the original bytes back so
+                // a good config isn't lost, keep modified=1 so a later save retries, and report failure
+                // so saveConfig shows "Error saving settings" instead of a false "Saved".
+                if (original != NULL) {
+                    int wfd = openFile(configSet->filename, O_WRONLY | O_CREAT | O_TRUNC);
+                    if (wfd >= 0) {
+                        write(wfd, original, originalLen);
+                        close(wfd);
+                    }
+                }
+                LOG("CONFIG write to %s FAILED -- restored %d original bytes\n", configSet->filename, originalLen);
+                free(original);
+                return 0;
+            }
+
+            free(original);
+            configSet->modified = 0;
             return 1;
         }
+        free(original);
         return 0;
     }
     return 1;
