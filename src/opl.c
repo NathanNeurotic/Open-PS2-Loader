@@ -584,8 +584,19 @@ static void initAllSupport(int force_reinit)
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_BDM));
     if (gBootInProgress)
         guiRenderGreetingScreen();
+    LOG("BOOT scan: bdmEnumerateDevices() begin\n");
     bdmEnumerateDevices();
+    LOG("BOOT scan: bdmEnumerateDevices() done; MMCE initSupport begin\n");
+    // Distinct banner for the MMCE init phase so a frozen boot screen LOCALIZES a scan-hang to this
+    // phase (vs the BDM/ATA enumerate above) on ANY build -- FifthFox reported a "Scanning..." freeze
+    // on a FAT console and the exact culprit (slow ATA/dev9 probe in bdmEnumerateDevices vs the MMCE
+    // slot devctl here) needs pinning on hardware. English literal is fine for a transient boot line.
+    if (gBootInProgress) {
+        guiSetBootStatus("Scanning memory cards...");
+        guiRenderGreetingScreen();
+    }
     initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
+    LOG("BOOT scan: MMCE initSupport done\n");
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_NET));
     if (gBootInProgress)
         guiRenderGreetingScreen();
