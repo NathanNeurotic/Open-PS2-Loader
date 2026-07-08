@@ -630,12 +630,16 @@ int configRead(config_set_t *configSet)
 int configWrite(config_set_t *configSet)
 {
     if (configSet->modified) {
+        if (configSet->filename == NULL)
+            return 0; // in-memory-only config set: nothing to persist (and openFile would deref NULL)
+
         // The write is NON-ATOMIC: openFileBuffer opens with O_TRUNC, emptying the existing good file
         // BEFORE the new content is flushed. On flaky media (a wedged HDD -- the reported case) the
-        // flush can fail AFTER the truncate, leaving a 0-byte config that reads back as all-defaults
-        // ("configuration appeared WIPED"), and the old code cleared modified + returned success
+        // flush -- or even openFileBuffer's own buffer malloc, AFTER openFile's O_TRUNC already
+        // emptied the file -- can fail, leaving a 0-byte config that reads back as all-defaults
+        // ("configuration appeared WIPED"); the old code cleared modified + returned success
         // regardless. PS2 filesystems lack reliable atomic rename (see system.c sysSyncNeutrinoIp), so
-        // snapshot the current on-disk bytes first and restore them if the write fails.
+        // snapshot the current on-disk bytes first and restore them if the save fails for ANY reason.
         char *original = NULL;
         int originalLen = 0;
         int rfd = openFile(configSet->filename, O_RDONLY);
@@ -655,6 +659,7 @@ int configWrite(config_set_t *configSet)
             close(rfd);
         }
 
+        int ok = 0;
         file_buffer_t *fileBuffer = openFileBuffer(configSet->filename, O_WRONLY | O_CREAT | O_TRUNC, 0, 4096);
         if (fileBuffer) {
             char line[512];
@@ -671,31 +676,40 @@ int configWrite(config_set_t *configSet)
                 cur = cur->next;
             }
 
-            int writeFailed = (closeFileBuffer(fileBuffer) != 0);
+            ok = (closeFileBuffer(fileBuffer) == 0);
             bgmUnMute();
+        }
 
-            if (writeFailed) {
-                // O_TRUNC already emptied the file and the flush failed. Put the original bytes back so
-                // a good config isn't lost, keep modified=1 so a later save retries, and report failure
-                // so saveConfig shows "Error saving settings" instead of a false "Saved".
-                if (original != NULL) {
+        if (!ok) {
+            // The save failed -- either openFileBuffer failed AFTER openFile's O_TRUNC emptied the
+            // file (OOM on the buffer alloc), or the flush itself failed post-truncate. Restore the
+            // original bytes ONLY if the file is actually damaged now (shorter than the snapshot): a
+            // plain open-failure leaves the file intact, and O_TRUNC+rewriting an intact file could
+            // itself corrupt it on a second failure. Keep modified=1 so a later save retries, and
+            // return 0 so saveConfig shows "Error saving settings" instead of a false "Saved".
+            if (original != NULL) {
+                int cfd = openFile(configSet->filename, O_RDONLY);
+                int curLen = (cfd >= 0) ? getFileSize(cfd) : 0; // unreadable/gone -> treat as damaged
+                if (cfd >= 0)
+                    close(cfd);
+                if (curLen < originalLen) {
                     int wfd = openFile(configSet->filename, O_WRONLY | O_CREAT | O_TRUNC);
                     if (wfd >= 0) {
                         write(wfd, original, originalLen);
                         close(wfd);
                     }
+                    LOG("CONFIG write to %s FAILED -- restored %d original bytes\n", configSet->filename, originalLen);
                 }
-                LOG("CONFIG write to %s FAILED -- restored %d original bytes\n", configSet->filename, originalLen);
-                free(original);
-                return 0;
+            } else {
+                LOG("CONFIG write to %s FAILED (no snapshot to restore)\n", configSet->filename);
             }
-
             free(original);
-            configSet->modified = 0;
-            return 1;
+            return 0;
         }
+
         free(original);
-        return 0;
+        configSet->modified = 0;
+        return 1;
     }
     return 1;
 }

@@ -426,6 +426,8 @@ void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)
 
 int closeFileBuffer(file_buffer_t *fileBuffer)
 {
+    if (fileBuffer == NULL)
+        return -1; // defensive: current callers null-check first, but never deref a null buffer
     int err = fileBuffer->writeError;
     if (fileBuffer->fd >= 0) {
         if (fileBuffer->mode != O_RDONLY && fileBuffer->available) {
