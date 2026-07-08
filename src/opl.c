@@ -1379,6 +1379,14 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, &gEnableArtTar);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
             configGetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, &gDefaultGameView);
+            // A boot default-view locked to one type (VCD or ISO) must force the same one-shot
+            // rescan the settings dialog does on a view change (gui.c). Without it, vcdViewActive()
+            // short-circuits mmce/bdm/hdd/eth NeedsUpdate before the initial-scan trigger and the
+            // list stays blank on boot -- a manual SELECT does not recover it (NeedsUpdate still
+            // returns 0), only re-toggling the view does. This runs before applyConfig()'s first
+            // support scans, so each VCD-capable page consumes the dirty flag on its first refresh.
+            if (gDefaultGameView != GAME_VIEW_BOTH)
+                vcdMarkAllDirty();
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_COUNT, &gCoverflowCount);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_SCALE, &gCoverflowCenterScale);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_ANIM, &gCoverflowAnimSpeed);
