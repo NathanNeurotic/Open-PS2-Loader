@@ -371,7 +371,12 @@ int ioBlockOpsTimed(int block, int timeoutTicks)
         isIOBlocked = 1;
 
         ThreadID = GetThreadId();
-        int haveStatus = (ReferThreadStatus(ThreadID, &status) == 0);
+        // EE ReferThreadStatus() returns the thread status (>= 0) or a negative error, NOT 0 on
+        // success (that is the IOP thbase variant). The old `== 0` test was always false, so
+        // haveStatus was always 0 and the saved priority below was never restored -- every
+        // ioBlockOps(1) caller left this (usually the main GUI) thread pinned at priority 90 for
+        // the rest of the session. `>= 0` is the correct success test.
+        int haveStatus = (ReferThreadStatus(ThreadID, &status) >= 0);
         ChangeThreadPriority(ThreadID, 90);
 
         // Wait for the in-flight IO handler(s) to finish. timeoutTicks < 0 waits

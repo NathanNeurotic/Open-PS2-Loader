@@ -85,7 +85,6 @@ enum {
 
 #define CACHE_SLOW_MODE_INTERACTIVE_DELAY 4
 #define CACHE_MMCE_INTERACTIVE_MAX_DELAY  12
-#define CACHE_MMCE_INTERACTIVE_DEBOUNCE   2
 #define CACHE_APP_INTERACTIVE_MAX_DELAY   4
 #define CACHE_APP_PREFETCH_DELAY          10
 #define CACHE_PRIME_IDLE_DELAY            12
@@ -113,8 +112,6 @@ static int gArtActiveCount = 0;
 static int gArtInteractiveActiveCount = 0;
 static int gCacheGeneration = 1;
 static load_image_request_t *gArtCurrentReq = NULL;
-static int gMmceInteractiveDebounceUntilFrame = -1;
-static char gMmceInteractiveDebounceValue[64];
 /* Navigation-active snapshot. getKey() mutates GUI-thread-only pad-repeat state,
  * so the art worker thread must not call it; the GUI thread refreshes this flag
  * (via cacheIsNavigationActive) each frame and the worker reads the snapshot. */
@@ -172,7 +169,12 @@ int cacheLowerCallerPriority(void)
     int callerPriority = -1;
 
     memset(&status, 0, sizeof(status));
-    if (ReferThreadStatus(GetThreadId(), &status) == 0) {
+    /* EE ReferThreadStatus() returns the thread STATUS (THS_RUN=1 for the running thread that
+     * GetThreadId() names here), or a negative error -- it does NOT return 0 on success (that is
+     * the IOP thbase variant). The old `== 0` guard was therefore ALWAYS false, so this function
+     * never actually lowered the caller and always returned -1: the #45/#111 priority handoff was
+     * silently inert. `>= 0` is the correct success test. */
+    if (ReferThreadStatus(GetThreadId(), &status) >= 0) {
         callerPriority = status.current_priority;
         if (callerPriority < CACHE_MMCE_LOAD_THREAD_PRIORITY + 1)
             ChangeThreadPriority(GetThreadId(), CACHE_MMCE_LOAD_THREAD_PRIORITY + 1);
@@ -300,8 +302,6 @@ static void cacheResetRequestTrackingLocked(void)
     gArtInteractiveReqEnd = NULL;
     gArtPrefetchReqList = NULL;
     gArtPrefetchReqEnd = NULL;
-    gMmceInteractiveDebounceUntilFrame = -1;
-    gMmceInteractiveDebounceValue[0] = '\0';
     gArtQueuedCount = 0;
     gArtActiveCount = 0;
     gArtInteractiveActiveCount = 0;
@@ -488,20 +488,6 @@ static void cacheDropQueuedInteractiveMmceDifferentValueLocked(const char *value
         if (req->effectiveMode == MMCE_MODE && strcmp(req->value, value) != 0)
             cacheDropQueuedRequestLocked(req);
     }
-}
-
-static int cacheShouldDebounceMmceInteractiveLocked(int effectiveMode, const char *value)
-{
-    if (effectiveMode != MMCE_MODE || value == NULL)
-        return 0;
-
-    if (strcmp(gMmceInteractiveDebounceValue, value) != 0) {
-        snprintf(gMmceInteractiveDebounceValue, sizeof(gMmceInteractiveDebounceValue), "%s", value);
-        gMmceInteractiveDebounceUntilFrame = guiFrameId + CACHE_MMCE_INTERACTIVE_DEBOUNCE;
-        return 1;
-    }
-
-    return guiFrameId < gMmceInteractiveDebounceUntilFrame;
 }
 
 static int cacheGetLoadThreadPriority(const load_image_request_t *req)
@@ -901,7 +887,11 @@ static void cacheLoadImage(load_image_request_t *req)
     threadId = GetThreadId();
     loadPriority = cacheGetLoadThreadPriority(req);
     memset(&status, 0, sizeof(status));
-    if (ReferThreadStatus(threadId, &status) == 0) {
+    /* EE ReferThreadStatus() returns the thread status (>= 0) or a negative error, not 0-on-success
+     * -- see cacheLowerCallerPriority(). The old `== 0` guard was always false, so the art worker
+     * was never re-prioritized to its per-mode load priority (0x5A for MMCE / 0x38 for APP) and
+     * stayed at the default 0x40 -- i.e. the whole MMCE read deprioritization was inert. */
+    if (ReferThreadStatus(threadId, &status) >= 0) {
         originalPriority = status.current_priority;
         if (originalPriority != loadPriority)
             ChangeThreadPriority(threadId, loadPriority);
@@ -968,8 +958,6 @@ void cacheInit()
     gArtInteractiveReqEnd = NULL;
     gArtPrefetchReqList = NULL;
     gArtPrefetchReqEnd = NULL;
-    gMmceInteractiveDebounceUntilFrame = -1;
-    gMmceInteractiveDebounceValue[0] = '\0';
 
     gArtSema.init_count = 1;
     gArtSema.max_count = 1;
@@ -1442,8 +1430,19 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     }
 
     if (priority == CACHE_REQ_PRIORITY_INTERACTIVE) {
-        if (cacheShouldDeferInteractiveArtOnInput(list, value) ||
-            cacheShouldDebounceMmceInteractiveLocked(effectiveMode, value)) {
+        /* The MMCE interactive-art debounce that used to sit here keyed its whole state on a
+         * single process-wide (value, until-frame) pair, so ANY frame that drew more than one
+         * distinct MMCE value (a coverflow carousel draws ~10 covers/frame; an attribute-art
+         * theme draws the cover plus #System/#Media/#DiscType) had every value overwrite the
+         * global left by the previous draw, re-arm the window, and return "defer" -- so no MMCE
+         * cover was ever enqueued and art never loaded on those themes. It was also redundant:
+         * the interactive settle is already enforced below by guiInactiveFrames < delay (4-12
+         * MMCE frames) and, during an active scroll, by cacheShouldDeferInteractiveArtOnInput.
+         * The 2-frame debounce window was strictly shorter than that settle, so its only
+         * distinct effect was to block a cover that scrolled into view while the user was
+         * already settled -- exactly when it should load. Removed; the two gates below are the
+         * complete throttle. */
+        if (cacheShouldDeferInteractiveArtOnInput(list, value)) {
             cacheUnlock();
             return NULL;
         }
