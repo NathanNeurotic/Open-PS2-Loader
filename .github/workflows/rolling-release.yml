@@ -354,6 +354,12 @@ jobs:
       # Pinned ps2sdk/toolchain tag of the FALLBACK (-PS2MAXSDK) build, referenced in the release
       # notes (the -PS2MAXSDK flavour). Bump alongside the build-rolling-pinned container (ps2max/dev:...).
       SDK_VER: "v20250725-2"
+      # MEGA archival credentials (repo secrets MEGA_USERNAME / MEGA_PASSWORD). Exposed under the
+      # names USERNAME / PASSWORD because the upload action (Difegue/action-megacmd) reads exactly
+      # those env names, and because it lets the MEGA steps gate on `env.USERNAME != ''` -- a fork
+      # (or any run) without the secrets simply SKIPS the MEGA archive instead of failing.
+      USERNAME: ${{ secrets.MEGA_USERNAME }}
+      PASSWORD: ${{ secrets.MEGA_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -716,3 +722,57 @@ jobs:
               $PREREL \
               $TARGET
           fi
+
+      # --- MEGA archival (master rolling builds only) -----------------------------------------
+      # The GitHub 'rolling' release above keeps OVERWRITING the latest build. To keep a PERMANENT
+      # record, every master rolling build is ALSO archived to MEGA as ONE immutable, self-contained
+      # zip of the entire release payload. Runs AFTER Publish so the GitHub release is completely
+      # unchanged and a MEGA hiccup can never block or alter it -- MEGA is purely additive. Gated to
+      # master + secrets present, so v* tag cuts and secret-less forks skip it cleanly.
+      - name: Build all-in-one MEGA archive
+        if: github.ref == 'refs/heads/master' && env.USERNAME != '' && env.PASSWORD != ''
+        run: |
+          set -eu
+          # Validate the payload BEFORE archiving so a broken publish fails loudly instead of pushing
+          # a half-empty "permanent" archive to MEGA.
+          if [ ! -d rolling ] || [ -z "$(ls -A rolling 2>/dev/null)" ]; then
+            echo "rolling/ is empty -- refusing to build a MEGA archive" >&2
+            exit 1
+          fi
+          if ! ls rolling/*-src.zip >/dev/null 2>&1; then
+            echo "No *-src.zip source snapshot in rolling/ -- refusing to archive an incomplete payload" >&2
+            exit 1
+          fi
+
+          VER="${OPL_VERSION:-rolling}"
+          SHORT_SHA="$(echo "${GITHUB_SHA}" | cut -c1-7)"
+          ARCHIVE="RIPTOPL-ROLLING-${VER}-${GITHUB_RUN_NUMBER}-${SHORT_SHA}.zip"
+
+          # Build the archive OUTSIDE rolling/ (requirement): if it lived in rolling/ it could zip
+          # itself and, worse, be swept into the GitHub release by `gh release upload rolling/*`.
+          # Publish already ran, so rolling/ holds EXACTLY the set uploaded to the GitHub release --
+          # archive all of it (ELFs, every release zip, SHA256SUMS.txt, IRX manifests, src snapshot,
+          # and anything else present) at the archive root.
+          rm -rf mega-out
+          mkdir -p mega-out
+          ( cd rolling && zip -r -X "../mega-out/${ARCHIVE}" . >/dev/null )
+
+          echo "MEGA_ARCHIVE=mega-out/${ARCHIVE}" >> "$GITHUB_ENV"
+          # Suggested layout: /RiptOPL/Rolling/<version>/run_<run number>/ -- run number keeps every
+          # build in its own immutable folder (nothing is ever overwritten on MEGA).
+          echo "MEGA_REMOTE_DIR=/RiptOPL/Rolling/${VER}/run_${GITHUB_RUN_NUMBER}/" >> "$GITHUB_ENV"
+
+          echo "== MEGA archive contents =="
+          unzip -l "mega-out/${ARCHIVE}"
+          echo "== MEGA archive SHA256 =="
+          sha256sum "mega-out/${ARCHIVE}" | tee "mega-out/${ARCHIVE}.sha256"
+
+      - name: Upload the all-in-one archive to MEGA
+        if: github.ref == 'refs/heads/master' && env.USERNAME != '' && env.PASSWORD != ''
+        uses: Difegue/action-megacmd@master
+        with:
+          # Runs `mega-put -c <archive> <remotedir>/`: -c creates the remote folder path if missing,
+          # the trailing slash puts the file INTO that folder. Uploads ONLY the single all-in-one
+          # zip -- individual assets are NOT uploaded separately. Credentials come from the job-level
+          # USERNAME/PASSWORD env, which this action reads by those exact names.
+          args: put -c ${{ env.MEGA_ARCHIVE }} ${{ env.MEGA_REMOTE_DIR }}
