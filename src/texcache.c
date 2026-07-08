@@ -437,23 +437,25 @@ static int cacheIsAbortableMmceRequest(load_image_request_t *req)
     return req != NULL && req->priority == CACHE_REQ_PRIORITY_INTERACTIVE && req->effectiveMode == MMCE_MODE;
 }
 
-static int cacheShouldDiscardCompletedRequestLocked(load_image_request_t *req)
-{
-    return cacheIsAbortableMmceRequest(req) && req->generation != gCacheGeneration;
-}
 
 static int cacheIsNavigationActive(void)
 {
-    /* getKey() mutates shared pad-repeat state, so only the GUI thread may call
-     * it. The art worker (which reaches here via cacheShouldDeferInteractiveArtOnInput
-     * while dequeuing) reads the most recent GUI-thread snapshot instead. The GUI
-     * thread evaluates this every frame while drawing the MMCE cover, keeping the
-     * snapshot fresh. */
+    /* Use getKeyPressed() (a pure `paddata & mask` read), NOT getKey(): getKey() CONSUMES
+     * the button-repeat -- it resets delaycnt when a repeat fires (pad.c). This runs on the
+     * GUI thread while DRAWING the MMCE cover, which happens BEFORE the input handler in the
+     * SAME frame, so getKey() here stole the held-d-pad repeat from menuNextV/menuPrevV and
+     * the MMCE cursor failed to advance while scrolling (the "MMCE nav is laggy / not working"
+     * report -- MMCE-only because only MMCE reaches this defer path). getKeyPressed() reads the
+     * raw held state with no side effects, so the cursor advances normally AND the snapshot
+     * stays true for the WHOLE hold (not just repeat-fire frames), keeping interactive MMCE
+     * cover reads correctly deferred off the SIO2 bus during a scroll. The art worker still
+     * reads the snapshot; getKeyPressed is side-effect free so the thread guard below is no
+     * longer strictly required, but is kept unchanged. */
     if (gArtThreadId >= 0 && GetThreadId() == gArtThreadId)
         return gNavInputActive;
 
-    gNavInputActive = (getKey(KEY_LEFT) || getKey(KEY_RIGHT) || getKey(KEY_UP) ||
-                       getKey(KEY_DOWN) || getKey(KEY_L1) || getKey(KEY_R1));
+    gNavInputActive = (getKeyPressed(KEY_LEFT) || getKeyPressed(KEY_RIGHT) || getKeyPressed(KEY_UP) ||
+                       getKeyPressed(KEY_DOWN) || getKeyPressed(KEY_L1) || getKeyPressed(KEY_R1));
     return gNavInputActive;
 }
 
@@ -839,7 +841,13 @@ static void cacheCompleteRequest(load_image_request_t *req, int result)
         req->entry->qr = NULL;
         req->entry->primeFrame = -1;
 
-        if (result == ERR_LOAD_ABORTED || cacheShouldDiscardCompletedRequestLocked(req)) {
+        // Only a genuinely ABORTED read is discarded. A read that COMPLETES is stored even if the
+        // cursor moved during it (generation advanced): the 844 guard already proved this entry still
+        // belongs to THIS request (qr==req && UID==cacheUID, and UIDs are monotonic per request), so
+        // the texture can only ever be shown for its own item. Discarding a finished cover just because
+        // the user scrolled forced a full re-read on the slow MMCE link when they scrolled back -- the
+        // "MMCE covers never stick / pop in and out" churn.
+        if (result == ERR_LOAD_ABORTED) {
             cacheClearItem(req->entry, 0);
         } else if (result < 0 || req->texture.Mem == NULL) {
             req->entry->lastUsed = 0;
