@@ -750,12 +750,30 @@ jobs:
 
           # Build the archive OUTSIDE rolling/ (requirement): if it lived in rolling/ it could zip
           # itself and, worse, be swept into the GitHub release by `gh release upload rolling/*`.
-          # Publish already ran, so rolling/ holds EXACTLY the set uploaded to the GitHub release --
-          # archive all of it (ELFs, every release zip, SHA256SUMS.txt, IRX manifests, src snapshot,
-          # and anything else present) at the archive root.
+          #
+          # Archive the INSTALLABLE + REPRODUCIBLE payload only. The two big diagnostic BUNDLES are
+          # deliberately EXCLUDED from the permanent MEGA copy:
+          #   RIPTOPL-VARIANTS-*.zip  (~120 MB -- every EXTRA_FEATURES x PADEMU combo x 3 SDKs)
+          #   RIPTOPL-DEBUG-*.zip     (~91 MB  -- iopcore/ingame/eesio/ppctty/DTL debug builds x 3 SDKs)
+          # They dominate the size (~10x: ~233 MB -> ~22 MB), they still ship on the GitHub rolling
+          # release for the CURRENT build, and a *permanent* per-build archive is for restoring or
+          # rebuilding an installable build -- not for old diagnostic permutations (when you debug,
+          # it is almost always the current build). Everything a restorer needs is kept: the
+          # installable package zip, the bare loader ELFs, the source snapshot, SHA256SUMS.txt, the
+          # IRX manifests and the language pack.
           rm -rf mega-out
           mkdir -p mega-out
-          ( cd rolling && zip -r -X "../mega-out/${ARCHIVE}" . >/dev/null )
+          MEGA_FILES=""
+          for f in rolling/*; do
+            b="$(basename "$f")"
+            case "$b" in
+              RIPTOPL-VARIANTS-*.zip|RIPTOPL-DEBUG-*.zip)
+                echo "MEGA archive: excluding diagnostic bundle $b" ;;
+              *)
+                MEGA_FILES="$MEGA_FILES $b" ;;
+            esac
+          done
+          ( cd rolling && zip -r -X "../mega-out/${ARCHIVE}" $MEGA_FILES >/dev/null )
 
           echo "MEGA_ARCHIVE=mega-out/${ARCHIVE}" >> "$GITHUB_ENV"
           # Suggested layout: /RiptOPL/Rolling/<version>/run_<run number>/ -- run number keeps every
