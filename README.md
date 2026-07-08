@@ -252,8 +252,9 @@ contains and how to pull it.
 
 > 🗄️ **Permanent archive (MEGA):** the GitHub `rolling` pre-release only ever holds the *latest*
 > build — every push overwrites it. So **every** rolling build is also archived permanently to MEGA
-> as one self-contained zip of the full release payload (all three loader ELFs, the installable
-> package zip, the source snapshot, `SHA256SUMS.txt`, and the IRX manifests). Click the **MEGA**
+> as one self-contained zip of the installable payload (all three loader ELFs, the installable
+> package zip, the source snapshot, `SHA256SUMS.txt`, and the IRX manifests — the large VARIANTS
+> and DEBUG diagnostic bundles stay on the GitHub release only). Click the **MEGA**
 > badge at the top of this README — or [browse the archive here](https://mega.nz/folder/74pRHKRB#9SLDkrkvZAbeKO4Qvxg9LQ) —
 > to fetch any past build. Each is stored immutably under `RiptOPL/Rolling/<version>/run_<number>/`,
 > so nothing is ever overwritten.
