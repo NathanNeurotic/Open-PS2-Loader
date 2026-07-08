@@ -345,12 +345,6 @@ static int cacheGetPrefetchLimit(const image_cache_t *cache)
     return cache->count - 1 < 4 ? cache->count - 1 : 4;
 }
 
-static int cacheShouldPreferLoadedVictim(const image_cache_t *cache, unsigned char priority, int effectiveMode)
-{
-    return cache != NULL && priority == CACHE_REQ_PRIORITY_INTERACTIVE && effectiveMode == MMCE_MODE &&
-           cache->suffix != NULL && strcmp(cache->suffix, "COV") == 0;
-}
-
 static int cacheGetEffectiveMode(const item_list_t *list, const char *value)
 {
     int mode;
@@ -474,27 +468,6 @@ static int cacheShouldDeferInteractiveArtOnInput(const item_list_t *list, const 
     return 0;
 }
 
-static int cacheHasQueuedInteractiveMmceValueLocked(const char *value)
-{
-    load_image_request_t *req;
-
-    for (req = gArtInteractiveReqList; req != NULL; req = req->next) {
-        if (req->effectiveMode == MMCE_MODE && strcmp(req->value, value) == 0)
-            return 1;
-    }
-
-    return 0;
-}
-
-static void cacheDropQueuedInteractiveMmceDifferentValueLocked(const char *value)
-{
-    for (load_image_request_t *req = gArtInteractiveReqList, *next; req != NULL; req = next) {
-        next = req->next;
-        if (req->effectiveMode == MMCE_MODE && strcmp(req->value, value) != 0)
-            cacheDropQueuedRequestLocked(req);
-    }
-}
-
 static int cacheGetLoadThreadPriority(const load_image_request_t *req)
 {
     if (req != NULL && req->list != NULL) {
@@ -602,10 +575,19 @@ static void cacheInvalidateEntryLocked(cache_entry_t *entry, int freeTxt, int pr
 
     switch (entry->state) {
         case CACHE_ENTRY_QUEUED:
-            entry->qr = NULL;
-            if (req != NULL && cacheRemoveQueuedRequestLocked(req))
-                cacheQueueCleanupRequestLocked(req);
-            cacheClearItem(entry, freeTxt);
+            // Teardown (preserveLoaded==0) drops the queued request. But a per-scroll / per-view-switch
+            // generation advance (preserveLoaded==1) must LEAVE queued covers enqueued so the single art
+            // worker drains them and they land in the LRU cache -- exactly like wOPL, which never cancels
+            // queued loads on navigation. Clearing them here made MMCE coverflow re-wait from scratch on
+            // every scroll step / device-tab switch (issue #116); the LOADING/READY cases below already
+            // honor preserveLoaded, this one did not. On scroll-back a still-QUEUED entry is matched by
+            // its UID and returned as "loading" (no double-enqueue), then completes normally.
+            if (!preserveLoaded) {
+                entry->qr = NULL;
+                if (req != NULL && cacheRemoveQueuedRequestLocked(req))
+                    cacheQueueCleanupRequestLocked(req);
+                cacheClearItem(entry, freeTxt);
+            }
             break;
         case CACHE_ENTRY_LOADING:
             if (req != NULL) {
@@ -1510,34 +1492,23 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
         return NULL;
     }
 
-    if (priority == CACHE_REQ_PRIORITY_INTERACTIVE && list != NULL && effectiveMode == MMCE_MODE) {
-        cacheDropQueuedInteractiveMmceDifferentValueLocked(value);
-
-        if ((gArtCurrentReq != NULL && cacheIsAbortableMmceRequest(gArtCurrentReq) && strcmp(gArtCurrentReq->value, value) != 0) &&
-            cacheHasQueuedInteractiveMmceValueLocked(value)) {
-            cacheUnlock();
-            return NULL;
-        }
-    }
+    // (Removed a MMCE-only per-draw sibling-drop + one-at-a-time enqueue gate here.) drawCoverFlow
+    // requests all 3-5 visible covers each frame; that gate dropped every OTHER queued MMCE cover on
+    // each cover's draw, so only one survived per frame and the carousel filled one slow SIO2 read at
+    // a time -- issue #116's "covers only appear after a while". It bought no bus-contention benefit:
+    // the single art worker already serializes every SIO2 read, and queued-but-not-running requests
+    // issue zero concurrent reads. wOPL enqueues the whole visible set and drains it FIFO on one
+    // worker; match that. The queue is still bounded by the 10-slot LRU cache (a full cache yields no
+    // free victim, so no unbounded growth).
 
     if (priority == CACHE_REQ_PRIORITY_PREFETCH && cache->queuedPrefetchRequests >= cacheGetPrefetchLimit(cache)) {
         cacheUnlock();
         return NULL;
     }
 
-    if (cacheShouldPreferLoadedVictim(cache, priority, effectiveMode)) {
-        for (int i = 0; i < cache->count; i++) {
-            entry = &cache->content[i];
-            if ((entry->state == CACHE_ENTRY_READY || entry->state == CACHE_ENTRY_PRIMED ||
-                 entry->state == CACHE_ENTRY_DISPLAYABLE || entry->state == CACHE_ENTRY_FAILED) &&
-                entry->lastUsed < rtime) {
-                oldestEntry = entry;
-                oldestEntryId = i;
-                rtime = entry->lastUsed;
-            }
-        }
-    }
-
+    // (Removed a MMCE-COV-only first pass that preferred evicting an already-LOADED entry over a FREE
+    // slot -- with 10 slots and <=5 visible covers it reverted a just-loaded neighbour to the
+    // placeholder = flicker (issue #116). Always use the normal FREE-inclusive LRU below, like wOPL.)
     if (oldestEntry == NULL) {
         rtime = guiFrameId;
         for (int i = 0; i < cache->count; i++) {
