@@ -11,6 +11,7 @@ Review the LICENSE file for further details.<br><br>
 [![Latest release](https://img.shields.io/github/v/release/NathanNeurotic/Open-PS2-Loader?style=plastic&logo=github&label=Latest%20Release&labelColor=navy&color=skyblue&include_prereleases)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases)
 [![Discord](https://img.shields.io/discord/1275875800318476381?style=flat&logo=Discord)](https://tinyurl.com/PS2SPACE)
 [![Documentation](https://img.shields.io/badge/Documentation-RiptOPL-skyblue?style=flat&logo=githubpages&logoColor=white&labelColor=navy)](https://nathanneurotic.github.io/Open-PS2-Loader/)
+[![MEGA Archive](https://img.shields.io/badge/MEGA-Rolling%20Archive-%23D90007?style=flat&logo=mega&logoColor=white)](https://mega.nz/folder/74pRHKRB#9SLDkrkvZAbeKO4Qvxg9LQ)
 
 > **What is RiptOPL?** A downstream fork of Open PS2 Loader with a built-in cover-art **Coverflow** theme (default), a **Favourites** tab, per-game **Neutrino** external-core launching, a consolidated **Device Settings** hub, DualSense support, and ready-to-use opinionated defaults. Its settings live in their own **`settings_riptopl.cfg`** so they never collide with official OPL or wOPL installed on the same memory card — while artwork, themes, VMCs and **favourites stay shared**. See **[This Fork's Additions](#this-forks-additions)**. For the canonical project, use [ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader).
 
@@ -248,6 +249,14 @@ contains and how to pull it.
 > the bleeding-edge `ps2dev:latest` SDK, which moves constantly and can intermittently fail to
 > boot on some consoles — it exists mainly to catch upstream SDK regressions early. See
 > [Which build should I use?](ROLLING_RELEASE.md#which-build-should-i-use).
+
+> 🗄️ **Permanent archive (MEGA):** the GitHub `rolling` pre-release only ever holds the *latest*
+> build — every push overwrites it. So **every** rolling build is also archived permanently to MEGA
+> as one self-contained zip of the full release payload (all three loader ELFs, the installable
+> package zip, the source snapshot, `SHA256SUMS.txt`, and the IRX manifests). Click the **MEGA**
+> badge at the top of this README — or [browse the archive here](https://mega.nz/folder/74pRHKRB#9SLDkrkvZAbeKO4Qvxg9LQ) —
+> to fetch any past build. Each is stored immutably under `RiptOPL/Rolling/<version>/run_<number>/`,
+> so nothing is ever overwritten.
 
 ## How to use
 
