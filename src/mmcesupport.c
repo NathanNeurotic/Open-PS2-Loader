@@ -33,6 +33,11 @@ static base_game_info_t *mmceGames;
 // -1=unresolved). Avoids re-probing BOTH slots over SIO2 every menu refresh -- that steady devctl
 // drip contends with MX4SIO on the shared bus. Reset by mmceInit (tab re-enable / settings apply).
 static int mmceResolvedDevice = -1;
+// sbCreateFolders() issues ~10 mkdir devctls; on an mmceN: card each is an SIO2 round-trip that
+// contends with MX4SIO. Remember the prefix we last created folders for so a refresh on an unchanged
+// card/slot skips the redundant burst (mirrors BDM's FoldersCreated one-shot). Reset by mmceInit and
+// on card removal (empty prefix) so a freshly inserted card still gets its folders.
+static char mmceFoldersCreatedFor[40] = {0};
 
 // Card-switch wait: poll the MMCE busy bit every 500 ms for up to ~7.5 s, matching mmceman's own
 // switch handshake. On a CROSS-DEVICE launch (a USB/HDD/SMB game whose per-game card lives on the
@@ -292,6 +297,7 @@ void mmceInit(item_list_t *itemList)
     mmceGameCount = 0;
     mmceGames = NULL;
     mmceResolvedDevice = -1; // re-detect the Auto slot on a fresh init (tab re-enable / settings apply)
+    mmceFoldersCreatedFor[0] = '\0';
 
     configGetInt(configGetByType(CONFIG_OPL), "usb_frames_delay", &mmceGameList.delay);
     mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
@@ -323,6 +329,7 @@ static int mmceNeedsUpdate(item_list_t *itemList)
 
     if (mmcePrefix[0] == '\0') {
         mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
+        mmceFoldersCreatedFor[0] = '\0'; // card gone: recreate folders on the next (possibly different) card
         return (mmceGameCount > 0);
     }
 
@@ -334,8 +341,15 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     if (vcdViewActive(itemList->mode))
         return 0;
 
-    if (mmceULSizePrev == -2)
+    if (mmceULSizePrev == -2) {
+        // First scan not yet successful. If it wedges on a contended SIO2 bus, sbReadList leaves
+        // mmceULSizePrev at its -2 sentinel and the tab stays empty; the NOUPDATE latch above would
+        // then strand it with no auto-retry (the reported "all MMCE lists vanished"). Keep the ~2s
+        // background retry alive until a scan populates the list -- a genuinely-empty readable card
+        // sets mmceULSizePrev via *fsize, so this still quiesces once the bus is readable.
+        mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
         result = 1;
+    }
 
     sprintf(path, "%sCD", mmcePrefix);
     if (stat(path, &st) != 0)
@@ -372,15 +386,31 @@ static int mmceNeedsUpdate(item_list_t *itemList)
             LanguagesLoaded = 1;
     }
 
-    sbCreateFolders(mmcePrefix, 1);
+    // Create the library folders once per card/slot, not on every refresh (each is an SIO2 mkdir).
+    if (strcmp(mmceFoldersCreatedFor, mmcePrefix) != 0) {
+        sbCreateFolders(mmcePrefix, 1);
+        snprintf(mmceFoldersCreatedFor, sizeof(mmceFoldersCreatedFor), "%s", mmcePrefix);
+    }
 
     return result;
 }
 
 static int mmceUpdateGameList(item_list_t *itemList)
 {
-    if (mmcePrefix[0] == '\0')
-        return mmceGameCount;
+    if (mmcePrefix[0] == '\0') {
+        // Card absent / slot unresolved (Auto mode after removal). Actually CLEAR the list rather
+        // than returning the stale count: mmceNeedsUpdate keeps reporting "update needed" while
+        // mmceGameCount > 0, so returning the stale count here leaves the removed card's games on
+        // screen and spins a menu-rebuild + apps-rescan + favourites-reload loop every ~2s. Freeing
+        // lets updateMenuFromGameList empty the menu and drives needsUpdate's (count > 0) test to 0.
+        if (mmceGames != NULL) {
+            free(mmceGames);
+            mmceGames = NULL;
+        }
+        mmceGameCount = 0;
+        mmceULSizePrev = -2; // force a fresh scan when a card returns
+        return 0;
+    }
 
     if (vcdViewActive(itemList->mode))
         mmceGameCount = vcdFillGameList(mmcePrefix, &mmceGames);
@@ -645,6 +675,11 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (coreLoader) {
         char mmcePartname[256];
         snprintf(mmcePartname, sizeof(mmcePartname), "%s", partname); // defensive copy across the deinit teardown (partname is a stack buffer, not freed by deinit)
+        // game (== &mmceGames[id]) is freed by deinitEx() below (moduleCleanup -> mmceCleanUp frees
+        // mmceGames), but sysLaunchNeutrino still reads game->startup afterwards to build its -elf
+        // argument -- a use-after-free read. Copy startup onto this stack frame like mmcePartname.
+        char mmceStartup[GAME_STARTUP_MAX + 1];
+        snprintf(mmceStartup, sizeof(mmceStartup), "%s", game->startup);
         // Neutrino bypasses OPL's mcemu, so the VMC fds opened above go unused on this path --
         // close them instead of leaking until the IOP reset (B3). Closed BEFORE the GameID push
         // below (Beta-2947 hardware report): the 0x8 switch physically re-mounts the card, and
@@ -714,7 +749,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             return;
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
         deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode);
-        sysLaunchNeutrino("mmce", mmcePartname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, &neutrinoVmc);
+        sysLaunchNeutrino("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, &neutrinoVmc);
         return;
     }
 
