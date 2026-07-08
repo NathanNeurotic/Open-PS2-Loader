@@ -798,6 +798,12 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     mmceSendGameID(game->startup, neutrinoPath,
                    (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0));
 
+    // game->startup lives inside bdmGames / gAutoLaunchBDMGame, both freed below (deinitEx's
+    // itemCleanUp, or the explicit free in the autolaunch branch). Copy it before the teardown so
+    // sysLaunchNeutrino's -elf build reads valid stack memory instead of freed heap (UAF).
+    char bdmStartup[GAME_STARTUP_MAX + 1];
+    snprintf(bdmStartup, sizeof(bdmStartup), "%s", game->startup);
+
     if (gAutoLaunchBDMGame == NULL) {
         // Keep-IOP handoff: keep BOTH the game device and the neutrino.elf device mounted
         // (Neutrino reads its -cwd config/modules and the ISO through our mounts pre-reset).
@@ -813,7 +819,7 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
 
     // gPS2Logo passes the user's preference straight through: Neutrino performs its own logo
     // read/validation for -logo, so the native path's CheckPS2Logo disc pass is not needed here.
-    sysLaunchNeutrino(bdmCurrentDriver, partname, game->startup, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, &neutrinoVmc);
+    sysLaunchNeutrino(bdmCurrentDriver, partname, bdmStartup, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, &neutrinoVmc);
     return 1;
 
 fail:
