@@ -718,6 +718,11 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     // MMCE cross-device game-id (#261); HDD emits no -mc args (VMC->neutrino deferred), mask 0.
     mmceSendGameID(game->startup, neutrinoPath, 0);
 
+    // game->startup lives in hddGames / gAutoLaunchGame, freed below (deinitEx's itemCleanUp or the
+    // explicit free). Copy it before the teardown so sysLaunchNeutrino's -elf build is not a UAF read.
+    char apaStartup[sizeof(game->startup)];
+    snprintf(apaStartup, sizeof(apaStartup), "%s", game->startup);
+
     if (gAutoLaunchGame == NULL) {
         // Keep-IOP handoff: keep the HDD stack up (NHDDL hands off with its full ATA stack
         // resident) AND the neutrino.elf device (-cwd config/module reads).
@@ -733,7 +738,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
 
     LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
     // gPS2Logo passes the preference straight through (Neutrino does its own logo work).
-    sysLaunchNeutrino("apa", apaPart, game->startup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11 inert: APA is always -bsdfs=hdl */, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
+    sysLaunchNeutrino("apa", apaPart, apaStartup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11 inert: APA is always -bsdfs=hdl */, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
     return 1;
 }
 
