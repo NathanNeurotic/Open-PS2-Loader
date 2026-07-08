@@ -842,8 +842,8 @@ static void cacheCompleteRequest(load_image_request_t *req, int result)
         req->entry->primeFrame = -1;
 
         // Only a genuinely ABORTED read is discarded. A read that COMPLETES is stored even if the
-        // cursor moved during it (generation advanced): the 844 guard already proved this entry still
-        // belongs to THIS request (qr==req && UID==cacheUID, and UIDs are monotonic per request), so
+        // cursor moved during it (generation advanced): the enclosing guard above already proved this
+        // entry still belongs to THIS request (qr==req && UID==cacheUID, and UIDs are monotonic per request), so
         // the texture can only ever be shown for its own item. Discarding a finished cover just because
         // the user scrolled forced a full re-read on the slow MMCE link when they scrolled back -- the
         // "MMCE covers never stick / pop in and out" churn.
