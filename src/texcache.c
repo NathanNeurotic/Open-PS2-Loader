@@ -463,7 +463,12 @@ static int cacheShouldDeferInteractiveArtOnInput(const item_list_t *list, const 
 {
     int effectiveMode = cacheGetEffectiveMode(list, value);
 
-    if (list != NULL && effectiveMode == MMCE_MODE)
+    // Defer interactive cover reads while the user is actively scrolling on the SLOW filesystem
+    // backends -- MMCE (SIO2) and APA-HDD (PFS over ATA). Both read art through the single fileXio
+    // channel the menu also uses for badge/config IO, so starting a read mid-scroll stalls nav (the
+    // "HDD is not very responsive... like the MMCE was" report). USB/exFAT BDM is fast and stays
+    // unthrottled. Covers still land once navigation goes idle (the per-value settle below).
+    if (list != NULL && (effectiveMode == MMCE_MODE || effectiveMode == HDD_MODE))
         return cacheIsNavigationActive();
 
     return 0;
@@ -493,7 +498,10 @@ static void cacheDropQueuedInteractiveMmceDifferentValueLocked(const char *value
 static int cacheGetLoadThreadPriority(const load_image_request_t *req)
 {
     if (req != NULL && req->list != NULL) {
-        if (req->effectiveMode == MMCE_MODE)
+        // MMCE and APA-HDD both read art through the single slow fileXio channel; deprioritize the
+        // art worker (higher number = lower EE priority) so an in-flight read yields that channel to
+        // the priority-30 IO worker's nav-time badge/config reads instead of starving them.
+        if (req->effectiveMode == MMCE_MODE || req->effectiveMode == HDD_MODE)
             return CACHE_MMCE_LOAD_THREAD_PRIORITY;
 
         if (req->list->mode == APP_MODE)
