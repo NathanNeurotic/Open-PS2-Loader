@@ -372,6 +372,16 @@ static int scanForISO(char *path, char type, struct game_list_t **glist)
             count++;
         }
         closedir(dir);
+    } else {
+        // opendir() failed: the directory could not be READ (device unreadable / bus wedged), which
+        // is DISTINCT from a readable-but-empty directory (that opens fine and returns count 0). Signal
+        // a read FAILURE with a negative return so sbReadList can preserve the last-good list instead
+        // of blanking it on a transient wedge (MMCE<->MX4SIO SIO2 contention). Crucially, do NOT call
+        // updateISOGameList here -- writing count 0 would rewrite the on-disk list cache to EMPTY,
+        // persisting a transient failure across reboots.
+        if (cacheLoaded)
+            freeISOGameListCache(&cache);
+        return -1;
     }
 
     if (cacheLoaded) {
@@ -386,26 +396,32 @@ static int scanForISO(char *path, char type, struct game_list_t **glist)
 
 int sbReadList(base_game_info_t **list, const char *prefix, int *fsize, int *gamecount)
 {
-    int fd, size, id = 0, result;
-    int count;
+    int fd, size, id = 0;
+    int count, cdRet, dvdRet;
     char path[256];
 
-    free(*list);
-    *list = NULL;
-    *fsize = -1;
-    *gamecount = 0;
+    // Build into a LOCAL list and leave the caller's *list/*gamecount/*fsize UNTOUCHED until we know
+    // the scan actually reached the device. On a TOTAL device-read failure (every directory's opendir
+    // failed AND no ul.cfg) we keep the old list -- so a transient bus wedge (e.g. the MMCE<->MX4SIO
+    // SIO2 contention) preserves the last-good list on screen instead of blanking it (issue: MMCE
+    // lists vanish on a contended bus). A readable-but-empty device still shows empty (scan returns 0,
+    // not < 0). Device removal is handled separately by page-visibility, not here.
+    base_game_info_t *newlist = NULL;
+    int newfsize = -1;
 
     // temporary storage for the game names
     struct game_list_t *dlist_head = NULL;
 
     // count iso games in "cd" directory
     snprintf(path, sizeof(path), "%sCD", prefix);
-    count = scanForISO(path, SCECdPS2CD, &dlist_head);
+    cdRet = scanForISO(path, SCECdPS2CD, &dlist_head);
+    count = cdRet;
 
     // count iso games in "dvd" directory
     snprintf(path, sizeof(path), "%sDVD", prefix);
-    if ((result = scanForISO(path, SCECdPS2DVD, &dlist_head)) >= 0) {
-        count = count < 0 ? result : count + result;
+    dvdRet = scanForISO(path, SCECdPS2DVD, &dlist_head);
+    if (dvdRet >= 0) {
+        count = count < 0 ? dvdRet : count + dvdRet;
     }
 
     // count and process games in ul.cfg
@@ -417,15 +433,15 @@ int sbReadList(base_game_info_t **list, const char *prefix, int *fsize, int *gam
         if (count < 0)
             count = 0;
         size = getFileSize(fd);
-        *fsize = size;
+        newfsize = size;
         count += size / sizeof(USBExtreme_game_entry_t);
 
         if (count > 0) {
-            if ((*list = (base_game_info_t *)malloc(sizeof(base_game_info_t) * count)) != NULL) {
-                memset(*list, 0, sizeof(base_game_info_t) * count);
+            if ((newlist = (base_game_info_t *)malloc(sizeof(base_game_info_t) * count)) != NULL) {
+                memset(newlist, 0, sizeof(base_game_info_t) * count);
 
                 while (size > 0) {
-                    base_game_info_t *g = &(*list)[id++];
+                    base_game_info_t *g = &newlist[id++];
 
                     // populate game entry in list even if entry corrupted
                     read(fd, &GameEntry, sizeof(USBExtreme_game_entry_t));
@@ -463,17 +479,17 @@ int sbReadList(base_game_info_t **list, const char *prefix, int *fsize, int *gam
         }
         close(fd);
     } else if (count > 0) {
-        *list = (base_game_info_t *)malloc(sizeof(base_game_info_t) * count);
+        newlist = (base_game_info_t *)malloc(sizeof(base_game_info_t) * count);
     }
 
-    if (*list != NULL) {
+    if (newlist != NULL) {
         // copy the dlist into the list
         while ((id < count) && dlist_head) {
             // copy one game, advance
             struct game_list_t *cur = dlist_head;
             dlist_head = dlist_head->next;
 
-            memcpy(&(*list)[id++], &cur->gameinfo, sizeof(base_game_info_t));
+            memcpy(&newlist[id++], &cur->gameinfo, sizeof(base_game_info_t));
             free(cur);
         }
     } else
@@ -486,8 +502,18 @@ int sbReadList(base_game_info_t **list, const char *prefix, int *fsize, int *gam
         free(cur);
     }
 
-    if (count > 0)
-        *gamecount = count;
+    // TOTAL device-read failure (both dir scans failed to open AND no ul.cfg): keep the caller's
+    // current list rather than blanking it. newlist is NULL here; nothing to publish or leak.
+    if (cdRet < 0 && dvdRet < 0 && fd < 0) {
+        free(newlist);
+        return *gamecount; // *list / *gamecount / *fsize untouched -> last-good list stays on screen
+    }
+
+    // Success or genuinely-empty: publish the freshly-built list (frees the previous one).
+    free(*list);
+    *list = newlist;
+    *fsize = newfsize;
+    *gamecount = (count > 0) ? count : 0;
 
     return count;
 }

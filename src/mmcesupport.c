@@ -29,6 +29,10 @@ static time_t mmceModifiedCDPrev;
 static time_t mmceModifiedDVDPrev;
 static int mmceGameCount = 0;
 static base_game_info_t *mmceGames;
+// Auto-slot (gMMCESlot==2) resolution cache: mmceDetectSlot()'s last result (2=mmce0, 3=mmce1,
+// -1=unresolved). Avoids re-probing BOTH slots over SIO2 every menu refresh -- that steady devctl
+// drip contends with MX4SIO on the shared bus. Reset by mmceInit (tab re-enable / settings apply).
+static int mmceResolvedDevice = -1;
 
 // Card-switch wait: poll the MMCE busy bit every 500 ms for up to ~7.5 s, matching mmceman's own
 // switch handshake. On a CROSS-DEVICE launch (a USB/HDD/SMB game whose per-game card lives on the
@@ -228,8 +232,27 @@ void mmceSetPrefix(void)
         sprintf(mmcePrefix, "mmce0:/%s", gMMCEPrefix);
     else if (gMMCESlot == 1)
         sprintf(mmcePrefix, "mmce1:/%s", gMMCEPrefix);
-    else if (gMMCESlot == 2)
-        (void)mmceDetectSlot();
+    else if (gMMCESlot == 2) {
+        // Auto: reuse the previously-detected slot instead of probing BOTH slots every refresh.
+        // On a cache hit, ONE presence devctl on the resolved slot confirms the card is still there
+        // (mmcePrefix from the prior detect is still correct); a miss means the card was pulled, so
+        // invalidate and fall through to a full re-detect. Net: 1 SIO2 probe/cycle instead of 2, and
+        // card removal is now noticed (mmceDetectSlot alone leaves a stale prefix on a lost card).
+        if (mmceResolvedDevice > 0) {
+            const char *root = (mmceResolvedDevice == 2) ? "mmce0:/" : "mmce1:/";
+            if (fileXioDevctl(root, 0x1, NULL, 0, NULL, 0) == -1) {
+                mmceResolvedDevice = -1;
+                mmcePrefix[0] = '\0';
+            } else {
+                // Still present. Rebuild mmcePrefix from the CURRENT gMMCEPrefix (a Device-Settings
+                // prefix change must apply immediately -- initSupport does not re-init an already-
+                // enabled MMCE tab) using the cached slot; we skip only the second SIO2 slot probe.
+                sprintf(mmcePrefix, "mmce%d:/%s", (mmceResolvedDevice == 2) ? 0 : 1, gMMCEPrefix);
+            }
+        }
+        if (mmceResolvedDevice <= 0)
+            mmceResolvedDevice = mmceDetectSlot();
+    }
 
     mmceRefreshArtRoots();
 }
@@ -268,6 +291,7 @@ void mmceInit(item_list_t *itemList)
     mmceModifiedDVDPrev = 0;
     mmceGameCount = 0;
     mmceGames = NULL;
+    mmceResolvedDevice = -1; // re-detect the Auto slot on a fresh init (tab re-enable / settings apply)
 
     configGetInt(configGetByType(CONFIG_OPL), "usb_frames_delay", &mmceGameList.delay);
     mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
