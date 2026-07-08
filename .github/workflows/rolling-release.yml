@@ -769,7 +769,11 @@ jobs:
 
       - name: Upload the all-in-one archive to MEGA
         if: github.ref == 'refs/heads/master' && env.USERNAME != '' && env.PASSWORD != ''
-        uses: Difegue/action-megacmd@master
+        # Pinned to a full commit SHA rather than @master: this third-party action runs with the
+        # MEGA credentials, so freeze it to a reviewed snapshot instead of trusting whatever is on
+        # its master branch at build time. bf698c6 == the action's v1.4.0 release == the master HEAD
+        # validated for this change, so behavior is identical. Bump deliberately (re-review first).
+        uses: Difegue/action-megacmd@bf698c68edaf91143b2a52d3468595202011bf17 # v1.4.0
         with:
           # Runs `mega-put -c <archive> <remotedir>/`: -c creates the remote folder path if missing,
           # the trailing slash puts the file INTO that folder. Uploads ONLY the single all-in-one
