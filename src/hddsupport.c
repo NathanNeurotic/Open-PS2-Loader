@@ -389,6 +389,11 @@ static void hddFreeVcdGameList(void)
 // owning partition label kept index-parallel in hddVcdParts (so the launch path knows which partition
 // to hand POPSTARTER). The default OPL data-partition mount is restored at the end -- pfs0: is the
 // single shared slot, so the rest of HDD mode breaks if we leave it pointed elsewhere. Returns the count.
+// Bounded wait (ticks, ~1ms each) for the art worker to drain before we remount pfs0:. Matches the
+// MMCE art-abort budget; long enough for an in-flight pfs cover read to abort at its next row
+// boundary, short enough that a truly-wedged read can't hang the view switch forever.
+#define HDD_VCD_ART_DRAIN_TICKS 500
+
 static int hddBuildVcdGameList(void)
 {
     hdd_pops_list_t parts;
@@ -398,6 +403,16 @@ static int hddBuildVcdGameList(void)
 
     if (hddGetPopsPartitionList(&parts) <= 0)
         return 0; // no __.POPS* partitions; pfs0: was not touched here
+
+    // pfs0: is the single shared ps2fs slot; umounting it in the loop below while the cache art
+    // worker still holds an open pfs0: cover fd is the documented HDD-freeze hazard (see hddLaunchVcd).
+    // The in-view L3 toggle / background refresh / Favourites-cold path all reach here WITHOUT the
+    // launch path's pre-quiesce -- FifthFox's "won't switch to VCD / crash on VCD launch on HDD",
+    // which only armed with cover art ON. Quiesce here in one spot so every caller is covered: cancel
+    // + DRAIN pending art (preserveLoaded=0 flags the in-flight read to abort at its next row
+    // boundary) with a bounded, NONZERO wait so the worker releases its pfs0: fd before we remount.
+    // (timeout 0 would return without waiting.) Runs on the IO handler thread, so no ioBlockOps here.
+    (void)cacheCancelPendingImageLoadsTimed(HDD_VCD_ART_DRAIN_TICKS);
 
     for (int p = 0; p < parts.count; p++) {
         char mountSrc[64];

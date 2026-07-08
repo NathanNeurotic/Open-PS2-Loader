@@ -618,8 +618,13 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
             readFunction = &texReadMemFunction;
         } else {
             fd = open(filePath, O_RDONLY, 0);
-            if (fd < 0)
+            if (fd < 0) {
+                // Diagnostic (debug builds only): make a stale/mis-keyed ART folder self-evident.
+                // The "no art on HDD" report is usually content -- covers key off the game's startup
+                // id (e.g. pfs0:OPL/ART/<startup>_COV.png); grep the log for these to spot old names.
+                LOG("texLoadAll: art file not found: %s\n", filePath);
                 return ERR_BAD_FILE;
+            }
 
             memset(&fileReader, 0, sizeof(fileReader));
             fileReader.fd = fd;

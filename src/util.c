@@ -270,6 +270,7 @@ file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned
         fileBuffer->allocResult = allocResult;
         fileBuffer->fd = fd;
         fileBuffer->mode = mode;
+        fileBuffer->writeError = 0;
     }
 
     return fileBuffer;
@@ -294,6 +295,7 @@ file_buffer_t *openFileBufferBuffer(short allocResult, const void *buffer, unsig
     fileBuffer->allocResult = allocResult;
     fileBuffer->fd = -1;
     fileBuffer->mode = O_RDONLY;
+    fileBuffer->writeError = 0;
 
     memcpy(fileBuffer->buffer, buffer, size);
     fileBuffer->buffer[size] = '\0';
@@ -403,14 +405,16 @@ void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)
     // LOG("writeFileBuffer avail: %d size: %d\n", fileBuffer->available, size);
     if (fileBuffer->available && fileBuffer->available + size > fileBuffer->size) {
         // LOG("writeFileBuffer flushing: %d\n", fileBuffer->available);
-        write(fileBuffer->fd, fileBuffer->buffer, fileBuffer->available);
+        if (write(fileBuffer->fd, fileBuffer->buffer, fileBuffer->available) != (int)fileBuffer->available)
+            fileBuffer->writeError = 1; // short write / wedged device -- surfaced by closeFileBuffer
         fileBuffer->lastPtr = fileBuffer->buffer;
         fileBuffer->available = 0;
     }
 
     if (size > fileBuffer->size) {
         // LOG("writeFileBuffer direct write: %d\n", size);
-        write(fileBuffer->fd, inBuf, size);
+        if (write(fileBuffer->fd, inBuf, size) != size)
+            fileBuffer->writeError = 1;
     } else {
         memcpy(fileBuffer->lastPtr, inBuf, size);
         fileBuffer->lastPtr += size;
@@ -420,17 +424,23 @@ void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)
     }
 }
 
-void closeFileBuffer(file_buffer_t *fileBuffer)
+int closeFileBuffer(file_buffer_t *fileBuffer)
 {
+    if (fileBuffer == NULL)
+        return -1; // defensive: current callers null-check first, but never deref a null buffer
+    int err = fileBuffer->writeError;
     if (fileBuffer->fd >= 0) {
         if (fileBuffer->mode != O_RDONLY && fileBuffer->available) {
             // LOG("writeFileBuffer final write: %d\n", fileBuffer->available);
-            write(fileBuffer->fd, fileBuffer->buffer, fileBuffer->available);
+            if (write(fileBuffer->fd, fileBuffer->buffer, fileBuffer->available) != (int)fileBuffer->available)
+                err = 1;
         }
-        close(fileBuffer->fd);
+        if (close(fileBuffer->fd) < 0)
+            err = 1;
     }
     free(fileBuffer->buffer);
     free(fileBuffer);
+    return err ? -1 : 0;
 }
 
 // a simple maximum of two
