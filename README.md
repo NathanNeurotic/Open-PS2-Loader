@@ -218,6 +218,11 @@ Enormous thanks to the testers who run every rolling build on real consoles and 
 reports that shape the fixes — **eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz
 and nuno6573**.
 
+### Financial support (this fork)
+
+Heartfelt thanks to **Akilluminati47** for generously **funding this fork's development** — a
+kindness that keeps the rolling builds coming and is deeply appreciated.
+
 If you want the canonical, actively-maintained project, it lives at
 **[ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader)** — please
 support it. This fork is a downstream labor of love, not a replacement, and it exists only

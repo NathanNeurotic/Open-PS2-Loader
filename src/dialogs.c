@@ -1100,6 +1100,15 @@ struct UIItem diaAbout[] = {
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"icyson55", -1}}},
     {UI_BREAK},
 
+    // Financial Support (RiptOPL fork)
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {NULL, _STR_FINANCIAL_SUPPORT}}},
+    {UI_BREAK},
+
+    {UI_SPACER},
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Akilluminati47", -1}}},
+    {UI_BREAK},
+
     // Build Options
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_BUILD_DETAILS}}},

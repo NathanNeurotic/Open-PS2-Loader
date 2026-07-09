@@ -316,6 +316,8 @@ gui_strings:
   string: Coders
 - label: QANDA
   string: Quality Assurance
+- label: FINANCIAL_SUPPORT
+  string: Financial Support
 - label: BDM_PREFIX
   string: BDM Prefix Path
 - label: HINT_EXITPATH
