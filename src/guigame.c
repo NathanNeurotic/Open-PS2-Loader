@@ -976,6 +976,11 @@ static unsigned char gameEffectiveFlags(item_list_t *support)
 // updater re-runs guiGameSetCoreAwareState on EVERY dialog change with no device handle -- a
 // one-shot diaSetEnabled here would be clobbered (same pattern as the UDPBD loader lock).
 static int bsdfsDeviceCapable = 1;
+// VCD (PS1) view: launches ONLY via POPSTARTER -- never OPL's core nor Neutrino. Set once per dialog
+// entry (same one-shot pattern as bsdfsDeviceCapable) so the core-aware grey keeps every Neutrino-only
+// row greyed for a VCD game even when the global default core is Neutrino (the locked "Default" row
+// would otherwise resolve to the global and un-grey them).
+static int coreNeverNeutrino = 0;
 
 static void guiGameSetCoreAwareState(void)
 {
@@ -985,6 +990,8 @@ static void guiGameSetCoreAwareState(void)
     // iff explicitly Neutrino, OR "Default" while the global gDefaultCoreLoader is Neutrino -- so the
     // Neutrino-only rows grey correctly even when the game defers its core to the global setting.
     neutrino = (coreChoice == 1) || (coreChoice == 2 && gDefaultCoreLoader == 1);
+    if (coreNeverNeutrino)
+        neutrino = 0; // VCD (POPSTARTER-only): keep all Neutrino-only rows greyed regardless of the global
     diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, &neutrinoVideo);
 
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrino);  // Neutrino-only field
@@ -1046,6 +1053,9 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     bsdfsDeviceCapable = (support == NULL) ||
                          ((support->mode >= BDM_MODE && support->mode <= BDM_MODE6 && !vcdViewActive(support->mode)) ||
                           support->mode == FAV_MODE);
+    // VCD games launch through POPSTARTER only, so the Loader Core is inert for them -- keep every
+    // Neutrino-only row greyed even under a Neutrino global default (guiGameSetCoreAwareState reads this).
+    coreNeverNeutrino = (support != NULL && vcdViewActive(support->mode));
 
     // UDPBD games have no OPL core backend -- they always launch via Neutrino
     // (bdmsupport.c forces it). Lock the selector to Neutrino so the screen matches;
