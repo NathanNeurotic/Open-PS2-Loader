@@ -182,8 +182,6 @@ gui_strings:
   string: Applications Start Mode
 - label: AUTO
   string: Auto
-- label: GAMES_DEVICE
-  string: Game's Device
 - label: MANUAL
   string: Manual
 - label: STARTNBD
@@ -758,10 +756,6 @@ gui_strings:
   string: OFF may help performance but can cause MMCE timeouts to result in freezes
 - label: CORE_LOADER
   string: Loader Core
-- label: DEFAULT_CORE
-  string: Default Loader Core
-- label: HINT_DEFAULT_CORE
-  string: Global default core for games whose per-game Loader Core is set to Default. <OPL> is the native core; Neutrino chains the external neutrino.elf. A per-game choice always overrides this.
 - label: NEUTRINO_BAD_FORMAT
   string: Neutrino does not support this file format, launching with <OPL> core
 - label: NEUTRINO_NOT_FOUND
@@ -967,3 +961,12 @@ gui_strings:
   string: First disc only (multi-disc PS1)
 - label: HINT_VCD_FIRST_DISC
   string: Show only Disc 1 of a multi-disc PS1 game in the device lists (POPSLoader style). Hides files named (Disc 2), (CD 2), etc. All discs stay on the card for in-game swapping; Favourites are not filtered.
+# APPEND-ONLY BELOW: external lang_*.lng files are matched by POSITION with no version check, so new
+# labels must only ever be added at the END -- a mid-list insert shifts every later string and makes a
+# stale translation file render wrong text across most of the UI.
+- label: GAMES_DEVICE
+  string: Game's Device
+- label: DEFAULT_CORE
+  string: Default Loader Core
+- label: HINT_DEFAULT_CORE
+  string: Global default core for games whose per-game Loader Core is set to Default. <OPL> is the native core; Neutrino chains the external neutrino.elf. A per-game choice always overrides this.
