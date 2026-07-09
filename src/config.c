@@ -180,7 +180,11 @@ static char cfgDevice[8];
 
 char *configGetDir(void)
 {
-    if (!strncmp(cfgDevice, "mc", 2)) {
+    // Substitute the wildcard slot digit ONLY when it actually is the "mc?:" wildcard AND a card was
+    // detected. Blind substitution stamped getmcID()'s -1 (0xFF) -- or a probe-time other-card digit --
+    // over a CONCRETE "mc0:"/"mc1:" prefix from an appdir-on-MC boot, so the "Settings saved to %s"
+    // toast rendered a garbage byte or the wrong card. Legacy "mc?:" homes keep today's behaviour.
+    if (!strncmp(cfgDevice, "mc", 2) && cfgDevice[2] == '?' && getmcID() >= 0) {
         cfgDevice[2] = getmcID();
     }
 

@@ -1878,8 +1878,16 @@ static void _saveConfig()
         configSetStr(configNet, CONFIG_NET_SMB_PASSW, gPCPassword);
     }
 
+    // Create/refresh the legacy mc?:OPL home ONLY in legacy-discovery mode (no known boot dir). The
+    // "mc" prefix test alone cannot tell the legacy mc?:OPL config root from an APPDIR THAT LIVES ON
+    // A MEMORY CARD (FMCB-style mc0:/APPS install: configGetDir() truncates either to "mc0:"), so an
+    // appdir-on-MC boot used to sprout an unwanted mc?:/OPL folder (+ icons) on every settings/theme/
+    // last-played save while the .cfg files themselves correctly stayed in the appdir -- and the
+    // configPrepareNotifications(gBaseMCDir) call re-pointed the "Settings saved to %s" toast at the
+    // wildcard card instead of the real appdir. gBootDir is the authoritative gate, same as the
+    // alternate-save logic below: non-empty means the appdir IS the config root, MC stays untouched.
     char *path = configGetDir();
-    if (!strncmp(path, "mc", 2)) {
+    if (gBootDir[0] == '\0' && !strncmp(path, "mc", 2)) {
         checkMCFolder();
         configPrepareNotifications(gBaseMCDir);
     }
