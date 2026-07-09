@@ -968,7 +968,12 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
         }
 
         int posX = basePosX + i * coverDistance + animOffset + recenterX * drawW / csw;
-        int posY = elem->posY + recenterY * drawH / csh;
+        // Covers draw ALIGN_CENTER at elem->posY, so a tall (portrait) cover's TOP overshoots a square
+        // cover's top by (drawH-drawW)/2 and touches the background frame. Shift portrait covers DOWN by
+        // that excess so every cover TOP-aligns at the square baseline -- square covers (Apps, square
+        // VCD art) get 0 and are unchanged, and a mixed tab (Favourites) keeps a consistent cover top.
+        int topAlign = (drawH > drawW) ? (drawH - drawW) / 2 : 0;
+        int posY = elem->posY + recenterY * drawH / csh + topAlign;
 
         u64 coverColor = (gCoverflowDimCovers && i != centerIndex) ? GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x40) : gDefaultCol;
 
