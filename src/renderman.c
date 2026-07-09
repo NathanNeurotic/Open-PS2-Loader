@@ -476,6 +476,10 @@ void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w,
         rm_quad_t iquad = quad;
         iquad.ul.x = quad.ul.x + ((ulx < blx) ? ulx : blx);
         iquad.br.x = quad.ul.x + ((urx > brx) ? urx : brx);
+        // Base the mirror height on the inlay WINDOW's top (uly/ury, already Y_SCALEd into the same
+        // screen space as quad.ul.y), not the frame's top -- otherwise reflH spans the padded frame
+        // height and the mirrored art renders vertically stretched, overflowing the frame's mirror.
+        iquad.ul.y = quad.ul.y + ((uly < ury) ? uly : ury);
         iquad.ul.u = 0.0f;
         iquad.br.u = inlay->Width;
         iquad.ul.v = 0.0f;
