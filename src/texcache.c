@@ -596,7 +596,14 @@ static void cacheInvalidateEntryLocked(cache_entry_t *entry, int freeTxt, int pr
                 // BDM/HDD/USB cover or disc icon FINISH and land in cache instead of being cancelled and
                 // re-queued on every scroll step. With one art worker and #DiscType now adding a 2nd
                 // request per game, the blanket abort starved both cover and disc (temperamental loading).
-                if (!preserveLoaded || cacheIsAbortableMmceRequest(req))
+                // #120: gate the MMCE abort on ACTIVE navigation. On a STATIC screen (VCD info page, a
+                // settled list) the exit/refresh generation advance must NOT kill the in-flight MMCE
+                // read -- otherwise the 2nd VCD screenshot (SCR2, always last on the single worker) is
+                // discarded and only reappears after an exit+re-enter. Info-exit is Circle/Cross (not
+                // nav keys), so this gate is false there and SCR2 completes; while scrolling the abort
+                // still fires, preserving the #116 slow-cover behaviour. Completion is UID-guarded, so a
+                // late-landing read can never show a wrong-item texture.
+                if (!preserveLoaded || (cacheIsAbortableMmceRequest(req) && cacheIsNavigationActive()))
                     req->abortRequested = 1;
             } else {
                 entry->qr = NULL;

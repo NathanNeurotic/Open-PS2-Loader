@@ -1976,6 +1976,11 @@ static void thmLoadFonts(config_set_t *themeConfig, const char *themePath, theme
     }
 }
 
+// #120: how long a theme (re)load waits for MMCE-backed art to abort before force-resetting the art
+// worker (mirrors mmcesupport.c's MMCE_ART_ABORT_WAIT_TICKS). A wedged MMCE read that never returns is
+// broken out of via cacheEnd(1)/cacheInit() after this bound, so a theme swap can never hang.
+#define THM_MMCE_ART_ABORT_WAIT_TICKS 500
+
 static void thmLoad(const char *themePath)
 {
     LOG("THEMES Load theme path=%s\n", themePath);
@@ -2013,6 +2018,18 @@ static void thmLoad(const char *themePath)
     newT->coverflowCoverOffset = 0;
     newT->loadingIcon = NULL;
     newT->loadingIconCount = LOAD7_ICON - LOAD0_ICON + 1;
+
+    // #120: a wedged MMCE art read (SD2PSX / MemCard PRO2 card still mid-mount at boot or right after an
+    // IGR return) holds the single shared fileXio channel; this theme (re)load's own blocking reads
+    // below -- and the terminal art drain further down -- would then wait on it forever, freezing the
+    // whole screen (game list stuck at 0,0) and needing a power cycle. Abort MMCE-backed art with a
+    // timeout FIRST, force-resetting the art worker if it will not drain (exactly like mmceLaunchGame),
+    // so the channel is free before we touch storage. Safe before cacheInit (thmInit runs first): with
+    // no MMCE requests queued this returns immediately and the reset branch is not taken.
+    if (!cacheAbortMmceImageLoadsTimed(THM_MMCE_ART_ABORT_WAIT_TICKS)) {
+        cacheEnd(1);
+        cacheInit();
+    }
 
     config_set_t *themeConfig = NULL;
     if (!themePath) {
@@ -2221,6 +2238,16 @@ static void thmLoad(const char *themePath)
 
     configFree(themeConfig); // all themeConfig reads are done now (last was use_settings_bg above)
 
+    // #120: bound the pre-swap art drain too. Abort MMCE art (force-resetting the worker on timeout) so
+    // the otherwise-UNBOUNDED cacheCancelPendingImageLoads() below can only ever wait on fast non-MMCE
+    // (USB / MC / VCD) requests -- never a wedged MMCE read -- and therefore cannot deadlock the theme
+    // swap. NOTE: cacheWaitForCacheRequests inside the subsequent thmFree() is deliberately left
+    // unbounded -- after this reset the only live requests are those fast non-MMCE loads, and bounding
+    // that wait could free a cache with a request still in flight (use-after-free).
+    if (!cacheAbortMmceImageLoadsTimed(THM_MMCE_ART_ABORT_WAIT_TICKS)) {
+        cacheEnd(1);
+        cacheInit();
+    }
     cacheCancelPendingImageLoads();
     gTheme = newT;
     thmFree(curT);
