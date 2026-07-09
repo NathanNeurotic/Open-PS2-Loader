@@ -459,25 +459,34 @@ void guiShowNetCompatUpdateSingle(int id, item_list_t *support, config_set_t *co
 static int guiUpdater(int modified)
 {
     int showAutoStartLast;
-    int bdmaApply;
-    int popsDev;
 
     if (modified) {
         diaGetInt(diaConfig, CFG_LASTPLAYED, &showAutoStartLast);
         diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, showAutoStartLast);
         diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, showAutoStartLast);
+    }
+    return 0;
+}
 
+// VCD Settings live-updater: same BDMA-apply + POPSTARTER-Custom visibility logic that used to run
+// in guiUpdater, now bound to the diaVcdConfig dialog.
+static int guiVcdUpdater(int modified)
+{
+    int bdmaApply;
+    int popsDev;
+
+    if (modified) {
         // Hide the manual BDMA Source/Mode pickers while "VCD BDMA Apply on Launch" is ON (it auto-equips).
-        diaGetInt(diaConfig, CFG_BDMA_APPLY, &bdmaApply);
-        diaSetVisible(diaConfig, CFG_LBL_BDMASOURCE, !bdmaApply);
-        diaSetVisible(diaConfig, CFG_BDMASOURCE, !bdmaApply);
-        diaSetVisible(diaConfig, CFG_LBL_BDMAMODE, !bdmaApply);
-        diaSetVisible(diaConfig, CFG_BDMAMODE, !bdmaApply);
+        diaGetInt(diaVcdConfig, CFG_BDMA_APPLY, &bdmaApply);
+        diaSetVisible(diaVcdConfig, CFG_LBL_BDMASOURCE, !bdmaApply);
+        diaSetVisible(diaVcdConfig, CFG_BDMASOURCE, !bdmaApply);
+        diaSetVisible(diaVcdConfig, CFG_LBL_BDMAMODE, !bdmaApply);
+        diaSetVisible(diaVcdConfig, CFG_BDMAMODE, !bdmaApply);
 
         // Reveal the free-text POPSTARTER.ELF Path field only when the device picker is "Custom".
-        diaGetInt(diaConfig, CFG_POPSTARTER_DEVICE, &popsDev);
-        diaSetVisible(diaConfig, CFG_LBL_POPSTARTER_PATH, popsDev == POPS_DEV_CUSTOM);
-        diaSetVisible(diaConfig, CFG_POPSTARTER_PATH, popsDev == POPS_DEV_CUSTOM);
+        diaGetInt(diaVcdConfig, CFG_POPSTARTER_DEVICE, &popsDev);
+        diaSetVisible(diaVcdConfig, CFG_LBL_POPSTARTER_PATH, popsDev == POPS_DEV_CUSTOM);
+        diaSetVisible(diaVcdConfig, CFG_POPSTARTER_PATH, popsDev == POPS_DEV_CUSTOM);
     }
     return 0;
 }
@@ -535,38 +544,10 @@ void guiShowConfig()
     const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", _l(_STR_GAMES_DEVICE), NULL}; // device TYPE holding /neutrino/neutrino.elf (NEUTRINO_DEV_*); "Game's Device" (NEUTRINO_DEV_GAME) appended last to match the enum tail
     diaSetEnum(diaConfig, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
     diaSetInt(diaConfig, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);
-    // POPSTARTER.ELF device TYPE holding POPS/POPSTARTER.ELF (POPS_DEV_*). MUST stay in sync with the
-    // resolution switch in vcdResolvePopstarter() (vcdsupport.c). Custom reveals the free-text path below.
-    const char *popsDevStrs[] = {_l(_STR_DEFAULT), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", "Custom", _l(_STR_GAMES_DEVICE), NULL}; // "Game's Device" (POPS_DEV_GAME) appended last to match the enum tail
-    diaSetEnum(diaConfig, CFG_POPSTARTER_DEVICE, popsDevStrs);
-    diaSetInt(diaConfig, CFG_POPSTARTER_DEVICE, gPopstarterDevice);
-    diaSetString(diaConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
-    // These path fields auto-resolve a built-in default when blank, so show a dim "Default"
-    // placeholder rather than "<not set>" -- the empty value (and thus the fallback) is kept.
+    // IGR Path auto-resolves a built-in default when blank, so show a dim "Default" placeholder
+    // rather than "<not set>" -- the empty value (and thus the fallback) is kept. (VCD/POPSTARTER
+    // and BDMA settings moved to their own "VCD Settings" page -- see guiShowVcdConfig.)
     diaSetShowDefaultWhenEmpty(diaConfig, CFG_EXITTO, 1);
-    diaSetShowDefaultWhenEmpty(diaConfig, CFG_POPSTARTER_PATH, 1);
-
-    // BDMA (BDMAssault exFAT driver) equip. MODE reflects what's ACTUALLY on the card (read the
-    // mc?:/POPSTARTER/ marker), so the menu is honest even if POPSLoader or a prior session set it.
-    const char *bdmaSourceStrs[] = {_l(_STR_BDMA_SRC_USB), _l(_STR_BDMA_SRC_MX4SIO), _l(_STR_BDMA_SRC_MMCE), _l(_STR_BDMA_SRC_HDD), NULL};
-    const char *bdmaModeStrs[] = {_l(_STR_BDMA_MODE_FAT32), _l(_STR_BDMA_MODE_USBEXFAT), _l(_STR_BDMA_MODE_MX4SIO), _l(_STR_BDMA_MODE_MMCE), _l(_STR_BDMA_MODE_ATA), NULL};
-    gBdmaMode = vcdReadBdmaMode();
-    diaSetEnum(diaConfig, CFG_BDMASOURCE, bdmaSourceStrs);
-    diaSetEnum(diaConfig, CFG_BDMAMODE, bdmaModeStrs);
-    diaSetInt(diaConfig, CFG_BDMASOURCE, gBdmaSource);
-    diaSetInt(diaConfig, CFG_BDMAMODE, gBdmaMode);
-    // "VCD BDMA Apply on Launch": when ON the launch auto-equips the matching driver, so the manual
-    // SOURCE/MODE pickers are hidden; flipping it OFF (live, via guiUpdater) reveals them.
-    diaSetInt(diaConfig, CFG_BDMA_APPLY, gBdmaApplyOnLaunch);
-    diaSetInt(diaConfig, CFG_VCD_HIDE_GAMEID, gVcdHideGameId);
-    diaSetInt(diaConfig, CFG_VCD_FIRST_DISC_ONLY, gVcdFirstDiscOnly);
-    diaSetVisible(diaConfig, CFG_LBL_BDMASOURCE, !gBdmaApplyOnLaunch);
-    diaSetVisible(diaConfig, CFG_BDMASOURCE, !gBdmaApplyOnLaunch);
-    diaSetVisible(diaConfig, CFG_LBL_BDMAMODE, !gBdmaApplyOnLaunch);
-    diaSetVisible(diaConfig, CFG_BDMAMODE, !gBdmaApplyOnLaunch);
-    // POPSTARTER.ELF Path is the Custom-only escape hatch; seed it hidden unless the picker is Custom.
-    diaSetVisible(diaConfig, CFG_LBL_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
-    diaSetVisible(diaConfig, CFG_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
 
     diaSetInt(diaConfig, CFG_ENWRITEOP, gEnableWrite);
     diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
@@ -588,44 +569,85 @@ reshow_config:
         diaGetString(diaConfig, CFG_EXITTO, gExitPath, sizeof(gExitPath));
         diaGetInt(diaConfig, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(diaConfig, CFG_NEUTRINO_DEVICE, &gNeutrinoDevice);
-        diaGetInt(diaConfig, CFG_POPSTARTER_DEVICE, &gPopstarterDevice);
+        diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
+        diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
+        diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);
+        DisableCron = 1; // Disable Auto Start Last Played counter (we don't want to call it right after enable it on GUI)
+
+        applyConfig(-1, -1, 0);
+        menuReinitMainMenu();
+    }
+}
+
+// VCD Settings: PS1-via-POPSTARTER launch config (POPSTARTER.ELF device/path), BDMA exFAT-driver
+// equip, and VCD list display options. All relocated out of General Settings; CFG ids are shared with
+// the old General rows, so saved config values map through unchanged.
+void guiShowVcdConfig(void)
+{
+    // POPSTARTER.ELF device TYPE (POPS_DEV_*). MUST stay in sync with vcdResolvePopstarter() (vcdsupport.c).
+    const char *popsDevStrs[] = {_l(_STR_DEFAULT), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", "Custom", _l(_STR_GAMES_DEVICE), NULL}; // "Game's Device" (POPS_DEV_GAME) appended last to match the enum tail
+    diaSetEnum(diaVcdConfig, CFG_POPSTARTER_DEVICE, popsDevStrs);
+    diaSetInt(diaVcdConfig, CFG_POPSTARTER_DEVICE, gPopstarterDevice);
+    diaSetString(diaVcdConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
+    diaSetShowDefaultWhenEmpty(diaVcdConfig, CFG_POPSTARTER_PATH, 1);
+
+    // BDMA (BDMAssault exFAT driver) equip. MODE reflects what's ACTUALLY on the card (marker read),
+    // so the menu is honest even if POPSLoader or a prior session set it.
+    const char *bdmaSourceStrs[] = {_l(_STR_BDMA_SRC_USB), _l(_STR_BDMA_SRC_MX4SIO), _l(_STR_BDMA_SRC_MMCE), _l(_STR_BDMA_SRC_HDD), NULL};
+    const char *bdmaModeStrs[] = {_l(_STR_BDMA_MODE_FAT32), _l(_STR_BDMA_MODE_USBEXFAT), _l(_STR_BDMA_MODE_MX4SIO), _l(_STR_BDMA_MODE_MMCE), _l(_STR_BDMA_MODE_ATA), NULL};
+    gBdmaMode = vcdReadBdmaMode();
+    diaSetEnum(diaVcdConfig, CFG_BDMASOURCE, bdmaSourceStrs);
+    diaSetEnum(diaVcdConfig, CFG_BDMAMODE, bdmaModeStrs);
+    diaSetInt(diaVcdConfig, CFG_BDMASOURCE, gBdmaSource);
+    diaSetInt(diaVcdConfig, CFG_BDMAMODE, gBdmaMode);
+    diaSetInt(diaVcdConfig, CFG_BDMA_APPLY, gBdmaApplyOnLaunch);
+    diaSetInt(diaVcdConfig, CFG_VCD_HIDE_GAMEID, gVcdHideGameId);
+    diaSetInt(diaVcdConfig, CFG_VCD_FIRST_DISC_ONLY, gVcdFirstDiscOnly);
+    // "VCD BDMA Apply on Launch" ON auto-equips, so hide the manual SOURCE/MODE pickers (guiVcdUpdater
+    // re-reveals them live when toggled off). POPSTARTER Path is the Custom-only escape hatch.
+    diaSetVisible(diaVcdConfig, CFG_LBL_BDMASOURCE, !gBdmaApplyOnLaunch);
+    diaSetVisible(diaVcdConfig, CFG_BDMASOURCE, !gBdmaApplyOnLaunch);
+    diaSetVisible(diaVcdConfig, CFG_LBL_BDMAMODE, !gBdmaApplyOnLaunch);
+    diaSetVisible(diaVcdConfig, CFG_BDMAMODE, !gBdmaApplyOnLaunch);
+    diaSetVisible(diaVcdConfig, CFG_LBL_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
+    diaSetVisible(diaVcdConfig, CFG_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
+
+    int ret = diaExecuteDialog(diaVcdConfig, -1, 1, &guiVcdUpdater);
+    if (ret) {
+        diaGetInt(diaVcdConfig, CFG_POPSTARTER_DEVICE, &gPopstarterDevice);
         {
             // The dialog field is char[32]; only adopt the typed value if it actually changed, so
-            // opening+saving General Settings never truncates a longer path stored via the cfg.
+            // opening+saving VCD Settings never truncates a longer path stored via the cfg.
             char tmpPop[sizeof(gPopstarterPath)];
-            diaGetString(diaConfig, CFG_POPSTARTER_PATH, tmpPop, sizeof(tmpPop));
+            diaGetString(diaVcdConfig, CFG_POPSTARTER_PATH, tmpPop, sizeof(tmpPop));
             if (strncmp(tmpPop, gPopstarterPath, 31) != 0)
                 snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", tmpPop);
         }
-        diaGetInt(diaConfig, CFG_BDMA_APPLY, &gBdmaApplyOnLaunch);
-        diaGetInt(diaConfig, CFG_VCD_HIDE_GAMEID, &gVcdHideGameId); // display-only; next list draw reflects it, no rebuild needed
+        diaGetInt(diaVcdConfig, CFG_BDMA_APPLY, &gBdmaApplyOnLaunch);
+        diaGetInt(diaVcdConfig, CFG_VCD_HIDE_GAMEID, &gVcdHideGameId); // display-only; next list draw reflects it, no rebuild needed
         {
             // #118: first-disc-only changes the VCD list CONTENTS (discs hidden/shown), so unlike the
             // cosmetic hide-gameid it must rebuild every VCD-capable device page when toggled. Device
             // lists only -- Favourites are intentionally left unfiltered (an explicit user pick).
             int previousFirstDiscOnly = gVcdFirstDiscOnly;
-            diaGetInt(diaConfig, CFG_VCD_FIRST_DISC_ONLY, &gVcdFirstDiscOnly);
+            diaGetInt(diaVcdConfig, CFG_VCD_FIRST_DISC_ONLY, &gVcdFirstDiscOnly);
             if (gVcdFirstDiscOnly != previousFirstDiscOnly)
                 vcdMarkAllDirty();
         }
         {
-            // Equip BDMA modules only when SOURCE or MODE actually changed (the equip copies
-            // files to the memory card). vcdEquipBdma is free-space-gated + truncation-safe, so a
-            // failure never corrupts the card; report it and resync MODE to what's really equipped.
+            // Equip BDMA modules only when SOURCE or MODE actually changed (the equip copies files to
+            // the memory card). vcdEquipBdma is free-space-gated + truncation-safe, so a failure never
+            // corrupts the card; report it and resync MODE to what's really equipped.
             int oldSrc = gBdmaSource, oldMode = gBdmaMode; // baselines (MODE = card's actual state)
             int newSrc = oldSrc, newMode = oldMode;
-            diaGetInt(diaConfig, CFG_BDMASOURCE, &newSrc);
-            diaGetInt(diaConfig, CFG_BDMAMODE, &newMode);
+            diaGetInt(diaVcdConfig, CFG_BDMASOURCE, &newSrc);
+            diaGetInt(diaVcdConfig, CFG_BDMAMODE, &newMode);
             // Re-equip on any MODE change, and on a SOURCE change only when MODE installs modules. FAT32
-            // mode ignores the source entirely, so a SOURCE-only move while already FAT32 must NOT re-run
-            // the pointless unlink + marker rewrite.
+            // ignores the source, so a SOURCE-only move while already FAT32 must NOT re-run the pointless work.
             if (newMode != oldMode || (newMode != VCD_BDMA_FAT32 && newSrc != oldSrc)) {
                 char bdmaDiag[160];
                 int er = vcdEquipBdma(newSrc, newMode, bdmaDiag, sizeof(bdmaDiag));
                 if (er == -4) {
-                    // Append what the equip actually probed (needed files + which source devices were
-                    // mounted) so a tester can screenshot it -- tells us "device not seen" vs "files
-                    // mis-named/placed" in one shot instead of another guess.
                     char msg[256];
                     snprintf(msg, sizeof(msg), "%s\n%s", _l(_STR_BDMA_ERR_SRC), bdmaDiag);
                     guiMsgBox(msg, 0, NULL);
@@ -637,11 +659,37 @@ reshow_config:
             }
             gBdmaSource = newSrc; // remember the source preference regardless of equip outcome
         }
-        diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
-        diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
-        diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);
-        DisableCron = 1; // Disable Auto Start Last Played counter (we don't want to call it right after enable it on GUI)
+        applyConfig(-1, -1, 0);
+        menuReinitMainMenu();
+    }
+}
 
+// MMCE Settings: SD2PSX / MemCard PRO2 tuning (memory-card slot, IGR slot, GameID push, SIO2 ack-wait
+// pacing, alarm usage). Relocated out of Device Settings; CFG ids shared with the old Device rows.
+void guiShowMmceConfig(void)
+{
+    const char *deviceSlots[] = {"0", "1", _l(_STR_AUTO), NULL};
+    const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
+    const char *deviceOnOff[] = {"OFF", "ON", NULL};
+    const char *deviceIGRSlots[] = {"NONE", "0", "1", "BOTH", NULL};
+
+    diaSetEnum(diaMmceConfig, CFG_MMCESLOT, deviceSlots);
+    diaSetInt(diaMmceConfig, CFG_MMCESLOT, gMMCESlot);
+    diaSetEnum(diaMmceConfig, CFG_MMCEIGRSLOT, deviceIGRSlots);
+    diaSetInt(diaMmceConfig, CFG_MMCEIGRSLOT, gMMCEIGRSlot);
+    diaSetInt(diaMmceConfig, CFG_MMCEGAMEID, gMMCEEnableGameID);
+    diaSetEnum(diaMmceConfig, CFG_MMCE_WAIT_CYCLES, deviceAckWaitCycles);
+    diaSetInt(diaMmceConfig, CFG_MMCE_WAIT_CYCLES, gMMCEAckWaitCycles);
+    diaSetEnum(diaMmceConfig, CFG_MMCE_USE_ALARMS, deviceOnOff);
+    diaSetInt(diaMmceConfig, CFG_MMCE_USE_ALARMS, gMMCEUseAlarms);
+
+    int ret = diaExecuteDialog(diaMmceConfig, -1, 1, NULL);
+    if (ret) {
+        diaGetInt(diaMmceConfig, CFG_MMCESLOT, &gMMCESlot);
+        diaGetInt(diaMmceConfig, CFG_MMCEIGRSLOT, &gMMCEIGRSlot);
+        diaGetInt(diaMmceConfig, CFG_MMCEGAMEID, &gMMCEEnableGameID);
+        diaGetInt(diaMmceConfig, CFG_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
+        diaGetInt(diaMmceConfig, CFG_MMCE_USE_ALARMS, &gMMCEUseAlarms);
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
     }
@@ -1013,10 +1061,6 @@ void guiShowDeviceConfig(void)
 {
     const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), _l(_STR_FAV), NULL};
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
-    const char *deviceSlots[] = {"0", "1", _l(_STR_AUTO), NULL};
-    const char *deviceAckWaitCycles[] = {"0", "1", "2", "3", "4", "5", NULL};
-    const char *deviceOnOff[] = {"OFF", "ON", NULL};
-    const char *deviceIGRSlots[] = {"NONE", "0", "1", "BOTH", NULL};
     const char *netProtocols[] = {"Off", "SMB", "UDPFS", "UDPBD", NULL}; // UDPBD kept for users on the older SUDPBDv2 server
     const char *udpfsModes[] = {"Files", "Image", NULL};                 // Files=udpfs_ioman filesystem, Image=udpfs_bd block
 
@@ -1072,18 +1116,10 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_HDDCACHE, hddCacheSize);
     diaSetInt(diaDeviceConfig, CFG_SMBCACHE, smbCacheSize);
 
-    // MMCE
+    // MMCE Start Mode stays with the other device start modes; the MMCE game-config (slot / IGR slot /
+    // GameID / ack-wait / alarms) moved to its own "MMCE Settings" page -- see guiShowMmceConfig.
     diaSetEnum(diaDeviceConfig, CFG_MMCEMODE, deviceModes);
     diaSetInt(diaDeviceConfig, CFG_MMCEMODE, gMMCEStartMode);
-    diaSetEnum(diaDeviceConfig, CFG_MMCESLOT, deviceSlots);
-    diaSetInt(diaDeviceConfig, CFG_MMCESLOT, gMMCESlot);
-    diaSetEnum(diaDeviceConfig, CFG_MMCEIGRSLOT, deviceIGRSlots);
-    diaSetInt(diaDeviceConfig, CFG_MMCEIGRSLOT, gMMCEIGRSlot);
-    diaSetEnum(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, deviceAckWaitCycles);
-    diaSetInt(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, gMMCEAckWaitCycles);
-    diaSetEnum(diaDeviceConfig, CFG_MMCE_USE_ALARMS, deviceOnOff);
-    diaSetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, gMMCEUseAlarms);
-    diaSetInt(diaDeviceConfig, CFG_MMCEGAMEID, gMMCEEnableGameID);
 
     int ret = diaExecuteDialog(diaDeviceConfig, -1, 1, &guiDeviceUpdater);
     if (ret) {
@@ -1131,11 +1167,6 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_SMBCACHE, &smbCacheSize);
 
         diaGetInt(diaDeviceConfig, CFG_MMCEMODE, &gMMCEStartMode);
-        diaGetInt(diaDeviceConfig, CFG_MMCESLOT, &gMMCESlot);
-        diaGetInt(diaDeviceConfig, CFG_MMCEIGRSLOT, &gMMCEIGRSlot);
-        diaGetInt(diaDeviceConfig, CFG_MMCEGAMEID, &gMMCEEnableGameID);
-        diaGetInt(diaDeviceConfig, CFG_MMCE_WAIT_CYCLES, &gMMCEAckWaitCycles);
-        diaGetInt(diaDeviceConfig, CFG_MMCE_USE_ALARMS, &gMMCEUseAlarms);
 
         // The UDP transports' ministack has no DHCP client; with DHCP on, ps2_ip[] is never refreshed, so
         // they need a static PS2 IP. Warn when switching TO a UDP protocol (UDPFS/UDPFSBD/UDPBD) from a

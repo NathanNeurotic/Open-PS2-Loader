@@ -742,6 +742,8 @@ gui_strings:
   string: Advanced
 - label: MMCE_SETTINGS
   string: MMCE Settings
+- label: VCD_SETTINGS
+  string: VCD Settings
 - label: MMCE_SEMA
   string: Lock Sema Enqueuing Method
 - label: HINT_MMCE_SEMA

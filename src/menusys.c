@@ -27,6 +27,8 @@
 enum MENU_IDs {
     MENU_SETTINGS = 0,
     MENU_DEVICE_SETTINGS,
+    MENU_VCD_SETTINGS,
+    MENU_MMCE_SETTINGS,
     MENU_GFX_SETTINGS,
     MENU_AUDIO_SETTINGS,
     MENU_CONTROLLER_SETTINGS,
@@ -435,6 +437,8 @@ static void menuInitMainMenu(void)
     submenuAppendItem(&mainMenu, -1, NULL, MENU_LAUNCH_PS2_DISC, _STR_LAUNCH_PS2_DISC, NULL);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_SETTINGS, _STR_GENERAL_SETTINGS, NULL);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_DEVICE_SETTINGS, _STR_DEVICE_SETTINGS, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_VCD_SETTINGS, _STR_VCD_SETTINGS, NULL);
+    submenuAppendItem(&mainMenu, -1, NULL, MENU_MMCE_SETTINGS, _STR_MMCE_SETTINGS, NULL);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_GFX_SETTINGS, _STR_GFX_SETTINGS, NULL);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_AUDIO_SETTINGS, _STR_AUDIO_SETTINGS, NULL);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_CONTROLLER_SETTINGS, _STR_CONTROLLER_SETTINGS, NULL);
@@ -1146,6 +1150,12 @@ void menuHandleInputMenu()
         } else if (id == MENU_DEVICE_SETTINGS) {
             if (menuCheckParentalLock() == 0)
                 guiShowDeviceConfig();
+        } else if (id == MENU_VCD_SETTINGS) {
+            if (menuCheckParentalLock() == 0)
+                guiShowVcdConfig();
+        } else if (id == MENU_MMCE_SETTINGS) {
+            if (menuCheckParentalLock() == 0)
+                guiShowMmceConfig();
         } else if (id == MENU_GFX_SETTINGS) {
             if (menuCheckParentalLock() == 0)
                 guiShowUIConfig();

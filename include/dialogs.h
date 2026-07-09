@@ -293,5 +293,7 @@ extern struct UIItem diaOSDConfig[];
 extern struct UIItem diaCoverflowConfig[];
 extern struct UIItem diaNeutrinoArgs[];
 extern struct UIItem diaDeviceConfig[];
+extern struct UIItem diaVcdConfig[];
+extern struct UIItem diaMmceConfig[];
 
 #endif
