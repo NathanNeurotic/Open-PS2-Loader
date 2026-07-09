@@ -2199,6 +2199,13 @@ static void thmLoad(const char *themePath)
     for (i = BDM_ICON; i <= START_ICON; i++)
         thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault);
 
+    // UDPFS_ICON is appended at the very END of the enum (after CASE_OVERLAY2) so that saved
+    // favourite icon_ids stay ABI-stable -- which puts it OUTSIDE the BDM_ICON..START_ICON device
+    // range above. Load it explicitly with the same disk-override + embedded-default semantics, or
+    // the UDPFS filesystem tab and the UDPFSBD block tab (bdmGetIconId returns UDPFS_ICON when
+    // gNetBootProtocol == NET_BOOT_UDPFS) draw no icon (thmGetTexture(UDPFS_ICON) returns NULL).
+    thmLoadResource(&newT->textures[UDPFS_ICON], UDPFS_ICON, themePath, GS_PSM_CT32, newT->useDefault);
+
     // Control-hint glyphs + Favourites tab icon/star: internal defaults only (theme-independent).
     // Contiguous L3_ICON..FAV_MARK in the enum -> the VCD L3 hint (L3_ICON), the Favourites R3 hint
     // (R3_ICON), the FAV tab icon (FAV_ICON) and the favourited-item star (FAV_MARK). Previously the
