@@ -197,6 +197,10 @@ struct UIItem diaConfig[] = {
     {UI_SPACER},
     {UI_BOOL, CFG_VCD_HIDE_GAMEID, 1, 1, _STR_HINT_VCD_HIDE_GAMEID, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VCD_FIRST_DISC}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_VCD_FIRST_DISC_ONLY, 1, 1, _STR_HINT_VCD_FIRST_DISC, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_WRITE}}},
     {UI_SPACER},

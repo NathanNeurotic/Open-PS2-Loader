@@ -1146,13 +1146,15 @@ static int bdmGetImage(item_list_t *itemList, char *folder, int isRelative, char
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
-    // VCD (PS1) covers: fall back disc-id -> filename -> POPSLoader's next-to-VCD <dev>/POPS/<name>.png
-    // so a cover a POPSLoader user already has is found. Local devices use '/'. Root-anchored like the
-    // VCD scan itself (the POPS layout lives at the device root, outside any gBDMPrefix library folder).
-    if (isRelative && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO"))) {
+    // VCD (PS1) art (issue #118: ALL suffixes -- cover, background, logo, screenshot -- not just cover):
+    // disc-id -> filename in <dev>ART/, then the cover/icon-only POPSLoader next-to-VCD fallback
+    // (vcdArtPopsDir gives "POPS" for COV/ICO, NULL for BG/SCR so those never render the cover). Local
+    // devices use '/'. Root-anchored like the VCD scan (POPS layout lives at the device root, outside
+    // gBDMPrefix). AttributeImage glyphs are absolute (isRelative==0) so they stay out.
+    if (isRelative && vcdViewActive(itemList->mode)) {
         char vcdPrefix[BDM_DEVICE_ROOT_MAX + 2];
         bdmBuildVcdPrefix(vcdPrefix, sizeof(vcdPrefix), itemList->mode);
-        return vcdLoadArt(vcdPrefix, '/', folder, value, suffix, "POPS", resultTex);
+        return vcdLoadArt(vcdPrefix, '/', folder, value, suffix, vcdArtPopsDir(suffix), resultTex);
     }
 
     if (isRelative)

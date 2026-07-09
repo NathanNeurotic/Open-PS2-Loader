@@ -334,6 +334,18 @@ void vcdMarkAllDirty(void)
             vcdDirty[m] = 1;
 }
 
+// Which POPSLoader next-to-VCD image (step 3 of vcdLoadArt) applies to a given art suffix. Only the
+// cover/icon fall back to the single suffix-less POPS/<name>.png (interop with existing POPSLoader
+// users); background/logo/screenshot must NOT, or they would each render the cover instead. Shared by
+// every device getImage VCD branch AND favGetImage so the source-list and Favourites VCD art (issue
+// #118 -- BG/screenshot for PS1) resolve identically and never drift.
+const char *vcdArtPopsDir(const char *suffix)
+{
+    if (suffix != NULL && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO")))
+        return "POPS";
+    return NULL;
+}
+
 // 3-level cover/icon fallback for VCD (PS1) games, so one art file can serve OPL and POPSLoader:
 //   (1) OPL ART keyed by the PS1 disc id  -> <dev>ART/<SXXX_NNN.NN>_<suffix>.png  (interoperable serial)
 //   (2) OPL ART keyed by the VCD basename -> <dev>ART/<name>_<suffix>.png         (long-standing behaviour)
@@ -360,6 +372,38 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
     return texDiscoverLoad(tex, path, -1);
 }
 
+// #118: a multi-disc PS1 game is a set of separate .VCD files whose titles carry a disc token, e.g.
+// "Game (Disc 2).VCD". With gVcdFirstDiscOnly on, the device VCD lists hide discs 2+ (POPSLoader
+// parity), leaving Disc 1 as the single entry -- the .VCD files are NOT touched, so every disc stays
+// on the card for in-game swapping. Detection is filename-only, case-insensitive: "(disc"/"[disc"/
+// "(cd"/"(disk" (optionally spaced) followed by an integer >= 2. Disc 1 / CD 1 always stay. Accepted
+// parity failure modes: a Disc 2 whose Disc 1 is absent vanishes; non-parenthesised schemes ("_2",
+// "CD2" mid-word) are not caught.
+int vcdIsHiddenDisc(const char *name)
+{
+    static const char *const tokens[] = {"(disc", "[disc", "(cd", "[cd", "(disk", "[disk"};
+    if (name == NULL)
+        return 0;
+    for (unsigned t = 0; t < sizeof(tokens) / sizeof(tokens[0]); t++) {
+        int toklen = (int)strlen(tokens[t]);
+        for (const char *p = name; *p != '\0'; p++) {
+            if (strncasecmp(p, tokens[t], toklen) != 0)
+                continue;
+            const char *d = p + toklen;
+            while (*d == ' ')
+                d++;
+            if (*d < '0' || *d > '9')
+                continue; // token not followed by a disc number
+            int num = 0;
+            while (*d >= '0' && *d <= '9')
+                num = num * 10 + (*d++ - '0');
+            if (num >= 2)
+                return 1;
+        }
+    }
+    return 0;
+}
+
 int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)
 {
     if (outGames == NULL)
@@ -378,16 +422,25 @@ int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)
         return 0;
     }
     memset(games, 0, n * sizeof(base_game_info_t));
+    int kept = 0;
     for (int i = 0; i < n; i++) {
-        snprintf(games[i].name, sizeof(games[i].name), "%s", vcds[i].name);
-        snprintf(games[i].startup, sizeof(games[i].startup), "%s", vcds[i].gameId); // "" -> no art lookup
-        snprintf(games[i].extension, sizeof(games[i].extension), ".VCD");
-        games[i].parts = 1;
-        games[i].format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
+        if (gVcdFirstDiscOnly && vcdIsHiddenDisc(vcds[i].name))
+            continue; // #118: hide discs 2+ of a multi-disc PS1 set (device lists only)
+        snprintf(games[kept].name, sizeof(games[kept].name), "%s", vcds[i].name);
+        snprintf(games[kept].startup, sizeof(games[kept].startup), "%s", vcds[i].gameId); // "" -> no art lookup
+        snprintf(games[kept].extension, sizeof(games[kept].extension), ".VCD");
+        games[kept].parts = 1;
+        games[kept].format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
+        kept++;
     }
     free(vcds);
-    *outGames = games;
-    return n;
+    if (kept == 0) { // every scanned entry was a hidden disc -> empty list (over-allocated buffer freed)
+        free(games);
+        *outGames = NULL;
+        return 0;
+    }
+    *outGames = games; // buffer over-allocated to n when some discs were hidden -- harmless
+    return kept;
 }
 
 // ---- safe memory-card copy (free-space gated) ---------------------------------------

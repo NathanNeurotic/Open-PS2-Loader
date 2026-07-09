@@ -63,12 +63,19 @@ void vcdMarkAllDirty(void);
 // Fill a base_game_info_t list (memalign'd like sbReadList; frees *outGames first) from
 // <devPrefix>POPS/*.VCD. Returns the count. name = VCD basename, startup = PS1 id (or "" = no art).
 int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames);
+// #118: 1 if a .VCD filename is disc 2+ of a multi-disc PS1 set ("(Disc N)"/"(CD N)"/"(Disk N)", N>=2,
+// case-insensitive). Callers hide it from the device lists when gVcdFirstDiscOnly is on.
+int vcdIsHiddenDisc(const char *name);
 
 // 3-level cover/icon fallback for a VCD game: ID-keyed OPL art -> name-keyed OPL art -> POPSLoader's
 // next-to-VCD "<dev>/POPS/<name>.png". Call from a support's getImage for VCD games + "COV"/"ICO". `sep`
 // matches the device prefix ('/' local/MMCE/HDD, '\\' SMB); popsDir e.g. "POPS" (NULL skips step 3).
 // Returns the first texDiscoverLoad hit (>= 0), else the last miss.
 int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const char *value, const char *suffix, const char *popsDir, GSTEXTURE *tex);
+// popsDir to pass vcdLoadArt for a given art suffix: "POPS" for COV/ICO (POPSLoader interop), NULL
+// otherwise (BG/logo/screenshot must not fall to the suffix-less cover image). Shared so every VCD
+// getImage branch and favGetImage resolve the same art (issue #118).
+const char *vcdArtPopsDir(const char *suffix);
 
 // ---- safe memory-card copy (free-space gated) -------------------------------------
 // Used by the BDMA/SMB module equip + the POPSTARTER config writers so a full or interrupted

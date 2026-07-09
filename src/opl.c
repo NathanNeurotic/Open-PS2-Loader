@@ -207,6 +207,7 @@ int gBdmaSource;           // BDMA SOURCE device family (VCD_BDMA_SRC_*) to read
 int gBdmaMode;             // BDMA MODE last reflected from the mc?:/POPSTARTER/ marker (VCD_BDMA_*); not persisted
 int gBdmaApplyOnLaunch;    // auto-equip the launched VCD's matching exFAT driver before boot (1=on, default)
 int gVcdHideGameId;        // display-only: hide a leading PS1 game-ID prefix from the VCD list (1=on, default off)
+int gVcdFirstDiscOnly;     // #118: hide discs 2+ of a multi-disc PS1 set from the device VCD lists (1=on, default off)
 int gWritePopstarterNet;   // mirror the network settings into POPSTARTER's IPCONFIG/SMBCONFIG on save
 int gEnableDebug;
 int gPS2Logo;
@@ -1558,6 +1559,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, &gBdmaSource);
             configGetInt(configOPL, CONFIG_OPL_BDMA_APPLY, &gBdmaApplyOnLaunch);
             configGetInt(configOPL, CONFIG_OPL_VCD_HIDE_GAMEID, &gVcdHideGameId);
+            configGetInt(configOPL, CONFIG_OPL_VCD_FIRST_DISC_ONLY, &gVcdFirstDiscOnly);
             configGetInt(configOPL, CONFIG_OPL_WRITE_POPS_NET, &gWritePopstarterNet);
         }
 
@@ -1829,6 +1831,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, gBdmaSource);
         configSetInt(configOPL, CONFIG_OPL_BDMA_APPLY, gBdmaApplyOnLaunch);
         configSetInt(configOPL, CONFIG_OPL_VCD_HIDE_GAMEID, gVcdHideGameId);
+        configSetInt(configOPL, CONFIG_OPL_VCD_FIRST_DISC_ONLY, gVcdFirstDiscOnly);
         configSetInt(configOPL, CONFIG_OPL_WRITE_POPS_NET, gWritePopstarterNet);
         configSetInt(configOPL, CONFIG_OPL_XSENSITIVITY, gXSensitivity);
         configSetInt(configOPL, CONFIG_OPL_YSENSITIVITY, gYSensitivity);
@@ -2516,6 +2519,7 @@ static void setDefaults(void)
     gBdmaMode = VCD_BDMA_FAT32;
     gBdmaApplyOnLaunch = 1; // auto-equip on launch by default (the MX4SIO->OSDSYS fix)
     gVcdHideGameId = 0;     // show the raw filename by default; opt-in cosmetic prefix hide
+    gVcdFirstDiscOnly = 0;  // #118: show every disc by default; opt-in first-disc-only hide
     gWritePopstarterNet = 0;
     gDefaultDevice = APP_MODE;
     gAutosort = 1;

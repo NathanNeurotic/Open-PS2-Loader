@@ -88,7 +88,8 @@ enum UI_ITEMS {
     CFG_BDMASOURCE,
     CFG_LBL_BDMAMODE,
     CFG_BDMAMODE,
-    CFG_VCD_HIDE_GAMEID, // display-only: hide a leading PS1 game-ID prefix from the VCD list
+    CFG_VCD_HIDE_GAMEID,     // display-only: hide a leading PS1 game-ID prefix from the VCD list
+    CFG_VCD_FIRST_DISC_ONLY, // #118: hide discs 2+ of a multi-disc PS1 set from the device VCD lists
 
     CFG_XSENSITIVITY,
     CFG_YSENSITIVITY,
