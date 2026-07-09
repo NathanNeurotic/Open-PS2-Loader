@@ -795,7 +795,7 @@ gui_strings:
 - label: NEUTRINO_DEVICE
   string: Neutrino Device
 - label: HINT_NEUTRINO_DEVICE
-  string: Device holding neutrino.elf (in a NEUTRINO/ or neutrino/ folder). Auto scans mc0 then mc1.
+  string: Device holding neutrino.elf (in a NEUTRINO/ or neutrino/ folder). Auto = the game's own device then mc0/mc1. Game's Device = the game's device only.
 - label: NARGS_QB
   string: Quick Boot (-qb)
 - label: NARGS_CWD
@@ -817,7 +817,7 @@ gui_strings:
 - label: POPSTARTER_DEVICE
   string: POPSTARTER.ELF Device
 - label: HINT_POPSTARTER_DEVICE
-  string: Device holding POPS/POPSTARTER.ELF for PS1 VCD launches. Default = boot device (cwd) then the VCD's own device. Custom reveals a free-text path.
+  string: Device holding POPS/POPSTARTER.ELF for PS1 VCD launches. Default = boot device (cwd) then the VCD's own device. Game's Device = the VCD's device only. Custom reveals a free-text path.
 - label: POPSTARTER_PATH
   string: POPSTARTER.ELF Path
 - label: HINT_POPSTARTER_PATH
@@ -961,3 +961,13 @@ gui_strings:
   string: First disc only (multi-disc PS1)
 - label: HINT_VCD_FIRST_DISC
   string: Show only Disc 1 of a multi-disc PS1 game in the device lists (POPSLoader style). Hides files named (Disc 2), (CD 2), etc. All discs stay on the card for in-game swapping; Favourites are not filtered.
+- label: GAMES_DEVICE
+  string: Game's Device
+- label: DEFAULT_CORE
+  string: Default Loader Core
+- label: HINT_DEFAULT_CORE
+  string: Global default core for games whose per-game Loader Core is set to Default. <OPL> is the native core; Neutrino chains the external neutrino.elf. A per-game choice always overrides this.
+- label: VCD_SETTINGS
+  string: VCD Settings
+- label: FINANCIAL_SUPPORT
+  string: Financial Support

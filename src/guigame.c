@@ -976,11 +976,22 @@ static unsigned char gameEffectiveFlags(item_list_t *support)
 // updater re-runs guiGameSetCoreAwareState on EVERY dialog change with no device handle -- a
 // one-shot diaSetEnabled here would be clobbered (same pattern as the UDPBD loader lock).
 static int bsdfsDeviceCapable = 1;
+// VCD (PS1) view: launches ONLY via POPSTARTER -- never OPL's core nor Neutrino. Set once per dialog
+// entry (same one-shot pattern as bsdfsDeviceCapable) so the core-aware grey keeps every Neutrino-only
+// row greyed for a VCD game even when the global default core is Neutrino (the locked "Default" row
+// would otherwise resolve to the global and un-grey them).
+static int coreNeverNeutrino = 0;
 
 static void guiGameSetCoreAwareState(void)
 {
-    int neutrino = 0, neutrinoVideo = 0;
-    diaGetInt(diaCompatConfig, COMPAT_LOADER, &neutrino);
+    int coreChoice = 0, neutrino = 0, neutrinoVideo = 0;
+    diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreChoice);
+    // COMPAT_LOADER: 0=<OPL>, 1=Neutrino, 2=Default(follow global). The effective core is Neutrino
+    // iff explicitly Neutrino, OR "Default" while the global gDefaultCoreLoader is Neutrino -- so the
+    // Neutrino-only rows grey correctly even when the game defers its core to the global setting.
+    neutrino = (coreChoice == 1) || (coreChoice == 2 && gDefaultCoreLoader == 1);
+    if (coreNeverNeutrino)
+        neutrino = 0; // VCD (POPSTARTER-only): keep all Neutrino-only rows greyed regardless of the global
     diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, &neutrinoVideo);
 
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrino);  // Neutrino-only field
@@ -1016,7 +1027,10 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
         diaSetEnum(diaCompatConfig, COMPAT_DMA, dmaModes);
     }
 
-    const char *loaders[] = {"<OPL>", "Neutrino", NULL};
+    // Index 0/1 == the stored $CoreLoader value (0=<OPL>, 1=Neutrino); index 2 "Default" = no per-game
+    // key -> follow the global gDefaultCoreLoader. Keeping 0/1 aligned with the stored ints means the
+    // UDPBD lock (index 1) and the launch-side value semantics are untouched -- only "Default" is new.
+    const char *loaders[] = {"<OPL>", "Neutrino", _l(_STR_DEFAULT), NULL};
     diaSetEnum(diaCompatConfig, COMPAT_LOADER, loaders);
 
     // Indices map 1:1 onto system.c's gsmVideoTokens (fp1/fp2/1080ix1/ix2/ix3) -- old configs
@@ -1039,15 +1053,19 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     bsdfsDeviceCapable = (support == NULL) ||
                          ((support->mode >= BDM_MODE && support->mode <= BDM_MODE6 && !vcdViewActive(support->mode)) ||
                           support->mode == FAV_MODE);
+    // VCD games launch through POPSTARTER only, so the Loader Core is inert for them -- keep every
+    // Neutrino-only row greyed even under a Neutrino global default (guiGameSetCoreAwareState reads this).
+    coreNeverNeutrino = (support != NULL && vcdViewActive(support->mode));
 
     // UDPBD games have no OPL core backend -- they always launch via Neutrino
     // (bdmsupport.c forces it). Lock the selector to Neutrino so the screen matches;
     // re-enable it for every other device (the dialog struct is reused across games).
     if (support != NULL && vcdViewActive(support->mode)) {
         // VCD (PS1) games launch ONLY via POPSTARTER -- neither OPL's core nor Neutrino is used, so the
-        // Loader Core choice is meaningless. Pin it to the inert <OPL> label and lock the row so the
-        // screen doesn't imply a VCD game could run under a different core.
-        diaSetInt(diaCompatConfig, COMPAT_LOADER, 0);
+        // Loader Core choice is meaningless. Pin it to the inert "Default" row (index 2 -> no per-game
+        // $CoreLoader key persisted, as before) and lock the row so the screen doesn't imply a VCD game
+        // could run under a different core.
+        diaSetInt(diaCompatConfig, COMPAT_LOADER, 2);
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
     } else if (bdmSupportIsUDPBD(support)) {
         diaSetInt(diaCompatConfig, COMPAT_LOADER, 1);
@@ -1119,10 +1137,10 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
         configRemoveKey(configSet, CONFIG_ITEM_COMPAT);
 
     diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreLoader);
-    if (coreLoader != 0)
-        result = configSetInt(configSet, CONFIG_ITEM_CORE_LOADER, coreLoader);
-    else
+    if (coreLoader == 2)                                     // "Default" -> drop the per-game key so the game follows gDefaultCoreLoader
         configRemoveKey(configSet, CONFIG_ITEM_CORE_LOADER);
+    else                                                     // 0=<OPL>, 1=Neutrino -> explicit per-game override (writes even 0 so it beats a Neutrino global)
+        result = configSetInt(configSet, CONFIG_ITEM_CORE_LOADER, coreLoader);
 
     /// GSM ///
     diaGetInt(diaGSConfig, GSMCFG_ENABLEGSM, &EnableGSM);
@@ -1655,8 +1673,10 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
     for (i = 0; i < COMPAT_MODE_COUNT; ++i)
         diaSetInt(diaCompatConfig, COMPAT_MODE_BASE + i, (compatMode & (1 << i)) > 0 ? 1 : 0);
 
-    coreLoader = 0;
-    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    // COMPAT_LOADER index == the stored $CoreLoader value when present (0=<OPL>, 1=Neutrino); a missing
+    // key maps to index 2 "Default" so the game defers its core to the global gDefaultCoreLoader.
+    if (!configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader))
+        coreLoader = 2;
     diaSetInt(diaCompatConfig, COMPAT_LOADER, coreLoader);
 
     guiGameLoadGSMConfig(configSet, configGame);

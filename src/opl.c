@@ -200,6 +200,7 @@ char gExitPath[256];
 char gNeutrinoArgs[256];   // extra command-line flags appended to every Neutrino launch
 char gNeutrinoPath[256];   // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
 int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy gNeutrinoPath
+int gDefaultCoreLoader;    // global default Loader Core (0=<OPL>, 1=Neutrino); per-game $CoreLoader overrides, absent key = follow this
 int gNeutrinoElfArg;       // opt-in (settings key only, no UI): auto-emit -elf=cdrom0: on Neutrino launches (parity Delta-10)
 char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
 int gPopstarterDevice;     // POPSTARTER.ELF device (POPS_DEV_*); Default = cwd then VCD device; legacy path -> Custom
@@ -1363,6 +1364,35 @@ static void resolveBootDirToMass(void)
     }
 }
 
+// Shared reader for the Neutrino-launch globals (args/path/-elf opt-in/global default core/device
+// TYPE incl. the legacy device-INDEX migration). Factored out so the interactive _loadConfig and the
+// autolaunch miniInit can never drift again -- the argv/autolaunch path previously read none of these
+// (then only DEFAULT_CORE), so a keyless "Default" game booted Neutrino with a stale AUTO device and
+// empty global args there, silently diverging from an interactive launch of the same game.
+static void configReadNeutrinoGlobals(config_set_t *configOPL)
+{
+    configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
+    configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath, sizeof(gNeutrinoPath));
+    configGetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
+    // Global default Loader Core (0=<OPL>, 1=Neutrino). Absent in legacy configs -> keep the
+    // reset default (0/<OPL>), so existing installs behave exactly as before this key existed.
+    configGetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, &gDefaultCoreLoader);
+    // Neutrino Device: prefer the new device-TYPE key; if absent (config predates the picker
+    // change), migrate the legacy device-INDEX value -- 0=Auto, 1/2=mc0/mc1 -> MC, 11/12=
+    // mmce0/mmce1 -> MMCE, 3-10=mass* -> Auto (a bare massN index can't name a driver type).
+    if (!configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, &gNeutrinoDevice)) {
+        int legacyDev = 0;
+        if (configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &legacyDev)) {
+            if (legacyDev == 1 || legacyDev == 2)
+                gNeutrinoDevice = NEUTRINO_DEV_MC;
+            else if (legacyDev == 11 || legacyDev == 12)
+                gNeutrinoDevice = NEUTRINO_DEV_MMCE;
+            else
+                gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+        }
+    }
+}
+
 static void _loadConfig()
 {
     int value, themeID = -1, langID = -1;
@@ -1534,23 +1564,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_BOOT_SND_VOLUME, &gBootSndVolume);
             configGetInt(configOPL, CONFIG_OPL_BGM_VOLUME, &gBGMVolume);
             configGetStrCopy(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath, sizeof(gDefaultBGMPath));
-            configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
-            configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath, sizeof(gNeutrinoPath));
-            // Neutrino Device: prefer the new device-TYPE key; if absent (config predates the picker
-            // change), migrate the legacy device-INDEX value -- 0=Auto, 1/2=mc0/mc1 -> MC, 11/12=
-            // mmce0/mmce1 -> MMCE, 3-10=mass* -> Auto (a bare massN index can't name a driver type).
-            configGetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
-            if (!configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, &gNeutrinoDevice)) {
-                int legacyDev = 0;
-                if (configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &legacyDev)) {
-                    if (legacyDev == 1 || legacyDev == 2)
-                        gNeutrinoDevice = NEUTRINO_DEV_MC;
-                    else if (legacyDev == 11 || legacyDev == 12)
-                        gNeutrinoDevice = NEUTRINO_DEV_MMCE;
-                    else
-                        gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-                }
-            }
+            configReadNeutrinoGlobals(configOPL); // args/path/-elf/global core/device TYPE (+legacy migration); shared with miniInit
             configGetStrCopy(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath, sizeof(gPopstarterPath));
             // POPSTARTER device TYPE (POPS_DEV_*). Absent in legacy configs: a non-empty custom
             // popstarter_path migrates to Custom (honour the old override); otherwise Default (cwd).
@@ -1824,6 +1838,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath);
+        configSetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, gDefaultCoreLoader);  // global default Loader Core (0=<OPL>, 1=Neutrino)
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice); // device-TYPE (NEUTRINO_DEV_*); the legacy neutrino_device key is left as-is
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
@@ -2512,6 +2527,7 @@ static void setDefaults(void)
     gNeutrinoArgs[0] = '\0';
     gNeutrinoPath[0] = '\0';
     gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+    gDefaultCoreLoader = 0; // <OPL> (native) -- preserves pre-existing behaviour until the user opts into Neutrino globally
     gNeutrinoElfArg = 0; // experimental Delta-10 -elf emission stays opt-in
     gPopstarterPath[0] = '\0';
     gPopstarterDevice = POPS_DEV_DEFAULT;
@@ -2718,6 +2734,11 @@ static void miniInit(int mode)
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);
+            // Honor ALL the Neutrino-launch globals on the autolaunch/argv path exactly like the
+            // interactive _loadConfig -- not just the default core: an autolaunched keyless "Default"
+            // game must resolve the SAME neutrino.elf (device pick / custom path) with the SAME global
+            // args as an interactive launch, or it silently boots a different/stale core without flags.
+            configReadNeutrinoGlobals(configOPL);
             if (mode == BDM_MODE) {
                 configGetStrCopy(configOPL, CONFIG_OPL_BDM_PREFIX, gBDMPrefix, sizeof(gBDMPrefix));
                 configGetInt(configOPL, CONFIG_OPL_BDM_CACHE, &bdmCacheSize);

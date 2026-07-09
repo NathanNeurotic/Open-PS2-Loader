@@ -636,6 +636,46 @@ static const char *sbNeutrinoResolved(const char *path)
     return path;
 }
 
+// Probe the ACTIVE game device for a co-located neutrino.elf: (A) the games-folder prefix, then
+// (B) the bare device root. Returns the resolved path of the first COMPLETE install (Δ1), or NULL.
+// Shared by the AUTO tier (one candidate among several) and the "Game's Device" pick (the ONLY
+// candidate -- a NULL here is surfaced to the user, no MC fallback). activePrefix NULL/"" -> NULL
+// (e.g. HDD passes NULL: raw APA is not POSIX-open()-reachable).
+static const char *sbNeutrinoProbeGameDevice(const char *activePrefix)
+{
+    if (activePrefix == NULL || activePrefix[0] == '\0')
+        return NULL;
+
+    char devRoot[64]; // bare device-root token, e.g. "mass0:" (everything up to & incl. ':')
+    const char *colon = strchr(activePrefix, ':');
+    size_t rootLen = (colon != NULL) ? (size_t)(colon - activePrefix + 1) : 0;
+    if (rootLen > 0 && rootLen < sizeof(devRoot)) {
+        memcpy(devRoot, activePrefix, rootLen);
+        devRoot[rootLen] = '\0';
+    } else {
+        devRoot[0] = '\0';
+    }
+    const char *bases[2] = {activePrefix, devRoot}; // (A) the games-folder prefix, (B) the device root
+    static const char *forms[] = {
+        "%sNEUTRINO/neutrino.elf",
+        "%sneutrino/neutrino.elf",
+        "%sNEUTRINO/NEUTRINO.ELF",
+        "%sneutrino/NEUTRINO.ELF",
+    };
+    static char probe[160];
+    for (int b = 0; b < 2; b++) {
+        if (bases[b] == NULL || bases[b][0] == '\0')
+            continue;
+        for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
+            snprintf(probe, sizeof(probe), forms[i], bases[b]);
+            // Δ1: a stale elf-only folder on the game device must NOT count as a valid install.
+            if (sbFileExists(probe) && sbNeutrinoInstallComplete(probe))
+                return sbNeutrinoResolved(probe);
+        }
+    }
+    return NULL;
+}
+
 // Resolve the Neutrino core ELF: probe the install locations users actually use (folder-case
 // and leading-slash variants on mc0/mc1) and return the first COMPLETE install (Δ1), or NULL.
 // Centralised so the bdm + mmce launch paths stay in sync.
@@ -645,6 +685,13 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
     // <root>:/neutrino/neutrino.elf. Resolve the type to its live device-name token(s) -- USB/MX4SIO/
     // exFAT-HDD via the mounted BDM device, MC/MMCE by slot, APA-HDD via the mounted OPL data partition
     // (pfs0:) -- then probe each first. The token has NO trailing ':' so the forms[] below add it.
+    // GAME'S DEVICE: resolve ONLY on the active game's own device (co-located neutrino.elf); no
+    // legacy-custom-path / MC fallback. A miss returns NULL so the launch path toasts "not found"
+    // and aborts in a live menu (every caller handles NULL that way) rather than silently using an
+    // MC core the user did not pick.
+    if (gNeutrinoDevice == NEUTRINO_DEV_GAME)
+        return sbNeutrinoProbeGameDevice(activePrefix);
+
     char cand[2][BDM_DEVICE_ROOT_MAX];
     int nCand = 0;
     switch (gNeutrinoDevice) {
@@ -711,37 +758,13 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
 
     // PR #300: in AUTO, probe the ACTIVE game device for a co-located neutrino.elf BEFORE the mc0/mc1
     // fallbacks, so a neutrino.elf dropped next to the games (USB/MMCE) just works with zero config.
-    // sbFileExists() uses POSIX open(), which reaches mc/mass/mmce (the same path art loads through);
-    // callers pass only a POSIX-reachable prefix (HDD passes NULL -- raw APA is not open()-reachable).
-    if (activePrefix != NULL && activePrefix[0] != '\0') {
-        char devRoot[64]; // bare device-root token, e.g. "mass0:" (everything up to & incl. ':')
-        const char *colon = strchr(activePrefix, ':');
-        size_t rootLen = (colon != NULL) ? (size_t)(colon - activePrefix + 1) : 0;
-        if (rootLen > 0 && rootLen < sizeof(devRoot)) {
-            memcpy(devRoot, activePrefix, rootLen);
-            devRoot[rootLen] = '\0';
-        } else {
-            devRoot[0] = '\0';
-        }
-        const char *bases[2] = {activePrefix, devRoot}; // (A) the games-folder prefix, (B) the device root
-        static const char *forms[] = {
-            "%sNEUTRINO/neutrino.elf",
-            "%sneutrino/neutrino.elf",
-            "%sNEUTRINO/NEUTRINO.ELF",
-            "%sneutrino/NEUTRINO.ELF",
-        };
-        static char probe[160];
-        for (int b = 0; b < 2; b++) {
-            if (bases[b] == NULL || bases[b][0] == '\0')
-                continue;
-            for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
-                snprintf(probe, sizeof(probe), forms[i], bases[b]);
-                // Δ1: a stale elf-only folder on the ACTIVE game device must NOT shadow a complete
-                // mc0/mc1 install below (the exact "worked once then never" failure) -- skip it.
-                if (sbFileExists(probe) && sbNeutrinoInstallComplete(probe))
-                    return sbNeutrinoResolved(probe);
-            }
-        }
+    // Δ1 (inside the helper): a stale elf-only folder on the game device must NOT shadow a complete
+    // mc0/mc1 install below (the "worked once then never" failure). Same probe as NEUTRINO_DEV_GAME,
+    // but here a miss falls through to the mc0/mc1 candidates instead of returning NULL.
+    {
+        const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
+        if (gameHit != NULL)
+            return gameHit;
     }
 
     static const char *candidates[] = {
