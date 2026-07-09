@@ -809,8 +809,10 @@ static config_set_t *mmceGetConfig(item_list_t *itemList, int id)
 static int mmceGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)
 {
     // VCD (PS1) covers: fall back disc-id -> filename -> POPSLoader's next-to-VCD <dev>/POPS/<name>.png.
-    if (isRelative && mmceArtPrimary[0] != '\0' && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO")))
-        return vcdLoadArt(mmceArtPrimary, '/', folder, value, suffix, "POPS", resultTex);
+    // #118: route ALL VCD art suffixes (cover/BG/logo/screenshot), not just cover; popsDir guard keeps
+    // BG/SCR off the cover-only POPSLoader fallback.
+    if (isRelative && mmceArtPrimary[0] != '\0' && vcdViewActive(itemList->mode))
+        return vcdLoadArt(mmceArtPrimary, '/', folder, value, suffix, vcdArtPopsDir(suffix), resultTex);
 
     return mmceTryLoadImage(mmceArtPrimary, folder, isRelative, value, suffix, resultTex);
 }

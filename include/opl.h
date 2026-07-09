@@ -265,6 +265,7 @@ extern int gBdmaSource;         // BDMA SOURCE device family (VCD_BDMA_SRC_*); p
 extern int gBdmaMode;           // BDMA MODE mirrored from the mc?:/POPSTARTER/ marker (VCD_BDMA_*)
 extern int gBdmaApplyOnLaunch;  // auto-equip the launched VCD's matching exFAT driver before boot (1=on)
 extern int gVcdHideGameId;      // display-only: hide a leading PS1 game-ID prefix from the VCD list (1=on, default off)
+extern int gVcdFirstDiscOnly;   // #118: hide discs 2+ of a multi-disc PS1 set from the device VCD lists (1=on, default off)
 extern int gWritePopstarterNet; // mirror network settings into POPSTARTER's IPCONFIG/SMBCONFIG on save
 // Enable Debug Colors
 extern int gEnableDebug;

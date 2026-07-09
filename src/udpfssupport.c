@@ -341,9 +341,10 @@ static int udpfsGetImage(item_list_t *itemList, char *folder, int isRelative, ch
 {
     char path[256];
 
-    // VCD (PS1) covers: fall back disc-id -> filename -> POPSLoader's next-to-VCD <root>/POPS/<name>.png.
-    if (isRelative && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO")))
-        return vcdLoadArt(udpfsPrefix, '/', folder, value, suffix, "POPS", resultTex);
+    // VCD (PS1) art (#118: ALL suffixes -- cover/BG/logo/screenshot): disc-id -> filename, then the
+    // cover/icon-only POPSLoader next-to-VCD fallback (vcdArtPopsDir NULLs it for BG/SCR).
+    if (isRelative && vcdViewActive(itemList->mode))
+        return vcdLoadArt(udpfsPrefix, '/', folder, value, suffix, vcdArtPopsDir(suffix), resultTex);
 
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s/%s_%s", udpfsPrefix, folder, value, suffix);

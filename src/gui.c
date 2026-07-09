@@ -553,6 +553,7 @@ void guiShowConfig()
     // SOURCE/MODE pickers are hidden; flipping it OFF (live, via guiUpdater) reveals them.
     diaSetInt(diaConfig, CFG_BDMA_APPLY, gBdmaApplyOnLaunch);
     diaSetInt(diaConfig, CFG_VCD_HIDE_GAMEID, gVcdHideGameId);
+    diaSetInt(diaConfig, CFG_VCD_FIRST_DISC_ONLY, gVcdFirstDiscOnly);
     diaSetVisible(diaConfig, CFG_LBL_BDMASOURCE, !gBdmaApplyOnLaunch);
     diaSetVisible(diaConfig, CFG_BDMASOURCE, !gBdmaApplyOnLaunch);
     diaSetVisible(diaConfig, CFG_LBL_BDMAMODE, !gBdmaApplyOnLaunch);
@@ -591,6 +592,15 @@ reshow_config:
         }
         diaGetInt(diaConfig, CFG_BDMA_APPLY, &gBdmaApplyOnLaunch);
         diaGetInt(diaConfig, CFG_VCD_HIDE_GAMEID, &gVcdHideGameId); // display-only; next list draw reflects it, no rebuild needed
+        {
+            // #118: first-disc-only changes the VCD list CONTENTS (discs hidden/shown), so unlike the
+            // cosmetic hide-gameid it must rebuild every VCD-capable device page when toggled. Device
+            // lists only -- Favourites are intentionally left unfiltered (an explicit user pick).
+            int previousFirstDiscOnly = gVcdFirstDiscOnly;
+            diaGetInt(diaConfig, CFG_VCD_FIRST_DISC_ONLY, &gVcdFirstDiscOnly);
+            if (gVcdFirstDiscOnly != previousFirstDiscOnly)
+                vcdMarkAllDirty();
+        }
         {
             // Equip BDMA modules only when SOURCE or MODE actually changed (the equip copies
             // files to the memory card). vcdEquipBdma is free-space-gated + truncation-safe, so a

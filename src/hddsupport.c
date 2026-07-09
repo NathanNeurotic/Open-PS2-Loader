@@ -473,18 +473,22 @@ static int hddBuildVcdGameList(void)
         }
         hddVcdParts = grownParts;
 
+        int kept = 0;
         for (int i = 0; i < n; i++) {
-            base_game_info_t *g = &hddVcdGames[total + i];
+            if (gVcdFirstDiscOnly && vcdIsHiddenDisc(vcds[i].name))
+                continue; // #118: hide discs 2+ of a multi-disc PS1 set (device lists only)
+            base_game_info_t *g = &hddVcdGames[total + kept];
             memset(g, 0, sizeof(base_game_info_t));
             snprintf(g->name, sizeof(g->name), "%s", vcds[i].name);
             snprintf(g->startup, sizeof(g->startup), "%s", vcds[i].gameId); // PS1 id (or "" = no art)
             snprintf(g->extension, sizeof(g->extension), ".VCD");
             g->parts = 1;
             g->format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
-            snprintf(hddVcdParts[total + i], APA_IDMAX + 1, "%s", parts.names[p]);
+            snprintf(hddVcdParts[total + kept], APA_IDMAX + 1, "%s", parts.names[p]);
+            kept++;
         }
         free(vcds);
-        total += n;
+        total += kept; // realloc over-allocated to (total+n); hidden discs leave harmless unused slots
     }
 
     hddFreePopsPartitionList(&parts);
@@ -1017,9 +1021,11 @@ static int hddGetImage(item_list_t *itemList, char *folder, int isRelative, char
     // VCD (PS1) covers: fall back disc-id -> filename in the OPL ART folder. POPSLoader's HDD layout keeps
     // art on the __common partition (POPS/ART/<name>.png), a different partition than gHDDPrefix, so that
     // step is a follow-up -- pass NULL to skip it rather than probe the wrong partition.
-    // VCD covers live at the APA partition ROOT /ART/ (pfs0:/ART/, whatever partition is mounted --
-    // common or +OPL), NOT the OPL data subfolder. pfs0: is already mounted while browsing, so no remount.
-    if (isRelative && vcdViewActive(itemList->mode) && (!strcmp(suffix, "COV") || !strcmp(suffix, "ICO")))
+    // VCD art (#118: ALL suffixes -- cover/BG/logo/screenshot) lives at the APA partition ROOT /ART/
+    // (pfs0:/ART/, whatever partition is mounted -- common or +OPL), NOT the OPL data subfolder. pfs0:
+    // is already mounted while browsing, so no remount. popsDir stays NULL here (HDD VCD art never used
+    // the next-to-VCD POPS image; it would be on a different partition).
+    if (isRelative && vcdViewActive(itemList->mode))
         return vcdLoadArt("pfs0:/", '/', folder, value, suffix, NULL, resultTex);
 
     if (isRelative)

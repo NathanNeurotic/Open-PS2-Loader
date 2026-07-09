@@ -957,3 +957,7 @@ gui_strings:
   string: Hide PS1 Game ID (VCD list)
 - label: HINT_VCD_HIDE_GAMEID
   string: Cosmetic only -- hide a leading game-ID prefix (e.g. SLUS_005.51.) from PS1/VCD list names. Names without an ID are shown as-is. Does not change launch, cover art, or favourites.
+- label: VCD_FIRST_DISC
+  string: First disc only (multi-disc PS1)
+- label: HINT_VCD_FIRST_DISC
+  string: Show only Disc 1 of a multi-disc PS1 game in the device lists (POPSLoader style). Hides files named (Disc 2), (CD 2), etc. All discs stay on the card for in-game swapping; Favourites are not filtered.
