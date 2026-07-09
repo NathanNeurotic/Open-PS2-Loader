@@ -645,7 +645,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
     // Per-game Neutrino core: gate BEFORE opening iso_file so no fd is leaked on
     // the Neutrino path (game is still valid here for the format check).
-    int coreLoader = 0;
+    int coreLoader = gDefaultCoreLoader; // no per-game $CoreLoader key -> follow the global default core
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     const char *neutrinoPath = NULL;
     char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit teardown

@@ -245,6 +245,7 @@ enum { NEUTRINO_DEV_AUTO = 0,     // game device, then mc0/mc1 (legacy behaviour
        NEUTRINO_DEV_APA_HDD,      // APA HDD: the mounted OPL data partition (pfs0:)
        NEUTRINO_DEV_GAME };       // the active game's OWN device ONLY (co-located neutrino.elf); no MC/boot fallback (a miss toasts "not found"). Appended at the enum end to keep saved neutrino_devtype ints stable.
 extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
+extern int gDefaultCoreLoader;    // global default Loader Core: 0 = <OPL> (native), 1 = Neutrino. A game's per-game $CoreLoader overrides it; absent per-game key = follow this global.
 extern int gNeutrinoElfArg;       // opt-in (settings key only, no UI): auto-emit -elf=cdrom0:\<startup>;1 on Neutrino launches
 extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
 extern char gBootDir[256];        // boot directory (cwd) OPL launched from, e.g. "mass0:/APPS"; "" if undeterminable

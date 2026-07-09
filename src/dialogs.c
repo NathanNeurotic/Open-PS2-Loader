@@ -160,6 +160,11 @@ struct UIItem diaConfig[] = {
     {UI_STRING, CFG_EXITTO, 1, 1, _STR_HINT_EXITPATH, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DEFAULT_CORE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_DEFAULT_CORE, 1, 1, _STR_HINT_DEFAULT_CORE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_BUTTON, CFG_NEUTRINO_ARGS, 1, 1, _STR_HINT_NEUTRINO_ARGS, 0, 0, {.label = {NULL, _STR_NEUTRINO_ARGS}}},
     {UI_BREAK},
 

@@ -758,6 +758,10 @@ gui_strings:
   string: OFF may help performance but can cause MMCE timeouts to result in freezes
 - label: CORE_LOADER
   string: Loader Core
+- label: DEFAULT_CORE
+  string: Default Loader Core
+- label: HINT_DEFAULT_CORE
+  string: Global default core for games whose per-game Loader Core is set to Default. <OPL> is the native core; Neutrino chains the external neutrino.elf. A per-game choice always overrides this.
 - label: NEUTRINO_BAD_FORMAT
   string: Neutrino does not support this file format, launching with <OPL> core
 - label: NEUTRINO_NOT_FOUND

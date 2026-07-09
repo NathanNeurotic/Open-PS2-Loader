@@ -1463,7 +1463,7 @@ void menuRenderGameMenu()
 // honored under Neutrino.)
 static int gameMenuCoreIsNeutrino(void)
 {
-    int coreLoader = 0;
+    int coreLoader = gDefaultCoreLoader; // no per-game $CoreLoader key -> follow the global default core
     if (itemConfig != NULL)
         configGetInt(itemConfig, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     // UDPBD games are Neutrino-only even while $CoreLoader is still its OPL default.

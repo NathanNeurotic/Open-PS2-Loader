@@ -694,7 +694,7 @@ static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
 // OPL, or any Neutrino-side failure -- ZSO, no install, preflight -- since HDL always boots natively).
 static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
 {
-    int coreLoader = 0;
+    int coreLoader = gDefaultCoreLoader; // no per-game $CoreLoader key -> follow the global default core
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     if (!coreLoader)
         return 0;

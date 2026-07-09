@@ -524,6 +524,12 @@ void guiShowConfig()
     diaSetInt(diaConfig, CFG_DEBUG, gEnableDebug);
     diaSetInt(diaConfig, CFG_PS2LOGO, gPS2Logo);
     diaSetString(diaConfig, CFG_EXITTO, gExitPath);
+    // Global default Loader Core: the core a game uses when its per-game selector is "Default".
+    // <OPL> = OPL's native ee-core; Neutrino = the external neutrino.elf. Indices 0/1 match the
+    // stored value (0=<OPL>, 1=Neutrino) and the first two per-game COMPAT_LOADER options.
+    const char *defaultCoreStrs[] = {"<OPL>", "Neutrino", NULL};
+    diaSetEnum(diaConfig, CFG_DEFAULT_CORE, defaultCoreStrs);
+    diaSetInt(diaConfig, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     // Neutrino lives at <root>:/neutrino/neutrino.elf on ANY device -- offer the common roots.
     // MUST stay in sync with the roots[] table in sbResolveNeutrinoPath() (supportbase.c).
     const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", _l(_STR_GAMES_DEVICE), NULL}; // device TYPE holding /neutrino/neutrino.elf (NEUTRINO_DEV_*); "Game's Device" (NEUTRINO_DEV_GAME) appended last to match the enum tail
@@ -580,6 +586,7 @@ reshow_config:
         diaGetInt(diaConfig, CFG_DEBUG, &gEnableDebug);
         diaGetInt(diaConfig, CFG_PS2LOGO, &gPS2Logo);
         diaGetString(diaConfig, CFG_EXITTO, gExitPath, sizeof(gExitPath));
+        diaGetInt(diaConfig, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(diaConfig, CFG_NEUTRINO_DEVICE, &gNeutrinoDevice);
         diaGetInt(diaConfig, CFG_POPSTARTER_DEVICE, &gPopstarterDevice);
         {

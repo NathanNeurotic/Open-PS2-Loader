@@ -737,7 +737,7 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, const neutrino_vmc_args_
 // 0 = proceed with the native launch (core is OPL, or Neutrino unavailable on a non-udp device).
 static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, bdm_device_data_t *pDeviceData, config_set_t *configSet)
 {
-    int coreLoader = 0;
+    int coreLoader = gDefaultCoreLoader; // no per-game $CoreLoader key -> follow the global default core
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     // UDPBD/UDPFS have no embedded cdvdman backend -- the "udp" BDM device can ONLY boot via
     // Neutrino, so force the core and treat every Neutrino failure below as a clean abort
