@@ -298,6 +298,27 @@ static void cacheResetRequestTrackingLocked(void)
 {
     cache_registry_entry_t *registry = gCacheRegistry;
 
+    // Drain the queued requests instead of just NULLing the list heads: each queued request owns
+    // heap memory AND its cache entry's qr backpointer. Dropping the heads leaked every request
+    // still queued at reset time and left entry->qr dangling -- a later invalidate pass would then
+    // dereference freed memory through it. Clear the entry linkage first, then finalize + free.
+    load_image_request_t *queues[2] = {gArtInteractiveReqList, gArtPrefetchReqList};
+    for (int q = 0; q < 2; q++) {
+        load_image_request_t *req = queues[q];
+        while (req != NULL) {
+            load_image_request_t *next = req->next;
+            req->next = NULL;
+            if (req->entry != NULL && req->entry->qr == req) {
+                req->entry->qr = NULL;
+                if (req->entry->state == CACHE_ENTRY_QUEUED)
+                    cacheClearItem(req->entry, 1);
+            }
+            cacheFinalizeRequestLocked(req);
+            cacheFreeRequest(req);
+            req = next;
+        }
+    }
+
     gArtInteractiveReqList = NULL;
     gArtInteractiveReqEnd = NULL;
     gArtPrefetchReqList = NULL;

@@ -1981,7 +1981,11 @@ static void thmLoadFonts(config_set_t *themeConfig, const char *themePath, theme
 // broken out of via cacheEnd(1)/cacheInit() after this bound, so a theme swap can never hang.
 #define THM_MMCE_ART_ABORT_WAIT_TICKS 500
 
-static void thmLoad(const char *themePath)
+// Returns 0 on success, -1 when the load was ABANDONED because the art worker would not drain (a
+// wedged MMCE read holding the shared fileXio channel). On -1 the current theme stays untouched;
+// callers must not commit the new theme id, so a later trigger (another device's theme scan, a
+// settings re-apply) naturally retries once the card recovers.
+static int thmLoad(const char *themePath)
 {
     LOG("THEMES Load theme path=%s\n", themePath);
     char path[256];
@@ -2021,14 +2025,19 @@ static void thmLoad(const char *themePath)
 
     // #120: a wedged MMCE art read (SD2PSX / MemCard PRO2 card still mid-mount at boot or right after an
     // IGR return) holds the single shared fileXio channel; this theme (re)load's own blocking reads
-    // below -- and the terminal art drain further down -- would then wait on it forever, freezing the
+    // below -- and the pre-swap art drain at the end -- would then wait on it forever, freezing the
     // whole screen (game list stuck at 0,0) and needing a power cycle. Abort MMCE-backed art with a
-    // timeout FIRST, force-resetting the art worker if it will not drain (exactly like mmceLaunchGame),
-    // so the channel is free before we touch storage. Safe before cacheInit (thmInit runs first): with
-    // no MMCE requests queued this returns immediately and the reset branch is not taken.
-    if (!cacheAbortMmceImageLoadsTimed(THM_MMCE_ART_ABORT_WAIT_TICKS)) {
-        cacheEnd(1);
-        cacheInit();
+    // timeout FIRST so the channel is free before we touch storage; if the worker will NOT drain (a
+    // truly wedged read), BAIL OUT: keep the current theme and let a later trigger retry. NEVER force-
+    // reset here (cacheEnd(1)): its TerminateThread would kill the worker mid-fileXio and orphan the
+    // SHARED RPC channel while OPL keeps running, hanging every later fileXio user -- including this
+    // function's own reads. (mmceLaunchGame can afford that reset only because it execs away right
+    // after.) The very first load (curT == NULL) never bails: pre-cacheInit there are no requests, so
+    // the abort returns success immediately.
+    if (!cacheAbortMmceImageLoadsTimed(THM_MMCE_ART_ABORT_WAIT_TICKS) && curT != NULL) {
+        LOG("THEMES Load: MMCE art worker wedged -- keeping the current theme (retry later)\n");
+        free(newT);
+        return -1;
     }
 
     config_set_t *themeConfig = NULL;
@@ -2238,19 +2247,25 @@ static void thmLoad(const char *themePath)
 
     configFree(themeConfig); // all themeConfig reads are done now (last was use_settings_bg above)
 
-    // #120: bound the pre-swap art drain too. Abort MMCE art (force-resetting the worker on timeout) so
-    // the otherwise-UNBOUNDED cacheCancelPendingImageLoads() below can only ever wait on fast non-MMCE
-    // (USB / MC / VCD) requests -- never a wedged MMCE read -- and therefore cannot deadlock the theme
-    // swap. NOTE: cacheWaitForCacheRequests inside the subsequent thmFree() is deliberately left
-    // unbounded -- after this reset the only live requests are those fast non-MMCE loads, and bounding
-    // that wait could free a cache with a request still in flight (use-after-free).
-    if (!cacheAbortMmceImageLoadsTimed(THM_MMCE_ART_ABORT_WAIT_TICKS)) {
-        cacheEnd(1);
-        cacheInit();
+    // #120: bound the pre-swap art drain too (the UNBOUNDED cacheCancelPendingImageLoads() here was the
+    // original hard-freeze site). Abort MMCE art first so the drain normally waits only on fast local
+    // (USB / MC / VCD) reads; if either step times out on a wedged worker, BAIL: free the fully-built
+    // newT -- it was never rendered, so its caches have no outstanding requests and thmFree returns
+    // instantly -- and keep rendering the current theme. No force-reset, for the same RPC-orphaning
+    // reason as the top abort; and thmFree(curT) must never run while an in-flight request may still
+    // reference the old theme's caches (use-after-free), which the successful timed drain rules out.
+    if (curT != NULL &&
+        (!cacheAbortMmceImageLoadsTimed(THM_MMCE_ART_ABORT_WAIT_TICKS) ||
+         !cacheCancelPendingImageLoadsTimed(THM_MMCE_ART_ABORT_WAIT_TICKS))) {
+        LOG("THEMES Load: art drain timed out -- keeping the current theme (retry later)\n");
+        thmFree(newT);
+        return -1;
     }
-    cacheCancelPendingImageLoads();
+    if (curT == NULL)
+        cacheCancelPendingImageLoads(); // first load: pre-cacheInit, nothing queued -- plain no-op drain
     gTheme = newT;
     thmFree(curT);
+    return 0;
 }
 
 static void thmRebuildGuiNames(void)
@@ -2344,14 +2359,20 @@ int thmSetGuiValue(int themeID, int reload)
 {
     if (themeID != -1) {
         if (guiThemeID != themeID || reload) {
+            int loadResult;
             if (themeID == nThemes + 1) {
                 // built-in coverflow theme: load the embedded buffer via thmLoad(NULL).
                 // Checked BEFORE the themes[themeID - 1] access below (which would be OOB).
                 gLoadCoverflowBuiltin = 1;
-                thmLoad(NULL);
+                loadResult = thmLoad(NULL);
                 gLoadCoverflowBuiltin = 0;
             } else
-                thmLoad(themeID != 0 ? themes[themeID - 1].filePath : NULL);
+                loadResult = thmLoad(themeID != 0 ? themes[themeID - 1].filePath : NULL);
+
+            // #120: an abandoned load (wedged MMCE art worker) keeps the CURRENT theme -- do not
+            // commit the new id, so the next thmAddElements/settings-apply trigger retries it.
+            if (loadResult != 0)
+                return 0;
 
             guiThemeID = themeID;
             return 1;
