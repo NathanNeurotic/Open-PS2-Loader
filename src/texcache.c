@@ -298,6 +298,27 @@ static void cacheResetRequestTrackingLocked(void)
 {
     cache_registry_entry_t *registry = gCacheRegistry;
 
+    // Drain the queued requests instead of just NULLing the list heads: each queued request owns
+    // heap memory AND its cache entry's qr backpointer. Dropping the heads leaked every request
+    // still queued at reset time and left entry->qr dangling -- a later invalidate pass would then
+    // dereference freed memory through it. Clear the entry linkage first, then finalize + free.
+    load_image_request_t *queues[2] = {gArtInteractiveReqList, gArtPrefetchReqList};
+    for (int q = 0; q < 2; q++) {
+        load_image_request_t *req = queues[q];
+        while (req != NULL) {
+            load_image_request_t *next = req->next;
+            req->next = NULL;
+            if (req->entry != NULL && req->entry->qr == req) {
+                req->entry->qr = NULL;
+                if (req->entry->state == CACHE_ENTRY_QUEUED)
+                    cacheClearItem(req->entry, 1);
+            }
+            cacheFinalizeRequestLocked(req);
+            cacheFreeRequest(req);
+            req = next;
+        }
+    }
+
     gArtInteractiveReqList = NULL;
     gArtInteractiveReqEnd = NULL;
     gArtPrefetchReqList = NULL;
@@ -596,7 +617,14 @@ static void cacheInvalidateEntryLocked(cache_entry_t *entry, int freeTxt, int pr
                 // BDM/HDD/USB cover or disc icon FINISH and land in cache instead of being cancelled and
                 // re-queued on every scroll step. With one art worker and #DiscType now adding a 2nd
                 // request per game, the blanket abort starved both cover and disc (temperamental loading).
-                if (!preserveLoaded || cacheIsAbortableMmceRequest(req))
+                // #120: gate the MMCE abort on ACTIVE navigation. On a STATIC screen (VCD info page, a
+                // settled list) the exit/refresh generation advance must NOT kill the in-flight MMCE
+                // read -- otherwise the 2nd VCD screenshot (SCR2, always last on the single worker) is
+                // discarded and only reappears after an exit+re-enter. Info-exit is Circle/Cross (not
+                // nav keys), so this gate is false there and SCR2 completes; while scrolling the abort
+                // still fires, preserving the #116 slow-cover behaviour. Completion is UID-guarded, so a
+                // late-landing read can never show a wrong-item texture.
+                if (!preserveLoaded || (cacheIsAbortableMmceRequest(req) && cacheIsNavigationActive()))
                     req->abortRequested = 1;
             } else {
                 entry->qr = NULL;
