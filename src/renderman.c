@@ -464,7 +464,27 @@ void rmDrawOverlayPixmap(GSTEXTURE *overlay, int x, int y, short aligned, int w,
         int coverBottomOff = (bly > bry) ? bly : bry;              // scaled, screen space
         int frameBottom = (origBly > origBry) ? origBly : origBry; // unscaled, element space
         float botV = (h > 0) ? (float)frameBottom * overlay->Height / h : overlay->Height;
-        rmDrawReflection(overlay, &quad, quad.ul.y + coverBottomOff, botV);
+        float waterline = quad.ul.y + coverBottomOff;
+        // Mirror the INLAY (the actual game cover art) too -- previously only the case FRAME was
+        // reflected, so the cover box mirrored but the artwork inside it had no reflection at all
+        // (the disc/frame appeared to mirror, the cover did not). Reuse the same rmDrawReflection the
+        // plain-cover path uses; the inlay occupies the cover WINDOW inside the frame, so span its x
+        // from the inlay's own (scaled) left/right corners and its u/v over the whole inlay texture.
+        // Share the frame's waterline + height so the art and frame reflections track together, and
+        // draw the inlay mirror FIRST so the frame mirror lands on top (matching the upright
+        // inlay-then-frame draw order above). Non-coverflow callers pass reflection=0, so unaffected.
+        rm_quad_t iquad = quad;
+        iquad.ul.x = quad.ul.x + ((ulx < blx) ? ulx : blx);
+        iquad.br.x = quad.ul.x + ((urx > brx) ? urx : brx);
+        // Base the mirror height on the inlay WINDOW's top (uly/ury, already Y_SCALEd into the same
+        // screen space as quad.ul.y), not the frame's top -- otherwise reflH spans the padded frame
+        // height and the mirrored art renders vertically stretched, overflowing the frame's mirror.
+        iquad.ul.y = quad.ul.y + ((uly < ury) ? uly : ury);
+        iquad.ul.u = 0.0f;
+        iquad.br.u = inlay->Width;
+        iquad.ul.v = 0.0f;
+        rmDrawReflection(inlay, &iquad, waterline, inlay->Height);
+        rmDrawReflection(overlay, &quad, waterline, botV);
     }
 }
 
