@@ -242,7 +242,8 @@ enum { NEUTRINO_DEV_AUTO = 0,     // game device, then mc0/mc1 (legacy behaviour
        NEUTRINO_DEV_MX4SIO,       // BDM "mx4sio"/sdc -> the mounted massN:
        NEUTRINO_DEV_MMCE,         // mmce0: / mmce1:
        NEUTRINO_DEV_EXFAT_HDD,    // BDM "ata" internal exFAT HDD -> the mounted massN:
-       NEUTRINO_DEV_APA_HDD };    // APA HDD: the mounted OPL data partition (pfs0:)
+       NEUTRINO_DEV_APA_HDD,      // APA HDD: the mounted OPL data partition (pfs0:)
+       NEUTRINO_DEV_GAME };       // the active game's OWN device ONLY (co-located neutrino.elf); no MC/boot fallback (a miss toasts "not found"). Appended at the enum end to keep saved neutrino_devtype ints stable.
 extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
 extern int gNeutrinoElfArg;       // opt-in (settings key only, no UI): auto-emit -elf=cdrom0:\<startup>;1 on Neutrino launches
 extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
@@ -259,7 +260,8 @@ enum { POPS_DEV_DEFAULT = 0,    // cwd (gBootDir) /POPS/, then the VCD's own dev
        POPS_DEV_MMCE,           // mmce0: / mmce1:
        POPS_DEV_EXFAT_HDD,      // BDM "ata" internal exFAT HDD -> the mounted massN:
        POPS_DEV_APA_HDD,        // APA HDD: the mounted OPL data partition (pfs0:)
-       POPS_DEV_CUSTOM };       // free-text gPopstarterPath
+       POPS_DEV_CUSTOM,         // free-text gPopstarterPath
+       POPS_DEV_GAME };         // the VCD's OWN device ONLY (<devPrefix>/POPS/POPSTARTER.ELF); no boot/cwd fallback (a miss toasts "not found"). Appended at the enum end to keep saved popstarter_device ints stable.
 extern int gPopstarterDevice;   // POPSTARTER.ELF device (POPS_DEV_*); legacy non-empty popstarter_path -> Custom
 extern int gBdmaSource;         // BDMA SOURCE device family (VCD_BDMA_SRC_*); persisted in conf
 extern int gBdmaMode;           // BDMA MODE mirrored from the mc?:/POPSTARTER/ marker (VCD_BDMA_*)

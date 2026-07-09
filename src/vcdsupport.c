@@ -184,6 +184,20 @@ int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
     // NOTE: this serves the bdm/eth/mmce launch paths; the HDD VCD launch keeps its own freeze-guarded
     // hddResolveHddPopstarter (the __common/+OPL pfs search), so HDD VCDs always load POPSTARTER off the HDD.
 
+    // GAME'S DEVICE: resolve ONLY on the VCD's own device (devPrefix); no boot-device (cwd) tier and
+    // no Default fallthrough. A miss returns 0 so the launch path shows "Missing POPSTARTER.ELF"
+    // (every caller does) instead of silently loading a boot-device copy the user did not pick.
+    if (gPopstarterDevice == POPS_DEV_GAME) {
+        if (devPrefix == NULL)
+            return 0;
+        snprintf(out, outSize, "%s%s%cPOPSTARTER.ELF", devPrefix, POPS_FOLDER, vcdSep(devPrefix));
+        int fd = open(out, O_RDONLY);
+        if (fd < 0)
+            return 0;
+        close(fd);
+        return 1;
+    }
+
     // CUSTOM: the free-text path wins, if it exists.
     if (gPopstarterDevice == POPS_DEV_CUSTOM && gPopstarterPath[0] != '\0') {
         int cfd = open(gPopstarterPath, O_RDONLY);

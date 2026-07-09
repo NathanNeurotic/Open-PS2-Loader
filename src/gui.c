@@ -526,12 +526,12 @@ void guiShowConfig()
     diaSetString(diaConfig, CFG_EXITTO, gExitPath);
     // Neutrino lives at <root>:/neutrino/neutrino.elf on ANY device -- offer the common roots.
     // MUST stay in sync with the roots[] table in sbResolveNeutrinoPath() (supportbase.c).
-    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", NULL}; // device TYPE holding /neutrino/neutrino.elf (NEUTRINO_DEV_*)
+    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", _l(_STR_GAMES_DEVICE), NULL}; // device TYPE holding /neutrino/neutrino.elf (NEUTRINO_DEV_*); "Game's Device" (NEUTRINO_DEV_GAME) appended last to match the enum tail
     diaSetEnum(diaConfig, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
     diaSetInt(diaConfig, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);
     // POPSTARTER.ELF device TYPE holding POPS/POPSTARTER.ELF (POPS_DEV_*). MUST stay in sync with the
     // resolution switch in vcdResolvePopstarter() (vcdsupport.c). Custom reveals the free-text path below.
-    const char *popsDevStrs[] = {_l(_STR_DEFAULT), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", "Custom", NULL};
+    const char *popsDevStrs[] = {_l(_STR_DEFAULT), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", "Custom", _l(_STR_GAMES_DEVICE), NULL}; // "Game's Device" (POPS_DEV_GAME) appended last to match the enum tail
     diaSetEnum(diaConfig, CFG_POPSTARTER_DEVICE, popsDevStrs);
     diaSetInt(diaConfig, CFG_POPSTARTER_DEVICE, gPopstarterDevice);
     diaSetString(diaConfig, CFG_POPSTARTER_PATH, gPopstarterPath);
