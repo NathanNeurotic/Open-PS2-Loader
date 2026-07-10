@@ -76,7 +76,10 @@ int cacheCancelPendingImageLoadsTimed(int timeoutTicks);
  */
 int cacheAbortMmceImageLoadsTimed(int timeoutTicks);
 
-/** Invalidates queued art loads without blocking on the IO worker.
+/** Advances the failure-retry generation and demotes loaded art to displayable. Queued and
+ *  in-flight loads are LEFT to finish and land in cache (wOPL persist-and-load); teardown paths
+ *  must use the cacheCancelPendingImageLoads / cacheAbortMmceImageLoadsTimed family instead.
+ *  Never blocks on the IO worker.
  */
 void cacheAdvanceGeneration(void);
 

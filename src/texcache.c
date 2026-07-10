@@ -612,19 +612,20 @@ static void cacheInvalidateEntryLocked(cache_entry_t *entry, int freeTxt, int pr
             break;
         case CACHE_ENTRY_LOADING:
             if (req != NULL) {
-                // Teardown (preserveLoaded==0) aborts everything. But a per-scroll generation advance
-                // (preserveLoaded==1) should only abort slow in-flight MMCE loads -- let a local
-                // BDM/HDD/USB cover or disc icon FINISH and land in cache instead of being cancelled and
-                // re-queued on every scroll step. With one art worker and #DiscType now adding a 2nd
-                // request per game, the blanket abort starved both cover and disc (temperamental loading).
-                // #120: gate the MMCE abort on ACTIVE navigation. On a STATIC screen (VCD info page, a
-                // settled list) the exit/refresh generation advance must NOT kill the in-flight MMCE
-                // read -- otherwise the 2nd VCD screenshot (SCR2, always last on the single worker) is
-                // discarded and only reappears after an exit+re-enter. Info-exit is Circle/Cross (not
-                // nav keys), so this gate is false there and SCR2 completes; while scrolling the abort
-                // still fires, preserving the #116 slow-cover behaviour. Completion is UID-guarded, so a
-                // late-landing read can never show a wrong-item texture.
-                if (!preserveLoaded || (cacheIsAbortableMmceRequest(req) && cacheIsNavigationActive()))
+                // Teardown (preserveLoaded==0: cacheEnd / cacheDestroyCache / the timed cancel+abort
+                // family) aborts the in-flight read. A generation advance (preserveLoaded==1: per-
+                // scroll step, tab/page switch, screen switch, list sort/clear) NEVER does -- wOPL
+                // semantics (test note #3): the read finishes, lands in its entry (completion is
+                // UID-guarded in cacheCompleteRequest -- qr==req && UID==cacheUID -- and every draw
+                // keys on a per-item UID match, so a late texture can never render on a wrong item)
+                // and persists for the scroll-back / tab-switch-back. The old nav-gated MMCE abort
+                // (#116 "held in reserve", #120 static-screen gate) cancelled the in-flight read on
+                // every held-nav carousel step, discarding partial SIO2 progress and forcing a full
+                // re-read after settle -- the residual "backs up like it's buffering". It bought
+                // nothing: during a hold, cacheShouldDeferInteractiveArtOnInput already blocks new
+                // MMCE/HDD enqueues (cacheGetTextureInternal) AND worker dequeues (cacheDequeueRequest),
+                // so at most this ONE read finishes into an otherwise idle bus.
+                if (!preserveLoaded)
                     req->abortRequested = 1;
             } else {
                 entry->qr = NULL;
