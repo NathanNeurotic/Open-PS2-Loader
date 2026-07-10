@@ -128,6 +128,35 @@ D0456788 0000FBFB                        <span style="opacity:.6"># D-type: appl
 launch-time cheat menu. If cheats don't take effect, the Master Code is almost always the culprit —
 verify it matches your exact disc revision.</p>
 
+<details class="deep" id="code-types"><summary>Which code types does the engine support?</summary>
+<p>The first digit of a code's address is its <b>type</b>, and it decides what the line does. The
+type is the only part of the syntax OPL interprets — everything else is just address and value.
+RiptOPL runs the PS2RD code handler, which implements these types (verified against
+<code>ee_core/src/cheat_engine.S</code>):</p>
+<table data-sortable>
+<thead><tr><th>Type</th><th>Name</th><th>What it does</th></tr></thead>
+<tbody>
+  <tr><td><code>9</code></td><td>Master Code (hook)</td><td>The activator hook — <b>required</b>, one per file (only the first that matches is used). See the callout above.</td></tr>
+  <tr><td><code>0</code></td><td>8-bit constant write</td><td>Continuously writes a byte to the address.</td></tr>
+  <tr><td><code>1</code></td><td>16-bit constant write</td><td>Continuously writes a halfword.</td></tr>
+  <tr><td><code>2</code></td><td>32-bit constant write</td><td>Continuously writes a full word. The most common cheat type.</td></tr>
+  <tr><td><code>3</code></td><td>Increment / Decrement</td><td>Adds to or subtracts from the value at an address (8/16/32-bit; 32-bit uses two lines).</td></tr>
+  <tr><td><code>4</code></td><td>Serial write</td><td>Two lines: writes a value to <i>n</i> addresses, stepping the address and value each time (fills tables/arrays).</td></tr>
+  <tr><td><code>5</code></td><td>Copy bytes</td><td>Two lines: copies a block of bytes from one address to another.</td></tr>
+  <tr><td><code>6</code></td><td>Pointer write</td><td>Two lines: reads a base pointer from an address, adds an offset, and writes to the result.</td></tr>
+  <tr><td><code>7</code></td><td>Boolean operation</td><td>Bitwise OR / AND / XOR of a value with what's at the address (8/16-bit).</td></tr>
+  <tr><td><code>C</code></td><td>Conditional (equal)</td><td>Runs <b>all</b> following codes only if the 32-bit value at the address equals the given value.</td></tr>
+  <tr><td><code>D</code></td><td>Conditional (multi-line)</td><td>Runs the next <i>n</i> code lines only if a test passes (equal, not-equal, &lt;, &gt;, NAND, AND, NOR, OR).</td></tr>
+  <tr><td><code>E</code></td><td>Conditional (legacy)</td><td>Older encoding of the <code>D</code> test; handled the same way.</td></tr>
+</tbody>
+</table>
+<p><b>Not implemented:</b> types <code>8</code>, <code>A</code>, and <code>B</code> are parsed but
+silently skipped — a cheat that relies on one of them simply won't do anything. (Type <code>F</code>
+is a Master-Code variant, handled like type&nbsp;<code>9</code>.) This matches upstream PS2RD; it is
+not a RiptOPL limitation. If a known-good code doesn't work, check whether it uses one of these
+unsupported types.</p>
+</details>
+
 <details class="deep"><summary>Where do I find .cht files?</summary>
 <p>PS2RD-format cheat files are the same format used by PCSX2 and many older cheat databases.
 Search for your game's disc ID plus "ps2rd" or "cht" to find community-maintained files, or

@@ -647,6 +647,11 @@
   "url": "cheats.html#example"
  },
  {
+  "title": "Cheats — Which code types does the engine support?",
+  "text": "RiptOPL runs the PS2RD code handler: types 0-7 (writes, increment, serial, copy, pointer, boolean), C/D/E (conditionals), and 9/F (Master Code hooks) are supported. Types 8, A and B are parsed but silently skipped. Verified against ee_core cheat_engine.S.",
+  "url": "cheats.html#code-types"
+ },
+ {
   "title": "Cheats — Enabling cheats for a game",
   "cat": "features",
   "text": "Open Game Settings > Cheat Settings, set the source to Per-game or Global, toggle PS2RD Cheat Engine on, then pick a cheat mode and save.",
