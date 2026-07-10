@@ -1653,7 +1653,7 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     // every frame and re-enqueue forever.
     oldestEntry->value = malloc(strlen(value) + 1);
     if (oldestEntry->value == NULL) {
-        free(req);
+        cacheFreeRequest(req); // the encapsulated release (equivalent to free(req) here: the fresh request owns no texture memory yet)
         cacheUnlock();
         return NULL;
     }
