@@ -1028,6 +1028,21 @@ static void initCoverflow(const char *themePath, config_set_t *themeConfig, them
 
 // AttributeImage ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Maps an AttributeImage's current value to the embedded internal glyph texId, including the
+// "display/asset" suffix-value form ("NTSC/ntsc" with attribute "Vmode" -> "Vmode_ntsc").
+// Returns -1 when no embedded glyph exists (e.g. Players, custom attributes); thmGetTexture(-1)
+// safely yields NULL (unsigned wrap >= TEXTURES_COUNT).
+static int thmAttributeTexId(mutable_image_t *attributeImage)
+{
+    char *seppos = strchr(attributeImage->currentValue, '/');
+    if (!seppos)
+        return texLookupInternalTexId(attributeImage->currentValue);
+
+    char imgName[32];
+    snprintf(imgName, sizeof(imgName), "%s_%s", attributeImage->cache->suffix, &seppos[1]);
+    return texLookupInternalTexId(imgName);
+}
+
 static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
     // No current item (empty list): clear, don't redraw the stale cached image -- same guard as
@@ -1045,16 +1060,7 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
         }
         if (attributeImage->currentValue) {
             if (thmGetGuiValue() == 0) {
-                int texId;
-                char *seppos = strchr(attributeImage->currentValue, '/');
-                if (!seppos)
-                    texId = texLookupInternalTexId(attributeImage->currentValue);
-                else {
-                    char imgName[32];
-                    snprintf(imgName, sizeof(imgName), "%s_%s", attributeImage->cache->suffix, &seppos[1]);
-                    texId = texLookupInternalTexId(&imgName[0]);
-                }
-                GSTEXTURE *texture = thmGetTexture(texId);
+                GSTEXTURE *texture = thmGetTexture(thmAttributeTexId(attributeImage));
                 if (texture && texture->Mem)
                     rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
 
@@ -1072,6 +1078,19 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
                     } else
                         rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
 
+                    return;
+                }
+                // #120 follow-up: the theme ships no glyph asset for this value (or its async ART
+                // load has not delivered yet) -- fall back to the embedded internal glyph before
+                // the element default, instead of e.g. a VCD badge rendering the theme's ELF
+                // default. cacheGetTexture above stays FIRST and this function re-runs every
+                // frame, so the embedded glyph only fills NULL frames: the moment the theme's own
+                // glyph finishes loading, it wins again -- the fallback can never shadow it. The
+                // glyph slots are decoded for every theme in thmLoad (embedded data only; the
+                // theme's own <value>_<attr>.png channel above is untouched).
+                texture = thmGetTexture(thmAttributeTexId(attributeImage));
+                if (texture && texture->Mem) {
+                    rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
                     return;
                 }
             }
@@ -2262,9 +2281,14 @@ static int thmLoad(const char *themePath)
     for (i = L3_ICON; i <= FAV_MARK; i++)
         thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
 
-    if (!themePath)
-        for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
-            thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
+    // Embedded attribute glyphs (#Format/#Media/Aspect/Rating/Scan/Vmode values): loaded for EVERY
+    // theme, disk themes included, so drawAttributeImage can fall back to them when the theme ships
+    // no <value>_<attr>.png (issue #120 follow-up: MMCE VCD entries showed the theme's ELF element-
+    // default on custom themes). Embedded data only (themePath=NULL): the theme's own glyph channel
+    // is the attribute cache and always wins at draw time. Cost ~153 KB decoded EE RAM (31x 64x32 T8
+    // glyphs + 6x 256x32 Rating strips; the NULL-data Device_* slots are no-ops), freed by thmFree.
+    for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
+        thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
 
     // Optional settings/menu background (guiDrawBGSettings draws it instead of the plasma).
     // Theme-supplied only for now: a disk theme opts in with use_settings_bg=1 and ships its
