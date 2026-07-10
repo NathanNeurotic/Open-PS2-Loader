@@ -2467,21 +2467,27 @@ void setDefaultColors(void)
     gDefaultPlasBlendColor[0] = 0x00;
     gDefaultPlasBlendColor[1] = 0x00;
     gDefaultPlasBlendColor[2] = 0x00;
-    gDefaultBgColor[0] = 0x28;
-    gDefaultBgColor[1] = 0xC5;
-    gDefaultBgColor[2] = 0xF9;
+    // The fork's navy <OPL> reskin lives HERE, not in the embedded conf_theme_OPL.cfg: theme-cfg
+    // color keys OVERRIDE the user's picked colors on every thmLoad(NULL) reload (boot vmode change,
+    // language change, theme-device unplug), while thmSetColors re-applies the user picks on other
+    // paths -- so cfg-embedded colors made the look flip-flop and user picks not stick (tester
+    // report: "changing settings makes it default look"). As defaults they seed the same navy
+    // scheme, survive every reload once the user re-picks, and "Reset Colors" restores the fork look.
+    gDefaultBgColor[0] = 0x18;
+    gDefaultBgColor[1] = 0x25;
+    gDefaultBgColor[2] = 0x80;
 
-    gDefaultTextColor[0] = 0xFF;
-    gDefaultTextColor[1] = 0xFF;
-    gDefaultTextColor[2] = 0xFF;
+    gDefaultTextColor[0] = 0x32;
+    gDefaultTextColor[1] = 0x4d;
+    gDefaultTextColor[2] = 0x9e;
 
-    gDefaultSelTextColor[0] = 0x00;
-    gDefaultSelTextColor[1] = 0xAE;
+    gDefaultSelTextColor[0] = 0xFF;
+    gDefaultSelTextColor[1] = 0xFF;
     gDefaultSelTextColor[2] = 0xFF;
 
-    gDefaultUITextColor[0] = 0x58;
-    gDefaultUITextColor[1] = 0x68;
-    gDefaultUITextColor[2] = 0xB4;
+    gDefaultUITextColor[0] = 0x00;
+    gDefaultUITextColor[1] = 0xFF;
+    gDefaultUITextColor[2] = 0xFF;
 }
 
 static void setDefaults(void)
