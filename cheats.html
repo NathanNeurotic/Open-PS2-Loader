@@ -72,9 +72,9 @@ lives under <code>hdd0:__common/OPL/CHT/</code>.</p>
 ID, e.g. <code>SLUS_123.45</code>) with a <code>.cht</code> extension:</p>
 <pre>CHT/SLUS_123.45.cht</pre>
 
-<p>The format is plain text in <b>PS2RD format</b>: cheat entries consist of a description line
-(the cheat name) followed by one or more hex code lines. Each code line is exactly 16 hex digits
-in two groups of 8, separated by a space:</p>
+<p>The format is plain text in <b>PS2RD format</b>: a cheat is a description line (the cheat name)
+followed by one or more hex code lines. A code line is exactly 16 hex digits — two groups of 8 —
+which OPL reads as an <b>address</b> (first 8) and a <b>value</b> (last 8):</p>
 <pre>Infinite Health
 20123456 3F800000
 Infinite Ammo
@@ -82,12 +82,51 @@ Infinite Ammo
 </pre>
 
 <ul class="checklist">
-  <li>Comment lines starting with <code>//</code> or <code>#</code> are ignored.</li>
-  <li>A description line can be up to 128 characters; a single cheat entry can carry multiple
-      code lines.</li>
-  <li>OPL supports up to 250 named cheat entries per file.</li>
-  <li>Files of any size are accepted; the engine reads as much as memory allows.</li>
+  <li>The 16 digits may be upper- or lower-case, split by any amount of spaces/tabs — or run
+      together with none. Anything that isn't 16 hex digits (plus whitespace) is read as a
+      <b>name</b> line instead.</li>
+  <li>A cheat starts with its name line; the code lines that follow belong to it. Code lines that
+      appear <b>before</b> any name line are ignored, so always put the name first.</li>
+  <li><code>//</code> or <code>#</code> begins a comment (a whole line, or a trailing note after a
+      code). Keep whole-line comments at the <b>start of the line</b> — an indented comment can
+      leave stray whitespace that hijacks the next cheat's name. <code>;</code> is <em>not</em> a
+      comment marker.</li>
+  <li>A name can be up to 128 characters; one cheat can carry many code lines. OPL stores up to
+      250 named cheats per file. Blank lines are ignored, and both LF and CRLF (Windows) line
+      endings work.</li>
 </ul>
+
+<div class="note" style="border-left:3px solid var(--accent,#6cf);padding:.6em .9em;margin:1em 0;">
+  <b>A Master Code is required.</b> Almost every PS2RD file begins with a <b>Master Code</b> — a
+  special line whose address starts with <code>9</code> (e.g. <code>90123ED8&nbsp;…</code>). It is
+  the hook that lets the engine run; <b>without it, none of the other codes do anything</b> (they
+  load silently and simply never fire). Master Codes are game-specific — copy the correct one from
+  a cheat database for your exact disc ID. In <i>Select Game Cheats</i> mode it always stays on and
+  can't be toggled off.
+</div>
+
+<h3 id="example">A complete example <code>.cht</code> file</h3>
+<p>Save this as <code>CHT/SLUS_000.01.cht</code> (using <b>your</b> game's boot ID). Every address
+and value here is an <b>illustrative placeholder</b> — get real codes for your title from a cheat
+database:</p>
+<pre>"Example Game /ID SLUS_000.01"          <span style="opacity:.6">// optional title line — decoration only</span>
+
+Mastercode                              <span style="opacity:.6"># REQUIRED hook. Address starts with 9.</span>
+90123ED8 0C048DB6                        <span style="opacity:.6"># Copy the real one from a cheat DB.</span>
+
+Infinite Health
+20365DB8 42C80000
+20365DBC 42C80000                        <span style="opacity:.6">// a cheat can have many code lines</span>
+
+Max Money
+203C5F00 05F5E0FF
+
+Have All Items
+D0456788 0000FBFB                        <span style="opacity:.6"># D-type: apply the next line only if a value matches</span>
+103C6210 0000270F</pre>
+<p>OPL displays each named block (<i>Infinite Health</i>, <i>Max Money</i>, …) as one toggle in the
+launch-time cheat menu. If cheats don't take effect, the Master Code is almost always the culprit —
+verify it matches your exact disc revision.</p>
 
 <details class="deep"><summary>Where do I find .cht files?</summary>
 <p>PS2RD-format cheat files are the same format used by PCSX2 and many older cheat databases.
