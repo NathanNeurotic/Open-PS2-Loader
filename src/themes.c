@@ -2354,8 +2354,22 @@ void thmInit(void)
 
 void thmReinit(const char *path)
 {
-    thmLoad(NULL);
-    guiThemeID = 0;
+    // Nad #5 (settings change reverts the look): this used to UNCONDITIONALLY thmLoad(NULL) +
+    // guiThemeID=0 -- reverting to the default <OPL> look even when the ACTIVE theme does not live
+    // on the device being removed. Worse, an SMB/ETH re-init calls in here on EVERY settings-OK
+    // while the network is in any error state (server asleep, cable out, or plain share-browse
+    // mode, which parks in an "error" state even when healthy), and a subsequent Save Changes then
+    // wrote the transient "<OPL>" over the user's saved theme name -- reverting it PERMANENTLY.
+    // Only fall back to the default when the active theme actually lives on the removed device;
+    // otherwise keep it and just re-index (the removal loop reshuffles ids, so re-find by name).
+    char activeName[64] = "";
+    int activeOnDevice = 0;
+    if (guiThemeID >= 1 && guiThemeID <= nThemes) {
+        snprintf(activeName, sizeof(activeName), "%s", themes[guiThemeID - 1].name);
+        activeOnDevice = strncmp(themes[guiThemeID - 1].filePath, path, strlen(path)) == 0;
+    } else if (guiThemeID == nThemes + 1) {
+        snprintf(activeName, sizeof(activeName), "<Coverflow>"); // built-in; its id (nThemes+1) shifts as themes are removed
+    }
 
     int i = 0;
     while (i < nThemes) {
@@ -2373,6 +2387,18 @@ void thmReinit(const char *path)
     }
 
     thmRebuildGuiNames();
+
+    if (activeOnDevice) {
+        // The displayed theme's files just went away with its device: drop to the built-in default.
+        // Honor thmLoad's abandon-and-retry (#120): commit the default id only if the swap happened,
+        // else keep the old id so the still-displayed theme and the saved config stay consistent.
+        if (thmLoad(NULL) == 0)
+            guiThemeID = 0;
+    } else if (guiThemeID != 0) {
+        // Active theme untouched (built-in coverflow, or a theme on another device): keep it. gTheme
+        // needs no reload -- its loaded resources are unaffected by the removed entries.
+        guiThemeID = thmFindGuiID(activeName);
+    }
 }
 
 void thmReloadScreenExtents(void)
