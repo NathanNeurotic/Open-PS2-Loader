@@ -109,7 +109,18 @@ extern void *case_overlay_png;
 
 // Not related to screen size, just to limit at some point
 static int maxSize = 720 * 512 * 4;
-#define TEX_MMCE_STAGE_READ_SIZE 4096
+// Per-read() chunk for staging an MMCE cover into RAM. Each read() is one COMPLETE mmceman FS RPC
+// over the shared SIO2 channel (command handshake + bulk DMA + trailer + a card-side seek/read-ahead
+// prime), and mmceman has NO read-size cap (its length field is a full 32 bits), so a big chunk is
+// served in ONE RPC. At 4 KB a ~100 KB cover cost ~25 RPCs; 32 KB serves it in ~4 -- an ~8x cut in
+// that fixed per-RPC overhead (the actual cause of slow MMCE art), moving the same bytes and keeping
+// the card's sequential read-ahead saturated. This is the same "few large reads" the in-game mmcedrv
+// block driver uses. DO NOT raise past 32 KB: the art worker only checks the abort flag BETWEEN
+// chunks, and mmcesupport.c's MMCE_ART_ABORT_WAIT_TICKS gives it 500 ms to reach a checkpoint before
+// TerminateThread (which corrupts the fileXio RPC channel = issue #120). 32 KB ~= 128 ms at the
+// pessimistic ~256 KB/s slow-card rate = a ~4x margin; 64 KB halves it for little gain, 128 KB+ risks
+// crossing the watchdog. A one-shot getStat+single-read is rejected for the same reason.
+#define TEX_MMCE_STAGE_READ_SIZE 32768
 
 typedef struct
 {
@@ -426,7 +437,7 @@ static int texStageExternalFileIntoMemory(int fd, void **buffer)
     // read the file sequentially (read()-only, the same access the working USB reader uses) and stop
     // at EOF, so no up-front file length is needed. We keep the bulk-into-RAM staging (the reason this
     // path exists: MMCE streaming reads during decode are unreliable) -- only the size probe changes.
-    capacity = TEX_MMCE_STAGE_READ_SIZE * 16; // 64 KB; doubles on demand for larger covers
+    capacity = TEX_MMCE_STAGE_READ_SIZE * 2; // 64 KB; doubles on demand for larger covers
     fileBuffer = malloc(capacity);
     if (fileBuffer == NULL)
         return ERR_BAD_FILE;
