@@ -166,7 +166,9 @@ static int udpfsUpdateGameList(item_list_t *itemList)
         return 0;
 
     if (vcdViewActive(itemList->mode)) {
-        udpfsGameCount = vcdFillGameList(udpfsPrefix, &udpfsGames);
+        int r = vcdFillGameList(udpfsPrefix, &udpfsGames);
+        if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
+            udpfsGameCount = r;
     } else if (sbReadList(&udpfsGames, udpfsPrefix, &udpfsULSizePrev, &udpfsGameCount) < 0) {
         udpfsGameCount = 0;
     }
