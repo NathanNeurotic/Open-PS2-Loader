@@ -605,10 +605,17 @@ void menuAppendItem(menu_item_t *item)
 
 static void refreshMenuPosition(void)
 {
-    // Find the first menu in the list that is visible and set it as the active menu.
     if (menu == NULL)
         return;
 
+    // Nad #6: this runs on EVERY start-menu exit -- if the current tab is still visible there is
+    // nothing to refresh, so KEEP it. The old unconditional reseat below positionally dumped the
+    // selection onto the first visible tab (BDM devices register first, so typically MX4SIO) on
+    // every settings/start-menu round trip, overriding the user's Default Menu landing.
+    if (selected_item != NULL && selected_item->item != NULL && selected_item->item->visible)
+        return;
+
+    // Find the first menu in the list that is visible and set it as the active menu.
     menu_list_t *cur = menu;
     while (cur->item->visible == 0 && cur->next)
         cur = cur->next;

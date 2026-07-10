@@ -2701,10 +2701,31 @@ static void deferredInit(void)
     if (id)
         guiDeferUpdate(id);
 
-    if (list_support[gDefaultDevice].support) {
+    // Nad #6: never silently SKIP the boot select -- doing so left the GUI on the start-menu screen
+    // with the first-appended tab (a BDM instance, typically MX4SIO) as the implicit selection. If
+    // the configured Default Menu's mode is not registered, fall back MMCE -> APP -> the first
+    // registered mode (mirroring applyConfig's clamp); only when NOTHING is registered is there no
+    // main screen worth selecting and the start menu stays.
+    int bootMode = gDefaultDevice;
+    if (list_support[bootMode].support == NULL) {
+        if (list_support[MMCE_MODE].support != NULL)
+            bootMode = MMCE_MODE;
+        else if (list_support[APP_MODE].support != NULL)
+            bootMode = APP_MODE;
+        else {
+            bootMode = -1;
+            for (int i = 0; i < MODE_COUNT; i++) {
+                if (list_support[i].support != NULL) {
+                    bootMode = i;
+                    break;
+                }
+            }
+        }
+    }
+    if (bootMode >= 0 && list_support[bootMode].support) {
         id = guiOpCreate(GUI_OP_SELECT_MENU);
         if (id) {
-            id->menu.menu = &list_support[gDefaultDevice].menuItem;
+            id->menu.menu = &list_support[bootMode].menuItem;
             guiDeferUpdate(id);
         }
     }
