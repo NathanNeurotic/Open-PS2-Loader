@@ -703,6 +703,45 @@ static void prefetchAdjacentGameImages(image_cache_t *cache, void *support, stru
     }
 }
 
+// Prewarm the info screen's per-game art (BG/SCR/SCR2 GameImage + Background elements) for ONE
+// item, outside the draw path (#120 follow-up: MMCE VCD info art trickled in on-demand on the slow
+// SIO2 bus). entry!=0: Square was just pressed -- interactive priority with the settle gate
+// skipped, so the reads start under the screen-switch fade in element order (BG -> SCR -> SCR2).
+// entry==0: browse-settle prewarm -- PREFETCH priority (never queues ahead of post-scroll covers),
+// explicitly allowed onto MMCE. Uses the item's own cache_id/cache_uid slots so the info screen's
+// normal draws dedupe against these requests and display them the moment they land. AttributeImage
+// caches (userId < 0, value-keyed by config attribute) are skipped. Once an entry drains READY, the
+// repeated browse-settle call flips it to DISPLAYABLE (the returned pointer is discarded), which
+// skips the idle VRAM pre-upload -- harmless, the first info draw uploads inline via TexManager.
+void thmPrewarmInfoArt(theme_elems_t *elems, item_list_t *list, submenu_item_t *item, int entry)
+{
+    theme_element_t *elem;
+    char *value;
+
+    if (!gEnableArt || elems == NULL || list == NULL || item == NULL)
+        return;
+    if (item->cache_id == NULL || item->cache_uid == NULL)
+        return;
+    value = list->itemGetStartup(list, item->id);
+    if (value == NULL || value[0] == '\0')
+        return;
+
+    for (elem = elems->first; elem != NULL; elem = elem->next) {
+        mutable_image_t *img;
+
+        if (elem->type != ELEM_TYPE_BACKGROUND && elem->type != ELEM_TYPE_GAME_IMAGE)
+            continue;
+        img = (mutable_image_t *)elem->extended;
+        if (img == NULL || img->cache == NULL || img->cache->userId < 0 || img->cache->userId >= gTheme->gameCacheCount)
+            continue;
+
+        if (entry)
+            cacheWarmTexture(img->cache, list, &item->cache_id[img->cache->userId], &item->cache_uid[img->cache->userId], value);
+        else
+            cachePrefetchTexturePrewarm(img->cache, list, &item->cache_id[img->cache->userId], &item->cache_uid[img->cache->userId], value);
+    }
+}
+
 // Favourites element redirection (defined in the Coverflow section below; used by both draw
 // paths so an APP favourite renders with the apps element, not the game cover element).
 static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem);
@@ -1028,6 +1067,21 @@ static void initCoverflow(const char *themePath, config_set_t *themeConfig, them
 
 // AttributeImage ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Maps an AttributeImage's current value to the embedded internal glyph texId, including the
+// "display/asset" suffix-value form ("NTSC/ntsc" with attribute "Vmode" -> "Vmode_ntsc").
+// Returns -1 when no embedded glyph exists (e.g. Players, custom attributes); thmGetTexture(-1)
+// safely yields NULL (unsigned wrap >= TEXTURES_COUNT).
+static int thmAttributeTexId(mutable_image_t *attributeImage)
+{
+    char *seppos = strchr(attributeImage->currentValue, '/');
+    if (!seppos)
+        return texLookupInternalTexId(attributeImage->currentValue);
+
+    char imgName[32];
+    snprintf(imgName, sizeof(imgName), "%s_%s", attributeImage->cache->suffix, &seppos[1]);
+    return texLookupInternalTexId(imgName);
+}
+
 static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
     // No current item (empty list): clear, don't redraw the stale cached image -- same guard as
@@ -1045,16 +1099,7 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
         }
         if (attributeImage->currentValue) {
             if (thmGetGuiValue() == 0) {
-                int texId;
-                char *seppos = strchr(attributeImage->currentValue, '/');
-                if (!seppos)
-                    texId = texLookupInternalTexId(attributeImage->currentValue);
-                else {
-                    char imgName[32];
-                    snprintf(imgName, sizeof(imgName), "%s_%s", attributeImage->cache->suffix, &seppos[1]);
-                    texId = texLookupInternalTexId(&imgName[0]);
-                }
-                GSTEXTURE *texture = thmGetTexture(texId);
+                GSTEXTURE *texture = thmGetTexture(thmAttributeTexId(attributeImage));
                 if (texture && texture->Mem)
                     rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
 
@@ -1072,6 +1117,19 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
                     } else
                         rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
 
+                    return;
+                }
+                // #120 follow-up: the theme ships no glyph asset for this value (or its async ART
+                // load has not delivered yet) -- fall back to the embedded internal glyph before
+                // the element default, instead of e.g. a VCD badge rendering the theme's ELF
+                // default. cacheGetTexture above stays FIRST and this function re-runs every
+                // frame, so the embedded glyph only fills NULL frames: the moment the theme's own
+                // glyph finishes loading, it wins again -- the fallback can never shadow it. The
+                // glyph slots are decoded for every theme in thmLoad (embedded data only; the
+                // theme's own <value>_<attr>.png channel above is untouched).
+                texture = thmGetTexture(thmAttributeTexId(attributeImage));
+                if (texture && texture->Mem) {
+                    rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
                     return;
                 }
             }
@@ -2262,9 +2320,14 @@ static int thmLoad(const char *themePath)
     for (i = L3_ICON; i <= FAV_MARK; i++)
         thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
 
-    if (!themePath)
-        for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
-            thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
+    // Embedded attribute glyphs (#Format/#Media/Aspect/Rating/Scan/Vmode values): loaded for EVERY
+    // theme, disk themes included, so drawAttributeImage can fall back to them when the theme ships
+    // no <value>_<attr>.png (issue #120 follow-up: MMCE VCD entries showed the theme's ELF element-
+    // default on custom themes). Embedded data only (themePath=NULL): the theme's own glyph channel
+    // is the attribute cache and always wins at draw time. Cost ~153 KB decoded EE RAM (31x 64x32 T8
+    // glyphs + 6x 256x32 Rating strips; the NULL-data Device_* slots are no-ops), freed by thmFree.
+    for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
+        thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
 
     // Optional settings/menu background (guiDrawBGSettings draws it instead of the plasma).
     // Theme-supplied only for now: a disk theme opts in with use_settings_bg=1 and ships its
@@ -2354,8 +2417,22 @@ void thmInit(void)
 
 void thmReinit(const char *path)
 {
-    thmLoad(NULL);
-    guiThemeID = 0;
+    // Nad #5 (settings change reverts the look): this used to UNCONDITIONALLY thmLoad(NULL) +
+    // guiThemeID=0 -- reverting to the default <OPL> look even when the ACTIVE theme does not live
+    // on the device being removed. Worse, an SMB/ETH re-init calls in here on EVERY settings-OK
+    // while the network is in any error state (server asleep, cable out, or plain share-browse
+    // mode, which parks in an "error" state even when healthy), and a subsequent Save Changes then
+    // wrote the transient "<OPL>" over the user's saved theme name -- reverting it PERMANENTLY.
+    // Only fall back to the default when the active theme actually lives on the removed device;
+    // otherwise keep it and just re-index (the removal loop reshuffles ids, so re-find by name).
+    char activeName[64] = "";
+    int activeOnDevice = 0;
+    if (guiThemeID >= 1 && guiThemeID <= nThemes) {
+        snprintf(activeName, sizeof(activeName), "%s", themes[guiThemeID - 1].name);
+        activeOnDevice = strncmp(themes[guiThemeID - 1].filePath, path, strlen(path)) == 0;
+    } else if (guiThemeID == nThemes + 1) {
+        snprintf(activeName, sizeof(activeName), "<Coverflow>"); // built-in; its id (nThemes+1) shifts as themes are removed
+    }
 
     int i = 0;
     while (i < nThemes) {
@@ -2373,6 +2450,18 @@ void thmReinit(const char *path)
     }
 
     thmRebuildGuiNames();
+
+    if (activeOnDevice) {
+        // The displayed theme's files just went away with its device: drop to the built-in default.
+        // Honor thmLoad's abandon-and-retry (#120): commit the default id only if the swap happened,
+        // else keep the old id so the still-displayed theme and the saved config stay consistent.
+        if (thmLoad(NULL) == 0)
+            guiThemeID = 0;
+    } else if (guiThemeID != 0) {
+        // Active theme untouched (built-in coverflow, or a theme on another device): keep it. gTheme
+        // needs no reload -- its loaded resources are unaffected by the removed entries.
+        guiThemeID = thmFindGuiID(activeName);
+    }
 }
 
 void thmReloadScreenExtents(void)

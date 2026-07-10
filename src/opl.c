@@ -292,8 +292,16 @@ void moduleUpdateMenuInternal(opl_io_module_t *mod, int themeChanged, int langCh
 
     // refresh Cache
     if (themeChanged) {
-        if (mod->subMenu)
+        if (mod->subMenu) {
+            // Serialize the per-item cache_id/cache_uid array reallocation with rendering: this runs
+            // on the IO thread during a mid-session theme reload while the GUI thread draws the
+            // carousel THROUGH those arrays (read + write on enqueue). Unserialized, a draw racing
+            // the free()+malloc() wrote a fresh (index, uid) pair through a freed pointer into a
+            // NEIGHBOUR's reallocated array -- the permanent wrong-cover mapping (test note #2).
+            guiLock();
             submenuRebuildCache(mod->subMenu);
+            guiUnlock();
+        }
         guiCheckNotifications(themeChanged, 0);
     }
 }
@@ -371,6 +379,11 @@ static void itemExecSquare(struct menu_item *curMenu)
         // #Size is skipped while scrolling so the badges paint instantly; resolve it now (async).
         menuRequestInfoSize();
         guiSwitchScreen(GUI_SCREEN_INFO);
+        // Fire the info art (BG -> SCR -> SCR2) NOW at interactive priority, bypassing the settle:
+        // the slow-bus reads run under the screen-switch fade instead of trickling in draw order
+        // after it (#120 follow-up). Placed AFTER guiSwitchScreen so its generation advance never
+        // touches these fresh requests; on exit the in-flight read finishes and stays cached.
+        menuPrewarmInfoArt(1);
     }
 }
 
@@ -1958,10 +1971,14 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
         }
     } else {
         if (changed) {
+            // Same serialization as moduleUpdateMenuInternal: never realloc the per-item art-pair
+            // arrays while the GUI thread may be drawing through them (test note #2).
+            guiLock();
             for (int i = 0; i < MODE_COUNT; i++) {
                 if (list_support[i].support && list_support[i].subMenu)
                     submenuRebuildCache(list_support[i].subMenu);
             }
+            guiUnlock();
         }
     }
 
@@ -2467,21 +2484,27 @@ void setDefaultColors(void)
     gDefaultPlasBlendColor[0] = 0x00;
     gDefaultPlasBlendColor[1] = 0x00;
     gDefaultPlasBlendColor[2] = 0x00;
-    gDefaultBgColor[0] = 0x28;
-    gDefaultBgColor[1] = 0xC5;
-    gDefaultBgColor[2] = 0xF9;
+    // The fork's navy <OPL> reskin lives HERE, not in the embedded conf_theme_OPL.cfg: theme-cfg
+    // color keys OVERRIDE the user's picked colors on every thmLoad(NULL) reload (boot vmode change,
+    // language change, theme-device unplug), while thmSetColors re-applies the user picks on other
+    // paths -- so cfg-embedded colors made the look flip-flop and user picks not stick (tester
+    // report: "changing settings makes it default look"). As defaults they seed the same navy
+    // scheme, survive every reload once the user re-picks, and "Reset Colors" restores the fork look.
+    gDefaultBgColor[0] = 0x18;
+    gDefaultBgColor[1] = 0x25;
+    gDefaultBgColor[2] = 0x80;
 
-    gDefaultTextColor[0] = 0xFF;
-    gDefaultTextColor[1] = 0xFF;
-    gDefaultTextColor[2] = 0xFF;
+    gDefaultTextColor[0] = 0x32;
+    gDefaultTextColor[1] = 0x4d;
+    gDefaultTextColor[2] = 0x9e;
 
-    gDefaultSelTextColor[0] = 0x00;
-    gDefaultSelTextColor[1] = 0xAE;
+    gDefaultSelTextColor[0] = 0xFF;
+    gDefaultSelTextColor[1] = 0xFF;
     gDefaultSelTextColor[2] = 0xFF;
 
-    gDefaultUITextColor[0] = 0x58;
-    gDefaultUITextColor[1] = 0x68;
-    gDefaultUITextColor[2] = 0xB4;
+    gDefaultUITextColor[0] = 0x00;
+    gDefaultUITextColor[1] = 0xFF;
+    gDefaultUITextColor[2] = 0xFF;
 }
 
 static void setDefaults(void)
@@ -2678,10 +2701,31 @@ static void deferredInit(void)
     if (id)
         guiDeferUpdate(id);
 
-    if (list_support[gDefaultDevice].support) {
+    // Nad #6: never silently SKIP the boot select -- doing so left the GUI on the start-menu screen
+    // with the first-appended tab (a BDM instance, typically MX4SIO) as the implicit selection. If
+    // the configured Default Menu's mode is not registered, fall back MMCE -> APP -> the first
+    // registered mode (mirroring applyConfig's clamp); only when NOTHING is registered is there no
+    // main screen worth selecting and the start menu stays.
+    int bootMode = gDefaultDevice;
+    if (list_support[bootMode].support == NULL) {
+        if (list_support[MMCE_MODE].support != NULL)
+            bootMode = MMCE_MODE;
+        else if (list_support[APP_MODE].support != NULL)
+            bootMode = APP_MODE;
+        else {
+            bootMode = -1;
+            for (int i = 0; i < MODE_COUNT; i++) {
+                if (list_support[i].support != NULL) {
+                    bootMode = i;
+                    break;
+                }
+            }
+        }
+    }
+    if (bootMode >= 0 && list_support[bootMode].support) {
         id = guiOpCreate(GUI_OP_SELECT_MENU);
         if (id) {
-            id->menu.menu = &list_support[gDefaultDevice].menuItem;
+            id->menu.menu = &list_support[bootMode].menuItem;
             guiDeferUpdate(id);
         }
     }
