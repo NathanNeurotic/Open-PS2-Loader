@@ -465,10 +465,17 @@ static int texStageExternalFileIntoMemory(int fd, void **buffer)
             free(fileBuffer);
             return ERR_BAD_FILE;
         }
-        if (result == 0)
-            break; // EOF -- the whole file is staged
-
         bytesRead += result;
+
+        // A SHORT read means EOF here -- break without the extra read()==0 RPC (and the buffer
+        // realloc it would trigger). This is safe ONLY because of how mmceman serves an FS read
+        // (verified against ps2-mmce/mmceman mmce_fs_read + mmce_sio2_rx_mixed @ db3e93f0): the card
+        // always transfers the FULL requested size on the wire and reports the valid byte count
+        // separately, and any mid-transfer stall returns -1 (handled above) -- never a partial
+        // positive count. So result<SIZE is only ever the card's file running out, i.e. EOF; there
+        // is no "short now, more later" case. Do NOT copy this short==EOF break to a non-mmce reader.
+        if (result < TEX_MMCE_STAGE_READ_SIZE)
+            break;
     }
 
     if (bytesRead == 0) {
