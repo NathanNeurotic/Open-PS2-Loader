@@ -1089,6 +1089,10 @@ static void cacheClearItem(cache_entry_t *item, int freeTxt)
         texFree(&item->texture);
     }
 
+    // The identity string belongs to the MAPPING, not the texture: free it on every clear
+    // (the memset below then leaves value = NULL for the reused slot).
+    free(item->value);
+
     memset(item, 0, sizeof(cache_entry_t));
     cacheResetTextureState(&item->texture);
     item->qr = NULL;
@@ -1142,6 +1146,10 @@ image_cache_t *cacheInitCache(int userId, const char *prefix, int isPrefixRelati
         return NULL;
     }
 
+    // MUST zero before the cacheClearItem loop: cacheClearItem free()s item->value, and a freshly
+    // malloc'd content block is recycled heap -- an uninitialized garbage pointer there would be
+    // free()d (heap corruption) on every cache creation.
+    memset(cache->content, 0, count * sizeof(cache_entry_t));
     for (int i = 0; i < count; ++i)
         cacheClearItem(&cache->content[i], 0);
 
@@ -1180,6 +1188,15 @@ void cacheDestroyCache(image_cache_t *cache)
 
     cacheWaitForCacheRequests(cache);
     cacheUnregister(cache);
+
+    // Free identity strings left on entries that never went through cacheClearItem -- e.g. a
+    // LOADING entry whose completion was skipped by the destroying flag above.
+    cacheLock();
+    for (int i = 0; i < cache->count; ++i) {
+        free(cache->content[i].value);
+        cache->content[i].value = NULL;
+    }
+    cacheUnlock();
 
     free(cache->prefix);
     free(cache->suffix);
@@ -1431,8 +1448,16 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     }
 
     if (*cacheId != -1) {
-        entry = &cache->content[*cacheId];
-        if (entry->UID == *UID) {
+        // Neighbor-covers fix: the instant-return used to trust the per-item (cacheId, UID) pair
+        // absolutely -- no bounds check (cacheGetTextureIfReady has one; this path did not) and no
+        // re-validation that the entry still holds THIS item's art. A pair poisoned by a racing
+        // per-item-array rebuild then validly matched ANOTHER title's entry and, because every
+        // instant-return refreshes lastUsed (exempting the entry from LRU), the wrong cover stuck
+        // PERMANENTLY. Validating the entry's identity string makes any stale/poisoned pair heal in
+        // one frame: mismatch -> *cacheId = -1 -> the normal by-value dedupe/enqueue re-associates.
+        if (*cacheId >= 0 && *cacheId < cache->count &&
+            (entry = &cache->content[*cacheId])->UID == *UID &&
+            entry->value != NULL && strcmp(entry->value, value) == 0) {
             switch (entry->state) {
                 case CACHE_ENTRY_QUEUED:
                     if (priority == CACHE_REQ_PRIORITY_INTERACTIVE && entry->qr != NULL)
@@ -1622,6 +1647,17 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
      * APPS and MMCE pages.  cacheClearItem() is the established
      * release pattern used by every other site in this file. */
     cacheClearItem(oldestEntry, 1);
+    // Record the entry's identity for the instant-return validation (neighbor-covers fix). Own
+    // heap copy -- req->value lives inline in the request, which is freed independently. On OOM
+    // FAIL the enqueue: an identity-less entry that ever reached READY would mismatch the gate
+    // every frame and re-enqueue forever.
+    oldestEntry->value = malloc(strlen(value) + 1);
+    if (oldestEntry->value == NULL) {
+        free(req);
+        cacheUnlock();
+        return NULL;
+    }
+    strcpy(oldestEntry->value, value);
     oldestEntry->qr = req;
     oldestEntry->state = CACHE_ENTRY_QUEUED;
     oldestEntry->UID = cache->nextUID;

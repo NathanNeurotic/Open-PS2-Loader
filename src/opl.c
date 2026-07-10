@@ -292,8 +292,16 @@ void moduleUpdateMenuInternal(opl_io_module_t *mod, int themeChanged, int langCh
 
     // refresh Cache
     if (themeChanged) {
-        if (mod->subMenu)
+        if (mod->subMenu) {
+            // Serialize the per-item cache_id/cache_uid array reallocation with rendering: this runs
+            // on the IO thread during a mid-session theme reload while the GUI thread draws the
+            // carousel THROUGH those arrays (read + write on enqueue). Unserialized, a draw racing
+            // the free()+malloc() wrote a fresh (index, uid) pair through a freed pointer into a
+            // NEIGHBOUR's reallocated array -- the permanent wrong-cover mapping (test note #2).
+            guiLock();
             submenuRebuildCache(mod->subMenu);
+            guiUnlock();
+        }
         guiCheckNotifications(themeChanged, 0);
     }
 }
@@ -1963,10 +1971,14 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
         }
     } else {
         if (changed) {
+            // Same serialization as moduleUpdateMenuInternal: never realloc the per-item art-pair
+            // arrays while the GUI thread may be drawing through them (test note #2).
+            guiLock();
             for (int i = 0; i < MODE_COUNT; i++) {
                 if (list_support[i].support && list_support[i].subMenu)
                     submenuRebuildCache(list_support[i].subMenu);
             }
+            guiUnlock();
         }
     }
 

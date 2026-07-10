@@ -22,6 +22,13 @@ typedef struct
     int lastUsed;
 
     int UID;
+
+    // Identity of the art this entry holds (heap copy of the request value, e.g. the game's
+    // startup). The instant-return path validates it against the caller's value so a poisoned or
+    // stale per-item (cacheId, UID) pair self-heals in one frame instead of permanently rendering
+    // another title's art (the CoverFlow wrong-neighbour-cover bug). Owned by the entry: freed in
+    // cacheClearItem / cacheDestroyCache.
+    char *value;
 } cache_entry_t;
 
 /// One texture cache instance
