@@ -136,6 +136,8 @@ void guiShowCoverflowConfig(void);
 void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize);
 void guiShowNetConfig();
 void guiShowDeviceConfig(void);
+void guiShowVcdConfig(void);
+void guiShowMmceConfig(void);
 void guiShowParentalLockConfig();
 
 void guiCheckNotifications(int checkTheme, int checkLang);

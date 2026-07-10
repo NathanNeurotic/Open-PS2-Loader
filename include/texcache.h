@@ -22,6 +22,13 @@ typedef struct
     int lastUsed;
 
     int UID;
+
+    // Identity of the art this entry holds (heap copy of the request value, e.g. the game's
+    // startup). The instant-return path validates it against the caller's value so a poisoned or
+    // stale per-item (cacheId, UID) pair self-heals in one frame instead of permanently rendering
+    // another title's art (the CoverFlow wrong-neighbour-cover bug). Owned by the entry: freed in
+    // cacheClearItem / cacheDestroyCache.
+    char *value;
 } cache_entry_t;
 
 /// One texture cache instance
@@ -72,11 +79,20 @@ void cacheCancelPendingImageLoads(void);
  */
 int cacheCancelPendingImageLoadsTimed(int timeoutTicks);
 
-/** Cancels queued MMCE-backed interactive art and waits up to timeoutTicks for active MMCE art to drain.
+/** Cancels queued MMCE-backed art (both queues) and waits up to timeoutTicks for active MMCE art to drain.
  */
 int cacheAbortMmceImageLoadsTimed(int timeoutTicks);
 
-/** Invalidates queued art loads without blocking on the IO worker.
+/** Interactive art request that skips the inactivity settle (info-screen entry prewarm). */
+GSTEXTURE *cacheWarmTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value);
+
+/** Prefetch art request allowed onto MMCE and past the prefetch cap (browse-settle info prewarm). */
+GSTEXTURE *cachePrefetchTexturePrewarm(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value);
+
+/** Advances the failure-retry generation and demotes loaded art to displayable. Queued and
+ *  in-flight loads are LEFT to finish and land in cache (wOPL persist-and-load); teardown paths
+ *  must use the cacheCancelPendingImageLoads / cacheAbortMmceImageLoadsTimed family instead.
+ *  Never blocks on the IO worker.
  */
 void cacheAdvanceGeneration(void);
 

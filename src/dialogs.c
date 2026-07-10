@@ -160,46 +160,17 @@ struct UIItem diaConfig[] = {
     {UI_STRING, CFG_EXITTO, 1, 1, _STR_HINT_EXITPATH, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DEFAULT_CORE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_DEFAULT_CORE, 1, 1, _STR_HINT_DEFAULT_CORE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_BUTTON, CFG_NEUTRINO_ARGS, 1, 1, _STR_HINT_NEUTRINO_ARGS, 0, 0, {.label = {NULL, _STR_NEUTRINO_ARGS}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_DEVICE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NEUTRINO_DEVICE, 1, 1, _STR_HINT_NEUTRINO_DEVICE, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_DEVICE}}},
-    {UI_SPACER},
-    {UI_ENUM, CFG_POPSTARTER_DEVICE, 1, 1, _STR_HINT_POPSTARTER_DEVICE, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, CFG_LBL_POPSTARTER_PATH, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_PATH}}},
-    {UI_SPACER},
-    {UI_STRING, CFG_POPSTARTER_PATH, 1, 1, _STR_HINT_POPSTARTER_PATH, 0, 0, {.stringvalue = {"", "", NULL}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_APPLY}}},
-    {UI_SPACER},
-    {UI_BOOL, CFG_BDMA_APPLY, 1, 1, _STR_HINT_BDMA_APPLY, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, CFG_LBL_BDMASOURCE, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_SOURCE}}},
-    {UI_SPACER},
-    {UI_ENUM, CFG_BDMASOURCE, 1, 1, _STR_HINT_BDMA_SOURCE, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, CFG_LBL_BDMAMODE, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_MODE}}},
-    {UI_SPACER},
-    {UI_ENUM, CFG_BDMAMODE, 1, 1, _STR_HINT_BDMA_MODE, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VCD_HIDE_GAMEID}}},
-    {UI_SPACER},
-    {UI_BOOL, CFG_VCD_HIDE_GAMEID, 1, 1, _STR_HINT_VCD_HIDE_GAMEID, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VCD_FIRST_DISC}}},
-    {UI_SPACER},
-    {UI_BOOL, CFG_VCD_FIRST_DISC_ONLY, 1, 1, _STR_HINT_VCD_FIRST_DISC, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_WRITE}}},
@@ -342,8 +313,64 @@ struct UIItem diaDeviceConfig[] = {
     {UI_INT, CFG_SMBCACHE, 1, 1, -1, 0, 0, {.intvalue = {16, 4, 0, 32, NULL}}},
     {UI_BREAK},
 
+    // buttons
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
     {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MMCE_SETTINGS}}},
+
+    // end of dialog
+    {UI_TERMINATOR}};
+
+// VCD Settings Menu (PS1-via-POPSTARTER launch config + BDMA equip + VCD list display options).
+// All rows relocated out of General Settings; CFG ids unchanged so saved config loads identically.
+struct UIItem diaVcdConfig[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_VCD_SETTINGS}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_DEVICE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_POPSTARTER_DEVICE, 1, 1, _STR_HINT_POPSTARTER_DEVICE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, CFG_LBL_POPSTARTER_PATH, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_PATH}}},
+    {UI_SPACER},
+    {UI_STRING, CFG_POPSTARTER_PATH, 1, 1, _STR_HINT_POPSTARTER_PATH, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_APPLY}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_BDMA_APPLY, 1, 1, _STR_HINT_BDMA_APPLY, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, CFG_LBL_BDMASOURCE, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_SOURCE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_BDMASOURCE, 1, 1, _STR_HINT_BDMA_SOURCE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, CFG_LBL_BDMAMODE, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_MODE}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_BDMAMODE, 1, 1, _STR_HINT_BDMA_MODE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VCD_HIDE_GAMEID}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_VCD_HIDE_GAMEID, 1, 1, _STR_HINT_VCD_HIDE_GAMEID, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VCD_FIRST_DISC}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_VCD_FIRST_DISC_ONLY, 1, 1, _STR_HINT_VCD_FIRST_DISC, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    // buttons
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
+    {UI_BREAK},
+
+    // end of dialog
+    {UI_TERMINATOR}};
+
+// MMCE Settings Menu (SD2PSX / MemCard PRO2 tuning). Relocated out of Device Settings; CFG ids unchanged.
+struct UIItem diaMmceConfig[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MMCE_SETTINGS}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCE_SLOT}}},
@@ -1071,6 +1098,15 @@ struct UIItem diaAbout[] = {
 
     {UI_SPACER},
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"icyson55", -1}}},
+    {UI_BREAK},
+
+    // Financial Support (RiptOPL fork)
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {NULL, _STR_FINANCIAL_SUPPORT}}},
+    {UI_BREAK},
+
+    {UI_SPACER},
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Akilluminati47", -1}}},
     {UI_BREAK},
 
     // Build Options

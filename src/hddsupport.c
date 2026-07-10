@@ -694,7 +694,7 @@ static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
 // OPL, or any Neutrino-side failure -- ZSO, no install, preflight -- since HDL always boots natively).
 static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
 {
-    int coreLoader = 0;
+    int coreLoader = gDefaultCoreLoader; // no per-game $CoreLoader key -> follow the global default core
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     if (!coreLoader)
         return 0;
@@ -990,6 +990,10 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
         configRead(vcdConfig);
         configSetStr(vcdConfig, CONFIG_ITEM_NAME, g->name);
         configSetStr(vcdConfig, CONFIG_ITEM_STARTUP, g->name);
+        // HDD bypasses sbPopulateConfig, which is what sets #Format="VCD" for every other device's VCD
+        // list (supportbase.c). Without it the info-page #Format AttributeImage has no value and falls
+        // back to the theme default (ELF glyph) -- so set it here to render the VCD badge like the rest.
+        configSetStr(vcdConfig, CONFIG_ITEM_FORMAT, "VCD");
         // HDD bypasses sbPopulateConfig, so set the #System/#Media/#DiscType badge attributes via the
         // shared helper (FR #49) -- a POPS disc is always a PS1 CD. Without it those badges never render.
         sbSetDiscAttributes(vcdConfig, 1, 1);

@@ -78,6 +78,7 @@ enum UI_ITEMS {
     CFG_BOOT_SND_VOLUME,
     CFG_BGM_VOLUME,
     CFG_DEFAULT_BGM_PATH,
+    CFG_DEFAULT_CORE, // global default Loader Core (gDefaultCoreLoader); per-game "Default" follows it
     CFG_NEUTRINO_ARGS,
     CFG_NEUTRINO_DEVICE,
     CFG_POPSTARTER_DEVICE,
@@ -292,5 +293,7 @@ extern struct UIItem diaOSDConfig[];
 extern struct UIItem diaCoverflowConfig[];
 extern struct UIItem diaNeutrinoArgs[];
 extern struct UIItem diaDeviceConfig[];
+extern struct UIItem diaVcdConfig[];
+extern struct UIItem diaMmceConfig[];
 
 #endif

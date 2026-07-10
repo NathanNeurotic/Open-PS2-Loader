@@ -298,6 +298,27 @@ static void cacheResetRequestTrackingLocked(void)
 {
     cache_registry_entry_t *registry = gCacheRegistry;
 
+    // Drain the queued requests instead of just NULLing the list heads: each queued request owns
+    // heap memory AND its cache entry's qr backpointer. Dropping the heads leaked every request
+    // still queued at reset time and left entry->qr dangling -- a later invalidate pass would then
+    // dereference freed memory through it. Clear the entry linkage first, then finalize + free.
+    load_image_request_t *queues[2] = {gArtInteractiveReqList, gArtPrefetchReqList};
+    for (int q = 0; q < 2; q++) {
+        load_image_request_t *req = queues[q];
+        while (req != NULL) {
+            load_image_request_t *next = req->next;
+            req->next = NULL;
+            if (req->entry != NULL && req->entry->qr == req) {
+                req->entry->qr = NULL;
+                if (req->entry->state == CACHE_ENTRY_QUEUED)
+                    cacheClearItem(req->entry, 1);
+            }
+            cacheFinalizeRequestLocked(req);
+            cacheFreeRequest(req);
+            req = next;
+        }
+    }
+
     gArtInteractiveReqList = NULL;
     gArtInteractiveReqEnd = NULL;
     gArtPrefetchReqList = NULL;
@@ -409,7 +430,9 @@ static int cacheHasPendingInteractiveArtLocked(void)
     return gArtInteractiveReqList != NULL || gArtInteractiveActiveCount > 0;
 }
 
-static int cacheHasQueuedInteractiveModeLocked(int mode)
+// Mode checks span BOTH queues: since the info-art prewarm, MMCE-backed requests can sit on the
+// PREFETCH queue too, and every quiesce path (launch, theme swap, config IO) must drain those as well.
+static int cacheHasQueuedModeLocked(int mode)
 {
     load_image_request_t *req;
 
@@ -417,18 +440,25 @@ static int cacheHasQueuedInteractiveModeLocked(int mode)
         if (req->effectiveMode == mode)
             return 1;
     }
+    for (req = gArtPrefetchReqList; req != NULL; req = req->next) {
+        if (req->effectiveMode == mode)
+            return 1;
+    }
 
     return 0;
 }
 
-static int cacheHasActiveInteractiveModeLocked(int mode)
+static int cacheHasActiveModeLocked(int mode)
 {
-    return gArtCurrentReq != NULL && gArtCurrentReq->priority == CACHE_REQ_PRIORITY_INTERACTIVE && gArtCurrentReq->effectiveMode == mode;
+    return gArtCurrentReq != NULL && gArtCurrentReq->effectiveMode == mode;
 }
 
 static int cacheIsAbortableMmceRequest(load_image_request_t *req)
 {
-    return req != NULL && req->priority == CACHE_REQ_PRIORITY_INTERACTIVE && req->effectiveMode == MMCE_MODE;
+    // Any MMCE-backed read is abortable, whatever its queue: the abort flag is polled by the same
+    // 4KB staging loop regardless of priority, and a prewarm PREFETCH read holds the SIO2 bus just
+    // like an interactive one.
+    return req != NULL && req->effectiveMode == MMCE_MODE;
 }
 
 
@@ -591,12 +621,20 @@ static void cacheInvalidateEntryLocked(cache_entry_t *entry, int freeTxt, int pr
             break;
         case CACHE_ENTRY_LOADING:
             if (req != NULL) {
-                // Teardown (preserveLoaded==0) aborts everything. But a per-scroll generation advance
-                // (preserveLoaded==1) should only abort slow in-flight MMCE loads -- let a local
-                // BDM/HDD/USB cover or disc icon FINISH and land in cache instead of being cancelled and
-                // re-queued on every scroll step. With one art worker and #DiscType now adding a 2nd
-                // request per game, the blanket abort starved both cover and disc (temperamental loading).
-                if (!preserveLoaded || cacheIsAbortableMmceRequest(req))
+                // Teardown (preserveLoaded==0: cacheEnd / cacheDestroyCache / the timed cancel+abort
+                // family) aborts the in-flight read. A generation advance (preserveLoaded==1: per-
+                // scroll step, tab/page switch, screen switch, list sort/clear) NEVER does -- wOPL
+                // semantics (test note #3): the read finishes, lands in its entry (completion is
+                // UID-guarded in cacheCompleteRequest -- qr==req && UID==cacheUID -- and every draw
+                // keys on a per-item UID match, so a late texture can never render on a wrong item)
+                // and persists for the scroll-back / tab-switch-back. The old nav-gated MMCE abort
+                // (#116 "held in reserve", #120 static-screen gate) cancelled the in-flight read on
+                // every held-nav carousel step, discarding partial SIO2 progress and forcing a full
+                // re-read after settle -- the residual "backs up like it's buffering". It bought
+                // nothing: during a hold, cacheShouldDeferInteractiveArtOnInput already blocks new
+                // MMCE/HDD enqueues (cacheGetTextureInternal) AND worker dequeues (cacheDequeueRequest),
+                // so at most this ONE read finishes into an otherwise idle bus.
+                if (!preserveLoaded)
                     req->abortRequested = 1;
             } else {
                 entry->qr = NULL;
@@ -779,6 +817,13 @@ static load_image_request_t *cacheDequeueRequest(void)
         if (gArtInteractiveReqEnd == req)
             gArtInteractiveReqEnd = NULL;
     } else if (gArtPrefetchReqList != NULL) {
+        // Same nav-time defer the interactive head gets: a prewarm (or HDD cover) prefetch read
+        // must never START mid-scroll on a slow shared bus.
+        if (cacheShouldDeferInteractiveArtOnInput(gArtPrefetchReqList->list, gArtPrefetchReqList->value)) {
+            cacheUnlock();
+            return NULL;
+        }
+
         req = gArtPrefetchReqList;
         gArtPrefetchReqList = req->next;
         req->next = NULL;
@@ -1044,6 +1089,10 @@ static void cacheClearItem(cache_entry_t *item, int freeTxt)
         texFree(&item->texture);
     }
 
+    // The identity string belongs to the MAPPING, not the texture: free it on every clear
+    // (the memset below then leaves value = NULL for the reused slot).
+    free(item->value);
+
     memset(item, 0, sizeof(cache_entry_t));
     cacheResetTextureState(&item->texture);
     item->qr = NULL;
@@ -1097,6 +1146,10 @@ image_cache_t *cacheInitCache(int userId, const char *prefix, int isPrefixRelati
         return NULL;
     }
 
+    // MUST zero before the cacheClearItem loop: cacheClearItem free()s item->value, and a freshly
+    // malloc'd content block is recycled heap -- an uninitialized garbage pointer there would be
+    // free()d (heap corruption) on every cache creation.
+    memset(cache->content, 0, count * sizeof(cache_entry_t));
     for (int i = 0; i < count; ++i)
         cacheClearItem(&cache->content[i], 0);
 
@@ -1136,6 +1189,15 @@ void cacheDestroyCache(image_cache_t *cache)
     cacheWaitForCacheRequests(cache);
     cacheUnregister(cache);
 
+    // Free identity strings left on entries that never went through cacheClearItem -- e.g. a
+    // LOADING entry whose completion was skipped by the destroying flag above.
+    cacheLock();
+    for (int i = 0; i < cache->count; ++i) {
+        free(cache->content[i].value);
+        cache->content[i].value = NULL;
+    }
+    cacheUnlock();
+
     free(cache->prefix);
     free(cache->suffix);
     free(cache->content);
@@ -1171,6 +1233,13 @@ int cacheAbortMmceImageLoadsTimed(int timeoutTicks)
         if (req->effectiveMode == MMCE_MODE)
             cacheDropQueuedRequestLocked(req);
     }
+    // Prewarm can queue MMCE art at PREFETCH priority too -- every quiesce caller (launch, theme
+    // swap, deferred config IO, deinit) needs those off the SIO2 bus just the same.
+    for (load_image_request_t *req = gArtPrefetchReqList, *next; req != NULL; req = next) {
+        next = req->next;
+        if (req->effectiveMode == MMCE_MODE)
+            cacheDropQueuedRequestLocked(req);
+    }
 
     cacheUnlock();
 
@@ -1182,7 +1251,7 @@ int cacheAbortMmceImageLoadsTimed(int timeoutTicks)
         int pending;
 
         cacheLock();
-        pending = cacheHasActiveInteractiveModeLocked(MMCE_MODE) || cacheHasQueuedInteractiveModeLocked(MMCE_MODE);
+        pending = cacheHasActiveModeLocked(MMCE_MODE) || cacheHasQueuedModeLocked(MMCE_MODE);
         cacheUnlock();
 
         if (!pending) {
@@ -1294,7 +1363,10 @@ void cacheWakeInteractiveArtOnInputIdle(void)
     int wakeWorker = 0;
 
     cacheLock();
-    if (gArtRunning && gArtThreadId >= 0 && gArtActiveCount == 0 && gArtInteractiveReqList != NULL)
+    // Prefetch heads can be nav-parked too (prewarm / HDD covers defer at dequeue), so wake the
+    // worker for parked work on EITHER queue once input goes idle.
+    if (gArtRunning && gArtThreadId >= 0 && gArtActiveCount == 0 &&
+        (gArtInteractiveReqList != NULL || gArtPrefetchReqList != NULL))
         wakeWorker = 1;
     cacheUnlock();
 
@@ -1344,7 +1416,10 @@ GSTEXTURE *cacheGetTextureIfReady(image_cache_t *cache, int *cacheId, int *UID)
     return result;
 }
 
-static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value, unsigned char priority)
+// prewarm: an explicit info-art prewarm request -- lifts the MMCE prefetch exemption and the
+// per-cache prefetch cap for THIS call only (the caller bounds when it fires). skipSettle: skip the
+// interactive inactivity settle (Square-entry prewarm fires the reads immediately, under the fade).
+static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value, unsigned char priority, int prewarm, int skipSettle)
 {
     cache_entry_t *entry;
     cache_entry_t *oldestEntry = NULL;
@@ -1373,8 +1448,16 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     }
 
     if (*cacheId != -1) {
-        entry = &cache->content[*cacheId];
-        if (entry->UID == *UID) {
+        // Neighbor-covers fix: the instant-return used to trust the per-item (cacheId, UID) pair
+        // absolutely -- no bounds check (cacheGetTextureIfReady has one; this path did not) and no
+        // re-validation that the entry still holds THIS item's art. A pair poisoned by a racing
+        // per-item-array rebuild then validly matched ANOTHER title's entry and, because every
+        // instant-return refreshes lastUsed (exempting the entry from LRU), the wrong cover stuck
+        // PERMANENTLY. Validating the entry's identity string makes any stale/poisoned pair heal in
+        // one frame: mismatch -> *cacheId = -1 -> the normal by-value dedupe/enqueue re-associates.
+        if (*cacheId >= 0 && *cacheId < cache->count &&
+            (entry = &cache->content[*cacheId])->UID == *UID &&
+            entry->value != NULL && strcmp(entry->value, value) == 0) {
             switch (entry->state) {
                 case CACHE_ENTRY_QUEUED:
                     if (priority == CACHE_REQ_PRIORITY_INTERACTIVE && entry->qr != NULL)
@@ -1437,7 +1520,7 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
             return NULL;
         }
 
-        {
+        if (!skipSettle) {
             int delay = cacheGetInteractiveDelay(list, value);
             /* In MMCE mode, give Cover art a 1-frame inactivity head start over
              * other art types (Background, Screenshot, etc.).  The default theme
@@ -1457,7 +1540,10 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
             }
         }
     } else {
-        if (list == NULL || effectiveMode == MMCE_MODE || guiInactiveFrames < cacheGetPrefetchDelay(list, value)) {
+        // MMCE is prefetch-exempt (browse-time prefetch hurt nav on the SIO2 bus) EXCEPT for an
+        // explicit info-art prewarm, whose caller only fires after a long settle with the art
+        // pipeline idle.
+        if (list == NULL || (effectiveMode == MMCE_MODE && !prewarm) || guiInactiveFrames < cacheGetPrefetchDelay(list, value)) {
             cacheUnlock();
             return NULL;
         }
@@ -1501,7 +1587,7 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     // worker; match that. The queue is still bounded by the 10-slot LRU cache (a full cache yields no
     // free victim, so no unbounded growth).
 
-    if (priority == CACHE_REQ_PRIORITY_PREFETCH && cache->queuedPrefetchRequests >= cacheGetPrefetchLimit(cache)) {
+    if (priority == CACHE_REQ_PRIORITY_PREFETCH && !prewarm && cache->queuedPrefetchRequests >= cacheGetPrefetchLimit(cache)) {
         cacheUnlock();
         return NULL;
     }
@@ -1561,6 +1647,17 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
      * APPS and MMCE pages.  cacheClearItem() is the established
      * release pattern used by every other site in this file. */
     cacheClearItem(oldestEntry, 1);
+    // Record the entry's identity for the instant-return validation (neighbor-covers fix). Own
+    // heap copy -- req->value lives inline in the request, which is freed independently. On OOM
+    // FAIL the enqueue: an identity-less entry that ever reached READY would mismatch the gate
+    // every frame and re-enqueue forever.
+    oldestEntry->value = malloc(strlen(value) + 1);
+    if (oldestEntry->value == NULL) {
+        free(req);
+        cacheUnlock();
+        return NULL;
+    }
+    strcpy(oldestEntry->value, value);
     oldestEntry->qr = req;
     oldestEntry->state = CACHE_ENTRY_QUEUED;
     oldestEntry->UID = cache->nextUID;
@@ -1579,10 +1676,25 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
 
 GSTEXTURE *cacheGetTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value)
 {
-    return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_INTERACTIVE);
+    return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_INTERACTIVE, 0, 0);
 }
 
 GSTEXTURE *cachePrefetchTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value)
 {
-    return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_PREFETCH);
+    return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_PREFETCH, 0, 0);
+}
+
+GSTEXTURE *cacheWarmTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value)
+{
+    // Info-screen ENTRY prewarm: interactive priority with the inactivity settle skipped, so the
+    // info art starts loading immediately under the screen-switch fade instead of after it.
+    return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_INTERACTIVE, 0, 1);
+}
+
+GSTEXTURE *cachePrefetchTexturePrewarm(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value)
+{
+    // Browse-settle info-art prewarm: prefetch priority (never queues ahead of post-scroll covers)
+    // allowed onto MMCE and past the per-cache prefetch cap. Callers bound when it fires (long
+    // idle, art pipeline empty).
+    return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_PREFETCH, 1, 0);
 }

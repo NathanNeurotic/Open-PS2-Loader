@@ -200,6 +200,7 @@ char gExitPath[256];
 char gNeutrinoArgs[256];   // extra command-line flags appended to every Neutrino launch
 char gNeutrinoPath[256];   // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
 int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy gNeutrinoPath
+int gDefaultCoreLoader;    // global default Loader Core (0=<OPL>, 1=Neutrino); per-game $CoreLoader overrides, absent key = follow this
 int gNeutrinoElfArg;       // opt-in (settings key only, no UI): auto-emit -elf=cdrom0: on Neutrino launches (parity Delta-10)
 char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
 int gPopstarterDevice;     // POPSTARTER.ELF device (POPS_DEV_*); Default = cwd then VCD device; legacy path -> Custom
@@ -291,8 +292,16 @@ void moduleUpdateMenuInternal(opl_io_module_t *mod, int themeChanged, int langCh
 
     // refresh Cache
     if (themeChanged) {
-        if (mod->subMenu)
+        if (mod->subMenu) {
+            // Serialize the per-item cache_id/cache_uid array reallocation with rendering: this runs
+            // on the IO thread during a mid-session theme reload while the GUI thread draws the
+            // carousel THROUGH those arrays (read + write on enqueue). Unserialized, a draw racing
+            // the free()+malloc() wrote a fresh (index, uid) pair through a freed pointer into a
+            // NEIGHBOUR's reallocated array -- the permanent wrong-cover mapping (test note #2).
+            guiLock();
             submenuRebuildCache(mod->subMenu);
+            guiUnlock();
+        }
         guiCheckNotifications(themeChanged, 0);
     }
 }
@@ -370,6 +379,11 @@ static void itemExecSquare(struct menu_item *curMenu)
         // #Size is skipped while scrolling so the badges paint instantly; resolve it now (async).
         menuRequestInfoSize();
         guiSwitchScreen(GUI_SCREEN_INFO);
+        // Fire the info art (BG -> SCR -> SCR2) NOW at interactive priority, bypassing the settle:
+        // the slow-bus reads run under the screen-switch fade instead of trickling in draw order
+        // after it (#120 follow-up). Placed AFTER guiSwitchScreen so its generation advance never
+        // touches these fresh requests; on exit the in-flight read finishes and stays cached.
+        menuPrewarmInfoArt(1);
     }
 }
 
@@ -1363,6 +1377,35 @@ static void resolveBootDirToMass(void)
     }
 }
 
+// Shared reader for the Neutrino-launch globals (args/path/-elf opt-in/global default core/device
+// TYPE incl. the legacy device-INDEX migration). Factored out so the interactive _loadConfig and the
+// autolaunch miniInit can never drift again -- the argv/autolaunch path previously read none of these
+// (then only DEFAULT_CORE), so a keyless "Default" game booted Neutrino with a stale AUTO device and
+// empty global args there, silently diverging from an interactive launch of the same game.
+static void configReadNeutrinoGlobals(config_set_t *configOPL)
+{
+    configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
+    configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath, sizeof(gNeutrinoPath));
+    configGetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
+    // Global default Loader Core (0=<OPL>, 1=Neutrino). Absent in legacy configs -> keep the
+    // reset default (0/<OPL>), so existing installs behave exactly as before this key existed.
+    configGetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, &gDefaultCoreLoader);
+    // Neutrino Device: prefer the new device-TYPE key; if absent (config predates the picker
+    // change), migrate the legacy device-INDEX value -- 0=Auto, 1/2=mc0/mc1 -> MC, 11/12=
+    // mmce0/mmce1 -> MMCE, 3-10=mass* -> Auto (a bare massN index can't name a driver type).
+    if (!configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, &gNeutrinoDevice)) {
+        int legacyDev = 0;
+        if (configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &legacyDev)) {
+            if (legacyDev == 1 || legacyDev == 2)
+                gNeutrinoDevice = NEUTRINO_DEV_MC;
+            else if (legacyDev == 11 || legacyDev == 12)
+                gNeutrinoDevice = NEUTRINO_DEV_MMCE;
+            else
+                gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+        }
+    }
+}
+
 static void _loadConfig()
 {
     int value, themeID = -1, langID = -1;
@@ -1534,23 +1577,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_BOOT_SND_VOLUME, &gBootSndVolume);
             configGetInt(configOPL, CONFIG_OPL_BGM_VOLUME, &gBGMVolume);
             configGetStrCopy(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath, sizeof(gDefaultBGMPath));
-            configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
-            configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath, sizeof(gNeutrinoPath));
-            // Neutrino Device: prefer the new device-TYPE key; if absent (config predates the picker
-            // change), migrate the legacy device-INDEX value -- 0=Auto, 1/2=mc0/mc1 -> MC, 11/12=
-            // mmce0/mmce1 -> MMCE, 3-10=mass* -> Auto (a bare massN index can't name a driver type).
-            configGetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
-            if (!configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, &gNeutrinoDevice)) {
-                int legacyDev = 0;
-                if (configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &legacyDev)) {
-                    if (legacyDev == 1 || legacyDev == 2)
-                        gNeutrinoDevice = NEUTRINO_DEV_MC;
-                    else if (legacyDev == 11 || legacyDev == 12)
-                        gNeutrinoDevice = NEUTRINO_DEV_MMCE;
-                    else
-                        gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-                }
-            }
+            configReadNeutrinoGlobals(configOPL); // args/path/-elf/global core/device TYPE (+legacy migration); shared with miniInit
             configGetStrCopy(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath, sizeof(gPopstarterPath));
             // POPSTARTER device TYPE (POPS_DEV_*). Absent in legacy configs: a non-empty custom
             // popstarter_path migrates to Custom (honour the old override); otherwise Default (cwd).
@@ -1824,6 +1851,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath);
+        configSetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, gDefaultCoreLoader);  // global default Loader Core (0=<OPL>, 1=Neutrino)
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice); // device-TYPE (NEUTRINO_DEV_*); the legacy neutrino_device key is left as-is
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
@@ -1863,8 +1891,16 @@ static void _saveConfig()
         configSetStr(configNet, CONFIG_NET_SMB_PASSW, gPCPassword);
     }
 
+    // Create/refresh the legacy mc?:OPL home ONLY in legacy-discovery mode (no known boot dir). The
+    // "mc" prefix test alone cannot tell the legacy mc?:OPL config root from an APPDIR THAT LIVES ON
+    // A MEMORY CARD (FMCB-style mc0:/APPS install: configGetDir() truncates either to "mc0:"), so an
+    // appdir-on-MC boot used to sprout an unwanted mc?:/OPL folder (+ icons) on every settings/theme/
+    // last-played save while the .cfg files themselves correctly stayed in the appdir -- and the
+    // configPrepareNotifications(gBaseMCDir) call re-pointed the "Settings saved to %s" toast at the
+    // wildcard card instead of the real appdir. gBootDir is the authoritative gate, same as the
+    // alternate-save logic below: non-empty means the appdir IS the config root, MC stays untouched.
     char *path = configGetDir();
-    if (!strncmp(path, "mc", 2)) {
+    if (gBootDir[0] == '\0' && !strncmp(path, "mc", 2)) {
         checkMCFolder();
         configPrepareNotifications(gBaseMCDir);
     }
@@ -1935,10 +1971,14 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
         }
     } else {
         if (changed) {
+            // Same serialization as moduleUpdateMenuInternal: never realloc the per-item art-pair
+            // arrays while the GUI thread may be drawing through them (test note #2).
+            guiLock();
             for (int i = 0; i < MODE_COUNT; i++) {
                 if (list_support[i].support && list_support[i].subMenu)
                     submenuRebuildCache(list_support[i].subMenu);
             }
+            guiUnlock();
         }
     }
 
@@ -2444,21 +2484,27 @@ void setDefaultColors(void)
     gDefaultPlasBlendColor[0] = 0x00;
     gDefaultPlasBlendColor[1] = 0x00;
     gDefaultPlasBlendColor[2] = 0x00;
-    gDefaultBgColor[0] = 0x28;
-    gDefaultBgColor[1] = 0xC5;
-    gDefaultBgColor[2] = 0xF9;
+    // The fork's navy <OPL> reskin lives HERE, not in the embedded conf_theme_OPL.cfg: theme-cfg
+    // color keys OVERRIDE the user's picked colors on every thmLoad(NULL) reload (boot vmode change,
+    // language change, theme-device unplug), while thmSetColors re-applies the user picks on other
+    // paths -- so cfg-embedded colors made the look flip-flop and user picks not stick (tester
+    // report: "changing settings makes it default look"). As defaults they seed the same navy
+    // scheme, survive every reload once the user re-picks, and "Reset Colors" restores the fork look.
+    gDefaultBgColor[0] = 0x18;
+    gDefaultBgColor[1] = 0x25;
+    gDefaultBgColor[2] = 0x80;
 
-    gDefaultTextColor[0] = 0xFF;
-    gDefaultTextColor[1] = 0xFF;
-    gDefaultTextColor[2] = 0xFF;
+    gDefaultTextColor[0] = 0x32;
+    gDefaultTextColor[1] = 0x4d;
+    gDefaultTextColor[2] = 0x9e;
 
-    gDefaultSelTextColor[0] = 0x00;
-    gDefaultSelTextColor[1] = 0xAE;
+    gDefaultSelTextColor[0] = 0xFF;
+    gDefaultSelTextColor[1] = 0xFF;
     gDefaultSelTextColor[2] = 0xFF;
 
-    gDefaultUITextColor[0] = 0x58;
-    gDefaultUITextColor[1] = 0x68;
-    gDefaultUITextColor[2] = 0xB4;
+    gDefaultUITextColor[0] = 0x00;
+    gDefaultUITextColor[1] = 0xFF;
+    gDefaultUITextColor[2] = 0xFF;
 }
 
 static void setDefaults(void)
@@ -2512,7 +2558,8 @@ static void setDefaults(void)
     gNeutrinoArgs[0] = '\0';
     gNeutrinoPath[0] = '\0';
     gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-    gNeutrinoElfArg = 0; // experimental Delta-10 -elf emission stays opt-in
+    gDefaultCoreLoader = 0; // <OPL> (native) -- preserves pre-existing behaviour until the user opts into Neutrino globally
+    gNeutrinoElfArg = 0;    // experimental Delta-10 -elf emission stays opt-in
     gPopstarterPath[0] = '\0';
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gBdmaSource = VCD_BDMA_SRC_USB;
@@ -2654,10 +2701,31 @@ static void deferredInit(void)
     if (id)
         guiDeferUpdate(id);
 
-    if (list_support[gDefaultDevice].support) {
+    // Nad #6: never silently SKIP the boot select -- doing so left the GUI on the start-menu screen
+    // with the first-appended tab (a BDM instance, typically MX4SIO) as the implicit selection. If
+    // the configured Default Menu's mode is not registered, fall back MMCE -> APP -> the first
+    // registered mode (mirroring applyConfig's clamp); only when NOTHING is registered is there no
+    // main screen worth selecting and the start menu stays.
+    int bootMode = gDefaultDevice;
+    if (list_support[bootMode].support == NULL) {
+        if (list_support[MMCE_MODE].support != NULL)
+            bootMode = MMCE_MODE;
+        else if (list_support[APP_MODE].support != NULL)
+            bootMode = APP_MODE;
+        else {
+            bootMode = -1;
+            for (int i = 0; i < MODE_COUNT; i++) {
+                if (list_support[i].support != NULL) {
+                    bootMode = i;
+                    break;
+                }
+            }
+        }
+    }
+    if (bootMode >= 0 && list_support[bootMode].support) {
         id = guiOpCreate(GUI_OP_SELECT_MENU);
         if (id) {
-            id->menu.menu = &list_support[gDefaultDevice].menuItem;
+            id->menu.menu = &list_support[bootMode].menuItem;
             guiDeferUpdate(id);
         }
     }
@@ -2718,6 +2786,11 @@ static void miniInit(int mode)
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);
+            // Honor ALL the Neutrino-launch globals on the autolaunch/argv path exactly like the
+            // interactive _loadConfig -- not just the default core: an autolaunched keyless "Default"
+            // game must resolve the SAME neutrino.elf (device pick / custom path) with the SAME global
+            // args as an interactive launch, or it silently boots a different/stale core without flags.
+            configReadNeutrinoGlobals(configOPL);
             if (mode == BDM_MODE) {
                 configGetStrCopy(configOPL, CONFIG_OPL_BDM_PREFIX, gBDMPrefix, sizeof(gBDMPrefix));
                 configGetInt(configOPL, CONFIG_OPL_BDM_CACHE, &bdmCacheSize);
