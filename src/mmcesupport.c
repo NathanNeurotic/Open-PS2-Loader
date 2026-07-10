@@ -49,9 +49,11 @@ static char mmceFoldersCreatedFor[40] = {0};
 #define MMCE_GAMEID_POLL_US       (200 * 1000) // 200 ms between polls -> ~3 s total budget (was 500 ms x 15 = 7.5 s)
 /* Allow up to 500 ms for the art thread to drain before resorting to
  * TerminateThread.  The MMCE worker checks the abort flag between every
- * 4 KB read chunk (~16 ms at typical card speeds), so 500 ms covers
- * even very slow cards and avoids the fileXio RPC corruption that
- * TerminateThread can cause mid-read. */
+ * staged read chunk (TEX_MMCE_STAGE_READ_SIZE = 32 KB, ~128 ms at the
+ * pessimistic ~256 KB/s slow-card rate), so 500 ms keeps a ~4x margin
+ * even on a slow card and avoids the fileXio RPC corruption that
+ * TerminateThread can cause mid-read. (If that chunk is ever enlarged,
+ * re-check this margin: 128 KB would approach the 500 ms watchdog.) */
 #define MMCE_ART_ABORT_WAIT_TICKS 500
 
 // forward declaration
