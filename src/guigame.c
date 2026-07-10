@@ -1137,9 +1137,9 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
         configRemoveKey(configSet, CONFIG_ITEM_COMPAT);
 
     diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreLoader);
-    if (coreLoader == 2)                                     // "Default" -> drop the per-game key so the game follows gDefaultCoreLoader
+    if (coreLoader == 2) // "Default" -> drop the per-game key so the game follows gDefaultCoreLoader
         configRemoveKey(configSet, CONFIG_ITEM_CORE_LOADER);
-    else                                                     // 0=<OPL>, 1=Neutrino -> explicit per-game override (writes even 0 so it beats a Neutrino global)
+    else // 0=<OPL>, 1=Neutrino -> explicit per-game override (writes even 0 so it beats a Neutrino global)
         result = configSetInt(configSet, CONFIG_ITEM_CORE_LOADER, coreLoader);
 
     /// GSM ///

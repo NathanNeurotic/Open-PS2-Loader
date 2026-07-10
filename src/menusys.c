@@ -88,8 +88,8 @@ static s32 menuSemaId = -1;
 static s32 menuListSemaId = -1;
 static ee_sema_t menuSema;
 
-#define MENU_MMCE_CONFIG_IDLE_FRAMES 20
-#define MENU_APP_CONFIG_IDLE_FRAMES  1
+#define MENU_MMCE_CONFIG_IDLE_FRAMES  20
+#define MENU_APP_CONFIG_IDLE_FRAMES   1
 // Browse-settle info-art prewarm (#120 follow-up): after this many idle frames (~2s) with the art
 // pipeline empty, the SELECTED item's info art (BG/SCR/SCR2) is queued at prefetch priority on the
 // slow buses, so Square opens an already-warm info page.

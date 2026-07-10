@@ -2559,7 +2559,7 @@ static void setDefaults(void)
     gNeutrinoPath[0] = '\0';
     gNeutrinoDevice = NEUTRINO_DEV_AUTO;
     gDefaultCoreLoader = 0; // <OPL> (native) -- preserves pre-existing behaviour until the user opts into Neutrino globally
-    gNeutrinoElfArg = 0; // experimental Delta-10 -elf emission stays opt-in
+    gNeutrinoElfArg = 0;    // experimental Delta-10 -elf emission stays opt-in
     gPopstarterPath[0] = '\0';
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gBdmaSource = VCD_BDMA_SRC_USB;
