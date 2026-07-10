@@ -414,9 +414,11 @@ static int mmceUpdateGameList(item_list_t *itemList)
         return 0;
     }
 
-    if (vcdViewActive(itemList->mode))
-        mmceGameCount = vcdFillGameList(mmcePrefix, &mmceGames);
-    else
+    if (vcdViewActive(itemList->mode)) {
+        int r = vcdFillGameList(mmcePrefix, &mmceGames);
+        if (r >= 0) // r < 0: transient scan failure (contended bus) -> keep the last-good list, do NOT blank
+            mmceGameCount = r;
+    } else
         sbReadList(&mmceGames, mmcePrefix, &mmceULSizePrev, &mmceGameCount);
     return mmceGameCount;
 }

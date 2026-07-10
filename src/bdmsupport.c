@@ -562,7 +562,9 @@ static int bdmUpdateGameList(item_list_t *itemList)
     if (vcdViewActive(itemList->mode)) {
         char vcdPrefix[BDM_DEVICE_ROOT_MAX + 2];
         bdmBuildVcdPrefix(vcdPrefix, sizeof(vcdPrefix), itemList->mode); // device root, NOT gBDMPrefix
-        pDeviceData->bdmGameCount = vcdFillGameList(vcdPrefix, &pDeviceData->bdmGames);
+        int r = vcdFillGameList(vcdPrefix, &pDeviceData->bdmGames);
+        if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
+            pDeviceData->bdmGameCount = r;
     } else
         sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
     return pDeviceData->bdmGameCount;

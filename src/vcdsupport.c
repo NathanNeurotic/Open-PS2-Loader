@@ -89,12 +89,16 @@ static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
 {
     DIR *dir = opendir(dirPath);
     if (dir == NULL)
-        return 0; // no such folder -> no VCDs
+        return -1; // could NOT read the dir (absent OR device momentarily unreadable / bus contended).
+                   // Signal a scan FAILURE -- distinct from a readable-but-empty dir (opens fine, count
+                   // 0) -- so the caller PRESERVES its last-good list instead of blanking it on a
+                   // transient wedge. Mirrors scanForISO (the ISO path) -- the #120 fix: the VCD & ISO
+                   // views share one backing store, and returning 0 here zeroed BOTH on a contended bus.
 
     vcd_entry_t *list = (vcd_entry_t *)calloc(VCD_MAX_ITEMS, sizeof(vcd_entry_t));
     if (list == NULL) {
         closedir(dir);
-        return 0;
+        return -1; // OOM: cannot build a list -> preserve the caller's current one rather than blank it
     }
 
     int count = 0;
@@ -418,38 +422,48 @@ int vcdIsHiddenDisc(const char *name)
     return 0;
 }
 
+// Returns the game count (>= 0) and publishes the new list into *outGames, OR returns -1 on a
+// transient scan FAILURE (device momentarily unreadable) leaving *outGames UNTOUCHED so the caller
+// keeps its last-good list. Callers MUST assign the count only when the return is >= 0. This mirrors
+// sbReadList / scanForISO (the ISO path): build into a LOCAL list and do NOT free the old one up
+// front, so a contended-bus opendir failure can no longer blank the list (#120: the VCD & ISO views
+// of a device share one backing store; the old free-up-front + return-0-on-fail zeroed BOTH).
 int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)
 {
     if (outGames == NULL)
         return 0;
-    free(*outGames); // symmetric with sbReadList: free the old list before reallocating
-    *outGames = NULL;
 
     vcd_entry_t *vcds = NULL;
-    int n = vcdScanDir(devPrefix, &vcds);
-    if (n <= 0)
-        return 0;
+    int n = vcdScanDir(devPrefix, &vcds); // NOTE: does NOT touch *outGames
+    if (n < 0)
+        return -1; // could not read the device -> preserve the caller's current list (leave it intact)
 
-    base_game_info_t *games = (base_game_info_t *)memalign(64, n * sizeof(base_game_info_t));
-    if (games == NULL) {
-        free(vcds);
-        return 0;
-    }
-    memset(games, 0, n * sizeof(base_game_info_t));
+    base_game_info_t *games = NULL;
     int kept = 0;
-    for (int i = 0; i < n; i++) {
-        if (gVcdFirstDiscOnly && vcdIsHiddenDisc(vcds[i].name))
-            continue; // #118: hide discs 2+ of a multi-disc PS1 set (device lists only)
-        snprintf(games[kept].name, sizeof(games[kept].name), "%s", vcds[i].name);
-        snprintf(games[kept].startup, sizeof(games[kept].startup), "%s", vcds[i].gameId); // "" -> no art lookup
-        snprintf(games[kept].extension, sizeof(games[kept].extension), ".VCD");
-        games[kept].parts = 1;
-        games[kept].format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
-        kept++;
+    if (n > 0) {
+        games = (base_game_info_t *)memalign(64, n * sizeof(base_game_info_t));
+        if (games == NULL) {
+            free(vcds);
+            return -1; // OOM -> preserve rather than blank
+        }
+        memset(games, 0, n * sizeof(base_game_info_t));
+        for (int i = 0; i < n; i++) {
+            if (gVcdFirstDiscOnly && vcdIsHiddenDisc(vcds[i].name))
+                continue; // #118: hide discs 2+ of a multi-disc PS1 set (device lists only)
+            snprintf(games[kept].name, sizeof(games[kept].name), "%s", vcds[i].name);
+            snprintf(games[kept].startup, sizeof(games[kept].startup), "%s", vcds[i].gameId); // "" -> no art lookup
+            snprintf(games[kept].extension, sizeof(games[kept].extension), ".VCD");
+            games[kept].parts = 1;
+            games[kept].format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
+            kept++;
+        }
     }
     free(vcds);
-    if (kept == 0) { // every scanned entry was a hidden disc -> empty list (over-allocated buffer freed)
-        free(games);
+
+    // Scan reached the device (n >= 0): NOW it is safe to replace the old list.
+    free(*outGames);
+    if (kept == 0) { // readable but empty (or every disc hidden) -> empty list
+        free(games); // free(NULL) when n == 0 is a no-op
         *outGames = NULL;
         return 0;
     }
