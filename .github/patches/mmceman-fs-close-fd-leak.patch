@@ -1,0 +1,64 @@
+diff --git a/mmceman/src/mmce_fs.c b/mmceman/src/mmce_fs.c
+index ca6f618..bfcff1b 100644
+--- a/mmceman/src/mmce_fs.c
++++ b/mmceman/src/mmce_fs.c
+@@ -164,22 +164,29 @@ int mmce_fs_close(iomanX_iop_file_t *file)
+     res = mmce_sio2_tx_rx_pio(sizeof(wrbuf), sizeof(rdbuf), wrbuf, rdbuf, &timeout_1s);
+     mmce_sio2_unlock();
+ 
++    // Free the EE/IOP-side handle slot on EVERY exit, not just a clean close: the fd is being torn
++    // down regardless of what the card reports, so a timed-out or errored close must still return
++    // its slot to the 16-entry pool. Otherwise a transient close failure strands the slot for the
++    // life of the (session-singleton) driver, and after ~16 such failures every mmceN: open()/
++    // opendir() fails permanently (observed downstream: contended VCD-info art reads exhaust the
++    // pool -> blank game lists / boot fails until reboot).
+     if (res == -1) {
+         DPRINTF("%s ERROR: P1 - Timedout waiting for /ACK\n", __func__);
++        *(int*)file->privdata = -1;
+         return -1;
+     }
+ 
+     if (rdbuf[0x1] != MMCE_REPLY_CONST) {
+         DPRINTF("%s ERROR: Invalid response from card. Got 0x%x, Expected 0x%x\n", __func__, rdbuf[0x1], MMCE_REPLY_CONST);
++        *(int*)file->privdata = -1;
+         return -1;
+     }
+ 
+-    if (rdbuf[0x4] == 0x0) {
+-        *(int*)file->privdata = -1;
+-    } else {
++    if (rdbuf[0x4] != 0x0) {
+         res = rdbuf[0x4];
+         DPRINTF("%s ERROR: got return value %i\n", __func__, res);
+     }
++    *(int*)file->privdata = -1;
+ 
+     return res;
+ }
+@@ -659,18 +666,26 @@ int mmce_fs_dclose(iomanX_iop_file_t *file)
+     res = mmce_sio2_tx_rx_pio(0x4, 0x6, wrbuf, rdbuf, &timeout_1s);
+     mmce_sio2_unlock();
+ 
++    // Free the handle slot on EVERY exit (same rationale as mmce_fs_close): a timed-out or errored
++    // dclose must still return its slot to the pool, or a transient failure strands it permanently.
+     if (res == -1) {
+         DPRINTF("%s ERROR: P1 - Timedout waiting for /ACK\n", __func__);
++        *(int*)file->privdata = -1;
++        file->privdata = NULL;
+         return -1;
+     }
+ 
+     if (rdbuf[0x1] != MMCE_REPLY_CONST) {
+         DPRINTF("%s ERROR: Invalid response from card. Got 0x%x, Expected 0x%x\n", __func__, rdbuf[0x1], MMCE_REPLY_CONST);
++        *(int*)file->privdata = -1;
++        file->privdata = NULL;
+         return -1;
+     }
+ 
+     if (rdbuf[0x4] != 0x0) {
+         DPRINTF("%s ERROR: Card failed to close dir %i, return value %i\n", __func__, (u8)*(int*)file->privdata, rdbuf[0x1]);
++        *(int*)file->privdata = -1;
++        file->privdata = NULL;
+         return -1;
+     }
+ 

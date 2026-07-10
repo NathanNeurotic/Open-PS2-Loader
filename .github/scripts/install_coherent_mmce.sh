@@ -40,6 +40,23 @@ echo "== Building menu-coherent mmceman from ps2-mmce @ ${MMCE_PIN} =="
 git clone --quiet "$MMCE_REPO" "$WORK/mmceman"
 git -C "$WORK/mmceman" checkout --quiet "$MMCE_PIN"
 
+# Local fix on top of the pin: mmce_fs_close/dclose leak their handle slot from the 16-entry FS
+# pool on ANY failed close (SIO2 timeout / bad reply / card error) -- only a clean close frees it.
+# On a contended card those close failures accumulate and, since mmceman is a session singleton,
+# after ~16 the pool is permanently drained and every mmceN: open()/opendir() fails (RiptOPL #120:
+# repeated VCD-info art reads -> blank game lists, boot fails, until reboot). The patch frees the
+# slot on every teardown path. Applied here (not a pin bump) so it is visible/reviewable and rides
+# the existing rebuild; drop it once the fix is upstream in ps2-mmce/mmceman. Fail LOUD if it stops
+# applying after a pin bump -- shipping the leak silently is the failure mode to avoid.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+FS_LEAK_PATCH="$SCRIPT_DIR/../patches/mmceman-fs-close-fd-leak.patch"
+if [ ! -f "$FS_LEAK_PATCH" ]; then
+    echo "ERROR: expected mmceman fd-leak patch not found at $FS_LEAK_PATCH" >&2
+    exit 1
+fi
+echo "== Applying mmceman fd-leak fix (mmce_fs_close/dclose slot free-on-failure) =="
+git -C "$WORK/mmceman" apply --verbose "$FS_LEAK_PATCH"
+
 # Older-SDK make quirk: the per-module obj dir isn't auto-created by every Makefile.iopglobal
 # vintage -- pre-create it so the first compile step doesn't fail on a missing directory.
 mkdir -p "$WORK/mmceman/mmceman/obj"

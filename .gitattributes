@@ -26,3 +26,6 @@ pops/* binary
 *.PDF  diff=astextplain
 *.rtf  diff=astextplain
 *.RTF  diff=astextplain
+
+# Vendored-driver patches must stay LF so git apply works on the Linux CI runner
+.github/patches/*.patch text eol=lf
