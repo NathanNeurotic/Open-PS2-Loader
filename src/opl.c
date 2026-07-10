@@ -371,6 +371,11 @@ static void itemExecSquare(struct menu_item *curMenu)
         // #Size is skipped while scrolling so the badges paint instantly; resolve it now (async).
         menuRequestInfoSize();
         guiSwitchScreen(GUI_SCREEN_INFO);
+        // Fire the info art (BG -> SCR -> SCR2) NOW at interactive priority, bypassing the settle:
+        // the slow-bus reads run under the screen-switch fade instead of trickling in draw order
+        // after it (#120 follow-up). Placed AFTER guiSwitchScreen so its generation advance never
+        // touches these fresh requests; on exit the in-flight read finishes and stays cached.
+        menuPrewarmInfoArt(1);
     }
 }
 
