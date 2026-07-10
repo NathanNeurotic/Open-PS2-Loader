@@ -113,9 +113,6 @@ char *menuItemGetText(menu_item_t *it);
 config_set_t *menuLoadConfig();
 config_set_t *menuLoadConfigDirect(void);
 void menuRequestInfoSize(void);
-// Prewarm the selected item's info-page art (BG/SCR/SCR2). entry!=0 = Square-entry (immediate,
-// interactive); entry==0 = browse-settle prefetch. #120 follow-up; see thmPrewarmInfoArt.
-void menuPrewarmInfoArt(int entry);
 config_set_t *gameMenuLoadConfig(struct UIItem *ui);
 void menuSaveConfig();
 

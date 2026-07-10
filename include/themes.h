@@ -164,10 +164,6 @@ extern theme_t *gTheme;
 extern int gCoverflowCount, gCoverflowCenterScale, gCoverflowAnimSpeed, gCoverflowDimCovers;
 void thmTriggerCoverflowAnim(int dir);
 
-/** Prewarm one item's info-page art (BG/SCR/SCR2). entry!=0 = Square-entry (interactive priority,
- *  settle skipped); entry==0 = browse-settle (prefetch priority, allowed onto MMCE). #120 follow-up. */
-void thmPrewarmInfoArt(theme_elems_t *elems, item_list_t *list, submenu_item_t *item, int entry);
-
 void thmInit(void);
 void thmReinit(const char *path);
 void thmReloadScreenExtents(void);

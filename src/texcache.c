@@ -1683,18 +1683,3 @@ GSTEXTURE *cachePrefetchTexture(image_cache_t *cache, item_list_t *list, int *ca
 {
     return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_PREFETCH, 0, 0);
 }
-
-GSTEXTURE *cacheWarmTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value)
-{
-    // Info-screen ENTRY prewarm: interactive priority with the inactivity settle skipped, so the
-    // info art starts loading immediately under the screen-switch fade instead of after it.
-    return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_INTERACTIVE, 0, 1);
-}
-
-GSTEXTURE *cachePrefetchTexturePrewarm(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value)
-{
-    // Browse-settle info-art prewarm: prefetch priority (never queues ahead of post-scroll covers)
-    // allowed onto MMCE and past the per-cache prefetch cap. Callers bound when it fires (long
-    // idle, art pipeline empty).
-    return cacheGetTextureInternal(cache, list, cacheId, UID, value, CACHE_REQ_PRIORITY_PREFETCH, 1, 0);
-}

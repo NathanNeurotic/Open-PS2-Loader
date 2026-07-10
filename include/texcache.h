@@ -83,12 +83,6 @@ int cacheCancelPendingImageLoadsTimed(int timeoutTicks);
  */
 int cacheAbortMmceImageLoadsTimed(int timeoutTicks);
 
-/** Interactive art request that skips the inactivity settle (info-screen entry prewarm). */
-GSTEXTURE *cacheWarmTexture(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value);
-
-/** Prefetch art request allowed onto MMCE and past the prefetch cap (browse-settle info prewarm). */
-GSTEXTURE *cachePrefetchTexturePrewarm(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value);
-
 /** Advances the failure-retry generation and demotes loaded art to displayable. Queued and
  *  in-flight loads are LEFT to finish and land in cache (wOPL persist-and-load); teardown paths
  *  must use the cacheCancelPendingImageLoads / cacheAbortMmceImageLoadsTimed family instead.

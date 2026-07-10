@@ -88,12 +88,8 @@ static s32 menuSemaId = -1;
 static s32 menuListSemaId = -1;
 static ee_sema_t menuSema;
 
-#define MENU_MMCE_CONFIG_IDLE_FRAMES  20
-#define MENU_APP_CONFIG_IDLE_FRAMES   1
-// Browse-settle info-art prewarm (#120 follow-up): after this many idle frames (~2s) with the art
-// pipeline empty, the SELECTED item's info art (BG/SCR/SCR2) is queued at prefetch priority on the
-// slow buses, so Square opens an already-warm info page.
-#define MENU_INFO_PREWARM_IDLE_FRAMES 120
+#define MENU_MMCE_CONFIG_IDLE_FRAMES 20
+#define MENU_APP_CONFIG_IDLE_FRAMES  1
 
 static void menuInvalidateArtSelection(void)
 {
@@ -1281,17 +1277,6 @@ void menuRenderMain(void)
         menuRenderElements(&gTheme->mainElems, allowItemConfig, renderConfig);
         gTheme->itemsList = gTheme->gamesItemsList;
     }
-
-    // Browse-time info-art prewarm, slow buses only: once the selection has settled ~2s and the art
-    // pipeline is idle, queue the SELECTED item's info art (BG/SCR/SCR2) at PREFETCH priority so
-    // Square opens a warm page. Idempotent per frame: QUEUED/LOADING/DISPLAYABLE entries and the
-    // FAILED generation marker all no-op inside the cache, so no one-shot latch is needed and a
-    // card with no SCR/SCR2 art is probed at most once per settle. (HDD note: an in-flight HDD
-    // prewarm read is not abortable and can share the PFS/ATA channel with the first post-settle
-    // scroll for up to one file read -- the same exposure class as the existing HDD cover prefetch.)
-    if (list != NULL && (list->mode == MMCE_MODE || list->mode == HDD_MODE) &&
-        guiInactiveFrames >= MENU_INFO_PREWARM_IDLE_FRAMES && !cacheHasPendingArt())
-        menuPrewarmInfoArt(0);
 }
 
 // Coverflow rotates the nav axis on the MAIN screen only: Left/Right step through the
@@ -1410,25 +1395,6 @@ void menuRenderInfo(void)
     } else {
         gTheme->itemsList = gTheme->gamesItemsList;
     }
-}
-
-// Prewarm the SELECTED item's info-page art. entry!=0 from itemExecSquare (Square just pressed);
-// entry==0 from the browse-settle hook in menuRenderMain. Bounded: only fires when the info screen
-// is reachable (same gTheme->infoElems.first condition as the Square hint / itemExecSquare) and art
-// is enabled (checked inside thmPrewarmInfoArt). GUI thread only (itemExecSquare / menuRenderMain),
-// same unlocked selected_item access discipline as itemExecSquare.
-void menuPrewarmInfoArt(int entry)
-{
-    item_list_t *list;
-
-    if (selected_item == NULL || selected_item->item == NULL || selected_item->item->current == NULL)
-        return;
-    if (gTheme == NULL || gTheme->infoElems.first == NULL)
-        return;
-    list = selected_item->item->userdata;
-    if (list == NULL || !list->enabled)
-        return;
-    thmPrewarmInfoArt(menuGetInfoElems(list), list, &selected_item->item->current->item, entry);
 }
 
 void menuHandleInputInfo()
