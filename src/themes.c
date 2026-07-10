@@ -703,45 +703,6 @@ static void prefetchAdjacentGameImages(image_cache_t *cache, void *support, stru
     }
 }
 
-// Prewarm the info screen's per-game art (BG/SCR/SCR2 GameImage + Background elements) for ONE
-// item, outside the draw path (#120 follow-up: MMCE VCD info art trickled in on-demand on the slow
-// SIO2 bus). entry!=0: Square was just pressed -- interactive priority with the settle gate
-// skipped, so the reads start under the screen-switch fade in element order (BG -> SCR -> SCR2).
-// entry==0: browse-settle prewarm -- PREFETCH priority (never queues ahead of post-scroll covers),
-// explicitly allowed onto MMCE. Uses the item's own cache_id/cache_uid slots so the info screen's
-// normal draws dedupe against these requests and display them the moment they land. AttributeImage
-// caches (userId < 0, value-keyed by config attribute) are skipped. Once an entry drains READY, the
-// repeated browse-settle call flips it to DISPLAYABLE (the returned pointer is discarded), which
-// skips the idle VRAM pre-upload -- harmless, the first info draw uploads inline via TexManager.
-void thmPrewarmInfoArt(theme_elems_t *elems, item_list_t *list, submenu_item_t *item, int entry)
-{
-    theme_element_t *elem;
-    char *value;
-
-    if (!gEnableArt || elems == NULL || list == NULL || item == NULL)
-        return;
-    if (item->cache_id == NULL || item->cache_uid == NULL)
-        return;
-    value = list->itemGetStartup(list, item->id);
-    if (value == NULL || value[0] == '\0')
-        return;
-
-    for (elem = elems->first; elem != NULL; elem = elem->next) {
-        mutable_image_t *img;
-
-        if (elem->type != ELEM_TYPE_BACKGROUND && elem->type != ELEM_TYPE_GAME_IMAGE)
-            continue;
-        img = (mutable_image_t *)elem->extended;
-        if (img == NULL || img->cache == NULL || img->cache->userId < 0 || img->cache->userId >= gTheme->gameCacheCount)
-            continue;
-
-        if (entry)
-            cacheWarmTexture(img->cache, list, &item->cache_id[img->cache->userId], &item->cache_uid[img->cache->userId], value);
-        else
-            cachePrefetchTexturePrewarm(img->cache, list, &item->cache_id[img->cache->userId], &item->cache_uid[img->cache->userId], value);
-    }
-}
-
 // Favourites element redirection (defined in the Coverflow section below; used by both draw
 // paths so an APP favourite renders with the apps element, not the game cover element).
 static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu_list *item, theme_element_t *elem);
