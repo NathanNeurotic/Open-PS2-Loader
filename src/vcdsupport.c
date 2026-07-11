@@ -364,17 +364,77 @@ const char *vcdArtPopsDir(const char *suffix)
     return NULL;
 }
 
+// Bounded miss-memo for VCD art (issue #120): a VCD info view probes up to ~2-3 filenames per art
+// suffix (see vcdLoadArt), almost all MISSING for PS1 games that ship no covers/screenshots. Opening
+// PS1 info repeatedly re-ran that failing-open STORM on the slow shared MMCE (SIO2) bus every time,
+// contending/desyncing the card. Remember a FULL miss per (device+value+suffix) so a subsequent probe
+// of the same art skips the opens entirely -- STRICTLY FEWER bus opens, never more. Invalidated
+// wholesale by an epoch bump on any VCD list rescan (art may now exist), so nothing is permanently
+// hidden. Thread model: the memo ARRAY is written ONLY on the art worker thread (vcdLoadArt runs there
+// via every getImage); the epoch is a lone volatile int bumped from the IO thread -- so there is no
+// cross-thread array access, aligned-int writes are atomic on EE, and a stale-epoch entry is ignored.
+#define VCD_ART_MISS_MEMO 128
+static struct
+{
+    unsigned int key;
+    unsigned int epoch;
+} vcdArtMiss[VCD_ART_MISS_MEMO];
+static int vcdArtMissNext = 0;
+static volatile unsigned int vcdArtMissEpoch = 1; // 0 reserved = a never-written slot
+
+static void vcdArtMissInvalidate(void)
+{
+    unsigned int e = vcdArtMissEpoch + 1; // bump on a VCD rescan -> every prior miss is re-probed
+    vcdArtMissEpoch = e ? e : 1;
+}
+
+static unsigned int vcdArtMissKey(const char *devPrefix, const char *value, const char *suffix)
+{
+    unsigned int h = 2166136261u; // FNV-1a over devPrefix, value, suffix (each NUL-separated)
+    const char *p;
+    for (p = devPrefix; p && *p; p++)
+        h = (h ^ (unsigned char)*p) * 16777619u;
+    h = (h ^ 0xffu) * 16777619u;
+    for (p = value; p && *p; p++)
+        h = (h ^ (unsigned char)*p) * 16777619u;
+    h = (h ^ 0xffu) * 16777619u;
+    for (p = suffix; p && *p; p++)
+        h = (h ^ (unsigned char)*p) * 16777619u;
+    return h ? h : 1; // 0 reserved
+}
+
+static int vcdArtMissKnown(unsigned int key)
+{
+    unsigned int ep = vcdArtMissEpoch;
+    for (int i = 0; i < VCD_ART_MISS_MEMO; i++)
+        if (vcdArtMiss[i].epoch == ep && vcdArtMiss[i].key == key)
+            return 1;
+    return 0;
+}
+
+static void vcdArtMissRemember(unsigned int key)
+{
+    vcdArtMiss[vcdArtMissNext].key = key;
+    vcdArtMiss[vcdArtMissNext].epoch = vcdArtMissEpoch;
+    vcdArtMissNext = (vcdArtMissNext + 1) % VCD_ART_MISS_MEMO;
+}
+
 // 3-level cover/icon fallback for VCD (PS1) games, so one art file can serve OPL and POPSLoader:
 //   (1) OPL ART keyed by the PS1 disc id  -> <dev>ART/<SXXX_NNN.NN>_<suffix>.png  (interoperable serial)
 //   (2) OPL ART keyed by the VCD basename -> <dev>ART/<name>_<suffix>.png         (long-standing behaviour)
 //   (3) POPSLoader layout next to the .VCD -> <dev><popsDir>/<name>.png            (no _suffix; POPSLoader's)
 // Returns the first texDiscoverLoad hit (>= 0), else the last miss. popsDir == NULL skips step (3).
-// `sep` is '/' for local/MMCE/HDD prefixes and '\\' for SMB (ethPrefix) -- mirror the caller's getImage.
+// A repeat probe of known-absent art short-circuits with NO opens (miss-memo above). `sep` is '/' for
+// local/MMCE/HDD prefixes and '\\' for SMB (ethPrefix) -- mirror the caller's getImage.
 int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const char *value, const char *suffix, const char *popsDir, GSTEXTURE *tex)
 {
     char path[256];
     char discId[VCD_ID_MAX];
     int r = -1;
+
+    unsigned int missKey = vcdArtMissKey(devPrefix, value, suffix);
+    if (vcdArtMissKnown(missKey))
+        return -1; // known-absent this epoch -> skip the failing-open storm on the slow MMCE bus (#120)
 
     vcdExtractGameId(value, discId, sizeof(discId));
     if (discId[0] != '\0') {
@@ -383,11 +443,16 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
             return r;
     }
     snprintf(path, sizeof(path), "%s%s%c%s_%s", devPrefix, artFolder, sep, value, suffix);
-    r = texDiscoverLoad(tex, path, -1);
-    if (r >= 0 || popsDir == NULL)
+    if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
         return r;
-    snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, popsDir, sep, value);
-    return texDiscoverLoad(tex, path, -1);
+    if (popsDir != NULL) {
+        snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, popsDir, sep, value);
+        if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
+            return r;
+    }
+
+    vcdArtMissRemember(missKey); // all tiers missed -> a repeat probe skips them until the next rescan
+    return r;
 }
 
 // #118: a multi-disc PS1 game is a set of separate .VCD files whose titles carry a disc token, e.g.
@@ -437,6 +502,10 @@ int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)
     int n = vcdScanDir(devPrefix, &vcds); // NOTE: does NOT touch *outGames
     if (n < 0)
         return -1; // could not read the device -> preserve the caller's current list (leave it intact)
+
+    // The device was readable and the list is being rebuilt -> art may have been added since; drop the
+    // VCD art miss-memo so previously-absent covers/screenshots are re-probed (see vcdArtMissInvalidate).
+    vcdArtMissInvalidate();
 
     base_game_info_t *games = NULL;
     int kept = 0;

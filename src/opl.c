@@ -385,8 +385,17 @@ static void itemExecSquare(struct menu_item *curMenu)
         // busy spinner (Andrew, #120). Skipping it for VCD strictly REDUCES channel traffic and drops
         // no displayed data (the info page shows no size for a VCD anyway).
         item_list_t *support = curMenu->userdata;
-        if (support == NULL || !vcdViewActive(support->mode))
+        if (support == NULL || !vcdViewActive(support->mode)) {
             menuRequestInfoSize();
+        } else {
+            // VCD: the info page's #Format/#System/#DiscType badges are AttributeImages, so the info
+            // RENDER path would otherwise queue an ASYNC item-config read (the badge values), raising
+            // the busy spinner on the slow MMCE bus for ~0.4s+ with nothing else to show (Andrew, #120,
+            // separate from the #Size stat above). Load that config SYNCHRONOUSLY here instead -- same
+            // proven API itemExecSelect uses at launch -- so the render path finds itemConfig already
+            // set and takes its no-op branch: no async request, no spinner, badges still populated.
+            menuLoadConfigDirect();
+        }
         guiSwitchScreen(GUI_SCREEN_INFO);
     }
 }
