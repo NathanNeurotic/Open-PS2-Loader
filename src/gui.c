@@ -56,9 +56,18 @@ static int showLngPopup;
 static clock_t popupTimer;
 
 // Boot-splash status line (#297, fork-native): set via guiSetBootStatus(), drawn under the logo by
-// guiRenderGreeting() during the boot splash / intro fade. Main-thread / boot-time only.
+// guiRenderGreeting() during the boot splash / intro fade.
 static char gBootStatus[64] = {0};
 static int gBootStatusActive = 0;
+// Boot-step localizer: the boot->menu handoff runs on the single IO worker thread (bdmLoadBlockDevice-
+// Modules -> mmceArmGameIDTransport -> deferredAudioInit -> deferredInit), any step of which can wedge
+// with no timeout on real hardware (e.g. a USB/exFAT module bring-up) and freeze the splash. The MAIN
+// thread meanwhile races ahead setting "Scanning MC..."/"Ready.", so a naive IO-thread status set would
+// be clobbered and the frozen screen would show a useless "Ready." (exactly the brenotomaz report). Once
+// an IO-thread step claims the line via guiSetBootStatusSticky(), this latch makes the main thread's
+// later guiSetBootStatus() calls no-ops -- so whichever ordering wins, the STUCK STEP is what stays on
+// screen, naming the wedge. Reset when the status is cleared (guiSetBootStatus(NULL)).
+static volatile int gBootStatusSticky = 0;
 
 // forward decl.
 static void guiShow();
@@ -1600,15 +1609,32 @@ static void guiDrawBusy(int alpha)
     }
 }
 
-// Boot-splash status line setter (#297). Pass NULL to clear. Main-thread / boot-time only; the field
-// is read only by guiRenderGreeting on the same thread, so no locking is needed.
+// Boot-splash status line setter (#297). Pass NULL to clear. Called on the main thread; guiRenderGreeting
+// reads gBootStatus on the main thread too, so no locking is needed for the render. A concurrent sticky
+// set from the IO thread (see below) can at worst leave one frame of mixed text -- never a crash.
 void guiSetBootStatus(const char *status)
 {
     if (status == NULL) {
         gBootStatus[0] = '\0';
         gBootStatusActive = 0;
+        gBootStatusSticky = 0; // clear the latch so a fresh boot sequence can set the line again
         return;
     }
+    if (gBootStatusSticky)
+        return; // an IO-thread boot step owns the line -> do not clobber it with a main-thread scan/Ready
+    snprintf(gBootStatus, sizeof(gBootStatus), "%s", status);
+    gBootStatusActive = 1;
+}
+
+// Boot-step localizer setter, called from the deferred IO-thread boot steps. Latches gBootStatusSticky
+// so the main thread's subsequent scan/Ready sets can't overwrite it -- so if this step wedges, its label
+// is what stays frozen on the splash. Sticky is set BEFORE the text so a racing main-thread reader that
+// sees the latch skips its own write. Later IO-thread steps (same single thread) freely override in turn.
+void guiSetBootStatusSticky(const char *status)
+{
+    if (status == NULL)
+        return;
+    gBootStatusSticky = 1;
     snprintf(gBootStatus, sizeof(gBootStatus), "%s", status);
     gBootStatusActive = 1;
 }

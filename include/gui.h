@@ -174,8 +174,13 @@ void guiShowGameID(const char *startup);
 void guiRenderGreetingScreen(void);
 
 /** Sets the boot-splash status line shown under the logo by guiRenderGreeting() during boot.
- *  Pass NULL to clear. Main-thread / boot-time only. (#297) */
+ *  Pass NULL to clear (also releases the sticky latch). Main-thread. (#297) */
 void guiSetBootStatus(const char *status);
+
+/** Boot-step localizer: set the boot-splash status from a deferred IO-thread boot step and LATCH it so
+ *  the main thread's later scan/Ready sets can't overwrite it. If the step wedges, its label stays frozen
+ *  on the splash, naming the stuck step. Call at the top of each such step. */
+void guiSetBootStatusSticky(const char *status);
 
 void guiWarning(const char *text, int count);
 
