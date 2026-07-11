@@ -177,10 +177,11 @@ void guiRenderGreetingScreen(void);
  *  Pass NULL to clear (also releases the sticky latch). Main-thread. (#297) */
 void guiSetBootStatus(const char *status);
 
-/** Boot-step localizer: set the boot-splash status from a deferred IO-thread boot step and LATCH it so
- *  the main thread's later scan/Ready sets can't overwrite it. If the step wedges, its label stays frozen
- *  on the splash, naming the stuck step. Call at the top of each such step. */
-void guiSetBootStatusSticky(const char *status);
+/** Boot-step localizer: publish a boot-splash label from a deferred IO-thread boot step. guiRenderGreeting
+ *  prefers it over the main-thread scan/Ready line, so if this step wedges its label stays frozen on the
+ *  splash, naming the stuck step. `label` MUST be static (an _l() lang entry / literal) -- only a pointer
+ *  to it is stored (atomic, no shared buffer -> no data race). Call at the top of each such step. */
+void guiSetBootStatusSticky(const char *label);
 
 void guiWarning(const char *text, int count);
 

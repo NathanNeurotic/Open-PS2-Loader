@@ -285,7 +285,7 @@ void mmceLoadModules(void)
 void mmceArmGameIDTransport(void)
 {
     if (gMMCEEnableGameID) {
-        guiSetBootStatusSticky("Arming MMCE game-ID..."); // boot-step localizer (IO thread) -- see gui.c
+        guiSetBootStatusSticky(_l(_STR_BOOT_ARMING_MMCE)); // boot-step localizer (IO thread) -- see gui.c
         mmceLoadModules();
     }
 }
