@@ -495,6 +495,11 @@ static int startPad(struct pad_data_t *pad)
     }
 
     initializePad(pad);
+    // Arm the self-heal for pads present at cold boot: startPads() drives them straight to
+    // STABLE/FINDCTP1 here, so readPad's connect block (which arms on DISCONN->connected) never
+    // fires for them. Without this the budget stays 0 and the self-heal is inert at boot -- the
+    // exact case it exists for.
+    pad->analogRetries = PAD_ANALOG_SELFHEAL_FRAMES;
 
     newState = waitPadReady(pad);
     updatePadState(pad, newState);
