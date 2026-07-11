@@ -444,10 +444,15 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
     int r;
     (void)popsDir; // POPSLoader-layout fallback tier dropped (#120); parameter kept for caller compatibility
 
+    // Defensive: the art path never passes NULL here, but a stray NULL would snprintf("%s", NULL) -> crash.
+    // Return a plain miss instead (harmless: callers treat any negative as "no art").
+    if (devPrefix == NULL || artFolder == NULL || value == NULL || suffix == NULL || tex == NULL)
+        return ERR_BAD_FILE;
+
     unsigned int missKey = vcdArtMissKey(devPrefix, value, suffix);
     if (vcdArtMissKnown(missKey)) {
-        gDiag.memoHit++; // #120 diag: storm avoided -- zero opens this probe
-        return -1;       // known-absent this epoch -> skip the failing open on the slow MMCE bus (#120)
+        gDiag.memoHit++;       // #120 diag: storm avoided -- zero opens this probe
+        return ERR_BAD_FILE;   // known-absent this epoch -> skip the failing open on the slow MMCE bus (#120)
     }
 
     snprintf(path, sizeof(path), "%s%s%c%s_%s", devPrefix, artFolder, sep, value, suffix);
