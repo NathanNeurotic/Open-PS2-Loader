@@ -543,14 +543,36 @@ static int hddGetGameCount(item_list_t *itemList)
     return vcdViewActive(itemList->mode) ? hddVcdGameCount : (int)hddGames.count;
 }
 
+// Toggle-window guard (Codex/Fable audit), mirroring mmceActiveGame. HDD_MODE is vcdModeSupported, so the L3
+// toggle flips vcdViewActive() SYNCHRONOUSLY ahead of the DEFERRED per-__.POPS pfs rebuild -- a WIDER window
+// than MMCE. During it an OLD-view id can index the freshly-switched other array (hddGames.games is {NULL,0}
+// on a PS1-only HDD; hddVcdGames NULL/shorter if that view never scanned) -> NULL/OOB deref + crash. Resolve
+// every id through these: an out-of-range id returns a static empty entry so a stale READ is safe empty data
+// and LAUNCH/delete/rename early-return on the sentinel. HDD needs TWO resolvers -- ISO is hdl_game_info_t,
+// VCD is base_game_info_t.
+static base_game_info_t hddEmptyVcd = {0};
+static hdl_game_info_t hddEmptyHdl = {0};
+static base_game_info_t *hddActiveVcd(int id)
+{
+    if (hddVcdGames == NULL || id < 0 || id >= hddVcdGameCount)
+        return &hddEmptyVcd;
+    return &hddVcdGames[id];
+}
+static hdl_game_info_t *hddActiveHdl(int id)
+{
+    if (hddGames.games == NULL || id < 0 || id >= (int)hddGames.count)
+        return &hddEmptyHdl;
+    return &hddGames.games[id];
+}
+
 static void *hddGetGame(item_list_t *itemList, int id)
 {
-    return vcdViewActive(itemList->mode) ? (void *)&hddVcdGames[id] : (void *)&hddGames.games[id];
+    return vcdViewActive(itemList->mode) ? (void *)hddActiveVcd(id) : (void *)hddActiveHdl(id);
 }
 
 static char *hddGetGameName(item_list_t *itemList, int id)
 {
-    return vcdViewActive(itemList->mode) ? hddVcdGames[id].name : hddGames.games[id].name;
+    return vcdViewActive(itemList->mode) ? hddActiveVcd(id)->name : hddActiveHdl(id)->name;
 }
 
 static int hddGetGameNameLength(item_list_t *itemList, int id)
@@ -561,14 +583,17 @@ static int hddGetGameNameLength(item_list_t *itemList, int id)
 static char *hddGetGameStartup(item_list_t *itemList, int id)
 {
     // VCD view keys per-game CFG/art off the VCD filename (game->name), not a disc id.
-    return vcdViewActive(itemList->mode) ? hddVcdGames[id].name : hddGames.games[id].startup;
+    return vcdViewActive(itemList->mode) ? hddActiveVcd(id)->name : hddActiveHdl(id)->startup;
 }
 
 static void hddDeleteGame(item_list_t *itemList, int id)
 {
     if (vcdViewActive(itemList->mode))
         return; // a VCD is not an HDL partition -- no delete in VCD view
-    hddDeleteHDLGame(&hddGames.games[id]);
+    hdl_game_info_t *game = hddActiveHdl(id);
+    if (game == &hddEmptyHdl)
+        return; // stale id in the VCD->ISO toggle window -> don't delete a wrong/OOB HDL partition
+    hddDeleteHDLGame(game);
     hddForceUpdate = 1;
 }
 
@@ -576,9 +601,11 @@ static void hddRenameGame(item_list_t *itemList, int id, char *newName)
 {
     if (vcdViewActive(itemList->mode))
         return; // a VCD is not an HDL partition -- no rename in VCD view
-    hdl_game_info_t *game = &hddGames.games[id];
+    hdl_game_info_t *game = hddActiveHdl(id);
+    if (game == &hddEmptyHdl)
+        return; // stale id in the VCD->ISO toggle window -> don't rename a wrong/OOB HDL partition
     strcpy(game->name, newName);
-    hddSetHDLGameInfo(&hddGames.games[id]);
+    hddSetHDLGameInfo(game);
     hddForceUpdate = 1;
 }
 
@@ -778,13 +805,18 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // selector/partition contract is hardware-testable -- POPSLoader proved the shape with a vendored
     // loader; we use the stock ps2sdk loader, the same one the shipping USB/MMCE/SMB VCD launch uses.
     if (gAutoLaunchGame == NULL && vcdViewActive(itemList->mode)) {
-        hddDoLaunchVcd(itemList, hddVcdGames[id].name, hddVcdParts[id]);
+        base_game_info_t *vcd = hddActiveVcd(id);
+        if (vcd == &hddEmptyVcd)
+            return; // stale id in the L3 toggle window -> nothing to launch (hddVcdParts[id] would also OOB)
+        hddDoLaunchVcd(itemList, vcd->name, hddVcdParts[id]);
         return;
     }
 
-    if (gAutoLaunchGame == NULL)
-        game = &hddGames.games[id];
-    else
+    if (gAutoLaunchGame == NULL) {
+        game = hddActiveHdl(id);
+        if (game == &hddEmptyHdl)
+            return; // stale id in the L3 toggle window -> nothing to launch
+    } else
         game = gAutoLaunchGame;
 
     // D8: Neutrino core gets its own lean path FIRST -- everything below is native-core prep it
@@ -984,7 +1016,7 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
     // {games=NULL,count=0} on a PS1-only HDD). Mirror the other VCD-aware accessors and key the per-game
     // CFG off the VCD basename, instead of dereferencing &hddGames.games[id] off a NULL base (crash).
     if (vcdViewActive(itemList->mode)) {
-        base_game_info_t *g = &hddVcdGames[id];
+        base_game_info_t *g = hddActiveVcd(id); // toggle-window safe: empty entry on a stale id (no OOB)
         snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, g->name);
         config_set_t *vcdConfig = configAlloc(0, NULL, path);
         configRead(vcdConfig);
@@ -1000,7 +1032,7 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
         return vcdConfig;
     }
 
-    hdl_game_info_t *game = &hddGames.games[id];
+    hdl_game_info_t *game = hddActiveHdl(id); // toggle-window safe: empty entry on a stale id (no OOB)
 
     snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, game->startup);
     config_set_t *config = configAlloc(0, NULL, path);
