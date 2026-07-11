@@ -449,23 +449,42 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
         return -1;       // known-absent this epoch -> skip the failing-open storm on the slow MMCE bus (#120)
     }
 
+    // Did every probed tier miss with ERR_BAD_FILE (open() failed = file GENUINELY not there)? A
+    // transient/present miss instead -- ERR_FILE_IO (a staged read that errored on a contended MMCE bus),
+    // ERR_LOAD_ABORTED, or a PNG decode error -- means the cover may EXIST and just failed to load this
+    // time. Memoizing that would false-hide a real cover until the next rescan (Codex/Fable audit + my own
+    // verify both flagged it). So only a GENUINE absence is cached below.
+    int allAbsent = 1;
+
     vcdExtractGameId(value, discId, sizeof(discId));
     if (discId[0] != '\0') {
         snprintf(path, sizeof(path), "%s%s%c%s_%s", devPrefix, artFolder, sep, discId, suffix);
         if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
             return r;
+        if (r != ERR_BAD_FILE)
+            allAbsent = 0;
     }
     snprintf(path, sizeof(path), "%s%s%c%s_%s", devPrefix, artFolder, sep, value, suffix);
     if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
         return r;
+    if (r != ERR_BAD_FILE)
+        allAbsent = 0;
     if (popsDir != NULL) {
         snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, popsDir, sep, value);
         if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
             return r;
+        if (r != ERR_BAD_FILE)
+            allAbsent = 0;
     }
 
-    gDiag.memoMiss++;            // #120 diag: full miss recorded (first probe of this cover this epoch)
-    vcdArtMissRemember(missKey); // all tiers missed -> a repeat probe skips them until the next rescan
+    // Cache ONLY a genuine absence, so a repeat probe of a cover-less PS1 game skips the failing-open storm
+    // (the #120 win). A transient/present failure is left UN-memoized -> it re-probes next generation, when
+    // the bus may have recovered, so a real cover isn't hidden. The texcache FAILED sentinel still bounds
+    // within-generation repeats, so not memoizing here does not reopen the storm.
+    if (allAbsent) {
+        gDiag.memoMiss++;            // #120 diag: genuine full miss recorded (first probe this epoch)
+        vcdArtMissRemember(missKey); // repeat probes skip the opens until the next rescan
+    }
     return r;
 }
 

@@ -122,7 +122,7 @@ enum INTERNAL_TEXTURE {
     TEXTURES_COUNT
 };
 
-#define ERR_BAD_FILE      -1
+#define ERR_BAD_FILE      -1 // open() failed = the file is not there (genuine absence)
 #define ERR_READ_STRUCT   -2
 #define ERR_INFO_STRUCT   -3
 #define ERR_SET_JMP       -4
@@ -130,6 +130,11 @@ enum INTERNAL_TEXTURE {
 #define ERR_MISSING_ALPHA -6
 #define ERR_BAD_DEPTH     -7
 #define ERR_LOAD_ABORTED  -8
+// The file OPENED but its bytes could not be staged/read (read() error on a contended bus, OOM, empty
+// file). Distinct from ERR_BAD_FILE (absent) so the VCD art miss-memo caches only GENUINE absence and
+// re-probes a transient/present failure instead of false-hiding a real cover (#120). Callers that only
+// test the sign are unaffected.
+#define ERR_FILE_IO       -9
 
 int texLookupInternalTexId(const char *name);
 int texLoadInternal(GSTEXTURE *texture, int texId);

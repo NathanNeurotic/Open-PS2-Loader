@@ -430,7 +430,7 @@ static int texStageExternalFileIntoMemory(int fd, void **buffer)
     unsigned char *fileBuffer;
 
     if (buffer == NULL)
-        return ERR_BAD_FILE;
+        return ERR_FILE_IO;
 
     // Do NOT size the file with lseek(SEEK_END) first: the MMCE newlib device (mmceman) does not
     // support SEEK_END, so it returned <= 0 and EVERY MMCE cover failed here with ERR_BAD_FILE (ISO
@@ -441,7 +441,7 @@ static int texStageExternalFileIntoMemory(int fd, void **buffer)
     capacity = TEX_MMCE_STAGE_READ_SIZE * 2; // 64 KB; doubles on demand for larger covers
     fileBuffer = malloc(capacity);
     if (fileBuffer == NULL)
-        return ERR_BAD_FILE;
+        return ERR_FILE_IO;
 
     for (;;) {
         int result;
@@ -455,7 +455,7 @@ static int texStageExternalFileIntoMemory(int fd, void **buffer)
             unsigned char *grown = realloc(fileBuffer, capacity * 2);
             if (grown == NULL) {
                 free(fileBuffer);
-                return ERR_BAD_FILE;
+                return ERR_FILE_IO;
             }
             fileBuffer = grown;
             capacity *= 2;
@@ -464,7 +464,7 @@ static int texStageExternalFileIntoMemory(int fd, void **buffer)
         result = read(fd, fileBuffer + bytesRead, TEX_MMCE_STAGE_READ_SIZE);
         if (result < 0) {
             free(fileBuffer);
-            return ERR_BAD_FILE;
+            return ERR_FILE_IO; // read() error (e.g. contended-bus EIO) -- the file EXISTS, retry later
         }
         bytesRead += result;
 
@@ -481,7 +481,7 @@ static int texStageExternalFileIntoMemory(int fd, void **buffer)
 
     if (bytesRead == 0) {
         free(fileBuffer);
-        return ERR_BAD_FILE; // empty file -> not a valid PNG
+        return ERR_FILE_IO; // empty file -> present but not a valid PNG (don't memoize as absent)
     }
 
     *buffer = fileBuffer;
@@ -567,14 +567,14 @@ static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr
 
     if (!texture->Mem) {
         LOG("TEXTURES PngReadData: Failed to allocate %d bytes\n", size);
-        return ERR_BAD_FILE;
+        return ERR_FILE_IO; // OOM mid-decode: the file EXISTS, this is transient -- don't memoize as absent
     }
 
     rowBuffer = malloc(rowBytes);
     if (!rowBuffer) {
         texFree(texture);
         LOG("TEXTURES PngReadData: Failed to allocate memory for PNG row\n");
-        return ERR_BAD_FILE;
+        return ERR_FILE_IO; // OOM mid-decode (see above)
     }
 
     for (int row = 0; row < texture->Height; row++) {
