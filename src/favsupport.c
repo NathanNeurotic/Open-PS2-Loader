@@ -24,7 +24,7 @@
 #include "include/textures.h"
 #include "include/config.h"
 #include "include/supportbase.h" // sbPopulateConfig + base_game_info_t (VCD favourite config)
-#include "include/vcdsupport.h"  // vcdLoadArt / vcdViewActive / vcdConsumeDirty (VCD favourites)
+#include "include/vcdsupport.h"  // vcdViewActive / vcdConsumeDirty (VCD favourites)
 #include "include/favsupport.h"
 
 int gFAVStartMode;

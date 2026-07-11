@@ -67,16 +67,6 @@ int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames);
 // case-insensitive). Callers hide it from the device lists when gVcdFirstDiscOnly is on.
 int vcdIsHiddenDisc(const char *name);
 
-// 3-level cover/icon fallback for a VCD game: ID-keyed OPL art -> name-keyed OPL art -> POPSLoader's
-// next-to-VCD "<dev>/POPS/<name>.png". Call from a support's getImage for VCD games + "COV"/"ICO". `sep`
-// matches the device prefix ('/' local/MMCE/HDD, '\\' SMB); popsDir e.g. "POPS" (NULL skips step 3).
-// Returns the first texDiscoverLoad hit (>= 0), else the last miss.
-int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const char *value, const char *suffix, const char *popsDir, GSTEXTURE *tex);
-// popsDir to pass vcdLoadArt for a given art suffix: "POPS" for COV/ICO (POPSLoader interop), NULL
-// otherwise (BG/logo/screenshot must not fall to the suffix-less cover image). Shared so every VCD
-// getImage branch and favGetImage resolve the same art (issue #118).
-const char *vcdArtPopsDir(const char *suffix);
-
 // ---- safe memory-card copy (free-space gated) -------------------------------------
 // Used by the BDMA/SMB module equip + the POPSTARTER config writers so a full or interrupted
 // write can never wreck the card. Every write onto mc?:/POPSTARTER/ must go through these.
