@@ -24,7 +24,7 @@
 #include "include/textures.h"
 #include "include/config.h"
 #include "include/supportbase.h" // sbPopulateConfig + base_game_info_t (VCD favourite config)
-#include "include/vcdsupport.h"  // vcdLoadArt / vcdViewActive / vcdConsumeDirty (VCD favourites)
+#include "include/vcdsupport.h"  // vcdViewActive / vcdConsumeDirty (VCD favourites)
 #include "include/favsupport.h"
 
 int gFAVStartMode;
@@ -580,28 +580,15 @@ static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char
         item_list_t *o = favArray[i].owner;
         if (o == NULL)
             continue;
-        // VCD favourite: art keys off the .VCD name (== favArray[i].text == value) via the shared
-        // 3-level VCD fallback against the owner's prefix -- mirrors each device's getImage VCD branch.
-        // #118: resolve ALL art suffixes (cover/BG/logo/screenshot), not just cover/icon, via the SAME
-        // vcdArtPopsDir helper the device branches use, so a VCD favourite's info page matches its source
-        // list. Local/MMCE prefixes use '/', SMB ('\\') is auto-detected from the prefix.
+        // VCD favourite: art keys off the .VCD name (== favArray[i].text == value). Load it through the
+        // OWNER device's normal getImage -- identical to a PS2/ISO favourite (which the branch below routes
+        // the same way), just keyed by the filename instead of the disc id. No separate VCD art loader (#120).
         if (favArray[i].isVcd) {
             if (strcmp(favArray[i].text, value) != 0)
                 continue;
-            // Relative art only (keyed to the device prefix); an absolute-prefix attribute-image element
-            // falls through to -1. Same isRelative gate as each device getImage VCD branch.
-            if (!isRelative)
+            if (o->itemGetImage == NULL)
                 return -1;
-            char *prefix = (o->itemGetPrefix != NULL) ? o->itemGetPrefix(o) : NULL;
-            if (prefix == NULL)
-                return -1;
-            // HDD VCD art lives at the APA partition ROOT /ART/ (mirroring the HDD VCD view), not the
-            // OPL data subfolder its itemGetPrefix points at -- key off the partition root instead.
-            if (favArray[i].mode == HDD_MODE)
-                prefix = "pfs0:/";
-            int pl = (int)strlen(prefix);
-            char sep = (pl > 0 && prefix[pl - 1] == '\\') ? '\\' : '/';
-            return vcdLoadArt(prefix, sep, folder, value, suffix, vcdArtPopsDir(suffix), resultTex);
+            return o->itemGetImage(o, folder, isRelative, value, suffix, resultTex, psm);
         }
         if (o->itemGetStartup == NULL || o->itemGetImage == NULL || !favOwnerHasId(o, favArray[i].id))
             continue;
