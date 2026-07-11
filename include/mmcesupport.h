@@ -30,4 +30,9 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
 // Arm the GameID transport at menu/settings time (idempotent; no-op when the feature is off).
 void mmceArmGameIDTransport(void);
 
+// Resync a desynced MMCE card via the mmceman RESET devctl (bounded, no TerminateThread). Called from the
+// art worker on a mid-file read-fail streak to recover from the #120 card-side bus wedge. Returns <0 on
+// no-card/failure (harmless). See mmcesupport.c.
+int mmceResetChannel(void);
+
 #endif

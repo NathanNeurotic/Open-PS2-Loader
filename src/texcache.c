@@ -4,6 +4,7 @@
 #include "include/pad.h"
 #include "include/texcache.h"
 #include "include/textures.h"
+#include "include/mmcesupport.h" // mmceResetChannel (card-side wedge recovery, #120)
 #include "include/gui.h"
 #include "include/util.h"
 #include "include/renderman.h"
@@ -86,6 +87,10 @@ enum {
 
 #define CACHE_SLOW_MODE_INTERACTIVE_DELAY 4
 #define CACHE_MMCE_INTERACTIVE_MAX_DELAY  12
+// Consecutive mid-file MMCE read failures (ERR_FILE_IO) that mean the card FS sequencer has desynced ->
+// issue the mmceman RESET devctl to resync it (#120 card-side wedge recovery). 3 avoids reacting to a
+// one-off transient; the card firmware fails EVERY read once desynced, so a real wedge hits it fast.
+#define CACHE_MMCE_EIO_RESET_STREAK       3
 #define CACHE_APP_INTERACTIVE_MAX_DELAY   4
 #define CACHE_APP_PREFETCH_DELAY          10
 #define CACHE_PRIME_IDLE_DELAY            12
@@ -942,6 +947,27 @@ static void cacheLoadImage(load_image_request_t *req)
     if (result < 0)
         result = req->list->itemGetImage(req->list, req->cache->prefix, req->cache->isPrefixRelative, req->value, req->cache->suffix, &req->texture, GS_PSM_CT24);
     texSetLoadAbortFlag(NULL);
+    // #120 card-side wedge RECOVERY. A mid-file read() failure on MMCE surfaces as ERR_FILE_IO (distinct
+    // from ERR_BAD_FILE = genuine open() miss and ERR_LOAD_ABORTED = nav abort). A STREAK of these means
+    // the card's FS command sequencer has desynced under the art-read load -- and (HW-confirmed via the
+    // on-screen diagnostic: TK==0) NOT because OPL TerminateThread'd the worker. Once desynced, every later
+    // read fails until reboot. Resync the card with the mmceman RESET devctl (bounded ~1s, no thread kill,
+    // shared channel intact) so art / POPSTARTER.ELF / ISO / boot-card reads recover. Runs only on the single
+    // art worker thread, so the counter needs no locking. Only ERR_FILE_IO (opened, mid-transfer read fail)
+    // is the desync signal; a successful read OR a clean ERR_BAD_FILE (the card completed the lookup and
+    // reported "not there" -- proof the sequencer is synced this instant) clears the streak. ERR_LOAD_ABORTED
+    // was cut short by nav, so its outcome is unknown -- leave the streak untouched.
+    if (req->effectiveMode == MMCE_MODE) {
+        static int mmceEioStreak = 0;
+        if (result == ERR_FILE_IO) {
+            if (++mmceEioStreak >= CACHE_MMCE_EIO_RESET_STREAK) {
+                mmceEioStreak = 0;
+                mmceResetChannel();
+            }
+        } else if (result != ERR_LOAD_ABORTED) {
+            mmceEioStreak = 0;
+        }
+    }
     cacheCompleteRequest(req, result);
     cacheProcessCleanupRequests();
 
