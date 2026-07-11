@@ -952,8 +952,11 @@ static void cacheLoadImage(load_image_request_t *req)
     // the card's FS command sequencer has desynced under the art-read load -- and (HW-confirmed via the
     // on-screen diagnostic: TK==0) NOT because OPL TerminateThread'd the worker. Once desynced, every later
     // read fails until reboot. Resync the card with the mmceman RESET devctl (bounded ~1s, no thread kill,
-    // shared channel intact) so art / POPSTARTER.ELF / ISO / boot-card reads recover. A single good read
-    // clears the streak. Runs only on the single art worker thread, so the counter needs no locking.
+    // shared channel intact) so art / POPSTARTER.ELF / ISO / boot-card reads recover. Runs only on the single
+    // art worker thread, so the counter needs no locking. Only ERR_FILE_IO (opened, mid-transfer read fail)
+    // is the desync signal; a successful read OR a clean ERR_BAD_FILE (the card completed the lookup and
+    // reported "not there" -- proof the sequencer is synced this instant) clears the streak. ERR_LOAD_ABORTED
+    // was cut short by nav, so its outcome is unknown -- leave the streak untouched.
     if (req->effectiveMode == MMCE_MODE) {
         static int mmceEioStreak = 0;
         if (result == ERR_FILE_IO) {
@@ -961,7 +964,7 @@ static void cacheLoadImage(load_image_request_t *req)
                 mmceEioStreak = 0;
                 mmceResetChannel();
             }
-        } else if (result >= 0) {
+        } else if (result != ERR_LOAD_ABORTED) {
             mmceEioStreak = 0;
         }
     }
