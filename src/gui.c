@@ -57,9 +57,19 @@ static int showLngPopup;
 static clock_t popupTimer;
 
 // Boot-splash status line (#297, fork-native): set via guiSetBootStatus(), drawn under the logo by
-// guiRenderGreeting() during the boot splash / intro fade. Main-thread / boot-time only.
+// guiRenderGreeting(). Both on the MAIN thread, so gBootStatus needs no locking.
 static char gBootStatus[64] = {0};
 static int gBootStatusActive = 0;
+// Boot-step localizer: the boot->menu handoff runs on the single IO worker thread (bdmLoadBlockDevice-
+// Modules -> mmceArmGameIDTransport -> deferredAudioInit -> deferredInit), any step of which can wedge
+// with no timeout on real hardware (e.g. a USB/exFAT module bring-up) and freeze the splash. The MAIN
+// thread meanwhile races ahead setting "Scanning MC..."/"Ready.", so the frozen screen would show a
+// useless "Ready." (the brenotomaz report) instead of the stuck step. An IO-thread step publishes its
+// label via guiSetBootStatusSticky(); guiRenderGreeting PREFERS it over gBootStatus, so whichever
+// ordering wins the STUCK STEP is what stays on screen. Cross-thread state is a single aligned POINTER
+// (atomic load/store on the EE) to a static _l() string -- no shared buffer, so no data race (the labels
+// outlive boot; the greeting is boot-only). Cleared by guiSetBootStatus(NULL).
+static const char *volatile gBootStickyLabel = NULL;
 
 // forward decl.
 static void guiShow();
@@ -1601,17 +1611,31 @@ static void guiDrawBusy(int alpha)
     }
 }
 
-// Boot-splash status line setter (#297). Pass NULL to clear. Main-thread / boot-time only; the field
-// is read only by guiRenderGreeting on the same thread, so no locking is needed.
+// Boot-splash status line setter (#297). Pass NULL to clear. Main-thread only (writes gBootStatus, which
+// only guiRenderGreeting on the same thread reads). guiRenderGreeting prefers any IO-thread sticky label
+// over this, so a main-thread scan/Ready set no longer needs to guard against the IO thread.
 void guiSetBootStatus(const char *status)
 {
     if (status == NULL) {
         gBootStatus[0] = '\0';
         gBootStatusActive = 0;
+        gBootStickyLabel = NULL; // release the localizer latch so a fresh boot can claim the line again
         return;
     }
     snprintf(gBootStatus, sizeof(gBootStatus), "%s", status);
     gBootStatusActive = 1;
+}
+
+// Boot-step localizer setter, called from the deferred IO-thread boot steps. `label` MUST be a static
+// string (an _l() lang entry or literal) since only a POINTER to it is stored -- no copy, no shared
+// buffer, so no data race with the main-thread render (a single aligned pointer store/load is atomic on
+// the EE). guiRenderGreeting prefers this over gBootStatus, so if this step wedges its label stays on the
+// splash. Later IO-thread steps (same single thread) simply replace the pointer in turn.
+void guiSetBootStatusSticky(const char *label)
+{
+    if (label == NULL)
+        return;
+    gBootStickyLabel = label;
 }
 
 static void guiRenderGreeting(int alpha)
@@ -1637,8 +1661,13 @@ static void guiRenderGreeting(int alpha)
     char verLine[48];
     snprintf(verLine, sizeof(verLine), "RiptOPL %s", OPL_VERSION);
     fntRenderString(gTheme->fonts[0], screenWidth >> 1, (gTheme->usedHeight >> 1) + 80, ALIGN_CENTER, 0, 0, verLine, infoColor);
-    if (gBootStatusActive && gBootStatus[0] != '\0')
-        fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight - 40, ALIGN_CENTER, 0, 0, gBootStatus, infoColor);
+    // Prefer an IO-thread boot-step label (the localizer) over the main-thread scan/Ready line, so a
+    // wedged step names itself. gBootStickyLabel is a single atomic pointer to a static string.
+    const char *bootLine = gBootStickyLabel;
+    if (bootLine == NULL && gBootStatusActive && gBootStatus[0] != '\0')
+        bootLine = gBootStatus;
+    if (bootLine != NULL)
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight - 40, ALIGN_CENTER, 0, 0, bootLine, infoColor);
 }
 
 // Draw one standalone boot-splash frame: the same greeting guiIntroLoop() shows,

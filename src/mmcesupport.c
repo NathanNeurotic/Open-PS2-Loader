@@ -292,8 +292,10 @@ void mmceLoadModules(void)
 // of a dead launch. Idempotent (mmceLoadModules latches); no-op when the GameID feature is off.
 void mmceArmGameIDTransport(void)
 {
-    if (gMMCEEnableGameID)
+    if (gMMCEEnableGameID) {
+        guiSetBootStatusSticky(_l(_STR_BOOT_ARMING_MMCE)); // boot-step localizer (IO thread) -- see gui.c
         mmceLoadModules();
+    }
 }
 
 void mmceInit(item_list_t *itemList)

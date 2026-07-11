@@ -316,10 +316,16 @@ static int bdmShouldQueueModuleLoad(void)
 
 static void bdmLoadBlockDeviceModules(void)
 {
+    // Boot-step localizer: this runs on the IO thread and can wedge on a real drive with no timeout,
+    // freezing the splash. Publish the step so a hang here names it instead of the main thread's "Ready.".
+    // (brenotomaz exFAT-USB boot hang investigation.)
+    guiSetBootStatusSticky(_l(_STR_BOOT_LOADING_DRIVERS));
+
     WaitSema(bdmLoadModuleLock);
 
     if (gEnableUSB && !iUSBModLoaded) {
-        // Load USB Block Device drivers
+        // Load USB Block Device drivers -- the prime suspect for a real exFAT/USB boot wedge.
+        guiSetBootStatusSticky(_l(_STR_BOOT_LOADING_USB));
         if (bdmLoadOptionalModule("USBMASS_BD", &usbmass_bd_irx, size_usbmass_bd_irx) >= 0)
             iUSBModLoaded = 1;
     }
