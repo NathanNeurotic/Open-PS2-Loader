@@ -449,11 +449,14 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
         return -1;       // known-absent this epoch -> skip the failing-open storm on the slow MMCE bus (#120)
     }
 
-    // Did every probed tier miss with ERR_BAD_FILE (open() failed = file GENUINELY not there)? A
-    // transient/present miss instead -- ERR_FILE_IO (a staged read that errored on a contended MMCE bus),
-    // ERR_LOAD_ABORTED, or a PNG decode error -- means the cover may EXIST and just failed to load this
-    // time. Memoizing that would false-hide a real cover until the next rescan (Codex/Fable audit + my own
-    // verify both flagged it). So only a GENUINE absence is cached below.
+    // Chase the next art tier only when THIS tier is a clean miss worth a fallback: a genuine absence
+    // (ERR_BAD_FILE = open() failed) or a permanent PNG-decode error (the file existed but is corrupt, so a
+    // lower tier may still hold a good cover -- old behaviour, kept). But a TRANSIENT miss -- ERR_FILE_IO (a
+    // staged read that errored on a contended MMCE bus) or ERR_LOAD_ABORTED (nav) -- means the card is choking,
+    // so the remaining tiers would almost certainly fail too: STOP and return immediately (#120 REDUCE -- don't
+    // pile up to 2 more failing opens per cover on an already-desyncing card). Memoize ONLY a full genuine
+    // absence (every tier ERR_BAD_FILE); a decode error or a transient leaves it un-memoized so a real cover
+    // isn't false-hidden and re-probes next generation when the bus may have recovered (the #134 intent).
     int allAbsent = 1;
 
     vcdExtractGameId(value, discId, sizeof(discId));
@@ -461,11 +464,15 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
         snprintf(path, sizeof(path), "%s%s%c%s_%s", devPrefix, artFolder, sep, discId, suffix);
         if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
             return r;
+        if (r == ERR_FILE_IO || r == ERR_LOAD_ABORTED)
+            return r;
         if (r != ERR_BAD_FILE)
             allAbsent = 0;
     }
     snprintf(path, sizeof(path), "%s%s%c%s_%s", devPrefix, artFolder, sep, value, suffix);
     if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
+        return r;
+    if (r == ERR_FILE_IO || r == ERR_LOAD_ABORTED)
         return r;
     if (r != ERR_BAD_FILE)
         allAbsent = 0;
@@ -473,14 +480,15 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
         snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, popsDir, sep, value);
         if ((r = texDiscoverLoad(tex, path, -1)) >= 0)
             return r;
+        if (r == ERR_FILE_IO || r == ERR_LOAD_ABORTED)
+            return r;
         if (r != ERR_BAD_FILE)
             allAbsent = 0;
     }
 
-    // Cache ONLY a genuine absence, so a repeat probe of a cover-less PS1 game skips the failing-open storm
-    // (the #120 win). A transient/present failure is left UN-memoized -> it re-probes next generation, when
-    // the bus may have recovered, so a real cover isn't hidden. The texcache FAILED sentinel still bounds
-    // within-generation repeats, so not memoizing here does not reopen the storm.
+    // Cache ONLY a full genuine absence (every tier ERR_BAD_FILE) so a repeat probe of a cover-less PS1 game
+    // skips the failing-open storm (the #120 win). The texcache FAILED sentinel still bounds within-generation
+    // repeats regardless.
     if (allAbsent) {
         gDiag.memoMiss++;            // #120 diag: genuine full miss recorded (first probe this epoch)
         vcdArtMissRemember(missKey); // repeat probes skip the opens until the next rescan
