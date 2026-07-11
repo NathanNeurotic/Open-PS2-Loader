@@ -38,7 +38,15 @@ struct pad_data_t
 
     char actAlign[6];
     int actuators;
+    int analogRetries; // bounded self-heal budget (frames): re-init a connected DualShock stuck in digital
 };
+
+// Cold-boot analog self-heal: if a controller's mode table isn't ready when initializePad first runs, it's
+// misread as digital and analog is never enabled -- and the only other re-init path is a physical
+// disconnect, which a slow-to-init (never-disconnected) pad never hits, so analog stays dead all session.
+// Re-run initializePad for up to this many frames while a connected pad reads as non-analog. A genuinely
+// digital controller just exhausts the budget harmlessly (initializePad bails before touching the mode).
+#define PAD_ANALOG_SELFHEAL_FRAMES 120
 
 /// current time in miliseconds (last update time)
 static u32 curtime = 0;
@@ -252,6 +260,7 @@ static int readPad(struct pad_data_t *pad)
         // Pad just connected.
         LOG("PAD pad %d,%d connected\n", pad->port, pad->slot);
         initializePad(pad);
+        pad->analogRetries = PAD_ANALOG_SELFHEAL_FRAMES; // arm the self-heal below in case the mode table wasn't ready yet
     }
     // The pad may transit from any state to disconnected. So check only for the disconnected state.
     else if ((oldState != PAD_STATE_DISCONN) && (pad->state == PAD_STATE_DISCONN)) {
@@ -265,6 +274,15 @@ static int readPad(struct pad_data_t *pad)
         if (ret != 0) {
             newpdata = 0xffff ^ pad->buttons.btns;
             padsRead++;
+
+            // Self-heal a DualShock that missed the cold-boot analog-mode set: while a connected pad reads as
+            // non-analog (mode high-nibble != 0x7 = not DualShock/analog) and the budget isn't spent, re-run
+            // initializePad. It succeeds once the mode table is ready (mode flips to analog, stopping this); a
+            // real digital controller just burns the budget with fast no-op inits (see PAD_ANALOG_SELFHEAL_FRAMES).
+            if ((pad->buttons.mode >> 4) != 0x07 && pad->analogRetries > 0) {
+                pad->analogRetries--;
+                initializePad(pad);
+            }
         }
     }
 
@@ -477,6 +495,11 @@ static int startPad(struct pad_data_t *pad)
     }
 
     initializePad(pad);
+    // Arm the self-heal for pads present at cold boot: startPads() drives them straight to
+    // STABLE/FINDCTP1 here, so readPad's connect block (which arms on DISCONN->connected) never
+    // fires for them. Without this the budget stays 0 and the self-heal is inert at boot -- the
+    // exact case it exists for.
+    pad->analogRetries = PAD_ANALOG_SELFHEAL_FRAMES;
 
     newState = waitPadReady(pad);
     updatePadState(pad, newState);
