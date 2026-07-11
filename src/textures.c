@@ -566,6 +566,8 @@ static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr
     texture->Mem = memalign(128, size);
 
     if (!texture->Mem) {
+        texFree(texture); // free the already-allocated paletted-PNG Clut before bailing (Gemini review);
+                          // matches the rowBuffer-OOM path just below
         LOG("TEXTURES PngReadData: Failed to allocate %d bytes\n", size);
         return ERR_FILE_IO; // OOM mid-decode: the file EXISTS, this is transient -- don't memoize as absent
     }
@@ -724,7 +726,7 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
                 texture->PSM = GS_PSM_T4;
                 texture->Clut = memalign(128, gsKit_texture_size_ee(8, 2, GS_PSM_CT32));
                 if (texture->Clut == NULL)
-                    return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_BAD_FILE);
+                    return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_FILE_IO); // Clut OOM: file present -> transient, not absent
                 memset(texture->Clut, 0, gsKit_texture_size_ee(8, 2, GS_PSM_CT32));
                 texPrepareClut(texture, 16);
                 texPngReadRow = &texReadPixels4Row;
@@ -732,7 +734,7 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
                 texture->PSM = GS_PSM_T8;
                 texture->Clut = memalign(128, gsKit_texture_size_ee(16, 16, GS_PSM_CT32));
                 if (texture->Clut == NULL)
-                    return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_BAD_FILE);
+                    return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_FILE_IO); // Clut OOM: file present -> transient, not absent
                 memset(texture->Clut, 0, gsKit_texture_size_ee(16, 16, GS_PSM_CT32));
                 texPrepareClut(texture, 256);
                 texPngReadRow = &texReadPixels8Row;
