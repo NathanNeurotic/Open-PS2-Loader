@@ -187,6 +187,25 @@ struct UIItem diaConfig[] = {
     {UI_INT, CFG_AUTOSTARTLAST, 1, 1, _STR_HINT_AUTOSTARTLAST, 0, 0, {.intvalue = {0, 0, 0, 9}}},
     {UI_BREAK},
 
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {"Prefix Paths", -1}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDM_PREFIX}}},
+    {UI_SPACER},
+    {UI_STRING, CFG_BDMPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ETH_PREFIX}}},
+    {UI_SPACER},
+    {UI_STRING, CFG_ETHPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCE_PREFIX}}},
+    {UI_SPACER},
+    {UI_STRING, CFG_MMCEPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_BREAK},
+
     // buttons
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
     {UI_BREAK},
@@ -263,25 +282,6 @@ struct UIItem diaDeviceConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCEMODE}}},
     {UI_SPACER},
     {UI_ENUM, CFG_MMCEMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {"Prefix Paths", -1}}},
-    {UI_SPLITTER},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDM_PREFIX}}},
-    {UI_SPACER},
-    {UI_STRING, CFG_BDMPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ETH_PREFIX}}},
-    {UI_SPACER},
-    {UI_STRING, CFG_ETHPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCE_PREFIX}}},
-    {UI_SPACER},
-    {UI_STRING, CFG_MMCEPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
     {UI_BREAK},

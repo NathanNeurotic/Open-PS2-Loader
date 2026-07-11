@@ -566,6 +566,11 @@ void guiShowConfig()
     diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, gRememberLastPlayed);
     diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, gRememberLastPlayed);
 
+    // Device prefix paths (moved from Device Settings to General Settings)
+    diaSetString(diaConfig, CFG_BDMPREFIX, gBDMPrefix);
+    diaSetString(diaConfig, CFG_ETHPREFIX, gETHPrefix);
+    diaSetString(diaConfig, CFG_MMCEPREFIX, gMMCEPrefix);
+
     int ret;
 reshow_config:
     ret = diaExecuteDialog(diaConfig, -1, 1, &guiUpdater);
@@ -583,6 +588,9 @@ reshow_config:
         diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
         diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);
+        diaGetString(diaConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
+        diaGetString(diaConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
+        diaGetString(diaConfig, CFG_MMCEPREFIX, gMMCEPrefix, sizeof(gMMCEPrefix));
         DisableCron = 1; // Disable Auto Start Last Played counter (we don't want to call it right after enable it on GUI)
 
         applyConfig(-1, -1, 0);
@@ -1115,11 +1123,6 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_UDPFSMODE, udpfsModeVal);
     diaSetVisible(diaDeviceConfig, CFG_UDPFSMODE, netPickerVal == 2); // Files/Image only meaningful for UDPFS
 
-    // Prefix paths
-    diaSetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix);
-    diaSetString(diaDeviceConfig, CFG_ETHPREFIX, gETHPrefix);
-    diaSetString(diaDeviceConfig, CFG_MMCEPREFIX, gMMCEPrefix);
-
     // Cache & storage
     diaSetInt(diaDeviceConfig, CFG_HDDSPINDOWN, gHDDSpindown);
     diaSetInt(diaDeviceConfig, CFG_HDDGAMELISTCACHE, gHDDGameListCache);
@@ -1166,10 +1169,6 @@ void guiShowDeviceConfig(void)
         } else {
             gETHStartMode = START_MODE_DISABLED;
         }
-
-        diaGetString(diaDeviceConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
-        diaGetString(diaDeviceConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
-        diaGetString(diaDeviceConfig, CFG_MMCEPREFIX, gMMCEPrefix, sizeof(gMMCEPrefix));
 
         diaGetInt(diaDeviceConfig, CFG_HDDSPINDOWN, &gHDDSpindown);
         diaGetInt(diaDeviceConfig, CFG_HDDGAMELISTCACHE, &gHDDGameListCache);
