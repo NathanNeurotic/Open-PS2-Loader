@@ -907,7 +907,10 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
     }
 
     // Slide animation (cubic ease-out). clock() wrap is clamped to snap-complete.
-    // NOTE: the slide/shrink sign convention is HW-tunable polish (one sign flip).
+    // Sign convention (FifthFox HW report: coverflow "advances in the opposite direction you'd expect"):
+    // advancing (Next / Right, dir=+1) must bring the incoming cover in from the RIGHT -> the strip starts
+    // shifted +right and eases to 0 (i.e. slides LEFT), and the OUTGOING old-center (now at centerIndex-dir)
+    // is the cover that shrinks. The prior (eased-1.0f) / centerIndex+dir convention slid the opposite way.
     float eased = 1.0f;
     int animOffset = 0;
     if (gCoverflowAnimSpeed <= 0) {
@@ -925,9 +928,9 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
             cfIsAnimating = 0;
         }
         eased = 1.0f - powf(1.0f - t, 3.0f);
-        animOffset = (int)(cfAnimDirection * coverDistance * (eased - 1.0f));
+        animOffset = (int)(cfAnimDirection * coverDistance * (1.0f - eased));
     }
-    int leavingIndex = centerIndex + cfAnimDirection; // neighbour swapping with center
+    int leavingIndex = centerIndex - cfAnimDirection; // the OUTGOING old-center shrinks (opposite the slide-in side)
 
     rmSetReflectionYOffset(elem->reflectionOffset); // theme reflection_offset; reset after the loop
 
