@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/diag.h"
 #include "include/appsupport.h"
 #include "include/pad.h"
 #include "include/texcache.h"
@@ -1043,6 +1044,7 @@ void cacheEnd(int forceStop)
     cacheRestoreCallerPriority(savedPriority);
 
     if (gArtRunning && gArtThreadId >= 0 && forceStop) {
+        gDiag.artTerminate++; // #120 diag: THE smoking gun -- this corrupts the shared mmceman RPC channel
         TerminateThread(gArtThreadId);
         DeleteThread(gArtThreadId);
         gArtRunning = 0;

@@ -29,6 +29,14 @@ static time_t mmceModifiedCDPrev;
 static time_t mmceModifiedDVDPrev;
 static int mmceGameCount = 0;
 static base_game_info_t *mmceGames;
+// #120: the PS2 (ISO) and PS1 (VCD) views must NOT share one backing store. When they did, a failed
+// ISO rescan on a contended MMCE bus fell into sbReadList's preserve-on-failure and re-published the
+// STALE list -- which, being shared, was the VCD list -> pressing "show PS2 games" silently kept the PS1
+// list on screen (Andrew's #129 "can't switch to PS2 list"). Separate arrays (mirroring hddGames vs
+// hddVcdGames) make a failed scan of one view preserve only THAT view's last-good (empty if never
+// scanned), so it can never resurrect the other view's contents.
+static int mmceVcdGameCount = 0;
+static base_game_info_t *mmceVcdGames = NULL;
 // Auto-slot (gMMCESlot==2) resolution cache: mmceDetectSlot()'s last result (2=mmce0, 3=mmce1,
 // -1=unresolved). Avoids re-probing BOTH slots over SIO2 every menu refresh -- that steady devctl
 // drip contends with MX4SIO on the shared bus. Reset by mmceInit (tab re-enable / settings apply).
@@ -298,6 +306,8 @@ void mmceInit(item_list_t *itemList)
     mmceModifiedDVDPrev = 0;
     mmceGameCount = 0;
     mmceGames = NULL;
+    mmceVcdGameCount = 0;
+    mmceVcdGames = NULL;
     mmceResolvedDevice = -1; // re-detect the Auto slot on a fresh init (tab re-enable / settings apply)
     mmceFoldersCreatedFor[0] = '\0';
 
@@ -332,7 +342,7 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     if (mmcePrefix[0] == '\0') {
         mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
         mmceFoldersCreatedFor[0] = '\0'; // card gone: recreate folders on the next (possibly different) card
-        return (mmceGameCount > 0);
+        return (mmceGameCount > 0 || mmceVcdGameCount > 0);
     }
 
     mmceGameList.updateDelay = MENU_UPD_DELAY_NOUPDATE;
@@ -409,56 +419,70 @@ static int mmceUpdateGameList(item_list_t *itemList)
             free(mmceGames);
             mmceGames = NULL;
         }
+        if (mmceVcdGames != NULL) {
+            free(mmceVcdGames);
+            mmceVcdGames = NULL;
+        }
         mmceGameCount = 0;
+        mmceVcdGameCount = 0;
         mmceULSizePrev = -2; // force a fresh scan when a card returns
         return 0;
     }
 
+    // Each view scans into its OWN array (#120): a failed rescan preserves only that view's last-good and
+    // can never resurrect the other view's list (see the mmceVcdGames comment at the declarations).
     if (vcdViewActive(itemList->mode)) {
-        int r = vcdFillGameList(mmcePrefix, &mmceGames);
-        if (r >= 0) // r < 0: transient scan failure (contended bus) -> keep the last-good list, do NOT blank
-            mmceGameCount = r;
-    } else
-        sbReadList(&mmceGames, mmcePrefix, &mmceULSizePrev, &mmceGameCount);
+        int r = vcdFillGameList(mmcePrefix, &mmceVcdGames);
+        if (r >= 0) // r < 0: transient scan failure (contended bus) -> keep the last-good VCD list
+            mmceVcdGameCount = r;
+        return mmceVcdGameCount;
+    }
+    sbReadList(&mmceGames, mmcePrefix, &mmceULSizePrev, &mmceGameCount);
     return mmceGameCount;
 }
 
 static int mmceGetGameCount(item_list_t *itemList)
 {
-    return mmceGameCount;
+    return vcdViewActive(itemList->mode) ? mmceVcdGameCount : mmceGameCount;
 }
 
 static void *mmceGetGame(item_list_t *itemList, int id)
 {
-    return (void *)&mmceGames[id];
+    return vcdViewActive(itemList->mode) ? (void *)&mmceVcdGames[id] : (void *)&mmceGames[id];
 }
 
 static char *mmceGetGameName(item_list_t *itemList, int id)
 {
-    return mmceGames[id].name;
+    return vcdViewActive(itemList->mode) ? mmceVcdGames[id].name : mmceGames[id].name;
 }
 
 static int mmceGetGameNameLength(item_list_t *itemList, int id)
 {
-    return ((mmceGames[id].format != GAME_FORMAT_USBLD) ? ISO_GAME_NAME_MAX + 1 : UL_GAME_NAME_MAX + 1);
+    base_game_info_t *g = vcdViewActive(itemList->mode) ? &mmceVcdGames[id] : &mmceGames[id];
+    return ((g->format != GAME_FORMAT_USBLD) ? ISO_GAME_NAME_MAX + 1 : UL_GAME_NAME_MAX + 1);
 }
 
 static char *mmceGetGameStartup(item_list_t *itemList, int id)
 {
     // VCD view keys per-game data (CFG/art) off the VCD filename, not a disc ID (see sbPopulateConfig).
     if (vcdViewActive(itemList->mode))
-        return mmceGames[id].name;
+        return mmceVcdGames[id].name;
     return mmceGames[id].startup;
 }
 
 static void mmceDeleteGame(item_list_t *itemList, int id)
 {
+    if (vcdViewActive(itemList->mode))
+        return; // #120: a VCD is not an ISO game -- no delete in VCD view (id indexes mmceVcdGames, and
+                // sbDelete would deref the ISO array mmceGames[id] out of range -> NULL/OOB + wrong unlink)
     sbDelete(&mmceGames, mmcePrefix, "/", mmceGameCount, id);
     mmceULSizePrev = -2;
 }
 
 static void mmceRenameGame(item_list_t *itemList, int id, char *newName)
 {
+    if (vcdViewActive(itemList->mode))
+        return; // #120: no rename in VCD view (same ISO-array OOB hazard as mmceDeleteGame above)
     sbRename(&mmceGames, mmcePrefix, "/", mmceGameCount, id, newName);
     mmceULSizePrev = -2;
 }
@@ -499,7 +523,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
     // No Autolaunch yet
     if (gAutoLaunchBDMGame == NULL)
-        game = &mmceGames[id];
+        game = vcdViewActive(itemList->mode) ? &mmceVcdGames[id] : &mmceGames[id];
     else
         game = gAutoLaunchBDMGame;
 
@@ -807,6 +831,10 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
 static config_set_t *mmceGetConfig(item_list_t *itemList, int id)
 {
+    // VCD view: config (CFG + #Format/#System/#DiscType badges) comes from the VCD array, keyed off the
+    // VCD basename -- never &mmceGames[id] (the ISO array, possibly shorter/empty in VCD view -> OOB).
+    if (vcdViewActive(itemList->mode))
+        return sbPopulateConfig(&mmceVcdGames[id], mmcePrefix, "/");
     return sbPopulateConfig(&mmceGames[id], mmcePrefix, "/");
 }
 
@@ -842,6 +870,9 @@ static void mmceCleanUp(item_list_t *itemList, int exception)
         LOG("MMCESUPPORT CleanUp\n");
 
         free(mmceGames);
+        mmceGames = NULL;
+        free(mmceVcdGames); // #120: free the separate VCD array too; NULL both (CleanUp + Shutdown both run)
+        mmceVcdGames = NULL;
 
         //      if ((exception & UNMOUNT_EXCEPTION) == 0)
         //          ...
@@ -855,6 +886,9 @@ static void mmceShutdown(item_list_t *itemList)
         LOG("MMCESUPPORT Shutdown\n");
 
         free(mmceGames);
+        mmceGames = NULL;
+        free(mmceVcdGames);
+        mmceVcdGames = NULL;
     }
 
     // As required by some (typically 2.5") HDDs, issue the SCSI STOP UNIT command to avoid causing an emergency park.

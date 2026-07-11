@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/diag.h"
 #include "include/textures.h"
 #include "include/util.h"
 #include "include/ioman.h"
@@ -772,6 +773,8 @@ int texDiscoverLoad(GSTEXTURE *texture, const char *path, int texId)
 {
     char filePath[256];
     int result;
+
+    gDiag.artOpens++; // #120 diag: the single funnel for every ISO+VCD cover/bg/screenshot open probe
 
     LOG("texDiscoverLoad(%s)\n", path);
 
