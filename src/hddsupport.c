@@ -1054,16 +1054,8 @@ static int hddGetImage(item_list_t *itemList, char *folder, int isRelative, char
 {
     char path[256];
 
-    // VCD (PS1) covers: fall back disc-id -> filename in the OPL ART folder. POPSLoader's HDD layout keeps
-    // art on the __common partition (POPS/ART/<name>.png), a different partition than gHDDPrefix, so that
-    // step is a follow-up -- pass NULL to skip it rather than probe the wrong partition.
-    // VCD art (#118: ALL suffixes -- cover/BG/logo/screenshot) lives at the APA partition ROOT /ART/
-    // (pfs0:/ART/, whatever partition is mounted -- common or +OPL), NOT the OPL data subfolder. pfs0:
-    // is already mounted while browsing, so no remount. popsDir stays NULL here (HDD VCD art never used
-    // the next-to-VCD POPS image; it would be on a different partition).
-    if (isRelative && vcdViewActive(itemList->mode))
-        return vcdLoadArt("pfs0:/", '/', folder, value, suffix, NULL, resultTex);
-
+    // PS1 (VCD) art loads through this same path as PS2 (ISO) art, keyed by the VCD filename (already
+    // `value`) -- no separate loader (#120). VCD art now lives in the same ART folder as ISO art.
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s/%s_%s", gHDDPrefix, folder, value, suffix);
     else
