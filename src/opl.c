@@ -5,6 +5,7 @@
 */
 
 #include "include/opl.h"
+#include "include/diag.h"
 #include "include/ioman.h"
 #include "include/gui.h"
 #include "include/guigame.h"
@@ -130,6 +131,10 @@ int ps2_ip[4];
 int ps2_netmask[4];
 int ps2_gateway[4];
 int ps2_dns[4];
+// #120 diagnostic counters (see include/diag.h). Ships in the release binary; visible only when the
+// user enables the debug-info overlay. The sole definition; every other TU externs it via diag.h.
+opl_diag_t gDiag = {0};
+
 int gETHOpMode; // See ETH_OP_MODES.
 int gPCShareAddressIsNetBIOS;
 int pc_ip[4];
@@ -385,17 +390,14 @@ static void itemExecSquare(struct menu_item *curMenu)
         // busy spinner (Andrew, #120). Skipping it for VCD strictly REDUCES channel traffic and drops
         // no displayed data (the info page shows no size for a VCD anyway).
         item_list_t *support = curMenu->userdata;
-        if (support == NULL || !vcdViewActive(support->mode)) {
+        if (support == NULL || !vcdViewActive(support->mode))
             menuRequestInfoSize();
-        } else {
-            // VCD: the info page's #Format/#System/#DiscType badges are AttributeImages, so the info
-            // RENDER path would otherwise queue an ASYNC item-config read (the badge values), raising
-            // the busy spinner on the slow MMCE bus for ~0.4s+ with nothing else to show (Andrew, #120,
-            // separate from the #Size stat above). Load that config SYNCHRONOUSLY here instead -- same
-            // proven API itemExecSelect uses at launch -- so the render path finds itemConfig already
-            // set and takes its no-op branch: no async request, no spinner, badges still populated.
-            menuLoadConfigDirect();
-        }
+        // NOTE: do NOT force a synchronous menuLoadConfigDirect() here for VCD to pre-load the
+        // #Format/#System/#DiscType badge config. That read runs on the GUI thread, and on a WEDGED
+        // MMCE card it would block the whole UI outright instead of the (harmless, non-blocking) busy
+        // spinner the async render path raises -- strictly worse than the spinner it was meant to hide
+        // (Andrew, #120: the card wedges card-side during browsing, so any GUI-thread card read is a
+        // freeze risk). The badges resolve fine via the render's own async config read.
         guiSwitchScreen(GUI_SCREEN_INFO);
     }
 }
@@ -1942,6 +1944,9 @@ static void _saveConfig()
         if (lscret > 0)
             writeConfigPathRedirect(configGetDir());
     }
+    // #120 diag: gDiag.lastSaveErrno is latched at the actual write-failure site inside configWrite()
+    // (config.c) -- NOT here, where later config-set snapshot-opens have already clobbered errno with a
+    // spurious ENOENT (adversarial review). See config.c.
     lscstatus = 0;
 }
 

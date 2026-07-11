@@ -5,6 +5,7 @@
  */
 
 #include "include/opl.h"
+#include "include/diag.h"
 #include "include/gui.h"
 #include "include/renderman.h"
 #include "include/menusys.h"
@@ -2048,6 +2049,19 @@ static void guiDrawOverlays()
     // BLURT output
     // if (gEnableDebug)
     //     fntRenderString(gTheme->fonts[0], 0, screenHeight - 24, ALIGN_NONE, 0, 0, blurttext, GS_SETREG_RGBA(255, 255, 0, 128));
+
+    // #120 MMCE-cascade diagnostic line (see include/diag.h). Ships in the RELEASE binary (NOT behind
+    // __DEBUG) so a hardware tester can surface it by flipping one already-existing switch (Settings ->
+    // debug info), no special build. Rendered here on the EE main thread every frame, independent of the
+    // (possibly wedged) art worker, reading plain volatile counters -> zero MMCE-bus traffic. TK > 0 is
+    // the smoking gun (art watchdog corrupted the shared RPC channel).
+    if (gEnableDebug) {
+        char diag[128];
+        snprintf(diag, sizeof(diag), "#120 AO:%u MH:%u MM:%u TK:%u Vp:%u Ip:%u SE:%d",
+                 gDiag.artOpens, gDiag.memoHit, gDiag.memoMiss, gDiag.artTerminate,
+                 gDiag.vcdRescanPreserved, gDiag.isoScanPreserved, gDiag.lastSaveErrno);
+        fntRenderString(gTheme->fonts[0], 0, screenHeight - 24, ALIGN_NONE, 0, 0, diag, GS_SETREG_RGBA(255, 255, 0, 128));
+    }
 }
 
 static void guiReadPads()

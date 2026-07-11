@@ -5,10 +5,12 @@
 */
 
 #include "include/opl.h"
+#include "include/diag.h" // #120 diag: latch the config-write errno at the failure site (below)
 #include "include/util.h"
 #include "include/ioman.h"
 #include "include/sound.h"
 #include <string.h>
+#include <errno.h>
 
 // FIXME: We should not need this function.
 //        Use newlib's 'stat' to get GMT time.
@@ -681,7 +683,12 @@ int configWrite(config_set_t *configSet)
             }
 
             ok = (closeFileBuffer(fileBuffer) == 0);
+            if (!ok)
+                gDiag.lastSaveErrno = errno; // #120 diag: flush/close failure errno, captured before bgmUnMute
             bgmUnMute();
+        } else {
+            gDiag.lastSaveErrno = errno; // #120 diag: write-open failure errno (wedged card = EIO/ENODEV),
+                                         // captured HERE before the restore-path opens below clobber it
         }
 
         if (!ok) {

@@ -16,6 +16,7 @@
 #include <sys/stat.h> // mkdir (POSIX, used like util.c / OSDHistory.c)
 
 #include "include/opl.h"         // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
+#include "include/diag.h"        // #120 diagnostic counters (memo hit/miss, VCD rescan preserve)
 #include "include/system.h"      // POPS_FOLDER
 #include "include/textures.h"    // texDiscoverLoad (VCD cover-art fallback)
 #include "include/ioman.h"       // LOG (BDMA equip probe trace)
@@ -83,6 +84,8 @@ const char *vcdDisplayName(int mode, const char *text)
     return n ? text + n : text;
 }
 
+static void vcdArtMissInvalidate(void); // defined below; bumped once per SUCCESSFUL scan (see vcdScanOpenDir)
+
 // Core scan: opendir `dirPath` and collect *.VCD basenames into a fresh vcd_entry_t list. POSIX dir
 // IO only (newlib-port rule). Shared by vcdScanDir (POPS subfolder) and vcdScanDirRoot (path as-is).
 static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
@@ -116,6 +119,14 @@ static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
         count++;
     }
     closedir(dir);
+
+    // The directory was readable (opened + fully enumerated) -> the VCD set may have changed since last
+    // time, so art that was previously absent might now exist: drop the art miss-memo (#120). Placed HERE,
+    // on the single shared scan success path, so it fires for EVERY VCD device -- including the HDD/APA
+    // path via vcdScanDirRoot, which does NOT go through vcdFillGameList (Gemini review of #130). Fires
+    // ONLY on success: the opendir-fail / OOM returns above never reach here, so a transient wedge does
+    // NOT wipe the memo and re-ignite the failing-open storm.
+    vcdArtMissInvalidate();
 
     if (count == 0) {
         free(list);
@@ -433,8 +444,10 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
     int r = -1;
 
     unsigned int missKey = vcdArtMissKey(devPrefix, value, suffix);
-    if (vcdArtMissKnown(missKey))
-        return -1; // known-absent this epoch -> skip the failing-open storm on the slow MMCE bus (#120)
+    if (vcdArtMissKnown(missKey)) {
+        gDiag.memoHit++; // #120 diag: storm avoided -- zero opens this probe
+        return -1;       // known-absent this epoch -> skip the failing-open storm on the slow MMCE bus (#120)
+    }
 
     vcdExtractGameId(value, discId, sizeof(discId));
     if (discId[0] != '\0') {
@@ -451,6 +464,7 @@ int vcdLoadArt(const char *devPrefix, char sep, const char *artFolder, const cha
             return r;
     }
 
+    gDiag.memoMiss++;            // #120 diag: full miss recorded (first probe of this cover this epoch)
     vcdArtMissRemember(missKey); // all tiers missed -> a repeat probe skips them until the next rescan
     return r;
 }
@@ -500,12 +514,12 @@ int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)
 
     vcd_entry_t *vcds = NULL;
     int n = vcdScanDir(devPrefix, &vcds); // NOTE: does NOT touch *outGames
-    if (n < 0)
-        return -1; // could not read the device -> preserve the caller's current list (leave it intact)
-
-    // The device was readable and the list is being rebuilt -> art may have been added since; drop the
-    // VCD art miss-memo so previously-absent covers/screenshots are re-probed (see vcdArtMissInvalidate).
-    vcdArtMissInvalidate();
+    if (n < 0) {
+        gDiag.vcdRescanPreserved++; // #120 diag: VCD list kept last-good on a failed device read
+        return -1;                  // could not read the device -> preserve the caller's current list
+    }
+    // NOTE: the art miss-memo invalidation now lives in vcdScanOpenDir (the shared scan success path) so
+    // it also covers the HDD vcdScanDirRoot path -- do NOT re-invalidate here (it already fired).
 
     base_game_info_t *games = NULL;
     int kept = 0;
