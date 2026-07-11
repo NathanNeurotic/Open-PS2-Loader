@@ -193,6 +193,27 @@ static void mmceGetDeviceRoot(char *root, size_t size)
         root[0] = '\0';
 }
 
+// mmceman FS-channel RESET devctl (mmce_fs_devctl -> mmce_cmd_reset, verified vs ps2-mmce/mmceman @
+// db3e93f0: MMCE_CMD_RESET is the 9th cmd, PING=0x1..RESET). A 5-byte command bounded by mmceman's own
+// ~1s SIO2 alarm, so it can NEVER hang -- and it takes NO TerminateThread. OPL already speaks this
+// protocol (mmceSendGameID uses devctl 0x1 ping / 0x8 set-gameid).
+#define MMCE_DEVCTL_RESET 0x9
+
+// Recover a DESYNCED MMCE card (#120). Under a heavy art-read burst the card firmware's FS command
+// sequencer can desync mid-transfer; from then on EVERY read fails (art, POPSTARTER.ELF, ISO, boot-card)
+// until reboot -- and with TK==0 (no OPL TerminateThread involved -- confirmed on HW via the on-screen
+// diagnostic). Issue the mmceman RESET devctl to resync it: bounded, no thread kill, so the shared channel
+// is left intact and subsequent reads recover. Called from the art worker on a read-fail streak
+// (texcache.c). Returns the devctl result; a no-card/failure is harmless (the next read just retries).
+int mmceResetChannel(void)
+{
+    char root[sizeof(mmcePrefix)];
+    mmceGetDeviceRoot(root, sizeof(root));
+    if (root[0] == '\0' || strlen(root) < 5)
+        return -1;
+    return fileXioDevctl(root, MMCE_DEVCTL_RESET, NULL, 0, NULL, 0);
+}
+
 static void mmceRefreshArtRoots(void)
 {
     int len;
@@ -563,8 +584,14 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     }
 
     if (!cacheAbortMmceImageLoadsTimed(MMCE_ART_ABORT_WAIT_TICKS)) {
-        cacheEnd(1);
-        cacheInit();
+        // #120: the art worker is wedged in a blocking fileXio on a slow/desynced card. Do NOT cacheEnd(1)
+        // here -- its TerminateThread(gArtThreadId) kills the worker MID-RPC and orphans the SHARED mmceman
+        // channel (TK>0). The launch reads below then FAIL and RETURN to a still-running OPL (unlike a launch
+        // that LoadExecPS2's away), poisoning every later card read. Abandon-and-retry instead (mirrors
+        // thmLoad's redesign): toast and bail; the card-recovery path (mmceResetChannel, texcache.c) may
+        // resync it, and the user retries once it's calm. NEVER a hard freeze -- guiWarning is non-blocking.
+        guiWarning(_l(_STR_ERR_FILE_INVALID), 8);
+        return;
     }
 
     void *irx = &mmce_cdvdman_irx;
