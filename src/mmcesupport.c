@@ -874,12 +874,11 @@ static config_set_t *mmceGetConfig(item_list_t *itemList, int id)
 
 static int mmceGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)
 {
-    // VCD (PS1) covers: fall back disc-id -> filename -> POPSLoader's next-to-VCD <dev>/POPS/<name>.png.
-    // #118: route ALL VCD art suffixes (cover/BG/logo/screenshot), not just cover; popsDir guard keeps
-    // BG/SCR off the cover-only POPSLoader fallback.
-    if (isRelative && mmceArtPrimary[0] != '\0' && vcdViewActive(itemList->mode))
-        return vcdLoadArt(mmceArtPrimary, '/', folder, value, suffix, vcdArtPopsDir(suffix), resultTex);
-
+    // PS1 (VCD) art loads through the EXACT same path as PS2 (ISO) art: one lookup of
+    // <dev>ART/<value>_<suffix>.png. The ONLY difference is the key -- PS2 uses the disc ID, PS1 uses the
+    // VCD filename (already the item's `value`). No separate VCD art loader, no tiers, no miss-memo: whatever
+    // PS2 art does (and PS2 info never wedges the card), PS1 now does identically (#120). This deletes the
+    // vcdLoadArt detour that was the only thing different about PS1 art.
     return mmceTryLoadImage(mmceArtPrimary, folder, isRelative, value, suffix, resultTex);
 }
 
