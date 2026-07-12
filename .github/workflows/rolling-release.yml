@@ -464,7 +464,7 @@ jobs:
           #   POPSTARTER/                     -- SMB network stack (popsmb/) + bdma_config.txt=fat32.
           #   POPS/                           -- POPSTARTER.ELF + BDMA variants + patch (from POPSLoader).
           #   neutrino/                       -- the official latest Neutrino core (rickgaiser/neutrino), extracted for drag-and-drop.
-          #   PC-SMB-Server/                  -- HOST-side SMBv1 server (run on the PC), NOT a memory-card folder.
+          #   PS2-Servers.url                 -- link to the UDPFS / SMB / UDPBD all-in-one PC server.
           PKG=riptopl_pkg
           rm -rf "$PKG"
           mkdir -p "$PKG/APP_RIPTOPL-PS2DEVLATESTSDK" "$PKG/POPSTARTER" "$PKG/POPS"
@@ -493,16 +493,11 @@ jobs:
           fi
           cp -f popsmb/* "$PKG/POPSTARTER/"
           cp -f pops/* "$PKG/POPS/"
-          # PC-SMB-Server/ -- a HOST-side tool (run on your PC, NOT copied to the memory card): a tiny
-          # pure-Python SMBv1 server so OPL's SMB game-loading keeps working on Windows 11 (24H2/25H2
-          # disabled the SMB1 server + removed NTLMv1). See its README for usage. Best-effort: a missing
-          # source file must not break the rest of the package.
-          if [ -f pc/smbserver/smbserver_opl.py ]; then
-            mkdir -p "$PKG/PC-SMB-Server"
-            cp -f pc/smbserver/smbserver_opl.py pc/smbserver/README.md pc/smbserver/build_exe.ps1 pc/smbserver/Start-SMB-Server.bat "$PKG/PC-SMB-Server/"
-          else
-            echo "WARN: pc/smbserver not found; package omits the PC SMB server this run" >&2
-          fi
+          # Keep PC-side servers in their dedicated release stream. The shortcut opens the maintained
+          # PS2 Servers all-in-one launcher for UDPFS, SMBv1 and UDPBD; no server binaries or source are
+          # embedded in the RiptOPL install package.
+          test -f pc/PS2-Servers.url
+          cp -f pc/PS2-Servers.url "$PKG/PS2-Servers.url"
           # neutrino/ (package folder) -- the official latest pre-release of the Neutrino core,
           # EXTRACTED into a plain folder so the user just drag-and-drops it onto the card (no
           # zip-in-zip). Best-effort: a fetch/extract failure still publishes the rest. The archive
@@ -547,8 +542,7 @@ jobs:
           ZIP="RIPTOPL-${REL}-${SHA}.zip"
           (
             cd "$PKG"
-            zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2DEVLATESTSDK POPSTARTER POPS >/dev/null
-            if [ -d PC-SMB-Server ]; then zip -r -X "../rolling/${ZIP}" PC-SMB-Server >/dev/null; fi
+            zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2DEVLATESTSDK POPSTARTER POPS PS2-Servers.url >/dev/null
             if [ -d APP_RIPTOPL-WOPLSDK ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-WOPLSDK >/dev/null; fi
             if [ -d APP_RIPTOPL-PS2MAXSDK ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2MAXSDK >/dev/null; fi
             # the extracted neutrino/ folder (drag-and-drop; replaces the old zip-in-zip neutrino_*.7z)
@@ -623,14 +617,15 @@ jobs:
               printf '  Included build: %s as the neutrino/ folder in the package -- RiptOPL adds only\n' "$NEUTRINO_VER"
               printf '  config/bsd-udpfsbd.toml (for UDPFS); otherwise the official build. Just copy the\n'
               printf '  whole neutrino/ folder to mc?:/ (it already holds neutrino.elf + config/ + modules/).\n'
-              printf '  Network games (UDPFS, both Files and Image): run pcm720/udpfsd on the PC\n'
-              printf '  (https://github.com/pcm720/udpfsd -- a single binary: -fsroot <dir> for Files, -bdpath <image> for Image).\n'
-              printf '  UDPBD is retired: old UDPBD configs auto-migrate to UDPFS (Image) and the old\n'
-              printf '  udpbd-server no longer applies -- switch the PC side to udpfsd -bdpath <image>.\n'
             else
               printf '  (Could not bundle Neutrino this run -- please grab the latest build from the link above.)\n'
             fi
             printf '  Neutrino is the work of its authors; RiptOPL only bundles the official build for convenience.\n'
+            printf '\n## PC network servers\n'
+            printf 'The RiptOPL package no longer embeds a PC SMB server. Open **PS2-Servers.url** from the\n'
+            printf 'package, or visit https://github.com/NathanNeurotic/PS2-Servers, for the maintained\n'
+            printf 'UDPFS / SMBv1 / UDPBD all-in-one launcher. Follow its protocol-specific setup and\n'
+            printf 'match RiptOPL network settings to the server you start.\n'
             printf '\n## In this build\n'
             printf -- '- External Neutrino core option: per-game core selector + global/per-game launch args\n'
             printf -- '- Coverflow cover-art render mode (default theme)\n'
@@ -641,17 +636,15 @@ jobs:
             printf -- '- Visual GameID barcode for Pixel FX / RetroGEM / PS2Digital (Device Settings, OFF by default)\n'
             printf -- '- Neutrino args: prefix a flag with $ to disable it without deleting; "Test launch" boots without saving\n'
             printf -- '- DualSense / DS5 USB controller support\n'
-            printf -- '- PC-SMB-Server/: a host-side SMBv1 server you run on your PC so SMB game-loading keeps working\n'
-            printf -- '  on Windows 11 (24H2/25H2 disabled SMB1 + removed NTLMv1). Bypasses Windows SMB entirely.\n'
+            printf -- '- PS2-Servers.url: opens the maintained UDPFS / SMBv1 / UDPBD all-in-one PC launcher\n'
             printf '\n## Needs testing -- please report from real hardware\n'
             printf -- '- GameID barcode: enable it in Device Settings, then confirm your Pixel FX / RetroGEM /\n'
             printf -- '  PS2Digital auto-loads the per-game profile (the HDMI latch is hardware-only -- not emulator-testable).\n'
             printf -- '- VMC -> Neutrino: confirm your save mounts when launching via Neutrino on USB / exFAT / MX4SIO.\n'
             printf -- '  (Neutrino cannot yet write a VMC to internal HDD APA/PFS -- upstream neutrino#132 -- so VMC\n'
             printf -- '  sharing is block-device only for now.)\n'
-            printf -- '- PC-SMB-Server: run it on your PC (see PC-SMB-Server/README.md), point OPL at its IP + custom\n'
-            printf -- '  port with a blank user/pass. Protocol is validated locally -- confirm an ISO boots and the\n'
-            printf -- '  game list populates over it from real hardware.\n'
+            printf -- '- PC network servers: use the linked PS2 Servers AIO, match the settings shown by its launcher,\n'
+            printf -- '  and confirm the game list populates and an ISO boots over your chosen protocol on real hardware.\n'
             printf '\n## Other downloads\n'
             if [ -f "rolling/RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip" ]; then
               printf -- '- RIPTOPL-VARIANTS-*.zip: EXTRA_FEATURES x PADEMU build configs, both SDK flavours\n'

@@ -120,14 +120,15 @@ This build layers several features on top of upstream OPL:
 - **UDPBD network boot (Neutrino):** stream games from a PC over the LAN as a network block
   device — they show up as a **UDPBD Games** list with full covers and per-game settings, just
   like a local drive. UDPBD launches via Neutrino, is **off by default**, is mutually exclusive
-  with SMB (they share the one network adapter), and needs a static PS2 IP. See the network-boot
-  section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--udpbd--udpfs-neutrino-only)**.
+  with SMB (they share the one network adapter), and needs a static PS2 IP. Run it from the
+  **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. See the
+  network-boot section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--udpbd--udpfs-neutrino-only)**.
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
-  alongside UDPBD. A **Net Boot Protocol** picker under **Device Settings** chooses **UDPBD** or
-  **UDPFS**; UDPFS launches via `-bsd=udpfsbd` with a bundled `bsd-udpfsbd.toml`. Its PC server is
-  the bundled `udpfs_server.py` (Python), or **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** — a
-  prebuilt Go binary (no Python) that serves both UDPBD and UDPFS. Same static-IP and SMB-exclusivity
-  rules as UDPBD.
+  alongside UDPBD. The **Network Protocol** picker under **Device Settings** offers **Off / SMB /
+  UDPFS / UDPBD**; UDPFS launches via `-bsd=udpfsbd` with a bundled `bsd-udpfsbd.toml`. Use the
+  **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher for UDPFS,
+  SMB and UDPBD; advanced users can run **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** directly.
+  Same static-IP and SMB-exclusivity rules as UDPBD.
 - **PS1 games via POPSTARTER (VCD view):** press **L3** on a device page to switch between your
   PS2 discs and a list of PS1 `*.VCD` games on the same device — it's a *view*, not a separate tab.
   A **Default game view** setting (**Both** / **ISO** / **VCD**, default **Both**) can lock a page
@@ -241,7 +242,7 @@ There are two release channels:
 
 | Channel | What it is |
 | --- | --- |
-| **Rolling pre-release** (the `rolling` tag) | Continuously rebuilt from `master` on every push — the bleeding edge. Each build publishes a full installable package zip (`RIPTOPL-<rel>-<sha>.zip`, containing all three labeled SDK loader folders + the bundled Neutrino core), the bare loader ELFs, a source snapshot, `SHA256SUMS.txt`, and a language pack. May be unstable. |
+| **Rolling pre-release** (the `rolling` tag) | Continuously rebuilt from `master` on every push — the bleeding edge. Each build publishes a full installable package zip (`RIPTOPL-<rel>-<sha>.zip`, containing all three labeled SDK loader folders + the bundled Neutrino core + a `PS2-Servers.url` shortcut), the bare loader ELFs, a source snapshot, `SHA256SUMS.txt`, and a language pack. May be unstable. |
 | **Tagged releases** (`v*` tags) | Curated, known-good versions cut from a tag. Use these for stability. |
 
 See **[ROLLING_RELEASE.md](ROLLING_RELEASE.md)** for exactly what the rolling release
@@ -319,9 +320,11 @@ are supported using the folder structure above.
 > appears. The default **SMB Port is `1111`** — a non-privileged port (>1024), so a server
 > binds it without admin/root. **Network Config** now opens with **advanced options on**, so
 > the **Port** field (and ETH link mode) are editable immediately. If Windows 10/11 has
-> disabled SMB1/NTLMv1, use the bundled pure-Python server in
-> **[`pc/smbserver/`](pc/smbserver/README.md)**, which also defaults to port **1111** so OPL
-> and the server agree out of the box (point OPL at this PC's LAN IP, blank user/pass = guest).
+> disabled SMB1/NTLMv1, use the **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)**
+> all-in-one launcher instead of Windows' SMB service. Choose its SMBv1 server, then set RiptOPL's
+> IP, port, share and credentials to the values the launcher displays (PS2 Servers currently uses
+> port **1445** by default, so change RiptOPL's saved **1111** when prompted). Release packages
+> include **`PS2-Servers.url`** as a direct shortcut to the repository.
 
 ## HDD
 	

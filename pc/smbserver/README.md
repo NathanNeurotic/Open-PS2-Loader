@@ -1,5 +1,9 @@
 # RiptOPL SMBv1 server
 
+> **Legacy source only:** this standalone server is no longer included in RiptOPL release packages.
+> For the maintained UDPFS / SMBv1 / UDPBD all-in-one launcher and packaged downloads, use
+> **[NathanNeurotic/PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)**.
+
 A tiny, dependency-free **SMBv1/CIFS server** that Open-PS2-Loader (and forks) can browse and
 load games from — so SMB keeps working even on hosts where the OS has killed SMBv1.
 

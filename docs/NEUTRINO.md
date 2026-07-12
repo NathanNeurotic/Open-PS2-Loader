@@ -122,9 +122,9 @@ port / share / credentials fields.
 | Choice | Wire protocol | On the PS2 | Core | PC server |
 |---|---|---|---|---|
 | **Off** | — | no network device (default) | — | — |
-| **SMB** | SMBv1 | a mounted file share | OPL's *own* core (not Neutrino) | Samba / `smbserver_opl.py` |
-| **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Neutrino only | [`udpfsd`](https://github.com/pcm720/udpfsd) (not bundled — see Requirements) |
-| **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino only | [`udpbd-server`](https://github.com/israpps/udpbd-server) |
+| **SMB** | SMBv1 | a mounted file share | OPL's *own* core (not Neutrino) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
+| **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Neutrino only | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
+| **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino only | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpbd-server`](https://github.com/israpps/udpbd-server) |
 
 Because the PS2 has a **single** network adapter, only ONE of these is active per session — the
 selector is exclusive *by construction* (the old separate ETH start-mode + "Network Boot" toggle +
@@ -169,11 +169,12 @@ effect** (OPL shows the usual restart-to-apply notice).
 ### Requirements
 
 - A **PC-side UDPFS server** on the same LAN, matching the UDPFS Access mode you chose. RiptOPL does
-  **not** bundle one — get **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)**, a single prebuilt Go
-  binary (no Python) that serves **both** `-d` (Files) and `-b` (Image); the fork's
-  **[NathanNeurotic/PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)** one-stop bundle also
-  carries it alongside the SMBv1 server. The old `udpbd-server` (SUDPBDv2) does **not** work with
-  UDPFS. Layout: **Image** mode's served FAT/exFAT image uses the usual OPL folders (`CD`, `DVD`,
+  **not** embed one. Use **[NathanNeurotic/PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)**,
+  the maintained all-in-one launcher for UDPFS, SMBv1 and UDPBD; release packages include a
+  `PS2-Servers.url` shortcut to it. Advanced users can instead run
+  **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** directly. The old standalone `udpbd-server`
+  (SUDPBDv2) does **not** work with UDPFS. Layout: **Image** mode's served FAT/exFAT image uses the
+  usual OPL folders (`CD`, `DVD`,
   `ART`, `CFG`, …); **Files** mode's served *directory* needs the same `CD/` + `DVD/` subfolders —
   OPL never lists ISOs sitting loose at the served root.
 - A **static** PS2 IP. UDPFS has no DHCP client — it reuses the address from **Settings → Network
