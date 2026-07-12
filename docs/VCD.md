@@ -55,8 +55,10 @@ VCD titles always boot through **`POPSTARTER.ELF`**. They never use OPL's built-
 or Neutrino, so on a VCD game the per-game **Loader Core** selector is locked to an
 inert label — choosing a core there has no effect on a PS1 game.
 
-POPSTARTER only needs the VCD's *name* to do its job; RiptOPL hands it the selected
-title and POPSTARTER finds the matching `*.VCD`.
+For ordinary VCD files, POPSTARTER needs the VCD's *name*; RiptOPL hands it the selected
+title and POPSTARTER finds the matching `*.VCD`. An APA one-game install instead launches
+with its literal, case-sensitive `PP.<name>` / `__.<name>` partition label so POPSTARTER can
+mount that partition and boot its fixed `IMAGE0.VCD`.
 
 Where `POPSTARTER.ELF` is loaded from is set by **Settings → General Settings →
 POPSTARTER.ELF Device** — a driver-accurate picker (matching the Neutrino Device picker):
@@ -86,7 +88,7 @@ characters; for a longer path set `popstarter_path` in `settings_riptopl.cfg` di
 | Device | Location |
 | --- | --- |
 | USB / MMCE / MX4SIO / iLink / SMB | a **`POPS`** folder at the device root, holding `POPSTARTER.ELF` + your `*.VCD` files |
-| Internal HDD (APA/PFS) | two layouts, both listed: a **`__.POPS`, `__.POPS0` … `__.POPS9`** store partition (many `*.VCD` on its root, named per file), and/or **`PP.<name>`** single-game install partitions (one `IMAGE0.VCD` each; shown as `<name>`). `POPSTARTER.ELF` is loaded from a **`POPS`** folder on the **`__common`** partition (then **`+OPL`** as a fallback). |
+| Internal HDD (APA/PFS) | two layouts, both listed: an exact **`__.POPS`, `__.POPS0` … `__.POPS9`** store partition (many `*.VCD` on its root, named per file), and/or **`PP.<name>`** (visible) / **`__.<name>`** (hidden-label) one-game partitions. A one-game candidate is listed only when its root contains the exact file **`IMAGE0.VCD`**, which prevents similarly named HDD apps from appearing as games; it is shown as `<name>`. `POPSTARTER.ELF` is loaded from a **`POPS`** folder on the **`__common`** partition (then **`+OPL`** as a fallback). |
 
 > The HDD's `XX.*` (BDMA/exFAT) and `SB.*` (SMBv1) launcher partitions point at VCDs that live on
 > an exFAT device or an SMB share — those games appear under the **USB/MX4SIO/MMCE** or **SMB** VCD
@@ -99,7 +101,8 @@ won't auto-match art by ID.
 
 > **Internal HDD covers:** VCD covers on the APA HDD load from an **`ART`** folder at the
 > **partition root** (`pfs:/ART/` — i.e. `<your OPL partition>:/ART/`), not the `OPL/ART/`
-> subfolder PS2-HDD covers use. (`PP.*` installs key off the displayed name, e.g. `GAME_COV.png`.)
+> subfolder PS2-HDD covers use. (`PP.*` / `__.*` one-game installs key off the displayed
+> name without the three-character prefix, e.g. `GAME_COV.png`.)
 
 ## 5. exFAT PS1 support — the BDMA equip
 

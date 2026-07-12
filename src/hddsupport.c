@@ -39,8 +39,9 @@ static unsigned char hddSupportModulesLoaded = 0;
 static char *hddPrefix = "pfs0:";
 static hdl_games_list_t hddGames;
 
-// HDD VCD view: PS1 .VCD games gathered from the __.POPS* APA partitions. hddVcdParts is index-
-// parallel to hddVcdGames -- it records which partition each VCD lives on (for the launch handoff).
+// HDD VCD view: PS1 games gathered from pooled __.POPS[0-9]? partitions and one-game PP. / __.
+// partitions. hddVcdParts is index-parallel to hddVcdGames -- it records the full owning partition
+// label for the launch handoff.
 static base_game_info_t *hddVcdGames = NULL;
 static int hddVcdGameCount = 0;
 static char (*hddVcdParts)[APA_IDMAX + 1] = NULL;
@@ -373,7 +374,7 @@ item_list_t *hddGetObject(int initOnly)
     return &hddGameList;
 }
 
-// ---- HDD VCD view (PS1 .VCD on the __.POPS* APA partitions) -------------------------------
+// ---- HDD VCD view (PS1 games on APA/PFS partitions) ---------------------------------------
 
 static void hddFreeVcdGameList(void)
 {
@@ -384,11 +385,11 @@ static void hddFreeVcdGameList(void)
     hddVcdGameCount = 0;
 }
 
-// Build the HDD VCD game list by scanning every present __.POPS* APA partition. Each is mounted
-// read-only on pfs0:, its root scanned for *.VCD, and the results appended to hddVcdGames, with the
-// owning partition label kept index-parallel in hddVcdParts (so the launch path knows which partition
-// to hand POPSTARTER). The default OPL data-partition mount is restored at the end -- pfs0: is the
-// single shared slot, so the rest of HDD mode breaks if we leave it pointed elsewhere. Returns the count.
+// Build the HDD VCD game list from both supported APA/PFS shapes. Exact __.POPS / __.POPS0..9
+// containers contribute every root *.VCD; PP.<name> / __.<name> candidates contribute one entry only
+// after a root IMAGE0.VCD probe succeeds. Each partition is mounted read-only on pfs0:, and its full
+// label is kept index-parallel in hddVcdParts for POPSTARTER. The default OPL data-partition mount is
+// restored at the end -- pfs0: is the single shared slot, so HDD mode breaks if it is left elsewhere.
 // Bounded wait (ticks, ~1ms each) for the art worker to drain before we remount pfs0:. Matches the
 // MMCE art-abort budget; long enough for an in-flight pfs cover read to abort at its next row
 // boundary, short enough that a truly-wedged read can't hang the view switch forever.
@@ -402,7 +403,7 @@ static int hddBuildVcdGameList(void)
     hddFreeVcdGameList();
 
     if (hddGetPopsPartitionList(&parts) <= 0)
-        return 0; // no __.POPS* partitions; pfs0: was not touched here
+        return 0; // no matching PFS partitions; pfs0: was not touched here
 
     // pfs0: is the single shared ps2fs slot; umounting it in the loop below while the cache art
     // worker still holds an open pfs0: cover fd is the documented HDD-freeze hazard (see hddLaunchVcd).
@@ -422,15 +423,16 @@ static int hddBuildVcdGameList(void)
         if (fileXioMount(hddPrefix, mountSrc, FIO_MT_RDONLY) < 0)
             continue; // can't mount this partition -> skip it
 
-        // PP.* single-game install: ONE IMAGE0.VCD on the partition root, displayed by the partition
-        // label minus "PP." (the launch keys off the FULL label -- see hddDoLaunchVcd). __.POPS* stores
-        // (handled below) hold MANY .VCD files named per game.
-        if (strncmp(parts.names[p], "PP.", 3) == 0) {
+        // PP.<name> / __.<name> one-game install: require ONE exact IMAGE0.VCD at the partition root,
+        // display the label without its three-character prefix, and retain the FULL label for launch.
+        // The name predicate excludes the exact __.POPS[0-9]? pooled containers handled below.
+        if (hddIsPopsPartitionGame(parts.names[p])) {
             int imgfd = open("pfs0:/IMAGE0.VCD", O_RDONLY);
+            if (imgfd >= 0)
+                close(imgfd); // close before unmount; ps2fs may reject an unmount with a live fd
             fileXioUmount(hddPrefix);
             if (imgfd < 0)
-                continue; // no IMAGE0.VCD here -> not a usable PP. install
-            close(imgfd);
+                continue; // candidate name alone is insufficient (PP.* HDDOSD apps are common)
 
             base_game_info_t *grownGames = realloc(hddVcdGames, (total + 1) * sizeof(base_game_info_t));
             if (grownGames == NULL)
@@ -443,11 +445,11 @@ static int hddBuildVcdGameList(void)
 
             base_game_info_t *g = &hddVcdGames[total];
             memset(g, 0, sizeof(base_game_info_t));
-            snprintf(g->name, sizeof(g->name), "%s", parts.names[p] + 3); // strip "PP." -> display name
+            snprintf(g->name, sizeof(g->name), "%s", parts.names[p] + 3); // strip PP. / __. for display
             snprintf(g->extension, sizeof(g->extension), ".VCD");
             g->parts = 1;
             g->format = GAME_FORMAT_ISO;                                       // harmless; VCD flag gates the launch
-            snprintf(hddVcdParts[total], APA_IDMAX + 1, "%s", parts.names[p]); // FULL label, e.g. PP.GAME
+            snprintf(hddVcdParts[total], APA_IDMAX + 1, "%s", parts.names[p]); // case-preserved full label
             total += 1;
             continue;
         }
@@ -646,11 +648,10 @@ static int hddResolveHddPopstarter(char *elfOut, int elfLen)
     return 0;
 }
 
-// Shared POPSTARTER handoff for an HDD VCD. argv[0] differs by partition shape: a PP.* single-game
-// install boots by its PARTITION LABEL (e.g. PP.GAME.ELF), a __.POPS* store entry boots by the VCD name
-// (e.g. GAME.ELF). The owning partition (`part`) is passed OUT OF BAND so POPSTARTER self-mounts it after
-// the IOP reset. Everything is built on stack BEFORE deinit() frees the VCD list. Used by both the
-// in-view menu launch and the Favourites tab (hddLaunchVcd).
+// Shared POPSTARTER handoff for an HDD VCD. argv[0] differs by partition shape: PP.<name> / __.<name>
+// one-game installs boot by their literal PARTITION LABEL; a pooled __.POPS[0-9]? entry boots by its
+// VCD name. The owning partition (`part`) is passed OUT OF BAND so POPSTARTER self-mounts it after the
+// IOP reset. Everything is built on stack BEFORE deinit() frees the VCD list.
 static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *part)
 {
     char vcdElf[256], vcdSelector[320], vcdPart[64];
@@ -658,10 +659,10 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
     if (name == NULL || name[0] == '\0' || part == NULL || part[0] == '\0')
         return;
 
-    if (strncmp(part, "PP.", 3) == 0)
-        snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", part); // PP.GAME.ELF (the partition label)
+    if (hddIsPopsPartitionGame(part))
+        snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", part); // literal PP.Game.ELF / __.Hidden.ELF
     else
-        snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", name); // GAME.ELF (the __.POPS* VCD name)
+        snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", name); // GAME.ELF (pooled-container VCD)
     snprintf(vcdPart, sizeof(vcdPart), "hdd0:%s:", part);           // self-mount target, hdd0:PART:
 
     // Resolve + keep pfs0: on the POPSTARTER.ELF partition. Quiesce art+IO first (this remounts pfs0:).
