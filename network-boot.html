@@ -88,7 +88,7 @@ and no greying interlock to manage.</p>
   <td><b>SMB</b></td>
   <td>SMBv1</td>
   <td>a mounted file share</td>
-  <td>Samba / <code>smbserver_opl.py</code></td>
+  <td><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> (recommended) / Samba</td>
   <td>OPL's <b>own</b> core (not Neutrino)</td>
 </tr>
 <tr>
@@ -96,14 +96,14 @@ and no greying interlock to manage.</p>
   <td>UDPRDMA</td>
   <td>a games source served over UDP — a <b>filesystem</b> (<code>udpfs:</code>, loose ISOs) or a
   <b>block device</b> (<code>massN:</code>, disk image), set by <b>UDPFS Access</b> below</td>
-  <td><code>udpfsd</code> (<code>-fsroot</code> Files or <code>-bdpath</code> Image)</td>
+  <td><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> (recommended) / <code>udpfsd</code></td>
   <td>Neutrino only</td>
 </tr>
 <tr>
   <td><b>UDPBD</b></td>
   <td>SUDPBDv2</td>
   <td>a served disk image mounted as <code>massN:</code></td>
-  <td><code>udpbd-server</code></td>
+  <td><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> (recommended) / <code>udpbd-server</code></td>
   <td>Neutrino only</td>
 </tr>
 </tbody>
@@ -183,14 +183,14 @@ the UDPRDMA path (both modes) is validated on emulator only so far — real-PS2 
 </details>
 
 <details class="deep"><summary>Which PC-side UDPFS server do I run?</summary>
-<p>The RiptOPL release ships Neutrino as a drag-and-drop <code>neutrino/</code> folder in the release
-zip (<code>neutrino.elf</code> + <code>config/</code> + <code>modules/</code>), but it does <b>not</b>
-bundle a UDPFS PC server. Get <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a> — a single
-prebuilt Go binary (no Python) that serves both modes: pass <code>-fsroot &lt;dir&gt;</code> for
-<b>Files</b> and <code>-bdpath &lt;image&gt;</code> for <b>Image</b>. RiptOPL's own
-<a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a> one-stop bundle collects the
-SMBv1 and UDPFS servers together. The old <code>udpbd-server</code> (SUDPBDv2) does <b>not</b> work with
-UDPFS — it is a <b>different</b> protocol served by the separate <b>UDPBD</b> Network Protocol choice.</p>
+<p>The RiptOPL release ships Neutrino as a drag-and-drop <code>neutrino/</code> folder, but it does
+<b>not</b> embed PC server software. Open <code>PS2-Servers.url</code> from the package or visit
+<a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> for the maintained UDPFS /
+SMBv1 / UDPBD all-in-one launcher, then choose UDPFS and follow its protocol-specific settings.
+Advanced users can instead run <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a> directly:
+pass <code>-fsroot &lt;dir&gt;</code> for <b>Files</b> or <code>-bdpath &lt;image&gt;</code> for <b>Image</b>.
+The standalone <code>udpbd-server</code> speaks SUDPBDv2 and does <b>not</b> work with UDPFS; use it
+only with the separate <b>UDPBD</b> Network Protocol choice.</p>
 </details>
 
 <details class="deep"><summary>Why does UDPFS <b>Image</b> need a private <code>bsd-udpfsbd.toml</code> when a stock <code>bsd-udpfs.toml</code> exists?</summary>
@@ -220,12 +220,12 @@ the RiptOPL source tree into your <code>neutrino/config/</code> folder.</p>
   Settings. (SMB can use DHCP or a static IP; it keeps its own address/port/share/credentials fields
   on the Network Config page, hidden automatically when UDPFS is selected.)</li>
   <li><b>PC-side UDPFS server running on the same LAN</b>, matching the UDPFS Access mode you chose.
-  RiptOPL does <b>not</b> bundle one — get <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a>
-  (a single prebuilt Go binary, no Python, that serves both <code>-fsroot</code> Files and
-  <code>-bdpath</code> Image). RiptOPL's own
-  <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a> bundles the SMBv1 and UDPFS
-  servers. The old <code>udpbd-server</code> (SUDPBDv2) does <b>not</b> work with UDPFS — it belongs to
-  the separate <b>UDPBD</b> Network Protocol choice.</li>
+  RiptOPL does <b>not</b> embed one. Open the package's <code>PS2-Servers.url</code> shortcut or visit
+  <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> for the maintained UDPFS /
+  SMBv1 / UDPBD all-in-one launcher. Advanced users can run
+  <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a> directly. The standalone
+  <code>udpbd-server</code> (SUDPBDv2) does <b>not</b> work with UDPFS — it belongs to the separate
+  <b>UDPBD</b> Network Protocol choice.</li>
   <li><b>Neutrino ELF</b> for UDPFS. UDPFS (Files and Image) always launches via Neutrino;
   if <code>neutrino.elf</code> is not found at launch, RiptOPL warns and returns to the menu. The
   UDPFS feature ships its <b>own bundled Neutrino</b> (a ready-to-use <code>neutrino/</code> folder in
@@ -267,9 +267,16 @@ take effect (only one UDPFS backend can bind the transport per boot).</p>
 </div>
 <div class="step">
 <h3>Start the PC server</h3>
-<p>On the PC, run <a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a> in the mode that matches
-your chosen access mode. Point it at the folder holding your games (a directory with <code>CD/</code> and
-<code>DVD/</code> subfolders for Files, a FAT/exFAT disk image for Image), or a share for SMB.</p>
+<p>Open <code>PS2-Servers.url</code> from the RiptOPL package or visit
+<a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a>. In its all-in-one launcher,
+choose the server that matches RiptOPL's <b>Network Protocol</b> setting: <b>SMBv1 server
+(RiptOPL)</b>, <b>UDPFS</b>, or <b>UDPBD</b>. Select the games folder or disk image, click
+<b>Start</b>, and follow the protocol-specific settings the launcher displays.</p>
+<details class="deep"><summary>Advanced: run pcm720/udpfsd directly</summary>
+<p>For UDPFS only, advanced users can run
+<a href="https://github.com/pcm720/udpfsd">pcm720/udpfsd</a> in the mode that matches the chosen
+access mode. Files serves a directory containing <code>CD/</code> and <code>DVD/</code> subfolders;
+Image serves a FAT/exFAT disk image.</p>
 <pre>
 # UDPFS Files — a folder with CD/ and DVD/ subfolders of ISOs
 udpfsd -fsroot /path/to/games            # Files   (Linux/macOS)
@@ -279,6 +286,7 @@ udpfsd.exe -fsroot C:\path\to\games      # Files   (Windows)
 udpfsd -bdpath /path/to/games.img        # Image   (Linux/macOS)
 udpfsd.exe -bdpath C:\path\to\games.img  # Image   (Windows)
 </pre>
+</details>
 </div>
 <div class="step">
 <h3>Boot the PS2 and find your games</h3>

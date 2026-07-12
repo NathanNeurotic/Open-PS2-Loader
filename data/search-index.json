@@ -38,7 +38,7 @@
  {
   "title": "Install & First Boot",
   "cat": "start",
-  "text": "How to get RIPTOPL.ELF onto your PS2 via FMCB/FHDB or any ELF launcher, what happens on first boot, and how opinionated defaults differ from upstream OPL.",
+  "text": "How to get RIPTOPL.ELF onto your PS2 via FMCB/FHDB or any ELF launcher, what the installable package contains (including the PS2 Servers AIO shortcut), and what happens on first boot.",
   "url": "install.html"
  },
  {
@@ -170,19 +170,19 @@
  {
   "title": "SMB (network share)",
   "cat": "devices",
-  "text": "Load PS2 and PS1 games from a shared folder on a PC, NAS, or Linux/Samba server over SMBv1. Covers share setup, Network Settings fields, the NIC interlock with Network Boot, and PS1 VCD over SMB.",
+  "text": "Load PS2 and PS1 games over SMBv1 with the recommended PS2 Servers AIO launcher, Samba, or a compatible NAS. Covers share setup, Network Settings, and PS1 VCD over SMB.",
   "url": "smb.html"
  },
  {
   "title": "SMB — What you need",
   "cat": "devices",
-  "text": "Requirements for SMB loading: a PS2 network adapter, an SMBv1-capable server (Windows with SMBv1 re-enabled or Samba), and a wired LAN connection. Static IP is strongly recommended.",
+  "text": "Requirements for SMB loading: a PS2 network adapter, the recommended PS2 Servers AIO launcher or another SMBv1-capable server, and a wired LAN connection. PS2 Servers avoids enabling Windows SMB1.",
   "url": "smb.html#requirements"
  },
  {
-  "title": "SMB — Set up the share on your PC or NAS",
+  "title": "SMB — Set up the SMB server and share",
   "cat": "devices",
-  "text": "Create an OPL-layout folder (CD, DVD, POPS, ART, CFG, VMC, THM, CHT, APPS), share it with full read/write permissions, and place ISOs in the correct subfolder. Samba config example included.",
+  "text": "With PS2 Servers, choose SMBv1, select the games folder, start it, and copy the displayed settings into RiptOPL. Manual Samba/NAS setup and the standard OPL folder layout are also covered.",
   "url": "smb.html#share-setup"
  },
  {
@@ -284,13 +284,13 @@
  {
   "title": "Network Boot (SMB / UDP)",
   "cat": "devices",
-  "text": "Stream your PS2 game library from a PC over the LAN. RiptOPL picks the network transport with a single selector — Device Settings → Network Protocol — offering just three choices: Off / SMB / UDPFS . ",
+  "text": "Stream your PS2 game library from a PC over the LAN. RiptOPL offers Off / SMB / UDPFS / UDPBD, and the linked PS2 Servers AIO launcher provides all three PC-side protocols.",
   "url": "network-boot.html"
  },
  {
-  "title": "The three Network Protocol choices",
+  "title": "The four Network Protocol choices",
   "cat": "devices",
-  "text": "Set Settings → Device Settings → Network Protocol to one of three values. Because the PS2 has a single NIC, choosing one automatically excludes the others — no separate enable toggle, and no greying i",
+  "text": "Set Settings → Device Settings → Network Protocol to Off, SMB, UDPFS, or UDPBD. Because the PS2 has a single NIC, choosing one protocol automatically excludes the others.",
   "url": "network-boot.html#protocols"
  },
  {
@@ -302,13 +302,13 @@
  {
   "title": "Requirements",
   "cat": "devices",
-  "text": "Static PS2 IP address (UDPFS only). The UDPFS IOP modules (both Files and Image) have no DHCP client — they read the IP set in Settings → Network Config and use it directly. If DHCP is currently on th",
+  "text": "UDPFS needs a static PS2 IP and a matching PC server. Open PS2-Servers.url for the maintained UDPFS / SMBv1 / UDPBD AIO launcher; server binaries are not embedded in RiptOPL.",
   "url": "network-boot.html#requirements"
  },
  {
   "title": "Selecting a network protocol",
   "cat": "devices",
-  "text": "Set a static IP on the PS2 (UDPFS only) For UDPFS (either access mode), go to Settings → Network Config and set a fixed IP address, subnet mask, and gateway; turn DHCP off . The UDPFS IOP modules read",
+  "text": "Choose SMB, UDPFS, or UDPBD in RiptOPL, then open PS2-Servers.url and start the matching server in the AIO launcher. Raw pcm720/udpfsd commands remain as an advanced UDPFS-only alternative.",
   "url": "network-boot.html#enable"
  },
  {
@@ -948,7 +948,7 @@
  {
   "title": "Releases — What the rolling release contains",
   "cat": "reference",
-  "text": "Each rolling build publishes the installable package zip (both toolchains + bundled Neutrino + POPSTARTER/POPS folders), bare ELFs, a source snapshot, SHA256SUMS.txt, and a language pack.",
+  "text": "Each rolling build publishes the installable package zip (three loader toolchains, bundled Neutrino, POPSTARTER/POPS, and PS2-Servers.url), bare ELFs, a source snapshot, checksums, and languages.",
   "url": "releases.html#rolling-assets"
  },
  {
