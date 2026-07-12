@@ -277,7 +277,7 @@ An <em>Advanced Options</em> toggle reveals Ethernet link-mode controls.</p>
 <tbody>
 <tr><td>Address Type</td><td>IP / NetBIOS</td><td>Whether the server is addressed by IP or by NetBIOS name.</td></tr>
 <tr><td>Address</td><td>text or four octets</td><td>Server IP or NetBIOS hostname.</td></tr>
-<tr><td>Port</td><td>0&ndash;65535 (default 1111)</td><td>SMB port. RiptOPL defaults to <code>1111</code> (was 445): a non-privileged port so the bundled <code>pc/smbserver</code> binds it without admin/root. Set it to 445 for a standard Windows share.</td></tr>
+<tr><td>Port</td><td>0&ndash;65535 (default 1111)</td><td>SMB port. RiptOPL defaults to <code>1111</code> (was 445), but the server and client must match. <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> currently defaults to <code>1445</code>; enter the protocol-specific value its launcher displays. Standard Samba/native shares commonly use <code>445</code>.</td></tr>
 <tr><td>Share</td><td>text (default <code>PS2SMB</code>)</td><td>Share name on the server. Leave blank to list available shares.</td></tr>
 <tr><td>User</td><td>text (default <code>GUEST</code>)</td><td>SMB username.</td></tr>
 <tr><td>Password</td><td>text</td><td>SMB password. Leave blank for guest authentication.</td></tr>

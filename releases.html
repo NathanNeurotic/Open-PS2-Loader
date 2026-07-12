@@ -101,8 +101,10 @@ The headline item is a full installable package zip; all other assets are publis
   <code>APP_RIPTOPL-OLDSDK/RIPTOPL.ELF</code> (the pinned/stable toolchain, as a fallback), the
   <code>POPSTARTER/</code> and <code>POPS/</code> folders for PS1 support, an already-extracted
   <code>neutrino/</code> folder (drag-and-drop — with <code>config/bsd-udpfsbd.toml</code> injected so
-  UDPFS works), and a host-side <code>PC-SMB-Server/</code> folder (a pure-Python SMBv1 server you run
-  on your PC for Windows 11). Extract it and use <code>APP_RIPTOPL/RIPTOPL.ELF</code>.</td>
+  UDPFS works), and <code>PS2-Servers.url</code>, a shortcut to the maintained
+  <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> UDPFS / SMBv1 / UDPBD
+  all-in-one PC launcher. Server software is no longer embedded in this package. Extract it and use
+  <code>APP_RIPTOPL/RIPTOPL.ELF</code>.</td>
 </tr>
 <tr>
   <td><code>RIPTOPL-&lt;version&gt;.ELF</code></td>
@@ -255,7 +257,7 @@ APP_RIPTOPL-OLDSDK/
 POPSTARTER/            ← SMB network stack + bdma_config.txt
 POPS/                  ← POPSTARTER.ELF and BDMA variants
 neutrino/              ← official Neutrino core (already extracted, drag-and-drop)
-PC-SMB-Server/         ← host-side SMBv1 server (run on your PC, not the card)</pre>
+PS2-Servers.url        ← link to the UDPFS / SMBv1 / UDPBD all-in-one PC launcher</pre>
 </div>
 <div class="step"><h3>Install the ELF via your launch method</h3>
 <p>Copy <code>APP_RIPTOPL/RIPTOPL.ELF</code> to wherever your launch method (FMCB, FHDB, or
