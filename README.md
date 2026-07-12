@@ -104,7 +104,9 @@ This build layers several features on top of upstream OPL:
   **Coverflow Settings** (shown while the Coverflow theme is active). Authoring details
   and every theme value live in the **[Theme Engine reference](docs/THEME_ENGINE.md)**.
 - **Cover-art `.tar` archive (opt-in):** keep all of a device's covers in a single uncompressed
-  **`ART/art.tar`** (entries named `<GAMEID>_<suffix>.png`) instead of thousands of loose files.
+  **`ART/art.tar`** (entries named `<GAMEID>_<suffix>.png`; VCD entries use the filename without
+  `.VCD`, or the displayed `PP.<name>` install name, in place of `<GAMEID>`) instead of thousands
+  of loose files.
   Enable **Cover Art .tar Archive** under **Display Settings** (default **off**); when on, each
   cover is read from the archive and *falls back to the loose `.png`* when it isn't there, so the
   two coexist. A small `art_cache.bin` index written beside the archive lets later boots skip the
@@ -282,7 +284,7 @@ USB, MMCE, MX4SIO, iLink, SMB, and the internal HDD:
 | `CHT`  | for cheats files                                     | all         |
 | `APPS`  | for ELF files                                       | all         |
 
-¹ **Folder-based devices** — USB, MMCE, MX4SIO, iLink, SMB, and the **exFAT** (BDM) HDD — keep games as files in the `CD`/`DVD` folders. The **APA/PFS** HDD instead stores games as HDLoader partitions (no `CD`/`DVD` folders), while still using `CFG`/`ART`/`VMC`/`THM`/`CHT`/`LNG`/`APPS` under `hdd0:__common/OPL/`.
+¹ **Folder-based devices** — USB, MMCE, MX4SIO, iLink, SMB, and the **exFAT** (BDM) HDD — keep games as files in the `CD`/`DVD` folders. The **APA/PFS** HDD instead stores games as HDLoader partitions (no `CD`/`DVD` folders), while still using `CFG`/`ART`/`VMC`/`THM`/`CHT`/`LNG`/`APPS` on the configured OPL data partition (`+OPL` root by default, or `__common/OPL/` for the legacy layout).
 
 Per-game settings are stored per title in the `CFG` context. Typical use cases include compatibility toggles, video options (GSM), cheat toggles, and assigning a VMC file from the `VMC` folder to that game.
 

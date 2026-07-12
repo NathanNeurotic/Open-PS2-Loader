@@ -1107,8 +1107,8 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
     }
 }
 
-// Shared so EVERY transport sets the same console/media badge attributes. The internal-HDD path
-// (hddGetConfig) builds its own config and does NOT call sbPopulateConfig, so it calls this directly --
+// Shared so EVERY transport sets the same console/media badge attributes. The internal-HDD HDL path
+// builds its own config and does NOT call sbPopulateConfig, so it calls this directly --
 // without it, a theme's #DiscType / #System AttributeImage badge has no value to resolve and silently
 // never renders on that device (drawAttributeImage returns at its NULL-value guard). #DiscType is the
 // combined console+media token a theme can map to ONE disc glyph (PS1-CD vs PS2-CD are both #Media=CD,
