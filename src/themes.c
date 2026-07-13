@@ -1935,7 +1935,25 @@ static void thmFree(theme_t *theme)
 
 static int thmReadEntry(int index, const char *path, const char *separator, const char *name, unsigned char d_type)
 {
-    if (d_type == DT_DIR && strstr(name, "thm_")) {
+    // #152: don't trust d_type alone. It is derived from iomanX FIO_S_IFDIR mode bits, but MMCE
+    // card FIRMWARE fills stat.mode verbatim over the wire (mmceman copies it through), and clone
+    // firmwares (e.g. Bitfunx PSxMemCard) may not speak the FIO_S_* dialect -- every entry then
+    // degrades to DT_UNKNOWN. That is why languages still listed (lngReadEntry accepts != DT_DIR)
+    // while themes vanished (this required == DT_DIR exactly). For a thm_-prefixed candidate that
+    // is not positively DT_DIR, confirm with an opendir() probe: it succeeds only for directories
+    // on every driver regardless of mode-bit dialect, and runs only for THM-folder candidates.
+    int isDir = (d_type == DT_DIR);
+    if (!isDir && strstr(name, "thm_")) {
+        char probe[256];
+        snprintf(probe, sizeof(probe), "%s%s%s", path, separator, name);
+        DIR *pd = opendir(probe);
+        if (pd != NULL) {
+            closedir(pd);
+            isDir = 1;
+        }
+    }
+
+    if (isDir && strstr(name, "thm_")) {
         theme_file_t *currTheme = &themes[nThemes + index];
 
         int length = strlen(name) - 4 + 1;

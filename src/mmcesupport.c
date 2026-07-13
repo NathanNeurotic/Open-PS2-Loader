@@ -349,6 +349,24 @@ static int mmceNeedsUpdate(item_list_t *itemList)
 
     mmceGameList.updateDelay = MENU_UPD_DELAY_NOUPDATE;
 
+    // Register the card's THM/LNG dirs BEFORE the VCD-view early returns (#152, AndrewBento). These
+    // used to sit below them, giving one realistic shot at boot: once the first list scan latches
+    // NOUPDATE above, the only future passes are L3-toggle / VCD-view ones, which returned before
+    // reaching the registration -- so if the boot-time attempt lost a race against the contended
+    // MMCE SIO2 bus (config + list + art traffic), themes on the card stayed invisible for the whole
+    // session while USB's fast first try succeeded. Here every pass retries until each succeeds; the
+    // cost is one dir-open per pass until then (identical to the old ISO-view retry behavior).
+    if (!ThemesLoaded) {
+        sprintf(path, "%sTHM", mmcePrefix);
+        if (thmAddElements(path, "/", 1) > 0)
+            ThemesLoaded = 1;
+    }
+    if (!LanguagesLoaded) {
+        sprintf(path, "%sLNG", mmcePrefix);
+        if (lngAddLanguages(path, "/", mmceGameList.mode) > 0)
+            LanguagesLoaded = 1;
+    }
+
     // VCD view: force a rescan once on toggle, then skip the disc heuristics while showing VCDs.
     if (vcdConsumeDirty(itemList->mode))
         return 1;
@@ -386,19 +404,8 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     if (!sbIsSameSize(mmcePrefix, mmceULSizePrev))
         result = 1;
 
-    // update Themes
-    if (!ThemesLoaded) {
-        sprintf(path, "%sTHM", mmcePrefix);
-        if (thmAddElements(path, "/", 1) > 0)
-            ThemesLoaded = 1;
-    }
-
-    // update Languages
-    if (!LanguagesLoaded) {
-        sprintf(path, "%sLNG", mmcePrefix);
-        if (lngAddLanguages(path, "/", mmceGameList.mode) > 0)
-            LanguagesLoaded = 1;
-    }
+    // Themes/Languages registration moved ABOVE the VCD-view early returns (#152) -- see the block
+    // after the NOUPDATE latch near the top of this function.
 
     // Create the library folders once per card/slot, not on every refresh (each is an SIO2 mkdir).
     if (strcmp(mmceFoldersCreatedFor, mmcePrefix) != 0) {
