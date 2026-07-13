@@ -1943,7 +1943,7 @@ static int thmReadEntry(int index, const char *path, const char *separator, cons
     // is not positively DT_DIR, confirm with an opendir() probe: it succeeds only for directories
     // on every driver regardless of mode-bit dialect, and runs only for THM-folder candidates.
     int isDir = (d_type == DT_DIR);
-    if (!isDir && strstr(name, "thm_")) {
+    if (!isDir && strncmp(name, "thm_", 4) == 0) {
         char probe[256];
         snprintf(probe, sizeof(probe), "%s%s%s", path, separator, name);
         DIR *pd = opendir(probe);
@@ -1953,7 +1953,9 @@ static int thmReadEntry(int index, const char *path, const char *separator, cons
         }
     }
 
-    if (isDir && strstr(name, "thm_")) {
+    // strncmp, not upstream's strstr: the name parse below assumes the prefix is at the START
+    // (name + 4), so a mid-string "thm_" match always produced a garbage theme name anyway.
+    if (isDir && strncmp(name, "thm_", 4) == 0) {
         theme_file_t *currTheme = &themes[nThemes + index];
 
         int length = strlen(name) - 4 + 1;

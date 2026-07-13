@@ -344,6 +344,12 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     if (mmcePrefix[0] == '\0') {
         mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
         mmceFoldersCreatedFor[0] = '\0'; // card gone: recreate folders on the next (possibly different) card
+        // Card gone: re-arm THM/LNG registration so a swapped-in card's assets get discovered
+        // (Gemini review of #153). The old card's already-registered entries stay in the pickers --
+        // eviction infrastructure doesn't exist -- but picking a stale one fails gracefully
+        // (thmLoad abandons and keeps the current theme), and thmAddElements caps at THM_MAX_FILES.
+        ThemesLoaded = 0;
+        LanguagesLoaded = 0;
         return (mmceGameCount > 0 || mmceVcdGameCount > 0);
     }
 
