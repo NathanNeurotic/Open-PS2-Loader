@@ -293,8 +293,11 @@ void hddLoadSupportModules(void)
                            "-n"
                            "\0"
                            "20";
-    static char pfsarg[] = "\0"
-                           "-m" // max mounts: keep pfs0: on OPL data while pfs1: scans POPS partitions
+    // No leading "\0": LOADFILE already supplies argv[0] ("LBbyEE") for buffer loads, so the first
+    // string here is argv[1]. PFS stops parsing at the first token that doesn't start with '-', so a
+    // leading empty string silently discarded EVERY option below (upstream OPL carries the same dead
+    // byte) -- leaving PFS at its defaults (-m 1, -o 2, -n 8) and making the pfs1: scan mount fail.
+    static char pfsarg[] = "-m" // max mounts: keep pfs0: on OPL data while pfs1: scans POPS partitions
                            "\0"
                            "2"
                            "\0"
@@ -439,6 +442,7 @@ static int hddBuildVcdGameList(void)
             base_game_info_t *g = &hddVcdGames[total];
             memset(g, 0, sizeof(base_game_info_t));
             snprintf(g->name, sizeof(g->name), "%s", parts.names[p] + 3); // strip PP. / __. for display
+            snprintf(g->startup, sizeof(g->startup), "%s", g->name);      // keep VCD identity = name (pooled entries do the same)
             snprintf(g->extension, sizeof(g->extension), ".VCD");
             g->parts = 1;
             g->format = GAME_FORMAT_ISO;                                       // harmless; VCD flag gates the launch
