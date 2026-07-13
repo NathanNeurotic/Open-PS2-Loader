@@ -585,11 +585,18 @@ static const char *vcdBdmaModule[2] = {"usbd.irx", "usbhdfsd.irx"};
 
 #define VCD_BDMA_MARKER "bdma_config.txt"
 
-// Resolve the memory-card POPSTARTER folder (where the modules live). Prefer an existing
-// mc?:/POPSTARTER; if neither card has one, default to mc0 and create it. Always returns 1.
+// Resolve the memory-card POPSTARTER folder (where the modules live). Prefer an existing folder;
+// otherwise create it on the first present card. A slot-2-only first-time setup must not silently
+// select absent mc0:, and mkdir/probe failure must reach the caller.
 static int vcdResolvePopstarterMc(char *out, int outSize)
 {
     static const char *cards[2] = {"mc0:/POPSTARTER", "mc1:/POPSTARTER"};
+    static const char *roots[2] = {"mc0:/", "mc1:/"};
+
+    if (out == NULL || outSize <= 0)
+        return 0;
+    out[0] = '\0';
+
     for (int i = 0; i < 2; i++) {
         DIR *d = opendir(cards[i]);
         if (d != NULL) {
@@ -598,9 +605,24 @@ static int vcdResolvePopstarterMc(char *out, int outSize)
             return 1;
         }
     }
-    snprintf(out, outSize, "%s", cards[0]);
-    mkdir(out, 0777); // first-time setup: create mc0:/POPSTARTER
-    return 1;
+
+    for (int i = 0; i < 2; i++) {
+        DIR *root = opendir(roots[i]);
+        if (root == NULL)
+            continue;
+        closedir(root);
+
+        snprintf(out, outSize, "%s", cards[i]);
+        mkdir(out, 0777);
+        DIR *created = opendir(out);
+        if (created != NULL) {
+            closedir(created);
+            return 1;
+        }
+    }
+
+    out[0] = '\0';
+    return 0;
 }
 
 // Write the equipped-state marker mc?:/POPSTARTER/bdma_config.txt = the variant token.
@@ -618,7 +640,8 @@ static int vcdWriteBdmaMarker(const char *mcDir, int mode)
 int vcdReadBdmaMode(void)
 {
     char mcDir[64];
-    vcdResolvePopstarterMc(mcDir, sizeof(mcDir));
+    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
+        return VCD_BDMA_FAT32;
     char path[96];
     snprintf(path, sizeof(path), "%s/%s", mcDir, VCD_BDMA_MARKER);
     int fd = open(path, O_RDONLY);
@@ -648,7 +671,11 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return -1;
 
     char mcDir[64];
-    vcdResolvePopstarterMc(mcDir, sizeof(mcDir));
+    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir))) {
+        if (diag != NULL && diagSize > 0)
+            snprintf(diag, diagSize, "No writable PS2 memory card is available.");
+        return -3;
+    }
 
     char dst0[96], dst1[96];
     snprintf(dst0, sizeof(dst0), "%s/%s", mcDir, vcdBdmaModule[0]);
@@ -735,21 +762,74 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return -4; // the matched SOURCE device had no variant files in its POPS/ (or none matched)
     }
 
-    // Copy both through the free-space-gated safe-copy (each write is space-gated + truncation-safe, so
-    // a failure never corrupts an individual file).
-    int r = vcdSafeCopyFile(src0, dst0);
-    if (r != 0)
-        return r; // -2 (no space) / -3 (IO); dst0 not yet replaced
-    r = vcdSafeCopyFile(src1, dst1);
+    // Stage BOTH replacements and backups before touching either live module. vcdSafeCopyFile removes
+    // a partial destination on failure, which is safe for these private staging names but not for a live
+    // driver. If either commit fails, restore the complete old pair (or the old absence) and still let the
+    // caller follow the established best-effort POPSTARTER handoff policy.
+    char tmp0[96], tmp1[96], bak0[96], bak1[96];
+    snprintf(tmp0, sizeof(tmp0), "%s/%s.new", mcDir, vcdBdmaModule[0]);
+    snprintf(tmp1, sizeof(tmp1), "%s/%s.new", mcDir, vcdBdmaModule[1]);
+    snprintf(bak0, sizeof(bak0), "%s/%s.bak", mcDir, vcdBdmaModule[0]);
+    snprintf(bak1, sizeof(bak1), "%s/%s.bak", mcDir, vcdBdmaModule[1]);
+    unlink(tmp0);
+    unlink(tmp1);
+    unlink(bak0);
+    unlink(bak1);
+
+    int r = vcdSafeCopyFile(src0, tmp0);
+    if (r == 0)
+        r = vcdSafeCopyFile(src1, tmp1);
     if (r != 0) {
-        // First module is now the NEW variant but the second failed -> the card holds a mismatched,
-        // half-equipped pair. Roll back to a clean FAT32/no-modules state (drop the lone new module +
-        // write the FAT32 marker) so the marker readback (vcdReadBdmaMode) stays truthful and POPSTARTER
-        // falls back to its built-in driver instead of loading a mismatched pair.
-        unlink(dst0);
-        vcdWriteBdmaMarker(mcDir, VCD_BDMA_FAT32);
+        unlink(tmp0);
+        unlink(tmp1);
         return r;
     }
+
+    int old0 = open(dst0, O_RDONLY);
+    int old1 = open(dst1, O_RDONLY);
+    int had0 = old0 >= 0;
+    int had1 = old1 >= 0;
+    if (old0 >= 0)
+        close(old0);
+    if (old1 >= 0)
+        close(old1);
+
+    // Same-directory renames avoid a second full copy of every module. Move the old pair aside,
+    // install both staged files, and restore both old names if any step fails.
+    if (had0 && rename(dst0, bak0) != 0)
+        r = -3;
+    if (r == 0 && had1 && rename(dst1, bak1) != 0) {
+        if (had0)
+            rename(bak0, dst0);
+        r = -3;
+    }
+    if (r == 0 && rename(tmp0, dst0) != 0) {
+        if (had0)
+            rename(bak0, dst0);
+        if (had1)
+            rename(bak1, dst1);
+        r = -3;
+    }
+    if (r == 0 && rename(tmp1, dst1) != 0) {
+        unlink(dst0);
+        if (had0)
+            rename(bak0, dst0);
+        if (had1)
+            rename(bak1, dst1);
+        r = -3;
+    }
+    if (r != 0) {
+        unlink(tmp0);
+        unlink(tmp1);
+        unlink(bak0);
+        unlink(bak1);
+        return r;
+    }
+
+    unlink(tmp0);
+    unlink(tmp1);
+    unlink(bak0);
+    unlink(bak1);
 
     int mr = vcdWriteBdmaMarker(mcDir, mode);
     return (mr != 0) ? mr : 0;
@@ -824,7 +904,8 @@ int vcdSmbModulesPresent(void)
 int vcdWritePopstarterNet(const char *ipconfig, const char *smbconfig)
 {
     char mcDir[64];
-    vcdResolvePopstarterMc(mcDir, sizeof(mcDir)); // creates mc0:/POPSTARTER if neither card has it
+    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
+        return -3;
     char path[96];
     int r1 = 0, r2 = 0;
     if (ipconfig != NULL) {

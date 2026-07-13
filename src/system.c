@@ -1433,7 +1433,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 // POPSTARTER itself re-derives the matching .VCD from), copies both to stack buffers, and
 // deinit()s the owning device with UNMOUNT_EXCEPTION BEFORE calling this -- the same contract as
 // sysLaunchNeutrino (so the VCD-holding device stays mounted across the IOP reset).
-void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const char *partition)
+void sysLaunchPopstarter(const char *popstarterElf, const char *selector)
 {
     if (popstarterElf == NULL || selector == NULL) {
         LOG("[POPS] null arg, abort\n");
@@ -1442,23 +1442,13 @@ void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const 
 
     char *argv[1];
     argv[0] = (char *)selector;
-    LOG("[POPS] elf=%s argv0=%s part=%s\n", popstarterElf, selector, partition ? partition : "");
+    LOG("[POPS] elf=%s argv0=%s\n", popstarterElf, selector);
 
-    if (partition != NULL && partition[0] != '\0') {
-        // HDD/APA launches keep the classic resetting loader: the partition-context handoff is
-        // the hardware-proven PP. path, and POPSTARTER's HDD route is the CORRECT one there.
-        LoadELFFromFileWithPartition(popstarterElf, partition, 1, argv);
-        return;
-    }
-
-    // BDMA/SMB: POPSTARTER string-parses ARGV[0] for the XX./SB. selector prefix to pick its
-    // backend. The stock SDK loader CLOBBERS the target's argv[0] with "<partition><filename>"
-    // and shifts the selector to argv[1] -- POPSTARTER then saw a prefixless "POPSTARTER.ELF"
-    // basename, took its HDD route, and died on "__common" (issues #56/#69: PS1 launch failing
-    // on every non-HDD device, regardless of the selector STRING, which PR #66 already fixed).
-    // Hand off via the argv-preserving no-reset loader instead -- POPSLoader parity: its loader
-    // "preserves caller args" and defaults REBOOT_IOP_WHILE_LOADING_POPSTARTER=0; POPSTARTER
-    // does its own IOP reset and reloads its drivers from the MC regardless.
+    // Every POPSTARTER route, including APA HDD, depends on the selector remaining target argv[0].
+    // The stock SDK partition loader replaces it with the ELF load path and shifts the selector to
+    // argv[1]; pooled __.POPS installs then lose their only selected-game identity. The caller has
+    // already kept the POPSTARTER device mounted, so use the argv-preserving loader uniformly.
+    // POPSTARTER performs its own IOP reset and device/partition discovery from the selector.
     if (sysLoadELFKeepIOP(popstarterElf, "", 1, argv) < 0)
         LOG("[POPS] keep-IOP handoff failed for %s\n", popstarterElf);
 }

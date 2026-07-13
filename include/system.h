@@ -49,9 +49,9 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 // Neutrino leg. Returns 0 = proceed; <0 = abort the launch (a toast has already been shown).
 int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath);
 
-// Launch an external POPSTARTER.ELF for a PS1 VCD. selector = the argv[0] "<POPS>/<prefix><name>.ELF"
-// token; partition = "" for non-HDD. Caller deinit()s with UNMOUNT_EXCEPTION first (see system.c).
-void sysLaunchPopstarter(const char *popstarterElf, const char *selector, const char *partition);
+// Launch an external POPSTARTER.ELF for a PS1 VCD. selector = the target's argv[0]
+// "<POPS>/<prefix><name>.ELF" token. Caller deinit()s with UNMOUNT_EXCEPTION first (see system.c).
+void sysLaunchPopstarter(const char *popstarterElf, const char *selector);
 
 // ELF handoff that KEEPS the IOP (drivers + mounts) alive -- NHDDL parity: the vendored elfldr/
 // child loader SifLoadElf()s the target through OPL's live mounts and never SifIopReset()s (the

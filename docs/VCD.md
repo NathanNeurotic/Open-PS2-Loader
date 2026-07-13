@@ -120,6 +120,10 @@ POPSTARTER needs extra block-device modules (the BDMAssault / "BDMA" drivers). R
 *equips* them for you from **General Settings** — you supply the module files, RiptOPL
 copies the right pair onto your memory card:
 
+RiptOPL prefers an existing `mc0:/POPSTARTER` or `mc1:/POPSTARTER` folder. On first setup it
+creates the folder on the first present card (slot 1, then slot 2). Both replacement modules are
+staged before the live pair is changed, so a failed copy leaves the previous pair available.
+
 - **VCD BDMA Apply on Launch** *(default On)* — POPSTARTER does its own IOP reset and reloads
   its block-device driver from the memory card, so the right exFAT variant must already be on
   the card or the game drops to OSDSYS. When **On**, RiptOPL equips the variant matching the

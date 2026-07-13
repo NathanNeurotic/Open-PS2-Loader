@@ -640,12 +640,12 @@ static int hddResolveHddPopstarter(char *elfOut, int elfLen)
 }
 
 // Shared POPSTARTER handoff for an HDD VCD. argv[0] differs by partition shape: PP.<name> / __.<name>
-// one-game installs boot by their literal PARTITION LABEL; a pooled __.POPS[0-9]? entry boots by its
-// VCD name. The owning partition (`part`) is passed OUT OF BAND so POPSTARTER self-mounts it after the
-// IOP reset. Everything is built on stack BEFORE deinit() frees the VCD list.
+// one-game installs boot by their literal partition label; a pooled __.POPS[0-9]? entry boots by its
+// VCD name. POPSTARTER derives the HDD route from that selector, so it must remain target argv[0].
+// Everything is built on stack before deinit() frees the VCD list.
 static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *part)
 {
-    char vcdElf[256], vcdSelector[320], vcdPart[64];
+    char vcdElf[256], vcdSelector[320];
 
     if (name == NULL || name[0] == '\0' || part == NULL || part[0] == '\0')
         return;
@@ -654,7 +654,6 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
         snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", part); // literal PP.Game.ELF / __.Hidden.ELF
     else
         snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", name); // GAME.ELF (pooled-container VCD)
-    snprintf(vcdPart, sizeof(vcdPart), "hdd0:%s:", part);           // self-mount target, hdd0:PART:
 
     // Resolve + keep pfs0: on the POPSTARTER.ELF partition. Quiesce art+IO first (this remounts pfs0:).
     cacheAbortMmceImageLoadsTimed(0);
@@ -666,9 +665,9 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
         return;
     }
     // Success: leave IO blocked (deinit re-blocks anyway) and pfs0: on the POPSTARTER partition for the
-    // load below. sysLaunchPopstarter reboots into POPSTARTER, so there is nothing to unblock.
+    // argv-preserving load below. POPSTARTER takes over and performs its own IOP reset.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
-    sysLaunchPopstarter(vcdElf, vcdSelector, vcdPart);
+    sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
 // Launch an HDD PS1/.VCD entry BY NAME -- the Favourites tab's view-independent entry point. The
