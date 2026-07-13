@@ -16,7 +16,7 @@
 #include "include/supportbase.h" // base_game_info_t (for vcdFillGameList)
 
 #define VCD_NAME_MAX  256  // VCD basename without ".VCD" (incl NUL); becomes the selector game name
-#define VCD_ID_MAX    16   // extracted PS1 disc ID, e.g. "SCUS_123.45"
+#define VCD_ID_MAX    16   // optional extracted PS1 disc ID, e.g. "SCUS_123.45"
 #define VCD_MAX_ITEMS 2048 // hard cap on VCDs scanned from one folder
 
 // POPStarter access-type prefix, prepended to the selector .ELF token per device class.
@@ -27,7 +27,6 @@
 typedef struct
 {
     char name[VCD_NAME_MAX]; // VCD basename WITHOUT ".VCD" (the POPSTARTER selector game name)
-    char gameId[VCD_ID_MAX]; // PS1 disc ID when name matches SXXX_NNN.NN.Title, else "" (art/cfg key)
 } vcd_entry_t;
 
 // Scan "<devPrefix>POPS/" for *.VCD (case-insensitive). Returns the count; *outList is a malloc'd
@@ -35,8 +34,11 @@ typedef struct
 int vcdScanDir(const char *devPrefix, vcd_entry_t **outList);
 
 // Like vcdScanDir but scans `dirPath` DIRECTLY (no POPS/ subfolder) -- for the APA/PFS HDD where each
-// __.POPS* partition holds its .VCD at the mounted root (e.g. dirPath = "pfs0:/").
+// __.POPS* partition holds its .VCD at the mounted root (e.g. dirPath = "pfs1:/").
 int vcdScanDirRoot(const char *dirPath, vcd_entry_t **outList);
+// Extract a strict leading PS1 ID from "SXXX_NNN.NN.Title" for same-folder CFG/art fallback.
+// Returns 1 and writes the 11-character ID on success; otherwise returns 0 and writes an empty string.
+int vcdExtractGameId(const char *name, char *idOut, int idSize);
 
 // Build "<devPrefix>POPS/POPSTARTER.ELF" into out; returns 1 if that file exists, else 0.
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize);
@@ -61,7 +63,7 @@ int vcdConsumeDirty(int mode);
 void vcdMarkAllDirty(void);
 
 // Fill a base_game_info_t list (memalign'd like sbReadList; frees *outGames first) from
-// <devPrefix>POPS/*.VCD. Returns the count. name = VCD basename, startup = PS1 id (or "" = no art).
+// <devPrefix>POPS/*.VCD. Returns the count. name/startup = VCD basename without the extension.
 int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames);
 // #118: 1 if a .VCD filename is disc 2+ of a multi-disc PS1 set ("(Disc N)"/"(CD N)"/"(Disk N)", N>=2,
 // case-insensitive). Callers hide it from the device lists when gVcdFirstDiscOnly is on.

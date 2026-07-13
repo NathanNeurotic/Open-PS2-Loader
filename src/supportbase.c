@@ -5,6 +5,7 @@
 #include "include/iosupport.h"
 #include "include/system.h"
 #include "include/supportbase.h"
+#include "include/vcdsupport.h"
 #include "include/bdmsupport.h" // bdmGetDeviceRootByType + BDM_TYPE_* for the Neutrino device-TYPE picker
 #include "include/ioman.h"
 #include "modules/iopcore/common/cdvd_config.h"
@@ -1107,8 +1108,8 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
     }
 }
 
-// Shared so EVERY transport sets the same console/media badge attributes. The internal-HDD path
-// (hddGetConfig) builds its own config and does NOT call sbPopulateConfig, so it calls this directly --
+// Shared so EVERY transport sets the same console/media badge attributes. The internal-HDD HDL path
+// builds its own config and does NOT call sbPopulateConfig, so it calls this directly --
 // without it, a theme's #DiscType / #System AttributeImage badge has no value to resolve and silently
 // never renders on that device (drawAttributeImage returns at its NULL-value guard). #DiscType is the
 // combined console+media token a theme can map to ONE disc glyph (PS1-CD vs PS2-CD are both #Media=CD,
@@ -1138,15 +1139,32 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     char path[256];
     struct stat st;
 
-    // VCD listings have no reliable disc ID, so their per-game data (CFG + cover art) is keyed by
-    // the VCD FILENAME, not the startup ID (game->name, the full basename -- the user names the
-    // .cfg/art to match the .VCD file). Everything else keys by the disc ID as before.
+    // VCD data is keyed primarily by the full filename basename; a strict leading disc ID is only
+    // a compatibility fallback when the filename CFG is absent. Everything else keys by startup ID.
     const int isVcd = !strcasecmp(game->extension, ".VCD");
     const char *cfgKey = isVcd ? game->name : game->startup;
 
     snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, cfgKey);
     config_set_t *config = configAlloc(0, NULL, path);
-    configRead(config); // Does not matter if the config file could be loaded or not.
+    int configLoaded = configRead(config);
+
+    // Compatibility only: filename remains the VCD identity, but an existing disc-ID config may be
+    // loaded when the primary filename config is absent. Keep the primary object if both miss so a
+    // future save creates CFG/<filename>.cfg rather than inventing an ID-keyed file.
+    if (!configLoaded && isVcd) {
+        char fallbackKey[VCD_ID_MAX];
+        if (vcdExtractGameId(game->name, fallbackKey, sizeof(fallbackKey))) {
+            snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, fallbackKey);
+            config_set_t *fallback = configAlloc(0, NULL, path);
+            if (fallback != NULL) {
+                if (configRead(fallback)) {
+                    configMerge(config, fallback);
+                    config->modified = 0;
+                }
+                configFree(fallback);
+            }
+        }
+    }
 
     // Get game size if not already set (deferred off the scroll path; see sbConfigStatSize). A .VCD (PS1) has
     // no meaningful ISO size and its file lives in POPS/, not CD/DVD/, so statting the CD/DVD path always
@@ -1196,7 +1214,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     int isPS1 = !strcasecmp(game->extension, ".VCD");
     sbSetDiscAttributes(config, isPS1, isPS1 || game->media == SCECdPS2CD);
 
-    configSetStr(config, CONFIG_ITEM_STARTUP, cfgKey); // VCD: keyed by filename (see cfgKey above)
+    configSetStr(config, CONFIG_ITEM_STARTUP, isVcd ? game->name : game->startup);
 
     return config;
 }

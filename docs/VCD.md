@@ -94,15 +94,24 @@ characters; for a longer path set `popstarter_path` in `settings_riptopl.cfg` di
 > an exFAT device or an SMB share — those games appear under the **USB/MX4SIO/MMCE** or **SMB** VCD
 > views, not the internal-HDD one.
 
-If a VCD's filename matches the PS1 disc-ID pattern `SXXX_NNN.NN.Title.VCD`, RiptOPL keys
-cover art and per-game config off that PS1 ID, so PS1 covers load from your `ART` folder
-exactly like PS2 covers. Any other `*.VCD` name is still listed and launched — it just
-won't auto-match art by ID.
+VCD per-game config and art use the VCD **filename without `.VCD`** as their identity. They
+otherwise follow the same layout and suffix rules as PS2 games on that device:
 
-> **Internal HDD covers:** VCD covers on the APA HDD load from an **`ART`** folder at the
-> **partition root** (`pfs:/ART/` — i.e. `<your OPL partition>:/ART/`), not the `OPL/ART/`
-> subfolder PS2-HDD covers use. (`PP.*` / `__.*` one-game installs key off the displayed
-> name without the three-character prefix, e.g. `GAME_COV.png`.)
+- `POPS/SCUS_123.45.Example.VCD`
+- `CFG/SCUS_123.45.Example.cfg`
+- `ART/SCUS_123.45.Example_COV.png`
+
+When the filename begins with a valid PS1 disc ID, RiptOPL also accepts that ID as a fallback after
+the filename lookup misses. For the example above, the fallback names are
+`CFG/SCUS_123.45.cfg` and `ART/SCUS_123.45_COV.png`. This is a same-folder compatibility fallback;
+`POPS/ART/` and a suffixless `POPS/<name>.png` remain POPSLoader-only layouts.
+
+APA `PP.<name>` and `__.<name>` one-game installs are the naming exception: every partition contains
+the same physical `IMAGE0.VCD` filename, so config and art use the displayed `<name>` from the label.
+
+> **Internal HDD covers and config:** VCD entries use the same OPL data prefix as PS2 HDD
+> games. On a `+OPL` data partition that means its root `ART/` and `CFG/` folders; when OPL
+> data lives under the legacy `__common/OPL/` layout, use `OPL/ART/` and `OPL/CFG/`.
 
 ## 5. exFAT PS1 support — the BDMA equip
 

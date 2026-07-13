@@ -7,6 +7,7 @@
 #include "include/gui.h"
 #include "include/util.h"
 #include "include/renderman.h"
+#include "include/vcdsupport.h"
 
 #include "include/tar.h"
 
@@ -59,9 +60,21 @@ typedef struct load_image_request
     int generation;
     volatile int abortRequested;
     unsigned char priority;
+    unsigned char vcdFallback;
     GSTEXTURE texture;
     char *value;
 } load_image_request_t;
+
+static int cacheLoadImageKey(load_image_request_t *req, char *value)
+{
+    int result = -1;
+
+    if (gEnableArtTar)
+        result = artTarLoadImage(value, req->cache->suffix, &req->texture);
+    if (result < 0)
+        result = req->list->itemGetImage(req->list, req->cache->prefix, req->cache->isPrefixRelative, value, req->cache->suffix, &req->texture, GS_PSM_CT24);
+    return result;
+}
 
 typedef struct cache_registry_entry
 {
@@ -934,13 +947,14 @@ static void cacheLoadImage(load_image_request_t *req)
     }
 
     texSetLoadAbortFlag(&req->abortRequested);
-    // Art .tar (gEnableArtTar, default OFF): try the archive first; on any miss fall back to the loose
-    // ART/<id>_<suffix>.png read. When the toggle is off this is byte-for-byte the original behavior.
-    result = -1;
-    if (gEnableArtTar)
-        result = artTarLoadImage(req->value, req->cache->suffix, &req->texture);
-    if (result < 0)
-        result = req->list->itemGetImage(req->list, req->cache->prefix, req->cache->isPrefixRelative, req->value, req->cache->suffix, &req->texture, GS_PSM_CT24);
+    // Filename remains the VCD identity. On a total filename miss, retry the same ART/art.tar + loose
+    // ART path once with a strict leading PS1 ID; no POPS/ART or suffixless POPS fallback is restored.
+    result = cacheLoadImageKey(req, req->value);
+    if (result == ERR_BAD_FILE && req->vcdFallback) {
+        char fallbackKey[VCD_ID_MAX];
+        if (vcdExtractGameId(req->value, fallbackKey, sizeof(fallbackKey)))
+            result = cacheLoadImageKey(req, fallbackKey);
+    }
     texSetLoadAbortFlag(NULL);
     cacheCompleteRequest(req, result);
     cacheProcessCleanupRequests();
@@ -1629,6 +1643,7 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     req->entry = oldestEntry;
     req->list = list;
     req->effectiveMode = effectiveMode;
+    req->vcdFallback = vcdViewActive(effectiveMode);
     req->priority = priority;
     req->generation = gCacheGeneration;
     req->value = (char *)req + sizeof(load_image_request_t);

@@ -56,7 +56,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
 void sbSetConfigStatSize(int enable);
 // Set the console/media display attributes a theme's AttributeImage badges resolve against
 // (#System, #Media, #DiscType). ANY itemGetConfig that does NOT go through sbPopulateConfig
-// (e.g. the internal-HDD HDL/VCD path) MUST call this, or those badges silently never render
+// (e.g. the internal-HDD HDL path) MUST call this, or those badges silently never render
 // on that device (drawAttributeImage bails at its NULL-value guard). isPS1 -> PS1 (always a CD).
 void sbSetDiscAttributes(config_set_t *config, int isPS1, int isCD);
 // Append neutrino -mc0/-mc1 VMC args (from the per-game config) for vmcPrefix's device. Call before deinit.

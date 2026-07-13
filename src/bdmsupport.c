@@ -1154,8 +1154,8 @@ static int bdmGetImage(item_list_t *itemList, char *folder, int isRelative, char
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
-    // PS1 (VCD) art loads through this same path as PS2 (ISO) art, keyed by the VCD filename (already
-    // `value`) -- no separate loader (#120). VCD art now lives in the same ART folder as ISO art.
+    // PS1 (VCD) art uses this same ART path as PS2. The cache supplies the filename first and may retry
+    // once with a strict PS1 ID after a genuine miss; no alternate VCD art directories are probed.
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s/%s_%s", pDeviceData->bdmPrefix, folder, value, suffix);
     else

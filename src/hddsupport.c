@@ -9,7 +9,7 @@
 #include "include/themes.h"
 #include "include/textures.h"
 #include "include/ioman.h"
-#include "include/texcache.h" // cache quiesce before the launch-path VCD partition rescan (freeze guard)
+#include "include/texcache.h" // cache quiesce before the POPSTARTER launch remounts pfs0:
 #include "include/system.h"
 #include "include/extern_irx.h"
 #include "include/cheatman.h"
@@ -294,6 +294,10 @@ void hddLoadSupportModules(void)
                            "\0"
                            "20";
     static char pfsarg[] = "\0"
+                           "-m" // max mounts: keep pfs0: on OPL data while pfs1: scans POPS partitions
+                           "\0"
+                           "2"
+                           "\0"
                            "-o" // max open
                            "\0"
                            "10" // Default value: 2
@@ -387,13 +391,9 @@ static void hddFreeVcdGameList(void)
 
 // Build the HDD VCD game list from both supported APA/PFS shapes. Exact __.POPS / __.POPS0..9
 // containers contribute every root *.VCD; PP.<name> / __.<name> candidates contribute one entry only
-// after a root IMAGE0.VCD probe succeeds. Each partition is mounted read-only on pfs0:, and its full
-// label is kept index-parallel in hddVcdParts for POPSTARTER. The default OPL data-partition mount is
-// restored at the end -- pfs0: is the single shared slot, so HDD mode breaks if it is left elsewhere.
-// Bounded wait (ticks, ~1ms each) for the art worker to drain before we remount pfs0:. Matches the
-// MMCE art-abort budget; long enough for an in-flight pfs cover read to abort at its next row
-// boundary, short enough that a truly-wedged read can't hang the view switch forever.
-#define HDD_VCD_ART_DRAIN_TICKS 500
+// after a root IMAGE0.VCD probe succeeds. Each partition is mounted read-only on the dedicated pfs1:
+// scan slot, and its full label is kept index-parallel in hddVcdParts for POPSTARTER. pfs0: stays on
+// the OPL data partition throughout, so CFG and ART reads keep their live mount during the scan.
 
 static int hddBuildVcdGameList(void)
 {
@@ -402,35 +402,28 @@ static int hddBuildVcdGameList(void)
 
     hddFreeVcdGameList();
 
-    if (hddGetPopsPartitionList(&parts) <= 0)
-        return 0; // no matching PFS partitions; pfs0: was not touched here
+    // Best-effort cleanup from an interrupted prior scan. This never touches pfs0:, which remains the
+    // live OPL data mount used by both PS2 and VCD config/art lookups.
+    fileXioUmount("pfs1:");
 
-    // pfs0: is the single shared ps2fs slot; umounting it in the loop below while the cache art
-    // worker still holds an open pfs0: cover fd is the documented HDD-freeze hazard (see hddLaunchVcd).
-    // The in-view L3 toggle / background refresh / Favourites-cold path all reach here WITHOUT the
-    // launch path's pre-quiesce -- FifthFox's "won't switch to VCD / crash on VCD launch on HDD",
-    // which only armed with cover art ON. Quiesce here in one spot so every caller is covered: cancel
-    // + DRAIN pending art (preserveLoaded=0 flags the in-flight read to abort at its next row
-    // boundary) with a bounded, NONZERO wait so the worker releases its pfs0: fd before we remount.
-    // (timeout 0 would return without waiting.) Runs on the IO handler thread, so no ioBlockOps here.
-    (void)cacheCancelPendingImageLoadsTimed(HDD_VCD_ART_DRAIN_TICKS);
+    if (hddGetPopsPartitionList(&parts) <= 0)
+        return 0; // no matching PFS partitions; the live pfs0: mount was not touched
 
     for (int p = 0; p < parts.count; p++) {
         char mountSrc[64];
         snprintf(mountSrc, sizeof(mountSrc), "hdd0:%s", parts.names[p]);
 
-        fileXioUmount(hddPrefix);
-        if (fileXioMount(hddPrefix, mountSrc, FIO_MT_RDONLY) < 0)
+        if (fileXioMount("pfs1:", mountSrc, FIO_MT_RDONLY) < 0)
             continue; // can't mount this partition -> skip it
 
         // PP.<name> / __.<name> one-game install: require ONE exact IMAGE0.VCD at the partition root,
         // display the label without its three-character prefix, and retain the FULL label for launch.
         // The name predicate excludes the exact __.POPS[0-9]? pooled containers handled below.
         if (hddIsPopsPartitionGame(parts.names[p])) {
-            int imgfd = open("pfs0:/IMAGE0.VCD", O_RDONLY);
+            int imgfd = open("pfs1:/IMAGE0.VCD", O_RDONLY);
             if (imgfd >= 0)
                 close(imgfd); // close before unmount; ps2fs may reject an unmount with a live fd
-            fileXioUmount(hddPrefix);
+            fileXioUmount("pfs1:");
             if (imgfd < 0)
                 continue; // candidate name alone is insufficient (PP.* HDDOSD apps are common)
 
@@ -455,8 +448,8 @@ static int hddBuildVcdGameList(void)
         }
 
         vcd_entry_t *vcds = NULL;
-        int n = vcdScanDirRoot("pfs0:/", &vcds);
-        fileXioUmount(hddPrefix);
+        int n = vcdScanDirRoot("pfs1:/", &vcds);
+        fileXioUmount("pfs1:");
         if (n <= 0) {
             free(vcds);
             continue;
@@ -482,7 +475,7 @@ static int hddBuildVcdGameList(void)
             base_game_info_t *g = &hddVcdGames[total + kept];
             memset(g, 0, sizeof(base_game_info_t));
             snprintf(g->name, sizeof(g->name), "%s", vcds[i].name);
-            snprintf(g->startup, sizeof(g->startup), "%s", vcds[i].gameId); // PS1 id (or "" = no art)
+            snprintf(g->startup, sizeof(g->startup), "%s", vcds[i].name);
             snprintf(g->extension, sizeof(g->extension), ".VCD");
             g->parts = 1;
             g->format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
@@ -495,9 +488,7 @@ static int hddBuildVcdGameList(void)
 
     hddFreePopsPartitionList(&parts);
 
-    // Restore the default OPL data-partition mount (the loop left pfs0: unmounted).
-    fileXioUmount(hddPrefix);
-    fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
+    fileXioUmount("pfs1:");
 
     hddVcdGameCount = total;
     return total;
@@ -552,7 +543,7 @@ static int hddGetGameCount(item_list_t *itemList)
 // every id through these: an out-of-range id returns a static empty entry so a stale READ is safe empty data
 // and LAUNCH/delete/rename early-return on the sentinel. HDD needs TWO resolvers -- ISO is hdl_game_info_t,
 // VCD is base_game_info_t.
-static base_game_info_t hddEmptyVcd = {0};
+static base_game_info_t hddEmptyVcd = {.extension = ".VCD"};
 static hdl_game_info_t hddEmptyHdl = {0};
 static base_game_info_t *hddActiveVcd(int id)
 {
@@ -683,33 +674,37 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
 // Launch an HDD PS1/.VCD entry BY NAME -- the Favourites tab's view-independent entry point. The
 // per-game __.POPS* partition lives in hddVcdParts, which is only populated while the HDD page is in
 // its VCD view; from Favourites it may be empty/stale, so (re)scan via the SAME safe partition walk the
-// VCD view uses (hddBuildVcdGameList mounts each __.POPS on pfs0:, scans, restores pfs0: to the default
-// OPL partition) to resolve name -> partition, then hand off exactly as the in-view launch does.
+// VCD view uses (hddBuildVcdGameList mounts each __.POPS on the dedicated pfs1: scan slot) to resolve
+// name -> partition, then hand off exactly as the in-view launch does.
 static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_t *configSet)
 {
+    char resolvedName[VCD_NAME_MAX];
+    char resolvedPart[APA_IDMAX + 1];
+
     if (vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
         return;
 
+    // Serialize against a queued HDD refresh that can use the same pfs1: slot and shared list. No art
+    // cancellation is needed because the live pfs0: mount is not disturbed. Copy the result while the
+    // worker remains blocked so a later refresh cannot invalidate the list storage passed to launch.
+    ioBlockOps(1);
     int idx = hddFindVcdByName(vcdName);
     if (idx < 0) {
         // Cold path: the per-game __.POPS partition is unknown (hddVcdGames is only built while the HDD
-        // page is in VCD view). hddBuildVcdGameList remounts the single ps2fs slot (pfs0:), and
-        // umounting it while the cache worker holds an open fd reading a cover from pfs0: is the
-        // documented HDD-freeze hazard. The equivalent in-view rescan runs on the IO thread only when no
-        // art/IO is pending (opl.c menuUpdateHook); on the launch path we enforce the same invariant by
-        // quiescing the art + IO workers first, exactly as deinit() does before its own teardown IO.
-        cacheAbortMmceImageLoadsTimed(0);
-        (void)cacheCancelPendingImageLoadsTimed(0);
-        ioBlockOps(1);
-        hddBuildVcdGameList(); // restores pfs0: to the default OPL partition when done
-        ioBlockOps(0);
+        // page is in VCD view), so rebuild it through the dedicated pfs1: scan slot.
+        hddBuildVcdGameList();
         idx = hddFindVcdByName(vcdName);
     }
+    if (idx >= 0) {
+        snprintf(resolvedName, sizeof(resolvedName), "%s", hddVcdGames[idx].name);
+        snprintf(resolvedPart, sizeof(resolvedPart), "%s", hddVcdParts[idx]);
+    }
+    ioBlockOps(0);
     if (idx < 0) {
         guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
         return;
     }
-    hddDoLaunchVcd(itemList, hddVcdGames[idx].name, hddVcdParts[idx]);
+    hddDoLaunchVcd(itemList, resolvedName, resolvedPart);
 }
 
 // Δ8 (NHDDL parity): the LEAN Neutrino launch path for HDL games -- see bdmTryNeutrinoLaunch's
@@ -1018,19 +1013,7 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
     // CFG off the VCD basename, instead of dereferencing &hddGames.games[id] off a NULL base (crash).
     if (vcdViewActive(itemList->mode)) {
         base_game_info_t *g = hddActiveVcd(id); // toggle-window safe: empty entry on a stale id (no OOB)
-        snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, g->name);
-        config_set_t *vcdConfig = configAlloc(0, NULL, path);
-        configRead(vcdConfig);
-        configSetStr(vcdConfig, CONFIG_ITEM_NAME, g->name);
-        configSetStr(vcdConfig, CONFIG_ITEM_STARTUP, g->name);
-        // HDD bypasses sbPopulateConfig, which is what sets #Format="VCD" for every other device's VCD
-        // list (supportbase.c). Without it the info-page #Format AttributeImage has no value and falls
-        // back to the theme default (ELF glyph) -- so set it here to render the VCD badge like the rest.
-        configSetStr(vcdConfig, CONFIG_ITEM_FORMAT, "VCD");
-        // HDD bypasses sbPopulateConfig, so set the #System/#Media/#DiscType badge attributes via the
-        // shared helper (FR #49) -- a POPS disc is always a PS1 CD. Without it those badges never render.
-        sbSetDiscAttributes(vcdConfig, 1, 1);
-        return vcdConfig;
+        return sbPopulateConfig(g, gHDDPrefix, "/");
     }
 
     hdl_game_info_t *game = hddActiveHdl(id); // toggle-window safe: empty entry on a stale id (no OOB)
@@ -1055,8 +1038,8 @@ static int hddGetImage(item_list_t *itemList, char *folder, int isRelative, char
 {
     char path[256];
 
-    // PS1 (VCD) art loads through this same path as PS2 (ISO) art, keyed by the VCD filename (already
-    // `value`) -- no separate loader (#120). VCD art now lives in the same ART folder as ISO art.
+    // PS1 (VCD) art uses this same ART path as PS2. The cache supplies the filename first and may retry
+    // once with a strict PS1 ID after a genuine miss; pfs0: remains the current OPL data mount.
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s/%s_%s", gHDDPrefix, folder, value, suffix);
     else
@@ -1082,6 +1065,7 @@ static void hddCleanUp(item_list_t *itemList, int exception)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
+        fileXioUmount("pfs1:");
 
         if ((exception & UNMOUNT_EXCEPTION) == 0)
             fileXioUmount(hddPrefix);
@@ -1108,6 +1092,7 @@ static void hddShutdown(item_list_t *itemList)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
+        fileXioUmount("pfs1:");
         fileXioUmount(hddPrefix);
     }
 

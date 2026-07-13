@@ -803,8 +803,8 @@ static int ethGetImage(item_list_t *itemList, char *folder, int isRelative, char
 {
     char path[256];
 
-    // PS1 (VCD) art loads through this same path as PS2 (ISO) art, keyed by the VCD filename (already
-    // `value`) -- no separate loader (#120).
+    // PS1 (VCD) art uses this same ART path as PS2. The cache supplies the filename first and may retry
+    // once with a strict PS1 ID after a genuine miss; no alternate VCD art directories are probed.
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s\\%s_%s", ethPrefix, folder, value, suffix);
     else

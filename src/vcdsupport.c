@@ -18,7 +18,6 @@
 #include "include/opl.h"         // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
 #include "include/diag.h"        // #120 diagnostic counters (memo hit/miss, VCD rescan preserve)
 #include "include/system.h"      // POPS_FOLDER
-#include "include/textures.h"    // texDiscoverLoad (VCD cover-art fallback)
 #include "include/ioman.h"       // LOG (BDMA equip probe trace)
 #include "include/bdmsupport.h"  // BDM_TYPE_* + bdmGetDeviceRootByType (BDMA source differentiation)
 #include "include/mmcesupport.h" // mmceLoadModules (ensure mmceman for the MMCE BDMA source)
@@ -26,48 +25,44 @@
 #include "include/lang.h"        // _l + _STR_BDMA_ERR_* (same texts the Settings-screen equip shows)
 #include "include/vcdsupport.h"
 
-// Extract the PS1 disc ID (SXXX_NNN.NN) from a VCD basename matching "SXXX_NNN.NN.Title"
-// (name[4]=='_', name[8]=='.', name[11]=='.'); leave empty otherwise. Keys cover-art / per-game cfg.
-static void vcdExtractGameId(const char *name, char *idOut, int idSize)
+int vcdExtractGameId(const char *name, char *idOut, int idSize)
 {
+    int i;
+
+    if (idOut == NULL || idSize <= 11)
+        return 0;
     idOut[0] = '\0';
-    if ((int)strlen(name) >= 12 && name[4] == '_' && name[8] == '.' && name[11] == '.') {
-        int n = (11 < idSize - 1) ? 11 : (idSize - 1); // "SXXX_NNN.NN" = 11 chars
-        memcpy(idOut, name, n);
-        idOut[n] = '\0';
-    }
+    if (name == NULL || strlen(name) < 13)
+        return 0; // require AAAA_NNN.NN plus a separator and non-empty title
+    for (i = 0; i < 4; i++)
+        if (!((name[i] >= 'A' && name[i] <= 'Z') || (name[i] >= 'a' && name[i] <= 'z') ||
+              (name[i] >= '0' && name[i] <= '9')))
+            return 0;
+    if (name[4] != '_')
+        return 0;
+    for (i = 5; i <= 7; i++)
+        if (name[i] < '0' || name[i] > '9')
+            return 0;
+    if (name[8] != '.' || name[9] < '0' || name[9] > '9' || name[10] < '0' || name[10] > '9')
+        return 0;
+    if ((name[11] != '.' && name[11] != '_') || name[12] == '\0')
+        return 0;
+
+    memcpy(idOut, name, 11);
+    idOut[11] = '\0';
+    return 1;
 }
 
 // Display-only prefix hider (aesthetic setting gVcdHideGameId). Returns the number of leading
 // characters to skip when `name` begins with a STRICT PS1 retail game-ID prefix AAAA_NNN.NN
 // followed by a '.' or '_' separator (= 12 chars, e.g. "SLUS_005.51." / "SCUS_941.63."), and only
 // when there is a non-empty title after it. Returns 0 otherwise, so clean titles are never cut.
-// Stricter than vcdExtractGameId's separator-only test on purpose: this drives what the user SEES,
-// so a false positive would eat a real title. The char checks short-circuit on the NUL, so a
-// name shorter than 12 chars is safe.
+// The strict character checks prevent a false positive from eating a real title and short-circuit
+// safely on names shorter than 12 characters.
 static int vcdGameIdPrefixLen(const char *name)
 {
-    int i;
-    if (name == NULL)
-        return 0;
-    for (i = 0; i < 4; i++) // AAAA (letters/digits)
-        if (!((name[i] >= 'A' && name[i] <= 'Z') || (name[i] >= '0' && name[i] <= '9')))
-            return 0;
-    if (name[4] != '_')
-        return 0;
-    for (i = 5; i <= 7; i++) // NNN
-        if (name[i] < '0' || name[i] > '9')
-            return 0;
-    if (name[8] != '.')
-        return 0;
-    for (i = 9; i <= 10; i++) // NN
-        if (name[i] < '0' || name[i] > '9')
-            return 0;
-    if (name[11] != '.' && name[11] != '_') // trailing separator before the title
-        return 0;
-    if (name[12] == '\0') // nothing after the prefix -- keep the raw name rather than blank it
-        return 0;
-    return 12;
+    char gameId[VCD_ID_MAX];
+    return vcdExtractGameId(name, gameId, sizeof(gameId)) ? 12 : 0;
 }
 
 // Render-time display name for the VCD list. PURELY COSMETIC: returns a pointer PAST a leading
@@ -113,7 +108,6 @@ static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
             baseLen = VCD_NAME_MAX - 1;
         memcpy(list[count].name, de->d_name, baseLen);
         list[count].name[baseLen] = '\0';
-        vcdExtractGameId(list[count].name, list[count].gameId, sizeof(list[count].gameId));
         count++;
     }
     closedir(dir);
@@ -141,7 +135,7 @@ int vcdScanDir(const char *devPrefix, vcd_entry_t **outList)
 }
 
 // Scan a directory path DIRECTLY (no POPS/ subfolder) for *.VCD -- used for the APA/PFS HDD, where
-// each __.POPS* partition holds its .VCD at the mounted root (caller passes e.g. "pfs0:/").
+// each __.POPS* partition holds its .VCD at the mounted root (caller passes e.g. "pfs1:/").
 int vcdScanDirRoot(const char *dirPath, vcd_entry_t **outList)
 {
     if (outList == NULL)
@@ -418,7 +412,7 @@ int vcdFillGameList(const char *devPrefix, base_game_info_t **outGames)
             if (gVcdFirstDiscOnly && vcdIsHiddenDisc(vcds[i].name))
                 continue; // #118: hide discs 2+ of a multi-disc PS1 set (device lists only)
             snprintf(games[kept].name, sizeof(games[kept].name), "%s", vcds[i].name);
-            snprintf(games[kept].startup, sizeof(games[kept].startup), "%s", vcds[i].gameId); // "" -> no art lookup
+            snprintf(games[kept].startup, sizeof(games[kept].startup), "%s", vcds[i].name);
             snprintf(games[kept].extension, sizeof(games[kept].extension), ".VCD");
             games[kept].parts = 1;
             games[kept].format = GAME_FORMAT_ISO; // harmless; the per-mode VCD flag gates the launch path
