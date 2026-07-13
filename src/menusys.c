@@ -101,13 +101,18 @@ static int menuCanRequestItemConfig(item_list_t *list)
     if (list != NULL && list->mode == APP_MODE)
         return guiInactiveFrames >= MENU_APP_CONFIG_IDLE_FRAMES;
 
-    // MMCE art and per-item config share the same device I/O path. Keep config behind
-    // queued or active interactive art, then retain the longer settle for the card.
-    if (list != NULL && list->mode == MMCE_MODE) {
-        if (cacheHasPendingInteractiveArt())
-            return 0;
+    // MMCE: same piping as the hardware-proven DIRECT config path (menuLoadConfigDirectInternal),
+    // which every launch/settings press has always used: the single CFG open/read/close simply
+    // serializes behind the current art chunk at the fileXio RPC layer (typically <= 20 ms) -- no
+    // waiting for the WHOLE interactive art set (cover + background + overlays) to drain. That
+    // drain-wait was the ~5 s disc-badge latency on a slow single step (issue #49, AcidReach; on a
+    // cold MMCE page the set takes seconds while cacheHasPendingInteractiveArt() stays true the
+    // entire time). Unlike the direct path we do NOT send the art-abort signal: the settled item's
+    // own cover is still loading and must not restart. The 20-frame settle below keeps the read off
+    // the active-scroll path, so there is at most ONE CFG open per settled selection -- the same
+    // per-press cost the direct path has always put on the card.
+    if (list != NULL && list->mode == MMCE_MODE)
         return guiInactiveFrames >= MENU_MMCE_CONFIG_IDLE_FRAMES;
-    }
 
     // BDM / ETH / HDD / FAV: the per-item config carries only the cheap, metadata-derived
     // #DiscType/#System/#Media badge values -- it must NOT wait for the whole interactive-art set
