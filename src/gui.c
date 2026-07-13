@@ -631,6 +631,7 @@ void guiShowVcdConfig(void)
     diaSetVisible(diaVcdConfig, CFG_LBL_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
     diaSetVisible(diaVcdConfig, CFG_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
 
+    int rebuildVcdLists = 0;
     int ret = diaExecuteDialog(diaVcdConfig, -1, 1, &guiVcdUpdater);
     if (ret) {
         diaGetInt(diaVcdConfig, CFG_POPSTARTER_DEVICE, &gPopstarterDevice);
@@ -650,8 +651,10 @@ void guiShowVcdConfig(void)
             // lists only -- Favourites are intentionally left unfiltered (an explicit user pick).
             int previousFirstDiscOnly = gVcdFirstDiscOnly;
             diaGetInt(diaVcdConfig, CFG_VCD_FIRST_DISC_ONLY, &gVcdFirstDiscOnly);
-            if (gVcdFirstDiscOnly != previousFirstDiscOnly)
+            if (gVcdFirstDiscOnly != previousFirstDiscOnly) {
                 vcdMarkAllDirty();
+                rebuildVcdLists = 1;
+            }
         }
         {
             // Equip BDMA modules only when SOURCE or MODE actually changed (the equip copies files to
@@ -680,6 +683,10 @@ void guiShowVcdConfig(void)
         }
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
+        // Queue after applyConfig/menu reinit so the IO worker cannot rebuild a submenu concurrently
+        // with their support/menu bookkeeping on the GUI thread.
+        if (rebuildVcdLists)
+            oplQueueVcdDeviceUpdates();
     }
 }
 
@@ -866,9 +873,9 @@ reselect_video_mode:
         diaGetInt(diaUIConfig, UICFG_OVERSCAN, &gOverscan);
         int previousGameView = gDefaultGameView;
         diaGetInt(diaUIConfig, UICFG_GAMEVIEW, &gDefaultGameView);
-        if (gDefaultGameView != previousGameView) {
+        int gameViewChanged = gDefaultGameView != previousGameView;
+        if (gameViewChanged) {
             vcdMarkAllDirty(); // rebuild every VCD-capable page so the new default view takes effect
-            loadFavourites();  // re-resolve the Favourites tab against the now-locked source lists
         }
 
         if (ret == UICFG_RESETCOL)
@@ -878,6 +885,13 @@ reselect_video_mode:
             bgmStop();
 
         applyConfig(themeID, langID, 1);
+        if (gameViewChanged) {
+            // applyConfig(..., skipDeviceRefresh=1) deliberately avoids device scans. Queue after it
+            // returns so HDD (which has no automatic refresh) cannot retain PS2 rows while rendering
+            // uses the new VCD view, without racing the theme/menu bookkeeping above.
+            oplQueueVcdDeviceUpdates();
+            loadFavourites(); // queued after source pages so the FAV resolver sees their rebuilt rows
+        }
         sfxInit(0);
 
         if (gEnableBGM && !isBgmPlaying())

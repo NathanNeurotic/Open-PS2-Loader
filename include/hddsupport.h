@@ -32,13 +32,13 @@ typedef struct
     hdl_game_info_t *games;
 } hdl_games_list_t;
 
-// HDD PS1/VCD store: PS1 .VCD games live on dedicated APA partitions __.POPS / __.POPS0..9 (each a
-// PFS filesystem with GameName.VCD at its root). This is the sorted, deduped list of which __.POPS*
-// partitions are present, enumerated from the APA partition table.
+// HDD PS1/VCD sources: exact __.POPS / __.POPS0..9 containers (many named .VCD files) plus
+// partition-installed PP.<name> / __.<name> games (one root IMAGE0.VCD). This is the sorted,
+// deduped list of matching main PFS partitions enumerated from the APA partition table.
 typedef struct
 {
     int count;
-    char (*names)[APA_IDMAX + 1]; // malloc'd array of partition labels, e.g. "__.POPS", "__.POPS3"
+    char (*names)[APA_IDMAX + 1]; // malloc'd labels, e.g. "__.POPS3", "PP.Game", "__.Hidden"
 } hdd_pops_list_t;
 
 typedef struct
@@ -74,8 +74,11 @@ void hddSetIdleTimeout(int timeout);
 void hddSetIdleImmediate(void);
 int hddGetHDLGamelist(hdl_games_list_t *game_list);
 void hddFreeHDLGamelist(hdl_games_list_t *game_list);
-// Enumerate the present __.POPS / __.POPS0..9 APA partitions (HDD PS1/VCD store). Fills a sorted,
-// deduped list; returns the count (0 on none/error). Free via hddFreePopsPartitionList.
+// True for a one-game PP.<name> / __.<name> partition label, excluding the exact __.POPS[0-9]?
+// container names. Matching is case-sensitive, like POPSTARTER's partition selector.
+int hddIsPopsPartitionGame(const char *name);
+// Enumerate the present classic-container and one-game APA/PFS partitions. Fills a sorted, deduped
+// list; returns the count (0 on none/error). Free via hddFreePopsPartitionList.
 int hddGetPopsPartitionList(hdd_pops_list_t *list);
 void hddFreePopsPartitionList(hdd_pops_list_t *list);
 int hddSetHDLGameInfo(hdl_game_info_t *ginfo);

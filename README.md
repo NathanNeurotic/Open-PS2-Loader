@@ -134,7 +134,8 @@ This build layers several features on top of upstream OPL:
   A **Default game view** setting (**Both** / **ISO** / **VCD**, default **Both**) can lock a page
   to one type, and Favourites follow the active view. PS1 titles boot through **POPSTARTER** only
   (never OPL's core, never Neutrino — the Loader Core selector is inert for them). Works on USB /
-  MMCE / MX4SIO / iLink / SMB **and the internal HDD** — both APA (`__.POPS*` partitions) and
+  MMCE / MX4SIO / iLink / SMB **and the internal HDD** — both APA (exact `__.POPS[0-9]?`
+  containers plus `PP.<name>` / `__.<name>` one-game partitions containing `IMAGE0.VCD`) and
   **exFAT** (BDMA; PS1 games in `massN:/POPS/`). See
   **[docs/VCD.md](docs/VCD.md)**.
 - **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —
