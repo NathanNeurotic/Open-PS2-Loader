@@ -18,13 +18,40 @@
 #include "include/opl.h"         // pulls <dirent.h> (opendir/readdir/DIR) + strcasecmp, like supportbase.c
 #include "include/diag.h"        // #120 diagnostic counters (memo hit/miss, VCD rescan preserve)
 #include "include/system.h"      // POPS_FOLDER
-#include "include/textures.h"    // texDiscoverLoad (VCD cover-art fallback)
 #include "include/ioman.h"       // LOG (BDMA equip probe trace)
 #include "include/bdmsupport.h"  // BDM_TYPE_* + bdmGetDeviceRootByType (BDMA source differentiation)
 #include "include/mmcesupport.h" // mmceLoadModules (ensure mmceman for the MMCE BDMA source)
 #include "include/gui.h"         // guiWarning (passing toast on a failed launch-path BDMA equip)
 #include "include/lang.h"        // _l + _STR_BDMA_ERR_* (same texts the Settings-screen equip shows)
 #include "include/vcdsupport.h"
+
+int vcdExtractGameId(const char *name, char *idOut, int idSize)
+{
+    int i;
+
+    if (idOut == NULL || idSize <= 11)
+        return 0;
+    idOut[0] = '\0';
+    if (name == NULL || strlen(name) < 13)
+        return 0; // require AAAA_NNN.NN plus a separator and non-empty title
+    for (i = 0; i < 4; i++)
+        if (!((name[i] >= 'A' && name[i] <= 'Z') || (name[i] >= 'a' && name[i] <= 'z') ||
+              (name[i] >= '0' && name[i] <= '9')))
+            return 0;
+    if (name[4] != '_')
+        return 0;
+    for (i = 5; i <= 7; i++)
+        if (name[i] < '0' || name[i] > '9')
+            return 0;
+    if (name[8] != '.' || name[9] < '0' || name[9] > '9' || name[10] < '0' || name[10] > '9')
+        return 0;
+    if ((name[11] != '.' && name[11] != '_') || name[12] == '\0')
+        return 0;
+
+    memcpy(idOut, name, 11);
+    idOut[11] = '\0';
+    return 1;
+}
 
 // Display-only prefix hider (aesthetic setting gVcdHideGameId). Returns the number of leading
 // characters to skip when `name` begins with a STRICT PS1 retail game-ID prefix AAAA_NNN.NN
@@ -34,27 +61,8 @@
 // safely on names shorter than 12 characters.
 static int vcdGameIdPrefixLen(const char *name)
 {
-    int i;
-    if (name == NULL)
-        return 0;
-    for (i = 0; i < 4; i++) // AAAA (letters/digits)
-        if (!((name[i] >= 'A' && name[i] <= 'Z') || (name[i] >= '0' && name[i] <= '9')))
-            return 0;
-    if (name[4] != '_')
-        return 0;
-    for (i = 5; i <= 7; i++) // NNN
-        if (name[i] < '0' || name[i] > '9')
-            return 0;
-    if (name[8] != '.')
-        return 0;
-    for (i = 9; i <= 10; i++) // NN
-        if (name[i] < '0' || name[i] > '9')
-            return 0;
-    if (name[11] != '.' && name[11] != '_') // trailing separator before the title
-        return 0;
-    if (name[12] == '\0') // nothing after the prefix -- keep the raw name rather than blank it
-        return 0;
-    return 12;
+    char gameId[VCD_ID_MAX];
+    return vcdExtractGameId(name, gameId, sizeof(gameId)) ? 12 : 0;
 }
 
 // Render-time display name for the VCD list. PURELY COSMETIC: returns a pointer PAST a leading
@@ -127,7 +135,7 @@ int vcdScanDir(const char *devPrefix, vcd_entry_t **outList)
 }
 
 // Scan a directory path DIRECTLY (no POPS/ subfolder) for *.VCD -- used for the APA/PFS HDD, where
-// each __.POPS* partition holds its .VCD at the mounted root (caller passes e.g. "pfs0:/").
+// each __.POPS* partition holds its .VCD at the mounted root (caller passes e.g. "pfs1:/").
 int vcdScanDirRoot(const char *dirPath, vcd_entry_t **outList)
 {
     if (outList == NULL)

@@ -77,6 +77,10 @@ int loadConfig(int types);
 int saveConfig(int types, int showUI);
 void applyConfig(int themeID, int langID, int skipDeviceRefresh);
 void menuDeferredUpdate(void *data);
+// Queue an immediate list rebuild for every enabled VCD-capable device page. Runtime settings that
+// call vcdMarkAllDirty() need this because no-auto-refresh modes (notably HDD) will not consume the
+// dirty flag on their own. Favourites are rebuilt separately through loadFavourites().
+void oplQueueVcdDeviceUpdates(void);
 void moduleUpdateMenu(int mode, int themeChanged, int langChanged);
 void handleLwnbdSrv();
 void deinit(int exception, int modeSelected);

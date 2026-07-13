@@ -874,11 +874,8 @@ static config_set_t *mmceGetConfig(item_list_t *itemList, int id)
 
 static int mmceGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)
 {
-    // PS1 (VCD) art loads through the EXACT same path as PS2 (ISO) art: one lookup of
-    // <dev>ART/<value>_<suffix>.png. The ONLY difference is the key -- PS2 uses the disc ID, PS1 uses the
-    // VCD filename (already the item's `value`). No separate VCD art loader, no tiers, no miss-memo: whatever
-    // PS2 art does (and PS2 info never wedges the card), PS1 now does identically (#120). This deletes the
-    // vcdLoadArt detour that was the only thing different about PS1 art.
+    // PS1 (VCD) art uses this same ART path as PS2. The cache supplies the filename first and may retry
+    // once with a strict PS1 ID after a genuine miss; no alternate paths or miss-memo are reintroduced.
     return mmceTryLoadImage(mmceArtPrimary, folder, isRelative, value, suffix, resultTex);
 }
 

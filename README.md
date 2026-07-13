@@ -104,9 +104,9 @@ This build layers several features on top of upstream OPL:
   **Coverflow Settings** (shown while the Coverflow theme is active). Authoring details
   and every theme value live in the **[Theme Engine reference](docs/THEME_ENGINE.md)**.
 - **Cover-art `.tar` archive (opt-in):** keep all of a device's covers in a single uncompressed
-  **`ART/art.tar`** (entries named `<GAMEID>_<suffix>.png`; VCD entries use the filename without
-  `.VCD`, or the displayed `PP.<name>` install name, in place of `<GAMEID>`) instead of thousands
-  of loose files.
+  **`ART/art.tar`** (entries named `<GAMEID>_<suffix>.png`; VCD entries first use the filename without
+  `.VCD`, or the displayed `PP.<name>` / `__.<name>` install name, then fall back to a parsed PS1 ID)
+  instead of thousands of loose files.
   Enable **Cover Art .tar Archive** under **Display Settings** (default **off**); when on, each
   cover is read from the archive and *falls back to the loose `.png`* when it isn't there, so the
   two coexist. A small `art_cache.bin` index written beside the archive lets later boots skip the
@@ -136,7 +136,8 @@ This build layers several features on top of upstream OPL:
   A **Default game view** setting (**Both** / **ISO** / **VCD**, default **Both**) can lock a page
   to one type, and Favourites follow the active view. PS1 titles boot through **POPSTARTER** only
   (never OPL's core, never Neutrino — the Loader Core selector is inert for them). Works on USB /
-  MMCE / MX4SIO / iLink / SMB **and the internal HDD** — both APA (`__.POPS*` partitions) and
+  MMCE / MX4SIO / iLink / SMB **and the internal HDD** — both APA (exact `__.POPS[0-9]?`
+  containers plus `PP.<name>` / `__.<name>` one-game partitions containing `IMAGE0.VCD`) and
   **exFAT** (BDMA; PS1 games in `massN:/POPS/`). See
   **[docs/VCD.md](docs/VCD.md)**.
 - **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —

@@ -16,6 +16,7 @@
 #include "include/supportbase.h" // base_game_info_t (for vcdFillGameList)
 
 #define VCD_NAME_MAX  256  // VCD basename without ".VCD" (incl NUL); becomes the selector game name
+#define VCD_ID_MAX    16   // optional extracted PS1 disc ID, e.g. "SCUS_123.45"
 #define VCD_MAX_ITEMS 2048 // hard cap on VCDs scanned from one folder
 
 // POPStarter access-type prefix, prepended to the selector .ELF token per device class.
@@ -33,8 +34,11 @@ typedef struct
 int vcdScanDir(const char *devPrefix, vcd_entry_t **outList);
 
 // Like vcdScanDir but scans `dirPath` DIRECTLY (no POPS/ subfolder) -- for the APA/PFS HDD where each
-// __.POPS* partition holds its .VCD at the mounted root (e.g. dirPath = "pfs0:/").
+// __.POPS* partition holds its .VCD at the mounted root (e.g. dirPath = "pfs1:/").
 int vcdScanDirRoot(const char *dirPath, vcd_entry_t **outList);
+// Extract a strict leading PS1 ID from "SXXX_NNN.NN.Title" for same-folder CFG/art fallback.
+// Returns 1 and writes the 11-character ID on success; otherwise returns 0 and writes an empty string.
+int vcdExtractGameId(const char *name, char *idOut, int idSize);
 
 // Build "<devPrefix>POPS/POPSTARTER.ELF" into out; returns 1 if that file exists, else 0.
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize);

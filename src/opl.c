@@ -551,6 +551,19 @@ opl_io_module_t *oplGetModule(int mode)
     return &list_support[mode];
 }
 
+void oplQueueVcdDeviceUpdates(void)
+{
+    // vcdMarkAllDirty() is intentionally side-effect-free because it also runs during early config
+    // loading, before the IO worker and device modules are ready. Runtime callers must explicitly
+    // enqueue the enabled pages. This matters most for HDD, whose updateDelay=-1 means a dirty view
+    // otherwise keeps displaying the old submenu indefinitely while rendering uses the new view.
+    for (int i = 0; i < MODE_COUNT; i++) {
+        item_list_t *support = list_support[i].support;
+        if (support != NULL && support->enabled && support->mode != FAV_MODE && vcdModeSupported(support->mode))
+            ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
+    }
+}
+
 void initSupport(item_list_t *itemList, int mode, int force_reinit)
 {
     opl_io_module_t *mod = &list_support[mode];

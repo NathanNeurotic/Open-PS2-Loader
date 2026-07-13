@@ -580,12 +580,15 @@ static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char
         item_list_t *o = favArray[i].owner;
         if (o == NULL)
             continue;
-        // VCD favourite: art keys off the .VCD name (== favArray[i].text == value). Load it through the
-        // OWNER device's normal getImage -- identical to a PS2/ISO favourite (which the branch below routes
-        // the same way), just keyed by the filename instead of the disc id. No separate VCD art loader (#120).
+        // VCD favourite: route both the primary filename and the cache's strict-ID fallback through
+        // the OWNER device's normal ART path. No separate directory or VCD art loader is used (#120).
         if (favArray[i].isVcd) {
-            if (strcmp(favArray[i].text, value) != 0)
-                continue;
+            if (strcmp(favArray[i].text, value) != 0) {
+                char fallbackKey[VCD_ID_MAX];
+                if (!vcdExtractGameId(favArray[i].text, fallbackKey, sizeof(fallbackKey)) ||
+                    strcmp(fallbackKey, value) != 0)
+                    continue;
+            }
             if (o->itemGetImage == NULL)
                 return -1;
             return o->itemGetImage(o, folder, isRelative, value, suffix, resultTex, psm);
