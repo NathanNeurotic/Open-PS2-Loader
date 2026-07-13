@@ -39,15 +39,15 @@ struct pad_data_t
 
     char actAlign[6];
     int actuators;
-    int analogCapable;   // -1 unknown/not ready, 0 digital-only, 1 DualShock-capable
+    int analogCapable; // -1 unknown/not ready, 0 digital-only, 1 DualShock-capable
     int analogRetryDelay;
 };
 
 // Pad commands are asynchronous. Keep every wait bounded so a transient SIO2/pad error cannot hang the
 // GUI thread, then retry DualShock recovery periodically for as long as the controller remains digital.
-#define PAD_WAIT_POLLS              25
-#define PAD_WAIT_POLL_US            1000
-#define PAD_ANALOG_RETRY_DELAY      60
+#define PAD_WAIT_POLLS         25
+#define PAD_WAIT_POLL_US       1000
+#define PAD_ANALOG_RETRY_DELAY 60
 
 #define PAD_INIT_RETRY       -1
 #define PAD_INIT_UNSUPPORTED 0
