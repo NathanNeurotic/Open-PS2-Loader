@@ -427,6 +427,21 @@ static void bdmInit(item_list_t *itemList)
     itemList->enabled = 1;
 }
 
+// Effective BDM device start mode. The UDPBD tab is not a mode-level tab like SMB -- it is a
+// hotplug-published BDM mass page, which needs the BDM pages initialized, polled, and the bdm core
+// modules loaded before smap_udpbd can even LINK. The unified network-protocol picker couples SMB to
+// gETHStartMode and UDPFS to its own derived start mode, but selecting UDPBD/UDPFSBD wrote NOTHING to
+// gBDMStartMode -- with the shipped Manual default (or Off), the UDPBD tab could NEVER appear unless
+// the user happened to enter the generic BDM placeholder tab first ("UDPBD tab never shows", 2026-07-13).
+// Floor the EFFECTIVE mode at AUTO while a BDM network transport is the selected protocol, mirroring
+// the UDPFS_MODE derivation; the user's saved gBDMStartMode is never modified or persisted.
+int bdmEffectiveStartMode(void)
+{
+    if (gEnableUDPBD && gBDMStartMode != START_MODE_AUTO)
+        return START_MODE_AUTO;
+    return gBDMStartMode;
+}
+
 // Per-transport enable flag for a classified BDM device type.
 // Returns 1 = enabled, 0 = disabled, -1 = unclassifiable (generic/unknown driver: never force-hidden).
 static int bdmTransportEnabled(int bdmDeviceType)
@@ -457,7 +472,7 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     bdmDeviceModeStarted = 1;
 
     // If bdm mode is disabled bail out as we don't want to update the visibility state of the device pages.
-    if (gBDMStartMode == START_MODE_DISABLED)
+    if (bdmEffectiveStartMode() == START_MODE_DISABLED)
         return 0;
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
@@ -1297,9 +1312,10 @@ void bdmInitDevicesData()
         if (bdmDeviceList[i].owner != NULL) {
             opl_io_module_t *pOwner = (opl_io_module_t *)bdmDeviceList[i].owner;
 
-            if (gBDMStartMode == START_MODE_DISABLED) {
+            int effectiveMode = bdmEffectiveStartMode();
+            if (effectiveMode == START_MODE_DISABLED) {
                 pOwner->menuItem.visible = 0;
-            } else if (gBDMStartMode == START_MODE_MANUAL) {
+            } else if (effectiveMode == START_MODE_MANUAL) {
                 // If BDM has already been started then make the page invisible and reset the bdm tick counter so visibility status is refreshed
                 // according to device state.
                 if (bdmDeviceModeStarted == 1) {
@@ -1307,7 +1323,7 @@ void bdmInitDevicesData()
                     ((bdm_device_data_t *)bdmDeviceList[i].priv)->bdmDeviceTick = -1;
                 } else
                     pOwner->menuItem.visible = (i == 0 ? 1 : 0);
-            } else if (gBDMStartMode == START_MODE_AUTO) {
+            } else if (effectiveMode == START_MODE_AUTO) {
                 pOwner->menuItem.visible = 0;
                 ((bdm_device_data_t *)bdmDeviceList[i].priv)->bdmDeviceTick = -1;
             }
@@ -1360,7 +1376,7 @@ int bdmUpdateDeviceData(item_list_t *itemList)
     int driverResult, deviceResult;
 
     // If bdm mode is disabled bail out as we don't want to update the visibility state of the device pages.
-    if (gBDMStartMode == START_MODE_DISABLED)
+    if (bdmEffectiveStartMode() == START_MODE_DISABLED)
         return 0;
 
     // LOG("bdmUpdateDeviceData: %d\n", itemList->mode);
@@ -1429,6 +1445,17 @@ int bdmUpdateDeviceData(item_list_t *itemList)
         if (bdmTransportEnabled(pDeviceData->bdmDeviceType) == 0) {
             LOG("bdmUpdateDeviceData: device %d is %s-backed but that transport is disabled; not publishing\n",
                 itemList->mode, pDeviceData->bdmDriver);
+            fileXioDclose(dir);
+            return 0;
+        }
+
+        // An EXPLICIT BDM = Off is only overridden by the UDPBD floor (bdmEffectiveStartMode) so
+        // the selected UDPBD protocol can publish ITS tab -- every other transport's page stays
+        // hidden exactly as the user asked (their sticks would otherwise resurface with the dialog
+        // still showing "Off").
+        if (gBDMStartMode == START_MODE_DISABLED && pDeviceData->bdmDeviceType != BDM_TYPE_UDPBD) {
+            LOG("bdmUpdateDeviceData: device %d withheld -- BDM is explicitly Off (UDPBD floor active)\n",
+                itemList->mode);
             fileXioDclose(dir);
             return 0;
         }

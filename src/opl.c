@@ -571,7 +571,9 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
     // Set the start mode flag based on device type.
     int startMode = 0;
     if (mode >= BDM_MODE && mode < ETH_MODE)
-        startMode = gBDMStartMode;
+        // Effective, not raw: a selected UDPBD/UDPFSBD network protocol floors BDM to Auto so its
+        // hotplug tab can exist (see bdmEffectiveStartMode) -- the saved setting is untouched.
+        startMode = bdmEffectiveStartMode();
     else if (mode == ETH_MODE)
         startMode = gETHStartMode;
     else if (mode == HDD_MODE)

@@ -1212,8 +1212,9 @@ void menuHandleInputMenu()
     }
 
     if (getKeyOn(KEY_START) || getKeyOn(gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE)) {
-        // Check if there is anything to show the user, at all.
-        if (gAPPStartMode || gETHStartMode || gBDMStartMode || gHDDStartMode || gMMCEStartMode || gFAVStartMode) {
+        // Check if there is anything to show the user, at all. BDM uses the EFFECTIVE mode: a
+        // selected UDPBD protocol floors it to Auto (its tab can exist even with raw BDM = Off).
+        if (gAPPStartMode || gETHStartMode || bdmEffectiveStartMode() || gHDDStartMode || gMMCEStartMode || gFAVStartMode) {
             guiSwitchScreen(GUI_SCREEN_MAIN);
             refreshMenuPosition();
         }
