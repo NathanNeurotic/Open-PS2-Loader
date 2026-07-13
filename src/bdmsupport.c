@@ -427,6 +427,26 @@ static void bdmInit(item_list_t *itemList)
     itemList->enabled = 1;
 }
 
+// Per-transport enable flag for a classified BDM device type.
+// Returns 1 = enabled, 0 = disabled, -1 = unclassifiable (generic/unknown driver: never force-hidden).
+static int bdmTransportEnabled(int bdmDeviceType)
+{
+    switch (bdmDeviceType) {
+        case BDM_TYPE_USB:
+            return gEnableUSB ? 1 : 0;
+        case BDM_TYPE_ILINK:
+            return gEnableILK ? 1 : 0;
+        case BDM_TYPE_SDC:
+            return gEnableMX4SIO ? 1 : 0;
+        case BDM_TYPE_ATA:
+            return gEnableBdmHDD ? 1 : 0;
+        case BDM_TYPE_UDPBD:
+            return gEnableUDPBD ? 1 : 0;
+        default:
+            return -1;
+    }
+}
+
 static int bdmNeedsUpdate(item_list_t *itemList)
 {
     char path[256];
@@ -452,31 +472,8 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // to off for a bdm device we want to hide the menu even though the drivers are still loaded and the device is being detected by bdm.
     opl_io_module_t *pOwner = (opl_io_module_t *)itemList->owner;
     if (pOwner != NULL && pOwner->menuItem.visible == 1) {
-        int deviceEnabled = 0;
-        int shouldApplyVisibility = 1;
-        switch (pDeviceData->bdmDeviceType) {
-            case BDM_TYPE_USB:
-                deviceEnabled = gEnableUSB;
-                break;
-            case BDM_TYPE_ILINK:
-                deviceEnabled = gEnableILK;
-                break;
-            case BDM_TYPE_SDC:
-                deviceEnabled = gEnableMX4SIO;
-                break;
-            case BDM_TYPE_ATA:
-                deviceEnabled = gEnableBdmHDD;
-                break;
-            case BDM_TYPE_UDPBD:
-                deviceEnabled = gEnableUDPBD;
-                break;
-            default:
-                shouldApplyVisibility = 0;
-                break;
-        }
-
         // If the device page is visible but the device support is not enabled, hide the device page.
-        if (shouldApplyVisibility && deviceEnabled == 0)
+        if (bdmTransportEnabled(pDeviceData->bdmDeviceType) == 0)
             pOwner->menuItem.visible = 0;
     }
 
@@ -1421,6 +1418,20 @@ int bdmUpdateDeviceData(item_list_t *itemList)
             LOG("Mass device: %d (%d) %s -> %s (compat root %s)\n", itemList->mode, pDeviceData->massDeviceIndex, pDeviceData->bdmPrefix, pDeviceData->bdmDriver, pDeviceData->bdmDeviceRoot);
         else
             LOG("Mass device: %d using generic BDM path %s\n", itemList->mode, pDeviceData->bdmPrefix);
+
+        // Publish-time enable gate (#120 audit F-13): the visible-page filter in bdmNeedsUpdate only
+        // hides a page that is ALREADY showing, i.e. one refresh pass too late. Without this gate a
+        // mounted slot on a DISABLED transport (e.g. an ATA-backed mass slot left over from the
+        // boot-resolver escalation or a BDMA-equip force-load, with BDM HDD OFF) flashes its tab,
+        // plays the connect sound and folder-writes the device on every BdmGeneration bump. Identity
+        // stays populated above: the BDMA equip and the device pickers read it through
+        // bdmGetDeviceSlotsByType/bdmReadDeviceIdentity independent of page visibility.
+        if (bdmTransportEnabled(pDeviceData->bdmDeviceType) == 0) {
+            LOG("bdmUpdateDeviceData: device %d is %s-backed but that transport is disabled; not publishing\n",
+                itemList->mode, pDeviceData->bdmDriver);
+            fileXioDclose(dir);
+            return 0;
+        }
 
         // Make the menu item visible.
         if (itemList->owner != NULL) {
