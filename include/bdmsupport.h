@@ -93,6 +93,9 @@ int bdmSupportIsUDPBD(item_list_t *support); // 1 if this support is the UDPBD b
 // Re-evaluate every BDM device's presence + page visibility on the next refresh (bumps the latch
 // generation). Call after a device-enable toggle so a latched-hidden tab re-shows without a replug.
 void bdmForceDeviceRefresh(void);
+// Effective BDM start mode: floors to AUTO while a BDM network transport (UDPBD/UDPFSBD) is the
+// selected protocol so its hotplug tab can exist; never modifies/persists the saved gBDMStartMode.
+int bdmEffectiveStartMode(void);
 // Current BDM device-change generation (bumped on hotplug / Device-Settings apply). The menu hook
 // reads this to bypass its background SIO2 rescan throttle when a real device change occurs.
 unsigned int bdmGetGeneration(void);

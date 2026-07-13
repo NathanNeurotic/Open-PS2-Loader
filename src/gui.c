@@ -21,6 +21,7 @@
 #include "include/ethsupport.h"
 #include "include/udpfssupport.h" // udpfsGetModulesLoaded() -- network-protocol restart-notice check
 #include "include/bdmsupport.h"   // bdmForceDeviceRefresh() -- re-show a latched-hidden BDM tab after a device-enable toggle
+#include "include/hddsupport.h"   // hddVcdInvalidateCache() -- first-disc-only is a scan-time filter
 #include "include/favsupport.h"
 #include "include/compatupd.h"
 #include "include/pggsm.h"
@@ -653,6 +654,7 @@ void guiShowVcdConfig(void)
             diaGetInt(diaVcdConfig, CFG_VCD_FIRST_DISC_ONLY, &gVcdFirstDiscOnly);
             if (gVcdFirstDiscOnly != previousFirstDiscOnly) {
                 vcdMarkAllDirty();
+                hddVcdInvalidateCache(); // scan-time filter changed -> the cached HDD VCD list is stale
                 rebuildVcdLists = 1;
             }
         }
@@ -2103,6 +2105,12 @@ static void guiDrawOverlays()
                  gDiag.artOpens, gDiag.memoHit, gDiag.memoMiss, gDiag.artTerminate,
                  gDiag.vcdRescanPreserved, gDiag.isoScanPreserved, gDiag.lastSaveErrno);
         fntRenderString(gTheme->fonts[0], 0, screenHeight - 24, ALIGN_NONE, 0, 0, diag, GS_SETREG_RGBA(255, 255, 0, 128));
+        // PAD dead-analog diagnostic line (see include/diag.h): md:2 with a zero t-entry = freepad
+        // published a half-built mode table; AC:0 = digital-only latched (the dead-analog state).
+        snprintf(diag, sizeof(diag), "PAD md:%d t0:%d t1:%d AC:%d SH:%u UN:%u SM:%u TO:%u",
+                 gDiag.padModes, gDiag.padMode0, gDiag.padMode1, gDiag.padAnalogCapable,
+                 gDiag.padSelfHeal, gDiag.padUnsupported, gDiag.padSetMainModeOk, gDiag.padReqTimeout);
+        fntRenderString(gTheme->fonts[0], 0, screenHeight - 40, ALIGN_NONE, 0, 0, diag, GS_SETREG_RGBA(255, 255, 0, 128));
     }
 }
 

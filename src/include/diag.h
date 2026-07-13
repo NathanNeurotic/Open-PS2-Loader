@@ -52,6 +52,23 @@ typedef struct
     volatile unsigned int vcdRescanPreserved;
     volatile unsigned int isoScanPreserved;
     volatile int lastSaveErrno;
+    // PAD line (intermittent dead-analog investigation, 2026-07-13; all writers on the EE main
+    // thread via readPads/initializePad). Read when analog is dead:
+    //   md/t0/t1 - last MODETABLE count + entries [0]/[1] seen by initializePad. md:2 with a zero
+    //              t-entry = freepad published a HALF-BUILT table (the latch bug's trigger).
+    //   AC       - last latched analogCapable verdict (0 = digital-only latched = dead analog).
+    //   SH       - analog self-heal re-init attempts (climbing = retry loop alive).
+    //   UN       - genuine fully-published digital-only verdicts (stays 0 for a real DualShock).
+    //   SM       - padSetMainMode accepted AND observed complete (0 while SH climbs = IOP reject).
+    //   TO       - request-completion waits that timed out (persistent TO = command-side contention).
+    volatile int padModes;
+    volatile int padMode0;
+    volatile int padMode1;
+    volatile int padAnalogCapable;
+    volatile unsigned int padSelfHeal;
+    volatile unsigned int padUnsupported;
+    volatile unsigned int padSetMainModeOk;
+    volatile unsigned int padReqTimeout;
 } opl_diag_t;
 
 extern opl_diag_t gDiag;

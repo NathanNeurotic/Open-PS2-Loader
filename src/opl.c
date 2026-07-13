@@ -571,7 +571,9 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
     // Set the start mode flag based on device type.
     int startMode = 0;
     if (mode >= BDM_MODE && mode < ETH_MODE)
-        startMode = gBDMStartMode;
+        // Effective, not raw: a selected UDPBD/UDPFSBD network protocol floors BDM to Auto so its
+        // hotplug tab can exist (see bdmEffectiveStartMode) -- the saved setting is untouched.
+        startMode = bdmEffectiveStartMode();
     else if (mode == ETH_MODE)
         startMode = gETHStartMode;
     else if (mode == HDD_MODE)
@@ -1568,20 +1570,36 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, &gEnableILK);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, &gEnableBdmHDD);
-            configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
+            // #120 audit F-12: APA (gHDDStartMode) and BDM-ATA (gEnableBdmHDD) are mutually exclusive by
+            // design, but the Device-Settings interlock only guards values changed THROUGH the dialog. A
+            // legacy, hand-edited or cross-version config can load both, and then BOTH internal-HDD
+            // stacks initialize against the one drive. Normalize at load: the backend matching the boot
+            // device wins; otherwise the APA start mode (the older, more deliberate setting) is kept.
+            // configSetInt the loser so the next save persists the reconciled pair.
+            if (gEnableBdmHDD && gHDDStartMode != START_MODE_DISABLED) {
+                if (gBootDirBdmType == BDM_TYPE_ATA)
+                    gHDDStartMode = START_MODE_DISABLED;
+                else
+                    gEnableBdmHDD = 0;
+                configSetInt(configOPL, CONFIG_OPL_HDD_MODE, gHDDStartMode);
+                configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
+            }
+            int udpbdKeyPresent = configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
             configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
             // Unified network-protocol selector (single SMAP NIC -> at most one transport per session).
             // Read the new key if present (authoritative); otherwise DERIVE it from the three legacy keys,
             // preserving the historical "network BDM wins over SMB" precedence (imported/hand-edited configs
             // could set both; at boot UDPBD loaded first, so it won). NET_PROTO_UDPFS (filesystem) has no
             // legacy encoding, so it is only ever reached by an explicit new-format value -- backward-safe.
+            // Since a NETWORK protocol became the shipped DEFAULT (UDPFS, 2026-07-13), the legacy branch
+            // must key off the FILE's enable_udpbd, not the defaulted global -- a legacy config must only
+            // ever derive from what IT expressed, never inherit a defaulted enable flag.
             if (!configGetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, &gNetworkProtocol)) {
-                if (gEnableUDPBD)
-                    gNetworkProtocol = (gNetBootProtocol == NET_BOOT_UDPFS) ? NET_PROTO_UDPFSBD : NET_PROTO_UDPBD;
+                if (udpbdKeyPresent)
+                    gNetworkProtocol = gEnableUDPBD ? ((gNetBootProtocol == NET_BOOT_UDPFS) ? NET_PROTO_UDPFSBD : NET_PROTO_UDPBD) : ((gETHStartMode != START_MODE_DISABLED) ? NET_PROTO_SMB : NET_PROTO_OFF);
                 else if (gETHStartMode != START_MODE_DISABLED)
                     gNetworkProtocol = NET_PROTO_SMB;
-                else
-                    gNetworkProtocol = NET_PROTO_OFF;
+                // else: the file never expressed ANY network choice -> the shipped default stands (UDPFS)
             }
             // UDPBD (SUDPBDv2) is a first-class protocol, NOT folded away: it is wire-incompatible with
             // UDPRDMA (SUDPBDv2 on 0xBDBD vs UDPFS on 0xF5F6), so users still on the older udpbd-server
@@ -1626,6 +1644,12 @@ static void _loadConfig()
         if (gBootDirBdmType == BDM_TYPE_ATA && !gEnableBdmHDD) {
             gEnableBdmHDD = 1;
             configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
+            // #120 audit F-12: don't leave a loaded APA start mode fighting the just-enabled BDM-ATA
+            // backend (the drive we booted from is exFAT, so APA is definitionally wrong for it).
+            if (gHDDStartMode != START_MODE_DISABLED) {
+                gHDDStartMode = START_MODE_DISABLED;
+                configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_HDD_MODE, gHDDStartMode);
+            }
         }
     }
 
@@ -2554,13 +2578,16 @@ static void setDefaults(void)
     hddCacheSize = 8;
     smbCacheSize = 16;
 
-    ps2_ip_use_dhcp = 1;
+    // RiptOPL network defaults (2026-07-13, Nathan's reference config): static addressing on the
+    // common 192.168.1.x home subnet with a ready-to-edit SMB target, so a first-time user sees a
+    // working-shaped setup instead of blanks. DHCP stays available one toggle away.
+    ps2_ip_use_dhcp = 0;
     gETHOpMode = ETH_OP_MODE_AUTO;
-    gPCShareAddressIsNetBIOS = 1;
+    gPCShareAddressIsNetBIOS = 0; // raw-IP SMB addressing by default (matches the static defaults below)
     gPCShareNBAddress[0] = '\0';
     ps2_ip[0] = 192;
     ps2_ip[1] = 168;
-    ps2_ip[2] = 0;
+    ps2_ip[2] = 1;
     ps2_ip[3] = 10;
     ps2_netmask[0] = 255;
     ps2_netmask[1] = 255;
@@ -2568,19 +2595,19 @@ static void setDefaults(void)
     ps2_netmask[3] = 0;
     ps2_gateway[0] = 192;
     ps2_gateway[1] = 168;
-    ps2_gateway[2] = 0;
+    ps2_gateway[2] = 1;
     ps2_gateway[3] = 1;
     pc_ip[0] = 192;
     pc_ip[1] = 168;
-    pc_ip[2] = 0;
-    pc_ip[3] = 2;
+    pc_ip[2] = 1;
+    pc_ip[3] = 100;
     ps2_dns[0] = 192;
     ps2_dns[1] = 168;
-    ps2_dns[2] = 0;
+    ps2_dns[2] = 1;
     ps2_dns[3] = 1;
     gPCPort = 1111; // RiptOPL default SMB port (was 445): non-privileged and freely editable through the always-visible advanced network options; match it to the PC server's displayed port
-    gPCShareName[0] = '\0';
-    gPCUserName[0] = '\0';
+    strcpy(gPCShareName, "games");
+    strcpy(gPCUserName, "guest");
     gPCPassword[0] = '\0';
     gNetworkStartup = ERROR_ETH_NOT_STARTED;
     gHDDSpindown = 20;
@@ -2596,9 +2623,9 @@ static void setDefaults(void)
     gBdmaSource = VCD_BDMA_SRC_USB;
     gBdmaMode = VCD_BDMA_FAT32;
     gBdmaApplyOnLaunch = 1; // auto-equip on launch by default (the MX4SIO->OSDSYS fix)
-    gVcdHideGameId = 0;     // show the raw filename by default; opt-in cosmetic prefix hide
-    gVcdFirstDiscOnly = 0;  // #118: show every disc by default; opt-in first-disc-only hide
-    gWritePopstarterNet = 0;
+    gVcdHideGameId = 1;     // hide the PS1 game-ID prefix by default (display-only; raw names one toggle away)
+    gVcdFirstDiscOnly = 1;  // #118: hide discs 2+ of multi-disc PS1 sets by default (POPSLoader parity)
+    gWritePopstarterNet = 1;
     gDefaultDevice = APP_MODE;
     gAutosort = 1;
     gAutoRefresh = 0;
@@ -2608,7 +2635,7 @@ static void setDefaults(void)
     gEnableWrite = 1;
     gRememberLastPlayed = 0;
     gAutoStartLastPlayed = 9;
-    gSelectButton = KEY_CIRCLE; // Default to Japan.
+    gSelectButton = KEY_CROSS; // Default to Cross-select (western layout); swap_select_btn=0 restores Circle
     gMMCEPrefix[0] = '\0';
     gBDMPrefix[0] = '\0';
     gETHPrefix[0] = '\0';
@@ -2619,7 +2646,7 @@ static void setDefaults(void)
     gDefaultGameView = GAME_VIEW_BOTH;
     gEnableSFX = 1;
     gEnableBootSND = 1;
-    gEnableBGM = 0;
+    gEnableBGM = 1;
     gSFXVolume = 80;
     gBootSndVolume = 80;
     gBGMVolume = 70;
@@ -2637,7 +2664,7 @@ static void setDefaults(void)
     gMMCESlot = 2; //Default to first Auto slot
     gMMCEIGRSlot = 3;
     gMMCEEnableGameID = 1;
-    gApplyGameID = 0; // visual GameID barcode OFF by default (only meaningful to Pixel FX/RetroGEM HDMI displays)
+    gApplyGameID = 1; // visual GameID barcode ON by default (Pixel FX/RetroGEM HDMI displays; imperceptible otherwise)
     // Restore the fork's long-standing known-good MMCE SIO2 pacing (was flipped to 0/0 in 519f520d,
     // mislabeled "safer" -- 0 cycles + alarms OFF is the aggressive/perf extreme the in-app hints warn
     // about: lower cycles = "instabilities", alarms OFF = "can cause MMCE timeouts to result in freezes").
@@ -2650,10 +2677,11 @@ static void setDefaults(void)
     gEnableUSB = 1;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
-    gEnableBdmHDD = 0;                 // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
-    gEnableUDPBD = 0;                  // OFF by default: needs a PC-side UDPBD server, and is NIC-exclusive with SMB
-    gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)
-    gNetworkProtocol = NET_PROTO_OFF;  // unified selector: no network device by default (matches the shadows above)
+    gEnableBdmHDD = 0;                  // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
+    gEnableUDPBD = 0;                   // the UDPBD BLOCK device stays opt-in; the default protocol below is UDPFS
+    gNetBootProtocol = NET_BOOT_UDPBD;  // default transport when network boot is enabled (back-compat)
+    gNetworkProtocol = NET_PROTO_UDPFS; // unified selector: UDPFS (UDPRDMA filesystem) by default -- inert
+                                        // without a NIC + PC server; NIC-exclusive with SMB as before
 
     frameCounter = 0;
 

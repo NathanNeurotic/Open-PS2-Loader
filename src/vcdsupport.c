@@ -762,19 +762,15 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return -4; // the matched SOURCE device had no variant files in its POPS/ (or none matched)
     }
 
-    // Stage BOTH replacements and backups before touching either live module. vcdSafeCopyFile removes
-    // a partial destination on failure, which is safe for these private staging names but not for a live
-    // driver. If either commit fails, restore the complete old pair (or the old absence) and still let the
-    // caller follow the established best-effort POPSTARTER handoff policy.
-    char tmp0[96], tmp1[96], bak0[96], bak1[96];
+    // Stage BOTH replacements before touching either live module. vcdSafeCopyFile removes a partial
+    // destination on failure, which is safe for these private staging names but not for a live driver.
+    // Staging guarantees both variant files were fully READ off the source device (the realistic torn-
+    // pair cause is a flaky USB/MMCE source dying between file 1 and file 2) before the live pair moves.
+    char tmp0[96], tmp1[96];
     snprintf(tmp0, sizeof(tmp0), "%s/%s.new", mcDir, vcdBdmaModule[0]);
     snprintf(tmp1, sizeof(tmp1), "%s/%s.new", mcDir, vcdBdmaModule[1]);
-    snprintf(bak0, sizeof(bak0), "%s/%s.bak", mcDir, vcdBdmaModule[0]);
-    snprintf(bak1, sizeof(bak1), "%s/%s.bak", mcDir, vcdBdmaModule[1]);
     unlink(tmp0);
     unlink(tmp1);
-    unlink(bak0);
-    unlink(bak1);
 
     int r = vcdSafeCopyFile(src0, tmp0);
     if (r == 0)
@@ -785,51 +781,25 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return r;
     }
 
-    int old0 = open(dst0, O_RDONLY);
-    int old1 = open(dst1, O_RDONLY);
-    int had0 = old0 >= 0;
-    int had1 = old1 >= 0;
-    if (old0 >= 0)
-        close(old0);
-    if (old1 >= 0)
-        close(old1);
-
-    // Same-directory renames avoid a second full copy of every module. Move the old pair aside,
-    // install both staged files, and restore both old names if any step fails.
-    if (had0 && rename(dst0, bak0) != 0)
-        r = -3;
-    if (r == 0 && had1 && rename(dst1, bak1) != 0) {
-        if (had0)
-            rename(bak0, dst0);
-        r = -3;
+    // Commit by COPY, not rename(): this dir is always on mc0:/mc1:, and the stock mcman.irx OPL embeds
+    // registers the legacy ioman 'mc' device with NO rename op -- iomanX returns -EUNSUP for every mc
+    // rename(), so a rename-based swap can never succeed here. If a commit write fails, the CARD is
+    // refusing IO: normalize to the consistent no-pair state (POPStarter falls back to its built-in
+    // FAT32 driver, same as the VCD_BDMA_FAT32 path) rather than leave a torn mixed-variant pair.
+    unlink(dst0); // free the old module's space first; tmp + old + new pairs may not fit a real MC
+    r = vcdSafeCopyFile(tmp0, dst0);
+    if (r == 0) {
+        unlink(dst1);
+        r = vcdSafeCopyFile(tmp1, dst1);
     }
-    if (r == 0 && rename(tmp0, dst0) != 0) {
-        if (had0)
-            rename(bak0, dst0);
-        if (had1)
-            rename(bak1, dst1);
-        r = -3;
-    }
-    if (r == 0 && rename(tmp1, dst1) != 0) {
-        unlink(dst0);
-        if (had0)
-            rename(bak0, dst0);
-        if (had1)
-            rename(bak1, dst1);
-        r = -3;
-    }
-    if (r != 0) {
-        unlink(tmp0);
-        unlink(tmp1);
-        unlink(bak0);
-        unlink(bak1);
-        return r;
-    }
-
     unlink(tmp0);
     unlink(tmp1);
-    unlink(bak0);
-    unlink(bak1);
+    if (r != 0) {
+        unlink(dst0); // drop the half-installed pair; vcdSafeCopyFile already removed its partial write
+        unlink(dst1);
+        vcdWriteBdmaMarker(mcDir, VCD_BDMA_FAT32);
+        return r;
+    }
 
     int mr = vcdWriteBdmaMarker(mcDir, mode);
     return (mr != 0) ? mr : 0;

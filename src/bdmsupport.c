@@ -427,6 +427,41 @@ static void bdmInit(item_list_t *itemList)
     itemList->enabled = 1;
 }
 
+// Effective BDM device start mode. The UDPBD tab is not a mode-level tab like SMB -- it is a
+// hotplug-published BDM mass page, which needs the BDM pages initialized, polled, and the bdm core
+// modules loaded before smap_udpbd can even LINK. The unified network-protocol picker couples SMB to
+// gETHStartMode and UDPFS to its own derived start mode, but selecting UDPBD/UDPFSBD wrote NOTHING to
+// gBDMStartMode -- with the shipped Manual default (or Off), the UDPBD tab could NEVER appear unless
+// the user happened to enter the generic BDM placeholder tab first ("UDPBD tab never shows", 2026-07-13).
+// Floor the EFFECTIVE mode at AUTO while a BDM network transport is the selected protocol, mirroring
+// the UDPFS_MODE derivation; the user's saved gBDMStartMode is never modified or persisted.
+int bdmEffectiveStartMode(void)
+{
+    if (gEnableUDPBD && gBDMStartMode != START_MODE_AUTO)
+        return START_MODE_AUTO;
+    return gBDMStartMode;
+}
+
+// Per-transport enable flag for a classified BDM device type.
+// Returns 1 = enabled, 0 = disabled, -1 = unclassifiable (generic/unknown driver: never force-hidden).
+static int bdmTransportEnabled(int bdmDeviceType)
+{
+    switch (bdmDeviceType) {
+        case BDM_TYPE_USB:
+            return gEnableUSB ? 1 : 0;
+        case BDM_TYPE_ILINK:
+            return gEnableILK ? 1 : 0;
+        case BDM_TYPE_SDC:
+            return gEnableMX4SIO ? 1 : 0;
+        case BDM_TYPE_ATA:
+            return gEnableBdmHDD ? 1 : 0;
+        case BDM_TYPE_UDPBD:
+            return gEnableUDPBD ? 1 : 0;
+        default:
+            return -1;
+    }
+}
+
 static int bdmNeedsUpdate(item_list_t *itemList)
 {
     char path[256];
@@ -437,7 +472,7 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     bdmDeviceModeStarted = 1;
 
     // If bdm mode is disabled bail out as we don't want to update the visibility state of the device pages.
-    if (gBDMStartMode == START_MODE_DISABLED)
+    if (bdmEffectiveStartMode() == START_MODE_DISABLED)
         return 0;
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
@@ -452,31 +487,8 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // to off for a bdm device we want to hide the menu even though the drivers are still loaded and the device is being detected by bdm.
     opl_io_module_t *pOwner = (opl_io_module_t *)itemList->owner;
     if (pOwner != NULL && pOwner->menuItem.visible == 1) {
-        int deviceEnabled = 0;
-        int shouldApplyVisibility = 1;
-        switch (pDeviceData->bdmDeviceType) {
-            case BDM_TYPE_USB:
-                deviceEnabled = gEnableUSB;
-                break;
-            case BDM_TYPE_ILINK:
-                deviceEnabled = gEnableILK;
-                break;
-            case BDM_TYPE_SDC:
-                deviceEnabled = gEnableMX4SIO;
-                break;
-            case BDM_TYPE_ATA:
-                deviceEnabled = gEnableBdmHDD;
-                break;
-            case BDM_TYPE_UDPBD:
-                deviceEnabled = gEnableUDPBD;
-                break;
-            default:
-                shouldApplyVisibility = 0;
-                break;
-        }
-
         // If the device page is visible but the device support is not enabled, hide the device page.
-        if (shouldApplyVisibility && deviceEnabled == 0)
+        if (bdmTransportEnabled(pDeviceData->bdmDeviceType) == 0)
             pOwner->menuItem.visible = 0;
     }
 
@@ -1300,9 +1312,10 @@ void bdmInitDevicesData()
         if (bdmDeviceList[i].owner != NULL) {
             opl_io_module_t *pOwner = (opl_io_module_t *)bdmDeviceList[i].owner;
 
-            if (gBDMStartMode == START_MODE_DISABLED) {
+            int effectiveMode = bdmEffectiveStartMode();
+            if (effectiveMode == START_MODE_DISABLED) {
                 pOwner->menuItem.visible = 0;
-            } else if (gBDMStartMode == START_MODE_MANUAL) {
+            } else if (effectiveMode == START_MODE_MANUAL) {
                 // If BDM has already been started then make the page invisible and reset the bdm tick counter so visibility status is refreshed
                 // according to device state.
                 if (bdmDeviceModeStarted == 1) {
@@ -1310,7 +1323,7 @@ void bdmInitDevicesData()
                     ((bdm_device_data_t *)bdmDeviceList[i].priv)->bdmDeviceTick = -1;
                 } else
                     pOwner->menuItem.visible = (i == 0 ? 1 : 0);
-            } else if (gBDMStartMode == START_MODE_AUTO) {
+            } else if (effectiveMode == START_MODE_AUTO) {
                 pOwner->menuItem.visible = 0;
                 ((bdm_device_data_t *)bdmDeviceList[i].priv)->bdmDeviceTick = -1;
             }
@@ -1363,7 +1376,7 @@ int bdmUpdateDeviceData(item_list_t *itemList)
     int driverResult, deviceResult;
 
     // If bdm mode is disabled bail out as we don't want to update the visibility state of the device pages.
-    if (gBDMStartMode == START_MODE_DISABLED)
+    if (bdmEffectiveStartMode() == START_MODE_DISABLED)
         return 0;
 
     // LOG("bdmUpdateDeviceData: %d\n", itemList->mode);
@@ -1421,6 +1434,31 @@ int bdmUpdateDeviceData(item_list_t *itemList)
             LOG("Mass device: %d (%d) %s -> %s (compat root %s)\n", itemList->mode, pDeviceData->massDeviceIndex, pDeviceData->bdmPrefix, pDeviceData->bdmDriver, pDeviceData->bdmDeviceRoot);
         else
             LOG("Mass device: %d using generic BDM path %s\n", itemList->mode, pDeviceData->bdmPrefix);
+
+        // Publish-time enable gate (#120 audit F-13): the visible-page filter in bdmNeedsUpdate only
+        // hides a page that is ALREADY showing, i.e. one refresh pass too late. Without this gate a
+        // mounted slot on a DISABLED transport (e.g. an ATA-backed mass slot left over from the
+        // boot-resolver escalation or a BDMA-equip force-load, with BDM HDD OFF) flashes its tab,
+        // plays the connect sound and folder-writes the device on every BdmGeneration bump. Identity
+        // stays populated above: the BDMA equip and the device pickers read it through
+        // bdmGetDeviceSlotsByType/bdmReadDeviceIdentity independent of page visibility.
+        if (bdmTransportEnabled(pDeviceData->bdmDeviceType) == 0) {
+            LOG("bdmUpdateDeviceData: device %d is %s-backed but that transport is disabled; not publishing\n",
+                itemList->mode, pDeviceData->bdmDriver);
+            fileXioDclose(dir);
+            return 0;
+        }
+
+        // An EXPLICIT BDM = Off is only overridden by the UDPBD floor (bdmEffectiveStartMode) so
+        // the selected UDPBD protocol can publish ITS tab -- every other transport's page stays
+        // hidden exactly as the user asked (their sticks would otherwise resurface with the dialog
+        // still showing "Off").
+        if (gBDMStartMode == START_MODE_DISABLED && pDeviceData->bdmDeviceType != BDM_TYPE_UDPBD) {
+            LOG("bdmUpdateDeviceData: device %d withheld -- BDM is explicitly Off (UDPBD floor active)\n",
+                itemList->mode);
+            fileXioDclose(dir);
+            return 0;
+        }
 
         // Make the menu item visible.
         if (itemList->owner != NULL) {

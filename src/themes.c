@@ -2021,9 +2021,10 @@ static void thmLoadFonts(config_set_t *themeConfig, const char *themePath, theme
     }
 }
 
-// #120: how long a theme (re)load waits for MMCE-backed art to abort before force-resetting the art
-// worker (mirrors mmcesupport.c's MMCE_ART_ABORT_WAIT_TICKS). A wedged MMCE read that never returns is
-// broken out of via cacheEnd(1)/cacheInit() after this bound, so a theme swap can never hang.
+// #120: how long a theme (re)load waits for MMCE-backed art to abort before giving up (mirrors
+// mmcesupport.c's MMCE_ART_ABORT_WAIT_TICKS). A wedged MMCE read that never returns makes thmLoad
+// ABANDON the swap and keep the current theme (never cacheEnd(1): its TerminateThread would kill the
+// worker mid-fileXio and orphan the shared RPC channel), so a theme swap can never hang.
 #define THM_MMCE_ART_ABORT_WAIT_TICKS 500
 
 // Returns 0 on success, -1 when the load was ABANDONED because the art worker would not drain (a
