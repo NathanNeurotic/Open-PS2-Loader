@@ -37,7 +37,7 @@ It supports six categories of devices:
 6. ATA/IDE HDDs, including internal exFAT configurations (MBR/GPT).
 
 Plus an optional **network-block-device boot** (UDPBD / UDPFS, via Neutrino) that streams games
-from a PC over the LAN as their own game list — UDPBD is the pre-selected network protocol (an
+from a PC over the LAN as their own game list — UDPFS is the pre-selected network protocol (an
 inert no-op until a network adapter and PC server are present) and is mutually exclusive with SMB.
 See [This Fork's Additions](#this-forks-additions).
 
@@ -122,9 +122,9 @@ This build layers several features on top of upstream OPL:
   globally and per-game. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
 - **UDPBD network boot (Neutrino):** stream games from a PC over the LAN as a network block
   device — they show up as a **UDPBD Games** list with full covers and per-game settings, just
-  like a local drive. UDPBD launches via Neutrino, is the **pre-selected network protocol**
-  (inert until a NIC + PC server are present), is mutually exclusive with SMB (they share the
-  one network adapter), and needs a static PS2 IP (the default is `192.168.1.10`). Run it from the
+  like a local drive. UDPBD launches via Neutrino, is mutually exclusive with SMB (they share
+  the one network adapter), and needs a static PS2 IP (the default is `192.168.1.10`); the
+  fork's **pre-selected network protocol is UDPFS** (switch to UDPBD in Device Settings). Run it from the
   **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. See the
   network-boot section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--udpbd--udpfs-neutrino-only)**.
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
@@ -320,7 +320,7 @@ on the host machine or NAS device and make sure that it has full read and
 write permissions. USB Advance/Extreme format is optional - \*.ISO images
 are supported using the folder structure above.
 
-> **RiptOPL network defaults:** the network protocol selector defaults to **UDPBD** — switch
+> **RiptOPL network defaults:** the network protocol selector defaults to **UDPFS** — switch
 > it to **SMB** under **Device Settings** before the **NET Games** tab appears. Network Config
 > ships static defaults (PS2 `192.168.1.10`, PC `192.168.1.100`, share `games`, user `guest`);
 > adjust them to your LAN. The default **SMB Port is `1111`** — a non-privileged port (>1024), so a server

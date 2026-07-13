@@ -1589,15 +1589,15 @@ static void _loadConfig()
             // preserving the historical "network BDM wins over SMB" precedence (imported/hand-edited configs
             // could set both; at boot UDPBD loaded first, so it won). NET_PROTO_UDPFS (filesystem) has no
             // legacy encoding, so it is only ever reached by an explicit new-format value -- backward-safe.
-            // Since UDPBD became the shipped DEFAULT (2026-07-13), the legacy branch must key off the
-            // FILE's enable_udpbd, not the defaulted global -- otherwise a pre-UDPBD-era SMB config
-            // (has eth_mode, lacks enable_udpbd) would inherit the default 1 and silently flip to UDPBD.
+            // Since a NETWORK protocol became the shipped DEFAULT (UDPFS, 2026-07-13), the legacy branch
+            // must key off the FILE's enable_udpbd, not the defaulted global -- a legacy config must only
+            // ever derive from what IT expressed, never inherit a defaulted enable flag.
             if (!configGetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, &gNetworkProtocol)) {
                 if (udpbdKeyPresent)
                     gNetworkProtocol = gEnableUDPBD ? ((gNetBootProtocol == NET_BOOT_UDPFS) ? NET_PROTO_UDPFSBD : NET_PROTO_UDPBD) : ((gETHStartMode != START_MODE_DISABLED) ? NET_PROTO_SMB : NET_PROTO_OFF);
                 else if (gETHStartMode != START_MODE_DISABLED)
                     gNetworkProtocol = NET_PROTO_SMB;
-                // else: the file never expressed ANY network choice -> the shipped default stands (UDPBD)
+                // else: the file never expressed ANY network choice -> the shipped default stands (UDPFS)
             }
             // UDPBD (SUDPBDv2) is a first-class protocol, NOT folded away: it is wire-incompatible with
             // UDPRDMA (SUDPBDv2 on 0xBDBD vs UDPFS on 0xF5F6), so users still on the older udpbd-server
@@ -2676,10 +2676,10 @@ static void setDefaults(void)
     gEnableILK = 0;
     gEnableMX4SIO = 0;
     gEnableBdmHDD = 0;                  // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
-    gEnableUDPBD = 1;                   // RiptOPL 2026-07-13: UDPBD is the default network protocol (below)
+    gEnableUDPBD = 0;                   // the UDPBD BLOCK device stays opt-in; the default protocol below is UDPFS
     gNetBootProtocol = NET_BOOT_UDPBD;  // default transport when network boot is enabled (back-compat)
-    gNetworkProtocol = NET_PROTO_UDPBD; // unified selector: UDPBD by default (no NIC/DEV9 = graceful no-op;
-                                        // NIC-exclusive with SMB -- picking SMB in the selector flips both shadows)
+    gNetworkProtocol = NET_PROTO_UDPFS; // unified selector: UDPFS (UDPRDMA filesystem) by default -- inert
+                                        // without a NIC + PC server; NIC-exclusive with SMB as before
 
     frameCounter = 0;
 
