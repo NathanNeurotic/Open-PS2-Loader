@@ -338,8 +338,8 @@ static int readPad(struct pad_data_t *pad)
                 if (pad->analogRetryDelay > 0) {
                     pad->analogRetryDelay--;
                 } else {
-                    int initResult = initializePad(pad);
-                    pad->analogRetryDelay = (initResult == PAD_INIT_OK) ? 1 : PAD_ANALOG_RETRY_DELAY;
+                    initializePad(pad);
+                    pad->analogRetryDelay = PAD_ANALOG_RETRY_DELAY;
                 }
             }
         }
