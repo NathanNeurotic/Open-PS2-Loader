@@ -1568,6 +1568,20 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, &gEnableILK);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, &gEnableBdmHDD);
+            // #120 audit F-12: APA (gHDDStartMode) and BDM-ATA (gEnableBdmHDD) are mutually exclusive by
+            // design, but the Device-Settings interlock only guards values changed THROUGH the dialog. A
+            // legacy, hand-edited or cross-version config can load both, and then BOTH internal-HDD
+            // stacks initialize against the one drive. Normalize at load: the backend matching the boot
+            // device wins; otherwise the APA start mode (the older, more deliberate setting) is kept.
+            // configSetInt the loser so the next save persists the reconciled pair.
+            if (gEnableBdmHDD && gHDDStartMode != START_MODE_DISABLED) {
+                if (gBootDirBdmType == BDM_TYPE_ATA)
+                    gHDDStartMode = START_MODE_DISABLED;
+                else
+                    gEnableBdmHDD = 0;
+                configSetInt(configOPL, CONFIG_OPL_HDD_MODE, gHDDStartMode);
+                configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
+            }
             configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
             configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
             // Unified network-protocol selector (single SMAP NIC -> at most one transport per session).
@@ -1626,6 +1640,12 @@ static void _loadConfig()
         if (gBootDirBdmType == BDM_TYPE_ATA && !gEnableBdmHDD) {
             gEnableBdmHDD = 1;
             configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
+            // #120 audit F-12: don't leave a loaded APA start mode fighting the just-enabled BDM-ATA
+            // backend (the drive we booted from is exFAT, so APA is definitionally wrong for it).
+            if (gHDDStartMode != START_MODE_DISABLED) {
+                gHDDStartMode = START_MODE_DISABLED;
+                configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_HDD_MODE, gHDDStartMode);
+            }
         }
     }
 
