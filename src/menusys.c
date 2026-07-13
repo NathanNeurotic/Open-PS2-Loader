@@ -1256,8 +1256,13 @@ static void menuRenderElements(theme_elems_t *elems, int allowItemConfig, config
 void menuRenderMain(void)
 {
     item_list_t *list = selected_item->item->userdata;
-    int allowItemConfig = !(list != NULL && list->mode == MMCE_MODE);
-    config_set_t *renderConfig = allowItemConfig ? itemConfig : NULL;
+    // MMCE main-screen item config re-enabled (#49): the b8bff90e-era hard-disable predates every
+    // piece of today's gating (worker settles, the 20-frame idle gate, the #120 hardening) and it
+    // meant the main-page #DiscType/#System badges could NEVER resolve on MMCE. The request now
+    // flows through menuCanRequestItemConfig's settled gate: at most one paced CFG open per settled
+    // selection -- the same browse-time read the FAV tab has always done for MMCE-sourced items.
+    int allowItemConfig = 1;
+    config_set_t *renderConfig = itemConfig;
 
     if (vcdViewActive(list->mode)) {
         // VCD/PS1 listings render with the vcd family (vcdMain*; each slot falls back at parse time to
