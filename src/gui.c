@@ -21,6 +21,7 @@
 #include "include/ethsupport.h"
 #include "include/udpfssupport.h" // udpfsGetModulesLoaded() -- network-protocol restart-notice check
 #include "include/bdmsupport.h"   // bdmForceDeviceRefresh() -- re-show a latched-hidden BDM tab after a device-enable toggle
+#include "include/hddsupport.h"   // hddVcdInvalidateCache() -- first-disc-only is a scan-time filter
 #include "include/favsupport.h"
 #include "include/compatupd.h"
 #include "include/pggsm.h"
@@ -653,6 +654,7 @@ void guiShowVcdConfig(void)
             diaGetInt(diaVcdConfig, CFG_VCD_FIRST_DISC_ONLY, &gVcdFirstDiscOnly);
             if (gVcdFirstDiscOnly != previousFirstDiscOnly) {
                 vcdMarkAllDirty();
+                hddVcdInvalidateCache(); // scan-time filter changed -> the cached HDD VCD list is stale
                 rebuildVcdLists = 1;
             }
         }
