@@ -7,6 +7,7 @@
 #include "include/opl.h"
 #include "include/pad.h"
 #include "include/ioman.h"
+#include <delaythread.h>
 #include <libpad.h>
 #include <timer.h>
 #include <time.h>
@@ -38,15 +39,19 @@ struct pad_data_t
 
     char actAlign[6];
     int actuators;
-    int analogRetries; // bounded self-heal budget (frames): re-init a connected DualShock stuck in digital
+    int analogCapable; // -1 unknown/not ready, 0 digital-only, 1 DualShock-capable
+    int analogRetryDelay;
 };
 
-// Cold-boot analog self-heal: if a controller's mode table isn't ready when initializePad first runs, it's
-// misread as digital and analog is never enabled -- and the only other re-init path is a physical
-// disconnect, which a slow-to-init (never-disconnected) pad never hits, so analog stays dead all session.
-// Re-run initializePad for up to this many frames while a connected pad reads as non-analog. A genuinely
-// digital controller just exhausts the budget harmlessly (initializePad bails before touching the mode).
-#define PAD_ANALOG_SELFHEAL_FRAMES 120
+// Pad commands are asynchronous. Keep every wait bounded so a transient SIO2/pad error cannot hang the
+// GUI thread, then retry DualShock recovery periodically for as long as the controller remains digital.
+#define PAD_WAIT_POLLS         25
+#define PAD_WAIT_POLL_US       1000
+#define PAD_ANALOG_RETRY_DELAY 60
+
+#define PAD_INIT_RETRY       -1
+#define PAD_INIT_UNSUPPORTED 0
+#define PAD_INIT_OK          1
 
 /// current time in miliseconds (last update time)
 static u32 curtime = 0;
@@ -82,34 +87,64 @@ static const int keyToPad[17] = {
     PAD_R2,
     PAD_L2};
 
+static int isPadReadyState(int state)
+{
+    return (state == PAD_STATE_STABLE) || (state == PAD_STATE_FINDCTP1);
+}
+
 /*
  * waitPadReady()
  */
 static int waitPadReady(struct pad_data_t *pad)
 {
-    int state;
+    int state = PAD_STATE_DISCONN;
+    int polls;
 
-    // busy wait for the pad to get ready
-    do {
+    for (polls = 0; polls < PAD_WAIT_POLLS; polls++) {
         state = padGetState(pad->port, pad->slot);
-    } while ((state != PAD_STATE_STABLE) && (state != PAD_STATE_FINDCTP1) && (state != PAD_STATE_DISCONN));
+        if (isPadReadyState(state) || (state == PAD_STATE_DISCONN))
+            return state;
+        DelayThread(PAD_WAIT_POLL_US);
+    }
+
+    LOG("PAD pad %d,%d ready wait timed out in state %d\n", pad->port, pad->slot, state);
 
     return state;
-};
+}
 
-static void initializePad(struct pad_data_t *pad)
+static int waitPadRequestComplete(struct pad_data_t *pad)
+{
+    int reqState = PAD_RSTAT_BUSY;
+    int polls;
+
+    for (polls = 0; polls < PAD_WAIT_POLLS; polls++) {
+        reqState = padGetReqState(pad->port, pad->slot);
+        if (reqState != PAD_RSTAT_BUSY)
+            return reqState == PAD_RSTAT_COMPLETE;
+        DelayThread(PAD_WAIT_POLL_US);
+    }
+
+    LOG("PAD pad %d,%d request timed out\n", pad->port, pad->slot);
+    return 0;
+}
+
+static int initializePad(struct pad_data_t *pad)
 {
     int tmp;
     int modes;
     int i;
+    int state;
 
     LOG("PAD initializing pad %d,%d\n", pad->port, pad->slot);
 
     // is there any device connected to that port?
-    if (waitPadReady(pad) == PAD_STATE_DISCONN) {
+    state = waitPadReady(pad);
+    if (state == PAD_STATE_DISCONN) {
         LOG("PAD pad %d,%d not connected.\n", pad->port, pad->slot);
-        return; // nope, don't waste your time here!
+        return PAD_INIT_RETRY;
     }
+    if (!isPadReadyState(state))
+        return PAD_INIT_RETRY;
 
     // How many different modes can this device operate in?
     // i.e. get # entrys in the modetable
@@ -130,11 +165,11 @@ static void initializePad(struct pad_data_t *pad)
     tmp = padInfoMode(pad->port, pad->slot, PAD_MODECURID, 0);
     LOG("PAD It is currently using mode %d\n", tmp);
 
-    // If modes == 0, this is not a Dual shock controller
-    // (it has no actuator engines)
-    if (modes == 0) {
-        LOG("PAD This is a digital controller?\n");
-        return;
+    // A not-yet-ready DualShock also reports an empty mode table, so keep it retryable. Once a
+    // non-empty table proves that DualShock mode is absent, mark the controller unsupported.
+    if (modes <= 0) {
+        LOG("PAD mode table is not ready (or controller is digital-only)\n");
+        return PAD_INIT_RETRY;
     }
 
     // Verify that the controller has a DUAL SHOCK mode
@@ -147,31 +182,42 @@ static void initializePad(struct pad_data_t *pad)
 
     if (i >= modes) {
         LOG("PAD This is no Dual Shock controller\n");
-        return;
+        pad->analogCapable = 0;
+        return PAD_INIT_UNSUPPORTED;
     }
+    pad->analogCapable = 1;
 
     // If ExId != 0x0 => This controller has actuator engines
     // This check should always pass if the Dual Shock test above passed
     tmp = padInfoMode(pad->port, pad->slot, PAD_MODECUREXID, 0);
     if (tmp == 0) {
         LOG("PAD This is no Dual Shock controller??\n");
-        return;
+        return PAD_INIT_RETRY;
     }
 
     LOG("PAD Enabling dual shock functions\n");
 
     // When using MMODE_LOCK, user cant change mode with Select button
-    padSetMainMode(pad->port, pad->slot, PAD_MMODE_DUALSHOCK, PAD_MMODE_LOCK);
+    tmp = padSetMainMode(pad->port, pad->slot, PAD_MMODE_DUALSHOCK, PAD_MMODE_LOCK);
+    if (tmp != 1 || !waitPadRequestComplete(pad)) {
+        LOG("PAD padSetMainMode failed: accepted=%d req=%d\n", tmp, padGetReqState(pad->port, pad->slot));
+        return PAD_INIT_RETRY;
+    }
 
-    waitPadReady(pad);
+    if (!isPadReadyState(waitPadReady(pad)))
+        return PAD_INIT_RETRY;
     tmp = padInfoPressMode(pad->port, pad->slot);
     LOG("PAD infoPressMode: %d\n", tmp);
 
-    waitPadReady(pad);
+    if (!isPadReadyState(waitPadReady(pad)))
+        return PAD_INIT_RETRY;
     tmp = padEnterPressMode(pad->port, pad->slot);
     LOG("PAD enterPressMode: %d\n", tmp);
+    if (tmp == 1 && !waitPadRequestComplete(pad))
+        LOG("PAD enterPressMode request failed\n");
 
-    waitPadReady(pad);
+    if (!isPadReadyState(waitPadReady(pad)))
+        return PAD_INIT_OK; // analog mode is restored; pressure/rumble setup can wait for reconnect
     pad->actuators = padInfoAct(pad->port, pad->slot, -1, 0);
     LOG("PAD # of actuators: %d\n", pad->actuators);
 
@@ -183,14 +229,18 @@ static void initializePad(struct pad_data_t *pad)
         pad->actAlign[4] = 0xff;
         pad->actAlign[5] = 0xff;
 
-        waitPadReady(pad);
+        if (!isPadReadyState(waitPadReady(pad)))
+            return PAD_INIT_OK;
         tmp = padSetActAlign(pad->port, pad->slot, pad->actAlign);
         LOG("PAD padSetActAlign: %d\n", tmp);
+        if (tmp == 1 && !waitPadRequestComplete(pad))
+            LOG("PAD padSetActAlign request failed\n");
     } else {
         LOG("PAD Did not find any actuators.\n");
     }
 
     waitPadReady(pad);
+    return PAD_INIT_OK;
 }
 
 static void updatePadState(struct pad_data_t *pad, int state)
@@ -259,12 +309,15 @@ static int readPad(struct pad_data_t *pad)
     if ((oldState == PAD_STATE_DISCONN) && ((pad->state == PAD_STATE_STABLE) || (pad->state == PAD_STATE_FINDCTP1))) {
         // Pad just connected.
         LOG("PAD pad %d,%d connected\n", pad->port, pad->slot);
+        pad->analogCapable = -1;
+        pad->analogRetryDelay = 0;
         initializePad(pad);
-        pad->analogRetries = PAD_ANALOG_SELFHEAL_FRAMES; // arm the self-heal below in case the mode table wasn't ready yet
     }
     // The pad may transit from any state to disconnected. So check only for the disconnected state.
     else if ((oldState != PAD_STATE_DISCONN) && (pad->state == PAD_STATE_DISCONN)) {
         LOG("PAD pad %d,%d disconnected\n", pad->port, pad->slot);
+        pad->analogCapable = -1;
+        pad->analogRetryDelay = 0;
     }
 
     if ((pad->state == PAD_STATE_STABLE) || (pad->state == PAD_STATE_FINDCTP1)) {
@@ -275,13 +328,19 @@ static int readPad(struct pad_data_t *pad)
             newpdata = 0xffff ^ pad->buttons.btns;
             padsRead++;
 
-            // Self-heal a DualShock that missed the cold-boot analog-mode set: while a connected pad reads as
-            // non-analog (mode high-nibble != 0x7 = not DualShock/analog) and the budget isn't spent, re-run
-            // initializePad. It succeeds once the mode table is ready (mode flips to analog, stopping this); a
-            // real digital controller just burns the budget with fast no-op inits (see PAD_ANALOG_SELFHEAL_FRAMES).
-            if ((pad->buttons.mode >> 4) != 0x07 && pad->analogRetries > 0) {
-                pad->analogRetries--;
-                initializePad(pad);
+            if ((pad->buttons.mode >> 4) == 0x07) {
+                pad->analogCapable = 1;
+                pad->analogRetryDelay = 0;
+            } else if (pad->analogCapable != 0) {
+                // freepad can temporarily return a pad to digital mode while recovering from a read error.
+                // Retry forever with a backoff; a real digital-only controller is disabled once its non-empty
+                // mode table proves that DualShock mode is absent.
+                if (pad->analogRetryDelay > 0) {
+                    pad->analogRetryDelay--;
+                } else {
+                    initializePad(pad);
+                    pad->analogRetryDelay = PAD_ANALOG_RETRY_DELAY;
+                }
             }
         }
     }
@@ -494,12 +553,9 @@ static int startPad(struct pad_data_t *pad)
         return 0;
     }
 
+    pad->analogCapable = -1;
+    pad->analogRetryDelay = 0;
     initializePad(pad);
-    // Arm the self-heal for pads present at cold boot: startPads() drives them straight to
-    // STABLE/FINDCTP1 here, so readPad's connect block (which arms on DISCONN->connected) never
-    // fires for them. Without this the budget stays 0 and the self-heal is inert at boot -- the
-    // exact case it exists for.
-    pad->analogRetries = PAD_ANALOG_SELFHEAL_FRAMES;
 
     newState = waitPadReady(pad);
     updatePadState(pad, newState);

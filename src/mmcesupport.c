@@ -533,7 +533,7 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
     // (POPSTARTER owns everything past the exec); a failed equip just toasts its diagnostic in passing.
     vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_MMCE, VCD_BDMA_MMCE);
     deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the MMCE device mounted across the IOP reset
-    sysLaunchPopstarter(vcdElf, vcdSelector, "");
+    sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
 void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)

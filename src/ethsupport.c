@@ -637,7 +637,7 @@ static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     }
     vcdBuildSelector(ethPrefix, VCD_PREFIX_SMB, vcdName, vcdSelector, sizeof(vcdSelector));
     deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the SMB mount alive across the IOP reset
-    sysLaunchPopstarter(vcdElf, vcdSelector, "");
+    sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
 static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
