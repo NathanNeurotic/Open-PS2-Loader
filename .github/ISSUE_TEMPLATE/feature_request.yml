@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an idea for this project
+description: Suggest an idea for RiptOPL
 title: "[FR]"
 labels: [enhancement]
 body:
@@ -9,7 +9,7 @@ body:
       label: Checks
       description: "Check before posting"
       options:
-        - label: I have checked existing [__OPL feature requests__](https://github.com/ps2homebrew/Open-PS2-Loader/issues?q=is%3Aissue+is%3Aopen+%5BFR%5D) for duplicates and found none
+        - label: I have checked existing [RiptOPL issues and feature requests](https://github.com/NathanNeurotic/Open-PS2-Loader/issues?q=is%3Aissue) for duplicates and found none
 
   - type: textarea
     id: explanation
@@ -42,7 +42,7 @@ body:
     id: context
     attributes:
       label: "Additional context"
-      description: "more context"
+      description: "Anything else — mockups, examples from other loaders, the theme or setup this would help with"
       placeholder: "..."
     validations:
       required: false

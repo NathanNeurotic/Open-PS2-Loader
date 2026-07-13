@@ -1,15 +1,15 @@
 name: Issue report
-description: Create a report to help us improve
+description: Report a RiptOPL bug to help us improve
 title: "[ISSUE]: "
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        ### __Disclaimer:__
-        Issue reports not related to MMCE mode will be automatically closed. you should post those issues on the [official OPL repository](https://github.com/ps2homebrew/Open-PS2-Loader)
-        Issue reports for consoles with installed and enabled modchip are not preferred.
-        Before posting the issue confirm that you meet the below requirements.
+        Thanks for testing RiptOPL! This fork has deviated well beyond upstream OPL, so please report
+        issues **here** even if they also exist upstream — we triage everything.
+        Every rolling build is archived on [MEGA](https://mega.nz/folder/74pRHKRB#9SLDkrkvZAbeKO4Qvxg9LQ),
+        so you can always roll back and tell us which build introduced a problem.
 
   - type: checkboxes
     id: terms
@@ -17,14 +17,14 @@ body:
       label: Checks
       description: "Check before posting"
       options:
-        - label: I have checked existing [__OPL issues__](https://github.com/ps2-mmce/Open-PS2-Loader/issues) for duplicates and found none
-        - label: I am using one of the [__OPL MMCE beta version__](https://github.com/ps2-mmce/open-ps2-loader/releases)
+        - label: I have checked existing [RiptOPL issues](https://github.com/NathanNeurotic/Open-PS2-Loader/issues?q=is%3Aissue) for duplicates and found none
+        - label: I am using a [RiptOPL build](https://github.com/NathanNeurotic/Open-PS2-Loader/releases) (a tagged release or the rolling pre-release)
 
   - type: textarea
     id: explanation
     attributes:
       label: Describe the issue
-      description: A clear and concise description of what the issue is.
+      description: What happened, what you expected, and the exact steps to reproduce it.
       placeholder: My issue is...
     validations:
       required: true
@@ -39,42 +39,80 @@ body:
     id: console
     attributes:
       label: Console model
-      description: you can see it on the console sticker or inside OSDSYS (press triangle on main menú)
+      description: On the console sticker, or inside OSDSYS (press Triangle on the main menu)
       placeholder: SCPH-?????
     validations:
       required: true
 
   - type: input
-    id: oplver
+    id: riptoplver
     attributes:
-      label: "OPL version / revision"
-      description: "you can see it on the About option from the settings menu (press start in game list)"
-      placeholder: "eg: OPL MMCE Beta 2"
+      label: RiptOPL version / revision
+      description: Shown on the boot splash and in Settings -> About (e.g. the Beta number)
+      placeholder: "eg: v1.2.0-Beta-3143"
     validations:
       required: true
 
   - type: dropdown
-    id: mmcedev
+    id: flavour
     attributes:
-      label: "In which device(s) have you experienced this issue?"
+      label: Which build flavour?
+      description: Each release ships several ELF flavours built with different SDKs — it matters for triage
+      options:
+        - Main RIPTOPL zip (PS2DEVLATESTSDK)
+        - WOPLSDK variant
+        - PS2MAXSDK variant
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: devices
+    attributes:
+      label: In which device(s) have you experienced this issue?
       multiple: true
       options:
         - USB
-        - SMB
-        - HDD
-        - iLink
+        - MMCE - SD2PSX
+        - MMCE - MemCardPRO2 (8BitMods)
+        - MMCE - PSxMemCard Gen1/Gen2 (Bitfunx)
+        - MMCE - other
         - MX4SIO
-        - SD2PSX (DIY)
-        - MemCardPRO2 (8BitMods)
-        - PSxMemCard Gen1 (Bitfunx)
-        - PSxMemCard Gen2 (Bitfunx)
-        - PicoMemCard
+        - iLink
+        - SMB (network share)
+        - UDPBD (network, PS2 Servers)
+        - UDPFS (network, PS2 Servers)
+        - Internal HDD - APA/PFS
+        - Internal HDD - exFAT (GPT/MBR)
+        - Memory Card (mc0/mc1)
+
+  - type: dropdown
+    id: core
+    attributes:
+      label: Loader core in use
+      description: Settings -> Loader Core, or the per-game Core setting (PS1 games always use POPSTARTER)
+      options:
+        - OPL native (default)
+        - Neutrino
+        - POPSTARTER (PS1 / VCD)
+        - Mixed / not sure
+    validations:
+      required: false
+
+  - type: input
+    id: debugline
+    attributes:
+      label: On-screen debug line (if relevant)
+      description: For freezes/art/pad issues — enable Settings -> Debug Info and copy the on-screen "#120 ..." and/or "PAD ..." line here (a photo attached below also works)
+      placeholder: "#120 AO:169 MH:21 MM:24 TK:0 Vp:2 Ip:2 SE:0 | PAD md:2 t0:4 t1:7 AC:1 SH:0 UN:0 SM:1 TO:0"
+    validations:
+      required: false
 
   - type: textarea
     id: context-and-data
     attributes:
       label: Context and extra information
-      description: Information about affected games (Game name, [Game ID], link to redump.org) and expected behavior
-      placeholder: "game affected is Kingdom Hearts: II Final Mix [SLPM_666.75], http://redump.org/disc/7733/"
+      description: Affected games (name, Game ID), theme in use, photos/videos, and anything else that seems relevant
+      placeholder: "Game affected is Kingdom Hearts II: Final Mix [SLPM_666.75]; using the built-in Coverflow theme at 480p..."
     validations:
       required: false
