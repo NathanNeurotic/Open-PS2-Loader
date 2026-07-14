@@ -1036,6 +1036,12 @@
   "url": "troubleshooting.html#quick-reference"
  },
  {
+  "title": "PS1/VCD list is empty (works elsewhere)",
+  "cat": "reference",
+  "text": "Triage ladder: device enables (APA vs exFAT auto-reconcile toast), PS2 ISOs prove the exFAT layer (byte-identical to wOPL), L3 + Default game view, VCDs scan from device-root /POPS not the games prefix, 160-char and POPSTARTER.VCD name rules, post-select failures are POPSTARTER-side.",
+  "url": "troubleshooting.html#vcd-list-empty"
+ },
+ {
   "title": "Credits & Sources",
   "cat": "reference",
   "text": "The people and projects RiptOPL is built on — from the ps2homebrew foundation and PS2SDK through the wider OPL family (rickgaiser, neutrino, sOPL, uOPL, wOPL, OPL DB, POPSLoader, RetroGEM ID, nhddl) to special thanks for Wolf3s, KrahJohlito, bbsan2k, saildot4k, Berion, Ifcaro, jimmikaelkael, and testers eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz, and nuno6573.",

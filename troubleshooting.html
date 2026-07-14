@@ -127,6 +127,39 @@ Do not use a third-party defragmenter on your game drive. They may rearrange clu
 If you saved an incompatible GSM (Graphics Synthesizer Mode) override and your screen went dark, the same recovery applies: hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while OPL boots to restore <b>Auto</b> video mode.
 </div>
 
+<h2 id="vcd-list-empty">PS1/VCD — "my VCDs don't show up" (works elsewhere)</h2>
+
+<p><b>Symptom:</b> A device lists PS2 games fine (or works in another loader), but its PS1/VCD view is empty — or a listed VCD does nothing when selected.</p>
+
+<p>Work down this ladder; each step isolates a different stage:</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>Does the device page appear at all?</h3>
+    <p>If not, it's the device enables, not VCD: USB/MX4SIO/iLink need their toggles on, and the <b>internal exFAT</b> page needs <b>BDM devices</b> + <b>BDM HDD</b> ON with the <b>APA HDD start mode OFF</b>. The two internal-HDD backends are mutually exclusive — a hand-edited or cross-version config that enables both is auto-reconciled at boot (a toast now says so; check Device Settings).</p>
+  </div>
+  <div class="step">
+    <h3>Do PS2 ISOs list from the device?</h3>
+    <p>If yes, the filesystem/mount layer is proven working — on the WOPLSDK build the exFAT driver is <em>byte-identical</em> to wOPL's, so "works in wOPL" adds no new information past this step.</p>
+  </div>
+  <div class="step">
+    <h3>Press L3 on the device page</h3>
+    <p>The VCD view is per device and only reachable when <b>Default game view</b> is "Both" (or the page is locked to VCD).</p>
+  </div>
+  <div class="step">
+    <h3>Check the folder — root, not your games prefix</h3>
+    <p>VCDs are scanned from <code>&lt;device-root&gt;:/POPS/*.VCD</code>. The game-folder prefix (<code>usb_prefix</code> etc.) is deliberately <b>not</b> applied, because POPSTARTER itself only reads <code>/POPS</code> at the root. A <code>POPS</code> folder inside your games subfolder will never be found.</p>
+  </div>
+  <div class="step">
+    <h3>Check the filename</h3>
+    <p>Basenames longer than <b>160 characters</b> and the reserved name <b>POPSTARTER.VCD</b> are skipped at scan (the debug log says which) — previously they listed but could never launch (a dead ✕ button). Rename the file.</p>
+  </div>
+  <div class="step">
+    <h3>Fails only after selecting a game?</h3>
+    <p>Then scanning is fine and the handoff is the suspect: is <code>POPSTARTER.ELF</code> present in <code>/POPS</code> (or <code>__common/POPS</code> on APA)? On exFAT the BDMA equip below is best-effort — a failed equip toasts but the launch still proceeds and may land on the OSD.</p>
+  </div>
+</div>
+
 <h2 id="bdma-module-not-found">BDMA — "module files not found on source device"</h2>
 
 <p><b>Symptom:</b> You have set a <b>BDMA Mode</b> (e.g. <code>USB (exFAT)</code>, <code>MX4SIO (exFAT)</code>, or <code>HDD (exFAT)</code>) and a <b>BDMA Source</b>, but when you save or apply the equip RiptOPL reports that the module files were not found on the source device.</p>
