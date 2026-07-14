@@ -59,7 +59,11 @@ RiptOPL ships a single standard ELF that includes <b>GSM</b> video-mode handling
 <b>DS3/DS4 pad emulation (PADEMU)</b>, <b>VMC</b> (Virtual Memory Cards),
 <b>PS2RD cheats</b>, and <b>parental controls</b>. There are no stripped-down per-feature variants
 to juggle. The one optional extra is <b>DualSense / DualShock 5 (USB)</b> support, which must be
-compiled in with <code>make DUALSENSE=1</code> and is not part of the standard release ELF.</div>
+compiled in with <code>make DUALSENSE=1</code> and is not part of the standard release ELF. A
+second, <b>experimental</b> extra — a forced-<b>1080p</b> GSM video mode — ships only as
+<code>RIPTOPL-&lt;version&gt;-PS2DEVLATESTSDK-1080p.ELF</code> (latest-SDK flavour only, gated
+behind a three-step in-GUI confirmation; the raster is hardware-unvalidated). Every other asset is
+1080p-free.</div>
 
 <h2 id="channels">Release channels</h2>
 
