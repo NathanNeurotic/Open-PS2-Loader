@@ -173,6 +173,17 @@ struct UIItem diaConfig[] = {
     {UI_ENUM, CFG_NEUTRINO_DEVICE, 1, 1, _STR_HINT_NEUTRINO_DEVICE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    // Global default Neutrino Video (-gsm) + its ":c" comp half: games whose per-game picker is
+    // "Default" follow these (e.g. -gsm=1080ix3 everywhere without touching every game).
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_VIDEO}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_NEUTRINO_VIDEO, 1, 1, _STR_HINT_NEUTRINO_VIDEO, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_GSM_COMP}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_NEUTRINO_GSMCOMP, 1, 1, _STR_HINT_NEUTRINO_GSM_COMP, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_WRITE}}},
     {UI_SPACER},
     {UI_BOOL, CFG_ENWRITEOP, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},

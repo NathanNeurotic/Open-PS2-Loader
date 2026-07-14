@@ -202,19 +202,21 @@ int gPadMacroSettings;
 #endif
 int gScrollSpeed;
 char gExitPath[256];
-char gNeutrinoArgs[256];   // extra command-line flags appended to every Neutrino launch
-char gNeutrinoPath[256];   // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
-int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy gNeutrinoPath
-int gDefaultCoreLoader;    // global default Loader Core (0=<OPL>, 1=Neutrino); per-game $CoreLoader overrides, absent key = follow this
-int gNeutrinoElfArg;       // opt-in (settings key only, no UI): auto-emit -elf=cdrom0: on Neutrino launches (parity Delta-10)
-char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
-int gPopstarterDevice;     // POPSTARTER.ELF device (POPS_DEV_*); Default = cwd then VCD device; legacy path -> Custom
-int gBdmaSource;           // BDMA SOURCE device family (VCD_BDMA_SRC_*) to read exFAT driver variants from
-int gBdmaMode;             // BDMA MODE last reflected from the mc?:/POPSTARTER/ marker (VCD_BDMA_*); not persisted
-int gBdmaApplyOnLaunch;    // auto-equip the launched VCD's matching exFAT driver before boot (1=on, default)
-int gVcdHideGameId;        // display-only: hide a leading PS1 game-ID prefix from the VCD list (1=on, default off)
-int gVcdFirstDiscOnly;     // #118: hide discs 2+ of a multi-disc PS1 set from the device VCD lists (1=on, default off)
-int gWritePopstarterNet;   // mirror the network settings into POPSTARTER's IPCONFIG/SMBCONFIG on save
+char gNeutrinoArgs[256];     // extra command-line flags appended to every Neutrino launch
+char gNeutrinoPath[256];     // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
+int gNeutrinoDevice;         // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy gNeutrinoPath
+int gDefaultCoreLoader;      // global default Loader Core (0=<OPL>, 1=Neutrino); per-game $CoreLoader overrides, absent key = follow this
+int gNeutrinoVideoDefault;   // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game $NeutrinoVideo overrides, absent key = follow this (R3Z3N's 1080i x3 "1080p impression" trick, now global)
+int gNeutrinoGsmCompDefault; // global default -gsm ":c" field-flip half (0=off, 1-3=type)
+int gNeutrinoElfArg;         // opt-in (settings key only, no UI): auto-emit -elf=cdrom0: on Neutrino launches (parity Delta-10)
+char gPopstarterPath[256];   // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
+int gPopstarterDevice;       // POPSTARTER.ELF device (POPS_DEV_*); Default = cwd then VCD device; legacy path -> Custom
+int gBdmaSource;             // BDMA SOURCE device family (VCD_BDMA_SRC_*) to read exFAT driver variants from
+int gBdmaMode;               // BDMA MODE last reflected from the mc?:/POPSTARTER/ marker (VCD_BDMA_*); not persisted
+int gBdmaApplyOnLaunch;      // auto-equip the launched VCD's matching exFAT driver before boot (1=on, default)
+int gVcdHideGameId;          // display-only: hide a leading PS1 game-ID prefix from the VCD list (1=on, default off)
+int gVcdFirstDiscOnly;       // #118: hide discs 2+ of a multi-disc PS1 set from the device VCD lists (1=on, default off)
+int gWritePopstarterNet;     // mirror the network settings into POPSTARTER's IPCONFIG/SMBCONFIG on save
 int gEnableDebug;
 int gPS2Logo;
 int gDefaultDevice;
@@ -1420,6 +1422,12 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
     // Global default Loader Core (0=<OPL>, 1=Neutrino). Absent in legacy configs -> keep the
     // reset default (0/<OPL>), so existing installs behave exactly as before this key existed.
     configGetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, &gDefaultCoreLoader);
+    configGetInt(configOPL, CONFIG_OPL_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
+    if (gNeutrinoVideoDefault < 0 || gNeutrinoVideoDefault > 5)
+        gNeutrinoVideoDefault = 0; // sanitize (indexes system.c gsmVideoTokens at the launch legs)
+    configGetInt(configOPL, CONFIG_OPL_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
+    if (gNeutrinoGsmCompDefault < 0 || gNeutrinoGsmCompDefault > 3)
+        gNeutrinoGsmCompDefault = 0;
     // Neutrino Device: prefer the new device-TYPE key; if absent (config predates the picker
     // change), migrate the legacy device-INDEX value -- 0=Auto, 1/2=mc0/mc1 -> MC, 11/12=
     // mmce0/mmce1 -> MMCE, 3-10=mass* -> Auto (a bare massN index can't name a driver type).
@@ -1903,7 +1911,9 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath);
-        configSetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, gDefaultCoreLoader);  // global default Loader Core (0=<OPL>, 1=Neutrino)
+        configSetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, gDefaultCoreLoader); // global default Loader Core (0=<OPL>, 1=Neutrino)
+        configSetInt(configOPL, CONFIG_OPL_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
+        configSetInt(configOPL, CONFIG_OPL_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice); // device-TYPE (NEUTRINO_DEV_*); the legacy neutrino_device key is left as-is
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
@@ -2616,8 +2626,10 @@ static void setDefaults(void)
     gNeutrinoArgs[0] = '\0';
     gNeutrinoPath[0] = '\0';
     gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-    gDefaultCoreLoader = 0; // <OPL> (native) -- preserves pre-existing behaviour until the user opts into Neutrino globally
-    gNeutrinoElfArg = 0;    // experimental Delta-10 -elf emission stays opt-in
+    gDefaultCoreLoader = 0;      // <OPL> (native) -- preserves pre-existing behaviour until the user opts into Neutrino globally
+    gNeutrinoVideoDefault = 0;   // no global -gsm until the user opts in
+    gNeutrinoGsmCompDefault = 0; // no field-flip comp half
+    gNeutrinoElfArg = 0;         // experimental Delta-10 -elf emission stays opt-in
     gPopstarterPath[0] = '\0';
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gBdmaSource = VCD_BDMA_SRC_USB;

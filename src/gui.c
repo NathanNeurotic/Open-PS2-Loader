@@ -471,11 +471,17 @@ void guiShowNetCompatUpdateSingle(int id, item_list_t *support, config_set_t *co
 static int guiUpdater(int modified)
 {
     int showAutoStartLast;
+    int neutrinoVideoDef;
 
     if (modified) {
         diaGetInt(diaConfig, CFG_LASTPLAYED, &showAutoStartLast);
         diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, showAutoStartLast);
         diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, showAutoStartLast);
+
+        // The ":c" comp half is only ever emitted alongside a video mode (-gsm=v:c grammar) --
+        // grey it while the global Neutrino Video default is Off (same rule as the per-game rows).
+        diaGetInt(diaConfig, CFG_NEUTRINO_VIDEO, &neutrinoVideoDef);
+        diaSetEnabled(diaConfig, CFG_NEUTRINO_GSMCOMP, neutrinoVideoDef != 0);
     }
     return 0;
 }
@@ -556,6 +562,14 @@ void guiShowConfig()
     const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", _l(_STR_GAMES_DEVICE), NULL}; // device TYPE holding /neutrino/neutrino.elf (NEUTRINO_DEV_*); "Game's Device" (NEUTRINO_DEV_GAME) appended last to match the enum tail
     diaSetEnum(diaConfig, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
     diaSetInt(diaConfig, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);
+    // Global default Neutrino Video (-gsm) + comp half: same indices as the per-game picker
+    // (system.c gsmVideoTokens). static: literals only, and diaSetEnum stores the raw pointer.
+    static const char *neutrinoVideoDefStrs[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
+    static const char *neutrinoGsmCompDefStrs[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", NULL};
+    diaSetEnum(diaConfig, CFG_NEUTRINO_VIDEO, neutrinoVideoDefStrs);
+    diaSetInt(diaConfig, CFG_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
+    diaSetEnum(diaConfig, CFG_NEUTRINO_GSMCOMP, neutrinoGsmCompDefStrs);
+    diaSetInt(diaConfig, CFG_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
     // IGR Path auto-resolves a built-in default when blank, so show a dim "Default" placeholder
     // rather than "<not set>" -- the empty value (and thus the fallback) is kept. (VCD/POPSTARTER
     // and BDMA settings moved to their own "VCD Settings" page -- see guiShowVcdConfig.)
@@ -572,6 +586,8 @@ void guiShowConfig()
     diaSetString(diaConfig, CFG_ETHPREFIX, gETHPrefix);
     diaSetString(diaConfig, CFG_MMCEPREFIX, gMMCEPrefix);
 
+    guiUpdater(1); // apply the initial comp-half grey before the dialog is drawn
+
     int ret;
 reshow_config:
     ret = diaExecuteDialog(diaConfig, -1, 1, &guiUpdater);
@@ -586,6 +602,8 @@ reshow_config:
         diaGetString(diaConfig, CFG_EXITTO, gExitPath, sizeof(gExitPath));
         diaGetInt(diaConfig, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(diaConfig, CFG_NEUTRINO_DEVICE, &gNeutrinoDevice);
+        diaGetInt(diaConfig, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
+        diaGetInt(diaConfig, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
         diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
         diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);

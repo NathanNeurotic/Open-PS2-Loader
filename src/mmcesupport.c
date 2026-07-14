@@ -790,10 +790,10 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int coreLoader = gDefaultCoreLoader; // no per-game $CoreLoader key -> follow the global default core
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     const char *neutrinoPath = NULL;
-    char neutrinoExtraArgs[256] = "";      // per-game Neutrino flags; copied before deinit teardown
-    int neutrinoVideo = 0;                 // per-game Neutrino -gsm video mode; copied before deinit
-    int neutrinoGsmComp = 0;               // per-game -gsm ":c" field-flip half; copied before deinit
-    neutrino_vmc_args_t neutrinoVmc = {0}; // per-game VMC -mc args; resolved before deinit, lives on this stack frame across the launch (#47)
+    char neutrinoExtraArgs[256] = "";              // per-game Neutrino flags; copied before deinit teardown
+    int neutrinoVideo = gNeutrinoVideoDefault;     // per-game -gsm video mode; absent key = follow the global; copied before deinit
+    int neutrinoGsmComp = gNeutrinoGsmCompDefault; // per-game -gsm ":c" field-flip half; absent key = follow the global; copied before deinit
+    neutrino_vmc_args_t neutrinoVmc = {0};         // per-game VMC -mc args; resolved before deinit, lives on this stack frame across the launch (#47)
     if (coreLoader) {
         configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
         configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);

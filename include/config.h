@@ -99,7 +99,9 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_OVERSCAN             "overscan"
 #define CONFIG_OPL_DISABLE_DEBUG        "disable_debug"
 #define CONFIG_OPL_PS2LOGO              "ps2logo"
-#define CONFIG_OPL_DEFAULT_CORE         "default_core" // global default Loader Core (0=<OPL>, 1=Neutrino); a game's per-game "$CoreLoader" overrides it, absent = follow this
+#define CONFIG_OPL_DEFAULT_CORE         "default_core"              // global default Loader Core (0=<OPL>, 1=Neutrino); a game's per-game "$CoreLoader" overrides it, absent = follow this
+#define CONFIG_OPL_NEUTRINO_VIDEO       "neutrino_video_default"    // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game "$NeutrinoVideo" overrides, absent = follow this
+#define CONFIG_OPL_NEUTRINO_GSMCOMP     "neutrino_gsm_comp_default" // global default -gsm ":c" field-flip half (0=off, 1-3=type); per-game "$NeutrinoGsmComp" overrides, absent = follow this
 #define CONFIG_OPL_NEUTRINO_ARGS        "neutrino_args"
 #define CONFIG_OPL_NEUTRINO_PATH        "neutrino_path"
 #define CONFIG_OPL_NEUTRINO_DEVICE      "neutrino_device"   // legacy device-INDEX (mc0/mass0/mmce0); read-only, migrated

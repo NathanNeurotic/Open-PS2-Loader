@@ -287,7 +287,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // Per-game Neutrino ELF + flags, resolved BEFORE deinit frees configSet's owner.
     const char *neutrinoPath = NULL;
     char neutrinoExtraArgs[256] = "";
-    int neutrinoVideo = 0, neutrinoGsmComp = 0;
+    int neutrinoVideo = gNeutrinoVideoDefault, neutrinoGsmComp = gNeutrinoGsmCompDefault; // absent per-game keys = follow the globals
     neutrino_vmc_args_t neutrinoVmc = {0};
 
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
