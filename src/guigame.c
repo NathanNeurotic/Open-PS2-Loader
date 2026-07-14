@@ -1019,13 +1019,18 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
 {
     int i;
 
-    if (gameEffectiveFlags(support) & MODE_FLAG_COMPAT_DMA) {
-        const char *dmaModes[] = {"MDMA 0", "MDMA 1", "MDMA 2", "UDMA 0", "UDMA 1", "UDMA 2", "UDMA 3", "UDMA 4", NULL};
-        diaSetEnum(diaCompatConfig, COMPAT_DMA, dmaModes);
-    } else {
-        const char *dmaModes[] = {NULL};
-        diaSetEnum(diaCompatConfig, COMPAT_DMA, dmaModes);
-    }
+    // static, NOT block-scoped: diaSetEnum stores the raw pointer and diaCompatConfig keeps
+    // re-rendering it (reshow_compat loop below). Block-locals dangled at the closing brace and
+    // the compiler reused their stack slot for the sibling arrays below -- on hardware the DMA
+    // row rendered the Neutrino video-mode list (issue #154, Blade). Upstream has the same
+    // block-scoped UB but no later arrays to reuse the slot, which is why it shows correct
+    // strings by luck. Literals only (no _l()), so static storage is safe across languages.
+    static const char *dmaModesFull[] = {"MDMA 0", "MDMA 1", "MDMA 2", "UDMA 0", "UDMA 1", "UDMA 2", "UDMA 3", "UDMA 4", NULL};
+    static const char *dmaModesNone[] = {NULL};
+    if (gameEffectiveFlags(support) & MODE_FLAG_COMPAT_DMA)
+        diaSetEnum(diaCompatConfig, COMPAT_DMA, dmaModesFull);
+    else
+        diaSetEnum(diaCompatConfig, COMPAT_DMA, dmaModesNone);
 
     // Index 0/1 == the stored $CoreLoader value (0=<OPL>, 1=Neutrino); index 2 "Default" = no per-game
     // key -> follow the global gDefaultCoreLoader. Keeping 0/1 aligned with the stored ints means the
