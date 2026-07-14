@@ -801,7 +801,28 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     if (sysNeutrinoPreflight("apa", neutrinoPath) < 0)
         return 0;
 
-    // MMCE cross-device game-id (#261); HDD emits no -mc args (VMC->neutrino deferred), mask 0.
+    // Honesty toast: the OPL core honors $VMC_N on HDD (mcemu over pfs0:VMC/), but Neutrino has no
+    // APA/pfs backing store to open the .bin from post-reset -- its APA support is -bsd=ata
+    // -bsdfs=hdl, game image only (NHDDL's HDL backend has the same no-VMC rule). No -mc args can
+    // be emitted here; warn instead of silently booting without the card the user configured.
+    // Runs pre-deinit so the toast still renders.
+    {
+        int slot;
+        char vmcName[32];
+        for (slot = 0; slot < NEUTRINO_VMC_SLOTS; slot++) {
+            int slotDisabled = 0;
+            vmcName[0] = '\0';
+            configGetVMC(configSet, vmcName, sizeof(vmcName), slot);
+            configGetVMCDisable(configSet, slot, &slotDisabled);
+            if (vmcName[0] != '\0' && !slotDisabled) {
+                LOG("[NEUTRINO] apa: VMC slot %d (%s) configured but unsupported -- launching without it\n", slot, vmcName);
+                guiWarning(_l(_STR_NEUTRINO_VMC_HDD_UNSUPPORTED), 6);
+                break;
+            }
+        }
+    }
+
+    // MMCE cross-device game-id (#261); HDD emits no -mc args (no APA/pfs backing store, above), mask 0.
     mmceSendGameID(game->startup, neutrinoPath, 0);
 
     // game->startup lives in hddGames / gAutoLaunchGame, freed below (deinitEx's itemCleanUp or the
