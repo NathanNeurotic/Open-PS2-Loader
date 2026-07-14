@@ -10,6 +10,7 @@
 #include "include/ioman.h"
 #include "modules/iopcore/common/cdvd_config.h"
 #include "include/cheatman.h"
+#include "include/tar.h" // CHT/cht.tar cheat archive (#154, wOPL 1.2 parity)
 #include "include/pggsm.h"
 #include "include/ps2cnf.h"
 #include "include/gui.h"
@@ -1308,12 +1309,52 @@ int sbLoadCheats(const char *path, const char *file)
     int cheatMode = 0;
 
     if (GetCheatsEnabled()) {
+        // wOPL 1.2 parity (#154, Blade1984000's widescreen packs): CHT/cht.tar -- a flat ustar of
+        // <startup>.cht members at a device root -- is probed FIRST, cross-device (the tar engine's
+        // gDevices order; the CHT kind's tables have shipped inert in src/tar.c since the art port).
+        // The loose CHT/<startup>.cht below stays the untouched fallback for any tar miss/failure.
+        char member[64];
+        if (snprintf(member, sizeof(member), "%s.cht", file) < (int)sizeof(member)) {
+            const TarEntryBase *entry = tarFind(TAR_KIND_CHT, member);
+            // rawSize == 0 counts as a miss (wOPL parity: its size check rejects empty members) so
+            // an empty tar member never shadows a possibly-valid loose CHT/<id>.cht below.
+            if (entry != NULL && entry->rawSize > 0) {
+                // rawSize+1: tar members carry no NUL and the parser needs a terminator. wOPL feeds
+                // the raw tar buffer to its parser (a latent overread we deliberately do not copy).
+                char *tarBuf = (char *)malloc(entry->rawSize + 1);
+                if (tarBuf != NULL) {
+                    if (tarRead(TAR_KIND_CHT, entry, tarBuf, entry->rawSize) == entry->rawSize) {
+                        tarBuf[entry->rawSize] = '\0';
+                        cheatMode = load_cheats_buf(tarBuf);
+                    } else
+                        cheatMode = -1;
+                    free(tarBuf);
+                    if (cheatMode >= 0) {
+                        LOG("Cheats found in CHT/cht.tar (%s)\n", tarGetDevicePrefix(TAR_KIND_CHT));
+                        if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL) && (cheatMode == 1))
+                            guiManageCheats();
+                        return cheatMode;
+                    }
+                    LOG("Error: cht.tar member failed to load; trying the loose file\n");
+                }
+            }
+        }
+
         snprintf(cheatfile, sizeof(cheatfile), "%sCHT/%s.cht", path, file);
         LOG("Loading Cheat File %s\n", cheatfile);
 
-        if ((cheatMode = load_cheats(cheatfile)) < 0)
+        if ((cheatMode = load_cheats(cheatfile)) < 0) {
+            // Distinguish absent from unreadable so the launch legs' 'No cheats found' branch --
+            // dead code until now (load_cheats never returned -ENOENT; an upstream errno-propagation
+            // attempt wrote to the pointer and was reverted) -- fires for a merely-missing file
+            // instead of the scary 'failed to load cheats' toast.
+            int probe = open(cheatfile, O_RDONLY);
+            if (probe < 0)
+                cheatMode = -ENOENT;
+            else
+                close(probe);
             LOG("Error: failed to load cheats\n");
-        else {
+        } else {
             LOG("Cheats found\n");
             if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL) && (cheatMode == 1))
                 guiManageCheats();

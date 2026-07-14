@@ -76,6 +76,7 @@ void InitCheatsConfig(config_set_t *configSet);
 int GetCheatsEnabled(void);
 const u32 *GetCheatsList(void);
 int load_cheats(const char *cheatfile);
+int load_cheats_buf(const char *buf); // buf must be NUL-terminated (tar members carry no NUL)
 void set_cheats_list(void);
 
 // Prebuilt PS2RD cheat image (.img): a binary patch list applied directly at boot, parallel to the
