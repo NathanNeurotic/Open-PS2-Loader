@@ -725,7 +725,7 @@ static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     char resolvedName[VCD_NAME_MAX];
     char resolvedPart[APA_IDMAX + 1];
 
-    if (vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+    if (vcdName == NULL || vcdName[0] == '\0' || !strcasecmp(vcdName, "POPSTARTER")) // reserved-name belt: the scanner no longer lists it (#154); strcasecmp -- FAT is case-insensitive
         return;
 
     // Serialize against a queued HDD refresh that can use the same pfs1: slot and shared list. No art

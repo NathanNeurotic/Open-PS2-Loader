@@ -937,6 +937,8 @@ gui_strings:
   string: Per-game VMC file not found -- launching without it (game uses its real card).
 - label: NEUTRINO_VMC_HDD_UNSUPPORTED
   string: Neutrino cannot use a VMC on APA HDD (no pfs support) -- launching without it.
+- label: HDD_BACKEND_RECONCILED
+  string: APA and exFAT internal HDD were both enabled -- one was disabled automatically (check Device Settings).
 - label: NEUTRINO_SMB_FALLBACK
   string: SMB games have no Neutrino support -- launching with the OPL core.
 - label: NEUTRINO_DEV_UNSUPPORTED

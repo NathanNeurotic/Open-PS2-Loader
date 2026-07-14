@@ -104,8 +104,24 @@ static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
         if (len < 5 || strcasecmp(de->d_name + len - 4, ".VCD") != 0)
             continue;          // keep only "*.VCD" (case-insensitive)
         int baseLen = len - 4; // strip ".VCD"
+        // Skip names no launch leg can start truthfully (#154 forensics) -- listing them made a
+        // dead X button:
+        // - basenames longer than ISO_GAME_NAME_MAX: the game list stores base_game_info_t names
+        //   capped at 160, and every VCD launch resolves BY NAME -- the truncated name targets a
+        //   nonexistent file and POPSTARTER drops to OSDSYS. Rename the file to fix.
+        // - "POPSTARTER": reserved -- its selector would be "XX.POPSTARTER.ELF", colliding with
+        //   POPSTARTER's own naming; the launch legs have always rejected it (silently, which
+        //   looked like a dead X button while it was still listed). Case-insensitive: FAT is.
+        if (baseLen > ISO_GAME_NAME_MAX) {
+            LOG("VCD skip (name > %d chars, unlaunchable): %s\n", ISO_GAME_NAME_MAX, de->d_name);
+            continue;
+        }
+        if (baseLen == 10 && strncasecmp(de->d_name, "POPSTARTER", 10) == 0) {
+            LOG("VCD skip (reserved name): %s\n", de->d_name);
+            continue;
+        }
         if (baseLen > VCD_NAME_MAX - 1)
-            baseLen = VCD_NAME_MAX - 1;
+            baseLen = VCD_NAME_MAX - 1; // unreachable after the cap above; kept as a belt
         memcpy(list[count].name, de->d_name, baseLen);
         list[count].name[baseLen] = '\0';
         count++;

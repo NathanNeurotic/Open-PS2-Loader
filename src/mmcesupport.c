@@ -567,7 +567,7 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
 {
     char vcdElf[256], vcdSelector[320];
 
-    if (vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+    if (vcdName == NULL || vcdName[0] == '\0' || !strcasecmp(vcdName, "POPSTARTER")) // reserved-name belt: the scanner no longer lists it (#154); strcasecmp -- FAT is case-insensitive
         return;
     if (!vcdResolvePopstarter(mmcePrefix, vcdElf, sizeof(vcdElf))) {
         guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
