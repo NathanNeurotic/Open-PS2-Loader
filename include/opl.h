@@ -240,22 +240,24 @@ extern char gNeutrinoArgs[256];
 extern char gNeutrinoPath[256]; // custom neutrino.elf path (General Settings); "" = mc0:/mc1: auto-detect
 // Neutrino Device picker: a driver-accurate device TYPE that holds <root>:/neutrino/neutrino.elf.
 // (Replaces the old device-INDEX enum mc0/mc1/mass0-7/mmce0/mmce1; legacy ints are migrated on load.)
-enum { NEUTRINO_DEV_AUTO = 0,     // game device, then mc0/mc1 (legacy behaviour)
-       NEUTRINO_DEV_MC,           // mc0: / mc1:
-       NEUTRINO_DEV_USB,          // BDM "usb"        -> the mounted massN:
-       NEUTRINO_DEV_MX4SIO,       // BDM "mx4sio"/sdc -> the mounted massN:
-       NEUTRINO_DEV_MMCE,         // mmce0: / mmce1:
-       NEUTRINO_DEV_EXFAT_HDD,    // BDM "ata" internal exFAT HDD -> the mounted massN:
-       NEUTRINO_DEV_APA_HDD,      // APA HDD: the mounted OPL data partition (pfs0:)
-       NEUTRINO_DEV_GAME };       // the active game's OWN device ONLY (co-located neutrino.elf); no MC/boot fallback (a miss toasts "not found"). Appended at the enum end to keep saved neutrino_devtype ints stable.
-extern int gNeutrinoDevice;       // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
-extern int gDefaultCoreLoader;    // global default Loader Core: 0 = <OPL> (native), 1 = Neutrino. A game's per-game $CoreLoader overrides it; absent per-game key = follow this global.
-extern int gNeutrinoElfArg;       // opt-in (settings key only, no UI): auto-emit -elf=cdrom0:\<startup>;1 on Neutrino launches
-extern char gPopstarterPath[256]; // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
-extern char gBootDir[256];        // boot directory (cwd) OPL launched from, e.g. "mass0:/APPS"; "" if undeterminable
-extern int gDeinitTerminal;       // 1 while deinit() runs for exit/poweroff, 0 for a game/app LAUNCH teardown.
-                                  // Launch teardown must NOT power shared buses down (dev9: the post-deinit
-                                  // POPSTARTER.ELF read comes off the ATA-backed massN: mount).
+enum { NEUTRINO_DEV_AUTO = 0,       // game device, then mc0/mc1 (legacy behaviour)
+       NEUTRINO_DEV_MC,             // mc0: / mc1:
+       NEUTRINO_DEV_USB,            // BDM "usb"        -> the mounted massN:
+       NEUTRINO_DEV_MX4SIO,         // BDM "mx4sio"/sdc -> the mounted massN:
+       NEUTRINO_DEV_MMCE,           // mmce0: / mmce1:
+       NEUTRINO_DEV_EXFAT_HDD,      // BDM "ata" internal exFAT HDD -> the mounted massN:
+       NEUTRINO_DEV_APA_HDD,        // APA HDD: the mounted OPL data partition (pfs0:)
+       NEUTRINO_DEV_GAME };         // the active game's OWN device ONLY (co-located neutrino.elf); no MC/boot fallback (a miss toasts "not found"). Appended at the enum end to keep saved neutrino_devtype ints stable.
+extern int gNeutrinoDevice;         // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy neutrino_path
+extern int gDefaultCoreLoader;      // global default Loader Core: 0 = <OPL> (native), 1 = Neutrino. A game's per-game $CoreLoader overrides it; absent per-game key = follow this global.
+extern int gNeutrinoVideoDefault;   // global default Neutrino -gsm video mode (0=Off..5=1080i x3, indices = system.c gsmVideoTokens). Per-game $NeutrinoVideo overrides; absent per-game key = follow this.
+extern int gNeutrinoGsmCompDefault; // global default -gsm ":c" field-flip half (0=off, 1-3=type); only emitted when the effective video mode is set.
+extern int gNeutrinoElfArg;         // opt-in (settings key only, no UI): auto-emit -elf=cdrom0:\<startup>;1 on Neutrino launches
+extern char gPopstarterPath[256];   // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
+extern char gBootDir[256];          // boot directory (cwd) OPL launched from, e.g. "mass0:/APPS"; "" if undeterminable
+extern int gDeinitTerminal;         // 1 while deinit() runs for exit/poweroff, 0 for a game/app LAUNCH teardown.
+                                    // Launch teardown must NOT power shared buses down (dev9: the post-deinit
+                                    // POPSTARTER.ELF read comes off the ATA-backed massN: mount).
 // POPSTARTER.ELF Device picker: where PS1 VCD launches load POPS/POPSTARTER.ELF from. Default tries the
 // boot device (cwd) then the VCD's own device; the 6 TYPEs force a device; Custom uses gPopstarterPath.
 enum { POPS_DEV_DEFAULT = 0,    // cwd (gBootDir) /POPS/, then the VCD's own device (back-compat fallback)

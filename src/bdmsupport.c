@@ -787,7 +787,10 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
 
     // Everything Neutrino actually needs from the config/device, copied to THIS stack frame
     // (deinit below frees configSet's owner + pDeviceData).
-    int compatmask = 0, neutrinoVideo = 0, neutrinoGsmComp = 0, neutrinoBsdfs = 0;
+    // Absent per-game $NeutrinoVideo/$NeutrinoGsmComp keys = follow the global defaults (the
+    // per-game picker's "Default" row removes the keys; explicit values -- including Off=0 --
+    // persist and override).
+    int compatmask = 0, neutrinoVideo = gNeutrinoVideoDefault, neutrinoGsmComp = gNeutrinoGsmCompDefault, neutrinoBsdfs = 0;
     char neutrinoExtraArgs[256] = "";
     neutrino_vmc_args_t neutrinoVmc = {0};
     char partname[256], bdmCurrentDriver[32];

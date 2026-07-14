@@ -70,7 +70,7 @@ settings:
 | `-gc=<modes>` | only if the game has OPL compatibility modes set |
 | `-dbc` | only if **Debug Colors** is enabled |
 | `-logo` | only if **PS2 Logo** is enabled |
-| `-gsm=<mode>` | only if a per-game **Neutrino Video** mode is set (Compatibility screen) |
+| `-gsm=<mode>` | only if a **Neutrino Video** mode resolves for the game (per-game picker, or the global **Settings → Neutrino Video** default when the per-game picker is "Default") |
 
 On top of those, you can pass **extra Neutrino flags** (e.g. media-type or video tweaks)
 in two places. Both are **appended after** the auto-built arguments; **global first, then
@@ -205,10 +205,20 @@ features — see the mapping below).
 
 When a game's core is **Neutrino**:
 - **Compatibility screen:** the **Neutrino Launch Args** field is editable, and a **Neutrino
-  Video** picker (Off / 240p / 480p / 1080i) appears beside it — it maps to Neutrino's `-gsm`
-  (`fp1` / `fp2` / `1080ix1`; Off emits nothing) and is the Neutrino-side stand-in for the hidden
-  OPL GSM panel. The picker is the *default*: a manual `-gsm` typed into **Launch Args** takes
-  precedence (OPL emits only one `-gsm`, since Neutrino aborts on a duplicate/malformed value).
+  Video** picker (Off / 240p / 480p / 1080i x1–x3 / Default) appears beside it — it maps to
+  Neutrino's `-gsm` (`fp1` / `fp2` / `1080ix1..3`; Off emits nothing) and is the Neutrino-side
+  stand-in for the hidden OPL GSM panel. **Default** follows the *global* Neutrino Video setting
+  in **Settings** (so you can force e.g. `-gsm=1080ix3` for every Neutrino game at once); an
+  explicit per-game value — including **Off** — overrides the global. The picker is the *default*
+  source of `-gsm`: a manual `-gsm` typed into **Launch Args** takes precedence (OPL emits only
+  one `-gsm`, since Neutrino aborts on a duplicate/malformed value).
+
+  > **The "1080p impression" trick:** on 1080-class displays, `1080i x3` (`-gsm=1080ix3`) is the
+  > community workaround for progressive-looking output — the same effect people previously got by
+  > launching Neutrino from PS2BBLE/OSDmenu with `-gsm=1080ix3`. Set it per game, or globally via
+  > **Settings → Neutrino Video** and leave games on "Default". (True 1080p does not exist in any
+  > OPL/GS mode table — the GS outputs `1080i`, and OPL's own UI lacks the VRAM for a 1080p
+  > framebuffer.)
   OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
   they're OPL ee-core features with **no Neutrino equivalent** (Neutrino has no in-game reset, and
   no PSS/BIK video-skip), so OPL never forwards them. **DL Defaults** is greyed too (it pulls

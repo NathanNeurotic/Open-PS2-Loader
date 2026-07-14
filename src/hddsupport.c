@@ -781,7 +781,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     }
 
     // Everything Neutrino needs, copied to THIS frame (deinit below frees `game`).
-    int compatMode = 0, neutrinoVideo = 0, neutrinoGsmComp = 0;
+    int compatMode = 0, neutrinoVideo = gNeutrinoVideoDefault, neutrinoGsmComp = gNeutrinoGsmCompDefault; // absent per-game keys = follow the globals
     char neutrinoExtraArgs[256] = "";
     char apaPart[APA_IDMAX + 1];
     configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatMode);

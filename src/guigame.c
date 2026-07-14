@@ -982,6 +982,12 @@ static int bsdfsDeviceCapable = 1;
 // would otherwise resolve to the global and un-grey them).
 static int coreNeverNeutrino = 0;
 
+// Appended "Default" (follow the global) enum indices for the per-game Neutrino Video / GSM-comp
+// pickers: values 0..5 / 0..3 persist 1:1 (system.c gsmVideoTokens); "Default" removes the key so
+// the launch legs fall back to gNeutrinoVideoDefault/gNeutrinoGsmCompDefault (Loader Core pattern).
+#define NEUTRINO_VIDEO_DEFAULT_IDX   6
+#define NEUTRINO_GSMCOMP_DEFAULT_IDX 4
+
 static void guiGameSetCoreAwareState(void)
 {
     int coreChoice = 0, neutrino = 0, neutrinoVideo = 0;
@@ -993,11 +999,15 @@ static void guiGameSetCoreAwareState(void)
     if (coreNeverNeutrino)
         neutrino = 0; // VCD (POPSTARTER-only): keep all Neutrino-only rows greyed regardless of the global
     diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, &neutrinoVideo);
+    // Resolve the "Default" row to the global it follows, so the comp-half grey below reflects the
+    // EFFECTIVE video mode (a game on "Default" with a non-Off global default has a live comp row).
+    if (neutrinoVideo == NEUTRINO_VIDEO_DEFAULT_IDX)
+        neutrinoVideo = gNeutrinoVideoDefault;
 
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_ARGS, neutrino);  // Neutrino-only field
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrino); // Neutrino-only -gsm video mode
     // The ":c" comp half is only ever emitted alongside a video mode (-gsm=v:c grammar), so it also
-    // greys while Neutrino Video is Off -- the updater re-runs this on every change, keeping it live.
+    // greys while the effective Neutrino Video is Off -- the updater re-runs this on every change.
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrino && neutrinoVideo != 0);
     // -bsdfs override: Neutrino-only AND block-backed-device-only (mmce/udpfs have no fs layer;
     // APA is always hdl). The launch side guards independently -- this grey is just honest UI.
@@ -1039,12 +1049,14 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     diaSetEnum(diaCompatConfig, COMPAT_LOADER, loaders);
 
     // Indices map 1:1 onto system.c's gsmVideoTokens (fp1/fp2/1080ix1/ix2/ix3) -- old configs
-    // stored 0-3, which keep their meaning; x2/x3 are APPENDED so persisted values stay stable.
-    const char *neutrinoVideoModes[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
+    // stored 0-3, which keep their meaning; x2/x3 and now "Default" are APPENDED so persisted
+    // values stay stable. "Default" (index NEUTRINO_VIDEO_DEFAULT_IDX) = no per-game key -> follow
+    // the global gNeutrinoVideoDefault, mirroring the Loader Core row's index-2 pattern.
+    const char *neutrinoVideoModes[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", _l(_STR_DEFAULT), NULL};
     diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideoModes);
     // The ":c" compatibility half of -gsm=v:c -- field-flipping interlace fixes for games that
-    // shake/tear under a forced mode. Ignored (not emitted) while Neutrino Video is Off.
-    const char *neutrinoGsmCompModes[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", NULL};
+    // shake/tear under a forced mode. Ignored (not emitted) while the effective video mode is Off.
+    const char *neutrinoGsmCompModes[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", _l(_STR_DEFAULT), NULL};
     diaSetEnum(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrinoGsmCompModes);
 
     // -bsdfs override (parity-audit #11). Indices map 1:1 onto system.c's bsdfsTokens; the value
@@ -1259,18 +1271,21 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     }
 
     {
-        int neutrinoVideo = 0;
+        // "Default" (appended index) removes the key -> the launch legs fall back to the global
+        // gNeutrinoVideoDefault. Explicit values persist -- INCLUDING 0 (Off), which used to
+        // remove the key too: an explicit per-game Off must now survive a non-Off global.
+        int neutrinoVideo = NEUTRINO_VIDEO_DEFAULT_IDX;
         diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, &neutrinoVideo);
-        if (neutrinoVideo != 0)
+        if (neutrinoVideo != NEUTRINO_VIDEO_DEFAULT_IDX)
             result = configSetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, neutrinoVideo);
         else
             configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_VIDEO);
     }
 
     {
-        int neutrinoGsmComp = 0;
+        int neutrinoGsmComp = NEUTRINO_GSMCOMP_DEFAULT_IDX;
         diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
-        if (neutrinoGsmComp != 0)
+        if (neutrinoGsmComp != NEUTRINO_GSMCOMP_DEFAULT_IDX)
             result = configSetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, neutrinoGsmComp);
         else
             configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP);
@@ -1717,15 +1732,17 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
     neutrinoArgs[0] = '\0';
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoArgs, sizeof(neutrinoArgs));
 
-    int neutrinoVideo = 0;
-    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
-    if (neutrinoVideo < 0 || neutrinoVideo > 5)
+    int neutrinoVideo;
+    if (!configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo))
+        neutrinoVideo = NEUTRINO_VIDEO_DEFAULT_IDX; // no per-game key -> "Default" (follow the global)
+    else if (neutrinoVideo < 0 || neutrinoVideo > 5)
         neutrinoVideo = 0; // sanitize a corrupt/out-of-range cfg value (valid: 0=Off .. 5=1080i x3)
     diaSetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, neutrinoVideo);
 
-    int neutrinoGsmComp = 0;
-    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
-    if (neutrinoGsmComp < 0 || neutrinoGsmComp > 3)
+    int neutrinoGsmComp;
+    if (!configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp))
+        neutrinoGsmComp = NEUTRINO_GSMCOMP_DEFAULT_IDX; // no per-game key -> "Default" (follow the global)
+    else if (neutrinoGsmComp < 0 || neutrinoGsmComp > 3)
         neutrinoGsmComp = 0; // sanitize (valid: 0=Off .. 3=field-flip type 3)
     diaSetInt(diaCompatConfig, COMPAT_NEUTRINO_GSMCOMP, neutrinoGsmComp);
 
