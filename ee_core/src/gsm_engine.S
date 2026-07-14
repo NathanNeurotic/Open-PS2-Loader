@@ -168,6 +168,7 @@ Hook_SetGsCrt:
  * Otherwise, call the original SetGsCrt() syscall handler and let it configure the GS for us.
  */
 
+#ifdef GSM_1080P                                    /* experimental 1080p variant build only */
     li      $a3, GS_MODE_DTV_1080P                  # 0x54 has NO ROM SetGsCrt case, so it is never
     bne     $a1, $a3, Chk_DTV_576P                  # native -- always route it to our own handler.
     nop
@@ -177,6 +178,7 @@ Hook_SetGsCrt:
     nop
 
 Chk_DTV_576P:
+#endif
     li      $a3, GS_MODE_DTV_576P
     la      $t0, GSMFlags
     bne     $a1, $a3, Call_SetGsCrt

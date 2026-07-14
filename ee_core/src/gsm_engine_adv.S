@@ -135,6 +135,9 @@ DTV576P_end:
 # SMODE1 write only -- an obvious bug (its other two SMODE1 writes do not), so that OR is dropped
 # here and all three writes are consistent. NOT hardware-validated in this fork -- gated behind a
 # triple-confirm + per-game opt-in + the Triangle+Cross 480p recovery combo.
+# Compiled ONLY into the dedicated GSM1080P=1 variant build (-DGSM_1080P); absent from every
+# default build so the untested raster code cannot ship in a mainline flavour.
+#ifdef GSM_1080P
 .ent DTV_1080P
 DTV_1080P:
     # $v0 = GS base address
@@ -230,6 +233,7 @@ DTV_1080P_delay:
     nop
 
 .end DTV_1080P
+#endif /* GSM_1080P */
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

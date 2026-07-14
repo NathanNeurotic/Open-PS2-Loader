@@ -415,10 +415,13 @@ void guiGameShowGSConfig(void)
         "VGA 1024x768p @85Hz",
         "VGA 1280x1024p @60Hz",
         "VGA 1280x1024p @75Hz",
-        // APPENDED last (index 29) to keep every existing $GSMVMode index pointing at the same mode;
-        // must stay 1:1 index-aligned with predef_vmode[] in src/gsm.c. Selecting it triggers the
-        // triple-confirm gate in the save path below (VMODE_1080P index).
+        // GSM1080P=1 variant only: APPENDED last (index 29) to keep every existing $GSMVMode index
+        // pointing at the same mode; stays 1:1 index-aligned with predef_vmode[] (gsm.c), which
+        // guards the matching row under the SAME #ifdef. Selecting it triggers the triple-confirm
+        // gate in the save path below.
+#ifdef GSM_1080P
         "HDTV 1080p @60Hz (EXPERIMENTAL)",
+#endif
         NULL};
     // clang-format on
 
@@ -993,8 +996,11 @@ static int coreNeverNeutrino = 0;
 #define NEUTRINO_GSMCOMP_DEFAULT_IDX 4
 
 // Index of the appended "HDTV 1080p @60Hz (EXPERIMENTAL)" entry in gsmvmodeNames[] / predef_vmode[]
-// (both 30 long, last index 29). Selecting it must clear a triple-confirm before it is saved.
+// (both 30 long, last index 29) -- only present in the GSM1080P=1 variant. Selecting it must clear
+// a triple-confirm before it is saved.
+#ifdef GSM_1080P
 #define GSM_VMODE_1080P_IDX 29
+#endif
 
 static void guiGameSetCoreAwareState(void)
 {
@@ -1182,10 +1188,12 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     diaGetInt(diaGSConfig, GSMCFG_GSMYOFFSET, &GSMYOffset);
     diaGetInt(diaGSConfig, GSMCFG_GSMFIELDFIX, &GSMFIELDFix);
 
+#ifdef GSM_1080P
     // 1080p is GSM-synthetic and hardware-unvalidated: force a THREE-STEP confirmation before it can
     // be committed. X continues / O cancels at each step; any cancel drops the selection back to 0
     // (Auto/off, which removes the per-game key) so 1080p is never persisted without deliberate
-    // consent. Only fires when the user actually chose 1080p AND left GSM enabled.
+    // consent. Only fires when the user actually chose 1080p AND left GSM enabled. (Only compiled
+    // into the GSM1080P=1 variant, the only build where the picker exposes the 1080p entry.)
     if (EnableGSM != 0 && GSMVMode == GSM_VMODE_1080P_IDX) {
         if (!guiMsgBox(_l(_STR_GSM_1080P_WARNING), 1, NULL) ||
             !guiMsgBox(_l(_STR_GSM_1080P_PROCEED), 1, NULL) ||
@@ -1194,6 +1202,7 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
             diaSetInt(diaGSConfig, GSMCFG_GSMVMODE, GSMVMode);
         }
     }
+#endif
 
     if (gGSMSource == SETTINGS_PERGAME) {
         result = configSetInt(configSet, CONFIG_ITEM_GSMSOURCE, gGSMSource);
