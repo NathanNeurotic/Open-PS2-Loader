@@ -267,9 +267,9 @@ Rules worth knowing:
 
 RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
 serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know (`devices=`,
-`reflection_offset`, `overlay2`, `plasma_blend_color`, the whole `favsMain*`/`vcdMain*` families…)
-are simply never read, and unknown element types (`Coverflow`) are skipped without stopping the
-parse. What to expect there:
+`reflection_offset`, `overlay2`, `plasma_blend_color`, the entire `favsMain*` and `vcdMain*`
+families…) are simply never read, and unknown element types (`Coverflow`) are skipped without
+stopping the parse. What to expect there:
 
 - **Invisible:** all pure-key extras above — regular OPL renders the theme as if they weren't
   written.
