@@ -951,39 +951,49 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
     }
 
     if (count > 0) {
-        int i;
+        // Folder browsing: emit in TWO passes -- folders first, then the games -- so folders always sit
+        // at the TOP of the list regardless of the Auto Sort setting. Each row keeps id=i (its array
+        // index), so favourites still resolve by id+text no matter the display order. Devices that never
+        // produce folder rows use a single pass, byte-for-byte the original behaviour. When Auto Sort is
+        // on, submenuSort's folder-first comparator keeps this grouping while sorting each group.
+        int passes = (gEnableFolderNav && folderMode) ? 2 : 1;
+        int pass, i;
 
-        for (i = 0; i < count; ++i) {
+        for (pass = 0; pass < passes; ++pass) {
+            for (i = 0; i < count; ++i) {
+                // Flag folder rows so the dispatch descends and the renderer marks them. Only the
+                // loose-file tree devices return base_game_info_t from itemGet, so gate on the mode.
+                int isFolderRow = 0;
+                if (folderMode && mdl->support->itemGet != NULL) {
+                    base_game_info_t *ginfo = (base_game_info_t *)mdl->support->itemGet(mdl->support, i);
+                    isFolderRow = (ginfo != NULL && ginfo->format == GAME_FORMAT_FOLDER);
+                }
+                // Pass 0 emits folders, pass 1 emits games (single-pass mode emits every row).
+                if (passes == 2 && ((pass == 0) != (isFolderRow != 0)))
+                    continue;
 
-            gup = guiOpCreate(GUI_OP_APPEND_MENU);
-            if (!gup) // OOM: skip this entry rather than deref NULL
-                continue;
+                gup = guiOpCreate(GUI_OP_APPEND_MENU);
+                if (!gup) // OOM: skip this entry rather than deref NULL
+                    continue;
 
-            gup->menu.menu = &mdl->menuItem;
-            gup->menu.subMenu = &mdl->subMenu;
+                gup->menu.menu = &mdl->menuItem;
+                gup->menu.subMenu = &mdl->subMenu;
 
-            // Folder browsing: flag folder rows so the dispatch descends and the renderer marks them.
-            // Only the loose-file tree devices return base_game_info_t from itemGet, so gate on the mode.
-            int isFolderRow = 0;
-            if (folderMode && mdl->support->itemGet != NULL) {
-                base_game_info_t *ginfo = (base_game_info_t *)mdl->support->itemGet(mdl->support, i);
-                isFolderRow = (ginfo != NULL && ginfo->format == GAME_FORMAT_FOLDER);
+                gup->submenu.icon_id = -1;
+                gup->submenu.id = i;
+                gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
+                gup->submenu.text_id = -1;
+                gup->submenu.selected = 0;
+                gup->submenu.owner = (void *)mdl->support; // producing list; Favourites proxies back to it
+                gup->submenu.isFolder = isFolderRow;
+
+                // Last-played auto-select never targets a folder row (its startup is empty).
+                if (gRememberLastPlayed && temp && !isFolderRow && strcmp(temp, mdl->support->itemGetStartup(mdl->support, i)) == 0) {
+                    gup->submenu.selected = 1; // Select Last Played Game
+                }
+
+                guiDeferUpdate(gup);
             }
-
-            gup->submenu.icon_id = -1;
-            gup->submenu.id = i;
-            gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
-            gup->submenu.text_id = -1;
-            gup->submenu.selected = 0;
-            gup->submenu.owner = (void *)mdl->support; // producing list; Favourites proxies back to it
-            gup->submenu.isFolder = isFolderRow;
-
-            // Last-played auto-select never targets a folder row (its startup is empty).
-            if (gRememberLastPlayed && temp && !isFolderRow && strcmp(temp, mdl->support->itemGetStartup(mdl->support, i)) == 0) {
-                gup->submenu.selected = 1; // Select Last Played Game
-            }
-
-            guiDeferUpdate(gup);
         }
     }
 

@@ -487,9 +487,14 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
 
     // temporary storage for the game names
     struct game_list_t *dlist_head = NULL;
-    // Folder rows (kept out of the games.bin cache). Only collected when folder browsing is on.
+    // Folder rows (kept out of the games.bin cache). Collected only when folder browsing is on AND the
+    // caller opted in by passing a non-NULL sub. A NULL sub is the opt-OUT signal for devices that do
+    // not participate in folder browsing (ETH/SMB, which uses a "\\" separator): without this gate a
+    // subdirectory in an SMB share would be listed as an ordinary, un-navigable, unlaunchable row on a
+    // device whose updateMenuFromGameList never flags it as a folder. The folder-capable callers
+    // (bdm/mmce/udpfs) always pass folderGetSub(mode), which is non-NULL ("" at the device root).
     struct game_list_t *folder_head = NULL;
-    struct game_list_t **folderlist = gEnableFolderNav ? &folder_head : NULL;
+    struct game_list_t **folderlist = (gEnableFolderNav && sub != NULL) ? &folder_head : NULL;
 
     // count iso games in "cd" directory (descending into the browse subpath when set)
     if (atRoot)
