@@ -667,6 +667,18 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
         return;
     }
 
+    // $CoreLoader honesty: SMB has no Neutrino launch leg (nothing here builds -bsd/-dvd args),
+    // so a per-game Neutrino selection -- or a Neutrino global default -- silently resolves to the
+    // OPL core. Toast once at launch instead of leaving the setting looking honored. Pre-deinit,
+    // so the toast renders; the launch then proceeds normally. Covers Favourites-origin launches
+    // too (they delegate to this leg), which the compat-dialog lock in guigame.c cannot reach.
+    {
+        int coreLoader = gDefaultCoreLoader;
+        configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+        if (coreLoader)
+            guiWarning(_l(_STR_NEUTRINO_SMB_FALLBACK), 6);
+    }
+
     char vmc_name[32];
     int vmc_id, size_mcemu_irx = 0;
     smb_vmc_infos_t smb_vmc_infos;

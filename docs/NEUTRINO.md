@@ -40,15 +40,15 @@ above; leave it blank to use the auto-detection (which also checks a few lowerca
 
 ### Where Neutrino works
 
-| Source | Neutrino? |
-|---|---|
-| USB / iLink / MX4SIO / internal ATA (BDM) | ✅ |
-| Internal HDD (APA → HDL) | ✅ |
-| MMCE | ✅ |
-| UDPFS (network boot — Files or Image) | ✅ **required** — no OPL core, Neutrino only (see §4) |
-| SMB / ETH | ❌ (falls back to `<OPL>`) |
-| USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) |
-| Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) |
+| Source | Neutrino? | VMC under Neutrino? |
+|---|---|---|
+| USB / iLink / MX4SIO / internal ATA (BDM) | ✅ | ✅ `-mcN=massN:…VMC/<name>.bin` |
+| Internal HDD (APA → HDL) | ✅ | ❌ **games boot, VMC is dropped with a warning** — Neutrino has no APA/pfs backing store to open the `.bin` from (NHDDL's HDL backend has the same no-VMC rule). The OPL core honors the same VMC normally. |
+| MMCE | ✅ | ✅ `-mcN=mmceN:/…VMC/<name>.bin` |
+| UDPFS (network boot — Files or Image) | ✅ **required** — no OPL core, Neutrino only (see §4) | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail |
+| SMB / ETH | ❌ (always launches with `<OPL>`; the core selector is locked and a stale Neutrino selection warns at launch) | n/a (OPL-core VMC works normally) |
+| USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) | n/a |
+| Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) | n/a |
 
 Unsupported cases fall back to the `<OPL>` core automatically with an on-screen warning.
 
@@ -218,8 +218,11 @@ When a game's core is **Neutrino**:
 - **GSM, Cheats, PADEMU, OSD Language** panels are OPL-core-only; opening one shows
   *"not used with the Neutrino core"* instead of editing dead options (use the Neutrino Video
   picker above for video forcing).
-- **VMC** and **Compatibility** stay available — both are honored under Neutrino (VMC via
-  `-mc0`/`-mc1` on block devices).
+- **VMC** and **Compatibility** stay available — both are honored under Neutrino. VMC becomes
+  discrete `-mc0`/`-mc1` args on **BDM devices (USB/iLink/MX4SIO/exFAT HDD/UDPBD), MMCE and
+  UDPFS**; the one exception is **APA HDD**, where no `-mc` args can be emitted (Neutrino has no
+  APA/pfs backing store — the game boots and OPL warns that the VMC was dropped). See the VMC
+  notes below.
 - **UDPFS games** (both Files and Image) have no OPL core backend, so the **Loader Core selector is
   locked to Neutrino** for them (they always launch via Neutrino regardless).
 
@@ -230,3 +233,28 @@ Args field and Neutrino Video picker are greyed (never read on the OPL path).
 > compat subset (`-gc`), VMC (`-mc0`/`-mc1`), `-logo`, and the free-text **Neutrino Launch
 > Args** (the catch-all for everything else, with `$`-disable). Cheats, GSM hacks, IGR/IGS,
 > PADEMU and OSD-language are OPL-embedded-core features with no Neutrino equivalent.
+
+### VMC under Neutrino — how it actually works
+
+OPL turns the per-game **VMC** settings (`$VMC_0`/`$VMC_1`) into discrete
+`-mcN=<device>:…VMC/<name>.bin` arguments — the same `.bin`, in the same `VMC/` folder, that the
+OPL core's mcemu uses, so one card serves both cores. Rules that follow from Neutrino's design
+(verified against `rickgaiser/neutrino` source):
+
+- **The `.bin` must already exist.** Neutrino opens it `O_RDWR` with no create, and **aborts the
+  whole boot** (black screen) if it can't. OPL therefore creates/format cards at *config* time
+  (the per-game VMC menu, via genvmc — including over UDPFS), and at *launch* verifies each card
+  and skips a missing one with a warning rather than handing Neutrino an unopenable path.
+- **The VMC must live on the same device as the game.** Neutrino loads exactly one backing-store
+  driver per launch and every virtual file (ISO + VMCs) shares it — a VMC on a different device
+  than the ISO is structurally unsupported. This is also why APA HDD can't have one: the game
+  comes from raw APA (`-bsd=ata -bsdfs=hdl`), and there is no pfs backend for the `.bin`.
+- **UDPFS VMCs are writable network files**: the card lives at `VMC/<name>.bin` under the PC
+  server's shared folder, and the server must not run in read-only mode or saves fail.
+- **Block devices share Neutrino's 64-fragment budget** across ISO + VMCs; OPL pre-counts and
+  falls back/aborts with a message when it can't fit (defragment the drive if you see it).
+- **Upstream caveats** (Neutrino's `mc_emu`, as of mid-2026): only **port 1 (`-mc0`) is actually
+  emulated** — `-mc1` is accepted and opened but the second port's emulation is left inactive —
+  and the advertised card geometry is hardcoded (8192 pages ≈ first 4 MB of the image addressed)
+  rather than read from the card file. Both are Neutrino-side behaviors, not OPL's; prefer slot 1
+  and 8 MB cards for predictable results.

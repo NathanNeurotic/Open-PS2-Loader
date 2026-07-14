@@ -1498,7 +1498,8 @@ void menuRenderGameMenu()
 // OSD-language settings (see docs/NEUTRINO.md), so opening those panels for a
 // Neutrino game would only edit dead options. Returns 1 when the selected game's
 // Loader Core is Neutrino. (VMC and Compatibility stay available -- both are
-// honored under Neutrino.)
+// honored under Neutrino, with one exception: APA HDD launches emit no -mc args,
+// because Neutrino has no APA/pfs backing store -- hddsupport toasts about it.)
 static int gameMenuCoreIsNeutrino(void)
 {
     int coreLoader = gDefaultCoreLoader; // no per-game $CoreLoader key -> follow the global default core
@@ -1507,10 +1508,12 @@ static int gameMenuCoreIsNeutrino(void)
     // VCD (PS1) games launch ONLY via POPSTARTER -- never Neutrino -- so a keyless VCD must not
     // inherit a Neutrino global default here, or its Cheats/GSM/OSD menu entries get blocked with
     // the wrong "not available under Neutrino" message (same exemption as the compat dialog's
-    // coreNeverNeutrino flag in guigame.c).
+    // coreNeverNeutrino flag in guigame.c). SMB is the same shape: ethsupport has no Neutrino
+    // launch leg, the effective core is always <OPL>, so its Cheats/GSM/PADEMU panels ARE live
+    // and must not grey under a Neutrino global default.
     if (selected_item != NULL && selected_item->item != NULL) {
         item_list_t *support = (item_list_t *)selected_item->item->userdata;
-        if (support != NULL && vcdViewActive(support->mode))
+        if (support != NULL && (vcdViewActive(support->mode) || support->mode == ETH_MODE))
             return 0;
     }
     // UDPBD games are Neutrino-only even while $CoreLoader is still its OPL default.
