@@ -18,6 +18,7 @@ ELFs and supporting files are published alongside it:
 | `RIPTOPL-<version>-PS2MAXSDK.ELF` | Bare loader, `ps2max/dev` (pinned) toolchain (**recommended #2**; in-app version ends `-PS2MAXSDK`). |
 | `RIPTOPL-<version>-PS2DEVLATESTSDK.ELF` | Bare loader, `ps2dev/ps2dev:latest` toolchain (bleeding-edge; in-app version ends `-PS2DEVLATESTSDK`; may not boot on all consoles). |
 | `RIPTOPL-<version>-<SDK>-ds5.ELF` | Same as the bare loader for each SDK flavour, **with DualSense (DS5 USB) pad support** compiled in (`DUALSENSE=1`). One per flavour (`-WOPLSDK-ds5` / `-PS2MAXSDK-ds5` / `-PS2DEVLATESTSDK-ds5`); same reliability order applies. The default builds keep DualSense OFF. Best-effort — a flavour's DS5 build may be absent if it failed that run. |
+| `RIPTOPL-<version>-PS2DEVLATESTSDK-1080p.ELF` | **Experimental** loader with the re-added forced-**1080p** GSM video mode compiled in (`GSM1080P=1`). **Latest-SDK flavour only** — the raster is hardware-unvalidated, so it is kept out of every other asset. Selecting 1080p in the per-game GSM picker requires clearing a **three-step confirmation**; the Triangle + Cross boot combo forces safe 480p if a display can't sync it. Best-effort. |
 | `RIPTOPL-<version>-src.zip` | Source snapshot to rebuild this exact commit. |
 | `SHA256SUMS.txt` | SHA256 of every published binary + the source snapshot. |
 | `IRX-MANIFEST*.txt` | SHA256 of every SDK-prebuilt IOP module each toolchain consumed (provenance for silent SDK-side driver swaps). |
