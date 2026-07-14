@@ -126,6 +126,7 @@ Every element block starts with `type=<ElementType>` (see §5). Most also accept
 | `font` | `0`…`15` | `0` | Font index (see §2). |
 | `reflection` | `0` / `1` | `0` | Draw a mirrored reflection beneath the element (used by `Coverflow`). |
 | `enabled` | `0` / `1` | `1` | Set `0` to skip the element without deleting the block. |
+| `devices` | name list | *(none)* | **This fork.** Show the element only on the listed device pages — honored by `MenuIcon`, `ItemsList` and `HintText` (ignored elsewhere). See §5 “Per-device placement”. |
 
 **Value tokens:** `POS_MID`, `DIM_INF` (above), and `#RRGGBB` for colors. `x`/`y` accept
 negative numbers for right/bottom-relative placement.
@@ -201,6 +202,66 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | Property | Used by | Notes |
 |---|---|---|
 | `decorator` | `ItemsList` | A `GameImage` pattern name to draw as per-row icons. |
+
+### Per-device placement (`devices=`) — *this fork*
+
+Normally one `MenuIcon`, one `ItemsList` and one `HintText` serve **every** device page, so they
+share a single position. `devices=` lets a theme place them differently per device: an element
+with the key draws **only** on the listed pages, and an unfiltered element of the same type
+automatically stands down there (no key needed on it), staying the default everywhere else.
+
+```ini
+# The shared icon spot, used by every page not claimed below.
+main3:
+type=MenuIcon
+x=POS_MID
+y=400
+
+# On the MMCE and APA-HDD pages, pin the icon top-right instead.
+main4:
+type=MenuIcon
+devices=mmce,hdd
+x=-40
+y=24
+```
+
+**Device names** (comma-separated, case-insensitive):
+
+| Name | Page |
+|---|---|
+| `usb` | USB mass storage (any slot) |
+| `ilink` | iLink / FireWire |
+| `mx4sio` | MX4SIO |
+| `hdd_bd` | Internal HDD, exFAT (BDM) |
+| `hdd` | Internal HDD, APA/PFS |
+| `eth` | Network (SMB) |
+| `smb` | Alias of `eth` |
+| `mmce` | MMCE / memory-card emulator |
+| `udpbd` | UDPBD network boot |
+| `udpfs` | UDPFS network boot |
+| `app` | The Apps tab |
+| `fav` | The Favourites tab |
+| `bdm` | The generic BDM page before its driver is identified (auto/manual start) |
+
+Rules worth knowing:
+
+- **Only `MenuIcon`, `ItemsList` and `HintText`** honor the key; on other element types it parses
+  but has no effect.
+- Matching follows the page's **visible device icon**, so a BDM page counts as `usb`/`mx4sio`/…
+  once its driver is identified, and as `bdm` before that. In the PS1/VCD (L3) view the page keeps
+  the device's identity — filters keep working there via the `vcdMain*` family.
+- A filtered `ItemsList` is an **override**: it does not consume one of the theme's ItemsList
+  slots (games/apps/favs/VCD, claimed in file order — see §1), and navigation/paging automatically
+  follows whichever list is drawn. Give it its own `x`/`y`/`height` (its row count comes from
+  `height`); `decorator=` works as usual.
+- **Keep one unfiltered `ItemsList`.** If *every* list in the theme carries `devices=`, OPL adds a
+  plain default list (373×316 at 42,42) on the pages nothing covers — navigation always needs a
+  list — and it won't match your layout.
+- Unknown device names are logged and skipped; if nothing valid remains, the element behaves as if
+  the key were absent (shared placement) rather than disappearing.
+- Two filtered elements of the same type may list different devices; listing the **same** device
+  twice draws both — that's an authoring error, not a picker.
+- Themes without the key are untouched — the filter only activates when `devices=` appears.
 
 ---
 

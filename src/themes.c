@@ -102,6 +102,143 @@ static const char *elementsType[ELEM_TYPE_COUNT] = {
     "GameCountText",
     "Coverflow"};
 
+// Per-device element filter (theme key devices=usb,hdd,... on MenuIcon/ItemsList/HintText) /////////////////////////////////
+//
+// Themer-facing device vocabulary, keyed to the SAME icon identity the MenuIcon renders
+// (menu->item->icon_id): BDM pages re-resolve it per detected driver at mount time (opl.c's
+// updateMenuFromGameList re-reads itemIconId), so a filter can never disagree with the visible
+// icon, and one 'usb' filter naturally covers every USB slot. 'bdm' names the generic
+// pre-mount/manual-start BDM page -- whose legacy TEXTURE name is literally "usb" (textures.c),
+// which is why this table must never be derived from texture names. 'vcd' is deliberately
+// absent: the L3 VCD view is an element FAMILY (vcdMain*), not a device; device filters keep
+// working inside the vcd family, where icon_id remains the device's.
+static const struct
+{
+    const char *name;
+    int iconId;
+} thmDeviceVocab[] = {
+    {"usb", USB_ICON},
+    {"ilink", ILINK_ICON},
+    {"mx4sio", MX4SIO_ICON},
+    {"hdd_bd", HDD_BD_ICON}, // internal exFAT (GPT/MBR) HDD via BDM
+    {"hdd", HDD_ICON},       // internal APA/PFS HDD
+    {"eth", ETH_ICON},
+    {"smb", ETH_ICON}, // alias: same page/icon as eth
+    {"mmce", MMCE_ICON},
+    {"udpbd", UDP_ICON},
+    {"udpfs", UDPFS_ICON},
+    {"app", APP_ICON},
+    {"fav", FAV_ICON},
+    {"bdm", BDM_ICON}, // generic/unidentified BDM page (pre-mount or manual-start)
+};
+#define THM_DEVICE_VOCAB_COUNT ((int)(sizeof(thmDeviceVocab) / sizeof(thmDeviceVocab[0])))
+
+// Parse a comma-separated devices= value into a vocab-index bitmask. Unknown names LOG and are
+// ignored (quiet suppresses that -- addGUIElem pre-checks the same value initBasic then parses
+// for real, and the warning should print once); an empty/unparseable value yields 0 = unfiltered,
+// so a typo degrades to the pre-existing shared-element behavior instead of hiding the element
+// everywhere. strtok_r, NOT strtok: theme loads run on the IO worker too (device NeedsUpdate ->
+// thmAddElements) and could interleave with a GUI-thread strtok (e.g. neutrinoArgsParse).
+static int thmParseDeviceList(const char *value, int quiet)
+{
+    int mask = 0;
+    char *buf;
+    char *tok;
+    char *saveptr;
+
+    if (value == NULL)
+        return 0;
+
+    buf = malloc(strlen(value) + 1);
+    if (buf == NULL)
+        return 0;
+    strcpy(buf, value);
+
+    for (tok = strtok_r(buf, ", \t", &saveptr); tok != NULL; tok = strtok_r(NULL, ", \t", &saveptr)) {
+        int i, hit = 0;
+        for (i = 0; i < THM_DEVICE_VOCAB_COUNT; i++) {
+            if (strcasecmp(tok, thmDeviceVocab[i].name) == 0) {
+                mask |= (1 << i);
+                hit = 1;
+                break;
+            }
+        }
+        if (!hit && !quiet)
+            LOG("THEMES devices=: unknown device name '%s' ignored\n", tok);
+    }
+    free(buf);
+    return mask;
+}
+
+// Does a vocab-index bitmask cover the given page icon? Matching is by icon id, so aliases
+// (smb/eth) and any future same-icon entries are free.
+static int thmDeviceMaskMatches(int mask, int iconId)
+{
+    int i;
+    if (mask == 0)
+        return 0;
+    for (i = 0; i < THM_DEVICE_VOCAB_COUNT; i++) {
+        if ((mask & (1 << i)) && thmDeviceVocab[i].iconId == iconId)
+            return 1;
+    }
+    return 0;
+}
+
+// Shared draw gate for MenuIcon/ItemsList/HintText: a FILTERED element draws only on its devices;
+// an UNFILTERED element skips the devices a filtered same-type sibling covers (deviceCoverage,
+// precomputed at theme load). Both fields zero -- every theme without the devices= key -- makes
+// this a no-op, preserving byte-identical behavior.
+static int thmElemSkipsDevice(const theme_element_t *elem, int iconId)
+{
+    if (elem->deviceFilter)
+        return !thmDeviceMaskMatches(elem->deviceFilter, iconId);
+    if (elem->deviceCoverage)
+        return thmDeviceMaskMatches(elem->deviceCoverage, iconId);
+    return 0;
+}
+
+// Nav-side twin of drawItemsList's gate: pick the FILTERED ItemsList that covers this page, else
+// the family's slot element (fallback). menusys assigns gTheme->itemsList through this so paging
+// math (displayedItems) always reads the exact element whose rows are on screen.
+theme_element_t *thmResolveItemsList(theme_elems_t *family, theme_element_t *fallback, int iconId)
+{
+    theme_element_t *elem;
+
+    if (family != NULL) {
+        for (elem = family->first; elem != NULL; elem = elem->next) {
+            if (elem->type == ELEM_TYPE_ITEMS_LIST && elem->deviceFilter && thmDeviceMaskMatches(elem->deviceFilter, iconId))
+                return elem;
+        }
+    }
+    return fallback;
+}
+
+// Precompute deviceCoverage per family: an UNFILTERED MenuIcon/ItemsList/HintText yields to
+// filtered same-type siblings on the devices they cover (the themer's per-device override wins
+// there; the unfiltered element stays the everywhere-else default). Runs once at theme load so the
+// per-frame gate never walks the family. Families with no devices= keys leave everything 0.
+static void thmComputeDeviceCoverage(theme_elems_t *elems)
+{
+    static const int filteredTypes[] = {ELEM_TYPE_MENU_ICON, ELEM_TYPE_ITEMS_LIST, ELEM_TYPE_HINT_TEXT};
+    unsigned int t;
+
+    for (t = 0; t < sizeof(filteredTypes) / sizeof(filteredTypes[0]); t++) {
+        int covered = 0;
+        theme_element_t *elem;
+
+        for (elem = elems->first; elem != NULL; elem = elem->next) {
+            if (elem->type == filteredTypes[t] && elem->deviceFilter)
+                covered |= elem->deviceFilter;
+        }
+        if (!covered)
+            continue;
+        for (elem = elems->first; elem != NULL; elem = elem->next) {
+            if (elem->type == filteredTypes[t] && !elem->deviceFilter)
+                elem->deviceCoverage = covered;
+        }
+    }
+}
+
 // Common functions for Text ////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void endMutableText(theme_element_t *elem)
@@ -1137,6 +1274,8 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     elem->type = type;
     elem->reflection = 0;
     elem->reflectionOffset = 0;
+    elem->deviceFilter = 0;   // malloc'd without memset: MUST be zeroed explicitly (0 = unfiltered)
+    elem->deviceCoverage = 0; // filled at validateGUIElems for unfiltered MenuIcon/ItemsList/HintText
     elem->extended = NULL;
     elem->drawElem = NULL;
     elem->endElem = &endBasic;
@@ -1231,6 +1370,11 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
         elem->reflectionOffset = intValue;
     }
 
+    // Optional per-device filter (MenuIcon/ItemsList/HintText consume it; harmless elsewhere).
+    snprintf(elemProp, sizeof(elemProp), "%s_devices", name);
+    if (configGetStr(themeConfig, elemProp, &temp))
+        elem->deviceFilter = thmParseDeviceList(temp, 0);
+
     return elem;
 }
 
@@ -1256,6 +1400,8 @@ static void initBackground(const char *themePath, config_set_t *themeConfig, the
 
 static void drawMenuIcon(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
+    if (thmElemSkipsDevice(elem, menu->item->icon_id))
+        return; // devices= filter: not this page's element
     GSTEXTURE *menuIconTex = thmGetTexture(menu->item->icon_id);
     if (menuIconTex && menuIconTex->Mem)
         rmDrawPixmap(menuIconTex, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
@@ -1323,6 +1469,11 @@ static void drawBDMIndex(struct menu_list *menu, struct submenu_list *item, conf
 
 static void drawItemsList(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
+    // devices= filter: the nav pointer (gTheme->itemsList) is resolved with the SAME matching rules
+    // (thmResolveItemsList), so the rows that draw are always the rows navigation counts.
+    if (thmElemSkipsDevice(elem, menu->item->icon_id))
+        return;
+
     if (item) {
         items_list_t *itemsList = (items_list_t *)elem->extended;
         item_list_t *list = menu->item->userdata;
@@ -1437,6 +1588,9 @@ static void drawItemText(struct menu_list *menu, struct submenu_list *item, conf
 
 static void drawHintText(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
+    if (thmElemSkipsDevice(elem, menu->item->icon_id))
+        return; // devices= filter: not this page's element
+
     menu_hint_item_t *hint = menu->item->hints;
     if (hint) {
         int x = elem->posX;
@@ -1488,7 +1642,12 @@ static void validateBackgroundElems(const char *themePath, config_set_t *themeCo
     }
 }
 
-static void validateItemsList(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *list, theme_elems_t *mainElems)
+// Returns the validated list -- the caller MUST store it back into the slot: when no list exists a
+// default one is created here, and before the write-back the slot stayed NULL while the default was
+// only chained for drawing, leaving gTheme->itemsList NULL (menusys derefs it without a check). That
+// was unreachable while every theme carried an unfiltered ItemsList; devices=-filtered ItemsLists
+// (which deliberately claim no slot) make it a one-key theme edit away.
+static theme_element_t *validateItemsList(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *list, theme_elems_t *mainElems)
 {
     if (list) {
         items_list_t *itemsList = (items_list_t *)list->extended;
@@ -1518,6 +1677,22 @@ static void validateItemsList(const char *themePath, config_set_t *themeConfig, 
         initItemsList(themePath, themeConfig, theme, list, "il", NULL);
         list->next = mainElems->first->next; // Position the itemsList as second element (right after the Background)
         mainElems->first->next = list;
+    }
+
+    return list;
+}
+
+// Run validateItemsList's decorator linking for devices=-FILTERED ItemsList elements: they claim no
+// slot, so the slot-based pass above never sees them -- without this their `decorator` string would
+// keep pointing into themeConfig (freed at the end of thmLoad) and the decorator image would never
+// link. Filtered lists are always non-NULL here, so this can never take the create-default branch.
+static void validateFilteredItemsLists(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *mainElems)
+{
+    theme_element_t *elem;
+
+    for (elem = mainElems->first; elem != NULL; elem = elem->next) {
+        if (elem->type == ELEM_TYPE_ITEMS_LIST && elem->deviceFilter)
+            validateItemsList(themePath, themeConfig, theme, elem, mainElems);
     }
 }
 
@@ -1731,11 +1906,40 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     validateBackgroundElems(themePath, themeConfig, theme, &theme->favsMainElems, &theme->favsInfoElems);
     validateBackgroundElems(themePath, themeConfig, theme, &theme->vcdMainElems, &theme->vcdInfoElems);
 
-    // 2. check we have a valid ItemsList element, and link its decorator to the target element
-    validateItemsList(themePath, themeConfig, theme, theme->gamesItemsList, &theme->mainElems);
-    validateItemsList(themePath, themeConfig, theme, theme->appsItemsList, &theme->appsMainElems);
-    validateItemsList(themePath, themeConfig, theme, theme->favsItemsList, &theme->favsMainElems);
-    validateItemsList(themePath, themeConfig, theme, theme->vcdItemsList, &theme->vcdMainElems);
+    // 2. check we have a valid ItemsList element, and link its decorator to the target element.
+    // Store the result back: validateItemsList may CREATE the default list, and a NULL slot is a
+    // menusys NULL deref (see the function comment).
+    theme->gamesItemsList = validateItemsList(themePath, themeConfig, theme, theme->gamesItemsList, &theme->mainElems);
+    theme->appsItemsList = validateItemsList(themePath, themeConfig, theme, theme->appsItemsList, &theme->appsMainElems);
+    theme->favsItemsList = validateItemsList(themePath, themeConfig, theme, theme->favsItemsList, &theme->favsMainElems);
+    theme->vcdItemsList = validateItemsList(themePath, themeConfig, theme, theme->vcdItemsList, &theme->vcdMainElems);
+
+    // devices=-filtered ItemsList overrides: link their decorators (they own no slot, so the pass
+    // above never reaches them). Info families too -- a filtered ItemsList can be declared there
+    // and its decorator string must not be left pointing into themeConfig (freed at end of load).
+    // NOTE: filtered decorators are NOT cache-split/exempted below (splitDecoratorCoverCache /
+    // clampSelectedCoverCaches walk the four slot lists only); a filtered list with its own COV
+    // decorator just loses idle-time priming (pop-in), nothing worse.
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->mainElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->infoElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->appsMainElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->appsInfoElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->favsMainElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->favsInfoElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->vcdMainElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->vcdInfoElems);
+
+    // ...then precompute the unfiltered elements' coverage so an unfiltered MenuIcon/ItemsList/
+    // HintText yields to filtered same-type siblings on the devices those cover. Must run AFTER the
+    // slot pass: the auto-created default list needs its coverage too.
+    thmComputeDeviceCoverage(&theme->mainElems);
+    thmComputeDeviceCoverage(&theme->infoElems);
+    thmComputeDeviceCoverage(&theme->appsMainElems);
+    thmComputeDeviceCoverage(&theme->appsInfoElems);
+    thmComputeDeviceCoverage(&theme->favsMainElems);
+    thmComputeDeviceCoverage(&theme->favsInfoElems);
+    thmComputeDeviceCoverage(&theme->vcdMainElems);
+    thmComputeDeviceCoverage(&theme->vcdInfoElems);
 
     // Items-list decorator covers need their own cache; sharing with selected covers defeats MMCE cover clamping.
     splitDecoratorCoverCache(theme, theme->gamesItemsList);
@@ -1804,7 +2008,22 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_MENU_TEXT, screenWidth >> 1, 20, ALIGN_CENTER, 200, 20, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                 elem->drawElem = &drawMenuText;
             } else if (!strcmp(elementsType[ELEM_TYPE_ITEMS_LIST], type)) {
-                if (!theme->gamesItemsList) {
+                // A devices=-filtered ItemsList is a per-device OVERRIDE: it joins its family's
+                // draw list but must NOT claim one of the four global nav slots below (games/apps/
+                // favs/vcd are claimed in strict parse order; a filtered element in that chain
+                // would corrupt the family-to-slot mapping and could silently drop later lists).
+                // Navigation resolves it per page via thmResolveItemsList instead.
+                char devProp[64];
+                const char *devValue;
+                snprintf(devProp, sizeof(devProp), "%s_devices", name);
+                if (configGetStr(themeConfig, devProp, &devValue) && thmParseDeviceList(devValue, 1 /* initBasic re-parses and logs */) != 0) {
+                    elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 42, 42, ALIGN_NONE, 400, 360, SCALING_RATIO, theme->textColor, theme->fonts[0]);
+                    initItemsList(themePath, themeConfig, theme, elem, name, NULL);
+                    // Pre-existing quirk kept as-is: an UNFILTERED ItemsList parsed for an INFO
+                    // family still claims the next nav slot below (thmLoad's info loops run after
+                    // the main ones). Refusing info-family claims here would change behavior for
+                    // themes that rely on it.
+                } else if (!theme->gamesItemsList) {
                     elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 0, 0, ALIGN_NONE, DIM_UNDEF, DIM_UNDEF, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                     initItemsList(themePath, themeConfig, theme, elem, name, NULL);
                     theme->gamesItemsList = elem;
