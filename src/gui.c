@@ -807,11 +807,12 @@ static int guiUIUpdater(int modified)
     return 0;
 }
 
-// Deep-copy a NULL-terminated name list under guiLock, for handing to diaSetEnum: the source
-// lists (thmGetGuiList/lngGetGuiList) live on the heap and are freed+rebuilt on the IO worker
-// (thmRebuildGuiNames/lngRebuildLangNames; thmReinit also frees the theme NAME strings on device
-// removal) -- the rebuilders take guiLock around the mutation, so copying under the same lock
-// makes the copy race-free. Returns NULL on OOM (caller falls back to the live list).
+// Deep-copy a NULL-terminated name list for handing to diaSetEnum. The CALLER must hold guiLock
+// across BOTH the getter fetch (thmGetGuiList/lngGetGuiList) and this copy: the source lists live
+// on the heap and are freed+rebuilt under guiLock on the IO worker (thmRebuildGuiNames/
+// lngRebuildLangNames; thmReinit also frees the theme NAME strings on device removal), and taking
+// the lock only inside this function left a preemption window between fetching the pointer and
+// locking (Gemini review of #165). Returns NULL on OOM (caller falls back to the live list).
 static const char **guiCopyNameList(const char **src)
 {
     int n = 0, i;
@@ -820,7 +821,6 @@ static const char **guiCopyNameList(const char **src)
     if (src == NULL)
         return NULL;
 
-    guiLock();
     while (src[n] != NULL)
         n++;
     copy = (const char **)malloc((n + 1) * sizeof(char *));
@@ -840,7 +840,6 @@ static const char **guiCopyNameList(const char **src)
         if (copy != NULL)
             copy[n] = NULL;
     }
-    guiUnlock();
     return copy;
 }
 
@@ -897,8 +896,10 @@ reselect_video_mode:
     // the live list -- the pre-existing narrow race, not a new failure mode.
     guiFreeNameList(themeNamesSnap);
     guiFreeNameList(langNamesSnap);
+    guiLock(); // must cover the getter FETCH too, not just the copy (Gemini review of #165)
     themeNamesSnap = guiCopyNameList((const char **)thmGetGuiList());
     langNamesSnap = guiCopyNameList((const char **)lngGetGuiList());
+    guiUnlock();
     diaSetEnum(diaUIConfig, UICFG_THEME, themeNamesSnap != NULL ? themeNamesSnap : (const char **)thmGetGuiList());
     diaSetEnum(diaUIConfig, UICFG_LANG, langNamesSnap != NULL ? langNamesSnap : (const char **)lngGetGuiList());
     diaSetEnum(diaUIConfig, UICFG_VMODE, vmodeNames);
