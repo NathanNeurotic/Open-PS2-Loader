@@ -760,6 +760,12 @@
   "url": "themes.html#per-device-placement"
  },
  {
+  "title": "Using RiptOPL themes on regular OPL",
+  "cat": "themes",
+  "text": "Dual-compatibility rules: fork keys are invisible on regular OPL, devices= layouts draw overlapped (RiptOPL-only in practice), and the one hard rule -- always include one plain unfiltered ItemsList, or regular OPL crashes on the first scroll (latent upstream bug RiptOPL fixed).",
+  "url": "themes.html#regular-opl-compat"
+ },
+ {
   "title": "Settings Reference",
   "cat": "reference",
   "text": "Every settings menu and option in RiptOPL, grouped by screen: General Settings, Device Settings, Display Settings, Audio, Controller, OSD, Parental Lock, and Network.",

@@ -310,6 +310,28 @@ twice draws both — that's an authoring error, not a picker.</li>
 appears.</li>
 </ul>
 
+<h3 id="regular-opl-compat">Using RiptOPL themes on regular OPL</h3>
+<p>RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
+serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know
+(<code>devices=</code>, <code>reflection_offset</code>, <code>overlay2</code>,
+<code>plasma_blend_color</code>, the whole <code>favsMain*</code>/<code>vcdMain*</code> families…) are
+simply never read, and unknown element types (<code>Coverflow</code>) are skipped without stopping the
+parse. What to expect there:</p>
+<ul>
+<li><b>Invisible:</b> all pure-key extras above — regular OPL renders the theme as if they weren't
+written.</li>
+<li><b>Cosmetic:</b> <code>aligned=2</code> renders centered; <code>#Size</code>/<code>#DiscType</code>/<code>#System</code>
+attributes and the Coverflow carousel are silently absent.</li>
+<li><b>Ugly but harmless:</b> <code>devices=</code> layouts — regular OPL draws <em>every</em>
+<code>MenuIcon</code>/<code>HintText</code> block on <em>every</em> page (overlapping), and treats a
+second <code>ItemsList</code> as the apps list while still drawing it on the games screen. Per-device
+layouts are effectively RiptOPL-only.</li>
+<li><b>⚠ The one rule:</b> <b>always include one plain (unfiltered) <code>ItemsList</code></b>. A theme
+with none — e.g. a Coverflow-only theme, or one where every list carries <code>devices=</code> —
+<em>crashes regular OPL on the first scroll</em> (a latent upstream bug in its default-list repair;
+RiptOPL fixed it on our side). Ship the plain list and the theme is safe everywhere.</li>
+</ul>
+
 <h2 id="image-overlay">6 · Image &amp; overlay properties (incl. the two-layer system)</h2>
 <p>Image-type elements (<code>StaticImage</code>, <code>GameImage</code>, <code>Background</code>,
 <code>AttributeImage</code>, <code>ItemCover</code>, <code>Coverflow</code>) add these:</p>
