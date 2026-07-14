@@ -1707,6 +1707,30 @@ static int isDecoratorCoverCache(theme_element_t *list, image_cache_t *cache)
     return itemsList->decoratorImage != NULL && itemsList->decoratorImage->cache == cache;
 }
 
+// devices=-filtered ItemsLists own no slot, so the four slot checks in isDecoratorCoverImage never
+// see their decorators. Recognizing them here is the CASCADE KILLER for the filtered-decorator
+// cache split below: without it, each split's replaceSharedCoverCache treats another filtered
+// list's decorator as a plain selected cover and re-points it, so repeated splits keep cloning.
+// Walks all 8 families; keys off elem->deviceFilter (0 for every element of a devices=-free theme,
+// so such themes take zero new branches).
+static int isFilteredDecoratorCoverImage(theme_t *theme, mutable_image_t *gameImage)
+{
+    theme_elems_t *groups[8] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems,
+                                &theme->favsMainElems, &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems};
+    int g;
+
+    for (g = 0; g < 8; g++) {
+        theme_element_t *e = groups[g]->first;
+        while (e != NULL) {
+            if (e->type == ELEM_TYPE_ITEMS_LIST && e->deviceFilter && e->extended != NULL &&
+                ((items_list_t *)e->extended)->decoratorImage == gameImage)
+                return 1;
+            e = e->next;
+        }
+    }
+    return 0;
+}
+
 static int isDecoratorCoverImage(theme_t *theme, mutable_image_t *gameImage)
 {
     items_list_t *itemsList;
@@ -1738,7 +1762,7 @@ static int isDecoratorCoverImage(theme_t *theme, mutable_image_t *gameImage)
             return 1;
     }
 
-    return 0;
+    return isFilteredDecoratorCoverImage(theme, gameImage);
 }
 
 static image_cache_t *cloneImageCache(theme_t *theme, image_cache_t *source)
@@ -1814,6 +1838,48 @@ static void splitDecoratorCoverCache(theme_t *theme, theme_element_t *list)
         cacheDestroyCache(replacementCache);
 }
 
+// Run the decorator/selected-cover split for every devices=-filtered ItemsList (they own no slot,
+// so the four slot calls in validateGUIElems never reach them). splitDecoratorCoverCache's own
+// guards (NULL extended/decoratorImage, non-COV suffix, destroy-unassigned-clone) make repeat
+// calls per shared source cache a no-op -- see the non-cascade note at the call site.
+static void splitFilteredDecoratorCoverCaches(theme_t *theme)
+{
+    int g;
+
+    if (theme == NULL)
+        return;
+
+    theme_elems_t *groups[8] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems,
+                                &theme->favsMainElems, &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems};
+    for (g = 0; g < 8; g++) {
+        theme_element_t *e = groups[g]->first;
+        while (e != NULL) {
+            if (e->type == ELEM_TYPE_ITEMS_LIST && e->deviceFilter)
+                splitDecoratorCoverCache(theme, e);
+            e = e->next;
+        }
+    }
+}
+
+// Cache-based twin of isFilteredDecoratorCoverImage for the clamp below: true when `cache` backs a
+// devices=-filtered ItemsList's decorator in ANY family. Zero-cost for devices=-free themes.
+static int isFilteredDecoratorCoverCache(theme_t *theme, image_cache_t *cache)
+{
+    theme_elems_t *groups[8] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems,
+                                &theme->favsMainElems, &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems};
+    int g;
+
+    for (g = 0; g < 8; g++) {
+        theme_element_t *e = groups[g]->first;
+        while (e != NULL) {
+            if (e->type == ELEM_TYPE_ITEMS_LIST && e->deviceFilter && isDecoratorCoverCache(e, cache))
+                return 1;
+            e = e->next;
+        }
+    }
+    return 0;
+}
+
 static void clampSelectedCoverCaches(theme_t *theme, theme_elems_t *elems)
 {
     theme_element_t *elem = elems->first;
@@ -1824,7 +1890,8 @@ static void clampSelectedCoverCaches(theme_t *theme, theme_elems_t *elems)
 
             if (gameImage != NULL && gameImage->cache != NULL && gameImage->cache->suffix != NULL && strcmp(gameImage->cache->suffix, "COV") == 0 &&
                 !isDecoratorCoverCache(theme->gamesItemsList, gameImage->cache) && !isDecoratorCoverCache(theme->appsItemsList, gameImage->cache) &&
-                !isDecoratorCoverCache(theme->favsItemsList, gameImage->cache) && !isDecoratorCoverCache(theme->vcdItemsList, gameImage->cache)) {
+                !isDecoratorCoverCache(theme->favsItemsList, gameImage->cache) && !isDecoratorCoverCache(theme->vcdItemsList, gameImage->cache) &&
+                !isFilteredDecoratorCoverCache(theme, gameImage->cache)) {
                 gameImage->cache->allowPrime = 0;
             }
         }
@@ -1917,9 +1984,9 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     // devices=-filtered ItemsList overrides: link their decorators (they own no slot, so the pass
     // above never reaches them). Info families too -- a filtered ItemsList can be declared there
     // and its decorator string must not be left pointing into themeConfig (freed at end of load).
-    // NOTE: filtered decorators are NOT cache-split/exempted below (splitDecoratorCoverCache /
-    // clampSelectedCoverCaches walk the four slot lists only); a filtered list with its own COV
-    // decorator just loses idle-time priming (pop-in), nothing worse.
+    // Their decorators are ALSO cache-split (splitFilteredDecoratorCoverCaches below) and
+    // clamp-exempt (isFilteredDecoratorCoverCache), the same treatment the slot lists get --
+    // isDecoratorCoverImage recognizes them, which is what keeps repeated splits from cascading.
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->mainElems);
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->infoElems);
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->appsMainElems);
@@ -1946,6 +2013,12 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     splitDecoratorCoverCache(theme, theme->appsItemsList);
     splitDecoratorCoverCache(theme, theme->favsItemsList);
     splitDecoratorCoverCache(theme, theme->vcdItemsList);
+
+    // devices=-filtered lists' decorators get the same split. Safe to repeat per list: with
+    // isDecoratorCoverImage recognizing every decorator (filtered included), a split's
+    // replaceSharedCoverCache can never re-point another list's decorator, so after the first
+    // effective clone per source cache the later calls find no sharers and destroy their clone.
+    splitFilteredDecoratorCoverCaches(theme);
 
     // The L3 VCD view reuses the device's own game list (same item ids), so its selected/carousel covers
     // must not share a COV cache with the ISO list -- otherwise toggling thrashes the same cache slots.

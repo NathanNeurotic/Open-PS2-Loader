@@ -35,6 +35,18 @@ cheat_entry_t *gCheats = NULL;        // lazily allocated in load_cheats (~1.03 
 static int gEnableImage;           // Prebuilt PS2RD cheat image (.img) - 0 Off, 1 On
 static u32 gImage[MAX_IMAGEWORDS]; // The loaded .img patch words (zeroed when none/failed)
 
+// Release the lazily-allocated ~1.03 MB cheat table (see ensureCheatTable). Every reader is
+// NULL-guarded (the cheat-selection menu and set_cheats_list), and the launch handoff never
+// references gCheats -- set_cheats_list flattens it into the small static gCheatList that
+// ee_core reads in-place, so freeing between launches is safe.
+static void freeCheatTable(void)
+{
+    if (gCheats != NULL) {
+        free(gCheats);
+        gCheats = NULL;
+    }
+}
+
 void InitCheatsConfig(config_set_t *configSet)
 {
     config_set_t *configGame = configGetByType(CONFIG_GAME);
@@ -57,6 +69,13 @@ void InitCheatsConfig(config_set_t *configSet)
         }
         configGetInt(configGame, CONFIG_ITEM_ENABLEIMAGE, &gEnableImage);
     }
+
+    // Cheats OFF for this launch: reclaim the ~1 MB table a previous cheats-ON launch may have
+    // left behind (it only survives OPL at all when that launch FAILED back to the GUI -- a
+    // successful launch hands off to ExecPS2). This runs in per-launch settings prep BEFORE any
+    // sbLoadCheats of the same launch, so a cheats-ON launch never sees a freed table.
+    if (!gEnableCheat)
+        freeCheatTable();
 }
 
 int GetCheatsEnabled(void)

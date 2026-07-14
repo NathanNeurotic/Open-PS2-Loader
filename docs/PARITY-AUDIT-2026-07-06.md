@@ -153,7 +153,13 @@ RiptOPL is at or ahead of parity across wOPL, NHDDL, upstream OPL, and the ps2-m
 
 ## 7. Prioritized "fill the gaps" work queue
 
-Ranked by user-visible payoff ÷ effort, black-screen / data-loss risks first. **Corrected** against the fork's own `docs/NEUTRINO-PARITY-2026-07-05.md` and the two hand-verifications above.
+Ranked by user-visible payoff ÷ effort, black-screen / data-loss risks first.
+
+> **Status (2026-07-14): this queue is DRAINED.** Items 1, 2, 3, 5, 8, 9, 10, 11 shipped across the
+> Δ-series and the core-aware-settings/DS5/bsdfs work; item 4 (gCheats lazy alloc) shipped in the
+> cht.tar PR (`ensureCheatTable`, f7546100) plus a free-on-disable hook; item 6 (480p recovery)
+> shipped as ef91674d; item 7 (RTC last-played) is **retracted** — `CONFIG_LAST` is a single
+> global store, so last-write-wins already IS newest-wins (do not resurrect this row again). **Corrected** against the fork's own `docs/NEUTRINO-PARITY-2026-07-05.md` and the two hand-verifications above.
 
 | # | Item | Why | Sev | Effort | Where |
 |---|------|-----|-----|--------|-------|
