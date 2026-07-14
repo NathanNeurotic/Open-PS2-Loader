@@ -213,7 +213,7 @@ DTV_1080P_syncv:
 DTV_1080P_delay:
     vnop
     vnop
-    addiu   $v1, 0xFFFF
+    addiu   $v1, $v1, -1                   # explicit 3-operand form (matches the rest of this file)
     vnop
     vnop
     bnez    $v1, DTV_1080P_delay
