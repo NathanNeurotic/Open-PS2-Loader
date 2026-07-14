@@ -104,6 +104,12 @@ This build layers several features on top of upstream OPL:
   cover count, and aspect-correct covers in both 4:3 and widescreen. Tune it live under
   **Coverflow Settings** (shown while the Coverflow theme is active). Authoring details
   and every theme value live in the **[Theme Engine reference](docs/THEME_ENGINE.md)**.
+- **Per-device theme placement (`devices=`):** themes can position the device icon, the games
+  list and the button hints **differently per device page** (e.g. pin the MMCE icon top-right
+  while every other page keeps the shared spot). Add `devices=usb,hdd,…` to a `MenuIcon`,
+  `ItemsList` or `HintText` block; the unfiltered element automatically stands down on the pages
+  a filtered one covers. Existing themes are untouched. See
+  **[Theme Engine reference §5](docs/THEME_ENGINE.md#per-device-placement-devices--this-fork)**.
 - **Cover-art `.tar` archive (opt-in):** keep all of a device's covers in a single uncompressed
   **`ART/art.tar`** (entries named `<GAMEID>_<suffix>.png`; VCD entries first use the filename without
   `.VCD`, or the displayed `PP.<name>` / `__.<name>` install name, then fall back to a parsed PS1 ID)

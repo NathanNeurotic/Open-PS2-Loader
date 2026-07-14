@@ -88,6 +88,13 @@ typedef struct theme_element
     int font;
     int reflection;
     int reflectionOffset; // Coverflow: vertical px shift of the mirror (theme key reflection_offset; -up / +down)
+    // Per-device element filter (theme key devices=usb,hdd,...): bitmask over the thmDeviceVocab
+    // table indices in themes.c. 0 = unfiltered (the pre-existing behavior). deviceCoverage is
+    // filled at theme-load validation for UNFILTERED MenuIcon/ItemsList/HintText elements: the
+    // union of their family's filtered same-type masks, so an unfiltered element can skip the
+    // devices a filtered sibling covers without needing to know its family at draw time.
+    int deviceFilter;
+    int deviceCoverage;
 
     void *extended;
 
@@ -171,6 +178,11 @@ int thmAddElements(char *path, const char *separator, int forceRefresh);
 const char *thmGetValue(void);
 GSTEXTURE *thmGetTexture(unsigned int id);
 void thmEnd(void);
+
+// Per-device ItemsList resolution (theme key devices=): returns the first ItemsList element in the
+// family whose device filter matches iconId, else the given fallback -- so navigation math and the
+// drawn rows always agree. fallback must follow the existing never-NULL slot chain.
+theme_element_t *thmResolveItemsList(theme_elems_t *family, theme_element_t *fallback, int iconId);
 
 // Indices are shifted in GUI, as we add the internal default theme at 0
 int thmSetGuiValue(int themeID, int reload);

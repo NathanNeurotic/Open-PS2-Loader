@@ -1272,7 +1272,7 @@ void menuRenderMain(void)
         // when the theme defines no 4th ItemsList (never NULL). This also covers the Favourites tab's
         // own VCD view (its L3 toggle): VCD favourites render with the PS1 family, not the favs family.
         menuRenderElements(&gTheme->vcdMainElems, allowItemConfig, renderConfig);
-        gTheme->itemsList = gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList;
+        gTheme->itemsList = thmResolveItemsList(&gTheme->vcdMainElems, gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList, selected_item->item->icon_id);
     } else if (list->mode == FAV_MODE) {
         // Favourites (ISO view) render with the theme's favs family (favsMain*); falls back to the game
         // elements when the theme defines no favsMain override.
@@ -1280,13 +1280,15 @@ void menuRenderMain(void)
         // Fall back to the games list (the slot every real theme populates -- the 1st/only ItemsList)
         // when the theme defines no favs/apps/vcd ItemsList, so gTheme->itemsList stays set: the
         // scroll/paging code (menuNextV/PrevV/Page) derefs gTheme->itemsList->extended without a NULL check.
-        gTheme->itemsList = gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList;
+        // thmResolveItemsList overrides the slot with a devices=-filtered ItemsList when one covers this
+        // page's device icon -- the same rule drawItemsList gates on, so paging math matches the drawn rows.
+        gTheme->itemsList = thmResolveItemsList(&gTheme->favsMainElems, gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList, selected_item->item->icon_id);
     } else if (list->mode == APP_MODE) {
         menuRenderElements(&gTheme->appsMainElems, allowItemConfig, renderConfig);
-        gTheme->itemsList = gTheme->appsItemsList ? gTheme->appsItemsList : gTheme->gamesItemsList;
+        gTheme->itemsList = thmResolveItemsList(&gTheme->appsMainElems, gTheme->appsItemsList ? gTheme->appsItemsList : gTheme->gamesItemsList, selected_item->item->icon_id);
     } else {
         menuRenderElements(&gTheme->mainElems, allowItemConfig, renderConfig);
-        gTheme->itemsList = gTheme->gamesItemsList;
+        gTheme->itemsList = thmResolveItemsList(&gTheme->mainElems, gTheme->gamesItemsList, selected_item->item->icon_id);
     }
 }
 
@@ -1398,13 +1400,15 @@ void menuRenderInfo(void)
     if (vcdViewActive(list->mode)) {
         // The VCD list uses vcdItemsList (its own cover cache); falls back to the games list when
         // absent so itemsList is never NULL. Also covers the Favourites tab's VCD view (L3 toggle).
-        gTheme->itemsList = gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList;
+        // Resolution goes through thmResolveItemsList against the MAIN family (info families define
+        // no lists): paging on the info screen must count the rows of the list the MAIN screen drew.
+        gTheme->itemsList = thmResolveItemsList(&gTheme->vcdMainElems, gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList, selected_item->item->icon_id);
     } else if (list->mode == FAV_MODE) {
-        gTheme->itemsList = gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList;
+        gTheme->itemsList = thmResolveItemsList(&gTheme->favsMainElems, gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList, selected_item->item->icon_id);
     } else if (list->mode == APP_MODE) {
-        gTheme->itemsList = gTheme->appsItemsList ? gTheme->appsItemsList : gTheme->gamesItemsList;
+        gTheme->itemsList = thmResolveItemsList(&gTheme->appsMainElems, gTheme->appsItemsList ? gTheme->appsItemsList : gTheme->gamesItemsList, selected_item->item->icon_id);
     } else {
-        gTheme->itemsList = gTheme->gamesItemsList;
+        gTheme->itemsList = thmResolveItemsList(&gTheme->mainElems, gTheme->gamesItemsList, selected_item->item->icon_id);
     }
 }
 
