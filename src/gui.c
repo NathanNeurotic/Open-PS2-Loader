@@ -45,7 +45,7 @@ static int gInitComplete;
 static gui_callback_t gFrameHook;
 
 static s32 gSemaId;
-static s32 gGUILockSemaId;
+static s32 gGUILockSemaId = -1; // -1 = not created yet (guiLock/guiUnlock no-op; see guiLock)
 static ee_sema_t gQueueSema;
 
 static int screenWidth;
@@ -190,15 +190,23 @@ void guiEnd()
 
     DeleteSema(gSemaId);
     DeleteSema(gGUILockSemaId);
+    gGUILockSemaId = -1; // post-shutdown callers no-op instead of waiting on a deleted id
 }
 
 void guiLock(void)
 {
+    // Not-ready guard: lngInit/thmInit rebuild the GUI name lists BEFORE guiInit creates this
+    // semaphore (opl.c init order), and everything is single-threaded until the GUI/IO threads
+    // exist -- a no-op lock is correct there, and WaitSema on id 0/garbage is not.
+    if (gGUILockSemaId < 0)
+        return;
     WaitSema(gGUILockSemaId);
 }
 
 void guiUnlock(void)
 {
+    if (gGUILockSemaId < 0)
+        return;
     SignalSema(gGUILockSemaId);
 }
 
@@ -799,12 +807,62 @@ static int guiUIUpdater(int modified)
     return 0;
 }
 
+// Deep-copy a NULL-terminated name list for handing to diaSetEnum. The CALLER must hold guiLock
+// across BOTH the getter fetch (thmGetGuiList/lngGetGuiList) and this copy: the source lists live
+// on the heap and are freed+rebuilt under guiLock on the IO worker (thmRebuildGuiNames/
+// lngRebuildLangNames; thmReinit also frees the theme NAME strings on device removal), and taking
+// the lock only inside this function left a preemption window between fetching the pointer and
+// locking (Gemini review of #165). Returns NULL on OOM (caller falls back to the live list).
+static const char **guiCopyNameList(const char **src)
+{
+    int n = 0, i;
+    const char **copy;
+
+    if (src == NULL)
+        return NULL;
+
+    while (src[n] != NULL)
+        n++;
+    copy = (const char **)malloc((n + 1) * sizeof(char *));
+    if (copy != NULL) {
+        for (i = 0; i < n; i++) {
+            char *dup = (char *)malloc(strlen(src[i]) + 1);
+            if (dup == NULL) {
+                while (--i >= 0)
+                    free((void *)copy[i]);
+                free((void *)copy);
+                copy = NULL;
+                break;
+            }
+            strcpy(dup, src[i]);
+            copy[i] = dup;
+        }
+        if (copy != NULL)
+            copy[n] = NULL;
+    }
+    return copy;
+}
+
+static void guiFreeNameList(const char **list)
+{
+    int i;
+
+    if (list == NULL)
+        return;
+    for (i = 0; list[i] != NULL; i++)
+        free((void *)list[i]);
+    free((void *)list);
+}
+
 void guiShowUIConfig(void)
 {
     int themeID = -1, langID = -1;
     curTheme = -1;
     showCfgPopup = 0;
     guiResetNotifications();
+
+    const char **themeNamesSnap = NULL;
+    const char **langNamesSnap = NULL;
 
     // clang-format off
     const char *vmodeNames[] = {_l(_STR_AUTO)
@@ -829,8 +887,21 @@ void guiShowUIConfig(void)
 reselect_video_mode:
     previousVMode = gVMode;
     previousTheme = thmGetGuiValue();
-    diaSetEnum(diaUIConfig, UICFG_THEME, (const char **)thmGetGuiList());
-    diaSetEnum(diaUIConfig, UICFG_LANG, (const char **)lngGetGuiList());
+    // Snapshot the theme/language name lists into dialog-owned copies: diaSetEnum stores raw
+    // pointers, and BOTH the outer arrays (thmRebuildGuiNames/lngRebuildLangNames free+realloc)
+    // AND the theme name strings (thmReinit frees them on device removal) are rebuilt on the IO
+    // worker when a deferred device update lands. Dialog frames render OUTSIDE guiStartFrame's
+    // lock, so a device event draining mid-dialog dereferenced freed memory. Re-snapshot on every
+    // reselect pass (applyConfig below can legitimately change the lists); on OOM fall back to
+    // the live list -- the pre-existing narrow race, not a new failure mode.
+    guiFreeNameList(themeNamesSnap);
+    guiFreeNameList(langNamesSnap);
+    guiLock(); // must cover the getter FETCH too, not just the copy (Gemini review of #165)
+    themeNamesSnap = guiCopyNameList((const char **)thmGetGuiList());
+    langNamesSnap = guiCopyNameList((const char **)lngGetGuiList());
+    guiUnlock();
+    diaSetEnum(diaUIConfig, UICFG_THEME, themeNamesSnap != NULL ? themeNamesSnap : (const char **)thmGetGuiList());
+    diaSetEnum(diaUIConfig, UICFG_LANG, langNamesSnap != NULL ? langNamesSnap : (const char **)lngGetGuiList());
     diaSetEnum(diaUIConfig, UICFG_VMODE, vmodeNames);
     diaSetInt(diaUIConfig, UICFG_THEME, thmGetGuiValue());
     diaSetInt(diaUIConfig, UICFG_LANG, lngGetGuiValue());
@@ -913,6 +984,9 @@ reselect_video_mode:
             goto reselect_video_mode;
         }
     }
+
+    guiFreeNameList(themeNamesSnap);
+    guiFreeNameList(langNamesSnap);
 }
 
 static int netConfigUpdater(int modified)

@@ -1,5 +1,6 @@
 #include "include/opl.h"
 #include "include/lang.h"
+#include "include/gui.h" // guiLock/guiUnlock -- name-list rebuild vs GUI readers
 #include "include/util.h"
 #include "include/fntsys.h"
 #include "include/ioman.h"
@@ -174,7 +175,12 @@ int lngAddLanguages(char *path, const char *separator, int mode)
 
     result = listDir(path, separator, MAX_LANGUAGE_FILES - nLanguages, &lngReadEntry);
     nLanguages += result;
+    // Serialize the name-list free+swap against the GUI's readers (see thmRebuildGuiNames):
+    // this runs on the IO worker for device-triggered language discovery, and guiShowUIConfig
+    // hands the list to its dialog. Lock is a not-ready no-op during pre-GUI init.
+    guiLock();
     lngRebuildLangNames();
+    guiUnlock();
 
     const char *temp;
     if (configGetStr(configGetByType(CONFIG_OPL), "language_text", &temp)) {

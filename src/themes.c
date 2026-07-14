@@ -2565,6 +2565,12 @@ static int thmLoad(const char *themePath)
     return 0;
 }
 
+// Callers MUST hold guiLock (except pre-GUI single-threaded init, where the lock is a not-ready
+// no-op): this free()s the list the UI-Settings dialog may be handed via thmGetGuiList, and it
+// runs on the IO worker for device-triggered rebuilds. guiShowUIConfig snapshots the list under
+// the same lock. NOT self-locking: thmReinit must hold the lock across its name-string frees AND
+// this rebuild as ONE critical section (between the two, the published list points at freed
+// strings), and the sema is not recursive.
 static void thmRebuildGuiNames(void)
 {
     if (guiThemesNames)
@@ -2592,7 +2598,11 @@ int thmAddElements(char *path, const char *separator, int forceRefresh)
 
     result = listDir(path, separator, THM_MAX_FILES - nThemes, &thmReadEntry);
     nThemes += result;
+    // Appends above only fill NEW themes[] slots (the published name list references old slots
+    // untouched); the rebuild's free+swap is what must be serialized against the GUI's readers.
+    guiLock();
     thmRebuildGuiNames();
+    guiUnlock();
 
     const char *temp;
     if (configGetStr(configGetByType(CONFIG_OPL), "theme", &temp)) {
@@ -2638,6 +2648,10 @@ void thmReinit(const char *path)
         snprintf(activeName, sizeof(activeName), "<Coverflow>"); // built-in; its id (nThemes+1) shifts as themes are removed
     }
 
+    // One guiLock section across the removal loop AND the rebuild: the frees below invalidate
+    // strings the CURRENTLY PUBLISHED guiThemesNames points at, so the GUI-side readers
+    // (frame-locked renders, guiShowUIConfig's snapshot) must not run between free and swap.
+    guiLock();
     int i = 0;
     while (i < nThemes) {
         if (strncmp(themes[i].filePath, path, strlen(path)) == 0) {
@@ -2654,6 +2668,7 @@ void thmReinit(const char *path)
     }
 
     thmRebuildGuiNames();
+    guiUnlock();
 
     if (activeOnDevice) {
         // The displayed theme's files just went away with its device: drop to the built-in default.
