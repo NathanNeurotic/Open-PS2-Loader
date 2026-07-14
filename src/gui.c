@@ -301,7 +301,7 @@ static void guiShowNotifications(void)
     int y = 10;
     int yadd = 35;
 
-    if (showPartPopup || showThmPopup || showLngPopup || showCfgPopup || showNetDhcpPopup) {
+    if (showPartPopup || showThmPopup || showLngPopup || showCfgPopup || showNetDhcpPopup || showHddReconcilePopup) {
         if (!popupTimer) {
             popupTimer = clock() + 5000 * (CLOCKS_PER_SEC / 1000);
             sfxPlay(SFX_MESSAGE);
@@ -345,14 +345,23 @@ static void guiShowNotifications(void)
 
         // One-time network notice set at config load: a UDP transport left on DHCP (the ministack has
         // no DHCP client; it binds the static PS2 IP fields as-is, so an unset static IP fails silently).
-        if (showNetDhcpPopup)
+        if (showNetDhcpPopup) {
             guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y);
+            y += yadd;
+        }
+
+        // One-time notice set at config load (#154): APA + exFAT(BDM) internal HDD were both
+        // enabled and one was auto-disabled. Rendered here (not toasted from _loadConfig) so _l()
+        // resolves AFTER the language pack loads -- Gemini review of #167.
+        if (showHddReconcilePopup)
+            guiRenderNotifications(_l(_STR_HDD_BACKEND_RECONCILED), y);
 
         if (clock() >= popupTimer) {
             guiResetNotifications();
             showPartPopup = 0;
             showCfgPopup = 0;
             showNetDhcpPopup = 0;
+            showHddReconcilePopup = 0;
         }
     }
 }
