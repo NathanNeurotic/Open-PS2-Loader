@@ -415,6 +415,10 @@ void guiGameShowGSConfig(void)
         "VGA 1024x768p @85Hz",
         "VGA 1280x1024p @60Hz",
         "VGA 1280x1024p @75Hz",
+        // APPENDED last (index 29) to keep every existing $GSMVMode index pointing at the same mode;
+        // must stay 1:1 index-aligned with predef_vmode[] in src/gsm.c. Selecting it triggers the
+        // triple-confirm gate in the save path below (VMODE_1080P index).
+        "HDTV 1080p @60Hz (EXPERIMENTAL)",
         NULL};
     // clang-format on
 
@@ -988,6 +992,10 @@ static int coreNeverNeutrino = 0;
 #define NEUTRINO_VIDEO_DEFAULT_IDX   6
 #define NEUTRINO_GSMCOMP_DEFAULT_IDX 4
 
+// Index of the appended "HDTV 1080p @60Hz (EXPERIMENTAL)" entry in gsmvmodeNames[] / predef_vmode[]
+// (both 30 long, last index 29). Selecting it must clear a triple-confirm before it is saved.
+#define GSM_VMODE_1080P_IDX 29
+
 static void guiGameSetCoreAwareState(void)
 {
     int coreChoice = 0, neutrino = 0, neutrinoVideo = 0;
@@ -1173,6 +1181,19 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     diaGetInt(diaGSConfig, GSMCFG_GSMXOFFSET, &GSMXOffset);
     diaGetInt(diaGSConfig, GSMCFG_GSMYOFFSET, &GSMYOffset);
     diaGetInt(diaGSConfig, GSMCFG_GSMFIELDFIX, &GSMFIELDFix);
+
+    // 1080p is GSM-synthetic and hardware-unvalidated: force a THREE-STEP confirmation before it can
+    // be committed. X continues / O cancels at each step; any cancel drops the selection back to 0
+    // (Auto/off, which removes the per-game key) so 1080p is never persisted without deliberate
+    // consent. Only fires when the user actually chose 1080p AND left GSM enabled.
+    if (EnableGSM != 0 && GSMVMode == GSM_VMODE_1080P_IDX) {
+        if (!guiMsgBox(_l(_STR_GSM_1080P_WARNING), 1, NULL) ||
+            !guiMsgBox(_l(_STR_GSM_1080P_PROCEED), 1, NULL) ||
+            !guiMsgBox(_l(_STR_GSM_1080P_SURE), 1, NULL)) {
+            GSMVMode = 0; // cancelled at some step -> do not apply 1080p
+            diaSetInt(diaGSConfig, GSMCFG_GSMVMODE, GSMVMode);
+        }
+    }
 
     if (gGSMSource == SETTINGS_PERGAME) {
         result = configSetInt(configSet, CONFIG_ITEM_GSMSOURCE, gGSMSource);

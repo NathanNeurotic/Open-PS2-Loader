@@ -32,6 +32,10 @@
 
 #Add - on video modes(made possible by SP193 and reprep)
 GS_MODE_DTV_576P=0x53
+# Re-added GSM-synthetic 1080p (progressive 1920x1080). Not a ROM-native SetGsCrt mode: the
+# DTV_1080P engine handler programs the raster manually (see gsm_engine_adv.S). Historically
+# present, removed in the engine rewrite ("temporary"), re-ported here behind a triple-confirm.
+GS_MODE_DTV_1080P=0x54
 
 #GSMSourceSetGsCrt
 .equ Source_INT,      0 # HALF
