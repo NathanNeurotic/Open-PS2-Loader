@@ -223,7 +223,7 @@ Both the global and per-game Neutrino Launch Args open a <b>structured sub-scree
 <li><b>Mode 7</b> is available (Neutrino-only; see above).</li>
 <li><b>DL Defaults</b> is greyed — it pulls OPL bitmask data that does not map to <code>-gc</code>.</li>
 <li><b>GSM, Cheats, PADEMU, OSD Language</b> panels show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
-<li><b>VMC</b> and the rest of <b>Compatibility</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on block devices.</li>
+<li><b>VMC</b> and the rest of <b>Compatibility</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on BDM devices (USB/iLink/MX4SIO/exFAT&nbsp;HDD/UDPBD), MMCE and UDPFS. The one exception is <b>APA HDD</b>: Neutrino has no APA/pfs backing store to open the <code>.bin</code> from, so the game boots <em>without</em> the VMC and OPL shows a warning (the OPL core honors the same card normally). See <a href="vmc.html#neutrino-vmc">VMC with the Neutrino core</a>.</li>
 <li><b>UDPBD / UDPFS games</b> have no OPL core backend, so the Loader Core selector is locked to Neutrino for them and cannot be changed.</li>
 </ul>
 
@@ -232,7 +232,7 @@ Both the global and per-game Neutrino Launch Args open a <b>structured sub-scree
 <p>The screen is unchanged from classic OPL. The Neutrino Launch Args field and Neutrino Video picker are greyed (they are never read on the OPL path). Mode 7 is greyed. Modes 4 and 6 are available as usual.</p>
 
 <details class="deep"><summary>What does Neutrino actually honor from OPL's per-game settings?</summary>
-<p>Neutrino honors: the storage backend + image path (<code>-bsd</code> / <code>-dvd</code>, automatic), the compat mode subset that maps to <code>-gc</code> (Modes 1/2/3/5/7), VMC via <code>-mc0</code>/<code>-mc1</code> on block devices, <code>-logo</code> (PS2 logo), <code>-dbc</code> (debug colors), the Neutrino Video picker (<code>-gsm</code>), and the free-text <b>Neutrino Launch Args</b> field. It does <b>not</b> honor: Cheats (OPL patches EE RAM), OPL GSM (OPL patches the GS registers), IGR/IGS (OPL's in-game reset hook), PADEMU (OPL's USB gamepad emulation), or OSD Language — all are OPL-embedded-core features with no Neutrino equivalent.</p>
+<p>Neutrino honors: the storage backend + image path (<code>-bsd</code> / <code>-dvd</code>, automatic), the compat mode subset that maps to <code>-gc</code> (Modes 1/2/3/5/7), VMC via <code>-mc0</code>/<code>-mc1</code> (BDM/MMCE/UDPFS — not APA HDD), <code>-logo</code> (PS2 logo), <code>-dbc</code> (debug colors), the Neutrino Video picker (<code>-gsm</code>), and the free-text <b>Neutrino Launch Args</b> field. It does <b>not</b> honor: Cheats (OPL patches EE RAM), OPL GSM (OPL patches the GS registers), IGR/IGS (OPL's in-game reset hook), PADEMU (OPL's USB gamepad emulation), or OSD Language — all are OPL-embedded-core features with no Neutrino equivalent.</p>
 </details>
 
 <h2 id="network-boot">7. Network boot — UDPBD / UDPFS</h2>

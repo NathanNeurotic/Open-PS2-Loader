@@ -299,6 +299,9 @@ the PS1/VCD (L3) view the page keeps the device's identity — filters keep work
 ItemsList slots (games/apps/favs/VCD, claimed in file order), and navigation/paging automatically follows
 whichever list is drawn. Give it its own <code>x</code>/<code>y</code>/<code>height</code> (its row count
 comes from <code>height</code>); <code>decorator=</code> works as usual.</li>
+<li><b>Keep one unfiltered <code>ItemsList</code>.</b> If <em>every</em> list in the theme carries
+<code>devices=</code>, OPL adds a plain default list (373×316 at 42,42) on the pages nothing covers —
+navigation always needs a list — and it won't match your layout.</li>
 <li>Unknown device names are logged and skipped; if nothing valid remains, the element behaves as if the
 key were absent (shared placement) rather than disappearing.</li>
 <li>Two filtered elements of the same type may list different devices; listing the <b>same</b> device
