@@ -115,16 +115,16 @@ Do not use a third-party defragmenter on your game drive. They may rearrange clu
 <div class="steps">
   <div class="step">
     <h3>Hold Triangle + Cross at boot</h3>
-    <p>Power on your PS2 and immediately hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while OPL initializes. Keep both buttons held until the interface appears (or until you have waited a few seconds). This resets the saved video mode to <b>Auto</b> without touching any other settings.</p>
+    <p>Power on your PS2 and immediately hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while OPL initializes. Keep both buttons held until the interface appears (or until you have waited a few seconds). This forces the video mode to <b>480p progressive</b> — a mode virtually every display syncs — without touching any other settings. (Older builds reset to <b>Auto</b>, which resolves to interlaced 480i/576i: exactly what some modern displays and upscalers can't lock onto.)</p>
   </div>
   <div class="step">
     <h3>Verify the display returns</h3>
-    <p>Start OPL normally (without holding buttons). If the interface is now visible, the forced video mode has been cleared. Open <b>Settings → Video</b> and leave it on <b>Auto</b> unless you have a specific reason to force a mode.</p>
+    <p>Start OPL normally (without holding buttons). If the interface is now visible, you're running in the safe 480p recovery mode. Open <b>Settings → Video</b> and pick your preferred mode (or <b>Auto</b>).</p>
   </div>
 </div>
 
 <div class="callout info"><div class="h">i Same fix for GSM video mode mistakes</div>
-If you saved an incompatible GSM (Graphics Synthesizer Mode) override and your screen went dark, the same recovery applies: hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while OPL boots to restore <b>Auto</b> video mode.
+If you saved an incompatible GSM (Graphics Synthesizer Mode) override and your screen went dark, the same recovery applies: hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while OPL boots to force safe <b>480p</b> for OPL's own UI. (Per-game GSM overrides only apply at game launch — they never affect the OPL menu itself.)
 </div>
 
 <h2 id="vcd-list-empty">PS1/VCD — "my VCDs don't show up" (works elsewhere)</h2>
@@ -228,12 +228,12 @@ Favourited VCD titles only appear in the Favourites list while a page is in VCD 
     <tr>
       <td>Blank / black screen (unsupported video mode)</td>
       <td><code>Triangle + Cross</code></td>
-      <td>Resets saved video mode to Auto</td>
+      <td>Forces the safe 480p video mode</td>
     </tr>
     <tr>
       <td>GSM override locked display</td>
       <td><code>Triangle + Cross</code></td>
-      <td>Resets saved video mode to Auto</td>
+      <td>Forces the safe 480p video mode</td>
     </tr>
   </tbody>
 </table>
