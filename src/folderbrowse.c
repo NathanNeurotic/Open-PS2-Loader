@@ -43,14 +43,16 @@ int folderDescend(int mode, const char *name)
         return 0;
 
     char joined[FOLDER_SUB_MAX];
+    int len;
     if (folderSub[mode][0] == '\0')
-        snprintf(joined, sizeof(joined), "%s", name);
+        len = snprintf(joined, sizeof(joined), "%s", name);
     else
-        snprintf(joined, sizeof(joined), "%s/%s", folderSub[mode], name);
+        len = snprintf(joined, sizeof(joined), "%s/%s", folderSub[mode], name);
 
     // Refuse a join that would not fit: a truncated subpath would scan the WRONG directory, so the
-    // user simply stays where they are (a folder with a name this long is not navigable).
-    if (strlen(joined) >= sizeof(folderSub[mode]) - 1)
+    // user simply stays where they are (a folder with a name this long is not navigable). snprintf
+    // returns the length it WOULD have written, so len >= buffer size means it did not fit.
+    if (len < 0 || (size_t)len >= sizeof(folderSub[mode]))
         return 0;
 
     strcpy(folderSub[mode], joined);

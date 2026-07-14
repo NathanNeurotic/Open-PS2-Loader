@@ -338,8 +338,8 @@ static int scanForISO(char *path, char type, struct game_list_t **glist, struct 
                                 memset(fg, 0, sizeof(base_game_info_t));
                                 fg->format = GAME_FORMAT_FOLDER;
                                 fg->media = type;
-                                strncpy(fg->name, dirent->d_name, ISO_GAME_NAME_MAX);
-                                fg->name[ISO_GAME_NAME_MAX] = '\0';
+                                strncpy(fg->name, dirent->d_name, sizeof(fg->name) - 1);
+                                fg->name[sizeof(fg->name) - 1] = '\0';
                                 fnode->next = *folderlist;
                                 *folderlist = fnode;
                             }
@@ -511,6 +511,12 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
 
     // Merge the CD/DVD folder rows into one deduped set.
     int fcount = (folder_head != NULL) ? sbDedupFolderList(&folder_head) : 0;
+
+    // Normalise a total-failure count to 0 up front, so every allocation/copy below works off a
+    // non-negative game count. (A failed scan emits no folders, so fcount is 0 here today, but this
+    // keeps the invariant explicit and robust to future changes.)
+    if (count < 0)
+        count = 0;
 
     // count and process games in ul.cfg -- a device-ROOT concept (USBLD split games live at the
     // library root); never present or scanned inside a browse subfolder.

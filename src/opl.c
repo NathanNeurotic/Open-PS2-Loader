@@ -944,7 +944,7 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
     // browse state resets to root on device switch), so a single static crumb buffer is safe.
     const int folderMode = folderModeSupported(mdl->support->mode);
     if (folderMode && folderDepth(mdl->support->mode) > 0) {
-        static char folderCrumb[192];
+        static char folderCrumb[256]; // generous headroom for a localized device name + subpath
         snprintf(folderCrumb, sizeof(folderCrumb), "%s: %s", _l(mdl->support->itemTextId(mdl->support)), folderGetSub(mdl->support->mode));
         mdl->menuItem.text = folderCrumb;
         mdl->menuItem.text_id = -1;
