@@ -298,7 +298,11 @@ static int parse_buf(const char *buf)
         int len = lfIdx;
         if (len < 0)
             len = strlen(buf);
-        else if (len > CHEAT_LINE_MAX)
+        // Cap BOTH branches: a final line with no trailing LF longer than CHEAT_LINE_MAX used to
+        // strncpy past line[256] -- a stack smash on the launch thread. Loose .cht files always
+        // carried this; community-distributed cht.tar packs make malformed input a first-class
+        // vector, so it lands with the tar support (adversarial review of #154).
+        if (len > CHEAT_LINE_MAX)
             len = CHEAT_LINE_MAX;
 
         if (!is_empty_substr(buf, len)) {
@@ -407,16 +411,14 @@ static inline char *read_text_file(const char *filename, int maxsize)
 /*
  * Load cheats from text file.
  */
-int load_cheats(const char *cheatfile)
+// Lazy cheat table: MAX_CODES x sizeof(cheat_entry_t) (~1.03 MB) that used to sit in BSS
+// permanently, held even with cheats off (the default). Allocated on the first cheat load and
+// kept for the session (a successful launch hands off to ExecPS2 anyway; a failed one reuses
+// the buffer on retry). An allocation failure degrades exactly like an unreadable cheat file --
+// the launch legs already toast _STR_ERR_CHEATS_LOAD_FAILED for ret < 0. Shared by the loose-
+// file loader below and the CHT/cht.tar member loader (load_cheats_buf).
+static int ensureCheatTable(void)
 {
-    char *buf = NULL;
-    int ret;
-
-    // Lazy cheat table: MAX_CODES x sizeof(cheat_entry_t) (~1.03 MB) that used to sit in BSS
-    // permanently, held even with cheats off (the default). Allocated on the first cheat-file
-    // load and kept for the session (a successful launch hands off to ExecPS2 anyway; a failed
-    // one reuses the buffer on retry). An allocation failure degrades exactly like an unreadable
-    // cheat file -- the launch legs already toast _STR_ERR_CHEATS_LOAD_FAILED for ret < 0.
     if (gCheats == NULL) {
         gCheats = (cheat_entry_t *)malloc(MAX_CODES * sizeof(cheat_entry_t));
         if (gCheats == NULL) {
@@ -425,6 +427,16 @@ int load_cheats(const char *cheatfile)
         }
     }
     memset(gCheats, 0, MAX_CODES * sizeof(cheat_entry_t));
+    return 0;
+}
+
+int load_cheats(const char *cheatfile)
+{
+    char *buf = NULL;
+    int ret;
+
+    if (ensureCheatTable() < 0)
+        return -1;
 
     LOG("%s: Reading cheat file '%s'...\n", __FUNCTION__, cheatfile);
     buf = read_text_file(cheatfile, 0);
@@ -436,6 +448,24 @@ int load_cheats(const char *cheatfile)
     ret = parse_buf(buf);
     free(buf);
 
+    if (ret < 0)
+        return ret;
+
+    return (gCheatMode == 0) ? 0 : 1;
+}
+
+// Parse cheats from an in-memory buffer (a CHT/cht.tar member). buf MUST be NUL-terminated --
+// tar members carry no terminator, so the caller allocates rawSize+1 and terminates. wOPL's
+// variant takes an unused size parameter and feeds the raw tar buffer to the parser (a latent
+// overread); the explicit contract here avoids porting that.
+int load_cheats_buf(const char *buf)
+{
+    int ret;
+
+    if (buf == NULL || ensureCheatTable() < 0)
+        return -1;
+
+    ret = parse_buf(buf);
     if (ret < 0)
         return ret;
 
