@@ -780,6 +780,12 @@ static void initStaticImage(const char *themePath, config_set_t *themeConfig, th
 
 static GSTEXTURE *getGameImageTexture(image_cache_t *cache, void *support, struct submenu_item *item)
 {
+    // Folder browsing: a folder row has no cover art (and no startup key). Never route it through the
+    // cover cache -- an empty key would thrash the cache and paint the empty case frame. Applies to
+    // every consumer: the list decorator, the big cover panel and the coverflow carousel.
+    if (item != NULL && item->isFolder)
+        return NULL;
+
     if (gEnableArt) {
         item_list_t *list = (item_list_t *)support;
         char *startup = list->itemGetStartup(list, item->id);
@@ -1508,10 +1514,22 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
             else
                 color = elem->color;
 
-            if (itemsList->decoratorImage) {
-                GSTEXTURE *itemIconTex;
+            // Folder browsing: a folder row shows its name with a trailing "/" and is NEVER routed
+            // through the cover cache (it has no startup key -- doing so would thrash the cache and
+            // paint the empty case frame). The default decorator slot keeps the text aligned with games.
+            const char *dispText = vcdDisplayName(list ? list->mode : -1, submenuItemGetText(&ps->item));
+            char folderBuf[256];
+            if (ps->item.isFolder) {
+                snprintf(folderBuf, sizeof(folderBuf), "%s/", dispText);
+                dispText = folderBuf;
+            }
 
-                if (list != NULL && list->mode == MMCE_MODE && itemsList->decoratorImage->cache != NULL) {
+            if (itemsList->decoratorImage) {
+                GSTEXTURE *itemIconTex = NULL;
+
+                if (ps->item.isFolder) {
+                    itemIconTex = NULL; // folders never carry a cover
+                } else if (list != NULL && list->mode == MMCE_MODE && itemsList->decoratorImage->cache != NULL) {
                     image_cache_t *cache = itemsList->decoratorImage->cache;
 
                     if (mmceSelectionChanged && ps == item)
@@ -1527,9 +1545,9 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                     if (itemsList->decoratorImage->defaultTexture)
                         rmDrawPixmap(&itemsList->decoratorImage->defaultTexture->source, posX, posY, elem->aligned, DECORATOR_SIZE, DECORATOR_SIZE, elem->scaled, gDefaultCol, 0);
                 }
-                textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, vcdDisplayName(list ? list->mode : -1, submenuItemGetText(&ps->item)), color);
+                textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, dispText, color);
             } else
-                textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, vcdDisplayName(list ? list->mode : -1, submenuItemGetText(&ps->item)), color);
+                textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, dispText, color);
 
             // Favourites: draw a small star just after the item text.
             if (ps->item.favourited) {

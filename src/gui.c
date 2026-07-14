@@ -594,6 +594,7 @@ void guiShowConfig()
 
     diaSetInt(diaConfig, CFG_ENWRITEOP, gEnableWrite);
     diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
+    diaSetInt(diaConfig, CFG_FOLDERNAV, gEnableFolderNav);
     diaSetInt(diaConfig, CFG_AUTOSTARTLAST, gAutoStartLastPlayed);
     diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, gRememberLastPlayed);
     diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, gRememberLastPlayed);
@@ -623,6 +624,7 @@ reshow_config:
         diaGetInt(diaConfig, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
         diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
+        diaGetInt(diaConfig, CFG_FOLDERNAV, &gEnableFolderNav);
         diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);
         diaGetString(diaConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
         diaGetString(diaConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
@@ -1625,6 +1627,8 @@ static void guiHandleOp(struct gui_update_t *item)
 
         case GUI_OP_APPEND_MENU:
             result = submenuAppendItem(item->menu.subMenu, item->submenu.icon_id, item->submenu.text, item->submenu.id, item->submenu.text_id, item->submenu.owner);
+            if (result != NULL)
+                result->item.isFolder = item->submenu.isFolder; // folder-browse row marker
             // coverflow wrap tail: submenuAppendItem always returns the new tail
             item->menu.menu->last = result;
             if (!item->menu.menu->submenu) { // first subitem in list

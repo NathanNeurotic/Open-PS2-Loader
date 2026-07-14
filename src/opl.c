@@ -39,6 +39,7 @@
 #include "include/xparam.h"
 #include "include/favsupport.h"
 #include "include/vcdsupport.h"
+#include "include/folderbrowse.h"
 
 // FIXME: We should not need this function.
 //        Use newlib's 'stat' to get GMT time.
@@ -226,6 +227,7 @@ char gBDMPrefix[32];
 char gMMCEPrefix[32];
 char gETHPrefix[32];
 int gRememberLastPlayed;
+int gEnableFolderNav;
 int KeyPressedOnce;
 int gAutoStartLastPlayed;
 int RemainSecs, DisableCron;
@@ -331,6 +333,13 @@ static void itemExecSelect(struct menu_item *curMenu)
     if (support) {
         if (support->enabled) {
             if (curMenu->current) {
+                // Folder browsing: a folder row DESCENDS (rescan one level deeper) instead of
+                // launching. folderDescend marks the mode dirty; the deferred update rebuilds the list.
+                if (curMenu->current->item.isFolder) {
+                    if (folderDescend(support->mode, curMenu->current->item.text))
+                        ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
+                    return;
+                }
                 config_set_t *configSet = menuLoadConfigDirect();
                 // Flash the GameID barcode (Pixel FX/RetroGEM HDMI auto-profile) before handoff; this
                 // single menu chokepoint covers both the Neutrino and OPL-native cores. No-op when off.
@@ -369,20 +378,41 @@ static void itemExecRefresh(struct menu_item *curMenu)
     }
 }
 
+// Folder browsing: the cancel button (whichever of Cross/Circle is NOT the select button) ascends one
+// folder level when inside a subfolder. At the device root it is a no-op -- there is no "back" out of
+// a device page -- so this never changes behaviour for users who aren't browsing folders.
+static void itemFolderAscend(struct menu_item *curMenu)
+{
+    item_list_t *support = curMenu ? curMenu->userdata : NULL;
+    if (support == NULL || folderDepth(support->mode) == 0)
+        return;
+    if (folderAscend(support->mode)) {
+        sfxPlay(SFX_CANCEL);
+        ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
+    }
+}
+
 static void itemExecCross(struct menu_item *curMenu)
 {
     if (gSelectButton == KEY_CROSS)
         itemExecSelect(curMenu);
+    else
+        itemFolderAscend(curMenu); // Cross is the cancel button here -> ascend a folder level
 }
 
 static void itemExecCircle(struct menu_item *curMenu)
 {
     if (gSelectButton == KEY_CIRCLE)
         itemExecSelect(curMenu);
+    else
+        itemFolderAscend(curMenu); // Circle is the cancel button here -> ascend a folder level
 }
 
 static void itemExecSquare(struct menu_item *curMenu)
 {
+    // Folder browsing: a folder row has no info screen (#Size/#DiscType would stat a directory).
+    if (curMenu->current && curMenu->current->item.isFolder)
+        return;
     if (curMenu->current && gTheme->infoElems.first) {
         // #Size is skipped while scrolling so the badges paint instantly; resolve it now (async) --
         // but NEVER for a VCD (PS1) list. A VCD carries no meaningful #Size: vcdFillGameList tags the
@@ -408,6 +438,10 @@ static void itemExecSquare(struct menu_item *curMenu)
 static void itemExecTriangle(struct menu_item *curMenu)
 {
     if (!curMenu->current)
+        return;
+
+    // Folder browsing: a folder row has no per-game settings menu.
+    if (curMenu->current->item.isFolder)
         return;
 
     item_list_t *support = curMenu->userdata;
@@ -447,6 +481,12 @@ static void itemExecFav(struct menu_item *curMenu)
 
     submenu_item_t *it = &curMenu->current->item;
 
+    // Folder browsing: on a source list a folder row is not favouritable, and a game favourited from
+    // INSIDE a subfolder would resolve by index against the wrong (root) view later -- suppress both in
+    // v1. Root favourites are unchanged; the Favourites tab's own removals are unaffected.
+    if (support->mode != FAV_MODE && (it->isFolder || folderDepth(support->mode) > 0))
+        return;
+
     if (support->mode == FAV_MODE) {
         favRemoveByIndex(it->id);
     } else {
@@ -485,6 +525,9 @@ static void itemExecToggleView(struct menu_item *curMenu)
     if (gDefaultGameView != GAME_VIEW_BOTH)
         return; // the global default-view setting locks the page to one type -> L3 is inert
 
+    // Folder browsing: the VCD/POPS list has no folder tree, so drop any ISO-view subfolder position
+    // back to root on a view toggle (the deferred rebuild below restores the plain device title).
+    folderReset(support->mode);
     vcdToggleView(support->mode);
     sfxPlay(SFX_CONFIRM);
     guiWarning(vcdViewActive(support->mode) ? _l(_STR_VCD_ON) : _l(_STR_VCD_OFF), 2);
@@ -894,30 +937,63 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
     // read the new game list
     struct gui_update_t *gup = NULL;
     int count = mdl->support->itemUpdate(mdl->support);
+
+    // Folder browsing: while inside a subfolder, show the breadcrumb ("Device: RPGs/SNES") as the page
+    // title. folderGetSub() points at persistent static state, so the char* stays valid. At the device
+    // root the device name set above stands. Only one device is ever inside a folder at a time (the
+    // browse state resets to root on device switch), so a single static crumb buffer is safe.
+    const int folderMode = folderModeSupported(mdl->support->mode);
+    if (folderMode && folderDepth(mdl->support->mode) > 0) {
+        static char folderCrumb[256]; // generous headroom for a localized device name + subpath
+        snprintf(folderCrumb, sizeof(folderCrumb), "%s: %s", _l(mdl->support->itemTextId(mdl->support)), folderGetSub(mdl->support->mode));
+        mdl->menuItem.text = folderCrumb;
+        mdl->menuItem.text_id = -1;
+    }
+
     if (count > 0) {
-        int i;
+        // Folder browsing: emit in TWO passes -- folders first, then the games -- so folders always sit
+        // at the TOP of the list regardless of the Auto Sort setting. Each row keeps id=i (its array
+        // index), so favourites still resolve by id+text no matter the display order. Devices that never
+        // produce folder rows use a single pass, byte-for-byte the original behaviour. When Auto Sort is
+        // on, submenuSort's folder-first comparator keeps this grouping while sorting each group.
+        int passes = (gEnableFolderNav && folderMode) ? 2 : 1;
+        int pass, i;
 
-        for (i = 0; i < count; ++i) {
+        for (pass = 0; pass < passes; ++pass) {
+            for (i = 0; i < count; ++i) {
+                // Flag folder rows so the dispatch descends and the renderer marks them. Only the
+                // loose-file tree devices return base_game_info_t from itemGet, so gate on the mode.
+                int isFolderRow = 0;
+                if (folderMode && mdl->support->itemGet != NULL) {
+                    base_game_info_t *ginfo = (base_game_info_t *)mdl->support->itemGet(mdl->support, i);
+                    isFolderRow = (ginfo != NULL && ginfo->format == GAME_FORMAT_FOLDER);
+                }
+                // Pass 0 emits folders, pass 1 emits games (single-pass mode emits every row).
+                if (passes == 2 && ((pass == 0) != (isFolderRow != 0)))
+                    continue;
 
-            gup = guiOpCreate(GUI_OP_APPEND_MENU);
-            if (!gup) // OOM: skip this entry rather than deref NULL
-                continue;
+                gup = guiOpCreate(GUI_OP_APPEND_MENU);
+                if (!gup) // OOM: skip this entry rather than deref NULL
+                    continue;
 
-            gup->menu.menu = &mdl->menuItem;
-            gup->menu.subMenu = &mdl->subMenu;
+                gup->menu.menu = &mdl->menuItem;
+                gup->menu.subMenu = &mdl->subMenu;
 
-            gup->submenu.icon_id = -1;
-            gup->submenu.id = i;
-            gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
-            gup->submenu.text_id = -1;
-            gup->submenu.selected = 0;
-            gup->submenu.owner = (void *)mdl->support; // producing list; Favourites proxies back to it
+                gup->submenu.icon_id = -1;
+                gup->submenu.id = i;
+                gup->submenu.text = mdl->support->itemGetName(mdl->support, i);
+                gup->submenu.text_id = -1;
+                gup->submenu.selected = 0;
+                gup->submenu.owner = (void *)mdl->support; // producing list; Favourites proxies back to it
+                gup->submenu.isFolder = isFolderRow;
 
-            if (gRememberLastPlayed && temp && strcmp(temp, mdl->support->itemGetStartup(mdl->support, i)) == 0) {
-                gup->submenu.selected = 1; // Select Last Played Game
+                // Last-played auto-select never targets a folder row (its startup is empty).
+                if (gRememberLastPlayed && temp && !isFolderRow && strcmp(temp, mdl->support->itemGetStartup(mdl->support, i)) == 0) {
+                    gup->submenu.selected = 1; // Select Last Played Game
+                }
+
+                guiDeferUpdate(gup);
             }
-
-            guiDeferUpdate(gup);
         }
     }
 
@@ -1545,6 +1621,7 @@ static void _loadConfig()
             configGetStrCopy(configOPL, CONFIG_OPL_BDM_PREFIX, gBDMPrefix, sizeof(gBDMPrefix));
             configGetStrCopy(configOPL, CONFIG_OPL_ETH_PREFIX, gETHPrefix, sizeof(gETHPrefix));
             configGetInt(configOPL, CONFIG_OPL_REMEMBER_LAST, &gRememberLastPlayed);
+            configGetInt(configOPL, CONFIG_OPL_FOLDER_NAV, &gEnableFolderNav);
             configGetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, &gAutoStartLastPlayed);
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
             configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode);
@@ -1881,6 +1958,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_BDM_PREFIX, gBDMPrefix);
         configSetStr(configOPL, CONFIG_OPL_ETH_PREFIX, gETHPrefix);
         configSetInt(configOPL, CONFIG_OPL_REMEMBER_LAST, gRememberLastPlayed);
+        configSetInt(configOPL, CONFIG_OPL_FOLDER_NAV, gEnableFolderNav);
         configSetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, gAutoStartLastPlayed);
         configSetInt(configOPL, CONFIG_OPL_BDM_MODE, gBDMStartMode);
         configSetInt(configOPL, CONFIG_OPL_HDD_MODE, gHDDStartMode);
@@ -2653,6 +2731,7 @@ static void setDefaults(void)
     gHDDGameListCache = 0;
     gEnableWrite = 1;
     gRememberLastPlayed = 0;
+    gEnableFolderNav = 0; // opt-in; a flat library is byte-identical to before
     gAutoStartLastPlayed = 9;
     gSelectButton = KEY_CROSS; // Default to Cross-select (western layout); swap_select_btn=0 restores Circle
     gMMCEPrefix[0] = '\0';

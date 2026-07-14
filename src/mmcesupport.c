@@ -4,6 +4,7 @@
 #include "include/supportbase.h"
 #include "include/mmcesupport.h"
 #include "include/vcdsupport.h"
+#include "include/folderbrowse.h"
 #include "include/util.h"
 #include "include/themes.h"
 #include "include/textures.h"
@@ -409,6 +410,9 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     // VCD view: force a rescan once on toggle, then skip the disc heuristics while showing VCDs.
     if (vcdConsumeDirty(itemList->mode))
         return 1;
+    // Folder browsing: descend/ascend forces one rescan (consumed before the NOUPDATE latch below).
+    if (folderConsumeDirty(itemList->mode))
+        return 1;
     if (vcdViewActive(itemList->mode))
         return 0;
 
@@ -485,7 +489,7 @@ static int mmceUpdateGameList(item_list_t *itemList)
             mmceVcdGameCount = r;
         return mmceVcdGameCount;
     }
-    sbReadList(&mmceGames, mmcePrefix, &mmceULSizePrev, &mmceGameCount);
+    sbReadList(&mmceGames, mmcePrefix, folderGetSub(itemList->mode), &mmceULSizePrev, &mmceGameCount);
     return mmceGameCount;
 }
 
@@ -544,8 +548,9 @@ static void mmceDeleteGame(item_list_t *itemList, int id)
     if (vcdViewActive(itemList->mode))
         return; // #120: a VCD is not an ISO game -- no delete in VCD view
     if (mmceActiveGame(itemList, id) == &mmceEmptyGame)
-        return; // stale id in the VCD->ISO toggle window (vcdViewActive already flipped, old VCD submenu id
-                // still live): sbDelete does NOT bounds-check, so this avoids an OOB/NULL deref + wrong unlink
+        return;                                   // stale id in the VCD->ISO toggle window (vcdViewActive already flipped, old VCD submenu id
+                                                  // still live): sbDelete does NOT bounds-check, so this avoids an OOB/NULL deref + wrong unlink
+    sbSetBrowseSub(folderGetSub(itemList->mode)); // delete inside the current subfolder, not the root
     sbDelete(&mmceGames, mmcePrefix, "/", mmceGameCount, id);
     mmceULSizePrev = -2;
 }
@@ -555,7 +560,8 @@ static void mmceRenameGame(item_list_t *itemList, int id, char *newName)
     if (vcdViewActive(itemList->mode))
         return; // #120: no rename in VCD view
     if (mmceActiveGame(itemList, id) == &mmceEmptyGame)
-        return; // stale id in the VCD->ISO toggle window (see mmceDeleteGame) -> avoid sbRename OOB
+        return;                                   // stale id in the VCD->ISO toggle window (see mmceDeleteGame) -> avoid sbRename OOB
+    sbSetBrowseSub(folderGetSub(itemList->mode)); // rename inside the current subfolder, not the root
     sbRename(&mmceGames, mmcePrefix, "/", mmceGameCount, id, newName);
     mmceULSizePrev = -2;
 }
@@ -601,6 +607,12 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             return; // stale id during the L3 toggle window (see mmceActiveGame) -> nothing to launch
     } else
         game = gAutoLaunchBDMGame;
+
+    // Folder browsing: a folder row is never launched (the dispatch descends first); guard defensively
+    // and pin the path composers to the current subfolder so a nested game resolves.
+    if (game != NULL && game->format == GAME_FORMAT_FOLDER)
+        return;
+    sbSetBrowseSub(folderGetSub(itemList->mode));
 
     // VCD view: hand off to POPSTARTER (by name) instead of the disc path below. Menu-launch only.
     if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {

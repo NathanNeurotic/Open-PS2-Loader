@@ -76,6 +76,7 @@ features, code, and ideas from:
   - POPSLoader                      https://github.com/NathanNeurotic/POPSLoader
   - OPL RetroGEM ID (CosmicScale)   https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM
   - nhddl (pcm720)                  https://github.com/pcm720/nhddl
+  - Modulo-R1 (AdityaKumar7209)     https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2
   - official OPL                    https://github.com/ps2homebrew/Open-PS2-Loader
 
 Special and sincere thanks to:
@@ -90,6 +91,9 @@ Special and sincere thanks to:
   - saildot4k - for BDMA-ATA (exFAT internal-HDD block-device support), and the
     fixes, feedback, and oversight that shaped this fork's block-device work.
   - Berion - for the artwork and theme design that has shaped how OPL looks.
+  - AdityaKumar7209 - whose Modulo-R1 project inspired this fork's folder
+    browsing in the game list. We didn't use their code; the idea of navigating
+    game subfolders came from seeing it there.
   - Ifcaro and jimmikaelkael - the original Open PS2 Loader authors - and every
     contributor across OPL's long history, all named above in this file.
 

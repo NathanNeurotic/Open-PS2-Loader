@@ -4,6 +4,7 @@
 #include "include/supportbase.h"
 #include "include/udpfssupport.h"
 #include "include/vcdsupport.h"
+#include "include/folderbrowse.h"
 #include "include/util.h"
 #include "include/renderman.h"
 #include "include/themes.h"
@@ -125,6 +126,9 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
     // VCD view: force a rescan once on toggle, then refresh on toggle only (skip disc heuristics).
     if (vcdConsumeDirty(itemList->mode))
         return 1;
+    // Folder browsing: descend/ascend forces one rescan.
+    if (folderConsumeDirty(itemList->mode))
+        return 1;
     if (vcdViewActive(itemList->mode))
         return 0;
 
@@ -169,7 +173,7 @@ static int udpfsUpdateGameList(item_list_t *itemList)
         int r = vcdFillGameList(udpfsPrefix, &udpfsGames);
         if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
             udpfsGameCount = r;
-    } else if (sbReadList(&udpfsGames, udpfsPrefix, &udpfsULSizePrev, &udpfsGameCount) < 0) {
+    } else if (sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), &udpfsULSizePrev, &udpfsGameCount) < 0) {
         udpfsGameCount = 0;
     }
     return udpfsGameCount;
@@ -208,12 +212,14 @@ static char *udpfsGetGameStartup(item_list_t *itemList, int id)
 
 static void udpfsDeleteGame(item_list_t *itemList, int id)
 {
+    sbSetBrowseSub(folderGetSub(itemList->mode)); // delete inside the current subfolder, not the root
     sbDelete(&udpfsGames, udpfsPrefix, "/", udpfsGameCount, id);
     udpfsULSizePrev = -2;
 }
 
 static void udpfsRenameGame(item_list_t *itemList, int id, char *newName)
 {
+    sbSetBrowseSub(folderGetSub(itemList->mode)); // rename inside the current subfolder, not the root
     sbRename(&udpfsGames, udpfsPrefix, "/", udpfsGameCount, id, newName);
     udpfsULSizePrev = -2;
 }
@@ -234,6 +240,12 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     int result;
     char filename[32], partname[256];
     base_game_info_t *game = &udpfsGames[id];
+
+    // Folder browsing: a folder row is never launched (the dispatch descends first); guard defensively
+    // and pin the path composers to the current subfolder so a nested game resolves.
+    if (game != NULL && game->format == GAME_FORMAT_FOLDER)
+        return;
+    sbSetBrowseSub(folderGetSub(itemList->mode));
 
     // VCD view: udpfs cannot host a POPSTARTER launch (network filesystem) -> hand off to the guard.
     if (game != NULL && vcdViewActive(itemList->mode)) {
