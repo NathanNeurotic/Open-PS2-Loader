@@ -594,10 +594,10 @@ Since 05/07/2021 every OPL build dispatched to the release section of this repos
 
 1. **Symptom:** No image is shown after launching OPL (black/blank screen on TV).
 2. **Likely cause:** A forced video mode was saved that your display does not support (commonly from GSM video mode/scaling compatibility settings).
-3. **Recovery steps:** Hold __`Triangle + Cross`__ while OPL initializes to reset video mode to __`Auto`__.
+3. **Recovery steps:** Hold __`Triangle + Cross`__ while OPL initializes to force the video mode to __`480p progressive`__ — a mode virtually every display syncs (Auto resolves to interlaced 480i/576i, which is exactly what some modern displays/upscalers can't lock onto). Once you can see the UI, pick your preferred mode under **Settings**.
 4. **Verification:** Start OPL again normally and confirm the interface appears and remains visible.
 
-For GSM/video-mode mistakes, use the same recovery combo above: hold __`Triangle + Cross`__ at boot to restore __`Auto`__ video mode.
+For GSM/video-mode mistakes, use the same recovery combo above: hold __`Triangle + Cross`__ at boot to force __`480p`__ for OPL's own UI (per-game GSM overrides only apply at game launch and don't affect the OPL menu).
 
 If your issue is still unresolved, report it here: <https://www.psx-place.com/threads/open-ps2-loader-game-bug-reports.19401/>.
 
