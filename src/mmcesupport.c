@@ -193,6 +193,39 @@ static void mmceGetDeviceRoot(char *root, size_t size)
         root[0] = '\0';
 }
 
+// Fs-settle after a GameID card switch. The 0x8 devctl physically re-mounts the card, and on Gen2
+// the busy bit (mmceSendGameID's own wait) can clear before the FILESYSTEM surface is back. Probe
+// the switched slot until a directory open answers: poll-first so a fast card costs ~0 ms; bounded
+// (~5 s) so a dead card can't hang; LOG each outcome so a debug ELF can localise a black screen to
+// OPL vs the loaded core. The helper may have fallen back to the OTHER slot when the game's slot
+// has no card (or is -mc-covered), so stay consistent: if the game's slot isn't present, settle the
+// other slot instead -- otherwise we'd probe an empty slot for the full ~5 s (PR #89 review). Same
+// 0x1 presence devctl mmceSendGameID itself uses.
+static void mmceSettleAfterSwitch(void)
+{
+    char mmceRoot[sizeof(mmcePrefix)];
+    mmceGetDeviceRoot(mmceRoot, sizeof(mmceRoot));
+    if (mmceRoot[0] != '\0' && strlen(mmceRoot) >= 5 &&
+        fileXioDevctl(mmceRoot, 0x1, NULL, 0, NULL, 0) == -1)
+        mmceRoot[4] = (mmceRoot[4] == '0') ? '1' : '0'; // mmce0:/ <-> mmce1:/
+    if (mmceRoot[0] == '\0')
+        return;
+    int settled = 0, settle;
+    for (settle = 0; settle < 25; settle++) {
+        int dfd = fileXioDopen(mmceRoot);
+        if (dfd >= 0) {
+            fileXioDclose(dfd);
+            settled = 1;
+            break;
+        }
+        DelayThread(200 * 1000);
+    }
+    if (settled)
+        LOG("MMCE settle: %s fs surface up after ~%d ms\n", mmceRoot, settle * 200);
+    else
+        LOG("MMCE settle: %s fs surface not back within ~5000 ms; launching anyway\n", mmceRoot);
+}
+
 static void mmceRefreshArtRoots(void)
 {
     int len;
@@ -593,6 +626,42 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (settings == NULL)
         return;
 
+    // Persist last-played BEFORE any card switch below: on an FMCB-on-MMCE setup this write goes to
+    // the card's mcN: surface, and after a GameID switch it would land inside the per-game virtual
+    // card instead of the boot card (adversarial review of the native-send re-land).
+    if (gRememberLastPlayed) {
+        configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
+        saveConfig(CONFIG_LAST, 0);
+    }
+
+    // Native-core GameID (AndrewBento, Gen2: with PS2 Logo off nothing ever names the game to the
+    // card, so its per-game save folder never engages). Send the 0x8 push HERE -- before ANY card-side
+    // fd exists (the VMC fds and the ISO fd below all traverse the switched card) -- matching the
+    // Neutrino leg's proven close-fds -> send -> settle ordering and NHDDL's zero-mmce-traffic-after-
+    // switch rule. The historical #50 freeze came from the OPPOSITE shape: a send placed LAST (after
+    // every fd was captured against the pre-switch surface) in a build whose card busy-wait had been
+    // gutted to zero (see the corrected note below, near the launch tail). Per-slot Δ3 parity: a slot
+    // whose per-game VMC will be covered by mcemu keeps its card (the folder is moot for it; saves go
+    // to the VMC file), enforced via the mask. The Neutrino leg keeps its own send; a Neutrino config
+    // that falls back to native (bad ZSO / neutrino.elf missing) keeps today's no-send behavior.
+    {
+        int coreLoaderEarly = gDefaultCoreLoader;
+        configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoaderEarly);
+        if (!coreLoaderEarly) {
+            char vmcNameEarly[32];
+            int vmcMask = 0, vs;
+            for (vs = 0; vs < 2; vs++) {
+                configGetVMC(configSet, vmcNameEarly, sizeof(vmcNameEarly), vs);
+                if (vmcNameEarly[0])
+                    vmcMask |= (1 << vs);
+            }
+            // protectMcPath=NULL: the native path loads no ELF from mcN: mid-launch (ee_core is
+            // embedded; sysLaunchLoaderElf reads rom0: only).
+            if (mmceSendGameID(game->startup, NULL, vmcMask))
+                mmceSettleAfterSwitch();
+        }
+    }
+
     char vmc_name[32];
     char vmc_path[256];
     int vmc_size_mb;
@@ -682,10 +751,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     }
     sbLoadImage(mmcePrefix, game->startup);
 
-    if (gRememberLastPlayed) {
-        configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
-        saveConfig(CONFIG_LAST, 0);
-    }
+    // (last-played persistence hoisted above the GameID switch -- see the native-core send block)
 
     if (configGetStrCopy(configSet, CONFIG_ITEM_ALTSTARTUP, filename, sizeof(filename)) == 0)
         strcpy(filename, game->startup);
@@ -778,46 +844,12 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // sits on this slot's mcN:).
         int gameIdSwitched = mmceSendGameID(game->startup, neutrinoPath,
                                             (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)); // Δ3: -mc-covered slots keep their card
-        // Fs-settle after a card switch. The 0x8 devctl physically re-mounts the card, and on Gen2
-        // the busy bit (mmceSendGameID's own wait) can clear before the FILESYSTEM surface is back.
-        // The game on this leg is ALWAYS mmce-hosted, so after any actual switch (gameIdSwitched)
-        // both our own reads below (neutrino.elf load, ISO open for the keep-IOP handoff) AND
-        // Neutrino's own post-reset mmceman read hit the just-switched card. Wait for the SWITCHED
-        // slot's fs to answer a directory probe first. Prior code gated this on an mmce-hosted
-        // neutrino.elf, which MISSED the game-on-MMCE / neutrino-on-USB case entirely: the card
-        // still switched (for the game's per-game folder) but nothing waited (issue #56/#68, lucas:
-        // "neutrino on USB, game from MMCE" froze on some titles). Probe the game's own slot (the
-        // one mmceSendGameID switched) -- covers both-on-MMCE (same slot) too. Poll-first so a fast
-        // card costs ~0 ms; bounded (~5 s) so a dead card can't hang; LOG each outcome so a debug
-        // ELF can distinguish "settling" from "hung" and localise a black screen to OPL vs Neutrino.
-        if (gameIdSwitched) {
-            char mmceRoot[sizeof(mmcePrefix)];
-            mmceGetDeviceRoot(mmceRoot, sizeof(mmceRoot)); // the game's slot ("mmceN:/")
-            // The game is mmce-hosted here, so its own slot is normally the one mmceSendGameID
-            // switched. But the helper falls back to the OTHER slot when the game's slot has no
-            // card (or is -mc-covered), so stay consistent: if the game's slot isn't present, settle
-            // the other slot instead -- otherwise we'd probe an empty slot for the full ~5 s
-            // (PR #89 review). Same 0x1 presence devctl mmceSendGameID itself uses.
-            if (mmceRoot[0] != '\0' && strlen(mmceRoot) >= 5 &&
-                fileXioDevctl(mmceRoot, 0x1, NULL, 0, NULL, 0) == -1)
-                mmceRoot[4] = (mmceRoot[4] == '0') ? '1' : '0'; // mmce0:/ <-> mmce1:/
-            if (mmceRoot[0] != '\0') {
-                int settled = 0, settle;
-                for (settle = 0; settle < 25; settle++) {
-                    int dfd = fileXioDopen(mmceRoot);
-                    if (dfd >= 0) {
-                        fileXioDclose(dfd);
-                        settled = 1;
-                        break;
-                    }
-                    DelayThread(200 * 1000);
-                }
-                if (settled)
-                    LOG("MMCE settle: %s fs surface up after ~%d ms\n", mmceRoot, settle * 200);
-                else
-                    LOG("MMCE settle: %s fs surface not back within ~5000 ms; launching anyway\n", mmceRoot);
-            }
-        }
+        // Fs-settle after a card switch (shared helper; see mmceSettleAfterSwitch). The game on this
+        // leg is ALWAYS mmce-hosted, so after any actual switch both our own reads below (neutrino.elf
+        // load, ISO open for the keep-IOP handoff) AND Neutrino's own post-reset mmceman read hit the
+        // just-switched card -- wait for the switched slot's fs to answer first (issue #56/#68).
+        if (gameIdSwitched)
+            mmceSettleAfterSwitch();
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino opens the mmce-hosted game through
         // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
         // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).
@@ -850,12 +882,16 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     LOG("name: %s\n", game->name);
     LOG("start: %s\n", game->startup);
 
-    // Issue #50: do NOT push a launcher GameID on the NATIVE MMCE launch. For a game ON the MMCE, the
-    // in-game card is handled by OPL's mcemu (the VMC fds above), so a SET_GAMEID here is at best
-    // redundant -- and it re-switches the physical card mid-launch, so a game that probes the memory
-    // card early boots before the re-mount finishes and FREEZES (regressed beta 2257 -> 2813; reported by
-    // ramonesfm, SCPH-30001 + PSxMemCard Gen2). The cross-device paths (bdm/hdd/eth) STILL send it,
-    // because there the MMCE can't see the boot device's id and must be told which per-game folder to use.
+    // Issue #50, CORRECTED HISTORY (2026-07-13 archaeology): the native GameID send was NOT the bug.
+    // Native MMCE launches sent SET_GAMEID from the first MMCE support (incl. the tester's known-good
+    // beta 2257, which waited up to 15 s for the card) -- the freeze regression (2257 -> 2813,
+    // ramonesfm, SCPH-30001 + Gen2) came from the busy-wait being gutted to nopdelay() (68bf1a73) AND
+    // the send sitting LAST, after every card-side fd was captured against the pre-switch surface.
+    // The wait has since been restored (aa780f24/847cc620, poll-first ~3 s) and the send re-landed
+    // ABOVE (before any fd exists, with the fs-settle) -- the mcemu rationale only ever held when a
+    // per-game VMC was configured (no VMC -> mcemu never loads and the game talks to the REAL card,
+    // where the per-game folder genuinely matters: AndrewBento's logo-off report). The cross-device
+    // paths (bdm/hdd/eth) send it too, with the same wait.
 
     // mcReset();
     // mcInit(MC_TYPE_XMC);
