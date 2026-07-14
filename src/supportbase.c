@@ -1317,8 +1317,13 @@ int sbLoadCheats(const char *path, const char *file)
         if (snprintf(member, sizeof(member), "%s.cht", file) < (int)sizeof(member)) {
             const TarEntryBase *entry = tarFind(TAR_KIND_CHT, member);
             // rawSize == 0 counts as a miss (wOPL parity: its size check rejects empty members) so
-            // an empty tar member never shadows a possibly-valid loose CHT/<id>.cht below.
-            if (entry != NULL && entry->rawSize > 0) {
+            // an empty tar member never shadows a possibly-valid loose CHT/<id>.cht below. The upper
+            // cap keeps a malformed/hostile member from asking for the tar engine's full 4 MiB at the
+            // launch's most heap-tight moment (Gemini review of #158): real cheat files are text that
+            // parses into at most MAX_CODES=250 cheats -- 1 MiB is already absurdly generous, and an
+            // over-cap member simply falls through to the loose file like any other miss.
+#define CHT_TAR_MEMBER_MAX (1024 * 1024)
+            if (entry != NULL && entry->rawSize > 0 && entry->rawSize <= CHT_TAR_MEMBER_MAX) {
                 // rawSize+1: tar members carry no NUL and the parser needs a terminator. wOPL feeds
                 // the raw tar buffer to its parser (a latent overread we deliberately do not copy).
                 char *tarBuf = (char *)malloc(entry->rawSize + 1);
