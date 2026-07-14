@@ -263,6 +263,26 @@ Rules worth knowing:
   twice draws both — that's an authoring error, not a picker.
 - Themes without the key are untouched — the filter only activates when `devices=` appears.
 
+### Using RiptOPL themes on regular OPL
+
+RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
+serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know (`devices=`,
+`reflection_offset`, `overlay2`, `plasma_blend_color`, the whole `favsMain*`/`vcdMain*` families…)
+are simply never read, and unknown element types (`Coverflow`) are skipped without stopping the
+parse. What to expect there:
+
+- **Invisible:** all pure-key extras above — regular OPL renders the theme as if they weren't
+  written.
+- **Cosmetic:** `aligned=2` renders centered; `#Size`/`#DiscType`/`#System` attributes and the
+  Coverflow carousel are silently absent.
+- **Ugly but harmless:** `devices=` layouts — regular OPL draws *every* `MenuIcon`/`HintText` block
+  on *every* page (overlapping), and treats a second `ItemsList` as the apps list while still
+  drawing it on the games screen. Per-device layouts are effectively RiptOPL-only.
+- **⚠ The one rule:** **always include one plain (unfiltered) `ItemsList`**. A theme with none —
+  e.g. a Coverflow-only theme, or one where every list carries `devices=` — *crashes regular OPL on
+  the first scroll* (a latent upstream bug in its default-list repair; RiptOPL fixed it on our
+  side). Ship the plain list and the theme is safe everywhere.
+
 ---
 
 ## 6. `attribute=` values
