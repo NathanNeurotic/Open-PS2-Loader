@@ -1256,6 +1256,11 @@ int diaSetLabel(struct UIItem *ui, int id, const char *text)
     return 0;
 }
 
+// LIFETIME CONTRACT: this stores enumvals' RAW POINTER -- no copy. The array must outlive every
+// render of the dialog (dialog structs are also reused across openings). A block-scoped array is
+// a dangling pointer the moment its brace closes (issue #154: the DMA row rendered the Neutrino
+// video-mode list). Use static arrays for pure literals; _l()-localized arrays must stay
+// function-scope in the function that executes the dialog (static would freeze the first language).
 int diaSetEnum(struct UIItem *ui, int id, const char **enumvals)
 {
     struct UIItem *item = diaFindByID(ui, id);
