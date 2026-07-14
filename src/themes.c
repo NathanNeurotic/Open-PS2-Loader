@@ -1865,9 +1865,13 @@ static void splitFilteredDecoratorCoverCaches(theme_t *theme)
 // devices=-filtered ItemsList's decorator in ANY family. Zero-cost for devices=-free themes.
 static int isFilteredDecoratorCoverCache(theme_t *theme, image_cache_t *cache)
 {
+    int g;
+
+    if (theme == NULL || cache == NULL) // unreachable from the current callers; matches the sibling helpers' guards (Gemini, #168)
+        return 0;
+
     theme_elems_t *groups[8] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems,
                                 &theme->favsMainElems, &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems};
-    int g;
 
     for (g = 0; g < 8; g++) {
         theme_element_t *e = groups[g]->first;
