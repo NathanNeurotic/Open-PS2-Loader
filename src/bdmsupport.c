@@ -653,7 +653,7 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
     char vcdPrefix[64], vcdElf[256], vcdSelector[320];
 
-    if (pDeviceData == NULL || vcdName == NULL || vcdName[0] == '\0' || !strcmp(vcdName, "POPSTARTER"))
+    if (pDeviceData == NULL || vcdName == NULL || vcdName[0] == '\0' || !strcasecmp(vcdName, "POPSTARTER")) // reserved-name belt: the scanner no longer lists it (#154); strcasecmp -- FAT is case-insensitive
         return;
     // POPSTARTER does its own IOP reset and reloads its block drivers from the MC -- it can't bring up
     // the network (udp) block device (no BDMA variant for it), so a PS1 VCD on the udp device would just

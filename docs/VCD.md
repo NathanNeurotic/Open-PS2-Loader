@@ -170,7 +170,32 @@ files for you: enable **Settings → Network Settings → Write POPSTARTER Netwo
 (copy them to `mc?:/POPSTARTER/`); if they're missing, an SMB VCD launch warns rather than
 hanging.
 
-## 7. Notes & limitations
+## 7. Troubleshooting — "my VCDs don't show up"
+
+Work down this ladder; each step isolates a different stage (from the #154 forensics):
+
+1. **Does the device page appear at all?** If not, it's the device enables, not VCD: USB/MX4SIO/
+   iLink need their toggles on; the **internal exFAT** page needs *BDM devices* + *BDM HDD* ON and
+   the **APA HDD start mode OFF** — the two internal-HDD backends are mutually exclusive, and a
+   hand-edited/cross-version config that enables both gets auto-reconciled at boot (you now get a
+   toast when that happens; check Device Settings).
+2. **Do PS2 ISOs list from the device?** If yes, the filesystem/mount layer is proven working —
+   on the WOPLSDK build the exFAT driver is *byte-identical* to wOPL's, so "works in wOPL" adds
+   no new information past this step.
+3. **Press L3.** The VCD view is per device and only reachable when *Default game view* is
+   "Both" (or the page is locked to VCD). No L3 response = check that setting.
+4. **VCDs are scanned from `<device-root>:/POPS/*.VCD`** — the game-folder prefix
+   (`usb_prefix` etc.) is deliberately **not** applied, because POPSTARTER itself only reads
+   `/POPS` at the root. A `POPS` folder inside your games subfolder will never be found.
+5. **Name rules:** basenames longer than **160 characters** and the reserved name
+   **`POPSTARTER.VCD`** are skipped at scan (the debug log says so) — previously they listed but
+   could never launch (a dead ✕ button). Rename the file.
+6. **Fails only after selecting a game?** Then listing/scan is fine and the handoff is the
+   suspect: `POPSTARTER.ELF` present in `/POPS` (or `__common/POPS` on APA)? On exFAT, the BDMA
+   equip (§5) is best-effort — a failed equip toasts but the launch still proceeds and may land
+   on OSDSYS.
+
+## 8. Notes & limitations
 
 - VCD support reuses the normal device pipeline, so covers, favourites and the theme all
   work exactly as they do for disc games.

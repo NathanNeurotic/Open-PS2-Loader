@@ -1591,6 +1591,10 @@ static void _loadConfig()
                     gEnableBdmHDD = 0;
                 configSetInt(configOPL, CONFIG_OPL_HDD_MODE, gHDDStartMode);
                 configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
+                // #154 forensics: this reconciliation was SILENT -- a user whose internal-exFAT (or
+                // APA) page vanished after a hand-edit/cross-version config had no clue why. Say so
+                // once; _loadConfig runs deferred (post-GUI), so the toast renders.
+                guiWarning(_l(_STR_HDD_BACKEND_RECONCILED), 8);
             }
             int udpbdKeyPresent = configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
             configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
