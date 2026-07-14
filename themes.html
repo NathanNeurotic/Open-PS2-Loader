@@ -197,6 +197,7 @@ accept these positioning/appearance properties:</p>
 <tr><td><code>reflection</code></td><td>0 / 1</td><td>Draw a mirrored, alpha-faded reflection beneath the element (used by <code>Coverflow</code>). Default 0.</td></tr>
 <tr><td><code>reflection_offset</code></td><td>int (clamped −1024…1024)</td><td>Shift the reflection vertically (e.g. to clear a case base).</td></tr>
 <tr><td><code>enabled</code></td><td>0 / 1</td><td>Set <code>0</code> to skip the element without deleting the block. Default 1.</td></tr>
+<tr><td><code>devices</code></td><td>name list</td><td><b>This fork.</b> Show the element only on the listed device pages — honoured by <code>MenuIcon</code>, <code>ItemsList</code> and <code>HintText</code> (ignored elsewhere). See <a href="#per-device-placement">Per-device placement</a>.</td></tr>
 </tbody>
 </table>
 <p><b>Value tokens:</b> <code>POS_MID</code> and <code>DIM_INF</code> (above), and <code>#RRGGBB</code> for
@@ -217,7 +218,7 @@ work instead of hard-coding resolution-specific numbers.</p>
 <tr><td><code>AttributeImage</code> <b>(item)</b></td><td>A badge image chosen by a game attribute — see §6.</td></tr>
 <tr><td><code>MenuIcon</code></td><td>The current device/menu icon.</td></tr>
 <tr><td><code>MenuText</code></td><td>The current menu name, with left/right arrows when there are sibling menus.</td></tr>
-<tr><td><code>ItemsList</code> <b>(item)</b></td><td>The scrolling list of games/apps. First one = games list, second = apps, third = Favourites. Auto-added if omitted.</td></tr>
+<tr><td><code>ItemsList</code> <b>(item)</b></td><td>The scrolling list of games/apps. First one = games list, second = apps, third = Favourites, fourth = PS1/VCD. Auto-added if omitted. A list with <code>devices=</code> is a per-device <em>override</em> and doesn't count toward those slots.</td></tr>
 <tr><td><code>ItemIcon</code> <b>(item)</b></td><td>A per-item icon element (a <code>GameImage</code> bound to the <code>ICO</code> cache).</td></tr>
 <tr><td><code>ItemCover</code> <b>(item)</b></td><td>The selected item's cover (a <code>GameImage</code> bound to the <code>COV</code> cache), with optional overlay.</td></tr>
 <tr><td><code>ItemText</code> <b>(item)</b></td><td>The selected item's startup filename.</td></tr>
@@ -248,6 +249,63 @@ work instead of hard-coding resolution-specific numbers.</p>
 <tr><td><code>decorator</code></td><td><code>ItemsList</code></td><td>A <code>GameImage</code> <code>pattern</code> name (e.g. <code>ICO</code>) to draw as a small per-row icon next to each entry.</td></tr>
 </tbody>
 </table>
+
+<h3 id="per-device-placement">Per-device placement (<code>devices=</code>) — <em>this fork</em></h3>
+<p>Normally one <code>MenuIcon</code>, one <code>ItemsList</code> and one <code>HintText</code> serve
+<b>every</b> device page, so they share a single position. <code>devices=</code> lets a theme place them
+differently per device: an element with the key draws <b>only</b> on the listed pages, and an unfiltered
+element of the same type automatically stands down there (no key needed on it), staying the default
+everywhere else.</p>
+<pre><code># The shared icon spot, used by every page not claimed below.
+main3:
+type=MenuIcon
+x=POS_MID
+y=400
+
+# On the MMCE and APA-HDD pages, pin the icon top-right instead.
+main4:
+type=MenuIcon
+devices=mmce,hdd
+x=-40
+y=24</code></pre>
+<p><b>Device names</b> (comma-separated, case-insensitive):</p>
+<table data-sortable>
+<thead><tr><th>Name</th><th>Page</th></tr></thead>
+<tbody>
+<tr><td><code>usb</code></td><td>USB mass storage (any slot)</td></tr>
+<tr><td><code>ilink</code></td><td>iLink / FireWire</td></tr>
+<tr><td><code>mx4sio</code></td><td>MX4SIO</td></tr>
+<tr><td><code>hdd_bd</code></td><td>Internal HDD, exFAT (BDM)</td></tr>
+<tr><td><code>hdd</code></td><td>Internal HDD, APA/PFS</td></tr>
+<tr><td><code>eth</code></td><td>Network (SMB)</td></tr>
+<tr><td><code>smb</code></td><td>Alias of <code>eth</code></td></tr>
+<tr><td><code>mmce</code></td><td>MMCE / memory-card emulator</td></tr>
+<tr><td><code>udpbd</code></td><td>UDPBD network boot</td></tr>
+<tr><td><code>udpfs</code></td><td>UDPFS network boot</td></tr>
+<tr><td><code>app</code></td><td>The Apps tab</td></tr>
+<tr><td><code>fav</code></td><td>The Favourites tab</td></tr>
+<tr><td><code>bdm</code></td><td>The generic BDM page before its driver is identified (auto/manual start)</td></tr>
+</tbody>
+</table>
+<p>Rules worth knowing:</p>
+<ul>
+<li><b>Only <code>MenuIcon</code>, <code>ItemsList</code> and <code>HintText</code></b> honour the key; on
+other element types it parses but has no effect.</li>
+<li>Matching follows the page's <b>visible device icon</b>, so a BDM page counts as
+<code>usb</code>/<code>mx4sio</code>/… once its driver is identified, and as <code>bdm</code> before that. In
+the PS1/VCD (L3) view the page keeps the device's identity — filters keep working there via the
+<code>vcdMain*</code> family.</li>
+<li>A filtered <code>ItemsList</code> is an <b>override</b>: it does not consume one of the theme's
+ItemsList slots (games/apps/favs/VCD, claimed in file order), and navigation/paging automatically follows
+whichever list is drawn. Give it its own <code>x</code>/<code>y</code>/<code>height</code> (its row count
+comes from <code>height</code>); <code>decorator=</code> works as usual.</li>
+<li>Unknown device names are logged and skipped; if nothing valid remains, the element behaves as if the
+key were absent (shared placement) rather than disappearing.</li>
+<li>Two filtered elements of the same type may list different devices; listing the <b>same</b> device
+twice draws both — that's an authoring error, not a picker.</li>
+<li>Themes without the key are untouched — the filter only activates when <code>devices=</code>
+appears.</li>
+</ul>
 
 <h2 id="image-overlay">6 · Image &amp; overlay properties (incl. the two-layer system)</h2>
 <p>Image-type elements (<code>StaticImage</code>, <code>GameImage</code>, <code>Background</code>,
@@ -518,7 +576,7 @@ main2:
     height=16
 main3:
     type=MenuIcon         # current device icon
-    x=0
+    x=0                   # (add devices=mmce,hdd,… to place this per device — see §5)
     y=0
     aligned=0
     scaled=0

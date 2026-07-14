@@ -754,6 +754,12 @@
   "url": "themes.html#complete-sample"
  },
  {
+  "title": "Per-device placement (devices=)",
+  "cat": "themes",
+  "text": "Place the MenuIcon, ItemsList and HintText differently per device page with devices=usb,hdd,mmce,...; a filtered element draws only on its pages and the unfiltered one automatically stands down there. Filtered ItemsLists are overrides that don't consume the games/apps/favs/VCD slots.",
+  "url": "themes.html#per-device-placement"
+ },
+ {
   "title": "Settings Reference",
   "cat": "reference",
   "text": "Every settings menu and option in RiptOPL, grouped by screen: General Settings, Device Settings, Display Settings, Audio, Controller, OSD, Parental Lock, and Network.",
