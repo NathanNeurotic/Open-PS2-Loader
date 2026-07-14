@@ -675,6 +675,8 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     {
         int coreLoader = gDefaultCoreLoader;
         configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+        if (coreLoader == 2)                 // "Default" sentinel: the dialog never persists it (index 2 removes the
+            coreLoader = gDefaultCoreLoader; // key), but a hand-edited cfg can carry it (Gemini, #161)
         if (coreLoader)
             guiWarning(_l(_STR_NEUTRINO_SMB_FALLBACK), 6);
     }
