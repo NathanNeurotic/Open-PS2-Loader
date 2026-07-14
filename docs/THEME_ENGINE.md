@@ -254,6 +254,9 @@ Rules worth knowing:
   slots (games/apps/favs/VCD, claimed in file order — see §1), and navigation/paging automatically
   follows whichever list is drawn. Give it its own `x`/`y`/`height` (its row count comes from
   `height`); `decorator=` works as usual.
+- **Keep one unfiltered `ItemsList`.** If *every* list in the theme carries `devices=`, OPL adds a
+  plain default list (373×316 at 42,42) on the pages nothing covers — navigation always needs a
+  list — and it won't match your layout.
 - Unknown device names are logged and skipped; if nothing valid remains, the element behaves as if
   the key were absent (shared placement) rather than disappearing.
 - Two filtered elements of the same type may list different devices; listing the **same** device

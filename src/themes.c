@@ -134,19 +134,27 @@ static const struct
 #define THM_DEVICE_VOCAB_COUNT ((int)(sizeof(thmDeviceVocab) / sizeof(thmDeviceVocab[0])))
 
 // Parse a comma-separated devices= value into a vocab-index bitmask. Unknown names LOG and are
-// ignored; an empty/unparseable value yields 0 = unfiltered, so a typo degrades to the
-// pre-existing shared-element behavior instead of hiding the element everywhere.
-static int thmParseDeviceList(const char *value)
+// ignored (quiet suppresses that -- addGUIElem pre-checks the same value initBasic then parses
+// for real, and the warning should print once); an empty/unparseable value yields 0 = unfiltered,
+// so a typo degrades to the pre-existing shared-element behavior instead of hiding the element
+// everywhere. strtok_r, NOT strtok: theme loads run on the IO worker too (device NeedsUpdate ->
+// thmAddElements) and could interleave with a GUI-thread strtok (e.g. neutrinoArgsParse).
+static int thmParseDeviceList(const char *value, int quiet)
 {
     int mask = 0;
-    char buf[128];
+    char *buf;
     char *tok;
+    char *saveptr;
 
     if (value == NULL)
         return 0;
-    snprintf(buf, sizeof(buf), "%s", value);
-    // plain strtok: theme parsing is single-threaded at load time (matches supportbase/system usage)
-    for (tok = strtok(buf, ", \t"); tok != NULL; tok = strtok(NULL, ", \t")) {
+
+    buf = malloc(strlen(value) + 1);
+    if (buf == NULL)
+        return 0;
+    strcpy(buf, value);
+
+    for (tok = strtok_r(buf, ", \t", &saveptr); tok != NULL; tok = strtok_r(NULL, ", \t", &saveptr)) {
         int i, hit = 0;
         for (i = 0; i < THM_DEVICE_VOCAB_COUNT; i++) {
             if (strcasecmp(tok, thmDeviceVocab[i].name) == 0) {
@@ -155,9 +163,10 @@ static int thmParseDeviceList(const char *value)
                 break;
             }
         }
-        if (!hit)
+        if (!hit && !quiet)
             LOG("THEMES devices=: unknown device name '%s' ignored\n", tok);
     }
+    free(buf);
     return mask;
 }
 
@@ -1364,7 +1373,7 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     // Optional per-device filter (MenuIcon/ItemsList/HintText consume it; harmless elsewhere).
     snprintf(elemProp, sizeof(elemProp), "%s_devices", name);
     if (configGetStr(themeConfig, elemProp, &temp))
-        elem->deviceFilter = thmParseDeviceList(temp);
+        elem->deviceFilter = thmParseDeviceList(temp, 0);
 
     return elem;
 }
@@ -1906,11 +1915,19 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     theme->vcdItemsList = validateItemsList(themePath, themeConfig, theme, theme->vcdItemsList, &theme->vcdMainElems);
 
     // devices=-filtered ItemsList overrides: link their decorators (they own no slot, so the pass
-    // above never reaches them)...
+    // above never reaches them). Info families too -- a filtered ItemsList can be declared there
+    // and its decorator string must not be left pointing into themeConfig (freed at end of load).
+    // NOTE: filtered decorators are NOT cache-split/exempted below (splitDecoratorCoverCache /
+    // clampSelectedCoverCaches walk the four slot lists only); a filtered list with its own COV
+    // decorator just loses idle-time priming (pop-in), nothing worse.
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->mainElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->infoElems);
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->appsMainElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->appsInfoElems);
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->favsMainElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->favsInfoElems);
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->vcdMainElems);
+    validateFilteredItemsLists(themePath, themeConfig, theme, &theme->vcdInfoElems);
 
     // ...then precompute the unfiltered elements' coverage so an unfiltered MenuIcon/ItemsList/
     // HintText yields to filtered same-type siblings on the devices those cover. Must run AFTER the
@@ -1999,9 +2016,13 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 char devProp[64];
                 const char *devValue;
                 snprintf(devProp, sizeof(devProp), "%s_devices", name);
-                if (configGetStr(themeConfig, devProp, &devValue) && thmParseDeviceList(devValue) != 0) {
+                if (configGetStr(themeConfig, devProp, &devValue) && thmParseDeviceList(devValue, 1 /* initBasic re-parses and logs */) != 0) {
                     elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 42, 42, ALIGN_NONE, 400, 360, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                     initItemsList(themePath, themeConfig, theme, elem, name, NULL);
+                    // Pre-existing quirk kept as-is: an UNFILTERED ItemsList parsed for an INFO
+                    // family still claims the next nav slot below (thmLoad's info loops run after
+                    // the main ones). Refusing info-family claims here would change behavior for
+                    // themes that rely on it.
                 } else if (!theme->gamesItemsList) {
                     elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 0, 0, ALIGN_NONE, DIM_UNDEF, DIM_UNDEF, SCALING_RATIO, theme->textColor, theme->fonts[0]);
                     initItemsList(themePath, themeConfig, theme, elem, name, NULL);
