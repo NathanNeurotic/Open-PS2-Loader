@@ -39,6 +39,7 @@ struct gui_update_t
             int text_id;
             int selected;
             void *owner;
+            int isFolder; // folder-browse row (GAME_FORMAT_FOLDER) -> copied onto the submenu item
         } submenu;
 
         struct

@@ -526,7 +526,7 @@ static int ethUpdateGameList(item_list_t *itemList)
             int r = vcdFillGameList(ethPrefix, &ethGames);
             if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
                 ethGameCount = r;
-        } else if ((sbReadList(&ethGames, ethPrefix, &ethULSizePrev, &ethGameCount)) < 0) {
+        } else if ((sbReadList(&ethGames, ethPrefix, NULL, &ethULSizePrev, &ethGameCount)) < 0) {
             gNetworkStartup = ERROR_ETH_SMB_LISTGAMES;
             ethDisplayErrorStatus();
         }

@@ -123,6 +123,13 @@ This build layers several features on top of upstream OPL:
   from every device into one list, and a star marks favourited titles everywhere. Favourites
   are stored in a shared `favourites.bin`, and RiptOPL will **import an existing uOPL / wOPL
   favourites file** if it finds one — so your favourites carry over from those builds.
+- **Folder browsing (opt-in):** turn on **Browse Folders in Game List** in **Settings** to have
+  subdirectories inside your `CD` / `DVD` folders appear as browsable entries (shown with a
+  trailing `/`). Select a folder to open it, and press the **cancel button** to go back up — a
+  breadcrumb in the page title shows where you are. Each folder view is just the normal game
+  list, so covers, favourites, coverflow and per-game settings all work inside folders. Works on
+  USB / MX4SIO / iLink / internal-BDM, MMCE and UDPFS-Files. Left off, a flat library looks and
+  behaves exactly as before.
 - **Neutrino external core (per-game):** hand a game off to an external `neutrino.elf`
   instead of OPL's built-in core, chosen per title, with custom launch flags you can set
   globally and per-game. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.

@@ -14,6 +14,9 @@ enum GAME_FORMAT {
     GAME_FORMAT_USBLD = 0,
     GAME_FORMAT_OLD_ISO,
     GAME_FORMAT_ISO,
+    // A browsable subdirectory row (folder navigation, opt-in). Never launched, never written to the
+    // games.bin cache and never stored as a favourite; the dispatch intercepts it to descend instead.
+    GAME_FORMAT_FOLDER,
 };
 
 typedef struct
@@ -42,7 +45,15 @@ typedef struct
 int isValidIsoName(char *name, int *pNameLen);
 int sbIsSameSize(const char *prefix, int prevSize);
 int sbCreateSemaphore(void);
-int sbReadList(base_game_info_t **list, const char *prefix, int *fsize, int *gamecount);
+// Scan a device's game list. sub is the folder-browse subpath below CD/DVD ("" or NULL = the device
+// root, the normal case); when set, the CD/DVD scans descend into it, subdirectories are listed as
+// GAME_FORMAT_FOLDER rows, and the ul.cfg (USBLD) leg -- a device-root-only concept -- is skipped.
+int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int *fsize, int *gamecount);
+
+// Set the folder-browse subpath the path composers (sbCreatePath / sbPopulateConfig) inject between
+// CD|DVD and the game name. A device leg calls this with folderGetSub(mode) before launch / delete /
+// rename so a game inside a subfolder resolves to <prefix>CD|DVD/<sub>/<name>. "" or NULL = root.
+void sbSetBrowseSub(const char *sub);
 int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex);
 void sbUnprepare(void *pCommon);
 void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID);

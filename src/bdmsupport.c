@@ -4,6 +4,7 @@
 #include "include/supportbase.h"
 #include "include/bdmsupport.h"
 #include "include/vcdsupport.h"
+#include "include/folderbrowse.h"
 #include "include/util.h"
 #include "include/themes.h"
 #include "include/textures.h"
@@ -500,6 +501,12 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     if (vcdConsumeDirty(itemList->mode))
         return 1;
 
+    // Folder browsing: a descend/ascend marks the mode dirty but bumps nothing the tick gate below
+    // watches, so consume it here (same discipline as vcdConsumeDirty) or the deeper/shallower list
+    // never rebuilds on a device already scanned this BdmGeneration.
+    if (folderConsumeDirty(itemList->mode))
+        return 1;
+
     if (pDeviceData->bdmDeviceTick == BdmGeneration) {
         if (pOwner != NULL && pOwner->menuItem.visible == 0)
             return 0;
@@ -584,7 +591,7 @@ static int bdmUpdateGameList(item_list_t *itemList)
         if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
             pDeviceData->bdmGameCount = r;
     } else
-        sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
+        sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, folderGetSub(itemList->mode), &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
     return pDeviceData->bdmGameCount;
 }
 
@@ -631,6 +638,7 @@ static void bdmDeleteGame(item_list_t *itemList, int id)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
+    sbSetBrowseSub(folderGetSub(itemList->mode)); // delete inside the current subfolder, not the root
     sbDelete(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, "/", pDeviceData->bdmGameCount, id);
     pDeviceData->bdmULSizePrev = -2;
     pDeviceData->ForceRefresh = 1;
@@ -640,6 +648,7 @@ static void bdmRenameGame(item_list_t *itemList, int id, char *newName)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
+    sbSetBrowseSub(folderGetSub(itemList->mode)); // rename inside the current subfolder, not the root
     sbRename(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, "/", pDeviceData->bdmGameCount, id, newName);
     pDeviceData->bdmULSizePrev = -2;
     pDeviceData->ForceRefresh = 1;
@@ -878,6 +887,13 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         pDeviceData = gAutoLaunchDeviceData;
         game = gAutoLaunchBDMGame;
     }
+
+    // Folder browsing: a folder row is never launchable (the dispatch descends instead of reaching
+    // here); guard defensively. Otherwise pin the path composers to the current subfolder so a game
+    // inside it resolves to <prefix>CD|DVD/<sub>/<name>.
+    if (game != NULL && game->format == GAME_FORMAT_FOLDER)
+        return;
+    sbSetBrowseSub(folderGetSub(itemList->mode));
 
     // VCD view: this device is showing PS1 VCDs -> hand off to POPSTARTER (by name) instead of the
     // disc / Neutrino path below (which is entirely disc-specific). The BDM_TYPE_ATA internal exFAT HDD

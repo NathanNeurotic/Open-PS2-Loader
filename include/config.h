@@ -124,6 +124,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_BDM_PREFIX           "usb_prefix" // Leave this "usb" for compatibility
 #define CONFIG_OPL_ETH_PREFIX           "eth_prefix"
 #define CONFIG_OPL_REMEMBER_LAST        "remember_last"
+#define CONFIG_OPL_FOLDER_NAV           "folder_nav"
 #define CONFIG_OPL_AUTOSTART_LAST       "autostart_last"
 #define CONFIG_OPL_BDM_MODE             "usb_mode" // Leave this "usb" for compatibility
 #define CONFIG_OPL_HDD_MODE             "hdd_mode"

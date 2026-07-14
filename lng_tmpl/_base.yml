@@ -252,6 +252,10 @@ gui_strings:
   string: Write Operations
 - label: LASTPLAYED
   string: Remember Last Played Game
+- label: FOLDER_NAV
+  string: Browse Folders in Game List
+- label: HINT_FOLDER_NAV
+  string: Show subfolders of CD/DVD as browsable entries; select to open, cancel to go back
 - label: SELECTBUTTON
   string: Select Button
 - label: ERR_FRAGMENTED

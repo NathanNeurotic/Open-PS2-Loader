@@ -58,6 +58,7 @@ enum UI_ITEMS {
     CFG_NETPROTOCOL,     // unified network-protocol selector (Off/SMB/UDPFS)
     CFG_UDPFSMODE,       // when UDPFS is selected: Files (udpfs_ioman filesystem) vs Image (udpfs_bd block/massN:)
     CFG_LASTPLAYED,
+    CFG_FOLDERNAV,
     CFG_LBL_AUTOSTARTLAST,
     CFG_AUTOSTARTLAST,
     CFG_SELECTBUTTON,

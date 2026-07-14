@@ -27,6 +27,9 @@ typedef struct submenu_item
     void *owner;
     /// 1 when the item is marked as a favourite (a star is drawn next to it)
     int favourited;
+    /// 1 when this row is a browsable folder (GAME_FORMAT_FOLDER), not a launchable game. The
+    /// dispatch descends into it instead of launching; the renderer marks it and skips its cover.
+    int isFolder;
 } submenu_item_t;
 
 typedef struct submenu_list

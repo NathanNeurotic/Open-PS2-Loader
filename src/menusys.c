@@ -11,6 +11,7 @@
 #include "include/favsupport.h"
 #include "include/bdmsupport.h"
 #include "include/vcdsupport.h" // vcdViewActive -- VCD view renders with the apps element family
+#include "include/folderbrowse.h"
 #include "include/renderman.h"
 #include "include/fntsys.h"
 #include "include/lang.h"
@@ -663,6 +664,7 @@ static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int tex
     it->item.cache_uid = NULL;
     it->item.owner = owner;
     it->item.favourited = 0;
+    it->item.isFolder = 0;
     submenuRebuildCache(it);
 
     return it;
@@ -842,7 +844,12 @@ void submenuSort(submenu_list_t **submenu)
             char *txt1 = submenuItemGetText(&tip->item);
             char *txt2 = submenuItemGetText(&nxt->item);
 
-            int cmp = strcasecmp(txt1, txt2);
+            // Folder browsing: folders group ahead of games; within each group sort by title.
+            int cmp;
+            if (tip->item.isFolder != nxt->item.isFolder)
+                cmp = tip->item.isFolder ? -1 : 1;
+            else
+                cmp = strcasecmp(txt1, txt2);
 
             if (cmp > 0) {
                 swap(tip, nxt);
@@ -860,6 +867,25 @@ void submenuSort(submenu_list_t **submenu)
     *submenu = head;
 }
 
+// Folder browsing: return the device page we are leaving to its folder root, so a device is never
+// parked inside a subfolder while off-screen. This keeps folder navigation a per-visit affair and
+// guarantees the Favourites tab / last-played always resolve against a device's root list. It also
+// frees the single shared breadcrumb buffer for the next device by restoring the device-name title.
+static void menuFolderResetLeaving(struct menu_list *leaving)
+{
+    if (leaving == NULL || leaving->item == NULL || leaving->item->userdata == NULL)
+        return;
+    item_list_t *support = (item_list_t *)leaving->item->userdata;
+    if (!folderModeSupported(support->mode) || folderDepth(support->mode) == 0)
+        return;
+    folderReset(support->mode);
+    leaving->item->text = NULL;
+    leaving->item->text_id = support->itemTextId(support); // restore the device name (was the breadcrumb)
+    // Queue the rebuild now (folderReset marked the mode dirty) so the device is back at its root list
+    // promptly -- the Favourites tab / last-played resolve against that root, not the subfolder we left.
+    ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
+}
+
 static void menuNextH()
 {
     struct menu_list *next = selected_item->next;
@@ -868,6 +894,7 @@ static void menuNextH()
 
     // If we found a valid menu transition to it.
     if (next != NULL) {
+        menuFolderResetLeaving(selected_item);
         selected_item = next;
         itemConfigId = -1;
         menuInvalidateArtSelection();
@@ -882,6 +909,7 @@ static void menuPrevH()
         prev = prev->prev;
 
     if (prev != NULL) {
+        menuFolderResetLeaving(selected_item);
         selected_item = prev;
         itemConfigId = -1;
         menuInvalidateArtSelection();
