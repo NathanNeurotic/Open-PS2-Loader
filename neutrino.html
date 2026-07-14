@@ -146,7 +146,7 @@ PlayStation 1 titles (<code>*.VCD</code>) always boot through <b>POPSTARTER.ELF<
 <tr><td><code>-gc=&lt;modes&gt;</code></td><td>Only when OPL compat modes are set for the game</td></tr>
 <tr><td><code>-dbc</code></td><td>Only when <b>Debug Colors</b> is enabled</td></tr>
 <tr><td><code>-logo</code></td><td>Only when <b>PS2 Logo</b> is enabled</td></tr>
-<tr><td><code>-gsm=&lt;mode&gt;</code></td><td>Only when a per-game <b>Neutrino Video</b> mode is set (see §5)</td></tr>
+<tr><td><code>-gsm=&lt;mode&gt;</code></td><td>Only when a <b>Neutrino Video</b> mode resolves — the per-game picker, or the global <b>Settings → Neutrino Video</b> default when the per-game picker is “Default” (see §5)</td></tr>
 <tr><td><code>-mc0=&lt;path&gt;</code> / <code>-mc1=&lt;path&gt;</code></td><td>Only when a per-game VMC is configured for that slot</td></tr>
 </tbody>
 </table>
@@ -201,10 +201,20 @@ Both the global and per-game Neutrino Launch Args open a <b>structured sub-scree
 <tr><td>Off (default)</td><td>(nothing emitted)</td></tr>
 <tr><td>240p</td><td><code>-gsm=fp1</code></td></tr>
 <tr><td>480p</td><td><code>-gsm=fp2</code></td></tr>
-<tr><td>1080i</td><td><code>-gsm=1080ix1</code></td></tr>
+<tr><td>1080i x1</td><td><code>-gsm=1080ix1</code></td></tr>
+<tr><td>1080i x2</td><td><code>-gsm=1080ix2</code></td></tr>
+<tr><td>1080i x3</td><td><code>-gsm=1080ix3</code></td></tr>
+<tr><td>Default</td><td><em>follows the global <b>Settings → Neutrino Video</b> value (no per-game key saved)</em></td></tr>
 </tbody>
 </table>
 
+<p><b>Global default:</b> the same picker also exists in <b>Settings</b> (with its GSM-comp half). Games whose per-game picker is “Default” follow it — so one global change forces e.g. <code>-gsm=1080ix3</code> for every Neutrino game. An explicit per-game value — <em>including Off</em> — overrides the global.</p>
+<div class="callout info"><div class="h">i The “1080p impression” trick</div>On 1080-class displays,
+<b>1080i x3</b> (<code>-gsm=1080ix3</code>) is the community workaround for progressive-looking output —
+the same effect previously reached by launching Neutrino from PS2BBLE/OSDmenu with
+<code>-gsm=1080ix3</code>. Set it per game, or globally and leave games on “Default”. True 1080p does
+not exist in any OPL/GS mode table — the GS outputs <code>1080i</code>, and OPL's own UI lacks the
+VRAM for a 1080p framebuffer.</div>
 <p>The picker is the <em>default</em> source for <code>-gsm</code>. If you manually type <code>-gsm=&lt;value&gt;</code> into the <b>Neutrino Launch Args</b> field, that value wins — OPL emits only one <code>-gsm</code> argument, because Neutrino aborts on a duplicate or malformed value.</p>
 
 <h3 id="mode7">Mode 7 — fix IOP buffer overrun (<code>-gc=7</code>)</h3>
@@ -232,7 +242,7 @@ Both the global and per-game Neutrino Launch Args open a <b>structured sub-scree
 <p>The screen is unchanged from classic OPL. The Neutrino Launch Args field and Neutrino Video picker are greyed (they are never read on the OPL path). Mode 7 is greyed. Modes 4 and 6 are available as usual.</p>
 
 <details class="deep"><summary>What does Neutrino actually honor from OPL's per-game settings?</summary>
-<p>Neutrino honors: the storage backend + image path (<code>-bsd</code> / <code>-dvd</code>, automatic), the compat mode subset that maps to <code>-gc</code> (Modes 1/2/3/5/7), VMC via <code>-mc0</code>/<code>-mc1</code> (BDM/MMCE/UDPFS — not APA HDD), <code>-logo</code> (PS2 logo), <code>-dbc</code> (debug colors), the Neutrino Video picker (<code>-gsm</code>), and the free-text <b>Neutrino Launch Args</b> field. It does <b>not</b> honor: Cheats (OPL patches EE RAM), OPL GSM (OPL patches the GS registers), IGR/IGS (OPL's in-game reset hook), PADEMU (OPL's USB gamepad emulation), or OSD Language — all are OPL-embedded-core features with no Neutrino equivalent.</p>
+<p>Neutrino honors: the storage backend + image path (<code>-bsd</code> / <code>-dvd</code>, automatic), the compat mode subset that maps to <code>-gc</code> (Modes 1/2/3/5/7), VMC via <code>-mc0</code>/<code>-mc1</code> (BDM/MMCE/UDPFS — not APA HDD), <code>-logo</code> (PS2 logo), <code>-dbc</code> (debug colors), the Neutrino Video picker (<code>-gsm</code>; per-game with a global default in Settings), and the free-text <b>Neutrino Launch Args</b> field. It does <b>not</b> honor: Cheats (OPL patches EE RAM), OPL GSM (OPL patches the GS registers), IGR/IGS (OPL's in-game reset hook), PADEMU (OPL's USB gamepad emulation), or OSD Language — all are OPL-embedded-core features with no Neutrino equivalent.</p>
 </details>
 
 <h2 id="network-boot">7. Network boot — UDPBD / UDPFS</h2>
