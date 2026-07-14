@@ -159,6 +159,12 @@ This build layers several features on top of upstream OPL:
 - **DualSense / DualShock 5 (USB):** optional controller support — grab a ready-made
   `RIPTOPL-<version>-<SDK>-ds5.ELF` (one per SDK flavour) from the rolling release, or build
   with `make DUALSENSE=1`.
+- **Experimental 1080p GSM mode:** a re-added forced-1080p video mode (progressive
+  1920×1080) lives **only** in a dedicated `RIPTOPL-<version>-PS2DEVLATESTSDK-1080p.ELF` asset
+  (latest-SDK flavour only) so the hardware-unvalidated raster code never touches a mainline
+  build. Selecting it in the per-game GSM picker requires clearing a **three-step confirmation**;
+  if your display can't sync it, the **Triangle + Cross** boot combo forces safe 480p. Build your
+  own with `make GSM1080P=1`.
 - **Ready-to-use defaults:** a fresh install boots with sensible options already enabled —
   widescreen, cover art, notifications, sound effects + boot sound, USB, delete/rename, and
   the PS2 logo, with the device tabs in **Manual** mode. Video mode stays **Auto**. Change
@@ -247,7 +253,10 @@ screenshots (IGS), DS3/DS4 pad emulation (PADEMU), VMC, PS2RD cheats and parenta
 controls are all included in the standard ELF (no upstream-style per-feature variants).
 DualSense / DualShock 5 (USB) support is the one optional extra: the rolling release ships it
 prebuilt as named `RIPTOPL-<version>-<SDK>-ds5.ELF` assets (one per SDK flavour), or build your
-own with `make DUALSENSE=1`.
+own with `make DUALSENSE=1`. One further **experimental** variant — a forced-1080p GSM mode
+(hardware-unvalidated) — ships **only** as `RIPTOPL-<version>-PS2DEVLATESTSDK-1080p.ELF`
+(latest-SDK flavour only, gated behind a three-step in-GUI confirmation), or `make GSM1080P=1`.
+Every other asset, including the `-ds5` loaders and the VARIANTS zip, is 1080p-free.
 
 There are two release channels:
 

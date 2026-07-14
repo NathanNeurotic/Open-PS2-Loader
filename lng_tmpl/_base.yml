@@ -540,6 +540,12 @@ gui_strings:
   string: Emulate FIELD Flipping
 - label: HINT_GSM_FIELD_FIX
   string: Fix for games that glitch under progressive video modes.
+- label: GSM_1080P_WARNING
+  string: WARNING -- forcing 1080p is experimental and unverified. It may show no picture or, on some hardware, stress the console. Proceed at your own risk. Cross = continue, Circle = cancel.
+- label: GSM_1080P_PROCEED
+  string: Proceed with forcing 1080p for this game?
+- label: GSM_1080P_SURE
+  string: Are you sure? Cross applies 1080p, Circle cancels.
 - label: PARENLOCKCONFIG
   string: Parental Lock Settings
 - label: PARENLOCK_PASSWORD
