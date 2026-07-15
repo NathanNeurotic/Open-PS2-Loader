@@ -32,8 +32,9 @@ void unloadPads();
 // power-on made sfxPlay fire every frame. See the long note in pad.c.
 void padRumbleActivate(void);
 
-void padRumbleTap(void);  // light tick: cursor moved
-void padRumbleBump(void); // firmer: confirm / cancel
+void padRumbleTap(void);     // light tick: cursor moved in a menu / dialog
+void padRumbleTapList(void); // light tick: cursor moved in the GAME LIST (firmer -- see pad.c)
+void padRumbleBump(void);    // firmer: confirm / cancel
 
 // Play out any in-flight pulse then stop. Call before anything that blocks the GUI thread for long,
 // since readPads() -- which ticks the decay -- stops running then; the launch path would otherwise turn
