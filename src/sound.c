@@ -11,6 +11,7 @@
 #include "include/opl.h"
 #include "include/ioman.h"
 #include "include/themes.h"
+#include "include/pad.h" // padRumbleTap -- menu rumble mirrors the cursor tick (#172)
 
 // Silence unused variable warnings from vorbisfile.h
 static ov_callbacks OV_CALLBACKS_NOCLOSE __attribute__((unused));
@@ -258,6 +259,17 @@ int sfxGetSoundDuration(int id)
 void sfxPlay(int id)
 {
     int channel;
+
+    // Menu rumble (#172): mirror the navigation tick on the pad. Deliberately ABOVE both gates below --
+    // rumble is haptic feedback, not sound, so it must survive a user who plays with SFX off (or a
+    // build where audsrv never came up). Every cursor move in the whole GUI already funnels through
+    // sfxPlay(), so this one line covers them all with no new call sites.
+    //
+    // SFX_CURSOR ONLY, on purpose: SFX_CONFIRM is also the LAUNCH edge, and the tap's decay clock is
+    // ticked by readPads(), which stops running during the launch handoff -- a tap armed there would
+    // buzz for the whole loading screen instead of 50ms. padRumbleTap() rate-limits itself.
+    if (id == SFX_CURSOR)
+        padRumbleTap();
 
     if (!audio_initialized) {
         LOG("SFX: %s: ERROR: not initialized!\n", __FUNCTION__);

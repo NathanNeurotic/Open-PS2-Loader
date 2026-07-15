@@ -228,6 +228,7 @@ char gMMCEPrefix[32];
 char gETHPrefix[32];
 int gRememberLastPlayed;
 int gEnableFolderNav;
+int gEnableRumble;
 int KeyPressedOnce;
 int gAutoStartLastPlayed;
 int RemainSecs, DisableCron;
@@ -1622,6 +1623,7 @@ static void _loadConfig()
             configGetStrCopy(configOPL, CONFIG_OPL_ETH_PREFIX, gETHPrefix, sizeof(gETHPrefix));
             configGetInt(configOPL, CONFIG_OPL_REMEMBER_LAST, &gRememberLastPlayed);
             configGetInt(configOPL, CONFIG_OPL_FOLDER_NAV, &gEnableFolderNav);
+            configGetInt(configOPL, CONFIG_OPL_RUMBLE, &gEnableRumble);
             configGetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, &gAutoStartLastPlayed);
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
             configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode);
@@ -1959,6 +1961,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_ETH_PREFIX, gETHPrefix);
         configSetInt(configOPL, CONFIG_OPL_REMEMBER_LAST, gRememberLastPlayed);
         configSetInt(configOPL, CONFIG_OPL_FOLDER_NAV, gEnableFolderNav);
+        configSetInt(configOPL, CONFIG_OPL_RUMBLE, gEnableRumble);
         configSetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, gAutoStartLastPlayed);
         configSetInt(configOPL, CONFIG_OPL_BDM_MODE, gBDMStartMode);
         configSetInt(configOPL, CONFIG_OPL_HDD_MODE, gHDDStartMode);
@@ -2582,6 +2585,13 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
 {
     gDeinitTerminal = (modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
 
+    /* Menu rumble (#172): kill the actuators FIRST, before anything below can block. Every launch and
+     * exit path funnels through here, and closing the pad ports later does NOT clear the motors -- so a
+     * tap still in flight would buzz on forever, straight into the game. This must stay at the TOP: the
+     * IO drain below can take up to LAUNCH_IO_DRAIN_TICKS (10s) on a slow or dying device, and the pad
+     * would grind through that entire loading screen if the stop lived down beside unloadPads(). */
+    padRumbleStopAll();
+
     /* Cut launch/exit latency by stopping queued art I/O before globally
      * blocking the I/O worker. This avoids waiting for stale cover requests
      * that are no longer needed once we are deinitializing. */
@@ -2732,6 +2742,7 @@ static void setDefaults(void)
     gEnableWrite = 1;
     gRememberLastPlayed = 0;
     gEnableFolderNav = 0; // opt-in; a flat library is byte-identical to before
+    gEnableRumble = 0;    // opt-in: nobody expects a menu to buzz, and these motors are 20+ years old
     gAutoStartLastPlayed = 9;
     gSelectButton = KEY_CROSS; // Default to Cross-select (western layout); swap_select_btn=0 restores Circle
     gMMCEPrefix[0] = '\0';

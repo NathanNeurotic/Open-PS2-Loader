@@ -294,6 +294,7 @@ extern char gMMCEPrefix[32];
 
 extern int gRememberLastPlayed;
 extern int gEnableFolderNav; // opt-in: browse subdirectories inside a device's game list
+extern int gEnableRumble;    // opt-in: short pad rumble tap when the menu cursor moves (#172)
 
 // Last Played Auto Start
 extern int KeyPressedOnce;

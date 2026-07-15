@@ -24,6 +24,13 @@ int startPads();
 int readPads();
 void unloadPads();
 
+// Menu rumble (#172), gated by gEnableRumble. padRumbleTap() arms a short tap on every capable pad and
+// never blocks -- safe to call from the GUI thread. padRumbleStopAll() force-stops every actuator and
+// MUST be called before anything that stops polling the pad (game launch / exit): closing the pad ports
+// does NOT clear the motors, so one left running keeps buzzing into the game.
+void padRumbleTap(void);
+void padRumbleStopAll(void);
+
 int getKey(int num);
 
 int getKeyOn(int num);

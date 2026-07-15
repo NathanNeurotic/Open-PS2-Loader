@@ -59,6 +59,7 @@ enum UI_ITEMS {
     CFG_UDPFSMODE,       // when UDPFS is selected: Files (udpfs_ioman filesystem) vs Image (udpfs_bd block/massN:)
     CFG_LASTPLAYED,
     CFG_FOLDERNAV,
+    CFG_RUMBLE,
     CFG_LBL_AUTOSTARTLAST,
     CFG_AUTOSTARTLAST,
     CFG_SELECTBUTTON,
