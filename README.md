@@ -131,6 +131,12 @@ This build layers several features on top of upstream OPL:
   list, so covers, favourites, coverflow and per-game settings all work inside folders. Works on
   USB / MX4SIO / iLink / internal-BDM, MMCE and UDPFS-Files. Left off, a flat library looks and
   behaves exactly as before.
+- **Controller vibration in the menus (opt-in):** turn on **Controller Vibration in Menus** in
+  **Settings** for a little haptic tap as you move around — a light tick when the cursor moves,
+  a slightly firmer bump on confirm / cancel / notifications, and one when OPL finishes booting
+  and the menu is ready. Needs a **DualShock in analog mode** (a digital-only or clone pad simply
+  won't buzz); DS3/DS4/DS5 pads are supported on builds with pad emulation. Left off, nothing
+  changes.
 - **Neutrino external core (per-game):** hand a game off to an external `neutrino.elf`
   instead of OPL's built-in core, chosen per title, with custom launch flags you can set
   globally and per-game. See **[docs/NEUTRINO.md](docs/NEUTRINO.md)**.
