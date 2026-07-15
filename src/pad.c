@@ -73,8 +73,12 @@ struct pad_data_t
 #define PAD_WAIT_POLL_US        1000
 #define PAD_ANALOG_RETRY_DELAY  60
 // Frames between actuator-alignment re-arm attempts (padRumbleRealign). Only ever runs while a pad
-// with actuators has NOT been aligned, so on a healthy pad it fires once and never again.
+// has NOT been aligned, so on a healthy pad it fires once and never again.
 #define PAD_REALIGN_RETRY_DELAY 60
+// Frames to wait after a FAILED re-arm. Much longer, because the failure path already burned up to
+// PAD_REQ_WAIT_POLLS ms (150ms) inside waitPadRequestComplete on the GUI thread -- retrying that
+// once a second on a pad that never aligns would stutter the menu 150ms/sec forever.
+#define PAD_REALIGN_FAIL_DELAY  600
 // A padSetMainMode round-trip can NEVER finish under freepad's own minimum latency: the IOP main
 // thread dispatches the task on the next vblank, SetMainModeThread needs three vblank-gated SIO2
 // transfers, and the request only flips COMPLETE after the next good ReadData -- >= 5 vblanks,
@@ -597,7 +601,7 @@ static int padRumbleSendNative(struct pad_data_t *pad, int on)
 // costs nothing. Runs on the GUI thread like every other libpad call here.
 static void padRumbleRealign(struct pad_data_t *pad)
 {
-    if (pad->actAligned || pad->actuators <= 0)
+    if (pad->actAligned)
         return;
     if (pad->realignDelay > 0) {
         pad->realignDelay--;
@@ -608,12 +612,36 @@ static void padRumbleRealign(struct pad_data_t *pad)
     if (padGetReqState(pad->port, pad->slot) == PAD_RSTAT_BUSY)
         return; // a request is already in flight -- do not stomp it; try again later
 
+    // Re-query the actuator count HERE rather than trusting pad->actuators, and rebuild actAlign
+    // rather than trusting it was ever filled. initializePad's early returns can bail BEFORE
+    // padInfoAct ever runs -- which is EXACTLY the case this self-heal exists for -- leaving
+    // actuators at 0 and actAlign never populated. Guarding on pad->actuators would therefore
+    // disable the rescue precisely when it is needed (Gemini review, #179). padInfoAct reads the
+    // DMA'd pad buffer on the EE, so it costs no RPC.
+    pad->actuators = padInfoAct(pad->port, pad->slot, -1, 0);
+    gDiag.padActuators = pad->actuators;
+    if (pad->actuators <= 0)
+        return; // digital-only pad, or not ready yet: nothing to align
+
+    pad->actAlign[0] = 0; // small engine
+    pad->actAlign[1] = 1; // big engine
+    pad->actAlign[2] = 0xff;
+    pad->actAlign[3] = 0xff;
+    pad->actAlign[4] = 0xff;
+    pad->actAlign[5] = 0xff;
+
     if (padSetActAlign(pad->port, pad->slot, pad->actAlign) == 1 && waitPadRequestComplete(pad)) {
         pad->actAligned = 1;
         gDiag.padActAligned = 1;
         gDiag.padRealignOk++;
         LOG("PAD actuator alignment re-armed for pad %d,%d\n", pad->port, pad->slot);
+        return;
     }
+
+    // FAILED: back off hard. waitPadRequestComplete above blocks for up to PAD_REQ_WAIT_POLLS ms
+    // (150ms) before giving up, so retrying once a second on a pad that never aligns would stutter
+    // the GUI by 150ms EVERY SECOND, forever. Rumble is a nicety; a smooth menu is not.
+    pad->realignDelay = PAD_REALIGN_FAIL_DELAY;
 }
 
 static void padRumbleArm(int durationMs)
