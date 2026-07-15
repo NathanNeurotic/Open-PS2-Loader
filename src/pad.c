@@ -601,6 +601,13 @@ static int padRumbleSendNative(struct pad_data_t *pad, int on)
 // costs nothing. Runs on the GUI thread like every other libpad call here.
 static void padRumbleRealign(struct pad_data_t *pad)
 {
+    // SAME gate as padRumbleArm, and it MUST stay first. padSetActAlign below is a libpad RPC and
+    // waitPadRequestComplete blocks the GUI thread for up to PAD_REQ_WAIT_POLLS ms (150ms).
+    // readPads() runs during BOOT, so without rumbleLive this fires exactly the boot-time
+    // RPC-vs-SifLoadModuleBuffer race that #176 exists to prevent -- and without gEnableRumble it
+    // would do it for EVERY user on the DEFAULT config, for a feature they never switched on.
+    if (!rumbleLive || !gEnableRumble)
+        return;
     if (pad->actAligned)
         return;
     if (pad->realignDelay > 0) {
