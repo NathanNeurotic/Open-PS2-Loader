@@ -271,6 +271,7 @@ static int initializePad(struct pad_data_t *pad)
         return PAD_INIT_OK; // analog mode is restored; pressure/rumble setup can wait for reconnect
     pad->actuators = padInfoAct(pad->port, pad->slot, -1, 0);
     LOG("PAD # of actuators: %d\n", pad->actuators);
+    gDiag.padActuators = pad->actuators; // #172 diag: AN (0 = the pad claims no motors)
 
     if (pad->actuators != 0) {
         pad->actAlign[0] = 0; // Enable small engine
@@ -290,6 +291,7 @@ static int initializePad(struct pad_data_t *pad)
             else
                 LOG("PAD padSetActAlign request failed\n");
         }
+        gDiag.padActAligned = pad->actAligned; // #172 diag: AK (0 = alignment never landed -> no rumble)
     } else {
         LOG("PAD Did not find any actuators.\n");
     }
@@ -477,6 +479,29 @@ static int getKeyDelay(int id, int repeat)
 // menu's pad path otherwise issues none, so only ever send it on a CHANGE: ~2 RPCs per tap, none while
 // idle. Never per frame.
 
+// Rumble stays INERT until the GUI main loop is live (padRumbleActivate, called from main()).
+//
+// WHY THIS GATE EXISTS -- it fixes a real boot hang (#172), do not remove it:
+// guiIntroLoop() calls screenHandler->handleInput() every frame but NEVER calls readPads(). paddata is
+// therefore frozen on the single pre-intro read (opl.c, before the intro) and oldpaddata is still 0
+// from BSS, so getKeyOn() -- (paddata & key) && !(oldpaddata & key) -- reports ANY button held at
+// power-on as newly-pressed on EVERY intro frame, and menuHandleInputMenu fires sfxPlay(SFX_CURSOR)
+// continuously for the whole boot.
+// That was harmless for years because sfxPlay early-returns on !audio_initialized and audsrv is not up
+// until deferredAudioInit (late in the IO FIFO) -- boot-time sfxPlay was a NO-OP. The rumble hook sits
+// ABOVE that gate (deliberately: haptics must survive SFX being off), which turned that dormant path
+// into a BLOCKING EE->IOP libpad RPC every RUMBLE_MIN_GAP_MS for the entire boot, concurrent with the
+// IO worker's SifLoadModuleBuffer of USBMASS_BD/dev9/smap -> intermittent hang at "Loading USB storage
+// driver...". Holding a button during boot made it MUCH more likely -- which is why the reporter's
+// "hold START" attempt made things worse rather than better.
+static int rumbleLive = 0;
+
+// Called once from main() when the boot is done and guiMainLoop is about to start polling pads.
+void padRumbleActivate(void)
+{
+    rumbleLive = 1;
+}
+
 #define RUMBLE_TAP_MS     50  // cursor tick: long enough to feel, short enough not to blur into the next
 #define RUMBLE_BUMP_MS    90  // confirm/cancel: same engine, just held a little longer so a decision \
                               // feels more definite than a scroll (the small engine has no intensity)
@@ -499,14 +524,23 @@ static int padRumbleSendNative(struct pad_data_t *pad, int on)
     char act[6] = {0, 0, 0, 0, 0, 0};
     act[0] = on ? 1 : 0; // small engine (on/off)
     act[1] = 0;          // big engine stays parked
-    return padSetActDirect(pad->port, pad->slot, act);
+    int r = padSetActDirect(pad->port, pad->slot, act);
+    // #172 diag: RS climbing while the pad stays still means the IOP took the command and the
+    // ENGINE/duration is wrong -- not our gating. RD counts IOP drops (outside TASK_UPDATE_PAD).
+    if (r == 1)
+        gDiag.padRumbleSent++;
+    else
+        gDiag.padRumbleDropped++;
+    return r;
 }
 
 static void padRumbleArm(int durationMs)
 {
     int i;
 
-    if (!gEnableRumble)
+    // rumbleLive: never issue a libpad RPC before the main loop is polling pads -- see the boot-hang
+    // note at the top of this section. This MUST stay ahead of the gEnableRumble check.
+    if (!rumbleLive || !gEnableRumble)
         return;
 
     // Rate limit on the SAME clock readPads() ticks with, so held-direction key-repeat can't grind.
@@ -514,6 +548,8 @@ static void padRumbleArm(int durationMs)
     if (rumbleLastMs != 0 && (now - rumbleLastMs) < RUMBLE_MIN_GAP_MS)
         return;
     rumbleLastMs = now;
+
+    gDiag.padRumbleArmed++; // #172 diag: RA past gEnableRumble + the rate limit (see include/diag.h)
 
     for (i = 0; i < pad_count; ++i) {
         struct pad_data_t *pad = &pad_data[i];

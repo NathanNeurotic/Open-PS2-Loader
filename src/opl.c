@@ -3219,6 +3219,13 @@ int main(int argc, char *argv[])
 
     guiIntroLoop();
 
+    // Menu rumble goes live ONLY now: the boot is done and guiMainLoop below starts polling pads.
+    // Before this point guiIntroLoop runs handleInput() against a FROZEN paddata snapshot, so a button
+    // held at power-on fires sfxPlay every frame -- which was a harmless no-op until rumble hooked
+    // above sfxPlay's audio gate and turned it into blocking libpad RPCs racing the IO worker's IOP
+    // module loads (intermittent boot hang at "Loading USB storage driver...", #172).
+    padRumbleActivate();
+
     // Menu rumble: "OPL is ready" tap. Armed HERE rather than off sfxPlay(SFX_BOOT) for two reasons.
     // (1) Correctness: SFX_BOOT plays from inside guiIntroLoop(), whose loop never polls readPads(),
     // so the decay countdown would be frozen for the whole intro -- seconds of buzz instead of a tap.

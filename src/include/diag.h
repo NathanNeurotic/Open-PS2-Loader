@@ -69,6 +69,24 @@ typedef struct
     volatile unsigned int padUnsupported;
     volatile unsigned int padSetMainModeOk;
     volatile unsigned int padReqTimeout;
+    // RUMBLE sub-line (#172 "no vibration" on HW, 2026-07-15). Rumble is invisible from here -- these
+    // split "we never asked" from "we asked and the motor ignored us", which no amount of source
+    // reading can. Read with Debug ON + Vibration ON while moving the cursor:
+    //   AN  - actuators reported by padInfoAct (0 = the pad claims no motors -> nothing we can do).
+    //   AK  - actAligned: padSetActAlign accepted AND observed complete (0 = alignment never landed,
+    //         so padRumbleCapable() gates every tap out and RS stays 0).
+    //   RS  - padSetActDirect calls the IOP ACCEPTED (returned 1). Climbing while the pad stays still
+    //         = the command lands and the ENGINE/duration is wrong, NOT our gating.
+    //   RD  - padSetActDirect calls DROPPED (returned != 1; the IOP discards them outside
+    //         TASK_UPDATE_PAD, e.g. during an initializePad re-init).
+    //   RA  - taps ARMED by sfxPlay (padRumbleArm past gEnableRumble + the rate limit). RA:0 = the
+    //         setting is off or the hook never fired; RA climbing with RS:0 = padRumbleCapable() is
+    //         the blocker -- read AN/AK/AC to see which gate.
+    volatile int padActuators;
+    volatile int padActAligned;
+    volatile unsigned int padRumbleSent;
+    volatile unsigned int padRumbleDropped;
+    volatile unsigned int padRumbleArmed;
 } opl_diag_t;
 
 extern opl_diag_t gDiag;
