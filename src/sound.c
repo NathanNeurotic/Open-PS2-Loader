@@ -271,8 +271,17 @@ void sfxPlay(int id)
     // before that blocking work, or this bump would run for the whole loading screen. See pad.c.
     if (id == SFX_CURSOR)
         padRumbleTap();
-    else if (id == SFX_CONFIRM || id == SFX_CANCEL)
+    else if (id == SFX_CONFIRM || id == SFX_CANCEL || id == SFX_MESSAGE)
         padRumbleBump();
+    // SFX_MESSAGE (notifications / message boxes) is safe to arm from here: every one of its sites
+    // renders from a loop that polls readPads() -- the main loop for guiShowNotifications, and
+    // guiMsgBox's own modal loop -- so the pulse decays normally.
+    //
+    // SFX_BOOT is deliberately NOT armed here. It plays from inside guiIntroLoop(), whose loop never
+    // polls readPads(), so the decay would be frozen for the whole intro (it runs for the length of
+    // the boot jingle) -- seconds of buzz. The "ready" tap is armed in main() right after the intro
+    // returns instead, which is the moment the user actually cares about and where the main loop is
+    // about to start ticking the decay.
 
     if (!audio_initialized) {
         LOG("SFX: %s: ERROR: not initialized!\n", __FUNCTION__);

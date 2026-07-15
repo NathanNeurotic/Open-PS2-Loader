@@ -3218,6 +3218,15 @@ int main(int argc, char *argv[])
     ioPutRequest(IO_CUSTOM_SIMPLEACTION, &deferredInit);
 
     guiIntroLoop();
+
+    // Menu rumble: "OPL is ready" tap. Armed HERE rather than off sfxPlay(SFX_BOOT) for two reasons.
+    // (1) Correctness: SFX_BOOT plays from inside guiIntroLoop(), whose loop never polls readPads(),
+    // so the decay countdown would be frozen for the whole intro -- seconds of buzz instead of a tap.
+    // Out here guiMainLoop() is about to start ticking it. (2) Meaning: this is the instant the menu
+    // is actually usable, which is what "ready" means to the user -- and it does not depend on the
+    // boot SOUND being enabled. No-op when rumble is off or the pad can't do it.
+    padRumbleBump();
+
     guiMainLoop();
 
     return 0;
