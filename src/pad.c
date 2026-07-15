@@ -26,6 +26,21 @@
 // 200 ms per repeat
 #define DEFAULT_PAD_DELAY 200
 
+// ---- Menu rumble pulse shape (#172) ---------------------------------------------------------------
+// Defined up here because readPad()'s ds34 leg needs RUMBLE_BIG_LEVEL long before the rumble section
+// further down. Calibrated against the known-working reference (Enceladus' lua_rumble, which the
+// reporter confirms buzzes on THIS console): drive BOTH engines. The small engine (act[0], on/off) is
+// the crisp attack; the big engine (act[1], 0..255) is an offset-weight ERM that needs ~50-80ms just to
+// start turning, so it mostly adds body on the longer bump -- but it is the one you actually FEEL, and
+// shipping the small engine alone gave the reporter nothing at all.
+#define RUMBLE_TAP_MS     60   // cursor tick
+#define RUMBLE_BUMP_MS    110  // confirm / cancel / notification / ready: long enough for the big engine
+#define RUMBLE_BIG_LEVEL  0x60 // ~37% on the big engine: felt through a controller, not a phone on a desk
+// Floor between taps. Key-repeat is ~100ms and an ERM never fully spins down, so an unthrottled
+// tap-per-tick becomes a continuous grind. (Comment kept ABOVE the define: as a trailing comment
+// clang-format wraps it with a line-continuation backslash, which -Wcomment rightly objects to.)
+#define RUMBLE_MIN_GAP_MS 120
+
 struct pad_data_t
 {
     int port, slot;
@@ -411,15 +426,17 @@ static int readPad(struct pad_data_t *pad)
 
 #ifdef PADEMU
     // Menu rumble on a ds34 pad rides this existing every-poll re-send, so it needs no RPC discipline
-    // of its own and stops for free when the countdown expires. Params are (port, lrum, rrum) where
-    // lrum = LEFT = heavy weight and rrum = RIGHT = light -- the INVERSE order of libpad's actAlign
-    // (small first). Use the LIGHT engine to match the native small-engine tap; a DS3's light motor is
-    // on/off in hardware, so drive it full rather than with a graded value.
-    u8 rrum = (gEnableRumble && pad->rumbleMsLeft > 0) ? 0xFF : 0;
+    // of its own and stops for free when the countdown expires. Params are (port, lrum, rrum).
+    // Drive BOTH motors with the same level, matching the known-working reference (Enceladus'
+    // lua_rumble does `ds34*_set_rumble(port, actAlign[1], actAlign[1])`). The previous version drove
+    // only the light motor and the reporter felt nothing -- across DS3/DS4/DS5 the two motors differ in
+    // kind (a DS3's light motor is on/off in hardware; a DualSense has no classic ERM at all), so
+    // picking one and hoping is exactly how you ship silence.
+    u8 rum = (gEnableRumble && pad->rumbleMsLeft > 0) ? (u8)RUMBLE_BIG_LEVEL : 0;
 
     if (ds34bt_get_status(pad->port) & DS34BT_STATE_RUNNING) {
         ret = ds34bt_get_data(pad->port, (u8 *)&pad->buttons.btns);
-        ds34bt_set_rumble(pad->port, 0, rrum);
+        ds34bt_set_rumble(pad->port, rum, rum);
         if (ret != 0) {
             newpdata |= 0xffff ^ pad->buttons.btns;
             padsRead++;
@@ -428,7 +445,7 @@ static int readPad(struct pad_data_t *pad)
 
     if (ds34usb_get_status(pad->port) & DS34USB_STATE_RUNNING) {
         ret = ds34usb_get_data(pad->port, (u8 *)&pad->buttons.btns);
-        ds34usb_set_rumble(pad->port, 0, rrum);
+        ds34usb_set_rumble(pad->port, rum, rum);
         if (ret != 0) {
             newpdata |= 0xffff ^ pad->buttons.btns;
             padsRead++;
@@ -508,18 +525,28 @@ void padRumbleActivate(void)
     rumbleLive = 1;
 }
 
-#define RUMBLE_TAP_MS     50  // cursor tick: long enough to feel, short enough not to blur into the next
-#define RUMBLE_BUMP_MS    90  // confirm/cancel: same engine, just held a little longer so a decision \
-                              // feels more definite than a scroll (the small engine has no intensity)
-#define RUMBLE_MIN_GAP_MS 120 // floor between taps: key-repeat is ~100ms, and an ERM never fully spins \
-                              // down, so an unthrottled tap-per-tick becomes a continuous grind
 static u32 rumbleLastMs = 0;
 
+// Gate a rumble command. Deliberately as PERMISSIVE as the known-working reference.
+//
+// HISTORY -- do not re-tighten this without hardware proof (#172):
+// This originally also required analogCapable == 1, actuators > 0, and a home-grown actAligned flag
+// (set only when padSetActAlign returned 1 AND waitPadRequestComplete observed it). That was
+// defensive-looking and shipped ZERO vibration on real hardware: any one of the three failing
+// silently means padSetActDirect is never called at all, with no error anywhere.
+//   actAligned was the worst of them -- OUR invention, latched off a request-completion wait that we
+// ALREADY KNOW is flaky on metal (we ship a TO: counter on the debug HUD precisely because these
+// waits time out, PR #151). One timeout during init and rumble is dead for the whole session.
+// Enceladus (DanielSant0s), whose rumble the reporter confirms works on THIS console, gates on
+// NOTHING but the pad state:
+//     int state = padGetState(port, 0);
+//     if ((state == PAD_STATE_STABLE) || (state == PAD_STATE_FINDCTP1)) padSetActDirect(port, 0, act);
+// It calls padSetActAlign, prints the result, and fires regardless. So do we now.
+// A pad with no motors simply ignores the bytes -- the cost of being wrong here is nothing happening,
+// which is exactly what the "safe" version delivered anyway.
 static int padRumbleCapable(struct pad_data_t *pad)
 {
-    // analogCapable is deliberately tri-state (PR #151): -1 = not yet known. Only 1 may rumble --
-    // never treat "unknown" as a yes. actAligned proves padSetActAlign actually landed.
-    return (pad->analogCapable == 1) && (pad->actuators > 0) && pad->actAligned && isPadReadyState(pad->state);
+    return isPadReadyState(pad->state);
 }
 
 // Drive a native PS2 pad's actuators. Returns 1 when the IOP accepted it. NOTE: the IOP silently
@@ -528,8 +555,10 @@ static int padRumbleCapable(struct pad_data_t *pad)
 static int padRumbleSendNative(struct pad_data_t *pad, int on)
 {
     char act[6] = {0, 0, 0, 0, 0, 0};
-    act[0] = on ? 1 : 0; // small engine (on/off)
-    act[1] = 0;          // big engine stays parked
+    act[0] = on ? 1 : 0;                      // small engine: on/off, the crisp attack
+    act[1] = on ? (char)RUMBLE_BIG_LEVEL : 0; // big engine: the part you actually feel
+    // act[2..5] stay 0 -- padSetActAlign mapped only slots 0/1 to real actuators (the rest are 0xff =
+    // unused), and the reference implementation passes 0 here too (a zeroed function-static).
     int r = padSetActDirect(pad->port, pad->slot, act);
     // #172 diag: RS climbing while the pad stays still means the IOP took the command and the
     // ENGINE/duration is wrong -- not our gating. RD counts IOP drops (outside TASK_UPDATE_PAD).
