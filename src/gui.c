@@ -954,6 +954,17 @@ reselect_video_mode:
     guiUIUpdater(1);
 
     int ret = diaExecuteDialog(diaUIConfig, -1, 1, guiUIUpdater);
+
+    // Play out the confirm bump the dialog just armed, before applyConfig() below tears down and
+    // rebuilds the GS (rmSetMode), reloads the theme and its textures, and holds guiLock over a
+    // submenu-cache rebuild -- none of which polls readPads(), so the pulse would run for all of it
+    // (#172, "really intense ... after changing the resolution"). Deliberately HERE and not at the top
+    // of applyConfig(): applyConfig is ALSO reached off the GUI thread, from _loadConfig() on the IO
+    // worker (opl.c: guiHandleDeferedIO with IO_CUSTOM_SIMPLEACTION), and every libpad call in pad.c
+    // is documented GUI-thread-only. This one site dominates BOTH applyConfig calls below, including
+    // the video-mode revert on the reselect path.
+    padRumbleFlush();
+
     if (ret) {
         diaGetInt(diaUIConfig, UICFG_LANG, &langID);
         diaGetInt(diaUIConfig, UICFG_THEME, &themeID);
@@ -2371,6 +2382,14 @@ void guiSetFrameHook(gui_callback_t cback)
     gFrameHook = cback;
 }
 
+int guiGetCurrentScreen(void)
+{
+    // screenHandler always points INTO screenHandlers[] -- it is initialised to &screenHandlers[
+    // GUI_SCREEN_MENU] and every reassignment takes its value from screenHandlerTarget, which is only
+    // ever set from &screenHandlers[target] below. So the subtraction is always a valid index.
+    return (int)(screenHandler - screenHandlers);
+}
+
 void guiSwitchScreen(int target)
 {
     // Only initiate the transition once or else we could get stuck in an infinite loop.
@@ -2460,6 +2479,15 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
 
 void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data, int timeoutMs)
 {
+    // Play out any rumble pulse BEFORE we block (#172). This function is almost always entered a few
+    // ms after an sfxPlay(SFX_CONFIRM) armed a 110ms bump, and its wait loop below renders every frame
+    // but never calls readPads() -- which is the ONLY thing that decays the pulse and the only thing
+    // that sends the "off". The IOP LATCHES the actuator value, so the motor does not need re-sending
+    // to keep spinning: it simply runs for the entire config write / device scan. That is what the
+    // hardware reporter felt as "really intense when you save a setting" -- it was never intensity,
+    // it was DURATION. Bounded by RUMBLE_BUMP_MS and inert when nothing is armed or rumble is off.
+    padRumbleFlush();
+
     // Free the shared IOP/fileXio channel before running the deferred IO. The
     // cover-art worker's queued and in-flight reads otherwise tie up that single
     // channel, so a config write (e.g. the last-played save on game launch) queues
@@ -2519,6 +2547,12 @@ void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data, int
 
 void guiGameHandleDeferedIO(int *ptr, struct UIItem *ui, int type, void *data)
 {
+    // Same rumble-vs-blocking-work trap as guiHandleDeferedIO -- see the note there. The wait loop
+    // below has the identical shape: it renders every frame and never polls readPads(), so a bump
+    // armed by the SFX_CONFIRM that got us here would run for the whole deferred load. Reached from
+    // gameMenuLoadConfig() on every per-game settings sub-dialog.
+    padRumbleFlush();
+
     if (ioPutRequest(type, data) != IO_OK) {
         *ptr = 0;
         return;

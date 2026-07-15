@@ -63,6 +63,11 @@ extern int guiFrameId;
 
 void guiSwitchScreen(int target);
 
+/** The GUI_SCREEN_* the user is looking at right now. Lets a caller that is handed only an event id
+ *  (sfxPlay) tell the game list from the menus. Never read mid-transition -- input is gated off while
+ *  one is in flight, so no event can fire in an ambiguous state. */
+int guiGetCurrentScreen(void);
+
 void guiReloadScreenExtents();
 
 /** Initializes the GUI */

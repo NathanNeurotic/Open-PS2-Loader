@@ -27,19 +27,34 @@
 #define DEFAULT_PAD_DELAY 200
 
 // ---- Menu rumble pulse shape (#172) ---------------------------------------------------------------
-// Defined up here because readPad()'s ds34 leg needs RUMBLE_BIG_LEVEL long before the rumble section
-// further down. Calibrated against the known-working reference (Enceladus' lua_rumble, which the
-// reporter confirms buzzes on THIS console): drive BOTH engines. The small engine (act[0], on/off) is
-// the crisp attack; the big engine (act[1], 0..255) is an offset-weight ERM that needs ~50-80ms just to
-// start turning, so it mostly adds body on the longer bump -- but it is the one you actually FEEL, and
+// Defined up here because readPad()'s ds34 leg needs the levels long before the rumble section further
+// down. Calibrated against the known-working reference (Enceladus' lua_rumble, which the reporter
+// confirms buzzes on THIS console): drive BOTH engines. The small engine (act[0], on/off) is the crisp
+// attack; the big engine (act[1], 0..255) is an offset-weight ERM that needs ~50-80ms just to start
+// turning, so it mostly adds body on the longer bump -- but it is the one you actually FEEL, and
 // shipping the small engine alone gave the reporter nothing at all.
-#define RUMBLE_TAP_MS     60   // cursor tick
-#define RUMBLE_BUMP_MS    110  // confirm / cancel / notification / ready: long enough for the big engine
-#define RUMBLE_BIG_LEVEL  0x60 // ~37% on the big engine: felt through a controller, not a phone on a desk
+//
+// THE BIG ENGINE'S LEVEL IS THE ONLY REAL INTENSITY KNOB WE HAVE. The small engine is on/off IN
+// HARDWARE, not by our choice -- libpad.h:252-255 is explicit: "act_align[0] = 0/1 turns off/on 'small'
+// engine" vs "act_align[1] = 0-255 sets 'big' engine speed". So a "quieter" tap has a FLOOR: the attack
+// never softens, only the body does. Do not expect 0x48 to feel like 3/4 of 0x60.
+// Lowering a level also buys ZERO current headroom: freepad's 600mA guard (CheckAirDirectTotal,
+// padMiscFuncs.c:265-292) tests each actuator for NONZERO, not for magnitude -- 0x01 costs it exactly
+// what 0xFF does. Only switching an engine fully off counts.
+#define RUMBLE_TAP_MS      60 // cursor tick in a menu / dialog
+// Game-list cursor tick. Deliberately longer than the menu tick: the list's frames stretch while cover
+// art loads, and readPads() -- which both re-sends and decays the pulse -- only runs once per frame. A
+// 60ms tap can therefore expire inside a single slow frame before ONE re-send has landed, which is
+// consistent with the reporter feeling the same pulse as "very weak" here and "too strong" in the menu.
+#define RUMBLE_LIST_TAP_MS 75
+#define RUMBLE_BUMP_MS     110  // confirm / cancel / notification / ready: long enough for the big engine
+#define RUMBLE_LEVEL_MENU  0x48 // ~28%: menu / dialog tick -- 0x60 read as "a bit too strong" on HW
+#define RUMBLE_LEVEL_LIST  0x78 // ~47%: game-list tick -- 0x60 read as "very weak" on HW
+#define RUMBLE_LEVEL_BUMP  0x60 // ~37%: confirm / cancel / notification / ready (see padRumbleBump)
 // Floor between taps. Key-repeat is ~100ms and an ERM never fully spins down, so an unthrottled
 // tap-per-tick becomes a continuous grind. (Comment kept ABOVE the define: as a trailing comment
 // clang-format wraps it with a line-continuation backslash, which -Wcomment rightly objects to.)
-#define RUMBLE_MIN_GAP_MS 120
+#define RUMBLE_MIN_GAP_MS  120
 
 struct pad_data_t
 {
@@ -62,9 +77,10 @@ struct pad_data_t
     // or be skipped by initializePad's early returns, so latch the confirmed alignment separately and
     // require it before ever driving an actuator.
     unsigned char actAligned;
-    unsigned char rumbleOn; // 1 = an "on" was sent that still owes its matching "off"
-    int rumbleMsLeft;       // ms remaining; ticked down in readPads() (see the ms-vs-frames note there)
-    int realignDelay;       // backoff for the actuator-alignment self-heal (padRumbleRealign)
+    unsigned char rumbleOn;    // 1 = an "on" was sent that still owes its matching "off"
+    unsigned char rumbleLevel; // big-engine level for the pulse in flight (0 = none armed)
+    int rumbleMsLeft;          // ms remaining; ticked down in readPads() (see the ms-vs-frames note there)
+    int realignDelay;          // backoff for the actuator-alignment self-heal (padRumbleRealign)
 };
 
 // Pad commands are asynchronous. Keep every wait bounded so a transient SIO2/pad error cannot hang the
@@ -440,7 +456,7 @@ static int readPad(struct pad_data_t *pad)
     // only the light motor and the reporter felt nothing -- across DS3/DS4/DS5 the two motors differ in
     // kind (a DS3's light motor is on/off in hardware; a DualSense has no classic ERM at all), so
     // picking one and hoping is exactly how you ship silence.
-    u8 rum = (gEnableRumble && pad->rumbleMsLeft > 0) ? (u8)RUMBLE_BIG_LEVEL : 0;
+    u8 rum = (gEnableRumble && pad->rumbleMsLeft > 0) ? (u8)pad->rumbleLevel : 0;
 
     if (ds34bt_get_status(pad->port) & DS34BT_STATE_RUNNING) {
         ret = ds34bt_get_data(pad->port, (u8 *)&pad->buttons.btns);
@@ -500,9 +516,10 @@ static int getKeyDelay(int id, int repeat)
 // locked into DualShock mode and padSetActAlign() has enabled both engines -- we simply never fired
 // padSetActDirect().
 //
-// Engine choice: the SMALL engine only (actAlign[0], on/off). The big engine (actAlign[1], 0..255) is
-// an offset-weight ERM -- it needs ~50-80ms just to start turning and then coasts well past a menu
-// tick, so it is the wrong tool for a "click".
+// Engine choice: BOTH engines. (This comment used to say "the small engine only, the big one is the
+// wrong tool for a click" -- that reasoning lost to hardware. The reporter felt NOTHING from the small
+// engine alone: a DS3's light motor is on/off in hardware and a DualSense has no classic ERM at all, so
+// the big engine is the one you actually feel. See the level table at the top of this file.)
 //
 // Cost: padSetActDirect adds ZERO SIO2 traffic -- it is a SIF RPC that latches 6 bytes on the IOP,
 // which freepad folds into the READ_DATA poll it already sends every vblank (the SIO2 frame length
@@ -563,13 +580,16 @@ static int padRumbleCapable(struct pad_data_t *pad)
 static int padRumbleSendNative(struct pad_data_t *pad, int on)
 {
     char act[6] = {0, 0, 0, 0, 0, 0};
-    act[0] = on ? 1 : 0;                      // small engine: on/off, the crisp attack
-    act[1] = on ? (char)RUMBLE_BIG_LEVEL : 0; // big engine: the part you actually feel
+    act[0] = on ? 1 : 0;                      // small engine: on/off IN HARDWARE, the crisp attack
+    act[1] = on ? (char)pad->rumbleLevel : 0; // big engine: the part you actually feel, 0..255
     // act[2..5] stay 0 -- padSetActAlign mapped only slots 0/1 to real actuators (the rest are 0xff =
     // unused), and the reference implementation passes 0 here too (a zeroed function-static).
     int r = padSetActDirect(pad->port, pad->slot, act);
     // #172 diag: RS climbing while the pad stays still means the IOP took the command and the
     // ENGINE/duration is wrong -- not our gating. RD counts IOP drops (outside TASK_UPDATE_PAD).
+    // CAVEAT: RS is not proof the motor was driven. freepad's 600mA guard (CheckAirDirectTotal,
+    // padMiscFuncs.c:265-292) can ZERO the actuator byte and still return 1, so a silent pad with RS
+    // climbing has a third possible cause besides engine/duration: the IOP zeroed it on the budget.
     if (r == 1)
         gDiag.padRumbleSent++;
     else
@@ -651,7 +671,7 @@ static void padRumbleRealign(struct pad_data_t *pad)
     pad->realignDelay = PAD_REALIGN_FAIL_DELAY;
 }
 
-static void padRumbleArm(int durationMs)
+static void padRumbleArm(int durationMs, unsigned char level)
 {
     int i;
 
@@ -675,6 +695,7 @@ static void padRumbleArm(int durationMs)
         // it never goes through padInfoAct/padSetActAlign -- and instead reads this straight off
         // readPad()'s existing every-poll re-send. Harmless on a pad that ends up rumbling nothing.
         pad->rumbleMsLeft = durationMs;
+        pad->rumbleLevel = level; // must be set BEFORE the kick below: padRumbleSendNative reads it
 
         // Kick the native actuator immediately so the tap has no perceptible latency; readPads()
         // then RE-SENDS it every frame for the life of the tap. Do NOT "optimise" that re-send away:
@@ -688,18 +709,34 @@ static void padRumbleArm(int durationMs)
     }
 }
 
-/** Light tick for a cursor move. Safe from the GUI thread; never blocks and silently no-ops when
- *  disabled, rate-limited, or the pad can't rumble. */
+/** Light tick for a cursor move in a MENU or dialog. Safe from the GUI thread; never blocks and
+ *  silently no-ops when disabled, rate-limited, or the pad can't rumble. */
 void padRumbleTap(void)
 {
-    padRumbleArm(RUMBLE_TAP_MS);
+    padRumbleArm(RUMBLE_TAP_MS, RUMBLE_LEVEL_MENU);
+}
+
+/** Light tick for a cursor move in the GAME LIST. Same event as padRumbleTap() -- both are
+ *  sfxPlay(SFX_CURSOR) -- but firmer and slightly longer, because hardware says the two screens do not
+ *  feel alike at identical settings. sound.c picks between them off the current GUI screen: sfxPlay()
+ *  is handed only an sfx id, so the screen cannot be inferred any deeper than the hook. */
+void padRumbleTapList(void)
+{
+    padRumbleArm(RUMBLE_LIST_TAP_MS, RUMBLE_LEVEL_LIST);
 }
 
 /** Slightly firmer bump for a confirm / cancel -- a decision should feel more definite than a scroll.
- *  On the LAUNCH edge the caller must follow this with padRumbleFlush(); see there for why. */
+ *  On the LAUNCH edge the caller must follow this with padRumbleFlush(); see there for why.
+ *
+ *  The level is deliberately UNCHANGED at RUMBLE_LEVEL_BUMP while the menu tick drops to 0x48. The
+ *  reporter asked for confirms "a bit lower" too, but he was judging a bump that ran for the WHOLE of a
+ *  blocking config write -- seconds, not 110ms (readPads() is the only decay tick and it does not run
+ *  during blocking work). That is fixed separately, at the guiHandleDeferedIO / guiGameHandleDeferedIO
+ *  chokepoints. Dropping the level in the same change would correct twice for one fault and risk a
+ *  confirm he cannot feel at all. Re-ask after he retests; 0x60 -> 0x50 is then one line. */
 void padRumbleBump(void)
 {
-    padRumbleArm(RUMBLE_BUMP_MS);
+    padRumbleArm(RUMBLE_BUMP_MS, RUMBLE_LEVEL_BUMP);
 }
 
 /** Play out any in-flight pulse, then stop the motors.

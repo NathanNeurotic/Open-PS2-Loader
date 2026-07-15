@@ -11,7 +11,8 @@
 #include "include/opl.h"
 #include "include/ioman.h"
 #include "include/themes.h"
-#include "include/pad.h" // padRumbleTap -- menu rumble mirrors the cursor tick (#172)
+#include "include/pad.h" // padRumbleTap/padRumbleTapList -- menu rumble mirrors the cursor tick (#172)
+#include "include/gui.h" // guiGetCurrentScreen -- the game list and the menus tap differently (#172)
 
 // Silence unused variable warnings from vorbisfile.h
 static ov_callbacks OV_CALLBACKS_NOCLOSE __attribute__((unused));
@@ -269,9 +270,18 @@ void sfxPlay(int id)
     // NOTE: SFX_CONFIRM is also the LAUNCH edge, and the pulse's decay clock is ticked by readPads(),
     // which stops running during the launch handoff -- so itemExecSelect() calls padRumbleFlush()
     // before that blocking work, or this bump would run for the whole loading screen. See pad.c.
-    if (id == SFX_CURSOR)
-        padRumbleTap();
-    else if (id == SFX_CONFIRM || id == SFX_CANCEL || id == SFX_MESSAGE)
+    // The game list and the menus both move the cursor with sfxPlay(SFX_CURSOR) -- the SAME id, so an
+    // id-only hook cannot tell them apart, and on hardware they do NOT feel alike at identical
+    // settings (the reporter called one "too strong" and the other "very weak" in the same breath).
+    // GUI_SCREEN_MAIN is exclusively the game list; the START menu is GUI_SCREEN_MENU. Reading the
+    // screen here is safe: input is gated off while a screen transition is in flight, so no cursor sfx
+    // can fire while the answer is ambiguous.
+    if (id == SFX_CURSOR) {
+        if (guiGetCurrentScreen() == GUI_SCREEN_MAIN)
+            padRumbleTapList();
+        else
+            padRumbleTap();
+    } else if (id == SFX_CONFIRM || id == SFX_CANCEL || id == SFX_MESSAGE)
         padRumbleBump();
     // SFX_MESSAGE (notifications / message boxes) is safe to arm from here: every one of its sites
     // renders from a loop that polls readPads() -- the main loop for guiShowNotifications, and
