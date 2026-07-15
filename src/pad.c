@@ -36,8 +36,10 @@
 #define RUMBLE_TAP_MS     60   // cursor tick
 #define RUMBLE_BUMP_MS    110  // confirm / cancel / notification / ready: long enough for the big engine
 #define RUMBLE_BIG_LEVEL  0x60 // ~37% on the big engine: felt through a controller, not a phone on a desk
-#define RUMBLE_MIN_GAP_MS 120  // floor between taps: key-repeat is ~100ms, and an ERM never fully spins \
-                               // down, so an unthrottled tap-per-tick becomes a continuous grind
+// Floor between taps. Key-repeat is ~100ms and an ERM never fully spins down, so an unthrottled
+// tap-per-tick becomes a continuous grind. (Comment kept ABOVE the define: as a trailing comment
+// clang-format wraps it with a line-continuation backslash, which -Wcomment rightly objects to.)
+#define RUMBLE_MIN_GAP_MS 120
 
 struct pad_data_t
 {
