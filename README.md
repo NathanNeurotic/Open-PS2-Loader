@@ -251,8 +251,8 @@ work it is built on:
 ### Real-hardware testing (this fork)
 
 Enormous thanks to the testers who run every rolling build on real consoles and file the
-reports that shape the fixes — **eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz
-and nuno6573**.
+reports that shape the fixes — **eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz,
+nuno6573 and Blade1984**.
 
 ### Financial support (this fork)
 
