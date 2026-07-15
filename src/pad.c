@@ -160,6 +160,12 @@ static int initializePad(struct pad_data_t *pad)
     pad->actAligned = 0;
     pad->rumbleOn = 0;
     pad->rumbleMsLeft = 0;
+    // Clear the HUD mirrors HERE too, not just where they are set below. Every early return between
+    // this point and the actuator block would otherwise leave AN/AK showing a PREVIOUS pad's values,
+    // and the actuators==0 branch never touches AK at all -- so a stale AK:1 could survive onto a pad
+    // that was never aligned. A diagnostic that lies is worse than no diagnostic (Gemini review, #176).
+    gDiag.padActuators = 0;
+    gDiag.padActAligned = 0;
 
     // is there any device connected to that port?
     state = waitPadReady(pad);
