@@ -26,6 +26,12 @@ void unloadPads();
 
 // Menu rumble (#172), gated by gEnableRumble. Tap/Bump arm a pulse on every capable pad and never
 // block -- safe to call from the GUI thread; they no-op when disabled or the pad can't rumble.
+// Rumble is INERT until this is called (once, from main(), when the boot is over and guiMainLoop is
+// about to start polling pads). Boot-time libpad RPCs raced the IO worker's IOP module loads and hung
+// the boot (#172) -- guiIntroLoop runs handleInput() against frozen paddata, so a button held at
+// power-on made sfxPlay fire every frame. See the long note in pad.c.
+void padRumbleActivate(void);
+
 void padRumbleTap(void);  // light tick: cursor moved
 void padRumbleBump(void); // firmer: confirm / cancel
 
