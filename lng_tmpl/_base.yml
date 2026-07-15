@@ -252,14 +252,6 @@ gui_strings:
   string: Write Operations
 - label: LASTPLAYED
   string: Remember Last Played Game
-- label: RUMBLE
-  string: Controller Vibration in Menus
-- label: HINT_RUMBLE
-  string: Short vibration when moving the cursor, confirming or going back -- needs a DualShock in analog mode
-- label: FOLDER_NAV
-  string: Browse Folders in Game List
-- label: HINT_FOLDER_NAV
-  string: Show subfolders of CD/DVD as browsable entries; select to open, cancel to go back
 - label: SELECTBUTTON
   string: Select Button
 - label: ERR_FRAGMENTED
@@ -1001,3 +993,11 @@ gui_strings:
   string: VCD Settings
 - label: FINANCIAL_SUPPORT
   string: Financial Support
+- label: FOLDER_NAV
+  string: Browse Folders in Game List
+- label: HINT_FOLDER_NAV
+  string: Show subfolders of CD/DVD as browsable entries; select to open, cancel to go back
+- label: RUMBLE
+  string: Controller Vibration in Menus
+- label: HINT_RUMBLE
+  string: Short vibration when moving the cursor, confirming or going back -- needs a DualShock in analog mode

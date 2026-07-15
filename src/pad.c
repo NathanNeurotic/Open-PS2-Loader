@@ -153,6 +153,14 @@ static int initializePad(struct pad_data_t *pad)
 
     LOG("PAD initializing pad %d,%d\n", pad->port, pad->slot);
 
+    // Menu rumble state belongs to the CURRENT connection: a re-init (fresh pad, or the analog
+    // self-heal firing on a transient digital report) invalidates it. Clear it before the alignment
+    // below re-proves itself -- otherwise a pad unplugged mid-tap comes back with rumbleOn stuck at 1
+    // and padRumbleArm()'s "already on, don't re-send" guard would skip it forever.
+    pad->actAligned = 0;
+    pad->rumbleOn = 0;
+    pad->rumbleMsLeft = 0;
+
     // is there any device connected to that port?
     state = waitPadReady(pad);
     if (state == PAD_STATE_DISCONN) {
@@ -633,8 +641,18 @@ int readPads()
                 continue;
             pad->rumbleMsLeft = 0;
         }
-        if (pad->rumbleOn && padRumbleSendNative(pad, 0) == 1)
-            pad->rumbleOn = 0; // still on next frame if the IOP dropped it -- we simply retry then
+        if (!pad->rumbleOn)
+            continue;
+
+        // A pad that is gone (or mid re-init) will never accept the off -- and retrying would fire a
+        // BLOCKING RPC at it EVERY frame, forever. Just drop the state: freepad clears the latched
+        // actuator bytes itself on padPortOpen, so a reconnecting pad cannot come back still buzzing.
+        if (!isPadReadyState(pad->state)) {
+            pad->rumbleOn = 0;
+            continue;
+        }
+        if (padRumbleSendNative(pad, 0) == 1)
+            pad->rumbleOn = 0; // else retry next frame: the IOP briefly drops it outside TASK_UPDATE_PAD
     }
 
     for (i = 0; i < 16; ++i) {
