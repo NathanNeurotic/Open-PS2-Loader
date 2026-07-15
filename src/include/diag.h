@@ -82,11 +82,16 @@ typedef struct
     //   RA  - taps ARMED by sfxPlay (padRumbleArm past gEnableRumble + the rate limit). RA:0 = the
     //         setting is off or the hook never fired; RA climbing with RS:0 = padRumbleCapable() is
     //         the blocker -- read AN/AK/AC to see which gate.
+    //   RL  - actuator alignments RE-ARMED by the padRumbleRealign self-heal. RL>0 means initializePad
+    //         had skipped/failed padSetActAlign and the poll loop rescued it -- which is the #172 bug:
+    //         freepad leaves ee_actAlignData at 0xFF (= no actuator) until padSetActAlign lands, and
+    //         padSetActDirect returns 1 regardless, so it silently drives nothing.
     volatile int padActuators;
     volatile int padActAligned;
     volatile unsigned int padRumbleSent;
     volatile unsigned int padRumbleDropped;
     volatile unsigned int padRumbleArmed;
+    volatile unsigned int padRealignOk;
 } opl_diag_t;
 
 extern opl_diag_t gDiag;

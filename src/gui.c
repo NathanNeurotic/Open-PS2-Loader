@@ -2221,9 +2221,9 @@ static void guiDrawOverlays()
         // #172 rumble sub-line (see include/diag.h). Splits "we never asked the motor" (RA/RS 0) from
         // "we asked and it ignored us" (RS climbing, pad still) -- the one thing source reading cannot
         // tell us, and the reason this ships instead of another blind fix.
-        snprintf(diag, sizeof(diag), "RUM AN:%d AK:%d RA:%u RS:%u RD:%u",
+        snprintf(diag, sizeof(diag), "RUM AN:%d AK:%d RA:%u RS:%u RD:%u RL:%u",
                  gDiag.padActuators, gDiag.padActAligned, gDiag.padRumbleArmed,
-                 gDiag.padRumbleSent, gDiag.padRumbleDropped);
+                 gDiag.padRumbleSent, gDiag.padRumbleDropped, gDiag.padRealignOk);
         fntRenderString(gTheme->fonts[0], 0, screenHeight - 56, ALIGN_NONE, 0, 0, diag, GS_SETREG_RGBA(255, 255, 0, 128));
     }
 }

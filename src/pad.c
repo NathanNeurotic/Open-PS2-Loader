@@ -64,20 +64,28 @@ struct pad_data_t
     unsigned char actAligned;
     unsigned char rumbleOn; // 1 = an "on" was sent that still owes its matching "off"
     int rumbleMsLeft;       // ms remaining; ticked down in readPads() (see the ms-vs-frames note there)
+    int realignDelay;       // backoff for the actuator-alignment self-heal (padRumbleRealign)
 };
 
 // Pad commands are asynchronous. Keep every wait bounded so a transient SIO2/pad error cannot hang the
 // GUI thread, then retry DualShock recovery periodically for as long as the controller remains digital.
-#define PAD_WAIT_POLLS         25
-#define PAD_WAIT_POLL_US       1000
-#define PAD_ANALOG_RETRY_DELAY 60
+#define PAD_WAIT_POLLS          25
+#define PAD_WAIT_POLL_US        1000
+#define PAD_ANALOG_RETRY_DELAY  60
+// Frames between actuator-alignment re-arm attempts (padRumbleRealign). Only ever runs while a pad
+// has NOT been aligned, so on a healthy pad it fires once and never again.
+#define PAD_REALIGN_RETRY_DELAY 60
+// Frames to wait after a FAILED re-arm. Much longer, because the failure path already burned up to
+// PAD_REQ_WAIT_POLLS ms (150ms) inside waitPadRequestComplete on the GUI thread -- retrying that
+// once a second on a pad that never aligns would stutter the menu 150ms/sec forever.
+#define PAD_REALIGN_FAIL_DELAY  600
 // A padSetMainMode round-trip can NEVER finish under freepad's own minimum latency: the IOP main
 // thread dispatches the task on the next vblank, SetMainModeThread needs three vblank-gated SIO2
 // transfers, and the request only flips COMPLETE after the next good ReadData -- >= 5 vblanks,
 // ~83-100 ms. The generic 25 ms budget above therefore ALWAYS timed out on this leg, so analog
 // arming worked only when the IOP happened to finish in the background and the pressure/rumble
 // setup below it was unreachable. Give request-completion waits a budget above the happy path.
-#define PAD_REQ_WAIT_POLLS     150
+#define PAD_REQ_WAIT_POLLS      150
 
 #define PAD_INIT_RETRY       -1
 #define PAD_INIT_UNSUPPORTED 0
@@ -569,6 +577,73 @@ static int padRumbleSendNative(struct pad_data_t *pad, int on)
     return r;
 }
 
+// THE root cause of "rumble does nothing" (#172). Re-arm the actuator alignment if it never landed.
+//
+// freepad fills ee_actAlignData.data[0..5] with 0xFF on port open (ps2sdk padPortOpen.c:157-160), and
+// padSetActAlign is the ONLY thing that ever overwrites it. If it never ran, padSetActDirect STILL
+// RETURNS 1 -- it just latches bytes that map to actuator index 0xFF, i.e. nothing. Perfect silence,
+// success return, and no error anywhere. (That is why the debug HUD would show AK:0 with RS climbing.)
+//
+// initializePad has several early returns between padSetMainMode and padSetActAlign, two of which
+// report PAD_INIT_OK having skipped the alignment ("pressure/rumble setup can wait for reconnect").
+// And it is unrecoverable on its own: startPad() discards initializePad's return, and the analog
+// self-heal only re-inits while (buttons.mode >> 4) != 0x07. So if padSetMainMode LANDED but took
+// longer than our PAD_REQ_WAIT_POLLS budget -- the likely case, since the happy path already needs
+// ~83-100ms and this fork has known SIO2 contention from MMCE/art traffic -- analog works fine, the
+// self-heal never fires, the alignment is NEVER retried, and rumble is dead for the whole session.
+//
+// The known-working reference (Enceladus/RETROLauncher) is structurally immune: it never checks
+// padSetMainMode's return and its waitPadReady spins unbounded, so it cannot reach padInfoAct/
+// padSetActAlign in a bad state -- it simply waits. Rather than un-bound our waits (which would hand
+// a wedged pad the power to freeze the GUI), retry the alignment lazily from the poll loop.
+//
+// Rate-limited, and only while the pad is ready and actually has actuators, so a digital-only pad
+// costs nothing. Runs on the GUI thread like every other libpad call here.
+static void padRumbleRealign(struct pad_data_t *pad)
+{
+    if (pad->actAligned)
+        return;
+    if (pad->realignDelay > 0) {
+        pad->realignDelay--;
+        return;
+    }
+    pad->realignDelay = PAD_REALIGN_RETRY_DELAY;
+
+    if (padGetReqState(pad->port, pad->slot) == PAD_RSTAT_BUSY)
+        return; // a request is already in flight -- do not stomp it; try again later
+
+    // Re-query the actuator count HERE rather than trusting pad->actuators, and rebuild actAlign
+    // rather than trusting it was ever filled. initializePad's early returns can bail BEFORE
+    // padInfoAct ever runs -- which is EXACTLY the case this self-heal exists for -- leaving
+    // actuators at 0 and actAlign never populated. Guarding on pad->actuators would therefore
+    // disable the rescue precisely when it is needed (Gemini review, #179). padInfoAct reads the
+    // DMA'd pad buffer on the EE, so it costs no RPC.
+    pad->actuators = padInfoAct(pad->port, pad->slot, -1, 0);
+    gDiag.padActuators = pad->actuators;
+    if (pad->actuators <= 0)
+        return; // digital-only pad, or not ready yet: nothing to align
+
+    pad->actAlign[0] = 0; // small engine
+    pad->actAlign[1] = 1; // big engine
+    pad->actAlign[2] = 0xff;
+    pad->actAlign[3] = 0xff;
+    pad->actAlign[4] = 0xff;
+    pad->actAlign[5] = 0xff;
+
+    if (padSetActAlign(pad->port, pad->slot, pad->actAlign) == 1 && waitPadRequestComplete(pad)) {
+        pad->actAligned = 1;
+        gDiag.padActAligned = 1;
+        gDiag.padRealignOk++;
+        LOG("PAD actuator alignment re-armed for pad %d,%d\n", pad->port, pad->slot);
+        return;
+    }
+
+    // FAILED: back off hard. waitPadRequestComplete above blocks for up to PAD_REQ_WAIT_POLLS ms
+    // (150ms) before giving up, so retrying once a second on a pad that never aligns would stutter
+    // the GUI by 150ms EVERY SECOND, forever. Rumble is a nicety; a smooth menu is not.
+    pad->realignDelay = PAD_REALIGN_FAIL_DELAY;
+}
+
 static void padRumbleArm(int durationMs)
 {
     int i;
@@ -594,12 +669,15 @@ static void padRumbleArm(int durationMs)
         // readPad()'s existing every-poll re-send. Harmless on a pad that ends up rumbling nothing.
         pad->rumbleMsLeft = durationMs;
 
-        // A native PS2 pad additionally needs its actuator driven, and only if it genuinely can.
-        // Skip when already on: the motor is running, so re-sending is a pointless blocking RPC.
-        if (!padRumbleCapable(pad) || pad->rumbleOn)
-            continue;
-        if (padRumbleSendNative(pad, 1) == 1)
-            pad->rumbleOn = 1; // dropped (pad mid re-init)? skip this tap rather than stall the GUI
+        // Kick the native actuator immediately so the tap has no perceptible latency; readPads()
+        // then RE-SENDS it every frame for the life of the tap. Do NOT "optimise" that re-send away:
+        // freepad silently DROPS padSetActDirect whenever the IOP is not in TASK_UPDATE_PAD
+        // (ps2sdk padMiscFuncs.c:294-296), and a single drop used to lose the whole 60ms tap. The
+        // known-working reference (RETROLauncher) re-sends every frame and ignores the return
+        // entirely, which is exactly why drops are invisible to it.
+        if (padRumbleCapable(pad))
+            padRumbleSendNative(pad, 1);
+        pad->rumbleOn = 1; // owed an "off" regardless: the re-send below may well be what lands
     }
 }
 
@@ -706,22 +784,33 @@ int readPads()
     for (i = 0; i < pad_count; ++i) {
         struct pad_data_t *pad = &pad_data[i];
 
+        // A pad that is gone will never accept anything -- and retrying would fire a BLOCKING RPC at
+        // it EVERY frame, forever. Drop the state: freepad re-arms its own actuator bytes on
+        // padPortOpen, so a reconnecting pad cannot come back still buzzing.
+        if (!isPadReadyState(pad->state)) {
+            pad->rumbleOn = 0;
+            pad->rumbleMsLeft = 0;
+            continue;
+        }
+
+        padRumbleRealign(pad); // self-heal the alignment (see there -- this is what makes rumble work)
+
         if (pad->rumbleMsLeft > 0) {
             pad->rumbleMsLeft -= (int)time_since_last;
-            if (pad->rumbleMsLeft > 0)
+            if (pad->rumbleMsLeft > 0) {
+                // RE-SEND the ON every frame for the life of the tap. freepad DROPS padSetActDirect
+                // whenever the IOP is not in TASK_UPDATE_PAD (ps2sdk padMiscFuncs.c:294-296) and says
+                // nothing, so a single drop used to lose the entire tap. The known-working reference
+                // (RETROLauncher) re-sends every frame and discards the return -- drops simply cannot
+                // matter to it. ~4 RPCs per 60ms tap, and ZERO while idle.
+                padRumbleSendNative(pad, 1);
                 continue;
+            }
             pad->rumbleMsLeft = 0;
         }
         if (!pad->rumbleOn)
             continue;
 
-        // A pad that is gone (or mid re-init) will never accept the off -- and retrying would fire a
-        // BLOCKING RPC at it EVERY frame, forever. Just drop the state: freepad clears the latched
-        // actuator bytes itself on padPortOpen, so a reconnecting pad cannot come back still buzzing.
-        if (!isPadReadyState(pad->state)) {
-            pad->rumbleOn = 0;
-            continue;
-        }
         if (padRumbleSendNative(pad, 0) == 1)
             pad->rumbleOn = 0; // else retry next frame: the IOP briefly drops it outside TASK_UPDATE_PAD
     }
