@@ -42,6 +42,13 @@ struct pad_data_t
     int actuators;
     int analogCapable; // -1 unknown/not ready, 0 digital-only, 1 DualShock-capable
     int analogRetryDelay;
+
+    // Menu rumble (#172). actuators != 0 only says the pad HAS motors -- padSetActAlign can still fail
+    // or be skipped by initializePad's early returns, so latch the confirmed alignment separately and
+    // require it before ever driving an actuator.
+    unsigned char actAligned;
+    unsigned char rumbleOn; // 1 = an "on" was sent that still owes its matching "off"
+    int rumbleMsLeft;       // ms remaining; ticked down in readPads() (see the ms-vs-frames note there)
 };
 
 // Pad commands are asynchronous. Keep every wait bounded so a transient SIO2/pad error cannot hang the
@@ -145,6 +152,14 @@ static int initializePad(struct pad_data_t *pad)
     int state;
 
     LOG("PAD initializing pad %d,%d\n", pad->port, pad->slot);
+
+    // Menu rumble state belongs to the CURRENT connection: a re-init (fresh pad, or the analog
+    // self-heal firing on a transient digital report) invalidates it. Clear it before the alignment
+    // below re-proves itself -- otherwise a pad unplugged mid-tap comes back with rumbleOn stuck at 1
+    // and padRumbleArm()'s "already on, don't re-send" guard would skip it forever.
+    pad->actAligned = 0;
+    pad->rumbleOn = 0;
+    pad->rumbleMsLeft = 0;
 
     // is there any device connected to that port?
     state = waitPadReady(pad);
@@ -269,8 +284,12 @@ static int initializePad(struct pad_data_t *pad)
             return PAD_INIT_OK;
         tmp = padSetActAlign(pad->port, pad->slot, pad->actAlign);
         LOG("PAD padSetActAlign: %d\n", tmp);
-        if (tmp == 1 && !waitPadRequestComplete(pad))
-            LOG("PAD padSetActAlign request failed\n");
+        if (tmp == 1) {
+            if (waitPadRequestComplete(pad))
+                pad->actAligned = 1; // accepted AND observed complete -- the only gate rumble trusts
+            else
+                LOG("PAD padSetActAlign request failed\n");
+        }
     } else {
         LOG("PAD Did not find any actuators.\n");
     }
@@ -383,9 +402,16 @@ static int readPad(struct pad_data_t *pad)
     }
 
 #ifdef PADEMU
+    // Menu rumble on a ds34 pad rides this existing every-poll re-send, so it needs no RPC discipline
+    // of its own and stops for free when the countdown expires. Params are (port, lrum, rrum) where
+    // lrum = LEFT = heavy weight and rrum = RIGHT = light -- the INVERSE order of libpad's actAlign
+    // (small first). Use the LIGHT engine to match the native small-engine tap; a DS3's light motor is
+    // on/off in hardware, so drive it full rather than with a graded value.
+    u8 rrum = (gEnableRumble && pad->rumbleMsLeft > 0) ? 0xFF : 0;
+
     if (ds34bt_get_status(pad->port) & DS34BT_STATE_RUNNING) {
         ret = ds34bt_get_data(pad->port, (u8 *)&pad->buttons.btns);
-        ds34bt_set_rumble(pad->port, 0, 0);
+        ds34bt_set_rumble(pad->port, 0, rrum);
         if (ret != 0) {
             newpdata |= 0xffff ^ pad->buttons.btns;
             padsRead++;
@@ -394,7 +420,7 @@ static int readPad(struct pad_data_t *pad)
 
     if (ds34usb_get_status(pad->port) & DS34USB_STATE_RUNNING) {
         ret = ds34usb_get_data(pad->port, (u8 *)&pad->buttons.btns);
-        ds34usb_set_rumble(pad->port, 0, 0);
+        ds34usb_set_rumble(pad->port, 0, rrum);
         if (ret != 0) {
             newpdata |= 0xffff ^ pad->buttons.btns;
             padsRead++;
@@ -435,6 +461,155 @@ static int getKeyDelay(int id, int repeat)
     return delay;
 }
 
+// ---- Menu rumble (#172) ---------------------------------------------------------------------------
+//
+// A short tap on the pad when the cursor moves. Everything expensive was already in place: the pad is
+// locked into DualShock mode and padSetActAlign() has enabled both engines -- we simply never fired
+// padSetActDirect().
+//
+// Engine choice: the SMALL engine only (actAlign[0], on/off). The big engine (actAlign[1], 0..255) is
+// an offset-weight ERM -- it needs ~50-80ms just to start turning and then coasts well past a menu
+// tick, so it is the wrong tool for a "click".
+//
+// Cost: padSetActDirect adds ZERO SIO2 traffic -- it is a SIF RPC that latches 6 bytes on the IOP,
+// which freepad folds into the READ_DATA poll it already sends every vblank (the SIO2 frame length
+// comes from the pad's mode, not the actuator payload). It IS a BLOCKING EE->IOP RPC though, and the
+// menu's pad path otherwise issues none, so only ever send it on a CHANGE: ~2 RPCs per tap, none while
+// idle. Never per frame.
+
+#define RUMBLE_TAP_MS     50  // cursor tick: long enough to feel, short enough not to blur into the next
+#define RUMBLE_BUMP_MS    90  // confirm/cancel: same engine, just held a little longer so a decision \
+                              // feels more definite than a scroll (the small engine has no intensity)
+#define RUMBLE_MIN_GAP_MS 120 // floor between taps: key-repeat is ~100ms, and an ERM never fully spins \
+                              // down, so an unthrottled tap-per-tick becomes a continuous grind
+static u32 rumbleLastMs = 0;
+
+static int padRumbleCapable(struct pad_data_t *pad)
+{
+    // analogCapable is deliberately tri-state (PR #151): -1 = not yet known. Only 1 may rumble --
+    // never treat "unknown" as a yes. actAligned proves padSetActAlign actually landed.
+    return (pad->analogCapable == 1) && (pad->actuators > 0) && pad->actAligned && isPadReadyState(pad->state);
+}
+
+// Drive a native PS2 pad's actuators. Returns 1 when the IOP accepted it. NOTE: the IOP silently
+// DROPS this (returns 0) unless it is in TASK_UPDATE_PAD -- e.g. while initializePad's mode/align
+// threads run -- so a caller that must not lose the command has to retry (see padRumbleStopAll).
+static int padRumbleSendNative(struct pad_data_t *pad, int on)
+{
+    char act[6] = {0, 0, 0, 0, 0, 0};
+    act[0] = on ? 1 : 0; // small engine (on/off)
+    act[1] = 0;          // big engine stays parked
+    return padSetActDirect(pad->port, pad->slot, act);
+}
+
+static void padRumbleArm(int durationMs)
+{
+    int i;
+
+    if (!gEnableRumble)
+        return;
+
+    // Rate limit on the SAME clock readPads() ticks with, so held-direction key-repeat can't grind.
+    u32 now = cpu_ticks() / CLOCKS_PER_MILISEC;
+    if (rumbleLastMs != 0 && (now - rumbleLastMs) < RUMBLE_MIN_GAP_MS)
+        return;
+    rumbleLastMs = now;
+
+    for (i = 0; i < pad_count; ++i) {
+        struct pad_data_t *pad = &pad_data[i];
+
+        // Arm the countdown for EVERY pad: a ds34 (DS3/4/5 over USB/BT) pad is not a native PS2 pad --
+        // it never goes through padInfoAct/padSetActAlign -- and instead reads this straight off
+        // readPad()'s existing every-poll re-send. Harmless on a pad that ends up rumbling nothing.
+        pad->rumbleMsLeft = durationMs;
+
+        // A native PS2 pad additionally needs its actuator driven, and only if it genuinely can.
+        // Skip when already on: the motor is running, so re-sending is a pointless blocking RPC.
+        if (!padRumbleCapable(pad) || pad->rumbleOn)
+            continue;
+        if (padRumbleSendNative(pad, 1) == 1)
+            pad->rumbleOn = 1; // dropped (pad mid re-init)? skip this tap rather than stall the GUI
+    }
+}
+
+/** Light tick for a cursor move. Safe from the GUI thread; never blocks and silently no-ops when
+ *  disabled, rate-limited, or the pad can't rumble. */
+void padRumbleTap(void)
+{
+    padRumbleArm(RUMBLE_TAP_MS);
+}
+
+/** Slightly firmer bump for a confirm / cancel -- a decision should feel more definite than a scroll.
+ *  On the LAUNCH edge the caller must follow this with padRumbleFlush(); see there for why. */
+void padRumbleBump(void)
+{
+    padRumbleArm(RUMBLE_BUMP_MS);
+}
+
+/** Play out any in-flight pulse, then stop the motors.
+ *
+ *  Call this before anything that blocks the GUI thread for a long time, because readPads() -- the ONLY
+ *  thing that ticks the decay countdown -- stops running while it does. The launch path is the case that
+ *  matters: between the confirm and deinitEx()'s stop sit menuLoadConfigDirect(), guiShowGameID()'s
+ *  frame hold, and the whole of itemLaunch (sbPrepare, VMC superblock checks, cheats, fragment counting,
+ *  and mmceSendGameID's card-switch wait, which alone can take seconds). Without this the confirm bump
+ *  would run for that entire window -- a multi-second buzz instead of a 90ms tap.
+ *
+ *  Bounded by RUMBLE_BUMP_MS, i.e. at worst it adds ~90ms to a launch that already takes seconds. */
+void padRumbleFlush(void)
+{
+    int i, waitMs = 0;
+
+    for (i = 0; i < pad_count; ++i) {
+        if (pad_data[i].rumbleMsLeft > waitMs)
+            waitMs = pad_data[i].rumbleMsLeft;
+    }
+
+    if (waitMs > 0) {
+        if (waitMs > RUMBLE_BUMP_MS)
+            waitMs = RUMBLE_BUMP_MS; // belt: never stall the launch on a bad counter
+        DelayThread(waitMs * 1000);  // ms -> us
+    }
+
+    padRumbleStopAll();
+}
+
+/** Stop every actuator NOW and make sure it sticks. Call before anything that stops polling the pad
+ *  (game launch / exit): padPortClose and padEnd do NOT clear actuators, so a motor left on keeps
+ *  spinning straight into the game. */
+void padRumbleStopAll(void)
+{
+    int i, polls;
+
+    for (i = 0; i < pad_count; ++i) {
+        struct pad_data_t *pad = &pad_data[i];
+
+#ifdef PADEMU
+        // ds34 pads are re-sent their rumble state every poll, so zeroing the state is enough -- but
+        // once polling stops nothing re-sends, so push an explicit off too.
+        ds34bt_set_rumble(pad->port, 0, 0);
+        ds34usb_set_rumble(pad->port, 0, 0);
+#endif
+        pad->rumbleMsLeft = 0;
+
+        if (!pad->rumbleOn)
+            continue;
+
+        // The IOP drops padSetActDirect unless it is in TASK_UPDATE_PAD, and the latched ON value
+        // survives to be re-asserted on the next poll -- so a fire-and-forget off can be silently
+        // lost. Retry on the same bounded budget waitPadReady uses. (padSetActDirect never raises
+        // PAD_RSTAT_BUSY, so there is no request to wait on -- only the return value tells us.)
+        for (polls = 0; polls < PAD_WAIT_POLLS; polls++) {
+            if (padRumbleSendNative(pad, 0) == 1)
+                break;
+            DelayThread(PAD_WAIT_POLL_US);
+        }
+        if (polls == PAD_WAIT_POLLS)
+            LOG("PAD rumble off was dropped for pad %d,%d\n", pad->port, pad->slot);
+        pad->rumbleOn = 0;
+    }
+}
+
 /** polling method. Call every frame. */
 int readPads()
 {
@@ -451,6 +626,33 @@ int readPads()
 
     for (i = 0; i < pad_count; ++i) {
         rslt |= readPad(&pad_data[i]);
+    }
+
+    // Expire any rumble tap. Deliberately ms-based off time_since_last rather than a frame counter:
+    // a few call sites poll readPads() twice within one frame to flush input, which would make a
+    // frame counter double-decrement and cut the tap short. The ms delta is immune (the second call
+    // sees ~0ms). One RPC to switch the motor off, then never again until the next tap.
+    for (i = 0; i < pad_count; ++i) {
+        struct pad_data_t *pad = &pad_data[i];
+
+        if (pad->rumbleMsLeft > 0) {
+            pad->rumbleMsLeft -= (int)time_since_last;
+            if (pad->rumbleMsLeft > 0)
+                continue;
+            pad->rumbleMsLeft = 0;
+        }
+        if (!pad->rumbleOn)
+            continue;
+
+        // A pad that is gone (or mid re-init) will never accept the off -- and retrying would fire a
+        // BLOCKING RPC at it EVERY frame, forever. Just drop the state: freepad clears the latched
+        // actuator bytes itself on padPortOpen, so a reconnecting pad cannot come back still buzzing.
+        if (!isPadReadyState(pad->state)) {
+            pad->rumbleOn = 0;
+            continue;
+        }
+        if (padRumbleSendNative(pad, 0) == 1)
+            pad->rumbleOn = 0; // else retry next frame: the IOP briefly drops it outside TASK_UPDATE_PAD
     }
 
     for (i = 0; i < 16; ++i) {
@@ -572,6 +774,11 @@ static void unloadPad(struct pad_data_t *pad)
 void unloadPads()
 {
     int i;
+
+    // Backstop before ANY port closes: padPortClose/padEnd do NOT clear the actuators -- polling just
+    // stops and the pad keeps whatever it was last told, i.e. it buzzes forever. The primary stop is at
+    // deinitEx() entry; this covers the callers that unload pads without going through it.
+    padRumbleStopAll();
 
     for (i = 0; i < pad_count; ++i)
         unloadPad(&pad_data[i]);

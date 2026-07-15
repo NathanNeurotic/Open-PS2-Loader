@@ -11,6 +11,7 @@
 #include "include/opl.h"
 #include "include/ioman.h"
 #include "include/themes.h"
+#include "include/pad.h" // padRumbleTap -- menu rumble mirrors the cursor tick (#172)
 
 // Silence unused variable warnings from vorbisfile.h
 static ov_callbacks OV_CALLBACKS_NOCLOSE __attribute__((unused));
@@ -258,6 +259,29 @@ int sfxGetSoundDuration(int id)
 void sfxPlay(int id)
 {
     int channel;
+
+    // Menu rumble (#172): mirror the GUI's own feedback on the pad. Deliberately ABOVE both gates
+    // below -- rumble is haptic feedback, not sound, so it must survive a user who plays with SFX off
+    // (or a build where audsrv never came up). Every cursor move / confirm / cancel in the whole GUI
+    // already funnels through sfxPlay(), so these lines cover them all with no new call sites.
+    // Both arms rate-limit themselves and never block.
+    //
+    // NOTE: SFX_CONFIRM is also the LAUNCH edge, and the pulse's decay clock is ticked by readPads(),
+    // which stops running during the launch handoff -- so itemExecSelect() calls padRumbleFlush()
+    // before that blocking work, or this bump would run for the whole loading screen. See pad.c.
+    if (id == SFX_CURSOR)
+        padRumbleTap();
+    else if (id == SFX_CONFIRM || id == SFX_CANCEL || id == SFX_MESSAGE)
+        padRumbleBump();
+    // SFX_MESSAGE (notifications / message boxes) is safe to arm from here: every one of its sites
+    // renders from a loop that polls readPads() -- the main loop for guiShowNotifications, and
+    // guiMsgBox's own modal loop -- so the pulse decays normally.
+    //
+    // SFX_BOOT is deliberately NOT armed here. It plays from inside guiIntroLoop(), whose loop never
+    // polls readPads(), so the decay would be frozen for the whole intro (it runs for the length of
+    // the boot jingle) -- seconds of buzz. The "ready" tap is armed in main() right after the intro
+    // returns instead, which is the moment the user actually cares about and where the main loop is
+    // about to start ticking the decay.
 
     if (!audio_initialized) {
         LOG("SFX: %s: ERROR: not initialized!\n", __FUNCTION__);

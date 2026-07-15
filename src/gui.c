@@ -595,6 +595,7 @@ void guiShowConfig()
     diaSetInt(diaConfig, CFG_ENWRITEOP, gEnableWrite);
     diaSetInt(diaConfig, CFG_LASTPLAYED, gRememberLastPlayed);
     diaSetInt(diaConfig, CFG_FOLDERNAV, gEnableFolderNav);
+    diaSetInt(diaConfig, CFG_RUMBLE, gEnableRumble);
     diaSetInt(diaConfig, CFG_AUTOSTARTLAST, gAutoStartLastPlayed);
     diaSetVisible(diaConfig, CFG_AUTOSTARTLAST, gRememberLastPlayed);
     diaSetVisible(diaConfig, CFG_LBL_AUTOSTARTLAST, gRememberLastPlayed);
@@ -625,6 +626,7 @@ reshow_config:
         diaGetInt(diaConfig, CFG_ENWRITEOP, &gEnableWrite);
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
         diaGetInt(diaConfig, CFG_FOLDERNAV, &gEnableFolderNav);
+        diaGetInt(diaConfig, CFG_RUMBLE, &gEnableRumble);
         diaGetInt(diaConfig, CFG_AUTOSTARTLAST, &gAutoStartLastPlayed);
         diaGetString(diaConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
         diaGetString(diaConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));

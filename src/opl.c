@@ -228,6 +228,7 @@ char gMMCEPrefix[32];
 char gETHPrefix[32];
 int gRememberLastPlayed;
 int gEnableFolderNav;
+int gEnableRumble;
 int KeyPressedOnce;
 int gAutoStartLastPlayed;
 int RemainSecs, DisableCron;
@@ -340,6 +341,14 @@ static void itemExecSelect(struct menu_item *curMenu)
                         ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
                     return;
                 }
+                // Menu rumble: play out the confirm bump and stop the motors BEFORE the launch prep.
+                // Everything below blocks the GUI thread -- the config read, guiShowGameID's frame hold,
+                // and all of itemLaunch (sbPrepare, VMC checks, cheats, fragment counting, and
+                // mmceSendGameID's card-switch wait) -- and readPads(), which ticks the decay, does not
+                // run during any of it. Without this the bump would buzz for the entire loading screen.
+                // Costs ~90ms at most, on a path that already takes seconds. No-op when rumble is off.
+                padRumbleFlush();
+
                 config_set_t *configSet = menuLoadConfigDirect();
                 // Flash the GameID barcode (Pixel FX/RetroGEM HDMI auto-profile) before handoff; this
                 // single menu chokepoint covers both the Neutrino and OPL-native cores. No-op when off.
@@ -1622,6 +1631,7 @@ static void _loadConfig()
             configGetStrCopy(configOPL, CONFIG_OPL_ETH_PREFIX, gETHPrefix, sizeof(gETHPrefix));
             configGetInt(configOPL, CONFIG_OPL_REMEMBER_LAST, &gRememberLastPlayed);
             configGetInt(configOPL, CONFIG_OPL_FOLDER_NAV, &gEnableFolderNav);
+            configGetInt(configOPL, CONFIG_OPL_RUMBLE, &gEnableRumble);
             configGetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, &gAutoStartLastPlayed);
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
             configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode);
@@ -1959,6 +1969,7 @@ static void _saveConfig()
         configSetStr(configOPL, CONFIG_OPL_ETH_PREFIX, gETHPrefix);
         configSetInt(configOPL, CONFIG_OPL_REMEMBER_LAST, gRememberLastPlayed);
         configSetInt(configOPL, CONFIG_OPL_FOLDER_NAV, gEnableFolderNav);
+        configSetInt(configOPL, CONFIG_OPL_RUMBLE, gEnableRumble);
         configSetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, gAutoStartLastPlayed);
         configSetInt(configOPL, CONFIG_OPL_BDM_MODE, gBDMStartMode);
         configSetInt(configOPL, CONFIG_OPL_HDD_MODE, gHDDStartMode);
@@ -2582,6 +2593,13 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
 {
     gDeinitTerminal = (modeSelected == IO_MODE_SELECTED_ALL || modeSelected == IO_MODE_SELECTED_NONE);
 
+    /* Menu rumble (#172): kill the actuators FIRST, before anything below can block. Every launch and
+     * exit path funnels through here, and closing the pad ports later does NOT clear the motors -- so a
+     * tap still in flight would buzz on forever, straight into the game. This must stay at the TOP: the
+     * IO drain below can take up to LAUNCH_IO_DRAIN_TICKS (10s) on a slow or dying device, and the pad
+     * would grind through that entire loading screen if the stop lived down beside unloadPads(). */
+    padRumbleStopAll();
+
     /* Cut launch/exit latency by stopping queued art I/O before globally
      * blocking the I/O worker. This avoids waiting for stale cover requests
      * that are no longer needed once we are deinitializing. */
@@ -2732,6 +2750,7 @@ static void setDefaults(void)
     gEnableWrite = 1;
     gRememberLastPlayed = 0;
     gEnableFolderNav = 0; // opt-in; a flat library is byte-identical to before
+    gEnableRumble = 0;    // opt-in: nobody expects a menu to buzz, and these motors are 20+ years old
     gAutoStartLastPlayed = 9;
     gSelectButton = KEY_CROSS; // Default to Cross-select (western layout); swap_select_btn=0 restores Circle
     gMMCEPrefix[0] = '\0';
@@ -3199,6 +3218,15 @@ int main(int argc, char *argv[])
     ioPutRequest(IO_CUSTOM_SIMPLEACTION, &deferredInit);
 
     guiIntroLoop();
+
+    // Menu rumble: "OPL is ready" tap. Armed HERE rather than off sfxPlay(SFX_BOOT) for two reasons.
+    // (1) Correctness: SFX_BOOT plays from inside guiIntroLoop(), whose loop never polls readPads(),
+    // so the decay countdown would be frozen for the whole intro -- seconds of buzz instead of a tap.
+    // Out here guiMainLoop() is about to start ticking it. (2) Meaning: this is the instant the menu
+    // is actually usable, which is what "ready" means to the user -- and it does not depend on the
+    // boot SOUND being enabled. No-op when rumble is off or the pad can't do it.
+    padRumbleBump();
+
     guiMainLoop();
 
     return 0;
