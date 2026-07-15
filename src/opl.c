@@ -341,6 +341,14 @@ static void itemExecSelect(struct menu_item *curMenu)
                         ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
                     return;
                 }
+                // Menu rumble: play out the confirm bump and stop the motors BEFORE the launch prep.
+                // Everything below blocks the GUI thread -- the config read, guiShowGameID's frame hold,
+                // and all of itemLaunch (sbPrepare, VMC checks, cheats, fragment counting, and
+                // mmceSendGameID's card-switch wait) -- and readPads(), which ticks the decay, does not
+                // run during any of it. Without this the bump would buzz for the entire loading screen.
+                // Costs ~90ms at most, on a path that already takes seconds. No-op when rumble is off.
+                padRumbleFlush();
+
                 config_set_t *configSet = menuLoadConfigDirect();
                 // Flash the GameID barcode (Pixel FX/RetroGEM HDMI auto-profile) before handoff; this
                 // single menu chokepoint covers both the Neutrino and OPL-native cores. No-op when off.

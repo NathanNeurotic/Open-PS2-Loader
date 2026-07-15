@@ -260,16 +260,19 @@ void sfxPlay(int id)
 {
     int channel;
 
-    // Menu rumble (#172): mirror the navigation tick on the pad. Deliberately ABOVE both gates below --
-    // rumble is haptic feedback, not sound, so it must survive a user who plays with SFX off (or a
-    // build where audsrv never came up). Every cursor move in the whole GUI already funnels through
-    // sfxPlay(), so this one line covers them all with no new call sites.
+    // Menu rumble (#172): mirror the GUI's own feedback on the pad. Deliberately ABOVE both gates
+    // below -- rumble is haptic feedback, not sound, so it must survive a user who plays with SFX off
+    // (or a build where audsrv never came up). Every cursor move / confirm / cancel in the whole GUI
+    // already funnels through sfxPlay(), so these lines cover them all with no new call sites.
+    // Both arms rate-limit themselves and never block.
     //
-    // SFX_CURSOR ONLY, on purpose: SFX_CONFIRM is also the LAUNCH edge, and the tap's decay clock is
-    // ticked by readPads(), which stops running during the launch handoff -- a tap armed there would
-    // buzz for the whole loading screen instead of 50ms. padRumbleTap() rate-limits itself.
+    // NOTE: SFX_CONFIRM is also the LAUNCH edge, and the pulse's decay clock is ticked by readPads(),
+    // which stops running during the launch handoff -- so itemExecSelect() calls padRumbleFlush()
+    // before that blocking work, or this bump would run for the whole loading screen. See pad.c.
     if (id == SFX_CURSOR)
         padRumbleTap();
+    else if (id == SFX_CONFIRM || id == SFX_CANCEL)
+        padRumbleBump();
 
     if (!audio_initialized) {
         LOG("SFX: %s: ERROR: not initialized!\n", __FUNCTION__);

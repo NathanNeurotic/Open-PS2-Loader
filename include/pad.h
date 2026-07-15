@@ -24,11 +24,18 @@ int startPads();
 int readPads();
 void unloadPads();
 
-// Menu rumble (#172), gated by gEnableRumble. padRumbleTap() arms a short tap on every capable pad and
-// never blocks -- safe to call from the GUI thread. padRumbleStopAll() force-stops every actuator and
-// MUST be called before anything that stops polling the pad (game launch / exit): closing the pad ports
-// does NOT clear the motors, so one left running keeps buzzing into the game.
-void padRumbleTap(void);
+// Menu rumble (#172), gated by gEnableRumble. Tap/Bump arm a pulse on every capable pad and never
+// block -- safe to call from the GUI thread; they no-op when disabled or the pad can't rumble.
+void padRumbleTap(void);  // light tick: cursor moved
+void padRumbleBump(void); // firmer: confirm / cancel
+
+// Play out any in-flight pulse then stop. Call before anything that blocks the GUI thread for long,
+// since readPads() -- which ticks the decay -- stops running then; the launch path would otherwise turn
+// a 90ms bump into a multi-second buzz. Adds at most ~90ms.
+void padRumbleFlush(void);
+
+// Force-stop every actuator. MUST run before anything that stops polling the pad (game launch / exit):
+// closing the pad ports does NOT clear the motors, so one left running keeps buzzing into the game.
 void padRumbleStopAll(void);
 
 int getKey(int num);

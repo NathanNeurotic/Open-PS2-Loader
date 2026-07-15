@@ -469,7 +469,9 @@ static int getKeyDelay(int id, int repeat)
 // menu's pad path otherwise issues none, so only ever send it on a CHANGE: ~2 RPCs per tap, none while
 // idle. Never per frame.
 
-#define RUMBLE_TAP_MS     50  // pulse length; long enough to feel, short enough not to blur into the next
+#define RUMBLE_TAP_MS     50  // cursor tick: long enough to feel, short enough not to blur into the next
+#define RUMBLE_BUMP_MS    90  // confirm/cancel: same engine, just held a little longer so a decision \
+                              // feels more definite than a scroll (the small engine has no intensity)
 #define RUMBLE_MIN_GAP_MS 120 // floor between taps: key-repeat is ~100ms, and an ERM never fully spins \
                               // down, so an unthrottled tap-per-tick becomes a continuous grind
 static u32 rumbleLastMs = 0;
@@ -492,9 +494,7 @@ static int padRumbleSendNative(struct pad_data_t *pad, int on)
     return padSetActDirect(pad->port, pad->slot, act);
 }
 
-/** Arm a short rumble tap on every capable pad. Safe to call from the GUI thread; never blocks and
- *  silently no-ops when disabled, rate-limited, or the pad can't rumble. */
-void padRumbleTap(void)
+static void padRumbleArm(int durationMs)
 {
     int i;
 
@@ -513,7 +513,7 @@ void padRumbleTap(void)
         // Arm the countdown for EVERY pad: a ds34 (DS3/4/5 over USB/BT) pad is not a native PS2 pad --
         // it never goes through padInfoAct/padSetActAlign -- and instead reads this straight off
         // readPad()'s existing every-poll re-send. Harmless on a pad that ends up rumbling nothing.
-        pad->rumbleMsLeft = RUMBLE_TAP_MS;
+        pad->rumbleMsLeft = durationMs;
 
         // A native PS2 pad additionally needs its actuator driven, and only if it genuinely can.
         // Skip when already on: the motor is running, so re-sending is a pointless blocking RPC.
@@ -522,6 +522,48 @@ void padRumbleTap(void)
         if (padRumbleSendNative(pad, 1) == 1)
             pad->rumbleOn = 1; // dropped (pad mid re-init)? skip this tap rather than stall the GUI
     }
+}
+
+/** Light tick for a cursor move. Safe from the GUI thread; never blocks and silently no-ops when
+ *  disabled, rate-limited, or the pad can't rumble. */
+void padRumbleTap(void)
+{
+    padRumbleArm(RUMBLE_TAP_MS);
+}
+
+/** Slightly firmer bump for a confirm / cancel -- a decision should feel more definite than a scroll.
+ *  On the LAUNCH edge the caller must follow this with padRumbleFlush(); see there for why. */
+void padRumbleBump(void)
+{
+    padRumbleArm(RUMBLE_BUMP_MS);
+}
+
+/** Play out any in-flight pulse, then stop the motors.
+ *
+ *  Call this before anything that blocks the GUI thread for a long time, because readPads() -- the ONLY
+ *  thing that ticks the decay countdown -- stops running while it does. The launch path is the case that
+ *  matters: between the confirm and deinitEx()'s stop sit menuLoadConfigDirect(), guiShowGameID()'s
+ *  frame hold, and the whole of itemLaunch (sbPrepare, VMC superblock checks, cheats, fragment counting,
+ *  and mmceSendGameID's card-switch wait, which alone can take seconds). Without this the confirm bump
+ *  would run for that entire window -- a multi-second buzz instead of a 90ms tap.
+ *
+ *  Bounded by RUMBLE_BUMP_MS, i.e. at worst it adds ~90ms to a launch that already takes seconds. */
+void padRumbleFlush(void)
+{
+    int i, waitMs = 0;
+
+    for (i = 0; i < pad_count; ++i) {
+        if (pad_data[i].rumbleMsLeft > waitMs)
+            waitMs = pad_data[i].rumbleMsLeft;
+    }
+
+    if (waitMs > 0) {
+        if (waitMs > RUMBLE_BUMP_MS)
+            waitMs = RUMBLE_BUMP_MS; // belt: never stall the launch on a bad counter
+        DelayThread(waitMs * 1000);  // ms -> us
+    }
+
+    padRumbleStopAll();
 }
 
 /** Stop every actuator NOW and make sure it sticks. Call before anything that stops polling the pad
