@@ -1242,9 +1242,8 @@ void guiShowDeviceConfig(void)
 {
     const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), _l(_STR_FAV), NULL};
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
-    const char *netStartModes[] = {"Off", "Manual", "Auto", NULL}; // Row 1: == START_MODE_DISABLED/MANUAL/AUTO
-    const char *netProtocols[] = {"SMB", "UDPFS", "UDPBD", NULL};  // Row 2 (Off moved to Row 1); UDPBD = SUDPBDv2 server
-    const char *udpfsModes[] = {"Files", "IMG", NULL};             // Row 3: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
+    const char *netProtocols[] = {"SMB", "UDPFS", "UDPBD", NULL}; // Row 2 (Off moved to Row 1); UDPBD = SUDPBDv2 server -- protocol names, not translated
+    const char *udpfsModes[] = {"Files", "IMG", NULL};            // Row 3: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
 
     // Devices & modes
     diaSetEnum(diaDeviceConfig, CFG_DEFDEVICE, deviceNames);
@@ -1280,7 +1279,11 @@ void guiShowDeviceConfig(void)
                                                                                                        0; // SMB / OFF
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
     int netAccessVal = (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD) ? 1 : 0;
-    diaSetEnum(diaDeviceConfig, CFG_NETSTART, netStartModes);
+    // Row 1 == START_MODE_DISABLED/MANUAL/AUTO -- the SAME three options (and indices) as every other
+    // device's start row, so reuse the localized deviceModes rather than a hardcoded English duplicate
+    // (Gemini review of #199). Same function scope as the dialog it feeds, so the diaSetEnum raw-pointer
+    // rule (#154) still holds.
+    diaSetEnum(diaDeviceConfig, CFG_NETSTART, deviceModes);
     diaSetInt(diaDeviceConfig, CFG_NETSTART, netStartVal);
     diaSetEnum(diaDeviceConfig, CFG_NETPROTOCOL, netProtocols);
     diaSetInt(diaDeviceConfig, CFG_NETPROTOCOL, netProtoVal);
