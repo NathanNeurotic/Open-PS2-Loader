@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Urutkan Game Menurut Abjad
+  RUMBLE: Getaran Kontroler di Menu
+  HINT_RUMBLE: Getaran singkat saat menggerakkan kursor, mengonfirmasi, atau kembali - perlu DualShock dalam mode analog
+  FOLDER_NAV: Jelajahi Folder di Daftar Game
+  HINT_FOLDER_NAV: Tampilkan subfolder CD/DVD sebagai entri yang dapat dijelajahi; pilih untuk membuka, batal untuk kembali
+  SETTINGS_NO_HOME: Kartu memori tidak ditemukan - pengaturan tidak dapat disimpan. OPL di-boot dari perangkat jaringan, yang pengaturannya harus tersimpan di kartu lokal.
+  ERROR_SAVING_SETTINGS_TO: Gagal menulis pengaturan ke %s (kesalahan %d)
   GENERAL_SETTINGS: Pengaturan Umum
   DEVICE_SETTINGS: Pengaturan Perangkat
   LAUNCH_PS2_DISC: Jalankan Disc PS2

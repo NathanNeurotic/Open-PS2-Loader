@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Rendit lojrat alfabetikisht
+  RUMBLE: Dridhje e komandës në menu
+  HINT_RUMBLE: Dridhje e shkurtër kur lëviz kursorin, konfirmon ose kthehesh -- kërkon një DualShock në modalitet analog
+  FOLDER_NAV: Shfleto dosjet në listën e lojrave
+  HINT_FOLDER_NAV: Shfaq nëndosjet e CD/DVD si hyrje të shfletueshme; zgjidh për të hapur, anulo për t'u kthyer
+  SETTINGS_NO_HOME: Nuk u gjet kartë memorie -- cilësimet nuk mund të ruhen. OPL u nis nga një pajisje rrjeti, cilësimet e së cilës duhet të qëndrojnë në një kartë lokale.
+  ERROR_SAVING_SETTINGS_TO: Cilësimet nuk u shkruan dot te %s (gabimi %d)
   GENERAL_SETTINGS: Cilësimet e Përgjithshme
   DEVICE_SETTINGS: Cilësimet e Pajisjes
   LAUNCH_PS2_DISC: Nisja e Diskut PS2

@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Sắp xếp trò chơi theo bảng chữ cái
+  RUMBLE: Rung tay cầm trong menu
+  HINT_RUMBLE: Rung ngắn khi di chuyển con trỏ, xác nhận hoặc quay lại -- cần DualShock ở chế độ analog
+  FOLDER_NAV: Duyệt thư mục trong danh sách trò chơi
+  HINT_FOLDER_NAV: Hiển thị thư mục con của CD/DVD dưới dạng mục duyệt được; chọn để mở, hủy để quay lại
+  SETTINGS_NO_HOME: Không tìm thấy thẻ nhớ -- không thể lưu cài đặt. OPL đã khởi động từ thiết bị mạng, cài đặt phải nằm trên thẻ nhớ cục bộ.
+  ERROR_SAVING_SETTINGS_TO: Không thể ghi cài đặt vào %s (lỗi %d)
   GENERAL_SETTINGS: Cài đặt chung
   DEVICE_SETTINGS: Cài đặt thiết bị
   LAUNCH_PS2_DISC: Khởi động đĩa PS2

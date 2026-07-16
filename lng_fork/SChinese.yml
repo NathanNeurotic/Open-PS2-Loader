@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: 按字母顺序排列游戏
+  RUMBLE: 菜单中手柄振动
+  HINT_RUMBLE: 移动光标、确认或返回时短暂振动 —— 需要 DualShock 处于模拟模式
+  FOLDER_NAV: 在游戏列表中浏览文件夹
+  HINT_FOLDER_NAV: 将 CD/DVD 的子文件夹显示为可浏览项；选择打开，取消返回
+  SETTINGS_NO_HOME: 未找到记忆卡 —— 无法保存设置。OPL 从网络设备启动，其设置必须存放在本地卡上。
+  ERROR_SAVING_SETTINGS_TO: 无法将设置写入 %s（错误 %d）
   GENERAL_SETTINGS: 常规设置
   DEVICE_SETTINGS: 设备设置
   LAUNCH_PS2_DISC: 启动 PS2 光盘

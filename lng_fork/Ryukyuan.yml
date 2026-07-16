@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: ゲームやアルファベット順に並びゆん
+  RUMBLE: メニューぬ中ぬコントローラー振動
+  HINT_RUMBLE: カーソル動かすねー、決定しやい戻いやいすしぇー短さん振動すん —— アナログモードぬDualShockぬ要ゆん
+  FOLDER_NAV: ゲームリストぬ中ぬフォルダー見ゆん
+  HINT_FOLDER_NAV: CD/DVDぬサブフォルダー、見ゆる項目んかい見しゆん；選むねー開ち、キャンセルねー戻ゆん
+  SETTINGS_NO_HOME: メモリーカードぇー見当たらん —— 設定ぇー保存ならん。OPLぇーネットワーク機器から起動さっとーくとぅ、設定ぇーローカルカードんかいあらんとーならん。
+  ERROR_SAVING_SETTINGS_TO: "%sんかい設定ぇー書ちきらんたん (エラー %d)"
   GENERAL_SETTINGS: 一般設定
   DEVICE_SETTINGS: 機器設定
   LAUNCH_PS2_DISC: PS2 ディスク起動

@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Sortera spel alfabetiskt
+  RUMBLE: Handkontrollsvibration i menyer
+  HINT_RUMBLE: Kort vibration när du flyttar markören, bekräftar eller går tillbaka -- kräver en DualShock i analogt läge
+  FOLDER_NAV: Bläddra bland mappar i spellistan
+  HINT_FOLDER_NAV: Visa undermappar på CD/DVD som bläddringsbara poster; välj för att öppna, avbryt för att gå tillbaka
+  SETTINGS_NO_HOME: Inget minneskort hittades -- inställningarna kan inte sparas. OPL startades från en nätverksenhet, vars inställningar måste finnas på ett lokalt kort.
+  ERROR_SAVING_SETTINGS_TO: Kunde inte skriva inställningarna till %s (fel %d)
   GENERAL_SETTINGS: Allmänna inställningar
   DEVICE_SETTINGS: Enhetsinställningar
   LAUNCH_PS2_DISC: Starta PS2-skiva
