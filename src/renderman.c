@@ -226,7 +226,31 @@ int rmSetMode(int force)
         gsGlobal->OffsetY = ((4096 - gsGlobal->Height) / 2) * 16;
 
         if (hires) {
+            // PrimAlphaEnable MUST be OFF across this call, and the bracket below is a real fix, not
+            // hygiene (FifthFox's 1080i "scrolling leaves artifacts that persist", HW).
+            //
+            // gsKit_hires_init_screen -> _gsKit_create_passes bakes a gsKit_clear into each pass's
+            // PERSISTENT queue -- that baked clear is the ONLY thing that ever erases a hires frame
+            // (rmStartFrame deliberately skips clearing when hires; see there). But gsKit_clear's
+            // sprite samples the PRIM ABE bit from gsGlobal->PrimAlphaEnable AT CREATION TIME
+            // (gsPrimitive.c gsKit_prim_list_sprite_flat), and the colour gsKit bakes is
+            // GS_SETREG_RGBAQ(0,0,0,0x00,0) -- ALPHA ZERO. With PrimAlphaEnable ON (set above) and our
+            // source-over blend (gDefaultAlpha: (Cs-Cd)*As+Cd), As=0 reduces to Cd: the "clear" wrote
+            // the old destination pixel back. A no-op, baked in, replayed every pass, forever.
+            //
+            // That is why a band whose pass misses its 1/180s deadline shows STALE pixels instead of
+            // black, and why they persist across screens: nothing under the UI ever repaints. The
+            // non-hires path never had this bug for exactly one reason: rmStartFrame's per-frame
+            // clear passes gColBlack, whose alpha is 0x80 (opaque) -- same function, different alpha.
+            //
+            // With ABE=0 baked in, the clear writes opaque black regardless of the runtime blend
+            // state. Restoring PrimAlphaEnable right after is safe: it is only ever sampled when a
+            // primitive is CREATED, and no OPL primitive is created inside init_screen. The only
+            // other _gsKit_create_passes caller is gsKit_hires_set_bg, which OPL never calls (and
+            // must not casually: a bg texture replaces the baked clear entirely).
+            gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
             gsKit_hires_init_screen(gsGlobal, rm_mode_table[vmode].passes);
+            gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
         } else {
             gsKit_init_screen(gsGlobal);
             gsKit_mode_switch(gsGlobal, GS_ONESHOT);
