@@ -336,9 +336,36 @@ static void favVcdMarkStar(opl_io_module_t *mod, int id, const char *text)
         src->item.favourited = 1;
 }
 
-static item_list_t *favResolve(int mode, int id, const char *text, int isVcd, int *outMode)
+// An APP favourite's stored id is the row index into the single AGGREGATED appsList (legacy
+// conf_apps entries first, then the device scan in mount order) -- add a stick, edit conf_apps, or
+// change APPS folders and every later index shifts, so a strict id+text match dies FOREVER for those
+// records. Games never have this problem (a game's id is stable within its device list, and BDM even
+// gets a lenient cross-slot re-match). For apps the stable identity is the TITLE (the conf_apps key /
+// title.cfg value), so apps match by mode+text and ignore the stored id everywhere: resolve (below),
+// the add-time duplicate check, and removal. Nathan's "Apps didn't seem to have functioning
+// R3/Favorites" (HW, 2026-07-16).
+static int favIdsMatchForMode(int mode, int recId, int liveId)
+{
+    return (mode == APP_MODE) || (recId == liveId);
+}
+
+// Title-only submenu walk for the APP fallback: first row whose text matches wins. Titles are the
+// apps' identity key already (a duplicate title in conf_apps overwrites in config parsing).
+static submenu_list_t *favFindItemByText(submenu_list_t *sub, const char *text)
+{
+    if (text == NULL)
+        return NULL;
+    for (submenu_list_t *cur = sub; cur != NULL; cur = cur->next) {
+        if (cur->item.text != NULL && strcmp(cur->item.text, text) == 0)
+            return cur;
+    }
+    return NULL;
+}
+
+static item_list_t *favResolve(int mode, int id, const char *text, int isVcd, int *outMode, int *outId)
 {
     *outMode = mode;
+    *outId = id;
 
     // VCD (PS1) favourites resolve by NAME, not by a live submenu id. The source device may be in its
     // ISO view right now (its submenu/games array holds discs, not VCDs), yet we must still surface +
@@ -393,6 +420,14 @@ static item_list_t *favResolve(int mode, int id, const char *text, int isVcd, in
     if (mod == NULL || mod->support == NULL)
         return NULL;
     submenu_list_t *src = submenuFindItemByIdAndText(mod->subMenu, id, text);
+    if (src == NULL && mode == APP_MODE) {
+        // Apps: the stored id is an aggregate-list index that shifts whenever the device set or
+        // conf_apps changes (see favIdsMatchForMode above). Fall back to the title, and hand the LIVE
+        // row id back to the caller so the launch/config/startup proxies hit the right appsList slot.
+        src = favFindItemByText(mod->subMenu, text);
+        if (src != NULL)
+            *outId = src->item.id;
+    }
     if (src == NULL)
         return NULL;
     src->item.favourited = 1;
@@ -456,9 +491,28 @@ static int favUpdateItemList(item_list_t *itemList)
             continue;
 
         int resolvedMode = recs[i].mode;
-        item_list_t *owner = favResolve(recs[i].mode, recs[i].id, recs[i].text, recs[i].isVcd, &resolvedMode);
-        if (owner == NULL)
+        int resolvedId = recs[i].id;
+        item_list_t *owner = favResolve(recs[i].mode, recs[i].id, recs[i].text, recs[i].isVcd, &resolvedMode, &resolvedId);
+        if (owner == NULL) {
+            // APPS never populate on their own: gAPPStartMode defaults to MANUAL and nothing scans a
+            // MANUAL tab until the user opens it, so every stored app favourite sat hidden ("device
+            // not loaded") until the APPS tab happened to be visited that session -- while game
+            // favourites resolved because the user starts their game tab every time. If the user has
+            // app favourites, they've opted in: arm the apps scan ONCE per boot ourselves. appInit is
+            // plain state init (safe on this IO thread, where config IO already runs), and the
+            // deferred update it queues re-calls loadFavourites when the list lands (opl.c
+            // menuDeferredUpdate), so the stars light through the normal resync -- no special path.
+            if (recs[i].mode == APP_MODE) {
+                static int favAppsArmed = 0;
+                opl_io_module_t *appMod = oplGetModule(APP_MODE);
+                if (!favAppsArmed && appMod != NULL && appMod->support != NULL && !appMod->support->enabled) {
+                    favAppsArmed = 1;
+                    appMod->support->itemInit(appMod->support);
+                    ioPutRequest(IO_MENU_UPDATE_DEFFERED, &appMod->support->mode);
+                }
+            }
             continue; // device not loaded / item absent -> hidden (kept in the file)
+        }
 
         char *txt = favStrdup(recs[i].text);
         if (txt == NULL)
@@ -466,7 +520,7 @@ static int favUpdateItemList(item_list_t *itemList)
 
         favArray[favCount].owner = owner;
         favArray[favCount].mode = resolvedMode;
-        favArray[favCount].id = recs[i].id;
+        favArray[favCount].id = resolvedId;
         favArray[favCount].icon_id = recs[i].icon_id;
         favArray[favCount].text_id = recs[i].text_id;
         favArray[favCount].isVcd = recs[i].isVcd;
@@ -683,7 +737,9 @@ int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *tex
     // recognised as already-present, matching the BDM-lenient logic in removeFavouriteByIdAndText.
     // isVcd is part of the identity so a disc favourite and a PS1 favourite never collide.
     for (int i = 0; i < count; i++) {
-        if (favModesMatch(recs[i].mode, mode) && recs[i].id == id && (recs[i].isVcd ? 1 : 0) == (isVcd ? 1 : 0) && strcmp(recs[i].text, text) == 0) {
+        // favIdsMatchForMode: apps identify by title (their stored id shifts with the device set) --
+        // without it, a shifted app would collect a DUPLICATE record on every re-favourite.
+        if (favModesMatch(recs[i].mode, mode) && favIdsMatchForMode(mode, recs[i].id, id) && (recs[i].isVcd ? 1 : 0) == (isVcd ? 1 : 0) && strcmp(recs[i].text, text) == 0) {
             free(recs);
             return 1;
         }
@@ -725,7 +781,9 @@ int removeFavouriteByIdAndText(int mode, int id, const char *text, int isVcd)
     for (int i = 0; i < count; i++) {
         // Match on id + text + mode (BDM-lenient) + isVcd so a same-titled favourite in a different
         // device mode -- or a disc vs PS1 favourite of the same title -- is NOT collaterally deleted.
-        if (!(recs[i].id == id && text != NULL && strcmp(recs[i].text, text) == 0 && favModesMatch(recs[i].mode, mode) && (recs[i].isVcd ? 1 : 0) == (isVcd ? 1 : 0)))
+        // Apps match by title alone (favIdsMatchForMode): their stored id shifts with the device set,
+        // and without the leniency R3 on an already-starred app could not un-favourite it.
+        if (!(favIdsMatchForMode(mode, recs[i].id, id) && text != NULL && strcmp(recs[i].text, text) == 0 && favModesMatch(recs[i].mode, mode) && (recs[i].isVcd ? 1 : 0) == (isVcd ? 1 : 0)))
             recs[survivors++] = recs[i]; // compact in place (single buffer)
     }
     int ok = favWriteFile(recs, survivors); // survivors may be 0 -> writes a header-only (empty) file
