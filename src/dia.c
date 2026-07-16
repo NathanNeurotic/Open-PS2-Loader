@@ -458,6 +458,34 @@ static void diaDrawHint(int text_id)
 
 /// renders an ui item (either selected or not)
 /// sets width and height of the render into the parameters
+// The height diaRenderItem WOULD set for this item, computed without drawing. Kept byte-for-byte in
+// step with diaRenderItem's *h logic below: the default is UI_SPACING_H, UI_SPACER is 0, UI_COLOUR is
+// 17, an invisible controllable item is 0 (diaRenderItem early-returns leaving the caller's h=0), and
+// any non-zero fixedHeight overrides upward (negative = percent of screenHeight). *h never depends on
+// x/y or the text, so this is exact -- used to advance layout past a row the viewport clip skips (#195
+// scroll-bleed fix) so the on-screen rows below it keep their true positions.
+static int diaItemHeight(struct UIItem *item)
+{
+    int h;
+
+    if (!item->visible && item->type >= UI_LABEL)
+        return 0;
+
+    if (item->type == UI_SPACER)
+        h = 0;
+    else if (item->type == UI_COLOUR)
+        h = 17;
+    else
+        h = UI_SPACING_H;
+
+    if (item->fixedHeight != 0) {
+        int newSize = (item->fixedHeight < 0) ? item->fixedHeight * screenHeight / -100 : item->fixedHeight;
+        if (h < newSize)
+            h = newSize;
+    }
+    return h;
+}
+
 static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int haveFocus, int *w, int *h)
 {
     // Don't draw controllable items that are not visible.
@@ -664,7 +692,28 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             hmax = 0;
         }
 
-        diaRenderItem(x, y, rc, rc == cur, haveFocus, &w, &h);
+        // Viewport clip for scrolled dialogs (FifthFox HW: "scrolled text moves out of the background
+        // image ... clearing the entire screen removes the stray text"). diaScrollOffset shifts rows
+        // above y0 (and below the hint bar); nothing else stops them drawing there, and since the
+        // dialog re-paints its background rather than full-clearing, a row that scrolled outside the
+        // background stays behind as stray text. So SKIP entirely any row fully outside the item
+        // viewport -- there is then nothing to leave behind. It is an APP-LAYER skip on purpose: a GS
+        // scissor cannot survive the 720p/1080i multi-pass render (its per-pass band scissor gets
+        // overwritten), so this works in every video mode where a scissor would not.
+        //
+        // A skipped row is not drawn, but the layout must advance by its EXACT height (diaItemHeight,
+        // which mirrors diaRenderItem's *h logic) so the on-screen rows below it keep their true
+        // positions and contentBottom/cursor-follow stay correct. Width is irrelevant for an unshown
+        // row -- x resets on the next line break -- so w=0. The FOCUSED row is never skipped (the
+        // cursor-follow clamp keeps it inside the viewport by construction), so cursor tracking is exact.
+        int rowH = diaItemHeight(rc);
+        int viewBottom = gTheme->usedHeight - 40; // the same bound the scroll clamp below uses
+        if (rc != cur && (y + rowH <= y0 || y >= viewBottom)) {
+            w = 0;
+            h = rowH;
+        } else {
+            diaRenderItem(x, y, rc, rc == cur, haveFocus, &w, &h);
+        }
 
         if (rc == cur) {
             curTop = y;
