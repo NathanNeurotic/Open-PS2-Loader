@@ -626,6 +626,9 @@ void configGetDiscIDBinary(config_set_t *configSet, void *dst)
     }
 }
 
+// Defined further down with the key table; the reader below needs the wOPL->ours direction.
+static const char *cfgWoplToOurs(const char *key);
+
 // Parse ONE line of a libconfig file into our flat key space.
 //
 // GROUPS FLATTEN ONTO OUR EXISTING COMPOSED KEYS. Our legacy parser turns
@@ -725,13 +728,95 @@ static void cfgReadLibconfigLine(char *line, char *group, size_t groupSize, conf
         else if (strcmp(val, "false") == 0)
             strcpy(val, "0");
 
-        if (group[0]) {
+        if (group[0])
             snprintf(composed, sizeof(composed), "%s_%s", group, key);
-            configSetStr(configSet, composed, val);
-        } else {
-            configSetStr(configSet, key, val);
+        else
+            snprintf(composed, sizeof(composed), "%s", key);
+
+        { // translate wOPL's per-game key names to ours; anything else passes through untouched
+            const char *ours = cfgWoplToOurs(composed);
+            configSetStr(configSet, ours != NULL ? ours : composed, val);
         }
     }
+}
+
+// ---- wOPL per-game key translation ----------------------------------------------------------------
+// wOPL's per-game migration does NOT merely reformat: it RENAMES every key and nests most of them.
+// Their build_per_game writes `compat`, `dma`, and groups `gsm`/`cheat`/`pademu`/`padmacro`/`osd`,
+// where we use `$Compatibility`, `$DMA`, `$EnableGSM` and friends. Parsing their syntax is therefore
+// only half the job -- without this table we would read the file perfectly and hand OPL a set of keys
+// nothing looks up, and every per-game setting would silently revert to defaults.
+//
+// The left column is the key AFTER group flattening (cfgReadLibconfigLine joins "gsm : { enable = 1; }"
+// into "gsm_enable"), so the group structure round-trips through cfgMatchGroup on write.
+//
+// ONLY per-game keys live here. A key that is not in this table passes through UNCHANGED, which is what
+// makes themes (`main0_type`) and app title.cfg (`title`/`boot`/`argv1`) work without any mapping.
+//
+// SEMANTICS VERIFIED, NOT ASSUMED:
+//   core_loader -- IDENTICAL on both sides: 0 = the host loader, 1 = Neutrino (theirs:
+//                  CORE_LOADER_WOPL/CORE_LOADER_NEUTRINO in config_wopl.h:12-13; ours: the stored
+//                  $CoreLoader int, guigame.c:1059 "0=<OPL>, 1=Neutrino"). No transform needed.
+//   vmc1/vmc2   -- THEIRS IS 1-BASED, OURS IS 0-BASED ($VMC_0/$VMC_1, composed at config.c "%s_%d").
+//                  Getting this backwards would load slot 2's card into slot 1.
+static const struct
+{
+    const char *wopl;
+    const char *ours;
+} cfgWoplPerGameKeys[] = {
+    {"compat", CONFIG_ITEM_COMPAT},
+    {"dma", CONFIG_ITEM_DMA},
+    {"core_loader", CONFIG_ITEM_CORE_LOADER},
+    {"dnas", CONFIG_ITEM_DNAS},
+    {"alt_startup", CONFIG_ITEM_ALTSTARTUP},
+    {"vmc1", CONFIG_ITEM_VMC "_0"}, // 1-based -> 0-based
+    {"vmc2", CONFIG_ITEM_VMC "_1"},
+    {"gsm_source", CONFIG_ITEM_GSMSOURCE},
+    {"gsm_enable", CONFIG_ITEM_ENABLEGSM},
+    {"gsm_vmode", CONFIG_ITEM_GSMVMODE},
+    {"gsm_x_offset", CONFIG_ITEM_GSMXOFFSET},
+    {"gsm_y_offset", CONFIG_ITEM_GSMYOFFSET},
+    {"gsm_field_fix", CONFIG_ITEM_GSMFIELDFIX},
+    {"cheat_source", CONFIG_ITEM_CHEATSSOURCE},
+    {"cheat_enable", CONFIG_ITEM_ENABLECHEAT},
+    {"cheat_mode", CONFIG_ITEM_CHEATMODE},
+    {"cheat_enable_image", CONFIG_ITEM_ENABLEIMAGE},
+    {"pademu_source", CONFIG_ITEM_PADEMUSOURCE},
+    {"pademu_enable", CONFIG_ITEM_ENABLEPADEMU},
+    {"pademu_settings", CONFIG_ITEM_PADEMUSETTINGS},
+    {"padmacro_source", CONFIG_ITEM_PADMACROSOURCE},
+    {"padmacro_settings", CONFIG_ITEM_PADMACROSETTINGS},
+    {"osd_source", CONFIG_ITEM_OSD_SETTINGS_SOURCE},
+    {"osd_enable", CONFIG_ITEM_OSD_SETTINGS_ENABLE},
+    {"osd_lang_id", CONFIG_ITEM_OSD_SETTINGS_LANGID},
+    {"osd_tv_aspect", CONFIG_ITEM_OSD_SETTINGS_TV_ASP},
+    {"osd_vmode", CONFIG_ITEM_OSD_SETTINGS_VMODE},
+    {NULL, NULL},
+};
+
+// Their key -> ours. Returns NULL when the key is not one of theirs (pass it through unchanged).
+static const char *cfgWoplToOurs(const char *key)
+{
+    int i;
+    for (i = 0; cfgWoplPerGameKeys[i].wopl != NULL; ++i) {
+        if (strcmp(key, cfgWoplPerGameKeys[i].wopl) == 0)
+            return cfgWoplPerGameKeys[i].ours;
+    }
+    return NULL;
+}
+
+// Ours -> theirs. Returns NULL when we have no wOPL equivalent -- those keys ($NeutrinoArgs,
+// $NeutrinoVideo, $VMCDisable_n, $ConfigSource ...) are emitted at ROOT verbatim instead of being
+// dropped. wOPL's parse_per_game is pure config_lookup by name and never enumerates root children, so
+// it ignores them silently while they survive for us: format inheritance with no data loss either way.
+static const char *cfgOursToWopl(const char *key)
+{
+    int i;
+    for (i = 0; cfgWoplPerGameKeys[i].wopl != NULL; ++i) {
+        if (strcmp(key, cfgWoplPerGameKeys[i].ours) == 0)
+            return cfgWoplPerGameKeys[i].wopl;
+    }
+    return NULL;
 }
 
 // True when the value is a bare libconfig scalar (int or bool) and therefore must NOT be quoted.
@@ -812,14 +897,21 @@ static void cfgWriteLibconfig(file_buffer_t *fileBuffer, config_set_t *configSet
     struct config_value_t *cur;
     int i;
 
-    // Pass 1: every root-level scalar (no recognised group prefix).
+    // Pass 1: every root-level scalar -- i.e. anything that does not translate into one of wOPL's
+    // groups. A key with no wOPL equivalent lands here verbatim (see cfgOursToWopl) rather than being
+    // dropped, so our Neutrino/VMCDisable settings survive a wOPL-format file untouched.
     for (cur = configSet->head; cur; cur = cur->next) {
+        const char *w;
         int off;
+
         if (cur->key[0] == '\0' || cur->key[0] == '#')
             continue;
-        if (cfgMatchGroup(cur->key, &off) != NULL)
-            continue;
-        cfgWriteLibconfigLine(fileBuffer, "", cur->key, cur->val);
+
+        w = cfgOursToWopl(cur->key);
+        if (w != NULL && cfgMatchGroup(w, &off) != NULL)
+            continue; // belongs to a group; pass 2 emits it
+
+        cfgWriteLibconfigLine(fileBuffer, "", w != NULL ? w : cur->key, cur->val);
     }
 
     // Pass 2: one block per group, in schema order, skipping groups with nothing in them.
@@ -828,11 +920,16 @@ static void cfgWriteLibconfig(file_buffer_t *fileBuffer, config_set_t *configSet
         int any = 0;
 
         for (cur = configSet->head; cur; cur = cur->next) {
+            const char *w, *g;
             int off;
-            const char *g;
+
             if (cur->key[0] == '\0' || cur->key[0] == '#')
                 continue;
-            g = cfgMatchGroup(cur->key, &off);
+
+            w = cfgOursToWopl(cur->key);
+            if (w == NULL)
+                continue;
+            g = cfgMatchGroup(w, &off);
             if (g == NULL || strcmp(g, cfgLibconfigGroups[i]) != 0)
                 continue;
 
@@ -841,7 +938,7 @@ static void cfgWriteLibconfig(file_buffer_t *fileBuffer, config_set_t *configSet
                 writeFileBuffer(fileBuffer, line, strlen(line));
                 any = 1;
             }
-            cfgWriteLibconfigLine(fileBuffer, "  ", cur->key + off, cur->val);
+            cfgWriteLibconfigLine(fileBuffer, "  ", w + off, cur->val);
         }
 
         if (any) {
@@ -941,10 +1038,73 @@ static void configBuildLegacyOplPath(const char *path, char *out, int outSize)
         snprintf(out, outSize, "%s", CONFIG_OPL_FILENAME_LEGACY);
 }
 
+// wOPL does not only reformat -- for three files it RELOCATES the data and leaves nothing at the name
+// we look for. Format detection cannot help with a file that is not there, so map our name onto the
+// wOPL one and read that instead. We honour the setup that exists rather than forcing ours back on top:
+// no rewrite, no un-migration, no "restore" -- we just read where the data actually lives now.
+//
+//   conf_theme.cfg   -> wopl_theme.cfg        the original is UNLINKED with NO backup (their .bak
+//                                             gates on the DESTINATION already existing, which for a
+//                                             renamed file it never does), so this fallback is the
+//                                             ONLY way a wOPL-touched theme still renders for us.
+//   conf_network.cfg -> wopl_network.cfg      original renamed to .bak
+//   conf_game.cfg    -> wopl_global_game.cfg  original renamed to .bak
+//
+// Returns 0 when this filename has no wOPL counterpart.
+static int configBuildWoplPath(const char *path, char *out, int outSize)
+{
+    static const struct
+    {
+        const char *ours;
+        const char *theirs;
+    } map[] = {
+        {"conf_theme.cfg", "wopl_theme.cfg"},
+        {"conf_network.cfg", "wopl_network.cfg"},
+        {"conf_game.cfg", "wopl_global_game.cfg"},
+        {NULL, NULL},
+    };
+    const char *slash;
+    int dirLen, i;
+
+    if (path == NULL)
+        return 0;
+
+    slash = strrchr(path, '/');
+    dirLen = (slash != NULL) ? (int)(slash - path) + 1 : 0;
+
+    for (i = 0; map[i].ours != NULL; ++i) {
+        const char *base = path + dirLen;
+        if (strcmp(base, map[i].ours) != 0)
+            continue;
+        if (dirLen + (int)strlen(map[i].theirs) + 1 > outSize)
+            return 0; // would not fit: leave it alone rather than compose a wrong path
+        memcpy(out, path, dirLen);
+        strcpy(out + dirLen, map[i].theirs);
+        return 1;
+    }
+    return 0;
+}
+
 int configRead(config_set_t *configSet)
 {
     int ret;
     file_buffer_t *fileBuffer = openFileBuffer(configSet->filename, O_RDONLY, 0, 4096);
+
+    if (fileBuffer == NULL && configSet->filename != NULL) {
+        // Our name is absent -- wOPL may have moved this file's data to its own name (see above).
+        char woplPath[256];
+        if (configBuildWoplPath(configSet->filename, woplPath, sizeof(woplPath))) {
+            fileBuffer = openFileBuffer(woplPath, O_RDONLY, 0, 4096);
+            if (fileBuffer != NULL) {
+                LOG("CONFIG %s absent; reading wOPL's %s instead\n", configSet->filename, woplPath);
+                // Point the set at the file we actually read, so a later save updates THAT file rather
+                // than resurrecting our name beside it and leaving the user with two configs that
+                // disagree. Their layout, honoured end to end.
+                configMove(configSet, woplPath);
+            }
+        }
+    }
+
     if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL) {
         // Migration: existing installs have the legacy conf_riptopl.cfg, not settings_riptopl.cfg.
         // Read the legacy file from the same dir so settings aren't lost; the next save writes the
