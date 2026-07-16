@@ -711,11 +711,20 @@ static void initAllSupport(int force_reinit)
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
 
-    // Δ4 (NHDDL parity): arm the MMCE GameID transport HERE -- at boot and on every settings apply --
-    // instead of self-arming inside mmceSendGameID during a launch (an IRX load at the launch's most
-    // fragile moment; issue #51's fix with the timing corrected). Deferred to the IO worker like
-    // udpfsInit's module load; idempotent, and a failure is a harmless LOG at menu time.
-    if (gMMCEEnableGameID)
+    // Δ4 (NHDDL parity): arm the MMCE GameID transport at boot and on every settings apply -- instead
+    // of self-arming inside mmceSendGameID during a launch (an IRX load at the launch's most fragile
+    // moment; issue #51's fix with the timing corrected). Idempotent; a failure is a harmless LOG.
+    //
+    // BUT NEVER AHEAD OF THE MENU (GZAst, HW 2026-07-16: boot stuck forever on "Arming MMCE
+    // game-ID..."). The arm is a blocking SifExecModuleBuffer of mmceman.irx with no possible EE-side
+    // timeout, and posting it here during BOOT put it in the IO FIFO ahead of deferredInit -- so
+    // GUI_INIT_DONE queued behind a wedgeable module load, and a rig where mmceman's probe hangs never
+    // reached the menu at all. GameID arming is MENU-time work by design (that is the whole Δ4 point):
+    // during boot, deferredInit posts it AFTER itself, so a wedge costs GameID on a degraded IO worker
+    // instead of the console. Post-boot (settings apply), arm immediately as before. Default-on
+    // exposure note: gMMCEEnableGameID ships 1, so EVERY rig pays this load -- including ones with no
+    // MMCE hardware anywhere, like the reporter's network-only setup.
+    if (gMMCEEnableGameID && !gBootInProgress)
         ioPutRequest(IO_CUSTOM_SIMPLEACTION, &mmceArmGameIDTransport);
 }
 
@@ -2906,6 +2915,15 @@ static void deferredInit(void)
     struct gui_update_t *id = guiOpCreate(GUI_INIT_DONE);
     if (id)
         guiDeferUpdate(id);
+
+    // MMCE GameID arming, boot leg: posted HERE -- after GUI_INIT_DONE is on its way to the GUI
+    // thread -- and not from initAllSupport, so the blocking, untimeoutable mmceman.irx load can never
+    // hold the menu hostage again (GZAst's boot froze forever on "Arming MMCE game-ID..."). This
+    // appends the arm after this handler in the IO FIFO: worst case a wedged probe degrades the IO
+    // worker POST-boot (visible, diagnosable, menu alive) instead of killing the boot. The
+    // settings-apply leg still arms immediately from initAllSupport.
+    if (gMMCEEnableGameID)
+        ioPutRequest(IO_CUSTOM_SIMPLEACTION, &mmceArmGameIDTransport);
 
     // Nad #6: never silently SKIP the boot select -- doing so left the GUI on the start-menu screen
     // with the first-appended tab (a BDM instance, typically MX4SIO) as the implicit selection. If
