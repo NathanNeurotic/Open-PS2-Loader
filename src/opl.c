@@ -2828,7 +2828,12 @@ static void setDefaults(void)
     gVMode = 0;
     gXOff = 0;
     gYOff = 0;
-    gOverscan = 100;
+    // Overscan compensation defaults OFF (was 100 = a 5%-per-side inset; Nathan 2026-07-16, from
+    // FifthFox's HW report). The inset shifts ALL rendering inward, but scrolled dialog text was not
+    // clipped to the inset viewport, so rows bled outside the background ("scrolled text moves out of
+    // the background image"). Modern displays don't need the inset; anyone on a CRT that does can
+    // still raise it in Display Settings. Saved configs override this, as with every default.
+    gOverscan = 0;
 
     setDefaultColors();
 
