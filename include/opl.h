@@ -170,7 +170,8 @@ enum NETWORK_PROTOCOL {
     NET_PROTO_UDPFSBD = 3, // udpfs BLOCK device (udpfs_bd -> massN:, UDPRDMA) -- picker "UDPFS", access=Image
     NET_PROTO_UDPBD = 4,   // smap_udpbd / SUDPBDv2 monolith -- picker "UDPBD"; server = udpbd-server (0xBDBD)
 };
-extern int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative; the three above are derived shadows
+extern int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend; the three above are derived shadows
+extern int gNetStartMode;    // START_MODE_* -- network start row (Off/Manual/Auto); DISABLED <=> protocol OFF
 
 extern int gAutosort;
 extern int gAutoRefresh;

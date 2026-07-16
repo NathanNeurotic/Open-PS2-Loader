@@ -1226,12 +1226,27 @@ static int guiDeviceUpdater(int modified)
         diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !bdmHdd);
         diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, hddMode == 0);
 
-        // Network transport is a single exclusive enum (CFG_NETPROTOCOL) now, so the old live
-        // ETH<->UDPBD NIC interlock is gone -- one selector cannot pick two transports at once.
-        // Reveal the UDPFS Files/Image sub-mode only while UDPFS (picker index 2) is selected.
-        int netPickerVal;
-        diaGetInt(diaDeviceConfig, CFG_NETPROTOCOL, &netPickerVal);
-        diaSetVisible(diaDeviceConfig, CFG_UDPFSMODE, netPickerVal == 2);
+        // Network 3-row live logic. Row 1 Start (Off/Manual/Auto), Row 2 Protocol (SMB/UDPFS/UDPBD),
+        // Row 3 Access (Files/IMG). While Start=Off, grey Protocol + Access. Lock Access to Files for
+        // SMB and to IMG for UDPBD (only UDPFS offers the free toggle) -- snap the value so a stale IMG
+        // left over from UDPFS can never mis-derive to UDPFSBD under SMB, AND grey the control so the
+        // lock is visible. (The OK read-back is protocol-first too, so this is belt-and-braces.)
+        int netStart = 0, netProto = 0;
+        diaGetInt(diaDeviceConfig, CFG_NETSTART, &netStart);
+        diaGetInt(diaDeviceConfig, CFG_NETPROTOCOL, &netProto);
+        int netOn = (netStart != START_MODE_DISABLED);
+        diaSetEnabled(diaDeviceConfig, CFG_NETPROTOCOL, netOn);
+        if (!netOn) {
+            diaSetEnabled(diaDeviceConfig, CFG_UDPFSMODE, 0);
+        } else if (netProto == 0) { // SMB -> Files, locked
+            diaSetInt(diaDeviceConfig, CFG_UDPFSMODE, 0);
+            diaSetEnabled(diaDeviceConfig, CFG_UDPFSMODE, 0);
+        } else if (netProto == 2) { // UDPBD -> IMG, locked
+            diaSetInt(diaDeviceConfig, CFG_UDPFSMODE, 1);
+            diaSetEnabled(diaDeviceConfig, CFG_UDPFSMODE, 0);
+        } else { // UDPFS -> Files/IMG free
+            diaSetEnabled(diaDeviceConfig, CFG_UDPFSMODE, 1);
+        }
     }
 
     return 0;
@@ -1241,8 +1256,8 @@ void guiShowDeviceConfig(void)
 {
     const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), _l(_STR_FAV), NULL};
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
-    const char *netProtocols[] = {"Off", "SMB", "UDPFS", "UDPBD", NULL}; // UDPBD kept for users on the older SUDPBDv2 server
-    const char *udpfsModes[] = {"Files", "Image", NULL};                 // Files=udpfs_ioman filesystem, Image=udpfs_bd block
+    const char *netProtocols[] = {"SMB", "UDPFS", "UDPBD", NULL}; // Row 2 (Off moved to Row 1); UDPBD = SUDPBDv2 server -- protocol names, not translated
+    const char *udpfsModes[] = {"Files", "IMG", NULL};            // Row 3: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
 
     // Devices & modes
     diaSetEnum(diaDeviceConfig, CFG_DEFDEVICE, deviceNames);
@@ -1265,24 +1280,33 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, gEnableBdmHDD);
     diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, !gHDDStartMode);
     diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !gEnableBdmHDD);
-    // Unified network selector: Off / SMB / UDPFS / UDPBD. gNetworkProtocol keeps distinct internal
-    // values (UDPFS=filesystem/udpfs_ioman, UDPFSBD=block/udpfs_bd, UDPBD=smap_udpbd/SUDPBDv2) as the
-    // backend discriminators; the picker maps them onto Off/SMB/UDPFS/UDPBD and the Files/Image sub-mode
-    // picks the UDPFS backend. UDPBD is retained as a first-class option: the SUDPBDv2 wire protocol is
-    // NOT interchangeable with UDPRDMA, so users on the older udpbd-server must keep selecting it.
-    int netPickerVal = (gNetworkProtocol == NET_PROTO_OFF)   ? 0 :
-                       (gNetworkProtocol == NET_PROTO_SMB)   ? 1 :
-                       (gNetworkProtocol == NET_PROTO_UDPBD) ? 3 :
-                                                               2; // UDPFS/UDPFSBD -> "UDPFS"
-    // Files is the default for everything EXCEPT an actual block (UDPFSBD) config, so a user switching
-    // Off/SMB -> UDPFS lands on the loose-ISO filesystem (the intended default), not the disk-image
-    // backend. guiDeviceUpdater only reveals this control, never re-seeds it, so the seed must be right.
-    int udpfsModeVal = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? 1 : 0; // Image only for the block config; else Files
+    // Network: 3 orthogonal rows seeded from the authoritative gNetworkProtocol + gNetStartMode.
+    //   Row 1 Start:    Off/Manual/Auto == gNetStartMode (START_MODE_*)
+    //   Row 2 Protocol: SMB(0)/UDPFS(1)/UDPBD(2)  -- OFF and UDPFSBD both collapse to their protocol
+    //   Row 3 Access:   Files(0)/IMG(1); IMG only distinct for UDPFS (-> UDPFSBD backend)
+    // guiDeviceUpdater does the greying + the Access lock (SMB->Files, UDPBD->IMG). A NET_PROTO_OFF
+    // backend has no protocol memory, so seed the protocol row to SMB -- the common default a user
+    // reaches when they switch Start from Off to Manual/Auto.
+    int netStartVal = gNetStartMode;
+    int netProtoVal = (gNetworkProtocol == NET_PROTO_UDPBD)                                          ? 2 :
+                      (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD) ? 1 :
+                                                                                                       0; // SMB / OFF
+    // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
+    int netAccessVal = (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD) ? 1 : 0;
+    // Row 1 == START_MODE_DISABLED/MANUAL/AUTO -- the SAME three options (and indices) as every other
+    // device's start row, so reuse the localized deviceModes rather than a hardcoded English duplicate
+    // (Gemini review of #199). Same function scope as the dialog it feeds, so the diaSetEnum raw-pointer
+    // rule (#154) still holds.
+    diaSetEnum(diaDeviceConfig, CFG_NETSTART, deviceModes);
+    diaSetInt(diaDeviceConfig, CFG_NETSTART, netStartVal);
     diaSetEnum(diaDeviceConfig, CFG_NETPROTOCOL, netProtocols);
-    diaSetInt(diaDeviceConfig, CFG_NETPROTOCOL, netPickerVal);
+    diaSetInt(diaDeviceConfig, CFG_NETPROTOCOL, netProtoVal);
     diaSetEnum(diaDeviceConfig, CFG_UDPFSMODE, udpfsModes);
-    diaSetInt(diaDeviceConfig, CFG_UDPFSMODE, udpfsModeVal);
-    diaSetVisible(diaDeviceConfig, CFG_UDPFSMODE, netPickerVal == 2); // Files/Image only meaningful for UDPFS
+    diaSetInt(diaDeviceConfig, CFG_UDPFSMODE, netAccessVal);
+    // Seed the initial grey/lock: diaExecuteDialog renders the FIRST frame before it calls
+    // guiDeviceUpdater, so without this the first frame flashes every row enabled.
+    diaSetEnabled(diaDeviceConfig, CFG_NETPROTOCOL, netStartVal != START_MODE_DISABLED);
+    diaSetEnabled(diaDeviceConfig, CFG_UDPFSMODE, netStartVal != START_MODE_DISABLED && netProtoVal == 1);
 
     // Cache & storage (spindown, game-list cache, BDM/HDD/SMB caches) moved to General Settings
     // (guiShowConfig / diaConfig) -- Device Settings is now strictly device selection.
@@ -1306,26 +1330,25 @@ void guiShowDeviceConfig(void)
         diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
         diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
-        // Read the unified selector (Off/SMB/UDPFS) + the Files/Image sub-mode, and fold them back into
-        // gNetworkProtocol (UDPFS Files -> NET_PROTO_UDPFS filesystem; UDPFS Image -> NET_PROTO_UDPFSBD
-        // block). Then re-derive the legacy shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) that
-        // downstream consumers still read. SMB keeps its live start-mode; any non-SMB protocol forces it off.
-        int netPickerVal = 0, udpfsModeVal = 0;
-        diaGetInt(diaDeviceConfig, CFG_NETPROTOCOL, &netPickerVal);
-        diaGetInt(diaDeviceConfig, CFG_UDPFSMODE, &udpfsModeVal);
-        gNetworkProtocol = (netPickerVal == 0) ? NET_PROTO_OFF :
-                           (netPickerVal == 1) ? NET_PROTO_SMB :
-                           (netPickerVal == 3) ? NET_PROTO_UDPBD :
-                           (udpfsModeVal == 1) ? NET_PROTO_UDPFSBD :
-                                                 NET_PROTO_UDPFS;
+        // Fold the 3 rows back into the authoritative gNetworkProtocol + gNetStartMode. PROTOCOL-FIRST:
+        // the Access value is consulted ONLY for UDPFS, so a stale IMG under SMB/UDPBD can never
+        // mis-derive. Start=Off -> OFF regardless of the (greyed) protocol/access. Then re-derive the
+        // legacy shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) downstream consumers read.
+        int netStartVal = 0, netProtoVal = 0, netAccessVal = 0;
+        diaGetInt(diaDeviceConfig, CFG_NETSTART, &netStartVal);
+        diaGetInt(diaDeviceConfig, CFG_NETPROTOCOL, &netProtoVal);
+        diaGetInt(diaDeviceConfig, CFG_UDPFSMODE, &netAccessVal);
+        gNetStartMode = netStartVal; // 0/1/2 == START_MODE_DISABLED/MANUAL/AUTO
+        gNetworkProtocol = (netStartVal == START_MODE_DISABLED) ? NET_PROTO_OFF :
+                           (netProtoVal == 0)                   ? NET_PROTO_SMB :
+                           (netProtoVal == 2)                   ? NET_PROTO_UDPBD :
+                           (netAccessVal == 1)                  ? NET_PROTO_UDPFSBD :
+                                                                  NET_PROTO_UDPFS; // UDPFS + Files
         gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
         gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
-        if (gNetworkProtocol == NET_PROTO_SMB) {
-            if (gETHStartMode == START_MODE_DISABLED)
-                gETHStartMode = START_MODE_MANUAL;
-        } else {
-            gETHStartMode = START_MODE_DISABLED;
-        }
+        // SMB's start mode IS the network start row now (Auto = boot connect, Manual = on-entry);
+        // every non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
+        gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
 
         // Cache & storage read-back now lives in guiShowConfig (moved to General Settings).
 
