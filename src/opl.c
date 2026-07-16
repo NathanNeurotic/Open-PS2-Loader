@@ -2809,11 +2809,19 @@ static void setDefaults(void)
     gEnableUSB = 1;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
-    gEnableBdmHDD = 0;                  // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
-    gEnableUDPBD = 0;                   // the UDPBD BLOCK device stays opt-in; the default protocol below is UDPFS
-    gNetBootProtocol = NET_BOOT_UDPBD;  // default transport when network boot is enabled (back-compat)
-    gNetworkProtocol = NET_PROTO_UDPFS; // unified selector: UDPFS (UDPRDMA filesystem) by default -- inert
-                                        // without a NIC + PC server; NIC-exclusive with SMB as before
+    gEnableBdmHDD = 0;                 // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
+    gEnableUDPBD = 0;                  // the UDPBD BLOCK device stays opt-in
+    gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)
+    // Unified network selector defaults to OFF (was UDPFS, Nathan 2026-07-16). The reason is the NIC
+    // latch: every network stack loads its IOP chain ONCE per boot and never unloads (re-binding the
+    // UDPRDMA socket bricks UDPFS; smap registers a single SMAP_driver), so whichever protocol is
+    // active FIRST owns the adapter until a restart -- the settings page even tells you so
+    // (NETBOOT_RESTART). With UDPFS pre-selected, a user who wanted UDPBD or SMB had to change the
+    // setting and REBOOT before their choice could load. Defaulting to Off means nothing claims the
+    // NIC at boot, so the first protocol the user picks in Device Settings comes up live -- the apply
+    // path re-derives the gEnableUDPBD/gNetBootProtocol shadows and forces a device refresh already.
+    // Existing installs are unaffected: a saved net protocol in settings_riptopl.cfg overrides this.
+    gNetworkProtocol = NET_PROTO_OFF;
 
     frameCounter = 0;
 
