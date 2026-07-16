@@ -2162,7 +2162,10 @@ int loadConfig(int types)
 
 int saveConfig(int types, int showUI)
 {
-    char notification[128];
+    // Sized for the worst message this function can now build: the failure text carries a full config
+    // home path (configGetDir -> cfgDevice, itself up to a 256-byte prefix) plus an errno, and 128
+    // truncated exactly the part that made the message worth showing (Gemini review of #187).
+    char notification[320];
     lscstatus = types;
     lscret = 0;
 
