@@ -935,9 +935,14 @@ static config_set_t *mmceGetConfig(item_list_t *itemList, int id)
 
 static int mmceGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)
 {
-    // PS1 (VCD) art uses this same ART path as PS2. The cache supplies the filename first and may retry
-    // once with a strict PS1 ID after a genuine miss; no alternate paths or miss-memo are reintroduced.
-    return mmceTryLoadImage(mmceArtPrimary, folder, isRelative, value, suffix, resultTex);
+    // OPL's own ART/<name>_COV.png is the PRIMARY lookup (same path PS2 uses; the cache also retries once
+    // with a strict PS1 ID). On a VCD (PS1) genuine miss, fall back to the POPSLoader-style suffixless
+    // cover named exactly like the .VCD, next to it in the POPS/ folder (mmceArtPrimary IS the VCD scan
+    // prefix). Cover/icon only, VCD view only -- a PS2 list and any hit never pay the extra probe.
+    int r = mmceTryLoadImage(mmceArtPrimary, folder, isRelative, value, suffix, resultTex);
+    if (r == ERR_BAD_FILE && isRelative && vcdViewActive(itemList->mode))
+        r = vcdLoadPopsCover(mmceArtPrimary, value, suffix, resultTex);
+    return r;
 }
 
 static int mmceGetTextId(item_list_t *itemList)
