@@ -28,11 +28,10 @@
 
 // ---- Menu rumble pulse shape (#172) ---------------------------------------------------------------
 // Defined up here because readPad()'s ds34 leg needs the levels long before the rumble section further
-// down. Calibrated against the known-working reference (Enceladus' lua_rumble, which the reporter
-// confirms buzzes on THIS console): drive BOTH engines. The small engine (act[0], on/off) is the crisp
-// attack; the big engine (act[1], 0..255) is an offset-weight ERM that needs ~50-80ms just to start
-// turning, so it mostly adds body on the longer bump -- but it is the one you actually FEEL, and
-// shipping the small engine alone gave the reporter nothing at all.
+// down. Engine roles: the small engine (act[0]) is on/off -- a crisp attack; the big engine (act[1],
+// 0..255) is an offset-weight ERM that needs ~50-80ms just to start turning but is the one you
+// actually FEEL. (History: the first cut drove the small engine ALONE and the reporter felt nothing;
+// the second drove both; the RETRO retune below made taps big-only and kept both on bumps.)
 //
 // THE BIG ENGINE'S LEVEL IS THE ONLY REAL INTENSITY KNOB WE HAVE. The small engine is on/off IN
 // HARDWARE, not by our choice -- libpad.h:252-255 is explicit: "act_align[0] = 0/1 turns off/on 'small'
@@ -41,20 +40,28 @@
 // Lowering a level also buys ZERO current headroom: freepad's 600mA guard (CheckAirDirectTotal,
 // padMiscFuncs.c:265-292) tests each actuator for NONZERO, not for magnitude -- 0x01 costs it exactly
 // what 0xFF does. Only switching an engine fully off counts.
-#define RUMBLE_TAP_MS      60 // cursor tick in a menu / dialog
-// Game-list cursor tick. Deliberately longer than the menu tick: the list's frames stretch while cover
-// art loads, and readPads() -- which both re-sends and decays the pulse -- only runs once per frame. A
-// 60ms tap can therefore expire inside a single slow frame before ONE re-send has landed, which is
-// consistent with the reporter feeling the same pulse as "very weak" here and "too strong" in the menu.
-#define RUMBLE_LIST_TAP_MS 75
-#define RUMBLE_BUMP_MS     110  // confirm / cancel / notification / ready: long enough for the big engine
-#define RUMBLE_LEVEL_MENU  0x48 // ~28%: menu / dialog tick -- 0x60 read as "a bit too strong" on HW
-#define RUMBLE_LEVEL_LIST  0x78 // ~47%: game-list tick -- 0x60 read as "very weak" on HW
-#define RUMBLE_LEVEL_BUMP  0x60 // ~37%: confirm / cancel / notification / ready (see padRumbleBump)
-// Floor between taps. Key-repeat is ~100ms and an ERM never fully spins down, so an unthrottled
-// tap-per-tick becomes a continuous grind. (Comment kept ABOVE the define: as a trailing comment
-// clang-format wraps it with a line-continuation backslash, which -Wcomment rightly objects to.)
-#define RUMBLE_MIN_GAP_MS  120
+// Pulse shape retuned to RETROLauncher's MEASURED model (Nathan, HW 2026-07-16: "theirs seems more
+// well implemented from the feeling perspective"). Decoded from their Lua (funciones.lua capturar):
+// a nav step rumbles ~260-283ms at big-engine 80 (0x50) inside a ~667ms step period (~40% duty), and
+// fast scroll is SILENT -- their per-step input freeze IS the rate limiter. Two consequences:
+//   - Our old 60-75ms taps ended right as the big ERM began turning, so we shipped mostly the small
+//     engine's click, and the old list level (0x78) was compensating for a window too short to feel.
+//     RETRO's thump is LONGER and SOFTER, not stronger. One tap now serves menu and list alike.
+//   - On a native DS2 their small motor NEVER fires: its drive byte keys on the LSB and RETRO's
+//     values (80/90) are even. The reference feel is big-ERM-only, so TAPS drop the small engine.
+//     BUMPS keep it -- a confirm should have a crisp attack; RETRO doesn't rumble confirm at all,
+//     but Blade explicitly asked for it and it is HW-validated.
+#define RUMBLE_TAP_MS           240  // nav thump, first press: long enough for the ERM to reach amplitude
+#define RUMBLE_TAP_LEVEL        0x50 // RETRO's level, byte for byte (80/255 ~ 31%)
+#define RUMBLE_BUMP_MS          110  // confirm / cancel / notification / ready (unchanged, HW-validated)
+#define RUMBLE_LEVEL_BUMP       0x60
+// Held-repeat policy, replacing the old flat 120ms gap (which ALIASED against key-repeat: 300ms
+// repeat -> sparse flutters; 100ms repeat -> every other pulse dropped at ragged 100/200ms gaps).
+// RETRO's throb rides each step at ~40% duty, and steps too fast to fit a felt pulse are silent.
+// We self-measure the event rate (inter-arm interval) instead of plumbing key identity into sfxPlay.
+#define RUMBLE_REPEAT_WINDOW_MS 400 // arms closer together than this = a held-repeat train
+#define RUMBLE_REPEAT_DUTY_PCT  45  // pulse = this % of the measured step period while held
+#define RUMBLE_REPEAT_FLOOR_MS  80  // shorter can't be felt (ERM spin-up) -> stay silent (RETRO rule)
 
 struct pad_data_t
 {
@@ -79,6 +86,7 @@ struct pad_data_t
     unsigned char actAligned;
     unsigned char rumbleOn;    // 1 = an "on" was sent that still owes its matching "off"
     unsigned char rumbleLevel; // big-engine level for the pulse in flight (0 = none armed)
+    unsigned char rumbleSmall; // 1 = drive the small engine too (bumps); taps are big-ERM-only
     int rumbleMsLeft;          // ms remaining; ticked down in readPads() (see the ms-vs-frames note there)
     int realignDelay;          // backoff for the actuator-alignment self-heal (padRumbleRealign)
 };
@@ -580,8 +588,8 @@ static int padRumbleCapable(struct pad_data_t *pad)
 static int padRumbleSendNative(struct pad_data_t *pad, int on)
 {
     char act[6] = {0, 0, 0, 0, 0, 0};
-    act[0] = on ? 1 : 0;                      // small engine: on/off IN HARDWARE, the crisp attack
-    act[1] = on ? (char)pad->rumbleLevel : 0; // big engine: the part you actually feel, 0..255
+    act[0] = (on && pad->rumbleSmall) ? 1 : 0; // small engine: on/off in HW; taps leave it OFF (RETRO parity)
+    act[1] = on ? (char)pad->rumbleLevel : 0;  // big engine: the part you actually feel, 0..255
     // act[2..5] stay 0 -- padSetActAlign mapped only slots 0/1 to real actuators (the rest are 0xff =
     // unused), and the reference implementation passes 0 here too (a zeroed function-static).
     int r = padSetActDirect(pad->port, pad->slot, act);
@@ -671,7 +679,7 @@ static void padRumbleRealign(struct pad_data_t *pad)
     pad->realignDelay = PAD_REALIGN_FAIL_DELAY;
 }
 
-static void padRumbleArm(int durationMs, unsigned char level)
+static void padRumbleArm(int durationMs, unsigned char level, int smallEngine)
 {
     int i;
 
@@ -680,11 +688,20 @@ static void padRumbleArm(int durationMs, unsigned char level)
     if (!rumbleLive || !gEnableRumble)
         return;
 
-    // Rate limit on the SAME clock readPads() ticks with, so held-direction key-repeat can't grind.
+    // Held-repeat duty policy (RETRO parity; constants above). Measured on the SAME clock readPads()
+    // ticks with. The interval is measured across EVERY arm attempt -- including suppressed ones --
+    // so a fast held scroll stays silent for its whole run instead of strobing at the window edge.
+    // Bumps (smallEngine) are decisions, not repeats: they always land at full length.
     u32 now = cpu_ticks() / CLOCKS_PER_MILISEC;
-    if (rumbleLastMs != 0 && (now - rumbleLastMs) < RUMBLE_MIN_GAP_MS)
-        return;
+    u32 interval = (rumbleLastMs != 0) ? (now - rumbleLastMs) : 0xFFFFFFFFu;
     rumbleLastMs = now;
+    if (!smallEngine && interval < RUMBLE_REPEAT_WINDOW_MS) {
+        int duty = (int)interval * RUMBLE_REPEAT_DUTY_PCT / 100;
+        if (duty < RUMBLE_REPEAT_FLOOR_MS)
+            return; // steps too fast to fit a felt pulse: silent, exactly like RETRO's fast scroll
+        if (duty < durationMs)
+            durationMs = duty; // ride each step at ~45% duty instead of merging into a grind
+    }
 
     gDiag.padRumbleArmed++; // #172 diag: RA past gEnableRumble + the rate limit (see include/diag.h)
 
@@ -695,7 +712,8 @@ static void padRumbleArm(int durationMs, unsigned char level)
         // it never goes through padInfoAct/padSetActAlign -- and instead reads this straight off
         // readPad()'s existing every-poll re-send. Harmless on a pad that ends up rumbling nothing.
         pad->rumbleMsLeft = durationMs;
-        pad->rumbleLevel = level; // must be set BEFORE the kick below: padRumbleSendNative reads it
+        pad->rumbleLevel = level; // both must be set BEFORE the kick below: padRumbleSendNative reads them
+        pad->rumbleSmall = (unsigned char)(smallEngine ? 1 : 0);
 
         // Kick the native actuator immediately so the tap has no perceptible latency; readPads()
         // then RE-SENDS it every frame for the life of the tap. Do NOT "optimise" that re-send away:
@@ -709,34 +727,31 @@ static void padRumbleArm(int durationMs, unsigned char level)
     }
 }
 
-/** Light tick for a cursor move in a MENU or dialog. Safe from the GUI thread; never blocks and
- *  silently no-ops when disabled, rate-limited, or the pad can't rumble. */
+/** Nav thump for a cursor move (RETRO parity: ~240ms @ 0x50, big engine only; held-repeat rides each
+ *  step at ~45% duty and fast scroll is silent). Safe from the GUI thread; never blocks and silently
+ *  no-ops when disabled, suppressed by the duty policy, or the pad can't rumble. */
 void padRumbleTap(void)
 {
-    padRumbleArm(RUMBLE_TAP_MS, RUMBLE_LEVEL_MENU);
+    padRumbleArm(RUMBLE_TAP_MS, RUMBLE_TAP_LEVEL, 0);
 }
 
-/** Light tick for a cursor move in the GAME LIST. Same event as padRumbleTap() -- both are
- *  sfxPlay(SFX_CURSOR) -- but firmer and slightly longer, because hardware says the two screens do not
- *  feel alike at identical settings. sound.c picks between them off the current GUI screen: sfxPlay()
- *  is handed only an sfx id, so the screen cannot be inferred any deeper than the hook. */
+/** Game-list variant of padRumbleTap(). The two are IDENTICAL since the RETRO retune -- the old
+ *  firmer/longer list split existed to compensate for a 60ms pulse dying inside the list's slow
+ *  art-loading frames, which a 240ms thump no longer suffers. The seam is kept (sound.c still picks
+ *  per screen off guiGetCurrentScreen) so re-splitting after HW feedback is a one-constant change. */
 void padRumbleTapList(void)
 {
-    padRumbleArm(RUMBLE_LIST_TAP_MS, RUMBLE_LEVEL_LIST);
+    padRumbleArm(RUMBLE_TAP_MS, RUMBLE_TAP_LEVEL, 0);
 }
 
-/** Slightly firmer bump for a confirm / cancel -- a decision should feel more definite than a scroll.
- *  On the LAUNCH edge the caller must follow this with padRumbleFlush(); see there for why.
- *
- *  The level is deliberately UNCHANGED at RUMBLE_LEVEL_BUMP while the menu tick drops to 0x48. The
- *  reporter asked for confirms "a bit lower" too, but he was judging a bump that ran for the WHOLE of a
- *  blocking config write -- seconds, not 110ms (readPads() is the only decay tick and it does not run
- *  during blocking work). That is fixed separately, at the guiHandleDeferedIO / guiGameHandleDeferedIO
- *  chokepoints. Dropping the level in the same change would correct twice for one fault and risk a
- *  confirm he cannot feel at all. Re-ask after he retests; 0x60 -> 0x50 is then one line. */
+/** Firmer bump for a confirm / cancel -- a decision should feel more definite than a scroll, so the
+ *  bump KEEPS the small engine's crisp attack (taps are big-only now) and always lands at full
+ *  length (the duty policy only clamps taps). RETRO doesn't rumble confirm at all; Blade explicitly
+ *  asked for it and it is HW-validated, so it stays. On the LAUNCH edge the caller must follow this
+ *  with padRumbleFlush(); see there for why. */
 void padRumbleBump(void)
 {
-    padRumbleArm(RUMBLE_BUMP_MS, RUMBLE_LEVEL_BUMP);
+    padRumbleArm(RUMBLE_BUMP_MS, RUMBLE_LEVEL_BUMP, 1);
 }
 
 /** Play out any in-flight pulse, then stop the motors.
@@ -760,7 +775,7 @@ void padRumbleFlush(void)
 
     if (waitMs > 0) {
         if (waitMs > RUMBLE_BUMP_MS)
-            waitMs = RUMBLE_BUMP_MS; // belt: never stall the launch on a bad counter
+            waitMs = RUMBLE_BUMP_MS; // belt + launch latency: a 240ms nav thump in flight is CUT here, deliberately
         DelayThread(waitMs * 1000);  // ms -> us
     }
 
