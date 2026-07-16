@@ -605,6 +605,13 @@ void guiShowConfig()
     diaSetString(diaConfig, CFG_ETHPREFIX, gETHPrefix);
     diaSetString(diaConfig, CFG_MMCEPREFIX, gMMCEPrefix);
 
+    // Cache & Storage -- relocated here from Device Settings (same CFG ids + globals)
+    diaSetInt(diaConfig, CFG_HDDSPINDOWN, gHDDSpindown);
+    diaSetInt(diaConfig, CFG_HDDGAMELISTCACHE, gHDDGameListCache);
+    diaSetInt(diaConfig, CFG_BDMCACHE, bdmCacheSize);
+    diaSetInt(diaConfig, CFG_HDDCACHE, hddCacheSize);
+    diaSetInt(diaConfig, CFG_SMBCACHE, smbCacheSize);
+
     guiUpdater(1); // apply the initial comp-half grey before the dialog is drawn
 
     int ret;
@@ -631,6 +638,14 @@ reshow_config:
         diaGetString(diaConfig, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
         diaGetString(diaConfig, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
         diaGetString(diaConfig, CFG_MMCEPREFIX, gMMCEPrefix, sizeof(gMMCEPrefix));
+
+        // Cache & Storage -- relocated here from Device Settings (same CFG ids + globals)
+        diaGetInt(diaConfig, CFG_HDDSPINDOWN, &gHDDSpindown);
+        diaGetInt(diaConfig, CFG_HDDGAMELISTCACHE, &gHDDGameListCache);
+        diaGetInt(diaConfig, CFG_BDMCACHE, &bdmCacheSize);
+        diaGetInt(diaConfig, CFG_HDDCACHE, &hddCacheSize);
+        diaGetInt(diaConfig, CFG_SMBCACHE, &smbCacheSize);
+
         DisableCron = 1; // Disable Auto Start Last Played counter (we don't want to call it right after enable it on GUI)
 
         applyConfig(-1, -1, 0);
@@ -1269,12 +1284,8 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_UDPFSMODE, udpfsModeVal);
     diaSetVisible(diaDeviceConfig, CFG_UDPFSMODE, netPickerVal == 2); // Files/Image only meaningful for UDPFS
 
-    // Cache & storage
-    diaSetInt(diaDeviceConfig, CFG_HDDSPINDOWN, gHDDSpindown);
-    diaSetInt(diaDeviceConfig, CFG_HDDGAMELISTCACHE, gHDDGameListCache);
-    diaSetInt(diaDeviceConfig, CFG_BDMCACHE, bdmCacheSize);
-    diaSetInt(diaDeviceConfig, CFG_HDDCACHE, hddCacheSize);
-    diaSetInt(diaDeviceConfig, CFG_SMBCACHE, smbCacheSize);
+    // Cache & storage (spindown, game-list cache, BDM/HDD/SMB caches) moved to General Settings
+    // (guiShowConfig / diaConfig) -- Device Settings is now strictly device selection.
 
     // MMCE Start Mode stays with the other device start modes; the MMCE game-config (slot / IGR slot /
     // GameID / ack-wait / alarms) moved to its own "MMCE Settings" page -- see guiShowMmceConfig.
@@ -1316,11 +1327,7 @@ void guiShowDeviceConfig(void)
             gETHStartMode = START_MODE_DISABLED;
         }
 
-        diaGetInt(diaDeviceConfig, CFG_HDDSPINDOWN, &gHDDSpindown);
-        diaGetInt(diaDeviceConfig, CFG_HDDGAMELISTCACHE, &gHDDGameListCache);
-        diaGetInt(diaDeviceConfig, CFG_BDMCACHE, &bdmCacheSize);
-        diaGetInt(diaDeviceConfig, CFG_HDDCACHE, &hddCacheSize);
-        diaGetInt(diaDeviceConfig, CFG_SMBCACHE, &smbCacheSize);
+        // Cache & storage read-back now lives in guiShowConfig (moved to General Settings).
 
         diaGetInt(diaDeviceConfig, CFG_MMCEMODE, &gMMCEStartMode);
 
