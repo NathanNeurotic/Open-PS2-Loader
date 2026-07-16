@@ -537,11 +537,18 @@ int sysLaunchDisc(void)
     // MUST stay ABOVE deinit(): the send needs the IOP transport still up, and deinit tears it down.
     {
         char gameid[16];
-        const char *s = strrchr(path, '\\');
+        // Accept EITHER separator, then the device colon. SYSTEM.CNF is a publisher-authored text file
+        // copied out verbatim by sysParseBoot2, and while the convention is "cdrom0:\NAME;1" nothing
+        // enforces it -- a disc using '/' would otherwise leave the colon fallback yielding "/SLUS_..."
+        // (a leading slash the MMCE would never match) instead of a clean id. Take whichever separator
+        // appears LAST so a mixed path still ends at the filename. (Gemini review of #185.)
+        const char *bs = strrchr(path, '\\');
+        const char *fs = strrchr(path, '/');
+        const char *s = (bs > fs) ? bs : fs; // NULL sorts lowest, so this picks whichever exists
         int i = 0;
 
         if (s == NULL)
-            s = strrchr(path, ':'); // no directory separator: fall back to the device colon
+            s = strrchr(path, ':'); // no directory separator at all: fall back to the device colon
         s = (s != NULL) ? s + 1 : path;
 
         while (s[i] != '\0' && s[i] != ';' && i < (int)sizeof(gameid) - 1) {
