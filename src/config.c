@@ -10,6 +10,7 @@
 #include "include/ioman.h"
 #include "include/sound.h"
 #include <string.h>
+#include <ctype.h> // isalpha/isalnum -- libconfig identifier grammar in cfgIsLibconfigIdent
 #include <errno.h>
 
 // FIXME: We should not need this function.
@@ -71,6 +72,93 @@ static int strToColor(const char *string, unsigned char *color)
 int isWS(char c)
 {
     return c == ' ' || c == '\t';
+}
+
+// ---- Dual-format support (wOPL/libconfig) ---------------------------------------------------------
+// wOPL migrated to libconfig and rewrites SHARED files in place (app title.cfg on every Apps scan) or
+// replaces them (conf_theme.cfg -> wopl_theme.cfg). We read BOTH syntaxes and write back whichever we
+// read, so we never convert a user's file out from under another program -- and never lose their data.
+//
+// WHY DETECTION AND NOT "TRY-LEGACY-THEN-FALL-BACK": splitAssignment below does NOT fail on libconfig.
+// Fed `title = "My App";` it happily returns key="title " (trailing space) and val=" \"My App\";" --
+// and getConfigItemForName does an exact strncmp, so the lookup misses and the app silently vanishes
+// from the list. Nothing ever reports an error, so there is no failure to fall back FROM.
+//
+// THE DISCRIMINATOR IS SYNTAX, NOT KEY NAMES. An earlier draft keyed off our '$'/'#' prefixes; that is
+// wrong -- app title.cfg uses bare lowercase `title`/`boot`/`argv1` (appsupport.h), exactly like wOPL,
+// and conf_apps.cfg uses the user's own app title as the key. Instead, note that the two WRITERS are
+// fully characterised and cannot overlap:
+//   ours (configWrite below): "%s=%s\r\n"  -- NEVER a space before '=', NEVER a trailing ';'
+//   theirs (libconfig):       "key = val;" -- ALWAYS " = ", ALWAYS a trailing ';'
+// Requiring BOTH, plus a legal libconfig identifier, makes misclassification impossible for anything
+// either writer can emit.
+//
+// A ':' NEVER SIGNALS LIBCONFIG. Our own legacy theme files open with a section prefix -- see
+// misc/conf_theme_OPL.cfg, whose FIRST line is `main0:` (25 such lines) -- parsed by parsePrefix and
+// composed into `main0_type`. Treating `name :` as libconfig-exclusive would misdetect our own shipped
+// theme and feed it to the wrong parser. We do not need ':' anyway: both of wOPL's writers emit a
+// SCALAR first (`compat = <n>;` for per-game, `title = "...";` for title.cfg), so the very first
+// meaningful line always settles the format before any group can appear.
+enum {
+    CFG_LINE_BLANK,
+    CFG_LINE_COMMENT,
+    CFG_LINE_LEGACY,
+    CFG_LINE_LIBCONFIG
+};
+
+// libconfig identifier grammar: [A-Za-z*][-A-Za-z0-9_*]*  . Pure read of [begin,end); no copies.
+static int cfgIsLibconfigIdent(const char *begin, const char *end)
+{
+    const char *p;
+
+    if (begin >= end)
+        return 0;
+    if (!isalpha((unsigned char)*begin) && *begin != '*')
+        return 0;
+
+    for (p = begin + 1; p < end; ++p) {
+        if (!isalnum((unsigned char)*p) && *p != '_' && *p != '-' && *p != '*')
+            return 0;
+    }
+    return 1;
+}
+
+static int cfgClassifyLine(const char *line)
+{
+    const char *p = line, *end, *eq;
+
+    while (isWS(*p))
+        ++p;
+
+    if (*p == '\0')
+        return CFG_LINE_BLANK;
+    if (*p == '#') // legacy comment AND libconfig comment: tells us nothing either way
+        return CFG_LINE_COMMENT;
+    if (p[0] == '/' && (p[1] == '/' || p[1] == '*')) // libconfig-only, but still not a key line
+        return CFG_LINE_COMMENT;
+
+    end = p + strlen(p);
+    while (end > p && isWS(end[-1]))
+        --end;
+
+    eq = strchr(p, '=');
+    if (eq == NULL || eq >= end)
+        return CFG_LINE_LEGACY; // no '=' -> our parser's existing malformed/prefix branch handles it
+
+    // BOTH conditions, and a legal identifier. Our writer can satisfy none of them:
+    //   "$Compatibility=0"   -> no space before '=', no ';', '$' is not an identifier char
+    //   "title=Foo"          -> no space before '=', no ';'
+    //   "title = Foo"        -> hand-edited legacy: space, but no ';'  -> stays LEGACY
+    //   "exit_path=a = b;"   -> strchr finds the FIRST '=', which has no space before it
+    if (eq > p && isWS(eq[-1]) && end[-1] == ';') {
+        const char *kend = eq; // the key is [p, kend) once the padding before '=' is trimmed
+        while (kend > p && isWS(kend[-1]))
+            --kend;
+        if (cfgIsLibconfigIdent(p, kend))
+            return CFG_LINE_LIBCONFIG;
+    }
+
+    return CFG_LINE_LEGACY;
 }
 
 static int splitAssignment(char *line, char *key, size_t keymax, char *val, size_t valmax)
@@ -267,6 +355,10 @@ config_set_t *configAlloc(int type, config_set_t *configSet, char *fileName)
     configSet->type = type;
     configSet->head = NULL;
     configSet->tail = NULL;
+    // A set with no file on disk yet defaults to OUR format: it is the interoperable one (OPL,
+    // OPL-Launcher, SAS and XMB all read it), so a NEW file should never be born libconfig. A file
+    // that already exists overwrites this in configReadFileBuffer from what is actually on disk.
+    configSet->format = CFG_FMT_LEGACY;
     if (fileName) {
         int length = strlen(fileName) + 1;
         configSet->filename = (char *)malloc(length * sizeof(char));
@@ -534,16 +626,262 @@ void configGetDiscIDBinary(config_set_t *configSet, void *dst)
     }
 }
 
+// Parse ONE line of a libconfig file into our flat key space.
+//
+// GROUPS FLATTEN ONTO OUR EXISTING COMPOSED KEYS. Our legacy parser turns
+//     main0:            ->  prefix "main0"
+//         type=Background   ->  key "main0_type"   (parsePrefix + the "%s_%s" compose below)
+// and libconfig writes the same data as
+//     main0 : { type = "Background"; };
+// so joining group+key with '_' lands on the IDENTICAL key. Themes therefore need no mapping at all.
+// One level of nesting is all wOPL emits (build_per_game / their theme builder).
+//
+// EMPTY STRING IS *ABSENT*, NOT "". wOPL's set_str has no skip-if-empty and init_per_game_cfg memsets
+// to zero, so EVERY wOPL per-game file literally contains `dnas = ""; alt_startup = ""; vmc1 = "";
+// vmc2 = "";`. This fork's invariant is absent==unset -- we never write an empty $AltStartup or $VMC.
+// Storing "" would tell OPL "an alt-startup IS configured, and it is the empty string", which breaks
+// the launch. So an empty string is DROPPED on read. configWrite re-emits the empties for the keys
+// wOPL expects, so their file stays valid for them (see cfgWriteLibconfigLine).
+static void cfgReadLibconfigLine(char *line, char *group, size_t groupSize, config_set_t *configSet)
+{
+    char *p = line, *eq, *end, *v;
+    char key[CONFIG_KEY_NAME_LEN], composed[2 * CONFIG_KEY_NAME_LEN];
+    size_t klen, vlen;
+
+    while (isWS(*p))
+        ++p;
+
+    if (*p == '\0' || *p == '#' || (p[0] == '/' && (p[1] == '/' || p[1] == '*')))
+        return;
+
+    // "};" or "}" closes the current group; "{" alone is the brace of a group header we already took.
+    if (*p == '}') {
+        group[0] = '\0';
+        return;
+    }
+    if (*p == '{')
+        return;
+
+    end = p + strlen(p);
+    while (end > p && isWS(end[-1]))
+        --end;
+    if (end > p && end[-1] == ';')
+        --end; // drop the statement terminator
+    while (end > p && isWS(end[-1]))
+        --end;
+
+    eq = strchr(p, '=');
+
+    // Group header: "name :" or "name : {" -- no '=' before the ':'.
+    if (eq == NULL || (strchr(p, ':') != NULL && strchr(p, ':') < eq)) {
+        char *colon = strchr(p, ':');
+        if (colon != NULL) {
+            char *kend = colon;
+            while (kend > p && isWS(kend[-1]))
+                --kend;
+            klen = (size_t)(kend - p);
+            if (klen > 0 && klen < groupSize) {
+                memcpy(group, p, klen);
+                group[klen] = '\0';
+            }
+        }
+        return;
+    }
+
+    { // scalar: key = value
+        char *kend = eq;
+        while (kend > p && isWS(kend[-1]))
+            --kend;
+        klen = (size_t)(kend - p);
+        if (klen == 0 || klen >= sizeof(key))
+            return; // nothing usable, or a key longer than we can store -- never truncate into a hit
+        memcpy(key, p, klen);
+        key[klen] = '\0';
+    }
+
+    v = eq + 1;
+    while (v < end && isWS(*v))
+        ++v;
+
+    if (v < end && *v == '"') { // quoted string: strip the quotes
+        ++v;
+        if (end > v && end[-1] == '"')
+            --end;
+    }
+
+    vlen = (end > v) ? (size_t)(end - v) : 0;
+    if (vlen == 0)
+        return; // EMPTY == ABSENT (see the note above) -- do NOT store ""
+    if (vlen >= CONFIG_KEY_VALUE_LEN)
+        vlen = CONFIG_KEY_VALUE_LEN - 1;
+
+    { // libconfig bools -> the 0/1 our getters expect
+        char val[CONFIG_KEY_VALUE_LEN];
+        memcpy(val, v, vlen);
+        val[vlen] = '\0';
+
+        if (strcmp(val, "true") == 0)
+            strcpy(val, "1");
+        else if (strcmp(val, "false") == 0)
+            strcpy(val, "0");
+
+        if (group[0]) {
+            snprintf(composed, sizeof(composed), "%s_%s", group, key);
+            configSetStr(configSet, composed, val);
+        } else {
+            configSetStr(configSet, key, val);
+        }
+    }
+}
+
+// True when the value is a bare libconfig scalar (int or bool) and therefore must NOT be quoted.
+// Everything else is emitted as a quoted string, which is what libconfig's own reader expects and
+// what wOPL's cfgGetStr asks for. A leading '-' is allowed (negative ints).
+static int cfgValueIsBareScalar(const char *v)
+{
+    const char *p = v;
+
+    if (strcmp(v, "true") == 0 || strcmp(v, "false") == 0)
+        return 1;
+    if (*p == '-')
+        ++p;
+    if (*p == '\0')
+        return 0;
+    for (; *p; ++p) {
+        if (!isdigit((unsigned char)*p))
+            return 0;
+    }
+    return 1;
+}
+
+// Emit one "key = value;" line, quoting and escaping as libconfig requires.
+static void cfgWriteLibconfigLine(file_buffer_t *fileBuffer, const char *indent, const char *key, const char *val)
+{
+    char line[512];
+
+    if (cfgValueIsBareScalar(val)) {
+        snprintf(line, sizeof(line), "%s%s = %s;\n", indent, key, val);
+        writeFileBuffer(fileBuffer, line, strlen(line));
+        return;
+    }
+
+    { // quoted string: escape '\' and '"' so a path or a title with a quote cannot break the file
+        char esc[CONFIG_KEY_VALUE_LEN * 2];
+        size_t i = 0;
+        const char *p;
+
+        for (p = val; *p && i + 2 < sizeof(esc); ++p) {
+            if (*p == '\\' || *p == '"')
+                esc[i++] = '\\';
+            esc[i++] = *p;
+        }
+        esc[i] = '\0';
+
+        snprintf(line, sizeof(line), "%s%s = \"%s\";\n", indent, key, esc);
+        writeFileBuffer(fileBuffer, line, strlen(line));
+    }
+}
+
+// Write the whole set back as libconfig, re-nesting the groups we flattened on read.
+//
+// Our store is flat, and cfgReadLibconfigLine joined "gsm : { enable = 1; }" into "gsm_enable". To
+// round-trip we must split on the LAST '_' whose prefix matches a group we actually saw, which we
+// cannot know from the key alone ("alt_startup" is a root key, not group "alt" key "startup"). So we
+// only re-nest keys whose group prefix appeared in wOPL's OWN schema -- anything else stays at root.
+// A key we do not recognise is emitted at root verbatim rather than dropped: wOPL's parse_per_game is
+// pure config_lookup by name and never enumerates children, so unknown settings are silently ignored
+// by them and survive for us. Nobody loses data in either direction.
+static const char *const cfgLibconfigGroups[] = {"gsm", "cheat", "pademu", "padmacro", "osd", NULL};
+
+static const char *cfgMatchGroup(const char *key, int *keyOffset)
+{
+    int i;
+
+    for (i = 0; cfgLibconfigGroups[i] != NULL; ++i) {
+        size_t glen = strlen(cfgLibconfigGroups[i]);
+        if (strncmp(key, cfgLibconfigGroups[i], glen) == 0 && key[glen] == '_' && key[glen + 1] != '\0') {
+            *keyOffset = (int)glen + 1;
+            return cfgLibconfigGroups[i];
+        }
+    }
+    return NULL;
+}
+
+static void cfgWriteLibconfig(file_buffer_t *fileBuffer, config_set_t *configSet)
+{
+    struct config_value_t *cur;
+    int i;
+
+    // Pass 1: every root-level scalar (no recognised group prefix).
+    for (cur = configSet->head; cur; cur = cur->next) {
+        int off;
+        if (cur->key[0] == '\0' || cur->key[0] == '#')
+            continue;
+        if (cfgMatchGroup(cur->key, &off) != NULL)
+            continue;
+        cfgWriteLibconfigLine(fileBuffer, "", cur->key, cur->val);
+    }
+
+    // Pass 2: one block per group, in schema order, skipping groups with nothing in them.
+    for (i = 0; cfgLibconfigGroups[i] != NULL; ++i) {
+        char line[128];
+        int any = 0;
+
+        for (cur = configSet->head; cur; cur = cur->next) {
+            int off;
+            const char *g;
+            if (cur->key[0] == '\0' || cur->key[0] == '#')
+                continue;
+            g = cfgMatchGroup(cur->key, &off);
+            if (g == NULL || strcmp(g, cfgLibconfigGroups[i]) != 0)
+                continue;
+
+            if (!any) {
+                snprintf(line, sizeof(line), "%s :\n{\n", cfgLibconfigGroups[i]);
+                writeFileBuffer(fileBuffer, line, strlen(line));
+                any = 1;
+            }
+            cfgWriteLibconfigLine(fileBuffer, "  ", cur->key + off, cur->val);
+        }
+
+        if (any) {
+            snprintf(line, sizeof(line), "};\n");
+            writeFileBuffer(fileBuffer, line, strlen(line));
+        }
+    }
+}
+
 static int configReadFileBuffer(file_buffer_t *fileBuffer, config_set_t *configSet)
 {
     char *line;
     unsigned int lineno = 0;
+    int fmt = CFG_FMT_LEGACY, fmtLatched = 0;
+    char group[CONFIG_KEY_NAME_LEN];
 
     char prefix[CONFIG_KEY_NAME_LEN];
     memset(prefix, 0, sizeof(prefix));
+    memset(group, 0, sizeof(group));
 
     while (readFileBuffer(fileBuffer, &line)) {
         lineno++;
+
+        // Latch the format from the first line that carries evidence. Blank/comment lines say nothing,
+        // so keep looking. An empty or comments-only file never latches and keeps the CFG_FMT_LEGACY
+        // default from configAlloc -- correct, since a file with no content to preserve should be
+        // written back in the interoperable format.
+        if (!fmtLatched) {
+            int c = cfgClassifyLine(line);
+            if (c == CFG_LINE_BLANK || c == CFG_LINE_COMMENT)
+                continue;
+            fmt = (c == CFG_LINE_LIBCONFIG) ? CFG_FMT_LIBCONFIG : CFG_FMT_LEGACY;
+            fmtLatched = 1;
+            configSet->format = fmt;
+        }
+
+        if (fmt == CFG_FMT_LIBCONFIG) {
+            cfgReadLibconfigLine(line, group, sizeof(group), configSet);
+            continue;
+        }
 
         char key[CONFIG_KEY_NAME_LEN], val[CONFIG_KEY_VALUE_LEN];
         memset(key, 0, sizeof(key));
@@ -671,15 +1009,24 @@ int configWrite(config_set_t *configSet)
             char line[512];
 
             bgmMute();
-            struct config_value_t *cur = configSet->head;
-            while (cur) {
-                if ((cur->key[0] != '\0') && (cur->key[0] != '#')) {
-                    snprintf(line, sizeof(line), "%s=%s\r\n", cur->key, cur->val); // add windows CR+LF (0x0D 0x0A)
-                    writeFileBuffer(fileBuffer, line, strlen(line));
-                }
 
-                // and advance
-                cur = cur->next;
+            // FORMAT INHERITANCE: emit whatever syntax this file arrived in. A file that was libconfig
+            // when we read it is written back as libconfig; a legacy file stays legacy. We never
+            // convert a user's file in either direction -- that is the whole point. Before this, a
+            // libconfig file hit the "%s=%s\r\n" loop below and was DESTROYED on the first save.
+            if (configSet->format == CFG_FMT_LIBCONFIG) {
+                cfgWriteLibconfig(fileBuffer, configSet);
+            } else {
+                struct config_value_t *cur = configSet->head;
+                while (cur) {
+                    if ((cur->key[0] != '\0') && (cur->key[0] != '#')) {
+                        snprintf(line, sizeof(line), "%s=%s\r\n", cur->key, cur->val); // add windows CR+LF (0x0D 0x0A)
+                        writeFileBuffer(fileBuffer, line, strlen(line));
+                    }
+
+                    // and advance
+                    cur = cur->next;
+                }
             }
 
             ok = (closeFileBuffer(fileBuffer) == 0);

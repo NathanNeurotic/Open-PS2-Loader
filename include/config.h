@@ -195,6 +195,14 @@ struct config_value_t
     struct config_value_t *next;
 };
 
+// On-disk syntax of a config file. We support BOTH as first-class citizens and NEVER convert a user's
+// file from one to the other -- whatever format we read is the format we write back (see configWrite).
+// wOPL migrated to libconfig (their PR #286) and rewrites shared files IN PLACE, so a user who has run
+// wOPL once has libconfig where we expect key=value. Honouring their layout is the whole point: we do
+// not force ours on top of an existing setup.
+#define CFG_FMT_LEGACY    0 // "key=value\r\n" -- OPL's own syntax; also what OPL-Launcher/SAS/XMB read
+#define CFG_FMT_LIBCONFIG 1 // "key = value;" -- wOPL/libconfig, groups as "name : { ... };"
+
 typedef struct
 {
     int type;
@@ -202,6 +210,7 @@ typedef struct
     struct config_value_t *tail;
     char *filename;
     int modified;
+    int format; // CFG_FMT_*: latched from the file we READ, honoured by configWrite
     u32 uid;
 } config_set_t;
 
