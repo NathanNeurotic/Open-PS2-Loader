@@ -1691,8 +1691,7 @@ static void guiHandleOp(struct gui_update_t *item)
             cacheAdvanceGeneration();
             break;
 
-        case GUI_OP_SORT:
-        {
+        case GUI_OP_SORT: {
             // Sort by the on-screen title: hand the owning device's mode down so a VCD view with "hide
             // game ID" on orders by the rendered name, not the raw filename's game-ID prefix (#195).
             // userdata is the item_list_t (opl.c: menuItem.userdata = mod->support); -1 if unset.
