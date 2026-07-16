@@ -80,11 +80,25 @@ const char *vcdDisplayName(int mode, const char *text)
     return n ? text + n : text;
 }
 
-// Case-insensitive name order for the scan sort below -- the same collation submenuSort uses
-// (strcasecmp), so a menu-level sort (gAutosort) can never disagree with the backing array's order.
+// Case-insensitive name order for the scan sort below. MUST stay in the same collation submenuSort
+// uses (strcasecmp on the SAME display-adjusted key -- menusys.c was updated alongside this to sort by
+// vcdDisplayName), or the two disagree and the menu-level gAutosort pass, which runs LAST, silently
+// undoes this backing array's order.
 static int vcdEntryCmp(const void *a, const void *b)
 {
-    return strcasecmp(((const vcd_entry_t *)a)->name, ((const vcd_entry_t *)b)->name);
+    const char *na = ((const vcd_entry_t *)a)->name;
+    const char *nb = ((const vcd_entry_t *)b)->name;
+    // Sort by the TITLE the user actually sees. With "hide game ID" on (gVcdHideGameId), the list
+    // renders each name past its "SLES_123.45." prefix (vcdDisplayName), so sorting the raw filenames
+    // ordered by the invisible publisher code -- alphabetical to nobody (Blade, HW, #195: "omit that
+    // part in the alphabet"). Skip the same prefix here so the visible order matches the visible text.
+    // With hide off, the prefix IS shown, so it stays part of the sort key. vcdGameIdPrefixLen returns
+    // 0 for a name without a strict game-ID prefix, so untagged titles are unaffected either way.
+    if (gVcdHideGameId) {
+        na += vcdGameIdPrefixLen(na);
+        nb += vcdGameIdPrefixLen(nb);
+    }
+    return strcasecmp(na, nb);
 }
 
 // Core scan: opendir `dirPath` and collect *.VCD basenames into a fresh vcd_entry_t list. POSIX dir

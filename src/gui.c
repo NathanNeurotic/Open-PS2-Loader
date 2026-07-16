@@ -684,7 +684,21 @@ void guiShowVcdConfig(void)
                 snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", tmpPop);
         }
         diaGetInt(diaVcdConfig, CFG_BDMA_APPLY, &gBdmaApplyOnLaunch);
-        diaGetInt(diaVcdConfig, CFG_VCD_HIDE_GAMEID, &gVcdHideGameId); // display-only; next list draw reflects it, no rebuild needed
+        {
+            // #195: hide-gameid is NO LONGER purely cosmetic -- it is now a SORT KEY. Both the VCD scan
+            // sort (vcdEntryCmp) and the menu sort (submenuSort) order by the DISPLAYED title, i.e. past
+            // the hidden prefix, so a change must re-sort every VCD-capable page. Without this the rows
+            // keep the PREVIOUS key's order while rendering the new text = visibly mis-alphabetised until
+            // something else happens to force a rescan (CodeRabbit review of #200). Mirrors the
+            // first-disc-only handling below.
+            int previousHideGameId = gVcdHideGameId;
+            diaGetInt(diaVcdConfig, CFG_VCD_HIDE_GAMEID, &gVcdHideGameId);
+            if (gVcdHideGameId != previousHideGameId) {
+                vcdMarkAllDirty();
+                hddVcdInvalidateCache(); // the cached HDD VCD list was sorted with the old key
+                rebuildVcdLists = 1;
+            }
+        }
         {
             // #118: first-disc-only changes the VCD list CONTENTS (discs hidden/shown), so unlike the
             // cosmetic hide-gameid it must rebuild every VCD-capable device page when toggled. Device
@@ -1677,8 +1691,13 @@ static void guiHandleOp(struct gui_update_t *item)
             cacheAdvanceGeneration();
             break;
 
-        case GUI_OP_SORT:
-            submenuSort(item->menu.subMenu);
+        case GUI_OP_SORT: {
+            // Sort by the on-screen title: hand the owning device's mode down so a VCD view with "hide
+            // game ID" on orders by the rendered name, not the raw filename's game-ID prefix (#195).
+            // userdata is the item_list_t (opl.c: menuItem.userdata = mod->support); -1 if unset.
+            item_list_t *sortSupport = (item_list_t *)item->menu.menu->userdata;
+            submenuSort(item->menu.subMenu, sortSupport ? sortSupport->mode : -1);
+        }
             item->menu.menu->submenu = *item->menu.subMenu;
 
             { // recompute the coverflow wrap tail after the sort reorders the list
