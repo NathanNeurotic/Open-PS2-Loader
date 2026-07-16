@@ -166,7 +166,8 @@ int gEnableMX4SIO;
 int gEnableBdmHDD;
 int gEnableUDPBD;
 int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived from gNetworkProtocol)
-int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative unified selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
+int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
+int gNetStartMode;    // START_MODE_* -- the Off/Manual/Auto network start row (see the 3-row Network setting)
 int gAutosort;
 int gAutoRefresh;
 int gEnableNotifications;
@@ -643,7 +644,9 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
         // The UDPFS filesystem tab lives only while its protocol is selected. It has no Auto/Manual
         // sub-mode (the unified selector is Off/on); treat "selected" as Manual so the IRX chain + mount
         // happen when the user enters the tab, mirroring SMB's default start behavior.
-        startMode = (gNetworkProtocol == NET_PROTO_UDPFS) ? START_MODE_MANUAL : START_MODE_DISABLED;
+        // UDPFS filesystem tab honours the network start row: Auto loads the udpfs IRX chain + mount at
+        // boot, Manual defers it to tab-entry. (Was a hardcoded MANUAL before the 3-row Network setting.)
+        startMode = (gNetworkProtocol == NET_PROTO_UDPFS) ? gNetStartMode : START_MODE_DISABLED;
 
     if (startMode) {
         if (!mod->support) {
@@ -1727,6 +1730,29 @@ static void _loadConfig()
             } else {
                 gETHStartMode = START_MODE_DISABLED;
             }
+
+            // Network start row (Off/Manual/Auto). A config predating this field has no net_start_mode
+            // key -- derive it from the protocol we just resolved so an existing user keeps working:
+            //   OFF   -> Off (Row 1); SMB -> its persisted eth_mode (so a prior SMB=Auto survives);
+            //   UDPFS -> Manual (matches the old hardcoded UDPFS_MODE start gate); block -> Auto
+            //   (matches the old bdm boot-connect for UDPBD/UDPFSBD, where start mode is cosmetic).
+            if (!configGetInt(configOPL, CONFIG_OPL_NET_START_MODE, &gNetStartMode)) {
+                if (gNetworkProtocol == NET_PROTO_OFF)
+                    gNetStartMode = START_MODE_DISABLED;
+                else if (gNetworkProtocol == NET_PROTO_SMB)
+                    gNetStartMode = gETHStartMode;
+                else if (gNetworkProtocol == NET_PROTO_UDPFS)
+                    gNetStartMode = START_MODE_MANUAL;
+                else
+                    gNetStartMode = START_MODE_AUTO; // UDPFSBD / UDPBD block
+            }
+            // A live protocol with an Off start row is contradictory (hand-edited config) -- make it
+            // start; and keep the SMB start-mode shadow in lockstep with the authoritative row.
+            if (gNetworkProtocol != NET_PROTO_OFF && gNetStartMode == START_MODE_DISABLED)
+                gNetStartMode = START_MODE_MANUAL;
+            if (gNetworkProtocol == NET_PROTO_SMB)
+                gETHStartMode = gNetStartMode;
+
             configGetInt(configOPL, CONFIG_OPL_SFX, &gEnableSFX);
             configGetInt(configOPL, CONFIG_OPL_BOOT_SND, &gEnableBootSND);
             configGetInt(configOPL, CONFIG_OPL_BGM, &gEnableBGM);
@@ -2007,6 +2033,7 @@ static void _saveConfig()
         // Dual-write: the authoritative unified selector PLUS the three legacy keys (derived shadows),
         // so a config saved by this build still boots correctly on an older OPL that only reads the legacy keys.
         configSetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, gNetworkProtocol);
+        configSetInt(configOPL, CONFIG_OPL_NET_START_MODE, gNetStartMode);
         configSetInt(configOPL, CONFIG_OPL_SFX, gEnableSFX);
         configSetInt(configOPL, CONFIG_OPL_BOOT_SND, gEnableBootSND);
         configSetInt(configOPL, CONFIG_OPL_BGM, gEnableBGM);
@@ -2831,6 +2858,7 @@ static void setDefaults(void)
     // path re-derives the gEnableUDPBD/gNetBootProtocol shadows and forces a device refresh already.
     // Existing installs are unaffected: a saved net protocol in settings_riptopl.cfg overrides this.
     gNetworkProtocol = NET_PROTO_OFF;
+    gNetStartMode = START_MODE_DISABLED; // Off in the 3-row Network setting; migration reconciles old configs
 
     frameCounter = 0;
 
