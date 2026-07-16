@@ -42,6 +42,16 @@ typedef struct
     time_t bdmModifiedDVDPrev;
     int bdmGameCount;
     base_game_info_t *bdmGames;
+    // #120: the PS2 (ISO) and PS1 (VCD) views must NOT share one backing store -- BDM was the last
+    // device still doing so (MMCE/HDD were split long ago). With one array, a VCD scan that returns
+    // "failure" left bdmGameCount untouched while the array still held the ISO list, so the VCD view
+    // re-published the ISO games and the L3 toggle looked dead ("the list never changes" -- Nathan, HW,
+    // ATA/HDD_BD). A device with NO POPS folder hits that EVERY time: vcdScanOpenDir cannot tell an
+    // absent dir from a contended one (opendir just fails) and returns -1 = preserve-last-good. Separate
+    // arrays make a failed scan of one view preserve only THAT view's last-good (empty if never scanned),
+    // so it can never resurrect the other view's contents. Mirrors mmceGames/mmceVcdGames.
+    int bdmVcdGameCount;
+    base_game_info_t *bdmVcdGames;
     char bdmDriver[32];
     int bdmDeviceType;      // Type of BDM device, see BDM_TYPE_* above
     int bdmDeviceTick;      // Used alongside BdmGeneration to tell if device data needs to be refreshed
