@@ -664,7 +664,28 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             hmax = 0;
         }
 
-        diaRenderItem(x, y, rc, rc == cur, haveFocus, &w, &h);
+        // Viewport clip for scrolled dialogs (FifthFox HW: "scrolled text moves out of the background
+        // image ... clearing the entire screen removes the stray text"). diaScrollOffset shifts rows
+        // above y0 (and below the hint bar); nothing else stops them drawing there, and since the
+        // dialog re-paints its background rather than full-clearing, a row that scrolled outside the
+        // background stays behind as stray text. So SKIP entirely any row fully outside the item
+        // viewport -- there is then nothing to leave behind. It is an APP-LAYER skip on purpose: a GS
+        // scissor cannot survive the 720p/1080i multi-pass render (its per-pass band scissor gets
+        // overwritten), so this works in every video mode where a scissor would not.
+        //
+        // A skipped row is not measured; advance the layout by its declared height (fixedHeight, or a
+        // small default) so the on-screen rows below keep their positions. Exactness is not needed for
+        // an invisible row -- w/h only feed the y advance and the maxScroll clamp, which the
+        // cursor-follow logic re-clamps every frame. The FOCUSED row is never skipped (that clamp keeps
+        // it inside the viewport by construction), so cursor tracking stays exact.
+        int viewBottom = gTheme->usedHeight - 40; // the same bound the scroll clamp below uses
+        int estH = (rc->fixedHeight > 0) ? rc->fixedHeight : 24;
+        if (rc != cur && (y + estH <= y0 || y >= viewBottom)) {
+            w = 0;
+            h = estH;
+        } else {
+            diaRenderItem(x, y, rc, rc == cur, haveFocus, &w, &h);
+        }
 
         if (rc == cur) {
             curTop = y;
