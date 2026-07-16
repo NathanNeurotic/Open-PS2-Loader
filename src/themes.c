@@ -673,6 +673,7 @@ static void endMutableImage(struct theme_element *elem)
 static mutable_image_t *initMutableImage(const char *themePath, config_set_t *themeConfig, theme_t *theme, const char *name, int type, const char *cachePattern, int cacheCount, const char *defaultTexture, const char *overlayTexture)
 {
     mutable_image_t *mutableImage = (mutable_image_t *)malloc(sizeof(mutable_image_t));
+    mutableImage->currentCacheId = -1; // -1 = the cache API's "no entry" sentinel (see themes.h)
     mutableImage->currentUid = -1;
     mutableImage->currentConfigId = 0;
     mutableImage->currentValue = NULL;
@@ -1199,6 +1200,13 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
     if (config) {
         if (attributeImage->currentConfigId != config->uid) {
             // force refresh
+            // Reset the cacheId TOO, and note this is mandatory rather than tidiness: the -2 memo gate
+            // in cacheGetTexture short-circuits WITHOUT comparing the value string (unlike the identity
+            // gate below it, which does strcmp entry->value). A -2 left over from the previous game
+            // would therefore suppress THIS game's badge for the rest of the generation -- i.e. the
+            // badge would stop updating / keep the old glyph. currentValue can only change inside this
+            // same branch, so clearing both here is airtight.
+            attributeImage->currentCacheId = -1;
             attributeImage->currentUid = -1;
             attributeImage->currentConfigId = config->uid;
             attributeImage->currentValue = NULL;
@@ -1212,8 +1220,15 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
 
                 return;
             } else {
-                int posZ = 0;
-                GSTEXTURE *texture = cacheGetTexture(attributeImage->cache, menu->item->userdata, &posZ, &attributeImage->currentUid, attributeImage->currentValue);
+                // Pass the PERSISTENT cacheId, not a stack local: cacheGetTexture's FAILED memo writes
+                // *cacheId = -2 (+ *UID = gCacheGeneration) and its skip gate reads BOTH back next
+                // frame. With a per-frame `int posZ = 0` the -2 was discarded, the gate was
+                // unreachable, and every frame re-enqueued a fresh FAILING open -- the unbounded
+                // info-page read storm behind #120/#154 (a badge whose glyph the theme does not ship
+                // is the NORMAL case; that is why the embedded-glyph fallback above exists). This is
+                // the same pattern getGameImageTexture has always used, which is exactly why main-page
+                // covers/screenshots never wedged (AndrewBento's bisect, #154).
+                GSTEXTURE *texture = cacheGetTexture(attributeImage->cache, menu->item->userdata, &attributeImage->currentCacheId, &attributeImage->currentUid, attributeImage->currentValue);
                 if (texture && texture->Mem) {
                     if (attributeImage->overlayTexture) {
                         rmDrawOverlayPixmap(&attributeImage->overlayTexture->source, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol,
