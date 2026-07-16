@@ -37,8 +37,9 @@ It supports six categories of devices:
 6. ATA/IDE HDDs, including internal exFAT configurations (MBR/GPT).
 
 Plus an optional **network-block-device boot** (UDPBD / UDPFS, via Neutrino) that streams games
-from a PC over the LAN as their own game list — UDPFS is the pre-selected network protocol (an
-inert no-op until a network adapter and PC server are present) and is mutually exclusive with SMB.
+from a PC over the LAN as their own game list — the network protocol defaults to **Off**; pick
+UDPFS, UDPBD or SMB in Device Settings and it comes up live, no restart needed (network stacks
+share the one adapter, so only the first protocol loaded per boot can own it).
 See [This Fork's Additions](#this-forks-additions).
 
 All of the devices mentioned above support multiple file formats, including:
@@ -144,7 +145,8 @@ This build layers several features on top of upstream OPL:
   device — they show up as a **UDPBD Games** list with full covers and per-game settings, just
   like a local drive. UDPBD launches via Neutrino, is mutually exclusive with SMB (they share
   the one network adapter), and needs a static PS2 IP (the default is `192.168.1.10`); the
-  fork's **pre-selected network protocol is UDPFS** (switch to UDPBD in Device Settings). Run it from the
+  fork's **network protocol defaults to Off** — pick UDPFS or UDPBD in Device Settings and it
+  loads live (a restart is only needed to *switch away* from a protocol already loaded). Run it from the
   **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. See the
   network-boot section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--udpbd--udpfs-neutrino-only)**.
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
