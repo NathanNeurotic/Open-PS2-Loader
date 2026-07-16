@@ -355,13 +355,18 @@ static int udpfsGetImage(item_list_t *itemList, char *folder, int isRelative, ch
 {
     char path[256];
 
-    // PS1 (VCD) art uses this same ART path as PS2. The cache supplies the filename first and may retry
-    // once with a strict PS1 ID after a genuine miss; no alternate VCD art directories are probed.
+    // OPL's own ART/<name>_COV.png is the PRIMARY lookup (same path PS2 uses; the cache also retries once
+    // with a strict PS1 ID).
     if (isRelative)
         snprintf(path, sizeof(path), "%s%s/%s_%s", udpfsPrefix, folder, value, suffix);
     else
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
-    return texDiscoverLoad(resultTex, path, -1);
+    int r = texDiscoverLoad(resultTex, path, -1);
+    // On a VCD (PS1) genuine miss, fall back to the POPSLoader-style suffixless cover next to the .VCD.
+    // Cover/icon only, VCD view only.
+    if (r == ERR_BAD_FILE && isRelative && vcdViewActive(itemList->mode))
+        r = vcdLoadPopsCover(udpfsPrefix, value, suffix, resultTex);
+    return r;
 }
 
 static int udpfsGetTextId(item_list_t *itemList)
