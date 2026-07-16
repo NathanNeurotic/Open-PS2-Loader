@@ -1001,3 +1001,7 @@ gui_strings:
   string: Controller Vibration in Menus
 - label: HINT_RUMBLE
   string: Short vibration when moving the cursor, confirming or going back -- needs a DualShock in analog mode
+- label: ERROR_SAVING_SETTINGS_TO
+  string: Could not write settings to %s (error %d)
+- label: SETTINGS_NO_HOME
+  string: No memory card found -- settings cannot be saved. OPL was booted from a network device, whose settings must live on a local card.
