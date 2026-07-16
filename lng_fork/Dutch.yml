@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Games alfabetisch sorteren
+  RUMBLE: Controllertrilling in menu's
+  HINT_RUMBLE: Korte trilling bij verplaatsen van de cursor, bevestigen of teruggaan -- vereist een DualShock in analoge modus
+  FOLDER_NAV: Mappen doorbladeren in gamelijst
+  HINT_FOLDER_NAV: Toon submappen van cd/dvd als doorbladerbare items -- selecteer om te openen, annuleer om terug te gaan
+  SETTINGS_NO_HOME: Geen geheugenkaart gevonden -- instellingen kunnen niet worden opgeslagen. OPL is opgestart vanaf een netwerkapparaat, waarvan de instellingen op een lokale kaart moeten staan.
+  ERROR_SAVING_SETTINGS_TO: Kan instellingen niet naar %s schrijven (fout %d)
   GENERAL_SETTINGS: Algemene instellingen
   DEVICE_SETTINGS: Apparaatinstellingen
   LAUNCH_PS2_DISC: PS2-schijf starten

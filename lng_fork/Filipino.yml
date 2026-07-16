@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Isaayos ang Laro Ayon sa Alpabeto
+  RUMBLE: Pag-vibrate ng Kontroler sa Menu
+  HINT_RUMBLE: Maikling vibration kapag ginagalaw ang cursor, kinukumpirma o bumabalik -- kailangan ng DualShock na naka-analog mode
+  FOLDER_NAV: Mag-browse ng Folder sa Listahan ng Laro
+  HINT_FOLDER_NAV: Ipakita ang mga subfolder ng CD/DVD bilang mabu-browse na entry; piliin para buksan, kanselahin para bumalik
+  SETTINGS_NO_HOME: Walang nakitang memory card -- hindi ma-save ang mga setting. Naka-boot ang OPL mula sa network device, na ang mga setting ay dapat nasa lokal na card.
+  ERROR_SAVING_SETTINGS_TO: Hindi maisulat ang mga setting sa %s (error %d)
   GENERAL_SETTINGS: Pangkalahatang Mga Setting
   DEVICE_SETTINGS: Mga Setting ng Device
   LAUNCH_PS2_DISC: I-launch ang PS2 Disc

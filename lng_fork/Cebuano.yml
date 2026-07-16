@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Ihan-ay ang mga dula sa alpabeto
+  RUMBLE: Pag-uyog sa controller sa mga menu
+  HINT_RUMBLE: Mubo nga pag-uyog kon molihok ang cursor, mokumpirma o mobalik -- kinahanglan og DualShock sa analog mode
+  FOLDER_NAV: Pagbrowse sa mga folder sa lista sa dula
+  HINT_FOLDER_NAV: Ipakita ang mga subfolder sa CD/DVD isip mabrowse nga entry; pilia aron ablihan, kanselaha aron mobalik
+  SETTINGS_NO_HOME: Walay nakit-ang memory card -- dili matipigan ang mga setting. Gi-boot ang OPL gikan sa network device, kansang mga setting kinahanglang anaa sa lokal nga card.
+  ERROR_SAVING_SETTINGS_TO: Dili masulat ang mga setting ngadto sa %s (sayop %d)
   GENERAL_SETTINGS: Kinatibuk-ang mga Setting
   DEVICE_SETTINGS: mga Setting sa Device
   LAUNCH_PS2_DISC: I-launch ang PS2 Disc

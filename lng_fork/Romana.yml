@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Sortează jocurile alfabetic
+  RUMBLE: Vibrația controllerului în meniuri
+  HINT_RUMBLE: Vibrație scurtă la mutarea cursorului, confirmare sau revenire -- necesită un DualShock în mod analog
+  FOLDER_NAV: Răsfoiește foldere în lista de jocuri
+  HINT_FOLDER_NAV: Afișează subfolderele de pe CD/DVD ca intrări navigabile; selectează pentru a deschide, anulează pentru a reveni
+  SETTINGS_NO_HOME: Niciun card de memorie găsit -- setările nu pot fi salvate. OPL a pornit de pe un dispozitiv de rețea, ale cărui setări trebuie să fie pe un card local.
+  ERROR_SAVING_SETTINGS_TO: Setările nu au putut fi scrise în %s (eroare %d)
   GENERAL_SETTINGS: Setări Generale
   DEVICE_SETTINGS: Setări Dispozitiv
   LAUNCH_PS2_DISC: Lansează Disc PS2

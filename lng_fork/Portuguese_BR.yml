@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Ordenar jogos em ordem alfabética
+  RUMBLE: Vibração do controle nos menus
+  HINT_RUMBLE: Vibração curta ao mover o cursor, confirmar ou voltar -- precisa de um DualShock em modo analógico
+  FOLDER_NAV: Navegar por pastas na lista de jogos
+  HINT_FOLDER_NAV: Mostra subpastas de CD/DVD como itens navegáveis; selecione para abrir, cancele para voltar
+  SETTINGS_NO_HOME: Nenhum cartão de memória encontrado -- não é possível salvar as configurações. O OPL foi iniciado de um dispositivo de rede, cujas configurações precisam ficar em um cartão local.
+  ERROR_SAVING_SETTINGS_TO: Não foi possível salvar as configurações em %s (erro %d)
   GENERAL_SETTINGS: Configurações Gerais
   DEVICE_SETTINGS: Configurações de Dispositivo
   LAUNCH_PS2_DISC: Iniciar Disco PS2

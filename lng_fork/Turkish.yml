@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Oyunları Alfabetik Sırala
+  RUMBLE: Menülerde Kumanda Titreşimi
+  HINT_RUMBLE: İmleci taşırken, onaylarken veya geri dönerken kısa titreşim -- analog moddaki bir DualShock gerekir
+  FOLDER_NAV: Oyun Listesinde Klasörlere Göz At
+  HINT_FOLDER_NAV: CD/DVD alt klasörlerini gezilebilir öğeler olarak göster; açmak için seç, geri dönmek için iptal et
+  SETTINGS_NO_HOME: Hafıza kartı bulunamadı -- ayarlar kaydedilemez. OPL bir ağ aygıtından başlatıldı, ayarları yerel bir kartta durmalı.
+  ERROR_SAVING_SETTINGS_TO: Ayarlar %s konumuna yazılamadı (hata %d)
   GENERAL_SETTINGS: Genel Ayarlar
   DEVICE_SETTINGS: Cihaz Ayarları
   LAUNCH_PS2_DISC: PS2 Diski Başlat

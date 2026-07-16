@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: 게임 가나다순 정렬
+  RUMBLE: 메뉴에서 컨트롤러 진동
+  HINT_RUMBLE: 커서 이동, 확인 또는 취소 시 짧게 진동 -- 아날로그 모드의 듀얼쇼크 필요
+  FOLDER_NAV: 게임 목록에서 폴더 탐색
+  HINT_FOLDER_NAV: CD/DVD의 하위 폴더를 탐색 가능한 항목으로 표시, 선택하면 열고 취소하면 뒤로
+  SETTINGS_NO_HOME: 메모리 카드가 없어 설정을 저장할 수 없습니다. OPL이 네트워크 장치에서 부팅되었으며, 설정은 로컬 카드에 저장되어야 합니다.
+  ERROR_SAVING_SETTINGS_TO: "%s에 설정을 저장할 수 없습니다 (오류 %d)"
   GENERAL_SETTINGS: 일반 설정
   DEVICE_SETTINGS: 장치 설정
   LAUNCH_PS2_DISC: PS2 디스크 실행

@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Řadit hry podle abecedy
+  RUMBLE: Vibrace ovladače v nabídkách
+  HINT_RUMBLE: Krátká vibrace při pohybu kurzoru, potvrzení nebo návratu -- vyžaduje DualShock v analogovém režimu
+  FOLDER_NAV: Procházet složky v seznamu her
+  HINT_FOLDER_NAV: Zobrazit podsložky CD/DVD jako procházené položky -- vyber pro otevření, zruš pro návrat
+  SETTINGS_NO_HOME: Paměťová karta nenalezena -- nastavení nelze uložit. OPL byl spuštěn ze síťového zařízení, jehož nastavení musí být na místní kartě.
+  ERROR_SAVING_SETTINGS_TO: Nelze zapsat nastavení na %s (chyba %d)
   GENERAL_SETTINGS: Obecná nastavení
   DEVICE_SETTINGS: Nastavení zařízení
   LAUNCH_PS2_DISC: Spustit PS2 disk

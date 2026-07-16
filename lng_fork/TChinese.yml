@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: 遊戲按字母排序
+  RUMBLE: 選單中控制器震動
+  HINT_RUMBLE: 移動游標、確認或返回時短暫震動 -- 需要類比模式的 DualShock
+  FOLDER_NAV: 在遊戲清單中瀏覽資料夾
+  HINT_FOLDER_NAV: 將 CD/DVD 的子資料夾顯示為可瀏覽項目，選取開啟，取消返回
+  SETTINGS_NO_HOME: 找不到記憶卡 -- 無法儲存設定。OPL 從網路裝置啟動，設定必須存放在本機記憶卡上。
+  ERROR_SAVING_SETTINGS_TO: 無法將設定寫入 %s（錯誤 %d）
   GENERAL_SETTINGS: 一般設定
   DEVICE_SETTINGS: 裝置設定
   LAUNCH_PS2_DISC: 啟動 PS2 光碟

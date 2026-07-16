@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: ゲームをアルファベット順に並べ替え
+  RUMBLE: メニューでのコントローラー振動
+  HINT_RUMBLE: カーソル移動、決定、戻る操作時の短い振動 - アナログモードのDualShockが必要
+  FOLDER_NAV: ゲームリストでフォルダを閲覧
+  HINT_FOLDER_NAV: CD/DVDのサブフォルダを閲覧可能な項目として表示。決定で開き、キャンセルで戻る
+  SETTINGS_NO_HOME: メモリーカードが見つかりません - 設定を保存できません。OPLはネットワーク機器から起動したため、設定はローカルカードに保存する必要があります。
+  ERROR_SAVING_SETTINGS_TO: "%s に設定を書き込めませんでした (エラー %d)"
   GENERAL_SETTINGS: 全般設定
   DEVICE_SETTINGS: デバイス設定
   LAUNCH_PS2_DISC: PS2 ディスクを起動

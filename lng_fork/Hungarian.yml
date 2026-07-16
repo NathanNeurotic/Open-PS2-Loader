@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Játékok rendezése ábécésorrendben
+  RUMBLE: Kontroller rezgése a menükben
+  HINT_RUMBLE: Rövid rezgés a kurzor mozgatásakor, megerősítéskor vagy visszalépéskor - DualShock szükséges analóg módban
+  FOLDER_NAV: Mappák böngészése a játéklistában
+  HINT_FOLDER_NAV: A CD/DVD almappáit böngészhető elemekként mutatja; kiválasztás megnyit, mégse visszalép
+  SETTINGS_NO_HOME: Nincs memóriakártya - a beállítások nem menthetők. Az OPL hálózati eszközről indult, amelynek beállításait helyi kártyán kell tárolni.
+  ERROR_SAVING_SETTINGS_TO: A beállítások mentése a(z) %s helyre sikertelen (hiba %d)
   GENERAL_SETTINGS: Általános beállítások
   DEVICE_SETTINGS: Eszközbeállítások
   LAUNCH_PS2_DISC: PS2 lemez indítása

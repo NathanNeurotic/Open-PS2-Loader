@@ -1,4 +1,11 @@
 translations:
+  AUTOSORT: Poredaj igre abecedno
+  RUMBLE: Vibracija kontrolera u izbornicima
+  HINT_RUMBLE: Kratka vibracija pri pomicanju pokazivača, potvrdi ili povratku -- treba DualShock u analognom načinu
+  FOLDER_NAV: Pregledavaj mape u popisu igara
+  HINT_FOLDER_NAV: Prikaži podmape CD/DVD-a kao stavke za pregled -- odaberi za otvaranje, odustani za povratak
+  SETTINGS_NO_HOME: Memorijska kartica nije pronađena -- postavke se ne mogu spremiti. OPL je pokrenut s mrežnog uređaja, čije postavke moraju biti na lokalnoj kartici.
+  ERROR_SAVING_SETTINGS_TO: Nije moguće zapisati postavke na %s (pogreška %d)
   GENERAL_SETTINGS: Opće postavke
   DEVICE_SETTINGS: Postavke uređaja
   LAUNCH_PS2_DISC: Pokretanje PS2 diska
