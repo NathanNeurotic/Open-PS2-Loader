@@ -419,6 +419,8 @@ static void bdmInit(item_list_t *itemList)
     pDeviceData->bdmModifiedDVDPrev = 0;
     pDeviceData->bdmGameCount = 0;
     pDeviceData->bdmGames = NULL;
+    pDeviceData->bdmVcdGameCount = 0; // #120: separate VCD store (see bdm_device_data_t)
+    pDeviceData->bdmVcdGames = NULL;
     pDeviceData->FoldersCreated = 0;
     pDeviceData->bdmDeviceType = BDM_TYPE_UNKNOWN;
     pDeviceData->bdmHddIsLBA48 = -1;
@@ -611,14 +613,19 @@ static int bdmUpdateGameList(item_list_t *itemList)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
+    // #120: each view scans into its OWN array (see bdm_device_data_t). Previously both shared
+    // bdmGames, so a VCD scan reporting failure (r < 0) left the ISO list published under the VCD
+    // view -- the L3 toggle then "never changed the list" (Nathan, HW, ATA/HDD_BD), and a device with
+    // no POPS folder hit that on every single toggle.
     if (vcdViewActive(itemList->mode)) {
         char vcdPrefix[BDM_DEVICE_ROOT_MAX + 2];
         bdmBuildVcdPrefix(vcdPrefix, sizeof(vcdPrefix), itemList->mode); // device root, NOT gBDMPrefix
-        int r = vcdFillGameList(vcdPrefix, &pDeviceData->bdmGames);
-        if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
-            pDeviceData->bdmGameCount = r;
-    } else
-        sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, folderGetSub(itemList->mode), &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
+        int r = vcdFillGameList(vcdPrefix, &pDeviceData->bdmVcdGames);
+        if (r >= 0) // r < 0: transient scan failure -> keep THIS view's last-good (empty if never scanned)
+            pDeviceData->bdmVcdGameCount = r;
+        return pDeviceData->bdmVcdGameCount;
+    }
+    sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, folderGetSub(itemList->mode), &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
     return pDeviceData->bdmGameCount;
 }
 
@@ -626,45 +633,66 @@ static int bdmGetGameCount(item_list_t *itemList)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
-    return pDeviceData->bdmGameCount;
+    return vcdViewActive(itemList->mode) ? pDeviceData->bdmVcdGameCount : pDeviceData->bdmGameCount;
+}
+
+// Toggle-window guard (mirrors mmceActiveGame). The L3 toggle flips vcdViewActive() SYNCHRONOUSLY
+// (vcdToggleView) but rebuilds the submenu on the DEFERRED IO thread, so for a window the OLD submenu's
+// ids are still live while vcdViewActive() already reports the NEW view -- and an id from the old view
+// can index the freshly-switched other-view array, which may be NULL (never scanned), shorter, or
+// mid-scan. Resolve EVERY id through here: an out-of-range id yields a STATIC EMPTY entry, so a stale-id
+// READ is safe empty data instead of an OOB deref, and launch/delete/rename treat &bdmEmptyGame as
+// "nothing there". (The shared store this replaced could not OOB: one array + one count stayed
+// self-consistent -- splitting them is what makes this guard mandatory.)
+static base_game_info_t bdmEmptyGame = {0};
+static base_game_info_t *bdmActiveGame(item_list_t *itemList, int id)
+{
+    bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
+    int vcd = vcdViewActive(itemList->mode);
+    base_game_info_t *arr = vcd ? pDeviceData->bdmVcdGames : pDeviceData->bdmGames;
+    int count = vcd ? pDeviceData->bdmVcdGameCount : pDeviceData->bdmGameCount;
+
+    if (arr == NULL || id < 0 || id >= count)
+        return &bdmEmptyGame;
+    return &arr[id];
 }
 
 static void *bdmGetGame(item_list_t *itemList, int id)
 {
-    bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
-
-    return (void *)&pDeviceData->bdmGames[id];
+    return (void *)bdmActiveGame(itemList, id);
 }
 
 static char *bdmGetGameName(item_list_t *itemList, int id)
 {
-    bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
-
-    return pDeviceData->bdmGames[id].name;
+    return bdmActiveGame(itemList, id)->name;
 }
 
 static int bdmGetGameNameLength(item_list_t *itemList, int id)
 {
-    bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
+    base_game_info_t *g = bdmActiveGame(itemList, id);
 
-    return ((pDeviceData->bdmGames[id].format != GAME_FORMAT_USBLD) ? ISO_GAME_NAME_MAX + 1 : UL_GAME_NAME_MAX + 1);
+    return ((g->format != GAME_FORMAT_USBLD) ? ISO_GAME_NAME_MAX + 1 : UL_GAME_NAME_MAX + 1);
 }
 
 static char *bdmGetGameStartup(item_list_t *itemList, int id)
 {
-    bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
+    base_game_info_t *g = bdmActiveGame(itemList, id);
 
     // VCD view: identity is the filename, not a disc ID -> per-game data (CFG/art) keys off the
     // VCD name (matches sbPopulateConfig).
     if (vcdViewActive(itemList->mode))
-        return pDeviceData->bdmGames[id].name;
-    return pDeviceData->bdmGames[id].startup;
+        return g->name;
+    return g->startup;
 }
 
 static void bdmDeleteGame(item_list_t *itemList, int id)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
+    if (vcdViewActive(itemList->mode))
+        return; // #120: a VCD is not an ISO game -- no delete in VCD view (mirrors mmceDeleteGame)
+    if (bdmActiveGame(itemList, id) == &bdmEmptyGame)
+        return;                                   // stale id in the toggle window: sbDelete does NOT bounds-check -> avoid an OOB/wrong unlink
     sbSetBrowseSub(folderGetSub(itemList->mode)); // delete inside the current subfolder, not the root
     sbDelete(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, "/", pDeviceData->bdmGameCount, id);
     pDeviceData->bdmULSizePrev = -2;
@@ -675,6 +703,10 @@ static void bdmRenameGame(item_list_t *itemList, int id, char *newName)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 
+    if (vcdViewActive(itemList->mode))
+        return; // #120: no rename in VCD view
+    if (bdmActiveGame(itemList, id) == &bdmEmptyGame)
+        return;                                   // stale id in the toggle window (see bdmDeleteGame) -> avoid sbRename OOB
     sbSetBrowseSub(folderGetSub(itemList->mode)); // rename inside the current subfolder, not the root
     sbRename(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, "/", pDeviceData->bdmGameCount, id, newName);
     pDeviceData->bdmULSizePrev = -2;
@@ -909,7 +941,12 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
     if (gAutoLaunchBDMGame == NULL) {
         pDeviceData = (bdm_device_data_t *)itemList->priv;
-        game = &pDeviceData->bdmGames[id];
+        // Resolve through the ACTIVE view's array (#120 split): in the VCD view this yields the VCD
+        // entry whose name the POPSTARTER handoff below uses, and a stale toggle-window id yields the
+        // empty entry rather than indexing the other view's (possibly NULL/shorter) array.
+        game = bdmActiveGame(itemList, id);
+        if (game == &bdmEmptyGame)
+            return; // nothing there (stale id / not scanned) -- never launch a blank entry
     } else {
         pDeviceData = gAutoLaunchDeviceData;
         game = gAutoLaunchBDMGame;
@@ -1203,7 +1240,9 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 static config_set_t *bdmGetConfig(item_list_t *itemList, int id)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
-    return sbPopulateConfig(&pDeviceData->bdmGames[id], pDeviceData->bdmPrefix, "/");
+    // Active view's array (#120 split) -- a VCD's per-game CFG keys off its own entry, and a stale
+    // toggle-window id resolves to the empty entry instead of the other view's array.
+    return sbPopulateConfig(bdmActiveGame(itemList, id), pDeviceData->bdmPrefix, "/");
 }
 
 static int bdmGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)
@@ -1269,6 +1308,7 @@ static void bdmCleanUp(item_list_t *itemList, int exception)
 
         bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
         free(pDeviceData->bdmGames);
+        free(pDeviceData->bdmVcdGames); // #120: free the separate VCD store too
         free(pDeviceData);
         itemList->priv = NULL;
 
