@@ -1458,7 +1458,7 @@ static void resolveBootDirToMass(void)
     // MMCE boot: the mmceman driver is likewise not loaded at boot time (sysReset loads none of the
     // device stacks), so mmceN: is unreadable exactly when settings must load. Load it (idempotent)
     // and give the card a moment to register its filesystem. mmceN: IS the readable namespace, so no
-    // prefix rewrite is needed; if the card never shows, drop to legacy discovery like the BDM case.
+    // prefix rewrite is needed.
     if (!strncmp(gBootDir, "mmce", 4)) {
         mmceLoadModules();
         char devRoot[8];
@@ -1476,10 +1476,16 @@ static void resolveBootDirToMass(void)
                 delay(1);
             }
         }
-        LOG("BOOT MMCE boot device for %s never mounted -> legacy discovery\n", gBootDir);
-        gBootDir[0] = '\0';
-        configEnd();
-        configInit(NULL);
+        // Card still settling after the wait. It served this very ELF milliseconds ago, so it IS present
+        // -- it just has not re-registered its mmceman filesystem yet. Do NOT blank gBootDir and re-home
+        // the config to a plain memory card here (the old configInit(NULL) fallback): with an empty boot
+        // dir, configGetDir() returns the legacy mc?: default, so _saveConfig's checkMCFolder() + the
+        // per-file O_CREAT stamped an unwanted mc?:OPL folder and settings onto a SEPARATE plain mc card
+        // (FifthFox, HW 2026-07-16). mc is never an MMCE user's config home. Keep mmce as the home: this
+        // boot falls back to defaults if the card is still settling, and the first save lands on mmce
+        // once it has mounted (a truly dead card fails the save visibly -- the same contract the BDM boot
+        // device honours below). mc stays untouched.
+        LOG("BOOT MMCE boot device %s not mounted after wait -> keep as config home (mc untouched)\n", gBootDir);
         return;
     }
 
@@ -1488,13 +1494,17 @@ static void resolveBootDirToMass(void)
     gBootDirBdmType = BDM_TYPE_UNKNOWN; // classify fresh from the prefix
     int ret = bdmResolveBootDir(gBootDir, sizeof(gBootDir), gBootElfName, &gBootDirBdmType);
     if (ret < 0) {
-        // The boot device did not mount in time. Drop the dead identity so the existing empty-gBootDir
-        // discovery/alternate-save can still find a home for the config, rather than every read/save
-        // silently failing against an unopenable prefix.
-        LOG("BOOT boot device for %s never mounted -> legacy discovery\n", before);
-        gBootDir[0] = '\0';
-        configEnd();
-        configInit(NULL);
+        // The boot device's BDM stack did not mount within the resolve budget. It served this ELF, so it
+        // IS present -- do NOT blank gBootDir and re-home the config to a plain mc here (the old
+        // configInit(NULL)). An empty boot dir makes configGetDir() fall to the legacy mc?: default, and
+        // _saveConfig's checkMCFolder() + the per-file O_CREAT then stamp an mc?:OPL folder + settings
+        // onto a plain memory card (FifthFox, HW 2026-07-16 -- extended from the MMCE case above at
+        // NathanNeurotic's request). mc is never the boot device's config home. Keep the boot identity as
+        // the home (the config sets were already homed there by init()'s configInit): this boot reads
+        // defaults if the stack is still coming up, and a save targets the boot device -- failing visibly
+        // if it is genuinely gone -- never a plain mc. bdmResolveBootDir leaves gBootDir UNCHANGED on a
+        // failed resolve (it only rewrites on success), so the identity here is intact.
+        LOG("BOOT boot device %s not mounted after resolve -> keep as config home (mc untouched)\n", before);
         return;
     }
     if (ret > 0 && strcmp(before, gBootDir) != 0) {

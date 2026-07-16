@@ -1788,8 +1788,15 @@ int bdmResolveBootDir(char *bootDir, int bootDirSize, const char *elfName, int *
     char stem[16];
     int unit;
 
-    // *ioBdmType is only written on success -- a failed resolve must not erase the caller's knowledge
-    // of the boot device's type (the save-path retry keys on it).
+    // *ioBdmType must never ERASE the caller's knowledge of the boot device's type -- the save-path
+    // retry keys on it. It is written on success, and also on the -1 (never-mounted) paths with the
+    // PREFIX CLASSIFICATION: that is not an erase (for an untyped massN: boot filterType IS knownType,
+    // so it round-trips unchanged; for a typed usb0:/ata0:/... boot the prefix is authoritative). This
+    // matters now that a failed resolve KEEPS the boot dir instead of dropping it to legacy discovery:
+    // the caller zeroes this to UNKNOWN before every call, so without writing it back a slow-to-mount
+    // boot device left gBootDirBdmType == UNKNOWN and _saveConfig's re-resolve-and-retry -- gated on
+    // exactly that -- could never fire, so the settings never reached the device once it did mount
+    // (CodeRabbit review of #202).
     int knownType = *ioBdmType;
 
     if (!bdmParseBootStem(bootDir, stem, sizeof(stem), &unit))
@@ -1799,8 +1806,10 @@ int bdmResolveBootDir(char *bootDir, int bootDirSize, const char *elfName, int *
     int filterType = isMass ? knownType : bdmDetermineDeviceType(stem);
     if (!isMass && filterType == BDM_TYPE_UNKNOWN)
         return 0; // mc/mmce/host/pfs/hdd/cdrom/... -- not a BDM boot path, leave it alone
-    if (filterType == BDM_TYPE_UDPBD)
-        return -1; // network block device: no local mount to resolve at config-load time
+    if (filterType == BDM_TYPE_UDPBD) {
+        *ioBdmType = filterType; // keep the classification so a later save retry stays pinned to it
+        return -1;               // network block device: no local mount to resolve at config-load time
+    }
 
     const char *tail = strchr(bootDir, ':') + 1; // "" | "/APPS" | "APPS" (bdmParseBootStem proved the ':')
     // The boot token's unit digit doubles as the scan-order hint for BOTH families: mass1: names the
@@ -1892,6 +1901,9 @@ int bdmResolveBootDir(char *bootDir, int bootDirSize, const char *elfName, int *
                 budgetMs += 8000;
                 continue;
             }
+            *ioBdmType = filterType; // never mounted in time, but keep the classification: the caller
+                                     // now KEEPS the boot dir, and _saveConfig's retry is gated on this
+                                     // being != UNKNOWN (see the header comment)
             return -1;
         }
         DelayThread(100 * 1000);
