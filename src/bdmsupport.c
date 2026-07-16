@@ -507,14 +507,31 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     if (folderConsumeDirty(itemList->mode))
         return 1;
 
-    if (pDeviceData->bdmDeviceTick == BdmGeneration) {
+    // NEVER-SCANNED (-2) DEFEATS EVERY SHORT-CIRCUIT IN HERE -- note the condition, not just the body.
+    // bdmULSizePrev starts at -2 and only leaves it once a scan has actually run, so while it is -2
+    // this device has published no list yet and must be let through, INCLUDING while the page is still
+    // invisible -- exactly the state a device sits in between attaching and being shown. (The invisible
+    // bail below used to run first, making the old `!= -2` test on the miss-count line unreachable for
+    // a never-visible page; that test is now redundant and gone.)
+    //
+    // Why this reaches far past the invisible case: the BDM list scans essentially ONCE, on the publish
+    // pass. Every later refresh hits bdmUpdateDeviceData's "no change to the device state" return 0
+    // below, so whatever the list held at that single instant is what the user has for the rest of the
+    // boot -- and sbReadList PRESERVES its last-good list on a failed read (gDiag.isoScanPreserved),
+    // which on a FIRST scan means an empty list with no error shown. A network block device (UDPBD) is
+    // precisely where that instant can be too early: the volume is mounted but the server round-trip
+    // behind the CD/DVD opendir can still fail, and the page then reads "0 games" permanently and
+    // silently. UDPFS already rescues itself with the identical idea (udpfssupport.c:134-135,
+    // `if (udpfsULSizePrev == -2) result = 1;` -- deliberately above every gate); BDM had no
+    // equivalent. Same class as the PR #151 tab bug, one layer down.
+    if (pDeviceData->bdmDeviceTick == BdmGeneration && pDeviceData->bdmULSizePrev != -2) {
         if (pOwner != NULL && pOwner->menuItem.visible == 0)
             return 0;
         // While a network page is inside its disconnect grace window (bdmMissCount > 0, set by the
         // presence-poll debounce in bdmUpdateDeviceData), keep re-polling each refresh so the debounce
         // advances to the hide threshold -- otherwise it would stall at the single disconnect event and
         // a truly-gone network page would never hide. Local devices always have bdmMissCount == 0 here.
-        if (pDeviceData->bdmULSizePrev != -2 && pDeviceData->bdmMissCount == 0)
+        if (pDeviceData->bdmMissCount == 0)
             return 0;
     }
     pDeviceData->bdmDeviceTick = BdmGeneration;
@@ -523,7 +540,17 @@ static int bdmNeedsUpdate(item_list_t *itemList)
         ioPutRequest(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules);
 
     // Check if the device has been connected or removed.
-    if ((result = bdmUpdateDeviceData(itemList)) == 0)
+    result = bdmUpdateDeviceData(itemList);
+    // "No change to the device state" normally means there is nothing to do -- but a device that has
+    // NEVER scanned (bdmULSizePrev == -2) has no list to leave alone, and bdmUpdateDeviceData reports
+    // 0 on every poll once the device is connected and its identity is populated. Returning here would
+    // make the -2 bypass at the device-tick gate above a NO-OP, which is exactly what it was before
+    // this line changed (Gemini review of #186 -- it caught that my first cut fixed nothing).
+    //
+    // Falling through is safe and needs no new scan logic: result stays 0 past the connect/disconnect
+    // sfx branches, and the sbIsSameSize(bdmPrefix, bdmULSizePrev) check further down cannot match a
+    // sentinel of -2, so it sets result = 1 and the first scan publishes through the existing path.
+    if (result == 0 && pDeviceData->bdmULSizePrev != -2)
         return 0;
 
     // If a device was added or removed play the appropriate UI sound.
