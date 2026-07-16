@@ -10,6 +10,7 @@
 #include "include/ioman.h"
 #include "include/sound.h"
 #include <string.h>
+#include <ctype.h> // isalpha/isalnum -- libconfig identifier grammar in cfgIsLibconfigIdent
 #include <errno.h>
 
 // FIXME: We should not need this function.
@@ -71,6 +72,93 @@ static int strToColor(const char *string, unsigned char *color)
 int isWS(char c)
 {
     return c == ' ' || c == '\t';
+}
+
+// ---- Dual-format support (wOPL/libconfig) ---------------------------------------------------------
+// wOPL migrated to libconfig and rewrites SHARED files in place (app title.cfg on every Apps scan) or
+// replaces them (conf_theme.cfg -> wopl_theme.cfg). We read BOTH syntaxes and write back whichever we
+// read, so we never convert a user's file out from under another program -- and never lose their data.
+//
+// WHY DETECTION AND NOT "TRY-LEGACY-THEN-FALL-BACK": splitAssignment below does NOT fail on libconfig.
+// Fed `title = "My App";` it happily returns key="title " (trailing space) and val=" \"My App\";" --
+// and getConfigItemForName does an exact strncmp, so the lookup misses and the app silently vanishes
+// from the list. Nothing ever reports an error, so there is no failure to fall back FROM.
+//
+// THE DISCRIMINATOR IS SYNTAX, NOT KEY NAMES. An earlier draft keyed off our '$'/'#' prefixes; that is
+// wrong -- app title.cfg uses bare lowercase `title`/`boot`/`argv1` (appsupport.h), exactly like wOPL,
+// and conf_apps.cfg uses the user's own app title as the key. Instead, note that the two WRITERS are
+// fully characterised and cannot overlap:
+//   ours (configWrite below): "%s=%s\r\n"  -- NEVER a space before '=', NEVER a trailing ';'
+//   theirs (libconfig):       "key = val;" -- ALWAYS " = ", ALWAYS a trailing ';'
+// Requiring BOTH, plus a legal libconfig identifier, makes misclassification impossible for anything
+// either writer can emit.
+//
+// A ':' NEVER SIGNALS LIBCONFIG. Our own legacy theme files open with a section prefix -- see
+// misc/conf_theme_OPL.cfg, whose FIRST line is `main0:` (25 such lines) -- parsed by parsePrefix and
+// composed into `main0_type`. Treating `name :` as libconfig-exclusive would misdetect our own shipped
+// theme and feed it to the wrong parser. We do not need ':' anyway: both of wOPL's writers emit a
+// SCALAR first (`compat = <n>;` for per-game, `title = "...";` for title.cfg), so the very first
+// meaningful line always settles the format before any group can appear.
+enum {
+    CFG_LINE_BLANK,
+    CFG_LINE_COMMENT,
+    CFG_LINE_LEGACY,
+    CFG_LINE_LIBCONFIG
+};
+
+// libconfig identifier grammar: [A-Za-z*][-A-Za-z0-9_*]*  . Pure read of [begin,end); no copies.
+static int cfgIsLibconfigIdent(const char *begin, const char *end)
+{
+    const char *p;
+
+    if (begin >= end)
+        return 0;
+    if (!isalpha((unsigned char)*begin) && *begin != '*')
+        return 0;
+
+    for (p = begin + 1; p < end; ++p) {
+        if (!isalnum((unsigned char)*p) && *p != '_' && *p != '-' && *p != '*')
+            return 0;
+    }
+    return 1;
+}
+
+static int cfgClassifyLine(const char *line)
+{
+    const char *p = line, *end, *eq;
+
+    while (isWS(*p))
+        ++p;
+
+    if (*p == '\0')
+        return CFG_LINE_BLANK;
+    if (*p == '#') // legacy comment AND libconfig comment: tells us nothing either way
+        return CFG_LINE_COMMENT;
+    if (p[0] == '/' && (p[1] == '/' || p[1] == '*')) // libconfig-only, but still not a key line
+        return CFG_LINE_COMMENT;
+
+    end = p + strlen(p);
+    while (end > p && isWS(end[-1]))
+        --end;
+
+    eq = strchr(p, '=');
+    if (eq == NULL || eq >= end)
+        return CFG_LINE_LEGACY; // no '=' -> our parser's existing malformed/prefix branch handles it
+
+    // BOTH conditions, and a legal identifier. Our writer can satisfy none of them:
+    //   "$Compatibility=0"   -> no space before '=', no ';', '$' is not an identifier char
+    //   "title=Foo"          -> no space before '=', no ';'
+    //   "title = Foo"        -> hand-edited legacy: space, but no ';'  -> stays LEGACY
+    //   "exit_path=a = b;"   -> strchr finds the FIRST '=', which has no space before it
+    if (eq > p && isWS(eq[-1]) && end[-1] == ';') {
+        const char *kend = eq; // the key is [p, kend) once the padding before '=' is trimmed
+        while (kend > p && isWS(kend[-1]))
+            --kend;
+        if (cfgIsLibconfigIdent(p, kend))
+            return CFG_LINE_LIBCONFIG;
+    }
+
+    return CFG_LINE_LEGACY;
 }
 
 static int splitAssignment(char *line, char *key, size_t keymax, char *val, size_t valmax)
@@ -267,6 +355,10 @@ config_set_t *configAlloc(int type, config_set_t *configSet, char *fileName)
     configSet->type = type;
     configSet->head = NULL;
     configSet->tail = NULL;
+    // A set with no file on disk yet defaults to OUR format: it is the interoperable one (OPL,
+    // OPL-Launcher, SAS and XMB all read it), so a NEW file should never be born libconfig. A file
+    // that already exists overwrites this in configReadFileBuffer from what is actually on disk.
+    configSet->format = CFG_FMT_LEGACY;
     if (fileName) {
         int length = strlen(fileName) + 1;
         configSet->filename = (char *)malloc(length * sizeof(char));
@@ -534,16 +626,363 @@ void configGetDiscIDBinary(config_set_t *configSet, void *dst)
     }
 }
 
+// Defined further down with the key table; the reader below needs the wOPL->ours direction.
+static const char *cfgWoplToOurs(const char *key);
+
+// Parse ONE line of a libconfig file into our flat key space.
+//
+// GROUPS FLATTEN ONTO OUR EXISTING COMPOSED KEYS. Our legacy parser turns
+//     main0:            ->  prefix "main0"
+//         type=Background   ->  key "main0_type"   (parsePrefix + the "%s_%s" compose below)
+// and libconfig writes the same data as
+//     main0 : { type = "Background"; };
+// so joining group+key with '_' lands on the IDENTICAL key. Themes therefore need no mapping at all.
+// One level of nesting is all wOPL emits (build_per_game / their theme builder).
+//
+// EMPTY STRING IS *ABSENT*, NOT "". wOPL's set_str has no skip-if-empty and init_per_game_cfg memsets
+// to zero, so EVERY wOPL per-game file literally contains `dnas = ""; alt_startup = ""; vmc1 = "";
+// vmc2 = "";`. This fork's invariant is absent==unset -- we never write an empty $AltStartup or $VMC.
+// Storing "" would tell OPL "an alt-startup IS configured, and it is the empty string", which breaks
+// the launch. So an empty string is DROPPED on read. configWrite re-emits the empties for the keys
+// wOPL expects, so their file stays valid for them (see cfgWriteLibconfigLine).
+static void cfgReadLibconfigLine(char *line, char *group, size_t groupSize, config_set_t *configSet)
+{
+    char *p = line, *eq, *end, *v;
+    char key[CONFIG_KEY_NAME_LEN], composed[2 * CONFIG_KEY_NAME_LEN];
+    size_t klen, vlen;
+
+    while (isWS(*p))
+        ++p;
+
+    if (*p == '\0' || *p == '#' || (p[0] == '/' && (p[1] == '/' || p[1] == '*')))
+        return;
+
+    // "};" or "}" closes the current group; "{" alone is the brace of a group header we already took.
+    if (*p == '}') {
+        group[0] = '\0';
+        return;
+    }
+    if (*p == '{')
+        return;
+
+    end = p + strlen(p);
+    while (end > p && isWS(end[-1]))
+        --end;
+    if (end > p && end[-1] == ';')
+        --end; // drop the statement terminator
+    while (end > p && isWS(end[-1]))
+        --end;
+
+    eq = strchr(p, '=');
+
+    // Group header: "name :" or "name : {" -- no '=' before the ':'.
+    if (eq == NULL || (strchr(p, ':') != NULL && strchr(p, ':') < eq)) {
+        char *colon = strchr(p, ':');
+        if (colon != NULL) {
+            char *kend = colon;
+            while (kend > p && isWS(kend[-1]))
+                --kend;
+            klen = (size_t)(kend - p);
+            if (klen > 0 && klen < groupSize) {
+                memcpy(group, p, klen);
+                group[klen] = '\0';
+            }
+        }
+        return;
+    }
+
+    { // scalar: key = value
+        char *kend = eq;
+        while (kend > p && isWS(kend[-1]))
+            --kend;
+        klen = (size_t)(kend - p);
+        if (klen == 0 || klen >= sizeof(key))
+            return; // nothing usable, or a key longer than we can store -- never truncate into a hit
+        memcpy(key, p, klen);
+        key[klen] = '\0';
+    }
+
+    v = eq + 1;
+    while (v < end && isWS(*v))
+        ++v;
+
+    if (v < end && *v == '"') { // quoted string: strip the quotes
+        ++v;
+        if (end > v && end[-1] == '"')
+            --end;
+    }
+
+    vlen = (end > v) ? (size_t)(end - v) : 0;
+    if (vlen == 0)
+        return; // EMPTY == ABSENT (see the note above) -- do NOT store ""
+    if (vlen >= CONFIG_KEY_VALUE_LEN)
+        vlen = CONFIG_KEY_VALUE_LEN - 1;
+
+    { // libconfig bools -> the 0/1 our getters expect
+        char val[CONFIG_KEY_VALUE_LEN];
+        memcpy(val, v, vlen);
+        val[vlen] = '\0';
+
+        if (strcmp(val, "true") == 0)
+            strcpy(val, "1");
+        else if (strcmp(val, "false") == 0)
+            strcpy(val, "0");
+
+        if (group[0])
+            snprintf(composed, sizeof(composed), "%s_%s", group, key);
+        else
+            snprintf(composed, sizeof(composed), "%s", key);
+
+        { // translate wOPL's per-game key names to ours; anything else passes through untouched
+            const char *ours = cfgWoplToOurs(composed);
+            configSetStr(configSet, ours != NULL ? ours : composed, val);
+        }
+    }
+}
+
+// ---- wOPL per-game key translation ----------------------------------------------------------------
+// wOPL's per-game migration does NOT merely reformat: it RENAMES every key and nests most of them.
+// Their build_per_game writes `compat`, `dma`, and groups `gsm`/`cheat`/`pademu`/`padmacro`/`osd`,
+// where we use `$Compatibility`, `$DMA`, `$EnableGSM` and friends. Parsing their syntax is therefore
+// only half the job -- without this table we would read the file perfectly and hand OPL a set of keys
+// nothing looks up, and every per-game setting would silently revert to defaults.
+//
+// The left column is the key AFTER group flattening (cfgReadLibconfigLine joins "gsm : { enable = 1; }"
+// into "gsm_enable"), so the group structure round-trips through cfgMatchGroup on write.
+//
+// ONLY per-game keys live here. A key that is not in this table passes through UNCHANGED, which is what
+// makes themes (`main0_type`) and app title.cfg (`title`/`boot`/`argv1`) work without any mapping.
+//
+// SEMANTICS VERIFIED, NOT ASSUMED:
+//   core_loader -- IDENTICAL on both sides: 0 = the host loader, 1 = Neutrino (theirs:
+//                  CORE_LOADER_WOPL/CORE_LOADER_NEUTRINO in config_wopl.h:12-13; ours: the stored
+//                  $CoreLoader int, guigame.c:1059 "0=<OPL>, 1=Neutrino"). No transform needed.
+//   vmc1/vmc2   -- THEIRS IS 1-BASED, OURS IS 0-BASED ($VMC_0/$VMC_1, composed at config.c "%s_%d").
+//                  Getting this backwards would load slot 2's card into slot 1.
+static const struct
+{
+    const char *wopl;
+    const char *ours;
+} cfgWoplPerGameKeys[] = {
+    {"compat", CONFIG_ITEM_COMPAT},
+    {"dma", CONFIG_ITEM_DMA},
+    {"core_loader", CONFIG_ITEM_CORE_LOADER},
+    {"dnas", CONFIG_ITEM_DNAS},
+    {"alt_startup", CONFIG_ITEM_ALTSTARTUP},
+    {"vmc1", CONFIG_ITEM_VMC "_0"}, // 1-based -> 0-based
+    {"vmc2", CONFIG_ITEM_VMC "_1"},
+    {"gsm_source", CONFIG_ITEM_GSMSOURCE},
+    {"gsm_enable", CONFIG_ITEM_ENABLEGSM},
+    {"gsm_vmode", CONFIG_ITEM_GSMVMODE},
+    {"gsm_x_offset", CONFIG_ITEM_GSMXOFFSET},
+    {"gsm_y_offset", CONFIG_ITEM_GSMYOFFSET},
+    {"gsm_field_fix", CONFIG_ITEM_GSMFIELDFIX},
+    {"cheat_source", CONFIG_ITEM_CHEATSSOURCE},
+    {"cheat_enable", CONFIG_ITEM_ENABLECHEAT},
+    {"cheat_mode", CONFIG_ITEM_CHEATMODE},
+    {"cheat_enable_image", CONFIG_ITEM_ENABLEIMAGE},
+    {"pademu_source", CONFIG_ITEM_PADEMUSOURCE},
+    {"pademu_enable", CONFIG_ITEM_ENABLEPADEMU},
+    {"pademu_settings", CONFIG_ITEM_PADEMUSETTINGS},
+    {"padmacro_source", CONFIG_ITEM_PADMACROSOURCE},
+    {"padmacro_settings", CONFIG_ITEM_PADMACROSETTINGS},
+    {"osd_source", CONFIG_ITEM_OSD_SETTINGS_SOURCE},
+    {"osd_enable", CONFIG_ITEM_OSD_SETTINGS_ENABLE},
+    {"osd_lang_id", CONFIG_ITEM_OSD_SETTINGS_LANGID},
+    {"osd_tv_aspect", CONFIG_ITEM_OSD_SETTINGS_TV_ASP},
+    {"osd_vmode", CONFIG_ITEM_OSD_SETTINGS_VMODE},
+    {NULL, NULL},
+};
+
+// Their key -> ours. Returns NULL when the key is not one of theirs (pass it through unchanged).
+static const char *cfgWoplToOurs(const char *key)
+{
+    int i;
+    for (i = 0; cfgWoplPerGameKeys[i].wopl != NULL; ++i) {
+        if (strcmp(key, cfgWoplPerGameKeys[i].wopl) == 0)
+            return cfgWoplPerGameKeys[i].ours;
+    }
+    return NULL;
+}
+
+// Ours -> theirs. Returns NULL when we have no wOPL equivalent -- those keys ($NeutrinoArgs,
+// $NeutrinoVideo, $VMCDisable_n, $ConfigSource ...) are emitted at ROOT verbatim instead of being
+// dropped. wOPL's parse_per_game is pure config_lookup by name and never enumerates root children, so
+// it ignores them silently while they survive for us: format inheritance with no data loss either way.
+static const char *cfgOursToWopl(const char *key)
+{
+    int i;
+    for (i = 0; cfgWoplPerGameKeys[i].wopl != NULL; ++i) {
+        if (strcmp(key, cfgWoplPerGameKeys[i].ours) == 0)
+            return cfgWoplPerGameKeys[i].wopl;
+    }
+    return NULL;
+}
+
+// True when the value is a bare libconfig scalar (int or bool) and therefore must NOT be quoted.
+// Everything else is emitted as a quoted string, which is what libconfig's own reader expects and
+// what wOPL's cfgGetStr asks for. A leading '-' is allowed (negative ints).
+static int cfgValueIsBareScalar(const char *v)
+{
+    const char *p = v;
+
+    if (strcmp(v, "true") == 0 || strcmp(v, "false") == 0)
+        return 1;
+    if (*p == '-')
+        ++p;
+    if (*p == '\0')
+        return 0;
+    for (; *p; ++p) {
+        if (!isdigit((unsigned char)*p))
+            return 0;
+    }
+    return 1;
+}
+
+// Emit one "key = value;" line, quoting and escaping as libconfig requires.
+static void cfgWriteLibconfigLine(file_buffer_t *fileBuffer, const char *indent, const char *key, const char *val)
+{
+    // Sized for the WORST case, because snprintf TRUNCATES rather than overflows and a truncated line
+    // loses its closing quote+semicolon -- which corrupts the file for wOPL and for us alike (Gemini
+    // review of #184). Worst case: indent(2) + key(CONFIG_KEY_NAME_LEN-1 = 31) + ` = "` (4) +
+    // every one of the value's 255 chars escaped (510) + `";\n` (3) + NUL = 551. A plain 512 was short.
+    char line[CONFIG_KEY_NAME_LEN + CONFIG_KEY_VALUE_LEN * 2 + 16];
+
+    if (cfgValueIsBareScalar(val)) {
+        snprintf(line, sizeof(line), "%s%s = %s;\n", indent, key, val);
+        writeFileBuffer(fileBuffer, line, strlen(line));
+        return;
+    }
+
+    { // quoted string: escape '\' and '"' so a path or a title with a quote cannot break the file
+        char esc[CONFIG_KEY_VALUE_LEN * 2];
+        size_t i = 0;
+        const char *p;
+
+        for (p = val; *p && i + 2 < sizeof(esc); ++p) {
+            if (*p == '\\' || *p == '"')
+                esc[i++] = '\\';
+            esc[i++] = *p;
+        }
+        esc[i] = '\0';
+
+        snprintf(line, sizeof(line), "%s%s = \"%s\";\n", indent, key, esc);
+        writeFileBuffer(fileBuffer, line, strlen(line));
+    }
+}
+
+// Write the whole set back as libconfig, re-nesting the groups we flattened on read.
+//
+// Our store is flat, and cfgReadLibconfigLine joined "gsm : { enable = 1; }" into "gsm_enable". To
+// round-trip we must split on the LAST '_' whose prefix matches a group we actually saw, which we
+// cannot know from the key alone ("alt_startup" is a root key, not group "alt" key "startup"). So we
+// only re-nest keys whose group prefix appeared in wOPL's OWN schema -- anything else stays at root.
+// A key we do not recognise is emitted at root verbatim rather than dropped: wOPL's parse_per_game is
+// pure config_lookup by name and never enumerates children, so unknown settings are silently ignored
+// by them and survive for us. Nobody loses data in either direction.
+static const char *const cfgLibconfigGroups[] = {"gsm", "cheat", "pademu", "padmacro", "osd", NULL};
+
+static const char *cfgMatchGroup(const char *key, int *keyOffset)
+{
+    int i;
+
+    for (i = 0; cfgLibconfigGroups[i] != NULL; ++i) {
+        size_t glen = strlen(cfgLibconfigGroups[i]);
+        if (strncmp(key, cfgLibconfigGroups[i], glen) == 0 && key[glen] == '_' && key[glen + 1] != '\0') {
+            *keyOffset = (int)glen + 1;
+            return cfgLibconfigGroups[i];
+        }
+    }
+    return NULL;
+}
+
+static void cfgWriteLibconfig(file_buffer_t *fileBuffer, config_set_t *configSet)
+{
+    struct config_value_t *cur;
+    int i;
+
+    // Pass 1: every root-level scalar -- i.e. anything that does not translate into one of wOPL's
+    // groups. A key with no wOPL equivalent lands here verbatim (see cfgOursToWopl) rather than being
+    // dropped, so our Neutrino/VMCDisable settings survive a wOPL-format file untouched.
+    for (cur = configSet->head; cur; cur = cur->next) {
+        const char *w;
+        int off;
+
+        if (cur->key[0] == '\0' || cur->key[0] == '#')
+            continue;
+
+        w = cfgOursToWopl(cur->key);
+        if (w != NULL && cfgMatchGroup(w, &off) != NULL)
+            continue; // belongs to a group; pass 2 emits it
+
+        cfgWriteLibconfigLine(fileBuffer, "", w != NULL ? w : cur->key, cur->val);
+    }
+
+    // Pass 2: one block per group, in schema order, skipping groups with nothing in them.
+    for (i = 0; cfgLibconfigGroups[i] != NULL; ++i) {
+        char line[128];
+        int any = 0;
+
+        for (cur = configSet->head; cur; cur = cur->next) {
+            const char *w, *g;
+            int off;
+
+            if (cur->key[0] == '\0' || cur->key[0] == '#')
+                continue;
+
+            w = cfgOursToWopl(cur->key);
+            if (w == NULL)
+                continue;
+            g = cfgMatchGroup(w, &off);
+            if (g == NULL || strcmp(g, cfgLibconfigGroups[i]) != 0)
+                continue;
+
+            if (!any) {
+                snprintf(line, sizeof(line), "%s :\n{\n", cfgLibconfigGroups[i]);
+                writeFileBuffer(fileBuffer, line, strlen(line));
+                any = 1;
+            }
+            cfgWriteLibconfigLine(fileBuffer, "  ", w + off, cur->val);
+        }
+
+        if (any) {
+            snprintf(line, sizeof(line), "};\n");
+            writeFileBuffer(fileBuffer, line, strlen(line));
+        }
+    }
+}
+
 static int configReadFileBuffer(file_buffer_t *fileBuffer, config_set_t *configSet)
 {
     char *line;
     unsigned int lineno = 0;
+    int fmt = CFG_FMT_LEGACY, fmtLatched = 0;
+    char group[CONFIG_KEY_NAME_LEN];
 
     char prefix[CONFIG_KEY_NAME_LEN];
     memset(prefix, 0, sizeof(prefix));
+    memset(group, 0, sizeof(group));
 
     while (readFileBuffer(fileBuffer, &line)) {
         lineno++;
+
+        // Latch the format from the first line that carries evidence. Blank/comment lines say nothing,
+        // so keep looking. An empty or comments-only file never latches and keeps the CFG_FMT_LEGACY
+        // default from configAlloc -- correct, since a file with no content to preserve should be
+        // written back in the interoperable format.
+        if (!fmtLatched) {
+            int c = cfgClassifyLine(line);
+            if (c == CFG_LINE_BLANK || c == CFG_LINE_COMMENT)
+                continue;
+            fmt = (c == CFG_LINE_LIBCONFIG) ? CFG_FMT_LIBCONFIG : CFG_FMT_LEGACY;
+            fmtLatched = 1;
+            configSet->format = fmt;
+        }
+
+        if (fmt == CFG_FMT_LIBCONFIG) {
+            cfgReadLibconfigLine(line, group, sizeof(group), configSet);
+            continue;
+        }
 
         char key[CONFIG_KEY_NAME_LEN], val[CONFIG_KEY_VALUE_LEN];
         memset(key, 0, sizeof(key));
@@ -603,10 +1042,73 @@ static void configBuildLegacyOplPath(const char *path, char *out, int outSize)
         snprintf(out, outSize, "%s", CONFIG_OPL_FILENAME_LEGACY);
 }
 
+// wOPL does not only reformat -- for three files it RELOCATES the data and leaves nothing at the name
+// we look for. Format detection cannot help with a file that is not there, so map our name onto the
+// wOPL one and read that instead. We honour the setup that exists rather than forcing ours back on top:
+// no rewrite, no un-migration, no "restore" -- we just read where the data actually lives now.
+//
+//   conf_theme.cfg   -> wopl_theme.cfg        the original is UNLINKED with NO backup (their .bak
+//                                             gates on the DESTINATION already existing, which for a
+//                                             renamed file it never does), so this fallback is the
+//                                             ONLY way a wOPL-touched theme still renders for us.
+//   conf_network.cfg -> wopl_network.cfg      original renamed to .bak
+//   conf_game.cfg    -> wopl_global_game.cfg  original renamed to .bak
+//
+// Returns 0 when this filename has no wOPL counterpart.
+static int configBuildWoplPath(const char *path, char *out, int outSize)
+{
+    static const struct
+    {
+        const char *ours;
+        const char *theirs;
+    } map[] = {
+        {"conf_theme.cfg", "wopl_theme.cfg"},
+        {"conf_network.cfg", "wopl_network.cfg"},
+        {"conf_game.cfg", "wopl_global_game.cfg"},
+        {NULL, NULL},
+    };
+    const char *slash;
+    int dirLen, i;
+
+    if (path == NULL)
+        return 0;
+
+    slash = strrchr(path, '/');
+    dirLen = (slash != NULL) ? (int)(slash - path) + 1 : 0;
+
+    for (i = 0; map[i].ours != NULL; ++i) {
+        const char *base = path + dirLen;
+        if (strcmp(base, map[i].ours) != 0)
+            continue;
+        if (dirLen + (int)strlen(map[i].theirs) + 1 > outSize)
+            return 0; // would not fit: leave it alone rather than compose a wrong path
+        memcpy(out, path, dirLen);
+        strcpy(out + dirLen, map[i].theirs);
+        return 1;
+    }
+    return 0;
+}
+
 int configRead(config_set_t *configSet)
 {
     int ret;
     file_buffer_t *fileBuffer = openFileBuffer(configSet->filename, O_RDONLY, 0, 4096);
+
+    if (fileBuffer == NULL && configSet->filename != NULL) {
+        // Our name is absent -- wOPL may have moved this file's data to its own name (see above).
+        char woplPath[256];
+        if (configBuildWoplPath(configSet->filename, woplPath, sizeof(woplPath))) {
+            fileBuffer = openFileBuffer(woplPath, O_RDONLY, 0, 4096);
+            if (fileBuffer != NULL) {
+                LOG("CONFIG %s absent; reading wOPL's %s instead\n", configSet->filename, woplPath);
+                // Point the set at the file we actually read, so a later save updates THAT file rather
+                // than resurrecting our name beside it and leaving the user with two configs that
+                // disagree. Their layout, honoured end to end.
+                configMove(configSet, woplPath);
+            }
+        }
+    }
+
     if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL) {
         // Migration: existing installs have the legacy conf_riptopl.cfg, not settings_riptopl.cfg.
         // Read the legacy file from the same dir so settings aren't lost; the next save writes the
@@ -671,15 +1173,24 @@ int configWrite(config_set_t *configSet)
             char line[512];
 
             bgmMute();
-            struct config_value_t *cur = configSet->head;
-            while (cur) {
-                if ((cur->key[0] != '\0') && (cur->key[0] != '#')) {
-                    snprintf(line, sizeof(line), "%s=%s\r\n", cur->key, cur->val); // add windows CR+LF (0x0D 0x0A)
-                    writeFileBuffer(fileBuffer, line, strlen(line));
-                }
 
-                // and advance
-                cur = cur->next;
+            // FORMAT INHERITANCE: emit whatever syntax this file arrived in. A file that was libconfig
+            // when we read it is written back as libconfig; a legacy file stays legacy. We never
+            // convert a user's file in either direction -- that is the whole point. Before this, a
+            // libconfig file hit the "%s=%s\r\n" loop below and was DESTROYED on the first save.
+            if (configSet->format == CFG_FMT_LIBCONFIG) {
+                cfgWriteLibconfig(fileBuffer, configSet);
+            } else {
+                struct config_value_t *cur = configSet->head;
+                while (cur) {
+                    if ((cur->key[0] != '\0') && (cur->key[0] != '#')) {
+                        snprintf(line, sizeof(line), "%s=%s\r\n", cur->key, cur->val); // add windows CR+LF (0x0D 0x0A)
+                        writeFileBuffer(fileBuffer, line, strlen(line));
+                    }
+
+                    // and advance
+                    cur = cur->next;
+                }
             }
 
             ok = (closeFileBuffer(fileBuffer) == 0);
