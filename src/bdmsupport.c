@@ -540,7 +540,17 @@ static int bdmNeedsUpdate(item_list_t *itemList)
         ioPutRequest(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules);
 
     // Check if the device has been connected or removed.
-    if ((result = bdmUpdateDeviceData(itemList)) == 0)
+    result = bdmUpdateDeviceData(itemList);
+    // "No change to the device state" normally means there is nothing to do -- but a device that has
+    // NEVER scanned (bdmULSizePrev == -2) has no list to leave alone, and bdmUpdateDeviceData reports
+    // 0 on every poll once the device is connected and its identity is populated. Returning here would
+    // make the -2 bypass at the device-tick gate above a NO-OP, which is exactly what it was before
+    // this line changed (Gemini review of #186 -- it caught that my first cut fixed nothing).
+    //
+    // Falling through is safe and needs no new scan logic: result stays 0 past the connect/disconnect
+    // sfx branches, and the sbIsSameSize(bdmPrefix, bdmULSizePrev) check further down cannot match a
+    // sentinel of -2, so it sets result = 1 and the first scan publishes through the existing path.
+    if (result == 0 && pDeviceData->bdmULSizePrev != -2)
         return 0;
 
     // If a device was added or removed play the appropriate UI sound.
