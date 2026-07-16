@@ -79,8 +79,10 @@ const char *vcdDisplayName(int mode, const char *text)
     return n ? text + n : text;
 }
 
-// Case-insensitive name order for the scan sort below -- the same collation submenuSort uses
-// (strcasecmp), so a menu-level sort (gAutosort) can never disagree with the backing array's order.
+// Case-insensitive name order for the scan sort below. MUST stay in the same collation submenuSort
+// uses (strcasecmp on the SAME display-adjusted key -- menusys.c was updated alongside this to sort by
+// vcdDisplayName), or the two disagree and the menu-level gAutosort pass, which runs LAST, silently
+// undoes this backing array's order.
 static int vcdEntryCmp(const void *a, const void *b)
 {
     const char *na = ((const vcd_entry_t *)a)->name;

@@ -1678,7 +1678,13 @@ static void guiHandleOp(struct gui_update_t *item)
             break;
 
         case GUI_OP_SORT:
-            submenuSort(item->menu.subMenu);
+        {
+            // Sort by the on-screen title: hand the owning device's mode down so a VCD view with "hide
+            // game ID" on orders by the rendered name, not the raw filename's game-ID prefix (#195).
+            // userdata is the item_list_t (opl.c: menuItem.userdata = mod->support); -1 if unset.
+            item_list_t *sortSupport = (item_list_t *)item->menu.menu->userdata;
+            submenuSort(item->menu.subMenu, sortSupport ? sortSupport->mode : -1);
+        }
             item->menu.menu->submenu = *item->menu.subMenu;
 
             { // recompute the coverflow wrap tail after the sort reorders the list

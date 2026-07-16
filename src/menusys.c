@@ -820,8 +820,15 @@ static void swap(submenu_list_t *a, submenu_list_t *b)
         nb->prev = a;
 }
 
-// Sorts the given submenu by comparing the on-screen titles
-void submenuSort(submenu_list_t **submenu)
+// Sorts the given submenu by comparing the ON-SCREEN titles. `mode` is the owning device's list mode
+// (menuItem.userdata->mode) so a VCD view with "hide game ID" on sorts by what is actually RENDERED:
+// vcdDisplayName() skips the leading "SLES_123.45." prefix at draw time, so comparing the raw stored
+// filenames here ordered the list by an invisible publisher code -- alphabetical to nobody (#195). It
+// returns `text` unchanged for every non-VCD list (and when the prefix is shown), so this is a no-op
+// for PS2/apps/folders. Pass -1 when no mode applies. MUST stay in the same collation the VCD scan
+// sort uses (vcdEntryCmp, strcasecmp on the same display-adjusted key) or the two disagree and this
+// menu-level pass -- which runs LAST -- silently undoes the backing array's order.
+void submenuSort(submenu_list_t **submenu, int mode)
 {
     // a simple bubblesort
     // *submenu = mergeSort(*submenu);
@@ -841,8 +848,12 @@ void submenuSort(submenu_list_t **submenu)
         while (tip->next) {
             submenu_list_t *nxt = tip->next;
 
-            char *txt1 = submenuItemGetText(&tip->item);
-            char *txt2 = submenuItemGetText(&nxt->item);
+            // Compare the RENDERED text, not the stored name (see the header comment): a VCD view with
+            // "hide game ID" on draws each row past its game-ID prefix, so the raw filename is the wrong
+            // sort key. vcdDisplayName is a pure pointer-bump (no copy) and returns the input unchanged
+            // for every other list.
+            const char *txt1 = vcdDisplayName(mode, submenuItemGetText(&tip->item));
+            const char *txt2 = vcdDisplayName(mode, submenuItemGetText(&nxt->item));
 
             // Folder browsing: folders group ahead of games; within each group sort by title.
             int cmp;
