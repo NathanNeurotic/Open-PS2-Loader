@@ -79,6 +79,13 @@ const char *vcdDisplayName(int mode, const char *text)
     return n ? text + n : text;
 }
 
+// Case-insensitive name order for the scan sort below -- the same collation submenuSort uses
+// (strcasecmp), so a menu-level sort (gAutosort) can never disagree with the backing array's order.
+static int vcdEntryCmp(const void *a, const void *b)
+{
+    return strcasecmp(((const vcd_entry_t *)a)->name, ((const vcd_entry_t *)b)->name);
+}
+
 // Core scan: opendir `dirPath` and collect *.VCD basenames into a fresh vcd_entry_t list. POSIX dir
 // IO only (newlib-port rule). Shared by vcdScanDir (POPS subfolder) and vcdScanDirRoot (path as-is).
 static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
@@ -132,6 +139,17 @@ static int vcdScanOpenDir(const char *dirPath, vcd_entry_t **outList)
         free(list);
         return 0;
     }
+
+    // #195 (Blade, HW): VCD lists arrived in readdir order -- i.e. FAT directory-entry order, which is
+    // effectively random after any add/delete churn -- while every other list reads alphabetical. Sort
+    // the BACKING array here at the scan, not the menu rows: every consumer then agrees (device pages,
+    // the FAV VCD view, art prewarm), ids stay in lockstep with parallel arrays (the HDD path keeps a
+    // per-id partition-label array), and it holds no matter which publish path builds the rows.
+    // Gated on the same Automatic Sorting switch the game lists honour: Autosort off = raw dir order,
+    // as for every other list. Launch/favourites are unaffected either way -- VCDs resolve BY NAME.
+    if (gAutosort && count > 1)
+        qsort(list, count, sizeof(vcd_entry_t), &vcdEntryCmp);
+
     *outList = list;
     return count;
 }

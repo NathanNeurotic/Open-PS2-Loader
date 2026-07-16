@@ -149,7 +149,7 @@ gui_strings:
 - label: ERROR_LOADING_ID
   string: Error while loading the Game ID.
 - label: AUTOSORT
-  string: Automatic Sorting
+  string: Sort Games Alphabetically
 - label: ERR_LOADING_LANGFILE
   string: Error loading the language file.
 - label: DEBUG
