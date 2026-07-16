@@ -37,9 +37,10 @@ It supports six categories of devices:
 6. ATA/IDE HDDs, including internal exFAT configurations (MBR/GPT).
 
 Plus an optional **network-block-device boot** (UDPBD / UDPFS, via Neutrino) that streams games
-from a PC over the LAN as their own game list — the network protocol defaults to **Off**; pick
-UDPFS, UDPBD or SMB in Device Settings and it comes up live, no restart needed (network stacks
-share the one adapter, so only the first protocol loaded per boot can own it).
+from a PC over the LAN as their own game list — the network protocol defaults to **Off**; the
+first protocol you pick in Device Settings comes up live. (Network stacks share the one adapter
+and stay loaded for the whole boot, so *switching away* from a loaded protocol still needs a
+restart — OPL says so when it applies.)
 See [This Fork's Additions](#this-forks-additions).
 
 All of the devices mentioned above support multiple file formats, including:
