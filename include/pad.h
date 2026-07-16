@@ -33,7 +33,7 @@ void unloadPads();
 void padRumbleActivate(void);
 
 void padRumbleTap(void);     // light tick: cursor moved in a menu / dialog
-void padRumbleTapList(void); // light tick: cursor moved in the GAME LIST (firmer -- see pad.c)
+void padRumbleTapList(void); // game-list cursor tick: identical to padRumbleTap since the RETRO retune (seam kept -- see pad.c)
 void padRumbleBump(void);    // firmer: confirm / cancel
 
 // Play out any in-flight pulse then stop. Call before anything that blocks the GUI thread for long,
