@@ -2162,21 +2162,36 @@ int loadConfig(int types)
 
 int saveConfig(int types, int showUI)
 {
-    char notification[128];
+    // Sized for the worst message this function can now build: the failure text carries a full config
+    // home path (configGetDir -> cfgDevice, itself up to a 256-byte prefix) plus an errno, and 128
+    // truncated exactly the part that made the message worth showing (Gemini review of #187).
+    char notification[320];
     lscstatus = types;
     lscret = 0;
 
     guiHandleDeferedIO(&lscstatus, _l(_STR_SAVING_SETTINGS), IO_CUSTOM_SIMPLEACTION, &_saveConfig, OPL_DEFERRED_IO_TIMEOUT_MS);
 
     if (showUI) {
-        if (lscret) {
-            char *path = configGetDir();
+        char *path = configGetDir();
 
+        if (lscret) {
             snprintf(notification, sizeof(notification), _l(_STR_SETTINGS_SAVED), path);
 
             guiMsgBox(notification, 0, NULL);
-        } else
-            guiMsgBox(_l(_STR_ERROR_SAVING_SETTINGS), 0, NULL);
+        } else if (strchr(path, '?') != NULL) {
+            // The '?' only survives configGetDir() when we fell back to the "mc?:OPL" home AND
+            // checkMC() found no card to substitute -- i.e. there is nowhere to save at all, which is
+            // a standing condition, not this one write failing. Explain that instead of an errno.
+            guiMsgBox(_l(_STR_SETTINGS_NO_HOME), 0, NULL);
+        } else {
+            // Say WHERE and WHY. A bare "Error writing settings!" cost a maintainer an afternoon on a
+            // network boot: the write was failing against a home he had no way to see, and the errno
+            // was already sitting in gDiag.lastSaveErrno (latched at the real failure site in
+            // config.c) with nothing putting it on screen.
+            snprintf(notification, sizeof(notification), _l(_STR_ERROR_SAVING_SETTINGS_TO), path, gDiag.lastSaveErrno);
+
+            guiMsgBox(notification, 0, NULL);
+        }
     }
 
     return lscret;
@@ -3218,6 +3233,20 @@ int main(int argc, char *argv[])
     ioPutRequest(IO_CUSTOM_SIMPLEACTION, &deferredInit);
 
     guiIntroLoop();
+
+    // No writable config home? Say so NOW, not after the user has changed settings and lost them.
+    // The '?' only survives configGetDir() when the discovery chain fell all the way back to the
+    // "mc?:OPL" default AND checkMC() found no card to substitute into it. That is precisely the
+    // network-boot case: the config must be read before any network stack exists, so a UDPFS/UDPBD/SMB
+    // boot can never resolve its own boot device at load time (bdmResolveBootDir returns -1 for a
+    // network block device by design), the chain falls through MC -> MMCE -> BDM -> BDM-HDD, and a rig
+    // with no local card has nowhere to put settings. Reported as "settings don't save - but they
+    // claim to load", which is exactly what silence looks like from the outside.
+    //
+    // A toast, not a modal: this is a standing property of the setup, not an error the user just
+    // caused, and it must not gate a boot that otherwise works fine.
+    if (strchr(configGetDir(), '?') != NULL)
+        guiWarning(_l(_STR_SETTINGS_NO_HOME), 6);
 
     // Menu rumble goes live ONLY now: the boot is done and guiMainLoop below starts polling pads.
     // Before this point guiIntroLoop runs handleInput() against a FROZEN paddata snapshot, so a button
