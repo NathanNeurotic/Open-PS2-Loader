@@ -204,8 +204,8 @@ int vcdLoadPopsCover(const char *scanPrefix, const char *value, const char *suff
 {
     char path[256];
 
-    if (scanPrefix == NULL || value == NULL || suffix == NULL)
-        return ERR_BAD_FILE;
+    if (scanPrefix == NULL || value == NULL || suffix == NULL || resultTex == NULL)
+        return ERR_BAD_FILE; // resultTex too: texDiscoverLoad dereferences it (CodeRabbit review of #203)
     if (strcmp(suffix, "COV") != 0 && strcmp(suffix, "ICO") != 0)
         return ERR_BAD_FILE; // only the cover/icon fall back to the suffixless POPS name
 
