@@ -524,6 +524,45 @@ int sysLaunchDisc(void)
 
     LOG("[DISC] booting %s\n", path);
 
+    // Tell the MMCE which game is about to boot (#183). EVERY other launch path already does this --
+    // bdmsupport.c:1145, ethsupport.c:801, hddsupport.c:1049 -- but Launch Disc never did, so a
+    // PSX MemCard Gen2 / MMCE never switched to the game's folder and the user simply could not save
+    // a physical disc. mmceSendGameID no-ops when the feature is off or the transport is not armed.
+    //
+    // Derive the id from the very path we are about to exec: "cdrom0:\SLUS_123.45;1" -> "SLUS_123.45".
+    // That is correct for BOTH sources above -- BOOT2 is copied verbatim from SYSTEM.CNF and the
+    // key-derived fallback is composed into the same "cdrom0:\%s;1" shape -- so the id always matches
+    // the disc we actually boot, including the case where the two disagree and BOOT2 wins.
+    //
+    // MUST stay ABOVE deinit(): the send needs the IOP transport still up, and deinit tears it down.
+    {
+        char gameid[16];
+        // Accept EITHER separator, then the device colon. SYSTEM.CNF is a publisher-authored text file
+        // copied out verbatim by sysParseBoot2, and while the convention is "cdrom0:\NAME;1" nothing
+        // enforces it -- a disc using '/' would otherwise leave the colon fallback yielding "/SLUS_..."
+        // (a leading slash the MMCE would never match) instead of a clean id. Take whichever separator
+        // appears LAST so a mixed path still ends at the filename. (Gemini review of #185.)
+        const char *bs = strrchr(path, '\\');
+        const char *fs = strrchr(path, '/');
+        const char *s = (bs > fs) ? bs : fs; // NULL sorts lowest, so this picks whichever exists
+        int i = 0;
+
+        if (s == NULL)
+            s = strrchr(path, ':'); // no directory separator at all: fall back to the device colon
+        s = (s != NULL) ? s + 1 : path;
+
+        while (s[i] != '\0' && s[i] != ';' && i < (int)sizeof(gameid) - 1) {
+            gameid[i] = s[i];
+            i++;
+        }
+        gameid[i] = '\0';
+
+        if (gameid[0] != '\0') {
+            LOG("[DISC] sending game id '%s' to MMCE\n", gameid);
+            mmceSendGameID(gameid, NULL, 0); // no Neutrino path and no VMC slots on a disc boot
+        }
+    }
+
     deinit(NO_EXCEPTION, IO_MODE_SELECTED_ALL); // tear OPL down (mirrors sysExecExit)
 
     args[0] = path;
