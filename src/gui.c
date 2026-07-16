@@ -29,6 +29,7 @@
 #include "include/sound.h"
 #include "include/guigame.h"
 #include "include/texcache.h"
+#include "include/tar.h" // tarInvalidate -- re-arm the .tar probe when the toggle flips
 
 #include <limits.h>
 #include <stdlib.h>
@@ -1008,7 +1009,16 @@ reselect_video_mode:
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(diaUIConfig, UICFG_COVERART, &gEnableArt);
-        diaGetInt(diaUIConfig, UICFG_ENABLE_ART_TAR, &gEnableArtTar);
+        {
+            // Re-arm the .tar probe when the toggle actually flips. tarFind's "no archive anywhere"
+            // latch is write-once and process-wide, and NOTHING was clearing it (tarInvalidate had no
+            // callers at all) -- so a user who turned the loader on after boot kept getting nothing
+            // until a reboot, which looks exactly like "the toggle does nothing".
+            int previousArtTar = gEnableArtTar;
+            diaGetInt(diaUIConfig, UICFG_ENABLE_ART_TAR, &gEnableArtTar);
+            if (gEnableArtTar != previousArtTar)
+                tarInvalidate(TAR_KIND_ART);
+        }
         diaGetInt(diaUIConfig, UICFG_WIDESCREEN, &gWideScreen);
         diaGetInt(diaUIConfig, CFG_APPLYGAMEID, &gApplyGameID);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);

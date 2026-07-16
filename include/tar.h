@@ -32,7 +32,16 @@ typedef struct
 typedef struct
 {
     TarEntryBase base;
-    char filename[41]; // ART: filename up to 40 chars + null
+    // [48], not [41]: the parser derives its copy length from the entry STRIDE, not from this array --
+    // nameMax = entrySize - sizeof(TarEntryBase) - 1 = 64 - 16 - 1 = 47 -- so it memcpy'd 47 bytes and
+    // NUL-terminated at [47], i.e. 7 bytes past the declared size. It landed in this struct's own tail
+    // padding (the stride is exactly 64), so it was benign in practice, but it is out of bounds on the
+    // declared type and would corrupt the next entry the moment anyone resizes this array or grows
+    // TarEntryBase. [48] keeps sizeof(TarEntryArt) == 64, so entrySize, nameMax, copyLen, the on-disk
+    // art_cache.bin layout and wOPL cache compatibility are all unchanged (do NOT widen further without
+    // bumping ARC_VERSION -- 47 is also wOPL-base's cap, and real keys are far shorter,
+    // e.g. "SLUS_203.70_COV.png" = 19).
+    char filename[48]; // ART: filename up to 47 chars + null
 } TarEntryArt;
 
 typedef struct
