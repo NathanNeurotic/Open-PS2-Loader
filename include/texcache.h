@@ -23,6 +23,14 @@ typedef struct
 
     int UID;
 
+    // Set when this entry's load FAILED with ERR_BAD_FILE -- a GENUINE ABSENCE (open() found no file),
+    // as opposed to a transient read error on a contended bus (ERR_FILE_IO). cacheGetTextureInternal
+    // memoizes a genuine absence on gCacheFailEpoch (which survives the per-screen-switch generation
+    // bump, so the info page stops re-running the same failing opens every visit -- #154/#120) and a
+    // transient on gCacheGeneration (re-probed next generation, in case the bus recovered). 0 on a
+    // fresh/cleared entry (memset) -- treated as transient, the conservative default.
+    unsigned char failAbsent;
+
     // Identity of the art this entry holds (heap copy of the request value, e.g. the game's
     // startup). The instant-return path validates it against the caller's value so a poisoned or
     // stale per-item (cacheId, UID) pair self-heals in one frame instead of permanently rendering
@@ -89,6 +97,8 @@ int cacheAbortMmceImageLoadsTimed(int timeoutTicks);
  *  Never blocks on the IO worker.
  */
 void cacheAdvanceGeneration(void);
+// Drop the genuine-absence art memos (see texcache.c). Call only on a deliberate settings/theme apply.
+void cacheInvalidateFailMemo(void);
 
 /** Advances the failure-retry generation without canceling queued art loads.
  */

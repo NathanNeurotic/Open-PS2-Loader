@@ -2177,6 +2177,12 @@ static void _saveConfig()
 
 void applyConfig(int themeID, int langID, int skipDeviceRefresh)
 {
+    // A deliberate settings/theme apply is the one moment art the user just added (or a theme they just
+    // switched to) could newly exist, so clear the genuine-absence art memo and let cover-less items be
+    // probed once more. This is NOT cacheAdvanceGeneration (screen-switch/scroll churn -- the very thing
+    // the fail epoch ignores) and NOT the background rescan poll (re-hammering that reintroduces #120).
+    cacheInvalidateFailMemo();
+
     if (gDefaultDevice < 0 || gDefaultDevice > FAV_MODE)
         gDefaultDevice = MMCE_MODE;
     // Favourites (issue #54) is a valid startup page only while the FAV tab is enabled; otherwise fall
