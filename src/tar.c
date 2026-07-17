@@ -17,6 +17,9 @@
 #include <string.h>
 
 #include "include/tar.h"
+#include "include/ioman.h" // LOG -- this engine shipped with ZERO tracing, which made every "art.tar
+                           // doesn't work" report unfalsifiable (the CHT path announces its hit at
+                           // supportbase.c; ART said nothing at all).
 
 typedef struct
 {
@@ -219,10 +222,11 @@ static int tarWriteCache(const char *cachePath, const char *tarPath, TarKind kin
 
 static int tarParseFile(TarKind kind, const char *path)
 {
-    struct stat st;
-    if (stat(path, &st) < 0)
-        return -1;
-
+    // No stat() existence probe here. It was pure redundancy -- the caller has already proven the file
+    // OPENS, and this function opens it again below -- but its failure latched s_inactive[kind], which is
+    // a process-wide, write-once kill switch with no live way to clear it. Any device driver where open()
+    // succeeds but stat() fails therefore killed art.tar for the whole session with the archive sitting
+    // right there. Let the open() below be the single arbiter of existence.
     char dirPath[256];
     strncpy(dirPath, path, sizeof(dirPath));
     dirPath[sizeof(dirPath) - 1] = '\0';
@@ -269,15 +273,27 @@ static int tarParseFile(TarKind kind, const char *path)
         if (isZeroBlock(header))
             break;
 
+        // Derive the seek distance from the UNCAPPED header size. Clamping rawSize FIRST and computing
+        // paddedSize from the clamped value made any member larger than MAX_FILE_SIZE seek SHORT, so the
+        // walk landed mid-data and indexed every SUBSEQUENT entry at a garbage offset -- and tarWriteCache
+        // then PERSISTED that corrupt index to art_cache.bin, where it passes revalidation (which only
+        // rejects rawSize > MAX_FILE_SIZE, and the clamped value is exactly ==) and survives reboots until
+        // the archive's size changes. wOPL refuses such an archive outright; skipping just the oversized
+        // member keeps the rest of the archive usable while never desynchronising the walk.
         u64 rawSize = parseOctal((char *)header + 124, 12);
-        if (rawSize > MAX_FILE_SIZE)
-            rawSize = MAX_FILE_SIZE;
-
         u64 paddedSize = ((rawSize + 511) / 512) * 512;
+        int oversized = (rawSize > MAX_FILE_SIZE); // too big to serve (rawSize/paddedSize are u32) -> don't index it
 
         u64 dataOffset = lseek64(fd, 0, SEEK_CUR);
         if (dataOffset == (u64)-1)
             goto fail;
+
+        if (oversized) {
+            LOG("TAR skip oversized entry (%lu bytes > %d) in %s\n", (unsigned long)rawSize, MAX_FILE_SIZE, path);
+            if (lseek64(fd, paddedSize, SEEK_CUR) == (u64)-1)
+                goto fail;
+            continue;
+        }
 
         if (s_count[kind] >= s_cap[kind]) {
             u32 newCap = s_cap[kind] ? (s_cap[kind] + 64) : 64;
@@ -356,15 +372,22 @@ int tarLoadFromAnyDevice(TarKind kind)
 
         s_dev[kind] = dev;
         if (tarParseFile(kind, tarPath) == 0) {
+            LOG("TAR indexed %s (%u entries)\n", tarPath, (unsigned int)s_count[kind]);
             found = 1;
             break;
         }
+        LOG("TAR parse FAILED for %s -- trying the next device\n", tarPath);
 
         tarCloseInternal(kind);
     }
 
-    if (!found)
+    // Latch: no archive on any device -> stop probing for the rest of the session (this is what makes
+    // the loader cheap by default on setups that ship no .tar -- one failed open per device, then zero).
+    // It is write-once and process-wide, so LOG it: a silent latch made every HW report unfalsifiable.
+    if (!found) {
+        LOG("TAR no archive found for kind %d -- probing disabled for this session\n", (int)kind);
         s_inactive[kind] = 1;
+    }
 
     return found ? 0 : -1;
 }
