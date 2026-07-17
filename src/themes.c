@@ -23,11 +23,13 @@
 
 // Cache slots per AttributeImage element. An AttributeImage is NOT a per-game image -- it is a small FIXED
 // SET of glyphs keyed by the attribute's value, so the cache only ever needs to hold that attribute's whole
-// value set to be thrash-free. Sized to the LARGEST set we emit, #Format (ISO/ZSO/VCD/UL/ELF/HDL = 6), with
-// headroom; #DiscType is 3 (PS1CD/PS2CD/PS2DVD), #Media and #System are 2 each. Cheap: cacheInitCache
-// allocates empty entry structs, and a slot costs texture memory only once a glyph is actually loaded into
-// it -- so a #DiscType cache still only ever holds its 3.
-#define ATTR_IMAGE_CACHE_SLOTS   8
+// value set to be thrash-free. Our built-in attributes are tiny (#Format = ISO/ZSO/VCD/UL/ELF/HDL = 6,
+// #DiscType = 3, #Media/#System = 2), but a theme can bind AttributeImage to a CUSTOM per-game config key
+// (Genre, Developer, Publisher, ...) whose value set is open-ended (Gemini review of #49), so size for that:
+// 32 covers any realistic custom attribute with headroom. Genuinely cheap -- cacheInitCache allocates only
+// `count` empty cache_entry_t structs (no texture memory until a glyph is actually loaded into a slot), so
+// 32 slots is ~2-3 KB of EE RAM and a #DiscType cache still only ever HOLDS its 3.
+#define ATTR_IMAGE_CACHE_SLOTS 32
 
 extern const char conf_theme_OPL_cfg;
 extern u16 size_conf_theme_OPL_cfg;
