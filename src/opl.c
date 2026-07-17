@@ -2855,13 +2855,12 @@ static void setDefaults(void)
     gETHPrefix[0] = '\0';
     gEnableNotifications = 1;
     gEnableArt = 1;
-    // .tar cover-art loader ON by default = wOPL parity (#54). wOPL has NO equivalent gate on either
-    // branch -- it tries ART/art.tar FIRST and falls back to the loose ART/ file -- so shipping this OFF
-    // was the whole of "art.tar covers don't work": the reporter had the feature and could not find the
-    // switch ("I looked for an activation option but couldn't find it"). The toggle stays as an escape
-    // hatch. Cost on a setup with no art.tar is one failed open() per session, then zero (the tarFind
-    // inactive latch), which is exactly why wOPL's author added that latch rather than a user toggle.
-    gEnableArtTar = 1;
+    // .tar cover-art loader is OPT-IN (default OFF) -- the fork's deliberate opinionated default (#54).
+    // The reporter's "art.tar doesn't work" was DISCOVERABILITY, not the default: the toggle lives in
+    // Display Settings ("Cover Art .tar Archive"). PR #207 briefly flipped this ON for wOPL parity;
+    // reverted at NathanNeurotic's call -- users who want the archive turn it on. The engine fixes from
+    // #207 (uncapped-seek index integrity, no stat()-latch, toggle re-arm, the [48] filename bound) stay.
+    gEnableArtTar = 0;
     gWideScreen = 1;
     gDefaultGameView = GAME_VIEW_BOTH;
     gEnableSFX = 1;
