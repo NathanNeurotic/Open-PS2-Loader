@@ -1942,7 +1942,35 @@ static int trySaveAlternateDevice(int types)
 {
     int value;
 
-    // Save in deterministic order: MC -> MMCE -> BDM -> BDM-HDD -> HDD.
+    // BOOT DEVICE FIRST. This whole function only runs with an EMPTY gBootDir (see _saveConfig), and the
+    // one common way to get here is an APA/uLE boot: resolveBootDirToMass DELIBERATELY blanks a
+    // "hdd0:<part>:pfs:/..." boot dir because that launch identity is unopenable, so legacy discovery can
+    // find the real APA config via checkLoadConfigHDD. Without this leg the order below then wrote an APA
+    // user's settings to a MEMORY CARD in preference to their own HDD -- the config had just been LOADED
+    // from pfs0: and would be saved somewhere else. Upstream has this leg (we dropped it in the fork); it
+    // restores "the boot device is the config home, mc is only the fallback".
+    //
+    // Upstream sizes its buffer `char pwd[8]`, which CANNOT hold an APA cwd ("hdd0:+OPL:pfs:/" is 15) --
+    // getcwd then fails and it strncmp's an UNINITIALISED stack buffer, so upstream's own leg is a no-op
+    // on the exact case it exists for. Size it properly and initialise it: same intent, actually reached.
+    // Deliberately NOT touching the pwd[8] in tryAlternateDevice's LOAD path -- that one is only a probe
+    // ORDER hint (checkLoadConfigHDD runs unconditionally there regardless), and staying byte-identical to
+    // upstream on the APA discovery mechanism is the whole point.
+    {
+        char pwd[64];
+        pwd[0] = '\0';
+        if (getcwd(pwd, sizeof(pwd)) != NULL && pwd[0] != '\0') {
+            if (!strncmp(pwd, "hdd", 3)) {
+                if ((value = trySaveConfigHDD(types)) > 0)
+                    return value;
+            } else if (!strncmp(pwd, "mass", 4)) {
+                if ((value = trySaveConfigBDM(types)) > 0)
+                    return value;
+            }
+        }
+    }
+
+    // Then the deterministic fallback order: MC -> MMCE -> BDM -> BDM-HDD -> HDD.
     if (sysCheckMC() >= 0) {
         if ((value = trySaveConfigMC(types)) > 0)
             return value;
@@ -3056,6 +3084,19 @@ static void miniInit(int mode)
     InitConsoleRegionData();
 
     ret = configReadMulti(CONFIG_ALL);
+    // Fall back to the device's own config home when the cwd read found nothing -- the fork dropped
+    // upstream's fallback here and only the BDM leg got a replacement (resolveBootDirToMass above). So an
+    // argv "mini" launch on an APA HDD read NO config at all and ran on pure DEFAULTS for gPS2Logo,
+    // gExitPath, gHDDSpindown, hddCacheSize and every Neutrino global -- with pfs0: already mounted a few
+    // lines up and the config sitting right there, unread. (Reachable only from an external launcher:
+    // HDD-OSD / PSBBN / a direct-to-game shortcut. If argv[0] carried no usable path, gBootDir is empty,
+    // configInit homed at mc?:OPL, and an APA-only setup misses for the same reason.)
+    if (!(ret & CONFIG_OPL)) {
+        if (mode == HDD_MODE)
+            ret = checkLoadConfigHDD(CONFIG_ALL);
+        else if (mode == BDM_MODE)
+            ret = checkLoadConfigBDM(CONFIG_ALL);
+    }
     if (CONFIG_ALL & CONFIG_OPL) {
         if (ret & CONFIG_OPL) {
             config_set_t *configOPL = configGetByType(CONFIG_OPL);
