@@ -701,17 +701,20 @@ void guiShowVcdConfig(void)
         }
         diaGetInt(diaVcdConfig, CFG_BDMA_APPLY, &gBdmaApplyOnLaunch);
         {
-            // #195: hide-gameid is NO LONGER purely cosmetic -- it is now a SORT KEY. Both the VCD scan
-            // sort (vcdEntryCmp) and the menu sort (submenuSort) order by the DISPLAYED title, i.e. past
-            // the hidden prefix, so a change must re-sort every VCD-capable page. Without this the rows
-            // keep the PREVIOUS key's order while rendering the new text = visibly mis-alphabetised until
-            // something else happens to force a rescan (CodeRabbit review of #200). Mirrors the
-            // first-disc-only handling below.
+            // #195: hide-gameid is NO LONGER purely cosmetic -- it is now a SORT KEY. The menu sort
+            // (submenuSort) orders by the DISPLAYED title, i.e. past the hidden prefix, so a change must
+            // re-sort every VCD-capable page. vcdMarkAllDirty() + rebuildVcdLists forces that menu rebuild
+            // and its submenuSort re-runs against the new vcdDisplayName key -- WITHOUT re-reading any
+            // device. Do NOT invalidate the HDD VCD cache here (unlike first-disc-only below): this toggle
+            // changes only the DISPLAY ORDER, not the list CONTENTS, and submenuSort reorders the cached
+            // rows in place. hddVcdInvalidateCache() would force an unnecessary full re-walk of every
+            // __.POPS partition (pfs1: remount) plus a transient empty HDD VCD page on every flip (audit
+            // 2026-07-17 of the CodeRabbit #200 fix -- my "sorted with the old key" note was true but
+            // irrelevant, the menu sort fixes the order regardless of the backing array).
             int previousHideGameId = gVcdHideGameId;
             diaGetInt(diaVcdConfig, CFG_VCD_HIDE_GAMEID, &gVcdHideGameId);
             if (gVcdHideGameId != previousHideGameId) {
                 vcdMarkAllDirty();
-                hddVcdInvalidateCache(); // the cached HDD VCD list was sorted with the old key
                 rebuildVcdLists = 1;
             }
         }
