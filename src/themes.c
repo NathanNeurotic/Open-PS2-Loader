@@ -21,6 +21,16 @@
 #define DECORATOR_SIZE           20
 #define APP_PREFETCH_IDLE_FRAMES 10
 
+// Cache slots per AttributeImage element. An AttributeImage is NOT a per-game image -- it is a small FIXED
+// SET of glyphs keyed by the attribute's value, so the cache only ever needs to hold that attribute's whole
+// value set to be thrash-free. Our built-in attributes are tiny (#Format = ISO/ZSO/VCD/UL/ELF/HDL = 6,
+// #DiscType = 3, #Media/#System = 2), but a theme can bind AttributeImage to a CUSTOM per-game config key
+// (Genre, Developer, Publisher, ...) whose value set is open-ended (Gemini review of #49), so size for that:
+// 32 covers any realistic custom attribute with headroom. Genuinely cheap -- cacheInitCache allocates only
+// `count` empty cache_entry_t structs (no texture memory until a glyph is actually loaded into a slot), so
+// 32 slots is ~2-3 KB of EE RAM and a #DiscType cache still only ever HOLDS its 3.
+#define ATTR_IMAGE_CACHE_SLOTS 32
+
 extern const char conf_theme_OPL_cfg;
 extern u16 size_conf_theme_OPL_cfg;
 extern const char theme_coverflow_cfg;
@@ -727,7 +737,17 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
 
     if (cachePattern && !mutableImage->cache) {
         if (type == ELEM_TYPE_ATTRIBUTE_IMAGE)
-            mutableImage->cache = cacheInitCache(-1, themePath, 0, cachePattern, 1);
+            // An AttributeImage is a small FIXED SET of glyphs keyed by the attribute's value, not a
+            // per-game image: #DiscType has three (PS1CD/PS2CD/PS2DVD), #Media two (CD/DVD), #System two
+            // (PS1/PS2), #Format a handful. With ONE slot the cache could hold exactly one of them, so
+            // every move between a DVD game and a CD game EVICTED it and re-read the PNG off the device --
+            // and that re-read rides the single art worker, queued BEHIND the whole interactive art set
+            // (the cover shows in ~0.2s but the rest drains for seconds). That is AcidReach's #49 report
+            // exactly: ~5s on a slow step to a new game, ~0.5s back to a previous one, and -- the tell --
+            // ~0.2s when scrolling FAST, because scrolling defers the art set and the badge jumps a clear
+            // queue. ATTR_IMAGE_CACHE_SLOTS covers the largest attribute's value set, so each glyph is read
+            // ONCE per session and every later selection is a RAM hit with zero device IO.
+            mutableImage->cache = cacheInitCache(-1, themePath, 0, cachePattern, ATTR_IMAGE_CACHE_SLOTS);
         else
             mutableImage->cache = cacheInitCache(theme->gameCacheCount++, "ART", 1, cachePattern, cacheCount);
     }
