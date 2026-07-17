@@ -125,6 +125,14 @@ static int gArtQueuedCount = 0;
 static int gArtActiveCount = 0;
 static int gArtInteractiveActiveCount = 0;
 static int gCacheGeneration = 1;
+// Separate epoch for GENUINE-ABSENCE art memos. gCacheGeneration bumps on every screen switch and cursor
+// move (cacheAdvanceGeneration), which is correct for scroll/nav churn but WRONG for a known-missing file:
+// keying an absence on it made every info-page entry re-run the same ~6 failing opens for a PS1 game with
+// no art, wedging the slow MMCE SIO2 bus (#154, the "baseline info-entry read burst" #120 never cut). This
+// epoch bumps ONLY on a deliberate settings/theme apply (cacheInvalidateFailMemo, from applyConfig) -- NOT
+// on generation advance and NEVER on the background rescan poll (that re-hammer is exactly what reintroduces
+// #120) -- so a genuine absence is probed ONCE and then costs zero opens until the user changes something.
+static int gCacheFailEpoch = 1;
 static load_image_request_t *gArtCurrentReq = NULL;
 /* Navigation-active snapshot. getKey() mutates GUI-thread-only pad-repeat state,
  * so the art worker thread must not call it; the GUI thread refreshes this flag
@@ -887,6 +895,12 @@ static void cacheCompleteRequest(load_image_request_t *req, int result)
         } else if (result < 0 || req->texture.Mem == NULL) {
             req->entry->lastUsed = 0;
             req->entry->state = CACHE_ENTRY_FAILED;
+            // ONLY ERR_BAD_FILE is a genuine absence (open() failed = no such file) -> long-term memo.
+            // ERR_FILE_IO (contended-bus read/stage error) and a decode that yielded no pixels
+            // (result >= 0 but Mem == NULL) are transient/present-but-broken -> re-probe next generation,
+            // so a real file is never permanently hidden by a one-off bus hiccup (the reason the earlier
+            // gCacheFailEpoch attempt was rejected -- PR #134's ERR_FILE_IO split is what makes it safe).
+            req->entry->failAbsent = (result == ERR_BAD_FILE);
         } else {
             req->entry->texture = req->texture;
             cacheResetTextureState(&req->texture);
@@ -1004,6 +1018,7 @@ void cacheInit()
     gArtActiveCount = 0;
     gArtInteractiveActiveCount = 0;
     gCacheGeneration = 1;
+    gCacheFailEpoch = 1;
     gArtInteractiveReqList = NULL;
     gArtInteractiveReqEnd = NULL;
     gArtPrefetchReqList = NULL;
@@ -1294,6 +1309,21 @@ void cacheAdvanceGeneration(void)
     cacheWakeWorker();
 }
 
+// Drop the GENUINE-ABSENCE art memos so cover-less items are probed once more. Call ONLY on a deliberate
+// settings/theme apply (from applyConfig) -- never on cacheAdvanceGeneration (that fires on every screen
+// switch, which is the churn this epoch exists to ignore) and never on the background rescan poll (that
+// re-hammer is what reintroduces the #120 wedge). A cover copied onto the card mid-session appears after
+// the next settings apply or reboot; a real device change already rebuilds the lists (fresh caches +
+// re-zeroed per-item cacheIds), so this is belt-and-braces for the settings/theme case.
+void cacheInvalidateFailMemo(void)
+{
+    cacheLock();
+    gCacheFailEpoch++;
+    if (gCacheFailEpoch <= 0)
+        gCacheFailEpoch = 1;
+    cacheUnlock();
+}
+
 void cacheBumpGeneration(void)
 {
     cacheLock();
@@ -1453,7 +1483,19 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     cacheLock();
     effectiveMode = cacheGetEffectiveMode(list, value);
 
+    // Failure memos. -2 = a GENUINE ABSENCE, keyed on gCacheFailEpoch: it survives the per-screen-switch
+    // generation bump, so the info page no longer re-runs the same failing opens on every visit (#154).
+    // -3 = a TRANSIENT failure, keyed on gCacheGeneration: re-probed on the next generation in case the
+    // bus recovered. A mismatch (epoch/generation advanced) drops the memo so the load is re-attempted.
     if (*cacheId == -2) {
+        if (*UID == gCacheFailEpoch) {
+            cacheUnlock();
+            return NULL;
+        }
+
+        *cacheId = -1;
+        *UID = -1;
+    } else if (*cacheId == -3) {
         if (*UID == gCacheGeneration) {
             cacheUnlock();
             return NULL;
@@ -1505,8 +1547,16 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
                     cacheUnlock();
                     return result;
                 case CACHE_ENTRY_FAILED:
-                    *cacheId = -2;
-                    *UID = gCacheGeneration;
+                    // Memo this failure so it is not reopened every frame. A genuine absence is keyed on
+                    // gCacheFailEpoch (long-lived: no re-probe until settings/theme apply); a transient on
+                    // gCacheGeneration (re-probed next generation, in case the bus recovered).
+                    if (entry->failAbsent) {
+                        *cacheId = -2;
+                        *UID = gCacheFailEpoch;
+                    } else {
+                        *cacheId = -3;
+                        *UID = gCacheGeneration;
+                    }
                     cacheUnlock();
                     return NULL;
                 default:
