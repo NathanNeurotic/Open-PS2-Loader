@@ -58,6 +58,7 @@ typedef struct load_image_request
     int cacheUID;
     int effectiveMode;
     int generation;
+    int failEpoch; // gCacheFailEpoch when this request was ENQUEUED -- see the completion path
     volatile int abortRequested;
     unsigned char priority;
     unsigned char vcdFallback;
@@ -900,7 +901,16 @@ static void cacheCompleteRequest(load_image_request_t *req, int result)
             // (result >= 0 but Mem == NULL) are transient/present-but-broken -> re-probe next generation,
             // so a real file is never permanently hidden by a one-off bus hiccup (the reason the earlier
             // gCacheFailEpoch attempt was rejected -- PR #134's ERR_FILE_IO split is what makes it safe).
-            req->entry->failAbsent = (result == ERR_BAD_FILE);
+            //
+            // AND require the fail-epoch to be UNCHANGED since this request started (req->failEpoch ==
+            // gCacheFailEpoch). cacheInvalidateFailMemo() (settings/theme apply) bumps the epoch precisely
+            // to force cover-less items to re-probe -- e.g. the user just copied a cover onto the card.
+            // A request already IN FLIGHT across that apply must NOT be allowed to write a genuine-absence
+            // memo under the NEW epoch: that would re-suppress the very re-probe the apply asked for, so
+            // the freshly-added art would not appear until a SECOND apply (CodeRabbit review of #154).
+            // Downgrading a stale-epoch absence to transient (failAbsent = 0) re-probes it next generation
+            // -- imminent, and exactly the item most likely to have just gained art.
+            req->entry->failAbsent = (result == ERR_BAD_FILE && req->failEpoch == gCacheFailEpoch);
         } else {
             req->entry->texture = req->texture;
             cacheResetTextureState(&req->texture);
@@ -1318,9 +1328,14 @@ void cacheAdvanceGeneration(void)
 void cacheInvalidateFailMemo(void)
 {
     cacheLock();
-    gCacheFailEpoch++;
-    if (gCacheFailEpoch <= 0)
+    // Wrap BEFORE overflowing: gCacheFailEpoch++ at INT_MAX is signed-overflow UB, and -O2 may then
+    // prove the (<= 0) guard dead and delete it (Gemini review of #154). Practically unreachable (one
+    // bump per settings/theme apply), but keep it defined. (gCacheGeneration uses the older <=0 idiom
+    // above; left as-is -- pre-existing, out of this change's scope.)
+    if (gCacheFailEpoch == 0x7FFFFFFF)
         gCacheFailEpoch = 1;
+    else
+        gCacheFailEpoch++;
     cacheUnlock();
 }
 
@@ -1696,6 +1711,7 @@ static GSTEXTURE *cacheGetTextureInternal(image_cache_t *cache, item_list_t *lis
     req->vcdFallback = vcdViewActive(effectiveMode);
     req->priority = priority;
     req->generation = gCacheGeneration;
+    req->failEpoch = gCacheFailEpoch; // pin the absence epoch to when the load STARTED, not when it finishes
     req->value = (char *)req + sizeof(load_image_request_t);
     strcpy(req->value, value);
     req->cacheUID = cache->nextUID;
