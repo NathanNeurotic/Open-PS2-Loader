@@ -1419,14 +1419,24 @@ void menuHandleInputMain()
 // Info-element family for a list: mirrors menuRenderInfo's dispatch (VCD view first -- it also
 // covers the Favourites tab's L3 VCD view -- then FAV/APP, else the games family). Shared with the
 // info-art prewarm so render and prewarm can never pick different families.
+//
+// A page-specific info family (VCD / Favourites / Apps) falls back to the theme's OWN games info family
+// when the LOADED theme does not define it -- NEVER to the built-in/baked theme (gTheme is always the
+// current theme, and every theme parses its families from a blank slate, themes.c). A custom
+// conf_theme.cfg that omits e.g. the favs-info section leaves favsInfoElems EMPTY (validateBackgroundElems
+// adds a background ONLY to an already-non-empty info family), so without this the Favourites info page
+// rendered NOTHING (brenotomaz, #213: "on the favorites info page, they don't load at all"). Rule
+// (NathanNeurotic): fav info defaults to MAIN info when the custom theme doesn't provide it; a custom
+// theme uses its OWN assets entirely, just like APPS -- never our baked assets. Empty-family-gated, so a
+// theme that DOES define the page keeps its own layout byte-for-byte.
 static theme_elems_t *menuGetInfoElems(item_list_t *list)
 {
     if (list != NULL && vcdViewActive(list->mode))
-        return &gTheme->vcdInfoElems;
+        return gTheme->vcdInfoElems.first ? &gTheme->vcdInfoElems : &gTheme->infoElems;
     if (list != NULL && list->mode == FAV_MODE)
-        return &gTheme->favsInfoElems;
+        return gTheme->favsInfoElems.first ? &gTheme->favsInfoElems : &gTheme->infoElems;
     if (list != NULL && list->mode == APP_MODE)
-        return &gTheme->appsInfoElems;
+        return gTheme->appsInfoElems.first ? &gTheme->appsInfoElems : &gTheme->infoElems;
     return &gTheme->infoElems;
 }
 
