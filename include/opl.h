@@ -216,7 +216,6 @@ extern int gOSDLanguageSource;
 
 extern int showCfgPopup;
 extern int showNetDhcpPopup;      // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
-extern int showHddReconcilePopup; // boot toast: APA + exFAT(BDM) HDD were both enabled -- one was auto-disabled (#154)
 
 #ifdef IGS
 #define IGS_VERSION "0.1"
@@ -258,6 +257,7 @@ extern int gNeutrinoElfArg;         // opt-in (settings key only, no UI): auto-e
 extern char gPopstarterPath[256];   // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
 extern char gBootDir[256];          // boot directory (cwd) OPL launched from, e.g. "mass0:/APPS"; "" if undeterminable
 extern int gDeinitTerminal;         // 1 while deinit() runs for exit/poweroff, 0 for a game/app LAUNCH teardown.
+extern int gDeinitAtaSelected;      // 1 when the selected launch backend still needs the internal ATA drive.
                                     // Launch teardown must NOT power shared buses down (dev9: the post-deinit
                                     // POPSTARTER.ELF read comes off the ATA-backed massN: mount).
 // POPSTARTER.ELF Device picker: where PS1 VCD launches load POPS/POPSTARTER.ELF from. Default tries the

@@ -65,7 +65,9 @@ typedef struct
 } bdm_device_data_t;
 
 void bdmLoadModules(void);
+void bdmResetModuleState(void);
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet);
+int bdmSupportIsATA(item_list_t *support);
 
 void bdmInitSemaphore();
 void bdmEnumerateDevices();

@@ -302,7 +302,7 @@ static void guiShowNotifications(void)
     int y = 10;
     int yadd = 35;
 
-    if (showPartPopup || showThmPopup || showLngPopup || showCfgPopup || showNetDhcpPopup || showHddReconcilePopup) {
+    if (showPartPopup || showThmPopup || showLngPopup || showCfgPopup || showNetDhcpPopup) {
         if (!popupTimer) {
             popupTimer = clock() + 5000 * (CLOCKS_PER_SEC / 1000);
             sfxPlay(SFX_MESSAGE);
@@ -351,18 +351,11 @@ static void guiShowNotifications(void)
             y += yadd;
         }
 
-        // One-time notice set at config load (#154): APA + exFAT(BDM) internal HDD were both
-        // enabled and one was auto-disabled. Rendered here (not toasted from _loadConfig) so _l()
-        // resolves AFTER the language pack loads -- Gemini review of #167.
-        if (showHddReconcilePopup)
-            guiRenderNotifications(_l(_STR_HDD_BACKEND_RECONCILED), y);
-
         if (clock() >= popupTimer) {
             guiResetNotifications();
             showPartPopup = 0;
             showCfgPopup = 0;
             showNetDhcpPopup = 0;
-            showHddReconcilePopup = 0;
         }
     }
 }
@@ -1231,14 +1224,6 @@ void guiShowNetConfig(void)
 static int guiDeviceUpdater(int modified)
 {
     if (modified) {
-        int hddMode, bdmHdd;
-        diaGetInt(diaDeviceConfig, CFG_HDDMODE, &hddMode);
-        diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &bdmHdd);
-        // BDM HDD (GPT/MBR) and the APA HDD mode are mutually exclusive; keep the
-        // two interlocked live now that both live on the same page.
-        diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !bdmHdd);
-        diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, hddMode == 0);
-
         // Network 3-row live logic. Row 1 Start (Off/Manual/Auto), Row 2 Protocol (SMB/UDPFS/UDPBD),
         // Row 3 Access (Files/IMG). While Start=Off, grey Protocol + Access. Lock Access to Files for
         // SMB and to IMG for UDPBD (only UDPFS offers the free toggle) -- snap the value so a stale IMG
@@ -1286,13 +1271,11 @@ void guiShowDeviceConfig(void)
     diaSetInt(diaDeviceConfig, CFG_APPMODE, gAPPStartMode);
     diaSetInt(diaDeviceConfig, CFG_FAVMODE, gFAVStartMode);
 
-    // Block devices (inlined; interlocked with the APA HDD mode)
+    // Block devices. ATA-BDM and APA/PFS intentionally coexist on the shared ATA stack.
     diaSetInt(diaDeviceConfig, CFG_ENABLEUSB, gEnableUSB);
     diaSetInt(diaDeviceConfig, CFG_ENABLEILK, gEnableILK);
     diaSetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, gEnableMX4SIO);
     diaSetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, gEnableBdmHDD);
-    diaSetEnabled(diaDeviceConfig, CFG_ENABLEBDMHDD, !gHDDStartMode);
-    diaSetEnabled(diaDeviceConfig, CFG_HDDMODE, !gEnableBdmHDD);
     // Network: 3 orthogonal rows seeded from the authoritative gNetworkProtocol + gNetStartMode.
     //   Row 1 Start:    Off/Manual/Auto == gNetStartMode (START_MODE_*)
     //   Row 2 Protocol: SMB(0)/UDPFS(1)/UDPBD(2)  -- OFF and UDPFSBD both collapse to their protocol
