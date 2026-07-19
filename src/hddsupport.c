@@ -578,36 +578,50 @@ static int hddNeedsUpdate(item_list_t *itemList)
     return 1;
 }
 
+#define HDD_GROK_SCAN_ATTEMPTS  10
+#define HDD_GROK_RETRY_DELAY_US (250 * 1000)
+
 static int hddUpdateGameList(item_list_t *itemList)
 {
     if (hddApaState != HDD_APA_READY)
         return 0;
 
     if (vcdViewActive(itemList->mode))
-        // Reuse the session's built list on view flips; hddBuildVcdGameList runs only when never
-        // built, invalidated (first-disc-only change), or freed by teardown (hddFreeVcdGameList).
         return hddVcdListBuilt ? hddVcdGameCount : hddBuildVcdGameList();
 
     hdl_games_list_t hddGamesNew;
     int ret;
 
-    // Force a live APA scan not only when the cache fails to load (ret != 0) or a prior build asked for it
-    // (hddForceUpdate), but ALSO when the cache loaded EMPTY (count 0). A missing/empty/stale games.bin
-    // otherwise left the first HDD page blank until a second manual refresh (provato's HW report).
-    if (((ret = hddLoadGameListCache(&hddGames)) != 0) || (hddForceUpdate) || (hddGames.count == 0)) {
+    if (((ret = hddLoadGameListCache(&hddGames)) != 0) || hddForceUpdate || (hddGames.count == 0)) {
+        int attempt;
+
         hddGamesNew.count = 0;
         hddGamesNew.games = NULL;
-        ret = hddGetHDLGamelist(&hddGamesNew);
+
+        for (attempt = 1; attempt <= HDD_GROK_SCAN_ATTEMPTS; attempt++) {
+            ret = hddGetHDLGamelist(&hddGamesNew);
+            LOG("HDD GROK RETRY: attempt %d/%d ret=%d count=%u\n", attempt, HDD_GROK_SCAN_ATTEMPTS, ret, hddGamesNew.count);
+
+            if ((ret == 0 && hddGamesNew.count > 0) || attempt == HDD_GROK_SCAN_ATTEMPTS)
+                break;
+
+            hddFreeHDLGamelist(&hddGamesNew);
+            hddGamesNew.count = 0;
+            hddGamesNew.games = NULL;
+            DelayThread(HDD_GROK_RETRY_DELAY_US);
+        }
+
         if (ret == 0) {
             hddUpdateGameListCache(&hddGames, &hddGamesNew);
             hddFreeHDLGamelist(&hddGames);
             hddGames = hddGamesNew;
+        } else {
+            hddFreeHDLGamelist(&hddGamesNew);
         }
     }
 
-    hddForceUpdate = 1; // Subsequent refresh operations will cause the HDD to be scanned.
-
-    return (ret == 0 ? hddGames.count : 0);
+    hddForceUpdate = 1;
+    return ret == 0 ? hddGames.count : 0;
 }
 
 static int hddGetGameCount(item_list_t *itemList)
