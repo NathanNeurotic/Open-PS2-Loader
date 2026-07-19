@@ -581,6 +581,9 @@ static int hddNeedsUpdate(item_list_t *itemList)
 #define HDD_GROK_SCAN_ATTEMPTS  10
 #define HDD_GROK_RETRY_DELAY_US (250 * 1000)
 
+#define HDD_GROK_SCAN_ATTEMPTS  10
+#define HDD_GROK_RETRY_DELAY_US (250 * 1000)
+
 static int hddUpdateGameList(item_list_t *itemList)
 {
     if (hddApaState != HDD_APA_READY)
