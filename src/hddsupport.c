@@ -93,6 +93,11 @@ static void hddInitModules(void)
     lngAddLanguages(path, "/", hddGameList.mode);
 
     sbCreateFolders(gHDDPrefix, 0);
+
+    // Hardware-test experiment: guarantee one deferred HDD-list rebuild only after
+    // the APA/PFS stack has reached HDD_APA_READY. This tests whether the original
+    // startup refresh was consumed while the state was still HDD_APA_PROBING.
+    ioPutRequest(IO_MENU_UPDATE_DEFFERED, &hddGameList.mode);
 }
 
 // HD Pro Kit is mapping the 1st word in ROM0 seg as a main ATA controller,
