@@ -46,6 +46,20 @@ enum hdd_apa_state {
 };
 static volatile unsigned char hddApaState = HDD_APA_PROBING;
 
+static const char *hddApaStateName(int state)
+{
+    switch (state) {
+        case HDD_APA_PROBING:
+            return "PROBING";
+        case HDD_APA_READY:
+            return "READY";
+        case HDD_APA_UNAVAILABLE:
+            return "UNAVAILABLE";
+        default:
+            return "UNKNOWN";
+    }
+}
+
 static char *hddPrefix = "pfs0:";
 static hdl_games_list_t hddGames;
 
@@ -77,12 +91,21 @@ void hddResetModuleState(void)
 
 static void hddInitModules(void)
 {
+    LOG("HDD DIAG: hddInitModules begin state=%s modules=%u support=%u\n", hddApaStateName(hddApaState), hddModulesLoaded, hddSupportModulesLoaded);
+
     if (hddLoadModules() < 0) {
         hddApaState = HDD_APA_UNAVAILABLE;
+        LOG("HDD DIAG: hddLoadModules failed state=%s\n", hddApaStateName(hddApaState));
         return;
     }
-    if (!hddLoadSupportModules())
+
+    LOG("HDD DIAG: physical modules ready state=%s modules=%u support=%u\n", hddApaStateName(hddApaState), hddModulesLoaded, hddSupportModulesLoaded);
+    if (!hddLoadSupportModules()) {
+        LOG("HDD DIAG: hddLoadSupportModules failed state=%s\n", hddApaStateName(hddApaState));
         return;
+    }
+
+    LOG("HDD DIAG: APA/PFS support ready state=%s modules=%u support=%u prefix=%s\n", hddApaStateName(hddApaState), hddModulesLoaded, hddSupportModulesLoaded, gHDDPrefix);
 
     // update Themes
     char path[256];
@@ -93,6 +116,7 @@ static void hddInitModules(void)
     lngAddLanguages(path, "/", hddGameList.mode);
 
     sbCreateFolders(gHDDPrefix, 0);
+    LOG("HDD DIAG: hddInitModules complete state=%s prefix=%s\n", hddApaStateName(hddApaState), gHDDPrefix);
 }
 
 // HD Pro Kit is mapping the 1st word in ROM0 seg as a main ATA controller,
@@ -387,11 +411,13 @@ int hddLoadSupportModules(void)
 void hddInit(item_list_t *itemList)
 {
     LOG("HDDSUPPORT Init\n");
+    LOG("HDD DIAG: hddInit entry state=%s modules=%u support=%u cache=%d count=%u\n", hddApaStateName(hddApaState), hddModulesLoaded, hddSupportModulesLoaded, gHDDGameListCache, hddGames.count);
     hddForceUpdate = 0; // Use cache at initial startup.
     hddApaState = hddSupportModulesLoaded ? HDD_APA_READY : HDD_APA_PROBING;
     configGetInt(configGetByType(CONFIG_OPL), "hdd_frames_delay", &hddGameList.delay);
     ioPutRequest(IO_CUSTOM_SIMPLEACTION, &hddInitModules);
     hddGameList.enabled = 1;
+    LOG("HDD DIAG: hddInit queued state=%s enabled=%u delay=%d updateDelay=%d\n", hddApaStateName(hddApaState), hddGameList.enabled, hddGameList.delay, hddGameList.updateDelay);
 }
 
 item_list_t *hddGetObject(int initOnly)
@@ -558,56 +584,61 @@ static int hddBuildVcdGameList(void)
 }
 
 static int hddNeedsUpdate(item_list_t *itemList)
-{ /* Auto refresh is disabled by setting HDD_MODE_UPDATE_DELAY to MENU_UPD_DELAY_NOUPDATE, within hddsupport.h.
-       Hence any update request would be issued by the user, which should be taken as an explicit request to re-scan the HDD. */
-    // Module initialization and this menu update share the IO FIFO, so the authoritative APA result
-    // is ready before the first scan. A non-APA disk belongs to ATA-BDM: withhold this page instead
-    // of publishing the same empty ghost tab that caused the original regression report.
+{
+    int vcdActive = vcdViewActive(itemList->mode);
+
+    LOG("HDD DIAG: needsUpdate mode=%d state=%s vcd=%d force=%u count=%u owner=%p\n", itemList->mode, hddApaStateName(hddApaState), vcdActive, hddForceUpdate, hddGames.count, itemList->owner);
+
     if (hddApaState != HDD_APA_READY) {
         if (hddApaState == HDD_APA_UNAVAILABLE && itemList->owner != NULL)
             ((opl_io_module_t *)itemList->owner)->menuItem.visible = 0;
+        LOG("HDD DIAG: needsUpdate -> 0 because state=%s\n", hddApaStateName(hddApaState));
         return 0;
     }
     if (itemList->owner != NULL)
         ((opl_io_module_t *)itemList->owner)->menuItem.visible = 1;
 
-    if (vcdConsumeDirty(itemList->mode))
-        return 1; // L3 toggle / default-view change -> rebuild the submenu (the ARRAY may be cached)
-    if (vcdViewActive(itemList->mode))
-        return 0; // in VCD view: skip the HDL re-scan churn
-    return 1;
+    int vcdDirty = vcdConsumeDirty(itemList->mode);
+    int result = vcdDirty ? 1 : (vcdActive ? 0 : 1);
+    LOG("HDD DIAG: needsUpdate dirty=%d vcd=%d -> %d\n", vcdDirty, vcdActive, result);
+    return result;
 }
 
 static int hddUpdateGameList(item_list_t *itemList)
 {
-    if (hddApaState != HDD_APA_READY)
-        return 0;
+    LOG("HDD DIAG: updateGameList entry mode=%d state=%s vcd=%d force=%u oldCount=%u\n", itemList->mode, hddApaStateName(hddApaState), vcdViewActive(itemList->mode), hddForceUpdate, hddGames.count);
 
-    if (vcdViewActive(itemList->mode))
-        // Reuse the session's built list on view flips; hddBuildVcdGameList runs only when never
-        // built, invalidated (first-disc-only change), or freed by teardown (hddFreeVcdGameList).
-        return hddVcdListBuilt ? hddVcdGameCount : hddBuildVcdGameList();
+    if (hddApaState != HDD_APA_READY) {
+        LOG("HDD DIAG: updateGameList -> 0 because state=%s\n", hddApaStateName(hddApaState));
+        return 0;
+    }
+
+    if (vcdViewActive(itemList->mode)) {
+        int count = hddVcdListBuilt ? hddVcdGameCount : hddBuildVcdGameList();
+        LOG("HDD DIAG: VCD update built=%u count=%d\n", hddVcdListBuilt, count);
+        return count;
+    }
 
     hdl_games_list_t hddGamesNew;
-    int ret;
+    int ret = hddLoadGameListCache(&hddGames);
+    LOG("HDD DIAG: cache result=%d count=%u force=%u cacheEnabled=%d\n", ret, hddGames.count, hddForceUpdate, gHDDGameListCache);
 
-    // Force a live APA scan not only when the cache fails to load (ret != 0) or a prior build asked for it
-    // (hddForceUpdate), but ALSO when the cache loaded EMPTY (count 0). A missing/empty/stale games.bin
-    // otherwise left the first HDD page blank until a second manual refresh (provato's HW report).
-    if (((ret = hddLoadGameListCache(&hddGames)) != 0) || (hddForceUpdate) || (hddGames.count == 0)) {
+    if ((ret != 0) || hddForceUpdate || (hddGames.count == 0)) {
         hddGamesNew.count = 0;
         hddGamesNew.games = NULL;
         ret = hddGetHDLGamelist(&hddGamesNew);
+        LOG("HDD DIAG: live HDL scan result=%d count=%u\n", ret, hddGamesNew.count);
         if (ret == 0) {
-            hddUpdateGameListCache(&hddGames, &hddGamesNew);
+            int cacheResult = hddUpdateGameListCache(&hddGames, &hddGamesNew);
+            LOG("HDD DIAG: cache update result=%d oldCount=%u newCount=%u\n", cacheResult, hddGames.count, hddGamesNew.count);
             hddFreeHDLGamelist(&hddGames);
             hddGames = hddGamesNew;
         }
     }
 
-    hddForceUpdate = 1; // Subsequent refresh operations will cause the HDD to be scanned.
-
-    return (ret == 0 ? hddGames.count : 0);
+    hddForceUpdate = 1;
+    LOG("HDD DIAG: updateGameList exit ret=%d finalCount=%u\n", ret, hddGames.count);
+    return ret == 0 ? hddGames.count : 0;
 }
 
 static int hddGetGameCount(item_list_t *itemList)

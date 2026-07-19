@@ -193,11 +193,14 @@ int hddGetHDLGamelist(hdl_games_list_t *game_list)
     hddFreeHDLGamelist(game_list);
 
     ret = 0;
-    if ((fd = fileXioDopen("hdd0:")) >= 0) {
+    fd = fileXioDopen("hdd0:");
+    LOG("HDD DIAG: hddGetHDLGamelist dopen=%d\n", fd);
+    if (fd >= 0) {
         head = current = NULL;
         count = 0;
         int saw_hdl = 0;
         while (fileXioDread(fd, &dirent) > 0) {
+            LOG("HDD DIAG: APA entry name='%s' mode=0x%lx attr=0x%lx size=%lu lba=%lu\n", dirent.name, (unsigned long)dirent.stat.mode, (unsigned long)dirent.stat.attr, (unsigned long)dirent.stat.size, (unsigned long)dirent.stat.private_5);
             if (dirent.stat.mode == HDL_FS_MAGIC) {
                 saw_hdl = 1;
                 if ((pGameEntry = GetGameListRecord(head, dirent.name)) == NULL) {
@@ -238,7 +241,9 @@ int hddGetHDLGamelist(hdl_games_list_t *game_list)
                 memset(game_list->games, 0, sizeof(hdl_game_info_t) * count);
 
                 for (i = 0, current = head; i < count; i++, current = current->next) {
-                    if ((ret = hddGetHDLGameInfo(current, &game_list->games[i])) != 0)
+                    ret = hddGetHDLGameInfo(current, &game_list->games[i]);
+                    LOG("HDD DIAG: HDL metadata partition='%s' lba=%lu size=%lu result=%d\n", current->id, (unsigned long)current->lba, (unsigned long)current->size, ret);
+                    if (ret != 0)
                         break;
                 }
 
@@ -261,6 +266,7 @@ int hddGetHDLGamelist(hdl_games_list_t *game_list)
         ret = fd;
     }
 
+    LOG("HDD DIAG: hddGetHDLGamelist exit ret=%d count=%u\n", ret, game_list->count);
     return ret;
 }
 
