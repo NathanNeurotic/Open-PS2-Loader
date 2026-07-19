@@ -584,30 +584,22 @@ static int hddUpdateGameList(item_list_t *itemList)
         return 0;
 
     if (vcdViewActive(itemList->mode))
-        // Reuse the session's built list on view flips; hddBuildVcdGameList runs only when never
-        // built, invalidated (first-disc-only change), or freed by teardown (hddFreeVcdGameList).
         return hddVcdListBuilt ? hddVcdGameCount : hddBuildVcdGameList();
 
-    hdl_games_list_t hddGamesNew;
-    int ret;
+    // Hardware-test experiment: bypass games.bin completely and publish only a fresh
+    // live APA/HDL scan. This isolates stale/corrupt cache handling from enumeration.
+    hdl_games_list_t hddGamesNew = {0, NULL};
+    int ret = hddGetHDLGamelist(&hddGamesNew);
 
-    // Force a live APA scan not only when the cache fails to load (ret != 0) or a prior build asked for it
-    // (hddForceUpdate), but ALSO when the cache loaded EMPTY (count 0). A missing/empty/stale games.bin
-    // otherwise left the first HDD page blank until a second manual refresh (provato's HW report).
-    if (((ret = hddLoadGameListCache(&hddGames)) != 0) || (hddForceUpdate) || (hddGames.count == 0)) {
-        hddGamesNew.count = 0;
-        hddGamesNew.games = NULL;
-        ret = hddGetHDLGamelist(&hddGamesNew);
-        if (ret == 0) {
-            hddUpdateGameListCache(&hddGames, &hddGamesNew);
-            hddFreeHDLGamelist(&hddGames);
-            hddGames = hddGamesNew;
-        }
+    if (ret == 0) {
+        hddFreeHDLGamelist(&hddGames);
+        hddGames = hddGamesNew;
+    } else {
+        hddFreeHDLGamelist(&hddGamesNew);
     }
 
-    hddForceUpdate = 1; // Subsequent refresh operations will cause the HDD to be scanned.
-
-    return (ret == 0 ? hddGames.count : 0);
+    hddForceUpdate = 1;
+    return ret == 0 ? hddGames.count : 0;
 }
 
 static int hddGetGameCount(item_list_t *itemList)
