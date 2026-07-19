@@ -112,12 +112,21 @@ static iop_device_t xhddDevice = {
 int _start(int argc, char *argv[])
 {
     int i;
+    int noBdm = 0;
 
     isHDPro = 0;
     for (i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-hdpro"))
             isHDPro = 1;
+        else if (!strcmp(argv[i], "-nobdm"))
+            noBdm = 1;
     }
+
+    // Keep xhdd0: available for APA devctl calls, but do not advertise it as a
+    // block device when ATA-BDM support is disabled. This prevents bdmfs_fatfs
+    // from probing an APA disk through the BDM path while USB BDM remains active.
+    if (noBdm)
+        xhddDevice.type = IOP_DT_CHAR | IOP_DT_FSEXT;
 
     return AddDrv(&xhddDevice) == 0 ? MODULE_RESIDENT_END : MODULE_NO_RESIDENT_END;
 }

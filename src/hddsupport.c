@@ -263,7 +263,13 @@ retry:
         if (retLoadModule >= 0)
             DelayThread(1000 * 1000);
         LOG("[XHDD]:\n");
-        sysLoadModuleBuffer(&xhdd_irx, size_xhdd_irx, 0, NULL);
+        // General BDM can remain enabled for USB/MX4SIO/iLink without exposing the
+        // internal APA disk to bdmfs_fatfs. Only register xhdd as a block device
+        // when the dedicated ATA-BDM backend is actually enabled.
+        if (gEnableBdmHDD)
+            sysLoadModuleBuffer(&xhdd_irx, size_xhdd_irx, 0, NULL);
+        else
+            sysLoadModuleBuffer(&xhdd_irx, size_xhdd_irx, 6, "-nobdm");
     }
 
     if (retLoadModule < 0) {
