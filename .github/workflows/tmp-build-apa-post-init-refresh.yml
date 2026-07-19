@@ -1,0 +1,46 @@
+name: Build APA HDL post-init refresh branch
+
+on:
+  push:
+    branches:
+      - agent/apa-hdl-post-init-refresh
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/apa-hdl-post-init-refresh
+      - name: Apply post-initialization refresh experiment
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/hddsupport.c')
+          text = path.read_text()
+          old = '''    sbCreateFolders(gHDDPrefix, 0);\n}\n'''
+          new = '''    sbCreateFolders(gHDDPrefix, 0);\n\n    // Hardware-test experiment: guarantee one deferred HDD-list rebuild only after\n    // the APA/PFS stack has reached HDD_APA_READY. This tests whether the original\n    // startup refresh was consumed while the state was still HDD_APA_PROBING.\n    ioPutRequest(IO_MENU_UPDATE_DEFFERED, &hddGameList.mode);\n}\n'''
+          assert old in text
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Format post-init refresh source
+        uses: DoozyX/clang-format-lint-action@v0.18.2
+        with:
+          source: './src/hddsupport.c'
+          extensions: 'c'
+          clangFormatVersion: 18
+          inplace: true
+      - name: Commit post-init refresh branch and remove temporary workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/tmp-build-apa-post-init-refresh.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/hddsupport.c .github/workflows/tmp-build-apa-post-init-refresh.yml
+          git commit -m 'Queue HDD refresh after APA initialization'
+          git push origin HEAD:agent/apa-hdl-post-init-refresh
