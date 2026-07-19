@@ -1,0 +1,33 @@
+name: Temporary clang-format 12 PR 222
+
+on:
+  push:
+    branches:
+      - agent/kimi-apa-hdl-fix
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/kimi-apa-hdl-fix
+      - name: Apply repository clang-format 12
+        uses: DoozyX/clang-format-lint-action@v0.18.2
+        with:
+          source: './src'
+          extensions: 'c,h'
+          clangFormatVersion: 12
+          inplace: true
+      - name: Commit formatted source and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/hdd.c
+          git rm .github/workflows/tmp-format12-pr222.yml
+          git diff --cached --quiet || git commit -m "Apply clang-format 12 to APA test"
+          git push origin HEAD:agent/kimi-apa-hdl-fix
