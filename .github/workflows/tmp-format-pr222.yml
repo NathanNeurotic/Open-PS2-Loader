@@ -1,0 +1,39 @@
+name: Temporary format PR 222
+
+on:
+  push:
+    branches:
+      - agent/kimi-apa-hdl-fix
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/kimi-apa-hdl-fix
+      - name: Apply repository clang-format
+        uses: DoozyX/clang-format-lint-action@v0.18.2
+        with:
+          source: './src/hdd.c'
+          extensions: 'c'
+          clangFormatVersion: 18
+          inplace: true
+      - name: Commit formatted source and remove temporary files
+        shell: bash
+        run: |
+          rm -f .github/workflows/tmp-format-pr222.yml .tmp-format-pr222-trigger
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'Format raw APA enumeration'
+          git push origin HEAD:agent/kimi-apa-hdl-fix
