@@ -1,0 +1,33 @@
+name: Temporary exact format PR 222
+
+on:
+  push:
+    branches:
+      - agent/kimi-apa-hdl-fix
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: agent/kimi-apa-hdl-fix
+      - name: Apply repository formatter to src directory
+        uses: DoozyX/clang-format-lint-action@v0.18.2
+        with:
+          source: './src'
+          extensions: 'c,h'
+          clangFormatVersion: 18
+          inplace: true
+      - name: Commit formatted source and remove temporary files
+        shell: bash
+        run: |
+          rm -f .github/workflows/tmp-exact-format.yml .tmp-exact-format-trigger
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/hdd.c .github/workflows/tmp-exact-format.yml .tmp-exact-format-trigger
+          git commit -m 'Apply repository formatting to raw APA experiment'
+          git push origin HEAD:agent/kimi-apa-hdl-fix
