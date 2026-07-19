@@ -1464,9 +1464,11 @@ void bdmEnumerateDevices()
     // Initialize the device list data if it hasn't been initialized yet.
     bdmInitDevicesData();
 
-    // Because bdmLoadModules is called before the config file is loaded bdmLoadBlockDeviceModules will not have loaded any
-    // optional bdm modules. Now that the config file has been loaded try loading any optional modules that weren't previously loaded.
-    ioPutRequest(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules);
+    // AUTO enumerates enabled transports during boot. MANUAL remains genuinely lazy:
+    // opening the BDM page calls bdmInit(), which loads the core first and then queues this
+    // same idempotent optional-loader path. Loaded transports remain resident together.
+    if (bdmEffectiveStartMode() == START_MODE_AUTO)
+        ioPutRequest(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules);
 
     LOG("bdmEnumerateDevices done\n");
 }

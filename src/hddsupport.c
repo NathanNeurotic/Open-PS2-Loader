@@ -38,6 +38,7 @@ static unsigned char hddModulesLoaded = 0;
 static unsigned char hddApaModuleLoaded = 0;
 static unsigned char hddSupportModulesLoaded = 0;
 static unsigned char hddDev9RefHeld = 0;
+static unsigned char hddDataMounted = 0;
 
 enum hdd_apa_state {
     HDD_APA_PROBING = 0,
@@ -72,6 +73,7 @@ void hddResetModuleState(void)
     hddApaModuleLoaded = 0;
     hddSupportModulesLoaded = 0;
     hddDev9RefHeld = 0;
+    hddDataMounted = 0;
     hddApaState = HDD_APA_PROBING;
 }
 
@@ -83,6 +85,13 @@ static void hddInitModules(void)
     }
     if (!hddLoadSupportModules())
         return;
+
+    // HDL enumeration only needs hdd0:, but themes, languages, caches and folder creation
+    // require a confirmed writable PFS data mount. Never fall through to a stale config/boot prefix.
+    if (!hddDataMounted) {
+        LOG("HDDSUPPORT: data partition is not mounted; skipping path-dependent setup\n");
+        return;
+    }
 
     // update Themes
     char path[256];
@@ -333,20 +342,25 @@ int hddLoadSupportModules(void)
         // not APA; require the authoritative formatted status before PS2FS is loaded or any PFS
         // partition can be mounted/created. Do not second-guess it with generic MBR/GPT bytes.
         int hddStatus = hddCheck();
-        if (hddStatus != 0) {
+        if (hddStatus == 1) {
+            // Authoritative non-APA result. ATA-BDM may still use the disk, but the APA page stays hidden.
             hddApaState = HDD_APA_UNAVAILABLE;
-            if (hddStatus == 1) {
-                LOG("HDD: HardDisk Drive is not APA formatted.\n");
-                // Expected when both logical backends are enabled on an exFAT disk: BDM-ATA owns
-                // the page, while APA simply stays unpublished. Only report an error when APA was
-                // the sole internal-HDD backend requested.
-                if (!gEnableBdmHDD)
-                    setErrorMessageWithCode(_STR_HDD_NOT_FORMATTED_ERROR, ERROR_HDD_NOT_DETECTED);
-            } else {
-                LOG("HDD: No usable APA HardDisk Drive detected.\n");
-                setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
-            }
+            LOG("HDD: HardDisk Drive is not APA formatted.\n");
+            if (!gEnableBdmHDD)
+                setErrorMessageWithCode(_STR_HDD_NOT_FORMATTED_ERROR, ERROR_HDD_NOT_DETECTED);
             return 0;
+        }
+        if (hddStatus < 0) {
+            // Detection can race the shared ATA stack during startup. Keep this retryable instead of
+            // permanently latching APA unavailable for the rest of the IOP session.
+            hddApaState = HDD_APA_PROBING;
+            LOG("HDD: APA status probe failed transiently; leaving initialization retryable.\n");
+            return 0;
+        }
+        if (hddStatus == 2) {
+            // The pre-regression path allowed PS2FS to load for this intermediate status and let the
+            // actual hdd0: directory operation decide readiness. Preserve that hardware-compatible path.
+            LOG("HDD: status is temporarily not usable; continuing APA initialization.\n");
         }
 
         LOG("[PS2FS]:\n");
@@ -363,6 +377,7 @@ int hddLoadSupportModules(void)
     }
 
     hddApaState = HDD_APA_READY;
+    hddDataMounted = 0;
 
     if (gOPLPart[0] == '\0')
         hddFindOPLPartition();
@@ -371,14 +386,26 @@ int hddLoadSupportModules(void)
 
     ret = fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
     if (ret == -ENOENT) {
-        // Attempt to create the partition.
-        if ((hddCreateOPLPartition(gOPLPart)) >= 0)
-            fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
+        // Attempt to create the configured data partition, then preserve the actual mount result.
+        if (hddCreateOPLPartition(gOPLPart) >= 0)
+            ret = fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
     }
 
-    if (gOPLPart[5] != '+') {
-        hddCheckOPLFolder(hddPrefix);
-        gHDDPrefix = "pfs0:OPL/";
+    if (ret >= 0) {
+        if (gOPLPart[5] != '+') {
+            hddCheckOPLFolder(hddPrefix);
+            gHDDPrefix = "pfs0:OPL/";
+        } else {
+            // The ordinary +OPL case must explicitly reset the prefix. Otherwise it can retain the
+            // active config/boot directory and create ART/CFG/VMC or read games.bin beside the ELF.
+            gHDDPrefix = "pfs0:";
+        }
+        hddDataMounted = 1;
+    } else {
+        // HDL enumeration remains available through hdd0:, but path-dependent HDD data is disabled.
+        // A safe PFS token also prevents any later caller from inheriting the ELF launch directory.
+        gHDDPrefix = "pfs0:";
+        LOG("HDD: failed to mount OPL data partition '%s' (%d); live HDL scan remains enabled.\n", gOPLPart, ret);
     }
 
     return 1;
@@ -560,14 +587,21 @@ static int hddBuildVcdGameList(void)
 static int hddNeedsUpdate(item_list_t *itemList)
 { /* Auto refresh is disabled by setting HDD_MODE_UPDATE_DELAY to MENU_UPD_DELAY_NOUPDATE, within hddsupport.h.
        Hence any update request would be issued by the user, which should be taken as an explicit request to re-scan the HDD. */
-    // Module initialization and this menu update share the IO FIFO, so the authoritative APA result
-    // is ready before the first scan. A non-APA disk belongs to ATA-BDM: withhold this page instead
-    // of publishing the same empty ghost tab that caused the original regression report.
-    if (hddApaState != HDD_APA_READY) {
-        if (hddApaState == HDD_APA_UNAVAILABLE && itemList->owner != NULL)
+    // Official OPL's HDD support always allows an explicit update to reach hddGetHDLGamelist().
+    // Keep the coexistence state only for module ownership, not as a one-way menu gate. If a startup
+    // probe was transient, finish the retry synchronously on this same IO-worker request so a successful
+    // initialization is immediately followed by the scan instead of being stranded with no second update.
+    if (hddApaState == HDD_APA_PROBING)
+        hddInitModules();
+
+    if (hddApaState == HDD_APA_UNAVAILABLE) {
+        if (itemList->owner != NULL)
             ((opl_io_module_t *)itemList->owner)->menuItem.visible = 0;
         return 0;
     }
+    if (hddApaState != HDD_APA_READY)
+        return 0;
+
     if (itemList->owner != NULL)
         ((opl_io_module_t *)itemList->owner)->menuItem.visible = 1;
 
@@ -1222,7 +1256,7 @@ static int hddLoadGameListCache(hdl_games_list_t *cache)
     hdl_game_info_t *games;
     int result, size, count;
 
-    if (!gHDDGameListCache)
+    if (!gHDDGameListCache || !hddDataMounted)
         return 1;
 
     hddFreeHDLGamelist(cache);
@@ -1270,7 +1304,7 @@ static int hddUpdateGameListCache(hdl_games_list_t *cache, hdl_games_list_t *gam
     FILE *file;
     int result, i, j, modified;
 
-    if (!gHDDGameListCache)
+    if (!gHDDGameListCache || !hddDataMounted)
         return 1;
 
     if (cache->count > 0) {
