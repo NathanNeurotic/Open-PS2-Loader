@@ -610,7 +610,7 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
     tex_mem_bounded_t memReader;
     void *PngFileBufferPtr;
     void *pFileBuffer = NULL;
-    void (*texPngReadRow)(GSTEXTURE * texture, png_bytep rowData, int row);
+    void (*texPngReadRow)(GSTEXTURE *texture, png_bytep rowData, int row);
 
     texPrepare(texture);
 

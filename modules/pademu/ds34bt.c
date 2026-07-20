@@ -15,7 +15,7 @@
 #include "sys_utils.h"
 #include "padmacro.h"
 
-//#define DPRINTF(x...) printf(x)
+// #define DPRINTF(x...) printf(x)
 #define DPRINTF(x...)
 
 static int bt_probe(int devId);
@@ -1048,7 +1048,7 @@ static int L2CAP_event_task(int result, int bytes)
                 pad = MAX_PADS;
             }
         } // acl_handle_ok
-    }     // !rcode
+    } // !rcode
 
     return pad;
 }

@@ -35,7 +35,7 @@ typedef struct
     eth_header_t eth; // 14 bytes
     ip_header_t ip;   // 20 bytes
     uint16_t align;   //  2 bytes - 2byte -> 4byte alignment
-    //char payload[IP_MAX_PAYLOAD];
+    // char payload[IP_MAX_PAYLOAD];
 } __attribute__((packed, aligned(4))) ip_packet_t;
 
 #define IP_PROTOCOL_UDP 0x11

@@ -14,7 +14,7 @@
 #define MODNAME "f2techioppatch"
 IRX_ID(MODNAME, 1, 1);
 
-#define JAL(addr) (0x0c000000 | (((addr)&0x03ffffff) >> 2))
+#define JAL(addr) (0x0c000000 | (((addr) & 0x03ffffff) >> 2))
 #define JMP(addr) (0x08000000 | (0x3ffffff & ((addr) >> 2)))
 
 int _start(int argc, char **argv)

@@ -85,7 +85,7 @@ static int _udpbd_read(struct block_device *bd, uint64_t sector, void *buffer, u
     iop_sys_clock_t clock;
     udpbd_pkt_rw_t pkt;
 
-    //M_DEBUG("%s: sector=%d, count=%d\n", __func__, (uint32_t)sector, count);
+    // M_DEBUG("%s: sector=%d, count=%d\n", __func__, (uint32_t)sector, count);
 
     g_cmdid = (g_cmdid + 1) & 0x7;
     g_buffer = buffer;
@@ -108,7 +108,7 @@ static int _udpbd_read(struct block_device *bd, uint64_t sector, void *buffer, u
     USec2SysClock((200 * 1000) + (count * 2000), &clock);
     SetAlarm(&clock, _udpbd_timeout, NULL);
 
-    //wait for data...
+    // wait for data...
     WaitEventFlag(g_ev_done, 2 | 1, WEF_OR | WEF_CLEAR, &EFBits);
 
     // Cancel alarm
@@ -121,17 +121,17 @@ static int _udpbd_read(struct block_device *bd, uint64_t sector, void *buffer, u
 
     switch (g_errno) {
         case 0:
-            //M_DEBUG("%s(%d, %d): ok\n", __func__);
+            // M_DEBUG("%s(%d, %d): ok\n", __func__);
             break;
         case 1:
             M_DEBUG("%s(%d, %d): ERROR: timeout\n", __func__, (uint32_t)sector, count);
             break;
-        //case 2:
-        //    M_DEBUG("%s(%d, %d): ERROR: invalid packet order!\n", __func__, sector, count);
-        //    break;
-        //case 3:
-        //    M_DEBUG("%s(%d, %d): ERROR: invalid packet size!\n", __func__, sector, count);
-        //    break;
+        // case 2:
+        //     M_DEBUG("%s(%d, %d): ERROR: invalid packet order!\n", __func__, sector, count);
+        //     break;
+        // case 3:
+        //     M_DEBUG("%s(%d, %d): ERROR: invalid packet size!\n", __func__, sector, count);
+        //     break;
         default:
             M_DEBUG("%s(%d, %d): ERROR: unknown %d\n", __func__, (uint32_t)sector, count, g_errno);
             break;
@@ -150,7 +150,7 @@ static int udpbd_read(struct block_device *bd, uint64_t sector, void *buffer, ui
     int retries;
     uint16_t count_left;
 
-    //M_DEBUG("%s: sector=%d, count=%d\n", __func__, (uint32_t)sector, count);
+    // M_DEBUG("%s: sector=%d, count=%d\n", __func__, (uint32_t)sector, count);
 
     if (bdm_connected == 0)
         return -EIO;
@@ -249,7 +249,7 @@ static int udpbd_write(struct block_device *bd, uint64_t sector, const void *buf
         USec2SysClock((200 * 1000), &clock);
         SetAlarm(&clock, _udpbd_timeout, NULL);
 
-        //wait for done...
+        // wait for done...
         WaitEventFlag(g_ev_done, 2 | 1, WEF_OR | WEF_CLEAR, &EFBits);
 
         // Cancel alarm
@@ -258,16 +258,16 @@ static int udpbd_write(struct block_device *bd, uint64_t sector, const void *buf
 
     switch (g_errno) {
         case 0:
-            //M_DEBUG("%s(%d, %d): ok\n", __func__);
+            // M_DEBUG("%s(%d, %d): ok\n", __func__);
             break;
         case 1:
             M_DEBUG("%s(%d, %d): ERROR: timeout\n", __func__, (uint32_t)sector, count);
             break;
         case 2:
-            //M_DEBUG("%s(%d, %d): ERROR: invalid packet order!\n", __func__, sector, count);
+            // M_DEBUG("%s(%d, %d): ERROR: invalid packet order!\n", __func__, sector, count);
             break;
         case 3:
-            //M_DEBUG("%s(%d, %d): ERROR: invalid packet size!\n", __func__, sector, count);
+            // M_DEBUG("%s(%d, %d): ERROR: invalid packet size!\n", __func__, sector, count);
             break;
         default:
             M_DEBUG("%s(%d, %d): ERROR: unknown %d\n", __func__, (uint32_t)sector, count, g_errno);
@@ -449,7 +449,7 @@ int udpbd_init(void)
     USE_SPD_REGS;
     iop_event_t EventFlagData;
 
-    //M_DEBUG("%s\n", __func__);
+    // M_DEBUG("%s\n", __func__);
     M_DEBUG("Starting UDPBD BDM driver by Maximus32\n");
     M_DEBUG("SPEED revision is 0x%x\n", SPD_REG16(SPD_R_REV_1));
 

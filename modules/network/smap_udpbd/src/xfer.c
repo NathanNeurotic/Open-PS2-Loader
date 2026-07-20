@@ -111,7 +111,7 @@ int HandleRxIntr(struct SmapDriverData *SmapDrivPrivData)
     int NumPacketsReceived;
     volatile smap_bd_t *PktBdPtr;
     volatile u8 *smap_regbase;
-    //void *pbuf, *payload;
+    // void *pbuf, *payload;
     u16 ctrl_stat, length, pointer, LengthRounded;
 
     smap_regbase = SmapDrivPrivData->smap_regbase;

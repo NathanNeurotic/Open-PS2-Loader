@@ -27,21 +27,21 @@ void ip_packet_init(ip_packet_t *pkt, uint32_t ip_dest)
     // IP
     pkt->ip.hlen = 0x45;
     pkt->ip.tos = 0;
-    //pkt->ip_len              = ;
+    // pkt->ip_len              = ;
     pkt->ip.id = 0;
     pkt->ip.flags = 0;
     pkt->ip.frag_offset = 0;
     pkt->ip.ttl = 64;
     pkt->ip.proto = IP_PROTOCOL_UDP;
-    //pkt->ip_csum             = ;
+    // pkt->ip_csum             = ;
     pkt->ip.addr_src.addr[0] = (ip_addr >> 24) & 0xff;
     pkt->ip.addr_src.addr[1] = (ip_addr >> 16) & 0xff;
     pkt->ip.addr_src.addr[2] = (ip_addr >> 8) & 0xff;
-    pkt->ip.addr_src.addr[3] = (ip_addr)&0xff;
+    pkt->ip.addr_src.addr[3] = (ip_addr) & 0xff;
     pkt->ip.addr_dst.addr[0] = (ip_dest >> 24) & 0xff;
     pkt->ip.addr_dst.addr[1] = (ip_dest >> 16) & 0xff;
     pkt->ip.addr_dst.addr[2] = (ip_dest >> 8) & 0xff;
-    pkt->ip.addr_dst.addr[3] = (ip_dest)&0xff;
+    pkt->ip.addr_dst.addr[3] = (ip_dest) & 0xff;
 }
 
 static uint16_t ip_checksum(ip_header_t *ip)
@@ -75,7 +75,7 @@ int handle_rx_ipv4(const uint8_t *hdr, uint16_t hdr_len)
         case IP_PROTOCOL_UDP:
             return handle_rx_udp(hdr, hdr_len);
         default:
-            //M_DEBUG("ministack: ipv4: protocol 0x%X\n", pkt->ip.proto);
+            // M_DEBUG("ministack: ipv4: protocol 0x%X\n", pkt->ip.proto);
             return -1;
     }
 }

@@ -8,10 +8,10 @@ void udp_packet_init(udp_packet_t *pkt, uint32_t ip_dst, uint16_t port_dst)
 {
     ip_packet_init((ip_packet_t *)pkt, ip_dst);
 
-    //pkt->udp.port_src = ;
+    // pkt->udp.port_src = ;
     pkt->udp.port_dst = htons(port_dst);
-    //pkt->udp.len      = ;
-    //pkt->udp.csum     = ;
+    // pkt->udp.len      = ;
+    // pkt->udp.csum     = ;
 }
 
 #define UDP_MAX_PORTS 4
@@ -54,6 +54,6 @@ int handle_rx_udp(const uint8_t *hdr, uint16_t hdr_len)
             return udp_ports[i].handler(&udp_ports[i], udp_ports[i].handler_arg, hdr, hdr_len);
     }
 
-    //M_DEBUG("ministack: udp: dport 0x%X\n", dport);
+    // M_DEBUG("ministack: udp: dport 0x%X\n", dport);
     return -1;
 }

@@ -35,31 +35,31 @@ void ip_packet_init(ip_packet_t *pkt, uint32_t ip_dest)
     // IP, broadcast
     pkt->ip.hlen = 0x45;
     pkt->ip.tos = 0;
-    //pkt->ip_len              = ;
+    // pkt->ip_len              = ;
     pkt->ip.id = 0;
     pkt->ip.flags = 0;
     pkt->ip.frag_offset = 0;
     pkt->ip.ttl = 64;
     pkt->ip.proto = IP_PROTOCOL_UDP;
-    //pkt->ip_csum             = ;
+    // pkt->ip_csum             = ;
     pkt->ip.addr_src.addr[0] = (ip_addr >> 24) & 0xff;
     pkt->ip.addr_src.addr[1] = (ip_addr >> 16) & 0xff;
     pkt->ip.addr_src.addr[2] = (ip_addr >> 8) & 0xff;
-    pkt->ip.addr_src.addr[3] = (ip_addr)&0xff;
+    pkt->ip.addr_src.addr[3] = (ip_addr) & 0xff;
     pkt->ip.addr_dst.addr[0] = (ip_dest >> 24) & 0xff;
     pkt->ip.addr_dst.addr[1] = (ip_dest >> 16) & 0xff;
     pkt->ip.addr_dst.addr[2] = (ip_dest >> 8) & 0xff;
-    pkt->ip.addr_dst.addr[3] = (ip_dest)&0xff;
+    pkt->ip.addr_dst.addr[3] = (ip_dest) & 0xff;
 }
 
 void udp_packet_init(udp_packet_t *pkt, uint32_t ip_dst, uint16_t port_dst)
 {
     ip_packet_init((ip_packet_t *)pkt, ip_dst);
 
-    //pkt->udp.port_src = ;
+    // pkt->udp.port_src = ;
     pkt->udp.port_dst = htons(port_dst);
-    //pkt->udp.len      = ;
-    //pkt->udp.csum     = ;
+    // pkt->udp.len      = ;
+    // pkt->udp.csum     = ;
 }
 
 static uint16_t ip_checksum(ip_header_t *ip)
@@ -212,7 +212,7 @@ static inline int handle_rx_udp(uint16_t pointer)
             return udp_ports[i].handler(&udp_ports[i], pointer, udp_ports[i].handler_arg);
     }
 
-    //M_DEBUG("ministack: udp: dport 0x%X\n", dport);
+    // M_DEBUG("ministack: udp: dport 0x%X\n", dport);
     return -1;
 }
 
@@ -229,7 +229,7 @@ static inline int handle_rx_ipv4(uint16_t pointer)
         case IP_PROTOCOL_UDP:
             return handle_rx_udp(pointer);
         default:
-            //M_DEBUG("ministack: ipv4: protocol 0x%X\n", protocol);
+            // M_DEBUG("ministack: ipv4: protocol 0x%X\n", protocol);
             return -1;
     }
 }
@@ -249,7 +249,7 @@ int handle_rx_eth(uint16_t pointer)
         case ETH_TYPE_IPV4:
             return handle_rx_ipv4(pointer);
         default:
-            //M_DEBUG("ministack: eth: type 0x%X\n", eth_type);
+            // M_DEBUG("ministack: eth: type 0x%X\n", eth_type);
             return -1;
     }
 }

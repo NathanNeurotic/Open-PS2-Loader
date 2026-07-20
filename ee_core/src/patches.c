@@ -154,9 +154,9 @@ static const patchlist_t patch_list[] = {
     {NULL, 0, {0x00000000, 0x00000000, 0x00000000}}                                // terminator
 };
 
-#define JAL(addr)      (0x0c000000 | (((addr)&0x03ffffff) >> 2))
+#define JAL(addr)      (0x0c000000 | (((addr) & 0x03ffffff) >> 2))
 #define JMP(addr)      (0x08000000 | (0x3ffffff & ((addr) >> 2)))
-#define FNADDR(jal)    (((jal)&0x03ffffff) << 2)
+#define FNADDR(jal)    (((jal) & 0x03ffffff) << 2)
 #define NIBBLE2CHAR(n) ((n) <= 9 ? '0' + (n) : 'a' + (n))
 
 static int (*cdReadPtr)(u32 lsn, u32 nsectors, void *buf, int *mode);

@@ -180,7 +180,7 @@ void etharp_tmr(void)
             } /* end if */
 #endif
         } /* end if */
-    }     /* end for */
+    } /* end for */
 } /* end etharp_tmr */
 /**
  * Return an empty ARP entry (possibly recycling the oldest stable entry).
@@ -395,7 +395,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
                 return NULL;
             }
         } /* if */
-    }     /* for */
+    } /* for */
 
     /* no matching ARP entry was found */
     LWIP_ASSERT("update_arp_entry: i == ARP_TABLE_SIZE", i == ARP_TABLE_SIZE);

@@ -13,7 +13,7 @@
 // SMAP module is the same as "2.25.0"
 IRX_ID(MODNAME, 0x2, 0x1A);
 
-//While the header of the export table is small, the large size of the export table (as a whole) places it in data instead of sdata.
+// While the header of the export table is small, the large size of the export table (as a whole) places it in data instead of sdata.
 extern struct irx_export_table _exp_smap __attribute__((section("data")));
 
 uint32_t parse_ip(const char *sIP)

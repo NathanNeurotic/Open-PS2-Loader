@@ -65,14 +65,14 @@
 #define IN_CLASSC_NSHIFT 8
 #define IN_CLASSC_HOST   (0xffffffff & ~IN_CLASSC_NET)
 
-#define IN_CLASSD(a)     (((u32_t)(a)&0xf0000000) == 0xe0000000)
+#define IN_CLASSD(a)     (((u32_t)(a) & 0xf0000000) == 0xe0000000)
 #define IN_CLASSD_NET    0xf0000000 /* These ones aren't really */
 #define IN_CLASSD_NSHIFT 28         /* net and host fields, but */
 #define IN_CLASSD_HOST   0x0fffffff /* routing needn't know.    */
 #define IN_MULTICAST(a)  IN_CLASSD(a)
 
-#define IN_EXPERIMENTAL(a) (((u32_t)(a)&0xf0000000) == 0xf0000000)
-#define IN_BADCLASS(a)     (((u32_t)(a)&0xf0000000) == 0xf0000000)
+#define IN_EXPERIMENTAL(a) (((u32_t)(a) & 0xf0000000) == 0xf0000000)
+#define IN_BADCLASS(a)     (((u32_t)(a) & 0xf0000000) == 0xf0000000)
 
 #define IN_LOOPBACKNET 127 /* official! */
 

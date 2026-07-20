@@ -37,7 +37,7 @@
 #error "must define mode"
 #endif
 
-//#define DPRINTF(x...) printf(x)
+// #define DPRINTF(x...) printf(x)
 #define DPRINTF(x...)
 
 typedef struct

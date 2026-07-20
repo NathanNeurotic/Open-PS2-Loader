@@ -144,7 +144,7 @@ int ps2ip_setconfig(t_ip_info *pInfo)
     } else {
         if (pNetIF->dhcp)
             dhcp_stop(pNetIF);
-    }  /* end else */
+    } /* end else */
 #endif /* LWIP_DHCP */
     return 1;
 
@@ -219,7 +219,7 @@ err_t ps2ip_input(struct pbuf *pInput, struct netif *pNetIF)
         pbuf_free(pInput);
         return ERR_OK;
     } /* end if */
-      // Allocate messagequeue entry.
+    // Allocate messagequeue entry.
     pIMSG = &aMSGs[u8LastMSG];
     u8LastMSG = GetNextMSGQueueIndex(u8LastMSG);
     // Initialize the InputMSG.

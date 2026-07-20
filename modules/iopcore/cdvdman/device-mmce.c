@@ -66,7 +66,7 @@ void DeviceFSInit(void)
         return;
     }
 
-    //Get func ptrs
+    // Get func ptrs
     fp_mmcedrv_get_size = (void *)info.exports[4];
     fp_mmcedrv_read_sector = (void *)info.exports[5];
     fp_mmcedrv_config_set = (void *)info.exports[6];
@@ -74,7 +74,7 @@ void DeviceFSInit(void)
     fp_mmcedrv_write = (void *)info.exports[8];
     fp_mmcedrv_lseek = (void *)info.exports[9];
 
-    //Set port and iso fd
+    // Set port and iso fd
     DPRINTF("Port: %i\n", cdvdman_settings.port);
     DPRINTF("Ack wait cycles: %i\n", cdvdman_settings.ack_wait_cycles);
     DPRINTF("Use alarms: %i\n", cdvdman_settings.use_alarms);
@@ -163,7 +163,7 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     return rv;
 }
 
-//TODO: For VMCs
+// TODO: For VMCs
 int mmce_read_offset(int fd, unsigned int offset, unsigned int size, unsigned char *buffer)
 {
     DPRINTF("%s\n", __func__);

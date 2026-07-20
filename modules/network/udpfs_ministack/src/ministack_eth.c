@@ -22,7 +22,7 @@ int handle_rx_eth(uint16_t len, const uint8_t *hdr, uint16_t hdr_len)
         case ETH_TYPE_IPV4:
             return handle_rx_ipv4(hdr, hdr_len);
         default:
-            //M_DEBUG("ministack: eth: type 0x%X\n", eth_type);
+            // M_DEBUG("ministack: eth: type 0x%X\n", eth_type);
             return -1;
     }
 }

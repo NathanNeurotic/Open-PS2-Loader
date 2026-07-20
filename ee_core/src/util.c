@@ -420,7 +420,7 @@ void BlinkColour(u8 x, u32 colour, u8 forever)
     do {
         delay(2);
         BGCOLND(0x000000); // Black
-        //foo
+        // foo
         for (i = 1; i <= x; i++) {
             delay(1);
             BGCOLND(colour); // Chosen colour

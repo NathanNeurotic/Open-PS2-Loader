@@ -321,8 +321,8 @@ void rmEnd(void)
     vmode = -1;
 }
 
-#define X_SCALE(x) (((x)*iDisplayWidth) / 640)
-#define Y_SCALE(y) (((y)*iDisplayHeight) / 480)
+#define X_SCALE(x) (((x) * iDisplayWidth) / 640)
+#define Y_SCALE(y) (((y) * iDisplayHeight) / 480)
 /** If txt is null, don't use DIM_UNDEF size */
 static void rmSetupQuad(GSTEXTURE *txt, int x, int y, short aligned, int w, int h, short scaled, u64 color, rm_quad_t *q)
 {

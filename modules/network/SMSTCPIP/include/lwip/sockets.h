@@ -130,7 +130,7 @@ struct linger
 
 
 #define IPTOS_TOS_MASK    0x1E
-#define IPTOS_TOS(tos)    ((tos)&IPTOS_TOS_MASK)
+#define IPTOS_TOS(tos)    ((tos) & IPTOS_TOS_MASK)
 #define IPTOS_LOWDELAY    0x10
 #define IPTOS_THROUGHPUT  0x08
 #define IPTOS_RELIABILITY 0x04
@@ -141,7 +141,7 @@ struct linger
  * Definitions for IP precedence (also in ip_tos) (hopefully unused)
  */
 #define IPTOS_PREC_MASK            0xe0
-#define IPTOS_PREC(tos)            ((tos)&IPTOS_PREC_MASK)
+#define IPTOS_PREC(tos)            ((tos) & IPTOS_PREC_MASK)
 #define IPTOS_PREC_NETCONTROL      0xe0
 #define IPTOS_PREC_INTERNETCONTROL 0xc0
 #define IPTOS_PREC_CRITIC_ECP      0xa0
@@ -200,9 +200,9 @@ struct linger
 #ifndef FD_SET
 #undef FD_SETSIZE
 #define FD_SETSIZE     16
-#define FD_SET(n, p)   ((p)->fd_bits[(n) / 8] |= (1 << ((n)&7)))
-#define FD_CLR(n, p)   ((p)->fd_bits[(n) / 8] &= ~(1 << ((n)&7)))
-#define FD_ISSET(n, p) ((p)->fd_bits[(n) / 8] & (1 << ((n)&7)))
+#define FD_SET(n, p)   ((p)->fd_bits[(n) / 8] |= (1 << ((n) & 7)))
+#define FD_CLR(n, p)   ((p)->fd_bits[(n) / 8] &= ~(1 << ((n) & 7)))
+#define FD_ISSET(n, p) ((p)->fd_bits[(n) / 8] & (1 << ((n) & 7)))
 #define FD_ZERO(p)     mips_memset((void *)(p), 0, sizeof(*(p)))
 
 typedef struct fd_set

@@ -24,7 +24,7 @@ void _ps2sdk_timezone_update() {}
 DISABLE_PATCHED_FUNCTIONS(); // Disable the patched functionalities
 // DISABLE_EXTRA_TIMERS_FUNCTIONS(); // Disable the extra functionalities for timers
 
-//#define PRINTF printf
+// #define PRINTF printf
 #define PRINTF scr_printf
 
 // Blocks sizes to test

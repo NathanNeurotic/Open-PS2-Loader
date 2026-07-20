@@ -136,7 +136,7 @@ extern int smbCacheSize;
 
 extern int gMMCESlot;
 extern int gMMCEIGRSlot;
-extern int gMMCEEnableGameID; //Send GameID on game launch
+extern int gMMCEEnableGameID; // Send GameID on game launch
 extern int gApplyGameID;      // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gMMCEAckWaitCycles;
 extern int gMMCEUseAlarms;
@@ -215,7 +215,7 @@ extern int gOSDLanguageEnable;
 extern int gOSDLanguageSource;
 
 extern int showCfgPopup;
-extern int showNetDhcpPopup;      // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
+extern int showNetDhcpPopup; // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
 
 #ifdef IGS
 #define IGS_VERSION "0.1"

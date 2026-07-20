@@ -22,7 +22,7 @@ typedef struct
     ip_header_t ip;   // 20 bytes
     udp_header_t udp; //  8 bytes
     uint16_t align;   //  2 bytes - 2byte -> 4byte alignment
-    //char payload[UDP_MAX_PAYLOAD];
+    // char payload[UDP_MAX_PAYLOAD];
 } __attribute__((packed, aligned(4))) udp_packet_t;
 
 struct udp_socket;

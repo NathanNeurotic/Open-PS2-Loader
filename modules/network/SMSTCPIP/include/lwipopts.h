@@ -237,7 +237,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 // Boman666: This define will force the TX-data to be splitted in an even number of TCP-segments. This will significantly increase
 // the upload speed, atleast on my configuration (PC - WinXP).
-//#define    PS2IP_EVEN_TCP_SEG
+// #define    PS2IP_EVEN_TCP_SEG
 // spooo:
 //     It is a normal TCP behaviour that small data are delayed. This is
 //     Nagle's algorithm. If you don't want it there's a legal way of

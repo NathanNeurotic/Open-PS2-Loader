@@ -366,11 +366,11 @@ static const unsigned int des_skb[8][64] = {
     u = (R ^ s[S]);                         \
     t = R ^ s[S + 1];                       \
     t = ((t >> 4) + (t << 28));             \
-    L ^= des_SPtrans[1][(t)&0x3f] |         \
+    L ^= des_SPtrans[1][(t) & 0x3f] |       \
          des_SPtrans[3][(t >> 8) & 0x3f] |  \
          des_SPtrans[5][(t >> 16) & 0x3f] | \
          des_SPtrans[7][(t >> 24) & 0x3f] | \
-         des_SPtrans[0][(u)&0x3f] |         \
+         des_SPtrans[0][(u) & 0x3f] |       \
          des_SPtrans[2][(u >> 8) & 0x3f] |  \
          des_SPtrans[4][(u >> 16) & 0x3f] | \
          des_SPtrans[6][(u >> 24) & 0x3f];
@@ -484,12 +484,12 @@ static unsigned char *DES_createkeys(unsigned char *key)
         d &= 0x0fffffff;
         /* could be a few less shifts but I am to lazy at this
          * point in time to investigate */
-        s = des_skb[0][(c)&0x3f] |
+        s = des_skb[0][(c) & 0x3f] |
             des_skb[1][((c >> 6) & 0x03) | ((c >> 7) & 0x3c)] |
             des_skb[2][((c >> 13) & 0x0f) | ((c >> 14) & 0x30)] |
             des_skb[3][((c >> 20) & 0x01) | ((c >> 21) & 0x06) | ((c >> 22) & 0x38)];
 
-        t = des_skb[4][(d)&0x3f] |
+        t = des_skb[4][(d) & 0x3f] |
             des_skb[5][((d >> 7) & 0x03) | ((d >> 8) & 0x3c)] |
             des_skb[6][(d >> 15) & 0x3f] |
             des_skb[7][((d >> 21) & 0x0f) | ((d >> 22) & 0x30)];

@@ -96,15 +96,14 @@ struct cdvdman_settings_mmce
     struct cdvdman_settings_common common;
     int port;
     int iso_fd;
-    //vmc_id is in mcemu struct
+    // vmc_id is in mcemu struct
     int ack_wait_cycles;
     int use_alarms;
 } __attribute__((packed));
 
-#define CDVDMAN_SETTINGS_DEFAULT_COMMON                    \
-    {                                                      \
-        0x68, 0x68, 0x1234, 0x39393939, "DSKID", 16, 8, 16 \
-    }
+#define CDVDMAN_SETTINGS_DEFAULT_COMMON \
+    {                                   \
+        0x68, 0x68, 0x1234, 0x39393939, "DSKID", 16, 8, 16}
 #define CDVDMAN_SETTINGS_DEFAULT_HDD 0x12345678
 #define CDVDMAN_SETTINGS_DEFAULT_SMB                          \
     "######  FILENAME  ######",                               \

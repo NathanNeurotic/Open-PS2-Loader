@@ -35,7 +35,7 @@ typedef struct
 {
     eth_header_t eth; // 14 bytes
     uint16_t align;   //  2 bytes - 2byte -> 4byte alignment
-    //char payload[ETH_MAX_PAYLOAD];
+    // char payload[ETH_MAX_PAYLOAD];
 } __attribute__((packed, aligned(4))) eth_packet_t;
 
 #define ETH_TYPE_IPV4 0x0800

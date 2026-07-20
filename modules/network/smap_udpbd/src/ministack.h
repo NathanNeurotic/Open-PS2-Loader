@@ -82,7 +82,7 @@ typedef struct
 {
     eth_header_t eth; // 14 bytes
     uint16_t align;   //  2 bytes - 2byte -> 4byte alignment
-    //char payload[ETH_MAX_PAYLOAD];
+    // char payload[ETH_MAX_PAYLOAD];
 } __attribute__((packed, aligned(4))) eth_packet_t;
 
 typedef struct
@@ -90,7 +90,7 @@ typedef struct
     eth_header_t eth; // 14 bytes
     ip_header_t ip;   // 20 bytes
     uint16_t align;   //  2 bytes - 2byte -> 4byte alignment
-    //char payload[IP_MAX_PAYLOAD];
+    // char payload[IP_MAX_PAYLOAD];
 } __attribute__((packed, aligned(4))) ip_packet_t;
 
 typedef struct
@@ -105,7 +105,7 @@ typedef struct
     ip_header_t ip;   // 20 bytes
     udp_header_t udp; //  8 bytes
     uint16_t align;   //  2 bytes - 2byte -> 4byte alignment
-    //char payload[UDP_MAX_PAYLOAD];
+    // char payload[UDP_MAX_PAYLOAD];
 } __attribute__((packed, aligned(4))) udp_packet_t;
 
 #define ETH_TYPE_IPV4 0x0800

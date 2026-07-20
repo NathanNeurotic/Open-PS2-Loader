@@ -107,7 +107,7 @@ static int _ist(udp_socket_t *udp_socket, void *arg, const uint8_t *hdr, uint16_
     const udprdma_pkt_disc_t *disc_pkt = (const udprdma_pkt_disc_t *)hdr;
     udprdma_hdr_t base_hdr = disc_pkt->hdr; /* offset 42-43: within 44-byte pre-read */
 
-    //M_DEBUG("_ist: type=%d seq=%d\n", base_hdr.packet_type, base_hdr.seq_nr);
+    // M_DEBUG("_ist: type=%d seq=%d\n", base_hdr.packet_type, base_hdr.seq_nr);
 
     switch (base_hdr.packet_type) {
         case UDPRDMA_PT_DISCOVERY: {
@@ -151,8 +151,8 @@ static int _ist(udp_socket_t *udp_socket, void *arg, const uint8_t *hdr, uint16_
         case UDPRDMA_PT_DATA: {
             udprdma_hdr_data_t data_hdr;
             smap_fifo_read(0x2C, &data_hdr.raw, sizeof(udprdma_hdr_data_t));
-            //M_DEBUG("_ist: DATA seq=%d flags=0x%02X bytes=%d\n",
-            //    data_hdr.seq_nr_ack, data_hdr.flags, data_hdr.data_byte_count);
+            // M_DEBUG("_ist: DATA seq=%d flags=0x%02X bytes=%d\n",
+            //     data_hdr.seq_nr_ack, data_hdr.flags, data_hdr.data_byte_count);
 
             /* Update TX ACK state only from ACK packets */
             if (data_hdr.flags & UDPRDMA_DF_ACK) {

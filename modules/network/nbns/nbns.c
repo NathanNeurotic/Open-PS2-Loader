@@ -21,7 +21,7 @@
 #define NB_MN_FLAGS(AA, TC, RD, RA, B) (((AA) << 6) | ((TC) << 5) | ((RD) << 4) | ((RA) << 3) | (B))
 #define NB_CODE(OPCODE, FLAGS, RCODE)  (((OPCODE) << 11) | ((FLAGS) << 4) | (RCODE))
 
-#define NB_GET_RCODE(CODE)    ((CODE)&0xF)
+#define NB_GET_RCODE(CODE)    ((CODE) & 0xF)
 #define NB_GET_MN_FLAGS(CODE) (((CODE) >> 4) & 0x7F)
 #define NB_GET_OPCODE(CODE)   (((CODE) >> 11) & 0xF)
 #define NB_GET_R(CODE)        (((CODE) >> 15) & 1)
