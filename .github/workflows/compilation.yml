@@ -1,591 +1,404 @@
-name: CI-compile
+name: Source patch runner
 
 on:
-  push:
   pull_request:
-  workflow_dispatch:
-  repository_dispatch:
-    types: [run_build]
+    branches:
+      - agent/patch-runner-base-v2
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  patch:
     runs-on: ubuntu-latest
-    container: ps2max/dev:v20250725-2
     steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow
-
-      - name: Compile -> make clean release
-        run: make --trace clean && make --trace release
-
-      - name: Create detailed changelog
-        run: sh ./make_changelog.sh
-
-      - name: Upload release artifact ELF
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v6
+      - uses: actions/checkout@v6
         with:
-          name: RIPTOPL
-          path: |
-            RIPTOPL-*.ELF
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
-      - name: Upload release artifact info
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: INFO
-          path: |
-            DETAILED_CHANGELOG
-            CREDITS
-            LICENSE
-            README.md
-
-
-  build-ps2dev-latest:
-    runs-on: ubuntu-latest
-    container: ps2dev/ps2dev:latest
-    steps:
-      # Install git BEFORE checkout: without it, actions/checkout falls back to an API
-      # tarball (no .git directory), so git describe fails and the Makefile marks the
-      # build "-dirty" -- the version string then collapses and hardware reports cannot
-      # identify the exact commit/toolchain they ran.
-      - name: Install host dependencies (Alpine only)
+      - name: Apply reviewed source patch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        shell: bash
         run: |
-          if command -v apk >/dev/null 2>&1; then
-            # Consolidated ps2dev Alpine prerequisites: build tools, scripting, packaging, and gcc runtime libs.
-            apk add --no-cache \
-              bash \
-              make \
-              git \
-              zip \
-              unzip \
-              tar \
-              gzip \
-              xz \
-              python3 \
-              py3-pip \
-              py3-yaml \
-              gmp \
-              mpfr4 \
-              mpc1 \
-              perl \
-              cmake \
-              pkgconf \
-              coreutils \
-              findutils \
-              grep \
-              sed \
-              gawk \
-              diffutils
-          fi
-
-      - name: git checkout
-        uses: actions/checkout@v6
-
-
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow || true
-
-      - name: Install menu-coherent mmceman (latest-only)
-        # Rebuild mmceman ONLY from ps2-mmce (with the 2026-06-14 sio2man-compat fix) over the
-        # container SDK prebuilt (pinned to the desynced v2.1.1) -- fixes the MMCE MENU freeze.
-        # The in-game mmcedrv/mmceigr stay the SDK stock prebuilts: same source as the pin, and
-        # the stock binaries are field-proven in-game where our rebuild was not. See script header.
-        run: sh ./.github/scripts/install_coherent_mmce.sh
-
-      - name: Compile -> make clean release
-        run: make --trace clean && make --trace release
-
-      - name: Create detailed changelog
-        run: sh ./make_changelog.sh
-
-      - name: Upload release artifact ELF (ps2dev-latest)
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-ps2dev-latest
-          path: |
-            RIPTOPL-*.ELF
-
-      - name: Upload release artifact info (ps2dev-latest)
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: INFO-ps2dev-latest
-          path: |
-            DETAILED_CHANGELOG
-            CREDITS
-            LICENSE
-            README.md
-
-  build-variants:
-    strategy:
-      fail-fast: false
-      matrix:
-        extra: [EXTRA_FEATURES=0, EXTRA_FEATURES=1]
-        pademu: [PADEMU=0, PADEMU=1]
-    runs-on: ubuntu-latest
-    container: ps2max/dev:v20250725-2
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow
-
-      - name: Get version
-        run: |
-          echo "OPL_VERSION=$(make oplversion)" >> "$GITHUB_ENV"
-
-      - name: Compile -> make ${{ matrix.extra }} ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
-        run: |
-          make --trace ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
-          mv opl.elf RIPTOPL-${{ env.OPL_VERSION }}-${{ matrix.pademu }}-${{ matrix.extra }}.ELF
-
-      - name: Create detailed changelog
-        run: sh ./make_changelog.sh
-
-      - name: Upload variants artifact ELF
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-VARIANTS ${{ matrix.pademu }} ${{ matrix.extra }}
-          path: RIPTOPL*.ELF
-
-
-  build-variants-ps2dev-latest:
-    strategy:
-      fail-fast: false
-      matrix:
-        extra: [EXTRA_FEATURES=0, EXTRA_FEATURES=1]
-        pademu: [PADEMU=0, PADEMU=1]
-    runs-on: ubuntu-latest
-    container: ps2dev/ps2dev:latest
-    steps:
-      # Install git BEFORE checkout: without it, actions/checkout falls back to an API
-      # tarball (no .git directory), so git describe fails and the Makefile marks the
-      # build "-dirty" -- the version string then collapses and hardware reports cannot
-      # identify the exact commit/toolchain they ran.
-      - name: Install host dependencies (Alpine only)
-        run: |
-          if command -v apk >/dev/null 2>&1; then
-            # Consolidated ps2dev Alpine prerequisites: build tools, scripting, packaging, and gcc runtime libs.
-            apk add --no-cache \
-              bash \
-              make \
-              git \
-              zip \
-              unzip \
-              tar \
-              gzip \
-              xz \
-              python3 \
-              py3-pip \
-              py3-yaml \
-              gmp \
-              mpfr4 \
-              mpc1 \
-              perl \
-              cmake \
-              pkgconf \
-              coreutils \
-              findutils \
-              grep \
-              sed \
-              gawk \
-              diffutils
-          fi
-
-      - name: git checkout
-        uses: actions/checkout@v6
-
-
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow || true
-
-      - name: Get version
-        run: |
-          echo "OPL_VERSION=$(make oplversion)" >> "$GITHUB_ENV"
-
-      - name: Install menu-coherent mmceman (latest-only)
-        # Rebuild mmceman ONLY from ps2-mmce (with the 2026-06-14 sio2man-compat fix) over the
-        # container SDK prebuilt (pinned to the desynced v2.1.1) -- fixes the MMCE MENU freeze.
-        # The in-game mmcedrv/mmceigr stay the SDK stock prebuilts: same source as the pin, and
-        # the stock binaries are field-proven in-game where our rebuild was not. See script header.
-        run: sh ./.github/scripts/install_coherent_mmce.sh
-
-      - name: Compile -> make ${{ matrix.extra }} ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
-        run: |
-          make --trace ${{ matrix.pademu }} ${{ matrix.extra }} NOT_PACKED=1
-          mv opl.elf RIPTOPL-${{ env.OPL_VERSION }}-${{ matrix.pademu }}-${{ matrix.extra }}.ELF
-
-      - name: Create detailed changelog
-        run: sh ./make_changelog.sh
-
-      - name: Upload variants artifact ELF (ps2dev-latest)
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-VARIANTS-ps2dev-latest ${{ matrix.pademu }} ${{ matrix.extra }}
-          path: RIPTOPL*.ELF
-
-  merge-variants:
-    runs-on: ubuntu-latest
-    needs: build-variants
-    steps:
-      - name: Download variant artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: RIPTOPL-VARIANTS PADEMU=*
-          path: merged-variants
-          merge-multiple: true
-
-      - name: Re-upload merged variants
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-VARIANTS
-          path: merged-variants
-
-
-  merge-variants-ps2dev-latest:
-    runs-on: ubuntu-latest
-    needs: build-variants-ps2dev-latest
-    steps:
-      - name: Download variant artifacts (ps2dev-latest)
-        uses: actions/download-artifact@v8
-        with:
-          pattern: RIPTOPL-VARIANTS-ps2dev-latest*
-          path: merged-variants-ps2dev-latest
-          merge-multiple: true
-
-      - name: Re-upload merged variants (ps2dev-latest)
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-VARIANTS-ps2dev-latest
-          path: merged-variants-ps2dev-latest
-
-  build-lang:
-    runs-on: ubuntu-latest
-    container: ps2max/dev:v20250725-2
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow
-
-      - name: Compile -> make download_lng languages
-        run: make --trace download_lng languages
-
-      - name: Create artifact
-        run: sh ./lng_pack.sh
-
-      - name: Upload release artifact
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-LANGS
-          path: |
-            RIPTOPL-LANGS-*.zip
-
-
-  build-lang-ps2dev-latest:
-    runs-on: ubuntu-latest
-    container: ps2dev/ps2dev:latest
-    steps:
-      # Install git BEFORE checkout: without it, actions/checkout falls back to an API
-      # tarball (no .git directory), so git describe fails and the Makefile marks the
-      # build "-dirty" -- the version string then collapses and hardware reports cannot
-      # identify the exact commit/toolchain they ran.
-      - name: Install host dependencies (Alpine only)
-        run: |
-          if command -v apk >/dev/null 2>&1; then
-            # Consolidated ps2dev Alpine prerequisites: build tools, scripting, packaging, and gcc runtime libs.
-            apk add --no-cache \
-              bash \
-              make \
-              git \
-              zip \
-              unzip \
-              tar \
-              gzip \
-              xz \
-              python3 \
-              py3-pip \
-              py3-yaml \
-              gmp \
-              mpfr4 \
-              mpc1 \
-              perl \
-              cmake \
-              pkgconf \
-              coreutils \
-              findutils \
-              grep \
-              sed \
-              gawk \
-              diffutils
-          fi
-
-      - name: git checkout
-        uses: actions/checkout@v6
-
-
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow || true
-
-      - name: Compile -> make download_lng languages
-        run: make --trace download_lng languages
-
-      - name: Create artifact
-        run: sh ./lng_pack.sh
-
-      - name: Upload release artifact (ps2dev-latest)
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-LANGS-ps2dev-latest
-          path: |
-            RIPTOPL-LANGS-*.zip
-
-  build-debug:
-    strategy:
-      fail-fast: false
-      matrix:
-        debug: [iopcore_debug, ingame_debug, eesio_debug, iopcore_ppctty_debug, ingame_ppctty_debug, DTL_T10000=1]
-        container_commit: [":v20250725-2"]
-    runs-on: ubuntu-latest
-    container: ps2max/dev${{ matrix.container_commit }}
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow
-
-      - name: Get version
-        run: |
-          echo "OPL_VERSION=$(make oplversion)" >> "$GITHUB_ENV"
-          SHORT_COMMIT="${{ matrix.container_commit }}"
-          SHORT_COMMIT=${SHORT_COMMIT: -4}
-          echo "SHORT_COMMIT=$SHORT_COMMIT" >> "$GITHUB_ENV"
-
-      - name: Compile -> make debug
-        run: |
-          make ${{ matrix.debug }} --trace
-          mv opl.elf opl-${{ matrix.debug }}-${{ env.OPL_VERSION }}-${{ env.SHORT_COMMIT }}.elf
-
-      - name: Upload debug artifact ELF
-        uses: actions/upload-artifact@v6
-        with:
-          name: opl-${{ matrix.debug }}-${{ env.OPL_VERSION }}-${{ env.SHORT_COMMIT }}
-          path: opl-*.elf
-
-  merge-debug:
-    runs-on: ubuntu-latest
-    needs: build-debug
-    steps:
-      - name: Download debug artifacts
-        uses: actions/download-artifact@v8
-        with:
-          pattern: opl-*
-          path: merged-debug
-          merge-multiple: true
-
-      - name: Remove ps2dev-latest debug artifacts from normal bundle
-        run: find merged-debug -type f -name '*-ps2dev-latest.elf' -delete
-
-      - name: Re-upload merged debug artifacts
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-DEBUG
-          path: merged-debug
-
-
-  build-debug-ps2dev-latest:
-    strategy:
-      fail-fast: false
-      matrix:
-        debug: [iopcore_debug, ingame_debug, eesio_debug, iopcore_ppctty_debug, ingame_ppctty_debug, DTL_T10000=1]
-    runs-on: ubuntu-latest
-    container: ps2dev/ps2dev:latest
-    steps:
-      # Install git BEFORE checkout: without it, actions/checkout falls back to an API
-      # tarball (no .git directory), so git describe fails and the Makefile marks the
-      # build "-dirty" -- the version string then collapses and hardware reports cannot
-      # identify the exact commit/toolchain they ran.
-      - name: Install host dependencies (Alpine only)
-        run: |
-          if command -v apk >/dev/null 2>&1; then
-            # Consolidated ps2dev Alpine prerequisites: build tools, scripting, packaging, and gcc runtime libs.
-            apk add --no-cache \
-              bash \
-              make \
-              git \
-              zip \
-              unzip \
-              tar \
-              gzip \
-              xz \
-              python3 \
-              py3-pip \
-              py3-yaml \
-              gmp \
-              mpfr4 \
-              mpc1 \
-              perl \
-              cmake \
-              pkgconf \
-              coreutils \
-              findutils \
-              grep \
-              sed \
-              gawk \
-              diffutils
-          fi
-
-      - name: git checkout
-        uses: actions/checkout@v6
-
-
-      - run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git fetch --prune --unshallow || true
-
-      - name: Get version
-        run: |
-          echo "OPL_VERSION=$(make oplversion)" >> "$GITHUB_ENV"
-
-      - name: Install menu-coherent mmceman (latest-only)
-        # Rebuild mmceman ONLY from ps2-mmce (with the 2026-06-14 sio2man-compat fix) over the
-        # container SDK prebuilt (pinned to the desynced v2.1.1) -- fixes the MMCE MENU freeze.
-        # The in-game mmcedrv/mmceigr stay the SDK stock prebuilts: same source as the pin, and
-        # the stock binaries are field-proven in-game where our rebuild was not. See script header.
-        run: sh ./.github/scripts/install_coherent_mmce.sh
-
-      - name: Compile -> make debug
-        run: |
-          make ${{ matrix.debug }} --trace
-          mv opl.elf opl-${{ matrix.debug }}-${{ env.OPL_VERSION }}-ps2dev-latest.elf
-
-      - name: Upload debug artifact ELF (ps2dev-latest)
-        uses: actions/upload-artifact@v6
-        with:
-          name: opl-${{ matrix.debug }}-${{ env.OPL_VERSION }}-ps2dev-latest
-          path: opl-*.elf
-
-  merge-debug-ps2dev-latest:
-    runs-on: ubuntu-latest
-    needs: build-debug-ps2dev-latest
-    steps:
-      - name: Download debug artifacts (ps2dev-latest)
-        uses: actions/download-artifact@v8
-        with:
-          pattern: opl-*-ps2dev-latest
-          path: merged-debug-ps2dev-latest
-          merge-multiple: true
-
-      - name: Re-upload merged debug artifacts (ps2dev-latest)
-        uses: actions/upload-artifact@v6
-        with:
-          name: RIPTOPL-DEBUG-ps2dev-latest
-          path: merged-debug-ps2dev-latest
-
-  release:
-    needs: [build, merge-variants, build-lang]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/master'
-    env:
-      USERNAME: ${{ secrets.USERNAME }}
-      PASSWORD: ${{ secrets.PASSWORD }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
-      - run: git fetch --prune --unshallow
-
-      - name: Get version
-        run: |
-          echo "OPL_VERSION=$(make oplversion)" >> "$GITHUB_ENV"
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v8
-
-      - name: Prepare artifacts for release
-        run: |
-          echo packing release of OPL ${{ env.OPL_VERSION }}
-          cp INFO/* RIPTOPL/
-          cp INFO/* RIPTOPL-VARIANTS/
-          7z a -t7z RIPTOPL-${{ env.OPL_VERSION }}.7z RIPTOPL/*
-          7z a -t7z RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z RIPTOPL-VARIANTS/*
-          7z a -t7z RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z RIPTOPL-LANGS/*
-          cp -f RIPTOPL-${{ env.OPL_VERSION }}.7z RIPTOPL.7z
-          cp -f RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z RIPTOPL-VARIANTS.7z
-          cp -f RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z RIPTOPL-LANGS.7z
-          cp -f RIPTOPL/RIPTOPL-${{ env.OPL_VERSION }}.ELF RIPTOPL.ELF
-
-      - name: Compute SHA256 checksums
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          set -eu
-          # Publish SHA256 of EVERY uploaded asset -- versioned bundles, the stable-alias
-          # bundles, and the ELF -- so any download (including the bare-name aliases) is verifiable.
-          sha256sum \
-            RIPTOPL-${{ env.OPL_VERSION }}.7z \
-            RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z \
-            RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z \
-            RIPTOPL.7z \
-            RIPTOPL-VARIANTS.7z \
-            RIPTOPL-LANGS.7z \
-            RIPTOPL.ELF \
-            > SHA256SUMS.txt
-          cat SHA256SUMS.txt
-
-      # NOTE: ALL release publishing -- the master "rolling" prerelease AND the per-version v* tag
-      # release -- is now handled by rolling-release.yml with identical packaging. This workflow only
-      # builds (CI) + uploads run artifacts; the v* release-cut below is retired (if: false).
-
-      - name: Create release
-        if: false # retired -- rolling-release.yml now cuts v* releases (unified packaging)
-        run: |
-          PRERELEASE_FLAG=""
-          if [[ "${GITHUB_REF}" == *"-rc"* ]]; then
-            PRERELEASE_FLAG="--prerelease"
-          fi
-
-          gh release create "${{ github.ref_name }}" \
-            RIPTOPL-${{ env.OPL_VERSION }}.7z \
-            RIPTOPL-VARIANTS-${{ env.OPL_VERSION }}.7z \
-            RIPTOPL-LANGS-${{ env.OPL_VERSION }}.7z \
-            RIPTOPL.7z \
-            RIPTOPL-VARIANTS.7z \
-            RIPTOPL-LANGS.7z \
-            RIPTOPL.ELF \
-            SHA256SUMS.txt \
-            --title "${{ env.OPL_VERSION }}" \
-            --notes "" \
-            ${PRERELEASE_FLAG}
-
-#      - name: Upload pre-release to Mega
-#        if: github.ref == 'refs/heads/master' && env.USERNAME != null
-#        uses: Difegue/action-megacmd@master
-#        with:
-#          args: put -c RIPTOPL.7z /OPL/Pre-Release/${{ env.OPL_VERSION }}/run_${{ github.run_number }}/
-#
-#      - name: Upload release to Mega
-#        if: startsWith(github.ref, 'refs/tags/v') && env.USERNAME != null
-#        uses: Difegue/action-megacmd@master
-#        with:
-#          args: put -c RIPTOPL.7z /OPL/Release/${{ env.OPL_VERSION }}/
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          branch = os.environ['HEAD_REF']
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'{label}: expected anchor not found in {path}')
+              p.write_text(text.replace(old, new, 1))
+
+          if branch == 'agent/final-mmce-vcd-art-quiesce':
+              old = '''    // VCD view: hand off to POPSTARTER (by name) instead of the disc path below. Menu-launch only.
+              if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
+                  mmceLaunchVcd(itemList, game->name, configSet);
+                  return;
+              }
+
+              if (!cacheAbortMmceImageLoadsTimed(MMCE_ART_ABORT_WAIT_TICKS)) {
+                  // #120: the art worker is wedged in a blocking fileXio on a slow/desynced card. Do NOT cacheEnd(1)
+                  // here -- its TerminateThread(gArtThreadId) kills the worker MID-RPC and orphans the SHARED mmceman
+                  // channel (TK>0). The launch reads below then FAIL and RETURN to a still-running OPL (unlike a launch
+                  // that LoadExecPS2's away), poisoning every later card read. Abandon-and-retry instead (mirrors
+                  // thmLoad's redesign): toast and bail so the user retries once the card is calm. NEVER a hard
+                  // freeze -- guiWarning is non-blocking.
+                  guiWarning(_l(_STR_ERR_FILE_INVALID), 8);
+                  return;
+              }
+          '''.replace('              ', '    ')
+              new = '''    // Quiesce every MMCE art read before either launch path performs card IO. The VCD handoff
+              // resolves POPSTARTER and may equip BDMA modules from MMCE before deinit(), so allowing its early
+              // return to bypass this guard can contend with the persistent art worker on the same mmceman channel.
+              if (!cacheAbortMmceImageLoadsTimed(MMCE_ART_ABORT_WAIT_TICKS)) {
+                  // #120: the art worker is wedged in a blocking fileXio on a slow/desynced card. Do NOT cacheEnd(1)
+                  // here -- its TerminateThread(gArtThreadId) kills the worker MID-RPC and orphans the SHARED mmceman
+                  // channel (TK>0). Abandon-and-retry instead so the user can retry once the card is calm.
+                  guiWarning(_l(_STR_ERR_FILE_INVALID), 8);
+                  return;
+              }
+
+              // VCD view: hand off to POPSTARTER (by name) instead of the disc path below. Menu-launch only.
+              if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
+                  mmceLaunchVcd(itemList, game->name, configSet);
+                  return;
+              }
+          '''.replace('              ', '    ')
+              replace_once('src/mmcesupport.c', old, new, 'MMCE launch guard')
+              files = ['src/mmcesupport.c']
+              message = 'Quiesce MMCE art before VCD launch IO'
+
+          elif branch == 'agent/final-silent-hdd-config-probes':
+              replace_once(
+                  'src/opl.c',
+                  '''    // Bounded wait so BDM-on-HDD can be detected without long black-screen stalls.
+              if (hddLoadModules() >= 0 && bdmHDDIsPresent(500)) {
+          '''.replace('              ', '    '),
+                  '''    // Legacy config discovery is speculative: expected absence must not post the user-facing 401.
+              // Keep the scan for compatibility, but load the shared ATA stack silently here.
+              if (hddLoadModulesSilent() >= 0 && bdmHDDIsPresent(500)) {
+          '''.replace('              ', '    '),
+                  'BDM-HDD config probe')
+              replace_once(
+                  'src/opl.c',
+                  '''    if (hddLoadModules() < 0 || !hddLoadSupportModules())
+              return 0;
+          '''.replace('              ', '    '),
+                  '''    // Legacy config discovery is speculative: preserve HDD config lookup without reporting expected
+              // hardware absence as a startup error on HDD-less consoles.
+              if (hddLoadModulesSilent() < 0 || !hddLoadSupportModules())
+                  return 0;
+          '''.replace('              ', '    '),
+                  'APA-HDD config probe')
+              replace_once(
+                  'src/opl.c',
+                  '''    char pwd[8];
+              char redirectPath[64];
+              int value;
+              DIR *dir;
+
+              getcwd(pwd, sizeof(pwd));
+          '''.replace('              ', '    '),
+                  '''    char pwd[64] = "";
+              char redirectPath[64];
+              int value;
+              DIR *dir;
+
+              if (getcwd(pwd, sizeof(pwd)) == NULL)
+                  pwd[0] = '\\0';
+          '''.replace('              ', '    '),
+                  'legacy cwd buffer')
+              replace_once('src/hddsupport.c', 'int hddLoadModules(void)\n{', 'static int hddLoadModulesInternal(int reportError)\n{', 'HDD loader internal')
+              replace_once(
+                  'src/hddsupport.c',
+                  '''        LOG("HDD: No HardDisk Drive detected.\\n");
+              setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
+              return HDD_LOADMODULES_STATUS_ERROR;
+          '''.replace('              ', '    '),
+                  '''        LOG("HDD: No HardDisk Drive detected.\\n");
+              if (reportError)
+                  setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
+              return HDD_LOADMODULES_STATUS_ERROR;
+          '''.replace('              ', '    '),
+                  'HDD error reporting')
+              replace_once(
+                  'src/hddsupport.c',
+                  '''    LOG("HDDSUPPORT LoadModules done\\n");
+              return HDD_LOADMODULES_STATUS_NOERROR;
+          }
+
+          int hddLoadSupportModules(void)
+          '''.replace('              ', '    '),
+                  '''    LOG("HDDSUPPORT LoadModules done\\n");
+              return HDD_LOADMODULES_STATUS_NOERROR;
+          }
+
+          int hddLoadModules(void)
+          {
+              return hddLoadModulesInternal(1);
+          }
+
+          int hddLoadModulesSilent(void)
+          {
+              return hddLoadModulesInternal(0);
+          }
+
+          int hddLoadSupportModules(void)
+          '''.replace('              ', '    '),
+                  'HDD loader wrappers')
+              replace_once(
+                  'include/hddsupport.h',
+                  '''int hddLoadModules(void);
+          int hddLoadSupportModules(void);
+          '''.replace('          ', ''),
+                  '''int hddLoadModules(void);
+          // Speculative legacy-config probe: identical module load, but expected HDD absence remains log-only.
+          int hddLoadModulesSilent(void);
+          int hddLoadSupportModules(void);
+          '''.replace('          ', ''),
+                  'HDD header declaration')
+              files = ['src/opl.c', 'src/hddsupport.c', 'include/hddsupport.h']
+              message = 'Silence speculative HDD config probes'
+
+          elif branch == 'agent/final-bdma-transaction-integrity':
+              replace_once(
+                  'src/vcdsupport.c',
+                  '''    if (rc != 0)
+              unlink(dstPath);
+              return rc;
+          }
+
+          // ---- BDMA (BDMAssault exFAT driver) equip -------------------------------------------
+          '''.replace('              ', '    '),
+                  '''    if (rc != 0)
+              unlink(dstPath);
+              return rc;
+          }
+
+          // Keep a complete live BDMA installation in EE RAM while replacing it. Memory-card rename is not
+          // available, and an on-card backup can exceed the free space of a real 8 MB card. Driver modules are
+          // small, but keep a hard upper bound so a damaged directory entry cannot cause unbounded allocation.
+          #define VCD_BACKUP_MAX (2 * 1024 * 1024)
+          static int vcdReadFileAlloc(const char *path, unsigned char **out, int *outSize)
+          {
+              struct stat st;
+              int fd, size, total = 0;
+              unsigned char *buf;
+
+              if (path == NULL || out == NULL || outSize == NULL)
+                  return -1;
+              *out = NULL;
+              *outSize = 0;
+
+              if (stat(path, &st) != 0 || st.st_size <= 0 || st.st_size > VCD_BACKUP_MAX)
+                  return -1;
+              size = (int)st.st_size;
+
+              fd = open(path, O_RDONLY);
+              if (fd < 0)
+                  return -1;
+              buf = (unsigned char *)malloc(size);
+              if (buf == NULL) {
+                  close(fd);
+                  return -1;
+              }
+
+              while (total < size) {
+                  int r = read(fd, buf + total, size - total);
+                  if (r <= 0) {
+                      free(buf);
+                      close(fd);
+                      return -1;
+                  }
+                  total += r;
+              }
+              close(fd);
+
+              *out = buf;
+              *outSize = size;
+              return 0;
+          }
+
+          // ---- BDMA (BDMAssault exFAT driver) equip -------------------------------------------
+          '''.replace('              ', '    '),
+                  'BDMA backup helper')
+              replace_once(
+                  'src/vcdsupport.c',
+                  '''#define VCD_BDMA_MARKER "bdma_config.txt"
+
+          // Resolve the memory-card POPSTARTER folder (where the modules live). Prefer an existing folder;
+          '''.replace('          ', ''),
+                  '''#define VCD_BDMA_MARKER "bdma_config.txt"
+
+          static int vcdBdmaLivePairPresent(const char *mcDir)
+          {
+              char path[96];
+              unsigned char byte;
+
+              if (mcDir == NULL || mcDir[0] == '\\0')
+                  return 0;
+
+              for (int i = 0; i < 2; i++) {
+                  snprintf(path, sizeof(path), "%s/%s", mcDir, vcdBdmaModule[i]);
+                  int fd = open(path, O_RDONLY);
+                  if (fd < 0)
+                      return 0;
+                  int r = read(fd, &byte, 1);
+                  close(fd);
+                  if (r != 1)
+                      return 0;
+              }
+              return 1;
+          }
+
+          // Resolve the memory-card POPSTARTER folder (where the modules live). Prefer an existing folder;
+          '''.replace('          ', ''),
+                  'BDMA live-pair check')
+              replace_once(
+                  'src/vcdsupport.c',
+                  '''    // Commit by COPY, not rename(): this dir is always on mc0:/mc1:, and the stock mcman.irx OPL embeds
+              // registers the legacy ioman 'mc' device with NO rename op -- iomanX returns -EUNSUP for every mc
+              // rename(), so a rename-based swap can never succeed here. If a commit write fails, the CARD is
+              // refusing IO: normalize to the consistent no-pair state (POPStarter falls back to its built-in
+              // FAT32 driver, same as the VCD_BDMA_FAT32 path) rather than leave a torn mixed-variant pair.
+              unlink(dst0); // free the old module's space first; tmp + old + new pairs may not fit a real MC
+              r = vcdSafeCopyFile(tmp0, dst0);
+              if (r == 0) {
+                  unlink(dst1);
+                  r = vcdSafeCopyFile(tmp1, dst1);
+              }
+              unlink(tmp0);
+              unlink(tmp1);
+              if (r != 0) {
+                  unlink(dst0); // drop the half-installed pair; vcdSafeCopyFile already removed its partial write
+                  unlink(dst1);
+                  vcdWriteBdmaMarker(mcDir, VCD_BDMA_FAT32);
+                  return r;
+              }
+
+              int mr = vcdWriteBdmaMarker(mcDir, mode);
+              return (mr != 0) ? mr : 0;
+          '''.replace('              ', '    '),
+                  '''    // Snapshot a complete existing pair before touching either live destination. If the pair exists but
+              // cannot be backed up, leave it untouched and fail the equip rather than risk destroying it.
+              unsigned char *old0 = NULL, *old1 = NULL, *oldMarker = NULL;
+              int old0Size = 0, old1Size = 0, oldMarkerSize = 0;
+              int hadOldPair = vcdBdmaLivePairPresent(mcDir);
+              if (hadOldPair &&
+                  (vcdReadFileAlloc(dst0, &old0, &old0Size) != 0 ||
+                   vcdReadFileAlloc(dst1, &old1, &old1Size) != 0)) {
+                  free(old0);
+                  free(old1);
+                  unlink(tmp0);
+                  unlink(tmp1);
+                  return -3;
+              }
+
+              char markerPath[96];
+              snprintf(markerPath, sizeof(markerPath), "%s/%s", mcDir, VCD_BDMA_MARKER);
+              int markerFd = open(markerPath, O_RDONLY);
+              int hadOldMarker = markerFd >= 0;
+              if (markerFd >= 0)
+                  close(markerFd);
+              if (hadOldMarker && vcdReadFileAlloc(markerPath, &oldMarker, &oldMarkerSize) != 0) {
+                  free(old0);
+                  free(old1);
+                  unlink(tmp0);
+                  unlink(tmp1);
+                  return -3;
+              }
+
+              // Commit by COPY, not rename(): stock mcman exposes no rename operation. The marker is written only
+              // after both live modules are complete. Any module or marker failure rolls the previous installation
+              // back; only a setup with no restorable prior pair falls back to the explicit FAT32/no-pair state.
+              unlink(dst0);
+              r = vcdSafeCopyFile(tmp0, dst0);
+              if (r == 0) {
+                  unlink(dst1);
+                  r = vcdSafeCopyFile(tmp1, dst1);
+              }
+              unlink(tmp0);
+              unlink(tmp1);
+              if (r == 0)
+                  r = vcdWriteBdmaMarker(mcDir, mode);
+
+              if (r != 0) {
+                  unlink(dst0);
+                  unlink(dst1);
+
+                  int pairRestored = 0;
+                  if (hadOldPair &&
+                      vcdSafeWriteFile(dst0, old0, old0Size) == 0 &&
+                      vcdSafeWriteFile(dst1, old1, old1Size) == 0) {
+                      pairRestored = 1;
+
+                      // The driver pair is the functional state. If its old marker cannot be restored, keep the
+                      // working pair and remove the untrustworthy marker so the next launch re-validates/equips it.
+                      if (hadOldMarker) {
+                          if (vcdSafeWriteFile(markerPath, oldMarker, oldMarkerSize) != 0)
+                              unlink(markerPath);
+                      } else {
+                          unlink(markerPath);
+                      }
+                  }
+
+                  if (!pairRestored) {
+                      unlink(dst0);
+                      unlink(dst1);
+                      vcdWriteBdmaMarker(mcDir, VCD_BDMA_FAT32);
+                  }
+
+                  free(old0);
+                  free(old1);
+                  free(oldMarker);
+                  return r;
+              }
+
+              free(old0);
+              free(old1);
+              free(oldMarker);
+              return 0;
+          '''.replace('              ', '    '),
+                  'BDMA transaction')
+              replace_once(
+                  'src/vcdsupport.c',
+                  '''    if (vcdReadBdmaMode() == mode)
+              return; // the matching variant is already on the card
+          '''.replace('              ', '    '),
+                  '''    char mcDir[64];
+              if (vcdReadBdmaMode() == mode &&
+                  vcdResolvePopstarterMc(mcDir, sizeof(mcDir)) &&
+                  vcdBdmaLivePairPresent(mcDir))
+                  return; // marker and both non-empty live modules agree
+          '''.replace('              ', '    '),
+                  'BDMA launch validation')
+              files = ['src/vcdsupport.c']
+              message = 'Make BDMA driver replacement transactional'
+
+          else:
+              raise SystemExit(f'unsupported source branch: {branch}')
+
+          Path('/tmp/patch-files').write_text('\n'.join(files))
+          Path('/tmp/commit-message').write_text(message)
+          PY
+
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang-format-18
+          mapfile -t files < /tmp/patch-files
+          clang-format-18 -i "${files[@]}"
+
+          git fetch origin master
+          git config user.name "ChatGPT"
+          git config user.email "noreply@openai.com"
+          git add "${files[@]}"
+          tree=$(git write-tree)
+          commit=$(git commit-tree "$tree" -p origin/master < /tmp/commit-message)
+          git push --force origin "$commit":refs/heads/"$HEAD_REF"
