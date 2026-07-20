@@ -1,32 +1,56 @@
 #!/bin/bash
 set -euo pipefail
 
-for i in $(seq 1 120); do
-  if git fetch origin agent/unified-stage2-mmce; then
-    break
-  fi
-  sleep 5
-done
-git rev-parse --verify FETCH_HEAD
+git fetch origin agent/unified-mmce-vcd-fixes
 git reset --hard FETCH_HEAD
 git clean -fdx
 
-# Import the already-reviewed transactional implementation, then repair the one malformed
-# NUL character introduced by an earlier source-publication script.
-git fetch origin agent/final-bdma-transaction-integrity-v2
-git show origin/agent/final-bdma-transaction-integrity-v2:src/vcdsupport.c > src/vcdsupport.c
 python3 - <<'PY'
 from pathlib import Path
 path = Path('src/vcdsupport.c')
-data = path.read_bytes()
-bad = b"mcDir[0] == '\x00'"
-if bad not in data:
-    raise SystemExit('expected malformed NUL expression not found')
-data = data.replace(bad, b"mcDir[0] == 0", 1)
-if b'\x00' in data:
-    raise SystemExit('unexpected NUL byte remains in vcdsupport.c')
-path.write_bytes(data)
+text = path.read_text()
+old = '''    if (stat(path, &st) != 0 || st.st_size <= 0 || st.st_size > VCD_BACKUP_MAX)
+        return -1;
+    size = (int)st.st_size;
+'''
+new = '''    if (stat(path, &st) != 0 || st.st_size < 0 || st.st_size > VCD_BACKUP_MAX)
+        return -1;
+    if (st.st_size == 0)
+        return 0;
+    size = (int)st.st_size;
+'''
+if old not in text:
+    raise SystemExit('bounded read size anchor missing')
+text = text.replace(old, new, 1)
+old = '''    if (hadOldMarker && vcdReadFileAlloc(markerPath, &oldMarker, &oldMarkerSize) != 0) {
+        free(old0);
+        free(old1);
+        unlink(tmp0);
+        unlink(tmp1);
+        return -3;
+    }
+'''
+new = '''    if (hadOldMarker) {
+        if (vcdReadFileAlloc(markerPath, &oldMarker, &oldMarkerSize) != 0) {
+            free(old0);
+            free(old1);
+            unlink(tmp0);
+            unlink(tmp1);
+            return -3;
+        }
+        // An empty marker is corrupted state, not something worth restoring. Treat it as absent so a
+        // replacement can proceed and rollback removes it rather than recreating the empty file.
+        if (oldMarkerSize == 0)
+            hadOldMarker = 0;
+    }
+'''
+if old not in text:
+    raise SystemExit('marker backup anchor missing')
+path.write_text(text.replace(old, new, 1))
 PY
+
+apk add --no-cache clang18-extra-tools
+/usr/lib/llvm18/bin/clang-format --lines=650:690 --lines=930:965 -i src/vcdsupport.c
 
 git add src/vcdsupport.c
 export GIT_AUTHOR_NAME="ChatGPT"
@@ -35,5 +59,5 @@ export GIT_COMMITTER_NAME="ChatGPT"
 export GIT_COMMITTER_EMAIL="noreply@openai.com"
 parent=$(git rev-parse HEAD)
 tree=$(git write-tree)
-commit=$(printf '%s\n' "Make BDMA driver replacement transactional" | git commit-tree "$tree" -p "$parent")
-git push --force origin "$commit":refs/heads/agent/unified-mmce-vcd-fixes
+commit=$(printf '%s\n' "Handle corrupted empty BDMA markers" | git commit-tree "$tree" -p "$parent")
+git push --force origin "$commit":refs/heads/agent/reviewfix-empty-bdma-marker-stage
