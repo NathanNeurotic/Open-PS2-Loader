@@ -655,8 +655,10 @@ static int vcdReadFileAlloc(const char *path, unsigned char **out, int *outSize)
     *out = NULL;
     *outSize = 0;
 
-    if (stat(path, &st) != 0 || st.st_size <= 0 || st.st_size > VCD_BACKUP_MAX)
+    if (stat(path, &st) != 0 || st.st_size < 0 || st.st_size > VCD_BACKUP_MAX)
         return -1;
+    if (st.st_size == 0)
+        return 0;
     size = (int)st.st_size;
 
     fd = open(path, O_RDONLY);
@@ -940,12 +942,18 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     int hadOldMarker = markerFd >= 0;
     if (markerFd >= 0)
         close(markerFd);
-    if (hadOldMarker && vcdReadFileAlloc(markerPath, &oldMarker, &oldMarkerSize) != 0) {
-        free(old0);
-        free(old1);
-        unlink(tmp0);
-        unlink(tmp1);
-        return -3;
+    if (hadOldMarker) {
+        if (vcdReadFileAlloc(markerPath, &oldMarker, &oldMarkerSize) != 0) {
+            free(old0);
+            free(old1);
+            unlink(tmp0);
+            unlink(tmp1);
+            return -3;
+        }
+        // An empty marker is corrupted state, not something worth restoring. Treat it as absent so a
+        // replacement can proceed and rollback removes it rather than recreating the empty file.
+        if (oldMarkerSize == 0)
+            hadOldMarker = 0;
     }
 
     // Commit by COPY, not rename(): stock mcman exposes no rename operation. The marker is written only

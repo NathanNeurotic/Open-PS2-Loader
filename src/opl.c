@@ -2874,7 +2874,7 @@ static void setDefaults(void)
     gMMCEStartMode = START_MODE_MANUAL;
     gFAVStartMode = START_MODE_MANUAL;
 
-    gMMCESlot = 2; //Default to first Auto slot
+    gMMCESlot = 2; // Default to first Auto slot
     gMMCEIGRSlot = 3;
     gMMCEEnableGameID = 1;
     gApplyGameID = 1; // visual GameID barcode ON by default (Pixel FX/RetroGEM HDMI displays; imperceptible otherwise)
