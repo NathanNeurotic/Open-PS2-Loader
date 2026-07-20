@@ -762,17 +762,79 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return (mr != 0) ? mr : 0;
     }
 
+    const char *suffix = vcdBdmaSuffix[mode];
+    char src0[96], src1[96];
+    int found = 0;
+
+    // FifthFox's adaptive seek order (maintainer-approved): look for the variant pair at the CUSTOM
+    // POPSTARTER.ELF's own folder first (a user who relocated POPSTARTER keeps its drivers beside it),
+    // then the BOOT (cwd) device's POPS/ folder, and only then the game device's family search below.
+    // This is also the FAST order: both pre-candidates live on ALREADY-LOADED stacks (we booted from
+    // one and are launching from the other), so a hit here costs a few open() probes and skips the
+    // family search's transport force-loads and bounded mount waits entirely.
+    {
+        char preBuf[2][96];
+        const char *pre[2];
+        int npre = 0;
+
+        if (gPopstarterDevice == POPS_DEV_CUSTOM && gPopstarterPath[0] != '\0') {
+            const char *s1 = strrchr(gPopstarterPath, '/');
+            const char *s2 = strrchr(gPopstarterPath, '\\'); // SMB custom paths use backslashes
+            // Not `(s2 > s1)`: relationally comparing a possibly-NULL pointer is UB in ISO C.
+            const char *sl = s1;
+            if (s2 != NULL && (sl == NULL || s2 > sl))
+                sl = s2;
+            int n = (sl != NULL) ? (int)(sl - gPopstarterPath) + 1 : 0; // keep the separator
+            if (n > 0 && n < (int)sizeof(preBuf[0])) {
+                memcpy(preBuf[npre], gPopstarterPath, n);
+                preBuf[npre][n] = '\0';
+                pre[npre] = preBuf[npre];
+                npre++;
+            }
+        }
+        if (gBootDir[0] != '\0') {
+            const char *colon = strchr(gBootDir, ':');
+            int n = (colon != NULL) ? (int)(colon - gBootDir) + 1 : 0;
+            if (n > 0 && (n + (int)sizeof("/" POPS_FOLDER "/")) < (int)sizeof(preBuf[1])) {
+                memcpy(preBuf[npre], gBootDir, n);
+                preBuf[npre][n] = '\0';
+                strcat(preBuf[npre], "/" POPS_FOLDER "/");
+                pre[npre] = preBuf[npre];
+                npre++;
+            }
+        }
+
+        for (int i = 0; i < npre && !found; i++) {
+            snprintf(src0, sizeof(src0), "%s%s.%s", pre[i], vcdBdmaModule[0], suffix);
+            snprintf(src1, sizeof(src1), "%s%s.%s", pre[i], vcdBdmaModule[1], suffix);
+            int f0 = open(src0, O_RDONLY);
+            LOG("[BDMA] pre-probe %s -> %d\n", src0, f0);
+            if (f0 < 0)
+                continue;
+            close(f0);
+            int f1 = open(src1, O_RDONLY);
+            LOG("[BDMA] pre-probe %s -> %d\n", src1, f1);
+            if (f1 < 0)
+                continue;
+            close(f1);
+            found = 1;
+        }
+    }
+
     // Resolve the SOURCE device(s) to read the variant files from. BDM sources are DIFFERENTIATED by
     // driver: find EVERY mounted device whose driver matches the chosen type (USB / MX4SIO / internal
     // exFAT HDD) and read from its massN: FILESYSTEM root -- the same path the device pages browse. OPL
     // never mounts a typed ata0:/usb0:/mx4sio0: filesystem (those are block-device identities used only
     // for launch binding), so the readable source path is always massN:/. Searching ALL matching slots,
     // not just the first, covers a source family with two same-type devices when the variant files sit
-    // on the second one. MMCE has its own mmce0:/mmce1: slots.
+    // on the second one. MMCE has its own mmce0:/mmce1: slots. Skipped when the adaptive pre-probe
+    // above already found the pair.
     const char *cands[MAX_BDM_DEVICES];
     char bdmRoots[MAX_BDM_DEVICES][BDM_DEVICE_ROOT_MAX + 2];
     int nc = 0;
-    if (source == VCD_BDMA_SRC_MMCE) {
+    if (found) {
+        // Adaptive pre-probe already located the pair -- no transport force-loads needed.
+    } else if (source == VCD_BDMA_SRC_MMCE) {
         // Ensure mmceman is loaded even when MMCE games are off / Manual-not-started -- otherwise mmce0:/
         // mmce1:/ are dead and nothing can be read. Then offer only slots that actually have a card, so
         // the not-found diagnostic is honest ("no device" vs "device found, files missing").
@@ -803,10 +865,7 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         }
     }
 
-    const char *suffix = vcdBdmaSuffix[mode];
-    char src0[96], src1[96];
-    int found = 0;
-    for (int i = 0; i < nc; i++) {
+    for (int i = 0; i < nc && !found; i++) {
         snprintf(src0, sizeof(src0), "%s" POPS_FOLDER "/%s.%s", cands[i], vcdBdmaModule[0], suffix);
         snprintf(src1, sizeof(src1), "%s" POPS_FOLDER "/%s.%s", cands[i], vcdBdmaModule[1], suffix);
         int f0 = open(src0, O_RDONLY);
