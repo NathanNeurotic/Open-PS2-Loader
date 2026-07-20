@@ -1313,7 +1313,7 @@ static int checkLoadConfigBDMHDD(int types)
     int value;
 
     // Bounded wait so BDM-on-HDD can be detected without long black-screen stalls.
-    if (HDD_LOADMODULES_OK(hddLoadModules()) && bdmHDDIsPresent(500)) {
+    if (hddLoadModulesReady() && bdmHDDIsPresent(500)) {
         if (bdmFindPartition(path, CONFIG_OPL_FILENAME, 0) || bdmFindPartition(path, CONFIG_OPL_FILENAME_LEGACY, 0)) {
             configEnd();
             configInit(path);
@@ -1901,7 +1901,7 @@ static int trySaveConfigBDMHDD(int types)
     char path[64];
 
     // Bounded wait so save can target BDM-on-HDD without long stalls.
-    if (HDD_LOADMODULES_OK(hddLoadModules()) && bdmHDDIsPresent(500)) {
+    if (hddLoadModulesReady() && bdmHDDIsPresent(500)) {
         if (bdmFindPartition(path, CONFIG_OPL_FILENAME, 1)) {
             configSetMove(path);
             return configWriteMulti(types);
