@@ -1261,18 +1261,20 @@ static void drawAttributeImage(struct menu_list *menu, struct submenu_list *item
 
                     return;
                 }
-                // #120 follow-up: the theme ships no glyph asset for this value (or its async ART
-                // load has not delivered yet) -- fall back to the embedded internal glyph before
-                // the element default, instead of e.g. a VCD badge rendering the theme's ELF
-                // default. cacheGetTexture above stays FIRST and this function re-runs every
-                // frame, so the embedded glyph only fills NULL frames: the moment the theme's own
-                // glyph finishes loading, it wins again -- the fallback can never shadow it. The
-                // glyph slots are decoded for every theme in thmLoad (embedded data only; the
-                // theme's own <value>_<attr>.png channel above is untouched).
-                texture = thmGetTexture(thmAttributeTexId(attributeImage));
-                if (texture && texture->Mem) {
-                    rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
-                    return;
+                // Embedded-glyph fallback: BUILT-IN theme only (#213). Attribute caches carry
+                // prefix = themePath, so a NULL prefix is exactly the built-in path -- there the
+                // baked glyph fills NULL frames while nothing else can. On a DISK theme this
+                // fallback made our baked art FLASH before the theme's own glyph finished its async
+                // load (and stand in permanently when the theme ships none) -- violating the rule
+                // that a custom theme uses its OWN assets entirely. Disk themes now fall through to
+                // the element's own _default (or draw nothing). thmLoad also no longer decodes the
+                // baked set for disk themes, so this gate is double-covered.
+                if (attributeImage->cache->prefix == NULL) {
+                    texture = thmGetTexture(thmAttributeTexId(attributeImage));
+                    if (texture && texture->Mem) {
+                        rmDrawPixmap(texture, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
+                        return;
+                    }
                 }
             }
         }
@@ -2654,14 +2656,18 @@ static int thmLoad(const char *themePath)
     for (i = L3_ICON; i <= FAV_MARK; i++)
         thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
 
-    // Embedded attribute glyphs (#Format/#Media/Aspect/Rating/Scan/Vmode values): loaded for EVERY
-    // theme, disk themes included, so drawAttributeImage can fall back to them when the theme ships
-    // no <value>_<attr>.png (issue #120 follow-up: MMCE VCD entries showed the theme's ELF element-
-    // default on custom themes). Embedded data only (themePath=NULL): the theme's own glyph channel
-    // is the attribute cache and always wins at draw time. Cost ~153 KB decoded EE RAM (31x 64x32 T8
-    // glyphs + 6x 256x32 Rating strips; the NULL-data Device_* slots are no-ops), freed by thmFree.
-    for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
-        thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
+    // Embedded attribute glyphs (#Format/#Media/Aspect/Rating/Scan/Vmode values): BUILT-IN theme
+    // ONLY. a1ae5e5e decoded these for every theme so badges could fall back to them on disk themes
+    // -- but the fallback fires on every frame BEFORE the theme's own glyph PNG has loaded off the
+    // single art worker, so custom themes FLASHED our baked glyph and then swapped to their own
+    // asset (brenotomaz, #213: "the original assets load first"). Doctrine (NathanNeurotic): a
+    // custom theme uses its OWN assets entirely -- never the baked set; no glyph shipped means the
+    // element's own _default (or nothing), not our art. Gating the decode also reclaims the ~153 KB
+    // of EE RAM on disk themes. The draw-site fallback is additionally gated on the built-in
+    // (NULL-prefix) cache in drawAttributeImage, so this can never regress by re-widening one side.
+    if (!themePath)
+        for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
+            thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
 
     // Optional settings/menu background (guiDrawBGSettings draws it instead of the plasma).
     // Theme-supplied only for now: a disk theme opts in with use_settings_bg=1 and ships its
