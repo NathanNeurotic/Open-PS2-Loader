@@ -2879,12 +2879,16 @@ static void setDefaults(void)
     gXSensitivity = 1;
     gYSensitivity = 1;
 
-    gBDMStartMode = START_MODE_MANUAL;
-    gHDDStartMode = START_MODE_DISABLED; // RiptOPL: APA/PFS HDD OFF by default (was Manual); user opts in
-    gETHStartMode = START_MODE_DISABLED; // RiptOPL: network/SMB OFF by default (was Manual); user opts in
-    gAPPStartMode = START_MODE_MANUAL;
-    gMMCEStartMode = START_MODE_MANUAL;
-    gFAVStartMode = START_MODE_MANUAL;
+    // RiptOPL doctrine (NathanNeurotic, 2026-07-20): EVERY device on the Devices page ships OFF -- the
+    // user opts in to exactly what their rig has. A fresh install boots to the start menu with no tabs
+    // (deferredInit's boot select handles the nothing-registered case explicitly) and the user enables
+    // devices in Settings. Existing saved configs override all of these on load.
+    gBDMStartMode = START_MODE_DISABLED;
+    gHDDStartMode = START_MODE_DISABLED;
+    gETHStartMode = START_MODE_DISABLED;
+    gAPPStartMode = START_MODE_DISABLED;
+    gMMCEStartMode = START_MODE_DISABLED;
+    gFAVStartMode = START_MODE_DISABLED;
 
     gMMCESlot = 2; //Default to first Auto slot
     gMMCEIGRSlot = 3;
@@ -2899,7 +2903,7 @@ static void setDefaults(void)
     gMMCEAckWaitCycles = 5;
     gMMCEUseAlarms = 1;
 
-    gEnableUSB = 1;
+    gEnableUSB = 0;                    // all block-device toggles OFF by default too (same opt-in doctrine)
     gEnableILK = 0;
     gEnableMX4SIO = 0;
     gEnableBdmHDD = 0;                 // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
