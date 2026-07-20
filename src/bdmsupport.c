@@ -552,7 +552,14 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // Falling through is safe and needs no new scan logic: result stays 0 past the connect/disconnect
     // sfx branches, and the sbIsSameSize(bdmPrefix, bdmULSizePrev) check further down cannot match a
     // sentinel of -2, so it sets result = 1 and the first scan publishes through the existing path.
-    if (result == 0 && pDeviceData->bdmULSizePrev != -2)
+    // ... but ONLY for a slot that has actually CONNECTED (bdmPrefix populated by the connect pass).
+    // A NEVER-connected slot also sits at the -2 sentinel with result == 0, and letting it fall
+    // through reached sbCreateFolders() with an EMPTY prefix -- mkdir("CFG")/mkdir("THM")/... resolve
+    // relative to the CWD, i.e. the BOOT FOLDER, so an enabled-but-absent BDM device recreated the
+    // whole OPL library tree inside mmce0:/RIPTOPL/ (or wherever OPL lives) on every startup
+    // (AndrewBento, #214; FifthFox reported the same class). The #186 first-scan rescue only ever
+    // needed MOUNTED devices, which always have bdmPrefix set before any 0-result poll.
+    if (result == 0 && (pDeviceData->bdmULSizePrev != -2 || pDeviceData->bdmPrefix[0] == '\0'))
         return 0;
 
     // If a device was added or removed play the appropriate UI sound.
@@ -562,7 +569,8 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     } else if (result == 1)
         sfxPlay(SFX_BD_CONNECT);
 
-    if (!pDeviceData->FoldersCreated) {
+    // Belt-and-suspenders: never create the library tree at an empty prefix (= the CWD/boot folder).
+    if (!pDeviceData->FoldersCreated && pDeviceData->bdmPrefix[0] != '\0') {
         sbCreateFolders(pDeviceData->bdmPrefix, 1);
         pDeviceData->FoldersCreated = 1;
     }
