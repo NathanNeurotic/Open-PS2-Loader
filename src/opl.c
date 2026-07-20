@@ -1698,15 +1698,15 @@ static void _loadConfig()
             // preserving the historical "network BDM wins over SMB" precedence (imported/hand-edited configs
             // could set both; at boot UDPBD loaded first, so it won). NET_PROTO_UDPFS (filesystem) has no
             // legacy encoding, so it is only ever reached by an explicit new-format value -- backward-safe.
-            // Since a NETWORK protocol became the shipped DEFAULT (UDPFS, 2026-07-13), the legacy branch
-            // must key off the FILE's enable_udpbd, not the defaulted global -- a legacy config must only
-            // ever derive from what IT expressed, never inherit a defaulted enable flag.
+            // Fresh installs now default to SMB/Manual. The legacy branch must still key off the FILE's
+            // enable_udpbd value, not the defaulted global: an older config must derive only from what it
+            // expressed and must never inherit a newly shipped transport choice accidentally.
             if (!configGetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, &gNetworkProtocol)) {
                 if (udpbdKeyPresent)
                     gNetworkProtocol = gEnableUDPBD ? ((gNetBootProtocol == NET_BOOT_UDPFS) ? NET_PROTO_UDPFSBD : NET_PROTO_UDPBD) : ((gETHStartMode != START_MODE_DISABLED) ? NET_PROTO_SMB : NET_PROTO_OFF);
                 else if (gETHStartMode != START_MODE_DISABLED)
                     gNetworkProtocol = NET_PROTO_SMB;
-                // else: the file never expressed ANY network choice -> the shipped default stands (UDPFS)
+                // else: the file never expressed ANY network choice -> the shipped SMB/Manual default stands
             }
             // UDPBD (SUDPBDv2) is a first-class protocol, NOT folded away: it is wire-incompatible with
             // UDPRDMA (SUDPBDv2 on 0xBDBD vs UDPFS on 0xF5F6), so users still on the older udpbd-server
@@ -2867,9 +2867,11 @@ static void setDefaults(void)
     gXSensitivity = 1;
     gYSensitivity = 1;
 
+    // Device Settings defaults: use Manual wherever the row supports it. This exposes each page
+    // without auto-starting its hardware stack; binary transport toggles below default Off.
     gBDMStartMode = START_MODE_MANUAL;
-    gHDDStartMode = START_MODE_DISABLED; // RiptOPL: APA/PFS HDD OFF by default (was Manual); user opts in
-    gETHStartMode = START_MODE_DISABLED; // RiptOPL: network/SMB OFF by default (was Manual); user opts in
+    gHDDStartMode = START_MODE_MANUAL;
+    gETHStartMode = START_MODE_MANUAL;
     gAPPStartMode = START_MODE_MANUAL;
     gMMCEStartMode = START_MODE_MANUAL;
     gFAVStartMode = START_MODE_MANUAL;
@@ -2887,23 +2889,18 @@ static void setDefaults(void)
     gMMCEAckWaitCycles = 5;
     gMMCEUseAlarms = 1;
 
-    gEnableUSB = 1;
+    // These Device Settings entries are binary (no Manual state), so default all of them Off.
+    gEnableUSB = 0;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
-    gEnableBdmHDD = 0;                 // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
+    gEnableBdmHDD = 0;
     gEnableUDPBD = 0;                  // the UDPBD BLOCK device stays opt-in
     gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)
-    // Unified network selector defaults to OFF (was UDPFS, Nathan 2026-07-16). The reason is the NIC
-    // latch: every network stack loads its IOP chain ONCE per boot and never unloads (re-binding the
-    // UDPRDMA socket bricks UDPFS; smap registers a single SMAP_driver), so whichever protocol is
-    // active FIRST owns the adapter until a restart -- the settings page even tells you so
-    // (NETBOOT_RESTART). With UDPFS pre-selected, a user who wanted UDPBD or SMB had to change the
-    // setting and REBOOT before their choice could load. Defaulting to Off means nothing claims the
-    // NIC at boot, so the first protocol the user picks in Device Settings comes up live -- the apply
-    // path re-derives the gEnableUDPBD/gNetBootProtocol shadows and forces a device refresh already.
-    // Existing installs are unaffected: a saved net protocol in settings_riptopl.cfg overrides this.
-    gNetworkProtocol = NET_PROTO_OFF;
-    gNetStartMode = START_MODE_DISABLED; // Off in the 3-row Network setting; migration reconciles old configs
+    // Network has a Manual start state, so fresh installs expose the SMB page without claiming the NIC
+    // during boot. Protocol and start mode must be coherent: NET_PROTO_OFF would force the Manual row
+    // back to Off during config reconciliation. Existing saved settings still override these defaults.
+    gNetworkProtocol = NET_PROTO_SMB;
+    gNetStartMode = START_MODE_MANUAL;
 
     frameCounter = 0;
 
