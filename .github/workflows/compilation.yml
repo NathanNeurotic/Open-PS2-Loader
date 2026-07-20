@@ -22,20 +22,19 @@ jobs:
           git fetch origin 311c92afe3a308c0c39e218396ccbc4cd4795c3c
           git reset --hard FETCH_HEAD
 
-      - name: Apply the CI formatter in place
+      - name: Apply repository formatting
         uses: DoozyX/clang-format-lint-action@v0.18.2
         with:
-          source: 'include/hddsupport.h src/hddsupport.c src/mmcesupport.c src/opl.c src/vcdsupport.c'
-          extensions: 'c,h'
+          source: '.'
           clangFormatVersion: 18
           style: file
           inplace: true
 
-      - name: Publish formatting commit
+      - name: Publish formatted tree
         run: |
           git config user.name "ChatGPT"
           git config user.email "noreply@openai.com"
-          git add include/hddsupport.h src/hddsupport.c src/mmcesupport.c src/opl.c src/vcdsupport.c
+          git add -u
           parent=$(git rev-parse HEAD)
           if git diff --cached --quiet; then
             commit="$parent"
@@ -43,4 +42,4 @@ jobs:
             tree=$(git write-tree)
             commit=$(printf '%s\n' "Apply exact CI formatting" | git commit-tree "$tree" -p "$parent")
           fi
-          git push --force origin "$commit":refs/heads/agent/ci-format-review-fix
+          git push --force origin "$commit":refs/heads/agent/ci-format-full-stage
