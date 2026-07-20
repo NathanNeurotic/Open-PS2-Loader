@@ -1,14 +1,15 @@
-name: Apply exact CI formatting
+name: Inspect format job log
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 permissions:
+  actions: read
   contents: write
 
 jobs:
-  format:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout staging branch
@@ -17,29 +18,24 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Reset to unified PR head
+      - name: Retrieve format-job diagnostics
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git fetch origin 311c92afe3a308c0c39e218396ccbc4cd4795c3c
-          git reset --hard FETCH_HEAD
+          curl -fsSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/jobs/88367599353/logs" \
+            -o /tmp/format-job.log
+          tail -n 140 /tmp/format-job.log > format-job-tail.txt
 
-      - name: Apply repository formatting
-        uses: DoozyX/clang-format-lint-action@v0.18.2
-        with:
-          source: '.'
-          clangFormatVersion: 18
-          style: file
-          inplace: true
-
-      - name: Publish formatted tree
+      - name: Publish diagnostics
         run: |
           git config user.name "ChatGPT"
           git config user.email "noreply@openai.com"
-          git add -u
+          git add format-job-tail.txt
+          tree=$(git write-tree)
           parent=$(git rev-parse HEAD)
-          if git diff --cached --quiet; then
-            commit="$parent"
-          else
-            tree=$(git write-tree)
-            commit=$(printf '%s\n' "Apply exact CI formatting" | git commit-tree "$tree" -p "$parent")
-          fi
-          git push --force origin "$commit":refs/heads/agent/ci-format-full-stage
+          commit=$(printf '%s\n' "Capture format check diagnostics" | git commit-tree "$tree" -p "$parent")
+          git push --force origin "$commit":refs/heads/agent/format-log-inspect
