@@ -878,6 +878,38 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     return (mr != 0) ? mr : 0;
 }
 
+// 1.0.1-style fast path for the launch equip: a card with NO marker but BOTH driver modules present is
+// a pair the user (or an install predating the marker file) manages MANUALLY. vcdReadBdmaMode()
+// collapses "marker absent" into VCD_BDMA_FAT32, so before this check every launch on such a card read
+// as a MISMATCH and paid the FULL equip -- source-device module loads with bounded waits plus two module
+// copies onto the memory card -- on EVERY VCD launch (NathanNeurotic: "unnecessary over work... extended
+// wait on game launch... unnecessary MC transfer"). Trust the card and hand off. An EXPLICIT different
+// marker (a real variant switch, checked by the caller before this) or a missing/partial pair still does
+// the copy work -- ONCE -- after which the marker matches and every later launch takes the cheap path.
+static int vcdBdmaManualPairPresent(void)
+{
+    char mcDir[64];
+    char path[96];
+    int fd, i;
+
+    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
+        return 0;
+    snprintf(path, sizeof(path), "%s/%s", mcDir, VCD_BDMA_MARKER);
+    fd = open(path, O_RDONLY);
+    if (fd >= 0) {
+        close(fd);
+        return 0; // marker PRESENT -> its verdict stands (the caller already compared it)
+    }
+    for (i = 0; i < 2; i++) {
+        snprintf(path, sizeof(path), "%s/%s", mcDir, vcdBdmaModule[i]);
+        fd = open(path, O_RDONLY);
+        if (fd < 0)
+            return 0; // pair incomplete -> a real equip is useful work
+        close(fd);
+    }
+    return 1;
+}
+
 // Best-effort auto-equip of the device-matching BDMA driver before a VCD launch (POPSLoader's
 // ApplyBdmaMode parity). POPSTARTER does its OWN SifIopReset, then reloads its block-device drivers
 // from the FIXED memory-card files mc?:/POPSTARTER/usbd.irx + usbhdfsd.irx; equipping copies the
@@ -901,6 +933,8 @@ void vcdEnsureBdmaForLaunch(int source, int mode)
         return; // FAT32 / invalid -> POPSTARTER's built-in driver, nothing to equip
     if (vcdReadBdmaMode() == mode)
         return; // the matching variant is already on the card
+    if (vcdBdmaManualPairPresent())
+        return; // no marker but a full pair on the card -- manually managed; dumb 1.0.1-style handoff
 
     int er = vcdEquipBdma(source, mode, diag, sizeof(diag));
     if (er == 0)
