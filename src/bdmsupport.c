@@ -559,8 +559,22 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // whole OPL library tree inside mmce0:/RIPTOPL/ (or wherever OPL lives) on every startup
     // (AndrewBento, #214; FifthFox reported the same class). The #186 first-scan rescue only ever
     // needed MOUNTED devices, which always have bdmPrefix set before any 0-result poll.
-    if (result == 0 && (pDeviceData->bdmULSizePrev != -2 || pDeviceData->bdmPrefix[0] == '\0'))
-        return 0;
+    if (result == 0) {
+        // The -2 rescue applies ONLY to a device that is CONNECTED **and PUBLISHED**. Two #214-class
+        // holes otherwise: a NEVER-connected slot (bdmPrefix empty) reached sbCreateFolders("") --
+        // bare mkdir("CFG")/mkdir("THM")/... resolve against the CWD, i.e. the BOOT FOLDER
+        // (AndrewBento, #214); and a PRESENT but transport-WITHHELD device would get folders + scans
+        // on a page the user disabled, because bdmUpdateDeviceData populates bdmPrefix BEFORE its
+        // explicit-BDM-off/transport-disabled 0-returns (CodeRabbit review of #239 -- vetted against
+        // bdmUpdateDeviceData: the withhold paths run after bdmBuildGamePrefix). The #186 first-scan
+        // rescue only ever needed MOUNTED devices, whose connect pass sets BOTH the prefix and
+        // menuItem.visible before any 0-result poll.
+        int neverScanned = (pDeviceData->bdmULSizePrev == -2);
+        int connectedAndPublished = pDeviceData->bdmPrefix[0] != '\0' &&
+                                    itemList->owner != NULL && ((opl_io_module_t *)itemList->owner)->menuItem.visible;
+        if (!(neverScanned && connectedAndPublished))
+            return 0;
+    }
 
     // If a device was added or removed play the appropriate UI sound.
     if (result == -1) {
