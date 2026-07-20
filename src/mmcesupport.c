@@ -614,23 +614,34 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         return;
     sbSetBrowseSub(folderGetSub(itemList->mode));
 
-    // VCD view: hand off to POPSTARTER (by name) instead of the disc path below. Menu-launch only.
-    if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
-        mmceLaunchVcd(itemList, game->name, configSet);
-        return;
-    }
-
+    // Quiesce every in-flight MMCE art read BEFORE either launch path touches the card. The VCD
+    // handoff below resolves POPSTARTER and may equip BDMA modules -- real reads/writes on the SAME
+    // shared mmceman SIO2 channel -- and its early return used to run BEFORE this guard, so a VCD
+    // launch could collide with the art worker mid-read (FifthFox: "bombed one launch of a VCD on
+    // the MMCE"; the disc path below has always quiesced first). The by-name handoff (ccd1d7a4)
+    // landed AFTER the quiesce existed and slotted in above it -- ordering bug since, probabilistic
+    // by nature, which is why it "worked until it didn't". Idea source: PR #236's quiesce-reorder,
+    // vetted against this tree and re-landed with the full #120 rationale kept.
     if (!cacheAbortMmceImageLoadsTimed(MMCE_ART_ABORT_WAIT_TICKS)) {
         // #120: the art worker is wedged in a blocking fileXio on a slow/desynced card. Do NOT cacheEnd(1)
         // here -- its TerminateThread(gArtThreadId) kills the worker MID-RPC and orphans the SHARED mmceman
         // channel (TK>0). The launch reads below then FAIL and RETURN to a still-running OPL (unlike a launch
         // that LoadExecPS2's away), poisoning every later card read. Abandon-and-retry instead (mirrors
         // thmLoad's redesign): toast and bail so the user retries once the card is calm. NEVER a hard
-        // freeze -- guiWarning is non-blocking.
+        // freeze -- guiWarning is non-blocking. Applies to the VCD handoff too: POPSTARTER's own reads
+        // would hit the same wedged channel and dead-launch to OSDSYS.
         guiWarning(_l(_STR_ERR_FILE_INVALID), 8);
         return;
     }
 
+    // VCD view: hand off to POPSTARTER (by name) instead of the disc path below. Menu-launch only.
+    if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
+        mmceLaunchVcd(itemList, game->name, configSet);
+        return;
+    }
+
+    // (The MMCE art quiesce runs ABOVE the VCD handoff now -- both launch paths are covered by the
+    // single guard before any card IO.)
     void *irx = &mmce_cdvdman_irx;
     int irx_size = size_mmce_cdvdman_irx;
     compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
