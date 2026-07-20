@@ -66,6 +66,12 @@ typedef enum {
     HDD_LOADMODULES_STATUS_COUNT,
 } hdd_loadmodules_status;
 
+// See hddLoadModulesReady() below the prototypes -- the single evaluate-once way to ask "is the ATA
+// stack actually resident?". Callers used to test `hddLoadModules() >= 0`, which also accepted
+// BUSYLOADING(2) -- returned for the whole session after a FAILED first load consumed the one-shot
+// count -- so "nothing is loaded" read as success and the APA page sat silently empty under both
+// Auto and Manual (Vapor). Pair with the retryable-failure change in hddLoadModules.
+
 int hddCheck(void);
 u32 hddGetTotalSectors(void);
 int hddIs48bit(void);
@@ -91,6 +97,17 @@ void hddVcdInvalidateCache(void);
 void hddInit(item_list_t *itemList);
 item_list_t *hddGetObject(int initOnly);
 int hddLoadModules(void);
+
+// Load (or confirm) the ATA stack and report residency, evaluating hddLoadModules EXACTLY ONCE.
+// A function, not a macro taking the call as its argument: the earlier HDD_LOADMODULES_OK(
+// hddLoadModules()) macro double-evaluated on any non-NOERROR first result -- and with the
+// retryable-failure change, a FAILED load would have immediately re-run the whole load (second
+// dev9 init + second error toast) inside one condition (CodeRabbit review of #241; vetted).
+static inline int hddLoadModulesReady(void)
+{
+    int r = hddLoadModules();
+    return r == HDD_LOADMODULES_STATUS_NOERROR || r == HDD_LOADMODULES_STATUS_ALREADYLOADED;
+}
 void hddLoadSupportModules(void);
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet);
 int hddIsPresent();

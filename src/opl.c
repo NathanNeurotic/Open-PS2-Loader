@@ -1313,7 +1313,7 @@ static int checkLoadConfigBDMHDD(int types)
     int value;
 
     // Bounded wait so BDM-on-HDD can be detected without long black-screen stalls.
-    if (hddLoadModules() >= 0 && bdmHDDIsPresent(500)) {
+    if (hddLoadModulesReady() && bdmHDDIsPresent(500)) {
         if (bdmFindPartition(path, CONFIG_OPL_FILENAME, 0) || bdmFindPartition(path, CONFIG_OPL_FILENAME_LEGACY, 0)) {
             configEnd();
             configInit(path);
@@ -1580,6 +1580,12 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, &gEnableArtTar);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
             configGetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, &gDefaultGameView);
+            // Clamp: an out-of-enum value (hand-edited/corrupt config) is UNRECOVERABLE on-console --
+            // vcdViewActive() treats anything but BOTH as a lock, the L3 toggle goes inert and its hint
+            // is hidden, so every VCD-capable page silently serves one (possibly empty) list with no
+            // way back. The coverflow ints just below have always been clamped; this one was not.
+            if (gDefaultGameView < GAME_VIEW_BOTH || gDefaultGameView > GAME_VIEW_VCD)
+                gDefaultGameView = GAME_VIEW_BOTH;
             // A boot default-view locked to one type (VCD or ISO) must force the same one-shot
             // rescan the settings dialog does on a view change (gui.c). Without it, vcdViewActive()
             // short-circuits mmce/bdm/hdd/eth NeedsUpdate before the initial-scan trigger and the
@@ -1895,7 +1901,7 @@ static int trySaveConfigBDMHDD(int types)
     char path[64];
 
     // Bounded wait so save can target BDM-on-HDD without long stalls.
-    if (hddLoadModules() >= 0 && bdmHDDIsPresent(500)) {
+    if (hddLoadModulesReady() && bdmHDDIsPresent(500)) {
         if (bdmFindPartition(path, CONFIG_OPL_FILENAME, 1)) {
             configSetMove(path);
             return configWriteMulti(types);
