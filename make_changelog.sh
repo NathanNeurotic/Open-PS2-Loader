@@ -50,14 +50,19 @@ path.write_text(text.replace(old, new, 1))
 PY
 
 apk add --no-cache clang18-extra-tools
-/usr/lib/llvm18/bin/clang-format --lines=650:690 --lines=930:965 -i src/vcdsupport.c
+/usr/lib/llvm18/bin/clang-format -i \
+  include/hddsupport.h \
+  src/hddsupport.c \
+  src/opl.c \
+  src/mmcesupport.c \
+  src/vcdsupport.c
 
-git add src/vcdsupport.c
+git add include/hddsupport.h src/hddsupport.c src/opl.c src/mmcesupport.c src/vcdsupport.c
 export GIT_AUTHOR_NAME="ChatGPT"
 export GIT_AUTHOR_EMAIL="noreply@openai.com"
 export GIT_COMMITTER_NAME="ChatGPT"
 export GIT_COMMITTER_EMAIL="noreply@openai.com"
 parent=$(git rev-parse HEAD)
 tree=$(git write-tree)
-commit=$(printf '%s\n' "Handle corrupted empty BDMA markers" | git commit-tree "$tree" -p "$parent")
-git push --force origin "$commit":refs/heads/agent/reviewfix-empty-bdma-marker-stage
+commit=$(printf '%s\n' "Format unified fixes and handle empty BDMA markers" | git commit-tree "$tree" -p "$parent")
+git push --force origin "$commit":refs/heads/agent/unified-formatted-review-stage
