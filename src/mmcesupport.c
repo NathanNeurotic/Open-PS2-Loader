@@ -614,20 +614,20 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         return;
     sbSetBrowseSub(folderGetSub(itemList->mode));
 
-    // VCD view: hand off to POPSTARTER (by name) instead of the disc path below. Menu-launch only.
-    if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
-        mmceLaunchVcd(itemList, game->name, configSet);
-        return;
-    }
-
+    // Quiesce every MMCE art read before either launch path performs card IO. The VCD handoff
+    // resolves POPSTARTER and may equip BDMA modules from MMCE before deinit(), so allowing its early
+    // return to bypass this guard can contend with the persistent art worker on the same mmceman channel.
     if (!cacheAbortMmceImageLoadsTimed(MMCE_ART_ABORT_WAIT_TICKS)) {
         // #120: the art worker is wedged in a blocking fileXio on a slow/desynced card. Do NOT cacheEnd(1)
         // here -- its TerminateThread(gArtThreadId) kills the worker MID-RPC and orphans the SHARED mmceman
-        // channel (TK>0). The launch reads below then FAIL and RETURN to a still-running OPL (unlike a launch
-        // that LoadExecPS2's away), poisoning every later card read. Abandon-and-retry instead (mirrors
-        // thmLoad's redesign): toast and bail so the user retries once the card is calm. NEVER a hard
-        // freeze -- guiWarning is non-blocking.
+        // channel (TK>0). Abandon-and-retry instead so the user can retry once the card is calm.
         guiWarning(_l(_STR_ERR_FILE_INVALID), 8);
+        return;
+    }
+
+    // VCD view: hand off to POPSTARTER (by name) instead of the disc path below. Menu-launch only.
+    if (gAutoLaunchBDMGame == NULL && game != NULL && vcdViewActive(itemList->mode)) {
+        mmceLaunchVcd(itemList, game->name, configSet);
         return;
     }
 
