@@ -55,4 +55,4 @@ export GIT_COMMITTER_NAME="ChatGPT"
 export GIT_COMMITTER_EMAIL="noreply@openai.com"
 tree=$(git write-tree)
 commit=$(printf '%s\n' "Silence speculative HDD config probes" | git commit-tree "$tree" -p origin/master)
-git push --force origin "$commit":refs/heads/agent/unified-mmce-vcd-hdd-bdma-fixes
+git push --force origin "$commit":refs/heads/agent/unified-stage1-hdd
