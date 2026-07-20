@@ -212,7 +212,7 @@ static int hddCreateOPLPartition(const char *name)
     return result;
 }
 
-int hddLoadModules(void)
+static int hddLoadModulesInternal(int reportError)
 {
     int retLoadModule;
     int wait;
@@ -271,7 +271,8 @@ retry:
         // terminal hardware stop, not a reversible reference release within the current IOP session.
         hddModulesLoading = 0;
         LOG("HDD: No HardDisk Drive detected.\n");
-        setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
+        if (reportError)
+            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
         return HDD_LOADMODULES_STATUS_ERROR;
     }
 
@@ -282,6 +283,16 @@ retry:
 
     LOG("HDDSUPPORT LoadModules done\n");
     return HDD_LOADMODULES_STATUS_NOERROR;
+}
+
+int hddLoadModules(void)
+{
+    return hddLoadModulesInternal(1);
+}
+
+int hddLoadModulesSilent(void)
+{
+    return hddLoadModulesInternal(0);
 }
 
 int hddLoadSupportModules(void)
