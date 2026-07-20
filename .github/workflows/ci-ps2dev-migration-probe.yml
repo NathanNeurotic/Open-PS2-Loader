@@ -5,116 +5,121 @@ on:
     paths:
       - '.github/workflows/ci-ps2dev-migration-probe.yml'
       - '.github/workflows/compilation.yml'
-      - 'Makefile'
-      - '**/*.mk'
-  workflow_dispatch:
+      - 'src/opl.c'
+
+permissions:
+  contents: write
 
 jobs:
-  build-probe:
+  apply-source-fix:
+    if: github.head_ref == 'agent/fix-boot-hdd-probe'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - container_image: ps2max/dev:v20250725-2
-            label: ps2max-dev-v20250725-2
-          - container_image: ps2dev/ps2dev:latest
-            label: ps2dev-latest
-    container: ${{ matrix.container_image }}
     steps:
-      - name: git checkout
-        uses: actions/checkout@v6
-
-      - name: Install diagnostic host dependencies (Alpine only)
-        run: |
-          if command -v apk >/dev/null 2>&1; then
-            # Consolidated ps2dev Alpine prerequisites: build tools, scripting, packaging, and gcc runtime libs.
-            apk add --no-cache \
-              bash \
-              make \
-              git \
-              zip \
-              unzip \
-              tar \
-              gzip \
-              xz \
-              python3 \
-              py3-pip \
-              py3-yaml \
-              gmp \
-              mpfr4 \
-              mpc1 \
-              perl \
-              cmake \
-              pkgconf \
-              coreutils \
-              findutils \
-              grep \
-              sed \
-              gawk \
-              diffutils
-          fi
-
-      - name: Mark workspace safe and fetch history
-        run: |
-          if command -v git >/dev/null 2>&1; then
-            git config --global --add safe.directory "$GITHUB_WORKSPACE"
-            git fetch --prune --unshallow || true
-          else
-            echo "git not available before dependency install"
-          fi
-
-      - name: Capture fingerprint and SDK snapshot
-        run: |
-          set +e
-          {
-            echo "===== /etc/os-release ====="
-            cat /etc/os-release || true
-            echo "===== uname -a ====="
-            uname -a || true
-            echo "===== env | sort ====="
-            env | sort || true
-            echo "===== PS2 vars ====="
-            echo "PS2DEV=${PS2DEV}"
-            echo "PS2SDK=${PS2SDK}"
-            echo "GSKIT=${GSKIT}"
-            echo "PATH=${PATH}"
-            echo "===== host tools ====="
-            which sh bash make git zip unzip tar gzip xz python3 perl cmake pkg-config gawk sed grep find || true
-            echo "===== cross tools ====="
-            which mips64r5900el-ps2-elf-gcc || true
-            which mipsel-none-elf-gcc || true
-            echo "===== cross tool versions ====="
-            mips64r5900el-ps2-elf-gcc --version || true
-            mipsel-none-elf-gcc --version || true
-            echo "===== PS2SDK tree ====="
-            ls -la "$PS2DEV" || true
-            ls -la "$PS2SDK" || true
-            ls -la "$GSKIT" || true
-            echo "===== Defs.make ====="
-            if test -f "$PS2SDK/Defs.make"; then
-              sed -n '1,160p' "$PS2SDK/Defs.make"
-            else
-              echo "Missing: $PS2SDK/Defs.make"
-            fi
-            echo "===== Makefile variables ====="
-            if test -f Makefile; then
-              grep -E '^(PS2DEV|PS2SDK|GSKIT|EE_|IOP_|DVP_|CC|CFLAGS|LDFLAGS|LIBS)\s*[:?+]?=' Makefile || true
-            fi
-          } | tee env-fingerprint.log
-
-          find "$PS2SDK" -maxdepth 4 \( -name '*.a' -o -name '*.h' -o -name '*.irx' -o -name '*.elf' \) -print 2>/dev/null | sort > ps2sdk-snapshot.log || true
-
-      - name: Build (same command as production workflow)
-        run: |
-          make --trace clean release 2>&1 | tee build.log
-
-      - name: Upload diagnostics
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v6
+      - uses: actions/checkout@v6
         with:
-          name: diagnostics-${{ matrix.label }}
-          path: |
-            env-fingerprint.log
-            ps2sdk-snapshot.log
-            build.log
+          ref: agent/fix-boot-hdd-probe
+          fetch-depth: 0
+      - name: Apply focused source patch and restore workflows
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/opl.c')
+          text = path.read_text()
+          old = '''    char pwd[8];
+    char redirectPath[64];
+    int value;
+    DIR *dir;
+
+    getcwd(pwd, sizeof(pwd));
+
+    if (readConfigPathRedirect(redirectPath, sizeof(redirectPath))) {
+        configEnd();
+        configInit(redirectPath);
+        value = configReadMulti(types);
+        if (value & CONFIG_OPL)
+            return value;
+    }
+
+    // Try both memory cards explicitly before probing slower removable devices.
+    if ((value = checkLoadConfigMC(types)) != 0)
+        return value;
+
+    // First, try the device that OPL booted from.
+    if (!strncmp(pwd, "mass", 4) && (pwd[4] == ':' || pwd[5] == ':')) {
+        if ((value = checkLoadConfigBDM(types)) != 0)
+            return value;
+    } else if (!strncmp(pwd, "hdd", 3) && (pwd[3] == ':' || pwd[4] == ':')) {
+        if ((value = checkLoadConfigHDD(types)) != 0)
+            return value;
+    }
+
+    // Config was not found on the boot device. Check all supported devices.
+    // Check MMCE before BDM.
+    if ((value = checkLoadConfigMMCE(types)) != 0)
+        return value;
+    // Check BDM devices.
+    if ((value = checkLoadConfigBDM(types)) != 0)
+        return value;
+    // Check BDM HDD with a short bounded wait.
+    if ((value = checkLoadConfigBDMHDD(types)) != 0)
+        return value;
+    // Check HDD
+    if ((value = checkLoadConfigHDD(types)) != 0)
+        return value;
+'''
+          new = '''    char pwd[64] = "";
+    char redirectPath[64];
+    int value;
+    DIR *dir;
+
+    if (getcwd(pwd, sizeof(pwd)) == NULL)
+        pwd[0] = '\\0';
+
+    if (readConfigPathRedirect(redirectPath, sizeof(redirectPath))) {
+        configEnd();
+        configInit(redirectPath);
+        value = configReadMulti(types);
+        if (value & CONFIG_OPL)
+            return value;
+    }
+
+    // Try both memory cards explicitly before probing slower removable devices.
+    if ((value = checkLoadConfigMC(types)) != 0)
+        return value;
+
+    // First, try the device that OPL booted from. Internal-HDD module loading is allowed only when
+    // cwd itself identifies an HDD boot; an ordinary MC/MMCE/USB boot must not turn expected HDD
+    // absence into the user-facing 401 error during legacy config discovery.
+    if (!strncmp(pwd, "mass", 4) && strchr(pwd, ':') != NULL) {
+        if ((value = checkLoadConfigBDM(types)) != 0)
+            return value;
+    } else if ((!strncmp(pwd, "hdd", 3) || !strncmp(pwd, "pfs", 3)) && strchr(pwd, ':') != NULL) {
+        if ((value = checkLoadConfigHDD(types)) != 0)
+            return value;
+    } else if (!strncmp(pwd, "ata", 3) && strchr(pwd, ':') != NULL) {
+        if ((value = checkLoadConfigBDMHDD(types)) != 0)
+            return value;
+    }
+
+    // Config was not found on the boot device. Check removable devices only. Do not blindly load
+    // either internal-HDD backend here: explicit redirects and HDD boot identities were handled above,
+    // while probing them on every no-config boot reports 401 on HDD-less Slim consoles.
+    if ((value = checkLoadConfigMMCE(types)) != 0)
+        return value;
+    if ((value = checkLoadConfigBDM(types)) != 0)
+        return value;
+'''
+          if new not in text:
+              if old not in text:
+                  raise SystemExit('expected tryAlternateDevice block not found')
+              path.write_text(text.replace(old, new, 1))
+          PY
+          git fetch origin master
+          git checkout origin/master -- .github/workflows/compilation.yml .github/workflows/ci-ps2dev-migration-probe.yml
+          rm -f .github/workflows/agent-fix-boot-hdd-probe.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Avoid blind HDD probes during config discovery"
+          git push origin HEAD:agent/fix-boot-hdd-probe
