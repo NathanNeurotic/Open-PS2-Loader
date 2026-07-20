@@ -91,8 +91,7 @@ void hddVcdInvalidateCache(void);
 void hddInit(item_list_t *itemList);
 item_list_t *hddGetObject(int initOnly);
 int hddLoadModules(void);
-int hddLoadSupportModules(void);
-void hddResetModuleState(void);
+void hddLoadSupportModules(void);
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet);
 int hddIsPresent();
 
