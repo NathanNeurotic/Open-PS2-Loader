@@ -353,7 +353,7 @@ static void bdmLoadBlockDeviceModules(void)
         // Only mark loaded on success -- a failure (no HDD/interface) must not
         // suppress future retries via bdmShouldQueueModuleLoad() (matches the
         // conditional pattern used for USB/MX4SIO and opl.c's hddLoadModules gate).
-        if (hddLoadModules() >= 0)
+        if (HDD_LOADMODULES_OK(hddLoadModules()))
             hddModLoaded = 1;
     }
 
@@ -1660,7 +1660,7 @@ static int bdmEnsureTransportLoaded(int bdmType)
             }
             return iLinkModLoaded;
         case BDM_TYPE_ATA:
-            if (!hddModLoaded && hddLoadModules() >= 0)
+            if (!hddModLoaded && HDD_LOADMODULES_OK(hddLoadModules()))
                 hddModLoaded = 1;
             return hddModLoaded;
         default:

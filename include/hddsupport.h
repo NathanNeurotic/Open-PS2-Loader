@@ -66,6 +66,13 @@ typedef enum {
     HDD_LOADMODULES_STATUS_COUNT,
 } hdd_loadmodules_status;
 
+// TRUE only when the ATA stack is actually resident (fresh load or already loaded). Callers used to
+// test `hddLoadModules() >= 0`, which also accepted BUSYLOADING(2) -- returned for the whole session
+// after a FAILED first load consumed the one-shot count -- so "nothing is loaded" read as success and
+// the APA page sat silently empty under both Auto and Manual (Vapor). Pair with the retryable-failure
+// change in hddLoadModules.
+#define HDD_LOADMODULES_OK(r) ((r) == HDD_LOADMODULES_STATUS_NOERROR || (r) == HDD_LOADMODULES_STATUS_ALREADYLOADED)
+
 int hddCheck(void);
 u32 hddGetTotalSectors(void);
 int hddIs48bit(void);

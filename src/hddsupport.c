@@ -224,6 +224,15 @@ int hddLoadModules(void)
             LOG("HDD: No HardDisk Drive detected.\n");
             setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
             retStatus = HDD_LOADMODULES_STATUS_ERROR;
+            // Make the failure RETRYABLE. Leaving the count consumed turned one bad first probe into a
+            // whole-session poison: every later call took the else branch and returned BUSYLOADING(2),
+            // which the >= 0 caller tests read as SUCCESS while nothing was loaded -- so the APA page
+            // sat silently empty under BOTH Auto and Manual (Vapor's report; the drive lists fine in
+            // wOPL/upstream because their earliest callers run at tab entry, when the drive is ready --
+            // our fork adds boot-time callers like bdmResolveBootDir's ATA escalation, seconds after
+            // power-on). sysInitDev9/sysLoadModuleBuffer are safe to re-run; a later caller (e.g. the
+            // HDD tab) now gets a real second attempt instead of a poisoned latch.
+            hddModulesLoadCount = 0;
         } else {
             retStatus = HDD_LOADMODULES_STATUS_NOERROR;
             hddModulesLoaded = 1;
@@ -313,9 +322,17 @@ void hddLoadSupportModules(void)
 
     // Check if the drive contains MBR/GPT partition data before we load the APA/PFS modules. If the drive is not
     // APA then loading the APA irx modules can corrupt the drive as it will try to write APA partition data.
-    if (hddDetectNonSonyFileSystem() != 0) {
+    int nonSony = hddDetectNonSonyFileSystem();
+    if (nonSony != 0) {
         // Drive is MBR/GPT style, or unknown, bail out or risk corrupting the drive.
-        LOG("HDDSUPPORT LoadSupportModules bailing out early...\n");
+        LOG("HDDSUPPORT LoadSupportModules bailing out early (%d)...\n", nonSony);
+        // A PROBE FAILURE (-1: the xhdd0: partition-sector devctl errored -- drive not ready, module
+        // missing, transient bus fault) was completely SILENT: no error box, no list, an APA page that
+        // just looks like a dead drive for the whole session. Surface it. The 1 (genuine MBR/GPT/exFAT)
+        // branch stays silent on purpose -- that is the NORMAL coexistence case for BDM-HDD users and
+        // must not toast at every boot.
+        if (nonSony < 0)
+            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
         return;
     }
 
