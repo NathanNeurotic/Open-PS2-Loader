@@ -2903,7 +2903,7 @@ static void setDefaults(void)
     gMMCEAckWaitCycles = 5;
     gMMCEUseAlarms = 1;
 
-    gEnableUSB = 0;                    // all block-device toggles OFF by default too (same opt-in doctrine)
+    gEnableUSB = 0; // all block-device toggles OFF by default too (same opt-in doctrine)
     gEnableILK = 0;
     gEnableMX4SIO = 0;
     gEnableBdmHDD = 0;                 // exFAT BDM HDD OFF by default (the other "HDD type"; APA/PFS is gHDDStartMode above)
