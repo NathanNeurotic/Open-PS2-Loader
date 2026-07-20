@@ -275,15 +275,6 @@ int bdmSupportIsUDPBD(item_list_t *support)
     return ((bdm_device_data_t *)support->priv)->bdmDeviceType == BDM_TYPE_UDPBD;
 }
 
-int bdmSupportIsATA(item_list_t *support)
-{
-    if (support == NULL || support->priv == NULL)
-        return 0;
-    if (support->mode < BDM_MODE || support->mode > BDM_MODE_LAST)
-        return 0;
-    return ((bdm_device_data_t *)support->priv)->bdmDeviceType == BDM_TYPE_ATA;
-}
-
 static void bdmEventHandler(void *packet, void *opt)
 {
     BdmGeneration++;
@@ -416,20 +407,6 @@ void bdmLoadModules(void)
     SifAddCmdHandler(0, &bdmEventHandler, NULL);
 
     LOG("BDMSUPPORT Modules loaded\n");
-}
-
-// The optional transport flags describe IOP residency. An in-process sysReset removes those IRXs
-// while the EE process and these statics survive, so clear them only at that explicit reset boundary.
-void bdmResetModuleState(void)
-{
-    iUSBModLoaded = 0;
-    iLinkModLoaded = 0;
-    iLinkManModLoaded = 0;
-    ieee1394ModLoaded = 0;
-    mx4sioModLoaded = 0;
-    hddModLoaded = 0;
-    udpbdModLoaded = 0;
-    bdmDeviceModeStarted = 0;
 }
 
 static void bdmInit(item_list_t *itemList)
@@ -1357,17 +1334,11 @@ static void bdmShutdown(item_list_t *itemList)
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
     snprintf(path, sizeof(path), "mass%d:", itemList->mode);
-    const char *devicePath = (pDeviceData != NULL && pDeviceData->bdmDeviceRoot[0] != '\0') ? pDeviceData->bdmDeviceRoot : path;
-    int deviceType = (pDeviceData != NULL) ? pDeviceData->bdmDeviceType : BDM_TYPE_UNKNOWN;
 
     // As required by some (typically 2.5") HDDs, issue the SCSI STOP UNIT command to avoid causing an emergency park.
     // pDeviceData may be NULL here (shutdown without init, or a second deinit pass after priv was freed below),
     // so guard the dereference and fall back to the constructed mass%d: path.
-    // ATA_BD and APA share the internal drive. Suppress STOP only when the selected launch backend
-    // actually needs ATA; unrelated USB/MMCE/network launches retain the orderly park behavior.
-    // Use the identity already cached by enumeration -- never add blocking mount probes to teardown.
-    if (!gDeinitAtaSelected || deviceType != BDM_TYPE_ATA)
-        fileXioDevctl(devicePath, USBMASS_DEVCTL_STOP_ALL, NULL, 0, NULL, 0);
+    fileXioDevctl((pDeviceData != NULL && pDeviceData->bdmDeviceRoot[0] != '\0') ? pDeviceData->bdmDeviceRoot : path, USBMASS_DEVCTL_STOP_ALL, NULL, 0, NULL, 0);
 
     if (itemList->enabled && pDeviceData != NULL) {
         LOG("BDMSUPPORT Shutdown free data\n");

@@ -19,7 +19,6 @@
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioFormat, fileXioMount, fileXioUmount, fileXioDevctl
 #include <io_common.h>   // FIO_MT_RDWR
-#include <delaythread.h> // DelayThread -- R3Z ATA_BD settle before APA/PFS starts
 
 #include <hdd-ioctl.h>
 
@@ -33,18 +32,9 @@ extern u8 IOBuffer[2048];
 
 static unsigned char hddForceUpdate = 0;
 static unsigned char hddHDProKitDetected = 0;
-static volatile unsigned char hddModulesLoading = 0;
+static unsigned char hddModulesLoadCount = 0;
 static unsigned char hddModulesLoaded = 0;
-static unsigned char hddApaModuleLoaded = 0;
 static unsigned char hddSupportModulesLoaded = 0;
-static unsigned char hddDev9RefHeld = 0;
-
-enum hdd_apa_state {
-    HDD_APA_PROBING = 0,
-    HDD_APA_READY,
-    HDD_APA_UNAVAILABLE,
-};
-static volatile unsigned char hddApaState = HDD_APA_PROBING;
 
 static char *hddPrefix = "pfs0:";
 static hdl_games_list_t hddGames;
@@ -62,27 +52,10 @@ static item_list_t hddGameList;
 static int hddLoadGameListCache(hdl_games_list_t *cache);
 static int hddUpdateGameListCache(hdl_games_list_t *cache, hdl_games_list_t *game_list);
 
-// EE-side residency bookkeeping must be cleared whenever the IOP is rebooted in-process. Ordinary
-// menu cleanup deliberately keeps these flags because the IRXs are still resident; sysReset is the
-// point where that physical state actually disappears.
-void hddResetModuleState(void)
-{
-    hddModulesLoading = 0;
-    hddModulesLoaded = 0;
-    hddApaModuleLoaded = 0;
-    hddSupportModulesLoaded = 0;
-    hddDev9RefHeld = 0;
-    hddApaState = HDD_APA_PROBING;
-}
-
 static void hddInitModules(void)
 {
-    if (hddLoadModules() < 0) {
-        hddApaState = HDD_APA_UNAVAILABLE;
-        return;
-    }
-    if (!hddLoadSupportModules())
-        return;
+    hddLoadModules();
+    hddLoadSupportModules();
 
     // update Themes
     char path[256];
@@ -215,78 +188,104 @@ static int hddCreateOPLPartition(const char *name)
 int hddLoadModules(void)
 {
     int retLoadModule;
-    int wait;
+    int retStatus = HDD_LOADMODULES_STATUS_UNK;
 
-retry:
-    LOG("HDDSUPPORT LoadModules loaded=%d loading=%d\n", hddModulesLoaded, hddModulesLoading);
+    LOG("HDDSUPPORT LoadModules %d\n", hddModulesLoadCount);
 
-    // R3Z-style physical residency: loading the shared ATA stack is idempotent. Logical APA and
-    // ATA-BDM users do not each take a fake reference to the same resident IRXs.
     if (hddModulesLoaded)
-        return HDD_LOADMODULES_STATUS_ALREADYLOADED;
-    if (hddModulesLoading) {
-        // Another caller is loading the one shared physical stack. R3Z makes its loaders
-        // idempotent; wait for that result instead of letting a logical backend run ahead of it.
-        for (wait = 0; wait < 250 && hddModulesLoading; wait++)
-            DelayThread(10 * 1000);
-        if (hddModulesLoaded)
-            return HDD_LOADMODULES_STATUS_ALREADYLOADED;
-        if (hddModulesLoading)
-            return HDD_LOADMODULES_STATUS_ERROR;
-        goto retry; // the other attempt failed cleanly; this caller gets one fresh attempt
-    }
-    hddModulesLoading = 1;
+        retStatus = HDD_LOADMODULES_STATUS_ALREADYLOADED;
 
-    // DEV9 must be loaded, as HDD.IRX depends on it. Keep this support's one ownership reference
-    // across retryable ATAD failures: DDIOC_OFF cannot be re-armed within the same IOP session.
-    if (!hddDev9RefHeld) {
+    if (hddModulesLoadCount == 0) {
+        // Increment the load count as soon as possible to prevent thread scheduling from allowing another thread to
+        // call into here and try to double load modules.
+        hddModulesLoadCount = 1;
+
+        // DEV9 must be loaded, as HDD.IRX depends on it. Even if not required by the I/F (i.e. HDPro)
         sysInitDev9();
-        hddDev9RefHeld = 1;
-    }
 
-    // try to detect HD Pro Kit (not the connected HDD),
-    // if detected it loads the specific ATAD module
-    hddHDProKitDetected = hddCheckHDProKit();
-    if (hddHDProKitDetected) {
-        LOG("[ATAD_HDPRO]:\n");
-        retLoadModule = sysLoadModuleBuffer(&hdpro_atad_irx, size_hdpro_atad_irx, 0, NULL);
-        LOG("[XHDD]:\n");
-        sysLoadModuleBuffer(&xhdd_irx, size_xhdd_irx, 6, "-hdpro");
+        // try to detect HD Pro Kit (not the connected HDD),
+        // if detected it loads the specific ATAD module
+        hddHDProKitDetected = hddCheckHDProKit();
+        if (hddHDProKitDetected) {
+            LOG("[ATAD_HDPRO]:\n");
+            retLoadModule = sysLoadModuleBuffer(&hdpro_atad_irx, size_hdpro_atad_irx, 0, NULL);
+            LOG("[XHDD]:\n");
+            sysLoadModuleBuffer(&xhdd_irx, size_xhdd_irx, 6, "-hdpro");
+        } else {
+            LOG("[BDM]:\n");
+            sysLoadModuleBuffer(&bdm_irx, size_bdm_irx, 0, NULL);
+            LOG("[ATAD]:\n");
+            retLoadModule = sysLoadModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL);
+            LOG("[XHDD]:\n");
+            sysLoadModuleBuffer(&xhdd_irx, size_xhdd_irx, 0, NULL);
+        }
+
+        if (retLoadModule < 0) {
+            LOG("HDD: No HardDisk Drive detected.\n");
+            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
+            retStatus = HDD_LOADMODULES_STATUS_ERROR;
+        } else {
+            retStatus = HDD_LOADMODULES_STATUS_NOERROR;
+            hddModulesLoaded = 1;
+        }
     } else {
-        LOG("[BDM]:\n");
-        sysLoadModuleBuffer(&bdm_irx, size_bdm_irx, 0, NULL);
-        LOG("[ATAD]:\n");
-        retLoadModule = sysLoadModuleBuffer(&ps2atad_irx, size_ps2atad_irx, 0, NULL);
-        // wLaunchELF-R3Z deliberately leaves a one-second settle window after ATA_BD
-        // becomes resident and before the APA stack touches it. Both BDM-ATA and APA
-        // share this same physical driver, so do this once at its first load.
-        if (retLoadModule >= 0)
-            DelayThread(1000 * 1000);
-        LOG("[XHDD]:\n");
-        sysLoadModuleBuffer(&xhdd_irx, size_xhdd_irx, 0, NULL);
+        hddModulesLoadCount++;
+        if (!hddModulesLoaded)
+            retStatus = HDD_LOADMODULES_STATUS_BUSYLOADING;
     }
-
-    if (retLoadModule < 0) {
-        // Leave the attempt retryable without powering DEV9 down. sysShutdownDev9's DDIOC_OFF is a
-        // terminal hardware stop, not a reversible reference release within the current IOP session.
-        hddModulesLoading = 0;
-        LOG("HDD: No HardDisk Drive detected.\n");
-        setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
-        return HDD_LOADMODULES_STATUS_ERROR;
-    }
-
-    // Publish success before clearing the in-progress flag. A waiter that observes loading == 0
-    // must also observe the resident state, or it could race into a second module load.
-    hddModulesLoaded = 1;
-    hddModulesLoading = 0;
 
     LOG("HDDSUPPORT LoadModules done\n");
-    return HDD_LOADMODULES_STATUS_NOERROR;
+    return retStatus;
 }
 
-int hddLoadSupportModules(void)
+// Returns 1 for MBR/GPT, 0 for APA, and -1 if an error occured
+int hddDetectNonSonyFileSystem()
 {
-    int ret;
+    int result = -1;
+    // Allocate memory for storing data for the first two sectors.
+    u8 *pSectorData = (u8 *)malloc(512 * 2);
+    if (pSectorData == NULL) {
+        LOG("hddDetectNonSonyFileSystem: failed to allocate scratch memory\n");
+        return -1;
+    }
+
+    // Trying to load the APA/PFS irx modules when a non-sony formatted HDD is connected (ie: MBR/GPT  w/ exFAT) runs
+    // the risk of corrupting the HDD. To avoid that get the first two sectors and perform some sanity checks. If
+    // we reasonably suspect the disk is not APA formatted bail out from loading the sony fs irx modules.
+    result = fileXioDevctl("xhdd0:", ATA_DEVCTL_READ_PARTITION_SECTOR, NULL, 0, pSectorData, 512 * 2);
+    if (result < 0) {
+        LOG("hddDetectNonSonyFileSystem: failed to read data from hdd %d\n", result);
+        free(pSectorData);
+        return -1;
+    }
+
+    // Check for MBR signature.
+    if (pSectorData[0x1FE] == 0x55 && pSectorData[0x1FF] == 0xAA) {
+        // Found MBR partition type.
+        LOG("hddDetectNonSonyFileSystem: found MBR partition data\n");
+        result = 1;
+    } else if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
+        // Found GPT partition type.
+        LOG("hddDetectNonSonyFileSystem: found GPT partition data\n");
+        result = 1;
+    } else if (strncmp((const char *)&pSectorData[4], "APA", 3) == 0) {
+        // Found APA partition type.
+        LOG("hddDetectNonSonyFileSystem: found APA partition data\n");
+        result = 0;
+    } else {
+        // Even though we didn't find evidence of non-APA partition data, if we load the APA irx module
+        // it will write to the drive and potentially corrupt any data that might be there.
+        LOG("hddDetectNonSonyFileSystem: partition data not recognized\n");
+        result = -1;
+    }
+
+    // Cleanup and return.
+    free(pSectorData);
+    return result;
+}
+
+void hddLoadSupportModules(void)
+{
     static char hddarg[] = "-o"
                            "\0"
                            "4"
@@ -312,83 +311,64 @@ int hddLoadSupportModules(void)
 
     LOG("HDDSUPPORT LoadSupportModules\n");
 
+    // Check if the drive contains MBR/GPT partition data before we load the APA/PFS modules. If the drive is not
+    // APA then loading the APA irx modules can corrupt the drive as it will try to write APA partition data.
+    if (hddDetectNonSonyFileSystem() != 0) {
+        // Drive is MBR/GPT style, or unknown, bail out or risk corrupting the drive.
+        LOG("HDDSUPPORT LoadSupportModules bailing out early...\n");
+        return;
+    }
+
     if (!hddSupportModulesLoaded) {
-        // ps2hdd-osd remains resident even when it classifies the connected disk as non-APA.
-        // Track that IRX independently from the complete APA+PFS stack so a later probe never
-        // attempts to load the same module twice.
-        if (!hddApaModuleLoaded) {
-            LOG("[HDD]:\n");
-            ret = sysLoadModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, sizeof(hddarg), hddarg);
-            if (ret < 0) {
-                hddApaState = HDD_APA_UNAVAILABLE;
-                LOG("HDD: No HardDisk Drive detected.\n");
-                setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_MODULE_HDD_FAILURE);
-                return 0;
-            }
-            hddApaModuleLoaded = 1;
+        LOG("[HDD]:\n");
+        int ret = sysLoadModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, sizeof(hddarg), hddarg);
+        if (ret < 0) {
+            LOG("HDD: No HardDisk Drive detected.\n");
+            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_MODULE_HDD_FAILURE);
+            return;
         }
 
-        // R3Z coexistence model: ATA_BD remains resident for FAT/exFAT while the direct-ATAD
-        // ps2hdd-osd driver independently validates APA. Its init is read-only when the disk is
-        // not APA; require the authoritative formatted status before PS2FS is loaded or any PFS
-        // partition can be mounted/created. Do not second-guess it with generic MBR/GPT bytes.
-        int hddStatus = hddCheck();
-        if (hddStatus != 0) {
-            hddApaState = HDD_APA_UNAVAILABLE;
-            if (hddStatus == 1) {
-                LOG("HDD: HardDisk Drive is not APA formatted.\n");
-                // Expected when both logical backends are enabled on an exFAT disk: BDM-ATA owns
-                // the page, while APA simply stays unpublished. Only report an error when APA was
-                // the sole internal-HDD backend requested.
-                if (!gEnableBdmHDD)
-                    setErrorMessageWithCode(_STR_HDD_NOT_FORMATTED_ERROR, ERROR_HDD_NOT_DETECTED);
-            } else {
-                LOG("HDD: No usable APA HardDisk Drive detected.\n");
-                setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
-            }
-            return 0;
+        // Check if a HDD unit is connected
+        if (hddCheck() < 0) {
+            LOG("HDD: No HardDisk Drive detected.\n");
+            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
+            return;
         }
 
         LOG("[PS2FS]:\n");
         ret = sysLoadModuleBuffer(&ps2fs_irx, size_ps2fs_irx, sizeof(pfsarg), pfsarg);
         if (ret < 0) {
-            hddApaState = HDD_APA_UNAVAILABLE;
             LOG("HDD: HardDisk Drive not formatted (PFS).\n");
             setErrorMessageWithCode(_STR_HDD_NOT_FORMATTED_ERROR, ERROR_HDD_MODULE_PFS_FAILURE);
-            return 0;
+            return;
         }
 
         hddSupportModulesLoaded = 1;
         LOG("HDDSUPPORT modules loaded\n");
+
+        if (gOPLPart[0] == '\0')
+            hddFindOPLPartition();
+
+        fileXioUmount(hddPrefix);
+
+        ret = fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
+        if (ret == -ENOENT) {
+            // Attempt to create the partition.
+            if ((hddCreateOPLPartition(gOPLPart)) >= 0)
+                fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
+        }
+
+        if (gOPLPart[5] != '+') {
+            hddCheckOPLFolder(hddPrefix);
+            gHDDPrefix = "pfs0:OPL/";
+        }
     }
-
-    hddApaState = HDD_APA_READY;
-
-    if (gOPLPart[0] == '\0')
-        hddFindOPLPartition();
-
-    fileXioUmount(hddPrefix);
-
-    ret = fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
-    if (ret == -ENOENT) {
-        // Attempt to create the partition.
-        if ((hddCreateOPLPartition(gOPLPart)) >= 0)
-            fileXioMount(hddPrefix, gOPLPart, FIO_MT_RDWR);
-    }
-
-    if (gOPLPart[5] != '+') {
-        hddCheckOPLFolder(hddPrefix);
-        gHDDPrefix = "pfs0:OPL/";
-    }
-
-    return 1;
 }
 
 void hddInit(item_list_t *itemList)
 {
     LOG("HDDSUPPORT Init\n");
     hddForceUpdate = 0; // Use cache at initial startup.
-    hddApaState = hddSupportModulesLoaded ? HDD_APA_READY : HDD_APA_PROBING;
     configGetInt(configGetByType(CONFIG_OPL), "hdd_frames_delay", &hddGameList.delay);
     ioPutRequest(IO_CUSTOM_SIMPLEACTION, &hddInitModules);
     hddGameList.enabled = 1;
@@ -560,17 +540,6 @@ static int hddBuildVcdGameList(void)
 static int hddNeedsUpdate(item_list_t *itemList)
 { /* Auto refresh is disabled by setting HDD_MODE_UPDATE_DELAY to MENU_UPD_DELAY_NOUPDATE, within hddsupport.h.
        Hence any update request would be issued by the user, which should be taken as an explicit request to re-scan the HDD. */
-    // Module initialization and this menu update share the IO FIFO, so the authoritative APA result
-    // is ready before the first scan. A non-APA disk belongs to ATA-BDM: withhold this page instead
-    // of publishing the same empty ghost tab that caused the original regression report.
-    if (hddApaState != HDD_APA_READY) {
-        if (hddApaState == HDD_APA_UNAVAILABLE && itemList->owner != NULL)
-            ((opl_io_module_t *)itemList->owner)->menuItem.visible = 0;
-        return 0;
-    }
-    if (itemList->owner != NULL)
-        ((opl_io_module_t *)itemList->owner)->menuItem.visible = 1;
-
     if (vcdConsumeDirty(itemList->mode))
         return 1; // L3 toggle / default-view change -> rebuild the submenu (the ARRAY may be cached)
     if (vcdViewActive(itemList->mode))
@@ -580,9 +549,6 @@ static int hddNeedsUpdate(item_list_t *itemList)
 
 static int hddUpdateGameList(item_list_t *itemList)
 {
-    if (hddApaState != HDD_APA_READY)
-        return 0;
-
     if (vcdViewActive(itemList->mode))
         // Reuse the session's built list on view flips; hddBuildVcdGameList runs only when never
         // built, invalidated (first-disc-only change), or freed by teardown (hddFreeVcdGameList).
@@ -1170,10 +1136,11 @@ static void hddCleanUp(item_list_t *itemList, int exception)
             fileXioUmount(hddPrefix);
     }
 
-    // Close logical PFS state, but keep the physical IRX residency flag. IOP modules cannot be
-    // unloaded here; a later settings re-init reuses them and remounts below, matching R3Z.
+    // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
     if (hddSupportModulesLoaded) {
         fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+
+        hddSupportModulesLoaded = 0;
     }
 }
 
@@ -1194,24 +1161,32 @@ static void hddShutdown(item_list_t *itemList)
         fileXioUmount(hddPrefix);
     }
 
-    // Close logical PFS state. Physical IRXs stay resident until the launch/exit IOP reset.
+    // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
     if (hddSupportModulesLoaded) {
         /* Close all files */
         fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+
+        hddSupportModulesLoaded = 0;
     }
 
-    if (hddModulesLoaded) {
-        // Park the internal drive when the selected launch does not use it. Keep it live only for
-        // APA or ATA-BDM handoff; their loaders still need the shared ATA stack after menu teardown.
-        if (!gDeinitAtaSelected)
+    if (hddModulesLoadCount > 0) {
+        hddModulesLoadCount -= 1;
+        if (hddModulesLoadCount == 0) {
+            // DEV9 will remain active if ETH is in use, so put the HDD in IDLE state.
+            // The HDD should still enter standby state after 21 minutes & 15 seconds, as per the ATAD defaults.
             hddSetIdleImmediate();
-    }
+        }
 
-    // Release this support's single physical DEV9 ownership on terminal exit/poweroff even if ATAD
-    // never became resident. Game/app handoffs reset the IOP themselves after reading launch assets.
-    if (gDeinitTerminal && hddDev9RefHeld) {
-        sysShutdownDev9();
-        hddDev9RefHeld = 0;
+        // Only shut down dev9 from here, if it was initialized from here before -- and only on a
+        // TERMINAL teardown (exit/poweroff). On the launch path this shutdown runs for every
+        // non-selected page, and powering DEV9 off here kills the ATA bus BEFORE bdmLaunchVcd's
+        // post-deinit POPSTARTER.ELF read from the ATA-backed massN: mount -- the elf-loader then
+        // returns into deinit'd OPL: the 4236edf6-class black-screen freeze (PCSX2 masks it; its
+        // emulated DEV9 power-off is inert). ee_core/POPSTARTER reset the IOP right after, so the
+        // launch path needs no power-off. Note the refcount asymmetry this also softens: N
+        // hddLoadModules calls take ONE dev9 reference, but every hddShutdown used to drop it.
+        if (gDeinitTerminal)
+            sysShutdownDev9();
     }
 }
 
