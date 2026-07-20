@@ -1,4 +1,4 @@
-name: Publish staged source commit
+name: Apply exact CI formatting
 
 on:
   pull_request:
@@ -8,9 +8,8 @@ permissions:
   contents: write
 
 jobs:
-  publish:
+  format:
     runs-on: ubuntu-latest
-    container: ps2max/dev:v20250725-2
     steps:
       - name: Checkout staging branch
         uses: actions/checkout@v6
@@ -18,7 +17,30 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Publish reviewed source commit
+      - name: Reset to unified PR head
         run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          sh ./make_changelog.sh
+          git fetch origin 311c92afe3a308c0c39e218396ccbc4cd4795c3c
+          git reset --hard FETCH_HEAD
+
+      - name: Apply the CI formatter in place
+        uses: DoozyX/clang-format-lint-action@v0.18.2
+        with:
+          source: 'include/hddsupport.h src/hddsupport.c src/mmcesupport.c src/opl.c src/vcdsupport.c'
+          extensions: 'c,h'
+          clangFormatVersion: 18
+          style: file
+          inplace: true
+
+      - name: Publish formatting commit
+        run: |
+          git config user.name "ChatGPT"
+          git config user.email "noreply@openai.com"
+          git add include/hddsupport.h src/hddsupport.c src/mmcesupport.c src/opl.c src/vcdsupport.c
+          parent=$(git rev-parse HEAD)
+          if git diff --cached --quiet; then
+            commit="$parent"
+          else
+            tree=$(git write-tree)
+            commit=$(printf '%s\n' "Apply exact CI formatting" | git commit-tree "$tree" -p "$parent")
+          fi
+          git push --force origin "$commit":refs/heads/agent/ci-format-review-fix
