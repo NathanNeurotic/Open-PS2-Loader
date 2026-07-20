@@ -1311,8 +1311,9 @@ static int checkLoadConfigBDMHDD(int types)
     char path[64];
     int value;
 
-    // Bounded wait so BDM-on-HDD can be detected without long black-screen stalls.
-    if (hddLoadModules() >= 0 && bdmHDDIsPresent(500)) {
+    // Legacy config discovery is speculative: expected absence must not post the user-facing 401.
+    // Keep the scan for compatibility, but load the shared ATA stack silently here.
+    if (hddLoadModulesSilent() >= 0 && bdmHDDIsPresent(500)) {
         if (bdmFindPartition(path, CONFIG_OPL_FILENAME, 0) || bdmFindPartition(path, CONFIG_OPL_FILENAME_LEGACY, 0)) {
             configEnd();
             configInit(path);
@@ -1333,7 +1334,9 @@ static int checkLoadConfigHDD(int types)
     int value;
     char path[64];
 
-    if (hddLoadModules() < 0 || !hddLoadSupportModules())
+    // Legacy config discovery is speculative: preserve HDD config lookup without reporting expected
+    // hardware absence as a startup error on HDD-less consoles.
+    if (hddLoadModulesSilent() < 0 || !hddLoadSupportModules())
         return 0;
 
     snprintf(path, sizeof(path), "%s%s", gHDDPrefix, CONFIG_OPL_FILENAME);
@@ -1359,12 +1362,13 @@ static int checkLoadConfigHDD(int types)
 // When this function is called, the current device for loading/saving config is the memory card.
 static int tryAlternateDevice(int types)
 {
-    char pwd[8];
+    char pwd[64] = "";
     char redirectPath[64];
     int value;
     DIR *dir;
 
-    getcwd(pwd, sizeof(pwd));
+    if (getcwd(pwd, sizeof(pwd)) == NULL)
+        pwd[0] = 0;
 
     if (readConfigPathRedirect(redirectPath, sizeof(redirectPath))) {
         configEnd();
@@ -2870,7 +2874,7 @@ static void setDefaults(void)
     gMMCEStartMode = START_MODE_MANUAL;
     gFAVStartMode = START_MODE_MANUAL;
 
-    gMMCESlot = 2; //Default to first Auto slot
+    gMMCESlot = 2; // Default to first Auto slot
     gMMCEIGRSlot = 3;
     gMMCEEnableGameID = 1;
     gApplyGameID = 1; // visual GameID barcode ON by default (Pixel FX/RetroGEM HDMI displays; imperceptible otherwise)
