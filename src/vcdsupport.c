@@ -640,6 +640,50 @@ int vcdSafeWriteFile(const char *dstPath, const void *buf, int len)
     return rc;
 }
 
+// Keep a complete live BDMA installation in EE RAM while replacing it. Memory-card rename is not
+// available, and an on-card backup can exceed the free space of a real 8 MB card. Driver modules are
+// small, but keep a hard upper bound so a damaged directory entry cannot cause unbounded allocation.
+#define VCD_BACKUP_MAX (2 * 1024 * 1024)
+static int vcdReadFileAlloc(const char *path, unsigned char **out, int *outSize)
+{
+    struct stat st;
+    int fd, size, total = 0;
+    unsigned char *buf;
+
+    if (path == NULL || out == NULL || outSize == NULL)
+        return -1;
+    *out = NULL;
+    *outSize = 0;
+
+    if (stat(path, &st) != 0 || st.st_size <= 0 || st.st_size > VCD_BACKUP_MAX)
+        return -1;
+    size = (int)st.st_size;
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return -1;
+    buf = (unsigned char *)malloc(size);
+    if (buf == NULL) {
+        close(fd);
+        return -1;
+    }
+
+    while (total < size) {
+        int r = read(fd, buf + total, size - total);
+        if (r <= 0) {
+            free(buf);
+            close(fd);
+            return -1;
+        }
+        total += r;
+    }
+    close(fd);
+
+    *out = buf;
+    *outSize = size;
+    return 0;
+}
+
 // ---- BDMA (BDMAssault exFAT driver) equip -------------------------------------------
 // POPStarter loads its block-device driver from mc?:/POPSTARTER/{usbd.irx,usbhdfsd.irx}. We let the
 // user EQUIP one of three exFAT variants (or FAT32 = none) by copying THEIR OWN files from a source
@@ -657,6 +701,27 @@ static const char *vcdBdmaSuffix[VCD_BDMA_MODE_COUNT] = {"fat32", "usbexfat", "m
 static const char *vcdBdmaModule[2] = {"usbd.irx", "usbhdfsd.irx"};
 
 #define VCD_BDMA_MARKER "bdma_config.txt"
+
+static int vcdBdmaLivePairPresent(const char *mcDir)
+{
+    char path[96];
+    unsigned char byte;
+
+    if (mcDir == NULL || mcDir[0] == 0)
+        return 0;
+
+    for (int i = 0; i < 2; i++) {
+        snprintf(path, sizeof(path), "%s/%s", mcDir, vcdBdmaModule[i]);
+        int fd = open(path, O_RDONLY);
+        if (fd < 0)
+            return 0;
+        int r = read(fd, &byte, 1);
+        close(fd);
+        if (r != 1)
+            return 0;
+    }
+    return 1;
+}
 
 // Resolve the memory-card POPSTARTER folder (where the modules live). Prefer an existing folder;
 // otherwise create it on the first present card. A slot-2-only first-time setup must not silently
@@ -854,12 +919,39 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return r;
     }
 
-    // Commit by COPY, not rename(): this dir is always on mc0:/mc1:, and the stock mcman.irx OPL embeds
-    // registers the legacy ioman 'mc' device with NO rename op -- iomanX returns -EUNSUP for every mc
-    // rename(), so a rename-based swap can never succeed here. If a commit write fails, the CARD is
-    // refusing IO: normalize to the consistent no-pair state (POPStarter falls back to its built-in
-    // FAT32 driver, same as the VCD_BDMA_FAT32 path) rather than leave a torn mixed-variant pair.
-    unlink(dst0); // free the old module's space first; tmp + old + new pairs may not fit a real MC
+    // Snapshot a complete existing pair before touching either live destination. If the pair exists but
+    // cannot be backed up, leave it untouched and fail the equip rather than risk destroying it.
+    unsigned char *old0 = NULL, *old1 = NULL, *oldMarker = NULL;
+    int old0Size = 0, old1Size = 0, oldMarkerSize = 0;
+    int hadOldPair = vcdBdmaLivePairPresent(mcDir);
+    if (hadOldPair &&
+        (vcdReadFileAlloc(dst0, &old0, &old0Size) != 0 ||
+         vcdReadFileAlloc(dst1, &old1, &old1Size) != 0)) {
+        free(old0);
+        free(old1);
+        unlink(tmp0);
+        unlink(tmp1);
+        return -3;
+    }
+
+    char markerPath[96];
+    snprintf(markerPath, sizeof(markerPath), "%s/%s", mcDir, VCD_BDMA_MARKER);
+    int markerFd = open(markerPath, O_RDONLY);
+    int hadOldMarker = markerFd >= 0;
+    if (markerFd >= 0)
+        close(markerFd);
+    if (hadOldMarker && vcdReadFileAlloc(markerPath, &oldMarker, &oldMarkerSize) != 0) {
+        free(old0);
+        free(old1);
+        unlink(tmp0);
+        unlink(tmp1);
+        return -3;
+    }
+
+    // Commit by COPY, not rename(): stock mcman exposes no rename operation. The marker is written only
+    // after both live modules are complete. Any module or marker failure rolls the previous installation
+    // back; only a setup with no restorable prior pair falls back to the explicit FAT32/no-pair state.
+    unlink(dst0);
     r = vcdSafeCopyFile(tmp0, dst0);
     if (r == 0) {
         unlink(dst1);
@@ -867,15 +959,45 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     }
     unlink(tmp0);
     unlink(tmp1);
+    if (r == 0)
+        r = vcdWriteBdmaMarker(mcDir, mode);
+
     if (r != 0) {
-        unlink(dst0); // drop the half-installed pair; vcdSafeCopyFile already removed its partial write
+        unlink(dst0);
         unlink(dst1);
-        vcdWriteBdmaMarker(mcDir, VCD_BDMA_FAT32);
+
+        int pairRestored = 0;
+        if (hadOldPair &&
+            vcdSafeWriteFile(dst0, old0, old0Size) == 0 &&
+            vcdSafeWriteFile(dst1, old1, old1Size) == 0) {
+            pairRestored = 1;
+
+            // The driver pair is the functional state. If its old marker cannot be restored, keep the
+            // working pair and remove the untrustworthy marker so the next launch re-validates/equips it.
+            if (hadOldMarker) {
+                if (vcdSafeWriteFile(markerPath, oldMarker, oldMarkerSize) != 0)
+                    unlink(markerPath);
+            } else {
+                unlink(markerPath);
+            }
+        }
+
+        if (!pairRestored) {
+            unlink(dst0);
+            unlink(dst1);
+            vcdWriteBdmaMarker(mcDir, VCD_BDMA_FAT32);
+        }
+
+        free(old0);
+        free(old1);
+        free(oldMarker);
         return r;
     }
 
-    int mr = vcdWriteBdmaMarker(mcDir, mode);
-    return (mr != 0) ? mr : 0;
+    free(old0);
+    free(old1);
+    free(oldMarker);
+    return 0;
 }
 
 // Best-effort auto-equip of the device-matching BDMA driver before a VCD launch (POPSLoader's
@@ -899,8 +1021,11 @@ void vcdEnsureBdmaForLaunch(int source, int mode)
         return; // user opted to manage the BDMA driver manually (General Settings -> BDMA Source/Mode)
     if (mode <= VCD_BDMA_FAT32 || mode >= VCD_BDMA_MODE_COUNT)
         return; // FAT32 / invalid -> POPSTARTER's built-in driver, nothing to equip
-    if (vcdReadBdmaMode() == mode)
-        return; // the matching variant is already on the card
+    char mcDir[64];
+    if (vcdReadBdmaMode() == mode &&
+        vcdResolvePopstarterMc(mcDir, sizeof(mcDir)) &&
+        vcdBdmaLivePairPresent(mcDir))
+        return; // marker and both non-empty live modules agree
 
     int er = vcdEquipBdma(source, mode, diag, sizeof(diag));
     if (er == 0)
