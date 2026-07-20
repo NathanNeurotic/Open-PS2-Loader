@@ -1,0 +1,140 @@
+2026-07-20T13:37:56.0796330Z   lfs: false
+2026-07-20T13:37:56.0796558Z   submodules: false
+2026-07-20T13:37:56.0796774Z   set-safe-directory: true
+2026-07-20T13:37:56.0797255Z ##[endgroup]
+2026-07-20T13:37:56.1788125Z Syncing repository: NathanNeurotic/Open-PS2-Loader
+2026-07-20T13:37:56.1790798Z ##[group]Getting Git version info
+2026-07-20T13:37:56.1791601Z Working directory is '/home/runner/work/Open-PS2-Loader/Open-PS2-Loader'
+2026-07-20T13:37:56.1792581Z [command]/usr/bin/git version
+2026-07-20T13:37:56.1792984Z git version 2.54.0
+2026-07-20T13:37:56.1806341Z ##[endgroup]
+2026-07-20T13:37:56.1819809Z Temporarily overriding HOME='/home/runner/work/_temp/7659c9ad-0235-4637-9248-81de996c3b06' before making global git config changes
+2026-07-20T13:37:56.1820805Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-20T13:37:56.1826235Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Open-PS2-Loader/Open-PS2-Loader
+2026-07-20T13:37:56.1869933Z Deleting the contents of '/home/runner/work/Open-PS2-Loader/Open-PS2-Loader'
+2026-07-20T13:37:56.1873720Z ##[group]Determining repository object format
+2026-07-20T13:37:56.1876196Z ##[endgroup]
+2026-07-20T13:37:56.1876657Z ##[group]Initializing the repository
+2026-07-20T13:37:56.1882069Z [command]/usr/bin/git init /home/runner/work/Open-PS2-Loader/Open-PS2-Loader
+2026-07-20T13:37:56.1971610Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-07-20T13:37:56.1972328Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-07-20T13:37:56.1972845Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-07-20T13:37:56.1973379Z hint: call:
+2026-07-20T13:37:56.1973684Z hint:
+2026-07-20T13:37:56.1973995Z hint: 	git config --global init.defaultBranch <name>
+2026-07-20T13:37:56.1974380Z hint:
+2026-07-20T13:37:56.1974727Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-07-20T13:37:56.1975411Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-07-20T13:37:56.1976385Z hint:
+2026-07-20T13:37:56.1976680Z hint: 	git branch -m <name>
+2026-07-20T13:37:56.1976990Z hint:
+2026-07-20T13:37:56.1977347Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-07-20T13:37:56.1978468Z Initialized empty Git repository in /home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git/
+2026-07-20T13:37:56.1988841Z [command]/usr/bin/git remote add origin https://github.com/NathanNeurotic/Open-PS2-Loader
+2026-07-20T13:37:56.2030987Z ##[endgroup]
+2026-07-20T13:37:56.2031628Z ##[group]Disabling automatic garbage collection
+2026-07-20T13:37:56.2035268Z [command]/usr/bin/git config --local gc.auto 0
+2026-07-20T13:37:56.2066091Z ##[endgroup]
+2026-07-20T13:37:56.2066800Z ##[group]Setting up auth
+2026-07-20T13:37:56.2067514Z Removing SSH command configuration
+2026-07-20T13:37:56.2074538Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-20T13:37:56.2108442Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-20T13:37:56.2430625Z Removing HTTP extra header
+2026-07-20T13:37:56.2435387Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-20T13:37:56.2467864Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-20T13:37:56.2692192Z Removing includeIf entries pointing to credentials config files
+2026-07-20T13:37:56.2698496Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-20T13:37:56.2729405Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-20T13:37:56.2968818Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-07-20T13:37:56.3004999Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git.path /home/runner/work/_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:37:56.3034832Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:37:56.3064187Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:37:56.3096586Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:37:56.3125263Z ##[endgroup]
+2026-07-20T13:37:56.3125860Z ##[group]Fetching the repository
+2026-07-20T13:37:56.3137389Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3f500f8f6822d779273090a33fdcc32d48e8099c:refs/remotes/pull/236/merge
+2026-07-20T13:37:56.8648366Z From https://github.com/NathanNeurotic/Open-PS2-Loader
+2026-07-20T13:37:56.8648918Z  * [new ref]         3f500f8f6822d779273090a33fdcc32d48e8099c -> pull/236/merge
+2026-07-20T13:37:56.8683140Z ##[endgroup]
+2026-07-20T13:37:56.8684268Z ##[group]Determining the checkout info
+2026-07-20T13:37:56.8684694Z ##[endgroup]
+2026-07-20T13:37:56.8689776Z [command]/usr/bin/git sparse-checkout disable
+2026-07-20T13:37:56.8734174Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-07-20T13:37:56.8760924Z ##[group]Checking out the ref
+2026-07-20T13:37:56.8765151Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/236/merge
+2026-07-20T13:37:57.0004811Z Note: switching to 'refs/remotes/pull/236/merge'.
+2026-07-20T13:37:57.0005103Z 
+2026-07-20T13:37:57.0005327Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-07-20T13:37:57.0005804Z changes and commit them, and you can discard any commits you make in this
+2026-07-20T13:37:57.0006567Z state without impacting any branches by switching back to a branch.
+2026-07-20T13:37:57.0006846Z 
+2026-07-20T13:37:57.0007075Z If you want to create a new branch to retain commits you create, you may
+2026-07-20T13:37:57.0007505Z do so (now or later) by using -c with the switch command. Example:
+2026-07-20T13:37:57.0007767Z 
+2026-07-20T13:37:57.0007882Z   git switch -c <new-branch-name>
+2026-07-20T13:37:57.0008061Z 
+2026-07-20T13:37:57.0008162Z Or undo this operation with:
+2026-07-20T13:37:57.0008323Z 
+2026-07-20T13:37:57.0008409Z   git switch -
+2026-07-20T13:37:57.0008544Z 
+2026-07-20T13:37:57.0008755Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-07-20T13:37:57.0009105Z 
+2026-07-20T13:37:57.0009450Z HEAD is now at 3f500f8 Merge 311c92afe3a308c0c39e218396ccbc4cd4795c3c into d14f3e73b65e9d54d1b85454b0cc38a7146e692d
+2026-07-20T13:37:57.0015843Z ##[endgroup]
+2026-07-20T13:37:57.0061148Z [command]/usr/bin/git log -1 --format=%H
+2026-07-20T13:37:57.0084929Z 3f500f8f6822d779273090a33fdcc32d48e8099c
+2026-07-20T13:37:57.0384230Z ##[group]Run DoozyX/clang-format-lint-action@v0.18.2
+2026-07-20T13:37:57.0384566Z with:
+2026-07-20T13:37:57.0384766Z   source: .
+2026-07-20T13:37:57.0384965Z   extensions: h,c
+2026-07-20T13:37:57.0385181Z   clangFormatVersion: 12
+2026-07-20T13:37:57.0385417Z   inplace: false
+2026-07-20T13:37:57.0385613Z   exclude: none
+2026-07-20T13:37:57.0385805Z   style: file
+2026-07-20T13:37:57.0386199Z ##[endgroup]
+2026-07-20T13:37:57.0516277Z ##[command]/usr/bin/docker run --name a9dde6ded30346e0b1d629660ca49cb0_c06afa --label 672048 --workdir /github/workspace --rm -e "INPUT_SOURCE" -e "INPUT_EXTENSIONS" -e "INPUT_CLANGFORMATVERSION" -e "INPUT_INPLACE" -e "INPUT_EXCLUDE" -e "INPUT_STYLE" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/Open-PS2-Loader/Open-PS2-Loader":"/github/workspace" 672048:a9dde6ded30346e0b1d629660ca49cb0  "--clang-format-executable" "/clang-format/clang-format12" "-r" "--color" "always" "--style" "file" "--inplace" "false" "--extensions" "h,c" "--exclude" "none" "."
+2026-07-20T13:37:58.2867511Z Processing 384 files: ./include/mcemu.h, ./include/fntsys.h, ./include/tar.h, ./include/lang.h, ./include/themes.h, ./include/system.h, ./include/util.h, ./include/menusys.h, ./include/renderman.h, ./include/mmcesupport.h, ./include/dia.h, ./include/textures.h, ./include/OSDHistory.h, ./include/bdmsupport.h, ./include/folderbrowse.h, ./include/SIOCookie.h, ./include/vcdsupport.h, ./include/nbns.h, ./include/atlas.h, ./include/utf8.h, ./include/hdd.h, ./include/guigame.h, ./include/hddsupport.h, ./include/xparam.h, ./include/appsupport.h, ./include/compatupd.h, ./include/ps2cnf.h, ./include/opl.h, ./include/udpfssupport.h, ./include/pggsm.h, ./include/vmc_groups.h, ./include/ioprp.h, ./include/texcache.h, ./include/cheatman.h, ./include/ethsupport.h, ./include/supportbase.h, ./include/pad.h, ./include/iosupport.h, ./include/ioman.h, ./include/favsupport.h, ./include/ds34common.h, ./include/dialogs.h, ./include/gui.h, ./include/debug.h, ./include/extern_irx.h, ./include/sound.h, ./include/config.h, ./src/fntsys.c, ./src/nbns.c, ./src/eesio_stub.c, ./src/bdmsupport.c, ./src/themes.c, ./src/lang.c, ./src/lz4.c, ./src/dialogs.c, ./src/textures.c, ./src/zso.c, ./src/ioprp.c, ./src/gui.c, ./src/vcdsupport.c, ./src/hdd.c, ./src/cheatman.c, ./src/OSDHistory.c, ./src/pad.c, ./src/httpclient.c, ./src/opl.c, ./src/util.c, ./src/ps2cnf.c, ./src/renderman.c, ./src/system.c, ./src/config.c, ./src/gsm.c, ./src/sound.c, ./src/dia.c, ./src/xparam.c, ./src/supportbase.c, ./src/texcache.c, ./src/guigame.c, ./src/tar.c, ./src/mmcesupport.c, ./src/ethsupport.c, ./src/favsupport.c, ./src/atlas.c, ./src/appsupport.c, ./src/hddsupport.c, ./src/folderbrowse.c, ./src/ioman.c, ./src/menusys.c, ./src/debug.c, ./src/elfldr_noreset.c, ./src/vmc_groups.c, ./src/udpfssupport.c, ./src/include/diag.h, ./ee_core/include/padhook.h, ./ee_core/include/util.h, ./ee_core/include/tlb.h, ./ee_core/include/cheat_engine.h, ./ee_core/include/coreconfig.h, ./ee_core/include/ee_core.h, ./ee_core/include/cd_igr_rpc.h, ./ee_core/include/modules.h, ./ee_core/include/asm.h, ./ee_core/include/iopmgr.h, ./ee_core/include/modmgr.h, ./ee_core/include/cheat_api.h, ./ee_core/include/patches.h, ./ee_core/include/gsm_defines.h, ./ee_core/include/padpatterns.h, ./ee_core/include/gsm_api.h, ./ee_core/include/syshook.h, ./ee_core/include/igs_api.h, ./ee_core/include/dve_reg.h, ./ee_core/src/iopmgr.c, ./ee_core/src/main.c, ./ee_core/src/modmgr.c, ./ee_core/src/igs_api.c, ./ee_core/src/util.c, ./ee_core/src/padhook.c, ./ee_core/src/syshook.c, ./ee_core/src/cd_igr_rpc.c, ./ee_core/src/patches.c, ./ee_core/src/tlb.c, ./ee_core/src/gsm_api.c, ./ee_core/src/cheat_api.c, ./notes/xparam/xparam_0250_20100415.c, ./notes/xparam/xparam_0220_20050620.c, ./modules/vmc/genvmc/genvmc.h, ./modules/vmc/genvmc/irx_imports.h, ./modules/vmc/genvmc/genvmc.c, ./modules/pademu/ds34usb.c, ./modules/pademu/padmacro.c, ./modules/pademu/pademu.h, ./modules/pademu/ds34usb.h, ./modules/pademu/sys_utils.c, ./modules/pademu/ds34common.c, ./modules/pademu/irx_imports.h, ./modules/pademu/ds34bt.c, ./modules/pademu/pademu.c, ./modules/pademu/ds34bt.h, ./modules/pademu/padmacro.h, ./modules/pademu/sys_utils.h, ./modules/iopcore/imgdrv/imgdrv.c, ./modules/iopcore/imgdrv/irx_imports.h, ./modules/iopcore/cdvdfsv/scmd.c, ./modules/iopcore/cdvdfsv/cdvdfsv.c, ./modules/iopcore/cdvdfsv/ncmd.c, ./modules/iopcore/cdvdfsv/searchfile.c, ./modules/iopcore/cdvdfsv/irx_imports.h, ./modules/iopcore/cdvdfsv/cdvdfsv-internal.h, ./modules/iopcore/cdvdman/internal.h, ./modules/iopcore/cdvdman/ioplib_util.c, ./modules/iopcore/cdvdman/ioplib_util.h, ./modules/iopcore/cdvdman/dev9.c, ./modules/iopcore/cdvdman/device-hdd.c, ./modules/iopcore/cdvdman/device-bdm.c, ./modules/iopcore/cdvdman/scmd.c, ./modules/iopcore/cdvdman/smb.c, ./modules/iopcore/cdvdman/ncmd.c, ./modules/iopcore/cdvdman/device.h, ./modules/iopcore/cdvdman/ioops.c, ./modules/iopcore/cdvdman/device-mmce.c, ./modules/iopcore/cdvdman/searchfile.c, ./modules/iopcore/cdvdman/irx_imports.h, ./modules/iopcore/cdvdman/dev9.h, ./modules/iopcore/cdvdman/smb.h, ./modules/iopcore/cdvdman/hdpro_atad.c, ./modules/iopcore/cdvdman/atad.h, ./modules/iopcore/cdvdman/device-smb.c, ./modules/iopcore/cdvdman/atad.c, ./modules/iopcore/cdvdman/cdvdman.c, ./modules/iopcore/cdvdman/streaming.c, ./modules/iopcore/cdvdman/ioman_add.h, ./modules/iopcore/common/cdvdman_opl.h, ./modules/iopcore/common/smsutils.h, ./modules/iopcore/common/cdvd_config.h, ./modules/iopcore/common/mmcedrv_config.h, ./modules/iopcore/common/oplsmb.h, ./modules/iopcore/patches/apemodpatch/main.c, ./modules/iopcore/patches/apemodpatch/irx_imports.h, ./modules/iopcore/patches/f2techioppatch/main.c, ./modules/iopcore/patches/f2techioppatch/irx_imports.h, ./modules/iopcore/patches/iremsndpatch/main.c, ./modules/iopcore/patches/iremsndpatch/irx_imports.h, ./modules/iopcore/patches/cleareffects/main.c, ./modules/iopcore/patches/cleareffects/irx_imports.h, ./modules/iopcore/resetspu/resetspu.c, ./modules/iopcore/resetspu/irx_imports.h, ./modules/network/udpfs_ioman/include/mprintf.h, ./modules/network/udpfs_ioman/include/main.h, ./modules/network/udpfs_ioman/src/udprdma_packet.h, ./modules/network/udpfs_ioman/src/main.c, ./modules/network/udpfs_ioman/src/udprdma.h, ./modules/network/udpfs_ioman/src/udpfs_core.h, ./modules/network/udpfs_ioman/src/udpfs_core.c, ./modules/network/udpfs_ioman/src/udprdma.c, ./modules/network/udpfs_ioman/src/irx_imports.h, ./modules/network/udpfs_ioman/src/udpfs_ioman.c, ./modules/network/udpfs_ioman/src/udpfs_packet.h, ./modules/network/udpfs_bd/include/mprintf.h, ./modules/network/udpfs_bd/include/main.h, ./modules/network/udpfs_bd/src/udpfs_bd.c, ./modules/network/udpfs_bd/src/udprdma_packet.h, ./modules/network/udpfs_bd/src/main.c, ./modules/network/udpfs_bd/src/udprdma.h, ./modules/network/udpfs_bd/src/udpfs_core.h, ./modules/network/udpfs_bd/src/udpfs_core.c, ./modules/network/udpfs_bd/src/udprdma.c, ./modules/network/udpfs_bd/src/irx_imports.h, ./modules/network/udpfs_bd/src/udpfs_packet.h, ./modules/network/nbns/nbns.c, ./modules/network/nbns/main.c, ./modules/network/nbns/irx_imports.h, ./modules/network/smbinit/des.c, ./modules/network/smbinit/main.c, ./modules/network/smbinit/smbauth.c, ./modules/network/smbinit/md4.c, ./modules/network/smbinit/irx_imports.h, ./modules/network/smbinit/smbauth.h, ./modules/network/smbinit/des.h, ./modules/network/smbinit/md4.h, ./modules/network/SMSTCPIP/tcp_out.c, ./modules/network/SMSTCPIP/tcpip.c, ./modules/network/SMSTCPIP/icmp.c, ./modules/network/SMSTCPIP/pbuf.c, ./modules/network/SMSTCPIP/tcp.c, ./modules/network/SMSTCPIP/tcp_in.c, ./modules/network/SMSTCPIP/ps2ip.c, ./modules/network/SMSTCPIP/loopif.c, ./modules/network/SMSTCPIP/ip_addr.c, ./modules/network/SMSTCPIP/mem.c, ./modules/network/SMSTCPIP/udp.c, ./modules/network/SMSTCPIP/netif.c, ./modules/network/SMSTCPIP/ip_frag.c, ./modules/network/SMSTCPIP/api_msg.c, ./modules/network/SMSTCPIP/api_lib.c, ./modules/network/SMSTCPIP/sockets.c, ./modules/network/SMSTCPIP/ip.c, ./modules/network/SMSTCPIP/memp.c, ./modules/network/SMSTCPIP/etharp.c, ./modules/network/SMSTCPIP/timers.c, ./modules/network/SMSTCPIP/include/ps2ip_internal.h, ./modules/network/SMSTCPIP/include/irx_imports.h, ./modules/network/SMSTCPIP/include/lwipopts.h, ./modules/network/SMSTCPIP/include/netif/loopif.h, ./modules/network/SMSTCPIP/include/netif/etharp.h, ./modules/network/SMSTCPIP/include/arch/sys_arch.h, ./modules/network/SMSTCPIP/include/arch/cc.h, ./modules/network/SMSTCPIP/include/lwip/icmp.h, ./modules/network/SMSTCPIP/include/lwip/api.h, ./modules/network/SMSTCPIP/include/lwip/inet.h, ./modules/network/SMSTCPIP/include/lwip/ip_addr.h, ./modules/network/SMSTCPIP/include/lwip/ip.h, ./modules/network/SMSTCPIP/include/lwip/tcp.h, ./modules/network/SMSTCPIP/include/lwip/memp.h, ./modules/network/SMSTCPIP/include/lwip/opt.h, ./modules/network/SMSTCPIP/include/lwip/snmp.h, ./modules/network/SMSTCPIP/include/lwip/ip_frag.h, ./modules/network/SMSTCPIP/include/lwip/mem.h, ./modules/network/SMSTCPIP/include/lwip/pbuf.h, ./modules/network/SMSTCPIP/include/lwip/stats.h, ./modules/network/SMSTCPIP/include/lwip/arch.h, ./modules/network/SMSTCPIP/include/lwip/api_msg.h, ./modules/network/SMSTCPIP/include/lwip/udp.h, ./modules/network/SMSTCPIP/include/lwip/timers.h, ./modules/network/SMSTCPIP/include/lwip/dhcp.h, ./modules/network/SMSTCPIP/include/lwip/sockets.h, ./modules/network/SMSTCPIP/include/lwip/raw.h, ./modules/network/SMSTCPIP/include/lwip/netif.h, ./modules/network/SMSTCPIP/include/lwip/sys.h, ./modules/network/SMSTCPIP/include/lwip/def.h, ./modules/network/SMSTCPIP/include/lwip/err.h, ./modules/network/SMSTCPIP/include/lwip/tcpip.h, ./modules/network/SMSTCPIP/include/lwip/debug.h, ./modules/network/udpfs_smap/include/mprintf.h, ./modules/network/udpfs_smap/include/smap.h, ./modules/network/udpfs_smap/include/main.h, ./modules/network/udpfs_smap/include/irx_imports.h, ./modules/network/udpfs_smap/include/xfer.h, ./modules/network/udpfs_smap/src/xfer.c, ./modules/network/udpfs_smap/src/main.c, ./modules/network/udpfs_smap/src/smap.c, ./modules/network/smap_udpbd/src/udpbd.h, ./modules/network/smap_udpbd/src/xfer.c, ./modules/network/smap_udpbd/src/ministack.c, ./modules/network/smap_udpbd/src/main.c, ./modules/network/smap_udpbd/src/smap.c, ./modules/network/smap_udpbd/src/udptty.h, ./modules/network/smap_udpbd/src/ministack.h, ./modules/network/smap_udpbd/src/udptty.c, ./modules/network/smap_udpbd/src/udpbd.c, ./modules/network/smap_udpbd/src/include/mprintf.h, ./modules/network/smap_udpbd/src/include/main.h, ./modules/network/smap_udpbd/src/include/irx_imports.h, ./modules/network/smap_udpbd/src/include/xfer.h, ./modules/network/httpclient/main.c, ./modules/network/httpclient/httpclient.c, ./modules/network/httpclient/irx_imports.h, ./modules/network/common/smstcpip.h, ./modules/network/common/smstcpip-common.h, ./modules/network/common/httpclient.h, ./modules/network/udpfs_ministack/include/ministack_ip.h, ./modules/network/udpfs_ministack/include/mprintf.h, ./modules/network/udpfs_ministack/include/ministack_arp.h, ./modules/network/udpfs_ministack/include/ministack_eth.h, ./modules/network/udpfs_ministack/include/udptty.h, ./modules/network/udpfs_ministack/include/mstack.h, ./modules/network/udpfs_ministack/include/ministack_udp.h, ./modules/network/udpfs_ministack/include/main.h, ./modules/network/udpfs_ministack/src/main.c, ./modules/network/udpfs_ministack/src/ministack_udp.c, ./modules/network/udpfs_ministack/src/ministack_arp.c, ./modules/network/udpfs_ministack/src/ministack_ip.c, ./modules/network/udpfs_ministack/src/ministack_eth.c, ./modules/network/udpfs_ministack/src/irx_imports.h, ./modules/network/udpfs_ministack/src/udptty.c, ./modules/network/smap-ingame/xfer.c, ./modules/network/smap-ingame/main.c, ./modules/network/smap-ingame/smap.c, ./modules/network/smap-ingame/main.h, ./modules/network/smap-ingame/irx_imports.h, ./modules/network/smap-ingame/xfer.h, ./modules/bdmevent/main.c, ./modules/bdmevent/irx_imports.h, ./modules/ds34bt/ee/libds34bt.h, ./modules/ds34bt/ee/libds34bt.c, ./modules/ds34bt/iop/irx_imports.h, ./modules/ds34bt/iop/ds34bt.c, ./modules/ds34bt/iop/ds34bt.h, ./modules/isofs/zso.c, ./modules/isofs/isofs.c, ./modules/isofs/irx_imports.h, ./modules/isofs/zso.h, ./modules/mcemu/mcemu.h, ./modules/mcemu/mcemu.c, ./modules/mcemu/device-hdd.c, ./modules/mcemu/device-bdm.c, ./modules/mcemu/mcemu_var.c, ./modules/mcemu/mcemu_utils.h, ./modules/mcemu/device.h, ./modules/mcemu/device-mmce.c, ./modules/mcemu/irx_imports.h, ./modules/mcemu/mcemu_io.c, ./modules/mcemu/device-smb.c, ./modules/mcemu/mcemu_rpc.c, ./modules/mcemu/mcemu_sys.c, ./modules/mcemu/ioman_add.h, ./modules/hdd/xhdd/hdpro.c, ./modules/hdd/xhdd/ata_identify.h, ./modules/hdd/xhdd/xatad.c, ./modules/hdd/xhdd/xhdd.c, ./modules/hdd/xhdd/xhdd.h, ./modules/hdd/xhdd/irx_imports.h, ./modules/hdd/common/opl-hdd-ioctl.h, ./modules/debug/ps2link/ps2link.c, ./modules/debug/ps2link/net_fio.c, ./modules/debug/ps2link/cmdHandler.c, ./modules/debug/ps2link/excepHandler.h, ./modules/debug/ps2link/irx_imports.h, ./modules/debug/ps2link/net_fsys.c, ./modules/debug/ps2link/hostlink.h, ./modules/debug/ps2link/net_fio.h, ./modules/debug/ps2link/nprintf.c, ./modules/debug/ps2link/excepHandler.c, ./modules/debug/udptty-ingame/irx_imports.h, ./modules/debug/udptty-ingame/udptty.c, ./modules/ds34usb/ee/libds34usb.c, ./modules/ds34usb/ee/libds34usb.h, ./modules/ds34usb/iop/ds34usb.c, ./modules/ds34usb/iop/ds34usb.h, ./modules/ds34usb/iop/irx_imports.h, ./elfldr/loader.c, ./labs/genvmclab/genvmclab.c, ./labs/opltestiso/ee/main.c, ./labs/opltestiso/iop/freeram/main.c, ./labs/opltestiso/iop/freeram/irx_imports.h, ./labs/lwnbdsvr/lwnbdsvrlab.c, ./labs/smblab/smblab.c, ./pc/iso2opl/src/isofs.c, ./pc/iso2opl/src/iso2opl.c, ./pc/iso2opl/src/iso2opl.h, ./pc/opl2iso/src/opl2iso.h, ./pc/opl2iso/src/opl2iso.c, ./pc/genvmc/src/genvmc.h, ./pc/genvmc/src/genvmc.c
+2026-07-20T13:38:00.2151904Z [1m--- ./include/opl.h	(original)
+2026-07-20T13:38:00.2152505Z [0m[1m+++ ./include/opl.h	(reformatted)
+2026-07-20T13:38:00.2153108Z [0m[36m@@ -215,7 +215,7 @@
+2026-07-20T13:38:00.2153548Z [0m extern int gOSDLanguageSource;
+2026-07-20T13:38:00.2153936Z  
+2026-07-20T13:38:00.2154215Z  extern int showCfgPopup;
+2026-07-20T13:38:00.2155075Z [31m-extern int showNetDhcpPopup;      // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
+2026-07-20T13:38:00.2156683Z [0m[32m+extern int showNetDhcpPopup; // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
+2026-07-20T13:38:00.2157511Z [0m 
+2026-07-20T13:38:00.2157774Z  #ifdef IGS
+2026-07-20T13:38:00.2158070Z  #define IGS_VERSION "0.1"
+2026-07-20T13:38:00.3463566Z Post job cleanup.
+2026-07-20T13:38:00.4312206Z [command]/usr/bin/git version
+2026-07-20T13:38:00.4381580Z git version 2.54.0
+2026-07-20T13:38:00.4421633Z Temporarily overriding HOME='/home/runner/work/_temp/90e627e7-65a2-470d-a0c0-69b216ad55d6' before making global git config changes
+2026-07-20T13:38:00.4422814Z Adding repository directory to the temporary git global config as a safe directory
+2026-07-20T13:38:00.4427898Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Open-PS2-Loader/Open-PS2-Loader
+2026-07-20T13:38:00.4460293Z Removing SSH command configuration
+2026-07-20T13:38:00.4466960Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-07-20T13:38:00.4504854Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-07-20T13:38:00.4748944Z Removing HTTP extra header
+2026-07-20T13:38:00.4755661Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-07-20T13:38:00.4791753Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-07-20T13:38:00.5025512Z Removing includeIf entries pointing to credentials config files
+2026-07-20T13:38:00.5033033Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-07-20T13:38:00.5060659Z includeif.gitdir:/home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git.path
+2026-07-20T13:38:00.5061604Z includeif.gitdir:/home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git/worktrees/*.path
+2026-07-20T13:38:00.5062376Z includeif.gitdir:/github/workspace/.git.path
+2026-07-20T13:38:00.5062932Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-07-20T13:38:00.5069804Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git.path
+2026-07-20T13:38:00.5092879Z /home/runner/work/_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:38:00.5104112Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git.path /home/runner/work/_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:38:00.5140881Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git/worktrees/*.path
+2026-07-20T13:38:00.5164022Z /home/runner/work/_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:38:00.5174389Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/Open-PS2-Loader/Open-PS2-Loader/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:38:00.5209250Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-07-20T13:38:00.5232235Z /github/runner_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:38:00.5240924Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:38:00.5274218Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-07-20T13:38:00.5296038Z /github/runner_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:38:00.5305650Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config
+2026-07-20T13:38:00.5339093Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-07-20T13:38:00.5587798Z Removing credentials config '/home/runner/work/_temp/git-credentials-598b679f-72ec-4b54-9c08-845d7793a008.config'
+2026-07-20T13:38:00.5743373Z Cleaning up orphan processes
