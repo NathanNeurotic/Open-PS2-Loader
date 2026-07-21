@@ -47,6 +47,8 @@ static int mmceResolvedDevice = -1;
 // card/slot skips the redundant burst (mirrors BDM's FoldersCreated one-shot). Reset by mmceInit and
 // on card removal (empty prefix) so a freshly inserted card still gets its folders.
 static char mmceFoldersCreatedFor[40] = {0};
+#define MMCE_FOLDER_RETRY_MAX 5           // bounded CFG-create retries per card before declaring it obstructed
+static unsigned char mmceFolderRetries = 0;
 
 // Card-switch wait: poll the MMCE busy bit every 500 ms for up to ~7.5 s, matching mmceman's own
 // switch handshake. On a CROSS-DEVICE launch (a USB/HDD/SMB game whose per-game card lives on the
@@ -346,6 +348,7 @@ void mmceInit(item_list_t *itemList)
     mmceVcdGames = NULL;
     mmceResolvedDevice = -1; // re-detect the Auto slot on a fresh init (tab re-enable / settings apply)
     mmceFoldersCreatedFor[0] = '\0';
+    mmceFolderRetries = 0;
 
     configGetInt(configGetByType(CONFIG_OPL), "usb_frames_delay", &mmceGameList.delay);
     mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
@@ -378,6 +381,7 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     if (mmcePrefix[0] == '\0') {
         mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
         mmceFoldersCreatedFor[0] = '\0'; // card gone: recreate folders on the next (possibly different) card
+        mmceFolderRetries = 0;
         // Card gone: re-arm THM/LNG registration so a swapped-in card's assets get discovered
         // (Gemini review of #153). The old card's already-registered entries stay in the pickers --
         // eviction infrastructure doesn't exist -- but picking a stale one fails gracefully
