@@ -1142,7 +1142,7 @@ void setErrorMessage(int strId)
 // the errno on screen instead of a bare "Error writing settings!".
 void setErrorMessagePathCode(int strId, const char *path, int error)
 {
-    snprintf(errorMessage, sizeof(errorMessage), _l(strId), path, error);
+    snprintf(errorMessage, sizeof(errorMessage), _l(strId), path ? path : "", error);
     guiSetFrameHook(&errorMessageHook);
 }
 
