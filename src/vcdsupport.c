@@ -748,7 +748,7 @@ typedef struct
 } bdma_embedded_pair_t;
 
 static const bdma_embedded_pair_t vcdBdmaEmbedded[VCD_BDMA_MODE_COUNT] = {
-    {NULL, NULL, NULL, NULL},                                                                     // FAT32: POPStarter built-in driver
+    {NULL, NULL, NULL, NULL},                                                                               // FAT32: POPStarter built-in driver
     {bdma_usbd_usb_gz, &size_bdma_usbd_usb_gz, bdma_usbhdfsd_usbexfat_gz, &size_bdma_usbhdfsd_usbexfat_gz}, // usbexfat
     {bdma_usbd_usb_gz, &size_bdma_usbd_usb_gz, bdma_usbhdfsd_mx4sio_gz, &size_bdma_usbhdfsd_mx4sio_gz},     // mx4sio (shared usbd)
     {bdma_usbd_mmce_gz, &size_bdma_usbd_mmce_gz, bdma_usbhdfsd_mmce_gz, &size_bdma_usbhdfsd_mmce_gz},       // mmce
