@@ -65,6 +65,13 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
 
+      - name: Install leak-fixed stock-generation mmceman (maintainer directive, #245)
+        # The stock mmceman leaks a 16-slot FS-pool handle on every failed close; the fix shipped
+        # on PS2DEVLATESTSDK since 2026-07-10 but this flavour kept the leak. Rebuilds mmceman from
+        # the PRE-sio2man-refactor generation (v2.1.1) + the fd-leak patch only -- NOT the
+        # db3e93f0 coherent-mmce pin, whose sio2man hook targets the post-refactor SDK.
+        run: sh ./.github/scripts/patch_stock_mmceman.sh
+
       - name: Build (make clean release)
         # LOCALVERSION brands the in-ELF version string ("-PS2MAXSDK") so hardware reports
         # self-identify which toolchain's binary produced them (Makefile appends it).
@@ -124,11 +131,12 @@ jobs:
   build-rolling-woplsdk:
     runs-on: ubuntu-latest
     # wOPL's exact digest-pinned build container ("use older sdk container until mmce is
-    # stabilised in sdk" -- KrahJohlito, wOPL, 2026-07-04). Deliberately does NOT run
-    # install_coherent_mmce.sh: this flavour ships the container's STOCK
-    # sio2man/mmceman/mmcedrv/mmceigr, i.e. 100% wOPL provenance. With the default (latest +
-    # coherent-mmce) and -PS2MAXSDK flavours, hardware reports become a three-way discriminator:
-    # which flavours reproduce a failure isolates SDK-vs-driver-vs-RiptOPL-code causes.
+    # stabilised in sdk" -- KrahJohlito, wOPL, 2026-07-04). Still does NOT run
+    # install_coherent_mmce.sh (that pin's sio2man hook targets the post-refactor SDK), but since
+    # 2026-07-20 (maintainer directive, #245) it DOES run patch_stock_mmceman.sh: mmceman is
+    # rebuilt from the container's own generation (v2.1.1) with ONLY the fd-leak fix -- no flavour
+    # ships the 16-slot pool leak anymore. sio2man/mmcedrv/mmceigr remain 100% container stock, so
+    # the three-way flavour discriminator survives with one documented, single-purpose delta.
     container: ghcr.io/ps2homebrew/ps2homebrew@sha256:207523ad98f17fd406afa7dd0c6cfe10730627545cbe45247f0bd73c8a66c376
     # Diagnostic/compat flavour: best-effort, must not block the rolling publish.
     continue-on-error: true
@@ -167,6 +175,11 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
+
+      - name: Install leak-fixed stock-generation mmceman (maintainer directive, #245)
+        # See the job comment above: v2.1.1 (this container's own ports generation) + the fd-leak
+        # patch only. The IRX manifest below records the shipped hash for provenance.
+        run: sh ./.github/scripts/patch_stock_mmceman.sh
 
       - name: Build (make clean release)
         # LOCALVERSION brands the in-ELF version string ("-WOPLSDK") so hardware reports

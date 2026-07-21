@@ -22,6 +22,9 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow
 
+      - name: Install leak-fixed stock-generation mmceman (maintainer directive, #245)
+        run: sh ./.github/scripts/patch_stock_mmceman.sh
+
       - name: Compile -> make clean release
         run: make --trace clean && make --trace release
 
@@ -141,6 +144,9 @@ jobs:
       - run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow
+
+      - name: Install leak-fixed stock-generation mmceman (maintainer directive, #245)
+        run: sh ./.github/scripts/patch_stock_mmceman.sh
 
       - name: Get version
         run: |
@@ -373,6 +379,9 @@ jobs:
       - run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow
+
+      - name: Install leak-fixed stock-generation mmceman (maintainer directive, #245)
+        run: sh ./.github/scripts/patch_stock_mmceman.sh
 
       - name: Get version
         run: |
