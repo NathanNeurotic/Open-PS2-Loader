@@ -467,7 +467,12 @@ static int mmceNeedsUpdate(item_list_t *itemList)
             closedir(cfgDir);
             snprintf(mmceFoldersCreatedFor, sizeof(mmceFoldersCreatedFor), "%s", mmcePrefix);
         } else {
-            LOG("MMCE: %s not present after sbCreateFolders -- will retry next refresh\n", cfgPath);
+            // Keep the ~2s background refresh alive so the create genuinely retries -- the NOUPDATE
+            // latch at the top of this function (line 390) would otherwise settle the callback to 0
+            // and the "retry next refresh" never happens. Mirrors the first-scan retry pattern above.
+            LOG("MMCE: %s not present after sbCreateFolders -- re-arming retry\n", cfgPath);
+            mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
+            result = 1;
         }
     }
 
