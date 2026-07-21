@@ -261,6 +261,7 @@ file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned
         fileBuffer->fd = fd;
         fileBuffer->mode = mode;
         fileBuffer->writeError = 0;
+        fileBuffer->totalQueued = 0;
     }
 
     return fileBuffer;
@@ -286,6 +287,7 @@ file_buffer_t *openFileBufferBuffer(short allocResult, const void *buffer, unsig
     fileBuffer->fd = -1;
     fileBuffer->mode = O_RDONLY;
     fileBuffer->writeError = 0;
+    fileBuffer->totalQueued = 0;
 
     memcpy(fileBuffer->buffer, buffer, size);
     fileBuffer->buffer[size] = '\0';
@@ -392,6 +394,7 @@ int readFileBuffer(file_buffer_t *fileBuffer, char **outBuf)
 
 void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)
 {
+    fileBuffer->totalQueued += size; // see util.h -- lets configWrite know whether buffer still holds ALL content
     // LOG("writeFileBuffer avail: %d size: %d\n", fileBuffer->available, size);
     if (fileBuffer->available && fileBuffer->available + size > fileBuffer->size) {
         // LOG("writeFileBuffer flushing: %d\n", fileBuffer->available);
