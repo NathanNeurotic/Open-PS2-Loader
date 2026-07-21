@@ -112,32 +112,48 @@ void checkMCFolder(void)
 
 static int checkFile(char *path, int mode)
 {
-    // check if it is mc
-    if (strncmp(path, "mc", 2) == 0) {
+    // The "mc?:" wildcard-card resolution is mc-specific: substitute the detected card digit, or bail
+    // if no card is present.
+    if (strncmp(path, "mc", 2) == 0 && path[2] == 0x3F) {
+        if (checkMC() >= 0)
+            path[2] = mcID;
+        else
+            return 0;
+    }
 
-        // if user didn't explicitly asked for a MC (using '?' char)
-        if (path[2] == 0x3F) {
-
-            // Use default detected card
-            if (checkMC() >= 0)
-                path[2] = mcID;
-            else
-                return 0;
-        }
-
-        // in create mode, we check that the directory exist, or create it
-        if (mode & O_CREAT) {
+    // In create mode, ensure the immediate parent directory exists (create it if not) for any device
+    // path shaped "<dev>:/<subdir>/<file>" -- previously this ran for "mc" prefixes only. In practice
+    // that shape is the MMCE per-game config target mmceN:/.../CFG/<id>.cfg (the reported case);
+    // BDM/HDD homes are written as "massN:OPL/..."/"pfs0:OPL/..." with no slash after the colon and are
+    // NOT matched here -- they were never matched before either, and sbCreateFolders remains their
+    // safety net. The MMCE failure: the driver's open(O_CREAT) cannot create a file under a missing
+    // directory, and sbCreateFolders' mkdir burst return is UNCHECKED while its once-per-card memo
+    // latches regardless -- so a single mkdir missed on a busy card leaves CFG permanently absent and
+    // every per-game save fails. Before d5150a49 that was swallowed and shown as "saved"; now it
+    // honestly errors (#245, AndrewBento, MMCE). Creating the parent here makes the write persist.
+    //
+    // Only a genuine SUBdirectory is created -- never a bare device root -- because the driver owns the
+    // root and its opendir/mkdir semantics differ; `pos > devSlash + 1` requires a path component after
+    // "<dev>:/". One extra opendir per O_CREAT write only (never on reads); on MMCE that is one SIO2
+    // round-trip on an already user-initiated, infrequent save.
+    if (mode & O_CREAT) {
+        char *pos = strrchr(path, '/');
+        const char *devSlash = strstr(path, ":/");
+        if (pos != NULL && devSlash != NULL && pos > devSlash + 1) {
             char dirPath[256];
-            char *pos = strrchr(path, '/');
-            if (pos) {
-                memcpy(dirPath, path, (pos - path));
-                dirPath[(pos - path)] = '\0';
+            int n = (int)(pos - path);
+            if (n < (int)sizeof(dirPath)) {
+                memcpy(dirPath, path, n);
+                dirPath[n] = '\0';
+                // Best-effort: attempt the mkdir only when opendir says the dir is missing, but NEVER
+                // fail checkFile on the result. open() is the real source of truth -- if the dir truly
+                // could not be made, the open below fails honestly; and if opendir ever mis-reports an
+                // existing dir as missing (a device-driver quirk), the harmless mkdir-EEXIST is ignored
+                // and the write still proceeds. So this can only ever HELP a write, never block one.
                 DIR *dir = opendir(dirPath);
-                if (dir == NULL) {
-                    int res = mkdir(dirPath, 0777);
-                    if (res != 0)
-                        return 0;
-                } else
+                if (dir == NULL)
+                    mkdir(dirPath, 0777);
+                else
                     closedir(dir);
             }
         }
