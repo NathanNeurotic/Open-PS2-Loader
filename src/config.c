@@ -1193,9 +1193,60 @@ int configWrite(config_set_t *configSet)
                 }
             }
 
+            // Capture the exact bytes about to be flushed, for the read-back verify below. The capture
+            // is COMPLETE only when nothing was flushed early (totalQueued == available) -- true for
+            // every real config (< 4 KB buffer). On a partial capture the rescue is skipped entirely;
+            // it never guesses.
+            char *intended = NULL;
+            unsigned int intendedLen = 0;
+            if (fileBuffer->available > 0 && fileBuffer->totalQueued == fileBuffer->available) {
+                intended = (char *)malloc(fileBuffer->available);
+                if (intended != NULL) {
+                    memcpy(intended, fileBuffer->buffer, fileBuffer->available);
+                    intendedLen = fileBuffer->available;
+                }
+            }
+
             ok = (closeFileBuffer(fileBuffer) == 0);
             if (!ok)
                 gDiag.lastSaveErrno = errno; // #120 diag: flush/close failure errno, captured before bgmUnMute
+
+            // EVIDENCE OVER STATUS CODES (#245, temporal bisect): on some MMCE clone firmware the
+            // write can LAND while the close reply is junk/timed out -- and honoring that status
+            // verbatim did two bad things: reported a persisted save as failed, and (worse) let the
+            // restore below O_TRUNC-rewrite the ORIGINAL bytes over the new ones when the new config
+            // was shorter, actively UN-saving the user's change. So on a failed close, read the file
+            // back and byte-compare against the captured intent: identical bytes = the save
+            // demonstrably PERSISTED, whatever the status said -> success (no restore, no toast). Any
+            // mismatch, short read, or unreadable file leaves the failure standing and the restore
+            // path intact -- this can only ever convert failure->success on PROOF, so the #184
+            // silent-wipe guard is not weakened.
+            // ...but NEVER on pfs: PFS commits data+metadata through a shared IOP-side block cache, so
+            // after a FAILED close a fresh open+read can be satisfied entirely from that still-dirty
+            // cache -- proving nothing about the platter. There, honest failure + retry is the safe
+            // behavior. MMCE is cacheless (the read round-trips to the card), which is what makes the
+            // rescue's evidence real on the device this targets.
+            if (!ok && intended != NULL && strncmp(configSet->filename, "pfs", 3) != 0) {
+                int vfd = openFile(configSet->filename, O_RDONLY);
+                if (vfd >= 0) {
+                    int vsz = getFileSize(vfd);
+                    if (vsz == (int)intendedLen) {
+                        char *readBack = (char *)malloc(intendedLen);
+                        if (readBack != NULL) {
+                            if (read(vfd, readBack, intendedLen) == (int)intendedLen &&
+                                memcmp(readBack, intended, intendedLen) == 0) {
+                                LOG("CONFIG write to %s: close reported failure but read-back verifies all %u bytes -- treating as SAVED\n",
+                                    configSet->filename, intendedLen);
+                                ok = 1;
+                                gDiag.lastSaveErrno = 0; // the save is ruled a success; don't leave a failure errno on the HUD
+                            }
+                            free(readBack);
+                        }
+                    }
+                    close(vfd);
+                }
+            }
+            free(intended);
             bgmUnMute();
         } else {
             gDiag.lastSaveErrno = errno; // #120 diag: write-open failure errno (wedged card = EIO/ENODEV),

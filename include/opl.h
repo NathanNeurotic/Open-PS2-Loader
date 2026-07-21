@@ -73,6 +73,7 @@ config_set_t *oplGetLegacyAppsInfo(char *name);
 
 void setErrorMessage(int strId);
 void setErrorMessageWithCode(int strId, int error);
+void setErrorMessagePathCode(int strId, const char *path, int error);
 int loadConfig(int types);
 int saveConfig(int types, int showUI);
 void applyConfig(int themeID, int langID, int skipDeviceRefresh);

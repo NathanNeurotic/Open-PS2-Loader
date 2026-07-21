@@ -18,7 +18,10 @@ typedef struct
     unsigned int available;
     char *lastPtr;
     short allocResult;
-    int writeError; // sticky flag: set when any buffered write()/close() fails; returned by closeFileBuffer
+    int writeError;           // sticky flag: set when any buffered write()/close() fails; returned by closeFileBuffer
+    unsigned int totalQueued; // total bytes ever handed to writeFileBuffer; when == available at close
+                              // time, the WHOLE content still sits in buffer (no intermediate flush) --
+                              // configWrite's read-back verify uses that to capture the intended bytes
 } file_buffer_t;
 
 file_buffer_t *openFileBufferBuffer(short allocResult, const void *buffer, unsigned int size);

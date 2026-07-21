@@ -47,6 +47,8 @@ static int mmceResolvedDevice = -1;
 // card/slot skips the redundant burst (mirrors BDM's FoldersCreated one-shot). Reset by mmceInit and
 // on card removal (empty prefix) so a freshly inserted card still gets its folders.
 static char mmceFoldersCreatedFor[40] = {0};
+#define MMCE_FOLDER_RETRY_MAX 5 // bounded CFG-create retries per card before declaring it obstructed
+static unsigned char mmceFolderRetries = 0;
 
 // Card-switch wait: poll the MMCE busy bit every 500 ms for up to ~7.5 s, matching mmceman's own
 // switch handshake. On a CROSS-DEVICE launch (a USB/HDD/SMB game whose per-game card lives on the
@@ -346,6 +348,7 @@ void mmceInit(item_list_t *itemList)
     mmceVcdGames = NULL;
     mmceResolvedDevice = -1; // re-detect the Auto slot on a fresh init (tab re-enable / settings apply)
     mmceFoldersCreatedFor[0] = '\0';
+    mmceFolderRetries = 0;
 
     configGetInt(configGetByType(CONFIG_OPL), "usb_frames_delay", &mmceGameList.delay);
     mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
@@ -378,6 +381,7 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     if (mmcePrefix[0] == '\0') {
         mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
         mmceFoldersCreatedFor[0] = '\0'; // card gone: recreate folders on the next (possibly different) card
+        mmceFolderRetries = 0;
         // Card gone: re-arm THM/LNG registration so a swapped-in card's assets get discovered
         // (Gemini review of #153). The old card's already-registered entries stay in the pickers --
         // eviction infrastructure doesn't exist -- but picking a stale one fails gracefully
@@ -451,9 +455,43 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     // after the NOUPDATE latch near the top of this function.
 
     // Create the library folders once per card/slot, not on every refresh (each is an SIO2 mkdir).
+    // Only latch the "done" memo once CFG actually EXISTS on the card: sbCreateFolders' mkdir burst
+    // ignores its return, so a single mkdir dropped on a busy card would otherwise mark the tree
+    // "created" forever while CFG never got made -- and every per-game save then fails, because the
+    // config write targets <prefix>CFG/<id>.cfg (#245, AndrewBento). Leaving the memo unset here lets
+    // the ~2s refresh keep retrying until CFG is confirmed present, so a missing folder always heals
+    // itself instead of stranding saves.
     if (strcmp(mmceFoldersCreatedFor, mmcePrefix) != 0) {
         sbCreateFolders(mmcePrefix, 1);
-        snprintf(mmceFoldersCreatedFor, sizeof(mmceFoldersCreatedFor), "%s", mmcePrefix);
+
+        char cfgPath[sizeof(mmcePrefix) + 4];
+        snprintf(cfgPath, sizeof(cfgPath), "%sCFG", mmcePrefix);
+        DIR *cfgDir = opendir(cfgPath);
+        if (cfgDir != NULL) {
+            closedir(cfgDir);
+            snprintf(mmceFoldersCreatedFor, sizeof(mmceFoldersCreatedFor), "%s", mmcePrefix);
+            mmceFolderRetries = 0;
+        } else if (++mmceFolderRetries >= MMCE_FOLDER_RETRY_MAX) {
+            // CFG is OBSTRUCTED, not merely missing: mkdir + opendir have now both failed repeatedly
+            // (a non-directory entry named CFG, or on-card FS damage to that dir entry -- e.g. a
+            // PC-side deletion that left a broken record). Retrying forever would churn the shared
+            // SIO2 bus with a 10-mkdir burst PLUS a forced full list rescan every ~2s for the whole
+            // session (adversarial review of #246), so latch and stop. The user is NOT left stranded:
+            // the write-time parent-create in checkFile still attempts CFG on every save, and the
+            // save's failure toast names the exact path + errno -- the card needs a PC-side look.
+            LOG("MMCE: %s still absent after %d create attempts -- obstructed; giving up for this session\n",
+                cfgPath, MMCE_FOLDER_RETRY_MAX);
+            snprintf(mmceFoldersCreatedFor, sizeof(mmceFoldersCreatedFor), "%s", mmcePrefix);
+            mmceFolderRetries = 0;
+        } else {
+            // Keep the ~2s background refresh alive so the create genuinely retries -- the NOUPDATE
+            // latch at the top of this function (line 390) would otherwise settle the callback to 0
+            // and the "retry next refresh" never happens. Mirrors the first-scan retry pattern above.
+            LOG("MMCE: %s not present after sbCreateFolders -- re-arming retry (%d/%d)\n",
+                cfgPath, mmceFolderRetries, MMCE_FOLDER_RETRY_MAX);
+            mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
+            result = 1;
+        }
     }
 
     return result;

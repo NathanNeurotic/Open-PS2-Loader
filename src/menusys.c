@@ -5,6 +5,7 @@
 */
 
 #include "include/opl.h"
+#include "include/diag.h" // gDiag.lastSaveErrno -- surfaced in the per-game save-failure toast (#245)
 #include "include/menusys.h"
 #include "include/iosupport.h"
 #include "include/supportbase.h" // sbSetConfigStatSize -- defer the #Size stat off the scroll path
@@ -295,18 +296,27 @@ static void _menuResolveInfoSize()
         configFree(loadedConfig);
 }
 
+static int menuSaveResult = 0; // carries configWrite's success out of the deferred _menuSaveConfig callback
+
 static void _menuSaveConfig()
 {
     int result;
 
     WaitSema(menuSemaId);
     result = configWrite(itemConfig);
-    itemConfigId = -1; // to invalidate cache and force reload
+    itemConfigId = -1;       // to invalidate cache and force reload
+    menuSaveResult = result; // publish BEFORE actionStatus=0 -- that flag is the waiter's release signal
     actionStatus = 0;
     SignalSema(menuSemaId);
 
     if (!result)
-        setErrorMessage(_STR_ERROR_SAVING_SETTINGS);
+        // #245 (AndrewBento, MMCE): name WHERE and the errno instead of a bare "Error writing
+        // settings!". itemConfig->filename is the per-game write target (e.g. mmceN:/CFG/<id>.cfg) and
+        // gDiag.lastSaveErrno was latched inside configWrite at the real failure site -- together they
+        // distinguish a genuine mmceman write/close failure (nonzero errno: EIO/ENOSPC/ENOENT/EROFS)
+        // from our strict close check tripping on a write that actually landed (errno 0). Matches the
+        // diagnostic the global saveConfig failure already prints.
+        setErrorMessagePathCode(_STR_ERROR_SAVING_SETTINGS_TO, itemConfig ? itemConfig->filename : "", gDiag.lastSaveErrno);
 }
 
 static void _menuRequestConfig()
@@ -428,10 +438,12 @@ config_set_t *gameMenuLoadConfig(struct UIItem *ui)
     return itemConfig;
 }
 
-void menuSaveConfig()
+int menuSaveConfig()
 {
     actionStatus = 1;
+    menuSaveResult = 0;
     guiHandleDeferedIO(&actionStatus, _l(_STR_SAVING_SETTINGS), IO_CUSTOM_SIMPLEACTION, &_menuSaveConfig, OPL_DEFERRED_IO_TIMEOUT_MS);
+    return menuSaveResult;
 }
 
 static void menuInitMainMenu(void)
@@ -1640,9 +1652,15 @@ void menuHandleInputGameMenu()
         } else if (menuID == GAME_SAVE_CHANGES) {
             if (guiGameSaveConfig(itemConfig, selected_item->item->userdata))
                 configSetInt(itemConfig, CONFIG_ITEM_CONFIGSOURCE, CONFIG_SOURCE_USER);
-            menuSaveConfig();
-            saveConfig(CONFIG_GAME, 0);
-            guiMsgBox(_l(_STR_GAME_SETTINGS_SAVED), 0, NULL);
+            int okItem = menuSaveConfig();           // per-game CFG/<id>.cfg (itemConfig)
+            int okGame = saveConfig(CONFIG_GAME, 0); // the global game config set
+            // #245: claim "saved" only when BOTH writes actually persisted. The modal used to be
+            // UNCONDITIONAL, so a failed mmceN: write showed "Game settings saved" IMMEDIATELY
+            // followed by the async "error writing settings!" toast -- the exact contradiction Andrew
+            // reported. On failure the error toast (raised in _menuSaveConfig / saveConfig, now with
+            // the path + errno) already explains why; don't also lie that it saved.
+            if (okItem && okGame)
+                guiMsgBox(_l(_STR_GAME_SETTINGS_SAVED), 0, NULL);
             guiGameLoadConfig(selected_item->item->userdata, gameMenuLoadConfig(NULL));
         } else if (menuID == GAME_TEST_CHANGES) {
             guiGameTestSettings(selected_item->item->current->item.id, selected_item->item->userdata, itemConfig);
