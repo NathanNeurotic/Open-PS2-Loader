@@ -24,6 +24,8 @@
 #include "include/gui.h"         // guiWarning (passing toast on a failed launch-path BDMA equip)
 #include "include/lang.h"        // _l + _STR_BDMA_ERR_* (same texts the Settings-screen equip shows)
 #include "include/textures.h"    // texDiscoverLoad + ERR_BAD_FILE (VCD POPS cover fallback)
+#include "include/bdma_embed.h"  // embedded BDMAssault variant pairs (gzipped; PROVENANCE.md)
+#include <zlib.h>                // inflate for the embedded pairs (already linked via libpng)
 #include "include/vcdsupport.h"
 
 int vcdExtractGameId(const char *name, char *idOut, int idSize)
@@ -735,6 +737,98 @@ int vcdReadBdmaMode(void)
     return VCD_BDMA_FAT32;
 }
 
+// Embedded BDMAssault pair table, indexed by VCD_BDMA_* mode. usbexfat and mx4sio share ONE usbd
+// blob (byte-identical upstream, deduped -- see modules/bdmassault/PROVENANCE.md). FAT32 row NULL.
+typedef struct
+{
+    const void *usbdGz;
+    const int *usbdGzLen;
+    const void *hdfsdGz;
+    const int *hdfsdGzLen;
+} bdma_embedded_pair_t;
+
+static const bdma_embedded_pair_t vcdBdmaEmbedded[VCD_BDMA_MODE_COUNT] = {
+    {NULL, NULL, NULL, NULL},                                                                     // FAT32: POPStarter built-in driver
+    {bdma_usbd_usb_gz, &size_bdma_usbd_usb_gz, bdma_usbhdfsd_usbexfat_gz, &size_bdma_usbhdfsd_usbexfat_gz}, // usbexfat
+    {bdma_usbd_usb_gz, &size_bdma_usbd_usb_gz, bdma_usbhdfsd_mx4sio_gz, &size_bdma_usbhdfsd_mx4sio_gz},     // mx4sio (shared usbd)
+    {bdma_usbd_mmce_gz, &size_bdma_usbd_mmce_gz, bdma_usbhdfsd_mmce_gz, &size_bdma_usbhdfsd_mmce_gz},       // mmce
+    {bdma_usbd_ata_gz, &size_bdma_usbd_ata_gz, bdma_usbhdfsd_ata_gz, &size_bdma_usbhdfsd_ata_gz},           // ata
+};
+
+// Inflate one gzipped embedded blob. Raw size comes from the gzip ISIZE footer (last 4 bytes, LE),
+// sanity-capped at 256 KiB (largest real pair member is ~48.5 KiB). Caller frees *out on success.
+static int vcdInflateGzip(const unsigned char *gz, unsigned int gzLen, unsigned char **out, unsigned int *outLen)
+{
+    if (gz == NULL || gzLen < 18 || out == NULL || outLen == NULL)
+        return -1;
+    unsigned int rawLen = (unsigned int)gz[gzLen - 4] | ((unsigned int)gz[gzLen - 3] << 8) |
+                          ((unsigned int)gz[gzLen - 2] << 16) | ((unsigned int)gz[gzLen - 1] << 24);
+    if (rawLen == 0 || rawLen > 256 * 1024)
+        return -1;
+    unsigned char *buf = (unsigned char *)malloc(rawLen);
+    if (buf == NULL)
+        return -1;
+    z_stream z;
+    memset(&z, 0, sizeof(z));
+    if (inflateInit2(&z, 15 + 16) != Z_OK) { // 15+16 = expect a gzip wrapper
+        free(buf);
+        return -1;
+    }
+    z.next_in = (Bytef *)gz;
+    z.avail_in = gzLen;
+    z.next_out = buf;
+    z.avail_out = rawLen;
+    int zr = inflate(&z, Z_FINISH);
+    unsigned int got = (unsigned int)z.total_out;
+    inflateEnd(&z);
+    if (zr != Z_STREAM_END || got != rawLen) {
+        free(buf);
+        return -1;
+    }
+    *out = buf;
+    *outLen = rawLen;
+    return 0;
+}
+
+// Write a memory buffer to path (O_CREAT|O_TRUNC). Removes the partial file on any failure --
+// same contract as vcdSafeCopyFile, for the private staging names only.
+static int vcdWriteBufFile(const char *path, const unsigned char *buf, unsigned int len)
+{
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd < 0)
+        return -3;
+    int wr = write(fd, buf, len);
+    int cr = close(fd);
+    if (wr != (int)len || cr < 0) {
+        unlink(path);
+        return -3;
+    }
+    return 0;
+}
+
+// Unpack the embedded pair for `mode` into the two staging paths, SEQUENTIALLY (one blob inflated at
+// a time caps the transient heap at ~48.5 KiB + zlib state). Any failure leaves no partial staging
+// file behind (vcdWriteBufFile removes its own partials; the caller unlinks both names regardless).
+static int vcdStageEmbeddedPair(int mode, const char *tmp0, const char *tmp1)
+{
+    if (mode <= VCD_BDMA_FAT32 || mode >= VCD_BDMA_MODE_COUNT || vcdBdmaEmbedded[mode].usbdGz == NULL)
+        return -1;
+    unsigned char *buf = NULL;
+    unsigned int len = 0;
+    if (vcdInflateGzip((const unsigned char *)vcdBdmaEmbedded[mode].usbdGz, (unsigned int)*vcdBdmaEmbedded[mode].usbdGzLen, &buf, &len) != 0)
+        return -1;
+    int r = vcdWriteBufFile(tmp0, buf, len);
+    free(buf);
+    if (r != 0)
+        return r;
+    buf = NULL;
+    if (vcdInflateGzip((const unsigned char *)vcdBdmaEmbedded[mode].hdfsdGz, (unsigned int)*vcdBdmaEmbedded[mode].hdfsdGzLen, &buf, &len) != 0)
+        return -1;
+    r = vcdWriteBufFile(tmp1, buf, len);
+    free(buf);
+    return r;
+}
+
 int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
 {
     if (diag != NULL && diagSize > 0)
@@ -881,17 +975,17 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         found = 1;
         break;
     }
+    // EMBEDDED FINAL FALLBACK (maintainer directive 2026-07-21, POPSLoader parity: "modules embedded
+    // in the elf, pasted according to the VCD device"): when NO seek-path device carries the pair --
+    // the common case on an MC boot, where nothing has a POPS folder -- unpack the gzipped
+    // BDMAssault pair vendored in modules/bdmassault (PROVENANCE.md there). The seek order above is
+    // unchanged, so user-supplied newer files still WIN; embedded only fills the void that used to be
+    // a hard -4 "source files absent" failure.
+    int useEmbedded = 0;
     if (!found) {
-        LOG("[BDMA] %s.%s + %s.%s not found; source device root: %s\n",
-            vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, nc ? cands[0] : "(no matching device)");
-        if (diag != NULL && diagSize > 0) {
-            if (nc == 0)
-                snprintf(diag, diagSize, "No device matching the selected BDMA source is connected.");
-            else
-                snprintf(diag, diagSize, "Source device %s has no %s.%s + %s.%s in its POPS folder.",
-                         cands[0], vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix);
-        }
-        return -4; // the matched SOURCE device had no variant files in its POPS/ (or none matched)
+        LOG("[BDMA] %s.%s + %s.%s not found on any seek-path device (%s) -- using the embedded pair\n",
+            vcdBdmaModule[0], suffix, vcdBdmaModule[1], suffix, nc ? cands[0] : "no matching device");
+        useEmbedded = 1;
     }
 
     // Stage BOTH replacements before touching either live module. vcdSafeCopyFile removes a partial
@@ -904,13 +998,25 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     unlink(tmp0);
     unlink(tmp1);
 
-    int r = vcdSafeCopyFile(src0, tmp0);
-    if (r == 0)
-        r = vcdSafeCopyFile(src1, tmp1);
-    if (r != 0) {
-        unlink(tmp0);
-        unlink(tmp1);
-        return r;
+    int r;
+    if (useEmbedded) {
+        r = vcdStageEmbeddedPair(mode, tmp0, tmp1);
+        if (r != 0) {
+            unlink(tmp0);
+            unlink(tmp1);
+            if (diag != NULL && diagSize > 0)
+                snprintf(diag, diagSize, "No %s BDMA files on any device, and the built-in pair failed to unpack.", suffix);
+            return -4;
+        }
+    } else {
+        r = vcdSafeCopyFile(src0, tmp0);
+        if (r == 0)
+            r = vcdSafeCopyFile(src1, tmp1);
+        if (r != 0) {
+            unlink(tmp0);
+            unlink(tmp1);
+            return r;
+        }
     }
 
     // Commit by COPY, not rename(): this dir is always on mc0:/mc1:, and the stock mcman.irx OPL embeds
@@ -992,8 +1098,15 @@ void vcdEnsureBdmaForLaunch(int source, int mode)
         return; // FAT32 / invalid -> POPSTARTER's built-in driver, nothing to equip
     if (vcdReadBdmaMode() == mode)
         return; // the matching variant is already on the card
-    if (vcdBdmaManualPairPresent())
-        return; // no marker but a full pair on the card -- manually managed; dumb 1.0.1-style handoff
+    if (vcdBdmaManualPairPresent()) {
+        // No marker but a full pair on the card = manually managed; dumb 1.0.1-style handoff. LOG it
+        // loudly (HW batch follow-up: this skip silently ate an expected ATA equip on a card left
+        // over from manual testing) -- a Settings-screen equip writes the marker once and restores
+        // auto-correction; deleting the stray pair does the same.
+        LOG("[BDMA] unmarked manual pair on the card -- NOT equipping the %s variant (Settings equip once to take over)\n",
+            vcdBdmaSuffix[mode]);
+        return;
+    }
 
     int er = vcdEquipBdma(source, mode, diag, sizeof(diag));
     if (er == 0)
