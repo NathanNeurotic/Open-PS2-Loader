@@ -1005,3 +1005,5 @@ gui_strings:
   string: Could not write settings to %s (error %d)
 - label: SETTINGS_NO_HOME
   string: No memory card found -- settings cannot be saved. OPL was booted from a network device, whose settings must live on a local card.
+- label: MMCE_GAMEID_UNSETTLED
+  string: MMCE card switch not confirmed -- launching anyway

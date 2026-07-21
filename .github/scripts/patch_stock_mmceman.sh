@@ -53,6 +53,16 @@ git -C "$WORK/mmceman" checkout --quiet "$MMCE_STOCK_PIN"
 echo "== Applying mmceman fd-leak fix (mmce_fs_close/dclose slot free-on-failure, v2.1.1 context) =="
 git -C "$WORK/mmceman" apply --verbose "$FS_LEAK_PATCH"
 
+# Distinct-errno fix (HW batch S3) -- see install_coherent_mmce.sh for the full rationale. The open
+# tail is identical across pins, so the SAME patch content applies here (validated at v2.1.1).
+FS_ENOENT_PATCH="$SCRIPT_DIR/../patches/mmceman-fs-open-enoent.patch"
+if [ ! -f "$FS_ENOENT_PATCH" ]; then
+    echo "ERROR: expected mmceman open-ENOENT patch not found at $FS_ENOENT_PATCH" >&2
+    exit 1
+fi
+echo "== Applying mmceman open-ENOENT fix (distinct errno for genuine not-found) =="
+git -C "$WORK/mmceman" apply --verbose "$FS_ENOENT_PATCH"
+
 # Older-SDK make quirk: pre-create the per-module obj dir (see install_coherent_mmce.sh).
 mkdir -p "$WORK/mmceman/mmceman/obj"
 

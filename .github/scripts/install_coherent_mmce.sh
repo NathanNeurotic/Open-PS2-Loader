@@ -57,6 +57,20 @@ fi
 echo "== Applying mmceman fd-leak fix (mmce_fs_close/dclose slot free-on-failure) =="
 git -C "$WORK/mmceman" apply --verbose "$FS_LEAK_PATCH"
 
+# Distinct-errno fix (HW batch S3): mmce_fs_open returned one bare -1 for six different failures --
+# only the card's explicit "no such file" reply actually means the file is absent. OPL memoizes
+# missing art per-session, so a contended-bus transient used to brand every browsed game's art
+# "nonexistent" until reboot. This patch makes ONLY the card's bad-fd reply return -ENOENT; the
+# transient paths stay -1, and OPL's classifier (textures.c) memoizes only on ENOENT. Same patch
+# content applies at both pins (the open tail is identical); fail LOUD if it stops applying.
+FS_ENOENT_PATCH="$SCRIPT_DIR/../patches/mmceman-fs-open-enoent.patch"
+if [ ! -f "$FS_ENOENT_PATCH" ]; then
+    echo "ERROR: expected mmceman open-ENOENT patch not found at $FS_ENOENT_PATCH" >&2
+    exit 1
+fi
+echo "== Applying mmceman open-ENOENT fix (distinct errno for genuine not-found) =="
+git -C "$WORK/mmceman" apply --verbose "$FS_ENOENT_PATCH"
+
 # Older-SDK make quirk: the per-module obj dir isn't auto-created by every Makefile.iopglobal
 # vintage -- pre-create it so the first compile step doesn't fail on a missing directory.
 mkdir -p "$WORK/mmceman/mmceman/obj"

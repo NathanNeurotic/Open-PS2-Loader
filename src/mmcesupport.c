@@ -26,6 +26,13 @@
 static char mmcePrefix[40]; // Contains the full path to the folder where all the games are.
 static char mmceArtPrimary[40];
 static int mmceULSizePrev = -2;
+// VCD-scan self-heal (HW batch S6): vcdFillGameList cannot tell an ABSENT POPS folder from a
+// CONTENDED one (-1 both), so ONE failed scan on a busy bus used to latch an empty VCD page under
+// NOUPDATE with no rescan for the session. Bounded retry, same shape as the ISO first-scan sentinel:
+// ~15 passes at the ~2s cadence, re-armed by a fresh L3 toggle, self-quiescing on success/expiry.
+static unsigned char mmceVcdScanFailed = 0;
+static unsigned char mmceVcdScanRetries = 0;
+#define MMCE_VCD_SCAN_RETRY_MAX 15
 static time_t mmceModifiedCDPrev;
 static time_t mmceModifiedDVDPrev;
 static int mmceGameCount = 0;
@@ -71,6 +78,7 @@ static unsigned char mmceFolderRetries = 0;
 static item_list_t mmceGameList;
 static void mmceGetDeviceRoot(char *root, size_t size);
 static int mmceModLoaded = 0; // latched by mmceLoadModules; read by mmceSendGameID's arm check
+static char mmceGameIdTarget[8] = {0}; // last device a GameID 0x8 switch was SENT to (mmceGameIdSettle polls it)
 
 int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMask)
 {
@@ -146,6 +154,10 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
     if (fileXioDevctl(mmceDevice, 0x8, (void *)startup, (strlen(startup) + 1), NULL, 0) < 0)
         return 0;
 
+    // Remember the slot this send actually targeted -- mmceGameIdSettle() (the MX4SIO pre-launch
+    // gate, batch S7) must poll the SAME device, not a guess.
+    snprintf(mmceGameIdTarget, sizeof(mmceGameIdTarget), "%s", mmceDevice);
+
     // Wait until the busy bit clears -- i.e. until the physical card has finished switching to the
     // per-game folder. This runs on the single GUI thread BEFORE deinit, so every millisecond here is a
     // frozen loading screen. POLL FIRST, sleep only if still busy: a card that switches instantly (the
@@ -160,14 +172,41 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
 
         if ((status & 1) == 0) {
             LOG("Set MMCE GameID to: %s\n", startup);
-            return 1; // card finished switching
+            return 1; // card finished switching (settle CONFIRMED)
         }
 
         DelayThread(MMCE_GAMEID_POLL_US); // still busy -> wait a short interval, then re-poll
     }
 
-    LOG("MMCE GameID switch did not signal ready within %d ms; launching anyway\n", MMCE_GAMEID_WAIT_TICKS * (MMCE_GAMEID_POLL_US / 1000));
-    return 1;
+    // Tri-state (batch S7): -1 = the 0x8 switch WAS sent but the settle was never confirmed (busy
+    // query unsupported, or the budget expired). Truthy on purpose -- the mmce-launch callers test
+    // truthiness and must still run their own settle; only the MX4SIO cross-device gate
+    // (mmceGameIdSettle) distinguishes -1 from 1, because there the un-settled switch shares SIO2
+    // with the SD enumeration the launch is about to depend on.
+    LOG("MMCE GameID switch not confirmed within budget; launching anyway\n");
+    return -1;
+}
+
+// Bounded post-GameID settle for cross-device launches that share SIO2 with the MMCE (MX4SIO, batch
+// S7: the lime-green hang is cdvdman waiting forever for the SD card to enumerate; an mmce switch
+// still in flight during the IOP reboot can starve that enumeration). Polls the exact device the
+// last send targeted: settled when presence answers AND the busy bit is clear OR unavailable --
+// requiring a readable busy bit would turn every busy-devctl-less firmware into a guaranteed full
+// stall. Returns 0 settled, -1 expired. NEVER blocks the launch -- the caller toasts and proceeds.
+int mmceGameIdSettle(int timeoutMs)
+{
+    if (mmceGameIdTarget[0] == '\0')
+        return 0;
+    for (int waited = 0; waited <= timeoutMs; waited += 200) {
+        if (fileXioDevctl(mmceGameIdTarget, 0x1, NULL, 0, NULL, 0) != -1) {
+            int busy = fileXioDevctl(mmceGameIdTarget, 0x2, NULL, 0, NULL, 0);
+            if (busy < 0 || (busy & 1) == 0)
+                return 0;
+        }
+        DelayThread(200 * 1000);
+    }
+    LOG("MMCE GameID settle NOT confirmed after %d ms\n", timeoutMs);
+    return -1;
 }
 
 static void mmceGetDeviceRoot(char *root, size_t size)
@@ -412,13 +451,24 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     }
 
     // VCD view: force a rescan once on toggle, then skip the disc heuristics while showing VCDs.
-    if (vcdConsumeDirty(itemList->mode))
+    if (vcdConsumeDirty(itemList->mode)) {
+        mmceVcdScanRetries = 0; // fresh user toggle re-arms the failed-scan retry budget
         return 1;
+    }
     // Folder browsing: descend/ascend forces one rescan (consumed before the NOUPDATE latch below).
     if (folderConsumeDirty(itemList->mode))
         return 1;
-    if (vcdViewActive(itemList->mode))
+    if (vcdViewActive(itemList->mode)) {
+        // A contended scan left the VCD page empty (S6): keep the ~2s refresh alive until a scan
+        // succeeds or the bounded budget runs out (no endless bus churn -- #246 doctrine). Also
+        // revives the manual-refresh button in the failed state.
+        if (mmceVcdScanFailed && mmceVcdScanRetries < MMCE_VCD_SCAN_RETRY_MAX) {
+            mmceVcdScanRetries++;
+            mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
+            return 1;
+        }
         return 0;
+    }
 
     if (mmceULSizePrev == -2) {
         // First scan not yet successful. If it wedges on a contended SIO2 bus, sbReadList leaves
@@ -516,6 +566,8 @@ static int mmceUpdateGameList(item_list_t *itemList)
         mmceGameCount = 0;
         mmceVcdGameCount = 0;
         mmceULSizePrev = -2; // force a fresh scan when a card returns
+        mmceVcdScanFailed = 0;
+        mmceVcdScanRetries = 0;
         return 0;
     }
 
@@ -523,8 +575,13 @@ static int mmceUpdateGameList(item_list_t *itemList)
     // can never resurrect the other view's list (see the mmceVcdGames comment at the declarations).
     if (vcdViewActive(itemList->mode)) {
         int r = vcdFillGameList(mmcePrefix, &mmceVcdGames);
-        if (r >= 0) // r < 0: transient scan failure (contended bus) -> keep the last-good VCD list
+        if (r >= 0) { // r < 0: transient scan failure (contended bus) -> keep the last-good VCD list
             mmceVcdGameCount = r;
+            mmceVcdScanFailed = 0;
+            mmceVcdScanRetries = 0;
+        } else {
+            mmceVcdScanFailed = 1; // arm mmceNeedsUpdate's bounded retry (S6)
+        }
         return mmceVcdGameCount;
     }
     sbReadList(&mmceGames, mmcePrefix, folderGetSub(itemList->mode), &mmceULSizePrev, &mmceGameCount);
@@ -828,6 +885,10 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (detectedPort < 0) {
             // Neither slot responded; abort rather than forward port -1 to the IOP.
             LOG("MMCE slot lost, aborting launch\n");
+            // Make the bail VISIBLE (HW batch S5: "does gameID and then nothing" with no message).
+            // deinit has not run yet, mmceLaunchGame is on the GUI thread, and guiWarning self-guards
+            // for autolaunch -- same pattern as the quiesce bail above.
+            guiWarning(_l(_STR_ERR_FILE_INVALID), 8);
             // Close the VMC fds opened above so a failed launch does not leak them
             // back to the menu across repeated attempts (Codex audit, Medium 2).
             if (vmc_fds[0] >= 0)
@@ -922,14 +983,24 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         return;
     }
 
+    // Poll-first: try once; on failure retry briefly. Covers a card re-mount that completes just past
+    // the settle window (the settle's Dopen probes can burn their whole budget on a recovering channel).
+    // A healthy card pays ~0 ms (first try succeeds); a dead one pays a bounded ~2 s before a VISIBLE
+    // bail -- the old path returned to the menu with only a LOG, which read on HW as "does gameID and
+    // then nothing" (batch S5).
     int iso_file = fileXioOpen(partname, 0x1, 0666);
+    for (int isoRetry = 0; iso_file < 0 && isoRetry < 10; isoRetry++) {
+        DelayThread(200 * 1000);
+        iso_file = fileXioOpen(partname, 0x1, 0666);
+    }
     if (iso_file < 0) {
-        LOG("Failed to open iso, aborting\n");
+        LOG("Failed to open iso %s (ret %d), aborting\n", partname, iso_file);
         // Same VMC-fd leak guard as the slot-lost path above (Codex audit, Medium 2).
         if (vmc_fds[0] >= 0)
             fileXioClose(vmc_fds[0]);
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
+        guiWarning(_l(_STR_ERR_FILE_INVALID), 8); // batch S5: never bail silently
         return;
     }
 
