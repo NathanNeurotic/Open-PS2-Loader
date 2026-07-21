@@ -66,7 +66,7 @@ IRX_ID(MODNAME, 2, 7);
 #define ATA_EV_COMPLETE 2
 
 static int ata_devinfo_init = 0;
-static int ata_evflg        = -1;
+static int ata_evflg = -1;
 
 // Workarounds
 static u8 ata_dvrp_workaround = 0; // Please read the comments in _start().
@@ -354,19 +354,19 @@ int _start(int argc, char *argv[])
         int i;
 
         for (i = 0; i < NUM_DEVICES; ++i) {
-            g_ata_bd[i].priv         = (void *)&atad_devinfo[i];
-            g_ata_bd[i].name         = "ata";
-            g_ata_bd[i].devNr        = i;
-            g_ata_bd[i].parNr        = 0;
-            g_ata_bd[i].parId        = 0x00;
-            g_ata_bd[i].sectorSize   = 512;
+            g_ata_bd[i].priv = (void *)&atad_devinfo[i];
+            g_ata_bd[i].name = "ata";
+            g_ata_bd[i].devNr = i;
+            g_ata_bd[i].parNr = 0;
+            g_ata_bd[i].parId = 0x00;
+            g_ata_bd[i].sectorSize = 512;
             g_ata_bd[i].sectorOffset = 0;
-            g_ata_bd[i].sectorCount  = 0;
+            g_ata_bd[i].sectorCount = 0;
 
-            g_ata_bd[i].read  = ata_bd_read;
+            g_ata_bd[i].read = ata_bd_read;
             g_ata_bd[i].write = ata_bd_write;
             g_ata_bd[i].flush = ata_bd_flush;
-            g_ata_bd[i].stop  = ata_bd_stop;
+            g_ata_bd[i].stop = ata_bd_stop;
         }
     }
 
@@ -542,17 +542,17 @@ int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector,
     /* For the SCE and SMART commands, we need to search on the subcommand
     specified in the feature register.  */
     if (command == ATA_C_SCE_SECURITY_CONTROL) {
-        cmd_table      = sec_ctrl_cmd_table;
+        cmd_table = sec_ctrl_cmd_table;
         cmd_table_size = SEC_CTRL_CMD_TABLE_SIZE;
-        searchcmd      = (u8)feature;
+        searchcmd = (u8)feature;
     } else if (command == ATA_C_SMART) {
-        cmd_table      = smart_cmd_table;
+        cmd_table = smart_cmd_table;
         cmd_table_size = SMART_CMD_TABLE_SIZE;
-        searchcmd      = (u8)feature;
+        searchcmd = (u8)feature;
     } else {
-        cmd_table      = ata_cmd_table;
+        cmd_table = ata_cmd_table;
         cmd_table_size = ATA_CMD_TABLE_SIZE;
-        searchcmd      = (u8)command;
+        searchcmd = (u8)command;
     }
 
     type = 0;
@@ -566,7 +566,7 @@ int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector,
     if (!(atad_cmd_state.type = type & 0x7F)) // Non-SONY: ignore the 48-bit LBA flag.
         return ATA_RES_ERR_CMD;
 
-    atad_cmd_state.buf      = buf;
+    atad_cmd_state.buf = buf;
     atad_cmd_state.blkcount = blkcount;
 
     /* Check that the device is ready if this the appropiate command.  */
@@ -593,7 +593,7 @@ int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector,
             break;
         case 4:
             atad_cmd_state.dir = (command != ATA_C_READ_DMA && command != ATA_C_READ_DMA_EXT);
-            using_timeout      = 1;
+            using_timeout = 1;
             break;
     }
 
@@ -629,17 +629,17 @@ int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector,
            only the latest data stored in address registers is used.  */
         ata_hwport->r_feature = (feature >> 8) & 0xff;
         ata_hwport->r_nsector = (nsector >> 8) & 0xff;
-        ata_hwport->r_sector  = (sector >> 8) & 0xff;
-        ata_hwport->r_lcyl    = (lcyl >> 8) & 0xff;
-        ata_hwport->r_hcyl    = (hcyl >> 8) & 0xff;
+        ata_hwport->r_sector = (sector >> 8) & 0xff;
+        ata_hwport->r_lcyl = (lcyl >> 8) & 0xff;
+        ata_hwport->r_hcyl = (hcyl >> 8) & 0xff;
     }
 
     ata_hwport->r_feature = feature & 0xff;
     ata_hwport->r_nsector = nsector & 0xff;
-    ata_hwport->r_sector  = sector & 0xff;
-    ata_hwport->r_lcyl    = lcyl & 0xff;
-    ata_hwport->r_hcyl    = hcyl & 0xff;
-    ata_hwport->r_select  = (select | ATA_SEL_LBA) & 0xff; // In v1.04, LBA was enabled in the sceAtaDmaTransfer function.
+    ata_hwport->r_sector = sector & 0xff;
+    ata_hwport->r_lcyl = lcyl & 0xff;
+    ata_hwport->r_hcyl = hcyl & 0xff;
+    ata_hwport->r_select = (select | ATA_SEL_LBA) & 0xff; // In v1.04, LBA was enabled in the sceAtaDmaTransfer function.
     ata_hwport->r_command = command & 0xff;
 
 #ifdef ATA_USE_DEV9
@@ -679,7 +679,7 @@ static int ata_pio_transfer(ata_cmd_state_t *cmd_state)
         buf16 = cmd_state->buf16;
         for (i = 0; i < 256; i++) {
             ata_hwport->r_data = *buf16;
-            cmd_state->buf16   = ++buf16;
+            cmd_state->buf16 = ++buf16;
         }
         if (cmd_state->type == 8) {
             u8 *buf8;
@@ -687,14 +687,14 @@ static int ata_pio_transfer(ata_cmd_state_t *cmd_state)
             buf8 = cmd_state->buf8;
             for (i = 0; i < 4; i++) {
                 ata_hwport->r_data = *buf8;
-                cmd_state->buf8    = ++buf8;
+                cmd_state->buf8 = ++buf8;
             }
         }
     } else if (type == 2) {
         /* PIO data in  */
         buf16 = cmd_state->buf16;
         for (i = 0; i < 256; i++) {
-            *buf16           = ata_hwport->r_data;
+            *buf16 = ata_hwport->r_data;
             cmd_state->buf16 = ++buf16;
         }
     }
@@ -744,7 +744,7 @@ static int ata_dma_complete(void *buf, u32 blkcount, int dir)
         dma_stat = SPD_REG16(0x38) & 0x1f;
 
     next_transfer:
-        count  = (blkcount < dma_stat) ? blkcount : dma_stat;
+        count = (blkcount < dma_stat) ? blkcount : dma_stat;
         nbytes = count * 512;
         if ((res = SpdDmaTransfer(0, buf, (nbytes << 9) | 32, dir)) < 0)
             return res;
@@ -1035,21 +1035,21 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
 
             /* Combine bits 24-31 and bits 0-7 of lba into sector.  */
             sector = ((lba >> 16) & 0xff00) | (lba & 0xff);
-            lcyl   = ((lba >> 24) & 0xff00) | ((lba >> 8) & 0xff);
-            hcyl   = ((lba >> 32) & 0xff00) | ((lba >> 16) & 0xff);
+            lcyl = ((lba >> 24) & 0xff00) | ((lba >> 8) & 0xff);
+            hcyl = ((lba >> 32) & 0xff00) | ((lba >> 16) & 0xff);
 
             /* In v1.04, LBA was enabled here.  */
-            select  = (device << 4) & 0xffff;
+            select = (device << 4) & 0xffff;
             command = (dir == 1) ? ATA_C_WRITE_DMA_EXT : ATA_C_READ_DMA_EXT;
         } else {
             /* Setup for 28-bit LBA.  */
-            len    = (nsectors > 256) ? 256 : nsectors;
+            len = (nsectors > 256) ? 256 : nsectors;
             sector = lba & 0xff;
-            lcyl   = (lba >> 8) & 0xff;
-            hcyl   = (lba >> 16) & 0xff;
+            lcyl = (lba >> 8) & 0xff;
+            hcyl = (lba >> 16) & 0xff;
 
             /* In v1.04, LBA was enabled here.  */
-            select  = ((device << 4) | ((lba >> 24) & 0xf)) & 0xffff;
+            select = ((device << 4) | ((lba >> 24) & 0xf)) & 0xffff;
             command = (dir == 1) ? ATA_C_WRITE_DMA : ATA_C_READ_DMA;
         }
 
@@ -1102,7 +1102,7 @@ static void ata_get_security_status(int device, ata_devinfo_t *devinfo, u16 *par
 int sceAtaSecuritySetPassword(int device, void *password)
 {
     ata_devinfo_t *devinfo = atad_devinfo;
-    u16 *param             = ata_param;
+    u16 *param = ata_param;
     int res;
 
     if (devinfo[device].security_status & ATA_F_SEC_ENABLED)
@@ -1123,7 +1123,7 @@ int sceAtaSecuritySetPassword(int device, void *password)
 int sceAtaSecurityUnLock(int device, void *password)
 {
     ata_devinfo_t *devinfo = atad_devinfo;
-    u16 *param             = ata_param;
+    u16 *param = ata_param;
     int res;
 
     if (!(devinfo[device].security_status & ATA_F_SEC_LOCKED))
@@ -1178,16 +1178,16 @@ static void ata_device_probe(ata_devinfo_t *devinfo)
 #endif
     u16 nsector, sector, lcyl, hcyl;
 
-    devinfo->exists     = 0;
+    devinfo->exists = 0;
     devinfo->has_packet = 2;
 
     if (ata_hwport->r_control & 0x88)
         return;
 
     nsector = ata_hwport->r_nsector & 0xff;
-    sector  = ata_hwport->r_sector & 0xff;
-    lcyl    = ata_hwport->r_lcyl & 0xff;
-    hcyl    = ata_hwport->r_hcyl & 0xff;
+    sector = ata_hwport->r_sector & 0xff;
+    lcyl = ata_hwport->r_lcyl & 0xff;
+    hcyl = ata_hwport->r_hcyl & 0xff;
     (void)ata_hwport->r_select;
 
     if ((nsector != 1) || (sector != 1))
@@ -1203,8 +1203,8 @@ static void ata_device_probe(ata_devinfo_t *devinfo)
        Not sure why this has to be done, but is present in v2.4.  */
     ata_hwport->r_lcyl = 0x55;
     ata_hwport->r_hcyl = 0xaa;
-    lcyl               = ata_hwport->r_lcyl & 0xff;
-    hcyl               = ata_hwport->r_hcyl & 0xff;
+    lcyl = ata_hwport->r_lcyl & 0xff;
+    hcyl = ata_hwport->r_hcyl & 0xff;
 
     if ((lcyl != 0x55) || (hcyl != 0xaa))
         devinfo->exists = 0;
@@ -1267,12 +1267,12 @@ static int ata_init_devices(ata_devinfo_t *devinfo)
         /* Send the IDENTIFY DEVICE command. if it doesn't succeed
            devinfo is disabled.  */
         if (!devinfo[i].has_packet) {
-            res               = ata_device_identify(i, ata_param);
+            res = ata_device_identify(i, ata_param);
             devinfo[i].exists = (res == 0);
         } else if (devinfo[i].has_packet == 1) {
             /* If it's a packet device, send the IDENTIFY PACKET
                DEVICE command.  */
-            res               = ata_device_pkt_identify(i, ata_param);
+            res = ata_device_pkt_identify(i, ata_param);
             devinfo[i].exists = (res == 0);
         }
         /* Otherwise, do nothing if has_packet = 2. */
@@ -1332,7 +1332,7 @@ static int ata_init_devices(ata_devinfo_t *devinfo)
             }
             devinfo[i].total_sectors_lba48 = total_sectors_lba48;
         } else {
-            devinfo[i].total_sectors       = total_sectors_nonlba48;
+            devinfo[i].total_sectors = total_sectors_nonlba48;
             devinfo[i].total_sectors_lba48 = total_sectors_nonlba48;
         }
 
@@ -1381,7 +1381,7 @@ static void ata_set_dir(int dir)
     u16 val;
 
     SPD_REG16(0x38) = 3;
-    val             = SPD_REG16(SPD_R_IF_CTRL) & 1;
+    val = SPD_REG16(SPD_R_IF_CTRL) & 1;
     val |= (dir == ATA_DIR_WRITE) ? 0x4c : 0x4e;
     SPD_REG16(SPD_R_IF_CTRL) = val;
 #ifdef ATA_GAMESTAR_WORKAROUND
@@ -1440,7 +1440,7 @@ static void ata_multiword_dma_mode(int mode)
     }
 
     SPD_REG16(SPD_R_MWDMA_MODE) = val;
-    SPD_REG16(SPD_R_IF_CTRL)    = (SPD_REG16(SPD_R_IF_CTRL) & 0xfffe) | 0x48;
+    SPD_REG16(SPD_R_IF_CTRL) = (SPD_REG16(SPD_R_IF_CTRL) & 0xfffe) | 0x48;
 }
 #endif
 
@@ -1478,7 +1478,7 @@ static void aif_tune_drive(int unit, int mode)
     unsigned int use_iordy, value;
 
     use_iordy = 1;
-    value     = (use_iordy << 3) | mode;
+    value = (use_iordy << 3) | mode;
     M_PRINTF("AIF HDD: tune unit%d, mode=%u\n", unit, value);
 
     switch (unit) {
