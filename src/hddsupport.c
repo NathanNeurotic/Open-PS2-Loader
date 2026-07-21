@@ -35,6 +35,10 @@ static unsigned char hddHDProKitDetected = 0;
 static unsigned char hddModulesLoadCount = 0;
 static unsigned char hddModulesLoaded = 0;
 static unsigned char hddSupportModulesLoaded = 0;
+// One toast per failure streak: hddUpdateGameList now RETRIES the support-module load every refresh
+// while it keeps failing, and re-toasting the same error box each pass would bury the UI. Reset on
+// success so a later, different failure toasts again.
+static unsigned char hddSupportErrToasted = 0;
 
 static char *hddPrefix = "pfs0:";
 static hdl_games_list_t hddGames;
@@ -331,8 +335,12 @@ void hddLoadSupportModules(void)
         // just looks like a dead drive for the whole session. Surface it. The 1 (genuine MBR/GPT/exFAT)
         // branch stays silent on purpose -- that is the NORMAL coexistence case for BDM-HDD users and
         // must not toast at every boot.
-        if (nonSony < 0)
+        if (nonSony < 0 && !hddSupportErrToasted) {
             setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
+            hddSupportErrToasted = 1;
+        } else if (nonSony > 0) {
+            hddSupportErrToasted = 0; // probe SUCCEEDED (genuine MBR/GPT) -- a future failure is new news
+        }
         return;
     }
 
@@ -341,14 +349,20 @@ void hddLoadSupportModules(void)
         int ret = sysLoadModuleBuffer(&ps2hdd_irx, size_ps2hdd_irx, sizeof(hddarg), hddarg);
         if (ret < 0) {
             LOG("HDD: No HardDisk Drive detected.\n");
-            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_MODULE_HDD_FAILURE);
+            if (!hddSupportErrToasted) {
+                setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_MODULE_HDD_FAILURE);
+                hddSupportErrToasted = 1;
+            }
             return;
         }
 
         // Check if a HDD unit is connected
         if (hddCheck() < 0) {
             LOG("HDD: No HardDisk Drive detected.\n");
-            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
+            if (!hddSupportErrToasted) {
+                setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
+                hddSupportErrToasted = 1;
+            }
             return;
         }
 
@@ -356,11 +370,15 @@ void hddLoadSupportModules(void)
         ret = sysLoadModuleBuffer(&ps2fs_irx, size_ps2fs_irx, sizeof(pfsarg), pfsarg);
         if (ret < 0) {
             LOG("HDD: HardDisk Drive not formatted (PFS).\n");
-            setErrorMessageWithCode(_STR_HDD_NOT_FORMATTED_ERROR, ERROR_HDD_MODULE_PFS_FAILURE);
+            if (!hddSupportErrToasted) {
+                setErrorMessageWithCode(_STR_HDD_NOT_FORMATTED_ERROR, ERROR_HDD_MODULE_PFS_FAILURE);
+                hddSupportErrToasted = 1;
+            }
             return;
         }
 
         hddSupportModulesLoaded = 1;
+        hddSupportErrToasted = 0; // recovered -- a future, different failure gets its own toast
         LOG("HDDSUPPORT modules loaded\n");
 
         if (gOPLPart[0] == '\0')
@@ -566,6 +584,20 @@ static int hddNeedsUpdate(item_list_t *itemList)
 
 static int hddUpdateGameList(item_list_t *itemList)
 {
+    // Self-heal (wLaunchELF-R3Z3N parity: latch only on success, retry per use): a boot-time first
+    // touch that raced drive spin-up used to leave the APA page EMPTY for the whole session -- the
+    // one-shot hddInitModules never retried, and nothing else reloads the support stack. Both calls
+    // are idempotent (hddLoadModules dedupes via ALREADYLOADED and its failed count is retryable
+    // post-#241; hddLoadSupportModules no-ops once hddSupportModulesLoaded), so tab entry / refresh
+    // becomes a real second attempt. Runs on the IO worker like the original init.
+    if (!hddSupportModulesLoaded) {
+        // Only chase the support stack when the base modules are actually resident -- calling it
+        // anyway made a failed base load toast TWICE (base failure + the doomed non-Sony probe's)
+        // on the first pass (Gemini + CodeRabbit review of #249, vetted).
+        if (hddLoadModulesReady())
+            hddLoadSupportModules();
+    }
+
     if (vcdViewActive(itemList->mode))
         // Reuse the session's built list on view flips; hddBuildVcdGameList runs only when never
         // built, invalidated (first-disc-only change), or freed by teardown (hddFreeVcdGameList).
