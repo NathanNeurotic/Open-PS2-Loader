@@ -556,7 +556,7 @@ static void texReadPixels32Row(GSTEXTURE *texture, png_bytep rowData, int row)
     }
 }
 
-static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr,
+static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr, int passes,
                        void (*texPngReadRow)(GSTEXTURE *texture, png_bytep rowData, int row))
 {
     int rowBytes = png_get_rowbytes(pngPtr, infoPtr);
@@ -570,6 +570,34 @@ static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr
                           // matches the rowBuffer-OOM path just below
         LOG("TEXTURES PngReadData: Failed to allocate %d bytes\n", size);
         return ERR_FILE_IO; // OOM mid-decode: the file EXISTS, this is transient -- don't memoize as absent
+    }
+
+    if (passes > 1) {
+        // Adam7-interlaced: libpng's pass merge ("sparkle" mode) revisits every row on each of the 7
+        // passes, so all rows must stay resident -- buffer the whole raw image, let libpng merge into
+        // it, then convert row-by-row. Transient rowBytes*Height (~188 KB for a 184x256 cover), freed
+        // before return; the common non-interlaced case keeps the single-row streaming loop below.
+        png_bytep raw = malloc((size_t)rowBytes * texture->Height);
+        if (!raw) {
+            texFree(texture);
+            LOG("TEXTURES PngReadData: Failed to allocate interlaced buffer (%d x %d)\n", rowBytes, texture->Height);
+            return ERR_FILE_IO; // OOM mid-decode (see above)
+        }
+        for (int pass = 0; pass < passes; pass++) {
+            for (int row = 0; row < texture->Height; row++) {
+                if (texLoadAbortRequested()) {
+                    free(raw);
+                    texFree(texture);
+                    return ERR_LOAD_ABORTED;
+                }
+                png_read_row(pngPtr, raw + (size_t)row * rowBytes, NULL);
+            }
+        }
+        for (int row = 0; row < texture->Height; row++)
+            texPngReadRow(texture, raw + (size_t)row * rowBytes, row);
+        free(raw);
+        png_read_end(pngPtr, NULL);
+        return 0;
     }
 
     rowBuffer = malloc(rowBytes);
@@ -700,6 +728,15 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
     if (colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
         png_set_gray_to_rgb(pngPtr);
 
+    // Adam7-interlaced PNGs: libpng must be told to MERGE the seven progressive passes, and that merge
+    // needs every row resident across passes -- the single-row streaming loop in texReadData cannot do
+    // it. Register the handling here (libpng requires it BEFORE png_read_update_info) and hand the pass
+    // count to texReadData, which buffers the whole image when passes > 1. Without this the seven
+    // passes decode as sequential rows: the cover renders as a stack of smaller-to-bigger copies of
+    // itself (maintainer HW report, 2026-07-21) -- a regression vs upstream's whole-image
+    // png_read_image, introduced with the streamed row decode.
+    int pngPasses = png_set_interlace_handling(pngPtr);
+
     png_set_filler(pngPtr, 0xff, PNG_FILLER_AFTER);
     png_read_update_info(pngPtr, infoPtr);
 
@@ -750,7 +787,7 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
         return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_BAD_DIMENSION);
     }
 
-    result = texReadData(texture, pngPtr, infoPtr, texPngReadRow);
+    result = texReadData(texture, pngPtr, infoPtr, pngPasses, texPngReadRow);
     return texEnd(pngPtr, infoPtr, pFileBuffer, fd, result);
 }
 
