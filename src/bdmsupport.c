@@ -908,8 +908,14 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         goto fail;
 
     // MMCE cross-device game-id (#261) with the Δ3 -mc-covered-slot guard. Before deinit (uses game).
-    mmceSendGameID(game->startup, neutrinoPath,
-                   (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0));
+    // Same MX4SIO settle gate as the native leg below (CodeRabbit review of #248, vetted): a switch
+    // still in flight through the IOP reboot can starve the SD enumeration on the shared SIO2.
+    if (mmceSendGameID(game->startup, neutrinoPath,
+                       (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)) < 0 &&
+        bdmDriverIsMx4sio(bdmCurrentDriver)) {
+        if (mmceGameIdSettle(5000) < 0)
+            guiWarning(_l(_STR_MMCE_GAMEID_UNSETTLED), 6);
+    }
 
     // game->startup lives inside bdmGames / gAutoLaunchBDMGame, both freed below (deinitEx's
     // itemCleanUp, or the explicit free in the autolaunch branch). Copy it before the teardown so

@@ -84,6 +84,8 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
 {
     char mmceDevice[sizeof(mmcePrefix)];
 
+    mmceGameIdTarget[0] = '\0'; // no stale target: only a send made by THIS call may be settled against
+
     if (!gMMCEEnableGameID || startup == NULL || startup[0] == '\0')
         return 0;
 
@@ -421,6 +423,11 @@ static int mmceNeedsUpdate(item_list_t *itemList)
         mmceGameList.updateDelay = MMCE_MODE_UPDATE_DELAY;
         mmceFoldersCreatedFor[0] = '\0'; // card gone: recreate folders on the next (possibly different) card
         mmceFolderRetries = 0;
+        // Card gone with an EMPTY failed VCD list never reaches mmceUpdateGameList's resets (this
+        // early return fires first), so a reinserted card would inherit an exhausted retry budget
+        // and a dead VCD page (CodeRabbit review of #248, vetted). Fresh card = fresh budget.
+        mmceVcdScanFailed = 0;
+        mmceVcdScanRetries = 0;
         // Card gone: re-arm THM/LNG registration so a swapped-in card's assets get discovered
         // (Gemini review of #153). The old card's already-registered entries stay in the pickers --
         // eviction infrastructure doesn't exist -- but picking a stale one fails gracefully

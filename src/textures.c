@@ -3,6 +3,7 @@
 #include "include/textures.h"
 #include "include/util.h"
 #include "include/ioman.h"
+#include <errno.h> // errno/ENOENT in the mmce staging-arm open classifier (transitively via opl.h, but be explicit)
 #include <kernel.h>
 #include <png.h>
 
