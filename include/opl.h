@@ -217,7 +217,6 @@ extern int gOSDLanguageSource;
 
 extern int showCfgPopup;
 extern int showNetDhcpPopup;      // boot toast: UDP transport selected while IP Type = DHCP (needs static IP)
-extern int showHddReconcilePopup; // boot toast: APA + exFAT(BDM) HDD were both enabled -- one was auto-disabled (#154)
 
 #ifdef IGS
 #define IGS_VERSION "0.1"

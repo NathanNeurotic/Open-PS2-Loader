@@ -195,8 +195,7 @@ int gFadeDelay;
 int toggleSfx;
 int showCfgPopup;
 // Boot toast (rendered by guiShowNotifications alongside showCfgPopup):
-int showNetDhcpPopup;      // a UDP transport is selected but IP Type is DHCP -- ministack needs a static IP
-int showHddReconcilePopup; // APA + exFAT(BDM) HDD were both enabled -- one was auto-disabled at load (#154)
+int showNetDhcpPopup; // a UDP transport is selected but IP Type is DHCP -- ministack needs a static IP
 #ifdef PADEMU
 int gEnablePadEmu;
 int gPadEmuSettings;
@@ -1704,26 +1703,14 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, &gEnableILK);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, &gEnableBdmHDD);
-            // #120 audit F-12: APA (gHDDStartMode) and BDM-ATA (gEnableBdmHDD) are mutually exclusive by
-            // design, but the Device-Settings interlock only guards values changed THROUGH the dialog. A
-            // legacy, hand-edited or cross-version config can load both, and then BOTH internal-HDD
-            // stacks initialize against the one drive. Normalize at load: the backend matching the boot
-            // device wins; otherwise the APA start mode (the older, more deliberate setting) is kept.
-            // configSetInt the loser so the next save persists the reconciled pair.
-            if (gEnableBdmHDD && gHDDStartMode != START_MODE_DISABLED) {
-                if (gBootDirBdmType == BDM_TYPE_ATA)
-                    gHDDStartMode = START_MODE_DISABLED;
-                else
-                    gEnableBdmHDD = 0;
-                configSetInt(configOPL, CONFIG_OPL_HDD_MODE, gHDDStartMode);
-                configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
-                // #154 forensics: this reconciliation was SILENT -- a user whose internal-exFAT (or
-                // APA) page vanished after a hand-edit/cross-version config had no clue why. Flag it
-                // for the notification popup (same pattern as showNetDhcpPopup): the render site
-                // resolves _l() per frame, so the message localizes correctly even though the
-                // language pack loads AFTER this point (applyConfig at the end of _loadConfig).
-                showHddReconcilePopup = 1;
-            }
+            // APA (gHDDStartMode) and BDM-ATA (gEnableBdmHDD) COEXIST -- maintainer directive
+            // 2026-07-21, overruling the old #120-audit F-12 exclusivity that force-disabled one here.
+            // There is no driver conflict to arbitrate: OPL's "ps2atad" is the SDK's ata_bd build,
+            // which registers the drive with BDM while exporting the atad library ps2hdd links
+            // against -- one shared stack serves both, the same approach wLaunchELF-R3Z3N, NHDDL and
+            // POPSLoader ship. Per-DRIVE arbitration stays where it belongs:
+            // hddDetectNonSonyFileSystem() keeps APA off an MBR/GPT/exFAT drive (corruption guard),
+            // and BDM only publishes massN: where a FAT/exFAT partition actually exists.
             int udpbdKeyPresent = configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
             configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
             // Unified network-protocol selector (single SMAP NIC -> at most one transport per session).
@@ -1815,12 +1802,9 @@ static void _loadConfig()
         if (gBootDirBdmType == BDM_TYPE_ATA && !gEnableBdmHDD) {
             gEnableBdmHDD = 1;
             configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
-            // #120 audit F-12: don't leave a loaded APA start mode fighting the just-enabled BDM-ATA
-            // backend (the drive we booted from is exFAT, so APA is definitionally wrong for it).
-            if (gHDDStartMode != START_MODE_DISABLED) {
-                gHDDStartMode = START_MODE_DISABLED;
-                configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_HDD_MODE, gHDDStartMode);
-            }
+            // A loaded APA start mode is left ALONE (coexistence directive 2026-07-21): a second,
+            // APA-formatted drive is a real setup, and on this single exFAT boot drive the
+            // hddDetectNonSonyFileSystem guard makes the APA leg a harmless no-op anyway.
         }
     }
 
