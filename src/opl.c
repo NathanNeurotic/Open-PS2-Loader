@@ -1136,6 +1136,16 @@ void setErrorMessage(int strId)
     guiSetFrameHook(&errorMessageHook);
 }
 
+// Two-argument (path + errno) variant, for a write failure that wants to name WHERE and WHY. The
+// per-game save path (#245) uses it to surface the config target and gDiag.lastSaveErrno, matching
+// the diagnostic the global saveConfig failure already prints -- so a failed mmceN:/CFG write reports
+// the errno on screen instead of a bare "Error writing settings!".
+void setErrorMessagePathCode(int strId, const char *path, int error)
+{
+    snprintf(errorMessage, sizeof(errorMessage), _l(strId), path, error);
+    guiSetFrameHook(&errorMessageHook);
+}
+
 // ----------------------------------------------------------
 // ------------------ Configuration handling ----------------
 // ----------------------------------------------------------
