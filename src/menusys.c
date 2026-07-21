@@ -304,8 +304,8 @@ static void _menuSaveConfig()
 
     WaitSema(menuSemaId);
     result = configWrite(itemConfig);
-    itemConfigId = -1;         // to invalidate cache and force reload
-    menuSaveResult = result;   // publish BEFORE actionStatus=0 -- that flag is the waiter's release signal
+    itemConfigId = -1;       // to invalidate cache and force reload
+    menuSaveResult = result; // publish BEFORE actionStatus=0 -- that flag is the waiter's release signal
     actionStatus = 0;
     SignalSema(menuSemaId);
 
@@ -1652,7 +1652,7 @@ void menuHandleInputGameMenu()
         } else if (menuID == GAME_SAVE_CHANGES) {
             if (guiGameSaveConfig(itemConfig, selected_item->item->userdata))
                 configSetInt(itemConfig, CONFIG_ITEM_CONFIGSOURCE, CONFIG_SOURCE_USER);
-            int okItem = menuSaveConfig();          // per-game CFG/<id>.cfg (itemConfig)
+            int okItem = menuSaveConfig();           // per-game CFG/<id>.cfg (itemConfig)
             int okGame = saveConfig(CONFIG_GAME, 0); // the global game config set
             // #245: claim "saved" only when BOTH writes actually persisted. The modal used to be
             // UNCONDITIONAL, so a failed mmceN: write showed "Game settings saved" IMMEDIATELY
