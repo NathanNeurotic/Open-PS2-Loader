@@ -62,6 +62,9 @@ extern unsigned int size_eesync_irx;
 
 #define MAX_MODULES 64
 static void *g_sysLoadedModBuffer[MAX_MODULES];
+// Deferred-loader latches (audio + launch-support one-shots below); cleared by sysReset.
+static unsigned char sysAudioModsLoaded = 0;
+static unsigned char sysLaunchModsLoaded = 0;
 static s32 sysLoadModuleLock = -1;
 
 #define ELF_MAGIC   0x464c457f
@@ -240,6 +243,10 @@ void sysReset()
 
     // clears modules list
     memset(g_sysLoadedModBuffer, 0, sizeof(g_sysLoadedModBuffer));
+    // ...and the deferred-loader latches: after an IOP reboot NOTHING is resident, so the audio and
+    // launch-support one-shots below must reload on their next call (CodeRabbit review of #252).
+    sysAudioModsLoaded = 0;
+    sysLaunchModsLoaded = 0;
 
     // load modules
     LOG("[IOMANX]:\n");
@@ -286,32 +293,34 @@ void sysReset()
     poweroffSetCallback(&poweroffHandler, NULL);
 }
 
-// Deferred halves of the old sysReset module set (see the comment there). Both are idempotent:
-// sysLoadModuleBuffer dedupes an already-resident buffer, and the one-shot guards make repeat calls
-// free. Audio pair = deferredAudioInit's first act; launch pair = deferredInit (IO worker, GUI path)
-// or the autolaunch fork (synchronous -- it skips deferredInit).
+// Deferred halves of the old sysReset module set (see the comment there). Both are idempotent
+// one-shots that latch ONLY on full success (a transient load failure stays retryable -- the exact
+// latch-on-failure class the 2026-07 atad/mmce fixes eradicated; CodeRabbit review of #252), and
+// sysReset() clears the latches so an in-process IOP reboot reloads everything. Audio pair =
+// deferredAudioInit's first act; launch pair = deferredInit (IO worker, GUI path) or the autolaunch
+// fork (synchronous -- it skips deferredInit).
 void sysLoadAudioModules(void)
 {
-    static unsigned char loaded = 0;
-    if (loaded)
+    if (sysAudioModsLoaded)
         return;
     LOG("[LIBSD]:\n");
-    sysLoadModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL);
+    int r0 = sysLoadModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL);
     LOG("[AUDSRV]:\n");
-    sysLoadModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL);
-    loaded = 1;
+    int r1 = sysLoadModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL);
+    if (r0 >= 0 && r1 >= 0)
+        sysAudioModsLoaded = 1;
 }
 
 void sysLoadLaunchModules(void)
 {
-    static unsigned char loaded = 0;
-    if (loaded)
+    if (sysLaunchModsLoaded)
         return;
     LOG("[ISOFS]:\n");
-    sysLoadModuleBuffer(&isofs_irx, size_isofs_irx, 0, NULL);
+    int r0 = sysLoadModuleBuffer(&isofs_irx, size_isofs_irx, 0, NULL);
     LOG("[GENVMC]:\n");
-    sysLoadModuleBuffer(&genvmc_irx, size_genvmc_irx, 0, NULL);
-    loaded = 1;
+    int r1 = sysLoadModuleBuffer(&genvmc_irx, size_genvmc_irx, 0, NULL);
+    if (r0 >= 0 && r1 >= 0)
+        sysLaunchModsLoaded = 1;
 }
 
 static void poweroffHandler(void *arg)
