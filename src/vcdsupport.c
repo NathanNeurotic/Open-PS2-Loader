@@ -790,25 +790,11 @@ static int vcdInflateGzip(const unsigned char *gz, unsigned int gzLen, unsigned 
     return 0;
 }
 
-// Write a memory buffer to path (O_CREAT|O_TRUNC). Removes the partial file on any failure --
-// same contract as vcdSafeCopyFile, for the private staging names only.
-static int vcdWriteBufFile(const char *path, const unsigned char *buf, unsigned int len)
-{
-    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-    if (fd < 0)
-        return -3;
-    int wr = write(fd, buf, len);
-    int cr = close(fd);
-    if (wr != (int)len || cr < 0) {
-        unlink(path);
-        return -3;
-    }
-    return 0;
-}
-
 // Unpack the embedded pair for `mode` into the two staging paths, SEQUENTIALLY (one blob inflated at
-// a time caps the transient heap at ~48.5 KiB + zlib state). Any failure leaves no partial staging
-// file behind (vcdWriteBufFile removes its own partials; the caller unlinks both names regardless).
+// a time caps the transient heap at ~48.5 KiB + zlib state). Writes go through the EXISTING
+// vcdSafeWriteFile (free-space check + partial-write cleanup -- Gemini review of #251: no redundant
+// weaker writer). Returns 0, -1 (no pair for mode / unpack failed), or vcdSafeWriteFile's -2 (card
+// full) / -3 (IO) so the caller's toast names the REAL problem.
 static int vcdStageEmbeddedPair(int mode, const char *tmp0, const char *tmp1)
 {
     if (mode <= VCD_BDMA_FAT32 || mode >= VCD_BDMA_MODE_COUNT || vcdBdmaEmbedded[mode].usbdGz == NULL)
@@ -817,14 +803,14 @@ static int vcdStageEmbeddedPair(int mode, const char *tmp0, const char *tmp1)
     unsigned int len = 0;
     if (vcdInflateGzip((const unsigned char *)vcdBdmaEmbedded[mode].usbdGz, (unsigned int)*vcdBdmaEmbedded[mode].usbdGzLen, &buf, &len) != 0)
         return -1;
-    int r = vcdWriteBufFile(tmp0, buf, len);
+    int r = vcdSafeWriteFile(tmp0, buf, (int)len);
     free(buf);
     if (r != 0)
         return r;
     buf = NULL;
     if (vcdInflateGzip((const unsigned char *)vcdBdmaEmbedded[mode].hdfsdGz, (unsigned int)*vcdBdmaEmbedded[mode].hdfsdGzLen, &buf, &len) != 0)
         return -1;
-    r = vcdWriteBufFile(tmp1, buf, len);
+    r = vcdSafeWriteFile(tmp1, buf, (int)len);
     free(buf);
     return r;
 }
@@ -1005,8 +991,10 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
             unlink(tmp0);
             unlink(tmp1);
             if (diag != NULL && diagSize > 0)
-                snprintf(diag, diagSize, "No %s BDMA files on any device, and the built-in pair failed to unpack.", suffix);
-            return -4;
+                snprintf(diag, diagSize, "No %s BDMA files on any device, and the built-in pair could not be installed.", suffix);
+            // Propagate the REAL failure class (Gemini review of #251): -2 card full / -3 IO keep
+            // their specific toasts; only "no embedded pair / unpack failed" maps to -4 (source absent).
+            return (r == -2 || r == -3) ? r : -4;
         }
     } else {
         r = vcdSafeCopyFile(src0, tmp0);

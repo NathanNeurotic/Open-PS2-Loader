@@ -108,7 +108,9 @@ enum {
     VCD_BDMA_SRC_COUNT
 };
 // Equip the chosen variant (copy from SOURCE's POPS/, or remove for FAT32) + write the marker.
-//   0 ok, -1 bad args, -2 MC too full, -3 IO error, -4 source variant files not found.
+//   0 ok, -1 bad args, -2 MC too full, -3 IO error, -4 = no source variant files on any seek-path
+//   device AND the embedded built-in pair could not be installed either (the embedded fallback makes
+//   plain "files not found" self-healing; -4 now means the fallback itself failed).
 // On -4, if diag != NULL it is filled with a human-readable summary (needed files + which source
 // devices were actually mounted) so the failure can be shown on screen / screenshotted to diagnose.
 int vcdEquipBdma(int source, int mode, char *diag, int diagSize);
