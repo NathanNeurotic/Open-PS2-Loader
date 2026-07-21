@@ -57,9 +57,12 @@ static int xhddDevctl(iop_file_t *fd, const char *name, int cmd, void *arg, unsi
             // hddDetectNonSonyFileSystem probe). sceAtaInit is a latched no-op once a probe has
             // succeeded, so a healthy path pays one call; a dead one gets a real second attempt
             // (with an atad whose init is retryable) instead of an unconditional -1 for the session.
-            if ((devinfo = sceAtaInit(fd->unit)) == NULL || !devinfo->exists)
-                if ((devinfo = sceAtaInit(fd->unit)) == NULL || !devinfo->exists)
+            devinfo = sceAtaInit(fd->unit);
+            if (devinfo == NULL || !devinfo->exists) {
+                devinfo = sceAtaInit(fd->unit); // one bounded retry
+                if (devinfo == NULL || !devinfo->exists)
                     return -ENODEV;
+            }
 
             return sceAtaDmaTransfer(fd->unit, buf, 0, buflen / 512, ATA_DIR_READ);
         }

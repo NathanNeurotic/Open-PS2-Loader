@@ -338,6 +338,8 @@ void hddLoadSupportModules(void)
         if (nonSony < 0 && !hddSupportErrToasted) {
             setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
             hddSupportErrToasted = 1;
+        } else if (nonSony > 0) {
+            hddSupportErrToasted = 0; // probe SUCCEEDED (genuine MBR/GPT) -- a future failure is new news
         }
         return;
     }
@@ -589,8 +591,11 @@ static int hddUpdateGameList(item_list_t *itemList)
     // post-#241; hddLoadSupportModules no-ops once hddSupportModulesLoaded), so tab entry / refresh
     // becomes a real second attempt. Runs on the IO worker like the original init.
     if (!hddSupportModulesLoaded) {
-        hddLoadModulesReady();
-        hddLoadSupportModules();
+        // Only chase the support stack when the base modules are actually resident -- calling it
+        // anyway made a failed base load toast TWICE (base failure + the doomed non-Sony probe's)
+        // on the first pass (Gemini + CodeRabbit review of #249, vetted).
+        if (hddLoadModulesReady())
+            hddLoadSupportModules();
     }
 
     if (vcdViewActive(itemList->mode))
