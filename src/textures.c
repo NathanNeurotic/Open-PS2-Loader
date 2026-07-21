@@ -3,6 +3,7 @@
 #include "include/textures.h"
 #include "include/util.h"
 #include "include/ioman.h"
+#include <errno.h> // errno/ENOENT in the mmce staging-arm open classifier (transitively via opl.h, but be explicit)
 #include <kernel.h>
 #include <png.h>
 
@@ -666,9 +667,23 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
         readFunction = &texReadMemBoundedFunction;
     } else if (filePath) {
         if (texShouldUseMemoryReader(filePath)) {
+            errno = 0;
             fd = open(filePath, O_RDONLY, 0);
-            if (fd < 0)
-                return ERR_BAD_FILE;
+            if (fd < 0) {
+                // Memoize as PERMANENTLY absent (ERR_BAD_FILE -> the fail-epoch memo) only on a real
+                // ENOENT. This is the MMCE staging arm, and mmceman used to return ONE bare -1 for six
+                // different open failures -- fd-pool exhausted, three packet timeouts, a garbled reply,
+                // AND the card's genuine not-found -- so a rapid-nav contention storm branded every
+                // browsed game's art "nonexistent" for the whole session (HW batch S3: art dies, never
+                // recovers). The paired mmceman patch makes the driver return -ENOENT only for the
+                // card's explicit not-found reply; every other failure lands in the EXISTING transient
+                // lane (ERR_FILE_IO, re-probed lazily once per generation) so art self-heals when the
+                // bus quiets. If the newlib glue ever maps errno unfaithfully, the degradation is a
+                // bounded once-per-generation re-probe -- never a hard failure. The generic loose-file
+                // branch below keeps its unconditional ERR_BAD_FILE (BDM/HDD semantics unchanged).
+                LOG("texLoadAll: mmce art open failed: %s (errno %d)\n", filePath, errno);
+                return (errno == ENOENT) ? ERR_BAD_FILE : ERR_FILE_IO;
+            }
 
             result = texStageExternalFileIntoMemory(fd, &pFileBuffer);
 

@@ -27,6 +27,9 @@ void mmceLaunchGame(item_list_t *itemList, int fd, config_set_t *configSet);
 // vmcSlotMask bit N = "a -mcN Neutrino VMC arg is set for this launch": that slot's MC comes from
 // the VMC FILE, so its physical card is NOT switched (pass 0 on OPL-core paths -- mcemu, unchanged).
 int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMask);
+// Bounded post-GameID settle for cross-device launches sharing SIO2 with the MMCE (MX4SIO, batch S7).
+// Polls the device the last send targeted; 0 = settled, -1 = expired. Caller warns + proceeds.
+int mmceGameIdSettle(int timeoutMs);
 // Arm the GameID transport at menu/settings time (idempotent; no-op when the feature is off).
 void mmceArmGameIDTransport(void);
 

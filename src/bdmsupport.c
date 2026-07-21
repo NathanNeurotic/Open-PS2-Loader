@@ -908,8 +908,14 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         goto fail;
 
     // MMCE cross-device game-id (#261) with the Δ3 -mc-covered-slot guard. Before deinit (uses game).
-    mmceSendGameID(game->startup, neutrinoPath,
-                   (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0));
+    // Same MX4SIO settle gate as the native leg below (CodeRabbit review of #248, vetted): a switch
+    // still in flight through the IOP reboot can starve the SD enumeration on the shared SIO2.
+    if (mmceSendGameID(game->startup, neutrinoPath,
+                       (neutrinoVmc.arg[0][0] ? 1 : 0) | (neutrinoVmc.arg[1][0] ? 2 : 0)) < 0 &&
+        bdmDriverIsMx4sio(bdmCurrentDriver)) {
+        if (mmceGameIdSettle(5000) < 0)
+            guiWarning(_l(_STR_MMCE_GAMEID_UNSETTLED), 6);
+    }
 
     // game->startup lives inside bdmGames / gAutoLaunchBDMGame, both freed below (deinitEx's
     // itemCleanUp, or the explicit free in the autolaunch branch). Copy it before the teardown so
@@ -1228,7 +1234,17 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // MMCE cross-device game-id (#261): push the disc id to a present SD2PSX/MemCard PRO2 (either slot)
     // so it switches its per-game folder, even though this game is not on the MMCE. Self-probes +
     // no-ops if no card answers / feature off. Must run BEFORE deinit frees `game`.
-    mmceSendGameID(game->startup, NULL, 0);
+    //
+    // MX4SIO settle gate (HW batch S7): MX4SIO shares SIO2 with the MMCE, and an mmce card switch
+    // still in flight during the IOP reboot can starve the SD enumeration cdvdman then waits on
+    // FOREVER (the lime-green hang -- ee_core's marker right before LoadElf from cdrom0:). When the
+    // send reports "switched but settle NOT confirmed" (-1), re-probe the exact slot it targeted for
+    // up to 5 s; on expiry, warn and LAUNCH ANYWAY (the gate mitigates, never blocks -- and other
+    // BDM transports don't share SIO2, so only the SDC leg pays it).
+    if (mmceSendGameID(game->startup, NULL, 0) < 0 && bdmDriverIsMx4sio(bdmCurrentDriver)) {
+        if (mmceGameIdSettle(5000) < 0)
+            guiWarning(_l(_STR_MMCE_GAMEID_UNSETTLED), 6);
+    }
 
     if (gAutoLaunchBDMGame == NULL) {
         deinit(NO_EXCEPTION, itemList->mode); // CAREFUL: deinit will call bdmCleanUp, so bdmGames/game will be freed
