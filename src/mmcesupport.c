@@ -451,9 +451,24 @@ static int mmceNeedsUpdate(item_list_t *itemList)
     // after the NOUPDATE latch near the top of this function.
 
     // Create the library folders once per card/slot, not on every refresh (each is an SIO2 mkdir).
+    // Only latch the "done" memo once CFG actually EXISTS on the card: sbCreateFolders' mkdir burst
+    // ignores its return, so a single mkdir dropped on a busy card would otherwise mark the tree
+    // "created" forever while CFG never got made -- and every per-game save then fails, because the
+    // config write targets <prefix>CFG/<id>.cfg (#245, AndrewBento). Leaving the memo unset here lets
+    // the ~2s refresh keep retrying until CFG is confirmed present, so a missing folder always heals
+    // itself instead of stranding saves.
     if (strcmp(mmceFoldersCreatedFor, mmcePrefix) != 0) {
         sbCreateFolders(mmcePrefix, 1);
-        snprintf(mmceFoldersCreatedFor, sizeof(mmceFoldersCreatedFor), "%s", mmcePrefix);
+
+        char cfgPath[sizeof(mmcePrefix) + 4];
+        snprintf(cfgPath, sizeof(cfgPath), "%sCFG", mmcePrefix);
+        DIR *cfgDir = opendir(cfgPath);
+        if (cfgDir != NULL) {
+            closedir(cfgDir);
+            snprintf(mmceFoldersCreatedFor, sizeof(mmceFoldersCreatedFor), "%s", mmcePrefix);
+        } else {
+            LOG("MMCE: %s not present after sbCreateFolders -- will retry next refresh\n", cfgPath);
+        }
     }
 
     return result;
