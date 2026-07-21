@@ -47,7 +47,7 @@ static int mmceResolvedDevice = -1;
 // card/slot skips the redundant burst (mirrors BDM's FoldersCreated one-shot). Reset by mmceInit and
 // on card removal (empty prefix) so a freshly inserted card still gets its folders.
 static char mmceFoldersCreatedFor[40] = {0};
-#define MMCE_FOLDER_RETRY_MAX 5           // bounded CFG-create retries per card before declaring it obstructed
+#define MMCE_FOLDER_RETRY_MAX 5 // bounded CFG-create retries per card before declaring it obstructed
 static unsigned char mmceFolderRetries = 0;
 
 // Card-switch wait: poll the MMCE busy bit every 500 ms for up to ~7.5 s, matching mmceman's own
