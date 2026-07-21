@@ -17,6 +17,9 @@ int sysGetDiscID(char *discID);
 void sysInitDev9(void);
 void sysShutdownDev9(void);
 void sysReset();
+// Deferred halves of the old sysReset module set (lazy boot, 2026-07-21). Idempotent one-shots.
+void sysLoadAudioModules(void);
+void sysLoadLaunchModules(void);
 void sysExecExit(void);
 int sysLaunchDisc(void); // boot the physical PS2 disc in the drive; <0 (stays in OPL) on failure
 void sysPowerOff(void);

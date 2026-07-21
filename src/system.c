@@ -258,14 +258,13 @@ void sysReset()
     sysLoadModuleBuffer(&poweroff_irx, size_poweroff_irx, 0, NULL);
     LOG("[USBD]:\n");
     sysLoadModuleBuffer(&usbd_irx, size_usbd_irx, 0, NULL);
-    LOG("[ISOFS]:\n");
-    sysLoadModuleBuffer(&isofs_irx, size_isofs_irx, 0, NULL);
-    LOG("[GENVMC]:\n");
-    sysLoadModuleBuffer(&genvmc_irx, size_genvmc_irx, 0, NULL);
-    LOG("[LIBSD]:\n");
-    sysLoadModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL);
-    LOG("[AUDSRV]:\n");
-    sysLoadModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL);
+    // isofs/genvmc/libsd/audsrv are NO LONGER loaded here (POPSLoader-shape lazy boot, maintainer
+    // directive 2026-07-21): they serialized four module DMAs onto the boot-critical path of EVERY
+    // flavor while nothing needs them before the menu. libsd+audsrv load in deferredAudioInit (their
+    // consumers' existing deferred seam); isofs+genvmc load via sysLoadLaunchModules() -- from
+    // deferredInit on the IO worker for the GUI path (resident long before any user launch, never AT
+    // launch per the Delta-4 no-module-loads-in-the-launch-sequence doctrine), and synchronously on
+    // the autolaunch fork which skips deferredInit entirely.
 
 #ifdef PADEMU
     int ds3pads = 1; // only one pad enabled
@@ -285,6 +284,34 @@ void sysReset()
     fileXioInit();
     poweroffInit();
     poweroffSetCallback(&poweroffHandler, NULL);
+}
+
+// Deferred halves of the old sysReset module set (see the comment there). Both are idempotent:
+// sysLoadModuleBuffer dedupes an already-resident buffer, and the one-shot guards make repeat calls
+// free. Audio pair = deferredAudioInit's first act; launch pair = deferredInit (IO worker, GUI path)
+// or the autolaunch fork (synchronous -- it skips deferredInit).
+void sysLoadAudioModules(void)
+{
+    static unsigned char loaded = 0;
+    if (loaded)
+        return;
+    LOG("[LIBSD]:\n");
+    sysLoadModuleBuffer(&libsd_irx, size_libsd_irx, 0, NULL);
+    LOG("[AUDSRV]:\n");
+    sysLoadModuleBuffer(&audsrv_irx, size_audsrv_irx, 0, NULL);
+    loaded = 1;
+}
+
+void sysLoadLaunchModules(void)
+{
+    static unsigned char loaded = 0;
+    if (loaded)
+        return;
+    LOG("[ISOFS]:\n");
+    sysLoadModuleBuffer(&isofs_irx, size_isofs_irx, 0, NULL);
+    LOG("[GENVMC]:\n");
+    sysLoadModuleBuffer(&genvmc_irx, size_genvmc_irx, 0, NULL);
+    loaded = 1;
 }
 
 static void poweroffHandler(void *arg)

@@ -3000,6 +3000,12 @@ static void deferredInit(void)
     guiSetBootStatusSticky(_l(_STR_BOOT_BUILDING_MENU)); // boot-step localizer (IO thread) -- reaching
                                                          // here means the device init chain cleared; see gui.c
 
+    // Launch-support modules (isofs + genvmc), moved OFF sysReset's boot-critical path (lazy boot,
+    // 2026-07-21). Loaded here on the IO worker: resident long before the menu becomes interactive,
+    // so no launch ever loads a module mid-sequence (Delta-4 doctrine). The autolaunch fork, which
+    // never reaches this handler, calls the same idempotent one-shot synchronously.
+    sysLoadLaunchModules();
+
     // inform GUI main init part is over
     struct gui_update_t *id = guiOpCreate(GUI_INIT_DONE);
     if (id)
@@ -3049,6 +3055,9 @@ static void deferredAudioInit(void)
     int ret;
 
     guiSetBootStatusSticky(_l(_STR_BOOT_LOADING_SOUNDS)); // boot-step localizer (IO thread) -- see gui.c
+    // libsd + audsrv, moved OFF sysReset's boot-critical path (lazy boot, 2026-07-21): this handler
+    // is their consumers' natural seam -- audioInit binds audsrv right below.
+    sysLoadAudioModules();
     audioInit();
     ret = sfxInit(1);
     if (ret < 0)
@@ -3341,6 +3350,10 @@ int main(int argc, char *argv[])
     }
 
     if (argc >= 5) {
+        // The autolaunch legs skip deferredInit (which loads these for the GUI path), and their
+        // launch prep needs isofs (ISO probing/PS2Logo) + genvmc (per-game VMC validation) resident
+        // BEFORE the launch sequence starts -- never load modules inside it (Delta-4 doctrine).
+        sysLoadLaunchModules();
         /* argv[0] boot path
            argv[1] game->startup
            argv[2] str to u32 game->start_sector
