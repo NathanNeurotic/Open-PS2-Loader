@@ -556,7 +556,8 @@ static void texReadPixels32Row(GSTEXTURE *texture, png_bytep rowData, int row)
     }
 }
 
-static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr,
+static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr, int passes,
+                       png_bytep volatile *bufSlot,
                        void (*texPngReadRow)(GSTEXTURE *texture, png_bytep rowData, int row))
 {
     int rowBytes = png_get_rowbytes(pngPtr, infoPtr);
@@ -572,15 +573,50 @@ static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr
         return ERR_FILE_IO; // OOM mid-decode: the file EXISTS, this is transient -- don't memoize as absent
     }
 
+    // Every decode buffer is mirrored into *bufSlot (the caller's setjmp-frame slot) so a
+    // png_read_row longjmp on corrupt data cannot leak it, and cleared again before local frees.
+    if (passes > 1) {
+        // Adam7-interlaced: libpng's pass merge ("sparkle" mode) revisits every row on each of the 7
+        // passes, so all rows must stay resident -- buffer the whole raw image, let libpng merge into
+        // it, then convert row-by-row. Transient rowBytes*Height (~188 KB for a 184x256 cover), freed
+        // before return; the common non-interlaced case keeps the single-row streaming loop below.
+        png_bytep raw = malloc((size_t)rowBytes * texture->Height);
+        if (!raw) {
+            texFree(texture);
+            LOG("TEXTURES PngReadData: Failed to allocate interlaced buffer (%d x %d)\n", rowBytes, texture->Height);
+            return ERR_FILE_IO; // OOM mid-decode (see above)
+        }
+        *bufSlot = raw;
+        for (int pass = 0; pass < passes; pass++) {
+            for (int row = 0; row < texture->Height; row++) {
+                if (texLoadAbortRequested()) {
+                    *bufSlot = NULL;
+                    free(raw);
+                    texFree(texture);
+                    return ERR_LOAD_ABORTED;
+                }
+                png_read_row(pngPtr, raw + (size_t)row * rowBytes, NULL);
+            }
+        }
+        for (int row = 0; row < texture->Height; row++)
+            texPngReadRow(texture, raw + (size_t)row * rowBytes, row);
+        *bufSlot = NULL;
+        free(raw);
+        png_read_end(pngPtr, NULL);
+        return 0;
+    }
+
     rowBuffer = malloc(rowBytes);
     if (!rowBuffer) {
         texFree(texture);
         LOG("TEXTURES PngReadData: Failed to allocate memory for PNG row\n");
         return ERR_FILE_IO; // OOM mid-decode (see above)
     }
+    *bufSlot = rowBuffer;
 
     for (int row = 0; row < texture->Height; row++) {
         if (texLoadAbortRequested()) {
+            *bufSlot = NULL;
             free(rowBuffer);
             texFree(texture);
             return ERR_LOAD_ABORTED;
@@ -590,6 +626,7 @@ static int texReadData(GSTEXTURE *texture, png_structp pngPtr, png_infop infoPtr
         texPngReadRow(texture, rowBuffer, row);
     }
 
+    *bufSlot = NULL;
     free(rowBuffer);
     png_read_end(pngPtr, NULL);
 
@@ -611,6 +648,13 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
     void *PngFileBufferPtr;
     void *pFileBuffer = NULL;
     void (*texPngReadRow)(GSTEXTURE * texture, png_bytep rowData, int row);
+    // The decode buffer texReadData allocates (streaming rowBuffer OR the Adam7 whole-image buffer).
+    // Owned by THIS frame so the setjmp handler can free it: png_read_row longjmps here on corrupt
+    // data, which would otherwise skip texReadData's local free and leak the buffer -- up to
+    // rowBytes*Height for an interlaced file, one leak per corrupt PNG (CodeRabbit review of #247;
+    // the streaming rowBuffer had the same pre-existing leak). volatile: written between setjmp and
+    // longjmp, read after.
+    png_bytep volatile decodeBuf = NULL;
 
     texPrepare(texture);
 
@@ -673,6 +717,8 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
         /* Always free texture->Mem / texture->Clut on any longjmp (decode error or abort).
            Capture the abort flag once to avoid a TOCTOU between the texFree and the return. */
         int aborted = texLoadAbortRequested();
+        if (decodeBuf != NULL)
+            free((void *)decodeBuf); // texReadData's in-flight decode buffer (see declaration above)
         texFree(texture);
         return texEnd(pngPtr, infoPtr, pFileBuffer, fd, aborted ? ERR_LOAD_ABORTED : ERR_SET_JMP);
     }
@@ -699,6 +745,15 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
     // below to ERR_BAD_DEPTH and fail to load (port of wOPL 8a1a583 / issue #225).
     if (colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
         png_set_gray_to_rgb(pngPtr);
+
+    // Adam7-interlaced PNGs: libpng must be told to MERGE the seven progressive passes, and that merge
+    // needs every row resident across passes -- the single-row streaming loop in texReadData cannot do
+    // it. Register the handling here (libpng requires it BEFORE png_read_update_info) and hand the pass
+    // count to texReadData, which buffers the whole image when passes > 1. Without this the seven
+    // passes decode as sequential rows: the cover renders as a stack of smaller-to-bigger copies of
+    // itself (maintainer HW report, 2026-07-21) -- a regression vs upstream's whole-image
+    // png_read_image, introduced with the streamed row decode.
+    int pngPasses = png_set_interlace_handling(pngPtr);
 
     png_set_filler(pngPtr, 0xff, PNG_FILLER_AFTER);
     png_read_update_info(pngPtr, infoPtr);
@@ -750,7 +805,7 @@ static int texLoadAll(GSTEXTURE *texture, const char *filePath, int texId, const
         return texEnd(pngPtr, infoPtr, pFileBuffer, fd, ERR_BAD_DIMENSION);
     }
 
-    result = texReadData(texture, pngPtr, infoPtr, texPngReadRow);
+    result = texReadData(texture, pngPtr, infoPtr, pngPasses, &decodeBuf, texPngReadRow);
     return texEnd(pngPtr, infoPtr, pFileBuffer, fd, result);
 }
 
