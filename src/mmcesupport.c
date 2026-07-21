@@ -77,7 +77,7 @@ static unsigned char mmceFolderRetries = 0;
 // forward declaration
 static item_list_t mmceGameList;
 static void mmceGetDeviceRoot(char *root, size_t size);
-static int mmceModLoaded = 0; // latched by mmceLoadModules; read by mmceSendGameID's arm check
+static int mmceModLoaded = 0;          // latched by mmceLoadModules; read by mmceSendGameID's arm check
 static char mmceGameIdTarget[8] = {0}; // last device a GameID 0x8 switch was SENT to (mmceGameIdSettle polls it)
 
 int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMask)
