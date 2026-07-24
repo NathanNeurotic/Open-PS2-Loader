@@ -1,14 +1,22 @@
 #!/bin/sh
 # Install a MENU-coherent mmceman into the container's $(PS2SDK)/iop/irx, replacing the
-# SDK-provided prebuilt, for the ps2dev/ps2dev:latest build. mmcedrv/mmceigr (the IN-GAME
-# modules) are deliberately LEFT AS THE CONTAINER'S STOCK PREBUILTS.
+# SDK-provided prebuilt. Used by ALL THREE build flavours (ps2dev/ps2dev:latest, ps2max/dev,
+# ghcr ps2homebrew pin) since the #254 fix. mmcedrv/mmceigr (the IN-GAME modules) are deliberately
+# LEFT AS THE CONTAINER'S STOCK PREBUILDS.
 #
-# WHY (menu / mmceman): the ps2dev:latest container gets its mmce trio via ps2sdk-ports, pinned to
-# ps2-mmce v2.1.1 (979dd77e, 2026-03-07) -- which PREDATES the 2026-06-14 "Changes to mmceman for
-# ps2sdk sio2man updates" fix (cccc366). The same container's sio2man is the post-May-2026 refactor,
-# so the pinned v2.1.1 mmceman's sio2man hook is DESYNCED from the runtime sio2man: short SIO2
-# exchanges (dir enumeration) happen to work, sustained transfers (cover-art PNG reads) freeze the
-# menu. Rebuilding mmceman from MMCE_PIN (includes cccc366) fixed this -- hardware-confirmed.
+# WHY (menu / mmceman): the containers' mmce trio comes via ps2sdk-ports, pinned to ps2-mmce
+# v2.1.1 (979dd77e, 2026-03-07) -- which PREDATES the "Changes to mmceman for ps2sdk sio2man
+# updates" fix (cccc366). Every current build container ships the SAME sio2man generation
+# (verified from the shipped IRX binaries: sio2man export 2.07 / sio2man1 1.02, 68/59 ordinals,
+# and the ghcr pin's sio2man.irx is byte-identical to ps2dev:latest's), whose internals the
+# v2.1.1-era sio2man hook does not match: short SIO2 exchanges happen to work, but the mismatched
+# hook wedges the bus -- sustained transfers freeze the menu, and with the default-on post-boot
+# GameID arm (opl.c deferredInit) the wedge hits right after GUI_INIT_DONE and takes the pads
+# (freepad, also SIO2) with it: menu drawn, "config loaded" notification up, console frozen
+# (#254, WOPLSDK + PS2MAXSDK). Rebuilding mmceman from MMCE_PIN (includes cccc366) fixes the
+# hook/sio2man pairing on every flavour. The 2026-07-20 v2.1.1-generation rebuild for the two
+# older containers (patch_stock_mmceman.sh, removed) rested on the mistaken premise that those
+# containers ship a pre-refactor sio2man.
 #
 # WHY NOT mmcedrv/mmceigr (in-game): mmcedrv drives SIO2 directly (its import table has NO sio2man
 # dependency -- verified by binary import-table parse), and its SOURCE is UNCHANGED between the
