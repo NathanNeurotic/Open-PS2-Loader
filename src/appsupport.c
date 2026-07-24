@@ -124,6 +124,12 @@ static int appStartupKeyEqual(const char *a, const char *b)
 {
     if (a == NULL || b == NULL)
         return 0;
+    // An empty startup is NOT an identity: it marks a record whose ELF path could not be resolved
+    // (e.g. a conf_apps.cfg line with an empty value), and appBuildArtLookup already skips such
+    // records as identity-less. Two of them must never merge -- one would silently vanish from the
+    // list (CodeRabbit review of #255).
+    if (a[0] == '\0' || b[0] == '\0')
+        return 0;
 
     for (;;) {
         char ca = *a;
