@@ -1223,9 +1223,17 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
     base_game_info_t *game = &(*list)[id];
 
     for (part = 0; part < game->parts; part++) {
+        int rr;
+
         sbCreatePath_name(game, oldpath, prefix, sep, part, game->name);
         sbCreatePath_name(game, newpath, prefix, sep, part, newname);
-        rename(oldpath, newpath);
+        rr = rename(oldpath, newpath);
+        // Fail LOUD (#257): an unsupported/failed rename must not be silent -- on the WOPLSDK and
+        // PS2MAXSDK flavours the v2.1.1-generation mmceman registered NOT_SUPPORTED_OP for rename,
+        // so MMCE game renames no-op'd with zero trace (fixed by the coherent-mmceman switch in
+        // PR #255; this log is the tripwire if a transport ever lacks rename again).
+        if (rr < 0)
+            LOG("sbRename: rename(%s -> %s) failed: %d\n", oldpath, newpath, rr);
     }
 
     if (game->format == GAME_FORMAT_USBLD) {
