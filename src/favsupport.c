@@ -650,8 +650,15 @@ static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char
         if (o->itemGetStartup == NULL || o->itemGetImage == NULL || !favOwnerHasId(o, favArray[i].id))
             continue;
         char *s = o->itemGetStartup(o, favArray[i].id);
-        if (s != NULL && strcmp(s, value) == 0)
-            return o->itemGetImage(o, folder, isRelative, value, suffix, resultTex, psm);
+        if (s != NULL && strcmp(s, value) == 0) {
+            int r = o->itemGetImage(o, folder, isRelative, value, suffix, resultTex, psm);
+            // Relative (ART) requests return as-is -- the matched owner IS the item's owner. For an
+            // absolute (theme-folder) request a bare -1 may only mean this owner can't key the path
+            // (e.g. appsupport's startup-keyed lookup with an unresolved artMode); fall through to
+            // the passthrough loop below, same as an unmatched request (CodeRabbit review of #255).
+            if (isRelative || r != -1)
+                return r;
+        }
     }
     // Attribute-image passthrough (#213): theme attribute caches (Rating/Vmode/Scan/Players...) are
     // created with an ABSOLUTE prefix (the theme path, isPrefixRelative=0, themes.c) and key their

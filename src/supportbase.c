@@ -18,6 +18,7 @@
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioMount("iso:", ***), fileXioUmount("iso:")
+#include <errno.h>       // sbRename failure logging (#257/#259)
 #include <io_common.h>   // FIO_MT_RDONLY
 #include <ps2sdkapi.h>   // lseek64
 #include <string.h>      // strtok/strncmp/strlen/memset (Neutrino args parse)
@@ -1221,14 +1222,38 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
     int part;
     char oldpath[256], newpath[256];
     base_game_info_t *game = &(*list)[id];
+    int renameFailed = 0;
 
     for (part = 0; part < game->parts; part++) {
+        int rr, re;
+
         sbCreatePath_name(game, oldpath, prefix, sep, part, game->name);
         sbCreatePath_name(game, newpath, prefix, sep, part, newname);
-        rename(oldpath, newpath);
+        rr = rename(oldpath, newpath);
+        re = errno; // capture BEFORE anything else can clobber it (CodeRabbit review of #259)
+        // Fail LOUD (#257): an unsupported/failed rename must not be silent -- on the WOPLSDK and
+        // PS2MAXSDK flavours the v2.1.1-generation mmceman registered NOT_SUPPORTED_OP for rename,
+        // so MMCE game renames no-op'd with zero trace (fixed by the coherent-mmceman switch in
+        // PR #255; this log is the tripwire if a transport ever lacks rename again). rename() only
+        // returns 0/-1, so the errno is what discriminates ENOTSUP/ENOENT/EIO -- the same "surface
+        // the write errno" convention as the #245 save-path fix.
+        if (rr < 0) {
+            LOG("sbRename: rename(%s -> %s) failed, errno=%d\n", oldpath, newpath, re);
+            renameFailed = 1;
+        }
     }
 
+    // Never commit metadata the files no longer match (CodeRabbit review of #259): for USBLD games
+    // the on-disk part paths derive from the NAME (ul.<crc>.<name>.N), so updating game->name and
+    // rebuilding ul.cfg after a failed rename would point the entry at paths that do not exist.
+    // Skipping the commit keeps the entry bound to the real (old) files; the next list refresh is
+    // consistent either way. In the #257 ENOTSUP case every part fails, so this also stops the
+    // "name changed on screen, file unchanged" desync.
     if (game->format == GAME_FORMAT_USBLD) {
+        if (renameFailed) {
+            LOG("sbRename: keeping old name/metadata for '%s' -- rename failed\n", game->name);
+            return;
+        }
         memset(game->name, 0, UL_GAME_NAME_MAX + 1);
         memcpy(game->name, newname, UL_GAME_NAME_MAX);
         sbRebuildULCfg(list, prefix, gamecount, -1);
