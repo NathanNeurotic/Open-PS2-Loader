@@ -2623,20 +2623,24 @@ static int thmLoad(const char *themePath)
             break;
     }
 
-    // First start with busy icon
-    const char *themePath_temp = themePath;
-    int customBusy = 0;
+    // Busy-icon animation frames, each frame probed INDEPENDENTLY: the theme's own load<N>.png
+    // first (disk themes), the baked frame only when use_default=1 opts into it. thmLoadResource's
+    // return is the DISK load's result only (it discards the embedded fallback's result), so a
+    // frame counts as loaded only when its texture slot actually got data. loadingIconCount is the
+    // number of CONTIGUOUS frames from load0 -- a gap (e.g. load2.png missing on a use_default=0
+    // theme) ends the count instead of letting guiDrawBusy's `LOAD0_ICON + frame % count` wander
+    // into texture IDs that hold no frame. The old loop latched themePath_temp=NULL off the FIRST
+    // failed custom probe (so one missing/unreadable load0.png silently replaced the theme's whole
+    // animation with the baked set -- or, with use_default=0, dropped frames that did exist), which
+    // is why custom frames appeared "randomly" (#213).
+    newT->loadingIconCount = 0;
     for (i = LOAD0_ICON; i <= LOAD7_ICON; i++) {
-        if (thmLoadResource(&newT->textures[i], i, themePath_temp, GS_PSM_CT32, newT->useDefault) >= 0)
-            customBusy = 1;
-        else {
-            if (customBusy)
-                break;
-            else
-                themePath_temp = NULL;
-        }
+        thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault);
+        if (newT->textures[i].Mem != NULL)
+            newT->loadingIconCount++;
+        else
+            break;
     }
-    newT->loadingIconCount = i;
 
     // Customizable icons
     for (i = BDM_ICON; i <= START_ICON; i++)
@@ -2649,12 +2653,17 @@ static int thmLoad(const char *themePath)
     // gNetBootProtocol == NET_BOOT_UDPFS) draw no icon (thmGetTexture(UDPFS_ICON) returns NULL).
     thmLoadResource(&newT->textures[UDPFS_ICON], UDPFS_ICON, themePath, GS_PSM_CT32, newT->useDefault);
 
-    // Control-hint glyphs + Favourites tab icon/star: internal defaults only (theme-independent).
-    // Contiguous L3_ICON..FAV_MARK in the enum -> the VCD L3 hint (L3_ICON), the Favourites R3 hint
-    // (R3_ICON), the FAV tab icon (FAV_ICON) and the favourited-item star (FAV_MARK). Previously the
-    // loop was commented out, so the R3/fav icons silently never loaded (thmGetTexture returned NULL).
+    // Control-hint glyphs + Favourites tab icon/star (contiguous L3_ICON..FAV_MARK: the VCD L3 hint,
+    // the Favourites R3 hint, the FAV tab icon FAV_ICON/"fav", the favourited-item star
+    // FAV_MARK/"fav_mark"). Theme-overridable with embedded fallback -- the SAME disk-override +
+    // baked-default semantics as the BDM_ICON..START_ICON loop above: a disk theme's fav.png /
+    // fav_mark.png / L3.png / R3.png win; the baked glyphs fill only what the theme does not ship
+    // (and nothing when use_default=0). This loop previously passed themePath=NULL + useDefault=1,
+    // so a disk theme's fav.png was never even probed and the baked icon always drew (#213).
+    // thmLoadResource is synchronous here, so the baked glyph can never flash ahead of the theme's
+    // own file.
     for (i = L3_ICON; i <= FAV_MARK; i++)
-        thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
+        thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault);
 
     // Embedded attribute glyphs (#Format/#Media/Aspect/Rating/Scan/Vmode values): BUILT-IN theme
     // ONLY. a1ae5e5e decoded these for every theme so badges could fall back to them on disk themes

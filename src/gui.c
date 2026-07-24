@@ -1785,7 +1785,10 @@ void guiExecDeferredOps(void)
 
 static void guiDrawBusy(int alpha)
 {
-    if (gTheme->loadingIcon) {
+    // loadingIconCount is now a true contiguous-frame count (themes.c) and CAN be 0 -- a disk theme
+    // shipping no load*.png with use_default=0 -- so gate the modulo on it (no div-by-zero, no
+    // garbage texture id).
+    if (gTheme->loadingIcon && gTheme->loadingIconCount > 0) {
         GSTEXTURE *texture = thmGetTexture(LOAD0_ICON + (guiFrameId >> 1) % gTheme->loadingIconCount);
         if (texture && texture->Mem) {
             u64 mycolor = GS_SETREG_RGBA(0x80, 0x80, 0x80, alpha);
