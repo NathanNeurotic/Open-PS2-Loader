@@ -18,6 +18,7 @@
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioMount("iso:", ***), fileXioUmount("iso:")
+#include <errno.h>       // sbRename failure logging (#257/#259)
 #include <io_common.h>   // FIO_MT_RDONLY
 #include <ps2sdkapi.h>   // lseek64
 #include <string.h>      // strtok/strncmp/strlen/memset (Neutrino args parse)
@@ -1223,17 +1224,20 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
     base_game_info_t *game = &(*list)[id];
 
     for (part = 0; part < game->parts; part++) {
-        int rr;
+        int rr, re;
 
         sbCreatePath_name(game, oldpath, prefix, sep, part, game->name);
         sbCreatePath_name(game, newpath, prefix, sep, part, newname);
         rr = rename(oldpath, newpath);
+        re = errno; // capture BEFORE anything else can clobber it (CodeRabbit review of #259)
         // Fail LOUD (#257): an unsupported/failed rename must not be silent -- on the WOPLSDK and
         // PS2MAXSDK flavours the v2.1.1-generation mmceman registered NOT_SUPPORTED_OP for rename,
         // so MMCE game renames no-op'd with zero trace (fixed by the coherent-mmceman switch in
-        // PR #255; this log is the tripwire if a transport ever lacks rename again).
+        // PR #255; this log is the tripwire if a transport ever lacks rename again). rename() only
+        // returns 0/-1, so the errno is what discriminates ENOTSUP/ENOENT/EIO -- the same "surface
+        // the write errno" convention as the #245 save-path fix.
         if (rr < 0)
-            LOG("sbRename: rename(%s -> %s) failed: %d\n", oldpath, newpath, rr);
+            LOG("sbRename: rename(%s -> %s) failed, errno=%d\n", oldpath, newpath, re);
     }
 
     if (game->format == GAME_FORMAT_USBLD) {
