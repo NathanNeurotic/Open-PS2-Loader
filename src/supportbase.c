@@ -1222,6 +1222,7 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
     int part;
     char oldpath[256], newpath[256];
     base_game_info_t *game = &(*list)[id];
+    int renameFailed = 0;
 
     for (part = 0; part < game->parts; part++) {
         int rr, re;
@@ -1236,11 +1237,23 @@ void sbRename(base_game_info_t **list, const char *prefix, const char *sep, int 
         // PR #255; this log is the tripwire if a transport ever lacks rename again). rename() only
         // returns 0/-1, so the errno is what discriminates ENOTSUP/ENOENT/EIO -- the same "surface
         // the write errno" convention as the #245 save-path fix.
-        if (rr < 0)
+        if (rr < 0) {
             LOG("sbRename: rename(%s -> %s) failed, errno=%d\n", oldpath, newpath, re);
+            renameFailed = 1;
+        }
     }
 
+    // Never commit metadata the files no longer match (CodeRabbit review of #259): for USBLD games
+    // the on-disk part paths derive from the NAME (ul.<crc>.<name>.N), so updating game->name and
+    // rebuilding ul.cfg after a failed rename would point the entry at paths that do not exist.
+    // Skipping the commit keeps the entry bound to the real (old) files; the next list refresh is
+    // consistent either way. In the #257 ENOTSUP case every part fails, so this also stops the
+    // "name changed on screen, file unchanged" desync.
     if (game->format == GAME_FORMAT_USBLD) {
+        if (renameFailed) {
+            LOG("sbRename: keeping old name/metadata for '%s' -- rename failed\n", game->name);
+            return;
+        }
         memset(game->name, 0, UL_GAME_NAME_MAX + 1);
         memcpy(game->name, newname, UL_GAME_NAME_MAX);
         sbRebuildULCfg(list, prefix, gamecount, -1);
