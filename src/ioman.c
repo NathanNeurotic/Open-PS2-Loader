@@ -139,7 +139,11 @@ static void ioWorkerThread(void *arg)
                 break;
 
             struct io_request_t *req = gReqList;
+            // In-flight request tracking (#254-class boot wedges): the last "begin" without a
+            // matching "end" in the serial/debug log names the request that never completed.
+            LOG("IOMAN request begin: type=%d data=%p pending=%d\n", req->type, req->data, gReqCount);
             ioProcessRequest(req);
+            LOG("IOMAN request end: type=%d\n", req->type);
 
             // lock the queue tip as well now
             WaitSema(gEndSemaId);

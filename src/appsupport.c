@@ -112,6 +112,95 @@ static unsigned int appHashStartup(const char *value)
     return hash;
 }
 
+// Canonical-identity comparison for APP dedup (#253). Identity is the resolved startup (the full
+// ELF path incl. its concrete device prefix) -- NEVER the title: two distinct APPs may share a
+// title, and one APP may have two titles (conf_apps.cfg key vs title.cfg). `mass:`/`mass?:` legacy
+// forms are already resolved to a concrete massN: by appSetResolvedStartup, so the slot prefix also
+// keeps the same relative path on two DIFFERENT physical devices distinct. Compared equal here:
+// '/' vs '\\', repeated separators, trailing separators, and case (the BDM filesystems OPL scans
+// apps from are FAT/exFAT -- case-insensitive; a case-differing pair on a case-sensitive fs would
+// have to collide on device+path in every other respect, which does not occur in practice).
+static int appStartupKeyEqual(const char *a, const char *b)
+{
+    if (a == NULL || b == NULL)
+        return 0;
+    // An empty startup is NOT an identity: it marks a record whose ELF path could not be resolved
+    // (e.g. a conf_apps.cfg line with an empty value), and appBuildArtLookup already skips such
+    // records as identity-less. Two of them must never merge -- one would silently vanish from the
+    // list (CodeRabbit review of #255).
+    if (a[0] == '\0' || b[0] == '\0')
+        return 0;
+
+    for (;;) {
+        char ca = *a;
+        char cb = *b;
+
+        if (ca == '\\')
+            ca = '/';
+        if (cb == '\\')
+            cb = '/';
+        if (ca >= 'A' && ca <= 'Z')
+            ca += 'a' - 'A';
+        if (cb >= 'A' && cb <= 'Z')
+            cb += 'a' - 'A';
+        if (ca != cb)
+            return 0;
+        if (ca == '\0')
+            return 1;
+        a++;
+        b++;
+        if (ca == '/') {
+            // Collapse separator runs; a trailing run is consumed here too, so the loop's next
+            // iteration compares '\0' against '\0' -- trailing separators never differentiate.
+            while (*a == '/' || *a == '\\')
+                a++;
+            while (*b == '/' || *b == '\\')
+                b++;
+        }
+    }
+}
+
+// Drop duplicate discoveries from the freshly built appsList (#253: the same APP listed several
+// times). The list is [legacy conf_apps.cfg entries...][scanned title.cfg entries...]; one APP
+// present in BOTH channels (the normal migration path from conf_apps.cfg to per-app title.cfg)
+// otherwise appears twice. First occurrence wins: order-stable, and because legacy entries sort
+// first, only SCANNED records are ever dropped -- legacy records keep their indices, preserving the
+// "legacy id <-> conf_apps.cfg node position" mapping appGetConfigValue relies on, the user's
+// conf_apps.cfg edits, and the title that Favourites records bind to. A scanned duplicate still
+// donates its argv1 (title.cfg-only metadata) to an empty-handed legacy survivor. Legacy-vs-legacy
+// collisions (two conf_apps.cfg keys pointing at the same ELF) are KEPT: dropping one would shift
+// the config-node mapping, and a duplicated hand-edited entry is the user's own data.
+static void appDedupList(void)
+{
+    if (appsList == NULL || appItemCount <= 1)
+        return;
+
+    int kept = 0;
+    for (int i = 0; i < appItemCount; i++) {
+        int dup = -1;
+        for (int j = 0; j < kept; j++) {
+            if (appStartupKeyEqual(appsList[j].startup, appsList[i].startup)) {
+                dup = j;
+                break;
+            }
+        }
+        if (dup >= 0 && !appsList[i].legacy) {
+            LOG("APPSUPPORT dedup: dropping scanned '%s' (%s) -- already listed as '%s' (%s)\n",
+                appsList[i].title, appsList[i].startup, appsList[dup].title, appsList[dup].startup);
+            if (appsList[dup].argv1[0] == '\0' && appsList[i].argv1[0] != '\0') {
+                strncpy(appsList[dup].argv1, appsList[i].argv1, APP_ARGV1_MAX + 1);
+                appsList[dup].argv1[APP_ARGV1_MAX] = '\0';
+            }
+            continue;
+        }
+        if (kept != i)
+            memcpy(&appsList[kept], &appsList[i], sizeof(app_info_t));
+        kept++;
+    }
+    appItemCount = kept;
+}
+
+
 static const char *appBuildStartupPath(const char *path, const char *boot)
 {
     if (path[0] != '\0') {
@@ -467,6 +556,11 @@ static int appUpdateItemList(item_list_t *itemList)
 
             for (i = 0; app != NULL; i++, app = app->next) // appsLinkedList contains items in reverse order.
                 memcpy(&appsList[appItemCount - i - 1], &app->app, sizeof(app_info_t));
+
+            // One APP discoverable through both channels (conf_apps.cfg + device-scanned title.cfg)
+            // must appear ONCE (#253). Runs before the art table is built so its startup hashes map
+            // to the deduped rows.
+            appDedupList();
         } else {
             LOG("APPSUPPORT unable to allocate memory.\n");
             appItemCount = 0;

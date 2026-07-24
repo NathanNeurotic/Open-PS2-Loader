@@ -653,6 +653,32 @@ static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char
         if (s != NULL && strcmp(s, value) == 0)
             return o->itemGetImage(o, folder, isRelative, value, suffix, resultTex, psm);
     }
+    // Attribute-image passthrough (#213): theme attribute caches (Rating/Vmode/Scan/Players...) are
+    // created with an ABSOLUTE prefix (the theme path, isPrefixRelative=0, themes.c) and key their
+    // request on the attribute VALUE ("4", "ntsc", ...) -- not on an item startup, so the loop
+    // above can never match them. Returning -1 here made texcache brand the theme's glyph
+    // "genuinely absent" (ERR_BAD_FILE) and memoize the failure for the whole session, which is why
+    // the Favourites info page showed only the placeholder while the normal info page -- same value,
+    // same theme file, drawn through the source list's itemGetImage -- rendered fine. `folder` is
+    // the absolute theme path, so ANY resolved owner's itemGetImage loads the identical file; only
+    // the interface needs an owner. ART loads (isRelative=1, startup-keyed) are untouched.
+    //
+    // Keep scanning past a -1 (CodeRabbit review of #255): some owners' itemGetImage is itself
+    // startup-keyed (appsupport's resolves `value` via appLookupByStartup) and returns -1 for an
+    // attribute VALUE even though a later, device-backed owner would load the same absolute file
+    // fine -- with an APP favourite sorted first, the Favourites info page still failed. A result
+    // other than plain -1 is a real signal (success, or a transient error worth surfacing over a
+    // bogus "absent"); a bare -1 may just mean "this owner can't key that path".
+    if (!isRelative) {
+        for (int i = 0; i < favCount; i++) {
+            item_list_t *o = favArray[i].owner;
+            if (o == NULL || o->itemGetImage == NULL || !favOwnerHasId(o, favArray[i].id))
+                continue;
+            int r = o->itemGetImage(o, folder, isRelative, value, suffix, resultTex, psm);
+            if (r != -1)
+                return r;
+        }
+    }
     return -1;
 }
 
