@@ -662,11 +662,21 @@ static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char
     // same theme file, drawn through the source list's itemGetImage -- rendered fine. `folder` is
     // the absolute theme path, so ANY resolved owner's itemGetImage loads the identical file; only
     // the interface needs an owner. ART loads (isRelative=1, startup-keyed) are untouched.
+    //
+    // Keep scanning past a -1 (CodeRabbit review of #255): some owners' itemGetImage is itself
+    // startup-keyed (appsupport's resolves `value` via appLookupByStartup) and returns -1 for an
+    // attribute VALUE even though a later, device-backed owner would load the same absolute file
+    // fine -- with an APP favourite sorted first, the Favourites info page still failed. A result
+    // other than plain -1 is a real signal (success, or a transient error worth surfacing over a
+    // bogus "absent"); a bare -1 may just mean "this owner can't key that path".
     if (!isRelative) {
         for (int i = 0; i < favCount; i++) {
             item_list_t *o = favArray[i].owner;
-            if (o != NULL && o->itemGetImage != NULL && favOwnerHasId(o, favArray[i].id))
-                return o->itemGetImage(o, folder, isRelative, value, suffix, resultTex, psm);
+            if (o == NULL || o->itemGetImage == NULL || !favOwnerHasId(o, favArray[i].id))
+                continue;
+            int r = o->itemGetImage(o, folder, isRelative, value, suffix, resultTex, psm);
+            if (r != -1)
+                return r;
         }
     }
     return -1;
