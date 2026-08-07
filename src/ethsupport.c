@@ -472,7 +472,8 @@ void ethInit(item_list_t *itemList)
         ethModifiedDVDPrev = 0;
         ethGameCount = 0;
         ethGames = NULL;
-        ethGameList.delay = gArtDelay;
+        // NAV-PARITY TEST BUILD (#340): official's fixed 8-frame art settle, not the fork Art Delay setting.
+        ethGameList.delay = MENU_MIN_INACTIVE_FRAMES;
         gNetworkStartup = ERROR_ETH_NOT_STARTED;
         ioPutRequest(IO_CUSTOM_SIMPLEACTION, &smbLoadModules);
         ethGameList.enabled = 1;
