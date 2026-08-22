@@ -252,6 +252,9 @@ enum UI_ITEMS {
     VCDUSB_BTN_FAT32,
     VCDUSB_BTN_EXFAT,
 
+    POPS_OVERWRITE_KEEP,
+    POPS_OVERWRITE_REPLACE,
+
     // Settings-layout restructure: sub-page buttons (chained dialogs, goto-reshow pattern)
     UICFG_ARTWORK_BUTTON,
     UICFG_COLORS_BUTTON,
@@ -361,6 +364,7 @@ extern struct UIItem diaNeutrinoDefaults[];
 extern struct UIItem diaBdmaConfig[];
 extern struct UIItem diaVcdListConfig[];
 extern struct UIItem diaPopsNetConfig[];
+extern struct UIItem diaPopsOverwrite[];
 extern struct UIItem diaMmceCommConfig[];
 extern struct UIItem diaMmcePathConfig[];
 extern struct UIItem diaSecurityConfig[];
