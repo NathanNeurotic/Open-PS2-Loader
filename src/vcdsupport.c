@@ -2000,13 +2000,18 @@ static int vcdPopsMc0Exists(const char *path)
         close(fd);
         return 1;
     }
-    return 0;
+    if (errno == ENOENT)
+        return 0;
+    return -1;
 }
 
 vcd_popsnet_ensure_t vcdEnsurePopstarterSmbConfigMc0(void)
 {
     int ipExists = vcdPopsMc0Exists(VCD_POPS_MC0_IPCONFIG);
     int smbExists = vcdPopsMc0Exists(VCD_POPS_MC0_SMBCONFIG);
+
+    if (ipExists < 0 || smbExists < 0)
+        return VCD_POPSNET_IO_ERROR;
 
     if (ipExists && smbExists)
         return VCD_POPSNET_READY;
@@ -2054,6 +2059,8 @@ vcd_popsnet_ensure_t vcdEnsurePopstarterSmbConfigMc0(void)
         }
     }
 
+    int createdIp = 0;
+
     if (needIp) {
         vcd_popsnet_t tmp;
         memset(&tmp, 0, sizeof(tmp));
@@ -2066,6 +2073,7 @@ vcd_popsnet_ensure_t vcdEnsurePopstarterSmbConfigMc0(void)
         int rc = vcdSafeWriteFile(VCD_POPS_MC0_IPCONFIG, buf, len);
         if (rc != 0)
             return VCD_POPSNET_IO_ERROR;
+        createdIp = 1;
     }
 
     if (needSmb) {
@@ -2079,8 +2087,11 @@ vcd_popsnet_ensure_t vcdEnsurePopstarterSmbConfigMc0(void)
         char buf[256];
         int len = vcdBuildSmbConfig(&tmp, buf, sizeof(buf));
         int rc = vcdSafeWriteFile(VCD_POPS_MC0_SMBCONFIG, buf, len);
-        if (rc != 0)
+        if (rc != 0) {
+            if (createdIp)
+                unlink(VCD_POPS_MC0_IPCONFIG);
             return VCD_POPSNET_IO_ERROR;
+        }
     }
 
     return VCD_POPSNET_READY;
@@ -2088,10 +2099,13 @@ vcd_popsnet_ensure_t vcdEnsurePopstarterSmbConfigMc0(void)
 
 vcd_popsnet_ensure_t vcdPreparePopstarterSmbLaunch(const char *smbPrefix)
 {
+    int installRes = 0;
     if (smbPrefix != NULL && smbPrefix[0] != '\0') {
-        (void)vcdInstallPopstarterMc(smbPrefix);
+        installRes = vcdInstallPopstarterMc(smbPrefix);
     }
     if (!vcdSmbModulesPresent()) {
+        if (installRes == -2 || installRes == -3)
+            return VCD_POPSNET_IO_ERROR;
         return VCD_POPSNET_SMB_MISSING;
     }
     return vcdEnsurePopstarterSmbConfigMc0();
