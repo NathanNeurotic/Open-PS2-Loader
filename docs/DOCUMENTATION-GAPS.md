@@ -92,12 +92,17 @@ decision: document, or record as deliberately internal.
 ## Tier 2 — Setting-line only (the option is listed; the feature is not explained)
 
 ### 6. GSM (video mode override)
-Referenced across eight site pages and `README.md:414`, but **no page explains what GSM is**, what
-the modes mean, when to use field-fix / skip-videos, or how to recover from a lost picture. The 1080p
-mode has a three-step confirmation guard that only `README.md` mentions.
+**Status: DONE** — `docs/GSM.md` + site `gsm.html`, cross-linked from the per-game GSM section, the
+settings list, and the home/troubleshooting tiles.
 
-**Home:** new `docs/GSM.md` + site `gsm.html`. Cross-link from `per-game-settings.html`,
-`ps3-bc.html`, `troubleshooting.html`.
+*Correction to the original audit:* `per-game-settings.html#gsm` did carry a two-paragraph stub
+defining GSM and covering the Neutrino case — it was not a total blank. What was missing everywhere:
+the GSM Source (Global / Per Game / **Per Game + Global** per-key inheritance), the 30-mode list, the
+three-step 1080p confirmation and its **fallback to NTSC on cancel**, what Emulate FIELD Flipping is
+for, and how to recover a game that loses the picture.
+
+*Trap found while writing it:* `GSMSKIPVIDEOS` / "FMV Skip" is a **dead language string** with no
+live UI reference — do not document it as a GSM option. Overscan is a UI setting, not a GSM one.
 
 ### 7. IGS (In-Game Screenshot)
 **Status: DONE** — covered in `docs/IGR.md` and `igr.html`, including the release-build caveat.
@@ -108,9 +113,14 @@ plainly: **IGS is OFF in stock builds** (`IGS ?= $(EXTRA_FEATURES)`, `EXTRA_FEAT
 **Sources:** `Makefile:27-34`, `ee_core/src/igs_api.c:569,607`.
 
 ### 8. PADEMU (pad emulator)
-Appears in settings tables only. Nothing explains which controllers are supported (DS3/DS4 over USB
-and Bluetooth via `ds34usb`/`ds34bt`), the port/mode/vibration options, the workaround toggle, or the
-DualSense situation — `DUALSENSE ?= 0`, hardware-validated but deliberately off in default builds.
+`per-game-settings.html#pademu` has a short stub; the settings tables list the rows. Nothing explains
+which controllers are supported (DS3/DS4 over USB and Bluetooth via `ds34usb`/`ds34bt`), the
+port/mode/vibration options, or the workaround toggle.
+
+*Correction to the original audit:* `DUALSENSE ?= 0` is the **default build** only — CI does ship
+ready-made `-ds5.ELF` assets per SDK flavour (`rolling-release.yml`, best-effort, skipped with a WARN
+if that build fails), and `release-normalize.yml` folds them into the variants archive. Do not write
+"you must build it yourself".
 
 **Home:** new `docs/PADEMU.md` + site `pademu.html`; link from Controls.
 
@@ -163,13 +173,12 @@ on the site at all**. Straight port of the README section.
 
 ## Progress
 
-**Done:** #1 IGR · #2 Controls · #3 Rumble · #7 IGS — plus the Triangle+Cross boot recovery combo,
-which was previously README-only.
+**Done:** #1 IGR · #2 Controls · #3 Rumble · #6 GSM · #7 IGS — plus the Triangle+Cross boot recovery
+combo, which was previously README-only.
 
 **Remaining order:**
 
-1. **GSM** (#6) — most cross-referenced undocumented subsystem.
-2. **Apps page** (#11) — pure port of the README section, low risk.
+1. **Apps page** (#11) — pure port of the README section, low risk.
 3. **PADEMU** (#8), **parental lock** (#9), **BGM/SFX** (#10), **folder browsing** (#4).
 4. Tier 3 parity items, then Tier 4.
 5. **XPARAM** (#5) — decide document vs. mark internal.
