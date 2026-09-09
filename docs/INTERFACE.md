@@ -14,7 +14,8 @@ For the button map, see [CONTROLS.md](CONTROLS.md).
 With it on, subfolders of `CD/` and `DVD/` appear in the game list as browsable entries instead of
 the loader flattening everything into one long list.
 
-* Folder rows sort to the **end** of the list and are drawn with a trailing `/`.
+* Folder rows sort to the **top** of the list, ahead of games, and are drawn with a trailing `/`.
+  Within each group, entries sort by title.
 * **Select** opens a folder; the **cancel** button goes back up a level. Which face button that is
   depends on your Select button setting.
 * A folder row has no info page and no per-game settings, so Square and Triangle do nothing on one.

@@ -91,8 +91,8 @@ named from the game's ID with a zero-padded sequence number starting at 001 — 
 
 Two conditions gate it, and both catch people out:
 
-1. **GSM must be enabled** for the running game. IGS reads the frame through GSM's view of the video
-   hardware, so with GSM off the combination does nothing.
+1. **GSM must be enabled** for the running game. The capture is gated on the game's GSM setting, so
+   with GSM off the combination does nothing at all.
 2. **The build must include IGS.** It is compiled out of stock builds — the `Makefile` defaults
    `EXTRA_FEATURES` to `0`, and `IGS` follows it. Official release builds therefore **do not have
    IGS**. Building with `make IGS=1` (or `EXTRA_FEATURES=1`) enables it.
