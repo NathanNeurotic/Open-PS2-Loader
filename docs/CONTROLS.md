@@ -104,12 +104,17 @@ Opened with Triangle from any text field.
 
 | Button | Action |
 |---|---|
-| **D-pad** | Move around the key grid |
-| **Cross** | Type the highlighted character |
-| **Square** | Backspace |
-| **Triangle** | Clear the field |
+| **D-pad** | Move around the key grid (wraps within the row and column) |
+| **Select button** | Type the highlighted character |
+| **Square** | Backspace — deletes to the left of the caret |
+| **Triangle** | Insert a **space** |
+| **Select** | Cycle the character set (lower case, upper case, symbols) |
 | **L1 / R1** | Move the caret left / right |
 | **Start** | Accept and close |
+| **Cancel button** | Discard and close |
+
+Numeric fields use a separate number pad rather than this keyboard. It works the same way, except
+that **Triangle clears the field** there instead of inserting a space.
 
 ---
 

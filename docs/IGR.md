@@ -33,13 +33,18 @@ The power button on the front of the console is hooked too, and does not need a 
 | Press **once** | Power off |
 | Press **twice** | Reset — return to RiptOPL |
 
+The second press has to land within **about a second** — RiptOPL waits ~50 vertical blanks after the
+first press to see whether another arrives, then acts on the count.
+
 This is the fallback worth remembering when a game has stopped responding to the pad entirely.
 
 ---
 
 ## Where a reset takes you
 
-By default a reset returns you to the RiptOPL browser, on the same device page you launched from.
+By default a reset returns you to the RiptOPL browser, started fresh. It does not restore what you
+had selected: **Remember Last Played** (*Settings → Interface*) is a separate setting, off by
+default, and it is what re-selects the last game you ran.
 
 You can send it somewhere else instead with the **IGR Path** setting (*Settings → General*). Point it
 at an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight
