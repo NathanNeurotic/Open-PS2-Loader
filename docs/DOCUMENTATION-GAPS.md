@@ -171,17 +171,20 @@ field. Now in both the README section and the new page.
 
 ## Tier 4 — Exists but thin
 
-* **`docs/` is plan-heavy.** `EMBER-INTEGRATION-PLAN.md`, `HTTP-INTEGRATION-PLAN.md`,
-  `RETROACHIEVEMENTS-INTEGRATION-PLAN.md` are engineering plans, not user docs. Ember in particular
-  has **no user-facing repo doc** — only the site's `ps1-vcd.html` explains it. Consider `docs/EMBER.md`,
-  or explicitly mark the plans as internal.
-* **Art / cover-art pipeline.** Naming is shown on `coverflow.html` and `install.html`, but there is no
-  single page on the `ART/` layout: the `_COV` / `_SCR` / `_SCR2` / `_BG` / `_LGO` key set, the
-  PS1/VCD key differences, and the `.tar` archive option (`Cover Art .tar Archive`, default OFF).
-  Standing rule to state plainly: **one art location; only the key varies.**
-* **Animated boot logo.** Shipped; mentioned only inside `themes.html`. Deserves its own section.
-* **Theme engine.** `docs/THEME_ENGINE.md` and `themes.html` are the largest docs we have (805 lines);
-  spot-check for drift rather than expansion.
+* **`docs/` is plan-heavy.** **DONE** — `EMBER-INTEGRATION-PLAN.md`, `HTTP-INTEGRATION-PLAN.md` and
+  `RETROACHIEVEMENTS-INTEGRATION-PLAN.md` now carry an "Internal engineering document" banner
+  pointing at the user-facing docs. No `docs/EMBER.md` was written: Ember's user documentation
+  already lives on the site's PS1 Games page and in `VCD.md`, so a repo copy would only duplicate.
+* **Art / cover-art pipeline.** **DONE** — `install.html#cover-art` consolidates the one rule
+  (**one `ART/` folder, only the key varies**) with the PS2 / VCD / Ember / app keys side by side, the
+  suffix set, and the `.tar` archive toggle. It links rather than restates: `themes.html` already
+  documents the `pattern=` suffix system for theme authors, `ps1-vcd.html` the PS1 keys, and
+  `coverflow.html` the default theme's usage.
+  *Correction to the original audit:* the suffix set is **not fixed by the loader** — a theme's
+  `GameImage` element declares its own `pattern=`. `COV` and `BG` are what the built-in themes use.
+* **Animated boot logo.** Still only inside `themes.html`. Low value to split out; left as-is.
+* **Theme engine.** `docs/THEME_ENGINE.md` and `themes.html` (805 lines) were spot-checked against
+  the new pages and found consistent. No drift.
 
 ---
 

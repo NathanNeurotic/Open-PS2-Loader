@@ -1,5 +1,8 @@
 # RetroAchievements integration plan (RiptOPL)
 
+> **Internal engineering document.** This is an implementation plan for contributors, not user
+> documentation. For how to *use* the feature, see [RETROACHIEVEMENTS.md](RETROACHIEVEMENTS.md).
+
 **Status:** approved, phases 0-2 implemented. This document is the brief for the implementing agent.
 **Branch:** `claude/retroachievements-port-bb1959` (PR #600), rebased onto `origin/rebuild/main`.
 **Shipping shape:** its own build flavour in the variants archive — `make RETROACHIEVEMENTS=1`. The
