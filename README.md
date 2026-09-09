@@ -724,6 +724,10 @@ docker run --rm -v "${PWD}:/src" -w /src ps2dev/ps2dev@sha256:8fba50ecc2229acd7f
 Use a clean checkout/build directory when changing SDK images. See the Makefile for flags such as
 `DUALSENSE=1` and `EXTRA_FEATURES=1`; build success does not establish console compatibility.
 
+`src/xparam.c` holds a hardcoded table of special disc titles whose EE parameters are taken from
+`SYSTEM.CNF`. It is applied automatically and has no setting, dialog row or language string — it is
+deliberately internal and is not user-facing documentation.
+
 ## OPL Archive
 
 Successful archive uploads preserve rolling builds on MEGA under run-specific folders (`RiptOPL/Rolling/<version>/run_<number>/`). Uploads depend on publishing success and configured credentials; superseded or failed runs may have no archive. The archive includes installable packages, source and build metadata; VARIANTS and DEBUG bundles are excluded. You can access it by clicking the MEGA badge at the top of this readme or visiting the [MEGA Rolling Archive](https://mega.nz/folder/74pRHKRB#9SLDkrkvZAbeKO4Qvxg9LQ).

@@ -82,12 +82,14 @@ with a trailing `/`, and it is supported on BDM/MMCE/UDPFS devices only. None of
 **Home:** Settings reference + a short section on the device pages.
 
 ### 5. XPARAM
-**Status:** Missing on both surfaces — zero mentions anywhere, despite `notes/xparam` and
-`src/xparam.c` existing.
+**Status: RESOLVED — internal by design, no user documentation needed.**
 
-Users never set this directly, so it may only warrant a paragraph in a dev/internals note rather than
-a user page — but the current state is that a whole subsystem is undocumented. Worth an explicit
-decision: document, or record as deliberately internal.
+Verified: `src/xparam.c` is a hardcoded table of special disc titles whose EE parameters come from
+`SYSTEM.CNF`. It has **no setting, no dialog row and no language string** — it is applied
+automatically and a user can neither see nor change it. Documenting it as a feature would invent a
+control that does not exist.
+
+Recorded in the README developer notes so it is not invisible to contributors.
 
 **Sources:** `src/xparam.c`, `notes/xparam`.
 
@@ -157,13 +159,13 @@ field. Now in both the README section and the new page.
 
 | Topic | `README.md` | Site | Action |
 |---|---|---|---|
-| Apps / `title.cfg` | §APPS (537–601) | absent | Port to `apps.html` (Tier 2 #11) |
-| OPL Archive | §OPL Archive (675) | absent | Add to site, or drop if obsolete |
-| Notes for devs / building from source | §Some notes for DEVS (659) | absent | Add a Building page, or link to the repo |
-| Frequent Issues | §679–710 | `troubleshooting.html` | Reconcile — confirm the site is a superset |
-| Folder browsing | line 226 | absent | Tier 1 #4 |
-| 1080p GSM three-step confirm | line 414 | absent | Tier 2 #6 |
-| Languages | `docs/LANGUAGES.md` (translator-facing) | absent | Site needs an **end-user** page: installing `RIPTOPL-LANGS-*.zip`, where `.lng` files go, picking a language |
+| Apps / `title.cfg` | §APPS | absent | **DONE** — `apps.html` |
+| OPL Archive | §OPL Archive | absent | **DONE** — `releases.html#archive`, with the folder layout and the MEGA link |
+| Notes for devs / building from source | §Some notes for DEVS | absent | **DONE** — `releases.html#building` |
+| Frequent Issues | §679–710 | `troubleshooting.html` | **DONE — no action.** Verified the site is a strict superset: it carries all four README items plus PS1/VCD, iLink 2692, BDMA equip, and the boot-combo table |
+| Folder browsing | line 226 | absent | **DONE** — Tier 1 #4 |
+| 1080p GSM three-step confirm | line 414 | absent | **DONE** — Tier 2 #6 |
+| Languages | `docs/LANGUAGES.md` (translator-facing) | absent | **DONE** — `languages.html` (end-user); `docs/LANGUAGES.md` stays translator-facing |
 
 ---
 
@@ -186,7 +188,7 @@ field. Now in both the README section and the new page.
 ## Progress
 
 **Done:** #1 IGR · #2 Controls · #3 Rumble · #4 Folder browsing · #6 GSM · #7 IGS · #8 PADEMU ·
-#9 Parental lock · #10 Audio · #11 Apps — plus the Triangle+Cross boot recovery
+#5 XPARAM (resolved as internal) · #9 Parental lock · #10 Audio · #11 Apps · all Tier 3 parity — plus the Triangle+Cross boot recovery
 combo, which was previously README-only.
 
 **Remaining order:**

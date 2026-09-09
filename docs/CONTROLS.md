@@ -4,9 +4,11 @@ Every button RiptOPL responds to, in one place.
 
 Two settings change what you read below, so check them first if the tables do not match your console:
 
-* **Select button** (*Settings → Interface*) swaps which face button confirms. The tables use the
-  default, **Cross = confirm, Circle = back**. If you set Circle as the select button, swap those two
-  everywhere *except* the Settings screens (see the note under [Settings screens](#settings-screens)).
+* **Select button** (*Settings → Interface*) swaps which face button confirms. The tables use
+  **Cross = confirm, Circle = back**, which is the default everywhere except **Japanese consoles**,
+  where RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your
+  select button, swap those two everywhere *except* the Settings screens (see the note under
+  [Settings screens](#settings-screens)).
 * **Coverflow** (*Settings → Interface*) rotates the navigation axis on the game list. Both layouts
   are given below.
 
@@ -118,7 +120,21 @@ with compatibility Mode 6. Full detail, including the limitations, is in [IGR.md
 
 | Hold at boot | Result |
 |---|---|
+| **Start** | Skip loading the config — boot with defaults |
 | **Triangle + Cross** | Force the menu to 480p progressive (recovery) |
+
+### Start — skip the config
+
+Hold **Start** while RiptOPL boots and it does not read your settings file at all, starting from
+built-in defaults instead. This is the recovery path for a configuration that hangs or crashes the
+loader on startup.
+
+> Your settings file is **not erased** — it is only ignored for this boot. But if you then change
+> anything and save, you save the *defaults* over your old configuration. If you want your settings
+> back, fix the offending option and save; if you want them preserved, do not save while booted this
+> way.
+
+### Triangle + Cross — force 480p
 
 Hold both while RiptOPL starts and it ignores the saved video mode, forcing **480p progressive**
 (640×448p60) and writing that back to the config. This is the recovery path for a blank screen after
@@ -142,11 +158,13 @@ available and the setting does nothing. Third-party pads and most adapters vary 
 report vibration support correctly.
 
 This is menu rumble only, and is independent of in-game vibration, which is the game's business (or
-PADEMU's, when emulating a pad).
+[PADEMU](PADEMU.md)'s, when emulating a pad).
 
 ---
 
 ## See also
 
 * [IGR.md](IGR.md) — In-Game Reset in full
+* [PADEMU.md](PADEMU.md) — using a DualShock 3/4 in games
+* [INTERFACE.md](INTERFACE.md) — folder browsing, parental lock, audio
 * [THEME_ENGINE.md](THEME_ENGINE.md) — themes can relabel on-screen button prompts
