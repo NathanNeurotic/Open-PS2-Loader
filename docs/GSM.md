@@ -143,9 +143,12 @@ Two settings are easy to mistake for GSM options:
 
 ## Notes for builders
 
-GSM's 1080p mode is behind `GSM_1080P`, which the `Makefile` defaults to `1` — so every shipped
-build has it and the mode list is a consistent 30 entries across published flavours. Building with
-`GSM1080P=0` drops mode 29 and shortens the list.
+Two names are involved, and they are not the same thing. **`GSM1080P` is the Makefile variable**; it
+defaults to `1`, and when set the `Makefile` adds **`-DGSM_1080P`** — the preprocessor macro the code
+actually tests — to the EE build, and forwards `GSM1080P=1` on to `ee_core/Makefile`.
+
+So every shipped build has mode 29 and the list is a consistent 30 entries across published flavours.
+Building with `GSM1080P=0` drops it and shortens the list.
 
 `In-game screenshots (IGS) require GSM to be enabled` — see [IGR.md](IGR.md#in-game-screenshots-igs).
 

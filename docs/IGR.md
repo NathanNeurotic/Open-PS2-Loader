@@ -99,9 +99,11 @@ If you are on a release build, the Up combination is inert and that is expected.
 
 **Nothing happens when I press the combination.** Check, in order: the game has actually started
 (past the early boot logos); the Loader Core is OPL rather than Neutrino; Mode 6 is not set for this
-game; and — for the power-off and screenshot combinations specifically — the controller is in analog
-mode. Try the console power button as a cross-check: if that resets and the pad combination does not,
-the hook is fine and the problem is in the pad half.
+game; and — for the power-off combination specifically — the controller is in analog mode, since L3
+and R3 are the stick clicks. The screenshot combination uses **Up**, so it needs no analog mode.
+
+Try the console power button as a cross-check: if that resets and the pad combination does not, the
+hook is fine and the problem is in the pad half.
 
 **Reset takes me somewhere unexpected.** Check **IGR Path** in *Settings → General*. A stale path
 left over from an earlier setup will boot that ELF instead of returning to the browser.

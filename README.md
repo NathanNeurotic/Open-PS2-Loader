@@ -440,7 +440,8 @@ and then, still holding them, press the second half:
 The console's own power button works too: **one press** powers off, **two presses** reset.
 
 Three cases where the combinations do nothing, all expected: before the game has opened a controller
-(the hook patches the game's own `scePadPortOpen`), when per-game compatibility **Mode 6 - Disable
+(the hook patches the game's own pad-open call - `scePadPortOpen` or `scePad2CreateSocket`), when
+per-game compatibility **Mode 6 - Disable
 IGR** is set, and under the **Neutrino core**, which has no IGR at all - which is why Mode 6 is greyed
 out there. PS1 titles use POPSTARTER's or Ember's own IGR, not this one.
 
