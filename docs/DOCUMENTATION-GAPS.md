@@ -4,8 +4,7 @@ Working checklist of features that exist in RiptOPL but are **not explained** to
 documentation surfaces:
 
 * **Repo** — `README.md` and `docs/*.md`
-* **Site** — the GitHub Pages docs at `NathanNeurotic/riptopl-ghpages` (staged locally at
-  `C:\Users\natha\Github\riptopl-ghpages`)
+* **Site** — the GitHub Pages docs, published from the `gh-pages` branch of this repository
 
 Audited 2026-09-09 against `rebuild/main` @ `10301224`, site @ `d66803be`.
 
@@ -21,6 +20,7 @@ settings table with a one-line hint, but nothing tells a user what the feature *
 ## Tier 1 — Missing entirely (highest priority)
 
 ### 1. In-Game Reset (IGR) — the feature itself
+
 **Status: DONE** — `docs/IGR.md` + site `igr.html`, cross-linked from the settings rows, the Mode 6 row,
 the index tiles and Troubleshooting. A short version is inlined in `README.md`.
 
@@ -50,6 +50,7 @@ the MMCE `IGR Bootcard Slot(s)` option fires a switch-to-bootcard command on res
 `include/iosupport.h:86`.
 
 ### 2. Controls / button reference
+
 **Status: DONE** — `docs/CONTROLS.md` + site `controls.html`; game-list table also inlined in `README.md`.
 
 There is no single page listing what any button does. Menu navigation, R3 to star a favourite, L3
@@ -60,6 +61,7 @@ A one-page control reference is the natural home for Tier 1 #1.
 **Home:** new `docs/CONTROLS.md` + site `controls.html`, linked from Getting Started.
 
 ### 3. Menu rumble
+
 **Status: DONE** — covered in the Controls doc and page (analog-mode requirement stated).
 Originally: zero mentions of "rumble" or "vibration" on either surface.
 
@@ -70,6 +72,7 @@ cursor, confirming or going back — needs a DualShock in analog mode"* (`lng_sr
 **Home:** Settings reference row + Controls page.
 
 ### 4. Folder browsing in the game list
+
 **Status: DONE** — `docs/INTERFACE.md` + a `settings.html#folder-browsing` section. The supported-device
 list is the part that was missing: BDM/MMCE/UDPFS-Files only, with **SMB deliberately deferred** (its
 paths use a different separator), and APA-HDD/VCD/UDPFS-block excluded because they scan no directory tree.
@@ -82,6 +85,7 @@ with a trailing `/`, and it is supported on BDM/MMCE/UDPFS devices only. None of
 **Home:** Settings reference + a short section on the device pages.
 
 ### 5. XPARAM
+
 **Status: RESOLVED — internal by design, no user documentation needed.**
 
 Verified: `src/xparam.c` is a hardcoded table of special disc titles whose EE parameters come from
@@ -98,6 +102,7 @@ Recorded in the README developer notes so it is not invisible to contributors.
 ## Tier 2 — Setting-line only (the option is listed; the feature is not explained)
 
 ### 6. GSM (video mode override)
+
 **Status: DONE** — `docs/GSM.md` + site `gsm.html`, cross-linked from the per-game GSM section, the
 settings list, and the home/troubleshooting tiles.
 
@@ -111,6 +116,7 @@ for, and how to recover a game that loses the picture.
 live UI reference — do not document it as a GSM option. Overscan is a UI setting, not a GSM one.
 
 ### 7. IGS (In-Game Screenshot)
+
 **Status: DONE** — covered in `docs/IGR.md` and `igr.html`, including the release-build caveat.
 Originally named only in `credits.html`, `hdd.html`, `install.html`, never explained. Important nuance to state
 plainly: **IGS is OFF in stock builds** (`IGS ?= $(EXTRA_FEATURES)`, `EXTRA_FEATURES ?= 0` in the
@@ -119,6 +125,7 @@ plainly: **IGS is OFF in stock builds** (`IGS ?= $(EXTRA_FEATURES)`, `EXTRA_FEAT
 **Sources:** `Makefile:27-34`, `ee_core/src/igs_api.c:569,607`.
 
 ### 8. PADEMU (pad emulator)
+
 **Status: DONE** — `docs/PADEMU.md` + site `pademu.html`. Notable detail neither surface had: **Fake DS3
 Workaround is only shown in Bluetooth mode**, which is why people cannot find it.
 
@@ -130,6 +137,7 @@ if that build fails), and `release-normalize.yml` folds them into the variants a
 **Home:** new `docs/PADEMU.md` + site `pademu.html`; link from Controls.
 
 ### 9. Parental lock
+
 **Status: DONE** — `docs/INTERFACE.md` + expanded `settings.html#parental-lock`. Now states what the lock
 actually gates (Settings, per-game screens, rename/delete, network update, NBD — **not** launching games,
 so it is not a content filter), that a correct password unlocks for the whole session, and that the master
@@ -141,12 +149,14 @@ forums"). That convention was kept on both surfaces — the behaviour is documen
 Publishing it is a maintainer call.
 
 ### 10. Audio: BGM and menu SFX
+
 **Status: DONE** — `docs/INTERFACE.md` + a `settings.html#audio-files` section: BGM is **Ogg Vorbis**,
 streamed, resolved theme → configured path → `THM/bgm.ogg` (**built-in themes only**); SFX are eight
 **PS2 ADPCM `.adp`** files in the theme's `sound/` folder, listed with what plays each. Explains why a
 disk theme's own music beats the Default Theme Music setting.
 
 ### 11. Apps (`conf_apps.cfg` / `title.cfg`)
+
 **Status: DONE** — site `apps.html`, linked from the home tiles and the install folder listing.
 
 *Found while porting it:* `title.cfg` supports a **third key, `argv1`**, which was documented
@@ -190,13 +200,27 @@ field. Now in both the README section and the new page.
 
 ## Progress
 
-**Done:** #1 IGR · #2 Controls · #3 Rumble · #4 Folder browsing · #6 GSM · #7 IGS · #8 PADEMU ·
-#5 XPARAM (resolved as internal) · #9 Parental lock · #10 Audio · #11 Apps · all Tier 3 parity — plus the Triangle+Cross boot recovery
-combo, which was previously README-only.
+**All four tiers are complete.** Every item in this index is either done or resolved with a recorded
+decision — see each item's **Status** line above.
 
-**Remaining order:**
+| Tier | Items | Outcome |
+|---|---|---|
+| 1 | IGR, Controls, Rumble, Folder browsing, XPARAM | Four documented; XPARAM resolved as internal by design |
+| 2 | GSM, IGS, PADEMU, Parental lock, Audio, Apps | All documented on both surfaces |
+| 3 | Apps port, OPL Archive, Building, Frequent Issues, Folder browsing, 1080p confirm, Languages | All closed; Frequent Issues needed no action |
+| 4 | Plan docs, Art pipeline, Boot logo, Theme engine | Plans marked internal, art consolidated; boot logo left as-is, theme engine found consistent |
 
-1. **Apps page** (#11) — pure port of the README section, low risk.
-3. **PADEMU** (#8), **parental lock** (#9), **BGM/SFX** (#10), **folder browsing** (#4).
-4. Tier 3 parity items, then Tier 4.
-5. **XPARAM** (#5) — decide document vs. mark internal.
+### Found during the work, not in the original audit
+
+* **`Start` held at boot skips config load** and boots with defaults. It was in the site's
+  troubleshooting boot-combo table but in no controls documentation, and not in the README at all.
+  Now in both Controls docs, with the caution that saving afterwards overwrites the old config.
+
+* **The select button default is region-dependent** — Japanese consoles start with Circle as confirm.
+  Documented nowhere. Now in both Controls docs.
+
+* **`title.cfg` supports `argv1`** (Tier 2, item 11).
+
+* **Fake DS3 Workaround only appears in Bluetooth mode** (Tier 2, item 8).
+
+* **`GSMSKIPVIDEOS` / "FMV Skip" is a dead string** with no live UI (Tier 2, item 6).
