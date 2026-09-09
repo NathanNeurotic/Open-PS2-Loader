@@ -1,0 +1,224 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Controls · RiptOPL Docs</title>
+<meta name="description" content="Every button RiptOPL responds to: game list, menus, in-game, and the boot recovery combo.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html" class="active"><span class="em">🕹️</span>Controls</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Controls</h1>
+<p class="lead">Every button RiptOPL responds to, in one place — the game list, the menus, inside a running
+game, and at boot.</p>
+
+<div class="callout info"><div class="h">ℹ Two settings change what you read below</div>
+<b>Select button</b> (<em>Settings → Interface</em>) swaps which face button confirms. The tables use the
+default, <b>Cross = confirm, Circle = back</b>. If you set Circle as the select button, swap those two
+everywhere <em>except</em> the Settings screens (see the note under <a href="#settings-screens">Settings
+screens</a>).<br>
+<b>Coverflow</b> (<em>Settings → Interface</em>) rotates the navigation axis on the game list. Both layouts
+are given below.</div>
+
+<h2 id="game-list">Game list</h2>
+<table>
+<thead><tr><th>Button</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><b>D-pad Up / Down</b></td><td>Move through the game list</td></tr>
+<tr><td><b>D-pad Left / Right</b></td><td>Switch device page (USB, HDD, SMB, Apps, Favorites…)</td></tr>
+<tr><td><b>Cross</b></td><td>Launch the selected game <em>(or go up one folder level, if Circle is your select button)</em></td></tr>
+<tr><td><b>Circle</b></td><td>Go up one folder level <em>(or launch, if Circle is your select button)</em></td></tr>
+<tr><td><b>Triangle</b></td><td>Per-game settings for the selected title</td></tr>
+<tr><td><b>Square</b></td><td>Game info page — cover, screenshots, size, disc type</td></tr>
+<tr><td><b>L1 / R1</b></td><td>Previous / next page of the list</td></tr>
+<tr><td><b>L2</b></td><td>Jump to the first page</td></tr>
+<tr><td><b>R2</b></td><td>Jump to the last page</td></tr>
+<tr><td><b>L3</b></td><td>Cycle this page's library view (PS2 / PS1 / Both / …)</td></tr>
+<tr><td><b>R3</b></td><td>Star or un-star the selected title as a Favorite</td></tr>
+<tr><td><b>Start</b></td><td>Open the main menu</td></tr>
+<tr><td><b>Select</b></td><td>Refresh the current device list</td></tr>
+</tbody>
+</table>
+
+<h3 id="coverflow-axis">With Coverflow enabled</h3>
+<p>Coverflow rotates the two navigation axes on the game list — <b>and only there</b>. The info screen and
+every menu keep the standard layout.</p>
+
+<table>
+<thead><tr><th>Button</th><th>Coverflow off</th><th>Coverflow on</th></tr></thead>
+<tbody>
+<tr><td><b>Up / Down</b></td><td>Move through the list</td><td>Switch device page</td></tr>
+<tr><td><b>Left / Right</b></td><td>Switch device page</td><td>Move through the carousel</td></tr>
+</tbody>
+</table>
+<p>Every other button is unchanged. See <a href="coverflow.html">Coverflow</a>.</p>
+
+<h3 id="button-notes">Notes on individual buttons</h3>
+<p><b>Triangle</b> adapts to what is selected. On a PS2 title it opens
+<a href="per-game-settings.html">per-game settings</a>; on a PS1 title it opens the VCD menu; on an entry in
+Apps it opens the app menu. Folder rows have no settings screen, so Triangle does nothing on them.</p>
+
+<p><b>Square</b> opens the info page. Folder rows have no info page. On PS1 titles and direct HDD entries the
+size field is intentionally left blank rather than computed.</p>
+
+<p><b>R3</b> does nothing when Favorites is disabled — it never writes silently. On the
+<a href="favourites.html">Favorites</a> page itself, R3 removes the selected entry.</p>
+
+<p><b>Select / Refresh</b> is also the retry for a device page that failed to populate — a network share that
+was not up when RiptOPL started, for example.</p>
+
+<h2 id="menus">Main menu and dialogs</h2>
+<table>
+<thead><tr><th>Button</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><b>Up / Down</b></td><td>Move between entries</td></tr>
+<tr><td><b>Left / Right</b></td><td>Change the value of the highlighted setting</td></tr>
+<tr><td><b>Cross</b></td><td>Confirm / activate</td></tr>
+<tr><td><b>Circle</b></td><td>Back / cancel</td></tr>
+<tr><td><b>Start</b></td><td>Confirm and close</td></tr>
+<tr><td><b>Triangle</b></td><td>Open the on-screen keyboard on a text field</td></tr>
+</tbody>
+</table>
+
+<h3 id="settings-screens">Settings screens</h3>
+<div class="callout info"><div class="h">ℹ Settings pins Cross and Circle</div>
+In the settings screens <b>Cross is always OK and Circle is always Cancel</b>, whichever way the global Select
+button setting is configured. This is deliberate — it keeps the settings UI stable no matter how the browser
+is set up.</div>
+
+<table>
+<thead><tr><th>Button</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><b>L1 / R1</b></td><td>Move to the previous / next settings screen</td></tr>
+<tr><td><b>Cross</b></td><td>OK</td></tr>
+<tr><td><b>Circle</b></td><td>Cancel</td></tr>
+</tbody>
+</table>
+<p>See the <a href="settings.html">Settings Reference</a> for what each screen contains.</p>
+
+<h3 id="keyboard">On-screen keyboard</h3>
+<p>Opened with Triangle from any text field.</p>
+<table>
+<thead><tr><th>Button</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><b>D-pad</b></td><td>Move around the key grid</td></tr>
+<tr><td><b>Cross</b></td><td>Type the highlighted character</td></tr>
+<tr><td><b>Square</b></td><td>Backspace</td></tr>
+<tr><td><b>Triangle</b></td><td>Clear the field</td></tr>
+<tr><td><b>L1 / R1</b></td><td>Move the caret left / right</td></tr>
+<tr><td><b>Start</b></td><td>Accept and close</td></tr>
+</tbody>
+</table>
+
+<h2 id="in-game">In-game</h2>
+<p>These work inside a running game. Hold all four shoulder buttons, then press the second half.</p>
+
+<table>
+<thead><tr><th>Hold</th><th>Then press</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>L1 + L2 + R1 + R2</td><td><b>Start + Select</b></td><td>Reset — return to RiptOPL</td></tr>
+<tr><td>L1 + L2 + R1 + R2</td><td><b>L3 + R3</b></td><td>Power off the console</td></tr>
+<tr><td>L1 + L2 + R1 + R2</td><td><b>Up</b></td><td>In-game screenshot <em>(needs GSM on and an IGS-enabled build)</em></td></tr>
+</tbody>
+</table>
+
+<p>The console's own power button also works: <b>one press</b> powers off, <b>two presses</b> reset.</p>
+
+<p>This is <a href="igr.html">In-Game Reset</a>. It does not apply under the Neutrino core, and it can be
+turned off per game with compatibility Mode 6. Full detail, including the limitations, is on that page.</p>
+
+<h2 id="at-boot">At boot</h2>
+<table>
+<thead><tr><th>Hold at boot</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td><b>Triangle + Cross</b></td><td>Force the menu to 480p progressive (recovery)</td></tr>
+</tbody>
+</table>
+
+<p>Hold both while RiptOPL starts and it ignores the saved video mode, forcing <b>480p progressive</b>
+(640×448p60) and writing that back to the config. This is the recovery path for a blank screen after setting a
+video mode the display cannot sync.</p>
+
+<div class="callout amber"><div class="h">⚠ Two things to know about the recovery combo</div>
+It forces <b>480p specifically, not Auto</b> — Auto resolves to the region-default interlaced mode, which is
+exactly what some upscalers fail to sync, so it would leave you no better off. And it affects <b>the RiptOPL
+menu only</b>, not games; a game that loses the picture needs its GSM override changed instead. Your display
+and cable must be able to do 480p progressive (component, VGA, or a capable HDMI adapter) for this to help.
+See <a href="troubleshooting.html">Troubleshooting</a>.</div>
+
+<h2 id="rumble">Rumble</h2>
+<p>RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by
+<b>Rumble</b> in <em>Settings → Controller</em>.</p>
+
+<p>It needs a <b>DualShock in analog mode</b> — with the analog light off the controller has no motors
+available and the setting does nothing. Third-party pads and most adapters vary in whether they report
+vibration support correctly.</p>
+
+<p>This is menu rumble only, and is independent of in-game vibration, which is the game's business (or
+PADEMU's, when emulating a pad).</p>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

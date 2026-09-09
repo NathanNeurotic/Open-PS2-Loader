@@ -41,6 +41,7 @@
     <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
     <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
     <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
     <a href="vmc.html"><span class="em">💾</span>VMC</a>
     <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
     <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
@@ -48,6 +49,7 @@
     <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
     <h4>Reference</h4>
     <a href="settings.html" class="active"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
     <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
     <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
     <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
@@ -86,7 +88,7 @@ The PS1/BDMA plumbing now lives on its own <a href="#vcd-settings">PS Emulation 
 <tbody>
 <tr><td>Debug Colors</td><td>Off / On</td><td>Draws colored debug overlays on the screen. For developers; leave off in normal use.</td></tr>
 <tr><td>PS2 Logo</td><td>Off / On</td><td>Shows the regional PS2 logo animation before launching a game (only when the disc signature matches the console region).</td></tr>
-<tr><td>IGR Path</td><td>text (path)</td><td>Path to a custom ELF that is loaded instead of returning to the browser on an in-game reset (IGR). Leave blank to return to the browser. Hint: <em>Boots custom ELF after an IGR.</em></td></tr>
+<tr><td>IGR Path</td><td>text (path)</td><td>Path to a custom ELF that is loaded instead of returning to the browser on an in-game reset (IGR). Leave blank to return to the browser. Hint: <em>Boots custom ELF after an IGR.</em> See <a href="igr.html">In-Game Reset</a>.</td></tr>
 <tr><td>Default Loader Core</td><td>&lt;OPL&gt; / Neutrino</td><td>Global default core for games whose per-game <em>Loader Core</em> is set to <em>Default</em>. <em>&lt;OPL&gt;</em> (the default) is the native EE core; <em>Neutrino</em> chains the external <code>neutrino.elf</code>. A per-game choice always overrides this. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 <tr><td>Neutrino Launch Args</td><td>[sub-screen]</td><td>Opens the structured global <a href="neutrino.html">Neutrino Args</a> editor. Flags set here apply to every game that uses the Neutrino core unless overridden per-game. Prefix a flag with <code>$</code> to disable it without deleting it.</td></tr>
 <tr><td>Neutrino Device</td><td>Auto / Memory Card / USB / MX4SIO / MMCE / HDD (exFAT) / HDD (APA) / Game's Device / iLink</td><td>Which device <em>type</em> to scan for <code>&lt;root&gt;:/neutrino/neutrino.elf</code>. <em>Auto</em> probes the active game device first, then a legacy custom path, then mc0 and mc1. <em>Game's Device</em> probes the game's own device <em>only</em> — there is no memory-card fallback, so a miss aborts the launch with a "not found" message. Choose a specific type if your ELF is on USB, iLink, MMCE, or an HDD. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
@@ -188,7 +190,7 @@ for full detail.</p>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>MMCE Slot</td><td>0 / 1 / Auto</td><td>Which memory-card slot the MMCE adapter is in.</td></tr>
-<tr><td>IGR Bootcard Slot(s)</td><td>NONE / 0 / 1 / BOTH</td><td>Slot(s) to which the "switch to bootcard" command is sent on in-game reset (IGR).</td></tr>
+<tr><td>IGR Bootcard Slot(s)</td><td>NONE / 0 / 1 / BOTH</td><td>Slot(s) to which the "switch to bootcard" command is sent on in-game reset (IGR). See <a href="igr.html">In-Game Reset</a>.</td></tr>
 <tr><td>Send GameID on Launch</td><td>Off / On</td><td>Sends the Game ID to the MMCE adapter when a game is launched (for adapters that can auto-switch profiles by game ID).</td></tr>
 <tr><td>Wait cycles after /ACK low</td><td>0&ndash;5</td><td>Extra wait cycles inserted after the SPI /ACK signal goes low. Lower values may improve performance at the cost of stability on some adapters.</td></tr>
 <tr><td>Use timeout alarms</td><td>OFF / ON</td><td>Enables MMCE timeout alarms. Turning this off may improve performance but a timeout will then cause a freeze rather than a graceful error.</td></tr>
