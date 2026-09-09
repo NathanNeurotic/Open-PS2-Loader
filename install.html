@@ -220,6 +220,33 @@ do not assume it is always <code>mc0:/OPL/</code>.</p>
 
 <p><b>Everything else</b> — cover art (<code>ART/</code>), themes (<code>THM/</code>), VMC images (<code>VMC/</code>), per-game config files (<code>CFG/</code>), and <code>favourites.bin</code> — lives in the shared <code>OPL/</code> folder structure and is read and written by any OPL-family build that understands those formats. RiptOPL will import an existing <code>favourites.bin</code> from wOPL or uOPL on first launch.</p>
 
+<h2 id="cover-art">Cover art at a glance</h2>
+<p>All artwork lives in <b>one place</b>: the <code>ART/</code> folder on the device the item is on. There is
+no second location and no fallback folder — if a cover is not appearing, the filename is what to check, not
+the path.</p>
+
+<p>Only the <b>key</b> — the part before the suffix — changes with the kind of item:</p>
+
+<table>
+<thead><tr><th>Item</th><th>Key</th><th>Example</th></tr></thead>
+<tbody>
+<tr><td>PS2 game</td><td>The game ID</td><td><code>ART/SLUS_012.34_COV.png</code></td></tr>
+<tr><td>PS1 game (VCD, POPSTARTER)</td><td>The VCD's name</td><td><code>ART/Spyro 2 (Ripto's Rage)_COV.png</code></td></tr>
+<tr><td>PS1 game (Ember)</td><td>The PS1 disc ID</td><td>See <a href="ps1-vcd.html">PS1 Games</a></td></tr>
+<tr><td>App</td><td>The ELF filename</td><td><code>ART/MYAPP_COV.png</code></td></tr>
+</tbody>
+</table>
+
+<p>The suffix says which image it is — <code>_COV</code> is the cover, <code>_SCR</code> and
+<code>_SCR2</code> are screenshots, <code>_BG</code> a background, <code>_ICO</code> an icon. Which of them a
+given theme actually draws is up to that theme; see <a href="themes.html">Theme Engine</a> for authoring, and
+<a href="coverflow.html">Coverflow</a> for what the default theme uses.</p>
+
+<div class="callout info"><div class="h">ℹ Many small files can be slow to open</div>
+On a slow device a folder of loose images costs one file open per cover. <b>Cover Art .tar Archive</b>
+(<em>Settings → Interface</em>, off by default) is an opt-in loader that also reads art from a single
+<code>ART/art.tar</code> alongside the loose files. See the <a href="settings.html">Settings Reference</a>.</div>
+
 <h2 id="next-steps">Next steps</h2>
 <div class="grid">
   <a class="tile" href="getting-started.html"><span class="em">🚀</span><b>Getting Started</b><span>End-to-end first game guide</span></a>
