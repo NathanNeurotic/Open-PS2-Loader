@@ -124,17 +124,33 @@ size field is intentionally left blank rather than computed.</p>
 was not up when RiptOPL started, for example.</p>
 
 <h2 id="menus">Main menu and dialogs</h2>
+<p>Menus have two states, and the same buttons do different things in each.</p>
+
+<p><b>Moving around</b> (nothing is being edited):</p>
 <table>
 <thead><tr><th>Button</th><th>Action</th></tr></thead>
 <tbody>
-<tr><td><b>Up / Down</b></td><td>Move between entries</td></tr>
-<tr><td><b>Left / Right</b></td><td>Change the value of the highlighted setting</td></tr>
-<tr><td><b>Cross</b></td><td>Confirm / activate</td></tr>
+<tr><td><b>Up / Down</b></td><td>Move between lines</td></tr>
+<tr><td><b>Left / Right</b></td><td>Move between controls</td></tr>
+<tr><td><b>Cross</b></td><td>Activate the highlighted control — start editing it</td></tr>
 <tr><td><b>Circle</b></td><td>Back / cancel</td></tr>
 <tr><td><b>Start</b></td><td>Confirm and close</td></tr>
-<tr><td><b>Triangle</b></td><td>Open the on-screen keyboard on a text field</td></tr>
 </tbody>
 </table>
+
+<p><b>Editing a control</b> (after Cross):</p>
+<table>
+<thead><tr><th>Button</th><th>Action</th></tr></thead>
+<tbody>
+<tr><td><b>Up / Down</b></td><td>Cycle the value of a list or number</td></tr>
+<tr><td><b>Triangle</b></td><td>Open the on-screen keyboard on a text field</td></tr>
+<tr><td><b>Cross</b></td><td>Accept and stop editing</td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">ℹ Why Up/Down does two different things</div>
+It moves the cursor when nothing is being edited, and changes a setting once a control is active. That is
+one control state, not two different bindings.</div>
 
 <h3 id="settings-screens">Settings screens</h3>
 <div class="callout info"><div class="h">ℹ Settings pins Cross and Circle</div>

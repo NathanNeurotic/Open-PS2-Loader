@@ -1026,42 +1026,6 @@
   "url": "retroachievements.html#credits"
  },
  {
-  "title": "Controls",
-  "cat": "reference",
-  "text": "Controls Every button RiptOPL responds to, in one place — the game list, the menus, inside a running game, and at boot. ℹ Two settings change what you read below Select button ( Settings → Interface ) swaps which face button confirms. The tables use Cross = confirm, Circle = back , which is the default everywhere except Japanese consoles , where RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your select button, swap those two everywhere except the Settings screens (see the note under Settings screens ). Coverflow ( Settings → Interface ) rotates the navigation axis on the game list. Both layouts are given below.",
-  "url": "controls.html"
- },
- {
-  "title": "Game list",
-  "cat": "reference",
-  "text": "Game list Button Action D-pad Up / Down Move through the game list D-pad Left / Right Switch device page (USB, HDD, SMB, Apps, Favorites…) Cross Launch the selected game (or go up one folder level, if Circle is your select button) Circle Go up one folder level (or launch, if Circle is your select button) Triangle Per-game settings for the selected title Square Game info page — cover, screenshots, size, disc type L1 / R1 Previous / next page of the list L2 Jump to the first page R2 Jump to the last page L3 Cycle this page's library view (PS2 / PS1 / Both / …) R3 Star or un-star the selected title as a Favorite Start Open the main menu Select Refresh the current device list With Coverflow enabled Coverflow rotates the two navigation axes on the game list — and only there . The info screen and every menu keep the standard layout. Button Coverflow off Coverflow on Up / Down Move through the list Switch device page Left / Right Switch device page Move through the carousel Every other button is unchanged. See Coverflow . Notes on individual buttons Triangle adapts to what is selected. On a PS2 title it opens per-game settings ; on a PS1 title it opens the VCD menu; on an entry in Apps it opens the app menu. Folder rows have no settings screen, so Triangle does nothing on them. Square opens the info page. Folder rows have no info page. On PS1 titles and direct HDD entries the size field is intentionally left blank rather than computed. R3 does nothing when Favorites is disabled — it never writes silently. On the Favorites page itself, R3 removes the selected entry. Select / Refresh is also the retry for a device page that failed to populate — a network share that was not up when RiptOPL started, for example.",
-  "url": "controls.html#game-list"
- },
- {
-  "title": "Main menu and dialogs",
-  "cat": "reference",
-  "text": "Main menu and dialogs Button Action Up / Down Move between entries Left / Right Change the value of the highlighted setting Cross Confirm / activate Circle Back / cancel Start Confirm and close Triangle Open the on-screen keyboard on a text field Settings screens ℹ Settings pins Cross and Circle In the settings screens Cross is always OK and Circle is always Cancel , whichever way the global Select button setting is configured. This is deliberate — it keeps the settings UI stable no matter how the browser is set up. Button Action L1 / R1 Move to the previous / next settings screen Cross OK Circle Cancel See the Settings Reference for what each screen contains. On-screen keyboard Opened with Triangle from any text field. Button Action D-pad Move around the key grid Cross Type the highlighted character Square Backspace Triangle Clear the field L1 / R1 Move the caret left / right Start Accept and close",
-  "url": "controls.html#menus"
- },
- {
-  "title": "In-game",
-  "cat": "reference",
-  "text": "In-game These work inside a running game. Hold all four shoulder buttons, then press the second half. Hold Then press Result L1 + L2 + R1 + R2 Start + Select Reset — return to RiptOPL L1 + L2 + R1 + R2 L3 + R3 Power off the console L1 + L2 + R1 + R2 Up In-game screenshot (needs GSM on and an IGS-enabled build) The console's own power button also works: one press powers off, two presses reset. This is In-Game Reset . It does not apply under the Neutrino core, and it can be turned off per game with compatibility Mode 6. Full detail, including the limitations, is on that page.",
-  "url": "controls.html#in-game"
- },
- {
-  "title": "At boot",
-  "cat": "reference",
-  "text": "At boot Hold at boot Result Start Skip loading the config — boot with defaults Triangle + Cross Force the menu to 480p progressive (recovery) Start — skip the config Hold Start while RiptOPL boots and it does not read your settings file at all, starting from built-in defaults instead. This is the recovery path for a configuration that hangs or crashes the loader on startup. See Troubleshooting . ⚠ Your settings are ignored, not erased — but do not save The settings file is left alone for this boot. If you then change anything and save, you save the defaults over your old configuration. To keep your settings, fix the offending option and save; to preserve them untouched, do not save while booted this way. Triangle + Cross — force 480p Hold both while RiptOPL starts and it ignores the saved video mode, forcing 480p progressive (640×448p60) and writing that back to the config. This is the recovery path for a blank screen after setting a video mode the display cannot sync. ⚠ Two things to know about the recovery combo It forces 480p specifically, not Auto — Auto resolves to the region-default interlaced mode, which is exactly what some upscalers fail to sync, so it would leave you no better off. And it affects the RiptOPL menu only , not games; a game that loses the picture needs its GSM override changed instead. Your display and cable must be able to do 480p progressive (component, VGA, or a capable HDMI adapter) for this to help. See Troubleshooting .",
-  "url": "controls.html#at-boot"
- },
- {
-  "title": "Rumble",
-  "cat": "reference",
-  "text": "Rumble RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by Rumble in Settings → Controller . It needs a DualShock in analog mode — with the analog light off the controller has no motors available and the setting does nothing. Third-party pads and most adapters vary in whether they report vibration support correctly. This is menu rumble only, and is independent of in-game vibration, which is the game's business (or PADEMU 's, when emulating a pad).",
-  "url": "controls.html#rumble"
- },
- {
   "title": "Apps",
   "cat": "features",
   "text": "Apps RiptOPL can list and launch your homebrew ELFs alongside your games, on the Apps device page. There are two supported ways to register an app; both work, and you can use both at once. Method Use it when title.cfg (folder-based) You want each app self-contained inside its own folder under APPS/ . This is the method to prefer for new setups. conf_apps.cfg (legacy) You want one central list, or your ELFs live somewhere other than APPS/ . ⚠ RiptOPL is case-sensitive Both methods match file names exactly, including letter case. MYAPP.ELF and myapp.elf are different files as far as the loader is concerned. This is the single most common reason an app does not appear or fails to launch.",
@@ -1434,48 +1398,6 @@
   "url": "troubleshooting.html#more-help"
  },
  {
-  "title": "In-Game Reset (IGR)",
-  "cat": "features",
-  "text": "In-Game Reset (IGR) In-Game Reset lets you leave a running game and come straight back to RiptOPL — or power the console off — without touching the console's own Reset button. It is a controller shortcut that works from inside the game. RiptOPL installs a small hook into the running game that watches the controller for a reserved button combination. When it sees one, it tears the game down and either returns you to the browser or shuts the console down.",
-  "url": "igr.html"
- },
- {
-  "title": "The button combinations",
-  "cat": "features",
-  "text": "The button combinations Every combination starts the same way: hold all four shoulder buttons — L1 + L2 + R1 + R2 — and then, while still holding them, press the second half. Hold Then press Result L1 + L2 + R1 + R2 Start + Select Reset — quit the game and return to RiptOPL L1 + L2 + R1 + R2 L3 + R3 Power off the console L1 + L2 + R1 + R2 Up In-game screenshot — see Screenshots L3 and R3 are the analog-stick clicks , so the power-off combination needs a DualShock with the analog light on.",
-  "url": "igr.html#combinations"
- },
- {
-  "title": "The console power button",
-  "cat": "features",
-  "text": "The console power button The power button on the front of the console is hooked too, and does not need a controller: Power button Result Press once Power off Press twice Reset — return to RiptOPL ℹ Worth remembering This is the fallback when a game has stopped responding to the pad entirely — it does not depend on the pad hook having attached.",
-  "url": "igr.html#power-button"
- },
- {
-  "title": "Where a reset takes you",
-  "cat": "features",
-  "text": "Where a reset takes you By default a reset returns you to the RiptOPL browser, on the same device page you launched from. You can send it somewhere else with the IGR Path setting ( Settings → General ). Point it at an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight back into a different launcher or a homebrew menu. The file must live on a memory card ( mc0: or mc1: ); leave the setting blank to return to RiptOPL normally. If you use MMCE cards, IGR Bootcard Slot(s) ( Settings → MMCE ) additionally sends a \"switch to bootcard\" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already back on its boot image by the time the next thing loads. See MMCE .",
-  "url": "igr.html#where-reset-goes"
- },
- {
-  "title": "When IGR is not available",
-  "cat": "features",
-  "text": "When IGR is not available IGR is not universal. It is worth knowing the three cases where the combinations will do nothing, so you do not spend time hunting a fault that is not there. Before the game opens a controller The hook attaches by patching the game's own scePadPortOpen / scePad2CreateSocket call. Until the game asks for a pad, there is nothing hooked — so IGR does not respond during very early boot logos on some titles. The console power button still works. When the game is incompatible A few games handle input in a way the hook disturbs. Per-game compatibility Mode 6 — Disable IGR turns the hook off for that title. If a game misbehaves in a way that started when you launched it through RiptOPL, this is the mode to try — at the cost of losing IGR for that game. See Per-game Settings . Under the Neutrino core ⚠ Neutrino has no IGR This is a property of that loader, not a RiptOPL limitation, and it is why Mode 6 is greyed out whenever the Loader Core is set to Neutrino — there is no hook there to disable. To leave a Neutrino-launched game, use the console's power or reset button. See Neutrino Core . PS1 titles are a separate case again: they run under POPSTARTER or Ember, each of which has its own independent IGR behaviour built into that binary. RiptOPL's hook is not involved. See PS1 Games and the sister POPStarter docs .",
-  "url": "igr.html#limitations"
- },
- {
-  "title": "In-game screenshots (IGS)",
-  "cat": "features",
-  "text": "In-game screenshots (IGS) The L1+L2+R1+R2 + Up combination captures the current frame to a bitmap on the memory card, named like mc1:/SLUS_012.34_IGS(001).bmp . Two conditions gate it, and both catch people out: GSM must be enabled for the running game. IGS reads the frame through GSM's view of the video hardware, so with GSM off the combination does nothing. The build must include IGS. It is compiled out of stock builds — the Makefile defaults EXTRA_FEATURES to 0 , and IGS follows it. ⚠ Release builds do not have IGS Official release builds are compiled with EXTRA_FEATURES=0 , so the Up combination is inert on them and that is expected. Building from source with make IGS=1 (or EXTRA_FEATURES=1 ) enables it.",
-  "url": "igr.html#igs"
- },
- {
-  "title": "Troubleshooting",
-  "cat": "features",
-  "text": "Troubleshooting Nothing happens when I press the combination. Check, in order: the game has actually started (past the early boot logos); the Loader Core is OPL rather than Neutrino; Mode 6 is not set for this game; and — for the power-off combination specifically — the controller is in analog mode, since L3 and R3 are the stick clicks. The screenshot combination uses Up , so it needs no analog mode. Try the console power button as a cross-check: if that resets and the pad combination does not, the hook is fine and the problem is in the pad half. Reset takes me somewhere unexpected. Check IGR Path in Settings → General . A stale path left over from an earlier setup will boot that ELF instead of returning to the browser. The game resets on its own during play. A game that uses all four shoulders plus Start or Select in normal play can trigger IGR by accident. Set Mode 6 — Disable IGR for that title. Where this lives in the source File Role ee_core/src/padhook.c The hook itself: pad pattern matching, the VBLANK interrupt handler, combo dispatch, the IGR thread ee_core/include/padhook.h The combo constants ( IGR_COMBO_R1_L1_R2_L2 , IGR_COMBO_START_SELECT , IGR_COMBO_R3_L3 , IGR_COMBO_UP ) ee_core/src/cd_igr_rpc.c IOP-side reset RPC ee_core/src/igs_api.c Screenshot capture and BMP writing include/iosupport.h COMPAT_MODE_6 — the Disable IGR flag",
-  "url": "igr.html#troubleshooting"
- },
- {
   "title": "GSM — forced video modes",
   "cat": "features",
   "text": "GSM — forced video modes GSM makes a game output a video mode it was never written to output. Most PS2 games render 480i (or 576i in PAL). GSM intercepts the game's video setup and substitutes a different raster, so the same game can come out as 480p, 720p, 1080i, or one of a range of VGA modes — useful on modern displays and upscalers that handle interlaced signals badly or not at all. ℹ GSM does not add detail It does not re-render anything. The game still draws the same picture at the same internal resolution; GSM changes how that picture is scanned out. Expect a cleaner, more stable signal, not a sharper one.",
@@ -1522,5 +1444,83 @@
   "cat": "features",
   "text": "Related settings that are not GSM Two settings are easy to mistake for GSM options: Overscan ( Settings → Display ) trims the edges of the RiptOPL menu , not of games. It is a UI setting and is unrelated to the GSM H-POS/V-POS offsets. Video Mode ( Settings → Display ) sets the mode the menu runs in. GSM never affects it. Notes for builders Two names are involved, and they are not the same thing. GSM1080P is the Makefile variable ; it defaults to 1 , and when set the Makefile adds -DGSM_1080P — the preprocessor macro the code actually tests — to the EE build, and forwards GSM1080P=1 on to ee_core/Makefile . So every shipped build has mode 29 and the list is a consistent 30 entries across published flavours. Building with GSM1080P=0 drops it and shortens the list. In-game screenshots (IGS) require GSM to be enabled — see In-Game Reset . File Role ee_core/src/gsm_api.c , gsm_engine.S , gsm_engine_adv.S The GSM engine src/guigame.c The GSM settings page, the mode list, and the 1080p confirmation gate src/dialogs.c The six GSM dialog rows",
   "url": "gsm.html#not-gsm"
+ },
+ {
+  "title": "In-Game Reset (IGR)",
+  "cat": "features",
+  "text": "In-Game Reset (IGR) In-Game Reset lets you leave a running game and come straight back to RiptOPL — or power the console off — without touching the console's own Reset button. It is a controller shortcut that works from inside the game. RiptOPL installs a small hook into the running game that watches the controller for a reserved button combination. When it sees one, it tears the game down and either returns you to the browser or shuts the console down.",
+  "url": "igr.html"
+ },
+ {
+  "title": "The button combinations",
+  "cat": "features",
+  "text": "The button combinations Every combination starts the same way: hold all four shoulder buttons — L1 + L2 + R1 + R2 — and then, while still holding them, press the second half. Hold Then press Result L1 + L2 + R1 + R2 Start + Select Reset — quit the game and return to RiptOPL L1 + L2 + R1 + R2 L3 + R3 Power off the console L1 + L2 + R1 + R2 Up In-game screenshot — see Screenshots L3 and R3 are the analog-stick clicks , so the power-off combination needs a DualShock with the analog light on.",
+  "url": "igr.html#combinations"
+ },
+ {
+  "title": "The console power button",
+  "cat": "features",
+  "text": "The console power button The power button on the front of the console is hooked too, and does not need a controller: Power button Result Press once Power off Press twice Reset — return to RiptOPL ℹ Worth remembering This is the fallback when a game has stopped responding to the pad entirely — it does not depend on the pad hook having attached.",
+  "url": "igr.html#power-button"
+ },
+ {
+  "title": "Where a reset takes you",
+  "cat": "features",
+  "text": "Where a reset takes you By default a reset returns you to the RiptOPL browser, on the same device page you launched from. You can send it somewhere else with the IGR Path setting ( Settings → General ). Point it at an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight back into a different launcher or a homebrew menu. The file must live on a memory card ( mc0: or mc1: ); leave the setting blank to return to RiptOPL normally. If you use MMCE cards, IGR Bootcard Slot(s) ( Settings → MMCE ) additionally sends a \"switch to bootcard\" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already back on its boot image by the time the next thing loads. See MMCE .",
+  "url": "igr.html#where-reset-goes"
+ },
+ {
+  "title": "When IGR is not available",
+  "cat": "features",
+  "text": "When IGR is not available IGR is not universal. It is worth knowing the three cases where the combinations will do nothing, so you do not spend time hunting a fault that is not there. Before the game opens a controller The hook attaches by patching the game's own scePadPortOpen / scePad2CreateSocket call. Until the game asks for a pad, there is nothing hooked — so IGR does not respond during very early boot logos on some titles. The console power button still works. When the game is incompatible A few games handle input in a way the hook disturbs. Per-game compatibility Mode 6 — Disable IGR turns the hook off for that title. If a game misbehaves in a way that started when you launched it through RiptOPL, this is the mode to try — at the cost of losing IGR for that game. See Per-game Settings . Under the Neutrino core ⚠ Neutrino has no IGR This is a property of that loader, not a RiptOPL limitation, and it is why Mode 6 is greyed out whenever the Loader Core is set to Neutrino — there is no hook there to disable. To leave a Neutrino-launched game, use the console's power or reset button. See Neutrino Core . PS1 titles are a separate case again: they run under POPSTARTER or Ember, each of which has its own independent IGR behaviour built into that binary. RiptOPL's hook is not involved. See PS1 Games and the sister POPStarter docs .",
+  "url": "igr.html#limitations"
+ },
+ {
+  "title": "In-game screenshots (IGS)",
+  "cat": "features",
+  "text": "In-game screenshots (IGS) The L1+L2+R1+R2 + Up combination captures the current frame to a bitmap on memory card slot 1 , named from the game's ID with a zero-padded sequence number starting at 001 — for example mc1:/SLUS_012.34_GS(001).bmp . The number increments to a maximum of 255 per game. Two conditions gate it, and both catch people out: GSM must be enabled for the running game. IGS reads the frame through GSM's view of the video hardware, so with GSM off the combination does nothing. The build must include IGS. It is compiled out of stock builds — the Makefile defaults EXTRA_FEATURES to 0 , and IGS follows it. ⚠ Release builds do not have IGS Official release builds are compiled with EXTRA_FEATURES=0 , so the Up combination is inert on them and that is expected. Building from source with make IGS=1 (or EXTRA_FEATURES=1 ) enables it.",
+  "url": "igr.html#igs"
+ },
+ {
+  "title": "Troubleshooting",
+  "cat": "features",
+  "text": "Troubleshooting Nothing happens when I press the combination. Check, in order: the game has actually started (past the early boot logos); the Loader Core is OPL rather than Neutrino; Mode 6 is not set for this game; and — for the power-off combination specifically — the controller is in analog mode, since L3 and R3 are the stick clicks. The screenshot combination uses Up , so it needs no analog mode. Try the console power button as a cross-check: if that resets and the pad combination does not, the hook is fine and the problem is in the pad half. Reset takes me somewhere unexpected. Check IGR Path in Settings → General . A stale path left over from an earlier setup will boot that ELF instead of returning to the browser. The game resets on its own during play. A game that uses all four shoulders plus Start or Select in normal play can trigger IGR by accident. Set Mode 6 — Disable IGR for that title. Where this lives in the source File Role ee_core/src/padhook.c The hook itself: pad pattern matching, the VBLANK interrupt handler, combo dispatch, the IGR thread ee_core/include/padhook.h The combo constants ( IGR_COMBO_R1_L1_R2_L2 , IGR_COMBO_START_SELECT , IGR_COMBO_R3_L3 , IGR_COMBO_UP ) ee_core/src/cd_igr_rpc.c IOP-side reset RPC ee_core/src/igs_api.c Screenshot capture and BMP writing include/iosupport.h COMPAT_MODE_6 — the Disable IGR flag",
+  "url": "igr.html#troubleshooting"
+ },
+ {
+  "title": "Controls",
+  "cat": "reference",
+  "text": "Controls Every button RiptOPL responds to, in one place — the game list, the menus, inside a running game, and at boot. ℹ Two settings change what you read below Select button ( Settings → Interface ) swaps which face button confirms. The tables use Cross = confirm, Circle = back , which is the default everywhere except Japanese consoles , where RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your select button, swap those two everywhere except the Settings screens (see the note under Settings screens ). Coverflow ( Settings → Interface ) rotates the navigation axis on the game list. Both layouts are given below.",
+  "url": "controls.html"
+ },
+ {
+  "title": "Game list",
+  "cat": "reference",
+  "text": "Game list Button Action D-pad Up / Down Move through the game list D-pad Left / Right Switch device page (USB, HDD, SMB, Apps, Favorites…) Cross Launch the selected game (or go up one folder level, if Circle is your select button) Circle Go up one folder level (or launch, if Circle is your select button) Triangle Per-game settings for the selected title Square Game info page — cover, screenshots, size, disc type L1 / R1 Previous / next page of the list L2 Jump to the first page R2 Jump to the last page L3 Cycle this page's library view (PS2 / PS1 / Both / …) R3 Star or un-star the selected title as a Favorite Start Open the main menu Select Refresh the current device list With Coverflow enabled Coverflow rotates the two navigation axes on the game list — and only there . The info screen and every menu keep the standard layout. Button Coverflow off Coverflow on Up / Down Move through the list Switch device page Left / Right Switch device page Move through the carousel Every other button is unchanged. See Coverflow . Notes on individual buttons Triangle adapts to what is selected. On a PS2 title it opens per-game settings ; on a PS1 title it opens the VCD menu; on an entry in Apps it opens the app menu. Folder rows have no settings screen, so Triangle does nothing on them. Square opens the info page. Folder rows have no info page. On PS1 titles and direct HDD entries the size field is intentionally left blank rather than computed. R3 does nothing when Favorites is disabled — it never writes silently. On the Favorites page itself, R3 removes the selected entry. Select / Refresh is also the retry for a device page that failed to populate — a network share that was not up when RiptOPL started, for example.",
+  "url": "controls.html#game-list"
+ },
+ {
+  "title": "Main menu and dialogs",
+  "cat": "reference",
+  "text": "Main menu and dialogs Menus have two states, and the same buttons do different things in each. Moving around (nothing is being edited): Button Action Up / Down Move between lines Left / Right Move between controls Cross Activate the highlighted control — start editing it Circle Back / cancel Start Confirm and close Editing a control (after Cross): Button Action Up / Down Cycle the value of a list or number Triangle Open the on-screen keyboard on a text field Cross Accept and stop editing ℹ Why Up/Down does two different things It moves the cursor when nothing is being edited, and changes a setting once a control is active. That is one control state, not two different bindings. Settings screens ℹ Settings pins Cross and Circle In the settings screens Cross is always OK and Circle is always Cancel , whichever way the global Select button setting is configured. This is deliberate — it keeps the settings UI stable no matter how the browser is set up. Button Action L1 / R1 Move to the previous / next settings screen Cross OK Circle Cancel See the Settings Reference for what each screen contains. On-screen keyboard Opened with Triangle from any text field. Button Action D-pad Move around the key grid Cross Type the highlighted character Square Backspace Triangle Clear the field L1 / R1 Move the caret left / right Start Accept and close",
+  "url": "controls.html#menus"
+ },
+ {
+  "title": "In-game",
+  "cat": "reference",
+  "text": "In-game These work inside a running game. Hold all four shoulder buttons, then press the second half. Hold Then press Result L1 + L2 + R1 + R2 Start + Select Reset — return to RiptOPL L1 + L2 + R1 + R2 L3 + R3 Power off the console L1 + L2 + R1 + R2 Up In-game screenshot (needs GSM on and an IGS-enabled build) The console's own power button also works: one press powers off, two presses reset. This is In-Game Reset . It does not apply under the Neutrino core, and it can be turned off per game with compatibility Mode 6. Full detail, including the limitations, is on that page.",
+  "url": "controls.html#in-game"
+ },
+ {
+  "title": "At boot",
+  "cat": "reference",
+  "text": "At boot Hold at boot Result Start Skip loading the config — boot with defaults Triangle + Cross Force the menu to 480p progressive (recovery) Start — skip the config Hold Start while RiptOPL boots and it does not read your settings file at all, starting from built-in defaults instead. This is the recovery path for a configuration that hangs or crashes the loader on startup. See Troubleshooting . ⚠ Your settings are ignored, not erased — but do not save The settings file is left alone for this boot. If you then change anything and save, you save the defaults over your old configuration. To keep your settings, fix the offending option and save; to preserve them untouched, do not save while booted this way. Triangle + Cross — force 480p Hold both while RiptOPL starts and it ignores the saved video mode, forcing 480p progressive (640×448p60) and writing that back to the config. This is the recovery path for a blank screen after setting a video mode the display cannot sync. ⚠ Two things to know about the recovery combo It forces 480p specifically, not Auto — Auto resolves to the region-default interlaced mode, which is exactly what some upscalers fail to sync, so it would leave you no better off. And it affects the RiptOPL menu only , not games; a game that loses the picture needs its GSM override changed instead. Your display and cable must be able to do 480p progressive (component, VGA, or a capable HDMI adapter) for this to help. See Troubleshooting .",
+  "url": "controls.html#at-boot"
+ },
+ {
+  "title": "Rumble",
+  "cat": "reference",
+  "text": "Rumble RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by Rumble in Settings → Controller . It needs a DualShock in analog mode — with the analog light off the controller has no motors available and the setting does nothing. Third-party pads and most adapters vary in whether they report vibration support correctly. This is menu rumble only, and is independent of in-game vibration, which is the game's business (or PADEMU 's, when emulating a pad).",
+  "url": "controls.html#rumble"
  }
 ]

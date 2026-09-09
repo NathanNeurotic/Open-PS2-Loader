@@ -142,8 +142,9 @@ independent IGR behaviour built into that binary. RiptOPL's hook is not involved
 <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
 
 <h2 id="igs">In-game screenshots (IGS)</h2>
-<p>The <b>L1+L2+R1+R2 + Up</b> combination captures the current frame to a bitmap on the memory card, named
-like <code>mc1:/SLUS_012.34_IGS(001).bmp</code>.</p>
+<p>The <b>L1+L2+R1+R2 + Up</b> combination captures the current frame to a bitmap on <b>memory card slot
+1</b>, named from the game's ID with a zero-padded sequence number starting at 001 — for example
+<code>mc1:/SLUS_012.34_GS(001).bmp</code>. The number increments to a maximum of 255 per game.</p>
 
 <p>Two conditions gate it, and both catch people out:</p>
 <ol>
