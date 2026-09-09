@@ -1,0 +1,222 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GSM — forced video modes · RiptOPL Docs</title>
+<meta name="description" content="GSM forced video modes: where to set them, the 30 modes, the 1080p confirmation, and recovering a lost picture.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="gsm.html" class="active"><span class="em">📺</span>GSM Video Modes</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>GSM — forced video modes</h1>
+<p class="lead">GSM makes a game output a video mode it was never written to output. Most PS2 games render 480i
+(or 576i in PAL). GSM intercepts the game's video setup and substitutes a different raster, so the same game
+can come out as 480p, 720p, 1080i, or one of a range of VGA modes — useful on modern displays and upscalers
+that handle interlaced signals badly or not at all.</p>
+
+<div class="callout info"><div class="h">ℹ GSM does not add detail</div>
+It does not re-render anything. The game still draws the same picture at the same internal resolution; GSM
+changes how that picture is scanned out. Expect a cleaner, more stable signal, not a sharper one.</div>
+
+<h2 id="where">Where to set it</h2>
+<p>GSM lives in two places:</p>
+<ul>
+<li><b>Per game</b> — Triangle on a title → <b>Configure GSM</b>.</li>
+<li><b>Globally</b> — <em>Settings → Display Settings → GSM Defaults</em>. This is what every game with no GSM
+settings of its own inherits.</li>
+</ul>
+
+<p>The per-game page's first row, <b>GSM Source</b>, decides which of those wins:</p>
+
+<table>
+<thead><tr><th>GSM Source</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><b>Global</b></td><td>Ignore this game's GSM keys entirely and follow the global defaults. Selecting it also <em>removes</em> the game's stored GSM keys.</td></tr>
+<tr><td><b>Per Game</b></td><td>This game's GSM settings apply, as a complete set.</td></tr>
+<tr><td><b>Per Game + Global</b></td><td>Per-key inheritance: any GSM value this game sets is used, and anything it leaves unset falls through to the global default.</td></tr>
+</tbody>
+</table>
+
+<p><b>Per Game + Global</b> is the option to reach for when you want one game to differ from your global setup
+in a single respect — a different video mode, say — while still tracking your global choices for everything
+else. See <a href="per-game-settings.html">Per-game Settings</a>.</p>
+
+<h2 id="options">The options</h2>
+<table>
+<thead><tr><th>Option</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><b>GSM Selector</b></td><td>The on/off switch. With it off, the four rows below are greyed out and GSM does nothing.</td></tr>
+<tr><td><b>Forced custom display mode</b></td><td>The video mode to output. See <a href="#modes">the list below</a>.</td></tr>
+<tr><td><b>H-POS</b></td><td>Horizontal position offset, −100 to +100. Shifts the picture left/right.</td></tr>
+<tr><td><b>V-POS</b></td><td>Vertical position offset, −100 to +100. Shifts the picture up/down.</td></tr>
+<tr><td><b>Emulate FIELD Flipping</b></td><td>Compatibility fix for games that shake, tear, or judder under a progressive mode. Try this first when a game looks wrong <em>after</em> GSM is applied.</td></tr>
+</tbody>
+</table>
+
+<p>On the per-game page the mode list ends with <b>Default</b>, which means "follow the global setting".
+Picking it removes the key rather than storing a value, so the game genuinely tracks the global from then on.
+That entry does not appear on the global page, where it would be meaningless.</p>
+
+<h2 id="modes">Available modes</h2>
+<p>Modes 0–5 are the standard console rasters; the rest are forced progressive, HDTV, or VGA modes.</p>
+
+<table>
+<thead><tr><th>#</th><th>Mode</th><th>#</th><th>Mode</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>NTSC</td><td>15</td><td>VGA 640x480p @75Hz</td></tr>
+<tr><td>1</td><td>NTSC Non Interlaced</td><td>16</td><td>VGA 640x480p @85Hz</td></tr>
+<tr><td>2</td><td>PAL</td><td>17</td><td>VGA 640x960i @60Hz</td></tr>
+<tr><td>3</td><td>PAL Non Interlaced</td><td>18</td><td>VGA 800x600p @56Hz</td></tr>
+<tr><td>4</td><td>PAL @60Hz</td><td>19</td><td>VGA 800x600p @60Hz</td></tr>
+<tr><td>5</td><td>PAL @60Hz Non Interlaced</td><td>20</td><td>VGA 800x600p @72Hz</td></tr>
+<tr><td>6</td><td>PS1 NTSC (HDTV 480p @60Hz)</td><td>21</td><td>VGA 800x600p @75Hz</td></tr>
+<tr><td>7</td><td>PS1 PAL (HDTV 576p @50Hz)</td><td>22</td><td>VGA 800x600p @85Hz</td></tr>
+<tr><td>8</td><td><b>HDTV 480p @60Hz</b></td><td>23</td><td>VGA 1024x768p @60Hz</td></tr>
+<tr><td>9</td><td>HDTV 576p @50Hz</td><td>24</td><td>VGA 1024x768p @70Hz</td></tr>
+<tr><td>10</td><td><b>HDTV 720p @60Hz</b></td><td>25</td><td>VGA 1024x768p @75Hz</td></tr>
+<tr><td>11</td><td><b>HDTV 1080i @60Hz</b></td><td>26</td><td>VGA 1024x768p @85Hz</td></tr>
+<tr><td>12</td><td>HDTV 1080i @60Hz Non Interlaced</td><td>27</td><td>VGA 1280x1024p @60Hz</td></tr>
+<tr><td>13</td><td>VGA 640x480p @60Hz</td><td>28</td><td>VGA 1280x1024p @75Hz</td></tr>
+<tr><td>14</td><td>VGA 640x480p @72Hz</td><td>29</td><td>HDTV 1080p @60Hz (EXPERIMENTAL)</td></tr>
+</tbody>
+</table>
+
+<p><b>HDTV 480p @60Hz</b> (8) is the safe starting point on almost any modern display. <b>720p</b> (10) and
+<b>1080i</b> (11) are the next most widely accepted. The VGA modes need a display fed over VGA or a
+component/VGA-capable path; a plain HDMI adapter will usually not sync them.</p>
+
+<h2 id="1080p">1080p is experimental, and asks three times</h2>
+<p>Mode 29, <b>HDTV 1080p @60Hz (EXPERIMENTAL)</b>, is compiled into every shipped build. It is a
+GSM-synthetic progressive raster — not a mode the PS2 hardware natively produces — and while it has passed
+real-hardware testing, it is non-standard enough that some displays will not sync it at all.</p>
+
+<div class="callout amber"><div class="h">⚠ Cancelling the confirmation falls back to NTSC</div>
+Selecting 1080p <b>with GSM enabled</b> triggers a <b>three-step confirmation</b> before it is written to
+disk, because a display that cannot sync leaves you with a black screen and no way to undo the choice from the
+console. Decline at any of the three steps and the mode falls back to <b>NTSC (mode 0)</b> — not to your
+previous selection. If you cancel, set the mode you actually wanted before leaving the page.</div>
+
+<p>The same gate applies on the global page, which carries the wider blast radius of the two: it is what every
+game without its own GSM settings inherits.</p>
+
+<h2 id="lost-picture">When a game loses the picture</h2>
+<p>GSM is applied per game, so a bad setting affects that game only — the RiptOPL menu itself is unaffected
+and you can always get back to it.</p>
+<ol>
+<li>Launch a game that still works, or use the console's reset to return to the browser.</li>
+<li>Triangle on the affected title → <b>Configure GSM</b>.</li>
+<li>Either turn <b>GSM Selector</b> off, or pick a more conservative mode (480p, or the game's native
+NTSC/PAL).</li>
+</ol>
+
+<div class="callout info"><div class="h">ℹ If the <em>menu</em> has no picture, that is not GSM</div>
+That is the global Video Mode setting. Hold <b>Triangle + Cross while RiptOPL boots</b> to force the menu to
+480p progressive. See <a href="controls.html#at-boot">Controls</a>.</div>
+
+<h3 id="looks-wrong">The game runs but looks wrong</h3>
+<p><b>Shaking, tearing, or juddering under a progressive mode</b> — turn on <b>Emulate FIELD Flipping</b>.
+This is what it exists for.</p>
+<p><b>Picture off-centre</b> — adjust <b>H-POS</b> and <b>V-POS</b>.</p>
+<p><b>Some scenes fine, others broken</b> — a few games switch video mode mid-run (typically for FMVs). Those
+tend to be poor GSM candidates; try a less aggressive mode or leave GSM off for that title.</p>
+
+<h2 id="other-cores">GSM and the other cores</h2>
+<p><b>Neutrino</b> does not use OPL's GSM. It has its own forced video mode handling, and the per-game
+<b>Neutrino GSM Compatibility</b> option is the equivalent field-flipping fix — "for games that shake or tear
+under a forced Neutrino video mode". Set it there rather than on the GSM page when the Loader Core is
+Neutrino. See <a href="neutrino.html">Neutrino Core</a>.</p>
+
+<p><b>PS1 titles</b> run under POPSTARTER or Ember and do not use OPL's GSM either. Modes 6 and 7 in the list
+above are named "PS1 NTSC/PAL" because of the raster they produce, not because they apply to PS1 games. See
+<a href="ps1-vcd.html">PS1 Games</a>.</p>
+
+<h2 id="not-gsm">Related settings that are not GSM</h2>
+<p>Two settings are easy to mistake for GSM options:</p>
+<ul>
+<li><b>Overscan</b> (<em>Settings → Display</em>) trims the edges of the <b>RiptOPL menu</b>, not of games. It
+is a UI setting and is unrelated to the GSM H-POS/V-POS offsets.</li>
+<li><b>Video Mode</b> (<em>Settings → Display</em>) sets the mode the <b>menu</b> runs in. GSM never affects
+it.</li>
+</ul>
+
+<details><summary>Notes for builders</summary>
+<p>GSM's 1080p mode is behind <code>GSM_1080P</code>, which the <code>Makefile</code> defaults to
+<code>1</code> — so every shipped build has it and the mode list is a consistent 30 entries across published
+flavours. Building with <code>GSM1080P=0</code> drops mode 29 and shortens the list.</p>
+<p>In-game screenshots (IGS) require GSM to be enabled — see <a href="igr.html#igs">In-Game Reset</a>.</p>
+<table>
+<thead><tr><th>File</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td><code>ee_core/src/gsm_api.c</code>, <code>gsm_engine.S</code>, <code>gsm_engine_adv.S</code></td><td>The GSM engine</td></tr>
+<tr><td><code>src/guigame.c</code></td><td>The GSM settings page, the mode list, and the 1080p confirmation gate</td></tr>
+<tr><td><code>src/dialogs.c</code></td><td>The six GSM dialog rows</td></tr>
+</tbody>
+</table>
+</details>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>
