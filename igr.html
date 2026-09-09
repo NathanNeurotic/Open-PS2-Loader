@@ -99,12 +99,17 @@ analog light on.</p>
 </tbody>
 </table>
 
+<p>The second press has to land within <b>about a second</b> — RiptOPL waits ~50 vertical blanks after the
+first press to see whether another arrives, then acts on the count.</p>
+
 <div class="callout info"><div class="h">ℹ Worth remembering</div>
 This is the fallback when a game has stopped responding to the pad entirely — it does not depend on the
 pad hook having attached.</div>
 
 <h2 id="where-reset-goes">Where a reset takes you</h2>
-<p>By default a reset returns you to the RiptOPL browser, on the same device page you launched from.</p>
+<p>By default a reset returns you to the RiptOPL browser, started fresh. It does not restore what you had
+selected: <b>Remember Last Played</b> (<em>Settings → Interface</em>) is a separate setting, off by default,
+and it is what re-selects the last game you ran.</p>
 
 <p>You can send it somewhere else with the <b>IGR Path</b> setting (<em>Settings → General</em>). Point it at
 an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight back into a
