@@ -70,7 +70,11 @@ cursor, confirming or going back — needs a DualShock in analog mode"* (`lng_sr
 **Home:** Settings reference row + Controls page.
 
 ### 4. Folder browsing in the game list
-**Status:** Missing on the site; one line in `README.md:226`.
+**Status: DONE** — `docs/INTERFACE.md` + a `settings.html#folder-browsing` section. The supported-device
+list is the part that was missing: BDM/MMCE/UDPFS-Files only, with **SMB deliberately deferred** (its
+paths use a different separator), and APA-HDD/VCD/UDPFS-block excluded because they scan no directory tree.
+
+Originally: missing on the site; one line in `README.md:226`.
 
 `FOLDER_NAV` — *"Browse Folders in Game List"* — is default-OFF, folders sort to the tail of the list
 with a trailing `/`, and it is supported on BDM/MMCE/UDPFS devices only. None of that is on the site.
@@ -113,9 +117,8 @@ plainly: **IGS is OFF in stock builds** (`IGS ?= $(EXTRA_FEATURES)`, `EXTRA_FEAT
 **Sources:** `Makefile:27-34`, `ee_core/src/igs_api.c:569,607`.
 
 ### 8. PADEMU (pad emulator)
-`per-game-settings.html#pademu` has a short stub; the settings tables list the rows. Nothing explains
-which controllers are supported (DS3/DS4 over USB and Bluetooth via `ds34usb`/`ds34bt`), the
-port/mode/vibration options, or the workaround toggle.
+**Status: DONE** — `docs/PADEMU.md` + site `pademu.html`. Notable detail neither surface had: **Fake DS3
+Workaround is only shown in Bluetooth mode**, which is why people cannot find it.
 
 *Correction to the original audit:* `DUALSENSE ?= 0` is the **default build** only — CI does ship
 ready-made `-ds5.ELF` assets per SDK flavour (`rolling-release.yml`, best-effort, skipped with a WARN
@@ -125,12 +128,21 @@ if that build fails), and `release-normalize.yml` folds them into the variants a
 **Home:** new `docs/PADEMU.md` + site `pademu.html`; link from Controls.
 
 ### 9. Parental lock
-Three passing mentions, no how-to. Missing: how to set a password, what it actually restricts, and —
-the question that will actually get asked — what to do when it is forgotten.
+**Status: DONE** — `docs/INTERFACE.md` + expanded `settings.html#parental-lock`. Now states what the lock
+actually gates (Settings, per-game screens, rename/delete, network update, NBD — **not** launching games,
+so it is not a content filter), that a correct password unlocks for the whole session, and that the master
+override **deletes the password and saves** rather than granting one-time access, and cannot be set as
+your own.
+
+**Editorial note:** the site deliberately does not print the master password ("ask in the community
+forums"). That convention was kept on both surfaces — the behaviour is documented, the value is not.
+Publishing it is a maintainer call.
 
 ### 10. Audio: BGM and menu SFX
-`BGM`, `BGM Volume`, `Default BGM Path` are settings rows only. Nothing explains supported formats,
-where to put files, or how theme-supplied sounds interact with the global setting.
+**Status: DONE** — `docs/INTERFACE.md` + a `settings.html#audio-files` section: BGM is **Ogg Vorbis**,
+streamed, resolved theme → configured path → `THM/bgm.ogg` (**built-in themes only**); SFX are eight
+**PS2 ADPCM `.adp`** files in the theme's `sound/` folder, listed with what plays each. Explains why a
+disk theme's own music beats the Default Theme Music setting.
 
 ### 11. Apps (`conf_apps.cfg` / `title.cfg`)
 **Status: DONE** — site `apps.html`, linked from the home tiles and the install folder listing.
@@ -173,7 +185,8 @@ field. Now in both the README section and the new page.
 
 ## Progress
 
-**Done:** #1 IGR · #2 Controls · #3 Rumble · #6 GSM · #7 IGS · #11 Apps — plus the Triangle+Cross boot recovery
+**Done:** #1 IGR · #2 Controls · #3 Rumble · #4 Folder browsing · #6 GSM · #7 IGS · #8 PADEMU ·
+#9 Parental lock · #10 Audio · #11 Apps — plus the Triangle+Cross boot recovery
 combo, which was previously README-only.
 
 **Remaining order:**

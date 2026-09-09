@@ -55,7 +55,8 @@ Review the LICENSE file for further details.<br><br>
 [Releases](#releases) · [Quick Start](#quick-start) · [Sources and cores](#introduction) ·
 [Features](#major-features-overview) · [Fork additions](#this-forks-additions) ·
 [PS1](#ps1-games-two-cores-one-list) · [HTTP](docs/HTTP.md) · [RetroAchievements](docs/RETROACHIEVEMENTS.md) ·
-[Controls & IGR](#controls-and-in-game-reset) · [GSM](docs/GSM.md) · [Apps](#apps) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
+[Controls & IGR](#controls-and-in-game-reset) · [GSM](docs/GSM.md) · [PADEMU](docs/PADEMU.md) ·
+[Interface](docs/INTERFACE.md) · [Apps](#apps) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
 [SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD](#nbd-server) ·
 [ZSO](#zso-format) · [PS3 BC](#ps3-bc) · [Troubleshooting](#frequent-issues) ·
 [Companion tools](#external-tools--services) · [Credits](#acknowledgements)
@@ -422,7 +423,8 @@ This build layers several features on top of upstream OPL:
 ## Controls and In-Game Reset
 
 Full button reference: **[docs/CONTROLS.md](docs/CONTROLS.md)**. In-Game Reset in detail:
-**[docs/IGR.md](docs/IGR.md)**.
+**[docs/IGR.md](docs/IGR.md)**. DualShock 3/4 emulation: **[docs/PADEMU.md](docs/PADEMU.md)**.
+Folder browsing, the parental lock and the audio system: **[docs/INTERFACE.md](docs/INTERFACE.md)**.
 
 ### Leaving a running game (In-Game Reset)
 
