@@ -153,8 +153,8 @@ independent IGR behaviour built into that binary. RiptOPL's hook is not involved
 
 <p>Two conditions gate it, and both catch people out:</p>
 <ol>
-<li><b>GSM must be enabled</b> for the running game. IGS reads the frame through GSM's view of the video
-hardware, so with GSM off the combination does nothing.</li>
+<li><b>GSM must be enabled</b> for the running game. The capture is gated on the game's GSM setting, so with
+GSM off the combination does nothing at all.</li>
 <li><b>The build must include IGS.</b> It is compiled out of stock builds — the <code>Makefile</code> defaults
 <code>EXTRA_FEATURES</code> to <code>0</code>, and <code>IGS</code> follows it.</li>
 </ol>

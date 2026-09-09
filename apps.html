@@ -178,8 +178,15 @@ RiptOPL actually reads — a memory-card copy shadows every other one.</p>
 the <code>=</code> is wrong. Note that <code>boot=</code> is relative to the app's folder, while
 <code>conf_apps.cfg</code> paths are absolute and carry a device prefix.</p>
 
-<p><b>Two entries for the same app.</b> Expected when the same ELF is registered by both methods. RiptOPL
-de-duplicates them, keeping one entry.</p>
+<p><b>Two entries for the same app.</b> When the same ELF is registered by <em>both</em> methods, RiptOPL
+drops the scanned <code>title.cfg</code> entry and keeps the legacy <code>conf_apps.cfg</code> one — the
+legacy record has to keep its position, because per-app settings and Favorites are bound to it. The dropped
+entry still hands over its <code>argv1</code> if the survivor has none.</p>
+
+<div class="callout info"><div class="h">ℹ Two <code>conf_apps.cfg</code> lines for one ELF are kept on purpose</div>
+Only <code>title.cfg</code> duplicates are removed. If your <code>conf_apps.cfg</code> lists the same ELF
+twice, both entries stay — that is your own hand-edited data, and dropping one would shift the config
+positions the other entries rely on. Remove the extra line yourself if you do not want it.</div>
 
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
