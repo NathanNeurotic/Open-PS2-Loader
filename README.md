@@ -55,7 +55,7 @@ Review the LICENSE file for further details.<br><br>
 [Releases](#releases) · [Quick Start](#quick-start) · [Sources and cores](#introduction) ·
 [Features](#major-features-overview) · [Fork additions](#this-forks-additions) ·
 [PS1](#ps1-games-two-cores-one-list) · [HTTP](docs/HTTP.md) · [RetroAchievements](docs/RETROACHIEVEMENTS.md) ·
-[Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
+[Controls & IGR](#controls-and-in-game-reset) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
 [SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD](#nbd-server) ·
 [ZSO](#zso-format) · [PS3 BC](#ps3-bc) · [Troubleshooting](#frequent-issues) ·
 [Companion tools](#external-tools--services) · [Credits](#acknowledgements)
@@ -418,6 +418,54 @@ This build layers several features on top of upstream OPL:
   lands on the start menu with no tabs — enable exactly the devices your console has under
   **Game Sources**. Change any of it under Settings.
 - **Private master settings, shared support files:** `settings_riptopl.cfg` is separate from stock OPL's master file. Other configuration and data can still be shared; favorites migration from uOPL/wOPL is one-way. See [Where your files live](#where-your-files-live).
+
+## Controls and In-Game Reset
+
+Full button reference: **[docs/CONTROLS.md](docs/CONTROLS.md)**. In-Game Reset in detail:
+**[docs/IGR.md](docs/IGR.md)**.
+
+### Leaving a running game (In-Game Reset)
+
+You do not need the console's Reset button. Hold all four shoulder buttons - **L1 + L2 + R1 + R2** -
+and then, still holding them, press the second half:
+
+| Hold | Then press | Result |
+| ---- | ---------- | ------ |
+| L1 + L2 + R1 + R2 | **Start + Select** | Reset - quit the game and return to RiptOPL |
+| L1 + L2 + R1 + R2 | **L3 + R3** | Power off the console |
+| L1 + L2 + R1 + R2 | **Up** | In-game screenshot (needs GSM on **and** an `IGS=1` build; off in release builds) |
+
+The console's own power button works too: **one press** powers off, **two presses** reset.
+
+Three cases where the combinations do nothing, all expected: before the game has opened a controller
+(the hook patches the game's own `scePadPortOpen`), when per-game compatibility **Mode 6 - Disable
+IGR** is set, and under the **Neutrino core**, which has no IGR at all - which is why Mode 6 is greyed
+out there. PS1 titles use POPSTARTER's or Ember's own IGR, not this one.
+
+**IGR Path** (*Settings -> General*) boots a custom ELF from `mc0:`/`mc1:` on reset instead of
+returning to the browser. **IGR Bootcard Slot(s)** (*Settings -> MMCE*) sends a switch-to-bootcard
+command as the reset happens.
+
+### Game list
+
+| Button | Action |
+| ------ | ------ |
+| D-pad Up/Down | Move through the list (Coverflow: switch device page) |
+| D-pad Left/Right | Switch device page (Coverflow: move through the carousel) |
+| Cross | Launch the selected game |
+| Circle | Go up one folder level |
+| Triangle | Per-game settings |
+| Square | Game info page |
+| L1 / R1 | Previous / next page |
+| L2 / R2 | First / last page |
+| L3 | Cycle the page's library view |
+| R3 | Star or un-star as a Favorite |
+| Start | Main menu |
+| Select | Refresh the current list |
+
+Cross and Circle follow the **Select button** setting, except in the settings screens, where Cross is
+always OK and Circle always Cancel. Holding **Triangle + Cross at boot** forces the menu to 480p
+progressive as a recovery path for a display that cannot sync the saved video mode.
 
 ## How to use
 

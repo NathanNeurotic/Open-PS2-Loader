@@ -21,7 +21,8 @@ settings table with a one-line hint, but nothing tells a user what the feature *
 ## Tier 1 — Missing entirely (highest priority)
 
 ### 1. In-Game Reset (IGR) — the feature itself
-**Status:** Missing on both surfaces. **This is the one that started the audit.**
+**Status: DONE** — `docs/IGR.md` + site `igr.html`, cross-linked from the settings rows, the Mode 6 row,
+the index tiles and Troubleshooting. A short version is inlined in `README.md`.
 
 Both surfaces document the *settings* around IGR (`IGR Path`, `IGR Bootcard Slot(s)`, compat
 `Mode 6 — Disable IGR`) but **never state what IGR is or which buttons trigger it**. Nothing on either
@@ -49,7 +50,7 @@ the MMCE `IGR Bootcard Slot(s)` option fires a switch-to-bootcard command on res
 `include/iosupport.h:86`.
 
 ### 2. Controls / button reference
-**Status:** Missing on both surfaces.
+**Status: DONE** — `docs/CONTROLS.md` + site `controls.html`; game-list table also inlined in `README.md`.
 
 There is no single page listing what any button does. Menu navigation, R3 to star a favourite, L3
 view cycling, Select/Refresh on a failed network page, Triangle+Cross at boot for 480p, the IGR
@@ -59,8 +60,8 @@ A one-page control reference is the natural home for Tier 1 #1.
 **Home:** new `docs/CONTROLS.md` + site `controls.html`, linked from Getting Started.
 
 ### 3. Menu rumble
-**Status:** Missing on both surfaces — **zero** mentions of "rumble" or "vibration" anywhere on the
-site, and none in `README.md`.
+**Status: DONE** — covered in the Controls doc and page (analog-mode requirement stated).
+Originally: zero mentions of "rumble" or "vibration" on either surface.
 
 The feature shipped (issues #172/#174) and has a settings string: *"Short vibration when moving the
 cursor, confirming or going back — needs a DualShock in analog mode"* (`lng_src/English.yml`,
@@ -99,7 +100,8 @@ mode has a three-step confirmation guard that only `README.md` mentions.
 `ps3-bc.html`, `troubleshooting.html`.
 
 ### 7. IGS (In-Game Screenshot)
-Named only in `credits.html`, `hdd.html`, `install.html` — never explained. Important nuance to state
+**Status: DONE** — covered in `docs/IGR.md` and `igr.html`, including the release-build caveat.
+Originally named only in `credits.html`, `hdd.html`, `install.html`, never explained. Important nuance to state
 plainly: **IGS is OFF in stock builds** (`IGS ?= $(EXTRA_FEATURES)`, `EXTRA_FEATURES ?= 0` in the
 `Makefile`), it depends on both GSM and IGR, and it writes `mc1:/XXXX_yyy.zz_IGS(nnn).bmp`.
 
@@ -159,10 +161,15 @@ on the site at all**. Straight port of the README section.
 
 ---
 
-## Suggested order
+## Progress
 
-1. **IGR** (#1) — the actual reported gap, and it blocks nothing else.
-2. **Controls page** (#2) — absorbs #1, #3, and part of #8.
-3. **GSM** (#6) — most cross-referenced undocumented subsystem; unblocks #7.
-4. **Apps page** (#11) — pure port, low risk.
-5. Remaining Tier 2, then Tier 3 parity, then Tier 4.
+**Done:** #1 IGR · #2 Controls · #3 Rumble · #7 IGS — plus the Triangle+Cross boot recovery combo,
+which was previously README-only.
+
+**Remaining order:**
+
+1. **GSM** (#6) — most cross-referenced undocumented subsystem.
+2. **Apps page** (#11) — pure port of the README section, low risk.
+3. **PADEMU** (#8), **parental lock** (#9), **BGM/SFX** (#10), **folder browsing** (#4).
+4. Tier 3 parity items, then Tier 4.
+5. **XPARAM** (#5) — decide document vs. mark internal.
