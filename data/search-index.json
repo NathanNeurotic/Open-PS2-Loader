@@ -1360,5 +1360,35 @@
   "cat": "features",
   "text": "Related settings that are not GSM Two settings are easy to mistake for GSM options: Overscan ( Settings → Display ) trims the edges of the RiptOPL menu , not of games. It is a UI setting and is unrelated to the GSM H-POS/V-POS offsets. Video Mode ( Settings → Display ) sets the mode the menu runs in. GSM never affects it.",
   "url": "gsm.html#not-gsm"
+ },
+ {
+  "title": "Apps",
+  "cat": "features",
+  "text": "Apps RiptOPL can list and launch your homebrew ELFs alongside your games, on the Apps device page. There are two supported ways to register an app; both work, and you can use both at once. Method Use it when title.cfg (folder-based) You want each app self-contained inside its own folder under APPS/ . This is the method to prefer for new setups. conf_apps.cfg (legacy) You want one central list, or your ELFs live somewhere other than APPS/ . ⚠ RiptOPL is case-sensitive Both methods match file names exactly, including letter case. MYAPP.ELF and myapp.elf are different files as far as the loader is concerned. This is the single most common reason an app does not appear or fails to launch.",
+  "url": "apps.html"
+ },
+ {
+  "title": "The title.cfg method",
+  "cat": "features",
+  "text": "The title.cfg method One title.cfg per app folder. The ELF and its title.cfg must sit in the same folder under APPS/ . In APPS/ , create a folder for the app. Put the ELF in that folder. Create a text file named title.cfg beside it. APPS/ MYAPP/ MYAPP.ELF title.cfg With title.cfg containing: title=My App Name boot=MYAPP.ELF Using RiptOPL itself as an example: title=Open PS2 Loader boot=RIPTOPL.ELF Keys Key Required Meaning title Yes The name shown in the app list. boot Yes The ELF filename to launch, relative to the app's own folder. argv1 No A single argument passed to the ELF on launch, as its first argument. Useful for homebrew that takes a path or a mode on its command line. ℹ argv1 and the per-app settings screen argv1 shares storage with the per-app Alternate Startup field, so an argument set in title.cfg shows up there and can be edited from the console. When a folder-based entry and a legacy entry resolve to the same ELF, the folder-based one donates its argv1 to the legacy entry if that entry has none of its own.",
+  "url": "apps.html#title-cfg"
+ },
+ {
+  "title": "The conf_apps.cfg method (legacy)",
+  "cat": "features",
+  "text": "The conf_apps.cfg method (legacy) A single text file listing one app per line, in the form Display Name=DevicePathToELF : Left of the = — the name shown in the app list. Right of the = — the full device path to the ELF. My App Name=mass:APPS/MYAPP.ELF OPL=mass:APPS/RIPTOPL.ELF Device prefixes: Prefix Device mass: USB, MX4SIO, iLink, exFAT HDD — any BDM device mmce0: / mmce1: MMCE (SD2PSX, MemCard PRO2) mc0: / mc1: Memory card hdd0: / pfs0: APA HDD With this method the ELFs do not have to live in APPS/ — though keeping them there still makes a setup easier to manage. Where RiptOPL looks for it The search order is: mc?:OPL/conf_apps.cfg — either memory card. conf_apps.cfg under each enabled source's configured prefix . ⚠ The first file found wins — lists are not merged If you have a conf_apps.cfg on the memory card and another on USB, only the memory card one is read. This trips people up when adding a second list and wondering why nothing changed. With a default mass-device prefix, the file goes at mass0:/conf_apps.cfg . mass0:/OPL/conf_apps.cfg is only found when OPL/ is that source's configured prefix — it is not searched as an extra location.",
+  "url": "apps.html#conf-apps"
+ },
+ {
+  "title": "Cover art for apps",
+  "cat": "features",
+  "text": "Cover art for apps Apps use the same ART/ folder as games, on the device the app itself lives on. The lookup key is the app's ELF filename rather than a game ID, so an app booting MYAPP.ELF looks for MYAPP -keyed art. The suffix convention is unchanged — see Coverflow for the naming. An app box is square , where a PS2 case is portrait — 184×184 against 184×256 on the built-in theme — so a square image is the right shape for an app.",
+  "url": "apps.html#art"
+ },
+ {
+  "title": "Troubleshooting",
+  "cat": "features",
+  "text": "Troubleshooting The app does not appear in the list. Check letter case on every path component. For title.cfg , confirm the ELF and the config file are in the same folder and that boot= names the ELF exactly. For conf_apps.cfg , confirm you are editing the file RiptOPL actually reads — a memory-card copy shadows every other one. The app appears but will not launch. Usually the boot= filename or the path right of the = is wrong. Note that boot= is relative to the app's folder, while conf_apps.cfg paths are absolute and carry a device prefix. Two entries for the same app. Expected when the same ELF is registered by both methods. RiptOPL de-duplicates them, keeping one entry.",
+  "url": "apps.html#troubleshooting"
  }
 ]
