@@ -80,8 +80,9 @@ independent IGR behaviour built into that binary. RiptOPL's hook is not involved
 
 ## In-Game Screenshots (IGS)
 
-The **L1+L2+R1+R2 + Up** combination captures the current frame to a bitmap on the memory card, named
-like `mc1:/SLUS_012.34_IGS(001).bmp`.
+The **L1+L2+R1+R2 + Up** combination captures the current frame to a bitmap on **memory card slot 1**,
+named from the game's ID with a zero-padded sequence number starting at 001 — for example
+`mc1:/SLUS_012.34_GS(001).bmp`. The number increments to a maximum of 255 per game.
 
 Two conditions gate it, and both catch people out:
 

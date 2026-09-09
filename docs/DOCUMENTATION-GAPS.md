@@ -120,7 +120,10 @@ live UI reference — do not document it as a GSM option. Overscan is a UI setti
 **Status: DONE** — covered in `docs/IGR.md` and `igr.html`, including the release-build caveat.
 Originally named only in `credits.html`, `hdd.html`, `install.html`, never explained. Important nuance to state
 plainly: **IGS is OFF in stock builds** (`IGS ?= $(EXTRA_FEATURES)`, `EXTRA_FEATURES ?= 0` in the
-`Makefile`), it depends on both GSM and IGR, and it writes `mc1:/XXXX_yyy.zz_IGS(nnn).bmp`.
+`Makefile`), it depends on both GSM and IGR, and it writes `mc1:/<GameID>_GS(nnn).bmp`.
+
+*Trap:* the comment above that code says `_IGS(` but the code builds `_GS(` — the classic
+data-and-comment-vs-code split. Read the `_strcat` chain, not the banner comment.
 
 **Sources:** `Makefile:27-34`, `ee_core/src/igs_api.c:569,607`.
 

@@ -63,14 +63,28 @@ that was not up when RiptOPL started, for example.
 
 ## Main menu and dialogs
 
+Menus have two states, and the same buttons do different things in each.
+
+**Moving around** (nothing is being edited):
+
 | Button | Action |
 |---|---|
-| **Up / Down** | Move between entries |
-| **Left / Right** | Change the value of the highlighted setting |
-| **Cross** | Confirm / activate |
+| **Up / Down** | Move between lines |
+| **Left / Right** | Move between controls |
+| **Cross** | Activate the highlighted control — start editing it |
 | **Circle** | Back / cancel |
 | **Start** | Confirm and close |
+
+**Editing a control** (after Cross):
+
+| Button | Action |
+|---|---|
+| **Up / Down** | Cycle the value of a list or number |
 | **Triangle** | Open the on-screen keyboard on a text field |
+| **Cross** | Accept and stop editing |
+
+This is why Up/Down sometimes moves the cursor and sometimes changes a setting: it depends on whether
+a control is currently being edited.
 
 ### Settings screens
 
