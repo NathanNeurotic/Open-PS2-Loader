@@ -195,9 +195,12 @@ it.</li>
 </ul>
 
 <details><summary>Notes for builders</summary>
-<p>GSM's 1080p mode is behind <code>GSM_1080P</code>, which the <code>Makefile</code> defaults to
-<code>1</code> — so every shipped build has it and the mode list is a consistent 30 entries across published
-flavours. Building with <code>GSM1080P=0</code> drops mode 29 and shortens the list.</p>
+<p>Two names are involved, and they are not the same thing. <b><code>GSM1080P</code> is the Makefile
+variable</b>; it defaults to <code>1</code>, and when set the <code>Makefile</code> adds
+<b><code>-DGSM_1080P</code></b> — the preprocessor macro the code actually tests — to the EE build, and
+forwards <code>GSM1080P=1</code> on to <code>ee_core/Makefile</code>.</p>
+<p>So every shipped build has mode 29 and the list is a consistent 30 entries across published flavours.
+Building with <code>GSM1080P=0</code> drops it and shortens the list.</p>
 <p>In-game screenshots (IGS) require GSM to be enabled — see <a href="igr.html#igs">In-Game Reset</a>.</p>
 <table>
 <thead><tr><th>File</th><th>Role</th></tr></thead>

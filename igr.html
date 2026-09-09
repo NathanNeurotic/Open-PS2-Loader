@@ -162,9 +162,11 @@ them and that is expected. Building from source with <code>make IGS=1</code> (or
 
 <p><b>Nothing happens when I press the combination.</b> Check, in order: the game has actually started (past
 the early boot logos); the Loader Core is OPL rather than Neutrino; Mode 6 is not set for this game; and — for
-the power-off and screenshot combinations specifically — the controller is in analog mode. Try the console
-power button as a cross-check: if that resets and the pad combination does not, the hook is fine and the
-problem is in the pad half.</p>
+the power-off combination specifically — the controller is in analog mode, since L3 and R3 are the stick
+clicks. The screenshot combination uses <b>Up</b>, so it needs no analog mode.</p>
+
+<p>Try the console power button as a cross-check: if that resets and the pad combination does not, the hook is
+fine and the problem is in the pad half.</p>
 
 <p><b>Reset takes me somewhere unexpected.</b> Check <b>IGR Path</b> in <em>Settings → General</em>. A stale
 path left over from an earlier setup will boot that ELF instead of returning to the browser.</p>

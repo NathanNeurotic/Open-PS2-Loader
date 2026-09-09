@@ -1026,48 +1026,6 @@
   "url": "retroachievements.html#credits"
  },
  {
-  "title": "In-Game Reset (IGR)",
-  "cat": "features",
-  "text": "In-Game Reset (IGR) In-Game Reset lets you leave a running game and come straight back to RiptOPL — or power the console off — without touching the console's own Reset button. It is a controller shortcut that works from inside the game. RiptOPL installs a small hook into the running game that watches the controller for a reserved button combination. When it sees one, it tears the game down and either returns you to the browser or shuts the console down.",
-  "url": "igr.html"
- },
- {
-  "title": "The button combinations",
-  "cat": "features",
-  "text": "The button combinations Every combination starts the same way: hold all four shoulder buttons — L1 + L2 + R1 + R2 — and then, while still holding them, press the second half. Hold Then press Result L1 + L2 + R1 + R2 Start + Select Reset — quit the game and return to RiptOPL L1 + L2 + R1 + R2 L3 + R3 Power off the console L1 + L2 + R1 + R2 Up In-game screenshot — see Screenshots L3 and R3 are the analog-stick clicks , so the power-off combination needs a DualShock with the analog light on.",
-  "url": "igr.html#combinations"
- },
- {
-  "title": "The console power button",
-  "cat": "features",
-  "text": "The console power button The power button on the front of the console is hooked too, and does not need a controller: Power button Result Press once Power off Press twice Reset — return to RiptOPL ℹ Worth remembering This is the fallback when a game has stopped responding to the pad entirely — it does not depend on the pad hook having attached.",
-  "url": "igr.html#power-button"
- },
- {
-  "title": "Where a reset takes you",
-  "cat": "features",
-  "text": "Where a reset takes you By default a reset returns you to the RiptOPL browser, on the same device page you launched from. You can send it somewhere else with the IGR Path setting ( Settings → General ). Point it at an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight back into a different launcher or a homebrew menu. The file must live on a memory card ( mc0: or mc1: ); leave the setting blank to return to RiptOPL normally. If you use MMCE cards, IGR Bootcard Slot(s) ( Settings → MMCE ) additionally sends a \"switch to bootcard\" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already back on its boot image by the time the next thing loads. See MMCE .",
-  "url": "igr.html#where-reset-goes"
- },
- {
-  "title": "When IGR is not available",
-  "cat": "features",
-  "text": "When IGR is not available IGR is not universal. It is worth knowing the three cases where the combinations will do nothing, so you do not spend time hunting a fault that is not there. Before the game opens a controller The hook attaches by patching the game's own scePadPortOpen / scePad2CreateSocket call. Until the game asks for a pad, there is nothing hooked — so IGR does not respond during very early boot logos on some titles. The console power button still works. When the game is incompatible A few games handle input in a way the hook disturbs. Per-game compatibility Mode 6 — Disable IGR turns the hook off for that title. If a game misbehaves in a way that started when you launched it through RiptOPL, this is the mode to try — at the cost of losing IGR for that game. See Per-game Settings . Under the Neutrino core ⚠ Neutrino has no IGR This is a property of that loader, not a RiptOPL limitation, and it is why Mode 6 is greyed out whenever the Loader Core is set to Neutrino — there is no hook there to disable. To leave a Neutrino-launched game, use the console's power or reset button. See Neutrino Core . PS1 titles are a separate case again: they run under POPSTARTER or Ember, each of which has its own independent IGR behaviour built into that binary. RiptOPL's hook is not involved. See PS1 Games and the sister POPStarter docs .",
-  "url": "igr.html#limitations"
- },
- {
-  "title": "In-game screenshots (IGS)",
-  "cat": "features",
-  "text": "In-game screenshots (IGS) The L1+L2+R1+R2 + Up combination captures the current frame to a bitmap on the memory card, named like mc1:/SLUS_012.34_IGS(001).bmp . Two conditions gate it, and both catch people out: GSM must be enabled for the running game. IGS reads the frame through GSM's view of the video hardware, so with GSM off the combination does nothing. The build must include IGS. It is compiled out of stock builds — the Makefile defaults EXTRA_FEATURES to 0 , and IGS follows it. ⚠ Release builds do not have IGS Official release builds are compiled with EXTRA_FEATURES=0 , so the Up combination is inert on them and that is expected. Building from source with make IGS=1 (or EXTRA_FEATURES=1 ) enables it.",
-  "url": "igr.html#igs"
- },
- {
-  "title": "Troubleshooting",
-  "cat": "features",
-  "text": "Troubleshooting Nothing happens when I press the combination. Check, in order: the game has actually started (past the early boot logos); the Loader Core is OPL rather than Neutrino; Mode 6 is not set for this game; and — for the power-off and screenshot combinations specifically — the controller is in analog mode. Try the console power button as a cross-check: if that resets and the pad combination does not, the hook is fine and the problem is in the pad half. Reset takes me somewhere unexpected. Check IGR Path in Settings → General . A stale path left over from an earlier setup will boot that ELF instead of returning to the browser. The game resets on its own during play. A game that uses all four shoulders plus Start or Select in normal play can trigger IGR by accident. Set Mode 6 — Disable IGR for that title. Where this lives in the source File Role ee_core/src/padhook.c The hook itself: pad pattern matching, the VBLANK interrupt handler, combo dispatch, the IGR thread ee_core/include/padhook.h The combo constants ( IGR_COMBO_R1_L1_R2_L2 , IGR_COMBO_START_SELECT , IGR_COMBO_R3_L3 , IGR_COMBO_UP ) ee_core/src/cd_igr_rpc.c IOP-side reset RPC ee_core/src/igs_api.c Screenshot capture and BMP writing include/iosupport.h COMPAT_MODE_6 — the Disable IGR flag",
-  "url": "igr.html#troubleshooting"
- },
- {
   "title": "Controls",
   "cat": "reference",
   "text": "Controls Every button RiptOPL responds to, in one place — the game list, the menus, inside a running game, and at boot. ℹ Two settings change what you read below Select button ( Settings → Interface ) swaps which face button confirms. The tables use Cross = confirm, Circle = back , which is the default everywhere except Japanese consoles , where RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your select button, swap those two everywhere except the Settings screens (see the note under Settings screens ). Coverflow ( Settings → Interface ) rotates the navigation axis on the game list. Both layouts are given below.",
@@ -1102,54 +1060,6 @@
   "cat": "reference",
   "text": "Rumble RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by Rumble in Settings → Controller . It needs a DualShock in analog mode — with the analog light off the controller has no motors available and the setting does nothing. Third-party pads and most adapters vary in whether they report vibration support correctly. This is menu rumble only, and is independent of in-game vibration, which is the game's business (or PADEMU 's, when emulating a pad).",
   "url": "controls.html#rumble"
- },
- {
-  "title": "GSM — forced video modes",
-  "cat": "features",
-  "text": "GSM — forced video modes GSM makes a game output a video mode it was never written to output. Most PS2 games render 480i (or 576i in PAL). GSM intercepts the game's video setup and substitutes a different raster, so the same game can come out as 480p, 720p, 1080i, or one of a range of VGA modes — useful on modern displays and upscalers that handle interlaced signals badly or not at all. ℹ GSM does not add detail It does not re-render anything. The game still draws the same picture at the same internal resolution; GSM changes how that picture is scanned out. Expect a cleaner, more stable signal, not a sharper one.",
-  "url": "gsm.html"
- },
- {
-  "title": "Where to set it",
-  "cat": "features",
-  "text": "Where to set it GSM lives in two places: Per game — Triangle on a title → Configure GSM . Globally — Settings → Display Settings → GSM Defaults . This is what every game with no GSM settings of its own inherits. The per-game page's first row, GSM Source , decides which of those wins: GSM Source Meaning Global Ignore this game's GSM keys entirely and follow the global defaults. Selecting it also removes the game's stored GSM keys. Per Game This game's GSM settings apply, as a complete set. Per Game + Global Per-key inheritance: any GSM value this game sets is used, and anything it leaves unset falls through to the global default. Per Game + Global is the option to reach for when you want one game to differ from your global setup in a single respect — a different video mode, say — while still tracking your global choices for everything else. See Per-game Settings .",
-  "url": "gsm.html#where"
- },
- {
-  "title": "The options",
-  "cat": "features",
-  "text": "The options Option What it does GSM Selector The on/off switch. With it off, the four rows below are greyed out and GSM does nothing. Forced custom display mode The video mode to output. See the list below . H-POS Horizontal position offset, −100 to +100. Shifts the picture left/right. V-POS Vertical position offset, −100 to +100. Shifts the picture up/down. Emulate FIELD Flipping Compatibility fix for games that shake, tear, or judder under a progressive mode. Try this first when a game looks wrong after GSM is applied. On the per-game page the mode list ends with Default , which means \"follow the global setting\". Picking it removes the key rather than storing a value, so the game genuinely tracks the global from then on. That entry does not appear on the global page, where it would be meaningless.",
-  "url": "gsm.html#options"
- },
- {
-  "title": "Available modes",
-  "cat": "features",
-  "text": "Available modes Modes 0–5 are the standard console rasters; the rest are forced progressive, HDTV, or VGA modes. # Mode # Mode 0 NTSC 15 VGA 640x480p @75Hz 1 NTSC Non Interlaced 16 VGA 640x480p @85Hz 2 PAL 17 VGA 640x960i @60Hz 3 PAL Non Interlaced 18 VGA 800x600p @56Hz 4 PAL @60Hz 19 VGA 800x600p @60Hz 5 PAL @60Hz Non Interlaced 20 VGA 800x600p @72Hz 6 PS1 NTSC (HDTV 480p @60Hz) 21 VGA 800x600p @75Hz 7 PS1 PAL (HDTV 576p @50Hz) 22 VGA 800x600p @85Hz 8 HDTV 480p @60Hz 23 VGA 1024x768p @60Hz 9 HDTV 576p @50Hz 24 VGA 1024x768p @70Hz 10 HDTV 720p @60Hz 25 VGA 1024x768p @75Hz 11 HDTV 1080i @60Hz 26 VGA 1024x768p @85Hz 12 HDTV 1080i @60Hz Non Interlaced 27 VGA 1280x1024p @60Hz 13 VGA 640x480p @60Hz 28 VGA 1280x1024p @75Hz 14 VGA 640x480p @72Hz 29 HDTV 1080p @60Hz (EXPERIMENTAL) HDTV 480p @60Hz (8) is the safe starting point on almost any modern display. 720p (10) and 1080i (11) are the next most widely accepted. The VGA modes need a display fed over VGA or a component/VGA-capable path; a plain HDMI adapter will usually not sync them.",
-  "url": "gsm.html#modes"
- },
- {
-  "title": "1080p is experimental, and asks three times",
-  "cat": "features",
-  "text": "1080p is experimental, and asks three times Mode 29, HDTV 1080p @60Hz (EXPERIMENTAL) , is compiled into every shipped build. It is a GSM-synthetic progressive raster — not a mode the PS2 hardware natively produces — and while it has passed real-hardware testing, it is non-standard enough that some displays will not sync it at all. ⚠ Cancelling the confirmation falls back to NTSC Selecting 1080p with GSM enabled triggers a three-step confirmation before it is written to disk, because a display that cannot sync leaves you with a black screen and no way to undo the choice from the console. Decline at any of the three steps and the mode falls back to NTSC (mode 0) — not to your previous selection. If you cancel, set the mode you actually wanted before leaving the page. The same gate applies on the global page, which carries the wider blast radius of the two: it is what every game without its own GSM settings inherits.",
-  "url": "gsm.html#1080p"
- },
- {
-  "title": "When a game loses the picture",
-  "cat": "features",
-  "text": "When a game loses the picture GSM is applied per game, so a bad setting affects that game only — the RiptOPL menu itself is unaffected and you can always get back to it. Launch a game that still works, or use the console's reset to return to the browser. Triangle on the affected title → Configure GSM . Either turn GSM Selector off, or pick a more conservative mode (480p, or the game's native NTSC/PAL). ℹ If the menu has no picture, that is not GSM That is the global Video Mode setting. Hold Triangle + Cross while RiptOPL boots to force the menu to 480p progressive. See Controls . The game runs but looks wrong Shaking, tearing, or juddering under a progressive mode — turn on Emulate FIELD Flipping . This is what it exists for. Picture off-centre — adjust H-POS and V-POS . Some scenes fine, others broken — a few games switch video mode mid-run (typically for FMVs). Those tend to be poor GSM candidates; try a less aggressive mode or leave GSM off for that title.",
-  "url": "gsm.html#lost-picture"
- },
- {
-  "title": "GSM and the other cores",
-  "cat": "features",
-  "text": "GSM and the other cores Neutrino does not use OPL's GSM. It has its own forced video mode handling, and the per-game Neutrino GSM Compatibility option is the equivalent field-flipping fix — \"for games that shake or tear under a forced Neutrino video mode\". Set it there rather than on the GSM page when the Loader Core is Neutrino. See Neutrino Core . PS1 titles run under POPSTARTER or Ember and do not use OPL's GSM either. Modes 6 and 7 in the list above are named \"PS1 NTSC/PAL\" because of the raster they produce, not because they apply to PS1 games. See PS1 Games .",
-  "url": "gsm.html#other-cores"
- },
- {
-  "title": "Related settings that are not GSM",
-  "cat": "features",
-  "text": "Related settings that are not GSM Two settings are easy to mistake for GSM options: Overscan ( Settings → Display ) trims the edges of the RiptOPL menu , not of games. It is a UI setting and is unrelated to the GSM H-POS/V-POS offsets. Video Mode ( Settings → Display ) sets the mode the menu runs in. GSM never affects it. Notes for builders GSM's 1080p mode is behind GSM_1080P , which the Makefile defaults to 1 — so every shipped build has it and the mode list is a consistent 30 entries across published flavours. Building with GSM1080P=0 drops mode 29 and shortens the list. In-game screenshots (IGS) require GSM to be enabled — see In-Game Reset . File Role ee_core/src/gsm_api.c , gsm_engine.S , gsm_engine_adv.S The GSM engine src/guigame.c The GSM settings page, the mode list, and the 1080p confirmation gate src/dialogs.c The six GSM dialog rows",
-  "url": "gsm.html#not-gsm"
  },
  {
   "title": "Apps",
@@ -1522,5 +1432,95 @@
   "cat": "reference",
   "text": "More help 💿 PS1 Games (VCD) Full setup guide for POPSTARTER and BDMA ⚛️ Neutrino Core Troubleshoot Neutrino launch failures 📡 Network Boot UDPBD / UDPFS setup and common errors 📺 GSM Video Modes Game launches but the screen goes black? 🔄 In-Game Reset Cannot quit a game from the pad? 🕹️ Controls Every button, plus the 480p boot recovery combo 🔧 Settings Reference Every option explained 📚 POPStarter docs PS1 config, IGR, cheats, multi-disc 🐛 Bug report thread Report game-specific compatibility issues",
   "url": "troubleshooting.html#more-help"
+ },
+ {
+  "title": "In-Game Reset (IGR)",
+  "cat": "features",
+  "text": "In-Game Reset (IGR) In-Game Reset lets you leave a running game and come straight back to RiptOPL — or power the console off — without touching the console's own Reset button. It is a controller shortcut that works from inside the game. RiptOPL installs a small hook into the running game that watches the controller for a reserved button combination. When it sees one, it tears the game down and either returns you to the browser or shuts the console down.",
+  "url": "igr.html"
+ },
+ {
+  "title": "The button combinations",
+  "cat": "features",
+  "text": "The button combinations Every combination starts the same way: hold all four shoulder buttons — L1 + L2 + R1 + R2 — and then, while still holding them, press the second half. Hold Then press Result L1 + L2 + R1 + R2 Start + Select Reset — quit the game and return to RiptOPL L1 + L2 + R1 + R2 L3 + R3 Power off the console L1 + L2 + R1 + R2 Up In-game screenshot — see Screenshots L3 and R3 are the analog-stick clicks , so the power-off combination needs a DualShock with the analog light on.",
+  "url": "igr.html#combinations"
+ },
+ {
+  "title": "The console power button",
+  "cat": "features",
+  "text": "The console power button The power button on the front of the console is hooked too, and does not need a controller: Power button Result Press once Power off Press twice Reset — return to RiptOPL ℹ Worth remembering This is the fallback when a game has stopped responding to the pad entirely — it does not depend on the pad hook having attached.",
+  "url": "igr.html#power-button"
+ },
+ {
+  "title": "Where a reset takes you",
+  "cat": "features",
+  "text": "Where a reset takes you By default a reset returns you to the RiptOPL browser, on the same device page you launched from. You can send it somewhere else with the IGR Path setting ( Settings → General ). Point it at an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight back into a different launcher or a homebrew menu. The file must live on a memory card ( mc0: or mc1: ); leave the setting blank to return to RiptOPL normally. If you use MMCE cards, IGR Bootcard Slot(s) ( Settings → MMCE ) additionally sends a \"switch to bootcard\" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already back on its boot image by the time the next thing loads. See MMCE .",
+  "url": "igr.html#where-reset-goes"
+ },
+ {
+  "title": "When IGR is not available",
+  "cat": "features",
+  "text": "When IGR is not available IGR is not universal. It is worth knowing the three cases where the combinations will do nothing, so you do not spend time hunting a fault that is not there. Before the game opens a controller The hook attaches by patching the game's own scePadPortOpen / scePad2CreateSocket call. Until the game asks for a pad, there is nothing hooked — so IGR does not respond during very early boot logos on some titles. The console power button still works. When the game is incompatible A few games handle input in a way the hook disturbs. Per-game compatibility Mode 6 — Disable IGR turns the hook off for that title. If a game misbehaves in a way that started when you launched it through RiptOPL, this is the mode to try — at the cost of losing IGR for that game. See Per-game Settings . Under the Neutrino core ⚠ Neutrino has no IGR This is a property of that loader, not a RiptOPL limitation, and it is why Mode 6 is greyed out whenever the Loader Core is set to Neutrino — there is no hook there to disable. To leave a Neutrino-launched game, use the console's power or reset button. See Neutrino Core . PS1 titles are a separate case again: they run under POPSTARTER or Ember, each of which has its own independent IGR behaviour built into that binary. RiptOPL's hook is not involved. See PS1 Games and the sister POPStarter docs .",
+  "url": "igr.html#limitations"
+ },
+ {
+  "title": "In-game screenshots (IGS)",
+  "cat": "features",
+  "text": "In-game screenshots (IGS) The L1+L2+R1+R2 + Up combination captures the current frame to a bitmap on the memory card, named like mc1:/SLUS_012.34_IGS(001).bmp . Two conditions gate it, and both catch people out: GSM must be enabled for the running game. IGS reads the frame through GSM's view of the video hardware, so with GSM off the combination does nothing. The build must include IGS. It is compiled out of stock builds — the Makefile defaults EXTRA_FEATURES to 0 , and IGS follows it. ⚠ Release builds do not have IGS Official release builds are compiled with EXTRA_FEATURES=0 , so the Up combination is inert on them and that is expected. Building from source with make IGS=1 (or EXTRA_FEATURES=1 ) enables it.",
+  "url": "igr.html#igs"
+ },
+ {
+  "title": "Troubleshooting",
+  "cat": "features",
+  "text": "Troubleshooting Nothing happens when I press the combination. Check, in order: the game has actually started (past the early boot logos); the Loader Core is OPL rather than Neutrino; Mode 6 is not set for this game; and — for the power-off combination specifically — the controller is in analog mode, since L3 and R3 are the stick clicks. The screenshot combination uses Up , so it needs no analog mode. Try the console power button as a cross-check: if that resets and the pad combination does not, the hook is fine and the problem is in the pad half. Reset takes me somewhere unexpected. Check IGR Path in Settings → General . A stale path left over from an earlier setup will boot that ELF instead of returning to the browser. The game resets on its own during play. A game that uses all four shoulders plus Start or Select in normal play can trigger IGR by accident. Set Mode 6 — Disable IGR for that title. Where this lives in the source File Role ee_core/src/padhook.c The hook itself: pad pattern matching, the VBLANK interrupt handler, combo dispatch, the IGR thread ee_core/include/padhook.h The combo constants ( IGR_COMBO_R1_L1_R2_L2 , IGR_COMBO_START_SELECT , IGR_COMBO_R3_L3 , IGR_COMBO_UP ) ee_core/src/cd_igr_rpc.c IOP-side reset RPC ee_core/src/igs_api.c Screenshot capture and BMP writing include/iosupport.h COMPAT_MODE_6 — the Disable IGR flag",
+  "url": "igr.html#troubleshooting"
+ },
+ {
+  "title": "GSM — forced video modes",
+  "cat": "features",
+  "text": "GSM — forced video modes GSM makes a game output a video mode it was never written to output. Most PS2 games render 480i (or 576i in PAL). GSM intercepts the game's video setup and substitutes a different raster, so the same game can come out as 480p, 720p, 1080i, or one of a range of VGA modes — useful on modern displays and upscalers that handle interlaced signals badly or not at all. ℹ GSM does not add detail It does not re-render anything. The game still draws the same picture at the same internal resolution; GSM changes how that picture is scanned out. Expect a cleaner, more stable signal, not a sharper one.",
+  "url": "gsm.html"
+ },
+ {
+  "title": "Where to set it",
+  "cat": "features",
+  "text": "Where to set it GSM lives in two places: Per game — Triangle on a title → Configure GSM . Globally — Settings → Display Settings → GSM Defaults . This is what every game with no GSM settings of its own inherits. The per-game page's first row, GSM Source , decides which of those wins: GSM Source Meaning Global Ignore this game's GSM keys entirely and follow the global defaults. Selecting it also removes the game's stored GSM keys. Per Game This game's GSM settings apply, as a complete set. Per Game + Global Per-key inheritance: any GSM value this game sets is used, and anything it leaves unset falls through to the global default. Per Game + Global is the option to reach for when you want one game to differ from your global setup in a single respect — a different video mode, say — while still tracking your global choices for everything else. See Per-game Settings .",
+  "url": "gsm.html#where"
+ },
+ {
+  "title": "The options",
+  "cat": "features",
+  "text": "The options Option What it does GSM Selector The on/off switch. With it off, the four rows below are greyed out and GSM does nothing. Forced custom display mode The video mode to output. See the list below . H-POS Horizontal position offset, −100 to +100. Shifts the picture left/right. V-POS Vertical position offset, −100 to +100. Shifts the picture up/down. Emulate FIELD Flipping Compatibility fix for games that shake, tear, or judder under a progressive mode. Try this first when a game looks wrong after GSM is applied. On the per-game page the mode list ends with Default , which means \"follow the global setting\". Picking it removes the key rather than storing a value, so the game genuinely tracks the global from then on. That entry does not appear on the global page, where it would be meaningless.",
+  "url": "gsm.html#options"
+ },
+ {
+  "title": "Available modes",
+  "cat": "features",
+  "text": "Available modes Modes 0–5 are the standard console rasters; the rest are forced progressive, HDTV, or VGA modes. # Mode # Mode 0 NTSC 15 VGA 640x480p @75Hz 1 NTSC Non Interlaced 16 VGA 640x480p @85Hz 2 PAL 17 VGA 640x960i @60Hz 3 PAL Non Interlaced 18 VGA 800x600p @56Hz 4 PAL @60Hz 19 VGA 800x600p @60Hz 5 PAL @60Hz Non Interlaced 20 VGA 800x600p @72Hz 6 PS1 NTSC (HDTV 480p @60Hz) 21 VGA 800x600p @75Hz 7 PS1 PAL (HDTV 576p @50Hz) 22 VGA 800x600p @85Hz 8 HDTV 480p @60Hz 23 VGA 1024x768p @60Hz 9 HDTV 576p @50Hz 24 VGA 1024x768p @70Hz 10 HDTV 720p @60Hz 25 VGA 1024x768p @75Hz 11 HDTV 1080i @60Hz 26 VGA 1024x768p @85Hz 12 HDTV 1080i @60Hz Non Interlaced 27 VGA 1280x1024p @60Hz 13 VGA 640x480p @60Hz 28 VGA 1280x1024p @75Hz 14 VGA 640x480p @72Hz 29 HDTV 1080p @60Hz (EXPERIMENTAL) HDTV 480p @60Hz (8) is the safe starting point on almost any modern display. 720p (10) and 1080i (11) are the next most widely accepted. The VGA modes need a display fed over VGA or a component/VGA-capable path; a plain HDMI adapter will usually not sync them.",
+  "url": "gsm.html#modes"
+ },
+ {
+  "title": "1080p is experimental, and asks three times",
+  "cat": "features",
+  "text": "1080p is experimental, and asks three times Mode 29, HDTV 1080p @60Hz (EXPERIMENTAL) , is compiled into every shipped build. It is a GSM-synthetic progressive raster — not a mode the PS2 hardware natively produces — and while it has passed real-hardware testing, it is non-standard enough that some displays will not sync it at all. ⚠ Cancelling the confirmation falls back to NTSC Selecting 1080p with GSM enabled triggers a three-step confirmation before it is written to disk, because a display that cannot sync leaves you with a black screen and no way to undo the choice from the console. Decline at any of the three steps and the mode falls back to NTSC (mode 0) — not to your previous selection. If you cancel, set the mode you actually wanted before leaving the page. The same gate applies on the global page, which carries the wider blast radius of the two: it is what every game without its own GSM settings inherits.",
+  "url": "gsm.html#1080p"
+ },
+ {
+  "title": "When a game loses the picture",
+  "cat": "features",
+  "text": "When a game loses the picture GSM is applied per game, so a bad setting affects that game only — the RiptOPL menu itself is unaffected and you can always get back to it. Launch a game that still works, or use the console's reset to return to the browser. Triangle on the affected title → Configure GSM . Either turn GSM Selector off, or pick a more conservative mode (480p, or the game's native NTSC/PAL). ℹ If the menu has no picture, that is not GSM That is the global Video Mode setting. Hold Triangle + Cross while RiptOPL boots to force the menu to 480p progressive. See Controls . The game runs but looks wrong Shaking, tearing, or juddering under a progressive mode — turn on Emulate FIELD Flipping . This is what it exists for. Picture off-centre — adjust H-POS and V-POS . Some scenes fine, others broken — a few games switch video mode mid-run (typically for FMVs). Those tend to be poor GSM candidates; try a less aggressive mode or leave GSM off for that title.",
+  "url": "gsm.html#lost-picture"
+ },
+ {
+  "title": "GSM and the other cores",
+  "cat": "features",
+  "text": "GSM and the other cores Neutrino does not use OPL's GSM. It has its own forced video mode handling, and the per-game Neutrino GSM Compatibility option is the equivalent field-flipping fix — \"for games that shake or tear under a forced Neutrino video mode\". Set it there rather than on the GSM page when the Loader Core is Neutrino. See Neutrino Core . PS1 titles run under POPSTARTER or Ember and do not use OPL's GSM either. Modes 6 and 7 in the list above are named \"PS1 NTSC/PAL\" because of the raster they produce, not because they apply to PS1 games. See PS1 Games .",
+  "url": "gsm.html#other-cores"
+ },
+ {
+  "title": "Related settings that are not GSM",
+  "cat": "features",
+  "text": "Related settings that are not GSM Two settings are easy to mistake for GSM options: Overscan ( Settings → Display ) trims the edges of the RiptOPL menu , not of games. It is a UI setting and is unrelated to the GSM H-POS/V-POS offsets. Video Mode ( Settings → Display ) sets the mode the menu runs in. GSM never affects it. Notes for builders Two names are involved, and they are not the same thing. GSM1080P is the Makefile variable ; it defaults to 1 , and when set the Makefile adds -DGSM_1080P — the preprocessor macro the code actually tests — to the EE build, and forwards GSM1080P=1 on to ee_core/Makefile . So every shipped build has mode 29 and the list is a consistent 30 entries across published flavours. Building with GSM1080P=0 drops it and shortens the list. In-game screenshots (IGS) require GSM to be enabled — see In-Game Reset . File Role ee_core/src/gsm_api.c , gsm_engine.S , gsm_engine_adv.S The GSM engine src/guigame.c The GSM settings page, the mode list, and the 1080p confirmation gate src/dialogs.c The six GSM dialog rows",
+  "url": "gsm.html#not-gsm"
  }
 ]
