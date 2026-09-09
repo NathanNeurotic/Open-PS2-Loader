@@ -52,6 +52,7 @@
     <h4>Reference</h4>
     <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
     <a href="controls.html" class="active"><span class="em">🕹️</span>Controls</a>
+    <a href="languages.html"><span class="em">🌐</span>Languages</a>
     <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
     <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
     <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
@@ -67,9 +68,10 @@
 game, and at boot.</p>
 
 <div class="callout info"><div class="h">ℹ Two settings change what you read below</div>
-<b>Select button</b> (<em>Settings → Interface</em>) swaps which face button confirms. The tables use the
-default, <b>Cross = confirm, Circle = back</b>. If you set Circle as the select button, swap those two
-everywhere <em>except</em> the Settings screens (see the note under <a href="#settings-screens">Settings
+<b>Select button</b> (<em>Settings → Interface</em>) swaps which face button confirms. The tables use
+<b>Cross = confirm, Circle = back</b>, which is the default everywhere except <b>Japanese consoles</b>, where
+RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your select button, swap
+those two everywhere <em>except</em> the Settings screens (see the note under <a href="#settings-screens">Settings
 screens</a>).<br>
 <b>Coverflow</b> (<em>Settings → Interface</em>) rotates the navigation axis on the game list. Both layouts
 are given below.</div>
@@ -185,10 +187,22 @@ turned off per game with compatibility Mode 6. Full detail, including the limita
 <table>
 <thead><tr><th>Hold at boot</th><th>Result</th></tr></thead>
 <tbody>
+<tr><td><b>Start</b></td><td>Skip loading the config — boot with defaults</td></tr>
 <tr><td><b>Triangle + Cross</b></td><td>Force the menu to 480p progressive (recovery)</td></tr>
 </tbody>
 </table>
 
+<h3 id="boot-start">Start — skip the config</h3>
+<p>Hold <b>Start</b> while RiptOPL boots and it does not read your settings file at all, starting from
+built-in defaults instead. This is the recovery path for a configuration that hangs or crashes the loader on
+startup. See <a href="troubleshooting.html">Troubleshooting</a>.</p>
+
+<div class="callout amber"><div class="h">⚠ Your settings are ignored, not erased — but do not save</div>
+The settings file is left alone for this boot. If you then change anything and save, you save the
+<em>defaults</em> over your old configuration. To keep your settings, fix the offending option and save; to
+preserve them untouched, do not save while booted this way.</div>
+
+<h3 id="boot-480p">Triangle + Cross — force 480p</h3>
 <p>Hold both while RiptOPL starts and it ignores the saved video mode, forcing <b>480p progressive</b>
 (640×448p60) and writing that back to the config. This is the recovery path for a blank screen after setting a
 video mode the display cannot sync.</p>

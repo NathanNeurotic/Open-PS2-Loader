@@ -894,108 +894,6 @@
   "url": "ps3-bc.html#limitations"
  },
  {
-  "title": "Releases",
-  "cat": "reference",
-  "text": "External Tools & Services PS2-Servers by Ripto — all-in-one PC server launcher for SMB, UDPFS, UDPBD and HTTP . udpfs-server by YouKnow-sys — the same idea from a phone: an Android app that shares folders and disk images to the PS2 over UDPFS , found by broadcast so there is no server address to type in on the console. Built on udpfsd by pcm720; MIT licensed. OrbitPS2 Manager by Luden — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management. OPL PS1 AIO Converter GUI by shaan — Windows all-in-one PS1/POPStarter preparation tool for BIN/CUE → VCD conversion and installation to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD. xeRAbora by hacan359 — the PC client for RetroAchievements on real PS2 hardware. RiptOPL's RA build streams the running game's memory to it; xeRAbora runs rcheevos, talks to the RetroAchievements servers, unlocks achievements and builds the per-game watch list. Shipped as a shortcut inside RIPTOPL-RA-*.zip ; MIT licensed. RiptOPL’s RA integration is not yet hardware-tested. OPL HTTP PC server by Docmine17 — the PC side of RiptOPL’s HTTP protocol: a small static HTTP server with byte-range support that serves your games.csv catalog and streams the ISOs. RiptOPL works with it unmodified — no new API, no catalog conversion, no changed layout — with host conformance checks against the upstream server; PS2 hardware validation is still pending. PS2RD CHT Manager by TheRealNextria — PC manager for the PS2RD .cht cheat files RiptOPL reads from your device's CHT folder. Ember by Gageformer — a PS1 emulator running natively on the PS2, used as RiptOPL's second PS1 core alongside POPSTARTER. Ships as an EMBER/ folder inside the release package, bundled unmodified under the ",
-  "url": "releases.html"
- },
- {
-  "title": "Releases — Release channels",
-  "cat": "reference",
-  "text": "Release channels Channel Tag When to use Stability Rolling (Latest) rolling Latest features, actively tested builds, eager testers Development builds — may be unstable Current Fan Favorite Build current-fan-favorite A fixed development snapshot for comparison Selected after positive feedback; compatibility varies Release notes on the rolling channel show the source commit, build version, build timestamp, and the CI run that produced it. The rolling channel is a full (non-pre-release) development release and intentionally owns GitHub's Latest marker. Release candidates use an -rc* suffix and stay as pre-releases; a bare v* tag produces a full curated release without displacing rolling.",
-  "url": "releases.html#channels"
- },
- {
-  "title": "Releases — What the rolling release contains",
-  "cat": "reference",
-  "text": "What the rolling release contains Successful publishing runs on rebuild/main replace the rolling assets. Archives are organized by purpose: the normal installable package, RA development package, exact source, VARIANTS, and optional language/debug packs. Read the release notes for omitted flavours or companion downloads. Asset What it is RIPTOPL-<rel>-<sha>.zip The installable package. Normally contains four explicitly labelled SDK loader folders (a best-effort flavour can be absent when its build fails, and the release notes identify it): APP_RIPTOPL-PS2DEVPINNED/ (#1, recommended pinned ps2dev), APP_RIPTOPL-OFFICIALPINNED/ (#2, recommended official pin), APP_RIPTOPL-PS2DEVROLLING/ (#3, moving ps2dev canary), and APP_RIPTOPL-OFFICIALROLLING/ (#4, moving official canary), one canonical POPS/ folder for POPSTARTER support (every BDMA pair stays loose there, including usbd.irx.ilink + usbhdfsd.irx.ilink ; none is embedded), the bundled EMBER/ and neutrino/ folders, and five companion-tool shortcuts. Start with APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF when that best-effort flavour is present. The presence of the loose iLink pair documents package contents, not a hardware pass: revision 2692's POPSTARTER iLink launch still returned to wLaunchELF in every flavour. RIPTOPL-<version>-src.zip Source snapshot of the exact built commit — you can rebuild this precise revision later. RIPTOPL-LANGS-*.zip Extra UI language files ( .lng files and non-Latin fonts not embedded in the ELF). Copy into your OPL folder alongside the ELF. RIPTOPL-RA-*.zip RetroAchievements build, as a complete package: the same POPS/ , EMBER/ , neutrino/ and PC-tool shortcuts as the main archive, with APP_RIPTOPL-RA-* loader folders in place of the standard ones, plus xeRAbora.url for the PC client the feature t",
-  "url": "releases.html#rolling-assets"
- },
- {
-  "title": "Releases — Four toolchain flavours",
-  "cat": "reference",
-  "text": "Four toolchain flavours, ordered for testing Every release attempts four labelled flavours of the same RiptOPL source, in this recommended order: APP_RIPTOPL-PS2DEVPINNED/ — digest-pinned ps2dev; recommended primary control. APP_RIPTOPL-OFFICIALPINNED/ — digest-pinned official ps2homebrew toolchain. APP_RIPTOPL-PS2DEVROLLING/ — moving ps2dev:latest canary. APP_RIPTOPL-OFFICIALROLLING/ — moving official ps2homebrew:main canary. The PS2DEVROLLING canary must compile — if it fails, the publish fails loudly rather than shipping without its required build. The other three flavours are best-effort : if one fails, the release still updates without that folder and the notes identify the omission.",
-  "url": "releases.html#four-flavours"
- },
- {
-  "title": "Releases — Bundled Neutrino core",
-  "cat": "reference",
-  "text": "Bundled Neutrino core The installable package ships the latest published official rickgaiser/neutrino build as an already-extracted neutrino/ folder at the package root (holding neutrino.elf plus the config/ and modules/ folders) — no zip-in-zip, so you just drag-and-drop it. RiptOPL adds only one file — config/bsd-udpfsbd.toml — so UDPFS works out of the box without a manual copy step. Everything else is the official Neutrino build, unchanged. ℹ Copying it over There is nothing to extract: copy the whole neutrino/ folder to mc?:/neutrino/ ( neutrino.elf plus the config/ and modules/ folders are already inside). See Neutrino Core for the full setup guide.",
-  "url": "releases.html#bundled-neutrino"
- },
- {
-  "title": "Releases — How to pull the rolling release",
-  "cat": "reference",
-  "text": "How to pull the rolling release Because filenames embed the version and short SHA, they change on every push. Pull by the rolling tag rather than a fixed filename so you always get what is currently published: # Everything in the current rolling release gh release download rolling --repo NathanNeurotic/Open-PS2-Loader --clobber Or download directly from the release page: github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling ℹ No stale accumulation Every prior run's assets are deleted before the new set is uploaded, so old builds do not pile up on the release page. GitHub's automatic \"Source code\" archives (added separately by GitHub) are the only exception.",
-  "url": "releases.html#how-to-pull"
- },
- {
-  "title": "Releases — How the pipeline works",
-  "cat": "reference",
-  "text": "How the pipeline works One workflow file — .github/workflows/rolling-release.yml — is the single place release packaging lives. The pushed ref picks the publish target: Push to rebuild/main or master → updates the rolling full development release, explicitly clears its pre-release flag, and keeps it marked as GitHub Latest. Push of a v* tag → cuts a curated per-version release for that tag, using the same normalized package format and best-effort rules. An -rc* tag stays a pre-release; a bare v* tag makes a full release. Neither displaces rolling from the Latest marker. Manual workflow_dispatch → re-runs as rolling. A concurrency group cancels in-flight rolling runs when a newer push arrives, so the release always reflects the freshest commit. A publishing-branch push and a simultaneous v* tag release run in separate concurrency groups and do not cancel each other. Why are there four toolchain flavours in the same release? The moving ps2dev and official toolchain tags can advance independently and occasionally introduce regressions. Each lineage therefore has a digest-pinned control beside its moving canary. Start with APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF ; if hardware behavior differs, test the other labelled folders and report the exact in-app flavour suffix so application and SDK regressions can be separated. When should I use the VARIANTS or DEBUG zips? VARIANTS contain the full EXTRA_FEATURES × PADEMU × DUALSENSE matrix for the moving and pinned ps2dev flavours. The normalizer also adds a ready-made DualSense loader for each available official flavour; it does not build the complete official-toolchain matrix. DEBUG builds are produced for the two ps2dev flavours only. Those configurations ( iopcore , ingame , eesio , iopcore_ppctty , ingame_ppctty , DTL_T10000 ) em",
-  "url": "releases.html#pipeline"
- },
- {
-  "title": "Releases — After downloading",
-  "cat": "reference",
-  "text": "After downloading Extract the package zip Unzip RIPTOPL-<rel>-<sha>.zip . The contents are ready to copy to your memory card or USB drive root: APP_RIPTOPL-PS2DEVPINNED/ RIPTOPL.ELF ← #1 recommended pinned control APP_RIPTOPL-OFFICIALPINNED/ RIPTOPL.ELF ← #2 official pinned control APP_RIPTOPL-PS2DEVROLLING/ RIPTOPL.ELF ← #3 moving ps2dev canary APP_RIPTOPL-OFFICIALROLLING/ RIPTOPL.ELF ← #4 moving official canary POPS/ ← POPSTARTER.ELF and every loose BDMA variant (including .ilink) EMBER/ ← official Ember core; add your own BIOS and games neutrino/ ← official Neutrino core (already extracted, drag-and-drop) PS2-Servers.url ← link to the UDPFS / SMBv1 / UDPBD all-in-one PC launcher Install the ELF via your launch method Copy APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF to wherever your launch method (FMCB, FHDB, or equivalent) expects it. If that best-effort folder is absent in a run, use the next available flavour in the order above. The labelled folders can sit side by side; the APP_ prefix is the OPL convention for homebrew apps stored on your device. Set up Neutrino (optional) The neutrino/ folder is already extracted — just copy the whole folder ( neutrino.elf plus the config/ and modules/ folders) to mc?:/neutrino/ . Required only if you want per-game Neutrino launching or network boot (UDPBD/UDPFS). See Neutrino Core . Copy the language pack (optional) If you want a non-default UI language, extract RIPTOPL-LANGS-*.zip and copy its .lng files and any non-Latin font files into your OPL/LNG/ folder. The standard ELF has the fork-specific UI strings machine-translated into all 31 bundled languages, but rarer scripts may need the external font. For a complete first-run walkthrough (folder layout, enabling devices, launching your first game), see Getting Started .",
-  "url": "releases.html#getting-started"
- },
- {
-  "title": "Troubleshooting",
-  "cat": "reference",
-  "text": "Troubleshooting Step-by-step fixes for the most common RiptOPL problems — boot hangs, blank screens, video mode locks, white-screen game failures, BDMA driver errors, and PS1/VCD list issues. i Still stuck after reading this page? Report RiptOPL regressions in our issue tracker . Include version/SHA, SDK flavour, console model, game ID, source/protocol, core, steps, settings and any known-good build comparison. The upstream OPL forum remains a community resource. For PS1 internals (IGR, cheats, multi-disc, config table), see the sister POPStarter docs . OPL freezes on the logo or grey screen Symptom: RiptOPL hangs at the animated logo or a grey screen on every boot — the game list never appears. First isolation check: Try skipping saved configuration. A bad config is one possible cause; a startup screen alone does not identify the failing subsystem. Skip config on boot Power on your PS2 and immediately hold START while RiptOPL initializes. Keep it held until the interface appears. This tells OPL to skip loading the saved config and boot with defaults instead. Expect to land on the start menu with no game-list tabs — that is what the defaults look like, since every device ships off — not on a game list. Open and re-save settings With the loader running (config skipped), open Settings and configure the options you need — at minimum, enable the device mode(s) you use. Then Save so a fresh, valid settings_riptopl.cfg is written. Verify the fix Reboot OPL normally (without holding any buttons). If it reaches the game list or settings screen without freezing, the bad config has been replaced. If it still freezes, record the exact build and active settings location and report the result; do not assume the file lives on the memory card. Why does RiptOPL have its own config file",
-  "url": "troubleshooting.html"
- },
- {
-  "title": "Troubleshooting: OPL freezes on logo or grey screen",
-  "cat": "reference",
-  "text": "OPL freezes on the logo or grey screen Symptom: RiptOPL hangs at the animated logo or a grey screen on every boot — the game list never appears. First isolation check: Try skipping saved configuration. A bad config is one possible cause; a startup screen alone does not identify the failing subsystem. Skip config on boot Power on your PS2 and immediately hold START while RiptOPL initializes. Keep it held until the interface appears. This tells OPL to skip loading the saved config and boot with defaults instead. Expect to land on the start menu with no game-list tabs — that is what the defaults look like, since every device ships off — not on a game list. Open and re-save settings With the loader running (config skipped), open Settings and configure the options you need — at minimum, enable the device mode(s) you use. Then Save so a fresh, valid settings_riptopl.cfg is written. Verify the fix Reboot OPL normally (without holding any buttons). If it reaches the game list or settings screen without freezing, the bad config has been replaced. If it still freezes, record the exact build and active settings location and report the result; do not assume the file lives on the memory card. Why does RiptOPL have its own config file? RiptOPL's master settings use settings_riptopl.cfg (with migration from conf_riptopl.cfg ). That filename is separate from stock OPL's master config, but conf_network.cfg , app lists, per-game configuration and support files can still be shared. Favorites import from uOPL/wOPL is one-way : the next write saves RiptOPL's own OFAV format to favourites.bin , which those loaders cannot read back. Keep an original copy if you use them too. The settings home follows boot-directory discovery or Custom Settings Path ; do not assume it is always mc0:/OPL/ .",
-  "url": "troubleshooting.html#freeze-logo"
- },
- {
-  "title": "Troubleshooting: Game stops on a white screen",
-  "cat": "reference",
-  "text": "Game stops on a white screen A white or black launch screen alone does not diagnose fragmentation or a corrupt dump. Record the build/SDK, console, game ID, source and core before changing anything. Check the image against a known-good dump and verify that the copy completed. Try the title with game overrides disabled, checking inherited global defaults as well. If the loader reports a fragment-limit error, try a fresh sequential copy with sufficient free space. OPL's BDM table is shared across game image parts; Neutrino counts ISO and VMC fragments together against its 64-entry block-device budget. Compare a known-good build on the same setup and report where the launch stops. Back up all data before considering a reformat. Do not reformat solely because of a screen colour. A successful retry after several changes does not establish which change fixed it.",
-  "url": "troubleshooting.html#white-screen"
- },
- {
-  "title": "Troubleshooting: No display on boot (blank or black screen)",
-  "cat": "reference",
-  "text": "No display on boot (blank or black screen) Hold Triangle + Cross while RiptOPL initializes to force 480p for the menu . The display and connection must accept that signal. Once visible, select a suitable mode under Interface , save, and retry. Holding START skips saved configuration and uses defaults.",
-  "url": "troubleshooting.html#no-display"
- },
- {
-  "title": "Troubleshooting: iLink revision 2692 handoff status",
-  "cat": "reference",
-  "text": "iLink — revision 2692 handoff failures Test control: On an SCPH-39001 with the same IEEE 1394 HDD, Ember launched in all four revision 2692 flavours. Native OPL, Neutrino, and POPSTARTER did not. Both pinned and rolling builds from both SDK lineages failed, so the result is not isolated to one compiler image. What Ember proves: RiptOPL can enumerate and read the iLink disk, select the title, and transfer control while keeping the live stack. This rules out a blanket menu-side iLink or drive visibility failure. Neutrino: revision 2692 sent -bsd=ilink but did not auto-send -qb . The post-2692 build corrects that source-confirmed RiptOPL-side mismatch so its inherited-stack handoff enters Neutrino's load environment directly. Hardware retest must still establish whether that mismatch was the complete cause. POPSTARTER: after a failed attempt, confirm mc?:/POPSTARTER/bdma_config.txt contains exactly ilink , usbd.irx is 48,500 bytes (SHA-256 5EA4818BA1CF5207F6D7CADB4C13B5AFA88C37C260750C21155B079A8C18F369 ), and usbhdfsd.irx is 23,452 bytes (SHA-256 145CF1C0AF130EA7AC5CEC6696AA7E60B5C66A2AC46B8DEA94DB17BB3B911BCC ). A mismatch is on RiptOPL's external-equip leg; exact files narrow the failure to POPSTARTER/BDMA after handoff. Native OPL: the existing iLink alias and dependency corrections are present, but the revision 2692 failures show they were not sufficient. No regular IOP module is replaced by this follow-up. The next useful control is current official OPL on the same console, adapter, disk, and ISO; that separates an upstream iLink reinitialization limitation from a RiptOPL regression.",
-  "url": "troubleshooting.html#ilink-handoff-status"
- },
- {
-  "title": "Troubleshooting: BDMA — module files not found on source device",
-  "cat": "reference",
-  "text": "BDMA — \"module files not found on source device\" Symptom: You have set a BDMA Mode (e.g. USB (exFAT) , MX4SIO (exFAT) , HDD (exFAT) , or iLink ) and a BDMA Source , but when you save or apply the equip RiptOPL reports that the module files were not found on the source device. Cause: The BDMA module files ( .irx driver pair for the chosen variant) are missing from or in the wrong location on the source device. RiptOPL does not embed these files — you supply them from the release's POPS/ folder. Locate the module files The BDMA module files ship loose inside the RiptOPL release archive; none is embedded in RIPTOPL.ELF . Find the POPS/ folder in the release zip — it contains the driver variants for each equip mode, including usbd.irx.ilink + usbhdfsd.irx.ilink for iLink. Copy them to the correct location Place the module files in a POPS/ folder at the root of whichever device you have set as the BDMA Source — USB, MX4SIO, MMCE, iLink, or Internal HDD. The path must be exactly: POPS/ ← folder at device root POPSTARTER.ELF <module files for your chosen variant> Note: the source must match the device's driver RiptOPL resolves the BDMA Source by its block-device driver , not by scanning the whole massN: namespace. A USB source reads only usb slots; MX4SIO reads only mx4sio slots; iLink reads only ilink slots; and Internal HDD reads only the ata (exFAT) HDD. Set the source to match the driver of the device where the loose pair actually lives. Re-apply the equip With the files in place, open PS Emulation Settings from the main menu — BDMA has its own page, it is not under General Settings — set BDMA Source / BDMA Mode , and save. (The two manual pickers are hidden while VCD BDMA Apply on Launch is ON, because that option equips automatically; turn it off to set them by hand.) Ri",
-  "url": "troubleshooting.html#bdma-module-not-found"
- },
- {
-  "title": "Troubleshooting: PS1 / VCD list not showing after a settings change",
-  "cat": "reference",
-  "text": "PS1 / VCD list not showing after a settings change Symptom: You have VCD files on a device but after changing PS2/PS1 Game Display , enabling a device, or changing BDMA settings, the PS1 list is empty or appears stuck on PS2. Fix: First distinguish a pinned view from missing content: If PS2/PS1 Game Display is PS2 or PS1 , L3 is completely disabled by design — no hint, sound, notification, pause, or response. Choose Both (L3) or Mixed on either Interface or PS Emulation Settings to enable an L3 ring. Under Both (L3) , L3 switches PS2 / PS1. Under Mixed , it cycles Mixed / PS2 / PS1. A setting change queues the affected lists automatically; a separate restart is not required. If the PS1 list still appears empty, confirm the *.VCD files are in a POPS/ folder at the device root (USB / MMCE / MX4SIO / iLink / SMB) or, for the internal APA HDD, inside the correct __.POPS / __.POPS0 – __.POPS9 partitions. Files in any other location are not scanned. For exFAT HDD, confirm HDD (GPT/MBR) is enabled in Game Sources and that the HDD has mounted — the game list should show an HDD Games entry. VCDs on the exFAT HDD live in massN:/POPS/ . i UDPFS / UDPBD are Ember-only PS1 pages No VCD rows on either network page is expected, not a failed scan. POPSTARTER cannot restore those connections after its IOP reset; Ember inherits the live mount, so only Ember titles are listed. i Favorites always has four views Press L3 on Favorites to cycle PS2 → PS1 → ELF → All in One . This independent ring is not pinned or disabled by PS2/PS1 Game Display. The page opens on PS2 and then comes back to whichever shelf you last left it on.",
-  "url": "troubleshooting.html#vcd-list-not-showing"
- },
- {
-  "title": "Troubleshooting: Quick-reference button combos",
-  "cat": "reference",
-  "text": "Quick-reference button combos Problem Boot combo Effect Freeze on logo / grey screen (bad config) START Skips config load; boots with defaults Blank / black screen (unsupported video mode) Triangle + Cross Forces 480p for the menu only; requires a compatible display/connection Menu works; game video fails No boot combo clears game overrides Disable/change GSM or Neutrino video settings and check global defaults",
-  "url": "troubleshooting.html#quick-reference"
- },
- {
-  "title": "PS1/VCD list is empty (works elsewhere)",
-  "cat": "reference",
-  "text": "PS1/VCD — \"my VCDs don't show up\" (works elsewhere) Symptom: A device lists PS2 games fine (or works in another loader), but its PS1 view is empty — or a listed VCD does nothing when selected. Work down this ladder; each step isolates a different stage: Does the device page appear at all? If not, it's the device enables, not VCD. Every device ships OFF on a fresh install, so check Game Sources first: USB/MX4SIO/iLink need their own toggles on and BDM Start Mode set to Manual or Auto, and the internal exFAT page additionally needs HDD (GPT/MBR) ON. The two internal-HDD backends are no longer mutually exclusive — APA (HDD start mode) and exFAT/BDM-ATA may both be enabled at once, since one shared ATA stack serves both, so leaving APA on does not suppress the exFAT page. Do PS2 ISOs list from the device? If yes, the filesystem/mount layer is proven working, so \"but it works in another loader\" adds no new information past this step. The release publishes four labelled flavours: PS2DEVPINNED , OFFICIALPINNED , PS2DEVROLLING , and OFFICIALROLLING . Start with the pinned primary control, and report the exact in-app suffix if behavior differs across flavours. Check PS2/PS1 Game Display Both (L3) switches separate PS2 and PS1 views. Mixed combines them and L3 cycles Mixed / PS2 / PS1. The locked PS2 and PS1 modes intentionally make L3 fully inert; choose PS1 to pin the PS1 view without L3. Check the folder — root, not your games prefix VCDs are scanned from <device-root>:/POPS/*.VCD . The game-folder prefix ( usb_prefix etc.) is deliberately not applied, because POPSTARTER itself only reads /POPS at the root. A POPS folder inside your games subfolder will never be found. Check the filename Basenames longer than 160 characters and the reserved name POPSTARTER.VCD are skipped at s",
-  "url": "troubleshooting.html#vcd-list-empty"
- },
- {
   "title": "Credits & Sources",
   "cat": "reference",
   "text": "Credits & Sources RiptOPL is a downstream fork of Open PS2 Loader — a labor of love, not a replacement for upstream. Every feature in this fork began as someone else's code and someone else's ideas. This page names the people and projects it stands on. ℹ Downstream, not canonical The canonical, actively-maintained project lives at ps2homebrew/Open-PS2-Loader . If you want the reference build, go there. This fork exists only because that upstream work is open for everyone to study, learn from, and build on. Please support the canonical project. The Foundation: ps2homebrew & PS2SDK None of this would exist without the ps2homebrew team and their many years of open-source work on Open PS2 Loader and the PS2SDK . The toolchain, the IOP module ecosystem, the network stack, the HDD drivers, the memory-card protocol, the pad-emulation IRX chain — all of it was built, maintained, and kept free and open so that people could study and extend it. Every feature in RiptOPL is built on that foundation. Original Open PS2 Loader authors: Ifcaro and jimmikaelkael (copyright 2009). Core OPL development has been carried on by Ifcaro, volca, jimmikaelkael, polo35, izdubar, hominem.te.esse, SP193, and many contributors listed in the CREDITS file. The OPL Family RiptOPL Draws From RiptOPL is a direct agglomeration of the wider OPL family. The following projects each contributed code, ideas, or directly-ported features: Project Author(s) What came from it Source rickgaiser's OPL rickgaiser Various enhancements and modernisations used as a base GitHub Neutrino rickgaiser Launched, not derived from — see Special Thanks . The external EE/IOP game-loader core RiptOPL hands games to per game, and the core behind the UDPBD block-device transport and the UDPFS network transports (a loose-ISO filesyst",
@@ -1200,42 +1098,6 @@
   "url": "igr.html#troubleshooting"
  },
  {
-  "title": "Controls",
-  "cat": "reference",
-  "text": "Controls Every button RiptOPL responds to, in one place — the game list, the menus, inside a running game, and at boot. ℹ Two settings change what you read below Select button ( Settings → Interface ) swaps which face button confirms. The tables use the default, Cross = confirm, Circle = back . If you set Circle as the select button, swap those two everywhere except the Settings screens (see the note under Settings screens ). Coverflow ( Settings → Interface ) rotates the navigation axis on the game list. Both layouts are given below.",
-  "url": "controls.html"
- },
- {
-  "title": "Game list",
-  "cat": "reference",
-  "text": "Game list Button Action D-pad Up / Down Move through the game list D-pad Left / Right Switch device page (USB, HDD, SMB, Apps, Favorites…) Cross Launch the selected game (or go up one folder level, if Circle is your select button) Circle Go up one folder level (or launch, if Circle is your select button) Triangle Per-game settings for the selected title Square Game info page — cover, screenshots, size, disc type L1 / R1 Previous / next page of the list L2 Jump to the first page R2 Jump to the last page L3 Cycle this page's library view (PS2 / PS1 / Both / …) R3 Star or un-star the selected title as a Favorite Start Open the main menu Select Refresh the current device list With Coverflow enabled Coverflow rotates the two navigation axes on the game list — and only there . The info screen and every menu keep the standard layout. Button Coverflow off Coverflow on Up / Down Move through the list Switch device page Left / Right Switch device page Move through the carousel Every other button is unchanged. See Coverflow . Notes on individual buttons Triangle adapts to what is selected. On a PS2 title it opens per-game settings ; on a PS1 title it opens the VCD menu; on an entry in Apps it opens the app menu. Folder rows have no settings screen, so Triangle does nothing on them. Square opens the info page. Folder rows have no info page. On PS1 titles and direct HDD entries the size field is intentionally left blank rather than computed. R3 does nothing when Favorites is disabled — it never writes silently. On the Favorites page itself, R3 removes the selected entry. Select / Refresh is also the retry for a device page that failed to populate — a network share that was not up when RiptOPL started, for example.",
-  "url": "controls.html#game-list"
- },
- {
-  "title": "Main menu and dialogs",
-  "cat": "reference",
-  "text": "Main menu and dialogs Button Action Up / Down Move between entries Left / Right Change the value of the highlighted setting Cross Confirm / activate Circle Back / cancel Start Confirm and close Triangle Open the on-screen keyboard on a text field Settings screens ℹ Settings pins Cross and Circle In the settings screens Cross is always OK and Circle is always Cancel , whichever way the global Select button setting is configured. This is deliberate — it keeps the settings UI stable no matter how the browser is set up. Button Action L1 / R1 Move to the previous / next settings screen Cross OK Circle Cancel See the Settings Reference for what each screen contains. On-screen keyboard Opened with Triangle from any text field. Button Action D-pad Move around the key grid Cross Type the highlighted character Square Backspace Triangle Clear the field L1 / R1 Move the caret left / right Start Accept and close",
-  "url": "controls.html#menus"
- },
- {
-  "title": "In-game",
-  "cat": "reference",
-  "text": "In-game These work inside a running game. Hold all four shoulder buttons, then press the second half. Hold Then press Result L1 + L2 + R1 + R2 Start + Select Reset — return to RiptOPL L1 + L2 + R1 + R2 L3 + R3 Power off the console L1 + L2 + R1 + R2 Up In-game screenshot (needs GSM on and an IGS-enabled build) The console's own power button also works: one press powers off, two presses reset. This is In-Game Reset . It does not apply under the Neutrino core, and it can be turned off per game with compatibility Mode 6. Full detail, including the limitations, is on that page.",
-  "url": "controls.html#in-game"
- },
- {
-  "title": "At boot",
-  "cat": "reference",
-  "text": "At boot Hold at boot Result Triangle + Cross Force the menu to 480p progressive (recovery) Hold both while RiptOPL starts and it ignores the saved video mode, forcing 480p progressive (640×448p60) and writing that back to the config. This is the recovery path for a blank screen after setting a video mode the display cannot sync. ⚠ Two things to know about the recovery combo It forces 480p specifically, not Auto — Auto resolves to the region-default interlaced mode, which is exactly what some upscalers fail to sync, so it would leave you no better off. And it affects the RiptOPL menu only , not games; a game that loses the picture needs its GSM override changed instead. Your display and cable must be able to do 480p progressive (component, VGA, or a capable HDMI adapter) for this to help. See Troubleshooting .",
-  "url": "controls.html#at-boot"
- },
- {
-  "title": "Rumble",
-  "cat": "reference",
-  "text": "Rumble RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by Rumble in Settings → Controller . It needs a DualShock in analog mode — with the analog light off the controller has no motors available and the setting does nothing. Third-party pads and most adapters vary in whether they report vibration support correctly. This is menu rumble only, and is independent of in-game vibration, which is the game's business (or PADEMU's, when emulating a pad).",
-  "url": "controls.html#rumble"
- },
- {
   "title": "GSM — forced video modes",
   "cat": "features",
   "text": "GSM — forced video modes GSM makes a game output a video mode it was never written to output. Most PS2 games render 480i (or 576i in PAL). GSM intercepts the game's video setup and substitutes a different raster, so the same game can come out as 480p, 720p, 1080i, or one of a range of VGA modes — useful on modern displays and upscalers that handle interlaced signals badly or not at all. ℹ GSM does not add detail It does not re-render anything. The game still draws the same picture at the same internal resolution; GSM changes how that picture is scanned out. Expect a cleaner, more stable signal, not a sharper one.",
@@ -1432,5 +1294,209 @@
   "cat": "reference",
   "text": "HTTP and RetroAchievements See HTTP for the separate server, port, base path and Test fields, and RetroAchievements for RA-build telemetry and badge settings.",
   "url": "settings.html#http-settings"
+ },
+ {
+  "title": "Languages",
+  "cat": "reference",
+  "text": "Languages RiptOPL ships with English built in and can load additional interface languages from your storage device. This page is about installing and choosing one. If you want to translate RiptOPL, see the maintainer documentation in the repository instead.",
+  "url": "languages.html"
+ },
+ {
+  "title": "What is already there",
+  "cat": "reference",
+  "text": "What is already there English is compiled into the ELF and needs no files. It is also the fallback: if a language file is missing a particular string, that string appears in English rather than blank. You will never lose text by switching language.",
+  "url": "languages.html#builtin"
+ },
+ {
+  "title": "Installing extra languages",
+  "cat": "reference",
+  "text": "Installing extra languages The language files are published as a separate release asset , not inside the main package: RIPTOPL-LANGS-*.zip It contains the .lng language files and the non-Latin fonts some of them need. To install: Download RIPTOPL-LANGS-*.zip from the release . Extract it. Copy the files into the LNG/ folder on the device you boot RiptOPL from. RiptOPL looks for an LNG/ folder under each enabled source's configured prefix, and on the memory card. Any device you have enabled can supply languages — they do not all have to live in one place. LNG/ lang_French.lng lang_Japanese.lng font_Japanese.ttf",
+  "url": "languages.html#install"
+ },
+ {
+  "title": "File naming",
+  "cat": "reference",
+  "text": "File naming ⚠ The filename is the language name A language file must be named lang_<Name>.lng . RiptOPL takes the text between lang_ and .lng and shows exactly that in the language picker — so lang_French.lng appears as French . Renaming the file renames the entry. A language that needs characters the default font does not carry — Japanese, Chinese, Korean, Russian, Greek, Arabic, Thai — can ship its own font beside it, named to match: font_<Name>.ttf or font_<Name>.otf . RiptOPL loads it automatically when that language is selected, and returns to the built-in font when you switch back to English.",
+  "url": "languages.html#naming"
+ },
+ {
+  "title": "Choosing a language",
+  "cat": "reference",
+  "text": "Choosing a language Settings → Interface → Language. The list contains English plus every .lng file RiptOPL found. Save settings to keep the choice. ℹ Languages are discovered per device, as devices come up A language on a device that was not ready when RiptOPL started will not be in the list yet. If a language is missing, make sure that device is enabled and its page has populated, then reopen Settings.",
+  "url": "languages.html#selecting"
+ },
+ {
+  "title": "This is not the OSD language setting",
+  "cat": "reference",
+  "text": "This is not the OSD language setting Two different things are called \"language\" in RiptOPL: Setting What it changes Language ( Settings → Interface ) The language of RiptOPL's own menus . This page. OSD Language Settings (per game, Triangle) The language, TV aspect and video mode written into EEPROM as a game boots — it changes what the game sees, not what RiptOPL shows. OPL core only; not available under Neutrino. See Per-game Settings .",
+  "url": "languages.html#per-game-osd"
+ },
+ {
+  "title": "Troubleshooting",
+  "cat": "reference",
+  "text": "Troubleshooting The language is not in the list. Confirm the file is in an LNG/ folder under an enabled device's configured prefix, that it is named lang_<Name>.lng , and that the device page has finished populating. The language appears but the text is boxes or blanks. The font is missing. Copy the matching font_<Name>.ttf / .otf into the same LNG/ folder — the language pack zip contains the fonts alongside the language files. Some strings are still English. Expected. Untranslated strings fall back to English rather than appearing blank, and a language pack from an older build will not have RiptOPL's newest strings. ⚠ Match the language pack to the build .lng files are read by line position , so a pack from a different build can show the wrong text rather than falling back to English. If translated strings look mismatched or nonsensical, download the language pack that goes with your build.",
+  "url": "languages.html#troubleshooting"
+ },
+ {
+  "title": "Releases",
+  "cat": "reference",
+  "text": "External Tools & Services PS2-Servers by Ripto — all-in-one PC server launcher for SMB, UDPFS, UDPBD and HTTP . udpfs-server by YouKnow-sys — the same idea from a phone: an Android app that shares folders and disk images to the PS2 over UDPFS , found by broadcast so there is no server address to type in on the console. Built on udpfsd by pcm720; MIT licensed. OrbitPS2 Manager by Luden — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management. OPL PS1 AIO Converter GUI by shaan — Windows all-in-one PS1/POPStarter preparation tool for BIN/CUE → VCD conversion and installation to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD. xeRAbora by hacan359 — the PC client for RetroAchievements on real PS2 hardware. RiptOPL's RA build streams the running game's memory to it; xeRAbora runs rcheevos, talks to the RetroAchievements servers, unlocks achievements and builds the per-game watch list. Shipped as a shortcut inside RIPTOPL-RA-*.zip ; MIT licensed. RiptOPL’s RA integration is not yet hardware-tested. OPL HTTP PC server by Docmine17 — the PC side of RiptOPL’s HTTP protocol: a small static HTTP server with byte-range support that serves your games.csv catalog and streams the ISOs. RiptOPL works with it unmodified — no new API, no catalog conversion, no changed layout — with host conformance checks against the upstream server; PS2 hardware validation is still pending. PS2RD CHT Manager by TheRealNextria — PC manager for the PS2RD .cht cheat files RiptOPL reads from your device's CHT folder. Ember by Gageformer — a PS1 emulator running natively on the PS2, used as RiptOPL's second PS1 core alongside POPSTARTER. Ships as an EMBER/ folder inside the release package, bundled unmodified under the ",
+  "url": "releases.html"
+ },
+ {
+  "title": "Release channels",
+  "cat": "reference",
+  "text": "Release channels Channel Tag When to use Stability Rolling (Latest) rolling Latest features, actively tested builds, eager testers Development builds — may be unstable Current Fan Favorite Build current-fan-favorite A fixed development snapshot for comparison Selected after positive feedback; compatibility varies Release notes on the rolling channel show the source commit, build version, build timestamp, and the CI run that produced it. The rolling channel is a full (non-pre-release) development release and intentionally owns GitHub's Latest marker. Release candidates use an -rc* suffix and stay as pre-releases; a bare v* tag produces a full curated release without displacing rolling.",
+  "url": "releases.html#channels"
+ },
+ {
+  "title": "What the rolling release contains",
+  "cat": "reference",
+  "text": "What the rolling release contains Successful publishing runs on rebuild/main replace the rolling assets. Archives are organized by purpose: the normal installable package, RA development package, exact source, VARIANTS, and optional language/debug packs. Read the release notes for omitted flavours or companion downloads. Asset What it is RIPTOPL-<rel>-<sha>.zip The installable package. Normally contains four explicitly labelled SDK loader folders (a best-effort flavour can be absent when its build fails, and the release notes identify it): APP_RIPTOPL-PS2DEVPINNED/ (#1, recommended pinned ps2dev), APP_RIPTOPL-OFFICIALPINNED/ (#2, recommended official pin), APP_RIPTOPL-PS2DEVROLLING/ (#3, moving ps2dev canary), and APP_RIPTOPL-OFFICIALROLLING/ (#4, moving official canary), one canonical POPS/ folder for POPSTARTER support (every BDMA pair stays loose there, including usbd.irx.ilink + usbhdfsd.irx.ilink ; none is embedded), the bundled EMBER/ and neutrino/ folders, and five companion-tool shortcuts. Start with APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF when that best-effort flavour is present. The presence of the loose iLink pair documents package contents, not a hardware pass: revision 2692's POPSTARTER iLink launch still returned to wLaunchELF in every flavour. RIPTOPL-<version>-src.zip Source snapshot of the exact built commit — you can rebuild this precise revision later. RIPTOPL-LANGS-*.zip Extra UI language files ( .lng files and non-Latin fonts not embedded in the ELF). Copy into your OPL folder alongside the ELF. RIPTOPL-RA-*.zip RetroAchievements build, as a complete package: the same POPS/ , EMBER/ , neutrino/ and PC-tool shortcuts as the main archive, with APP_RIPTOPL-RA-* loader folders in place of the standard ones, plus xeRAbora.url for the PC client the feature t",
+  "url": "releases.html#rolling-assets"
+ },
+ {
+  "title": "Four toolchain flavours, ordered for testing",
+  "cat": "reference",
+  "text": "Four toolchain flavours, ordered for testing Every release attempts four labelled flavours of the same RiptOPL source, in this recommended order: APP_RIPTOPL-PS2DEVPINNED/ — digest-pinned ps2dev; recommended primary control. APP_RIPTOPL-OFFICIALPINNED/ — digest-pinned official ps2homebrew toolchain. APP_RIPTOPL-PS2DEVROLLING/ — moving ps2dev:latest canary. APP_RIPTOPL-OFFICIALROLLING/ — moving official ps2homebrew:main canary. The PS2DEVROLLING canary must compile — if it fails, the publish fails loudly rather than shipping without its required build. The other three flavours are best-effort : if one fails, the release still updates without that folder and the notes identify the omission.",
+  "url": "releases.html#four-flavours"
+ },
+ {
+  "title": "Bundled Neutrino core",
+  "cat": "reference",
+  "text": "Bundled Neutrino core The installable package ships the latest published official rickgaiser/neutrino build as an already-extracted neutrino/ folder at the package root (holding neutrino.elf plus the config/ and modules/ folders) — no zip-in-zip, so you just drag-and-drop it. RiptOPL adds only one file — config/bsd-udpfsbd.toml — so UDPFS works out of the box without a manual copy step. Everything else is the official Neutrino build, unchanged. ℹ Copying it over There is nothing to extract: copy the whole neutrino/ folder to mc?:/neutrino/ ( neutrino.elf plus the config/ and modules/ folders are already inside). See Neutrino Core for the full setup guide.",
+  "url": "releases.html#bundled-neutrino"
+ },
+ {
+  "title": "How to pull the rolling release",
+  "cat": "reference",
+  "text": "How to pull the rolling release Because filenames embed the version and short SHA, they change on every push. Pull by the rolling tag rather than a fixed filename so you always get what is currently published: # Everything in the current rolling release gh release download rolling --repo NathanNeurotic/Open-PS2-Loader --clobber Or download directly from the release page: github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling ℹ No stale accumulation Every prior run's assets are deleted before the new set is uploaded, so old builds do not pile up on the release page. GitHub's automatic \"Source code\" archives (added separately by GitHub) are the only exception.",
+  "url": "releases.html#how-to-pull"
+ },
+ {
+  "title": "How the pipeline works",
+  "cat": "reference",
+  "text": "How the pipeline works One workflow file — .github/workflows/rolling-release.yml — is the single place release packaging lives. The pushed ref picks the publish target: Push to rebuild/main or master → updates the rolling full development release, explicitly clears its pre-release flag, and keeps it marked as GitHub Latest. Push of a v* tag → cuts a curated per-version release for that tag, using the same normalized package format and best-effort rules. An -rc* tag stays a pre-release; a bare v* tag makes a full release. Neither displaces rolling from the Latest marker. Manual workflow_dispatch → re-runs as rolling. A concurrency group cancels in-flight rolling runs when a newer push arrives, so the release always reflects the freshest commit. A publishing-branch push and a simultaneous v* tag release run in separate concurrency groups and do not cancel each other. Why are there four toolchain flavours in the same release? The moving ps2dev and official toolchain tags can advance independently and occasionally introduce regressions. Each lineage therefore has a digest-pinned control beside its moving canary. Start with APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF ; if hardware behavior differs, test the other labelled folders and report the exact in-app flavour suffix so application and SDK regressions can be separated. When should I use the VARIANTS or DEBUG zips? VARIANTS contain the full EXTRA_FEATURES × PADEMU × DUALSENSE matrix for the moving and pinned ps2dev flavours. The normalizer also adds a ready-made DualSense loader for each available official flavour; it does not build the complete official-toolchain matrix. DEBUG builds are produced for the two ps2dev flavours only. Those configurations ( iopcore , ingame , eesio , iopcore_ppctty , ingame_ppctty , DTL_T10000 ) em",
+  "url": "releases.html#pipeline"
+ },
+ {
+  "title": "After downloading",
+  "cat": "reference",
+  "text": "After downloading Extract the package zip Unzip RIPTOPL-<rel>-<sha>.zip . The contents are ready to copy to your memory card or USB drive root: APP_RIPTOPL-PS2DEVPINNED/ RIPTOPL.ELF ← #1 recommended pinned control APP_RIPTOPL-OFFICIALPINNED/ RIPTOPL.ELF ← #2 official pinned control APP_RIPTOPL-PS2DEVROLLING/ RIPTOPL.ELF ← #3 moving ps2dev canary APP_RIPTOPL-OFFICIALROLLING/ RIPTOPL.ELF ← #4 moving official canary POPS/ ← POPSTARTER.ELF and every loose BDMA variant (including .ilink) EMBER/ ← official Ember core; add your own BIOS and games neutrino/ ← official Neutrino core (already extracted, drag-and-drop) PS2-Servers.url ← link to the UDPFS / SMBv1 / UDPBD all-in-one PC launcher Install the ELF via your launch method Copy APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF to wherever your launch method (FMCB, FHDB, or equivalent) expects it. If that best-effort folder is absent in a run, use the next available flavour in the order above. The labelled folders can sit side by side; the APP_ prefix is the OPL convention for homebrew apps stored on your device. Set up Neutrino (optional) The neutrino/ folder is already extracted — just copy the whole folder ( neutrino.elf plus the config/ and modules/ folders) to mc?:/neutrino/ . Required only if you want per-game Neutrino launching or network boot (UDPBD/UDPFS). See Neutrino Core . Copy the language pack (optional) If you want a non-default UI language, extract RIPTOPL-LANGS-*.zip and copy its .lng files and any non-Latin font files into your OPL/LNG/ folder. The standard ELF has the fork-specific UI strings machine-translated into all 31 bundled languages, but rarer scripts may need the external font. For a complete first-run walkthrough (folder layout, enabling devices, launching your first game), see Getting Started .",
+  "url": "releases.html#getting-started"
+ },
+ {
+  "title": "Archive availability",
+  "cat": "reference",
+  "text": "Archive availability MEGA uploads require successful publishing and configured credentials. Superseded or failed runs may have no archive. Installable packages, source and metadata are archived when upload succeeds; VARIANTS and DEBUG are excluded. Neutrino download/extraction is best-effort, so check release notes before relying on a bundled core.",
+  "url": "releases.html#archive-availability"
+ },
+ {
+  "title": "The rolling archive",
+  "cat": "reference",
+  "text": "The rolling archive Because the rolling release is rebuilt on every push, a build you were happy with is replaced quickly. Successful runs are preserved on MEGA under run-specific folders, so an older build can still be retrieved: RiptOPL/Rolling/<version>/run_<number>/ Each folder holds the installable packages plus source and build metadata. VARIANTS and DEBUG bundles are excluded , and — as above — an upload only exists when that run published successfully and the credentials were configured, so superseded or failed runs may have no archive at all. Browse the MEGA rolling archive ->",
+  "url": "releases.html#archive"
+ },
+ {
+  "title": "Building from source",
+  "cat": "reference",
+  "text": "Building from source You do not need to build RiptOPL to use it — the releases above are ready to run. This is for people who want to change the code or produce a build with non-default options. Build inside one of the toolchain images from the CI matrix. Both pinned and rolling SDK images work, and the latest SDK is not required. For a reproducible baseline use the PS2DEVPINNED image digest from that matrix. From the repository root, with Docker available: docker run --rm -v \"${PWD}:/src\" -w /src ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11 make -j4 Repository scripts live in tools/ and are run from the repository root. Existing Makefile targets keep their names and output locations. ⚠ Use a clean build directory when changing SDK image Object files from one SDK are not safe to mix with another. Also worth saying plainly: a successful build does not establish console compatibility — it only means the code compiled. See the Makefile for the option flags, including DUALSENSE=1 (a DualSense loader) and EXTRA_FEATURES=1 (which turns on in-game screenshots and right-to-left language support).",
+  "url": "releases.html#building"
+ },
+ {
+  "title": "Controls",
+  "cat": "reference",
+  "text": "Controls Every button RiptOPL responds to, in one place — the game list, the menus, inside a running game, and at boot. ℹ Two settings change what you read below Select button ( Settings → Interface ) swaps which face button confirms. The tables use the default, Cross = confirm, Circle = back . If you set Circle as the select button, swap those two everywhere except the Settings screens (see the note under Settings screens ). Coverflow ( Settings → Interface ) rotates the navigation axis on the game list. Both layouts are given below.",
+  "url": "controls.html"
+ },
+ {
+  "title": "Game list",
+  "cat": "reference",
+  "text": "Game list Button Action D-pad Up / Down Move through the game list D-pad Left / Right Switch device page (USB, HDD, SMB, Apps, Favorites…) Cross Launch the selected game (or go up one folder level, if Circle is your select button) Circle Go up one folder level (or launch, if Circle is your select button) Triangle Per-game settings for the selected title Square Game info page — cover, screenshots, size, disc type L1 / R1 Previous / next page of the list L2 Jump to the first page R2 Jump to the last page L3 Cycle this page's library view (PS2 / PS1 / Both / …) R3 Star or un-star the selected title as a Favorite Start Open the main menu Select Refresh the current device list With Coverflow enabled Coverflow rotates the two navigation axes on the game list — and only there . The info screen and every menu keep the standard layout. Button Coverflow off Coverflow on Up / Down Move through the list Switch device page Left / Right Switch device page Move through the carousel Every other button is unchanged. See Coverflow . Notes on individual buttons Triangle adapts to what is selected. On a PS2 title it opens per-game settings ; on a PS1 title it opens the VCD menu; on an entry in Apps it opens the app menu. Folder rows have no settings screen, so Triangle does nothing on them. Square opens the info page. Folder rows have no info page. On PS1 titles and direct HDD entries the size field is intentionally left blank rather than computed. R3 does nothing when Favorites is disabled — it never writes silently. On the Favorites page itself, R3 removes the selected entry. Select / Refresh is also the retry for a device page that failed to populate — a network share that was not up when RiptOPL started, for example.",
+  "url": "controls.html#game-list"
+ },
+ {
+  "title": "Main menu and dialogs",
+  "cat": "reference",
+  "text": "Main menu and dialogs Button Action Up / Down Move between entries Left / Right Change the value of the highlighted setting Cross Confirm / activate Circle Back / cancel Start Confirm and close Triangle Open the on-screen keyboard on a text field Settings screens ℹ Settings pins Cross and Circle In the settings screens Cross is always OK and Circle is always Cancel , whichever way the global Select button setting is configured. This is deliberate — it keeps the settings UI stable no matter how the browser is set up. Button Action L1 / R1 Move to the previous / next settings screen Cross OK Circle Cancel See the Settings Reference for what each screen contains. On-screen keyboard Opened with Triangle from any text field. Button Action D-pad Move around the key grid Cross Type the highlighted character Square Backspace Triangle Clear the field L1 / R1 Move the caret left / right Start Accept and close",
+  "url": "controls.html#menus"
+ },
+ {
+  "title": "In-game",
+  "cat": "reference",
+  "text": "In-game These work inside a running game. Hold all four shoulder buttons, then press the second half. Hold Then press Result L1 + L2 + R1 + R2 Start + Select Reset — return to RiptOPL L1 + L2 + R1 + R2 L3 + R3 Power off the console L1 + L2 + R1 + R2 Up In-game screenshot (needs GSM on and an IGS-enabled build) The console's own power button also works: one press powers off, two presses reset. This is In-Game Reset . It does not apply under the Neutrino core, and it can be turned off per game with compatibility Mode 6. Full detail, including the limitations, is on that page.",
+  "url": "controls.html#in-game"
+ },
+ {
+  "title": "At boot",
+  "cat": "reference",
+  "text": "At boot Hold at boot Result Start Skip loading the config — boot with defaults Triangle + Cross Force the menu to 480p progressive (recovery) Start — skip the config Hold Start while RiptOPL boots and it does not read your settings file at all, starting from built-in defaults instead. This is the recovery path for a configuration that hangs or crashes the loader on startup. See Troubleshooting . ⚠ Your settings are ignored, not erased — but do not save The settings file is left alone for this boot. If you then change anything and save, you save the defaults over your old configuration. To keep your settings, fix the offending option and save; to preserve them untouched, do not save while booted this way. Triangle + Cross — force 480p Hold both while RiptOPL starts and it ignores the saved video mode, forcing 480p progressive (640×448p60) and writing that back to the config. This is the recovery path for a blank screen after setting a video mode the display cannot sync. ⚠ Two things to know about the recovery combo It forces 480p specifically, not Auto — Auto resolves to the region-default interlaced mode, which is exactly what some upscalers fail to sync, so it would leave you no better off. And it affects the RiptOPL menu only , not games; a game that loses the picture needs its GSM override changed instead. Your display and cable must be able to do 480p progressive (component, VGA, or a capable HDMI adapter) for this to help. See Troubleshooting .",
+  "url": "controls.html#at-boot"
+ },
+ {
+  "title": "Rumble",
+  "cat": "reference",
+  "text": "Rumble RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by Rumble in Settings → Controller . It needs a DualShock in analog mode — with the analog light off the controller has no motors available and the setting does nothing. Third-party pads and most adapters vary in whether they report vibration support correctly. This is menu rumble only, and is independent of in-game vibration, which is the game's business (or PADEMU 's, when emulating a pad).",
+  "url": "controls.html#rumble"
+ },
+ {
+  "title": "Troubleshooting",
+  "cat": "reference",
+  "text": "Troubleshooting Step-by-step fixes for the most common RiptOPL problems — boot hangs, blank screens, video mode locks, white-screen game failures, BDMA driver errors, and PS1/VCD list issues. i Still stuck after reading this page? Report RiptOPL regressions in our issue tracker . Include version/SHA, SDK flavour, console model, game ID, source/protocol, core, steps, settings and any known-good build comparison. The upstream OPL forum remains a community resource. For PS1 internals (IGR, cheats, multi-disc, config table), see the sister POPStarter docs . OPL freezes on the logo or grey screen Symptom: RiptOPL hangs at the animated logo or a grey screen on every boot — the game list never appears. First isolation check: Try skipping saved configuration. A bad config is one possible cause; a startup screen alone does not identify the failing subsystem. Skip config on boot Power on your PS2 and immediately hold START while RiptOPL initializes. Keep it held until the interface appears. This tells OPL to skip loading the saved config and boot with defaults instead. Expect to land on the start menu with no game-list tabs — that is what the defaults look like, since every device ships off — not on a game list. Open and re-save settings With the loader running (config skipped), open Settings and configure the options you need — at minimum, enable the device mode(s) you use. Then Save so a fresh, valid settings_riptopl.cfg is written. Verify the fix Reboot OPL normally (without holding any buttons). If it reaches the game list or settings screen without freezing, the bad config has been replaced. If it still freezes, record the exact build and active settings location and report the result; do not assume the file lives on the memory card. Why does RiptOPL have its own config file",
+  "url": "troubleshooting.html"
+ },
+ {
+  "title": "OPL freezes on the logo or grey screen",
+  "cat": "reference",
+  "text": "OPL freezes on the logo or grey screen Symptom: RiptOPL hangs at the animated logo or a grey screen on every boot — the game list never appears. First isolation check: Try skipping saved configuration. A bad config is one possible cause; a startup screen alone does not identify the failing subsystem. Skip config on boot Power on your PS2 and immediately hold START while RiptOPL initializes. Keep it held until the interface appears. This tells OPL to skip loading the saved config and boot with defaults instead. Expect to land on the start menu with no game-list tabs — that is what the defaults look like, since every device ships off — not on a game list. Open and re-save settings With the loader running (config skipped), open Settings and configure the options you need — at minimum, enable the device mode(s) you use. Then Save so a fresh, valid settings_riptopl.cfg is written. Verify the fix Reboot OPL normally (without holding any buttons). If it reaches the game list or settings screen without freezing, the bad config has been replaced. If it still freezes, record the exact build and active settings location and report the result; do not assume the file lives on the memory card. Why does RiptOPL have its own config file? RiptOPL's master settings use settings_riptopl.cfg (with migration from conf_riptopl.cfg ). That filename is separate from stock OPL's master config, but conf_network.cfg , app lists, per-game configuration and support files can still be shared. Favorites import from uOPL/wOPL is one-way : the next write saves RiptOPL's own OFAV format to favourites.bin , which those loaders cannot read back. Keep an original copy if you use them too. The settings home follows boot-directory discovery or Custom Settings Path ; do not assume it is always mc0:/OPL/ .",
+  "url": "troubleshooting.html#freeze-logo"
+ },
+ {
+  "title": "Game stops on a white screen",
+  "cat": "reference",
+  "text": "Game stops on a white screen A white or black launch screen alone does not diagnose fragmentation or a corrupt dump. Record the build/SDK, console, game ID, source and core before changing anything. Check the image against a known-good dump and verify that the copy completed. Try the title with game overrides disabled, checking inherited global defaults as well. If the loader reports a fragment-limit error, try a fresh sequential copy with sufficient free space. OPL's BDM table is shared across game image parts; Neutrino counts ISO and VMC fragments together against its 64-entry block-device budget. Compare a known-good build on the same setup and report where the launch stops. Back up all data before considering a reformat. Do not reformat solely because of a screen colour. A successful retry after several changes does not establish which change fixed it.",
+  "url": "troubleshooting.html#white-screen"
+ },
+ {
+  "title": "No display on boot (blank or black screen)",
+  "cat": "reference",
+  "text": "No display on boot (blank or black screen) Hold Triangle + Cross while RiptOPL initializes to force 480p for the menu . The display and connection must accept that signal. Once visible, select a suitable mode under Interface , save, and retry. Holding START skips saved configuration and uses defaults. Menu works, but launching a game loses the picture The menu recovery combo does not clear per-game GSM settings. Open the affected game's settings and disable/change its GSM override, or its Neutrino video options for that core. Check global video defaults too. Retry with the game's normal output before adding overrides again.",
+  "url": "troubleshooting.html#no-display"
+ },
+ {
+  "title": "PS1/VCD — \"my VCDs don't show up\" (works elsewhere)",
+  "cat": "reference",
+  "text": "PS1/VCD — \"my VCDs don't show up\" (works elsewhere) Symptom: A device lists PS2 games fine (or works in another loader), but its PS1 view is empty — or a listed VCD does nothing when selected. Work down this ladder; each step isolates a different stage: Does the device page appear at all? If not, it's the device enables, not VCD. Every device ships OFF on a fresh install, so check Game Sources first: USB/MX4SIO/iLink need their own toggles on and BDM Start Mode set to Manual or Auto, and the internal exFAT page additionally needs HDD (GPT/MBR) ON. The two internal-HDD backends are no longer mutually exclusive — APA (HDD start mode) and exFAT/BDM-ATA may both be enabled at once, since one shared ATA stack serves both, so leaving APA on does not suppress the exFAT page. Do PS2 ISOs list from the device? If yes, the filesystem/mount layer is proven working, so \"but it works in another loader\" adds no new information past this step. The release publishes four labelled flavours: PS2DEVPINNED , OFFICIALPINNED , PS2DEVROLLING , and OFFICIALROLLING . Start with the pinned primary control, and report the exact in-app suffix if behavior differs across flavours. Check PS2/PS1 Game Display Both (L3) switches separate PS2 and PS1 views. Mixed combines them and L3 cycles Mixed / PS2 / PS1. The locked PS2 and PS1 modes intentionally make L3 fully inert; choose PS1 to pin the PS1 view without L3. Check the folder — root, not your games prefix VCDs are scanned from <device-root>:/POPS/*.VCD . The game-folder prefix ( usb_prefix etc.) is deliberately not applied, because POPSTARTER itself only reads /POPS at the root. A POPS folder inside your games subfolder will never be found. Check the filename Basenames longer than 160 characters and the reserved name POPSTARTER.VCD are skipped at s",
+  "url": "troubleshooting.html#vcd-list-empty"
+ },
+ {
+  "title": "iLink — revision 2692 handoff failures",
+  "cat": "reference",
+  "text": "iLink — revision 2692 handoff failures Test control: On an SCPH-39001 with the same IEEE 1394 HDD, Ember launched in all four revision 2692 flavours. Native OPL, Neutrino, and POPSTARTER did not. Both pinned and rolling builds from both SDK lineages failed, so the result is not isolated to one compiler image. What Ember proves: RiptOPL can enumerate and read the iLink disk, select the title, and transfer control while keeping the live stack. This rules out a blanket menu-side iLink or drive visibility failure. Neutrino: revision 2692 sent -bsd=ilink but did not auto-send -qb . The post-2692 build corrects that source-confirmed RiptOPL-side mismatch so its inherited-stack handoff enters Neutrino's load environment directly. Hardware retest must still establish whether that mismatch was the complete cause. POPSTARTER: after a failed attempt, confirm mc?:/POPSTARTER/bdma_config.txt contains exactly ilink , usbd.irx is 48,500 bytes (SHA-256 5EA4818BA1CF5207F6D7CADB4C13B5AFA88C37C260750C21155B079A8C18F369 ), and usbhdfsd.irx is 23,452 bytes (SHA-256 145CF1C0AF130EA7AC5CEC6696AA7E60B5C66A2AC46B8DEA94DB17BB3B911BCC ). A mismatch is on RiptOPL's external-equip leg; exact files narrow the failure to POPSTARTER/BDMA after handoff. Native OPL: the existing iLink alias and dependency corrections are present, but the revision 2692 failures show they were not sufficient. No regular IOP module is replaced by this follow-up. The next useful control is current official OPL on the same console, adapter, disk, and ISO; that separates an upstream iLink reinitialization limitation from a RiptOPL regression.",
+  "url": "troubleshooting.html#ilink-handoff-status"
+ },
+ {
+  "title": "BDMA — \"module files not found on source device\"",
+  "cat": "reference",
+  "text": "BDMA — \"module files not found on source device\" Symptom: You have set a BDMA Mode (e.g. USB (exFAT) , MX4SIO (exFAT) , HDD (exFAT) , or iLink ) and a BDMA Source , but when you save or apply the equip RiptOPL reports that the module files were not found on the source device. Cause: The BDMA module files ( .irx driver pair for the chosen variant) are missing from or in the wrong location on the source device. RiptOPL does not embed these files — you supply them from the release's POPS/ folder. Locate the module files The BDMA module files ship loose inside the RiptOPL release archive; none is embedded in RIPTOPL.ELF . Find the POPS/ folder in the release zip — it contains the driver variants for each equip mode, including usbd.irx.ilink + usbhdfsd.irx.ilink for iLink. Copy them to the correct location Place the module files in a POPS/ folder at the root of whichever device you have set as the BDMA Source — USB, MX4SIO, MMCE, iLink, or Internal HDD. The path must be exactly: POPS/ ← folder at device root POPSTARTER.ELF <module files for your chosen variant> Note: the source must match the device's driver RiptOPL resolves the BDMA Source by its block-device driver , not by scanning the whole massN: namespace. A USB source reads only usb slots; MX4SIO reads only mx4sio slots; iLink reads only ilink slots; and Internal HDD reads only the ata (exFAT) HDD. Set the source to match the driver of the device where the loose pair actually lives. Re-apply the equip With the files in place, open PS Emulation Settings from the main menu — BDMA has its own page, it is not under General Settings — set BDMA Source / BDMA Mode , and save. (The two manual pickers are hidden while VCD BDMA Apply on Launch is ON, because that option equips automatically; turn it off to set them by hand.) Ri",
+  "url": "troubleshooting.html#bdma-module-not-found"
+ },
+ {
+  "title": "PS1 / VCD list not showing after a settings change",
+  "cat": "reference",
+  "text": "PS1 / VCD list not showing after a settings change Symptom: You have VCD files on a device but after changing PS2/PS1 Game Display , enabling a device, or changing BDMA settings, the PS1 list is empty or appears stuck on PS2. Fix: First distinguish a pinned view from missing content: If PS2/PS1 Game Display is PS2 or PS1 , L3 is completely disabled by design — no hint, sound, notification, pause, or response. Choose Both (L3) or Mixed on either Interface or PS Emulation Settings to enable an L3 ring. Under Both (L3) , L3 switches PS2 / PS1. Under Mixed , it cycles Mixed / PS2 / PS1. A setting change queues the affected lists automatically; a separate restart is not required. If the PS1 list still appears empty, confirm the *.VCD files are in a POPS/ folder at the device root (USB / MMCE / MX4SIO / iLink / SMB) or, for the internal APA HDD, inside the correct __.POPS / __.POPS0 – __.POPS9 partitions. Files in any other location are not scanned. For exFAT HDD, confirm HDD (GPT/MBR) is enabled in Game Sources and that the HDD has mounted — the game list should show an HDD Games entry. VCDs on the exFAT HDD live in massN:/POPS/ . i UDPFS / UDPBD are Ember-only PS1 pages No VCD rows on either network page is expected, not a failed scan. POPSTARTER cannot restore those connections after its IOP reset; Ember inherits the live mount, so only Ember titles are listed. i Favorites always has four views Press L3 on Favorites to cycle PS2 → PS1 → ELF → All in One . This independent ring is not pinned or disabled by PS2/PS1 Game Display. The page opens on PS2 and then comes back to whichever shelf you last left it on.",
+  "url": "troubleshooting.html#vcd-list-not-showing"
+ },
+ {
+  "title": "Quick-reference button combos",
+  "cat": "reference",
+  "text": "Quick-reference button combos Boot combos only. For every button RiptOPL responds to — the game list, menus, and the in-game In-Game Reset combinations — see Controls . Problem Boot combo Effect Freeze on logo / grey screen (bad config) START Skips config load; boots with defaults Blank / black screen (unsupported video mode) Triangle + Cross Forces 480p for the menu only; requires a compatible display/connection Menu works; game video fails No boot combo clears game overrides Disable/change GSM or Neutrino video settings and check global defaults",
+  "url": "troubleshooting.html#quick-reference"
+ },
+ {
+  "title": "More help",
+  "cat": "reference",
+  "text": "More help 💿 PS1 Games (VCD) Full setup guide for POPSTARTER and BDMA ⚛️ Neutrino Core Troubleshoot Neutrino launch failures 📡 Network Boot UDPBD / UDPFS setup and common errors 📺 GSM Video Modes Game launches but the screen goes black? 🔄 In-Game Reset Cannot quit a game from the pad? 🕹️ Controls Every button, plus the 480p boot recovery combo 🔧 Settings Reference Every option explained 📚 POPStarter docs PS1 config, IGR, cheats, multi-disc 🐛 Bug report thread Report game-specific compatibility issues",
+  "url": "troubleshooting.html#more-help"
  }
 ]
