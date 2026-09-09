@@ -133,11 +133,11 @@ the question that will actually get asked — what to do when it is forgotten.
 where to put files, or how theme-supplied sounds interact with the global setting.
 
 ### 11. Apps (`conf_apps.cfg` / `title.cfg`)
-`README.md` documents both methods thoroughly (lines 537–601). The site has **no Apps page** —
-`conf_apps` appears only incidentally on `hdd.html` and `mmce.html`, and `title.cfg` appears **nowhere
-on the site at all**. Straight port of the README section.
+**Status: DONE** — site `apps.html`, linked from the home tiles and the install folder listing.
 
-**Home:** new site `apps.html`.
+*Found while porting it:* `title.cfg` supports a **third key, `argv1`**, which was documented
+nowhere — it passes a first argument to the ELF and shares storage with the per-app Alternate Startup
+field. Now in both the README section and the new page.
 
 ---
 
@@ -173,7 +173,7 @@ on the site at all**. Straight port of the README section.
 
 ## Progress
 
-**Done:** #1 IGR · #2 Controls · #3 Rumble · #6 GSM · #7 IGS — plus the Triangle+Cross boot recovery
+**Done:** #1 IGR · #2 Controls · #3 Rumble · #6 GSM · #7 IGS · #11 Apps — plus the Triangle+Cross boot recovery
 combo, which was previously README-only.
 
 **Remaining order:**

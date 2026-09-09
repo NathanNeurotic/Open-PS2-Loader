@@ -55,7 +55,7 @@ Review the LICENSE file for further details.<br><br>
 [Releases](#releases) · [Quick Start](#quick-start) · [Sources and cores](#introduction) ·
 [Features](#major-features-overview) · [Fork additions](#this-forks-additions) ·
 [PS1](#ps1-games-two-cores-one-list) · [HTTP](docs/HTTP.md) · [RetroAchievements](docs/RETROACHIEVEMENTS.md) ·
-[Controls & IGR](#controls-and-in-game-reset) · [GSM](docs/GSM.md) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
+[Controls & IGR](#controls-and-in-game-reset) · [GSM](docs/GSM.md) · [Apps](#apps) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
 [SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD](#nbd-server) ·
 [ZSO](#zso-format) · [PS3 BC](#ps3-bc) · [Troubleshooting](#frequent-issues) ·
 [Companion tools](#external-tools--services) · [Credits](#acknowledgements)
@@ -621,9 +621,11 @@ RiptOPL checks `mc?:OPL/conf_apps.cfg` first, then `conf_apps.cfg` under each en
 
 ### title.cfg method
 
-This method uses one `title.cfg` per app folder, with two required lines:
+This method uses one `title.cfg` per app folder, with two required lines and one optional one:
 - `title=` for the app name shown in OPL.
-- `boot=` for the ELF filename to launch.
+- `boot=` for the ELF filename to launch, relative to the app's own folder.
+- `argv1=` (optional) for a single argument passed to the ELF as its first argument. It shares
+  storage with the per-app **Alternate Startup** field, so it can also be edited from the console.
 
 To begin:
 
