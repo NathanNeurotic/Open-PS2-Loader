@@ -155,14 +155,28 @@ previous selection. If you cancel, set the mode you actually wanted before leavi
 game without its own GSM settings inherits.</p>
 
 <h2 id="lost-picture">When a game loses the picture</h2>
-<p>GSM is applied per game, so a bad setting affects that game only — the RiptOPL menu itself is unaffected
-and you can always get back to it.</p>
+<p>The RiptOPL menu never uses GSM, so whatever you set, <b>you can always get back to the browser and undo
+it</b>. Which setting to undo depends on where you set it.</p>
+
+<p><b>If you set it for one game</b> (GSM Source = Per Game), only that title is affected:</p>
 <ol>
-<li>Launch a game that still works, or use the console's reset to return to the browser.</li>
+<li>Return to the browser — reset the console if the game has no picture at all.</li>
 <li>Triangle on the affected title → <b>Configure GSM</b>.</li>
 <li>Either turn <b>GSM Selector</b> off, or pick a more conservative mode (480p, or the game's native
 NTSC/PAL).</li>
 </ol>
+
+<p><b>If you set it globally</b>, every game that has no GSM settings of its own inherits it — so they can all
+lose the picture at once. That is the wider blast radius the 1080p confirmation warns about:</p>
+<ol>
+<li>Return to the browser.</li>
+<li><em>Settings → Display Settings → <b>GSM Defaults</b></em>.</li>
+<li>Turn <b>GSM Selector</b> off there, or pick a conservative mode, and save.</li>
+</ol>
+
+<div class="callout info"><div class="h">ℹ Fixing the global default will not repair a game you broke individually</div>
+A game whose GSM Source is <b>Per Game</b> keeps its own settings and ignores the global one. If only some
+games are affected, check both.</div>
 
 <div class="callout info"><div class="h">ℹ If the <em>menu</em> has no picture, that is not GSM</div>
 That is the global Video Mode setting. Hold <b>Triangle + Cross while RiptOPL boots</b> to force the menu to
