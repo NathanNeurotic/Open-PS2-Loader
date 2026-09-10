@@ -94,13 +94,26 @@ every game without its own GSM settings inherits.
 
 ## When a game loses the picture
 
-GSM is applied per game, so a bad setting affects that game only — the RiptOPL menu itself is
-unaffected and you can always get back to it.
+The RiptOPL menu never uses GSM, so whatever you set, **you can always get back to the browser and
+undo it**. Which setting to undo depends on where you set it.
 
-1. Launch a game that still works, or use the console's reset to return to the browser.
+**If you set it for one game** (GSM Source = Per Game), only that title is affected:
+
+1. Return to the browser — reset the console if the game has no picture at all.
 2. Triangle on the affected title → **Configure GSM**.
 3. Either turn **GSM Selector** off, or pick a more conservative mode (480p, or the game's native
    NTSC/PAL).
+
+**If you set it globally**, every game that has no GSM settings of its own inherits it — so they can
+all lose the picture at once. That is the wider blast radius the 1080p confirmation warns about:
+
+1. Return to the browser.
+2. *Settings → Display Settings → **GSM Defaults***.
+3. Turn **GSM Selector** off there, or pick a conservative mode, and save.
+
+A game whose GSM Source is **Per Game** keeps its own settings and is unaffected by the global one,
+so fixing the global default will not repair a title you broke individually — check both if only
+some games are affected.
 
 If the **menu itself** has no picture, that is not GSM — that is the global video mode setting. Hold
 **Triangle + Cross while RiptOPL boots** to force the menu to 480p progressive. See

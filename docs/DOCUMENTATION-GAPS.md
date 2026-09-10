@@ -80,7 +80,8 @@ paths use a different separator), and APA-HDD/VCD/UDPFS-block excluded because t
 Originally: missing on the site; one line in `README.md:226`.
 
 `FOLDER_NAV` — *"Browse Folders in Game List"* — is default-OFF, folders sort to the **top** of the list
-with a trailing `/`, and it is supported on BDM/MMCE/UDPFS devices only. None of that is on the site.
+with a trailing `/`, and it is supported on BDM, MMCE and **UDPFS in Files mode** only — not the
+UDPFS block device, and not SMB. None of that is on the site.
 
 **Home:** Settings reference + a short section on the device pages.
 
