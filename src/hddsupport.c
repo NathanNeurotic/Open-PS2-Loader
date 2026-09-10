@@ -1892,7 +1892,11 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
         return 0;
     }
 
-    const char *neutrinoPath = sbResolveNeutrinoPath(NULL); // #300: HDD keeps custom-path + mc0/mc1 + Device-picker resolution (raw APA isn't POSIX-reachable; pfs0 probe = shared-slot risk)
+    // NULL activePrefix: an HDL game has no POSIX prefix of its own (it is a raw APA partition), so
+    // there is no "co-located next to the games" install to probe for. The resolver still covers the
+    // internal HDD -- through the OPL data partition mounted on pfs0:, which it probes both for an
+    // explicit "HDD (APA)" pick and in AUTO -- alongside the custom path and mc0/mc1.
+    const char *neutrinoPath = sbResolveNeutrinoPath(NULL);
     if (neutrinoPath == NULL) {
         guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
         return 0;
@@ -1952,13 +1956,20 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
         // Keep-IOP handoff: keep the HDD stack up (NHDDL hands off with its full ATA stack
         // resident) AND the neutrino.elf device (-cwd config/module reads).
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
-        deinitEx(UNMOUNT_EXCEPTION, HDD_MODE, neutrinoDevMode); // CAREFUL: itemCleanUp frees hddGames/game
+        deinitEx(sbNeutrinoDeinitException(neutrinoPath), HDD_MODE, neutrinoDevMode); // CAREFUL: itemCleanUp frees hddGames/game
     } else {
         miniDeinit(configSet);
         free(gAutoLaunchGame);
         gAutoLaunchGame = NULL;
-        fileXioUmount("pfs0:");
-        fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+        // The game itself is read raw (-bsd=ata -bsdfs=hdl), so this teardown normally drops pfs0:
+        // outright. It must NOT when neutrino.elf lives on the OPL data partition: the keep-IOP
+        // handoff opens that ELF after this runs, and both the unmount and PDIOC_CLOSEALL would
+        // pull it out from under the load. Neutrino resets the IOP itself moments later, which
+        // reclaims the mount and the descriptors we leave behind here.
+        if ((sbNeutrinoDeinitException(neutrinoPath) & KEEPIOP_EXCEPTION) == 0) {
+            fileXioUmount("pfs0:");
+            fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+        }
     }
 
     LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);

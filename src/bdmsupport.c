@@ -1952,7 +1952,7 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         // Keep-IOP handoff: keep BOTH the game device and the neutrino.elf device mounted
         // (Neutrino reads its -cwd config/modules and the ISO through our mounts pre-reset).
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
-        deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode); // CAREFUL: itemCleanUp frees bdmGames/game
+        deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode); // CAREFUL: itemCleanUp frees bdmGames/game
     } else {
         miniDeinit(configSet);
         free(gAutoLaunchBDMGame);

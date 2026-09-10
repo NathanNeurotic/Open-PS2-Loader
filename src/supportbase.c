@@ -1411,6 +1411,8 @@ static const char *sbNeutrinoProbeGameDevice(const char *activePrefix)
     for (int b = 0; b < 2; b++) {
         if (bases[b] == NULL || bases[b][0] == '\0')
             continue;
+        if (b == 1 && !strcmp(bases[1], bases[0]))
+            continue; // a prefix that IS the bare root (e.g. "pfs0:") -- do not probe it twice
         for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
             snprintf(probe, sizeof(probe), forms[i], bases[b]);
             // Δ1: a stale elf-only folder on the game device must NOT count as a valid install.
@@ -1419,6 +1421,54 @@ static const char *sbNeutrinoProbeGameDevice(const char *activePrefix)
         }
     }
     return NULL;
+}
+
+// Probe the internal APA HDD for a Neutrino install. Raw APA is not POSIX-open()-able, so the only
+// reachable install there is the OPL data partition OPL has ALREADY mounted on pfs0:. That is the
+// same partition NHDDL resolves for its own hdd0:/<OPL partition>/neutrino/neutrino.elf rule
+// (hdd0:__common/OPL/conf_hdd.cfg, else +OPL, else __common/OPL) -- OPL did that resolution at
+// startup and gHDDPrefix names the result: "pfs0:" for a +OPL home, "pfs0:OPL/" for the __common
+// one. Probing the data home AND the partition root therefore covers hdd0:/+OPL/neutrino/ and
+// hdd0:/__common/OPL/neutrino/ alike. NULL when the HDD stack is not up: nothing is mounted on
+// pfs0: to read, and a path that only open()s while the menu is alive is worse than no path at all.
+static const char *sbNeutrinoProbeApaHome(void)
+{
+    if (gHDDPrefix == NULL || gHDDPrefix[0] == '\0')
+        return NULL;
+
+    // (A) the data home, (B) the bare pfs0: root -- both with the folder/extension case variants.
+    const char *hit = sbNeutrinoProbeGameDevice(gHDDPrefix);
+    if (hit != NULL)
+        return hit;
+
+    // Leading-slash spellings of the partition root. PFS accepts pfs0:DIR and pfs0:/DIR alike and
+    // users copy whichever form they were shown, so both are tried rather than assumed equivalent.
+    static const char *rootForms[] = {
+        "pfs0:/neutrino/neutrino.elf",
+        "pfs0:/NEUTRINO/neutrino.elf",
+        "pfs0:/neutrino/NEUTRINO.ELF",
+        "pfs0:/NEUTRINO/NEUTRINO.ELF",
+    };
+    for (int i = 0; i < (int)(sizeof(rootForms) / sizeof(rootForms[0])); i++) {
+        if (sbFileExists(rootForms[i]) && sbNeutrinoInstallComplete(rootForms[i]))
+            return sbNeutrinoResolved(rootForms[i]);
+    }
+    return NULL;
+}
+
+// The deinit exception mask a Neutrino handoff needs for the device holding neutrino.elf. Every leg
+// hands off through sysLoadELFKeepIOP, which does NOT reset the IOP, and the ELF is opened AFTER the
+// teardown out of whatever is left behind. UNMOUNT_EXCEPTION spares the mount, which is all any
+// other device needs. On APA it is not enough: hddCleanUp also issues PDIOC_CLOSEALL and drops every
+// pfs descriptor in the IOP -- free before an IOP reset, fatal before a handoff that does not reset.
+// That is the exact trap the Ember APA launch hit; see KEEPIOP_EXCEPTION in include/iosupport.h.
+// The extra bit is added ONLY for a pfs-hosted neutrino.elf so every other leg keeps the teardown it
+// already has (per the rebuild rule: change behaviour only where there is a reason to).
+int sbNeutrinoDeinitException(const char *neutrinoPath)
+{
+    if (neutrinoPath != NULL && !strncmp(neutrinoPath, "pfs", 3))
+        return UNMOUNT_EXCEPTION | KEEPIOP_EXCEPTION;
+    return UNMOUNT_EXCEPTION;
 }
 
 // ---- Neutrino launch-args parse / assemble (the "Launch Args" picker) ----------------
@@ -1467,6 +1517,17 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
     if (gNeutrinoDevice == NEUTRINO_DEV_GAME)
         return sbNeutrinoProbeGameDevice(activePrefix);
 
+    // HDD (APA) is not a device ROOT like the others: OPL's data home is a partition mounted on
+    // pfs0:, and where inside it Neutrino sits depends on which partition that is ("pfs0:" for
+    // +OPL, "pfs0:OPL/" for __common/OPL). The helper knows both, so this pick never reaches the
+    // bare-root forms[] loop below. A miss still falls through to the AUTO tiers, same as any other
+    // picked-device miss.
+    if (gNeutrinoDevice == NEUTRINO_DEV_APA_HDD) {
+        const char *apaHit = sbNeutrinoProbeApaHome();
+        if (apaHit != NULL)
+            return apaHit;
+    }
+
     char cand[2][BDM_DEVICE_ROOT_MAX];
     int nCand = 0;
     switch (gNeutrinoDevice) {
@@ -1498,8 +1559,7 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
             }
             break;
         }
-        case NEUTRINO_DEV_APA_HDD:
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "pfs0"); // the already-mounted OPL data partition
+        case NEUTRINO_DEV_APA_HDD: // handled above by sbNeutrinoProbeApaHome (the data home, not a bare root)
             break;
         default: // AUTO -- no explicit device root
             break;
@@ -1543,6 +1603,19 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
         const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
         if (gameHit != NULL)
             return gameHit;
+    }
+
+    // Then the internal APA HDD's OPL data home, the way NHDDL's own discovery includes
+    // hdd0:/<OPL partition>/neutrino/. Only ever a candidate while the HDD stack is up (the helper
+    // returns NULL otherwise), so this costs a pointer test on consoles with no APA drive. It sits
+    // AFTER the game's own device -- a co-located install still wins for the device being played --
+    // and BEFORE mc0/mc1, because an APA install is the one a memory-card-starved user has
+    // deliberately placed, while an mc: copy is the historical default. An explicit HDD (APA) pick
+    // already ran this probe at the top and missed, so it is not repeated here.
+    if (gNeutrinoDevice != NEUTRINO_DEV_APA_HDD) {
+        const char *apaHit = sbNeutrinoProbeApaHome();
+        if (apaHit != NULL)
+            return apaHit;
     }
 
     static const char *candidates[] = {

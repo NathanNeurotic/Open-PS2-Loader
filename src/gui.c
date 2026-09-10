@@ -1969,7 +1969,8 @@ static int guiNeutrinoDefaultsUpdater(int modified)
 void guiShowNeutrinoDefaults(void)
 {
     // Neutrino lives at <root>:/neutrino/neutrino.elf on ANY device -- offer the common roots.
-    // MUST stay in sync with the roots[] table in sbResolveNeutrinoPath() (supportbase.c).
+    // MUST stay in sync with the NEUTRINO_DEV_* switch in sbResolveNeutrinoPath() (supportbase.c),
+    // where HDD (APA) resolves to the mounted OPL data partition rather than to a bare device root.
     const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", _l(_STR_GAMES_DEVICE), "iLink", NULL}; // device TYPE holding /neutrino/neutrino.elf (NEUTRINO_DEV_*); iLink is appended after Game's Device to preserve every saved value
     diaSetEnum(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
     diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);

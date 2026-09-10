@@ -87,6 +87,11 @@ int sbFileExists(const char *path);
 // ignores activePrefix. Pass NULL when no game device applies.
 const char *sbResolveNeutrinoPath(const char *activePrefix);
 
+// Deinit exception mask for the device holding a resolved neutrino.elf. UNMOUNT_EXCEPTION for every
+// device; APA (pfs) additionally needs KEEPIOP_EXCEPTION, because hddCleanUp's PDIOC_CLOSEALL would
+// drop the pfs descriptors before the keep-IOP handoff opens the ELF. Pass the resolved path.
+int sbNeutrinoDeinitException(const char *neutrinoPath);
+
 // Structured view of the USER-settable Neutrino launch flags (the catch-all "Launch Args" box).
 typedef struct
 {

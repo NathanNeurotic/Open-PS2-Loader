@@ -471,7 +471,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     int neutrinoDevMode = oplPath2Mode(neutrinoPath);
     char gameStartup[GAME_STARTUP_MAX + 1];
     snprintf(gameStartup, sizeof(gameStartup), "%s", game->startup);
-    deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode); // itemCleanUp frees udpfsGames/game
+    deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode); // itemCleanUp frees udpfsGames/game
 
     // Hand off to Neutrino with the udpfs driver token. `partname` and `gameStartup` survive the deinit;
     // `game` does not and is not dereferenced past this point.
