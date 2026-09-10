@@ -93,11 +93,18 @@ Two conditions gate it, and both catch people out:
 
 1. **GSM must be enabled** for the running game. The capture is gated on the game's GSM setting, so
    with GSM off the combination does nothing at all.
-2. **The build must include IGS.** It is compiled out of stock builds — the `Makefile` defaults
-   `EXTRA_FEATURES` to `0`, and `IGS` follows it. Official release builds therefore **do not have
-   IGS**. Building with `make IGS=1` (or `EXTRA_FEATURES=1`) enables it.
+2. **The build must include IGS.** The `Makefile` defaults `EXTRA_FEATURES` to `0` and `IGS`
+   follows it, and the **main release loader is built with that default** — so the loader most
+   people run has no IGS and the Up combination is simply inert.
 
-If you are on a release build, the Up combination is inert and that is expected.
+You do not have to build it yourself. The rolling release also publishes an IGS-enabled loader:
+inside `RIPTOPL-VARIANTS-*.zip`, the variants named `-extra1` are built with `EXTRA_FEATURES=1`,
+which turns IGS on. They come in `pademu0`/`pademu1` and optional `-ds5` flavours. Building from
+source with `make IGS=1` (or `EXTRA_FEATURES=1`) works too.
+
+One combination is not available: the **RetroAchievements** loader (`RIPTOPL-RA-*.zip`) is
+deliberately built without `EXTRA_FEATURES`, because GSM 1080p plus IGS and RA cannot both fit in
+the `ram84` region — you can have achievements or in-game screenshots, not both.
 
 ---
 

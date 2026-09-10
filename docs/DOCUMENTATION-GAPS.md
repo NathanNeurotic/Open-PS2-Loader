@@ -24,12 +24,12 @@ settings table with a one-line hint, but nothing tells a user what the feature *
 **Status: DONE** — `docs/IGR.md` + site `igr.html`, cross-linked from the settings rows, the Mode 6 row,
 the index tiles and Troubleshooting. A short version is inlined in `README.md`.
 
-Both surfaces document the *settings* around IGR (`IGR Path`, `IGR Bootcard Slot(s)`, compat
-`Mode 6 — Disable IGR`) but **never state what IGR is or which buttons trigger it**. Nothing on either
-surface contains the button combination. The site's only route to an explanation is an outbound link
+*Originally:* both surfaces documented the *settings* around IGR (`IGR Path`, `IGR Bootcard
+Slot(s)`, compat `Mode 6 — Disable IGR`) but **never stated what IGR is or which buttons trigger
+it**. Nothing on either surface contained the button combination. The site's only route to an explanation is an outbound link
 to the POPStarter docs (`troubleshooting.html:269`), which covers PS1 IGR, not OPL's.
 
-Needs to cover, from `ee_core/src/padhook.c` + `ee_core/include/padhook.h`:
+What it needed to cover, from `ee_core/src/padhook.c` + `ee_core/include/padhook.h` — all now documented:
 
 | Input | Result |
 |---|---|
@@ -53,10 +53,10 @@ the MMCE `IGR Bootcard Slot(s)` option fires a switch-to-bootcard command on res
 
 **Status: DONE** — `docs/CONTROLS.md` + site `controls.html`; game-list table also inlined in `README.md`.
 
-There is no single page listing what any button does. Menu navigation, R3 to star a favourite, L3
-view cycling, Select/Refresh on a failed network page, Triangle+Cross at boot for 480p, the IGR
-combos, and the Coverflow bindings are each mentioned in passing on unrelated pages, or not at all.
-A one-page control reference is the natural home for Tier 1 #1.
+*Originally:* no single page listed what any button does. Menu navigation, R3 to star a favourite,
+L3 view cycling, Select/Refresh on a failed network page, Triangle+Cross at boot for 480p, the IGR
+combos, and the Coverflow bindings were each mentioned in passing on unrelated pages, or not at
+all.
 
 **Home:** new `docs/CONTROLS.md` + site `controls.html`, linked from Getting Started.
 
@@ -79,7 +79,7 @@ paths use a different separator), and APA-HDD/VCD/UDPFS-block excluded because t
 
 Originally: missing on the site; one line in `README.md:226`.
 
-`FOLDER_NAV` — *"Browse Folders in Game List"* — is default-OFF, folders sort to the tail of the list
+`FOLDER_NAV` — *"Browse Folders in Game List"* — is default-OFF, folders sort to the **top** of the list
 with a trailing `/`, and it is supported on BDM/MMCE/UDPFS devices only. None of that is on the site.
 
 **Home:** Settings reference + a short section on the device pages.
@@ -117,10 +117,19 @@ live UI reference — do not document it as a GSM option. Overscan is a UI setti
 
 ### 7. IGS (In-Game Screenshot)
 
-**Status: DONE** — covered in `docs/IGR.md` and `igr.html`, including the release-build caveat.
-Originally named only in `credits.html`, `hdd.html`, `install.html`, never explained. Important nuance to state
-plainly: **IGS is OFF in stock builds** (`IGS ?= $(EXTRA_FEATURES)`, `EXTRA_FEATURES ?= 0` in the
-`Makefile`), it depends on both GSM and IGR, and it writes `mc1:/<GameID>_GS(nnn).bmp`.
+**Status: DONE** — covered in `docs/IGR.md` and `igr.html`. Originally named only in `credits.html`,
+`hdd.html`, `install.html`, never explained. IGS depends on both GSM and IGR and writes
+`mc1:/<GameID>_GS(nnn).bmp`.
+
+⛔ **The build story is NOT "off in stock builds, build it yourself"** — that was wrong twice in this
+sweep. `EXTRA_FEATURES ?= 0` governs the **main release loader only**.
+`.github/scripts/build_rolling_extras.sh` loops `EXTRA_FEATURES=0/1 x PADEMU=0/1 x DUALSENSE=0/1`
+into `rolling/variants/`, so **`-extra1` loaders with IGS on ARE published** in
+`RIPTOPL-VARIANTS-*.zip`. The RA loader is the one genuine exclusion: GSM 1080p + IGS + RA will not
+fit `ram84`, so `RIPTOPL-RA-*.zip` omits `EXTRA_FEATURES` by design.
+
+⚠ *Method trap:* grepping `.github/workflows/` alone MISSES this — the matrix lives in
+`.github/scripts/`. Search the whole `.github/` tree.
 
 *Trap:* the comment above that code says `_IGS(` but the code builds `_GS(` — the classic
 data-and-comment-vs-code split. Read the `_strcat` chain, not the banner comment.
