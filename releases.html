@@ -133,6 +133,20 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   2692's POPSTARTER iLink launch still returned to wLaunchELF in every flavour.</td>
 </tr>
 <tr>
+  <td><code>RIPTOPL.ELF</code></td>
+  <td><b>The loader on its own, for updating an install you already have.</b> Download it and
+  overwrite your existing <code>RIPTOPL.ELF</code> — no archive to unpack, nothing else to copy.
+  Alone among the release assets its name never changes, so
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF">the
+  download link</a> is permanent. It is the <code>-OFFICIALROLLING</code> flavour, and there is only
+  one of these on purpose: four would put the "which do I pick?" question back in front of the
+  people this asset exists for. <b>Not a first install</b> — the bare loader does not bring
+  <code>POPS/</code>, <code>EMBER/</code>, <code>neutrino/</code> or the language files, so PS1 and
+  Neutrino launches still need the package above. For a reproducible build to quote in a bug report,
+  take a pinned folder from the package instead. Best-effort, like the flavour it is copied from: if
+  that build fails the release ships without it.</td>
+</tr>
+<tr>
   <td><code>RIPTOPL-&lt;version&gt;-src.zip</code></td>
   <td>Source snapshot of the exact built commit — you can rebuild this precise revision later.</td>
 </tr>
@@ -171,10 +185,11 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 16 hex characters of the required <code>PS2DEVROLLING</code> ELF's SHA256 — a uniqueness tag, not a
 security guarantee.</p>
 
-<div class="callout info"><div class="h">ℹ Archive-only public downloads</div>
-The normalizer deliberately removes floating loader ELFs, checksum lists, detailed changelogs, and
-SDK/IRX manifests from the GitHub asset list. Standard loaders are inside the unified package;
-DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</div>
+<div class="callout info"><div class="h">ℹ One loose ELF, everything else in archives</div>
+The normalizer keeps exactly one floating loader, the stable-named <code>RIPTOPL.ELF</code> update
+download, and deliberately removes every other floating ELF, checksum list, detailed changelog, and
+SDK/IRX manifest from the GitHub asset list. The other standard loaders are inside the unified
+package; DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</div>
 
 <span id="two-toolchains"></span>
 <h2 id="four-flavours">Four toolchain flavours, ordered for testing</h2>
