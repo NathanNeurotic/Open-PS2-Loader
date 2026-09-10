@@ -844,6 +844,19 @@ jobs:
               for pad in 1 0; do
                 SRC="rolling/ra/RIPTOPL-ra-pademu${pad}-${sdk}.ELF"
                 [ -f "$SRC" ] || continue
+                # The RA loader must be PACKED, like the one in the main package. It shipped raw for
+                # a while because build_rolling_extras.sh passed NOT_PACKED=1 to this flavour along
+                # with the diagnostic ones: 12.2 MB against the main package's 1.46 MB, which does
+                # not fit on an 8 MB memory card at all -- and nothing complained, because an
+                # oversized ELF is still a valid ELF. Assert the size instead of trusting the flag.
+                # The packed loader is ~1.5 MB, so 6 MB leaves room to grow and still catches a raw
+                # opl.elf by a wide margin.
+                RA_BYTES="$(wc -c < "$SRC")"
+                if [ "$RA_BYTES" -gt 6291456 ]; then
+                  echo "ERROR: RA loader $SRC is ${RA_BYTES} bytes -- that is an UNPACKED build." >&2
+                  echo "       It would not fit a memory card. Check NOT_PACKED in build_rolling_extras.sh." >&2
+                  exit 1
+                fi
                 if [ "$pad" = "1" ]; then DEST="$PKG/APP_RIPTOPL-RA-${sdk}"; else DEST="$PKG/APP_RIPTOPL-RA-${sdk}-nopademu"; fi
                 mkdir -p "$DEST"
                 cp -f "$SRC" "$DEST/RIPTOPL.ELF"
