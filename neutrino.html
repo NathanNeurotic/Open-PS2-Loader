@@ -84,6 +84,18 @@ The <b>Loader Core</b> selector, the <b>Neutrino Device</b> picker, the structur
 
 <p>Auto-detection also checks a handful of lowercase and <code>NEUTRINO.ELF</code> spelling variants on <code>mc0:</code> and <code>mc1:</code> (e.g. <code>mc0:/neutrino/neutrino.elf</code>, <code>mc0:/neutrino/NEUTRINO.ELF</code>, etc.) so minor capitalisation differences are tolerated.</p>
 
+<p>The <b>internal APA HDD</b> is also searched, through the OPL data partition OPL has already mounted — the same partition NHDDL resolves for its own <code>hdd0:/&lt;OPL partition&gt;/neutrino/neutrino.elf</code> rule (read from <code>hdd0:__common/OPL/conf_hdd.cfg</code>, with <code>+OPL</code> or <code>__common/OPL</code> as fallbacks). In practice that means one of these two layouts, with nothing to configure:</p>
+
+<table data-sortable>
+<thead><tr><th>Your OPL data home</th><th>Put Neutrino at</th></tr></thead>
+<tbody>
+<tr><td><code>+OPL</code> (preferred when the partition exists)</td><td><code>hdd0:/+OPL/neutrino/</code></td></tr>
+<tr><td><code>__common</code></td><td><code>hdd0:/__common/OPL/neutrino/</code></td></tr>
+</tbody>
+</table>
+
+<p>The APA HDD must be <b>started</b> for this to resolve — nothing is mounted to read otherwise — but the game itself may live anywhere: a USB or MMCE game can boot from an APA-hosted Neutrino, and OPL keeps that partition mounted across the handoff. An install on a partition that is <em>not</em> the OPL data home cannot be reached; move it, or use another device.</p>
+
 <p>If none of those paths exist when you launch a game set to the Neutrino core, OPL shows a warning and falls back to the <code>&lt;OPL&gt;</code> core for that launch only.</p>
 
 <h3>Custom Neutrino ELF path</h3>
@@ -149,22 +161,22 @@ PlayStation 1 titles always boot through their own core — <b>POPSTARTER.ELF</b
 
 <h2 id="neutrino-device">3. Neutrino Device picker</h2>
 
-<p>Under <b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Default Device</b> you can pin Neutrino to a specific storage device <b>type</b>, or leave it on <b>Auto</b>. This is a device <em>type</em> (not a fixed device-name slot): OPL resolves the chosen type to its live device token(s) at launch — USB / MX4SIO / iLink / HDD (exFAT) resolve to <code>massN:</code>, MMCE resolves to <code>mmceN:</code>, and HDD (APA) resolves to a <code>pfs</code> mount. It then probes <code>&lt;root&gt;:/neutrino/neutrino.elf</code> (plus case variants) on that device type. When set to <b>Auto</b>, OPL first probes the <b>active game device</b> for a co-located <code>neutrino.elf</code>, then honours a legacy custom Neutrino ELF path, and only then falls back to the <code>mc0</code>/<code>mc1</code> candidate list. A separate <b>Game's Device</b> choice narrows the search to the active game's own device and nothing else — no legacy custom path and no memory-card fallback.</p>
+<p>Under <b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Default Device</b> you can pin Neutrino to a specific storage device <b>type</b>, or leave it on <b>Auto</b>. This is a device <em>type</em> (not a fixed device-name slot): OPL resolves the chosen type to its live device token(s) at launch — USB / MX4SIO / iLink / HDD (exFAT) resolve to <code>massN:</code>, MMCE resolves to <code>mmceN:</code>, and HDD (APA) resolves inside the OPL data partition already mounted on <code>pfs</code>. It then probes <code>&lt;root&gt;:/neutrino/neutrino.elf</code> (plus case variants) on that device type. When set to <b>Auto</b>, OPL honours a legacy custom Neutrino ELF path first, then probes the <b>active game device</b> for a co-located <code>neutrino.elf</code>, then the APA HDD’s OPL data partition, and only then falls back to the <code>mc0</code>/<code>mc1</code> candidate list. A separate <b>Game's Device</b> choice narrows the search to the active game's own device and nothing else — no legacy custom path and no memory-card fallback.</p>
 
 <p>Available choices:</p>
 <ul class="checklist">
-<li><b>Auto</b> — active game device first, then a legacy custom path, then the <code>mc0</code>/<code>mc1</code> candidates (default)</li>
+<li><b>Auto</b> — a legacy custom path first, then the active game device, then the APA HDD’s OPL data partition, then the <code>mc0</code>/<code>mc1</code> candidates (default)</li>
 <li><b>Memory Card</b> — <code>mc0</code> / <code>mc1</code></li>
 <li><b>USB</b> — USB mass storage (resolves to <code>massN:</code>)</li>
 <li><b>MX4SIO</b> — SD-card-over-SIO2 adapter (resolves to <code>massN:</code>)</li>
 <li><b>MMCE</b> — SD2PSX / MemCard PRO2 (resolves to <code>mmceN:</code>)</li>
 <li><b>HDD (exFAT)</b> — internal BDM/exFAT HDD (resolves to <code>massN:</code>)</li>
-<li><b>HDD (APA)</b> — internal APA HDD (resolves to a <code>pfs</code> mount)</li>
+<li><b>HDD (APA)</b> — internal APA HDD, resolved through OPL’s own mounted data partition: <code>hdd0:/+OPL/neutrino/</code> or <code>hdd0:/__common/OPL/neutrino/</code>. Needs the HDD started; a Neutrino install on any other partition is not reachable</li>
 <li><b>Game's Device</b> — resolves <em>only</em> on the active game's own device (a co-located <code>neutrino/neutrino.elf</code>); there is no legacy custom path and no <code>mc0</code>/<code>mc1</code> fallback, so a miss shows a "not found" message and aborts the launch</li>
 <li><b>iLink</b> — IEEE 1394 / SBP-2 storage on FAT PS2 models (resolves to the matching mounted <code>massN:</code> device)</li>
 </ul>
 
-<p>In all cases the path searched on the chosen device type is <code>&lt;device&gt;:NEUTRINO/neutrino.elf</code> and its capitalisation variants; the leading-slash form <code>&lt;device&gt;:/neutrino/neutrino.elf</code> is also tried.</p>
+<p>In all cases the path searched on the chosen device type is <code>&lt;device&gt;:NEUTRINO/neutrino.elf</code> and its capitalisation variants; the leading-slash form <code>&lt;device&gt;:/neutrino/neutrino.elf</code> is also tried. <b>HDD (APA)</b> is the one entry that is not a plain device root — a raw APA partition cannot be opened directly, so OPL searches inside the data partition it already has mounted (see §1).</p>
 
 <h2 id="launch-args">4. Launch arguments</h2>
 
