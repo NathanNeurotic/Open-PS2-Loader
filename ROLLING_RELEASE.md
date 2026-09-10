@@ -68,8 +68,11 @@ flavour suffix tells you. Those details greatly help pin down any issues between
 pulled by URL and dropped straight over your existing copy:
 
 ```sh
-curl -L -o RIPTOPL.ELF \
-  https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF
+# --fail matters: the asset is best-effort, and a plain `curl -L -o` writes the
+# HTTP error page into the file and still exits 0 -- overwriting a loader that works.
+curl --fail --location --show-error --output RIPTOPL.ELF.tmp \
+  https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF \
+  && mv RIPTOPL.ELF.tmp RIPTOPL.ELF
 ```
 
 Every other filename changes each build, so pull those by the `rolling` tag rather than a fixed

@@ -561,9 +561,13 @@ jobs:
           # is permanent and can be linked or bookmarked.
           #
           # ONLY ONE of the four flavours can hold that name; publishing four would recreate the
-          # "which do I pick" problem the single file exists to remove. The choice is Nathan's
-          # (2026-09-10) and lives here as one variable -- change this line to move the one-click
-          # download to another flavour, nothing else.
+          # "which do I pick" problem the single file exists to remove.
+          #
+          # SETTLED: OFFICIALROLLING, chosen by Nathan 2026-09-10 and reaffirmed the same day after
+          # the objection was put to him -- that it is flavour #4, a MOVING tag which can build
+          # green and not boot (issue #102), while every doc ranks PS2DEVPINNED first. It is his
+          # call, it is documented honestly wherever the asset is described, and it is not to be
+          # "corrected" to a pinned flavour. Moving it is this one line, nothing else.
           ONECLICK_FLAVOUR=OFFICIALROLLING
           SRC="rolling/${VERSIONED_BASE}-${ONECLICK_FLAVOUR}.ELF"
           # Landmine: build-rolling-ps2dev-latest stages its output as rolling/RIPTOPL.ELF and the
