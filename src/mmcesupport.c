@@ -1178,7 +1178,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         if (sysNeutrinoPreflight("mmce", neutrinoPath) < 0) // D6 pre-teardown validation
             return;
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
-        deinitEx(UNMOUNT_EXCEPTION, itemList->mode, neutrinoDevMode);
+        deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode);
         sysLaunchNeutrino("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, &neutrinoVmc);
         return;
     }

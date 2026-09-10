@@ -44,7 +44,8 @@ order is:
 | 1 | The device chosen in **Game Launching → Neutrino Defaults → Default Device** (see below) |
 | 2 | The custom **Neutrino ELF Path** (`neutrino_path`) |
 | 3 | The active game's own device — `<games prefix>/neutrino/`, then `<device root>/neutrino/` |
-| 4 | `mc0:` / `mc1:` — `NEUTRINO/neutrino.elf` and its lowercase / `NEUTRINO.ELF` variants |
+| 4 | The internal **APA HDD**'s OPL data partition — `hdd0:/+OPL/neutrino/` or `hdd0:/__common/OPL/neutrino/` (only while the HDD is started) |
+| 5 | `mc0:` / `mc1:` — `NEUTRINO/neutrino.elf` and its lowercase / `NEUTRINO.ELF` variants |
 
 If no complete install is found when you launch a game set to the Neutrino core, OPL shows a
 warning and falls back to the `<OPL>` core for that launch.
@@ -54,6 +55,23 @@ warning and falls back to the `<OPL>` core for that launch.
 HDD (APA) / **Game's Device** / iLink. A miss on the device you picked is not a dead end: OPL falls
 through to the AUTO tiers above. The exception is **Game's Device**, which only ever looks on
 the game's own device and reports "not found" instead of falling back.
+
+**HDD (APA)** is the one entry that is not a plain device root, because a raw APA partition cannot be
+opened directly — only a mounted one can. OPL therefore uses the **OPL data partition it has already
+mounted**, which is the same partition NHDDL resolves for its own
+`hdd0:/<OPL partition>/neutrino/neutrino.elf` rule (`hdd0:__common/OPL/conf_hdd.cfg`, else `+OPL`,
+else `__common/OPL`). In practice that means both of these work, with no extra setting to fill in:
+
+| Your OPL data home | Put Neutrino at |
+|---|---|
+| `+OPL` (the preferred default when the partition exists) | `hdd0:/+OPL/neutrino/` |
+| `__common` | `hdd0:/__common/OPL/neutrino/` |
+
+The APA HDD must be **started** for this to resolve — nothing is mounted to read otherwise — but the
+game itself may live anywhere: a USB or MMCE game can boot from an APA-hosted Neutrino, and OPL keeps
+that partition mounted across the handoff so the ELF is still readable when it is loaded. A Neutrino
+install on a partition that is *not* the OPL data home is not reachable; move it, or use one of the
+other devices.
 
 You can also point OPL at a **custom location** via the **Neutrino ELF Path** (`neutrino_path` key
 in `settings_riptopl.cfg`). When that field is set and the file exists it takes **priority** over the
