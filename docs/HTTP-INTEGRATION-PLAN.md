@@ -1,5 +1,8 @@
 # HTTP integration plan (RiptOPL)
 
+> **Internal engineering document.** This is an implementation plan for contributors, not user
+> documentation. For how to *use* the feature, see [HTTP.md](HTTP.md).
+
 **Status:** phases 1-4 written and building; **nothing has run on a PlayStation 2.** See the ledger
 immediately below before picking anything up.
 

@@ -55,7 +55,8 @@ Review the LICENSE file for further details.<br><br>
 [Releases](#releases) · [Quick Start](#quick-start) · [Sources and cores](#introduction) ·
 [Features](#major-features-overview) · [Fork additions](#this-forks-additions) ·
 [PS1](#ps1-games-two-cores-one-list) · [HTTP](docs/HTTP.md) · [RetroAchievements](docs/RETROACHIEVEMENTS.md) ·
-[Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
+[Controls & IGR](#controls-and-in-game-reset) · [GSM](docs/GSM.md) · [PADEMU](docs/PADEMU.md) ·
+[Interface](docs/INTERFACE.md) · [Apps](#apps) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
 [SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD](#nbd-server) ·
 [ZSO](#zso-format) · [PS3 BC](#ps3-bc) · [Troubleshooting](#frequent-issues) ·
 [Companion tools](#external-tools--services) · [Credits](#acknowledgements)
@@ -411,13 +412,63 @@ This build layers several features on top of upstream OPL:
   it no longer falls back to the first USB page.
 - **DualSense / DualShock 5 (USB):** optional controller support — available in the prebuilt
   `RIPTOPL-VARIANTS-*.zip` release bundle (one ELF per SDK flavour), or build with `make DUALSENSE=1`.
-- **1080p GSM video mode:** forced progressive 1080p (1920×1080) GSM mode is built directly into all standard builds (`make GSM1080P=1`). Selecting 1080p in the per-game GSM picker is guarded by a **three-step confirmation**; if a game loses the picture, disable/change its GSM override before relaunching. **Triangle + Cross** at boot affects only the OPL menu and requires a 480p-capable display/connection.
+- **1080p GSM video mode:** forced progressive 1080p (1920×1080) GSM mode is built directly into all standard builds (`make GSM1080P=1`). Full GSM documentation: **[docs/GSM.md](docs/GSM.md)**. Selecting 1080p in the per-game GSM picker is guarded by a **three-step confirmation**; if a game loses the picture, disable/change its GSM override before relaunching. **Triangle + Cross** at boot affects only the OPL menu and requires a 480p-capable display/connection.
 - **Ready-to-use defaults:** a fresh install boots with sensible options already enabled —
   widescreen, cover art, notifications, sound effects + boot sound, delete/rename, and
   the PS2 logo. Video mode stays **Auto**. Every storage device ships **off**, so the first boot
   lands on the start menu with no tabs — enable exactly the devices your console has under
   **Game Sources**. Change any of it under Settings.
 - **Private master settings, shared support files:** `settings_riptopl.cfg` is separate from stock OPL's master file. Other configuration and data can still be shared; favorites migration from uOPL/wOPL is one-way. See [Where your files live](#where-your-files-live).
+
+## Controls and In-Game Reset
+
+Full button reference: **[docs/CONTROLS.md](docs/CONTROLS.md)**. In-Game Reset in detail:
+**[docs/IGR.md](docs/IGR.md)**. DualShock 3/4 emulation: **[docs/PADEMU.md](docs/PADEMU.md)**.
+Folder browsing, the parental lock and the audio system: **[docs/INTERFACE.md](docs/INTERFACE.md)**.
+
+### Leaving a running game (In-Game Reset)
+
+You do not need the console's Reset button. Hold all four shoulder buttons - **L1 + L2 + R1 + R2** -
+and then, still holding them, press the second half:
+
+| Hold | Then press | Result |
+| ---- | ---------- | ------ |
+| L1 + L2 + R1 + R2 | **Start + Select** | Reset - quit the game and return to RiptOPL |
+| L1 + L2 + R1 + R2 | **L3 + R3** | Power off the console |
+| L1 + L2 + R1 + R2 | **Up** | In-game screenshot (needs GSM on **and** an `IGS=1` build; off in release builds) |
+
+The console's own power button works too: **one press** powers off, **two presses** reset.
+
+Three cases where the combinations do nothing, all expected: before the game has opened a controller
+(the hook patches the game's own pad-open call - `scePadPortOpen` or `scePad2CreateSocket`), when
+per-game compatibility **Mode 6 - Disable
+IGR** is set, and under the **Neutrino core**, which has no IGR at all - which is why Mode 6 is greyed
+out there. PS1 titles use POPSTARTER's or Ember's own IGR, not this one.
+
+**IGR Path** (*Settings -> General*) boots a custom ELF from `mc0:`/`mc1:` on reset instead of
+returning to the browser. **IGR Bootcard Slot(s)** (*Settings -> MMCE*) sends a switch-to-bootcard
+command as the reset happens.
+
+### Game list
+
+| Button | Action |
+| ------ | ------ |
+| D-pad Up/Down | Move through the list (Coverflow: switch device page) |
+| D-pad Left/Right | Switch device page (Coverflow: move through the carousel) |
+| Cross | Launch the selected game |
+| Circle | Go up one folder level |
+| Triangle | Per-game settings |
+| Square | Game info page |
+| L1 / R1 | Previous / next page |
+| L2 / R2 | First / last page |
+| L3 | Cycle the page's library view |
+| R3 | Star or un-star as a Favorite |
+| Start | Main menu |
+| Select | Refresh the current list |
+
+Cross and Circle follow the **Select button** setting, except in the settings screens, where Cross is
+always OK and Circle always Cancel. Holding **Triangle + Cross at boot** forces the menu to 480p
+progressive as a recovery path for a display that cannot sync the saved video mode.
 
 ## How to use
 
@@ -573,9 +624,11 @@ RiptOPL checks `mc?:OPL/conf_apps.cfg` first, then `conf_apps.cfg` under each en
 
 ### title.cfg method
 
-This method uses one `title.cfg` per app folder, with two required lines:
+This method uses one `title.cfg` per app folder, with two required lines and one optional one:
 - `title=` for the app name shown in OPL.
-- `boot=` for the ELF filename to launch.
+- `boot=` for the ELF filename to launch, relative to the app's own folder.
+- `argv1=` (optional) for a single argument passed to the ELF as its first argument. It shares
+  storage with the per-app **Alternate Startup** field, so it can also be edited from the console.
 
 To begin:
 
@@ -671,6 +724,10 @@ docker run --rm -v "${PWD}:/src" -w /src ps2dev/ps2dev@sha256:8fba50ecc2229acd7f
 
 Use a clean checkout/build directory when changing SDK images. See the Makefile for flags such as
 `DUALSENSE=1` and `EXTRA_FEATURES=1`; build success does not establish console compatibility.
+
+`src/xparam.c` holds a hardcoded table of special disc titles whose EE parameters are taken from
+`SYSTEM.CNF`. It is applied automatically and has no setting, dialog row or language string — it is
+deliberately internal and is not user-facing documentation.
 
 ## OPL Archive
 
