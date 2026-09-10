@@ -67,11 +67,19 @@ mkdir -p rolling/ra
 # 8 MB, so mc?:/ could not hold the RA build at all. So take $(EE_BIN_PACKED) (RIPTOPL.ELF) rather
 # than $(EE_BIN) (opl.elf). rolling-release.yml asserts the size of what lands here.
 for ra_pad in PADEMU=0 PADEMU=1; do
-  make clean >/dev/null 2>&1 || true
-  # `make clean` is best-effort (|| true), and RIPTOPL.ELF is also what the job's own main and DS5
-  # builds leave in this directory -- so without this the [ -f ] test below could pass on somebody
-  # else's loader and ship a NON-RA build inside the RA package. Same reason rolling-release.yml
-  # does `rm -f RIPTOPL-*.ELF` before each DS5 build; that glob does not match this name.
+  # A failed clean is FATAL to this variant, not something to build through. PADEMU changes between
+  # the two iterations and the Makefile does not rebuild objects when a flag changes, so leftover
+  # objects would silently produce a mixed-configuration loader -- and this one goes into a package
+  # people install, where a wrong binary is worse than an absent one. The other two loops in this
+  # file keep `|| true`; their payload is diagnostic.
+  if ! make clean >/dev/null 2>&1; then
+    echo "WARN: could not clean before RA build '$ra_pad'${SDK_SUFFIX}; skipping it" >&2
+    continue
+  fi
+  # RIPTOPL.ELF is also what the job's own main and DS5 builds leave in this directory, so without
+  # this the [ -f ] test below could pass on somebody else's loader and ship a NON-RA build inside
+  # the RA package. Same reason rolling-release.yml does `rm -f RIPTOPL-*.ELF` before each DS5
+  # build; that glob does not match this name.
   rm -f RIPTOPL.ELF
   if make --trace RETROACHIEVEMENTS=1 $ra_pad $BRAND_ARG && [ -f RIPTOPL.ELF ]; then
     mv RIPTOPL.ELF "rolling/ra/RIPTOPL-ra-pademu${ra_pad#PADEMU=}${SDK_SUFFIX}.ELF"
