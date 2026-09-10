@@ -259,12 +259,11 @@ endif
 # for the full account of each). Both defaults below are the stock ps2sdk prebuilt, and the RA
 # branch swaps in ours.
 #
-# ⚠ THE USBD SWAP IS NOT AN RA FEATURE. It fixes a bug that is present in every build this fork
-# ships -- and in official OPL too -- and it is held behind the RA switch only because it replaces
-# the USB host driver for every user and has not been validated on OUR hardware yet. Promoting it
-# is deliberately a one-line change: move USBD_MINI_IRX out of the conditional. Do that only with
-# a hardware pass behind it.
-USBD_MINI_IRX = $(PS2SDK)/iop/irx/usbd_mini.irx
+# THE USBD SWAP IS FORK-WIDE, ON PURPOSE. It fixes a bug present in every build this fork ships
+# -- and in official OPL too -- so it is deliberately NOT gated: a CD-era game run off a USB
+# stick loses its pad AND its sound at the game's first IOP reboot with ps2sdk's post-2024-09-04
+# driver, whatever flavour you built. See the rule further down for the whole account.
+USBD_MINI_IRX = modules/usb/usbd-ra/usbd_mini.irx
 SMBMAN_IRX    = $(PS2SDK)/iop/irx/smbman.irx
 
 # RetroAchievements flavour. Everything the feature adds hangs off this one switch, on BOTH sides
@@ -274,8 +273,7 @@ SMBMAN_IRX    = $(PS2SDK)/iop/irx/smbman.irx
 ifeq ($(RETROACHIEVEMENTS),1)
   EE_CFLAGS += -DRETROACHIEVEMENTS
   EECORE_EXTRA_FLAGS += RETROACHIEVEMENTS=1
-  USBD_MINI_IRX = modules/usb/usbd-ra/usbd_mini.irx
-  SMBMAN_IRX    = modules/network/smbman-ra/smbman.irx
+  SMBMAN_IRX = modules/network/smbman-ra/smbman.irx
   # md5 (vendored, zlib licence): the game hash the PC client keys achievements on.
   # rawatch: the watch list the menu hands to ee_core, loaded from <device>RA/.
   # rahash:  the image hash RetroAchievements keys a game on, taken by walking
