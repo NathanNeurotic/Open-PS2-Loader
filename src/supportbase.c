@@ -1952,7 +1952,12 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
             return;
         }
 
-        /* Record which step failed: a bare "not hashed" says nothing. */
+        /* Record which step failed: a bare "not hashed" says nothing. -6 is the one the user can
+           actually act on -- a console that played this game off the share and was switched off
+           left the image open, and the server frees it for nobody. Without that row it prints "?"
+           and the rahash half of the fix lands saying nothing.
+           Keep this comment OUT of the ternary chain below: a comment inside the run makes
+           clang-format realign every arm of it. */
         LOG("RA: %s -> code %d\n", iso, ret);
         snprintf(last_err, sizeof(last_err), "%s: %s", dirs[i],
                  ret == -1 ? "image did not open" :
@@ -1960,6 +1965,7 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
                  ret == -3 ? "ELF not found in directory" :
                  ret == -4 ? "odd ELF size" :
                  ret == -5 ? "read broke off" :
+                 ret == -6 ? "image held open on the share by an earlier run" :
                              "?");
     }
 

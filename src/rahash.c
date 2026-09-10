@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -335,8 +336,16 @@ int raHashIsoDirect(const char *isopath, const char *startup, char *out33)
     step("1-opening-image");
     fd = open(isopath, O_RDONLY);
     if (fd < 0) {
-        step("1-open-failed");
-        return -1;
+        /* open() always answers -1: ps2sdk's __transform_errno puts the IOP code in errno.
+           On a share that code is the whole story -- EBUSY is smbman saying an earlier run
+           still holds the image (see modules/network/smbman-ra), which is worth telling the
+           user apart from "could not open it", because it is something they can act on. */
+        int err = errno;
+        char line[48];
+
+        snprintf(line, sizeof(line), "1-open-failed errno=%d", err);
+        step(line);
+        return err == EBUSY ? -6 : -1;
     }
 
     ret = hash_boot_exec(fd, startup, out33);
