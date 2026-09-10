@@ -1,0 +1,158 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Languages · RiptOPL Docs</title>
+<meta name="description" content="Installing and choosing a RiptOPL interface language: the LANGS zip, the LNG folder, file naming, fonts, and troubleshooting.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
+    <a href="apps.html"><span class="em">🧰</span>Apps</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
+    <a href="languages.html" class="active"><span class="em">🌐</span>Languages</a>
+    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Languages</h1>
+<p class="lead">RiptOPL ships with English built in and can load additional interface languages from your storage
+device. This page is about installing and choosing one. If you want to <em>translate</em> RiptOPL, see the
+maintainer documentation in the repository instead.</p>
+
+<h2 id="builtin">What is already there</h2>
+<p><b>English is compiled into the ELF</b> and needs no files. It is also the fallback: if a language file is
+missing a particular string, that string appears in English rather than blank. You will never lose text by
+switching language.</p>
+
+<h2 id="install">Installing extra languages</h2>
+<p>The language files are published as a <b>separate release asset</b>, not inside the main package:</p>
+
+<pre>RIPTOPL-LANGS-*.zip</pre>
+
+<p>It contains the <code>.lng</code> language files and the non-Latin fonts some of them need. To install:</p>
+
+<ol>
+<li>Download <code>RIPTOPL-LANGS-*.zip</code> from the <a href="releases.html">release</a>.</li>
+<li>Extract it.</li>
+<li>Copy the files into the <code>LNG/</code> folder on the device you boot RiptOPL from.</li>
+</ol>
+
+<p>RiptOPL looks for an <code>LNG/</code> folder under each enabled source's configured prefix, and on the
+memory card. Any device you have enabled can supply languages — they do not all have to live in one place.</p>
+
+<pre>LNG/
+  lang_French.lng
+  lang_Japanese.lng
+  font_Japanese.ttf</pre>
+
+<h2 id="naming">File naming</h2>
+<div class="callout amber"><div class="h">⚠ The filename is the language name</div>
+A language file must be named <code>lang_&lt;Name&gt;.lng</code>. RiptOPL takes the text between
+<code>lang_</code> and <code>.lng</code> and shows exactly that in the language picker — so
+<code>lang_French.lng</code> appears as <b>French</b>. Renaming the file renames the entry.</div>
+
+<p>A language that needs characters the default font does not carry — Japanese, Chinese, Korean, Russian,
+Greek, Arabic, Thai — can ship its own font beside it, named to match: <code>font_&lt;Name&gt;.ttf</code> or
+<code>font_&lt;Name&gt;.otf</code>. RiptOPL loads it automatically when that language is selected, and returns
+to the built-in font when you switch back to English.</p>
+
+<h2 id="selecting">Choosing a language</h2>
+<p><em>Settings → Interface → Language.</em> The list contains English plus every <code>.lng</code> file
+RiptOPL found. Save settings to keep the choice.</p>
+
+<div class="callout info"><div class="h">ℹ Languages are discovered per device, as devices come up</div>
+A language on a device that was not ready when RiptOPL started will not be in the list yet. If a language is
+missing, make sure that device is enabled and its page has populated, then reopen Settings.</div>
+
+<h2 id="per-game-osd">This is not the OSD language setting</h2>
+<p>Two different things are called "language" in RiptOPL:</p>
+
+<table>
+<thead><tr><th>Setting</th><th>What it changes</th></tr></thead>
+<tbody>
+<tr><td><b>Language</b> (<em>Settings → Interface</em>)</td><td>The language of <b>RiptOPL's own menus</b>. This page.</td></tr>
+<tr><td><b>OSD Language Settings</b> (per game, Triangle)</td><td>The language, TV aspect and video mode <b>written into EEPROM as a game boots</b> — it changes what the <em>game</em> sees, not what RiptOPL shows. OPL core only; not available under Neutrino. See <a href="per-game-settings.html">Per-game Settings</a>.</td></tr>
+</tbody>
+</table>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<p><b>The language is not in the list.</b> Confirm the file is in an <code>LNG/</code> folder under an
+<em>enabled</em> device's configured prefix, that it is named <code>lang_&lt;Name&gt;.lng</code>, and that the
+device page has finished populating.</p>
+
+<p><b>The language appears but the text is boxes or blanks.</b> The font is missing. Copy the matching
+<code>font_&lt;Name&gt;.ttf</code> / <code>.otf</code> into the same <code>LNG/</code> folder — the language
+pack zip contains the fonts alongside the language files.</p>
+
+<p><b>Some strings are still English.</b> Expected. Untranslated strings fall back to English rather than
+appearing blank, and a language pack from an older build will not have RiptOPL's newest strings.</p>
+
+<div class="callout amber"><div class="h">⚠ Match the language pack to the build</div>
+<code>.lng</code> files are read <b>by line position</b>, so a pack from a different build can show the
+<em>wrong</em> text rather than falling back to English. If translated strings look mismatched or nonsensical,
+download the language pack that goes with your build.</div>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

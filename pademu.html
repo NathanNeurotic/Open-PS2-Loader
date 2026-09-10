@@ -1,0 +1,159 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PADEMU — DualShock 3 and 4 emulation · RiptOPL Docs</title>
+<meta name="description" content="PADEMU: USB and Bluetooth DualShock 3/4 emulation, ports, vibration, multitap, the fake-DS3 workaround, and DualSense builds.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
+    <a href="apps.html"><span class="em">🧰</span>Apps</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
+    <a href="languages.html"><span class="em">🌐</span>Languages</a>
+    <a href="pademu.html" class="active"><span class="em">🎮</span>PADEMU</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>PADEMU — DualShock 3 and 4 emulation</h1>
+<p class="lead">PADEMU lets a DualShock 3 or DualShock 4 stand in for a PS2 controller. The game sees an ordinary
+PS2 pad; PADEMU translates for it. Connect over USB or Bluetooth, on either pad port, with optional vibration
+and multitap emulation.</p>
+
+<p>PADEMU is the work of <b>belek666</b> — see <a href="credits.html">Credits &amp; Sources</a>.</p>
+
+<div class="callout amber"><div class="h">⚠ PADEMU is an OPL-core feature</div>
+It is not available under Neutrino. Opening the PADEMU screen for a title whose Loader Core is Neutrino shows
+<em>"This setting is not used with the Neutrino core."</em> If you need PADEMU for a game, that game has to
+launch on the OPL core. See <a href="neutrino.html">Neutrino Core</a>.</div>
+
+<p>PADEMU is compiled in by default, so stock builds have it.</p>
+
+<h2 id="setup">Setting it up</h2>
+<p>PADEMU is configured per game: Triangle on a title → <b>PADEMU Settings</b>. The first row, <b>PADEMU
+Source</b>, chooses between <b>Global</b> (follow the defaults set in <em>Settings</em>) and <b>Per Game</b>
+(this title's own settings). See <a href="per-game-settings.html">Per-game Settings</a>.</p>
+
+<table>
+<thead><tr><th>Option</th><th>What it does</th></tr></thead>
+<tbody>
+<tr><td><b>Pad Emulator</b></td><td>The master on/off switch for this game. Everything below is greyed out while it is off.</td></tr>
+<tr><td><b>Pad Emulator Mode</b></td><td><b>DualShock3/4 USB</b> or <b>DualShock3/4 BT</b> (Bluetooth).</td></tr>
+<tr><td><b>Emulation</b></td><td>Enable emulation on the selected pad port. Set this per port.</td></tr>
+<tr><td><b>Vibration</b></td><td>Vibration for the selected port. Only available once that port's Emulation is on.</td></tr>
+<tr><td><b>Multitap Emulation</b></td><td>Present a multitap to the game, for titles that support more than two players.</td></tr>
+<tr><td><b>Multitap Emulator On Port</b></td><td>Which pad port the emulated multitap occupies. Only available with Multitap Emulation on.</td></tr>
+<tr><td><b>Fake DS3 Workaround</b></td><td>A compatibility shim for counterfeit DualShock 3 units. <b>Only shown in Bluetooth mode.</b></td></tr>
+</tbody>
+</table>
+
+<p>The port rows are per-port: select the pad port first, then set Emulation and Vibration for it.</p>
+
+<h2 id="usb-bt">USB or Bluetooth</h2>
+<p><b>USB</b> (<code>ds34usb</code>) is the simpler path — plug the controller into one of the console's USB
+ports. Start here if you are not sure.</p>
+
+<p><b>Bluetooth</b> (<code>ds34bt</code>) needs a compatible USB Bluetooth adapter plugged into the console.
+The controller is then paired to that adapter rather than to the console itself.</p>
+
+<h3 id="fake-ds3">Fake DS3 controllers</h3>
+<p>Counterfeit DualShock 3 units are common, and many of them deviate from the real protocol enough to fail.
+<b>Fake DS3 Workaround</b> exists for those. It appears <b>only when the mode is set to Bluetooth</b>, so if
+you cannot find the option, check the mode first.</p>
+
+<p>If a controller behaves erratically or will not connect at all, trying this toggle is cheap. It will not
+help a genuine DualShock 3, which does not need it.</p>
+
+<h2 id="dualsense">DualSense (DualShock 5)</h2>
+<p>DS5 over USB is supported in the code and has been hardware-validated, but it is <b>off in the default
+build</b>. The entire DS5 path is compiled out, so a default build behaves identically to the build that is
+already hardware-proven.</p>
+
+<div class="callout info"><div class="h">ℹ You do not have to build it yourself</div>
+CI produces a ready-made DualSense loader as a separate named asset for each SDK flavour — look for the
+<code>-ds5.ELF</code> downloads on the release. They are built best-effort: if that build fails for a given
+run, the asset is skipped for that run rather than holding up the release, so it will not always be present.
+See <a href="releases.html">Releases</a>.</div>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<p><b>The PADEMU screen says it is not used with this core.</b> The game's Loader Core is Neutrino. Change it
+to the OPL core, or accept that PADEMU is unavailable for that title.</p>
+
+<p><b>The controller does nothing in game.</b> Check three things in order: <b>Pad Emulator</b> is on;
+<b>Emulation</b> is on <em>for the port you plugged into</em>; and the <b>Mode</b> matches how you actually
+connected (USB vs BT).</p>
+
+<p><b>No vibration.</b> Vibration is per port and only becomes available once that port's Emulation is on.
+Confirm the port is right, then that vibration is enabled on it. This is separate from the menu's own
+<b>Rumble</b> setting, which is about the RiptOPL browser rather than the game — see
+<a href="controls.html#rumble">Controls</a>.</p>
+
+<p><b>A Bluetooth controller will not pair.</b> Confirm the adapter is one PADEMU supports and is plugged into
+the console, then try <b>Fake DS3 Workaround</b> if the controller is not a genuine Sony unit.</p>
+
+<p><b>Multitap options are greyed out.</b> Multitap Emulator On Port only becomes available once Multitap
+Emulation itself is on.</p>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

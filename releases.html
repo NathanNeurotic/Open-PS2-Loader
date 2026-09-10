@@ -40,7 +40,10 @@
     <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
     <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
     <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
+    <a href="apps.html"><span class="em">🧰</span>Apps</a>
     <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
     <a href="vmc.html"><span class="em">💾</span>VMC</a>
     <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
     <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
@@ -48,6 +51,9 @@
     <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
     <h4>Reference</h4>
     <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
+    <a href="languages.html"><span class="em">🌐</span>Languages</a>
+    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
     <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
     <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
     <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
@@ -295,7 +301,40 @@ languages, but rarer scripts may need the external font.</p>
 
 <p>For a complete first-run walkthrough (folder layout, enabling devices, launching your first game),
 see <a href="getting-started.html">Getting Started</a>.</p>
-<h2 id="archive-availability">Archive availability</h2><p>MEGA uploads require successful publishing and configured credentials. Superseded or failed runs may have no archive. Installable packages, source and metadata are archived when upload succeeds; VARIANTS and DEBUG are excluded. Neutrino download/extraction is best-effort, so check release notes before relying on a bundled core.</p></main>
+<h2 id="archive-availability">Archive availability</h2><p>MEGA uploads require successful publishing and configured credentials. Superseded or failed runs may have no archive. Installable packages, source and metadata are archived when upload succeeds; VARIANTS and DEBUG are excluded. Neutrino download/extraction is best-effort, so check release notes before relying on a bundled core.</p>
+
+<h2 id="archive">The rolling archive</h2>
+<p>Because the rolling release is rebuilt on every push, a build you were happy with is replaced quickly.
+Successful runs are preserved on MEGA under run-specific folders, so an older build can still be retrieved:</p>
+
+<pre>RiptOPL/Rolling/&lt;version&gt;/run_&lt;number&gt;/</pre>
+
+<p>Each folder holds the installable packages plus source and build metadata. <b>VARIANTS and DEBUG bundles are
+excluded</b>, and — as above — an upload only exists when that run published successfully and the credentials
+were configured, so superseded or failed runs may have no archive at all.</p>
+
+<p><a href="https://mega.nz/folder/74pRHKRB#9SLDkrkvZAbeKO4Qvxg9LQ">Browse the MEGA rolling archive &rarr;</a></p>
+
+<h2 id="building">Building from source</h2>
+<p>You do not need to build RiptOPL to use it — the releases above are ready to run. This is for people who
+want to change the code or produce a build with non-default options.</p>
+
+<p>Build inside one of the toolchain images from the CI matrix. Both pinned and rolling SDK images work, and
+the latest SDK is <em>not</em> required. For a reproducible baseline use the <code>PS2DEVPINNED</code> image
+digest from that matrix. From the repository root, with Docker available:</p>
+
+<pre>docker run --rm -v "${PWD}:/src" -w /src   ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11   make -j4</pre>
+
+<p>Repository scripts live in <code>tools/</code> and are run from the repository root. Existing Makefile
+targets keep their names and output locations.</p>
+
+<div class="callout amber"><div class="h">⚠ Use a clean build directory when changing SDK image</div>
+Object files from one SDK are not safe to mix with another. Also worth saying plainly: <b>a successful build
+does not establish console compatibility</b> — it only means the code compiled.</div>
+
+<p>See the <code>Makefile</code> for the option flags, including <code>DUALSENSE=1</code> (a
+<a href="pademu.html#dualsense">DualSense</a> loader) and <code>EXTRA_FEATURES=1</code> (which turns on
+<a href="igr.html#igs">in-game screenshots</a> and right-to-left language support).</p></main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>
 <footer>

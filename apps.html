@@ -1,0 +1,204 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Apps · RiptOPL Docs</title>
+<meta name="description" content="Adding homebrew ELFs to RiptOPL: the title.cfg and conf_apps.cfg methods, argv1, app art, and troubleshooting.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
+    <a href="apps.html" class="active"><span class="em">🧰</span>Apps</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
+    <a href="languages.html"><span class="em">🌐</span>Languages</a>
+    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Apps</h1>
+<p class="lead">RiptOPL can list and launch your homebrew ELFs alongside your games, on the <b>Apps</b> device
+page. There are two supported ways to register an app; both work, and you can use both at once.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Use it when</th></tr></thead>
+<tbody>
+<tr><td><b><code>title.cfg</code></b> (folder-based)</td><td>You want each app self-contained inside its own folder under <code>APPS/</code>. This is the method to prefer for new setups.</td></tr>
+<tr><td><b><code>conf_apps.cfg</code></b> (legacy)</td><td>You want one central list, or your ELFs live somewhere other than <code>APPS/</code>.</td></tr>
+</tbody>
+</table>
+
+<div class="callout amber"><div class="h">⚠ RiptOPL is case-sensitive</div>
+Both methods match file names exactly, including letter case. <code>MYAPP.ELF</code> and
+<code>myapp.elf</code> are different files as far as the loader is concerned. This is the single most common
+reason an app does not appear or fails to launch.</div>
+
+<h2 id="title-cfg">The <code>title.cfg</code> method</h2>
+<p>One <code>title.cfg</code> per app folder. The ELF and its <code>title.cfg</code> must sit in the
+<b>same folder</b> under <code>APPS/</code>.</p>
+
+<ol>
+<li>In <code>APPS/</code>, create a folder for the app.</li>
+<li>Put the ELF in that folder.</li>
+<li>Create a text file named <code>title.cfg</code> beside it.</li>
+</ol>
+
+<pre>APPS/
+  MYAPP/
+    MYAPP.ELF
+    title.cfg</pre>
+
+<p>With <code>title.cfg</code> containing:</p>
+<pre>title=My App Name
+boot=MYAPP.ELF</pre>
+
+<p>Using RiptOPL itself as an example:</p>
+<pre>title=Open PS2 Loader
+boot=RIPTOPL.ELF</pre>
+
+<h3 id="title-cfg-keys">Keys</h3>
+<table>
+<thead><tr><th>Key</th><th>Required</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>title</code></td><td>Yes</td><td>The name shown in the app list.</td></tr>
+<tr><td><code>boot</code></td><td>Yes</td><td>The ELF filename to launch, relative to the app's own folder.</td></tr>
+<tr><td><code>argv1</code></td><td>No</td><td>A single argument passed to the ELF on launch, as its first argument. Useful for homebrew that takes a path or a mode on its command line.</td></tr>
+</tbody>
+</table>
+
+<div class="callout info"><div class="h">ℹ <code>argv1</code> and the per-app settings screen</div>
+<code>argv1</code> shares storage with the per-app <b>Alternate Startup</b> field, so an argument set in
+<code>title.cfg</code> shows up there and can be edited from the console. When a folder-based entry and a
+legacy entry resolve to the same ELF, the folder-based one donates its <code>argv1</code> to the legacy entry
+if that entry has none of its own.</div>
+
+<h2 id="conf-apps">The <code>conf_apps.cfg</code> method (legacy)</h2>
+<p>A single text file listing one app per line, in the form <code>Display Name=DevicePathToELF</code>:</p>
+<ul>
+<li><b>Left of the <code>=</code></b> — the name shown in the app list.</li>
+<li><b>Right of the <code>=</code></b> — the full device path to the ELF.</li>
+</ul>
+
+<pre>My App Name=mass:APPS/MYAPP.ELF
+OPL=mass:APPS/RIPTOPL.ELF</pre>
+
+<p>Device prefixes:</p>
+<table>
+<thead><tr><th>Prefix</th><th>Device</th></tr></thead>
+<tbody>
+<tr><td><code>mass:</code></td><td>USB, MX4SIO, iLink, exFAT HDD — any <a href="usb.html">BDM device</a></td></tr>
+<tr><td><code>mmce0:</code> / <code>mmce1:</code></td><td><a href="mmce.html">MMCE</a> (SD2PSX, MemCard PRO2)</td></tr>
+<tr><td><code>mc0:</code> / <code>mc1:</code></td><td>Memory card</td></tr>
+<tr><td><code>hdd0:</code> / <code>pfs0:</code></td><td><a href="hdd.html">APA HDD</a></td></tr>
+</tbody>
+</table>
+
+<p>With this method the ELFs do <b>not</b> have to live in <code>APPS/</code> — though keeping them there
+still makes a setup easier to manage.</p>
+
+<h3 id="conf-apps-search">Where RiptOPL looks for it</h3>
+<p>The search order is:</p>
+<ol>
+<li><code>mc?:OPL/conf_apps.cfg</code> — either memory card.</li>
+<li><code>conf_apps.cfg</code> under <b>each enabled source's configured prefix</b>.</li>
+</ol>
+
+<div class="callout amber"><div class="h">⚠ The first file found wins — lists are not merged</div>
+If you have a <code>conf_apps.cfg</code> on the memory card and another on USB, only the memory card one is
+read. This trips people up when adding a second list and wondering why nothing changed.</div>
+
+<p>With a default mass-device prefix, the file goes at <code>mass0:/conf_apps.cfg</code>.
+<code>mass0:/OPL/conf_apps.cfg</code> is only found when <code>OPL/</code> is that source's <em>configured
+prefix</em> — it is not searched as an extra location.</p>
+
+<h2 id="art">Cover art for apps</h2>
+<p>Apps use the same <code>ART/</code> folder as games, on the device the app itself lives on. The lookup key
+is the app's <b>ELF filename</b> rather than a game ID, so an app booting <code>MYAPP.ELF</code> looks for
+<code>MYAPP</code>-keyed art. The suffix convention is unchanged — see <a href="coverflow.html">Coverflow</a>
+for the naming.</p>
+
+<p>An app box is <b>square</b>, where a PS2 case is portrait — 184×184 against 184×256 on the built-in theme —
+so a square image is the right shape for an app.</p>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<p><b>The app does not appear in the list.</b> Check letter case on every path component. For
+<code>title.cfg</code>, confirm the ELF and the config file are in the <em>same</em> folder and that
+<code>boot=</code> names the ELF exactly. For <code>conf_apps.cfg</code>, confirm you are editing the file
+RiptOPL actually reads — a memory-card copy shadows every other one.</p>
+
+<p><b>The app appears but will not launch.</b> Usually the <code>boot=</code> filename or the path right of
+the <code>=</code> is wrong. Note that <code>boot=</code> is relative to the app's folder, while
+<code>conf_apps.cfg</code> paths are absolute and carry a device prefix.</p>
+
+<p><b>Two entries for the same app.</b> When the same ELF is registered by <em>both</em> methods, RiptOPL
+drops the scanned <code>title.cfg</code> entry and keeps the legacy <code>conf_apps.cfg</code> one — the
+legacy record has to keep its position, because per-app settings and Favorites are bound to it. The dropped
+entry still hands over its <code>argv1</code> if the survivor has none.</p>
+
+<div class="callout info"><div class="h">ℹ Two <code>conf_apps.cfg</code> lines for one ELF are kept on purpose</div>
+Only <code>title.cfg</code> duplicates are removed. If your <code>conf_apps.cfg</code> lists the same ELF
+twice, both entries stay — that is your own hand-edited data, and dropping one would shift the config
+positions the other entries rely on. Remove the extra line yourself if you do not want it.</div>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>

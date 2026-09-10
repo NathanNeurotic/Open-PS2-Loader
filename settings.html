@@ -40,7 +40,10 @@
     <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
     <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
     <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
+    <a href="apps.html"><span class="em">🧰</span>Apps</a>
     <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
     <a href="vmc.html"><span class="em">💾</span>VMC</a>
     <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
     <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
@@ -48,6 +51,9 @@
     <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
     <h4>Reference</h4>
     <a href="settings.html" class="active"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
+    <a href="languages.html"><span class="em">🌐</span>Languages</a>
+    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
     <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
     <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
     <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
@@ -86,7 +92,7 @@ The PS1/BDMA plumbing now lives on its own <a href="#vcd-settings">PS Emulation 
 <tbody>
 <tr><td>Debug Colors</td><td>Off / On</td><td>Draws colored debug overlays on the screen. For developers; leave off in normal use.</td></tr>
 <tr><td>PS2 Logo</td><td>Off / On</td><td>Shows the regional PS2 logo animation before launching a game (only when the disc signature matches the console region).</td></tr>
-<tr><td>IGR Path</td><td>text (path)</td><td>Path to a custom ELF that is loaded instead of returning to the browser on an in-game reset (IGR). Leave blank to return to the browser. Hint: <em>Boots custom ELF after an IGR.</em></td></tr>
+<tr><td>IGR Path</td><td>text (path)</td><td>Path to a custom ELF that is loaded instead of returning to the browser on an in-game reset (IGR). Leave blank to return to the browser. Hint: <em>Boots custom ELF after an IGR.</em> See <a href="igr.html">In-Game Reset</a>.</td></tr>
 <tr><td>Default Loader Core</td><td>&lt;OPL&gt; / Neutrino</td><td>Global default core for games whose per-game <em>Loader Core</em> is set to <em>Default</em>. <em>&lt;OPL&gt;</em> (the default) is the native EE core; <em>Neutrino</em> chains the external <code>neutrino.elf</code>. A per-game choice always overrides this. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 <tr><td>Neutrino Launch Args</td><td>[sub-screen]</td><td>Opens the structured global <a href="neutrino.html">Neutrino Args</a> editor. Flags set here apply to every game that uses the Neutrino core unless overridden per-game. Prefix a flag with <code>$</code> to disable it without deleting it.</td></tr>
 <tr><td>Neutrino Device</td><td>Auto / Memory Card / USB / MX4SIO / MMCE / HDD (exFAT) / HDD (APA) / Game's Device / iLink</td><td>Which device <em>type</em> to scan for <code>&lt;root&gt;:/neutrino/neutrino.elf</code>. <em>Auto</em> probes the active game device first, then a legacy custom path, then mc0 and mc1. <em>Game's Device</em> probes the game's own device <em>only</em> — there is no memory-card fallback, so a miss aborts the launch with a "not found" message. Choose a specific type if your ELF is on USB, iLink, MMCE, or an HDD. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
@@ -95,7 +101,7 @@ The PS1/BDMA plumbing now lives on its own <a href="#vcd-settings">PS Emulation 
 <tr><td>Write Operations</td><td>Off / On</td><td>Enables write access to storage media. Required for VMC creation and some other write operations. Disable if you want a read-only mode.</td></tr>
 <tr><td>Remember Last Played Game</td><td>Off / On</td><td>Remembers and pre-selects the last launched game on the next boot.</td></tr>
 <tr><td>Auto Start <em>(seconds)</em></td><td>0&ndash;9</td><td>Auto-launches the last played game after the specified number of seconds. Visible only when <em>Remember Last Played Game</em> is on. 0 disables the countdown.</td></tr>
-<tr><td>Browse Folders in Game List</td><td>Off / On</td><td>Shows subfolders of <code>CD/</code> and <code>DVD/</code> as browsable entries — select to open, cancel to go back. Off by default.</td></tr>
+<tr><td>Browse Folders in Game List</td><td>Off / On</td><td>Shows subfolders of <code>CD/</code> and <code>DVD/</code> as browsable entries — select to open, cancel to go back. Off by default. <b>Not supported on every device</b> — see <a href="#folder-browsing">Folder browsing</a>.</td></tr>
 <tr><td>Controller Vibration in Menus</td><td>Off / On</td><td>Short vibration when moving the cursor, confirming, or going back. Needs a DualShock in analog mode. On by default; disable it here if preferred.</td></tr>
 </tbody>
 </table>
@@ -188,7 +194,7 @@ for full detail.</p>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>MMCE Slot</td><td>0 / 1 / Auto</td><td>Which memory-card slot the MMCE adapter is in.</td></tr>
-<tr><td>IGR Bootcard Slot(s)</td><td>NONE / 0 / 1 / BOTH</td><td>Slot(s) to which the "switch to bootcard" command is sent on in-game reset (IGR).</td></tr>
+<tr><td>IGR Bootcard Slot(s)</td><td>NONE / 0 / 1 / BOTH</td><td>Slot(s) to which the "switch to bootcard" command is sent on in-game reset (IGR). See <a href="igr.html">In-Game Reset</a>.</td></tr>
 <tr><td>Send GameID on Launch</td><td>Off / On</td><td>Sends the Game ID to the MMCE adapter when a game is launched (for adapters that can auto-switch profiles by game ID).</td></tr>
 <tr><td>Wait cycles after /ACK low</td><td>0&ndash;5</td><td>Extra wait cycles inserted after the SPI /ACK signal goes low. Lower values may improve performance at the cost of stability on some adapters.</td></tr>
 <tr><td>Use timeout alarms</td><td>OFF / ON</td><td>Enables MMCE timeout alarms. Turning this off may improve performance but a timeout will then cause a freeze rather than a graceful error.</td></tr>
@@ -242,6 +248,26 @@ Coverflow theme is active. See <a href="coverflow.html">Coverflow</a> for full d
 </tbody>
 </table>
 
+<h2 id="folder-browsing">Folder browsing</h2>
+<p>With <b>Browse Folders in Game List</b> on, subfolders of <code>CD/</code> and <code>DVD/</code> appear in
+the list as browsable entries instead of the loader flattening everything into one long list. It is
+<b>off by default</b>.</p>
+
+<ul>
+<li>Folder rows sort to the <b>top</b> of the list, ahead of games, and are drawn with a trailing
+<code>/</code>. Within each group, entries sort by title.</li>
+<li><b>Select</b> opens a folder; the <b>cancel</b> button goes back up a level. (Which face button that is
+depends on your Select button setting — see <a href="controls.html">Controls</a>.)</li>
+<li>A folder row has no info page and no per-game settings, so Square and Triangle do nothing on one.</li>
+</ul>
+
+<div class="callout amber"><div class="h">⚠ Supported devices only</div>
+Folder browsing works on <b>BDM devices</b> (USB, MX4SIO, iLink, exFAT HDD), <b>MMCE</b>, and
+<b>UDPFS in Files mode</b>. It does <b>not</b> apply to the APA/PFS HDD or the PS1/VCD list, which do not scan
+a <code>CD</code>/<code>DVD</code> directory tree at all, nor to the UDPFS block device. <b>SMB is not
+supported yet</b> — its paths use a different separator and it is deliberately deferred. Turning the setting
+on simply has no effect on those pages.</div>
+
 <h2 id="audio-settings">Audio Settings</h2>
 <p>Reached via <b>Settings &rarr; Audio Settings</b>.</p>
 
@@ -257,6 +283,40 @@ Coverflow theme is active. See <a href="coverflow.html">Coverflow</a> for full d
 <tr><td>Default Theme Music</td><td>text (path)</td><td>Path to a music file to stream when the active theme has no BGM of its own. Leave blank to use the theme's default. Hint: <em>Set path to stream music for internal theme.</em></td></tr>
 </tbody>
 </table>
+
+<h3 id="audio-files">Where the audio comes from</h3>
+<p><b>Background music is Ogg Vorbis</b> (<code>.ogg</code>). RiptOPL streams it rather than loading it into
+memory, so a long track costs no extra RAM. It looks in this order and takes the first that works:</p>
+<ol>
+<li><code>&lt;theme&gt;/sound/bgm.ogg</code> — a disk theme's own music.</li>
+<li>The <b>Default Theme Music</b> path set above.</li>
+<li><code>THM/bgm.ogg</code> under the active settings home — <b>built-in themes only</b>
+(<code>&lt;OPL&gt;</code> and <code>&lt;Coverflow&gt;</code>). A disk theme never falls through to this.</li>
+</ol>
+
+<p>That order is why a disk theme with its own <code>sound/bgm.ogg</code> ignores your Default Theme Music
+setting: the theme wins. To use your own track everywhere, pick a theme that ships no music of its own.</p>
+
+<p><b>Sound effects are PS2 ADPCM</b> (<code>.adp</code>, 44.1&nbsp;kHz), supplied by the theme in its
+<code>sound/</code> folder. There are eight:</p>
+
+<table>
+<thead><tr><th>File</th><th>Played when</th></tr></thead>
+<tbody>
+<tr><td><code>boot.adp</code></td><td>RiptOPL starts (the Boot Sound setting)</td></tr>
+<tr><td><code>cursor.adp</code></td><td>Moving the cursor</td></tr>
+<tr><td><code>confirm.adp</code></td><td>Confirming</td></tr>
+<tr><td><code>cancel.adp</code></td><td>Going back</td></tr>
+<tr><td><code>message.adp</code></td><td>A message or dialog appears</td></tr>
+<tr><td><code>transition.adp</code></td><td>Changing screen</td></tr>
+<tr><td><code>bd_connect.adp</code></td><td>A block device is connected</td></tr>
+<tr><td><code>bd_disconnect.adp</code></td><td>A block device is removed</td></tr>
+</tbody>
+</table>
+
+<p>The two built-in themes use effects embedded in the ELF and read nothing from the card. A disk theme
+supplying only some of the eight falls back to the built-in sound for the rest. See
+<a href="themes.html">Theme Engine</a>.</p>
 
 <h2 id="controller-settings">Controller Settings</h2>
 <p>Reached via <b>Settings &rarr; Controller Settings</b>. Controls navigation behavior and optionally opens
@@ -300,6 +360,32 @@ changing settings. Leave the password blank to disable the parental lock entirel
 <tr><td>Parental Lock Password</td><td>Text password. Leave blank to disable. The master override password bypasses any forgotten lock (ask in the community forums). An invalid password (e.g. the master password itself entered as a new password) is rejected.</td></tr>
 </tbody>
 </table>
+
+<h3 id="parental-lock-behaviour">What the lock actually gates</h3>
+<p>The parental lock guards <b>configuration and destructive actions</b>, not game launching. Anyone can
+still start any game on the list. What is behind the password:</p>
+<ul>
+<li><b>Settings</b> and the per-game / per-app settings screens (Triangle on a title)</li>
+<li><b>Rename</b> and <b>Delete</b> on a game entry</li>
+<li><b>Network compatibility update</b> and <b>Start NBD Server</b></li>
+</ul>
+
+<div class="callout amber"><div class="h">⚠ It is not a content filter</div>
+If your aim is to stop a particular game being played, the parental lock will not do it — it stops the
+library being <em>changed</em>, not played.</div>
+
+<h3 id="parental-lock-usage">Setting, using and clearing it</h3>
+<p><b>To set one</b>, enter a password in the field above and save. <b>To remove one</b>, clear the field and
+save — RiptOPL confirms with <em>"Parental lock disabled."</em></p>
+
+<p><b>Entering the correct password</b> unlocks for the rest of the session: RiptOPL stops asking until the
+next restart, so you are not re-prompted between one settings screen and the next.</p>
+
+<div class="callout info"><div class="h">ℹ The master override <em>disables</em> the lock, it does not just unlock it</div>
+Entering the master override at the prompt does not grant one-time access — it deletes the stored password
+and writes the config immediately, showing <em>"Parental lock disabled."</em> After that there is no lock at
+all until you set a new one. The master password also cannot be chosen as your own: trying to set it is
+rejected with <em>"Error - this password cannot be used."</em></div>
 
 <h2 id="network-settings">Network Settings</h2>
 <p>Reached via <b>Settings &rarr; Network Settings</b>. Configures the PS2 IP address and the SMB server.
@@ -347,7 +433,7 @@ Here is a map of every sub-screen:</p>
 <ul class="checklist">
 <li><b>Game Settings (main)</b> — Loader Core, OPL compat Modes 1–7, DMA Mode, Game ID, Custom ELF, Neutrino Args (per-game), Neutrino Video. See <a href="per-game-settings.html">Per-game Settings</a> and <a href="neutrino.html">Neutrino Core</a>.</li>
 <li><b>Configure VMC</b> — VMC Slot 1 and Slot 2 assignment, VMC file creation and deletion. See <a href="vmc.html">VMC</a>.</li>
-<li><b>GSM Settings</b> — GSM Selector (on/off), forced video mode (V-POS, H-POS), Emulate FIELD Flipping. Global or per-game. OPL core only.</li>
+<li><b>GSM Settings</b> — GSM Selector (on/off), forced video mode (V-POS, H-POS), Emulate FIELD Flipping. Global or per-game. OPL core only. See <a href="gsm.html">GSM Video Modes</a>.</li>
 <li><b>Cheat Settings</b> — PS2RD Cheat Engine on/off, mode (Auto Select / Select Game Cheats), PS2RD Cheat Image on/off. Global or per-game. See <a href="cheats.html">Cheats</a>.</li>
 <li><b>OSD Settings</b> — OSD language, screen size, video mode override. Global or per-game. See <a href="#osd-settings">OSD Settings</a> above.</li>
 <li><b>Configure PADEMU</b> — pad emulator, mode, multitap, port, vibration, Bluetooth pairing.</li>
