@@ -155,14 +155,21 @@ independent IGR behaviour built into that binary. RiptOPL's hook is not involved
 <ol>
 <li><b>GSM must be enabled</b> for the running game. The capture is gated on the game's GSM setting, so with
 GSM off the combination does nothing at all.</li>
-<li><b>The build must include IGS.</b> It is compiled out of stock builds — the <code>Makefile</code> defaults
-<code>EXTRA_FEATURES</code> to <code>0</code>, and <code>IGS</code> follows it.</li>
+<li><b>The build must include IGS.</b> The <code>Makefile</code> defaults <code>EXTRA_FEATURES</code> to
+<code>0</code> and <code>IGS</code> follows it, and the <b>main release loader is built with that
+default</b> — so the loader most people run has no IGS and the Up combination is simply inert.</li>
 </ol>
 
-<div class="callout amber"><div class="h">⚠ Release builds do not have IGS</div>
-Official release builds are compiled with <code>EXTRA_FEATURES=0</code>, so the Up combination is inert on
-them and that is expected. Building from source with <code>make IGS=1</code> (or
-<code>EXTRA_FEATURES=1</code>) enables it.</div>
+<div class="callout info"><div class="h">ℹ You do not have to build it yourself</div>
+The rolling release also publishes an IGS-enabled loader. Inside <code>RIPTOPL-VARIANTS-*.zip</code>, the
+variants named <code>-extra1</code> are built with <code>EXTRA_FEATURES=1</code>, which turns IGS on; they
+come in <code>pademu0</code>/<code>pademu1</code> and optional <code>-ds5</code> flavours. Building from
+source with <code>make IGS=1</code> works too. See <a href="releases.html">Releases</a>.</div>
+
+<div class="callout amber"><div class="h">⚠ RetroAchievements and IGS are mutually exclusive</div>
+The RA loader (<code>RIPTOPL-RA-*.zip</code>) is deliberately built without <code>EXTRA_FEATURES</code>:
+GSM 1080p plus IGS and RA will not both fit in the console's <code>ram84</code> region. You can have
+achievements or in-game screenshots, not both. See <a href="retroachievements.html">RetroAchievements</a>.</div>
 
 <h2 id="troubleshooting">Troubleshooting</h2>
 
