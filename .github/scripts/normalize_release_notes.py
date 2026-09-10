@@ -36,15 +36,36 @@ body = re.sub(r'\nSHA256 \(also published as SHA256SUMS\.txt\):\n```.*?```\n', '
 body = hero_re.sub('', body)
 body = body.lstrip()
 
-downloads = '''## Release downloads
+# `RIPTOPL.ELF` is published as a loose asset only when its (best-effort) flavour built this run,
+# so the workflow passes its presence in rather than letting these notes promise a download that
+# is not there. Absent argument => treat it as missing, which is the safe direction to be wrong in.
+oneclick = len(sys.argv) > 2 and sys.argv[2] == 'yes'
+oneclick_line = (
+    '- **RIPTOPL.ELF:** the loader on its own, for **updating an existing install** — download it and'
+    ' overwrite the `RIPTOPL.ELF` you already have. The filename never changes, so the link above is'
+    ' permanent. Use the unified package for a first install: the bare ELF does not bring `POPS/`,'
+    ' `EMBER/`, `neutrino/` or the language files.\n'
+) if oneclick else ''
+# The closing sentence has to track the line above it: saying "no bare ELF files are published"
+# while one sits in the asset list is exactly the kind of quiet contradiction people stop reading
+# release notes over.
+closing = (
+    'Apart from `RIPTOPL.ELF` above, no bare ELF files or SDK/IRX manifests are published as release'
+    ' assets; they are kept inside the appropriate archives where needed.'
+    if oneclick else
+    'No bare ELF files or SDK/IRX manifests are published as release assets; they are kept inside'
+    ' the appropriate archives where needed.'
+)
+
+downloads = f'''## Release downloads
 
 - **Unified package:** the normal installable RiptOPL package containing the standard loaders, PS1/POPSTARTER files, bundled Neutrino and the five companion-tool shortcuts.
-- **Variants:** alternate build configurations, including the DualSense (DS5) loaders.
+{oneclick_line}- **Variants:** alternate build configurations, including the DualSense (DS5) loaders.
 - **Debug:** diagnostic builds for troubleshooting, when produced.
 - **Languages:** additional UI language files and fonts, when produced.
 - **Source:** the exact source snapshot used to produce the release.
 
-No bare ELF files or SDK/IRX manifests are published as release assets; they are kept inside the appropriate archives where needed.'''
+{closing}'''
 
 # Hero FIRST, AI-disclosure banner LAST -- the two images do different jobs. The hero is the
 # project's identity and belongs where a reader lands. The disclosure badge is a footnote about how

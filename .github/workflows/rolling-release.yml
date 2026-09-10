@@ -550,6 +550,45 @@ jobs:
           echo "Renamed assets:"
           ls -la rolling
 
+      - name: Stage the one-click RIPTOPL.ELF
+        run: |
+          set -eu
+          # ONE stable, version-agnostic loader asset, so somebody who already has RiptOPL installed
+          # can replace just the ELF without downloading and unpacking the whole package (requested
+          # by eliminator1403, 2026-09-10). The name is deliberately RIPTOPL.ELF -- exactly the
+          # filename it has to have on the card -- and it never changes, so the download URL
+          #   .../releases/download/rolling/RIPTOPL.ELF
+          # is permanent and can be linked or bookmarked.
+          #
+          # ONLY ONE of the four flavours can hold that name; publishing four would recreate the
+          # "which do I pick" problem the single file exists to remove.
+          #
+          # SETTLED: OFFICIALROLLING, chosen by Nathan 2026-09-10 and reaffirmed the same day after
+          # the objection was put to him -- that it is flavour #4, a MOVING tag which can build
+          # green and not boot (issue #102), while every doc ranks PS2DEVPINNED first. It is his
+          # call, it is documented honestly wherever the asset is described, and it is not to be
+          # "corrected" to a pinned flavour. Moving it is this one line, nothing else.
+          ONECLICK_FLAVOUR=OFFICIALROLLING
+          SRC="rolling/${VERSIONED_BASE}-${ONECLICK_FLAVOUR}.ELF"
+          # Landmine: build-rolling-ps2dev-latest stages its output as rolling/RIPTOPL.ELF and the
+          # step above renames it to ...-PS2DEVROLLING.ELF. If that rename is ever moved or removed,
+          # a PS2DEVROLLING binary would silently inherit the one-click name. Fail instead.
+          if [ -f rolling/RIPTOPL.ELF ]; then
+            echo "ERROR: rolling/RIPTOPL.ELF already exists before this step -- the PS2DEVROLLING" >&2
+            echo "       rename must run first, or the one-click asset would be the wrong flavour." >&2
+            exit 1
+          fi
+          if [ -f "$SRC" ]; then
+            cp -f "$SRC" rolling/RIPTOPL.ELF
+            echo "One-click loader: RIPTOPL.ELF == ${ONECLICK_FLAVOUR}"
+          else
+            # Best-effort, like the flavour it comes from. The publish step deletes every existing
+            # asset before uploading, so a missing file this run simply means the release carries no
+            # one-click ELF, rather than last run's binary lingering under a stable name.
+            echo "WARN: ${ONECLICK_FLAVOUR} ELF missing this run; release ships without RIPTOPL.ELF" >&2
+          fi
+          echo "ONECLICK_FLAVOUR=${ONECLICK_FLAVOUR}" >> "$GITHUB_ENV"
+
       - name: Archive source snapshot
         run: |
           set -eu
@@ -866,6 +905,9 @@ jobs:
       - name: Build release notes
         run: |
           set -eu
+          # Same tag the Publish step below resolves, needed here to print a working download URL
+          # for the one-click ELF. Keep the two in step if either is ever changed.
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then REL_TAG="${GITHUB_REF_NAME}"; else REL_TAG="rolling"; fi
           HAS_PS2DEVPINNED=no
           [ -f "rolling/${VERSIONED_BASE}-PS2DEVPINNED.ELF" ] && HAS_PS2DEVPINNED=yes
           HAS_OFFICIALROLLING=no
@@ -893,6 +935,15 @@ jobs:
             printf 'the SDK toolchain each was built with -- the RiptOPL code in every one is identical. Pick a folder\n'
             printf 'and copy its RIPTOPL.ELF to your launch method.\n'
             printf '\n'
+            if [ -f rolling/RIPTOPL.ELF ]; then
+              printf '**Already running RiptOPL?** Grab the single **RIPTOPL.ELF** asset below and overwrite the\n'
+              printf 'one you already have -- no zip, no unpacking, nothing else to copy. It is the %s\n' "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
+              printf 'flavour, and the link never changes:\n'
+              printf '  %s/%s/releases/download/%s/RIPTOPL.ELF\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG"
+              printf 'Use the full package for a FIRST install -- the ELF alone does not bring POPS/, EMBER/,\n'
+              printf 'neutrino/ or the language files, and PS1 and Neutrino launches need those.\n'
+              printf '\n'
+            fi
             printf '**Prefer a PINNED flavour.** Pinned builds are digest-locked and reproducible, so a report\n'
             printf 'against one can be rebuilt and compared later. When you report, **name the flavour you are\n'
             printf 'running -- Settings -> About shows it** in the version string. That one line is what makes\n'
@@ -1000,6 +1051,9 @@ jobs:
             fi
             if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
               printf -- '- RIPTOPL-DEBUG-*.zip: debug builds for the two ps2dev flavours (iopcore/ingame/eesio/ppctty/DTL_T10000)\n'
+            fi
+            if [ -f rolling/RIPTOPL.ELF ]; then
+              printf -- '- RIPTOPL.ELF: the one-click loader for updating an existing install -- %s flavour, stable filename, permanent link\n' "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
             fi
             if [ "$HAS_PS2DEVPINNED" = yes ]; then
               printf -- '- %s-PS2DEVPINNED.ELF: bare loader, digest-pinned ps2dev snapshot %s (SAFE FALLBACK -- pinned, boots reliably)\n' "$VERSIONED_BASE" "$SDK_VER"
@@ -1211,6 +1265,11 @@ jobs:
             case "$b" in
               RIPTOPL-VARIANTS-*.zip|RIPTOPL-DEBUG-*.zip)
                 echo "MEGA archive: excluding diagnostic bundle $b" ;;
+              RIPTOPL.ELF)
+                # Byte-identical to the versioned <base>-<flavour>.ELF already in this archive --
+                # it exists only to give the GitHub release a stable filename. The permanent copy
+                # keeps the versioned name, which is the one a restorer can identify.
+                echo "MEGA archive: excluding $b (duplicate of the versioned flavour ELF)" ;;
               *)
                 MEGA_FILES="$MEGA_FILES $b" ;;
             esac

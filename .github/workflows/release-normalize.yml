@@ -137,9 +137,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # RIPTOPL.ELF is the ONE deliberate exception. Every other loose ELF here is a
+          # version-and-flavour-stamped build that belongs inside an archive; RIPTOPL.ELF exists
+          # precisely so an existing install can be updated by replacing one file, from a link that
+          # never changes. Sweeping it up with the rest would delete the asset the rolling release
+          # advertises in its own "Get started" section.
           for f in release-work/*.ELF release-work/*MANIFEST*.txt release-work/SHA256SUMS.txt release-work/DETAILED_CHANGELOG; do
             [[ -f "$f" ]] || continue
             asset="$(basename "$f")"
+            if [[ "$asset" == "RIPTOPL.ELF" ]]; then
+              echo "Keeping one-click loader asset: $asset"
+              continue
+            fi
             echo "Removing floating release asset: $asset"
             gh release delete-asset "$TAG" "$asset" --repo "$GITHUB_REPOSITORY" --yes || true
           done
@@ -151,7 +160,11 @@ jobs:
           BODY="release-work/original-notes.md"
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq '.body' > "$BODY"
 
-          python3 .github/scripts/normalize_release_notes.py "$BODY" > release-work/notes.md
+          # Tell the notes generator whether the one-click loader actually shipped this run, so the
+          # "Release downloads" list never advertises an asset the release does not carry.
+          ONECLICK=no
+          [[ -f release-work/RIPTOPL.ELF ]] && ONECLICK=yes
+          python3 .github/scripts/normalize_release_notes.py "$BODY" "$ONECLICK" > release-work/notes.md
 
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file release-work/notes.md
 
@@ -159,11 +172,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          ASSETS="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | sort)"
           echo 'Final release assets:'
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | sort
+          printf '%s\n' "$ASSETS"
           echo 'Invariant checks:'
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -E '\.ELF$|MANIFEST|SHA256SUMS|DETAILED_CHANGELOG'; then
+          # RIPTOPL.ELF is the one sanctioned loose loader (the one-click update download); every
+          # other match is a floating build artefact that should have stayed inside an archive.
+          if printf '%s\n' "$ASSETS" | grep -vFx 'RIPTOPL.ELF' | grep -E '\.ELF$|MANIFEST|SHA256SUMS|DETAILED_CHANGELOG'; then
             echo 'ERROR: floating ELF/manifest asset remains.' >&2
             exit 1
           fi
-          echo 'OK: no floating ELF or manifest assets.'
+          echo 'OK: no floating ELF or manifest assets beyond RIPTOPL.ELF.'
+          if printf '%s\n' "$ASSETS" | grep -qFx 'RIPTOPL.ELF'; then
+            echo 'OK: one-click RIPTOPL.ELF is published.'
+          else
+            # Not fatal: it comes from a best-effort flavour, so a build hiccup means the release
+            # ships without it rather than shipping a stale one under a stable name.
+            echo 'NOTE: no RIPTOPL.ELF this run -- its flavour did not build.'
+          fi

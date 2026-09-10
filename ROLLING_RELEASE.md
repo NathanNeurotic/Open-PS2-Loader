@@ -17,16 +17,19 @@ archives by purpose (RA, DEBUG and language packs are listed when produced):
 | Asset | What it is |
 |---|---|
 | `RIPTOPL-<rel>-<sha>.zip` | **The installable package.** Normally contains four loader folders that differ ONLY by the SDK toolchain they were built with (the RiptOPL code in each is identical), each explicitly labeled: `APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF` (#1, recommended pinned ps2dev), `APP_RIPTOPL-OFFICIALPINNED/RIPTOPL.ELF` (#2, recommended pinned ps2homebrew), `APP_RIPTOPL-PS2DEVROLLING/RIPTOPL.ELF` (#3, rolling canary), and `APP_RIPTOPL-OFFICIALROLLING/RIPTOPL.ELF` (#4, rolling canary). A best-effort flavour can be absent when its build fails, and the release notes identify it. Also includes a `POPS/` folder for PS1 support via POPSTARTER (including all loose BDMA pairs—none are embedded in the loader—the new `usbd.irx.ilink` + `usbhdfsd.irx.ilink` pair for iLink VCD launches, and `POPS/POPSTARTER VERSIONS/`, the alternate POPSTARTER builds) and an `EMBER/` folder for PS1 support via **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)**, the second PS1 core; the normally bundled **[Neutrino](https://github.com/rickgaiser/neutrino)** core by **[rickgaiser](https://github.com/rickgaiser)** as a ready-to-use `neutrino/` folder (drag-and-drop to `mc?:/`), plus `PS2-Servers.url`, `udpfs-server.url`, `OrbitPS2-Manager.url`, `OPL-PS1-AIO-Converter-GUI.url`, and `PS2RD-CHT-Manager.url`. Extract it, pick a folder and copy its `RIPTOPL.ELF` — see [Which build should I use?](#which-build-should-i-use) below. |
+| `RIPTOPL.ELF` | **The loader on its own, for updating an install you already have.** Download it and overwrite your existing `RIPTOPL.ELF` — no archive to unpack, nothing else to copy. Alone among the release assets its name never changes, so <https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF> is a permanent link. It is the **`-OFFICIALROLLING`** flavour; there is only one of these because four would put the "which do I pick?" question back in front of the people this file exists for. It is not a first install: the bare loader does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files, so PS1 and Neutrino launches need the package above. If you want a reproducible build to quote in a bug report, take a pinned folder from the package instead — see [Which build should I use?](#which-build-should-i-use). Best-effort, like the flavour it is copied from: if that build fails the release simply ships without it. |
 | `RIPTOPL-<version>-src.zip` | Source snapshot to rebuild this exact commit. |
 | `RIPTOPL-LANGS-*.zip` | Extra UI language files (`.lng` + non-Latin fonts) — copy into your OPL folder. |
 | `RIPTOPL-VARIANTS-*.zip` | Alternate build configs across the moving and pinned ps2dev flavours; the normalizer also adds one ready-made DualSense (`DUALSENSE=1`) loader for each available official flavour. |
 | `RIPTOPL-RA-*.zip` | The **RetroAchievements** loader as a complete, installable package — same shape as the main archive (`POPS/`, `EMBER/`, `neutrino/`, the PC-tool shortcuts), with `APP_RIPTOPL-RA-*` loader folders in place of the standard ones, plus `xeRAbora.url` for the PC client the feature needs. Its own archive rather than an entry in VARIANTS so it can be picked deliberately, and because VARIANTS is excluded from the permanent MEGA archive as a diagnostic bundle. **A development build, not a finished feature**: both halves are written, none of it has been tested on hardware. See [docs/RETROACHIEVEMENTS.md](docs/RETROACHIEVEMENTS.md). |
 | `RIPTOPL-DEBUG-*.zip` | Diagnostic builds across the moving and pinned ps2dev flavours, when produced. |
 
-The final GitHub release intentionally has no floating `.ELF`, `SHA256SUMS.txt`, detailed changelog,
-or SDK/IRX manifest assets. Standard loaders live in the unified package, DualSense loaders live in
-VARIANTS, and build checksums remain in the workflow log/immutable MEGA archive rather than beside the
-public archives.
+Apart from the single stable-named `RIPTOPL.ELF` above, the final GitHub release intentionally has
+no floating `.ELF`, `SHA256SUMS.txt`, detailed changelog, or SDK/IRX manifest assets. The other
+standard loaders live in the unified package, DualSense loaders live in VARIANTS, and build
+checksums remain in the workflow log/immutable MEGA archive rather than beside the public archives.
+The permanent MEGA archive keeps the versioned `…-OFFICIALROLLING.ELF` rather than the stable copy,
+since the two are byte-identical and only the versioned name identifies what it is.
 
 The current UI presents the same **PS2/PS1 Game Display** setting on Interface and PS Emulation:
 **Both (L3)** switches separate device libraries; **Mixed** combines them and L3 cycles
@@ -52,12 +55,27 @@ Start with a pinned SDK for reproducible comparisons:
 3. **`APP_RIPTOPL-PS2DEVROLLING/` (`-PS2DEVROLLING`) — bleeding-edge canary.** Tracks `ps2dev/ps2dev:latest`.
 4. **`APP_RIPTOPL-OFFICIALROLLING/` (`-OFFICIALROLLING`) — bleeding-edge official canary.** Tracks `ps2homebrew:main`.
 
+The loose `RIPTOPL.ELF` asset is **#4**, `-OFFICIALROLLING`. It is there to make *updating* a working
+install a one-file job, not to recommend that flavour: if you are chasing a bug, or want a build a
+report can be reproduced against later, take #1 or #2 out of the package.
+
 When something misbehaves on hardware, please say **which flavour you ran** — the in-app version string's
 flavour suffix tells you. Those details greatly help pin down any issues between application code and toolchain updates.
 
 ## Pull the latest build
 
-Because the filenames change each build, pull by the `rolling` tag rather than a fixed
+**Just updating the loader?** `RIPTOPL.ELF` is the one asset whose name is fixed, so it can be
+pulled by URL and dropped straight over your existing copy:
+
+```sh
+# --fail matters: the asset is best-effort, and a plain `curl -L -o` writes the
+# HTTP error page into the file and still exits 0 -- overwriting a loader that works.
+curl --fail --location --show-error --output RIPTOPL.ELF.tmp \
+  https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF \
+  && mv RIPTOPL.ELF.tmp RIPTOPL.ELF
+```
+
+Every other filename changes each build, so pull those by the `rolling` tag rather than a fixed
 filename — the `gh` CLI grabs whatever is currently published:
 
 ```sh

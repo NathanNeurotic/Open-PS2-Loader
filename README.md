@@ -92,7 +92,13 @@ Download the **normal installable package**, `RIPTOPL-<rel>-<sha>.zip`. Separate
 different purposes: `RA` for the experimental RetroAchievements loader, `VARIANTS` for alternate
 configurations including DualSense, `DEBUG` for diagnostics, `LANGS` for translations, and `src`
 for the exact source snapshot. Optional archives or SDK flavours can be omitted; read the release notes.
-GitHub does not publish bare loader ELFs or separate checksum/SDK manifests in the normalized asset set.
+
+**Already have RiptOPL installed?** The rolling release carries one loose loader asset,
+`RIPTOPL.ELF`, for exactly that case: download it and overwrite the `RIPTOPL.ELF` you already have. Its name never changes, so
+<https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF> is a
+permanent link. It is the `-OFFICIALROLLING` flavour, and it is not a first install — the bare loader
+does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files. Apart from that one file, GitHub
+does not publish bare loader ELFs or separate checksum/SDK manifests in the normalized asset set.
 The workflow can also publish `v*` tags, but no such stable release is currently offered here.
 
 
