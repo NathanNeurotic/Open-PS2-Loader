@@ -59,6 +59,7 @@ prefix=r'''
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "include/md5.h"
@@ -67,8 +68,8 @@ typedef struct { unsigned char trycount,spindlctrl,datapattern,pad; } sceCdRMode
 enum { SCECdErNO=0,SCECdSecS2048=0,SCECdSpinNom=1,SCECdSpinStm=2 };
 #define LOG(...) ((void)0)
 static unsigned char iso[96*2048], payload[65536+17];
-static int pos, file_mode, raw_fail, raw_calls, raw_refuse, short_reads;
-static int mock_open(const char *p,int flags) { (void)p;(void)flags;pos=0;return file_mode?7:-1; }
+static int pos, file_mode, raw_fail, raw_calls, raw_refuse, short_reads, mock_open_errno;
+static int mock_open(const char *p,int flags) { (void)p;(void)flags;pos=0;if(file_mode)return 7;errno=mock_open_errno;return -1; }
 static int mock_close(int fd) {(void)fd;return 0;}
 static int mock_lseek(int fd,int off,int whence) {(void)fd;if(whence==SEEK_END)return sizeof(payload);pos=off;return off;}
 static long long mock_lseek64(int fd,long long off,int whence) {(void)fd;(void)whence;pos=off;return off;}
@@ -125,7 +126,15 @@ int main(void) {
     assert(disc_read_at(1,g_chunk,2048)<0);
     raw_fail=0;file_mode=0;put32(r+10,0);
     assert(raHashDisc("disc","SLUS_201.74",hash)<0 && hash[0]==0);
-    puts("PASS: file/raw hash agreement, short reads, sector tail, retries, failure rejects partial hash");
+    /* An image an earlier run left open on a share: smbman answers EBUSY, and that has to reach
+       the caller as its own code (-6) rather than the generic -1, or the menu cannot tell the
+       user the one thing they can act on. Any other errno stays -1. */
+    file_mode=0;mock_open_errno=EBUSY;strcpy(hash,"stale");
+    assert(raHashIsoDirect("smb0:/held.iso","SLUS_201.74",hash)==-6 && hash[0]==0);
+    mock_open_errno=ENOENT;strcpy(hash,"stale");
+    assert(raHashIsoDirect("smb0:/gone.iso","SLUS_201.74",hash)==-1 && hash[0]==0);
+    mock_open_errno=0;
+    puts("PASS: file/raw hash agreement, short reads, sector tail, retries, failure rejects partial hash, held image reports -6");
 }
 '''.replace('EXPECTED', expected)
 run('hash', prefix+s+test, [root/'src/md5.c'])

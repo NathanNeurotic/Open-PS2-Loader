@@ -254,6 +254,19 @@ else
   PADEMU_FLAGS = PADEMU=0
 endif
 
+# ---- Which prebuilt IOP modules the loader embeds -------------------------------------------
+# Two of ps2sdk's shipped .irx files are replaced by fork-built ones (see the rules further down
+# for the full account of each). Both defaults below are the stock ps2sdk prebuilt, and the RA
+# branch swaps in ours.
+#
+# ⚠ THE USBD SWAP IS NOT AN RA FEATURE. It fixes a bug that is present in every build this fork
+# ships -- and in official OPL too -- and it is held behind the RA switch only because it replaces
+# the USB host driver for every user and has not been validated on OUR hardware yet. Promoting it
+# is deliberately a one-line change: move USBD_MINI_IRX out of the conditional. Do that only with
+# a hardware pass behind it.
+USBD_MINI_IRX = $(PS2SDK)/iop/irx/usbd_mini.irx
+SMBMAN_IRX    = $(PS2SDK)/iop/irx/smbman.irx
+
 # RetroAchievements flavour. Everything the feature adds hangs off this one switch, on BOTH sides
 # of the EE/ee_core split -- the define reaches the menu build directly and ee_core through
 # EECORE_EXTRA_FLAGS, because ee_core is a separate $(MAKE) invocation that inherits nothing.
@@ -261,6 +274,8 @@ endif
 ifeq ($(RETROACHIEVEMENTS),1)
   EE_CFLAGS += -DRETROACHIEVEMENTS
   EECORE_EXTRA_FLAGS += RETROACHIEVEMENTS=1
+  USBD_MINI_IRX = modules/usb/usbd-ra/usbd_mini.irx
+  SMBMAN_IRX    = modules/network/smbman-ra/smbman.irx
   # md5 (vendored, zlib licence): the game hash the PC client keys achievements on.
   # rawatch: the watch list the menu hands to ee_core, loaded from <device>RA/.
   # rahash:  the image hash RetroAchievements keys a game on, taken by walking
@@ -481,6 +496,10 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/ps2ips clean
 	echo " -raudp"
 	$(MAKE) -C modules/network/raudp clean
+	echo " -smbman-ra"
+	$(MAKE) -C modules/network/smbman-ra clean
+	echo " -usbd-ra"
+	$(MAKE) -C modules/usb/usbd-ra clean
 	echo "-pc tools"
 	$(MAKE) -C pc clean
 
@@ -694,7 +713,27 @@ modules/isofs/isofs.irx: modules/isofs
 $(EE_ASM_DIR)isofs.c: modules/isofs/isofs.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)usbd.c: $(PS2SDK)/iop/irx/usbd_mini.irx | $(EE_ASM_DIR)
+# FORK-BUILT usbd_mini (modules/usb/usbd-ra) -- currently RA-only, see USBD_MINI_IRX above.
+#
+# ps2sdk rewrote its USB host driver on 2024-09-04 ("USBD feature update", b1f7ff96: 28 files,
+# +4446/-3336, with driver.c/hcd.h/hub.h deleted and device.c/endpoint.c/hub_resets.c added).
+# Since then a CD-era game run off a USB stick loses its controller AND its sound at the game's
+# first IOP reboot -- Dynasty Warriors 2 on real hardware, reported by hacan359 2026-09-10, and
+# reproducing with official OPL as much as with this fork. Swapping only this module fixes it.
+#
+# usbd_mini.irx is NOT a separate ps2sdk source tree: iop/usb/usbd_mini/Makefile just points
+# IOP_SRC_DIR at iop/usb/usbd/src and adds -DMINI_DRIVER, so that rewrite lands squarely on the
+# module we embed. We take the prebuilt straight out of the container, so every flavour we ship
+# carries the post-rewrite driver.
+#
+# The source here is ps2sdk iop/usb/usbd as of 314d87e7 (2024-04-01), the last state before the
+# rewrite -- verified byte-identical to that tree, every file, with ONLY the Makefile ours
+# (exports.o first for srxfixup, -DMINI_DRIVER, no gp switching). Do not reformat it: the whole
+# value of this vendoring is that it still diffs cleanly against ps2sdk.
+modules/usb/usbd-ra/usbd_mini.irx: $(wildcard modules/usb/usbd-ra/src/*.c) $(wildcard modules/usb/usbd-ra/src/*.h) $(wildcard modules/usb/usbd-ra/include/*.h) modules/usb/usbd-ra/src/imports.lst modules/usb/usbd-ra/src/exports.tab modules/usb/usbd-ra/Makefile
+	$(MAKE) -C modules/usb/usbd-ra rebuild
+
+$(EE_ASM_DIR)usbd.c: $(USBD_MINI_IRX) | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)libsd.c: $(PS2SDK)/iop/irx/libsd.irx | $(EE_ASM_DIR)
@@ -878,7 +917,29 @@ modules/network/ps2ips/ps2ips.irx: $(wildcard modules/network/ps2ips/*.c) $(wild
 $(EE_ASM_DIR)ps2ips.c: modules/network/ps2ips/ps2ips.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)smbman.c: $(PS2SDK)/iop/irx/smbman.irx | $(EE_ASM_DIR)
+# FORK-BUILT smbman (modules/network/smbman-ra) -- RA-only, see SMBMAN_IRX above.
+#
+# A console that ran a game off a share and was switched off leaves the image OPEN on the server:
+# OPL logs off from nothing, the session dies with the console, and a cheap server never reaps it.
+# From then on NT create is refused with a sharing violation, so the image cannot be hashed and
+# "check game support" can only say it could not be opened -- while the game still BOOTS off that
+# same file, because the in-play open uses the legacy command, which the server grants in
+# compatibility mode.
+#
+# So: try NT create first, and fall back to the legacy open only when the server says the file is
+# held, and only for a read. A write/create/truncate still returns -EBUSY -- reaching past someone
+# else's handle to write is not ours to ask for -- and rahash turns that -EBUSY into a menu message
+# naming the held image instead of a silent failure.
+#
+# The source is ps2sdk master's iop/network/smbman with the changes marked "RA fix" -- verified by
+# diffing every file against ps2dev/ps2sdk: only smb.c (35 lines) and smb.h (4) differ, the rest is
+# byte-identical, so vendoring drops no upstream behaviour. Both new status constants decode under
+# this module's own `Eclass | (Ecode << 16)`: 0xc0000043 is NT STATUS_SHARING_VIOLATION, 0x00200001
+# is the same refusal in the DOS class (ERRDOS=0x01, ERRbadshare=32). Do not reformat it.
+modules/network/smbman-ra/smbman.irx: $(wildcard modules/network/smbman-ra/*.c) $(wildcard modules/network/smbman-ra/*.h) modules/network/smbman-ra/imports.lst modules/network/smbman-ra/Makefile
+	$(MAKE) -C modules/network/smbman-ra rebuild
+
+$(EE_ASM_DIR)smbman.c: $(SMBMAN_IRX) | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/network/smbinit/smbinit.irx: modules/network/smbinit

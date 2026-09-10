@@ -120,6 +120,25 @@ achievements on a local device.** The same reasoning applies to HTTP, which stre
 HDD (APA) games are stored in HDLoader format and have no image file to hash, so while a watch list
 placed by hand still loads and streams, the console cannot work out the hash for them itself.
 
+### An image an earlier run left open on the share can still be hashed
+
+Checking a game on a share used to fail outright once a console had played that game and been
+switched off: OPL logs off from nothing on power-down, the SMB session dies with the console, and a
+cheap server never reaps the handle. From then on the server refused every NT open of that file with
+a sharing violation, so "check game support" could only report that it could not open the image —
+while the game still *booted* off it, because the in-play open uses the older command, which the same
+server grants in compatibility mode.
+
+This flavour now carries its own `smbman` (`modules/network/smbman-ra`) that tries NT create first
+and falls back to the legacy open **only** when the server says the file is held, and **only for a
+read** — reaching past another handle to write is not something worth asking for. If both are
+refused, the hash log names the image as held instead of saying nothing. hacan359 confirmed this on
+hardware on 2026-09-10: two images held open by earlier runs hashed anyway, and the hashes matched
+the ones taken from a USB stick.
+
+Note this fixes *hashing*, not play: a game with an achievement set still stops about a minute in
+when streamed from a share, per the section above.
+
 ## Networking
 
 Telemetry is UDP, sent by an IOP module that builds Ethernet frames by hand rather than going through
@@ -181,6 +200,29 @@ diagnostic bundle rather than installable payload. The default build is unaffect
 every call site is behind `#ifdef RETROACHIEVEMENTS`, and that is checked by comparing the two builds'
 symbol tables, loader core and embedded IOP modules. PR CI also builds the pinned
 **PS2DEVPINNED-RA** flavour and records the RA flag in its build manifest.
+
+### Two IOP modules this flavour builds instead of taking from the SDK
+
+Both are ps2sdk sources vendored with a marked change, the way `modules/network/ps2ips` already is,
+and both are selected by `USBD_MINI_IRX` / `SMBMAN_IRX` at the top of the Makefile.
+
+| Module | Why | Diff from ps2sdk |
+|---|---|---|
+| `modules/network/smbman-ra` | the held-image fix above | `smb.c` (35 lines) and `smb.h` (4); every other file byte-identical to ps2sdk master |
+| `modules/usb/usbd-ra` | see below | **nothing** — byte-identical to ps2sdk `iop/usb/usbd` at `314d87e7` (2024-04-01); only the Makefile is ours |
+
+⚠ **The usbd swap is not a RetroAchievements feature.** ps2sdk rewrote its USB host driver on
+2024-09-04 (`b1f7ff96`: 28 files, +4446/−3336), and since then a CD-era game run off a USB stick
+loses its controller *and* its sound at the game's first IOP reboot — Dynasty Warriors 2 on real
+hardware, reported by hacan359 on 2026-09-10, reproducing **with official OPL as much as with this
+fork**. Swapping only that one module fixes it. `usbd_mini.irx` is not a separate source tree:
+`iop/usb/usbd_mini/Makefile` points `IOP_SRC_DIR` at `iop/usb/usbd/src` and adds `-DMINI_DRIVER`, so
+the rewrite lands squarely on the module every RiptOPL flavour embeds straight from its container.
+
+It is behind the RA switch **only** because promoting it changes the USB host driver for every user
+on the strength of someone else's hardware test, and this is not something an emulator can answer.
+Moving `USBD_MINI_IRX` out of the conditional is the whole change; do it with a hardware pass behind
+it, not before.
 
 ## Before this is called finished
 
