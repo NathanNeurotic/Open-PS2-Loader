@@ -43,6 +43,17 @@ the current values and reconnects immediately; Select / Refresh retries a failed
 `<version>` is the `ps2dev:latest` build's `git describe` (e.g. `v1.2.0-Beta-2562-c553567`); each
 flavour carries the same version with its flavour suffix (`-PS2DEVPINNED`, `-OFFICIALPINNED`, `-PS2DEVROLLING`, `-OFFICIALROLLING`).
 
+## Auto Loading global settings (#545; pending hardware validation)
+
+Auto Loading now uses the GUI's existing settings-home recovery, including
+same-device legacy folders and Custom Settings Path, so the launch path can read
+`conf_game.cfg` when the launcher's directory is not the settings home. The change
+preserves the first-run defaults gate. Diagnostic builds show the config home,
+read masks and global-config population before launch, with an eight-second hold
+that is absent from normal builds. Source review supports the fix; the original
+hardware report remains unconfirmed locally. See the
+[validation matrix and diagnostic limits](docs/AUTOLAUNCH-GLOBAL-SETTINGS.md).
+
 ## Which build should I use?
 
 All loaders contain **the same RiptOPL code** — they differ only by the SDK toolchain that built them.

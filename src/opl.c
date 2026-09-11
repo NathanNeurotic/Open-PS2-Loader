@@ -4799,9 +4799,10 @@ static void miniInit(int mode)
     ioInit();
     LOG_ENABLE();
 
-    if (mode == BDM_MODE) {
-        bdmInitSemaphore();
+    // Settings discovery can need a BDM transport even when the game itself is on APA HDD.
+    bdmInitSemaphore();
 
+    if (mode == BDM_MODE) {
         // Force load all BDM modules.. we aren't using the gui so this is fine.
         // gEnableUSB belongs in this list and was the one missing from it. Unlike the others it is a
         // FORK INVENTION -- upstream loads USBMASS_BD unconditionally and has no such flag -- so the
@@ -4814,11 +4815,6 @@ static void miniInit(int mode)
         gEnableMX4SIO = 1;
         gEnableBdmHDD = 1;
         bdmLoadModules();
-
-        // Autolaunch reads its per-game config from the boot dir too -- resolve a launch-identity or
-        // not-yet-mounted massN: boot dir before the configReadMulti below, same as the full boot path.
-        resolveBootDirToMass();
-
     } else if (mode == HDD_MODE) {
         hddLoadModules();
         hddLoadSupportModules();
@@ -4826,6 +4822,9 @@ static void miniInit(int mode)
         mmceLoadModules();
     }
 
+    // Resolve the settings home and its recovery policy for every launch mode, as _loadConfig does.
+    // The launcher directory can differ from the game's device and from the saved settings home.
+    resolveBootDirToMass();
     InitConsoleRegionData();
 
 #ifdef __OPLDIAG
@@ -4838,12 +4837,7 @@ static void miniInit(int mode)
 #endif
     if (CONFIG_ALL & CONFIG_OPL) {
         if (!(ret & CONFIG_OPL)) {
-            if (mode == BDM_MODE)
-                ret = checkLoadConfigBDM(CONFIG_ALL);
-            else if (mode == HDD_MODE)
-                ret = checkLoadConfigHDD(CONFIG_ALL);
-            else if (mode == MMCE_MODE)
-                ret = checkLoadConfigMMCE(CONFIG_ALL);
+            ret = tryAlternateDevice(CONFIG_ALL);
         }
 
         if (ret & CONFIG_OPL) {
