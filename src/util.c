@@ -23,8 +23,15 @@ extern u32 probed_lba;
 
 extern unsigned char icon_sys[];
 extern unsigned int size_icon_sys;
-extern unsigned char icon_icn[];
-extern unsigned int size_icon_icn;
+extern unsigned char save_icn[];
+extern unsigned int size_save_icn;
+
+// icon.sys names THREE icon files -- the normal one, the one shown while the folder is being
+// copied, and the one shown while it is being deleted -- and the PS2/PS3 browser wants every name
+// it lists to actually be there. All three are the same artwork here, so ONE blob is embedded and
+// written out under each of these names; embedding three byte-identical ~11 KB copies would cost
+// ~22 KB of ELF for nothing. If they ever need to differ, split the blob, do not rename this list.
+static const char *const saveIconName[3] = {"list.icn", "copy.icn", "del.icn"};
 
 static int mcID = -1;
 
@@ -99,6 +106,30 @@ static int checkMC()
     return mcID;
 }
 
+// Build "<dir>/<name>", tolerating a dir that does or does not carry a trailing separator
+// ("mc0:OPL/" vs "mc0:/APPS/RIPTOPL"). Returns 0 when the result would not fit.
+static int buildIconPath(char *path, size_t size, const char *dir, const char *name)
+{
+    size_t dlen = strlen(dir);
+    const char *sep = (dlen > 0 && (dir[dlen - 1] == '/' || dir[dlen - 1] == ':')) ? "" : "/";
+    return snprintf(path, size, "%s%s%s", dir, sep, name) < (int)size;
+}
+
+static int iconFilePresent(const char *dir, const char *name)
+{
+    char path[128];
+    int fd;
+
+    if (!buildIconPath(path, sizeof(path), dir, name))
+        return 1; // cannot address it, so treat it as present and write nothing
+
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return 0;
+    close(fd);
+    return 1;
+}
+
 // Write one browser-save file into an existing folder if it is not already there. Never truncates
 // an existing one: the icon is static, and rewriting it would be a pointless card write on a device
 // whose writes we are otherwise being careful about.
@@ -107,10 +138,7 @@ static void writeIconFile(const char *dir, const char *name, const void *data, u
     char path[128];
     int fd;
 
-    // dir may or may not carry a trailing slash ("mc0:OPL/" vs "mc0:/APPS/RIPTOPL").
-    size_t dlen = strlen(dir);
-    const char *sep = (dlen > 0 && (dir[dlen - 1] == '/' || dir[dlen - 1] == ':')) ? "" : "/";
-    if (snprintf(path, sizeof(path), "%s%s%s", dir, sep, name) >= (int)sizeof(path))
+    if (!buildIconPath(path, sizeof(path), dir, name))
         return;
 
     fd = open(path, O_RDONLY);
@@ -126,8 +154,30 @@ static void writeIconFile(const char *dir, const char *name, const void *data, u
     }
 }
 
-// Give the folder settings ACTUALLY get saved into the browser save icon (opl.icn + icon.sys), so
-// the PS2/PS3 Memory Card Manager shows it properly instead of "Corrupted Data" (#353).
+// Stamp the full browser-save set -- icon.sys plus the three .icn files it names -- into an
+// existing folder. All four have to be there together or the browser cannot draw the folder.
+//
+// icon.sys is the gate for the whole set, not just for itself. A folder that already has one
+// already shows a valid icon, and the .icn files THAT icon.sys names are already beside it --
+// including the older opl.icn pairing this fork shipped before, which still works. Writing our
+// .icn files in that case would only strew files next to an icon.sys that never references them.
+// It is also written LAST, so an interrupted stamp does not latch the gate on a half-written set.
+static void writeSaveIconSet(const char *dir)
+{
+    unsigned int i;
+
+    if (iconFilePresent(dir, "icon.sys"))
+        return;
+
+    for (i = 0; i < sizeof(saveIconName) / sizeof(saveIconName[0]); i++)
+        writeIconFile(dir, saveIconName[i], save_icn, size_save_icn);
+
+    writeIconFile(dir, "icon.sys", icon_sys, size_icon_sys);
+}
+
+// Give the folder settings ACTUALLY get saved into the browser save icon (icon.sys + list.icn +
+// copy.icn + del.icn), so the PS2/PS3 Memory Card Manager shows it properly instead of "Corrupted
+// Data" (#353).
 //
 // Takes the config FILE path and uses its own directory, rather than assuming mc?:OPL/. That
 // assumption is why the icon stamping had to be gated to the legacy no-boot-identity case in the
@@ -154,16 +204,15 @@ void checkMCSaveIcons(const char *cfgFilePath)
     memcpy(dir, cfgFilePath, n);
     dir[n] = '\0';
 
-    writeIconFile(dir, "opl.icn", icon_icn, size_icon_icn);
-    writeIconFile(dir, "icon.sys", icon_sys, size_icon_sys);
+    writeSaveIconSet(dir);
 }
 
-// Ensure mc?:OPL/ exists and contains browser save icon (opl.icn + icon.sys) so PS2/PS3
-// Memory Card Manager displays the save folder with a valid icon instead of 'Corrupted Data' (#353).
+// Ensure mc?:OPL/ exists and contains the browser save icon (icon.sys + list.icn + copy.icn +
+// del.icn) so PS2/PS3 Memory Card Manager displays the save folder with a valid icon instead of
+// 'Corrupted Data' (#353).
 void checkMCFolder(void)
 {
     char path[32];
-    int fd;
 
     if (checkMC() < 0) {
         return;
@@ -172,29 +221,7 @@ void checkMCFolder(void)
     snprintf(path, sizeof(path), "mc%d:OPL/", mcID & 1);
     mkdir(path, 0777);
 
-    snprintf(path, sizeof(path), "mc%d:OPL/opl.icn", mcID & 1);
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-        if (fd >= 0) {
-            write(fd, icon_icn, size_icon_icn);
-            close(fd);
-        }
-    } else {
-        close(fd);
-    }
-
-    snprintf(path, sizeof(path), "mc%d:OPL/icon.sys", mcID & 1);
-    fd = open(path, O_RDONLY);
-    if (fd < 0) {
-        fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-        if (fd >= 0) {
-            write(fd, icon_sys, size_icon_sys);
-            close(fd);
-        }
-    } else {
-        close(fd);
-    }
+    writeSaveIconSet(path);
 }
 
 static int checkFile(char *path, int mode)
