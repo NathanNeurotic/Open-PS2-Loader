@@ -22,6 +22,7 @@
 #include "include/debug.h"
 #ifdef __OPLDIAG
 #include "include/fntsys.h"
+#include <delaythread.h>
 #endif
 #include "include/config.h"
 #include "include/util.h"
