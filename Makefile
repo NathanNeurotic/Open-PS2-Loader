@@ -711,7 +711,9 @@ modules/isofs/isofs.irx: modules/isofs
 $(EE_ASM_DIR)isofs.c: modules/isofs/isofs.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-# FORK-BUILT usbd_mini (modules/usb/usbd-ra) -- currently RA-only, see USBD_MINI_IRX above.
+# FORK-BUILT usbd_mini (modules/usb/usbd-ra) -- used by EVERY flavour, see USBD_MINI_IRX above.
+# The "-ra" in the directory name is historical: it is what upstream called it, kept so this
+# tree still diffs against theirs. It is NOT a statement about gating.
 #
 # ps2sdk rewrote its USB host driver on 2024-09-04 ("USBD feature update", b1f7ff96: 28 files,
 # +4446/-3336, with driver.c/hcd.h/hub.h deleted and device.c/endpoint.c/hub_resets.c added).
@@ -721,8 +723,10 @@ $(EE_ASM_DIR)isofs.c: modules/isofs/isofs.irx | $(EE_ASM_DIR)
 #
 # usbd_mini.irx is NOT a separate ps2sdk source tree: iop/usb/usbd_mini/Makefile just points
 # IOP_SRC_DIR at iop/usb/usbd/src and adds -DMINI_DRIVER, so that rewrite lands squarely on the
-# module we embed. We take the prebuilt straight out of the container, so every flavour we ship
-# carries the post-rewrite driver.
+# module we embed. Taking the prebuilt straight out of the build container is what gave every
+# flavour the post-rewrite driver; building it here is what stops that.
+#
+# Hardware-checked by Zack, 2026-09-10: no noticeable USB regressions on the promoted build.
 #
 # The source here is ps2sdk iop/usb/usbd as of 314d87e7 (2024-04-01), the last state before the
 # rewrite -- verified byte-identical to that tree, every file, with ONLY the Makefile ours
