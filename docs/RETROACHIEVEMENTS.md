@@ -223,6 +223,12 @@ It is therefore **not** gated: `USBD_MINI_IRX` sits outside the `RETROACHIEVEMEN
 every flavour gets the pre-rewrite driver. It is listed here only because this is where the module
 came from; it is not a RetroAchievements feature and does not depend on the flag.
 
+Hardware-checked by **Zack on 2026-09-10** before that promotion landed: no noticeable USB
+regressions on the promoted build. That is the check the promotion was waiting on — it is a
+no-regression result, not a confirmation that the Dynasty Warriors 2 case is cured here; that
+remains hacan359's finding on his own hardware. `backup/pre-usbd-forkwide-58fe5529` is the tree
+immediately before the swap, kept as a restore point.
+
 ## Before this is called finished
 
 Nothing below has been done. The feature is written end to end and builds clean; it has not run on a
