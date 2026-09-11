@@ -115,43 +115,51 @@ static int buildIconPath(char *path, size_t size, const char *dir, const char *n
     return snprintf(path, size, "%s%s%s", dir, sep, name) < (int)size;
 }
 
-static int iconFilePresent(const char *dir, const char *name)
+// Is this folder's save icon already done? icon.sys is the marker for the whole set, so the test
+// has to be stricter than "a file by that name exists": a SHORT one is the signature of a stamp
+// that ran out of card part-way, and treating that as done would leave the folder unreadable
+// forever. Anything at least as long as ours is somebody's icon -- an older opl.icn pairing from a
+// previous build, or a hand-made one -- and is left alone.
+static int saveIconSetDone(const char *dir)
 {
     char path[128];
-    int fd;
+    int fd, size;
 
-    if (!buildIconPath(path, sizeof(path), dir, name))
-        return 1; // cannot address it, so treat it as present and write nothing
+    if (!buildIconPath(path, sizeof(path), dir, "icon.sys"))
+        return 1; // cannot address it, so write nothing
 
     fd = open(path, O_RDONLY);
     if (fd < 0)
         return 0;
+    size = getFileSize(fd);
     close(fd);
-    return 1;
+
+    return size >= (int)size_icon_sys;
 }
 
-// Write one browser-save file into an existing folder if it is not already there. Never truncates
-// an existing one: the icon is static, and rewriting it would be a pointless card write on a device
-// whose writes we are otherwise being careful about.
-static void writeIconFile(const char *dir, const char *name, const void *data, unsigned int len)
+// Write one browser-save file, replacing whatever is there. Returns 1 only when the WHOLE blob
+// landed: a card with no room left accepts the open and then writes short, and a truncated icon is
+// indistinguishable from a corrupt one to the browser.
+//
+// This always truncates, which is safe only because the single caller has already established that
+// the folder has no finished icon.sys -- so anything here is a leftover from a stamp that did not
+// complete, and trusting its contents is exactly the mistake being avoided.
+static int writeIconFile(const char *dir, const char *name, const void *data, unsigned int len)
 {
     char path[128];
-    int fd;
+    int fd, written;
 
     if (!buildIconPath(path, sizeof(path), dir, name))
-        return;
-
-    fd = open(path, O_RDONLY);
-    if (fd >= 0) {
-        close(fd);
-        return; // already present
-    }
+        return 0;
 
     fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-    if (fd >= 0) {
-        write(fd, data, len);
-        close(fd);
-    }
+    if (fd < 0)
+        return 0;
+
+    written = write(fd, data, len);
+    close(fd);
+
+    return written == (int)len;
 }
 
 // Stamp the full browser-save set -- icon.sys plus the three .icn files it names -- into an
@@ -161,16 +169,22 @@ static void writeIconFile(const char *dir, const char *name, const void *data, u
 // already shows a valid icon, and the .icn files THAT icon.sys names are already beside it --
 // including the older opl.icn pairing this fork shipped before, which still works. Writing our
 // .icn files in that case would only strew files next to an icon.sys that never references them.
-// It is also written LAST, so an interrupted stamp does not latch the gate on a half-written set.
+//
+// icon.sys is therefore written LAST and only if every .icn before it landed whole, so its presence
+// means what the gate above assumes it means. Give up on the first short write instead: the folder
+// does not draw either way, and leaving icon.sys off is what lets the next save retry the set
+// rather than inheriting a half-written one that can never be repaired.
 static void writeSaveIconSet(const char *dir)
 {
     unsigned int i;
 
-    if (iconFilePresent(dir, "icon.sys"))
+    if (saveIconSetDone(dir))
         return;
 
-    for (i = 0; i < sizeof(saveIconName) / sizeof(saveIconName[0]); i++)
-        writeIconFile(dir, saveIconName[i], save_icn, size_save_icn);
+    for (i = 0; i < sizeof(saveIconName) / sizeof(saveIconName[0]); i++) {
+        if (!writeIconFile(dir, saveIconName[i], save_icn, size_save_icn))
+            return;
+    }
 
     writeIconFile(dir, "icon.sys", icon_sys, size_icon_sys);
 }
