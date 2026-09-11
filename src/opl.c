@@ -2399,7 +2399,7 @@ static int tryMissingConfigPathRecovery(int types)
 }
 
 
-static int tryAlternateDevice(int types)
+static int tryAlternateDevice(int types, int autoLaunchMode)
 {
     char redirectPath[64];
     int value;
@@ -2438,7 +2438,20 @@ static int tryAlternateDevice(int types)
         }
     }
 
-    // APA/PFS boot identity is authoritative. After an explicit redirect misses, ONLY the
+    // A BDM argv launch can keep its ELF on APA/PFS while its ISO and settings live at the ATA
+    // filesystem root (#545). Prefer that settings bundle over the unrelated PFS data home, but
+    // only after an explicit config.path redirect. Match the ATA driver, not whichever USB slot
+    // happened to enumerate first. The same bounded HDD readiness helper served the old BDM fallback.
+    if (autoLaunchMode == BDM_MODE && gBootHomeApa) {
+        char home[BDM_DEVICE_ROOT_MAX];
+        if (bdmHDDIsPresent(5000) && bdmGetDeviceRootByType(BDM_TYPE_ATA, home, sizeof(home))) {
+            value = tryReadRecoveryConfigHome(types, home);
+            if (value & CONFIG_OPL)
+                return value;
+        }
+    }
+
+    // For GUI/HDL launches, APA/PFS boot identity is authoritative. After an explicit redirect misses, ONLY the
     // deterministic existing-PFS ownership chain is eligible: __common/OPL/conf_hdd.cfg's valid
     // existing target, otherwise __common/OPL. Never import an unrelated MC/USB master config into
     // an FHDB/APA session; that can resurrect stale Custom Settings Path state and makes the next
@@ -2769,7 +2782,7 @@ static void _loadConfig()
 
     if (lscstatus & CONFIG_OPL) {
         if (!(result & CONFIG_OPL)) {
-            result = tryAlternateDevice(lscstatus);
+            result = tryAlternateDevice(lscstatus, IO_MODE_SELECTED_NONE);
         }
 
         if (result & CONFIG_OPL) {
@@ -3074,7 +3087,7 @@ static void _loadConfig()
 
     if (lscstatus & CONFIG_NETWORK) {
         if (!(result & CONFIG_NETWORK)) {
-            result = tryAlternateDevice(lscstatus);
+            result = tryAlternateDevice(lscstatus, IO_MODE_SELECTED_NONE);
         }
 
         if (result & CONFIG_NETWORK) {
@@ -4836,8 +4849,11 @@ static void miniInit(int mode)
     initialRet = ret;
 #endif
     if (CONFIG_ALL & CONFIG_OPL) {
-        if (!(ret & CONFIG_OPL)) {
-            ret = tryAlternateDevice(CONFIG_ALL);
+        // A mixed APA-boot/BDM-game launch has a distinct settings owner. Resolve its redirect or
+        // ATA root even if the initial PFS home contained a different master config. A missing
+        // CONFIG_GAME alone still never triggers discovery on any launch path.
+        if (!(ret & CONFIG_OPL) || (mode == BDM_MODE && gBootHomeApa)) {
+            ret = tryAlternateDevice(CONFIG_ALL, mode);
         }
 
         if (ret & CONFIG_OPL) {

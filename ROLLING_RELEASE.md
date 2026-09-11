@@ -48,7 +48,11 @@ flavour carries the same version with its flavour suffix (`-PS2DEVPINNED`, `-OFF
 Auto Loading now uses the GUI's existing settings-home recovery, including
 same-device legacy folders and Custom Settings Path, so the launch path can read
 `conf_game.cfg` when the launcher's directory is not the settings home. The change
-preserves the first-run defaults gate. Diagnostic builds show the config home,
+does not scan merely because global settings are absent. For an APA/PFS ELF
+launching a BDM/ATA game, explicit settings redirects take precedence, followed
+by the ATA filesystem root and then the PFS home; an unrelated PFS master no
+longer hides the ATA-root settings bundle. GUI/HDL settings ownership is unchanged.
+Diagnostic builds show the config home,
 read masks and global-config population before launch, with an eight-second hold
 that is absent from normal builds. Source review supports the fix; the original
 hardware report remains unconfirmed locally. See the
