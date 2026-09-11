@@ -219,10 +219,9 @@ fork**. Swapping only that one module fixes it. `usbd_mini.irx` is not a separat
 `iop/usb/usbd_mini/Makefile` points `IOP_SRC_DIR` at `iop/usb/usbd/src` and adds `-DMINI_DRIVER`, so
 the rewrite lands squarely on the module every RiptOPL flavour embeds straight from its container.
 
-It is behind the RA switch **only** because promoting it changes the USB host driver for every user
-on the strength of someone else's hardware test, and this is not something an emulator can answer.
-Moving `USBD_MINI_IRX` out of the conditional is the whole change; do it with a hardware pass behind
-it, not before.
+It is therefore **not** gated: `USBD_MINI_IRX` sits outside the `RETROACHIEVEMENTS` conditional and
+every flavour gets the pre-rewrite driver. It is listed here only because this is where the module
+came from; it is not a RetroAchievements feature and does not depend on the flag.
 
 ## Before this is called finished
 
