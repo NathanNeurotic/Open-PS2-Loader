@@ -131,10 +131,11 @@ jobs:
             exit 1
           fi
           cp -f "$MAIN_ELF" rolling/RIPTOPL-PS2DEVPINNED.ELF
-          # IRX provenance manifest: hash every prebuilt module consumed from this container's SDK.
-          # A silent SDK-side driver swap (the mmceman class) then shows up as a manifest diff
-          # between runs instead of as a hardware mystery.
-          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-PS2DEVPINNED.txt 2>/dev/null || true
+          # IRX provenance manifest: hash every prebuilt IOP module in this container's SDK, so a
+          # silent SDK-side driver swap (the mmceman class) shows up as a manifest diff between
+          # runs instead of as a hardware mystery. NOT every module listed is one we embed -- the
+          # script writes a header naming the three the fork builds itself.
+          sh ./.github/scripts/irx_manifest.sh PS2DEVPINNED
           echo "Staged pinned rolling assets:"
           ls -la rolling
 
@@ -247,7 +248,7 @@ jobs:
           cp -f "$MAIN_ELF" rolling/RIPTOPL.ELF
           [ -f DETAILED_CHANGELOG ] && cp -f DETAILED_CHANGELOG rolling/ || true
           # IRX provenance manifest for the required container's SDK prebuilts (see the pinned job).
-          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-PS2DEVROLLING.txt 2>/dev/null || true
+          sh ./.github/scripts/irx_manifest.sh PS2DEVROLLING
           # Standalone language pack (lang_*.lng + their non-Latin fonts, which are NOT embedded in the
           # ELF) -- build it off the just-built lng/ and stage it so 'rolling' carries it too. Soft-fail
           # so a LANGS hiccup can't break rolling.
@@ -343,7 +344,7 @@ jobs:
           fi
           cp -f "$MAIN_ELF" rolling/RIPTOPL-OFFICIALROLLING.ELF
           # IRX provenance manifest for this container's SDK prebuilts.
-          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-OFFICIALROLLING.txt 2>/dev/null || true
+          sh ./.github/scripts/irx_manifest.sh OFFICIALROLLING
           echo "Staged officialsdk rolling assets:"
           ls -la rolling
 
@@ -423,7 +424,7 @@ jobs:
             exit 1
           fi
           cp -f "$MAIN_ELF" rolling/RIPTOPL-OFFICIALPINNED.ELF
-          sha256sum "$PS2SDK"/iop/irx/*.irx > rolling/IRX-MANIFEST-OFFICIALPINNED.txt 2>/dev/null || true
+          sh ./.github/scripts/irx_manifest.sh OFFICIALPINNED
           echo "Staged official-pinned rolling assets:"
           ls -la rolling
 
@@ -1085,7 +1086,7 @@ jobs:
                 printf -- '- %s-%s-ds5.ELF: %s toolchain WITH DualSense (DS5 USB) pad support (same reliability as the %s bare loader above)\n' "$VERSIONED_BASE" "$sdk" "$sdk" "$sdk"
               fi
             done
-            printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module each toolchain consumed\n'
+            printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module in each toolchain; the header names the three the fork builds itself instead\n'
             printf -- '- %s-src.zip: source snapshot to rebuild this exact commit\n' "$VERSIONED_BASE"
             if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
               printf -- '- RIPTOPL-LANGS-*.zip: extra UI language files (.lng + non-Latin fonts) -- copy into your OPL folder\n'
