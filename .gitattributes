@@ -29,6 +29,14 @@ POPS/** binary
 # internet shortcut is one of the few files that genuinely must check out with CRLF.
 EMBER/** binary
 
+# PS2 memory-card browser save icons: the save-folder icon.sys and the .icn geometry/texture files
+# it names. POPS/** above already covers POPSTARTER's copies; these are the ones embedded in the
+# ELF and written to the settings folder. A CRLF<->LF pass through either corrupts the icon, and
+# the failure surfaces as a save folder the browser draws as "Corrupted Data" -- the exact bug the
+# files exist to prevent -- long after the commit that caused it.
+*.icn binary
+misc/*.sys binary
+
 # Internet shortcuts are a Windows-native format and must check out with CRLF. pc/PS2-Servers.url is
 # copied straight into the release package, so this is load-bearing at publish time, not cosmetic.
 *.url text eol=crlf
