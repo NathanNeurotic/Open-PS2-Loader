@@ -20,6 +20,9 @@
 #include "include/menusys.h"
 #include "include/system.h"
 #include "include/debug.h"
+#ifdef __OPLDIAG
+#include "include/fntsys.h"
+#endif
 #include "include/config.h"
 #include "include/util.h"
 #include "include/compatupd.h"
@@ -4783,6 +4786,11 @@ static void deferredAudioInit(void)
 static void miniInit(int mode)
 {
     int ret;
+#ifdef __OPLDIAG
+    int initialRet;
+    char initialHome[256];
+    clock_t configStart;
+#endif
 
     setDefaults();
     configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd)
@@ -4819,7 +4827,14 @@ static void miniInit(int mode)
 
     InitConsoleRegionData();
 
+#ifdef __OPLDIAG
+    configStart = clock();
+    snprintf(initialHome, sizeof(initialHome), "%s", configGetHomePath());
+#endif
     ret = configReadMulti(CONFIG_ALL);
+#ifdef __OPLDIAG
+    initialRet = ret;
+#endif
     if (CONFIG_ALL & CONFIG_OPL) {
         if (!(ret & CONFIG_OPL)) {
             if (mode == BDM_MODE)
@@ -4848,6 +4863,36 @@ static void miniInit(int mode)
                 configGetInt(configOPL, CONFIG_OPL_HDD_CACHE, &hddCacheSize);
         }
     }
+#ifdef __OPLDIAG
+    // Autolaunch never initializes the GUI or a release TTY. Display the captured config state
+    // using only the renderer and built-in font, then release them before the game handoff.
+    // Capture timing before the diagnostic display; its eight-second hold is DIAG-only.
+    config_set_t *globalGame = configGetByType(CONFIG_GAME);
+    char diagnostic[1536];
+    snprintf(diagnostic, sizeof(diagnostic),
+             "Auto Loading config diagnostic (#545)\n"
+             "mode=%d  config=%ld ms\n"
+             "boot: %s\ninitial home: %s\nfinal home: %s\n"
+             "read=0x%02x  final=0x%02x  GAME bit=0x%02x\n"
+             "CONFIG_GAME populated=%d\n"
+             "Game continues after 8 seconds.",
+             mode, (long)((clock() - configStart) / (CLOCKS_PER_SEC / 1000)),
+             gBootDir, initialHome, configGetHomePath(), initialRet, ret, CONFIG_GAME,
+             globalGame != NULL && globalGame->head != NULL);
+    printf("%s\n", diagnostic);
+    rmInit();
+    fntInit();
+    for (int frame = 0; frame < 2; frame++) {
+        rmStartFrame();
+        rmDrawRect(0, 0, 640, 480, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));
+        fntRenderString(FNT_DEFAULT, 24, 32, 0, 592, 416, diagnostic,
+                        GS_SETREG_RGBAQ(0xff, 0xff, 0xff, 0x80, 0));
+        rmEndFrame();
+    }
+    DelayThread(8000000);
+    fntEnd();
+    rmEnd();
+#endif
 }
 
 void miniDeinit(config_set_t *configSet)
