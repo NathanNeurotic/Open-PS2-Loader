@@ -417,7 +417,7 @@ SIO2 bus quiet — those covers still load on selection, as before.
 | `default` | Fallback cover (e.g. `cover`, or `coverapp` for the apps list). |
 | `overlay` + `overlay_*` corners | The case art drawn around each cover (e.g. `case` / `apps_case`). The corners place the cover **inside** the case frame; the engine auto-centers the visible frame and keeps it aspect-correct in both 4:3 and widescreen. |
 | `reflection` | `1` to draw the mirrored reflection below each cover (alpha-faded). |
-| `x`, `y`, `width`, `height` | Position and per-cover size. `width`/`height` should match your case art's pixel size so the overlay corners line up. |
+| `x`, `y`, `width`, `height` | Position and per-cover size. `width`/`height` should match your case art's pixel size so the overlay corners line up. `y` is the **vertical centerline** of the carousel: every cover is centered on it, whatever its shape, so a mixed shelf (Favorites *All*, a Mixed device page) keeps one horizontal center across portrait and square covers instead of aligning their top edges. |
 
 A minimal example (this fork's `<Coverflow>` theme uses values like these):
 
@@ -426,7 +426,7 @@ main2:
 	type=Coverflow
 	default=cover
 	reflection=1
-	y=197
+	y=233
 	width=184
 	height=256
 	overlay=case
