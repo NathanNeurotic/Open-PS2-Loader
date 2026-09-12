@@ -1324,3 +1324,5 @@ gui_strings:
   string: Enable RetroAchievements telemetry in Network settings first
 - label: RA_DISC_CHECK_FIRST
   string: No watch list for this disc -- use RA check disc support first
+- label: HDD_APA_REJECTED_ERROR
+  string: '%d: HardDisk Drive APA table rejected. Data may be recoverable, do not format.'

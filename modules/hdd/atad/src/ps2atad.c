@@ -1025,13 +1025,26 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
 {
     USE_SPD_REGS;
     int res = 0, retries;
-    u16 sector, lcyl, hcyl, select, command, len;
+    u16 sector, lcyl, hcyl, select, command;
+    u32 len;
+    u64 capacity;
+
+    /* Bound the whole request before issuing any command. Do not gate on ata_devinfo_init:
+       IDENTIFY supplies the capacity before ata_init_devices() connects the BDM device. */
+    if (device < 0 || device > 1 || !atad_devinfo[device].exists)
+        return ATA_RES_ERR_NODEV;
+    capacity = atad_devinfo[device].total_sectors_lba48;
+    if (!atad_devinfo[device].lba48 && capacity > 0x10000000)
+        capacity = 0x10000000;
+    if (lba >= capacity || nsectors > capacity - lba)
+        return ATA_RES_ERR_IO;
 
     while (res == 0 && nsectors > 0) {
 
-        if (atad_devinfo[device].lba48 && (ata_dvrp_workaround ? (lba >= atad_devinfo[device].total_sectors) : 1)) {
+        if (atad_devinfo[device].lba48 && (!ata_dvrp_workaround || lba >= atad_devinfo[device].total_sectors || lba >= 0x10000000)) {
             /* Setup for 48-bit LBA.  */
-            len = (u16)((nsectors > 65536) ? 65536 : nsectors); /* 0 means 65536 in LBA48 */
+            /* Keep the DMA count and loop progress at 65536; only the taskfile count encodes 0. */
+            len = (nsectors > 65536) ? 65536 : nsectors;
 
             /* Combine bits 24-31 and bits 0-7 of lba into sector.  */
             sector = ((lba >> 16) & 0xff00) | (lba & 0xff);
@@ -1042,8 +1055,12 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
             select = (device << 4) & 0xffff;
             command = (dir == 1) ? ATA_C_WRITE_DMA_EXT : ATA_C_READ_DMA_EXT;
         } else {
-            /* Setup for 28-bit LBA.  */
+            /* Setup for 28-bit LBA. Split a DVR request before switching addressing modes. */
             len = (nsectors > 256) ? 256 : nsectors;
+            if (len > 0x10000000 - lba)
+                len = 0x10000000 - lba;
+            if (atad_devinfo[device].lba48 && len > atad_devinfo[device].total_sectors - lba)
+                len = atad_devinfo[device].total_sectors - lba;
             sector = lba & 0xff;
             lcyl = (lba >> 8) & 0xff;
             hcyl = (lba >> 16) & 0xff;
@@ -1062,7 +1079,7 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
 #endif
 #endif
 
-            if ((res = sceAtaExecCmd(buf, len, 0, len, sector, lcyl, hcyl, select, command)) != 0)
+            if ((res = sceAtaExecCmd(buf, len, 0, (u16)len, sector, lcyl, hcyl, select, command)) != 0)
                 break;
 
 #ifdef ATA_USE_DEV9

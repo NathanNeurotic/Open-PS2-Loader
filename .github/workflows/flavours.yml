@@ -47,6 +47,17 @@ permissions:
   contents: read
 
 jobs:
+  hdd-host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check HDD startup failure recovery and diagnostics
+        run: python3 .github/scripts/test_hdd_startup.py
+      - name: Check ATA request bounds and command encoding
+        run: python3 .github/scripts/test_atad_bounds.py
+
   ra-host-tests:
     runs-on: ubuntu-latest
     steps:

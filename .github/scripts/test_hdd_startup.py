@@ -20,26 +20,41 @@ def function(source, signature):
 prefix = r'''
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #define LOG(...) ((void)0)
 #define HDD_PFS_DIAG_NOT_RUN (-9999)
 #define ERROR_HDD_IF_NOT_DETECTED 400
+#define ERROR_HDD_NOT_DETECTED 401
+#define ERROR_HDD_MODULE_HDD_FAILURE 402
+#define ATA_DEVCTL_READ_PARTITION_SECTOR 0x1234
 #define _STR_HDD_NOT_CONNECTED_ERROR 1
+#define _STR_HDD_UNAVAILABLE_ERROR 2
+#define _STR_HDD_APA_REJECTED_ERROR 3
 #define PDIOC_CLOSEALL 1
 #define DDIOC_OFF 2
 #define MAX_MODULES 32
 #define sysLoadModuleLock 1
 #define WaitSema(x) ((void)0)
 #define SignalSema(x) ((void)0)
-enum { DEV9, BDM, ATAD, HDPRO, XHDD, MODULE_COUNT };
+typedef unsigned char u8;
+typedef unsigned int u32;
+enum { DEV9, BDM, ATAD, HDPRO, XHDD, PS2HDD, PS2FS, MODULE_COUNT };
 static char ps2dev9_irx, bdm_irx, ps2atad_irx, hdpro_atad_irx, xhdd_irx;
+static char ps2hdd_irx, ps2fs_irx;
 static int size_ps2dev9_irx = 1, size_bdm_irx = 1, size_ps2atad_irx = 1;
 static int size_hdpro_atad_irx = 1, size_xhdd_irx = 1;
+static int size_ps2hdd_irx = 1, size_ps2fs_irx = 1;
 static void *g_sysLoadedModBuffer[MAX_MODULES];
 static unsigned char dev9Initialized, dev9Loaded, dev9InitCount;
 static int attempts[MODULE_COUNT], resident[MODULE_COUNT], failures[MODULE_COUNT];
 static int hdpro, powerOffs, powered, errors, settles, supportCalls, folderCalls;
 static int nestedLoad, nestedResult;
+static int hddCheckResult, diagArmed, diagReason, lastMessage;
+static unsigned char hddSupportErrToasted;
+static unsigned char apaImage[1024], mbrImage[1024], zeroImage[1024];
+static const unsigned char *probeImages[4];
+static int probeResults[4], probeCalls, probeTotal;
 static unsigned char hddForceUpdate, hddHDProKitDetected, hddModulesLoadCount;
 static unsigned char hddModulesLoaded, hddSupportModulesLoaded;
 '''
@@ -57,6 +72,8 @@ static int module_id(void *buffer) {
     if (buffer == &bdm_irx) return BDM;
     if (buffer == &ps2atad_irx) return ATAD;
     if (buffer == &hdpro_atad_irx) return HDPRO;
+    if (buffer == &ps2hdd_irx) return PS2HDD;
+    if (buffer == &ps2fs_irx) return PS2FS;
     assert(buffer == &xhdd_irx);
     return XHDD;
 }
@@ -92,6 +109,15 @@ static int fileXioDevctl(const char *device, int command, void *arg, int size,
     if (!strcmp(device, "dev9x:") && command == DDIOC_OFF) {
         powerOffs++;
         powered = 0;
+        return 0;
+    }
+    if (!strcmp(device, "xhdd0:") && command == ATA_DEVCTL_READ_PARTITION_SECTOR) {
+        int index = probeCalls < probeTotal ? probeCalls : probeTotal - 1;
+        probeCalls++;
+        if (probeResults[index] < 0)
+            return probeResults[index];
+        memcpy(out, probeImages[index], outsize);
+        return 0;
     }
     return 0;
 }
@@ -103,7 +129,17 @@ static void hddDiagBootStageBegin(const char *stage) {}
 static void hddDiagBootStageEnd(const char *stage, int result) {}
 static void hddDiagBootStageEndVoid(const char *stage) {}
 static int hddCheckHDProKit(void) { return hdpro; }
-static void setErrorMessageWithCode(int message, int code) { errors++; }
+static int hddCheck(void) { return hddCheckResult; }
+static void hddArmPfsDiagFailure(int reason, int hddCheckRes, int ps2fsResult) {
+    diagArmed++;
+    diagReason = reason;
+}
+static void hddClearPfsDiagFailure(const char *reason) { diagArmed = 0; }
+static void hddClearRecoveredErrors(void) {}
+static void setErrorMessageWithCode(int message, int code) {
+    errors++;
+    lastMessage = message;
+}
 static void DelayThread(int duration) {
     assert(duration == 1000000);
     assert(hddModulesLoaded); /* Preserve the hardware-validated readiness ordering. */
@@ -130,7 +166,28 @@ production += function(header, "static inline int hddLoadModulesReady(void)")
 production += function(hdd, "static void hddInitModules(void)")
 production += function(hdd, "static void hddShutdown(item_list_t *itemList)")
 
+diag_start = hdd.index("typedef enum {\n    HDD_PFS_DIAG_REASON_NONE")
+diag_end = hdd.index("} hdd_pfs_diag_reason_t;", diag_start) + len("} hdd_pfs_diag_reason_t;")
+production += hdd[diag_start:diag_end] + "\n"
+production += function(hdd, "static int hddApaHeaderValid(const u8 *pSectorData)")
+production += function(hdd, "int hddDetectNonSonyFileSystem()")
+production += function(hdd, "static int hddLoadCoreSupportModules(void)")
+
 tests = r'''
+static void makeApaImage(void) {
+    u32 sum = 0;
+    int i;
+    memset(apaImage, 0, sizeof(apaImage));
+    memcpy(apaImage + 4, "APA", 3);
+    for (i = 1; i < 128; i++)
+        sum += ((u32 *)apaImage)[i];
+    ((u32 *)apaImage)[0] = sum;
+}
+static void makeMbrImage(void) {
+    memset(mbrImage, 0, sizeof(mbrImage));
+    mbrImage[0x1FE] = 0x55;
+    mbrImage[0x1FF] = 0xAA;
+}
 int main(int argc, char **argv) {
     assert(argc == 2);
     const char *test = argv[1];
@@ -151,6 +208,61 @@ int main(int argc, char **argv) {
         assert(hddLoadModulesReady());
         assert(nestedResult == HDD_LOADMODULES_STATUS_BUSYLOADING);
         assert(attempts[DEV9] == 1 && attempts[ATAD] == 1 && attempts[XHDD] == 1);
+    } else if (!strcmp(test, "unformatted-rejected")) {
+        /* The partial raw probe passes but ps2hdd reports "unformatted". Warn without
+           claiming that the partition table or game data survived. */
+        makeApaImage();
+        probeImages[0] = apaImage; probeImages[1] = apaImage;
+        probeResults[0] = 0; probeResults[1] = 0; probeTotal = 2;
+        hddCheckResult = 1;
+        assert(!hddLoadCoreSupportModules());
+        assert(probeCalls == 2 && errors == 1 && lastMessage == _STR_HDD_APA_REJECTED_ERROR);
+        assert(diagArmed == 0 && !hddSupportModulesLoaded);
+    } else if (!strcmp(test, "unformatted-degraded")) {
+        /* The second raw probe no longer matches APA; retain the existing diagnostic path. */
+        makeApaImage();
+        probeImages[0] = apaImage; probeImages[1] = zeroImage;
+        probeResults[0] = 0; probeResults[1] = 0; probeTotal = 2;
+        hddCheckResult = 1;
+        assert(!hddLoadCoreSupportModules());
+        assert(probeCalls == 2 && errors == 0 && diagArmed == 1);
+        assert(diagReason == HDD_PFS_DIAG_REASON_HDD_CHECK_STATUS_1);
+    } else if (!strcmp(test, "unformatted-probe-fails")) {
+        /* A failed re-read retains the existing diagnostic path too. */
+        makeApaImage();
+        probeImages[0] = apaImage; probeImages[1] = apaImage;
+        probeResults[0] = 0; probeResults[1] = -1; probeTotal = 2;
+        hddCheckResult = 1;
+        assert(!hddLoadCoreSupportModules());
+        assert(probeCalls == 2 && errors == 0 && diagArmed == 1);
+    } else if (!strcmp(test, "support-success")) {
+        makeApaImage();
+        probeImages[0] = apaImage; probeResults[0] = 0; probeTotal = 1;
+        hddCheckResult = 0;
+        assert(hddLoadCoreSupportModules());
+        assert(hddSupportModulesLoaded && errors == 0 && diagArmed == 0);
+        assert(resident[PS2HDD] && resident[PS2FS]);
+        /* Already-proven guard: a second call must not re-probe the drive. */
+        assert(hddLoadCoreSupportModules());
+        assert(probeCalls == 1);
+    } else if (!strcmp(test, "support-mbr")) {
+        /* A genuine MBR/exFAT disk is normal BDM territory: bail silently. */
+        makeMbrImage();
+        probeImages[0] = mbrImage; probeResults[0] = 0; probeTotal = 1;
+        assert(!hddLoadCoreSupportModules());
+        assert(probeCalls == 1 && errors == 0 && !hddSupportModulesLoaded);
+    } else if (!strcmp(test, "support-probe-fail")) {
+        probeImages[0] = zeroImage; probeResults[0] = -1; probeTotal = 1;
+        assert(!hddLoadCoreSupportModules());
+        assert(errors == 1 && lastMessage == _STR_HDD_NOT_CONNECTED_ERROR);
+    } else if (!strcmp(test, "support-pfs-fail")) {
+        makeApaImage();
+        probeImages[0] = apaImage; probeResults[0] = 0; probeTotal = 1;
+        hddCheckResult = 0;
+        failures[PS2FS] = 1;
+        assert(!hddLoadCoreSupportModules());
+        assert(errors == 0 && diagArmed == 1);
+        assert(diagReason == HDD_PFS_DIAG_REASON_PS2FS_LOAD_FAILURE);
     } else {
         hdpro = strstr(test, "hdpro") != NULL;
         int shared = strstr(test, "shared") != NULL;
@@ -204,6 +316,8 @@ cases = [
     "normal", "hdpro", "xhdd", "hdpro-xhdd", "atad", "hdpro-atad", "bdm", "dev9",
     "shared-xhdd", "terminal-failure-xhdd", "terminal-failure-dev9",
     "shared-terminal-failure-xhdd", "worker-failure", "worker-busy", "worker-success", "busy",
+    "unformatted-rejected", "unformatted-degraded", "unformatted-probe-fails",
+    "support-success", "support-mbr", "support-probe-fail", "support-pfs-fail",
 ]
 with tempfile.TemporaryDirectory(prefix="hdd-startup-tests-") as temp:
     source = Path(temp) / "test.c"

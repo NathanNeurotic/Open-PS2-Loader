@@ -513,8 +513,8 @@ int hddModulesAreLoaded(void)
     return hddModulesLoaded != 0;
 }
 
-// Validate an APA header sector without ps2hdd: the "APA" magic plus the header checksum
-// (sum of the 127 little-endian words after the checksum word itself, per ps2sdk apaCheckSum).
+// Probe the first APA header sector without ps2hdd. This partial checksum is a format hint,
+// not the full 1 KB apaReadHeader validation or a partition-table integrity check.
 static int hddApaHeaderValid(const u8 *pSectorData)
 {
     const u32 *pWords = (const u32 *)pSectorData;
@@ -686,9 +686,20 @@ static int hddLoadCoreSupportModules(void)
             return 0;
         }
         if (ret == 1) {
-            LOG("HDD: APA status reports an unformatted drive.\n");
-            hddSupportErrToasted = 0;
-            hddArmPfsDiagFailure(HDD_PFS_DIAG_REASON_HDD_CHECK_STATUS_1, ret, HDD_PFS_DIAG_NOT_RUN);
+            // Our raw probe checks only part of the APA header. A match does not establish
+            // partition or game integrity, or explain why the driver's format check failed.
+            // In particular, apaGetFormat skips the error-record dwords in sectors 6 and 7.
+            if (hddDetectNonSonyFileSystem() == 0) {
+                LOG("HDD: raw APA probe matched but ps2hdd reports unformatted; cause unknown.\n");
+                if (!hddSupportErrToasted) {
+                    setErrorMessageWithCode(_STR_HDD_APA_REJECTED_ERROR, ERROR_HDD_NOT_DETECTED);
+                    hddSupportErrToasted = 1;
+                }
+            } else {
+                LOG("HDD: APA status reports an unformatted drive.\n");
+                hddSupportErrToasted = 0;
+                hddArmPfsDiagFailure(HDD_PFS_DIAG_REASON_HDD_CHECK_STATUS_1, ret, HDD_PFS_DIAG_NOT_RUN);
+            }
             return 0;
         }
         if (ret == 2) {
