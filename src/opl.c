@@ -20,6 +20,10 @@
 #include "include/menusys.h"
 #include "include/system.h"
 #include "include/debug.h"
+#ifdef __OPLDIAG
+#include "include/fntsys.h"
+#include <delaythread.h>
+#endif
 #include "include/config.h"
 #include "include/util.h"
 #include "include/compatupd.h"
@@ -2395,7 +2399,7 @@ static int tryMissingConfigPathRecovery(int types)
 }
 
 
-static int tryAlternateDevice(int types)
+static int tryAlternateDevice(int types, int autoLaunchMode)
 {
     char redirectPath[64];
     int value;
@@ -2434,7 +2438,20 @@ static int tryAlternateDevice(int types)
         }
     }
 
-    // APA/PFS boot identity is authoritative. After an explicit redirect misses, ONLY the
+    // A BDM argv launch can keep its ELF on APA/PFS while its ISO and settings live at the ATA
+    // filesystem root (#545). Prefer that settings bundle over the unrelated PFS data home, but
+    // only after an explicit config.path redirect. Match the ATA driver, not whichever USB slot
+    // happened to enumerate first. The same bounded HDD readiness helper served the old BDM fallback.
+    if (autoLaunchMode == BDM_MODE && gBootHomeApa) {
+        char home[BDM_DEVICE_ROOT_MAX];
+        if (bdmHDDIsPresent(5000) && bdmGetDeviceRootByType(BDM_TYPE_ATA, home, sizeof(home))) {
+            value = tryReadRecoveryConfigHome(types, home);
+            if (value & CONFIG_OPL)
+                return value;
+        }
+    }
+
+    // For GUI/HDL launches, APA/PFS boot identity is authoritative. After an explicit redirect misses, ONLY the
     // deterministic existing-PFS ownership chain is eligible: __common/OPL/conf_hdd.cfg's valid
     // existing target, otherwise __common/OPL. Never import an unrelated MC/USB master config into
     // an FHDB/APA session; that can resurrect stale Custom Settings Path state and makes the next
@@ -2765,7 +2782,7 @@ static void _loadConfig()
 
     if (lscstatus & CONFIG_OPL) {
         if (!(result & CONFIG_OPL)) {
-            result = tryAlternateDevice(lscstatus);
+            result = tryAlternateDevice(lscstatus, IO_MODE_SELECTED_NONE);
         }
 
         if (result & CONFIG_OPL) {
@@ -3070,7 +3087,7 @@ static void _loadConfig()
 
     if (lscstatus & CONFIG_NETWORK) {
         if (!(result & CONFIG_NETWORK)) {
-            result = tryAlternateDevice(lscstatus);
+            result = tryAlternateDevice(lscstatus, IO_MODE_SELECTED_NONE);
         }
 
         if (result & CONFIG_NETWORK) {
@@ -4783,6 +4800,11 @@ static void deferredAudioInit(void)
 static void miniInit(int mode)
 {
     int ret;
+#ifdef __OPLDIAG
+    int initialRet;
+    char initialHome[256];
+    clock_t configStart;
+#endif
 
     setDefaults();
     configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd)
@@ -4790,9 +4812,10 @@ static void miniInit(int mode)
     ioInit();
     LOG_ENABLE();
 
-    if (mode == BDM_MODE) {
-        bdmInitSemaphore();
+    // Settings discovery can need a BDM transport even when the game itself is on APA HDD.
+    bdmInitSemaphore();
 
+    if (mode == BDM_MODE) {
         // Force load all BDM modules.. we aren't using the gui so this is fine.
         // gEnableUSB belongs in this list and was the one missing from it. Unlike the others it is a
         // FORK INVENTION -- upstream loads USBMASS_BD unconditionally and has no such flag -- so the
@@ -4805,11 +4828,6 @@ static void miniInit(int mode)
         gEnableMX4SIO = 1;
         gEnableBdmHDD = 1;
         bdmLoadModules();
-
-        // Autolaunch reads its per-game config from the boot dir too -- resolve a launch-identity or
-        // not-yet-mounted massN: boot dir before the configReadMulti below, same as the full boot path.
-        resolveBootDirToMass();
-
     } else if (mode == HDD_MODE) {
         hddLoadModules();
         hddLoadSupportModules();
@@ -4817,17 +4835,25 @@ static void miniInit(int mode)
         mmceLoadModules();
     }
 
+    // Resolve the settings home and its recovery policy for every launch mode, as _loadConfig does.
+    // The launcher directory can differ from the game's device and from the saved settings home.
+    resolveBootDirToMass();
     InitConsoleRegionData();
 
+#ifdef __OPLDIAG
+    configStart = clock();
+    snprintf(initialHome, sizeof(initialHome), "%s", configGetHomePath());
+#endif
     ret = configReadMulti(CONFIG_ALL);
+#ifdef __OPLDIAG
+    initialRet = ret;
+#endif
     if (CONFIG_ALL & CONFIG_OPL) {
-        if (!(ret & CONFIG_OPL)) {
-            if (mode == BDM_MODE)
-                ret = checkLoadConfigBDM(CONFIG_ALL);
-            else if (mode == HDD_MODE)
-                ret = checkLoadConfigHDD(CONFIG_ALL);
-            else if (mode == MMCE_MODE)
-                ret = checkLoadConfigMMCE(CONFIG_ALL);
+        // A mixed APA-boot/BDM-game launch has a distinct settings owner. Resolve its redirect or
+        // ATA root even if the initial PFS home contained a different master config. A missing
+        // CONFIG_GAME alone still never triggers discovery on any launch path.
+        if (!(ret & CONFIG_OPL) || (mode == BDM_MODE && gBootHomeApa)) {
+            ret = tryAlternateDevice(CONFIG_ALL, mode);
         }
 
         if (ret & CONFIG_OPL) {
@@ -4848,6 +4874,36 @@ static void miniInit(int mode)
                 configGetInt(configOPL, CONFIG_OPL_HDD_CACHE, &hddCacheSize);
         }
     }
+#ifdef __OPLDIAG
+    // Autolaunch never initializes the GUI or a release TTY. Display the captured config state
+    // using only the renderer and built-in font, then release them before the game handoff.
+    // Capture timing before the diagnostic display; its eight-second hold is DIAG-only.
+    config_set_t *globalGame = configGetByType(CONFIG_GAME);
+    char diagnostic[1536];
+    snprintf(diagnostic, sizeof(diagnostic),
+             "Auto Loading config diagnostic (#545)\n"
+             "mode=%d  config=%ld ms\n"
+             "boot: %s\ninitial home: %s\nfinal home: %s\n"
+             "read=0x%02x  final=0x%02x  GAME bit=0x%02x\n"
+             "CONFIG_GAME populated=%d\n"
+             "Game continues after 8 seconds.",
+             mode, (long)((clock() - configStart) / (CLOCKS_PER_SEC / 1000)),
+             gBootDir, initialHome, configGetHomePath(), initialRet, ret, CONFIG_GAME,
+             globalGame != NULL && globalGame->head != NULL);
+    printf("%s\n", diagnostic);
+    rmInit();
+    fntInit();
+    for (int frame = 0; frame < 2; frame++) {
+        rmStartFrame();
+        rmDrawRect(0, 0, 640, 480, GS_SETREG_RGBAQ(0, 0, 0, 0x80, 0));
+        fntRenderString(FNT_DEFAULT, 24, 32, 0, 592, 416, diagnostic,
+                        GS_SETREG_RGBAQ(0xff, 0xff, 0xff, 0x80, 0));
+        rmEndFrame();
+    }
+    DelayThread(8000000);
+    fntEnd();
+    rmEnd();
+#endif
 }
 
 void miniDeinit(config_set_t *configSet)
