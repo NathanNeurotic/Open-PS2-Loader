@@ -266,3 +266,68 @@ check in hddAddPartitionHere. They are inherited code, but still require
 validation and fixes. A fifth finding concerned journal bounds: restore is
 fixed in 953f008f; the append guard is included with the first-signature fix.
 Do not describe the APA review or the incident investigation as complete.
+
+
+## APA transaction atomicity, journal preservation and review hardening (2026-09-13)
+
+The transaction failure vulnerabilities identified in the cache probe are now
+addressed across `cache.c` and `journal.c`:
+
+1. **Staging & Commit Gate**: `apaCacheFlushAllDirty` checks staging
+   (`apaJournalWrite`) and commit (`apaJournalFlush`) results. If either
+   fails, execution halts immediately before any destination writes.
+   `apaJournalAbort` clears in-memory journal state so retries start fresh,
+   dirty flags are preserved, and an error is returned.
+2. **Destination Failure & Journal Preservation**: When writing destination
+   headers (`apaWriteHeader`), the first I/O failure immediately aborts
+   subsequent destination writes. Crucially, `apaJournalReset` is skipped,
+   preserving the on-disk recovery journal (`APAL`) with its complete
+   committed transaction intact for recovery via `apaJournalRestore`.
+   Dirty flags are retained on all buffers in the transaction so subsequent
+   flush attempts restage the complete set rather than an incomplete subset.
+3. **Post-Destination Write Barrier**: A cache barrier (`blkIoFlushCache`) is
+   issued after all destination writes complete and before resetting the
+   journal. If this barrier fails, dirty flags and the on-disk journal are
+   preserved.
+4. **Free-List Dirty Buffer Protection**: `apaCacheGetHeader` and
+   `apaCacheAlloc` now scan the free list (`cacheBuf->next`) to find clean
+   buffers, skipping any buffer with `APA_CACHE_FLAG_DIRTY`. If all free
+   buffers are dirty, allocation returns NULL (`-ENOMEM`), preventing
+   unwritten dirty metadata from being silently overwritten.
+5. **Transfer Dirty Flag**: `apaCacheTransfer` clears `APA_CACHE_FLAG_DIRTY`
+   only when the write operation succeeds (`err == 0`).
+
+The probe script `.github/scripts/probe_apa_cache_transaction.py` is updated
+into a permanent host regression and wired into `.github/workflows/flavours.yml`.
+Its updated test results confirm the corrected behavior:
+
+| Injected failure | Destination header writes | Result | Final headers changed | Dirty entries / saved journal entries |
+| --- | ---: | ---: | --- | --- |
+| None (control) | 2 | 0 | Both | 0 / 0 |
+| First staging write | 0 | -5 (-EIO) | Neither | 2 / 0 |
+| Journal commit write | 0 | -5 (-EIO) | Neither | 2 / 0 |
+| First destination-header write | 1 | -5 (-EIO) | Neither | 2 / 2 (preserved journal!) |
+| First flush barrier | 0 | -5 (-EIO) | Neither | 2 / 0 |
+| Post-destination barrier | 2 | -1 | Both | 2 / 2 (preserved journal!) |
+
+All four CodeRabbit review findings and an additional use-after-free are also
+resolved:
+- `apa.c`: `apaGetPartErrorSector` frees the allocated cache entry on read
+  failure before returning `-EIO`.
+- `apa.c`: `apaInsertPartition` caches `start`, `next`, and `prev` locally
+  before freeing `clink_this`, preventing use-after-free during header filling.
+- `hdd_fio.c`: `apaOpen` compares passwords before calling `apaCacheFree(clink)`.
+- `hdd_fio.c`: `hddFormat` saves `clink->sector` into a local variable before
+  freeing `clink` across both format loops.
+- `hdd_fio.c`: `apaRename` removes three redundant `SignalSema(fioSema)` calls
+  that previously caused double-release of the file semaphore.
+- `hdd.c`: `hddAddPartitionHere` validates that `clink_this` from
+  `apaCacheGetHeader` is non-NULL before dereferencing its header.
+
+Scope and limits: These changes ensure that APA metadata transactions are
+atomic, that recovery journals survive I/O and barrier failures, and that
+dirty metadata is neither discarded nor clobbered. However, ordinary healthy
+startup does not initiate transactions or write to sector zero. While these
+fixes eliminate confirmed corruption vectors under I/O failure, the exact
+trigger for the reporter's initial error 401 on their specific drive model
+remains causally unproven.

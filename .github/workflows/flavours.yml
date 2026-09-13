@@ -65,6 +65,8 @@ jobs:
         run: python3 .github/scripts/test_apa_transfer_bounds.py
       - name: Check APA journal recovery preserves failed work
         run: python3 .github/scripts/test_apa_journal_recovery.py
+      - name: Check APA cache transaction atomicity and failure handling
+        run: python3 .github/scripts/probe_apa_cache_transaction.py
       - name: Check BDM startup resource cleanup
         run: python3 .github/scripts/test_bdm_startup.py
 

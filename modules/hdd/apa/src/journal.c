@@ -45,6 +45,12 @@ int apaJournalReset(s32 device)
     return apaJournalFlush(device);
 }
 
+void apaJournalAbort(void)
+{
+    journalBuf.magic = APAL_MAGIC;
+    journalBuf.num = 0;
+}
+
 int apaJournalWrite(apa_cache_t *clink)
 {
     if (journalBuf.num < 0 ||

@@ -26,17 +26,33 @@ LOCAL CHANGES:
   replay fails; reject invalid magic/count and handle scratch allocation
   failure. Reset only after successful replay. Initialize the in-memory
   journal magic for the first transaction; bound append count before I/O.
+  Provide apaJournalAbort to clear in-memory journal state on aborted staging.
+- cache.c: enforce transaction atomicity in apaCacheFlushAllDirty: abort
+  destination writes on staging/commit failure, halt destination writes and
+  preserve the on-disk recovery journal on destination write failure, require
+  a cache flush barrier before resetting the journal, and clear dirty flags
+  only after complete success. apaCacheTransfer clears dirty flags only on
+  success. apaCacheGetHeader and apaCacheAlloc skip dirty entries on the free
+  list to prevent silent metadata clobbering.
+- apa.c: free the cache entry on read failure in apaGetPartErrorSector; save
+  partition coordinates before freeing clink in apaInsertPartition.
+- hdd_fio.c: compare passwords before freeing clink in apaOpen; save the
+  partition sector before freeing clink in hddFormat; remove duplicate
+  SignalSema calls in apaRename.
+- hdd.c: validate clink_this from apaCacheGetHeader before dereference in
+  hddAddPartitionHere.
 - Standalone Makefile using the installed SDK headers/imports and the same
   APA_OSD_VER, APA_USE_DEV9 and APA_USE_ATAD options as the previous variant.
 - Repository C formatting only in the remaining sources.
 
 Unchanged: on-disk format, module version, ATA transport, password behavior,
-APA enumeration/link repair, journal write/commit format, PFS driver and
-PFS journal replay. Recovery error handling changes are listed above.
+APA enumeration/link repair, PFS driver and PFS journal replay. Recovery and
+transaction error handling changes are listed above.
 This does not implement read-only mounting, validate all APA metadata, or
 protect raw devctl/APA journal/header operations through this transfer check.
 It does not enable APA_SUPPORT_GPT, APA_SUPPORT_BHDD or APA_USE_BDM.
 
 RE-VENDOR: compare the complete source against a new SDK pin, retain the
-OSD variant and checks above, run test_apa_transfer_bounds.py, test_apa_journal_recovery.py and all flavor
+OSD variant and checks above, run test_apa_transfer_bounds.py,
+test_apa_journal_recovery.py, probe_apa_cache_transaction.py and all flavor
 builds, and verify the manifest contains the local ps2hdd-osd.irx hash.

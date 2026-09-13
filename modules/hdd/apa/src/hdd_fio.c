@@ -346,6 +346,7 @@ int hddFormat(iomanX_iop_file_t *f, const char *dev, const char *blockdev, void 
 #ifdef APA_FORMAT_MAKE_PARTITIONS
     apa_params_t params;
     u32 emptyBlocks[32];
+    u32 sector = 0;
 #endif
 
     (void)dev;
@@ -447,17 +448,19 @@ int hddFormat(iomanX_iop_file_t *f, const char *dev, const char *blockdev, void 
     strcpy(params.id, "__sysconf");
     if (!(clink = apaFindPartition(f->unit, params.id, &rv)))
         return rv;
+    sector = clink->sector;
     apaCacheFree(clink);
     memset(params.id, 0, APA_IDMAX);
     strcpy(params.id, "__common");
-    if (!hddAddPartitionHere(f->unit, &params, emptyBlocks, clink->sector, &rv))
+    if (!hddAddPartitionHere(f->unit, &params, emptyBlocks, sector, &rv))
         return rv;
 #else
     for (i = 0; formatPartList[i]; i++) {
         memset(params.id, 0, APA_IDMAX);
         strcpy(params.id, formatPartList[i]);
-        if (!(clink = hddAddPartitionHere(f->unit, &params, emptyBlocks, i ? clink->sector : 0, &rv)))
+        if (!(clink = hddAddPartitionHere(f->unit, &params, emptyBlocks, sector, &rv)))
             return rv;
+        sector = clink->sector;
         apaCacheFree(clink);
 
         params.size <<= 1;
@@ -524,11 +527,11 @@ static int apaOpen(s32 device, hdd_file_slot_t *fileSlot, apa_params_t *params, 
     fileSlot->type = clink->header->type;
     fileSlot->nsub = clink->header->nsub;
     memcpy(&fileSlot->id, &clink->header->id, APA_IDMAX);
-    apaCacheFree(clink);
     if (apaPassCmp(clink->header->fpwd, params->fpwd) != 0) {
         rv = (!(mode & FIO_O_WRONLY)) ? apaPassCmp(clink->header->rpwd, params->rpwd) : -EACCES;
     } else
         rv = 0;
+    apaCacheFree(clink);
 
     return rv;
 }
@@ -587,7 +590,6 @@ static int apaRename(s32 device, const char *oldId, const char *newId)
     // look to see if can make(newname) or not...
     if ((clink = apaFindPartition(device, newId, &rv)) != NULL) {
         apaCacheFree(clink);
-        SignalSema(fioSema);
         return -EEXIST; // File exists
     }
 
@@ -595,7 +597,6 @@ static int apaRename(s32 device, const char *oldId, const char *newId)
     for (i = 0; i < apaMaxOpen; i++) {
         if (hddFileSlots[i].f != NULL) {
             if (memcmp(hddFileSlots[i].id, oldId, APA_IDMAX) == 0) {
-                SignalSema(fioSema);
                 return -EBUSY;
             }
         }
@@ -609,7 +610,6 @@ static int apaRename(s32 device, const char *oldId, const char *newId)
 
     // find :)
     if ((clink = apaFindPartition(device, oldId, &rv)) == NULL) {
-        SignalSema(fioSema);
         return rv;
     }
 

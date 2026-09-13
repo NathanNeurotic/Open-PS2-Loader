@@ -126,7 +126,8 @@ apa_cache_t *hddAddPartitionHere(s32 device, const apa_params_t *params, u32 *em
         if ((u32)(1 << i) >= params->size && emptyBlocks[i] != 0)
             return apaInsertPartition(device, params, emptyBlocks[i], err);
     }
-    clink_this = apaCacheGetHeader(device, sector, APA_IO_MODE_READ, err);
+    if ((clink_this = apaCacheGetHeader(device, sector, APA_IO_MODE_READ, err)) == NULL)
+        return NULL;
     header = clink_this->header;
     part_end = header->start + header->length;
     some_size = (part_end % params->size);

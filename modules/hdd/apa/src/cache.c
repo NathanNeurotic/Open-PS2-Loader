@@ -21,6 +21,7 @@
 #include <hdd-ioctl.h>
 
 #include "libapa.h"
+#include "hdd_blkio.h"
 
 //  Globals
 static apa_cache_t *cacheBuf;
@@ -97,8 +98,9 @@ int apaCacheTransfer(apa_cache_t *clink, int type)
                    err, clink->device, clink->sector, type);
         if (type == 0) // save any read error's..
             apaSaveError(clink->device, clink->header, APA_SECTOR_SECTOR_ERROR, clink->sector);
+    } else {
+        clink->flags &= ~APA_CACHE_FLAG_DIRTY;
     }
-    clink->flags &= ~APA_CACHE_FLAG_DIRTY;
     return err;
 }
 
@@ -110,18 +112,58 @@ void apaCacheFlushDirty(apa_cache_t *clink)
 
 int apaCacheFlushAllDirty(s32 device)
 {
-    int i;
-    // flush apal
+    int i, ret = 0;
+    int has_dirty = 0;
+
+    for (i = 1; i < cacheSize + 1; i++) {
+        if ((cacheBuf[i].flags & APA_CACHE_FLAG_DIRTY) && cacheBuf[i].device == device) {
+            has_dirty = 1;
+            break;
+        }
+    }
+    if (!has_dirty)
+        return 0;
+
+    apaJournalAbort();
+    // 1. Stage dirty headers into the journal
+    for (i = 1; i < cacheSize + 1; i++) {
+        if ((cacheBuf[i].flags & APA_CACHE_FLAG_DIRTY) && cacheBuf[i].device == device) {
+            ret = apaJournalWrite(&cacheBuf[i]);
+            if (ret != 0) {
+                apaJournalAbort();
+                return ret;
+            }
+        }
+    }
+
+    // 2. Commit journal to disk
+    ret = apaJournalFlush(device);
+    if (ret != 0) {
+        apaJournalAbort();
+        return ret;
+    }
+
+    // 3. Write dirty headers to their destinations
+    for (i = 1; i < cacheSize + 1; i++) {
+        if ((cacheBuf[i].flags & APA_CACHE_FLAG_DIRTY) && cacheBuf[i].device == device) {
+            ret = apaWriteHeader(cacheBuf[i].device, cacheBuf[i].header, cacheBuf[i].sector);
+            if (ret != 0)
+                return ret;
+        }
+    }
+
+    // 4. Ensure destination writes reached non-volatile media before clearing journal
+    ret = blkIoFlushCache(device);
+    if (ret != 0)
+        return ret;
+
+    // 5. Clear dirty flags only after all destination writes and barrier succeed
     for (i = 1; i < cacheSize + 1; i++) {
         if ((cacheBuf[i].flags & APA_CACHE_FLAG_DIRTY) && cacheBuf[i].device == device)
-            apaJournalWrite(&cacheBuf[i]);
+            cacheBuf[i].flags &= ~APA_CACHE_FLAG_DIRTY;
     }
-    apaJournalFlush(device);
-    // flush apa
-    for (i = 1; i < cacheSize + 1; i++) {
-        if ((cacheBuf[i].flags & APA_CACHE_FLAG_DIRTY) && cacheBuf[i].device == device)
-            apaCacheTransfer(&cacheBuf[i], APA_IO_MODE_WRITE);
-    }
+
+    // 6. Reset journal on disk
     return apaJournalReset(device);
 }
 
@@ -149,14 +191,20 @@ apa_cache_t *apaCacheGetHeader(s32 device, u32 sector, u32 mode, int *result)
         (cacheBuf->tail == cacheBuf->tail->next)) {
         APA_PRINTF(APA_DRV_NAME ": error: free buffer empty\n");
     } else {
-        clink = cacheBuf->next;
-        if (clink->flags & APA_CACHE_FLAG_DIRTY)
-            APA_PRINTF(APA_DRV_NAME ": error: dirty buffer allocated\n");
-        clink->flags = 0;
-        clink->nused = 1;
-        clink->device = device;
-        clink->sector = sector;
-        clink = apaCacheUnLink(clink);
+        for (clink = cacheBuf->next; clink != cacheBuf; clink = clink->next) {
+            if (!(clink->flags & APA_CACHE_FLAG_DIRTY))
+                break;
+        }
+        if (clink == cacheBuf) {
+            APA_PRINTF(APA_DRV_NAME ": error: free buffer empty\n");
+            clink = NULL;
+        } else {
+            clink->flags = 0;
+            clink->nused = 1;
+            clink->device = device;
+            clink->sector = sector;
+            clink = apaCacheUnLink(clink);
+        }
     }
     if (clink == NULL) {
         *result = -ENOMEM;
@@ -200,9 +248,14 @@ apa_cache_t *apaCacheAlloc(void)
         APA_PRINTF(APA_DRV_NAME ": error: free buffer empty\n");
         return NULL;
     }
-    cnext = cacheBuf->next;
-    if (cnext->flags & APA_CACHE_FLAG_DIRTY)
-        APA_PRINTF(APA_DRV_NAME ": error: dirty buffer allocated\n");
+    for (cnext = cacheBuf->next; cnext != cacheBuf; cnext = cnext->next) {
+        if (!(cnext->flags & APA_CACHE_FLAG_DIRTY))
+            break;
+    }
+    if (cnext == cacheBuf) {
+        APA_PRINTF(APA_DRV_NAME ": error: free buffer empty\n");
+        return NULL;
+    }
     cnext->nused = 1;
     cnext->flags = 0;
     cnext->device = -1;

@@ -1,8 +1,8 @@
-"""Characterize outstanding APA transaction failures using RAM-only I/O.
+"""Regression test for APA cache transaction atomicity, journal preservation, and eviction safety.
 
-This is an investigation probe, NOT a passing safety regression or CI gate.
-It asserts the currently observed defects so a future agent can reproduce
-them before designing error propagation, retry, and cache eviction together.
+Verifies that staging, commit, destination write, and barrier failures safely
+abort partial writes, preserve the on-disk recovery journal, retain dirty
+cache state, and prevent dirty buffers on the free list from being clobbered.
 No device or disk image is opened. Only temporary C source/executable files
 are created. Run from any directory with Python and GCC available.
 """
@@ -58,6 +58,7 @@ apa_cache_t *apaCacheAlloc(void);
 int apaJournalWrite(apa_cache_t *);
 int apaJournalFlush(s32);
 int apaJournalReset(s32);
+void apaJournalAbort(void);
 int apaWriteHeader(s32,apa_header_t *,u32);
 static int apaReadHeader(s32 d,apa_header_t *h,u32 l) {
  (void)d;(void)h;(void)l; assert(!"probe unexpectedly read a header"); return -EIO;
@@ -85,13 +86,15 @@ static int blkIoDmaTransfer(int device,void *buffer,u32 sector,u32 count,int dir
 }
 static int blkIoFlushCache(int device) {
  assert(device==0); flush_calls++;
- return scenario==4 && flush_calls==1 ? -1 : 0;
+ if(scenario==4 && flush_calls==1) return -1;
+ if(scenario==5 && flush_calls==3) return -1;
+ return 0;
 }
 '''
 
 tests = r'''
 int main(void) {
- for(scenario=0;scenario<=4;scenario++) {
+ for(scenario=0;scenario<=5;scenario++) {
   memset(&saved,0,sizeof(saved)); saved.magic=APAL_MAGIC;
   memset(staged,0,sizeof(staged)); memset(destination,0,sizeof(destination));
   journalBuf=saved;
@@ -112,14 +115,66 @@ int main(void) {
          "dirty=%d remaining_journal=%ld changed=%d,%d\n",
          scenario,ret,header_calls,journal_count_at_header,dirty,(long)saved.num,
          changed0,changed1);
-  /* These assertions record outstanding behavior, not desired safety. */
-  assert(ret==0 && header_calls==2 && dirty==0 && saved.num==0);
-  assert(changed0==(scenario!=3) && changed1);
-  assert(journal_count_at_header==(scenario==1?1:(scenario==2 || scenario==4)?0:2));
+  if(scenario==0) {
+   /* Scenario 0: Normal success */
+   assert(ret==0 && header_calls==2 && dirty==0 && saved.num==0);
+   assert(changed0 && changed1);
+   assert(journal_count_at_header==2);
+  } else if(scenario==1) {
+   /* Scenario 1: First staging write fails -> no destination writes, dirty kept, journal not committed */
+   assert(ret!=0 && header_calls==0 && dirty!=0 && saved.num==0);
+   assert(!changed0 && !changed1);
+  } else if(scenario==2) {
+   /* Scenario 2: Journal commit write fails -> no destination writes, dirty kept, journal not committed */
+   assert(ret!=0 && header_calls==0 && dirty!=0 && saved.num==0);
+   assert(!changed0 && !changed1);
+  } else if(scenario==3) {
+   /* Scenario 3: First destination write fails -> subsequent destination writes aborted,
+      dirty kept, committed journal on disk PRESERVED */
+   assert(ret!=0 && header_calls==1 && dirty!=0 && saved.num==2);
+   assert(!changed0 && !changed1);
+   assert(journal_count_at_header==2);
+  } else if(scenario==4) {
+   /* Scenario 4: Commit flush barrier fails -> no destination writes, dirty kept */
+   assert(ret!=0 && header_calls==0 && dirty!=0);
+   assert(!changed0 && !changed1);
+  } else if(scenario==5) {
+   /* Scenario 5: Post-destination barrier fails -> headers written, dirty kept, journal PRESERVED */
+   assert(ret!=0 && header_calls==2 && dirty!=0 && saved.num==2);
+   assert(changed0 && changed1);
+   assert(journal_count_at_header==2);
+  }
   apaCacheFree(entries[0]); apaCacheFree(entries[1]); apaCacheDeinit();
  }
- puts("OBSERVED: staging/commit/barrier failures do not stop header writes; "
-      "failed header write is reported as success and loses dirty/journal state.");
+
+ /* Test: Dirty buffer eviction safety */
+ {
+  assert(apaCacheInit(3)==0);
+  int err;
+  apa_cache_t *e1=apaCacheGetHeader(0,0x10000,APA_IO_MODE_WRITE,&err);
+  apa_cache_t *e2=apaCacheGetHeader(0,0x20000,APA_IO_MODE_WRITE,&err);
+  assert(e1 && e2 && err==0);
+  e1->flags|=APA_CACHE_FLAG_DIRTY;
+  e2->flags|=APA_CACHE_FLAG_DIRTY;
+  apaCacheFree(e1); // e1 freed to free list, but remains DIRTY
+  /* Allocation of a new sector must skip dirty e1 and allocate clean e3 */
+  apa_cache_t *e3=apaCacheGetHeader(0,0x30000,APA_IO_MODE_WRITE,&err);
+  assert(e3 && err==0 && e3!=e1);
+  e3->flags|=APA_CACHE_FLAG_DIRTY;
+  apaCacheFree(e3);
+  apaCacheFree(e2);
+  /* Now all 3 buffers in cache are dirty with nused==0.
+     Attempting to allocate a 4th sector must fail with -ENOMEM rather than clobbering dirty data */
+  apa_cache_t *e4=apaCacheGetHeader(0,0x40000,APA_IO_MODE_WRITE,&err);
+  assert(e4==NULL && err==-ENOMEM);
+  /* apaCacheAlloc must also return NULL when all free buffers are dirty */
+  apa_cache_t *alloc_fail=apaCacheAlloc();
+  assert(alloc_fail==NULL);
+  apaCacheDeinit();
+ }
+
+ puts("PASS: transaction atomicity, journal preservation on destination/barrier failure, "
+      "and dirty-buffer eviction protection");
  return 0;
 }
 '''

@@ -56,8 +56,10 @@ int apaGetPartErrorSector(s32 device, u32 lba, u32 *lba_out)
     if (!(clink = apaCacheAlloc()))
         return -ENOMEM;
 
-    if (blkIoDmaTransfer(device, clink->header, lba, 1, BLKIO_DIR_READ))
+    if (blkIoDmaTransfer(device, clink->header, lba, 1, BLKIO_DIR_READ)) {
+        apaCacheFree(clink);
         return -EIO;
+    }
 
     if (lba_out)
         *lba_out = *clink->error_lba;
@@ -133,6 +135,7 @@ apa_cache_t *apaInsertPartition(s32 device, const apa_params_t *params, u32 sect
 { // Adds a new partition using an empty block.
     apa_cache_t *clink_empty;
     apa_cache_t *clink_this;
+    u32 start, next, prev;
 
     if ((clink_this = apaCacheGetHeader(device, sector, APA_IO_MODE_READ, err)) == 0)
         return 0;
@@ -156,9 +159,11 @@ apa_cache_t *apaInsertPartition(s32 device, const apa_params_t *params, u32 sect
         apaCacheFree(clink_empty);
         apaCacheFree(clink_next);
     }
+    start = clink_this->header->start;
+    next = clink_this->header->next;
+    prev = clink_this->header->prev;
     apaCacheFree(clink_this);
-    clink_this = apaFillHeader(device, params, clink_this->header->start, clink_this->header->next,
-                               clink_this->header->prev, params->size, err);
+    clink_this = apaFillHeader(device, params, start, next, prev, params->size, err);
     apaCacheFlushAllDirty(device);
     return clink_this;
 }
