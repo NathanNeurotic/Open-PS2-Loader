@@ -2843,7 +2843,9 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_WRITE, &gEnableWrite);
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);
             configGetStrCopy(configOPL, CONFIG_OPL_BDM_PREFIX, gBDMPrefix, sizeof(gBDMPrefix));
+            sanitizePrefix(gBDMPrefix);
             configGetStrCopy(configOPL, CONFIG_OPL_ETH_PREFIX, gETHPrefix, sizeof(gETHPrefix));
+            sanitizePrefix(gETHPrefix);
             configGetInt(configOPL, CONFIG_OPL_REMEMBER_LAST, &gRememberLastPlayed);
             configGetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, &gAutoStartLastPlayed);
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
@@ -4869,6 +4871,7 @@ static void miniInit(int mode)
             configReadNeutrinoGlobals(configOPL);
             if (mode == BDM_MODE) {
                 configGetStrCopy(configOPL, CONFIG_OPL_BDM_PREFIX, gBDMPrefix, sizeof(gBDMPrefix));
+                sanitizePrefix(gBDMPrefix);
                 configGetInt(configOPL, CONFIG_OPL_BDM_CACHE, &bdmCacheSize);
             } else if (mode == HDD_MODE)
                 configGetInt(configOPL, CONFIG_OPL_HDD_CACHE, &hddCacheSize);

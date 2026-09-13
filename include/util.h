@@ -64,5 +64,6 @@ int sysDeleteFolder(const char *folder);
 int CheckPS2Logo(int fd, u32 lba);
 
 void delay(int count);
+void sanitizePrefix(char *prefix);
 
 #endif

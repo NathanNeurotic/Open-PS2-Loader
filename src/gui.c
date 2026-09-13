@@ -1942,7 +1942,9 @@ static void guiSetAdvancedSettings(struct UIItem *ui)
 static void guiSaveAdvancedSettings(struct UIItem *ui)
 {
     diaGetString(ui, CFG_BDMPREFIX, gBDMPrefix, sizeof(gBDMPrefix));
+    sanitizePrefix(gBDMPrefix);
     diaGetString(ui, CFG_ETHPREFIX, gETHPrefix, sizeof(gETHPrefix));
+    sanitizePrefix(gETHPrefix);
     diaGetInt(ui, CFG_HDDSPINDOWN, &gHDDSpindown);
     diaGetInt(ui, CFG_HDDGAMELISTCACHE, &gHDDGameListCache);
     diaGetInt(ui, CFG_BDMCACHE, &bdmCacheSize);
