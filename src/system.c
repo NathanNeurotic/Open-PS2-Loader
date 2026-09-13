@@ -1891,6 +1891,8 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     config->raWatchList = GetWatchList();
     config->raWatchCount = GetWatchCount();
     config->raSnapBytes = GetWatchBytes();
+    config->raNodeList = GetNodeList();
+    config->raNodeCount = GetNodeCount();
 
     // The last point where the list is still ours: from here it goes into ee_core
     // with no feedback. A zero shows up in the launch log directly, rather than as

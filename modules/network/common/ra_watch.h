@@ -67,4 +67,75 @@ struct ra_watch_file
     unsigned int bytes;   /* snapshot size in bytes: sum of the entry sizes */
 };
 
+/* ---- Pointer chains ----------------------------------------------------
+
+   Some achievements read through a pointer: the address is not fixed,
+   it is held in memory and changes as the game runs. rcheevos calls
+   these AddAddress chains. The console resolves them itself, in the
+   same frame: reading the pointer on the PC and asking for the target
+   next frame would give a value from a frame that no longer exists.
+
+   The chains travel as an optional tail after the entries. A build that
+   does not know about them stops at count entries and never sees it,
+   which is why the version stays 1: an old console keeps working on a
+   list from a new client, it just cannot follow pointers, exactly as
+   before. The same holds the other way: a new console on a list without
+   the tail reads nodes as zero.
+
+   struct ra_watch_file
+   unsigned int entries[count]      direct addresses
+   struct ra_node_file              only if more bytes follow
+   struct ra_node nodes[count]
+
+   Nodes come in dependency order: a node's parent is always earlier in
+   the list, so one pass resolves every chain however deep.
+
+   A snapshot then carries the direct values, as before, followed by one
+   (address, value) pair per node. The pair states the address the
+   console ended up reading, so the client looks its answer up rather
+   than walking the chain a second time and hoping both sides agree. An
+   unresolved chain -- a null or out-of-range pointer -- reports address
+   0, and the client answers that read with zeros, which is what
+   rcheevos expects from a pointer that leads nowhere.
+
+   Why the total snapshot size is not in ra_watch_file.bytes: that field
+   means "direct values" to every build ever shipped. The console adds
+   8 bytes per node to it and reports the total in the snapshot header,
+   so the client can tell from the first snapshot whether it is talking
+   to a console that follows pointers. */
+
+#define RA_NODE_MAGIC 0x4C4E4152 /* "RANL" in little-endian */
+
+/* Node ceiling. ee_core resolves chains from its own copy, and it lives
+   in 77 KB of low memory shared with everything else the loader leaves
+   behind, so this number is what its arrays cost: 16 bytes per node
+   there. The snapshot ceiling binds next, at 8 bytes per node. */
+#define RA_NODE_MAX 128
+
+/* Bytes one node adds to a snapshot: the resolved address and the value. */
+#define RA_NODE_PAIR_BYTES 8
+
+struct ra_node_file
+{
+    unsigned int magic; /* RA_NODE_MAGIC */
+    unsigned int count; /* nodes that follow */
+};
+
+/* One node: parent + offset -> read size bytes.
+
+   parent is an index, into the entry list when from_node is 0 and into
+   the node list when it is 1. offset is added to the value read there;
+   it is the static part of the address and can be any 32-bit value. */
+struct ra_node
+{
+    unsigned int w;      /* parent index, from_node flag, read size */
+    unsigned int offset; /* added to the parent value */
+};
+
+#define RA_NODE_PARENT(w)    ((w)&0x0FFF)
+#define RA_NODE_FROM_NODE(w) (((w) >> 12) & 1)
+#define RA_NODE_SIZE(w)      (((w) >> 13) & 7)
+#define RA_NODE_PACK(parent, from_node, size) \
+    (((unsigned int)(size) << 13) | ((unsigned int)(from_node) << 12) | ((parent)&0x0FFF))
+
 #endif /* __RA_WATCH_H__ */
