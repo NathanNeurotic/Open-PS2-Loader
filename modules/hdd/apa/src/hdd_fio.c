@@ -560,6 +560,10 @@ static int apaRemove(s32 device, const char *id, const char *fpwd)
         return -EACCES;
     }
     // remove all subs first...
+    if (clink->header->nsub > APA_MAXSUB) {
+        apaCacheFree(clink);
+        return -EINVAL;
+    }
     nsub = clink->header->nsub;
     clink->header->nsub = 0;
     clink->flags |= APA_CACHE_FLAG_DIRTY;
@@ -763,10 +767,13 @@ static void fioGetStatFiller(apa_cache_t *clink, iox_stat_t *stat)
     if (clink->header->flags & APA_FLAG_SUB)
         stat->private_0 = clink->header->number;
     else {
-        stat->private_0 = clink->header->nsub;
+        u32 nsub = clink->header->nsub;
+        if (nsub > APA_MAXSUB)
+            nsub = APA_MAXSUB;
+        stat->private_0 = nsub;
 
         u64 totalsize = (u64)clink->header->length;
-        for (int i = 0; i < clink->header->nsub; i++) {
+        for (u32 i = 0; i < nsub; i++) {
             totalsize += (u64)clink->header->subs[i].length;
         }
         stat->private_1 = (u32)(totalsize & 0xFFFFFFFF); // low size
@@ -914,6 +921,11 @@ static int ioctl2AddSub(hdd_file_slot_t *fileSlot, char *argp)
     if (!(clink = apaCacheGetHeader(device, fileSlot->parts[0].start, APA_IO_MODE_READ, &rv)))
         return rv;
 
+    if (clink->header->nsub >= APA_MAXSUB) {
+        apaCacheFree(clink);
+        return -EFBIG;
+    }
+
     clink->header->subs[clink->header->nsub].start = sector;
     clink->header->subs[clink->header->nsub].length = length;
     clink->header->nsub++;
@@ -936,11 +948,16 @@ static int ioctl2DeleteLastSub(hdd_file_slot_t *fileSlot)
     if (!(fileSlot->f->mode & FIO_O_WRONLY))
         return -EACCES;
 
-    if (fileSlot->nsub == 0)
+    if (fileSlot->nsub == 0 || fileSlot->nsub > APA_MAXSUB)
         return -ENOENT;
 
     if (!(mainPart = apaCacheGetHeader(device, fileSlot->parts[0].start, APA_IO_MODE_READ, &rv)))
         return rv;
+
+    if (mainPart->header->nsub == 0 || mainPart->header->nsub > APA_MAXSUB) {
+        apaCacheFree(mainPart);
+        return -EINVAL;
+    }
 
     if ((subPart = apaCacheGetHeader(device,
                                      mainPart->header->subs[mainPart->header->nsub - 1].start, APA_IO_MODE_READ, &rv))) {

@@ -554,3 +554,19 @@ defects in `modules/hdd/apa/src/apa.c`:
    *Fix*: Save `u32 prev = clink->header->prev;` before calling
    `apaCacheFree(clink)`, and pass saved `device` and `prev` to
    `apaCacheGetHeader`.
+
+### Subpartition array bounds hardening in hdd_fio.c
+
+Four subpartition array access paths lacked validation against `APA_MAXSUB`:
+- **`apaRemove`**: checked password but not `clink->header->nsub > APA_MAXSUB`
+  before decrementing loop; would read out-of-bounds `subs` indices if corrupted;
+  returns `-EINVAL`.
+- **`fioGetStatFiller`**: computed `totalsize` by summing up to
+  `clink->header->nsub` without bounding to `APA_MAXSUB`; clamped to
+  `APA_MAXSUB`.
+- **`ioctl2AddSub`**: checked `fileSlot->nsub < APA_MAXSUB` but not
+  `clink->header->nsub >= APA_MAXSUB` before indexing
+  `clink->header->subs[clink->header->nsub]`; added check returning `-EFBIG`.
+- **`ioctl2DeleteLastSub`**: did not check `fileSlot->nsub > APA_MAXSUB` or
+  `mainPart->header->nsub == 0 || mainPart->header->nsub > APA_MAXSUB`; would
+  underflow or index out-of-bounds; added checks.
