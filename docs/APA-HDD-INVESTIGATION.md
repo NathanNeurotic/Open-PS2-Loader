@@ -619,3 +619,40 @@ Analysis of disk shutdown and standby behavior revealed an additional vulnerabil
 - `fileXioDevctl("hdd0:", HDIOC_FLUSH)` (`ATA_C_FLUSH_CACHE` / `ATA_C_FLUSH_CACHE_EXT`) is **not** called during `hddShutdown()`.
 - If uncommitted data remains in the drive's volatile cache when DEV9 power is cut, or if an internal 4KiB Read-Modify-Write cycle is interrupted by power loss, sectors 0-7 (sharing the first physical 4KiB sector) are subject to torn writes and physical corruption.
 
+
+## GPT probe priority fix, shutdown write cache flush, and subpartition removal guard (2026-09-13)
+
+### 1. Root Cause Resolution: GPT "EFI PART" Priority (Fixing Commit ad6a8d5ae Regression)
+
+On August 20, 2026, commit `ad6a8d5ae` (*"hdd: let a valid APA header outrank the MBR/GPT signature in the probe"*) moved the APA header check ahead of the MBR and GPT checks in `hddDetectNonSonyFileSystem()`.
+
+On any drive formatted with GPT-APA partitioning (common with modern wLaunchELF builds and PC management tools):
+- Sector 0 contains an APA protective MBR with a valid 128-dword checksum.
+- Sector 1 contains the Primary GPT Header (`"EFI PART"`).
+- Sectors 2 through 33 contain the GPT Partition Entry Array (Sectors 6 and 7 hold Partition Entries 17 through 24).
+
+Because OPL's vendored `modules/hdd/apa` is built **without** `APA_SUPPORT_GPT`:
+1. `apaReadHeader` strictly validates 256 dwords (`apaCheckSum(header, 1)`), which fails with `-EIO` because Sector 1 is a GPT header rather than an APA subpartition table.
+2. Even if header reading succeeded, `apaGetFormat` reads Sectors 6 and 7. Because these sectors contain GPT partition entries, the non-zero dwords fail the format check (`status = 1`).
+3. OPL EE's probe sees `hddDetectNonSonyFileSystem() == 0` (APA matched) but IOP `status == 1` (unformatted). It logs `"raw APA probe matched but ps2hdd reports unformatted"` and raises **Error 401 (`_STR_HDD_APA_REJECTED_ERROR`)**.
+4. **Destructive Corruption Vector**: If non-GPT `ps2hdd` is loaded on this disk and any write operation occurs:
+   - Writing an error record (`apaSaveError`) writes to Sector 6 (`APA_SECTOR_SECTOR_ERROR`), destroying GPT Partition Entries 17–20.
+   - Writing an APA journal (`APAL`) writes to Sector 8+, destroying GPT Partition Entries 25+.
+   - Once GPT partition entries are overwritten, even wLaunchELF GetHddInfo reports: **Connected: YES, Formatted: NO**, matching the exact state reported in the incident!
+
+**Fix**: In `hddDetectNonSonyFileSystem()`, check Sector 1 for `"EFI PART"` (`strncmp(&pSectorData[0x200], "EFI PART", 8) == 0`) *before* evaluating Sector 0 APA magic. If `"EFI PART"` is present, the disk is immediately classified as GPT (`result = 1`), preventing non-GPT `ps2hdd.irx` from loading, preventing false Error 401, and protecting GPT partition tables from destructive writes.
+
+### 2. Volatile Write Cache Flush in `hddShutdown`
+
+`hddShutdown()` now ensures that:
+1. All open file descriptors on `pfs:` are closed via `PDIOC_CLOSEALL`.
+2. Active PFS partitions (`pfs0:`, `pfs1:`) are unmounted via `fileXioUmount`.
+3. An ATA write cache flush barrier (`HDIOC_FLUSH` / `ATA_C_FLUSH_CACHE` / `ATA_C_FLUSH_CACHE_EXT`) is issued via `hddFlush()` before `hddSetIdleImmediate()` and `sysShutdownDev9()`.
+This eliminates torn writes and lost dirty blocks in drive onboard RAM during console shutdown or sleep on Advanced Format 512e drives.
+
+### 3. Subpartition Removal Guard in `apaRemove`
+
+In `modules/hdd/apa/src/hdd_fio.c`, `apaRemove()` previously looped through subpartitions and called `clink2 = apaCacheGetHeader(...)`. If reading a subpartition header failed, the loop silently skipped that subpartition and proceeded to delete the main partition. This left the subpartition orphaned and leaked on disk.
+Fixed to check `!(clink2 = apaCacheGetHeader(...))` and immediately abort returning `rv`.
+
+

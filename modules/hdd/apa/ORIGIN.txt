@@ -44,9 +44,11 @@ LOCAL CHANGES:
 - hdd_fio.c: compare passwords before freeing clink in apaOpen; save the
   partition sector before freeing clink in hddFormat; remove duplicate
   SignalSema calls in apaRename; validate nsub against APA_MAXSUB in apaRemove,
-  fioGetStatFiller, ioctl2AddSub, and ioctl2DeleteLastSub; propagate flush errors
-  in apaRemove, apaRename, ioctl2AddSub, ioctl2DeleteLastSub, devctlSwapTemp, and
-  devctlSetOsdMBR; free clink on invalid osdStart in devctlSetOsdMBR.
+  fioGetStatFiller, ioctl2AddSub, and ioctl2DeleteLastSub; check clink2 return
+  from apaCacheGetHeader in apaRemove subpartition loop and abort on error;
+  propagate flush errors in apaRemove, apaRename, ioctl2AddSub,
+  ioctl2DeleteLastSub, devctlSwapTemp, and devctlSetOsdMBR; free clink on invalid
+  osdStart in devctlSetOsdMBR.
 - hdd.c: validate clink_this from apaCacheGetHeader before dereference in
   hddAddPartitionHere.
 - Standalone Makefile using the installed SDK headers/imports and the same

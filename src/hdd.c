@@ -96,6 +96,13 @@ void hddSetIdleImmediate(void)
     fileXioDevctl("hdd1:", HDIOC_IDLEIMM, NULL, 0, NULL, 0);
 }
 
+int hddFlush(void)
+{
+    int ret0 = fileXioDevctl("hdd0:", HDIOC_FLUSH, NULL, 0, NULL, 0);
+    fileXioDevctl("hdd1:", HDIOC_FLUSH, NULL, 0, NULL, 0);
+    return ret0;
+}
+
 //-------------------------------------------------------------------------
 int hddReadSectors(u32 lba, u32 nsectors, void *buf)
 {

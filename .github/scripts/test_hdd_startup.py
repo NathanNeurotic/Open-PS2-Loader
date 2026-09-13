@@ -125,6 +125,7 @@ static void fileXioUmount(const char *path) {}
 static void hddFreeHDLGamelist(int *games) {}
 static void hddFreeVcdGameList(void) {}
 static void hddSetIdleImmediate(void) {}
+static int hddFlush(void) { return 0; }
 static void hddDiagBootStageBegin(const char *stage) {}
 static void hddDiagBootStageEnd(const char *stage, int result) {}
 static void hddDiagBootStageEndVoid(const char *stage) {}
@@ -251,6 +252,14 @@ int main(int argc, char **argv) {
         probeImages[0] = mbrImage; probeResults[0] = 0; probeTotal = 1;
         assert(!hddLoadCoreSupportModules());
         assert(probeCalls == 1 && errors == 0 && !hddSupportModulesLoaded);
+    } else if (!strcmp(test, "support-gpt")) {
+        /* A GPT disk with protective APA MBR at sector 0 and EFI PART at sector 1:
+           must be detected as GPT (BDM territory) and bail silently without loading non-GPT ps2hdd. */
+        makeApaImage();
+        memcpy(apaImage + 0x200, "EFI PART", 8);
+        probeImages[0] = apaImage; probeResults[0] = 0; probeTotal = 1;
+        assert(!hddLoadCoreSupportModules());
+        assert(probeCalls == 1 && errors == 0 && !hddSupportModulesLoaded);
     } else if (!strcmp(test, "support-probe-fail")) {
         probeImages[0] = zeroImage; probeResults[0] = -1; probeTotal = 1;
         assert(!hddLoadCoreSupportModules());
@@ -317,7 +326,7 @@ cases = [
     "shared-xhdd", "terminal-failure-xhdd", "terminal-failure-dev9",
     "shared-terminal-failure-xhdd", "worker-failure", "worker-busy", "worker-success", "busy",
     "unformatted-rejected", "unformatted-degraded", "unformatted-probe-fails",
-    "support-success", "support-mbr", "support-probe-fail", "support-pfs-fail",
+    "support-success", "support-mbr", "support-gpt", "support-probe-fail", "support-pfs-fail",
 ]
 with tempfile.TemporaryDirectory(prefix="hdd-startup-tests-") as temp:
     source = Path(temp) / "test.c"

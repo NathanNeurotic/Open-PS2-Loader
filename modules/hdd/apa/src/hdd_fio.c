@@ -574,11 +574,13 @@ static int apaRemove(s32 device, const char *id, const char *fpwd)
     for (i = nsub - 1; i != -1; i--) {
         apa_cache_t *clink2;
 
-        if ((clink2 = apaCacheGetHeader(device, clink->header->subs[i].start, APA_IO_MODE_READ, &rv))) {
-            if ((rv = apaDelete(clink2))) {
-                apaCacheFree(clink);
-                return rv;
-            }
+        if (!(clink2 = apaCacheGetHeader(device, clink->header->subs[i].start, APA_IO_MODE_READ, &rv))) {
+            apaCacheFree(clink);
+            return rv;
+        }
+        if ((rv = apaDelete(clink2))) {
+            apaCacheFree(clink);
+            return rv;
         }
     }
     if (rv == 0)

@@ -551,15 +551,19 @@ int hddDetectNonSonyFileSystem()
         return -1;
     }
 
-    // Check for a valid APA header FIRST, and only treat MBR/GPT evidence as decisive when no valid
-    // APA header exists. The MBR test used to win: but a modern formatter (ps2sdk's GPT-capable
-    // ps2hdd, PC-side POPS/HDL partition tools) legitimately stamps a protective/residual 0x55AA at
-    // bytes 510-511 of the __mbr header while the sector is STILL a fully valid, checksummed APA
-    // header. Such a drive was misclassified as MBR and ps2hdd never loaded -- silently (that branch
-    // raises no error by design), leaving the APA page empty with zero HDL/PFS content while ATA
-    // itself worked fine. The checksummed APA magic is far stronger evidence than two signature
-    // bytes; a genuine exFAT/MBR/GPT drive has no valid APA header and still bails below.
-    if (memcmp((const char *)&pSectorData[4], "APA", 3) == 0) {
+    // Check for GPT partition type FIRST (Primary GPT Header at sector 1). Even if sector 0 contains
+    // an APA protective MBR, non-GPT ps2hdd cannot read GPT-APA (its 256-dword checksum fails against
+    // sector 1, and sectors 6-7 collide with GPT partition entries). Loading non-GPT ps2hdd would trigger
+    // false error 401 and risk overwriting GPT partition entries.
+    //
+    // For non-GPT disks, check for a valid APA header before considering MBR signatures: a modern
+    // formatter (e.g. PC-side POPS/HDL partition tools) legitimately stamps a protective/residual 0x55AA
+    // at bytes 510-511 of sector 0 while the sector remains a fully valid, checksummed APA header.
+    // A genuine MBR drive has no valid APA header and still bails below.
+    if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
+        LOG("hddDetectNonSonyFileSystem: found GPT partition data\n");
+        result = 1;
+    } else if (memcmp((const char *)&pSectorData[4], "APA", 3) == 0) {
         if (hddApaHeaderValid(pSectorData)) {
             // Found APA partition type.
             LOG("hddDetectNonSonyFileSystem: found APA partition data\n");
@@ -573,10 +577,6 @@ int hddDetectNonSonyFileSystem()
     } else if (pSectorData[0x1FE] == 0x55 && pSectorData[0x1FF] == 0xAA) {
         // Found MBR partition type.
         LOG("hddDetectNonSonyFileSystem: found MBR partition data\n");
-        result = 1;
-    } else if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
-        // Found GPT partition type.
-        LOG("hddDetectNonSonyFileSystem: found GPT partition data\n");
         result = 1;
     } else {
         // Even though we didn't find evidence of non-APA partition data, if we load the APA irx module
@@ -2360,14 +2360,15 @@ static void hddShutdown(item_list_t *itemList)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
-        fileXioUmount("pfs1:");
-        fileXioUmount(hddPrefix);
     }
 
     // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
     if (hddSupportModulesLoaded) {
-        /* Close all files */
+        /* Close all files, unmount PFS partitions, and flush ATA write cache */
         fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+        fileXioUmount("pfs1:");
+        fileXioUmount(hddPrefix);
+        hddFlush();
 
         hddSupportModulesLoaded = 0;
         gHDDPrefix = NULL; // pfs0: is no longer a valid persistent data-home mount marker
@@ -2376,8 +2377,9 @@ static void hddShutdown(item_list_t *itemList)
     if (hddModulesLoadCount > 0) {
         hddModulesLoadCount -= 1;
         if (hddModulesLoadCount == 0) {
-            // DEV9 will remain active if ETH is in use, so put the HDD in IDLE state.
+            // DEV9 will remain active if ETH is in use, so flush write cache and put the HDD in IDLE state.
             // The HDD should still enter standby state after 21 minutes & 15 seconds, as per the ATAD defaults.
+            hddFlush();
             hddSetIdleImmediate();
         }
     }

@@ -78,6 +78,7 @@ int hddIs48bit(void);
 int hddSetTransferMode(int type, int mode);
 void hddSetIdleTimeout(int timeout);
 void hddSetIdleImmediate(void);
+int hddFlush(void);
 int hddGetHDLGamelist(hdl_games_list_t *game_list);
 void hddFreeHDLGamelist(hdl_games_list_t *game_list);
 // True for a one-game PP.<name> / __.<name> partition label, excluding the exact __.POPS[0-9]?
