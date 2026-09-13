@@ -32,7 +32,7 @@ typedef uint64_t u64;
 #define ATA_C_WRITE_DMA 0xca
 #define ATA_C_READ_DMA_EXT 0x25
 #define ATA_C_WRITE_DMA_EXT 0x35
-static u16 spd_reg;
+static u16 spd_reg __attribute__((unused)); /* Historical sources clean up DMA here. */
 static struct { int exists, lba48; u32 total_sectors; u64 total_sectors_lba48; } atad_devinfo[2];
 static int ata_dvrp_workaround;
 static int calls, waits, crc_failures, exec_error, wait_error;

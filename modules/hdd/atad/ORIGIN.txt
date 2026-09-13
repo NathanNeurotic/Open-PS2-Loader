@@ -19,13 +19,19 @@ LOCAL CHANGES vs the pin (all marked /* FORK */ in src/ps2atad.c):
    offsets identical -> ABI-safe to omit), bdmfs_fatfs always registers "mass" separately, and
    the fork forces massN: paths anyway (repo doctrine).
 5. Makefile is fork-authored (exports.o-first ordering; see the comment in it).
+6. Bound full transfer requests and keep the actual 65536-sector DMA count separate
+   from the taskfile's zero encoding. Split DVR transfers at the legacy boundary.
+7. Serialize command setup through completion across APA/XHDD/BDM callers. Preserve
+   the split ExecCmd/WaitResult API, but require the same thread to complete its
+   command. Initialization and soft reset share this lock; nested initialization
+   commands retain the outer ownership. DMA cleanup occurs before releasing it.
 
 Also picked up from the pin (missing from BOTH pinned build containers): upstream ab3c5a883
 ("fix device probing", per-device SoftReset+select loop) and 221f6e27a (DVRP device-selection
 workaround).
 
 RE-VENDOR: re-fetch src/ps2atad.c, src/imports.lst, src/irx_imports.h, src/exports.tab from the
-new pin, re-apply changes 1-4, update this file's pin line, `rm -rf obj/` before rebuilding.
+new pin, re-apply changes 1-4 and 6-7, update this file's pin line, `rm -rf obj/` before rebuilding.
 NOT vendored: include/atad.h (the installed SDK's copy is used so xhdd and this module compile
 against the same header per container; stable since 2024-12).
 HDPro: hdpro_atad.irx remains the SDK prebuilt (its own latch unfixed; vendor separately only if
