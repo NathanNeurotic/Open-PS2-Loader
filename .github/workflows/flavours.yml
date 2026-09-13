@@ -67,6 +67,8 @@ jobs:
         run: python3 .github/scripts/test_apa_journal_recovery.py
       - name: Check APA cache transaction atomicity and failure handling
         run: python3 .github/scripts/probe_apa_cache_transaction.py
+      - name: Check APA format check rejection and sector 6-7 write paths
+        run: python3 .github/scripts/probe_apa_format_rejection.py
       - name: Check BDM startup resource cleanup
         run: python3 .github/scripts/test_bdm_startup.py
 

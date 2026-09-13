@@ -340,8 +340,8 @@ apa_cache_t *apaDeleteFixNext(apa_cache_t *clink, int *err)
             break;
         }
         length = tmp;
-        apaCacheFree(clink1);
         lnext = header->next;
+        apaCacheFree(clink1);
     }
     if (length != saved_length) {
         apa_cache_t *clink2;
@@ -381,8 +381,10 @@ int apaDelete(apa_cache_t *clink)
             return rv;
         }
         do {
+            u32 prev = clink->header->prev;
+
             apaCacheFree(clink);
-            if ((clink = apaCacheGetHeader(clink->device, clink->header->prev, APA_IO_MODE_READ, &rv)) == NULL)
+            if ((clink = apaCacheGetHeader(device, prev, APA_IO_MODE_READ, &rv)) == NULL)
                 return 0;
             clink->header->next = 0;
             clink->flags |= APA_CACHE_FLAG_DIRTY;
@@ -509,12 +511,14 @@ u32 apaGetPartitionMax(u32 totalLBA)
 apa_cache_t *apaGetNextHeader(apa_cache_t *clink, int *err)
 {
     u32 start = clink->header->start;
+    u32 next = clink->header->next;
+    s32 device = clink->device;
 
     apaCacheFree(clink);
-    if (!clink->header->next)
+    if (!next)
         return NULL;
 
-    if (!(clink = apaCacheGetHeader(clink->device, clink->header->next, APA_IO_MODE_READ, err)))
+    if (!(clink = apaCacheGetHeader(device, next, APA_IO_MODE_READ, err)))
         return NULL;
 
     if (start != clink->header->prev) {

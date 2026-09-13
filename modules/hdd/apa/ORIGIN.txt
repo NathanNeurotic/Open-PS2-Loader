@@ -35,7 +35,10 @@ LOCAL CHANGES:
   success. apaCacheGetHeader and apaCacheAlloc skip dirty entries on the free
   list to prevent silent metadata clobbering.
 - apa.c: free the cache entry on read failure in apaGetPartErrorSector; save
-  partition coordinates before freeing clink in apaInsertPartition.
+  partition coordinates before freeing clink in apaInsertPartition; save next
+  and device before freeing clink in apaGetNextHeader; save header->next before
+  freeing clink1 in apaDeleteFixNext; save prev before freeing clink in
+  apaDelete.
 - hdd_fio.c: compare passwords before freeing clink in apaOpen; save the
   partition sector before freeing clink in hddFormat; remove duplicate
   SignalSema calls in apaRename.
@@ -54,5 +57,6 @@ It does not enable APA_SUPPORT_GPT, APA_SUPPORT_BHDD or APA_USE_BDM.
 
 RE-VENDOR: compare the complete source against a new SDK pin, retain the
 OSD variant and checks above, run test_apa_transfer_bounds.py,
-test_apa_journal_recovery.py, probe_apa_cache_transaction.py and all flavor
-builds, and verify the manifest contains the local ps2hdd-osd.irx hash.
+test_apa_journal_recovery.py, probe_apa_cache_transaction.py,
+probe_apa_format_rejection.py and all flavor builds, and verify the manifest
+contains the local ps2hdd-osd.irx hash.

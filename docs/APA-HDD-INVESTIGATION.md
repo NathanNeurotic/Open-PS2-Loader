@@ -460,3 +460,97 @@ could have produced the reported state under I/O failure. They do not
 prove that those paths were taken in the specific incident. Causal
 certainty requires a disk image or a reproducible write-sequence test
 that produces sector 6/7 corruption from an ordinary OPL session.
+
+
+## Sector 6-7 write-path exhaustion, deletion MBR writes, and additional UAF hardening (2026-09-13)
+
+### Exhaustive sector 6-7 write-path analysis (probe_apa_format_rejection.py)
+
+To determine whether any combination of normal driver writes can produce
+the format-rejection state without physical hardware fault or torn write, all
+write paths touching sectors 6 and 7 were analytically exhausted:
+
+1. **`apaSaveError(APA_SECTOR_SECTOR_ERROR, err_lba)`** (called by
+   `apaCacheTransfer` on any header read failure): zeroes the 512-byte buffer
+   and writes `err_lba` into dword 0. Dword 0 is at offset 0 (`pDW[0]`), which
+   is explicitly skipped by `apaGetFormat`'s `(i & 0x7F)` mask. All other 127
+   dwords in sector 6 remain zero. Always passes `apaGetFormat`.
+2. **`apaSetPartErrorSector(lba)`** (called by `HIOCSETPARTERROR` and
+   `apaGetPartErrorName` error-clear): zeroes the 512-byte buffer and writes
+   `lba` into dword 0 of sector 7. This corresponds to `pDW[128]` in the
+   two-sector read, which is also skipped by `(128 & 0x7F) == 0`. All other
+   127 dwords in sector 7 remain zero. Always passes `apaGetFormat`.
+3. **`hddFormat`**: zeroes a full 1024-byte buffer and writes 512 bytes of
+   zeros to sector 6, then 512 bytes of zeros to sector 7. Always passes.
+4. **Sequences of error writes**: because each error write zeroes the full
+   512-byte sector before placing the LBA in dword 0, repeated error writes
+   never accumulate dirty dwords in non-skipped slots.
+5. **No other normal driver path writes to sectors 6 or 7**:
+   - Journal writes: sector 8+ (`APA_SECTOR_APAL`).
+   - Partition creation writes: `partition_start + 8` and `partition_start +
+     0x2000` (always $\ge 256 \times 1024$ sectors).
+   - Data / file transfers (`ioctl2Transfer`, `fioDataTransfer`): guarded by
+     APA reserved-area limits ($\ge 0x2000$ for main, $\ge 2$ for sub).
+
+**Proved**: Normal OPL driver operation *cannot* produce non-zero checked dwords
+in sectors 6 or 7. Format rejection (path 4 of error 401) requires either:
+- A pre-existing structural defect (e.g. an APA partition starting at LBA 6,
+  causing a 1024-byte partition header to be flushed across sectors 6 and 7); OR
+- A physical write event outside the driver's intentional semantics, notably
+  the **512e torn-write hypothesis** (power loss or reset during a 4KiB
+  read-modify-write cycle encompassing logical sectors 0 through 7).
+
+The analytical probe is added to `.github/scripts/probe_apa_format_rejection.py`
+and wired into `.github/workflows/flavours.yml`.
+
+### Partition deletion writes to sector zero (MBR)
+
+The reporter's narrative specifically notes: *"repeated RiptOPL error 401,
+unsuccessful configuration/data deletion, and then loss of access"*.
+
+Investigation of `apaDelete` (`apa.c:365-411`) reveals that deleting a
+partition at the tail of the disk (`clink->header->next == 0`) executes:
+
+```c
+clink_mbr = apaCacheGetHeader(device, APA_SECTOR_MBR, APA_IO_MODE_READ, &rv);
+do {
+    ...
+    clink_mbr->header->prev = clink->header->start;
+    clink_mbr->flags |= APA_CACHE_FLAG_DIRTY;
+    apaCacheFlushAllDirty(device);
+} while (clink->header->type == 0);
+```
+
+Because APA maintains a doubly-linked ring where the MBR's `prev` pointer
+identifies the last partition on disk, **deleting the tail partition modifies
+and flushes Sector 0 (APA_SECTOR_MBR)**. If an I/O failure or power loss
+occurred during this deletion flush prior to the transaction atomicity fixes in
+this PR, sector 0 was directly exposed to partial writes and uncommitted journal
+state.
+
+### Three additional use-after-free defects in apa.c
+
+Auditing all `apaCacheFree` call sites revealed three further use-after-free
+defects in `modules/hdd/apa/src/apa.c`:
+
+1. **`apaGetNextHeader` (lines 513-520)**:
+   `apaCacheFree(clink)` was called *before* evaluating `clink->header->next`
+   and `clink->device` for the next header read. Because `apaGetNextHeader` is
+   the core traversal function used by `apaFindPartition`, `apaGetFreeSectors`,
+   and `fioDread`, every single partition enumeration step accessed freed
+   memory. If the buffer was recycled by `apaCacheAlloc` during the traversal,
+   the link address was read from modified memory.
+   *Fix*: Save `start`, `next = clink->header->next`, and `device =
+   clink->device` into local variables before calling `apaCacheFree(clink)`.
+
+2. **`apaDeleteFixNext` (lines 343-344)**:
+   `apaCacheFree(clink1)` was called *before* evaluating `lnext = header->next`
+   (where `header = clink1->header`).
+   *Fix*: Read `lnext = header->next` before calling `apaCacheFree(clink1)`.
+
+3. **`apaDelete` (lines 384-386)**:
+   In the backward-merge loop for tail partition deletion, `apaCacheFree(clink)`
+   was called *before* evaluating `clink->header->prev` and `clink->device`.
+   *Fix*: Save `u32 prev = clink->header->prev;` before calling
+   `apaCacheFree(clink)`, and pass saved `device` and `prev` to
+   `apaCacheGetHeader`.
