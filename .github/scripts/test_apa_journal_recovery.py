@@ -44,9 +44,12 @@ static int blkIoDmaTransfer(int device,void *buffer,u32 sector,u32 count,int dir
   assert(count==1);
   if(direction==BLKIO_DIR_READ) memcpy(buffer,&saved,sizeof(saved));
   else { saved=*(apa_journal_t*)buffer; journal_writes++; }
- } else if(direction==BLKIO_DIR_READ) {
-  assert(count==2 && (sector==10 || sector==12));
-  memcpy(buffer,&staged[(sector-10)/2],sizeof(scratch));
+ } else if(sector==260 && direction==BLKIO_DIR_WRITE) {
+  assert(count==2); /* Last of the 126 staged-header slots. */
+ } else if(sector==10 || sector==12) {
+  assert(count==2);
+  if(direction==BLKIO_DIR_READ) memcpy(buffer,&staged[(sector-10)/2],sizeof(scratch));
+  else memcpy(&staged[(sector-10)/2],buffer,sizeof(scratch));
  } else {
   assert(count==2 && (sector==0x40000 || sector==0x80000));
   memcpy(&destination[sector==0x80000],buffer,sizeof(scratch)); metadata_writes++;
@@ -72,6 +75,17 @@ static void setup(void) {
  fail_io=fail_flush=alloc_fail=in_use=0; trace[0]=0;
 }
 int main(void) {
+ /* The OSD/ATAD startup path skips restore/reset after successful unlock.
+    Its first transaction must still publish a recognizable journal. */
+ setup();
+ entry.device=0; entry.sector=0x40000; scratch=staged[0];
+ assert(apaJournalWrite(&entry)==0);
+ entry.sector=0x80000; scratch=staged[1];
+ assert(apaJournalWrite(&entry)==0 && apaJournalFlush(0)==0);
+ assert(saved.magic==APAL_MAGIC && saved.num==2);
+ assert(saved.sectors[0]==0x40000 && saved.sectors[1]==0x80000);
+ assert(strcmp(trace,"WWFWF")==0);
+ puts("PASS: first transaction has a valid journal without prior restore/reset");
  /* Fail each recovery I/O before the clear operation, including after one
     metadata entry has already been replayed. The saved record must survive. */
  for(int fail=1;fail<=5;fail++) {
@@ -108,6 +122,19 @@ int main(void) {
  setup(); fail_flush=2;
  assert(apaJournalRestore(0)==-EIO && journal_writes==1 && !in_use);
  puts("PASS: empty/invalid journals, allocation failure and reset/flush failures");
+ /* Invalid/full append state must not modify the header or issue I/O. */
+ for(int test=0;test<3;test++) {
+  setup(); journalBuf.magic=APAL_MAGIC;
+  journalBuf.num=test==0?-1:test==1?126:127;
+  apa_header_t before=scratch;
+  assert(apaJournalWrite(&entry)==-EIO && io_calls==0);
+  assert(memcmp(&scratch,&before,sizeof(scratch))==0);
+ }
+ setup(); journalBuf.num=125;
+ assert(apaJournalWrite(&entry)==0 && io_calls==1 && journalBuf.num==126);
+ assert(journalBuf.sectors[125]==entry.sector);
+ assert(apaJournalWrite(&entry)==-EIO && io_calls==1);
+ puts("PASS: journal append capacity rejects invalid/full state before I/O");
  return 0;
 }
 '''

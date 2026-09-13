@@ -24,7 +24,8 @@ LOCAL CHANGES:
   narrowing it into the open file slot; bound size/start metadata queries.
 - journal.c: preserve the saved journal and return an error if its read or
   replay fails; reject invalid magic/count and handle scratch allocation
-  failure. Reset only after successful replay.
+  failure. Reset only after successful replay. Initialize the in-memory
+  journal magic for the first transaction; bound append count before I/O.
 - Standalone Makefile using the installed SDK headers/imports and the same
   APA_OSD_VER, APA_USE_DEV9 and APA_USE_ATAD options as the previous variant.
 - Repository C formatting only in the remaining sources.

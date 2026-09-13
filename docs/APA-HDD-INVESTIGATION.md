@@ -194,3 +194,75 @@ Sources: [Microsoft's read-modify-write resiliency explanation](https://learn.mi
 and [WD Advanced Format white paper](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/white-paper/white-paper-advanced-format.pdf).
 The papers establish the general mechanism; they do not identify the
 reporter's model, confirm an interruption, or establish recovery prospects.
+
+
+## First transaction and cache failure probe (2026-09-13)
+
+The normal ATAD startup path sets a present/unlocked device to status 1;
+`hdd.c` then skips `apaJournalRestore`. `blkIoInit` is a no-op in the ATAD
+variant. Before any prior reset/restore/flush, the original static journal
+buffer has magic 0 and count 0. `apaJournalWrite` increments the count but
+never sets the magic; the first `apaJournalFlush` therefore publishes an
+unrecognized journal. A later successful reset supplies the correct magic,
+which confines this particular defect to the first transaction in that state.
+
+The recovery regression now exercises two production journal appends and a
+flush before any restore/reset. It fails on 953f008f at the saved-magic
+assertion. The follow-up initializes only the in-memory magic to APAL_MAGIC;
+it does not write a reset record at startup or enable automatic replay.
+Append also rejects negative/full/out-of-range counts before checksum
+modification or I/O. Tests cover the last valid slot, the full boundary,
+negative and excessive counts. Restore bounds were already fixed in 953f008f.
+A normal RiptOPL cache has 20 entries, below the 126-entry journal capacity;
+capacity checks do not establish that this limit was reached in the incident.
+
+The new `python .github/scripts/probe_apa_cache_transaction.py` compiles the
+production cache and journal implementations plus `apaWriteHeader`, using
+RAM-only I/O and two ordinary partition-header destinations. This is an
+investigation probe that asserts current defective behavior, NOT a safety
+regression and NOT a CI gate. It should change or become a desired-behavior
+regression when the transaction implementation is fixed.
+
+| Injected failure | Entries in saved journal at first header write | Result | Final headers changed | Dirty entries / saved journal entries |
+| --- | ---: | ---: | --- | --- |
+| None (control) | 2 | 0 | Both | 0 / 0 |
+| First staging write | 1 | 0 | Both | 0 / 0 |
+| Journal commit write | 0 | 0 | Both | 0 / 0 |
+| First destination-header write | 2 | 0 | Only second | 0 / 0 |
+| First flush barrier | 0 | 0 | Both | 0 / 0 |
+
+Thus a failed destination write can produce a partially applied metadata
+transaction, report success, discard dirty state, and clear the recovery
+record. Staging/commit failures also do not stop the destination writes.
+The first-signature and append-bound fixes do not fix these transaction
+failures. `apaCacheFlushAllDirty` ignores intermediate results;
+`apaCacheTransfer` clears DIRTY even when a header write fails. Simply returning
+early is insufficient: both cache allocation paths can recycle a dirty entry,
+callers often ignore flush errors, and retries must preserve the committed
+set rather than restage only the remaining dirty subset. Design these states
+and their failure behavior together before editing the larger transaction.
+
+Incident reachability remains limited. `apaGetNextHeader` can repair a
+backward-link mismatch and flush during enumeration, but this requires a
+previously inconsistent link and does not normally select the sector-zero
+header as its destination. Creation/deletion can update sector zero but is
+not established in the reported startup. The probe starts from two explicitly
+dirty headers; it does not reproduce an ordinary healthy mount damaging a
+disk, physical torn writes, or the reporter's original trigger.
+
+Comparison: the locally inspected wLaunchELF_R3Z source at
+`e1c3a5cd78a1e9774b7a35649c5282c01f34615a` has the same zero-initialized journal,
+startup restore condition, ignored transaction errors and unconditional dirty
+clear. These are inherited SDK-family behaviors, not evidence of a RiptOPL-only
+regression or proof that the reporter's R3Z binary had this exact source.
+See [R3Z journal](https://github.com/saildot4k/wLaunchELF_R3Z/blob/e1c3a5cd78a1e9774b7a35649c5282c01f34615a/iop/ps2hdd_osd/journal.c),
+[R3Z cache](https://github.com/saildot4k/wLaunchELF_R3Z/blob/e1c3a5cd78a1e9774b7a35649c5282c01f34615a/iop/ps2hdd_osd/cache.c),
+and [R3Z startup](https://github.com/saildot4k/wLaunchELF_R3Z/blob/e1c3a5cd78a1e9774b7a35649c5282c01f34615a/iop/ps2hdd_osd/hdd.c).
+
+PR review now also has four open APA findings: an error-path cache leak in
+apaGetPartErrorSector, access after cache release in open/format paths,
+duplicate semaphore release in apaRename, and a missing allocation/read-result
+check in hddAddPartitionHere. They are inherited code, but still require
+validation and fixes. A fifth finding concerned journal bounds: restore is
+fixed in 953f008f; the append guard is included with the first-signature fix.
+Do not describe the APA review or the incident investigation as complete.

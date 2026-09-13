@@ -24,7 +24,8 @@
 #include "hdd_blkio.h"
 
 //  Globals
-static apa_journal_t journalBuf;
+// OSD/ATAD startup can skip restore/reset before the first metadata transaction.
+static apa_journal_t journalBuf = {.magic = APAL_MAGIC};
 
 int apaJournalFlush(s32 device)
 { // this write any thing that in are journal buffer :)
@@ -46,6 +47,9 @@ int apaJournalReset(s32 device)
 
 int apaJournalWrite(apa_cache_t *clink)
 {
+    if (journalBuf.num < 0 ||
+        (u32)journalBuf.num >= sizeof(journalBuf.sectors) / sizeof(journalBuf.sectors[0]))
+        return -EIO;
     clink->header->checksum = journalCheckSum(clink->header);
     if (blkIoDmaTransfer(clink->device, clink->header,
                          (journalBuf.num << 1) + APA_SECTOR_APAL_HEADERS, 2, BLKIO_DIR_WRITE))
