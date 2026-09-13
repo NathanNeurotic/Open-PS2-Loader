@@ -20,7 +20,8 @@ int partitions_sanity_check_mbr(struct block_device *bd, master_boot_record *pMb
 
         if (pMbrBlock->primary_partitions[i].partition_type != 0) {
 
-            if ((pMbrBlock->primary_partitions[i].first_lba == 0) || (pMbrBlock->primary_partitions[i].first_lba >= bd->sectorCount))
+            if ((pMbrBlock->primary_partitions[i].first_lba == 0) || (pMbrBlock->primary_partitions[i].first_lba >= bd->sectorCount) ||
+                pMbrBlock->primary_partitions[i].sector_count > bd->sectorCount - pMbrBlock->primary_partitions[i].first_lba)
                 return 0; //invalid
 
             active++;
@@ -47,9 +48,14 @@ int part_connect_mbr(struct block_device *bd)
     // the raw device.
     if (bd->sectorOffset != 0)
         return rval;
+    // One device read writes sectorSize bytes, regardless of the MBR structure.
+    // Bound the signed allocator size and require whole power-of-two sectors.
+    if (bd->sectorSize < sizeof(master_boot_record) || bd->sectorSize > 0x3fffffff ||
+        (bd->sectorSize & (bd->sectorSize - 1)) != 0 || bd->sectorCount == 0)
+        return -EINVAL;
 
     // Allocate memory for MBR partition sector.
-    pMbrBlock = AllocSysMemory(ALLOC_FIRST, sizeof(master_boot_record), NULL);
+    pMbrBlock = AllocSysMemory(ALLOC_FIRST, bd->sectorSize, NULL);
     if (pMbrBlock == NULL) {
         // Failed to allocate memory for mbr block.
         M_DEBUG("Failed to allocate memory for MBR block\n");

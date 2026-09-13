@@ -80,3 +80,14 @@ The e85d69a7 ATA ownership commit passed all six full build flavors in run 34729
 No affected-drive retest, physical-console validation, or data recovery has been performed. No merge or release is authorized by passing these checks. The withdrawn release should remain withdrawn while investigation is unresolved; publishing-branch merges can themselves trigger distribution.
 
 Remaining causal work is to establish a reachable write or persistent read/availability failure that explains the cross-application status. Prioritize actual worker schedules, shared completion/controller state, and partition/journal writes under fault injection on disposable images. Neither of the reproduced defects identifies the reporter's actual failure by itself.
+
+## Follow-up review corrections
+
+The five review findings on 3a417739 were verified and corrected in the follow-up:
+- Partition reads/writes validate the local range and the complete partition's extent inside its parent before translating an address. A disk-wide check alone permits accesses to adjacent partitions.
+- MBR/GPT buffers use the device sector size; invalid sizes are rejected before allocation or reads. Tests use actual 4 KiB probe writes with destination-allocation checks. The ATA block device advertises 512-byte sectors, so this defect alone does not directly match the reported HDD configuration.
+- GPT partition length includes its final sector. Header/table/entry geometry checks prevent reversed or oversized ranges from becoming exported devices. Unsupported entry layouts are rejected. These are bounds checks, not CRC verification.
+- BDM initialization failures release exports after cleaning event/thread resources. Failure injection covers all three resource/start failures and a successful retry.
+- The corrupted license citation character is restored.
+
+These changes are defect corrections, not a reproduction of the reported persistent loss of APA access. Refer to the PR for the exact pushed follow-up head and its checks; the earlier 3a417739 CI does not validate later code.

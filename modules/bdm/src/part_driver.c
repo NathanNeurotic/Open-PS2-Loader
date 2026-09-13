@@ -46,12 +46,25 @@ void part_disconnect(struct block_device *bd)
 //
 // Block device interface
 //
+static int part_range_valid(struct block_device *bd, struct block_device *parent, u64 sector, u16 count)
+{
+    // Validate the complete partition before translating an individual request.
+    // Subtraction avoids wrapping either sector + count or sectorOffset + sector.
+    return bd->sectorOffset <= parent->sectorCount &&
+           bd->sectorCount <= parent->sectorCount - bd->sectorOffset &&
+           sector < bd->sectorCount && count <= bd->sectorCount - sector;
+}
+
 static int part_read(struct block_device *bd, u64 sector, void *buffer, u16 count)
 {
     struct partition *part = (struct partition *)bd->priv;
 
     if ((part == NULL) || (part->bd == NULL))
         return -1;
+    if (count == 0)
+        return 0;
+    if (!part_range_valid(bd, part->bd, sector, count))
+        return -EIO;
 
 #ifdef DEBUG
     u64 finalSector = sector + bd->sectorOffset;
@@ -68,6 +81,10 @@ static int part_write(struct block_device *bd, u64 sector, const void *buffer, u
 
     if ((part == NULL) || (part->bd == NULL))
         return -1;
+    if (count == 0)
+        return 0;
+    if (!part_range_valid(bd, part->bd, sector, count))
+        return -EIO;
 
 #ifdef DEBUG
     u64 finalSector = sector + bd->sectorOffset;

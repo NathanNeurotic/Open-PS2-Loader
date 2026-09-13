@@ -61,6 +61,8 @@ jobs:
         run: python3 .github/scripts/test_atad_command_ownership.py
       - name: Check BDM failed reads and cache refill boundaries
         run: python3 .github/scripts/test_bdm_cache.py
+      - name: Check BDM startup resource cleanup
+        run: python3 .github/scripts/test_bdm_startup.py
 
   ra-host-tests:
     runs-on: ubuntu-latest

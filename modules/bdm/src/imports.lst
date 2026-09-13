@@ -1,5 +1,6 @@
 loadcore_IMPORTS_start
 I_RegisterLibraryEntries
+I_ReleaseLibraryEntries
 loadcore_IMPORTS_end
 
 stdio_IMPORTS_start

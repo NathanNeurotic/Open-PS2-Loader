@@ -30,6 +30,7 @@ int _start(int argc, char *argv[])
     // initialize the block device manager
     if (bdm_init() < 0) {
         M_PRINTF("ERROR: BDM init failed!\n");
+        ReleaseLibraryEntries(&_exp_bdm);
         return MODULE_NO_RESIDENT_END;
     }
 

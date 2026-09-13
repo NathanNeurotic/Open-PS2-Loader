@@ -21,11 +21,18 @@ LOCAL CHANGES:
 - Copy block_device metadata using the installed header's complete structure,
   then assign wrapper callbacks. This preserves optional appended fields and
   builds with older official SDK headers without a .path member.
+- Validate partition-local and parent-device ranges before read/write address
+  translation; include the last sector of valid GPT partitions.
+- Size MBR/GPT probe buffers to the advertised sector size, rejecting invalid
+  sizes before allocation. Reject malformed table/partition geometry and
+  unsupported GPT entry layouts; inspect GPT only on whole devices.
+- Release exports when event/thread startup fails. Restore the license citation's
+  section symbol, which was previously a replacement character.
 - Fork Makefile, exports-first for iopfixup compatibility. Export ABI stays 1.1.
 
-Unchanged: mount worker, priority, transport drivers, FAT/exFAT driver, GPT/MBR
-layout interpretation, and partition I/O arithmetic. This does not implement
-read-only discovery or guarantee malformed filesystem metadata is safe.
+Unchanged: mount worker, priority, transport drivers and FAT/exFAT driver.
+This does not implement read-only discovery, GPT CRC validation, cache-wide
+synchronization, or general filesystem metadata validation.
 
 RE-VENDOR: compare all files to the new pin, reapply the changes above, run the
 BDM failure regressions and all flavor builds, and update this record. Do not

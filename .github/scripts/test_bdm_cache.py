@@ -35,16 +35,34 @@ struct block_device {
 #endif
 };
 static int allocations, fail_alloc;
+static struct { unsigned char *ptr; size_t size; } allocated[64];
+static void check_probe_buffer(void *ptr,size_t size) {
+ for(int i=0;i<64;i++) {
+  uintptr_t base=(uintptr_t)allocated[i].ptr, p=(uintptr_t)ptr;
+  if(base && p>=base && p-base<allocated[i].size) {
+   assert(size<=allocated[i].size-(p-base)); return;
+  }
+ }
+ assert(!"probe destination is not inside its allocated buffer");
+}
 static void *AllocSysMemory(int mode, size_t size, void *ptr) {
  (void)mode; (void)ptr;
  if(fail_alloc && --fail_alloc==0) return NULL;
- void *p=malloc(size); assert(p); memset(p,0,size); allocations++; return p;
+ void *p=malloc(size); assert(p); memset(p,0,size); allocations++;
+ for(int i=0;i<64;i++) if(!allocated[i].ptr) { allocated[i].ptr=p; allocated[i].size=size; return p; }
+ assert(!"allocation registry full"); return NULL;
 }
-static void FreeSysMemory(void *p) { assert(p); allocations--; free(p); }
+static void FreeSysMemory(void *p) {
+ assert(p); allocations--;
+ for(int i=0;i<64;i++) if(allocated[i].ptr==p) { allocated[i].ptr=NULL; free(p); return; }
+ assert(!"free of unknown allocation");
+}
 static int calls, writes, fault, fault_result=-5;
 static u16 last_count;
+static u64 last_lba;
+static const void *last_buffer;
 static int device_read(struct block_device *bd,u64 lba,void *buf,u16 count) {
- calls++; last_count=count;
+ calls++; last_count=count; last_lba=lba; last_buffer=buf;
  assert(lba < bd->sectorCount && count <= bd->sectorCount-lba);
  if(fault) { memset(buf,0xee,512); return fault_result; }
  memset(buf,0,count*bd->sectorSize);
@@ -56,7 +74,7 @@ static int device_read(struct block_device *bd,u64 lba,void *buf,u16 count) {
  return count;
 }
 static int device_write(struct block_device *bd,u64 lba,const void *buf,u16 count) {
- (void)bd; (void)lba; (void)buf; writes++; return count;
+ (void)bd; last_lba=lba; last_count=count; last_buffer=buf; writes++; return count;
 }
 '''
 # Include the production partition probes to verify full-read checks and the
@@ -76,9 +94,11 @@ static void bdm_connect_bd(struct block_device *bd) { (void)bd; mounted++; }
 static void bdm_disconnect_bd(struct block_device *bd) { (void)bd; }
 static void bdm_connect_fs(struct file_system *fs) { (void)fs; }
 static unsigned char sectors[3][512];
-static int probe_result=1;
+static int probe_result=1, probe_calls;
 static int probe_read(struct block_device *bd,u64 lba,void *buf,u16 count) {
- (void)bd; assert(lba<3 && count==1); memcpy(buf,sectors[lba],512); return probe_result;
+ assert(lba<3 && count==1); probe_calls++;
+ check_probe_buffer(buf,bd->sectorSize);
+ memset(buf,0,bd->sectorSize); memcpy(buf,sectors[lba],512); return probe_result;
 }
 '''
 
@@ -174,6 +194,7 @@ int main(void) {
 #endif
  gpt_partition_table_header *gpt=(void*)sectors[1];
  memcpy(gpt->signature,EFI_PARTITION_SIGNATURE,8);
+ gpt->header_size=sizeof(*gpt); gpt->partition_entry_size=sizeof(gpt_partition_table_entry);
  gpt->first_lba=8; gpt->last_lba=4095; gpt->partition_table_lba=2; gpt->partition_count=4;
  gpt_partition_table_entry *entry=(void*)sectors[2];
  memcpy(entry->partition_type_guid,MS_BASIC_DATA_PARTITION_GUID,16);
@@ -185,11 +206,61 @@ int main(void) {
  part_init(); probe_result=1; mounted=0;
  assert(part_connect_gpt(&bd)==0 && mounted==1 && allocations==0);
  assert(g_part_bd[0].priv==&g_part[0] && g_part_bd[0].read==part_read);
- assert(g_part_bd[0].sectorOffset==8);
+ assert(g_part_bd[0].sectorOffset==8 && g_part_bd[0].sectorCount==64);
 #if HAS_PATH
  assert(g_part_bd[0].path==bd.path);
 #endif
  puts("PASS: MBR/GPT reject failed/short reads, preserve metadata and use partition callbacks");
+ /* 4KiB sectors exercise actual parser destinations, not just the cache. */
+ bd.sectorSize=4096;
+ part_init(); mounted=0; assert(part_connect_mbr(&bd)==0 && mounted==1 && allocations==0);
+ part_init(); mounted=0; assert(part_connect_gpt(&bd)==0 && mounted==1 && allocations==0);
+ /* Invalid sector sizes must fail before allocation or device I/O. */
+ unsigned invalid_sizes[]={0,128,511,513,0x80000000u,0xffffffffu};
+ for(unsigned i=0;i<sizeof(invalid_sizes)/sizeof(invalid_sizes[0]);i++) {
+  bd.sectorSize=invalid_sizes[i]; before=probe_calls;
+  assert(part_connect_mbr(&bd)<0 && part_connect_gpt(&bd)<0);
+  assert(probe_calls==before && allocations==0);
+ }
+ bd.sectorSize=512;
+ fail_alloc=1; assert(part_connect_mbr(&bd)<0 && allocations==0);
+ fail_alloc=1; assert(part_connect_gpt(&bd)<0 && allocations==0);
+ /* Reject malformed table geometry instead of exporting a huge partition. */
+ entry->first_lba=72; part_init(); mounted=0;
+ assert(part_connect_gpt(&bd)<0 && mounted==0); entry->first_lba=8;
+ gpt->last_lba=4096; part_init(); assert(part_connect_gpt(&bd)<0); gpt->last_lba=4095;
+ gpt->partition_table_lba=UINT64_MAX; assert(part_connect_gpt(&bd)<0); gpt->partition_table_lba=2;
+ gpt->partition_count=UINT32_MAX; assert(part_connect_gpt(&bd)<0); gpt->partition_count=4;
+ gpt->partition_entry_size=0; assert(part_connect_gpt(&bd)<0); gpt->partition_entry_size=sizeof(*entry);
+ mbr->primary_partitions[0].sector_count=4096; assert(part_connect_mbr(&bd)<0);
+ mbr->primary_partitions[0].sector_count=64;
+ bd.sectorOffset=8; before=probe_calls;
+ assert(part_connect_mbr(&bd)<0 && part_connect_gpt(&bd)<0 && probe_calls==before);
+ bd.sectorOffset=0;
+ part_init(); assert(part_connect_gpt(&bd)==0);
+ /* Reads/writes must stay within both partition and parent bounds. */
+ struct block_device *part=&g_part_bd[0]; bd.read=device_read;
+ before=calls; assert(part->read(part,63,out,1)==1 && calls==before+1);
+ assert(last_lba==71 && last_count==1 && last_buffer==out);
+ before=writes; assert(part->write(part,63,out,1)==1 && writes==before+1 && last_lba==71);
+ u64 invalid_sectors[]={64,65,UINT64_MAX,UINT64_MAX-7};
+ for(unsigned i=0;i<sizeof(invalid_sectors)/sizeof(invalid_sectors[0]);i++) {
+  before=calls; int old_writes=writes;
+  assert(part->read(part,invalid_sectors[i],out,1)<0);
+  assert(part->write(part,invalid_sectors[i],out,1)<0);
+  assert(calls==before && writes==old_writes);
+ }
+ before=calls; int old_writes=writes;
+ assert(part->read(part,63,out,2)<0 && part->write(part,63,out,2)<0);
+ assert(part->read(part,UINT64_MAX,out,0)==0 && part->write(part,UINT64_MAX,out,0)==0);
+ part->sectorOffset=UINT64_MAX-31;
+ assert(part->write(part,32,out,1)<0 && part->read(part,32,out,1)<0);
+ part->sectorOffset=4090;
+ assert(part->write(part,0,out,1)<0 && part->read(part,0,out,1)<0);
+ assert(calls==before && writes==old_writes);
+ assert(allocations==0);
+ puts("PASS: 4KiB probe buffers, invalid geometry, allocation failures and partition/parent read-write boundaries");
+
 #endif
 #if EXPECT_STALE
  assert(writes==0);
