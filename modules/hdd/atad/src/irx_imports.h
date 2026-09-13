@@ -30,5 +30,6 @@
 #include <sysclib.h>
 #include <thbase.h>
 #include <thevent.h>
+#include <thsemap.h>
 
 #endif /* IOP_IRX_IMPORTS_H */

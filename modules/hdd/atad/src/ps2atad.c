@@ -25,6 +25,7 @@
 #include <loadcore.h>
 #include <thbase.h>
 #include <thevent.h>
+#include <thsemap.h>
 #include <stdio.h>
 #include <sysclib.h>
 #ifdef ATA_USE_DEV9
@@ -67,6 +68,37 @@ IRX_ID(MODNAME, 2, 7);
 
 static int ata_devinfo_init = 0;
 static int ata_evflg = -1;
+static int ata_io_sema = -1;
+static int ata_io_owner = -1;
+static unsigned int ata_io_depth;
+static int ata_cmd_active;
+
+/* APA, XHDD and BDM have different caller-side locks but share one ATA taskfile,
+   event flag and command buffer. Own the bus from command setup through completion.
+   Initialization nests commands while holding the same lock over resets/IDENTIFY. */
+static int ata_io_lock(void)
+{
+    int thread = GetThreadId();
+    int res;
+
+    if (thread < 0 || ata_io_sema < 0)
+        return ATA_RES_ERR_NOTREADY;
+    if (ata_io_owner != thread) {
+        if ((res = WaitSema(ata_io_sema)) < 0)
+            return res;
+        ata_io_owner = thread;
+    }
+    ata_io_depth++;
+    return 0;
+}
+
+static void ata_io_unlock(void)
+{
+    if (--ata_io_depth == 0) {
+        ata_io_owner = -1;
+        SignalSema(ata_io_sema);
+    }
+}
 
 // Workarounds
 static u8 ata_dvrp_workaround = 0; // Please read the comments in _start().
@@ -326,6 +358,20 @@ int _start(int argc, char *argv[])
         goto out;
     }
 
+    {
+        iop_sema_t sema;
+        sema.attr = SA_THPRI;
+        sema.option = 0;
+        sema.initial = 1;
+        sema.max = 1;
+        if ((ata_io_sema = CreateSema(&sema)) < 0) {
+            M_PRINTF("Couldn't create ATA command semaphore, exiting.\n");
+            DeleteEventFlag(ata_evflg);
+            ata_evflg = -1;
+            goto out;
+        }
+    }
+
 #ifdef ATA_USE_DEV9
     /* In v1.04, PIO mode 0 was set here. In late versions, it is set in ata_init_devices(). */
     SpdRegisterIntrHandler(1, &ata_intr_cb);
@@ -382,6 +428,10 @@ int _start(int argc, char *argv[])
     res = MODULE_RESIDENT_END;
     M_PRINTF("Driver loaded.\n");
 out:
+    if (res != MODULE_RESIDENT_END && ata_io_sema >= 0) {
+        DeleteSema(ata_io_sema);
+        ata_io_sema = -1;
+    }
     return res;
 }
 
@@ -517,7 +567,7 @@ static int ata_device_select(int device)
 
     48-bit LBA just involves writing the upper 24 bits in the format above into each respective register on the first write pass, before writing the lower 24 bits in the 2nd write pass. The LBA bits within the device field are not used in either write pass.
 */
-int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector, u16 lcyl, u16 hcyl, u16 select, u16 command)
+static int ata_exec_cmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector, u16 lcyl, u16 hcyl, u16 select, u16 command)
 {
 #ifdef ATA_USE_DEV9
     USE_ATA_REGS;
@@ -650,6 +700,24 @@ int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector,
     return 0;
 }
 
+int sceAtaExecCmd(void *buf, u32 blkcount, u16 feature, u16 nsector, u16 sector, u16 lcyl, u16 hcyl, u16 select, u16 command)
+{
+    int res = ata_io_lock();
+    if (res < 0)
+        return res;
+    // A second setup by the owner without WaitResult must not overwrite its active command.
+    if (ata_cmd_active) {
+        ata_io_unlock();
+        return ATA_RES_ERR_NOTREADY;
+    }
+    res = ata_exec_cmd(buf, blkcount, feature, nsector, sector, lcyl, hcyl, select, command);
+    if (res != 0)
+        ata_io_unlock();
+    else
+        ata_cmd_active = 1;
+    return res;
+}
+
 /* Do a PIO transfer, to or from the device.  */
 static int ata_pio_transfer(ata_cmd_state_t *cmd_state)
 {
@@ -758,7 +826,7 @@ static int ata_dma_complete(void *buf, u32 blkcount, int dir)
 #endif
 
 /* Export 7 */
-int sceAtaWaitResult(void)
+static int ata_wait_result(void)
 {
 #ifdef ATA_USE_DEV9
     USE_SPD_REGS;
@@ -776,7 +844,8 @@ int sceAtaWaitResult(void)
         WaitEventFlag(ata_evflg, ATA_EV_TIMEOUT | ATA_EV_COMPLETE, WEF_CLEAR | WEF_OR, &bits);
         if (bits & ATA_EV_TIMEOUT) { /* Timeout.  */
             M_PRINTF("Error: ATA timeout on a non-data command.\n");
-            return ATA_RES_ERR_TIMEOUT;
+            res = ATA_RES_ERR_TIMEOUT;
+            goto finish;
         }
     } else if (type == 4) { /* DMA.  */
 #ifdef ATA_USE_DEV9
@@ -842,6 +911,26 @@ finish:
     return res;
 }
 
+int sceAtaWaitResult(void)
+{
+#ifdef ATA_USE_DEV9
+    USE_SPD_REGS;
+#endif
+    int res;
+
+    if (ata_io_owner != GetThreadId() || !ata_cmd_active)
+        return ATA_RES_ERR_NOTREADY;
+    res = ata_wait_result();
+#ifdef ATA_USE_DEV9
+    // Finish controller cleanup before another caller can start a transfer.
+    if (atad_cmd_state.type == 4)
+        SPD_REG16(SPD_R_IF_CTRL) &= ~SPD_IF_DMA_ENABLE;
+#endif
+    ata_cmd_active = 0;
+    ata_io_unlock();
+    return res;
+}
+
 /* Reset the ATA controller/bus.  */
 static int ata_bus_reset(void)
 {
@@ -857,7 +946,7 @@ static int ata_bus_reset(void)
 }
 
 /* Export 5 */
-int sceAtaSoftReset(void)
+static int ata_soft_reset(void)
 {
 #ifdef ATA_USE_DEV9
     USE_ATA_REGS;
@@ -878,6 +967,19 @@ int sceAtaSoftReset(void)
     DelayThread(3000);
 
     return ata_wait_busy();
+}
+
+int sceAtaSoftReset(void)
+{
+    int res = ata_io_lock();
+    if (res < 0)
+        return res;
+    if (ata_cmd_active)
+        res = ATA_RES_ERR_NOTREADY;
+    else
+        res = ata_soft_reset();
+    ata_io_unlock();
+    return res;
 }
 
 /* Export 17 */
@@ -1023,15 +1125,27 @@ int sceAtaDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
 
 int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir)
 {
-    USE_SPD_REGS;
     int res = 0, retries;
-    u16 sector, lcyl, hcyl, select, command, len;
+    u16 sector, lcyl, hcyl, select, command;
+    u32 len;
+    u64 capacity;
+
+    /* Bound the whole request before issuing any command. Do not gate on ata_devinfo_init:
+       IDENTIFY supplies the capacity before ata_init_devices() connects the BDM device. */
+    if (device < 0 || device > 1 || !atad_devinfo[device].exists)
+        return ATA_RES_ERR_NODEV;
+    capacity = atad_devinfo[device].total_sectors_lba48;
+    if (!atad_devinfo[device].lba48 && capacity > 0x10000000)
+        capacity = 0x10000000;
+    if (lba >= capacity || nsectors > capacity - lba)
+        return ATA_RES_ERR_IO;
 
     while (res == 0 && nsectors > 0) {
 
-        if (atad_devinfo[device].lba48 && (ata_dvrp_workaround ? (lba >= atad_devinfo[device].total_sectors) : 1)) {
+        if (atad_devinfo[device].lba48 && (!ata_dvrp_workaround || lba >= atad_devinfo[device].total_sectors || lba >= 0x10000000)) {
             /* Setup for 48-bit LBA.  */
-            len = (u16)((nsectors > 65536) ? 65536 : nsectors); /* 0 means 65536 in LBA48 */
+            /* Keep the DMA count and loop progress at 65536; only the taskfile count encodes 0. */
+            len = (nsectors > 65536) ? 65536 : nsectors;
 
             /* Combine bits 24-31 and bits 0-7 of lba into sector.  */
             sector = ((lba >> 16) & 0xff00) | (lba & 0xff);
@@ -1042,8 +1156,12 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
             select = (device << 4) & 0xffff;
             command = (dir == 1) ? ATA_C_WRITE_DMA_EXT : ATA_C_READ_DMA_EXT;
         } else {
-            /* Setup for 28-bit LBA.  */
+            /* Setup for 28-bit LBA. Split a DVR request before switching addressing modes. */
             len = (nsectors > 256) ? 256 : nsectors;
+            if (len > 0x10000000 - lba)
+                len = 0x10000000 - lba;
+            if (atad_devinfo[device].lba48 && len > atad_devinfo[device].total_sectors - lba)
+                len = atad_devinfo[device].total_sectors - lba;
             sector = lba & 0xff;
             lcyl = (lba >> 8) & 0xff;
             hcyl = (lba >> 16) & 0xff;
@@ -1062,7 +1180,7 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
 #endif
 #endif
 
-            if ((res = sceAtaExecCmd(buf, len, 0, len, sector, lcyl, hcyl, select, command)) != 0)
+            if ((res = sceAtaExecCmd(buf, len, 0, (u16)len, sector, lcyl, hcyl, select, command)) != 0)
                 break;
 
 #ifdef ATA_USE_DEV9
@@ -1077,9 +1195,7 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
 
             res = sceAtaWaitResult();
 
-            /* In v1.04, this was not done. Neither was there a mechanism to retry if a non-permanent error occurs. */
-            SPD_REG16(SPD_R_IF_CTRL) &= ~SPD_IF_DMA_ENABLE;
-
+            /* Retry transient CRC errors; WaitResult has already cleaned up the command. */
             if (res != ATA_RES_ERR_ICRC)
                 break;
         }
@@ -1358,7 +1474,7 @@ static int ata_init_devices(ata_devinfo_t *devinfo)
 }
 
 /* Export 4 */
-ata_devinfo_t *sceAtaInit(int device)
+static ata_devinfo_t *ata_init(int device)
 {
     if (!ata_devinfo_init) {
         /* FORK (RiptOPL): latch init-done only on SUCCESS. Stock atad latches before probing, so a
@@ -1372,6 +1488,17 @@ ata_devinfo_t *sceAtaInit(int device)
     }
 
     return &atad_devinfo[device];
+}
+
+ata_devinfo_t *sceAtaInit(int device)
+{
+    ata_devinfo_t *result = NULL;
+    if (device < 0 || device >= 2 || ata_io_lock() < 0)
+        return NULL;
+    if (!ata_cmd_active)
+        result = ata_init(device);
+    ata_io_unlock();
+    return result;
 }
 
 #ifdef ATA_USE_DEV9

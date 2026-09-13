@@ -7,10 +7,19 @@ I_DelayThread
 I_SetAlarm
 I_CancelAlarm
 I_USec2SysClock
+I_GetThreadId
 thbase_IMPORTS_end
+
+thsemap_IMPORTS_start
+I_CreateSema
+I_DeleteSema
+I_WaitSema
+I_SignalSema
+thsemap_IMPORTS_end
 
 thevent_IMPORTS_start
 I_CreateEventFlag
+I_DeleteEventFlag
 I_iSetEventFlag
 I_ClearEventFlag
 I_WaitEventFlag

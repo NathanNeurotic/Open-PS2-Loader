@@ -37,6 +37,7 @@ static unsigned char hddForceUpdate = 0;
 static unsigned char hddHDProKitDetected = 0;
 static unsigned char hddModulesLoadCount = 0;
 static unsigned char hddModulesLoaded = 0;
+static unsigned char hddDev9Owned = 0;
 static unsigned char hddSupportModulesLoaded = 0;
 // One toast per failure streak: hddUpdateGameList now RETRIES the support-module load every refresh
 // while it keeps failing, and re-toasting the same error box each pass would bury the UI. Reset on
@@ -207,7 +208,8 @@ static int hddUpdateGameListCache(hdl_games_list_t *cache, hdl_games_list_t *gam
 static void hddInitModules(void)
 {
     hddRetryQueued = 0;
-    hddLoadModules();
+    if (!hddLoadModulesReady())
+        return;
     hddLoadSupportModules();
 
     // Existing-partitions-only discovery may legitimately fail closed. Do not dereference a
@@ -422,6 +424,12 @@ int hddLoadModules(void)
         // DEV9 must be loaded, as HDD.IRX depends on it. Even if not required by the I/F (i.e. HDPro)
         hddDiagBootStageBegin("HDD:DEV9");
         sysInitDev9();
+        // Retry DEV9 initialization too, but retain only one reference across partial loads.
+        // Dropping the last reference on failure would power off resident ATA modules.
+        if (hddDev9Owned)
+            sysShutdownDev9();
+        else
+            hddDev9Owned = 1;
         hddDiagBootStageEndVoid("HDD:DEV9");
 
         // try to detect HD Pro Kit (not the connected HDD),
@@ -453,25 +461,12 @@ int hddLoadModules(void)
             hddDiagBootStageEnd("HDD:XHDD", retXhddModule);
         }
 
-        if (retLoadModule < 0) {
-            LOG("HDD: No HardDisk Drive detected.\n");
+        if (retLoadModule < 0 || retXhddModule < 0 || (!hddHDProKitDetected && retBdmModule < 0)) {
+            LOG("HDD: Required module load failed (bdm=%d atad=%d xhdd=%d).\n", retBdmModule, retLoadModule, retXhddModule);
             setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
             retStatus = HDD_LOADMODULES_STATUS_ERROR;
-            // Make the failure RETRYABLE. Leaving the count consumed turned one bad first probe into a
-            // whole-session poison: every later call took the else branch and returned BUSYLOADING(2),
-            // which the >= 0 caller tests read as SUCCESS while nothing was loaded -- so the APA page
-            // sat silently empty under BOTH Auto and Manual (Vapor's report; the drive lists fine in
-            // wOPL/upstream because their earliest callers run at tab entry, when the drive is ready --
-            // our fork adds boot-time callers like bdmResolveBootDir's ATA escalation, seconds after
-            // power-on). sysInitDev9/sysLoadModuleBuffer are safe to re-run; a later caller (e.g. the
-            // HDD tab) now gets a real second attempt instead of a poisoned latch.
-            //
-            // Release the dev9 reference taken above before clearing the count, or the retry that this
-            // line exists to permit takes a SECOND one and never gives either back. dev9 is refcounted
-            // and shared with ETH/UDPBD, so an inflated count means a later teardown can never power
-            // dev9 down. The UDPBD arm in bdmsupport.c already pairs its init/shutdown this way; this
-            // arm did not, and rebuild-153's device-refresh bump made the retry more frequent.
-            sysShutdownDev9();
+            // Retry missing modules on the next request. sysLoadModuleBuffer reuses successful
+            // loads; keep DEV9 powered for those residents until terminal shutdown.
             hddModulesLoadCount = 0;
         } else {
             retStatus = HDD_LOADMODULES_STATUS_NOERROR;
@@ -518,8 +513,8 @@ int hddModulesAreLoaded(void)
     return hddModulesLoaded != 0;
 }
 
-// Validate an APA header sector without ps2hdd: the "APA" magic plus the header checksum
-// (sum of the 127 little-endian words after the checksum word itself, per ps2sdk apaCheckSum).
+// Probe the first APA header sector without ps2hdd. This partial checksum is a format hint,
+// not the full 1 KB apaReadHeader validation or a partition-table integrity check.
 static int hddApaHeaderValid(const u8 *pSectorData)
 {
     const u32 *pWords = (const u32 *)pSectorData;
@@ -691,9 +686,20 @@ static int hddLoadCoreSupportModules(void)
             return 0;
         }
         if (ret == 1) {
-            LOG("HDD: APA status reports an unformatted drive.\n");
-            hddSupportErrToasted = 0;
-            hddArmPfsDiagFailure(HDD_PFS_DIAG_REASON_HDD_CHECK_STATUS_1, ret, HDD_PFS_DIAG_NOT_RUN);
+            // Our raw probe checks only part of the APA header. A match does not establish
+            // partition or game integrity, or explain why the driver's format check failed.
+            // In particular, apaGetFormat skips the error-record dwords in sectors 6 and 7.
+            if (hddDetectNonSonyFileSystem() == 0) {
+                LOG("HDD: raw APA probe matched but ps2hdd reports unformatted; cause unknown.\n");
+                if (!hddSupportErrToasted) {
+                    setErrorMessageWithCode(_STR_HDD_APA_REJECTED_ERROR, ERROR_HDD_NOT_DETECTED);
+                    hddSupportErrToasted = 1;
+                }
+            } else {
+                LOG("HDD: APA status reports an unformatted drive.\n");
+                hddSupportErrToasted = 0;
+                hddArmPfsDiagFailure(HDD_PFS_DIAG_REASON_HDD_CHECK_STATUS_1, ret, HDD_PFS_DIAG_NOT_RUN);
+            }
             return 0;
         }
         if (ret == 2) {
@@ -2374,17 +2380,14 @@ static void hddShutdown(item_list_t *itemList)
             // The HDD should still enter standby state after 21 minutes & 15 seconds, as per the ATAD defaults.
             hddSetIdleImmediate();
         }
+    }
 
-        // Only shut down dev9 from here, if it was initialized from here before -- and only on a
-        // TERMINAL teardown (exit/poweroff). On the launch path this shutdown runs for every
-        // non-selected page, and powering DEV9 off here kills the ATA bus BEFORE bdmLaunchVcd's
-        // post-deinit POPSTARTER.ELF read from the ATA-backed massN: mount -- the elf-loader then
-        // returns into deinit'd OPL: the 4236edf6-class black-screen freeze (PCSX2 masks it; its
-        // emulated DEV9 power-off is inert). ee_core/POPSTARTER reset the IOP right after, so the
-        // launch path needs no power-off. Note the refcount asymmetry this also softens: N
-        // hddLoadModules calls take ONE dev9 reference, but every hddShutdown used to drop it.
-        if (gDeinitTerminal)
-            sysShutdownDev9();
+    // A partial load also owns DEV9 even though its module-use count was reset for retry.
+    // Release that single reference once, on exit/poweroff. Launch handoffs still need ATA
+    // for post-deinit ELF reads and must leave the bus powered.
+    if (gDeinitTerminal && hddDev9Owned) {
+        sysShutdownDev9();
+        hddDev9Owned = 0;
     }
 }
 
