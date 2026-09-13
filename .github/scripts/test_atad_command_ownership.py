@@ -48,6 +48,9 @@ static ata_devinfo_t atad_devinfo[2] = {{1}, {0}};
 #define ATA_C_READ_DMA 0xc8
 #define ATA_C_READ_DMA_EXT 0x25
 #define ATA_C_WRITE_DMA 0xca
+#define ATA_C_WRITE_DMA_EXT 0x35
+#define READ_COMMAND (EXTENDED ? ATA_C_READ_DMA_EXT : ATA_C_READ_DMA)
+#define WRITE_COMMAND (EXTENDED ? ATA_C_WRITE_DMA_EXT : ATA_C_WRITE_DMA)
 #define ATA_SCE_SECURITY_ERASE_UNIT 0xf4
 #define ATA_SEL_LBA 0x40
 #define ATA_RES_ERR_NODEV (-1)
@@ -72,9 +75,9 @@ static u16 spd[64] = {[SPD_R_INTR_STAT] = 1};
 #define SPD_REG16(x) spd[x]
 static int ata_evflg;
 typedef struct { u8 command, type; } ata_cmd_info_t;
-static const ata_cmd_info_t ata_cmd_table[] = {{ATA_C_READ_DMA,4},{ATA_C_WRITE_DMA,4},{ATA_C_DEVICE_RESET,1}};
+static const ata_cmd_info_t ata_cmd_table[] = {{ATA_C_READ_DMA,4},{ATA_C_WRITE_DMA,4},{ATA_C_DEVICE_RESET,1},{ATA_C_READ_DMA_EXT,0x84},{ATA_C_WRITE_DMA_EXT,0x84}};
 static const ata_cmd_info_t sec_ctrl_cmd_table[] = {{0,0}}, smart_cmd_table[] = {{0,0}};
-#define ATA_CMD_TABLE_SIZE 3
+#define ATA_CMD_TABLE_SIZE 5
 #define SEC_CTRL_CMD_TABLE_SIZE 1
 #define SMART_CMD_TABLE_SIZE 1
 static struct { u16 r_control, r_feature, r_nsector, r_sector, r_lcyl, r_hcyl, r_select, r_command, r_status; } regs = {.r_control=0x40}, *ata_hwport = &regs;
@@ -147,7 +150,7 @@ static void *caller(void *arg) {
     thread_id=(int)(intptr_t)arg;
     int writer=thread_id==1;
     assert(sceAtaExecCmd(writer ? record : probe, writer ? 1 : 2, 0, writer ? 1 : 2,
-                         writer ? 6 : 0, 0,0,0, writer ? ATA_C_WRITE_DMA : ATA_C_READ_DMA)==0);
+                         writer ? 6 : 0, 0,0,0, writer ? WRITE_COMMAND : READ_COMMAND)==0);
     issued[thread_id].lba=regs.r_sector | (regs.r_lcyl<<8) | (regs.r_hcyl<<16) | ((regs.r_select&15)<<24);
     issued[thread_id].count=regs.r_nsector;
     issued[thread_id].command=regs.r_command;
@@ -186,15 +189,15 @@ int main(void) {
     resume_writer=1; pthread_cond_broadcast(&changed);
     pthread_mutex_unlock(&gate);
     pthread_join(writer,NULL); pthread_join(reader,NULL);
-    printf("Requested WRITE LBA=6/count=1; programmed WRITE LBA=%u/count=%u; correct buffer=%d\n",
-           issued[1].lba,issued[1].count,issued[1].buf==record);
+    printf("%s: Requested WRITE LBA=6/count=1; programmed WRITE LBA=%u/count=%u; correct buffer=%d\n",
+           EXTENDED ? "LBA48" : "LBA28", issued[1].lba,issued[1].count,issued[1].buf==record);
 #if EXPECT_RACE
     assert(issued[1].lba==0 && issued[1].count==2 && issued[1].buf==probe);
     puts("PASS: historical driver reproduces command corruption at injected scheduler boundary");
 #else
-    assert(issued[1].command==ATA_C_WRITE_DMA && issued[1].lba==6 && issued[1].count==1);
+    assert(issued[1].command==WRITE_COMMAND && issued[1].lba==6 && issued[1].count==1);
     assert(issued[1].buf==record && issued[1].dir==1);
-    assert(issued[2].command==ATA_C_READ_DMA && issued[2].lba==0 && issued[2].buf==probe);
+    assert(issued[2].command==READ_COMMAND && issued[2].lba==0 && issued[2].buf==probe);
     puts("PASS: competing setup cannot change the writer's taskfile or DMA state");
 #endif
 #if FIXED
@@ -237,9 +240,10 @@ with tempfile.TemporaryDirectory(prefix="atad-ownership-") as temp:
     c = Path(temp) / "test.c"
     exe = Path(temp) / "test"
     c.write_text(prefix + production + tests)
-    subprocess.run([
-        "gcc", "-std=gnu11", "-Wall", "-Wextra", "-Werror", "-Wno-unused-function",
-        "-Wno-unused-variable", "-pthread", f"-DFIXED={int(fixed)}",
-        f"-DEXPECT_RACE={int('--expect-race' in sys.argv)}", str(c), "-o", str(exe),
-    ], check=True)
-    subprocess.run([str(exe)], check=True, timeout=10)
+    for extended in (0, 1):
+        subprocess.run([
+            "gcc", "-std=gnu11", "-Wall", "-Wextra", "-Werror", "-Wno-unused-function",
+            "-Wno-unused-variable", "-pthread", f"-DFIXED={int(fixed)}", f"-DEXTENDED={extended}",
+            f"-DEXPECT_RACE={int('--expect-race' in sys.argv)}", str(c), "-o", str(exe),
+        ], check=True)
+        subprocess.run([str(exe)], check=True, timeout=10)
