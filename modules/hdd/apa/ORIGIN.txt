@@ -22,16 +22,20 @@ LOCAL CHANGES:
   update under fioSema and preserve it on device errors.
 - hdd_fio.c: reject an on-disk subpartition count above APA_MAXSUB before
   narrowing it into the open file slot; bound size/start metadata queries.
+- journal.c: preserve the saved journal and return an error if its read or
+  replay fails; reject invalid magic/count and handle scratch allocation
+  failure. Reset only after successful replay.
 - Standalone Makefile using the installed SDK headers/imports and the same
   APA_OSD_VER, APA_USE_DEV9 and APA_USE_ATAD options as the previous variant.
 - Repository C formatting only in the remaining sources.
 
 Unchanged: on-disk format, module version, ATA transport, password behavior,
-APA enumeration/link repair, APA journal, PFS driver and PFS journal replay.
+APA enumeration/link repair, journal write/commit format, PFS driver and
+PFS journal replay. Recovery error handling changes are listed above.
 This does not implement read-only mounting, validate all APA metadata, or
 protect raw devctl/APA journal/header operations through this transfer check.
 It does not enable APA_SUPPORT_GPT, APA_SUPPORT_BHDD or APA_USE_BDM.
 
 RE-VENDOR: compare the complete source against a new SDK pin, retain the
-OSD variant and checks above, run test_apa_transfer_bounds.py and all flavor
+OSD variant and checks above, run test_apa_transfer_bounds.py, test_apa_journal_recovery.py and all flavor
 builds, and verify the manifest contains the local ps2hdd-osd.irx hash.

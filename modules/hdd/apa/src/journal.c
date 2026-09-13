@@ -57,30 +57,37 @@ int apaJournalWrite(apa_cache_t *clink)
 
 int apaJournalRestore(s32 device)
 { // copies the journal from the HDD and erases the original.
-    int ret;
+    int ret, i;
     u32 sector;
+    apa_cache_t *clink;
 
     APA_PRINTF(APA_DRV_NAME ": checking log...\n");
     ret = blkIoDmaTransfer(device, &journalBuf, APA_SECTOR_APAL, sizeof(apa_journal_t) / 512, BLKIO_DIR_READ) == 0 ? 0 : -EIO;
-    if ((ret == 0) && (journalBuf.magic == APAL_MAGIC)) {
-        int i;
-        apa_cache_t *clink;
+    // A failed read does not establish that the journal is empty or invalid.
+    // Preserve it so a subsequent recovery attempt can retry the same record.
+    if (ret != 0)
+        return ret;
+    if (journalBuf.magic != APAL_MAGIC || journalBuf.num < 0 ||
+        (u32)journalBuf.num > sizeof(journalBuf.sectors) / sizeof(journalBuf.sectors[0]))
+        return -EIO;
+    if (journalBuf.num == 0)
+        return 0;
 
-        if (journalBuf.num == 0)
-            return 0;
+    clink = apaCacheAlloc();
+    if (clink == NULL)
+        return -ENOMEM;
+    for (i = 0, sector = APA_SECTOR_APAL_HEADERS; i < journalBuf.num; i++, sector += 2) {
+        ret = (blkIoDmaTransfer(device, clink->header, sector, 2, BLKIO_DIR_READ) == 0) ? 0 : -EIO;
+        if (ret != 0)
+            break;
 
-        clink = apaCacheAlloc();
-        for (i = 0, sector = APA_SECTOR_APAL_HEADERS; i < journalBuf.num; i++, sector += 2) {
-            ret = (blkIoDmaTransfer(device, clink->header, sector, 2, BLKIO_DIR_READ) == 0) ? 0 : -EIO;
-            if (ret != 0)
-                break;
-
-            ret = (blkIoDmaTransfer(device, clink->header, journalBuf.sectors[i], 2, BLKIO_DIR_WRITE) == 0) ? 0 : -EIO;
-            if (ret != 0)
-                break;
-        }
-        apaCacheFree(clink);
+        ret = (blkIoDmaTransfer(device, clink->header, journalBuf.sectors[i], 2, BLKIO_DIR_WRITE) == 0) ? 0 : -EIO;
+        if (ret != 0)
+            break;
     }
+    apaCacheFree(clink);
+    if (ret != 0)
+        return ret;
 
     return apaJournalReset(device);
 }

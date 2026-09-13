@@ -147,3 +147,50 @@ was added on the strength of that test alone. Other BDM consumers, hotplug,
 and access bypassing the cache remain separate questions. The deterministic
 local fixture is tmp/hdd-validation/probe_cache_race.py; it is investigation
 evidence, not a passing production regression or proof of incident causation.
+
+
+## Recovery failures and power interruption follow-up (2026-09-13)
+
+`apaJournalRestore` previously reset the journal after an initial journal
+read failure or a failed replay read/write. A successful reset could mask
+the original failure by returning success, while discarding the recovery
+record. The follow-up returns the error without attempting a reset in those
+cases. It rejects invalid journal magic/counts and handles scratch-cache
+allocation failure. Successful replay retains its existing flush/reset order.
+
+The new `test_apa_journal_recovery.py` compiles the production journal source
+with an in-memory backend. It checks failures at each replay I/O, including
+a failure after an earlier entry succeeded, and then retries from the
+preserved record. It also checks empty/invalid records, allocation failure,
+and reset/flush errors. The final edited source passes these tests and the
+APA transfer regressions on the local Windows GCC toolchain. The current APA
+IRX also cross-builds successfully, and its changed C source passes the
+CI-matching clang-format 12 check. Full CI remains a separate commit gate.
+
+Scope: this does not enable new startup replay or validate all staged header
+contents/destinations. In the inspected OSD/ATAD startup, successful device
+initialization/unlock leaves status 1 before the format check; the existing
+`status != 1` condition skips `apaJournalRestore` there. That condition is
+unchanged. Consequently this recovery fix is not itself a demonstrated
+explanation of the reporter's initial error 401. The cache writer's ignored
+journal/metadata errors and dirty-flag handling remain separate open work;
+do not describe the entire APA transaction path as fixed.
+
+The newest screenshot contains another person's suggestion of a shutdown
+during writing. It is not a reporter-confirmed event. The exact drive model,
+physical sector size/alignment and power-loss behavior remain unknown.
+
+A conditional mechanism deserves investigation: 512e disks can update a
+physical 4KiB sector to service a smaller logical write. An interruption can
+affect neighboring logical sectors. If logical sectors 0-7 share that unit,
+APA's header at 0-1 and error records at 6-7 share it too. This is an inference
+from the layout and documented drive behavior, not proof about this WD disk.
+It does not revive the refuted claim that normal error-record dwords fail
+the APA format check. The proposed difference is an interrupted physical
+write, not the intended contents of a completed error record.
+
+Sources: [Microsoft's read-modify-write resiliency explanation](https://learn.microsoft.com/en-us/windows/compatibility/advanced-format-disk-compatibility-update#resiliency-the-hidden-cost-of-read-modify-write),
+[Dell Enterprise Disk Engineering, 4K Sector HDD FAQ, sections 3-5](https://dl.dell.com/manuals/all-products/esuprt_ser_stor_net/esuprt_poweredge/poweredge-t630_reference%20guide2_en-us.pdf),
+and [WD Advanced Format white paper](https://documents.westerndigital.com/content/dam/doc-library/en_us/assets/public/western-digital/collateral/white-paper/white-paper-advanced-format.pdf).
+The papers establish the general mechanism; they do not identify the
+reporter's model, confirm an interruption, or establish recovery prospects.
