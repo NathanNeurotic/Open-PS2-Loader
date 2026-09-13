@@ -471,6 +471,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/httpclient clean
 	echo " -atad (ata_bd)"
 	$(MAKE) -C modules/hdd/atad clean
+	$(MAKE) -C modules/bdm clean
 	echo " -xhdd"
 	$(MAKE) -C modules/hdd/xhdd clean
 	echo " -mcemu"
@@ -783,7 +784,11 @@ modules/pademu/usb_pademu.irx: modules/pademu
 $(EE_ASM_DIR)usb_pademu.c: modules/pademu/usb_pademu.irx
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)bdm.c: $(PS2SDK)/iop/irx/bdm.irx | $(EE_ASM_DIR)
+# Build the cache error-handling fix consistently across SDK flavors.
+modules/bdm/bdm.irx: $(wildcard modules/bdm/src/*.* modules/bdm/src/include/*.h) modules/bdm/Makefile
+	$(MAKE) -C modules/bdm
+
+$(EE_ASM_DIR)bdm.c: modules/bdm/bdm.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)bdmfs_fatfs.c: $(PS2SDK)/iop/irx/bdmfs_fatfs.irx | $(EE_ASM_DIR)

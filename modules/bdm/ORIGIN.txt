@@ -1,0 +1,32 @@
+Vendored from ps2dev/ps2sdk at 3e46a44a21db66f42a56320b6f64bfc52ea279f8:
+  iop/fs/bdm/src/*
+  iop/fs/libbdm/src/bd_cache.c
+  iop/fs/libbdm/include/bd_cache.h
+License: Academic Free License 2.0, included as LICENSE.
+
+WHY VENDORED: the SDK prebuilt BDM embeds a cache that ignores failed/short
+refills, publishes stale data as a successful read, and caches it at the new
+LBA. ATA cannot fix that cache contract. Building BDM here makes the source
+and correction consistent across all toolchain flavors. This is a separate
+confirmed defect; a destructive write from it has not been demonstrated.
+
+LOCAL CHANGES:
+- Invalidate an entry before refill and publish it only after all 8 sectors
+  are read. Propagate failures and turn short refills into -EIO.
+- Bypass read-ahead for valid requests at the device end and for sector sizes
+  other than 512 bytes; reject out-of-capacity requests without overflow.
+- Handle cache allocation failure; existing BDM falls back to direct access.
+- MBR/GPT probes require a complete one-sector read. Free the MBR allocation
+  on read failure.
+- Copy block_device metadata using the installed header's complete structure,
+  then assign wrapper callbacks. This preserves optional appended fields and
+  builds with older official SDK headers without a .path member.
+- Fork Makefile, exports-first for iopfixup compatibility. Export ABI stays 1.1.
+
+Unchanged: mount worker, priority, transport drivers, FAT/exFAT driver, GPT/MBR
+layout interpretation, and partition I/O arithmetic. This does not implement
+read-only discovery or guarantee malformed filesystem metadata is safe.
+
+RE-VENDOR: compare all files to the new pin, reapply the changes above, run the
+BDM failure regressions and all flavor builds, and update this record. Do not
+replace this module with a prebuilt SDK bdm.irx without verifying the fix.
