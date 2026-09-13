@@ -43,6 +43,7 @@ mkdir -p rolling
   echo "#   ps2ips.irx     -> modules/network/ps2ips"
   echo "#                     (ps2sdk master + four fixes marked \"RA fix\")"
   echo "#   ata_bd.irx / ps2atad.irx -> modules/hdd/atad (local ATA backend)"
+  echo "#   ps2hdd-osd.irx -> modules/hdd/apa (local APA transfer bounds)"
   echo "#   bdm.irx       -> modules/bdm (local cache error-handling fix)"
   echo "#"
   echo "# SMB IS CONDITIONAL, and this container produces both kinds of build:"
@@ -61,7 +62,7 @@ mkdir -p rolling
   echo "#"
   echo "# This file is for DIFFING two runs, which comments do not disturb; -c is the rarer use."
   cat "$TMP"
-  for module in modules/hdd/atad/ata_bd.irx modules/bdm/bdm.irx; do
+  for module in modules/hdd/atad/ata_bd.irx modules/bdm/bdm.irx modules/hdd/apa/ps2hdd-osd.irx; do
     if [ -f "$module" ]; then
       sha256sum "$module"
     else

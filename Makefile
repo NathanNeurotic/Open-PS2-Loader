@@ -471,6 +471,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/httpclient clean
 	echo " -atad (ata_bd)"
 	$(MAKE) -C modules/hdd/atad clean
+	$(MAKE) -C modules/hdd/apa clean
 	$(MAKE) -C modules/bdm clean
 	echo " -xhdd"
 	$(MAKE) -C modules/hdd/xhdd clean
@@ -980,7 +981,12 @@ modules/hdd/xhdd/xhdd.irx: modules/hdd/xhdd
 $(EE_ASM_DIR)xhdd.c: modules/hdd/xhdd/xhdd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)ps2hdd.c: $(PS2SDK)/iop/irx/ps2hdd-osd.irx
+# Build the OSD APA variant locally so partition bounds are checked before
+# translating requests into ATA addresses. See modules/hdd/apa/ORIGIN.txt.
+modules/hdd/apa/ps2hdd-osd.irx: $(wildcard modules/hdd/apa/src/*.*) modules/hdd/apa/Makefile
+	$(MAKE) -C modules/hdd/apa
+
+$(EE_ASM_DIR)ps2hdd.c: modules/hdd/apa/ps2hdd-osd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)ps2fs.c: $(PS2SDK)/iop/irx/ps2fs-osd.irx

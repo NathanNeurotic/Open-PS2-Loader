@@ -91,3 +91,59 @@ The five review findings on 3a417739 were verified and corrected in the follow-u
 - The corrupted license citation character is restored.
 
 These changes are defect corrections, not a reproduction of the reported persistent loss of APA access. Refer to the PR for the exact pushed follow-up head and its checks; the earlier 3a417739 CI does not validate later code.
+
+
+## APA transfer containment follow-up (2026-09-13)
+
+The SDK OSD APA driver checks a relative request using an addition, then
+adds the partition start in 32-bit arithmetic. It does not first establish
+that the complete partition fits the device. The ATA request guard cannot
+recover that missing context after translation. The same missing extent
+check exists in the reserved-area file view used by hddRead/hddWrite.
+
+The application now builds the same OSD/ATAD APA variant from the pinned
+source in modules/hdd/apa. The behavioral changes are limited to hdd_fio.c:
+subtraction-based partition and request bounds before translation, bounded
+file-view positions and sizes, and subpartition-count/index validation.
+Valid requests retain the existing main/subpartition reserved-area limits.
+The test runs extracted production transfer functions with a recording stub,
+checking that invalid inputs cause no device callback. It also checks valid
+last-sector transfers, EOF clamping, zero counts and failure cleanup.
+
+This is a confirmed missing containment check. It requires invalid metadata
+or an invalid request; it does not establish how either arose on the
+reporter's drive. In particular, do not describe the host tests as a
+reproduction of a normal mount erasing a valid disk. The OSD variant checks
+APA header checksums, which constrain hypotheses based on damaged metadata.
+The separate APA_SUPPORT_GPT checksum branch is not enabled in this build.
+
+PFS mount-time journal reset/replay routes its partition transfers through
+HIOCTRANSFER and therefore receives these bounds checks. APA's own raw
+header/journal/devctl operations do not go through this function and remain
+separate audit targets. The PFS journal implementation itself is unchanged.
+A failed APA readiness check still returns before loading/mounting PFS on
+that attempt, so a later PFS write requires an earlier successful readiness
+path or a different caller; error 401 alone does not demonstrate that path.
+
+The local APA IRX cross-build and new host regressions pass. Fresh PR CI and
+review must be associated with the commit containing this follow-up before
+claiming all-flavor validation. The prior e90e009a head passed all six builds,
+HDD/BDM host tests, RA host tests and formatting in run 34751249581.
+
+## Concurrent cache probe: demonstrated primitive, constrained callers
+
+A memory-only two-thread test of bd_cache.c can make two successful refills
+reuse the same victim buffer, returning the second request's bytes to both
+callers. No device writes occur in that test. However, the SDK FatFs driver
+holds the same _fs_lock semaphore across both connect_bd mounting and file
+operations. That excludes the initially proposed overlap between a FatFs
+mount and a FatFs file operation. APA/PFS accesses use ATAD directly rather
+than this BDM cache. Current whole-device guards also exclude the proposed
+nested GPT probe on an ordinary nonzero-offset partition.
+
+The cache has no internal synchronization, but a concurrent caller path for
+the reported APA-only startup is not established. No additional cache lock
+was added on the strength of that test alone. Other BDM consumers, hotplug,
+and access bypassing the cache remain separate questions. The deterministic
+local fixture is tmp/hdd-validation/probe_cache_race.py; it is investigation
+evidence, not a passing production regression or proof of incident causation.

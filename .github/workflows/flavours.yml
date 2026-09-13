@@ -61,6 +61,8 @@ jobs:
         run: python3 .github/scripts/test_atad_command_ownership.py
       - name: Check BDM failed reads and cache refill boundaries
         run: python3 .github/scripts/test_bdm_cache.py
+      - name: Check APA partition and file-view transfer bounds
+        run: python3 .github/scripts/test_apa_transfer_bounds.py
       - name: Check BDM startup resource cleanup
         run: python3 .github/scripts/test_bdm_startup.py
 
@@ -177,7 +179,7 @@ jobs:
             (iop-gcc --version 2>/dev/null || mipsel-none-elf-gcc --version 2>/dev/null || echo "iop compiler: not probed") | head -1
             echo "PS2SDK=${PS2SDK:-unset}"
             echo "---- locally built storage modules (SHA256) ----"
-            sha256sum modules/hdd/atad/ata_bd.irx modules/bdm/bdm.irx
+            sha256sum modules/hdd/atad/ata_bd.irx modules/bdm/bdm.irx modules/hdd/apa/ps2hdd-osd.irx
             for v in "$PS2SDK/../.version" "$PS2SDK/.version" /usr/local/ps2dev/.version; do
               [ -f "$v" ] && { echo "sdk version file ($v):"; cat "$v"; break; }
             done

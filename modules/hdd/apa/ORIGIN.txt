@@ -1,0 +1,37 @@
+Vendored from ps2dev/ps2sdk at 3e46a44a21db66f42a56320b6f64bfc52ea279f8:
+  iop/hdd/apa/src/*
+  iop/hdd/libapa/src/*
+  iop/hdd/libapa/include/libapa.h
+License: Academic Free License 2.0, included as LICENSE.
+
+WHY VENDORED: the application previously embedded the SDK's prebuilt
+ps2hdd-osd.irx. Its partition transfer checks add 32-bit offsets before
+establishing that the partition and relative request fit. A lower ATA
+capacity check cannot identify an address that already wrapped in APA.
+Building the same OSD/ATAD variant here applies the checks in every flavor.
+This is fault containment for invalid metadata/requests; it does not
+establish what caused the reported loss of access or repair affected media.
+
+LOCAL CHANGES:
+- hdd_fio.c: check device capacity, complete partition extent and relative
+  request with subtraction before translating the sector. Preserve main
+  and subpartition reserved-sector restrictions. Reject invalid direction
+  and subpartition indexes; zero-length valid transfers do no device I/O.
+- hdd_fio.c: bound the file view's position and signed byte count, clamp to
+  its existing EOF, and check the partition before device I/O. Keep position
+  update under fioSema and preserve it on device errors.
+- hdd_fio.c: reject an on-disk subpartition count above APA_MAXSUB before
+  narrowing it into the open file slot; bound size/start metadata queries.
+- Standalone Makefile using the installed SDK headers/imports and the same
+  APA_OSD_VER, APA_USE_DEV9 and APA_USE_ATAD options as the previous variant.
+- Repository C formatting only in the remaining sources.
+
+Unchanged: on-disk format, module version, ATA transport, password behavior,
+APA enumeration/link repair, APA journal, PFS driver and PFS journal replay.
+This does not implement read-only mounting, validate all APA metadata, or
+protect raw devctl/APA journal/header operations through this transfer check.
+It does not enable APA_SUPPORT_GPT, APA_SUPPORT_BHDD or APA_USE_BDM.
+
+RE-VENDOR: compare the complete source against a new SDK pin, retain the
+OSD variant and checks above, run test_apa_transfer_bounds.py and all flavor
+builds, and verify the manifest contains the local ps2hdd-osd.irx hash.
