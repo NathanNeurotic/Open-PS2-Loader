@@ -331,3 +331,132 @@ startup does not initiate transactions or write to sector zero. While these
 fixes eliminate confirmed corruption vectors under I/O failure, the exact
 trigger for the reporter's initial error 401 on their specific drive model
 remains causally unproven.
+
+
+## Startup write-path trace, apaGetNextHeader, and error 401 mapping (2026-09-13)
+
+### Error 401 resolved
+
+"Error 401" is an OPL EE-side error code (`ERROR_HDD_NOT_DETECTED = 401` in
+`include/iosupport.h`, enum `ERROR_CODE`). It is displayed as a numeric suffix
+by `setErrorMessageWithCode()` and `setErrorMessageWithCodeAndDetail()`, paired
+with one of several string IDs (`_STR_HDD_NOT_CONNECTED_ERROR`,
+`_STR_HDD_UNAVAILABLE_ERROR`, or `_STR_HDD_APA_REJECTED_ERROR`).
+
+The code fires in `src/hddsupport.c` on three distinct paths:
+
+1. **Non-Sony probe devctl error** (transient bus fault, module missing,
+   drive mid-seek): `nonSony < 0` at line 651 → `_STR_HDD_NOT_CONNECTED_ERROR`
+   with code 401. The module has not yet loaded; the drive may still be
+   physically healthy.
+
+2. **`hddCheck()` returns negative** (line 682-684): `fileXioDevctl("hdd0:",
+   HDIOC_STATUS)` returns a negative fileXio error. This means ps2hdd.irx
+   loaded but the devctl itself failed (unusual) OR the IOP hdd module
+   exited early with `MODULE_NO_RESIDENT_END` before registering `hdd0:`.
+   `MODULE_NO_RESIDENT_END` fires if journal restore fails (line 328-330
+   of IOP `hdd.c`), file-slot allocation fails, or cache init fails. In
+   those cases `hdd0:` is never registered; `hddCheck()` sees a negative
+   return from fileXio. → `_STR_HDD_NOT_CONNECTED_ERROR` with code 401.
+
+3. **`hddCheck()` returns 2** (line 705-710): IOP `hddDevices[device].status`
+   remained at 2, meaning ATA found the disk but unlock failed (password-
+   locked drive). → `_STR_HDD_UNAVAILABLE_ERROR` with code 401.
+
+4. **`hddCheck()` returns 1 with raw APA match** (line 694-696): ps2hdd
+   loaded, drive detected and unlocked, but `apaGetFormat` returned 0
+   (unformatted/rejected) even though the EE raw probe found an APA magic
+   at sector 0. → `_STR_HDD_APA_REJECTED_ERROR` with code 401. This is the
+   most diagnostically informative branch: it means sector 0 was readable
+   with APA magic but `apaGetFormat`'s sector-6/7 check failed (all non-
+   skipped dwords must be 0, or the sector read itself failed).
+
+`hddCheck()` returns 0 (formatted OK) only when IOP status reaches 0: disk
+detected, unlocked, and `apaGetFormat` returned 1 (all 254 checked dwords in
+error-sectors 6/7 are zero, or sector read returned `rv == 0`).
+
+The reporter's symptom ("repeated error 401, no usable listing") is consistent
+with path 1 (transient probe), path 2 (IOP module exit), or path 4 (APA
+rejected). Path 4 is the most probable if the drive was previously healthy and
+accessible: it means the APA format signature was readable but the error-sector
+check failed — which would happen if sectors 6/7 had non-zero content in the
+checked positions, or if a read of sectors 6/7 itself returned an error. The
+latter is consistent with sectors 6-7 being physically unreadable after
+corruption or a torn write (see 512e hypothesis in the "Recovery failures"
+section above).
+
+### hddInit startup write-path: no sector-zero write on healthy mount
+
+The full IOP startup sequence is:
+
+```
+hddInit()
+  → sceAtaInit(device)     [detects disk, hddDevices[i].status: 3→2]
+  → unlockDrive(device)    [unlocks, hddDevices[i].status: 2→1]
+  → apaCacheInit(cacheSize)
+  → if (status != 1): apaJournalRestore(i)   [SKIPPED on clean unlock]
+  → apaGetFormat(i, &format)
+      → apaReadHeader(device, clink->header, 0)   [reads sector 0 only — READ]
+      → blkIoDmaTransfer(device, clink->header,
+            APA_SECTOR_SECTOR_ERROR, 2, BLKIO_DIR_READ)  [reads sectors 6-7 — READ]
+      → checks 254 dwords, returns 1 (formatted) or 0 (rejected)
+  → if (apaGetFormat returned 1): status: 1→0
+  → blkIoInit()   [no-op in ATAD variant]
+  → iomanX_AddDrv(&hddFioDev)
+```
+
+**Conclusion: ordinary healthy startup performs two reads (sector 0, sectors
+6-7) and zero writes. No sector-zero write, no partition-chain enumeration,
+no journal flush.**
+
+### apaGetNextHeader: conditional flush trace
+
+`apaGetNextHeader` (apa.c:509-527) is called during partition enumeration by:
+- `apaGetPartErrorName` (apa.c:83-94): walks the chain to find a partition
+  by the LBA stored in the error-record sector.
+- `apaFindPartition` (apa.c:187): finds a named partition during open/create.
+
+Neither of these is called during `hddInit`. `apaGetFormat` does not call
+`apaGetNextHeader` or `apaFindPartition`. Partition enumeration only occurs
+when an HDD operation (open, create, rename, delete, dread) is executed after
+the driver is loaded.
+
+When called, `apaGetNextHeader` does the following:
+1. Saves `clink->header->start` as local `start`.
+2. Frees the current cache entry (`apaCacheFree`).
+3. Reads the next header at `clink->header->next` via `apaCacheGetHeader`.
+4. Compares `start` with the newly loaded header's `prev` field.
+5. **If `start != header->prev`**: logs a warning, sets `header->prev = start`,
+   marks the cache entry dirty, and calls `apaCacheFlushAllDirty(device)`.
+
+The flush at step 5 writes the corrected prev-link back to disk. The
+destination sector is whatever partition follows in the chain — it is not
+sector 0 unless the partition chain is already arranged such that the second
+partition begins at sector 0, which is the APA MBR and would be a pre-existing
+structural defect.
+
+**Conclusion: `apaGetNextHeader` can write to disk during enumeration, but
+only when a prev-link mismatch already exists (pre-existing inconsistency),
+and its destination is the following partition's header sector, not sector zero
+unconditionally. It is not reachable during startup before `hdd0:` is
+registered.**
+
+### Causal certainty: remaining gap
+
+After this trace, the following is established by static inspection:
+
+| Question | Answer |
+| --- | --- |
+| Does healthy startup write to sector 0? | No. Only two reads (sector 0, sectors 6-7). |
+| Does `apaGetNextHeader` run during startup? | No. Called only from partition enumeration, after driver loads. |
+| Can `apaGetNextHeader` write sector 0? | Only if a mismatch and sector-0-adjacent chain already exist. |
+| What does "error 401" mean? | OPL internal `ERROR_HDD_NOT_DETECTED = 401`. Four distinct paths. |
+| Which path matches "repeated 401 on working disk"? | Most likely path 4: APA magic present but format check rejected; sector 6/7 unreadable or has non-zero checked dwords. |
+| Is the exact trigger confirmed? | No. Drive model, physical sector size, prior write history, and disk image remain unknown. The 512e torn-write hypothesis is the strongest uninvestigated candidate. |
+
+The confirmed fixes (transaction atomicity, journal preservation, dirty
+eviction safety, UAF/semaphore findings) eliminate corruption paths that
+could have produced the reported state under I/O failure. They do not
+prove that those paths were taken in the specific incident. Causal
+certainty requires a disk image or a reproducible write-sequence test
+that produces sector 6/7 corruption from an ordinary OPL session.
