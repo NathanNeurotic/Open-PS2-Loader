@@ -567,7 +567,10 @@ static int apaRemove(s32 device, const char *id, const char *fpwd)
     nsub = clink->header->nsub;
     clink->header->nsub = 0;
     clink->flags |= APA_CACHE_FLAG_DIRTY;
-    apaCacheFlushAllDirty(device);
+    if ((rv = apaCacheFlushAllDirty(device)) != 0) {
+        apaCacheFree(clink);
+        return rv;
+    }
     for (i = nsub - 1; i != -1; i--) {
         apa_cache_t *clink2;
 
@@ -627,10 +630,10 @@ static int apaRename(s32 device, const char *oldId, const char *newId)
 
     clink->flags |= APA_CACHE_FLAG_DIRTY;
 
-    apaCacheFlushAllDirty(device);
+    rv = apaCacheFlushAllDirty(device);
     apaCacheFree(clink);
 
-    return 0;
+    return rv;
 }
 
 int hddRemove(iomanX_iop_file_t *f, const char *name)
@@ -933,7 +936,7 @@ static int ioctl2AddSub(hdd_file_slot_t *fileSlot, char *argp)
     fileSlot->parts[fileSlot->nsub].start = sector;
     fileSlot->parts[fileSlot->nsub].length = length;
     clink->flags |= APA_CACHE_FLAG_DIRTY;
-    apaCacheFlushAllDirty(device);
+    rv = apaCacheFlushAllDirty(device);
     apaCacheFree(clink);
     return rv;
 }
@@ -964,7 +967,11 @@ static int ioctl2DeleteLastSub(hdd_file_slot_t *fileSlot)
         fileSlot->nsub--;
         mainPart->header->nsub--;
         mainPart->flags |= APA_CACHE_FLAG_DIRTY;
-        apaCacheFlushAllDirty(device);
+        if ((rv = apaCacheFlushAllDirty(device)) != 0) {
+            apaCacheFree(subPart);
+            apaCacheFree(mainPart);
+            return rv;
+        }
         rv = apaDelete(subPart);
     }
     apaCacheFree(mainPart);
@@ -1090,7 +1097,7 @@ static int devctlSwapTemp(s32 device, char *argp)
             memset(partNew->header->fpwd, 0, APA_PASSMAX);
             partTemp->flags |= APA_CACHE_FLAG_DIRTY;
             partNew->flags |= APA_CACHE_FLAG_DIRTY;
-            apaCacheFlushAllDirty(device);
+            rv = apaCacheFlushAllDirty(device);
         }
         apaCacheFree(partNew);
     }
@@ -1109,13 +1116,15 @@ static int devctlSetOsdMBR(s32 device, hddSetOsdMBR_t *mbrInfo)
     APA_PRINTF(APA_DRV_NAME ": mbr start: %ld\n" APA_DRV_NAME ": mbr size : %ld\n", mbrInfo->start, mbrInfo->size);
 #ifdef APA_SUPPORT_GPT
     // osdStart should not overwrite APA journal
-    if (mbrInfo->start < APA_SECTOR_MIN_OSDSTART)
+    if (mbrInfo->start < APA_SECTOR_MIN_OSDSTART) {
+        apaCacheFree(clink);
         return -EINVAL;
+    }
 #endif
     clink->header->mbr.osdStart = mbrInfo->start;
     clink->header->mbr.osdSize = mbrInfo->size;
     clink->flags |= APA_CACHE_FLAG_DIRTY;
-    apaCacheFlushAllDirty(device);
+    rv = apaCacheFlushAllDirty(device);
     apaCacheFree(clink);
     return rv;
 }

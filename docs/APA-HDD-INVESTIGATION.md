@@ -570,3 +570,52 @@ Four subpartition array access paths lacked validation against `APA_MAXSUB`:
 - **`ioctl2DeleteLastSub`**: did not check `fileSlot->nsub > APA_MAXSUB` or
   `mainPart->header->nsub == 0 || mainPart->header->nsub > APA_MAXSUB`; would
   underflow or index out-of-bounds; added checks.
+
+
+## Error propagation, leak fixes, GPT layout incompatibility, and volatile cache trace (2026-09-13)
+
+### Flush error propagation and resource leak hardening (apa.c & hdd_fio.c)
+
+A systematic audit of all `apaCacheFlushAllDirty` calls and error return paths identified several unhandled failure points and resource leaks:
+
+1. **`apaInsertPartition` (`apa.c`)**:
+   - `apaRemovePartition()` return value was dereferenced unconditionally without checking for `NULL` (`clink_empty->header->start`). If memory allocation or header reading failed during partition splitting, this triggered an immediate NULL pointer dereference crash. Added NULL check returning `-ENOMEM` after freeing allocated headers.
+   - Return values of `apaCacheFlushAllDirty()` during block splitting and header initialization were previously ignored. They are now captured into `*err` with proper cleanup and early return on failure.
+
+2. **`apaDelete` (`apa.c`)**:
+   - When backward-traversing partitions during tail deletion (`clink->header->next == 0`), if `apaCacheGetHeader(device, prev, ...)` failed, the loop previously executed `return 0;`. This leaked the allocated `clink_mbr` header and falsely reported success for an unapplied deletion. Fixed to call `apaCacheFree(clink_mbr)` and return `rv`.
+   - `apaCacheFlushAllDirty()` errors during tail deletion backward merge and non-tail deletion are now captured and propagated instead of returning success.
+   - Non-tail partition fix loops (`apaDeleteFixPrev` / `apaDeleteFixNext`) previously returned `0` on NULL return. They now propagate the actual error code `rv`.
+
+3. **`hdd_fio.c` flush error propagation**:
+   - `apaRemove`, `apaRename`, `ioctl2AddSub`, `ioctl2DeleteLastSub`, and `devctlSwapTemp` now check and return the result of `apaCacheFlushAllDirty(device)` rather than returning 0.
+   - `devctlSetOsdMBR`: on GPT builds (`#ifdef APA_SUPPORT_GPT`), if `mbrInfo->start < APA_SECTOR_MIN_OSDSTART`, the function previously returned `-EINVAL` without freeing `clink`. Fixed to call `apaCacheFree(clink)`. The return value of `apaCacheFlushAllDirty(device)` is now captured and returned.
+
+### Architectural finding: GPT layout incompatibility causes false Error 401
+
+Investigation of the interplay between the EE-side `hddDetectNonSonyFileSystem()` probe and IOP-side `ps2hdd` revealed an architectural defect that produces a false "HDD APA format rejected (401)" on modern GPT-partitioned drives:
+
+1. **Checksum scope divergence**:
+   - `hddApaHeaderValid()` in `src/hddsupport.c` sums only the first 128 dwords (`i < 128`, sector 0), treating this as sufficient to detect APA magic.
+   - On a disk formatted with GPT-APA support (e.g. via modern wLaunchELF or ps2sdk's `apa-gpt`), Sector 0 (Protective MBR) is stamped with an APA header whose checksum is computed with `fullcheck = 0` (128 dwords) because Sector 1 is the Primary GPT Header (`"EFI PART"`), not an APA subpartition table.
+   - However, OPL's `modules/hdd/apa` is compiled *without* `APA_SUPPORT_GPT`. In `apaReadHeader()`, without `APA_SUPPORT_GPT`, the driver strictly checks `apaCheckSum(header, 1)` (256 dwords / 1024 bytes). Sector 1 containing the GPT header causes this checksum to fail with `-EIO`.
+
+2. **Sector 6-7 layout collision**:
+   - On a legacy APA disk, Sectors 6 and 7 are reserved for `APA_SECTOR_SECTOR_ERROR` and `APA_SECTOR_PART_ERROR`.
+   - On a GPT-partitioned disk, Sectors 2 through 33 contain the GPT Partition Array (each entry is 128 bytes; Sectors 6 and 7 hold Partition Entries 17 through 24).
+   - In GPT-APA (`libapa.h`), `APA_SECTOR_SECTOR_ERROR` is moved to Sector **34**.
+   - When OPL's non-GPT driver boots, `apaGetFormat()` reads Sectors 6 and 7. If the drive has GPT partition entries or non-zero initialization in those sectors, `apaGetFormat()` finds non-zero dwords and rejects the drive (`status = 1`).
+
+3. **The Error 401 symptom**:
+   - EE-side `hddDetectNonSonyFileSystem()` checks Sector 0, finds valid APA magic and matching 128-dword checksum, and returns `0` (APA detected).
+   - IOP-side `ps2hdd` rejects the drive (`status = 1`) due to the checksum mismatch or non-zero data in Sectors 6-7.
+   - OPL EE observes `status == 1` but `hddDetectNonSonyFileSystem() == 0`, logs `"HDD: raw APA probe matched but ps2hdd reports unformatted; cause unknown."`, and displays **`_STR_HDD_APA_REJECTED_ERROR` with code `ERROR_HDD_NOT_DETECTED` (Error 401)**!
+
+### Volatile write cache and power-down without cache barrier
+
+Analysis of disk shutdown and standby behavior revealed an additional vulnerability:
+- Modern HDDs (particularly Advanced Format 512e drives like Western Digital Caviar Green/Blue/Red) enable volatile onboard write caching by default.
+- In `hddShutdown()` (`src/hddsupport.c`), when tearing down HDD support or shutting down the console, `hddSetIdleImmediate()` is called to issue `HDIOC_IDLEIMM` (`ATA_C_IDLE_IMMEDIATE`), followed by `sysShutdownDev9()` to power off the DEV9 controller.
+- `fileXioDevctl("hdd0:", HDIOC_FLUSH)` (`ATA_C_FLUSH_CACHE` / `ATA_C_FLUSH_CACHE_EXT`) is **not** called during `hddShutdown()`.
+- If uncommitted data remains in the drive's volatile cache when DEV9 power is cut, or if an internal 4KiB Read-Modify-Write cycle is interrupted by power loss, sectors 0-7 (sharing the first physical 4KiB sector) are subject to torn writes and physical corruption.
+

@@ -35,14 +35,18 @@ LOCAL CHANGES:
   success. apaCacheGetHeader and apaCacheAlloc skip dirty entries on the free
   list to prevent silent metadata clobbering.
 - apa.c: free the cache entry on read failure in apaGetPartErrorSector; save
-  partition coordinates before freeing clink in apaInsertPartition; save next
+  partition coordinates before freeing clink in apaInsertPartition; check
+  clink_empty against NULL before dereference in apaInsertPartition; save next
   and device before freeing clink in apaGetNextHeader; save header->next before
   freeing clink1 in apaDeleteFixNext; save prev before freeing clink in
-  apaDelete.
+  apaDelete; free clink_mbr and propagate errors in apaDelete; propagate flush
+  errors in apaInsertPartition and apaDelete.
 - hdd_fio.c: compare passwords before freeing clink in apaOpen; save the
   partition sector before freeing clink in hddFormat; remove duplicate
   SignalSema calls in apaRename; validate nsub against APA_MAXSUB in apaRemove,
-  fioGetStatFiller, ioctl2AddSub, and ioctl2DeleteLastSub.
+  fioGetStatFiller, ioctl2AddSub, and ioctl2DeleteLastSub; propagate flush errors
+  in apaRemove, apaRename, ioctl2AddSub, ioctl2DeleteLastSub, devctlSwapTemp, and
+  devctlSetOsdMBR; free clink on invalid osdStart in devctlSetOsdMBR.
 - hdd.c: validate clink_this from apaCacheGetHeader before dereference in
   hddAddPartitionHere.
 - Standalone Makefile using the installed SDK headers/imports and the same

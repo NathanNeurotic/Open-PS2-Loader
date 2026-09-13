@@ -150,12 +150,23 @@ apa_cache_t *apaInsertPartition(s32 device, const apa_params_t *params, u32 sect
         clink_this->header->length >>= 1;
         clink_empty = apaRemovePartition(device, (clink_this->header->start + clink_this->header->length),
                                          clink_this->header->next, clink_this->header->start, clink_this->header->length);
+        if (clink_empty == NULL) {
+            apaCacheFree(clink_next);
+            apaCacheFree(clink_this);
+            *err = -ENOMEM;
+            return 0;
+        }
         clink_this->header->next = clink_empty->header->start;
         clink_this->flags |= APA_CACHE_FLAG_DIRTY;
         clink_next->header->prev = clink_empty->header->start;
         clink_next->flags |= APA_CACHE_FLAG_DIRTY;
 
-        apaCacheFlushAllDirty(device);
+        if ((*err = apaCacheFlushAllDirty(device)) != 0) {
+            apaCacheFree(clink_empty);
+            apaCacheFree(clink_next);
+            apaCacheFree(clink_this);
+            return 0;
+        }
         apaCacheFree(clink_empty);
         apaCacheFree(clink_next);
     }
@@ -164,7 +175,12 @@ apa_cache_t *apaInsertPartition(s32 device, const apa_params_t *params, u32 sect
     prev = clink_this->header->prev;
     apaCacheFree(clink_this);
     clink_this = apaFillHeader(device, params, start, next, prev, params->size, err);
-    apaCacheFlushAllDirty(device);
+    if (clink_this != NULL) {
+        if ((*err = apaCacheFlushAllDirty(device)) != 0) {
+            apaCacheFree(clink_this);
+            return 0;
+        }
+    }
     return clink_this;
 }
 
@@ -384,13 +400,19 @@ int apaDelete(apa_cache_t *clink)
             u32 prev = clink->header->prev;
 
             apaCacheFree(clink);
-            if ((clink = apaCacheGetHeader(device, prev, APA_IO_MODE_READ, &rv)) == NULL)
-                return 0;
+            if ((clink = apaCacheGetHeader(device, prev, APA_IO_MODE_READ, &rv)) == NULL) {
+                apaCacheFree(clink_mbr);
+                return rv;
+            }
             clink->header->next = 0;
             clink->flags |= APA_CACHE_FLAG_DIRTY;
             clink_mbr->header->prev = clink->header->start;
             clink_mbr->flags |= APA_CACHE_FLAG_DIRTY;
-            apaCacheFlushAllDirty(device);
+            if ((rv = apaCacheFlushAllDirty(device)) != 0) {
+                apaCacheFree(clink_mbr);
+                apaCacheFree(clink);
+                return rv;
+            }
         } while (clink->header->type == 0);
         apaCacheFree(clink_mbr);
     } else {
@@ -399,13 +421,13 @@ int apaDelete(apa_cache_t *clink)
 
         for (i = 0; i < 2; i++) {
             if ((clink = apaDeleteFixPrev(clink, &rv)) == NULL)
-                return 0;
+                return rv;
             if ((clink = apaDeleteFixNext(clink, &rv)) == NULL)
-                return 0;
+                return rv;
         }
         if (clink->header->start == start && clink->header->length == length) {
             apaMakeEmpty(clink);
-            apaCacheFlushAllDirty(clink->device);
+            rv = apaCacheFlushAllDirty(clink->device);
         }
     }
     apaCacheFree(clink);
