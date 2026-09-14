@@ -585,6 +585,7 @@ Sources**. For PS2, 48-bit LBA internal HDDs are supported. The HDD can be forma
 
 - APA partitioning with PFS filesystem (up to 2TB)
 	- RiptOPL mounts an existing data partition. A usable `hdd_partition` selection in `__common/OPL/conf_hdd.cfg` takes priority, followed by existing `+OPL`, then `__common/OPL/`. No partition is created, resized or formatted. `+OPL` uses its root for support folders; `__common` uses `OPL/`.
+	- **Table protection:** RiptOPL's APA driver will not write the sector that holds the partition table except to store a complete, valid header, and it refuses format and partition creation outright. If a disk reports **code 402** (or "Formatted: NO" elsewhere), **do not format it** — your games are almost certainly still there. See **[docs/APA-SAFETY.md](docs/APA-SAFETY.md)** and the PC recovery tool in [`pc/apa-recovery`](pc/apa-recovery/README.md).
 - MBR partitioning (up to 2TB) or GPT partitioning (capacities above the MBR limit, subject to the driver and tested hardware) with the exFAT filesystem
 	- Enable **BDM HDD** in **Game Sources**. The exFAT HDD then mounts through the Block Device Manager (BDMAssault / "BDMA") into the shared `massN:` namespace — the same path as USB/MX4SIO — and appears as an **HDD (exFAT)** games list with the HDD icon.
 	- Files should be added contiguously or synchronously to avoid fragmentation. For example, drag and drop files one at a time, or ensure that files are added sequentially.
@@ -759,6 +760,14 @@ Back up the device before any reformat; do not reformat solely because of the sc
 Hold **Triangle + Cross** while RiptOPL initializes to force **480p for the OPL menu**. Your display
 and connection must accept 480p. Once visible, choose a suitable menu mode under **Interface** and
 save. **START** skips saved configuration and uses defaults if you need to undo a saved menu setup.
+
+### The internal HDD shows code 402, or "Formatted: NO" in another tool
+
+The drive answered, but its APA partition table can't be read. This is almost always the table's
+first sectors only — every partition, and every game, is normally still on the disk. **Do not
+format or initialize it.** Connect it to a PC and follow **[docs/APA-SAFETY.md](docs/APA-SAFETY.md)**,
+which uses [`pc/apa-recovery/apa_recover.py`](pc/apa-recovery/README.md) to check and, when safe,
+rebuild just that table.
 
 ### The menu works, but launching a game loses the picture
 
