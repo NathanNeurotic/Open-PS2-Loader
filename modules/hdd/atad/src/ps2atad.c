@@ -1026,12 +1026,14 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
     USE_SPD_REGS;
     int res = 0, retries;
     u16 sector, lcyl, hcyl, select, command, len;
+    u32 chunk; /* FORK: upstream f30f05eba -- progress is counted in chunk, not in the u16 register value */
 
     while (res == 0 && nsectors > 0) {
 
         if (atad_devinfo[device].lba48 && (ata_dvrp_workaround ? (lba >= atad_devinfo[device].total_sectors) : 1)) {
             /* Setup for 48-bit LBA.  */
-            len = (u16)((nsectors > 65536) ? 65536 : nsectors); /* 0 means 65536 in LBA48 */
+            chunk = (nsectors > 65536) ? 65536 : nsectors;
+            len = (u16)chunk; /* 0 means 65536 in the LBA48 sector count register. */
 
             /* Combine bits 24-31 and bits 0-7 of lba into sector.  */
             sector = ((lba >> 16) & 0xff00) | (lba & 0xff);
@@ -1043,7 +1045,8 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
             command = (dir == 1) ? ATA_C_WRITE_DMA_EXT : ATA_C_READ_DMA_EXT;
         } else {
             /* Setup for 28-bit LBA.  */
-            len = (nsectors > 256) ? 256 : nsectors;
+            chunk = (nsectors > 256) ? 256 : nsectors;
+            len = (u16)chunk;
             sector = lba & 0xff;
             lcyl = (lba >> 8) & 0xff;
             hcyl = (lba >> 16) & 0xff;
@@ -1062,7 +1065,7 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
 #endif
 #endif
 
-            if ((res = sceAtaExecCmd(buf, len, 0, len, sector, lcyl, hcyl, select, command)) != 0)
+            if ((res = sceAtaExecCmd(buf, chunk, 0, len, sector, lcyl, hcyl, select, command)) != 0)
                 break;
 
 #ifdef ATA_USE_DEV9
@@ -1084,9 +1087,9 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
                 break;
         }
 
-        buf = (void *)((u8 *)buf + len * 512);
-        lba += len;
-        nsectors -= len;
+        buf = (void *)((u8 *)buf + chunk * 512);
+        lba += chunk;
+        nsectors -= chunk;
     }
 
     return res;
@@ -1536,8 +1539,35 @@ static int ata_bd_read(struct block_device *bd, u64 sector, void *buffer, u16 co
     return count;
 }
 
+/* FORK (RiptOPL): BDM never writes into an APA disk's reserved area.
+   The first 128 MB of an APA disk -- the __mbr partition, holding the partition table, the error
+   records and the journal -- is never FAT/exFAT territory, not even on an APA+exFAT hybrid, whose
+   exFAT volume starts far above it. A filesystem write landing there can only come from a stale
+   partition entry, a misparsed boot sector or a bug, and on a 512e drive LBA 0-7 is one physical
+   sector: losing it makes the whole disk read as unformatted. So a write below the first APA user
+   partition is refused when LBA 0 carries the APA magic, or when LBA 0 cannot be read to prove it
+   does not. See docs/APA-SAFETY.md. */
+#define ATA_BD_APA_RESERVED_SECTORS (1024 * 256)
+
+static int ata_bd_write_hits_apa_reserved(int device, u64 sector, u16 count)
+{
+    static u8 lba0[512];
+
+    if (count == 0 || sector >= ATA_BD_APA_RESERVED_SECTORS)
+        return 0;
+    if (ata_device_sector_io64(device, lba0, 0, 1, ATA_DIR_READ) != 0)
+        return 1;
+    return lba0[4] == 'A' && lba0[5] == 'P' && lba0[6] == 'A' && lba0[7] == 0;
+}
+
 static int ata_bd_write(struct block_device *bd, u64 sector, const void *buffer, u16 count)
 {
+    if (ata_bd_write_hits_apa_reserved(bd->devNr, sector, count)) {
+        M_PRINTF("BDM write refused: %u sector(s) at LBA %lu is inside the APA reserved area\n",
+                 (unsigned int)count, (unsigned long)sector);
+        return -EIO;
+    }
+
     if (ata_device_sector_io64(bd->devNr, (void *)buffer, sector, count, ATA_DIR_WRITE) != 0) {
         return -EIO;
     }
