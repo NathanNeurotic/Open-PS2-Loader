@@ -30,6 +30,7 @@
 #include "hdd.h"
 #include "hdd_fio.h"
 #include "hdd_blkio.h"
+#include "table_fence.h"
 
 hdd_file_slot_t *hddFileSlots;
 int fioSema;
@@ -92,9 +93,12 @@ static int fioDataTransfer(iomanX_iop_file_t *f, void *buf, int size, int mode);
 static int getFileSlot(apa_params_t *params, hdd_file_slot_t **fileSlot, iomanX_iop_file_t *file);
 static int ioctl2Transfer(s32 device, hdd_file_slot_t *fileSlot, hddIoctl2Transfer_t *arg);
 static void fioGetStatFiller(apa_cache_t *clink1, iox_stat_t *stat);
-static int ioctl2AddSub(hdd_file_slot_t *fileSlot, char *argp);
-static int ioctl2DeleteLastSub(hdd_file_slot_t *fileSlot);
-static int devctlSwapTemp(s32 device, char *argp);
+// RiptOPL: these four partition-table editors are kept for diffability against the SDK but are no
+// longer reachable (see hddIoctl2/hddDevctl).
+static int ioctl2AddSub(hdd_file_slot_t *fileSlot, char *argp) __attribute__((unused));
+static int ioctl2DeleteLastSub(hdd_file_slot_t *fileSlot) __attribute__((unused));
+static int devctlSwapTemp(s32 device, char *argp) __attribute__((unused));
+static int devctlSetOsdMBR(s32 device, hddSetOsdMBR_t *mbrInfo) __attribute__((unused));
 
 static int fioPartitionSizeLookUp(char *str)
 {
@@ -279,7 +283,10 @@ static int ioctl2Transfer(s32 device, hdd_file_slot_t *fileSlot, hddIoctl2Transf
     if (arg->sub != 0 && (arg->sector < 2))
         return -EINVAL;
 
-    if (fileSlot->parts[arg->sub].length < arg->sector + arg->size)
+    // RiptOPL: overflow-safe. The SDK summed sector + size in u32, so a wrapping request passed this
+    // check and then addressed start + sector modulo 2^32 -- anywhere on the disk.
+    if (arg->sector > fileSlot->parts[arg->sub].length ||
+        arg->size > fileSlot->parts[arg->sub].length - arg->sector)
         return -ENXIO;
 
     if (blkIoDmaTransfer(device, arg->buffer,
@@ -333,6 +340,11 @@ int hddFormat(iomanX_iop_file_t *f, const char *dev, const char *blockdev, void 
 
     if (f->unit >= BLKIO_MAX_VOLUMES)
         return -ENXIO;
+
+    // RiptOPL: the loader never formats a drive, and a format erases every partition header on the
+    // disk. Refuse it outright rather than trusting every caller to stay away.
+    APA_PRINTF(APA_DRV_NAME ": format refused (disabled in this build)\n");
+    return -EACCES;
 
     // clear all errors on hdd
     clink = apaCacheAlloc();
@@ -447,7 +459,6 @@ static int apaOpen(s32 device, hdd_file_slot_t *fileSlot, apa_params_t *params, 
     int rv = 0;
     u32 emptyBlocks[32];
     apa_cache_t *clink;
-    apa_cache_t *clink2;
     u32 sector = 0;
 
 #ifdef APA_SUPPORT_BHDD
@@ -473,17 +484,12 @@ static int apaOpen(s32 device, hdd_file_slot_t *fileSlot, apa_params_t *params, 
         return rv;
     rv = -ENOENT;
 
+    // RiptOPL: never create partitions. The loader only ever opens partitions that already exist, and
+    // hddN: is the raw APA namespace, so an O_CREAT that reaches here from any stray path would rewrite
+    // the partition table (with no size given it also divides by zero in hddAddPartitionHere).
     if (clink == NULL && (mode & FIO_O_CREAT)) {
-        if ((rv = hddCheckPartitionMax(device, params->size)) >= 0) {
-            if ((clink = hddAddPartitionHere(device, params, emptyBlocks, sector, &rv)) != NULL) {
-                sector = clink->header->start;
-                clink2 = apaCacheAlloc();
-                memset(clink2->header, 0, sizeof(apa_header_t));
-                blkIoDmaTransfer(device, clink2->header, sector + 8, 2, BLKIO_DIR_WRITE);
-                blkIoDmaTransfer(device, clink2->header, sector + 0x2000, 2, BLKIO_DIR_WRITE);
-                apaCacheFree(clink2);
-            }
-        }
+        APA_PRINTF(APA_DRV_NAME ": partition creation refused (disabled in this build)\n");
+        rv = -EACCES;
     }
     if (clink == NULL)
         return rv;
@@ -950,12 +956,10 @@ int hddIoctl2(iomanX_iop_file_t *f, int req, void *argp, unsigned int arglen,
     WaitSema(fioSema);
     switch (req) {
         // cmd set 1
+        // RiptOPL: sub-partition add/remove rewrites partition-table headers; the loader never does it.
         case HIOCADDSUB:
-            rv = ioctl2AddSub(fileSlot, (char *)argp);
-            break;
-
         case HIOCDELSUB:
-            rv = ioctl2DeleteLastSub(fileSlot);
+            rv = -EACCES;
             break;
 
         case HIOCNSUB:
@@ -1109,8 +1113,9 @@ int hddDevctl(iomanX_iop_file_t *f, const char *devname, int cmd, void *arg,
                 rv = -EIO;
             break;
 
+        // RiptOPL: renames/swaps system partitions (OSD installers); the loader never does it.
         case HDIOC_SWAPTMP:
-            rv = devctlSwapTemp(f->unit, (char *)arg);
+            rv = -EACCES;
             break;
 
         case HDIOC_SMARTSTAT:
@@ -1138,8 +1143,9 @@ int hddDevctl(iomanX_iop_file_t *f, const char *devname, int cmd, void *arg,
             rv = apaGetTime((apa_ps2time_t *)bufp);
             break;
 
+        // RiptOPL: rewrites the __mbr header itself (OSD installers); the loader never does it.
         case HDIOC_SETOSDMBR:
-            rv = devctlSetOsdMBR(f->unit, (hddSetOsdMBR_t *)arg);
+            rv = -EACCES;
             break;
 
         case HDIOC_GETSECTORERROR:
@@ -1156,6 +1162,13 @@ int hddDevctl(iomanX_iop_file_t *f, const char *devname, int cmd, void *arg,
             break;
 
         case HDIOC_WRITESECTOR:
+            // RiptOPL: an absolute LBA straight from the EE. The loader only rewrites HDL game headers,
+            // which never sit inside the __mbr partition, so refuse anything that does.
+            if (!apaFenceRawWriteAllowed(((hddAtaTransfer_t *)arg)->lba, ((hddAtaTransfer_t *)arg)->size,
+                                         hddDevices[f->unit].totalLBA)) {
+                rv = -EROFS;
+                break;
+            }
             rv = blkIoDmaTransfer(f->unit, ((hddAtaTransfer_t *)arg)->data,
                                   ((hddAtaTransfer_t *)arg)->lba, ((hddAtaTransfer_t *)arg)->size,
                                   BLKIO_DIR_WRITE);

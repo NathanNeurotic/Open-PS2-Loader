@@ -8,7 +8,7 @@ IOP_INCS := -Isrc
 IOP_CFLAGS += -DAPA_OSD_VER -DAPA_USE_DEV9 -DAPA_USE_ATAD
 IOP_CFLAGS += -DIOMANX_OLD_NAME_COMPATIBILITY=0 -DIOMANX_OLD_NAME_ADDDELDRV=0
 
-IOP_OBJS := hdd_fio.o hdd_blkio.o hdd.o imports.o password.o misc.o cache.o apa.o journal.o free.o
+IOP_OBJS := hdd_fio.o hdd_blkio.o hdd.o imports.o password.o misc.o cache.o apa.o journal.o free.o table_fence.o
 
 all:: $(IOP_BIN)
 
