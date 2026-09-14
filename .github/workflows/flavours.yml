@@ -47,6 +47,17 @@ permissions:
   contents: read
 
 jobs:
+  apa-safety-host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check the APA table write fence, driver write policy and raw hdd0 paths
+        run: python3 .github/scripts/test_apa_table_safety.py
+      - name: Check the APA recovery tool against synthetic damaged disks
+        run: python3 .github/scripts/test_apa_recover.py
+
   ra-host-tests:
     runs-on: ubuntu-latest
     steps:
