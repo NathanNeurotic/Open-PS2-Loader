@@ -1017,6 +1017,10 @@ jobs:
             # "PC library manager" section that used to sit here, so the recommendation is edited
             # in ONE place and every rolling release carries it unchanged.
             printf '\n## In this build\n'
+            printf -- '- APA HDD table protection: the APA driver can no longer write the partition-table sector except a\n'
+            printf -- '  complete valid header, never formats or creates partitions, and never writes error records.\n'
+            printf -- '  A disk whose table cannot be read now says so (code 402: do NOT format) -- see docs/APA-SAFETY.md\n'
+            printf -- '  and the PC recovery tool pc/apa-recovery in the source.\n'
             printf -- '- External Neutrino core option: per-game core selector + global/per-game launch args\n'
             printf -- '- Coverflow cover-art render mode (default theme)\n'
             printf -- '- Favorites tab: R3 stars; its independent L3 ring always cycles PS2 / PS1 / ELF / All in One, opening on PS2\n'
@@ -1043,6 +1047,9 @@ jobs:
             printf -- '- OPL-PS1-AIO-Converter-GUI.url: BIN/CUE to VCD conversion and install, by shaan\n'
             printf -- '- PS2RD-CHT-Manager.url: manager for the PS2RD .cht cheat files, by TheRealNextria\n'
             printf '\n## Needs testing -- please report from real hardware\n'
+            printf -- '- APA HDD, on a disk you have backed up: boot, list and launch; delete a game (including the last\n'
+            printf -- '  one on the disk); rename a PS1 partition; exit and power off from the menu. Everything should still\n'
+            printf -- '  list afterwards, and no "refused" line should appear in the IOP log during normal use.\n'
             printf -- '- GameID barcode: enable it on the Interface page, then confirm your Pixel FX / RetroGEM /\n'
             printf -- '  PS2Digital auto-loads the per-game profile (the HDMI latch is hardware-only -- not emulator-testable).\n'
             printf -- '- VMC -> Neutrino: confirm your save mounts when launching via Neutrino on USB / exFAT / MX4SIO.\n'
