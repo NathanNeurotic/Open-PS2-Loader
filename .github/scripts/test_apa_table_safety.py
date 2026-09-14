@@ -263,6 +263,27 @@ def check_driver_policy():
     check(transfer is not None and 'arg->sector + arg->size' not in transfer,
           'hdd_fio.c: ioctl2Transfer bounds check can wrap again')
 
+    # A corrupt on-disk sub-partition count must never index past the 64-entry subs array.
+    open_body = function_body(fio, 'static int apaOpen(')
+    check(open_body is not None and re.search(r'nsub > APA_MAXSUB.*?return -EIO;.*?fileSlot->parts\[0\]', open_body, re.S),
+          'hdd_fio.c: apaOpen no longer rejects an out-of-range sub-partition count before using it')
+    stat_body = function_body(fio, 'static void fioGetStatFiller(')
+    check(stat_body is not None and 'i < APA_MAXSUB' in stat_body,
+          'hdd_fio.c: fioGetStatFiller walks subs[] without the APA_MAXSUB bound')
+    remove_body = function_body(fio, 'static int apaRemove(')
+    if remove_body is None:
+        failures.append('hdd_fio.c: apaRemove not found')
+    else:
+        first_edit = remove_body.find('clink->header->nsub = 0;')
+        proof = remove_body.find('sub->header->main == clink->header->start')
+        check(first_edit != -1 and proof != -1 and proof < first_edit and 'nsub > APA_MAXSUB' in remove_body[:first_edit],
+              'hdd_fio.c: apaRemove modifies the table before proving every sub-partition belongs to it')
+
+    # The probe classifies a GPT/APA hybrid as GPT before it ever looks for an APA header.
+    probe = function_body(text(root / 'src/hddsupport.c'), 'int hddDetectNonSonyFileSystem(')
+    check(probe is not None and 0 <= probe.find('"EFI PART"') < probe.find('"APA", 3'),
+          'hddsupport.c: the probe no longer classifies GPT/APA hybrids before the APA header check')
+
 
 BD_HARNESS_PREFIX = r'''
 #include <assert.h>
@@ -324,6 +345,75 @@ int main(void)
 }
 '''
 
+RANGE_HARNESS_PREFIX = r'''
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+typedef uint32_t u32;
+typedef uint64_t u64;
+typedef struct { u32 exists, has_packet, total_sectors, security_status, lba48, total_sectors_lba48; } ata_devinfo_t;
+'''
+
+RANGE_HARNESS_MAIN = r'''
+int main(void)
+{
+    ata_devinfo_t small = {1, 0, 0x0FFFFFFF, 0, 0, 0x0FFFFFFF};   /* 137 GB, no LBA48 */
+    ata_devinfo_t tiny = {1, 0, 1000000, 0, 0, 1000000};           /* no LBA48, exact size known */
+    ata_devinfo_t big = {1, 0, 0x0FFFFFFF, 0, 1, 0x74706DB0};      /* 1 TB, LBA48 */
+    ata_devinfo_t huge = {1, 0, 0x0FFFFFFF, 0, 1, 0xFFFFFFFF};     /* > 2 TiB: the u32 saturates */
+
+    /* Without LBA48, a request that would wrap past 2^28 (or past the end) is refused. */
+    assert(ata_request_in_range(&small, 0, 8));
+    assert(ata_request_in_range(&small, 0x0FFFFFFE, 1));
+    assert(!ata_request_in_range(&small, 0x0FFFFFFF, 1));
+    assert(!ata_request_in_range(&small, 0x10000000, 1));
+    assert(!ata_request_in_range(&small, 0x0FFFFF00, 0x200));
+    assert(ata_request_in_range(&tiny, 999999, 1));
+    assert(!ata_request_in_range(&tiny, 999999, 2));
+
+    /* With LBA48 and a real capacity, the capacity is the limit. */
+    assert(ata_request_in_range(&big, 0x74706DAF, 1));
+    assert(!ata_request_in_range(&big, 0x74706DB0, 1));
+    assert(!ata_request_in_range(&big, 0xFFFFFFFFFFFFull, 1));
+
+    /* Past 2 TiB the reported capacity is saturated: stay usable beyond it, but never past 2^48. */
+    assert(ata_request_in_range(&huge, 0x1FFFFFFFFull, 8));
+    assert(ata_request_in_range(&huge, (1ull << 48) - 8, 8));
+    assert(!ata_request_in_range(&huge, (1ull << 48) - 8, 9));
+    assert(!ata_request_in_range(&huge, 0xFFFFFFFFFFFFFFFFull, 1));
+
+    /* Zero-length requests do no I/O and are never refused. */
+    assert(ata_request_in_range(&small, 0x20000000, 0));
+
+    puts("ata range: all cases passed");
+    return 0;
+}
+'''
+
+
+def run_range_harness():
+    atad = text(root / 'modules/hdd/atad/src/ps2atad.c')
+    match = re.search(r'static int ata_request_in_range\(.*?\n\}\n', atad, re.S)
+    if match is None:
+        failures.append('ps2atad.c: the ATA addressable-range check is missing')
+        return
+    io_body = function_body(atad, 'int ata_device_sector_io64(')
+    check(io_body is not None and 0 <= io_body.find('ata_request_in_range(') < io_body.find('while (res == 0'),
+          'ps2atad.c: ata_device_sector_io64 no longer checks the addressable range before its first command')
+    with tempfile.TemporaryDirectory() as tmp:
+        c_file = Path(tmp) / 'range_test.c'
+        exe = Path(tmp) / 'range_test'
+        c_file.write_text(RANGE_HARNESS_PREFIX + match.group(0) + RANGE_HARNESS_MAIN)
+        result = subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', str(c_file), '-o', str(exe)],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            failures.append('ata range harness failed to compile:\n' + result.stderr)
+            return
+        result = subprocess.run([str(exe)], capture_output=True, text=True)
+        sys.stdout.write(result.stdout)
+        if result.returncode != 0:
+            failures.append('ata range harness failed:\n' + result.stdout + result.stderr)
+
 
 def run_bd_harness():
     atad = text(root / 'modules/hdd/atad/src/ps2atad.c')
@@ -380,6 +470,7 @@ def check_raw_apa_namespace():
 run_fence_harness()
 check_driver_policy()
 run_bd_harness()
+run_range_harness()
 check_raw_apa_namespace()
 
 if failures:

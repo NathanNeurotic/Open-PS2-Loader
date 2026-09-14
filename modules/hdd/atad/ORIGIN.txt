@@ -24,14 +24,18 @@ LOCAL CHANGES vs the pin (all marked /* FORK */ in src/ps2atad.c):
    The partition table, error records and journal live there; no FAT/exFAT volume ever does.
 7. Backported upstream f30f05eba (2026-08-27): ata_device_sector_io64 counts progress in a u32
    chunk, so a 65536-sector LBA48 request no longer re-issues the same command forever.
-Changes 6 and 7 are pinned by .github/scripts/test_apa_table_safety.py.
+8. ata_device_sector_io64 refuses a request outside the drive's addressable range before issuing
+   any command (ata_request_in_range): on a drive without LBA48 the 28-bit taskfile silently wrapped
+   a sector at or above 2^28 to the start of the disk, and nothing checked capacity. The u32
+   total_sectors_lba48 saturates past 2 TiB, so such drives are bounded by the 48-bit width instead.
+Changes 6-8 are pinned by .github/scripts/test_apa_table_safety.py.
 
 Also picked up from the pin (missing from BOTH pinned build containers): upstream ab3c5a883
 ("fix device probing", per-device SoftReset+select loop) and 221f6e27a (DVRP device-selection
 workaround).
 
 RE-VENDOR: re-fetch src/ps2atad.c, src/imports.lst, src/irx_imports.h, src/exports.tab from the
-new pin, re-apply changes 1-4 and 6 (7 is upstream from f30f05eba on), update this file's pin line, `rm -rf obj/` before rebuilding.
+new pin, re-apply changes 1-4, 6 and 8 (7 is upstream from f30f05eba on), update this file's pin line, `rm -rf obj/` before rebuilding.
 NOT vendored: include/atad.h (the installed SDK's copy is used so xhdd and this module compile
 against the same header per container; stable since 2024-12).
 HDPro: hdpro_atad.irx remains the SDK prebuilt (its own latch unfixed; vendor separately only if

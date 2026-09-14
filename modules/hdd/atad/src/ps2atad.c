@@ -1021,12 +1021,38 @@ int sceAtaDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
     return ata_device_sector_io64(device, buf, (u64)lba, nsectors, dir);
 }
 
+/* FORK (RiptOPL): refuse a request the drive cannot address, instead of letting it land elsewhere.
+   The 28-bit taskfile keeps only LBA bits 0-27 (bits 24-27 ride in the select register), so on a
+   drive without LBA48 a sector at or above 2^28 silently wrapped to the start of the disk; nothing
+   checked capacity at all. Only corrupt metadata or a stray request can get here.
+   total_sectors_lba48 is a u32 that saturates at 0xffffffff on drives past 2 TiB, so it is trusted
+   only below that; larger drives are held to the 48-bit address width, keeping them fully usable. */
+static int ata_request_in_range(const ata_devinfo_t *info, u64 lba, u32 nsectors)
+{
+    u64 limit;
+
+    if (nsectors == 0)
+        return 1;
+    if (info->lba48)
+        limit = (info->total_sectors_lba48 != 0 && info->total_sectors_lba48 != 0xffffffff) ? info->total_sectors_lba48 : (1ULL << 48);
+    else
+        limit = (info->total_sectors != 0 && info->total_sectors < 0x10000000) ? info->total_sectors : 0x10000000;
+    return lba < limit && nsectors <= limit - lba;
+}
+
 int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir)
 {
     USE_SPD_REGS;
     int res = 0, retries;
     u16 sector, lcyl, hcyl, select, command, len;
     u32 chunk; /* FORK: upstream f30f05eba -- progress is counted in chunk, not in the u16 register value */
+
+    if (device < 0 || device >= (int)(sizeof(atad_devinfo) / sizeof(atad_devinfo[0])) ||
+        !ata_request_in_range(&atad_devinfo[device], lba, nsectors)) {
+        M_PRINTF("refused %lu-sector request at LBA 0x%08lx%08lx: outside the drive's addressable range\n",
+                 (unsigned long)nsectors, (unsigned long)(lba >> 32), (unsigned long)(lba & 0xffffffff));
+        return ATA_RES_ERR_IO;
+    }
 
     while (res == 0 && nsectors > 0) {
 

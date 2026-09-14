@@ -493,6 +493,14 @@ static int apaOpen(s32 device, hdd_file_slot_t *fileSlot, apa_params_t *params, 
     }
     if (clink == NULL)
         return rv;
+    // RiptOPL: the on-disk sub-partition count indexes the 64-entry subs array here and in every
+    // later transfer; a corrupt count must not turn into out-of-bounds partition extents.
+    if (clink->header->nsub > APA_MAXSUB) {
+        APA_PRINTF(APA_DRV_NAME ": partition at %lu claims %lu sub-partitions; refused\n",
+                   (unsigned long)clink->header->start, (unsigned long)clink->header->nsub);
+        apaCacheFree(clink);
+        return -EIO;
+    }
     fileSlot->parts[0].start = clink->header->start;
     fileSlot->parts[0].length = clink->header->length;
     memcpy(&fileSlot->parts[1], &clink->header->subs, APA_MAXSUB * sizeof(apa_sub_t));
@@ -531,8 +539,30 @@ static int apaRemove(s32 device, const char *id, const char *fpwd)
         apaCacheFree(clink);
         return -EACCES;
     }
-    // remove all subs first...
+    // RiptOPL: prove every sub-partition before changing anything. The SDK cleared nsub first,
+    // skipped a sub whose header could not be read, and then deleted the main partition anyway --
+    // orphaning that sub for good. A corrupt count walked past the 64-entry subs array, and a subs
+    // entry pointing at an unrelated partition would have deleted THAT partition. Delete game is the
+    // loader's one partition-table edit, so it refuses rather than guesses.
     nsub = clink->header->nsub;
+    if (nsub > APA_MAXSUB) {
+        apaCacheFree(clink);
+        return -EIO;
+    }
+    for (i = 0; i < (int)nsub; i++) {
+        apa_cache_t *sub = apaCacheGetHeader(device, clink->header->subs[i].start, APA_IO_MODE_READ, &rv);
+        int ok = sub != NULL && (sub->header->flags & APA_FLAG_SUB) && sub->header->main == clink->header->start;
+
+        if (sub != NULL)
+            apaCacheFree(sub);
+        if (!ok) {
+            APA_PRINTF(APA_DRV_NAME ": sub-partition %d of %s is unreadable or not its own; delete refused\n", i, id);
+            apaCacheFree(clink);
+            return rv != 0 ? rv : -EIO;
+        }
+    }
+
+    // remove all subs first...
     clink->header->nsub = 0;
     clink->flags |= APA_CACHE_FLAG_DIRTY;
     apaCacheFlushAllDirty(device);
@@ -741,7 +771,7 @@ static void fioGetStatFiller(apa_cache_t *clink, iox_stat_t *stat)
         stat->private_0 = clink->header->nsub;
 
         u64 totalsize = (u64)clink->header->length;
-        for (int i = 0; i < clink->header->nsub; i++) {
+        for (int i = 0; i < (int)clink->header->nsub && i < APA_MAXSUB; i++) { // RiptOPL: bounded
             totalsize += (u64)clink->header->subs[i].length;
         }
         stat->private_1 = (u32)(totalsize & 0xFFFFFFFF); // low size
