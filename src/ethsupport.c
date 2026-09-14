@@ -174,9 +174,7 @@ static void ethInitSMB(void)
         sprintf(path, "%sLNG", ethPrefix);
         lngAddLanguages(path, "\\", ethGameList.mode);
 
-        sbCreateFolders(ethBase, 1);
-        if (strcmp(ethPrefix, ethBase) != 0)
-            sbCreateFolders(ethPrefix, 1);
+        sbCreateFolders(ethPrefix, 1);
     } else if (gPCShareName[0] || !(gNetworkStartup >= ERROR_ETH_SMB_OPENSHARE)) {
         ethDisplayErrorStatus();
     }

@@ -823,3 +823,26 @@ void delay(int count)
             asm("nop\nnop\nnop\nnop");
     }
 }
+
+void sanitizePrefix(char *prefix)
+{
+    if (prefix == NULL || prefix[0] == '\0')
+        return;
+
+    char *p;
+    for (p = prefix; *p != '\0'; p++) {
+        if (*p == '\\')
+            *p = '/';
+    }
+
+    char *start = prefix;
+    while (*start == '/')
+        start++;
+
+    size_t len = strlen(start);
+    while (len > 0 && start[len - 1] == '/')
+        start[--len] = '\0';
+
+    if (start != prefix)
+        memmove(prefix, start, len + 1);
+}

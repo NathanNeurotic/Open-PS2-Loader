@@ -71,6 +71,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
 // #Size still resolves on demand. (1 = stat, 0 = skip.)
 void sbSetConfigStatSize(int enable);
 int sbConfigStatSizeEnabled(void);
+void sbMakeDirTree(const char *path);
 void sbCreateFolders(const char *path, int createDiscImgFolders);
 
 // ISO9660 filesystem management functions.

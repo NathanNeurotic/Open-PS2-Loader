@@ -1106,6 +1106,35 @@ static void sbCreateFoldersFromList(const char *path, const char **folders)
     }
 }
 
+void sbMakeDirTree(const char *path)
+{
+    char temp[256];
+    size_t len = path ? strlen(path) : 0;
+    if (len == 0 || len >= sizeof(temp))
+        return;
+
+    memcpy(temp, path, len + 1);
+
+    while (len > 0 && (temp[len - 1] == '/' || temp[len - 1] == '\\')) {
+        temp[--len] = '\0';
+    }
+
+    char *colon = strchr(temp, ':');
+    char *p = colon ? colon + 1 : temp;
+    while (*p == '/' || *p == '\\')
+        p++;
+
+    for (; *p != '\0'; p++) {
+        if (*p == '/' || *p == '\\') {
+            char sep = *p;
+            *p = '\0';
+            mkdir(temp, 0777);
+            *p = sep;
+        }
+    }
+    mkdir(temp, 0777);
+}
+
 void sbCreateFolders(const char *path, int createDiscImgFolders)
 {
     const char *basicFolders[] = {"CFG", "THM", "LNG", "ART", "VMC", "CHT", "APPS", "POPS",
@@ -1119,6 +1148,7 @@ void sbCreateFolders(const char *path, int createDiscImgFolders)
                                   NULL};
     const char *discImgFolders[] = {"CD", "DVD", NULL};
 
+    sbMakeDirTree(path);
     sbCreateFoldersFromList(path, basicFolders);
 
     if (createDiscImgFolders)
