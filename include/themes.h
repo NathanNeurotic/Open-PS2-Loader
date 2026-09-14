@@ -98,6 +98,7 @@ typedef struct theme_element
     int font;
     int reflection;
     int reflectionOffset; // Coverflow: vertical px shift of the mirror (theme key reflection_offset; -up / +down)
+    int showRun;          // InfoHintText: whether to draw the Run hint (theme key <n>_show_run; default 1)
     // Per-device element filter (theme key devices=usb,hdd,...): bitmask over the thmDeviceVocab
     // table indices in themes.c. 0 = unfiltered (the pre-existing behavior). deviceCoverage is
     // filled at theme-load validation for UNFILTERED MenuIcon/ItemsList/HintText elements: the

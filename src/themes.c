@@ -608,10 +608,18 @@ static image_texture_t *initImageTexture(const char *themePath, config_set_t *th
     if (themePath) {
         char path[256];
         snprintf(path, sizeof(path), "%s%s", themePath, imgName);
-        result = (texDiscoverLoad(&texture->source, path, texId) >= 0);
+        if (texDiscoverLoad(&texture->source, path, texId) < 0) {
+            LOG("THEMES texture load FAILED: %s\n", path);
+            texMakePlaceholder(&texture->source);
+        }
+        result = 1;
     } else {
         texId = texLookupInternalTexId(imgName);
-        result = (texLoadInternal(&texture->source, texId) >= 0);
+        if (texLoadInternal(&texture->source, texId) < 0) {
+            LOG("THEMES internal texture load FAILED: %s\n", imgName);
+            texMakePlaceholder(&texture->source);
+        }
+        result = 1;
     }
 
     if (result) {
@@ -1734,6 +1742,7 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     elem->type = type;
     elem->reflection = 0;
     elem->reflectionOffset = 0;
+    elem->showRun = 1;
     elem->deviceFilter = 0;   // malloc'd without memset: MUST be zeroed explicitly (0 = unfiltered)
     elem->deviceCoverage = 0; // filled at validateGUIElems for unfiltered MenuIcon/ItemsList/HintText
     elem->family = NULL;      // set by whoever chains the element into a family (addGUIElem, below)
@@ -2149,6 +2158,20 @@ static void drawInfoHintText(struct menu_list *menu, struct submenu_list *item, 
     int infoHints[2] = {_STR_RUN, _STR_BACK};
     int infoIcons[2] = {CIRCLE_ICON, CROSS_ICON};
     int x = elem->posX;
+
+    /* A theme that draws its own launch affordance does not want OPL saying
+     * "Run" a second time. Back is never hidden -- it is the only way off this
+     * screen, and a theme cannot be allowed to strand the user. */
+    if (!elem->showRun) {
+        int backOnly[1] = {_STR_BACK};
+        int backIcon[1] = {CROSS_ICON};
+
+        if (elem->aligned)
+            x = guiAlignSubMenuHints(1, backOnly, backIcon, elem->font, elem->width, 1);
+
+        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? infoIcons[1] : infoIcons[0], _STR_BACK, elem->font, x, elem->posY, elem->color);
+        return;
+    }
 
     if (elem->aligned)
         x = guiAlignSubMenuHints(2, infoHints, infoIcons, elem->font, elem->width, 1);
@@ -2641,6 +2664,10 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 elem->drawElem = &drawHintText;
             } else if (!strcmp(elementsType[ELEM_TYPE_INFO_HINT_TEXT], type)) {
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_INFO_HINT_TEXT, 16, -HINT_HEIGHT, ALIGN_NONE, 12, 20, SCALING_RATIO, theme->textColor, theme->fonts[0]);
+                int showRun = 1;
+                snprintf(elemProp, sizeof(elemProp), "%s_show_run", name);
+                configGetInt(themeConfig, elemProp, &showRun);
+                elem->showRun = showRun != 0;
                 elem->drawElem = &drawInfoHintText;
             } else if (!strcmp(elementsType[ELEM_TYPE_LOADING_ICON], type)) {
                 if (!theme->loadingIcon)

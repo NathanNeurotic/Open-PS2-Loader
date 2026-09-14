@@ -50,6 +50,17 @@ static u32 ra_watch[RA_WATCH_MAX];
 static int ra_watch_count = 0;
 static int ra_watch_bytes = 0;
 
+/* What may be read at all: the game's own memory. Below 0x80000 sits
+   the EE kernel and above 32 MB there is no RAM on a retail console.
+
+   A set can carry a plain address outside that window -- X-Men Origins has
+   0x00000000 among its entries -- and reading it every frame from the interrupt
+   handler hung the game while it was still loading. An address we will not
+   read is sent as zero, so the snapshot keeps its shape and the client
+   still gets a value for every entry. */
+#define RA_RAM_LOW  0x00080000
+#define RA_RAM_HIGH 0x02000000
+
 void RA_SetupWatchList(void)
 {
     USE_LOCAL_EECORE_CONFIG;
@@ -118,7 +129,12 @@ static void ra_snap_send(void)
         u32 addr = RA_WATCH_ADDR(e);
         u32 size = RA_WATCH_SIZE(e);
 
-        if (size == 4) {
+        if (addr < RA_RAM_LOW || addr + size > RA_RAM_HIGH) {
+            u32 j;
+
+            for (j = 0; j < size; j++)
+                vals[off++] = 0;
+        } else if (size == 4) {
             u32 v = *(volatile u32 *)UNCACHED_SEG(addr);
 
             vals[off++] = (u8)v;

@@ -193,6 +193,14 @@ static int splitAssignment(char *line, char *key, size_t keymax, char *val, size
 
 static int parsePrefix(char *line, char *prefix, size_t prefixSize)
 {
+    // Skip leading whitespace
+    for (; isWS(*line); ++line)
+        ;
+
+    // Ignore comment lines and empty lines
+    if (*line == '#' || *line == '\0')
+        return 0;
+
     // find ":".
     // If found, the text before is the prefix.
     // Otherwise a malformed string is encountered.
@@ -1022,14 +1030,15 @@ static int configReadFileBuffer(file_buffer_t *fileBuffer, config_set_t *configS
     while (readFileBuffer(fileBuffer, &line)) {
         lineno++;
 
+        int c = cfgClassifyLine(line);
+        if (c == CFG_LINE_BLANK || c == CFG_LINE_COMMENT)
+            continue;
+
         // Latch the format from the first line that carries evidence. Blank/comment lines say nothing,
         // so keep looking. An empty or comments-only file never latches and keeps the CFG_FMT_LEGACY
         // default from configAlloc -- correct, since a file with no content to preserve should be
         // written back in the interoperable format.
         if (!fmtLatched) {
-            int c = cfgClassifyLine(line);
-            if (c == CFG_LINE_BLANK || c == CFG_LINE_COMMENT)
-                continue;
             fmt = (c == CFG_LINE_LIBCONFIG) ? CFG_FMT_LIBCONFIG : CFG_FMT_LEGACY;
             fmtLatched = 1;
             configSet->format = fmt;

@@ -337,6 +337,73 @@ void texFree(GSTEXTURE *texture)
     }
 }
 
+/** A visible stand-in for a texture that failed to load.
+ *
+ * The point is that it is seen. LOG output needs a debug build, and the failure
+ * being fixed here is one that only shows up on a television -- an asset that
+ * quietly does not appear looks identical to an asset nobody added. Magenta is
+ * chosen because nothing in the art pipeline produces it by accident.
+ */
+int texMakePlaceholder(GSTEXTURE *texture)
+{
+    const int dim = 16;
+    u32 *px;
+    int x, y;
+
+    texPrepare(texture);
+    texture->Width = dim;
+    texture->Height = dim;
+    texture->PSM = GS_PSM_CT32;
+    texture->Mem = memalign(128, gsKit_texture_size_ee(dim, dim, GS_PSM_CT32));
+    if (!texture->Mem)
+        return -1;
+
+    px = (u32 *)texture->Mem;
+    for (y = 0; y < dim; y++) {
+        for (x = 0; x < dim; x++) {
+            /* 0x80 is fully opaque on the GS, not 0xFF. */
+            px[y * dim + x] = (((x >> 3) ^ (y >> 3)) & 1) ? 0x80FF00FF : 0x80400040;
+        }
+    }
+
+    return 0;
+}
+
+/** Clamp the per-texture cap to something the VRAM pool can actually satisfy.
+ *
+ * gsKit's _blockAlloc loops `while (block == NULL)` with no failure exit. A
+ * request larger than the whole pool can never be satisfied by eviction, so it
+ * spins forever -- a hung console rather than a rejected asset. Nothing in gsKit
+ * guards this; maxSize is the only thing that does, and it lives here.
+ *
+ * This clamps rather than asserting, deliberately. LOG compiles out in a release
+ * build, so a warning would be invisible in exactly the build that ships, and a
+ * return code would be discarded. Lowering maxSize makes the hang unreachable by
+ * construction: an oversized asset is rejected by texSizeValidate, which is the
+ * clean failure we already handle and now draw a placeholder for.
+ *
+ * Called once the video mode is known, because the pool is whatever the
+ * framebuffers leave behind and that depends on the mode.
+ */
+void texCheckBudget(unsigned int poolBytes)
+{
+    /* Worst case is a texture at the cap plus its 16x16 CT32 palette, which
+     * gsKit allocates as one block. */
+    unsigned int clut = gsKit_texture_size(16, 16, GS_PSM_CT32);
+    unsigned int required = (unsigned int)maxSize + clut;
+
+    if (required > poolBytes) {
+        int clamped = (int)(poolBytes - clut);
+
+        LOG("TEXTURES maxSize %d + CLUT %u exceeds the %u byte pool; clamping to %d\n",
+            maxSize, clut, poolBytes, clamped);
+        maxSize = clamped > 0 ? clamped : 0;
+    } else {
+        LOG("TEXTURES budget ok: %u of %u bytes, %u spare\n",
+            required, poolBytes, poolBytes - required);
+    }
+}
+
 typedef struct
 {
     int fd;

@@ -163,5 +163,7 @@ extern int gTexLastMissOpenMs;
 void texDebugWorstOpen(int *ms, int *pending, int *wasMiss, int *menu, int *bgm);
 void texSetLoadAbortFlag(volatile int *abortRequested);
 void texFree(GSTEXTURE *texture);
+int texMakePlaceholder(GSTEXTURE *texture);
+void texCheckBudget(unsigned int poolBytes);
 
 #endif

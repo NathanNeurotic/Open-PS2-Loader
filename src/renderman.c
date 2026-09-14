@@ -10,6 +10,7 @@
 #include "include/opl.h"
 #include "include/renderman.h"
 #include "include/ioman.h"
+#include "include/textures.h"
 
 // Allocateable space in vram, as indicated in GsKit's code
 #define __VRAM_SIZE 4194304
@@ -258,6 +259,11 @@ int rmSetMode(int force)
 
         gsKit_set_test(gsGlobal, GS_ZTEST_OFF);
         gsKit_set_primalpha(gsGlobal, gDefaultAlpha, 0);
+
+        /* The framebuffers are allocated by now, so CurrentPointer is where the
+         * texture pool starts and everything above it is what gsKit will hand
+         * out. Check the per-texture cap fits inside it -- see texCheckBudget. */
+        texCheckBudget(__VRAM_SIZE - gsGlobal->CurrentPointer);
 
         // reset the contents of the screen to avoid garbage being displayed
         if (hires) {
