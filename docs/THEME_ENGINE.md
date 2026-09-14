@@ -220,6 +220,7 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | `attribute` | `AttributeText`, `AttributeImage` | The metadata key (§6). |
 | `display` | text | `0` = always (label + value), `1` = only when the value exists, `2` = value only (no label). |
 | `wrap` | text | `1` = word-wrap within `width`/`height`. |
+| `show_run` | `InfoHintText` | **This fork:** `0` hides the Run hint, for a theme that draws its own launch prompt. Back is always shown. Default `1`. |
 | `title` | `AttributeText` | Override the auto label for the attribute. |
 
 ### List extras
