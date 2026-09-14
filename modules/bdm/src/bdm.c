@@ -152,6 +152,16 @@ static void bdm_try_mount(struct bdm_mounts *mount)
 
     M_DEBUG("%s(%s%dp%d)\n", __func__, mount->bd->name, mount->bd->devNr, mount->bd->parNr);
 
+    // RiptOPL: every filesystem and partition driver behind BDM (FatFs with FF_MAX_SS 512, the MBR/GPT
+    // parsers, the block cache) reads sectors into 512-byte buffers, while USB and iLink devices
+    // take their sector size from the drive. A 4K-native disk would make the very first probe read
+    // copy 4096 bytes into a 512-byte buffer and corrupt IOP memory. Such a device cannot be mounted
+    // anyway, so never offer it to a driver.
+    if (mount->bd->sectorSize != 512) {
+        M_PRINTF("%s%dp%d: %u-byte sectors are not supported, not mounting\n", mount->bd->name, mount->bd->devNr, mount->bd->parNr, mount->bd->sectorSize);
+        return;
+    }
+
     for (i = 0; i < MAX_CONNECTIONS; ++i) {
         if (g_fs[i] != NULL) {
             if (g_fs[i]->connect_bd(mount->cbd != NULL ? mount->cbd : mount->bd) == 0) {

@@ -53,6 +53,11 @@ static int part_read(struct block_device *bd, u64 sector, void *buffer, u16 coun
     if ((part == NULL) || (part->bd == NULL))
         return -1;
 
+    // RiptOPL: stay inside the partition. A filesystem whose boot sector claims more sectors than
+    // its partition holds would otherwise read (and, below, write) into the partition after it.
+    if (sector > bd->sectorCount || count > bd->sectorCount - sector)
+        return -1;
+
 #ifdef DEBUG
     u64 finalSector = sector + bd->sectorOffset;
     DEBUG_U64_2XU32(finalSector);
@@ -67,6 +72,10 @@ static int part_write(struct block_device *bd, u64 sector, const void *buffer, u
     struct partition *part = (struct partition *)bd->priv;
 
     if ((part == NULL) || (part->bd == NULL))
+        return -1;
+
+    // RiptOPL: never write past the partition end into a neighbouring partition.
+    if (sector > bd->sectorCount || count > bd->sectorCount - sector)
         return -1;
 
 #ifdef DEBUG

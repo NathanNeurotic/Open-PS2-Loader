@@ -24,6 +24,21 @@ against a simulated device and fails on the SDK original):
    would corrupt the filesystem. The slot is now invalidated before the refill and published only
    when all 8 sectors arrive; otherwise exactly the requested sectors are read directly and the
    driver's real result is returned. That fallback also serves blocks that run past the device end.
+2. src/bdm.c bdm_try_mount: a device whose sectors are not 512 bytes is never offered to a driver.
+   USB and iLink take the sector size from the drive; every consumer here (FatFs FF_MAX_SS 512, the
+   MBR/GPT probes, the cache) reads into 512-byte buffers, so a 4K-native disk overflowed IOP memory
+   on its first probe read. libbdm bd_cache_create also returns NULL for such devices and on
+   allocation failure (the SDK dereferenced NULL); BDM then mounts uncached.
+3. src/part_driver.c: part_read/part_write refuse I/O outside the partition (overflow-safe), so a
+   filesystem claiming more sectors than its partition cannot write into the next one.
+4. src/part_driver_mbr.c: a partition must fit on the device end to end, not just start on it; the
+   probe buffer is freed when the MBR read fails, and a short read counts as a failure.
+5. src/part_driver_gpt.c: only whole devices are parsed; allocation failure returns failure (the SDK
+   returned success); an entry size other than 128 bytes is refused; parsing stops at the declared
+   entry count; reversed entries are skipped (they underflowed into a huge partition); last_lba is
+   inclusive (every partition was one sector short). Not bounded by bd->sectorCount on purpose: the
+   ATA driver saturates it at 0xffffffff on drives past 2 TiB.
+Changes 2-5 are pinned by .github/scripts/test_bdm_partitions.py.
 
 RE-VENDOR: fetch the files above from the new pin, clang-format 12, build and cmp against the
 container's prebuilt to re-establish the baseline, then re-apply LOCAL CHANGES and update the pin.
