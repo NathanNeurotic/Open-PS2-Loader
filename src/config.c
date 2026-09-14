@@ -1022,14 +1022,17 @@ static int configReadFileBuffer(file_buffer_t *fileBuffer, config_set_t *configS
     while (readFileBuffer(fileBuffer, &line)) {
         lineno++;
 
-        // Latch the format from the first line that carries evidence. Blank/comment lines say nothing,
-        // so keep looking. An empty or comments-only file never latches and keeps the CFG_FMT_LEGACY
-        // default from configAlloc -- correct, since a file with no content to preserve should be
-        // written back in the interoperable format.
+        // Blank and comment lines carry nothing in either format. Skip them on every line, not just
+        // before the format latches: the legacy parser used to take "# note: x" as a prefix (renaming
+        // the keys under it) and "# a=b" as a key. '#' keys are runtime-only and never written.
+        int c = cfgClassifyLine(line);
+        if (c == CFG_LINE_BLANK || c == CFG_LINE_COMMENT)
+            continue;
+
+        // Latch the format from the first line that carries evidence. An empty or comments-only file
+        // never latches and keeps the CFG_FMT_LEGACY default from configAlloc -- correct, since a file
+        // with no content to preserve should be written back in the interoperable format.
         if (!fmtLatched) {
-            int c = cfgClassifyLine(line);
-            if (c == CFG_LINE_BLANK || c == CFG_LINE_COMMENT)
-                continue;
             fmt = (c == CFG_LINE_LIBCONFIG) ? CFG_FMT_LIBCONFIG : CFG_FMT_LEGACY;
             fmtLatched = 1;
             configSet->format = fmt;
