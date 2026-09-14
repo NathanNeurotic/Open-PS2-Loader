@@ -50,6 +50,14 @@ static u32 ra_watch[RA_WATCH_MAX];
 static int ra_watch_count = 0;
 static int ra_watch_bytes = 0;
 
+/* Readable window for a watch address. UNCACHED_SEG puts it in the 0x20000000 mirror, which the
+   kernel's default TLB maps only from 0x20080000 up to the end of the 32 MB of RAM (ps2sdk
+   ee/kernel/src/tlbfunc.c). An address outside that -- a watch list can carry 0x00000000 -- takes a
+   TLB miss inside the vsync interrupt and hangs the game. Such entries are sent as zero, so the
+   snapshot keeps its shape and the client still gets a value for every entry. */
+#define RA_RAM_LOW  0x00080000
+#define RA_RAM_HIGH 0x02000000
+
 void RA_SetupWatchList(void)
 {
     USE_LOCAL_EECORE_CONFIG;
@@ -118,7 +126,12 @@ static void ra_snap_send(void)
         u32 addr = RA_WATCH_ADDR(e);
         u32 size = RA_WATCH_SIZE(e);
 
-        if (size == 4) {
+        if (addr < RA_RAM_LOW || addr >= RA_RAM_HIGH || size > RA_RAM_HIGH - addr) {
+            u32 n = (size == 4 || size == 2) ? size : 1; // exactly what the read below would pack
+
+            while (n-- > 0)
+                vals[off++] = 0;
+        } else if (size == 4) {
             u32 v = *(volatile u32 *)UNCACHED_SEG(addr);
 
             vals[off++] = (u8)v;
