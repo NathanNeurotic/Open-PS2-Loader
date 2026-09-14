@@ -113,6 +113,15 @@ int main(void)
     seal();
     assert(!apaFenceWriteAllowed(0, 2, hdr, TOTAL));
     make_mbr(0x40000, 0x7FC0000);
+    memcpy(hdr + 0x16, "junk", 4); /* padding after the terminator is not part of the id */
+    seal();
+    assert(apaFenceWriteAllowed(0, 2, hdr, TOTAL));
+    make_mbr(0x40000, 0x7FC0000);
+    memcpy(hdr + 0x10, "__mb", 4);
+    hdr[0x14] = 0;
+    seal();
+    assert(!apaFenceWriteAllowed(0, 2, hdr, TOTAL));
+    make_mbr(0x40000, 0x7FC0000);
     put32(0x40, 0x40000);
     seal();
     assert(!apaFenceWriteAllowed(0, 2, hdr, TOTAL));

@@ -67,9 +67,10 @@ static inline int apaFenceIsValidMbrHeader(const unsigned char *header, u32 tota
         if (header[APA_FENCE_OFS_MBRMAGIC + i] != (unsigned char)mbrMagic[i])
             return 0;
     }
-    for (i = 0; i < APA_FENCE_ID_LEN; i++) {
-        unsigned char expect = i < sizeof(mbrId) - 1 ? (unsigned char)mbrId[i] : 0;
-        if (header[APA_FENCE_OFS_ID + i] != expect)
+    // "__mbr" as a C string, the way the driver compares ids: bytes after the terminator are not
+    // checked, so a formatter's leftover padding cannot turn a legitimate table edit into a refusal.
+    for (i = 0; i < sizeof(mbrId); i++) {
+        if (header[APA_FENCE_OFS_ID + i] != (unsigned char)mbrId[i])
             return 0;
     }
     if (apaFenceWord(header, APA_FENCE_OFS_START) != 0)
