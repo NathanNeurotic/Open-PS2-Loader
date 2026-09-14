@@ -30,15 +30,15 @@ against a simulated device and fails on the SDK original):
    on its first probe read. libbdm bd_cache_create also returns NULL for such devices and on
    allocation failure (the SDK dereferenced NULL); BDM then mounts uncached.
 3. src/part_driver.c: part_read/part_write refuse I/O outside the partition (overflow-safe), so a
-   filesystem claiming more sectors than its partition cannot write into the next one.
-4. src/part_driver_mbr.c: a partition must fit on the device end to end, not just start on it; the
-   probe buffer is freed when the MBR read fails, and a short read counts as a failure.
-5. src/part_driver_gpt.c: only whole devices are parsed; allocation failure returns failure (the SDK
-   returned success); an entry size other than 128 bytes is refused; parsing stops at the declared
-   entry count; reversed entries are skipped (they underflowed into a huge partition); last_lba is
-   inclusive (every partition was one sector short). Not bounded by bd->sectorCount on purpose: the
-   ATA driver saturates it at 0xffffffff on drives past 2 TiB.
-Changes 2-5 are pinned by .github/scripts/test_bdm_partitions.py.
+   filesystem claiming more sectors than its partition cannot write into the next one. For that,
+   src/part_driver_gpt.c now treats last_lba as inclusive (the SDK made every GPT partition one
+   sector short, which these bounds would otherwise turn into an unreachable last sector).
+Changes 2-3 are pinned by .github/scripts/test_bdm_partitions.py.
+
+DELIBERATELY UNCHANGED: the MBR/GPT parsers are otherwise the SDK's. In particular, never require an
+MBR partition to fit inside bd->sectorCount: the ATA driver reports 0xffffffff sectors on drives
+past 2 TiB, a maximum-size MBR partition ends one sector beyond that, and the check would hide the
+whole drive (the test pins this).
 
 RE-VENDOR: fetch the files above from the new pin, clang-format 12, build and cmp against the
 container's prebuilt to re-establish the baseline, then re-apply LOCAL CHANGES and update the pin.

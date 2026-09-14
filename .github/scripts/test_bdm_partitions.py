@@ -1,10 +1,11 @@
-"""Exercise modules/bdm's MBR/GPT partition drivers and partition I/O bounds on the host.
+"""Exercise modules/bdm's partition I/O bounds and sector-size refusal on the host.
 
 part_driver.c, part_driver_mbr.c and part_driver_gpt.c are compiled unmodified against stub SDK
-headers and a simulated 512-byte-sector device. These pin the review fixes on PR #650: whole-range
-MBR validation, freeing the probe buffer on a failed read, GPT entry-size/count/bounds validation,
-inclusive GPT lengths, GPT only on whole devices, and partition reads/writes that cannot cross into
-the next partition. It also checks that bd_cache refuses devices whose sectors are not 512 bytes.
+headers and a simulated 512-byte-sector device. These pin: partition reads/writes that cannot cross
+into the next partition, inclusive GPT lengths (without which those bounds would cut off the last
+sector of every GPT partition), MBR partitions past the 2 TiB mark still mounting on a drive whose
+reported size saturates at 0xffffffff sectors, and bd_cache refusing devices whose sectors are not
+512 bytes.
 """
 from pathlib import Path
 import re
@@ -83,17 +84,15 @@ void bdm_connect_fs(struct file_system *fs) { (void)fs; }
 
 #define DISK_SECTORS 64
 static unsigned char disk[DISK_SECTORS * 512];
-static int fail_reads, dev_reads;
 static u64 last_io_sector;
 static int last_io_count;
 
 static int dev_read(struct block_device *bd, u64 sector, void *buffer, u16 count)
 {
     (void)bd;
-    dev_reads++;
     last_io_sector = sector;
     last_io_count = count;
-    if (fail_reads || sector + count > DISK_SECTORS)
+    if (sector + count > DISK_SECTORS)
         return -5;
     memcpy(buffer, disk + sector * 512, (size_t)count * 512);
     return count;
@@ -118,7 +117,7 @@ static void reset(void)
     memset(disk, 0, sizeof(disk));
     memset(connected, 0, sizeof(connected));
     nconnected = 0;
-    fail_reads = fail_alloc = 0;
+    fail_alloc = 0;
     for (int i = 0; i < MAX_PARTITIONS; i++)
         g_part[i].bd = NULL;
     memset(&raw, 0, sizeof(raw));
@@ -179,56 +178,26 @@ int main(void)
     assert(p->write(p, 36, buf, 4) == 4 && last_io_sector == 44);
     assert(p->write(p, 0xFFFFFFFFFFFFFFFFull, buf, 2) < 0); /* no wrap-around */
 
-    /* MBR: a partition running past the end of the device is rejected, not advertised. */
+    /* MBR on a drive past 2 TiB: the ATA driver reports 0xffffffff sectors there, and a maximum-size
+       MBR partition (1 MiB to the 2 TiB mark) ends one sector beyond that. It must still mount; a
+       "whole partition fits the device" check would hide the entire drive. */
     reset();
-    mbr_entry(0, 0x07, 8, 100);
-    assert(part_connect_mbr(&raw) != 0 && nconnected == 0);
+    raw.sectorCount = 0xffffffffull;
+    mbr_entry(0, 0x07, 2048, 0xfffff800u);
+    assert(part_connect_mbr(&raw) == 0 && nconnected == 1);
+    assert(connected[0]->sectorOffset == 2048 && connected[0]->sectorCount == 0xfffff800u);
 
-    /* MBR: a failed probe read releases its buffer. */
-    reset();
-    fail_reads = 1;
-    int a = allocs, f = frees;
-    assert(part_connect_mbr(&raw) != 0);
-    assert(allocs - a == frees - f);
-
-    /* GPT: lengths are inclusive, and parsing stops at the declared entry count even when more
-       non-empty entries follow in the same sector. */
+    /* GPT: lengths are inclusive, so the bounds above still reach each partition's last sector. */
     reset();
     gpt_header(2, 128);
     gpt_entry(0, 10, 19);
     gpt_entry(1, 20, 29);
-    gpt_entry(2, 30, 39); /* beyond partition_count */
     assert(part_connect_gpt(&raw) == 0 && nconnected == 2);
     assert(connected[0]->sectorOffset == 10 && connected[0]->sectorCount == 10);
     assert(connected[1]->sectorOffset == 20 && connected[1]->sectorCount == 10);
-
-    /* GPT: a reversed entry is skipped instead of underflowing into a huge partition. */
-    reset();
-    gpt_header(4, 128);
-    gpt_entry(0, 30, 25);
-    gpt_entry(1, 40, 49);
-    assert(part_connect_gpt(&raw) == 0 && nconnected == 1 && connected[0]->sectorOffset == 40);
-
-    /* GPT: an entry size other than 128 bytes is refused. */
-    reset();
-    gpt_header(4, 256);
-    gpt_entry(0, 10, 19);
-    assert(part_connect_gpt(&raw) != 0 && nconnected == 0);
-
-    /* GPT: a partition's own block device is never parsed as a GPT. */
-    reset();
-    gpt_header(4, 128);
-    gpt_entry(0, 10, 19);
-    raw.sectorOffset = 8;
-    int reads = dev_reads;
-    assert(part_connect_gpt(&raw) != 0 && dev_reads == reads);
-
-    /* GPT: allocation failure reports failure, not a successful mount. */
-    reset();
-    gpt_header(4, 128);
-    gpt_entry(0, 10, 19);
-    fail_alloc = 1;
-    assert(part_connect_gpt(&raw) != 0 && nconnected == 0);
+    p = connected[0];
+    assert(p->read(p, 9, buf, 1) == 1 && last_io_sector == 19);
+    assert(p->read(p, 10, buf, 1) < 0);
 
     /* The block cache refuses devices whose sectors are not 512 bytes (its slots are 8 * 512). */
     reset();

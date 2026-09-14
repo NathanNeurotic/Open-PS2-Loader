@@ -77,7 +77,7 @@ jobs:
           persist-credentials: false
       - name: Check the BDM block cache never returns stale data on a failed refill
         run: python3 .github/scripts/test_bdm_cache.py
-      - name: Check BDM partition parsing, partition I/O bounds and sector-size refusal
+      - name: Check BDM partition I/O bounds and sector-size refusal
         run: python3 .github/scripts/test_bdm_partitions.py
 
   build-flavour:
