@@ -473,6 +473,8 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/hdd/atad clean
 	echo " -xhdd"
 	$(MAKE) -C modules/hdd/xhdd clean
+	echo " -apa (ps2hdd-osd)"
+	$(MAKE) -C modules/hdd/apa clean
 	echo " -mcemu"
 	$(MAKE) -C modules/mcemu USE_BDM=1 clean
 	$(MAKE) -C modules/mcemu USE_MMCE=1 clean
@@ -975,7 +977,13 @@ modules/hdd/xhdd/xhdd.irx: modules/hdd/xhdd
 $(EE_ASM_DIR)xhdd.c: modules/hdd/xhdd/xhdd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)ps2hdd.c: $(PS2SDK)/iop/irx/ps2hdd-osd.irx
+# FORK-VENDORED APA driver (modules/hdd/apa, see its ORIGIN.txt): the SDK's ps2hdd-osd source plus a
+# partition-table write fence. Generated file keeps the ps2hdd.c name -> symbol ps2hdd_irx -> zero
+# EE-side loader changes.
+modules/hdd/apa/ps2hdd-osd.irx: modules/hdd/apa
+	$(MAKE) -C $<
+
+$(EE_ASM_DIR)ps2hdd.c: modules/hdd/apa/ps2hdd-osd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)ps2fs.c: $(PS2SDK)/iop/irx/ps2fs-osd.irx

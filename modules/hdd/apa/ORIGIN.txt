@@ -1,0 +1,19 @@
+Vendored from: ps2dev/ps2sdk
+  iop/hdd/apa/src/*          (driver)
+  iop/hdd/libapa/src/*       (APA library)
+  iop/hdd/libapa/include/libapa.h
+Built with the iop/hdd/apa-osd flag set: APA_OSD_VER APA_USE_DEV9 APA_USE_ATAD (see Makefile).
+Pin: 3e46a44a21db66f42a56320b6f64bfc52ea279f8 (2026-09-03)
+License: Academic Free License 2.0, included as LICENSE (headers retained in the sources).
+
+BASELINE PROOF: the unmodified vendoring commit, after repository clang-format 12 formatting,
+builds a ps2hdd-osd.irx that is BYTE-IDENTICAL to $(PS2SDK)/iop/irx/ps2hdd-osd.irx in
+ghcr.io/ps2dev/ps2dev:latest (as of 2026-09-14). Every functional change is therefore isolated in
+the commits that follow it; diff against that commit to review them.
+
+WHY VENDORED: see LOCAL CHANGES below, and docs/APA-SAFETY.md for the incident analysis.
+
+LOCAL CHANGES: none in the baseline commit.
+
+RE-VENDOR: fetch the files above from the new pin, clang-format 12, build and cmp against the
+container's prebuilt to re-establish the baseline, then re-apply LOCAL CHANGES and update the pin.
