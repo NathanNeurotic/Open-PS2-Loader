@@ -32,20 +32,22 @@ extern apa_device_t hddDevices[];
 
 const char apaMBRMagic[] = "Sony Computer Entertainment Inc.";
 
+// RiptOPL: error records are NOT written. They live at LBA 6/7, inside the APA table's physical
+// sector on 512e drives, and the SDK writes them exactly when something is already failing -- a
+// read error, a drive that is not ready, a teardown race -- which is when power is most likely to
+// be cut mid-write. Nothing in OPL reads them back. Log instead. (The SDK also dereferenced a NULL
+// apaCacheAlloc result in apaSetPartErrorSector once the cache was exhausted, and would then have
+// written whatever that pointer addressed to LBA 7.)
 void apaSaveError(s32 device, void *buffer, u32 lba, u32 err_lba)
 {
-    memset(buffer, 0, 512);
-    *(u32 *)buffer = err_lba;
-    blkIoDmaTransfer(device, buffer, lba, 1, BLKIO_DIR_WRITE);
-    blkIoFlushCache(device);
+    (void)buffer;
+    APA_PRINTF(APA_DRV_NAME ": error record for LBA %lu on device %ld not written to sector %lu\n",
+               (unsigned long)err_lba, (long)device, (unsigned long)lba);
 }
 
 void apaSetPartErrorSector(s32 device, u32 lba)
 { // used to set the lba of a partition that has a error...
-    apa_cache_t *clink;
-    clink = apaCacheAlloc();
-    apaSaveError(device, clink->header, APA_SECTOR_PART_ERROR, lba);
-    apaCacheFree(clink);
+    apaSaveError(device, NULL, APA_SECTOR_PART_ERROR, lba);
 }
 
 int apaGetPartErrorSector(s32 device, u32 lba, u32 *lba_out)
@@ -56,8 +58,10 @@ int apaGetPartErrorSector(s32 device, u32 lba, u32 *lba_out)
     if (!(clink = apaCacheAlloc()))
         return -ENOMEM;
 
-    if (blkIoDmaTransfer(device, clink->header, lba, 1, BLKIO_DIR_READ))
+    if (blkIoDmaTransfer(device, clink->header, lba, 1, BLKIO_DIR_READ)) {
+        apaCacheFree(clink); // RiptOPL: the SDK leaked this cache entry on every failed read
         return -EIO;
+    }
 
     if (lba_out)
         *lba_out = *clink->error_lba;

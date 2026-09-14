@@ -24,9 +24,12 @@ static inline int blkIoInit(void)
     return 0;
 }
 
+// RiptOPL: every transfer goes through the APA table write fence (table_fence.c).
+extern int apaFencedDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir);
+
 static inline int blkIoDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
 {
-    return sceAtaDmaTransfer(device, buf, lba, nsectors, dir);
+    return apaFencedDmaTransfer(device, buf, lba, nsectors, dir);
 }
 
 static inline int blkIoIdle(int device, int period)
