@@ -23,6 +23,10 @@ int partitions_sanity_check_mbr(struct block_device *bd, master_boot_record *pMb
             if ((pMbrBlock->primary_partitions[i].first_lba == 0) || (pMbrBlock->primary_partitions[i].first_lba >= bd->sectorCount))
                 return 0; //invalid
 
+            // RiptOPL: the whole partition must fit on the device, not just its first sector.
+            if (pMbrBlock->primary_partitions[i].sector_count > bd->sectorCount - pMbrBlock->primary_partitions[i].first_lba)
+                return 0; //invalid
+
             active++;
         }
 
@@ -58,9 +62,10 @@ int part_connect_mbr(struct block_device *bd)
 
     // Read the MBR block from the block device.
     ret = bd->read(bd, 0, pMbrBlock, 1);
-    if (ret < 0) {
+    if (ret != 1) {
         // Failed to read MBR block from the block device.
         M_DEBUG("Failed to read MBR sector from block device %d\n", ret);
+        FreeSysMemory(pMbrBlock); // RiptOPL: the SDK leaked this on every failed probe
         return rval;
     }
 

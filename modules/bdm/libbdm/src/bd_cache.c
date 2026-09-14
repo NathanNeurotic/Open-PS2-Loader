@@ -171,10 +171,24 @@ struct block_device *bd_cache_create(struct block_device *bd)
 {
     int blkidx;
 
+    // RiptOPL: each slot holds 8 * 512 bytes, so a device with larger sectors would overflow it on the
+    // first refill. And AllocSysMemory can fail under IOP memory pressure, where the SDK dereferenced
+    // the NULL. In both cases return NULL: BDM then mounts the device uncached.
+    if (bd->sectorSize != 512)
+        return NULL;
+
     // Create new block device
     struct block_device *cbd = AllocSysMemory(ALLOC_FIRST, sizeof(struct block_device), NULL);
     // Create new private data
     struct bd_cache *c = AllocSysMemory(ALLOC_FIRST, sizeof(struct bd_cache), NULL);
+
+    if (cbd == NULL || c == NULL) {
+        if (cbd != NULL)
+            FreeSysMemory(cbd);
+        if (c != NULL)
+            FreeSysMemory(c);
+        return NULL;
+    }
 
     M_DEBUG("%s\n", __FUNCTION__);
 
