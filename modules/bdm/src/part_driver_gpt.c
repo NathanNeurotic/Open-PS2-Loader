@@ -30,16 +30,11 @@ int part_connect_gpt(struct block_device *bd)
 
     M_DEBUG("%s\n", __func__);
 
-    // RiptOPL: a GPT describes a whole device. A partition's own block device (sectorOffset != 0)
-    // is never parsed as one, the same filter the MBR driver applies.
-    if (bd->sectorOffset != 0)
-        return -1;
-
     // Allocate scratch memory for parsing the partition table.
     buffer = AllocSysMemory(ALLOC_FIRST, 512 * 2, NULL);
     if (buffer == NULL) {
         M_DEBUG("Failed to allocate memory\n");
-        return -1; // RiptOPL: the SDK returned 0 here, reporting a successful mount
+        return 0;
     }
 
     pGptHeader = (gpt_partition_table_header *)buffer;
@@ -47,7 +42,7 @@ int part_connect_gpt(struct block_device *bd)
 
     // Read the GPT partition table header from the block device.
     ret = bd->read(bd, 1, pGptHeader, 1);
-    if (ret != 1) {
+    if (ret < 0) {
         // Failed to read gpt partition table header.
         M_DEBUG("Failed to read GPT partition table header %d\n", ret);
         FreeSysMemory(buffer);
@@ -65,14 +60,6 @@ int part_connect_gpt(struct block_device *bd)
     // TODO: we might want to check the header revision and size for compatibility for newer/older GPT layouts. There's
     // also a few CRC checksums in the header that may be useful to validate, but is probably not needed.
 
-    // RiptOPL: entries are parsed at a fixed 128-byte stride. A table declaring another entry size
-    // would be read at the wrong offsets and produce phantom partitions, so refuse it.
-    if (pGptHeader->partition_entry_size != sizeof(gpt_partition_table_entry)) {
-        M_PRINTF("GPT partition entry size %u is not supported\n", (unsigned int)pGptHeader->partition_entry_size);
-        FreeSysMemory(buffer);
-        return -1;
-    }
-
     // Calculate how many partition entries there are per sector.
     entriesPerSector = bd->sectorSize / sizeof(gpt_partition_table_entry);
 
@@ -84,7 +71,7 @@ int part_connect_gpt(struct block_device *bd)
         if (i % entriesPerSector == 0) {
             // Read the next sector from the block device.
             ret = bd->read(bd, pGptHeader->partition_table_lba + (i / entriesPerSector), pGptPartitionEntry, 1);
-            if (ret != 1) {
+            if (ret < 0) {
                 // Failed to read the next sector from the drive.
 #ifdef DEBUG
                 u64 lba = pGptHeader->partition_table_lba + (i / entriesPerSector);
@@ -96,8 +83,7 @@ int part_connect_gpt(struct block_device *bd)
             }
 
             // Parse the two partition table entries in the structure.
-            // RiptOPL: also stop at the declared entry count, which need not fill the last sector.
-            for (int x = 0; x < entriesPerSector && i < pGptHeader->partition_count; x++, i++) {
+            for (int x = 0; x < entriesPerSector; x++, i++) {
                 // Check if the partition type guid is valid, the header will list the maximum number of partitions that can fit into the table, so
                 // we need to check if the entries are actually valid.
                 if (memcmp(pGptPartitionEntry[x].partition_type_guid, NULL_GUID, sizeof(NULL_GUID)) == 0) {
@@ -107,11 +93,7 @@ int part_connect_gpt(struct block_device *bd)
                 }
 
                 // Perform some sanity checks on the partition.
-                // RiptOPL: also reject reversed bounds, which underflowed sectorCount below into a huge
-                // partition. (Not checked against bd->sectorCount: the ATA driver saturates that at
-                // 0xffffffff on drives past 2 TiB, where valid GPT partitions sit above it.)
-                if (pGptPartitionEntry[x].first_lba < pGptHeader->first_lba || pGptPartitionEntry[x].last_lba > pGptHeader->last_lba ||
-                    pGptPartitionEntry[x].first_lba > pGptPartitionEntry[x].last_lba) {
+                if (pGptPartitionEntry[x].first_lba < pGptHeader->first_lba || pGptPartitionEntry[x].last_lba > pGptHeader->last_lba) {
                     // Partition entry data appears to be corrupt.
                     M_DEBUG("Partition entry %d appears to be corrupt (lba bounds incorrect)\n", i);
                     continue;
@@ -154,7 +136,9 @@ int part_connect_gpt(struct block_device *bd)
                 g_part_bd[partIndex].parId = 0;
                 g_part_bd[partIndex].sectorSize = bd->sectorSize;
                 g_part_bd[partIndex].sectorOffset = bd->sectorOffset + pGptPartitionEntry[x].first_lba;
-                g_part_bd[partIndex].sectorCount = pGptPartitionEntry[x].last_lba - pGptPartitionEntry[x].first_lba + 1; // RiptOPL: last_lba is inclusive
+                // RiptOPL: last_lba is inclusive. part_read/part_write bound I/O by this count, so the SDK's
+                // one-short length would make the last sector of every GPT partition unreachable.
+                g_part_bd[partIndex].sectorCount = pGptPartitionEntry[x].last_lba - pGptPartitionEntry[x].first_lba + 1;
                 bdm_connect_bd(&g_part_bd[partIndex]);
                 mountCount++;
             }
