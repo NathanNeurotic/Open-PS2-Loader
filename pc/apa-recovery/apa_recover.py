@@ -67,6 +67,18 @@ class Header:
         # ps2hdd's apaReadHeader(LBA 0): magic, full 1 KB checksum, Sony MBR magic.
         return self.magic == APA_MAGIC and self.checksum_ok and self.mbr_magic == MBR_MAGIC
 
+    @property
+    def mbr_fields_ok(self):
+        # The formatter invariants RiptOPL's driver fence also demands (table_fence.h): id "__mbr" as a
+        # C string, start 0, MBR type, no sub-partitions.
+        return self.raw[0x10:0x16] == b'__mbr\0' and self.start == 0 and self.type == 0x0001 and self.nsub == 0
+
+    def fence_valid_mbr(self, total):
+        # table_fence.h apaFenceIsValidMbrHeader. A header ps2hdd reads but this rejects would make
+        # RiptOPL's driver refuse every later table update (e.g. deleting the last game), so only a
+        # header passing this is ever kept or relinked; anything less is rebuilt.
+        return self.valid_mbr and self.mbr_fields_ok and self.next < total and self.prev < total
+
     def describe(self):
         kind = TYPE_NAMES.get(self.type, '0x%04x' % self.type)
         sub = ' sub#%d of %#x' % (self.number, self.main) if self.flags & FLAG_SUB else ''
@@ -79,14 +91,18 @@ def checksum(raw):
 
 
 class Disk:
-    def __init__(self, path, writable, sectors=None):
+    def __init__(self, path, sectors=None):
+        # Always opened read-only. reopen_writable() is called only after the user has confirmed
+        # this exact target, so a mistyped disk number cannot be written during diagnosis.
         self.path = path
-        flags = os.O_RDWR if writable else os.O_RDONLY
-        flags |= getattr(os, 'O_BINARY', 0)
-        self.fd = os.open(path, flags)
+        self.fd = os.open(path, os.O_RDONLY | getattr(os, 'O_BINARY', 0))
         self.total = sectors if sectors else self._detect_sectors()
         # APA addresses sectors with 32-bit LBAs.
         self.apa_total = min(self.total, 0x100000000)
+
+    def reopen_writable(self):
+        os.close(self.fd)
+        self.fd = os.open(self.path, os.O_RDWR | getattr(os, 'O_BINARY', 0))
 
     def _detect_sectors(self):
         if os.path.isfile(self.path):
@@ -132,9 +148,12 @@ class Disk:
         assert len(data) % SECTOR == 0
         assert lba + len(data) // SECTOR <= TABLE_SECTORS, 'this tool only ever writes LBA 0-7'
         os.lseek(self.fd, lba * SECTOR, os.SEEK_SET)
-        written = os.write(self.fd, data)
-        if written != len(data):
-            raise OSError('short write: %d of %d bytes' % (written, len(data)))
+        view = memoryview(data)
+        while view:
+            written = os.write(self.fd, view)
+            if written <= 0:
+                raise OSError('write made no progress at byte %d' % (len(data) - len(view)))
+            view = view[written:]
         os.fsync(self.fd)
 
     def header(self, lba):
@@ -199,6 +218,15 @@ def walk_chain(disk, first, notes=None):
         chain.append(h)
         seen.add(nxt)
         current = h
+    # A checksummed next == 0 is the driver's own record of the tail. A valid header may still sit
+    # right after it: ps2hdd's apaDelete unlinks a deleted tail partition without clearing its
+    # header, so a leftover is normal and must not be read as a truncated chain. Just report it.
+    end = current.start + current.length
+    if notes is not None and end < disk.apa_total:
+        follower = disk.header(end)
+        if follower is not None and follower.valid_partition:
+            notes.append('a valid header also sits at %#x after the chain end (usually a partition deleted '
+                         'from the end of the disk); it is not part of the table' % end)
     return chain, None
 
 
@@ -259,13 +287,21 @@ def main(argv=None):
     parser.add_argument('device', help='disk or image to inspect')
     parser.add_argument('--repair', action='store_true', help='rebuild LBA 0-7 after a backup (writes!)')
     parser.add_argument('--backup', help='backup file for --repair (default: apa_backup_<time>.bin)')
-    parser.add_argument('--yes', action='store_true', help='do not ask for confirmation before repairing')
+    parser.add_argument('--yes', action='store_true',
+                        help='skip the confirmation of the target disk before repairing (make sure the path is right)')
     parser.add_argument('--sectors', type=int, help='disk size in sectors, if it cannot be detected')
     args = parser.parse_args(argv)
 
-    disk = Disk(args.device, writable=args.repair, sectors=args.sectors)
+    try:
+        disk = Disk(args.device, sectors=args.sectors)
+    except OSError as e:
+        print('Cannot open %s: %s' % (args.device, e))
+        return 2
     try:
         return run(disk, args)
+    except OSError as e:
+        print('I/O error on %s: %s' % (args.device, e))
+        return 2
     finally:
         disk.close()
 
@@ -289,6 +325,9 @@ def run(disk, args):
                 problems.append('the __mbr header checksum is wrong')
             else:
                 problems.append('the __mbr header lacks the Sony MBR magic')
+        elif not header0.mbr_fields_ok:
+            problems.append('the __mbr header reads, but its id/start/type/subs are not what a formatter writes '
+                            '(RiptOPL would refuse to update it)')
         if dirty:
             problems.append('LBA 6-7 hold data in %d position(s) where ps2hdd expects zero' % len(dirty))
         if table[SECTOR:SECTOR + 8] == b'EFI PART':
@@ -319,6 +358,14 @@ def run(disk, args):
     if len(mains) > 40:
         print('  ... and %d more' % (len(mains) - 40))
 
+    # A checksum-valid old __mbr is authoritative about where the chain ended. If it names a later
+    # valid partition than the walk reached, the chain was cut short: rewriting prev would orphan
+    # every partition after the cut.
+    if (header0 is not None and header0.valid_mbr and not broken and last.lba < header0.prev < disk.apa_total):
+        named = disk.header(header0.prev)
+        if named is not None and named.valid_partition:
+            broken = 'the chain stops at %#x, but the __mbr names %#x as the last partition' % (last.lba, header0.prev)
+
     if header0 is not None and header0.valid_mbr and not broken:
         if header0.next != first.lba or header0.prev != last.lba:
             problems.append('__mbr links (next %#x, prev %#x) disagree with the chain (%#x .. %#x)' %
@@ -333,14 +380,15 @@ def run(disk, args):
         print('\nNothing to repair.')
         return 0
     if broken:
-        print('\nThe chain is broken, so the table cannot be rebuilt safely. Keep the disk as it is and image it.')
+        print('\nThe chain is broken (%s), so the table cannot be rebuilt safely. Keep the disk as it is and image it.' % broken)
         return 1
     if not args.repair:
         print('\nRepairable: every partition above is intact. Run again with --repair to rebuild LBA 0-7.')
         print('Do NOT format this disk.')
         return 1
 
-    mbr_valid = header0 is not None and header0.valid_mbr
+    # Keep or relink only a header the driver fence would also accept; rebuild anything less.
+    mbr_valid = header0 is not None and header0.valid_mbr and header0.mbr_fields_ok
     if mbr_valid and header0.next == first.lba and header0.prev == last.lba:
         new_header, action = header0.raw, 'existing __mbr header kept'
     elif mbr_valid:
@@ -357,18 +405,22 @@ def run(disk, args):
     print('\nPlan:')
     print('  1. save the first %d sectors to %s' % (min(BACKUP_SECTORS, disk.total), backup_path))
     print('  2. write LBA 0-7: %s, LBA 6-7 zeroed' % action)
-    print('  3. re-read and verify with the same checks ps2hdd applies')
+    print('  3. re-read and verify with the same checks ps2hdd and RiptOPL\'s driver apply')
+    print('\nTarget: %s -- %d sectors (%.1f GB), %d partition(s) listed above.' %
+          (disk.path, disk.total, disk.total * SECTOR / 1e9, len(mains)))
     if not args.yes:
-        if input('Type REPAIR to continue: ').strip() != 'REPAIR':
+        if input('Is this the right disk? Type REPAIR to write to it: ').strip() != 'REPAIR':
             print('Aborted; nothing was written.')
             return 1
 
     bad = backup(disk, backup_path)
     print('Backup written%s.' % (' (%d unreadable sector(s) saved as zeros: %s)' % (len(bad), bad[:16]) if bad else ''))
+    disk.reopen_writable()
     disk.write(0, new_table)
 
     verify = disk.read(0, TABLE_SECTORS)
     ok, verified, dirty = format_check(verify) if verify is not None else (False, None, [])
+    ok = ok and verified.fence_valid_mbr(disk.apa_total)
     chain2, broken2 = walk_chain(disk, disk.header(verified.next)) if ok and verified.next else ([], 'no chain')
     if not broken2 and chain2 and chain2[0].prev != 0:
         broken2 = 'the __mbr no longer points at the first partition'

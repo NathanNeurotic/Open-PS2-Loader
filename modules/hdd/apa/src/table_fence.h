@@ -14,7 +14,7 @@
   records, partial writes, a partition header aimed at the wrong sector and anything else are
   refused before they reach the drive.
 
-  Pure functions over raw bytes, so .github/scripts/test_apa_table_fence.py can compile and test
+  Pure functions over raw bytes, so .github/scripts/test_apa_table_safety.py can compile and test
   this exact file on the host. Byte offsets are asserted against apa_header_t in table_fence.c.
 */
 
