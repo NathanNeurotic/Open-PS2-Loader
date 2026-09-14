@@ -390,8 +390,10 @@ static void hddShutdownCb(void)
     int i;
 
     for (i = 0; i < BLKIO_MAX_VOLUMES; i++) {
-        if (hddDevices[i].status == 0)
+        if (hddDevices[i].status == 0) {
+            blkIoFlushCache(i);
             blkIoSmartSaveAttr(i);
+        }
     }
 }
 #endif

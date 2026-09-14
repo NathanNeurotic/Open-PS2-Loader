@@ -264,6 +264,10 @@ static int fioDataTransfer(iomanX_iop_file_t *f, void *buf, int size, int mode)
     size >>= 9;
 
     WaitSema(fioSema);
+    if (!fileSlot) {
+        rv = -EBADF;
+        goto finish;
+    }
     // This file view exposes only sectors 8 through 0x1fff of the main
     // partition. Check the position before subtracting or adding to it.
     if (fileSlot->post > 0x1FF8) {
@@ -565,13 +569,7 @@ static int apaRemove(s32 device, const char *id, const char *fpwd)
         return -EINVAL;
     }
     nsub = clink->header->nsub;
-    clink->header->nsub = 0;
-    clink->flags |= APA_CACHE_FLAG_DIRTY;
-    if ((rv = apaCacheFlushAllDirty(device)) != 0) {
-        apaCacheFree(clink);
-        return rv;
-    }
-    for (i = nsub - 1; i != -1; i--) {
+    for (i = (int)nsub - 1; i >= 0; i--) {
         apa_cache_t *clink2;
 
         if (!(clink2 = apaCacheGetHeader(device, clink->header->subs[i].start, APA_IO_MODE_READ, &rv))) {
@@ -579,6 +577,12 @@ static int apaRemove(s32 device, const char *id, const char *fpwd)
             return rv;
         }
         if ((rv = apaDelete(clink2))) {
+            apaCacheFree(clink);
+            return rv;
+        }
+        clink->header->nsub--;
+        clink->flags |= APA_CACHE_FLAG_DIRTY;
+        if ((rv = apaCacheFlushAllDirty(device)) != 0) {
             apaCacheFree(clink);
             return rv;
         }
@@ -703,7 +707,10 @@ int hddOpen(iomanX_iop_file_t *f, const char *name, int flags, int mode)
 int hddClose(iomanX_iop_file_t *f)
 {
     WaitSema(fioSema);
-    memset(f->privdata, 0, sizeof(hdd_file_slot_t));
+    if (f->privdata) {
+        memset(f->privdata, 0, sizeof(hdd_file_slot_t));
+        f->privdata = NULL;
+    }
     SignalSema(fioSema);
     return 0;
 }
@@ -739,6 +746,10 @@ int hddLseek(iomanX_iop_file_t *f, int post, int whence)
 
     WaitSema(fioSema);
     fileSlot = f->privdata;
+    if (!fileSlot) {
+        SignalSema(fioSema);
+        return -EBADF;
+    }
     if (whence == FIO_SEEK_CUR) {
         if (((int)fileSlot->post + post) < 0 || (fileSlot->post + post) >= 0x1FF9)
             rv = -EINVAL;
@@ -825,6 +836,9 @@ int hddDread(iomanX_iop_file_t *f, iox_dirent_t *dirent)
 
     if (!(f->mode & FIO_O_DIROPEN))
         return -ENOTDIR;
+
+    if (!fileSlot)
+        return -EBADF;
 
     if (fileSlot->parts[0].start == (u32)(-1))
         return 0; // end :)
@@ -1005,6 +1019,10 @@ int hddIoctl2(iomanX_iop_file_t *f, int req, void *argp, unsigned int arglen,
     }
 #endif
     WaitSema(fioSema);
+    if (!fileSlot) {
+        SignalSema(fioSema);
+        return -EBADF;
+    }
     switch (req) {
         // cmd set 1
         case HIOCADDSUB:

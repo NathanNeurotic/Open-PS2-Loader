@@ -145,6 +145,8 @@ int main(void) {
   slot.parts[0]=saved; io_error=1;
   assert(fioDataTransfer(&file,buffer,512,direction)==-EIO && slot.post==0);
   assert(lock_depth==0); io_error=0;
+  iomanX_iop_file_t null_file={.unit=0,.privdata=NULL};
+  assert(fioDataTransfer(&null_file,buffer,512,direction)==-EBADF && lock_depth==0);
  }
  puts("PASS: APA file-view limits, EOF clamping, position/size checks and lock/position cleanup");
  return 0;

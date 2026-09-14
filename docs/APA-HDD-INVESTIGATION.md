@@ -135,7 +135,7 @@ HDD/BDM host tests, RA host tests and formatting in run 34751249581.
 A memory-only two-thread test of bd_cache.c can make two successful refills
 reuse the same victim buffer, returning the second request's bytes to both
 callers. No device writes occur in that test. However, the SDK FatFs driver
-holds the same _fs_lock semaphore across both connect_bd mounting and file
+holds the same `_fs_lock` semaphore across both connect_bd mounting and file
 operations. That excludes the initially proposed overlap between a FatFs
 mount and a FatFs file operation. APA/PFS accesses use ATAD directly rather
 than this BDM cache. Current whole-device guards also exclude the proposed
@@ -143,7 +143,7 @@ nested GPT probe on an ordinary nonzero-offset partition.
 
 The cache has no internal synchronization, but a concurrent caller path for
 the reported APA-only startup is not established. No additional cache lock
-was added on the strength of that test alone. Other BDM consumers, hotplug,
+was added based on that test alone. Other BDM consumers, hotplug,
 and access bypassing the cache remain separate questions. The deterministic
 local fixture is tmp/hdd-validation/probe_cache_race.py; it is investigation
 evidence, not a passing production regression or proof of incident causation.
@@ -662,5 +662,19 @@ A complete audit of all remaining `apaCacheFlushAllDirty` invocations identified
 - In `apaGetNextHeader` (`apa.c`), auto-correcting an inconsistent `prev` link flushed without error checking. Fixed to propagate `flush_rv` into `*err` and return `NULL` on failure.
 - In `hddAddPartitionHere` (`hdd.c`), `clink_new = apaRemovePartition(...)` was dereferenced without checking for `NULL`, and flush failures during intermediate block splitting and header filling were discarded. Fixed with NULL checks and flush error propagation.
 
+### 5. PFS Driver Verification & Invariants (libpfs)
 
+An exhaustive audit of `libpfs` (`super.c`, `superWrite.c`, `journal.c`, `cache.c`, `misc.c`) was performed to assess behavior during read-only directory scanning (`pfs1:`):
+- **Superblock Mount**: In `pfsMountSuperBlock()`, the superblock is read strictly from `PFS_SUPER_SECTOR = 8192` (`0x2000`).
+- **Journal Behavior on Read-Only Mounts**: PS2SDK's `pfsJournalRestore()` executes a journal check upon every mount. If `pfsJournalBuf.num == 0` (clean journal), it unconditionally invokes `pfsJournalReset()`, writing 2 sectors to the partition's metadata log area (`0x2000 + bitmap_size + 1`) and flushing the cache. Similarly, `pfsFioUmount()` invokes `pfsCacheClose()` -> `pfsCacheFlushAllDirty()` -> `pfsJournalReset()`.
+- **Partition Isolation Invariant**: The vendored APA driver strictly bounds all I/O via `fioPartitionRange()` and `ioctl2Transfer()`:
+  - Transfers to `arg->sub == 0 && arg->sector < 0x2000` return `-EINVAL`.
+  - Transfers to subpartitions `arg->sub != 0 && arg->sector < 2` return `-EINVAL`.
+  - All transfers beyond partition bounds return `-ENXIO`.
+  - Consequently, PFS mount/umount journal resets can never write to Sector 0 (the partition header), nor can they access or clobber LBA 0 (MBR), LBAs 1–33 (GPT), or any other partition on the disk.
 
+### 6. DEV9 Hardware Power-Off Flush & File Slot Hardening
+
+- **DEV9 Power-off Callback**: When the console's physical power button is pressed, DEV9 executes `hddShutdownCb()` (`modules/hdd/apa/src/hdd.c`). It previously invoked only `blkIoSmartSaveAttr(i)` without flushing the volatile ATA write cache. It now calls `blkIoFlushCache(i)` before saving SMART attributes, ensuring dirty sectors in drive cache RAM are committed to media even during physical power-off.
+- **File Slot NULL Dereference Hardening**: `fioDataTransfer()`, `hddClose()`, `hddLseek()`, `hddDread()`, and `hddIoctl2()` now validate that `f->privdata` / `fileSlot` is non-NULL, returning `-EBADF` if an invalid or uninitialized file handle is passed. In `hddClose()`, `f->privdata` is cleared to `NULL` after zeroing.
+- **Atomic Subpartition Deletion**: In `apaRemove()`, `clink->header->nsub` was previously zeroed and flushed up front before deleting any subpartitions. It is now decremented and flushed incrementally as each subpartition is successfully deleted, ensuring that an intermediate failure leaves the remaining subpartitions properly tracked on disk.
