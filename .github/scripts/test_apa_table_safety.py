@@ -345,9 +345,33 @@ def run_bd_harness():
             failures.append('bdm fence harness failed:\n' + result.stdout + result.stderr)
 
 
+# hdd0:/hdd1: is the raw APA partition namespace, not a filesystem: there, mkdir/open(O_CREAT) means
+# "create a partition" and remove means "delete one". Only the three files that own APA handling may
+# spell it. Everything else reaches the HDD through the mounted pfs0: data home. (The driver refuses
+# creation regardless; this keeps new code from even trying, as the RA launch log and the tar device
+# table once did.)
+RAW_APA_LITERAL = re.compile(r'"hdd(?:[0-9]|%[a-z])?:')
+RAW_APA_ALLOWED = {'src/hdd.c', 'src/hddsupport.c', 'src/opl.c'}
+
+
+def check_raw_apa_namespace():
+    for directory in ('src', 'ee_core/src', 'include'):
+        for path in sorted((root / directory).rglob('*.[ch]')):
+            rel = path.relative_to(root).as_posix()
+            source = text(path)
+            if rel not in RAW_APA_ALLOWED:
+                for number, line in enumerate(source.split('\n'), 1):
+                    if RAW_APA_LITERAL.search(line):
+                        failures.append('%s:%d spells the raw APA namespace (use the pfs0: data home): %s'
+                                        % (rel, number, line.strip()))
+            if re.search(r'\bfileXioFormat\s*\(', source):
+                failures.append('%s calls fileXioFormat; the loader never formats a drive' % rel)
+
+
 run_fence_harness()
 check_driver_policy()
 run_bd_harness()
+check_raw_apa_namespace()
 
 if failures:
     print('\nAPA table safety checks FAILED:')

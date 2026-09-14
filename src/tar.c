@@ -35,7 +35,7 @@ typedef struct
 } TarKindInfo;
 
 // Probe order (first device that has the archive wins). Widened vs wOPL to RiptOPL's mounts:
-// all 8 BDM mass slots, both MMCE slots, the internal HDD (APA + pfs), and SMB.
+// all 8 BDM mass slots, both MMCE slots, the internal HDD (its mounted pfs0: data home), and SMB.
 static const TarDevice gDevices[] = {
     {"mass0:", "mass0:/"},
     {"mass1:", "mass1:/"},
@@ -47,7 +47,9 @@ static const TarDevice gDevices[] = {
     {"mass7:", "mass7:/"},
     {"mmce0:", "mmce0:/"},
     {"mmce1:", "mmce1:/"},
-    {"hdd0:", "hdd0:/"},
+    // The internal HDD is reached through its mounted PFS data home only. hdd0: is the raw APA
+    // partition namespace, not a filesystem: probing it walks the whole partition table per lookup,
+    // and any create there would be an APA partition create (refused by the driver since 2026-09).
     {"pfs0:", "pfs0:/"},
     {"smb0:", "smb0:/"},
     {NULL, NULL}};

@@ -1324,3 +1324,5 @@ gui_strings:
   string: Enable RetroAchievements telemetry in Network settings first
 - label: RA_DISC_CHECK_FIRST
   string: No watch list for this disc -- use RA check disc support first
+- label: HDD_APA_TABLE_UNREADABLE_ERROR
+  string: '%d: HDD found, but its APA partition table cannot be read. Do not format it -- your games may be recoverable.'

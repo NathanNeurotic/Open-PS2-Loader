@@ -96,6 +96,14 @@ void hddSetIdleImmediate(void)
     fileXioDevctl("hdd1:", HDIOC_IDLEIMM, NULL, 0, NULL, 0);
 }
 
+// Commit the drive's volatile write cache (ATA FLUSH CACHE). IDLE IMMEDIATE does not promise this,
+// and a teardown can end in a power cut before DEV9's own STANDBY IMMEDIATE ever runs.
+void hddFlushCache(void)
+{
+    fileXioDevctl("hdd0:", HDIOC_FLUSH, NULL, 0, NULL, 0);
+    fileXioDevctl("hdd1:", HDIOC_FLUSH, NULL, 0, NULL, 0);
+}
+
 //-------------------------------------------------------------------------
 int hddReadSectors(u32 lba, u32 nsectors, void *buf)
 {
