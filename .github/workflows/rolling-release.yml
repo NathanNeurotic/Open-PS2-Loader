@@ -1037,6 +1037,8 @@ jobs:
             printf -- '- Category settings layout with return-to-paused-page retention\n'
             printf -- '- Per-game VMC shared with Neutrino on writable BDM (honours OPL VMC groups)\n'
             printf -- '- Visual GameID barcode for Pixel FX / RetroGEM / PS2Digital (Interface page, OFF by default)\n'
+            printf -- '- BDM (USB / exFAT HDD / MX4SIO / iLink) block cache fix: a failed read no longer comes back as\n'
+            printf -- '  another part of the disk, which could let a later save corrupt a FAT/exFAT filesystem\n'
             printf -- '- RetroGEM Game ID optical barcode for POPSTARTER / PS1 VCD launches (PS Emulation Settings, ON by default)\n'
 
             printf -- '- Neutrino args: prefix a flag with $ to disable it without deleting; "Test launch" boots without saving\n'
@@ -1063,6 +1065,8 @@ jobs:
             printf -- '  and app covers are square and PS2 covers portrait, on your own theme as well as the built-in ones.\n'
             printf -- '- Remembered L3 view: toggle a page, then launch a game OR save settings, reboot, and confirm it\n'
             printf -- '  comes back where you left it. (A toggle followed by a power-off with neither is deliberately not kept.)\n'
+            printf -- '- USB / MX4SIO / exFAT HDD: browse, launch and save settings as usual; confirm lists load at normal speed\n'
+            printf -- '  and the drive still checks clean on a PC afterwards (the BDM block cache changed underneath).\n'
             printf '\n## Other downloads\n'
             if ls rolling/RIPTOPL-RA-*.zip >/dev/null 2>&1; then
               printf -- '- RIPTOPL-RA-*.zip: the RetroAchievements loader as a complete package (POPS, EMBER, neutrino, shortcuts) -- **development build, not hardware-tested**\n'

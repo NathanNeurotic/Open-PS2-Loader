@@ -114,7 +114,20 @@ static int _read(struct block_device *bd, u64 sector, void *buffer, u16 count)
 #endif
 
     // Fill the block
-    c->bd->read(c->bd, sector, c->cache[blkidx_best], SECTORS_PER_BLOCK);
+    //
+    // RiptOPL: the SDK ignored this read's result. A failed or short refill left the buffer holding
+    // the EVICTED block, which was then returned as a successful read of the requested sectors and
+    // cached under their LBA for later hits too. FatFs reads its FAT, allocation bitmap and
+    // directory sectors through here, so one read error (a flaky SD card or USB link) could hand it
+    // another region's bytes as metadata -- and the next write computed from them corrupts the
+    // filesystem. Invalidate the slot before the refill, publish it only when all 8 sectors arrived,
+    // and otherwise read exactly the requested sectors, returning the driver's real result. The same
+    // fallback serves a block that would run past the end of the device.
+    c->sector[blkidx_best] = 0xffffffffffffffff;
+    if (c->bd->read(c->bd, sector, c->cache[blkidx_best], SECTORS_PER_BLOCK) != SECTORS_PER_BLOCK) {
+        c->weight[blkidx_best] = 0;
+        return c->bd->read(c->bd, sector, buffer, count);
+    }
     c->sector[blkidx_best] = sector;
 
     // Read from cache
