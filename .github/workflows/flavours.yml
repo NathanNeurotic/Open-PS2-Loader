@@ -47,6 +47,17 @@ permissions:
   contents: read
 
 jobs:
+  apa-safety-host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check the APA table write fence, driver write policy and raw hdd0 paths
+        run: python3 .github/scripts/test_apa_table_safety.py
+      - name: Check the APA recovery tool against synthetic damaged disks
+        run: python3 .github/scripts/test_apa_recover.py
+
   ra-host-tests:
     runs-on: ubuntu-latest
     steps:
@@ -57,6 +68,17 @@ jobs:
         run: python3 .github/scripts/test_ra_disc.py
       - name: Check RA snapshot scheduling and transmission retries
         run: python3 .github/scripts/test_ra_sender.py
+
+  bdm-host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Check the BDM block cache never returns stale data on a failed refill
+        run: python3 .github/scripts/test_bdm_cache.py
+      - name: Check BDM partition I/O bounds and sector-size refusal
+        run: python3 .github/scripts/test_bdm_partitions.py
 
   build-flavour:
     strategy:

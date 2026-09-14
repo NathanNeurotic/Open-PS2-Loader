@@ -1,0 +1,48 @@
+Vendored from: ps2dev/ps2sdk
+  iop/fs/bdm/src/*                  -> src/
+  iop/fs/libbdm/src/*               -> libbdm/src/
+  iop/fs/libbdm/include/*           -> libbdm/include/
+Built like the SDK: bdm.irx linked against a static libbdm.a (see Makefile, libbdm/Makefile).
+Pin: 3e46a44a21db66f42a56320b6f64bfc52ea279f8 (2026-09-03)
+License: Academic Free License 2.0, included as LICENSE (headers retained in the sources).
+
+BASELINE PROOF: the unmodified vendoring commit, after repository clang-format 12 formatting,
+builds a bdm.irx that is BYTE-IDENTICAL to $(PS2SDK)/iop/irx/bdm.irx in ghcr.io/ps2dev/ps2dev:latest
+and ghcr.io/ps2homebrew/ps2homebrew:main (both ship the same prebuilt as of 2026-09-14). Every
+functional change is isolated in the commits that follow; diff against that commit to review them.
+
+WHY VENDORED: the block cache in libbdm (bd_cache.c) returned stale data as a successful read, and
+a prebuilt library cannot be patched. See LOCAL CHANGES.
+
+LOCAL CHANGES (marked "RiptOPL" in the sources; .github/scripts/test_bdm_cache.py compiles the cache
+against a simulated device and fails on the SDK original):
+1. libbdm/src/bd_cache.c _read: the 8-sector refill's result was ignored. A failed or short refill
+   left the slot holding the evicted block's bytes, returned them as a successful read of the
+   requested sectors, and cached them under the new LBA for later hits. Every FAT/exFAT device
+   (USB, exFAT HDD, MX4SIO, iLink, UDPBD) reads its FAT, bitmap and directory sectors through this
+   cache, so one read error could feed FatFs another region's bytes as metadata and the next write
+   would corrupt the filesystem. The slot is now invalidated before the refill and published only
+   when all 8 sectors arrive; otherwise exactly the requested sectors are read directly and the
+   driver's real result is returned. That fallback also serves blocks that run past the device end.
+2. src/bdm.c bdm_try_mount: a device whose sectors are not 512 bytes is never offered to a driver.
+   USB and iLink take the sector size from the drive; every consumer here (FatFs FF_MAX_SS 512, the
+   MBR/GPT probes, the cache) reads into 512-byte buffers, so a 4K-native disk overflowed IOP memory
+   on its first probe read. libbdm bd_cache_create also returns NULL for such devices and on
+   allocation failure (the SDK dereferenced NULL); BDM then mounts uncached. The refusal fires the
+   mount callback once per device (struct bdm_mounts gains a `refused` flag), so bdmevent can count
+   refused devices and the loader can show code 500 instead of a drive that silently never appears.
+   bdm_connect_bd's size log no longer divides by (1000000 / sectorSize), which trapped on a zero
+   divisor for a device reporting a sector size of 0 or above 1 MB before the refusal was reached.
+3. src/part_driver.c: part_read/part_write refuse I/O outside the partition (overflow-safe), so a
+   filesystem claiming more sectors than its partition cannot write into the next one. For that,
+   src/part_driver_gpt.c now treats last_lba as inclusive (the SDK made every GPT partition one
+   sector short, which these bounds would otherwise turn into an unreachable last sector).
+Changes 2-3 are pinned by .github/scripts/test_bdm_partitions.py.
+
+DELIBERATELY UNCHANGED: the MBR/GPT parsers are otherwise the SDK's. In particular, never require an
+MBR partition to fit inside bd->sectorCount: the ATA driver reports 0xffffffff sectors on drives
+past 2 TiB, a maximum-size MBR partition ends one sector beyond that, and the check would hide the
+whole drive (the test pins this).
+
+RE-VENDOR: fetch the files above from the new pin, clang-format 12, build and cmp against the
+container's prebuilt to re-establish the baseline, then re-apply LOCAL CHANGES and update the pin.

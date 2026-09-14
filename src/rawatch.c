@@ -66,11 +66,13 @@ void ClearWatchList(void)
    reaches a tester, which is exactly who needs this. The share comes first --
    a write to a USB stick can sit in the driver's cache and be lost when the
    console powers off, which is when the note matters -- but with no share
-   mounted it falls back to the game's device so the note still lands. */
+   mounted it falls back to local storage so the note still lands. The HDD
+   fallback is the mounted pfs0: data home: hdd0: is the raw APA partition
+   namespace, where mkdir/fopen("a") mean creating a partition. */
 void raLaunchNote(const char *what, int a, int b)
 {
 #ifdef __OPLDIAG
-    static const char *dirs[] = {"smb0:RA", "mass0:RA", "hdd0:RA"};
+    static const char *dirs[] = {"smb0:RA", "mass0:RA", "pfs0:RA"};
     FILE *f = NULL;
     int i;
 

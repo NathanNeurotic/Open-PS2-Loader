@@ -1734,6 +1734,7 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     elem->type = type;
     elem->reflection = 0;
     elem->reflectionOffset = 0;
+    elem->showRun = 1;
     elem->deviceFilter = 0;   // malloc'd without memset: MUST be zeroed explicitly (0 = unfiltered)
     elem->deviceCoverage = 0; // filled at validateGUIElems for unfiltered MenuIcon/ItemsList/HintText
     elem->family = NULL;      // set by whoever chains the element into a family (addGUIElem, below)
@@ -2149,12 +2150,17 @@ static void drawInfoHintText(struct menu_list *menu, struct submenu_list *item, 
     int infoHints[2] = {_STR_RUN, _STR_BACK};
     int infoIcons[2] = {CIRCLE_ICON, CROSS_ICON};
     int x = elem->posX;
+    // <name>_show_run=0 hides Run for a theme that draws its own launch prompt. Back always stays: it
+    // is the only way off this screen.
+    int first = elem->showRun ? 0 : 1;
 
     if (elem->aligned)
-        x = guiAlignSubMenuHints(2, infoHints, infoIcons, elem->font, elem->width, 1);
+        x = guiAlignSubMenuHints(2 - first, infoHints + first, infoIcons + first, elem->font, elem->width, 1);
 
-    x = guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? infoIcons[0] : infoIcons[1], infoHints[0], elem->font, x, elem->posY, elem->color);
-    x += elem->width;
+    if (elem->showRun) {
+        x = guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? infoIcons[0] : infoIcons[1], infoHints[0], elem->font, x, elem->posY, elem->color);
+        x += elem->width;
+    }
     x = guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? infoIcons[1] : infoIcons[0], infoHints[1], elem->font, x, elem->posY, elem->color);
 }
 
@@ -2641,6 +2647,10 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 elem->drawElem = &drawHintText;
             } else if (!strcmp(elementsType[ELEM_TYPE_INFO_HINT_TEXT], type)) {
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_INFO_HINT_TEXT, 16, -HINT_HEIGHT, ALIGN_NONE, 12, 20, SCALING_RATIO, theme->textColor, theme->fonts[0]);
+                int showRun = 1;
+                snprintf(elemProp, sizeof(elemProp), "%s_show_run", name);
+                configGetInt(themeConfig, elemProp, &showRun);
+                elem->showRun = showRun != 0;
                 elem->drawElem = &drawInfoHintText;
             } else if (!strcmp(elementsType[ELEM_TYPE_LOADING_ICON], type)) {
                 if (!theme->loadingIcon)

@@ -180,6 +180,7 @@ static void hddClearRecoveredErrors(void)
     clearErrorMessageIf(_STR_HDD_NOT_FORMATTED_ERROR);
     clearErrorMessageIf(_STR_HDD_UNAVAILABLE_ERROR);
     clearErrorMessageIf(_STR_HDD_PFS_UNAVAILABLE_ERROR);
+    clearErrorMessageIf(_STR_HDD_APA_TABLE_UNREADABLE_ERROR);
 }
 
 static char *hddPrefix = "pfs0:";
@@ -518,8 +519,14 @@ int hddModulesAreLoaded(void)
     return hddModulesLoaded != 0;
 }
 
-// Validate an APA header sector without ps2hdd: the "APA" magic plus the header checksum
-// (sum of the 127 little-endian words after the checksum word itself, per ps2sdk apaCheckSum).
+#define HDD_PROBE_READ_FAILED      (-1)
+#define HDD_PROBE_TABLE_UNREADABLE (-2)
+
+// Validate an APA header without ps2hdd: the "APA" magic plus the header checksum, per ps2sdk
+// apaCheckSum. The non-GPT driver sums all 255 words after the checksum (the whole 1 KB header);
+// GPT-capable formatters seal the __mbr over the first sector only (127 words). Accept either, so
+// this probe never calls a validly sealed table unreadable. (Disks that actually carry a GPT header
+// at LBA 1 are classified as GPT before this is consulted.)
 static int hddApaHeaderValid(const u8 *pSectorData)
 {
     const u32 *pWords = (const u32 *)pSectorData;
@@ -531,19 +538,27 @@ static int hddApaHeaderValid(const u8 *pSectorData)
 
     for (i = 1; i < 128; i++)
         sum += pWords[i];
+    if (sum == pWords[0])
+        return 1;
+
+    for (i = 128; i < 256; i++)
+        sum += pWords[i];
 
     return sum == pWords[0];
 }
 
-// Returns 1 for MBR/GPT, 0 for APA, and -1 if an error occured
+// Returns 0 for APA, 1 for MBR/GPT, HDD_PROBE_READ_FAILED when the drive did not answer, and
+// HDD_PROBE_TABLE_UNREADABLE when it answered but LBA 0-1 hold no valid APA header and no MBR/GPT
+// either. The last one is exactly what a damaged APA table looks like: the drive is there, every
+// game may still be on it, and the one thing the user must not do is format it.
 int hddDetectNonSonyFileSystem()
 {
-    int result = -1;
+    int result = HDD_PROBE_READ_FAILED;
     // Allocate memory for storing data for the first two sectors.
     u8 *pSectorData = (u8 *)malloc(512 * 2);
     if (pSectorData == NULL) {
         LOG("hddDetectNonSonyFileSystem: failed to allocate scratch memory\n");
-        return -1;
+        return HDD_PROBE_READ_FAILED;
     }
 
     // Trying to load the APA/PFS irx modules when a non-sony formatted HDD is connected (ie: MBR/GPT  w/ exFAT) runs
@@ -553,7 +568,7 @@ int hddDetectNonSonyFileSystem()
     if (result < 0) {
         LOG("hddDetectNonSonyFileSystem: failed to read data from hdd %d\n", result);
         free(pSectorData);
-        return -1;
+        return HDD_PROBE_READ_FAILED;
     }
 
     // Check for a valid APA header FIRST, and only treat MBR/GPT evidence as decisive when no valid
@@ -564,7 +579,16 @@ int hddDetectNonSonyFileSystem()
     // raises no error by design), leaving the APA page empty with zero HDL/PFS content while ATA
     // itself worked fine. The checksummed APA magic is far stronger evidence than two signature
     // bytes; a genuine exFAT/MBR/GPT drive has no valid APA header and still bails below.
-    if (memcmp((const char *)&pSectorData[4], "APA", 3) == 0) {
+    //
+    // One exception comes first: a GPT header at LBA 1. That is a GPT/APA hybrid, laid out for a
+    // GPT-capable APA driver (error records at LBA 34, GPT entries over LBA 2-33). The APA driver
+    // this loader embeds is not built with GPT support and rejects such a table, so loading it would
+    // only earn a false "table cannot be read" (402) on a healthy disk. Treat it like any GPT disk:
+    // silent, APA stack never loaded, the BDM side free to mount its GPT volumes.
+    if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
+        LOG("hddDetectNonSonyFileSystem: found GPT partition data (GPT/APA hybrids are not supported)\n");
+        result = 1;
+    } else if (memcmp((const char *)&pSectorData[4], "APA", 3) == 0) {
         if (hddApaHeaderValid(pSectorData)) {
             // Found APA partition type.
             LOG("hddDetectNonSonyFileSystem: found APA partition data\n");
@@ -573,21 +597,17 @@ int hddDetectNonSonyFileSystem()
             // APA magic with a BAD checksum: fail closed. Do not let an accompanying 0x55AA
             // reclassify a possibly-corrupt APA drive as safe-to-ignore MBR media either.
             LOG("hddDetectNonSonyFileSystem: APA magic present but header checksum invalid\n");
-            result = -1;
+            result = HDD_PROBE_TABLE_UNREADABLE;
         }
     } else if (pSectorData[0x1FE] == 0x55 && pSectorData[0x1FF] == 0xAA) {
         // Found MBR partition type.
         LOG("hddDetectNonSonyFileSystem: found MBR partition data\n");
         result = 1;
-    } else if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
-        // Found GPT partition type.
-        LOG("hddDetectNonSonyFileSystem: found GPT partition data\n");
-        result = 1;
     } else {
         // Even though we didn't find evidence of non-APA partition data, if we load the APA irx module
         // it will write to the drive and potentially corrupt any data that might be there.
         LOG("hddDetectNonSonyFileSystem: partition data not recognized\n");
-        result = -1;
+        result = HDD_PROBE_TABLE_UNREADABLE;
     }
 
     // Cleanup and return.
@@ -653,7 +673,14 @@ static int hddLoadCoreSupportModules(void)
         // just looks like a dead drive for the whole session. Surface it. The 1 (genuine MBR/GPT/exFAT)
         // branch stays silent on purpose -- that is the NORMAL coexistence case for BDM-HDD users and
         // must not toast at every boot.
-        if (nonSony < 0 && !hddSupportErrToasted) {
+        //
+        // A drive that ANSWERED but carries no recognizable table gets its own message. "Not detected"
+        // is false there, and it is the wording that sends people to delete configs, re-run tools and
+        // eventually reformat a disk whose games are all still on it.
+        if (nonSony == HDD_PROBE_TABLE_UNREADABLE && !hddSupportErrToasted) {
+            setErrorMessageWithCode(_STR_HDD_APA_TABLE_UNREADABLE_ERROR, ERROR_HDD_APA_TABLE_UNREADABLE);
+            hddSupportErrToasted = 1;
+        } else if (nonSony < 0 && !hddSupportErrToasted) {
             setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_NOT_DETECTED);
             hddSupportErrToasted = 1;
         } else if (nonSony > 0) {
@@ -1186,9 +1213,17 @@ static int hddUpdateGameList(item_list_t *itemList)
             // here is a genuine retry (hddLoadSupportModules ran and did not latch), and the success
             // arm above resets the count, so this only fires when PFS has really refused to come up.
             if (++hddPfsSettledFailures >= HDD_PFS_REPORT_AFTER_FAILURES) {
-                hddLogPfsDiagState("emit-code-222", "settled-retries-exhausted");
-                setErrorMessageWithCodeAndDetail(_STR_HDD_PFS_UNAVAILABLE_ERROR, ERROR_HDD_MODULE_PFS_FAILURE,
-                                                 hddPfsDiagReasonName(hddPfsDiagReason));
+                if (hddPfsDiagReason == HDD_PFS_DIAG_REASON_HDD_CHECK_STATUS_1) {
+                    // ps2hdd itself rejected the APA table (apaGetFormat), and its status is latched
+                    // for the session. That is not a PFS problem, and "PFS support unavailable" hid
+                    // the one thing that matters: the drive is there and must not be formatted.
+                    hddLogPfsDiagState("emit-code-402", "settled-retries-exhausted");
+                    setErrorMessageWithCode(_STR_HDD_APA_TABLE_UNREADABLE_ERROR, ERROR_HDD_APA_TABLE_UNREADABLE);
+                } else {
+                    hddLogPfsDiagState("emit-code-222", "settled-retries-exhausted");
+                    setErrorMessageWithCodeAndDetail(_STR_HDD_PFS_UNAVAILABLE_ERROR, ERROR_HDD_MODULE_PFS_FAILURE,
+                                                     hddPfsDiagReasonName(hddPfsDiagReason));
+                }
                 hddSupportErrToasted = 1;
             } else {
                 hddLogPfsDiagState("defer-code-222", "settled-retry-failed-below-threshold");
@@ -2336,6 +2371,10 @@ static void hddCleanUp(item_list_t *itemList, int exception)
         if ((exception & KEEPIOP_EXCEPTION) == 0)
             fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
 
+        // Whatever the handoff is, commit what has been written so far: the next thing to happen to
+        // this drive may be a power cut. Harmless to a keep-IOP child, which reads through the mount.
+        hddFlushCache();
+
         hddSupportModulesLoaded = 0;
         gHDDPrefix = NULL; // pfs0: is no longer a valid persistent data-home mount marker
     }
@@ -2362,6 +2401,13 @@ static void hddShutdown(item_list_t *itemList)
     if (hddSupportModulesLoaded) {
         /* Close all files */
         fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+
+        // Exit and power-off end here, and the console may lose power before DEV9's own STANDBY
+        // IMMEDIATE runs (it only runs once DEV9's refcount reaches zero). Commit the write cache.
+        // Terminal only: on a launch from another device the drive stays powered, and a flush would
+        // spin up an idle disk and stall the handoff for nothing.
+        if (gDeinitTerminal)
+            hddFlushCache();
 
         hddSupportModulesLoaded = 0;
         gHDDPrefix = NULL; // pfs0: is no longer a valid persistent data-home mount marker

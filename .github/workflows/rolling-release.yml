@@ -134,7 +134,7 @@ jobs:
           # IRX provenance manifest: hash every prebuilt IOP module in this container's SDK, so a
           # silent SDK-side driver swap (the mmceman class) shows up as a manifest diff between
           # runs instead of as a hardware mystery. NOT every module listed is one we embed -- the
-          # script writes a header naming the three the fork builds itself.
+          # script writes a header naming the modules the fork builds itself.
           sh ./.github/scripts/irx_manifest.sh PS2DEVPINNED
           echo "Staged pinned rolling assets:"
           ls -la rolling
@@ -1017,6 +1017,10 @@ jobs:
             # "PC library manager" section that used to sit here, so the recommendation is edited
             # in ONE place and every rolling release carries it unchanged.
             printf '\n## In this build\n'
+            printf -- '- APA HDD table protection: the APA driver can no longer write the partition-table sector except a\n'
+            printf -- '  complete valid header, never formats or creates partitions, and never writes error records.\n'
+            printf -- '  A disk whose table cannot be read now says so (code 402: do NOT format) -- see docs/APA-SAFETY.md\n'
+            printf -- '  and the PC recovery tool pc/apa-recovery in the source.\n'
             printf -- '- External Neutrino core option: per-game core selector + global/per-game launch args\n'
             printf -- '- Coverflow cover-art render mode (default theme)\n'
             printf -- '- Favorites tab: R3 stars; its independent L3 ring always cycles PS2 / PS1 / ELF / All in One, opening on PS2\n'
@@ -1033,6 +1037,10 @@ jobs:
             printf -- '- Category settings layout with return-to-paused-page retention\n'
             printf -- '- Per-game VMC shared with Neutrino on writable BDM (honours OPL VMC groups)\n'
             printf -- '- Visual GameID barcode for Pixel FX / RetroGEM / PS2Digital (Interface page, OFF by default)\n'
+            printf -- '- BDM (USB / exFAT HDD / MX4SIO / iLink) block cache fix: a failed read no longer comes back as\n'
+            printf -- '  another part of the disk, which could let a later save corrupt a FAT/exFAT filesystem\n'
+            printf -- '- A USB drive with 4K sectors is no longer read into 512-byte buffers (IOP memory corruption); it\n'
+            printf -- '  shows code 500 and stays unmounted. Support is tracked in issue #651\n'
             printf -- '- RetroGEM Game ID optical barcode for POPSTARTER / PS1 VCD launches (PS Emulation Settings, ON by default)\n'
 
             printf -- '- Neutrino args: prefix a flag with $ to disable it without deleting; "Test launch" boots without saving\n'
@@ -1043,6 +1051,9 @@ jobs:
             printf -- '- OPL-PS1-AIO-Converter-GUI.url: BIN/CUE to VCD conversion and install, by shaan\n'
             printf -- '- PS2RD-CHT-Manager.url: manager for the PS2RD .cht cheat files, by TheRealNextria\n'
             printf '\n## Needs testing -- please report from real hardware\n'
+            printf -- '- APA HDD, on a disk you have backed up: boot, list and launch; delete a game (including the last\n'
+            printf -- '  one on the disk); rename a PS1 partition; exit and power off from the menu. Everything should still\n'
+            printf -- '  list afterwards, and no "refused" line should appear in the IOP log during normal use.\n'
             printf -- '- GameID barcode: enable it on the Interface page, then confirm your Pixel FX / RetroGEM /\n'
             printf -- '  PS2Digital auto-loads the per-game profile (the HDMI latch is hardware-only -- not emulator-testable).\n'
             printf -- '- VMC -> Neutrino: confirm your save mounts when launching via Neutrino on USB / exFAT / MX4SIO.\n'
@@ -1056,6 +1067,8 @@ jobs:
             printf -- '  and app covers are square and PS2 covers portrait, on your own theme as well as the built-in ones.\n'
             printf -- '- Remembered L3 view: toggle a page, then launch a game OR save settings, reboot, and confirm it\n'
             printf -- '  comes back where you left it. (A toggle followed by a power-off with neither is deliberately not kept.)\n'
+            printf -- '- USB / MX4SIO / exFAT HDD: browse, launch and save settings as usual; confirm lists load at normal speed\n'
+            printf -- '  and the drive still checks clean on a PC afterwards (the BDM block cache changed underneath).\n'
             printf '\n## Other downloads\n'
             if ls rolling/RIPTOPL-RA-*.zip >/dev/null 2>&1; then
               printf -- '- RIPTOPL-RA-*.zip: the RetroAchievements loader as a complete package (POPS, EMBER, neutrino, shortcuts) -- **development build, not hardware-tested**\n'
@@ -1086,7 +1099,7 @@ jobs:
                 printf -- '- %s-%s-ds5.ELF: %s toolchain WITH DualSense (DS5 USB) pad support (same reliability as the %s bare loader above)\n' "$VERSIONED_BASE" "$sdk" "$sdk" "$sdk"
               fi
             done
-            printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module in each toolchain; the header names the three the fork builds itself instead\n'
+            printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module in each toolchain; the header names the modules the fork builds itself instead\n'
             printf -- '- %s-src.zip: source snapshot to rebuild this exact commit\n' "$VERSIONED_BASE"
             if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
               printf -- '- RIPTOPL-LANGS-*.zip: extra UI language files (.lng + non-Latin fonts) -- copy into your OPL folder\n'
