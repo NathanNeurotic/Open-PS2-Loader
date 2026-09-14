@@ -40,7 +40,8 @@ LOCAL CHANGES:
   and device before freeing clink in apaGetNextHeader; save header->next before
   freeing clink1 in apaDeleteFixNext; save prev before freeing clink in
   apaDelete; free clink_mbr and propagate errors in apaDelete; propagate flush
-  errors in apaInsertPartition and apaDelete.
+  errors in apaInsertPartition, apaDelete, apaDeleteFixPrev, apaDeleteFixNext,
+  and apaGetNextHeader.
 - hdd_fio.c: compare passwords before freeing clink in apaOpen; save the
   partition sector before freeing clink in hddFormat; remove duplicate
   SignalSema calls in apaRename; validate nsub against APA_MAXSUB in apaRemove,
@@ -50,7 +51,8 @@ LOCAL CHANGES:
   ioctl2DeleteLastSub, devctlSwapTemp, and devctlSetOsdMBR; free clink on invalid
   osdStart in devctlSetOsdMBR.
 - hdd.c: validate clink_this from apaCacheGetHeader before dereference in
-  hddAddPartitionHere.
+  hddAddPartitionHere; check clink_new against NULL in hddAddPartitionHere;
+  propagate flush errors during partition creation in hddAddPartitionHere.
 - Standalone Makefile using the installed SDK headers/imports and the same
   APA_OSD_VER, APA_USE_DEV9 and APA_USE_ATAD options as the previous variant.
 - Repository C formatting only in the remaining sources.

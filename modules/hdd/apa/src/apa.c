@@ -315,7 +315,11 @@ apa_cache_t *apaDeleteFixPrev(apa_cache_t *clink, int *err)
         clink2->header->prev = clink->header->start;
         clink2->flags |= APA_CACHE_FLAG_DIRTY;
         clink->flags |= APA_CACHE_FLAG_DIRTY;
-        apaCacheFlushAllDirty(device);
+        if ((*err = apaCacheFlushAllDirty(device)) != 0) {
+            apaCacheFree(clink2);
+            apaCacheFree(clink);
+            return NULL;
+        }
         apaCacheFree(clink2);
     }
     return clink;
@@ -371,7 +375,11 @@ apa_cache_t *apaDeleteFixNext(apa_cache_t *clink, int *err)
         apaMakeEmpty(clink);
         clink2->header->prev = clink->header->start;
         clink2->flags |= APA_CACHE_FLAG_DIRTY;
-        apaCacheFlushAllDirty(device);
+        if ((*err = apaCacheFlushAllDirty(device)) != 0) {
+            apaCacheFree(clink2);
+            apaCacheFree(clink);
+            return NULL;
+        }
         apaCacheFree(clink2);
     }
     return clink;
@@ -547,7 +555,13 @@ apa_cache_t *apaGetNextHeader(apa_cache_t *clink, int *err)
         APA_PRINTF(APA_DRV_NAME ": Warning: Invalid partition information. start != prev\n");
         clink->header->prev = start;
         clink->flags |= APA_CACHE_FLAG_DIRTY;
-        apaCacheFlushAllDirty(clink->device);
+        int flush_rv = apaCacheFlushAllDirty(clink->device);
+        if (flush_rv != 0) {
+            if (err)
+                *err = flush_rv;
+            apaCacheFree(clink);
+            return NULL;
+        }
     }
     return clink;
 }

@@ -153,26 +153,46 @@ apa_cache_t *hddAddPartitionHere(s32 device, const apa_params_t *params, u32 *em
             if (!(part_end % tempSize)) {
                 clink_new = apaRemovePartition(device, part_end, 0,
                                                clink_this->header->start, tempSize);
+                if (clink_new == NULL) {
+                    if (err)
+                        *err = -ENOMEM;
+                    break;
+                }
                 clink_this->header->next = part_end;
                 clink_this->flags |= APA_CACHE_FLAG_DIRTY;
                 clink_next->header->prev = clink_new->header->start;
                 part_end += tempSize;
                 clink_next->flags |= APA_CACHE_FLAG_DIRTY;
-                apaCacheFlushAllDirty(device);
+                int flush_rv = apaCacheFlushAllDirty(device);
+                if (flush_rv != 0) {
+                    if (err)
+                        *err = flush_rv;
+                    apaCacheFree(clink_new);
+                    clink_new = NULL;
+                    break;
+                }
                 apaCacheFree(clink_this);
                 clink_this = clink_new;
                 break;
             }
             tempSize >>= 1;
         }
+        if (*err != 0)
+            break;
     }
-    if ((clink_new = apaFillHeader(device, params, part_end, 0, clink_this->header->start,
-                                   params->size, err)) != NULL) {
+    if (*err == 0 && (clink_new = apaFillHeader(device, params, part_end, 0, clink_this->header->start,
+                                                params->size, err)) != NULL) {
         clink_this->header->next = part_end;
         clink_this->flags |= APA_CACHE_FLAG_DIRTY;
         clink_next->header->prev = clink_new->header->start;
         clink_next->flags |= APA_CACHE_FLAG_DIRTY;
-        apaCacheFlushAllDirty(device);
+        int flush_rv = apaCacheFlushAllDirty(device);
+        if (flush_rv != 0) {
+            if (err)
+                *err = flush_rv;
+            apaCacheFree(clink_new);
+            clink_new = NULL;
+        }
     }
     apaCacheFree(clink_this);
     apaCacheFree(clink_next);

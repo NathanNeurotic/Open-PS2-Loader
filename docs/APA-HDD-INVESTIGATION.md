@@ -655,4 +655,12 @@ This eliminates torn writes and lost dirty blocks in drive onboard RAM during co
 In `modules/hdd/apa/src/hdd_fio.c`, `apaRemove()` previously looped through subpartitions and called `clink2 = apaCacheGetHeader(...)`. If reading a subpartition header failed, the loop silently skipped that subpartition and proceeded to delete the main partition. This left the subpartition orphaned and leaked on disk.
 Fixed to check `!(clink2 = apaCacheGetHeader(...))` and immediately abort returning `rv`.
 
+### 4. Partition Creation & Link Fix Error Propagation (apa.c & hdd.c)
+
+A complete audit of all remaining `apaCacheFlushAllDirty` invocations identified three unhandled flush points:
+- In `apaDeleteFixPrev` and `apaDeleteFixNext` (`apa.c`), merging adjacent empty partitions during deletion ignored flush failures, returning `clink` as success even when header flushes failed. Fixed to capture `*err = apaCacheFlushAllDirty(device)` and return `NULL` on error.
+- In `apaGetNextHeader` (`apa.c`), auto-correcting an inconsistent `prev` link flushed without error checking. Fixed to propagate `flush_rv` into `*err` and return `NULL` on failure.
+- In `hddAddPartitionHere` (`hdd.c`), `clink_new = apaRemovePartition(...)` was dereferenced without checking for `NULL`, and flush failures during intermediate block splitting and header filling were discarded. Fixed with NULL checks and flush error propagation.
+
+
 
