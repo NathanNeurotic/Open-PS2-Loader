@@ -203,7 +203,8 @@ def main():
         outside = digest_outside_table(image)
         code, out = run_tool(image)
         check(code == 1 and 'Repairable' in out and 'Do NOT format' in out, 'wiped table not reported repairable:\n' + out)
-        check(digest_all(image) != '' and read(image, 0, 8) == b'\0' * 8 * SECTOR, 'diagnosis wrote to the disk')
+        check(read(image, 0, 8) == b'\0' * 8 * SECTOR and digest_outside_table(image) == outside,
+              'diagnosis wrote to the disk')
         backup = Path(tmp) / 'wiped.bak'
         code, out = run_tool(image, '--repair', '--yes', '--backup', backup)
         check(code == 0 and 'Repaired and verified' in out, 'wiped table repair failed:\n' + out)
@@ -249,6 +250,48 @@ def main():
         fixed = read(image, 0, 2)
         check(code == 0 and struct.unpack_from('<I', fixed, 0x0C)[0] == starts[-1], 'relink failed:\n' + out)
         check(fixed[0x10:] == bytes(raw[0x10:]), 'relink changed fields other than the links')
+
+        # The last game was deleted before the damage: ps2hdd's apaDelete unlinks a tail partition but
+        # leaves its header on disk. That leftover must not block the repair, and must not become prev.
+        image, starts, total = fresh('stale_tail')
+        new_tail = bytearray(read(image, starts[-2], 2))
+        struct.pack_into('<I', new_tail, 0x08, 0)
+        seal(new_tail)
+        write(image, starts[-2], bytes(new_tail))
+        write(image, 0, b'\0' * 8 * SECTOR)
+        code, out = run_tool(image, '--repair', '--yes', '--backup', Path(tmp) / 'stale_tail.bak')
+        _, rebuilt, _ = tool.format_check(read(image, 0, 8))
+        check(code == 0 and rebuilt.prev == starts[-2] and 'after the chain end' in out,
+              'repair after a deleted tail failed or linked the leftover header:\n' + out)
+
+        # An intact __mbr names a later tail than the chain reaches: the chain was cut short, so
+        # rewriting prev would orphan partitions. Refuse, and write nothing.
+        image, starts, total = fresh('truncated')
+        cut = bytearray(read(image, starts[3], 2))
+        struct.pack_into('<I', cut, 0x08, 0)
+        seal(cut)
+        write(image, starts[3], bytes(cut))
+        write(image, 6, b'\xff' * 2 * SECTOR)
+        before = digest_all(image)
+        code, out = run_tool(image, '--repair', '--yes', '--backup', Path(tmp) / 'truncated.bak')
+        check(code == 1 and 'names' in out and digest_all(image) == before,
+              'a chain cut short under an intact __mbr was not refused untouched:\n' + out)
+
+        # A checksum-valid header with a field no formatter writes: ps2hdd reads it, RiptOPL's fence
+        # would refuse to update it. It must be rebuilt, not kept.
+        image, starts, total = fresh('fields')
+        odd = bytearray(read(image, 0, 2))
+        odd[0x10:0x15] = b'__mbX'
+        seal(odd)
+        write(image, 0, bytes(odd))
+        code, out = run_tool(image, '--repair', '--yes', '--backup', Path(tmp) / 'fields.bak')
+        _, rebuilt, _ = tool.format_check(read(image, 0, 8))
+        check(code == 0 and rebuilt.fence_valid_mbr(total) and fence_accepts(fence_exe, image, total),
+              'a header with bad fields was kept instead of rebuilt:\n' + out)
+
+        # I/O errors report exit code 2 instead of a traceback.
+        code, out = run_tool(Path(tmp) / 'no-such-disk.img')
+        check(code == 2 and 'Cannot open' in out, 'a missing target did not exit 2:\n' + out)
 
         # A broken chain: refuse, and write nothing.
         image, starts, total = fresh('broken')

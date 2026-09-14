@@ -959,8 +959,14 @@ $(EE_ASM_DIR)smbinit.c: modules/network/smbinit/smbinit.irx | $(EE_ASM_DIR)
 # first probe forever (the "40x: HardDisk Drive not detected" all-session APA death); ours makes
 # sceAtaInit retryable so the EE retry loop + xhdd's re-probe devctl genuinely heal. Generated file
 # keeps the ps2atad.c name -> symbol ps2atad_irx -> zero EE-side changes.
-modules/hdd/atad/ata_bd.irx: modules/hdd/atad
-	$(MAKE) -C $<
+#
+# Both vendored storage drivers are safety-critical: always enter their sub-makes (as http-submake
+# does) so an edited source rebuilds the IRX -- a directory timestamp does not change on edits.
+.PHONY: hdd-driver-submake
+hdd-driver-submake:
+
+modules/hdd/atad/ata_bd.irx: hdd-driver-submake
+	$(MAKE) -C modules/hdd/atad
 
 $(EE_ASM_DIR)ps2atad.c: modules/hdd/atad/ata_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
@@ -980,8 +986,8 @@ $(EE_ASM_DIR)xhdd.c: modules/hdd/xhdd/xhdd.irx | $(EE_ASM_DIR)
 # FORK-VENDORED APA driver (modules/hdd/apa, see its ORIGIN.txt): the SDK's ps2hdd-osd source plus a
 # partition-table write fence. Generated file keeps the ps2hdd.c name -> symbol ps2hdd_irx -> zero
 # EE-side loader changes.
-modules/hdd/apa/ps2hdd-osd.irx: modules/hdd/apa
-	$(MAKE) -C $<
+modules/hdd/apa/ps2hdd-osd.irx: hdd-driver-submake
+	$(MAKE) -C modules/hdd/apa
 
 $(EE_ASM_DIR)ps2hdd.c: modules/hdd/apa/ps2hdd-osd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx

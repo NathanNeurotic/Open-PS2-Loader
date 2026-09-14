@@ -45,7 +45,9 @@ python3 apa_recover.py /dev/sdX --repair
    - LBA 2–5 are kept if readable; LBA 6–7 are zeroed.
 4. **Verifies:** re-reads LBA 0–7, applies ps2hdd's own format check, and walks the whole chain again from the new header.
 
-It asks you to type `REPAIR` before writing, unless you pass `--yes`.
+The disk is opened read-only for the whole diagnosis. Before anything is written, the tool shows the target (path, size and partition count) and asks you to type `REPAIR`; only then does it reopen the disk for writing. `--yes` skips that confirmation, so only use it when you are certain of the path.
+
+A checksummed header whose `next` is 0 is taken as the real end of the chain, because deleting the last partition on a disk leaves that partition's old header in place. If an intact `__mbr` names a later last partition than the chain reaches, the tool refuses: the chain was cut short.
 
 ## Tests
 
@@ -61,4 +63,4 @@ It asks you to type `REPAIR` before writing, unless you pass `--yes`.
 
 It checks that a rebuilt header passes the IOP driver's write fence and ps2hdd's format rules, and uses the password ps2sdk computes. It also checks that nothing outside LBA 0–7 ever changes.
 
-Raw-device access on Windows and macOS has been exercised with image files only. Tested reports from real disks are welcome.
+Image-file operation has been tested on Linux and Windows. Raw-device access (`\\.\PhysicalDriveN`, `/dev/sdX`, `/dev/rdiskN` and the disk-size ioctls) has not been tested. Reports from real disks are welcome.
