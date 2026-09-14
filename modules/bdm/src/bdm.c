@@ -52,8 +52,10 @@ void bdm_connect_bd(struct block_device *bd)
 {
     int i;
 
+    // RiptOPL: scale by multiplying. The SDK divided by (1000000 / sectorSize), a zero divisor for a
+    // device reporting a sector size of 0 or above 1 MB, before bdm_try_mount could refuse it.
     M_PRINTF("connecting device %s%dp%d size=%luMB id=0x%x\n", bd->name, bd->devNr, bd->parNr,
-             (u32)(bd->sectorCount / ((1000 * 1000) / bd->sectorSize)), bd->parId);
+             (u32)(bd->sectorCount * bd->sectorSize / (1000 * 1000)), bd->parId);
 
     for (i = 0; i < MAX_CONNECTIONS; ++i) {
         if (g_mount[i].bd == NULL) {

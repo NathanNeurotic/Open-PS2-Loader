@@ -145,8 +145,11 @@ class Disk:
             return None
 
     def write(self, lba, data):
-        assert len(data) % SECTOR == 0
-        assert lba + len(data) // SECTOR <= TABLE_SECTORS, 'this tool only ever writes LBA 0-7'
+        # Real checks, not asserts: python -O strips asserts, and this is the only bound on the write.
+        if len(data) == 0 or len(data) % SECTOR != 0:
+            raise ValueError('write of %d bytes is not a whole number of sectors' % len(data))
+        if lba < 0 or lba + len(data) // SECTOR > TABLE_SECTORS:
+            raise ValueError('this tool only ever writes LBA 0-7')
         os.lseek(self.fd, lba * SECTOR, os.SEEK_SET)
         view = memoryview(data)
         while view:

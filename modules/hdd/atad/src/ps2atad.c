@@ -1577,7 +1577,7 @@ static int ata_bd_read(struct block_device *bd, u64 sector, void *buffer, u16 co
 
 static int ata_bd_write_hits_apa_reserved(int device, u64 sector, u16 count)
 {
-    static u8 lba0[512];
+    static u8 lba0[512] __attribute__((aligned(4))); // a DMA target, like every other buffer here
 
     if (count == 0 || sector >= ATA_BD_APA_RESERVED_SECTORS)
         return 0;
