@@ -1,0 +1,19 @@
+Vendored from: ps2dev/ps2sdk
+  iop/fs/bdm/src/*                  -> src/
+  iop/fs/libbdm/src/*               -> libbdm/src/
+  iop/fs/libbdm/include/*           -> libbdm/include/
+Built like the SDK: bdm.irx linked against a static libbdm.a (see Makefile, libbdm/Makefile).
+Pin: 3e46a44a21db66f42a56320b6f64bfc52ea279f8 (2026-09-03)
+License: Academic Free License 2.0, included as LICENSE (headers retained in the sources).
+
+BASELINE PROOF: the unmodified vendoring commit, after repository clang-format 12 formatting,
+builds a bdm.irx that is BYTE-IDENTICAL to $(PS2SDK)/iop/irx/bdm.irx in ghcr.io/ps2dev/ps2dev:latest
+and ghcr.io/ps2homebrew/ps2homebrew:main (both ship the same prebuilt as of 2026-09-14). Every
+functional change is isolated in the commits that follow; diff against that commit to review them.
+
+WHY VENDORED: see LOCAL CHANGES.
+
+LOCAL CHANGES: none in the baseline commit.
+
+RE-VENDOR: fetch the files above from the new pin, clang-format 12, build and cmp against the
+container's prebuilt to re-establish the baseline, then re-apply LOCAL CHANGES and update the pin.

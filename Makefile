@@ -469,6 +469,8 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/nbns clean
 	echo " -httpclient"
 	$(MAKE) -C modules/network/httpclient clean
+	echo " -bdm"
+	$(MAKE) -C modules/bdm clean
 	echo " -atad (ata_bd)"
 	$(MAKE) -C modules/hdd/atad clean
 	echo " -xhdd"
@@ -785,7 +787,15 @@ modules/pademu/usb_pademu.irx: modules/pademu
 $(EE_ASM_DIR)usb_pademu.c: modules/pademu/usb_pademu.irx
 	$(BIN2C) $< $@ $(*F)_irx
 
-$(EE_ASM_DIR)bdm.c: $(PS2SDK)/iop/irx/bdm.irx | $(EE_ASM_DIR)
+# FORK-VENDORED Block Device Manager (modules/bdm, see its ORIGIN.txt): ps2sdk's bdm + libbdm with the
+# block-cache refill fix. Always enter the sub-make so an edited source rebuilds the IRX.
+.PHONY: bdm-submake
+bdm-submake:
+
+modules/bdm/bdm.irx: bdm-submake
+	$(MAKE) -C modules/bdm
+
+$(EE_ASM_DIR)bdm.c: modules/bdm/bdm.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)bdmfs_fatfs.c: $(PS2SDK)/iop/irx/bdmfs_fatfs.irx | $(EE_ASM_DIR)
