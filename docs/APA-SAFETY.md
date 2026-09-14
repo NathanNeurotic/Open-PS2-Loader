@@ -42,6 +42,9 @@ The exact trigger on that disk cannot be proven without the disk. The fix is the
 | **No error records.** LBA 6/7 are never written; the events are logged instead. | `modules/hdd/apa/src/apa.c` |
 | **No table edits the loader doesn't need.** Refused: format, partition creation (including a stray `open(O_CREAT)` on `hdd0:`), sub-partition add/remove, OSD MBR changes, partition swaps. **Delete game** and **PS1 rename** still work. | `modules/hdd/apa/src/hdd_fio.c` |
 | **Raw sector writes stay out of `__mbr`.** `HDIOC_WRITESECTOR` refuses any LBA inside the first 128 MB or off the disk. The partition transfer bounds check no longer wraps. | `hdd_fio.c` |
+| **Corrupt headers can't steer a delete.** A partition claiming more than 64 sub-partitions is refused. **Delete game** first proves every sub-partition it lists is readable and really belongs to it, and refuses otherwise, rather than orphaning a piece or deleting an unrelated partition. | `hdd_fio.c` |
+| **No wrapped addresses.** The ATA driver refuses any request past the drive's capacity. On drives without LBA48 (up to 137 GB), a sector at or above 2^28 used to wrap silently to the start of the disk. | `modules/hdd/atad/src/ps2atad.c` |
+| **GPT/APA hybrids are left alone.** A disk with a GPT header at LBA 1 is treated as a GPT disk: this build's APA driver cannot read that layout, so it is never loaded on it. | `src/hddsupport.c` |
 | **BDM (FAT/exFAT) never writes an APA disk's first 128 MB.** This also holds on APA + exFAT hybrids. | `modules/hdd/atad/src/ps2atad.c` |
 | **Honest errors.** Code **402**: *"HDD found, but its APA partition table cannot be read. Do not format it -- your games may be recoverable."* It covers both a probe that reads garbage and a table ps2hdd rejects. 401 now means a drive that really did not answer. | `src/hddsupport.c` |
 | **Flush on teardown.** An ATA FLUSH CACHE is sent after closing PFS files on exit, power-off and launches from the HDD. Launches from other devices skip it so an idle disk isn't spun up. | `src/hddsupport.c`, `src/hdd.c` |
@@ -52,6 +55,7 @@ The driver is built from ps2sdk source. The unmodified copy builds **byte-identi
 ## What it cannot guarantee
 
 - **Other software** (wLaunchELF, HDD-OSD, PSBBN, PC tools) uses its own driver and does not get these protections.
+- **GPT/APA hybrid disks** are not supported by this build's APA driver, and their APA side does not list.
 - **A power cut inside a partition** can still damage what was being written there, such as a PFS journal or a config file. PFS replays its journal on the next mount; the partition table itself is not at risk.
 - **A failing drive** fails regardless. Recovery starts with imaging the disk.
 - **None of this has been through a hardware power-cut test yet.** See the checklist below.

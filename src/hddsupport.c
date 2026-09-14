@@ -524,8 +524,9 @@ int hddModulesAreLoaded(void)
 
 // Validate an APA header without ps2hdd: the "APA" magic plus the header checksum, per ps2sdk
 // apaCheckSum. The non-GPT driver sums all 255 words after the checksum (the whole 1 KB header);
-// GPT-capable formatters seal the __mbr over the first sector only (127 words) because sector 1
-// holds the GPT header. Accept either, so this probe never calls a valid table unreadable.
+// GPT-capable formatters seal the __mbr over the first sector only (127 words). Accept either, so
+// this probe never calls a validly sealed table unreadable. (Disks that actually carry a GPT header
+// at LBA 1 are classified as GPT before this is consulted.)
 static int hddApaHeaderValid(const u8 *pSectorData)
 {
     const u32 *pWords = (const u32 *)pSectorData;
@@ -578,7 +579,16 @@ int hddDetectNonSonyFileSystem()
     // raises no error by design), leaving the APA page empty with zero HDL/PFS content while ATA
     // itself worked fine. The checksummed APA magic is far stronger evidence than two signature
     // bytes; a genuine exFAT/MBR/GPT drive has no valid APA header and still bails below.
-    if (memcmp((const char *)&pSectorData[4], "APA", 3) == 0) {
+    //
+    // One exception comes first: a GPT header at LBA 1. That is a GPT/APA hybrid, laid out for a
+    // GPT-capable APA driver (error records at LBA 34, GPT entries over LBA 2-33). The APA driver
+    // this loader embeds is not built with GPT support and rejects such a table, so loading it would
+    // only earn a false "table cannot be read" (402) on a healthy disk. Treat it like any GPT disk:
+    // silent, APA stack never loaded, the BDM side free to mount its GPT volumes.
+    if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
+        LOG("hddDetectNonSonyFileSystem: found GPT partition data (GPT/APA hybrids are not supported)\n");
+        result = 1;
+    } else if (memcmp((const char *)&pSectorData[4], "APA", 3) == 0) {
         if (hddApaHeaderValid(pSectorData)) {
             // Found APA partition type.
             LOG("hddDetectNonSonyFileSystem: found APA partition data\n");
@@ -592,10 +602,6 @@ int hddDetectNonSonyFileSystem()
     } else if (pSectorData[0x1FE] == 0x55 && pSectorData[0x1FF] == 0xAA) {
         // Found MBR partition type.
         LOG("hddDetectNonSonyFileSystem: found MBR partition data\n");
-        result = 1;
-    } else if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
-        // Found GPT partition type.
-        LOG("hddDetectNonSonyFileSystem: found GPT partition data\n");
         result = 1;
     } else {
         // Even though we didn't find evidence of non-APA partition data, if we load the APA irx module

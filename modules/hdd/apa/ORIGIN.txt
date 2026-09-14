@@ -37,6 +37,11 @@ compiles the fence and fails if any of the policy below is lost):
    the disk, or wrapping (apaFenceRawWriteAllowed). The loader only uses it for HDL headers.
 6. hdd_fio.c: ioctl2Transfer's partition bounds check is overflow-safe (the SDK summed sector + size
    in u32, so a wrapping request could address anywhere on the disk).
+7. hdd_fio.c: an on-disk sub-partition count above APA_MAXSUB is refused in apaOpen and bounded in
+   fioGetStatFiller (it indexes the 64-entry subs array). apaRemove -- Delete game -- first proves
+   every listed sub-partition is readable and is a sub of this partition (APA_FLAG_SUB, main ==
+   start), and refuses otherwise: the SDK cleared nsub, skipped unreadable subs (orphaning them) and
+   would have deleted whatever unrelated partition a corrupt subs entry named.
 
 Unchanged: on-disk format, module name/version, cache, journal, enumeration and link repair, PFS.
 

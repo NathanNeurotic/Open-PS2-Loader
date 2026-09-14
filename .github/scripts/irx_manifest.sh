@@ -6,10 +6,11 @@
 # up as a diff between two runs, instead of arriving as an unexplained hardware report.
 #
 # WHY IT NOW CARRIES A HEADER: that early warning is only true for modules we actually embed, and
-# three of the ones listed are no longer among them -- the fork builds its own and ignores the
+# several of the ones listed are no longer among them -- the fork builds its own and ignores the
 # SDK's copy. Somebody debugging a USB report would otherwise diff usbd_mini.irx's hash across
 # runs, find it unchanged, and conclude the driver did not move, when the driver we ship does not
-# come from there at all. The header names all three so the file cannot mislead that way.
+# come from there at all. The header names every one so the file cannot mislead that way, and the
+# locally built HDD drivers are hashed at the end so their changes show up in the diff too.
 #
 # The four call sites used to be four identical inline sha256sum lines; the note lives here once
 # rather than being copy-pasted into each of them and drifting.
@@ -34,10 +35,14 @@ mkdir -p rolling
   echo "# container's ps2sdk, so an SDK-side driver swap shows up as a diff between runs rather"
   echo "# than as an unexplained hardware report."
   echo "#"
-  echo "# TWO OF THE MODULES BELOW ARE NEVER WHAT THE LOADER EMBEDS. The fork builds its own and"
+  echo "# FOUR OF THE MODULES BELOW ARE NEVER WHAT THE LOADER EMBEDS. The fork builds its own and"
   echo "# ignores the SDK's copy, so their hashes here will NOT explain a change in behaviour --"
-  echo "# read the fork's source instead:"
+  echo "# read the fork's source instead (the locally built storage drivers are hashed at the end):"
   echo "#"
+  echo "#   ata_bd.irx     -> modules/hdd/atad"
+  echo "#                     (ps2sdk iop/dev9/atad + retryable init, BDM guard for APA disks)"
+  echo "#   ps2hdd-osd.irx -> modules/hdd/apa"
+  echo "#                     (ps2sdk apa-osd + the APA partition-table write fence; docs/APA-SAFETY.md)"
   echo "#   usbd_mini.irx  -> modules/usb/usbd-ra"
   echo "#                     (ps2sdk iop/usb/usbd @314d87e7, the state before the 2024-09-04 rewrite)"
   echo "#   ps2ips.irx     -> modules/network/ps2ips"
@@ -58,6 +63,15 @@ mkdir -p rolling
   echo "#"
   echo "# This file is for DIFFING two runs, which comments do not disturb; -c is the rarer use."
   cat "$TMP"
+  echo "#"
+  echo "# Locally built storage drivers actually embedded in this build:"
+  for module in modules/hdd/atad/ata_bd.irx modules/hdd/apa/ps2hdd-osd.irx; do
+    if [ -f "$module" ]; then
+      sha256sum "$module"
+    else
+      echo "# (not built at manifest time: $module)"
+    fi
+  done
 } > "$OUT"
 
 echo "Wrote ${OUT} ($(grep -vc '^#' "$OUT") modules hashed)"

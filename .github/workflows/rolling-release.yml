@@ -134,7 +134,7 @@ jobs:
           # IRX provenance manifest: hash every prebuilt IOP module in this container's SDK, so a
           # silent SDK-side driver swap (the mmceman class) shows up as a manifest diff between
           # runs instead of as a hardware mystery. NOT every module listed is one we embed -- the
-          # script writes a header naming the three the fork builds itself.
+          # script writes a header naming the modules the fork builds itself.
           sh ./.github/scripts/irx_manifest.sh PS2DEVPINNED
           echo "Staged pinned rolling assets:"
           ls -la rolling
@@ -1093,7 +1093,7 @@ jobs:
                 printf -- '- %s-%s-ds5.ELF: %s toolchain WITH DualSense (DS5 USB) pad support (same reliability as the %s bare loader above)\n' "$VERSIONED_BASE" "$sdk" "$sdk" "$sdk"
               fi
             done
-            printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module in each toolchain; the header names the three the fork builds itself instead\n'
+            printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module in each toolchain; the header names the modules the fork builds itself instead\n'
             printf -- '- %s-src.zip: source snapshot to rebuild this exact commit\n' "$VERSIONED_BASE"
             if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
               printf -- '- RIPTOPL-LANGS-*.zip: extra UI language files (.lng + non-Latin fonts) -- copy into your OPL folder\n'
