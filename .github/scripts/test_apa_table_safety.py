@@ -255,8 +255,99 @@ def check_driver_policy():
           'hdd_fio.c: ioctl2Transfer bounds check can wrap again')
 
 
+BD_HARNESS_PREFIX = r'''
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+#define ATA_DIR_READ 0
+static unsigned char disk_lba0[512];
+static int reads, read_fails;
+static int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir)
+{
+    (void)device;
+    assert(dir == ATA_DIR_READ && lba == 0 && nsectors == 1);
+    reads++;
+    if (read_fails)
+        return -5;
+    memcpy(buf, disk_lba0, 512);
+    return 0;
+}
+'''
+
+BD_HARNESS_MAIN = r'''
+int main(void)
+{
+    /* An APA disk: nothing below the first user partition, including the whole table sector. */
+    memset(disk_lba0, 0, sizeof(disk_lba0));
+    memcpy(disk_lba0 + 4, "APA", 4);
+    assert(ata_bd_write_hits_apa_reserved(0, 0, 1));
+    assert(ata_bd_write_hits_apa_reserved(0, 7, 1));
+    assert(ata_bd_write_hits_apa_reserved(0, 0x3FFFF, 1));
+    assert(ata_bd_write_hits_apa_reserved(0, 2048, 64));
+    assert(!ata_bd_write_hits_apa_reserved(0, 0x40000, 1));
+    assert(!ata_bd_write_hits_apa_reserved(0, 0x12345678, 8));
+
+    /* A plain MBR/exFAT disk (or a superfloppy) keeps full write access. */
+    memset(disk_lba0, 0, sizeof(disk_lba0));
+    memcpy(disk_lba0 + 3, "EXFAT   ", 8);
+    disk_lba0[510] = 0x55;
+    disk_lba0[511] = 0xAA;
+    assert(!ata_bd_write_hits_apa_reserved(0, 1, 1));
+    assert(!ata_bd_write_hits_apa_reserved(0, 2048, 8));
+
+    /* LBA 0 unreadable: the disk cannot be proven non-APA, so low writes are refused. */
+    read_fails = 1;
+    assert(ata_bd_write_hits_apa_reserved(0, 6, 1));
+
+    /* Writes above the reserved area never pay for the probe read, and zero-length writes do nothing. */
+    reads = 0;
+    assert(!ata_bd_write_hits_apa_reserved(0, 0x40000, 1));
+    assert(!ata_bd_write_hits_apa_reserved(0, 0, 0));
+    assert(reads == 0);
+
+    puts("bdm fence: all cases passed");
+    return 0;
+}
+'''
+
+
+def run_bd_harness():
+    atad = text(root / 'modules/hdd/atad/src/ps2atad.c')
+    check('lba += chunk;' in atad and 'nsectors -= chunk;' in atad,
+          'ps2atad.c: the 65536-sector zero-progress loop fix (upstream f30f05eba) is gone')
+    match = re.search(r'#define ATA_BD_APA_RESERVED_SECTORS[^\n]*\n\s*static int ata_bd_write_hits_apa_reserved\(.*?\n\}\n',
+                      atad, re.S)
+    if match is None:
+        failures.append('ps2atad.c: the BDM APA reserved-area guard is missing')
+        return
+    write_body = function_body(atad, 'static int ata_bd_write(')
+    check(write_body is not None and
+          write_body.find('ata_bd_write_hits_apa_reserved(') != -1 and
+          write_body.find('ata_bd_write_hits_apa_reserved(') < write_body.find('ATA_DIR_WRITE'),
+          'ps2atad.c: ata_bd_write no longer checks the APA reserved area before writing')
+    with tempfile.TemporaryDirectory() as tmp:
+        c_file = Path(tmp) / 'bd_test.c'
+        exe = Path(tmp) / 'bd_test'
+        c_file.write_text(BD_HARNESS_PREFIX + match.group(0) + BD_HARNESS_MAIN)
+        result = subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', str(c_file), '-o', str(exe)],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            failures.append('bdm fence harness failed to compile:\n' + result.stderr)
+            return
+        result = subprocess.run([str(exe)], capture_output=True, text=True)
+        sys.stdout.write(result.stdout)
+        if result.returncode != 0:
+            failures.append('bdm fence harness failed:\n' + result.stdout + result.stderr)
+
+
 run_fence_harness()
 check_driver_policy()
+run_bd_harness()
 
 if failures:
     print('\nAPA table safety checks FAILED:')
