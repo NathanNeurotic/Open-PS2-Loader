@@ -61,6 +61,11 @@ void bdmInitDevicesData();
 int bdmUpdateDeviceData(item_list_t *itemList);
 
 static unsigned int BdmGeneration = 0;
+// Drives BDM refused because their sectors are not 512 bytes (e.g. 4K-sector USB disks, issue #651).
+// They never become massN:, so without a message they just look dead. Written by bdmEventHandler,
+// reported by bdmReportUnsupportedDrives on the ordinary update path.
+static volatile unsigned int BdmUnsupportedSectorDrives;
+static unsigned int BdmUnsupportedSectorReported;
 #ifdef __DEBUG
 // bdmEventHandler runs in the SIF command callback context; never perform diagnostic I/O there.
 // Snapshot the change and emit it from the ordinary deferred device-update worker instead.
@@ -698,6 +703,9 @@ static void bdmEventHandler(void *packet, void *opt)
 
     (void)opt;
 
+    if (event != NULL)
+        BdmUnsupportedSectorDrives = event->unsupportedSectorCount;
+
 #ifdef __DEBUG
     if (event != NULL) {
         BdmDiagIopCallbackSequence = event->callbackSequence;
@@ -1285,6 +1293,19 @@ static int bdmTransportEnabled(int bdmDeviceType)
     }
 }
 
+// Once per rise in the number of refused drives: plugging one in says why it will not appear, and
+// unplugging it re-arms the message (and withdraws it if it has not been shown yet).
+static void bdmReportUnsupportedDrives(void)
+{
+    unsigned int count = BdmUnsupportedSectorDrives;
+
+    if (count > BdmUnsupportedSectorReported)
+        setErrorMessageWithCode(_STR_BDM_UNSUPPORTED_SECTOR_SIZE_ERROR, ERROR_BDM_UNSUPPORTED_SECTOR_SIZE);
+    else if (count == 0 && BdmUnsupportedSectorReported != 0)
+        clearErrorMessageIf(_STR_BDM_UNSUPPORTED_SECTOR_SIZE_ERROR);
+    BdmUnsupportedSectorReported = count;
+}
+
 static int bdmNeedsUpdate(item_list_t *itemList)
 {
     char path[256];
@@ -1297,6 +1318,8 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // If bdm mode is disabled bail out as we don't want to update the visibility state of the device pages.
     if (bdmEffectiveStartMode() == START_MODE_DISABLED)
         return 0;
+
+    bdmReportUnsupportedDrives();
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
 

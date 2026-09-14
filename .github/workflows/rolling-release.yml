@@ -1039,6 +1039,8 @@ jobs:
             printf -- '- Visual GameID barcode for Pixel FX / RetroGEM / PS2Digital (Interface page, OFF by default)\n'
             printf -- '- BDM (USB / exFAT HDD / MX4SIO / iLink) block cache fix: a failed read no longer comes back as\n'
             printf -- '  another part of the disk, which could let a later save corrupt a FAT/exFAT filesystem\n'
+            printf -- '- A USB drive with 4K sectors is no longer read into 512-byte buffers (IOP memory corruption); it\n'
+            printf -- '  shows code 500 and stays unmounted. Support is tracked in issue #651\n'
             printf -- '- RetroGEM Game ID optical barcode for POPSTARTER / PS1 VCD launches (PS Emulation Settings, ON by default)\n'
 
             printf -- '- Neutrino args: prefix a flag with $ to disable it without deleting; "Test launch" boots without saving\n'

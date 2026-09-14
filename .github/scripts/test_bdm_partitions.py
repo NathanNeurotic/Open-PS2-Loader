@@ -220,6 +220,13 @@ def main():
             match.group(0).find('sectorSize != 512') > match.group(0).find('connect_bd('):
         print('bdm.c: bdm_try_mount no longer refuses non-512-byte devices before offering them to a driver')
         sys.exit(1)
+    if 'BDM_EVENT_CB_MOUNT' not in match.group(0):
+        print('bdm.c: a refused device no longer notifies the callback, so the loader cannot show code 500')
+        sys.exit(1)
+    bdmevent = (root / 'modules/bdmevent/main.c').read_text().replace('\r\n', '\n')
+    if 'sectorSize != 512' not in bdmevent or 'unsupportedSectorCount' not in bdmevent:
+        print('bdmevent: the snapshot no longer counts devices refused for their sector size')
+        sys.exit(1)
 
     with tempfile.TemporaryDirectory() as tmp:
         stubs = Path(tmp) / 'stubs'

@@ -62,6 +62,9 @@ enum ERROR_CODE {
     ERROR_HDD_IF_NOT_DETECTED = 400,
     ERROR_HDD_NOT_DETECTED,
     ERROR_HDD_APA_TABLE_UNREADABLE, // 402: the drive answered; its APA table did not validate
+
+    // BDM error codes
+    ERROR_BDM_UNSUPPORTED_SECTOR_SIZE = 500, // a drive's sectors are not 512 bytes; BDM refused it
 };
 
 #define NO_EXCEPTION      0x00

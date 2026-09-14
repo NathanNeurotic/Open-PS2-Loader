@@ -28,7 +28,9 @@ against a simulated device and fails on the SDK original):
    USB and iLink take the sector size from the drive; every consumer here (FatFs FF_MAX_SS 512, the
    MBR/GPT probes, the cache) reads into 512-byte buffers, so a 4K-native disk overflowed IOP memory
    on its first probe read. libbdm bd_cache_create also returns NULL for such devices and on
-   allocation failure (the SDK dereferenced NULL); BDM then mounts uncached.
+   allocation failure (the SDK dereferenced NULL); BDM then mounts uncached. The refusal fires the
+   mount callback once per device (struct bdm_mounts gains a `refused` flag), so bdmevent can count
+   refused devices and the loader can show code 500 instead of a drive that silently never appears.
 3. src/part_driver.c: part_read/part_write refuse I/O outside the partition (overflow-safe), so a
    filesystem claiming more sectors than its partition cannot write into the next one. For that,
    src/part_driver_gpt.c now treats last_lba as inclusive (the SDK made every GPT partition one

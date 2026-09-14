@@ -13,6 +13,7 @@ struct bdm_mounts
     struct block_device *bd;  // real block device
     struct block_device *cbd; // cached block device
     struct file_system *fs;
+    int refused; // RiptOPL: refused for its sector size, and the callback has already been told
 };
 
 #define MAX_CONNECTIONS 20
@@ -38,9 +39,9 @@ void bdm_RegisterCallback(bdm_cb cb)
     if (g_cb == NULL)
         return;
 
-    // Trigger a mount callback if we already have mounts
+    // Trigger a mount callback if we already have mounts (RiptOPL: or refused devices)
     for (i = 0; i < MAX_CONNECTIONS; ++i) {
-        if ((g_mount[i].bd != NULL) && (g_mount[i].fs != NULL)) {
+        if ((g_mount[i].bd != NULL) && (g_mount[i].fs != NULL || g_mount[i].refused)) {
             SetEventFlag(bdm_event, BDM_EVENT_CB_MOUNT);
             break;
         }
@@ -57,6 +58,7 @@ void bdm_connect_bd(struct block_device *bd)
     for (i = 0; i < MAX_CONNECTIONS; ++i) {
         if (g_mount[i].bd == NULL) {
             g_mount[i].bd = bd;
+            g_mount[i].refused = 0;
             // Create cache for entire device only (not for the partitions on it)
             g_mount[i].cbd = (bd->parNr == 0) ? bd_cache_create(bd) : NULL;
             // New block device, try to mount it to a filesystem
@@ -87,6 +89,7 @@ void bdm_disconnect_bd(struct block_device *bd)
             }
 
             g_mount[i].bd = NULL;
+            g_mount[i].refused = 0;
 
             if (g_cb != NULL)
                 SetEventFlag(bdm_event, BDM_EVENT_CB_UMOUNT);
@@ -156,9 +159,15 @@ static void bdm_try_mount(struct bdm_mounts *mount)
     // parsers, the block cache) reads sectors into 512-byte buffers, while USB and iLink devices
     // take their sector size from the drive. A 4K-native disk would make the very first probe read
     // copy 4096 bytes into a 512-byte buffer and corrupt IOP memory. Such a device cannot be mounted
-    // anyway, so never offer it to a driver.
+    // anyway, so never offer it to a driver. Tell the callback once, so the loader can say why the
+    // drive never appears (bdmevent counts refused devices in its snapshot).
     if (mount->bd->sectorSize != 512) {
-        M_PRINTF("%s%dp%d: %u-byte sectors are not supported, not mounting\n", mount->bd->name, mount->bd->devNr, mount->bd->parNr, mount->bd->sectorSize);
+        if (!mount->refused) {
+            M_PRINTF("%s%dp%d: %u-byte sectors are not supported, not mounting\n", mount->bd->name, mount->bd->devNr, mount->bd->parNr, mount->bd->sectorSize);
+            mount->refused = 1;
+            if (g_cb != NULL)
+                SetEventFlag(bdm_event, BDM_EVENT_CB_MOUNT);
+        }
         return;
     }
 
@@ -221,6 +230,7 @@ int bdm_init()
         g_mount[i].bd = NULL;
         g_mount[i].cbd = NULL;
         g_mount[i].fs = NULL;
+        g_mount[i].refused = 0;
         g_fs[i] = NULL;
     }
 

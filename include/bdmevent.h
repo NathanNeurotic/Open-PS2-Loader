@@ -24,6 +24,9 @@ typedef struct
     unsigned int blockDeviceCount;
     unsigned int usbRootCount;
     unsigned int usbRootMask;
+    // Whole devices BDM refused to mount because their sectors are not 512 bytes (modules/bdm
+    // bdm_try_mount). They never become massN:, so this is the only way the loader hears of them.
+    unsigned int unsupportedSectorCount;
 } bdm_event_packet_t;
 
 #endif

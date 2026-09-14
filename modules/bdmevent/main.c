@@ -26,6 +26,7 @@ static void bdm_diag_fill_snapshot(bdm_event_packet_t *packet, unsigned int kind
     packet->blockDeviceCount = 0;
     packet->usbRootCount = 0;
     packet->usbRootMask = 0;
+    packet->unsupportedSectorCount = 0;
 
     for (i = 0; i < sizeof(devices) / sizeof(devices[0]); i++) {
         struct block_device *device = devices[i];
@@ -34,6 +35,8 @@ static void bdm_diag_fill_snapshot(bdm_event_packet_t *packet, unsigned int kind
             continue;
 
         packet->blockDeviceCount++;
+        if (device->parNr == 0 && device->sectorSize != 512)
+            packet->unsupportedSectorCount++;
         if (device->parNr == 0 && device->name != NULL &&
             device->name[0] == 'u' && device->name[1] == 's' && device->name[2] == 'b' && device->name[3] == '\0') {
             packet->usbRootCount++;
