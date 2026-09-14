@@ -2398,7 +2398,10 @@ static void hddShutdown(item_list_t *itemList)
 
         // Exit and power-off end here, and the console may lose power before DEV9's own STANDBY
         // IMMEDIATE runs (it only runs once DEV9's refcount reaches zero). Commit the write cache.
-        hddFlushCache();
+        // Terminal only: on a launch from another device the drive stays powered, and a flush would
+        // spin up an idle disk and stall the handoff for nothing.
+        if (gDeinitTerminal)
+            hddFlushCache();
 
         hddSupportModulesLoaded = 0;
         gHDDPrefix = NULL; // pfs0: is no longer a valid persistent data-home mount marker

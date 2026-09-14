@@ -44,7 +44,7 @@ The exact trigger on that disk cannot be proven without the disk. The fix is the
 | **Raw sector writes stay out of `__mbr`.** `HDIOC_WRITESECTOR` refuses any LBA inside the first 128 MB or off the disk. The partition transfer bounds check no longer wraps. | `hdd_fio.c` |
 | **BDM (FAT/exFAT) never writes an APA disk's first 128 MB.** This also holds on APA + exFAT hybrids. | `modules/hdd/atad/src/ps2atad.c` |
 | **Honest errors.** Code **402**: *"HDD found, but its APA partition table cannot be read. Do not format it -- your games may be recoverable."* It covers both a probe that reads garbage and a table ps2hdd rejects. 401 now means a drive that really did not answer. | `src/hddsupport.c` |
-| **Flush on teardown.** An ATA FLUSH CACHE is sent after closing PFS files on every exit, power-off and launch. | `src/hddsupport.c`, `src/hdd.c` |
+| **Flush on teardown.** An ATA FLUSH CACHE is sent after closing PFS files on exit, power-off and launches from the HDD. Launches from other devices skip it so an idle disk isn't spun up. | `src/hddsupport.c`, `src/hdd.c` |
 | **No raw `hdd0:` paths in new code.** CI fails if a file other than `hdd.c`, `hddsupport.c` or `opl.c` spells `hdd0:`/`hdd1:`, or anything calls `fileXioFormat`. | `.github/scripts/test_apa_table_safety.py` |
 
 The driver is built from ps2sdk source. The unmodified copy builds **byte-identical** to the ps2sdk prebuilt, so every change is a reviewable diff; see `modules/hdd/apa/ORIGIN.txt`. `test_apa_table_safety.py` compiles the fences on the host, and fails if any of the policy above is lost in a future re-vendor.
