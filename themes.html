@@ -142,7 +142,8 @@ while <code>vcdInfo</code> falls back to the rich game <code>info</code> page.</
 exists only if the theme declares at least one of its blocks. They give PS1 and app favorites their own layout,
 list and cover proportions without touching the device pages. Undeclared slots fall back to the blocks those
 Favorites views used before. A <b>cover</b> is taken from them only where you declared it, so an undeclared cover
-keeps today's square PS1 or app cover rather than a copy of <code>favsMain</code>'s portrait case. Their lists take
+keeps today's square PS1 or app cover rather than a copy of <code>favsMain</code>'s portrait case, and it is only
+used where the page draws the same kind (a declared Coverflow styles a carousel, never an ItemCover panel). Their lists take
 none of the four global list slots, and PS1 / app favorites keep sharing their existing cover caches.</li>
 </ul>
 
