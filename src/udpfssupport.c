@@ -185,7 +185,7 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
         struct stat st;
         char path[256];
 
-        sprintf(path, "%sCD", udpfsPrefix);
+        snprintf(path, sizeof(path), "%sCD", udpfsPrefix);
         if (stat(path, &st) != 0)
             st.st_mtime = 0;
         if (udpfsModifiedCDPrev != st.st_mtime) {
@@ -193,7 +193,7 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
             result = 1;
         }
 
-        sprintf(path, "%sDVD", udpfsPrefix);
+        snprintf(path, sizeof(path), "%sDVD", udpfsPrefix);
         if (stat(path, &st) != 0)
             st.st_mtime = 0;
         if (udpfsModifiedDVDPrev != st.st_mtime) {

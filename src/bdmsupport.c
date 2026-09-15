@@ -1485,14 +1485,14 @@ static int bdmNeedsUpdate(item_list_t *itemList)
 
     // update Themes
     if (!pDeviceData->ThemesLoaded) {
-        sprintf(path, "%sTHM", pDeviceData->bdmPrefix);
+        snprintf(path, sizeof(path), "%sTHM", pDeviceData->bdmPrefix);
         if (thmAddElements(path, "/", 1) > 0)
             pDeviceData->ThemesLoaded = 1;
     }
 
     // update Languages
     if (!pDeviceData->LanguagesLoaded) {
-        sprintf(path, "%sLNG", pDeviceData->bdmPrefix);
+        snprintf(path, sizeof(path), "%sLNG", pDeviceData->bdmPrefix);
         if (lngAddLanguages(path, "/", itemList->mode) > 0)
             pDeviceData->LanguagesLoaded = 1;
     }
@@ -2851,7 +2851,7 @@ static int bdmWaitForDevice(int deviceId, u32 timeoutMs)
     char path[16];
 
     u32 start = GetTimerSystemTime();
-    sprintf(path, "mass%d:/", deviceId);
+    snprintf(path, sizeof(path), "mass%d:/", deviceId);
 
     while (1) {
         int dir = fileXioDopen(path);
@@ -2875,7 +2875,7 @@ static int bdmWaitForDevice(int deviceId, u32 timeoutMs)
 static int bdmDeviceIsPresent(int deviceId)
 {
     char path[16];
-    sprintf(path, "mass%d:/", deviceId);
+    snprintf(path, sizeof(path), "mass%d:/", deviceId);
     int dir = fileXioDopen(path);
 
     if (dir >= 0) {
@@ -3362,7 +3362,7 @@ static int bdmDeviceIsATA(int deviceId)
     char path[16];
     bdm_device_data_t data;
 
-    sprintf(path, "mass%d:/", deviceId);
+    snprintf(path, sizeof(path), "mass%d:/", deviceId);
     int dir = fileXioDopen(path);
     if (dir < 0)
         return 0;
