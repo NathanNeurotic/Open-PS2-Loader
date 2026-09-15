@@ -91,7 +91,7 @@ exFAT with a GPT partition table instead (see below).</p>
 
 <h3 id="apa-opl-partition">The OPL data partition</h3>
 <p>RiptOPL only mounts <b>existing</b> PFS partitions. It does not create, resize or format an APA
-partition. The selection order is:</p>
+partition (see <a href="#disk-safety">Disk safety</a>). The selection order is:</p>
 <ol><li>A usable <code>hdd_partition</code> selection in <code>__common/OPL/conf_hdd.cfg</code>.</li>
 <li>An existing <code>+OPL</code> partition.</li><li>Existing <code>__common/OPL/</code>.</li></ol>
 <p>If none is available, the data home stays unavailable instead of creating a partition. To select
@@ -252,6 +252,60 @@ reads its <code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code>).
 </div>
 <p>See <a href="ps1-vcd.html#bdma">PS1 Games (VCD) — exFAT BDMA equip</a> for the complete walkthrough,
 including the BDMA Source setting.</p>
+
+<h2 id="disk-safety">Disk safety and code 402</h2>
+<p>RiptOPL is a game loader, not a partition manager. On an APA disk it writes only <i>inside</i> PFS
+partitions (settings, covers, VMCs) and never edits the APA partition table. That changes a few things
+you may know from older OPL builds:</p>
+<ul class="checklist">
+<li><b>No Delete on the HDD, and no Rename for PS2 games.</b> Both edited APA partition headers, so
+the menu no longer offers them. Manage the HDLoader library from a PC with HDL-Dump over
+<a href="nbd.html">NBD</a>.</li>
+<li><b>A one-game <code>PP.*</code> PS1 install can't be renamed</b>, because it is its own APA partition;
+RiptOPL says so and changes nothing. Loose VCDs in <code>__.POPS*</code> and Ember titles still rename:
+that is a file write inside their partition.</li>
+<li><b>No formatting, and no creating, deleting or renaming partitions.</b> The driver refuses all of
+them, and raw sector writes too.</li>
+<li><b>4Kn drives are refused.</b> A drive whose <i>logical</i> sectors are not 512 bytes gets no disk
+I/O at all: formatted exFAT it shows <b>code 500</b>, formatted APA it is not detected. Ordinary
+Advanced Format <b>512e</b> drives, which is nearly every modern disk, are unaffected.</li>
+<li><b>GPT/APA hybrid disks are left alone.</b> A disk with a GPT header is treated as GPT and never gets
+the APA driver, so its APA side does not list.</li>
+<li><b>FAT/exFAT never writes the first 128 MB of an APA disk</b>, including on APA + exFAT hybrids.</li>
+</ul>
+
+<div class="callout amber"><div class="h">⚠ Code 402, or "Formatted: NO" — do not format the disk</div>
+Code <b>402</b> means the HDD answered, but its APA partition table can't be read. The same damage shows
+as <b>"Connected: YES / Formatted: NO"</b> in wLaunchELF. Every partition header and every game is almost
+certainly still on the disk; only the start of the partition chain is gone. Formatting is what would
+destroy them. (Code <b>401</b> now means the drive really did not answer.)
+</div>
+
+<div class="steps">
+<div class="step"><h3>Stop writing to the disk</h3>
+<p>Don't format, "initialize", or run repair tools that write. Every write is a risk until you have a copy.</p></div>
+<div class="step"><h3>Connect it to a PC and image it</h3>
+<p>Use a SATA/IDE adapter. If you have the space, image the whole disk first, for example with
+<code>dd</code> or Win32 Disk Imager's <i>Read</i>. At minimum the recovery tool saves the first 4 MB for you.</p></div>
+<div class="step"><h3>Diagnose (read-only)</h3>
+<p>Get <code>apa_recover.py</code> from
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/tree/rebuild/main/pc/apa-recovery"><code>pc/apa-recovery</code></a>
+(Python 3.8 or newer, no extra packages) and run it as root:</p>
+<pre>python3 apa_recover.py /dev/sdX</pre>
+<p>On Windows, from an Administrator prompt: <code>python apa_recover.py \\.\PhysicalDrive2</code>. Find the
+number in Disk Management; the APA disk shows as unallocated. The report says what is wrong and lists the
+partitions it can find.</p></div>
+<div class="step"><h3>Repair, if it says Repairable</h3>
+<pre>python3 apa_recover.py /dev/sdX --repair</pre>
+<p>It backs up the first 4 MB, rewrites only the table's root (LBA 0–7), then re-reads the result and
+checks it with the same rules the PS2 driver applies. It refuses GPT hybrids, a chain broken in the
+middle, and anything else it cannot verify.</p></div>
+</div>
+
+<p><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/APA-SAFETY.md">docs/APA-SAFETY.md</a>
+lists every protection and what none of them can cover: other software (wLaunchELF, HDD-OSD, PC tools)
+uses its own driver, and a failing drive fails regardless. None of these protections has been through a
+hardware power-cut test yet.</p>
 
 <h2 id="apa-vs-exfat">APA/PFS vs. exFAT at a glance</h2>
 <table data-sortable>

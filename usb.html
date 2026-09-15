@@ -226,6 +226,10 @@ directly at <code>mass0:/</code>.</p>
 <p>The same prefix applies to all BDM mass devices (USB, MX4SIO, iLink, exFAT HDD). Leave it empty to use
 the drive root, which is the most common setup.</p>
 
+<p>With a prefix set, RiptOPL creates its folders <b>inside the prefix</b>, including every level of a
+nested one such as <code>PS2/OPL</code>, and leaves the drive root alone. Leading and trailing slashes
+are ignored, and backslashes are read as forward slashes.</p>
+
 <h2 id="multiple-devices">Multiple devices at once</h2>
 <p>OPL can enumerate up to 8 BDM slots (<code>mass0:</code> through <code>mass7:</code>). Each connected
 device occupies one slot. If you have a USB drive in <code>mass0:</code> and an MX4SIO card in

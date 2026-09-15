@@ -109,7 +109,7 @@ A USB drive is the fastest path to a first working game. Format it FAT32 (or exF
 
 <h2 id="folder-structure">The OPL folder structure</h2>
 
-<p>All folder-based devices — USB, MX4SIO, MMCE, iLink, SMB, and an exFAT HDD — share the same directory layout under a root <code>OPL/</code> folder (or at the root of the device, depending on your setup). <b>RiptOPL creates these folders automatically</b> the first time it boots and you enable a device — you do not need to create them by hand.</p>
+<p>All folder-based devices — USB, MX4SIO, MMCE, iLink, SMB, and an exFAT HDD — share the same directory layout, at the root of the device (or inside a subfolder, if you set a prefix). <b>RiptOPL creates these folders automatically</b> the first time it boots and you enable a device — you do not need to create them by hand.</p>
 
 <pre>
 DVD/        PS2 DVD games (ISO, ZSO, or USBExtreme ul.* split files)
@@ -125,7 +125,7 @@ APPS/       Homebrew ELF applications
 </pre>
 
 <div class="callout info"><div class="h">ℹ APA/PFS HDD is different</div>
-An APA-formatted internal HDD stores games as HDLoader partitions, <b>not</b> as files in <code>DVD/</code> or <code>CD/</code>. The <code>CFG/</code>, <code>ART/</code>, <code>VMC/</code>, <code>THM/</code>, <code>CHT/</code>, <code>LNG/</code>, and <code>APPS/</code> folders still apply, but they live under <code>hdd0:__common/OPL/</code>. See <a href="hdd.html">Internal HDD</a> for the full workflow.</div>
+An APA-formatted internal HDD stores games as HDLoader partitions, <b>not</b> as files in <code>DVD/</code> or <code>CD/</code>. The <code>CFG/</code>, <code>ART/</code>, <code>VMC/</code>, <code>THM/</code>, <code>CHT/</code>, <code>LNG/</code>, and <code>APPS/</code> folders still apply, but they live in the OPL data partition: at the root of <code>+OPL</code>, or in <code>OPL/</code> on <code>__common</code>. See <a href="hdd.html#apa-opl-partition">Internal HDD</a> for how the partition is chosen.</div>
 
 <h3>Supported game image formats</h3>
 <ul class="checklist">
