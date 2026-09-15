@@ -168,10 +168,10 @@ static void ethInitSMB(void)
     if (gNetworkStartup == 0) {
         // update Themes
         char path[256];
-        sprintf(path, "%sTHM", ethPrefix);
+        snprintf(path, sizeof(path), "%sTHM", ethPrefix);
         thmAddElements(path, "\\", 1);
 
-        sprintf(path, "%sLNG", ethPrefix);
+        snprintf(path, sizeof(path), "%sLNG", ethPrefix);
         lngAddLanguages(path, "\\", ethGameList.mode);
 
         sbCreateFolders(ethPrefix, 1);
@@ -384,7 +384,7 @@ static int ethNeedsUpdate(item_list_t *itemList)
         struct stat st;
         char path[256];
 
-        sprintf(path, "%sCD", ethPrefix);
+        snprintf(path, sizeof(path), "%sCD", ethPrefix);
         if (stat(path, &st) != 0)
             st.st_mtime = 0;
         if (ethModifiedCDPrev != st.st_mtime) {
@@ -392,7 +392,7 @@ static int ethNeedsUpdate(item_list_t *itemList)
             result = 1;
         }
 
-        sprintf(path, "%sDVD", ethPrefix);
+        snprintf(path, sizeof(path), "%sDVD", ethPrefix);
         if (stat(path, &st) != 0)
             st.st_mtime = 0;
         if (ethModifiedDVDPrev != st.st_mtime) {

@@ -108,12 +108,12 @@ def read_zso_header(fin):
     # ZSO header has 0x18 bytes
     data = seek_and_read(fin, 0, 0x18)
     magic, header_size, total_bytes, block_size, ver, align = unpack(
-        'IIQIbbxx', data)
+        '<IIQIbbxx', data)
     return magic, header_size, total_bytes, block_size, ver, align
 
 
 def generate_zso_header(magic, header_size, total_bytes, block_size, ver, align):
-    data = pack('IIQIbbxx', magic, header_size,
+    data = pack('<IIQIbbxx', magic, header_size,
                 total_bytes, block_size, ver, align)
     return data
 
@@ -137,10 +137,8 @@ def decompress_zso(fname_in, fname_out):
         return -1
 
     total_block = total_bytes // block_size
-    index_buf = []
-
-    for _ in range(total_block + 1):
-        index_buf.append(unpack('I', fin.read(4))[0])
+    index_count = total_block + 1
+    index_buf = list(unpack('<%dI' % index_count, fin.read(4 * index_count)))
 
     show_zso_info(fname_in, fname_out, total_bytes,
                   block_size, total_block, ver, align)
@@ -312,9 +310,7 @@ def compress_zso(fname_in, fname_out, level, bsize):
 
     # Update index block
     fout.seek(len(header))
-    for i in index_buf:
-        idx = pack('I', i)
-        fout.write(idx)
+    fout.write(pack('<%dI' % len(index_buf), *index_buf))
 
     print("ziso compress completed , total size = %8d bytes , rate %d%%" %
           (write_pos, (write_pos*100/total_bytes)))

@@ -4754,7 +4754,7 @@ void guiManageCheats(void)
     if (gCheats == NULL) // defensive: the menu is only reachable after load_cheats, but never deref NULL
         return;
 
-    while (cheatCount < MAX_CODES && strlen(gCheats[cheatCount].name) > 0)
+    while (cheatCount < MAX_CODES && gCheats[cheatCount].name[0] != '\0')
         cheatCount++;
 
     sfxPlay(SFX_MESSAGE);
