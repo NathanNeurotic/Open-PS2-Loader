@@ -71,7 +71,7 @@ Game Sources controls — all three mount into the <code>massN:</code> namespace
 Block Device Manager (BDM).</p>
 
 <div class="callout info"><div class="h">i All three ship off — you opt in</div>
-On a fresh install RiptOPL ships with <b>USB, iLink and MX4SIO all disabled</b> and <b>BDM Start Mode</b> set to
+On a fresh install RiptOPL ships with <b>USB, iLink and MX4SIO all disabled</b> and <b>BDM Devices Start Mode</b> set to
 <b>Off</b> — every device in Game Sources starts off so you enable exactly the hardware your rig has. Turn
 on the transport you use, and set a start mode, in <b>Game Sources</b>. Until you do, a fresh install boots
 to the start menu with no game-list tabs at all.</div>
@@ -197,18 +197,18 @@ all games regardless of size. If your drive is FAT32, use USBExtreme for any gam
 <span id="device-settings"></span>
 <h2 id="game-sources">Enabling devices in Game Sources</h2>
 <p>Open <b>Game Sources</b> from the Settings Index for the start mode and the per-transport toggles. The
-cache and prefix rows are <em>not</em> on that screen — they were moved to <b>General Settings</b> so Game
+cache and prefix rows are <em>not</em> on that screen: they are on <b>General &amp; System</b>, so Game
 Sources is strictly device selection:</p>
 
 <table data-sortable>
 <thead><tr><th>Setting</th><th>What it does</th><th>Default</th></tr></thead>
 <tbody>
-<tr><td><b>BDM Start Mode</b></td><td>Off / Manual / Auto — controls when OPL scans for mass devices (Game Sources)</td><td>Off</td></tr>
+<tr><td><b>BDM Devices Start Mode</b></td><td>Off / Manual / Auto — controls when OPL scans for mass devices (Game Sources)</td><td>Off</td></tr>
 <tr><td><b>USB</b></td><td>Enable/disable the USB mass storage driver (Game Sources)</td><td>Off</td></tr>
 <tr><td><b>iLink</b></td><td>Enable/disable the IEEE 1394 SBP-2 driver (Game Sources)</td><td>Off</td></tr>
 <tr><td><b>MX4SIO</b></td><td>Enable/disable the MX4SIO SD driver (Game Sources)</td><td>Off</td></tr>
-<tr><td><b>BDM Cache</b></td><td>Read-ahead cache size in sectors (0–32) — <b>General Settings → Cache &amp; Storage</b></td><td>16</td></tr>
-<tr><td><b>BDM Prefix</b></td><td>Optional subfolder inside the drive root where OPL looks for its folders — <b>General Settings → Prefix Paths</b></td><td>(empty)</td></tr>
+<tr><td><b>BDM Cache</b></td><td>Read-ahead cache size in sectors (0–32) — <b>General &amp; System</b></td><td>16</td></tr>
+<tr><td><b>BDM Prefix Path</b></td><td>Optional subfolder inside the drive root where OPL looks for its folders — <b>General &amp; System</b></td><td>(empty)</td></tr>
 </tbody>
 </table>
 
@@ -218,7 +218,7 @@ mass devices attached and want the fastest possible boot. <b>Manual</b> register
 the scan until you navigate to it — the device is scanned on demand. <b>Auto</b> scans immediately on boot.</div>
 
 <h2 id="prefix">BDM Prefix</h2>
-<p>The <b>BDM Prefix</b> field lets you store your OPL folder tree inside a subfolder of the drive rather
+<p>The <b>BDM Prefix Path</b> setting, on <b>General &amp; System</b>, lets you store your OPL folder tree inside a subfolder of the drive rather
 than at the drive root. For example, setting the prefix to <code>OPL</code> tells RiptOPL to look for
 <code>DVD/</code>, <code>CD/</code>, <code>CFG/</code>, etc. inside <code>mass0:/OPL/</code> rather than
 directly at <code>mass0:/</code>.</p>
@@ -234,7 +234,7 @@ are ignored, and backslashes are read as forward slashes.</p>
 <p>OPL can enumerate up to 8 BDM slots (<code>mass0:</code> through <code>mass7:</code>). Each connected
 device occupies one slot. If you have a USB drive in <code>mass0:</code> and an MX4SIO card in
 <code>mass1:</code>, both appear as separate game lists (with the slot number shown in the tab label). You
-do not need to configure them separately — one <b>BDM Start Mode</b> and one <b>BDM Prefix</b> applies to all
+do not need to configure them separately — one <b>BDM Devices Start Mode</b> and one <b>BDM Prefix Path</b> apply to all
 slots.</p>
 
 <h2 id="troubleshooting">Common issues</h2>
@@ -242,7 +242,7 @@ slots.</p>
 <details class="deep"><summary>Drive is not detected / game list is empty</summary>
 <ul>
   <li>Confirm the correct transport is enabled in <b>Game Sources</b> (USB / iLink / MX4SIO).</li>
-  <li>Check that <b>BDM Start Mode</b> is not set to <b>Off</b>.</li>
+  <li>Check that <b>BDM Devices Start Mode</b> is not set to <b>Off</b>.</li>
   <li>Make sure the drive uses an <b>MBR</b> partition table (not GPT) and is formatted FAT32 or exFAT.</li>
   <li>Verify the folder structure — games must be in <code>DVD/</code> or <code>CD/</code> (case-sensitive).
   If you set a BDM Prefix, games must be under that subfolder.</li>

@@ -113,7 +113,7 @@ want a pinned flavour, or if any of those companion folders are missing.</div>
   <li><code>APP_RIPTOPL-OFFICIALROLLING/RIPTOPL.ELF</code> — #4 moving official <code>ps2homebrew:main</code> canary.</li>
   <li><code>POPS/</code> — the single canonical release folder for POPSTARTER support. It contains <code>POPSTARTER.ELF</code>, the SMB externals, <code>PATCH_5.BIN</code>, and every loose BDMA <code>usbd.irx.*</code> / <code>usbhdfsd.irx.*</code> pair, including <code>.ilink</code>. No BDMA pair is embedded in <code>RIPTOPL.ELF</code>, and there is no duplicate release-root <code>POPSTARTER/</code> folder. Only <code>POPS.ELF</code> — Sony's PS1 emulator — is not distributed here.</li>
   <li><code>EMBER/</code> — the bundled external Ember PS1 core, unmodified and ready for the user-supplied BIOS and games.</li>
-  <li><code>neutrino/</code> — the bundled Neutrino external core, shipped extracted as a drag-and-drop folder (<code>neutrino.elf</code> + <code>config/</code> + <code>modules/</code>) used by the <b>network-boot (UDPBD/UDPFS)</b> subsystem (pre-populated with the UDPFS config). Copy it to <code>mc?:/neutrino/</code> — that path is exactly what <b>Neutrino ELF Path</b> auto-detect looks for, and the same copy serves both per-game Neutrino launching and network boot. No separate download is needed.</li>
+  <li><code>neutrino/</code> — the bundled Neutrino external core, shipped extracted as a drag-and-drop folder (<code>neutrino.elf</code> + <code>config/</code> + <code>modules/</code>) used by the <b>network-boot (UDPBD/UDPFS)</b> subsystem (pre-populated with the UDPFS config). Copy it to <code>mc?:/neutrino/</code> — that path is exactly what <b>Neutrino Device</b> auto-detect looks for, and the same copy serves both per-game Neutrino launching and network boot. No separate download is needed.</li>
   <li>Five <code>.url</code> shortcuts — <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a>, <a href="https://github.com/YouKnow-sys/udpfs-server">udpfs-server</a>, <a href="https://github.com/Luden02/OrbitPS2-Manager">OrbitPS2 Manager</a>, <a href="https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI">OPL PS1 AIO Converter GUI</a>, and <a href="https://github.com/TheRealNextria/PS2RD-CHT-Manager">PS2RD CHT Manager</a>. These are links to the maintained external tools; the tools themselves are not embedded in the RiptOPL package.</li>
 </ul>
 <p>The final GitHub asset set contains archives by purpose (including the separate experimental RA package): the unified package, exact source snapshot, variants, and the language/debug packs when those optional jobs produce them. Bare loader ELFs and build/checksum manifests are not separate public assets; standard loaders are inside the unified package, and DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</p>
@@ -139,7 +139,7 @@ want a pinned flavour, or if any of those companion folders are missing.</div>
   </div>
   <div class="step">
     <h3>3. (Optional) Place the Neutrino folder</h3>
-    <p>Copy the bundled <code>neutrino/</code> folder (drag-and-drop: <code>neutrino.elf</code> + <code>config/</code> + <code>modules/</code>, pre-populated with the UDPFS config) to <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code>. That one copy serves both <b>per-game Neutrino launching</b> and <b>network boot (UDPBD/UDPFS)</b> — the resolver finds <code>mc?:/neutrino/neutrino.elf</code> automatically, and the <code>mc?:NEUTRINO/neutrino.elf</code> form is accepted too. You can also set <b>Neutrino Device</b> / <b>Neutrino ELF Path</b> to a custom location after first boot. See <a href="neutrino.html">Neutrino Core</a>.</p>
+    <p>Copy the bundled <code>neutrino/</code> folder (drag-and-drop: <code>neutrino.elf</code> + <code>config/</code> + <code>modules/</code>, pre-populated with the UDPFS config) to <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code>. That one copy serves both <b>per-game Neutrino launching</b> and <b>network boot (UDPBD/UDPFS)</b> — the resolver finds <code>mc?:/neutrino/neutrino.elf</code> automatically, and the <code>mc?:NEUTRINO/neutrino.elf</code> form is accepted too. You can also pick a device type with <b>Neutrino Device</b> (<b>Settings → Game Launching</b>) after first boot, or set a full custom path with the <code>neutrino_path</code> key in <code>settings_riptopl.cfg</code>. See <a href="neutrino.html">Neutrino Core</a>.</p>
   </div>
   <div class="step">
     <h3>4. Prepare your storage device</h3>
@@ -188,19 +188,19 @@ When you enable a device mode in OPL settings and exit back to the game list, OP
 <thead><tr><th>Setting</th><th>Default</th><th>Where to change</th></tr></thead>
 <tbody>
 <tr><td>Widescreen (16:9)</td><td>ON</td><td>Interface</td></tr>
-<tr><td>Cover art display</td><td>ON</td><td>Interface</td></tr>
+<tr><td>Cover Art</td><td>ON</td><td>Interface → Artwork Settings</td></tr>
 <tr><td>Notifications (popups)</td><td>ON</td><td>Interface</td></tr>
-<tr><td>PS2 logo on boot</td><td>ON</td><td>Interface</td></tr>
-<tr><td>Sound effects (SFX)</td><td>ON (volume 80)</td><td>Audio Settings</td></tr>
-<tr><td>Boot sound</td><td>ON (volume 80)</td><td>Audio Settings</td></tr>
-<tr><td>BGM (background music)</td><td>ON (volume 70)</td><td>Audio Settings</td></tr>
-<tr><td>USB, iLink, MX4SIO, exFAT HDD, UDPBD</td><td>OFF</td><td>Game Sources</td></tr>
-<tr><td>Device start mode (all tabs)</td><td>Off (disabled)</td><td>Game Sources</td></tr>
+<tr><td>PS2 Logo</td><td>ON</td><td>Game Launching</td></tr>
+<tr><td>Sound effects (SFX)</td><td>ON (volume 90)</td><td>Audio Settings</td></tr>
+<tr><td>Boot sound</td><td>ON (volume 90)</td><td>Audio Settings</td></tr>
+<tr><td>BGM (background music)</td><td>ON (volume 90)</td><td>Audio Settings</td></tr>
+<tr><td>USB, iLink, MX4SIO, Internal HDD (exFAT)</td><td>OFF</td><td>Game Sources</td></tr>
+<tr><td>Every start mode (HDD, MMCE, BDM devices, network, Apps, Favorites)</td><td>Off</td><td>Game Sources</td></tr>
 <tr><td>Video mode</td><td>Auto (0)</td><td>Interface (menu only)</td></tr>
-<tr><td>Default theme</td><td>&lt;Coverflow&gt; (built-in)</td><td>Theme Settings</td></tr>
-<tr><td>Delete/rename games</td><td>Enabled</td><td>General Settings</td></tr>
-<tr><td>Visual GameID barcode</td><td>OFF</td><td>Interface</td></tr>
-<tr><td>UDPBD/UDPFS network boot</td><td>OFF</td><td>Game Sources</td></tr>
+<tr><td>Theme</td><td>&lt;Coverflow&gt; (built-in)</td><td>Interface</td></tr>
+<tr><td>Write Operations (rename, delete, VMC creation)</td><td>ON</td><td>General &amp; System</td></tr>
+<tr><td>Show GameID Barcode (Pixel FX)</td><td>On (POPSTARTER only)</td><td>Interface</td></tr>
+<tr><td>Network Connectivity</td><td>Off</td><td>Game Sources</td></tr>
 </tbody>
 </table>
 

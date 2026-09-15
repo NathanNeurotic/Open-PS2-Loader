@@ -112,12 +112,12 @@ pad hook having attached.</div>
 selected: <b>Remember Last Played</b> (<em>Settings → Interface</em>) is a separate setting, off by default,
 and it is what re-selects the last game you ran.</p>
 
-<p>You can send it somewhere else with the <b>IGR Path</b> setting (<em>Settings → General</em>). Point it at
+<p>You can send it somewhere else with the <b>IGR Path</b> setting (<em>Settings → General &amp; System</em>). Point it at
 an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight back into a
 different launcher or a homebrew menu. The file must live <b>on a memory card</b> (<code>mc0:</code> or
 <code>mc1:</code>); leave the setting blank to return to RiptOPL normally.</p>
 
-<p>If you use MMCE cards, <b>IGR Bootcard Slot(s)</b> (<em>Settings → MMCE</em>) additionally sends a
+<p>If you use MMCE cards, <b>IGR Bootcard Slot(s)</b> (<em>Settings → Game Sources → MMCE Settings</em>) additionally sends a
 "switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already
 back on its boot image by the time the next thing loads. See <a href="mmce.html">MMCE</a>.</p>
 
@@ -182,7 +182,7 @@ clicks. The screenshot combination uses <b>Up</b>, so it needs no analog mode.</
 <p>Try the console power button as a cross-check: if that resets and the pad combination does not, the hook is
 fine and the problem is in the pad half.</p>
 
-<p><b>Reset takes me somewhere unexpected.</b> Check <b>IGR Path</b> in <em>Settings → General</em>. A stale
+<p><b>Reset takes me somewhere unexpected.</b> Check <b>IGR Path</b> in <em>Settings → General &amp; System</em>. A stale
 path left over from an earlier setup will boot that ELF instead of returning to the browser.</p>
 
 <p><b>The game resets on its own during play.</b> A game that uses all four shoulders plus Start or Select in

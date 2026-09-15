@@ -124,12 +124,10 @@ automatically on first launch.</p>
 
 <span id="device-settings"></span>
 <h2 id="game-sources">Where the MMCE settings live</h2>
-<p>MMCE is configured across <b>three</b> pages of the RiptOPL main menu. <b>MMCE Start Mode</b> stays in
-<b>Game Sources</b>, alongside the other device start modes. The MMCE tuning rows — <b>Slot</b>,
-<b>IGR Bootcard Slot(s)</b>, <b>Send GameID on Launch</b>, <b>Wait Cycles after /ACK low</b> and
-<b>Use Timeout Alarms</b> — moved out to their own <b>Settings &rarr; MMCE Settings</b> page.
-<b>MMCE Prefix Path</b> is on a third page: <b>Settings &rarr; General Settings</b>, under the
-<b>Prefix Paths</b> group with the BDM and ETH prefixes.</p>
+<p><b>MMCE Start Mode</b> is in <b>Settings &rarr; Game Sources</b>, alongside the other device start
+modes. Everything else is on the <b>MMCE Settings</b> screen, opened from the <b>MMCE Settings</b> row just
+below it: <b>MMCE Slot</b>, <b>IGR Bootcard Slot(s)</b>, <b>Send GameID on Launch</b>,
+<b>Wait cycles after /ACK low</b>, <b>Use timeout alarms</b> and <b>MMCE Prefix Path</b>.</p>
 
 <h3 id="start-mode">MMCE Start Mode</h3>
 <p>Controls when OPL loads the MMCE driver and shows the MMCE Games tab.</p>
@@ -156,8 +154,7 @@ you enable exactly what your rig has. A saved config overrides the shipped defau
 </table>
 
 <h3 id="prefix-path">MMCE Prefix Path</h3>
-<p><i>(<b>Settings &rarr; General Settings</b>, under <b>Prefix Paths</b> — not Game Sources or MMCE
-Settings.)</i> An optional sub-path appended after the device root before OPL looks for game folders.
+<p><i>(On the <b>MMCE Settings</b> screen, opened from Game Sources.)</i> An optional sub-path appended after the device root before OPL looks for game folders.
 Useful when your SD card serves multiple purposes and you want to keep OPL files in a subdirectory — for example, setting the prefix to
 <code>OPL</code> causes OPL to look for games in <code>mmce0:/OPL/DVD/</code> instead of
 <code>mmce0:/DVD/</code>. Leave blank (the default) to use the root of the SD card.</p>
@@ -216,8 +213,8 @@ meaning POPSTARTER can read BDMA module files from the MMCE card when you use an
 <p>Per-game <a href="neutrino.html">Neutrino</a> is fully supported for games stored on MMCE. When a game's
 Loader Core is set to Neutrino, OPL hands the launch to <code>neutrino.elf</code>. Neutrino itself can be stored
 on the MMCE card at <code>mmce0:/neutrino/neutrino.elf</code> (or <code>mmce1:/</code>) — select
-<b>MMCE</b> in the Neutrino ELF Path device picker under General Settings. That picker lists device
-<i>types</i> (Auto, Memory Card, USB, MX4SIO, MMCE, HDD (exFAT), HDD (APA), Game's Device), not per-slot entries, so there is
+<b>MMCE</b> in the <b>Neutrino Device</b> picker on <b>Settings &rarr; Game Launching</b>. That picker lists device
+<i>types</i> (Auto, Memory Card, USB, MX4SIO, MMCE, HDD (exFAT), HDD (APA), Game's Device, iLink), not per-slot entries, so there is
 no separate <code>mmce0</code>/<code>mmce1</code> choice. <b>Auto</b> also works: it probes the active game device
 for a co-located <code>neutrino/neutrino.elf</code> before falling back to <code>mc0:</code>/<code>mc1:</code>, so a
 neutrino.elf on the MMCE card is found automatically when you launch an MMCE game — an explicit device pick is no

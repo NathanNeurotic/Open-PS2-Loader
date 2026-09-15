@@ -72,15 +72,16 @@ and the loader core independently for each game — without touching any other t
 <h2 id="open-game-settings">Opening Game Settings</h2>
 <p>Highlight a game in any list and press the <b>Triangle</b> button. A small menu drops down with these entries:</p>
 <ul class="checklist">
-  <li><b>Compatibility Settings</b> — compatibility modes, Loader Core, Neutrino args &amp; video, DMA mode, Game ID, Alt-Startup</li>
+  <li><b>Game Settings</b> — Loader Core, DMA Mode, Game ID, Custom ELF, compatibility modes, Neutrino args &amp; video</li>
   <li><b>Cheat Settings</b> — enable/disable PS2RD cheats for this title</li>
-  <li><b>GSM Settings</b> — per-game video-mode override (OPL core only)</li>
-  <li><b>VMC</b> — assign Virtual Memory Cards to slot 1 and slot 2</li>
-  <li><b>PADEMU Settings</b> — DualShock 3 / DualShock 4 pad emulation (OPL core only)</li>
-  <li><b>OSD Language Settings</b> — per-game OSD language override (OPL core only)</li>
+  <li><b>Configure GSM</b> — per-game video-mode override (OPL core only)</li>
+  <li><b>Configure VMC</b> — assign Virtual Memory Cards to slot 1 and slot 2</li>
+  <li><b>Controller Emulation</b> — DualShock 3 / DualShock 4 pad emulation (OPL core only)</li>
+  <li><b>Controller Macros</b> — analog slow-down, axis invert and turbo speed</li>
+  <li><b>OSD Settings</b> — per-game OSD language, screen size and video mode (OPL core only)</li>
   <li><b>Save Changes</b> — write the current settings to <code>CFG/</code></li>
   <li><b>Test Changes</b> — launch the game immediately with the current (unsaved) settings</li>
-  <li><b>Remove All Settings</b> — delete per-game (and optionally global) config entries for this title</li>
+  <li><b>Remove Settings</b> — delete per-game (and optionally global) config entries for this title</li>
 </ul>
 
 <div class="callout info"><div class="h">i Config file location</div>
@@ -90,8 +91,8 @@ RiptOPL / OPL / wOPL builds that read from the same device; only the master sett
 (<code>settings_riptopl.cfg</code>) is private to RiptOPL.
 </div>
 
-<h2 id="compatibility-settings">Compatibility Settings</h2>
-<p>The Compatibility Settings screen is the main per-game workhorse. It is split into several sections.</p>
+<h2 id="compatibility-settings">Game Settings</h2>
+<p>The <b>Game Settings</b> screen, the first entry in the Triangle menu, is the main per-game workhorse. It is split into several sections.</p>
 
 <h3 id="loader-core">Loader Core</h3>
 <p>The <b>Loader Core</b> picker selects which engine launches this title:</p>
@@ -100,7 +101,7 @@ RiptOPL / OPL / wOPL builds that read from the same device; only the master sett
   <tbody>
     <tr><td><code>&lt;OPL&gt;</code></td><td>Pin this title to OPL's built-in EE core.</td></tr>
     <tr><td><code>Neutrino</code></td><td>Hand the game off to an external <code>neutrino.elf</code>. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
-    <tr><td><code>Default</code></td><td>Make no per-game choice — follow the global <b>Settings &rarr; General Settings &rarr; Default Loader Core</b> value. This is what a title shows while it has no saved <code>$CoreLoader</code> key, so it is the state every game starts in.</td></tr>
+    <tr><td><code>Default</code></td><td>Make no per-game choice — follow the global <b>Settings &rarr; Game Launching &rarr; Default Loader Core</b> value. This is what a title shows while it has no saved <code>$CoreLoader</code> key, so it is the state every game starts in.</td></tr>
   </tbody>
 </table>
 <p>Config key: <code>$CoreLoader</code> — no key is written while the picker reads <b>Default</b>.
@@ -125,8 +126,8 @@ Core is Neutrino. They are greyed under <code>&lt;OPL&gt;</code>.</p>
   a free-form Extra field) reassembled in a valid order with <code>--b</code> last. Stored in config key
   <code>$NeutrinoArgs</code> as a single flat string (e.g. <code>-mt=dvd</code>). Each sub-field holds 31
   visible characters; for a longer single value, edit <code>$NeutrinoArgs</code> in the <code>.cfg</code>
-  directly — OPL forwards the full value at launch. A global default is set in <b>Settings → General
-  Settings → Neutrino Launch Args</b>; per-game args are appended after it.</li>
+  directly — OPL forwards the full value at launch. A global default is set in <b>Settings → Game
+  Launching → Neutrino Advanced Arguments</b>; per-game args are appended after it.</li>
   <li><b>Neutrino Video</b> — structured picker for Neutrino's <code>-gsm</code> video-mode flag.
   Config key: <code>$NeutrinoVideo</code>.</li>
   <li><b>Neutrino GSM Compatibility</b> — the <code>:c</code> field-flipping half of <code>-gsm</code>, for
@@ -148,7 +149,7 @@ Core is Neutrino. They are greyed under <code>&lt;OPL&gt;</code>.</p>
     <tr><td>1080i x1</td><td><code>-gsm=1080ix1</code></td><td>Force 1080i</td></tr>
     <tr><td>1080i x2</td><td><code>-gsm=1080ix2</code></td><td>Force 1080i</td></tr>
     <tr><td>1080i x3</td><td><code>-gsm=1080ix3</code></td><td>Force 1080i — the community "1080p impression" setting</td></tr>
-    <tr><td>Default</td><td><em>(nothing per-game)</em></td><td>Removes <code>$NeutrinoVideo</code> entirely, so the title follows the global <b>Settings → General Settings → Neutrino Video</b> value</td></tr>
+    <tr><td>Default</td><td><em>(nothing per-game)</em></td><td>Removes <code>$NeutrinoVideo</code> entirely, so the title follows the global <b>Settings → Game Launching → Neutrino Video</b> value</td></tr>
   </tbody>
 </table>
 <p>See <a href="neutrino.html#neutrino-video">Neutrino Core &sect;5</a> for the same table with the global
@@ -169,7 +170,7 @@ flag is forwarded automatically.</p>
 A few titles are known to need a mode and default to it until you save your own choice. Today that is
 <b>Pro Evolution Soccer 2</b> (<code>SLES_511.14</code>), which defaults to <b>Accurate Reads</b> so its streamed
 audio plays correctly. The screen shows the default ticked. Untick it and save to turn it off, or use
-<b>Remove All Settings</b> to return to the default.</div>
+<b>Remove Settings</b> to return to the default.</div>
 
 <table data-sortable>
   <thead><tr><th>Mode</th><th>Label</th><th>What it does</th><th>Core</th></tr></thead>
@@ -229,7 +230,7 @@ audio plays correctly. The screen shows the default ticked. Untick it and save t
 <div class="callout info"><div class="h">i How -gc is built for Neutrino</div>
 When the Loader Core is Neutrino, OPL converts the compatibility bitmask to Neutrino's
 <code>-gc=&lt;value&gt;</code> format, forwarding modes 1, 2, 3, 5, and 7 (mode 4 and mode 6 have
-no Neutrino equivalent and are silently skipped). The <b>DL Defaults</b> button — which downloads
+no Neutrino equivalent and are silently skipped). The <b>Download Defaults</b> button — which downloads
 OPL-bitmask compatibility data from the network — is greyed under the Neutrino core because
 that data does not map to <code>-gc</code>.
 </div>
@@ -240,10 +241,10 @@ mode used to read the game partition. Options range from <b>MDMA 0</b> through <
 (default UDMA 4). Lowering the DMA mode can resolve read errors on aging drives or cables. This
 picker is hidden for devices that do not support DMA (USB, SMB, MMCE, etc.).</p>
 
-<h3 id="game-id-alt-startup">Game ID &amp; Alt-Startup</h3>
+<h3 id="game-id-alt-startup">Game ID &amp; Custom ELF</h3>
 <p><b>Game ID</b> (<code>$DNAS</code>) stores the hexadecimal startup ID used to look up the game in the
 OPL compatibility database. Use <b>Load from Disc</b> to read it automatically from an inserted disc, or
-type it manually. <b>Alt-Startup</b> (<code>$AltStartup</code>) overrides the ELF that is executed at boot —
+type it manually. <b>Custom ELF</b> (<code>$AltStartup</code>) overrides the ELF that is executed at boot —
 useful for multi-disc sets or non-standard disc layouts. Both fields are 31 characters maximum in the
 on-screen editor.</p>
 
@@ -277,21 +278,21 @@ launch; <b>this panel is an OPL core feature</b> and is not available under Neut
 <p>For the cheat file format and a full how-to, see <a href="cheats.html">Cheats</a> and the
 <a href="https://nathanneurotic.github.io/POPSLoader/cheats.html">POPStarter cheats reference</a>.</p>
 
-<h2 id="gsm">GSM Settings</h2>
+<h2 id="gsm">Configure GSM</h2>
 <p><b>GSM</b> (Game Screen Mode) forces a specific video output mode for a game — useful for titles that
 output an unusual or unsupported signal. The per-game GSM screen is an <b>OPL core feature</b>; it is not
 available under Neutrino.</p>
-<p>If the game's Loader Core is set to Neutrino, opening GSM Settings displays the message
+<p>If the game's Loader Core is set to Neutrino, opening Configure GSM displays the message
 <em>"This setting is not used with the Neutrino core."</em> Use the <b>Neutrino Video</b> picker on the
-Compatibility Settings screen instead.</p>
-<p>The GSM screen is covered in full on the <a href="gsm.html">GSM Video Modes</a> page: the GSM Source
+Game Settings screen instead.</p>
+<p>The GSM screen is covered in full on the <a href="gsm.html">GSM Video Modes</a> page: the Settings Mode
 (Global / Per Game / Per Game + Global), all 30 modes, the three-step confirmation on 1080p, Emulate FIELD
 Flipping, and how to recover a game that loses the picture.</p>
 
-<h2 id="pademu">PADEMU Settings</h2>
+<h2 id="pademu">Controller Emulation</h2>
 <p><b>PADEMU</b> enables DualShock 3 and DualShock 4 controller emulation for a game. It is an
 <b>OPL core feature</b> and is not available under Neutrino.</p>
-<p>If the game's Loader Core is set to Neutrino, opening PADEMU Settings displays the message
+<p>If the game's Loader Core is set to Neutrino, opening Controller Emulation displays the message
 <em>"This setting is not used with the Neutrino core."</em></p>
 <p>DualSense / DualShock 5 (USB) support is off in the default builds, but you do not have to build it
 yourself: each release flavour also ships a ready-made <code>-ds5.ELF</code> loader as its own named
@@ -299,11 +300,11 @@ download. See the <a href="releases.html">Releases</a> page.</p>
 <p>The PADEMU screen is covered in full on the <a href="pademu.html">PADEMU</a> page: USB and Bluetooth
 modes, per-port emulation and vibration, multitap, and the fake-DS3 workaround.</p>
 
-<h2 id="osd-language">OSD Language Settings</h2>
+<h2 id="osd-language">OSD Settings</h2>
 <p>OPL can patch the OSD language, TV aspect ratio, and video output mode written into EEPROM during
-game boot via the per-game <b>OSD Language Settings</b> screen. This is an <b>OPL core feature</b>;
+game boot via the per-game <b>OSD Settings</b> screen. This is an <b>OPL core feature</b>;
 it is not available under Neutrino.</p>
-<p>If the game's Loader Core is set to Neutrino, opening OSD Language Settings displays the message
+<p>If the game's Loader Core is set to Neutrino, opening OSD Settings displays the message
 <em>"This setting is not used with the Neutrino core."</em></p>
 
 <h2 id="core-aware-adaptation">Core-aware adaptation</h2>
@@ -319,7 +320,7 @@ will be silently ignored at launch.</p>
     <tr><td>Mode 4 — Skip Videos</td><td><b>Active</b></td><td>Greyed (no Neutrino equivalent)</td></tr>
     <tr><td>Mode 6 — Disable IGR</td><td><b>Active</b></td><td>Greyed (no Neutrino equivalent)</td></tr>
     <tr><td>Mode 7 — Fix IOP buffer overrun</td><td>Greyed (no OPL effect)</td><td><b>Active</b></td></tr>
-    <tr><td>DL Defaults button</td><td><b>Active</b></td><td>Greyed (OPL bitmask data, not -gc)</td></tr>
+    <tr><td>Download Defaults button</td><td><b>Active</b></td><td>Greyed (OPL bitmask data, not -gc)</td></tr>
     <tr><td>Cheats panel</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>
     <tr><td>GSM panel</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>
     <tr><td>PADEMU / Pad Macro panels</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>
@@ -351,7 +352,7 @@ online compatibility updates from overwriting your manual settings.</p>
 including any unsaved edits. Use this to verify a compatibility tweak before committing it to disk.
 If the settings turn out to work, follow up with <b>Save Changes</b>.</p>
 
-<h3>Remove All Settings</h3>
+<h3>Remove Settings</h3>
 <p>Prompts you to choose what to delete:</p>
 <ul class="checklist">
   <li><b>Per-game settings</b> — removes this title's <code>CFG/&lt;GAMEID&gt;.cfg</code> entry only.</li>
