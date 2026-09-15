@@ -175,7 +175,7 @@ the same physical `IMAGE0.VCD` filename, so config and art use the displayed `<n
 POPSTARTER reloads its mass-storage driver after resetting the IOP. USB FAT32 can use its built-in
 driver; USB exFAT and the MX4SIO, MMCE, ATA and iLink transports need matching external
 block-device modules (the BDMAssault / "BDMA" drivers). RiptOPL
-*equips* them for you from **PS Emulation Settings → BDMA Settings** — RiptOPL copies the selected
+*equips* them for you from the BDMA rows on **Settings → PS Emulation Settings** — RiptOPL copies the selected
 loose pair from a device's `POPS/` folder onto your memory card:
 
 RiptOPL prefers an existing `mc0:/POPSTARTER` or `mc1:/POPSTARTER` folder. On first setup it

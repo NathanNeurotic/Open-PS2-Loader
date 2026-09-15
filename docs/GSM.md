@@ -149,9 +149,9 @@ games. See [VCD.md](VCD.md).
 
 Two settings are easy to mistake for GSM options:
 
-* **Overscan** (*Settings → Display*) trims the edges of the **RiptOPL menu**, not of games. It is a
+* **Overscan** (*Settings → Interface*) trims the edges of the **RiptOPL menu**, not of games. It is a
   UI setting and is unrelated to the GSM H-POS/V-POS offsets.
-* **Video Mode** (*Settings → Display*) sets the mode the **menu** runs in. GSM never affects it.
+* **Video Mode** (*Settings → Interface*) sets the mode the **menu** runs in. GSM never affects it.
 
 ---
 

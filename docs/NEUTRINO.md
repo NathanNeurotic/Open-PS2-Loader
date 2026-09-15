@@ -134,7 +134,7 @@ settings:
 | `-gc=<modes>` | only if the game has OPL compatibility modes set |
 | `-dbc` | only if **Debug Colors** is enabled |
 | `-logo` | only if **PS2 Logo** is enabled |
-| `-gsm=<mode>[:<comp>]` | only if a **Neutrino Video** mode resolves for the game (per-game picker, or the global **Settings → Neutrino Video** default when the per-game picker is "Default"). The `:<comp>` half is appended only when a **Neutrino GSM Compatibility** type is set — it is never emitted on its own |
+| `-gsm=<mode>[:<comp>]` | only if a **Neutrino Video** mode resolves for the game (per-game picker, or the global **Settings → Game Launching → Neutrino Video** default when the per-game picker is "Default"). The `:<comp>` half is appended only when a **Neutrino GSM Compatibility** type is set — it is never emitted on its own |
 
 > **Revision 2692 iLink result:** Neutrino failed on an SCPH-39001 from iLink in all four SDK
 > flavours. That build emitted the documented `-bsd=ilink` token but, unlike its USB handoff, did not
@@ -313,7 +313,7 @@ When a game's core is **Neutrino**:
   > **The "1080p impression" trick:** on 1080-class displays, `1080i x3` (`-gsm=1080ix3`) is the
   > community workaround for progressive-looking output — the same effect people previously got by
   > launching Neutrino from PS2BBLE/OSDmenu with `-gsm=1080ix3`. Set it per game, or globally via
-  > **Settings → Neutrino Video** and leave games on "Default". Neutrino itself exposes only the
+  > **Settings → Game Launching → Neutrino Video** and leave games on "Default". Neutrino itself exposes only the
   > listed `1080i` modes; it does not expose RiptOPL's separate, GSM-synthetic forced-progressive
   > 1080p mode used by the native OPL core.
   OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
