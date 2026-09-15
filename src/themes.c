@@ -253,10 +253,11 @@ theme_element_t *thmFamilyItemsList(theme_elems_t *family, theme_element_t *fall
     elem = thmResolveItemsList(family, NULL, iconId);
     if (elem != NULL)
         return elem;
-    // No filtered list covers this page: the drawn list is the family's unfiltered one (drawItemsList
-    // skips an unfiltered list only where a filtered sibling covers the device, handled above).
+    // No filtered list covers this page: navigate with the unfiltered list the theme DECLARED in this
+    // family (or the default one validation added). An inherited copy is today's list, and today's page
+    // navigated with the slot, so it keeps doing so through the fallback.
     for (elem = family->first; elem != NULL; elem = elem->next) {
-        if (elem->type == ELEM_TYPE_ITEMS_LIST && !elem->deviceFilter)
+        if (elem->type == ELEM_TYPE_ITEMS_LIST && !elem->deviceFilter && !elem->inherited)
             return elem;
     }
     return fallback;
@@ -2600,9 +2601,10 @@ static void validateFavKindBackgrounds(const char *themePath, config_set_t *them
 
 // ItemsList validation for a Favourites per-kind family. Its lists own no slot, so link every list's
 // decorator here (validateItemsList with a non-NULL list only does that). A declared MAIN family with no
-// unfiltered list of its own gets the same default list the slot families get, so the page it draws
-// always has the list that thmFamilyItemsList hands to navigation.
-static void validateFavKindItemsLists(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, int isMain)
+// unfiltered list of its own gets a default list exactly when the slot family that view used before got
+// one (addDefault: that family's slot was still empty at validation). Otherwise the page draws no list,
+// as a theme that replaced the list slot intends, and thmFamilyItemsList navigates with the old slot.
+static void validateFavKindItemsLists(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, int addDefault)
 {
     theme_element_t *elem;
     int hasUnfiltered = 0;
@@ -2616,7 +2618,7 @@ static void validateFavKindItemsLists(const char *themePath, config_set_t *theme
             hasUnfiltered = 1;
         validateItemsList(themePath, themeConfig, theme, elem, elems);
     }
-    if (isMain && !hasUnfiltered)
+    if (addDefault && !hasUnfiltered)
         validateItemsList(themePath, themeConfig, theme, NULL, elems);
 }
 
@@ -2633,6 +2635,10 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     // 2. check we have a valid ItemsList element, and link its decorator to the target element.
     // Store the result back: validateItemsList may CREATE the default list, and a NULL slot is a
     // menusys NULL deref (see the function comment).
+    // Whether the Favourites PS1 / ELF views' slot families get a default list, for their per-kind
+    // counterparts below (validateFavKindItemsLists).
+    int vcdGetsDefaultList = theme->vcdItemsList == NULL;
+    int favsGetsDefaultList = theme->favsItemsList == NULL;
     theme->gamesItemsList = validateItemsList(themePath, themeConfig, theme, theme->gamesItemsList, &theme->mainElems);
     theme->appsItemsList = validateItemsList(themePath, themeConfig, theme, theme->appsItemsList, &theme->appsMainElems);
     theme->favsItemsList = validateItemsList(themePath, themeConfig, theme, theme->favsItemsList, &theme->favsMainElems);
@@ -2652,9 +2658,9 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->vcdMainElems);
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->vcdInfoElems);
     // Favourites per-kind families: every list is slot-free (no-op for an undeclared, empty family).
-    validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsVcdMainElems, 1);
+    validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsVcdMainElems, vcdGetsDefaultList);
     validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsVcdInfoElems, 0);
-    validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsAppsMainElems, 1);
+    validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsAppsMainElems, favsGetsDefaultList);
     validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsAppsInfoElems, 0);
 
     // ...then precompute the unfiltered elements' coverage so an unfiltered MenuIcon/ItemsList/
@@ -2844,44 +2850,100 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
     return 1;
 }
 
-// True when the theme declares at least one <prefix><j> block (j < count) -- the opt-in test for the
-// Favourites per-kind families. Uses the same _type key addGUIElem reads, so "declared" means exactly
-// "addGUIElem would build it".
-static int thmFavKindDeclared(config_set_t *themeConfig, const char *prefix, int count)
+// How addGUIElem treats block <name>, without building it: 0 when absent (a fallback chain moves on),
+// 1 when present -- declared with a _type, or switched off with <name>_enabled=0 (present, builds
+// nothing). *claimsSlot is set when the block is an unfiltered ItemsList, i.e. one that takes a global
+// nav slot in a slot family (or is dropped once all four are taken).
+static int thmBlockPresent(config_set_t *themeConfig, const char *name, int *claimsSlot)
 {
     char key[64];
-    const char *type;
-    int j;
+    const char *type = NULL;
+    const char *devValue;
+    int enabled = 1;
+
+    *claimsSlot = 0;
+    snprintf(key, sizeof(key), "%s_enabled", name);
+    configGetInt(themeConfig, key, &enabled);
+    if (!enabled)
+        return 1;
+    snprintf(key, sizeof(key), "%s_type", name);
+    if (!configGetStr(themeConfig, key, &type) || type == NULL)
+        return 0;
+    if (!strcmp(elementsType[ELEM_TYPE_ITEMS_LIST], type)) {
+        snprintf(key, sizeof(key), "%s_devices", name);
+        *claimsSlot = !(configGetStr(themeConfig, key, &devValue) && thmParseDeviceList(devValue, 1) != 0);
+    }
+    return 1;
+}
+
+// True when the theme declares at least one <prefix><j> block (j < count) -- the opt-in test for the
+// Favourites per-kind families. Same presence rule as addGUIElem, so a slot the theme only switches off
+// (<prefix><j>_enabled=0, to hide it on that Favourites view) opts in too.
+static int thmFavKindDeclared(config_set_t *themeConfig, const char *prefix, int count)
+{
+    char name[64];
+    int j, claimsSlot;
 
     for (j = 0; j < count; j++) {
-        type = NULL;
-        snprintf(key, sizeof(key), "%s%d_type", prefix, j);
-        if (configGetStr(themeConfig, key, &type) && type != NULL)
+        snprintf(name, sizeof(name), "%s%d", prefix, j);
+        if (thmBlockPresent(themeConfig, name, &claimsSlot))
             return 1;
     }
     return 0;
 }
 
-// Parse one slot of a Favourites per-kind family: the declared <prefix><j> block if present, otherwise
-// the first present block of the fallback chain, whose copy is marked inherited. The chain is exactly
-// the blocks that view renders from today, so an undeclared slot reproduces today's element.
-static void addFavKindSlot(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, const char *prefix, int j, const char *const *chain, int chainLen)
+// Did the slot family `today` (the family this Favourites view renders from before the per-kind family
+// existed, parsed with the same chain) keep its unfiltered ItemsList at slot j? A slot family builds such
+// a list only while a nav slot is free, and slots never free up during a family's parse, so the lists it
+// kept are the FIRST ones in slot order: slot j's list survived iff fewer earlier slots resolve to one
+// than the family holds.
+static int thmSlotListKept(config_set_t *themeConfig, theme_elems_t *today, const char *const *chain, int chainLen, int j)
 {
     char path[64];
-    int c;
+    theme_element_t *e;
+    int k, c, claimsSlot, earlier = 0, kept = 0;
+
+    for (e = today->first; e != NULL; e = e->next) {
+        if (e->type == ELEM_TYPE_ITEMS_LIST && !e->deviceFilter)
+            kept++;
+    }
+    for (k = 0; k < j; k++) {
+        for (c = 0; c < chainLen; c++) {
+            snprintf(path, sizeof(path), "%s%d", chain[c], k);
+            if (thmBlockPresent(themeConfig, path, &claimsSlot)) {
+                earlier += claimsSlot;
+                break;
+            }
+        }
+    }
+    return earlier < kept;
+}
+
+// Parse one slot of a Favourites per-kind family: the declared <prefix><j> block if present, otherwise
+// the first present block of the fallback chain, whose copy is marked inherited. The chain is exactly
+// the one `today` (the family that view renders from today) was parsed with, so an undeclared slot
+// reproduces today's element -- including an unfiltered ItemsList today's family had to DROP for lack of
+// a free nav slot: that copy is skipped too, rather than appearing only on the Favourites view.
+static void addFavKindSlot(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, theme_elems_t *today, const char *prefix, int j, const char *const *chain, int chainLen)
+{
+    char path[64];
+    int c, claimsSlot;
 
     snprintf(path, sizeof(path), "%s%d", prefix, j);
     if (addGUIElem(themePath, themeConfig, theme, elems, NULL, path))
         return;
     for (c = 0; c < chainLen; c++) {
-        theme_element_t *before = elems->last;
         snprintf(path, sizeof(path), "%s%d", chain[c], j);
-        if (addGUIElem(themePath, themeConfig, theme, elems, NULL, path)) {
-            theme_element_t *e = before ? before->next : elems->first;
-            for (; e != NULL; e = e->next)
-                e->inherited = 1;
+        if (!thmBlockPresent(themeConfig, path, &claimsSlot))
+            continue;
+        if (claimsSlot && !thmSlotListKept(themeConfig, today, chain, chainLen, j))
             return;
-        }
+        theme_element_t *before = elems->last;
+        addGUIElem(themePath, themeConfig, theme, elems, NULL, path);
+        theme_element_t *e = before ? before->next : elems->first;
+        for (; e != NULL; e = e->next)
+            e->inherited = 1;
+        return;
     }
 }
 
@@ -3258,12 +3320,12 @@ static int thmLoad(const char *themePath)
     if (thmFavKindDeclared(themeConfig, "favsVcdMain", i)) {
         static const char *const vcdChain[] = {"vcdMain", "appsMain", "main"};
         for (j = 0; j < i; j++)
-            addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdMainElems, "favsVcdMain", j, vcdChain, 3);
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdMainElems, &newT->vcdMainElems, "favsVcdMain", j, vcdChain, 3);
     }
     if (thmFavKindDeclared(themeConfig, "favsAppsMain", i)) {
         static const char *const appsChain[] = {"favsMain", "main"};
         for (j = 0; j < i; j++)
-            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsMainElems, "favsAppsMain", j, appsChain, 2);
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsMainElems, &newT->favsMainElems, "favsAppsMain", j, appsChain, 2);
     }
     newT->parsingFavKindFamily = 0;
 
@@ -3314,12 +3376,12 @@ static int thmLoad(const char *themePath)
     if (thmFavKindDeclared(themeConfig, "favsVcdInfo", i)) {
         static const char *const vcdInfoChain[] = {"vcdInfo", "info"};
         for (j = 0; j < i; j++)
-            addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdInfoElems, "favsVcdInfo", j, vcdInfoChain, 2);
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdInfoElems, &newT->vcdInfoElems, "favsVcdInfo", j, vcdInfoChain, 2);
     }
     if (thmFavKindDeclared(themeConfig, "favsAppsInfo", i)) {
         static const char *const appsInfoChain[] = {"favsInfo", "info"};
         for (j = 0; j < i; j++)
-            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsInfoElems, "favsAppsInfo", j, appsInfoChain, 2);
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsInfoElems, &newT->favsInfoElems, "favsAppsInfo", j, appsInfoChain, 2);
     }
     newT->parsingFavKindFamily = 0;
 

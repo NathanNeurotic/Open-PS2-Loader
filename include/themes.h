@@ -119,7 +119,8 @@ typedef struct theme_element
     // (favsVcd* / favsApps*): the theme did not declare that slot, the parser copied the slot it would
     // otherwise have used. The per-row cover redirect only takes a cover the theme actually declared in
     // those families, so an inherited copy (e.g. favsAppsMain's copy of the portrait favsMain cover)
-    // never replaces today's appsMain/vcdMain cover. Always 0 for every other family.
+    // never replaces today's appsMain/vcdMain cover; likewise an inherited ItemsList leaves navigation on
+    // the list that view used before (thmFamilyItemsList). Always 0 for every other family.
     unsigned char inherited;
 
     void *extended;
@@ -229,8 +230,9 @@ void thmEnd(void);
 theme_element_t *thmResolveItemsList(theme_elems_t *family, theme_element_t *fallback, int iconId);
 
 // Items list for a page drawn from a Favourites per-kind family (favsVcd* / favsApps*). Those families
-// own no global slot, so after the devices=-filtered match this returns the family's own unfiltered
-// ItemsList -- the element actually drawn -- and only then the given slot fallback.
+// own no global slot, so after the devices=-filtered match this returns the unfiltered ItemsList the
+// theme declared in the family (the element actually drawn), and otherwise the given slot fallback --
+// the list that view navigated with before the family existed.
 theme_element_t *thmFamilyItemsList(theme_elems_t *family, theme_element_t *fallback, int iconId);
 
 // Indices are shifted in GUI, as we add the internal default theme at 0

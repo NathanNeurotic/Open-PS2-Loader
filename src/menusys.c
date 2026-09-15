@@ -1635,9 +1635,9 @@ void menuRenderMain(void)
     theme_elems_t *kindElems = menuGetMainElems(list);
 
     if (kindElems == &gTheme->favsVcdMainElems || kindElems == &gTheme->favsAppsMainElems) {
-        // A Favourites per-kind family page. Its lists own no global slot, so navigation takes the
-        // family's own list (the one drawn), falling back to the slot this view used before the family
-        // existed: the VCD list for the PS1 view, the favourites list for the ELF view.
+        // A Favourites per-kind family page. Its lists own no global slot, so navigation takes the list
+        // the theme declared in the family (the one drawn), falling back to the slot this view used
+        // before the family existed: the VCD list for the PS1 view, the favourites list for the ELF view.
         theme_element_t *slot = (kindElems == &gTheme->favsVcdMainElems) ? (gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList) : (gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList);
         menuRenderElements(kindElems);
         gTheme->itemsList = thmFamilyItemsList(kindElems, slot, selected_item->item->icon_id);
