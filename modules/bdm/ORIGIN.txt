@@ -40,9 +40,10 @@ against a simulated device and fails on the SDK original):
 4. src/part_driver_gpt.c (#653): an unused entry (all-zero type GUID) marks only itself, so the scan
    continues past it; the SDK stopped at the first one, hiding every partition listed after a gap in
    the entry array (for example after deleting the first partition on a PC). The scan is bounded by
-   the header's entry count, including inside the last sector, and the count is clamped to what fits
-   between partition_table_lba and first_lba, so a corrupt count cannot read sectors for hours at
-   mount. A header whose first_lba does not follow the array start keeps the SDK's
+   the header's entry count, including inside the last sector. The full scan only runs when the array
+   extent is plausible (first_lba follows partition_table_lba by at most GPT_MAX_ARRAY_SECTORS = 2048,
+   the conventional start of partition data), with the count clamped to that extent, so a corrupt
+   header cannot read more than 2048 sectors at mount. Any other header keeps the SDK's
    stop-at-first-unused scan. Worth offering upstream to ps2sdk.
 Changes 2-4 are pinned by .github/scripts/test_bdm_partitions.py.
 

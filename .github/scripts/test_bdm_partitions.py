@@ -142,19 +142,19 @@ static void mbr_entry(int i, u8 type, u32 first, u32 count)
     disk[0x1FF] = 0xAA;
 }
 
-static void gpt_header_first_usable(u32 count, u32 entry_size, u64 first_usable)
+static void gpt_header_lbas(u32 count, u32 entry_size, u64 first_usable, u64 last_usable)
 {
     unsigned char *h = disk + 512;
     memcpy(h, "EFI PART", 8);
     put64(h + 0x28, first_usable);
-    put64(h + 0x30, 60); /* last usable */
-    put64(h + 0x48, 2);  /* entries at LBA 2 */
+    put64(h + 0x30, last_usable);
+    put64(h + 0x48, 2); /* entries at LBA 2 */
     put32(h + 0x50, count);
     put32(h + 0x54, entry_size);
 }
 
 /* Entries at LBA 2, first usable LBA 4: room for 2 sectors = 8 entries. */
-static void gpt_header(u32 count, u32 entry_size) { gpt_header_first_usable(count, entry_size, 4); }
+static void gpt_header(u32 count, u32 entry_size) { gpt_header_lbas(count, entry_size, 4, 60); }
 
 static void gpt_entry(int i, u64 first, u64 last)
 {
@@ -229,6 +229,23 @@ int main(void)
     assert(part_connect_gpt(&raw) == 0 && nconnected == 1);
     assert(max_read_sector == 3);
 
+    /* A distant first usable LBA gives no plausible extent (over GPT_MAX_ARRAY_SECTORS), so even a
+       maximum count cannot turn on the full scan: it stops at the first unused entry, as the SDK does,
+       and reads nothing past the first entry sector. */
+    reset();
+    gpt_header_lbas(0xFFFFFFFFu, 128, 0x100000000ull, 0x200000000ull);
+    gpt_entry(0, 0x100000010ull, 0x100000019ull);
+    gpt_entry(2, 0x100000030ull, 0x100000039ull);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1 && connected[0]->sectorOffset == 0x100000010ull);
+    assert(max_read_sector == 2);
+
+    /* The largest plausible extent still scans past gaps (first usable at 2 + GPT_MAX_ARRAY_SECTORS).
+       Only the entry sectors are read at mount, so partitions may lie beyond the simulated disk. */
+    reset();
+    gpt_header_lbas(4, 128, 2 + 2048, 5000);
+    gpt_entry(1, 3000, 3009);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1 && connected[0]->sectorOffset == 3000);
+
     /* The count is honoured inside a sector too: an entry beyond it is not part of the array. */
     reset();
     gpt_header(1, 128);
@@ -239,7 +256,7 @@ int main(void)
     /* A header too malformed to bound the array (first usable LBA not after the array start) keeps the
        SDK's scan, which stops at the first unused entry, so nothing that mounted before is lost. */
     reset();
-    gpt_header_first_usable(4, 128, 2);
+    gpt_header_lbas(4, 128, 2, 60);
     gpt_entry(0, 10, 19);
     gpt_entry(2, 30, 39);
     assert(part_connect_gpt(&raw) == 0 && nconnected == 1 && connected[0]->sectorOffset == 10);
