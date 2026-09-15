@@ -49,6 +49,8 @@ override only what differs and inherit the rest.
 | `appsMain0…` / `appsInfo0…` | The **apps** device list / info | → `mainN` / `infoN` |
 | `favsMain0…` / `favsInfo0…` | The **Favorites** tab list / info | → `mainN` / `infoN` |
 | `vcdMain0…` / `vcdInfo0…` | A device's homogeneous **PS1/VCD view**, plus every PS1 row's cover and info wherever it appears | main: → `appsMainN` → `mainN`  ·  info: → `infoN` |
+| `favsVcdMain0…` / `favsVcdInfo0…` *(opt-in)* | The **Favorites PS1 view**, plus PS1 covers and info on the Favorites *All* shelf | main: → `vcdMainN` → `appsMainN` → `mainN`  ·  info: → `vcdInfoN` → `infoN` |
+| `favsAppsMain0…` / `favsAppsInfo0…` *(opt-in)* | The **Favorites ELF view**, plus app covers and info on the Favorites *All* shelf | main: → `favsMainN` → `mainN`  ·  info: → `favsInfoN` → `infoN` |
 
 **The VCD family** (new in this fork) lets PS1/VCD games have their own look. A device's homogeneous
 PS1 view renders from `vcdMain*`. Because each `vcdMain` slot falls
@@ -56,6 +58,24 @@ back to `appsMain` — a **square** box, matching
 PS1 jewel-case art — before `main`, a theme that defines *no* `vcdMain` blocks still shows PS1 games
 in the square apps box. So you only add `vcdMain` blocks to make PS1 covers *differ* from apps;
 `vcdInfo` falls back to the game `info` layout, preserving the rich PS1 metadata page.
+
+**The Favorites per-kind families** (`favsVcd*`, `favsApps*`) let PS1 and app favorites look different
+from the same games on their device pages — their own layout, list and cover proportions. They are
+**opt-in**: a family is built only if the theme declares at least one of its blocks, and a theme that
+declares none behaves exactly as before (the Favorites PS1 view keeps using `vcdMain*`, the ELF view
+`favsMain*`, and the *All* shelf the `vcdMain*` / `appsMain*` covers).
+
+- Once declared, every slot you leave out falls back along the chain in the table — the blocks that view
+  used before — so you override only what differs.
+- A **cover** is taken from these families only where you **declared** it. An undeclared cover slot keeps
+  today's cover (the PS1 square from `vcdMain*`, the app square from `appsMain*`), never a fallback copy
+  such as `favsMain`'s portrait case. This applies to `ItemCover` panels and `Coverflow` carousels, and a
+  declared cover is only used where the page draws the same kind: a `Coverflow` in `favsVcdMain*` styles
+  a carousel, never an `ItemCover` panel, and vice versa.
+- An `ItemsList` declared in these families needs no special handling: it takes none of the four global
+  list slots, and the page navigates with the list it draws.
+- PS1 favorites keep sharing the PS1 cover cache and app favorites the shared one, so no extra cover
+  memory is used.
 
 #### Mixed lists: the page picks the family, each row picks its own cover
 
@@ -71,8 +91,8 @@ shape on all three stretches whichever kinds are not the page's own. So the cove
 | Row | Cover drawn from |
 |---|---|
 | PS2 disc game | the page's own family (`main2` / `favsMain2` / …) |
-| PS1 / VCD | `vcdMain*` (→ `appsMain*` → `main*`) |
-| App / ELF | `appsMain*` (→ `main*`) |
+| PS1 / VCD | `vcdMain*` (→ `appsMain*` → `main*`); on Favorites, a cover declared in `favsVcdMain*` first |
+| App / ELF | `appsMain*` (→ `main*`); on Favorites, a cover declared in `favsAppsMain*` first |
 
 Only the cover is redirected — its `width`/`height`, `overlay`/`overlay2` and `default` placeholder.
 Everything else on the page is untouched, and on a single-kind page the row's kind *is* the page's
@@ -295,8 +315,8 @@ Rules worth knowing:
 
 RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
 serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know (`devices=`,
-`reflection_offset`, `overlay2`, `plasma_blend_color`, the entire `favsMain*` and `vcdMain*`
-families…) are simply never read, and unknown element types (`Coverflow`) are skipped without
+`reflection_offset`, `overlay2`, `plasma_blend_color`, the entire `favsMain*`, `vcdMain*`,
+`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`) are skipped without
 stopping the parse. What to expect there:
 
 - **Invisible:** all pure-key extras above — regular OPL renders the theme as if they weren't
@@ -471,10 +491,38 @@ the page, because only the PS1 and app rows are redirected; the PS2 row keeps wh
 itself renders from:
 
 - a **device page** set to Mixed → `main2` + `vcdMain2` + `appsMain2`
-- the **Favorites** *All* shelf → `favsMain2` + `vcdMain2` + `appsMain2`
+- the **Favorites** *All* shelf → `favsMain2` + `vcdMain2` + `appsMain2`, with `favsVcdMain2` /
+  `favsAppsMain2` taking over the PS1 / app covers when the theme declares them
 
 So a theme that overrides `favsMain2` should size it as its **PS2** cover, and define `vcdMain2` /
 `appsMain2` for the other two kinds rather than leaving the whole shelf on one shape.
+
+The Favorites PS1 and ELF views are homogeneous pages. With `favsVcdMain*` / `favsAppsMain*` declared,
+they draw their own carousel from those blocks — its position, size and case, independent of the device
+pages. For example, taller PS1 covers on Favorites only, with every device page unchanged:
+
+```ini
+favsVcdMain2:
+	type=Coverflow
+	default=cover
+	reflection=1
+	y=250
+	width=200
+	height=200
+	overlay=case
+	overlay2=case_overlay
+	overlay_ulx=0    overlay_uly=0    overlay_urx=200  overlay_ury=0
+	overlay_llx=0    overlay_lly=200  overlay_lrx=200  overlay_lry=200
+```
+
+Slots `favsVcdMain0`, `favsVcdMain1`, `favsVcdMain3`… are not declared here, so they fall back to
+`vcdMain*` and the rest of the PS1 page looks as it did. The global Coverflow tuning below applies to
+these carousels too.
+
+This example assumes a theme that already uses Coverflow. A `Coverflow` block in **any** family makes
+the whole theme a Coverflow theme: Left/Right steps through the list on every browse page and the
+Coverflow Settings menu appears. Adding one only to `favsVcdMain*` in a list-based theme therefore
+changes navigation on the device pages as well.
 
 ### Global Coverflow tuning (NOT in the theme)
 

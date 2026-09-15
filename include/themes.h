@@ -115,6 +115,14 @@ typedef struct theme_element
     // ever a redirect target -- the lookup matches GameImage/Coverflow by cover-cache suffix.
     struct theme_elems *family;
 
+    // 1 when the element came from a FALLBACK block while parsing an opt-in Favorites per-kind family
+    // (favsVcd* / favsApps*): the theme did not declare that slot, the parser copied the slot it would
+    // otherwise have used. The per-row cover redirect only takes a cover the theme actually declared in
+    // those families, so an inherited copy (e.g. favsAppsMain's copy of the portrait favsMain cover)
+    // never replaces today's appsMain/vcdMain cover; likewise an inherited ItemsList leaves navigation on
+    // the list that view used before (thmFamilyItemsList). Always 0 for every other family.
+    unsigned char inherited;
+
     void *extended;
 
     void (*drawElem)(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem);
@@ -175,6 +183,19 @@ typedef struct theme
     theme_elems_t vcdInfoElems;
     theme_element_t *vcdItemsList;
 
+    // Favourites per-kind families (opt-in): favsVcdMain<N>/favsVcdInfo<N> style the Favourites PS1
+    // view and the PS1 covers on the All shelf; favsAppsMain<N>/favsAppsInfo<N> style the Favourites
+    // ELF view and the app covers on the All shelf. Each is built ONLY when the theme declares at least
+    // one block of it, so a theme without them leaves these empty and every consumer falls through to
+    // today's families (vcd*, favs*/apps*). Undeclared slots of a built family fall back to the blocks
+    // those views use today. They claim NO global ItemsList slot: an ItemsList parsed into them is a
+    // slot-free element resolved per page (thmFamilyItemsList), like a devices=-filtered one.
+    theme_elems_t favsVcdMainElems;
+    theme_elems_t favsVcdInfoElems;
+    theme_elems_t favsAppsMainElems;
+    theme_elems_t favsAppsInfoElems;
+    int parsingFavKindFamily; // parse-time only: addGUIElem must not claim an ItemsList slot
+
     theme_element_t *coverflow;
     int coverflowCoverOffset;
 
@@ -207,6 +228,12 @@ void thmEnd(void);
 // family whose device filter matches iconId, else the given fallback -- so navigation math and the
 // drawn rows always agree. fallback must follow the existing never-NULL slot chain.
 theme_element_t *thmResolveItemsList(theme_elems_t *family, theme_element_t *fallback, int iconId);
+
+// Items list for a page drawn from a Favourites per-kind family (favsVcd* / favsApps*). Those families
+// own no global slot, so after the devices=-filtered match this returns the unfiltered ItemsList the
+// theme declared in the family (the element actually drawn), and otherwise the given slot fallback --
+// the list that view navigated with before the family existed.
+theme_element_t *thmFamilyItemsList(theme_elems_t *family, theme_element_t *fallback, int iconId);
 
 // Indices are shifted in GUI, as we add the internal default theme at 0
 int thmSetGuiValue(int themeID, int reload);
