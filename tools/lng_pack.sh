@@ -9,7 +9,13 @@ CURRENT_DIR=$(pwd)
 BUILD_DIR="$(pwd)/tmp/OPL_LANG"
 LANG_LIST="$(pwd)/tmp/OPL_LANG_LIST"
 make oplversion 2>/dev/null
-if [ $? == "0" ]
+MAKE_OPLVERSION_STATUS=$?
+if [ -n "${LNG_PACK_VERSION:-}" ]
+then
+	# The release workflow passes the download-file version (no commit hash) so the pack's name and
+	# its folders match the other release archives.
+	export OPL_VERSION="${LNG_PACK_VERSION}"
+elif [ $MAKE_OPLVERSION_STATUS == "0" ]
 then
 	export OPL_VERSION=$(make oplversion)
 else
@@ -28,7 +34,10 @@ fi
 # Print a list
 mkdir -p "${BUILD_DIR}"
 cd "${CURRENT_DIR}/lng/"
-printf "$(ls lang_*.lng | cut -c 6- | rev | cut -c 5- | rev)" > "${LANG_LIST}"
+# Written straight from the pipe so the list ends with a newline. The old printf "$(...)" form lost
+# it (command substitution strips trailing newlines), and `while read` below then skipped the last
+# line: the alphabetically last language (Vietnamese) was silently left out of every pack.
+ls lang_*.lng | cut -c 6- | rev | cut -c 5- | rev > "${LANG_LIST}"
 cd "${CURRENT_DIR}"
 
 # Copy format
