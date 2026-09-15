@@ -292,7 +292,7 @@ translations:
   VCD_USB_BDMA_ASK: Demander
   SETTINGS_HDD_FALLBACK: 'Les paramètres HDD ont utilisé l''emplacement de secours : %s'
   HDD_BACKEND_RECONCILED: "Les HDD internes APA et exFAT étaient tous deux activés -- l'un a été désactivé automatiquement (voir Paramètres des périphériques)."
-  SETTINGS_SAVE_PROMPT: ENREGISTRER LES RÉGLAGES ?
+  SETTINGS_SAVE_PROMPT: ENREGISTRER LES PARAMÈTRES ?
   SETTINGS_SAVE_PROMPT_LINE1: Vos modifications sont actuellement actives.
   SETTINGS_SAVE_PROMPT_LINE2: Voulez-vous les enregistrer pour les prochains démarrages ?
   SETTINGS_SAVE: Enregistrer les paramètres

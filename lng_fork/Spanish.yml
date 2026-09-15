@@ -292,7 +292,7 @@ translations:
   VCD_USB_BDMA_ASK: Preguntar
   SETTINGS_HDD_FALLBACK: 'La configuración del HDD usó la ubicación segura de reserva: %s'
   HDD_BACKEND_RECONCILED: El HDD interno APA y el exFAT estaban ambos activados -- uno se desactivó automáticamente (revisa Ajustes de dispositivos).
-  SETTINGS_SAVE_PROMPT: ¿GUARDAR AJUSTES?
+  SETTINGS_SAVE_PROMPT: ¿GUARDAR CONFIGURACIÓN?
   SETTINGS_SAVE_PROMPT_LINE1: Tus cambios están activos ahora mismo.
   SETTINGS_SAVE_PROMPT_LINE2: ¿Quieres guardarlos para próximos arranques?
   SETTINGS_SAVE: Guardar configuración
