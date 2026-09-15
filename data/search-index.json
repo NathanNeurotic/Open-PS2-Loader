@@ -1522,5 +1522,53 @@
   "cat": "features",
   "text": "Related settings that are not GSM Two settings are easy to mistake for GSM options: Overscan ( Settings → Display ) trims the edges of the RiptOPL menu , not of games. It is a UI setting and is unrelated to the GSM H-POS/V-POS offsets. Video Mode ( Settings → Display ) sets the mode the menu runs in. GSM never affects it. Notes for builders Two names are involved, and they are not the same thing. GSM1080P is the Makefile variable ; it defaults to 1 , and when set the Makefile adds -DGSM_1080P — the preprocessor macro the code actually tests — to the EE build, and forwards GSM1080P=1 on to ee_core/Makefile . So every shipped build has mode 29 and the list is a consistent 30 entries across published flavours. Building with GSM1080P=0 drops it and shortens the list. In-game screenshots (IGS) require GSM to be enabled — see In-Game Reset . File Role ee_core/src/gsm_api.c , gsm_engine.S , gsm_engine_adv.S The GSM engine src/guigame.c The GSM settings page, the mode list, and the 1080p confirmation gate src/dialogs.c The six GSM dialog rows",
   "url": "gsm.html#not-gsm"
+ },
+ {
+  "title": "Fork Feature Gaps",
+  "cat": "reference",
+  "text": "Fork Feature Gaps Features and fixes that other PS2 loader forks have and RiptOPL does not have yet. Each entry was checked against RiptOPL's own code rather than taken from a fork's changelog, and links to where that fork implements it. ℹ A tracking list, not a roadmap An entry here means another fork has something RiptOPL does not; it does not mean the feature is scheduled. Checked on 2026-09-14 against rebuild/main at 3f2e9b1d. Every entry has a short ID — W for wOPL, O for OPLattice, H for xeRAbora and L for Extended APA — so it can be referenced in issues and chat. Forks surveyed MarkForkRepositoryGaps ✕wOPL — the continuation of KrahJohlito's uOPLps2homebrew/wOPL6 △OPLattice — grid themes, the SHELF interface and theme toolingcoffeedevsolutions/OPLattice15 □xeRAbora — RetroAchievements for real PS2 hardwarehacan359/xerabora1 ◯Extended APA — internal HDDs larger than 2 TiBL10N37/Open-PS2-Loader-Extended-APA1 At a glance All 23 entries in one list. Click a column heading to sort. IDFeatureAreaForkType W1Themes loaded from a .tar archiveTheme enginewOPLFeature W2wsX widescreen X positionTheme enginewOPLFeature W3PADEMU, GSM and cheat status iconsTheme enginewOPLFeature W4Disc art toggle without restartLibrary & menuwOPLFeature W5Held scrolling stalls every ~29 secondsControlswOPLFix W6Info page without list navigationLibrary & menuwOPLOptional O1Grid game listTheme engineOPLatticeFeature O2GameImage offset for non-selected gamesTheme engineOPLatticeFeature O3Recently played listLibrary & menuOPLatticeFeature O4Sort modesLibrary & menuOPLatticeFeature O5MenuTabs device tab stripTheme engineOPLatticeFeature O6GameCountText prefix and suffixTheme engineOPLatticeFeature O7x_scaled widescreen alignmentTheme engineOPLatticeFeature O8VRAM texture budget clampTheme engineOPL",
+  "url": "fork-gaps.html"
+ },
+ {
+  "title": "Fork Gaps: Forks surveyed",
+  "cat": "reference",
+  "text": "Forks surveyed MarkForkRepositoryGaps ✕wOPL — the continuation of KrahJohlito's uOPLps2homebrew/wOPL6 △OPLattice — grid themes, the SHELF interface and theme toolingcoffeedevsolutions/OPLattice15 □xeRAbora — RetroAchievements for real PS2 hardwarehacan359/xerabora1 ◯Extended APA — internal HDDs larger than 2 TiBL10N37/Open-PS2-Loader-Extended-APA1",
+  "url": "fork-gaps.html#forks"
+ },
+ {
+  "title": "Fork Gaps: At a glance",
+  "cat": "reference",
+  "text": "At a glance All 23 entries in one list. Click a column heading to sort. IDFeatureAreaForkType W1Themes loaded from a .tar archiveTheme enginewOPLFeature W2wsX widescreen X positionTheme enginewOPLFeature W3PADEMU, GSM and cheat status iconsTheme enginewOPLFeature W4Disc art toggle without restartLibrary & menuwOPLFeature W5Held scrolling stalls every ~29 secondsControlswOPLFix W6Info page without list navigationLibrary & menuwOPLOptional O1Grid game listTheme engineOPLatticeFeature O2GameImage offset for non-selected gamesTheme engineOPLatticeFeature O3Recently played listLibrary & menuOPLatticeFeature O4Sort modesLibrary & menuOPLatticeFeature O5MenuTabs device tab stripTheme engineOPLatticeFeature O6GameCountText prefix and suffixTheme engineOPLatticeFeature O7x_scaled widescreen alignmentTheme engineOPLatticeFeature O8VRAM texture budget clampTheme engineOPLatticeFix O9Play statsLibrary & menuOPLatticeFeature O10SHELF sidebar interfaceLibrary & menuOPLatticeFeature O11App subtitlesLibrary & menuOPLatticeFeature O12Art conversion and VRAM checkerPC toolsOPLatticeTool O13In-game screenshot importerPC toolsOPLatticeTool O14Browser theme previewerPC toolsOPLatticeTool O15Device staging and card sync scriptsPC toolsOPLatticeTool H1Pointer chains on the consoleRetroAchievementsxeRAboraFeature L1APA HDDs over 2 TiBInternal HDDExtended APANot planned",
+  "url": "fork-gaps.html#at-a-glance"
+ },
+ {
+  "title": "Fork Gaps: wOPL",
+  "cat": "reference",
+  "text": "wOPL ✕ ps2homebrew/wOPL — much of RiptOPL's Coverflow, Favorites and Neutrino work started here. These are the parts RiptOPL does not have yet. IDFeatureWhat it doesSource W1Themes loaded from a .tar archiveSeveral themes packed into THM/thm.tar, with fonts and images read straight from the archive.PR #370PR #378 W2wsX widescreen X positionA separate X coordinate per element for 16:9, so one theme file serves both 4:3 and widescreen.src/themes.c W3PADEMU, GSM and cheat status iconsOn/off images showing each game's pad emulation, GSM and cheat settings, with built-in default images.src/textures.csrc/themes.c W4Disc art toggle without restartAn Enable Disc Art setting that takes effect immediately. RiptOPL has no disc art toggle.PR #308 W5Held scrolling stalls every ~29 seconds FixThe pad timer wraps roughly every 29 seconds; when it does, a held direction stops repeating until the button is released.PR #308 W6Info page without list navigation OptionalUp, down and page buttons no longer move through the list from a game's info page. A design choice rather than a missing capability.PR #308",
+  "url": "fork-gaps.html#wopl"
+ },
+ {
+  "title": "Fork Gaps: OPLattice",
+  "cat": "reference",
+  "text": "OPLattice △ coffeedevsolutions/OPLattice — nine patches to OPL's theme engine and menus, a sidebar interface, themes and PC tooling. IDFeatureWhat it doesSource O1Grid game listA tile layout for the game list (columns, cell_width, gap, frame) with two-axis navigation.patch 01 O2GameImage offset for non-selected gamesAn image element can draw the game a set number of places down the page, which makes hero and filmstrip layouts possible.patch 01 O3Recently played listThe last 8 games launched, newest first, shown with RecentImage and RecentText elements. RiptOPL remembers only the last one.patch 02 O4Sort modesA to Z, Z to A, most recent first, or as scanned. OPLattice cycles them with R3, which RiptOPL uses for Favorites.patch 02 O5MenuTabs device tab stripEvery device drawn at once with the active one highlighted, plus per-device label overrides.patch 03 O6GameCountText prefix and suffixThemes set their own wording around the game count.patch 03 O7x_scaled widescreen alignmentElements keep their position relative to a centred layout when widescreen is on.patch 03 O8VRAM texture budget clamp FixCaps texture size to the video memory left after the framebuffers, so an oversized theme image is rejected instead of risking a hang in hi-res modes.patch 07 O9Play statsA launch count and playtime for each game.patch 08 O10SHELF sidebar interfaceAn opt-in sidebar with Home, Library, Apps and Settings pages. It opens with L3, which RiptOPL uses to switch between PS2 and PS1 views.patch 09 O11App subtitlesAn optional subtitle key in an app's title.cfg.patch 09 O12Art conversion and VRAM checker ToolConverts art to indexed PNG8 and reports how much memory each theme's art cache will use.palettize-art.pycheck-art.py O13In-game screenshot importer ToolTurns in-game screenshot BMPs fro",
+  "url": "fork-gaps.html#oplattice"
+ },
+ {
+  "title": "Fork Gaps: xeRAbora",
+  "cat": "reference",
+  "text": "xeRAbora □ hacan359/xerabora — the PC client RiptOPL's RetroAchievements build talks to. Its console code lives on hacan359's OPL fork, branch ra. IDFeatureWhat it doesSource H1Pointer chains on the consoleAchievements that read game memory through a pointer can unlock. Without it, they never trigger — 22 of 50 in one measured achievement set.commit 0c5f61a3",
+  "url": "fork-gaps.html#xerabora"
+ },
+ {
+  "title": "Fork Gaps: Extended APA",
+  "cat": "reference",
+  "text": "Extended APA ◯ L10N37/Open-PS2-Loader-Extended-APA — an OPL build for internal HDDs formatted with PS2 HDD Manager's banked APA layout. IDFeatureWhat it doesSource L1APA HDDs over 2 TiB Not plannedSplits a large internal HDD into APA “banks” and lists and launches games from every bank. RiptOPL stays on the standard APA layout — see Internal HDD.EXTENDED_APA.md",
+  "url": "fork-gaps.html#extended-apa"
+ },
+ {
+  "title": "Fork Gaps: Notes",
+  "cat": "reference",
+  "text": "Notes Already in RiptOPL, so not listed: the fix from wOPL PR #435 (remember the last played game when it is the first list entry), PS2RD cheat images (.img), cover art from ART/art.tar (Interface settings), cheats from CHT/cht.tar, the <name>_show_run theme key, and RetroAchievements for physical discs. wOPL's config format: wOPL moved to libconfig. RiptOPL reads and writes both formats, so files the two loaders share, such as an app's title.cfg, keep working in both. Device names: RiptOPL accepts usb0: and ata0: style names for its boot path and ties each launch to its device by driver name, but reads files through massN:. wOPL uses the typed names throughout. That is a different approach rather than a missing feature, so it is not counted. CFG/cfg.tar: wOPL's README lists it, but neither wOPL nor RiptOPL reads per-game configs from an archive, so it is not counted either.",
+  "url": "fork-gaps.html#notes"
  }
 ]

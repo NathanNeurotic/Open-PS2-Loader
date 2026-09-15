@@ -1,0 +1,211 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fork Feature Gaps · RiptOPL Docs</title>
+<meta name="description" content="Features and fixes other PS2 loader forks have that RiptOPL does not yet, with links to each fork.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+  <div class="search">
+    <span class="ico">🔎</span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
+    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
+    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
+    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
+    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
+    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
+    <a href="apps.html"><span class="em">🧰</span>Apps</a>
+    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
+    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
+    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
+    <a href="vmc.html"><span class="em">💾</span>VMC</a>
+    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
+    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
+    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
+    <a href="languages.html"><span class="em">🌐</span>Languages</a>
+    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
+    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
+    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
+    <a href="releases.html"><span class="em">📦</span>Releases</a>
+    <a href="fork-gaps.html" class="active"><span class="em">🧭</span>Fork Feature Gaps</a>
+    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
+    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Fork Feature Gaps</h1>
+<p class="lead">Features and fixes that other PS2 loader forks have and RiptOPL does not have yet. Each entry was
+checked against RiptOPL's own code rather than taken from a fork's changelog, and links to where that fork
+implements it.</p>
+
+<div class="callout info"><div class="h">ℹ A tracking list, not a roadmap</div>
+An entry here means another fork has something RiptOPL does not; it does not mean the feature is scheduled.
+Checked on 2026-09-14 against <code>rebuild/main</code> at
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/3f2e9b1da04d19a10d7799a3a1f1435ed3c6f293">3f2e9b1d</a>.
+Every entry has a short ID &mdash; <b>W</b> for wOPL, <b>O</b> for OPLattice, <b>H</b> for xeRAbora and <b>L</b> for
+Extended APA &mdash; so it can be referenced in issues and chat.
+</div>
+
+<h2 id="forks">Forks surveyed</h2>
+<table>
+  <thead><tr><th>Mark</th><th>Fork</th><th>Repository</th><th>Gaps</th></tr></thead>
+  <tbody>
+    <tr><td><span class="psbtns"><i class="cro">&#10005;</i></span></td><td><b>wOPL</b> &mdash; the continuation of KrahJohlito's uOPL</td><td><a href="https://github.com/ps2homebrew/wOPL">ps2homebrew/wOPL</a></td><td>6</td></tr>
+    <tr><td><span class="psbtns"><i class="tri">&#9651;</i></span></td><td><b>OPLattice</b> &mdash; grid themes, the SHELF interface and theme tooling</td><td><a href="https://github.com/coffeedevsolutions/OPLattice">coffeedevsolutions/OPLattice</a></td><td>15</td></tr>
+    <tr><td><span class="psbtns"><i class="squ">&#9633;</i></span></td><td><b>xeRAbora</b> &mdash; RetroAchievements for real PS2 hardware</td><td><a href="https://github.com/hacan359/xerabora">hacan359/xerabora</a></td><td>1</td></tr>
+    <tr><td><span class="psbtns"><i class="cir">&#9711;</i></span></td><td><b>Extended APA</b> &mdash; internal HDDs larger than 2 TiB</td><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">L10N37/Open-PS2-Loader-Extended-APA</a></td><td>1</td></tr>
+  </tbody>
+</table>
+
+<h2 id="at-a-glance">At a glance</h2>
+<p>All 23 entries in one list. Click a column heading to sort.</p>
+<table data-sortable>
+  <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Fork</th><th>Type</th></tr></thead>
+  <tbody>
+    <tr><td><code>W1</code></td><td>Themes loaded from a <code>.tar</code> archive</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
+    <tr><td><code>W2</code></td><td><code>wsX</code> widescreen X position</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
+    <tr><td><code>W3</code></td><td>PADEMU, GSM and cheat status icons</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
+    <tr><td><code>W4</code></td><td>Disc art toggle without restart</td><td>Library &amp; menu</td><td>wOPL</td><td>Feature</td></tr>
+    <tr><td><code>W5</code></td><td>Held scrolling stalls every ~29 seconds</td><td>Controls</td><td>wOPL</td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>W6</code></td><td>Info page without list navigation</td><td>Library &amp; menu</td><td>wOPL</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>O1</code></td><td>Grid game list</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O2</code></td><td><code>GameImage offset</code> for non-selected games</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O3</code></td><td>Recently played list</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O4</code></td><td>Sort modes</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O5</code></td><td><code>MenuTabs</code> device tab strip</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O6</code></td><td><code>GameCountText</code> prefix and suffix</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O7</code></td><td><code>x_scaled</code> widescreen alignment</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O8</code></td><td>VRAM texture budget clamp</td><td>Theme engine</td><td>OPLattice</td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>O9</code></td><td>Play stats</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O10</code></td><td>SHELF sidebar interface</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O11</code></td><td>App subtitles</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O12</code></td><td>Art conversion and VRAM checker</td><td>PC tools</td><td>OPLattice</td><td>Tool</td></tr>
+    <tr><td><code>O13</code></td><td>In-game screenshot importer</td><td>PC tools</td><td>OPLattice</td><td>Tool</td></tr>
+    <tr><td><code>O14</code></td><td>Browser theme previewer</td><td>PC tools</td><td>OPLattice</td><td>Tool</td></tr>
+    <tr><td><code>O15</code></td><td>Device staging and card sync scripts</td><td>PC tools</td><td>OPLattice</td><td>Tool</td></tr>
+    <tr><td><code>H1</code></td><td>Pointer chains on the console</td><td>RetroAchievements</td><td>xeRAbora</td><td>Feature</td></tr>
+    <tr><td><code>L1</code></td><td>APA HDDs over 2 TiB</td><td>Internal HDD</td><td>Extended APA</td><td><span class="badge unconfirmed">Not planned</span></td></tr>
+  </tbody>
+</table>
+
+<h2 id="wopl">wOPL</h2>
+<p><span class="psbtns"><i class="cro">&#10005;</i></span> <a href="https://github.com/ps2homebrew/wOPL">ps2homebrew/wOPL</a>
+&mdash; much of RiptOPL's Coverflow, Favorites and Neutrino work started here. These are the parts RiptOPL does
+not have yet.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>W1</code></td><td><b>Themes loaded from a <code>.tar</code> archive</b></td><td>Several themes packed into <code>THM/thm.tar</code>, with fonts and images read straight from the archive.</td><td><a href="https://github.com/ps2homebrew/wOPL/pull/370">PR #370</a><br><a href="https://github.com/ps2homebrew/wOPL/pull/378">PR #378</a></td></tr>
+    <tr><td><code>W2</code></td><td><b><code>wsX</code> widescreen X position</b></td><td>A separate X coordinate per element for 16:9, so one theme file serves both 4:3 and widescreen.</td><td><a href="https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c">src/themes.c</a></td></tr>
+    <tr><td><code>W3</code></td><td><b>PADEMU, GSM and cheat status icons</b></td><td>On/off images showing each game's pad emulation, GSM and cheat settings, with built-in default images.</td><td><a href="https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/textures.c">src/textures.c</a><br><a href="https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c">src/themes.c</a></td></tr>
+    <tr><td><code>W4</code></td><td><b>Disc art toggle without restart</b></td><td>An <b>Enable Disc Art</b> setting that takes effect immediately. RiptOPL has no disc art toggle.</td><td><a href="https://github.com/ps2homebrew/wOPL/pull/308">PR #308</a></td></tr>
+    <tr><td><code>W5</code></td><td><b>Held scrolling stalls every ~29 seconds</b> <span class="badge secondary">Fix</span></td><td>The pad timer wraps roughly every 29 seconds; when it does, a held direction stops repeating until the button is released.</td><td><a href="https://github.com/ps2homebrew/wOPL/pull/308">PR #308</a></td></tr>
+    <tr><td><code>W6</code></td><td><b>Info page without list navigation</b> <span class="pill">Optional</span></td><td>Up, down and page buttons no longer move through the list from a game's info page. A design choice rather than a missing capability.</td><td><a href="https://github.com/ps2homebrew/wOPL/pull/308">PR #308</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="oplattice">OPLattice</h2>
+<p><span class="psbtns"><i class="tri">&#9651;</i></span> <a href="https://github.com/coffeedevsolutions/OPLattice">coffeedevsolutions/OPLattice</a>
+&mdash; nine patches to OPL's theme engine and menus, a sidebar interface, themes and PC tooling.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>O1</code></td><td><b>Grid game list</b></td><td>A tile layout for the game list (<code>columns</code>, <code>cell_width</code>, <code>gap</code>, <code>frame</code>) with two-axis navigation.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch">patch 01</a></td></tr>
+    <tr><td><code>O2</code></td><td><b><code>GameImage offset</code> for non-selected games</b></td><td>An image element can draw the game a set number of places down the page, which makes hero and filmstrip layouts possible.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch">patch 01</a></td></tr>
+    <tr><td><code>O3</code></td><td><b>Recently played list</b></td><td>The last 8 games launched, newest first, shown with <code>RecentImage</code> and <code>RecentText</code> elements. RiptOPL remembers only the last one.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch">patch 02</a></td></tr>
+    <tr><td><code>O4</code></td><td><b>Sort modes</b></td><td>A to Z, Z to A, most recent first, or as scanned. OPLattice cycles them with <b>R3</b>, which RiptOPL uses for Favorites.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch">patch 02</a></td></tr>
+    <tr><td><code>O5</code></td><td><b><code>MenuTabs</code> device tab strip</b></td><td>Every device drawn at once with the active one highlighted, plus per-device label overrides.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch">patch 03</a></td></tr>
+    <tr><td><code>O6</code></td><td><b><code>GameCountText</code> prefix and suffix</b></td><td>Themes set their own wording around the game count.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch">patch 03</a></td></tr>
+    <tr><td><code>O7</code></td><td><b><code>x_scaled</code> widescreen alignment</b></td><td>Elements keep their position relative to a centred layout when widescreen is on.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch">patch 03</a></td></tr>
+    <tr><td><code>O8</code></td><td><b>VRAM texture budget clamp</b> <span class="badge secondary">Fix</span></td><td>Caps texture size to the video memory left after the framebuffers, so an oversized theme image is rejected instead of risking a hang in hi-res modes.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/07-texture-safety.patch">patch 07</a></td></tr>
+    <tr><td><code>O9</code></td><td><b>Play stats</b></td><td>A launch count and playtime for each game.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/08-play-stats.patch">patch 08</a></td></tr>
+    <tr><td><code>O10</code></td><td><b>SHELF sidebar interface</b></td><td>An opt-in sidebar with Home, Library, Apps and Settings pages. It opens with <b>L3</b>, which RiptOPL uses to switch between PS2 and PS1 views.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch">patch 09</a></td></tr>
+    <tr><td><code>O11</code></td><td><b>App subtitles</b></td><td>An optional <code>subtitle</code> key in an app's <code>title.cfg</code>.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch">patch 09</a></td></tr>
+    <tr><td><code>O12</code></td><td><b>Art conversion and VRAM checker</b> <span class="pill">Tool</span></td><td>Converts art to indexed PNG8 and reports how much memory each theme's art cache will use.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/palettize-art.py">palettize-art.py</a><br><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/check-art.py">check-art.py</a></td></tr>
+    <tr><td><code>O13</code></td><td><b>In-game screenshot importer</b> <span class="pill">Tool</span></td><td>Turns in-game screenshot BMPs from the memory card into the <code>_SCR.png</code> images the info page shows.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/import-igs.py">import-igs.py</a></td></tr>
+    <tr><td><code>O14</code></td><td><b>Browser theme previewer</b> <span class="pill">Tool</span></td><td>A single HTML file that renders a theme's layout before it goes on a console.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/opl-theme-previewer.html">opl-theme-previewer.html</a></td></tr>
+    <tr><td><code>O15</code></td><td><b>Device staging and card sync scripts</b> <span class="pill">Tool</span></td><td>Scripts that copy a build onto a USB device or HDD and sync a memory card.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/tree/main/tools">tools/</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="xerabora">xeRAbora</h2>
+<p><span class="psbtns"><i class="squ">&#9633;</i></span> <a href="https://github.com/hacan359/xerabora">hacan359/xerabora</a>
+&mdash; the PC client RiptOPL's <a href="retroachievements.html">RetroAchievements</a> build talks to. Its console code
+lives on hacan359's OPL fork, branch <a href="https://github.com/hacan359/Open-PS2-Loader/tree/ra"><code>ra</code></a>.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>H1</code></td><td><b>Pointer chains on the console</b></td><td>Achievements that read game memory through a pointer can unlock. Without it, they never trigger &mdash; 22 of 50 in one measured achievement set.</td><td><a href="https://github.com/hacan359/Open-PS2-Loader/commit/0c5f61a31c2b54bdd9424af0bb6da2721818e8b0">commit 0c5f61a3</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="extended-apa">Extended APA</h2>
+<p><span class="psbtns"><i class="cir">&#9711;</i></span> <a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">L10N37/Open-PS2-Loader-Extended-APA</a>
+&mdash; an OPL build for internal HDDs formatted with PS2 HDD Manager's banked APA layout.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>L1</code></td><td><b>APA HDDs over 2 TiB</b> <span class="badge unconfirmed">Not planned</span></td><td>Splits a large internal HDD into APA &ldquo;banks&rdquo; and lists and launches games from every bank. RiptOPL stays on the standard APA layout &mdash; see <a href="hdd.html#apa-pfs">Internal HDD</a>.</td><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA/blob/main/EXTENDED_APA.md">EXTENDED_APA.md</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="notes">Notes</h2>
+<ul>
+  <li><b>Already in RiptOPL, so not listed:</b> the fix from wOPL PR #435 (remember the last played game when it is
+  the first list entry), <a href="cheats.html#ps2rd-image">PS2RD cheat images (<code>.img</code>)</a>, cover art from
+  <code>ART/art.tar</code> (<a href="settings.html#display-settings">Interface settings</a>), cheats from
+  <a href="cheats.html#cht-files"><code>CHT/cht.tar</code></a>, the <code>&lt;name&gt;_show_run</code> theme key, and
+  RetroAchievements for <a href="retroachievements.html#physical-discs">physical discs</a>.</li>
+  <li><b>wOPL's config format:</b> wOPL moved to libconfig. RiptOPL reads and writes both formats, so files the two
+  loaders share, such as an app's <code>title.cfg</code>, keep working in both.</li>
+  <li><b>Device names:</b> RiptOPL accepts <code>usb0:</code> and <code>ata0:</code> style names for its boot path and
+  ties each launch to its device by driver name, but reads files through <code>massN:</code>. wOPL uses the typed
+  names throughout. That is a different approach rather than a missing feature, so it is not counted.</li>
+  <li><b><code>CFG/cfg.tar</code>:</b> wOPL's README lists it, but neither wOPL nor RiptOPL reads per-game configs from
+  an archive, so it is not counted either.</li>
+</ul>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+</body></html>
