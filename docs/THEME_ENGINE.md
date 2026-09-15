@@ -78,7 +78,9 @@ Only the cover is redirected — its `width`/`height`, `overlay`/`overlay2` and 
 Everything else on the page is untouched, and on a single-kind page the row's kind *is* the page's
 kind, so nothing is redirected at all. The same rule picks the info screen's cover from the matching
 `*Info*` family. In a Coverflow carousel the cover **width** stays uniform (so spacing stays even) and
-only the height follows each row's own element aspect.
+only the height follows each row's own element aspect. Every cover stands on the same **bottom edge**
+as a cover of the page's own shape, so portrait and square covers share one baseline and their
+reflections start together.
 
 > The games / apps / favs families share one cover-art cache (deduplicated by `pattern`). The **PS1/VCD
 > view keeps its OWN cover cache**: separate PS2 and PS1 views reuse the device's game *list* indices,
@@ -418,7 +420,7 @@ SIO2 bus quiet — those covers still load on selection, as before.
 | `default` | Fallback cover (e.g. `cover`, or `coverapp` for the apps list). |
 | `overlay` + `overlay_*` corners | The case art drawn around each cover (e.g. `case` / `apps_case`). The corners place the cover **inside** the case frame; the engine auto-centers the visible frame and keeps it aspect-correct in both 4:3 and widescreen. |
 | `reflection` | `1` to draw the mirrored reflection below each cover (alpha-faded). |
-| `x`, `y`, `width`, `height` | Position and per-cover size. `width`/`height` should match your case art's pixel size so the overlay corners line up. `y` is the **vertical centerline** of the carousel: every cover is centered on it, whatever its shape, so a mixed shelf (Favorites *All*, a Mixed device page) keeps one horizontal center across portrait and square covers instead of aligning their top edges. |
+| `x`, `y`, `width`, `height` | Position and per-cover size. `width`/`height` should match your case art's pixel size so the overlay corners line up. `y` is the vertical **center of a cover of this element's own shape**. On a mixed shelf (Favorites *All*, a Mixed device page) a cover of another shape stands on that cover's **bottom edge**, so every cover rests on one baseline and the reflections line up. On a single-kind page every cover is this shape, so `y` is simply each cover's center. |
 
 A minimal example (this fork's `<Coverflow>` theme uses values like these):
 

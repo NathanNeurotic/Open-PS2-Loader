@@ -1583,10 +1583,15 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
         }
 
         int posX = basePosX + (i - COVERFLOW_PAD) * coverDistance + animOffset + recenterX * drawW / csw;
-        // Every cover is vertically CENTERED on the page element's posY, whatever its shape: a
-        // mixed shelf (Favourites "All", Mixed device pages) shares one centerline across portrait
-        // and square covers instead of top-aligning them (#623).
-        int posY = elem->posY + recenterY * drawH / csh;
+        // Covers stand on a common BASELINE: each cover's bottom edge sits where a cover of the PAGE
+        // element's own shape (elem, not this row's coverElem) would end at this width. On a mixed shelf
+        // (Favourites "All", Mixed device pages) portrait and square covers therefore rest on one floor
+        // line and their reflections start together, where centering left the square ones floating
+        // (#643). On a single-kind page coverElem == elem, the shift is 0 and elem->posY stays the
+        // cover's center, so nothing moves there.
+        int pageW = (elem->width > 0) ? elem->width : csw;
+        int pageDrawH = ((elem->height > 0) ? elem->height : csh) * drawW / pageW;
+        int posY = elem->posY + (pageDrawH - drawH) / 2 + recenterY * drawH / csh;
 
         u64 coverColor = (gCoverflowDimCovers && i != centerIdx) ? GS_SETREG_RGBA(0x80, 0x80, 0x80, 0x40) : gDefaultCol;
 
