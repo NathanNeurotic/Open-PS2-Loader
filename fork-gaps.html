@@ -72,7 +72,8 @@ project implements it.</p>
 <div class="callout info"><div class="h">ℹ A tracking list, not a roadmap</div>
 An entry here means another project has something RiptOPL does not; it does not mean the feature is scheduled.
 Checked on 2026-09-14 against <code>rebuild/main</code> at
-<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/3f2e9b1da04d19a10d7799a3a1f1435ed3c6f293">3f2e9b1d</a>.
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/3f2e9b1da04d19a10d7799a3a1f1435ed3c6f293">3f2e9b1d</a>, and updated on 2026-09-15 when
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a> shipped three entries (see <a href="#notes">Notes</a>).
 Every entry has a short ID whose letter names its source (see <a href="#sources">Sources surveyed</a>), so it can be
 referenced in issues and chat. Entries in the <b>Beyond game loading</b> area are general-purpose tools from PS2
 environments built on OPL, listed so the survey is complete.
@@ -84,7 +85,7 @@ environments built on OPL, listed so the survey is complete.
   <tbody>
     <tr><td><code>W</code></td><td><a href="https://github.com/ps2homebrew/wOPL">wOPL</a></td><td>The continuation of KrahJohlito's uOPL</td><td>6</td></tr>
     <tr><td><code>O</code></td><td><a href="https://github.com/coffeedevsolutions/OPLattice">OPLattice</a></td><td>Grid themes, the SHELF interface and theme tooling</td><td>15</td></tr>
-    <tr><td><code>U</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pulls">Upstream OPL</a></td><td>Pull requests not yet merged into Open PS2 Loader</td><td>9</td></tr>
+    <tr><td><code>U</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pulls">Upstream OPL</a></td><td>Pull requests not yet merged into Open PS2 Loader</td><td>6</td></tr>
     <tr><td><code>B</code></td><td><a href="https://boliviaos.site/">BoliviaOS</a></td><td>A multifunction PS2 environment built on OPL</td><td>7</td></tr>
     <tr><td><code>P</code></td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher">PS2-Launcher</a></td><td>An OPL-based launcher with a console-style interface</td><td>5</td></tr>
     <tr><td><code>T</code></td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">Project Titan</a></td><td>A PS2 system shell and application platform</td><td>2</td></tr>
@@ -98,7 +99,7 @@ environments built on OPL, listed so the survey is complete.
 <p>Nine more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
 
 <h2 id="at-a-glance">At a glance</h2>
-<p>All 49 entries in one list. Click a column heading to sort.</p>
+<p>All 46 entries in one list. Click a column heading to sort.</p>
 <table data-sortable>
   <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Source</th><th>Type</th></tr></thead>
   <tbody>
@@ -127,10 +128,7 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>U2</code></td><td>Remembered per-game cheat selections</td><td>Cheats, launching &amp; network</td><td>Upstream OPL</td><td>Feature</td></tr>
     <tr><td><code>U3</code></td><td>Disc size from the real media</td><td>Game compatibility</td><td>Upstream OPL</td><td><span class="badge secondary">Fix</span></td></tr>
     <tr><td><code>U4</code></td><td>In-game reset without the VBLANK interrupt</td><td>Game compatibility</td><td>Upstream OPL</td><td><span class="badge secondary">Fix</span></td></tr>
-    <tr><td><code>U5</code></td><td>Ratchet &amp; Clank 3 over SMB</td><td>Game compatibility</td><td>Upstream OPL</td><td><span class="badge secondary">Fix</span></td></tr>
     <tr><td><code>U6</code></td><td>Launch announcement for Discord rich presence</td><td>Cheats, launching &amp; network</td><td>Upstream OPL</td><td>Feature</td></tr>
-    <tr><td><code>U7</code></td><td>Pro Evolution Soccer 2 audio</td><td>Game compatibility</td><td>Upstream OPL</td><td><span class="badge secondary">Fix</span></td></tr>
-    <tr><td><code>U8</code></td><td>Galician and Serbian UI languages</td><td>Languages</td><td>Upstream OPL</td><td>Feature</td></tr>
     <tr><td><code>U9</code></td><td>Bluetooth controller input lag</td><td>Controllers &amp; input</td><td>Upstream OPL</td><td><span class="badge primary">Investigate</span></td></tr>
     <tr><td><code>B1</code></td><td>File explorer</td><td>Beyond game loading</td><td>BoliviaOS</td><td>Feature</td></tr>
     <tr><td><code>B2</code></td><td>Music player</td><td>Beyond game loading</td><td>BoliviaOS</td><td>Feature</td></tr>
@@ -203,10 +201,7 @@ on upstream's master branch, so the gaps here are pull requests not yet merged t
     <tr><td><code>U2</code></td><td><b>Remembered per-game cheat selections</b></td><td>Saves which optional cheats were enabled for each game, by cheat name, with master codes always on.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1748">PR #1748</a></td></tr>
     <tr><td><code>U3</code></td><td><b>Disc size from the real media</b> <span class="badge secondary">Fix</span></td><td>Out-of-bounds read checks use the image's real sector count instead of the ISO volume field, so discs mastered with a short volume (Zombie Zone, Demolition Girl) boot again. RiptOPL still reads the volume field.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1763">PR #1763</a></td></tr>
     <tr><td><code>U4</code></td><td><b>In-game reset without the VBLANK interrupt</b> <span class="badge secondary">Fix</span></td><td>Checks the in-game reset button combo from a timer instead of the VBLANK handler; titles that black-screened with the old hook boot, and in-game reset still works.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1762">PR #1762</a></td></tr>
-    <tr><td><code>U5</code></td><td><b>Ratchet &amp; Clank 3 over SMB</b> <span class="badge secondary">Fix</span></td><td>An SMB-specific pointer shift in the existing Up Your Arsenal patch lets the retail game launch from a network share.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1761">PR #1761</a></td></tr>
     <tr><td><code>U6</code></td><td><b>Launch announcement for Discord rich presence</b></td><td>When a game starts, a small UDP broadcast carries its title ID so a PC listener can set Discord rich presence.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1736">PR #1736</a></td></tr>
-    <tr><td><code>U7</code></td><td><b>Pro Evolution Soccer 2 audio</b> <span class="badge secondary">Fix</span></td><td>Defaults SLES-51114 to Accurate Reads when it has no per-game config, so its audio streams correctly.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1689">PR #1689</a></td></tr>
-    <tr><td><code>U8</code></td><td><b>Galician and Serbian UI languages</b></td><td>Both are complete in the OPL language repository but not yet in RiptOPL's list of built languages. See <a href="languages.html">Languages</a>.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1774">PR #1774</a><br><a href="https://github.com/ps2homebrew/Open-PS2-Loader-lang">Open-PS2-Loader-lang</a></td></tr>
     <tr><td><code>U9</code></td><td><b>Bluetooth controller input lag</b> <span class="badge primary">Investigate</span></td><td>Shortens <a href="pademu.html">PADEMU</a> Bluetooth polling delays to remove input lag. As submitted it also turns off rumble and the menu's pad delay, so it is a lead rather than a finished fix.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1675">PR #1675</a></td></tr>
   </tbody>
 </table>
@@ -309,14 +304,14 @@ build for internal HDDs formatted with PS2 HDD Manager's banked APA layout.</p>
 <table>
   <thead><tr><th>Project</th><th>Why nothing is listed</th></tr></thead>
   <tbody>
-    <tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a></td><td>RiptOPL is built on its master branch. Its open pull requests are listed above as U1&ndash;U9.</td></tr>
+    <tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a></td><td>RiptOPL is built on its master branch. Its open pull requests are listed above under <a href="#upstream-prs">Upstream OPL pull requests</a>.</td></tr>
     <tr><td><a href="https://github.com/ps2-mmce/Open-PS2-Loader">ps2-mmce/Open-PS2-Loader</a></td><td>MMCE support, switching MMCEs to the boot card during in-game reset, and VMC groups are all in RiptOPL; the rest are upstream fixes.</td></tr>
     <tr><td><a href="https://github.com/Docmine17/Open-PS2-Loader-HTTP">Docmine17/Open-PS2-Loader-HTTP</a></td><td>RiptOPL's <a href="http.html">HTTP</a> protocol comes from this project. Its only later change is an example <code>games.csv</code>.</td></tr>
     <tr><td><a href="https://github.com/NathanNeurotic/xerabora">NathanNeurotic/xerabora</a></td><td>A fork of hacan359's xeRAbora with no changes of its own; the upstream change is H1.</td></tr>
     <tr><td><a href="https://github.com/SvenGDK/Open-PS2-Loader">SvenGDK/Open-PS2-Loader</a></td><td>An OPL v1.0.0 build for PSX DESR consoles. Everything it lists is in upstream OPL 1.2, which RiptOPL is based on.</td></tr>
     <tr><td><a href="https://github.com/rodrigo1593-dev/oplfork">rodrigo1593-dev/oplfork</a></td><td>Two experiments with PADEMU module loading. The same author's Bluetooth change is U9.</td></tr>
     <tr><td><a href="https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats">PS2-Widescreen/OPL-Widescreen-Cheats</a></td><td>A widescreen cheat collection that works with RiptOPL's <a href="cheats.html">cheat engine</a> as it is.</td></tr>
-    <tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader-lang">ps2homebrew/Open-PS2-Loader-lang</a></td><td>RiptOPL builds its <a href="languages.html">UI languages</a> from this repository; the two it does not build yet are U8.</td></tr>
+    <tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader-lang">ps2homebrew/Open-PS2-Loader-lang</a></td><td>RiptOPL builds its <a href="languages.html">UI languages</a> from this repository, including Galician and Serbian.</td></tr>
     <tr><td><a href="https://github.com/ps2homebrew/HDLGameInstaller">ps2homebrew/HDLGameInstaller</a></td><td>A separate app that installs games into APA partitions. RiptOPL does not write APA partitions.</td></tr>
   </tbody>
 </table>
@@ -329,6 +324,10 @@ build for internal HDDs formatted with PS2 HDD Manager's banked APA layout.</p>
   <a href="cheats.html#cht-files"><code>CHT/cht.tar</code></a>, the <code>&lt;name&gt;_show_run</code> theme key,
   RetroAchievements for <a href="retroachievements.html#physical-discs">physical discs</a>, per-game OSD language,
   virtual memory card creation, and the older USB driver that upstream PR #1752 proposes pinning.</li>
+  <li><b>Shipped since the survey</b> (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a>):
+  Ratchet &amp; Clank 3 over SMB (was U5, from upstream PR #1761), Pro Evolution Soccer 2 defaulting to Accurate Reads
+  (was U7, see <a href="per-game-settings.html#compatibility-modes">Compatibility Modes</a>), and Galician and Serbian
+  UI languages (was U8, see <a href="languages.html#naming">Languages</a>). IDs are not reused.</li>
   <li><b>wOPL's config format:</b> wOPL moved to libconfig. RiptOPL reads and writes both formats, so files the two
   loaders share, such as an app's <code>title.cfg</code>, keep working in both.</li>
   <li><b>Device names:</b> RiptOPL accepts <code>usb0:</code> and <code>ata0:</code> style names for its boot path and
