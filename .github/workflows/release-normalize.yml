@@ -141,7 +141,7 @@ jobs:
           # version-and-flavour-stamped build that belongs inside an archive; RIPTOPL.ELF exists
           # precisely so an existing install can be updated by replacing one file, from a link that
           # never changes. Sweeping it up with the rest would delete the asset the rolling release
-          # advertises in its own "Get started" section.
+          # advertises in its own "Download" section.
           for f in release-work/*.ELF release-work/*MANIFEST*.txt release-work/SHA256SUMS.txt release-work/DETAILED_CHANGELOG; do
             [[ -f "$f" ]] || continue
             asset="$(basename "$f")"
@@ -160,11 +160,9 @@ jobs:
           BODY="release-work/original-notes.md"
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq '.body' > "$BODY"
 
-          # Tell the notes generator whether the one-click loader actually shipped this run, so the
-          # "Release downloads" list never advertises an asset the release does not carry.
-          ONECLICK=no
-          [[ -f release-work/RIPTOPL.ELF ]] && ONECLICK=yes
-          python3 .github/scripts/normalize_release_notes.py "$BODY" "$ONECLICK" > release-work/notes.md
+          # The Download section is written by rolling-release.yml from the archives that actually
+          # built; this pass only adds the banners and External Tools & Services (from README).
+          python3 .github/scripts/normalize_release_notes.py "$BODY" > release-work/notes.md
 
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file release-work/notes.md
 
