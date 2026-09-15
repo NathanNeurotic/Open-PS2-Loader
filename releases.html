@@ -119,7 +119,7 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 <thead><tr><th>Asset</th><th>What it is</th></tr></thead>
 <tbody>
 <tr>
-  <td><code>RIPTOPL-&lt;rel&gt;-&lt;sha&gt;.zip</code></td>
+  <td><code>RIPTOPL-&lt;version&gt;.zip</code></td>
   <td><b>The installable package.</b> Normally contains four explicitly labelled SDK loader folders
   (a best-effort flavour can be absent when its build fails, and the release notes identify it):
   <code>APP_RIPTOPL-PS2DEVPINNED/</code> (#1, recommended pinned ps2dev),
@@ -156,10 +156,11 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   <td>Extra UI language files (<code>.lng</code> files and non-Latin fonts not embedded in the ELF). Copy into your OPL folder alongside the ELF.</td>
 </tr>
 <tr>
-  <td><code>RIPTOPL-RA-*.zip</code></td>
+  <td><code>RIPTOPL-RetroAchievements-*.zip</code></td>
   <td><b>RetroAchievements</b> build, as a complete package: the same <code>POPS/</code>,
   <code>EMBER/</code>, <code>neutrino/</code> and PC-tool shortcuts as the main archive, with
-  <code>APP_RIPTOPL-RA-*</code> loader folders in place of the standard ones, plus
+  <code>APP_RIPTOPL-RA-PINNED/</code> and <code>APP_RIPTOPL-RA-ROLLING/</code> loader folders (and a
+  <code>-nopademu</code> build of each) in place of the standard ones, plus
   <code>xeRAbora.url</code> for the PC client the feature talks to. Take this one <i>instead of</i>
   the main archive if you want achievements. <b>A development build</b>: it is written end to end
   but has not been tested on real hardware yet. See
@@ -180,11 +181,11 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 </tbody>
 </table>
 
-<p><code>&lt;version&gt;</code> is the build's <code>git describe</code> output, e.g.
-<code>v1.2.0-Beta-2559-bb25a00</code> — one authoritative version, taken from the required
-<code>ps2dev:latest</code> build and applied to all four flavours. <code>&lt;sha&gt;</code> is the first
-16 hex characters of the required <code>PS2DEVROLLING</code> ELF's SHA256 — a uniqueness tag, not a
-security guarantee.</p>
+<p><code>&lt;version&gt;</code> in a download's name is the build version without its commit, e.g.
+<code>v1.2.0-Beta-2915</code> — one authoritative version, taken from the required
+<code>ps2dev:latest</code> build and applied to all four flavours. The full version, commit included
+(for example <code>v1.2.0-Beta-2915-da28622</code>), is in the release notes header and on the
+loader's About screen.</p>
 
 <div class="callout info"><div class="h">ℹ One loose ELF, everything else in archives</div>
 The normalizer keeps exactly one floating loader, the stable-named <code>RIPTOPL.ELF</code> update
@@ -280,7 +281,7 @@ they are significantly slower.</p></details>
 
 <div class="steps">
 <div class="step"><h3>Extract the package zip</h3>
-<p>Unzip <code>RIPTOPL-&lt;rel&gt;-&lt;sha&gt;.zip</code>. The contents are ready to
+<p>Unzip <code>RIPTOPL-&lt;version&gt;.zip</code>. The contents are ready to
 copy to your memory card or USB drive root:</p>
 <pre>APP_RIPTOPL-PS2DEVPINNED/
   RIPTOPL.ELF          ← #1 recommended pinned control
