@@ -608,7 +608,7 @@
  {
   "title": "Coverflow — Authoring a Coverflow theme",
   "cat": "themes",
-  "text": "Authoring a Coverflow theme You can create your own theme that uses the type=Coverflow element — custom background, fonts, colors, and overlay art, with the same live settings above. See Theme Engine for the full authoring reference, including: The type=Coverflow element properties ( default , overlay , overlay2 , reflection , width / height , overlay corners) The global coverflow_cover_offset key for horizontal nudging of the whole carousel Block family prefixes ( appsMain* , vcdMain* , favsMain* ) for per-view overrides The two-layer overlay system ( overlay + overlay2 ) used by the built-in case frame The built-in theme's source, misc/theme_coverflow.cfg in the repository, is a complete working reference you can copy and modify.",
+  "text": "Authoring a Coverflow theme You can create your own theme that uses the type=Coverflow element — custom background, fonts, colors, and overlay art, with the same live settings above. See Theme Engine for the full authoring reference, including: The type=Coverflow element properties (default, overlay, overlay2, reflection, width/height, overlay corners) The global coverflow_cover_offset key for horizontal nudging of the whole carousel Block family prefixes (appsMain*, vcdMain*, favsMain*, and the opt-in favsVcdMain* / favsAppsMain* for PS1 and app favorites) for per-view overrides The two-layer overlay system (overlay + overlay2) used by the built-in case frame The built-in theme's source, misc/theme_coverflow.cfg in the repository, is a complete working reference you can copy and modify.",
   "url": "coverflow.html#theme-authoring"
  },
  {
