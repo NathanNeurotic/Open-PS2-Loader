@@ -4965,6 +4965,9 @@ static void autoLaunchHDDGame(char *argv[])
         miniDeinit(NULL);
         return;
     }
+    // A menu launch gets #Startup from hddGetConfig; this config came straight from the CFG file, which
+    // never stores '#' keys. sbGetCompatModes needs it to find a title's default compatibility modes.
+    configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchGame->startup);
 
     hddLaunchGame(NULL, -1, configSet);
 }
@@ -5106,6 +5109,10 @@ static void autoLaunchBDMGame(char *argv[])
 
     configSet = configAlloc(0, NULL, path);
     configRead(configSet);
+    // A menu launch gets #Startup from sbPopulateConfig; this config came straight from the CFG file, which
+    // never stores '#' keys. sbGetCompatModes needs it to find a title's default compatibility modes.
+    if (configSet != NULL)
+        configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchBDMGame->startup);
 
     bdmLaunchGame(NULL, -1, configSet);
 }
