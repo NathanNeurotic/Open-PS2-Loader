@@ -63,9 +63,25 @@ int part_connect_gpt(struct block_device *bd)
     // Calculate how many partition entries there are per sector.
     entriesPerSector = bd->sectorSize / sizeof(gpt_partition_table_entry);
 
+    // RiptOPL: an unused entry (all-zero type GUID) marks only itself. The UEFI entry array can have gaps, so
+    // the scan continues past one instead of treating it as the end of the table (#653). That walks the whole
+    // array, so the entry count is bounded by where a primary array can physically sit, from
+    // partition_table_lba up to the first usable LBA: a corrupt count would otherwise read sectors for hours
+    // at mount. A header too malformed to give that bound keeps the SDK's stop-at-the-first-unused-entry scan.
+    u32 entryCount = pGptHeader->partition_count;
+    int stopAtUnused = 1;
+    if (pGptHeader->first_lba > pGptHeader->partition_table_lba) {
+        u64 arraySectors = pGptHeader->first_lba - pGptHeader->partition_table_lba;
+        if (arraySectors < 0xFFFFFFFFu / entriesPerSector && (u64)entryCount > arraySectors * entriesPerSector) {
+            M_PRINTF("GPT header lists %u entries, only %u fit before the first usable LBA\n", entryCount, (u32)(arraySectors * entriesPerSector));
+            entryCount = (u32)(arraySectors * entriesPerSector);
+        }
+        stopAtUnused = 0;
+    }
+
     // Loop through all the partition table entries and attempt to mount each one.
     M_PRINTF("Found GPT disk '%08x...'\n", *(u32 *)&pGptHeader->disk_guid);
-    for (int i = 0; i < pGptHeader->partition_count && endOfTable == 0;) {
+    for (int i = 0; (u32)i < entryCount && endOfTable == 0;) {
         // Check if we need to buffer more data, GPT usually uses LBA 2-33 for partition table entries. Typically there will
         // only be a couple partitions at most, so we buffer one sector at a time to avoid making needless allocations for all sectors at once.
         if (i % entriesPerSector == 0) {
@@ -83,13 +99,17 @@ int part_connect_gpt(struct block_device *bd)
             }
 
             // Parse the two partition table entries in the structure.
-            for (int x = 0; x < entriesPerSector; x++, i++) {
+            // RiptOPL: also bounded by the entry count, which need not fill the last sector.
+            for (int x = 0; x < entriesPerSector && (u32)i < entryCount; x++, i++) {
                 // Check if the partition type guid is valid, the header will list the maximum number of partitions that can fit into the table, so
                 // we need to check if the entries are actually valid.
                 if (memcmp(pGptPartitionEntry[x].partition_type_guid, NULL_GUID, sizeof(NULL_GUID)) == 0) {
-                    // Stop scanning for partitions.
-                    endOfTable = 1;
-                    break;
+                    if (stopAtUnused) {
+                        // No trustworthy bound on the array (see above): stop scanning, as the SDK does.
+                        endOfTable = 1;
+                        break;
+                    }
+                    continue; // RiptOPL: an unused entry, not the end of the table.
                 }
 
                 // Perform some sanity checks on the partition.
