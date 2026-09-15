@@ -501,7 +501,7 @@ The Favorites PS1 and ELF views are homogeneous pages. With `favsVcdMain*` / `fa
 they draw their own carousel from those blocks — its position, size and case, independent of the device
 pages. For example, taller PS1 covers on Favorites only, with every device page unchanged:
 
-```
+```ini
 favsVcdMain2:
 	type=Coverflow
 	default=cover
