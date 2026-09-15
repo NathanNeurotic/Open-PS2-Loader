@@ -244,6 +244,24 @@ theme_element_t *thmResolveItemsList(theme_elems_t *family, theme_element_t *fal
     return fallback;
 }
 
+theme_element_t *thmFamilyItemsList(theme_elems_t *family, theme_element_t *fallback, int iconId)
+{
+    theme_element_t *elem;
+
+    if (family == NULL)
+        return fallback;
+    elem = thmResolveItemsList(family, NULL, iconId);
+    if (elem != NULL)
+        return elem;
+    // No filtered list covers this page: the drawn list is the family's unfiltered one (drawItemsList
+    // skips an unfiltered list only where a filtered sibling covers the device, handled above).
+    for (elem = family->first; elem != NULL; elem = elem->next) {
+        if (elem->type == ELEM_TYPE_ITEMS_LIST && !elem->deviceFilter)
+            return elem;
+    }
+    return fallback;
+}
+
 // Precompute deviceCoverage per family: an UNFILTERED MenuIcon/ItemsList/HintText yields to
 // filtered same-type siblings on the devices they cover (the themer's per-device override wins
 // there; the unfiltered element stays the everywhere-else default). Runs once at theme load so the
@@ -768,6 +786,10 @@ static mutable_image_t *initMutableImage(const char *themePath, config_set_t *th
     findDuplicate(theme->favsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
     findDuplicate(theme->vcdMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
     findDuplicate(theme->vcdInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsVcdMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsVcdInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsAppsMainElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
+    findDuplicate(theme->favsAppsInfoElems.first, cachePattern, defaultTexture, overlayTexture, overlayTexture2, mutableImage);
 
     if (cachePattern && !mutableImage->cache) {
         if (type == ELEM_TYPE_ATTRIBUTE_IMAGE)
@@ -1215,7 +1237,11 @@ static void *thmGetItemSource(struct menu_list *menu, struct submenu_list *item)
 // prefer the element DRAWN the same way (the carousel resolves to a carousel, a panel to a panel);
 // a Coverflow element is typed GAME_IMAGE like the rest, so the draw function is what separates
 // them. Falls back to the first suffix match, which is the historical behaviour.
-static theme_element_t *thmFindElemBySuffix(theme_elems_t *elems, const char *suffix, theme_element_t *like)
+// declaredOnly skips elements a Favourites per-kind family copied from a fallback block (see
+// theme_element_t::inherited) AND drops the first-match fallback: a declared element is only returned
+// when it is drawn the same way as `like`, so a declared Coverflow never stands in for an ItemCover panel
+// (the caller then keeps today's redirect). 0 keeps the historical behaviour.
+static theme_element_t *thmFindElemBySuffixEx(theme_elems_t *elems, const char *suffix, theme_element_t *like, int declaredOnly)
 {
     theme_element_t *firstMatch = NULL;
 
@@ -1224,28 +1250,55 @@ static theme_element_t *thmFindElemBySuffix(theme_elems_t *elems, const char *su
     for (theme_element_t *e = elems->first; e != NULL; e = e->next) {
         if (e->type != ELEM_TYPE_GAME_IMAGE && e->type != ELEM_TYPE_COVERFLOW)
             continue;
+        if (declaredOnly && e->inherited)
+            continue;
         mutable_image_t *eimg = (mutable_image_t *)e->extended;
         if (eimg == NULL || eimg->cache == NULL || eimg->cache->suffix == NULL || strcmp(eimg->cache->suffix, suffix) != 0)
             continue;
         if (like != NULL && e->drawElem == like->drawElem)
             return e;
-        if (firstMatch == NULL)
+        if (firstMatch == NULL && !declaredOnly)
             firstMatch = e;
     }
     return firstMatch;
 }
 
+static theme_element_t *thmFindElemBySuffix(theme_elems_t *elems, const char *suffix, theme_element_t *like)
+{
+    return thmFindElemBySuffixEx(elems, suffix, like, 0);
+}
+
 // Family a redirected cover resolves into. Stays on the SAME screen half the source element came
 // from: a browse-page cover redirects to another main-family element, an info-page cover to an info
 // one. Redirecting across the two would hand the cover the other screen's coordinates.
+static int thmElemIsInfo(theme_element_t *elem)
+{
+    return elem->family == &gTheme->infoElems || elem->family == &gTheme->appsInfoElems ||
+           elem->family == &gTheme->favsInfoElems || elem->family == &gTheme->vcdInfoElems ||
+           elem->family == &gTheme->favsVcdInfoElems || elem->family == &gTheme->favsAppsInfoElems;
+}
+
 static theme_elems_t *thmKindFamily(theme_element_t *elem, int isApp)
 {
-    int info = elem->family == &gTheme->infoElems || elem->family == &gTheme->appsInfoElems ||
-               elem->family == &gTheme->favsInfoElems || elem->family == &gTheme->vcdInfoElems;
+    int info = thmElemIsInfo(elem);
 
     if (isApp)
         return info ? &gTheme->appsInfoElems : &gTheme->appsMainElems;
     return info ? &gTheme->vcdInfoElems : &gTheme->vcdMainElems;
+}
+
+// The Favourites per-kind family for a PS1 or app row on the same screen half, or NULL when the theme
+// does not declare it (the family is empty) -- in which case the caller keeps today's redirect.
+static theme_elems_t *thmFavKindFamily(theme_element_t *elem, int isApp)
+{
+    int info = thmElemIsInfo(elem);
+    theme_elems_t *family;
+
+    if (isApp)
+        family = info ? &gTheme->favsAppsInfoElems : &gTheme->favsAppsMainElems;
+    else
+        family = info ? &gTheme->favsVcdInfoElems : &gTheme->favsVcdMainElems;
+    return family->first != NULL ? family : NULL;
 }
 
 // Element to DRAW a submenu item's COVER with. A page as a whole renders with one family
@@ -1283,11 +1336,32 @@ static theme_element_t *thmGetElemForItem(struct menu_list *menu, struct submenu
     if (!isApp && rowView != LIB_VIEW_PS1)
         return elem;
 
+    mutable_image_t *img = (mutable_image_t *)elem->extended;
+
+    // Favourites with an opt-in per-kind family (favsVcd* for PS1 rows, favsApps* for app rows): take
+    // the cover the theme DECLARED there -- on that family's own page (the Favourites PS1 / ELF view)
+    // and on the All shelf alike. Inherited fallback copies are skipped, so an undeclared cover slot
+    // lands on today's vcd/apps redirect below instead of e.g. favsMain's portrait case. An inherited
+    // slot on the family's own page is NOT moved onto another declared slot of the same family (that
+    // element is drawn at its own position already); it takes today's redirect like any other.
+    if (menuList->mode == FAV_MODE) {
+        theme_elems_t *favFamily = thmFavKindFamily(elem, isApp);
+        if (favFamily != NULL) {
+            if (elem->family == favFamily) {
+                if (!elem->inherited)
+                    return elem;
+            } else if (img != NULL && img->cache != NULL) {
+                theme_element_t *favElem = thmFindElemBySuffixEx(favFamily, img->cache->suffix, elem, 1);
+                if (favElem != NULL)
+                    return favElem;
+            }
+        }
+    }
+
     theme_elems_t *family = thmKindFamily(elem, isApp);
     if (elem->family == family)
         return elem; // already this kind's own element (a homogeneous page): nothing to redirect
 
-    mutable_image_t *img = (mutable_image_t *)elem->extended;
     if (img == NULL || img->cache == NULL)
         return elem;
     theme_element_t *kindElem = thmFindElemBySuffix(family, img->cache->suffix, elem);
@@ -1742,6 +1816,7 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     elem->showRun = 1;
     elem->deviceFilter = 0;   // malloc'd without memset: MUST be zeroed explicitly (0 = unfiltered)
     elem->deviceCoverage = 0; // filled at validateGUIElems for unfiltered MenuIcon/ItemsList/HintText
+    elem->inherited = 0;      // set by the Favourites per-kind family parse for fallback-block copies
     elem->family = NULL;      // set by whoever chains the element into a family (addGUIElem, below)
     elem->extended = NULL;
     elem->drawElem = NULL;
@@ -2255,16 +2330,28 @@ static void validateFilteredItemsLists(const char *themePath, config_set_t *them
 // list's decorator as a plain selected cover and re-points it, so repeated splits keep cloning.
 // Walks all 8 families; keys off elem->deviceFilter (0 for every element of a devices=-free theme,
 // so such themes take zero new branches).
+// The Favourites per-kind families (favsVcd* / favsApps*) own no ItemsList slot, so EVERY ItemsList in
+// them -- filtered or not -- is a slot-free list that the slot-based passes never reach. Callers treat
+// such lists exactly like devices=-filtered ones. False for every other family, so themes without
+// these opt-in families take none of the new branches.
+static int thmIsFavKindFamily(theme_t *theme, theme_elems_t *elems)
+{
+    return elems == &theme->favsVcdMainElems || elems == &theme->favsVcdInfoElems ||
+           elems == &theme->favsAppsMainElems || elems == &theme->favsAppsInfoElems;
+}
+
 static int isFilteredDecoratorCoverImage(theme_t *theme, mutable_image_t *gameImage)
 {
-    theme_elems_t *groups[8] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems,
-                                &theme->favsMainElems, &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems};
+    theme_elems_t *groups[12] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems,
+                                 &theme->favsMainElems, &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems,
+                                 &theme->favsVcdMainElems, &theme->favsVcdInfoElems, &theme->favsAppsMainElems, &theme->favsAppsInfoElems};
     int g;
 
-    for (g = 0; g < 8; g++) {
+    for (g = 0; g < 12; g++) {
+        int slotFree = thmIsFavKindFamily(theme, groups[g]);
         theme_element_t *e = groups[g]->first;
         while (e != NULL) {
-            if (e->type == ELEM_TYPE_ITEMS_LIST && e->deviceFilter && e->extended != NULL &&
+            if (e->type == ELEM_TYPE_ITEMS_LIST && (e->deviceFilter || slotFree) && e->extended != NULL &&
                 ((items_list_t *)e->extended)->decoratorImage == gameImage)
                 return 1;
             e = e->next;
@@ -2373,6 +2460,10 @@ static void splitDecoratorCoverCache(theme_t *theme, theme_element_t *list)
     replaceSharedCoverCache(theme, &theme->favsInfoElems, sourceCache, replacementCache, &replacementAssigned);
     replaceSharedCoverCache(theme, &theme->vcdMainElems, sourceCache, replacementCache, &replacementAssigned);
     replaceSharedCoverCache(theme, &theme->vcdInfoElems, sourceCache, replacementCache, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->favsVcdMainElems, sourceCache, replacementCache, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->favsVcdInfoElems, sourceCache, replacementCache, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->favsAppsMainElems, sourceCache, replacementCache, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->favsAppsInfoElems, sourceCache, replacementCache, &replacementAssigned);
 
     if (!replacementAssigned)
         cacheDestroyCache(replacementCache);
@@ -2389,12 +2480,14 @@ static void splitFilteredDecoratorCoverCaches(theme_t *theme)
     if (theme == NULL)
         return;
 
-    theme_elems_t *groups[8] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems,
-                                &theme->favsMainElems, &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems};
-    for (g = 0; g < 8; g++) {
+    theme_elems_t *groups[12] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems, &theme->appsInfoElems,
+                                 &theme->favsMainElems, &theme->favsInfoElems, &theme->vcdMainElems, &theme->vcdInfoElems,
+                                 &theme->favsVcdMainElems, &theme->favsVcdInfoElems, &theme->favsAppsMainElems, &theme->favsAppsInfoElems};
+    for (g = 0; g < 12; g++) {
+        int slotFree = thmIsFavKindFamily(theme, groups[g]);
         theme_element_t *e = groups[g]->first;
         while (e != NULL) {
-            if (e->type == ELEM_TYPE_ITEMS_LIST && e->deviceFilter)
+            if (e->type == ELEM_TYPE_ITEMS_LIST && (e->deviceFilter || slotFree))
                 splitDecoratorCoverCache(theme, e);
             e = e->next;
         }
@@ -2407,9 +2500,11 @@ static void splitFilteredDecoratorCoverCaches(theme_t *theme)
 // re-pointing the vcd covers would leave the original cache unreferenced -> a one-time leak. Skip then.
 static int vcdCoverCacheSharedOutsideVcd(theme_t *theme, image_cache_t *cache)
 {
-    theme_elems_t *groups[6] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems,
-                                &theme->appsInfoElems, &theme->favsMainElems, &theme->favsInfoElems};
-    for (int g = 0; g < 6; g++) {
+    // favsVcd* is on the VCD side (it is re-pointed with vcd* below); favsApps* is outside it.
+    theme_elems_t *groups[8] = {&theme->mainElems, &theme->infoElems, &theme->appsMainElems,
+                                &theme->appsInfoElems, &theme->favsMainElems, &theme->favsInfoElems,
+                                &theme->favsAppsMainElems, &theme->favsAppsInfoElems};
+    for (int g = 0; g < 8; g++) {
         theme_element_t *e = groups[g]->first;
         while (e != NULL) {
             if (e->type == ELEM_TYPE_GAME_IMAGE) {
@@ -2461,6 +2556,11 @@ static void separateVcdCoverCache(theme_t *theme)
     int replacementAssigned = 0;
     replaceSharedCoverCache(theme, &theme->vcdMainElems, source, replacement, &replacementAssigned);
     replaceSharedCoverCache(theme, &theme->vcdInfoElems, source, replacement, &replacementAssigned);
+    // PS1 favourites draw from favsVcd* when the theme declares it (the Favourites PS1 view and the PS1
+    // covers on the All shelf). Keep them on the same VCD cache the vcd family moves to, so a PS1 row
+    // never loads its cover into the games cache on one view and the VCD cache on another.
+    replaceSharedCoverCache(theme, &theme->favsVcdMainElems, source, replacement, &replacementAssigned);
+    replaceSharedCoverCache(theme, &theme->favsVcdInfoElems, source, replacement, &replacementAssigned);
 
     if (!replacementAssigned)
         cacheDestroyCache(replacement);
@@ -2486,6 +2586,40 @@ static void linkItemsListCoverElems(theme_elems_t *elems)
     }
 }
 
+// Background validation for a Favourites per-kind pair. validateBackgroundElems adds a background to the
+// MAIN group unconditionally, which would turn an undeclared (empty) family into a non-empty one and make
+// menusys select it. So only a family that already has elements is touched; an info-only declaration is
+// validated as its own main (its first element becomes the background, and the info branch then no-ops).
+static void validateFavKindBackgrounds(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *mainElems, theme_elems_t *infoElems)
+{
+    if (mainElems->first)
+        validateBackgroundElems(themePath, themeConfig, theme, mainElems, infoElems);
+    else if (infoElems->first)
+        validateBackgroundElems(themePath, themeConfig, theme, infoElems, infoElems);
+}
+
+// ItemsList validation for a Favourites per-kind family. Its lists own no slot, so link every list's
+// decorator here (validateItemsList with a non-NULL list only does that). A declared MAIN family with no
+// unfiltered list of its own gets the same default list the slot families get, so the page it draws
+// always has the list that thmFamilyItemsList hands to navigation.
+static void validateFavKindItemsLists(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, int isMain)
+{
+    theme_element_t *elem;
+    int hasUnfiltered = 0;
+
+    if (elems->first == NULL)
+        return;
+    for (elem = elems->first; elem != NULL; elem = elem->next) {
+        if (elem->type != ELEM_TYPE_ITEMS_LIST)
+            continue;
+        if (!elem->deviceFilter)
+            hasUnfiltered = 1;
+        validateItemsList(themePath, themeConfig, theme, elem, elems);
+    }
+    if (isMain && !hasUnfiltered)
+        validateItemsList(themePath, themeConfig, theme, NULL, elems);
+}
+
 static void validateGUIElems(const char *themePath, config_set_t *themeConfig, theme_t *theme)
 {
     // 1. check we have a valid Background elements
@@ -2493,6 +2627,8 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     validateBackgroundElems(themePath, themeConfig, theme, &theme->appsMainElems, &theme->appsInfoElems);
     validateBackgroundElems(themePath, themeConfig, theme, &theme->favsMainElems, &theme->favsInfoElems);
     validateBackgroundElems(themePath, themeConfig, theme, &theme->vcdMainElems, &theme->vcdInfoElems);
+    validateFavKindBackgrounds(themePath, themeConfig, theme, &theme->favsVcdMainElems, &theme->favsVcdInfoElems);
+    validateFavKindBackgrounds(themePath, themeConfig, theme, &theme->favsAppsMainElems, &theme->favsAppsInfoElems);
 
     // 2. check we have a valid ItemsList element, and link its decorator to the target element.
     // Store the result back: validateItemsList may CREATE the default list, and a NULL slot is a
@@ -2515,6 +2651,11 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->favsInfoElems);
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->vcdMainElems);
     validateFilteredItemsLists(themePath, themeConfig, theme, &theme->vcdInfoElems);
+    // Favourites per-kind families: every list is slot-free (no-op for an undeclared, empty family).
+    validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsVcdMainElems, 1);
+    validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsVcdInfoElems, 0);
+    validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsAppsMainElems, 1);
+    validateFavKindItemsLists(themePath, themeConfig, theme, &theme->favsAppsInfoElems, 0);
 
     // ...then precompute the unfiltered elements' coverage so an unfiltered MenuIcon/ItemsList/
     // HintText yields to filtered same-type siblings on the devices those cover. Must run AFTER the
@@ -2527,6 +2668,10 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     thmComputeDeviceCoverage(&theme->favsInfoElems);
     thmComputeDeviceCoverage(&theme->vcdMainElems);
     thmComputeDeviceCoverage(&theme->vcdInfoElems);
+    thmComputeDeviceCoverage(&theme->favsVcdMainElems);
+    thmComputeDeviceCoverage(&theme->favsVcdInfoElems);
+    thmComputeDeviceCoverage(&theme->favsAppsMainElems);
+    thmComputeDeviceCoverage(&theme->favsAppsInfoElems);
 
     // Keep list-row decorator covers from evicting the selected cover.
     splitDecoratorCoverCache(theme, theme->gamesItemsList);
@@ -2557,6 +2702,10 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     linkItemsListCoverElems(&theme->favsInfoElems);
     linkItemsListCoverElems(&theme->vcdMainElems);
     linkItemsListCoverElems(&theme->vcdInfoElems);
+    linkItemsListCoverElems(&theme->favsVcdMainElems);
+    linkItemsListCoverElems(&theme->favsVcdInfoElems);
+    linkItemsListCoverElems(&theme->favsAppsMainElems);
+    linkItemsListCoverElems(&theme->favsAppsInfoElems);
 }
 
 static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, const char *type, const char *name)
@@ -2613,7 +2762,11 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 char devProp[64];
                 const char *devValue;
                 snprintf(devProp, sizeof(devProp), "%s_devices", name);
-                if (configGetStr(themeConfig, devProp, &devValue) && thmParseDeviceList(devValue, 1 /* initBasic re-parses and logs */) != 0) {
+                // A Favourites per-kind family (favsVcd* / favsApps*) owns no slot either: its lists take
+                // this same slot-free path, filtered or not, so they can never displace the four
+                // families' slot mapping. menusys resolves them per page via thmFamilyItemsList.
+                if (theme->parsingFavKindFamily ||
+                    (configGetStr(themeConfig, devProp, &devValue) && thmParseDeviceList(devValue, 1 /* initBasic re-parses and logs */) != 0)) {
                     elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_ITEMS_LIST, 42, 42, ALIGN_NONE, 400, 360, SCALING_RATIO, theme->titleColor, theme->fonts[0]);
                     initItemsList(themePath, themeConfig, theme, elem, name, NULL);
                     // Pre-existing quirk kept as-is: an UNFILTERED ItemsList parsed for an INFO
@@ -2691,6 +2844,47 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
     return 1;
 }
 
+// True when the theme declares at least one <prefix><j> block (j < count) -- the opt-in test for the
+// Favourites per-kind families. Uses the same _type key addGUIElem reads, so "declared" means exactly
+// "addGUIElem would build it".
+static int thmFavKindDeclared(config_set_t *themeConfig, const char *prefix, int count)
+{
+    char key[64];
+    const char *type;
+    int j;
+
+    for (j = 0; j < count; j++) {
+        type = NULL;
+        snprintf(key, sizeof(key), "%s%d_type", prefix, j);
+        if (configGetStr(themeConfig, key, &type) && type != NULL)
+            return 1;
+    }
+    return 0;
+}
+
+// Parse one slot of a Favourites per-kind family: the declared <prefix><j> block if present, otherwise
+// the first present block of the fallback chain, whose copy is marked inherited. The chain is exactly
+// the blocks that view renders from today, so an undeclared slot reproduces today's element.
+static void addFavKindSlot(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, const char *prefix, int j, const char *const *chain, int chainLen)
+{
+    char path[64];
+    int c;
+
+    snprintf(path, sizeof(path), "%s%d", prefix, j);
+    if (addGUIElem(themePath, themeConfig, theme, elems, NULL, path))
+        return;
+    for (c = 0; c < chainLen; c++) {
+        theme_element_t *before = elems->last;
+        snprintf(path, sizeof(path), "%s%d", chain[c], j);
+        if (addGUIElem(themePath, themeConfig, theme, elems, NULL, path)) {
+            theme_element_t *e = before ? before->next : elems->first;
+            for (; e != NULL; e = e->next)
+                e->inherited = 1;
+            return;
+        }
+    }
+}
+
 static void freeGUIElems(theme_elems_t *elems)
 {
     theme_element_t *elem = elems->first;
@@ -2731,6 +2925,10 @@ static void thmFree(theme_t *theme)
         freeGUIElems(&theme->favsInfoElems);
         freeGUIElems(&theme->vcdMainElems);
         freeGUIElems(&theme->vcdInfoElems);
+        freeGUIElems(&theme->favsVcdMainElems);
+        freeGUIElems(&theme->favsVcdInfoElems);
+        freeGUIElems(&theme->favsAppsMainElems);
+        freeGUIElems(&theme->favsAppsInfoElems);
 
         // free textures
         GSTEXTURE *texture;
@@ -2912,6 +3110,15 @@ static int thmLoad(const char *themePath)
     newT->vcdMainElems.last = NULL;
     newT->vcdInfoElems.first = NULL;
     newT->vcdInfoElems.last = NULL;
+    newT->favsVcdMainElems.first = NULL;
+    newT->favsVcdMainElems.last = NULL;
+    newT->favsVcdInfoElems.first = NULL;
+    newT->favsVcdInfoElems.last = NULL;
+    newT->favsAppsMainElems.first = NULL;
+    newT->favsAppsMainElems.last = NULL;
+    newT->favsAppsInfoElems.first = NULL;
+    newT->favsAppsInfoElems.last = NULL;
+    newT->parsingFavKindFamily = 0;
     newT->gameCacheCount = 0;
     newT->itemsList = NULL;
     newT->gamesItemsList = NULL;
@@ -3043,6 +3250,23 @@ static int thmLoad(const char *themePath)
         addGUIElem(themePath, themeConfig, newT, &newT->vcdMainElems, NULL, path);
     }
 
+    // Favourites per-kind MAIN families -- opt-in, built only when the theme declares a block of them.
+    // favsVcdMain<j> falls back along vcdMain's own chain (the Favourites PS1 view renders vcdMain today);
+    // favsAppsMain<j> falls back along favsMain's (the Favourites ELF view renders favsMain today). Parsed
+    // after the four slot families with slot claiming off, so they can never take an ItemsList slot.
+    newT->parsingFavKindFamily = 1;
+    if (thmFavKindDeclared(themeConfig, "favsVcdMain", i)) {
+        static const char *const vcdChain[] = {"vcdMain", "appsMain", "main"};
+        for (j = 0; j < i; j++)
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdMainElems, "favsVcdMain", j, vcdChain, 3);
+    }
+    if (thmFavKindDeclared(themeConfig, "favsAppsMain", i)) {
+        static const char *const appsChain[] = {"favsMain", "main"};
+        for (j = 0; j < i; j++)
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsMainElems, "favsAppsMain", j, appsChain, 2);
+    }
+    newT->parsingFavKindFamily = 0;
+
     i = 1;
     snprintf(path, sizeof(path), "info0");
     while (addGUIElem(themePath, themeConfig, newT, &newT->infoElems, NULL, path))
@@ -3082,6 +3306,22 @@ static int thmLoad(const char *themePath)
             addGUIElem(themePath, themeConfig, newT, &newT->vcdInfoElems, NULL, path);
         }
     }
+
+    // Favourites per-kind INFO families, same opt-in rule. favsVcdInfo<j> falls back like vcdInfo (a PS1
+    // row's info screen uses vcdInfo today); favsAppsInfo<j> like favsInfo (an app favourite's info
+    // screen uses favsInfo today).
+    newT->parsingFavKindFamily = 1;
+    if (thmFavKindDeclared(themeConfig, "favsVcdInfo", i)) {
+        static const char *const vcdInfoChain[] = {"vcdInfo", "info"};
+        for (j = 0; j < i; j++)
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsVcdInfoElems, "favsVcdInfo", j, vcdInfoChain, 2);
+    }
+    if (thmFavKindDeclared(themeConfig, "favsAppsInfo", i)) {
+        static const char *const appsInfoChain[] = {"favsInfo", "info"};
+        for (j = 0; j < i; j++)
+            addFavKindSlot(themePath, themeConfig, newT, &newT->favsAppsInfoElems, "favsAppsInfo", j, appsInfoChain, 2);
+    }
+    newT->parsingFavKindFamily = 0;
 
     validateGUIElems(themePath, themeConfig, newT);
 

@@ -1570,6 +1570,18 @@ static void menuRenderElements(theme_elems_t *elems)
     SignalSema(menuSemaId);
 }
 
+// True when the highlighted Favourites row is an app favourite -- the same test the theme's per-row
+// cover redirect uses (thmGetElemForItem), so the info page and its cover always agree on the kind.
+static int menuFavSelectedIsApp(item_list_t *list, int rowView)
+{
+    if (rowView == LIB_VIEW_ELF || rowView == LIB_VIEW_PS1_ELF)
+        return 1;
+    if (list != NULL && list->mode == FAV_MODE && selected_item != NULL && selected_item->item != NULL &&
+        selected_item->item->current != NULL)
+        return favGetItemSourceMode(selected_item->item->current->item.id) == APP_MODE;
+    return 0;
+}
+
 // Per-page element families fall back to the GAMES family when the theme defines none. Neither
 // built-in theme (<OPL>, <Coverflow>) declares a single appsInfo*/favsInfo*/vcdInfo* element, and
 // validateBackgroundElems only auto-adds a background to a NON-empty info group -- so dispatching
@@ -1579,6 +1591,15 @@ static void menuRenderElements(theme_elems_t *elems)
 // guard so the two paths cannot drift again.
 static theme_elems_t *menuGetInfoElems(item_list_t *list)
 {
+    // Favourites per-kind info families (opt-in, see theme_t): a PS1 or app favourite's info page uses
+    // favsVcdInfo* / favsAppsInfo* when the theme declares them. Empty families fall through unchanged.
+    if (list != NULL && list->mode == FAV_MODE) {
+        int rowView = menuSelectedRowView(list);
+        if (rowView == LIB_VIEW_PS1 && gTheme->favsVcdInfoElems.first)
+            return &gTheme->favsVcdInfoElems;
+        if (rowView != LIB_VIEW_PS1 && gTheme->favsAppsInfoElems.first && menuFavSelectedIsApp(list, rowView))
+            return &gTheme->favsAppsInfoElems;
+    }
     if (list != NULL && menuSelectedRowView(list) == LIB_VIEW_PS1)
         return gTheme->vcdInfoElems.first ? &gTheme->vcdInfoElems : &gTheme->infoElems;
     if (list != NULL && list->mode == FAV_MODE)
@@ -1590,6 +1611,15 @@ static theme_elems_t *menuGetInfoElems(item_list_t *list)
 
 static theme_elems_t *menuGetMainElems(item_list_t *list)
 {
+    // Favourites per-kind main families (opt-in): the Favourites PS1 view draws favsVcdMain* and the ELF
+    // view favsAppsMain* when the theme declares them. The All and PS2 views keep favsMain*.
+    if (list != NULL && list->mode == FAV_MODE) {
+        int view = libViewActive(FAV_MODE);
+        if (view == LIB_VIEW_PS1 && gTheme->favsVcdMainElems.first)
+            return &gTheme->favsVcdMainElems;
+        if (view == LIB_VIEW_ELF && gTheme->favsAppsMainElems.first)
+            return &gTheme->favsAppsMainElems;
+    }
     if (list != NULL && (libViewActive(list->mode) == LIB_VIEW_PS1))
         return gTheme->vcdMainElems.first ? &gTheme->vcdMainElems : &gTheme->mainElems;
     if (list != NULL && list->mode == FAV_MODE)
@@ -1602,8 +1632,16 @@ static theme_elems_t *menuGetMainElems(item_list_t *list)
 void menuRenderMain(void)
 {
     item_list_t *list = selected_item->item->userdata;
+    theme_elems_t *kindElems = menuGetMainElems(list);
 
-    if (libViewActive(list->mode) == LIB_VIEW_PS1) {
+    if (kindElems == &gTheme->favsVcdMainElems || kindElems == &gTheme->favsAppsMainElems) {
+        // A Favourites per-kind family page. Its lists own no global slot, so navigation takes the
+        // family's own list (the one drawn), falling back to the slot this view used before the family
+        // existed: the VCD list for the PS1 view, the favourites list for the ELF view.
+        theme_element_t *slot = (kindElems == &gTheme->favsVcdMainElems) ? (gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList) : (gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList);
+        menuRenderElements(kindElems);
+        gTheme->itemsList = thmFamilyItemsList(kindElems, slot, selected_item->item->icon_id);
+    } else if (libViewActive(list->mode) == LIB_VIEW_PS1) {
         // VCD/PS1 listings render with the vcd family (vcdMain*; each slot falls back at parse time to
         // appsMain* then main*). The VCD list uses its OWN items-list slot (vcdItemsList) so it keeps a
         // SEPARATE cover cache from the device's ISO list -- the view reuses the device's game list
@@ -1721,8 +1759,14 @@ void menuHandleInputMain()
 void menuRenderInfo(void)
 {
     item_list_t *list = selected_item->item->userdata;
+    theme_elems_t *kindElems = menuGetInfoElems(list);
 
-    if (menuSelectedRowView(list) == LIB_VIEW_PS1) {
+    if (kindElems == &gTheme->favsVcdInfoElems || kindElems == &gTheme->favsAppsInfoElems) {
+        // Favourites per-kind info page: same slot-free list resolution as menuRenderMain.
+        theme_element_t *slot = (kindElems == &gTheme->favsVcdInfoElems) ? (gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList) : (gTheme->favsItemsList ? gTheme->favsItemsList : gTheme->gamesItemsList);
+        menuRenderElements(kindElems);
+        gTheme->itemsList = thmFamilyItemsList(kindElems, slot, selected_item->item->icon_id);
+    } else if (menuSelectedRowView(list) == LIB_VIEW_PS1) {
         menuRenderElements(menuGetInfoElems(list));
         gTheme->itemsList = thmResolveItemsList(&gTheme->vcdInfoElems, gTheme->vcdItemsList ? gTheme->vcdItemsList : gTheme->gamesItemsList, selected_item->item->icon_id);
     } else if (list->mode == FAV_MODE) {
