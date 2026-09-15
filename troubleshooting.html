@@ -125,6 +125,18 @@ The display and connection must accept that signal. Once visible, select a suita
 and disable/change its GSM override, or its Neutrino video options for that core. Check global video
 defaults too. Retry with the game's normal output before adding overrides again.</p>
 
+<h2 id="hdd-code-402">Internal HDD — code 402, 500, or "Formatted: NO"</h2>
+<p><b>Code 402:</b> the HDD answered, but its APA partition table can't be read. wLaunchELF shows the same
+disk as <b>"Connected: YES / Formatted: NO"</b>. Your games are almost certainly still on it.
+<b>Do not format it.</b> Stop using the disk, then follow the recovery steps under
+<a href="hdd.html#disk-safety">Internal HDD — Disk safety and code 402</a>. Code <b>401</b> means the
+drive did not answer at all.</p>
+<p><b>Code 500:</b> a drive was not mounted because its sectors are not 512 bytes, as on a 4Kn drive.
+This applies to any USB, iLink, MX4SIO or internal exFAT drive: RiptOPL only reads 512-byte sectors.
+Ordinary 512e drives are unaffected.</p>
+<p><b>Delete is missing on the HDD, or Rename on an HDD PS2 game:</b> by design. RiptOPL does not edit
+the APA partition table, so the HDD library is managed from a PC with HDL-Dump.</p>
+
 <h2 id="vcd-list-empty">PS1/VCD — "my VCDs don't show up" (works elsewhere)</h2>
 
 <p><b>Symptom:</b> A device lists PS2 games fine (or works in another loader), but its PS1 view is empty — or a listed VCD does nothing when selected.</p>
