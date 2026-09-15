@@ -40,8 +40,8 @@ Turning the setting on simply has no effect on those pages.
 
 ## Parental lock
 
-**Settings → Parental Lock Settings.** Sets a password that must be entered before configuration can
-be changed.
+**Parental Lock Password**, on **Settings → General & System**. Sets a password that must be entered
+before configuration can be changed. Leave it blank to disable the lock.
 
 ### What it actually gates
 

@@ -130,7 +130,7 @@ contains and how to pull it.
 1. Extract the normal installable archive. Start with `APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF` when present; see [build choices](ROLLING_RELEASE.md#which-build-should-i-use) for alternatives.
 2. Copy that ELF to a location your homebrew launcher can boot. For Neutrino, also copy the complete `neutrino/` folder to `mc0:/neutrino/` or `mc1:/neutrino/`. PS1 needs the companion files described in [PS1 games](#ps1-games-two-cores-one-list); copying the loader ELF alone does not install those cores.
 3. Prepare your game's source: `CD/` or `DVD/` for folder-based PS2 libraries, HDLoader partitions for APA, or `games.csv` for HTTP. See [How to use](#how-to-use).
-4. In **Settings → Game Sources**, enable the device and its start mode. For a network source, set **Network Start Mode** to **Manual** or **Auto**, then choose the protocol in **Network** and enter your server's settings.
+4. In **Settings → Game Sources**, enable the device and its start mode. For a network source, set **Network Connectivity** to **Manual** or **Auto**, then choose the protocol in **Network** and enter your server's settings.
 5. Use the server's Test action where available, then choose **Save Changes** before launching a game. A successful menu test is not proof that gameplay works.
 6. Launch one test game. If it fails, record the exact build, SDK flavour, source and core before changing settings; see [Frequent Issues](#frequent-issues).
 
@@ -273,7 +273,7 @@ This build layers several features on top of upstream OPL:
   See **[docs/HTTP.md](docs/HTTP.md)**.
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
   alongside UDPBD. The network controls are split across two pages: **Game Sources** holds the
-  **Network Start Mode** row (Off / Manual / Auto), and **Network** holds **Protocol**
+  **Network Connectivity** row (Off / Manual / Auto), and **Network** holds **Protocol**
   (**SMB / UDPFS / UDPBD / HTTP**), **SMB Version** (SMBv1 / SMB2, live only while Protocol is SMB),
   and **Access** (Files / IMG — locked to Files
   for SMB/HTTP and to IMG for UDPBD, free only for UDPFS). UDPFS launches via `-bsd=udpfsbd` with a
@@ -564,11 +564,11 @@ are supported using the folder structure above.
 > session.
 >
 > **RiptOPL network defaults:** the network protocol selector defaults to **Off** — under
-> **Game Sources** set **Network Start Mode** to **Manual** or **Auto**, then in **Network** set
-> **Protocol** to **SMB**, before the **NET Games** tab appears. Network Config
+> **Game Sources** set **Network Connectivity** to **Manual** or **Auto**, then in **Network** set
+> **Protocol** to **SMB**, before the **NET Games** tab appears. The Network page
 > ships static defaults (PS2 `192.168.1.10`, PC `192.168.1.100`, share `games`, user `guest`);
 > adjust them to your LAN. The default **SMB Port is `1111`** — a non-privileged port (>1024), so a server
-> binds it without admin/root. **Network Config** now opens with **advanced options on**, so
+> binds it without admin/root. The **Network** page opens with **Advanced Options** on, so
 > the **Port** field (and ETH link mode) are editable immediately. If Windows 10/11 has
 > disabled SMB1/NTLMv1, set **SMB Version** to **SMB2**; the
 > **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one launcher remains the

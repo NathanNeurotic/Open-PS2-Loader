@@ -231,10 +231,10 @@ so POPSTARTER itself can read them off the exFAT volume.
 ## 6. PS1 over SMB — network config mirror
 
 PS1 games on an SMB share need POPSTARTER's own network config (`IPCONFIG.DAT` +
-`SMBCONFIG.DAT`) on the memory card, plus its SMB modules. RiptOPL can write those config
-files for you: enable **Settings → Network Settings → Write POPSTARTER Network Config**
-(**on** by default). On save it mirrors the same IP / share values OPL already uses into
-`mc?:/POPSTARTER/`. The SMB modules themselves ship in the release's `POPS/` folder
+`SMBCONFIG.DAT`) on the memory card, plus its SMB modules. Edit those files from
+**POPSTARTER Network Settings**, on **Settings → PS Emulation Settings** or **Settings → Network**.
+The screen shows what the card's files already contain, can import both from the connected share's
+`POPS` folder, and on OK writes back only the values you changed. The SMB modules themselves ship in the release's `POPS/` folder
 (copy them to `mc?:/POPSTARTER/`); if they're missing, an SMB VCD launch warns rather than
 hanging.
 

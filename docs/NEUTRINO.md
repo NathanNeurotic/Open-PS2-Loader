@@ -41,8 +41,8 @@ order is:
 
 | Priority | Where OPL looks |
 |---|---|
-| 1 | The device chosen in **Game Launching → Neutrino Defaults → Default Device** (see below) |
-| 2 | The custom **Neutrino ELF Path** (`neutrino_path`) |
+| 1 | The device type chosen in **Game Launching → Neutrino Device** (see below) |
+| 2 | A custom path in the `neutrino_path` key of `settings_riptopl.cfg` |
 | 3 | The active game's own device — `<games prefix>/neutrino/`, then `<device root>/neutrino/` |
 | 4 | The internal **APA HDD**'s OPL data partition — `hdd0:/+OPL/neutrino/` or `hdd0:/__common/OPL/neutrino/` (only while the HDD is started) |
 | 5 | `mc0:` / `mc1:` — `NEUTRINO/neutrino.elf` and its lowercase / `NEUTRINO.ELF` variants |
@@ -50,7 +50,7 @@ order is:
 If no complete install is found when you launch a game set to the Neutrino core, OPL shows a
 warning and falls back to the `<OPL>` core for that launch.
 
-**Game Launching → Neutrino Defaults → Default Device** picks the device *type* holding
+**Game Launching → Neutrino Device** picks the device *type* holding
 `<root>:/neutrino/neutrino.elf` — **Auto** / Memory Card / USB / MX4SIO / MMCE / HDD (exFAT) /
 HDD (APA) / **Game's Device** / iLink. A miss on the device you picked is not a dead end: OPL falls
 through to the AUTO tiers above. The exception is **Game's Device**, which only ever looks on
@@ -73,10 +73,10 @@ that partition mounted across the handoff so the ELF is still readable when it i
 install on a partition that is *not* the OPL data home is not reachable; move it, or use one of the
 other devices.
 
-You can also point OPL at a **custom location** via the **Neutrino ELF Path** (`neutrino_path` key
-in `settings_riptopl.cfg`). When that field is set and the file exists it takes **priority** over the
+You can also point OPL at a **custom location** with the `neutrino_path` key in
+`settings_riptopl.cfg` (there is no menu row for it). When it is set and the file exists it takes **priority** over the
 auto-detected tiers above (the game's own device and `mc0:`/`mc1:`) — only the **Neutrino
-Device** picker outranks it; leave it blank to use the auto-detection. The custom path is
+Device** picker outranks it; leave it out to use the auto-detection. The custom path is
 honoured only when its install passes the same `config/system.toml` completeness check (a path
 with no directory component is taken as-is). For a path longer than the on-screen 31-character
 editor, set `neutrino_path` in `settings_riptopl.cfg` directly.
@@ -88,7 +88,7 @@ editor, set `neutrino_path` in `settings_riptopl.cfg` directly.
 
 ## 2. Pick the core per game
 
-1. Highlight a game and open **Game Settings → Compatibility Settings**.
+1. Highlight a game, press **Triangle** and choose **Game Settings**.
 2. Set **Loader Core** to one of:
    - **`<OPL>`** — OPL's built-in core (default).
    - **`Neutrino`** — chain to the external `neutrino.elf`.
@@ -155,7 +155,7 @@ per-game**, so a game can extend the global set.
 
 ### Per-game args — applies to one title
 
-**Game Settings → Compatibility Settings → Neutrino Launch Args** (config key
+**Triangle → Game Settings → Neutrino Launch Args** (config key
 `$NeutrinoArgs` in the game's `.cfg`).
 
 Both rows are **buttons** that open the same structured sub-screen rather than one raw text
@@ -208,7 +208,7 @@ reading, so an SMBv1-only server (including the bundled PS2-Servers tool) will l
 
 | Choice | Wire protocol | On the PS2 | Core | PC server |
 |---|---|---|---|---|
-| **Network Start Mode: Off** | — | no network device (default) | — | — |
+| **Network Connectivity: Off** | — | no network device (default) | — | — |
 | **SMB** | SMBv1 (default) or SMB2 — **Network → SMB Version** | a mounted file share | OPL's *own* core (not Neutrino) | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / Samba |
 | **UDPFS** | UDPRDMA | a games source served over UDP (see **UDPFS Access** below) | Neutrino only | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended, PC) / [udpfs-server](https://github.com/YouKnow-sys/udpfs-server) (Android) / [`udpfsd`](https://github.com/pcm720/udpfsd) |
 | **UDPBD** | SUDPBDv2 | a served disk image mounted as `massN:` | Neutrino only | [PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers) (recommended) / [`udpbd-server`](https://github.com/israpps/udpbd-server) |
@@ -318,7 +318,7 @@ When a game's core is **Neutrino**:
   > 1080p mode used by the native OPL core.
   OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
   they're OPL ee-core features with **no Neutrino equivalent** (Neutrino has no in-game reset, and
-  no PSS/BIK video-skip), so OPL never forwards them. **DL Defaults** is greyed too (it pulls
+  no PSS/BIK video-skip), so OPL never forwards them. **Download Defaults** is greyed too (it pulls
   OPL-bitmask data that doesn't map to `-gc`). Modes 1/2/3/5 *do* map to `-gc`, and a Neutrino-only
   **mode 7** (greyed under the OPL core — the inverse of 4/6) maps to `-gc=7` (fix games that overrun
   an IOP buffer).
