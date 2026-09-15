@@ -260,6 +260,9 @@ def check_driver_policy():
     stat_body = function_body(fio, 'static void fioGetStatFiller(')
     check(stat_body is not None and 'i < APA_MAXSUB' in stat_body,
           'hdd_fio.c: fioGetStatFiller walks subs[] without the APA_MAXSUB bound')
+    walk = function_body(apa_c, 'apa_cache_t *apaGetNextHeader(')
+    check(walk is not None and 'APA_CACHE_FLAG_DIRTY' not in walk and 'apaCacheFlushAllDirty' not in walk,
+          'apa.c: walking the partition chain writes headers again (start != prev repair)')
 
     # ...and the loader itself never asks for a partition edit or a raw write.
     hdd_c = text(root / 'src/hdd.c')
@@ -435,6 +438,11 @@ int main(void)
 
     /* Bit 12 without a size is not 512 either. */
     id[117] = 0;
+    assert(ata_identify_logical_sector_size(id) != 512);
+
+    /* A garbage word count that would wrap to 512 when doubled is still refused. */
+    id[117] = 0x0100;
+    id[118] = 0x8000;
     assert(ata_identify_logical_sector_size(id) != 512);
 
     /* Word 106 with bit 15 set is invalid and ignored. */

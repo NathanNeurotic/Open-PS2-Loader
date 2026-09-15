@@ -1033,9 +1033,13 @@ int sceAtaDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
    drive (4K physical, 512 logical -- nearly every modern disk) reports 512 here and is unaffected. */
 static u32 ata_identify_logical_sector_size(const u16 *param)
 {
+    u32 words;
+
     if ((param[106] & 0xC000) != 0x4000 || !(param[106] & 0x1000))
         return 512;
-    return (((u32)param[118] << 16) | param[117]) * 2;
+    words = ((u32)param[118] << 16) | param[117];
+    /* A garbage count must not wrap back to 512 when doubled (0x80000100 * 2 == 0x200). */
+    return words <= 0x7fffffff ? words * 2 : 0;
 }
 
 /* Every consumer of this driver -- APA, PFS, the DMA transfer lengths, BDM's FatFs -- counts LBAs in

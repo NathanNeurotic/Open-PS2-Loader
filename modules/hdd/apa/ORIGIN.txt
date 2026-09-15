@@ -32,8 +32,9 @@ compiles the fence and fails if any of the policy below is lost):
 4. hdd_fio.c: a game loader is not a partition manager, so every partition edit and raw write is
    refused with -EACCES: hddFormat, partition creation through O_CREAT in apaOpen, hddRemove,
    hddReName, HIOCADDSUB/HIOCDELSUB, HDIOC_SWAPTMP, HDIOC_SETOSDMBR and HDIOC_WRITESECTOR. The
-   refused code is kept after the early returns (or marked unused) for diffability. What remains is
-   opening existing partitions and PFS I/O inside them.
+   refused code is kept after the early returns (or marked unused) for diffability. apa.c
+   apaGetNextHeader also logs a start != prev mismatch instead of rewriting the header mid-walk.
+   What remains is opening existing partitions and PFS I/O inside them.
 5. hdd_fio.c: ioctl2Transfer's partition bounds check is overflow-safe (the SDK summed sector + size
    in u32, so a wrapping request could address anywhere on the disk).
 6. hdd_fio.c: an on-disk sub-partition count above APA_MAXSUB is refused in apaOpen and bounded in

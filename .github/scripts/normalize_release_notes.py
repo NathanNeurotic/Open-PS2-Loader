@@ -20,6 +20,9 @@ hero = '''<p align="center"><img alt="RiptOPL" src="https://raw.githubuserconten
 # if the markup is ever edited, an exact match would stop recognising the previous hero and start
 # stacking a second one on every pass.
 hero_re = re.compile(r'\A\s*<p align="center">(?:(?!</p>).)*docs/assets/riptopl\.png(?:(?!</p>).)*</p>\s*', re.DOTALL)
+# The same, for the footer banner: normally it goes out with the tools section it follows, but when
+# README yields no tools section there is nothing to cut it with, and every pass would add another.
+banner_re = re.compile(r'\s*<p align="center">(?:(?!</p>).)*AI-Assisted-Software-Lovers-Only(?:(?!</p>).)*</p>\s*\Z', re.DOTALL)
 
 
 def external_tools():
@@ -50,6 +53,7 @@ for marker in ('## Other downloads', '## Release downloads', '## External Tools 
         body = body.split(marker, 1)[0].rstrip()
 body = re.sub(r'\nSHA256 \(also published as SHA256SUMS\.txt\):\n```.*?```\n', '\n', body, flags=re.DOTALL)
 body = hero_re.sub('', body)
+body = banner_re.sub('', body)
 body = body.strip()
 
 tools = external_tools()
