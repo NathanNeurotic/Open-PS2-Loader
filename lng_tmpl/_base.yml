@@ -967,7 +967,7 @@ gui_strings:
 - label: BDMA_ERR_IO
   string: Error writing the BDMA modules to the memory card.
 - label: UDPBD_NEEDS_STATIC_IP
-  string: UDPBD needs a static PS2 IP. Set one in Network Config (DHCP is currently on).
+  string: UDPBD needs a static PS2 IP. Set one under Settings > Network (DHCP is currently on).
 - label: NETBOOT_RESTART
   string: Restart OPL to apply the network boot protocol change.
 - label: NET_UDPFS_TAB_HINT

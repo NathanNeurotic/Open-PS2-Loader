@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: هسته لودر
   NEUTRINO_BAD_FORMAT: Neutrino از این فرمت فایل پشتیبانی نمی‌کند، اجرا با هسته <OPL>
   NEUTRINO_NOT_FOUND: Neutrino ELF پیدا نشد، اجرا با هسته <OPL>
-  UDPBD_NEEDS_STATIC_IP: UDPBD نیاز به IP ثابت PS2 دارد. در تنظیمات شبکه تنظیم کنید (DHCP در حال حاضر روشن است).
+  UDPBD_NEEDS_STATIC_IP: UDPBD نیاز به IP ثابت PS2 دارد. در ﺗﻨﻈﻴﻤﺎت > شبکه تنظیم کنید (DHCP در حال حاضر روشن است).
   NEUTRINO_SETTING_NA: این تنظیم با هسته Neutrino استفاده نمی‌شود.
   POPSTARTER_NOT_FOUND: POPSTARTER.ELF پیدا نشد
   POPSTARTER_SMB_MISSING: پیش‌نیازهای SMB برای POPSTARTER موجود نیست

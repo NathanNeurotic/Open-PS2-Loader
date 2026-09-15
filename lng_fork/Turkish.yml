@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Yükleyici Çekirdeği
   NEUTRINO_BAD_FORMAT: Neutrino bu dosya biçimini desteklemiyor, <OPL> çekirdeğiyle başlatılıyor
   NEUTRINO_NOT_FOUND: Neutrino ELF bulunamadı, <OPL> çekirdeğiyle başlatılıyor
-  UDPBD_NEEDS_STATIC_IP: UDPBD sabit bir PS2 IP adresi gerektirir. Ağ Ayarlarından belirleyin (DHCP şu an açık).
+  UDPBD_NEEDS_STATIC_IP: UDPBD sabit bir PS2 IP adresi gerektirir. Ayarlar > Ağ bölümünden belirleyin (DHCP şu an açık).
   NEUTRINO_SETTING_NA: Bu ayar Neutrino çekirdeğiyle kullanılmaz.
   POPSTARTER_NOT_FOUND: POPSTARTER.ELF eksik
   POPSTARTER_SMB_MISSING: POPSTARTER SMB gereksinimleri eksik

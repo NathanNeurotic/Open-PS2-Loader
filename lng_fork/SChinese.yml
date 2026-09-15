@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: 核心加载器
   NEUTRINO_BAD_FORMAT: Neutrino 不支持此文件格式，将使用 <OPL> 核心启动
   NEUTRINO_NOT_FOUND: 未找到 Neutrino ELF，将使用 <OPL> 核心启动
-  UDPBD_NEEDS_STATIC_IP: UDPBD 需要静态 PS2 IP。请在网络配置中设置（当前已启用 DHCP）。
+  UDPBD_NEEDS_STATIC_IP: UDPBD 需要静态 PS2 IP。请在 设置 > 网络 中设置（当前已启用 DHCP）。
   NEUTRINO_SETTING_NA: 此设置不适用于 Neutrino 核心。
   POPSTARTER_NOT_FOUND: 缺少 POPSTARTER.ELF
   POPSTARTER_SMB_MISSING: 缺少 POPSTARTER SMB 所需文件

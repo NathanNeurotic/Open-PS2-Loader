@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Loader Core
   NEUTRINO_BAD_FORMAT: Neutrino tidak mendukung format file ini, menjalankan dengan core <OPL>
   NEUTRINO_NOT_FOUND: ELF Neutrino tidak ditemukan, menjalankan dengan core <OPL>
-  UDPBD_NEEDS_STATIC_IP: UDPBD membutuhkan IP PS2 statis. Atur di Konfigurasi Jaringan (DHCP sedang aktif).
+  UDPBD_NEEDS_STATIC_IP: UDPBD membutuhkan IP PS2 statis. Atur di Setingan > Jaringan (DHCP sedang aktif).
   NEUTRINO_SETTING_NA: Pengaturan ini tidak digunakan dengan core Neutrino.
   POPSTARTER_NOT_FOUND: POPSTARTER.ELF tidak ditemukan
   POPSTARTER_SMB_MISSING: Persyaratan SMB POPSTARTER tidak terpenuhi

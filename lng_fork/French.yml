@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Noyau de chargement
   NEUTRINO_BAD_FORMAT: Neutrino ne supporte pas ce format de fichier, lancement avec le noyau <OPL>
   NEUTRINO_NOT_FOUND: ELF Neutrino introuvable, lancement avec le noyau <OPL>
-  UDPBD_NEEDS_STATIC_IP: UDPBD nécessite une IP PS2 statique. Configurez-en une dans la Config réseau (DHCP est actuellement activé).
+  UDPBD_NEEDS_STATIC_IP: UDPBD nécessite une IP PS2 statique. Configurez-en une dans Configuration > Réseau (DHCP est actuellement activé).
   NEUTRINO_SETTING_NA: Ce paramètre n'est pas utilisé avec le noyau Neutrino.
   POPSTARTER_NOT_FOUND: POPSTARTER.ELF manquant
   POPSTARTER_SMB_MISSING: Prérequis SMB de POPSTARTER manquants

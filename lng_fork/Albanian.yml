@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Bërthama e Ngarkuesit
   NEUTRINO_BAD_FORMAT: Neutrino nuk e mbështet këtë format skedari, niset me bërthamën <OPL>
   NEUTRINO_NOT_FOUND: ELF i Neutrino nuk u gjet, niset me bërthamën <OPL>
-  UDPBD_NEEDS_STATIC_IP: UDPBD kërkon një IP statike të PS2. Vendoseni në Konfigurimin e Rrjetit (DHCP është aktiv).
+  UDPBD_NEEDS_STATIC_IP: UDPBD kërkon një IP statike të PS2. Vendoseni te Cilësimet > Rrjeti (DHCP është aktiv).
   NEUTRINO_SETTING_NA: Kjo cilësim nuk përdoret me bërthamën Neutrino.
   POPSTARTER_NOT_FOUND: Mungon POPSTARTER.ELF
   POPSTARTER_SMB_MISSING: Mungojnë kërkesat SMB të POPSTARTER
