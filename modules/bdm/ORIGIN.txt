@@ -37,9 +37,17 @@ against a simulated device and fails on the SDK original):
    filesystem claiming more sectors than its partition cannot write into the next one. For that,
    src/part_driver_gpt.c now treats last_lba as inclusive (the SDK made every GPT partition one
    sector short, which these bounds would otherwise turn into an unreachable last sector).
-Changes 2-3 are pinned by .github/scripts/test_bdm_partitions.py.
+4. src/part_driver_gpt.c (#653): an unused entry (all-zero type GUID) marks only itself, so the scan
+   continues past it; the SDK stopped at the first one, hiding every partition listed after a gap in
+   the entry array (for example after deleting the first partition on a PC). The scan is bounded by
+   the header's entry count, including inside the last sector. The full scan only runs when the array
+   extent is plausible (first_lba follows partition_table_lba by at most GPT_MAX_ARRAY_SECTORS = 2048,
+   the conventional start of partition data), with the count clamped to that extent, so a corrupt
+   header cannot read more than 2048 sectors at mount. Any other header keeps the SDK's
+   stop-at-first-unused scan. Worth offering upstream to ps2sdk.
+Changes 2-4 are pinned by .github/scripts/test_bdm_partitions.py.
 
-DELIBERATELY UNCHANGED: the MBR/GPT parsers are otherwise the SDK's. In particular, never require an
+DELIBERATELY UNCHANGED: the MBR/GPT parsers are otherwise the SDK's (change 4 aside). In particular, never require an
 MBR partition to fit inside bd->sectorCount: the ATA driver reports 0xffffffff sectors on drives
 past 2 TiB, a maximum-size MBR partition ends one sector beyond that, and the check would hide the
 whole drive (the test pins this).

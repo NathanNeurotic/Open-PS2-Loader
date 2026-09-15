@@ -86,12 +86,15 @@ void bdm_connect_fs(struct file_system *fs) { (void)fs; }
 static unsigned char disk[DISK_SECTORS * 512];
 static u64 last_io_sector;
 static int last_io_count;
+static u64 max_read_sector; /* highest sector any read touched, to prove a scan stays bounded */
 
 static int dev_read(struct block_device *bd, u64 sector, void *buffer, u16 count)
 {
     (void)bd;
     last_io_sector = sector;
     last_io_count = count;
+    if (count > 0 && sector + count - 1 > max_read_sector)
+        max_read_sector = sector + count - 1;
     if (sector + count > DISK_SECTORS)
         return -5;
     memcpy(buffer, disk + sector * 512, (size_t)count * 512);
@@ -118,6 +121,7 @@ static void reset(void)
     memset(connected, 0, sizeof(connected));
     nconnected = 0;
     fail_alloc = 0;
+    max_read_sector = 0;
     for (int i = 0; i < MAX_PARTITIONS; i++)
         g_part[i].bd = NULL;
     memset(&raw, 0, sizeof(raw));
@@ -138,16 +142,19 @@ static void mbr_entry(int i, u8 type, u32 first, u32 count)
     disk[0x1FF] = 0xAA;
 }
 
-static void gpt_header(u32 count, u32 entry_size)
+static void gpt_header_lbas(u32 count, u32 entry_size, u64 first_usable, u64 last_usable)
 {
     unsigned char *h = disk + 512;
     memcpy(h, "EFI PART", 8);
-    put64(h + 0x28, 4);  /* first usable */
-    put64(h + 0x30, 60); /* last usable */
-    put64(h + 0x48, 2);  /* entries at LBA 2 */
+    put64(h + 0x28, first_usable);
+    put64(h + 0x30, last_usable);
+    put64(h + 0x48, 2); /* entries at LBA 2 */
     put32(h + 0x50, count);
     put32(h + 0x54, entry_size);
 }
+
+/* Entries at LBA 2, first usable LBA 4: room for 2 sectors = 8 entries. */
+static void gpt_header(u32 count, u32 entry_size) { gpt_header_lbas(count, entry_size, 4, 60); }
 
 static void gpt_entry(int i, u64 first, u64 last)
 {
@@ -198,6 +205,61 @@ int main(void)
     p = connected[0];
     assert(p->read(p, 9, buf, 1) == 1 && last_io_sector == 19);
     assert(p->read(p, 10, buf, 1) < 0);
+
+    /* GPT (#653): an unused entry marks only itself, so a partition after a gap still mounts, and it
+       keeps its own entry number. The SDK stopped at the first unused entry and saw no partitions. */
+    reset();
+    gpt_header(4, 128);
+    gpt_entry(1, 20, 29);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1);
+    assert(connected[0]->sectorOffset == 20 && connected[0]->sectorCount == 10 && connected[0]->parNr == 2);
+
+    /* ...including a gap that runs into the next sector of the entry array (entry 5 is on LBA 3). */
+    reset();
+    gpt_header(8, 128);
+    gpt_entry(5, 30, 39);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1);
+    assert(connected[0]->sectorOffset == 30 && connected[0]->parNr == 6);
+
+    /* A corrupt entry count cannot walk the disk: the scan stops where the array must end (the first
+       usable LBA), so it never reads past LBA 3 however large the count claims to be. */
+    reset();
+    gpt_header(0xFFFFFFFFu, 128);
+    gpt_entry(0, 10, 19);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1);
+    assert(max_read_sector == 3);
+
+    /* A distant first usable LBA gives no plausible extent (over GPT_MAX_ARRAY_SECTORS), so even a
+       maximum count cannot turn on the full scan: it stops at the first unused entry, as the SDK does,
+       and reads nothing past the first entry sector. */
+    reset();
+    gpt_header_lbas(0xFFFFFFFFu, 128, 0x100000000ull, 0x200000000ull);
+    gpt_entry(0, 0x100000010ull, 0x100000019ull);
+    gpt_entry(2, 0x100000030ull, 0x100000039ull);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1 && connected[0]->sectorOffset == 0x100000010ull);
+    assert(max_read_sector == 2);
+
+    /* The largest plausible extent still scans past gaps (first usable at 2 + GPT_MAX_ARRAY_SECTORS).
+       Only the entry sectors are read at mount, so partitions may lie beyond the simulated disk. */
+    reset();
+    gpt_header_lbas(4, 128, 2 + 2048, 5000);
+    gpt_entry(1, 3000, 3009);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1 && connected[0]->sectorOffset == 3000);
+
+    /* The count is honoured inside a sector too: an entry beyond it is not part of the array. */
+    reset();
+    gpt_header(1, 128);
+    gpt_entry(0, 10, 19);
+    gpt_entry(1, 20, 29);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1 && connected[0]->sectorOffset == 10);
+
+    /* A header too malformed to bound the array (first usable LBA not after the array start) keeps the
+       SDK's scan, which stops at the first unused entry, so nothing that mounted before is lost. */
+    reset();
+    gpt_header_lbas(4, 128, 2, 60);
+    gpt_entry(0, 10, 19);
+    gpt_entry(2, 30, 39);
+    assert(part_connect_gpt(&raw) == 0 && nconnected == 1 && connected[0]->sectorOffset == 10);
 
     /* The block cache refuses devices whose sectors are not 512 bytes (its slots are 8 * 512). */
     reset();
