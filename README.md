@@ -72,7 +72,7 @@ compiled into any published main ELF (`EXTRA_FEATURES ?= 0`); they ship in the
 DualSense / DualShock 5 (USB) support is available prebuilt in the `RIPTOPL-VARIANTS-*.zip`
 bundle, or build your own with `make DUALSENSE=1`.
 
-**RetroAchievements** ships as its own complete package, `RIPTOPL-RA-*.zip` (or build it with
+**RetroAchievements** ships as its own complete package, `RIPTOPL-RetroAchievements-*.zip` (or build it with
 `make RETROACHIEVEMENTS=1`). It is laid out like the main archive — same `POPS/`, `EMBER/`,
 `neutrino/` and shortcuts — with the RA loader in place of the standard one, plus a shortcut to
 **xeRAbora**, the PC client the feature talks to. It is a **development build, not a finished
@@ -88,8 +88,8 @@ Choose the current development build or a preserved snapshot:
 | **[Rolling (Latest)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling)** | Updated from `rebuild/main` by successful publishing runs. A full, non-pre-release GitHub release that remains a **development build**, with compatibility depending on the game and hardware. |
 | **[Current Fan Favorite Build](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite)** | A preserved development snapshot selected after positive user feedback. Use it as a fixed comparison point; it is not a universal compatibility guarantee. |
 
-Download the **normal installable package**, `RIPTOPL-<rel>-<sha>.zip`. Separate archives serve
-different purposes: `RA` for the experimental RetroAchievements loader, `VARIANTS` for alternate
+Download the **normal installable package**, `RIPTOPL-<version>.zip`. Separate archives serve
+different purposes: `RetroAchievements` for the experimental achievements loader, `VARIANTS` for alternate
 configurations including DualSense, `DEBUG` for diagnostics, `LANGS` for translations, and `src`
 for the exact source snapshot. Optional archives or SDK flavours can be omitted; read the release notes.
 
@@ -123,7 +123,7 @@ contains and how to pull it.
 
 - A PS2 with a homebrew ELF launcher, or a supported [backward-compatible PS3](#ps3-bc).
 - One prepared storage source from the table below. Ethernet and a reachable server are required for network sources.
-- The normal installable `RIPTOPL-<rel>-<sha>.zip` from [Releases](#releases).
+- The normal installable `RIPTOPL-<version>.zip` from [Releases](#releases).
 
 ### Minimal startup path
 
@@ -798,7 +798,7 @@ RiptOPL is intended to work with these maintained companion tools:
 - **[udpfs-server](https://github.com/YouKnow-sys/udpfs-server)** by **[YouKnow-sys](https://github.com/YouKnow-sys)** — the same idea **from a phone**: an Android app that shares folders and disk images to the PS2 over **UDPFS**, found by broadcast so there is no server address to type in on the console. Works over a router or a direct cable. Built on **[udpfsd](https://github.com/pcm720/udpfsd)** by **[pcm720](https://github.com/pcm720)**; MIT licensed. A `udpfs-server.url` shortcut ships in installable packages.
 - **[OrbitPS2 Manager](https://github.com/Luden02/OrbitPS2-Manager)** by **[Luden](https://github.com/Luden02)** — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management.
 - **[OPL PS1 AIO Converter GUI](https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI)** by **[shaan](https://github.com/shaanhomebrew-cloud)** — Windows all-in-one PS1/POPStarter preparation tool for converting BIN/CUE backups to VCDs and installing them to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD.
-- **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. RiptOPL's RA build streams the running game's memory to it; xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RA-*.zip`; MIT licensed. RiptOPL’s RA integration is not yet hardware-tested.
+- **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. RiptOPL's RA build streams the running game's memory to it; xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RetroAchievements-*.zip`; MIT licensed. RiptOPL’s RA integration is not yet hardware-tested.
 - **[OPL HTTP PC server](https://github.com/Docmine17/Open-PS2-Loader-HTTP)** by **[Docmine17](https://github.com/Docmine17)** — the PC side of RiptOPL’s **HTTP** protocol: a small static HTTP server with byte-range support that serves your `games.csv` catalog and streams the ISOs themselves. RiptOPL works with it **unmodified** — no new API, no catalog conversion, no changed folder layout — with host conformance checks against the upstream server. PS2 hardware validation is still pending.
 - **[PS2RD CHT Manager](https://github.com/TheRealNextria/PS2RD-CHT-Manager)** by **[TheRealNextria](https://github.com/TheRealNextria)** — PC manager for the PS2RD `.cht` cheat files RiptOPL reads from your device's `CHT` folder. A `PS2RD-CHT-Manager.url` shortcut ships in installable packages.
 - **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)** — a PS1 emulator that runs natively on the PS2, used as RiptOPL's **second PS1 core** alongside POPSTARTER. Unlike the others this one is not just a shortcut: an `EMBER/` folder ships **inside** the release package, ready to drop onto a device. It is bundled unmodified under the Ember Public Beta Testing Licence (`EMBER/LICENSE-BETA.txt` in the package); releases: <https://github.com/Gageformer/Ember/releases>.
@@ -844,7 +844,7 @@ With special and sincere thanks to:
   **[xeRAbora PC client](https://github.com/hacan359/xerabora)** (MIT). The console identifies the
   game and streams the memory addresses its achievements watch; xeRAbora handles rcheevos, the
   RetroAchievements service, and login. RiptOPL implements the published wire protocol in its
-  `RIPTOPL-RA-*.zip` build, which includes a shortcut to xeRAbora.
+  `RIPTOPL-RetroAchievements-*.zip` build, which includes a shortcut to xeRAbora.
 - **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
 - **eliminator1403** — for dedicated **testing, bug reports, and real-hardware feedback** that

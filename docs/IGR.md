@@ -102,7 +102,7 @@ inside `RIPTOPL-VARIANTS-*.zip`, the variants named `-extra1` are built with `EX
 which turns IGS on. They come in `pademu0`/`pademu1` and optional `-ds5` flavours. Building from
 source with `make IGS=1` (or `EXTRA_FEATURES=1`) works too.
 
-One combination is not available: the **RetroAchievements** loader (`RIPTOPL-RA-*.zip`) is
+One combination is not available: the **RetroAchievements** loader (`RIPTOPL-RetroAchievements-*.zip`) is
 deliberately built without `EXTRA_FEATURES`, because GSM 1080p plus IGS and RA cannot both fit in
 the `ram84` region — you can have achievements or in-game screenshots, not both.
 

@@ -9,7 +9,13 @@ CURRENT_DIR=$(pwd)
 BUILD_DIR="$(pwd)/tmp/OPL_LANG"
 LANG_LIST="$(pwd)/tmp/OPL_LANG_LIST"
 make oplversion 2>/dev/null
-if [ $? == "0" ]
+MAKE_OPLVERSION_STATUS=$?
+if [ -n "${LNG_PACK_VERSION:-}" ]
+then
+	# The release workflow passes the download-file version (no commit hash) so the pack's name and
+	# its folders match the other release archives.
+	export OPL_VERSION="${LNG_PACK_VERSION}"
+elif [ $MAKE_OPLVERSION_STATUS == "0" ]
 then
 	export OPL_VERSION=$(make oplversion)
 else

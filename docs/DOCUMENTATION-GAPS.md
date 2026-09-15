@@ -127,7 +127,7 @@ sweep. `EXTRA_FEATURES ?= 0` governs the **main release loader only**.
 `.github/scripts/build_rolling_extras.sh` loops `EXTRA_FEATURES=0/1 x PADEMU=0/1 x DUALSENSE=0/1`
 into `rolling/variants/`, so **`-extra1` loaders with IGS on ARE published** in
 `RIPTOPL-VARIANTS-*.zip`. The RA loader is the one genuine exclusion: GSM 1080p + IGS + RA will not
-fit `ram84`, so `RIPTOPL-RA-*.zip` omits `EXTRA_FEATURES` by design.
+fit `ram84`, so `RIPTOPL-RetroAchievements-*.zip` omits `EXTRA_FEATURES` by design.
 
 ⚠ *Method trap:* grepping `.github/workflows/` alone MISSES this — the matrix lives in
 `.github/scripts/`. Search the whole `.github/` tree.

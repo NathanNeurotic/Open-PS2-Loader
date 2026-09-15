@@ -66,7 +66,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          MAIN_ZIP="$(find release-work -maxdepth 1 -type f -name 'RIPTOPL-*.zip' ! -name 'RIPTOPL-VARIANTS-*' ! -name 'RIPTOPL-DEBUG-*' ! -name 'RIPTOPL-LANGS-*' ! -name '*-src.zip' -print -quit)"
+          # The unified package is the one RIPTOPL-*.zip that is not another archive. The RetroAchievements
+          # package must be excluded too: `-print -quit` takes whichever match find lists first.
+          MAIN_ZIP="$(find release-work -maxdepth 1 -type f -name 'RIPTOPL-*.zip' ! -name 'RIPTOPL-VARIANTS-*' ! -name 'RIPTOPL-DEBUG-*' ! -name 'RIPTOPL-LANGS-*' ! -name 'RIPTOPL-RetroAchievements-*' ! -name 'RIPTOPL-RA-*' ! -name '*-src.zip' -print -quit)"
           if [[ -z "$MAIN_ZIP" ]]; then
             echo 'ERROR: unified RIPTOPL release package zip is missing.' >&2
             exit 1

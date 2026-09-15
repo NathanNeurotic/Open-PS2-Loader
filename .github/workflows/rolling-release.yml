@@ -252,7 +252,8 @@ jobs:
           # Standalone language pack (lang_*.lng + their non-Latin fonts, which are NOT embedded in the
           # ELF) -- build it off the just-built lng/ and stage it so 'rolling' carries it too. Soft-fail
           # so a LANGS hiccup can't break rolling.
-          if ./tools/lng_pack.sh && ls RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
+          # Named with the download-file version (no commit hash), like every other release archive.
+          if LNG_PACK_VERSION="$(sh ./.github/scripts/asset_version.sh "${{ steps.ver.outputs.version }}")" ./tools/lng_pack.sh && ls RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
             cp -f RIPTOPL-LANGS-*.zip rolling/
           else
             echo "WARN: language pack not produced this run"
@@ -519,13 +520,22 @@ jobs:
           path: rolling
 
 
+      - name: Compute the download file version
+        run: |
+          set -eu
+          # Download file names carry the version WITHOUT the commit hash (RIPTOPL-v1.2.0-Beta-2910.zip,
+          # not RIPTOPL-v1.2.0-Beta-2910-6c5f4b1-3031f67ccece3825.zip): they are what a new user reads
+          # on the release page. OPL_VERSION itself is unchanged and still heads the release notes with
+          # its commit link. The MEGA archive step keeps OPL_VERSION so its per-build name stays unique.
+          echo "ASSET_VERSION=$(sh ./.github/scripts/asset_version.sh "${OPL_VERSION:-rolling}")" >> "$GITHUB_ENV"
+
       - name: Name assets with the build version
         run: |
           set -eu
           # Apply ONE authoritative version (from the required ps2dev:latest build, which now
           # resolves full git history) to all available flavours. The source commit is identical;
           # the toolchain-brand suffix records which of the four build environments produced it.
-          VER="${OPL_VERSION:-}"
+          VER="${ASSET_VERSION:-}"
           if [ -z "$VER" ]; then
             VER="rolling-${GITHUB_SHA}"
           fi
@@ -794,12 +804,11 @@ jobs:
             echo "WARN: could not fetch neutrino latest pre-release; package omits it this run"
           fi
           echo "NEUTRINO_VER=${NEUTRINO_VER}" >> "$GITHUB_ENV"
-          REL="${OPL_VERSION:-rolling}"
-          # <SHA256>: first 16 hex of the RIPTOPL.ELF SHA256 (integrity + uniqueness; full hash is
-          # in SHA256SUMS-style listing inside the zip is overkill, the short tag suffices).
-          # SHA is taken from the always-present PS2DEVROLLING ELF purely for a stable unique tag.
-          SHA="$(sha256sum "$PKG/APP_RIPTOPL-PS2DEVROLLING/RIPTOPL.ELF" | cut -c1-16)"
-          ZIP="RIPTOPL-${REL}-${SHA}.zip"
+          REL="${ASSET_VERSION:-rolling}"
+          # Just the version: the release is replaced on every publish (every old asset is deleted
+          # first), and the version's revision number changes whenever the code does, so no hash
+          # suffix is needed to keep the name unique.
+          ZIP="RIPTOPL-${REL}.zip"
           (
             cd "$PKG"
             zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2DEVROLLING POPS EMBER PS2-Servers.url udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
@@ -825,7 +834,7 @@ jobs:
           # Best-effort throughout: RA is an opt-in flavour and a missing RA build must never sink
           # the publish of everything else.
           PKG=riptopl_pkg
-          REL="${OPL_VERSION:-rolling}"
+          REL="${ASSET_VERSION:-rolling}"
           # xeRAbora, hacan359's PC client. The RA loader does nothing on its own -- the console
           # streams memory to this and it does the talking to RetroAchievements -- so the package
           # that ships the loader has to say where to get it. Shortcut only, like every other
@@ -835,7 +844,7 @@ jobs:
           test -f pc/xeRAbora.url
           cp -f pc/xeRAbora.url "$PKG/xeRAbora.url"
           if [ ! -d rolling/ra ] || [ -z "$(ls -A rolling/ra 2>/dev/null)" ]; then
-            echo "No RA builds present; skipping the RIPTOPL RA zip."
+            echo "No RA builds present; skipping the RetroAchievements zip."
           else
             # PADEMU ?= 1 is the Makefile default, so the pademu1 build is the one that matches the
             # main package's loader and takes the plain flavour folder name. The pademu0 build sits
@@ -865,18 +874,11 @@ jobs:
               done
             done
             if [ "$RA_STAGED" = "no" ]; then
-              echo "WARN: rolling/ra held no recognisable ELF names; skipping the RIPTOPL RA zip." >&2
+              echo "WARN: rolling/ra held no recognisable ELF names; skipping the RetroAchievements zip." >&2
             else
-              # Tag from the PS2DEVROLLING loader when it exists, exactly as the main zip does:
-              # that flavour is required-to-build, while PS2DEVPINNED is best-effort, so sourcing
-              # the tag from whatever sorts first would silently change which build names the file.
-              if [ -f "$PKG/APP_RIPTOPL-RA-PS2DEVROLLING/RIPTOPL.ELF" ]; then
-                RA_REF="$PKG/APP_RIPTOPL-RA-PS2DEVROLLING"
-              else
-                RA_REF="$(ls -d "$PKG"/APP_RIPTOPL-RA-* 2>/dev/null | head -n1)"
-              fi
-              RA_SHA="$(sha256sum "$RA_REF/RIPTOPL.ELF" | cut -c1-16)"
-              RA_ZIP="RIPTOPL-RA-${REL}-${RA_SHA}.zip"
+              # The DOWNLOAD is named in full for a new user. The APP_RIPTOPL-RA-* folders inside keep
+              # the short name: they are copied onto memory cards, whose file names stop at 31 chars.
+              RA_ZIP="RIPTOPL-RetroAchievements-${REL}.zip"
               (
                 cd "$PKG"
                 # Same payload as the main package, RA loader in place of the standard one. POPS,
@@ -902,7 +904,7 @@ jobs:
           # The EXTRA_FEATURES x PADEMU x DUALSENSE variants and debug builds for the two ps2dev
           # flavours (-PS2DEVROLLING and -PS2DEVPINNED) become two separate release zips. Remove the
           # loose dirs afterward so the final 'gh release upload rolling/*' stays file-only.
-          REL="${OPL_VERSION:-rolling}"
+          REL="${ASSET_VERSION:-rolling}"
           for kind in variants debug; do
             up="$(echo "$kind" | tr '[:lower:]' '[:upper:]')"
             if [ -d "rolling/$kind" ] && [ -n "$(ls -A "rolling/$kind" 2>/dev/null)" ]; then
@@ -944,7 +946,7 @@ jobs:
             cat .github/rolling-release-notes-intro.md
 
             printf '\n## Download\n\n'
-            printf -- '- **New install:** the `RIPTOPL-<version>-<hash>.zip` package. Copy `RIPTOPL.ELF` from one `APP_RIPTOPL-<flavour>/` folder to your launch method, plus `POPS/`, `EMBER/` and `neutrino/` as described below. It also carries shortcuts to the tools at the bottom of this page. [Install guide](https://nathanneurotic.github.io/Open-PS2-Loader/install.html)\n'
+            printf -- '- **New install:** the `RIPTOPL-<version>.zip` package. Copy `RIPTOPL.ELF` from one `APP_RIPTOPL-<flavour>/` folder to your launch method, plus `POPS/`, `EMBER/` and `neutrino/` as described below. It also carries shortcuts to the tools at the bottom of this page. [Install guide](https://nathanneurotic.github.io/Open-PS2-Loader/install.html)\n'
             if [ -f rolling/RIPTOPL.ELF ]; then
               printf -- '- **Updating:** download **[RIPTOPL.ELF](%s/%s/releases/download/%s/RIPTOPL.ELF)** and overwrite yours. It is the %s flavour and the link never changes, but it does not bring `POPS/`, `EMBER/`, `neutrino/` or languages.\n' \
                 "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG" "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
@@ -956,13 +958,13 @@ jobs:
             else
               printf -- '- **Neutrino could not be bundled this run:** get the latest from https://github.com/rickgaiser/neutrino/releases.\n'
             fi
-            if ls rolling/RIPTOPL-RA-*.zip >/dev/null 2>&1; then
-              printf -- '- `RIPTOPL-RA-*.zip`: the RetroAchievements build as a complete package. A development build, not hardware-tested.\n'
+            if ls rolling/RIPTOPL-RetroAchievements-*.zip >/dev/null 2>&1; then
+              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the RetroAchievements build as a complete package. A development build, not hardware-tested.\n'
             fi
-            if [ -f "rolling/RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip" ]; then
+            if [ -f "rolling/RIPTOPL-VARIANTS-${ASSET_VERSION:-rolling}.zip" ]; then
               printf -- '- `RIPTOPL-VARIANTS-*.zip`: EXTRA_FEATURES (IGS, RTL), PADEMU and DualSense (DS5, USB) loaders. For DS5, prefer `-PS2DEVPINNED-ds5`.\n'
             fi
-            if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
+            if [ -f "rolling/RIPTOPL-DEBUG-${ASSET_VERSION:-rolling}.zip" ]; then
               printf -- '- `RIPTOPL-DEBUG-*.zip`: debug builds (iopcore, ingame, eesio, ppctty, DTL-T10000) for diagnosing a problem.\n'
             fi
             if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
@@ -1160,7 +1162,7 @@ jobs:
           # deliberately EXCLUDED from the permanent MEGA copy:
           #   RIPTOPL-VARIANTS-*.zip  (~120 MB -- every PADEMU x EXTRA_FEATURES x DUALSENSE combo, two ps2dev flavours)
           #   RIPTOPL-DEBUG-*.zip     (~91 MB  -- iopcore/ingame/eesio/ppctty/DTL debug builds, two ps2dev flavours)
-          # RIPTOPL-RA-*.zip is NOT in that exclusion: it is an installable package (loader + POPS +
+          # RIPTOPL-RetroAchievements-*.zip is NOT in that exclusion: it is an installable package (loader + POPS +
           # EMBER + neutrino + shortcuts), the same shape as the main zip, so it is archived like one.
           # They dominate the size (~10x: ~233 MB -> ~22 MB), they still ship on the GitHub rolling
           # release for the CURRENT build, and a *permanent* per-build archive is for restoring or

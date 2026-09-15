@@ -45,7 +45,7 @@ done
 #
 # EXTRA_FEATURES is deliberately NOT passed. The flag defaults to 0 and the MAIN release loader is
 # built with that default, so leaving it alone is what makes this the shipping loader plus
-# achievements -- which is what somebody taking RIPTOPL-RA-*.zip instead of the main archive should
+# achievements -- which is what somebody taking RIPTOPL-RetroAchievements-*.zip instead of the main archive should
 # get. An earlier version pinned EXTRA_FEATURES=1, borrowed from the matrix above on the reasoning
 # that an opt-in build may as well carry everything. The linker settled it: GSM_1080P + IGS cost
 # ee_core ~6.2 KB of text, RA costs ~6.0 KB of bss, and ram84 (77312 bytes, ee_core/linkfile) fits
