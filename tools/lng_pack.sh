@@ -42,6 +42,11 @@ do
 	elif [ -e "lng_src/thirdparty/font_${CURRENT_FILE}.otf" ]
 	then
 		cp "${CURRENT_DIR}/lng_src/thirdparty/font_${CURRENT_FILE}.otf" "${BUILD_DIR}/${CURRENT_FILE}-${OPL_VERSION}/font_${CURRENT_FILE}.otf"
+	elif [ "${CURRENT_FILE}" = "Serbian" ] && [ -e "lng_src/thirdparty/font_Croatian.ttf" ]
+	then
+		# The language repo has no Serbian font, and the built-in font lacks č, ć and đ. Serbian Latin
+		# uses exactly Croatian's letters, so ship the Croatian font under the name the loader looks for.
+		cp "${CURRENT_DIR}/lng_src/thirdparty/font_Croatian.ttf" "${BUILD_DIR}/${CURRENT_FILE}-${OPL_VERSION}/font_${CURRENT_FILE}.ttf"
 	fi
 done < ${LANG_LIST}
 
