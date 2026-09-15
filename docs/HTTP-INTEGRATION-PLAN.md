@@ -64,8 +64,10 @@ Ours is a peer protocol with its own source.
 Take the byte-range reader and the wire shape. Re-author the integration. `git cherry-pick` and
 three-way merge will both produce garbage here.
 
-The parts that map closely are `modules/iopcore/cdvdman/http.c`, `http.h` and `device-http.c`. The
-menu side does not map at all.
+The parts that map closely are the donor's `modules/iopcore/cdvdman/http.c`, `http.h` and
+`device-http.c`. The menu side does not map at all. (In this tree the reader became the shared
+`modules/network/common/httpstream.inc`, included by `device-http.c` and
+`modules/network/httpclient/httpclient.c`; there is no `http.c`.)
 
 ### 0.3 Standing repo rules that bite this feature
 
