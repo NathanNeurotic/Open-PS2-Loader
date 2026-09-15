@@ -271,11 +271,22 @@ remains available for a normal disc boot.</p>
 <p><code>make clean</code> is not optional when switching the flag: it changes the layout of a structure and an
 enumeration shared between the menu and the loader core, and make cannot see that a stale object file
 is now wrong.</p>
-<p>The rolling release publishes the flavour as its own archive, <strong><code>RIPTOPL-RA-*.zip</code></strong>, built to the
+<p>The rolling release publishes the flavour as its own archive, <strong><code>RIPTOPL-RetroAchievements-*.zip</code></strong>, built to the
 same shape as the main package: <code>POPS/</code>, <code>EMBER/</code>, <code>neutrino/</code> and the PC-tool shortcuts, with
-<code>APP_RIPTOPL-RA-&lt;flavour&gt;/RIPTOPL.ELF</code> in place of the standard loader (<code>-nopademu</code> folders carry the
-<code>PADEMU=0</code> builds). It also carries <strong><code>xeRAbora.url</code></strong>, because the loader does nothing without the
-PC client.</p>
+loader folders in place of the standard ones:</p>
+<table>
+<thead><tr><th>Folder</th><th>Build</th></tr></thead>
+<tbody>
+<tr><td><code>APP_RIPTOPL-RA-PINNED/</code></td><td>Pinned ps2dev toolchain, <code>PADEMU=1</code> (the default). Start here.</td></tr>
+<tr><td><code>APP_RIPTOPL-RA-ROLLING/</code></td><td><code>ps2dev:latest</code>, <code>PADEMU=1</code></td></tr>
+<tr><td><code>APP_RIPTOPL-RA-PINNED-nopademu/</code></td><td>Pinned ps2dev toolchain, <code>PADEMU=0</code></td></tr>
+<tr><td><code>APP_RIPTOPL-RA-ROLLING-nopademu/</code></td><td><code>ps2dev:latest</code>, <code>PADEMU=0</code></td></tr>
+</tbody>
+</table>
+<p>RA is built with the ps2dev toolchain only, so these folders say <code>PINNED</code>/<code>ROLLING</code> where the main
+package says <code>PS2DEVPINNED</code>/<code>PS2DEVROLLING</code>. The names are kept short on purpose: a memory card file
+name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
+archive also carries <strong><code>xeRAbora.url</code></strong>, because the loader does nothing without the PC client.</p>
 <p>It is deliberately <em>not</em> an entry in <code>RIPTOPL-VARIANTS-*.zip</code>: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
 diagnostic bundle rather than installable payload. The default build is unaffected by all of this — every RA source file and
