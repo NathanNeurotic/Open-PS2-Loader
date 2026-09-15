@@ -183,7 +183,8 @@ under L3 PS1 view exactly like a USB drive (with the BDMA equip for POPSTARTER â
 <h3 id="exfat-format">Formatting and partition table</h3>
 <p>Format the drive exFAT from your PC before use. Key rules:</p>
 <ul class="checklist">
-<li>Partition table: <b>MBR</b> (up to 2 TB) or <b>GPT</b> (larger drives)</li>
+<li>Partition table: <b>MBR</b> (up to 2 TB) or <b>GPT</b> (larger drives). On GPT, a partition is found
+even when an earlier slot in the partition table is empty, for example after deleting the first partition on a PC.</li>
 <li>Filesystem: <b>exFAT</b></li>
 <li>Allocation unit size: <b>Default</b> â€” do not choose a custom cluster size</li>
 </ul>
