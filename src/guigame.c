@@ -12,6 +12,7 @@
 #include "include/ethsupport.h"
 #include "include/favsupport.h"
 #include "include/bdmsupport.h"
+#include "include/supportbase.h"
 #include "include/vcdsupport.h" // VCD games are POPSTARTER-only (Loader Core is N/A)
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
 #include "include/compatupd.h"
@@ -1309,6 +1310,8 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
 
     if (compatMode != 0)
         result = configSetInt(configSet, CONFIG_ITEM_COMPAT, compatMode);
+    else if (sbTitleCompatDefault(configSet) != 0) // "none" must be saved explicitly, or the title default comes back
+        result = configSetInt(configSet, CONFIG_ITEM_COMPAT, 0);
     else
         configRemoveKey(configSet, CONFIG_ITEM_COMPAT);
 
@@ -1882,8 +1885,7 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
     } else
         diaSetInt(diaCompatConfig, COMPAT_DMA, 0);
 
-    compatMode = 0;
-    configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatMode);
+    compatMode = sbGetCompatModes(configSet); // includes a title default, so the screen matches what launches
     for (i = 0; i < COMPAT_MODE_COUNT; ++i)
         diaSetInt(diaCompatConfig, COMPAT_MODE_BASE + i, (compatMode & (1 << i)) > 0 ? 1 : 0);
 
