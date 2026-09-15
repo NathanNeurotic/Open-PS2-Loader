@@ -247,7 +247,7 @@ If you leave the <b>Share</b> field empty, OPL asks the driver to enumerate the 
   <div class="step">
     <h3>Set up the POPSTARTER network config</h3>
     <p>Open <b>POPSTARTER Network Settings</b>, from <b>Settings → Network</b> or <b>Settings → PS Emulation Settings</b>. It edits POPSTARTER's own <code>mc?:/POPSTARTER/IPCONFIG.DAT</code> and <code>SMBCONFIG.DAT</code> in the format POPSTARTER expects, so you do not need to edit those files by hand.</p>
-    <p>The screen shows what those files already contain, or says none were found. <b>Import from SMB POPS Directory</b> copies both from the connected share's <code>POPS</code> folder. On OK, only the values you changed are written, to the card the existing files came from, and replacing an existing configuration asks first. If writing fails, OPL shows an error message.</p>
+    <p>The screen shows what those files already contain, or says none were found. <b>Import from SMB POPS Directory</b> copies both from the connected share's <code>POPS</code> folder. On OK, only the values you changed are written, to the card the existing files came from, and replacing an existing configuration asks first. On a first setup, with neither file on the card, saving the SMB values writes <code>IPCONFIG.DAT</code> too, as DHCP unless a complete static IP is entered. If writing fails, OPL shows an error message.</p>
   </div>
 </div>
 
