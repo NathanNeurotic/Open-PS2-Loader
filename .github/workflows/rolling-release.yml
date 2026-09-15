@@ -849,8 +849,17 @@ jobs:
             # PADEMU ?= 1 is the Makefile default, so the pademu1 build is the one that matches the
             # main package's loader and takes the plain flavour folder name. The pademu0 build sits
             # beside it as -nopademu, mirroring how the main zip labels its flavours by folder.
+            #
+            # The folders are named ROLLING/PINNED, not PS2DEVROLLING/PS2DEVPINNED like the main
+            # package's: RA is built with the ps2dev toolchain only, so the prefix told nobody
+            # anything, and it pushed the -nopademu names to 36-37 characters. These folders are
+            # copied onto memory cards, whose file names stop at 31 (EntryName[32] in libmc).
             RA_STAGED=no
             for sdk in PS2DEVROLLING PS2DEVPINNED; do
+              case "$sdk" in
+                PS2DEVROLLING) RA_LABEL=ROLLING ;;
+                PS2DEVPINNED) RA_LABEL=PINNED ;;
+              esac
               for pad in 1 0; do
                 SRC="rolling/ra/RIPTOPL-ra-pademu${pad}-${sdk}.ELF"
                 [ -f "$SRC" ] || continue
@@ -867,7 +876,12 @@ jobs:
                   echo "       It would not fit a memory card. Check NOT_PACKED in build_rolling_extras.sh." >&2
                   exit 1
                 fi
-                if [ "$pad" = "1" ]; then DEST="$PKG/APP_RIPTOPL-RA-${sdk}"; else DEST="$PKG/APP_RIPTOPL-RA-${sdk}-nopademu"; fi
+                if [ "$pad" = "1" ]; then DEST_NAME="APP_RIPTOPL-RA-${RA_LABEL}"; else DEST_NAME="APP_RIPTOPL-RA-${RA_LABEL}-nopademu"; fi
+                if [ "${#DEST_NAME}" -gt 31 ]; then
+                  echo "ERROR: RA folder $DEST_NAME is ${#DEST_NAME} characters; memory card names stop at 31." >&2
+                  exit 1
+                fi
+                DEST="$PKG/$DEST_NAME"
                 mkdir -p "$DEST"
                 cp -f "$SRC" "$DEST/RIPTOPL.ELF"
                 RA_STAGED=yes
@@ -877,7 +891,7 @@ jobs:
               echo "WARN: rolling/ra held no recognisable ELF names; skipping the RetroAchievements zip." >&2
             else
               # The DOWNLOAD is named in full for a new user. The APP_RIPTOPL-RA-* folders inside keep
-              # the short name: they are copied onto memory cards, whose file names stop at 31 chars.
+              # the short RA name, for the memory card limit described above.
               RA_ZIP="RIPTOPL-RetroAchievements-${REL}.zip"
               (
                 cd "$PKG"

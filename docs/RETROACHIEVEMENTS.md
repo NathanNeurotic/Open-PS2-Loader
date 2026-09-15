@@ -190,9 +190,19 @@ is now wrong.
 
 The rolling release publishes the flavour as its own archive, **`RIPTOPL-RetroAchievements-*.zip`**, built to the
 same shape as the main package: `POPS/`, `EMBER/`, `neutrino/` and the PC-tool shortcuts, with
-`APP_RIPTOPL-RA-<flavour>/RIPTOPL.ELF` in place of the standard loader (the loader folders keep the short
-`RA` name; `-nopademu` folders carry the `PADEMU=0` builds). It also carries **`xeRAbora.url`**, because the loader does nothing without the
-PC client.
+loader folders in place of the standard ones:
+
+| Folder | Build |
+| --- | --- |
+| `APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` (the default). Start here. |
+| `APP_RIPTOPL-RA-ROLLING/` | `ps2dev:latest`, `PADEMU=1` |
+| `APP_RIPTOPL-RA-PINNED-nopademu/` | Pinned ps2dev toolchain, `PADEMU=0` |
+| `APP_RIPTOPL-RA-ROLLING-nopademu/` | `ps2dev:latest`, `PADEMU=0` |
+
+RA is built with the ps2dev toolchain only, so these folders say `PINNED`/`ROLLING` where the main
+package says `PS2DEVPINNED`/`PS2DEVROLLING`. The names are kept short on purpose: a memory card file
+name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
+archive also carries **`xeRAbora.url`**, because the loader does nothing without the PC client.
 
 It is deliberately *not* an entry in `RIPTOPL-VARIANTS-*.zip`: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
