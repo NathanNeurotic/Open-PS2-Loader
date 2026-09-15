@@ -156,18 +156,6 @@ int main(void)
     assert(apaFenceWriteAllowed(0x40000, 2, hdr, TOTAL));
     assert(apaFenceWriteAllowed(3, 0, hdr, TOTAL)); /* zero-length: no I/O happens */
 
-    /* HDIOC_WRITESECTOR: an absolute EE-supplied LBA. Only above the __mbr partition, in range. */
-    assert(!apaFenceRawWriteAllowed(0, 2, TOTAL));
-    assert(!apaFenceRawWriteAllowed(6, 1, TOTAL));
-    assert(!apaFenceRawWriteAllowed(0x3FFFF, 2, TOTAL));
-    assert(apaFenceRawWriteAllowed(0x40000, 2, TOTAL));
-    assert(apaFenceRawWriteAllowed(0x40000 + 0x808, 2, TOTAL));
-    assert(!apaFenceRawWriteAllowed(TOTAL - 1, 2, TOTAL));
-    assert(!apaFenceRawWriteAllowed(TOTAL, 1, TOTAL));
-    assert(!apaFenceRawWriteAllowed(0xFFFFFFFFu, 2, TOTAL));
-    assert(apaFenceRawWriteAllowed(0xFFFFFFF0u, 2, 0)); /* capacity unknown: floor still applies */
-    assert(apaFenceRawWriteAllowed(5, 0, TOTAL));
-
     puts("fence: all cases passed");
     return 0;
 }
@@ -252,13 +240,15 @@ def check_driver_policy():
         body = case_body(fio, 'int hddIoctl2(', label)
         check(body is not None and '-EACCES' in body and 'ioctl2' not in body,
               'hdd_fio.c: %s is reachable again' % label)
-    for label in ('HDIOC_SWAPTMP', 'HDIOC_SETOSDMBR'):
+    for label in ('HDIOC_SWAPTMP', 'HDIOC_SETOSDMBR', 'HDIOC_WRITESECTOR'):
         body = case_body(fio, 'int hddDevctl(', label)
-        check(body is not None and '-EACCES' in body and 'devctl' not in body,
+        check(body is not None and '-EACCES' in body and 'devctl' not in body and 'blkIoDmaTransfer' not in body,
               'hdd_fio.c: %s is reachable again' % label)
-    body = case_body(fio, 'int hddDevctl(', 'HDIOC_WRITESECTOR')
-    check(body is not None and 'apaFenceRawWriteAllowed' in body,
-          'hdd_fio.c: HDIOC_WRITESECTOR lost its raw LBA bound')
+    # A game loader is not a partition manager: delete and rename refuse before touching the table.
+    for signature, call in (('int hddRemove(', 'apaRemove('), ('int hddReName(', 'apaRename(')):
+        body = function_body(fio, signature)
+        check(body is not None and 0 <= body.find('return -EACCES;') < body.find(call),
+              'hdd_fio.c: %s can reach %s again' % (signature.rstrip('('), call.rstrip('(')))
     transfer = function_body(fio, 'static int ioctl2Transfer(')
     check(transfer is not None and 'arg->sector + arg->size' not in transfer,
           'hdd_fio.c: ioctl2Transfer bounds check can wrap again')
@@ -270,14 +260,14 @@ def check_driver_policy():
     stat_body = function_body(fio, 'static void fioGetStatFiller(')
     check(stat_body is not None and 'i < APA_MAXSUB' in stat_body,
           'hdd_fio.c: fioGetStatFiller walks subs[] without the APA_MAXSUB bound')
-    remove_body = function_body(fio, 'static int apaRemove(')
-    if remove_body is None:
-        failures.append('hdd_fio.c: apaRemove not found')
-    else:
-        first_edit = remove_body.find('clink->header->nsub = 0;')
-        proof = remove_body.find('sub->header->main == clink->header->start')
-        check(first_edit != -1 and proof != -1 and proof < first_edit and 'nsub > APA_MAXSUB' in remove_body[:first_edit],
-              'hdd_fio.c: apaRemove modifies the table before proving every sub-partition belongs to it')
+
+    # ...and the loader itself never asks for a partition edit or a raw write.
+    hdd_c = text(root / 'src/hdd.c')
+    support = text(root / 'src/hddsupport.c')
+    check('HDIOC_WRITESECTOR' not in hdd_c and 'unlink(' not in hdd_c,
+          'src/hdd.c: the loader issues raw sector writes or partition deletes again')
+    check('fileXioRename(' not in support and 'hddDeleteGame' not in support and 'hddSetHDLGameInfo' not in support,
+          'src/hddsupport.c: the HDD page renames a partition, deletes a game or rewrites an HDL header again')
 
     # The probe classifies a GPT/APA hybrid as GPT before it ever looks for an APA header.
     probe = function_body(text(root / 'src/hddsupport.c'), 'int hddDetectNonSonyFileSystem(')
@@ -415,6 +405,78 @@ def run_range_harness():
             failures.append('ata range harness failed:\n' + result.stdout + result.stderr)
 
 
+SECTOR_SIZE_HARNESS_PREFIX = r'''
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+typedef uint16_t u16;
+typedef uint32_t u32;
+'''
+
+SECTOR_SIZE_HARNESS_MAIN = r'''
+int main(void)
+{
+    u16 id[256];
+
+    /* Old drive: word 106 not valid. */
+    memset(id, 0, sizeof(id));
+    assert(ata_identify_logical_sector_size(id) == 512);
+
+    /* 512e: 4K physical (bit 13, exponent 3), 512 logical -- accepted. */
+    id[106] = 0x4000 | 0x2000 | 3;
+    assert(ata_identify_logical_sector_size(id) == 512);
+
+    /* 4Kn: bit 12, 2048 words = 4096 bytes -- refused by the caller. */
+    id[106] = 0x4000 | 0x1000;
+    id[117] = 2048;
+    id[118] = 0;
+    assert(ata_identify_logical_sector_size(id) == 4096);
+
+    /* Bit 12 without a size is not 512 either. */
+    id[117] = 0;
+    assert(ata_identify_logical_sector_size(id) != 512);
+
+    /* Word 106 with bit 15 set is invalid and ignored. */
+    id[106] = 0x8000 | 0x4000 | 0x1000;
+    id[117] = 2048;
+    assert(ata_identify_logical_sector_size(id) == 512);
+
+    puts("ata logical sector size: all cases passed");
+    return 0;
+}
+'''
+
+
+def run_sector_size_harness():
+    atad = text(root / 'modules/hdd/atad/src/ps2atad.c')
+    match = re.search(r'static u32 ata_identify_logical_sector_size\(.*?\n\}\n', atad, re.S)
+    if match is None:
+        failures.append('ps2atad.c: the IDENTIFY logical sector size check is missing')
+        return
+    io_body = function_body(atad, 'int ata_device_sector_io64(')
+    check(io_body is not None and 0 <= io_body.find('ata_logical_sector_size[device] != 512') < io_body.find('while (res == 0'),
+          'ps2atad.c: ata_device_sector_io64 no longer refuses drives with non-512-byte logical sectors')
+    check(0 <= atad.find('ata_logical_sector_size[i] = ata_identify_logical_sector_size(ata_param);') <
+          atad.find('sceAtaGetSceId(i, ata_param)'),
+          'ps2atad.c: the logical sector size is no longer read before the Sony identify overwrites ata_param')
+    check('g_ata_bd[i].sectorSize = ata_logical_sector_size[i];' in atad,
+          'ps2atad.c: the ATA block device no longer reports its logical sector size to BDM')
+    with tempfile.TemporaryDirectory() as tmp:
+        c_file = Path(tmp) / 'sector_size_test.c'
+        exe = Path(tmp) / 'sector_size_test'
+        c_file.write_text(SECTOR_SIZE_HARNESS_PREFIX + match.group(0) + SECTOR_SIZE_HARNESS_MAIN)
+        result = subprocess.run(['cc', '-std=c99', '-Wall', '-Wextra', '-Werror', str(c_file), '-o', str(exe)],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            failures.append('ata sector size harness failed to compile:\n' + result.stderr)
+            return
+        result = subprocess.run([str(exe)], capture_output=True, text=True)
+        sys.stdout.write(result.stdout)
+        if result.returncode != 0:
+            failures.append('ata sector size harness failed:\n' + result.stdout + result.stderr)
+
+
 def run_bd_harness():
     atad = text(root / 'modules/hdd/atad/src/ps2atad.c')
     check('lba += chunk;' in atad and 'nsectors -= chunk;' in atad,
@@ -471,6 +533,7 @@ run_fence_harness()
 check_driver_policy()
 run_bd_harness()
 run_range_harness()
+run_sector_size_harness()
 check_raw_apa_namespace()
 
 if failures:

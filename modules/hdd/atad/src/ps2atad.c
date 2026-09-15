@@ -1027,6 +1027,21 @@ int sceAtaDmaTransfer(int device, void *buf, u32 lba, u32 nsectors, int dir)
    checked capacity at all. Only corrupt metadata or a stray request can get here.
    total_sectors_lba48 is a u32 that saturates at 0xffffffff on drives past 2 TiB, so it is trusted
    only below that; larger drives are held to the 48-bit address width, keeping them fully usable. */
+/* FORK (RiptOPL): the drive's LOGICAL sector size, from IDENTIFY DEVICE. Word 106 is valid when bit
+   14 is set and bit 15 clear; bit 12 then means logical sectors are not 512 bytes, and words 117-118
+   hold their size in 16-bit words. Bit 13 and bits 3:0 describe PHYSICAL sectors only, so a 512e
+   drive (4K physical, 512 logical -- nearly every modern disk) reports 512 here and is unaffected. */
+static u32 ata_identify_logical_sector_size(const u16 *param)
+{
+    if ((param[106] & 0xC000) != 0x4000 || !(param[106] & 0x1000))
+        return 512;
+    return (((u32)param[118] << 16) | param[117]) * 2;
+}
+
+/* Every consumer of this driver -- APA, PFS, the DMA transfer lengths, BDM's FatFs -- counts LBAs in
+   512-byte sectors, so a 4Kn drive would be read and written eight times over per request. */
+static u32 ata_logical_sector_size[sizeof(atad_devinfo) / sizeof(atad_devinfo[0])] = {512, 512};
+
 static int ata_request_in_range(const ata_devinfo_t *info, u64 lba, u32 nsectors)
 {
     u64 limit;
@@ -1053,6 +1068,8 @@ int ata_device_sector_io64(int device, void *buf, u64 lba, u32 nsectors, int dir
                  (unsigned long)nsectors, (unsigned long)(lba >> 32), (unsigned long)(lba & 0xffffffff));
         return ATA_RES_ERR_IO;
     }
+    if (ata_logical_sector_size[device] != 512)
+        return ATA_RES_ERR_IO; /* FORK: a 4Kn drive -- see ata_identify_logical_sector_size */
 
     while (res == 0 && nsectors > 0) {
 
@@ -1316,6 +1333,14 @@ static int ata_init_devices(ata_devinfo_t *devinfo)
            either words(61:60) for 28-bit or words(103:100) for 48-bit.  */
         devinfo[i].lba48 = (ata_param[ATA_ID_COMMAND_SETS_SUPPORTED] & 0x0400) != 0;
 
+        /* FORK: read before the Sony identify below overwrites ata_param. A drive whose logical
+           sectors are not 512 bytes is refused all sector I/O, and its BDM device reports its real
+           size so BDM declines it too (the loader then shows code 500). */
+        ata_logical_sector_size[i] = ata_identify_logical_sector_size(ata_param);
+        if (ata_logical_sector_size[i] != 512)
+            M_PRINTF("device %d uses %lu-byte logical sectors; only 512 is supported, sector I/O refused\n",
+                     i, (unsigned long)ata_logical_sector_size[i]);
+
         /* Save the total sector counts before we overwrite ata_param with the value of Sony identify drive command. */
         total_sectors_nonlba48 = (ata_param[ATA_ID_SECTOTAL_HI] << 16) | ata_param[ATA_ID_SECTOTAL_LO];
         if (ata_param[ATA_ID_48BIT_SECTOTAL_HI]) {
@@ -1374,6 +1399,7 @@ static int ata_init_devices(ata_devinfo_t *devinfo)
 #endif
 
 #ifdef ATA_ENABLE_BDM
+        g_ata_bd[i].sectorSize = ata_logical_sector_size[i];
         g_ata_bd[i].sectorCount = devinfo[i].total_sectors_lba48;
         if (!g_ata_bd_connected[i]) { /* FORK: connect at most once per unit across re-probes */
             bdm_connect_bd(&g_ata_bd[i]);

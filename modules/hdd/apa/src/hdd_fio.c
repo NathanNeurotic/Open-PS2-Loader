@@ -539,30 +539,8 @@ static int apaRemove(s32 device, const char *id, const char *fpwd)
         apaCacheFree(clink);
         return -EACCES;
     }
-    // RiptOPL: prove every sub-partition before changing anything. The SDK cleared nsub first,
-    // skipped a sub whose header could not be read, and then deleted the main partition anyway --
-    // orphaning that sub for good. A corrupt count walked past the 64-entry subs array, and a subs
-    // entry pointing at an unrelated partition would have deleted THAT partition. Delete game is the
-    // loader's one partition-table edit, so it refuses rather than guesses.
-    nsub = clink->header->nsub;
-    if (nsub > APA_MAXSUB) {
-        apaCacheFree(clink);
-        return -EIO;
-    }
-    for (i = 0; i < (int)nsub; i++) {
-        apa_cache_t *sub = apaCacheGetHeader(device, clink->header->subs[i].start, APA_IO_MODE_READ, &rv);
-        int ok = sub != NULL && (sub->header->flags & APA_FLAG_SUB) && sub->header->main == clink->header->start;
-
-        if (sub != NULL)
-            apaCacheFree(sub);
-        if (!ok) {
-            APA_PRINTF(APA_DRV_NAME ": sub-partition %d of %s is unreadable or not its own; delete refused\n", i, id);
-            apaCacheFree(clink);
-            return rv != 0 ? rv : -EIO;
-        }
-    }
-
     // remove all subs first...
+    nsub = clink->header->nsub;
     clink->header->nsub = 0;
     clink->flags |= APA_CACHE_FLAG_DIRTY;
     apaCacheFlushAllDirty(device);
@@ -645,6 +623,11 @@ int hddRemove(iomanX_iop_file_t *f, const char *name)
     if (strcmp(f->device->name, "bhdd") == 0)
         return -EACCES;
 #endif
+    // RiptOPL: a game loader never deletes partitions. Deleting one rewrites the headers around it
+    // (and LBA 0 for the last one), and a torn or misdirected header write breaks the whole chain.
+    APA_PRINTF(APA_DRV_NAME ": partition delete refused (disabled in this build)\n");
+    return -EACCES;
+
     WaitSema(fioSema);
     rv = apaRemove(f->unit, params.id, params.fpwd);
     SignalSema(fioSema);
@@ -862,6 +845,10 @@ int hddDread(iomanX_iop_file_t *f, iox_dirent_t *dirent)
 int hddReName(iomanX_iop_file_t *f, const char *oldname, const char *newname)
 {
     int rv;
+
+    // RiptOPL: a game loader never renames partitions; a rename rewrites the partition's APA header.
+    APA_PRINTF(APA_DRV_NAME ": partition rename refused (disabled in this build)\n");
+    return -EACCES;
 
     WaitSema(fioSema);
     rv = apaRename(f->unit, oldname, newname);
@@ -1191,17 +1178,10 @@ int hddDevctl(iomanX_iop_file_t *f, const char *devname, int cmd, void *arg,
                                   ((hddAtaTransfer_t *)arg)->size, BLKIO_DIR_READ);
             break;
 
+        // RiptOPL: an absolute LBA straight from the EE. The loader writes nothing outside the PFS
+        // partitions it mounts, so raw sector writes are refused outright.
         case HDIOC_WRITESECTOR:
-            // RiptOPL: an absolute LBA straight from the EE. The loader only rewrites HDL game headers,
-            // which never sit inside the __mbr partition, so refuse anything that does.
-            if (!apaFenceRawWriteAllowed(((hddAtaTransfer_t *)arg)->lba, ((hddAtaTransfer_t *)arg)->size,
-                                         hddDevices[f->unit].totalLBA)) {
-                rv = -EROFS;
-                break;
-            }
-            rv = blkIoDmaTransfer(f->unit, ((hddAtaTransfer_t *)arg)->data,
-                                  ((hddAtaTransfer_t *)arg)->lba, ((hddAtaTransfer_t *)arg)->size,
-                                  BLKIO_DIR_WRITE);
+            rv = -EACCES;
             break;
 
         case HDIOC_SCEIDENTIFY:

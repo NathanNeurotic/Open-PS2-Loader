@@ -651,7 +651,7 @@ void menuReinitMainMenu(void)
     menuInitMainMenu();
 }
 
-void menuInitGameMenu(void)
+void menuInitGameMenu(item_list_t *support)
 {
     if (gameMenu)
         submenuDestroy(&gameMenu);
@@ -670,8 +670,13 @@ void menuInitGameMenu(void)
     submenuAppendItem(&gameMenu, -1, NULL, GAME_TEST_CHANGES, _STR_TEST);
     submenuAppendItem(&gameMenu, -1, NULL, GAME_REMOVE_CHANGES, _STR_REMOVE_ALL_SETTINGS);
     if (gEnableWrite) {
-        submenuAppendItem(&gameMenu, -1, NULL, GAME_RENAME_GAME, _STR_RENAME);
-        submenuAppendItem(&gameMenu, -1, NULL, GAME_DELETE_GAME, _STR_DELETE);
+        // Offer only what the page can do. Favorites keeps both so it can explain why not. The APA
+        // HDD page neither renames nor deletes PS2 games: both would edit the partition table.
+        int fav = support != NULL && support->mode == FAV_MODE;
+        if (fav || (support != NULL && support->itemRename != NULL && support->mode != HDD_MODE))
+            submenuAppendItem(&gameMenu, -1, NULL, GAME_RENAME_GAME, _STR_RENAME);
+        if (fav || (support != NULL && support->itemDelete != NULL))
+            submenuAppendItem(&gameMenu, -1, NULL, GAME_DELETE_GAME, _STR_DELETE);
     }
 #ifdef RETROACHIEVEMENTS
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
