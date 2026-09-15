@@ -228,7 +228,7 @@ block device, so its PS1 games in `massN:/POPS/` list and launch through the sam
 according to **PS2/PS1 Game Display** — there's no separate page. Equip the `HDD (exFAT)` BDMA mode
 so POPSTARTER itself can read them off the exFAT volume.
 
-## 6. PS1 over SMB — network config mirror
+## 6. PS1 over SMB — POPSTARTER network settings
 
 PS1 games on an SMB share need POPSTARTER's own network config (`IPCONFIG.DAT` +
 `SMBCONFIG.DAT`) on the memory card, plus its SMB modules. Edit those files from

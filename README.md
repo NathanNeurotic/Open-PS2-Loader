@@ -636,7 +636,7 @@ This method uses one `title.cfg` per app folder, with two required lines and one
 - `title=` for the app name shown in OPL.
 - `boot=` for the ELF filename to launch, relative to the app's own folder.
 - `argv1=` (optional) for a single argument passed to the ELF as its first argument. It shares
-  storage with the per-app **Alternate Startup** field, so it can also be edited from the console.
+  storage with the per-app **Custom ELF** field, so it can also be edited from the console.
 
 To begin:
 

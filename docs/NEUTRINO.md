@@ -175,7 +175,7 @@ The stored format is unchanged — a space-separated string, e.g.:
 ```
 
 > **Editor length:** each on-screen field still edits at most 31 characters (the same limit as
-> Alt-Startup / Game-ID), but fields you don't touch keep their full stored value, so editing one
+> Custom ELF / Game ID), but fields you don't touch keep their full stored value, so editing one
 > field no longer truncates the others. Edit `neutrino_args` / `$NeutrinoArgs` directly in the
 > config file only when a single field needs more than 31 characters — OPL reads and forwards the
 > full string at launch.
@@ -194,8 +194,8 @@ For the full list of flags Neutrino accepts, see the
 
 ## 4. Network boot — the Network Protocol selector
 
-RiptOPL streams games from a PC over the LAN, chosen with the **Game Sources → Network Start
-Mode** row (**Off** / Manual / Auto) plus the **Network → Protocol** selector — **SMB / UDPFS /
+RiptOPL streams games from a PC over the LAN, chosen with the **Game Sources → Network
+Connectivity** row (**Off** / Manual / Auto) plus the **Network → Protocol** selector — **SMB / UDPFS /
 UDPBD / HTTP**. HTTP uses OPL’s core and has its own [guide](HTTP.md). **UDPFS** is the modern
 network-boot protocol (Rick Gaiser's **UDPRDMA** transport); **UDPBD** is the older SUDPBDv2 protocol,
 kept for users still running the `udpbd-server`. Both appear in OPL as their own games list — with
@@ -274,8 +274,8 @@ effect** (OPL shows the usual restart-to-apply notice).
   usual OPL folders (`CD`, `DVD`,
   `ART`, `CFG`, …); **Files** mode's served *directory* needs the same `CD/` + `DVD/` subfolders —
   OPL never lists ISOs sitting loose at the served root.
-- A **static** PS2 IP. UDPFS has no DHCP client — it reuses the address from **Settings → Network
-  Config**, so set a static IP there. OPL warns if DHCP is on when you select UDPFS, and repeats the
+- A **static** PS2 IP. UDPFS has no DHCP client — it reuses the address from **Settings →
+  Network**, so set a static IP there. OPL warns if DHCP is on when you select UDPFS, and repeats the
   warning as a boot notice while a UDPFS protocol is active with DHCP still on. SMB's server / port /
   share / credentials fields hide automatically when UDPFS is selected.
 - You can start the server **after** the console: the UDPFS drivers keep re-discovering in the
