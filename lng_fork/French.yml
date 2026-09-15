@@ -4,8 +4,8 @@ translations:
   HINT_RUMBLE: Courte vibration en déplaçant le curseur, en confirmant ou en revenant -- nécessite une DualShock en mode analogique
   FOLDER_NAV: Parcourir les dossiers dans la liste des jeux
   HINT_FOLDER_NAV: Affiche les sous-dossiers du CD/DVD comme entrées navigables ; valider pour ouvrir, annuler pour revenir
-  SETTINGS_NO_HOME: Aucune carte mémoire trouvée -- impossible d'enregistrer les réglages. OPL a démarré depuis un périphérique réseau, dont les réglages doivent résider sur une carte locale.
-  ERROR_SAVING_SETTINGS_TO: Impossible d'écrire les réglages sur %s (erreur %d)
+  SETTINGS_NO_HOME: Aucune carte mémoire trouvée -- impossible d'enregistrer les paramètres. OPL a démarré depuis un périphérique réseau, dont les paramètres doivent résider sur une carte locale.
+  ERROR_SAVING_SETTINGS_TO: Impossible d'écrire les paramètres sur %s (erreur %d)
   GENERAL_SETTINGS: Paramètres généraux
   DEVICE_SETTINGS: Paramètres des périphériques
   LAUNCH_PS2_DISC: Lancer un disque PS2
@@ -157,14 +157,14 @@ translations:
   "INFO_RELEASE": "Sortie"
   "INFO_DESCRIPTION": "Description"
   "BLOCKDEVICE_SETTINGS": "Périphériques bloc"
-  "CONTROLLER_SETTINGS": "Réglages de la manette"
+  "CONTROLLER_SETTINGS": "Paramètres de la manette"
   "HINT_BDM_START": "Activer/désactiver le gestionnaire de périphériques bloc (BDM)."
   "HINT_BLOCK_DEVICES": "Activer/désactiver les périphériques bloc (p. ex. USB)."
   "USB_GAMES": "Jeux USB"
   "ILINK_GAMES": "Jeux iLink"
   "MX4SIO_GAMES": "Jeux MX4SIO"
   "PADMACROCONFIG": "Configurer PADMACRO"
-  "PADMACRO_SETTINGS": "Réglages des macros de manette"
+  "PADMACRO_SETTINGS": "Paramètres des macros de manette"
   "PADMACRO_ENABLE": "Macros de manette"
   "PADMACRO_SLOWDOWN": "Ralenti analogique :"
   "HINT_PADMACRO_SLOWDOWN_AXIS": "Réduire l'amplitude du stick analogique lorsque le bouton est enfoncé"
@@ -188,7 +188,7 @@ translations:
   "LANGUAGE_KOREAN": "CORÉEN"
   "LANGUAGE_TRAD_CHINESE": "CHINOIS TRADITIONNEL"
   "LANGUAGE_SIMPL_CHINESE": "CHINOIS SIMPLIFIÉ"
-  "OSD_SETTINGS": "Réglages OSD"
+  "OSD_SETTINGS": "Paramètres OSD"
   "OSD_SETTINGS_LNG": "Langue de l'OSD"
   "ENABLE_LNG": "Changer de langue"
   "BGM": "Musique de fond"
@@ -225,7 +225,7 @@ translations:
   "GAMES_DEVICE": "Périphérique du jeu"
   "DEFAULT_CORE": "Cœur de chargement par défaut"
   "HINT_DEFAULT_CORE": "Cœur par défaut global pour les jeux dont le Cœur de chargement par jeu est réglé sur Défaut. <OPL> est le cœur natif ; Neutrino enchaîne le neutrino.elf externe. Un choix par jeu remplace toujours ce réglage."
-  "VCD_SETTINGS": "Réglages VCD"
+  "VCD_SETTINGS": "Paramètres VCD"
   "FINANCIAL_SUPPORT": "Soutien financier"
   ADVANCED_ARGUMENTS: Arguments avancés
   ADVANCED_SETTINGS: Avancé
@@ -282,28 +282,28 @@ translations:
   GSM_1080P_PROCEED: Forcer le 1080p pour ce jeu ?
   GSM_1080P_SURE: Êtes-vous sûr ? Le mode 1080p expérimental sera appliqué à ce jeu.
   CUSTOM_SETTINGS_PATH: Chemin de sauvegarde personnalisé
-  HINT_CUSTOM_SETTINGS_PATH: "Enregistre les réglages dans un dossier de votre choix, par ex. mass0:/OPL. Laissez vide pour utiliser le dossier de démarrage d'OPL. Le périphérique est chargé à la demande, il n'a donc pas besoin d'être monté à la saisie."
+  HINT_CUSTOM_SETTINGS_PATH: "Enregistre les paramètres dans un dossier de votre choix, par ex. mass0:/OPL. Laissez vide pour utiliser le dossier de démarrage d'OPL. Le périphérique est chargé à la demande, il n'a donc pas besoin d'être monté à la saisie."
   PERGAME_MIXED_SETTINGS: Par jeu + global
   GSM_DEFAULTS: Valeurs GSM par défaut (tous les jeux)
-  ERR_DEVICE_BUSY_TIMEOUT: 'Périphérique occupé : l''écriture des réglages n''a jamais démarré. Réessayez une fois le chargement terminé.'
+  ERR_DEVICE_BUSY_TIMEOUT: 'Périphérique occupé : l''écriture des paramètres n''a jamais démarré. Réessayez une fois le chargement terminé.'
   BDMA_EQUIPPING: Préparation du pilote PS1 sur la carte mémoire...
   VCD_USB_BDMA: Pilote BDMA USB
   HINT_VCD_USB_BDMA: Concerne uniquement les lancements PS1 (VCD) depuis une clé USB. La PS2 ne peut pas détecter si une clé est en fat32 ou exFAT, il faut donc choisir le pilote de POPSTARTER. L'option Demander pose la question à chaque lancement, tandis qu'exFAT ou fat32 fixent la réponse et la sautent.
   VCD_USB_BDMA_ASK: Demander
-  SETTINGS_HDD_FALLBACK: 'Les réglages HDD ont utilisé l''emplacement de secours : %s'
+  SETTINGS_HDD_FALLBACK: 'Les paramètres HDD ont utilisé l''emplacement de secours : %s'
   HDD_BACKEND_RECONCILED: "Les HDD internes APA et exFAT étaient tous deux activés -- l'un a été désactivé automatiquement (voir Paramètres des périphériques)."
   SETTINGS_SAVE_PROMPT: ENREGISTRER LES RÉGLAGES ?
   SETTINGS_SAVE_PROMPT_LINE1: Vos modifications sont actuellement actives.
   SETTINGS_SAVE_PROMPT_LINE2: Voulez-vous les enregistrer pour les prochains démarrages ?
-  SETTINGS_SAVE: Enregistrer les réglages
+  SETTINGS_SAVE: Enregistrer les paramètres
   SETTINGS_EXIT_WITHOUT_SAVING: Quitter sans enregistrer
   SETTINGS_CONTINUE_EDITING: "Continuer l'édition"
   CONFIGURE: Configurer
   HDD_UNAVAILABLE_ERROR: '%d : disque dur indisponible.'
   HDD_PFS_UNAVAILABLE_ERROR: '%d : support PFS du disque dur indisponible.'
-  POPS_LOADING_SETTINGS: Chargement des réglages POPSTARTER...
+  POPS_LOADING_SETTINGS: Chargement des paramètres POPSTARTER...
   POPS_SMB_NOT_CONNECTED: "SMB n'est pas connecté."
-  POPS_SMB_SETTINGS_NOT_FOUND: Aucun réglage POPSTARTER trouvé dans le dossier POPS SMB.
+  POPS_SMB_SETTINGS_NOT_FOUND: Aucun paramètre POPSTARTER trouvé dans le dossier POPS SMB.
   HDD_OPL_PLUS_NOT_FOUND: Partition +OPL introuvable.
   HDD_OPL_COMMON_NOT_FOUND: Partition __common introuvable.
   HDD_OPL_PARTITION_RESTART: Redémarrez RiptOPL pour appliquer la partition OPL sélectionnée.

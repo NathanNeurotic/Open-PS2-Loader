@@ -68,7 +68,7 @@ translations:
   BDMA_ERR_SRC: Hindi nahanap ang mga BDMA module file sa source device.
   BDMA_ERR_SPACE: Hindi sapat ang espasyo ng memory card para sa mga BDMA module.
   BDMA_ERR_IO: Error sa pagsulat ng mga BDMA module sa memory card.
-  COVERFLOW_SETTINGS: Coverflow Settings
+  COVERFLOW_SETTINGS: Mga setting ng Coverflow
   COVERFLOW_COUNT: Bilang ng Cover
   COVERFLOW_SCALE: Center Scale
   COVERFLOW_ANIM: Bilis ng Animation
