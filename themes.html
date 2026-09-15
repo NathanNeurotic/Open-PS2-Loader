@@ -123,6 +123,8 @@ chain — so you override only what differs and inherit the rest.</p>
 <tr><td><code>appsMain0…</code> / <code>appsInfo0…</code></td><td>The <b>apps</b> device list / info</td><td>→ <code>mainN</code> / <code>infoN</code></td></tr>
 <tr><td><code>favsMain0…</code> / <code>favsInfo0…</code></td><td>The <b>Favorites</b> tab list / info</td><td>→ <code>mainN</code> / <code>infoN</code></td></tr>
 <tr><td><code>vcdMain0…</code> / <code>vcdInfo0…</code></td><td>A device's <b>PS1 / VCD</b> view (toggle with <b>L3</b>), plus every PS1 row's cover and info wherever it appears</td><td>main: → <code>appsMainN</code> → <code>mainN</code> · info: → <code>infoN</code></td></tr>
+<tr><td><code>favsVcdMain0…</code> / <code>favsVcdInfo0…</code> <em>(opt-in)</em></td><td>The <b>Favorites PS1</b> view, plus PS1 covers and info on the Favorites <b>All in One</b> shelf</td><td>main: → <code>vcdMainN</code> → <code>appsMainN</code> → <code>mainN</code> · info: → <code>vcdInfoN</code> → <code>infoN</code></td></tr>
+<tr><td><code>favsAppsMain0…</code> / <code>favsAppsInfo0…</code> <em>(opt-in)</em></td><td>The <b>Favorites ELF</b> view, plus app covers and info on the Favorites <b>All in One</b> shelf</td><td>main: → <code>favsMainN</code> → <code>mainN</code> · info: → <code>favsInfoN</code> → <code>infoN</code></td></tr>
 </tbody>
 </table>
 
@@ -136,6 +138,12 @@ portrait box; everything else still inherits <code>main*</code>.</li>
 <li>The <b>VCD/PS1</b> main family falls back to <code>appsMain</code> <em>before</em> <code>main</code>, so a
 PS1 disc with no <code>vcdMain</code> blocks automatically uses the square apps box (jewel-case art is square),
 while <code>vcdInfo</code> falls back to the rich game <code>info</code> page.</li>
+<li>The <b>Favorites per-kind</b> families (<code>favsVcd*</code>, <code>favsApps*</code>) are <b>opt-in</b>: a family
+exists only if the theme declares at least one of its blocks. They give PS1 and app favorites their own layout,
+list and cover proportions without touching the device pages. Undeclared slots fall back to the blocks those
+Favorites views used before. A <b>cover</b> is taken from them only where you declared it, so an undeclared cover
+keeps today's square PS1 or app cover rather than a copy of <code>favsMain</code>'s portrait case. Their lists take
+none of the four global list slots, and PS1 / app favorites keep sharing their existing cover caches.</li>
 </ul>
 
 <h3>Mixed lists: the page picks the family, each row picks its own cover</h3>
@@ -150,8 +158,8 @@ panel, the <code>Coverflow</code> carousel — is resolved <b>per row, by media 
 <thead><tr><th>Row</th><th>Cover drawn from</th></tr></thead>
 <tbody>
 <tr><td>PS2 disc game</td><td>the page's own family — <code>main2</code> on a device page, <code>favsMain2</code> on Favorites</td></tr>
-<tr><td>PS1 / VCD</td><td><code>vcdMain*</code> → <code>appsMain*</code> → <code>main*</code></td></tr>
-<tr><td>App / ELF</td><td><code>appsMain*</code> → <code>main*</code></td></tr>
+<tr><td>PS1 / VCD</td><td><code>vcdMain*</code> → <code>appsMain*</code> → <code>main*</code>; on Favorites, a cover declared in <code>favsVcdMain*</code> first</td></tr>
+<tr><td>App / ELF</td><td><code>appsMain*</code> → <code>main*</code>; on Favorites, a cover declared in <code>favsAppsMain*</code> first</td></tr>
 </tbody>
 </table>
 <p>Only the cover is redirected — its <code>width</code>/<code>height</code>, <code>overlay</code>/<code>overlay2</code>
@@ -359,7 +367,8 @@ appears.</li>
 <p>RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
 serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know
 (<code>devices=</code>, <code>reflection_offset</code>, <code>overlay2</code>,
-<code>plasma_blend_color</code>, the entire <code>favsMain*</code> and <code>vcdMain*</code> families…) are
+<code>plasma_blend_color</code>, the entire <code>favsMain*</code>, <code>vcdMain*</code>, <code>favsVcdMain*</code>
+and <code>favsAppsMain*</code> families…) are
 simply never read, and unknown element types (<code>Coverflow</code>) are skipped without stopping the
 parse. What to expect there:</p>
 <ul>
@@ -511,7 +520,10 @@ square art. Define a <code>vcdMain</code> Coverflow block to give PS1 covers the
 PS1 games reuse <code>appsMain</code> (see §2). More than one of these blocks is live at once on a
 <b>mixed</b> list, where each row's cover picks the one for its own media kind — so a theme that
 overrides <code>favsMain2</code> should size it as its <b>PS2</b> cover and define <code>vcdMain2</code> /
-<code>appsMain2</code> for the other two kinds, rather than leaving the whole shelf on one shape.</div>
+<code>appsMain2</code> for the other two kinds, rather than leaving the whole shelf on one shape. To give PS1 or app
+<em>favorites</em> a carousel of their own, declare a Coverflow block in <code>favsVcdMain*</code> or
+<code>favsAppsMain*</code>: the Favorites PS1 / ELF view draws it, and the All in One shelf uses its cover shape for
+those rows.</div>
 
 <p>A minimal three-family Coverflow setup (the shape the fork's <code>&lt;Coverflow&gt;</code> theme uses):</p>
 <pre>main2:
