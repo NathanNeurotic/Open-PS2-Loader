@@ -677,9 +677,10 @@ part of the identity so an ISO, a VCD and a CUE of the same name never collide.
 
 Per the standing rule (docs updated in the same effort the feature lands):
 
-* New `docs/EMBER.md` — user-facing, mirroring `docs/VCD.md`'s structure: what the CUE view is, the
-  folder layout, where to put `bios.bin`, the L3 ring, the combined-PS1 setting, and an explicit
-  "Ember vs POPSTARTER — which should I use?" section.
+* A separate `docs/EMBER.md` was planned here but *not written*. Ember's user-facing documentation
+  went into the site's PS1 Games page instead (the `EMBER/games/` folder layout, `EMBER/bios.bin`,
+  and how each row decides which core runs it), and `docs/VCD.md` covers the merged PS1 list; see
+  `DOCUMENTATION-GAPS.md`.
 * `docs/VCD.md` — update §1 and §2 (the view is no longer binary) and the Favorites paragraph.
 * `README.md` — one line in the feature list.
 * Rolling release notes.
