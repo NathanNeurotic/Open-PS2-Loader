@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Betöltő mag
   NEUTRINO_BAD_FORMAT: A Neutrino nem támogatja ezt a fájlformátumot, indítás <OPL> maggal
   NEUTRINO_NOT_FOUND: A Neutrino ELF nem található, indítás <OPL> maggal
-  UDPBD_NEEDS_STATIC_IP: Az UDPBD statikus PS2 IP-t igényel. Állítsd be a Hálózati konfigurációban (a DHCP jelenleg be van kapcsolva).
+  UDPBD_NEEDS_STATIC_IP: Az UDPBD statikus PS2 IP-t igényel. Állítsd be a Beállítások > Hálózat menüben (a DHCP jelenleg be van kapcsolva).
   NEUTRINO_SETTING_NA: Ez a beállítás nem használható a Neutrino maggal.
   POPSTARTER_NOT_FOUND: Hiányzó POPSTARTER.ELF
   POPSTARTER_SMB_MISSING: Hiányzó POPSTARTER SMB követelmények

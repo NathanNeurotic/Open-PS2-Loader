@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Loader Core
   NEUTRINO_BAD_FORMAT: Neutrino không hỗ trợ định dạng này, khởi động bằng lõi <OPL>
   NEUTRINO_NOT_FOUND: Không tìm thấy Neutrino ELF, khởi động bằng lõi <OPL>
-  UDPBD_NEEDS_STATIC_IP: UDPBD cần IP tĩnh cho PS2. Đặt trong Cấu hình mạng (DHCP đang bật).
+  UDPBD_NEEDS_STATIC_IP: UDPBD cần IP tĩnh cho PS2. Đặt trong Cài đặt > Mạng (DHCP đang bật).
   NEUTRINO_SETTING_NA: Cài đặt này không dùng với lõi Neutrino.
   POPSTARTER_NOT_FOUND: Thiếu POPSTARTER.ELF
   POPSTARTER_SMB_MISSING: Thiếu yêu cầu SMB cho POPSTARTER

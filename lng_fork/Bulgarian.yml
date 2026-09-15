@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Ядро на зареждача
   NEUTRINO_BAD_FORMAT: Neutrino не поддържа този файлов формат, стартиране с ядро <OPL>
   NEUTRINO_NOT_FOUND: Neutrino ELF не е намерен, стартиране с ядро <OPL>
-  UDPBD_NEEDS_STATIC_IP: UDPBD изисква статично PS2 IP. Задайте го в Мрежова конфигурация (DHCP е включен).
+  UDPBD_NEEDS_STATIC_IP: UDPBD изисква статично PS2 IP. Задайте го в менюто Настройки > Мрежа (DHCP е включен).
   NEUTRINO_SETTING_NA: Тази настройка не се използва с ядрото Neutrino.
   POPSTARTER_NOT_FOUND: Липсва POPSTARTER.ELF
   POPSTARTER_SMB_MISSING: Липсват изисквания на POPSTARTER за SMB

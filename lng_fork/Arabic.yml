@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: نواة المُشغِّل
   NEUTRINO_BAD_FORMAT: 'Neutrino لا يدعم هذا التنسيق، يتم التشغيل بنواة <OPL>'
   NEUTRINO_NOT_FOUND: 'لم يُعثر على Neutrino ELF، يتم التشغيل بنواة <OPL>'
-  UDPBD_NEEDS_STATIC_IP: يتطلب UDPBD عنوان IP ثابتاً لـ PS2. عيّنه في إعدادات الشبكة (DHCP مفعّل حالياً).
+  UDPBD_NEEDS_STATIC_IP: يتطلب UDPBD عنوان IP ثابتاً لـ PS2. عيّنه في الاعدادات > الشبكة (DHCP مفعّل حالياً).
   NEUTRINO_SETTING_NA: هذا الإعداد غير مستخدم مع نواة Neutrino.
   POPSTARTER_NOT_FOUND: POPSTARTER.ELF مفقود
   POPSTARTER_SMB_MISSING: متطلبات POPSTARTER SMB مفقودة

@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Loader Core
   NEUTRINO_BAD_FORMAT: Neutrino はこのファイル形式に対応しとらん、<OPL> コアで起動すん
   NEUTRINO_NOT_FOUND: Neutrino ELF が見つからん、<OPL> コアで起動すん
-  UDPBD_NEEDS_STATIC_IP: UDPBD には静的PS2 IPが必要やん。ネットワーク設定で指定しみそーれ（DHCP 有効中）。
+  UDPBD_NEEDS_STATIC_IP: UDPBD には静的PS2 IPが必要やん。設定 > ネットワーク で指定しみそーれ（DHCP 有効中）。
   NEUTRINO_SETTING_NA: この設定は Neutrino コアでは使わんむん。
   POPSTARTER_NOT_FOUND: POPSTARTER.ELF が見つからん
   POPSTARTER_SMB_MISSING: POPSTARTER の SMB 要件が足らん

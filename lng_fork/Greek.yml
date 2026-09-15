@@ -34,7 +34,7 @@ translations:
   CORE_LOADER: Loader Core
   NEUTRINO_BAD_FORMAT: Το Neutrino δεν υποστηρίζει αυτή τη μορφή αρχείου, εκκίνηση με πυρήνα <OPL>
   NEUTRINO_NOT_FOUND: Δεν βρέθηκε το Neutrino ELF, εκκίνηση με πυρήνα <OPL>
-  UDPBD_NEEDS_STATIC_IP: Το UDPBD απαιτεί στατική IP για PS2. Ορίστε μία στις Ρυθμίσεις Δικτύου (το DHCP είναι ενεργό).
+  UDPBD_NEEDS_STATIC_IP: Το UDPBD απαιτεί στατική IP για PS2. Ορίστε μία στο μενού Ρυθμίσεις > Δίκτυο (το DHCP είναι ενεργό).
   NEUTRINO_SETTING_NA: Αυτή η ρύθμιση δεν χρησιμοποιείται με τον πυρήνα Neutrino.
   POPSTARTER_NOT_FOUND: Λείπει το POPSTARTER.ELF
   POPSTARTER_SMB_MISSING: Λείπουν οι απαιτήσεις SMB για το POPSTARTER
