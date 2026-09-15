@@ -770,13 +770,14 @@ format or initialize it.** Connect it to a PC and follow **[docs/APA-SAFETY.md](
 which uses [`pc/apa-recovery/apa_recover.py`](pc/apa-recovery/README.md) to check and, when safe,
 rebuild just that table.
 
-### A USB drive shows code 500 and never appears
+### A drive shows code 500 and never appears
 
-The drive uses 4K (4096-byte) sectors, and OPL's USB, iLink and network block-device support can
-only read drives with 512-byte sectors. This mostly affects large desktop external drives whose
-enclosures present 4K sectors. The same drive in a generic enclosure usually presents 512-byte
-sectors, but it must be **reformatted** after the move. A drive that is 4K natively stays 4K in any
-enclosure. Support is tracked in [issue #651](https://github.com/NathanNeurotic/Open-PS2-Loader/issues/651).
+The drive uses 4K (4096-byte) *logical* sectors. Every PS2 storage driver counts in 512-byte
+sectors, so RiptOPL refuses such drives on purpose rather than risk reading or writing the wrong
+data; this will not change. It mostly affects large desktop external drives whose enclosures present
+4K sectors. The same drive in a generic enclosure usually presents 512-byte sectors, but it must be
+**reformatted** after the move. A drive that is 4K natively (4Kn) stays 4K in any enclosure. Ordinary
+512e drives (4K physical, 512 logical) are not affected.
 
 ### The menu works, but launching a game loses the picture
 
