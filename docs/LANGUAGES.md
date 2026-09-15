@@ -71,6 +71,20 @@ translation pass), not part of this repo's build. So to keep translations curren
 supply the translated text for `lng_fork/*.yml` yourself (by hand, an external MT tool, or
 an assistant) — the build will not invent it.
 
+## Which languages are built, and adding one
+
+The `TRANSLATIONS` list in the `Makefile` decides which `lang_<Language>.lng` files get built. A
+language exists upstream as `lng_src/<Language>.yml`; to ship it, add its name to that list.
+
+- **Fonts.** A language that needs glyphs the built-in font lacks has a `font_<Language>.ttf` (or
+  `.otf`) in the upstream repo's `thirdparty/` folder. `tools/lng_pack.sh` copies it beside the
+  `.lng` in the `RIPTOPL-LANGS` pack, and the loader picks it up from the same folder.
+- **Serbian** has no font upstream, and the built-in font has no `č`, `ć` or `đ`. Serbian Latin uses
+  exactly Croatian's letters, so `lng_pack.sh` ships `font_Croatian.ttf` as `font_Serbian.ttf`.
+  Check a new language's characters against the built-in font before assuming it needs no font.
+- **Fork strings.** A language with no `lng_fork/<Language>.yml` (Galician and Serbian today) shows
+  the fork's own strings in English until someone adds that file.
+
 ## Building just the languages
 
 ```sh

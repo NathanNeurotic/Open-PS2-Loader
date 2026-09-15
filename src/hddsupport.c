@@ -1900,7 +1900,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     int compatMode = 0, neutrinoVideo = gNeutrinoVideoDefault, neutrinoGsmComp = gNeutrinoGsmCompDefault; // absent per-game keys = follow the globals
     char neutrinoExtraArgs[256] = "";
     char apaPart[APA_IDMAX + 1];
-    configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatMode);
+    compatMode = sbGetCompatModes(configSet);
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp);
@@ -2115,8 +2115,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     char gid[5];
     configGetDiscIDBinary(configSet, gid);
 
-    int dmaType = 0, dmaMode = 7, compatMode = 0;
-    configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatMode);
+    int dmaType = 0, dmaMode = 7, compatMode = sbGetCompatModes(configSet);
     configGetInt(configSet, CONFIG_ITEM_DMA, &dmaMode);
     if (dmaMode < 3)
         dmaType = 0x20;

@@ -1928,7 +1928,7 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     char neutrinoExtraArgs[256] = "";
     neutrino_vmc_args_t neutrinoVmc = {0};
     char partname[256], bdmCurrentDriver[32];
-    configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatmask); // same source sbPrepare reads; no IRX patch needed
+    compatmask = sbGetCompatModes(configSet); // same source sbPrepare reads; no IRX patch needed
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, neutrinoExtraArgs, sizeof(neutrinoExtraArgs));
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &neutrinoVideo);
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &neutrinoGsmComp);

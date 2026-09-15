@@ -58,6 +58,12 @@ const char *sbCheatsNotFoundText(void);
 int sbCheatsMissingContinue(void *pCommon, int cheatResult);
 int sbLoadImage(const char *path, const char *file);
 void sbSetDiscAttributes(config_set_t *config, int isPS1, int isCD); // #System/#Media/#DiscType identity stamp
+
+// Compatibility modes for a game: its saved $Compatibility key, else a known title default. Every reader of
+// the modes (launch paths and the per-game screen) must use sbGetCompatModes so they agree.
+int sbTitleCompatDefault(config_set_t *configSet);
+int sbGetCompatModes(config_set_t *configSet);
+
 int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex);
 void sbUnprepare(void *pCommon);
 void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID);

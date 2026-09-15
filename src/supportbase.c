@@ -717,6 +717,46 @@ int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset)
     return result;
 }
 
+// Compatibility modes a title needs by default, keyed by its startup ID. A default applies only while the
+// game has no saved $Compatibility key, and every reader goes through sbGetCompatModes() -- the launch
+// paths and the per-game screen alike -- so the screen always shows what will actually launch. Keep each
+// entry evidence-backed: it changes launches for everyone who never opened that game's settings.
+static const struct
+{
+    const char *startup;
+    int compatModes;
+} sbTitleCompatDefaults[] = {
+    {"SLES_511.14", COMPAT_MODE_1}, // Pro Evolution Soccer 2 (Europe): streamed audio breaks without Accurate Reads (upstream OPL #1686)
+};
+
+int sbTitleCompatDefault(config_set_t *configSet)
+{
+    const char *startup = NULL;
+    unsigned int i;
+
+    if (configSet == NULL || !configGetStr(configSet, CONFIG_ITEM_STARTUP, &startup) || startup == NULL)
+        return 0;
+
+    for (i = 0; i < sizeof(sbTitleCompatDefaults) / sizeof(sbTitleCompatDefaults[0]); i++) {
+        if (!strcmp(startup, sbTitleCompatDefaults[i].startup))
+            return sbTitleCompatDefaults[i].compatModes;
+    }
+
+    return 0;
+}
+
+int sbGetCompatModes(config_set_t *configSet)
+{
+    int compatModes = 0;
+
+    // A saved key wins even when it is 0: the per-game screen saves an explicit 0 for a title that has a
+    // default, which is the only way to turn that default off.
+    if (configSet != NULL && !configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatModes))
+        compatModes = sbTitleCompatDefault(configSet);
+
+    return compatModes;
+}
+
 static const struct cdvdman_settings_common cdvdman_settings_common_sample = CDVDMAN_SETTINGS_DEFAULT_COMMON;
 
 int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex)
@@ -724,8 +764,7 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
     int i;
     struct cdvdman_settings_common *settings;
 
-    int compatmask = 0;
-    configGetInt(configSet, CONFIG_ITEM_COMPAT, &compatmask);
+    int compatmask = sbGetCompatModes(configSet);
 
     char gameid[5];
     configGetDiscIDBinary(configSet, gameid);
