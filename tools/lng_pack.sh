@@ -28,7 +28,10 @@ fi
 # Print a list
 mkdir -p "${BUILD_DIR}"
 cd "${CURRENT_DIR}/lng/"
-printf "$(ls lang_*.lng | cut -c 6- | rev | cut -c 5- | rev)" > "${LANG_LIST}"
+# Written straight from the pipe so the list ends with a newline. The old printf "$(...)" form lost
+# it (command substitution strips trailing newlines), and `while read` below then skipped the last
+# line: the alphabetically last language (Vietnamese) was silently left out of every pack.
+ls lang_*.lng | cut -c 6- | rev | cut -c 5- | rev > "${LANG_LIST}"
 cd "${CURRENT_DIR}"
 
 # Copy format
