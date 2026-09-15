@@ -129,7 +129,7 @@ another already-configured SMB server.</p>
   </div>
 </div>
 
-<h2 id="network-settings">2. Configure Network Settings in OPL</h2>
+<h2 id="network-settings">2. Configure the Network page in OPL</h2>
 
 <p>In RiptOPL, go to <b>Settings → Network</b>. The page has two sections: the PS2's own network identity, and the share address.</p>
 
@@ -154,9 +154,9 @@ another already-configured SMB server.</p>
   <tbody>
     <tr><td><b>Address Type</b></td><td><b>IP Address</b> or <b>NetBIOS</b>. For most setups use IP address — it connects directly without name resolution. NetBIOS lets you type a Windows machine name (e.g. <code>MYPC</code>) but requires the PS2 to resolve the name first; if the name lookup fails, OPL cannot connect at all.</td></tr>
     <tr><td><b>Address</b></td><td>Either the server's IPv4 address (e.g. <code>192.168.0.5</code>) or its NetBIOS name (up to 15 characters, e.g. <code>MYPC</code>), depending on Address Type.</td></tr>
-    <tr><td><b>Port</b></td><td>RiptOPL defaults to <b>1111</b>, but the client and server must match. <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> currently defaults to <b>1111</b>; enter the value its launcher displays. Standard Samba/native SMB commonly uses port 445. Network Settings opens with advanced options on, so the Port field is always visible and editable.</td></tr>
-    <tr><td><b>Share</b></td><td>The share name, e.g. <code>PS2SMB</code>. This is the name you gave the share on the server — not a path. Default is <code>PS2SMB</code>.</td></tr>
-    <tr><td><b>User</b></td><td>The username to log on with. Default is <code>GUEST</code>. For a guest/public share leave this as-is. For a password-protected share enter the correct account name.</td></tr>
+    <tr><td><b>Port</b></td><td>RiptOPL defaults to <b>1111</b>, but the client and server must match. <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> currently defaults to <b>1111</b>; enter the value its launcher displays. Standard Samba/native SMB commonly uses port 445. The Network page opens with Advanced Options on, so the Port field is editable straight away.</td></tr>
+    <tr><td><b>Share</b></td><td>The share name, e.g. <code>PS2SMB</code>. This is the name you gave the share on the server — not a path. A fresh RiptOPL install defaults to <code>games</code>.</td></tr>
+    <tr><td><b>User</b></td><td>The username to log on with. A fresh install defaults to <code>guest</code>. For a guest/public share leave this as-is. For a password-protected share enter the correct account name.</td></tr>
     <tr><td><b>Password</b></td><td>Leave empty for no-password shares. For password-protected shares OPL first asks the loaded SMB driver to pre-hash the password. The SMBv1 driver does that and sends the hash; the SMB2 driver declines, because its own NTLMSSP exchange wants the password verbatim — so OPL hands it over as-is and the driver still turns it into an NTLM response rather than putting it on the wire in the clear.</td></tr>
   </tbody>
 </table>
@@ -288,7 +288,7 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
     </tr>
     <tr>
       <td>OPL shows "SHARE" error (open share failed)</td>
-      <td>The share name does not match. Verify the exact share name on the server (case-sensitive on Linux). The default OPL share name is <code>PS2SMB</code>.</td>
+      <td>The share name does not match. Verify the exact share name on the server (case-sensitive on Linux). RiptOPL's default share name is <code>games</code> (stock OPL uses <code>PS2SMB</code>).</td>
     </tr>
     <tr>
       <td>Game list is empty even after connecting</td>
@@ -338,8 +338,8 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
     <tr><td><code>smb_share_nb_addr</code></td><td>NetBIOS name of the server (used when <code>smb_share_use_nbns=1</code>)</td></tr>
     <tr><td><code>smb_ip</code></td><td>Server IP address (used when <code>smb_share_use_nbns=0</code>)</td></tr>
     <tr><td><code>smb_port</code></td><td>SMB TCP port (default <code>1111</code>)</td></tr>
-    <tr><td><code>smb_share</code></td><td>Share name (default <code>PS2SMB</code>)</td></tr>
-    <tr><td><code>smb_user</code></td><td>Login username (default <code>GUEST</code>)</td></tr>
+    <tr><td><code>smb_share</code></td><td>Share name (default <code>games</code>)</td></tr>
+    <tr><td><code>smb_user</code></td><td>Login username (default <code>guest</code>)</td></tr>
     <tr><td><code>smb_pass</code></td><td>Password (empty for no-password shares)</td></tr>
   </tbody>
 </table>

@@ -79,17 +79,23 @@ The <b>Loader Core</b> selector, the <b>Neutrino Device</b> picker, the structur
 
 <h2 id="install">1. Install Neutrino</h2>
 
-<p>Neutrino is <b>not bundled</b> with OPL — you supply the ELF. Place it on a memory card in <b>all-caps</b> at one of these paths; OPL checks them in order:</p>
+<p>The release package includes a complete <code>neutrino/</code> folder: copy the whole folder to a
+device OPL searches. A memory card is the zero-config choice, but it is the <b>last</b> place OPL looks,
+not the first. The full order is:</p>
 
 <table data-sortable>
-<thead><tr><th>Priority</th><th>Path</th></tr></thead>
+<thead><tr><th>Priority</th><th>Where OPL looks</th></tr></thead>
 <tbody>
-<tr><td>1</td><td><code>mc0:NEUTRINO/neutrino.elf</code></td></tr>
-<tr><td>2</td><td><code>mc1:NEUTRINO/neutrino.elf</code></td></tr>
+<tr><td>1</td><td>The device type chosen in <b>Neutrino Device</b> (<b>Settings → Game Launching</b>), when it is not <em>Auto</em></td></tr>
+<tr><td>2</td><td>A custom path in the <code>neutrino_path</code> key of <code>settings_riptopl.cfg</code> (see below)</td></tr>
+<tr><td>3</td><td>The active game's own device: <code>&lt;games prefix&gt;/neutrino/</code>, then <code>&lt;device root&gt;/neutrino/</code></td></tr>
+<tr><td>4</td><td>The internal <b>APA HDD</b>'s OPL data partition, while the HDD is started (see below)</td></tr>
+<tr><td>5</td><td><code>mc0:</code> / <code>mc1:</code>: <code>NEUTRINO/neutrino.elf</code> and its lowercase / <code>NEUTRINO.ELF</code> variants</td></tr>
 </tbody>
 </table>
 
-<p>Auto-detection also checks a handful of lowercase and <code>NEUTRINO.ELF</code> spelling variants on <code>mc0:</code> and <code>mc1:</code> (e.g. <code>mc0:/neutrino/neutrino.elf</code>, <code>mc0:/neutrino/NEUTRINO.ELF</code>, etc.) so minor capitalisation differences are tolerated.</p>
+<p>A miss on the device you picked falls through to the automatic tiers. The exception is <b>Game's Device</b>,
+which only looks on the game's own device and reports "not found" instead of falling back.</p>
 
 <p>The <b>internal APA HDD</b> is also searched, through the OPL data partition OPL has already mounted — the same partition NHDDL resolves for its own <code>hdd0:/&lt;OPL partition&gt;/neutrino/neutrino.elf</code> rule (read from <code>hdd0:__common/OPL/conf_hdd.cfg</code>, with <code>+OPL</code> or <code>__common/OPL</code> as fallbacks). In practice that means one of these two layouts, with nothing to configure:</p>
 
