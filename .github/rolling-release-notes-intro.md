@@ -13,6 +13,6 @@
   parity with the pre-rebuild build, whose final release stays archived as
   **[Rolling Alpha](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-alpha)** (and on MEGA).
 - **Report everything, even something you saw fixed before.** Reports are tracked against this
-  lineage, regressions happen, and a duplicate costs nothing. Name your flavour: *Settings → About*
+  lineage, regressions happen, and a duplicate costs nothing. Name your flavour: *Start menu → About*
   shows it.
 - **Guides** for every device, core and setting: <https://nathanneurotic.github.io/Open-PS2-Loader/>

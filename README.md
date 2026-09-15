@@ -130,7 +130,7 @@ contains and how to pull it.
 1. Extract the normal installable archive. Start with `APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF` when present; see [build choices](ROLLING_RELEASE.md#which-build-should-i-use) for alternatives.
 2. Copy that ELF to a location your homebrew launcher can boot. For Neutrino, also copy the complete `neutrino/` folder to `mc0:/neutrino/` or `mc1:/neutrino/`. PS1 needs the companion files described in [PS1 games](#ps1-games-two-cores-one-list); copying the loader ELF alone does not install those cores.
 3. Prepare your game's source: `CD/` or `DVD/` for folder-based PS2 libraries, HDLoader partitions for APA, or `games.csv` for HTTP. See [How to use](#how-to-use).
-4. In **Settings → Game Sources**, enable the device and its start mode. For a network source, set **Network Start Mode** to **Manual** or **Auto**, then choose the protocol in **Network** and enter your server's settings.
+4. In **Settings → Game Sources**, enable the device and its start mode. For a network source, set **Network Connectivity** to **Manual** or **Auto**, then choose the protocol in **Network** and enter your server's settings.
 5. Use the server's Test action where available, then choose **Save Changes** before launching a game. A successful menu test is not proof that gameplay works.
 6. Launch one test game. If it fails, record the exact build, SDK flavour, source and core before changing settings; see [Frequent Issues](#frequent-issues).
 
@@ -273,7 +273,7 @@ This build layers several features on top of upstream OPL:
   See **[docs/HTTP.md](docs/HTTP.md)**.
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
   alongside UDPBD. The network controls are split across two pages: **Game Sources** holds the
-  **Network Start Mode** row (Off / Manual / Auto), and **Network** holds **Protocol**
+  **Network Connectivity** row (Off / Manual / Auto), and **Network** holds **Protocol**
   (**SMB / UDPFS / UDPBD / HTTP**), **SMB Version** (SMBv1 / SMB2, live only while Protocol is SMB),
   and **Access** (Files / IMG — locked to Files
   for SMB/HTTP and to IMG for UDPBD, free only for UDPFS). UDPFS launches via `-bsd=udpfsbd` with a
@@ -451,8 +451,8 @@ per-game compatibility **Mode 6 - Disable
 IGR** is set, and under the **Neutrino core**, which has no IGR at all - which is why Mode 6 is greyed
 out there. PS1 titles use POPSTARTER's or Ember's own IGR, not this one.
 
-**IGR Path** (*Settings -> General*) boots a custom ELF from `mc0:`/`mc1:` on reset instead of
-returning to the browser. **IGR Bootcard Slot(s)** (*Settings -> MMCE*) sends a switch-to-bootcard
+**IGR Path** (*Settings -> General & System*) boots a custom ELF from `mc0:`/`mc1:` on reset instead of
+returning to the browser. **IGR Bootcard Slot(s)** (*Settings -> Game Sources -> MMCE Settings*) sends a switch-to-bootcard
 command as the reset happens.
 
 ### Game list
@@ -564,11 +564,11 @@ are supported using the folder structure above.
 > session.
 >
 > **RiptOPL network defaults:** the network protocol selector defaults to **Off** — under
-> **Game Sources** set **Network Start Mode** to **Manual** or **Auto**, then in **Network** set
-> **Protocol** to **SMB**, before the **NET Games** tab appears. Network Config
+> **Game Sources** set **Network Connectivity** to **Manual** or **Auto**, then in **Network** set
+> **Protocol** to **SMB**, before the **NET Games** tab appears. The Network page
 > ships static defaults (PS2 `192.168.1.10`, PC `192.168.1.100`, share `games`, user `guest`);
 > adjust them to your LAN. The default **SMB Port is `1111`** — a non-privileged port (>1024), so a server
-> binds it without admin/root. **Network Config** now opens with **advanced options on**, so
+> binds it without admin/root. The **Network** page opens with **Advanced Options** on, so
 > the **Port** field (and ETH link mode) are editable immediately. If Windows 10/11 has
 > disabled SMB1/NTLMv1, set **SMB Version** to **SMB2**; the
 > **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one launcher remains the
@@ -591,7 +591,7 @@ Sources**. For PS2, 48-bit LBA internal HDDs are supported. The HDD can be forma
 	- Enable **BDM HDD** in **Game Sources**. The exFAT HDD then mounts through the Block Device Manager (BDMAssault / "BDMA") into the shared `massN:` namespace — the same path as USB/MX4SIO — and appears as an **HDD (exFAT)** games list with the HDD icon.
 	- Files should be added contiguously or synchronously to avoid fragmentation. For example, drag and drop files one at a time, or ensure that files are added sequentially.
 	- When formatting drives for the exFAT filesystem, please make sure the `Allocation unit size` is set to `Default`.
-	- **PS1 games:** PS1 `*.VCD` titles in the HDD's `POPS/` folder list under the **L3** PS1 view like any other device. To boot them, open **PS Emulation Settings → BDMA Settings** from the main menu. **VCD BDMA Apply on Launch** is on by default and equips the matching exFAT driver automatically; turn it off to reveal the manual **BDMA Source** / **BDMA Mode** pickers and set **BDMA Mode → HDD (exFAT)** by hand so POPSTARTER can read the exFAT volume. See **[docs/VCD.md](docs/VCD.md)**.
+	- **PS1 games:** PS1 `*.VCD` titles in the HDD's `POPS/` folder list under the **L3** PS1 view like any other device. To boot them, use the BDMA rows on **Settings → PS Emulation Settings**. **VCD BDMA Apply on Launch** is on by default and equips the matching exFAT driver automatically; turn it off to reveal the manual **BDMA Source** / **BDMA Mode** pickers and set **BDMA Mode → HDD (exFAT)** by hand so POPSTARTER can read the exFAT volume. See **[docs/VCD.md](docs/VCD.md)**.
 
 ## APPS
 
@@ -636,7 +636,7 @@ This method uses one `title.cfg` per app folder, with two required lines and one
 - `title=` for the app name shown in OPL.
 - `boot=` for the ELF filename to launch, relative to the app's own folder.
 - `argv1=` (optional) for a single argument passed to the ELF as its first argument. It shares
-  storage with the per-app **Alternate Startup** field, so it can also be edited from the console.
+  storage with the per-app **Custom ELF** field, so it can also be edited from the console.
 
 To begin:
 

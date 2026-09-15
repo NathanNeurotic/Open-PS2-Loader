@@ -20,8 +20,9 @@ PADEMU is compiled in by default (`PADEMU ?= 1`), so stock builds have it.
 
 ## Setting it up
 
-PADEMU is configured per game: Triangle on a title → **PADEMU Settings**. The first row, **PADEMU
-Source**, chooses between **Global** (follow the defaults set in *Settings*) and **Per Game** (this
+PADEMU is configured per game: Triangle on a title → **Controller Emulation**. The first row,
+**Settings Mode**, chooses between **Global** (follow the defaults set in *Settings → Controller
+Settings → Controller Emulation*) and **Per Game** (this
 title's own settings).
 
 | Option | What it does |

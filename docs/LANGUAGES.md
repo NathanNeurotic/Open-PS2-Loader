@@ -66,7 +66,7 @@ Repeat per language you want to cover. Untranslated languages fall back to Engli
 ## Important: there is **no auto-translator** in the build
 
 `tools/lang_compiler.py` only *merges* translations that already exist in `lng_fork/*.yml`. The
-initial bulk fill of the 32 fork languages was a **one-off external step** (a machine
+initial bulk fill of the 31 fork languages was a **one-off external step** (a machine
 translation pass), not part of this repo's build. So to keep translations current you must
 supply the translated text for `lng_fork/*.yml` yourself (by hand, an external MT tool, or
 an assistant) — the build will not invent it.

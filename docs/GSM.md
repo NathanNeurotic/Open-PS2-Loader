@@ -16,12 +16,13 @@ extra detail.
 GSM lives in two places:
 
 * **Per game** — Triangle on a title → **Configure GSM**.
-* **Globally** — *Settings → Display Settings → GSM Defaults*. This is what every game with no GSM
+* **Globally** — **GSM Defaults (All Games)** on *Settings → Game Launching* (also on Interface and
+  General & System). This is what every game with no GSM
   settings of its own inherits.
 
-The per-game page's first row, **GSM Source**, decides which of those wins:
+The per-game page's first row, **Settings Mode** (stored as `$GSMSource`), decides which of those wins:
 
-| GSM Source | Meaning |
+| Settings Mode | Meaning |
 |---|---|
 | **Global** | Ignore this game's GSM keys entirely and follow the global defaults. Selecting it also *removes* the game's stored GSM keys. |
 | **Per Game** | This game's GSM settings apply, as a complete set. |
@@ -97,7 +98,7 @@ every game without its own GSM settings inherits.
 The RiptOPL menu never uses GSM, so whatever you set, **you can always get back to the browser and
 undo it**. Which setting to undo depends on where you set it.
 
-**If you set it for one game** (GSM Source = Per Game), only that title is affected:
+**If you set it for one game** (Settings Mode = Per Game), only that title is affected:
 
 1. Return to the browser — reset the console if the game has no picture at all.
 2. Triangle on the affected title → **Configure GSM**.
@@ -108,10 +109,10 @@ undo it**. Which setting to undo depends on where you set it.
 all lose the picture at once. That is the wider blast radius the 1080p confirmation warns about:
 
 1. Return to the browser.
-2. *Settings → Display Settings → **GSM Defaults***.
+2. *Settings → Game Launching → **GSM Defaults (All Games)***.
 3. Turn **GSM Selector** off there, or pick a conservative mode, and save.
 
-A game whose GSM Source is **Per Game** keeps its own settings and is unaffected by the global one,
+A game whose Settings Mode is **Per Game** keeps its own settings and is unaffected by the global one,
 so fixing the global default will not repair a title you broke individually — check both if only
 some games are affected.
 
@@ -148,9 +149,9 @@ games. See [VCD.md](VCD.md).
 
 Two settings are easy to mistake for GSM options:
 
-* **Overscan** (*Settings → Display*) trims the edges of the **RiptOPL menu**, not of games. It is a
+* **Overscan** (*Settings → Interface*) trims the edges of the **RiptOPL menu**, not of games. It is a
   UI setting and is unrelated to the GSM H-POS/V-POS offsets.
-* **Video Mode** (*Settings → Display*) sets the mode the **menu** runs in. GSM never affects it.
+* **Video Mode** (*Settings → Interface*) sets the mode the **menu** runs in. GSM never affects it.
 
 ---
 

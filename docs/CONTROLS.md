@@ -4,7 +4,7 @@ Every button RiptOPL responds to, in one place.
 
 Two settings change what you read below, so check them first if the tables do not match your console:
 
-* **Select button** (*Settings → Interface*) swaps which face button confirms. The tables use
+* **Select Button** (*Settings → Controller Settings*) swaps which face button confirms. The tables use
   **Cross = confirm, Circle = back**, which is the default everywhere except **Japanese consoles**,
   where RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your
   select button, swap those two everywhere *except* the Settings screens (see the note under
@@ -170,7 +170,7 @@ VGA, or a capable HDMI adapter) for this to help.
 ## Rumble
 
 RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by
-**Rumble** in *Settings → Controller*.
+**Controller Vibration in Menus** in *Settings → Controller Settings*.
 
 It needs a **DualShock in analog mode** — with the analog light off, the controller has no motors
 available and the setting does nothing. Third-party pads and most adapters vary in whether they

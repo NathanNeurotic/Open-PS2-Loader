@@ -175,7 +175,7 @@ the same physical `IMAGE0.VCD` filename, so config and art use the displayed `<n
 POPSTARTER reloads its mass-storage driver after resetting the IOP. USB FAT32 can use its built-in
 driver; USB exFAT and the MX4SIO, MMCE, ATA and iLink transports need matching external
 block-device modules (the BDMAssault / "BDMA" drivers). RiptOPL
-*equips* them for you from **PS Emulation Settings → BDMA Settings** — RiptOPL copies the selected
+*equips* them for you from the BDMA rows on **Settings → PS Emulation Settings** — RiptOPL copies the selected
 loose pair from a device's `POPS/` folder onto your memory card:
 
 RiptOPL prefers an existing `mc0:/POPSTARTER` or `mc1:/POPSTARTER` folder. On first setup it
@@ -228,13 +228,15 @@ block device, so its PS1 games in `massN:/POPS/` list and launch through the sam
 according to **PS2/PS1 Game Display** — there's no separate page. Equip the `HDD (exFAT)` BDMA mode
 so POPSTARTER itself can read them off the exFAT volume.
 
-## 6. PS1 over SMB — network config mirror
+## 6. PS1 over SMB — POPSTARTER network settings
 
 PS1 games on an SMB share need POPSTARTER's own network config (`IPCONFIG.DAT` +
-`SMBCONFIG.DAT`) on the memory card, plus its SMB modules. RiptOPL can write those config
-files for you: enable **Settings → Network Settings → Write POPSTARTER Network Config**
-(**on** by default). On save it mirrors the same IP / share values OPL already uses into
-`mc?:/POPSTARTER/`. The SMB modules themselves ship in the release's `POPS/` folder
+`SMBCONFIG.DAT`) on the memory card, plus its SMB modules. Edit those files from
+**POPSTARTER Network Settings**, on **Settings → PS Emulation Settings** or **Settings → Network**.
+The screen shows what the card's files already contain, can import both from the connected share's
+`POPS` folder, and on OK writes back only the values you changed. The exception is a first setup:
+with neither file on the card, saving the SMB values writes `IPCONFIG.DAT` too, as DHCP unless a
+complete static IP is entered. The SMB modules themselves ship in the release's `POPS/` folder
 (copy them to `mc?:/POPSTARTER/`); if they're missing, an SMB VCD launch warns rather than
 hanging.
 

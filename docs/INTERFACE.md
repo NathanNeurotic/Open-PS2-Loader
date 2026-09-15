@@ -9,7 +9,7 @@ For the button map, see [CONTROLS.md](CONTROLS.md).
 
 ## Folder browsing
 
-**Settings → Interface → Browse Folders in Game List.** Off by default.
+**Settings → General & System → Browse Folders in Game List.** Off by default.
 
 With it on, subfolders of `CD/` and `DVD/` appear in the game list as browsable entries instead of
 the loader flattening everything into one long list.
@@ -40,8 +40,8 @@ Turning the setting on simply has no effect on those pages.
 
 ## Parental lock
 
-**Settings → Parental Lock Settings.** Sets a password that must be entered before configuration can
-be changed.
+**Parental Lock Password**, on **Settings → General & System**. Sets a password that must be entered
+before configuration can be changed. Leave it blank to disable the lock.
 
 ### What it actually gates
 

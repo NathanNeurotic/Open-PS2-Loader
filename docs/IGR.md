@@ -43,15 +43,15 @@ This is the fallback worth remembering when a game has stopped responding to the
 ## Where a reset takes you
 
 By default a reset returns you to the RiptOPL browser, started fresh. It does not restore what you
-had selected: **Remember Last Played** (*Settings → Interface*) is a separate setting, off by
+had selected: **Remember Last Played Game** (*Settings → General & System*) is a separate setting, off by
 default, and it is what re-selects the last game you ran.
 
-You can send it somewhere else instead with the **IGR Path** setting (*Settings → General*). Point it
+You can send it somewhere else instead with the **IGR Path** setting (*Settings → General & System*). Point it
 at an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight
 back into a different launcher or a homebrew menu. The file must live **on a memory card**
 (`mc0:` or `mc1:`); leave the setting blank to return to RiptOPL normally.
 
-If you use MMCE cards, **IGR Bootcard Slot(s)** (*Settings → MMCE*) additionally sends a
+If you use MMCE cards, **IGR Bootcard Slot(s)** (*Settings → Game Sources → MMCE Settings*) additionally sends a
 "switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is
 already back on its boot image by the time the next thing loads.
 
@@ -118,7 +118,7 @@ and R3 are the stick clicks. The screenshot combination uses **Up**, so it needs
 Try the console power button as a cross-check: if that resets and the pad combination does not, the
 hook is fine and the problem is in the pad half.
 
-**Reset takes me somewhere unexpected.** Check **IGR Path** in *Settings → General*. A stale path
+**Reset takes me somewhere unexpected.** Check **IGR Path** in *Settings → General & System*. A stale path
 left over from an earlier setup will boot that ELF instead of returning to the browser.
 
 **The game resets on its own during play.** A game that uses all four shoulders plus Start or Select
