@@ -519,6 +519,11 @@ Slots `favsVcdMain0`, `favsVcdMain1`, `favsVcdMain3`… are not declared here, s
 `vcdMain*` and the rest of the PS1 page looks as it did. The global Coverflow tuning below applies to
 these carousels too.
 
+This example assumes a theme that already uses Coverflow. A `Coverflow` block in **any** family makes
+the whole theme a Coverflow theme: Left/Right steps through the list on every browse page and the
+Coverflow Settings menu appears. Adding one only to `favsVcdMain*` in a list-based theme therefore
+changes navigation on the device pages as well.
+
 ### Global Coverflow tuning (NOT in the theme)
 
 These live in **`settings_riptopl.cfg`** and are exposed in the **Coverflow Settings** menu (shown
