@@ -119,28 +119,6 @@ int hddReadSectors(u32 lba, u32 nsectors, void *buf)
 }
 
 //-------------------------------------------------------------------------
-static int hddWriteSectors(u32 lba, u32 nsectors, const void *buf)
-{
-    static u8 WriteBuffer[2 * 512 + sizeof(hddAtaTransfer_t)] ALIGNED(64); // Has to be a different buffer from IOBuffer (input can be in IOBuffer).
-    int argsz;
-    hddAtaTransfer_t *args = (hddAtaTransfer_t *)WriteBuffer;
-
-    if (nsectors > 2) // Sanity check
-        return -ENOMEM;
-
-    args->lba = lba;
-    args->size = nsectors;
-    memcpy(args->data, buf, nsectors * 512);
-
-    argsz = sizeof(hddAtaTransfer_t) + (nsectors * 512);
-
-    if (fileXioDevctl("hdd0:", HDIOC_WRITESECTOR, args, argsz, NULL, 0) != 0)
-        return -1;
-
-    return 0;
-}
-
-//-------------------------------------------------------------------------
 struct GameDataEntry
 {
     u32 lba, size;
@@ -428,40 +406,6 @@ void hddFreePopsPartitionList(hdd_pops_list_t *list)
         list->names = NULL;
         list->count = 0;
     }
-}
-
-//-------------------------------------------------------------------------
-int hddSetHDLGameInfo(hdl_game_info_t *ginfo)
-{
-    if (hddReadSectors(ginfo->start_sector, 2, IOBuffer) != 0)
-        return -EIO;
-
-    hdl_apa_header *hdl_header = (hdl_apa_header *)IOBuffer;
-
-    // just change game name and compat flags !!!
-    strncpy(hdl_header->gamename, ginfo->name, sizeof(hdl_header->gamename));
-    hdl_header->gamename[sizeof(hdl_header->gamename) - 1] = '\0';
-    // hdl_header->hdl_compat_flags = ginfo->hdl_compat_flags;
-    hdl_header->ops2l_compat_flags = ginfo->ops2l_compat_flags;
-    hdl_header->dma_type = ginfo->dma_type;
-    hdl_header->dma_mode = ginfo->dma_mode;
-
-    if (hddWriteSectors(ginfo->start_sector, 2, IOBuffer) != 0)
-        return -EIO;
-
-    return 0;
-}
-
-//-------------------------------------------------------------------------
-int hddDeleteHDLGame(hdl_game_info_t *ginfo)
-{
-    char path[38];
-
-    LOG("HDD Delete game: '%s'\n", ginfo->name);
-
-    sprintf(path, "hdd0:%s", ginfo->partition_name);
-
-    return unlink(path);
 }
 
 //-------------------------------------------------------------------------

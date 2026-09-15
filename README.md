@@ -585,7 +585,8 @@ Sources**. For PS2, 48-bit LBA internal HDDs are supported. The HDD can be forma
 
 - APA partitioning with PFS filesystem (up to 2TB)
 	- RiptOPL mounts an existing data partition. A usable `hdd_partition` selection in `__common/OPL/conf_hdd.cfg` takes priority, followed by existing `+OPL`, then `__common/OPL/`. No partition is created, resized or formatted. `+OPL` uses its root for support folders; `__common` uses `OPL/`.
-	- **Table protection:** RiptOPL's APA driver will not write the sector that holds the partition table except to store a complete, valid header, and it refuses format and partition creation outright. If a disk reports **code 402** (or "Formatted: NO" elsewhere), **do not format it** — your games are almost certainly still there. See **[docs/APA-SAFETY.md](docs/APA-SAFETY.md)** and the PC recovery tool in [`pc/apa-recovery`](pc/apa-recovery/README.md).
+	- **Table protection:** RiptOPL is a game loader, not a partition manager. It writes only inside PFS partitions (settings, art, VCD and Ember renames) and never to the APA partition table: its driver refuses formatting and creating, deleting or renaming partitions, and raw sector writes. So HDL games can't be deleted or renamed from RiptOPL, and neither can one-game `PP.*` PS1 installs; use a PC tool. If a disk reports **code 402** (or "Formatted: NO" elsewhere), **do not format it** — your games are almost certainly still there. See **[docs/APA-SAFETY.md](docs/APA-SAFETY.md)** and the PC recovery tool in [`pc/apa-recovery`](pc/apa-recovery/README.md).
+	- **4Kn drives** (4096-byte *logical* sectors) are refused: every PS2 driver counts in 512-byte sectors. 512e drives (4K physical, 512 logical, nearly every modern disk) work normally.
 - MBR partitioning (up to 2TB) or GPT partitioning (capacities above the MBR limit, subject to the driver and tested hardware) with the exFAT filesystem
 	- Enable **BDM HDD** in **Game Sources**. The exFAT HDD then mounts through the Block Device Manager (BDMAssault / "BDMA") into the shared `massN:` namespace — the same path as USB/MX4SIO — and appears as an **HDD (exFAT)** games list with the HDD icon.
 	- Files should be added contiguously or synchronously to avoid fragmentation. For example, drag and drop files one at a time, or ensure that files are added sequentially.
@@ -769,13 +770,14 @@ format or initialize it.** Connect it to a PC and follow **[docs/APA-SAFETY.md](
 which uses [`pc/apa-recovery/apa_recover.py`](pc/apa-recovery/README.md) to check and, when safe,
 rebuild just that table.
 
-### A USB drive shows code 500 and never appears
+### A drive shows code 500 and never appears
 
-The drive uses 4K (4096-byte) sectors, and OPL's USB, iLink and network block-device support can
-only read drives with 512-byte sectors. This mostly affects large desktop external drives whose
-enclosures present 4K sectors. The same drive in a generic enclosure usually presents 512-byte
-sectors, but it must be **reformatted** after the move. A drive that is 4K natively stays 4K in any
-enclosure. Support is tracked in [issue #651](https://github.com/NathanNeurotic/Open-PS2-Loader/issues/651).
+The drive uses 4K (4096-byte) *logical* sectors. Every PS2 storage driver counts in 512-byte
+sectors, so RiptOPL refuses such drives on purpose rather than risk reading or writing the wrong
+data; this will not change. It mostly affects large desktop external drives whose enclosures present
+4K sectors. The same drive in a generic enclosure usually presents 512-byte sectors, but it must be
+**reformatted** after the move. A drive that is 4K natively (4Kn) stays 4K in any enclosure. Ordinary
+512e drives (4K physical, 512 logical) are not affected.
 
 ### The menu works, but launching a game loses the picture
 

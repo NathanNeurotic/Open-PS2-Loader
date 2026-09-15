@@ -516,11 +516,10 @@ apa_cache_t *apaGetNextHeader(apa_cache_t *clink, int *err)
     if (!(clink = apaCacheGetHeader(clink->device, clink->header->next, APA_IO_MODE_READ, err)))
         return NULL;
 
-    if (start != clink->header->prev) {
-        APA_PRINTF(APA_DRV_NAME ": Warning: Invalid partition information. start != prev\n");
-        clink->header->prev = start;
-        clink->flags |= APA_CACHE_FLAG_DIRTY;
-        apaCacheFlushAllDirty(clink->device);
-    }
+    // RiptOPL: report, never repair. The SDK rewrote this header's prev link, and flushed, during any
+    // chain walk -- merely listing or opening partitions -- an APA write the loader never asked for.
+    // Only partition create and delete use prev, and both are refused.
+    if (start != clink->header->prev)
+        APA_PRINTF(APA_DRV_NAME ": Warning: Invalid partition information. start != prev (not repaired)\n");
     return clink;
 }

@@ -23,10 +23,6 @@
 
 #define APA_FENCE_TABLE_SECTORS 8 // LBA 0-7: one physical sector on 512e drives
 
-// The __mbr partition occupies the first 128 MB on every APA formatter; no user partition, and so
-// no HDL header a raw sector write could legitimately target, starts below it.
-#define APA_FENCE_RAW_WRITE_MIN_LBA (1024 * 256)
-
 #define APA_FENCE_MAGIC        0x00415041 // 'APA\0'
 #define APA_FENCE_TYPE_MBR     0x0001
 #define APA_FENCE_OFS_CHECKSUM 0x000
@@ -93,20 +89,6 @@ static inline int apaFenceWriteAllowed(u32 lba, u32 nsectors, const void *buf, u
 
     // The write touches the table's physical sector. Only a whole __mbr header at LBA 0 may.
     return lba == 0 && nsectors == 2 && buf != 0 && apaFenceIsValidMbrHeader((const unsigned char *)buf, totalLBA);
-}
-
-// HDIOC_WRITESECTOR takes an absolute LBA from the EE. The loader's only use is rewriting an HDL
-// game's own header, far above the __mbr partition, so refuse anything below it, past the end of
-// the disk, or wrapping.
-static inline int apaFenceRawWriteAllowed(u32 lba, u32 nsectors, u32 totalLBA)
-{
-    if (nsectors == 0)
-        return 1;
-    if (lba < APA_FENCE_RAW_WRITE_MIN_LBA)
-        return 0;
-    if (totalLBA != 0 && (lba >= totalLBA || nsectors > totalLBA - lba))
-        return 0;
-    return 1;
 }
 
 #endif /* APA_TABLE_FENCE_H */

@@ -2,13 +2,13 @@
 
 This page explains how RiptOPL protects an internal APA (PS2-formatted) hard disk. It also covers what to do if a disk shows up as **"Formatted: NO"**, or RiptOPL reports **code 402**.
 
-**Short version:** RiptOPL's copy of the APA driver cannot write the one physical sector that holds the partition table, except to store a complete, valid table header. It never formats, never creates partitions and never writes error records. If a disk's table is damaged anyway, your games are almost certainly still on it. **Do not format it.** Use [`pc/apa-recovery`](../pc/apa-recovery/README.md).
+**Short version:** RiptOPL is a game loader, not a partition manager. It writes only inside PFS partitions and never edits the APA partition table: its driver refuses formatting, creating, deleting or renaming partitions, and raw sector writes, and it never writes error records. If a disk's table is damaged anyway, your games are almost certainly still on it. **Do not format it.** Use [`pc/apa-recovery`](../pc/apa-recovery/README.md).
 
-## Why one sector matters
+## Why LBA 0–7 matter
 
-An APA disk is a chain of partitions. Each partition carries its own 1 KB header, and the chain starts at the `__mbr` header in LBA 0–1. The stock ps2sdk driver keeps two *error records* at LBA 6 and 7, in the same sector group.
+An APA disk is a chain of partitions. Each partition carries its own 1 KB header, and the chain starts at the `__mbr` header in LBA 0–1. The stock ps2sdk driver also keeps two APA *error records* at LBA 6 and 7, in the same reserved area. They are part of APA's own bookkeeping, not a filesystem.
 
-Almost every modern hard disk is **Advanced Format 512e**. It presents 512-byte sectors but stores 4 KB physical sectors. So LBA 0–7 are **one physical sector** on the platter. If a write anywhere in that range is interrupted or misdirected, the drive can lose the whole physical sector. The disk then reads as unformatted:
+Almost every modern hard disk is **Advanced Format 512e**: the PS2 addresses ordinary 512-byte logical sectors, and the drive's firmware maps them onto 4 KB physical sectors, so logical LBA 0–7 share one physical sector. Whether an interrupted write there can take its neighbours with it depends on the firmware, and it could not be proven for the disk below. What is certain is that losing LBA 0–1 makes the disk read as unformatted:
 
 - **wLaunchELF:** "Connected: YES / Formatted: NO"
 - **RiptOPL:** code 402
@@ -20,10 +20,10 @@ Every partition header, and every game, is untouched. The data is fine; only the
 
 In September 2026 a tester's internal WD disk ended up in exactly that state after trying the RA rolling build. There was no disk image and no way to retest, so the analysis was done from source. The full review is in the description of the pull request that added this page.
 
-- **RiptOPL's own code** only mounts partitions that already exist. Its one raw write is an HDL game's own header on rename. None of it writes LBA 0–7.
+- **RiptOPL's own code** only mounts partitions that already exist, and none of it writes LBA 0–7. It did edit APA structures elsewhere: *Delete game* removed a partition (rewriting its neighbours' headers, and LBA 0 for the last one), HDL rename rewrote the game's HDL header, and renaming a one-game `PP.*` PS1 install rewrote its partition header. All three are gone.
 - **The drivers RiptOPL embedded from ps2sdk** do write there:
-  - `ps2hdd` rewrites **LBA 6** (and flushes) whenever a partition header fails to read or checksum during a table walk.
-  - `ps2fs` has **LBA 7** rewritten on *any* PFS disk error, including a bad checksum found by a plain read.
+  - `ps2hdd` rewrites the **LBA 6** error record (and flushes) whenever a partition header fails to read or checksum during a table walk.
+  - PFS asks `ps2hdd` to set the **LBA 7** error record on *any* PFS disk error, including a bad checksum found by a plain read.
   - Creating or deleting a partition rewrites **LBA 0**.
 - **Error records are written when something is already failing:** a drive that isn't ready, a read error, a teardown. Those are the moments a user reaches for the power button.
 - **Latent SDK bugs sat on those same error paths:**
@@ -40,9 +40,9 @@ The exact trigger on that disk cannot be proven without the disk. The fix is the
 | --- | --- |
 | **Table write fence.** Every APA driver transfer is checked. The only write allowed into LBA 0–7 is a complete, checksummed `__mbr` header at LBA 0: magic, full 1 KB checksum, Sony MBR magic, `__mbr` id, start 0, links inside the disk. Everything else is refused before it reaches the drive. | `modules/hdd/apa/src/table_fence.h`, `table_fence.c` |
 | **No error records.** LBA 6/7 are never written; the events are logged instead. | `modules/hdd/apa/src/apa.c` |
-| **No table edits the loader doesn't need.** Refused: format, partition creation (including a stray `open(O_CREAT)` on `hdd0:`), sub-partition add/remove, OSD MBR changes, partition swaps. **Delete game** and **PS1 rename** still work. | `modules/hdd/apa/src/hdd_fio.c` |
-| **Raw sector writes stay out of `__mbr`.** `HDIOC_WRITESECTOR` refuses any LBA inside the first 128 MB or off the disk. The partition transfer bounds check no longer wraps. | `hdd_fio.c` |
-| **Corrupt headers can't steer a delete.** A partition claiming more than 64 sub-partitions is refused. **Delete game** first proves every sub-partition it lists is readable and really belongs to it, and refuses otherwise, rather than orphaning a piece or deleting an unrelated partition. | `hdd_fio.c` |
+| **No APA writes from the loader.** Every APA edit is refused: format, partition creation (including a stray `open(O_CREAT)` on `hdd0:`), partition delete and rename, sub-partition add/remove, OSD MBR changes, partition swaps, and raw sector writes (`HDIOC_WRITESECTOR`). The driver no longer repairs a broken back-link on its own while walking the chain either; it logs it. Nothing left in this build writes a partition header, so the fence above is a backstop. The HDD page offers no Delete, and no Rename for PS2 games; a one-game `PP.*` PS1 install says it can't be renamed. Loose VCDs and Ember folders still rename, because that is a PFS write inside their partition. | `modules/hdd/apa/src/hdd_fio.c`, `src/hddsupport.c` |
+| **Bounded reads of corrupt headers.** A partition claiming more than 64 sub-partitions is refused: the header has exactly 64 sub slots, so a larger count is corruption, and the SDK would index past the array. The partition transfer bounds check no longer wraps. | `hdd_fio.c` |
+| **4Kn drives are refused.** A drive whose *logical* sectors are not 512 bytes (IDENTIFY word 106) gets no sector I/O at all, since every driver here counts in 512-byte sectors; on the exFAT side it shows code 500. 512e drives are unaffected. | `modules/hdd/atad/src/ps2atad.c` |
 | **No wrapped addresses.** The ATA driver refuses any request past the drive's capacity. On drives without LBA48 (up to 137 GB), a sector at or above 2^28 used to wrap silently to the start of the disk. | `modules/hdd/atad/src/ps2atad.c` |
 | **GPT/APA hybrids are left alone.** A disk with a GPT header at LBA 1 is treated as a GPT disk: this build's APA driver cannot read that layout, so it is never loaded on it. | `src/hddsupport.c` |
 | **BDM (FAT/exFAT) never writes an APA disk's first 128 MB.** "APA disk" means LBA 0 carries the APA magic, or LBA 0 can't be read (then the write is refused too). This also holds on APA + exFAT hybrids. A disk whose header is wiped has no MBR/GPT for BDM to mount, so nothing writes it either way. | `modules/hdd/atad/src/ps2atad.c` |
@@ -93,10 +93,8 @@ If the chain itself is broken (a damaged header in the middle), the tool stops a
 Use a disposable APA disk with PS2 games, POPS containers, an Ember partition and a `+OPL` data home.
 
 1. **Boot, list, launch:** HDL, POPS and Ember titles, plus Neutrino with its install on `+OPL`. The IOP log must show no `refused` lines.
-2. **Delete game:**
-   - delete an HDL game in the middle of the disk, and the **last** one (which rewrites LBA 0)
-   - reboot, confirm both are gone, and confirm the remaining games still list
-3. **PS1 partition rename**, then reboot.
+2. **No partition edits:** the Triangle menu on an HDD PS2 game has no Rename or Delete. Renaming a one-game `PP.*` PS1 title shows the "own APA partition" message and changes nothing. Renaming a loose VCD in `__.POPS` and an Ember title still works after a reboot.
+3. **4Kn drive** (if available): an internal 4Kn disk formatted exFAT shows code 500, and one formatted APA is not detected. Neither is written to.
 4. **Exit to browser**, and **power off from the menu** while a cover is loading and while a list is still building. Reboot and confirm the disk still lists.
 5. **Code 402:** zero LBA 0–7 on the test disk from a PC and boot. Confirm code 402 appears, and that nothing is written. Then recover the disk with `apa_recover.py --repair`, boot again, and confirm everything lists.
 6. **APA + exFAT hybrid (APA-Jail):** confirm the exFAT side still mounts and saves settings.

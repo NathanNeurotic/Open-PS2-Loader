@@ -61,7 +61,7 @@ void bdmInitDevicesData();
 int bdmUpdateDeviceData(item_list_t *itemList);
 
 static unsigned int BdmGeneration = 0;
-// Drives BDM refused because their sectors are not 512 bytes (e.g. 4K-sector USB disks, issue #651).
+// Drives BDM refused because their sectors are not 512 bytes (4K-sector drives, refused by design).
 // They never become massN:, so without a message they just look dead. Written by bdmEventHandler,
 // reported by bdmReportUnsupportedDrives on the ordinary update path.
 static volatile unsigned int BdmUnsupportedSectorDrives;

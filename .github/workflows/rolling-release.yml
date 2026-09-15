@@ -41,7 +41,7 @@ name: Rolling Release
 # its PS2DEVPINNED, OFFICIALPINNED, PS2DEVROLLING, or OFFICIALROLLING version suffix. The compile gate
 # catches BUILD breakage only: ps2dev:latest tracks a MOVING tag whose ps2sdk drifts daily and
 # can yield a green-but-non-booting binary (issue #102), which is why the pinned PS2DEVPINNED flavour
-# is kept as the safe fallback -- see the release notes "Get started".
+# is kept as the safe fallback -- see the release notes "Download" section.
 
 on:
   push:
@@ -928,196 +928,80 @@ jobs:
           [ -f "rolling/${VERSIONED_BASE}-OFFICIALROLLING.ELF" ] && HAS_OFFICIALROLLING=yes
           [ -f "rolling/${VERSIONED_BASE}-OFFICIALPINNED.ELF" ] && HAS_OFFICIALPINNED=yes
           {
+            # THE NOTES ARE ASSEMBLED FROM FOUR PLACES, each owning different facts (details in
+            # .github/rolling-release-notes-block.md): this step generates what changes per run --
+            # header, Download, Recently merged; the two tracked .md files carry the evergreen text;
+            # normalize_release_notes.py later adds the banners and External Tools & Services. Edit
+            # those files, never a release body. set -eu makes a missing file fail the publish.
             if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-              printf 'RiptOPL %s -- tagged release.\n\n' "$OPL_VERSION"
+              printf '**RiptOPL %s**: tagged release.\n\n' "$OPL_VERSION"
             else
-              printf 'RiptOPL -- rolling build of the rebuild line (not a stable release).\n\n'
+              printf '**RiptOPL Rolling**: rebuilt on every merge to `%s`. A development build, not a stable release.\n\n' "$GITHUB_REF_NAME"
             fi
-            printf 'Version: %s\n' "$OPL_VERSION"
-            printf 'Commit: %s/%s/commit/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA"
-            printf 'Built: %s UTC\n' "$(date -u '+%Y-%m-%d %H:%M')"
-            printf 'Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-            printf '\n'
-            # The new-lineage statement (parity goal, MMCE status, report rules, which flavour to
-            # download) lives in a TRACKED FILE so every rolling release carries it verbatim without
-            # being re-drafted -- edit the file, never a one-off release body. With set -eu, a
-            # missing file fails the publish loudly rather than shipping notes that mislead testers.
-            cat .github/rolling-release-notes-block.md
-            printf '\n'
-            printf '\n## Get started -- which build should I download?\n'
-            printf 'Grab **RIPTOPL-*.zip** and extract it. It ships up to four loader folders that differ ONLY by\n'
-            printf 'the SDK toolchain each was built with -- the RiptOPL code in every one is identical. Pick a folder\n'
-            printf 'and copy its RIPTOPL.ELF to your launch method.\n'
-            printf '\n'
-            if [ -f rolling/RIPTOPL.ELF ]; then
-              printf '**Already running RiptOPL?** Grab the single **RIPTOPL.ELF** asset below and overwrite the\n'
-              printf 'one you already have -- no zip, no unpacking, nothing else to copy. It is the %s\n' "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
-              printf 'flavour, and the link never changes:\n'
-              printf '  %s/%s/releases/download/%s/RIPTOPL.ELF\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG"
-              printf 'Use the full package for a FIRST install -- the ELF alone does not bring POPS/, EMBER/,\n'
-              printf 'neutrino/ or the language files, and PS1 and Neutrino launches need those.\n'
-              printf '\n'
-            fi
-            printf '**Prefer a PINNED flavour.** Pinned builds are digest-locked and reproducible, so a report\n'
-            printf 'against one can be rebuilt and compared later. When you report, **name the flavour you are\n'
-            printf 'running -- Settings -> About shows it** in the version string. That one line is what makes\n'
-            printf 'a report actionable.\n'
-            printf '\n'
-            printf 'The four flavours, in order of preference:\n'
-            printf '\n'
-            if [ "$HAS_PS2DEVPINNED" = yes ]; then
-              printf '  * **APP_RIPTOPL-PS2DEVPINNED/** -- the ps2dev SDK pinned by digest to a day it was known\n'
-              printf '     good (version ends "-PS2DEVPINNED"). The RECOMMENDED download: the stock drivers\n'
-              printf '     RiptOPL is developed and tested against, frozen so they cannot drift.\n'
-            fi
-            if [ "${HAS_OFFICIALPINNED:-}" = yes ]; then
-              printf '  * **APP_RIPTOPL-OFFICIALPINNED/** -- the EXACT container official OPL'"'"'s rolling\n'
-              printf '     pre-release compiles in, frozen at a digest (version ends "-OFFICIALPINNED"). The\n'
-              printf '     second reproducible build, on a separate SDK lineage from ps2dev.\n'
-            fi
-            printf '  * **APP_RIPTOPL-PS2DEVROLLING/** -- built on the ps2dev:latest toolchain (version ends\n'
-            printf '     "-PS2DEVROLLING"): the current SDK, but a MOVING tag that can occasionally regress\n'
-            printf '     on some consoles (see issue #102). A triage build: a PS2DEVROLLING-only failure\n'
-            printf '     points at the SDK; a failure across BOTH toolchain lineages (a PS2DEV* and an\n'
-            printf '     OFFICIAL* flavour) points at RiptOPL code.\n'
-            if [ "$HAS_OFFICIALROLLING" = yes ]; then
-              printf '  * **APP_RIPTOPL-OFFICIALROLLING/** -- the same official container tracking its moving\n'
-              printf '     "main" tag (ghcr.io/ps2homebrew/ps2homebrew:main; version ends "-OFFICIALROLLING").\n'
-              printf '     Triage against official OPL'"'"'s own toolchain on the same console.\n'
-            fi
-            printf '\n'
-            printf 'When something misbehaves on hardware, please say WHICH flavour you ran (the in-app version\n'
-            printf 'string suffix tells you). A PS2DEVROLLING-only failure points at an SDK regression; a\n'
-            printf 'failure across BOTH toolchain lineages (a PS2DEV* and an OFFICIAL* flavour) points at\n'
-            printf 'RiptOPL code -- two ps2dev flavours failing together can still be a shared ps2dev SDK\n'
-            printf 'defect. Those bits triple the value of a report.\n'
-            printf '\n'
-            printf '**DualSense / DS5 (USB) owners:** `RIPTOPL-VARIANTS-*.zip` contains a ready-made\n'
-            printf 'DUALSENSE=1 loader for each available flavour. The same reliability order applies -- prefer\n'
-            printf '`-PS2DEVPINNED-ds5`. The default loaders in the unified package keep DualSense OFF.\n'
-            printf '\n## Bundled Neutrino core\n'
-            printf 'Required for the per-game Neutrino launch mode. From the official repo:\n'
-            printf '  https://github.com/rickgaiser/neutrino\n'
-            if [ -n "${NEUTRINO_VER:-}" ]; then
-              printf '  Included build: %s as the neutrino/ folder in the package -- RiptOPL adds only\n' "$NEUTRINO_VER"
-              printf '  config/bsd-udpfsbd.toml (for UDPFS); otherwise the official build. Just copy the\n'
-              printf '  whole neutrino/ folder to mc?:/ (it already holds neutrino.elf + config/ + modules/).\n'
-            else
-              printf '  (Could not bundle Neutrino this run -- please grab the latest build from the link above.)\n'
-            fi
-            printf '  Neutrino is the work of its authors; RiptOPL only bundles the official build for convenience.\n'
-            printf '\n## PC network servers\n'
-            printf 'The RiptOPL package no longer embeds a PC SMB server. Open **PS2-Servers.url** from the\n'
-            printf 'package, or visit https://github.com/NathanNeurotic/PS2-Servers, for the maintained\n'
-            printf 'UDPFS / SMBv1 / UDPBD all-in-one launcher. Follow its protocol-specific setup and\n'
-            printf 'match RiptOPL network settings to the server you start.\n'
-            # NOTE: the cover-art / metadata section ("Setting up cover art and game metadata",
-            # recommending OrbitPS2 Manager) lives in the reusable notes block
-            # (.github/rolling-release-notes-block.md), cat'd in above -- it replaced the inline
-            # "PC library manager" section that used to sit here, so the recommendation is edited
-            # in ONE place and every rolling release carries it unchanged.
-            printf '\n## In this build\n'
-            printf -- '- APA HDD table protection: the APA driver can no longer write the partition-table sector except a\n'
-            printf -- '  complete valid header, never formats or creates partitions, and never writes error records.\n'
-            printf -- '  A disk whose table cannot be read now says so (code 402: do NOT format) -- see docs/APA-SAFETY.md\n'
-            printf -- '  and the PC recovery tool pc/apa-recovery in the source.\n'
-            printf -- '- External Neutrino core option: per-game core selector + global/per-game launch args\n'
-            printf -- '- Coverflow cover-art render mode (default theme)\n'
-            printf -- '- Favorites tab: R3 stars; its independent L3 ring always cycles PS2 / PS1 / ELF / All in One, opening on PS2\n'
-            printf -- '- Mixed lists draw each cover at its OWN size: PS2 cases stay portrait, PS1 cases and app boxes stay square\n'
-            printf -- '- The L3 view you leave a page on is remembered across reboots, per device page / Favorites / APPS\n'
-            printf -- '- PS1 through TWO cores in one list: POPSTARTER (*.VCD) and Ember (*.cue); UDPFS/UDPBD list Ember only\n'
-            printf -- '  -- setup, display mode, credit and licence under "Playing PS1 games" above\n'
-            printf -- '- iLink POPSTARTER handoff plumbing (hardware retest pending): .ilink pair, automatic MC apply, XX. selector\n'
-            printf -- '- POPS/POPSTARTER VERSIONS/: five POPSTARTER builds to swap in by hand; the redundant\n'
-            printf -- '  POPSTARTER/ folder is gone -- see "Alternate POPSTARTER builds" above\n'
-            printf -- '- Shared PS2/PS1 Game Display on Interface + PS Emulation: Both (L3), Mixed, PS2, or PS1\n'
-            printf -- '- Independent APPS display: one Mixed ELF list or Apps / [PS1]-titled ELF views via L3\n'
-            printf -- '- Network Settings OK applies/reconnects live; Select / Refresh retries a failed network page\n'
-            printf -- '- Category settings layout with return-to-paused-page retention\n'
-            printf -- '- Per-game VMC shared with Neutrino on writable BDM (honours OPL VMC groups)\n'
-            printf -- '- Visual GameID barcode for Pixel FX / RetroGEM / PS2Digital (Interface page, OFF by default)\n'
-            printf -- '- BDM (USB / exFAT HDD / MX4SIO / iLink) block cache fix: a failed read no longer comes back as\n'
-            printf -- '  another part of the disk, which could let a later save corrupt a FAT/exFAT filesystem\n'
-            printf -- '- A USB drive with 4K sectors is no longer read into 512-byte buffers (IOP memory corruption); it\n'
-            printf -- '  shows code 500 and stays unmounted. Support is tracked in issue #651\n'
-            printf -- '- RetroGEM Game ID optical barcode for POPSTARTER / PS1 VCD launches (PS Emulation Settings, ON by default)\n'
+            printf '`%s` · [commit %s](%s/%s/commit/%s) · built %s UTC · [build run](%s/%s/actions/runs/%s)\n\n' \
+              "$OPL_VERSION" "${GITHUB_SHA:0:8}" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA" \
+              "$(date -u '+%Y-%m-%d %H:%M')" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            cat .github/rolling-release-notes-intro.md
 
-            printf -- '- Neutrino args: prefix a flag with $ to disable it without deleting; "Test launch" boots without saving\n'
-            printf -- '- DualSense / DS5 USB controller support\n'
-            printf -- '- PS2-Servers.url: the UDPFS / SMBv1 / UDPBD all-in-one PC launcher, by Ripto\n'
-            printf -- '- udpfs-server.url: an Android UDPFS server -- serve games from a phone, by YouKnow-sys\n'
-            printf -- '- OrbitPS2-Manager.url: OrbitPS2 Manager, the cross-platform PC library manager, by Luden\n'
-            printf -- '- OPL-PS1-AIO-Converter-GUI.url: BIN/CUE to VCD conversion and install, by shaan\n'
-            printf -- '- PS2RD-CHT-Manager.url: manager for the PS2RD .cht cheat files, by TheRealNextria\n'
-            printf '\n## Needs testing -- please report from real hardware\n'
-            printf -- '- APA HDD, on a disk you have backed up: boot, list and launch; delete a game (including the last\n'
-            printf -- '  one on the disk); rename a PS1 partition; exit and power off from the menu. Everything should still\n'
-            printf -- '  list afterwards, and no "refused" line should appear in the IOP log during normal use.\n'
-            printf -- '- GameID barcode: enable it on the Interface page, then confirm your Pixel FX / RetroGEM /\n'
-            printf -- '  PS2Digital auto-loads the per-game profile (the HDMI latch is hardware-only -- not emulator-testable).\n'
-            printf -- '- VMC -> Neutrino: confirm your save mounts when launching via Neutrino on USB / exFAT / MX4SIO.\n'
-            printf -- '  (Neutrino cannot yet write a VMC to internal HDD APA/PFS -- upstream neutrino#132 -- so VMC\n'
-            printf -- '  sharing is block-device only for now.)\n'
-            printf -- '- iLink: retest Neutrino with the post-2692 automatic -qb handoff; for POPSTARTER, report the\n'
-            printf -- '  mc?:/POPSTARTER ilink marker plus both installed module sizes/hashes. Native OPL remains open.\n'
-            printf -- '- PC network servers: use the linked PS2 Servers AIO, match the settings shown by its launcher,\n'
-            printf -- '  and confirm the game list populates and an ISO boots over your chosen protocol on real hardware.\n'
-            printf -- '- Mixed cover sizing: on the Favorites All in One shelf and a device page set to Mixed, confirm PS1\n'
-            printf -- '  and app covers are square and PS2 covers portrait, on your own theme as well as the built-in ones.\n'
-            printf -- '- Remembered L3 view: toggle a page, then launch a game OR save settings, reboot, and confirm it\n'
-            printf -- '  comes back where you left it. (A toggle followed by a power-off with neither is deliberately not kept.)\n'
-            printf -- '- USB / MX4SIO / exFAT HDD: browse, launch and save settings as usual; confirm lists load at normal speed\n'
-            printf -- '  and the drive still checks clean on a PC afterwards (the BDM block cache changed underneath).\n'
-            printf '\n## Other downloads\n'
+            printf '\n## Download\n\n'
+            printf -- '- **New install:** the `RIPTOPL-<version>-<hash>.zip` package. Copy `RIPTOPL.ELF` from one `APP_RIPTOPL-<flavour>/` folder to your launch method, plus `POPS/`, `EMBER/` and `neutrino/` as described below. It also carries shortcuts to the tools at the bottom of this page. [Install guide](https://nathanneurotic.github.io/Open-PS2-Loader/install.html)\n'
+            if [ -f rolling/RIPTOPL.ELF ]; then
+              printf -- '- **Updating:** download **[RIPTOPL.ELF](%s/%s/releases/download/%s/RIPTOPL.ELF)** and overwrite yours. It is the %s flavour and the link never changes, but it does not bring `POPS/`, `EMBER/`, `neutrino/` or languages.\n' \
+                "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG" "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
+            fi
+            # neutrino-watch.yml reads the bundled version back from "Included build: <ver> " -- keep
+            # that exact phrase, followed by a space.
+            if [ -n "${NEUTRINO_VER:-}" ]; then
+              printf -- '- **Neutrino:** Included build: %s (official, as the `neutrino/` folder).\n' "$NEUTRINO_VER"
+            else
+              printf -- '- **Neutrino could not be bundled this run:** get the latest from https://github.com/rickgaiser/neutrino/releases.\n'
+            fi
             if ls rolling/RIPTOPL-RA-*.zip >/dev/null 2>&1; then
-              printf -- '- RIPTOPL-RA-*.zip: the RetroAchievements loader as a complete package (POPS, EMBER, neutrino, shortcuts) -- **development build, not hardware-tested**\n'
+              printf -- '- `RIPTOPL-RA-*.zip`: the RetroAchievements build as a complete package. A development build, not hardware-tested.\n'
             fi
             if [ -f "rolling/RIPTOPL-VARIANTS-${OPL_VERSION:-rolling}.zip" ]; then
-              printf -- '- RIPTOPL-VARIANTS-*.zip: EXTRA_FEATURES x PADEMU x DUALSENSE configs for the two ps2dev flavours\n'
+              printf -- '- `RIPTOPL-VARIANTS-*.zip`: EXTRA_FEATURES (IGS, RTL), PADEMU and DualSense (DS5, USB) loaders. For DS5, prefer `-PS2DEVPINNED-ds5`.\n'
             fi
             if [ -f "rolling/RIPTOPL-DEBUG-${OPL_VERSION:-rolling}.zip" ]; then
-              printf -- '- RIPTOPL-DEBUG-*.zip: debug builds for the two ps2dev flavours (iopcore/ingame/eesio/ppctty/DTL_T10000)\n'
+              printf -- '- `RIPTOPL-DEBUG-*.zip`: debug builds (iopcore, ingame, eesio, ppctty, DTL-T10000) for diagnosing a problem.\n'
             fi
-            if [ -f rolling/RIPTOPL.ELF ]; then
-              printf -- '- RIPTOPL.ELF: the one-click loader for updating an existing install -- %s flavour, stable filename, permanent link\n' "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
+            if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
+              printf -- '- `RIPTOPL-LANGS-*.zip`: extra UI languages and fonts. Delete any `lang_*.lng` from a pre-rebuild build first: those number their strings differently and show the wrong text. Packs from this line stay compatible.\n'
             fi
+            printf -- '- `*-src.zip`: the source snapshot of this commit.\n'
+
+            printf '\n**Which flavour?** Every `APP_RIPTOPL-*` folder holds the same RiptOPL code, built with a different SDK toolchain:\n\n'
+            printf '| Folder | Toolchain | Use it for |\n'
+            printf '| --- | --- | --- |\n'
             if [ "$HAS_PS2DEVPINNED" = yes ]; then
-              printf -- '- %s-PS2DEVPINNED.ELF: bare loader, digest-pinned ps2dev snapshot %s (SAFE FALLBACK -- pinned, boots reliably)\n' "$VERSIONED_BASE" "$SDK_VER"
-            else
-              printf -- '- (pinned %s PS2DEVPINNED build FAILED this run)\n' "$SDK_VER"
-            fi
-            printf -- '- %s-PS2DEVROLLING.ELF: bare loader, ps2dev:latest toolchain (current SDK, MOVING tag; see "Get started")\n' "$VERSIONED_BASE"
-            if [ "$HAS_OFFICIALROLLING" = yes ]; then
-              printf -- '- %s-OFFICIALROLLING.ELF: bare loader, official OPL'"'"'s ps2homebrew:main container (toolchain A/B vs official)\n' "$VERSIONED_BASE"
+              printf '| `APP_RIPTOPL-PS2DEVPINNED` | %s, by digest | **Recommended.** Reproducible |\n' "$SDK_VER"
             fi
             if [ "${HAS_OFFICIALPINNED:-}" = yes ]; then
-              printf -- '- %s-OFFICIALPINNED.ELF: bare loader, official container DIGEST-PINNED (REPRODUCIBLE -- quote this one in bug reports)\n' "$VERSIONED_BASE"
+              printf '| `APP_RIPTOPL-OFFICIALPINNED` | official OPL CI container, by digest | Reproducible, second SDK lineage |\n'
             fi
-            for sdk in PS2DEVPINNED PS2DEVROLLING OFFICIALPINNED OFFICIALROLLING; do
-              if [ -f "rolling/${VERSIONED_BASE}-${sdk}-ds5.ELF" ]; then
-                printf -- '- %s-%s-ds5.ELF: %s toolchain WITH DualSense (DS5 USB) pad support (same reliability as the %s bare loader above)\n' "$VERSIONED_BASE" "$sdk" "$sdk" "$sdk"
-              fi
-            done
-            printf -- '- IRX-MANIFEST*.txt: SHA256 of every SDK-prebuilt IOP module in each toolchain; the header names the modules the fork builds itself instead\n'
-            printf -- '- %s-src.zip: source snapshot to rebuild this exact commit\n' "$VERSIONED_BASE"
-            if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
-              printf -- '- RIPTOPL-LANGS-*.zip: extra UI language files (.lng + non-Latin fonts) -- copy into your OPL folder\n'
+            printf '| `APP_RIPTOPL-PS2DEVROLLING` | `ps2dev:latest` | Triage: newest SDK, can regress (#102) |\n'
+            if [ "$HAS_OFFICIALROLLING" = yes ]; then
+              printf '| `APP_RIPTOPL-OFFICIALROLLING` | `ps2homebrew:main` | Triage against official OPL'"'"'s toolchain |\n'
             fi
-            printf '\n## Using a language other than English?\n'
-            printf 'If you have lang_*.lng files from a PRE-REBUILD RiptOPL build, DELETE them and use the ones\n'
-            printf 'in RIPTOPL-LANGS-*.zip above. That older line numbered its strings differently, and a .lng\n'
-            printf 'is a bare list consumed BY LINE POSITION -- no version, no label names -- so OPL cannot\n'
-            printf 'detect a mismatch: the menus would just show unrelated text instead of failing visibly.\n'
+            printf '\nA failure on only a rolling flavour points at the SDK; a failure on both a PS2DEV and an OFFICIAL flavour points at RiptOPL.\n'
+            if [ "$HAS_PS2DEVPINNED" != yes ]; then
+              printf '\nThe pinned PS2DEVPINNED build failed this run, so its folder is missing.\n'
+            fi
             printf '\n'
-            printf 'Packs from this rebuild line are safe to keep: strings are only ever APPENDED, so an older\n'
-            printf 'pack still lines up and any strings it predates simply appear in English until you update\n'
-            printf 'it. English itself is always correct -- it is compiled into the ELF, not read from a .lng.\n'
-            printf '\nSHA256 (also published as SHA256SUMS.txt):\n'
-            printf '```\n'
-            cat rolling/SHA256SUMS.txt
-            printf '```\n'
-            printf '\nUpdated on every push to the publishing branch (rebuild/main during the rebuild, master after cutover). This is the single rolling channel; stable builds are the v* tagged releases.\n'
+
+            cat .github/rolling-release-notes-block.md
+
+            # The newest merged PRs, so "what changed" is never hand-maintained and never stale.
+            # Best-effort: an API hiccup drops the section rather than failing the publish.
+            if [[ "${GITHUB_REF}" != refs/tags/v* ]]; then
+              MERGED="$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=closed&base=${GITHUB_REF_NAME}&sort=updated&direction=desc&per_page=50" \
+                --jq '[.[] | select(.merged_at != null)] | sort_by(.merged_at) | reverse | .[:8] | .[] | "- #\(.number) \(.title)"' 2>/dev/null || true)"
+              if [ -n "$MERGED" ]; then
+                printf '\n## Recently merged\n\n'
+                printf '%s\n' "$MERGED"
+                printf '\nFull history: [commits on %s](%s/%s/commits/%s)\n' "$GITHUB_REF_NAME" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME"
+              fi
+            fi
           } > notes.md
           echo "PS2DEVPINNED flavour present: $HAS_PS2DEVPINNED"
           cat notes.md

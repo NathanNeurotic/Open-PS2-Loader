@@ -1,73 +1,61 @@
 import pathlib, re, sys
 
+# Final pass over a published release body (release-normalize.yml): the hero banner on top, the
+# External Tools & Services list and the AI-disclosure banner at the foot. Everything between comes
+# from rolling-release.yml and the two .github/rolling-release-notes-*.md files. This pass runs more
+# than once per release (on `release: published` AND after every Rolling Release), so it must be
+# idempotent: it strips what an earlier pass added before adding it back.
+
 p = pathlib.Path(sys.argv[1])
 body = p.read_text(encoding='utf-8')
+root = pathlib.Path(__file__).resolve().parents[2]
+
 banner = '''<p align="center">\n  <img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" />\n</p>'''
 # The project banner, served from rebuild/main so one file in the repo drives the README, the
 # docs site and every release page at once. It has to be an ABSOLUTE url: a release description
 # is rendered outside any repository context, so a relative path resolves to nothing.
 hero = '''<p align="center"><img alt="RiptOPL" src="https://raw.githubusercontent.com/NathanNeurotic/Open-PS2-Loader/rebuild/main/docs/assets/riptopl.png" /></p>'''
 # Anchored to the START of the body and to the asset PATH, not a bare filename, so this only ever
-# removes a hero this script itself put there. Matching a loose "riptopl.png" anywhere would delete
-# a centred image someone had placed in the notes on purpose. Deliberately NOT an exact-string match
-# against `hero`: if the markup is ever edited, an exact match would stop recognising the previous
-# hero and start stacking a second one on every pass -- the very failure this guard exists to stop.
+# removes a hero this script itself put there. Deliberately NOT an exact-string match against `hero`:
+# if the markup is ever edited, an exact match would stop recognising the previous hero and start
+# stacking a second one on every pass.
 hero_re = re.compile(r'\A\s*<p align="center">(?:(?!</p>).)*docs/assets/riptopl\.png(?:(?!</p>).)*</p>\s*', re.DOTALL)
-resources = '''## External Tools & Services
+# The same, for the footer banner: normally it goes out with the tools section it follows, but when
+# README yields no tools section there is nothing to cut it with, and every pass would add another.
+banner_re = re.compile(r'\s*<p align="center">(?:(?!</p>).)*AI-Assisted-Software-Lovers-Only(?:(?!</p>).)*</p>\s*\Z', re.DOTALL)
 
-- **PS2-Servers** — all-in-one PC server launcher for **SMBv1, UDPFS and UDPBD**: https://github.com/NathanNeurotic/PS2-Servers
-- **udpfs-server** — Android UDPFS server for sharing folders and disk images from a phone: https://github.com/YouKnow-sys/udpfs-server
-- **OrbitPS2 Manager** — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management: https://github.com/Luden02/OrbitPS2-Manager
-- **OPL PS1 AIO Converter GUI** — Windows all-in-one PS1/POPStarter preparation tool for converting BIN/CUE backups to VCDs and installing them to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD: https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI
-- **PS2RD CHT Manager** — Windows application for creating, editing and managing `.cht` cheat files for **Open PS2 Loader (OPL) / PS2RD**: https://github.com/TheRealNextria/PS2RD-CHT-Manager
-'''
 
-# '## Release downloads' is in this list for the same reason the hero is stripped above: a second
-# normalization pass reads back the body the first one wrote. Without it that section was re-appended
-# every pass, so a release normalized twice listed its downloads twice.
+def external_tools():
+    """A compact copy of README's External Tools & Services, which docs-sync.yml owns: one line per
+    tool with its link, author and first sentence, so the release never carries a stale second list."""
+    try:
+        readme = (root / 'README.md').read_text(encoding='utf-8')
+    except OSError:
+        return ''
+    section = re.search(r'^## External Tools & Services\n(.*?)(?=^## |\Z)', readme, re.M | re.S)
+    if section is None:
+        return ''
+    lines = []
+    for item in re.findall(r'^- (.+)$', section.group(1), re.M):
+        head, sep, desc = item.partition(' — ')
+        if not sep:
+            continue
+        first = re.match(r'(.+?[.!?])(?:\s|$)', desc)
+        lines.append('- %s — %s' % (head, (first.group(1) if first else desc).strip()))
+    if not lines:
+        return ''
+    return '## External Tools & Services\n\n' + '\n'.join(lines)
+
+
+# Strip anything an earlier pass (or an older notes format) appended, then the hero.
 for marker in ('## Other downloads', '## Release downloads', '## External Tools & Services'):
     if marker in body:
         body = body.split(marker, 1)[0].rstrip()
 body = re.sub(r'\nSHA256 \(also published as SHA256SUMS\.txt\):\n```.*?```\n', '\n', body, flags=re.DOTALL)
-# Drop any hero this script added on an earlier pass before adding it back. Normalization is not
-# once-per-release -- it fires on `release: published` AND on every Rolling Release completion, and
-# a re-run reads back the body it wrote last time. Without this, each pass would stack another copy
-# of the banner on top of the notes.
 body = hero_re.sub('', body)
-body = body.lstrip()
+body = banner_re.sub('', body)
+body = body.strip()
 
-# `RIPTOPL.ELF` is published as a loose asset only when its (best-effort) flavour built this run,
-# so the workflow passes its presence in rather than letting these notes promise a download that
-# is not there. Absent argument => treat it as missing, which is the safe direction to be wrong in.
-oneclick = len(sys.argv) > 2 and sys.argv[2] == 'yes'
-oneclick_line = (
-    '- **RIPTOPL.ELF:** the loader on its own, for **updating an existing install** — download it and'
-    ' overwrite the `RIPTOPL.ELF` you already have. The filename never changes, so the link above is'
-    ' permanent. Use the unified package for a first install: the bare ELF does not bring `POPS/`,'
-    ' `EMBER/`, `neutrino/` or the language files.\n'
-) if oneclick else ''
-# The closing sentence has to track the line above it: saying "no bare ELF files are published"
-# while one sits in the asset list is exactly the kind of quiet contradiction people stop reading
-# release notes over.
-closing = (
-    'Apart from `RIPTOPL.ELF` above, no bare ELF files or SDK/IRX manifests are published as release'
-    ' assets; they are kept inside the appropriate archives where needed.'
-    if oneclick else
-    'No bare ELF files or SDK/IRX manifests are published as release assets; they are kept inside'
-    ' the appropriate archives where needed.'
-)
-
-downloads = f'''## Release downloads
-
-- **Unified package:** the normal installable RiptOPL package containing the standard loaders, PS1/POPSTARTER files, bundled Neutrino and the five companion-tool shortcuts.
-{oneclick_line}- **Variants:** alternate build configurations, including the DualSense (DS5) loaders.
-- **Debug:** diagnostic builds for troubleshooting, when produced.
-- **Languages:** additional UI language files and fonts, when produced.
-- **Source:** the exact source snapshot used to produce the release.
-
-{closing}'''
-
-# Hero FIRST, AI-disclosure banner LAST -- the two images do different jobs. The hero is the
-# project's identity and belongs where a reader lands. The disclosure badge is a footnote about how
-# the software is built, so it stays at the foot where it does not push the notes down the page.
-print(f'{hero}\n\n{body}\n\n{downloads}\n\n{resources}\n\n{banner}', end='')
+tools = external_tools()
+parts = [hero, body] + ([tools] if tools else []) + [banner]
+print('\n\n'.join(parts), end='')

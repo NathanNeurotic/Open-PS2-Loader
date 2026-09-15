@@ -695,7 +695,7 @@ static void itemExecTriangle(struct menu_item *curMenu)
 
         if (!(flags & MODE_FLAG_NO_COMPAT)) {
             if (menuCheckParentalLock() == 0) {
-                menuInitGameMenu();
+                menuInitGameMenu(support);
                 guiSwitchScreen(GUI_SCREEN_GAME_MENU);
                 guiGameLoadConfig(support, gameMenuLoadConfig(NULL));
             }

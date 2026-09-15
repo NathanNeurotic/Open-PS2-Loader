@@ -95,8 +95,6 @@ int hddGetPopsPartitionList(hdd_pops_list_t *list);
 // POPS-specific one.
 int hddGetEmberPartitionList(hdd_pops_list_t *list);
 void hddFreePopsPartitionList(hdd_pops_list_t *list);
-int hddSetHDLGameInfo(hdl_game_info_t *ginfo);
-int hddDeleteHDLGame(hdl_game_info_t *ginfo);
 
 // Drop the once-per-session HDD VCD list cache so the next VCD-view update re-walks the partitions.
 // Needed only when a SCAN-TIME filter changes (gVcdFirstDiscOnly); view flips reuse the built list.

@@ -1364,18 +1364,6 @@ static char *hddGetGameStartup(item_list_t *itemList, int id)
     return ps1 ? hddActiveVcd(id)->name : hddActiveHdl(id)->startup;
 }
 
-static void hddDeleteGame(item_list_t *itemList, int id)
-{
-    if (hddGetItemView(itemList, id) == LIB_VIEW_PS1)
-        return; // a VCD is not an HDL partition -- no delete in VCD view
-    id = hddGetSourceId(itemList, id);
-    hdl_game_info_t *game = hddActiveHdl(id);
-    if (game == &hddEmptyHdl)
-        return; // stale/invalid id -> don't delete a wrong/OOB HDL partition
-    hddDeleteHDLGame(game);
-    hddForceUpdate = 1;
-}
-
 // Settings probes use pfs1:, never pfs0:. The latter is the persistent OPL data-home mount and
 // remounting it under live readers is both unsafe and unnecessary just to prove an APA partition
 // already exists.
@@ -1603,37 +1591,14 @@ int hddCommitOplHomeSelection(void)
     return result;
 }
 
-// A PP.<DISC-ID>.POPS.<title> VCD is the APA/PFS partition itself, not a loose .VCD file. Preserve
-// the strict POPSTARTER prefix and replace only its title component; the next VCD scan then resolves
-// the new literal partition label for the handoff selector.
-static int hddRenamePopsPartition(const char *part, const char *newName)
-{
-    char oldPath[APA_IDMAX + 6];
-    char newPart[APA_IDMAX + 1];
-    char newPath[APA_IDMAX + 6];
-    int titleOfs;
-    int n;
-
-    if (part == NULL || newName == NULL || newName[0] == '\0' || strpbrk(newName, ":/\\") != NULL)
-        return -1;
-    titleOfs = vcdPopsPartitionTitleOffset(part);
-    if (titleOfs <= 0)
-        return -1;
-
-    n = snprintf(newPart, sizeof(newPart), "%.*s%s", titleOfs, part, newName);
-    if (n < 0 || n > APA_IDMAX)
-        return -1; // an APA label cannot grow past its on-disk field
-    snprintf(oldPath, sizeof(oldPath), "hdd0:%s", part);
-    snprintf(newPath, sizeof(newPath), "hdd0:%s", newPart);
-    return fileXioRename(oldPath, newPath);
-}
-
 static void hddRenameVcd(int id, const char *newName)
 {
     char oldName[VCD_NAME_MAX];
     char part[APA_IDMAX + 1];
-    int renamed = 0, isEmber = 0;
+    int renamed = 0, isEmber = 0, isApaLabel = 0;
 
+    // The loader writes only inside PFS partitions, never to the APA table: a loose VCD or an Ember
+    // folder is renamed within its partition, but a one-game PP.* install IS its partition label.
     // The list builder owns pfs1: and the backing arrays on the IO worker. Block it before copying
     // the selected storage identity and before temporarily mounting a pooled POPS partition RW.
     ioBlockOps(1);
@@ -1654,9 +1619,9 @@ static void hddRenameVcd(int id, const char *newName)
                 fileXioUmount("pfs1:");
             }
         } else if (vcdPopsPartitionTitleOffset(part) > 0) {
-            // One-game PP.* POPS installs boot from their partition label, so a file rename would
-            // change nothing. Rename the APA record while retaining its required prefix instead.
-            renamed = (hddRenamePopsPartition(part, newName) == 0);
+            // One-game PP.* POPS installs boot from their partition label, so only an APA header
+            // write could rename them. Say so instead of doing it.
+            isApaLabel = 1;
         } else {
             char mountSrc[APA_IDMAX + 6];
 
@@ -1670,9 +1635,10 @@ static void hddRenameVcd(int id, const char *newName)
     }
     ioBlockOps(0);
 
+    if (isApaLabel)
+        guiMsgBox(_l(_STR_HDD_PARTITION_RENAME_UNSUPPORTED), 0, NULL);
+
     if (renamed) {
-        // vcdRenameFileInDir already clears this for a loose file; doing it again keeps the
-        // partition-label path identical and is harmless.
         vcdInvalidateGameIds();
         hddVcdInvalidateCache();
     }
@@ -1680,17 +1646,10 @@ static void hddRenameVcd(int id, const char *newName)
 
 static void hddRenameGame(item_list_t *itemList, int id, char *newName)
 {
-    if (hddGetItemView(itemList, id) == LIB_VIEW_PS1) {
+    // PS1 titles only. An HDL game's name lives in its partition's HDL header, outside any PFS
+    // filesystem, and the loader never writes there (the game menu offers no Rename on this page).
+    if (hddGetItemView(itemList, id) == LIB_VIEW_PS1)
         hddRenameVcd(hddGetSourceId(itemList, id), newName);
-        return;
-    }
-    id = hddGetSourceId(itemList, id);
-    hdl_game_info_t *game = hddActiveHdl(id);
-    if (game == &hddEmptyHdl)
-        return; // stale/invalid id -> don't rename a wrong/OOB HDL partition
-    strcpy(game->name, newName);
-    hddSetHDLGameInfo(game);
-    hddForceUpdate = 1;
 }
 
 // Index of the VCD whose basename matches vcdName in the current hddVcdGames list, or -1.
@@ -2562,6 +2521,6 @@ int hddGetArtArchivePath(item_list_t *itemList, char *out, int outSize)
 
 static item_list_t hddGameList = {
     HDD_MODE, 0, 0, MODE_FLAG_COMPAT_DMA, MENU_MIN_INACTIVE_FRAMES, HDD_MODE_UPDATE_DELAY, NULL, NULL, &hddGetTextId, &hddGetPrefix, &hddInit, &hddNeedsUpdate, &hddUpdateGameList,
-    &hddGetGameCount, &hddGetGame, &hddGetGameName, &hddGetGameNameLength, &hddGetGameStartup, &hddDeleteGame, &hddRenameGame,
+    &hddGetGameCount, &hddGetGame, &hddGetGameName, &hddGetGameNameLength, &hddGetGameStartup, NULL, &hddRenameGame,
     &hddLaunchGame, &hddGetConfig, &hddGetImage, &hddCleanUp, &hddShutdown, &hddCheckVMC, &hddGetIconId, &hddLaunchVcd, 0, &hddGetArtArchivePath,
     &hddLaunchVcd, &hddGetItemView, &hddGetSourceId};

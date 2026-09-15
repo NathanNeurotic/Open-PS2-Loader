@@ -112,7 +112,8 @@ void menuEnd();
 // case to spot "user enabled the FIRST tab from the start menu" (#254).
 int menuHasRegisteredItems(void);
 void menuReinitMainMenu(void);
-void menuInitGameMenu(void);
+struct _item_list_t;
+void menuInitGameMenu(struct _item_list_t *support);
 void menuInitAppMenu(void);
 // Reuses the lightweight item-operation menu, but exposes Rename only. VCD/POPSTARTER entries
 // must never enter the PS2 per-game configuration menu.

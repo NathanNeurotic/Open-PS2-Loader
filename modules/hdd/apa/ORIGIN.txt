@@ -29,19 +29,17 @@ compiles the fence and fails if any of the policy below is lost):
    when a read was already failing. Also removes the SDK's NULL dereference of apaCacheAlloc in
    apaSetPartErrorSector.
 3. apa.c: apaGetPartErrorSector frees its cache entry on a failed read (SDK leaked one per failure).
-4. hdd_fio.c: partition-table edits the loader never performs are refused with -EACCES: hddFormat,
-   partition creation through O_CREAT in apaOpen, HIOCADDSUB/HIOCDELSUB, HDIOC_SWAPTMP,
-   HDIOC_SETOSDMBR. The now-unreachable helpers are kept (marked unused) for diffability.
-   Partition remove and rename stay (Delete game / PS1 rename).
-5. hdd_fio.c: HDIOC_WRITESECTOR refuses an absolute LBA inside the __mbr partition, past the end of
-   the disk, or wrapping (apaFenceRawWriteAllowed). The loader only uses it for HDL headers.
-6. hdd_fio.c: ioctl2Transfer's partition bounds check is overflow-safe (the SDK summed sector + size
+4. hdd_fio.c: a game loader is not a partition manager, so every partition edit and raw write is
+   refused with -EACCES: hddFormat, partition creation through O_CREAT in apaOpen, hddRemove,
+   hddReName, HIOCADDSUB/HIOCDELSUB, HDIOC_SWAPTMP, HDIOC_SETOSDMBR and HDIOC_WRITESECTOR. The
+   refused code is kept after the early returns (or marked unused) for diffability. apa.c
+   apaGetNextHeader also logs a start != prev mismatch instead of rewriting the header mid-walk.
+   What remains is opening existing partitions and PFS I/O inside them.
+5. hdd_fio.c: ioctl2Transfer's partition bounds check is overflow-safe (the SDK summed sector + size
    in u32, so a wrapping request could address anywhere on the disk).
-7. hdd_fio.c: an on-disk sub-partition count above APA_MAXSUB is refused in apaOpen and bounded in
-   fioGetStatFiller (it indexes the 64-entry subs array). apaRemove -- Delete game -- first proves
-   every listed sub-partition is readable and is a sub of this partition (APA_FLAG_SUB, main ==
-   start), and refuses otherwise: the SDK cleared nsub, skipped unreadable subs (orphaning them) and
-   would have deleted whatever unrelated partition a corrupt subs entry named.
+6. hdd_fio.c: an on-disk sub-partition count above APA_MAXSUB is refused in apaOpen and bounded in
+   fioGetStatFiller. The header has exactly 64 sub slots (apa_header_t.subs, and ioctl2AddSub stops at
+   64), so a larger count is corruption; the SDK would index past the array into unrelated memory.
 
 Unchanged: on-disk format, module name/version, cache, journal, enumeration and link repair, PFS.
 
