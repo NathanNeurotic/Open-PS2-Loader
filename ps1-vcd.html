@@ -304,7 +304,7 @@ POPSTARTER should use:</p>
     <tr><td><b>USB (exFAT)</b></td><td>Equips the USB exFAT BDMAssault modules.</td></tr>
     <tr><td><b>MX4SIO (exFAT)</b></td><td>Equips the MX4SIO exFAT BDMAssault modules.</td></tr>
     <tr><td><b>MMCE (exFAT)</b></td><td>Equips the MMCE exFAT BDMAssault modules.</td></tr>
-    <tr><td><b>HDD (exFAT)</b></td><td>Equips the internal ATA HDD BDMAssault modules. Requires <em>HDD (GPT/MBR)</em> enabled in Game Sources.</td></tr>
+    <tr><td><b>HDD (exFAT)</b></td><td>Equips the internal ATA HDD BDMAssault modules. Requires <em>Internal HDD (exFAT)</em> enabled in Game Sources.</td></tr>
     <tr><td><b>iLink</b></td><td>Equips the iLink / IEEE 1394 BDMAssault modules from the <code>.ilink</code> pair.</td></tr>
   </tbody>
 </table>
@@ -359,9 +359,10 @@ volume mounted through the BDM mass-device namespace, never a typed <code>ata0:<
 
 <p>PS1 games on an SMB share need POPSTARTER's own network config
 (<code>IPCONFIG.DAT</code> + <code>SMBCONFIG.DAT</code>) on the memory card, plus its SMB
-modules. RiptOPL can write those config files for you: enable
-<b>Settings → Network Settings → Write POPSTARTER Network Config</b> (off by default). On save it
-mirrors the same IP and share values OPL already uses into <code>mc?:/POPSTARTER/</code>.</p>
+modules. Edit those files from <b>POPSTARTER Network Settings</b>, on <b>Settings → PS Emulation
+Settings</b> or <b>Settings → Network</b>. The screen shows what the files on the memory card already
+contain, can import both from the connected share's <code>POPS</code> folder, and writes back only what you
+change. See <a href="settings.html#pops-network-settings">POPSTARTER Network Settings</a>.</p>
 
 <p>The SMB modules themselves ship in the release's <code>POPS/</code> folder — copy them to
 <code>mc?:/POPSTARTER/</code>. If they are missing, an SMB VCD launch warns you rather than
@@ -375,7 +376,7 @@ hanging silently.</p>
   <code>__.POPS0</code> … <code>__.POPS9</code>). RiptOPL scans all of them and lists their
   <code>*.VCD</code> files in the HDD device's PS1 view. No BDMA equip is needed here because
   POPSTARTER reads PFS natively.</li>
-  <li><b>exFAT HDD (BDM)</b> — enable <em>HDD (GPT/MBR)</em> in Game Sources. The exFAT volume
+  <li><b>exFAT HDD (BDM)</b> — enable <em>Internal HDD (exFAT)</em> in Game Sources. The exFAT volume
   mounts as a normal BDM block device (one of the <code>massN:</code> slots) and its
   <code>POPS/</code> folder appears in the same PS1 view as USB. Equip the
   <b>HDD (exFAT)</b> BDMA mode so POPSTARTER can read back off the exFAT volume at launch time.</li>

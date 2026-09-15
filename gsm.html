@@ -78,14 +78,14 @@ changes how that picture is scanned out. Expect a cleaner, more stable signal, n
 <p>GSM lives in two places:</p>
 <ul>
 <li><b>Per game</b> — Triangle on a title → <b>Configure GSM</b>.</li>
-<li><b>Globally</b> — <em>Settings → Display Settings → GSM Defaults</em>. This is what every game with no GSM
+<li><b>Globally</b> — <b>GSM Defaults (All Games)</b> on <em>Settings → Game Launching</em> (also on Interface and General &amp; System). This is what every game with no GSM
 settings of its own inherits.</li>
 </ul>
 
-<p>The per-game page's first row, <b>GSM Source</b>, decides which of those wins:</p>
+<p>The per-game page's first row, <b>Settings Mode</b> (stored as <code>$GSMSource</code>), decides which of those wins:</p>
 
 <table>
-<thead><tr><th>GSM Source</th><th>Meaning</th></tr></thead>
+<thead><tr><th>Settings Mode</th><th>Meaning</th></tr></thead>
 <tbody>
 <tr><td><b>Global</b></td><td>Ignore this game's GSM keys entirely and follow the global defaults. Selecting it also <em>removes</em> the game's stored GSM keys.</td></tr>
 <tr><td><b>Per Game</b></td><td>This game's GSM settings apply, as a complete set.</td></tr>
@@ -159,7 +159,7 @@ game without its own GSM settings inherits.</p>
 <p>The RiptOPL menu never uses GSM, so whatever you set, <b>you can always get back to the browser and undo
 it</b>. Which setting to undo depends on where you set it.</p>
 
-<p><b>If you set it for one game</b> (GSM Source = Per Game), only that title is affected:</p>
+<p><b>If you set it for one game</b> (Settings Mode = Per Game), only that title is affected:</p>
 <ol>
 <li>Return to the browser — reset the console if the game has no picture at all.</li>
 <li>Triangle on the affected title → <b>Configure GSM</b>.</li>
@@ -171,12 +171,12 @@ NTSC/PAL).</li>
 lose the picture at once. That is the wider blast radius the 1080p confirmation warns about:</p>
 <ol>
 <li>Return to the browser.</li>
-<li><em>Settings → Display Settings → <b>GSM Defaults</b></em>.</li>
+<li><em>Settings → Game Launching → <b>GSM Defaults (All Games)</b></em>.</li>
 <li>Turn <b>GSM Selector</b> off there, or pick a conservative mode, and save.</li>
 </ol>
 
 <div class="callout info"><div class="h">ℹ Fixing the global default will not repair a game you broke individually</div>
-A game whose GSM Source is <b>Per Game</b> keeps its own settings and ignores the global one. If only some
+A game whose Settings Mode is <b>Per Game</b> keeps its own settings and ignores the global one. If only some
 games are affected, check both.</div>
 
 <div class="callout info"><div class="h">ℹ If the <em>menu</em> has no picture, that is not GSM</div>
@@ -203,9 +203,9 @@ above are named "PS1 NTSC/PAL" because of the raster they produce, not because t
 <h2 id="not-gsm">Related settings that are not GSM</h2>
 <p>Two settings are easy to mistake for GSM options:</p>
 <ul>
-<li><b>Overscan</b> (<em>Settings → Display</em>) trims the edges of the <b>RiptOPL menu</b>, not of games. It
+<li><b>Overscan</b> (<em>Settings → Interface</em>) trims the edges of the <b>RiptOPL menu</b>, not of games. It
 is a UI setting and is unrelated to the GSM H-POS/V-POS offsets.</li>
-<li><b>Video Mode</b> (<em>Settings → Display</em>) sets the mode the <b>menu</b> runs in. GSM never affects
+<li><b>Video Mode</b> (<em>Settings → Interface</em>) sets the mode the <b>menu</b> runs in. GSM never affects
 it.</li>
 </ul>
 

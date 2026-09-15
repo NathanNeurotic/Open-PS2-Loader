@@ -107,7 +107,7 @@ The <b>Loader Core</b> selector, the <b>Neutrino Device</b> picker, the structur
 
 <h3>Custom Neutrino ELF path</h3>
 
-<p>You can override the lookup entirely: <b>Settings &rarr; General Settings &rarr; Neutrino ELF Path</b>. When that field is set and the file exists it takes priority over every candidate above. Leave it blank to use the auto-detection. The in-app text editor caps at 31 visible characters; for a longer path, set <code>neutrino_path</code> directly in <code>settings_riptopl.cfg</code> — OPL reads and uses the full string at launch regardless of how it was entered.</p>
+<p>You can override the lookup entirely with the <code>neutrino_path</code> key in <code>settings_riptopl.cfg</code>; there is no menu row for it. When it is set and the file exists it takes priority over every candidate above. Leave it out to use the auto-detection. To pick a device type instead, use <b>Neutrino Device</b> on <b>Settings &rarr; Game Launching</b>.</p>
 
 <h3>Network boot exception</h3>
 
@@ -116,8 +116,8 @@ The <b>Loader Core</b> selector, the <b>Neutrino Device</b> picker, the structur
 <h2 id="per-game-core">2. Pick the core per game</h2>
 
 <div class="steps">
-<div class="step"><h3>Open Compatibility Settings</h3>
-<p>Highlight a game and open <b>Game Settings &rarr; Compatibility Settings</b>.</p>
+<div class="step"><h3>Open Game Settings</h3>
+<p>Highlight a game, press <b>Triangle</b> and choose <b>Game Settings</b>.</p>
 </div>
 <div class="step"><h3>Set Loader Core</h3>
 <p>Change <b>Loader Core</b> to <b><code>Neutrino</code></b>. The other option is <b><code>&lt;OPL&gt;</code></b> (the built-in core; default for every game).</p>
@@ -209,20 +209,20 @@ PlayStation 1 titles always boot through their own core — <b>POPSTARTER.ELF</b
 <p>On top of the auto-built arguments you can pass <b>extra Neutrino flags</b> in two places. Both sets are appended after the auto-built arguments; global first, then per-game, so a game can extend or override the global defaults.</p>
 
 <ul class="checklist">
-<li><b>Global (every Neutrino launch):</b> <b>Settings &rarr; General Settings &rarr; Neutrino Launch Args</b> &mdash; config key <code>neutrino_args</code> in <code>settings_riptopl.cfg</code>.</li>
-<li><b>Per game (one title only):</b> <b>Game Settings &rarr; Compatibility Settings &rarr; Neutrino Launch Args</b> &mdash; config key <code>$NeutrinoArgs</code> in the game's <code>.cfg</code>.</li>
+<li><b>Global (every Neutrino launch):</b> <b>Settings &rarr; Game Launching &rarr; Neutrino Advanced Arguments</b> &mdash; config key <code>neutrino_args</code> in <code>settings_riptopl.cfg</code>.</li>
+<li><b>Per game (one title only):</b> <b>Triangle &rarr; Game Settings &rarr; Neutrino Launch Args</b> &mdash; config key <code>$NeutrinoArgs</code> in the game's <code>.cfg</code>.</li>
 </ul>
 
 <p>Arguments are space-separated. Example:</p>
 <pre>-mt=dvd -gsm=1</pre>
 
 <div class="callout info"><div class="h">ℹ Editing long argument strings</div>
-Both the global and per-game Neutrino Launch Args open a <b>structured sub-screen</b> (see below) whose individual fields each hold up to 31 visible characters. If you need a longer value in a single field, edit <code>neutrino_args</code> (global, in <code>settings_riptopl.cfg</code>) or <code>$NeutrinoArgs</code> (per game, in the game's <code>.cfg</code>) directly — OPL reads and forwards the full string at launch. The editor preserves every field you do not touch at its full stored length, so opening and closing the dialog never truncates a hand-edited value.
+Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Args open a <b>structured sub-screen</b> (see below) whose individual fields each hold up to 31 visible characters. If you need a longer value in a single field, edit <code>neutrino_args</code> (global, in <code>settings_riptopl.cfg</code>) or <code>$NeutrinoArgs</code> (per game, in the game's <code>.cfg</code>) directly — OPL reads and forwards the full string at launch. The editor preserves every field you do not touch at its full stored length, so opening and closing the dialog never truncates a hand-edited value.
 </div>
 
 <h3 id="args-subscreen">Structured Neutrino Args sub-screen</h3>
 
-<p>Both the <b>global</b> Neutrino Launch Args entry (<b>Settings &rarr; General Settings &rarr; Neutrino Launch Args</b>) and the <b>per-game</b> field (<b>Game Settings &rarr; Compatibility Settings &rarr; Neutrino Launch Args</b>) are buttons that open the <em>same</em> companion sub-screen. It breaks the argument string into named fields — Quick Boot (<code>-qb</code>), Debug Colors (<code>-dbc</code>), PS2 Logo (<code>-logo</code>), Working Dir (<code>-cwd</code>), Config (<code>-cfg</code>), Boot ELF (<code>-elf</code>), ATA0 Image (<code>-ata0</code>), ATA0 ID (<code>-ata0id</code>), ATA1 Image (<code>-ata1</code>), plus a free-form <b>Extra</b> field — reassembles them in a valid canonical order with <code>--b</code> kept last, and writes the result back as a single flat string: the global into <code>neutrino_args</code>, the per-game value into <code>$NeutrinoArgs</code> (each game edited independently).</p>
+<p>Both the <b>global</b> entry (<b>Settings &rarr; Game Launching &rarr; Neutrino Advanced Arguments</b>) and the <b>per-game</b> field (<b>Triangle &rarr; Game Settings &rarr; Neutrino Launch Args</b>) are buttons that open the <em>same</em> companion sub-screen. It breaks the argument string into named fields — Quick Boot (<code>-qb</code>), Debug Colors (<code>-dbc</code>), PS2 Logo (<code>-logo</code>), Working Dir (<code>-cwd</code>), Config (<code>-cfg</code>), Boot ELF (<code>-elf</code>), ATA0 Image (<code>-ata0</code>), ATA0 ID (<code>-ata0id</code>), ATA1 Image (<code>-ata1</code>), plus a free-form <b>Extra</b> field — reassembles them in a valid canonical order with <code>--b</code> kept last, and writes the result back as a single flat string: the global into <code>neutrino_args</code>, the per-game value into <code>$NeutrinoArgs</code> (each game edited independently).</p>
 
 <table data-sortable>
 <thead><tr><th>Field</th><th>Argument emitted</th><th>Notes</th></tr></thead>
@@ -249,7 +249,7 @@ Both the global and per-game Neutrino Launch Args open a <b>structured sub-scree
 
 <h2 id="neutrino-video">5. Per-game Neutrino Video (-gsm)</h2>
 
-<p>When a game's Loader Core is set to <b>Neutrino</b>, a <b>Neutrino Video</b> picker appears in <b>Compatibility Settings</b>. This is the Neutrino-side stand-in for the OPL GSM panel (which is an OPL-core-only feature and is greyed under Neutrino). The picker maps to Neutrino's <code>-gsm</code> flag:</p>
+<p>When a game's Loader Core is set to <b>Neutrino</b>, a <b>Neutrino Video</b> picker appears in <b>Game Settings</b>. This is the Neutrino-side stand-in for the OPL GSM panel (which is an OPL-core-only feature and is greyed under Neutrino). The picker maps to Neutrino's <code>-gsm</code> flag:</p>
 
 <table data-sortable>
 <thead><tr><th>Picker value</th><th>Neutrino flag emitted</th></tr></thead>
@@ -277,7 +277,7 @@ boot changing only the menu to 480p. A game video override must be changed in ga
 
 <h3 id="mode7">Mode 7 — fix IOP buffer overrun (<code>-gc=7</code>)</h3>
 
-<p>The compat modes list contains a Neutrino-only entry: <b>Mode 7 (Fix IOP Buffer Overrun)</b>. This maps to <code>-gc=7</code> and targets a small class of games that overrun an IOP buffer during loading. It is greyed out when the Loader Core is set to <code>&lt;OPL&gt;</code> (the inverse of Modes 4 and 6, which are greyed under Neutrino). Enable it from the compat modes screen inside Compatibility Settings when the game's core is Neutrino.</p>
+<p>The compat modes list contains a Neutrino-only entry: <b>Mode 7</b>. This maps to <code>-gc=7</code> and targets a small class of games that overrun an IOP buffer during loading. It is greyed out when the Loader Core is set to <code>&lt;OPL&gt;</code> (the inverse of Modes 4 and 6, which are greyed under Neutrino). Enable it in <b>Game Settings</b> when the game's core is Neutrino.</p>
 
 <h2 id="core-aware-settings">6. Core-aware per-game settings</h2>
 
@@ -289,9 +289,9 @@ boot changing only the menu to 480p. A game video override must be changed in ga
 <li><b>Neutrino Launch Args</b> and <b>Neutrino Video</b> picker are active and editable.</li>
 <li><b>Compat Modes 4 (Skip Videos) and 6 (Disable IGR)</b> are greyed — these are OPL ee-core features with no Neutrino equivalent. OPL never forwards them.</li>
 <li><b>Mode 7</b> is available (Neutrino-only; see above).</li>
-<li><b>DL Defaults</b> is greyed — it pulls OPL bitmask data that does not map to <code>-gc</code>.</li>
-<li><b>GSM, Cheats, PADEMU, OSD Language</b> panels show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
-<li><b>VMC</b> and the rest of <b>Compatibility</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on BDM devices (USB/iLink/MX4SIO/exFAT&nbsp;HDD/UDPBD), MMCE and UDPFS. The one exception is <b>APA HDD</b>: Neutrino has no APA/pfs backing store to open the <code>.bin</code> from, so the game boots <em>without</em> the VMC and OPL shows a warning (the OPL core honors the same card normally). See <a href="vmc.html#neutrino-vmc">VMC with the Neutrino core</a>.</li>
+<li><b>Download Defaults</b> is greyed — it pulls OPL bitmask data that does not map to <code>-gc</code>.</li>
+<li>The <b>Configure GSM</b>, <b>Cheat Settings</b>, <b>Controller Emulation</b> and <b>OSD Settings</b> screens show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
+<li><b>VMC</b> and the rest of <b>Game Settings</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on BDM devices (USB/iLink/MX4SIO/exFAT&nbsp;HDD/UDPBD), MMCE and UDPFS. The one exception is <b>APA HDD</b>: Neutrino has no APA/pfs backing store to open the <code>.bin</code> from, so the game boots <em>without</em> the VMC and OPL shows a warning (the OPL core honors the same card normally). See <a href="vmc.html#neutrino-vmc">VMC with the Neutrino core</a>.</li>
 <li><b>UDPBD / UDPFS games</b> have no OPL core backend, so the Loader Core selector is locked to Neutrino for them and cannot be changed.</li>
 </ul>
 

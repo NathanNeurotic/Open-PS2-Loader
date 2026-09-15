@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Network Boot (SMB/UDP) · RiptOPL Docs</title>
-<meta name="description" content="Stream games from a PC over the LAN with four Game Sources rows — Network Start Mode (Off / Manual / Auto), Protocol (SMB / UDPFS / UDPBD / HTTP), SMB Version, and Access (Files / IMG).">
+<meta name="description" content="Stream games from a PC over the LAN with Network Connectivity (Off / Manual / Auto) in Game Sources, then Protocol (SMB / UDPFS / UDPBD / HTTP), SMB Version and Access (Files / IMG) on the Network page.">
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <meta property="og:site_name" content="RiptOPL Docs">
 <meta property="og:type" content="website">
@@ -65,21 +65,21 @@
   </nav>
   <main class="content">
 <h1>Network Boot (SMB / UDP)</h1>
-<p class="lead">UDPFS and UDPBD stream PS2 games from a PC and require Neutrino. Set <b>Network Start Mode</b> (Off / Manual / Auto) in <b>Game Sources</b>, then choose <b>Protocol</b> in <b>Network</b>. The picker contains SMB / UDPFS / UDPBD / HTTP. SMB and <a href="http.html">HTTP</a> use OPL's own core; HTTP has separate setup and limits.</p>
+<p class="lead">UDPFS and UDPBD stream PS2 games from a PC and require Neutrino. Set <b>Network Connectivity</b> (Off / Manual / Auto) in <b>Game Sources</b>, then choose <b>Protocol</b> in <b>Network</b>. The picker contains SMB / UDPFS / UDPBD / HTTP. SMB and <a href="http.html">HTTP</a> use OPL's own core; HTTP has separate setup and limits.</p>
 
 <div class="callout info"><div class="h">ℹ Four rows, Off by default</div>
 The old <b>Network Boot</b> ON/OFF toggle and the separate <b>Net Boot Protocol</b> picker are retired
-placeholders. The network is now four rows: row 1 <b>Network Start Mode</b> is an <b>Off / Manual / Auto</b>
-start mode and defaults to <b>Off</b> (no network device); row 2 <b>Protocol</b> chooses
-<b>SMB / UDPFS / UDPBD / HTTP</b> and greys while row 1 is Off; rows 3 and 4 (<b>SMB Version</b> and
-<b>Access</b>) qualify the chosen protocol. UDPFS needs a static PS2 IP and a matching
+placeholders. The network is now four rows. <b>Network Connectivity</b>, on Game Sources, is an
+<b>Off / Manual / Auto</b> start mode and defaults to <b>Off</b> (no network device). On the Network page,
+<b>Protocol</b> chooses <b>SMB / UDPFS / UDPBD / HTTP</b>, and <b>SMB Version</b> and <b>Access</b>
+qualify the chosen protocol. UDPFS needs a static PS2 IP and a matching
 PC-side server. Pick a protocol only when you have those pieces in place. Local devices
 (USB / internal HDD / MMCE) are independent and browse alongside whichever network protocol you choose.
 </div>
 
 <h2 id="protocols">The Network rows</h2>
 
-<p><b>Game Sources</b> holds <b>Network Start Mode</b>. <b>Network</b> holds <b>Protocol</b>, <b>SMB Version</b> and <b>Access</b>. The SMB version is editable for SMB. Access is Files/IMG for UDPFS, locked to Files for SMB/HTTP and IMG for UDPBD. The first protocol can start while the NIC is unused; switching an already loaded protocol requires restarting RiptOPL.</p>
+<p><b>Game Sources</b> holds <b>Network Connectivity</b>. <b>Network</b> holds <b>Protocol</b>, <b>SMB Version</b> and <b>Access</b>. The SMB version is editable for SMB. Access is Files/IMG for UDPFS, locked to Files for SMB/HTTP and IMG for UDPBD. The first protocol can start while the NIC is unused; switching an already loaded protocol requires restarting RiptOPL.</p>
 
 <table data-sortable>
 <thead><tr><th>Choice</th><th>Wire protocol</th><th>On the PS2</th><th>PC server</th><th>Core</th></tr></thead>
@@ -263,10 +263,10 @@ the RiptOPL source tree into your <code>neutrino/config/</code> folder.</p>
 
 <ul class="checklist">
   <li><b>Static PS2 IP address</b> (UDPFS only). The UDPFS IOP modules (both Files and IMG)
-  have no DHCP client — they read the IP set in <b>Settings &rarr; Network Config</b> and use it
-  directly. If DHCP is currently on there, RiptOPL warns you when you select UDPFS in Game
-  Sources. (SMB can use DHCP or a static IP; it keeps its own address/port/share/credentials fields
-  on the Network Config page, hidden automatically when UDPFS is selected.)</li>
+  have no DHCP client — they read the IP set in <b>Settings &rarr; Network</b> and use it
+  directly. If DHCP is currently on there, RiptOPL warns you when you select UDPFS as the
+  Protocol. (SMB can use DHCP or a static IP; it keeps its own address/port/share/credentials fields
+  on the Network page, hidden automatically when UDPFS is selected.)</li>
   <li><b>PC-side UDPFS server running on the same LAN</b>, matching the Access mode you chose.
   RiptOPL does <b>not</b> embed one. Open the package's <code>PS2-Servers.url</code> shortcut or visit
   <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> for the maintained UDPFS /
@@ -298,20 +298,20 @@ the RiptOPL source tree into your <code>neutrino/config/</code> folder.</p>
 <div class="steps">
 <div class="step">
 <h3>Set a static IP on the PS2 (UDPFS only)</h3>
-<p>For UDPFS (either access mode), go to <b>Settings &rarr; Network Config</b> and set a fixed
+<p>For UDPFS (either access mode), go to <b>Settings &rarr; Network</b> and set a fixed
 IP address, subnet mask, and gateway; turn DHCP <b>off</b>. The UDPFS IOP modules read this address at
 module-load time and have no way to acquire a lease later. (SMB can stay on DHCP if you prefer.)</p>
 </div>
 <div class="step">
 <h3>Pick your Network Protocol (and Access)</h3>
-<p>In <b>Settings &rarr; Game Sources</b>, set <b>Network Start Mode</b> (row 1) to <b>Manual</b> or
-<b>Auto</b>, then set <b>Protocol</b> (row 2) to <b>SMB</b>, <b>UDPFS</b>, or <b>UDPBD</b>; set row 1 back
-to <b>Off</b> to disable networking. When Protocol = <b>SMB</b>, pick the <b>SMB Version</b> — <b>SMBv1</b>
+<p>In <b>Settings &rarr; Game Sources</b>, set <b>Network Connectivity</b> to <b>Manual</b> or
+<b>Auto</b>. Then, on <b>Settings &rarr; Network</b>, set <b>Protocol</b> to <b>SMB</b>, <b>UDPFS</b>, or
+<b>UDPBD</b>. Set Network Connectivity back to <b>Off</b> to disable networking. When Protocol = <b>SMB</b>, pick the <b>SMB Version</b> — <b>SMBv1</b>
 (default) or <b>SMB2</b>. The <b>Access</b> row (<b>Files</b> / <b>IMG</b>) is always present, but it is
 only free to change under <b>UDPFS</b>: under SMB it is locked to <b>Files</b> and under UDPBD to
 <b>IMG</b>, greyed in both cases. Because the PS2 has a single
 NIC, choosing one excludes the others automatically. Save settings. When UDPFS is selected, SMB's server / port / share / credentials fields on the
-Network Config page are hidden automatically. Switching between Files and IMG needs an OPL restart to
+Network page are hidden automatically. Switching between Files and IMG needs an OPL restart to
 take effect (only one UDPFS backend can bind the transport per boot).</p>
 </div>
 <div class="step">
@@ -374,9 +374,8 @@ and <a href="neutrino.html">Neutrino Core</a> for details.
 loads a SMAP driver on it. Only one can own the adapter at a time, so RiptOPL exposes them as
 mutually exclusive <b>values of one Protocol row</b> rather than independent toggles. That replaces the
 old model, where a separate <b>Network Boot</b> toggle and an <b>Ethernet (SMB)</b> mode had to be greyed
-against each other. The four rows still interlock live, but only downward: <b>Network Start Mode</b>
-(row 1) gates the rest — while it is <b>Off</b>, <b>Protocol</b>, <b>SMB Version</b> and <b>Access</b>
-are all greyed — and the chosen protocol then qualifies its own sub-rows (SMB Version is live only under
+against each other. <b>Network Connectivity</b> decides whether the stack starts at all, and on the Network page the chosen
+protocol qualifies its own sub-rows (SMB Version is live only under
 SMB; Access is free only under UDPFS, and is value-locked to <b>Files</b> under SMB and to <b>IMG</b>
 under UDPBD). Switching between SMB, UDPFS and UDPBD is just changing the <b>Protocol</b> value and
 saving. (The same one-transport-per-boot rule is why Access = Files vs IMG is a config-time choice,
@@ -393,7 +392,7 @@ independent of these rows and browse alongside whichever network protocol you pi
 <thead><tr><th>Key</th><th>Type</th><th>Default</th><th>Meaning</th></tr></thead>
 <tbody>
 <tr><td><code>network_protocol</code></td><td>int (0–4)</td><td><code>0</code></td><td><b>Authoritative selector.</b> User-facing: <code>0</code>=Off, <code>1</code>=SMB, <code>2</code>=UDPFS (Access = Files). <code>3</code>=UDPFSBD is the internal value for Access = IMG — the picker maps both <code>2</code> and <code>3</code> onto the single "UDPFS" menu entry, and the <b>Access</b> row picks between them. <code>4</code>=UDPBD is a <b>first-class value</b> for the retained UDPBD (SUDPBDv2) choice: it is <b>preserved as-is on load</b>, never migrated, so users still on the old <code>udpbd-server</code> keep it.</td></tr>
-<tr><td><code>net_start_mode</code></td><td>int (0–2)</td><td><code>0</code></td><td>Row 1 <b>Network Start Mode</b>: <code>0</code>=Off, <code>1</code>=Manual, <code>2</code>=Auto. Reconciled with <code>network_protocol</code> on load — a protocol of Off forces this to Off, and a live protocol with an Off (or out-of-range) start mode is floored to Manual.</td></tr>
+<tr><td><code>net_start_mode</code></td><td>int (0–2)</td><td><code>0</code></td><td><b>Network Connectivity</b>: <code>0</code>=Off, <code>1</code>=Manual, <code>2</code>=Auto. Reconciled with <code>network_protocol</code> on load — a protocol of Off forces this to Off, and a live protocol with an Off (or out-of-range) start mode is floored to Manual.</td></tr>
 <tr><td><code>smb_dialect</code></td><td>int (0/1)</td><td><code>0</code></td><td>Row 3 <b>SMB Version</b>: <code>0</code>=SMBv1 (default), <code>1</code>=SMB2. Only meaningful while the protocol is SMB; the value is kept (not reset) when the row is greyed. SMB3 is reserved internally and is not a selectable value.</td></tr>
 <tr><td><code>enable_udpbd</code></td><td>bool (0/1)</td><td><code>0</code></td><td><b>Legacy back-compat shadow</b> (superseded by <code>network_protocol</code>). Still dual-written: <code>1</code> whenever the protocol resolves to UDPFSBD (IMG) <em>or</em> UDPBD — both block-device transports set it.</td></tr>
 <tr><td><code>net_boot_protocol</code></td><td>int (0/1)</td><td><code>0</code></td><td><b>Legacy back-compat shadow</b> (superseded). Derived from the selector; only meaningful when the legacy <code>enable_udpbd=1</code>. Selecting <b>UDPBD</b> sets <code>enable_udpbd=1</code> with the classic UDPBD encoding, so a fresh UDPBD config still produces the legacy UDPBD shadow values.</td></tr>
@@ -406,7 +405,7 @@ into <code>network_protocol</code> itself (<code>2</code> = Files, <code>3</code
 writes the legacy <code>enable_udpbd</code> / <code>net_boot_protocol</code> / <code>eth_mode</code>
 keys alongside the new one (a dual-write) purely so older builds can still read the config;
 <code>network_protocol</code> is the source of truth. The PS2 IP address used by the UDPFS IOP modules is
-read from the standard Network Config fields (the same ones SMB uses); there are no protocol-specific
+read from the standard Network page fields (the same ones SMB uses); there are no protocol-specific
 network keys.</p>
 
 <h2 id="folder-layout">Game folder layout on the server</h2>
@@ -455,13 +454,13 @@ in IMG mode, only standard ISO images work.</p>
 </tr>
 <tr>
   <td>"needs a static PS2 IP" warning when selecting UDPFS</td>
-  <td>DHCP is enabled in Network Config.</td>
-  <td>Go to <b>Settings &rarr; Network Config</b>, disable DHCP, and enter a static IP.</td>
+  <td>DHCP is enabled on the Network page.</td>
+  <td>Go to <b>Settings &rarr; Network</b>, disable DHCP, and enter a static IP.</td>
 </tr>
 <tr>
   <td>List appears but game list is empty</td>
   <td>PC server not running, wrong IP, or the server is in a different mode than the Access you selected.</td>
-  <td>Confirm the server is running. Confirm the PS2 IP in Network Config matches the server's
+  <td>Confirm the server is running. Confirm the PS2 IP on the Network page matches the server's
   expected client address. Confirm the <b>Access</b> mode matches the server flag
   (<code>-fsroot</code> for Files, <code>-bdpath</code> for IMG).</td>
 </tr>
@@ -470,7 +469,7 @@ in IMG mode, only standard ISO images work.</p>
   <td><code>neutrino.elf</code> not found, wrong <code>ip=</code> in the Neutrino toml, or server
   disconnect mid-launch.</td>
   <td>Verify <code>neutrino.elf</code> exists (bundled <code>neutrino/</code> folder or the custom
-  Neutrino ELF Path). Check the <code>ip=</code> line in the active mode's toml
+  <code>neutrino_path</code>). Check the <code>ip=</code> line in the active mode's toml
   (<code>neutrino/config/bsd-udpfs.toml</code> for Files, <code>bsd-udpfsbd.toml</code> for IMG)
   matches your PS2's static IP. Keep the PC server running throughout play.</td>
 </tr>
@@ -488,7 +487,7 @@ in IMG mode, only standard ISO images work.</p>
   <td>Existing UDPBD setup stopped working after updating</td>
   <td>The <b>Protocol</b> row is set to something other than <b>UDPBD</b> (UDPBD is
   wire-incompatible with UDPFS, so a UDPFS pick won't talk to <code>udpbd-server</code>).</td>
-  <td>Set <b>Game Sources &rarr; Protocol</b> back to <b>UDPBD</b> (with <b>Network Start Mode</b> on
+  <td>Set <b>Network &rarr; Protocol</b> back to <b>UDPBD</b> (with <b>Network Connectivity</b> on
   <b>Manual</b> or <b>Auto</b>) and keep running the same
   <code>udpbd-server</code> on the PC — a config saved as UDPBD is preserved as-is, never migrated.
   (Alternatively, switch to <b>UDPFS</b> and run <code>udpfsd</code> instead — but that is a different

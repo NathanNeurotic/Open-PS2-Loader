@@ -202,8 +202,8 @@ use or reformat and re-copy.</p>
 
 <h3 id="exfat-enable">Enabling BDM HDD in RiptOPL</h3>
 <div class="steps">
-<div class="step"><h3>Enable HDD (GPT/MBR)</h3>
-<p>Go to <b>Game Sources</b> and enable <b>HDD (GPT/MBR)</b>. On the next boot (or scan) the exFAT HDD mounts into
+<div class="step"><h3>Enable Internal HDD (exFAT)</h3>
+<p>In <b>Settings → Game Sources</b>, turn <b>Internal HDD (exFAT)</b> on and set <b>BDM Devices Start Mode</b> to Manual or Auto. On the next boot (or scan) the exFAT HDD mounts into
 the <code>massN:</code> namespace and an <b>HDD Games</b> tab appears in the game list.</p></div>
 <div class="step"><h3>Copy your games</h3>
 <p>On your PC, place PS2 ISO/ZSO files in the <code>DVD/</code> (for DVD-format discs) or <code>CD/</code> (for
@@ -318,7 +318,7 @@ hardware power-cut test yet.</p>
 <tr><td>PS1 support</td><td><code>__.POPS*</code> (POPSTARTER) and <code>__.EMBER*</code> (Ember) APA partitions</td><td><code>POPS/</code> + BDMA equip, and/or <code>EMBER/</code></td></tr>
 <tr><td>Fragmentation risk</td><td>None (partition-based)</td><td>Yes — add files one at a time</td></tr>
 <tr><td>Tool ecosystem</td><td>HDL-Dump, pfs-shell, uLaunchELF</td><td>Any PC file manager</td></tr>
-<tr><td>Enable in RiptOPL</td><td>Game Sources → HDD (APA) Start Mode</td><td>Game Sources → HDD (GPT/MBR)</td></tr>
+<tr><td>Enable in RiptOPL</td><td>Game Sources → HDD (APA) Start Mode</td><td>Game Sources → Internal HDD (exFAT)</td></tr>
 </tbody>
 </table>
 

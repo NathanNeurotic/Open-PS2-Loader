@@ -131,7 +131,7 @@ another already-configured SMB server.</p>
 
 <h2 id="network-settings">2. Configure Network Settings in OPL</h2>
 
-<p>In RiptOPL, go to <b>Settings → Network Settings</b>. This dialog has two sections: the PS2's own network identity, and the share address.</p>
+<p>In RiptOPL, go to <b>Settings → Network</b>. The page has two sections: the PS2's own network identity, and the share address.</p>
 
 <h3 id="ps2-ip">PS2 IP address</h3>
 
@@ -140,10 +140,10 @@ another already-configured SMB server.</p>
   <tbody>
     <tr><td><b>IP address type</b></td><td><b>Static</b> or <b>DHCP</b>. Static is recommended — it avoids re-needing to update the settings when your router assigns a different lease.</td></tr>
     <tr><td><b>IP Address</b></td><td>The PS2's IP address (e.g. <code>192.168.0.10</code>). Grayed out when DHCP is selected.</td></tr>
-    <tr><td><b>Subnet Mask</b></td><td>Typically <code>255.255.255.0</code> for a home /24 network.</td></tr>
+    <tr><td><b>Mask</b></td><td>Typically <code>255.255.255.0</code> for a home /24 network.</td></tr>
     <tr><td><b>Gateway</b></td><td>Your router's IP (e.g. <code>192.168.0.1</code>).</td></tr>
     <tr><td><b>DNS Server</b></td><td>Usually the same as the gateway, or your ISP/public DNS. Not required for SMB itself (which connects by IP), but needed if DHCP negotiation touches DNS.</td></tr>
-    <tr><td><b>Eth. Link Mode</b></td><td>Leave on <b>Auto</b> unless your switch forces a specific speed/duplex. Options: Auto, 100Mbps Full-Duplex, 100Mbps Half-Duplex, 10Mbps Full-Duplex, 10Mbps Half-Duplex.</td></tr>
+    <tr><td><b>Ethernet Link Mode</b></td><td>Leave on <b>Auto</b> unless your switch forces a specific speed/duplex. Options: Auto, 100Mbps Full-Duplex, 100Mbps Half-Duplex, 10Mbps Full-Duplex, 10Mbps Half-Duplex.</td></tr>
   </tbody>
 </table>
 
@@ -162,7 +162,7 @@ another already-configured SMB server.</p>
 </table>
 
 <div class="callout info"><div class="h">ℹ Subfolder prefix (ETH Prefix)</div>
-If your share contains more than one OPL layout — for example you have multiple consoles sharing one NAS share — you can point OPL at a subfolder inside the share. Set <b>ETH Prefix Path</b> under <b>Settings → General Settings → Prefix Paths</b> (config key <code>eth_prefix</code>) to the subfolder name. OPL will prepend that path to every read/write inside the share. Leave it empty to use the share root directly.</div>
+If your share contains more than one OPL layout — for example you have multiple consoles sharing one NAS share — you can point OPL at a subfolder inside the share. Set <b>ETH Prefix Path</b> on <b>Settings → General &amp; System</b> (config key <code>eth_prefix</code>) to the subfolder name. OPL will prepend that path to every read/write inside the share. Leave it empty to use the share root directly.</div>
 
 <h3 id="save-connect">Saving and connecting</h3>
 
@@ -170,15 +170,15 @@ If your share contains more than one OPL layout — for example you have multipl
 
 <h2 id="enable-smb">3. Enable SMB in Game Sources</h2>
 
-<p>Network Settings stores the <em>how</em> (address, credentials). <b>Game Sources</b> stores the <em>whether</em> — open <b>Settings → Game Sources</b>. The network block is <b>four separate rows</b>, not one combined picker. For SMB you set the first row to Manual or Auto, the second to SMB, and the third to the dialect your server speaks:</p>
+<p>The <b>Network</b> page stores the <em>how</em>: protocol, address and credentials. <b>Game Sources</b> stores the <em>whether</em>. For SMB, set <b>Network Connectivity</b> on Game Sources to Manual or Auto, then on the Network page set <b>Protocol</b> to SMB and <b>SMB Version</b> to the dialect your server speaks:</p>
 
 <table data-sortable>
   <thead><tr><th>Row</th><th>Values</th><th>What it does</th></tr></thead>
   <tbody>
-    <tr><td><b>Network Start Mode</b></td><td>Off / Manual / Auto</td><td>The network <em>start mode</em>, using the same three options as every other device. <b>Off</b> loads no network transport at all and greys out the three rows below it. <b>Manual</b> registers the <b>ETH Games</b> tab and connects when you navigate into it — boot stays fast and you only pay the connection cost on entry. <b>Auto</b> brings the stack up during startup instead.</td></tr>
-    <tr><td><b>Protocol</b></td><td>SMB / UDPFS / UDPBD / HTTP</td><td>Which transport owns the single Ethernet adapter. <b>SMB</b> is the network-share client documented on this page; UDPFS and UDPBD select Network Boot instead — see <a href="network-boot.html">Network Boot</a>.</td></tr>
-    <tr><td><b>SMB Version</b></td><td>SMBv1 / SMB2</td><td>Which SMB dialect to speak. <b>SMBv1</b> is the default. Live only while <b>Protocol</b> is SMB, and greyed out otherwise — but the value is kept, so detouring through UDPFS and back does not silently reset you to SMBv1. See <a href="#smb-version">SMB Version</a> below.</td></tr>
-    <tr><td><b>Access</b></td><td>Files / IMG</td><td>Only meaningful for UDPFS. Under <b>SMB</b> it is locked to <b>Files</b> and greyed out; under UDPBD it is locked to <b>IMG</b>. You never need to touch it for an SMB setup.</td></tr>
+    <tr><td><b>Network Connectivity</b> (Game Sources)</td><td>Off / Manual / Auto</td><td>The network <em>start mode</em>, using the same three options as every other device. <b>Off</b> loads no network transport at all. <b>Manual</b> registers the <b>ETH Games</b> tab and connects when you navigate into it — boot stays fast and you only pay the connection cost on entry. <b>Auto</b> brings the stack up during startup instead.</td></tr>
+    <tr><td><b>Protocol</b> (Network)</td><td>SMB / UDPFS / UDPBD / HTTP</td><td>Which transport owns the single Ethernet adapter. <b>SMB</b> is the network-share client documented on this page; UDPFS and UDPBD select Network Boot instead — see <a href="network-boot.html">Network Boot</a>.</td></tr>
+    <tr><td><b>SMB Version</b> (Network)</td><td>SMBv1 / SMB2</td><td>Which SMB dialect to speak. <b>SMBv1</b> is the default. Live only while <b>Protocol</b> is SMB, and greyed out otherwise — but the value is kept, so detouring through UDPFS and back does not silently reset you to SMBv1. See <a href="#smb-version">SMB Version</a> below.</td></tr>
+    <tr><td><b>Access</b> (Network)</td><td>Files / IMG</td><td>Only meaningful for UDPFS. Under <b>SMB</b> it is locked to <b>Files</b> and greyed out; under UDPBD it is locked to <b>IMG</b>. You never need to touch it for an SMB setup.</td></tr>
   </tbody>
 </table>
 
@@ -245,9 +245,9 @@ If you leave the <b>Share</b> field empty, OPL asks the driver to enumerate the 
     <p>The release package ships a <code>POPSTARTER/</code> folder containing the four network IRX modules POPSTARTER needs for SMB: <code>smbman.irx</code>, <code>ps2ip.irx</code>, <code>ps2smap.irx</code>, and <code>ps2dev9.irx</code>. Copy them to <code>mc0:/POPSTARTER/</code> (or <code>mc1:/POPSTARTER/</code>). OPL checks for all four on one card before an SMB VCD launch and warns you rather than hanging if any are missing. OPL does not install them for you.</p>
   </div>
   <div class="step">
-    <h3>Write the POPSTARTER network config</h3>
-    <p>Enable <b>Settings → Network Settings → Write POPSTARTER Network Config</b> (off by default). When you save Network Settings with this enabled, OPL mirrors the IP address and share values you just entered directly into <code>mc?:/POPSTARTER/IPCONFIG.DAT</code> and <code>mc?:/POPSTARTER/SMBCONFIG.DAT</code>, in the exact format POPSTARTER expects. You do not need to edit those files by hand.</p>
-    <p>The write is free-space-gated and truncation-safe — it will not corrupt the memory card even if the card is nearly full. If writing fails, OPL shows an error message.</p>
+    <h3>Set up the POPSTARTER network config</h3>
+    <p>Open <b>POPSTARTER Network Settings</b>, from <b>Settings → Network</b> or <b>Settings → PS Emulation Settings</b>. It edits POPSTARTER's own <code>mc?:/POPSTARTER/IPCONFIG.DAT</code> and <code>SMBCONFIG.DAT</code> in the format POPSTARTER expects, so you do not need to edit those files by hand.</p>
+    <p>The screen shows what those files already contain, or says none were found. <b>Import from SMB POPS Directory</b> copies both from the connected share's <code>POPS</code> folder. On OK, only the values you changed are written, to the card the existing files came from, and replacing an existing configuration asks first. If writing fails, OPL shows an error message.</p>
   </div>
 </div>
 
@@ -257,7 +257,7 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
 <p>For deeper PS1 coverage — cover art by PS1 disc ID, the four <b>PS2/PS1 Game Display</b> modes, and BDMA module equipping for block devices — see <a href="ps1-vcd.html">PS1 Games (VCD)</a>.</p>
 
 <details class="deep"><summary>Does the BDMA exFAT equip apply to SMB?</summary>
-<p>No. The BDMA equip copies block-device driver modules for POPSTARTER to use when reading an exFAT drive. SMB is a pure network path — there is no block device involved. The BDMA Mode and BDMA Source settings in General Settings have no effect on an SMB VCD launch. The only prerequisite for PS1 over SMB is the four network IRX modules above plus the POPSTARTER network config files.</p>
+<p>No. The BDMA equip copies block-device driver modules for POPSTARTER to use when reading an exFAT drive. SMB is a pure network path — there is no block device involved. The BDMA Mode and BDMA Source settings on PS Emulation Settings have no effect on an SMB VCD launch. The only prerequisite for PS1 over SMB is the four network IRX modules above plus the POPSTARTER network config files.</p>
 </details>
 
 <h2 id="nic-exclusive">6. SMB vs. Network Boot — the NIC interlock</h2>
@@ -312,7 +312,7 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
     </tr>
     <tr>
       <td>PS1 VCD launch fails or hangs</td>
-      <td>Check that the four SMB IRX modules (<code>smbman.irx</code>, <code>ps2ip.irx</code>, <code>ps2smap.irx</code>, <code>ps2dev9.irx</code>) are present in <code>mc?:/POPSTARTER/</code>, and that the network config files (<code>IPCONFIG.DAT</code>, <code>SMBCONFIG.DAT</code>) have been written. Use the <b>Write POPSTARTER Network Config</b> toggle in Network Settings. Note that this leg is SMBv1 whatever <b>SMB Version</b> is set to, so the server must still answer SMBv1 for PS1 VCDs.</td>
+      <td>Check that the four SMB IRX modules (<code>smbman.irx</code>, <code>ps2ip.irx</code>, <code>ps2smap.irx</code>, <code>ps2dev9.irx</code>) are present in <code>mc?:/POPSTARTER/</code>, and that the network config files (<code>IPCONFIG.DAT</code>, <code>SMBCONFIG.DAT</code>) have been written. Set them up from <b>POPSTARTER Network Settings</b> on <b>Settings → Network</b>. Note that this leg is SMBv1 whatever <b>SMB Version</b> is set to, so the server must still answer SMBv1 for PS1 VCDs.</td>
     </tr>
     <tr>
       <td>Windows: share works from PC but PS2 cannot connect</td>
@@ -355,7 +355,7 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
 </table>
 
 <details class="deep"><summary>What about eth_prefix / ETH Prefix?</summary>
-<p>The <code>eth_prefix</code> key (set via <b>General Settings → Prefix Paths → ETH Prefix Path</b>) is stored in <code>settings_riptopl.cfg</code>, not in <code>conf_network.cfg</code>. When non-empty, OPL appends it (plus a backslash) between the share root and every path it constructs — so <code>smb0:PS2\DVD\game.iso</code> instead of <code>smb0:DVD\game.iso</code>. Use this if the share hosts multiple setups and OPL's root is not the share root.</p>
+<p>The <code>eth_prefix</code> key (set via <b>Settings → General &amp; System → ETH Prefix Path</b>) is stored in <code>settings_riptopl.cfg</code>, not in <code>conf_network.cfg</code>. When non-empty, OPL appends it (plus a backslash) between the share root and every path it constructs — so <code>smb0:PS2\DVD\game.iso</code> instead of <code>smb0:DVD\game.iso</code>. Use this if the share hosts multiple setups and OPL's root is not the share root.</p>
 </details>
 
 <h2 id="see-also">See also</h2>
