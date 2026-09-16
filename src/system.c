@@ -508,33 +508,40 @@ static int sysParseBoot2(const char *cnf, char *out, int outSize)
 // as a logged cross-check otherwise.
 // One poll interval of a disc wait. With a progress callback the vsync inside it does the waiting
 // (and keeps the menu animating); without one we fall back to a plain sleep.
-static void sysDiscProbeWait(void (*progress)(void))
+// Returns non-zero when the callback reports the user asked to abort the wait.
+static int sysDiscProbeWait(int (*progress)(void))
 {
     if (progress != NULL)
-        progress();
-    else
-        DelayThread(20 * 1000);
+        return progress();
+
+    DelayThread(20 * 1000);
+    return 0;
 }
 
 // Wait out a DETCT ("still identifying") report, bounded by WALL CLOCK rather than by a poll count.
-static int sysDiscSettle(void (*progress)(void), int budgetMs)
+// `cancelled` is set when the user abandoned the wait; `type` is then whatever the drive last said.
+static int sysDiscSettle(int (*progress)(void), int budgetMs, int *cancelled)
 {
     clock_t deadline = clock() + (clock_t)budgetMs * (CLOCKS_PER_SEC / 1000);
     int type = sceCdGetDiskType();
 
     while (type == SCECdDETCT && clock() < deadline) {
-        sysDiscProbeWait(progress);
+        if (sysDiscProbeWait(progress)) {
+            *cancelled = 1;
+            break;
+        }
         type = sceCdGetDiskType();
     }
     return type;
 }
 
-int sysGetDiscBootPath(char *path, int pathSize, void (*progress)(void))
+int sysGetDiscBootPath(char *path, int pathSize, int (*progress)(void))
 {
     u8 key[16];
     char boot[16], cnf[1024];
     u32 k32;
     int type, fd, len;
+    int cancelled = 0;
 
     if (path == NULL || pathSize < 64)
         return -3;
@@ -542,7 +549,9 @@ int sysGetDiscBootPath(char *path, int pathSize, void (*progress)(void))
     if (sceCdStatus() == SCECdErOPENS) // tray open
         return -1;
 
-    type = sysDiscSettle(progress, SYS_DISC_DETECT_MS);
+    type = sysDiscSettle(progress, SYS_DISC_DETECT_MS, &cancelled);
+    if (cancelled)
+        return SYS_DISC_CANCELLED;
     // An idle drive spins the disc DOWN and then reports NODISC even with a game disc loaded.
     // The software equivalent of a tray open/close is a TRAY-CLOSE REQUEST on the already-closed
     // tray, which re-runs the detect cycle. A genuinely empty drive still ends at the -2 bail
@@ -578,9 +587,14 @@ int sysGetDiscBootPath(char *path, int pathSize, void (*progress)(void))
             // remaining budget buys only dead time. See SYS_DISC_NODISC_MS.
             if (!sawDetct && clock() >= nodiscDeadline)
                 break;
-            sysDiscProbeWait(progress);
+            if (sysDiscProbeWait(progress)) {
+                cancelled = 1;
+                break;
+            }
         }
-        LOG("[DISC] after tray-close re-detect: type=%d (%d re-polls, sawDetct=%d)\n", type, spin, sawDetct);
+        LOG("[DISC] after tray-close re-detect: type=%d (%d re-polls, sawDetct=%d, cancelled=%d)\n", type, spin, sawDetct, cancelled);
+        if (cancelled)
+            return SYS_DISC_CANCELLED;
     }
 
     if (type != SCECdPS2DVD && type != SCECdPS2CD) // no disc / not a PS2 game disc
@@ -635,7 +649,7 @@ int sysGetDiscBootPath(char *path, int pathSize, void (*progress)(void))
     return 0;
 }
 
-int sysLaunchDisc(void (*progress)(void))
+int sysLaunchDisc(int (*progress)(void))
 {
     char path[64];
     char *args[1];

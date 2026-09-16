@@ -1459,7 +1459,10 @@ void menuHandleInputMenu()
             if (id == MENU_LAUNCH_PS2_DISC) {
             // Pump a frame per poll: the drive can take seconds to answer with an empty tray, and
             // this runs on the GUI thread, so without it the menu simply stops dead (issue #465).
-            if (sysLaunchDisc(&guiRenderProbeFrame) < 0) // success never returns; <0 -> stay in OPL
+            // That same callback carries the cancel press back, and a wait the user ended on
+            // purpose is not an error -- returning quietly to the menu IS the acknowledgement.
+            int discResult = sysLaunchDisc(&guiRenderProbeFrame); // success never returns; <0 -> stay in OPL
+            if (discResult < 0 && discResult != SYS_DISC_CANCELLED)
                 guiMsgBox(_l(_STR_DISC_LAUNCH_ERR), 0, NULL);
         } else if (id == MENU_SETTINGS) {
             if (menuCheckParentalLock() == 0)

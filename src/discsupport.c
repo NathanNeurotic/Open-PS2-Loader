@@ -26,12 +26,15 @@ int discCheckBusy(void)
 }
 
 // The watch-list format keys games by their root boot executable (up to 15 chars).
-static int discIdentity(char *bootPath, char *startup, void (*progress)(void))
+static int discIdentity(char *bootPath, char *startup, int (*progress)(void))
 {
     const char *name, *end;
     size_t len;
-    if (sysGetDiscBootPath(bootPath, 64, progress) < 0)
-        return -1;
+    // Returned verbatim so SYS_DISC_CANCELLED survives: a user-ended wait must not surface as a
+    // disc error here any more than it does on the plain Launch Disc path.
+    int result = sysGetDiscBootPath(bootPath, 64, progress);
+    if (result < 0)
+        return result;
     if (strncmp(bootPath, "cdrom0:", 7) != 0)
         return -1;
     name = bootPath + 7;
@@ -111,7 +114,7 @@ int discCheckSupportDeferred(void)
     return 1;
 }
 
-void discLaunch(void (*progress)(void))
+void discLaunch(int (*progress)(void))
 {
     char bootPath[64], startup[16], prefix[120];
     if (discCheckBusy()) {
@@ -122,8 +125,10 @@ void discLaunch(void (*progress)(void))
         guiShowRANotice(_l(_STR_RA_DISC_ENABLE), NULL);
         return;
     }
-    if (discIdentity(bootPath, startup, progress) < 0) {
-        guiShowRANotice(_l(_STR_DISC_LAUNCH_ERR), NULL);
+    int identity = discIdentity(bootPath, startup, progress);
+    if (identity < 0) {
+        if (identity != SYS_DISC_CANCELLED)
+            guiShowRANotice(_l(_STR_DISC_LAUNCH_ERR), NULL);
         return;
     }
     if (discSupportPrefix(prefix, sizeof(prefix)) < 0) {
