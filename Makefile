@@ -160,7 +160,7 @@ PNG_ASSETS = load0 load1 load2 load3 load4 load5 load6 load7 usb usb_bd ilk_bd \
 	Scan_480p1 Scan_480p2 Scan_480p3 Scan_480p4 Scan_480p5 Scan_576i Scan_576p Scan_720p \
 	Scan_1080i Scan_1080i2 Scan_1080p Vmode_multi Vmode_ntsc Vmode_pal logo \
 	logo0 logo1 logo2 logo3 \
-	case case_ps1 apps_case case_overlay disc_ps1 \
+	case case_ps1 apps_case disc_ps1 \
 	Players_1 Players_2 Players_3 Players_4 \
 	Index_0 Index_1 Index_2 Index_3 Index_4 fav fav_mark R3 L3 L1 R1 PS1 PS2
 	# unused icons - up down l2 r2

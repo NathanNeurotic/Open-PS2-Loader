@@ -114,7 +114,6 @@ extern void *Players_3_png;
 extern void *Players_4_png;
 extern void *PS1_png;
 extern void *PS2_png;
-extern void *case_overlay_png;
 #ifdef RETROACHIEVEMENTS
 extern void *ra_mark_png;
 #endif
@@ -279,7 +278,12 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {APPS_CASE_OVERLAY, "apps_case", &apps_case_png},
     {PS1_SYSTEM, "PS1", &PS1_png}, // #System console glyphs (FR #49); names match the #System values
     {PS2_SYSTEM, "PS2", &PS2_png},
-    {CASE_OVERLAY2, "case_overlay", &case_overlay_png}, // b2 foliage layer (two-layer frame)
+    // b2 "foliage" layer. Korium declares no overlay2 -- its case art carries the gloss in its
+    // own face alpha -- so nothing in either built-in theme references this any more and the
+    // bitmap is no longer embedded. Name kept (texId is positional) so a DISK theme naming
+    // overlay2=case_overlay still resolves; disk themes load it from their own folder anyway,
+    // since initImageTexture passes texId -1 on that path and never falls back to the baked set.
+    {CASE_OVERLAY2, "case_overlay", NULL},
     {UDPFS_ICON, "udp_fs", &udp_fs_png},
     {L1_ICON, "L1", &L1_png},
     {R1_ICON, "R1", &R1_png},
