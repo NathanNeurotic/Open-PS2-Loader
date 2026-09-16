@@ -23,7 +23,7 @@ static u8 hires = 0;
 static u8 guiWakeupCount;
 static int vsync_id = -1;
 
-#define NUM_RM_VMODES 14
+#define NUM_RM_VMODES 16
 #define RM_VMODE_AUTO 0
 
 // RM Vmode -> GS Vmode conversion table
@@ -62,6 +62,22 @@ static struct rm_mode rm_mode_table[NUM_RM_VMODES] = {
     // 24 bit color mode for older systems (non-interlaced, low resolution)
     {GS_MODE_PAL,        16,  640,  256,  1, 4, GS_NONINTERLACED, GS_FRAME, RM_ARATIO_4_3,  8, 15}, // PAL@50Hz
     {GS_MODE_NTSC,       16,  640,  224,  1, 4, GS_NONINTERLACED, GS_FRAME, RM_ARATIO_4_3,  7, 15}, // NTSC@60Hz
+    // Flicker-filtered interlaced modes (issue #615). APPENDED AT THE TAIL, never inserted beside
+    // their FIELD twins above: $VMode is a stored raw INDEX, so a mid-list insert would silently
+    // repoint every saved config one row down.
+    //
+    // Identical raster to the 640x512i/640x448i rows -- same GS mode, same 50/60Hz interlaced
+    // signal a CRT expects -- but FFMD=1 (GS_FRAME), so the CRTC reads the SAME lines for both
+    // fields instead of alternating. Nothing alternates at 25/30Hz any more, which is what removes
+    // the interlace strobe on thin lines and font edges; the cost is that the framebuffer is half
+    // as tall (rmSetMode halves Height for INTERLACED+FRAME) so vertical detail is genuinely
+    // halved. The GS has no vertical-blend filter for the CRTC -- this is the hardware's flicker
+    // control -- and the whole path is already proven here by the 1080i FRAME row above: Height
+    // halving, the doubled PAR in rmGetPAR, and the font compensation in fntsys all key off the
+    // same INTERLACED+FRAME test. PAR1/PAR2 stay as the FIELD rows' because rmGetPAR applies the
+    // x2 for the twice-as-tall pixels itself.
+    {GS_MODE_PAL,        16,  640,  512,  1, 4, GS_INTERLACED,    GS_FRAME, RM_ARATIO_4_3, 16, 15}, // PAL@50Hz flicker-filtered
+    {GS_MODE_NTSC,       16,  640,  448,  1, 4, GS_INTERLACED,    GS_FRAME, RM_ARATIO_4_3, 14, 15}, // NTSC@60Hz flicker-filtered
 };
 // clang-format on
 
