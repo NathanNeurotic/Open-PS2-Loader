@@ -148,12 +148,13 @@ prefix='''
 #include <string.h>
 enum { '''+', '.join(labels)+''' };
 #define _l(x) "notice"
+#define SYS_DISC_CANCELLED (-4)
 enum { IO_CUSTOM_SIMPLEACTION, IO_OK, NO_EXCEPTION, IO_MODE_SELECTED_ALL };
 static int gRATelemetry, image_busy, probe_result, watch_count, queued_result=IO_OK;
 static int launched, torn_down, queue_count;
 static const char *probe_path="cdrom0:\\\\SLUS_201.74;1", *home="mc0:/OPL";
 static int sbHashGameBusy(void) {return image_busy;}
-static int sysGetDiscBootPath(char *p,int n,void(*fn)(void)) {(void)fn;snprintf(p,n,"%s",probe_path);return probe_result;}
+static int sysGetDiscBootPath(char *p,int n,int(*fn)(void)) {(void)fn;snprintf(p,n,"%s",probe_path);return probe_result;}
 static const char *configGetHomePath(void) {return home;}
 static void guiShowRANotice(const char *a,const char *b) {(void)a;(void)b;}
 static void raHashLogOpen(const char *p) {(void)p;}
@@ -195,8 +196,12 @@ int main(void) {
     gRATelemetry=0;discLaunch(NULL);assert(!launched);
     gRATelemetry=1;watch_count=0;discLaunch(NULL);assert(!launched && !torn_down);
     watch_count=1;probe_result=-1;discLaunch(NULL);assert(!launched && !torn_down);
+    // A cancelled wait must survive discIdentity verbatim, not collapse into a generic -1:
+    // discLaunch keys its error notice off that code being distinguishable (issue #465).
+    probe_result=SYS_DISC_CANCELLED;assert(discIdentity(boot,startup,NULL)==SYS_DISC_CANCELLED);
+    discLaunch(NULL);assert(!launched && !torn_down);
     probe_result=0;discLaunch(NULL);assert(launched==1 && torn_down==1);
-    puts("PASS: disc identity, settings paths, busy/queue failure, telemetry and watch-list gates, PS2LOGO handoff");
+    puts("PASS: disc identity, settings paths, busy/queue failure, telemetry and watch-list gates, cancel pass-through, PS2LOGO handoff");
 }
 '''
 run('launch',prefix+s+test)
