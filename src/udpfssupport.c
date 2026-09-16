@@ -36,6 +36,7 @@ static base_game_info_t *udpfsGames = NULL;
 static int udpfsPs1GameCount = 0;
 static base_game_info_t *udpfsPs1Games = NULL;
 static int udpfsIomanModLoaded = 0;
+static int udpfsWaitingForServer = 0; // the last scan got no answer from the server; see udpfsSetWaitingForServer
 
 // forward declaration
 static item_list_t udpfsGameList;
@@ -98,6 +99,27 @@ int udpfsGetModulesLoaded(void)
     return udpfsIomanModLoaded;
 }
 
+// True when the server answers. While the udpfs_ioman session is down, every call fails inside the IOP
+// before anything reaches the network, so this is cheap enough to poll.
+static int udpfsServerAnswers(void)
+{
+    struct stat st;
+
+    return stat(udpfsPrefix, &st) == 0;
+}
+
+// Without Automatic Refresh (off by default) this page is scanned when it first comes up and on SELECT,
+// nothing else. udpfs_ioman connects in the background, so a first scan that ran before the server
+// answered -- server started after the console, slow link negotiation, server restarted -- left the page
+// empty for good, and the server log showed DISCOVERY and nothing after it. While waiting, poll through
+// the every-frame background path (2 s throttle, idle only, yields to cover art) and rescan the moment the
+// server answers; once a scan reaches it, go back to the normal cadence.
+static void udpfsSetWaitingForServer(int waiting)
+{
+    udpfsWaitingForServer = waiting;
+    udpfsGameList.updateDelay = waiting ? MENU_UPD_DELAY_GENREFRESH : UDPFS_MODE_UPDATE_DELAY;
+}
+
 void udpfsInit(item_list_t *itemList)
 {
     LOG("UDPFSSUPPORT Init\n");
@@ -112,6 +134,7 @@ void udpfsInit(item_list_t *itemList)
     udpfsPs1GameCount = 0;
     udpfsPs1Games = NULL;
     udpfsGameList.delay = gArtDelay;
+    udpfsSetWaitingForServer(0);
     ioPutRequest(IO_CUSTOM_SIMPLEACTION, &udpfsLoadModules);
     udpfsGameList.enabled = 1;
 }
@@ -173,6 +196,10 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
     // Folder browsing: descend/ascend forces one rescan.
     if (folderConsumeDirty(itemList->mode))
         return 1;
+    // Waiting for the server: rescan only once it answers, so an unreachable server costs one failed stat
+    // per poll instead of an empty rebuild every two seconds. Ahead of the PS1 early-out so Ember heals too.
+    if (udpfsWaitingForServer)
+        return udpfsServerAnswers();
     if (libListViewActive(itemList) == LIB_VIEW_PS1)
         return 0;
 
@@ -213,10 +240,13 @@ static int udpfsFoldersCreated = 0;
 static int udpfsUpdateGameList(item_list_t *itemList)
 {
     int view = libListViewActive(itemList);
+    int reached = 0;
     if (udpfsIomanModLoaded == 0)
         return udpfsActiveGameCount(itemList);
 
-    if (!udpfsFoldersCreated) {
+    // Latch only once the server can hear us. A scan that ran before it answered used to latch here, so
+    // the CD/DVD folders were never created for the rest of the boot.
+    if (!udpfsFoldersCreated && udpfsServerAnswers()) {
         sbCreateFolders(udpfsPrefix, 1);
         udpfsFoldersCreated = 1;
     }
@@ -228,10 +258,16 @@ static int udpfsUpdateGameList(item_list_t *itemList)
         if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
             udpfsPs1GameCount = r;
     }
-    if ((view == LIB_VIEW_ISO || view == LIB_VIEW_MIXED) &&
-        sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), &udpfsULSizePrev, &udpfsGameCount) < 0) {
-        udpfsGameCount = 0;
+    if (view == LIB_VIEW_ISO || view == LIB_VIEW_MIXED) {
+        if (sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), &udpfsULSizePrev, &udpfsGameCount) < 0)
+            udpfsGameCount = 0;
+        else
+            reached = 1;
     }
+    // Only a readable CD/DVD scan proves the server answered. A share without those folders, or the PS1
+    // view (whose empty result can't tell "no titles" from "no answer"), asks the server itself before
+    // deciding to wait -- otherwise a working server would be polled and rescanned every two seconds.
+    udpfsSetWaitingForServer(!reached && !udpfsServerAnswers());
     return udpfsActiveGameCount(itemList);
 }
 

@@ -82,8 +82,9 @@ static int _validate_fd(iomanX_iop_file_t *f, int *fd_idx_out, int32_t *handle_o
  * finished autonegotiating inside the first 5 s discovery window, or a recv timeout tore the session
  * down mid-use -- keep re-discovering so 'udpfs:' heals without a reboot. udpfs_core_init() binds the
  * UDPRDMA socket ONCE and reuses it across retries (the ministack has no udp_unbind; destroy+recreate
- * would leak one of the 4 port slots per blip), so retrying indefinitely is safe. The EE side re-stats
- * the device on every list poll, so a healed session repopulates the OPL page for free. Cadence: a
+ * would leak one of the 4 port slots per blip), so retrying indefinitely is safe. A heal does NOT
+ * repopulate the OPL page by itself -- the EE lists on demand only; udpfssupport.c polls while its last
+ * scan got no answer (udpfsSetWaitingForServer) and rescans once this reconnects. Cadence: a
  * failed discovery blocks ~5 s itself, plus the 1 s pause -> a missing server is probed every ~6 s.
  */
 static int udpfs_watchdog(void *arg)
