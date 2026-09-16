@@ -2213,6 +2213,24 @@ static int bootHomeIsKnownMmce(void)
            (gBootDir[4] == '0' || gBootDir[4] == '1') && gBootDir[5] == ':';
 }
 
+// PCSX2 and ps2client expose the development host's filesystem as "host:" (ps2client also uses
+// "host0:"). NO support driver claims that prefix, so oplPath2Mode() returns -1 for it and every
+// boot-device fast path in OPL misses -- OPL literally cannot tell where it booted from and falls
+// back to exhaustive device discovery. It is nevertheless a real readable and writable filesystem,
+// so recognise it explicitly instead of treating an emulator boot as an unknown device.
+static int oplBootDirIsHostFs(void)
+{
+    const char *p;
+
+    if (strncmp(gBootDir, "host", 4) != 0)
+        return 0;
+
+    p = gBootDir + 4;
+    if (*p == ':')
+        return 1;
+    return (*p >= '0' && *p <= '9' && p[1] == ':');
+}
+
 static int bootPathIsConcreteMass(const char *path)
 {
     const char *p;
@@ -2360,6 +2378,14 @@ static int tryMissingConfigPathRecovery(int types)
     // USB is third choice. Force only the USB transport, then inspect only slots whose live driver
     // identity is USB; ATA/MX4SIO/iLink are not pulled into this recovery scan. Check both the device
     // root and the conventional /OPL directory. configRead() itself handles the legacy filename.
+    //
+    // NOTE for anyone profiling a slow boot: bdmEnsureSourceModules blocks for up to 1500 ms here,
+    // and this whole recovery runs whenever the boot dir yielded no readable config. On a host:
+    // (emulator) boot that had been every boot, because host: is unclassifiable -- see
+    // oplBootDirIsHostFs. The save path no longer reaches this sweep for host:; the read path still
+    // does by design, since a host: boot may legitimately keep its settings on a card.
+    if (oplBootDirIsHostFs())
+        LOG("CONFIG recovery: host: boot, about to spend up to 1500ms probing for USB modules\n");
     if (bdmEnsureSourceModules(BDM_TYPE_USB, 1500)) {
         int slots[MAX_BDM_DEVICES];
         int count = bdmGetDeviceSlotsByType(BDM_TYPE_USB, slots, MAX_BDM_DEVICES);
@@ -3221,7 +3247,18 @@ static int trySaveAlternateDevice(int types)
         pwd[0] = '\0';
 
     // First, try the device that OPL booted from.
-    if (!strncmp(pwd, "hdd", 3) || !strncmp(pwd, "pfs", 3)) {
+    if (oplBootDirIsHostFs()) {
+        // host: is the emulator's host filesystem. No support driver claims that prefix, so
+        // oplPath2Mode() returns -1 for it and every boot-device fast path in OPL misses -- this
+        // function in particular fell straight through to the all-devices sweep below, which probes
+        // both MC slots, then blocks up to 1500 ms in bdmEnsureSourceModules() waiting for USB
+        // modules, then scans MMCE. Under an emulator with nothing attached that is the entire cost,
+        // paid to look for a home when a perfectly writable one is the directory we booted from.
+        // It IS writable, so write there and stop.
+        if ((value = configWriteMulti(types)) > 0)
+            return value;
+        LOG("CONFIG host: boot dir is not writable; falling back to device discovery\n");
+    } else if (!strncmp(pwd, "hdd", 3) || !strncmp(pwd, "pfs", 3)) {
         if ((value = trySaveConfigHDD(types)) > 0)
             return value;
     } else if (!strncmp(pwd, "mass", 4) && (pwd[4] == ':' || pwd[5] == ':')) {

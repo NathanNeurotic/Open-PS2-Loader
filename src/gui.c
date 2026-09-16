@@ -1666,7 +1666,13 @@ void guiShowVcdListConfig(void)
 // real runtime frame here; guiHandleDeferedIO is intentionally not used because its text screen
 // does not poll input or animate the Settings plasma.
 #define POPSNET_READ_TIMEOUT_MS  15000
-#define GUI_POPSNET_READ_ABORTED (-100)
+// Distinct abort reasons. The editor used to return a single ABORTED code and the caller simply
+// returned, so a read that timed out after fifteen seconds and a read the user cancelled were
+// indistinguishable on screen -- both silently dropped you back on the network page with no
+// explanation. Only CANCELLED is the user's own doing and stays quiet.
+#define GUI_POPSNET_READ_ABORTED (-100) // user pressed Circle
+#define GUI_POPSNET_READ_TIMEOUT (-101) // the worker never finished inside POPSNET_READ_TIMEOUT_MS
+#define GUI_POPSNET_READ_UNAVAIL (-102) // the request could not be queued at all (I/O blocked/OOM)
 enum gui_popsnet_read_source {
     GUI_POPSNET_READ_LOCAL = 0,
     GUI_POPSNET_READ_SMB,
@@ -1705,7 +1711,7 @@ static int guiReadPopsNet(int source, vcd_popsnet_t *out)
         // A cancelled request still owns the static payload until its I/O RPC returns. Reopening the
         // same editor may resume its wait, but a second source may not overwrite that payload.
         if (guiPopsNetReadSource != source)
-            return GUI_POPSNET_READ_ABORTED;
+            return GUI_POPSNET_READ_UNAVAIL;
         guiPopsNetReadAbandoned = 0;
     } else {
         memset(&guiPopsNetReadData, 0, sizeof(guiPopsNetReadData));
@@ -1717,7 +1723,7 @@ static int guiReadPopsNet(int source, vcd_popsnet_t *out)
         if (ioPutRequest(IO_CUSTOM_SIMPLEACTION, &guiPopsNetReadWorker) != IO_OK) {
             guiPopsNetReadInFlight = 0;
             guiPopsNetReadPending = 0;
-            return GUI_POPSNET_READ_ABORTED;
+            return GUI_POPSNET_READ_UNAVAIL;
         }
     }
 
@@ -1739,7 +1745,7 @@ static int guiReadPopsNet(int source, vcd_popsnet_t *out)
         }
         if ((clock() - startTick) >= timeoutTicks) {
             guiPopsNetReadAbandoned = 1;
-            return GUI_POPSNET_READ_ABORTED;
+            return GUI_POPSNET_READ_TIMEOUT;
         }
     }
 
@@ -1800,8 +1806,16 @@ void guiShowPopsNetConfig(void)
     ipAddrConfModes[2] = NULL;
     diaSetEnum(diaPopsNetConfig, NETCFG_POPS_IPTYPE, ipAddrConfModes);
 
-    if (guiReadPopsNet(GUI_POPSNET_READ_LOCAL, &popsOriginal) == GUI_POPSNET_READ_ABORTED)
+    int readResult = guiReadPopsNet(GUI_POPSNET_READ_LOCAL, &popsOriginal);
+    if (readResult == GUI_POPSNET_READ_ABORTED)
+        return; // the user cancelled; they know why they are back on the previous page
+    if (readResult == GUI_POPSNET_READ_TIMEOUT || readResult == GUI_POPSNET_READ_UNAVAIL) {
+        // Say so rather than dropping the user back on the network page with no explanation. The
+        // page is unreachable here for a transient reason -- the single I/O worker is busy, or the
+        // card scan (both slots, directory and file RPCs) outran the fifteen-second bound.
+        guiMsgBox(_l(_STR_POPS_SETTINGS_UNREADABLE), 0, NULL);
         return;
+    }
     guiSetPopsNetDialogFields(&popsOriginal);
 
     if (popsOriginal.smbInvalid || popsOriginal.ipInvalid) {
@@ -1828,6 +1842,12 @@ void guiShowPopsNetConfig(void)
             importResult = guiReadPopsNet(GUI_POPSNET_READ_SMB, &imported);
             if (importResult == GUI_POPSNET_READ_ABORTED)
                 return;
+            if (importResult == GUI_POPSNET_READ_TIMEOUT || importResult == GUI_POPSNET_READ_UNAVAIL) {
+                // Stay on the editor for the import path -- the user has unsaved fields in front of
+                // them and dropping out would discard them for a transient share/worker problem.
+                guiMsgBox(_l(_STR_POPS_SETTINGS_UNREADABLE), 0, NULL);
+                continue;
+            }
             if (importResult == VCD_POPSNET_SMB_IMPORT_NOT_CONNECTED) {
                 guiMsgBox(_l(_STR_POPS_SMB_NOT_CONNECTED), 0, NULL);
                 continue;

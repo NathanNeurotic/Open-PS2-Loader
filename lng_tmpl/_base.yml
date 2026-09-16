@@ -1330,3 +1330,5 @@ gui_strings:
   string: '%d: A drive was not mounted because its sectors are not 512 bytes (e.g. a 4K-sector drive). OPL can only read 512-byte sectors.'
 - label: HDD_PARTITION_RENAME_UNSUPPORTED
   string: This title is its own APA partition, and OPL never edits the partition table. Rename it on a PC.
+- label: POPS_SETTINGS_UNREADABLE
+  string: Could not read POPSTARTER's settings -- the memory card is busy or unreadable. Try again once loading finishes.
