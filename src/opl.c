@@ -4686,7 +4686,16 @@ static void setDefaults(void)
     // resolveBootDirToMass() early-return at its `gBootDir[0] == '\0'` guard every time, and homed
     // every config set on the mc?:OPL default regardless of what OPL actually booted from.
     // setBootDir() already zeroes the buffer at its own entry, so nothing needs a reset here.
-    gEnableBGArt = 1; // fork parity; gEnableArt is 1 above, so this is live
+    // OFF BY DEFAULT -- opt-in. Both built-in themes now draw a per-game background behind the MAIN
+    // list (pattern=BG on main0), and that requests ART/<id>_BG.png for every row the selection
+    // settles on while browsing. drawGameImage holds each request back until the cover has loaded,
+    // but on a slow bus it still competes with the single IO worker -- the same competition that
+    // left "the settings write never started" stalled on a PCSX2 host: boot. So it is the user's
+    // call. getGameImageTextureEx checks this flag before any request is made, so off means no I/O.
+    //
+    // Only a FRESH install sees this: saveConfig writes enable_bgart unconditionally, so anyone who
+    // has ever saved settings keeps the value they already have.
+    gEnableBGArt = 0;
     gEnableArtTar = 0;
     // NO SETTLE BY DEFAULT. This is the number of INACTIVE frames the menu must see before art is
     // even asked for, and it shipped at 8 -- the slowest of the four values the UI offers {0,2,5,8}
