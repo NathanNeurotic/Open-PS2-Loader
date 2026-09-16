@@ -404,16 +404,17 @@ coordinates from a neighbouring `AttributeImage` such as the `#Media` badge to l
 
 You can point `default=`/`overlay=` at any of OPL's embedded textures (no file needed):
 
-- **Covers / art:** `cover`, `coverapp`, `disc`, `screen`, `screens` (overlay), `missing`
-- **Case overlays:** `case` (the shared frame, layer 1), `case_overlay` (layer 2, drawn over `case`), `apps_case` (legacy apps-only frame)
+- **Covers / art:** `cover`, `coverapp` (alias of `cover`), `disc`, `disc_ps1`, `screen`, `screens` (overlay), `missing`
+- **Case overlays:** `case` (the PS2 DVD case, layer 1), `case_overlay` (layer 2, drawn over `case`), `apps_case` (the square apps sleeve), `case_ps1` (the PS1 jewel case, used by the `vcdMain` family)
 - **Device icons:** `usb`, `mmce`, `hdd`, `eth`, `app`, `fav`, `usb_bd`, `ilk_bd`, `m4s_bd`, `hdd_bd`, `udp_bd` (UDPBD), `udp_fs` (UDPFS)
 - **BDM indicators:** `Index_0` … `Index_4`
 - **Buttons:** `cross`, `circle`, `triangle`, `square`, `left`, `right`, `select`, `start`, `L3`, `R3`, `fav_mark`
 - **Loading frames:** `load0` … `load7`
 - **Boot logo:** `logo`, `logo0` … `logo6`
-- **Backgrounds:** `incebtion` (default theme bg), `ip`
-- **Format icons:** `ELF`, `HDL`, `ISO`, `ZSO`, `UL`
+- **Backgrounds:** `background` (built-in theme's main page), `background_info` (its info page)
+- **Format icons:** `ELF`, `HDL`, `ISO`, `ZSO`, `UL`, `VCD`
 - **Media icons:** `APP`, `CD`, `DVD`
+- **Players:** `Players_1` … `Players_4`
 - **Aspect / scan / vmode / rating** sets as listed in §6.
 
 (`settings_bg` is theme-supplied; `Device_*` indicators are deprecated/removed in this fork.)
@@ -437,8 +438,8 @@ SIO2 bus quiet — those covers still load on selection, as before.
 
 | Property | Notes |
 |---|---|
-| `default` | Fallback cover (e.g. `cover`, or `coverapp` for the apps list). |
-| `overlay` + `overlay_*` corners | The case art drawn around each cover (e.g. `case` / `apps_case`). The corners place the cover **inside** the case frame; the engine auto-centers the visible frame and keeps it aspect-correct in both 4:3 and widescreen. |
+| `default` | Fallback cover (e.g. `cover`). |
+| `overlay` + `overlay_*` corners | The case art drawn around each cover (`case`, `apps_case`, `case_ps1`). The corners place the cover **inside** the case frame; the engine auto-centers the visible frame and keeps it aspect-correct in both 4:3 and widescreen. |
 | `reflection` | `1` to draw the mirrored reflection below each cover (alpha-faded). |
 | `x`, `y`, `width`, `height` | Position and per-cover size. `width`/`height` should match your case art's pixel size so the overlay corners line up. `y` is the vertical **center of a cover of this element's own shape**. On a mixed shelf (Favorites *All*, a Mixed device page) a cover of another shape stands on that cover's **bottom edge**, so every cover rests on one baseline and the reflections line up. On a single-kind page every cover is this shape, so `y` is simply each cover's center. |
 
@@ -449,41 +450,42 @@ main2:
 	type=Coverflow
 	default=cover
 	reflection=1
-	y=233
-	width=184
+	y=300
+	width=256
 	height=256
 	overlay=case
 	overlay2=case_overlay
-	overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
-	overlay_llx=0    overlay_lly=256  overlay_lrx=184  overlay_lry=256
+	overlay_ulx=0    overlay_uly=12   overlay_urx=167  overlay_ury=22
+	overlay_llx=0    overlay_lly=240  overlay_lrx=167  overlay_lry=250
 appsMain2:
 	type=Coverflow
-	default=coverapp
+	default=cover
 	reflection=1
-	y=239
-	width=184
-	height=184
-	overlay=case
+	y=300
+	width=256
+	height=256
+	overlay=apps_case
 	overlay2=case_overlay
-	overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
-	overlay_llx=0    overlay_lly=184  overlay_lrx=184  overlay_lry=184
+	overlay_ulx=0    overlay_uly=12   overlay_urx=167  overlay_ury=22
+	overlay_llx=0    overlay_lly=165  overlay_lrx=167  overlay_lry=175
 vcdMain2:
 	type=Coverflow
 	default=cover
 	reflection=1
-	y=239
-	width=184
-	height=184
-	overlay=case
-	overlay2=case_overlay
-	overlay_ulx=0    overlay_uly=0    overlay_urx=184  overlay_ury=0
-	overlay_llx=0    overlay_lly=184  overlay_lrx=184  overlay_lry=184
+	y=300
+	width=256
+	height=256
+	overlay=case_ps1
+	overlay_ulx=17   overlay_uly=11   overlay_urx=155  overlay_ury=21
+	overlay_llx=17   overlay_lly=140  overlay_lrx=155  overlay_lry=150
 ```
 
-Apps and PS1/VCD covers share the games frame but use a **square** element so the box matches
-their square art, while games stay PS2-case **portrait**. The `vcdMain2` block above gives PS1/VCD
-covers their own square element; omit it and PS1 games reuse `appsMain2` (see *Block families*). The element `width`/`height` set the box
-aspect; the overlay corners (full-canvas of those dims) let the cover fill it.
+Each kind gets its **own frame**: games the PS2 DVD case, apps the square sleeve, PS1/VCD the
+jewel case. Omit `vcdMain2` and PS1 games fall back to `appsMain2`, then to `main2` (see *Block
+families*). All three share one element size here because the three case bitmaps share a 256×256
+canvas with the art anchored top-left — what differs is the overlay corners, which is where each
+frame's own front face actually is. The engine derives a per-cover recenter from those corners, so
+a shorter frame does not float above the carousel centerline.
 
 More than one of these blocks is live at once on a **mixed** list — each row's cover picks the one
 for its own media kind (see *Mixed lists* under *Block families*). Which trio is in play depends on

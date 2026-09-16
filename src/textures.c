@@ -56,9 +56,8 @@ extern void *fav_mark_png;
 extern void *cover_png;
 extern void *disc_png;
 extern void *screen_png;
-extern void *incebtion_png;
-extern void *ip_png;
-extern void *coverapp_png;
+extern void *background_png;
+extern void *background_info_png;
 extern void *missing_png;
 extern void *screens_png;
 
@@ -106,6 +105,13 @@ extern void *logo1_png;
 extern void *logo2_png;
 extern void *logo3_png;
 extern void *case_png;
+extern void *case_ps1_png;
+extern void *apps_case_png;
+extern void *disc_ps1_png;
+extern void *Players_1_png;
+extern void *Players_2_png;
+extern void *Players_3_png;
+extern void *Players_4_png;
 extern void *PS1_png;
 extern void *PS2_png;
 extern void *case_overlay_png;
@@ -198,9 +204,11 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {COVER_DEFAULT, "cover", &cover_png},
     {DISC_DEFAULT, "disc", &disc_png},
     {SCREEN_DEFAULT, "screen", &screen_png},
-    {INCEBTION_PICTURE, "incebtion", &incebtion_png}, // default theme background (conf_theme_OPL.cfg: default=incebtion)
-    {IP_PICTURE, "ip", &ip_png},
-    {COVERAPP_DEFAULT, "coverapp", &coverapp_png},
+    {BACKGROUND_PICTURE, "background", &background_png},                // built-in theme background (conf_theme_OPL.cfg: default=background)
+    {BACKGROUND_INFO_PICTURE, "background_info", &background_info_png}, // info page's lighter plate
+    // Korium ships no separate apps cover default; apps borrow the games one (name kept so a disk
+    // theme can still override by filename).
+    {COVERAPP_DEFAULT, "coverapp", &cover_png},
     {MISSING_PICTURE, "missing", &missing_png},
     // no_Device fallback dropped with the device indicator; not embedded.
     {NO_DEVICE_PICTURE, "no_Device", NULL},
@@ -212,6 +220,9 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {VCD_FORMAT, "VCD", &VCD_png},
     {ZSO_FORMAT, "ZSO", &ZSO_png},
     {UL_FORMAT, "UL", &UL_png},
+    // Sourced from gfx/APPS.png, not gfx/APP.png: the texture NAME is "APP" (that is what the
+    // #Media value resolves to) but the FILE cannot be called APP.png, because gfx/app.png -- the
+    // apps device icon -- already exists and Windows checkouts cannot hold both spellings.
     {APP_MEDIA, "APP", &APPS_png},
     {CD_MEDIA, "CD", &CD_png},
     {DVD_MEDIA, "DVD", &DVD_png},
@@ -264,15 +275,20 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {LOGO5_PICTURE, "logo5", &logo2_png},
     {LOGO6_PICTURE, "logo6", &logo1_png},
     {CASE_OVERLAY, "case", &case_png},
-    // apps_case retired -- both built-in themes now use case + case_overlay; aliased to case so an
-    // external theme that still names overlay=apps_case keeps a frame (no separate bitmap embedded).
-    {APPS_CASE_OVERLAY, "apps_case", &case_png},
+    // apps_case un-aliased: Korium draws a square sleeve for apps, not the tall PS2 case.
+    {APPS_CASE_OVERLAY, "apps_case", &apps_case_png},
     {PS1_SYSTEM, "PS1", &PS1_png}, // #System console glyphs (FR #49); names match the #System values
     {PS2_SYSTEM, "PS2", &PS2_png},
     {CASE_OVERLAY2, "case_overlay", &case_overlay_png}, // b2 foliage layer (two-layer frame)
     {UDPFS_ICON, "udp_fs", &udp_fs_png},
     {L1_ICON, "L1", &L1_png},
     {R1_ICON, "R1", &R1_png},
+    {CASE_PS1, "case_ps1", &case_ps1_png}, // VCD (PS1) jewel-case frame + its black disc
+    {DISC_PS1, "disc_ps1", &disc_ps1_png},
+    {PLAYERS_1, "Players_1", &Players_1_png},
+    {PLAYERS_2, "Players_2", &Players_2_png},
+    {PLAYERS_3, "Players_3", &Players_3_png},
+    {PLAYERS_4, "Players_4", &Players_4_png},
 #ifdef RETROACHIEVEMENTS
     // Positional: guarded by the same #ifdef as RA_MARK in enum INTERNAL_TEXTURE. Without
     // this row TEXTURES_COUNT grows but the initialiser does not, leaving the last slot
