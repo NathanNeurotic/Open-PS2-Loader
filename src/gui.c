@@ -3428,13 +3428,34 @@ static void guiDrawBusy(int alpha)
    inside an existing guiStartFrame/guiEndFrame bracket or from any other thread.
 
    The vsync wait inside guiEndFrame also paces the caller's poll loop, which is why callers can
-   drop their own DelayThread and measure the budget with clock(). */
-void guiRenderProbeFrame(void)
+   drop their own DelayThread and measure the budget with clock().
+
+   Returns 1 when the user pressed cancel, which the caller is expected to treat as "abandon the
+   wait". This is the ONLY poll running during such a wait -- guiMainLoop is not turning -- so the
+   pad read has to happen here, outside the guiLock bracket above, exactly as the other synchronous
+   wait loops in this file do (issue #465: a drive that answers slowly must still be escapable). */
+int guiRenderProbeFrame(void)
 {
+    int hints[1] = {_STR_CANCEL};
+    int icons[1] = {gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON};
+    int x;
+
     guiStartFrame();
     guiShow();
     guiDrawBusy(0x80);
+    // Without this the escape hatch is invisible: the probe frame is the unchanged menu plus a
+    // spinner, so nothing tells the user the wait can be abandoned at all.
+    x = guiAlignSubMenuHints(1, hints, icons, gTheme->fonts[0], 12, 2);
+    guiDrawIconAndText(icons[0], hints[0], gTheme->fonts[0], x, gTheme->usedHeight - 32, gTheme->textColor);
     guiEndFrame();
+
+    readPads();
+    if (getKeyOn(gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE)) {
+        sfxPlay(SFX_CANCEL);
+        return 1;
+    }
+
+    return 0;
 }
 
 // Boot-splash status line setter. Pass NULL to clear. Main-thread only (writes gBootStatus,

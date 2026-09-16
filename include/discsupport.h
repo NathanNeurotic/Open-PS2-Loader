@@ -3,6 +3,6 @@
 
 int discCheckBusy(void);
 int discCheckSupportDeferred(void);
-void discLaunch(void (*progress)(void));
+void discLaunch(int (*progress)(void));
 
 #endif

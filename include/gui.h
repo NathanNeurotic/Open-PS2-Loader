@@ -194,9 +194,10 @@ void guiRenderTextScreen(const char *message);
  *  HDMI auto-profiles. No-op unless gApplyGameID is set. Call just before launching a game.
  */
 void guiShowGameID(const char *startup);
-// One frame of the current screen + the busy spinner, for main-thread hardware waits. Must NOT be
+// One frame of the current screen + the busy spinner, for main-thread hardware waits; returns 1 if
+// the user pressed cancel, so a caller polling hardware can abandon the wait. Must NOT be
 // called inside a guiStartFrame/guiEndFrame bracket, nor from any thread but the GUI thread.
-void guiRenderProbeFrame(void);
+int guiRenderProbeFrame(void);
 
 void guiRenderGreetingScreen(void);
 // Boot-splash status line (main thread); NULL clears both the line and the sticky label.
