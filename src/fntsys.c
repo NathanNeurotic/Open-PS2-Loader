@@ -448,10 +448,13 @@ void fntUpdateAspectRatio()
     // Scale width according to the PAR (Pixel Aspect Ratio)
     ws = hs * rmGetPAR();
 
-    // Supersample height*2 when using interlaced frame mode
-    if (rmGetInterlacedFrameMode() == 1)
-        hs *= 2;
-
+    // NOTE: interlaced FRAME modes (1080i, the 480i/576i flicker-free rows) used to supersample
+    // the glyph bitmaps 2x vertically here (hs *= 2) and squash the quad back down at draw time.
+    // Removed: the atlas samples with GS_FILTER_NEAREST (atlas.c), so that 2:1 minification just
+    // drops every other glyph row -- at a 224-line framebuffer the 17px main font lost whole
+    // strokes and rendered blank/half-readable (issue #615). At native height the path is
+    // numerically identical to the known-good 640x224p/640x256p rows, and a FRAME display can
+    // only show the halved line count anyway, so the extra texels were never displayable.
     // flush cache - it will be invalid after the setting
     for (i = 0; i < FNT_MAX_COUNT; i++) {
         if (fonts[i].isValid) {
@@ -476,18 +479,12 @@ static void fntRenderGlyph(fnt_glyph_cache_entry_t *glyph, int pen_x, int pen_y)
          *    without the use of prim_quad_texture and rmSetupQuad...
          */
         quad.ul.x = pen_x + glyph->ox;
-        if (rmGetInterlacedFrameMode() == 0)
-            quad.ul.y = pen_y + glyph->oy;
-        else
-            quad.ul.y = (float)pen_y + ((float)glyph->oy / 2.0f);
+        quad.ul.y = pen_y + glyph->oy;
         quad.ul.u = glyph->allocation->x;
         quad.ul.v = glyph->allocation->y;
 
         quad.br.x = quad.ul.x + glyph->width;
-        if (rmGetInterlacedFrameMode() == 0)
-            quad.br.y = quad.ul.y + glyph->height;
-        else
-            quad.br.y = quad.ul.y + ((float)glyph->height / 2.0f);
+        quad.br.y = quad.ul.y + glyph->height;
         quad.br.u = quad.ul.u + glyph->width;
         quad.br.v = quad.ul.v + glyph->height;
 
