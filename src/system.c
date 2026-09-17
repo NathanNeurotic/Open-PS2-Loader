@@ -1532,15 +1532,17 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
            did its job) and then the screen stays black, because Neutrino reset away the stack the
            game path depends on. -qb keeps the inherited environment and skips that reset.
 
-           USB AND ILINK ONLY, deliberately: both launch through this inherited BDM environment, and
-           rev 2692 hardware showed the same reset-boundary symptom on iLink that established the USB
-           exception (iLink leg still needs a retest to prove it was the whole cause). Other backends
-           stay on the normal boot path until hardware says otherwise. A user-typed -qb in the global
-           or per-game args wins -- do not emit a second copy.
+           USB, iLink, and UDPFS (both filesystem and block variants): all launch through this
+           inherited environment. For UDPFS, an IOP reset destroys the resident ministack/ioman
+           state and triggers an immediate secondary DISCOVERY from the same socket that collides
+           with active server streams; NHDDL parity passes -qb for all non-HDL modes. Other
+           backends stay on the normal boot path until hardware says otherwise. A user-typed -qb
+           in the global or per-game args wins -- do not emit a second copy.
 
            Emitted ABOVE coreArgc so the pool-fit drop loop can never shed it: a dropped -qb would
            silently reinstate the reset and reproduce the black screen with no way to tell why. */
-        if ((!strcmp(deviceName, "usb") || !strcmp(deviceName, "ilink")) && argc < argvMax &&
+        if ((!strcmp(deviceName, "usb") || !strcmp(deviceName, "ilink") ||
+             !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd")) && argc < argvMax &&
             !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") && !neutrinoArgHasActiveFlag(extraArgs, "-qb"))
             argv[argc++] = "-qb";
     }
