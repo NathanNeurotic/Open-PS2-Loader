@@ -260,6 +260,14 @@ static void ra_snap_send(void)
                 base |= ((u32)at[2] << 16) | ((u32)at[3] << 24);
         }
 
+        /* A zero base is a broken chain: a null pointer, or a parent that
+           itself led outside memory. Adding the offset to it can land on an
+           in-range address and read memory that has nothing to do with the
+           chain, so the pair goes out as address 0 -- the "led outside
+           memory" the client already understands. */
+        if (base == 0)
+            size = 0;
+
         addr = (base + RA_NODE_OFF(i)) & 0x1FFFFFFF;
 
         if (size == 0 || addr < RA_RAM_LOW || addr + size > RA_RAM_HIGH) {
