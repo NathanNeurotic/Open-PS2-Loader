@@ -159,41 +159,32 @@ static int cdrom_purifyPath(char *path, size_t capacity)
 
     len = strlen(path);
 
-    // Ensure there's enough space for the worst case (adding ;1\0)
-    if ((size_t)len >= capacity) {
-        return -1; // Buffer exhausted or path already at capacity
-    }
-
     // Adjusted to better handle cases. Was adding ;1 on every case no matter what.
 
-    if (len >= 3) {
-        // Path is already valid.
-        if ((path[len - 2] == ';') && (path[len - 1] == '1')) {
-            return 1;
-        }
+    // Path is already valid with version suffix ";1"
+    if (len >= 2 && (path[len - 2] == ';') && (path[len - 1] == '1')) {
+        return 1;
+    }
 
-        // Path is missing only version.
-        if (path[len - 1] == ';') {
-            if ((size_t)(len + 2) > capacity) {
-                return -1; // No room for "1\0"
-            }
-            path[len] = '1';
-            path[len + 1] = '\0';
-            return 0;
+    // Path is missing only version.
+    if (len >= 1 && path[len - 1] == ';') {
+        if ((size_t)(len + 2) > capacity) {
+            return -1; // No room for "1\0"
         }
-
-        // Path has no terminator or version at all.
-        if ((size_t)(len + 3) > capacity) {
-            return -1; // No room for ";1\0"
-        }
-        path[len] = ';';
-        path[len + 1] = '1';
-        path[len + 2] = '\0';
-
+        path[len] = '1';
+        path[len + 1] = '\0';
         return 0;
     }
 
-    return 1;
+    // Path has no terminator or version at all.
+    if ((size_t)(len + 3) > capacity) {
+        return -1; // No room for ";1\0"
+    }
+    path[len] = ';';
+    path[len + 1] = '1';
+    path[len + 2] = '\0';
+
+    return 0;
 }
 
 //--------------------------------------------------------------
@@ -245,7 +236,7 @@ static int cdrom_open(iop_file_t *f, const char *filename, int mode)
 
     DPRINTF("cdrom_open %s mode=%d layer %d\n", filename, mode, f->unit);
 
-    if (strlen(filename) >= sizeof(path_buffer))
+    if (!filename || strlen(filename) >= sizeof(path_buffer))
         return -ENAMETOOLONG;
 
     strncpy(path_buffer, filename, sizeof(path_buffer) - 1);
@@ -388,7 +379,7 @@ static int cdrom_getstat(iop_file_t *f, const char *filename, iox_stat_t *stat)
     DPRINTF("cdrom_getstat %s layer %d\n", filename, f->unit);
     WaitEventFlag(cdvdman_stat.intr_ef, 1, WEF_AND, NULL);
 
-    if (strlen(filename) >= sizeof(path_buffer))
+    if (!filename || strlen(filename) >= sizeof(path_buffer))
         return -ENAMETOOLONG;
 
     strncpy(path_buffer, filename, sizeof(path_buffer) - 1);
