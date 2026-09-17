@@ -1155,7 +1155,13 @@ INTERNAL_LANGUAGE_C = src/lang_internal.c
 INTERNAL_LANGUAGE_H = include/lang_autogen.h
 LANG_COMPILER = tools/lang_compiler.py
 
-languages: $(ENGLISH_TEMPLATE_YML) $(TRANSLATIONS_YML) $(ENGLISH_LNG) $(TRANSLATIONS_LNG) $(INTERNAL_LANGUAGE_C) $(INTERNAL_LANGUAGE_H)
+# The download is an order-only prerequisite, not a sibling of language generation. With -j, a
+# sibling can still be cloning/resetting lng_src while the compiler reads it. Every target that
+# consumes that checkout shares this prerequisite, so GNU Make runs download_lng once and waits for
+# it before starting any consumer while preserving the existing rolling-update behavior.
+LANGUAGE_SOURCE_CONSUMERS = $(ENGLISH_TEMPLATE_YML) $(TRANSLATIONS_YML) $(ENGLISH_LNG) $(TRANSLATIONS_LNG)
+
+languages: $(ENGLISH_TEMPLATE_YML) $(TRANSLATIONS_YML) $(ENGLISH_LNG) $(TRANSLATIONS_LNG) $(INTERNAL_LANGUAGE_C) $(INTERNAL_LANGUAGE_H) | download_lng
 
 download_lng:
 	./tools/download_lng.sh
@@ -1165,6 +1171,8 @@ download_lwNBD:
 
 download_cfla:
 	./tools/download_cfla.sh
+
+$(LANGUAGE_SOURCE_CONSUMERS): | download_lng
 
 $(TRANSLATIONS_LNG): $(LNG_DIR)lang_%.lng: $(LNG_SRC_DIR)%.yml $(BASE_LANGUAGE) $(LANG_COMPILER)
 	@if [ -f $(LNG_FORK_DIR)$*.yml ]; then python3 $(LANG_COMPILER) --overlay_translation_yml --base $(BASE_LANGUAGE) --translation $< --overlay $(LNG_FORK_DIR)$*.yml; fi
