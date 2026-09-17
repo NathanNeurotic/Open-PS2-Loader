@@ -73,9 +73,11 @@ static struct rm_mode rm_mode_table[NUM_RM_VMODES] = {
     // as tall (rmSetMode halves Height for INTERLACED+FRAME) so vertical detail is genuinely
     // halved. The GS has no vertical-blend filter for the CRTC -- this is the hardware's flicker
     // control -- and the whole path is already proven here by the 1080i FRAME row above: Height
-    // halving, the doubled PAR in rmGetPAR, and the font compensation in fntsys all key off the
-    // same INTERLACED+FRAME test. PAR1/PAR2 stay as the FIELD rows' because rmGetPAR applies the
-    // x2 for the twice-as-tall pixels itself.
+    // halving and the doubled PAR in rmGetPAR key off the same INTERLACED+FRAME test, and with the
+    // halved height the fntsys scaling math lands exactly on the long-standing 224p/256p rows
+    // (there is deliberately NO font supersample for FRAME mode -- under the atlas's NEAREST
+    // sampling the 2:1 squash just dropped every other glyph row, issue #615). PAR1/PAR2 stay as
+    // the FIELD rows' because rmGetPAR applies the x2 for the twice-as-tall pixels itself.
     {GS_MODE_PAL,        16,  640,  512,  1, 4, GS_INTERLACED,    GS_FRAME, RM_ARATIO_4_3, 16, 15}, // PAL@50Hz flicker-filtered
     {GS_MODE_NTSC,       16,  640,  448,  1, 4, GS_INTERLACED,    GS_FRAME, RM_ARATIO_4_3, 14, 15}, // NTSC@60Hz flicker-filtered
 };
