@@ -123,7 +123,7 @@ apa_cache_t *hddAddPartitionHere(s32 device, const apa_params_t *params, u32 *em
 
     // walk empty blocks in case can use one :)
     for (i = 0; i < 32; i++) {
-        if ((u32)(1 << i) >= params->size && emptyBlocks[i] != 0)
+        if ((1U << i) >= params->size && emptyBlocks[i] != 0)
             return apaInsertPartition(device, params, emptyBlocks[i], err);
     }
     clink_this = apaCacheGetHeader(device, sector, APA_IO_MODE_READ, err);
