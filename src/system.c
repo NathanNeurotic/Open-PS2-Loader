@@ -1542,7 +1542,8 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
            Emitted ABOVE coreArgc so the pool-fit drop loop can never shed it: a dropped -qb would
            silently reinstate the reset and reproduce the black screen with no way to tell why. */
         if ((!strcmp(deviceName, "usb") || !strcmp(deviceName, "ilink") ||
-             !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd")) && argc < argvMax &&
+             !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd")) &&
+            argc < argvMax &&
             !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") && !neutrinoArgHasActiveFlag(extraArgs, "-qb"))
             argv[argc++] = "-qb";
     }
