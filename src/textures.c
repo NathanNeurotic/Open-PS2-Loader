@@ -263,7 +263,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {VMODE_NTSC, "Vmode_ntsc", &Vmode_ntsc_png},
     {VMODE_PAL, "Vmode_pal", &Vmode_pal_png},
     {LOGO_PICTURE, "logo", &logo_png},
-    // Animated boot-logo frames (embedded build assets, gfx/logo0.png..logo6.png).
+    // Animated boot-logo frames (embedded build assets, gfx/logo0.png..logo3.png).
     {LOGO0_PICTURE, "logo0", &logo0_png},
     {LOGO1_PICTURE, "logo1", &logo1_png},
     {LOGO2_PICTURE, "logo2", &logo2_png},
