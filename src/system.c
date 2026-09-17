@@ -383,7 +383,7 @@ unsigned int USBA_crc32(const char *string)
         crc = table << 24;
 
         for (count = 8; count > 0; count--) {
-            if (crc < 0x80000000)
+            if (crc & 0x80000000)
                 crc = crc << 1;
             else
                 crc = (crc << 1) ^ 0x04C11DB7;
