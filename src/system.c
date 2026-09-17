@@ -1452,12 +1452,20 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 
     // HW-confirmed (issue #56, AndrewBento, PSXMemCard Gen2): Neutrino's -logo on the mmce backend
     // black-screens GAME-DEPENDENTLY ("depends a bit on luck which game") -- and the identical
-    // failure reproduces on NHDDL, so it is a Neutrino/mmce interaction, not this launcher. Every
-    // affected game boots with the logo off, so the GLOBAL PS2-Logo toggle is suppressed for
-    // mmce-hosted games until that is fixed upstream. Deliberate escape hatch: a user-supplied
-    // "-logo" in the global/per-game Neutrino args still passes through the tokenizer untouched.
-    if (EnablePS2Logo && !strcmp(driver, "mmce")) {
-        LOG("[NEUTRINO] -logo suppressed on mmce (issue #56: game-dependent black screens, repro'd on NHDDL)\n");
+    // failure reproduces on NHDDL, so it is a Neutrino/backend interaction, not this launcher. The
+    // mechanism (neutrino ee_core main.c): -logo routes the boot through rom0:PS2LOGO, and ee_core's
+    // extra LoadExecPS2 pass reboots the IOP (New_Reset_Iop2) before PS2LOGO runs, dropping the
+    // resident stack a keep-IOP backend reads the game through. udpfs/udpfsbd are that same
+    // keep-IOP class (HW, nuno6573: udpfs lists fine but every launch black-screens with the global
+    // logo toggle on), so the GLOBAL PS2-Logo toggle is suppressed for all three until that is
+    // fixed upstream. Keyed on deviceName, not driver: the udpfs BLOCK leg arrives here as driver
+    // "udp" and only resolves to "udpfsbd" above. Parity: NHDDL's logo toggle defaults off and
+    // wLaunchELF has no logo path at all, so neither sends -logo in practice. Deliberate escape
+    // hatch: a user-supplied "-logo" in the global/per-game Neutrino args still passes through the
+    // tokenizer untouched.
+    if (EnablePS2Logo &&
+        (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd"))) {
+        LOG("[NEUTRINO] -logo suppressed on %s (issue #56 class: PS2LOGO pass reboots the IOP)\n", deviceName);
         EnablePS2Logo = 0;
     }
 
