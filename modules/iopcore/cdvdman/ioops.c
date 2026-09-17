@@ -247,7 +247,7 @@ static int cdrom_open(iop_file_t *f, const char *filename, int mode)
 
     strncpy(path_buffer, filename, sizeof(path_buffer) - 1);
     path_buffer[sizeof(path_buffer) - 1] = '\0';
-    
+
     if (cdrom_purifyPath(path_buffer, sizeof(path_buffer)) < 0)
         return -ENAMETOOLONG;
 
@@ -387,7 +387,7 @@ static int cdrom_getstat(iop_file_t *f, const char *filename, iox_stat_t *stat)
 
     strncpy(path_buffer, filename, sizeof(path_buffer) - 1);
     path_buffer[sizeof(path_buffer) - 1] = '\0';
-    
+
     if (cdrom_purifyPath(path_buffer, sizeof(path_buffer)) < 0)
         return -ENAMETOOLONG;
 
