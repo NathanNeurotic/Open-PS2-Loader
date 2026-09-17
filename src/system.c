@@ -9,6 +9,7 @@
 #endif
 
 #include <delaythread.h> // DelayThread for the bounded disc re-detect polls in sysLaunchDisc
+#include <stdint.h>
 #include <time.h>        // clock()/CLOCKS_PER_SEC -- the disc waits are budgeted by wall clock
 
 // Disc-probe budgets (issue #465). All are TOTAL wall-clock caps, not per-poll ones.
@@ -370,29 +371,31 @@ void sysPowerOff(void)
     poweroffShutdown();
 }
 
-static unsigned int crctab[0x400];
+static u32 crctab[0x400];
 
-unsigned int USBA_crc32(const char *string)
+u32 USBA_crc32(const char *string)
 {
-    int crc, table, count;
-    unsigned char byte; // MUST be unsigned: a signed char sign-extends bytes >= 0x80 and the XOR
-                        // below then produces a negative crctab index (OOB read)
+    u32 crc, table;
+    unsigned int count = 0;
+    u8 byte; // MUST be unsigned: a signed char sign-extends bytes >= 0x80 and the XOR below then
+             // produces an out-of-bounds crctab index.
 
     for (table = 0; table < 256; table++) {
         crc = table << 24;
 
-        for (count = 8; count > 0; count--) {
-            if (crc < 0)
+        for (int bit = 0; bit < 8; bit++) {
+            if ((crc & UINT32_C(0x80000000)) != 0)
                 crc = crc << 1;
             else
-                crc = (crc << 1) ^ 0x04C11DB7;
+                crc = (crc << 1) ^ UINT32_C(0x04C11DB7);
         }
         crctab[255 - table] = crc;
     }
 
     do {
-        byte = string[count++];
-        crc = crctab[byte ^ ((crc >> 24) & 0xFF)] ^ ((crc << 8) & 0xFFFFFF00);
+        byte = (u8)string[count++];
+        crc = crctab[byte ^ ((crc >> 24) & UINT32_C(0xFF))] ^
+              ((crc << 8) & UINT32_C(0xFFFFFF00));
     } while ((string[count - 1] != 0) && (count <= 32));
 
     return crc;

@@ -10,8 +10,9 @@
 */
 
 #include "opl2iso.h"
+#include <stdint.h>
 
-u32 crctab[0x400];
+uint32_t crctab[0x400];
 
 #define EXIT_OK      0
 #define EXIT_FAILURE 1
@@ -40,25 +41,28 @@ char spin(int i)
 }
 
 //-----------------------------------------------------------------------
-u32 crc32(const char *string)
+uint32_t crc32(const char *string)
 {
-    int crc, table, count, byte;
+    uint32_t crc, table;
+    size_t count = 0;
+    uint8_t byte;
 
     for (table = 0; table < 256; table++) {
         crc = table << 24;
 
-        for (count = 8; count > 0; count--) {
-            if (crc < 0)
+        for (int bit = 0; bit < 8; bit++) {
+            if ((crc & UINT32_C(0x80000000)) != 0)
                 crc = crc << 1;
             else
-                crc = (crc << 1) ^ 0x04C11DB7;
+                crc = (crc << 1) ^ UINT32_C(0x04C11DB7);
         }
         crctab[255 - table] = crc;
     }
 
     do {
-        byte = string[count++];
-        crc = crctab[byte ^ ((crc >> 24) & 0xFF)] ^ ((crc << 8) & 0xFFFFFF00);
+        byte = (uint8_t)string[count++];
+        crc = crctab[byte ^ ((crc >> 24) & UINT32_C(0xFF))] ^
+              ((crc << 8) & UINT32_C(0xFFFFFF00));
     } while (string[count - 1] != 0);
 
     return crc;
