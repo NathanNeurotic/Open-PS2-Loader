@@ -3442,6 +3442,11 @@ static void guiDrawBusy(int alpha)
     }
 }
 
+/* Set only for the guiShow() call inside guiRenderProbeFrame: while a probe wait owns the
+   screen, guiDrawSubMenuHints skips the menu's hint row so the probe's Cancel hint is the only
+   thing drawn on the bottom-right strip (issue #465). */
+static int gProbeFrameActive = 0;
+
 /* Render ONE frame of the current screen plus the busy animation, for a synchronous main-thread
    wait on hardware that cannot be moved off that thread.
 
@@ -3463,7 +3468,13 @@ int guiRenderProbeFrame(void)
     int x;
 
     guiStartFrame();
+    // The screen renderer's own hint row shares this bottom-right strip (same y, same right
+    // edge), so drawing the Cancel hint over it overdraws glyphs on glyphs -- the garbled
+    // "combined" string reported in #465. The menu hints are dead input while the wait runs
+    // anyway, so suppress them for this frame and let Cancel own the strip.
+    gProbeFrameActive = 1;
     guiShow();
+    gProbeFrameActive = 0;
     guiDrawBusy(0x80);
     // Without this the escape hatch is invisible: the probe frame is the unchanged menu plus a
     // spinner, so nothing tells the user the wait can be abandoned at all.
@@ -3863,6 +3874,11 @@ int guiAlignSubMenuHints(int hintCount, int *textID, int *iconID, int font, int 
 
 void guiDrawSubMenuHints(void)
 {
+    // During a probe wait these hints promise input the menu is not reading; the only live
+    // action is the Cancel hint guiRenderProbeFrame draws on this same strip (#465).
+    if (gProbeFrameActive)
+        return;
+
     int subMenuHints[2] = {_STR_SELECT, _STR_GAMES_LIST};
     int subMenuIcons[2] = {CIRCLE_ICON, CROSS_ICON};
 
