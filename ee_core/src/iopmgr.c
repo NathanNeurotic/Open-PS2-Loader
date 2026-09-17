@@ -17,6 +17,7 @@
 #include "syshook.h"
 #include "coreconfig.h"
 #ifdef RETROACHIEVEMENTS
+#include "ra.h"
 #include "ra_overlay.h"
 #include "../../modules/network/common/ra_snap.h"
 #endif
@@ -181,10 +182,17 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
        games running from USB: raudp imports SMAPSendPacket from the SMAP
        driver, so without SMAP it fails to link and nothing is sent. ETH mode
        loads both modules in its own branch below; every other mode loads them
-       here, and only when there is actually a watch list to stream. */
+       here, and only when there is actually a watch list to stream.
+
+       RA_PROBE (lab, 12.09): a ladder for the hunt after X-Men Origins would
+       not finish loading under the fork while it runs on stock OPL. 1 loads
+       nothing of ours, 2 the stack only, 3 the stack and SMAP, 4 those and
+       raudp but no snapshots from the EE. 0, the default, is the real thing. */
     if (config->GameMode != ETH_MODE && config->GameMode != HTTP_MODE && RA_TelemetryWanted(config)) {
-        LoadOPLModule(OPL_MODULE_ID_SMSTCPIP, 0, 0, NULL);
-        LoadOPLModule(OPL_MODULE_ID_SMAP, 0, g_ipconfig_len, g_ipconfig);
+        if (RA_PROBE != 1)
+            LoadOPLModule(OPL_MODULE_ID_SMSTCPIP, 0, 0, NULL);
+        if (RA_PROBE != 1 && RA_PROBE != 2)
+            LoadOPLModule(OPL_MODULE_ID_SMAP, 0, g_ipconfig_len, g_ipconfig);
     }
 #endif
 
@@ -242,7 +250,7 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
        allocated here, while the IOP heap is up and the game has not started,
        and its address handed to the module as a load argument -- RA_SNAP_TOTAL
        covers the header plus the values of the largest supported watch list. */
-    if (RA_TelemetryWanted(config)) {
+    if (RA_TelemetryWanted(config) && RA_PROBE != 1 && RA_PROBE != 2 && RA_PROBE != 3) {
         void *snap = SifAllocIopHeap(RA_SNAP_TOTAL);
 
         if (snap != NULL) {

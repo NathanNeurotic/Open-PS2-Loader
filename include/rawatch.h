@@ -2,6 +2,8 @@
 #ifndef __RAWATCH_H__
 #define __RAWATCH_H__
 
+#include "modules/network/common/ra_watch.h"
+
 /* Reads one specific watch-list file. Callers go through sbLoadWatchList(),
    which owns where a list may live. Returns the entry count, or negative on
    failure -- a missing file is not an error, the game simply has no set. */
@@ -14,6 +16,10 @@ int SetWatchList(const void *data, int len, const char *startup);
 unsigned int *GetWatchList(void);
 int GetWatchCount(void);
 int GetWatchBytes(void);
+/* The pointer chains that came with the list, already checked: every
+   parent points backwards, so ee_core can resolve them in one pass. */
+struct ra_node *GetNodeList(void);
+int GetNodeCount(void);
 void ClearWatchList(void);
 
 /* One line in the launch log: what happened plus two numbers. Compiled away

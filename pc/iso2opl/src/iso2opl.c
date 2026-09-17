@@ -47,13 +47,14 @@ void printUsage(void)
 //-----------------------------------------------------------------------
 u32 crc32(const char *string)
 {
-    int crc, table, count, byte;
+    u32 crc;
+    int table, count, byte;
 
     for (table = 0; table < 256; table++) {
         crc = table << 24;
 
         for (count = 8; count > 0; count--) {
-            if (crc < 0)
+            if (crc < 0x80000000)
                 crc = crc << 1;
             else
                 crc = (crc << 1) ^ 0x04C11DB7;

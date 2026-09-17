@@ -32,6 +32,10 @@
 static unsigned int gWatchList[RA_WATCH_MAX];
 static int gWatchCount = 0;
 static int gWatchBytes = 0;
+/* Pointer chains, optional: an older client sends a list without them
+   and everything works as it did, minus the chains. */
+static struct ra_node gNodeList[RA_NODE_MAX];
+static int gNodeCount = 0;
 /* Which game's list is in memory. The list can arrive over the network
    (ranet.c) while still in the menu; at launch there is then no reason to read
    the file, which on USB may not even have left the driver's cache yet. */
@@ -52,10 +56,72 @@ int GetWatchBytes(void)
     return gWatchBytes;
 }
 
+struct ra_node *GetNodeList(void)
+{
+    return gNodeCount > 0 ? gNodeList : NULL;
+}
+
+int GetNodeCount(void)
+{
+    return gNodeCount;
+}
+
+/* Takes the chain list if it is sound, drops all of it otherwise.
+
+   ee_core walks these in an interrupt handler with the game running, so
+   nothing is checked there: a parent must already be resolved when its
+   child is read, and a size must be one the reader knows. A list that
+   breaks either rule is thrown away whole rather than half-used. */
+static void TakeNodes(const struct ra_node *nodes, unsigned int count)
+{
+    unsigned int i;
+
+    gNodeCount = 0;
+
+    if (nodes == NULL || count == 0)
+        return;
+
+    if (count > RA_NODE_MAX) {
+        LOG("RA: %u pointer chains, limit %d; dropping them\n", count, RA_NODE_MAX);
+        return;
+    }
+
+    if (gWatchBytes + (int)count * RA_NODE_PAIR_BYTES > RA_SNAP_MAX_BYTES) {
+        LOG("RA: chains do not fit the snapshot; dropping them\n");
+        return;
+    }
+
+    for (i = 0; i < count; i++) {
+        unsigned int parent = RA_NODE_PARENT(nodes[i].w);
+        unsigned int size = RA_NODE_SIZE(nodes[i].w);
+
+        if (size != 1 && size != 2 && size != 4) {
+            LOG("RA: chain %u reads %u bytes; dropping the chains\n", i, size);
+            return;
+        }
+
+        if (RA_NODE_FROM_NODE(nodes[i].w)) {
+            if (parent >= i) {
+                LOG("RA: chain %u waits on chain %u; dropping the chains\n", i, parent);
+                return;
+            }
+        } else if (parent >= (unsigned int)gWatchCount) {
+            LOG("RA: chain %u points at entry %u of %d; dropping the chains\n", i, parent, gWatchCount);
+            return;
+        }
+    }
+
+    if (nodes != gNodeList)
+        memcpy(gNodeList, nodes, count * sizeof(struct ra_node));
+    gNodeCount = (int)count;
+    LOG("RA: %d pointer chains\n", gNodeCount);
+}
+
 void ClearWatchList(void)
 {
     gWatchCount = 0;
     gWatchBytes = 0;
+    gNodeCount = 0;
     gWatchStartup[0] = '\0';
 }
 
@@ -128,8 +194,23 @@ int SetWatchList(const void *data, int len, const char *startup)
     gWatchBytes = (int)hdr->bytes;
     snprintf(gWatchStartup, sizeof(gWatchStartup), "%s", startup);
 
-    LOG("RA: list received over the network: %d entries, snapshot %d bytes\n",
-        gWatchCount, gWatchBytes);
+    /* Pointer chains ride after the entries. A list without them ends
+       here, which is what every client before them sends. */
+    {
+        const unsigned char *tail = (const unsigned char *)data + sizeof(*hdr) + need;
+        int left = len - (int)(sizeof(*hdr) + need);
+
+        if (left >= (int)sizeof(struct ra_node_file)) {
+            const struct ra_node_file *nf = (const struct ra_node_file *)tail;
+
+            if (nf->magic == RA_NODE_MAGIC &&
+                left >= (int)(sizeof(*nf) + nf->count * sizeof(struct ra_node)))
+                TakeNodes((const struct ra_node *)(nf + 1), nf->count);
+        }
+    }
+
+    LOG("RA: list received over the network: %d entries, %d chains, snapshot %d bytes\n",
+        gWatchCount, gNodeCount, gWatchBytes);
 
     return gWatchCount;
 }
@@ -199,10 +280,10 @@ int LoadWatchListFile(const char *file, const char *startup)
     }
 
     got = read(fd, gWatchList, (int)(hdr.count * sizeof(unsigned int)));
-    close(fd);
 
     if (got != (int)(hdr.count * sizeof(unsigned int))) {
         LOG("RA: short read on the list: %d of %u\n", got, (unsigned)(hdr.count * sizeof(unsigned int)));
+        close(fd);
         return -7;
     }
 
@@ -210,7 +291,25 @@ int LoadWatchListFile(const char *file, const char *startup)
     gWatchBytes = (int)hdr.bytes;
     snprintf(gWatchStartup, sizeof(gWatchStartup), "%s", startup);
 
-    LOG("RA: list loaded: %d entries, snapshot %d bytes\n", gWatchCount, gWatchBytes);
+    /* Pointer chains, if the file has them. Read straight into the
+       array; TakeNodes checks them there and leaves the count at zero
+       if anything is wrong. */
+    {
+        struct ra_node_file nf;
+
+        if (read(fd, &nf, sizeof(nf)) == (int)sizeof(nf) && nf.magic == RA_NODE_MAGIC &&
+            nf.count > 0 && nf.count <= RA_NODE_MAX) {
+            int want = (int)(nf.count * sizeof(struct ra_node));
+
+            if (read(fd, gNodeList, want) == want)
+                TakeNodes(gNodeList, nf.count);
+        }
+    }
+
+    close(fd);
+
+    LOG("RA: list loaded: %d entries, %d chains, snapshot %d bytes\n",
+        gWatchCount, gNodeCount, gWatchBytes);
 
     return gWatchCount;
 }

@@ -190,14 +190,14 @@ int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title)
                     rmDrawPixmap(l1Tex, hintX, 417, ALIGN_NONE, l1W, 20, SCALING_RATIO, gDefaultCol, 0);
                 hintX += rmWideScale(l1W) + 8;
                 hintX = fntRenderString(gTheme->fonts[0], hintX, 417, ALIGN_NONE, avail, 20,
-                                        _l(_STR_KEYB_MOVE_CURSOR), gTheme->selTextColor);
+                                        _l(_STR_KEYB_MOVE_CURSOR), gTheme->textColor);
                 hintX += 8;
                 if (r1Tex && r1Tex->Mem && hintX + rmWideScale(r1W) <= KEYB_HINT_END)
                     rmDrawPixmap(r1Tex, hintX, 417, ALIGN_NONE, r1W, 20, SCALING_RATIO, gDefaultCol, 0);
             }
         }
 
-        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_CANCEL, gTheme->fonts[0], 500, 417, gTheme->selTextColor);
+        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_CANCEL, gTheme->fonts[0], 500, 417, gTheme->textColor);
 
         rmEndFrame();
 
@@ -405,9 +405,9 @@ static int diaShowNumPad(char *text, int maxLen, int minv, int maxv)
             }
         }
 
-        guiDrawIconAndText(SQUARE_ICON, _STR_BACKSPACE, gTheme->fonts[0], 50, 417, gTheme->selTextColor);
-        guiDrawIconAndText(START_ICON, _STR_ENTER, gTheme->fonts[0], 250, 417, gTheme->selTextColor);
-        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_CANCEL, gTheme->fonts[0], 500, 417, gTheme->selTextColor);
+        guiDrawIconAndText(SQUARE_ICON, _STR_BACKSPACE, gTheme->fonts[0], 50, 417, gTheme->textColor);
+        guiDrawIconAndText(START_ICON, _STR_ENTER, gTheme->fonts[0], 250, 417, gTheme->textColor);
+        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_CANCEL, gTheme->fonts[0], 500, 417, gTheme->textColor);
 
         rmEndFrame();
 
@@ -528,8 +528,8 @@ static int diaShowColSel(unsigned char *r, unsigned char *g, unsigned char *b)
         rmDrawRect(x, y, 70, 70, GS_SETREG_RGBA(0x60, 0x60, 0x60, 0x80));
         rmDrawRect(x + 5, y + 5, 60, 60, dcol);
 
-        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_OK, gTheme->fonts[0], 420, 417, gTheme->selTextColor);
-        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_CANCEL, gTheme->fonts[0], 500, 417, gTheme->selTextColor);
+        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_OK, gTheme->fonts[0], 420, 417, gTheme->textColor);
+        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_CANCEL, gTheme->fonts[0], 500, 417, gTheme->textColor);
 
         rmEndFrame();
 

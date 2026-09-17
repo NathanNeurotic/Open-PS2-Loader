@@ -374,7 +374,8 @@ static unsigned int crctab[0x400];
 
 unsigned int USBA_crc32(const char *string)
 {
-    int crc, table, count;
+    u32 crc;
+    int table, count;
     unsigned char byte; // MUST be unsigned: a signed char sign-extends bytes >= 0x80 and the XOR
                         // below then produces a negative crctab index (OOB read)
 
@@ -382,7 +383,7 @@ unsigned int USBA_crc32(const char *string)
         crc = table << 24;
 
         for (count = 8; count > 0; count--) {
-            if (crc < 0)
+            if (crc < 0x80000000)
                 crc = crc << 1;
             else
                 crc = (crc << 1) ^ 0x04C11DB7;
@@ -1452,12 +1453,20 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 
     // HW-confirmed (issue #56, AndrewBento, PSXMemCard Gen2): Neutrino's -logo on the mmce backend
     // black-screens GAME-DEPENDENTLY ("depends a bit on luck which game") -- and the identical
-    // failure reproduces on NHDDL, so it is a Neutrino/mmce interaction, not this launcher. Every
-    // affected game boots with the logo off, so the GLOBAL PS2-Logo toggle is suppressed for
-    // mmce-hosted games until that is fixed upstream. Deliberate escape hatch: a user-supplied
-    // "-logo" in the global/per-game Neutrino args still passes through the tokenizer untouched.
-    if (EnablePS2Logo && !strcmp(driver, "mmce")) {
-        LOG("[NEUTRINO] -logo suppressed on mmce (issue #56: game-dependent black screens, repro'd on NHDDL)\n");
+    // failure reproduces on NHDDL, so it is a Neutrino/backend interaction, not this launcher. The
+    // mechanism (neutrino ee_core main.c): -logo routes the boot through rom0:PS2LOGO, and ee_core's
+    // extra LoadExecPS2 pass reboots the IOP (New_Reset_Iop2) before PS2LOGO runs, dropping the
+    // resident stack a keep-IOP backend reads the game through. udpfs/udpfsbd are that same
+    // keep-IOP class (HW, nuno6573: udpfs lists fine but every launch black-screens with the global
+    // logo toggle on), so the GLOBAL PS2-Logo toggle is suppressed for all three until that is
+    // fixed upstream. Keyed on deviceName, not driver: the udpfs BLOCK leg arrives here as driver
+    // "udp" and only resolves to "udpfsbd" above. Parity: NHDDL's logo toggle defaults off and
+    // wLaunchELF has no logo path at all, so neither sends -logo in practice. Deliberate escape
+    // hatch: a user-supplied "-logo" in the global/per-game Neutrino args still passes through the
+    // tokenizer untouched.
+    if (EnablePS2Logo &&
+        (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd"))) {
+        LOG("[NEUTRINO] -logo suppressed on %s (issue #56 class: PS2LOGO pass reboots the IOP)\n", deviceName);
         EnablePS2Logo = 0;
     }
 
@@ -1532,15 +1541,18 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
            did its job) and then the screen stays black, because Neutrino reset away the stack the
            game path depends on. -qb keeps the inherited environment and skips that reset.
 
-           USB AND ILINK ONLY, deliberately: both launch through this inherited BDM environment, and
-           rev 2692 hardware showed the same reset-boundary symptom on iLink that established the USB
-           exception (iLink leg still needs a retest to prove it was the whole cause). Other backends
-           stay on the normal boot path until hardware says otherwise. A user-typed -qb in the global
-           or per-game args wins -- do not emit a second copy.
+           USB, iLink, and UDPFS (both filesystem and block variants): all launch through this
+           inherited environment. For UDPFS, an IOP reset destroys the resident ministack/ioman
+           state and triggers an immediate secondary DISCOVERY from the same socket that collides
+           with active server streams; NHDDL parity passes -qb for all non-HDL modes. Other
+           backends stay on the normal boot path until hardware says otherwise. A user-typed -qb
+           in the global or per-game args wins -- do not emit a second copy.
 
            Emitted ABOVE coreArgc so the pool-fit drop loop can never shed it: a dropped -qb would
            silently reinstate the reset and reproduce the black screen with no way to tell why. */
-        if ((!strcmp(deviceName, "usb") || !strcmp(deviceName, "ilink")) && argc < argvMax &&
+        if ((!strcmp(deviceName, "usb") || !strcmp(deviceName, "ilink") ||
+             !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd")) &&
+            argc < argvMax &&
             !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") && !neutrinoArgHasActiveFlag(extraArgs, "-qb"))
             argv[argc++] = "-qb";
     }
@@ -1880,6 +1892,8 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     config->raWatchList = GetWatchList();
     config->raWatchCount = GetWatchCount();
     config->raSnapBytes = GetWatchBytes();
+    config->raNodeList = GetNodeList();
+    config->raNodeCount = GetNodeCount();
 
     // The last point where the list is still ours: from here it goes into ee_core
     // with no feedback. A zero shows up in the launch log directly, rather than as

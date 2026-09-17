@@ -130,10 +130,10 @@ settings:
 | `-bsdfs=hdl` | internal HDD (APA) only |
 | `-bsdfs=<exfat\|hdl\|bd>` | only if the per-game **Neutrino Filesystem** picker (Compatibility screen) is set off Auto; block-backed devices only (never mmce/udpfs — no filesystem layer there). `hdl`/`bd` also reshape `-dvd` to `hdl:`/`bdfs:`; a hand-typed `-bsdfs=`/`-dvd=` in the args always wins |
 | `-dvd=<path>` / `-dvd=hdl:<partition>` | always (the game image/partition) |
-| `-qb` | USB and iLink. RiptOPL's no-reset ELF bridge deliberately preserves the already-mounted BDM environment; quick boot makes Neutrino enter its load environment without resetting that inherited stack away. A user-supplied active `-qb` is never duplicated |
+| `-qb` | USB, iLink, and both UDPFS legs (`udpfs`/`udpfsbd`). RiptOPL's no-reset ELF bridge deliberately preserves the already-mounted BDM/UDPFS environment; quick boot makes Neutrino enter its load environment without resetting that inherited stack away (for UDPFS an IOP reset also triggers a secondary DISCOVERY that collides with active server streams). A user-supplied active `-qb` is never duplicated |
 | `-gc=<modes>` | only if the game has OPL compatibility modes set |
 | `-dbc` | only if **Debug Colors** is enabled |
-| `-logo` | only if **PS2 Logo** is enabled |
+| `-logo` | only if **PS2 Logo** is enabled — and never on mmce or the UDPFS legs: rom0:PS2LOGO's extra IOP reboot drops the resident backend stack (issue #56 class), so the global toggle is suppressed there. A hand-typed `-logo` in the global/per-game args still passes through |
 | `-gsm=<mode>[:<comp>]` | only if a **Neutrino Video** mode resolves for the game (per-game picker, or the global **Settings → Game Launching → Neutrino Video** default when the per-game picker is "Default"). The `:<comp>` half is appended only when a **Neutrino GSM Compatibility** type is set — it is never emitted on its own |
 
 > **Revision 2692 iLink result:** Neutrino failed on an SCPH-39001 from iLink in all four SDK
@@ -165,8 +165,8 @@ free-text **Extra** field for everything else. OPL reassembles the fields in the
 accepts, with the Extra / `--b` tail last.
 
 Quick Boot means **enter Neutrino's load environment directly**; it is not merely a boot-screen
-toggle. RiptOPL supplies it automatically for USB and iLink handoffs, so enabling the field yourself
-on those devices changes nothing and does not add a duplicate.
+toggle. RiptOPL supplies it automatically for USB, iLink, and UDPFS handoffs, so enabling the field
+yourself on those devices changes nothing and does not add a duplicate.
 
 The stored format is unchanged — a space-separated string, e.g.:
 
