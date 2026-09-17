@@ -5,7 +5,7 @@
 #include "ministack_eth.h"
 
 
-#define IP_ADDR(a, b, c, d) (((uint8_t)(a) << 24) | ((uint8_t)(b) << 16) | ((uint8_t)(c) << 8) | (uint8_t)(d))
+#define IP_ADDR(a, b, c, d) (((uint32_t)(uint8_t)(a) << 24) | ((uint32_t)(uint8_t)(b) << 16) | ((uint32_t)(uint8_t)(c) << 8) | (uint32_t)(uint8_t)(d))
 
 typedef struct
 {
