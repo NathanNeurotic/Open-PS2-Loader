@@ -17,6 +17,10 @@
 # CRLF<->LF pass through one produces a binary that no longer loads, and the failure would surface
 # as "this POPSTARTER variant hangs" long after the commit that caused it.
 POPS/** binary
+# Human-readable provenance metadata lives beside the protected payloads. Keep it reviewable while
+# leaving every ELF, IRX, patch, and icon under the binary catch-all above.
+POPS/*.md -binary diff merge text eol=lf
+POPS/*.json -binary diff merge text eol=lf
 *.irx binary
 
 # Ember's core, shipped verbatim exactly like the POPSTARTER payload above. ember.elf is a PS2 ELF;

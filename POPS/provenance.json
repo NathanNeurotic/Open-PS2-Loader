@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "scope": "Every shipped regular file below POPS except PROVENANCE.md and provenance.json",
+  "upstreamAcquisition": {
+    "project": "POPStarter",
+    "version": "r13, 2019/06/05",
+    "author": "krHACKen",
+    "sourcePage": "https://www.psx-place.com/threads/popstarter.19139/",
+    "archiveUrl": "http://ddata.over-blog.com/1/06/19/78/01022202/POPStarter_20190605.7z",
+    "retrievedAt": "2026-09-17T17:19:12Z",
+    "archiveName": "POPStarter_20190605.7z",
+    "archiveBytes": 2824745,
+    "archiveSha256": "77f509d54ac329081b9ff2dcc2979b54ab099f4598d2f362e016034eb03187ed",
+    "sourceChainStatus": "The archive URL is linked from the official PSX-Place thread and attributed there to the maintainer's AssemblerGames source post. Equivalence to the current Cloudflare-protected PSX-Place attachment is unverified."
+  },
+  "files": [
+    {
+      "path": "POPS/POPSTARTER VERSIONS/MAIN/POPSTARTER.ELF",
+      "bytes": 167700,
+      "sha256": "734c813e8e8ec2c6729ec5e15dd46ab696e90deeade8d0b2ca3ad03782781aa1",
+      "origin": "POPStarter_20190605.7z:POPStarter_20190605/POPSTARTER.ELF",
+      "relationship": "exact",
+      "license": "No formal licence file found; see the maintainer redistribution statement in PROVENANCE.md."
+    },
+    {
+      "path": "POPS/POPSTARTER VERSIONS/DEBUG/POPSTARTER.ELF",
+      "bytes": 167700,
+      "sha256": "3ec327085eccd62578a453e3deedf3ba35f19cd7d332aedaffdc7926c73876b8",
+      "origin": "POPS/POPSTARTER VERSIONS/MAIN/POPSTARTER.ELF",
+      "relationship": "modified-from-exact-upstream",
+      "license": "No formal licence file found; see PROVENANCE.md.",
+      "notes": "Differs only at zero-indexed offset 1040: 00 -> ff."
+    },
+    {
+      "path": "POPS/POPSTARTER VERSIONS/USBDELAY/POPSTARTER.ELF",
+      "bytes": 167700,
+      "sha256": "613b16e1823a154d0e468e0a686aad02823fea9d876d91d86131382fa6d42d01",
+      "origin": "POPS/POPSTARTER VERSIONS/MAIN/POPSTARTER.ELF",
+      "relationship": "modified-from-exact-upstream",
+      "license": "No formal licence file found; see PROVENANCE.md.",
+      "notes": "Differs only at zero-indexed offset 1043: 02 -> 06."
+    },
+    {
+      "path": "POPS/POPSTARTER VERSIONS/USBDELAY_DEBUG/POPSTARTER.ELF",
+      "bytes": 167700,
+      "sha256": "9bab715aa17f39981af2ad68c107b74d79817336bde79afaf72f22e0f6812e0e",
+      "origin": "POPS/POPSTARTER VERSIONS/MAIN/POPSTARTER.ELF",
+      "relationship": "modified-from-exact-upstream",
+      "license": "No formal licence file found; see PROVENANCE.md.",
+      "notes": "Differs only at zero-indexed offsets 1040 (00 -> ff) and 1043 (02 -> 06)."
+    },
+    {
+      "path": "POPS/POPSTARTER VERSIONS/USBDELAY_LONGER_DEBUG/POPSTARTER.ELF",
+      "bytes": 167700,
+      "sha256": "bb697bea1d7ede1a8e4d211442d8bb762fff42372a94f03ccd61a960f4845a18",
+      "origin": "POPS/POPSTARTER VERSIONS/MAIN/POPSTARTER.ELF",
+      "relationship": "modified-from-exact-upstream",
+      "license": "No formal licence file found; see PROVENANCE.md.",
+      "notes": "Differs only at zero-indexed offsets 1040 (00 -> ff) and 1043 (02 -> 09)."
+    },
+    {
+      "path": "POPS/POPSTARTER.ELF",
+      "bytes": 167700,
+      "sha256": "3ec327085eccd62578a453e3deedf3ba35f19cd7d332aedaffdc7926c73876b8",
+      "origin": "POPS/POPSTARTER VERSIONS/DEBUG/POPSTARTER.ELF",
+      "relationship": "exact-alias",
+      "license": "No formal licence file found; see PROVENANCE.md.",
+      "notes": "The package default intentionally aliases the DEBUG payload."
+    },
+    {
+      "path": "POPS/PATCH_5.BIN",
+      "bytes": 327360,
+      "sha256": "55a60ea7e0da08d615e1dcd77c4a8da546603ee4d1a5ff5564259405c0b40d42",
+      "origin": "unverified",
+      "relationship": "unverified",
+      "license": "unverified",
+      "notes": "Absent from the acquired r13 archive. It begins with PATCH but does not pass a bounds-checked strict IPS record walk; do not describe it as a file-level IPS patch without upstream documentation."
+    },
+    {
+      "path": "POPS/ps2ip.irx",
+      "bytes": 109497,
+      "sha256": "1bf99ca297dcca410bccce14b8efa00f5efc536359e3e34be50edf0043c867b9",
+      "origin": "unverified; the official thread publishes network modules separately from r13",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/smbman.irx",
+      "bytes": 44329,
+      "sha256": "000296a2f03073dffd2f87a6f3eae249a1f83c2213ffb0ae25bad67b970ebed0",
+      "origin": "unverified; the official thread publishes network modules separately from r13",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/ps2smap.irx",
+      "bytes": 12605,
+      "sha256": "671fe9e3c5e0e735fb3ea3b81a8ea39898bd0fafbdacbf9ca7fa11fff391df8d",
+      "origin": "unverified; the official thread publishes network modules separately from r13",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/ps2dev9.irx",
+      "bytes": 11505,
+      "sha256": "e2b83bb01a5904b3f4360e23fd7cfc07a2a11eaa413c1808961432dced80119c",
+      "origin": "unverified; the official thread publishes network modules separately from r13",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/poweroff.irx",
+      "bytes": 3413,
+      "sha256": "573863a0f9b213b6f53f2eeaf074745b27b9c4d52dfddeaff8f0b112632cb504",
+      "origin": "unverified; the official thread publishes network modules separately from r13",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/SMSUTILS.irx",
+      "bytes": 1305,
+      "sha256": "91daae46a300138218bfd6a876a1b5012594412b71c2eebf6eadfb70fde38e1b",
+      "origin": "unverified; the official thread publishes network modules separately from r13",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/usbd.irx.ata",
+      "bytes": 42749,
+      "sha256": "4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee",
+      "origin": "modules/bdmassault/usbd.irx.ata",
+      "relationship": "exact-local-mirror",
+      "license": "AFL-2.0; see modules/bdmassault/PROVENANCE.md"
+    },
+    {
+      "path": "POPS/usbhdfsd.irx.ata",
+      "bytes": 21837,
+      "sha256": "1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c",
+      "origin": "modules/bdmassault/usbhdfsd.irx.ata",
+      "relationship": "exact-local-mirror",
+      "license": "AFL-2.0; see modules/bdmassault/PROVENANCE.md"
+    },
+    {
+      "path": "POPS/usbd.irx.mmce",
+      "bytes": 11841,
+      "sha256": "0fed25d9eecdd263d4617ad5c8eeb2c5307c799aa97962b62b40a0e63e3adac8",
+      "origin": "modules/bdmassault/usbd.irx.mmce",
+      "relationship": "exact-local-mirror",
+      "license": "AFL-2.0; exact upstream build source remains unpinned; see modules/bdmassault/PROVENANCE.md"
+    },
+    {
+      "path": "POPS/usbhdfsd.irx.mmce",
+      "bytes": 19733,
+      "sha256": "9f7b77848935f0d8e9bd792b997910777352f8d480dc32d99a04e6e8653779ab",
+      "origin": "modules/bdmassault/usbhdfsd.irx.mmce",
+      "relationship": "exact-local-mirror",
+      "license": "AFL-2.0; exact upstream build source remains unpinned; see modules/bdmassault/PROVENANCE.md"
+    },
+    {
+      "path": "POPS/usbd.irx.mx4sio",
+      "bytes": 48500,
+      "sha256": "5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369",
+      "origin": "modules/bdmassault/usbd.irx.usbexfat",
+      "relationship": "exact-local-mirror-reused-for-mx4sio",
+      "license": "AFL-2.0; see modules/bdmassault/PROVENANCE.md"
+    },
+    {
+      "path": "POPS/usbhdfsd.irx.mx4sio",
+      "bytes": 14993,
+      "sha256": "61525fab3b340aaef467eb3a08ce16e35aca98fe742982a7a151c5c7e1ffa00a",
+      "origin": "modules/bdmassault/usbhdfsd.irx.mx4sio",
+      "relationship": "exact-local-mirror",
+      "license": "AFL-2.0; see modules/bdmassault/PROVENANCE.md"
+    },
+    {
+      "path": "POPS/usbd.irx.usbexfat",
+      "bytes": 48500,
+      "sha256": "5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369",
+      "origin": "modules/bdmassault/usbd.irx.usbexfat",
+      "relationship": "exact-local-mirror",
+      "license": "AFL-2.0; see modules/bdmassault/PROVENANCE.md"
+    },
+    {
+      "path": "POPS/usbhdfsd.irx.usbexfat",
+      "bytes": 34508,
+      "sha256": "70a369e47745e7f995fa771edbbfed086727b759fba915a7070c0fbcf061dd34",
+      "origin": "modules/bdmassault/usbhdfsd.irx.usbexfat",
+      "relationship": "exact-local-mirror",
+      "license": "AFL-2.0; see modules/bdmassault/PROVENANCE.md"
+    },
+    {
+      "path": "POPS/usbd.irx.ilink",
+      "bytes": 48500,
+      "sha256": "5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369",
+      "origin": "unverified; byte-identical to the usbexfat/mx4sio usbd payload",
+      "relationship": "exact-local-alias-with-unverified-role-provenance",
+      "license": "AFL-2.0 for the identical payload; iLink role provenance unverified"
+    },
+    {
+      "path": "POPS/usbhdfsd.irx.ilink",
+      "bytes": 23452,
+      "sha256": "145cf1c0af130ea7ac5cec6696aa7e60b5c66a2ac46b8dea94db17bb3b911bcc",
+      "origin": "unverified",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/icon.sys",
+      "bytes": 964,
+      "sha256": "63d235ab174c1997b67d6b884b65246d478fdfa22d5a903967b043258a7dfa63",
+      "origin": "repository history; not present in the acquired r13 archive",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/del.icn",
+      "bytes": 61740,
+      "sha256": "c381028728d8a0212f6c219fe210411d03fb3104f8204608563307c7bfd36e1e",
+      "origin": "repository history; not present in the acquired r13 archive",
+      "relationship": "unverified",
+      "license": "unverified"
+    },
+    {
+      "path": "POPS/list.icn",
+      "bytes": 46540,
+      "sha256": "df374ea77c4f775165ca70ff4efe8548fbd970a1fc5078a6d7b130ee3be93774",
+      "origin": "repository history; not present in the acquired r13 archive",
+      "relationship": "unverified",
+      "license": "unverified"
+    }
+  ]
+}
