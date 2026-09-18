@@ -23,6 +23,7 @@
 int startPads();
 int readPads();
 void unloadPads();
+void unloadPadsEx(int keepIopRpc);
 
 int getKey(int num);
 

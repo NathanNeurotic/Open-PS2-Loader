@@ -54,8 +54,31 @@ DISABLE_PATCHED_FUNCTIONS();
 DISABLE_EXTRA_TIMERS_FUNCTIONS();
 PS2_DISABLE_AUTOSTART_PTHREAD();
 
-#define ELF_MAGIC   0x464c457f
-#define ELF_PT_LOAD 1
+#define ELF_MAGIC            0x464c457f
+#define ELF_PT_LOAD          1
+#define ELF_PT_MIPS_REGINFO  0x70000000
+#define ELF_SHT_MIPS_REGINFO 0x70000006
+
+typedef struct
+{
+    u32 ri_gprmask;
+    u32 ri_cprmask[4];
+    s32 ri_gp_value;
+} elf_reginfo_t;
+
+typedef struct
+{
+    u32 name;
+    u32 type;
+    u32 flags;
+    u32 addr;
+    u32 offset;
+    u32 size;
+    u32 link;
+    u32 info;
+    u32 addralign;
+    u32 entsize;
+} elf_sheader_t;
 
 typedef struct
 {
@@ -119,13 +142,15 @@ static int readAll(int fd, void *buf, int size)
 
 // Manual ELF load through the resident fileXio server (iomanX-aware). The program segments load
 // into user memory (>= 0x100000, already wiped) well above this loader's bram home, so reading
-// straight to each vaddr is safe. Returns 0 and sets *entry on success. gp stays 0 at ExecPS2:
-// standard PS2 crt0s load $gp themselves (POPSLoader's embedded loader ships the same way).
-static int loadElfViaFileXio(const char *path, u32 *entry)
+// straight to each vaddr is safe. Returns 0 and sets *entry and *gp on success.
+static int loadElfViaFileXio(const char *path, u32 *entry, u32 *gp)
 {
     elf_header_t eh;
     elf_pheader_t ph;
     int fd, i, loaded = 0;
+
+    *entry = 0;
+    *gp = 0;
 
     if (fileXioInit() < 0)
         return -1;
@@ -150,6 +175,14 @@ static int loadElfViaFileXio(const char *path, u32 *entry)
             fileXioExit();
             return -1;
         }
+        if (ph.type == ELF_PT_MIPS_REGINFO && ph.filesz >= sizeof(elf_reginfo_t)) {
+            elf_reginfo_t reginfo;
+            if (fileXioLseek(fd, ph.offset, SEEK_SET) >= 0 &&
+                readAll(fd, &reginfo, sizeof(reginfo)) == 0) {
+                *gp = (u32)reginfo.ri_gp_value;
+            }
+            continue;
+        }
         if (ph.type != ELF_PT_LOAD || ph.memsz == 0)
             continue;
         // Defensive bounds: a truncated/half-copied ELF (a real hazard on flaky cards) must fail
@@ -173,6 +206,24 @@ static int loadElfViaFileXio(const char *path, u32 *entry)
             memset((u8 *)ph.vaddr + ph.filesz, 0, ph.memsz - ph.filesz);
         loaded++;
     }
+
+    if (*gp == 0 && eh.shoff != 0 && eh.shnum != 0 && eh.shentsize == sizeof(elf_sheader_t)) {
+        for (i = 0; i < eh.shnum; i++) {
+            elf_sheader_t sh;
+            if (fileXioLseek(fd, eh.shoff + i * sizeof(elf_sheader_t), SEEK_SET) < 0 ||
+                readAll(fd, &sh, sizeof(sh)) != 0)
+                break;
+            if (sh.type == ELF_SHT_MIPS_REGINFO && sh.size >= sizeof(elf_reginfo_t)) {
+                elf_reginfo_t reginfo;
+                if (fileXioLseek(fd, sh.offset, SEEK_SET) >= 0 &&
+                    readAll(fd, &reginfo, sizeof(reginfo)) == 0) {
+                    *gp = (u32)reginfo.ri_gp_value;
+                }
+                break;
+            }
+        }
+    }
+
     fileXioClose(fd);
     fileXioExit();
 
@@ -249,6 +300,8 @@ int main(int argc, char *argv[])
     elfdata.epc = 0;
     SifLoadFileInit();
     ret = SifLoadElf(argv[0], &elfdata);
+    if (ret != 0 || elfdata.epc == 0)
+        ret = SifLoadElfEncrypted(argv[0], &elfdata);
     SifLoadFileExit();
     if (ret == 0 && elfdata.epc != 0) {
         if (reset_iop)
@@ -260,13 +313,14 @@ int main(int argc, char *argv[])
     }
 
     // Rescue: fileXio (iomanX) for the devices LOADFILE cannot see (mmceN:, pfs, ...).
-    if (loadElfViaFileXio(argv[0], &entry) == 0) {
+    u32 gp = 0;
+    if (loadElfViaFileXio(argv[0], &entry, &gp) == 0) {
         if (reset_iop)
             resetIOP();
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
-        return ExecPS2((void *)entry, NULL, argc - 1, &argv[1]);
+        return ExecPS2((void *)entry, (void *)gp, argc - 1, &argv[1]);
     }
 
     SifExitRpc();

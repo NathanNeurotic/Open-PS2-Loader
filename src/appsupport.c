@@ -906,6 +906,41 @@ static void appRenameItem(item_list_t *itemList, int id, char *newName)
     appForceUpdate = 1;
 }
 
+static const char *appNormalizeLaunchPath(char *out, size_t outSize, const char *path)
+{
+    const char *colon;
+
+    if (path == NULL || out == NULL || outSize == 0)
+        return path;
+
+    colon = strchr(path, ':');
+    if (colon == NULL) {
+        snprintf(out, outSize, "%s", path);
+        return out;
+    }
+
+    // Ensure leading slash after device colon (e.g. mass0:path -> mass0:/path)
+    if (*(colon + 1) != '/' && *(colon + 1) != '\\') {
+        int devLen = (int)(colon - path) + 1; // includes ':'
+        snprintf(out, outSize, "%.*s/%s", devLen, path, colon + 1);
+    } else {
+        snprintf(out, outSize, "%s", path);
+    }
+
+    // Convert any backslashes after colon to forward slashes for canonical PS2 paths
+    colon = strchr(out, ':');
+    if (colon != NULL) {
+        char *p = (char *)(colon + 1);
+        while (*p != '\0') {
+            if (*p == '\\')
+                *p = '/';
+            p++;
+        }
+    }
+
+    return out;
+}
+
 static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int fd;
@@ -952,6 +987,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
         int mode;
         char partition[128];
         char altStartup[256];
+        char normFilename[256];
         char *target_argv[2];
         int target_argc = 0;
         int isPops, rebootIop = 0;
@@ -1001,7 +1037,8 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             }
         }
 
-        target_argv[0] = filename;
+        appNormalizeLaunchPath(normFilename, sizeof(normFilename), filename);
+        target_argv[0] = isPops ? filename : normFilename;
         target_argc = 1;
 
         if (configGetStr(configSet, CONFIG_ITEM_ALTSTARTUP, &argv1) != 0) {
@@ -1044,8 +1081,8 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
         }
 #endif
 
-        deinit(UNMOUNT_EXCEPTION, mode); // CAREFUL: deinit will call appCleanUp, which frees appsList, appArtLookupTable, and configApps
         if (isPops) {
+            deinit(UNMOUNT_EXCEPTION, mode); // CAREFUL: deinit will call appCleanUp, which frees appsList, appArtLookupTable, and configApps
             char *pops_argv[1];
             int pops_argc = 0;
             if (target_argc > 1) {
@@ -1054,7 +1091,12 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             }
             LoadELFFromFileWithPartition(filename, partition, pops_argc, pops_argv);
         } else {
-            sysLoadELF(filename, partition, target_argc, target_argv, rebootIop);
+            // wLaunchELF_R3Z parity for app launches:
+            // Do not unmount filesystems, shut down block devices, or power down DEV9.
+            // On keep-IOP launches, also preserve IOP PFS descriptors (KEEPIOP_EXCEPTION)
+            // and IOP pad RPC (unloadPadsEx(1)).
+            deinit(UNMOUNT_EXCEPTION | (rebootIop == 0 ? KEEPIOP_EXCEPTION : 0), IO_MODE_SELECTED_ALL_SPARE);
+            sysLoadELF(normFilename, partition, target_argc, target_argv, rebootIop);
         }
     } else
         guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);

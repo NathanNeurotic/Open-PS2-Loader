@@ -905,8 +905,7 @@ static void unloadPad(struct pad_data_t *pad)
     padPortClose(pad->port, pad->slot);
 }
 
-/** Unloads all pads. Use to terminate the usage of the pads. */
-void unloadPads()
+void unloadPadsEx(int keepIopRpc)
 {
     int i;
 
@@ -917,7 +916,16 @@ void unloadPads()
     for (i = 0; i < pad_count; ++i)
         unloadPad(&pad_data[i]);
 
-    padEnd();
+    // Matching wLaunchELF_R3Z parity: on a keep-IOP handoff, keep the IOP pad server (freepad/padman)
+    // live and active so the child ELF can immediately open pad ports or call padInit().
+    if (!keepIopRpc)
+        padEnd();
+}
+
+/** Unloads all pads. Use to terminate the usage of the pads. */
+void unloadPads()
+{
+    unloadPadsEx(0);
 }
 
 /** Tries to start a single pad.
