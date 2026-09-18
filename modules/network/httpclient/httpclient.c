@@ -249,20 +249,48 @@ static int HttpGetResponse(s32 socket, s8 *mode, char *buffer, u16 *length)
     return result;
 }
 
+static int ParseIPv4(const char *s, struct in_addr *ip)
+{
+    int i, val;
+    unsigned char octets[4];
+
+    if (s == NULL || ip == NULL)
+        return 0;
+
+    for (i = 0; i < 4; i++) {
+        if (*s < '0' || *s > '9')
+            return 0;
+        val = 0;
+        while (*s >= '0' && *s <= '9') {
+            val = val * 10 + (*s - '0');
+            if (val > 255)
+                return 0;
+            s++;
+        }
+        octets[i] = (unsigned char)val;
+        if (i < 3) {
+            if (*s != '.')
+                return 0;
+            s++;
+        }
+    }
+    if (*s != '\0')
+        return 0;
+
+    ip->s_addr = (u32)(octets[0] | (octets[1] << 8) | (octets[2] << 16) | (octets[3] << 24));
+    return 1;
+}
+
 static int ResolveHostname(char *hostname, struct in_addr *ip)
 {
     struct hostent *HostEntry;
     struct in_addr **addr_list;
-    u32 addr;
 
     if (hostname == NULL || ip == NULL)
         return 1;
 
-    addr = inet_addr(hostname);
-    if (addr != (u32)-1 && addr != INADDR_NONE) {
-        ip->s_addr = addr;
+    if (ParseIPv4(hostname, ip))
         return 0;
-    }
 
     if ((HostEntry = gethostbyname(hostname)) == NULL)
         return 1;
