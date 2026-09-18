@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
        target, inheriting the live IOP, mounts the game device; the callback DMAs into a stale
        handler in memory the target now owns; the console lands in OSDSYS instead of the game. */
     // Primary: the classic LOADFILE path (see header -- every ioman-visible device stays on it).
-    elfdata.epc = 0;
+    memset(&elfdata, 0, sizeof(elfdata));
     SifLoadFileInit();
     ret = SifLoadElf(argv[0], &elfdata);
     if (ret != 0 || elfdata.epc == 0)
