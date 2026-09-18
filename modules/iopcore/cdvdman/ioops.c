@@ -376,11 +376,12 @@ static int cdrom_getstat(iop_file_t *f, const char *filename, iox_stat_t *stat)
 {
     char path_buffer[128]; // Original buffer size in the SCE CDVDMAN module.
 
-    DPRINTF("cdrom_getstat %s layer %d\n", filename, f->unit);
     WaitEventFlag(cdvdman_stat.intr_ef, 1, WEF_AND, NULL);
 
     if (!filename || strlen(filename) >= sizeof(path_buffer))
         return -ENAMETOOLONG;
+
+    DPRINTF("cdrom_getstat %s layer %d\n", filename, f->unit);
 
     strncpy(path_buffer, filename, sizeof(path_buffer) - 1);
     path_buffer[sizeof(path_buffer) - 1] = '\0';
