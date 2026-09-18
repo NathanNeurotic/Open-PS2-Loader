@@ -100,9 +100,9 @@ Bundled third-party software, shipped in the release package and NOT part of Rip
     The design and the console implementation that RiptOPL's RETROACHIEVEMENTS
     flavour follows: hashing an image the way rcheevos does, streaming the
     watched memory addresses out of the running game over UDP, and the PC client
-    that runs rcheevos on the console's behalf. Adopted with the author's
-    permission (2026-08-27); he supplies and maintains the PC client. Re-authored
-    against this fork rather than merged, so any defect in the port is ours.
+    (xeRAbora v0.1.0-alpha.10) that runs rcheevos on the console's behalf. Adopted with
+    the author's permission (2026-08-27); he supplies and maintains the PC client.
+    Re-authored against this fork rather than merged, so any defect in the port is ours.
     Includes md5.c/md5.h by L. Peter Deutsch, vendored unchanged under the zlib
     licence.
 

@@ -973,7 +973,7 @@ jobs:
               printf -- '- **Neutrino could not be bundled this run:** get the latest from https://github.com/rickgaiser/neutrino/releases.\n'
             fi
             if ls rolling/RIPTOPL-RetroAchievements-*.zip >/dev/null 2>&1; then
-              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the RetroAchievements build as a complete package. A development build, not hardware-tested.\n'
+              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the RetroAchievements build as a complete package (paired with [xeRAbora v0.1.0-alpha.10](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)). A development build, not hardware-tested.\n'
             fi
             if [ -f "rolling/RIPTOPL-VARIANTS-${ASSET_VERSION:-rolling}.zip" ]; then
               printf -- '- `RIPTOPL-VARIANTS-*.zip`: EXTRA_FEATURES (IGS, RTL), PADEMU and DualSense (DS5, USB) loaders. For DS5, prefer `-PS2DEVPINNED-ds5`.\n'
