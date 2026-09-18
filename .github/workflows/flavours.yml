@@ -48,9 +48,9 @@ permissions:
 
 jobs:
   apa-safety-host-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Check the APA table write fence, driver write policy and raw hdd0 paths
@@ -59,9 +59,9 @@ jobs:
         run: python3 .github/scripts/test_apa_recover.py
 
   ra-host-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Check disc hashing, reset image and launch gates
@@ -70,9 +70,9 @@ jobs:
         run: python3 .github/scripts/test_ra_sender.py
 
   bdm-host-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
       - name: Check the BDM block cache never returns stale data on a failed refill
@@ -128,7 +128,7 @@ jobs:
             pinned: "yes (2026-08-13)"
             opldiag: "0"
             ra: "1"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ${{ matrix.image }}
     steps:
       # git must exist BEFORE checkout (ps2dev images are minimal Alpine): without it,
@@ -144,7 +144,7 @@ jobs:
           fi
 
       - name: git checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -189,7 +189,7 @@ jobs:
 
       - name: Upload ELF (${{ matrix.flavour }})
         if: ${{ success() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: OPL-${{ matrix.flavour }}
           path: |
