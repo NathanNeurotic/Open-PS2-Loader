@@ -277,7 +277,7 @@ static int ParseIPv4(const char *s, struct in_addr *ip)
     if (*s != '\0')
         return 0;
 
-    ip->s_addr = (u32)(octets[0] | (octets[1] << 8) | (octets[2] << 16) | (octets[3] << 24));
+    ip->s_addr = (u32)octets[0] | ((u32)octets[1] << 8) | ((u32)octets[2] << 16) | ((u32)octets[3] << 24);
     return 1;
 }
 
