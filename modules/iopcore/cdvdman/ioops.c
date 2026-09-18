@@ -234,10 +234,10 @@ static int cdrom_open(iop_file_t *f, const char *filename, int mode)
 
     WaitEventFlag(cdvdman_stat.intr_ef, 1, WEF_AND, NULL);
 
-    DPRINTF("cdrom_open %s mode=%d layer %d\n", filename, mode, f->unit);
-
     if (!filename || strlen(filename) >= sizeof(path_buffer))
         return -ENAMETOOLONG;
+
+    DPRINTF("cdrom_open %s mode=%d layer %d\n", filename, mode, f->unit);
 
     strncpy(path_buffer, filename, sizeof(path_buffer) - 1);
     path_buffer[sizeof(path_buffer) - 1] = '\0';
@@ -394,6 +394,9 @@ static int cdrom_getstat(iop_file_t *f, const char *filename, iox_stat_t *stat)
 //--------------------------------------------------------------
 static int cdrom_dopen(iop_file_t *f, const char *dirname)
 {
+    if (!dirname)
+        return -ENOENT;
+
     DPRINTF("cdrom_dopen %s layer %d\n", dirname, f->unit);
 
     return cdvdman_open(f, dirname, 8);

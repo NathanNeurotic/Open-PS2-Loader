@@ -476,8 +476,8 @@ vcdMain2:
 	width=256
 	height=256
 	overlay=case_ps1
-	overlay_ulx=17   overlay_uly=11   overlay_urx=155  overlay_ury=21
-	overlay_llx=17   overlay_lly=140  overlay_lrx=155  overlay_lry=150
+	overlay_ulx=17   overlay_uly=11   overlay_urx=155  overlay_ury=17
+	overlay_llx=17   overlay_lly=144  overlay_lrx=155  overlay_lry=150
 ```
 
 Each kind gets its **own frame**: games the PS2 DVD case, apps the square sleeve, PS1/VCD the
