@@ -272,7 +272,7 @@ int mmceReset(void)
 
     mmceGameIdTarget[0] = '\0';
 
-    if (!mmceModLoaded && gMMCEEnableGameID)
+    if (!mmceModLoaded)
         mmceLoadModules();
 
     if (!mmceModLoaded)
