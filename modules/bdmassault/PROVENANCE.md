@@ -18,9 +18,11 @@ fallback — the same external-beats-embedded order POPSLoader ships.
 | usbhdfsd.irx.mmce | 19733 | 9f7b77848935f0d8e9bd792b997910777352f8d480dc32d99a04e6e8653779ab |
 | usbd.irx.ata | 42749 | 4e1d39365854747117a08f8a8d843937614590ea072cf2b70f6e4c2ebbf3c6ee |
 | usbhdfsd.irx.ata | 21837 | 1cc865cd09997bd708e9e102c0f0f1f17f352b7844b282fcfa6a00f38609db9c |
+| usbd.irx.ilink | 48500 | 5ea4818ba1cf5207f6d7cadb4c13b5afa88c37c260750c21155b079a8c18f369 |
+| usbhdfsd.irx.ilink | 21609 | 9b47d90b03804ea9ef47c3702911d83d488405cc64285b62073ce88a7b6bfc63 |
 
-**Dedupe (verified by sha256):** `usbd.irx.mx4sio` is byte-identical to `usbd.irx.usbexfat`, so it
-is NOT vendored twice — the mx4sio mode reuses the usbexfat usbd blob (one embedded symbol).
+**Dedupe (verified by sha256):** `usbd.irx.mx4sio` and `usbd.irx.ilink` are byte-identical to
+`usbd.irx.usbexfat` (all are copies of `bdm_assault.irx`).
 
 ## Sources
 
@@ -35,6 +37,12 @@ is NOT vendored twice — the mx4sio mode reuses the usbexfat usbd blob (one emb
   WARNING: that tag is MUTABLE, which is exactly why the bytes are vendored here with sha256s.
 - **mmce pair caveat**: exact upstream build source unpinned (mmceman-family; distributed via
   POPSLoader). Confirm lineage with saildot4k when convenient.
+- **ilink pair & source**: `usbd.irx.ilink` is identical to `usbd.irx.usbexfat` (`bdm_assault.irx`).
+  `usbhdfsd.irx.ilink` source is vendored under `modules/bdmassault/ilink_bd_assault/`, adapted from
+  `israpps/BDMAssault` (branch `ilink`). Upstream imported `cdvdman` (ordinals 22 & 64: `sceCdRI` and
+  `sceCdRM`) to query the console GUID/model, which crashes POPSTARTER because POPSTARTER does not
+  load `cdvdman`. The vendored source removes `cdvdman` imports and substitutes a static Sony OUI
+  EUI-64 GUID and model string, building cleanly with PS2SDK/Docker.
 
 ## License
 
