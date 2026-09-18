@@ -910,23 +910,28 @@ static void appRenameItem(item_list_t *itemList, int id, char *newName)
 static const char *appNormalizeLaunchPath(char *out, size_t outSize, const char *path)
 {
     const char *colon;
+    int ret;
 
     if (path == NULL || out == NULL || outSize == 0)
-        return path;
+        return NULL;
 
     colon = strchr(path, ':');
     if (colon == NULL) {
-        snprintf(out, outSize, "%s", path);
+        ret = snprintf(out, outSize, "%s", path);
+        if (ret < 0 || (size_t)ret >= outSize)
+            return NULL;
         return out;
     }
 
     // Ensure leading slash after device colon (e.g. mass0:path -> mass0:/path)
     if (*(colon + 1) != '/' && *(colon + 1) != '\\') {
         int devLen = (int)(colon - path) + 1; // includes ':'
-        snprintf(out, outSize, "%.*s/%s", devLen, path, colon + 1);
+        ret = snprintf(out, outSize, "%.*s/%s", devLen, path, colon + 1);
     } else {
-        snprintf(out, outSize, "%s", path);
+        ret = snprintf(out, outSize, "%s", path);
     }
+    if (ret < 0 || (size_t)ret >= outSize)
+        return NULL;
 
     // Convert any backslashes after colon to forward slashes for canonical PS2 paths
     colon = strchr(out, ':');
@@ -1039,7 +1044,10 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             mmceReset();
         }
 
-        appNormalizeLaunchPath(normFilename, sizeof(normFilename), filename);
+        if (appNormalizeLaunchPath(normFilename, sizeof(normFilename), filename) == NULL) {
+            guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+            return;
+        }
         target_argv[0] = isPops ? filename : normFilename;
         target_argc = 1;
 
