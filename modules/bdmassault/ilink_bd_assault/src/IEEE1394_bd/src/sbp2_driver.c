@@ -92,14 +92,14 @@ void init_ieee1394DiskDriver(void)
 
     for (i = 0; i < MAX_DEVICES; i++) {
         SBP2Devices[i].IsConnected = 0;
-        SBP2Devices[i].nodeID      = 0;
-        SBP2Devices[i].trContext   = (-1);
+        SBP2Devices[i].nodeID = 0;
+        SBP2Devices[i].trContext = (-1);
 
-        SBP2Devices[i].scsi.priv        = &SBP2Devices[i];
-        SBP2Devices[i].scsi.name        = "sd";
+        SBP2Devices[i].scsi.priv = &SBP2Devices[i];
+        SBP2Devices[i].scsi.name = "sd";
         SBP2Devices[i].scsi.max_sectors = XFER_BLOCK_SIZE / 512;
         SBP2Devices[i].scsi.get_max_lun = sbp2_get_max_lun;
-        SBP2Devices[i].scsi.queue_cmd   = sbp2_queue_cmd;
+        SBP2Devices[i].scsi.queue_cmd = sbp2_queue_cmd;
     }
 
     writeBuffer = malloc(XFER_BLOCK_SIZE);
@@ -108,7 +108,7 @@ void init_ieee1394DiskDriver(void)
 
     M_DEBUG("Starting threads..\n");
 
-    threadData.thread   = &iLinkIntrCBHandlingThread;
+    threadData.thread = &iLinkIntrCBHandlingThread;
     iLinkIntrCBThreadID = CreateThread(&threadData);
     StartThread(iLinkIntrCBThreadID, NULL);
 
@@ -213,12 +213,12 @@ static inline int initSBP2Disk(struct SBP2Device *dev)
                 managementAgentAddr = (void *)(LeafData & 0x00FFFFFF); /* Mask off the bits that represent the Management Agent key. */
                 M_DEBUG("managementAgentAddr=0x%08lx.\n", (u32)managementAgentAddr * 4);
 
-                dev->ManagementAgent_low  = (u32)managementAgentAddr * 4 + 0xf0000000;
+                dev->ManagementAgent_low = (u32)managementAgentAddr * 4 + 0xf0000000;
                 dev->ManagementAgent_high = 0x0000ffff;
                 break;
             case IEEE1394_CROM_UNIT_CHARA:
                 dev->mgt_ORB_timeout = (LeafData & 0x0000FF00) >> 8;
-                dev->ORB_size        = LeafData & 0x000000FF;
+                dev->ORB_size = LeafData & 0x000000FF;
                 M_DEBUG("mgt_ORB_timeout=%u; ORB_size=%u.\n", dev->mgt_ORB_timeout, dev->ORB_size);
                 break;
             case IEEE1394_CROM_LOGICAL_UNIT_NUM:
@@ -376,13 +376,13 @@ static int ieee1394_InitializeFetchAgent(struct SBP2Device *dev)
     ieee1394_ResetFetchAgent(dev);
 
     /* Write the address of the dummy ORB to the fetch agent's ORB_POINTER register. */
-    address.low    = (u32)dummy_ORB;
+    address.low = (u32)dummy_ORB;
     address.NodeID = dev->InitiatorNodeID;
-    address.high   = 0;
+    address.high = 0;
 
     ((struct sbp2_ORB_pointer *)dummy_ORB)->reserved = NULL_POINTER;
     ((struct sbp2_ORB_pointer *)dummy_ORB)->high = ((struct sbp2_ORB_pointer *)dummy_ORB)->low = 0;
-    ((struct management_ORB *)dummy_ORB)->flags                                                = (u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(3));
+    ((struct management_ORB *)dummy_ORB)->flags = (u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(3));
 
     retries = 0;
     while ((result = iLinkTrWrite(dev->trContext, dev->CommandBlockAgent_high, dev->CommandBlockAgent_low + 0x08, &address, 8)) < 0) {
@@ -417,7 +417,7 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
     memset(&new_management_ORB, 0, sizeof(struct management_ORB));
 
     new_management_ORB.status_FIFO.low = (u32)&statusFIFO;
-    new_management_ORB.flags           = (u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(0) | MANAGEMENT_ORB_FUNCTION(mode));
+    new_management_ORB.flags = (u32)(ORB_NOTIFY | ORB_REQUEST_FORMAT(0) | MANAGEMENT_ORB_FUNCTION(mode));
 
     switch (mode) {
         case SBP2_LOGIN_REQUEST: /* Login. */
@@ -425,7 +425,7 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
             new_management_ORB.flags |= (u32)(MANAGEMENT_ORB_RECONNECT(0) | MANAGEMENT_ORB_EXCLUSIVE(1) | MANAGEMENT_ORB_LUN(dev->LUN));
 
             new_management_ORB.login.response.low = (u32)&login_result;
-            new_management_ORB.length             = (MANAGEMENT_ORB_RESPONSE_LENGTH(sizeof(struct sbp2_login_response)) | MANAGEMENT_ORB_PASSWORD_LENGTH(0));
+            new_management_ORB.length = (MANAGEMENT_ORB_RESPONSE_LENGTH(sizeof(struct sbp2_login_response)) | MANAGEMENT_ORB_PASSWORD_LENGTH(0));
             break;
 #if 0
         case SBP2_RECONNECT_REQUEST:                                                                               /* Reconnect. */
@@ -437,8 +437,8 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
     }
 
     address.NodeID = dev->InitiatorNodeID;
-    address.high   = 0;
-    address.low    = (u32)&new_management_ORB;
+    address.high = 0;
+    address.low = (u32)&new_management_ORB;
 
     M_DEBUG("Management ORB: %p. size=%d.\n", &new_management_ORB, sizeof(struct management_ORB));
     M_DEBUG("Address pointer: %p\n", &address);
@@ -461,7 +461,7 @@ static int ieee1394_SendManagementORB(int mode, struct SBP2Device *dev)
                 /* Store the address to the target's command block agent. */
 
                 dev->CommandBlockAgent_high = login_result.command_block_agent.high;
-                dev->CommandBlockAgent_low  = login_result.command_block_agent.low;
+                dev->CommandBlockAgent_low = login_result.command_block_agent.low;
 
                 dev->loginID = login_result.login_ID; /* Store the login ID. */
 
@@ -492,9 +492,9 @@ int ieee1394_SendCommandBlockORB(struct SBP2Device *dev, struct CommandDescripto
 
     memset((void *)&statusFIFO, 0, sizeof(statusFIFO));
 
-    address.low    = (u32)firstCDB;
+    address.low = (u32)firstCDB;
     address.NodeID = dev->InitiatorNodeID;
-    address.high   = 0;
+    address.high = 0;
 
     retries = 0;
 
@@ -543,12 +543,12 @@ static int sbp2_queue_cmd(struct scsi_interface *scsi, const unsigned char *cmd,
     if (data_len > 0)
         cdb.misc |= CDB_DATA_SIZE(data_len);
 
-    cdb.DataDescriptor.low    = data_wr ? (u32)writeBuffer : (u32)data;
-    cdb.DataDescriptor.high   = 0;
+    cdb.DataDescriptor.low = data_wr ? (u32)writeBuffer : (u32)data;
+    cdb.DataDescriptor.high = 0;
     cdb.DataDescriptor.NodeID = dev->InitiatorNodeID;
 
-    cdb.NextOrb.high     = 0;
-    cdb.NextOrb.low      = 0;
+    cdb.NextOrb.high = 0;
+    cdb.NextOrb.low = 0;
     cdb.NextOrb.reserved = NULL_POINTER;
 
     // Copy and BSWAP32 the SCSI command
@@ -588,11 +588,11 @@ static int ProcessStatus(void)
     int result;
 
     statusFIFO_result = statusFIFO.status.status;
-    status            = RESP_SBP_STATUS(statusFIFO_result);
-    resp              = RESP_RESP(statusFIFO_result);
-    dead              = RESP_DEAD(statusFIFO_result);
-    len               = RESP_LEN(statusFIFO_result);
-    sense             = ((statusFIFO.status.data[0]) >> 16) & 0xF;
+    status = RESP_SBP_STATUS(statusFIFO_result);
+    resp = RESP_RESP(statusFIFO_result);
+    dead = RESP_DEAD(statusFIFO_result);
+    len = RESP_LEN(statusFIFO_result);
+    sense = ((statusFIFO.status.data[0]) >> 16) & 0xF;
 
     M_DEBUG("result: 0x%08lx; status: 0x%02x; RESP: 0x%02x; Dead: %u; len: 0x%02x; sense: 0x%02x.\n", statusFIFO_result, status, resp, dead, len, sense);
     if (sense == 0)

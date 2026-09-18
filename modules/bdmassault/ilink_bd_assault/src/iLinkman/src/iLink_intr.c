@@ -159,7 +159,7 @@ static void WriteRequestHandler(unsigned int header, volatile unsigned int *buff
 
     /* Read in the header. */
     WriteReqHeader.header = header;
-    QuadsToRead           = sizeof(struct ieee1394_TrPacketHdr) >> 2;
+    QuadsToRead = sizeof(struct ieee1394_TrPacketHdr) >> 2;
     if (((header >> 4) & 0xF) == IEEE1394_TCODE_WRITEQ) {
         QuadsToRead--;           /* Quadlet write requests do not have the data length field. */
         WriteReqHeader.misc = 4; /* nBytes=4 */
@@ -169,7 +169,7 @@ static void WriteRequestHandler(unsigned int header, volatile unsigned int *buff
     }
 
     for (i = 1; i < QuadsToRead; i++) {
-        data                                   = *buffer;
+        data = *buffer;
         ((unsigned int *)(&WriteReqHeader))[i] = data;
     }
 
@@ -182,7 +182,7 @@ static void WriteRequestHandler(unsigned int header, volatile unsigned int *buff
     if (WriteReqHeader.offset_low < 0x00200000) { /* Make sure that the write request falls within IOP memory. */
 #endif
         for (i = 0; i < (WriteReqHeader.misc >> 2); i++) {
-            data                                           = *buffer;
+            data = *buffer;
             ((unsigned int *)WriteReqHeader.offset_low)[i] = data;
         }
 #ifdef REQ_CHECK_MEM_BOUNDARIES
@@ -240,7 +240,7 @@ static void ReadRequestHandler(unsigned int header, volatile unsigned int *buffe
 
     /* Read in the header. */
     ReadReqHeader[0] = header;
-    tCode            = (header >> 4) & 0xF;
+    tCode = (header >> 4) & 0xF;
     if (tCode == IEEE1394_TCODE_READQ) {
         QuadsToRead = sizeof(struct ieee1394_TrQuadRdPacketHdr) >> 2;
         DEBUG_PRINTF("Quadlet");
@@ -254,21 +254,21 @@ static void ReadRequestHandler(unsigned int header, volatile unsigned int *buffe
     }
 
     if (tCode == IEEE1394_TCODE_READB) {
-        offset_low        = BSWAP32(((struct ieee1394_TrCommonRdPktHdr *)ReadReqHeader)->offset_low);
-        offset_high       = BSWAP32(((struct ieee1394_TrCommonRdPktHdr *)ReadReqHeader)->offset_high);
+        offset_low = BSWAP32(((struct ieee1394_TrCommonRdPktHdr *)ReadReqHeader)->offset_low);
+        offset_high = BSWAP32(((struct ieee1394_TrCommonRdPktHdr *)ReadReqHeader)->offset_high);
         DestinationNodeID = BSWAP16((unsigned short int)offset_high);
     } else {
-        offset_low        = ((struct ieee1394_TrCommonRdPktHdr *)ReadReqHeader)->offset_low;
-        offset_high       = ((struct ieee1394_TrCommonRdPktHdr *)ReadReqHeader)->offset_high;
+        offset_low = ((struct ieee1394_TrCommonRdPktHdr *)ReadReqHeader)->offset_low;
+        offset_high = ((struct ieee1394_TrCommonRdPktHdr *)ReadReqHeader)->offset_high;
         DestinationNodeID = (unsigned short int)(offset_high >> 16);
     }
 
     if (tCode == IEEE1394_TCODE_READQ) {
         nBytes = 4;
-        speed  = (((struct ieee1394_TrQuadRdPacketHdr *)ReadReqHeader)->trailer >> 16) & 0x7;
+        speed = (((struct ieee1394_TrQuadRdPacketHdr *)ReadReqHeader)->trailer >> 16) & 0x7;
     } else {
         nBytes = ((struct ieee1394_TrBlockRdPacketHdr *)ReadReqHeader)->nBytes >> 16;
-        speed  = (((struct ieee1394_TrBlockRdPacketHdr *)ReadReqHeader)->trailer >> 16) & 0x7;
+        speed = (((struct ieee1394_TrBlockRdPacketHdr *)ReadReqHeader)->trailer >> 16) & 0x7;
     }
 
     DEBUG_PRINTF(" read request to 0x%08x %08x with length %u.\n", offset_high, offset_low, nBytes);
@@ -279,22 +279,22 @@ static void ReadRequestHandler(unsigned int header, volatile unsigned int *buffe
         offset_low &= 0x0FFFFFFF;
         if ((offset_low - 0x400) < ConfigurationROMSize) {
             offset_high = 0;
-            offset_low  = (unsigned int)ConfigurationROM + (offset_low - 0x400);
+            offset_low = (unsigned int)ConfigurationROM + (offset_low - 0x400);
         }
 #ifdef REQ_CHECK_MEM_BOUNDARIES
         else {
             DEBUG_PRINTF("Read request is beyond the range of the configuration ROM.\n");
-            rCode  = 6;
+            rCode = 6;
             nBytes = 0;
         }
     } else if ((offset_low >= 0x00200000) || (offset_low == 0)) {
         DEBUG_PRINTF("Invalid read request.");
-        rCode  = 6;
+        rCode = 6;
         nBytes = 0;
     }
 #endif
 
-    tCode  = (tCode == IEEE1394_TCODE_READQ) ? IEEE1394_TCODE_READQ_RESPONSE : IEEE1394_TCODE_READB_RESPONSE;
+    tCode = (tCode == IEEE1394_TCODE_READQ) ? IEEE1394_TCODE_READQ_RESPONSE : IEEE1394_TCODE_READB_RESPONSE;
     tLabel = (header >> 10) & 0x3F;
     SendResponse(DestinationNodeID, DestinationNodeID >> 6, rCode, tLabel, tCode, speed, (unsigned int *)offset_low, nBytes >> 2);
 

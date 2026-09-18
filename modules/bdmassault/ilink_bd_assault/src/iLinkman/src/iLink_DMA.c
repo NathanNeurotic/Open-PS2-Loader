@@ -25,7 +25,7 @@ extern unsigned int *TargetBuffer;
 extern unsigned int LocalCachedIntr0Register;
 
 struct DMAChannelRegBlock *iLinkDMACRegs = (struct DMAChannelRegBlock *)ILINK_DMAC_REGISTER_BASE;
-struct DMARRegBlock *iLinkDMARRegs       = (struct DMARRegBlock *)ILINK_DMAC_DMAR_CTRL_BASE;
+struct DMARRegBlock *iLinkDMARRegs = (struct DMARRegBlock *)ILINK_DMAC_DMAR_CTRL_BASE;
 
 static int iLinkPHTSendData(struct TransactionContextData *trContext, unsigned char tCode, unsigned short int offset_high, unsigned int offset_low, unsigned int *payload, unsigned int nBytes, char ByteSwap);
 
@@ -39,7 +39,7 @@ void iLinkInitPHT(void)
 
     while ((ILINKRegisterBase->PHT_ctrl_ST_R0 & PHT_CTRL_ST_PHTRst) || (ILINKRegisterBase->PHT_ctrl_ST_R1 & PHT_CTRL_ST_PHTRst)) {};
 
-    ILINKRegisterBase->dmar           = 0x00000020;                            /* DMA space is within the 2MB of IOP memory. */
+    ILINKRegisterBase->dmar = 0x00000020;                                      /* DMA space is within the 2MB of IOP memory. */
     ILINKRegisterBase->PHT_ctrl_ST_R1 = PHT_CTRL_ST_EnDMAS | PHT_CTRL_ST_IHdr; /* EnDMAS | IHdr */
     ILINKRegisterBase->PHT_ctrl_ST_R0 = 0;
 
@@ -47,7 +47,7 @@ void iLinkInitPHT(void)
     ILINKRegisterBase->STRxNIDSel0_R0 = ILINKRegisterBase->STRxNIDSel1_R0 = 0;          /* Reject DMA transfers from all nodes. */
 
     iLinkDMACRegs[0].slice = iLinkDMACRegs[2].slice = 0x400;
-    iLinkDMACRegs[2].chcr                           = DMAC_CHCR_AR | DMAC_CHCR_CO;
+    iLinkDMACRegs[2].chcr = DMAC_CHCR_AR | DMAC_CHCR_CO;
 
     iLinkDMACRegs[0].DmarReadStart = iLinkDMACRegs[2].DmarReadStart = iLinkDMARRegs->DmarWriteStart = 0x00000800;
     iLinkDMACRegs[0].DmarReadEnd = iLinkDMACRegs[2].DmarReadEnd = iLinkDMARRegs->DmarWriteEnd = 0x00200000;
@@ -72,7 +72,7 @@ static int iLinkPHTSendData(struct TransactionContextData *trContext, unsigned c
     ClearEventFlag(IntrEventFlag, ~(iLinkEventDMATransEnd | iLinkEventError));
 
     PHT_ctrl_ST_R0_flags = (tCode == IEEE1394_TCODE_WRITEB) ? PHT_CTRL_ST_EPCNT | PHT_CTRL_ST_EWREQ : PHT_CTRL_ST_EPCNT | PHT_CTRL_ST_ERREQ; /* EWReq and EPCnt, OR ERReq and EPCnt. */
-    tLabel               = 0x3F;                                                                                                             /* PHT 00 */
+    tLabel = 0x3F;                                                                                                                           /* PHT 00 */
 
     ILINKRegisterBase->PHT_ReqResHdr0_R0 = (((unsigned int)trContext->NodeID) << 16) | offset_high;
     ILINKRegisterBase->PHT_ReqResHdr1_R0 = offset_low;

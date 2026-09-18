@@ -7,3 +7,4 @@
 ./include/md5.h
 ./modules/network/smbman-ra
 ./modules/usb/usbd-ra
+./modules/bdmassault

@@ -52,7 +52,7 @@ static struct block_device g_scsi_bd[NUM_DEVICES];
 //
 static int scsi_cmd(struct block_device *bd, unsigned char cmd, void *buffer, int buf_size, int cmd_size)
 {
-    unsigned char comData[12]   = {0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    unsigned char comData[12] = {0x00, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     struct scsi_interface *scsi = (struct scsi_interface *)bd->priv;
 
     // M_DEBUG("%s\n", __func__);
@@ -100,7 +100,7 @@ static inline int scsi_cmd_read_capacity(struct block_device *bd, void *buffer, 
 
 static int scsi_cmd_rw_sector(struct block_device *bd, u64 lba, const void *buffer, unsigned short int sectorCount, unsigned int write)
 {
-    unsigned char comData[12]   = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    unsigned char comData[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     struct scsi_interface *scsi = (struct scsi_interface *)bd->priv;
 
     M_DEBUG("scsi_cmd_rw_sector - 0x%08x%08x %p 0x%04x\n", U64_2XU32(&lba), buffer, sectorCount);
@@ -170,9 +170,9 @@ static int scsi_warmup(struct block_device *bd)
         return -1;
     }
 
-    bd->sectorSize   = getBI32(&rcd.block_length);
+    bd->sectorSize = getBI32(&rcd.block_length);
     bd->sectorOffset = 0;
-    bd->sectorCount  = getBI32(&rcd.last_lba);
+    bd->sectorCount = getBI32(&rcd.last_lba);
     M_PRINTF("%u %u-byte logical blocks: (%uMB / %uMiB)\n", bd->sectorCount, bd->sectorSize, bd->sectorCount / ((1000 * 1000) / bd->sectorSize), bd->sectorCount / ((1024 * 1024) / bd->sectorSize));
 
     return 0;
@@ -184,7 +184,7 @@ static int scsi_warmup(struct block_device *bd)
 static int scsi_read(struct block_device *bd, u64 sector, void *buffer, u16 count)
 {
     struct scsi_interface *scsi = (struct scsi_interface *)bd->priv;
-    u16 sc_remaining            = count;
+    u16 sc_remaining = count;
     int retries;
 
     M_DEBUG("%s: sector=0x%08x%08x, count=%d\n", __func__, U64_2XU32(&sector), count);
@@ -211,7 +211,7 @@ static int scsi_read(struct block_device *bd, u64 sector, void *buffer, u16 coun
 static int scsi_write(struct block_device *bd, u64 sector, const void *buffer, u16 count)
 {
     struct scsi_interface *scsi = (struct scsi_interface *)bd->priv;
-    u16 sc_remaining            = count;
+    u16 sc_remaining = count;
     int retries;
 
     M_DEBUG("%s: sector=0x%08x%08x, count=%d\n", __func__, U64_2XU32(&sector), count);
@@ -306,11 +306,11 @@ int scsi_init(void)
         g_scsi_bd[i].parNr = 0;
         g_scsi_bd[i].parId = 0x00;
 
-        g_scsi_bd[i].priv  = NULL;
-        g_scsi_bd[i].read  = scsi_read;
+        g_scsi_bd[i].priv = NULL;
+        g_scsi_bd[i].read = scsi_read;
         g_scsi_bd[i].write = scsi_write;
         g_scsi_bd[i].flush = scsi_flush;
-        g_scsi_bd[i].stop  = scsi_stop;
+        g_scsi_bd[i].stop = scsi_stop;
     }
 
     return 0;

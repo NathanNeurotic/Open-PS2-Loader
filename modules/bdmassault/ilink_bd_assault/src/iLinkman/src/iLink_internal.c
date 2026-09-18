@@ -140,7 +140,7 @@ void iLinkHWInitialize(void)
     while (ILINKRegisterBase->ctrl0 & (iLink_CTRL0_RxRst | iLink_CTRL0_TxRst)) {};
 
     ILINKRegisterBase->ubufTransmitClear = 0; /* Clear UBUF Tx FIFO. */
-    ILINKRegisterBase->ubufReceiveClear  = 0; /* Clear UBUF Rx FIFO. */
+    ILINKRegisterBase->ubufReceiveClear = 0;  /* Clear UBUF Rx FIFO. */
 
     ILINKRegisterBase->dbufFIFO_lvlR0 = DBUF_FIFO_RESET_TX | DBUF_FIFO_RESET_RX; /* Reset DBUF FIFO 0 */
     ILINKRegisterBase->dbufFIFO_lvlR1 = DBUF_FIFO_RESET_TX | DBUF_FIFO_RESET_RX; /* Reset DBUF FIFO 1 */

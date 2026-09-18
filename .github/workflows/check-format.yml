@@ -8,12 +8,14 @@ on:
       - '**.c'
       - '.github/workflows/check-format.yml'
       - '.clang-format'
+      - '.clang-format-ignore'
   pull_request:
     paths:
       - '**.h'
       - '**.c'
       - '.github/workflows/check-format.yml'
       - '.clang-format'
+      - '.clang-format-ignore'
 
 permissions:
   contents: read
