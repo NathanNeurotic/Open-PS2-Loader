@@ -4322,7 +4322,7 @@ static void moduleCleanup(opl_io_module_t *mod, int exception, int modeSelected)
         return;
 
     // Shutdown if not required anymore.
-    if ((mod->support->mode != modeSelected) && (modeSelected != IO_MODE_SELECTED_ALL)) {
+    if ((mod->support->mode != modeSelected) && (modeSelected != IO_MODE_SELECTED_ALL) && (modeSelected != IO_MODE_SELECTED_ALL_SPARE)) {
         if (mod->support->itemShutdown)
             mod->support->itemShutdown(mod->support);
     } else {
@@ -4422,7 +4422,10 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     ds34usb_reset();
     ds34bt_reset();
 #endif
-    unloadPads();
+    if (exception & KEEPIOP_EXCEPTION)
+        unloadPadsEx(1);
+    else
+        unloadPads();
 
     for (int i = 0; i < MODE_COUNT; i++) {
         if (list_support[i].support != NULL) {
@@ -4492,7 +4495,10 @@ void deinit(int exception, int modeSelected)
     ds34usb_reset();
     ds34bt_reset();
 #endif
-    unloadPads();
+    if (exception & KEEPIOP_EXCEPTION)
+        unloadPadsEx(1);
+    else
+        unloadPads();
 
     deinitAllSupport(exception, modeSelected);
 
