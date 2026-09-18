@@ -108,14 +108,14 @@ int _start(int argc, char *argv[])
     InitializeConfigurationROM();
 
     CallBackFunction = NULL;
-    IntrEventFlag    = CreateEventFlag(&EventFlagData);
-    UBUFTxSema       = CreateMutex(IOP_MUTEX_UNLOCKED);
+    IntrEventFlag = CreateEventFlag(&EventFlagData);
+    UBUFTxSema = CreateMutex(IOP_MUTEX_UNLOCKED);
 
-    ThreadData.attr      = TH_C;
-    ThreadData.option    = 0;
-    ThreadData.thread    = &UBUFThread;
+    ThreadData.attr = TH_C;
+    ThreadData.option = 0;
+    ThreadData.thread = &UBUFThread;
     ThreadData.stacksize = 0x350;
-    ThreadData.priority  = 0x60;
+    ThreadData.priority = 0x60;
 
     StartThread(UBUFThreadID = CreateThread(&ThreadData), NULL);
 
@@ -129,7 +129,7 @@ int _start(int argc, char *argv[])
 
     if (RegisterLibraryEntries(&_exp_iLinkman) != 0)
         return MODULE_NO_RESIDENT_END;
-    
+
     return BD_iLink_start(argc, argv);
 }
 
@@ -164,9 +164,9 @@ int iLinkTrAlloc(unsigned short int NodeID, unsigned char speed)
 
         for (i = 0; i < MAX_CONCURRENT_TRANSACTIONS; i++) {
             if (TransactionContexts[i].IsConnected == 0) {
-                TransactionContexts[i].NodeID           = NodeID;
+                TransactionContexts[i].NodeID = NodeID;
                 TransactionContexts[i].GenerationNumber = GenerationNumber;
-                TransactionContexts[i].IsConnected      = 1;
+                TransactionContexts[i].IsConnected = 1;
                 iLinkSetNodeTrSpeed(i, speed);
                 break;
             }
@@ -250,7 +250,7 @@ void *iLinkSetTrCallbackHandler(void *function)
 {
     void *cb_function;
 
-    cb_function      = CallBackFunction;
+    cb_function = CallBackFunction;
     CallBackFunction = function;
 
     return cb_function;

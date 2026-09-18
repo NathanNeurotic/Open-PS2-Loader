@@ -37,7 +37,7 @@ static int iLinkSendData(struct TransactionContextData *trContext, unsigned int 
     ClearEventFlag(IntrEventFlag, ~(iLinkEventDataSent | iLinkEventDataReceived | iLinkEventError));
 
     ILINKRegisterBase->ubufTransmitClear = 0;
-    data                                 = header;
+    data = header;
 
     /* Transmit the header... */
     for (i = 0; i < HeaderLength; i++) {
@@ -83,9 +83,9 @@ void SendResponse(unsigned short int NodeID, unsigned short RcvdBusID, unsigned 
     DEBUG_PRINTF("Sending response to: 0x%04x, RcvdBusID: 0x%04x, rcode: %d, Header length: %u, speed: 0x%04x. Payload length: 0x%08x.\n", NodeID, RcvdBusID, rCode, ResponseHeaderLength, speed, nQuads);
     DEBUG_PRINTF("tCode: 0x%02x\n", tCode);
 
-    ResponseHeader.header    = (((unsigned int)RcvdBusID) << 22) | (((unsigned int)speed) << 16) | (((unsigned int)tLabel) << 10) | (1 << 8) | (((unsigned int)tCode) << 4);
-    ResponseHeader.header2   = (((unsigned int)NodeID) << 16) | (((unsigned int)rCode) << 12);
-    ResponseHeader.reserved  = 0;
+    ResponseHeader.header = (((unsigned int)RcvdBusID) << 22) | (((unsigned int)speed) << 16) | (((unsigned int)tLabel) << 10) | (1 << 8) | (((unsigned int)tCode) << 4);
+    ResponseHeader.header2 = (((unsigned int)NodeID) << 16) | (((unsigned int)rCode) << 12);
+    ResponseHeader.reserved = 0;
     ResponseHeader.LastField = nQuads << 18;
 
     iLinkSendData(NULL, (unsigned int *)&ResponseHeader, ResponseHeaderLength, buffer, nQuads);
@@ -130,7 +130,8 @@ static int iLinkSync(unsigned int PayloadLength)
     if (LocalCachedIntr0Register & iLink_INTR0_RetEx)
         return (-1026);
     /* if (!(LocalCachedIntr0Register & iLink_INTR0_AckRcvd))
-        return (-1); */ /* Don't test for an acknowledge, as this somehow doesn't work right. :/ */
+        return (-1); */
+    /* Don't test for an acknowledge, as this somehow doesn't work right. :/ */
 
     return PayloadLength;
 }
@@ -146,12 +147,12 @@ int iLinkReadReq(struct TransactionContextData *trContext, unsigned short int of
 
     TargetBuffer = buffer;
 
-    tlabel               = 1; /* Note: As the tlabel is the same, multiple simultaneous transactions will probably not be possible. */
-    tCode                = IEEE1394_TCODE_READQ;
-    TxHeader.header      = (((unsigned int)trContext->speed) << 16) | (((unsigned int)tlabel) << 10) | (1 << 8) | (((unsigned int)tCode) << 4);
+    tlabel = 1; /* Note: As the tlabel is the same, multiple simultaneous transactions will probably not be possible. */
+    tCode = IEEE1394_TCODE_READQ;
+    TxHeader.header = (((unsigned int)trContext->speed) << 16) | (((unsigned int)tlabel) << 10) | (1 << 8) | (((unsigned int)tCode) << 4);
     TxHeader.offset_high = (((unsigned int)trContext->NodeID) << 16) | offset_high;
-    TxHeader.offset_low  = offset_low;
-    TxHeader.misc        = nBytes << 16;
+    TxHeader.offset_low = offset_low;
+    TxHeader.misc = nBytes << 16;
 
     nBytesToTransfer = sizeof(struct ieee1394_TrPacketHdr) - 4; /* Quadlet reads do not have the data length field. */
 
@@ -171,12 +172,12 @@ int iLinkWriteReq(struct TransactionContextData *trContext, unsigned short int o
 
     DEBUG_PRINTF("iLinkTrWrite() 0x%08x %08x; nbytes: 0x%08x. Node: 0x%04x.\n", offset_high, offset_low, nBytes, trContext->NodeID);
 
-    tlabel               = 1; /* Note: As the tlabel is the same, multiple simultaneous transactions will probably not be possible. */
-    tCode                = IEEE1394_TCODE_WRITEQ;
-    TxHeader.header      = (((unsigned int)trContext->speed) << 16) | (((unsigned int)tlabel) << 10) | (1 << 8) | (((unsigned int)tCode) << 4);
+    tlabel = 1; /* Note: As the tlabel is the same, multiple simultaneous transactions will probably not be possible. */
+    tCode = IEEE1394_TCODE_WRITEQ;
+    TxHeader.header = (((unsigned int)trContext->speed) << 16) | (((unsigned int)tlabel) << 10) | (1 << 8) | (((unsigned int)tCode) << 4);
     TxHeader.offset_high = (((unsigned int)trContext->NodeID) << 16) | offset_high;
-    TxHeader.offset_low  = offset_low;
-    TxHeader.misc        = nBytes << 16;
+    TxHeader.offset_low = offset_low;
+    TxHeader.misc = nBytes << 16;
 
     nBytesToTransfer = sizeof(struct ieee1394_TrPacketHdr) - 4; /* Quadlet writes do not have the data length field. */
 
