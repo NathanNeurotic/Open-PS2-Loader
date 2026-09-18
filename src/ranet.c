@@ -13,7 +13,7 @@
   The request is a broadcast: no PC address is stored anywhere, and
   whoever listens answers.
 
-  Protocol (pc/RA/xerabora-0.1.0-alpha.4/protocol/PROTOCOL.md is the contract):
+  Protocol (xeRAbora v0.1.0-alpha.10 protocol v1 with pointer chain extension):
     console -> "RAP1 <own-ip> <own-port>"                    (discovery)
     PC      -> "RAO1 OK <client>/<version>"
     console -> "RAQ1 <hash32> <serial> <own-ip> <own-port>"
