@@ -69,6 +69,7 @@ struct cdvdman_settings_http
     struct cdvdman_settings_common common;
     char server[16];
     u16 port;
+    u16 reserved;
     char uri[CDVDMAN_HTTP_URI_MAX];
     u32 size_lo;
     u32 size_hi;

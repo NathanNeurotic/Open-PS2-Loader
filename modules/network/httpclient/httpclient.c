@@ -253,13 +253,25 @@ static int ResolveHostname(char *hostname, struct in_addr *ip)
 {
     struct hostent *HostEntry;
     struct in_addr **addr_list;
+    u32 addr;
+
+    if (hostname == NULL || ip == NULL)
+        return 1;
+
+    addr = inet_addr(hostname);
+    if (addr != (u32)-1 && addr != INADDR_NONE) {
+        ip->s_addr = addr;
+        return 0;
+    }
 
     if ((HostEntry = gethostbyname(hostname)) == NULL)
         return 1;
 
-    for (addr_list = (struct in_addr **)HostEntry->h_addr_list; addr_list != NULL; addr_list++) {
-        ip->s_addr = (*addr_list)->s_addr;
-        return 0;
+    if (HostEntry->h_addr_list != NULL) {
+        for (addr_list = (struct in_addr **)HostEntry->h_addr_list; *addr_list != NULL; addr_list++) {
+            ip->s_addr = (*addr_list)->s_addr;
+            return 0;
+        }
     }
 
     return 1;
