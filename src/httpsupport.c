@@ -753,6 +753,7 @@ static void httpLaunchGame(item_list_t *itemList, int id, config_set_t *configSe
 
     snprintf(settings->server, sizeof(settings->server), "%s", server);
     settings->port = (u16)endpoint.port;
+    settings->reserved = 0;
     snprintf(settings->uri, sizeof(settings->uri), "%s", uri);
     settings->size_lo = (u32)(imageSize & 0xFFFFFFFF);
     settings->size_hi = (u32)(imageSize >> 32);
@@ -823,6 +824,12 @@ static void httpCleanUp(item_list_t *itemList, int exception)
 static void httpShutdown(item_list_t *itemList)
 {
     httpCleanUp(itemList, NO_EXCEPTION);
+
+    int httpWasLoaded = (netGetModulesLoaded() == NET_PROTO_HTTP);
+    if (httpWasLoaded) {
+        netDeinitModules(NULL);
+        sysShutdownDev9();
+    }
 }
 
 static int httpCheckVMC(item_list_t *itemList, char *name, int createSize)
