@@ -3,8 +3,8 @@
 
 #include "include/config.h"
 
-#define IO_MODE_SELECTED_NONE       -1
-#define IO_MODE_SELECTED_ALL        MODE_COUNT
+#define IO_MODE_SELECTED_NONE      -1
+#define IO_MODE_SELECTED_ALL       MODE_COUNT
 #define IO_MODE_SELECTED_ALL_SPARE (MODE_COUNT + 1)
 
 enum IO_MODES {
