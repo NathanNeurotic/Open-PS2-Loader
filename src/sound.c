@@ -775,7 +775,7 @@ void bgmStart(void)
         // Pre-buffer before starting playback thread so the ring buffer is primed and audsrv
         // never suffers from immediate underrun or device contention at startup.
         int prebufferWait = 0;
-        while (!terminateFlag && bgmIoThreadRunning && bgmBufferedChunks < BGM_IO_LOW_WATER_CHUNKS && prebufferWait < 100) {
+        while (!terminateFlag && bgmBufferedChunks < BGM_IO_LOW_WATER_CHUNKS && prebufferWait < 100) {
             DelayThread(5 * 1000);
             prebufferWait++;
         }
