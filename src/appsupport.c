@@ -12,6 +12,7 @@
 #include "include/vcdsupport.h"
 #include "include/cuesupport.h"
 #include "include/hddsupport.h"
+#include "include/mmcesupport.h"
 #include "include/texcache.h"
 #include "include/textures.h"
 #include "include/libview.h"
@@ -1035,6 +1036,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
                 if (rebootIop < 0)
                     return; // User cancelled launch
             }
+            mmceReset();
         }
 
         appNormalizeLaunchPath(normFilename, sizeof(normFilename), filename);

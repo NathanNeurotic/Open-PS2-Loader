@@ -32,5 +32,8 @@ int mmceSendGameID(const char *startup, const char *protectMcPath, int vmcSlotMa
 int mmceGameIdSettle(int timeoutMs);
 // Arm the GameID transport at menu/settings time (idempotent; no-op when the feature is off).
 void mmceArmGameIDTransport(void);
+// Reset present MMCE cards (SD2PSX/MemCard PRO2) to default channel (Card 1 / Channel 1) and clear GameID.
+// Called on non-game launches (Apps / Favorites) so homebrew doesn't inherit a per-game VMC.
+int mmceReset(void);
 
 #endif
