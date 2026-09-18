@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   promote:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Wait for Rolling Release publish
         if: github.event_name == 'push'
