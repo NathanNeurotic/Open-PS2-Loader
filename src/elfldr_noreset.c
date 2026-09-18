@@ -71,17 +71,18 @@ static void wipeBramMem(void)
     }
 }
 
-int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, char *argv[])
+int sysLoadELF(const char *filename, const char *partition, int argc, char *argv[], int resetIop)
 {
     elfldr_header_t *eh;
     elfldr_pheader_t *eph;
     void *pdata;
     int i, fd;
+    int extra_args = resetIop ? 1 : 0;
 
     (void)partition; // callers pass "" -- no APA-partition context needed on this path
 
     // argv here is the target's FULL argv -- argv[0] INCLUDED and caller-controlled (Neutrino:
-    // its own path; POPSTARTER: the XX./SB. selector it string-parses). At least argv[0] must
+    // its own path; POPSTARTER: the XX./SB. selector it string-parses; Apps: bootpath). At least argv[0] must
     // be supplied: the child forwards &argv[1] verbatim, never synthesizing a replacement.
     if (argc < 1 || argv == NULL || argv[0] == NULL)
         return -1;
@@ -92,31 +93,36 @@ int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, cha
         return -1;
     close(fd);
 
-    // Kernel args-area budget, the last line of defense for EVERY keep-IOP handoff (Neutrino and
-    // POPSTARTER): SetArg copies at most 15 strings into ONE 256-byte pool (NULs included) and
+    // Kernel args-area budget, the last line of defense for EVERY handoff (Neutrino,
+    // POPSTARTER, Apps): SetArg copies at most 15 strings into ONE 256-byte pool (NULs included) and
     // ExecPS2 forwards the UNCLAMPED count -- exceeding either limit corrupts rather than
     // truncates. Callers are expected to fit (sysLaunchNeutrino budgets itself); refuse loudly
     // here rather than hand the kernel a mangled argv.
     {
         int pool = (int)strlen(filename) + 1;
         int j;
+        if (resetIop)
+            pool += (int)strlen("-reset-iop") + 1;
         for (j = 0; j < argc; j++) {
             if (argv[j] == NULL)
                 return -1; // a NULL mid-argv would crash SetArg's copy inside ExecPS2 -- refuse here
             pool += (int)strlen(argv[j]) + 1;
         }
-        if (argc + 1 > 15 || pool > 256) {
-            LOG("[ELFLDR] argv over the kernel budget (args=%d/15, pool=%d/256) -- refusing handoff\n", argc + 1, pool);
+        if (argc + 1 + extra_args > 15 || pool > 256) {
+            LOG("[ELFLDR] argv over the kernel budget (args=%d/15, pool=%d/256) -- refusing handoff\n", argc + 1 + extra_args, pool);
             return -1;
         }
     }
 
-    // Child contract: argv[0] = load path (SifLoadElf'd), argv[1..] = the target's full argv;
-    // the ExecPS2 syscall marshals the strings across the jump.
-    char *new_argv[argc + 1];
+    // Child contract: argv[0] = load path (SifLoadElf'd), argv[1..argc] = the target's full argv;
+    // if resetIop is non-zero, trailing argv[argc+1] = "-reset-iop".
+    // The ExecPS2 syscall marshals the strings across the jump.
+    char *new_argv[argc + 1 + extra_args];
     new_argv[0] = (char *)filename;
     for (i = 0; i < argc; i++)
         new_argv[i + 1] = argv[i];
+    if (resetIop)
+        new_argv[argc + 1] = "-reset-iop";
 
     wipeBramMem();
 
@@ -140,5 +146,10 @@ int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, cha
     FlushCache(0);
     FlushCache(2);
 
-    return ExecPS2((void *)eh->entry, NULL, argc + 1, new_argv);
+    return ExecPS2((void *)eh->entry, NULL, argc + 1 + extra_args, new_argv);
+}
+
+int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, char *argv[])
+{
+    return sysLoadELF(filename, partition, argc, argv, 0);
 }

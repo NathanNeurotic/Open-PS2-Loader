@@ -156,30 +156,31 @@ static char *appGetBoot(char *device, int max, char *path)
     return appGetELFName(path);
 }
 
+static const char *appBasename(const char *path)
+{
+    const char *p1, *p2, *p3, *last;
+
+    if (path == NULL || path[0] == '\0')
+        return "";
+
+    p1 = strrchr(path, '/');
+    p2 = strrchr(path, '\\');
+    p3 = strrchr(path, ':');
+    last = p1;
+    if (p2 != NULL && (last == NULL || p2 > last))
+        last = p2;
+    if (p3 != NULL && (last == NULL || p3 > last))
+        last = p3;
+    return (last != NULL) ? last + 1 : path;
+}
+
 // POPSTARTER SMB selector detection for APPS: APPS -> SB.<game>.ELF
 // Uses VCD_PREFIX_SMB. Handles '/', '\\' and ':' separators locally so
 // smb0:\POPS\SB.Game.ELF is recognized without changing the generic
 // appGetELFName() semantics for other callers.
 static int appIsPopstarterSmb(const char *startup)
 {
-    const char *base;
-    const char *p1;
-    const char *p2;
-    const char *p3;
-    const char *last;
-
-    if (startup == NULL || startup[0] == '\0')
-        return 0;
-
-    p1 = strrchr(startup, '/');
-    p2 = strrchr(startup, '\\');
-    p3 = strrchr(startup, ':');
-    last = p1;
-    if (p2 != NULL && (last == NULL || p2 > last))
-        last = p2;
-    if (p3 != NULL && (last == NULL || p3 > last))
-        last = p3;
-    base = (last != NULL) ? last + 1 : startup;
+    const char *base = appBasename(startup);
 
     if (base[0] == '\0')
         return 0;
@@ -195,6 +196,59 @@ static int appIsPopstarterSmb(const char *startup)
     return 1;
 }
 
+static int appIsPopstarterElf(const char *filename, const char *title)
+{
+    const char *base;
+
+    if (filename != NULL && appIsPopstarterSmb(filename))
+        return 1;
+
+    if (title != NULL && appTitleIsPs1Elf(title))
+        return 1;
+
+    base = appBasename(filename);
+    if (base[0] != '\0') {
+        if (strcasecmp(base, "POPSTARTER.ELF") == 0)
+            return 1;
+        if (!strncasecmp(base, "XX.", 3) ||
+            !strncasecmp(base, "SB.", 3) ||
+            !strncasecmp(base, "EL.", 3) ||
+            !strncasecmp(base, "SM.", 3)) {
+            const char *dot = strrchr(base, '.');
+            if (dot != NULL && strcasecmp(dot, ".ELF") == 0)
+                return 1;
+        }
+    }
+
+    return 0;
+}
+
+static int appGetRebootIopConfig(config_set_t *configSet)
+{
+    struct config_value_t *val;
+
+    if (configSet == NULL)
+        return -1;
+
+    for (val = configSet->head; val != NULL; val = val->next) {
+        if (strcasecmp(val->key, "REBOOTIOP") == 0 || strcasecmp(val->key, "REBOOT_IOP") == 0) {
+            if (strcasecmp(val->val, "YES") == 0 ||
+                strcasecmp(val->val, "1") == 0 ||
+                strcasecmp(val->val, "TRUE") == 0 ||
+                strcasecmp(val->val, "ON") == 0)
+                return 1;
+            if (strcasecmp(val->val, "NO") == 0 ||
+                strcasecmp(val->val, "0") == 0 ||
+                strcasecmp(val->val, "FALSE") == 0 ||
+                strcasecmp(val->val, "OFF") == 0)
+                return 0;
+            return -1;
+        }
+    }
+
+    return -1;
+}
+
 #ifdef __OPLDIAG
 // Ember probe (docs/EMBER-INTEGRATION-PLAN.md Phase 0): does this APPS boot path name an ember.elf?
 // Basename match only, case-insensitively -- FAT is case-insensitive and Ember's install folder is
@@ -202,24 +256,10 @@ static int appIsPopstarterSmb(const char *startup)
 // is recognised too, without changing appGetELFName()'s semantics for other callers.
 static int appIsEmberElf(const char *startup)
 {
-    const char *base;
-    const char *p1;
-    const char *p2;
-    const char *p3;
-    const char *last;
+    const char *base = appBasename(startup);
 
-    if (startup == NULL || startup[0] == '\0')
+    if (base[0] == '\0')
         return 0;
-
-    p1 = strrchr(startup, '/');
-    p2 = strrchr(startup, '\\');
-    p3 = strrchr(startup, ':');
-    last = p1;
-    if (p2 != NULL && (last == NULL || p2 > last))
-        last = p2;
-    if (p3 != NULL && (last == NULL || p3 > last))
-        last = p3;
-    base = (last != NULL) ? last + 1 : startup;
 
     return strcasecmp(base, EMBER_ELF_NAME) == 0;
 }
@@ -909,10 +949,12 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
 
     fd = open(filename, O_RDONLY);
     if (fd >= 0) {
-        int mode, argc = 0;
+        int mode;
         char partition[128];
         char altStartup[256];
-        char *argv[1];
+        char *target_argv[2];
+        int target_argc = 0;
+        int isPops, rebootIop = 0;
         close(fd);
 
         strcpy(partition, "");
@@ -948,13 +990,27 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             }
         }
 
+        isPops = appIsPopstarterElf(filename, appsList[id].title);
+
+        if (!isPops) {
+            rebootIop = appGetRebootIopConfig(configSet);
+            if (rebootIop < 0) {
+                rebootIop = guiPromptRebootIop();
+                if (rebootIop < 0)
+                    return; // User cancelled launch
+            }
+        }
+
+        target_argv[0] = filename;
+        target_argc = 1;
+
         if (configGetStr(configSet, CONFIG_ITEM_ALTSTARTUP, &argv1) != 0) {
             // Copy before deinit(): argv1 points into the config heap which
             // deinit() -> configEnd() frees just below; passing it to the loader
             // afterward would be a use-after-free (A6).
             snprintf(altStartup, sizeof(altStartup), "%s", argv1);
-            argv[0] = altStartup;
-            argc = 1;
+            target_argv[1] = altStartup;
+            target_argc = 2;
         }
 
 #ifdef __OPLDIAG
@@ -973,7 +1029,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             // Validate BEFORE deinit, while the GUI can still draw a dialog. An untranslated
             // English string is correct here: this is OPLDIAG-only text, matching the existing
             // convention for diagnostic detail (see setErrorMessageWithCodeAndDetail in opl.c).
-            const char *emberGame = (argc > 0) ? argv[0] : NULL;
+            const char *emberGame = (target_argc > 1) ? target_argv[1] : NULL;
 
             if (emberGame != NULL && !cueNameLaunchable(emberGame)) {
                 guiMsgBox("Ember probe: argv1 must be a bare folder name under games/\n"
@@ -989,7 +1045,17 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
 #endif
 
         deinit(UNMOUNT_EXCEPTION, mode); // CAREFUL: deinit will call appCleanUp, which frees appsList, appArtLookupTable, and configApps
-        LoadELFFromFileWithPartition(filename, partition, argc, argv);
+        if (isPops) {
+            char *pops_argv[1];
+            int pops_argc = 0;
+            if (target_argc > 1) {
+                pops_argv[0] = altStartup;
+                pops_argc = 1;
+            }
+            LoadELFFromFileWithPartition(filename, partition, pops_argc, pops_argv);
+        } else {
+            sysLoadELF(filename, partition, target_argc, target_argv, rebootIop);
+        }
     } else
         guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
 }

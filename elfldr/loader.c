@@ -31,6 +31,7 @@
 */
 
 #include <kernel.h>
+#include <iopcontrol.h>
 #include <loadfile.h>
 #include <ps2sdkapi.h>
 #include <sifrpc.h>
@@ -181,17 +182,44 @@ static int loadElfViaFileXio(const char *path, u32 *entry)
     return 0;
 }
 
+static void resetIOP(void)
+{
+    while (!SifIopReset("", 0))
+        ;
+    while (!SifIopSync())
+        ;
+    SifInitRpc(0);
+}
+
 // argv[0] = path of the ELF to LOAD; argv[1..] = the target's FULL argv, forwarded verbatim
 // (argv[1] becomes the target's argv[0]). The caller CONTROLS the target's argv[0]: Neutrino
 // gets its own path (NHDDL convention), POPSTARTER gets the "XX./SB." selector it string-parses
 // to pick its backend -- the stock SDK loader clobbers argv[0] with the load path, which is
 // exactly what sent POPSTARTER down its HDD "__common" route on every non-HDD VCD launch.
 // The ExecPS2 syscall marshals the strings, so wiping user memory is safe.
+//
+// An optional trailing "-reset-iop" (or "-la=AR" wLaunchELF flag) requests a clean SifIopReset()
+// after the target ELF has been loaded into user memory, matching wLaunchELF_R3Z parity.
 int main(int argc, char *argv[])
 {
     static t_ExecData elfdata;
     u32 entry;
     int ret;
+    int reset_iop = 0;
+
+    if (argc < 2)
+        return -EINVAL;
+
+    if (argc > 1) {
+        if (strcmp(argv[argc - 1], "-reset-iop") == 0) {
+            reset_iop = 1;
+            argc--;
+        } else if (!strncmp(argv[argc - 1], "-la=", 4)) {
+            if (strchr(argv[argc - 1] + 4, 'R') != NULL)
+                reset_iop = 1;
+            argc--;
+        }
+    }
 
     if (argc < 2)
         return -EINVAL;
@@ -223,6 +251,8 @@ int main(int argc, char *argv[])
     ret = SifLoadElf(argv[0], &elfdata);
     SifLoadFileExit();
     if (ret == 0 && elfdata.epc != 0) {
+        if (reset_iop)
+            resetIOP();
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
@@ -231,6 +261,8 @@ int main(int argc, char *argv[])
 
     // Rescue: fileXio (iomanX) for the devices LOADFILE cannot see (mmceN:, pfs, ...).
     if (loadElfViaFileXio(argv[0], &entry) == 0) {
+        if (reset_iop)
+            resetIOP();
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
