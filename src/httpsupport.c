@@ -825,7 +825,7 @@ static void httpShutdown(item_list_t *itemList)
 {
     httpCleanUp(itemList, NO_EXCEPTION);
 
-    int httpWasLoaded = (netGetModulesLoaded() == NET_PROTO_HTTP);
+    int httpWasLoaded = (netGetResidentProtocol() == NET_PROTO_HTTP);
     if (httpWasLoaded) {
         netDeinitModules(NULL);
         sysShutdownDev9();

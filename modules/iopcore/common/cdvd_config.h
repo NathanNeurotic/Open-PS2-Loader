@@ -75,6 +75,15 @@ struct cdvdman_settings_http
     u32 size_hi;
 } __attribute__((packed));
 
+#ifndef offsetof
+#define offsetof(type, member) __builtin_offsetof(type, member)
+#endif
+
+typedef char cdvdmanSettingsHttpAssertUri[(offsetof(struct cdvdman_settings_http, uri) == 36) ? 1 : -1];
+typedef char cdvdmanSettingsHttpAssertSizeLo[(offsetof(struct cdvdman_settings_http, size_lo) == 804) ? 1 : -1];
+typedef char cdvdmanSettingsHttpAssertSizeHi[(offsetof(struct cdvdman_settings_http, size_hi) == 808) ? 1 : -1];
+typedef char cdvdmanSettingsHttpAssertTotalSize[(sizeof(struct cdvdman_settings_http) == 812) ? 1 : -1];
+
 #define BDM_MAX_FILES 1  // ISO
 #define BDM_MAX_FRAGS 64 // 64 * 8bytes = 512bytes
 
