@@ -28,6 +28,7 @@ STUBS = r'''
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 #include <stddef.h>
 #define O_RDONLY 0
