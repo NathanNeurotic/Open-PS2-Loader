@@ -601,12 +601,14 @@ $(EE_ASM_DIR)imgdrv.c: modules/iopcore/imgdrv/imgdrv.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)eesync.c: $(PS2SDK)/iop/irx/eesync-nano.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-# RetroAchievements needs the network even when the game runs from USB, and the
-# in-game DEV9 driver lives inside cdvdman -- upstream enables it for the BDM
-# variant only under IOPCORE_DEBUG (modules/iopcore/cdvdman/Makefile). Without
-# DEV9 SMAP cannot start and raudp fails to load with -200 (E_IOP_DEPENDANCY).
-# Conditional so the default build's bdm_cdvdman.irx does not grow a driver it
-# has no use for.
+# RetroAchievements needs the network even when the game runs from USB or MMCE, and
+# the in-game DEV9 driver lives inside cdvdman -- upstream enables it for the BDM and
+# MMCE variants only under IOPCORE_DEBUG (modules/iopcore/cdvdman/Makefile). Without
+# DEV9 SMAP cannot start and raudp fails to load with -200 (E_IOP_DEPENDANCY): the
+# game runs, but not one packet leaves the console. Every cdvdman variant a RA
+# launch can use needs it; the HDD, SMB, HTTP and BDM-ATA ones already carry it.
+# Conditional so the default build's cdvdman modules do not grow a driver they
+# have no use for.
 ifeq ($(RETROACHIEVEMENTS),1)
 CDVDMAN_RA_FLAGS = USE_DEV9=1
 endif
@@ -624,7 +626,7 @@ $(EE_ASM_DIR)bdm_ata_cdvdman.c: modules/iopcore/cdvdman/bdm_ata_cdvdman.irx | $(
 	$(BIN2C) $< $@ bdm_ata_cdvdman_irx
 
 modules/iopcore/cdvdman/mmce_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_MMCE=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_RA_FLAGS) USE_MMCE=1 -C $< all
 
 $(EE_ASM_DIR)mmce_cdvdman.c: modules/iopcore/cdvdman/mmce_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
