@@ -374,7 +374,8 @@ static unsigned int crctab[0x400];
 
 unsigned int USBA_crc32(const char *string)
 {
-    int crc, table, count;
+    u32 crc;
+    int table, count;
     unsigned char byte; // MUST be unsigned: a signed char sign-extends bytes >= 0x80 and the XOR
                         // below then produces a negative crctab index (OOB read)
 
@@ -382,7 +383,7 @@ unsigned int USBA_crc32(const char *string)
         crc = table << 24;
 
         for (count = 8; count > 0; count--) {
-            if (crc < 0)
+            if (crc & 0x80000000)
                 crc = crc << 1;
             else
                 crc = (crc << 1) ^ 0x04C11DB7;

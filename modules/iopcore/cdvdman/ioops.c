@@ -152,7 +152,8 @@ static int cdvdman_open(iop_file_t *f, const char *filename, int mode)
 
 // SCE does this too, hence assuming that the version suffix will be either totally there or absent. The only version supported is 1.
 // Instead of using strcat like the original, append the version suffix manually for efficiency.
-static int cdrom_purifyPath(char *path)
+// capacity: total buffer size including NUL terminator
+static int cdrom_purifyPath(char *path, size_t capacity)
 {
     int len;
 
@@ -160,28 +161,30 @@ static int cdrom_purifyPath(char *path)
 
     // Adjusted to better handle cases. Was adding ;1 on every case no matter what.
 
-    if (len >= 3) {
-        // Path is already valid.
-        if ((path[len - 2] == ';') && (path[len - 1] == '1')) {
-            return 1;
+    // Path is already valid with version suffix ";1"
+    if (len >= 2 && (path[len - 2] == ';') && (path[len - 1] == '1')) {
+        return 1;
+    }
+
+    // Path is missing only version.
+    if (len >= 1 && path[len - 1] == ';') {
+        if ((size_t)(len + 2) > capacity) {
+            return -1; // No room for "1\0"
         }
-
-        // Path is missing only version.
-        if (path[len - 1] == ';') {
-            path[len] = '1';
-            path[len + 1] = '\0';
-            return 0;
-        }
-
-        // Path has no terminator or version at all.
-        path[len] = ';';
-        path[len + 1] = '1';
-        path[len + 2] = '\0';
-
+        path[len] = '1';
+        path[len + 1] = '\0';
         return 0;
     }
 
-    return 1;
+    // Path has no terminator or version at all.
+    if ((size_t)(len + 3) > capacity) {
+        return -1; // No room for ";1\0"
+    }
+    path[len] = ';';
+    path[len + 1] = '1';
+    path[len + 2] = '\0';
+
+    return 0;
 }
 
 //--------------------------------------------------------------
@@ -231,10 +234,15 @@ static int cdrom_open(iop_file_t *f, const char *filename, int mode)
 
     WaitEventFlag(cdvdman_stat.intr_ef, 1, WEF_AND, NULL);
 
-    DPRINTF("cdrom_open %s mode=%d layer %d\n", filename, mode, f->unit);
+    if (!filename || strlen(filename) >= sizeof(path_buffer))
+        return -ENAMETOOLONG;
 
-    strncpy(path_buffer, filename, sizeof(path_buffer));
-    cdrom_purifyPath(path_buffer);
+    DPRINTF("cdrom_open %s mode=%d layer %d\n", filename, mode, f->unit);
+    strncpy(path_buffer, filename, sizeof(path_buffer) - 1);
+    path_buffer[sizeof(path_buffer) - 1] = '\0';
+
+    if (cdrom_purifyPath(path_buffer, sizeof(path_buffer)) < 0)
+        return -ENAMETOOLONG;
 
     if ((result = cdvdman_open(f, path_buffer, mode)) >= 0)
         f->mode = O_RDONLY; // SCE fixes the open flags to O_RDONLY for open().
@@ -367,11 +375,17 @@ static int cdrom_getstat(iop_file_t *f, const char *filename, iox_stat_t *stat)
 {
     char path_buffer[128]; // Original buffer size in the SCE CDVDMAN module.
 
-    DPRINTF("cdrom_getstat %s layer %d\n", filename, f->unit);
     WaitEventFlag(cdvdman_stat.intr_ef, 1, WEF_AND, NULL);
 
-    strncpy(path_buffer, filename, sizeof(path_buffer));
-    cdrom_purifyPath(path_buffer); // Unlike the SCE original, purify the path right away.
+    if (!filename || strlen(filename) >= sizeof(path_buffer))
+        return -ENAMETOOLONG;
+
+    DPRINTF("cdrom_getstat %s layer %d\n", filename, f->unit);
+    strncpy(path_buffer, filename, sizeof(path_buffer) - 1);
+    path_buffer[sizeof(path_buffer) - 1] = '\0';
+
+    if (cdrom_purifyPath(path_buffer, sizeof(path_buffer)) < 0)
+        return -ENAMETOOLONG;
 
     return sceCdLayerSearchFile((sceCdlFILE *)&stat->attr, path_buffer, f->unit) - 1;
 }
