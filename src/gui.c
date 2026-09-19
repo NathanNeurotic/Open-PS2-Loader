@@ -2179,6 +2179,7 @@ static int artDelayToEnum(int delay)
 void guiShowArtworkConfig(void)
 {
     diaSetInt(diaArtworkConfig, UICFG_COVERART, gEnableArt);
+    diaSetInt(diaArtworkConfig, UICFG_ENABLE_DISCART, gEnableDiscArt);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_BGART, gEnableBGArt);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_ART_TAR, gEnableArtTar);
     diaSetEnum(diaArtworkConfig, UICFG_ART_DELAY, artDelayNames);
@@ -2187,6 +2188,7 @@ void guiShowArtworkConfig(void)
     int ret = diaExecuteDialog(diaArtworkConfig, -1, 1, NULL);
     if (ret) {
         diaGetInt(diaArtworkConfig, UICFG_COVERART, &gEnableArt);
+        diaGetInt(diaArtworkConfig, UICFG_ENABLE_DISCART, &gEnableDiscArt);
         diaGetInt(diaArtworkConfig, UICFG_ENABLE_BGART, &gEnableBGArt);
         {
             // Re-arm the .tar probe when the toggle actually flips. tarFind's "no archive anywhere"
@@ -3250,14 +3252,16 @@ static int guiSettingsShowIndex(int *page)
     }
 }
 
-void guiShowSettings(void)
+static void guiShowSettingsFromPage(int page, int showIndexFirst)
 {
-    int page = SETTINGS_SOURCES;
     int result;
+
+    if (page < SETTINGS_SOURCES || page >= SETTINGS_PAGE_COUNT)
+        page = SETTINGS_SOURCES;
 
     guiSettingsShellActive = 1;
     guiSettingsSavePending = 0;
-    if (!guiSettingsShowIndex(&page)) {
+    if (showIndexFirst && !guiSettingsShowIndex(&page)) {
         hddDiscardOplHomeSelection();
         guiSettingsShellActive = 0;
         guiSettingsSavePending = 0;
@@ -3316,6 +3320,19 @@ void guiShowSettings(void)
             return;
         }
     }
+}
+
+void guiShowSettings(void)
+{
+    guiShowSettingsFromPage(SETTINGS_SOURCES, 1);
+}
+
+void guiShowPsEmulationSettings(void)
+{
+    // PS1 Triangle shortcut: enter the normal Settings shell directly on the global PS emulation
+    // page. The shell still owns Save Changes and navigation, and returning leaves the caller's
+    // selected PS1 title/menu intact.
+    guiShowSettingsFromPage(SETTINGS_POPSTARTER, 0);
 }
 
 int guiShowKeyboard(char *value, int maxLength)

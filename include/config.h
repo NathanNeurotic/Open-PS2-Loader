@@ -91,6 +91,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_PLAS_BLEND_COLOR           "plasma_blend_color" // plasma gradient LOW end (parity-audit #15); doubles as the theme-cfg key
 #define CONFIG_OPL_ENABLE_NOTIFICATIONS       "enable_notifications"
 #define CONFIG_OPL_ENABLE_COVERART            "enable_coverart"
+#define CONFIG_OPL_ENABLE_DISCART             "enable_discart"
 #define CONFIG_OPL_ENABLE_BGART               "enable_bgart"
 #define CONFIG_OPL_ENABLE_ART_TAR             "enable_art_tar"
 #define CONFIG_OPL_ENABLE_ANALOG_NAV          "enable_analog_nav"

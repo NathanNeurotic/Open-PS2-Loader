@@ -848,6 +848,13 @@ static void initStaticImage(const char *themePath, config_set_t *themeConfig, th
 
 // GameImage ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// ItemIcon is backed by the ICO art suffix. Treat it as disc artwork independently from COV so
+// users can keep covers/backgrounds while hiding the large disc image used by some themes.
+static int isDiscArtCache(const image_cache_t *cache)
+{
+    return cache != NULL && cache->suffix != NULL && strcmp(cache->suffix, "ICO") == 0;
+}
+
 static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, struct submenu_item *item, int isPriority)
 {
     // Folder browsing: a folder row has no cover art (and no startup key). Never route it through the
@@ -857,6 +864,9 @@ static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, str
         return NULL;
 
     if (cache == NULL || cache->userId < 0 || item->cache_id == NULL || item->cache_uid == NULL)
+        return NULL;
+
+    if (!gEnableDiscArt && isDiscArtCache(cache))
         return NULL;
 
     if (gTheme == NULL || cache->userId >= gTheme->gameCacheCount)
@@ -894,6 +904,9 @@ static GSTEXTURE *getGameImageCached(image_cache_t *cache, struct submenu_item *
         return NULL;
 
     if (cache == NULL || cache->userId < 0 || item->cache_id == NULL || item->cache_uid == NULL)
+        return NULL;
+
+    if (!gEnableDiscArt && isDiscArtCache(cache))
         return NULL;
 
     if (gTheme == NULL || cache->userId >= gTheme->gameCacheCount)
@@ -1098,6 +1111,11 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
         struct theme_element *drawElem = thmGetElemForItem(menu, item, elem);
         mutable_image_t *gameImage = (mutable_image_t *)drawElem->extended;
         if (gameImage == NULL)
+            return;
+
+        // A disabled disc element must disappear completely, including its theme-supplied default
+        // texture/overlay. Merely blocking the ICO file read would otherwise leave the placeholder.
+        if (!gEnableDiscArt && isDiscArtCache(gameImage->cache))
             return;
 
         // A per-game BACKGROUND must never be REQUESTED before the cover. This function draws both,
@@ -2033,7 +2051,8 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         // loose PNG users regain the deep lookahead older fast builds provided. Games, APPS,
         // Favourites and VCD all pass through this one scheduler.
         image_cache_t *selectedCache = NULL;
-        if (itemsList->decoratorImage != NULL && !item->item.isFolder) {
+        if (itemsList->decoratorImage != NULL && !item->item.isFolder &&
+            (gEnableDiscArt || !isDiscArtCache(itemsList->decoratorImage->cache))) {
             selectedCache = itemsList->decoratorImage->cache;
             getGameImageTextureEx(selectedCache, menu->item->userdata, &item->item, 1);
         } else if (itemsList->coverElem != NULL && !item->item.isFolder) {
@@ -2106,7 +2125,8 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                 dispText = folderBuf;
             }
 
-            if (itemsList->decoratorImage) {
+            if (itemsList->decoratorImage &&
+                (gEnableDiscArt || !isDiscArtCache(itemsList->decoratorImage->cache))) {
                 GSTEXTURE *itemIconTex = NULL;
 
                 if (!ps->item.isFolder) {
@@ -2587,6 +2607,48 @@ static void linkItemsListCoverElems(theme_elems_t *elems)
     }
 }
 
+// Theme elements are painted in linked-list order. ItemText carries the selected GAME ID/startup
+// (and ELF caption in app views), so it is semantic foreground: an ItemIcon/ICO declared later by a
+// theme must never paint over it. Stable-promote every ItemText node to the family tail while keeping
+// all other theme z-order intact.
+static void promoteItemTextElements(theme_elems_t *elems)
+{
+    theme_element_t *elem = elems->first;
+    theme_element_t *prev = NULL;
+    theme_element_t *textFirst = NULL;
+    theme_element_t *textLast = NULL;
+
+    while (elem != NULL) {
+        theme_element_t *next = elem->next;
+
+        if (elem->type == ELEM_TYPE_ITEM_TEXT) {
+            if (prev != NULL)
+                prev->next = next;
+            else
+                elems->first = next;
+
+            elem->next = NULL;
+            if (textLast != NULL)
+                textLast->next = elem;
+            else
+                textFirst = elem;
+            textLast = elem;
+        } else {
+            prev = elem;
+        }
+
+        elem = next;
+    }
+
+    if (textFirst != NULL) {
+        if (elems->first != NULL)
+            prev->next = textFirst;
+        else
+            elems->first = textFirst;
+        elems->last = textLast;
+    }
+}
+
 // Background validation for a Favourites per-kind pair. validateBackgroundElems adds a background to the
 // MAIN group unconditionally, which would turn an undeclared (empty) family into a non-empty one and make
 // menusys select it. So only a family that already has elements is touched; an info-only declaration is
@@ -2712,6 +2774,20 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     linkItemsListCoverElems(&theme->favsVcdInfoElems);
     linkItemsListCoverElems(&theme->favsAppsMainElems);
     linkItemsListCoverElems(&theme->favsAppsInfoElems);
+
+    // Painter-order safety: GAME ID / startup / ELF captions always remain readable over ICO discs.
+    promoteItemTextElements(&theme->mainElems);
+    promoteItemTextElements(&theme->infoElems);
+    promoteItemTextElements(&theme->appsMainElems);
+    promoteItemTextElements(&theme->appsInfoElems);
+    promoteItemTextElements(&theme->favsMainElems);
+    promoteItemTextElements(&theme->favsInfoElems);
+    promoteItemTextElements(&theme->vcdMainElems);
+    promoteItemTextElements(&theme->vcdInfoElems);
+    promoteItemTextElements(&theme->favsVcdMainElems);
+    promoteItemTextElements(&theme->favsVcdInfoElems);
+    promoteItemTextElements(&theme->favsAppsMainElems);
+    promoteItemTextElements(&theme->favsAppsInfoElems);
 }
 
 static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_elems_t *elems, const char *type, const char *name)

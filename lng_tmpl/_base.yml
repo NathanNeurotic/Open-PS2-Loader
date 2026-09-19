@@ -1332,3 +1332,5 @@ gui_strings:
   string: This title is its own APA partition, and OPL never edits the partition table. Rename it on a PC.
 - label: POPS_SETTINGS_UNREADABLE
   string: Could not read POPSTARTER's settings -- the memory card is busy or unreadable. Try again once loading finishes.
+- label: GLOBAL_PS_EMULATION_SETTINGS
+  string: Global PS Emulation Settings

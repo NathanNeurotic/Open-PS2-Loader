@@ -234,6 +234,7 @@ int gRATelemetry;
 int gRABadges;
 #endif
 int gEnableArt;
+int gEnableDiscArt;
 int gWideScreen;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
@@ -2852,6 +2853,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
 #endif
             configGetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, &gEnableArt);
+            configGetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, &gEnableDiscArt);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
 
             if (!(getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS))) {
@@ -3453,6 +3455,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_RA_BADGES, gRABadges);
 #endif
         configSetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, gEnableArt);
+        configSetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, gEnableDiscArt);
         configSetInt(configOPL, CONFIG_OPL_WIDESCREEN, gWideScreen);
         configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
         configSetInt(configOPL, CONFIG_OPL_XOFF, gXOff);
@@ -4653,6 +4656,7 @@ static void setDefaults(void)
     gRABadges = 1;    // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
 #endif
     gEnableArt = 1;
+    gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
     gWideScreen = 1;
     gEnableSFX = 1; // safe now: sfxPlay dispatches asynchronously (#340)
     gEnableRumble = 1;

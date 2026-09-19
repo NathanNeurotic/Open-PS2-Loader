@@ -69,6 +69,12 @@ enum GAME_MENU_IDs {
 #endif
 };
 
+enum APP_MENU_IDs {
+    APP_RENAME = 0,
+    APP_DELETE,
+    APP_GLOBAL_PS_SETTINGS,
+};
+
 // global menu variables
 static menu_list_t *menu;
 static menu_list_t *selected_item;
@@ -692,8 +698,8 @@ void menuInitAppMenu(void)
         submenuDestroy(&appMenu);
 
     // initialize the menu
-    submenuAppendItem(&appMenu, -1, NULL, 0, _STR_RENAME);
-    submenuAppendItem(&appMenu, -1, NULL, 1, _STR_DELETE);
+    submenuAppendItem(&appMenu, -1, NULL, APP_RENAME, _STR_RENAME);
+    submenuAppendItem(&appMenu, -1, NULL, APP_DELETE, _STR_DELETE);
 
     appMenuCurrent = appMenu;
 }
@@ -703,9 +709,11 @@ void menuInitVcdMenu(void)
     if (appMenu)
         submenuDestroy(&appMenu);
 
-    // VCDs launch through POPSTARTER, not OPL's PS2 loader/core. Keep their Triangle menu on this
-    // item-operation path so merely opening it cannot create or read a per-game CFG.
-    submenuAppendItem(&appMenu, -1, NULL, 0, _STR_RENAME);
+    // PS1 titles are handed off to POPSTARTER or Ember, so this menu must not imply that RiptOPL
+    // owns per-game emulator settings. Link to the existing GLOBAL PS emulation page instead, and
+    // keep this item-operation path free of PS2 per-game CFG reads/creation.
+    submenuAppendItem(&appMenu, -1, NULL, APP_GLOBAL_PS_SETTINGS, _STR_GLOBAL_PS_EMULATION_SETTINGS);
+    submenuAppendItem(&appMenu, -1, NULL, APP_RENAME, _STR_RENAME);
 
     appMenuCurrent = appMenu;
 }
@@ -2108,10 +2116,12 @@ void menuHandleInputAppMenu()
 
         sfxPlay(SFX_CONFIRM);
 
-        if (menuID == 0) {
+        if (menuID == APP_RENAME) {
             menuRenameGame(&appMenu);
-        } else if (menuID == 1) {
+        } else if (menuID == APP_DELETE) {
             menuDeleteGame(&appMenu);
+        } else if (menuID == APP_GLOBAL_PS_SETTINGS) {
+            guiShowPsEmulationSettings();
         }
         // so the exit press wont propagate twice
         readPads();
