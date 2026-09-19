@@ -18,6 +18,7 @@ text = source.read_text()
 
 
 def function(name):
+    """Extract a complete top-level static C function for the host harness."""
     start = text.index("static ", text.index(name) - 25)
     end = text.index("\n}", start) + 2
     return text[start:end]
@@ -143,6 +144,18 @@ int main(void)
         arg[256 - fixed] = 0;
         run(apa, arg, reset, 0);
         assert(errors == 1 && !torn_down && !launched);
+
+        gOPLPart[0] = 0;
+        run(apa, NULL, reset, 0);
+        assert(errors == 1 && !torn_down && !launched && !sdk_launch);
+        run(apa, "hdd0:__.EMBER/EMBER/launcHER.CNF", reset, 0);
+        assert(errors == 1 && !torn_down && !launched && !sdk_launch);
+        for (unsigned i = 0; i < sizeof(paths) / sizeof(paths[0]); i++) {
+            run(paths[i], NULL, reset, 0);
+            assert(launched == 1 && !errors && !sdk_launch);
+            assert(!strcmp(got_path, paths[i]) && !strcmp(got_argv[0], paths[i]));
+        }
+        strcpy(gOPLPart, "hdd0:+OPL");
     }
     strcpy(gOPLPart, "hdd0:__common");
     run("pfs0:OPL/APPS/launcHER.elf", NULL, 0, 0);

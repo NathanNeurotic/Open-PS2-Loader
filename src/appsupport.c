@@ -1103,6 +1103,10 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
         } else {
             // Match the SDK Apps contract: load through the live PFS mount, but give
             // the app its partition-qualified path so it can remount after an IOP reset.
+            if (mode == HDD_MODE && gOPLPart[0] == '\0') {
+                guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+                return;
+            }
             char appArgv0[sizeof(partition) + sizeof(normFilename)];
             snprintf(appArgv0, sizeof(appArgv0), "%s%s", partition, normFilename);
             target_argv[0] = appArgv0;
