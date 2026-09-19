@@ -1750,7 +1750,7 @@ void menuHandleInputMain()
     }
 
     // Last Played Auto Start
-    if (gRememberLastPlayed && gAutoStartLastPlayed > 0 && RemainSecs < 0 && !viewPending) {
+    if (gRememberLastPlayed && gAutoStartLastPlayed > 0 && RemainSecs < 0 && DisableCron == 0 && !viewPending) {
         DisableCron = 1; // Disable Counter
         if (gSelectButton == KEY_CIRCLE)
             selected_item->item->execCircle(selected_item->item);
