@@ -132,6 +132,7 @@ void guiShowAbout();
 void guiShowConfig();
 void guiShowUIConfig();
 void guiShowSettings(void);
+void guiShowPsEmulationSettings(void); // PS1 Triangle shortcut to the global PS emulation page
 // Settings-layout category pages (rebuild step 06)
 void guiShowDeviceConfig(void);
 int guiShowControllerConfig(void);
