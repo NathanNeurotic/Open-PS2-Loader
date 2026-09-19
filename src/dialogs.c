@@ -1577,16 +1577,20 @@ struct UIItem diaAbout[] = {
     {UI_BREAK},
 
     {UI_SPACER},
+#ifdef RETROACHIEVEMENTS
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"BatRastard - bbsan2k - belek666 - crazyc - dlanor - doctorxyz - hacan359", -1}}},
+#else
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"BatRastard - bbsan2k - belek666 - crazyc - dlanor - doctorxyz", -1}}},
+#endif
     {UI_BREAK},
 
     {UI_SPACER},
 #ifdef RETROACHIEVEMENTS
-    // hacan359 authored the RetroAchievements work this flavour ships. diaAbout never scrolls and
-    // has about one row of headroom, so the credit goes ON an existing line rather than adding a
-    // row. Guarded because the acceptance gate for this feature is that the standard ELF is
-    // unchanged, and a longer string literal changes it. CREDITS carries the full entry for both.
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"hacan359 - hominem.te.esse - ifcaro - izdubar - jimmikaelkael - KrahJohlito", -1}}},
+    // hacan359 authored the RA design/client and oMrRexD supplied the hardware stabilization fixes.
+    // diaAbout never scrolls, so both credits are rebalanced across existing coder rows rather than
+    // adding a row. Guarded so the standard ELF's About strings remain unchanged; CREDITS has the
+    // full provenance for both contributors.
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"oMrRexD - hominem.te.esse - ifcaro - izdubar - jimmikaelkael - KrahJohlito", -1}}},
 #else
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"hominem.te.esse - ifcaro - izdubar - jimmikaelkael - KrahJohlito", -1}}},
 #endif

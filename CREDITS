@@ -106,6 +106,15 @@ Bundled third-party software, shipped in the release package and NOT part of Rip
     Includes md5.c/md5.h by L. Peter Deutsch, vendored unchanged under the zlib
     licence.
 
+  - RetroAchievements stabilization, by oMrRexD
+                                     https://github.com/oMrRexD
+    The real-hardware investigation and focused fixes that made the RiptOPL RA
+    port reliably boot and communicate on the tested USB/MMCE paths. His work
+    identified and corrected the ee_core stack squeeze, the missing MMCE DEV9
+    dependency, cold-launch network bring-up / unusable-IP fallback, and the RA
+    settings-page placement. Landed through PRs #702, #703, #704 and #705 after
+    hardware testing on a real PS2, with careful separation from normal builds.
+
   - POPStarter, by krHACKen          https://www.psx-place.com/resources/popstarter.683/
     A PS1 launcher built around Sony's native POPS emulator for the PS2, used as
     RiptOPL's primary PS1 core alongside Ember. POPStarter provides the
