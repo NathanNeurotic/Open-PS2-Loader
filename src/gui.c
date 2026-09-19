@@ -3373,13 +3373,13 @@ static void guiHandleOp(struct gui_update_t *item)
                     item->menu.menu->pagestart = result;
                 }
             }
-            if (item->submenu.selected) { // remember last played game feature
+            if (item->submenu.selected) { // restore cursor or select the remembered last-played game
                 item->menu.menu->current = result;
                 item->menu.menu->pagestart = result;
                 item->menu.menu->remindLast = 1;
 
                 // Last Played Auto Start
-                if ((gAutoStartLastPlayed) && !(KeyPressedOnce))
+                if (item->submenu.autoStart && gRememberLastPlayed && gAutoStartLastPlayed && !(KeyPressedOnce))
                     DisableCron = 0; // Release Auto Start Last Played counter
             }
 
@@ -4016,7 +4016,7 @@ static void guiDrawOverlays()
 #endif
 
     // Last Played Auto Start
-    if (!pending && DisableCron == 0 && endIntro) {
+    if (!pending && gRememberLastPlayed && gAutoStartLastPlayed && DisableCron == 0 && endIntro) {
         if (CronStart == 0) {
             CronStart = clock() / CLOCKS_PER_SEC;
         } else {

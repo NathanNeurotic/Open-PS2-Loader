@@ -1265,15 +1265,23 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
 #endif
                 gup->submenu.text_id = -1;
                 gup->submenu.selected = 0;
+                gup->submenu.autoStart = 0;
                 gup->submenu.isFolder = isFolderRow;
 
                 // Neither auto-select targets a folder row (no startup). The remembered cursor
-                // wins over last-played: it is where the user actually was.
+                // wins over last-played: it is where the user actually was. Only the persisted
+                // Last Played match may release the Auto Start countdown; cursor restoration must
+                // never turn a menu rebuild into an automatic launch.
                 if (!isFolderRow) {
                     const char *st = mdl->support->itemGetStartup(mdl->support, i);
-                    if (st != NULL && ((keepStartup[0] && strcmp(keepStartup, st) == 0) ||
-                                       (!keepStartup[0] && gRememberLastPlayed && temp && strcmp(temp, st) == 0)))
-                        gup->submenu.selected = 1;
+                    if (st != NULL) {
+                        if (keepStartup[0] && strcmp(keepStartup, st) == 0) {
+                            gup->submenu.selected = 1;
+                        } else if (!keepStartup[0] && gRememberLastPlayed && temp && strcmp(temp, st) == 0) {
+                            gup->submenu.selected = 1;
+                            gup->submenu.autoStart = 1;
+                        }
+                    }
                 }
 
                 guiDeferUpdate(gup);
