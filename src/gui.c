@@ -438,8 +438,8 @@ static void guiShowNotifications(void)
             y += yadd;
         }
 
-        // One-time network notice set at config load: a UDP transport left on DHCP (the ministack has
-        // no DHCP client; it binds the static PS2 IP fields as-is, so an unset static IP fails silently).
+        // One-time network notice set at config load: UDP transports always use the saved static PS2
+        // IP fields. If DHCP is the preserved SMB/HTTP preference, remind the user which address UDP uses.
         if (showNetDhcpPopup) {
             guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y);
             y += yadd;
@@ -1164,6 +1164,12 @@ static int httpTestBusy;
 static int httpTestIp[4], httpTestPort;
 static char httpTestBase[HTTP_BASE_PATH_MAX], httpTestMessage[128];
 
+// UDPFS/UDPBD use a ministack with no DHCP client, but SMB/HTTP can still use DHCP.
+// Keep the user's full-stack preference separate from the transport-effective UI value so
+// selecting a UDP protocol can force Static without permanently clobbering that preference.
+static int netConfigDhcpPreference;
+static int netConfigLastProtocol = -1;
+
 static void httpTestWorker(void)
 {
     httpTestServer(httpTestIp, httpTestPort, httpTestBase, httpTestMessage, sizeof(httpTestMessage));
@@ -1172,7 +1178,7 @@ static void httpTestWorker(void)
 
 static int netConfigUpdater(int modified)
 {
-    int showAdvancedOptions, isNetBIOS, isDHCPEnabled, netProto, isSMB, isHTTP, i;
+    int showAdvancedOptions, isNetBIOS, isDHCPEnabled, netProto, isSMB, isHTTP, isUdp, i;
 
     if (modified) {
         diaGetInt(diaNetConfig, NETCFG_SHOW_ADVANCED_OPTS, &showAdvancedOptions);
@@ -1182,6 +1188,29 @@ static int netConfigUpdater(int modified)
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProto);
         isSMB = netProto == 0;
         isHTTP = netProto == 3;
+        isUdp = netProto == 1 || netProto == 2;
+
+        // UDPFS/UDPBD always bind the configured static PS2 IP; their ministack has no DHCP client.
+        // Force the effective row to Static while either protocol is selected, but remember the
+        // user's DHCP choice so switching back to SMB/HTTP restores it instead of silently changing
+        // their normal network preference.
+        if (isUdp) {
+            if (netConfigLastProtocol != 1 && netConfigLastProtocol != 2)
+                netConfigDhcpPreference = isDHCPEnabled;
+            diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, 0);
+            diaSetEnabled(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, 0);
+            isDHCPEnabled = 0;
+        } else {
+            if (netConfigLastProtocol == 1 || netConfigLastProtocol == 2) {
+                diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, netConfigDhcpPreference);
+                isDHCPEnabled = netConfigDhcpPreference;
+            } else {
+                netConfigDhcpPreference = isDHCPEnabled;
+            }
+            diaSetEnabled(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, 1);
+        }
+        netConfigLastProtocol = netProto;
+
         diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, isNetBIOS);
 
         // SMB server fields belong to OPL's SMB consumer. UDPFS/UDPBD are the Neutrino-facing
@@ -1334,6 +1363,8 @@ int guiShowNetConfig(void)
     // netConfigUpdater, so without this the first frame flashes every row enabled.
     diaSetEnabled(diaNetConfig, CFG_UDPFSMODE, netProtoVal == 1);
     diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, 0); // NOTE(rebuild): greyed until item 4
+    netConfigDhcpPreference = ps2_ip_use_dhcp;
+    netConfigLastProtocol = -1;
     netConfigUpdater(1);
 
     // Update the spacer item between the OK and reconnect buttons (See dialogs.c).
@@ -1371,8 +1402,19 @@ reshow_network:
         goto reshow_network;
     }
     if (result) {
+        int netProtoVal2, netAccessVal2;
+        diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
+        diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
+
+        // Under UDPFS/UDPBD the visible row is transport-effectively Static, but ps2_ip_use_dhcp
+        // remains the user's SMB/HTTP preference. The UDP stacks never consult it; they always use
+        // ps2_ip[] directly. This lets a DHCP user test UDP and return to SMB without losing DHCP.
+        if (netProtoVal2 == 1 || netProtoVal2 == 2)
+            ps2_ip_use_dhcp = netConfigDhcpPreference;
+        else
+            diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &ps2_ip_use_dhcp);
+
         // Store values
-        diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &ps2_ip_use_dhcp);
         diaGetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, &gPCShareAddressIsNetBIOS);
         diaGetString(diaNetConfig, NETCFG_SHARE_NB_ADDR, gPCShareNBAddress, sizeof(gPCShareNBAddress));
 
@@ -1406,9 +1448,6 @@ reshow_network:
         // shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) downstream consumers read.
         // NOTE(rebuild): the fork also reads the SMB dialect row back here (item 4).
         int netProtocolWas = gNetworkProtocol;
-        int netProtoVal2, netAccessVal2;
-        diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
-        diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
         if (gNetStartMode == START_MODE_DISABLED)
             gNetworkProtocol = NET_PROTO_OFF;
         else
@@ -1423,9 +1462,8 @@ reshow_network:
         // every non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
         gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
 
-        // The UDP transports' ministack has no DHCP client; with DHCP on, ps2_ip[] is never refreshed, so
-        // they need a static PS2 IP. Warn when switching TO a UDP protocol (UDPFS/UDPFSBD/UDPBD) from a
-        // non-UDP one while DHCP is on. SMB is exempt (it runs the full ETH stack that acquires a lease).
+        // UDP transports always use the saved static PS2 IP fields. If the user's preserved
+        // SMB/HTTP preference is DHCP, explain that the UDP transport is using Static by design.
         int nowUdp = (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD);
         int wasUdp = (netProtocolWas == NET_PROTO_UDPFS || netProtocolWas == NET_PROTO_UDPFSBD || netProtocolWas == NET_PROTO_UDPBD);
         if (nowUdp && !wasUdp && ps2_ip_use_dhcp)

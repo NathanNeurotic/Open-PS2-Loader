@@ -773,6 +773,12 @@ jobs:
           # zip-in-zip). Best-effort: a fetch/extract failure still publishes the rest. The archive
           # root holds neutrino.elf + config/ + modules/, so the neutrino/ folder copies straight to
           # mc?:/neutrino/. RiptOPL adds ONLY config/bsd-udpfsbd.toml (UDPFS); else the official build.
+          # This file is fork-private -- upstream Neutrino will not supply it -- so fail loudly if a
+          # refactor ever drops the source payload instead of publishing an IMG-mode-broken package.
+          if [ ! -s neutrino/bsd-udpfsbd.toml ]; then
+            echo "ERROR: fork-private neutrino/bsd-udpfsbd.toml is missing or empty; refusing to package." >&2
+            exit 1
+          fi
           NEUTRINO_VER=""
           if gh release download latest --repo rickgaiser/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
             NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"
@@ -786,6 +792,10 @@ jobs:
             # next to the others in config/. Require neutrino.elf at the folder root, else omit.
             if [ -n "$SEVENZ" ] && "$SEVENZ" x -y -o"$PKG/neutrino" "$NEUT_ABS" >/dev/null && [ -e "$PKG/neutrino/neutrino.elf" ]; then
               mkdir -p "$PKG/neutrino/config" && cp neutrino/bsd-udpfsbd.toml "$PKG/neutrino/config/bsd-udpfsbd.toml"
+              if [ ! -s "$PKG/neutrino/config/bsd-udpfsbd.toml" ] || ! cmp -s neutrino/bsd-udpfsbd.toml "$PKG/neutrino/config/bsd-udpfsbd.toml"; then
+                echo "ERROR: fork-private bsd-udpfsbd.toml did not reach the staged Neutrino config unchanged." >&2
+                exit 1
+              fi
               rm -f "$NEUT_ABS"
               echo "Extracted Neutrino into $PKG/neutrino (added config/bsd-udpfsbd.toml for UDPFS)."
               # UDPFS Files mode launches with stock -bsd=udpfs, which needs Neutrino's own
@@ -820,6 +830,10 @@ jobs:
           )
           echo "Built rolling/${ZIP}:"
           unzip -l "rolling/${ZIP}"
+          if [ -n "${NEUTRINO_VER:-}" ] && ! unzip -p "rolling/${ZIP}" neutrino/config/bsd-udpfsbd.toml | cmp -s neutrino/bsd-udpfsbd.toml -; then
+            echo "ERROR: final RIPTOPL package is missing or changed neutrino/config/bsd-udpfsbd.toml." >&2
+            exit 1
+          fi
 
       - name: Pack the RIPTOPL RA package zip
         run: |
@@ -906,6 +920,10 @@ jobs:
               )
               echo "Built rolling/${RA_ZIP}:"
               unzip -l "rolling/${RA_ZIP}"
+              if [ -n "${NEUTRINO_VER:-}" ] && ! unzip -p "rolling/${RA_ZIP}" neutrino/config/bsd-udpfsbd.toml | cmp -s neutrino/bsd-udpfsbd.toml -; then
+                echo "ERROR: final RetroAchievements package is missing or changed neutrino/config/bsd-udpfsbd.toml." >&2
+                exit 1
+              fi
             fi
           fi
           # Remove the loose dir either way so the final 'gh release upload rolling/*' stays

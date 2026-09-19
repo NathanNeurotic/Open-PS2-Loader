@@ -3183,10 +3183,9 @@ static void _loadConfig()
         }
     }
 
-    // A UDP transport binds the ministack to the STATIC PS2 IP fields (it has no DHCP client), so IP
-    // Type = DHCP means whatever stale/default address sits there gets used -- discovery then fails
-    // with an empty games page and no error. The Device-Settings dialog warns only at the moment of
-    // switching protocols; surface it as a boot toast too so an already-configured user sees it.
+    // UDP transports bind their ministack to the saved STATIC PS2 IP fields and never consult DHCP.
+    // ps2_ip_use_dhcp is preserved as the user's SMB/HTTP preference, so when that preference is DHCP
+    // surface an informational boot toast reminding them which address UDP will actually use.
     showNetDhcpPopup = (ps2_ip_use_dhcp &&
                         (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
                          gNetworkProtocol == NET_PROTO_UDPBD));
