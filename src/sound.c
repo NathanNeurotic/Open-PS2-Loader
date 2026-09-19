@@ -7,6 +7,7 @@
 #include <audsrv.h>
 #include <timer.h>
 #include <vorbis/vorbisfile.h>
+#include <delaythread.h>
 
 #include "include/sound.h"
 #include "include/opl.h"
@@ -464,10 +465,12 @@ static void bgmAdjustBufferedChunks(int delta)
 {
     DIntr();
     bgmBufferedChunks += delta;
-    if (bgmBufferedChunks < 0)
+    if (bgmBufferedChunks <= 0) {
         bgmBufferedChunks = 0;
-    else if (bgmBufferedChunks > BGM_RING_BUFFER_COUNT)
+        bgmBufferPrimed = 0;
+    } else if (bgmBufferedChunks >= BGM_RING_BUFFER_COUNT) {
         bgmBufferedChunks = BGM_RING_BUFFER_COUNT;
+    }
     if (bgmBufferedChunks >= BGM_IO_RESUME_WATER_CHUNKS)
         bgmBufferPrimed = 1;
     EIntr();
@@ -475,8 +478,11 @@ static void bgmAdjustBufferedChunks(int delta)
 
 int bgmDiscretionaryIoAllowed(void)
 {
-    if (!bgmIsPlaying || !gEnableBGM || !bgmBufferPrimed)
+    if (!bgmIsPlaying || !gEnableBGM)
         return 1;
+
+    if (!bgmBufferPrimed)
+        return 0;
 
     int buffered = bgmBufferedChunks;
     if (bgmIoThrottle) {
@@ -509,6 +515,16 @@ static void bgmThread(void *arg)
         rdPtr = (rdPtr + 1) % BGM_RING_BUFFER_COUNT;
 
         SignalSema(inSema);
+
+        // If the ring buffer completely emptied, yield briefly so the decode thread can rebuild
+        // a small cushion instead of stuttering chunk-by-chunk on the verge of starvation.
+        if (bgmBufferedChunks <= 0 && !terminateFlag && bgmIoThreadRunning) {
+            int cushionWait = 0;
+            while (!terminateFlag && bgmIoThreadRunning && bgmBufferedChunks < 16 && cushionWait < 20) {
+                DelayThread(5 * 1000);
+                cushionWait++;
+            }
+        }
     }
 
     audsrv_stop_audio();
@@ -755,7 +771,17 @@ void bgmStart(void)
         bgmIsPlaying = 1;
 
         StartThread(bgmIoThreadID, NULL);
-        StartThread(bgmThreadID, NULL);
+
+        // Pre-buffer before starting playback thread so the ring buffer is primed and audsrv
+        // never suffers from immediate underrun or device contention at startup.
+        int prebufferWait = 0;
+        while (!terminateFlag && bgmBufferedChunks < BGM_IO_LOW_WATER_CHUNKS && prebufferWait < 100) {
+            DelayThread(5 * 1000);
+            prebufferWait++;
+        }
+
+        if (!terminateFlag && bgmIoThreadRunning)
+            StartThread(bgmThreadID, NULL);
     }
 }
 
@@ -780,6 +806,7 @@ void bgmQuiesce(void)
     terminateFlag = 1;
     SignalSema(inSema);
     SignalSema(outSema);
+    WakeupThread(bgmThreadID);
 }
 
 void bgmStop(void)
@@ -796,6 +823,7 @@ void bgmStop(void)
     terminateFlag = 1;
     SignalSema(inSema);
     SignalSema(outSema);
+    WakeupThread(bgmThreadID);
 
     threadId = GetThreadId();
     int waits = BGM_STOP_WAIT_SLICES;

@@ -314,6 +314,10 @@ void guiEndFrame(void)
     curtime = clock();
 #endif
     guiUnlock();
+
+    // Rotate priority 31 ready queue so peer threads (such as BGM I/O decode) get timeslices
+    // even during continuous frames or animations.
+    RotateThreadReadyQueue(31);
 }
 
 void guiShowAbout()
