@@ -93,6 +93,15 @@ struct EECoreConfig_t
        so ee_core resolves them each frame. Same story, same copy. */
     const void *raNodeList;
     int raNodeCount;
+    /* Where the snapshot buffer and the watch list copy live (RA_EE_WORK_BYTES,
+       64-byte aligned), or NULL when there is nothing to watch. It is carved
+       out of module storage by the launcher instead of sitting in ee_core's
+       .bss: ee_core's stack is whatever ram84 leaves above .bss (see
+       ee_core/linkfile), and these 8 KB left it under 2 KB -- the first IOP
+       reset then ran the stack into libkernel's SIF data and hung, on every
+       device. Module storage is kept for the whole game: the kernel wipes
+       user memory only from ModuleStorageEnd up. */
+    void *raWorkArea;
 #endif
 };
 

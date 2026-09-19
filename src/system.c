@@ -47,6 +47,7 @@
 #include "include/xparam.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rawatch.h"
+#include "modules/network/common/ra_snap.h"
 #endif
 
 #ifdef PADEMU
@@ -1816,6 +1817,18 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     LOG("SYSTEM LaunchLoaderElf loading modules\n");
     ModuleStorageSize = (sendIrxKernelRAM(filename, mode_str, modules, ModuleStorage, size_cdvdman_irx, cdvdman_irx, size_mcemu_irx, mcemu_irx) + 0x3F) & ~0x3F;
 
+#ifdef RETROACHIEVEMENTS
+    /* ee_core's RetroAchievements buffers live at the end of module storage,
+       not in its .bss -- see EECoreConfig_t.raWorkArea. ModuleStorageSize is
+       64-byte aligned, so the area is too. Same gate as the network modules:
+       an untracked game reserves nothing. */
+    void *raWorkArea = NULL;
+    if (gRATelemetry && GetWatchCount() > 0) {
+        raWorkArea = (u8 *)ModuleStorage + ModuleStorageSize;
+        ModuleStorageSize += (RA_EE_WORK_BYTES + 0x3F) & ~0x3F;
+    }
+#endif
+
     ModuleStorageEnd = (void *)((u8 *)ModuleStorage + ModuleStorageSize);
 
     // NB: LOADER.ELF is embedded
@@ -1894,6 +1907,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     config->raSnapBytes = GetWatchBytes();
     config->raNodeList = GetNodeList();
     config->raNodeCount = GetNodeCount();
+    config->raWorkArea = raWorkArea;
 
     // The last point where the list is still ours: from here it goes into ee_core
     // with no feedback. A zero shows up in the launch log directly, rather than as
