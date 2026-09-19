@@ -39,7 +39,7 @@ struct gui_update_t
             int text_id;
             int selected;
             int autoStart; // selected from the persisted Last Played setting, not cursor restoration
-            int isFolder; // folder-browse row marker (checklist item 34)
+            int isFolder;  // folder-browse row marker (checklist item 34)
 #ifdef RETROACHIEVEMENTS
             int raBadged; // RA watch list present -- resolved on the I/O thread, see submenu_item_t
 #endif
