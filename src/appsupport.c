@@ -991,7 +991,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
     fd = open(filename, O_RDONLY);
     if (fd >= 0) {
         int mode;
-        char partition[128];
+        char partition[sizeof(gOPLPart) + 1];
         char altStartup[256];
         char normFilename[256];
         char *target_argv[2];
@@ -1101,6 +1101,24 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             }
             LoadELFFromFileWithPartition(filename, partition, pops_argc, pops_argv);
         } else {
+            // Match the SDK Apps contract: load through the live PFS mount, but give
+            // the app its partition-qualified path so it can remount after an IOP reset.
+            char appArgv0[sizeof(partition) + sizeof(normFilename)];
+            snprintf(appArgv0, sizeof(appArgv0), "%s%s", partition, normFilename);
+            target_argv[0] = appArgv0;
+
+            // sysLoadELF sends the load path and full target argv through one 256-byte
+            // kernel pool. Refuse oversized arguments while the GUI is still alive.
+            size_t argBytes = strlen(normFilename) + 1 + strlen(appArgv0) + 1;
+            if (target_argc > 1)
+                argBytes += strlen(altStartup) + 1;
+            if (rebootIop)
+                argBytes += sizeof("-reset-iop");
+            if (argBytes > 256) {
+                guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+                return;
+            }
+
             // wLaunchELF_R3Z parity for app launches:
             // Do not unmount filesystems, shut down block devices, or power down DEV9.
             // On keep-IOP launches, also preserve IOP PFS descriptors (KEEPIOP_EXCEPTION)
