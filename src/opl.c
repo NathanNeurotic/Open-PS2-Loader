@@ -2640,6 +2640,13 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
                 gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         }
     }
+    // The device-specific picker entries were removed because their launch behaviour is volatile.
+    // Preserve the stable Auto/Memory Card/Game Device choices, but do not let an older saved
+    // USB/MX4SIO/MMCE/HDD/iLink value silently keep selecting a retired path.
+    if (gNeutrinoDevice != NEUTRINO_DEV_AUTO &&
+        gNeutrinoDevice != NEUTRINO_DEV_MC &&
+        gNeutrinoDevice != NEUTRINO_DEV_GAME)
+        gNeutrinoDevice = NEUTRINO_DEV_AUTO;
 }
 
 static void resolveBootDirToMass(void)
