@@ -1334,3 +1334,5 @@ gui_strings:
   string: Could not read POPSTARTER's settings -- the memory card is busy or unreadable. Try again once loading finishes.
 - label: GLOBAL_PS_EMULATION_SETTINGS
   string: Global PS Emulation Settings
+- label: RA_NO_LINK_UNTRACKED
+  string: Network unavailable -- launching without RetroAchievements this time.
