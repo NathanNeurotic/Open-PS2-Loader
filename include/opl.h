@@ -162,15 +162,17 @@ extern int smbCacheSize;
 extern int gApplyGameID; // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gEnableUSB;
 // Neutrino Device picker: a driver-accurate device TYPE that holds <root>:/neutrino/neutrino.elf.
-enum { NEUTRINO_DEV_AUTO = 0,  // game device, then mc0/mc1 (legacy behaviour)
-       NEUTRINO_DEV_MC,        // mc0: / mc1:
-       NEUTRINO_DEV_USB,       // BDM "usb"        -> the mounted massN:
-       NEUTRINO_DEV_MX4SIO,    // BDM "mx4sio"/sdc -> the mounted massN:
-       NEUTRINO_DEV_MMCE,      // mmce0: / mmce1: (checklist item 1)
-       NEUTRINO_DEV_EXFAT_HDD, // BDM "ata" internal exFAT HDD -> the mounted massN:
-       NEUTRINO_DEV_APA_HDD,   // APA HDD: the mounted OPL data partition (pfs0:)
+enum { NEUTRINO_DEV_AUTO = 0, // game device, then mc0/mc1 (legacy behaviour)
+       NEUTRINO_DEV_MC,       // mc0: / mc1:
+       // The following values are retained so old settings keep their numeric meaning while they
+       // are migrated to Auto at load time. They are intentionally no longer exposed by the UI.
+       NEUTRINO_DEV_USB,       // legacy: BDM "usb"        -> the mounted massN:
+       NEUTRINO_DEV_MX4SIO,    // legacy: BDM "mx4sio"/sdc -> the mounted massN:
+       NEUTRINO_DEV_MMCE,      // legacy: mmce0: / mmce1:
+       NEUTRINO_DEV_EXFAT_HDD, // legacy: BDM "ata" internal exFAT HDD -> the mounted massN:
+       NEUTRINO_DEV_APA_HDD,   // legacy: APA HDD: the mounted OPL data partition (pfs0:)
        NEUTRINO_DEV_GAME,      // the active game's OWN device ONLY; retains its historical saved value
-       NEUTRINO_DEV_ILINK };   // BDM "ilink" -> the mounted massN:; appended to keep saved ints stable
+       NEUTRINO_DEV_ILINK };   // legacy: BDM "ilink" -> the mounted massN:
 extern int gNeutrinoDevice;
 extern int gDefaultCoreLoader;
 extern int gNeutrinoVideoDefault;

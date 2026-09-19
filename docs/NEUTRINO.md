@@ -51,14 +51,16 @@ If no complete install is found when you launch a game set to the Neutrino core,
 warning and falls back to the `<OPL>` core for that launch.
 
 **Game Launching → Neutrino Device** picks the device *type* holding
-`<root>:/neutrino/neutrino.elf` — **Auto** / Memory Card / USB / MX4SIO / MMCE / HDD (exFAT) /
-HDD (APA) / **Game's Device** / iLink. A miss on the device you picked is not a dead end: OPL falls
-through to the AUTO tiers above. The exception is **Game's Device**, which only ever looks on
-the game's own device and reports "not found" instead of falling back.
+`<root>:/neutrino/neutrino.elf` — **Auto**, **Memory Card**, or **Game's Device**. Auto searches
+the working locations in the priority table above. Memory Card tries `mc0:` and `mc1:` first before
+using the normal fallback tiers, while Game's Device restricts it to the active game's own device
+and reports "not found" instead of falling back.
 
-**HDD (APA)** is the one entry that is not a plain device root, because a raw APA partition cannot be
-opened directly — only a mounted one can. OPL therefore uses the **OPL data partition it has already
-mounted**, which is the same partition NHDDL resolves for its own
+There are no separate USB, MX4SIO, MMCE, exFAT HDD, APA HDD, or iLink entries. Those device-specific
+launch paths are intentionally not exposed by the picker because their Neutrino handoffs are not
+reliable across setups. If Neutrino is installed on an APA HDD data home, **Auto** can still discover
+it through the normal fallback tier below. OPL uses the **OPL data partition it has already mounted**,
+which is the same partition NHDDL resolves for its own
 `hdd0:/<OPL partition>/neutrino/neutrino.elf` rule (`hdd0:__common/OPL/conf_hdd.cfg`, else `+OPL`,
 else `__common/OPL`). In practice that means both of these work, with no extra setting to fill in:
 
@@ -274,10 +276,13 @@ effect** (OPL shows the usual restart-to-apply notice).
   usual OPL folders (`CD`, `DVD`,
   `ART`, `CFG`, …); **Files** mode's served *directory* needs the same `CD/` + `DVD/` subfolders —
   OPL never lists ISOs sitting loose at the served root.
-- A **static** PS2 IP. UDPFS has no DHCP client — it reuses the address from **Settings →
-  Network**, so set a static IP there. OPL warns if DHCP is on when you select UDPFS, and repeats the
-  warning as a boot notice while a UDPFS protocol is active with DHCP still on. SMB's server / port /
-  share / credentials fields hide automatically when UDPFS is selected.
+- A **static** PS2 IP. UDPFS/UDPBD have no DHCP client — they use the static address fields from
+  **Settings → Network**. When either UDP protocol is selected, RiptOPL locks **IP Address Type** to
+  **Static** and enables those address fields. The user's DHCP choice is preserved as the SMB/HTTP
+  preference and is restored when switching back, so testing UDP does not silently rewrite normal
+  network behavior. If DHCP is that preserved preference, the boot notice reminds you that UDP is
+  using the saved static address. SMB's server / port / share / credentials fields hide automatically
+  when UDPFS is selected.
 - You can start the server **after** the console: the UDPFS drivers keep re-discovering in the
   background (both Files and Image), so the games page appears when the server comes up — no reboot.
 - UDPFS is Neutrino-only (no `<OPL>` core fallback); if `neutrino.elf` is missing, OPL warns and

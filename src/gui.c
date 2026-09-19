@@ -438,8 +438,8 @@ static void guiShowNotifications(void)
             y += yadd;
         }
 
-        // One-time network notice set at config load: a UDP transport left on DHCP (the ministack has
-        // no DHCP client; it binds the static PS2 IP fields as-is, so an unset static IP fails silently).
+        // One-time network notice set at config load: UDP transports always use the saved static PS2
+        // IP fields. If DHCP is the preserved SMB/HTTP preference, remind the user which address UDP uses.
         if (showNetDhcpPopup) {
             guiRenderNotifications(_l(_STR_UDPBD_NEEDS_STATIC_IP), y);
             y += yadd;
@@ -1164,6 +1164,12 @@ static int httpTestBusy;
 static int httpTestIp[4], httpTestPort;
 static char httpTestBase[HTTP_BASE_PATH_MAX], httpTestMessage[128];
 
+// UDPFS/UDPBD use a ministack with no DHCP client, but SMB/HTTP can still use DHCP.
+// Keep the user's full-stack preference separate from the transport-effective UI value so
+// selecting a UDP protocol can force Static without permanently clobbering that preference.
+static int netConfigDhcpPreference;
+static int netConfigLastProtocol = -1;
+
 static void httpTestWorker(void)
 {
     httpTestServer(httpTestIp, httpTestPort, httpTestBase, httpTestMessage, sizeof(httpTestMessage));
@@ -1172,7 +1178,7 @@ static void httpTestWorker(void)
 
 static int netConfigUpdater(int modified)
 {
-    int showAdvancedOptions, isNetBIOS, isDHCPEnabled, netProto, isSMB, isHTTP, i;
+    int showAdvancedOptions, isNetBIOS, isDHCPEnabled, netProto, isSMB, isHTTP, isUdp, i;
 
     if (modified) {
         diaGetInt(diaNetConfig, NETCFG_SHOW_ADVANCED_OPTS, &showAdvancedOptions);
@@ -1182,6 +1188,29 @@ static int netConfigUpdater(int modified)
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProto);
         isSMB = netProto == 0;
         isHTTP = netProto == 3;
+        isUdp = netProto == 1 || netProto == 2;
+
+        // UDPFS/UDPBD always bind the configured static PS2 IP; their ministack has no DHCP client.
+        // Force the effective row to Static while either protocol is selected, but remember the
+        // user's DHCP choice so switching back to SMB/HTTP restores it instead of silently changing
+        // their normal network preference.
+        if (isUdp) {
+            if (netConfigLastProtocol != 1 && netConfigLastProtocol != 2)
+                netConfigDhcpPreference = isDHCPEnabled;
+            diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, 0);
+            diaSetEnabled(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, 0);
+            isDHCPEnabled = 0;
+        } else {
+            if (netConfigLastProtocol == 1 || netConfigLastProtocol == 2) {
+                diaSetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, netConfigDhcpPreference);
+                isDHCPEnabled = netConfigDhcpPreference;
+            } else {
+                netConfigDhcpPreference = isDHCPEnabled;
+            }
+            diaSetEnabled(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, 1);
+        }
+        netConfigLastProtocol = netProto;
+
         diaSetVisible(diaNetConfig, NETCFG_SHARE_NB_ADDR, isNetBIOS);
 
         // SMB server fields belong to OPL's SMB consumer. UDPFS/UDPBD are the Neutrino-facing
@@ -1334,6 +1363,8 @@ int guiShowNetConfig(void)
     // netConfigUpdater, so without this the first frame flashes every row enabled.
     diaSetEnabled(diaNetConfig, CFG_UDPFSMODE, netProtoVal == 1);
     diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, 0); // NOTE(rebuild): greyed until item 4
+    netConfigDhcpPreference = ps2_ip_use_dhcp;
+    netConfigLastProtocol = -1;
     netConfigUpdater(1);
 
     // Update the spacer item between the OK and reconnect buttons (See dialogs.c).
@@ -1371,8 +1402,19 @@ reshow_network:
         goto reshow_network;
     }
     if (result) {
+        int netProtoVal2, netAccessVal2;
+        diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
+        diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
+
+        // Under UDPFS/UDPBD the visible row is transport-effectively Static, but ps2_ip_use_dhcp
+        // remains the user's SMB/HTTP preference. The UDP stacks never consult it; they always use
+        // ps2_ip[] directly. This lets a DHCP user test UDP and return to SMB without losing DHCP.
+        if (netProtoVal2 == 1 || netProtoVal2 == 2)
+            ps2_ip_use_dhcp = netConfigDhcpPreference;
+        else
+            diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &ps2_ip_use_dhcp);
+
         // Store values
-        diaGetInt(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, &ps2_ip_use_dhcp);
         diaGetInt(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, &gPCShareAddressIsNetBIOS);
         diaGetString(diaNetConfig, NETCFG_SHARE_NB_ADDR, gPCShareNBAddress, sizeof(gPCShareNBAddress));
 
@@ -1406,9 +1448,6 @@ reshow_network:
         // shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) downstream consumers read.
         // NOTE(rebuild): the fork also reads the SMB dialect row back here (item 4).
         int netProtocolWas = gNetworkProtocol;
-        int netProtoVal2, netAccessVal2;
-        diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
-        diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
         if (gNetStartMode == START_MODE_DISABLED)
             gNetworkProtocol = NET_PROTO_OFF;
         else
@@ -1423,9 +1462,8 @@ reshow_network:
         // every non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
         gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
 
-        // The UDP transports' ministack has no DHCP client; with DHCP on, ps2_ip[] is never refreshed, so
-        // they need a static PS2 IP. Warn when switching TO a UDP protocol (UDPFS/UDPFSBD/UDPBD) from a
-        // non-UDP one while DHCP is on. SMB is exempt (it runs the full ETH stack that acquires a lease).
+        // UDP transports always use the saved static PS2 IP fields. If the user's preserved
+        // SMB/HTTP preference is DHCP, explain that the UDP transport is using Static by design.
         int nowUdp = (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD);
         int wasUdp = (netProtocolWas == NET_PROTO_UDPFS || netProtocolWas == NET_PROTO_UDPFSBD || netProtocolWas == NET_PROTO_UDPBD);
         if (nowUdp && !wasUdp && ps2_ip_use_dhcp)
@@ -1991,16 +2029,34 @@ static int guiNeutrinoDefaultsUpdater(int modified)
     return 0;
 }
 
+// The Neutrino device enum predates the reduced picker and its values are persisted in the global
+// config. Keep the old internal values stable, but expose only the three supported choices in the
+// UI and translate between the compact UI index and the persisted device type.
+static int guiNeutrinoDeviceToIndex(int device)
+{
+    if (device == NEUTRINO_DEV_MC)
+        return 1;
+    if (device == NEUTRINO_DEV_GAME)
+        return 2;
+    return 0; // Auto, including a legacy retired value loaded from an older config.
+}
+
+static int guiNeutrinoDeviceFromIndex(int index)
+{
+    if (index == 1)
+        return NEUTRINO_DEV_MC;
+    if (index == 2)
+        return NEUTRINO_DEV_GAME;
+    return NEUTRINO_DEV_AUTO;
+}
+
 // Game Launching -> Neutrino Defaults: the global Neutrino device/video/gsm-comp defaults + the
 // structured Advanced Arguments editor.
 void guiShowNeutrinoDefaults(void)
 {
-    // Neutrino lives at <root>:/neutrino/neutrino.elf on ANY device -- offer the common roots.
-    // MUST stay in sync with the NEUTRINO_DEV_* switch in sbResolveNeutrinoPath() (supportbase.c),
-    // where HDD (APA) resolves to the mounted OPL data partition rather than to a bare device root.
-    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", _l(_STR_GAMES_DEVICE), "iLink", NULL}; // device TYPE holding /neutrino/neutrino.elf (NEUTRINO_DEV_*); iLink is appended after Game's Device to preserve every saved value
+    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", _l(_STR_GAMES_DEVICE), NULL};
     diaSetEnum(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
-    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);
+    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, guiNeutrinoDeviceToIndex(gNeutrinoDevice));
     // Global default Neutrino Video (-gsm) + comp half: same indices as the per-game picker
     // (system.c gsmVideoTokens). static: literals only, and diaSetEnum stores the raw pointer.
     static const char *neutrinoVideoDefStrs[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
@@ -2020,7 +2076,9 @@ reshow_neutrino:
         goto reshow_neutrino;
     }
     if (ret) {
-        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, &gNeutrinoDevice);
+        int neutrinoDeviceIndex;
+        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, &neutrinoDeviceIndex);
+        gNeutrinoDevice = guiNeutrinoDeviceFromIndex(neutrinoDeviceIndex);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
 
@@ -2899,7 +2957,7 @@ static int guiSettingsShowLaunch(void)
     const struct UIItem *parts[] = {diaLaunchConfig, diaNeutrinoDefaults};
     const int skipIDs[] = {LAUNCH_NEUTRINO_DEFAULTS_BUTTON};
     const char *defaultCoreStrs[] = {"<OPL>", "Neutrino", NULL};
-    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", _l(_STR_GAMES_DEVICE), "iLink", NULL};
+    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", _l(_STR_GAMES_DEVICE), NULL};
     static const char *neutrinoVideoDefStrs[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
     static const char *neutrinoGsmCompDefStrs[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
@@ -2912,7 +2970,7 @@ static int guiSettingsShowLaunch(void)
     diaSetInt(ui, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     diaSetInt(ui, CFG_PS2LOGO, gPS2Logo);
     diaSetEnum(ui, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
-    diaSetInt(ui, CFG_NEUTRINO_DEVICE, gNeutrinoDevice);
+    diaSetInt(ui, CFG_NEUTRINO_DEVICE, guiNeutrinoDeviceToIndex(gNeutrinoDevice));
     diaSetEnum(ui, CFG_NEUTRINO_VIDEO, neutrinoVideoDefStrs);
     diaSetInt(ui, CFG_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
     diaSetEnum(ui, CFG_NEUTRINO_GSMCOMP, neutrinoGsmCompDefStrs);
@@ -2939,7 +2997,11 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
-        diaGetInt(ui, CFG_NEUTRINO_DEVICE, &gNeutrinoDevice);
+        {
+            int neutrinoDeviceIndex;
+            diaGetInt(ui, CFG_NEUTRINO_DEVICE, &neutrinoDeviceIndex);
+            gNeutrinoDevice = guiNeutrinoDeviceFromIndex(neutrinoDeviceIndex);
+        }
         diaGetInt(ui, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(ui, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
         applyConfig(-1, -1, 0);
@@ -3334,13 +3396,13 @@ static void guiHandleOp(struct gui_update_t *item)
                     item->menu.menu->pagestart = result;
                 }
             }
-            if (item->submenu.selected) { // remember last played game feature
+            if (item->submenu.selected) { // restore cursor or select the remembered last-played game
                 item->menu.menu->current = result;
                 item->menu.menu->pagestart = result;
                 item->menu.menu->remindLast = 1;
 
                 // Last Played Auto Start
-                if ((gAutoStartLastPlayed) && !(KeyPressedOnce))
+                if (item->submenu.autoStart && gRememberLastPlayed && gAutoStartLastPlayed && !(KeyPressedOnce))
                     DisableCron = 0; // Release Auto Start Last Played counter
             }
 
@@ -3977,7 +4039,7 @@ static void guiDrawOverlays()
 #endif
 
     // Last Played Auto Start
-    if (!pending && DisableCron == 0 && endIntro) {
+    if (!pending && gRememberLastPlayed && gAutoStartLastPlayed && DisableCron == 0 && endIntro) {
         if (CronStart == 0) {
             CronStart = clock() / CLOCKS_PER_SEC;
         } else {

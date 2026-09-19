@@ -71,15 +71,18 @@ static void wipeBramMem(void)
     }
 }
 
-int sysLoadELF(const char *filename, const char *partition, int argc, char *argv[], int resetIop)
+static int sysLoadELFCommon(const char *filename, const char *partition, int argc, char *argv[], int resetIop, int cleanupHdd)
 {
     elfldr_header_t *eh;
     elfldr_pheader_t *eph;
     void *pdata;
     int i, fd;
-    int extra_args = resetIop ? 1 : 0;
+    const char *loaderArg = cleanupHdd ? (resetIop ? "-la=RH" : "-la=H") : (resetIop ? "-reset-iop" : NULL);
+    int extra_args = loaderArg != NULL ? 1 : 0;
 
-    (void)partition; // callers pass "" -- no APA-partition context needed on this path
+    // The child loads through filename's live mount. Any portable APA path is already present in
+    // the caller-controlled target argv[0]; partition is retained for API compatibility.
+    (void)partition;
 
     // argv here is the target's FULL argv -- argv[0] INCLUDED and caller-controlled (Neutrino:
     // its own path; POPSTARTER: the XX./SB. selector it string-parses; Apps: bootpath). At least argv[0] must
@@ -101,8 +104,8 @@ int sysLoadELF(const char *filename, const char *partition, int argc, char *argv
     {
         int pool = (int)strlen(filename) + 1;
         int j;
-        if (resetIop)
-            pool += (int)strlen("-reset-iop") + 1;
+        if (loaderArg != NULL)
+            pool += (int)strlen(loaderArg) + 1;
         for (j = 0; j < argc; j++) {
             if (argv[j] == NULL)
                 return -1; // a NULL mid-argv would crash SetArg's copy inside ExecPS2 -- refuse here
@@ -121,8 +124,8 @@ int sysLoadELF(const char *filename, const char *partition, int argc, char *argv
     new_argv[0] = (char *)filename;
     for (i = 0; i < argc; i++)
         new_argv[i + 1] = argv[i];
-    if (resetIop)
-        new_argv[argc + 1] = "-reset-iop";
+    if (loaderArg != NULL)
+        new_argv[argc + 1] = (char *)loaderArg;
 
     wipeBramMem();
 
@@ -147,6 +150,16 @@ int sysLoadELF(const char *filename, const char *partition, int argc, char *argv
     FlushCache(2);
 
     return ExecPS2((void *)eh->entry, NULL, argc + 1 + extra_args, new_argv);
+}
+
+int sysLoadELF(const char *filename, const char *partition, int argc, char *argv[], int resetIop)
+{
+    return sysLoadELFCommon(filename, partition, argc, argv, resetIop, 0);
+}
+
+int sysLoadELFApp(const char *filename, const char *partition, int argc, char *argv[], int resetIop, int cleanupHdd)
+{
+    return sysLoadELFCommon(filename, partition, argc, argv, resetIop, cleanupHdd);
 }
 
 int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, char *argv[])
