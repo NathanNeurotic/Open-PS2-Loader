@@ -249,17 +249,57 @@ static int HttpGetResponse(s32 socket, s8 *mode, char *buffer, u16 *length)
     return result;
 }
 
+static int ParseIPv4(const char *s, struct in_addr *ip)
+{
+    int i, val;
+    unsigned char octets[4];
+
+    if (s == NULL || ip == NULL)
+        return 0;
+
+    for (i = 0; i < 4; i++) {
+        if (*s < '0' || *s > '9')
+            return 0;
+        val = 0;
+        while (*s >= '0' && *s <= '9') {
+            val = val * 10 + (*s - '0');
+            if (val > 255)
+                return 0;
+            s++;
+        }
+        octets[i] = (unsigned char)val;
+        if (i < 3) {
+            if (*s != '.')
+                return 0;
+            s++;
+        }
+    }
+    if (*s != '\0')
+        return 0;
+
+    ip->s_addr = (u32)octets[0] | ((u32)octets[1] << 8) | ((u32)octets[2] << 16) | ((u32)octets[3] << 24);
+    return 1;
+}
+
 static int ResolveHostname(char *hostname, struct in_addr *ip)
 {
     struct hostent *HostEntry;
     struct in_addr **addr_list;
 
+    if (hostname == NULL || ip == NULL)
+        return 1;
+
+    if (ParseIPv4(hostname, ip))
+        return 0;
+
     if ((HostEntry = gethostbyname(hostname)) == NULL)
         return 1;
 
-    for (addr_list = (struct in_addr **)HostEntry->h_addr_list; addr_list != NULL; addr_list++) {
-        ip->s_addr = (*addr_list)->s_addr;
-        return 0;
+    if (HostEntry->h_addr_list != NULL) {
+        for (addr_list = (struct in_addr **)HostEntry->h_addr_list; *addr_list != NULL; addr_list++) {
+            ip->s_addr = (*addr_list)->s_addr;
+            return 0;
+        }
     }
 
     return 1;

@@ -83,11 +83,15 @@ void DeviceInit(void)
     httpSema = CreateSema(&sema);
 }
 
-void DeviceFSInit(void)
+static int httpEnsureReady(void)
 {
     modinfo_t info;
-    if (httpSema < 0 || !getModInfo("ps2ip\0\0\0", &info))
-        return;
+    if (httpReady)
+        return 1;
+    if (httpSema < 0)
+        return 0;
+    if (!getModInfo("ps2ip\0\0\0", &info))
+        return 0;
     httpClose = info.exports[6];
     httpConnect = info.exports[7];
     httpRecv = info.exports[9];
@@ -95,6 +99,16 @@ void DeviceFSInit(void)
     httpSocket = info.exports[13];
     httpInetAddr = info.exports[24];
     httpReady = 1;
+    return 1;
+}
+
+void DeviceFSInit(void)
+{
+    int i;
+    // ps2ip is loaded concurrently by ee_core; give it a bounded window to appear
+    for (i = 0; i < 50 && !httpEnsureReady(); i++) {
+        DelayThread(10000); // 10ms * 50 = up to 500ms
+    }
 }
 
 int DeviceReady(void) { return SCECdComplete; }
@@ -119,8 +133,8 @@ int DeviceReadSectors(u64 lsn, void *buffer, unsigned int sectors)
     if (!sectors)
         return SCECdErNO;
     expected = ((u64)cdvdman_settings.size_hi << 32) | cdvdman_settings.size_lo;
-    if (!httpReady || httpStopped || lsn > (expected >> 11) || sectors > (expected >> 11) - lsn ||
-        sectors > 0x7fffffffU / 2048)
+    if ((!httpReady && !httpEnsureReady()) || httpStopped || lsn > (expected >> 11) ||
+        sectors > (expected >> 11) - lsn || sectors > 0x7fffffffU / 2048)
         return SCECdErREAD;
     first = lsn << 11;
     last = first + ((u64)sectors << 11) - 1;
