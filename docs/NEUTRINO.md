@@ -282,7 +282,7 @@ effect** (OPL shows the usual restart-to-apply notice).
   preference and is restored when switching back, so testing UDP does not silently rewrite normal
   network behavior. If DHCP is that preserved preference, the boot notice reminds you that UDP is
   using the saved static address. SMB's server / port / share / credentials fields hide automatically
-  when UDPFS is selected.
+  when either UDP protocol is selected.
 - You can start the server **after** the console: the UDPFS drivers keep re-discovering in the
   background (both Files and Image), so the games page appears when the server comes up — no reboot.
 - UDPFS is Neutrino-only (no `<OPL>` core fallback); if `neutrino.elf` is missing, OPL warns and
