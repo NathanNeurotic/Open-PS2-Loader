@@ -2889,6 +2889,8 @@ static void _loadConfig()
             sanitizePrefix(gETHPrefix);
             configGetInt(configOPL, CONFIG_OPL_REMEMBER_LAST, &gRememberLastPlayed);
             configGetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, &gAutoStartLastPlayed);
+            if (gAutoStartLastPlayed < 0)
+                gAutoStartLastPlayed = 0;
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
             configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode);
             // resolveBootDirToMass runs before this read. A stored Disabled value must not undo
