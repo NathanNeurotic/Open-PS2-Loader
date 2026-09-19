@@ -154,9 +154,9 @@ A launch with a watch list and telemetry on brings the menu's network up first w
 already, so it takes a moment longer. That is not optional: the in-game DEV9 driver does not power
 the network adapter on, it expects the menu to have done it, and without it no packet leaves the
 console. It is also how the console learns its address when it uses DHCP. If the network cannot
-come up -- no cable, no adapter, no DHCP lease -- the game launches without achievements and a
-notice says so; with the adapter powered and no link, the in-game network driver would otherwise
-wait for a cable for ever and the game would never start.
+come up -- no cable, no adapter, no usable IP address or DHCP lease -- the game launches without
+achievements and the menu shows a notice. With the adapter powered and no link, the in-game
+network driver would otherwise wait for a cable for ever and the game would never start.
 
 The PC client is found automatically: the console broadcasts a query on UDP port 18194 and the client
 answers. Nothing is stored between runs.

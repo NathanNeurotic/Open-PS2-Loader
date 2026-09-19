@@ -491,7 +491,8 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
    address, DHCP included, which sysLaunchLoaderElf reads next (netGetConfig only knows it once
    the stack has run). Called by sbLoadWatchList once a launch has a list; a no-op otherwise.
 
-   Without a link -- no cable, no adapter, no DHCP lease -- the launch goes ahead untracked instead.
+   Without a usable network -- no cable, no adapter, no address or DHCP lease -- the launch goes
+   ahead untracked instead.
    Once the adapter is powered, the in-game SMAP retries auto-negotiation with no limit while it
    loads (InitPHY, modules/network/smap-ingame/smap.c), so a game launched with the network modules
    and no cable would never start. Dropping the list keeps those modules out of the launch, exactly
@@ -499,6 +500,7 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
 void raLaunchNetworkUp(void)
 {
     int sock, linkUp;
+    u8 ip[4], mask[4], gateway[4];
 
     if (!gRATelemetry || GetWatchCount() <= 0)
         return;
@@ -509,14 +511,23 @@ void raLaunchNetworkUp(void)
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock >= 0) {
-        /* Already up (a share, or an earlier check), but the cable may have come out since. */
+        /* A resident stack can still have no link after a cable pull. */
         disconnect(sock);
         linkUp = NetManIoctl(NETMAN_NETIF_IOCTL_GET_LINK_STATUS, NULL, 0, NULL, 0) == NETMAN_NETIF_ETH_LINK_STATE_UP;
     } else
         linkUp = ethLoadInitModules() == 0;
 
+    /* A socket and physical link do not mean DHCP succeeded. A failed menu-side
+       attempt leaves PS2IP resident, so socket() can work while the console has
+       no address. Keep the watch list only if the address handed to the in-game
+       stack is usable; a pending DHCP lease is not ready either. */
+    if (linkUp)
+        linkUp = ethGetNetConfig(ip, mask, gateway) >= 0 &&
+                 (ip[0] | ip[1] | ip[2] | ip[3]) != 0 &&
+                 (!ps2_ip_use_dhcp || ethGetDHCPStatus() > 0);
+
     if (!linkUp) {
-        LOG("RA: no network link, launching without telemetry\n");
+        LOG("RA: network unavailable, launching without telemetry\n");
         ClearWatchList();
         guiWarning(_l(_STR_RA_NO_LINK_UNTRACKED), 6);
     }

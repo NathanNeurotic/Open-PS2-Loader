@@ -1335,4 +1335,4 @@ gui_strings:
 - label: GLOBAL_PS_EMULATION_SETTINGS
   string: Global PS Emulation Settings
 - label: RA_NO_LINK_UNTRACKED
-  string: No network link -- launching without RetroAchievements this time.
+  string: Network unavailable -- launching without RetroAchievements this time.
