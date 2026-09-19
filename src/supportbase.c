@@ -1872,6 +1872,8 @@ int sbLoadWatchList(const char *path, const char *file)
 
     if (result < 0)
         LOG("RA: no watch list for %s under %sRA/\n", file, path);
+    else
+        raLaunchNetworkUp(); // the in-game DEV9 driver needs the adapter already up
 
     return result;
 }

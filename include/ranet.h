@@ -21,6 +21,9 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
    refuse with a notice instead. */
 int raNetNicBusy(void);
 
+/* Brings the menu network up for a telemetry launch (see ranet.c). */
+void raLaunchNetworkUp(void);
+
 /* Broadcasts a discovery request and reports the outcome as two lines
    of text for the notice popup. Returns 1 when a PC client answered. */
 int raNetTestLink(char *line1, int sz1, char *line2, int sz2);

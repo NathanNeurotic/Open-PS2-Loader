@@ -81,6 +81,7 @@
 #include "include/bdmsupport.h"   /* bdmIsUDPBDLoaded: the NIC interlock */
 #include "include/udpfssupport.h" /* udpfsGetModulesLoaded: the NIC interlock */
 #include "include/rawatch.h"      /* SetWatchList: list straight into memory */
+#include "include/gui.h"          /* guiWarning: the untracked-launch notice */
 
 #include <ps2ips.h>
 #include <errno.h>
@@ -478,6 +479,47 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
     }
 
     return 0;
+}
+
+/* A telemetry launch needs the network adapter already powered and configured when the game
+   takes over. The in-game DEV9 driver (inside cdvdman, modules/iopcore/cdvdman/dev9.c) does not
+   power the adapter up -- it expects the menu to have done it ("The DEV9 interface and SPEED
+   should be already initialized"). That holds for a share, where the menu network is always up,
+   but not for a USB or MMCE launch straight from the list: with no RA check or PC link test first
+   the adapter stays off in the game, SMAP never sends, and nothing reaches the PC. Bringing the
+   network up here is what the link test did by accident. It also settles the console's own
+   address, DHCP included, which sysLaunchLoaderElf reads next (netGetConfig only knows it once
+   the stack has run). Called by sbLoadWatchList once a launch has a list; a no-op otherwise.
+
+   Without a link -- no cable, no adapter, no DHCP lease -- the launch goes ahead untracked instead.
+   Once the adapter is powered, the in-game SMAP retries auto-negotiation with no limit while it
+   loads (InitPHY, modules/network/smap-ingame/smap.c), so a game launched with the network modules
+   and no cable would never start. Dropping the list keeps those modules out of the launch, exactly
+   as for a game with no watch list. */
+void raLaunchNetworkUp(void)
+{
+    int sock, linkUp;
+
+    if (!gRATelemetry || GetWatchCount() <= 0)
+        return;
+
+    /* UDPBD/UDPFS own the NIC and are not telemetry launch paths. */
+    if (raNetNicBusy())
+        return;
+
+    sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock >= 0) {
+        /* Already up (a share, or an earlier check), but the cable may have come out since. */
+        disconnect(sock);
+        linkUp = NetManIoctl(NETMAN_NETIF_IOCTL_GET_LINK_STATUS, NULL, 0, NULL, 0) == NETMAN_NETIF_ETH_LINK_STATE_UP;
+    } else
+        linkUp = ethLoadInitModules() == 0;
+
+    if (!linkUp) {
+        LOG("RA: no network link, launching without telemetry\n");
+        ClearWatchList();
+        guiWarning(_l(_STR_RA_NO_LINK_UNTRACKED), 6);
+    }
 }
 
 /* Link test for the menu: broadcasts every 250 ms for up to three seconds.
