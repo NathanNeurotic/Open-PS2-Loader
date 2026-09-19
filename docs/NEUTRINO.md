@@ -276,10 +276,13 @@ effect** (OPL shows the usual restart-to-apply notice).
   usual OPL folders (`CD`, `DVD`,
   `ART`, `CFG`, …); **Files** mode's served *directory* needs the same `CD/` + `DVD/` subfolders —
   OPL never lists ISOs sitting loose at the served root.
-- A **static** PS2 IP. UDPFS has no DHCP client — it reuses the address from **Settings →
-  Network**, so set a static IP there. OPL warns if DHCP is on when you select UDPFS, and repeats the
-  warning as a boot notice while a UDPFS protocol is active with DHCP still on. SMB's server / port /
-  share / credentials fields hide automatically when UDPFS is selected.
+- A **static** PS2 IP. UDPFS/UDPBD have no DHCP client — they use the static address fields from
+  **Settings → Network**. When either UDP protocol is selected, RiptOPL locks **IP Address Type** to
+  **Static** and enables those address fields. The user's DHCP choice is preserved as the SMB/HTTP
+  preference and is restored when switching back, so testing UDP does not silently rewrite normal
+  network behavior. If DHCP is that preserved preference, the boot notice reminds you that UDP is
+  using the saved static address. SMB's server / port / share / credentials fields hide automatically
+  when either UDP protocol is selected.
 - You can start the server **after** the console: the UDPFS drivers keep re-discovering in the
   background (both Files and Image), so the games page appears when the server comes up — no reboot.
 - UDPFS is Neutrino-only (no `<OPL>` core fallback); if `neutrino.elf` is missing, OPL warns and
