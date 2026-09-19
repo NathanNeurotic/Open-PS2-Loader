@@ -849,10 +849,32 @@ int oplIsBootInProgress(void)
 
 static void initAllSupport(int force_reinit)
 {
+    // THE ORDER OF THESE CALLS IS THE DEVICE TAB ORDER. menuAppendItem links each new page at the
+    // tail of the menu list, so the sequence here is exactly what the user pages through -- and it
+    // now follows the theme's tab-strip artwork left to right: BDM, MMCE, APA, NET, APPS, FAV. The
+    // strip is one 640x128 bitmap per device with that device's tab lit, so any disagreement between
+    // this order and the art shows up as the wrong tab lighting up for the page you are on.
+    //
+    // Favourites stays LAST regardless: it resolves its entries against the other lists' owners, so
+    // every list it can point at must already be initialised by the time it runs.
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_BDM));
     if (gBootInProgress)
         guiRenderGreetingScreen();
     bdmEnumerateDevices();
+    LOG("BOOT scan: bdmEnumerateDevices() done; MMCE initSupport begin\n");
+    // Distinct banner for the MMCE init phase so a frozen boot screen LOCALIZES a scan-hang to this
+    // step. Helps distinguish between the 4-probe presence check against a genuinely empty card slot
+    // on a FAT console and the exact culprit (slow ATA/dev9 probe in bdmEnumerateDevices vs the MMCE
+    // presence poll in mmceman).
+    guiSetBootStatus(_l(_STR_BOOT_SCANNING_MC));
+    if (gBootInProgress)
+        guiRenderGreetingScreen();
+    initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
+    LOG("BOOT scan: MMCE initSupport done\n");
+    guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
+    if (gBootInProgress)
+        guiRenderGreetingScreen();
+    initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_NET));
     if (gBootInProgress)
         guiRenderGreetingScreen();
@@ -863,19 +885,8 @@ static void initAllSupport(int force_reinit)
     // HTTP shares that same NIC and the same one-tab-at-a-time rule: its start-mode gate is live
     // only when gNetworkProtocol == NET_PROTO_HTTP.
     initSupport(httpGetObject(0), HTTP_MODE, force_reinit);
-    guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
-    if (gBootInProgress)
-        guiRenderGreetingScreen();
-    initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
-    LOG("BOOT scan: bdmEnumerateDevices() done; MMCE initSupport begin\n");
-    // Distinct banner for the MMCE init phase so a frozen boot screen LOCALIZES a scan-hang to this
-    // step. Helps distinguish between the 4-probe presence check against a genuinely empty card slot
-    // on a FAT console and the exact culprit (slow ATA/dev9 probe in bdmEnumerateDevices vs the MMCE
-    // presence poll in mmceman).
-    initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
-    LOG("BOOT scan: MMCE initSupport done\n");
 
     // Arm the MMCE GameID transport at boot and on every settings apply -- instead
     // of deferring it to itemLaunchMMCE.
@@ -1266,15 +1277,23 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
 #endif
                 gup->submenu.text_id = -1;
                 gup->submenu.selected = 0;
+                gup->submenu.autoStart = 0;
                 gup->submenu.isFolder = isFolderRow;
 
                 // Neither auto-select targets a folder row (no startup). The remembered cursor
-                // wins over last-played: it is where the user actually was.
+                // wins over last-played: it is where the user actually was. Only the persisted
+                // Last Played match may release the Auto Start countdown; cursor restoration must
+                // never turn a menu rebuild into an automatic launch.
                 if (!isFolderRow) {
                     const char *st = mdl->support->itemGetStartup(mdl->support, i);
-                    if (st != NULL && ((keepStartup[0] && strcmp(keepStartup, st) == 0) ||
-                                       (!keepStartup[0] && gRememberLastPlayed && temp && strcmp(temp, st) == 0)))
-                        gup->submenu.selected = 1;
+                    if (st != NULL) {
+                        if (keepStartup[0] && strcmp(keepStartup, st) == 0) {
+                            gup->submenu.selected = 1;
+                        } else if (!keepStartup[0] && gRememberLastPlayed && temp && strcmp(temp, st) == 0) {
+                            gup->submenu.selected = 1;
+                            gup->submenu.autoStart = 1;
+                        }
+                    }
                 }
 
                 guiDeferUpdate(gup);
@@ -2641,6 +2660,13 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
                 gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         }
     }
+    // The device-specific picker entries were removed because their launch behaviour is volatile.
+    // Preserve the stable Auto/Memory Card/Game Device choices, but do not let an older saved
+    // USB/MX4SIO/MMCE/HDD/iLink value silently keep selecting a retired path.
+    if (gNeutrinoDevice != NEUTRINO_DEV_AUTO &&
+        gNeutrinoDevice != NEUTRINO_DEV_MC &&
+        gNeutrinoDevice != NEUTRINO_DEV_GAME)
+        gNeutrinoDevice = NEUTRINO_DEV_AUTO;
 }
 
 static void resolveBootDirToMass(void)
@@ -4685,7 +4711,16 @@ static void setDefaults(void)
     // resolveBootDirToMass() early-return at its `gBootDir[0] == '\0'` guard every time, and homed
     // every config set on the mc?:OPL default regardless of what OPL actually booted from.
     // setBootDir() already zeroes the buffer at its own entry, so nothing needs a reset here.
-    gEnableBGArt = 1; // fork parity; gEnableArt is 1 above, so this is live
+    // OFF BY DEFAULT -- opt-in. Both built-in themes now draw a per-game background behind the MAIN
+    // list (pattern=BG on main0), and that requests ART/<id>_BG.png for every row the selection
+    // settles on while browsing. drawGameImage holds each request back until the cover has loaded,
+    // but on a slow bus it still competes with the single IO worker -- the same competition that
+    // left "the settings write never started" stalled on a PCSX2 host: boot. So it is the user's
+    // call. getGameImageTextureEx checks this flag before any request is made, so off means no I/O.
+    //
+    // Only a FRESH install sees this: saveConfig writes enable_bgart unconditionally, so anyone who
+    // has ever saved settings keeps the value they already have.
+    gEnableBGArt = 0;
     gEnableArtTar = 0;
     // NO SETTLE BY DEFAULT. This is the number of INACTIVE frames the menu must see before art is
     // even asked for, and it shipped at 8 -- the slowest of the four values the UI offers {0,2,5,8}

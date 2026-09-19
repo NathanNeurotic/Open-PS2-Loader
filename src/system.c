@@ -380,7 +380,7 @@ unsigned int USBA_crc32(const char *string)
                         // below then produces a negative crctab index (OOB read)
 
     for (table = 0; table < 256; table++) {
-        crc = table << 24;
+        crc = (u32)table << 24;
 
         for (count = 8; count > 0; count--) {
             if (crc & 0x80000000)
