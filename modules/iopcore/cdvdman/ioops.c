@@ -393,6 +393,9 @@ static int cdrom_getstat(iop_file_t *f, const char *filename, iox_stat_t *stat)
 //--------------------------------------------------------------
 static int cdrom_dopen(iop_file_t *f, const char *dirname)
 {
+    if (!dirname)
+        return -ENOENT;
+
     DPRINTF("cdrom_dopen %s layer %d\n", dirname, f->unit);
 
     return cdvdman_open(f, dirname, 8);
