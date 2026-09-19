@@ -31,6 +31,7 @@
 */
 
 #include <kernel.h>
+#include <iopcontrol.h>
 #include <loadfile.h>
 #include <ps2sdkapi.h>
 #include <sifrpc.h>
@@ -53,8 +54,31 @@ DISABLE_PATCHED_FUNCTIONS();
 DISABLE_EXTRA_TIMERS_FUNCTIONS();
 PS2_DISABLE_AUTOSTART_PTHREAD();
 
-#define ELF_MAGIC   0x464c457f
-#define ELF_PT_LOAD 1
+#define ELF_MAGIC            0x464c457f
+#define ELF_PT_LOAD          1
+#define ELF_PT_MIPS_REGINFO  0x70000000
+#define ELF_SHT_MIPS_REGINFO 0x70000006
+
+typedef struct
+{
+    u32 ri_gprmask;
+    u32 ri_cprmask[4];
+    s32 ri_gp_value;
+} elf_reginfo_t;
+
+typedef struct
+{
+    u32 name;
+    u32 type;
+    u32 flags;
+    u32 addr;
+    u32 offset;
+    u32 size;
+    u32 link;
+    u32 info;
+    u32 addralign;
+    u32 entsize;
+} elf_sheader_t;
 
 typedef struct
 {
@@ -118,13 +142,15 @@ static int readAll(int fd, void *buf, int size)
 
 // Manual ELF load through the resident fileXio server (iomanX-aware). The program segments load
 // into user memory (>= 0x100000, already wiped) well above this loader's bram home, so reading
-// straight to each vaddr is safe. Returns 0 and sets *entry on success. gp stays 0 at ExecPS2:
-// standard PS2 crt0s load $gp themselves (POPSLoader's embedded loader ships the same way).
-static int loadElfViaFileXio(const char *path, u32 *entry)
+// straight to each vaddr is safe. Returns 0 and sets *entry and *gp on success.
+static int loadElfViaFileXio(const char *path, u32 *entry, u32 *gp)
 {
     elf_header_t eh;
     elf_pheader_t ph;
     int fd, i, loaded = 0;
+
+    *entry = 0;
+    *gp = 0;
 
     if (fileXioInit() < 0)
         return -1;
@@ -149,6 +175,14 @@ static int loadElfViaFileXio(const char *path, u32 *entry)
             fileXioExit();
             return -1;
         }
+        if (ph.type == ELF_PT_MIPS_REGINFO && ph.filesz >= sizeof(elf_reginfo_t)) {
+            elf_reginfo_t reginfo;
+            if (fileXioLseek(fd, ph.offset, SEEK_SET) >= 0 &&
+                readAll(fd, &reginfo, sizeof(reginfo)) == 0) {
+                *gp = (u32)reginfo.ri_gp_value;
+            }
+            continue;
+        }
         if (ph.type != ELF_PT_LOAD || ph.memsz == 0)
             continue;
         // Defensive bounds: a truncated/half-copied ELF (a real hazard on flaky cards) must fail
@@ -172,6 +206,24 @@ static int loadElfViaFileXio(const char *path, u32 *entry)
             memset((u8 *)ph.vaddr + ph.filesz, 0, ph.memsz - ph.filesz);
         loaded++;
     }
+
+    if (*gp == 0 && eh.shoff != 0 && eh.shnum != 0 && eh.shentsize == sizeof(elf_sheader_t)) {
+        for (i = 0; i < eh.shnum; i++) {
+            elf_sheader_t sh;
+            if (fileXioLseek(fd, eh.shoff + i * sizeof(elf_sheader_t), SEEK_SET) < 0 ||
+                readAll(fd, &sh, sizeof(sh)) != 0)
+                break;
+            if (sh.type == ELF_SHT_MIPS_REGINFO && sh.size >= sizeof(elf_reginfo_t)) {
+                elf_reginfo_t reginfo;
+                if (fileXioLseek(fd, sh.offset, SEEK_SET) >= 0 &&
+                    readAll(fd, &reginfo, sizeof(reginfo)) == 0) {
+                    *gp = (u32)reginfo.ri_gp_value;
+                }
+                break;
+            }
+        }
+    }
+
     fileXioClose(fd);
     fileXioExit();
 
@@ -181,17 +233,44 @@ static int loadElfViaFileXio(const char *path, u32 *entry)
     return 0;
 }
 
+static void resetIOP(void)
+{
+    while (!SifIopReset("", 0))
+        ;
+    while (!SifIopSync())
+        ;
+    SifInitRpc(0);
+}
+
 // argv[0] = path of the ELF to LOAD; argv[1..] = the target's FULL argv, forwarded verbatim
 // (argv[1] becomes the target's argv[0]). The caller CONTROLS the target's argv[0]: Neutrino
 // gets its own path (NHDDL convention), POPSTARTER gets the "XX./SB." selector it string-parses
 // to pick its backend -- the stock SDK loader clobbers argv[0] with the load path, which is
 // exactly what sent POPSTARTER down its HDD "__common" route on every non-HDD VCD launch.
 // The ExecPS2 syscall marshals the strings, so wiping user memory is safe.
+//
+// An optional trailing "-reset-iop" (or "-la=AR" wLaunchELF flag) requests a clean SifIopReset()
+// after the target ELF has been loaded into user memory, matching wLaunchELF_R3Z parity.
 int main(int argc, char *argv[])
 {
     static t_ExecData elfdata;
     u32 entry;
     int ret;
+    int reset_iop = 0;
+
+    if (argc < 2)
+        return -EINVAL;
+
+    if (argc > 1) {
+        if (strcmp(argv[argc - 1], "-reset-iop") == 0) {
+            reset_iop = 1;
+            argc--;
+        } else if (!strncmp(argv[argc - 1], "-la=", 4)) {
+            if (strchr(argv[argc - 1] + 4, 'R') != NULL)
+                reset_iop = 1;
+            argc--;
+        }
+    }
 
     if (argc < 2)
         return -EINVAL;
@@ -218,11 +297,15 @@ int main(int argc, char *argv[])
        target, inheriting the live IOP, mounts the game device; the callback DMAs into a stale
        handler in memory the target now owns; the console lands in OSDSYS instead of the game. */
     // Primary: the classic LOADFILE path (see header -- every ioman-visible device stays on it).
-    elfdata.epc = 0;
+    memset(&elfdata, 0, sizeof(elfdata));
     SifLoadFileInit();
     ret = SifLoadElf(argv[0], &elfdata);
+    if (ret != 0 || elfdata.epc == 0)
+        ret = SifLoadElfEncrypted(argv[0], &elfdata);
     SifLoadFileExit();
     if (ret == 0 && elfdata.epc != 0) {
+        if (reset_iop)
+            resetIOP();
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
@@ -230,11 +313,14 @@ int main(int argc, char *argv[])
     }
 
     // Rescue: fileXio (iomanX) for the devices LOADFILE cannot see (mmceN:, pfs, ...).
-    if (loadElfViaFileXio(argv[0], &entry) == 0) {
+    u32 gp = 0;
+    if (loadElfViaFileXio(argv[0], &entry, &gp) == 0) {
+        if (reset_iop)
+            resetIOP();
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
-        return ExecPS2((void *)entry, NULL, argc - 1, &argv[1]);
+        return ExecPS2((void *)entry, (void *)gp, argc - 1, &argv[1]);
     }
 
     SifExitRpc();

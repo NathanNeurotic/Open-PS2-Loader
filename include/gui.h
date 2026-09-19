@@ -114,6 +114,7 @@ struct gui_update_t *guiOpCreate(gui_op_type_t type);
 
 int guiShowKeyboard(char *value, int maxLength);
 int guiMsgBox(const char *text, int addAccept, struct UIItem *ui);
+int guiPromptRebootIop(void);
 
 void guiUpdateScrollSpeed(void);
 void guiUpdateScreenScale(void);

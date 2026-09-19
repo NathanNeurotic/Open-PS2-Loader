@@ -3825,6 +3825,29 @@ int guiDrawIconAndText(int iconId, int textId, int font, int x, int y, u64 color
     return x;
 }
 
+static int guiDrawIconAndLiteralText(int iconId, const char *text, int font, int x, int y, u64 color)
+{
+    GSTEXTURE *iconTex = thmGetTexture(iconId);
+    int w = 0;
+    int h = 20;
+
+    if (iconTex) {
+        w = (iconTex->Width * 20) / iconTex->Height;
+    }
+
+    if (iconTex && iconTex->Mem) {
+        y += h >> 1;
+        rmDrawPixmap(iconTex, x, y, ALIGN_VCENTER, w, h, SCALING_RATIO, gDefaultCol, 0);
+        x += rmWideScale(w) + 2;
+    } else {
+        y += 10;
+    }
+
+    x = fntRenderString(font, x, y, ALIGN_VCENTER, 0, 0, text, color);
+
+    return x;
+}
+
 int guiAlignMenuHints(menu_hint_item_t *hint, int font, int width)
 {
     int x = screenWidth;
@@ -4399,6 +4422,53 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
     }
 
     return terminate - 1;
+}
+
+int guiPromptRebootIop(void)
+{
+    int terminate = 0;
+
+    sfxPlay(SFX_MESSAGE);
+
+    while (!terminate) {
+        guiStartFrame();
+
+        readPads();
+
+        if (getKeyOn(KEY_CROSS))
+            terminate = 1;
+        else if (getKeyOn(KEY_CIRCLE))
+            terminate = 2;
+        else if (getKeyOn(KEY_TRIANGLE))
+            terminate = 3;
+
+        guiShow();
+
+        rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
+
+        rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
+        rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
+
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, "REBOOT IOP?", gTheme->textColor);
+
+        guiDrawIconAndLiteralText(CROSS_ICON, "YES", gTheme->fonts[0], 70, 417, gTheme->textColor);
+        guiDrawIconAndLiteralText(TRIANGLE_ICON, _l(_STR_CANCEL), gTheme->fonts[0], 285, 417, gTheme->textColor);
+        guiDrawIconAndLiteralText(CIRCLE_ICON, "NO", gTheme->fonts[0], 500, 417, gTheme->textColor);
+
+        guiEndFrame();
+    }
+
+    if (terminate == 1) {
+        sfxPlay(SFX_CONFIRM);
+        return 1;
+    }
+    if (terminate == 2) {
+        sfxPlay(SFX_CONFIRM);
+        return 0;
+    }
+
+    sfxPlay(SFX_CANCEL);
+    return -1;
 }
 
 void guiHandleDeferedIO(int *ptr, const char *message, int type, void *data, int timeoutMs)

@@ -66,7 +66,7 @@ void sysLaunchEmber(const char *emberElf, const char *gameFolder);
 // ELF handoff that KEEPS the IOP (drivers + mounts) alive -- NHDDL parity: the vendored elfldr/
 // child loader SifLoadElf()s the target through OPL's live mounts and never SifIopReset()s (the
 // target resets the IOP itself). argv is the target's FULL argv, argv[0] INCLUDED and
-// caller-controlled. Returns only on failure (bad path/ELF). Implemented in elfldr_noreset.c.
+int sysLoadELF(const char *filename, const char *partition, int argc, char *argv[], int resetIop);
 int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, char *argv[]);
 void sysPowerOff(void);
 #ifdef __DECI2_DEBUG

@@ -265,6 +265,51 @@ static void mmceGetDeviceRoot(char *root, size_t size)
         root[0] = '\0';
 }
 
+int mmceReset(void)
+{
+    char mmceDevice[sizeof(mmcePrefix)];
+    int resetCount = 0;
+
+    mmceGameIdTarget[0] = '\0';
+
+    if (!mmceModLoaded)
+        mmceLoadModules();
+
+    if (!mmceModLoaded)
+        return 0;
+
+    mmceGetDeviceRoot(mmceDevice, sizeof(mmceDevice));
+    {
+        const char *cands[3] = {mmceDevice[0] != '\0' ? mmceDevice : NULL, "mmce0:/", "mmce1:/"};
+        int tried[2] = {0, 0};
+
+        for (int c = 0; c < 3; c++) {
+            if (cands[c] == NULL || strlen(cands[c]) < 5)
+                continue;
+            int slot = cands[c][4] - '0';
+            if (slot < 0 || slot > 1 || tried[slot])
+                continue;
+            tried[slot] = 1;
+
+            if (fileXioDevctl(cands[c], 0x1, NULL, 0, NULL, 0) != -1) {
+                LOG("MMCE: sending reset (0x9) to %s\n", cands[c]);
+                fileXioDevctl(cands[c], 0x9, NULL, 0, NULL, 0);
+
+                for (int i = 0; i < MMCE_GAMEID_WAIT_TICKS; i++) {
+                    int status = fileXioDevctl(cands[c], 0x2, NULL, 0, NULL, 0);
+                    if (status < 0 || (status & 1) == 0)
+                        break;
+
+                    DelayThread(MMCE_GAMEID_POLL_US);
+                }
+                resetCount++;
+            }
+        }
+    }
+
+    return resetCount;
+}
+
 // Fs-settle after a GameID card switch. The 0x8 devctl physically re-mounts the card, and on Gen2
 // the busy bit (mmceSendGameID's own wait) can clear before the FILESYSTEM surface is back. Probe
 // the switched slot until a directory open answers: poll-first so a fast card costs ~0 ms; bounded
