@@ -1132,7 +1132,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             //   load path:   pfsN:/... (the live OPL mount used to read the ELF)
             //   target argv: hddN:<partition>:pfs:/... (portable APA path used by the child)
             // This is the wLaunchELF/OSDMenu contract. Passing pfs0: in the second form makes
-            // launcHER parse "hdd0:<part>:pfs0:" as the partition name and quickboot fails.
+            // launcHER treats the numbered mount token as part of the partition name and quickboot fails.
             if (mode == HDD_MODE) {
                 if (gOPLPart[0] == '\0') {
                     guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
