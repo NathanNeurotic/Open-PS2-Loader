@@ -53,7 +53,7 @@ enum { VCD_POPSNET_SMB_MISSING, VCD_POPSNET_NEED_STATIC,
 static struct { const char *title; } appsList[] = {{"launcHER"}};
 static char gOPLPart[128];
 static int is_pops, reset_iop, errors, torn_down, launched, sdk_launch;
-static int got_argc, got_reset;
+static int got_argc, got_reset, got_cleanup;
 static char got_path[512], got_partition[256], got_argv[2][512];
 static int appVisibleToMaster(item_list_t *items, int id) { return id; }
 static void configGetStrCopy(config_set_t *c, int key, char *out, size_t size)
@@ -77,17 +77,26 @@ static const char *_l(int id) { return "error"; }
 static void guiMsgBox(const char *text, int mode, void *data)
 { assert(!torn_down); errors++; }
 static void deinit(int exception, int mode) { torn_down++; }
-static int sysLoadELF(const char *path, const char *partition, int argc, char **argv, int reset)
+static int captureLoad(const char *path, const char *partition, int argc, char **argv, int reset, int cleanup)
 {
     assert(torn_down == 1);
     launched++;
     got_argc = argc;
     got_reset = reset;
+    got_cleanup = cleanup;
     snprintf(got_path, sizeof(got_path), "%s", path);
     snprintf(got_partition, sizeof(got_partition), "%s", partition);
     for (int i = 0; i < argc; i++)
         snprintf(got_argv[i], sizeof(got_argv[i]), "%s", argv[i]);
     return 0;
+}
+static int sysLoadELF(const char *path, const char *partition, int argc, char **argv, int reset)
+{
+    return captureLoad(path, partition, argc, argv, reset, 0);
+}
+int sysLoadELFApp(const char *path, const char *partition, int argc, char **argv, int reset, int cleanup)
+{
+    return captureLoad(path, partition, argc, argv, reset, cleanup);
 }
 static void LoadELFFromFileWithPartition(const char *path, const char *partition, int argc, char **argv)
 {
@@ -102,20 +111,20 @@ static void run(const char *path, const char *arg, int reset, int pops)
     config_set_t config = {path, arg};
     reset_iop = reset;
     is_pops = pops;
-    errors = torn_down = launched = sdk_launch = got_argc = 0;
+    errors = torn_down = launched = sdk_launch = got_argc = got_cleanup = 0;
     memset(got_argv, 0, sizeof(got_argv));
     appLaunchItem(NULL, 0, &config);
 }
 int main(void)
 {
     const char *apa = "pfs0:/APPS/Ember/launcHER.elf";
-    const char *qualified = "hdd0:+OPL:pfs0:/APPS/Ember/launcHER.elf";
+    const char *qualified = "hdd0:+OPL:pfs:/APPS/Ember/launcHER.elf";
     strcpy(gOPLPart, "hdd0:+OPL");
     for (int reset = 0; reset <= 1; reset++) {
         run(apa, NULL, reset, 0);
         assert(launched == 1 && !errors && !sdk_launch && got_argc == 1);
         assert(!strcmp(got_path, apa) && !strcmp(got_argv[0], qualified));
-        assert(got_reset == reset);
+        assert(got_reset == reset && got_cleanup == 1);
         run(apa, "hdd0:__.EMBER/EMBER/launcHER.CNF", reset, 0);
         assert(got_argc == 2 && !strcmp(got_argv[0], qualified));
         assert(!strcmp(got_argv[1], "hdd0:__.EMBER/EMBER/launcHER.CNF"));
@@ -128,13 +137,12 @@ int main(void)
             run(paths[i], NULL, reset, 0);
             assert(launched == 1 && !errors);
             assert(!strcmp(got_path, paths[i]) && !strcmp(got_argv[0], paths[i]));
-            assert(got_partition[0] == 0);
+            assert(got_partition[0] == 0 && got_cleanup == 0);
         }
 
         // NULs, duplicate load path and reset flag all count toward the first hop.
         size_t fixed = strlen(apa) + 1 + strlen(qualified) + 1;
-        if (reset)
-            fixed += sizeof("-reset-iop");
+        fixed += reset ? sizeof("-la=RH") : sizeof("-la=H");
         char arg[256];
         memset(arg, 'a', sizeof(arg));
         arg[256 - fixed - 1] = 0;
@@ -160,15 +168,15 @@ int main(void)
     strcpy(gOPLPart, "hdd0:__common");
     run("pfs0:OPL/APPS/launcHER.elf", NULL, 0, 0);
     assert(!strcmp(got_path, "pfs0:/OPL/APPS/launcHER.elf"));
-    assert(!strcmp(got_argv[0], "hdd0:__common:pfs0:/OPL/APPS/launcHER.elf"));
+    assert(!strcmp(got_argv[0], "hdd0:__common:pfs:/OPL/APPS/launcHER.elf"));
     strcpy(gOPLPart, "hdd0:CustomApps");
     run(apa, NULL, 1, 0);
-    assert(!strcmp(got_argv[0], "hdd0:CustomApps:pfs0:/APPS/Ember/launcHER.elf"));
+    assert(!strcmp(got_argv[0], "hdd0:CustomApps:pfs:/APPS/Ember/launcHER.elf"));
     run(apa, "game", 0, 1);
     assert(sdk_launch == 1 && got_argc == 1);
     assert(!strcmp(got_path, apa) && !strcmp(got_partition, "hdd0:CustomApps:"));
     assert(!strcmp(got_argv[0], "game"));
-    puts("PASS: APA argv[0], reset choices, optional argv[1], other devices, POPSTARTER, 256/257-byte boundary");
+    puts("PASS: APA pfs handoff, HDD cleanup, reset choices, optional argv[1], other devices, POPSTARTER, 256/257-byte boundary");
     return 0;
 }
 '''
@@ -176,8 +184,10 @@ int main(void)
 with tempfile.TemporaryDirectory(prefix="opl-app-args-") as temp:
     path = Path(temp)
     harness = path / "launch.c"
-    harness.write_text(STUBS + function("appNormalizeLaunchPath(") + "\n"
-                       + function("appLaunchItem(") + TESTS)
+    helpers = function("appNormalizeLaunchPath(") + "\n"
+    if "appBuildHddHandoffPath(" in text:
+        helpers += function("appBuildHddHandoffPath(") + "\n"
+    harness.write_text(STUBS + helpers + function("appLaunchItem(") + TESTS)
     executable = path / ("launch.exe" if os.name == "nt" else "launch")
     flags = ["-std=c99", "-Wall", "-Wextra", "-Werror", "-Wno-unused-parameter"]
     if source != root / "src/appsupport.c":

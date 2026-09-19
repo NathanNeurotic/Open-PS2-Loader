@@ -947,6 +947,32 @@ static const char *appNormalizeLaunchPath(char *out, size_t outSize, const char 
     return out;
 }
 
+static const char *appBuildHddHandoffPath(char *out, size_t outSize, const char *partition, const char *path)
+{
+    const char *colon;
+    const char *p;
+    int ret;
+
+    if (out == NULL || outSize == 0 || partition == NULL || partition[0] == '\0' || path == NULL)
+        return NULL;
+
+    // The numbered pfsN: name is OPL's live mountpoint. It is not portable across an IOP
+    // handoff. wLaunchELF/OSDMenu use the canonical APA form hddN:<partition>:pfs:/path.
+    colon = strchr(path, ':');
+    if (colon == NULL || strncasecmp(path, "pfs", 3) != 0)
+        return NULL;
+    for (p = path + 3; p < colon; p++) {
+        if (*p < '0' || *p > '9')
+            return NULL;
+    }
+
+    ret = snprintf(out, outSize, "%spfs:%s", partition, colon + 1);
+    if (ret < 0 || (size_t)ret >= outSize)
+        return NULL;
+
+    return out;
+}
+
 static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int fd;
@@ -994,6 +1020,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
         char partition[sizeof(gOPLPart) + 1];
         char altStartup[256];
         char normFilename[256];
+        char appArgv0[sizeof(partition) + sizeof(normFilename)];
         char *target_argv[2];
         int target_argc = 0;
         int isPops, rebootIop = 0;
@@ -1101,34 +1128,44 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             }
             LoadELFFromFileWithPartition(filename, partition, pops_argc, pops_argv);
         } else {
-            // Match the SDK Apps contract: load through the live PFS mount, but give
-            // the app its partition-qualified path so it can remount after an IOP reset.
-            if (mode == HDD_MODE && gOPLPart[0] == '\0') {
-                guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
-                return;
-            }
-            char appArgv0[sizeof(partition) + sizeof(normFilename)];
-            snprintf(appArgv0, sizeof(appArgv0), "%s%s", partition, normFilename);
-            target_argv[0] = appArgv0;
+            // HDD Apps have two different paths at handoff:
+            //   load path:   pfsN:/... (the live OPL mount used to read the ELF)
+            //   target argv: hddN:<partition>:pfs:/... (portable APA path used by the child)
+            // This is the wLaunchELF/OSDMenu contract. Passing pfs0: in the second form makes
+            // launcHER parse "hdd0:<part>:pfs0:" as the partition name and quickboot fails.
+            if (mode == HDD_MODE) {
+                if (gOPLPart[0] == '\0') {
+                    guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+                    return;
+                }
 
-            // sysLoadELF sends the load path and full target argv through one 256-byte
-            // kernel pool. Refuse oversized arguments while the GUI is still alive.
-            size_t argBytes = strlen(normFilename) + 1 + strlen(appArgv0) + 1;
+                if (appBuildHddHandoffPath(appArgv0, sizeof(appArgv0), partition, normFilename) == NULL) {
+                    guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+                    return;
+                }
+                target_argv[0] = appArgv0;
+            }
+
+            // The child-loader ExecPS2 handoff has one 256-byte kernel argument pool. Count the
+            // load path, target argv and the private loader flag before tearing down the GUI.
+            size_t argBytes = strlen(normFilename) + 1 + strlen(target_argv[0]) + 1;
             if (target_argc > 1)
                 argBytes += strlen(altStartup) + 1;
-            if (rebootIop)
+            if (mode == HDD_MODE)
+                argBytes += rebootIop ? sizeof("-la=RH") : sizeof("-la=H");
+            else if (rebootIop)
                 argBytes += sizeof("-reset-iop");
             if (argBytes > 256) {
                 guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
                 return;
             }
 
-            // wLaunchELF_R3Z parity for app launches:
-            // Do not unmount filesystems, shut down block devices, or power down DEV9.
-            // On keep-IOP launches, also preserve IOP PFS descriptors (KEEPIOP_EXCEPTION)
-            // and IOP pad RPC (unloadPadsEx(1)).
+            // Keep the source device alive until the child has loaded the ELF. For HDD Apps the
+            // child then performs wLaunchELF_R3Z's post-load PFS/HDD/DEV9 cleanup (H) before
+            // entering the app, regardless of the Reboot IOP choice. This is intentionally NOT
+            // used by the dedicated Ember PS1-page path, which requires its inherited live PFS.
             deinit(UNMOUNT_EXCEPTION | (rebootIop == 0 ? KEEPIOP_EXCEPTION : 0), IO_MODE_SELECTED_ALL_SPARE);
-            sysLoadELF(normFilename, partition, target_argc, target_argv, rebootIop);
+            sysLoadELFApp(normFilename, partition, target_argc, target_argv, rebootIop, mode == HDD_MODE);
         }
     } else
         guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);

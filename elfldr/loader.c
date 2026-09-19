@@ -37,6 +37,7 @@
 #include <sifrpc.h>
 #include <fileXio_rpc.h>
 #include <fileio.h>
+#include <hdd-ioctl.h>
 #include <errno.h>
 #include <string.h>
 
@@ -58,6 +59,7 @@ PS2_DISABLE_AUTOSTART_PTHREAD();
 #define ELF_PT_LOAD          1
 #define ELF_PT_MIPS_REGINFO  0x70000000
 #define ELF_SHT_MIPS_REGINFO 0x70000006
+#define PFS_MOUNTPOINT_COUNT  4
 
 typedef struct
 {
@@ -242,6 +244,28 @@ static void resetIOP(void)
     SifInitRpc(0);
 }
 
+// wLaunchELF_R3Z HDD-app parity. The target ELF is already in EE RAM when this runs, so the
+// numbered PFS mount can be dismantled safely before control is transferred to the child app.
+// This is deliberately opt-in: Ember's dedicated PS1-page launch inherits a live writable PFS.
+static void cleanupHddForLaunch(void)
+{
+    char pfsDev[] = "pfs0:";
+    int i;
+
+    fileXioInit();
+    fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+    for (i = 0; i < PFS_MOUNTPOINT_COUNT; i++) {
+        pfsDev[3] = '0' + i;
+        fileXioSync(pfsDev, FXIO_WAIT);
+        fileXioUmount(pfsDev);
+    }
+
+    fileXioDevctl("hdd0:", HDIOC_IDLEIMM, NULL, 0, NULL, 0);
+    fileXioDevctl("hdd1:", HDIOC_IDLEIMM, NULL, 0, NULL, 0);
+    fileXioDevctl("dev9x:", DDIOC_OFF, NULL, 0, NULL, 0);
+    fileXioExit();
+}
+
 // argv[0] = path of the ELF to LOAD; argv[1..] = the target's FULL argv, forwarded verbatim
 // (argv[1] becomes the target's argv[0]). The caller CONTROLS the target's argv[0]: Neutrino
 // gets its own path (NHDDL convention), POPSTARTER gets the "XX./SB." selector it string-parses
@@ -257,6 +281,7 @@ int main(int argc, char *argv[])
     u32 entry;
     int ret;
     int reset_iop = 0;
+    int cleanup_hdd = 0;
 
     if (argc < 2)
         return -EINVAL;
@@ -268,6 +293,8 @@ int main(int argc, char *argv[])
         } else if (!strncmp(argv[argc - 1], "-la=", 4)) {
             if (strchr(argv[argc - 1] + 4, 'R') != NULL)
                 reset_iop = 1;
+            if (strchr(argv[argc - 1] + 4, 'H') != NULL)
+                cleanup_hdd = 1;
             argc--;
         }
     }
@@ -304,6 +331,8 @@ int main(int argc, char *argv[])
         ret = SifLoadElfEncrypted(argv[0], &elfdata);
     SifLoadFileExit();
     if (ret == 0 && elfdata.epc != 0) {
+        if (cleanup_hdd)
+            cleanupHddForLaunch();
         if (reset_iop)
             resetIOP();
         SifExitRpc();
@@ -315,6 +344,8 @@ int main(int argc, char *argv[])
     // Rescue: fileXio (iomanX) for the devices LOADFILE cannot see (mmceN:, pfs, ...).
     u32 gp = 0;
     if (loadElfViaFileXio(argv[0], &entry, &gp) == 0) {
+        if (cleanup_hdd)
+            cleanupHddForLaunch();
         if (reset_iop)
             resetIOP();
         SifExitRpc();
