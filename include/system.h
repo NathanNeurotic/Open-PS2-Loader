@@ -67,6 +67,9 @@ void sysLaunchEmber(const char *emberElf, const char *gameFolder);
 // child loader SifLoadElf()s the target through OPL's live mounts and never SifIopReset()s (the
 // target resets the IOP itself). argv is the target's FULL argv, argv[0] INCLUDED and
 int sysLoadELF(const char *filename, const char *partition, int argc, char *argv[], int resetIop);
+// Ordinary APPS variant. cleanupHdd requests the wLaunchELF_R3Z post-load PFS/HDD/DEV9 teardown;
+// dedicated Ember/Neutrino/POPSTARTER paths keep using their existing handoff functions.
+int sysLoadELFApp(const char *filename, const char *partition, int argc, char *argv[], int resetIop, int cleanupHdd);
 int sysLoadELFKeepIOP(const char *filename, const char *partition, int argc, char *argv[]);
 void sysPowerOff(void);
 #ifdef __DECI2_DEBUG
