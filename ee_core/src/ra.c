@@ -35,8 +35,9 @@ extern unsigned int ra_snap_iop; /* snapshot buffer in IOP RAM, 0 if none */
 
 /* The snapshot is assembled here and DMA'd from here. SIF DMA requires
    64-byte alignment; all writes go through UNCACHED_SEG so the data
-   reaches RAM instead of staying in the EE cache. */
-static u8 ra_snap_buf[RA_SNAP_TOTAL] __attribute__((aligned(64)));
+   reaches RAM instead of staying in the EE cache. It points into
+   config->raWorkArea (module storage), NULL while nothing is watched. */
+static u8 *ra_snap_buf = NULL;
 static int ra_snap_dma_id = 0;
 static unsigned int ra_snap_seq = 0;
 static unsigned int ra_snap_skip = 0;
@@ -48,19 +49,22 @@ static unsigned int ra_frames = 0;
    the same way SetupCheats() copies the cheat list.
 
    Pointer chains live in the same array, behind the entries, and so do
-   the two words each chain needs while a frame is built. Nothing here
-   may grow: ee_core sits in 77 KB of low memory that ends at 0x96E00,
-   and a game loads its own code close behind. Two kilobytes of tables
-   of our own pushed X-Men Origins over that edge -- it stopped starting
-   at all, while NFS Underground 2 in the same build was fine
-   (12.09.2026, lab/pointers). The array holds 1024 words and a real set
-   uses a few hundred, so the chains go in the space already paid for.
+   the two words each chain needs while a frame is built. The array holds
+   1024 words and a real set uses a few hundred, so the chains go in the
+   space already paid for.
+
+   The array is not in ee_core's .bss: it sits behind the snapshot buffer
+   in config->raWorkArea. ee_core's stack is the part of ram84 left above
+   .bss (ee_core/linkfile), so every byte added to .bss comes off the
+   stack; with these two buffers in .bss only ~1.9 KB were left, and the
+   first IOP reset overran it (the "X-Men Origins stops starting when
+   ee_core grows" symptom seen on 12.09.2026 was the same squeeze).
 
    [0 .. count)                entries, one word each
    [count .. +2N)              nodes: packed word, then offset
    [count+2N .. +3N)           what each chain read this frame
    [count+3N .. +4N)           where each chain reads its base, precomputed */
-static u32 ra_watch[RA_WATCH_MAX];
+static u32 *ra_watch = NULL;
 static int ra_watch_count = 0;
 static int ra_watch_bytes = 0;
 static int ra_node_at = 0; /* first node word in ra_watch */
@@ -92,13 +96,20 @@ void RA_SetupWatchList(void)
     ra_snap_bytes = 0;
     ra_node_count = 0;
     ra_node_at = 0;
+    ra_snap_buf = NULL;
+    ra_watch = NULL;
 
     if (config->raWatchList == NULL || config->raWatchCount <= 0)
+        return;
+    if (config->raWorkArea == NULL)
         return;
     if (config->raWatchCount > RA_WATCH_MAX)
         return;
     if (config->raSnapBytes <= 0 || config->raSnapBytes > RA_SNAP_MAX_BYTES)
         return;
+
+    ra_snap_buf = (u8 *)config->raWorkArea;
+    ra_watch = (u32 *)(ra_snap_buf + RA_SNAP_TOTAL);
 
     for (i = 0; i < config->raWatchCount; i++)
         ra_watch[i] = config->raWatchList[i];
@@ -157,7 +168,7 @@ void RA_SetupWatchList(void)
 static void ra_snap_send(void)
 {
     USE_LOCAL_EECORE_CONFIG;
-    struct ra_snap *s = (struct ra_snap *)UNCACHED_SEG(&ra_snap_buf);
+    struct ra_snap *s = (struct ra_snap *)UNCACHED_SEG(ra_snap_buf);
     u8 *vals = (u8 *)UNCACHED_SEG(&ra_snap_buf[RA_SNAP_HDR]);
     SifDmaTransfer_t dmat;
     int i, off = 0;
@@ -296,7 +307,7 @@ static void ra_snap_send(void)
        header's seq to detect a snapshot overwritten mid-copy. */
     *(volatile u32 *)UNCACHED_SEG(&ra_snap_buf[RA_SNAP_TRAILER_OFF(ra_snap_bytes)]) = ra_snap_seq;
 
-    dmat.src = (void *)&ra_snap_buf;
+    dmat.src = (void *)ra_snap_buf;
     dmat.dest = (void *)ra_snap_iop;
     dmat.size = RA_SNAP_DMA_SIZE(ra_snap_bytes);
     dmat.attr = 0;

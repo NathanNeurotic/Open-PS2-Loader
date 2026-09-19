@@ -61,6 +61,13 @@ struct ra_snap
    64-byte cache line so the EE buffer shares no line with other data */
 #define RA_SNAP_TOTAL ((RA_SNAP_DMA_SIZE(RA_SNAP_MAX_BYTES) + 63) & ~63)
 
+/* ee_core's RetroAchievements work area: the snapshot buffer (RA_SNAP_TOTAL,
+   first, so it keeps the 64-byte alignment SIF DMA needs) followed by the
+   watch list copy (RA_WATCH_MAX words). The launcher reserves it in module
+   storage and hands it over as EECoreConfig_t.raWorkArea; see there for why
+   it is not in ee_core's .bss. */
+#define RA_EE_WORK_BYTES (RA_SNAP_TOTAL + RA_WATCH_MAX * 4)
+
 /* PC -> game side: raudp DMAs this 16-byte record into an ee_core buffer
    whose address came as a load argument; the VBLANK handler treats a new
    seq as a new event. */

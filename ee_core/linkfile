@@ -110,4 +110,11 @@ SECTIONS {
 
 	_end = _stack + _stack_size ;
 	PROVIDE(end = _end);
+
+	/* The stack is only what ram84 leaves above .bss. The first IOP reset alone
+	   needs ~1.4 KB of it (LoadMemModule's RPC argument block is ~600 bytes) plus
+	   what the kernel's SIF entry points use. On real hardware a RetroAchievements
+	   build left with 1920 bytes hung there, one with 2304 did not; EXTRA_FEATURES
+	   leaves ~3.3 KB. Refuse to link below 3 KB. */
+	ASSERT(_stack_size >= 0xC00, "ee_core: less than 3 KB left for the stack above .bss -- move data out of ee_core")
 }
