@@ -3188,14 +3188,16 @@ static int guiSettingsShowIndex(int *page)
     }
 }
 
-void guiShowSettings(void)
+static void guiShowSettingsFromPage(int page, int showIndexFirst)
 {
-    int page = SETTINGS_SOURCES;
     int result;
+
+    if (page < SETTINGS_SOURCES || page >= SETTINGS_PAGE_COUNT)
+        page = SETTINGS_SOURCES;
 
     guiSettingsShellActive = 1;
     guiSettingsSavePending = 0;
-    if (!guiSettingsShowIndex(&page)) {
+    if (showIndexFirst && !guiSettingsShowIndex(&page)) {
         hddDiscardOplHomeSelection();
         guiSettingsShellActive = 0;
         guiSettingsSavePending = 0;
@@ -3254,6 +3256,19 @@ void guiShowSettings(void)
             return;
         }
     }
+}
+
+void guiShowSettings(void)
+{
+    guiShowSettingsFromPage(SETTINGS_SOURCES, 1);
+}
+
+void guiShowPsEmulationSettings(void)
+{
+    // PS1 Triangle shortcut: enter the normal Settings shell directly on the global PS emulation
+    // page. The shell still owns Save Changes and navigation, and returning leaves the caller's
+    // selected PS1 title/menu intact.
+    guiShowSettingsFromPage(SETTINGS_POPSTARTER, 0);
 }
 
 int guiShowKeyboard(char *value, int maxLength)
