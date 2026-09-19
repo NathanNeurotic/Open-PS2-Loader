@@ -10,7 +10,7 @@ else — talking to the RetroAchievements servers, deciding what unlocked, your 
 PC.
 
 Based on the RetroAchievements implementation by **[hacan359 (yoba)](https://github.com/hacan359/Open-PS2-Loader/pull/1)**.
-Use the upstream **[xeRAbora PC client](https://github.com/hacan359/xerabora)** with RiptOPL's RA build.
+Use the upstream **[xeRAbora PC client (v0.1.0-alpha.10)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)** with RiptOPL's RA build.
 
 ---
 
@@ -153,14 +153,17 @@ game runs normally but nothing reaches the PC.
 The PC client is found automatically: the console broadcasts a query on UDP port 18194 and the client
 answers. Nothing is stored between runs.
 
-The sender follows xeRAbora alpha.8's console changes (`9bacfe59` and `9531fd9c`): it polls
-every 4 ms, sends each new snapshot once, and retries a busy transmitter or torn copy on the
-next poll. An unchanged snapshot is repeated only after about a second without a new one.
-RiptOPL additionally records the sequence of the staged payload, rather than rereading the live
-DMA buffer after sending, and leaves a snapshot pending if any packet fails to send. These
-contracts have host regression tests; snapshot loss and gameplay timing still need PS2 validation.
-Use the current upstream xeRAbora PC client. This sender update does not establish that the
-SMB/HTTP gameplay limitation above is fixed.
+The console integration follows **xeRAbora v0.1.0-alpha.10** (`ebd18ed6`, paired with console commit `0c5f61a3` / `6c7e9a79` and CodeRabbit hardening `136f2620`). This release brings significant stability improvements between OPL and RA:
+
+- **Console pointer-chain resolution:** Achievements that read through pointers previously never unlocked because the console only read a flat list of addresses (one measured set lost 22 of 50 achievements). In alpha.10, xeRAbora compiles pointer chains into nodes (parent, static offset, read size) sent as a tail after the watch addresses. `ee_core` walks the nodes once per frame and appends the dynamic `(address, value)` pair per node.
+- **Null base and broken chain protection:** If a chain's base pointer resolves to 0 (a null pointer or an out-of-range parent), RiptOPL forces the pair out as address 0 rather than adding the offset and reading random memory from the VBlank interrupt handler.
+- **Interrupt memory safety:** Addresses outside `0x00080000..0x02000000` (such as `0x00000000` found in some achievement sets like X-Men Origins) are never dereferenced in the interrupt handler. Reading outside mapped RAM caused TLB misses during VBlank and hung games on loading screens. Unreadable entries are reported as 0 so the snapshot maintains its structure.
+- **PC client stability:** xeRAbora v0.1.0-alpha.10 drops tracked leaderboards when the console disconnects instead of hanging stale on screen.
+- **Snapshot delivery:** Telemetry polls every 4 ms, sends each new snapshot once, retries busy or torn copies, repeats unchanged snapshots after ~1 second without a new one, and commits only the staged sequence once accepted.
+
+> [!IMPORTANT]
+> **Client Version Compatibility:** Always use **[xeRAbora v0.1.0-alpha.10](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)** with this build. Using earlier versions (alpha.8/alpha.9) lacks pointer-chain nodes and out-of-range memory handling, while arbitrary unverified versions risk protocol drift.
+
 
 ---
 
@@ -202,7 +205,7 @@ loader folders in place of the standard ones:
 RA is built with the ps2dev toolchain only, so these folders say `PINNED`/`ROLLING` where the main
 package says `PS2DEVPINNED`/`PS2DEVROLLING`. The names are kept short on purpose: a memory card file
 name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
-archive also carries **`xeRAbora.url`**, because the loader does nothing without the PC client.
+archive also carries **`xeRAbora.url`** (pointing directly to the paired [v0.1.0-alpha.10 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)), because the loader does nothing without the PC client.
 
 It is deliberately *not* an entry in `RIPTOPL-VARIANTS-*.zip`: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a

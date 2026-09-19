@@ -65,7 +65,7 @@ concurrency:
 
 jobs:
   build-rolling-pinned:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ps2dev/ps2dev@sha256:c64ae69c9817865ed98ff054e4ae5360b9e280ed952c97946bca95d9d35be995
     # Fallback/compatibility toolchain: best-effort, must not block the rolling publish.
     continue-on-error: true
@@ -171,7 +171,7 @@ jobs:
           if-no-files-found: error
 
   build-rolling-ps2dev-latest:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: ps2dev/ps2dev:latest
     # PS2DEVROLLING (target) toolchain: REQUIRED to COMPILE. If this fails to build, the publish
     # fails loudly. It ships as its own labeled APP_RIPTOPL-PS2DEVROLLING/ folder (no default slot).
@@ -297,7 +297,7 @@ jobs:
           if-no-files-found: error
 
   build-rolling-officialsdk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # OFFICIALROLLING (third flavour): the EXACT container official OPL's rolling pre-release
     # compiles in (ghcr.io/ps2homebrew/ps2homebrew:main) -- a separate SDK lineage from
     # ps2dev/ps2dev, so hardware reports can split toolchain effects from RiptOPL code.
@@ -377,7 +377,7 @@ jobs:
           if-no-files-found: error
 
   build-rolling-official-pinned:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # OFFICIALPINNED -- the FOURTH flavour, and the reproducible half of the official lineage.
     # Same container as build-rolling-officialsdk but PINNED BY DIGEST (2026-08-13), so it can be
     # rebuilt byte-for-byte months from now and a bug report against it stays meaningful.
@@ -466,7 +466,7 @@ jobs:
     # a push to it publishing over the rolling channel would ship pre-rebuild code as Latest. This
     # gate is belt-and-braces with the push trigger above, which no longer lists master either.
     if: ${{ github.ref == 'refs/heads/rebuild/main' || startsWith(github.ref, 'refs/tags/v') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     env:
@@ -973,7 +973,7 @@ jobs:
               printf -- '- **Neutrino could not be bundled this run:** get the latest from https://github.com/rickgaiser/neutrino/releases.\n'
             fi
             if ls rolling/RIPTOPL-RetroAchievements-*.zip >/dev/null 2>&1; then
-              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the RetroAchievements build as a complete package. A development build, not hardware-tested.\n'
+              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the RetroAchievements build as a complete package (paired with [xeRAbora v0.1.0-alpha.10](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)). A development build, not hardware-tested.\n'
             fi
             if [ -f "rolling/RIPTOPL-VARIANTS-${ASSET_VERSION:-rolling}.zip" ]; then
               printf -- '- `RIPTOPL-VARIANTS-*.zip`: EXTRA_FEATURES (IGS, RTL), PADEMU and DualSense (DS5, USB) loaders. For DS5, prefer `-PS2DEVPINNED-ds5`.\n'
