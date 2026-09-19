@@ -57,6 +57,8 @@ jobs:
         run: python3 .github/scripts/test_apa_table_safety.py
       - name: Check the APA recovery tool against synthetic damaged disks
         run: python3 .github/scripts/test_apa_recover.py
+      - name: Check Apps launch paths and argument limits before teardown
+        run: python3 .github/scripts/test_app_launch_args.py
 
   ra-host-tests:
     runs-on: ubuntu-24.04
