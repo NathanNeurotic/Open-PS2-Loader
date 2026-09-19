@@ -51,7 +51,7 @@ u32 crc32(const char *string)
     int table, count, byte;
 
     for (table = 0; table < 256; table++) {
-        crc = table << 24;
+        crc = (u32)table << 24;
 
         for (count = 8; count > 0; count--) {
             if (crc & 0x80000000)
