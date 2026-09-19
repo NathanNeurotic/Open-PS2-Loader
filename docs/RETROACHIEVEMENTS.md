@@ -12,12 +12,17 @@ PC.
 Based on the RetroAchievements implementation by **[hacan359 (yoba)](https://github.com/hacan359/Open-PS2-Loader/pull/1)**.
 Use the upstream **[xeRAbora PC client (v0.1.0-alpha.10)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)** with RiptOPL's RA build.
 
+RiptOPL's real-hardware stabilization was contributed by **[oMrRexD](https://github.com/oMrRexD)** through
+PRs **#702–#705**, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
+bring-up / unusable-IP fallback, and the misplaced RA settings rows.
+
 ---
 
 ## Status
 
-**Implemented, not yet validated on PS2 hardware.** Every part below exists in the build; not one of them
-has run on a PlayStation 2. Treat the RA variant as a development build until that changes.
+**Implemented, with the USB/MMCE telemetry path now exercised on real PS2 hardware during oMrRexD's
+stabilization work.** Broader launch paths and edge cases remain development-grade and should still be
+validated individually before being treated as finished.
 
 | Part | State |
 | --- | --- |
@@ -319,4 +324,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 * **hacan359 (yoba)** — the RetroAchievements design, the console implementation this port follows,
   and the PC client. Physical-disc integration follows the
   [upstream disc implementation](https://github.com/hacan359/Open-PS2-Loader/tree/cb713e686acb2fb63de20aa44b3fd4e8c59ca680).
+* **[oMrRexD](https://github.com/oMrRexD)** — the real-hardware RA stabilization work merged through
+  PRs #702–#705: ee_core stack recovery, MMCE DEV9, launch-time network readiness/fallback, and the
+  RA settings-page correction, plus the hardware investigation that exposed those failures.
 * `src/md5.c`, `include/md5.h` — L. Peter Deutsch, zlib licence, vendored unchanged.

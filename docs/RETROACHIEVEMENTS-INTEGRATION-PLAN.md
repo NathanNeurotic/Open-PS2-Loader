@@ -14,6 +14,13 @@ default RiptOPL ELF must be **byte-for-byte unaffected**.
 > plan as written, not the tree as built; the RA flavour now uses the same ps2ips as every other
 > flavour. Open question #4 ("land RA-only first, then propose promotion") is answered by events.
 
+> **2026-09-19 stabilization note.** **[oMrRexD](https://github.com/oMrRexD)** followed the initial
+> integration with a real-hardware failure investigation (#701) and four focused fixes (#702–#705):
+> moving the RA work buffers out of ee_core's squeezed stack region, enabling DEV9 for MMCE RA
+> launches, bringing the menu network up safely before telemetry launches (including unusable-IP /
+> DHCP fallback), and restoring the RA controls to the Network page. Those fixes are now part of
+> `rebuild/main`; this note is retained here so the implementation provenance is not lost.
+
 ---
 
 ## 0. Read this first
