@@ -169,6 +169,22 @@ struct UIItem diaNetConfig[] = {
     {UI_BUTTON, NETCFG_HTTP_TEST, 1, 1, -1, 0, 0, {.label = {NULL, _STR_TEST}}},
     {UI_BREAK},
 
+#ifdef RETROACHIEVEMENTS
+    // RetroAchievements. Always visible: telemetry rides whatever SMAP the LAUNCH loaded, so
+    // unlike the SMB block above it is not conditioned on the selected network protocol. Only
+    // the menu-side check is refused under UDPBD/UDPFS, and it says so when asked. These rows
+    // belong to THIS page: guiShowNetConfig reads and writes them through diaNetConfig.
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_TELEMETRY}}},
+    {UI_SPACER},
+    {UI_BOOL, NETCFG_RA_TELEMETRY, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_BADGES}}},
+    {UI_SPACER},
+    {UI_BOOL, NETCFG_RA_BADGES, 1, 1, -1, 0, 0, {.intvalue = {1, 0}}},
+    {UI_BREAK},
+#endif
+
     // POPSTARTER owns its own IPCONFIG.DAT / SMBCONFIG.DAT editor. Keep its entry beside the
     // SMB server data it relates to, without duplicating any of that state in this page.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_NETWORK_SETTINGS}}},
@@ -271,21 +287,6 @@ struct UIItem diaPopsNetConfig[] = {
     {UI_SPACER},
     {UI_PASSWORD, NETCFG_POPS_SMB_PASS, 1, 1, _STR_HINT_GUEST, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
-
-#ifdef RETROACHIEVEMENTS
-    // RetroAchievements. Always visible: telemetry rides whatever SMAP the LAUNCH loaded, so
-    // unlike the SMB block above it is not conditioned on the selected network protocol. Only
-    // the menu-side check is refused under UDPBD/UDPFS, and it says so when asked.
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_TELEMETRY}}},
-    {UI_SPACER},
-    {UI_BOOL, NETCFG_RA_TELEMETRY, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_BADGES}}},
-    {UI_SPACER},
-    {UI_BOOL, NETCFG_RA_BADGES, 1, 1, -1, 0, 0, {.intvalue = {1, 0}}},
-    {UI_BREAK},
-#endif
 
     // buttons
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
