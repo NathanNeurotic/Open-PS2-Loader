@@ -380,7 +380,7 @@ jobs:
           fi
 
       - name: Build + stage RetroAchievements loader (OFFICIALROLLING)
-        # This is the RA source for the stable RIPTOPL_RA.ELF download and, when available,
+        # This is the RA source for the stable RIPTOPL-RA.ELF download and, when available,
         # the ready-to-install APPS/APP_RIPTOPL-RA app/PSU. PADEMU=1 matches the normal
         # release default. Keep it best-effort like the rest of the official moving flavour.
         run: |
@@ -1044,10 +1044,10 @@ jobs:
               echo "Published standalone PSU: APP_RIPTOPL-RA.psu"
               RA_OFFICIAL_SRC="rolling/ra/RIPTOPL-ra-pademu1-OFFICIALROLLING.ELF"
               if [ -s "$RA_OFFICIAL_SRC" ]; then
-                cp -f "$RA_OFFICIAL_SRC" rolling/RIPTOPL_RA.ELF
-                echo "Standalone RA loader: RIPTOPL_RA.ELF == OFFICIALROLLING PADEMU1"
+                cp -f "$RA_OFFICIAL_SRC" rolling/RIPTOPL-RA.ELF
+                echo "Standalone RA loader: RIPTOPL-RA.ELF == OFFICIALROLLING PADEMU1"
               else
-                echo "WARN: OFFICIALROLLING RA loader missing; release ships without RIPTOPL_RA.ELF" >&2
+                echo "WARN: OFFICIALROLLING RA loader missing; release ships without RIPTOPL-RA.ELF" >&2
               fi
               # The DOWNLOAD is named in full for a new user. The APP_RIPTOPL-RA-* folders inside keep
               # the short RA name, for the memory card limit described above.
@@ -1145,8 +1145,8 @@ jobs:
               printf -- '- **Updating:** download **[RIPTOPL.ELF](%s/%s/releases/download/%s/RIPTOPL.ELF)** and overwrite yours. It is the %s flavour and the link never changes, but it does not bring `POPS/`, `EMBER/`, `neutrino/` or languages.\n' \
                 "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG" "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
             fi
-            if [ -f rolling/RIPTOPL_RA.ELF ]; then
-              printf -- '- **RetroAchievements update:** **[RIPTOPL_RA.ELF](%s/%s/releases/download/%s/RIPTOPL_RA.ELF)** is the OFFICIALROLLING PADEMU1 RA loader as a stable standalone download. When updating the packaged RA app, replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with this file (rename it to `RIPTOPL-RA.ELF`).\n' \
+            if [ -f rolling/RIPTOPL-RA.ELF ]; then
+              printf -- '- **RetroAchievements update:** **[RIPTOPL-RA.ELF](%s/%s/releases/download/%s/RIPTOPL-RA.ELF)** is the OFFICIALROLLING PADEMU1 RA loader as a stable standalone download. When updating the packaged RA app, replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with this file (rename it to `RIPTOPL-RA.ELF`).\n' \
                 "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG"
             fi
             if [ -f rolling/APP_RIPTOPL.psu ]; then
