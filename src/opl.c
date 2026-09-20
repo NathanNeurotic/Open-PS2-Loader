@@ -1625,6 +1625,10 @@ static char gLastSaveTarget[sizeof(gCustomSettingsPath)];
 static int gLastSaveWasStagedOplHome = 0;
 static int gHddSettingsFallbackNotice = 0;
 static int gBootHddCommonFallback = 0;
+// APA can host the ELF while the authoritative settings live on the ATA-backed BDM filesystem.
+// Keep this distinct from gBootHomeApa: saves/config.path must follow the settings owner, not the ELF.
+static int gBootApaConfigFromBdm = 0;
+static char gBootApaBdmConfigHome[BDM_DEVICE_ROOT_MAX];
 
 static int checkLoadConfigMMCE(int types)
 {
@@ -1847,10 +1851,13 @@ static int configPathRedirectLocation(char *out, int outLen)
 {
     const char *home = gBootDir;
 
+    if (gBootApaConfigFromBdm && gBootApaBdmConfigHome[0] != '\0')
+        home = gBootApaBdmConfigHome;
+
     // APA launch identity and config ownership are separate. A delayed HDD mount can leave
     // gBootDir as raw hddN:, but once the EXISTING persistent PFS home is mounted, config.path
     // belongs there. This is the only APA override; every other boot class keeps gBootDir.
-    if (gBootHomeApa && gHDDPrefix != NULL && gHDDPrefix[0] != '\0')
+    if (!gBootApaConfigFromBdm && gBootHomeApa && gHDDPrefix != NULL && gHDDPrefix[0] != '\0')
         home = gHDDPrefix;
 
     // Never compose a writable bootstrap file in raw APA space. hddN: is a partition
@@ -2491,20 +2498,51 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
         }
     }
 
-    // For GUI/HDL launches, APA/PFS boot identity is authoritative. After an explicit redirect misses, ONLY the
-    // deterministic existing-PFS ownership chain is eligible: __common/OPL/conf_hdd.cfg's valid
-    // existing target, otherwise __common/OPL. Never import an unrelated MC/USB master config into
-    // an FHDB/APA session; that can resurrect stale Custom Settings Path state and makes the next
-    // save destination depend on whichever removable device happened to be inserted.
+    // APA can host only the ELF while the user's settings + games live on the ATA BDM filesystem
+    // (#545, CosmicScale). Preserve APA as first choice, but if it contains no master config, hand
+    // the physical drive over cleanly and probe ONLY the ATA BDM root -- never USB/MX4SIO/iLink.
     if (gBootHomeApa) {
         value = checkLoadConfigHDD(types);
         if (value & CONFIG_OPL)
             return value;
 
+        if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0' && hddReleasePfsForBdm()) {
+            char home[BDM_DEVICE_ROOT_MAX];
+
+            // bdmLoadModules supplies BDMFS_FATFS synchronously; bdmEnsureSourceModules then loads
+            // only the ATA transport synchronously even though this code itself runs on the IO worker.
+            bdmLoadModules();
+            if (bdmEnsureSourceModules(BDM_TYPE_ATA, 5000) &&
+                bdmGetDeviceRootByType(BDM_TYPE_ATA, home, sizeof(home))) {
+                value = tryReadRecoveryConfigHome(types, home);
+                if (value & CONFIG_OPL) {
+                    config_set_t *configOPL = configGetByType(CONFIG_OPL);
+
+                    gBootApaConfigFromBdm = 1;
+                    snprintf(gBootApaBdmConfigHome, sizeof(gBootApaBdmConfigHome), "%s", home);
+
+                    // Same reconciliation checkLoadConfigBDM performs: the settings owner itself is
+                    // proof that ATA-BDM must remain enabled and the BDM page must be startable.
+                    gEnableBdmHDD = 1;
+                    configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, 1);
+                    configSetInt(configOPL, CONFIG_OPL_BDM_MODE, START_MODE_AUTO);
+                    return value;
+                }
+            }
+
+            // No ATA-BDM master config was found. Restore the original APA settings owner; never
+            // silently relocate a first-run APA install merely because an exFAT partition exists.
+            configEnd();
+            hddLoadSupportModules();
+            if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0')
+                configInit(gHDDPrefix);
+            else
+                configInit(gBootDir[0] != '\0' ? gBootDir : NULL);
+        }
+
         // No master config yet is a valid first-run state. Keep defaults homed to the mounted safe
         // PFS target so the first explicit Save materializes them there. If PFS is still unavailable,
-        // leave the raw APA launch identity only as a fail-closed marker; _saveConfig retries this
-        // same safe chain and config.c blocks every raw hddN: config write as defense in depth.
+        // leave the launch identity only as a fail-closed marker; _saveConfig retries the safe chain.
         if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0')
             configSetMove(gHDDPrefix);
         showCfgPopup = 0;
@@ -3191,16 +3229,6 @@ static void _loadConfig()
                         (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
                          gNetworkProtocol == NET_PROTO_UDPBD));
 
-    // Official OPL never leaves an APA/PFS config mount in front of an ATA-backed BDM session.
-    // RiptOPL's CWD settings policy can do exactly that when the ELF lives on APA. Once the config
-    // is resident in EE memory, release only the live PFS mount when BDM-HDD is the selected game
-    // path and APA games are disabled. The save path remounts the same PFS home on demand.
-    if (gBootHomeApa && gEnableBdmHDD && gHDDStartMode == START_MODE_DISABLED &&
-        bdmEffectiveStartMode() != START_MODE_DISABLED) {
-        if (!hddReleasePfsForBdm())
-            LOG("CONFIG: APA data-home mount could not be released for BDM-HDD\n");
-    }
-
     applyConfig(themeID, langID, 0);
 
     lscret = result;
@@ -3593,7 +3621,7 @@ static void _saveConfig()
     // A current APA session keeps pfs0: mounted on its original data home until restart. When the
     // selected next-boot home differs, write only the changed sets through pfs1: and commit the
     // selector only after that write succeeds. The normal automatic +OPL case still uses pfs0:.
-    if (gBootHomeApa && gCustomSettingsPath[0] == '\0' && hddOplHomeSelectionNeedsTargetSave()) {
+    if (gBootHomeApa && !gBootApaConfigFromBdm && gCustomSettingsPath[0] == '\0' && hddOplHomeSelectionNeedsTargetSave()) {
         if (!saveSelectedHddOplHome(lscstatus) ||
             (hddOplHomeSelectionPending() && !commitSelectedHddOplHome())) {
             lscret = 0;
@@ -3611,7 +3639,7 @@ static void _saveConfig()
     // explicit Custom Settings Path must resolve the existing-PFS ownership chain NOW. This keeps
     // raw hddN: out of configWrite entirely: configured existing target first, then __common/OPL,
     // otherwise fail visibly without creating/formatting/repairing any APA partition.
-    if (gBootHomeApa && gCustomSettingsPath[0] == '\0') {
+    if (gBootHomeApa && !gBootApaConfigFromBdm && gCustomSettingsPath[0] == '\0') {
         char hddSaveHome[64];
         if (prepareHddSettingsFallback(hddSaveHome, sizeof(hddSaveHome)) <= 0) {
             if (gOPLPart[0] != '\0')
@@ -4584,6 +4612,8 @@ static void setDefaults(void)
     gAutoLaunchGame = NULL;
     gAutoLaunchBDMGame = NULL;
     gAutoLaunchDeviceData = NULL;
+    gBootApaConfigFromBdm = 0;
+    gBootApaBdmConfigHome[0] = '\0';
     gOPLPart[0] = '\0';
     // NULL is the only truthful pre-mount state. hddLoadSupportModules() uses non-NULL as the
     // proof that the persistent pfs0: data home is already mounted; seeding this with "pfs0:"
