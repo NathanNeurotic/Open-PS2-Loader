@@ -651,6 +651,9 @@ jobs:
           echo "Source snapshot:"
           ls -la "rolling/${VERSIONED_BASE}-src.zip"
 
+      - name: Check SAS PSU timestamps
+        run: python3 .github/scripts/test_psu_timestamps.py
+
       - name: Build RIPTOPL release package
         run: |
           set -eu
@@ -691,7 +694,6 @@ jobs:
             refs/tags/v*) RELEASE_CHANNEL=Tagged ;;
             *) RELEASE_CHANNEL=Rolling ;;
           esac
-          COMMIT_TS="$(git log -1 --format=%ct)"
           stage_variant_app() {
             APP_NAME="$1"
             SOURCE_ELF="$2"
@@ -701,8 +703,7 @@ jobs:
               --app-name "$APP_NAME" --elf-name RIPTOPL.ELF \
               --title '[APP] Open PS2 Loader: RiptOPL' --pbt-title '[APP] RiptOPL' \
               --version "${ASSET_VERSION:-rolling}" --flavour "$FLAVOUR" \
-              --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader for PS2 and PS3' \
-              --timestamp "$COMMIT_TS"
+              --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader for PS2 and PS3'
             # Variant PSUs are intentionally not release assets; only APPS/ contains these
             # alternate flavours. Staging still gives every folder icon.sys, *.icn,
             # title.cfg, APPINFO.PBT, bgm.ogg and validates that metadata before packaging.
@@ -892,8 +893,7 @@ jobs:
             --app-name APP_RIPTOPL --elf-name RIPTOPL.ELF \
             --title '[APP] Open PS2 Loader: RiptOPL' --pbt-title '[APP] RiptOPL' \
             --version "${ASSET_VERSION:-rolling}" --flavour "$INSTALL_FLAVOUR" \
-            --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader for PS2 and PS3' \
-            --timestamp "$COMMIT_TS"
+            --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader for PS2 and PS3'
           # Read the deterministic PSU with techwritescode's preserved PSUManager core,
           # then compare every direct app file before the archive is published.
           g++ -std=c++17 -O2 .github/scripts/verify_psu_with_psumanager.cpp \
@@ -960,7 +960,6 @@ jobs:
               refs/tags/v*) RELEASE_CHANNEL=Tagged ;;
               *) RELEASE_CHANNEL=Rolling ;;
             esac
-            COMMIT_TS="$(git log -1 --format=%ct)"
             RA_STAGED=no
             [ -s rolling/ra/RIPTOPL-ra-pademu1-OFFICIALROLLING.ELF ] && RA_STAGED=yes
             for sdk in PS2DEVROLLING PS2DEVPINNED; do
@@ -994,8 +993,7 @@ jobs:
                   --app-name "$DEST_NAME" --elf-name RIPTOPL-RA.ELF \
                   --title '[APP] Open PS2 Loader: RiptOPL RA' --pbt-title '[APP] RiptOPL RA' \
                   --version "${ASSET_VERSION:-rolling}" --flavour "${RA_LABEL} PADEMU${pad}" \
-                  --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support' \
-                  --timestamp "$COMMIT_TS"
+                  --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support'
                 # Only the selected APPS/APP_RIPTOPL-RA gets a standalone PSU. The labelled
                 # alternatives still carry the full direct-app metadata set inside APPS/ and use
                 # the RA-specific RIPTOPL-RA.ELF filename so every RA folder shares the same artwork.
@@ -1037,8 +1035,7 @@ jobs:
                 --app-name APP_RIPTOPL-RA --elf-name RIPTOPL-RA.ELF \
                 --title '[APP] Open PS2 Loader: RiptOPL RA' --pbt-title '[APP] RiptOPL RA' \
                 --version "${ASSET_VERSION:-rolling}" --flavour "$RA_INSTALL_FLAVOUR" \
-                --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support' \
-                --timestamp "$COMMIT_TS"
+                --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support'
               "$RUNNER_TEMP/verify-psu" "$PKG/APP_RIPTOPL-RA.psu" "$PKG/APPS/APP_RIPTOPL-RA"
               cp -f "$PKG/APP_RIPTOPL-RA.psu" rolling/APP_RIPTOPL-RA.psu
               echo "Published standalone PSU: APP_RIPTOPL-RA.psu"
