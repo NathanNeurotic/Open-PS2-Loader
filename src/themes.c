@@ -1964,9 +1964,7 @@ static void drawMenuIcon(struct menu_list *menu, struct submenu_list *item, conf
     if (thmElemSkipsDevice(elem, menu->item->icon_id))
         return; // devices= filter: not this page's element
 
-    GSTEXTURE *menuIconTex = gTheme->isBuiltin
-                                 ? thmGetBuiltinMenuStrip(menu->item->icon_id)
-                                 : thmGetTexture(menu->item->icon_id);
+    GSTEXTURE *menuIconTex = gTheme->isBuiltin ? thmGetBuiltinMenuStrip(menu->item->icon_id) : thmGetTexture(menu->item->icon_id);
     if (menuIconTex && menuIconTex->Mem)
         rmDrawPixmap(menuIconTex, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
 }

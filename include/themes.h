@@ -151,8 +151,8 @@ typedef struct theme
 {
     int useDefault;
     int usedHeight;
-    int isBuiltin;          // embedded <OPL>/<Coverflow> theme; enables exact internal-resource sharing
-    int loadedMenuStripId;  // one-resident built-in MenuIcon strip, -1 until first draw
+    int isBuiltin;         // embedded <OPL>/<Coverflow> theme; enables exact internal-resource sharing
+    int loadedMenuStripId; // one-resident built-in MenuIcon strip, -1 until first draw
 
     unsigned char bgColor[3];
     unsigned char plasBlendColor[3]; // plasma gradient LOW end (theme key plasma_blend_color); default black = historical look
