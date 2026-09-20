@@ -651,20 +651,6 @@ jobs:
           echo "Source snapshot:"
           ls -la "rolling/${VERSIONED_BASE}-src.zip"
 
-      - name: Compute SHA256 checksums
-        run: |
-          set -eu
-          # Compute SHA256 of every staged binary + the source snapshot for the release notes and
-          # permanent archive. release-normalize.yml removes the floating checksum file from the
-          # final GitHub asset list.
-          cd rolling
-          : > SHA256SUMS.txt
-          for f in *.ELF *-src.zip; do
-            if [ -f "$f" ]; then sha256sum "$f" >> SHA256SUMS.txt; fi
-          done
-          echo "SHA256SUMS.txt:"
-          cat SHA256SUMS.txt
-
       - name: Build RIPTOPL release package
         run: |
           set -eu
@@ -1089,6 +1075,21 @@ jobs:
           # Remove the loose dir either way so the final 'gh release upload rolling/*' stays
           # file-only -- the same contract the VARIANTS/DEBUG step keeps.
           rm -rf rolling/ra 2>/dev/null || true
+
+      - name: Compute SHA256 checksums
+        run: |
+          set -eu
+          # Run only after the standard/RA standalone ELFs and PSUs have been staged, so the
+          # permanent archive manifest covers every independently downloadable binary/install file
+          # as well as the exact source snapshot. release-normalize.yml later removes the floating
+          # checksum file from the public GitHub asset list.
+          cd rolling
+          : > SHA256SUMS.txt
+          for f in *.ELF *.psu *-src.zip; do
+            if [ -f "$f" ]; then sha256sum "$f" >> SHA256SUMS.txt; fi
+          done
+          echo "SHA256SUMS.txt:"
+          cat SHA256SUMS.txt
 
       - name: Pack RIPTOPL VARIANTS + DEBUG zips
         run: |
