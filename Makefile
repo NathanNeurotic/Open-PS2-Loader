@@ -152,7 +152,7 @@ EECORE_OBJS = ee_core.o ioprp.o util.o \
 		ingame_smstcpip.o smap_ingame.o smbman.o smbinit.o
 
 PNG_ASSETS = load0 load1 load2 load3 load4 load5 load6 load7 usb usb_bd ilk_bd \
-	m4s_bd hdd_bd mmce hdd eth udp_bd udp_fs app cross triangle circle square select start left right \
+	m4s_bd hdd_bd mmce hdd eth app cross triangle circle square select start left right \
 	cover disc screen background background_info missing screens \
 	ELF HDL ISO VCD ZSO UL APPS CD DVD Aspect_s Aspect_w Aspect_w1 \
 	Aspect_w2 Rating_0 \
@@ -166,6 +166,9 @@ PNG_ASSETS = load0 load1 load2 load3 load4 load5 load6 load7 usb usb_bd ilk_bd \
 	# unused icons - up down l2 r2
 	# Korium Komblete drops incebtion/ip (the old background pair, now background +
 	# background_info) and coverapp (aliased to cover in textures.c).
+	# Korium's eth.png, udp_bd.png and udp_fs.png are byte-identical NET strips. Only eth.png is
+	# embedded; textures.c points both UDP defaults at that same blob, while disk themes still probe
+	# their own udp_bd.png / udp_fs.png filenames normally.
 	# APPS stays: it is the FILE that backs the "APP" #Media glyph. It cannot be named APP.png
 	# because gfx/app.png (the apps device icon) exists and Windows checkouts are case-insensitive.
 

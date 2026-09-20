@@ -3040,15 +3040,24 @@ GSTEXTURE *thmGetTexture(unsigned int id)
 {
     if (id >= TEXTURES_COUNT)
         return NULL;
-    else {
-        // see if the texture is valid
-        GSTEXTURE *txt = &gTheme->textures[id];
 
-        if (txt->Mem)
-            return txt;
-        else
-            return NULL;
+    // See if the texture is valid.
+    GSTEXTURE *txt = &gTheme->textures[id];
+    if (txt->Mem)
+        return txt;
+
+    // The built-in Korium NET strip is exactly the same PNG for ETH, UDPBD and UDPFS. The two UDP
+    // slots are intentionally left undecoded by thmLoad(NULL), so share ETH's already-loaded texture
+    // instead of spending another ~80 KiB of T8 pixels + CLUT on each copy. Keep this BUILT-IN only:
+    // disk themes must retain their independent udp_bd.png / udp_fs.png overrides and fallback rules.
+    if ((id == UDP_ICON || id == UDPFS_ICON) &&
+        (guiThemeID == 0 || guiThemeID == nThemes + 1)) {
+        GSTEXTURE *net = &gTheme->textures[ETH_ICON];
+        if (net->Mem)
+            return net;
     }
+
+    return NULL;
 }
 
 static void thmFree(theme_t *theme)
@@ -3504,16 +3513,20 @@ static int thmLoad(const char *themePath)
     }
     newT->loadingIconCount = i;
 
-    // Customizable icons
-    for (i = BDM_ICON; i <= START_ICON; i++)
+    // Customizable icons. Korium's built-in ETH/UDPBD/UDPFS NET bars are byte-identical, so the
+    // built-in themes decode ETH_ICON once and thmGetTexture aliases the two UDP ids to it. Disk
+    // themes still load/probe each distinct filename normally, including use_default fallback.
+    for (i = BDM_ICON; i <= START_ICON; i++) {
+        if (!themePath && i == UDP_ICON)
+            continue;
         thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault);
+    }
 
     // UDPFS_ICON is appended at the very END of the enum (after CASE_OVERLAY2) so that saved
     // favourite icon_ids stay ABI-stable -- which puts it OUTSIDE the BDM_ICON..START_ICON device
-    // range above. Load it explicitly with the same disk-override + embedded-default semantics, or
-    // the UDPFS filesystem tab and the UDPFSBD block tab (bdmGetIconId returns UDPFS_ICON when
-    // gNetBootProtocol == NET_BOOT_UDPFS) draw no icon (thmGetTexture(UDPFS_ICON) returns NULL).
-    thmLoadResource(&newT->textures[UDPFS_ICON], UDPFS_ICON, themePath, GS_PSM_CT32, newT->useDefault);
+    // range above. Disk themes load it explicitly. Built-ins leave the slot empty and share ETH_ICON.
+    if (themePath)
+        thmLoadResource(&newT->textures[UDPFS_ICON], UDPFS_ICON, themePath, GS_PSM_CT32, newT->useDefault);
 
     // Control-hint glyphs + Favourites tab icon/star (contiguous L3_ICON..FAV_MARK: the VCD L3 hint,
     // the Favourites R3 hint, the FAV tab icon FAV_ICON/"fav", the favourited-item star
