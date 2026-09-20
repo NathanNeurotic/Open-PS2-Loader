@@ -1676,7 +1676,7 @@ static int checkLoadConfigBDM(int types)
     // if not on USB, check BDM HDD
     if (bdm_result == 0) {
         // wait for up to 5 seconds for the HDD to spin up and become accessible...
-        if (hddLoadModules() >= 0 && bdmHDDIsPresent(5000)) {
+        if (hddLoadModulesReady() && bdmHDDIsPresent(5000)) {
             bdm_result = bdmFindPartition(path, CONFIG_OPL_FILENAME, 0);
             if (!bdm_result)
                 bdm_result = bdmFindPartition(path, CONFIG_OPL_FILENAME_LEGACY, 0);
@@ -3242,7 +3242,7 @@ static int trySaveConfigBDM(int types)
     // if not on USB, check BDM HDD
     if (bdm_result == 0) {
         // wait for up to 5 seconds for the HDD to spin up and become accessible...
-        if (hddLoadModules() >= 0 && bdmHDDIsPresent(5000)) {
+        if (hddLoadModulesReady() && bdmHDDIsPresent(5000)) {
             bdm_result = bdmFindPartition(path, CONFIG_OPL_FILENAME, 1);
         }
     }
