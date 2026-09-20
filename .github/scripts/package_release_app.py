@@ -201,6 +201,7 @@ def stage(args: argparse.Namespace) -> None:
 
 
 def verify(args: argparse.Namespace) -> None:
+    """Validate release ZIP structure, app metadata, and ELF/PSU consistency."""
     archive = Path(args.zip)
     source_elf = Path(args.source_elf).read_bytes()
     if not source_elf.startswith(b"\x7fELF"):
@@ -209,10 +210,18 @@ def verify(args: argparse.Namespace) -> None:
         bad = package.testzip()
         if bad:
             raise ValueError(f"corrupt ZIP entry: {bad}")
-        files = [info.filename for info in package.infolist() if not info.is_dir()]
+        entries = package.infolist()
+        files = [info.filename for info in entries if not info.is_dir()]
         if len(files) != len(set(files)):
             raise ValueError("duplicate ZIP filenames")
         names = set(files)
+        all_names = {info.filename for info in entries}
+        misplaced_apps = sorted(name for name in all_names if re.match(r"^APP_RIPTOPL[^/]*/", name))
+        if misplaced_apps:
+            raise ValueError(
+                "release app folders must live under APPS/: "
+                + ", ".join(misplaced_apps[:8])
+            )
         required = {
             f"APPS/{args.app_name}/{args.elf_name}",
             f"{args.app_name}.psu",
@@ -244,6 +253,43 @@ def verify(args: argparse.Namespace) -> None:
         required.update(f"POPS/POPSTARTER VERSIONS/{version}/POPSTARTER.ELF" for version in (
             "MAIN", "DEBUG", "USBDELAY", "USBDELAY_DEBUG", "USBDELAY_LONGER_DEBUG"
         ))
+
+        # Every labelled loader choice is an installable app folder, not just a loose ELF.
+        # Keep the same metadata companions as the selected APPS/APP_RIPTOPL[/ -RA] folder
+        # so users can copy any flavour directly without reconstructing icon/title metadata.
+        app_dirs = sorted({
+            name.split("/", 2)[1]
+            for name in all_names
+            if name.startswith("APPS/")
+            and name.count("/") >= 2
+            and name.split("/", 2)[1].startswith("APP_RIPTOPL")
+        })
+        for app_dir in app_dirs:
+            prefix = f"APPS/{app_dir}/"
+            direct = {
+                name[len(prefix):]
+                for name in names
+                if name.startswith(prefix)
+            }
+            app_entries = {
+                name[len(prefix):]
+                for name in all_names
+                if name.startswith(prefix)
+            }
+            if any("/" in name for name in app_entries if name):
+                raise ValueError(f"{app_dir} contains nested paths; app folders must be flat")
+            missing_companions = sorted(set(APP_COMPANIONS) - direct)
+            if missing_companions:
+                raise ValueError(f"{app_dir} missing app metadata: {missing_companions}")
+            elf_names = sorted(name for name in direct if name.upper().endswith(".ELF"))
+            if len(elf_names) != 1:
+                raise ValueError(f"{app_dir} must contain exactly one ELF, found {elf_names}")
+            cfg = package.read(prefix + "title.cfg").decode("utf-8")
+            pbt = package.read(prefix + "APPINFO.PBT").decode("utf-8")
+            elf_name = elf_names[0]
+            if f"boot={elf_name}\n" not in cfg or f'SET "ELF" "{elf_name}"' not in pbt:
+                raise ValueError(f"{app_dir} metadata does not name its packaged ELF")
+
         missing = sorted(required - names)
         if missing:
             raise ValueError(f"missing ZIP entries: {missing}")
