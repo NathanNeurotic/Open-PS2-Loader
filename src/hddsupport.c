@@ -1397,7 +1397,7 @@ int hddReleasePfsForBdm(void)
 
     LOG("HDDSUPPORT releasing live PFS data-home mount for BDM-HDD\n");
 
-    // Config reads are complete at both call sites. Close any residual PFS descriptors first so
+    // Config reads are complete at the boot-time call site. Close residual PFS descriptors first so
     // unmount cannot be rejected by a stale handle; pfs1: is only a transient selector/POPS mount.
     fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
     fileXioUmount("pfs1:");
