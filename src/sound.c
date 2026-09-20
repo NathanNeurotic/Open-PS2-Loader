@@ -452,7 +452,9 @@ static int outSema, inSema;
 // are observed across threads rather than cached in a register.
 static volatile unsigned char terminateFlag, bgmIsPlaying;
 static volatile unsigned char rdPtr, wrPtr;
-static char bgmBuffer[BGM_RING_BUFFER_COUNT][BGM_RING_BUFFER_SIZE];
+// Allocate the large ring only while BGM is actually active. The old static array reserved
+// 192 * 4096 = 786432 bytes of EE .bss even when BGM was disabled or no track existed.
+static char (*bgmBuffer)[BGM_RING_BUFFER_SIZE];
 static volatile unsigned char bgmThreadRunning, bgmIoThreadRunning;
 static volatile int bgmBufferedChunks = 0;
 static volatile unsigned char bgmBufferPrimed = 0;
@@ -654,6 +656,14 @@ static int bgmInit(void)
     ee_sema_t sema;
     int result;
 
+    if (bgmBuffer == NULL) {
+        bgmBuffer = memalign(64, BGM_RING_BUFFER_COUNT * BGM_RING_BUFFER_SIZE);
+        if (bgmBuffer == NULL) {
+            LOG("BGM: failed to allocate %d-byte ring buffer.\n", BGM_RING_BUFFER_COUNT * BGM_RING_BUFFER_SIZE);
+            return -ENOMEM;
+        }
+    }
+
     terminateFlag = 0;
     rdPtr = 0;
     wrPtr = 0;
@@ -678,10 +688,15 @@ static int bgmInit(void)
 
         if (outSema < 0) {
             DeleteSema(inSema);
+            free(bgmBuffer);
+            bgmBuffer = NULL;
             return outSema;
         }
-    } else
+    } else {
+        free(bgmBuffer);
+        bgmBuffer = NULL;
         return inSema;
+    }
 
     thread.func = &bgmThread;
     thread.stack = bgmThreadStack;
@@ -711,12 +726,16 @@ static int bgmInit(void)
             DeleteSema(inSema);
             DeleteSema(outSema);
             DeleteThread(bgmThreadID);
+            free(bgmBuffer);
+            bgmBuffer = NULL;
             result = bgmIoThreadID;
         }
     } else {
         result = bgmThreadID;
         DeleteSema(inSema);
         DeleteSema(outSema);
+        free(bgmBuffer);
+        bgmBuffer = NULL;
     }
 
     return result;
@@ -728,6 +747,9 @@ static void bgmDeinit(void)
     DeleteSema(outSema);
     DeleteThread(bgmThreadID);
     DeleteThread(bgmIoThreadID);
+
+    free(bgmBuffer);
+    bgmBuffer = NULL;
 
     if (vorbisFile != NULL) {
         // Vorbisfile takes care of fclose for file-backed sources.
