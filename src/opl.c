@@ -869,6 +869,9 @@ static void initAllSupport(int force_reinit)
     initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
+    guiSetBootStatus(_l(_STR_BOOT_SCANNING_MC));
+    if (gBootInProgress)
+        guiRenderGreetingScreen();
     LOG("BOOT scan: bdmEnumerateDevices() done; MMCE initSupport begin\n");
     // Distinct banner for the MMCE init phase so a frozen boot screen LOCALIZES a scan-hang to this
     // step. Helps distinguish between the 4-probe presence check against a genuinely empty card slot
