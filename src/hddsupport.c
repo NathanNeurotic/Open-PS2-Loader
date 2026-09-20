@@ -1397,17 +1397,19 @@ int hddReleasePfsForBdm(void)
 
     LOG("HDDSUPPORT releasing live PFS data-home mount for BDM-HDD\n");
 
-    // Config reads are complete at the boot-time call site. Close residual PFS descriptors first so
-    // unmount cannot be rejected by a stale handle; pfs1: is only a transient selector/POPS mount.
-    fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+    // This handoff is speculative until the unmount succeeds. Never use PDIOC_CLOSEALL here:
+    // it closes EVERY PFS descriptor process-wide and would damage the still-live APA session if
+    // fileXioUmount then refused the mount. At this boot-time call site all config descriptors are
+    // already closed; a busy mount is therefore a reason to abort the BDM handoff, not to force it.
     fileXioUmount("pfs1:");
     ret = fileXioUmount(hddPrefix);
     if (ret < 0) {
-        LOG("HDDSUPPORT could not release %s for BDM-HDD (%d)\n", hddPrefix, ret);
+        LOG("HDDSUPPORT could not release %s for BDM-HDD (%d); leaving APA ownership intact\n", hddPrefix, ret);
         return 0;
     }
 
-    // Commit anything the config read/write path may have dirtied before the BDM side takes over.
+    // The filesystem is detached now; commit the drive cache before another filesystem stack starts
+    // using the same ATA device. Keep gOPLPart + the loaded modules so the APA home can be remounted.
     hddFlushCache();
     gHDDPrefix = NULL;
     return 1;
