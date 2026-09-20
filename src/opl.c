@@ -2898,9 +2898,11 @@ static void _loadConfig()
             if (gAutoStartLastPlayed < 0)
                 gAutoStartLastPlayed = 0;
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
-            configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode);
-            // The boot transport and the game source are separate. An APA-hosted ELF/config may
-            // legitimately run with APA games disabled while BDM-HDD exposes an exFAT volume (#545).
+            // The boot transport and the game source are separate. Respect an explicit Disabled
+            // value so an APA-hosted ELF/config can hand the disk to BDM-HDD (#545). Preserve the
+            // historical first-run/legacy behavior only when the key does not exist at all.
+            if (!configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode) && gBootHomeApa)
+                gHDDStartMode = START_MODE_AUTO;
             configGetInt(configOPL, CONFIG_OPL_ETH_MODE, &gETHStartMode);
             configGetInt(configOPL, CONFIG_OPL_APP_MODE, &gAPPStartMode);
             configGetStrCopy(configOPL, CONFIG_OPL_MMCE_PREFIX, gMMCEPrefix, sizeof(gMMCEPrefix));
@@ -3131,6 +3133,10 @@ static void _loadConfig()
                 *bootDevFlag = 1;
                 configSetInt(configGetByType(CONFIG_OPL), bootDevKey, *bootDevFlag);
             }
+        } else if (gBootHomeApa) {
+            // No master config exists yet. Keep the long-standing APA first-run behavior: the HDD
+            // games page is available until the user explicitly disables it in saved settings.
+            gHDDStartMode = START_MODE_AUTO;
         }
     }
 
