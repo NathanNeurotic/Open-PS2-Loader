@@ -221,6 +221,15 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
 
+      - name: Refuse a dirty checkout before versioning
+        run: |
+          set -eu
+          if ! git diff --quiet --; then
+            echo "ERROR: tracked files changed immediately after checkout; refusing to publish a -dirty release." >&2
+            git status --short >&2
+            exit 1
+          fi
+
       - name: Get version
         id: ver
         run: echo "version=$(make oplversion)" >> "$GITHUB_OUTPUT"
@@ -1087,7 +1096,7 @@ jobs:
             fi
             printf -- '- **Neutrino:** Included build: %s (official, as the `neutrino/` folder).\n' "$NEUTRINO_VER"
             if ls rolling/RIPTOPL-RetroAchievements-*.zip >/dev/null 2>&1; then
-              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the complete RA kit with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching artwork and `APP_RIPTOPL-RA.psu`, plus the shared cores and shortcuts (paired with [xeRAbora v0.1.0-alpha.10](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)). A development build, not hardware-tested.\n'
+              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the complete RA kit with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching artwork and `APP_RIPTOPL-RA.psu`, plus the shared cores and shortcuts. PC client: [xeRAbora GitHub](https://github.com/hacan359/xerabora) · [required v0.1.0-alpha.10 download](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10). A development build, not hardware-tested.\n'
             fi
             if [ -f "rolling/RIPTOPL-VARIANTS-${ASSET_VERSION:-rolling}.zip" ]; then
               printf -- '- `RIPTOPL-VARIANTS-*.zip`: EXTRA_FEATURES (IGS, RTL), PADEMU and DualSense (DS5, USB) loaders. For DS5, prefer `-PS2DEVPINNED-ds5`.\n'

@@ -10,7 +10,7 @@ else — talking to the RetroAchievements servers, deciding what unlocked, your 
 PC.
 
 Based on the RetroAchievements implementation by **[hacan359 (yoba)](https://github.com/hacan359/Open-PS2-Loader/pull/1)**.
-Use the upstream **[xeRAbora PC client (v0.1.0-alpha.10)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)** with RiptOPL's RA build.
+Use the upstream **[xeRAbora PC client](https://github.com/hacan359/xerabora)** with RiptOPL's RA build. Download the required **[v0.1.0-alpha.10 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)**.
 
 RiptOPL's real-hardware stabilization was contributed by **[oMrRexD](https://github.com/oMrRexD)** through
 PRs **#702–#705**, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
