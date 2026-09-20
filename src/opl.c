@@ -2939,7 +2939,8 @@ static void _loadConfig()
             // The boot transport and the game source are separate. Respect an explicit Disabled
             // value so an APA-hosted ELF/config can hand the disk to BDM-HDD (#545). Preserve the
             // historical first-run/legacy behavior only when the key does not exist at all.
-            if (!configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode) && gBootHomeApa)
+            if (!configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode) &&
+                gBootHomeApa && !gBootApaConfigFromBdm)
                 gHDDStartMode = START_MODE_AUTO;
             configGetInt(configOPL, CONFIG_OPL_ETH_MODE, &gETHStartMode);
             configGetInt(configOPL, CONFIG_OPL_APP_MODE, &gAPPStartMode);
