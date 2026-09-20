@@ -966,11 +966,17 @@ jobs:
             # main package's loader and takes the plain flavour folder name. The pademu0 build sits
             # beside it as -nopademu, mirroring how the main zip labels its flavours by folder.
             #
-            # The folders are named ROLLING/PINNED, not PS2DEVROLLING/PS2DEVPINNED like the main
-            # package's: RA is built with the ps2dev toolchain only, so the prefix told nobody
-            # anything, and it pushed the -nopademu names to 36-37 characters. These folders are
-            # copied onto memory cards, whose file names stop at 31 (EntryName[32] in libmc).
+            # The alternate folders stay named ROLLING/PINNED for the two ps2dev RA builds because
+            # the longer SDK labels push -nopademu past the 31-character memory-card name limit.
+            # OFFICIALROLLING PADEMU1 is the preferred ready app and standalone ELF, not another
+            # labelled alternate folder, so APPS/APP_RIPTOPL-RA remains the clean install target.
+            case "$GITHUB_REF" in
+              refs/tags/v*) RELEASE_CHANNEL=Tagged ;;
+              *) RELEASE_CHANNEL=Rolling ;;
+            esac
+            COMMIT_TS="$(git log -1 --format=%ct)"
             RA_STAGED=no
+            [ -s rolling/ra/RIPTOPL-ra-pademu1-OFFICIALROLLING.ELF ] && RA_STAGED=yes
             for sdk in PS2DEVROLLING PS2DEVPINNED; do
               case "$sdk" in
                 PS2DEVROLLING) RA_LABEL=ROLLING ;;
@@ -997,9 +1003,16 @@ jobs:
                   echo "ERROR: RA folder $DEST_NAME is ${#DEST_NAME} characters; memory card names stop at 31." >&2
                   exit 1
                 fi
-                DEST="$PKG/$DEST_NAME"
-                mkdir -p "$DEST"
-                cp -f "$SRC" "$DEST/RIPTOPL.ELF"
+                python3 .github/scripts/package_release_app.py stage \
+                  --package "$PKG" --source-elf "$SRC" \
+                  --app-name "$DEST_NAME" --elf-name RIPTOPL.ELF \
+                  --title '[APP] Open PS2 Loader: RiptOPL RA' --pbt-title '[APP] RiptOPL RA' \
+                  --version "${ASSET_VERSION:-rolling}" --flavour "${RA_LABEL} PADEMU${pad}" \
+                  --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support' \
+                  --timestamp "$COMMIT_TS"
+                # Only the selected APPS/APP_RIPTOPL-RA gets a standalone PSU. The labelled
+                # alternatives still carry the full direct-app metadata set inside APPS/.
+                rm -f "$PKG/${DEST_NAME}.psu"
                 RA_STAGED=yes
               done
             done
