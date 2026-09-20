@@ -74,7 +74,8 @@ bundle, or build your own with `make DUALSENSE=1`.
 
 **RetroAchievements** ships as its own complete package, `RIPTOPL-RetroAchievements-*.zip` (or build it with
 `make RETROACHIEVEMENTS=1`). It is laid out like the main archive — same `POPS/`, `EMBER/`,
-`neutrino/` and shortcuts — with the RA loader in place of the standard one, plus a shortcut to
+`neutrino/` and shortcuts — with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/` files and
+`APP_RIPTOPL-RA.psu` in place of the standard app, plus a shortcut to
 **xeRAbora**, the PC client the feature talks to. It is a **development build, not a finished
 feature** — both halves are now written, the menu side included, but none of it has run on a real
 console yet — and the standard ELF is completely unaffected by it. See
@@ -92,6 +93,13 @@ Download the **normal installable package**, `RIPTOPL-<version>.zip`. Separate a
 different purposes: `RetroAchievements` for the experimental achievements loader, `VARIANTS` for alternate
 configurations including DualSense, `DEBUG` for diagnostics, `LANGS` for translations, and `src`
 for the exact source snapshot. Optional archives or SDK flavours can be omitted; read the release notes.
+
+The standard and RetroAchievements ZIPs each contain a ready app under `APPS/`, matching `ART/`
+files, `POPS/`, `EMBER/`, `neutrino/`, companion shortcuts and a `.psu` memory-card save. The
+standard app is `APP_RIPTOPL` with `RIPTOPL.ELF`; the RA app is `APP_RIPTOPL-RA` with
+`RIPTOPL-RA.ELF`. Each PSU contains only the direct files in its app folder. Install the other
+folders separately where you use those features. A release fails packaging if a required
+Neutrino bundle is unavailable.
 
 **Already have RiptOPL installed?** The rolling release carries one loose loader asset,
 `RIPTOPL.ELF`, for exactly that case: download it and overwrite the `RIPTOPL.ELF` you already have. Its name never changes, so
@@ -127,8 +135,8 @@ contains and how to pull it.
 
 ### Minimal startup path
 
-1. Extract the normal installable archive. Start with `APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF` when present; see [build choices](ROLLING_RELEASE.md#which-build-should-i-use) for alternatives.
-2. Copy that ELF to a location your homebrew launcher can boot. For Neutrino, also copy the complete `neutrino/` folder to `mc0:/neutrino/` or `mc1:/neutrino/`. PS1 needs the companion files described in [PS1 games](#ps1-games-two-cores-one-list); copying the loader ELF alone does not install those cores.
+1. Extract the normal installable archive. Copy `APPS/APP_RIPTOPL/` to your device's `APPS/` directory, or import `APP_RIPTOPL.psu` with a PS2 save manager to install that app on a memory card. The supplied app uses `-OFFICIALROLLING` when that build is available; the labelled ELF folders provide [other build choices](ROLLING_RELEASE.md#which-build-should-i-use).
+2. Copy `ART/` to the device's artwork directory. For Neutrino, copy the complete `neutrino/` folder to `mc0:/neutrino/` or `mc1:/neutrino/`. Install the `POPS/` and `EMBER/` companions for PS1 as described in [PS1 games](#ps1-games-two-cores-one-list). The PSU contains the app files only.
 3. Prepare your game's source: `CD/` or `DVD/` for folder-based PS2 libraries, HDLoader partitions for APA, or `games.csv` for HTTP. See [How to use](#how-to-use).
 4. In **Settings → Game Sources**, enable the device and its start mode. For a network source, set **Network Connectivity** to **Manual** or **Auto**, then choose the protocol in **Network** and enter your server's settings.
 5. Use the server's Test action where available, then choose **Save Changes** before launching a game. A successful menu test is not proof that gameplay works.
@@ -795,7 +803,7 @@ discussion, the [OPL forum](https://www.psx-place.com/forums/open-ps2-loader-opl
 RiptOPL is intended to work with these maintained companion tools:
 
 - **[PS2-Servers](https://github.com/NathanNeurotic/PS2-Servers)** by **[Ripto](https://github.com/NathanNeurotic)** — all-in-one PC server launcher for **SMB, UDPFS, UDPBD and HTTP**.
-- **[udpfs-server](https://github.com/YouKnow-sys/udpfs-server)** by **[YouKnow-sys](https://github.com/YouKnow-sys)** — the same idea **from a phone**: an Android app that shares folders and disk images to the PS2 over **UDPFS**, found by broadcast so there is no server address to type in on the console. Works over a router or a direct cable. Built on **[udpfsd](https://github.com/pcm720/udpfsd)** by **[pcm720](https://github.com/pcm720)**; MIT licensed. A `udpfs-server.url` shortcut ships in installable packages.
+- **[udpfs-server](https://github.com/YouKnow-sys/udpfs-server)** by **[YouKnow-sys](https://github.com/YouKnow-sys)** — the same idea **from a phone**: an Android app that shares folders and disk images to the PS2 over **UDPFS**, found by broadcast so there is no server address to type in on the console. Works over a router or a direct cable. Built on **[udpfsd](https://github.com/pcm720/udpfsd)** by **[pcm720](https://github.com/pcm720)**; MIT licensed. An `android-udpfs-server.url` shortcut ships in installable packages.
 - **[OrbitPS2 Manager](https://github.com/Luden02/OrbitPS2-Manager)** by **[Luden](https://github.com/Luden02)** — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management.
 - **[OPL PS1 AIO Converter GUI](https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI)** by **[shaan](https://github.com/shaanhomebrew-cloud)** — Windows all-in-one PS1/POPStarter preparation tool for converting BIN/CUE backups to VCDs and installing them to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD.
 - **[xeRAbora v0.1.0-alpha.10](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. RiptOPL's RA build is paired with and requires **xeRAbora v0.1.0-alpha.10** (which added console pointer-chain resolution and memory bounds safety). xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RetroAchievements-*.zip`; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by **[oMrRexD](https://github.com/oMrRexD)**, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.
@@ -803,7 +811,7 @@ RiptOPL is intended to work with these maintained companion tools:
 - **[PS2RD CHT Manager](https://github.com/TheRealNextria/PS2RD-CHT-Manager)** by **[TheRealNextria](https://github.com/TheRealNextria)** — PC manager for the PS2RD `.cht` cheat files RiptOPL reads from your device's `CHT` folder. A `PS2RD-CHT-Manager.url` shortcut ships in installable packages.
 - **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)** — a PS1 emulator that runs natively on the PS2, used as RiptOPL's **second PS1 core** alongside POPSTARTER. Unlike the others this one is not just a shortcut: an `EMBER/` folder ships **inside** the release package, ready to drop onto a device. It is bundled unmodified under the Ember Public Beta Testing Licence (`EMBER/LICENSE-BETA.txt` in the package); releases: <https://github.com/Gageformer/Ember/releases>.
 - **[POPStarter](https://www.psx-place.com/resources/popstarter.683/)** by **krHACKen** — a PS1 launcher built around Sony's native **POPS** emulator for the PS2, used as RiptOPL's **primary PS1 core** alongside Ember. POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains **no Sony emulator binaries, libraries, or BIOS files**; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on **[PSX-Place](https://www.psx-place.com/resources/popstarter.683/)**.
-- **[Neutrino](https://github.com/rickgaiser/neutrino)** by **[rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular PS2 Device Emulator"*, and RiptOPL's **second PS2 loader core** alongside OPL's own. Like Ember it is not a shortcut: a ready-to-use `neutrino/` folder normally ships **inside** the installable package (check release notes for download/extraction omissions), drag-and-drop to `mc?:/neutrino/`. Neutrino is deliberately **UI-agnostic** — it has no interface of its own, which is exactly what lets a front-end like RiptOPL drive it per game. Licensed **AFL-3.0**; releases: <https://github.com/rickgaiser/neutrino/releases>.
+- **[Neutrino](https://github.com/rickgaiser/neutrino)** by **[rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular PS2 Device Emulator"*, and RiptOPL's **second PS2 loader core** alongside OPL's own. Like Ember it is not a shortcut: a ready-to-use `neutrino/` folder ships **inside** each installable ZIP, drag-and-drop to `mc?:/neutrino/`. Neutrino is deliberately **UI-agnostic** — it has no interface of its own, which is exactly what lets a front-end like RiptOPL drive it per game. Licensed **AFL-3.0**; releases: <https://github.com/rickgaiser/neutrino/releases>.
 ## Acknowledgements
 
 This fork stands entirely on the shoulders of the PS2 homebrew community. **None of this

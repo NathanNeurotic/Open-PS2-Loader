@@ -79,7 +79,8 @@ jobs:
           unzip -q "$MAIN_ZIP" -d package-work
 
           printf '%s\r\n' '[InternetShortcut]' 'URL=https://github.com/NathanNeurotic/PS2-Servers' > package-work/PS2-Servers.url
-          printf '%s\r\n' '[InternetShortcut]' 'URL=https://github.com/YouKnow-sys/udpfs-server' > package-work/udpfs-server.url
+          rm -f package-work/udpfs-server.url
+          printf '%s\r\n' '[InternetShortcut]' 'URL=https://github.com/YouKnow-sys/udpfs-server' > package-work/android-udpfs-server.url
           printf '%s\r\n' '[InternetShortcut]' 'URL=https://github.com/Luden02/OrbitPS2-Manager' > package-work/OrbitPS2-Manager.url
           printf '%s\r\n' '[InternetShortcut]' 'URL=https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI' > package-work/OPL-PS1-AIO-Converter-GUI.url
           printf '%s\r\n' '[InternetShortcut]' 'URL=https://github.com/TheRealNextria/PS2RD-CHT-Manager' > package-work/PS2RD-CHT-Manager.url
@@ -87,8 +88,13 @@ jobs:
           rm -f "$MAIN_ZIP"
           (
             cd package-work
-            zip -qr -X "../$(basename "$MAIN_ZIP")" .
+            zip -qr -X "../release-work/$(basename "$MAIN_ZIP")" *
           )
+          if [[ -f package-work/APPS/APP_RIPTOPL/RIPTOPL.ELF ]]; then
+            python3 .github/scripts/package_release_app.py verify \
+              --zip "$MAIN_ZIP" --source-elf package-work/APPS/APP_RIPTOPL/RIPTOPL.ELF \
+              --app-name APP_RIPTOPL --elf-name RIPTOPL.ELF
+          fi
           echo "Rebuilt $(basename "$MAIN_ZIP") with all five companion-tool shortcuts."
 
       - name: Add all DS5 loaders to the variants archive
@@ -119,7 +125,7 @@ jobs:
           rm -f "$VARIANT_ZIP"
           (
             cd variants-work
-            zip -qr -X "../$(basename "$VARIANT_ZIP")" .
+            zip -qr -X "../release-work/$(basename "$VARIANT_ZIP")" *
           )
           echo "Rebuilt $(basename "$VARIANT_ZIP") with DS5 loaders."
 

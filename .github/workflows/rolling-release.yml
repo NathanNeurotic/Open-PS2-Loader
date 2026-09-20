@@ -36,8 +36,9 @@ name: Rolling Release
 # moving canaries across both maintained toolchain lineages (issue #270).
 #
 # GATING: the ps2dev:latest (PS2DEVROLLING) build must COMPILE -- if it fails to build the
-# publish FAILS loudly. All available flavours ship as their own labeled folder; there is NO
-# unlabeled default, so a toolchain can never be swapped in silently. Each ELF self-identifies with
+# publish FAILS loudly. All available flavours ship as their own labelled comparison folder.
+# The ready app under APPS/ selects OFFICIALROLLING when present and records any fallback in its
+# metadata, so a toolchain cannot be swapped silently. Each ELF self-identifies with
 # its PS2DEVPINNED, OFFICIALPINNED, PS2DEVROLLING, or OFFICIALROLLING version suffix. The compile gate
 # catches BUILD breakage only: ps2dev:latest tracks a MOVING tag whose ps2sdk drifts daily and
 # can yield a green-but-non-booting binary (issue #102), which is why the pinned PS2DEVPINNED flavour
@@ -643,7 +644,7 @@ jobs:
           #   APP_RIPTOPL-PS2DEVROLLING/RIPTOPL.ELF  -- ps2dev:latest (bleeding-edge MOVING tag; may
           #                                              not boot, issue #102).
           #   APP_RIPTOPL-OFFICIALROLLING/RIPTOPL.ELF -- official ps2homebrew:main moving canary.
-          #                                              There is no unlabeled default folder.
+          #   These four folders are labelled build choices; APPS/ holds the ready-to-install app.
           #   POPS/                           -- POPSTARTER.ELF + every auto-installed MC external + loose BDMA
           #                                      variants (including iLink), plus "POPSTARTER VERSIONS/" holding the alternate
           #                                      POPSTARTER builds (MAIN, DEBUG, USBDELAY*) for users to swap
@@ -660,8 +661,10 @@ jobs:
           #                                      user-supplied, and the placeholder filename in the folder
           #                                      says so. Peer of POPS/ -- both go to the device ROOT.
           #   neutrino/                       -- the official latest Neutrino core (rickgaiser/neutrino), extracted for drag-and-drop.
+          #   APPS/APP_RIPTOPL/               -- ready-to-install app, with artwork in ART/.
+          #   APP_RIPTOPL.psu                 -- memory-card save containing only direct app files.
           #   PS2-Servers.url                 -- link to the UDPFS / SMB / UDPBD all-in-one PC server.
-          #   udpfs-server.url                -- link to the Android UDPFS server (serve from a phone).
+          #   android-udpfs-server.url        -- link to the Android UDPFS server (serve from a phone).
           #   OrbitPS2-Manager.url            -- link to the cross-platform PC library manager.
           #   OPL-PS1-AIO-Converter-GUI.url   -- link to the PS1/POPSTARTER preparation tool.
           #   PS2RD-CHT-Manager.url           -- link to the PS2RD cheat-file manager.
@@ -699,6 +702,14 @@ jobs:
             echo "WARN: officialsdk build missing this run; package ships without APP_RIPTOPL-OFFICIALROLLING" >&2
           fi
           cp -rf POPS/. "$PKG/POPS/"
+          # The supplied install-kit example adds POPStarter's cheats, IGR artwork, KELF and
+          # Trojan beside the files already tracked in POPS/. Keep the iLink drivers in POPS/:
+          # RiptOPL resolves that pair there, even though the example also has copies at its root.
+          EXAMPLE=Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP
+          for f in CHEATS.TXT IGR_BG.TM2 IGR_NO.TM2 IGR_YES.TM2 POPSTARTER.KELF TROJAN_7.BIN; do
+            test -s "$EXAMPLE/POPS/$f"
+            cp -f "$EXAMPLE/POPS/$f" "$PKG/POPS/$f"
+          done
           # Every POPSTARTER BDMA family is intentionally loose-file-only: none of these payloads is
           # embedded in RIPTOPL.ELF. Publishing an incomplete POPS/ stash would leave launch-time
           # preparation with no pair to copy from the device to mc?:/POPSTARTER/.
@@ -735,6 +746,8 @@ jobs:
           # hard failure, exactly like the bios.bin guard below.
           test -f EMBER/LICENSE-BETA.txt
           cp -rf EMBER/. "$PKG/EMBER/"
+          mkdir -p "$PKG/EMBER/games/Per-Game-Folder"
+          cp -f "$EXAMPLE/EMBER/games/Per-Game-Folder/GAME FILES" "$PKG/EMBER/games/Per-Game-Folder/GAME FILES"
           if [ ! -s "$PKG/EMBER/LICENSE-BETA.txt" ]; then
             echo "ERROR: EMBER/LICENSE-BETA.txt did not reach the package -- bundling Ember without" >&2
             echo "       its licence breaches section 2(a) of that licence. Refusing to publish." >&2
@@ -756,7 +769,7 @@ jobs:
           # found by broadcast, built on pcm720's udpfsd. Shipped as a shortcut for the same reason
           # as the rest: link the maintained tool, never vendor a copy of it.
           test -f pc/udpfs-server.url
-          cp -f pc/udpfs-server.url "$PKG/udpfs-server.url"
+          cp -f pc/udpfs-server.url "$PKG/android-udpfs-server.url"
           # OrbitPS2 Manager: the PC-side library manager (import discs, fetch covers/screenshots,
           # ZSO compression, per-game settings, VMC management). Shipped as a shortcut for the same
           # reason as PS2-Servers -- link the maintained tool, never vendor a copy of it.
@@ -770,7 +783,7 @@ jobs:
           cp -f pc/PS2RD-CHT-Manager.url "$PKG/PS2RD-CHT-Manager.url"
           # neutrino/ (package folder) -- the official latest pre-release of the Neutrino core,
           # EXTRACTED into a plain folder so the user just drag-and-drops it onto the card (no
-          # zip-in-zip). Best-effort: a fetch/extract failure still publishes the rest. The archive
+          # zip-in-zip). Both installable ZIPs require it; a failed fetch fails packaging. The archive
           # root holds neutrino.elf + config/ + modules/, so the neutrino/ folder copies straight to
           # mc?:/neutrino/. RiptOPL adds ONLY config/bsd-udpfsbd.toml (UDPFS); else the official build.
           # This file is fork-private -- upstream Neutrino will not supply it -- so fail loudly if a
@@ -780,17 +793,28 @@ jobs:
             exit 1
           fi
           NEUTRINO_VER=""
-          if gh release download latest --repo rickgaiser/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
-            NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"
+          NEUTRINO_ARCHIVE=""
+          for attempt in 1 2 3; do
+            if gh release download latest --repo rickgaiser/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
+              NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"
+              [ -n "$NEUTRINO_ARCHIVE" ] && break
+            fi
+            [ "$attempt" = 3 ] || sleep 5
+          done
+          if [ -n "$NEUTRINO_ARCHIVE" ]; then
             NEUTRINO_VER="$(printf '%s' "$NEUTRINO_ARCHIVE" | sed -e 's/^neutrino_//' -e 's/\.7z$//')"
+            if [ -z "$NEUTRINO_VER" ]; then
+              echo "ERROR: downloaded Neutrino archive has no version in its filename" >&2
+              exit 1
+            fi
             echo "Bundled neutrino: $NEUTRINO_ARCHIVE"
             SEVENZ="$(command -v 7z || command -v 7za || true)"
             if [ -z "$SEVENZ" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full && SEVENZ="$(command -v 7z || command -v 7za)"; fi
             NEUT_ABS="$(cd "$PKG" && pwd)/$NEUTRINO_ARCHIVE"
             # Extract into $PKG/neutrino/ and drop the raw .7z. Neutrino ships udpfs_bd.irx but no
             # built-in -bsd token for it; RiptOPL launches UDPFS via -bsd=udpfsbd, so add that config
-            # next to the others in config/. Require neutrino.elf at the folder root, else omit.
-            if [ -n "$SEVENZ" ] && "$SEVENZ" x -y -o"$PKG/neutrino" "$NEUT_ABS" >/dev/null && [ -e "$PKG/neutrino/neutrino.elf" ]; then
+            # next to the others in config/. Require neutrino.elf at the folder root.
+            if [ -n "$SEVENZ" ] && "$SEVENZ" x -y -o"$PKG/neutrino" "$NEUT_ABS" >/dev/null && [ -s "$PKG/neutrino/neutrino.elf" ]; then
               mkdir -p "$PKG/neutrino/config" && cp neutrino/bsd-udpfsbd.toml "$PKG/neutrino/config/bsd-udpfsbd.toml"
               if [ ! -s "$PKG/neutrino/config/bsd-udpfsbd.toml" ] || ! cmp -s neutrino/bsd-udpfsbd.toml "$PKG/neutrino/config/bsd-udpfsbd.toml"; then
                 echo "ERROR: fork-private bsd-udpfsbd.toml did not reach the staged Neutrino config unchanged." >&2
@@ -802,18 +826,45 @@ jobs:
               # config/bsd-udpfs.toml + udpfs modules. The bundle is a MOVING target re-fetched
               # every publish -- assert the dependency so an upstream re-layout is caught here,
               # not as a mystery black screen on hardware.
-              if [ ! -e "$PKG/neutrino/config/bsd-udpfs.toml" ]; then
-                echo "WARN: bundled Neutrino has no config/bsd-udpfs.toml -- UDPFS 'Files' launches would fail with this bundle" >&2
+              if [ ! -s "$PKG/neutrino/config/bsd-udpfs.toml" ]; then
+                echo "ERROR: bundled Neutrino has no config/bsd-udpfs.toml for UDPFS Files mode" >&2
+                exit 1
               fi
             else
-              echo "WARN: could not extract a usable Neutrino (no neutrino.elf at archive root); package omits it this run" >&2
-              rm -rf "$PKG/neutrino" "$NEUT_ABS"
-              NEUTRINO_VER=""
+              echo "ERROR: could not extract a usable Neutrino (no neutrino.elf at archive root)" >&2
+              exit 1
             fi
           else
-            echo "WARN: could not fetch neutrino latest pre-release; package omits it this run"
+            echo "ERROR: could not fetch Neutrino after three attempts; refusing an incomplete installable ZIP" >&2
+            exit 1
           fi
           echo "NEUTRINO_VER=${NEUTRINO_VER}" >> "$GITHUB_ENV"
+          INSTALL_ELF="$OFFICIAL_ELF"
+          INSTALL_FLAVOUR=OFFICIALROLLING
+          if [ ! -s "$INSTALL_ELF" ]; then
+            for flavour in PS2DEVPINNED OFFICIALPINNED PS2DEVROLLING; do
+              candidate="rolling/${VERSIONED_BASE}-${flavour}.ELF"
+              if [ -s "$candidate" ]; then
+                INSTALL_ELF="$candidate"
+                INSTALL_FLAVOUR="$flavour"
+                break
+              fi
+            done
+          fi
+          # OFFICIALROLLING is the selected one-click flavour when present. Use a named build
+          # fallback only if it was unavailable; never put the zero-byte example ELF into a ZIP.
+          case "$GITHUB_REF" in
+            refs/tags/v*) RELEASE_CHANNEL=Tagged ;;
+            *) RELEASE_CHANNEL=Rolling ;;
+          esac
+          python3 .github/scripts/package_release_app.py stage \
+            --package "$PKG" --source-elf "$INSTALL_ELF" \
+            --app-name APP_RIPTOPL --elf-name RIPTOPL.ELF \
+            --title '[APP] Open PS2 Loader: RiptOPL' --pbt-title '[APP] RiptOPL' \
+            --version "${ASSET_VERSION:-rolling}" --flavour "$INSTALL_FLAVOUR" \
+            --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader for PS2 and PS3' \
+            --timestamp "$(git log -1 --format=%ct)"
+          echo "INSTALL_FLAVOUR=${INSTALL_FLAVOUR}" >> "$GITHUB_ENV"
           REL="${ASSET_VERSION:-rolling}"
           # Just the version: the release is replaced on every publish (every old asset is deleted
           # first), and the version's revision number changes whenever the code does, so no hash
@@ -821,16 +872,17 @@ jobs:
           ZIP="RIPTOPL-${REL}.zip"
           (
             cd "$PKG"
-            zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2DEVROLLING POPS EMBER PS2-Servers.url udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
+            zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2DEVROLLING APPS ART APP_RIPTOPL.psu POPS EMBER neutrino PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
             if [ -d APP_RIPTOPL-PS2DEVPINNED ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-PS2DEVPINNED >/dev/null; fi
             if [ -d APP_RIPTOPL-OFFICIALROLLING ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-OFFICIALROLLING >/dev/null; fi
             if [ -d APP_RIPTOPL-OFFICIALPINNED ]; then zip -r -X "../rolling/${ZIP}" APP_RIPTOPL-OFFICIALPINNED >/dev/null; fi
-            # the extracted neutrino/ folder (drag-and-drop; replaces the old zip-in-zip neutrino_*.7z)
-            if [ -d neutrino ]; then zip -r -X "../rolling/${ZIP}" neutrino >/dev/null; fi
           )
           echo "Built rolling/${ZIP}:"
           unzip -l "rolling/${ZIP}"
-          if [ -n "${NEUTRINO_VER:-}" ] && ! unzip -p "rolling/${ZIP}" neutrino/config/bsd-udpfsbd.toml | cmp -s neutrino/bsd-udpfsbd.toml -; then
+          python3 .github/scripts/package_release_app.py verify \
+            --zip "rolling/${ZIP}" --source-elf "$INSTALL_ELF" \
+            --app-name APP_RIPTOPL --elf-name RIPTOPL.ELF
+          if ! unzip -p "rolling/${ZIP}" neutrino/config/bsd-udpfsbd.toml | cmp -s neutrino/bsd-udpfsbd.toml -; then
             echo "ERROR: final RIPTOPL package is missing or changed neutrino/config/bsd-udpfsbd.toml." >&2
             exit 1
           fi
@@ -845,8 +897,8 @@ jobs:
           #     sixteen ELFs to pick" is not a way to offer somebody a feature.
           #   * the MEGA step below excludes VARIANTS and DEBUG as diagnostic bundles, so anything
           #     shipped there is never permanently archived.
-          # Best-effort throughout: RA is an opt-in flavour and a missing RA build must never sink
-          # the publish of everything else.
+          # RA is opt-in: missing builds omit the RA ZIP, while a malformed staged build fails
+          # packaging instead of publishing an unusable app or PSU.
           PKG=riptopl_pkg
           REL="${ASSET_VERSION:-rolling}"
           # xeRAbora, hacan359's PC client. The RA loader does nothing on its own -- the console
@@ -904,6 +956,40 @@ jobs:
             if [ "$RA_STAGED" = "no" ]; then
               echo "WARN: rolling/ra held no recognisable ELF names; skipping the RetroAchievements zip." >&2
             else
+              # Prefer the pinned PADEMU build for the installable app, then the rolling PADEMU
+              # build. The labelled alternatives remain in the archive for diagnosis.
+              RA_INSTALL_SRC=""
+              RA_INSTALL_FLAVOUR=""
+              for spec in \
+                'PS2DEVPINNED:1:PINNED PADEMU1' \
+                'PS2DEVROLLING:1:ROLLING PADEMU1' \
+                'PS2DEVPINNED:0:PINNED PADEMU0' \
+                'PS2DEVROLLING:0:ROLLING PADEMU0'; do
+                sdk="${spec%%:*}"
+                remaining="${spec#*:}"
+                pad="${remaining%%:*}"
+                candidate="rolling/ra/RIPTOPL-ra-pademu${pad}-${sdk}.ELF"
+                if [ -s "$candidate" ]; then
+                  RA_INSTALL_SRC="$candidate"
+                  RA_INSTALL_FLAVOUR="${remaining#*:}"
+                  break
+                fi
+              done
+              if [ -z "$RA_INSTALL_SRC" ]; then
+                echo 'ERROR: RA builds were staged but none is usable for the installable app' >&2
+                exit 1
+              fi
+              case "$GITHUB_REF" in
+                refs/tags/v*) RELEASE_CHANNEL=Tagged ;;
+                *) RELEASE_CHANNEL=Rolling ;;
+              esac
+              python3 .github/scripts/package_release_app.py stage \
+                --package "$PKG" --source-elf "$RA_INSTALL_SRC" \
+                --app-name APP_RIPTOPL-RA --elf-name RIPTOPL-RA.ELF \
+                --title '[APP] Open PS2 Loader: RiptOPL RA' --pbt-title '[APP] RiptOPL RA' \
+                --version "${ASSET_VERSION:-rolling}" --flavour "$RA_INSTALL_FLAVOUR" \
+                --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support' \
+                --timestamp "$(git log -1 --format=%ct)"
               # The DOWNLOAD is named in full for a new user. The APP_RIPTOPL-RA-* folders inside keep
               # the short RA name, for the memory card limit described above.
               RA_ZIP="RIPTOPL-RetroAchievements-${REL}.zip"
@@ -912,15 +998,17 @@ jobs:
                 # Same payload as the main package, RA loader in place of the standard one. POPS,
                 # EMBER and the shortcuts are already staged and asserted by the step above, so a
                 # broken bundle has failed the build long before here.
-                zip -r -X "../rolling/${RA_ZIP}" POPS EMBER xeRAbora.url PS2-Servers.url udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
+                zip -r -X "../rolling/${RA_ZIP}" APPS/APP_RIPTOPL-RA ART/RIPTOPL-RA.ELF_*.png APP_RIPTOPL-RA.psu POPS EMBER neutrino xeRAbora.url PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
                 for d in APP_RIPTOPL-RA-*; do
                   [ -d "$d" ] && zip -r -X "../rolling/${RA_ZIP}" "$d" >/dev/null
                 done
-                if [ -d neutrino ]; then zip -r -X "../rolling/${RA_ZIP}" neutrino >/dev/null; fi
               )
               echo "Built rolling/${RA_ZIP}:"
               unzip -l "rolling/${RA_ZIP}"
-              if [ -n "${NEUTRINO_VER:-}" ] && ! unzip -p "rolling/${RA_ZIP}" neutrino/config/bsd-udpfsbd.toml | cmp -s neutrino/bsd-udpfsbd.toml -; then
+              python3 .github/scripts/package_release_app.py verify \
+                --zip "rolling/${RA_ZIP}" --source-elf "$RA_INSTALL_SRC" \
+                --app-name APP_RIPTOPL-RA --elf-name RIPTOPL-RA.ELF --ra
+              if ! unzip -p "rolling/${RA_ZIP}" neutrino/config/bsd-udpfsbd.toml | cmp -s neutrino/bsd-udpfsbd.toml -; then
                 echo "ERROR: final RetroAchievements package is missing or changed neutrino/config/bsd-udpfsbd.toml." >&2
                 exit 1
               fi
@@ -978,20 +1066,20 @@ jobs:
             cat .github/rolling-release-notes-intro.md
 
             printf '\n## Download\n\n'
-            printf -- '- **New install:** the `RIPTOPL-<version>.zip` package. Copy `RIPTOPL.ELF` from one `APP_RIPTOPL-<flavour>/` folder to your launch method, plus `POPS/`, `EMBER/` and `neutrino/` as described below. It also carries shortcuts to the tools at the bottom of this page. [Install guide](https://nathanneurotic.github.io/Open-PS2-Loader/install.html)\n'
+            printf -- '- **New install:** the `RIPTOPL-<version>.zip` package contains `APPS/APP_RIPTOPL/`, `ART/`, `APP_RIPTOPL.psu`, `POPS/`, `EMBER/`, `neutrino/` and companion shortcuts. The ready app uses the %s build. The PSU contains only the app files; install the other folders separately. [Install guide](https://github.com/NathanNeurotic/Open-PS2-Loader#quick-start)\n' "${INSTALL_FLAVOUR:-OFFICIALROLLING}"
             if [ -f rolling/RIPTOPL.ELF ]; then
               printf -- '- **Updating:** download **[RIPTOPL.ELF](%s/%s/releases/download/%s/RIPTOPL.ELF)** and overwrite yours. It is the %s flavour and the link never changes, but it does not bring `POPS/`, `EMBER/`, `neutrino/` or languages.\n' \
                 "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG" "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
             fi
             # neutrino-watch.yml reads the bundled version back from "Included build: <ver> " -- keep
             # that exact phrase, followed by a space.
-            if [ -n "${NEUTRINO_VER:-}" ]; then
-              printf -- '- **Neutrino:** Included build: %s (official, as the `neutrino/` folder).\n' "$NEUTRINO_VER"
-            else
-              printf -- '- **Neutrino could not be bundled this run:** get the latest from https://github.com/rickgaiser/neutrino/releases.\n'
+            if [ -z "${NEUTRINO_VER:-}" ]; then
+              echo 'ERROR: full installable ZIP was built without a Neutrino version' >&2
+              exit 1
             fi
+            printf -- '- **Neutrino:** Included build: %s (official, as the `neutrino/` folder).\n' "$NEUTRINO_VER"
             if ls rolling/RIPTOPL-RetroAchievements-*.zip >/dev/null 2>&1; then
-              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the RetroAchievements build as a complete package (paired with [xeRAbora v0.1.0-alpha.10](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)). A development build, not hardware-tested.\n'
+              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the complete RA kit with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching artwork and `APP_RIPTOPL-RA.psu`, plus the shared cores and shortcuts (paired with [xeRAbora v0.1.0-alpha.10](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)). A development build, not hardware-tested.\n'
             fi
             if [ -f "rolling/RIPTOPL-VARIANTS-${ASSET_VERSION:-rolling}.zip" ]; then
               printf -- '- `RIPTOPL-VARIANTS-*.zip`: EXTRA_FEATURES (IGS, RTL), PADEMU and DualSense (DS5, USB) loaders. For DS5, prefer `-PS2DEVPINNED-ds5`.\n'

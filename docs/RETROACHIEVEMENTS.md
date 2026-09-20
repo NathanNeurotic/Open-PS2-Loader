@@ -206,11 +206,14 @@ is now wrong.
 
 The rolling release publishes the flavour as its own archive, **`RIPTOPL-RetroAchievements-*.zip`**, built to the
 same shape as the main package: `POPS/`, `EMBER/`, `neutrino/` and the PC-tool shortcuts, with
-loader folders in place of the standard ones:
+`APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/RIPTOPL-RA.ELF_*.png` artwork, and
+`APP_RIPTOPL-RA.psu`. The PSU contains only the direct files of `APP_RIPTOPL-RA`; import it with a
+PS2 save manager for a memory-card installation, then copy the other folders separately. The
+archive also keeps these labelled loader folders for comparing builds:
 
 | Folder | Build |
 | --- | --- |
-| `APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` (the default). Start here. |
+| `APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` (the installable app's first choice). Start here for build comparisons. |
 | `APP_RIPTOPL-RA-ROLLING/` | `ps2dev:latest`, `PADEMU=1` |
 | `APP_RIPTOPL-RA-PINNED-nopademu/` | Pinned ps2dev toolchain, `PADEMU=0` |
 | `APP_RIPTOPL-RA-ROLLING-nopademu/` | `ps2dev:latest`, `PADEMU=0` |
