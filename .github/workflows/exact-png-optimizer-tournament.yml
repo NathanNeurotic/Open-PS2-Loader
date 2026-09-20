@@ -1,0 +1,143 @@
+name: Exact PNG optimizer tournament
+
+on:
+  push:
+    branches:
+      - test/korium-audit-remediation
+    paths:
+      - .github/workflows/exact-png-optimizer-tournament.yml
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: test/korium-audit-remediation
+          fetch-depth: 0
+
+      - name: Install optimizers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq optipng pngcrush pngquant advancecomp zopfli
+          python3 -m pip install --disable-pip-version-check pillow
+
+      - name: Keep only strictly smaller pixel-identical PNGs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          import hashlib, re, shutil, struct, subprocess, tempfile
+
+          keep_chunks={b"gAMA",b"cHRM",b"sRGB",b"iCCP"}
+
+          def parse_assets():
+              lines=Path("Makefile").read_text().splitlines()
+              out=[]
+              for i,line in enumerate(lines):
+                  m=re.match(r"^PNG_ASSETS\s*=\s*(.*)$", line)
+                  if not m: continue
+                  rhs=m.group(1)
+                  while True:
+                      cont=rhs.rstrip().endswith("\\")
+                      rhs=rhs.rstrip()
+                      if cont: rhs=rhs[:-1]
+                      rhs=rhs.split("#",1)[0]
+                      out += rhs.split()
+                      if not cont: break
+                      i += 1
+                      rhs=lines[i]
+                  break
+              return list(dict.fromkeys(out))
+
+          def sig(path):
+              raw=path.read_bytes()
+              with Image.open(path) as im:
+                  rgba=im.convert("RGBA")
+                  pix=(im.size,hashlib.sha256(rgba.tobytes()).hexdigest())
+              pos=8; chunks={}
+              while pos+12<=len(raw):
+                  n=struct.unpack(">I",raw[pos:pos+4])[0]
+                  kind=raw[pos+4:pos+8]
+                  payload=raw[pos+8:pos+8+n]
+                  if kind in keep_chunks:
+                      chunks[kind.decode("ascii")]=hashlib.sha256(payload).hexdigest()
+                  pos += 12+n
+                  if kind==b"IEND": break
+              return pix,chunks
+
+          total=0; wins=[]
+          for name in parse_assets():
+              src=Path("gfx")/f"{name}.png"
+              if not src.exists(): continue
+              base=src.read_bytes(); base_sig=sig(src)
+              candidates=[]
+
+              with tempfile.TemporaryDirectory() as td:
+                  td=Path(td)
+                  def consider(p,label):
+                      nonlocal_dummy=None
+                      if not p.exists(): return
+                      try:
+                          if sig(p)==base_sig and p.stat().st_size < len(base):
+                              candidates.append((p.stat().st_size,label,p.read_bytes()))
+                      except Exception:
+                          pass
+
+                  p=td/"zopfli.png"
+                  subprocess.run(["zopflipng","--iterations=30","--filters=01234mepb",str(src),str(p)],
+                                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                  consider(p,"zopflipng30")
+
+                  p=td/"crush.png"
+                  subprocess.run(["pngcrush","-q","-brute","-reduce",str(src),str(p)],
+                                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                  consider(p,"pngcrush-brute-reduce")
+
+                  p=td/"quant.png"
+                  subprocess.run(["pngquant","--quality=100-100","--speed","1","--force","--output",str(p),str(src)],
+                                 stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                  consider(p,"pngquant-exact")
+
+                  p=td/"opt.png"; p.write_bytes(base)
+                  subprocess.run(["optipng","-o7","-quiet",str(p)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                  consider(p,"optipng-o7")
+
+                  # advancecomp after the current best candidate can sometimes shave DEFLATE bytes.
+                  seed=min(candidates,key=lambda x:x[0])[2] if candidates else base
+                  p=td/"adv.png"; p.write_bytes(seed)
+                  subprocess.run(["advpng","-z4","-q",str(p)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                  consider(p,"advpng-z4")
+
+              if candidates:
+                  size,label,data=min(candidates,key=lambda x:x[0])
+                  if size < len(base):
+                      src.write_bytes(data)
+                      saved=len(base)-size
+                      total+=saved
+                      wins.append((saved,name,len(base),size,label))
+
+          print(f"TOURNAMENT_SAVED={total}")
+          print(f"TOURNAMENT_FILES={len(wins)}")
+          for saved,name,before,after,label in sorted(wins,reverse=True):
+              print(f"{name} {before}->{after} saved={saved} via={label}")
+          PY
+
+      - name: Commit verified winners
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- gfx; then
+            echo "No further exact PNG reductions."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gfx
+          git commit -m "assets: select smallest exact PNG encodings"
+          git push origin HEAD:test/korium-audit-remediation
