@@ -41,9 +41,8 @@ jobs:
             label="$1"
             make clean >/dev/null
             if make LOCALVERSION=FLAGAUDIT OPLDIAG=0 RETROACHIEVEMENTS=0 release >/tmp/build.log 2>&1; then
-              elf=$(find . -maxdepth 1 -type f -name 'RIPTOPL*.ELF' | head -1)
               stripped=opl_stripped.elf
-              echo "FLAG_RESULT $label packed=$(stat -c %s "$elf") stripped=$(stat -c %s "$stripped")"
+              echo "FLAG_RESULT $label packed=$(stat -c %s RIPTOPL.ELF) stripped=$(stat -c %s "$stripped")"
             else
               echo "FLAG_RESULT $label BUILD_FAILED"
               tail -80 /tmp/build.log
