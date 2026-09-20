@@ -991,13 +991,14 @@ jobs:
                 fi
                 python3 .github/scripts/package_release_app.py stage \
                   --package "$PKG" --source-elf "$SRC" \
-                  --app-name "$DEST_NAME" --elf-name RIPTOPL.ELF \
+                  --app-name "$DEST_NAME" --elf-name RIPTOPL-RA.ELF \
                   --title '[APP] Open PS2 Loader: RiptOPL RA' --pbt-title '[APP] RiptOPL RA' \
                   --version "${ASSET_VERSION:-rolling}" --flavour "${RA_LABEL} PADEMU${pad}" \
                   --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support' \
                   --timestamp "$COMMIT_TS"
                 # Only the selected APPS/APP_RIPTOPL-RA gets a standalone PSU. The labelled
-                # alternatives still carry the full direct-app metadata set inside APPS/.
+                # alternatives still carry the full direct-app metadata set inside APPS/ and use
+                # the RA-specific RIPTOPL-RA.ELF filename so every RA folder shares the same artwork.
                 rm -f "$PKG/${DEST_NAME}.psu"
                 RA_STAGED=yes
               done
@@ -1056,7 +1057,7 @@ jobs:
                 # Same payload as the main package, RA loader in place of the standard one. POPS,
                 # EMBER and the shortcuts are already staged and asserted by the step above, so a
                 # broken bundle has failed the build long before here.
-                zip -r -X "../rolling/${RA_ZIP}" APPS/APP_RIPTOPL-RA ART/RIPTOPL-RA.ELF_*.png ART/RIPTOPL.ELF_*.png APP_RIPTOPL-RA.psu POPS EMBER neutrino xeRAbora.url PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
+                zip -r -X "../rolling/${RA_ZIP}" APPS/APP_RIPTOPL-RA ART/RIPTOPL-RA.ELF_*.png APP_RIPTOPL-RA.psu POPS EMBER neutrino xeRAbora.url PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
                 for d in APPS/APP_RIPTOPL-RA-*; do
                   [ -d "$d" ] && zip -r -X "../rolling/${RA_ZIP}" "$d" >/dev/null
                 done
