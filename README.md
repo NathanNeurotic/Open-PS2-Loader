@@ -860,6 +860,10 @@ With special and sincere thanks to:
   and explicitly kept from contaminating normal build behavior.
 - **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
+- **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)** — for
+  **PSUManager**, whose CC0 core documents the PS2 save container format and independently
+  validates the `APP_RIPTOPL.psu` and `APP_RIPTOPL-RA.psu` release saves. Its unmodified
+  core and license are preserved in [third_party/PSUManager](third_party/PSUManager/README.md).
 - **eliminator1403** — for dedicated **testing, bug reports, and real-hardware feedback** that
   has repeatedly caught issues and shaped fixes across this fork. Invaluable QA.
 - **Berion** — for the artwork and theme design that has shaped how OPL *looks* for years.

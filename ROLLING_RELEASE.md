@@ -30,6 +30,11 @@ devices, copy the matching `APPS/APP_RIPTOPL*/` directory instead. Install `ART/
 does not contain those shared folders. The labelled ELF folders are alternate builds, not
 additional PSU saves.
 
+The `.psu` format and independent package check use the CC0
+[PSUManager core by techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager),
+preserved with its license in [third_party/PSUManager](third_party/PSUManager/README.md).
+The core is release-host tooling and does not enter the installable packages.
+
 Apart from the single stable-named `RIPTOPL.ELF` above, the final GitHub release intentionally has
 no floating `.ELF`, `SHA256SUMS.txt`, detailed changelog, or SDK/IRX manifest assets. The other
 standard loaders live in the unified package, DualSense loaders live in VARIANTS, and build

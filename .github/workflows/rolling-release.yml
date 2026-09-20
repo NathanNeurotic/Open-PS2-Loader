@@ -864,6 +864,13 @@ jobs:
             --version "${ASSET_VERSION:-rolling}" --flavour "$INSTALL_FLAVOUR" \
             --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader for PS2 and PS3' \
             --timestamp "$(git log -1 --format=%ct)"
+          # Read the deterministic PSU with techwritescode's preserved PSUManager core,
+          # then compare every direct app file before the archive is published.
+          g++ -std=c++17 -O2 .github/scripts/verify_psu_with_psumanager.cpp \
+            third_party/PSUManager/src/core/PsuArchive.cpp \
+            third_party/PSUManager/src/core/PsuDate.cpp \
+            -o "$RUNNER_TEMP/verify-psu"
+          "$RUNNER_TEMP/verify-psu" "$PKG/APP_RIPTOPL.psu" "$PKG/APPS/APP_RIPTOPL"
           echo "INSTALL_FLAVOUR=${INSTALL_FLAVOUR}" >> "$GITHUB_ENV"
           REL="${ASSET_VERSION:-rolling}"
           # Just the version: the release is replaced on every publish (every old asset is deleted
@@ -990,6 +997,7 @@ jobs:
                 --version "${ASSET_VERSION:-rolling}" --flavour "$RA_INSTALL_FLAVOUR" \
                 --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support' \
                 --timestamp "$(git log -1 --format=%ct)"
+              "$RUNNER_TEMP/verify-psu" "$PKG/APP_RIPTOPL-RA.psu" "$PKG/APPS/APP_RIPTOPL-RA"
               # The DOWNLOAD is named in full for a new user. The APP_RIPTOPL-RA-* folders inside keep
               # the short RA name, for the memory card limit described above.
               RA_ZIP="RIPTOPL-RetroAchievements-${REL}.zip"

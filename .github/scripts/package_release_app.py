@@ -3,9 +3,9 @@
 
 The committed Example is a reference for artwork and app companions. Its ELF is
 an empty placeholder; only a checked build output may enter a release package.
-The PSU record layout follows PSUManager's PsuFormat.h and PsuArchive.cpp
-(https://git.techwritescode.dev/techwritescode/PSUManager). A commit timestamp
-is used for reproducible PSU dates rather than the packager's wall clock.
+The PSU record layout follows techwritescode's PSUManager core, preserved in
+third_party/PSUManager. A commit timestamp is used for reproducible PSU dates
+rather than the packager's wall clock. The vendored reader checks both outputs.
 """
 
 import argparse
