@@ -143,15 +143,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # RIPTOPL.ELF is the ONE deliberate exception. Every other loose ELF here is a
-          # version-and-flavour-stamped build that belongs inside an archive; RIPTOPL.ELF exists
-          # precisely so an existing install can be updated by replacing one file, from a link that
-          # never changes. Sweeping it up with the rest would delete the asset the rolling release
-          # advertises in its own "Download" section.
+          # RIPTOPL.ELF and RIPTOPL_RA.ELF are the deliberate stable-name exceptions. Every other
+          # loose ELF here is a version-and-flavour-stamped build that belongs inside an archive.
+          # These two exist so standard and RetroAchievements installs can be updated by replacing
+          # one file from a link that never changes. Sweeping them up would delete assets the
+          # release advertises in its own "Download" section.
           for f in release-work/*.ELF release-work/*MANIFEST*.txt release-work/SHA256SUMS.txt release-work/DETAILED_CHANGELOG; do
             [[ -f "$f" ]] || continue
             asset="$(basename "$f")"
-            if [[ "$asset" == "RIPTOPL.ELF" ]]; then
+            if [[ "$asset" == "RIPTOPL.ELF" || "$asset" == "RIPTOPL_RA.ELF" ]]; then
               echo "Keeping one-click loader asset: $asset"
               continue
             fi
@@ -180,17 +180,33 @@ jobs:
           echo 'Final release assets:'
           printf '%s\n' "$ASSETS"
           echo 'Invariant checks:'
-          # RIPTOPL.ELF is the one sanctioned loose loader (the one-click update download); every
-          # other match is a floating build artefact that should have stayed inside an archive.
-          if printf '%s\n' "$ASSETS" | grep -vFx 'RIPTOPL.ELF' | grep -E '\.ELF$|MANIFEST|SHA256SUMS|DETAILED_CHANGELOG'; then
+          # Only the two stable update loaders may remain loose. Every version/flavour-stamped
+          # loader belongs inside an archive.
+          if printf '%s\n' "$ASSETS" | grep -Ev '^(RIPTOPL\.ELF|RIPTOPL_RA\.ELF)
+ | grep -E '\.ELF$|MANIFEST|SHA256SUMS|DETAILED_CHANGELOG'; then
             echo 'ERROR: floating ELF/manifest asset remains.' >&2
             exit 1
           fi
-          echo 'OK: no floating ELF or manifest assets beyond RIPTOPL.ELF.'
-          if printf '%s\n' "$ASSETS" | grep -qFx 'RIPTOPL.ELF'; then
-            echo 'OK: one-click RIPTOPL.ELF is published.'
-          else
-            # Not fatal: it comes from a best-effort flavour, so a build hiccup means the release
-            # ships without it rather than shipping a stale one under a stable name.
-            echo 'NOTE: no RIPTOPL.ELF this run -- its flavour did not build.'
+          echo 'OK: no floating ELF or manifest assets beyond the stable standard/RA update loaders.'
+          for asset in RIPTOPL.ELF RIPTOPL_RA.ELF; do
+            if printf '%s\n' "$ASSETS" | grep -qFx "$asset"; then
+              echo "OK: one-click $asset is published."
+            else
+              # Both come from best-effort OFFICIALROLLING builds. Never retain a stale stable-name
+              # binary from the previous publish when that flavour fails this run.
+              echo "NOTE: no $asset this run -- its OFFICIALROLLING flavour did not build."
+            fi
+          done
+          if ! printf '%s\n' "$ASSETS" | grep -qFx 'APP_RIPTOPL.psu'; then
+            echo 'ERROR: standalone APP_RIPTOPL.psu is missing from the release.' >&2
+            exit 1
+          fi
+          echo 'OK: standalone APP_RIPTOPL.psu is published.'
+          if printf '%s\n' "$ASSETS" | grep -qE '^RIPTOPL-RetroAchievements-.*\.zip
+; then
+            if ! printf '%s\n' "$ASSETS" | grep -qFx 'APP_RIPTOPL-RA.psu'; then
+              echo 'ERROR: RA package exists but standalone APP_RIPTOPL-RA.psu is missing.' >&2
+              exit 1
+            fi
+            echo 'OK: standalone APP_RIPTOPL-RA.psu accompanies the RA package.'
           fi
