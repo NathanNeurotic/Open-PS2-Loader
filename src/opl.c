@@ -2485,19 +2485,6 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
         }
     }
 
-    // A BDM argv launch can keep its ELF on APA/PFS while its ISO and settings live at the ATA
-    // filesystem root (#545). Prefer that settings bundle over the unrelated PFS data home, but
-    // only after an explicit config.path redirect. Match the ATA driver, not whichever USB slot
-    // happened to enumerate first. The same bounded HDD readiness helper served the old BDM fallback.
-    if (autoLaunchMode == BDM_MODE && gBootHomeApa) {
-        char home[BDM_DEVICE_ROOT_MAX];
-        if (bdmHDDIsPresent(5000) && bdmGetDeviceRootByType(BDM_TYPE_ATA, home, sizeof(home))) {
-            value = tryReadRecoveryConfigHome(types, home);
-            if (value & CONFIG_OPL)
-                return value;
-        }
-    }
-
     // APA can host only the ELF while the user's settings + games live on the ATA BDM filesystem
     // (#545, CosmicScale). Preserve APA as first choice, but if it contains no master config, hand
     // the physical drive over cleanly and probe ONLY the ATA BDM root -- never USB/MX4SIO/iLink.
@@ -2506,7 +2493,8 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
         if (value & CONFIG_OPL)
             return value;
 
-        if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0' && hddReleasePfsForBdm()) {
+        if (autoLaunchMode == IO_MODE_SELECTED_NONE &&
+            gHDDPrefix != NULL && gHDDPrefix[0] != '\0' && hddReleasePfsForBdm()) {
             char home[BDM_DEVICE_ROOT_MAX];
 
             // bdmLoadModules supplies BDMFS_FATFS synchronously; bdmEnsureSourceModules then loads
@@ -3182,7 +3170,9 @@ static void _loadConfig()
     }
 
     if (lscstatus & CONFIG_NETWORK) {
-        if (!(result & CONFIG_NETWORK)) {
+        // The ATA-BDM master was already selected above. A missing optional network file must
+        // not run APA recovery again: its first step remounts PFS on the same physical disk.
+        if (!(result & CONFIG_NETWORK) && !gBootApaConfigFromBdm) {
             result = tryAlternateDevice(lscstatus, IO_MODE_SELECTED_NONE);
         }
 
@@ -4982,8 +4972,6 @@ static void miniInit(int mode)
                 ret = checkLoadConfigBDM(CONFIG_ALL);
             else
                 ret = tryAlternateDevice(CONFIG_ALL, mode);
-        } else if (mode == BDM_MODE && gBootHomeApa) {
-            ret = tryAlternateDevice(CONFIG_ALL, mode);
         }
 
         if (ret & CONFIG_OPL) {

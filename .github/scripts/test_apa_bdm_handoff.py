@@ -45,7 +45,7 @@ bdm = text(root / 'src/bdmsupport.c')
 release = function_body(hdd, 'int hddReleasePfsForBdm(')
 check(release is not None, 'hddReleasePfsForBdm is missing')
 if release is not None:
-    check(not re.search(r'fileXioDevctl\\s*\\(\\s*"pfs:"\\s*,\\s*PDIOC_CLOSEALL', release),
+    check(not re.search(r'fileXioDevctl\s*\(\s*"pfs:"\s*,\s*PDIOC_CLOSEALL', release),
           'APA->BDM handoff force-closes PFS descriptors before ownership is transferred')
     check('fileXioUmount("pfs1:")' not in release,
           'APA->BDM handoff unexpectedly tears down the unrelated pfs1: scratch mount')
@@ -63,14 +63,16 @@ check(alternate is not None, 'tryAlternateDevice is missing')
 if alternate is not None:
     apa = alternate.find('if (gBootHomeApa)')
     handoff = alternate.find('hddReleasePfsForBdm()', apa)
+    gui_only = alternate.find('autoLaunchMode == IO_MODE_SELECTED_NONE', apa)
     ata_only = alternate.find('bdmEnsureSourceModules(BDM_TYPE_ATA', handoff)
     root_by_type = alternate.find('bdmGetDeviceRootByType(BDM_TYPE_ATA', ata_only)
     recovery = alternate.find('tryReadRecoveryConfigHome(types, home)', root_by_type)
     owner = alternate.find('gBootApaConfigFromBdm = 1', recovery)
     restore = alternate.find('hddLoadSupportModules()', owner)
-    check(apa >= 0 and handoff > apa and ata_only > handoff and root_by_type > ata_only and
+    check(apa >= 0 and gui_only > apa and handoff > gui_only and
+          ata_only > handoff and root_by_type > ata_only and
           recovery > root_by_type and owner > recovery,
-          'GUI APA->BDM recovery no longer transfers ownership in the audited order')
+          'GUI APA->BDM recovery is not gated to GUI mode or lost its audited order')
     check(restore > owner,
           'failed ATA-BDM config discovery no longer restores the original APA/PFS home')
     region = alternate[apa:restore if restore > 0 else len(alternate)]
@@ -97,13 +99,17 @@ if load is not None:
     check(re.search(r'!configGetInt\(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode\).*?'
                     r'gBootHomeApa && !gBootApaConfigFromBdm', load, re.S),
           'legacy HDD-mode fallback can re-enable APA after BDM became the settings owner')
+    check('if (!(result & CONFIG_NETWORK) && !gBootApaConfigFromBdm)' in load,
+          'a missing network config can remount PFS after ATA-BDM became the settings owner')
 
 ensure = function_body(bdm, 'static int bdmEnsureTransportLoaded(')
 check(ensure is not None, 'bdmEnsureTransportLoaded is missing')
 if ensure is not None:
     ata = re.search(r'case BDM_TYPE_ATA:(.*?)default:', ensure, re.S)
-    check(ata is not None and 'hddModulesAreLoaded() || hddLoadModulesReady()' in ata.group(1),
-          'BDM ATA handoff can double-acquire an ATA stack already loaded by APA discovery')
+    check(ata is not None and 'if (!hddModLoaded)' in ata.group(1) and
+          'if (hddLoadModulesReady())' in ata.group(1) and
+          'hddModulesAreLoaded()' not in ata.group(1),
+          'BDM ATA handoff does not retain its own module reference exactly once')
 
 mini = function_body(opl, 'static void miniInit(')
 check(mini is not None, 'miniInit is missing')
