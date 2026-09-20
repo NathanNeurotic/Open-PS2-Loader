@@ -182,7 +182,7 @@ jobs:
           echo 'Invariant checks:'
           # Only the two stable update loaders may remain loose. Every version/flavour-stamped
           # loader belongs inside an archive.
-          if printf '%s\n' "$ASSETS" | grep -Ev '^(RIPTOPL\.ELF|RIPTOPL_RA\.ELF)$' | grep -E '\.ELF$|MANIFEST|SHA256SUMS|DETAILED_CHANGELOG'; then
+          if printf '%s\n' "$ASSETS" | grep -Ev '^(RIPTOPL\.ELF|RIPTOPL-RA\.ELF)$' | grep -E '\.ELF$|MANIFEST|SHA256SUMS|DETAILED_CHANGELOG'; then
             echo 'ERROR: floating ELF/manifest asset remains.' >&2
             exit 1
           fi
