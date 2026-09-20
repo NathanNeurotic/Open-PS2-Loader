@@ -1,0 +1,188 @@
+name: Optimize Korium embedded PNGs
+
+on:
+  push:
+    branches:
+      - test/korium-audit-remediation
+    paths:
+      - .github/workflows/optimize-korium-embedded-pngs.yml
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Korium parity branch
+        uses: actions/checkout@v4
+        with:
+          ref: test/korium-audit-remediation
+          fetch-depth: 0
+
+      - name: Install lossless PNG optimizer
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y optipng
+          python3 -m pip install --disable-pip-version-check pillow
+
+      - name: Optimize embedded PNG assets and verify exact decoded pixels
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from __future__ import annotations
+          from pathlib import Path
+          from PIL import Image
+          import hashlib
+          import json
+          import re
+          import struct
+          import subprocess
+
+          ROOT = Path(".")
+          MAKEFILE = ROOT / "Makefile"
+          GFX = ROOT / "gfx"
+          STATE = Path("/tmp/korium_png_before.json")
+
+          def png_asset_names(makefile: Path) -> list[str]:
+              lines = makefile.read_text(encoding="utf-8").splitlines()
+              names: list[str] = []
+              i = 0
+              while i < len(lines):
+                  line = lines[i]
+                  match = re.match(r"^PNG_ASSETS\s*(\+?=)\s*(.*)$", line)
+                  if not match:
+                      i += 1
+                      continue
+
+                  rhs = match.group(2)
+                  while True:
+                      continued = rhs.rstrip().endswith("\\")
+                      rhs = rhs.rstrip()
+                      if continued:
+                          rhs = rhs[:-1]
+                      rhs = rhs.split("#", 1)[0]
+                      names.extend(rhs.split())
+                      if not continued:
+                          break
+                      i += 1
+                      if i >= len(lines):
+                          break
+                      rhs = lines[i]
+                  i += 1
+
+              # Preserve Makefile order while removing duplicates.
+              return list(dict.fromkeys(names))
+
+          def color_chunks(path: Path) -> dict[str, str]:
+              data = path.read_bytes()
+              sig = b"\x89PNG\r\n\x1a\n"
+              if not data.startswith(sig):
+                  raise RuntimeError(f"{path} is not a PNG")
+              pos = len(sig)
+              keep = {b"gAMA", b"cHRM", b"sRGB", b"iCCP"}
+              found: dict[str, str] = {}
+              while pos + 12 <= len(data):
+                  length = struct.unpack(">I", data[pos:pos+4])[0]
+                  kind = data[pos+4:pos+8]
+                  chunk = data[pos+8:pos+8+length]
+                  if kind in keep:
+                      found[kind.decode("ascii")] = hashlib.sha256(chunk).hexdigest()
+                  pos += 12 + length
+                  if kind == b"IEND":
+                      break
+              return found
+
+          def image_signature(path: Path) -> dict:
+              with Image.open(path) as image:
+                  frames = getattr(image, "n_frames", 1)
+                  if frames != 1:
+                      raise RuntimeError(f"{path}: animated PNG ({frames} frames) is not eligible")
+                  rgba = image.convert("RGBA")
+                  return {
+                      "size": list(image.size),
+                      "rgba_sha256": hashlib.sha256(rgba.tobytes()).hexdigest(),
+                      "color_chunks": color_chunks(path),
+                      "file_size": path.stat().st_size,
+                  }
+
+          assets = []
+          for name in png_asset_names(MAKEFILE):
+              path = GFX / f"{name}.png"
+              if path.exists():
+                  assets.append(path)
+
+          if not assets:
+              raise RuntimeError("No PNG_ASSETS files were found")
+
+          before = {str(path): image_signature(path) for path in assets}
+          STATE.write_text(json.dumps(before, indent=2), encoding="utf-8")
+
+          for path in assets:
+              subprocess.run(
+                  ["optipng", "-o7", "-quiet", str(path)],
+                  check=True,
+              )
+
+          after = {str(path): image_signature(path) for path in assets}
+
+          mismatches = []
+          reductions = []
+          for key, old in before.items():
+              new = after[key]
+              if old["size"] != new["size"]:
+                  mismatches.append(f"{key}: dimensions changed {old['size']} -> {new['size']}")
+              if old["rgba_sha256"] != new["rgba_sha256"]:
+                  mismatches.append(f"{key}: decoded RGBA pixels changed")
+              if old["color_chunks"] != new["color_chunks"]:
+                  mismatches.append(f"{key}: color-management chunks changed")
+              saved = old["file_size"] - new["file_size"]
+              if saved > 0:
+                  reductions.append((saved, key, old["file_size"], new["file_size"]))
+
+          if mismatches:
+              raise RuntimeError("\n".join(mismatches))
+
+          reductions.sort(reverse=True)
+          total_before = sum(v["file_size"] for v in before.values())
+          total_after = sum(v["file_size"] for v in after.values())
+          total_saved = total_before - total_after
+
+          print(f"Verified {len(assets)} embedded PNGs: dimensions, decoded RGBA pixels, and color metadata unchanged.")
+          print(f"Embedded PNG bytes: {total_before} -> {total_after} (saved {total_saved}).")
+          for saved, key, old_size, new_size in reductions:
+              print(f"{saved:8d}  {old_size:8d} -> {new_size:8d}  {key}")
+
+          summary = Path("/tmp/korium_png_summary.md")
+          with summary.open("w", encoding="utf-8") as out:
+              out.write("## Korium embedded PNG optimization\n\n")
+              out.write(f"- Verified assets: **{len(assets)}**\n")
+              out.write(f"- Before: **{total_before:,} bytes**\n")
+              out.write(f"- After: **{total_after:,} bytes**\n")
+              out.write(f"- Saved: **{total_saved:,} bytes**\n")
+              out.write("- Verification: dimensions, decoded RGBA pixels, and PNG color-management chunks unchanged.\n\n")
+              if reductions:
+                  out.write("| Saved | Before | After | Asset |\n")
+                  out.write("|---:|---:|---:|---|\n")
+                  for saved, key, old_size, new_size in reductions:
+                      out.write(f"| {saved:,} | {old_size:,} | {new_size:,} | \`{key}\` |\n")
+          PY
+
+          cat /tmp/korium_png_summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit only genuine reductions
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- gfx; then
+            echo "OptiPNG found no smaller lossless representations."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gfx
+          git commit -m "assets: losslessly optimize Korium embedded PNGs"
+          git push origin HEAD:test/korium-audit-remediation
