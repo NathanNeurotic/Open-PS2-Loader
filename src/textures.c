@@ -24,6 +24,8 @@ extern void *hdd_bd_png;
 extern void *mmce_png;
 extern void *hdd_png;
 extern void *eth_png;
+extern void *udp_bd_png;
+extern void *udp_fs_png;
 extern void *app_png;
 extern void *Index_0_png;
 extern void *Index_1_png;
@@ -178,9 +180,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {MMCE_ICON, "mmce", &mmce_png},
     {HDD_ICON, "hdd", &hdd_png},
     {ETH_ICON, "eth", &eth_png},
-    // Korium's embedded UDPBD/UDPFS NET bars decode identically to eth.png. Point their
-    // internal fallback at the one compiled blob; disk themes still probe the distinct names.
-    {UDP_ICON, "udp_bd", &eth_png},
+    {UDP_ICON, "udp_bd", &udp_bd_png},
     {APP_ICON, "app", &app_png},
     {INDEX_0, "Index_0", &Index_0_png},
     {INDEX_1, "Index_1", &Index_1_png},
@@ -284,7 +284,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     // overlay2=case_overlay still resolves; disk themes load it from their own folder anyway,
     // since initImageTexture passes texId -1 on that path and never falls back to the baked set.
     {CASE_OVERLAY2, "case_overlay", NULL},
-    {UDPFS_ICON, "udp_fs", &eth_png},
+    {UDPFS_ICON, "udp_fs", &udp_fs_png},
     {L1_ICON, "L1", &L1_png},
     {R1_ICON, "R1", &R1_png},
     {CASE_PS1, "case_ps1", &case_ps1_png}, // VCD (PS1) jewel-case frame + its black disc
