@@ -143,7 +143,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # RIPTOPL.ELF and RIPTOPL_RA.ELF are the deliberate stable-name exceptions. Every other
+          # RIPTOPL.ELF and RIPTOPL-RA.ELF are the deliberate stable-name exceptions. Every other
           # loose ELF here is a version-and-flavour-stamped build that belongs inside an archive.
           # These two exist so standard and RetroAchievements installs can be updated by replacing
           # one file from a link that never changes. Sweeping them up would delete assets the
@@ -151,7 +151,7 @@ jobs:
           for f in release-work/*.ELF release-work/*MANIFEST*.txt release-work/SHA256SUMS.txt release-work/DETAILED_CHANGELOG; do
             [[ -f "$f" ]] || continue
             asset="$(basename "$f")"
-            if [[ "$asset" == "RIPTOPL.ELF" || "$asset" == "RIPTOPL_RA.ELF" ]]; then
+            if [[ "$asset" == "RIPTOPL.ELF" || "$asset" == "RIPTOPL-RA.ELF" ]]; then
               echo "Keeping one-click loader asset: $asset"
               continue
             fi
@@ -187,7 +187,7 @@ jobs:
             exit 1
           fi
           echo 'OK: no floating ELF or manifest assets beyond the stable standard/RA update loaders.'
-          for asset in RIPTOPL.ELF RIPTOPL_RA.ELF; do
+          for asset in RIPTOPL.ELF RIPTOPL-RA.ELF; do
             if printf '%s\n' "$ASSETS" | grep -qFx "$asset"; then
               echo "OK: one-click $asset is published."
             else
