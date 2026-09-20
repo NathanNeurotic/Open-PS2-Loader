@@ -31,6 +31,7 @@ jobs:
     - uses: DoozyX/clang-format-lint-action@v0.18.2
       with:
         source: '.'
+        exclude: './third_party/PSUManager'
         extensions: 'h,c'
         clangFormatVersion: 12
         inplace: False

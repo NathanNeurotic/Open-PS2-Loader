@@ -1601,7 +1601,9 @@ struct UIItem diaAbout[] = {
     {UI_BREAK},
 
     {UI_SPACER},
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"... and the anonymous ...", -1}}},
+    // PSUManager is release-host tooling; credit techwritescode in both editions without
+    // adding a row to this non-scrolling dialog.
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"techwritescode (PSUManager) - ... and the anonymous ...", -1}}},
     {UI_BREAK},
 
     {UI_BREAK},
