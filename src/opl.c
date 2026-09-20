@@ -3073,6 +3073,12 @@ static void _loadConfig()
             configGetStrCopy(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath, sizeof(gDefaultBGMPath));
         }
 
+        if (!(result & CONFIG_OPL) && gBootHomeApa) {
+            // No master config exists yet. Keep the long-standing APA first-run behavior: the HDD
+            // games page is available until the user explicitly disables it in saved settings.
+            gHDDStartMode = START_MODE_AUTO;
+        }
+
         // BOOT-DEVICE RECONCILE. The device OPL is RUNNING FROM always has its transport enabled.
         //
         // This existed for ATA alone, and rebuild-137b bolted MX4SIO on beside it. Both were the same
@@ -3133,10 +3139,6 @@ static void _loadConfig()
                 *bootDevFlag = 1;
                 configSetInt(configGetByType(CONFIG_OPL), bootDevKey, *bootDevFlag);
             }
-        } else if (gBootHomeApa) {
-            // No master config exists yet. Keep the long-standing APA first-run behavior: the HDD
-            // games page is available until the user explicitly disables it in saved settings.
-            gHDDStartMode = START_MODE_AUTO;
         }
     }
 
