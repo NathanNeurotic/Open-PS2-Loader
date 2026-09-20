@@ -1,0 +1,170 @@
+name: Resize Korium menu strips to render size
+
+on:
+  push:
+    branches:
+      - test/korium-audit-remediation
+    paths:
+      - .github/workflows/resize-korium-menu-strips.yml
+
+permissions:
+  contents: write
+
+jobs:
+  resize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: test/korium-audit-remediation
+          fetch-depth: 0
+
+      - name: Prefilter menu strips to exact 480x96 render size
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq optipng
+          python3 -m pip install --disable-pip-version-check pillow
+
+          python3 - <<'PY'
+          from PIL import Image, ImageChops, ImageStat
+          from pathlib import Path
+          import math
+          import struct
+          import subprocess
+
+          names = ["usb","usb_bd","ilk_bd","m4s_bd","hdd_bd","mmce","hdd","eth","udp_bd","udp_fs","app","fav"]
+          target = (480, 96)
+          rows = []
+          total_before = 0
+          total_after = 0
+
+          def png_header(path):
+              data = path.read_bytes()[:29]
+              if data[:8] != b"\x89PNG\r\n\x1a\n":
+                  raise RuntimeError(f"{path}: bad PNG signature")
+              w,h = struct.unpack(">II", data[16:24])
+              return w,h,data[24],data[25]
+
+          def mse_psnr(a, b):
+              aa = a.convert("RGBA")
+              bb = b.convert("RGBA")
+              diff = ImageChops.difference(aa, bb)
+              hist = diff.histogram()
+              # histogram has 256 bins per RGBA channel
+              sq = 0
+              count = aa.width * aa.height * 4
+              for channel in range(4):
+                  base = channel * 256
+                  for v in range(256):
+                      sq += hist[base+v] * v * v
+              mse = sq / count
+              psnr = float("inf") if mse == 0 else 10 * math.log10((255*255)/mse)
+              means = ImageStat.Stat(diff).mean
+              return mse, psnr, means
+
+          for name in names:
+              path = Path("gfx") / f"{name}.png"
+              before_bytes = path.stat().st_size
+              total_before += before_bytes
+
+              with Image.open(path) as src:
+                  if src.size != (640,128):
+                      raise RuntimeError(f"{path}: expected 640x128, got {src.size}")
+                  if src.mode != "P":
+                      raise RuntimeError(f"{path}: expected indexed P mode, got {src.mode}")
+
+                  # OPL sets every texture to GS_FILTER_LINEAR. Precomputing that same linear
+                  # downscale to the element's fixed 480x96 virtual-canvas draw size removes
+                  # the 1.33x source oversampling without changing theme geometry.
+                  ideal = src.convert("RGBA").resize(target, Image.Resampling.BILINEAR)
+
+              indexed = ideal.quantize(
+                  colors=256,
+                  method=Image.Quantize.FASTOCTREE,
+                  dither=Image.Dither.NONE,
+              )
+              indexed.save(path, format="PNG", optimize=True)
+
+              # Ensure the result stayed indexed and compare the actual decoded saved image
+              # against the ideal linear-filtered 480x96 target.
+              with Image.open(path) as check:
+                  if check.size != target:
+                      raise RuntimeError(f"{path}: wrong output dimensions {check.size}")
+                  if check.mode != "P":
+                      raise RuntimeError(f"{path}: quantizer did not retain indexed PNG mode")
+                  decoded = check.convert("RGBA")
+
+              mse, psnr, means = mse_psnr(ideal, decoded)
+              alpha_mae = means[3]
+              rgba_mae = sum(means) / 4.0
+
+              # Strict visual-quality gate. These thresholds are deliberately tighter than
+              # normal texture quantization; if any asset cannot meet them it is restored by
+              # failing the job before commit.
+              if psnr < 38.0 or rgba_mae > 1.50 or alpha_mae > 1.50:
+                  raise RuntimeError(
+                      f"{path}: quality gate failed: PSNR={psnr:.2f} dB, "
+                      f"RGBA MAE={rgba_mae:.3f}, alpha MAE={alpha_mae:.3f}"
+                  )
+
+              subprocess.run(["optipng","-o7","-quiet",str(path)], check=False)
+
+              w,h,depth,color_type = png_header(path)
+              if (w,h) != target or color_type != 3 or depth != 8:
+                  raise RuntimeError(
+                      f"{path}: expected 480x96 8-bit indexed PNG after optimization, "
+                      f"got {w}x{h}, depth={depth}, color_type={color_type}"
+                  )
+
+              after_bytes = path.stat().st_size
+              total_after += after_bytes
+              rows.append((name,before_bytes,after_bytes,psnr,rgba_mae,alpha_mae))
+
+          cfg = Path("misc/conf_theme_OPL.cfg")
+          text = cfg.read_text(encoding="utf-8")
+          old = """# no y, no aligned. Only the forced dimensions grow, because the strip is now a 640 by 128 bitmap
+# per device with that device's tab lit where Korium's was 256 by 64; 480 by 96 holds the art's
+# 5 to 1 aspect and still ends at 448, leaving the hint on its own default row underneath."""
+          new = """# no y, no aligned. The embedded per-device strip is prefiltered to this element's exact 480 by 96
+# draw size on OPL's fixed 640 by 480 virtual canvas. Korium originally shipped 256 by 64 strips;
+# this keeps the delivered 5 to 1 artwork larger than the original while avoiding a redundant
+# 640 by 128 T8 allocation that the renderer immediately downscaled to 480 by 96 anyway."""
+          if old not in text:
+              raise RuntimeError("Korium MenuIcon size comment changed unexpectedly; refusing blind edit")
+          cfg.write_text(text.replace(old,new), encoding="utf-8")
+
+          print(f"KORIUM_STRIPS_BYTES={total_before}->{total_after};saved={total_before-total_after}")
+          print("asset before after psnr_db rgba_mae alpha_mae")
+          for row in rows:
+              print(f"{row[0]} {row[1]} {row[2]} {row[3]:.2f} {row[4]:.4f} {row[5]:.4f}")
+
+          with open("/tmp/summary.md","w",encoding="utf-8") as out:
+              out.write("## Korium MenuIcon texture resize\n\n")
+              out.write("- Source dimensions: **640×128 → 480×96**\n")
+              out.write("- Renderer target: **480×96** on the fixed 640×480 virtual canvas\n")
+              out.write("- Texture format retained: **8-bit indexed (GS_PSM_T8)**\n")
+              out.write(f"- PNG bytes: **{total_before:,} → {total_after:,}** (saved **{total_before-total_after:,}**)\n")
+              out.write("- Estimated decoded pixel storage: **983,040 → 552,960 bytes** before CLUT/alignment, saving **430,080 bytes**.\n\n")
+              out.write("| Asset | Before | After | PSNR | RGBA MAE | Alpha MAE |\n")
+              out.write("|---|---:|---:|---:|---:|---:|\n")
+              for n,b,a,p,m,am in rows:
+                  out.write(f"| {n} | {b:,} | {a:,} | {p:.2f} dB | {m:.4f} | {am:.4f} |\n")
+          PY
+
+          cat /tmp/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit verified strip resize
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gfx/usb.png gfx/usb_bd.png gfx/ilk_bd.png gfx/m4s_bd.png gfx/hdd_bd.png gfx/mmce.png gfx/hdd.png gfx/eth.png gfx/udp_bd.png gfx/udp_fs.png gfx/app.png gfx/fav.png misc/conf_theme_OPL.cfg
+          if git diff --cached --quiet; then
+            echo "No changes produced."
+            exit 0
+          fi
+          git commit -m "assets: size Korium menu strips to their render dimensions"
+          git push origin HEAD:test/korium-audit-remediation
