@@ -1963,7 +1963,10 @@ static void drawMenuIcon(struct menu_list *menu, struct submenu_list *item, conf
 {
     if (thmElemSkipsDevice(elem, menu->item->icon_id))
         return; // devices= filter: not this page's element
-    GSTEXTURE *menuIconTex = thmGetTexture(menu->item->icon_id);
+
+    GSTEXTURE *menuIconTex = gTheme->isBuiltin
+                                 ? thmGetBuiltinMenuStrip(menu->item->icon_id)
+                                 : thmGetTexture(menu->item->icon_id);
     if (menuIconTex && menuIconTex->Mem)
         rmDrawPixmap(menuIconTex, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, elem->scaled, gDefaultCol, 0);
 }
@@ -3041,23 +3044,44 @@ GSTEXTURE *thmGetTexture(unsigned int id)
     if (id >= TEXTURES_COUNT)
         return NULL;
 
-    // See if the texture is valid.
     GSTEXTURE *txt = &gTheme->textures[id];
-    if (txt->Mem)
-        return txt;
+    return txt->Mem ? txt : NULL;
+}
 
-    // The built-in Korium NET strip is exactly the same PNG for ETH, UDPBD and UDPFS. The two UDP
-    // slots are intentionally left undecoded by thmLoad(NULL), so share ETH's already-loaded texture
-    // instead of spending another ~80 KiB of T8 pixels + CLUT on each copy. Keep this BUILT-IN only:
-    // disk themes must retain their independent udp_bd.png / udp_fs.png overrides and fallback rules.
-    if ((id == UDP_ICON || id == UDPFS_ICON) &&
-        (guiThemeID == 0 || guiThemeID == nThemes + 1)) {
-        GSTEXTURE *net = &gTheme->textures[ETH_ICON];
-        if (net->Mem)
-            return net;
+static int thmIsBuiltinMenuStripId(unsigned int id)
+{
+    return (id >= BDM_ICON && id <= APP_ICON) || id == FAV_ICON || id == UDPFS_ICON;
+}
+
+// Korium's built-in MenuIcon art is a 640x128 strip per page, but only one page can be visible.
+// Keep exactly one decoded strip resident instead of pinning every device strip in EE RAM for the
+// whole session. The source PNGs remain embedded at full resolution; switching pages only decodes
+// the requested in-memory PNG, so this changes neither pixels nor disk-theme semantics.
+static GSTEXTURE *thmGetBuiltinMenuStrip(unsigned int id)
+{
+    GSTEXTURE *txt;
+
+    if (gTheme == NULL || !gTheme->isBuiltin || !thmIsBuiltinMenuStripId(id))
+        return thmGetTexture(id);
+
+    if (gTheme->loadedMenuStripId == (int)id)
+        return thmGetTexture(id);
+
+    if (gTheme->loadedMenuStripId >= 0) {
+        GSTEXTURE *old = &gTheme->textures[gTheme->loadedMenuStripId];
+        if (old->Mem != NULL) {
+            rmUnloadTexture(old);
+            texFree(old);
+        }
     }
 
-    return NULL;
+    gTheme->loadedMenuStripId = -1;
+    txt = &gTheme->textures[id];
+    if (texLoadInternal(txt, id) < 0 || txt->Mem == NULL)
+        return NULL;
+
+    gTheme->loadedMenuStripId = (int)id;
+    return txt;
 }
 
 static void thmFree(theme_t *theme)
@@ -3240,6 +3264,8 @@ static int thmLoad(const char *themePath)
 
     newT->useDefault = 1;
     newT->usedHeight = 480;
+    newT->isBuiltin = (themePath == NULL);
+    newT->loadedMenuStripId = -1;
     thmSetColors(newT);
     newT->mainElems.first = NULL;
     newT->mainElems.last = NULL;
@@ -3513,18 +3539,17 @@ static int thmLoad(const char *themePath)
     }
     newT->loadingIconCount = i;
 
-    // Customizable icons. Korium's built-in ETH/UDPBD/UDPFS NET bars are byte-identical, so the
-    // built-in themes decode ETH_ICON once and thmGetTexture aliases the two UDP ids to it. Disk
-    // themes still load/probe each distinct filename normally, including use_default fallback.
+    // Customizable icons. Built-in MenuIcon strips (BDM_ICON..APP_ICON) are demand-decoded by
+    // thmGetBuiltinMenuStrip(), keeping one 640x128 strip resident instead of all of them. Disk themes
+    // retain the historical eager load so their independent per-device overrides behave unchanged.
     for (i = BDM_ICON; i <= START_ICON; i++) {
-        if (!themePath && i == UDP_ICON)
+        if (!themePath && i >= BDM_ICON && i <= APP_ICON)
             continue;
         thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault);
     }
 
-    // UDPFS_ICON is appended at the very END of the enum (after CASE_OVERLAY2) so that saved
-    // favourite icon_ids stay ABI-stable -- which puts it OUTSIDE the BDM_ICON..START_ICON device
-    // range above. Disk themes load it explicitly. Built-ins leave the slot empty and share ETH_ICON.
+    // UDPFS_ICON is appended after the contiguous icon range. Disk themes load it eagerly; built-ins
+    // leave it for the same one-resident MenuIcon path.
     if (themePath)
         thmLoadResource(&newT->textures[UDPFS_ICON], UDPFS_ICON, themePath, GS_PSM_CT32, newT->useDefault);
 
@@ -3537,8 +3562,12 @@ static int thmLoad(const char *themePath)
     // so a disk theme's fav.png was never even probed and the baked icon always drew (#213).
     // thmLoadResource is synchronous here, so the baked glyph can never flash ahead of the theme's
     // own file.
-    for (i = L3_ICON; i <= FAV_MARK; i++)
+    for (i = L3_ICON; i <= FAV_MARK; i++) {
+        // FAV_ICON is another full Korium MenuIcon strip; built-ins demand-load it with the device bars.
+        if (!themePath && i == FAV_ICON)
+            continue;
         thmLoadResource(&newT->textures[i], i, themePath, GS_PSM_CT32, newT->useDefault);
+    }
 
     // L1/R1 are used by the Settings peer-page footer. They are kept outside the L3..FAV_MARK
     // range so the existing texture IDs and theme loading range remain stable.
