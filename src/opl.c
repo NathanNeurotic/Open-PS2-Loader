@@ -2694,8 +2694,8 @@ static void resolveBootDirToMass(void)
                     gBootHomeApa = 1;
                     if (!strcmp(gOPLPart, "hdd0:__common"))
                         gBootHddCommonFallback = 1;
-                    if (gHDDStartMode == START_MODE_DISABLED)
-                        gHDDStartMode = START_MODE_AUTO;
+                    // Booting the ELF from APA does not mean the APA/HDL game source is enabled.
+                    // Keep the saved/default source mode intact so BDM-HDD can own the same disk.
 
                     // Preserve rebuild-206's recursion guard: re-home only when resolution changed it.
                     if (strcmp(before, gBootDir) != 0) {
@@ -2713,7 +2713,6 @@ static void resolveBootDirToMass(void)
         // hddN: config firewall makes the first read fail closed, and tryAlternateDevice retries
         // only the existing-partition HDD ownership chain.
         gBootHomeApa = 1;
-        gHDDStartMode = START_MODE_AUTO;
         gBootHddCommonFallback = 0;
         return;
     }
@@ -2900,10 +2899,8 @@ static void _loadConfig()
                 gAutoStartLastPlayed = 0;
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
             configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode);
-            // resolveBootDirToMass runs before this read. A stored Disabled value must not undo
-            // the AUTO fallback for an APA/PFS boot that already mounted and served OPL itself.
-            if (gBootHomeApa && gHDDStartMode == START_MODE_DISABLED)
-                gHDDStartMode = START_MODE_AUTO;
+            // The boot transport and the game source are separate. An APA-hosted ELF/config may
+            // legitimately run with APA games disabled while BDM-HDD exposes an exFAT volume (#545).
             configGetInt(configOPL, CONFIG_OPL_ETH_MODE, &gETHStartMode);
             configGetInt(configOPL, CONFIG_OPL_APP_MODE, &gAPPStartMode);
             configGetStrCopy(configOPL, CONFIG_OPL_MMCE_PREFIX, gMMCEPrefix, sizeof(gMMCEPrefix));
@@ -3185,6 +3182,16 @@ static void _loadConfig()
     showNetDhcpPopup = (ps2_ip_use_dhcp &&
                         (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
                          gNetworkProtocol == NET_PROTO_UDPBD));
+
+    // Official OPL never leaves an APA/PFS config mount in front of an ATA-backed BDM session.
+    // RiptOPL's CWD settings policy can do exactly that when the ELF lives on APA. Once the config
+    // is resident in EE memory, release only the live PFS mount when BDM-HDD is the selected game
+    // path and APA games are disabled. The save path remounts the same PFS home on demand.
+    if (gBootHomeApa && gEnableBdmHDD && gHDDStartMode == START_MODE_DISABLED &&
+        bdmEffectiveStartMode() != START_MODE_DISABLED) {
+        if (!hddReleasePfsForBdm())
+            LOG("CONFIG: APA data-home mount could not be released for BDM-HDD\n");
+    }
 
     applyConfig(themeID, langID, 0);
 
@@ -4870,6 +4877,7 @@ static void deferredAudioInit(void)
 static void miniInit(int mode)
 {
     int ret;
+    int apaBdmAutoLaunch;
 #ifdef __OPLDIAG
     int initialRet;
     char initialHome[256];
@@ -4877,7 +4885,14 @@ static void miniInit(int mode)
 #endif
 
     setDefaults();
-    configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd)
+
+    // Match current official OPL for the cross-transport case reported in #545: when a BDM
+    // auto-launcher ELF itself lives on APA/PFS, do NOT mount that APA home just to discover config.
+    // Official starts from the normal MC config home and, if absent, discovers config on BDM. That
+    // leaves the ATA-backed exFAT volume free to become massN: before the game handoff.
+    apaBdmAutoLaunch = (mode == BDM_MODE &&
+                        (!strncmp(gBootDir, "hdd", 3) || !strncmp(gBootDir, "pfs", 3)));
+    configInit(apaBdmAutoLaunch ? NULL : (gBootDir[0] ? gBootDir : NULL));
 
     ioInit();
     LOG_ENABLE();
@@ -4905,9 +4920,10 @@ static void miniInit(int mode)
         mmceLoadModules();
     }
 
-    // Resolve the settings home and its recovery policy for every launch mode, as _loadConfig does.
-    // The launcher directory can differ from the game's device and from the saved settings home.
-    resolveBootDirToMass();
+    // Resolve the settings home normally, except for APA -> BDM auto-launch. That one deliberately
+    // follows official OPL's ordering above and must not mount PFS before the BDM volume appears.
+    if (!apaBdmAutoLaunch)
+        resolveBootDirToMass();
     InitConsoleRegionData();
 
 #ifdef __OPLDIAG
@@ -4919,10 +4935,15 @@ static void miniInit(int mode)
     initialRet = ret;
 #endif
     if (CONFIG_ALL & CONFIG_OPL) {
-        // A mixed APA-boot/BDM-game launch has a distinct settings owner. Resolve its redirect or
-        // ATA root even if the initial PFS home contained a different master config. A missing
-        // CONFIG_GAME alone still never triggers discovery on any launch path.
-        if (!(ret & CONFIG_OPL) || (mode == BDM_MODE && gBootHomeApa)) {
+        // For the APA -> BDM exception, use the same ownership order as official OPL: normal MC
+        // config first, then BDM. Never mount PFS merely because argv[0] came from APA. Other launch
+        // modes keep RiptOPL's normal boot-home/custom-path recovery policy.
+        if (!(ret & CONFIG_OPL)) {
+            if (apaBdmAutoLaunch)
+                ret = checkLoadConfigBDM(CONFIG_ALL);
+            else
+                ret = tryAlternateDevice(CONFIG_ALL, mode);
+        } else if (mode == BDM_MODE && gBootHomeApa) {
             ret = tryAlternateDevice(CONFIG_ALL, mode);
         }
 
