@@ -166,7 +166,7 @@ PNG_ASSETS = load0 load1 load2 load3 load4 load5 load6 load7 usb usb_bd ilk_bd \
 	# unused icons - up down l2 r2
 	# Korium Komblete drops incebtion/ip (the old background pair, now background +
 	# background_info) and coverapp (aliased to cover in textures.c).
-	# Korium's eth.png, udp_bd.png and udp_fs.png are byte-identical NET strips. Only eth.png is
+	# Korium's eth.png, udp_bd.png and udp_fs.png decode to the same NET strip. Only eth.png is
 	# embedded; textures.c points both UDP defaults at that same blob, while disk themes still probe
 	# their own udp_bd.png / udp_fs.png filenames normally.
 	# APPS stays: it is the FILE that backs the "APP" #Media glyph. It cannot be named APP.png

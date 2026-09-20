@@ -178,7 +178,7 @@ static texture_t internalDefault[TEXTURES_COUNT] = {
     {MMCE_ICON, "mmce", &mmce_png},
     {HDD_ICON, "hdd", &hdd_png},
     {ETH_ICON, "eth", &eth_png},
-    // Korium's embedded UDPBD/UDPFS NET bars are byte-identical to eth.png. Point their
+    // Korium's embedded UDPBD/UDPFS NET bars decode identically to eth.png. Point their
     // internal fallback at the one compiled blob; disk themes still probe the distinct names.
     {UDP_ICON, "udp_bd", &eth_png},
     {APP_ICON, "app", &app_png},
