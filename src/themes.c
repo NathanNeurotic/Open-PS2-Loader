@@ -70,6 +70,8 @@ static int nThemes = 0;
 static theme_file_t themes[THM_MAX_FILES];
 static const char **guiThemesNames = NULL;
 
+static GSTEXTURE *thmGetBuiltinMenuStrip(unsigned int id);
+
 // Coverflow render-mode state (externs in themes.h; defaults match wOPL 3/30/200/0).
 #define COVERFLOW_PAD 1 // extra covers built off each edge, purely to fill the slide (see drawCoverFlow)
 #define COVERFLOW_MAX (5 + 2 * COVERFLOW_PAD)
