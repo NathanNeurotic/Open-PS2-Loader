@@ -1019,8 +1019,8 @@ jobs:
             if [ "$RA_STAGED" = "no" ]; then
               echo "WARN: rolling/ra held no recognisable ELF names; skipping the RetroAchievements zip." >&2
             else
-              # Prefer the pinned PADEMU build for the installable app, then the rolling PADEMU
-              # build. The labelled alternatives remain in the archive for diagnosis.
+              # Prefer OFFICIALROLLING PADEMU1 for the installable app so it matches the requested
+              # stable RA ELF. The existing ps2dev RA builds remain labelled fallbacks in the archive.
               RA_INSTALL_SRC=""
               RA_INSTALL_FLAVOUR=""
               # Keep the installable RA app aligned with the requested standalone RA download:
@@ -1070,7 +1070,7 @@ jobs:
                 # Same payload as the main package, RA loader in place of the standard one. POPS,
                 # EMBER and the shortcuts are already staged and asserted by the step above, so a
                 # broken bundle has failed the build long before here.
-                zip -r -X "../rolling/${RA_ZIP}" APPS/APP_RIPTOPL-RA ART/RIPTOPL-RA.ELF_*.png APP_RIPTOPL-RA.psu POPS EMBER neutrino xeRAbora.url PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
+                zip -r -X "../rolling/${RA_ZIP}" APPS/APP_RIPTOPL-RA ART/RIPTOPL-RA.ELF_*.png ART/RIPTOPL.ELF_*.png APP_RIPTOPL-RA.psu POPS EMBER neutrino xeRAbora.url PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
                 for d in APPS/APP_RIPTOPL-RA-*; do
                   [ -d "$d" ] && zip -r -X "../rolling/${RA_ZIP}" "$d" >/dev/null
                 done
@@ -1144,7 +1144,7 @@ jobs:
                 "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG" "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
             fi
             if [ -f rolling/RIPTOPL_RA.ELF ]; then
-              printf -- '- **RetroAchievements update:** **[RIPTOPL_RA.ELF](%s/%s/releases/download/%s/RIPTOPL_RA.ELF)** is the OFFICIALROLLING PADEMU1 RA loader as a stable standalone download.\n' \
+              printf -- '- **RetroAchievements update:** **[RIPTOPL_RA.ELF](%s/%s/releases/download/%s/RIPTOPL_RA.ELF)** is the OFFICIALROLLING PADEMU1 RA loader as a stable standalone download. When updating the packaged RA app, replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with this file (rename it to `RIPTOPL-RA.ELF`).\n' \
                 "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG"
             fi
             if [ -f rolling/APP_RIPTOPL.psu ]; then
