@@ -1,0 +1,108 @@
+name: Zopfli Korium PNGs
+
+on:
+  push:
+    branches:
+      - test/korium-audit-remediation
+    paths:
+      - .github/workflows/zopfli-korium-pngs.yml
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: test/korium-audit-remediation
+          fetch-depth: 0
+
+      - name: Recompress Korium PNGs losslessly with Zopfli
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq zopfli
+          python3 -m pip install --disable-pip-version-check pillow
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          import hashlib, struct, subprocess
+
+          names = [
+              "background","background_info",
+              "usb","usb_bd","ilk_bd","m4s_bd","hdd_bd","mmce","hdd","eth","app","fav",
+              "case","case_ps1","apps_case","disc","disc_ps1",
+              "Players_1","Players_2","Players_3","Players_4",
+              "select","missing","ELF","HDL","ISO","VCD","ZSO","UL","CD","DVD","PS1","PS2"
+          ]
+          keep_chunks={b"gAMA",b"cHRM",b"sRGB",b"iCCP"}
+
+          def sig(path):
+              raw=path.read_bytes()
+              with Image.open(path) as im:
+                  rgba=im.convert("RGBA")
+                  pixel=(im.size,hashlib.sha256(rgba.tobytes()).hexdigest())
+              pos=8
+              chunks={}
+              while pos+12 <= len(raw):
+                  n=struct.unpack(">I",raw[pos:pos+4])[0]
+                  kind=raw[pos+4:pos+8]
+                  payload=raw[pos+8:pos+8+n]
+                  if kind in keep_chunks:
+                      chunks[kind.decode("ascii")]=hashlib.sha256(payload).hexdigest()
+                  pos += 12+n
+                  if kind == b"IEND":
+                      break
+              return pixel,chunks
+
+          saved=[]
+          skipped=[]
+          for name in names:
+              path=Path("gfx")/f"{name}.png"
+              if not path.exists():
+                  continue
+              before=path.read_bytes()
+              before_sig=sig(path)
+              out=Path("/tmp")/f"{name}.png"
+              p=subprocess.run(
+                  ["zopflipng","--iterations=15","--filters=01234mepb",str(path),str(out)],
+                  stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True
+              )
+              if p.returncode != 0 or not out.exists():
+                  skipped.append((name,"zopflipng failed"))
+                  continue
+              if sig(out) != before_sig:
+                  skipped.append((name,"semantic/color metadata mismatch"))
+                  continue
+              after=out.read_bytes()
+              if len(after) >= len(before):
+                  skipped.append((name,"not smaller"))
+                  continue
+              path.write_bytes(after)
+              saved.append((name,len(before),len(after),len(before)-len(after)))
+
+          total=sum(x[3] for x in saved)
+          print(f"ZOPFLI_FILES={len(saved)}")
+          print(f"ZOPFLI_SAVED={total}")
+          for row in sorted(saved,key=lambda x:x[3],reverse=True):
+              print(f"{row[0]} {row[1]}->{row[2]} saved={row[3]}")
+          for row in skipped:
+              print(f"SKIP {row[0]}: {row[1]}")
+          PY
+
+      - name: Commit only verified reductions
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- gfx; then
+            echo "No verified Zopfli reductions."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gfx
+          git commit -m "assets: zopfli-compress Korium PNGs"
+          git push origin HEAD:test/korium-audit-remediation
