@@ -82,6 +82,17 @@ jobs:
       - name: Check BDM partition I/O bounds and sector-size refusal
         run: python3 .github/scripts/test_bdm_partitions.py
 
+  udpfs-host-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check cumulative ACK order and sequence wrap
+        run: |
+          cc -std=c99 -Wall -Wextra -Werror -pedantic modules/network/udpfs_ioman/tests/test_ack_sequence.c -o /tmp/test_udpfs_ack
+          /tmp/test_udpfs_ack
+
   build-flavour:
     strategy:
       fail-fast: false
