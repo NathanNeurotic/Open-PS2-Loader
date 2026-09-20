@@ -90,11 +90,9 @@ jobs:
             cd package-work
             zip -qr -X "../release-work/$(basename "$MAIN_ZIP")" *
           )
-          if [[ -f package-work/APPS/APP_RIPTOPL/RIPTOPL.ELF ]]; then
-            python3 .github/scripts/package_release_app.py verify \
-              --zip "$MAIN_ZIP" --source-elf package-work/APPS/APP_RIPTOPL/RIPTOPL.ELF \
-              --app-name APP_RIPTOPL --elf-name RIPTOPL.ELF
-          fi
+          python3 .github/scripts/package_release_app.py verify \
+            --zip "$MAIN_ZIP" --source-elf package-work/APPS/APP_RIPTOPL/RIPTOPL.ELF \
+            --app-name APP_RIPTOPL --elf-name RIPTOPL.ELF
           echo "Rebuilt $(basename "$MAIN_ZIP") with all five companion-tool shortcuts."
 
       - name: Add all DS5 loaders to the variants archive
