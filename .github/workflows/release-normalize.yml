@@ -182,8 +182,7 @@ jobs:
           echo 'Invariant checks:'
           # Only the two stable update loaders may remain loose. Every version/flavour-stamped
           # loader belongs inside an archive.
-          if printf '%s\n' "$ASSETS" | grep -Ev '^(RIPTOPL\.ELF|RIPTOPL_RA\.ELF)
- | grep -E '\.ELF$|MANIFEST|SHA256SUMS|DETAILED_CHANGELOG'; then
+          if printf '%s\n' "$ASSETS" | grep -Ev '^(RIPTOPL\.ELF|RIPTOPL_RA\.ELF)$' | grep -E '\.ELF$|MANIFEST|SHA256SUMS|DETAILED_CHANGELOG'; then
             echo 'ERROR: floating ELF/manifest asset remains.' >&2
             exit 1
           fi
@@ -202,8 +201,7 @@ jobs:
             exit 1
           fi
           echo 'OK: standalone APP_RIPTOPL.psu is published.'
-          if printf '%s\n' "$ASSETS" | grep -qE '^RIPTOPL-RetroAchievements-.*\.zip
-; then
+          if printf '%s\n' "$ASSETS" | grep -qE '^RIPTOPL-RetroAchievements-.*\.zip$'; then
             if ! printf '%s\n' "$ASSETS" | grep -qFx 'APP_RIPTOPL-RA.psu'; then
               echo 'ERROR: RA package exists but standalone APP_RIPTOPL-RA.psu is missing.' >&2
               exit 1
