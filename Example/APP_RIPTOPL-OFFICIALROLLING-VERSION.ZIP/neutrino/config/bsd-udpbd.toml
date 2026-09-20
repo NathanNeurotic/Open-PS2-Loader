@@ -1,0 +1,18 @@
+# Name of loaded config, to show to user
+name = "UDPBD BDM driver"
+
+# Drivers this driver depends on (config file must exist)
+depends = ["i_bdm", "i_dev9_hidden"]
+
+# Modules to load
+[[module]]
+file = "smap.irx"
+env = ["LE", "EE"]
+[[module]]
+file = "ministack.irx"
+args = ["ip=192.168.1.10"]
+env = ["LE", "EE"]
+[[module]]
+file = "udpbd.irx"
+#file = "udpfs_bd.irx" # Alternative driver based on UDPRDMA
+env = ["LE", "EE"]

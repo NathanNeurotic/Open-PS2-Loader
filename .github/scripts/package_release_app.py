@@ -4,8 +4,8 @@
 The committed Example is a reference for artwork and app companions. Its ELF is
 an empty placeholder; only a checked build output may enter a release package.
 The PSU record layout follows techwritescode's PSUManager core, preserved in
-third_party/PSUManager. A commit timestamp is used for reproducible PSU dates
-rather than the packager's wall clock. The vendored reader checks both outputs.
+third_party/PSUManager. PSU dates follow R3Z3N's SAS folder-name schedule,
+independent of checkout and file times. The vendored reader checks both outputs.
 """
 
 import argparse
@@ -39,6 +39,66 @@ PSU_DIR_MODE = 0x8027
 PSU_FILE_MODE = 0x8017
 PSU_CLUSTER = 1024
 MAX_MC_NAME = 31
+
+# Port of the timestamp planner in R3Z3N's SAS-TIMESTAMPSTOMLV3.py. The release
+# packer writes PSU directory records directly, so its psu.toml and Windows
+# SetFileTime steps are unnecessary here. Keep the fixed UTC base, category
+# order, dash handling, and integer rank identical to that planner.
+SAS_BASE_UTC = dt.datetime(2099, 1, 1, 7, 59, 59, tzinfo=dt.timezone.utc)
+SAS_SLOTS_PER_CATEGORY = 86_400
+SAS_CATEGORY_ORDER = (
+    "APP_", "APPS", "PS1_", "EMU_", "GME_", "DST_", "DBG_", "RAA_",
+    "RTE_", "DEFAULT", "SYS_", "ZZY_", "ZZZ_",
+)
+SAS_UNPREFIXED = {
+    "APP_": ("OSDXMB", "XEBPLUS"),
+    "RAA_": ("RESTART", "POWEROFF"),
+    "RTE_": ("NEUTRINO",),
+    "SYS_": ("BOOT",),
+    "ZZY_": ("EXPLOITS",),
+    "ZZZ_": ("BM", "MATRIXTEAM", "OPL", "POPSTARTER"),
+}
+SAS_CHARSET = " 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_-."
+SAS_CHAR_INDEX = {char: index for index, char in enumerate(SAS_CHARSET)}
+SAS_RANK_WIDTH = 48
+
+
+def sas_timestamp(folder_name: str) -> dt.datetime:
+    """Return the exact SAS timestamp for a save folder, in UTC."""
+    effective = folder_name.strip().upper()
+    for category, names in SAS_UNPREFIXED.items():
+        if effective in names:
+            effective = category + effective
+            break
+    category = "DEFAULT"
+    for candidate in SAS_CATEGORY_ORDER:
+        if candidate == "APPS":
+            matches = effective == "APPS"
+        elif candidate == "DEFAULT":
+            continue
+        else:
+            matches = effective.startswith(candidate) or (candidate == "SYS_" and effective == "SYS")
+        if matches:
+            category = candidate
+            break
+    if category == "APPS":
+        payload = "APPS"
+    elif category == "DEFAULT" or not effective.startswith(category):
+        payload = effective
+    else:
+        payload = effective[len(category):]
+    payload = payload.replace("-", "")[:SAS_RANK_WIDTH]
+    base = len(SAS_CHARSET)
+    rank = 0
+    for char in payload:
+        rank = rank * base + SAS_CHAR_INDEX.get(char, base - 1) + 1
+    rank *= base ** (SAS_RANK_WIDTH - len(payload))
+    # The source planner intentionally has no tie-breaker when two names land
+    # in the same one-second slot (as APP_RIPTOPL and APP_RIPTOPL-RA do).
+    slot = min(rank * SAS_SLOTS_PER_CATEGORY // base ** SAS_RANK_WIDTH,
+               SAS_SLOTS_PER_CATEGORY - 1)
+    offset = SAS_CATEGORY_ORDER.index(category) * SAS_SLOTS_PER_CATEGORY + slot
+    return SAS_BASE_UTC - dt.timedelta(seconds=offset)
 
 
 def require_name(name: str) -> None:
@@ -80,8 +140,7 @@ def replace_pbt_fields(text: str, values: dict[str, str]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def psu_date(timestamp: int) -> bytes:
-    date = dt.datetime.fromtimestamp(timestamp, dt.timezone.utc)
+def psu_date(date: dt.datetime) -> bytes:
     if not 2000 <= date.year <= 2099:
         raise ValueError("PSU timestamp year must be between 2000 and 2099")
     return struct.pack("<BBBBBBH", 0, date.second, date.minute, date.hour, date.day, date.month, date.year)
@@ -94,12 +153,12 @@ def psu_entry(mode: int, size: int, date: bytes, name: str) -> bytes:
     return PSU_ENTRY.pack(mode, 0, size, date, 0, 0, date, 0, bytes(28), name_bytes.ljust(448, b"\0"))
 
 
-def build_psu(app_dir: Path, output: Path, timestamp: int) -> None:
+def build_psu(app_dir: Path, output: Path) -> None:
     require_name(app_dir.name)
     files = sorted((path for path in app_dir.iterdir() if path.is_file()), key=lambda path: path.name)
     if len(files) != len(APP_COMPANIONS) + 1:
         raise ValueError(f"unexpected direct app files in {app_dir}")
-    date = psu_date(timestamp)
+    date = psu_date(sas_timestamp(app_dir.name))
     with output.open("wb") as out:
         out.write(psu_entry(PSU_DIR_MODE, len(files) + 2, date, app_dir.name))
         out.write(psu_entry(PSU_DIR_MODE, 0, date, "."))
@@ -124,6 +183,10 @@ def inspect_psu(data: bytes) -> tuple[str, dict[str, bytes]]:
     require_name(name)
     if root[0] != PSU_DIR_MODE or get_name(dot) != "." or get_name(dotdot) != ".." or root[2] < 2:
         raise ValueError("invalid PSU directory records")
+    expected_date = psu_date(sas_timestamp(name))
+    for record in (root, dot, dotdot):
+        if record[3] != expected_date or record[6] != expected_date:
+            raise ValueError(f"incorrect SAS timestamp in PSU entry: {get_name(record)}")
     position = 3 * PSU_ENTRY.size
     files = {}
     for _ in range(root[2] - 2):
@@ -134,6 +197,8 @@ def inspect_psu(data: bytes) -> tuple[str, dict[str, bytes]]:
         require_name(filename)
         if entry[0] != PSU_FILE_MODE or filename in files:
             raise ValueError("invalid or duplicate PSU file entry")
+        if entry[3] != expected_date or entry[6] != expected_date:
+            raise ValueError(f"incorrect SAS timestamp in PSU entry: {filename}")
         start = position + PSU_ENTRY.size
         end = start + entry[2]
         if end > len(data):
@@ -193,11 +258,12 @@ def stage(args: argparse.Namespace) -> None:
             raise ValueError(f"missing or invalid app artwork: {source}")
         shutil.copyfile(source, art_dir / f"{args.elf_name}_{suffix}.png")
     psu = package / f"{args.app_name}.psu"
-    build_psu(app_dir, psu, args.timestamp)
+    build_psu(app_dir, psu)
     psu_name, psu_files = inspect_psu(psu.read_bytes())
     if psu_name != args.app_name or psu_files != {p.name: p.read_bytes() for p in app_dir.iterdir() if p.is_file()}:
         raise ValueError("staged PSU differs from its direct app folder")
-    print(f"Staged {app_dir} ({args.flavour}); {psu.name} ({psu.stat().st_size} bytes)")
+    sas_date = sas_timestamp(args.app_name).strftime("%Y-%m-%d %H:%M:%S UTC")
+    print(f"Staged {app_dir} ({args.flavour}); {psu.name} ({psu.stat().st_size} bytes, SAS {sas_date})")
 
 
 def verify(args: argparse.Namespace) -> None:
@@ -335,7 +401,6 @@ def main() -> None:
     stage_parser.add_argument("--flavour", required=True)
     stage_parser.add_argument("--channel", required=True)
     stage_parser.add_argument("--description", required=True)
-    stage_parser.add_argument("--timestamp", required=True, type=int)
     verify_parser = commands.add_parser("verify")
     verify_parser.add_argument("--zip", required=True)
     verify_parser.add_argument("--source-elf", required=True)

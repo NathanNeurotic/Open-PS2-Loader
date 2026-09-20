@@ -1,0 +1,10 @@
+# Name of loaded config, to show to user
+name = "ATA HDD BDM driver"
+
+# Drivers this driver depends on (config file must exist)
+depends = ["i_bdm", "i_dev9_hidden"]
+
+# Modules to load
+[[module]]
+file = "ata_bd.irx"
+env = ["LE", "EE"]
