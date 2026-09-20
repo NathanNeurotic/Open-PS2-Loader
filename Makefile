@@ -351,7 +351,7 @@ ifeq ($(DEBUG),1)
     endif
   endif
 else
-  EE_CFLAGS += -Os
+  EE_CFLAGS += -O2
   SMSTCPIP_INGAME_CFLAGS = INGAME_DRIVER=1
 endif
 
