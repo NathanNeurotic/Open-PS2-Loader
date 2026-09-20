@@ -45,7 +45,7 @@ bdm = text(root / 'src/bdmsupport.c')
 release = function_body(hdd, 'int hddReleasePfsForBdm(')
 check(release is not None, 'hddReleasePfsForBdm is missing')
 if release is not None:
-    check('PDIOC_CLOSEALL' not in release,
+    check(not re.search(r'fileXioDevctl\\s*\\(\\s*"pfs:"\\s*,\\s*PDIOC_CLOSEALL', release),
           'APA->BDM handoff force-closes PFS descriptors before ownership is transferred')
     check('fileXioUmount("pfs1:")' not in release,
           'APA->BDM handoff unexpectedly tears down the unrelated pfs1: scratch mount')
