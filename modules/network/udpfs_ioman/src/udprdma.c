@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "udprdma.h"
+#include "udprdma_seq.h"
 #include "ministack_udp.h"
 #include "smap.h"
 #include "main.h"
@@ -500,8 +501,7 @@ int udprdma_send(udprdma_socket_t *socket, const void *data, uint32_t size)
         ClearEventFlag(socket->event_flag, ~(EF_RX_ACK | EF_TIMEOUT));
 
         if (evf_bits & EF_RX_ACK) {
-            int16_t diff = (int16_t)((socket->tx_seq_nr_acked - sent_seq_nr) & 0xFFF);
-            if (diff >= 0 || diff < -2048) {
+            if (udprdma_ack_covers(socket->tx_seq_nr_acked, sent_seq_nr)) {
                 return UDPRDMA_OK;
             }
             M_PRINTF("send: stale ACK acked=%d sent=%d, retry %d\n",
@@ -559,8 +559,7 @@ int udprdma_send_ll(udprdma_socket_t *socket,
         ClearEventFlag(socket->event_flag, ~(EF_RX_ACK | EF_TIMEOUT));
 
         if (evf_bits & EF_RX_ACK) {
-            int16_t diff = (int16_t)((socket->tx_seq_nr_acked - sent_seq_nr) & 0xFFF);
-            if (diff >= 0 || diff < -2048) {
+            if (udprdma_ack_covers(socket->tx_seq_nr_acked, sent_seq_nr)) {
                 return UDPRDMA_OK;
             }
             M_PRINTF("send_ll: stale ACK acked=%d sent=%d, retry %d\n",
