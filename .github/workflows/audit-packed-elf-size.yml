@@ -45,8 +45,7 @@ jobs:
             label="$1"
             make clean >/dev/null
             make LOCALVERSION=SIZEAUDIT OPLDIAG=0 RETROACHIEVEMENTS=0 release >/dev/null
-            elf=$(find . -maxdepth 1 -type f -name 'RIPTOPL*.ELF' | head -1)
-            bytes=$(stat -c %s "$elf")
+            bytes=$(stat -c %s RIPTOPL.ELF)
             echo "SIZE_RESULT $label $bytes"
           }
 
