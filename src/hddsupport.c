@@ -1379,6 +1379,40 @@ static int hddPartitionMountableAt(const char *mountPoint, const char *partition
     return ret == 0;
 }
 
+// APA/PFS and BDM-HDD can share the ATA stack, but they cannot both own the same drive's live
+// filesystem view. In particular, keeping pfs0: mounted after reading an APA-hosted config prevents
+// the BDM/FatFs side from publishing/launching the exFAT volume on hybrid/coexisting layouts (#545).
+//
+// This is intentionally NOT hddCleanUp(): the PS2HDD/PFS modules and DEV9/ATAD/XHDD stay resident,
+// gOPLPart stays authoritative, and hddSupportModulesLoaded stays set. That lets _saveConfig's
+// existing prepareHddSettingsFallback() remount the exact same data home on demand without reloading
+// modules or changing the selected partition. Callers must use this only before menu I/O begins (or
+// on the GUI boot pass before audio/art workers can open PFS files).
+int hddReleasePfsForBdm(void)
+{
+    int ret;
+
+    if (gHDDPrefix == NULL || gHDDPrefix[0] == '\0')
+        return 1;
+
+    LOG("HDDSUPPORT releasing live PFS data-home mount for BDM-HDD\n");
+
+    // Config reads are complete at both call sites. Close any residual PFS descriptors first so
+    // unmount cannot be rejected by a stale handle; pfs1: is only a transient selector/POPS mount.
+    fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
+    fileXioUmount("pfs1:");
+    ret = fileXioUmount(hddPrefix);
+    if (ret < 0) {
+        LOG("HDDSUPPORT could not release %s for BDM-HDD (%d)\n", hddPrefix, ret);
+        return 0;
+    }
+
+    // Commit anything the config read/write path may have dirtied before the BDM side takes over.
+    hddFlushCache();
+    gHDDPrefix = NULL;
+    return 1;
+}
+
 int hddGetOplHomeSelection(void)
 {
     if (hddOplHomePending >= 0)
