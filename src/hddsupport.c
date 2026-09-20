@@ -1384,10 +1384,9 @@ static int hddPartitionMountableAt(const char *mountPoint, const char *partition
 // the BDM/FatFs side from publishing/launching the exFAT volume on hybrid/coexisting layouts (#545).
 //
 // This is intentionally NOT hddCleanUp(): the PS2HDD/PFS modules and DEV9/ATAD/XHDD stay resident,
-// gOPLPart stays authoritative, and hddSupportModulesLoaded stays set. That lets _saveConfig's
-// existing prepareHddSettingsFallback() remount the exact same data home on demand without reloading
-// modules or changing the selected partition. Callers must use this only before menu I/O begins (or
-// on the GUI boot pass before audio/art workers can open PFS files).
+// gOPLPart stays authoritative, and hddSupportModulesLoaded stays set. A caller can therefore
+// remount the exact same data home if the BDM probe finds nothing. This helper is boot-time only:
+// it must never race menu art/audio/config I/O.
 int hddReleasePfsForBdm(void)
 {
     int ret;
@@ -1401,7 +1400,6 @@ int hddReleasePfsForBdm(void)
     // it closes EVERY PFS descriptor process-wide and would damage the still-live APA session if
     // fileXioUmount then refused the mount. At this boot-time call site all config descriptors are
     // already closed; a busy mount is therefore a reason to abort the BDM handoff, not to force it.
-    fileXioUmount("pfs1:");
     ret = fileXioUmount(hddPrefix);
     if (ret < 0) {
         LOG("HDDSUPPORT could not release %s for BDM-HDD (%d); leaving APA ownership intact\n", hddPrefix, ret);
