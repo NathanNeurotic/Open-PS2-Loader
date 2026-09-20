@@ -1,0 +1,41 @@
+name: Audit embedded resource compression
+
+on:
+  push:
+    branches:
+      - test/korium-audit-remediation
+    paths:
+      - .github/workflows/audit-resource-compression.yml
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: test/korium-audit-remediation
+      - name: Measure exact resource compressibility
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zlib, lzma
+
+          files = [
+              "audio/boot.adp","audio/cancel.adp","audio/confirm.adp","audio/cursor.adp",
+              "audio/message.adp","audio/transition.adp","audio/bd_connect.adp","audio/bd_disconnect.adp",
+              "thirdparty/PoeVeticaNew.ttf","misc/conf_theme_OPL.cfg","misc/theme_coverflow.cfg",
+              "misc/list.icn","misc/icon.sys","misc/icon_A.sys","misc/icon_J.sys","misc/icon_C.sys",
+          ]
+          total_raw=total_z=total_xz=0
+          for f in files:
+              b=Path(f).read_bytes()
+              z=zlib.compress(b,9)
+              x=lzma.compress(b,preset=9)
+              total_raw+=len(b); total_z+=len(z); total_xz+=len(x)
+              print(f"{f} raw={len(b)} zlib9={len(z)} save={len(b)-len(z)} ratio={len(z)/len(b):.3f} xz9={len(x)}")
+          audio=[Path(f).read_bytes() for f in files if f.startswith("audio/")]
+          joined=b"".join(audio)
+          z=zlib.compress(joined,9)
+          print(f"AUDIO_JOINED raw={len(joined)} zlib9={len(z)} save={len(joined)-len(z)} ratio={len(z)/len(joined):.3f}")
+          print(f"TOTAL raw={total_raw} zlib9={total_z} save={total_raw-total_z} xz9={total_xz}")
+          PY
