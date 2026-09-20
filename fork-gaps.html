@@ -71,9 +71,10 @@ project implements it.</p>
 
 <div class="callout info"><div class="h">ℹ A tracking list, not a roadmap</div>
 An entry here means another project has something RiptOPL does not; it does not mean the feature is scheduled.
-Checked on 2026-09-14 against <code>rebuild/main</code> at
-<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/3f2e9b1da04d19a10d7799a3a1f1435ed3c6f293">3f2e9b1d</a>, and updated on 2026-09-15 when
-<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a> shipped three entries (see <a href="#notes">Notes</a>).
+Re-audited on 2026-09-20 against <code>rebuild/main</code> at
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/f69d11bd2b150ee6f8e9080eec1b58824279dd90">f69d11bd</a>.
+This pass adds <a href="#nhddl">NHDDL v1.2.2</a>; the earlier 2026-09-15 update also records
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a> shipping three former entries (see <a href="#notes">Notes</a>).
 Every entry has a short ID whose letter names its source (see <a href="#sources">Sources surveyed</a>), so it can be
 referenced in issues and chat. Entries in the <b>Beyond game loading</b> area are general-purpose tools from PS2
 environments built on OPL, listed so the survey is complete.
@@ -93,13 +94,14 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>H</code></td><td><a href="https://github.com/hacan359/xerabora">xeRAbora</a></td><td>RetroAchievements for real PS2 hardware</td><td>1</td></tr>
     <tr><td><code>R</code></td><td><a href="https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher">RETROLauncher</a></td><td>A Lua launcher for retro emulators and PS2 games</td><td>1</td></tr>
     <tr><td><code>M</code></td><td><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2">Modulo R1</a></td><td>A Neutrino-based loader in beta</td><td>1</td></tr>
+    <tr><td><code>N</code></td><td><a href="https://github.com/pcm720/nhddl">NHDDL</a></td><td>A deliberately small Neutrino front-end and launcher</td><td>2</td></tr>
     <tr><td><code>L</code></td><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">Extended APA</a></td><td>An OPL build for internal HDDs larger than 2 TiB</td><td>1</td></tr>
   </tbody>
 </table>
 <p>Nine more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
 
 <h2 id="at-a-glance">At a glance</h2>
-<p>All 46 entries in one list. Click a column heading to sort.</p>
+<p>All 48 entries in one list. Click a column heading to sort.</p>
 <table data-sortable>
   <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Source</th><th>Type</th></tr></thead>
   <tbody>
@@ -148,6 +150,8 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>H1</code></td><td>RetroAchievements pointer chains</td><td>RetroAchievements</td><td>xeRAbora</td><td>Feature</td></tr>
     <tr><td><code>R1</code></td><td>Retro emulator ROM libraries</td><td>Beyond game loading</td><td>RETROLauncher</td><td>Feature</td></tr>
     <tr><td><code>M1</code></td><td>Choose between several network servers</td><td>Cheats, launching &amp; network</td><td>Modulo R1</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>N1</code></td><td>Generic forward-boot CLI</td><td>Launcher integration</td><td>NHDDL</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>N2</code></td><td>Reuse <code>SYS-CONF/IPCONFIG.DAT</code> for UDPFS IP</td><td>Cheats, launching &amp; network</td><td>NHDDL</td><td><span class="pill">Optional</span></td></tr>
     <tr><td><code>L1</code></td><td>APA HDDs over 2 TiB</td><td>Internal HDD</td><td>Extended APA</td><td><span class="badge unconfirmed">Not planned</span></td></tr>
   </tbody>
 </table>
@@ -289,6 +293,29 @@ branch <a href="https://github.com/hacan359/Open-PS2-Loader/tree/ra"><code>ra</c
   </tbody>
 </table>
 
+
+<h2 id="nhddl">NHDDL</h2>
+<p><a href="https://github.com/pcm720/nhddl">pcm720/nhddl</a> &mdash; a deliberately small Neutrino front-end whose
+README explicitly keeps OPL-only features such as PADEMU, IGR and cheats out of scope unless Neutrino itself provides
+them. Audited against the released <a href="https://github.com/pcm720/nhddl/tree/v1.2.2">v1.2.2</a> code and documentation.
+The core features most likely to look unique at first glance are already present in RiptOPL: PixelFX/RetroGEM visual
+Game ID signalling, per-title SD2PSX/MemCard PRO2 card switching, cover art, persistent title caching, remembered
+last-played selection, global and per-game Neutrino arguments, VMC handoff and the principal Neutrino storage backends.
+The two remaining differences below are launcher/network conveniences rather than missing game-source support.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>N1</code></td><td><b>Generic forward-boot CLI</b> <span class="pill">Optional</span></td><td>Launching NHDDL with <code>-mode=&lt;type&gt;</code> and <code>-dvd=&lt;path&gt;</code> bypasses its UI and hands the target straight to Neutrino; <code>-noinit</code> can reuse an environment whose modules are already loaded. RiptOPL has positional HDD/BDM autolaunch entry points, but not an equivalent documented generic backend/path command line.</td><td><a href="https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#forward-boot-mode">Forward Boot Mode</a></td></tr>
+    <tr><td><code>N2</code></td><td><b>Reuse <code>SYS-CONF/IPCONFIG.DAT</code> for UDPFS IP</b> <span class="pill">Optional</span></td><td>When no explicit <code>udpfs_ip</code> is supplied, NHDDL can obtain the PS2 network address from the wLaunchELF/uLaunchELF-style <code>SYS-CONF/IPCONFIG.DAT</code>. RiptOPL's <a href="network-boot.html">UDPFS</a> path currently uses its own Network settings and the active Neutrino TOML instead of inheriting that shared file.</td><td><a href="https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#udpfs">UDPFS documentation</a><br><a href="https://github.com/pcm720/nhddl/commit/81905e1f68f50ded828fe59a04f6313a9c4f21de">IPCONFIG.DAT fix</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">ℹ What did not become a gap</div>
+NHDDL's visual Game ID output and SD2PSX/MemCard PRO2 per-title switching both have direct RiptOPL equivalents.
+RiptOPL also already remembers the last-played title, caches parsed ISO metadata, supports global and per-game Neutrino
+arguments, and can hand VMCs to Neutrino. NHDDL's backend-forcing ELF filename suffixes are a different configuration
+interface for selecting a device mode, not a separate game-loading capability, so they are not counted independently.
+</div>
+
 <h2 id="extended-apa">Extended APA</h2>
 <p><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">L10N37/Open-PS2-Loader-Extended-APA</a> &mdash; an OPL
 build for internal HDDs formatted with PS2 HDD Manager's banked APA layout.</p>
@@ -338,6 +365,7 @@ is complete.</p>
 
 <h2 id="notes">Notes</h2>
 <ul>
+  <li><b>NHDDL parity checked on 2026-09-20:</b> RiptOPL already has the visual Game ID signal used by PixelFX/RetroGEM hardware, MMCE GameID switching for SD2PSX/MemCard PRO2 on cross-device launches, remembered last-played selection with optional autostart, persistent ISO metadata caching, and global/per-game Neutrino arguments. Those are therefore not N-series gaps.</li>
   <li><b>Already in RiptOPL, so not listed:</b> the fix from wOPL PR #435 (remember the last played game when it is
   the first list entry), <a href="cheats.html#ps2rd-image">PS2RD cheat images (<code>.img</code>)</a>, cover art from
   <code>ART/art.tar</code> (<a href="settings.html#display-settings">Interface settings</a>), cheats from
