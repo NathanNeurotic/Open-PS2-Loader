@@ -1,0 +1,143 @@
+name: Audit embedded texture memory
+
+on:
+  push:
+    branches:
+      - test/korium-audit-remediation
+    paths:
+      - .github/workflows/audit-embedded-texture-memory.yml
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: test/korium-audit-remediation
+
+      - name: Audit exact-format optimization candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check pillow
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          from collections import defaultdict
+          import hashlib, json, re, struct
+
+          def parse_assets():
+              lines = Path("Makefile").read_text(encoding="utf-8").splitlines()
+              out=[]
+              for i,line in enumerate(lines):
+                  m=re.match(r"^PNG_ASSETS\s*=\s*(.*)$", line)
+                  if not m:
+                      continue
+                  rhs=m.group(1)
+                  while True:
+                      cont=rhs.rstrip().endswith("\\")
+                      rhs=rhs.rstrip()
+                      if cont:
+                          rhs=rhs[:-1]
+                      rhs=rhs.split("#",1)[0]
+                      out += rhs.split()
+                      if not cont:
+                          break
+                      i += 1
+                      rhs = lines[i]
+                  break
+              # RA mark is conditional, audit source too if present.
+              if Path("gfx/ra_mark.png").exists():
+                  out.append("ra_mark")
+              return list(dict.fromkeys(out))
+
+          def png_header(path):
+              d=path.read_bytes()[:29]
+              if d[:8] != b"\x89PNG\r\n\x1a\n":
+                  return None
+              w,h=struct.unpack(">II",d[16:24])
+              return {"w":w,"h":h,"bit_depth":d[24],"color_type":d[25]}
+
+          assets=[]
+          pixel_groups=defaultdict(list)
+          exact_file_groups=defaultdict(list)
+
+          for name in parse_assets():
+              path=Path("gfx")/f"{name}.png"
+              if not path.exists():
+                  continue
+              raw=path.read_bytes()
+              h=png_header(path)
+              with Image.open(path) as im:
+                  rgba=im.convert("RGBA")
+                  rgba_bytes=rgba.tobytes()
+                  unique=len(set(rgba.getdata()))
+                  alphas={p[3] for p in rgba.getdata()}
+                  alpha_nonzero=rgba.getchannel("A").getbbox()
+                  rec={
+                      "name":name,
+                      "bytes":len(raw),
+                      **h,
+                      "mode":im.mode,
+                      "unique_rgba":unique,
+                      "alpha_values":len(alphas),
+                      "has_transparency":min(alphas)<255,
+                      "alpha_bbox":list(alpha_nonzero) if alpha_nonzero else None,
+                      "rgba_sha256":hashlib.sha256(rgba_bytes).hexdigest(),
+                      "file_sha256":hashlib.sha256(raw).hexdigest(),
+                  }
+              pixel_groups[rec["rgba_sha256"]].append(name)
+              exact_file_groups[rec["file_sha256"]].append(name)
+
+              # Approximate decoded EE pixel storage + CLUT used by textures.c.
+              pixels=h["w"]*h["h"]
+              if h["color_type"] == 3 and h["bit_depth"] == 4:
+                  rec["decoded_pixel_bytes"]= (pixels+1)//2
+                  rec["clut_bytes"]=16*4
+                  rec["current_psm"]="T4"
+              elif h["color_type"] == 3 and h["bit_depth"] == 8:
+                  rec["decoded_pixel_bytes"]=pixels
+                  rec["clut_bytes"]=256*4
+                  rec["current_psm"]="T8"
+              elif h["color_type"] == 6:
+                  rec["decoded_pixel_bytes"]=pixels*4
+                  rec["clut_bytes"]=0
+                  rec["current_psm"]="CT32"
+              elif h["color_type"] == 2:
+                  rec["decoded_pixel_bytes"]=pixels*3
+                  rec["clut_bytes"]=0
+                  rec["current_psm"]="CT24"
+              else:
+                  rec["decoded_pixel_bytes"]=None
+                  rec["clut_bytes"]=None
+                  rec["current_psm"]="other"
+
+              # Exact-pixel conversion candidates supported by textures.c.
+              candidates=[]
+              if unique <= 16 and not (h["color_type"]==3 and h["bit_depth"]==4):
+                  new_bytes=(pixels+1)//2 + 16*4
+                  old=(rec["decoded_pixel_bytes"] or 0)+(rec["clut_bytes"] or 0)
+                  candidates.append({"to":"T4","save_runtime_bytes":old-new_bytes})
+              elif unique <= 256 and h["color_type"] in (2,6):
+                  new_bytes=pixels+256*4
+                  old=(rec["decoded_pixel_bytes"] or 0)+(rec["clut_bytes"] or 0)
+                  candidates.append({"to":"T8","save_runtime_bytes":old-new_bytes})
+              rec["candidates"]=[c for c in candidates if c["save_runtime_bytes"]>0]
+              assets.append(rec)
+
+          dup_pixels=[v for v in pixel_groups.values() if len(v)>1]
+          dup_files=[v for v in exact_file_groups.values() if len(v)>1]
+          candidates=[a for a in assets if a["candidates"]]
+          candidates.sort(key=lambda a:max(c["save_runtime_bytes"] for c in a["candidates"]), reverse=True)
+
+          report={
+              "asset_count":len(assets),
+              "total_png_bytes":sum(a["bytes"] for a in assets),
+              "total_runtime_bytes":sum((a["decoded_pixel_bytes"] or 0)+(a["clut_bytes"] or 0) for a in assets),
+              "pixel_duplicate_groups":dup_pixels,
+              "exact_file_duplicate_groups":dup_files,
+              "format_candidates":candidates,
+              "all_assets":assets,
+          }
+          print("TEXTURE_AUDIT="+json.dumps(report,separators=(",",":")))
+          PY
