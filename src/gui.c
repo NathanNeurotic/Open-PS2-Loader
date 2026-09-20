@@ -640,13 +640,13 @@ int guiDeviceTypeToIoMode(int deviceType)
     if (deviceType == 0)
         return BDM_MODE;
     else if (deviceType == 1)
-        return ETH_MODE;
+        return MMCE_MODE;
     else if (deviceType == 2)
         return HDD_MODE;
     else if (deviceType == 3)
-        return APP_MODE;
+        return ETH_MODE;
     else if (deviceType == 4)
-        return MMCE_MODE;
+        return APP_MODE;
     else if (deviceType == 5)
         return FAV_MODE;
     else
@@ -657,13 +657,13 @@ int guiIoModeToDeviceType(int ioMode)
 {
     if (ioMode >= BDM_MODE && ioMode < ETH_MODE)
         return 0;
-    if (ioMode == ETH_MODE)
+    if (ioMode == MMCE_MODE)
         return 1;
     if (ioMode == HDD_MODE)
         return 2;
-    if (ioMode == APP_MODE)
+    if (ioMode == ETH_MODE)
         return 3;
-    if (ioMode == MMCE_MODE)
+    if (ioMode == APP_MODE)
         return 4;
     if (ioMode == FAV_MODE)
         return 5;
@@ -768,7 +768,7 @@ static int guiDeviceConfigUpdater(int modified)
 
 void guiShowDeviceConfig(void)
 {
-    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), _l(_STR_FAV), NULL};
+    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
     static const char *hddOplHomes[] = {"__common/OPL/", "+OPL/", NULL};
 
@@ -2695,7 +2695,7 @@ static int guiSettingsSourcesUpdater(int modified)
 static int guiSettingsShowSources(void)
 {
     const struct UIItem *parts[] = {diaDeviceConfig};
-    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_NET_GAMES), _l(_STR_HDD_GAMES), _l(_STR_APPS), _l(_STR_MMCE), _l(_STR_FAV), NULL};
+    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
     static const char *hddOplHomes[] = {"__common/OPL/", "+OPL/", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 1, NULL, 0, -1, 0);

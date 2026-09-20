@@ -849,10 +849,26 @@ int oplIsBootInProgress(void)
 
 static void initAllSupport(int force_reinit)
 {
+    // menuAppendItem builds the shared device page ring used by both list and coverflow views.
+    // Keep this sequence aligned with the theme tab strip: BDM, MMCE, APA, NET, APPS, FAV.
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_BDM));
     if (gBootInProgress)
         guiRenderGreetingScreen();
     bdmEnumerateDevices();
+    LOG("BOOT scan: bdmEnumerateDevices() done; MMCE initSupport begin\n");
+    // Distinct banner for the MMCE init phase so a frozen boot screen LOCALIZES a scan-hang to this
+    // step. Helps distinguish between the 4-probe presence check against a genuinely empty card slot
+    // on a FAT console and the exact culprit (slow ATA/dev9 probe in bdmEnumerateDevices vs the MMCE
+    // presence poll in mmceman).
+    guiSetBootStatus(_l(_STR_BOOT_SCANNING_MC));
+    if (gBootInProgress)
+        guiRenderGreetingScreen();
+    initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
+    LOG("BOOT scan: MMCE initSupport done\n");
+    guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
+    if (gBootInProgress)
+        guiRenderGreetingScreen();
+    initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     guiSetBootStatus(_l(_STR_BOOT_SCANNING_NET));
     if (gBootInProgress)
         guiRenderGreetingScreen();
@@ -863,19 +879,8 @@ static void initAllSupport(int force_reinit)
     // HTTP shares that same NIC and the same one-tab-at-a-time rule: its start-mode gate is live
     // only when gNetworkProtocol == NET_PROTO_HTTP.
     initSupport(httpGetObject(0), HTTP_MODE, force_reinit);
-    guiSetBootStatus(_l(_STR_BOOT_SCANNING_HDD));
-    if (gBootInProgress)
-        guiRenderGreetingScreen();
-    initSupport(hddGetObject(0), HDD_MODE, force_reinit);
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
-    LOG("BOOT scan: bdmEnumerateDevices() done; MMCE initSupport begin\n");
-    // Distinct banner for the MMCE init phase so a frozen boot screen LOCALIZES a scan-hang to this
-    // step. Helps distinguish between the 4-probe presence check against a genuinely empty card slot
-    // on a FAT console and the exact culprit (slow ATA/dev9 probe in bdmEnumerateDevices vs the MMCE
-    // presence poll in mmceman).
-    initSupport(mmceGetObject(0), MMCE_MODE, force_reinit);
-    LOG("BOOT scan: MMCE initSupport done\n");
 
     // Arm the MMCE GameID transport at boot and on every settings apply -- instead
     // of deferring it to itemLaunchMMCE.
