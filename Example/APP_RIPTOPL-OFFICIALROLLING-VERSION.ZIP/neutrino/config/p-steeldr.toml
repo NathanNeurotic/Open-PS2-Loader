@@ -1,0 +1,10 @@
+# Name of loaded config, to show to user
+name = "Patch memory buffer overrun - Steel Dragon EX"
+
+# These games have IOP memory buffer overrun issues
+# Load patch module that fixes this game bug
+[[module]]
+file = "patch_membo.irx"
+load_order = 31
+args = ["0", "1"]
+env = ["EE"]
