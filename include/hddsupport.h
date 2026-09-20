@@ -121,9 +121,8 @@ static inline int hddLoadModulesReady(void)
 // hddLoadModulesReady() decision while enabling nested, source-level startup stages beneath it.
 int hddDiagLoadModulesReady(void);
 void hddLoadSupportModules(void);
-// Release only the live pfs0:/pfs1: mounts while keeping the already-loaded APA/PFS and ATA
-// modules resident. Used when an APA-booted RiptOPL session hands the same physical HDD to the
-// BDM/exFAT path; the config is already resident in EE memory and the save path can remount it.
+// Release only the live pfs0: data-home mount while keeping the already-loaded APA/PFS and ATA
+// modules resident. Boot-time only: used after an APA config miss before probing ATA BDM/exFAT.
 int hddReleasePfsForBdm(void);
 
 // Normal APA data-home choices surfaced by Settings -> Game Sources. POPS loose files remain
