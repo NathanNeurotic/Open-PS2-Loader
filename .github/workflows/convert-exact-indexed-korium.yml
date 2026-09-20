@@ -1,0 +1,120 @@
+name: Convert exact indexed Korium assets
+
+on:
+  push:
+    branches:
+      - test/korium-audit-remediation
+    paths:
+      - .github/workflows/convert-exact-indexed-korium.yml
+
+permissions:
+  contents: write
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: test/korium-audit-remediation
+          fetch-depth: 0
+
+      - name: Convert eligible PNGs to exact T8 indexed form
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq optipng
+          python3 -m pip install --disable-pip-version-check pillow
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          import hashlib, struct, subprocess
+
+          names = ["select","missing","ELF","HDL","ISO","VCD","ZSO","UL","CD","DVD","PS1","PS2"]
+          changed=[]
+          total_before=0
+          total_after=0
+          runtime_saved=0
+
+          def rgba_sig(path):
+              with Image.open(path) as im:
+                  rgba=im.convert("RGBA")
+                  return (
+                      im.size,
+                      hashlib.sha256(rgba.tobytes()).hexdigest(),
+                      list(rgba.getdata()),
+                  )
+
+          def png_header(path):
+              d=path.read_bytes()[:29]
+              if d[:8] != b"\x89PNG\r\n\x1a\n":
+                  raise RuntimeError(f"{path}: invalid PNG")
+              w,h=struct.unpack(">II", d[16:24])
+              return w,h,d[24],d[25]
+
+          for name in names:
+              path=Path("gfx")/f"{name}.png"
+              before_bytes=path.stat().st_size
+              size, before_hash, pixels=rgba_sig(path)
+              colors=list(dict.fromkeys(pixels))
+              if len(colors) > 256:
+                  raise RuntimeError(f"{path}: expected <=256 exact RGBA colors, got {len(colors)}")
+
+              color_to_idx={c:i for i,c in enumerate(colors)}
+              indexed=Image.new("P", size)
+              indexed.putdata([color_to_idx[p] for p in pixels])
+
+              palette=[]
+              alphas=[]
+              for r,g,b,a in colors:
+                  palette.extend((r,g,b))
+                  alphas.append(a)
+              while len(palette) < 768:
+                  palette.extend((0,0,0))
+              indexed.putpalette(palette[:768])
+
+              save_kwargs={"format":"PNG","optimize":True,"bits":8}
+              if any(a != 255 for a in alphas):
+                  # PNG tRNS may contain one alpha byte per palette entry; OPL applies the
+                  # same >>1 alpha conversion here that it uses for CT32 pixels.
+                  save_kwargs["transparency"]=bytes(alphas)
+              indexed.save(path, **save_kwargs)
+              subprocess.run(["optipng","-o7","-quiet",str(path)], check=False)
+
+              w,h,depth,ctype=png_header(path)
+              if (w,h) != size or depth != 8 or ctype != 3:
+                  raise RuntimeError(f"{path}: expected exact 8-bit palette output, got {w}x{h} depth={depth} type={ctype}")
+
+              _, after_hash, _=rgba_sig(path)
+              if after_hash != before_hash:
+                  raise RuntimeError(f"{path}: decoded RGBA hash changed")
+
+              after_bytes=path.stat().st_size
+              old_runtime=w*h*4
+              new_runtime=w*h + 256*4
+              saved=old_runtime-new_runtime
+              if saved <= 0:
+                  raise RuntimeError(f"{path}: conversion would not save runtime memory")
+
+              total_before += before_bytes
+              total_after += after_bytes
+              runtime_saved += saved
+              changed.append((name,before_bytes,after_bytes,len(colors),saved,before_hash))
+
+          print(f"EXACT_INDEXED_COUNT={len(changed)}")
+          print(f"PNG_BYTES={total_before}->{total_after};delta={total_after-total_before}")
+          print(f"EST_RUNTIME_SAVED={runtime_saved}")
+          for row in changed:
+              print(f"{row[0]} bytes={row[1]}->{row[2]} colors={row[3]} runtime_saved={row[4]} rgba_sha256={row[5]}")
+          PY
+
+      - name: Commit exact conversions
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gfx/select.png gfx/missing.png gfx/ELF.png gfx/HDL.png gfx/ISO.png gfx/VCD.png gfx/ZSO.png gfx/UL.png gfx/CD.png gfx/DVD.png gfx/PS1.png gfx/PS2.png
+          git commit -m "assets: store exact low-color Korium glyphs as T8"
+          git push origin HEAD:test/korium-audit-remediation
