@@ -30,6 +30,15 @@ devices, copy the matching `APPS/APP_RIPTOPL*/` directory instead. Install `ART/
 does not contain those shared folders. The labelled ELF folders are alternate builds, not
 additional PSU saves.
 
+The release packer writes R3Z3N's SAS timestamps into the PSU save folder and
+every direct file at packaging time. Its fixed schedule gives both
+`APP_RIPTOPL` and `APP_RIPTOPL-RA` **2098-12-31 14:17:22 UTC**; the two names
+share a one-second slot under the supplied ranking algorithm. The packer writes
+those dates directly into PSU records, so it does not need a Windows file-time
+step or a `psu.toml` file. Saving settings after installation may change the
+memory card's file times; the release package cannot preserve them after a
+runtime write.
+
 The `.psu` format and independent package check use the CC0
 [PSUManager core by techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager),
 preserved with its license in [third_party/PSUManager](third_party/PSUManager/README.md).
