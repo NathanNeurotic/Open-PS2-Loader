@@ -1526,7 +1526,7 @@ int sbLoaderDeinitException(const char *loaderPath)
     int exception = UNMOUNT_EXCEPTION;
 
     if (loaderPath != NULL && !strncasecmp(loaderPath, "pfs", 3)) {
-        exception |= KEEPIOP_EXCEPTION;
+        exception |= KEEP_PFS_FDS_EXCEPTION;
         // pfs1: is normally a transient HDD scratch mount and must not inherit the broad
         // UNMOUNT_EXCEPTION used by unrelated Apps/Ember handoffs. Preserve it only when the
         // resolved child ELF itself is explicitly on pfs1:.
