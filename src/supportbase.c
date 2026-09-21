@@ -1452,9 +1452,8 @@ static const char *sbNeutrinoResolved(const char *path)
 
 // Probe the ACTIVE game device for a co-located neutrino.elf: (A) the games-folder prefix, then
 // (B) the bare device root. Returns the resolved path of the first COMPLETE install (Δ1), or NULL.
-// Shared by the AUTO tier (one candidate among several) and the "Game's Device" pick (the ONLY
-// candidate -- a NULL here is surfaced to the user, no MC fallback). activePrefix NULL/"" -> NULL
-// (e.g. HDD passes NULL: raw APA is not POSIX-open()-reachable).
+// This is the default resolver's first tier when Neutrino Path is <not set>. activePrefix NULL/""
+// means raw APA, whose game-device equivalent is handled separately by sbNeutrinoProbeApaHome().
 static const char *sbNeutrinoProbeGameDevice(const char *activePrefix)
 {
     if (activePrefix == NULL || activePrefix[0] == '\0')
