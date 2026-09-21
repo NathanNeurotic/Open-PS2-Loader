@@ -693,6 +693,12 @@ int bdmEnsureNetworkSourceModules(int protocol, u32 timeoutMs)
     if (ethGetModulesLoaded() || udpfsGetModulesLoaded())
         return 0;
 
+    // The transport IRX only publishes a BDM block device. A custom path needs the common BDM +
+    // FatFs filesystem infrastructure too so that device can become an openable massN: mount.
+    // Use the synchronous core-only path here: bdmLoadModules() would also queue every enabled
+    // optional transport on the IO worker, which is unrelated to resolving this one explicit path.
+    bdmLoadCoreModules(0);
+
     WaitSema(bdmLoadModuleLock);
 
     if (udpbdModLoaded) {
