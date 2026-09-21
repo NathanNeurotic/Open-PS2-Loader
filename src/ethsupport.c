@@ -37,8 +37,9 @@ static base_game_info_t *ethGames = NULL;
 static int ethPs1GameCount = 0;
 static base_game_info_t *ethPs1Games = NULL;
 
-// forward declaration
+// forward declarations
 static item_list_t ethGameList;
+static void smbLoadModules(void);
 
 static unsigned char ethReconnectQueued = 0;
 
