@@ -99,6 +99,33 @@ int udpfsGetModulesLoaded(void)
     return udpfsIomanModLoaded;
 }
 
+int udpfsEnsureReady(u32 timeoutMs)
+{
+    u64 start;
+
+    if (ethGetModulesLoaded() || bdmIsUDPBDLoaded())
+        return 0;
+
+    if (!udpfsIomanModLoaded)
+        udpfsLoadModules();
+    if (!udpfsIomanModLoaded)
+        return 0;
+
+    // A healthy, already-connected server returns on the first probe. A just-loaded ioman session
+    // can need a short discovery window, so only the explicit custom-path request pays this wait.
+    start = GetTimerSystemTime();
+    do {
+        struct stat st;
+        if (stat("udpfs:/", &st) == 0)
+            return 1;
+        if ((GetTimerSystemTime() - start) / (kBUSCLK / 1000) >= timeoutMs)
+            break;
+        DelayThread(100 * 1000);
+    } while (1);
+
+    return 0;
+}
+
 // True when the server answers. While the udpfs_ioman session is down, every call fails inside the IOP
 // before anything reaches the network, so this is cheap enough to poll.
 static int udpfsServerAnswers(void)
