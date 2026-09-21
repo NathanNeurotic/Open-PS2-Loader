@@ -1572,39 +1572,10 @@ int sbFileExists(const char *path)
 // Resolve the Neutrino core ELF: probe the install locations users actually use (folder-case
 // and leading-slash variants on mc0/mc1) and return the first COMPLETE install (Δ1), or NULL.
 // Centralised so the bdm + mmce launch paths stay in sync.
-const char *sbResolveNeutrinoPath(const char *activePrefix)
+static const char *sbNeutrinoProbeMemoryCards(void)
 {
-    // An explicit path is authoritative. This is the fast/expert path: one exact ELF lookup plus
-    // the install-completeness check, with NO device scan and NO silent fallback. If a user typed
-    // mmce0:/neutrino/neutrino.elf for an HDD game, that exact MMCE install is the one we hand off
-    // to; the MMCE GameID switch remains free to change mcN: because the ELF lives on mmceN:.
-    if (gNeutrinoPath[0] != '\0') {
-        if (sbFileExists(gNeutrinoPath) && sbNeutrinoInstallComplete(gNeutrinoPath))
-            return sbNeutrinoResolved(gNeutrinoPath);
-
-        LOG("[NEUTRINO] configured path unavailable/incomplete: %s\n", gNeutrinoPath);
-        return NULL;
-    }
-
-    // "<not set>" / empty path is the compatibility-first default. Keep the behaviour existing
-    // installations rely on: search the ACTIVE GAME DEVICE first, then fall back to mc0:/mc1:.
-    //
-    // APA is the one game source without a POSIX-open()-able activePrefix. For an APA game,
-    // sbNeutrinoProbeApaHome() is therefore its "game device" equivalent: the OPL data partition
-    // already mounted on pfs0: (+OPL or __common/OPL). We do NOT probe that APA home for games
-    // hosted on some other device; cross-device placement belongs in the explicit Neutrino Path.
-    const char *gameHit = NULL;
-    if (activePrefix != NULL && activePrefix[0] != '\0')
-        gameHit = sbNeutrinoProbeGameDevice(activePrefix);
-    else
-        gameHit = sbNeutrinoProbeApaHome();
-
-    if (gameHit != NULL)
-        return gameHit;
-
-    // Historical memory-card fallbacks. Keep the accepted case/slash spellings so an existing
-    // setup keeps booting after this UI change; users who want a single exact lookup can set the
-    // Neutrino Path field instead.
+    // Historical memory-card spellings. Keep these for compatibility with installations created
+    // before the path-only UI; users who explicitly set Neutrino Path get a single exact lookup.
     static const char *candidates[] = {
         NEUTRINO_PATH,     // mc0:NEUTRINO/neutrino.elf
         NEUTRINO_ALT_PATH, // mc1:NEUTRINO/neutrino.elf
@@ -1615,12 +1586,79 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
         "mc0:NEUTRINO/NEUTRINO.ELF",
         "mc1:/NEUTRINO/NEUTRINO.ELF",
     };
+
     for (int i = 0; i < (int)(sizeof(candidates) / sizeof(candidates[0])); i++) {
         if (sbFileExists(candidates[i]) && sbNeutrinoInstallComplete(candidates[i]))
             return sbNeutrinoResolved(candidates[i]);
     }
+    return NULL;
+}
 
-    LOG("[NEUTRINO] no complete install found on game device or memory cards\n");
+// Resolve the Neutrino core ELF.
+//
+// CURRENT contract:
+//   path explicitly confirmed in the path-only UI -> exact path, no fallback.
+//   path <not set>                              -> active game device, then memory cards.
+//
+// UPGRADE compatibility is intentionally invisible. Old device-picker selections and old custom
+// paths keep their former resolver semantics until the user edits Neutrino Path. This prevents an
+// unrelated Save Changes after upgrading from changing which Neutrino installation boots.
+const char *sbResolveNeutrinoPath(const char *activePrefix)
+{
+    // New path-only contract: a path explicitly confirmed under the new UI is authoritative.
+    if (gNeutrinoPathExact && gNeutrinoPath[0] != '\0') {
+        if (sbFileExists(gNeutrinoPath) && sbNeutrinoInstallComplete(gNeutrinoPath))
+            return sbNeutrinoResolved(gNeutrinoPath);
+
+        LOG("[NEUTRINO] configured exact path unavailable/incomplete: %s\n", gNeutrinoPath);
+        return NULL;
+    }
+
+    // Pre-path-only "Game's Device" was exclusive. Preserve that until the user touches the new
+    // path field; in particular an APA game passed NULL here and therefore had no fallback.
+    if (gNeutrinoLegacyMode == NEUTRINO_LEGACY_GAME)
+        return sbNeutrinoProbeGameDevice(activePrefix);
+
+    // Pre-path-only "Memory Card" tried MC first, then fell through to the normal Auto tiers.
+    // Preserve that ordering so upgrades cannot silently choose a game-device copy instead.
+    int legacyMcProbed = 0;
+    if (gNeutrinoLegacyMode == NEUTRINO_LEGACY_MC) {
+        const char *mcHit = sbNeutrinoProbeMemoryCards();
+        legacyMcProbed = 1;
+        if (mcHit != NULL)
+            return mcHit;
+    }
+
+    // A neutrino_path written by an older build had "try this first, then fall back" semantics.
+    // Absence of the new exact marker identifies that legacy state. Do not strand a user whose old
+    // path went stale: retain the historical fall-through until they deliberately edit the field.
+    if (gNeutrinoPath[0] != '\0') {
+        if (sbFileExists(gNeutrinoPath) && sbNeutrinoInstallComplete(gNeutrinoPath))
+            return sbNeutrinoResolved(gNeutrinoPath);
+        LOG("[NEUTRINO] legacy configured path unavailable/incomplete; continuing fallback: %s\n", gNeutrinoPath);
+    }
+
+    // Current <not set> default (and legacy Auto fallback): ACTIVE GAME DEVICE first.
+    // APA has no POSIX-open()-able activePrefix, so its already-mounted OPL data home is the
+    // equivalent game-device tier. Other game sources do NOT scan APA here.
+    const char *gameHit = NULL;
+    if (activePrefix != NULL && activePrefix[0] != '\0')
+        gameHit = sbNeutrinoProbeGameDevice(activePrefix);
+    else
+        gameHit = sbNeutrinoProbeApaHome();
+
+    if (gameHit != NULL)
+        return gameHit;
+
+    // Then the historical memory-card fallback. If a legacy MC selector already exhausted this
+    // tier above, repeating eight opens buys nothing.
+    if (!legacyMcProbed) {
+        const char *mcHit = sbNeutrinoProbeMemoryCards();
+        if (mcHit != NULL)
+            return mcHit;
+    }
+
+    LOG("[NEUTRINO] no complete install found on configured/game device or memory cards\n");
     return NULL;
 }
 
