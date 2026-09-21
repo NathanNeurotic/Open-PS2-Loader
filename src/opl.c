@@ -190,7 +190,7 @@ int smbCacheSize;
 int gApplyGameID;
 int gEnableUSB;
 char gNeutrinoArgs[256];     // extra command-line flags appended to every Neutrino launch
-char gNeutrinoPath[256];     // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
+char gNeutrinoPath[256];     // exact neutrino.elf path; "" -> active game device, then mc0:/mc1:
 int gDefaultCoreLoader;      // global default Loader Core (0=<OPL>, 1=Neutrino); per-game $CoreLoader overrides, absent key = follow this
 int gNeutrinoVideoDefault;   // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game $NeutrinoVideo overrides
 int gNeutrinoGsmCompDefault; // global default -gsm ":c" field-flip half (0=off, 1-3=type)
