@@ -917,6 +917,33 @@ int oplPath2Mode(const char *path)
     int i, blkdevnamelen;
     item_list_t *listSupport;
 
+    if (path == NULL || path[0] == '\0')
+        return -1;
+
+    // Custom core paths are normalized to these live filesystem namespaces before teardown.
+    // Classify them directly instead of depending on a visible/enabled menu page: a user may keep
+    // Neutrino/POPSTARTER on a device whose games tab is disabled.
+    if (!strncasecmp(path, "mmce", 4))
+        return MMCE_MODE;
+    if (!strncasecmp(path, "smb", 3))
+        return ETH_MODE;
+    if (!strncasecmp(path, "udpfs:", 6))
+        return UDPFS_MODE;
+    if (!strncasecmp(path, "pfs", 3) || !strncasecmp(path, "hdd", 3))
+        return HDD_MODE;
+    if (!strncasecmp(path, "http://", 7) || !strncasecmp(path, "https://", 8))
+        return HTTP_MODE;
+    if (!strncasecmp(path, "mass", 4)) {
+        const char *p = path + 4;
+        int slot = 0, haveDigit = 0;
+        while (*p >= '0' && *p <= '9') {
+            haveDigit = 1;
+            slot = slot * 10 + (*p++ - '0');
+        }
+        if (haveDigit && *p == ':' && slot >= BDM_MODE && slot <= BDM_MODE_LAST)
+            return slot;
+    }
+
     for (i = 0; i < MODE_COUNT; i++) {
         listSupport = list_support[i].support;
         if ((listSupport != NULL) && (listSupport->itemGetPrefix != NULL)) {
