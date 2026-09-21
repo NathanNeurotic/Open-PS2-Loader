@@ -4866,6 +4866,9 @@ static void deferredAudioInit(void)
 // --------------------- Auto Loading -----------------------
 // ----------------------------------------------------------
 
+// Extra delay(6) rounds autoLaunchBDMGame waits for mass0: to publish before giving up on the launch.
+#define AUTOLAUNCH_MASS0_RETRIES 8
+
 static void miniInit(int mode)
 {
     int ret;
@@ -5037,6 +5040,16 @@ static void autoLaunchHDDGame(char *argv[])
     configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchGame->startup);
 
     hddLaunchGame(NULL, -1, configSet);
+
+    // Only reached when the launch was refused. hddLaunchGame tears the mini session down only on the
+    // way to a handoff, so finish it here: main() then boots the menu, which must not inherit a live
+    // gAutoLaunchGame (every later menu launch would be treated as this autolaunch).
+    if (gAutoLaunchGame != NULL) {
+        LOG("AUTOLAUNCH HDD launch refused; falling back to the menu\n");
+        free(gAutoLaunchGame);
+        gAutoLaunchGame = NULL;
+        miniDeinit(configSet);
+    }
 }
 
 static void autoLaunchBDMGame(char *argv[])
@@ -5111,6 +5124,10 @@ static void autoLaunchBDMGame(char *argv[])
     // first -- the config path and the device identity disagreed whenever more than one mass
     // device was present.
     int selectedMassSlot = -1;
+    // Upstream retries mass0: forever, so a device that never publishes a filesystem hung the
+    // autolaunch on a black screen. Bound it (delay() ticks are ~0.25 s, so about 12 s) and let the
+    // menu boot instead, where the device and its error are visible.
+    int mass0Retries = 0;
     delay(8);
     // Loop through mass0: to mass4:
     for (int i = 0; i <= 4; i++) {
@@ -5145,8 +5162,8 @@ static void autoLaunchBDMGame(char *argv[])
                 break; // Exit the loop if "ata" device is found
             }
         } else {
-            // Retry for mass0: only
-            if (i == 0) {
+            // Retry for mass0: only, and only for a bounded time.
+            if (i == 0 && mass0Retries++ < AUTOLAUNCH_MASS0_RETRIES) {
                 delay(6);
                 i--;
             } else {
@@ -5156,10 +5173,17 @@ static void autoLaunchBDMGame(char *argv[])
         delay(6);
     }
 
-    // No mass device answered at all: keep the historical mass0: guess rather than an empty prefix,
-    // which would build a rootless config path.
-    if (selectedMassSlot < 0)
-        snprintf(apaDevicePrefix, sizeof(apaDevicePrefix), "mass0:");
+    // No mass device answered at all. The old mass0: guess could only build a path to a file that is
+    // not there, and the launch error behind it has no screen to show on.
+    if (selectedMassSlot < 0) {
+        LOG("AUTOLAUNCH no mass device answered; falling back to the menu\n");
+        free(gAutoLaunchDeviceData);
+        gAutoLaunchDeviceData = NULL;
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        miniDeinit(NULL);
+        return;
+    }
 
     // bdmDeviceRoot was never written on this path, so the launch legs that resolve paths through
     // it saw an empty string.
@@ -5182,6 +5206,19 @@ static void autoLaunchBDMGame(char *argv[])
         configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchBDMGame->startup);
 
     bdmLaunchGame(NULL, -1, configSet);
+
+    // Only reached when the launch was refused (missing ISO, fragmented image, unusable device).
+    // bdmLaunchGame tears the mini session down only on the way to a handoff; a Neutrino abort that
+    // already did so has cleared gAutoLaunchBDMGame. Finish it here, or main() would boot the menu with
+    // live autolaunch state and treat every later menu launch as this autolaunch.
+    if (gAutoLaunchBDMGame != NULL) {
+        LOG("AUTOLAUNCH BDM launch refused; falling back to the menu\n");
+        free(gAutoLaunchDeviceData);
+        gAutoLaunchDeviceData = NULL;
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        miniDeinit(configSet);
+    }
 }
 
 // --------------------- Main --------------------

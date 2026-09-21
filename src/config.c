@@ -443,6 +443,11 @@ void configMove(config_set_t *configSet, const char *fileName)
 
 void configFree(config_set_t *configSet)
 {
+    // Every early autolaunch bail-out calls miniDeinit(NULL). Without this guard configClear read
+    // NULL->head -- a TLB miss on hardware -- so a refused autolaunch crashed instead of reaching the menu.
+    if (configSet == NULL)
+        return;
+
     configClear(configSet);
     free(configSet->filename);
     free(configSet);
