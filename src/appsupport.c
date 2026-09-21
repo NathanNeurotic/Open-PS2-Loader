@@ -197,16 +197,18 @@ static int appIsPopstarterSmb(const char *startup)
     return 1;
 }
 
-static int appIsPopstarterElf(const char *filename)
+static int appIsPopstarterElf(const char *filename, const char *title)
 {
     const char *base;
+    (void)title;
 
     if (filename != NULL && appIsPopstarterSmb(filename))
         return 1;
 
     // [PS1] is only an Apps/PS1ELF shelf tag. It is not proof that the executable is POPSTARTER:
     // an ordinary ELF may be categorized there and must retain the normal Apps IOP-reset question.
-    // Exempt only the executable forms POPSTARTER actually uses.
+    // Keep title in the signature for the existing host-test/helper contract, but executable form
+    // alone decides whether this launch is exempt from the prompt.
     base = appBasename(filename);
     if (base[0] != '\0') {
         if (strcasecmp(base, "POPSTARTER.ELF") == 0)
@@ -1059,7 +1061,7 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             }
         }
 
-        isPops = appIsPopstarterElf(filename);
+        isPops = appIsPopstarterElf(filename, appsList[id].title);
 
         // This is the ONLY launch class that may ask the user about resetting the IOP:
         // an ordinary ELF launched through APPS (including an Apps-owned Favourite). POPSTARTER
