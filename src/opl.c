@@ -3482,7 +3482,10 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_VCD_FIRST_DISC_ONLY, gVcdFirstDiscOnly);
         configSetInt(configOPL, CONFIG_OPL_VCD_SHOW_PP_POPS, gVcdShowPpPops);
         configSetStr(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs);
-        configSetStr(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath);
+        if (gNeutrinoPath[0] != '\0')
+            configSetStr(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath);
+        else
+            configRemoveKey(configOPL, CONFIG_OPL_NEUTRINO_PATH); // "<not set>" is genuinely unset
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, gDefaultCoreLoader);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
