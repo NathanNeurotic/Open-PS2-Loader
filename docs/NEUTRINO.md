@@ -64,6 +64,7 @@ Common accepted path families include:
 | SMB filesystem | `smb:/...` |
 | UDPFS filesystem | `udpfs:/...` |
 | UDPFS disk / UDPBD disk | `udpfsd:/...`, `udpfsbd:/...`, `udpbd:/...` |
+| APA HDD / selected OPL data home | `hdd:/...`, `hdd0:/...` |
 | Mounted APA/PFS filesystem | `pfs:/...`, `pfs0:/...` |
 | Internal ROM | `rom:/...`, `rom0:/...` |
 
@@ -72,8 +73,11 @@ alone. A `massN:` slot backed by ATA therefore remains ATA semantically; it is n
 as USB.
 
 For an **APA HDL game**, the automatic Game Device tier means the selected OPL data home already
-mounted on `pfs0:` (`+OPL` root or `__common/OPL/`). A custom `pfs0:` path may point elsewhere
-inside that currently mounted partition.
+mounted on `pfs0:` (`+OPL` root or `__common/OPL/`). The semantic `hdd:/...` / `hdd0:/...`
+alias also resolves only through that already-selected live APA data home; it never mounts an
+arbitrary partition. Explicit nonzero `hddN:` units fail closed rather than being silently
+redirected to `hdd0:`. A custom `pfs0:` path addresses the currently mounted PFS filesystem
+directly.
 
 > **HTTP URLs are not direct ELF filesystem paths in the current HTTP backend.** HTTP games are
 > streamed by the in-game HTTP driver; RiptOPL does not have an `http:` ioman filesystem from which
