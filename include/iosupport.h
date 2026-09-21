@@ -68,8 +68,8 @@ enum ERROR_CODE {
     ERROR_BDM_UNSUPPORTED_SECTOR_SIZE = 500, // a drive's sectors are not 512 bytes; BDM refused it
 };
 
-#define NO_EXCEPTION      0x00
-#define UNMOUNT_EXCEPTION 0x01
+#define NO_EXCEPTION        0x00
+#define UNMOUNT_EXCEPTION   0x01
 // The child ELF keeps the IOP: it inherits the live modules, mounts and file descriptors instead of
 // resetting them away. Set by the Ember launch paths, which hand off through sysLoadELFKeepIOP.
 //
@@ -77,7 +77,10 @@ enum ERROR_CODE {
 // issues PDIOC_CLOSEALL, which drops every pfs descriptor in the IOP -- fine when the next thing to
 // run resets the IOP anyway, fatal when it does not. A driver only OPL knows about is still the
 // driver Ember has to read its game through.
-#define KEEPIOP_EXCEPTION 0x02
+#define KEEPIOP_EXCEPTION   0x02
+// pfs1: is HDD support's transient scan/settings mount and must keep its historical always-unmount
+// behaviour. Only an explicitly resolved child ELF on pfs1: may preserve it across the handoff.
+#define KEEP_PFS1_EXCEPTION 0x04
 
 #define MODE_FLAG_NO_COMPAT  0x01 // no compat support
 #define MODE_FLAG_COMPAT_DMA 0x02 // Supports DMA compat flags
