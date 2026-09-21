@@ -1719,6 +1719,11 @@ static int checkLoadConfigHDD(int types)
         snprintf(path, sizeof(path), "%s%s", gHDDPrefix, CONFIG_OPL_FILENAME_LEGACY);
         value = open(path, O_RDONLY);
     }
+    if (value < 0) {
+        // Official OPL's own +OPL/__common home: configRead reads it as a read-only seed.
+        snprintf(path, sizeof(path), "%s%s", gHDDPrefix, CONFIG_OPL_FILENAME_OFFICIAL);
+        value = open(path, O_RDONLY);
+    }
     if (value >= 0) {
         close(value);
         configEnd();
@@ -2340,11 +2345,13 @@ static void restoreRecoverySaveHome(const char *recoveredHome)
             configSetMove((char *)mcHome);
         else
             configSetMove(NULL); // no concrete MC is reachable: keep the normal fail-visible wildcard home
-    } else if (sameConcreteMcSlot(gBootDir, recoveredHome)) {
+    } else if (sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed()) {
         // A concrete MC boot that recovered its existing settings from the same card keeps that
         // exact directory as its save owner. In particular, a launcher that supplies only "mc1:"
         // as the boot CWD must not move a successfully read mc1:/OPL configuration to the card
-        // root (or to mc0 when both cards are inserted).
+        // root (or to mc0 when both cards are inserted). This applies to RiptOPL's OWN settings
+        // only: an official conf_opl.cfg is a read-only seed and must not pull our save home into
+        // official OPL's folder, so that case falls through to the boot dir below.
         configSetMove((char *)recoveredHome);
     } else if (gBootDir[0] != '\0') {
         configSetMove(gBootDir);
@@ -2573,7 +2580,8 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
             // already serving this config -- sysCheckMC() gated the whole branch.
             if (gBootHomeDeferred)
                 homeLeftOnCard = 1;
-            else if (sameConcreteMcSlot(gBootDir, concreteMcHome)) {
+            else if (sameConcreteMcSlot(gBootDir, concreteMcHome) && !configOplIsOfficialSeed()) {
+                // Not for an official conf_opl.cfg seed: that is read-only and never our save home.
                 configSetMove(concreteMcHome); // MC legacy config remains at the exact discovered home
                 // configSetMove already made the exact MC1/MC0 home the notification/save owner.
                 // Do not overwrite that with a compact/root boot CWD below: failure reporting must
