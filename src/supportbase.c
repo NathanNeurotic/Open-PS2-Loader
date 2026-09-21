@@ -1404,23 +1404,39 @@ int sbLoadCheats(const char *path, const char *file)
 // install: accept the elf only when config/system.toml OR flat system.toml sits beside it. A stale
 // folder (elf only, no config) is skipped so probing continues to a good install instead of
 // shadowing it. Uses its own buffer so the caller's returned path is untouched.
+static const char *sbLastPathSeparator(const char *path)
+{
+    const char *slash;
+    const char *backslash;
+
+    if (path == NULL)
+        return NULL;
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    if (backslash != NULL && (slash == NULL || backslash > slash))
+        return backslash;
+    return slash;
+}
+
 static int sbNeutrinoInstallComplete(const char *elfPath)
 {
     if (elfPath == NULL)
         return 0;
-    const char *slash = strrchr(elfPath, '/');
+    const char *slash = sbLastPathSeparator(elfPath);
     char probe[320]; // longest caller path (~160) + "/config/system.toml" with headroom -- a TRUNCATED
                      // probe would miss a real toml and reject a VALID install (PR #81 review)
     int dirLen;
+    char sep;
 
     if (slash == NULL) // no directory component -- can't derive cwd; don't reject (custom path edge)
         return 1;
     dirLen = (int)(slash - elfPath);
+    sep = *slash;
 
-    snprintf(probe, sizeof(probe), "%.*s/config/system.toml", dirLen, elfPath);
+    snprintf(probe, sizeof(probe), "%.*s%cconfig%csystem.toml", dirLen, elfPath, sep, sep);
     if (sbFileExists(probe))
         return 1;
-    snprintf(probe, sizeof(probe), "%.*s/system.toml", dirLen, elfPath);
+    snprintf(probe, sizeof(probe), "%.*s%csystem.toml", dirLen, elfPath, sep);
     return sbFileExists(probe);
 }
 
@@ -1431,11 +1447,11 @@ static const char *sbNeutrinoResolved(const char *path)
 {
     if (path == NULL)
         return NULL;
-    const char *slash = strrchr(path, '/');
+    const char *slash = sbLastPathSeparator(path);
     if (slash != NULL) {
         char vpath[320], ver[128]; // same headroom rationale as sbNeutrinoInstallComplete's probe
         int fd;
-        snprintf(vpath, sizeof(vpath), "%.*s/version.txt", (int)(slash - path), path);
+        snprintf(vpath, sizeof(vpath), "%.*s%cversion.txt", (int)(slash - path), path, *slash);
         fd = open(vpath, O_RDONLY, 0666);
         if (fd >= 0) {
             int n = read(fd, ver, sizeof(ver) - 1);
@@ -1697,12 +1713,23 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
 
     // SMB is a real filesystem only after the configured share is open.
     if (sbTokenStemIs(token, "smb")) {
+        char smbTail[320];
+
         // smb: and smb0: name the one configured share. Do not alias an explicit smb1:/etc.
         // back onto smb0:, because a full path with a unit number must remain truthful.
         if (strcmp(token, "smb") != 0 && strcmp(token, "smb0") != 0)
             return 0;
+
+        // smbman paths throughout this tree use backslashes. Accept the user-facing smb:/...
+        // spelling but canonicalize it before both the existence probe and the later handoff.
+        snprintf(smbTail, sizeof(smbTail), "%s", tail != NULL ? tail : "");
+        for (char *p = smbTail; *p != '\0'; p++) {
+            if (*p == '/')
+                *p = '\\';
+        }
+
         if (ethEnsureSMBShareConnected() &&
-            sbJoinDeviceTail(out, outSize, "smb0:", tail) && sbFileExists(out))
+            sbJoinDeviceTail(out, outSize, "smb0:", smbTail) && sbFileExists(out))
             return 1;
         out[0] = '\0';
         return 0;
