@@ -161,7 +161,8 @@ extern int smbCacheSize;
 
 extern int gApplyGameID; // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gEnableUSB;
-// Neutrino Device picker: a driver-accurate device TYPE that holds <root>:/neutrino/neutrino.elf.
+// Neutrino resolver policy. Only Auto / Memory Card / Game's Device are user-facing now;
+// the legacy device-specific enum slots stay below only so old saved numeric values can migrate safely.
 enum { NEUTRINO_DEV_AUTO = 0, // auto discovery; MMCE game device is preferred before custom/MC fallback
        NEUTRINO_DEV_MC,       // mc0: / mc1:
        // The following values are retained so old settings keep their numeric meaning while they
