@@ -1103,9 +1103,9 @@ gui_strings:
 - label: HINT_WRITE_POPSTARTER_NET
   string: Also save these IP + SMB share values to POPSTARTER's own IPCONFIG.DAT / SMBCONFIG.DAT on the memory card (for VCD-over-SMB).
 - label: NEUTRINO_PATH
-  string: Neutrino ELF Path
+  string: Neutrino Path
 - label: HINT_NEUTRINO_PATH
-  string: Full path to neutrino.elf (e.g. mc0:NEUTRINO/neutrino.elf). Blank = auto-detect on mc0/mc1.
+  string: "Where is neutrino.elf located? Leave <not set> for automatic game-device then memory-card fallback. Examples: mass0:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | APA +OPL: pfs0:/neutrino/neutrino.elf | APA __common: pfs0:OPL/neutrino/neutrino.elf"
 - label: BOOT_SCANNING_MC
   string: Scanning memory cards...
 - label: BOOT_ARMING_MMCE
