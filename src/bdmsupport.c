@@ -59,6 +59,7 @@ static int bdmDeviceListInitialized = 0;
 
 void bdmInitDevicesData();
 int bdmUpdateDeviceData(item_list_t *itemList);
+static void bdmLoadCoreModules(int forceUsb);
 
 static unsigned int BdmGeneration = 0;
 // Drives BDM refused because their sectors are not 512 bytes (4K-sector drives, refused by design).
