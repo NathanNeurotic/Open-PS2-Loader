@@ -1713,6 +1713,21 @@ static int hddResolveHddPopstarter(char *elfOut, int elfLen)
     return 0;
 }
 
+// A custom POPSTARTER.ELF may live somewhere other than the HDD game device, but moving the
+// executable must not bypass the established POPSTARTER dependency install. Borrow the dedicated
+// pfs1: scratch slot to copy any missing mc?:/POPSTARTER externals from __common/POPS without
+// disturbing pfs0: (which may itself hold the custom ELF or the normal OPL data home).
+// Best-effort, matching hddResolveHddPopstarter(): existing card files always win and a missing
+// __common payload never turns an otherwise-valid custom ELF into a launch failure.
+static void hddInstallPopstarterMcFromCommon(void)
+{
+    fileXioUmount("pfs1:");
+    if (fileXioMount("pfs1:", "hdd0:__common", FIO_MT_RDONLY) == 0) {
+        (void)vcdInstallPopstarterMc("pfs1:/");
+        fileXioUmount("pfs1:");
+    }
+}
+
 // Hand an APA/PFS Ember title off with pfs0: STILL MOUNTED on the partition that holds it.
 //
 // This is the one launch in OPL where the mount is not a means of finding an ELF but the thing the
@@ -1811,7 +1826,15 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
     if (gPopstarterPath[0] != '\0')
         customResolved = sbResolveCustomLoaderPath(gPopstarterPath, vcdElf, sizeof(vcdElf));
 
-    if (!customResolved) {
+    if (customResolved) {
+        // Serialize against the HDD VCD/settings users of pfs1: before borrowing that scratch mount
+        // to preserve the normal mc?:/POPSTARTER dependency staging. If the requested ELF itself is
+        // already on pfs1:, never remount it out from under the pending keep-IOP load.
+        ioBlockOps(1);
+        if (strncasecmp(vcdElf, "pfs1:", 5) != 0)
+            hddInstallPopstarterMcFromCommon();
+        // Success intentionally leaves IO blocked. deinitEx re-blocks and tears the menu down next.
+    } else {
         // Tier 2: the HDD game's canonical POPSTARTER home. Resolve + keep pfs0: on __common/POPS.
         // There is exactly one live pfs0: data-home mount, so quiesce workers before borrowing it.
         cacheAbortMmceImageLoadsTimed(HDD_ART_QUIESCE_MS);
@@ -2338,15 +2361,14 @@ static void hddCleanUp(item_list_t *itemList, int exception)
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
 
-        // UNMOUNT_EXCEPTION now also protects a deliberately targeted secondary PFS mount. A
-        // custom Neutrino/POPSTARTER path may resolve to pfs1:, and deinitEx keeps HDD as the
-        // loader's second mode specifically so that path remains openable until the child ELF
-        // has been loaded. The target resets the IOP shortly afterwards, so retaining an
-        // otherwise-scratch pfs1: mount for this handoff has no persistent cost.
-        if ((exception & UNMOUNT_EXCEPTION) == 0) {
+        // pfs1: is a scratch slot used by HDD scans/settings and historically gets torn down even
+        // when pfs0: is deliberately spared. Do not broaden UNMOUNT_EXCEPTION to pfs1: -- Apps and
+        // Ember also use that flag. Only a child ELF explicitly resolved from pfs1: gets the narrow
+        // KEEP_PFS1_EXCEPTION added by sbLoaderDeinitException().
+        if ((exception & KEEP_PFS1_EXCEPTION) == 0)
             fileXioUmount("pfs1:");
+        if ((exception & UNMOUNT_EXCEPTION) == 0)
             fileXioUmount(hddPrefix);
-        }
     }
 
     // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
