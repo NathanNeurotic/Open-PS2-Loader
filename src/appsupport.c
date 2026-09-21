@@ -1061,6 +1061,9 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
 
         isPops = appIsPopstarterElf(filename, appsList[id].title);
 
+        // This is the ONLY launch class that may ask the user about resetting the IOP:
+        // an ordinary ELF launched through APPS (including an Apps-owned Favourite). POPSTARTER
+        // is excluded above and every game/PS1-core/device launcher owns its handoff policy already.
         if (!isPops) {
             rebootIop = appGetRebootIopConfig(configSet);
             if (rebootIop < 0) {
