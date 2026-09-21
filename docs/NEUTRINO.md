@@ -89,8 +89,19 @@ important MMCE + GameID case, using `mmceN:` is safe because GameID switches the
 same `mcN:` view that GameID is about to switch; RiptOPL retains a last-resort guard against
 unloading the loader, but `mmceN:` (or another unaffected device) is the intended configuration.
 
-The retired `neutrino_device` / `neutrino_devtype` selector keys are ignored and removed on the
-next settings save. The single **Neutrino Path** field now covers cross-device placement directly.
+### Upgrade compatibility
+
+The retired `neutrino_device` / `neutrino_devtype` picker is no longer shown, but RiptOPL does
+**not** discard an existing user's choice on upgrade. A saved **Memory Card** policy keeps its
+memory-card-first ordering, and a saved **Game's Device** policy stays game-device-only. Likewise,
+a `neutrino_path` written by an older build keeps its historical "try this path, then fall back"
+behavior if that path is stale.
+
+Those compatibility rules remain invisible until you actually edit the new **Neutrino Path** field.
+Once you confirm that field, the old selector policy is retired for that setup: a non-empty value is
+the new exact/authoritative path, while clearing it adopts the new `<not set>` default of game
+device → memory-card fallback. Merely saving some unrelated RiptOPL setting does not migrate or
+break the old Neutrino layout.
 
 > **Network boot note:** UDPBD / UDPFS still use the same resolver. Leaving Neutrino Path at
 > `<not set>` preserves game-device → memory-card discovery; setting an exact path pins the core
