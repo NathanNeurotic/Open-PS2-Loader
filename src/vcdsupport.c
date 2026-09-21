@@ -812,6 +812,18 @@ static int vcdTryPopsAtRoot(const char *root, char *out, int outSize)
     return 0;
 }
 
+int vcdResolvePopstarterMcElf(char *out, int outSize)
+{
+    if (out == NULL || outSize <= 0)
+        return 0;
+
+    if (vcdTryPopsAtRoot("mc0", out, outSize) || vcdTryPopsAtRoot("mc1", out, outSize))
+        return 1;
+
+    out[0] = '\0';
+    return 0;
+}
+
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
 {
     if (out == NULL || outSize <= 0)
@@ -836,11 +848,7 @@ int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
         }
     }
 
-    if (vcdTryPopsAtRoot("mc0", out, outSize) || vcdTryPopsAtRoot("mc1", out, outSize))
-        return 1;
-
-    out[0] = '\0';
-    return 0;
+    return vcdResolvePopstarterMcElf(out, outSize);
 }
 
 void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *name, char *out, int outSize)
