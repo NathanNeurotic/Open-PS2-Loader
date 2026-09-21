@@ -117,6 +117,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_NEUTRINO_GSMCOMP           "neutrino_gsm_comp_default" // global default -gsm ":c" field-flip half (0=off, 1-3=type); per-game "$NeutrinoGsmComp" overrides, absent = follow this
 #define CONFIG_OPL_NEUTRINO_ARGS              "neutrino_args"
 #define CONFIG_OPL_NEUTRINO_PATH              "neutrino_path"              // exact neutrino.elf path; empty = active game device then MC fallback
+#define CONFIG_OPL_NEUTRINO_PATH_EXACT        "neutrino_path_exact"        // 1 only for paths explicitly confirmed in the new path-only UI
 #define CONFIG_OPL_NEUTRINO_DEVICE            "neutrino_device"            // retired legacy picker key; removed on next save
 #define CONFIG_OPL_NEUTRINO_DEVTYPE           "neutrino_devtype"           // retired legacy picker key; removed on next save
 #define CONFIG_OPL_NEUTRINO_ELF_ARG           "neutrino_elf_arg"           // default-on (no UI row): auto-emit -elf=cdrom0:\<startup>;1 (parity Delta-10)
