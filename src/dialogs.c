@@ -912,16 +912,18 @@ struct UIItem diaLaunchConfig[] = {
     // end of dialog
     {UI_TERMINATOR}};
 
-// Game Launching -> Neutrino Defaults: the global Neutrino device/video/gsm-comp defaults (games
-// whose per-game picker is "Default" follow these) + the structured Advanced Arguments editor.
-// Rows moved out of the old General Settings (diaConfig).
+// Game Launching -> Neutrino Defaults: the optional exact Neutrino ELF path plus video/gsm-comp
+// defaults (games whose per-game picker is "Default" follow these) + Advanced Arguments.
+// A blank path is the compatibility-first default: game device first, then memory-card fallback.
 struct UIItem diaNeutrinoDefaults[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NEUTRINO_DEFAULTS}}},
     {UI_SPLITTER},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_DEVICE}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_PATH}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_NEUTRINO_DEVICE, 1, 1, _STR_HINT_NEUTRINO_DEVICE, 0, 0, {.intvalue = {0, 0}}},
+    // The UI_STRING's visible buffer is 31 chars, but the handler opens the keyboard on the full
+    // 256-byte edit buffer in gui.c. Empty renders as the standard "<not set>" placeholder.
+    {UI_STRING, CFG_NEUTRINO_PATH, 1, 1, _STR_HINT_NEUTRINO_PATH, 0, 0, {.stringvalue = {"", "", &guiNeutrinoPathHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_VIDEO}}},
