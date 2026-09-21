@@ -21,6 +21,7 @@
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h>
+#include <delaythread.h>
 
 // udpfs is a network FILESYSTEM device: the iomanX device "udpfs:" is served by the udpfs_ioman IRX
 // chain (smap -> ministack(ip=) -> udpfs_ioman). Games are read straight off "udpfs:/" and boot through
