@@ -161,9 +161,18 @@ extern int smbCacheSize;
 
 extern int gApplyGameID; // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gEnableUSB;
-// Neutrino location policy is path-only:
-//   gNeutrinoPath empty  -> active game device, then memory-card fallback.
-//   gNeutrinoPath set    -> exact authoritative neutrino.elf path, no scan/fallback.
+// Neutrino location policy is path-only for current UI:
+//   gNeutrinoPath empty + no legacy mode -> active game device, then memory-card fallback.
+//   gNeutrinoPath set + gNeutrinoPathExact -> exact authoritative path, no scan/fallback.
+// Legacy selector/path semantics are retained invisibly until the user edits Neutrino Path, so
+// upgrading cannot silently change an existing launch layout.
+enum {
+    NEUTRINO_LEGACY_NONE = 0,
+    NEUTRINO_LEGACY_MC,
+    NEUTRINO_LEGACY_GAME
+};
+extern int gNeutrinoPathExact;
+extern int gNeutrinoLegacyMode;
 extern int gDefaultCoreLoader;
 extern int gNeutrinoVideoDefault;
 extern int gNeutrinoGsmCompDefault;
