@@ -190,8 +190,8 @@ int smbCacheSize;
 int gApplyGameID;
 int gEnableUSB;
 char gNeutrinoArgs[256];     // extra command-line flags appended to every Neutrino launch
-char gNeutrinoPath[256];     // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
-int gNeutrinoDevice;         // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy gNeutrinoPath
+char gNeutrinoPath[256];     // optional full path; runtime order: custom -> game device -> mc0/mc1
+int gNeutrinoDevice;         // retired picker value retained in config for compatibility; runtime ignores it
 int gDefaultCoreLoader;      // global default Loader Core (0=<OPL>, 1=Neutrino); per-game $CoreLoader overrides, absent key = follow this
 int gNeutrinoVideoDefault;   // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game $NeutrinoVideo overrides
 int gNeutrinoGsmCompDefault; // global default -gsm ":c" field-flip half (0=off, 1-3=type)
@@ -199,8 +199,8 @@ int gNeutrinoElfArg;         // default-on (settings key only, no UI): auto-emit
 int gDefaultGameView;
 int gAppsDisplay;
 int gEmberDisplay;
-char gPopstarterPath[256];         // custom POPSTARTER.ELF path (used only when gPopstarterDevice == POPS_DEV_CUSTOM)
-int gPopstarterDevice;             // POPSTARTER.ELF device (POPS_DEV_*); legacy path -> Custom
+char gPopstarterPath[256];         // optional full path; runtime order: custom -> game device -> mc0/mc1
+int gPopstarterDevice;             // retired picker value retained in config for compatibility; runtime ignores it
 int gPopstarterRetroGemGameID = 1; // RetroGEM Game ID optical barcode for VCD launches (1=on, default)
 int gBdmaSource;                   // BDMA SOURCE device family (VCD_BDMA_SRC_*)
 int gBdmaMode;                     // BDMA MODE mirrored from the mc?:/POPSTARTER/ marker
