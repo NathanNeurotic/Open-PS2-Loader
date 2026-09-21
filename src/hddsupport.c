@@ -1865,7 +1865,7 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
 
     // The game data is APA, while POPSTARTER.ELF may be on a second device. Keep both backends
     // available until sysLoadELFKeepIOP has loaded the target. A pfs-hosted ELF additionally needs
-    // KEEPIOP_EXCEPTION so PDIOC_CLOSEALL cannot invalidate it before that open.
+    // KEEP_PFS_FDS_EXCEPTION so PDIOC_CLOSEALL cannot invalidate it before that open.
     deinitEx(sbLoaderDeinitException(vcdElf), HDD_MODE, oplPath2Mode(vcdElf));
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
@@ -2374,11 +2374,10 @@ static void hddCleanUp(item_list_t *itemList, int exception)
 
     // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
     if (hddSupportModulesLoaded) {
-        // PDIOC_CLOSEALL closes EVERY pfs descriptor in the IOP. That is free when the next thing to
-        // run resets the IOP and reclaims them anyway -- the assumption stated above, and the one
-        // every launch made until Ember. An Ember handoff keeps the IOP precisely so the child
-        // inherits this pfs0: mount and reads its game through it; closing the descriptors out from
-        // under it would leave Ember holding a mount it can no longer open anything on.
+        // PDIOC_CLOSEALL closes EVERY pfs descriptor in the IOP. Ember/wLaunchELF keep the broader
+        // IOP state and therefore use KEEPIOP_EXCEPTION; an external Neutrino/POPSTARTER ELF hosted
+        // on PFS only needs those descriptors long enough for sysLoadELFKeepIOP to open the child,
+        // so it uses the narrower KEEP_PFS_FDS_EXCEPTION.
         if ((exception & (KEEPIOP_EXCEPTION | KEEP_PFS_FDS_EXCEPTION)) == 0)
             fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
 
