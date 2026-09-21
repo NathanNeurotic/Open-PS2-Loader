@@ -2680,13 +2680,49 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
                 gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         }
     }
-    // The device-specific picker entries were removed because their launch behaviour is volatile.
-    // Preserve the stable Auto/Memory Card/Game Device choices, but do not let an older saved
-    // USB/MX4SIO/MMCE/HDD/iLink value silently keep selecting a retired path.
-    if (gNeutrinoDevice != NEUTRINO_DEV_AUTO &&
-        gNeutrinoDevice != NEUTRINO_DEV_MC &&
-        gNeutrinoDevice != NEUTRINO_DEV_GAME)
+    // The picker is retired, but explicit choices from older configs are user intent. Convert every
+    // device that has a stable path alias into the new full-path field so the upgrade is visible in
+    // the UI and keeps its old precedence. HDD (APA) is the one exception: its old meaning depended
+    // on the live +OPL/__common data-home mount, so supportbase keeps that value as a read-only
+    // compatibility probe until the user supplies a real full path.
+    if (gNeutrinoDevice < NEUTRINO_DEV_AUTO || gNeutrinoDevice > NEUTRINO_DEV_ILINK)
         gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+    if (gNeutrinoPath[0] != '\0') {
+        gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+    } else {
+        const char *migratedPath = NULL;
+        switch (gNeutrinoDevice) {
+            case NEUTRINO_DEV_MC:
+                migratedPath = "mc:/NEUTRINO/neutrino.elf";
+                break;
+            case NEUTRINO_DEV_USB:
+                migratedPath = "usb:/neutrino/neutrino.elf";
+                break;
+            case NEUTRINO_DEV_MX4SIO:
+                migratedPath = "mx4sio:/neutrino/neutrino.elf";
+                break;
+            case NEUTRINO_DEV_MMCE:
+                migratedPath = "mmce:/neutrino/neutrino.elf";
+                break;
+            case NEUTRINO_DEV_EXFAT_HDD:
+                migratedPath = "ata:/neutrino/neutrino.elf";
+                break;
+            case NEUTRINO_DEV_ILINK:
+                migratedPath = "ilink:/neutrino/neutrino.elf";
+                break;
+            case NEUTRINO_DEV_GAME:
+                // The new default is Game Device -> MC, so the retired strict-game choice becomes
+                // the default policy rather than a hidden mode the user can no longer edit.
+                gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+                break;
+            default:
+                break;
+        }
+        if (migratedPath != NULL) {
+            snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", migratedPath);
+            gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+        }
+    }
 }
 
 static void resolveBootDirToMass(void)
@@ -2980,10 +3016,42 @@ static void _loadConfig()
             if (gDefaultGameView != GAME_VIEW_BOTH)
                 libViewMarkAllDirty();
             configGetStrCopy(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath, sizeof(gPopstarterPath));
-            // POPSTARTER device TYPE (POPS_DEV_*). Absent in legacy configs: a non-empty custom
-            // popstarter_path migrates to Custom (honour the old override); otherwise Default (cwd).
+            // The POPSTARTER device picker is retired. Preserve older explicit choices by translating
+            // them into the new full-path syntax; current runtime then uses the same deterministic
+            // Custom -> Game Device -> MC order for old and new configs. Keep POPS_DEV_CUSTOM when a
+            // path exists solely so downgrading to an older RiptOPL still honours that path.
             if (!configGetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, &gPopstarterDevice))
                 gPopstarterDevice = (gPopstarterPath[0] != '\0') ? POPS_DEV_CUSTOM : POPS_DEV_DEFAULT;
+            if (gPopstarterDevice < POPS_DEV_DEFAULT || gPopstarterDevice > POPS_DEV_ILINK)
+                gPopstarterDevice = POPS_DEV_DEFAULT;
+            if (gPopstarterPath[0] == '\0') {
+                const char *migratedPath = NULL;
+                switch (gPopstarterDevice) {
+                    case POPS_DEV_MC:
+                        migratedPath = "mc:/POPS/POPSTARTER.ELF";
+                        break;
+                    case POPS_DEV_USB:
+                        migratedPath = "usb:/POPS/POPSTARTER.ELF";
+                        break;
+                    case POPS_DEV_MX4SIO:
+                        migratedPath = "mx4sio:/POPS/POPSTARTER.ELF";
+                        break;
+                    case POPS_DEV_MMCE:
+                        migratedPath = "mmce:/POPS/POPSTARTER.ELF";
+                        break;
+                    case POPS_DEV_EXFAT_HDD:
+                        migratedPath = "ata:/POPS/POPSTARTER.ELF";
+                        break;
+                    case POPS_DEV_ILINK:
+                        migratedPath = "ilink:/POPS/POPSTARTER.ELF";
+                        break;
+                    default:
+                        break;
+                }
+                if (migratedPath != NULL)
+                    snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", migratedPath);
+            }
+            gPopstarterDevice = (gPopstarterPath[0] != '\0') ? POPS_DEV_CUSTOM : POPS_DEV_DEFAULT;
             if (!configGetInt(configOPL, CONFIG_OPL_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID))
                 gPopstarterRetroGemGameID = 1;
             configGetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, &gBdmaSource);
