@@ -26,22 +26,36 @@ bugs belong on rickgaiser's tracker.
 
 ## 1. Install Neutrino
 
-**The RiptOPL release package ships a ready-to-use `neutrino/` folder** — drag it onto a memory card
-as `mc?:/neutrino/` and this is already done. (Upstream OPL does not bundle Neutrino; if you built
-RiptOPL yourself or are coming from another loader, supply it from
+**The RiptOPL release package ships a ready-to-use `neutrino/` folder.** Copy the complete
+folder to a location RiptOPL can still read at handoff time. On ordinary non-MMCE setups,
+`mc0:/neutrino/` or `mc1:/neutrino/` remains supported. (Upstream OPL does not bundle
+Neutrino; if you built RiptOPL yourself or are coming from another loader, supply it from
 <https://github.com/rickgaiser/neutrino/releases>.)
 
 Either way, copy Neutrino's **whole `neutrino/` folder**, not just the ELF: OPL only accepts an install when `config/system.toml` (or a flat `system.toml`,
 the SAS layout) sits beside `neutrino.elf`. An ELF-only folder is **skipped** and probing
 continues, so you get the `<OPL>` fallback even though the file exists.
 
-A memory card is the zero-config default — `mc0:NEUTRINO/neutrino.elf`, then
-`mc1:NEUTRINO/neutrino.elf` — but it is the **last** place OPL looks, not the first. The full
-order is:
+> **MMCE users: put Neutrino on the MMCE game device if you use GameID card switching.**
+> Use `mmceN:/neutrino/` when the MMCE library is at the device root, or put `neutrino/`
+> under the configured **MMCE Prefix Path** (for example `mmce0:/OPL/neutrino/`).
+> **Auto** intentionally probes the active game's prefix and then its bare device root before
+> falling back to `mc0:` / `mc1:`.
+>
+> The reason is the MMCE GameID switch. If Neutrino resolves from `mcN:` on the same MMCE slot,
+> switching that slot would replace the emulated memory-card view before `neutrino.elf` and its
+> support files are loaded. RiptOPL detects that collision and **skips the GameID switch for that
+> launch** (with a warning) so Neutrino is not pulled out from under the handoff. A copy on
+> `mmceN:` is the MMCE mass-storage surface and is **not** affected by the card switch, so the
+> per-game card switch and Neutrino can both work as intended.
+
+A memory card is a supported general fallback — `mc0:NEUTRINO/neutrino.elf`, then
+`mc1:NEUTRINO/neutrino.elf` — but it is the **last** automatic location OPL looks, not the first.
+The full order is:
 
 | Priority | Where OPL looks |
 |---|---|
-| 1 | The device type chosen in **Game Launching → Neutrino Device** (see below) |
+| 1 | An explicit **Game Launching → Neutrino Device** choice: **Memory Card** is tried first; **Game's Device** is exclusive (see below) |
 | 2 | A custom path in the `neutrino_path` key of `settings_riptopl.cfg` |
 | 3 | The active game's own device — `<games prefix>/neutrino/`, then `<device root>/neutrino/` |
 | 4 | The internal **APA HDD**'s OPL data partition — `hdd0:/+OPL/neutrino/` or `hdd0:/__common/OPL/neutrino/` (only while the HDD is started) |
@@ -50,11 +64,11 @@ order is:
 If no complete install is found when you launch a game set to the Neutrino core, OPL shows a
 warning and falls back to the `<OPL>` core for that launch.
 
-**Game Launching → Neutrino Device** picks the device *type* holding
-`<root>:/neutrino/neutrino.elf` — **Auto**, **Memory Card**, or **Game's Device**. Auto searches
-the working locations in the priority table above. Memory Card tries `mc0:` and `mc1:` first before
-using the normal fallback tiers, while Game's Device restricts it to the active game's own device
-and reports "not found" instead of falling back.
+**Game Launching → Neutrino Device** selects the resolver policy — **Auto**,
+**Memory Card**, or **Game's Device**. Auto searches the working locations in the priority table
+above. Memory Card tries `mc0:` and `mc1:` first before using the normal fallback tiers, while
+Game's Device restricts lookup to the active game's own device and reports "not found" instead of
+falling back.
 
 There are no separate USB, MX4SIO, MMCE, exFAT HDD, APA HDD, or iLink entries. Those device-specific
 launch paths are intentionally not exposed by the picker because their Neutrino handoffs are not
