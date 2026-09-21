@@ -20,6 +20,11 @@
 #include "include/cheatman.h"
 #include "include/ps2cnf.h"
 #include "include/gui.h"
+#include "include/bdmsupport.h"
+#include "include/ethsupport.h"
+#include "include/udpfssupport.h"
+#include "include/hddsupport.h"
+#include "include/mmcesupport.h"
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioMount("iso:", ***), fileXioUmount("iso:")
@@ -1570,126 +1575,311 @@ int sbFileExists(const char *path)
     return 1;
 }
 
+
+static int sbPathToken(const char *path, char *token, int tokenSize, const char **tail)
+{
+    const char *colon;
+    int n;
+
+    if (path == NULL || token == NULL || tokenSize <= 1)
+        return 0;
+    colon = strchr(path, ':');
+    if (colon == NULL)
+        return 0;
+    n = (int)(colon - path);
+    if (n <= 0 || n >= tokenSize)
+        return 0;
+    for (int i = 0; i < n; i++) {
+        char c = path[i];
+        token[i] = (c >= 'A' && c <= 'Z') ? (char)(c - 'A' + 'a') : c;
+    }
+    token[n] = '\0';
+    if (tail != NULL)
+        *tail = colon + 1;
+    return 1;
+}
+
+static int sbTokenStemIs(const char *token, const char *stem)
+{
+    int i = 0;
+
+    while (token[i] != '\0' && stem[i] != '\0' && token[i] == stem[i])
+        i++;
+    if (stem[i] != '\0')
+        return 0;
+    if (token[i] == '\0')
+        return 1;
+    if (token[i] == '?' && token[i + 1] == '\0')
+        return 1;
+    while (token[i] >= '0' && token[i] <= '9')
+        i++;
+    return token[i] == '\0';
+}
+
+static int sbJoinDeviceTail(char *out, int outSize, const char *root, const char *tail)
+{
+    int n;
+    int rootSlash;
+    int tailSlash;
+
+    if (out == NULL || outSize <= 0 || root == NULL)
+        return 0;
+    if (tail == NULL)
+        tail = "";
+
+    rootSlash = root[0] != '\0' && (root[strlen(root) - 1] == '/' || root[strlen(root) - 1] == '\\');
+    tailSlash = tail[0] == '/' || tail[0] == '\\';
+
+    if (rootSlash && tailSlash)
+        tail++;
+    else if (!rootSlash && !tailSlash && tail[0] != '\0')
+        return snprintf(out, outSize, "%s/%s", root, tail) < outSize;
+
+    n = snprintf(out, outSize, "%s%s", root, tail);
+    return n >= 0 && n < outSize;
+}
+
+// Resolve aliases by SEMANTIC backend, not by their spelling. In particular massN: is a mounted
+// BDM slot whose driver may be USB, MX4SIO, iLink, ATA or a network block transport; typed aliases
+// are therefore normalized to the live massN: namespace only after the driver stack is resident.
+int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
+{
+    char token[24];
+    const char *tail = NULL;
+
+    if (out == NULL || outSize <= 0)
+        return 0;
+    out[0] = '\0';
+    if (requested == NULL || requested[0] == '\0')
+        return 0;
+
+    // HTTP is a streaming backend, not an ioman filesystem. There is no path sysLoadELFKeepIOP can
+    // open directly, so never pretend a URL is a loader filesystem; the caller falls through.
+    if (!strncasecmp(requested, "http://", 7) || !strncasecmp(requested, "https://", 8)) {
+        LOG("[CORE PATH] HTTP URL cannot host a directly-opened ELF: %s\n", requested);
+        return 0;
+    }
+
+    if (!sbPathToken(requested, token, sizeof(token), &tail)) {
+        if (sbFileExists(requested)) {
+            snprintf(out, outSize, "%s", requested);
+            return 1;
+        }
+        return 0;
+    }
+
+    // Memory-card aliases: mc:, mc?: -> both slots; an explicit mc0:/mc1: remains exact.
+    if (sbTokenStemIs(token, "mc")) {
+        int explicitSlot = -1;
+        if (token[2] >= '0' && token[2] <= '1' && token[3] == '\0')
+            explicitSlot = token[2] - '0';
+        for (int slot = 0; slot < 2; slot++) {
+            int use = explicitSlot >= 0 ? explicitSlot : slot;
+            char root[8];
+            snprintf(root, sizeof(root), "mc%d:", use);
+            if (sbJoinDeviceTail(out, outSize, root, tail) && sbFileExists(out))
+                return 1;
+            if (explicitSlot >= 0)
+                break;
+        }
+        out[0] = '\0';
+        return 0;
+    }
+
+    // MMCE aliases work even with the games page disabled. Unitless mmce: tries both physical slots.
+    if (sbTokenStemIs(token, "mmce")) {
+        int explicitSlot = -1;
+        mmceLoadModules();
+        if (token[4] >= '0' && token[4] <= '1' && token[5] == '\0')
+            explicitSlot = token[4] - '0';
+        for (int slot = 0; slot < 2; slot++) {
+            int use = explicitSlot >= 0 ? explicitSlot : slot;
+            char root[10];
+            snprintf(root, sizeof(root), "mmce%d:", use);
+            if (sbJoinDeviceTail(out, outSize, root, tail) && sbFileExists(out))
+                return 1;
+            if (explicitSlot >= 0)
+                break;
+        }
+        out[0] = '\0';
+        return 0;
+    }
+
+    // SMB is a real filesystem only after the configured share is open.
+    if (sbTokenStemIs(token, "smb")) {
+        if (ethEnsureSMBShareConnected() &&
+            sbJoinDeviceTail(out, outSize, "smb0:", tail) && sbFileExists(out))
+            return 1;
+        out[0] = '\0';
+        return 0;
+    }
+
+    // UDPFS directory mode is likewise an ioman filesystem; explicit use may arm it even when its
+    // game page is disabled, provided another network stack has not already claimed SMAP.
+    if (!strcmp(token, "udpfs")) {
+        if (udpfsEnsureReady(3000) &&
+            sbJoinDeviceTail(out, outSize, "udpfs:", tail) && sbFileExists(out))
+            return 1;
+        out[0] = '\0';
+        return 0;
+    }
+
+    // UDPBD and UDPFS disk-image modes are BDM transports. Their user-facing aliases are converted
+    // to the mounted massN: filesystem before the ELF is opened.
+    if (!strcmp(token, "udpbd") || !strcmp(token, "udpfsbd") || !strcmp(token, "udpfsd")) {
+        int protocol = !strcmp(token, "udpbd") ? NET_BOOT_UDPBD : NET_BOOT_UDPFS;
+        char root[BDM_DEVICE_ROOT_MAX];
+        if (bdmEnsureNetworkSourceModules(protocol, 3000) &&
+            bdmGetDeviceRootByType(BDM_TYPE_UDPBD, root, sizeof(root)) &&
+            sbJoinDeviceTail(out, outSize, root, tail) && sbFileExists(out))
+            return 1;
+        out[0] = '\0';
+        return 0;
+    }
+
+    // APA/PFS custom paths address OPL's live data-home mount. A bare pfs: aliases pfs0:.
+    if (sbTokenStemIs(token, "pfs")) {
+        if (!hddLoadModulesReady()) {
+            out[0] = '\0';
+            return 0;
+        }
+        hddLoadSupportModules();
+        if (gHDDPrefix == NULL) {
+            out[0] = '\0';
+            return 0;
+        }
+        if (!strcmp(token, "pfs") || !strcmp(token, "pfs?")) {
+            if (sbJoinDeviceTail(out, outSize, "pfs0:", tail) && sbFileExists(out))
+                return 1;
+        } else {
+            snprintf(out, outSize, "%s", requested);
+            if (sbFileExists(out))
+                return 1;
+        }
+        out[0] = '\0';
+        return 0;
+    }
+
+    // hddN: is the APA device, not a file namespace. Support the two OPL data-home spellings users
+    // commonly mean by an "HDD path" by translating them onto the already-selected pfs0: mount.
+    if (sbTokenStemIs(token, "hdd")) {
+        const char *rel = tail;
+        if (!hddLoadModulesReady()) {
+            out[0] = '\0';
+            return 0;
+        }
+        hddLoadSupportModules();
+        if (gHDDPrefix == NULL || rel == NULL) {
+            out[0] = '\0';
+            return 0;
+        }
+        while (*rel == '/')
+            rel++;
+        if (!strncasecmp(rel, "+OPL/", 5) && !strcmp(gOPLPart, "hdd0:+OPL"))
+            rel += 5;
+        else if (!strncasecmp(rel, "__common/OPL/", 13) && !strcmp(gOPLPart, "hdd0:__common"))
+            rel += 13;
+        else {
+            out[0] = '\0';
+            return 0;
+        }
+        if (sbJoinDeviceTail(out, outSize, gHDDPrefix, rel) && sbFileExists(out))
+            return 1;
+        out[0] = '\0';
+        return 0;
+    }
+
+    // Internal ROM alias.
+    if (sbTokenStemIs(token, "rom")) {
+        if (sbJoinDeviceTail(out, outSize, "rom0:", tail) && sbFileExists(out))
+            return 1;
+        out[0] = '\0';
+        return 0;
+    }
+
+    // Local BDM typed aliases. massN: itself is deliberately included: its semantic transport is
+    // learned from the mounted slot's driver ioctls rather than guessed from the spelling.
+    if (sbTokenStemIs(token, "usb") || sbTokenStemIs(token, "ata") ||
+        sbTokenStemIs(token, "ilink") || sbTokenStemIs(token, "sd") ||
+        sbTokenStemIs(token, "sdc") || sbTokenStemIs(token, "mx4") ||
+        sbTokenStemIs(token, "mx4sio") || sbTokenStemIs(token, "mass")) {
+        char normalized[320];
+        char dir[320];
+        const char *base;
+        char *slash;
+        int type = BDM_TYPE_UNKNOWN;
+
+        snprintf(normalized, sizeof(normalized), "%s", requested);
+        // Friendly aliases not understood by the lower boot-dir classifier.
+        if (!strncasecmp(normalized, "mx4:", 4))
+            snprintf(normalized, sizeof(normalized), "mx4sio:%s", requested + 4);
+        else if (!strncasecmp(normalized, "massX:", 6) || !strncasecmp(normalized, "massx:", 6))
+            snprintf(normalized, sizeof(normalized), "mx4sio:%s", requested + 6);
+
+        snprintf(dir, sizeof(dir), "%s", normalized);
+        slash = strrchr(dir, '/');
+        if (slash == NULL)
+            slash = strrchr(dir, '\\');
+        if (slash != NULL) {
+            base = slash + 1;
+            *slash = '\0';
+        } else {
+            char *colon = strchr(dir, ':');
+            if (colon == NULL)
+                return 0;
+            base = colon + 1;
+            colon[1] = '\0';
+        }
+
+        if (base[0] != '\0' && bdmResolveBootDir(dir, sizeof(dir), base, &type) > 0) {
+            if (sbJoinDeviceTail(out, outSize, dir, base) && sbFileExists(out))
+                return 1;
+        }
+
+        // If the user supplied an already-live massN: path, keep it exact as a final no-guess probe.
+        if (sbFileExists(normalized)) {
+            snprintf(out, outSize, "%s", normalized);
+            return 1;
+        }
+        out[0] = '\0';
+        return 0;
+    }
+
+    // host:, cdfs:, and any other already-registered filesystem stay literal.
+    if (sbFileExists(requested)) {
+        snprintf(out, outSize, "%s", requested);
+        return 1;
+    }
+    return 0;
+}
+
 // Resolve the Neutrino core ELF: probe the install locations users actually use (folder-case
 // and leading-slash variants on mc0/mc1) and return the first COMPLETE install (Δ1), or NULL.
 // Centralised so the bdm + mmce launch paths stay in sync.
 const char *sbResolveNeutrinoPath(const char *activePrefix)
 {
-    // Neutrino Device (General Settings): a driver-accurate device TYPE (NEUTRINO_DEV_*) that holds
-    // <root>:/neutrino/neutrino.elf. Resolve the type to its live device-name token(s) -- USB/MX4SIO/
-    // iLink/exFAT-HDD via the mounted BDM device, MC/MMCE by slot, APA-HDD via the mounted OPL data
-    // partition (pfs0:) -- then probe each first. The token has NO trailing ':' so the forms[] below add it.
-    // GAME'S DEVICE: resolve ONLY on the active game's own device (co-located neutrino.elf); no
-    // legacy-custom-path / MC fallback. A miss returns NULL so the launch path toasts "not found"
-    // and aborts in a live menu (every caller handles NULL that way) rather than silently using an
-    // MC core the user did not pick.
-    if (gNeutrinoDevice == NEUTRINO_DEV_GAME)
-        return sbNeutrinoProbeGameDevice(activePrefix);
+    static char custom[320];
 
-    // HDD (APA) is not a device ROOT like the others: OPL's data home is a partition mounted on
-    // pfs0:, and where inside it Neutrino sits depends on which partition that is ("pfs0:" for
-    // +OPL, "pfs0:OPL/" for __common/OPL). The helper knows both, so this pick never reaches the
-    // bare-root forms[] loop below. A miss still falls through to the AUTO tiers, same as any other
-    // picked-device miss.
-    if (gNeutrinoDevice == NEUTRINO_DEV_APA_HDD) {
-        const char *apaHit = sbNeutrinoProbeApaHome();
-        if (apaHit != NULL)
-            return apaHit;
-    }
+    // One deterministic policy for every launch:
+    //   1) user-entered full path,
+    //   2) the active game's device,
+    //   3) mc0:/mc1:.
+    // The retired neutrino_device selector is still parsed/saved for downgrade compatibility but
+    // intentionally does not participate in runtime resolution.
+    if (gNeutrinoPath[0] != '\0' &&
+        sbResolveCustomLoaderPath(gNeutrinoPath, custom, sizeof(custom)) &&
+        sbNeutrinoInstallComplete(custom))
+        return sbNeutrinoResolved(custom);
 
-    char cand[2][BDM_DEVICE_ROOT_MAX];
-    int nCand = 0;
-    switch (gNeutrinoDevice) {
-        case NEUTRINO_DEV_MC:
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mc0");
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mc1");
-            break;
-        case NEUTRINO_DEV_MMCE:
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mmce0");
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mmce1");
-            break;
-        case NEUTRINO_DEV_USB:
-        case NEUTRINO_DEV_MX4SIO:
-        case NEUTRINO_DEV_ILINK:
-        case NEUTRINO_DEV_EXFAT_HDD: {
-            int bt = BDM_TYPE_ATA; // NEUTRINO_DEV_EXFAT_HDD
-            if (gNeutrinoDevice == NEUTRINO_DEV_USB)
-                bt = BDM_TYPE_USB;
-            else if (gNeutrinoDevice == NEUTRINO_DEV_MX4SIO)
-                bt = BDM_TYPE_SDC;
-            else if (gNeutrinoDevice == NEUTRINO_DEV_ILINK)
-                bt = BDM_TYPE_ILINK;
-            char bdmRoot[BDM_DEVICE_ROOT_MAX];
-            if (bdmGetDeviceRootByType(bt, bdmRoot, sizeof(bdmRoot))) {
-                char *colon = strchr(bdmRoot, ':'); // "massN:/" -> bare "massN" token
-                if (colon != NULL)
-                    *colon = '\0';
-                snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "%s", bdmRoot);
-            }
-            break;
-        }
-        case NEUTRINO_DEV_APA_HDD: // handled above by sbNeutrinoProbeApaHome (the data home, not a bare root)
-            break;
-        default: // AUTO -- no explicit device root
-            break;
-    }
-    if (nCand > 0) {
-        static const char *forms[] = {
-            "%s:NEUTRINO/neutrino.elf",
-            "%s:/neutrino/neutrino.elf",
-            "%s:/NEUTRINO/neutrino.elf",
-            "%s:/neutrino/NEUTRINO.ELF",
-            "%s:/NEUTRINO/NEUTRINO.ELF",
-            "%s:NEUTRINO/NEUTRINO.ELF",
-        };
-        static char built[64];
-        for (int c = 0; c < nCand; c++) {
-            for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
-                snprintf(built, sizeof(built), forms[i], cand[c]);
-                if (sbFileExists(built) && sbNeutrinoInstallComplete(built))
-                    return sbNeutrinoResolved(built);
-            }
-        }
-        // The picked device TYPE had no neutrino.elf -- do NOT dead-end here. Fall through to the AUTO
-        // discovery below (legacy custom path -> active game device co-located -> mc0/mc1) so a picker
-        // miss degrades to NHDDL-style cross-device discovery instead of returning NULL (which makes
-        // bdmLaunchGame drop to a native launch that can die to OSDSYS -- issue #51). The chosen device
-        // was tried FIRST above, so an explicit pick is still honoured when it holds the ELF.
-    }
-
-    // Auto: a legacy custom path (settings_riptopl.cfg "neutrino_path") wins when it exists;
-    // otherwise fall back to the mc0:/mc1: auto-detect candidates below. A custom path that names
-    // the elf directly (no dir) is honoured as-is (sbNeutrinoInstallComplete returns 1 for it).
-    if (gNeutrinoPath[0] != '\0' && sbFileExists(gNeutrinoPath) && sbNeutrinoInstallComplete(gNeutrinoPath))
-        return sbNeutrinoResolved(gNeutrinoPath);
-
-    // PR #300: in AUTO, probe the ACTIVE game device for a co-located neutrino.elf BEFORE the mc0/mc1
-    // fallbacks, so a neutrino.elf dropped next to the games (USB/MMCE) just works with zero config.
-    // Δ1 (inside the helper): a stale elf-only folder on the game device must NOT shadow a complete
-    // mc0/mc1 install below (the "worked once then never" failure). Same probe as NEUTRINO_DEV_GAME,
-    // but here a miss falls through to the mc0/mc1 candidates instead of returning NULL.
     {
         const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
         if (gameHit != NULL)
             return gameHit;
     }
 
-    // Then the internal APA HDD's OPL data home, the way NHDDL's own discovery includes
-    // hdd0:/<OPL partition>/neutrino/. Only ever a candidate while the HDD stack is up (the helper
-    // returns NULL otherwise), so this costs a pointer test on consoles with no APA drive. It sits
-    // AFTER the game's own device -- a co-located install still wins for the device being played --
-    // and BEFORE mc0/mc1, because an APA install is the one a memory-card-starved user has
-    // deliberately placed, while an mc: copy is the historical default. An explicit HDD (APA) pick
-    // already ran this probe at the top and missed, so it is not repeated here.
-    if (gNeutrinoDevice != NEUTRINO_DEV_APA_HDD) {
-        const char *apaHit = sbNeutrinoProbeApaHome();
-        if (apaHit != NULL)
-            return apaHit;
-    }
-
     static const char *candidates[] = {
-        NEUTRINO_PATH,     // mc0:NEUTRINO/neutrino.elf
-        NEUTRINO_ALT_PATH, // mc1:NEUTRINO/neutrino.elf
+        NEUTRINO_PATH,
+        NEUTRINO_ALT_PATH,
         "mc0:/neutrino/neutrino.elf",
         "mc1:/neutrino/neutrino.elf",
         "mc0:/neutrino/NEUTRINO.ELF",
@@ -1701,7 +1891,8 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
         if (sbFileExists(candidates[i]) && sbNeutrinoInstallComplete(candidates[i]))
             return sbNeutrinoResolved(candidates[i]);
     }
-    LOG("[NEUTRINO] no complete install found (elf without config/system.toml is skipped)\n");
+
+    LOG("[NEUTRINO] no complete install found (custom -> game device -> mc0/mc1)\n");
     return NULL;
 }
 
