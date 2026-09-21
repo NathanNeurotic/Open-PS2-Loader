@@ -1780,9 +1780,10 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
         }
         while (*rel == '/')
             rel++;
-        if (!strncasecmp(rel, "+OPL/", 5) && !strcmp(gOPLPart, "hdd0:+OPL"))
+        int liveHome = hddGetLiveOplHomeSelection();
+        if (!strncasecmp(rel, "+OPL/", 5) && liveHome == HDD_OPL_HOME_PLUS)
             rel += 5;
-        else if (!strncasecmp(rel, "__common/OPL/", 13) && !strcmp(gOPLPart, "hdd0:__common"))
+        else if (!strncasecmp(rel, "__common/OPL/", 13) && liveHome == HDD_OPL_HOME_COMMON)
             rel += 13;
         else {
             out[0] = '\0';
