@@ -1507,9 +1507,17 @@ static const char *sbNeutrinoProbeGameDevice(const char *activePrefix)
 // already has (per the rebuild rule: change behaviour only where there is a reason to).
 int sbLoaderDeinitException(const char *loaderPath)
 {
-    if (loaderPath != NULL && !strncasecmp(loaderPath, "pfs", 3))
-        return UNMOUNT_EXCEPTION | KEEPIOP_EXCEPTION;
-    return UNMOUNT_EXCEPTION;
+    int exception = UNMOUNT_EXCEPTION;
+
+    if (loaderPath != NULL && !strncasecmp(loaderPath, "pfs", 3)) {
+        exception |= KEEPIOP_EXCEPTION;
+        // pfs1: is normally a transient HDD scratch mount and must not inherit the broad
+        // UNMOUNT_EXCEPTION used by unrelated Apps/Ember handoffs. Preserve it only when the
+        // resolved child ELF itself is explicitly on pfs1:.
+        if (!strncasecmp(loaderPath, "pfs1:", 5))
+            exception |= KEEP_PFS1_EXCEPTION;
+    }
+    return exception;
 }
 
 int sbNeutrinoDeinitException(const char *neutrinoPath)
@@ -1643,8 +1651,13 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
     // Memory-card aliases: mc:, mc?: -> both slots; an explicit mc0:/mc1: remains exact.
     if (sbTokenStemIs(token, "mc")) {
         int explicitSlot = -1;
-        if (token[2] >= '0' && token[2] <= '1' && token[3] == '\0')
+        // mc: / mc?: mean "try both". A numeric spelling is exact; never reinterpret mc2:/mc10:
+        // as a request for slots 0/1.
+        if (token[2] != '\0' && token[2] != '?') {
+            if ((token[2] < '0' || token[2] > '1') || token[3] != '\0')
+                return 0;
             explicitSlot = token[2] - '0';
+        }
         for (int slot = 0; slot < 2; slot++) {
             int use = explicitSlot >= 0 ? explicitSlot : slot;
             char root[8];
@@ -1661,9 +1674,14 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
     // MMCE aliases work even with the games page disabled. Unitless mmce: tries both physical slots.
     if (sbTokenStemIs(token, "mmce")) {
         int explicitSlot = -1;
-        mmceLoadModules();
-        if (token[4] >= '0' && token[4] <= '1' && token[5] == '\0')
+        // As with mcN:, an explicit MMCE slot is exact. Reject impossible numeric slots rather
+        // than silently falling back to whichever card happens to be in slot 0/1.
+        if (token[4] != '\0' && token[4] != '?') {
+            if ((token[4] < '0' || token[4] > '1') || token[5] != '\0')
+                return 0;
             explicitSlot = token[4] - '0';
+        }
+        mmceLoadModules();
         for (int slot = 0; slot < 2; slot++) {
             int use = explicitSlot >= 0 ? explicitSlot : slot;
             char root[10];
@@ -1679,6 +1697,10 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
 
     // SMB is a real filesystem only after the configured share is open.
     if (sbTokenStemIs(token, "smb")) {
+        // smb: and smb0: name the one configured share. Do not alias an explicit smb1:/etc.
+        // back onto smb0:, because a full path with a unit number must remain truthful.
+        if (strcmp(token, "smb") != 0 && strcmp(token, "smb0") != 0)
+            return 0;
         if (ethEnsureSMBShareConnected() &&
             sbJoinDeviceTail(out, outSize, "smb0:", tail) && sbFileExists(out))
             return 1;
@@ -1762,10 +1784,17 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
         return 0;
     }
 
-    // Internal ROM alias.
+    // Internal ROM aliases. Unitless rom: means the normal rom0: device; an explicit romN:
+    // remains exact instead of being silently rewritten to rom0:.
     if (sbTokenStemIs(token, "rom")) {
-        if (sbJoinDeviceTail(out, outSize, "rom0:", tail) && sbFileExists(out))
-            return 1;
+        if (!strcmp(token, "rom") || !strcmp(token, "rom?")) {
+            if (sbJoinDeviceTail(out, outSize, "rom0:", tail) && sbFileExists(out))
+                return 1;
+        } else {
+            snprintf(out, outSize, "%s", requested);
+            if (sbFileExists(out))
+                return 1;
+        }
         out[0] = '\0';
         return 0;
     }
@@ -1827,6 +1856,39 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
     return 0;
 }
 
+// One retired picker value cannot be represented as a stable full-path alias: "HDD (APA)" meant
+// whichever OPL data home was live (pfs0: for +OPL, pfs0:OPL/ for __common), plus the partition
+// root as a historical fallback. Keep that one legacy choice readable so upgrading does not strand
+// an existing setup. New configurations never write this choice; their normal order remains
+// custom full path -> game device -> mc0/mc1.
+static const char *sbResolveLegacyApaNeutrino(void)
+{
+    if (gNeutrinoDevice != NEUTRINO_DEV_APA_HDD || gNeutrinoPath[0] != '\0')
+        return NULL;
+
+    if (!hddModulesAreLoaded() && !hddLoadModulesReady())
+        return NULL;
+    hddLoadSupportModules();
+    if (gHDDPrefix == NULL || gHDDPrefix[0] == '\0')
+        return NULL;
+
+    const char *hit = sbNeutrinoProbeGameDevice(gHDDPrefix);
+    if (hit != NULL)
+        return hit;
+
+    static const char *rootForms[] = {
+        "pfs0:/neutrino/neutrino.elf",
+        "pfs0:/NEUTRINO/neutrino.elf",
+        "pfs0:/neutrino/NEUTRINO.ELF",
+        "pfs0:/NEUTRINO/NEUTRINO.ELF",
+    };
+    for (int i = 0; i < (int)(sizeof(rootForms) / sizeof(rootForms[0])); i++) {
+        if (sbFileExists(rootForms[i]) && sbNeutrinoInstallComplete(rootForms[i]))
+            return sbNeutrinoResolved(rootForms[i]);
+    }
+    return NULL;
+}
+
 // Resolve the Neutrino core ELF: probe the install locations users actually use (folder-case
 // and leading-slash variants on mc0/mc1) and return the first COMPLETE install (Δ1), or NULL.
 // Centralised so the bdm + mmce launch paths stay in sync.
@@ -1844,6 +1906,14 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
         sbResolveCustomLoaderPath(gNeutrinoPath, custom, sizeof(custom)) &&
         sbNeutrinoInstallComplete(custom))
         return sbNeutrinoResolved(custom);
+
+    // Compatibility-only migration for an older saved "HDD (APA)" picker. All other retired
+    // picker values are converted to full-path aliases while the config is read.
+    {
+        const char *legacyApaHit = sbResolveLegacyApaNeutrino();
+        if (legacyApaHit != NULL)
+            return legacyApaHit;
+    }
 
     {
         const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
