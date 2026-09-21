@@ -161,20 +161,9 @@ extern int smbCacheSize;
 
 extern int gApplyGameID; // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gEnableUSB;
-// Neutrino resolver policy. Only Auto / Memory Card / Game's Device are user-facing now;
-// the legacy device-specific enum slots stay below only so old saved numeric values can migrate safely.
-enum { NEUTRINO_DEV_AUTO = 0, // auto discovery; MMCE game device is preferred before custom/MC fallback
-       NEUTRINO_DEV_MC,       // mc0: / mc1:
-       // The following values are retained so old settings keep their numeric meaning while they
-       // are migrated to Auto at load time. They are intentionally no longer exposed by the UI.
-       NEUTRINO_DEV_USB,       // legacy: BDM "usb"        -> the mounted massN:
-       NEUTRINO_DEV_MX4SIO,    // legacy: BDM "mx4sio"/sdc -> the mounted massN:
-       NEUTRINO_DEV_MMCE,      // legacy: mmce0: / mmce1:
-       NEUTRINO_DEV_EXFAT_HDD, // legacy: BDM "ata" internal exFAT HDD -> the mounted massN:
-       NEUTRINO_DEV_APA_HDD,   // legacy: APA HDD: the mounted OPL data partition (pfs0:)
-       NEUTRINO_DEV_GAME,      // the active game's OWN device ONLY; retains its historical saved value
-       NEUTRINO_DEV_ILINK };   // legacy: BDM "ilink" -> the mounted massN:
-extern int gNeutrinoDevice;
+// Neutrino location policy is path-only:
+//   gNeutrinoPath empty  -> active game device, then memory-card fallback.
+//   gNeutrinoPath set    -> exact authoritative neutrino.elf path, no scan/fallback.
 extern int gDefaultCoreLoader;
 extern int gNeutrinoVideoDefault;
 extern int gNeutrinoGsmCompDefault;
