@@ -1538,11 +1538,16 @@ static const char *sbNeutrinoProbeApaHome(void)
 // That is the exact trap the Ember APA launch hit; see KEEPIOP_EXCEPTION in include/iosupport.h.
 // The extra bit is added ONLY for a pfs-hosted neutrino.elf so every other leg keeps the teardown it
 // already has (per the rebuild rule: change behaviour only where there is a reason to).
-int sbNeutrinoDeinitException(const char *neutrinoPath)
+int sbLoaderDeinitException(const char *loaderPath)
 {
-    if (neutrinoPath != NULL && !strncmp(neutrinoPath, "pfs", 3))
+    if (loaderPath != NULL && !strncasecmp(loaderPath, "pfs", 3))
         return UNMOUNT_EXCEPTION | KEEPIOP_EXCEPTION;
     return UNMOUNT_EXCEPTION;
+}
+
+int sbNeutrinoDeinitException(const char *neutrinoPath)
+{
+    return sbLoaderDeinitException(neutrinoPath);
 }
 
 // ---- Neutrino launch-args parse / assemble (the "Launch Args" picker) ----------------
