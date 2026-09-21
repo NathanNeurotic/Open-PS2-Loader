@@ -100,9 +100,11 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize);
 // ignores activePrefix. Pass NULL when no game device applies.
 const char *sbResolveNeutrinoPath(const char *activePrefix);
 
-// Deinit exception mask for the device holding a resolved neutrino.elf. UNMOUNT_EXCEPTION for every
-// device; APA (pfs) additionally needs KEEPIOP_EXCEPTION, because hddCleanUp's PDIOC_CLOSEALL would
-// drop the pfs descriptors before the keep-IOP handoff opens the ELF. Pass the resolved path.
+// Deinit exception mask for an external ELF that is opened AFTER OPL's teardown. Every loader path
+// keeps its mount; PFS additionally keeps the IOP-side descriptors because hddCleanUp's
+// PDIOC_CLOSEALL would otherwise invalidate the mount before the ELF loader opens it.
+int sbLoaderDeinitException(const char *loaderPath);
+// Backward-compatible Neutrino-named wrapper used by existing launch legs.
 int sbNeutrinoDeinitException(const char *neutrinoPath);
 
 // Structured view of the USER-settable Neutrino launch flags (the catch-all "Launch Args" box).
