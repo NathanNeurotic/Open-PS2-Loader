@@ -90,7 +90,8 @@ void menuDeferredUpdate(void *data);
 void moduleUpdateMenu(int mode, int themeChanged, int langChanged);
 void handleLwnbdSrv();
 void deinit(int exception, int modeSelected);
-// Neutrino keep-IOP handoff: deinit that spares a SECOND mode's mounts (the neutrino.elf device).
+// External-loader handoff: deinit that can spare a SECOND mode's mounts (for a cross-device
+// Neutrino/POPSTARTER ELF) until sysLoadELFKeepIOP has opened the child.
 void deinitEx(int exception, int modeSelected, int modeSelected2);
 extern int gDeinitTerminal; // 1 while deinit() runs for exit/poweroff, 0 for a game/app LAUNCH teardown.
 extern int gArtAbandoned;   // 1 when cacheEnd() could NOT join the art worker: a thread is still inside a
