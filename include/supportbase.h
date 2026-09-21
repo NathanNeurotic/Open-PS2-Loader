@@ -95,9 +95,9 @@ int sbFileExists(const char *path);
 // massN:/ or smb0:. Returns 1 only when the resolved file can be opened.
 int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize);
 
-// First existing Neutrino core ELF, or NULL. In AUTO mode (gNeutrinoDevice==0): custom gNeutrinoPath
-// -> the active game's device (activePrefix) -> mc0/mc1 install spots. An explicit Device picker
-// ignores activePrefix. Pass NULL when no game device applies.
+// First usable Neutrino core ELF, or NULL. Runtime order is fixed:
+// custom gNeutrinoPath -> active game's device (activePrefix) -> mc0/mc1.
+// The retired Neutrino device-picker config is ignored by this resolver.
 const char *sbResolveNeutrinoPath(const char *activePrefix);
 
 // Deinit exception mask for an external ELF that is opened AFTER OPL's teardown. Every loader path
