@@ -190,6 +190,31 @@ int ethIsSMBShareConnected(void)
     return netGetModulesLoaded() && gNetworkStartup == 0 && ethPrefix[0] != '\0';
 }
 
+// A custom core path is an explicit request to use SMB even when the SMB game page is disabled.
+// Bring the configured share up synchronously so the resolver can open the ELF before teardown.
+// We still honor the one-NIC-stack invariant: an already-resident UDPFS/UDPBD stack cannot be
+// replaced safely mid-session, so that case fails closed and the resolver continues to its normal
+// game-device / memory-card fallback.
+int ethEnsureSMBShareConnected(void)
+{
+    if (ethIsSMBShareConnected())
+        return 1;
+    if (udpfsGetModulesLoaded() || bdmIsUDPBDLoaded())
+        return 0;
+    if (netInitSema() < 0)
+        return 0;
+
+    if (ethBase == NULL)
+        ethBase = "smb0:";
+
+    if (!netGetModulesLoaded() || !ethSmbModuleLoaded)
+        smbLoadModules();
+    else
+        ethInitSMB();
+
+    return ethIsSMBShareConnected();
+}
+
 // SMB's own teardown. netDeinitModules runs this inside the init lock, at the point in the
 // sequence nbnsDeinit() has always occupied: after the HTTP RPC client is released, before
 // NetManDeinit.
