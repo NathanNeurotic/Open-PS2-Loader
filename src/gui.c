@@ -2034,16 +2034,27 @@ static int guiNeutrinoDefaultsUpdater(int modified)
 // full-size buffer and let the UI row render only a preview. An empty preview is rendered by dia.c
 // as the standard "<not set>" placeholder; the stored value remains genuinely empty.
 static char neutrinoPathEdit[sizeof(gNeutrinoPath)];
+static int neutrinoPathEdited;
 
 static void guiNeutrinoPathEditBegin(struct UIItem *ui)
 {
     snprintf(neutrinoPathEdit, sizeof(neutrinoPathEdit), "%s", gNeutrinoPath);
+    neutrinoPathEdited = 0;
     diaSetString(ui, CFG_NEUTRINO_PATH, neutrinoPathEdit);
 }
 
 static void guiNeutrinoPathEditCommit(void)
 {
     snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
+
+    // Merely opening/saving another settings page must NOT migrate an existing installation.
+    // Only an accepted edit of this field opts into the new contract: non-empty = exact path,
+    // empty = the new zero-config game-device -> MC default. Either way the retired selector no
+    // longer applies once the user has deliberately touched its replacement.
+    if (neutrinoPathEdited) {
+        gNeutrinoPathExact = gNeutrinoPath[0] != '\0';
+        gNeutrinoLegacyMode = NEUTRINO_LEGACY_NONE;
+    }
 }
 
 int guiNeutrinoPathHandler(char *text, int maxLen)
@@ -2051,6 +2062,7 @@ int guiNeutrinoPathHandler(char *text, int maxLen)
     if (!guiShowKeyboard(neutrinoPathEdit, sizeof(neutrinoPathEdit)))
         return 0;
 
+    neutrinoPathEdited = 1;
     // text is only the row's display buffer. Keep the complete path in neutrinoPathEdit.
     snprintf(text, maxLen, "%s", neutrinoPathEdit);
     return 1;
