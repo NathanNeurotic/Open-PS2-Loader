@@ -191,7 +191,6 @@ int gApplyGameID;
 int gEnableUSB;
 char gNeutrinoArgs[256];     // extra command-line flags appended to every Neutrino launch
 char gNeutrinoPath[256];     // custom neutrino.elf path; "" -> auto-detect on mc0:/mc1:
-int gNeutrinoDevice;         // Neutrino ELF device (NEUTRINO_DEV_*); Auto scans mc0/mc1 + honors a legacy gNeutrinoPath
 int gDefaultCoreLoader;      // global default Loader Core (0=<OPL>, 1=Neutrino); per-game $CoreLoader overrides, absent key = follow this
 int gNeutrinoVideoDefault;   // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game $NeutrinoVideo overrides
 int gNeutrinoGsmCompDefault; // global default -gsm ":c" field-flip half (0=off, 1-3=type)
@@ -2641,24 +2640,10 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
     configGetInt(configOPL, CONFIG_OPL_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
     if (gNeutrinoGsmCompDefault < 0 || gNeutrinoGsmCompDefault > 3)
         gNeutrinoGsmCompDefault = 0;
-    // Neutrino Device: prefer the new device-TYPE key; if absent (config predates the picker
-    // change), migrate the legacy device-INDEX value.
-    if (!configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, &gNeutrinoDevice)) {
-        int legacyDev = 0;
-        if (configGetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVICE, &legacyDev)) {
-            if (legacyDev == 1 || legacyDev == 2)
-                gNeutrinoDevice = NEUTRINO_DEV_MC;
-            else
-                gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-        }
-    }
-    // The device-specific picker entries were removed because their launch behaviour is volatile.
-    // Preserve the stable Auto/Memory Card/Game Device choices, but do not let an older saved
-    // USB/MX4SIO/MMCE/HDD/iLink value silently keep selecting a retired path.
-    if (gNeutrinoDevice != NEUTRINO_DEV_AUTO &&
-        gNeutrinoDevice != NEUTRINO_DEV_MC &&
-        gNeutrinoDevice != NEUTRINO_DEV_GAME)
-        gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+    // The old neutrino_device / neutrino_devtype picker is retired. Its saved values are
+    // intentionally ignored: an empty neutrino_path now means game device -> memory cards, while
+    // a non-empty neutrino_path is the exact authoritative location.
+
 }
 
 static void resolveBootDirToMass(void)
@@ -3502,7 +3487,9 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, gDefaultCoreLoader);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
-        configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice);
+        // Retire stale selector keys on the next save so the config reflects the path-only UI.
+        configRemoveKey(configOPL, CONFIG_OPL_NEUTRINO_DEVICE);
+        configRemoveKey(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_BGART, gEnableBGArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, gEnableArtTar);
@@ -4680,7 +4667,6 @@ static void setDefaults(void)
     gApplyGameID = 0;
     gNeutrinoArgs[0] = '\0';
     gNeutrinoPath[0] = '\0';
-    gNeutrinoDevice = NEUTRINO_DEV_AUTO;
     gDefaultCoreLoader = 0;    // <OPL> (native) -- preserves behaviour until the user opts into Neutrino globally
     gNeutrinoVideoDefault = 0; // no global -gsm until the user opts in
     gNeutrinoGsmCompDefault = 0;
