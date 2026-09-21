@@ -1624,6 +1624,10 @@ static char gLastSaveTarget[sizeof(gCustomSettingsPath)];
 static int gLastSaveWasStagedOplHome = 0;
 static int gHddSettingsFallbackNotice = 0;
 static int gBootHddCommonFallback = 0;
+// APA can host the ELF while the authoritative settings live on the ATA-backed BDM filesystem.
+// Keep this distinct from gBootHomeApa: saves/config.path must follow the settings owner, not the ELF.
+static int gBootApaConfigFromBdm = 0;
+static char gBootApaBdmConfigHome[BDM_DEVICE_ROOT_MAX];
 
 static int checkLoadConfigMMCE(int types)
 {
@@ -1675,7 +1679,7 @@ static int checkLoadConfigBDM(int types)
     // if not on USB, check BDM HDD
     if (bdm_result == 0) {
         // wait for up to 5 seconds for the HDD to spin up and become accessible...
-        if (hddLoadModules() >= 0 && bdmHDDIsPresent(5000)) {
+        if (hddLoadModulesReady() && bdmHDDIsPresent(5000)) {
             bdm_result = bdmFindPartition(path, CONFIG_OPL_FILENAME, 0);
             if (!bdm_result)
                 bdm_result = bdmFindPartition(path, CONFIG_OPL_FILENAME_LEGACY, 0);
@@ -1846,10 +1850,13 @@ static int configPathRedirectLocation(char *out, int outLen)
 {
     const char *home = gBootDir;
 
+    if (gBootApaConfigFromBdm && gBootApaBdmConfigHome[0] != '\0')
+        home = gBootApaBdmConfigHome;
+
     // APA launch identity and config ownership are separate. A delayed HDD mount can leave
     // gBootDir as raw hddN:, but once the EXISTING persistent PFS home is mounted, config.path
     // belongs there. This is the only APA override; every other boot class keeps gBootDir.
-    if (gBootHomeApa && gHDDPrefix != NULL && gHDDPrefix[0] != '\0')
+    if (!gBootApaConfigFromBdm && gBootHomeApa && gHDDPrefix != NULL && gHDDPrefix[0] != '\0')
         home = gHDDPrefix;
 
     // Never compose a writable bootstrap file in raw APA space. hddN: is a partition
@@ -2477,33 +2484,52 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
         }
     }
 
-    // A BDM argv launch can keep its ELF on APA/PFS while its ISO and settings live at the ATA
-    // filesystem root (#545). Prefer that settings bundle over the unrelated PFS data home, but
-    // only after an explicit config.path redirect. Match the ATA driver, not whichever USB slot
-    // happened to enumerate first. The same bounded HDD readiness helper served the old BDM fallback.
-    if (autoLaunchMode == BDM_MODE && gBootHomeApa) {
-        char home[BDM_DEVICE_ROOT_MAX];
-        if (bdmHDDIsPresent(5000) && bdmGetDeviceRootByType(BDM_TYPE_ATA, home, sizeof(home))) {
-            value = tryReadRecoveryConfigHome(types, home);
-            if (value & CONFIG_OPL)
-                return value;
-        }
-    }
-
-    // For GUI/HDL launches, APA/PFS boot identity is authoritative. After an explicit redirect misses, ONLY the
-    // deterministic existing-PFS ownership chain is eligible: __common/OPL/conf_hdd.cfg's valid
-    // existing target, otherwise __common/OPL. Never import an unrelated MC/USB master config into
-    // an FHDB/APA session; that can resurrect stale Custom Settings Path state and makes the next
-    // save destination depend on whichever removable device happened to be inserted.
+    // APA can host only the ELF while the user's settings + games live on the ATA BDM filesystem
+    // (#545, CosmicScale). Preserve APA as first choice, but if it contains no master config, hand
+    // the physical drive over cleanly and probe ONLY the ATA BDM root -- never USB/MX4SIO/iLink.
     if (gBootHomeApa) {
         value = checkLoadConfigHDD(types);
         if (value & CONFIG_OPL)
             return value;
 
+        if (autoLaunchMode == IO_MODE_SELECTED_NONE &&
+            gHDDPrefix != NULL && gHDDPrefix[0] != '\0' && hddReleasePfsForBdm()) {
+            char home[BDM_DEVICE_ROOT_MAX];
+
+            // bdmLoadModules supplies BDMFS_FATFS synchronously; bdmEnsureSourceModules then loads
+            // only the ATA transport synchronously even though this code itself runs on the IO worker.
+            bdmLoadModules();
+            if (bdmEnsureSourceModules(BDM_TYPE_ATA, 5000) &&
+                bdmGetDeviceRootByType(BDM_TYPE_ATA, home, sizeof(home))) {
+                value = tryReadRecoveryConfigHome(types, home);
+                if (value & CONFIG_OPL) {
+                    config_set_t *configOPL = configGetByType(CONFIG_OPL);
+
+                    gBootApaConfigFromBdm = 1;
+                    snprintf(gBootApaBdmConfigHome, sizeof(gBootApaBdmConfigHome), "%s", home);
+
+                    // Same reconciliation checkLoadConfigBDM performs: the settings owner itself is
+                    // proof that ATA-BDM must remain enabled and the BDM page must be startable.
+                    gEnableBdmHDD = 1;
+                    configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, 1);
+                    configSetInt(configOPL, CONFIG_OPL_BDM_MODE, START_MODE_AUTO);
+                    return value;
+                }
+            }
+
+            // No ATA-BDM master config was found. Restore the original APA settings owner; never
+            // silently relocate a first-run APA install merely because an exFAT partition exists.
+            configEnd();
+            hddLoadSupportModules();
+            if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0')
+                configInit(gHDDPrefix);
+            else
+                configInit(gBootDir[0] != '\0' ? gBootDir : NULL);
+        }
+
         // No master config yet is a valid first-run state. Keep defaults homed to the mounted safe
         // PFS target so the first explicit Save materializes them there. If PFS is still unavailable,
-        // leave the raw APA launch identity only as a fail-closed marker; _saveConfig retries this
-        // same safe chain and config.c blocks every raw hddN: config write as defense in depth.
+        // leave the launch identity only as a fail-closed marker; _saveConfig retries the safe chain.
         if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0')
             configSetMove(gHDDPrefix);
         showCfgPopup = 0;
@@ -2693,8 +2719,8 @@ static void resolveBootDirToMass(void)
                     gBootHomeApa = 1;
                     if (!strcmp(gOPLPart, "hdd0:__common"))
                         gBootHddCommonFallback = 1;
-                    if (gHDDStartMode == START_MODE_DISABLED)
-                        gHDDStartMode = START_MODE_AUTO;
+                    // Booting the ELF from APA does not mean the APA/HDL game source is enabled.
+                    // Keep the saved/default source mode intact so BDM-HDD can own the same disk.
 
                     // Preserve rebuild-206's recursion guard: re-home only when resolution changed it.
                     if (strcmp(before, gBootDir) != 0) {
@@ -2712,7 +2738,6 @@ static void resolveBootDirToMass(void)
         // hddN: config firewall makes the first read fail closed, and tryAlternateDevice retries
         // only the existing-partition HDD ownership chain.
         gBootHomeApa = 1;
-        gHDDStartMode = START_MODE_AUTO;
         gBootHddCommonFallback = 0;
         return;
     }
@@ -2898,10 +2923,11 @@ static void _loadConfig()
             if (gAutoStartLastPlayed < 0)
                 gAutoStartLastPlayed = 0;
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
-            configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode);
-            // resolveBootDirToMass runs before this read. A stored Disabled value must not undo
-            // the AUTO fallback for an APA/PFS boot that already mounted and served OPL itself.
-            if (gBootHomeApa && gHDDStartMode == START_MODE_DISABLED)
+            // The boot transport and the game source are separate. Respect an explicit Disabled
+            // value so an APA-hosted ELF/config can hand the disk to BDM-HDD (#545). Preserve the
+            // historical first-run/legacy behavior only when the key does not exist at all.
+            if (!configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode) &&
+                gBootHomeApa && !gBootApaConfigFromBdm)
                 gHDDStartMode = START_MODE_AUTO;
             configGetInt(configOPL, CONFIG_OPL_ETH_MODE, &gETHStartMode);
             configGetInt(configOPL, CONFIG_OPL_APP_MODE, &gAPPStartMode);
@@ -3073,6 +3099,12 @@ static void _loadConfig()
             configGetStrCopy(configOPL, CONFIG_OPL_DEFAULT_BGM_PATH, gDefaultBGMPath, sizeof(gDefaultBGMPath));
         }
 
+        if (!(result & CONFIG_OPL) && gBootHomeApa) {
+            // No master config exists yet. Keep the long-standing APA first-run behavior: the HDD
+            // games page is available until the user explicitly disables it in saved settings.
+            gHDDStartMode = START_MODE_AUTO;
+        }
+
         // BOOT-DEVICE RECONCILE. The device OPL is RUNNING FROM always has its transport enabled.
         //
         // This existed for ATA alone, and rebuild-137b bolted MX4SIO on beside it. Both were the same
@@ -3137,7 +3169,9 @@ static void _loadConfig()
     }
 
     if (lscstatus & CONFIG_NETWORK) {
-        if (!(result & CONFIG_NETWORK)) {
+        // The ATA-BDM master was already selected above. A missing optional network file must
+        // not run APA recovery again: its first step remounts PFS on the same physical disk.
+        if (!(result & CONFIG_NETWORK) && !gBootApaConfigFromBdm) {
             result = tryAlternateDevice(lscstatus, IO_MODE_SELECTED_NONE);
         }
 
@@ -3226,7 +3260,7 @@ static int trySaveConfigBDM(int types)
     // if not on USB, check BDM HDD
     if (bdm_result == 0) {
         // wait for up to 5 seconds for the HDD to spin up and become accessible...
-        if (hddLoadModules() >= 0 && bdmHDDIsPresent(5000)) {
+        if (hddLoadModulesReady() && bdmHDDIsPresent(5000)) {
             bdm_result = bdmFindPartition(path, CONFIG_OPL_FILENAME, 1);
         }
     }
@@ -3577,7 +3611,7 @@ static void _saveConfig()
     // A current APA session keeps pfs0: mounted on its original data home until restart. When the
     // selected next-boot home differs, write only the changed sets through pfs1: and commit the
     // selector only after that write succeeds. The normal automatic +OPL case still uses pfs0:.
-    if (gBootHomeApa && gCustomSettingsPath[0] == '\0' && hddOplHomeSelectionNeedsTargetSave()) {
+    if (gBootHomeApa && !gBootApaConfigFromBdm && gCustomSettingsPath[0] == '\0' && hddOplHomeSelectionNeedsTargetSave()) {
         if (!saveSelectedHddOplHome(lscstatus) ||
             (hddOplHomeSelectionPending() && !commitSelectedHddOplHome())) {
             lscret = 0;
@@ -3595,7 +3629,7 @@ static void _saveConfig()
     // explicit Custom Settings Path must resolve the existing-PFS ownership chain NOW. This keeps
     // raw hddN: out of configWrite entirely: configured existing target first, then __common/OPL,
     // otherwise fail visibly without creating/formatting/repairing any APA partition.
-    if (gBootHomeApa && gCustomSettingsPath[0] == '\0') {
+    if (gBootHomeApa && !gBootApaConfigFromBdm && gCustomSettingsPath[0] == '\0') {
         char hddSaveHome[64];
         if (prepareHddSettingsFallback(hddSaveHome, sizeof(hddSaveHome)) <= 0) {
             if (gOPLPart[0] != '\0')
@@ -4568,6 +4602,8 @@ static void setDefaults(void)
     gAutoLaunchGame = NULL;
     gAutoLaunchBDMGame = NULL;
     gAutoLaunchDeviceData = NULL;
+    gBootApaConfigFromBdm = 0;
+    gBootApaBdmConfigHome[0] = '\0';
     gOPLPart[0] = '\0';
     // NULL is the only truthful pre-mount state. hddLoadSupportModules() uses non-NULL as the
     // proof that the persistent pfs0: data home is already mounted; seeding this with "pfs0:"
@@ -4869,6 +4905,7 @@ static void deferredAudioInit(void)
 static void miniInit(int mode)
 {
     int ret;
+    int apaBdmAutoLaunch;
 #ifdef __OPLDIAG
     int initialRet;
     char initialHome[256];
@@ -4876,7 +4913,14 @@ static void miniInit(int mode)
 #endif
 
     setDefaults();
-    configInit(gBootDir[0] ? gBootDir : NULL); // settings live in the boot dir (cwd)
+
+    // Match current official OPL for the cross-transport case reported in #545: when a BDM
+    // auto-launcher ELF itself lives on APA/PFS, do NOT mount that APA home just to discover config.
+    // Official starts from the normal MC config home and, if absent, discovers config on BDM. That
+    // leaves the ATA-backed exFAT volume free to become massN: before the game handoff.
+    apaBdmAutoLaunch = (mode == BDM_MODE &&
+                        (!strncmp(gBootDir, "hdd", 3) || !strncmp(gBootDir, "pfs", 3)));
+    configInit(apaBdmAutoLaunch ? NULL : (gBootDir[0] ? gBootDir : NULL));
 
     ioInit();
     LOG_ENABLE();
@@ -4904,9 +4948,10 @@ static void miniInit(int mode)
         mmceLoadModules();
     }
 
-    // Resolve the settings home and its recovery policy for every launch mode, as _loadConfig does.
-    // The launcher directory can differ from the game's device and from the saved settings home.
-    resolveBootDirToMass();
+    // Resolve the settings home normally, except for APA -> BDM auto-launch. That one deliberately
+    // follows official OPL's ordering above and must not mount PFS before the BDM volume appears.
+    if (!apaBdmAutoLaunch)
+        resolveBootDirToMass();
     InitConsoleRegionData();
 
 #ifdef __OPLDIAG
@@ -4918,11 +4963,14 @@ static void miniInit(int mode)
     initialRet = ret;
 #endif
     if (CONFIG_ALL & CONFIG_OPL) {
-        // A mixed APA-boot/BDM-game launch has a distinct settings owner. Resolve its redirect or
-        // ATA root even if the initial PFS home contained a different master config. A missing
-        // CONFIG_GAME alone still never triggers discovery on any launch path.
-        if (!(ret & CONFIG_OPL) || (mode == BDM_MODE && gBootHomeApa)) {
-            ret = tryAlternateDevice(CONFIG_ALL, mode);
+        // For the APA -> BDM exception, use the same ownership order as official OPL: normal MC
+        // config first, then BDM. Never mount PFS merely because argv[0] came from APA. Other launch
+        // modes keep RiptOPL's normal boot-home/custom-path recovery policy.
+        if (!(ret & CONFIG_OPL)) {
+            if (apaBdmAutoLaunch)
+                ret = checkLoadConfigBDM(CONFIG_ALL);
+            else
+                ret = tryAlternateDevice(CONFIG_ALL, mode);
         }
 
         if (ret & CONFIG_OPL) {

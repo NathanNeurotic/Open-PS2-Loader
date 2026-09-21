@@ -12,56 +12,55 @@ arg = DVD
 arg = bdm
 ```
 
-The settings are reported at the ATA root. The reply repeats `conf_opl.cfg`;
-for this investigation the intended second filename is assumed to be
-`conf_game.cfg`, consistent with the original report. This is sufficient to
-review the mixed layout without requiring more work from the reporter.
-Nathan has not reproduced it locally. The root cause of the upstream behavior
-is still unconfirmed: upstream revision `3e3f34e9` already calls
-`checkLoadConfigBDM(CONFIG_ALL)` after an initial master-config miss, and that
-helper attempts to read globals as well as the master config.
+The reporter later confirmed that both `conf_opl.cfg` and `conf_game.cfg` are
+at the ATA root, with no Custom Settings Path or config on another device. They
+also reported that current official OPL launches from APA to exFAT through both
+Auto Loading and the GUI. RiptOPL's extra PFS mount is confirmed in source;
+whether it causes the black screen on this console remains unverified.
 
 ## Change and scope
 
-`miniInit()` now resolves its boot/settings home for every launch mode and uses
-`tryAlternateDevice(CONFIG_ALL, mode)` when the first read misses `CONFIG_OPL`, using
-the GUI's recovery entry point. The three mode-specific `checkLoadConfig*` calls
-are removed. Its existing BDM semaphore initialization also runs for every mode:
-an APA game can have a BDM-hosted launcher or custom settings home, and the reused
-transport helpers acquire that semaphore.
+`miniInit()` detects an APA/PFS-hosted ELF with BDM argv. For that combination it
+starts at the normal memory-card config home, then uses `checkLoadConfigBDM()`
+if the master config is absent, matching official OPL's ordering. It skips
+`resolveBootDirToMass()` so loading settings does not mount PFS before exFAT is
+available as `massN:`. Other auto-launch modes retain the boot-home resolver and
+`tryAlternateDevice()`. BDM semaphore initialization still runs for every mode.
 
-An APA/PFS boot with BDM argv is the deliberate exception to the initial-read
-gate: the ELF's PFS data home can contain a different master config from the
-game's ATA filesystem. For that combination, `tryAlternateDevice` first tries
-the existing explicit `config.path` redirect, then the first ATA-backed `massN:`
-root, then the existing PFS fallback. The ATA root is selected by driver identity,
-not by taking the first readable USB slot. It uses the existing bounded HDD
-readiness helper, and accepts a settings bundle only when its master config loads.
-GUI and HDL launches pass no BDM autolaunch mode and retain their existing policy.
+For a normal GUI boot from APA, the existing PFS settings home remains first
+choice. If it has no master config, GUI recovery must successfully unmount `pfs0:`
+before probing only the ATA BDM device. A failed unmount leaves APA ownership
+intact; a failed ATA config probe remounts the original PFS home. A successful
+ATA probe records BDM as the settings owner so a later Save Settings does not
+remount PFS immediately before launching an exFAT game. The handoff keeps the
+APA/PFS modules resident and does not force-close PFS descriptors. HDD and MMCE
+auto-launches keep their existing PFS recovery path. A missing optional network
+config file does not restart APA recovery after BDM ownership is selected.
 
 The shared GSM, cheats, PADEMU, pad-macro and OSD-language application code and
 the on-disk meaning of Global are unchanged. Per-game CFG files still come from
 the game device. An absent `conf_game.cfg` by itself does **not** trigger recovery.
-The mixed-layout exception is based on the launch mode and boot device, not on
-whether global settings exist. No new loading helper or filesystem writes are added.
+Recovery itself does not write config files or create APA partitions.
 
 ## Source review (not runtime tests)
 
 | Layout/state | Path through the existing helpers |
 | --- | --- |
-| APA/PFS ELF, BDM/ATA game, settings at ATA root | Explicit redirect first, then ATA-identified `massN:/`, then PFS. Also applies if the initial PFS home contains another master config. |
+| APA/PFS ELF, BDM/ATA Auto Loading, settings at ATA root | Read the normal MC home, then BDM if the MC master is absent. No PFS settings mount. A different MC master takes precedence, as in official OPL. |
+| APA/PFS ELF, GUI launch of an ATA/exFAT game, settings at ATA root | Try APA first. On a master-config miss, unmount `pfs0:` before ATA-only BDM discovery; retain BDM ownership for later saves. Remount PFS if no ATA master loads. |
 | Launcher `mc0:/APPS`, settings `mc0:/OPL` | Initial read misses; same-card recovery reads `/OPL`, including `CONFIG_GAME`. MC1 uses the same slot-preserving rule. |
 | BDM launcher directory differs from `<device>:/OPL` | Resolve the boot transport, then probe that device's `/OPL` and root. No other-device hunt on a known BDM boot. |
-| Custom Settings Path | On ordinary initial-master misses, or the mixed APA/BDM path, read the boot home's `config.path`, prepare its transport, and read all config sets from the target. A stale redirect falls back to discovery. |
-| APA boot with GUI/HDL launch | Classify APA before recovery and resolve the existing PFS data home. Recovery retains the existing HDD ownership chain. |
-| Settings beside launcher, including globals | The first read succeeds; no recovery. |
-| Master exists but `conf_game.cfg` is absent | Keep global defaults. Ordinary launches do not recover; mixed APA/BDM launches use their normal redirect/ATA/PFS selection regardless of whether the globals file exists. |
+| Custom Settings Path | Ordinary initial-master misses still read the boot home's `config.path`. APA-hosted BDM Auto Loading follows official MC/BDM ordering and cannot read a redirect stored inside an unmounted PFS home. |
+| APA boot with GUI or HDL launch | Classify APA before recovery and resolve the existing PFS data home; only a GUI master-config miss can transfer settings ownership to ATA BDM. |
+| Settings beside launcher, including globals | Ordinary boot-home reads succeed without recovery; APA-hosted BDM Auto Loading follows the MC/BDM order above. |
+| Master exists but `conf_game.cfg` is absent | Keep global defaults; the missing globals file alone does not trigger recovery. |
 | No configs on a known local boot | Same-device probes or the APA chain only. |
 | Unknown/deferred boot, master missing | Existing broad recovery can load USB with a 1500 ms mount budget, then probe MMCE. Hardware timing remains unmeasured. |
 
 `restoreRecoverySaveHome()` calls `configSetMove()` and may probe MC directories;
-neither it nor `configSetMove()` writes settings. For non-MC recovery, the final
-save home can be moved back to the boot directory after the config was read.
+neither it nor `configSetMove()` writes settings. For ordinary non-MC recovery,
+the final save home can be moved back to the boot directory after the config was
+read. The APA GUI to ATA-BDM handoff keeps its separately recorded BDM owner.
 Consequently, the final home alone does not prove which directory supplied the
 loaded values. A populated `CONFIG_GAME` alone also does not prove that those
 values are the intended ones.
@@ -104,6 +103,7 @@ the argv autolaunch handoff, and compare actual behavior:
 | OSD language override | USB | Pending hardware |
 | Global option with Custom Settings Path | HDD/USB | Pending hardware |
 | APA/PFS ELF with `bdm`, ATA-root settings, with and without a different PFS master | ATA | Pending hardware |
+| APA/PFS ELF GUI boot, ATA/exFAT game, then Save Settings and Remember Last Played | ATA | Pending hardware |
 | Same options set to Per Game | HDD/USB | Pending hardware |
 | No `conf_game.cfg` anywhere; defaults and launch timing | HDD/USB | Pending hardware |
 
@@ -111,8 +111,7 @@ Cover a launcher outside the settings home, settings on the game device, and bot
 APA/HDL and mixed APA/BDM boot. Include an HDD game with a BDM-hosted custom home to exercise semaphore
 initialization, and measure unknown-boot recovery separately. No broad-scan flag
 has been introduced without timing evidence. Measure the mixed-layout ATA wait
-on hardware too; it reuses the former BDM fallback's 5000 ms readiness budget.
+on hardware too; the BDM fallback retains its 5000 ms readiness budget.
 
-Docker compilation and a PCSX2 GUI smoke test do not validate the real argv
-handoff, GSM output, cheats or controller behavior. No unit-test scaffolding is
-part of this change.
+Docker compilation and the source-level APA handoff regression do not validate
+the real argv handoff, GSM output, cheats or controller behavior.

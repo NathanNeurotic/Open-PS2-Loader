@@ -121,6 +121,9 @@ static inline int hddLoadModulesReady(void)
 // hddLoadModulesReady() decision while enabling nested, source-level startup stages beneath it.
 int hddDiagLoadModulesReady(void);
 void hddLoadSupportModules(void);
+// Release only the live pfs0: data-home mount while keeping the already-loaded APA/PFS and ATA
+// modules resident. Boot-time only: used after an APA config miss before probing ATA BDM/exFAT.
+int hddReleasePfsForBdm(void);
 
 // Normal APA data-home choices surfaced by Settings -> Game Sources. POPS loose files remain
 // separately owned by __common/POPS; this selector only controls OPL's regular data home.

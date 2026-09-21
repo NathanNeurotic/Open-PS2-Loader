@@ -2912,8 +2912,14 @@ static int bdmEnsureTransportLoaded(int bdmType)
             }
             return iLinkModLoaded;
         case BDM_TYPE_ATA:
-            if (!hddModLoaded && hddLoadModulesReady())
-                hddModLoaded = 1;
+            if (!hddModLoaded) {
+                // APA discovery can already have the ATA stack resident through hddsupport.
+                // Retain one BDM reference even then: hddShutdown releases a reference during
+                // launch teardown, and a residency-only check would leave its count at zero.
+                // hddLoadModulesReady reuses loaded modules without loading them a second time.
+                if (hddLoadModulesReady())
+                    hddModLoaded = 1;
+            }
             return hddModLoaded;
         default:
             return 0;

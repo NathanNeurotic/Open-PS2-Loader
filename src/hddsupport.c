@@ -1379,6 +1379,40 @@ static int hddPartitionMountableAt(const char *mountPoint, const char *partition
     return ret == 0;
 }
 
+// APA/PFS and BDM-HDD can share the ATA stack, but they cannot both own the same drive's live
+// filesystem view. In particular, keeping pfs0: mounted after reading an APA-hosted config prevents
+// the BDM/FatFs side from publishing/launching the exFAT volume on hybrid/coexisting layouts (#545).
+//
+// This is intentionally NOT hddCleanUp(): the PS2HDD/PFS modules and DEV9/ATAD/XHDD stay resident,
+// gOPLPart stays authoritative, and hddSupportModulesLoaded stays set. A caller can therefore
+// remount the exact same data home if the BDM probe finds nothing. This helper is boot-time only:
+// it must never race menu art/audio/config I/O.
+int hddReleasePfsForBdm(void)
+{
+    int ret;
+
+    if (gHDDPrefix == NULL || gHDDPrefix[0] == '\0')
+        return 1;
+
+    LOG("HDDSUPPORT releasing live PFS data-home mount for BDM-HDD\n");
+
+    // This handoff is speculative until the unmount succeeds. Never use PDIOC_CLOSEALL here:
+    // it closes EVERY PFS descriptor process-wide and would damage the still-live APA session if
+    // fileXioUmount then refused the mount. At this boot-time call site all config descriptors are
+    // already closed; a busy mount is therefore a reason to abort the BDM handoff, not to force it.
+    ret = fileXioUmount(hddPrefix);
+    if (ret < 0) {
+        LOG("HDDSUPPORT could not release %s for BDM-HDD (%d); leaving APA ownership intact\n", hddPrefix, ret);
+        return 0;
+    }
+
+    // The filesystem is detached now; commit the drive cache before another filesystem stack starts
+    // using the same ATA device. Keep gOPLPart + the loaded modules so the APA home can be remounted.
+    hddFlushCache();
+    gHDDPrefix = NULL;
+    return 1;
+}
+
 int hddGetOplHomeSelection(void)
 {
     if (hddOplHomePending >= 0)
