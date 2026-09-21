@@ -2689,6 +2689,7 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
         gNeutrinoDevice = NEUTRINO_DEV_AUTO;
     } else {
         const char *migratedPath = NULL;
+        int preserveLegacyApa = 0;
         switch (gNeutrinoDevice) {
             case NEUTRINO_DEV_MC:
                 migratedPath = "mc:/NEUTRINO/neutrino.elf";
@@ -2707,6 +2708,7 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
                 break;
             case NEUTRINO_DEV_APA_HDD:
                 migratedPath = "hdd:/neutrino/neutrino.elf";
+                preserveLegacyApa = 1;
                 break;
             case NEUTRINO_DEV_ILINK:
                 migratedPath = "ilink:/neutrino/neutrino.elf";
@@ -2721,7 +2723,11 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
         }
         if (migratedPath != NULL) {
             snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", migratedPath);
-            gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+            // APA's retired picker historically probed four case variants on the case-sensitive
+            // PFS filesystem. Keep that one migration marker until the path is explicitly edited,
+            // so runtime can preserve the old installs without making arbitrary custom paths fuzzy.
+            if (!preserveLegacyApa)
+                gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         }
     }
 }
