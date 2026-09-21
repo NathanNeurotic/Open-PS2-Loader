@@ -1784,6 +1784,7 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
 static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *part)
 {
     char vcdElf[256], vcdSelector[320];
+    int customResolved = 0;
 
     if (name == NULL || name[0] == '\0' || part == NULL || part[0] == '\0')
         return;
@@ -1793,31 +1794,44 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
     else
         snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", name); // GAME.ELF (pooled-container VCD)
 
-    // Resolve + keep pfs0: on the POPSTARTER.ELF partition. Quiesce art+IO first (this remounts pfs0:).
-    //
-    // The budget used to be 0 on both, i.e. no wait at all -- harmless while these were `return 1`
-    // stubs, and not harmless now that they are real. There is exactly ONE pfs0: slot, so the remount
-    // below is destructive to any HDD art read still running; a zero budget quiesced nothing and just
-    // reported success. Note cacheAbortMmce* only covers SIO2 requests, so the second call (which
-    // covers ALL of them) is the one that matters here and its result is the one worth honouring.
-    cacheAbortMmceImageLoadsTimed(HDD_ART_QUIESCE_MS);
-    if (!cacheCancelPendingImageLoadsTimed(HDD_ART_QUIESCE_MS)) {
-        LOG("HDD VCD: art did not quiesce; refusing the pfs0: remount\n");
-        guiMsgBox(_l(_STR_PLEASE_WAIT), 0, NULL);
-        return;
+    // Tier 1: an explicit full path is allowed to live anywhere. Resolve it BEFORE borrowing pfs0:
+    // for the APA game-device fallback, otherwise a custom pfs0: path could be invalidated by our
+    // own remount before it is handed to the ELF loader.
+    if (gPopstarterPath[0] != '\0')
+        customResolved = sbResolveCustomLoaderPath(gPopstarterPath, vcdElf, sizeof(vcdElf));
+
+    if (!customResolved) {
+        // Tier 2: the HDD game's canonical POPSTARTER home. Resolve + keep pfs0: on __common/POPS.
+        // There is exactly one live pfs0: data-home mount, so quiesce workers before borrowing it.
+        cacheAbortMmceImageLoadsTimed(HDD_ART_QUIESCE_MS);
+        if (!cacheCancelPendingImageLoadsTimed(HDD_ART_QUIESCE_MS)) {
+            LOG("HDD VCD: art did not quiesce; refusing the pfs0: remount\n");
+            guiMsgBox(_l(_STR_PLEASE_WAIT), 0, NULL);
+            return;
+        }
+        ioBlockOps(1);
+
+        if (!hddResolveHddPopstarter(vcdElf, sizeof(vcdElf))) {
+            // The APA resolver restored pfs0: to the normal data home on failure.
+            // Tier 3: memory-card fallback (vcdResolvePopstarter(NULL) = custom retry -> mc0/mc1;
+            // the custom retry is harmless and keeps the resolver's single public contract).
+            if (!vcdResolvePopstarter(NULL, vcdElf, sizeof(vcdElf))) {
+                ioBlockOps(0);
+                guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+                return;
+            }
+        }
+        // Success intentionally leaves IO blocked. deinitEx re-blocks and tears the menu down next.
     }
-    ioBlockOps(1);
-    if (!hddResolveHddPopstarter(vcdElf, sizeof(vcdElf))) {
-        ioBlockOps(0); // resolver already restored pfs0: to the OPL data partition on failure
-        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
-        return;
-    }
-    // Success: leave IO blocked (deinit re-blocks anyway) and pfs0: on the POPSTARTER partition for the
-    // argv-preserving load below. POPSTARTER takes over and performs its own IOP reset.
+
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%s/%s.VCD", part, name);
     vcdPrepareRetroGemBarcode(vcdFullPath);
-    deinit(UNMOUNT_EXCEPTION, itemList->mode);
+
+    // The game data is APA, while POPSTARTER.ELF may be on a second device. Keep both backends
+    // available until sysLoadELFKeepIOP has loaded the target. A pfs-hosted ELF additionally needs
+    // KEEPIOP_EXCEPTION so PDIOC_CLOSEALL cannot invalidate it before that open.
+    deinitEx(sbLoaderDeinitException(vcdElf), HDD_MODE, oplPath2Mode(vcdElf));
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
