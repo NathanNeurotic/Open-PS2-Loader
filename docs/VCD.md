@@ -110,7 +110,9 @@ The custom ELF may live on a different backend from the VCD. RiptOPL keeps both 
 until the argv-preserving loader has opened `POPSTARTER.ELF`, so combinations such as an
 MMCE-hosted ELF with an APA-HDD game are no longer torn down merely because the game is elsewhere.
 Typed BDM aliases are normalized by the mounted driver's real identity (`massN:` may be USB,
-MX4SIO, ATA, iLink, or a network block transport).
+MX4SIO, ATA, iLink, or a network block transport). APA `hdd:/...` / `hdd0:/...` paths resolve
+only through the already-selected live OPL data-home partition; RiptOPL does not mount an arbitrary
+APA partition just because a custom ELF path names one.
 
 For an **APA-HDD VCD**, the Game Device tier retains the established canonical
 `hdd0:__common/POPS/POPSTARTER.ELF` route. If that is absent, the resolver proceeds to the memory
@@ -126,7 +128,7 @@ memory-card dependency/config folder used by SMB/BDMA preparation; those files r
 
 ### Which *build* of POPSTARTER
 
-The picker above chooses which **copy** of `POPSTARTER.ELF` is loaded. Which **build** that copy is
+The resolver above chooses which **copy** of `POPSTARTER.ELF` is loaded. Which **build** that copy is
 comes down to the file itself, and the release package ships five of them in
 `POPS/POPSTARTER VERSIONS/`:
 
@@ -139,7 +141,7 @@ comes down to the file itself, and the release package ships five of them in
 | **USBDELAY_LONGER_DEBUG** | A longer delay again, with diagnostics. |
 
 Swapping is manual: copy the `POPSTARTER.ELF` you want over the `POPS/POPSTARTER.ELF` that the
-picker resolves to. RiptOPL never chooses a build for you and never rewrites that file.
+resolver selects. RiptOPL never chooses a build for you and never rewrites that file.
 
 > **The shipped `POPS/POPSTARTER.ELF` is the DEBUG build, deliberately** — it is the build carrying
 > SMB support, so it is the correct default for the package. POPSTARTER diagnostic text during an
