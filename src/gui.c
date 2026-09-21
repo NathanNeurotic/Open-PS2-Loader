@@ -1507,19 +1507,33 @@ reshow_network:
     return guiSettingsPageResult(result);
 }
 
-// POPStarter page live-updater: reveal the free-text POPSTARTER.ELF Path field only when the
-// device picker is "Custom".
-static int guiVcdUpdater(int modified)
-{
-    struct UIItem *ui = guiSettingsActiveDialog != NULL ? guiSettingsActiveDialog : diaVcdConfig;
-    int popsDev;
+// Core path fields use a full-size backing buffer. UI_STRING's inline storage is intentionally
+// short, so using diaGetString() directly would truncate perfectly valid cross-device paths.
+// The row is only a preview; selecting it opens the normal full keyboard editor.
+static char neutrinoPathEdit[sizeof(gNeutrinoPath)];
+static char popstarterPathEdit[sizeof(gPopstarterPath)];
 
-    if (modified) {
-        diaGetInt(ui, CFG_POPSTARTER_DEVICE, &popsDev);
-        diaSetVisible(ui, CFG_LBL_POPSTARTER_PATH, popsDev == POPS_DEV_CUSTOM);
-        diaSetVisible(ui, CFG_POPSTARTER_PATH, popsDev == POPS_DEV_CUSTOM);
-    }
-    return 0;
+static void guiCorePathBegin(struct UIItem *ui, int id, char *edit, size_t editSize, const char *value)
+{
+    snprintf(edit, editSize, "%s", value != NULL ? value : "");
+    diaSetString(ui, id, edit);
+    diaSetShowDefaultWhenEmpty(ui, id, 1);
+}
+
+int guiNeutrinoPathHandler(char *text, int maxLen)
+{
+    if (!guiShowKeyboard(neutrinoPathEdit, sizeof(neutrinoPathEdit)))
+        return 0;
+    snprintf(text, maxLen, "%s", neutrinoPathEdit);
+    return 1;
+}
+
+int guiPopstarterPathHandler(char *text, int maxLen)
+{
+    if (!guiShowKeyboard(popstarterPathEdit, sizeof(popstarterPathEdit)))
+        return 0;
+    snprintf(text, maxLen, "%s", popstarterPathEdit);
+    return 1;
 }
 
 // BDMA Settings live-updater: hide the manual BDMA Source/Mode pickers while "VCD BDMA Apply on
@@ -2029,34 +2043,11 @@ static int guiNeutrinoDefaultsUpdater(int modified)
     return 0;
 }
 
-// The Neutrino device enum predates the reduced picker and its values are persisted in the global
-// config. Keep the old internal values stable, but expose only the three supported choices in the
-// UI and translate between the compact UI index and the persisted device type.
-static int guiNeutrinoDeviceToIndex(int device)
-{
-    if (device == NEUTRINO_DEV_MC)
-        return 1;
-    if (device == NEUTRINO_DEV_GAME)
-        return 2;
-    return 0; // Auto, including a legacy retired value loaded from an older config.
-}
-
-static int guiNeutrinoDeviceFromIndex(int index)
-{
-    if (index == 1)
-        return NEUTRINO_DEV_MC;
-    if (index == 2)
-        return NEUTRINO_DEV_GAME;
-    return NEUTRINO_DEV_AUTO;
-}
-
-// Game Launching -> Neutrino Defaults: the global Neutrino device/video/gsm-comp defaults + the
-// structured Advanced Arguments editor.
+// Game Launching -> Neutrino Defaults: optional custom full path + video/gsm-comp defaults +
+// structured Advanced Arguments. Empty is the compatibility default: game device, then mc0/mc1.
 void guiShowNeutrinoDefaults(void)
 {
-    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", _l(_STR_GAMES_DEVICE), NULL};
-    diaSetEnum(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
-    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, guiNeutrinoDeviceToIndex(gNeutrinoDevice));
+    guiCorePathBegin(diaNeutrinoDefaults, CFG_NEUTRINO_PATH, neutrinoPathEdit, sizeof(neutrinoPathEdit), gNeutrinoPath);
     // Global default Neutrino Video (-gsm) + comp half: same indices as the per-game picker
     // (system.c gsmVideoTokens). static: literals only, and diaSetEnum stores the raw pointer.
     static const char *neutrinoVideoDefStrs[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
@@ -2076,9 +2067,7 @@ reshow_neutrino:
         goto reshow_neutrino;
     }
     if (ret) {
-        int neutrinoDeviceIndex;
-        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, &neutrinoDeviceIndex);
-        gNeutrinoDevice = guiNeutrinoDeviceFromIndex(neutrinoDeviceIndex);
+        snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
 
@@ -2959,7 +2948,6 @@ static int guiSettingsShowLaunch(void)
     const struct UIItem *parts[] = {diaLaunchConfig, diaNeutrinoDefaults};
     const int skipIDs[] = {LAUNCH_NEUTRINO_DEFAULTS_BUTTON};
     const char *defaultCoreStrs[] = {"<OPL>", "Neutrino", NULL};
-    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", _l(_STR_GAMES_DEVICE), NULL};
     static const char *neutrinoVideoDefStrs[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
     static const char *neutrinoGsmCompDefStrs[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
@@ -2971,8 +2959,7 @@ static int guiSettingsShowLaunch(void)
     diaSetEnum(ui, CFG_DEFAULT_CORE, defaultCoreStrs);
     diaSetInt(ui, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     diaSetInt(ui, CFG_PS2LOGO, gPS2Logo);
-    diaSetEnum(ui, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
-    diaSetInt(ui, CFG_NEUTRINO_DEVICE, guiNeutrinoDeviceToIndex(gNeutrinoDevice));
+    guiCorePathBegin(ui, CFG_NEUTRINO_PATH, neutrinoPathEdit, sizeof(neutrinoPathEdit), gNeutrinoPath);
     diaSetEnum(ui, CFG_NEUTRINO_VIDEO, neutrinoVideoDefStrs);
     diaSetInt(ui, CFG_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
     diaSetEnum(ui, CFG_NEUTRINO_GSMCOMP, neutrinoGsmCompDefStrs);
@@ -2999,11 +2986,7 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
-        {
-            int neutrinoDeviceIndex;
-            diaGetInt(ui, CFG_NEUTRINO_DEVICE, &neutrinoDeviceIndex);
-            gNeutrinoDevice = guiNeutrinoDeviceFromIndex(neutrinoDeviceIndex);
-        }
+        snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
         diaGetInt(ui, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(ui, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
         applyConfig(-1, -1, 0);
@@ -3017,12 +3000,11 @@ reshow_launch:
 
 static int guiSettingsPopstarterUpdater(int modified)
 {
-    guiVcdUpdater(modified);
     guiBdmaUpdater(modified);
     return 0;
 }
 
-// PS Emulation Settings: PS1-via-POPSTARTER launch config (POPSTARTER.ELF device/path).
+// PS Emulation Settings: PS1-via-POPSTARTER launch config (optional POPSTARTER.ELF full path).
 //
 // This page COMPOSES a copy of diaVcdConfig + diaBdmaConfig and drives that copy, so a new row
 // belongs HERE, against the composed `ui` -- never against either template. A row wired into a
@@ -3036,7 +3018,6 @@ static int guiSettingsShowPopstarter(void)
 {
     const struct UIItem *parts[] = {diaVcdConfig, diaBdmaConfig};
     const int skipIDs[] = {VCD_BDMA_BUTTON};
-    const char *popsDevStrs[] = {_l(_STR_DEFAULT), "Memory Card", "USB", "MX4SIO", "MMCE", "HDD (exFAT)", "HDD (APA)", "Custom", _l(_STR_GAMES_DEVICE), "iLink", NULL};
     const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480p", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
     int result;
@@ -3052,13 +3033,8 @@ static int guiSettingsShowPopstarter(void)
     diaSetInt(ui, CFG_EMBER_DISPLAY, gEmberDisplay);
     guiSetGameViewPicker(ui);
 
-    diaSetEnum(ui, CFG_POPSTARTER_DEVICE, popsDevStrs);
-    diaSetInt(ui, CFG_POPSTARTER_DEVICE, gPopstarterDevice);
-    diaSetString(ui, CFG_POPSTARTER_PATH, gPopstarterPath);
-    diaSetShowDefaultWhenEmpty(ui, CFG_POPSTARTER_PATH, 1);
+    guiCorePathBegin(ui, CFG_POPSTARTER_PATH, popstarterPathEdit, sizeof(popstarterPathEdit), gPopstarterPath);
     diaSetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, gPopstarterRetroGemGameID);
-    diaSetVisible(ui, CFG_LBL_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
-    diaSetVisible(ui, CFG_POPSTARTER_PATH, gPopstarterDevice == POPS_DEV_CUSTOM);
     guiSetBdmaSettings(ui);
     guiSettingsBeginDialog(ui);
 
@@ -3076,15 +3052,11 @@ reshow_popstarter:
     }
 
     if (result != UIID_BTN_CANCEL && result != -1) {
-        char tmpPop[sizeof(gPopstarterPath)];
         int gameViewChanged = guiReadGameViewPicker(ui);
 
-        diaGetInt(ui, CFG_POPSTARTER_DEVICE, &gPopstarterDevice);
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
         diaGetInt(ui, CFG_EMBER_DISPLAY, &gEmberDisplay);
-        diaGetString(ui, CFG_POPSTARTER_PATH, tmpPop, sizeof(tmpPop));
-        if (strncmp(tmpPop, gPopstarterPath, 31) != 0)
-            snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", tmpPop);
+        snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", popstarterPathEdit);
         guiSaveBdmaSettings(ui);
         applyConfig(-1, -1, 0);
         if (gameViewChanged)
