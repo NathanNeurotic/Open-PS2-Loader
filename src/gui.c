@@ -2069,6 +2069,10 @@ reshow_neutrino:
         goto reshow_neutrino;
     }
     if (ret) {
+        // Editing the new field retires any hidden legacy APA picker state. Merely opening/saving
+        // an untouched <not set> field does not, so an upgraded APA setup remains compatible.
+        if (strcmp(gNeutrinoPath, neutrinoPathEdit) != 0)
+            gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
@@ -2988,6 +2992,8 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
+        if (strcmp(gNeutrinoPath, neutrinoPathEdit) != 0)
+            gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
         diaGetInt(ui, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(ui, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
@@ -3059,6 +3065,9 @@ reshow_popstarter:
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
         diaGetInt(ui, CFG_EMBER_DISPLAY, &gEmberDisplay);
         snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", popstarterPathEdit);
+        // Runtime ignores the retired picker, but keeping CUSTOM in the persisted compatibility
+        // key means a downgrade still honours the full path the user entered here.
+        gPopstarterDevice = (gPopstarterPath[0] != '\0') ? POPS_DEV_CUSTOM : POPS_DEV_DEFAULT;
         guiSaveBdmaSettings(ui);
         applyConfig(-1, -1, 0);
         if (gameViewChanged)
