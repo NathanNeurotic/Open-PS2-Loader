@@ -2029,34 +2029,38 @@ static int guiNeutrinoDefaultsUpdater(int modified)
     return 0;
 }
 
-// The Neutrino device enum predates the reduced picker and its values are persisted in the global
-// config. Keep the old internal values stable, but expose only the three supported choices in the
-// UI and translate between the compact UI index and the persisted device type.
-static int guiNeutrinoDeviceToIndex(int device)
+// Full custom Neutrino path editor. UI_STRING stores only 31 visible characters, which is too
+// short for valid paths such as pfs0:OPL/neutrino/neutrino.elf. Keep the real edit value in this
+// full-size buffer and let the UI row render only a preview. An empty preview is rendered by dia.c
+// as the standard "<not set>" placeholder; the stored value remains genuinely empty.
+static char neutrinoPathEdit[sizeof(gNeutrinoPath)];
+
+static void guiNeutrinoPathEditBegin(struct UIItem *ui)
 {
-    if (device == NEUTRINO_DEV_MC)
-        return 1;
-    if (device == NEUTRINO_DEV_GAME)
-        return 2;
-    return 0; // Auto, including a legacy retired value loaded from an older config.
+    snprintf(neutrinoPathEdit, sizeof(neutrinoPathEdit), "%s", gNeutrinoPath);
+    diaSetString(ui, CFG_NEUTRINO_PATH, neutrinoPathEdit);
 }
 
-static int guiNeutrinoDeviceFromIndex(int index)
+static void guiNeutrinoPathEditCommit(void)
 {
-    if (index == 1)
-        return NEUTRINO_DEV_MC;
-    if (index == 2)
-        return NEUTRINO_DEV_GAME;
-    return NEUTRINO_DEV_AUTO;
+    snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
 }
 
-// Game Launching -> Neutrino Defaults: the global Neutrino device/video/gsm-comp defaults + the
+int guiNeutrinoPathHandler(char *text, int maxLen)
+{
+    if (!guiShowKeyboard(neutrinoPathEdit, sizeof(neutrinoPathEdit)))
+        return 0;
+
+    // text is only the row's display buffer. Keep the complete path in neutrinoPathEdit.
+    snprintf(text, maxLen, "%s", neutrinoPathEdit);
+    return 1;
+}
+
+// Game Launching -> Neutrino Defaults: optional exact path + video/gsm-comp defaults + the
 // structured Advanced Arguments editor.
 void guiShowNeutrinoDefaults(void)
 {
-    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", _l(_STR_GAMES_DEVICE), NULL};
-    diaSetEnum(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
-    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, guiNeutrinoDeviceToIndex(gNeutrinoDevice));
+    guiNeutrinoPathEditBegin(diaNeutrinoDefaults);
     // Global default Neutrino Video (-gsm) + comp half: same indices as the per-game picker
     // (system.c gsmVideoTokens). static: literals only, and diaSetEnum stores the raw pointer.
     static const char *neutrinoVideoDefStrs[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
@@ -2076,9 +2080,7 @@ reshow_neutrino:
         goto reshow_neutrino;
     }
     if (ret) {
-        int neutrinoDeviceIndex;
-        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_DEVICE, &neutrinoDeviceIndex);
-        gNeutrinoDevice = guiNeutrinoDeviceFromIndex(neutrinoDeviceIndex);
+        guiNeutrinoPathEditCommit();
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
 
@@ -2959,7 +2961,6 @@ static int guiSettingsShowLaunch(void)
     const struct UIItem *parts[] = {diaLaunchConfig, diaNeutrinoDefaults};
     const int skipIDs[] = {LAUNCH_NEUTRINO_DEFAULTS_BUTTON};
     const char *defaultCoreStrs[] = {"<OPL>", "Neutrino", NULL};
-    const char *neutrinoDevStrs[] = {_l(_STR_AUTO), "Memory Card", _l(_STR_GAMES_DEVICE), NULL};
     static const char *neutrinoVideoDefStrs[] = {"Off", "240p", "480p", "1080i x1", "1080i x2", "1080i x3", NULL};
     static const char *neutrinoGsmCompDefStrs[] = {"Off", "Type 1 (GSM/OPL)", "Type 2", "Type 3", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
@@ -2971,8 +2972,7 @@ static int guiSettingsShowLaunch(void)
     diaSetEnum(ui, CFG_DEFAULT_CORE, defaultCoreStrs);
     diaSetInt(ui, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     diaSetInt(ui, CFG_PS2LOGO, gPS2Logo);
-    diaSetEnum(ui, CFG_NEUTRINO_DEVICE, neutrinoDevStrs);
-    diaSetInt(ui, CFG_NEUTRINO_DEVICE, guiNeutrinoDeviceToIndex(gNeutrinoDevice));
+    guiNeutrinoPathEditBegin(ui);
     diaSetEnum(ui, CFG_NEUTRINO_VIDEO, neutrinoVideoDefStrs);
     diaSetInt(ui, CFG_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
     diaSetEnum(ui, CFG_NEUTRINO_GSMCOMP, neutrinoGsmCompDefStrs);
@@ -2999,11 +2999,7 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
-        {
-            int neutrinoDeviceIndex;
-            diaGetInt(ui, CFG_NEUTRINO_DEVICE, &neutrinoDeviceIndex);
-            gNeutrinoDevice = guiNeutrinoDeviceFromIndex(neutrinoDeviceIndex);
-        }
+        guiNeutrinoPathEditCommit();
         diaGetInt(ui, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(ui, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
         applyConfig(-1, -1, 0);
