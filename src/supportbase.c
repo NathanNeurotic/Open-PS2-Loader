@@ -1744,7 +1744,7 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
 
     // APA/PFS custom paths address OPL's live data-home mount. A bare pfs: aliases pfs0:.
     if (sbTokenStemIs(token, "pfs")) {
-        if (!hddLoadModulesReady()) {
+        if (!hddModulesAreLoaded() && !hddLoadModulesReady()) {
             out[0] = '\0';
             return 0;
         }
@@ -1769,7 +1769,7 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
     // commonly mean by an "HDD path" by translating them onto the already-selected pfs0: mount.
     if (sbTokenStemIs(token, "hdd")) {
         const char *rel = tail;
-        if (!hddLoadModulesReady()) {
+        if (!hddModulesAreLoaded() && !hddLoadModulesReady()) {
             out[0] = '\0';
             return 0;
         }
