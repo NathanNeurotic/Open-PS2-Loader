@@ -1882,7 +1882,9 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS/%s.VCD", vcdPrefix, vcdName);
     vcdPrepareRetroGemBarcode(vcdFullPath);
 
-    deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the VCD device mounted across the IOP reset
+    // POPSTARTER.ELF may be on a different backend than the VCD. Keep both alive until the
+    // argv-preserving loader has opened the ELF; POPSTARTER performs its own IOP reset afterwards.
+    deinitEx(sbLoaderDeinitException(vcdElf), itemList->mode, oplPath2Mode(vcdElf));
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
