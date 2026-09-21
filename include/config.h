@@ -118,8 +118,8 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_NEUTRINO_ARGS              "neutrino_args"
 #define CONFIG_OPL_NEUTRINO_PATH              "neutrino_path"              // exact neutrino.elf path; empty = active game device then MC fallback
 #define CONFIG_OPL_NEUTRINO_PATH_EXACT        "neutrino_path_exact"        // 1 only for paths explicitly confirmed in the new path-only UI
-#define CONFIG_OPL_NEUTRINO_DEVICE            "neutrino_device"            // retired legacy picker key; removed on next save
-#define CONFIG_OPL_NEUTRINO_DEVTYPE           "neutrino_devtype"           // retired legacy picker key; removed on next save
+#define CONFIG_OPL_NEUTRINO_DEVICE            "neutrino_device"            // retired legacy index key; migrated invisibly for upgrade compatibility
+#define CONFIG_OPL_NEUTRINO_DEVTYPE           "neutrino_devtype"           // retired legacy type key; retained only while preserving old MC/Game policy
 #define CONFIG_OPL_NEUTRINO_ELF_ARG           "neutrino_elf_arg"           // default-on (no UI row): auto-emit -elf=cdrom0:\<startup>;1 (parity Delta-10)
 #define CONFIG_OPL_POPSTARTER_PATH            "popstarter_path"            // free-text custom path (used only when device=Custom)
 #define CONFIG_OPL_POPSTARTER_DEVICE          "popstarter_device"          // device TYPE holding POPS/POPSTARTER.ELF (POPS_DEV_*)
