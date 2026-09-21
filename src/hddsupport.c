@@ -1886,11 +1886,10 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
         return 0;
     }
 
-    // NULL activePrefix: an HDL game has no POSIX prefix of its own (it is a raw APA partition), so
-    // there is no "co-located next to the games" install to probe for. The resolver still covers the
-    // internal HDD -- through the OPL data partition mounted on pfs0:, which it probes both for an
-    // explicit "HDD (APA)" pick and in AUTO -- alongside the custom path and mc0/mc1.
-    const char *neutrinoPath = sbResolveNeutrinoPath(NULL);
+    // HDL games are raw APA partitions, so their filesystem-visible "game device" for external
+    // support files is the selected OPL data home already mounted on pfs0:. This keeps the universal
+    // resolution order intact: custom full path -> game device (gHDDPrefix) -> mc0/mc1.
+    const char *neutrinoPath = sbResolveNeutrinoPath(gHDDPrefix);
     if (neutrinoPath == NULL) {
         guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
         return 0;
