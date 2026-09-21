@@ -64,11 +64,11 @@ The full order is:
 If no complete install is found when you launch a game set to the Neutrino core, OPL shows a
 warning and falls back to the `<OPL>` core for that launch.
 
-**Game Launching → Neutrino Device** picks the device *type* holding
-`<root>:/neutrino/neutrino.elf` — **Auto**, **Memory Card**, or **Game's Device**. Auto searches
-the working locations in the priority table above. Memory Card tries `mc0:` and `mc1:` first before
-using the normal fallback tiers, while Game's Device restricts it to the active game's own device
-and reports "not found" instead of falling back.
+**Game Launching → Neutrino Device** selects the resolver policy — **Auto**,
+**Memory Card**, or **Game's Device**. Auto searches the working locations in the priority table
+above. Memory Card tries `mc0:` and `mc1:` first before using the normal fallback tiers, while
+Game's Device restricts lookup to the active game's own device and reports "not found" instead of
+falling back.
 
 There are no separate USB, MX4SIO, MMCE, exFAT HDD, APA HDD, or iLink entries. Those device-specific
 launch paths are intentionally not exposed by the picker because their Neutrino handoffs are not
