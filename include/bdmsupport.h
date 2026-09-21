@@ -110,6 +110,9 @@ int bdmResolveBootDirBootstrap(char *bootDir, int bootDirSize, const char *elfNa
 
 int bdmFindPartition(char *target, const char *name, int write);
 int bdmIsUDPBDLoaded(void); // 1 if the UDPBD NIC stack is loaded (the SMB stack must not load on top)
+// Explicit-loader helper: force the requested block-network transport (NET_BOOT_UDPBD /
+// NET_BOOT_UDPFS) up even when its game page is disabled, then wait for its massN: mount.
+int bdmEnsureNetworkSourceModules(int protocol, u32 timeoutMs);
 // Which network block transport is actually resident (NET_BOOT_UDPBD / NET_BOOT_UDPFS). Use this,
 // not gNetBootProtocol, for anything DESCRIBING the live device -- the picker can change without a
 // reboot while the loaded IRX cannot.
