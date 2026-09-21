@@ -1846,10 +1846,11 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
         ioBlockOps(1);
 
         if (!hddResolveHddPopstarter(vcdElf, sizeof(vcdElf))) {
-            // The APA resolver restored pfs0: to the normal data home on failure.
-            // Tier 3: memory-card fallback (vcdResolvePopstarter(NULL) = custom retry -> mc0/mc1;
-            // the custom retry is harmless and keeps the resolver's single public contract).
-            if (!vcdResolvePopstarter(NULL, vcdElf, sizeof(vcdElf))) {
+            // The APA resolver restored pfs0: to the normal data home on failure. Custom was already
+            // attempted BEFORE ioBlockOps(1), so go straight to the final MC tier here. Re-entering
+            // the generic custom resolver while IO is blocked can try to start another storage stack
+            // or queue BDM work during teardown preparation.
+            if (!vcdResolvePopstarterMcElf(vcdElf, sizeof(vcdElf))) {
                 ioBlockOps(0);
                 guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
                 return;
