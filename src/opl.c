@@ -2621,11 +2621,10 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
     return 0;
 }
 
-// Shared reader for the Neutrino-launch globals (args / custom path / -elf switch / global default
-// core / device TYPE incl. the legacy device-INDEX migration). Factored out so the interactive
-// _loadConfig and the autolaunch miniInit can never drift: the argv/autolaunch path previously read
-// NONE of these, so a keyless "Default" game autolaunched with a stale AUTO device and empty global
-// args, silently diverging from an interactive launch of the same game.
+// Shared reader for the Neutrino-launch globals (args / exact optional path / -elf switch /
+// global default core and video defaults). Factored out so the interactive _loadConfig and the
+// autolaunch miniInit can never drift. An empty neutrino_path is meaningful: game device first,
+// then the historical memory-card fallback.
 static void configReadNeutrinoGlobals(config_set_t *configOPL)
 {
     configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
