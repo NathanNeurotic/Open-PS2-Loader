@@ -823,28 +823,58 @@ static menu_list_t *AllocMenuItem(menu_item_t *item)
     return it;
 }
 
+static int menuDevicePageRank(const menu_item_t *item)
+{
+    item_list_t *support = item != NULL ? item->userdata : NULL;
+    if (support == NULL)
+        return 6;
+
+    if (support->mode >= BDM_MODE && support->mode <= BDM_MODE_LAST)
+        return 0;
+    if (support->mode == MMCE_MODE)
+        return 1;
+    if (support->mode == HDD_MODE)
+        return 2;
+    if (support->mode == ETH_MODE || support->mode == UDPFS_MODE || support->mode == HTTP_MODE)
+        return 3;
+    if (support->mode == APP_MODE)
+        return 4;
+    if (support->mode == FAV_MODE)
+        return 5;
+
+    return 6;
+}
+
 void menuAppendItem(menu_item_t *item)
 {
     assert(item);
 
     WaitSema(menuListSemaId);
 
+    menu_list_t *newitem = AllocMenuItem(item);
     if (menu == NULL) {
-        menu = AllocMenuItem(item);
+        menu = newitem;
         selected_item = menu;
     } else {
-        menu_list_t *cur = menu;
+        // The GUI page order is independent of support initialization order. List and Coverflow
+        // share this same ring, so keep both views in the Korium order:
+        // BDM, MMCE, APA HDD, NET, APPS, FAV.
+        const int rank = menuDevicePageRank(item);
+        if (rank < menuDevicePageRank(menu->item)) {
+            newitem->next = menu;
+            menu->prev = newitem;
+            menu = newitem;
+        } else {
+            menu_list_t *cur = menu;
+            while (cur->next != NULL && menuDevicePageRank(cur->next->item) <= rank)
+                cur = cur->next;
 
-        // traverse till the end
-        while (cur->next)
-            cur = cur->next;
-
-        // create new item
-        menu_list_t *newitem = AllocMenuItem(item);
-
-        // link
-        cur->next = newitem;
-        newitem->prev = cur;
+            newitem->next = cur->next;
+            newitem->prev = cur;
+            if (cur->next != NULL)
+                cur->next->prev = newitem;
+            cur->next = newitem;
+        }
     }
 
     SignalSema(menuListSemaId);
