@@ -91,7 +91,7 @@ enum UI_ITEMS {
     CFG_DEFAULT_BGM_PATH,
     CFG_DEFAULT_CORE, // global default Loader Core (gDefaultCoreLoader); per-game "Default" follows it
     CFG_NEUTRINO_ARGS,
-    CFG_NEUTRINO_DEVICE,
+    CFG_NEUTRINO_PATH,   // full custom neutrino.elf path; empty = game device, then MC fallback
     CFG_NEUTRINO_VIDEO,   // global default Neutrino -gsm video mode (gNeutrinoVideoDefault); per-game "Default" follows it
     CFG_NEUTRINO_GSMCOMP, // global default -gsm ":c" comp half (gNeutrinoGsmCompDefault)
     CFG_POPSTARTER_DEVICE,
