@@ -801,7 +801,7 @@ gui_strings:
 - label: HINT_POPSTARTER_DEVICE
   string: Device holding POPS/POPSTARTER.ELF for PS1 VCD launches. Default = boot device (cwd) then the VCD's own device. Game's Device = the VCD's device only. Custom reveals a free-text path.
 - label: HINT_POPSTARTER_PATH
-  string: Where is POPSTARTER.ELF located? <not set> = game device, then mc0/mc1. A custom full path is tried first; if unavailable, the same fallbacks are used.
+  string: "Where is POPSTARTER.ELF located? <not set> = Game Device -> mc0/mc1. A custom full path is tried first. Examples: mass0:/POPS/POPSTARTER.ELF | ata:/POPS/POPSTARTER.ELF | mmce0:/POPS/POPSTARTER.ELF | mc0:/POPS/POPSTARTER.ELF | pfs0:/POPS/POPSTARTER.ELF"
 - label: HINT_POPSTARTER_RETROGEM_GAMEID
   string: Render optical barcode for Pixel FX / RetroGEM / PS2Digital on PS1 VCD launch
 - label: HINT_POPS_IMPORT
@@ -1103,9 +1103,9 @@ gui_strings:
 - label: HINT_WRITE_POPSTARTER_NET
   string: Also save these IP + SMB share values to POPSTARTER's own IPCONFIG.DAT / SMBCONFIG.DAT on the memory card (for VCD-over-SMB).
 - label: NEUTRINO_PATH
-  string: Neutrino ELF Path
+  string: Neutrino Path
 - label: HINT_NEUTRINO_PATH
-  string: Where is neutrino.elf located? <not set> = game device, then mc0/mc1. A custom full path is tried first; if unavailable, the same game-device and memory-card fallbacks are used.
+  string: "Where is neutrino.elf located? <not set> = Game Device -> mc0/mc1. A custom full path is tried first. Examples: mass0:/neutrino/neutrino.elf | ata:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | pfs0:/neutrino/neutrino.elf"
 - label: BOOT_SCANNING_MC
   string: Scanning memory cards...
 - label: BOOT_ARMING_MMCE
