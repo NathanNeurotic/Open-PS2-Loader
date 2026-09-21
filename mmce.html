@@ -228,11 +228,13 @@ card switch; keeping Neutrino there allows both Neutrino and per-game GameID swi
 </div>
 
 <p>The current <b>Neutrino Device</b> picker has three choices: <b>Auto</b>,
-<b>Memory Card</b>, and <b>Game's Device</b>. <b>Auto</b> is normally sufficient: it checks a
-custom path, then the active game's prefix and bare device root, then the APA HDD data home, and
-finally <code>mc0:</code>/<code>mc1:</code>. <b>Game's Device</b> is stricter: it searches only
-the active MMCE game device, with no custom-path or memory-card fallback, so a miss reports
-"not found" instead of silently using another copy.</p>
+<b>Memory Card</b>, and <b>Game's Device</b>. For an MMCE-hosted game, <b>Auto now gives the active
+MMCE game device first refusal</b>: it checks the game prefix and bare <code>mmceN:</code> root,
+then the legacy custom path, then APA HDD and finally <code>mc0:</code>/<code>mc1:</code>. This is
+the functional half of the rule above: a complete <code>mmceN:/neutrino/</code> install is selected
+before an <code>mcN:</code> fallback, so the GameID switch can still be sent. <b>Game's Device</b>
+is stricter: it searches only the active MMCE game device, with no custom-path or memory-card
+fallback, so a miss reports "not found" instead of silently using another copy.</p>
 
 <div class="callout info"><div class="h">ℹ USBExtreme (.ul) and ZSO on MMCE</div>
 USBExtreme multi-chunk format (<code>ul.*</code>) and ZSO compressed images are both supported on MMCE, subject
