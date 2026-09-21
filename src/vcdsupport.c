@@ -1229,7 +1229,7 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         const char *pre[2];
         int npre = 0;
 
-        if (gPopstarterDevice == POPS_DEV_CUSTOM && gPopstarterPath[0] != '\0') {
+        if (gPopstarterPath[0] != '\0') {
             const char *s1 = strrchr(gPopstarterPath, '/');
             const char *s2 = strrchr(gPopstarterPath, '\\'); // SMB custom paths use backslashes
             // Not `(s2 > s1)`: relationally comparing a possibly-NULL pointer is UB in ISO C.
