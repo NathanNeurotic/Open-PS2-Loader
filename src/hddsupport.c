@@ -1379,13 +1379,24 @@ static int hddPartitionMountableAt(const char *mountPoint, const char *partition
     return ret == 0;
 }
 
+int hddGetLiveOplHomeSelection(void)
+{
+    if (strcmp(gOPLPart, "hdd0:+OPL") == 0)
+        return HDD_OPL_HOME_PLUS;
+    if (strcmp(gOPLPart, "hdd0:__common") == 0)
+        return HDD_OPL_HOME_COMMON;
+    return -1;
+}
+
 int hddGetOplHomeSelection(void)
 {
     if (hddOplHomePending >= 0)
         return hddOplHomePending;
     if (hddOplHomeCommitted >= 0)
         return hddOplHomeCommitted;
-    return strcmp(gOPLPart, "hdd0:+OPL") == 0 ? HDD_OPL_HOME_PLUS : HDD_OPL_HOME_COMMON;
+
+    int live = hddGetLiveOplHomeSelection();
+    return live >= 0 ? live : HDD_OPL_HOME_COMMON;
 }
 
 int hddOplHomeIsLegacy(void)
