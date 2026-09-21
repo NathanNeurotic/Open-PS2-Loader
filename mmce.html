@@ -210,17 +210,29 @@ fallback chain.</p>
 meaning POPSTARTER can read BDMA module files from the MMCE card when you use an exFAT-formatted SD.</p>
 
 <h2 id="neutrino">Neutrino on MMCE</h2>
-<p>Per-game <a href="neutrino.html">Neutrino</a> is fully supported for games stored on MMCE. When a game's
-Loader Core is set to Neutrino, OPL hands the launch to <code>neutrino.elf</code>. Neutrino itself can be stored
-on the MMCE card at <code>mmce0:/neutrino/neutrino.elf</code> (or <code>mmce1:/</code>) — select
-<b>MMCE</b> in the <b>Neutrino Device</b> picker on <b>Settings &rarr; Game Launching</b>. That picker lists device
-<i>types</i> (Auto, Memory Card, USB, MX4SIO, MMCE, HDD (exFAT), HDD (APA), Game's Device, iLink), not per-slot entries, so there is
-no separate <code>mmce0</code>/<code>mmce1</code> choice. <b>Auto</b> also works: it probes the active game device
-for a co-located <code>neutrino/neutrino.elf</code> before falling back to <code>mc0:</code>/<code>mc1:</code>, so a
-neutrino.elf on the MMCE card is found automatically when you launch an MMCE game — an explicit device pick is no
-longer required. <b>Game's Device</b> is the stricter variant: it probes <i>only</i> the active game's own device
-for a co-located <code>neutrino/neutrino.elf</code>, with no legacy-path and no <code>mc0:</code>/<code>mc1:</code>
-fallback — a miss toasts "not found" and aborts the launch instead of quietly using a core you did not pick.</p>
+<p>Per-game <a href="neutrino.html">Neutrino</a> is fully supported for games stored on MMCE. Copy the
+<b>complete</b> bundled <code>neutrino/</code> folder to the MMCE game device, not just
+<code>neutrino.elf</code>. With a blank MMCE Prefix Path, use
+<code>mmce0:/neutrino/</code> or <code>mmce1:/neutrino/</code>. If you use a prefix such as
+<code>OPL</code>, the resolver also probes that game prefix first — for example
+<code>mmce0:/OPL/neutrino/</code> — before the bare <code>mmceN:</code> root.</p>
+
+<div class="callout amber"><div class="h">⚠ MMCE + GameID: do not rely on an mcN: Neutrino install</div>
+When <b>Send GameID on Launch</b> is enabled, the MMCE device switches the emulated memory-card
+view for the selected game. If the Neutrino install is on that same slot's <code>mcN:</code> view,
+the switch would replace the filesystem holding <code>neutrino.elf</code>, <code>config/</code> and
+<code>modules/</code> before the handoff finishes. RiptOPL detects this collision and protects the
+launch by <b>skipping that GameID switch</b> (and showing a warning), so the per-game card image is
+not applied for that launch. The MMCE mass-storage path <code>mmceN:</code> is not affected by the
+card switch; keeping Neutrino there allows both Neutrino and per-game GameID switching to work.
+</div>
+
+<p>The current <b>Neutrino Device</b> picker has three choices: <b>Auto</b>,
+<b>Memory Card</b>, and <b>Game's Device</b>. <b>Auto</b> is normally sufficient: it checks a
+custom path, then the active game's prefix and bare device root, then the APA HDD data home, and
+finally <code>mc0:</code>/<code>mc1:</code>. <b>Game's Device</b> is stricter: it searches only
+the active MMCE game device, with no custom-path or memory-card fallback, so a miss reports
+"not found" instead of silently using another copy.</p>
 
 <div class="callout info"><div class="h">ℹ USBExtreme (.ul) and ZSO on MMCE</div>
 USBExtreme multi-chunk format (<code>ul.*</code>) and ZSO compressed images are both supported on MMCE, subject

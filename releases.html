@@ -74,7 +74,7 @@
 <b><a href="https://github.com/TheRealNextria/PS2RD-CHT-Manager">PS2RD CHT Manager</a></b> by <b><a href="https://github.com/TheRealNextria">TheRealNextria</a></b> — PC manager for the PS2RD <code>.cht</code> cheat files RiptOPL reads from your device's <code>CHT</code> folder.<br>
 <b><a href="https://github.com/Gageformer/Ember">Ember</a></b> by <b><a href="https://github.com/Gageformer">Gageformer</a></b> — a PS1 emulator running natively on the PS2, used as RiptOPL's second PS1 core alongside POPSTARTER. Ships as an <code>EMBER/</code> folder inside the release package, bundled unmodified under the Ember Public Beta Testing Licence (<code>EMBER/LICENSE-BETA.txt</code>); <a href="https://github.com/Gageformer/Ember/releases">releases</a>.<br>
 <b><a href="https://www.psx-place.com/resources/popstarter.683/">POPStarter</a></b> by <b>krHACKen</b> — a PS1 launcher built around Sony's native <b>POPS</b> emulator for the PS2, used as RiptOPL's primary PS1 core alongside Ember. POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains no Sony emulator binaries, libraries, or BIOS files; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on <a href="https://www.psx-place.com/resources/popstarter.683/">PSX-Place</a>.<br>
-<b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b> by <b><a href="https://github.com/rickgaiser">rickgaiser</a></b> — a small, fast, modular PS2 device emulator, and RiptOPL's second PS2 loader core alongside OPL's own. Ships as a ready-to-use <code>neutrino/</code> folder inside each installable ZIP (drag-and-drop to <code>mc?:/neutrino/</code>), under the <b>AFL-3.0</b> licence; <a href="https://github.com/rickgaiser/neutrino/releases">releases</a>.<br>
+<b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b> by <b><a href="https://github.com/rickgaiser">rickgaiser</a></b> — a small, fast, modular PS2 device emulator, and RiptOPL's second PS2 loader core alongside OPL's own. Ships as a ready-to-use <code>neutrino/</code> folder inside each installable ZIP. Memory-card placement is supported for ordinary launches; <b>MMCE users using GameID card switching should put the complete folder on the MMCE game device</b> (<code>mmceN:/neutrino/</code>, or under the configured MMCE Prefix Path). See <a href="neutrino.html">Neutrino Core</a>. AFL-3.0; <a href="https://github.com/rickgaiser/neutrino/releases">releases</a>.<br>
 <b><a href="https://git.techwritescode.dev/techwritescode/PSUManager">PSUManager</a></b> by <b>techwritescode</b> — the CC0 PS2 save-container implementation used by RiptOPL release tooling to independently validate <code>APP_RIPTOPL.psu</code> and <code>APP_RIPTOPL-RA.psu</code>. The exact upstream core and license used by CI are preserved in <code>third_party/PSUManager/</code>.</p></section>
 <h1>Releases</h1>
 <p class="lead">Choose <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling">Rolling</a> for current development or <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite">Current Fan Favorite Build</a> for a preserved development snapshot. The publishing branch is <code>rebuild/main</code>; neither choice guarantees compatibility with every setup.</p>
@@ -219,9 +219,14 @@ zip-in-zip, so you just drag-and-drop it. RiptOPL adds only one file —
 Everything else is the official Neutrino build, unchanged.</p>
 
 <div class="callout info"><div class="h">ℹ Copying it over</div>
-There is nothing to extract: copy the whole <code>neutrino/</code> folder to <code>mc?:/neutrino/</code>
-(<code>neutrino.elf</code> plus the <code>config/</code> and <code>modules/</code> folders are already
-inside). See <a href="neutrino.html">Neutrino Core</a> for the full setup guide.</div>
+There is nothing to extract: copy the whole <code>neutrino/</code> folder, including
+<code>neutrino.elf</code>, <code>config/</code> and <code>modules/</code>. For ordinary non-MMCE
+setups, <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code> is supported. <b>For MMCE games
+with GameID card switching, place it on the MMCE game device instead</b> — normally
+<code>mmceN:/neutrino/</code>, or under the configured MMCE Prefix Path. An <code>mcN:</code>-hosted
+Neutrino would conflict with that slot's card switch, so RiptOPL protects the handoff by skipping
+the switch; an <code>mmceN:</code> copy is unaffected. <b>Auto</b> probes the active game device
+before memory-card fallbacks. See <a href="neutrino.html">Neutrino Core</a> for the full setup guide.</div>
 
 <h2 id="how-to-pull">How to pull the rolling release</h2>
 
@@ -304,10 +309,12 @@ flavour in the order above. The labelled folders can sit side by side; the <code
 the OPL convention for homebrew apps stored on your device.</p>
 </div>
 <div class="step"><h3>Set up Neutrino (optional)</h3>
-<p>The <code>neutrino/</code> folder is already extracted — just copy the whole folder
-(<code>neutrino.elf</code> plus the <code>config/</code> and <code>modules/</code> folders) to
-<code>mc?:/neutrino/</code>. Required only if you want per-game Neutrino launching or network boot
-(UDPBD/UDPFS). See <a href="neutrino.html">Neutrino Core</a>.</p>
+<p>The <code>neutrino/</code> folder is already extracted — copy the whole folder
+(<code>neutrino.elf</code> plus <code>config/</code> and <code>modules/</code>) to a resolver location.
+For ordinary non-MMCE setups, <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code> is supported.
+For MMCE games using GameID card switching, use the active MMCE device instead
+(<code>mmceN:/neutrino/</code>, or under its Prefix Path). Required only if you want per-game
+Neutrino launching or network boot (UDPBD/UDPFS). See <a href="neutrino.html">Neutrino Core</a>.</p>
 </div>
 <div class="step"><h3>Copy the language pack (optional)</h3>
 <p>If you want a non-default UI language, extract <code>RIPTOPL-LANGS-*.zip</code> and copy its
