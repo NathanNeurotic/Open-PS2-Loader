@@ -1900,8 +1900,9 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
     //   1) user-entered full path,
     //   2) the active game's device,
     //   3) mc0:/mc1:.
-    // The retired neutrino_device selector is still parsed/saved for downgrade compatibility but
-    // intentionally does not participate in runtime resolution.
+    // Retired picker values with stable device aliases are migrated into gNeutrinoPath at config
+    // load. Only the old APA choice needs the compatibility probe below because its location depends
+    // on which OPL data-home partition is live.
     if (gNeutrinoPath[0] != '\0' &&
         sbResolveCustomLoaderPath(gNeutrinoPath, custom, sizeof(custom)) &&
         sbNeutrinoInstallComplete(custom))
