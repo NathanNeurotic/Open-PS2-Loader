@@ -1781,10 +1781,15 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
         return 0;
     }
 
-    // hddN: is the APA device, not a file namespace. Support the two OPL data-home spellings users
-    // commonly mean by an "HDD path" by translating them onto the already-selected pfs0: mount.
+    // hdd: / hdd0: identify the live APA HDD side, not an independently openable filesystem.
+    // Translate them only onto the OPL data-home partition that hddsupport has ALREADY selected and
+    // mounted on pfs0:. Never mount an arbitrary partition merely because a custom loader string
+    // named it. A nonzero explicit HDD unit would otherwise silently read hdd0:, so fail it closed.
     if (sbTokenStemIs(token, "hdd")) {
         const char *rel = tail;
+
+        if (strcmp(token, "hdd") != 0 && strcmp(token, "hdd?") != 0 && strcmp(token, "hdd0") != 0)
+            return 0;
         if (!hddModulesAreLoaded() && !hddLoadModulesReady()) {
             out[0] = '\0';
             return 0;
@@ -1794,19 +1799,34 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
             out[0] = '\0';
             return 0;
         }
-        while (*rel == '/')
+
+        while (*rel == '/' || *rel == '\\')
             rel++;
+
+        // Explicit physical-home spellings are accepted only when they describe the partition that
+        // is actually mounted. This preserves the old +OPL/__common forms without borrowing pfs1:.
         int liveHome = hddGetLiveOplHomeSelection();
-        if (!strncasecmp(rel, "+OPL/", 5) && liveHome == HDD_OPL_HOME_PLUS)
+        if (!strncasecmp(rel, "+OPL/", 5)) {
+            if (liveHome != HDD_OPL_HOME_PLUS)
+                return 0;
             rel += 5;
-        else if (!strncasecmp(rel, "__common/OPL/", 13) && liveHome == HDD_OPL_HOME_COMMON)
+        } else if (!strncasecmp(rel, "__common/OPL/", 13)) {
+            if (liveHome != HDD_OPL_HOME_COMMON)
+                return 0;
             rel += 13;
-        else {
-            out[0] = '\0';
-            return 0;
         }
+
+        // Normal hdd:/path means "path inside the live OPL data home".
         if (sbJoinDeviceTail(out, outSize, gHDDPrefix, rel) && sbFileExists(out))
             return 1;
+
+        // Historical __common installs sometimes placed Neutrino/POPS at the partition root rather
+        // than under OPL/. When the data-home prefix is a subdirectory, try that SAME mounted
+        // partition's root too. This is still pfs0: -- no second partition is mounted or guessed.
+        if (strcmp(gHDDPrefix, "pfs0:") != 0 &&
+            sbJoinDeviceTail(out, outSize, "pfs0:", rel) && sbFileExists(out))
+            return 1;
+
         out[0] = '\0';
         return 0;
     }
@@ -1883,39 +1903,6 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
     return 0;
 }
 
-// One retired picker value cannot be represented as a stable full-path alias: "HDD (APA)" meant
-// whichever OPL data home was live (pfs0: for +OPL, pfs0:OPL/ for __common), plus the partition
-// root as a historical fallback. Keep that one legacy choice readable so upgrading does not strand
-// an existing setup. New configurations never write this choice; their normal order remains
-// custom full path -> game device -> mc0/mc1.
-static const char *sbResolveLegacyApaNeutrino(void)
-{
-    if (gNeutrinoDevice != NEUTRINO_DEV_APA_HDD || gNeutrinoPath[0] != '\0')
-        return NULL;
-
-    if (!hddModulesAreLoaded() && !hddLoadModulesReady())
-        return NULL;
-    hddLoadSupportModules();
-    if (gHDDPrefix == NULL || gHDDPrefix[0] == '\0')
-        return NULL;
-
-    const char *hit = sbNeutrinoProbeGameDevice(gHDDPrefix);
-    if (hit != NULL)
-        return hit;
-
-    static const char *rootForms[] = {
-        "pfs0:/neutrino/neutrino.elf",
-        "pfs0:/NEUTRINO/neutrino.elf",
-        "pfs0:/neutrino/NEUTRINO.ELF",
-        "pfs0:/NEUTRINO/NEUTRINO.ELF",
-    };
-    for (int i = 0; i < (int)(sizeof(rootForms) / sizeof(rootForms[0])); i++) {
-        if (sbFileExists(rootForms[i]) && sbNeutrinoInstallComplete(rootForms[i]))
-            return sbNeutrinoResolved(rootForms[i]);
-    }
-    return NULL;
-}
-
 // Resolve the Neutrino core ELF: probe the install locations users actually use (folder-case
 // and leading-slash variants on mc0/mc1) and return the first COMPLETE install (Δ1), or NULL.
 // Centralised so the bdm + mmce launch paths stay in sync.
@@ -1927,21 +1914,12 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
     //   1) user-entered full path,
     //   2) the active game's device,
     //   3) mc0:/mc1:.
-    // Retired picker values with stable device aliases are migrated into gNeutrinoPath at config
-    // load. Only the old APA choice needs the compatibility probe below because its location depends
-    // on which OPL data-home partition is live.
+    // Retired picker values are migrated into gNeutrinoPath at config load, including APA via
+    // the semantic hdd:/ alias above. Runtime therefore has exactly the visible three-tier policy.
     if (gNeutrinoPath[0] != '\0' &&
         sbResolveCustomLoaderPath(gNeutrinoPath, custom, sizeof(custom)) &&
         sbNeutrinoInstallComplete(custom))
         return sbNeutrinoResolved(custom);
-
-    // Compatibility-only migration for an older saved "HDD (APA)" picker. All other retired
-    // picker values are converted to full-path aliases while the config is read.
-    {
-        const char *legacyApaHit = sbResolveLegacyApaNeutrino();
-        if (legacyApaHit != NULL)
-            return legacyApaHit;
-    }
 
     {
         const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
