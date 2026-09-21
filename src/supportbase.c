@@ -1513,14 +1513,12 @@ static const char *sbNeutrinoProbeGameDevice(const char *activePrefix)
     return NULL;
 }
 
-// The deinit exception mask a Neutrino handoff needs for the device holding neutrino.elf. Every leg
-// hands off through sysLoadELFKeepIOP, which does NOT reset the IOP, and the ELF is opened AFTER the
-// teardown out of whatever is left behind. UNMOUNT_EXCEPTION spares the mount, which is all any
-// other device needs. On APA it is not enough: hddCleanUp also issues PDIOC_CLOSEALL and drops every
-// pfs descriptor in the IOP -- free before an IOP reset, fatal before a handoff that does not reset.
-// That is the exact trap the Ember APA launch hit; see KEEPIOP_EXCEPTION in include/iosupport.h.
-// The extra bit is added ONLY for a pfs-hosted neutrino.elf so every other leg keeps the teardown it
-// already has (per the rebuild rule: change behaviour only where there is a reason to).
+// The deinit exception mask an external-loader handoff needs for the device holding its ELF.
+// sysLoadELFKeepIOP opens that ELF only AFTER OPL's teardown. UNMOUNT_EXCEPTION spares the owning
+// mount, which is enough for ordinary filesystems. PFS also needs KEEP_PFS_FDS_EXCEPTION because
+// hddCleanUp's PDIOC_CLOSEALL would invalidate the mount before the ELF open. That narrow flag is
+// deliberately separate from KEEPIOP_EXCEPTION: Neutrino/POPSTARTER reset the IOP themselves after
+// loading and should keep the normal pad teardown used on every non-PFS backend.
 int sbLoaderDeinitException(const char *loaderPath)
 {
     int exception = UNMOUNT_EXCEPTION;
