@@ -93,30 +93,36 @@ re-registers the selected device driver as bare `mass:` before it resolves that 
 > the same iLink disk. Treat iLink POPSTARTER as **wired but not hardware-confirmed** until a later
 > build passes; the statement above documents the argument contract, not a claimed successful boot.
 
-Where `POPSTARTER.ELF` is loaded from is set by **PS Emulation Settings →
-POPSTARTER.ELF Device** — a driver-accurate picker (matching the Neutrino Device picker):
+Where `POPSTARTER.ELF` is loaded from is controlled by **PS Emulation Settings →
+POPSTARTER.ELF Path**. The old device picker is gone. The path field displays **`<not set>`** until
+you enter a custom full path.
 
-| Choice | Loads `POPS/POPSTARTER.ELF` from |
-| --- | --- |
-| **Default** | the boot device (where OPL launched, i.e. cwd), then the VCD's own device |
-| Memory Card | `mc0:` / `mc1:` |
-| USB | the mounted USB drive |
-| MX4SIO | the mounted MX4SIO SD card |
-| MMCE | `mmce0:` / `mmce1:` (SD2PSX / MemCard PRO2) |
-| HDD (exFAT) | the mounted exFAT internal HDD |
-| HDD (APA) | see the note below — APA POPSTARTER only applies to HDD-page launches |
-| **Custom** | reveals a free-text path field — your own absolute `POPSTARTER.ELF` path |
-| **Game's Device** | the VCD's own device only (`<device>:/POPS/POPSTARTER.ELF`) — no boot/cwd fallback and no Default fallthrough; a miss aborts with the usual *Missing POPSTARTER.ELF* warning |
-| iLink | the mounted iLink / IEEE 1394 drive |
+The launch resolver uses one fixed order:
 
-The picker covers USB / MMCE / MX4SIO / iLink / SMB VCD launches. PS1 VCDs **on the internal
-APA HDD** always load `POPSTARTER.ELF` from the HDD (the `__common` then `+OPL` `POPS` folder, as
-below) regardless of this setting — and that is also why **HDD (APA)** is inert for launches from
-*other* device pages: those launches unmount `pfs0:` during their own teardown *before* the ELF is
-read, so a `pfs0:` POPSTARTER can never survive them (OPL falls through to **Default** instead of
-freezing on a dead path). Keep your APA copy for HDD-page launches; give the other pages a copy on
-the boot device or the VCD's own device. For the **Custom** option the on-screen editor caps at 31
-characters; for a longer path set `popstarter_path` in `settings_riptopl.cfg` directly.
+1. **Custom Path** — the user-entered full `POPSTARTER.ELF` path, when present and resolvable.
+2. **Game Device** — the VCD's own `POPS/POPSTARTER.ELF`.
+3. **Memory Card** — `mc0:/POPS/POPSTARTER.ELF`, then `mc1:/POPS/POPSTARTER.ELF`.
+
+A stale or temporarily unavailable custom path does **not** strand the launch; it falls through to the
+same Game Device → MC behavior as an empty field.
+
+The custom ELF may live on a different backend from the VCD. RiptOPL keeps both backends available
+until the argv-preserving loader has opened `POPSTARTER.ELF`, so combinations such as an
+MMCE-hosted ELF with an APA-HDD game are no longer torn down merely because the game is elsewhere.
+Typed BDM aliases are normalized by the mounted driver's real identity (`massN:` may be USB,
+MX4SIO, ATA, iLink, or a network block transport).
+
+For an **APA-HDD VCD**, the Game Device tier retains the established canonical
+`hdd0:__common/POPS/POPSTARTER.ELF` route. If that is absent, the resolver proceeds to the memory
+cards. A custom path still outranks the APA default.
+
+The path editor uses the full 256-byte setting buffer; it is no longer limited to the 31-character
+inline preview.
+
+This setting moves **only the executable `POPSTARTER.ELF`**. It does not relocate POPSTARTER's
+memory-card dependency/config folder used by SMB/BDMA preparation; those files retain their existing
+`mc?:/POPSTARTER/` rules.
+
 
 ### Which *build* of POPSTARTER
 
