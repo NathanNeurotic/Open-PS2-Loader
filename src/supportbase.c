@@ -1575,139 +1575,37 @@ int sbFileExists(const char *path)
 // Centralised so the bdm + mmce launch paths stay in sync.
 const char *sbResolveNeutrinoPath(const char *activePrefix)
 {
-    // Neutrino Device (General Settings): a driver-accurate device TYPE (NEUTRINO_DEV_*) that holds
-    // <root>:/neutrino/neutrino.elf. Resolve the type to its live device-name token(s) -- USB/MX4SIO/
-    // iLink/exFAT-HDD via the mounted BDM device, MC/MMCE by slot, APA-HDD via the mounted OPL data
-    // partition (pfs0:) -- then probe each first. The token has NO trailing ':' so the forms[] below add it.
-    // GAME'S DEVICE: resolve ONLY on the active game's own device (co-located neutrino.elf); no
-    // legacy-custom-path / MC fallback. A miss returns NULL so the launch path toasts "not found"
-    // and aborts in a live menu (every caller handles NULL that way) rather than silently using an
-    // MC core the user did not pick.
-    if (gNeutrinoDevice == NEUTRINO_DEV_GAME)
-        return sbNeutrinoProbeGameDevice(activePrefix);
+    // An explicit path is authoritative. This is the fast/expert path: one exact ELF lookup plus
+    // the install-completeness check, with NO device scan and NO silent fallback. If a user typed
+    // mmce0:/neutrino/neutrino.elf for an HDD game, that exact MMCE install is the one we hand off
+    // to; the MMCE GameID switch remains free to change mcN: because the ELF lives on mmceN:.
+    if (gNeutrinoPath[0] != '\0') {
+        if (sbFileExists(gNeutrinoPath) && sbNeutrinoInstallComplete(gNeutrinoPath))
+            return sbNeutrinoResolved(gNeutrinoPath);
 
-    // HDD (APA) is not a device ROOT like the others: OPL's data home is a partition mounted on
-    // pfs0:, and where inside it Neutrino sits depends on which partition that is ("pfs0:" for
-    // +OPL, "pfs0:OPL/" for __common/OPL). The helper knows both, so this pick never reaches the
-    // bare-root forms[] loop below. A miss still falls through to the AUTO tiers, same as any other
-    // picked-device miss.
-    if (gNeutrinoDevice == NEUTRINO_DEV_APA_HDD) {
-        const char *apaHit = sbNeutrinoProbeApaHome();
-        if (apaHit != NULL)
-            return apaHit;
+        LOG("[NEUTRINO] configured path unavailable/incomplete: %s\n", gNeutrinoPath);
+        return NULL;
     }
 
-    char cand[2][BDM_DEVICE_ROOT_MAX];
-    int nCand = 0;
-    switch (gNeutrinoDevice) {
-        case NEUTRINO_DEV_MC:
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mc0");
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mc1");
-            break;
-        case NEUTRINO_DEV_MMCE:
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mmce0");
-            snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "mmce1");
-            break;
-        case NEUTRINO_DEV_USB:
-        case NEUTRINO_DEV_MX4SIO:
-        case NEUTRINO_DEV_ILINK:
-        case NEUTRINO_DEV_EXFAT_HDD: {
-            int bt = BDM_TYPE_ATA; // NEUTRINO_DEV_EXFAT_HDD
-            if (gNeutrinoDevice == NEUTRINO_DEV_USB)
-                bt = BDM_TYPE_USB;
-            else if (gNeutrinoDevice == NEUTRINO_DEV_MX4SIO)
-                bt = BDM_TYPE_SDC;
-            else if (gNeutrinoDevice == NEUTRINO_DEV_ILINK)
-                bt = BDM_TYPE_ILINK;
-            char bdmRoot[BDM_DEVICE_ROOT_MAX];
-            if (bdmGetDeviceRootByType(bt, bdmRoot, sizeof(bdmRoot))) {
-                char *colon = strchr(bdmRoot, ':'); // "massN:/" -> bare "massN" token
-                if (colon != NULL)
-                    *colon = '\0';
-                snprintf(cand[nCand++], BDM_DEVICE_ROOT_MAX, "%s", bdmRoot);
-            }
-            break;
-        }
-        case NEUTRINO_DEV_APA_HDD: // handled above by sbNeutrinoProbeApaHome (the data home, not a bare root)
-            break;
-        default: // AUTO -- no explicit device root
-            break;
-    }
-    if (nCand > 0) {
-        static const char *forms[] = {
-            "%s:NEUTRINO/neutrino.elf",
-            "%s:/neutrino/neutrino.elf",
-            "%s:/NEUTRINO/neutrino.elf",
-            "%s:/neutrino/NEUTRINO.ELF",
-            "%s:/NEUTRINO/NEUTRINO.ELF",
-            "%s:NEUTRINO/NEUTRINO.ELF",
-        };
-        static char built[64];
-        for (int c = 0; c < nCand; c++) {
-            for (int i = 0; i < (int)(sizeof(forms) / sizeof(forms[0])); i++) {
-                snprintf(built, sizeof(built), forms[i], cand[c]);
-                if (sbFileExists(built) && sbNeutrinoInstallComplete(built))
-                    return sbNeutrinoResolved(built);
-            }
-        }
-        // The picked device TYPE had no neutrino.elf -- do NOT dead-end here. Fall through to the AUTO
-        // discovery below (legacy custom path -> active game device co-located -> mc0/mc1) so a picker
-        // miss degrades to NHDDL-style cross-device discovery instead of returning NULL (which makes
-        // bdmLaunchGame drop to a native launch that can die to OSDSYS -- issue #51). The chosen device
-        // was tried FIRST above, so an explicit pick is still honoured when it holds the ELF.
-    }
+    // "<not set>" / empty path is the compatibility-first default. Keep the behaviour existing
+    // installations rely on: search the ACTIVE GAME DEVICE first, then fall back to mc0:/mc1:.
+    //
+    // APA is the one game source without a POSIX-open()-able activePrefix. For an APA game,
+    // sbNeutrinoProbeApaHome() is therefore its "game device" equivalent: the OPL data partition
+    // already mounted on pfs0: (+OPL or __common/OPL). We do NOT probe that APA home for games
+    // hosted on some other device; cross-device placement belongs in the explicit Neutrino Path.
+    const char *gameHit = NULL;
+    if (activePrefix != NULL && activePrefix[0] != '\0')
+        gameHit = sbNeutrinoProbeGameDevice(activePrefix);
+    else
+        gameHit = sbNeutrinoProbeApaHome();
 
-    // AUTO normally preserves the legacy custom-path override, but MMCE has one correctness
-    // exception: a co-located install on mmceN: must win BEFORE a custom/memory-card fallback.
-    // mmceSendGameID() switches the emulated mcN: view for the launched title; if AUTO chose a
-    // custom mcN:-hosted Neutrino while the same game already had a complete mmceN:/neutrino/
-    // install, the safety guard would have to skip GameID to keep the loader from disappearing.
-    // Prefer the active MMCE game device first so both claims remain true at once: Neutrino stays on
-    // the stable MMCE mass-storage surface and the required per-game GameID switch can still happen.
-    // Explicit "Memory Card" is intentionally unaffected: that is a user choice, and the existing
-    // guard remains the safe fallback there.
-    int autoMmceGameDeviceProbed = 0;
-    if (gNeutrinoDevice == NEUTRINO_DEV_AUTO &&
-        activePrefix != NULL && !strncmp(activePrefix, "mmce", 4)) {
-        const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
-        autoMmceGameDeviceProbed = 1;
-        if (gameHit != NULL) {
-            LOG("[NEUTRINO] AUTO: MMCE game-device install selected before custom/MC fallback\n");
-            return gameHit;
-        }
-    }
+    if (gameHit != NULL)
+        return gameHit;
 
-    // Auto: a legacy custom path (settings_riptopl.cfg "neutrino_path") wins when it exists,
-    // except for the MMCE correctness case above. A custom path that names the elf directly
-    // (no dir) is honoured as-is (sbNeutrinoInstallComplete returns 1 for it).
-    if (gNeutrinoPath[0] != '\0' && sbFileExists(gNeutrinoPath) && sbNeutrinoInstallComplete(gNeutrinoPath))
-        return sbNeutrinoResolved(gNeutrinoPath);
-
-    // PR #300: in AUTO, probe the ACTIVE game device for a co-located neutrino.elf BEFORE the mc0/mc1
-    // fallbacks, so a neutrino.elf dropped next to the games (USB/MMCE) just works with zero config.
-    // Δ1 (inside the helper): a stale elf-only folder on the game device must NOT shadow a complete
-    // mc0/mc1 install below (the "worked once then never" failure). Same probe as NEUTRINO_DEV_GAME,
-    // but here a miss falls through to the mc0/mc1 candidates instead of returning NULL.
-    // MMCE may already have been probed above to preserve GameID; do not hit the same filesystem twice.
-    if (!autoMmceGameDeviceProbed) {
-        const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
-        if (gameHit != NULL)
-            return gameHit;
-    }
-
-    // Then the internal APA HDD's OPL data home, the way NHDDL's own discovery includes
-    // hdd0:/<OPL partition>/neutrino/. Only ever a candidate while the HDD stack is up (the helper
-    // returns NULL otherwise), so this costs a pointer test on consoles with no APA drive. It sits
-    // AFTER the game's own device -- a co-located install still wins for the device being played --
-    // and BEFORE mc0/mc1, because an APA install is the one a memory-card-starved user has
-    // deliberately placed, while an mc: copy is the historical default. An explicit HDD (APA) pick
-    // already ran this probe at the top and missed, so it is not repeated here.
-    if (gNeutrinoDevice != NEUTRINO_DEV_APA_HDD) {
-        const char *apaHit = sbNeutrinoProbeApaHome();
-        if (apaHit != NULL)
-            return apaHit;
-    }
-
+    // Historical memory-card fallbacks. Keep the accepted case/slash spellings so an existing
+    // setup keeps booting after this UI change; users who want a single exact lookup can set the
+    // Neutrino Path field instead.
     static const char *candidates[] = {
         NEUTRINO_PATH,     // mc0:NEUTRINO/neutrino.elf
         NEUTRINO_ALT_PATH, // mc1:NEUTRINO/neutrino.elf
@@ -1722,7 +1620,8 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
         if (sbFileExists(candidates[i]) && sbNeutrinoInstallComplete(candidates[i]))
             return sbNeutrinoResolved(candidates[i]);
     }
-    LOG("[NEUTRINO] no complete install found (elf without config/system.toml is skipped)\n");
+
+    LOG("[NEUTRINO] no complete install found on game device or memory cards\n");
     return NULL;
 }
 
