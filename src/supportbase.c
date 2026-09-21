@@ -1497,39 +1497,6 @@ static const char *sbNeutrinoProbeGameDevice(const char *activePrefix)
     return NULL;
 }
 
-// Probe the internal APA HDD for a Neutrino install. Raw APA is not POSIX-open()-able, so the only
-// reachable install there is the OPL data partition OPL has ALREADY mounted on pfs0:. That is the
-// same partition NHDDL resolves for its own hdd0:/<OPL partition>/neutrino/neutrino.elf rule
-// (hdd0:__common/OPL/conf_hdd.cfg, else +OPL, else __common/OPL) -- OPL did that resolution at
-// startup and gHDDPrefix names the result: "pfs0:" for a +OPL home, "pfs0:OPL/" for the __common
-// one. Probing the data home AND the partition root therefore covers hdd0:/+OPL/neutrino/ and
-// hdd0:/__common/OPL/neutrino/ alike. NULL when the HDD stack is not up: nothing is mounted on
-// pfs0: to read, and a path that only open()s while the menu is alive is worse than no path at all.
-static const char *sbNeutrinoProbeApaHome(void)
-{
-    if (gHDDPrefix == NULL || gHDDPrefix[0] == '\0')
-        return NULL;
-
-    // (A) the data home, (B) the bare pfs0: root -- both with the folder/extension case variants.
-    const char *hit = sbNeutrinoProbeGameDevice(gHDDPrefix);
-    if (hit != NULL)
-        return hit;
-
-    // Leading-slash spellings of the partition root. PFS accepts pfs0:DIR and pfs0:/DIR alike and
-    // users copy whichever form they were shown, so both are tried rather than assumed equivalent.
-    static const char *rootForms[] = {
-        "pfs0:/neutrino/neutrino.elf",
-        "pfs0:/NEUTRINO/neutrino.elf",
-        "pfs0:/neutrino/NEUTRINO.ELF",
-        "pfs0:/NEUTRINO/NEUTRINO.ELF",
-    };
-    for (int i = 0; i < (int)(sizeof(rootForms) / sizeof(rootForms[0])); i++) {
-        if (sbFileExists(rootForms[i]) && sbNeutrinoInstallComplete(rootForms[i]))
-            return sbNeutrinoResolved(rootForms[i]);
-    }
-    return NULL;
-}
-
 // The deinit exception mask a Neutrino handoff needs for the device holding neutrino.elf. Every leg
 // hands off through sysLoadELFKeepIOP, which does NOT reset the IOP, and the ELF is opened AFTER the
 // teardown out of whatever is left behind. UNMOUNT_EXCEPTION spares the mount, which is all any
