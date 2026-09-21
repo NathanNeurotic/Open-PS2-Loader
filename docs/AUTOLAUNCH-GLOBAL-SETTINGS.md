@@ -79,6 +79,8 @@ The menu and Auto Loading run one discovery path. `miniInit` calls `resolveBootD
   missing ISO, a fragmented image or no mass device.
   - `guiMsgBox` answers "back" before the GUI exists, as `guiWarning` already did.
   - Both entry points tear down the autolaunch session, and `configFree(NULL)` is safe.
+  - The menu then starts a fresh IO worker. `ioInit` waits for the old one to leave and clears
+    the queue block.
   - The `mass0:` wait is bounded to about 12 s.
 - **Cheats prompt (#265).** "Continue without cheats" had cancelled the launch, because the code
   compared `guiMsgBox`'s result with 2 while accept returns 1.

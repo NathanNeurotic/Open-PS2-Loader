@@ -275,6 +275,12 @@ def check_pins():
     check(cheats is not None and 'guiMsgBox(text, 1, NULL))' in cheats and '== 2' not in cheats,
           'sbCheatsMissingContinue: guiMsgBox returns 1 for accept, not 2')
 
+    ioman = text('src/ioman.c')
+    io_init = function_text(ioman, 'void ioInit(')
+    check(io_init is not None and 'isIOBlocked = 0;' in io_init and
+          io_init.find('isIORunning') < io_init.find('gIOTerminate = 0;'),
+          'ioInit: a menu booted after a refused autolaunch must wait out the old worker and start unblocked')
+
     config = text('src/config.c')
     free_body = function_text(config, 'void configFree(')
     check(free_body is not None and re.search(r'if \(configSet == NULL\)\s*return;', free_body),

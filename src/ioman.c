@@ -2,6 +2,7 @@
 #include "include/ioman.h"
 #include "include/util.h" // delay() -- bounded drain in ioBlockOpsTimed
 #include <kernel.h>
+#include <delaythread.h> // DelayThread -- ioInit waits for a previous worker to leave
 #include <string.h>
 #include <malloc.h>
 #include <stdio.h>
@@ -229,6 +230,16 @@ static void ioSimpleActionHandler(void *data)
 
 void ioInit(void)
 {
+    // A second ioInit happens only when a refused autolaunch falls back to the menu: miniDeinit has
+    // blocked the queue and asked the first worker to stop (ioEnd), but that worker runs below this
+    // thread and has not necessarily left yet. It lives on the static thread_stack reused below, and
+    // clearing gIOTerminate early would keep it alive beside the new one. Let it leave first -- bounded
+    // (~3 s), so a worker wedged in a device RPC cannot hold the menu hostage.
+    for (int i = 0; *(volatile int *)&isIORunning && i < 300; i++)
+        DelayThread(10 * 1000);
+    // The new worker starts with an open queue, whatever the previous session left behind.
+    isIOBlocked = 0;
+
     gIOTerminate = 0;
     gHandlerCount = 0;
     gReqList = NULL;
