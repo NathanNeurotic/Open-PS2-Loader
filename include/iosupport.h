@@ -77,10 +77,15 @@ enum ERROR_CODE {
 // issues PDIOC_CLOSEALL, which drops every pfs descriptor in the IOP -- fine when the next thing to
 // run resets the IOP anyway, fatal when it does not. A driver only OPL knows about is still the
 // driver Ember has to read its game through.
-#define KEEPIOP_EXCEPTION   0x02
+#define KEEPIOP_EXCEPTION    0x02
 // pfs1: is HDD support's transient scan/settings mount and must keep its historical always-unmount
 // behaviour. Only an explicitly resolved child ELF on pfs1: may preserve it across the handoff.
-#define KEEP_PFS1_EXCEPTION 0x04
+#define KEEP_PFS1_EXCEPTION  0x04
+// External loaders opened from PFS need the mount descriptors to survive until sysLoadELFKeepIOP
+// reads the ELF, but unlike Ember/wLaunchELF they do NOT need OPL's IOP pad RPC left active.
+// Keep this narrower than KEEPIOP_EXCEPTION so PFS-hosted Neutrino/POPSTARTER retain the same pad
+// teardown as those loaders on every other backend.
+#define KEEP_PFS_FDS_EXCEPTION 0x08
 
 #define MODE_FLAG_NO_COMPAT  0x01 // no compat support
 #define MODE_FLAG_COMPAT_DMA 0x02 // Supports DMA compat flags
