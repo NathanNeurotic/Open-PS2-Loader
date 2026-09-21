@@ -147,9 +147,16 @@ path) is the intended setup. This also solves the cross-device case: an HDD game
 <code>mmce0:/neutrino/neutrino.elf</code> while MMCE GameID still switches normally.
 </div>
 
-<p>The retired <code>neutrino_device</code> / <code>neutrino_devtype</code> picker keys are ignored
-and removed on the next settings save. The single Neutrino Path field now covers cross-device
-placement directly.</p>
+<h3>Upgrade compatibility</h3>
+<p>The retired <code>neutrino_device</code> / <code>neutrino_devtype</code> picker is no longer
+shown, but existing choices are preserved invisibly on upgrade. A saved <b>Memory Card</b> policy
+keeps memory-card-first lookup; a saved <b>Game's Device</b> policy remains game-device-only. An
+older <code>neutrino_path</code> also keeps its historical "try this path, then fall back" behavior
+if that path has gone stale.</p>
+<p>Those compatibility rules are retired only when you actually edit and confirm the new
+<b>Neutrino Path</b> field. A non-empty value then becomes exact/authoritative; clearing it adopts
+the new <code>&lt;not set&gt;</code> default of game device &rarr; memory-card fallback. Saving unrelated
+settings does not silently migrate an existing Neutrino layout.</p>
 
 <h3>Network boot note</h3>
 <p>UDPBD / UDPFS use the same resolver. Leave Neutrino Path at <code>&lt;not set&gt;</code> for
