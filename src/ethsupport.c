@@ -666,7 +666,8 @@ static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS%c%s.VCD", ethPrefix, separator, vcdName);
     vcdPrepareRetroGemBarcode(vcdFullPath);
-    deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the SMB mount alive across the IOP reset
+    // Keep the SMB game share plus any distinct custom POPSTARTER.ELF backend through handoff.
+    deinitEx(sbLoaderDeinitException(vcdElf), itemList->mode, oplPath2Mode(vcdElf));
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
