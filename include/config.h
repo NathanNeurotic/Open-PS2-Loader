@@ -116,9 +116,9 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_NEUTRINO_VIDEO             "neutrino_video_default"    // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game "$NeutrinoVideo" overrides, absent = follow this
 #define CONFIG_OPL_NEUTRINO_GSMCOMP           "neutrino_gsm_comp_default" // global default -gsm ":c" field-flip half (0=off, 1-3=type); per-game "$NeutrinoGsmComp" overrides, absent = follow this
 #define CONFIG_OPL_NEUTRINO_ARGS              "neutrino_args"
-#define CONFIG_OPL_NEUTRINO_PATH              "neutrino_path"
-#define CONFIG_OPL_NEUTRINO_DEVICE            "neutrino_device"            // legacy device-INDEX (mc0/mass0/mmce0); read-only, migrated
-#define CONFIG_OPL_NEUTRINO_DEVTYPE           "neutrino_devtype"           // device-TYPE (NEUTRINO_DEV_*); the live key
+#define CONFIG_OPL_NEUTRINO_PATH              "neutrino_path"              // exact neutrino.elf path; empty = active game device then MC fallback
+#define CONFIG_OPL_NEUTRINO_DEVICE            "neutrino_device"            // retired legacy picker key; removed on next save
+#define CONFIG_OPL_NEUTRINO_DEVTYPE           "neutrino_devtype"           // retired legacy picker key; removed on next save
 #define CONFIG_OPL_NEUTRINO_ELF_ARG           "neutrino_elf_arg"           // default-on (no UI row): auto-emit -elf=cdrom0:\<startup>;1 (parity Delta-10)
 #define CONFIG_OPL_POPSTARTER_PATH            "popstarter_path"            // free-text custom path (used only when device=Custom)
 #define CONFIG_OPL_POPSTARTER_DEVICE          "popstarter_device"          // device TYPE holding POPS/POPSTARTER.ELF (POPS_DEV_*)
