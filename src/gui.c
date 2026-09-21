@@ -1517,7 +1517,9 @@ static void guiCorePathBegin(struct UIItem *ui, int id, char *edit, size_t editS
 {
     snprintf(edit, editSize, "%s", value != NULL ? value : "");
     diaSetString(ui, id, edit);
-    diaSetShowDefaultWhenEmpty(ui, id, 1);
+    // Empty is intentionally rendered by UI_STRING as the localized "<not set>" placeholder.
+    // Do not opt into showDefaultWhenEmpty: that would display "Default", which is not the contract.
+    diaSetShowDefaultWhenEmpty(ui, id, 0);
 }
 
 int guiNeutrinoPathHandler(char *text, int maxLen)
