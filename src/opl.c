@@ -2680,11 +2680,9 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
                 gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         }
     }
-    // The picker is retired, but explicit choices from older configs are user intent. Convert every
-    // device that has a stable path alias into the new full-path field so the upgrade is visible in
-    // the UI and keeps its old precedence. HDD (APA) is the one exception: its old meaning depended
-    // on the live +OPL/__common data-home mount, so supportbase keeps that value as a read-only
-    // compatibility probe until the user supplies a real full path.
+    // The picker is retired, but explicit choices from older configs are user intent. Convert them
+    // into the new full-path aliases so the upgrade is visible in the UI and no hidden picker state
+    // changes what "<not set>" means. The hdd:/ alias resolves the already-selected live APA data home.
     if (gNeutrinoDevice < NEUTRINO_DEV_AUTO || gNeutrinoDevice > NEUTRINO_DEV_ILINK)
         gNeutrinoDevice = NEUTRINO_DEV_AUTO;
     if (gNeutrinoPath[0] != '\0') {
@@ -2706,6 +2704,9 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
                 break;
             case NEUTRINO_DEV_EXFAT_HDD:
                 migratedPath = "ata:/neutrino/neutrino.elf";
+                break;
+            case NEUTRINO_DEV_APA_HDD:
+                migratedPath = "hdd:/neutrino/neutrino.elf";
                 break;
             case NEUTRINO_DEV_ILINK:
                 migratedPath = "ilink:/neutrino/neutrino.elf";
