@@ -1657,9 +1657,29 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
         // was tried FIRST above, so an explicit pick is still honoured when it holds the ELF.
     }
 
-    // Auto: a legacy custom path (settings_riptopl.cfg "neutrino_path") wins when it exists;
-    // otherwise fall back to the mc0:/mc1: auto-detect candidates below. A custom path that names
-    // the elf directly (no dir) is honoured as-is (sbNeutrinoInstallComplete returns 1 for it).
+    // AUTO normally preserves the legacy custom-path override, but MMCE has one correctness
+    // exception: a co-located install on mmceN: must win BEFORE a custom/memory-card fallback.
+    // mmceSendGameID() switches the emulated mcN: view for the launched title; if AUTO chose a
+    // custom mcN:-hosted Neutrino while the same game already had a complete mmceN:/neutrino/
+    // install, the safety guard would have to skip GameID to keep the loader from disappearing.
+    // Prefer the active MMCE game device first so both claims remain true at once: Neutrino stays on
+    // the stable MMCE mass-storage surface and the required per-game GameID switch can still happen.
+    // Explicit "Memory Card" is intentionally unaffected: that is a user choice, and the existing
+    // guard remains the safe fallback there.
+    int autoMmceGameDeviceProbed = 0;
+    if (gNeutrinoDevice == NEUTRINO_DEV_AUTO &&
+        activePrefix != NULL && !strncmp(activePrefix, "mmce", 4)) {
+        const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
+        autoMmceGameDeviceProbed = 1;
+        if (gameHit != NULL) {
+            LOG("[NEUTRINO] AUTO: MMCE game-device install selected before custom/MC fallback\n");
+            return gameHit;
+        }
+    }
+
+    // Auto: a legacy custom path (settings_riptopl.cfg "neutrino_path") wins when it exists,
+    // except for the MMCE correctness case above. A custom path that names the elf directly
+    // (no dir) is honoured as-is (sbNeutrinoInstallComplete returns 1 for it).
     if (gNeutrinoPath[0] != '\0' && sbFileExists(gNeutrinoPath) && sbNeutrinoInstallComplete(gNeutrinoPath))
         return sbNeutrinoResolved(gNeutrinoPath);
 
@@ -1668,7 +1688,8 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
     // Δ1 (inside the helper): a stale elf-only folder on the game device must NOT shadow a complete
     // mc0/mc1 install below (the "worked once then never" failure). Same probe as NEUTRINO_DEV_GAME,
     // but here a miss falls through to the mc0/mc1 candidates instead of returning NULL.
-    {
+    // MMCE may already have been probed above to preserve GameID; do not hit the same filesystem twice.
+    if (!autoMmceGameDeviceProbed) {
         const char *gameHit = sbNeutrinoProbeGameDevice(activePrefix);
         if (gameHit != NULL)
             return gameHit;
