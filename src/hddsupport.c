@@ -2008,7 +2008,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
         // handoff opens that ELF after this runs, and both the unmount and PDIOC_CLOSEALL would
         // pull it out from under the load. Neutrino resets the IOP itself moments later, which
         // reclaims the mount and the descriptors we leave behind here.
-        if ((sbNeutrinoDeinitException(neutrinoPath) & KEEPIOP_EXCEPTION) == 0) {
+        if ((sbNeutrinoDeinitException(neutrinoPath) & KEEP_PFS_FDS_EXCEPTION) == 0) {
             fileXioUmount("pfs0:");
             fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
         }
@@ -2379,7 +2379,7 @@ static void hddCleanUp(item_list_t *itemList, int exception)
         // every launch made until Ember. An Ember handoff keeps the IOP precisely so the child
         // inherits this pfs0: mount and reads its game through it; closing the descriptors out from
         // under it would leave Ember holding a mount it can no longer open anything on.
-        if ((exception & KEEPIOP_EXCEPTION) == 0)
+        if ((exception & (KEEPIOP_EXCEPTION | KEEP_PFS_FDS_EXCEPTION)) == 0)
             fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
 
         // Whatever the handoff is, commit what has been written so far: the next thing to happen to
