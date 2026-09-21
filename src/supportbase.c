@@ -1904,23 +1904,23 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
 // Compatibility for an untouched legacy "HDD (APA)" picker migration. The old picker did not
 // encode path case and historically accepted all four common folder/file case combinations on PFS.
 // New custom full paths remain exact: this helper is reached only while the legacy APA marker is
-// still present and the visible path is the canonical migration string.
+// still present. HDD support owns the APA/PFS namespace and resolves each RELATIVE candidate only
+// inside the already-selected live data-home mount.
 static const char *sbResolveMigratedApaNeutrino(void)
 {
     static const char *variants[] = {
-        "hdd:/neutrino/neutrino.elf",
-        "hdd:/NEUTRINO/neutrino.elf",
-        "hdd:/neutrino/NEUTRINO.ELF",
-        "hdd:/NEUTRINO/NEUTRINO.ELF",
+        "neutrino/neutrino.elf",
+        "NEUTRINO/neutrino.elf",
+        "neutrino/NEUTRINO.ELF",
+        "NEUTRINO/NEUTRINO.ELF",
     };
     char resolved[320];
 
-    if (gNeutrinoDevice != NEUTRINO_DEV_APA_HDD ||
-        strcmp(gNeutrinoPath, "hdd:/neutrino/neutrino.elf") != 0)
+    if (gNeutrinoDevice != NEUTRINO_DEV_APA_HDD)
         return NULL;
 
     for (int i = 0; i < (int)(sizeof(variants) / sizeof(variants[0])); i++) {
-        if (sbResolveCustomLoaderPath(variants[i], resolved, sizeof(resolved)) &&
+        if (hddResolveLiveOplDataPath(variants[i], resolved, sizeof(resolved)) &&
             sbNeutrinoInstallComplete(resolved))
             return sbNeutrinoResolved(resolved);
     }
