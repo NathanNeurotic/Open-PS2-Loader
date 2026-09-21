@@ -368,20 +368,21 @@ the display pickers above no longer allow is discarded, not forced.</div>
 <tr><td>Default Loader Core</td><td>&lt;OPL&gt; / Neutrino</td><td>Core for games whose per-game <em>Loader Core</em> is <em>Default</em>. <em>&lt;OPL&gt;</em> (the default) is the native core; <em>Neutrino</em> chains the external <code>neutrino.elf</code>. A per-game choice always wins. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 <tr><td>OSD Defaults</td><td>[sub-screen]</td><td>The global <a href="#osd-settings">OSD Settings</a>: the console language, screen size and video mode handed to games that do not set their own.</td></tr>
 <tr><td>GSM Defaults (All Games)</td><td>[sub-screen]</td><td>The global GSM settings. See <a href="gsm.html">GSM Video Modes</a>.</td></tr>
-<tr><td>Neutrino Device</td><td>Auto / Memory Card / Game's Device</td><td>Controls Neutrino ELF discovery. <em>Auto</em> is source-aware: for MMCE-hosted games it tries the active MMCE game prefix/device root first, then a valid custom path; on other sources the custom path keeps historical priority. Both then continue through APA HDD and <code>mc0:</code>/<code>mc1:</code>. <em>Memory Card</em> tries the two memory-card slots first, then normal fallbacks. <em>Game's Device</em> searches only the active game's own device. This MMCE-first Auto rule allows <code>mmceN:/neutrino/</code> to coexist with the required GameID switch instead of forcing the <code>mcN:</code> safety fallback. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
+<tr><td>Neutrino Path</td><td>&lt;not set&gt; / full path to <code>neutrino.elf</code></td><td>Location of the Neutrino core. <em>&lt;not set&gt;</em> is the compatibility default: search the active game's own device first, then <code>mc0:</code>/<code>mc1:</code>; an APA game uses its mounted OPL data home as the game-device tier. Once you enter a path, that exact path is authoritative and no fallback scan is performed. This lets an HDD game use Neutrino from MMCE, for example <code>mmce0:/neutrino/neutrino.elf</code>. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 <tr><td>Neutrino Video</td><td>Off / 240p / 480p / 1080i x1 / 1080i x2 / 1080i x3</td><td>Default Neutrino <code>-gsm</code> video mode for games whose per-game picker is <em>Default</em>. Off by default.</td></tr>
 <tr><td>Neutrino GSM Compatibility</td><td>Off / Type 1 (GSM/OPL) / Type 2 / Type 3</td><td>Field-flipping fix for games that shake or tear under a forced Neutrino video mode: the <code>:c</code> half of <code>-gsm</code>. Greyed until a Neutrino Video mode is set. Off by default.</td></tr>
 <tr><td>Neutrino Advanced Arguments</td><td>[sub-screen]</td><td>The structured global Neutrino arguments editor. These apply to every Neutrino game; per-game arguments add on top. Prefix a flag with <code>$</code> to disable it without deleting it. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 </tbody>
 </table>
 
-<details class="deep"><summary>Setting the Neutrino ELF path longer than 31 characters</summary>
-<p><em>Auto</em> covers the common locations automatically. If you need a fully custom path
-(e.g. <code>mass0:NEUTRINO/neutrino.elf</code>) you can set <code>neutrino_path</code> directly in
-<code>settings_riptopl.cfg</code>. In Auto mode, <code>sbResolveNeutrinoPath()</code> normally checks a
-valid custom path before the active game device; the exception is an MMCE-hosted game, where a
-complete install on the active MMCE game device is checked first so GameID switching remains usable.
-<em>Game's Device</em> deliberately ignores the custom path.</p>
+<details class="deep"><summary>Neutrino Path examples and long paths</summary>
+<p>The row displays <code>&lt;not set&gt;</code> while no custom path exists. Selecting it opens the
+full-size editor even though the settings row itself only shows a short preview. Typical values are
+<code>mass0:/neutrino/neutrino.elf</code>, <code>mmce0:/neutrino/neutrino.elf</code> and
+<code>mc0:/neutrino/neutrino.elf</code>. For APA, use the already-mounted PFS view:
+<code>pfs0:/neutrino/neutrino.elf</code> for a <code>+OPL</code> root, or
+<code>pfs0:OPL/neutrino/neutrino.elf</code> for <code>__common/OPL</code>. Clear the field to
+restore game-device &rarr; memory-card fallback.</p>
 </details>
 
 <h3 id="osd-settings">OSD Settings</h3>
