@@ -1802,32 +1802,33 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
     if (sbTokenStemIs(token, "usb") || sbTokenStemIs(token, "ata") ||
         sbTokenStemIs(token, "ilink") || sbTokenStemIs(token, "sd") ||
         sbTokenStemIs(token, "sdc") || sbTokenStemIs(token, "mx4") ||
-        sbTokenStemIs(token, "mx4sio") || sbTokenStemIs(token, "mass")) {
+        sbTokenStemIs(token, "mx4sio") || sbTokenStemIs(token, "mass") || !strcmp(token, "massx")) {
         char normalized[320];
         char dir[320];
-        const char *base;
+        char base[128];
         char *slash;
         int type = BDM_TYPE_UNKNOWN;
 
-        snprintf(normalized, sizeof(normalized), "%s", requested);
+        // Rebuild with the already-lowercased token so typed aliases are case-insensitive.
+        snprintf(normalized, sizeof(normalized), "%s:%s", token, tail != NULL ? tail : "");
         // Friendly aliases not understood by the lower boot-dir classifier.
-        if (!strncasecmp(normalized, "mx4:", 4))
-            snprintf(normalized, sizeof(normalized), "mx4sio:%s", requested + 4);
-        else if (!strncasecmp(normalized, "massX:", 6) || !strncasecmp(normalized, "massx:", 6))
-            snprintf(normalized, sizeof(normalized), "mx4sio:%s", requested + 6);
+        if (!strcmp(token, "mx4"))
+            snprintf(normalized, sizeof(normalized), "mx4sio:%s", tail != NULL ? tail : "");
+        else if (!strcmp(token, "massx"))
+            snprintf(normalized, sizeof(normalized), "mx4sio:%s", tail != NULL ? tail : "");
 
         snprintf(dir, sizeof(dir), "%s", normalized);
         slash = strrchr(dir, '/');
         if (slash == NULL)
             slash = strrchr(dir, '\\');
         if (slash != NULL) {
-            base = slash + 1;
+            snprintf(base, sizeof(base), "%s", slash + 1);
             *slash = '\0';
         } else {
             char *colon = strchr(dir, ':');
             if (colon == NULL)
                 return 0;
-            base = colon + 1;
+            snprintf(base, sizeof(base), "%s", colon + 1);
             colon[1] = '\0';
         }
 
