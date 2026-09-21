@@ -1336,3 +1336,5 @@ gui_strings:
   string: Global PS Emulation Settings
 - label: RA_NO_LINK_UNTRACKED
   string: Network unavailable -- launching without RetroAchievements this time.
+- label: HINT_NEUTRINO_PATH_EXACT
+  string: "Where is neutrino.elf located? Leave <not set> for automatic game-device then memory-card fallback. Examples: mass0:/neutrino/neutrino.elf | mmce0:/neutrino/neutrino.elf | mc0:/neutrino/neutrino.elf | APA +OPL: pfs0:/neutrino/neutrino.elf | APA __common: pfs0:OPL/neutrino/neutrino.elf"
