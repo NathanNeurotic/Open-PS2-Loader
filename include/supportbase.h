@@ -89,6 +89,12 @@ int sbLoadCheats(const char *path, const char *file);
 
 int sbFileExists(const char *path);
 
+// Resolve one user-entered full ELF path into the filesystem path RiptOPL can actually open.
+// This activates the explicitly named storage stack when safe (USB/MX4SIO/iLink/exFAT BDM,
+// MMCE, SMB, UDPFS, UDPBD/UDPFS-BD, APA/PFS) and normalizes aliases to live namespaces such as
+// massN:/ or smb0:. Returns 1 only when the resolved file can be opened.
+int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize);
+
 // First existing Neutrino core ELF, or NULL. In AUTO mode (gNeutrinoDevice==0): custom gNeutrinoPath
 // -> the active game's device (activePrefix) -> mc0/mc1 install spots. An explicit Device picker
 // ignores activePrefix. Pass NULL when no game device applies.
