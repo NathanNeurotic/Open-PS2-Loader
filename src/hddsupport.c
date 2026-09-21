@@ -2337,10 +2337,16 @@ static void hddCleanUp(item_list_t *itemList, int exception)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
-        fileXioUmount("pfs1:");
 
-        if ((exception & UNMOUNT_EXCEPTION) == 0)
+        // UNMOUNT_EXCEPTION now also protects a deliberately targeted secondary PFS mount. A
+        // custom Neutrino/POPSTARTER path may resolve to pfs1:, and deinitEx keeps HDD as the
+        // loader's second mode specifically so that path remains openable until the child ELF
+        // has been loaded. The target resets the IOP shortly afterwards, so retaining an
+        // otherwise-scratch pfs1: mount for this handoff has no persistent cost.
+        if ((exception & UNMOUNT_EXCEPTION) == 0) {
+            fileXioUmount("pfs1:");
             fileXioUmount(hddPrefix);
+        }
     }
 
     // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
