@@ -923,7 +923,7 @@ struct UIItem diaNeutrinoDefaults[] = {
     {UI_SPACER},
     // The UI_STRING's visible buffer is 31 chars, but the handler opens the keyboard on the full
     // 256-byte edit buffer in gui.c. Empty renders as the standard "<not set>" placeholder.
-    {UI_STRING, CFG_NEUTRINO_PATH, 1, 1, _STR_HINT_NEUTRINO_PATH, 0, 0, {.stringvalue = {"", "", &guiNeutrinoPathHandler}}},
+    {UI_STRING, CFG_NEUTRINO_PATH, 1, 1, _STR_HINT_NEUTRINO_PATH_EXACT, 0, 0, {.stringvalue = {"", "", &guiNeutrinoPathHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_VIDEO}}},
