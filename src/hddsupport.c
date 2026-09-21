@@ -1388,6 +1388,53 @@ int hddGetLiveOplHomeSelection(void)
     return -1;
 }
 
+int hddResolveLiveOplDataPath(const char *relativePath, char *out, int outSize)
+{
+    int fd;
+    const char *rel = relativePath;
+
+    if (out == NULL || outSize <= 0 || rel == NULL)
+        return 0;
+    out[0] = '\0';
+
+    if (!hddModulesAreLoaded() && !hddLoadModulesReady())
+        return 0;
+    hddLoadSupportModules();
+    if (gHDDPrefix == NULL)
+        return 0;
+
+    while (*rel == '/' || *rel == '\\')
+        rel++;
+
+    if (snprintf(out, outSize, "%s%s", gHDDPrefix, rel) >= outSize) {
+        out[0] = '\0';
+        return 0;
+    }
+    fd = open(out, O_RDONLY);
+    if (fd >= 0) {
+        close(fd);
+        return 1;
+    }
+
+    // __common uses pfs0:OPL/ as OPL's data-home prefix, but legacy core installs may live at
+    // that same already-mounted partition's root. This is still the live pfs0: mount; no APA
+    // partition is selected, remounted, or guessed here.
+    if (strcmp(gHDDPrefix, "pfs0:") != 0) {
+        if (snprintf(out, outSize, "pfs0:/%s", rel) >= outSize) {
+            out[0] = '\0';
+            return 0;
+        }
+        fd = open(out, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            return 1;
+        }
+    }
+
+    out[0] = '\0';
+    return 0;
+}
+
 int hddGetOplHomeSelection(void)
 {
     if (hddOplHomePending >= 0)
