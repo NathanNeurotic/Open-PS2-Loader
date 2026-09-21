@@ -161,8 +161,9 @@ extern int smbCacheSize;
 
 extern int gApplyGameID; // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gEnableUSB;
-// Neutrino Device picker: a driver-accurate device TYPE that holds <root>:/neutrino/neutrino.elf.
-enum { NEUTRINO_DEV_AUTO = 0, // game device, then mc0/mc1 (legacy behaviour)
+// Retired Neutrino Device picker values. Kept only to migrate older settings into the full-path
+// field; new UI/runtime policy is Custom Path -> Game Device -> mc0/mc1.
+enum { NEUTRINO_DEV_AUTO = 0, // game device, then mc0/mc1
        NEUTRINO_DEV_MC,       // mc0: / mc1:
        // The following values are retained so old settings keep their numeric meaning while they
        // are migrated to Auto at load time. They are intentionally no longer exposed by the UI.
@@ -206,8 +207,9 @@ enum {
     EMBER_DISPLAY_480
 };
 extern int gEmberDisplay;
-// POPSTARTER.ELF Device picker: where PS1 VCD launches load POPS/POPSTARTER.ELF from.
-enum { POPS_DEV_DEFAULT = 0, // cwd (gBootDir) /POPS/, then the VCD's own device (back-compat fallback)
+// Retired POPSTARTER.ELF Device picker values. Older configs are migrated to full-path aliases;
+// current runtime policy is Custom Path -> Game Device -> mc0/mc1.
+enum { POPS_DEV_DEFAULT = 0, // legacy default value; current runtime ignores the picker
        POPS_DEV_MC,          // mc0: / mc1:
        POPS_DEV_USB,         // BDM "usb"        -> the mounted massN:
        POPS_DEV_MX4SIO,      // BDM "mx4sio"/sdc -> the mounted massN:
