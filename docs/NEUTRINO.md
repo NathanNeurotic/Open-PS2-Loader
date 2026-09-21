@@ -39,8 +39,10 @@ continues, so you get the `<OPL>` fallback even though the file exists.
 > **MMCE users: put Neutrino on the MMCE game device if you use GameID card switching.**
 > Use `mmceN:/neutrino/` when the MMCE library is at the device root, or put `neutrino/`
 > under the configured **MMCE Prefix Path** (for example `mmce0:/OPL/neutrino/`).
-> **Auto** intentionally probes the active game's prefix and then its bare device root before
-> falling back to `mc0:` / `mc1:`.
+> **Auto** intentionally gives an MMCE-hosted game's own prefix and bare device root first refusal,
+> ahead of the legacy custom path and the `mc0:` / `mc1:` fallbacks. This is deliberate:
+> a complete `mmceN:/neutrino/` install lets the required GameID switch proceed instead of
+> forcing the memory-card safety guard to suppress it.
 >
 > The reason is the MMCE GameID switch. If Neutrino resolves from `mcN:` on the same MMCE slot,
 > switching that slot would replace the emulated memory-card view before `neutrino.elf` and its
@@ -51,24 +53,27 @@ continues, so you get the `<OPL>` fallback even though the file exists.
 
 A memory card is a supported general fallback — `mc0:NEUTRINO/neutrino.elf`, then
 `mc1:NEUTRINO/neutrino.elf` — but it is the **last** automatic location OPL looks, not the first.
-The full order is:
 
-| Priority | Where OPL looks |
-|---|---|
-| 1 | An explicit **Game Launching → Neutrino Device** choice: **Memory Card** is tried first; **Game's Device** is exclusive (see below) |
-| 2 | A custom path in the `neutrino_path` key of `settings_riptopl.cfg` |
-| 3 | The active game's own device — `<games prefix>/neutrino/`, then `<device root>/neutrino/` |
-| 4 | The internal **APA HDD**'s OPL data partition — `hdd0:/+OPL/neutrino/` or `hdd0:/__common/OPL/neutrino/` (only while the HDD is started) |
-| 5 | `mc0:` / `mc1:` — `NEUTRINO/neutrino.elf` and its lowercase / `NEUTRINO.ELF` variants |
+**Auto has one intentional MMCE-specific precedence rule:** when the active game itself is on MMCE,
+its own `<games prefix>/neutrino/` and `<device root>/neutrino/` are checked **before** the
+legacy `neutrino_path` override. On every other game source the legacy custom path keeps its
+historical priority. After those first two tiers, both cases continue through APA HDD and finally
+`mc0:` / `mc1:`.
+
+| Auto priority | MMCE-hosted game | Other game sources |
+|---|---|---|
+| 1 | Active game's own MMCE device — `<games prefix>/neutrino/`, then `<device root>/neutrino/` | A valid custom `neutrino_path` |
+| 2 | A valid custom `neutrino_path` | Active game's own device — `<games prefix>/neutrino/`, then `<device root>/neutrino/` |
+| 3 | Internal **APA HDD** OPL data home — `hdd0:/+OPL/neutrino/` or `hdd0:/__common/OPL/neutrino/` | Same |
+| 4 | `mc0:` / `mc1:` candidates | Same |
 
 If no complete install is found when you launch a game set to the Neutrino core, OPL shows a
 warning and falls back to the `<OPL>` core for that launch.
 
 **Game Launching → Neutrino Device** selects the resolver policy — **Auto**,
-**Memory Card**, or **Game's Device**. Auto searches the working locations in the priority table
-above. Memory Card tries `mc0:` and `mc1:` first before using the normal fallback tiers, while
-Game's Device restricts lookup to the active game's own device and reports "not found" instead of
-falling back.
+**Memory Card**, or **Game's Device**. Auto follows the source-aware order above. Memory Card tries
+`mc0:` and `mc1:` first before using the normal fallback tiers, while Game's Device restricts
+lookup to the active game's own device and reports "not found" instead of falling back.
 
 There are no separate USB, MX4SIO, MMCE, exFAT HDD, APA HDD, or iLink entries. Those device-specific
 launch paths are intentionally not exposed by the picker because their Neutrino handoffs are not
@@ -90,9 +95,11 @@ install on a partition that is *not* the OPL data home is not reachable; move it
 other devices.
 
 You can also point OPL at a **custom location** with the `neutrino_path` key in
-`settings_riptopl.cfg` (there is no menu row for it). When it is set and the file exists it takes **priority** over the
-auto-detected tiers above (the game's own device and `mc0:`/`mc1:`) — only the **Neutrino
-Device** picker outranks it; leave it out to use the auto-detection. The custom path is
+`settings_riptopl.cfg` (there is no menu row for it). In **Auto**, it keeps its historical priority
+over the active game device on non-MMCE sources. For an **MMCE-hosted game**, a complete Neutrino
+install on that game's own `mmceN:` device is deliberately preferred first so GameID switching is
+not sacrificed to protect an `mcN:` loader. **Game's Device** ignores the custom path entirely.
+The custom path is
 honoured only when its install passes the same `config/system.toml` completeness check (a path
 with no directory component is taken as-is). For a path longer than the on-screen 31-character
 editor, set `neutrino_path` in `settings_riptopl.cfg` directly.
