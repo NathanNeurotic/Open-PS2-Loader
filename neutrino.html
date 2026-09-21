@@ -74,67 +74,86 @@ under its <b>AFL-3.0</b> licence; see <a href="credits.html#special-thanks">Cred
 attribution. Report <i>launching</i> problems to us and genuine Neutrino bugs upstream.</p>
 
 <div class="callout info"><div class="h">ℹ These features are specific to RiptOPL</div>
-The <b>Loader Core</b> selector, the <b>Neutrino Device</b> picker, the structured <b>Launch Args</b> sub-screen, and the per-game <b>Neutrino Video</b> picker are all additions in this fork. They do not exist in stock OPL or wOPL.
+The <b>Loader Core</b> selector, the editable <b>Neutrino Path</b>, the structured <b>Launch Args</b> sub-screen, and the per-game <b>Neutrino Video</b> picker are all additions in this fork. They do not exist in stock OPL or wOPL.
 </div>
 
 <h2 id="install">1. Install Neutrino</h2>
 
-<p>The release package includes a complete <code>neutrino/</code> folder: copy the <b>whole folder</b>
-to a location RiptOPL can keep available through the handoff. On ordinary non-MMCE setups,
-<code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code> is supported. A memory card is the last
-automatic location OPL looks, not the first.</p>
+<p>The release package includes a complete <code>neutrino/</code> folder. Copy the <b>whole folder</b>,
+not only <code>neutrino.elf</code>: Neutrino also needs its <code>config/</code> and
+<code>modules/</code> contents. RiptOPL rejects an incomplete ELF-only install before teardown.</p>
 
-<div class="callout amber"><div class="h">⚠ MMCE users: place Neutrino on the MMCE game device</div>
-If you use <b>Send GameID on Launch</b>, put the complete folder on <code>mmceN:</code> rather than
-relying on the same slot's <code>mcN:</code> view: use <code>mmceN:/neutrino/</code>, or put
-<code>neutrino/</code> under the configured MMCE Prefix Path. The GameID command switches the
-emulated memory-card view. An <code>mcN:</code>-hosted Neutrino would be displaced by that switch,
-so RiptOPL detects the collision and <b>skips the GameID switch for that launch</b> to keep the
-loader readable. An <code>mmceN:</code> install is not affected, so the per-game card switch can
-still occur. For an MMCE-hosted game, <b>Auto deliberately probes the active game's MMCE prefix
-and device root before both the legacy custom path and the memory-card fallbacks</b>. This makes the
-<code>mmceN:/neutrino/</code> placement functional, not merely recommended: when it is complete,
-the resolver selects it and the GameID switch can proceed normally.
+<h3>Default: Neutrino Path = <code>&lt;not set&gt;</code></h3>
+
+<p>Open <b>Settings &rarr; Game Launching &rarr; Neutrino Defaults</b>. The
+<b>Neutrino Path</b> field displays <code>&lt;not set&gt;</code> until you explicitly enter one.
+That is a real empty value, not a hidden hard-coded path.</p>
+
+<p>With the field left at <code>&lt;not set&gt;</code>, RiptOPL keeps the compatibility-first behavior
+existing installations expect:</p>
+<ol>
+<li><b>Active game device first.</b> RiptOPL checks the game's configured prefix and then the bare
+device root for a complete <code>NEUTRINO/neutrino.elf</code> /
+<code>neutrino/neutrino.elf</code> install, including the existing case/slash variants.</li>
+<li><b>Memory-card fallback.</b> If the game device has no complete install, RiptOPL checks the
+historical <code>mc0:</code> / <code>mc1:</code> locations.</li>
+</ol>
+
+<div class="callout info"><div class="h">ℹ MMCE default behavior</div>
+For an MMCE-hosted game, the active-device tier means the MMCE game prefix and then the bare
+<code>mmceN:</code> root are checked before any <code>mcN:</code> fallback. A complete
+<code>mmceN:/neutrino/</code> install therefore survives MMCE GameID switching normally because the
+switch changes the emulated memory-card view, not the MMCE mass-storage filesystem.
 </div>
 
-<p><b>Auto is source-aware.</b> MMCE-hosted games have one deliberate precedence exception so a
-co-located <code>mmceN:</code> Neutrino install can coexist with the required GameID switch. Other
-sources keep the historical custom-path priority.</p>
+<p>For an <b>APA HDD game</b>, raw <code>hdd0:</code> is not directly POSIX-openable by the menu.
+Its game-device equivalent is the OPL data partition already mounted on <code>pfs0:</code>:
+<code>+OPL</code> at the partition root, or <code>__common/OPL/</code> when that is the configured
+data home. Only an APA-hosted game gets this automatic APA probe; other game sources do not scan the
+HDD merely because one exists.</p>
+
+<h3>Custom: set the exact Neutrino Path</h3>
+
+<p>If Neutrino lives somewhere else &mdash; for example, an HDD game should load Neutrino from an
+MMCE card &mdash; select <b>Neutrino Path</b> and type the complete path to
+<code>neutrino.elf</code>.</p>
+
+<p>Once a path is set, it is <b>authoritative</b>: RiptOPL checks that exact ELF and its required
+install files and performs no game-device / APA / memory-card search afterward. If the configured
+path is missing or incomplete, the launch reports Neutrino as unavailable rather than silently
+choosing another copy. Clear the field back to empty to restore the default game-device &rarr;
+memory-card behavior.</p>
 
 <table data-sortable>
-<thead><tr><th>Auto priority</th><th>MMCE-hosted game</th><th>Other game sources</th></tr></thead>
+<thead><tr><th>Location</th><th>Neutrino Path</th></tr></thead>
 <tbody>
-<tr><td>1</td><td>Active game's own MMCE device: <code>&lt;games prefix&gt;/neutrino/</code>, then <code>&lt;device root&gt;/neutrino/</code></td><td>A valid custom <code>neutrino_path</code></td></tr>
-<tr><td>2</td><td>A valid custom <code>neutrino_path</code></td><td>Active game's own device: <code>&lt;games prefix&gt;/neutrino/</code>, then <code>&lt;device root&gt;/neutrino/</code></td></tr>
-<tr><td>3</td><td>Internal <b>APA HDD</b> OPL data home, while the HDD is started</td><td>Same</td></tr>
-<tr><td>4</td><td><code>mc0:</code> / <code>mc1:</code> candidates</td><td>Same</td></tr>
+<tr><td>USB / another BDM mass device</td><td><code>mass0:/neutrino/neutrino.elf</code></td></tr>
+<tr><td>MMCE slot 0</td><td><code>mmce0:/neutrino/neutrino.elf</code></td></tr>
+<tr><td>Memory card slot 0</td><td><code>mc0:/neutrino/neutrino.elf</code></td></tr>
+<tr><td>APA <code>+OPL</code> mounted root</td><td><code>pfs0:/neutrino/neutrino.elf</code></td></tr>
+<tr><td>APA <code>__common/OPL</code> data home</td><td><code>pfs0:OPL/neutrino/neutrino.elf</code></td></tr>
 </tbody>
 </table>
 
-<p>A miss on the device you picked falls through to the automatic tiers. The exception is <b>Game's Device</b>,
-which only looks on the game's own device and reports "not found" instead of falling back.</p>
+<p>The settings row is only a short preview, but selecting it opens the full-size path editor, so
+long APA/custom paths are not restricted to the normal 31-character UI string width.</p>
 
-<p>The <b>internal APA HDD</b> is also searched, through the OPL data partition OPL has already mounted — the same partition NHDDL resolves for its own <code>hdd0:/&lt;OPL partition&gt;/neutrino/neutrino.elf</code> rule (read from <code>hdd0:__common/OPL/conf_hdd.cfg</code>, with <code>+OPL</code> or <code>__common/OPL</code> as fallbacks). In practice that means one of these two layouts, with nothing to configure:</p>
+<div class="callout amber"><div class="h">⚠ MMCE + GameID</div>
+For GameID switching, place Neutrino on <code>mmceN:</code> or another filesystem that the switch
+does not replace. Do not deliberately point Neutrino at the same <code>mcN:</code> view that the
+MMCE device is about to switch. RiptOPL retains a last-resort safety guard against unloading the
+loader, but that is a misconfiguration fallback; <code>mmceN:</code> (or another unaffected custom
+path) is the intended setup. This also solves the cross-device case: an HDD game can use
+<code>mmce0:/neutrino/neutrino.elf</code> while MMCE GameID still switches normally.
+</div>
 
-<table data-sortable>
-<thead><tr><th>Your OPL data home</th><th>Put Neutrino at</th></tr></thead>
-<tbody>
-<tr><td><code>+OPL</code> (preferred when the partition exists)</td><td><code>hdd0:/+OPL/neutrino/</code></td></tr>
-<tr><td><code>__common</code></td><td><code>hdd0:/__common/OPL/neutrino/</code></td></tr>
-</tbody>
-</table>
+<p>The retired <code>neutrino_device</code> / <code>neutrino_devtype</code> picker keys are ignored
+and removed on the next settings save. The single Neutrino Path field now covers cross-device
+placement directly.</p>
 
-<p>The APA HDD must be <b>started</b> for this to resolve — nothing is mounted to read otherwise — but the game itself may live anywhere: a USB or MMCE game can boot from an APA-hosted Neutrino, and OPL keeps that partition mounted across the handoff. An install on a partition that is <em>not</em> the OPL data home cannot be reached; move it, or use another device.</p>
-
-<p>If none of those paths exist when you launch a game set to the Neutrino core, OPL shows a warning and falls back to the <code>&lt;OPL&gt;</code> core for that launch only.</p>
-
-<h3>Custom Neutrino ELF path</h3>
-
-<p>You can provide a custom location with the <code>neutrino_path</code> key in <code>settings_riptopl.cfg</code>; there is no menu row for it. In <b>Auto</b>, that custom path keeps its historical priority on non-MMCE sources. For an <b>MMCE-hosted game</b>, a complete install on the active <code>mmceN:</code> game device is checked first so GameID switching does not have to be suppressed to protect an <code>mcN:</code>-hosted loader. <b>Memory Card</b> explicitly tries <code>mc0:</code>/<code>mc1:</code> first, while <b>Game's Device</b> ignores the custom path and searches only the active game's own device.</p>
-
-<h3>Network boot exception</h3>
-
-<p>The <a href="network-boot.html">UDPBD / UDPFS</a> feature ships its <b>own bundled Neutrino</b> — a drag-and-drop <code>neutrino/</code> folder (<code>neutrino.elf</code> plus <code>config/</code> and <code>modules/</code>) in the release zip, pre-populated with the UDPFS config. Per-game Neutrino use still needs you to supply <code>neutrino.elf</code> at the paths above.</p>
+<h3>Network boot note</h3>
+<p>UDPBD / UDPFS use the same resolver. Leave Neutrino Path at <code>&lt;not set&gt;</code> for
+game-device &rarr; memory-card discovery, or set an exact path to pin the core to one install.</p>
 
 <h2 id="per-game-core">2. Pick the core per game</h2>
 
@@ -189,31 +208,23 @@ enclosures are expected to fail upstream as well.
 PlayStation 1 titles always boot through their own core — <b>POPSTARTER.ELF</b> for <code>*.VCD</code>, <b>ember.elf</b> for Ember titles — never OPL's core and never Neutrino. The Loader Core selector is locked and has no effect for PS1 games. See <a href="ps1-vcd.html">PS1 Games (VCD)</a>.
 </div>
 
-<h2 id="neutrino-device">3. Neutrino Device picker</h2>
+<h2 id="neutrino-device">3. Neutrino Path</h2>
 
-<p>Under <b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Default Device</b>, the
-current picker intentionally exposes only three policies. Device-specific entries such as USB,
-MX4SIO, MMCE, exFAT HDD, APA HDD and iLink are not user-facing choices in current builds.</p>
+<p><b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Neutrino Path</b> is now the
+single location control. It replaces the old device picker.</p>
 
-<p>Available choices:</p>
 <ul class="checklist">
-<li><b>Auto</b> — on an MMCE-hosted game, checks that game's MMCE prefix/device root first, then a
-valid custom <code>neutrino_path</code>; on other sources, custom path remains first. Both paths then
-continue through the mounted APA HDD OPL data home and finally the <code>mc0:</code>/<code>mc1:</code>
-candidates (default).</li>
-<li><b>Memory Card</b> — tries <code>mc0:</code>/<code>mc1:</code> first; if they miss, the normal
-Auto fallback tiers are still available. MMCE users who need GameID card switching should not use
-an <code>mcN:</code>-hosted Neutrino on that same slot.</li>
-<li><b>Game's Device</b> — searches <em>only</em> the active game's own device: its configured
-games-prefix path first, then the bare device root. There is no custom-path, APA-HDD or memory-card
-fallback; a miss shows "not found" and aborts the Neutrino handoff.</li>
+<li><b><code>&lt;not set&gt;</code> (default)</b> — active game's own device first, then
+<code>mc0:</code>/<code>mc1:</code>. For an APA game, its mounted OPL data home on
+<code>pfs0:</code> acts as the game-device tier.</li>
+<li><b>Any explicit full path</b> — exact authoritative <code>neutrino.elf</code> location; no
+fallback scan is performed if it fails.</li>
 </ul>
 
-<p>The active-device probe accepts the normal <code>NEUTRINO/neutrino.elf</code> /
-<code>neutrino/neutrino.elf</code> case variants. For MMCE this means, for example,
-<code>mmce0:/OPL/neutrino/neutrino.elf</code> when <code>OPL</code> is the Prefix Path, then
-<code>mmce0:/neutrino/neutrino.elf</code> at the bare root. The APA HDD remains a special Auto
-fallback through the already-mounted OPL data partition (see §1).</p>
+<p>This keeps existing/simple layouts zero-config while allowing cross-device setups with one
+deterministic lookup. For example, an HDD game can point directly to
+<code>mmce0:/neutrino/neutrino.elf</code>, avoiding the ambiguity that a device-type selector could
+not express.</p>
 
 <h2 id="launch-args">4. Launch arguments</h2>
 
