@@ -437,12 +437,19 @@ void sfxPlay(int id)
 #define BGM_IO_LOW_WATER_CHUNKS    48 // ~1.1 s: stop STARTING discretionary device reads
 #define BGM_IO_RESUME_WATER_CHUNKS 80 // ~1.8 s: hysteresis before artwork/cosmetic IO resumes
 // EE priorities are strict (lower number wins): playback=30, Vorbis I/O/decode=31. Playback is
-// tiny and normally blocked in audsrv; decode now outranks the background I/O worker (32) while
+// tiny and normally asleep between audsrv room polls; decode now outranks the background I/O worker (32) while
 // sharing the GUI/pad tier (31), whose vsync wait yields naturally. This prevents a long runnable
 // background queue from starving refills; the larger ring also covers stalls that are IOP-bound,
 // where EE thread priority cannot help.
 #define BGM_THREAD_BASE_PRIO       0x1E
 #define BGM_THREAD_STACK_SIZE      0x1000
+// Sleep bounds while audsrv's ring has no room for the next chunk (see bgmWaitForRoom). One chunk is
+// ~23 ms of 44.1 kHz stereo; the sleep is sized from the stream's byte rate so polls stay near one per
+// chunk, like the blocking wait they replace. A stream that stops draining is polled slowly.
+#define BGM_ROOM_POLL_MIN_US       2000
+#define BGM_ROOM_POLL_MAX_US       20000
+#define BGM_ROOM_STALL_POLLS       50
+#define BGM_ROOM_STALL_US          100000
 
 extern void *_gp;
 
@@ -500,6 +507,55 @@ static u8 bgmIoThreadStack[BGM_THREAD_STACK_SIZE] __attribute__((aligned(16)));
 
 static OggVorbis_File *vorbisFile;
 
+// PCM bytes the stream plays per millisecond, set by bgmStart from its format.
+static int bgmBytesPerMs = 0;
+
+// Wait until audsrv can take one more chunk. Returns 0 once asked to terminate.
+//
+// NOT audsrv_wait_audio(). That RPC parks audsrv's only IOP RPC thread -- and holds the EE library's
+// call mutex -- until the IOP play thread frees ring space, which it does only while SPU2 keeps
+// completing block transfers. This thread sits in that wait almost all the time, so whenever
+// playback stalled, every audsrv call from every other thread queued behind it for good: the menu
+// thread's per-press sound effect (sfxPlay starts the rumble pulse first, so the controller kept
+// vibrating on a frozen menu), bgmMute() on the way into a launch, any volume change. Polling
+// audsrv_available() keeps each call a short round trip, so a stalled stream costs the music and
+// nothing else, and terminateFlag is seen within one sleep.
+static int bgmWaitForRoom(void)
+{
+    int lastRoom = -1, samePolls = 0;
+
+    while (!terminateFlag) {
+        int room = audsrv_available();
+        int us;
+
+        if (room >= BGM_RING_BUFFER_SIZE)
+            return 1;
+
+        if (room == lastRoom) {
+            if (++samePolls == BGM_ROOM_STALL_POLLS)
+                LOG("BGM: audsrv ring has not drained for %d polls -- playback stalled\n", samePolls);
+        } else {
+            samePolls = 0;
+            lastRoom = room;
+        }
+
+        if (samePolls >= BGM_ROOM_STALL_POLLS) {
+            us = BGM_ROOM_STALL_US;
+        } else if (room >= 0 && bgmBytesPerMs > 0) {
+            // Most of the time the missing room takes to play out.
+            us = ((BGM_RING_BUFFER_SIZE - room) * 750) / bgmBytesPerMs;
+            if (us < BGM_ROOM_POLL_MIN_US)
+                us = BGM_ROOM_POLL_MIN_US;
+            else if (us > BGM_ROOM_POLL_MAX_US)
+                us = BGM_ROOM_POLL_MAX_US;
+        } else {
+            us = BGM_ROOM_POLL_MAX_US;
+        }
+        DelayThread(us);
+    }
+    return 0;
+}
+
 static void bgmThread(void *arg)
 {
     bgmThreadRunning = 1;
@@ -510,7 +566,8 @@ static void bgmThread(void *arg)
             break;
 
         bgmAdjustBufferedChunks(-1);
-        audsrv_wait_audio(BGM_RING_BUFFER_SIZE);
+        if (!bgmWaitForRoom())
+            break;
         audsrv_play_audio(bgmBuffer[rdPtr], BGM_RING_BUFFER_SIZE);
         rdPtr = (rdPtr + 1) % BGM_RING_BUFFER_COUNT;
 
@@ -764,6 +821,7 @@ void bgmStart(void)
         audsrvFmt.channels = vi->channels;
         audsrvFmt.freq = vi->rate;
         audsrvFmt.bits = 16;
+        bgmBytesPerMs = (int)((vi->rate * vi->channels * 2) / 1000);
 
         audsrv_set_format(&audsrvFmt);
         audsrv_set_volume(gBGMVolume);
