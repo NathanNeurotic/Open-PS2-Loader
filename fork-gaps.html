@@ -73,12 +73,16 @@ project implements it.</p>
 An entry here means another project has something RiptOPL does not; it does not mean the feature is scheduled.
 Re-audited on 2026-09-22 against <code>rebuild/main</code> at
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b">abf14079</a>.
-This pass re-audits <a href="#project-titan">Project Titan Magenta Edition</a> against upstream
+This pass completes the eight-project <b>Awaiting Comparison</b> backlog and re-audits
+<a href="#project-titan">Project Titan Magenta Edition</a>. The legacy-variant sweep adds confirmed gaps from
+<a href="#e2opl">E2OPL</a>, <a href="#modular-pademu">Modular PADEMU</a>, <a href="#uopl-historical">historical uOPL</a>,
+<a href="#rrve">exaconn's RRVE / wheel work</a> and <a href="#sopl">Stable OPL</a>, while moving OPL Daily Build,
+Grimdoomer OPL and X2P to <a href="#checked">Checked, nothing missing</a>. Titan was audited against upstream
 <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>2a69c259</code></a>
 (<code>VERSION</code> 0.3.93-rc17), expanding its confirmed code-level gaps from 2 to 10 while preserving Titan's own
 target/hardware-validation caveats below. The 2026-09-20 pass added <a href="#nhddl">NHDDL v1.2.2</a>; the earlier 2026-09-15 update also records
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a> shipping three former entries (see <a href="#notes">Notes</a>).
-Every entry has a short ID whose letter names its source (see <a href="#sources">Sources surveyed</a>), so it can be
+Every entry has a short ID whose prefix names its source (see <a href="#sources">Sources surveyed</a>), so it can be
 referenced in issues and chat. Entries in the <b>Beyond game loading</b> area are general-purpose tools from PS2
 environments built on OPL, listed so the survey is complete.
 </div>
@@ -99,12 +103,17 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>M</code></td><td><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2">Modulo R1</a></td><td>A Neutrino-based loader in beta</td><td>1</td></tr>
     <tr><td><code>N</code></td><td><a href="https://github.com/pcm720/nhddl">NHDDL</a></td><td>A deliberately small Neutrino front-end and launcher</td><td>2</td></tr>
     <tr><td><code>L</code></td><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">Extended APA</a></td><td>An OPL build for internal HDDs larger than 2 TiB</td><td>1</td></tr>
+    <tr><td><code>X</code></td><td><a href="https://sourceforge.net/projects/e2opl/">E2OPL</a></td><td>A historical OPL fork adding EXT2 USB storage</td><td>1</td></tr>
+    <tr><td><code>MP</code></td><td><a href="https://github.com/belek666/Open-PS2-Loader/tree/modularPademu">Modular PADEMU</a></td><td>A historical modular controller-emulation branch</td><td>2</td></tr>
+    <tr><td><code>K</code></td><td><a href="https://github.com/slimpuggamer/uOPL/tree/uOPL-1">uOPL (historical)</a></td><td>KrahJohlito-era uOPL before the later wOPL line</td><td>1</td></tr>
+    <tr><td><code>RR</code></td><td><a href="https://github.com/exaconn/Open-PS2-Loader">RRVE / exaconn OPL</a></td><td>The former RRVE repository, now carrying wheel and negCon experiments</td><td>1</td></tr>
+    <tr><td><code>S</code></td><td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader">Stable OPL</a></td><td>A stability-focused OPL fork with storage-driver changes</td><td>1</td></tr>
   </tbody>
 </table>
-<p>Nine more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
+<p>Twelve more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
 
 <h2 id="at-a-glance">At a glance</h2>
-<p>All 56 entries in one list. Click a column heading to sort.</p>
+<p>All 62 entries in one list. Click a column heading to sort.</p>
 <table data-sortable>
   <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Source</th><th>Type</th></tr></thead>
   <tbody>
@@ -164,6 +173,12 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>N1</code></td><td>Generic forward-boot CLI</td><td>Launcher integration</td><td>NHDDL</td><td><span class="pill">Optional</span></td></tr>
     <tr><td><code>N2</code></td><td>Reuse <code>SYS-CONF/IPCONFIG.DAT</code> for UDPFS IP</td><td>Cheats, launching &amp; network</td><td>NHDDL</td><td><span class="pill">Optional</span></td></tr>
     <tr><td><code>L1</code></td><td>APA HDDs over 2 TiB</td><td>Internal HDD</td><td>Extended APA</td><td><span class="badge unconfirmed">Not planned</span></td></tr>
+    <tr><td><code>X1</code></td><td>EXT2 USB filesystem support</td><td>USB / game sources</td><td>E2OPL</td><td>Feature</td></tr>
+    <tr><td><code>MP1</code></td><td>Xbox 360 controllers over USB</td><td>Controllers &amp; input</td><td>Modular PADEMU</td><td>Feature <span class="pill">Historical</span></td></tr>
+    <tr><td><code>MP2</code></td><td>Generic USB HID gamepads</td><td>Controllers &amp; input</td><td>Modular PADEMU</td><td>Feature <span class="pill">Historical</span></td></tr>
+    <tr><td><code>K1</code></td><td>Write debug logs to a BDM device</td><td>Developer / diagnostics</td><td>uOPL (historical)</td><td>Feature <span class="pill">Debug build</span></td></tr>
+    <tr><td><code>RR1</code></td><td>USB Driving Force wheel with negCon presentation</td><td>Controllers &amp; input</td><td>RRVE / exaconn OPL</td><td>Feature <span class="pill">Experimental</span></td></tr>
+    <tr><td><code>S1</code></td><td>ATA DRDY waiting for slow-starting SMR / SSD drives</td><td>Internal HDD</td><td>Stable OPL</td><td><span class="badge secondary">Fix</span></td></tr>
   </tbody>
 </table>
 
@@ -351,25 +366,86 @@ build for internal HDDs formatted with PS2 HDD Manager's banked APA layout.</p>
   </tbody>
 </table>
 
-<h2 id="awaiting-comparison">Awaiting Comparison</h2>
-<p>These OPL variants are documented in the sister
-<a href="https://nathanneurotic.github.io/R4D-DOCS/App%20Flavors%20-%20Open%20PS2%20Loader.html">Open PS2 Loader Flavors</a>
-page but have not yet been audited against RiptOPL. Their presence here does <b>not</b> mean they contain a confirmed
-RiptOPL feature gap; it only reserves them for a future code comparison. No gap IDs should be assigned until that audit
-is complete.</p>
+<h2 id="e2opl">E2OPL</h2>
+<p><a href="https://sourceforge.net/projects/e2opl/">E2OPL</a> &mdash; a historical OPL branch whose defining change was
+read-only EXT2 support for USB storage. Its published README requires the EXT2 partition to be first, uses 4096-byte
+blocks and supports ISO files rather than USBExtreme splitting.</p>
 <table>
-  <thead><tr><th>Project</th><th>Repository / source</th><th>Status</th></tr></thead>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
   <tbody>
-    <tr><td><b>E2OPL</b></td><td><a href="https://sourceforge.net/projects/e2opl/">SourceForge project</a></td><td>Awaiting comparison</td></tr>
-    <tr><td><b>Open PS2 Loader Daily Build (OPL DB / OPL TA)</b></td><td><a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds">Jay-Jay-OPL/OPL-Daily-Builds</a></td><td>Awaiting comparison</td></tr>
-    <tr><td><b>Open PS2 Loader Modular PADEMU</b></td><td><a href="https://github.com/belek666/Open-PS2-Loader/tree/modularPademu">belek666/Open-PS2-Loader <code>modularPademu</code> branch</a></td><td>Awaiting comparison</td></tr>
-    <tr><td><b>Open PS2 Loader Grimdoomer</b></td><td><a href="https://github.com/grimdoomer/Open-PS2-Loader">grimdoomer/Open-PS2-Loader</a></td><td>Awaiting comparison</td></tr>
-    <tr><td><b>X2P (Xbox-to-PlayStation)</b></td><td><a href="https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa">koraxial/Xbox-2-PlayStation-Emulator-AlFa</a></td><td>Awaiting comparison</td></tr>
-    <tr><td><b>uOPL (historical)</b></td><td><a href="https://github.com/NathanNeurotic/uOPL">NathanNeurotic/uOPL mirror</a></td><td>Awaiting comparison</td></tr>
-    <tr><td><b>wOPL Ridge Racer V Edition (RRVE)</b></td><td><a href="https://github.com/exaconn/Open-PS2-Loader">exaconn/Open-PS2-Loader</a></td><td>Awaiting comparison</td></tr>
-    <tr><td><b>Stable Open PS2 Loader (sOPL)</b></td><td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader">mystyq/Stable-Open-PS2-Loader</a></td><td>Awaiting comparison</td></tr>
+    <tr><td><code>X1</code></td><td><b>EXT2 USB filesystem support</b></td><td>Loads PS2 ISO images from a read-only EXT2 USB partition, avoiding FAT32's 4 GiB file limit and fragmentation requirement. RiptOPL supports FAT/exFAT-style BDM filesystems but has no EXT2 filesystem driver, so this remains a distinct storage-format capability even though exFAT solves most of the same practical problem today.</td><td><a href="https://sourceforge.net/projects/e2opl/">SourceForge project</a><br><a href="https://sourceforge.net/p/e2opl/code/HEAD/tree/trunk/README">source README</a></td></tr>
   </tbody>
 </table>
+
+<h2 id="modular-pademu">Open PS2 Loader Modular PADEMU</h2>
+<p><a href="https://github.com/belek666/Open-PS2-Loader/tree/modularPademu">belek666/Open-PS2-Loader <code>modularPademu</code></a>
+&mdash; a 2020 experimental branch that split PADEMU into controller-specific modules. DS3/DS4 overlap modern OPL,
+and its Xbox One USB path overlaps <a href="#ps2-launcher">P1</a>; the two controller classes below still have no
+equivalent module in RiptOPL.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>MP1</code></td><td><b>Xbox 360 controllers over USB</b> <span class="pill">Historical</span></td><td>A dedicated wired-Xbox-360 module recognizes Microsoft and several third-party VID/PID pairs, translates reports to DualShock 2 input and drives LEDs/rumble. RiptOPL has no <code>xbox360usb</code> PADEMU module.</td><td><a href="https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/xbox360usb/xbox360usb.c">xbox360usb.c</a></td></tr>
+    <tr><td><code>MP2</code></td><td><b>Generic USB HID gamepads</b> <span class="pill">Historical</span></td><td>A generic HID module parses a USB gamepad's HID report descriptor and maps buttons, hats and axes into the emulated DS2 report instead of requiring a controller-specific driver. This is separate from Titan's keyboard/mouse support and BoliviaOS's USB keyboard support.</td><td><a href="https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/hidusb/hidusb.c">hidusb.c</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">ℹ Modular PADEMU status</div>
+These are historical source capabilities, not claims of current RiptOPL-era hardware validation. The branch head is
+<a href="https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a"><code>66b93542</code></a>
+from 2020. Its Xbox One USB module is not counted separately because modern Xbox One / Series USB support is already P1.
+</div>
+
+<h2 id="uopl-historical">uOPL (historical)</h2>
+<p><a href="https://github.com/slimpuggamer/uOPL/tree/uOPL-1">slimpuggamer/uOPL <code>uOPL-1</code></a> &mdash; the
+historical uOPL line mirrored by <a href="https://github.com/NathanNeurotic/uOPL">NathanNeurotic/uOPL</a>. Most of the
+features that once distinguished it are now directly present in RiptOPL: Favorites, Coverflow, per-game Neutrino,
+Mode 7, legacy <code>mass:</code> app paths, the extra theme keys, one-button Disable All in the cheat selector and
+cancellation of pending artwork work during launch.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>K1</code></td><td><b>Write debug logs to a BDM device</b> <span class="pill">Debug build</span></td><td>Debug builds can switch <code>LOG()</code> from the normal debug transport to a block-device file and append messages to <code>mass0:opllog.txt</code>. RiptOPL still has UDP/PPC/DECI2-style debug output, but no equivalent <b>BD Debug Log</b> setting or file-backed BDM logger.</td><td><a href="https://github.com/slimpuggamer/uOPL/blob/uOPL-1/include/ioman.h">include/ioman.h</a><br><a href="https://github.com/slimpuggamer/uOPL/blob/uOPL-1/src/ioman.c">src/ioman.c</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="rrve">RRVE / exaconn OPL wheel work</h2>
+<p><a href="https://github.com/exaconn/Open-PS2-Loader">exaconn/Open-PS2-Loader</a> &mdash; the repository previously
+listed here as the wOPL Ridge Racer V Edition. Its current 2026 source has moved beyond that label and contains
+Logitech wheel work on <code>master</code>, plus a companion
+<a href="https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition"><code>Driving-Force-2-negCon-Edition</code></a>
+branch. The entry below describes the code that actually exists now rather than inferring features from the old RRVE name.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>RR1</code></td><td><b>USB Driving Force wheel with negCon presentation</b> <span class="pill">Experimental</span></td><td>The DS34 USB path recognizes Logitech wheel devices, parses wheel/pedal reports and applies a spring/auto-centering command. The companion branch presents that wheel through the PS1 <code>negCon</code> protocol (<code>0x23</code>) instead of only emulating a normal DS2, which is useful to titles designed around negCon-style analog steering. RiptOPL's DS34 USB driver has no Logitech <code>dfreport</code> / negCon path.</td><td><a href="https://github.com/exaconn/Open-PS2-Loader/commit/3ab34d2028e3da9592b99b4681a7cdb324e3a070">Logitech definitions</a><br><a href="https://github.com/exaconn/Open-PS2-Loader/commit/e70e6cbddf39a68497c28b302d19695ee2ce753a">auto-centering</a><br><a href="https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition">negCon branch</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="sopl">Stable Open PS2 Loader (sOPL)</h2>
+<p><a href="https://github.com/mystyq/Stable-Open-PS2-Loader">mystyq/Stable-Open-PS2-Loader</a> &mdash; a
+stability-focused fork. Its artwork TAR caching, large-list work, BDM HDD support, game-size fixes, MMCE work and
+other older changes either exist in RiptOPL or have since been superseded there. One lower-level ATA behavior remains
+materially different.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>S1</code></td><td><b>ATA DRDY waiting for slow-starting SMR / SSD drives</b> <span class="badge secondary">Fix</span></td><td>sOPL's in-game ATAD path adds an <code>ata_wait_until_ready()</code> loop that waits for BUSY to clear and DRDY to assert at driver start and around ATA commands. It was introduced specifically for newer SMR/SSD drives that can take longer to become ready. RiptOPL has its own post-ATAD settling and HDD-detection safeguards, but its current <code>cdvdman/atad.c</code> does not implement this in-driver DRDY wait strategy.</td><td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader/commit/3495d55b96ce72497b6a922ab540ac76a58ca74a">commit 3495d55b</a><br><a href="https://github.com/mystyq/Stable-Open-PS2-Loader/blob/master/modules/iopcore/cdvdman/atad.c">current atad.c</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">ℹ sOPL TAR claims vs. audited source</div>
+The May 2026 sOPL release text advertises <code>ART/art.tar</code>, <code>CFG/cfg.tar</code> and <code>CHT/cht.tar</code>.
+The published <code>release</code> tag points to an older commit, while current <code>master</code> visibly carries the
+ART reader/cache path. This survey does not turn an unlocated release-note claim into a separate gap. More importantly,
+RiptOPL <code>rebuild/main</code> now has a unified TAR engine for all three archive kinds, including
+<code>art_cache.bin</code>, <code>cfg_cache.bin</code> and <code>cht_cache.bin</code>, so none of those archive features
+is a current RiptOPL gap regardless.
+</div>
+
+<div class="callout info"><div class="h">ℹ Awaiting Comparison cleared</div>
+All eight variants that were previously reserved for comparison have now been audited. OPL Daily Build, Grimdoomer OPL
+and X2P produced no remaining unique RiptOPL gap and are recorded in <a href="#checked">Checked, nothing missing</a>.
+The five sources above produced six confirmed entries.
+</div>
 
 <h2 id="checked">Checked, nothing missing</h2>
 <p>Surveyed with the rest. Everything these offer is already in RiptOPL or does not apply to it.</p>
@@ -385,17 +461,22 @@ is complete.</p>
     <tr><td><a href="https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats">PS2-Widescreen/OPL-Widescreen-Cheats</a></td><td>A widescreen cheat collection that works with RiptOPL's <a href="cheats.html">cheat engine</a> as it is.</td></tr>
     <tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader-lang">ps2homebrew/Open-PS2-Loader-lang</a></td><td>RiptOPL builds its <a href="languages.html">UI languages</a> from this repository, including Galician and Serbian.</td></tr>
     <tr><td><a href="https://github.com/ps2homebrew/HDLGameInstaller">ps2homebrew/HDLGameInstaller</a></td><td>A separate app that installs games into APA partitions. RiptOPL does not write APA partitions.</td></tr>
+    <tr><td><a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds">Open PS2 Loader Daily Build (OPL DB / OPL TA)</a></td><td>Its historical ELM/PS1 page is superseded by RiptOPL's dedicated <a href="ps1-vcd.html">PS1 Games</a> view and current POPSTARTER/Ember paths. Its theme sound effects, startup audio and related theme assets are also already present or extended in RiptOPL's current sound/theme engine.</td></tr>
+    <tr><td><a href="https://github.com/grimdoomer/Open-PS2-Loader">grimdoomer/Open-PS2-Loader</a></td><td>The exFAT/GPT internal-HDD path that made this fork distinctive is already part of RiptOPL's <a href="hdd.html">internal HDD</a> support. Its later 64-bit BDM LBA / VMC-range safety work is also present in RiptOPL's current <code>bdmsupport.c</code>.</td></tr>
+    <tr><td><a href="https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa">X2P (Xbox-to-PlayStation)</a></td><td>X2P intentionally removes OPL features and presents a themed, USB-focused subset; it is not an Xbox emulator. Its sound/theme stack (SFX, startup audio and streamed OGG BGM) is already present and more extensively integrated in RiptOPL, so the audit found no net-added capability.</td></tr>
   </tbody>
 </table>
 
 <h2 id="notes">Notes</h2>
 <ul>
+  <li><b>Previously awaiting variants fully audited on 2026-09-22:</b> E2OPL's historical SourceForge source; OPL Daily Build <a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds/commit/aa531a858c583104bfd577c4715339c8ce68d534"><code>aa531a85</code></a>; Modular PADEMU <a href="https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a"><code>66b93542</code></a>; Grimdoomer's large-capacity branch <a href="https://github.com/grimdoomer/Open-PS2-Loader/commit/d1f51be4452074c2352931e0b9c474da9242e481"><code>d1f51be4</code></a> plus its later BDM LBA fix branch; historical uOPL <a href="https://github.com/slimpuggamer/uOPL/commit/0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64"><code>0daf81fe</code></a>; X2P <a href="https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa/commit/160c3e18c508432323946fca9bb5cb989705f28e"><code>160c3e18</code></a>; exaconn master <a href="https://github.com/exaconn/Open-PS2-Loader/commit/73a4921dee722837c18150d0c0f1a7f3675e8349"><code>73a4921d</code></a> and negCon branch <a href="https://github.com/exaconn/Open-PS2-Loader/commit/f9717f7676a6d7db588a1c042c3eaff36ec414b0"><code>f9717f76</code></a>; and Stable OPL <a href="https://github.com/mystyq/Stable-Open-PS2-Loader/commit/770d5323928ff20990d07d70a5ce266a95e0f6c4"><code>770d5323</code></a>. Six new gaps survived code comparison; three projects moved to the no-gap table.</li>
   <li><b>Project Titan Magenta Edition parity checked on 2026-09-22:</b> audited against upstream <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>main@2a69c259</code></a> / <code>VERSION</code> 0.3.93-rc17 and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b"><code>rebuild/main@abf14079</code></a>. Titan's controller, Smart IGR and Store/Download documentation explicitly retains physical-target validation caveats; those rows describe source capability, not a hardware-compatibility guarantee.</li>
   <li><b>NHDDL parity checked on 2026-09-20:</b> RiptOPL already has the visual Game ID signal used by PixelFX/RetroGEM hardware, MMCE GameID switching for SD2PSX/MemCard PRO2 on cross-device launches, remembered last-played selection with optional autostart, persistent ISO metadata caching, and global/per-game Neutrino arguments. Those are therefore not N-series gaps.</li>
   <li><b>Already in RiptOPL, so not listed:</b> the fix from wOPL PR #435 (remember the last played game when it is
   the first list entry), <a href="cheats.html#ps2rd-image">PS2RD cheat images (<code>.img</code>)</a>, cover art from
-  <code>ART/art.tar</code> (<a href="settings.html#display-settings">Interface settings</a>), cheats from
-  <a href="cheats.html#cht-files"><code>CHT/cht.tar</code></a>, the <code>&lt;name&gt;_show_run</code> theme key,
+  <code>ART/art.tar</code> (<a href="settings.html#display-settings">Interface settings</a>), per-game configs from
+  <code>CFG/cfg.tar</code>, cheats from <a href="cheats.html#cht-files"><code>CHT/cht.tar</code></a>, persistent TAR
+  index sidecars for all three archive kinds, the <code>&lt;name&gt;_show_run</code> theme key,
   RetroAchievements for <a href="retroachievements.html#physical-discs">physical discs</a>, per-game OSD language,
   virtual memory card creation, and the older USB driver that upstream PR #1752 proposes pinning.</li>
   <li><b>Shipped since the survey</b> (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a>):
@@ -407,8 +488,10 @@ is complete.</p>
   <li><b>Device names:</b> RiptOPL accepts <code>usb0:</code> and <code>ata0:</code> style names for its boot path and
   ties each launch to its device by driver name, but reads files through <code>massN:</code>. wOPL uses the typed
   names throughout. That is a different approach rather than a missing feature, so it is not counted.</li>
-  <li><b><code>CFG/cfg.tar</code>:</b> wOPL's README lists it, but neither wOPL nor RiptOPL reads per-game configs from
-  an archive, so it is not counted either.</li>
+  <li><b>TAR archive status:</b> the older survey note about <code>CFG/cfg.tar</code> is obsolete. RiptOPL
+  <code>rebuild/main</code> now has one indexed/persistently cached TAR engine for <code>ART/art.tar</code>,
+  <code>CFG/cfg.tar</code> and <code>CHT/cht.tar</code>. Consequently, sOPL's TAR work is not a current gap, and an
+  archive claim is counted only when its implementation can be located in the audited source.</li>
 </ul>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
