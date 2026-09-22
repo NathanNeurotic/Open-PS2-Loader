@@ -41,8 +41,16 @@ The lookup order is fixed and deliberately short:
    device for `neutrino/neutrino.elf` (including the established case variants).
 3. **Memory Card** — finally `mc0:`, then `mc1:`.
 
-There is no Neutrino device picker anymore. The old device-selection config keys remain readable for
-configuration compatibility, but they do not change this runtime order.
+There is no Neutrino device picker anymore. When you upgrade, an old **Memory Card** or **HDD (APA)**
+choice becomes the matching Neutrino Path: `mc:/NEUTRINO/neutrino.elf` or `hdd:/neutrino/neutrino.elf`.
+Until you edit that path, RiptOPL also tries the other folder/file spellings the old picker accepted,
+because memory cards and APA partitions are case-sensitive. The other old choices (USB, MX4SIO, MMCE,
+exFAT HDD, iLink, Game's Device) load as `<not set>`.
+
+> **Upgrading with Neutrino on the APA HDD:** older builds also searched the APA data home
+> automatically for games on other devices. That search is gone. If Neutrino lives in
+> `+OPL/neutrino/` or `__common/OPL/neutrino/` and you use it for USB, MMCE or network games, set
+> Neutrino Path to `hdd:/neutrino/neutrino.elf`. HDD games still find it through the Game Device tier.
 
 ### Custom paths and cross-device launches
 
@@ -56,9 +64,11 @@ Common accepted path families include:
 
 | Meaning | Accepted examples |
 |---|---|
-| USB / mounted BDM | `usb:/...`, `usb0:/...`, `mass:/...`, `mass0:/...` |
+| USB | `usb:/...`, `usb0:/...` |
 | Internal exFAT HDD | `ata:/...`, `ata0:/...` |
 | MX4SIO | `mx4:/...`, `mx4sio:/...`, `massX:/...` |
+| iLink | `ilink:/...` |
+| A mounted BDM slot | `mass:/...` (every mounted slot), `mass0:/...` (that one slot) |
 | MMCE | `mmce:/...`, `mmce0:/...`, `mmce1:/...` |
 | Memory card | `mc:/...`, `mc?:/...`, `mc0:/...`, `mc1:/...` |
 | SMB filesystem | `smb:/...` |
@@ -68,9 +78,20 @@ Common accepted path families include:
 | Mounted APA/PFS filesystem | `pfs:/...`, `pfs0:/...` |
 | Internal ROM | `rom:/...`, `rom0:/...` |
 
-`massN:` is interpreted by the mounted device's **actual driver identity**, not by the spelling
-alone. A `massN:` slot backed by ATA therefore remains ATA semantically; it is not blindly treated
-as USB.
+BDM paths are resolved against the devices that are mounted **now**:
+
+- `massN:` means that exact slot and nothing else, and nothing is loaded for it. Slot numbers
+  follow the order devices mounted in, so a typed alias is the steadier spelling.
+- `mass:` searches every mounted slot.
+- A typed alias (`usb:`, `ata:`, `mx4sio:`, `ilink:` and the other spellings above) searches every
+  mounted device of that family. The family comes from each device's **driver**, not from the
+  spelling, so an ATA-backed slot counts as ATA. Only when no device of that family is mounted does
+  RiptOPL load that one driver and wait briefly for a device: 2 s, or 5 s for the internal HDD. A
+  device that is present but lacks the file costs no wait, and no other family is ever loaded.
+
+A network path (`smb:`, `udpfs:`, `udpbd:`...) starts its network stack when no other network
+protocol is running yet. The PS2 has one network adapter, so the other protocols stay unavailable
+until you reboot.
 
 For an **APA HDL game**, the automatic Game Device tier means the selected OPL data home already
 mounted on `pfs0:` (`+OPL` root or `__common/OPL/`). The semantic `hdd:/...` / `hdd0:/...`

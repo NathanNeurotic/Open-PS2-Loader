@@ -95,7 +95,10 @@ re-registers the selected device driver as bare `mass:` before it resolves that 
 
 Where `POPSTARTER.ELF` is loaded from is controlled by **PS Emulation Settings →
 POPSTARTER.ELF Path**. The old device picker is gone. The path field displays **`<not set>`** until
-you enter a custom full path.
+you enter a custom full path. When you upgrade, a device the old picker was set to becomes the matching
+path, for example `usb:/POPS/POPSTARTER.ELF` or `mmce:/POPS/POPSTARTER.ELF`, and an old Custom path is
+kept as it was. HDD (APA) and Game's Device become `<not set>`, because the Game Device tier below
+already covers them.
 
 The launch resolver uses one fixed order:
 
@@ -110,16 +113,22 @@ The custom ELF may live on a different backend from the VCD. RiptOPL keeps both 
 until the argv-preserving loader has opened `POPSTARTER.ELF`, so combinations such as an
 MMCE-hosted ELF with an APA-HDD game are no longer torn down merely because the game is elsewhere.
 Typed BDM aliases are normalized by the mounted driver's real identity (`massN:` may be USB,
-MX4SIO, ATA, iLink, or a network block transport). APA `hdd:/...` / `hdd0:/...` paths resolve
-only through the already-selected live OPL data-home partition; RiptOPL does not mount an arbitrary
-APA partition just because a custom ELF path names one.
+MX4SIO, ATA, iLink, or a network block transport). They search the devices mounted now and load
+only the one named driver, briefly, when no device of that family is present; `massN:` is that exact
+slot. [NEUTRINO.md](NEUTRINO.md#custom-paths-and-cross-device-launches) has the full rules, which
+are shared. APA `hdd:/...` / `hdd0:/...` paths resolve only through the already-selected live OPL
+data-home partition; RiptOPL does not mount an arbitrary APA partition just because a custom ELF
+path names one.
+
+When RiptOPL equips the BDMA drivers, it looks for the variant files first beside the file the
+custom path resolved to, so keep them in the same folder as a relocated `POPSTARTER.ELF`.
 
 For an **APA-HDD VCD**, the Game Device tier retains the established canonical
 `hdd0:__common/POPS/POPSTARTER.ELF` route. If that is absent, the resolver proceeds to the memory
 cards. A custom path still outranks the APA default.
 
-The path editor uses the full 256-byte setting buffer; it is no longer limited to the 31-character
-inline preview.
+The path editor uses the full 256-byte setting buffer, and its text field scrolls to keep the cursor
+in view; it is no longer limited to the 31-character inline preview.
 
 This setting moves **only the executable `POPSTARTER.ELF`**. It does not relocate POPSTARTER's
 memory-card dependency/config folder used by SMB/BDMA preparation; those files retain their existing
