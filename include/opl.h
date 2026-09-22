@@ -175,11 +175,12 @@ enum { NEUTRINO_DEV_AUTO = 0, // game device, then mc0/mc1
        NEUTRINO_DEV_MX4SIO,    // legacy: BDM "mx4sio"/sdc -> Auto
        NEUTRINO_DEV_MMCE,      // legacy: mmce0: / mmce1:  -> Auto
        NEUTRINO_DEV_EXFAT_HDD, // legacy: BDM "ata" internal exFAT HDD -> Auto
-       NEUTRINO_DEV_APA_HDD,   // legacy: APA data home (pfs0:) -> NEUTRINO_MIGRATED_APA_PATH + marker
+       NEUTRINO_DEV_APA_HDD,   // legacy: APA data home (pfs0:) -> the migrated hdd:/ path (opl.c) + marker
        NEUTRINO_DEV_GAME,      // legacy: the active game's own device only -> Auto (game device first)
        NEUTRINO_DEV_ILINK };   // legacy: BDM "ilink"      -> Auto
-#define NEUTRINO_MIGRATED_MC_PATH  "mc:/NEUTRINO/neutrino.elf"
-#define NEUTRINO_MIGRATED_APA_PATH "hdd:/neutrino/neutrino.elf"
+// The APA counterpart lives in opl.c: only the APA-owning sources may spell the raw hdd namespace
+// (test_apa_table_safety.py).
+#define NEUTRINO_MIGRATED_MC_PATH "mc:/NEUTRINO/neutrino.elf"
 extern int gNeutrinoDevice;
 extern int gDefaultCoreLoader;
 extern int gNeutrinoVideoDefault;

@@ -2650,6 +2650,11 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
     return 0;
 }
 
+// The visible path an old "HDD (APA)" Neutrino picker choice migrates to. Defined here rather than
+// beside NEUTRINO_MIGRATED_MC_PATH in opl.h: only the APA-owning sources may spell the raw hdd
+// namespace. The resolver keys the case-variant probe off the gNeutrinoDevice marker, not this text.
+#define NEUTRINO_MIGRATED_APA_PATH "hdd:/neutrino/neutrino.elf"
+
 // Shared reader for the Neutrino-launch globals (args / custom path / -elf switch / global default
 // core / device TYPE incl. the legacy device-INDEX migration). Factored out so the interactive
 // _loadConfig and the autolaunch miniInit can never drift: the argv/autolaunch path previously read
