@@ -742,6 +742,17 @@ int bdmEnsureNetworkSourceModules(int protocol, u32 timeoutMs)
     return 1;
 }
 
+// A typed custom ELF path (usb:/ata:/mx4sio:/ilink:) may name a family whose games page is off, so
+// its transport may not be resident. Load the core and exactly that transport, never the boot-dir
+// resolver's escalation ladder: a custom path that misses must not drag MX4SIO onto the pad bus or
+// wake the ATA stack on a console that never asked for them. bdmEnsureSourceModules returns at once
+// when the transport was already up, whether or not a device of the family is present.
+int bdmEnsureTypedSource(int bdmType, u32 timeoutMs)
+{
+    bdmLoadCoreModules(0);
+    return bdmEnsureSourceModules(bdmType, timeoutMs);
+}
+
 // True when this support's device is the UDPBD block device (its games are Neutrino-only).
 // Returns 0 for non-BDM supports (incl. FAV-wrapped items, which have no source lookup here).
 int bdmSupportIsUDPBD(const item_list_t *support)

@@ -113,6 +113,10 @@ int bdmIsUDPBDLoaded(void); // 1 if the UDPBD NIC stack is loaded (the SMB stack
 // Explicit-loader helper: force the requested block-network transport (NET_BOOT_UDPBD /
 // NET_BOOT_UDPFS) up even when its game page is disabled, then wait for its massN: mount.
 int bdmEnsureNetworkSourceModules(int protocol, u32 timeoutMs);
+// Explicit-loader helper for a typed local BDM path (usb:/ata:/mx4sio:/ilink:): bring up the BDM
+// core plus exactly that one transport and wait at most timeoutMs for a device of the type. Unlike
+// bdmResolveBootDir it never escalates to other transports. Returns 1 if such a device is present.
+int bdmEnsureTypedSource(int bdmType, u32 timeoutMs);
 // Which network block transport is actually resident (NET_BOOT_UDPBD / NET_BOOT_UDPFS). Use this,
 // not gNetBootProtocol, for anything DESCRIBING the live device -- the picker can change without a
 // reboot while the loaded IRX cannot.

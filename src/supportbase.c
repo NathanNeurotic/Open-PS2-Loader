@@ -1633,6 +1633,52 @@ static int sbJoinDeviceTail(char *out, int outSize, const char *root, const char
     return n >= 0 && n < outSize;
 }
 
+// How long a typed custom ELF path waits for a JUST-LOADED transport's device to mount. The BDMA
+// equip's source wait, with the bootstrap resolver's extra spin-up room for ATA. Only paid when no
+// device of the family was mounted at all; this runs before the launch draws "Please wait".
+#define SB_CUSTOM_BDM_WAIT_MS 2000
+#define SB_CUSTOM_ATA_WAIT_MS 5000
+
+// BDM family named by a typed alias, or BDM_TYPE_UNKNOWN. Spellings follow the drivers' own names
+// (bdmDetermineDeviceType): the iLink driver registers as "sd", MX4SIO as "sdc" or "mx4sio".
+static int sbAliasBdmType(const char *token)
+{
+    if (sbTokenStemIs(token, "usb"))
+        return BDM_TYPE_USB;
+    if (sbTokenStemIs(token, "ata"))
+        return BDM_TYPE_ATA;
+    if (sbTokenStemIs(token, "ilink") || sbTokenStemIs(token, "sd"))
+        return BDM_TYPE_ILINK;
+    if (sbTokenStemIs(token, "mx4sio") || sbTokenStemIs(token, "mx4") || sbTokenStemIs(token, "sdc") ||
+        !strcmp(token, "massx"))
+        return BDM_TYPE_SDC;
+    return BDM_TYPE_UNKNOWN;
+}
+
+// Probe massN:<tail> on every mounted slot of one BDM family (BDM_TYPE_UNKNOWN = every slot), in
+// slot order: a family can hold several devices and the file may sit on any of them.
+static int sbProbeBdmSlots(int bdmType, const char *tail, char *out, int outSize)
+{
+    int slots[MAX_BDM_DEVICES];
+    int n = 0;
+
+    if (bdmType == BDM_TYPE_UNKNOWN) {
+        for (int i = 0; i < MAX_BDM_DEVICES; i++)
+            slots[n++] = i;
+    } else {
+        n = bdmGetDeviceSlotsByType(bdmType, slots, MAX_BDM_DEVICES);
+    }
+
+    for (int i = 0; i < n; i++) {
+        char root[12];
+        snprintf(root, sizeof(root), "mass%d:", slots[i]);
+        if (sbJoinDeviceTail(out, outSize, root, tail) && sbFileExists(out))
+            return 1;
+    }
+    out[0] = '\0';
+    return 0;
+}
+
 // Resolve aliases by SEMANTIC backend, not by their spelling. In particular massN: is a mounted
 // BDM slot whose driver may be USB, MX4SIO, iLink, ATA or a network block transport; typed aliases
 // are therefore normalized to the live massN: namespace only after the driver stack is resident.
@@ -1844,53 +1890,37 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize)
         return 0;
     }
 
-    // Local BDM typed aliases. massN: itself is deliberately included: its semantic transport is
-    // learned from the mounted slot's driver ioctls rather than guessed from the spelling.
-    if (sbTokenStemIs(token, "usb") || sbTokenStemIs(token, "ata") ||
-        sbTokenStemIs(token, "ilink") || sbTokenStemIs(token, "sd") ||
-        sbTokenStemIs(token, "sdc") || sbTokenStemIs(token, "mx4") ||
-        sbTokenStemIs(token, "mx4sio") || sbTokenStemIs(token, "mass") || !strcmp(token, "massx")) {
-        char normalized[320];
-        char dir[320];
-        char base[128];
-        char *slash;
-        int type = BDM_TYPE_UNKNOWN;
-
-        // Rebuild with the already-lowercased token so typed aliases are case-insensitive.
-        snprintf(normalized, sizeof(normalized), "%s:%s", token, tail != NULL ? tail : "");
-        // Friendly aliases not understood by the lower boot-dir classifier.
-        if (!strcmp(token, "mx4"))
-            snprintf(normalized, sizeof(normalized), "mx4sio:%s", tail != NULL ? tail : "");
-        else if (!strcmp(token, "massx"))
-            snprintf(normalized, sizeof(normalized), "mx4sio:%s", tail != NULL ? tail : "");
-
-        snprintf(dir, sizeof(dir), "%s", normalized);
-        slash = strrchr(dir, '/');
-        if (slash == NULL)
-            slash = strrchr(dir, '\\');
-        if (slash != NULL) {
-            snprintf(base, sizeof(base), "%s", slash + 1);
-            *slash = '\0';
-        } else {
-            char *colon = strchr(dir, ':');
-            if (colon == NULL)
-                return 0;
-            snprintf(base, sizeof(base), "%s", colon + 1);
-            colon[1] = '\0';
-        }
-
-        if (base[0] != '\0' && bdmResolveBootDir(dir, sizeof(dir), base, &type) > 0) {
-            if (sbJoinDeviceTail(out, outSize, dir, base) && sbFileExists(out))
+    // Local BDM. massN: names one live mount slot and stays literal: there is nothing to activate, and
+    // slot numbers follow mount order, so an absent slot fails fast instead of starting the boot-dir
+    // resolver's USB -> MX4SIO -> iLink+ATA ladder (~14 s, with every transport left resident). Bare
+    // mass: searches whatever is mounted now. Neither loads anything.
+    if (sbTokenStemIs(token, "mass")) {
+        if (token[4] >= '0' && token[4] <= '9') {
+            char root[sizeof(token) + 1];
+            snprintf(root, sizeof(root), "%s:", token);
+            if (sbJoinDeviceTail(out, outSize, root, tail) && sbFileExists(out))
                 return 1;
+            out[0] = '\0';
+            return 0;
         }
+        return sbProbeBdmSlots(BDM_TYPE_UNKNOWN, tail, out, outSize);
+    }
 
-        // If the user supplied an already-live massN: path, keep it exact as a final no-guess probe.
-        if (sbFileExists(normalized)) {
-            snprintf(out, outSize, "%s", normalized);
-            return 1;
+    // A typed alias names a device family, learned from each mounted slot's driver rather than from
+    // the spelling. Search the mounted devices of that family first. Only when none holds the file is
+    // the one named transport brought up (its games page may be off) with a short, bounded wait for a
+    // device; a device that is present but lacks the file costs no wait. No other family is touched.
+    {
+        int bdmType = sbAliasBdmType(token);
+        if (bdmType != BDM_TYPE_UNKNOWN) {
+            if (sbProbeBdmSlots(bdmType, tail, out, outSize))
+                return 1;
+            if (bdmEnsureTypedSource(bdmType, bdmType == BDM_TYPE_ATA ? SB_CUSTOM_ATA_WAIT_MS : SB_CUSTOM_BDM_WAIT_MS) &&
+                sbProbeBdmSlots(bdmType, tail, out, outSize))
+                return 1;
+            out[0] = '\0';
+            return 0;
         }
-        out[0] = '\0';
-        return 0;
     }
 
     // host:, cdfs:, and any other already-registered filesystem stay literal.
