@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino Video
   HINT_NEUTRINO_VIDEO: 'Vynutit výstupní video režim GS Neutrino (-gsm). Vypnuto ponechá výchozí nastavení hry.'
   NEUTRINO_PATH: Neutrino ELF Cesta
-  HINT_NEUTRINO_PATH: Úplná cesta k neutrino.elf (např. mc0:NEUTRINO/neutrino.elf). Prázdné = automatická detekce na mc0/mc1.
   POPSTARTER_PATH: POPSTARTER.ELF Cesta
-  HINT_POPSTARTER_PATH: Vlastní cesta k POPSTARTER.ELF; pokud je prázdná/chybí, použije složku POPS na zařízení. Klávesnice max. 31 znaků; delší cesty přes settings_riptopl.cfg.
   BDMA_SOURCE: BDMA Zdroj
   HINT_BDMA_SOURCE: Zařízení, jehož složka POPS obsahuje soubory ovladače BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: BDMA Režim

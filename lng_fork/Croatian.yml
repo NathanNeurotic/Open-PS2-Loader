@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino Video
   HINT_NEUTRINO_VIDEO: Prisili Neutrino GS izlazni video način (-gsm). Isklj. zadržava zadano igre.
   NEUTRINO_PATH: Neutrino ELF Putanja
-  HINT_NEUTRINO_PATH: Puna putanja do neutrino.elf (npr. mc0:NEUTRINO/neutrino.elf). Prazno = automatsko otkrivanje na mc0/mc1.
   POPSTARTER_PATH: POPSTARTER.ELF Putanja
-  HINT_POPSTARTER_PATH: Prilagođena POPSTARTER.ELF putanja; tiho se vraća na POPS mapu uređaja ako je prazna/nedostaje. Tipkovnica ograničena na 31 znak; dulje putanje putem settings_riptopl.cfg.
   BDMA_SOURCE: BDMA Izvor
   HINT_BDMA_SOURCE: Uređaj čija POPS mapa sadrži vaše BDMAssault upravljačke datoteke (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: BDMA Način

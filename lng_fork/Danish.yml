@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino-video
   HINT_NEUTRINO_VIDEO: Tving Neutrinos GS-outputvideotilstand (-gsm). Fra bevarer spillets standard.
   NEUTRINO_PATH: Neutrino ELF-sti
-  HINT_NEUTRINO_PATH: Fuld sti til neutrino.elf (f.eks. mc0:NEUTRINO/neutrino.elf). Tom = auto-søg på mc0/mc1.
   POPSTARTER_PATH: POPSTARTER.ELF-sti
-  HINT_POPSTARTER_PATH: Brugerdefineret POPSTARTER.ELF-sti; falder stille tilbage til enhedens POPS-mappe hvis tom/manglende. Tastatur begrænset til 31 tegn; længere stier via settings_riptopl.cfg.
   BDMA_SOURCE: BDMA-kilde
   HINT_BDMA_SOURCE: Enhed hvis POPS-mappe indeholder dine BDMAssault-driverfiler (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: BDMA-tilstand

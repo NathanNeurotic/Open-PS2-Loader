@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Video Neutrino
   HINT_NEUTRINO_VIDEO: Buộc chế độ video GS của Neutrino (-gsm). Tắt giữ mặc định của game.
   NEUTRINO_PATH: Đường dẫn Neutrino ELF
-  HINT_NEUTRINO_PATH: Đường dẫn đầy đủ tới neutrino.elf (vd. mc0:NEUTRINO/neutrino.elf). Để trống = tự tìm trên mc0/mc1.
   POPSTARTER_PATH: Đường dẫn POPSTARTER.ELF
-  HINT_POPSTARTER_PATH: Đường dẫn tùy chỉnh POPSTARTER.ELF; tự dùng thư mục POPS trên thiết bị nếu để trống/thiếu. Bàn phím giới hạn 31 ký tự; đường dài hơn qua settings_riptopl.cfg.
   BDMA_SOURCE: Nguồn BDMA
   HINT_BDMA_SOURCE: Thiết bị có thư mục POPS chứa các tệp driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: Chế độ BDMA
