@@ -107,6 +107,7 @@ only reads, and the exFAT side is written only when the user saves settings.
 | Hybrid with a Custom Settings Path file in the APA home | That APA home is kept and the redirect decides. |
 | PSBBN hybrid, no settings anywhere | Home `massN:/`, defaults, BDM page Auto and HDD (exFAT) on, so the exFAT games show; the first save writes to exFAT. |
 | Hybrid whose exFAT volume never mounts within 5 s | Falls back to the APA path. |
+| Hybrid whose drive is not ready until the settings retry | Same home as when the drive is ready at boot: the retry runs the same hybrid check. |
 | Plain APA disk | Unchanged; a pure-APA official user's `+OPL/conf_opl.cfg` now seeds a first boot. |
 | Launcher `mc0:/APPS`, official settings in `mc0:/OPL` | Same-card recovery reads the seed; the save home stays the boot directory. |
 | USB/BDM root with official `conf_opl.cfg` | Read as the seed; RiptOPL saves its own file there. |
