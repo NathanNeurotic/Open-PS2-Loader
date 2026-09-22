@@ -71,9 +71,12 @@ project implements it.</p>
 
 <div class="callout info"><div class="h">ℹ A tracking list, not a roadmap</div>
 An entry here means another project has something RiptOPL does not; it does not mean the feature is scheduled.
-Re-audited on 2026-09-20 against <code>rebuild/main</code> at
-<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/f69d11bd2b150ee6f8e9080eec1b58824279dd90">f69d11bd</a>.
-This pass adds <a href="#nhddl">NHDDL v1.2.2</a>; the earlier 2026-09-15 update also records
+Re-audited on 2026-09-22 against <code>rebuild/main</code> at
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b">abf14079</a>.
+This pass re-audits <a href="#project-titan">Project Titan Magenta Edition</a> against upstream
+<a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>2a69c259</code></a>
+(<code>VERSION</code> 0.3.93-rc17), expanding its confirmed code-level gaps from 2 to 10 while preserving Titan's own
+target/hardware-validation caveats below. The 2026-09-20 pass added <a href="#nhddl">NHDDL v1.2.2</a>; the earlier 2026-09-15 update also records
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a> shipping three former entries (see <a href="#notes">Notes</a>).
 Every entry has a short ID whose letter names its source (see <a href="#sources">Sources surveyed</a>), so it can be
 referenced in issues and chat. Entries in the <b>Beyond game loading</b> area are general-purpose tools from PS2
@@ -89,7 +92,7 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>U</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pulls">Upstream OPL</a></td><td>Pull requests not yet merged into Open PS2 Loader</td><td>6</td></tr>
     <tr><td><code>B</code></td><td><a href="https://boliviaos.site/">BoliviaOS</a></td><td>A multifunction PS2 environment built on OPL</td><td>7</td></tr>
     <tr><td><code>P</code></td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher">PS2-Launcher</a></td><td>An OPL-based launcher with a console-style interface</td><td>5</td></tr>
-    <tr><td><code>T</code></td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">Project Titan</a></td><td>A PS2 system shell and application platform</td><td>2</td></tr>
+    <tr><td><code>T</code></td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">Project Titan Magenta Edition</a></td><td>A PS2 operating-system/system-platform project with integrated game engines</td><td>10</td></tr>
     <tr><td><code>E</code></td><td><a href="https://github.com/officialjuicedesigns/OPL-Evolution">OPL-Evolution</a></td><td>An experimental OPL fork with a unified dashboard</td><td>1</td></tr>
     <tr><td><code>H</code></td><td><a href="https://github.com/hacan359/xerabora">xeRAbora</a></td><td>RetroAchievements for real PS2 hardware</td><td>1</td></tr>
     <tr><td><code>R</code></td><td><a href="https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher">RETROLauncher</a></td><td>A Lua launcher for retro emulators and PS2 games</td><td>1</td></tr>
@@ -101,7 +104,7 @@ environments built on OPL, listed so the survey is complete.
 <p>Nine more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
 
 <h2 id="at-a-glance">At a glance</h2>
-<p>All 48 entries in one list. Click a column heading to sort.</p>
+<p>All 56 entries in one list. Click a column heading to sort.</p>
 <table data-sortable>
   <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Source</th><th>Type</th></tr></thead>
   <tbody>
@@ -144,8 +147,16 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>P3</code></td><td>One games list across every device</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
     <tr><td><code>P4</code></td><td>Hold SELECT to leave a game</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
     <tr><td><code>P5</code></td><td>Launch transition animation</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
-    <tr><td><code>T1</code></td><td>Graphics patches kept apart from cheats</td><td>Cheats, launching &amp; network</td><td>Project Titan</td><td>Feature</td></tr>
-    <tr><td><code>T2</code></td><td>Installable app packages and runtime</td><td>Beyond game loading</td><td>Project Titan</td><td>Feature</td></tr>
+    <tr><td><code>T1</code></td><td>Graphics patches kept apart from cheats</td><td>Cheats, launching &amp; network</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T2</code></td><td>Installable TPKG apps, in-process runtime and SDK</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T3</code></td><td>Smart IGR overlay with Resume / Return</td><td>Game compatibility</td><td>Project Titan Magenta Edition</td><td>Feature <span class="badge primary">Hardware pending</span></td></tr>
+    <tr><td><code>T4</code></td><td>Named user profiles with per-profile VMC</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T5</code></td><td>Notification center and background-progress UI</td><td>Library &amp; menu</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T6</code></td><td>Integrated lightweight web browser</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T7</code></td><td>Transactional <code>.pup</code> system updater</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T8</code></td><td>Installable animated scene themes with audio</td><td>Theme engine</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T9</code></td><td>Xbox Bluetooth/BLE plus USB keyboard and mouse input</td><td>Controllers &amp; input</td><td>Project Titan Magenta Edition</td><td>Feature <span class="badge primary">Hardware pending</span></td></tr>
+    <tr><td><code>T10</code></td><td>Repository-backed package download pipeline</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature <span class="badge primary">Target pending</span></td></tr>
     <tr><td><code>E1</code></td><td>Controller, memory card, storage and network status</td><td>Library &amp; menu</td><td>OPL-Evolution</td><td>Feature</td></tr>
     <tr><td><code>H1</code></td><td>RetroAchievements pointer chains</td><td>RetroAchievements</td><td>xeRAbora</td><td>Feature</td></tr>
     <tr><td><code>R1</code></td><td>Retro emulator ROM libraries</td><td>Beyond game loading</td><td>RETROLauncher</td><td>Feature</td></tr>
@@ -241,16 +252,30 @@ console-style interface. Checked against its published v4.0 source, not only its
   </tbody>
 </table>
 
-<h2 id="project-titan">Project Titan</h2>
+<h2 id="project-titan">Project Titan Magenta Edition</h2>
 <p><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">sobecapaklebs-dev/project-titan-magenta-edition</a>
-&mdash; a PS2 system shell and application platform whose game launching is one subsystem among many.</p>
+&mdash; a PS2 operating-system/system-platform project with its own shell, services, application runtime and integrated
+Titan Neutrino / Titan UL game engines. Re-audited against <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>main@2a69c259</code></a>
+with <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/VERSION"><code>VERSION</code> 0.3.93-rc17</a>.</p>
 <table>
   <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
   <tbody>
-    <tr><td><code>T1</code></td><td><b>Graphics patches kept apart from cheats</b></td><td>Graphics patches such as widescreen live in <code>ENH/&lt;id&gt;.enh</code>, separate from gameplay cheats in <code>CHT/</code>, and the selection is remembered per game. See <a href="cheats.html">Cheats</a> for what RiptOPL reads today.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_GAME_PATCHES.md">TITAN_GAME_PATCHES.md</a></td></tr>
-    <tr><td><code>T2</code></td><td><b>Installable app packages and runtime</b></td><td>Installable packages and an application runtime, so native apps run as part of the system instead of as separately launched ELFs.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition#readme">README</a></td></tr>
+    <tr><td><code>T1</code></td><td><b>Graphics patches kept apart from cheats</b></td><td>Graphics patches such as widescreen live in <code>ENH/&lt;id&gt;.enh</code>, separate from gameplay cheats in <code>CHT/</code>. Per-game selections persist independently and graphics patches can carry <code>@auto</code> / <code>@experimental</code> metadata. RiptOPL currently feeds these through its normal cheat path instead of a separate enhancement class.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_GAME_PATCHES.md">TITAN_GAME_PATCHES.md</a></td></tr>
+    <tr><td><code>T2</code></td><td><b>Installable TPKG apps, in-process runtime and SDK</b></td><td>TPKG v2 can install native R5900 application modules that execute inside Titan's application runtime and consume shared UI, input, notification, storage and media services. A public App/Game SDK lets software target Titan itself rather than only launching a separate ELF.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition#product-components">README</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_PACKAGE_FORMAT.md">TPKG format</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/reference/TITAN_STANDALONE_SDK.md">SDK</a></td></tr>
+    <tr><td><code>T3</code></td><td><b>Smart IGR overlay with Resume / Return</b> <span class="badge primary">Hardware pending</span></td><td>For titles with a safe compatibility profile, Titan can suspend the running title, show a small in-game overlay, then resume the same threads without ResetEE/GS/IOP or return through the engine cleanup path. Unknown titles fail closed to return-only/legacy behavior. RiptOPL's IGR returns out of the game; it has no equivalent resumable in-game overlay.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_SMART_IGR.md">TITAN_SMART_IGR.md</a></td></tr>
+    <tr><td><code>T4</code></td><td><b>Named user profiles with per-profile VMC</b></td><td>Up to four named users can be created, selected and renamed, each carrying its own avatar and VMC path. RiptOPL has per-game VMC configuration but no system-wide user/profile layer that selects an exclusive VMC by user.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_user_profile.h">titan_user_profile.h</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_profile_storage.c">titan_profile_storage.c</a></td></tr>
+    <tr><td><code>T5</code></td><td><b>Notification center and background-progress UI</b></td><td>A system Notifications page and top status/ticker surface alerts plus background activity and download progress, including transfer bytes, percentage and speed. RiptOPL has transient dialogs/status text but no comparable system notification/activity service.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_notifications.h">titan_notifications.h</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_shell_catalog.c">titan_shell_catalog.c</a></td></tr>
+    <tr><td><code>T6</code></td><td><b>Integrated lightweight web browser</b></td><td>An installed system app stays inside the running shell and provides URL entry, lightweight HTML text/link parsing, scrolling and back/forward history. HTTP uses PS2IP directly; HTTPS is translated through Titan's configurable Stream Bridge. RiptOPL has network game protocols but no interactive web browser.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/apps/internet-browser/README.md">Internet / Titan Browser</a></td></tr>
+    <tr><td><code>T7</code></td><td><b>Transactional <code>.pup</code> system updater</b></td><td>Settings can discover forward-only TPUP update packages, verify table/payload CRCs, stage files privately and roll back already-published files if a multi-file update fails. RiptOPL updates are distributed as release artifacts rather than installed by an in-console transactional updater.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/SYSTEM_UPDATE_PUP.md">SYSTEM_UPDATE_PUP.md</a></td></tr>
+    <tr><td><code>T8</code></td><td><b>Installable animated scene themes with audio</b></td><td><code>.tthm</code> packages can provide full HOME/TOP scene frames, reversible transition keyframes, bounded idle loops, background music, navigation/interface sounds and icon styling. RiptOPL's theme engine does not have Titan's packaged state/keyframe scene-animation model.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/THEME_AUTHORING.md">THEME_AUTHORING.md</a></td></tr>
+    <tr><td><code>T9</code></td><td><b>Xbox Bluetooth/BLE plus USB keyboard and mouse input</b> <span class="badge primary">Hardware pending</span></td><td>Titan's Unified Input has source paths for Bluetooth-capable Xbox One and Xbox Series pads over Bluetooth/BLE, plus USB keyboard and mouse input. Wired Xbox USB is already counted as <a href="#ps2-launcher">P1</a>; this row counts Titan's additional Bluetooth/HID input classes. Titan explicitly labels these host-contract PASS but physical-PS2 validation pending.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_MODERN_CONTROLLER_MATRIX.md">Modern Controller Matrix</a></td></tr>
+    <tr><td><code>T10</code></td><td><b>Repository-backed package download pipeline</b> <span class="badge primary">Target pending</span></td><td>Titan can accept a static repository catalog, resolve package/dependency metadata, queue HTTP/HTTPS package downloads, verify size and SHA-256 plus TPKG structure, then atomically publish the package for installation. Its documentation calls this a Store foundation rather than a finished storefront and says real target downloads remain pending.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_STORE_ARCHITECTURE.md">Store architecture</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_DOWNLOAD_SERVICE.md">Download Service</a></td></tr>
   </tbody>
 </table>
+<div class="callout info"><div class="h">ℹ Titan validation and overlap notes</div>
+Titan distinguishes source/host-contract completion from physical-PS2 validation. In particular, Smart IGR, the modern-controller paths and Store/Download path are kept above because this page audits implemented code capabilities, but Titan's own hardware/target-pending labels are preserved rather than treating them as proven compatibility.<br><br>
+Several other Titan capabilities are real but do not get extra T-series IDs because the same RiptOPL gap is already represented elsewhere on this page: direct cover/background fetching overlaps <a href="#ps2-launcher">P2</a>, its native wLaunchELF work overlaps <a href="#boliviaos">B1</a>, Project NES overlaps <a href="#retrolauncher">R1</a>, its launch transition overlaps <a href="#ps2-launcher">P5</a>, and wired Xbox USB overlaps <a href="#ps2-launcher">P1</a>. Titan's Neutrino/UL launching, VMC support and ordinary PS2RD cheats also have RiptOPL equivalents and are not gaps by themselves.
+</div>
 
 <h2 id="opl-evolution">OPL-Evolution</h2>
 <p><a href="https://github.com/officialjuicedesigns/OPL-Evolution">officialjuicedesigns/OPL-Evolution</a> &mdash; an
@@ -365,6 +390,7 @@ is complete.</p>
 
 <h2 id="notes">Notes</h2>
 <ul>
+  <li><b>Project Titan Magenta Edition parity checked on 2026-09-22:</b> audited against upstream <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>main@2a69c259</code></a> / <code>VERSION</code> 0.3.93-rc17 and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b"><code>rebuild/main@abf14079</code></a>. Titan's controller, Smart IGR and Store/Download documentation explicitly retains physical-target validation caveats; those rows describe source capability, not a hardware-compatibility guarantee.</li>
   <li><b>NHDDL parity checked on 2026-09-20:</b> RiptOPL already has the visual Game ID signal used by PixelFX/RetroGEM hardware, MMCE GameID switching for SD2PSX/MemCard PRO2 on cross-device launches, remembered last-played selection with optional autostart, persistent ISO metadata caching, and global/per-game Neutrino arguments. Those are therefore not N-series gaps.</li>
   <li><b>Already in RiptOPL, so not listed:</b> the fix from wOPL PR #435 (remember the last played game when it is
   the first list entry), <a href="cheats.html#ps2rd-image">PS2RD cheat images (<code>.img</code>)</a>, cover art from
