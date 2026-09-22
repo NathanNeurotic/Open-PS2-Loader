@@ -824,8 +824,26 @@ int vcdResolvePopstarterMcElf(char *out, int outSize)
     return 0;
 }
 
+// Tier 1 of the POPSTARTER lookup, remembered: the gPopstarterPath value last resolved and the file
+// it resolved to ("" on a miss). vcdEquipBdma pre-probes beside that FILE -- an alias such as
+// mmce:/, usb:/ or smb:/ is not an openable directory -- and reuses the launch's own result rather
+// than bringing a storage stack up a second time.
+static char vcdCustomPopsFor[sizeof(gPopstarterPath)];
+static char vcdCustomPopsElf[256];
+
+static const char *vcdResolveCustomPopstarter(void)
+{
+    snprintf(vcdCustomPopsFor, sizeof(vcdCustomPopsFor), "%s", gPopstarterPath);
+    if (gPopstarterPath[0] == '\0' ||
+        !sbResolveCustomLoaderPath(gPopstarterPath, vcdCustomPopsElf, sizeof(vcdCustomPopsElf)))
+        vcdCustomPopsElf[0] = '\0';
+    return vcdCustomPopsElf[0] != '\0' ? vcdCustomPopsElf : NULL;
+}
+
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
 {
+    const char *customElf;
+
     if (out == NULL || outSize <= 0)
         return 0;
 
@@ -835,8 +853,8 @@ int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
     //   3) mc0:/mc1:.
     // The retired POPSTARTER device picker remains in the config schema only for downgrade
     // compatibility; it no longer changes runtime lookup order.
-    if (gPopstarterPath[0] != '\0' &&
-        sbResolveCustomLoaderPath(gPopstarterPath, out, outSize))
+    customElf = vcdResolveCustomPopstarter();
+    if (customElf != NULL && snprintf(out, outSize, "%s", customElf) < outSize)
         return 1;
 
     if (devPrefix != NULL && devPrefix[0] != '\0') {
@@ -1237,16 +1255,26 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         const char *pre[2];
         int npre = 0;
 
+        // The folder of the file the custom path RESOLVED to, not of the typed string: an alias
+        // (mmce:/, usb:/, smb:/...) is not an openable directory. A launch resolved it moments ago;
+        // an equip outside a launch (the BDMA settings page) resolves it here once.
+        const char *customElf = NULL;
         if (gPopstarterPath[0] != '\0') {
-            const char *s1 = strrchr(gPopstarterPath, '/');
-            const char *s2 = strrchr(gPopstarterPath, '\\'); // SMB custom paths use backslashes
+            if (strcmp(vcdCustomPopsFor, gPopstarterPath) != 0)
+                vcdResolveCustomPopstarter();
+            if (vcdCustomPopsElf[0] != '\0')
+                customElf = vcdCustomPopsElf;
+        }
+        if (customElf != NULL) {
+            const char *s1 = strrchr(customElf, '/');
+            const char *s2 = strrchr(customElf, '\\'); // SMB paths use backslashes
             // Not `(s2 > s1)`: relationally comparing a possibly-NULL pointer is UB in ISO C.
             const char *sl = s1;
             if (s2 != NULL && (sl == NULL || s2 > sl))
                 sl = s2;
-            int n = (sl != NULL) ? (int)(sl - gPopstarterPath) + 1 : 0; // keep the separator
+            int n = (sl != NULL) ? (int)(sl - customElf) + 1 : 0; // keep the separator
             if (n > 0 && n < (int)sizeof(preBuf[0])) {
-                memcpy(preBuf[npre], gPopstarterPath, n);
+                memcpy(preBuf[npre], customElf, n);
                 preBuf[npre][n] = '\0';
                 pre[npre] = preBuf[npre];
                 npre++;
