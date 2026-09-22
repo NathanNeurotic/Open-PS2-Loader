@@ -309,13 +309,27 @@ def check_pins():
 
     # Retest of #545: a hybrid is homed on exFAT like official OPL. Only an explicit Custom Settings Path
     # in the APA home keeps APA; RiptOPL settings found there are carried over instead of winning.
+    apa_home = function_text(text('src/opl.c'), 'static int resolveApaBootHome(')
+    check(apa_home is not None and
+          'haveExfatHome && !bootHomeHasFile(gHDDPrefix, configPathRedirectFile)' in apa_home and
+          apa_home.find('configSetCarryOverDir(gHDDPrefix);') <
+          apa_home.find('adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT, APA settings carried over")') and
+          'haveExfatHome && !bootHomeHasRiptoplSettings(gHDDPrefix)' not in apa_home,
+          'resolveApaBootHome: a hybrid must stay on exFAT when only RiptOPL settings sit on APA')
+    # One decision for an on-time drive and a late one. A failed ATA load is retryable, so the drive can
+    # first come up in tryAlternateDevice's retry; a bare PFS mount there skipped the hybrid check and homed
+    # the hybrid on __common/OPL (CodeRabbit on #725).
     to_mass = function_text(text('src/opl.c'), 'static void resolveBootDirToMass(')
-    check(to_mass is not None and
-          'haveExfatHome && !bootHomeHasFile(gHDDPrefix, configPathRedirectFile)' in to_mass and
-          to_mass.find('configSetCarryOverDir(gHDDPrefix);') <
-          to_mass.find('adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT, APA settings carried over")') and
-          'haveExfatHome && !bootHomeHasRiptoplSettings(gHDDPrefix)' not in to_mass,
-          'resolveBootDirToMass: a hybrid must stay on exFAT when only RiptOPL settings sit on APA')
+    check(to_mass is not None and 'hddLoadModulesReady() && resolveApaBootHome()' in to_mass and
+          'hddIsApaMbrHybrid(' not in to_mass,
+          'resolveBootDirToMass: the APA home must come from resolveApaBootHome')
+    retry = function_text(text('src/opl.c'), 'static int tryAlternateDevice(')
+    retry_head = retry[:retry.find('readConfigPathRedirect(')] if retry else ''
+    check(retry is not None and
+          re.search(r'hddLoadModulesReady\(\) && resolveApaBootHome\(\) && gBootHomeHybridExfat\)\s*\{\s*'
+                    r'value = configReadMulti\(types\);', retry_head) and
+          'hddLoadSupportModules();' not in retry_head,
+          'tryAlternateDevice: a drive that comes up on the retry must get the boot-time hybrid decision')
     load = function_text(text('src/opl.c'), 'static void _loadConfig(')
     check(load is not None and
           re.search(r'gBootHomeHybridExfat && gBDMStartMode == START_MODE_DISABLED &&\s*'
