@@ -443,13 +443,17 @@ void sfxPlay(int id)
 // where EE thread priority cannot help.
 #define BGM_THREAD_BASE_PRIO       0x1E
 #define BGM_THREAD_STACK_SIZE      0x1000
-// Sleep bounds while audsrv's ring has no room for the next chunk (see bgmWaitForRoom). One chunk is
-// ~23 ms of 44.1 kHz stereo; the sleep is sized from the stream's byte rate so polls stay near one per
-// chunk, like the blocking wait they replace. A stream that stops draining is polled slowly.
-#define BGM_ROOM_POLL_MIN_US       2000
+// Sleep bounds while audsrv's ring has no room for the next piece (see bgmWaitForRoom). The sleep is the
+// time the missing room takes to play out, but never under one SPU2 block -- 512 samples at 48 kHz,
+// 10.7 ms -- because the IOP frees room a block at a time and a shorter sleep only re-reads the same
+// room. A stream that stops draining is polled slowly.
+#define BGM_ROOM_POLL_MIN_US       10000
 #define BGM_ROOM_POLL_MAX_US       20000
 #define BGM_ROOM_STALL_POLLS       50
 #define BGM_ROOM_STALL_US          100000
+// Below this the ring measurement in bgmStart is not believable, and it keeps the whole-chunk target.
+// The smallest start room of any 16-bit format audsrv accepts is 1168 bytes (11025 Hz mono).
+#define BGM_ROOM_TARGET_MIN        256
 
 extern void *_gp;
 
@@ -509,8 +513,13 @@ static OggVorbis_File *vorbisFile;
 
 // PCM bytes the stream plays per millisecond, set by bgmStart from its format.
 static int bgmBytesPerMs = 0;
+// Most room bgmQueueChunk waits for before queueing: one chunk, or less when the audsrv ring is small.
+// audsrv sizes its ring at ten SPU2 feeds of the stream format and starts a stream with only half of it
+// free, so an 11025 Hz stream never has room for a whole chunk and neither does the start of a 12 kHz
+// stereo or a 22/32 kHz mono one. Set by bgmStart.
+static int bgmRoomTarget = BGM_RING_BUFFER_SIZE;
 
-// Wait until audsrv can take one more chunk. Returns 0 once asked to terminate.
+// Wait until audsrv has room for `want` bytes. Returns that room, or 0 once asked to terminate.
 //
 // NOT audsrv_wait_audio(). That RPC parks audsrv's only IOP RPC thread -- and holds the EE library's
 // call mutex -- until the IOP play thread frees ring space, which it does only while SPU2 keeps
@@ -520,7 +529,7 @@ static int bgmBytesPerMs = 0;
 // vibrating on a frozen menu), bgmMute() on the way into a launch, any volume change. Polling
 // audsrv_available() keeps each call a short round trip, so a stalled stream costs the music and
 // nothing else, and terminateFlag is seen within one sleep.
-static int bgmWaitForRoom(void)
+static int bgmWaitForRoom(int want)
 {
     int lastRoom = -1, samePolls = 0;
 
@@ -528,8 +537,8 @@ static int bgmWaitForRoom(void)
         int room = audsrv_available();
         int us;
 
-        if (room >= BGM_RING_BUFFER_SIZE)
-            return 1;
+        if (room >= want)
+            return room;
 
         if (room == lastRoom) {
             if (++samePolls == BGM_ROOM_STALL_POLLS)
@@ -542,8 +551,8 @@ static int bgmWaitForRoom(void)
         if (samePolls >= BGM_ROOM_STALL_POLLS) {
             us = BGM_ROOM_STALL_US;
         } else if (room >= 0 && bgmBytesPerMs > 0) {
-            // Most of the time the missing room takes to play out.
-            us = ((BGM_RING_BUFFER_SIZE - room) * 750) / bgmBytesPerMs;
+            // The time the missing room takes to play out.
+            us = ((want - room) * 1000) / bgmBytesPerMs;
             if (us < BGM_ROOM_POLL_MIN_US)
                 us = BGM_ROOM_POLL_MIN_US;
             else if (us > BGM_ROOM_POLL_MAX_US)
@@ -556,6 +565,29 @@ static int bgmWaitForRoom(void)
     return 0;
 }
 
+// Queue one decoded chunk, in as many pieces as the audsrv ring has room for. audsrv_play_audio keeps
+// what fits and DROPS the rest, so each piece is at most the room just seen and the chunk advances by
+// what was actually queued. Returns 0 once asked to terminate.
+static int bgmQueueChunk(const char *chunk)
+{
+    int done = 0;
+
+    while (done < BGM_RING_BUFFER_SIZE) {
+        int left = BGM_RING_BUFFER_SIZE - done;
+        int room = bgmWaitForRoom(left < bgmRoomTarget ? left : bgmRoomTarget);
+        int sent;
+
+        if (room <= 0)
+            return 0;
+        sent = audsrv_play_audio(chunk + done, room < left ? room : left);
+        if (sent > 0)
+            done += sent;
+        else
+            DelayThread(BGM_ROOM_STALL_US); // audsrv refused it; never spin at this priority
+    }
+    return 1;
+}
+
 static void bgmThread(void *arg)
 {
     bgmThreadRunning = 1;
@@ -566,9 +598,8 @@ static void bgmThread(void *arg)
             break;
 
         bgmAdjustBufferedChunks(-1);
-        if (!bgmWaitForRoom())
+        if (!bgmQueueChunk(bgmBuffer[rdPtr]))
             break;
-        audsrv_play_audio(bgmBuffer[rdPtr], BGM_RING_BUFFER_SIZE);
         rdPtr = (rdPtr + 1) % BGM_RING_BUFFER_COUNT;
 
         SignalSema(inSema);
@@ -823,7 +854,26 @@ void bgmStart(void)
         audsrvFmt.bits = 16;
         bgmBytesPerMs = (int)((vi->rate * vi->channels * 2) / 1000);
 
-        audsrv_set_format(&audsrvFmt);
+        if (audsrv_set_format(&audsrvFmt) != AUDSRV_ERR_NOERROR) {
+            // No audsrv upsampler for this rate (16 kHz, say): its ring would never drain. The blocking
+            // wait this code used to have hung on that first chunk, holding audsrv, and the menu froze on
+            // its first sound effect. Play no music instead.
+            LOG("BGM: audsrv cannot play %ld Hz, %d ch -- no music\n", vi->rate, vi->channels);
+            bgmDeinit();
+            return;
+        }
+        // A new format starts with nothing queued, and audsrv drains nothing until the first chunk is
+        // queued: the room now is all the first wait can ever see, and free plus queued is the whole ring.
+        int room = audsrv_available();
+        int ring = room + audsrv_queued();
+        bgmRoomTarget = BGM_RING_BUFFER_SIZE;
+        if (ring / 2 < bgmRoomTarget)
+            bgmRoomTarget = ring / 2;
+        if (room < bgmRoomTarget)
+            bgmRoomTarget = room;
+        if (bgmRoomTarget < BGM_ROOM_TARGET_MIN)
+            bgmRoomTarget = BGM_RING_BUFFER_SIZE;
+        LOG("BGM: %ld Hz, %d ch, audsrv ring %d bytes, queue up to %d at a time\n", vi->rate, vi->channels, ring, bgmRoomTarget);
         audsrv_set_volume(gBGMVolume);
 
         bgmIsPlaying = 1;
