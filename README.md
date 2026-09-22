@@ -525,8 +525,9 @@ If a place RiptOPL checks has no RiptOPL settings but does have official OPL's `
 RiptOPL starts from that file. It is read-only: RiptOPL never writes it, and the next save writes
 `settings_riptopl.cfg` to RiptOPL's own settings home. On an APA + exFAT hybrid disk (PSBBN
 Definitive's "APA-Jail" layout), a RiptOPL launched from APA uses the exFAT volume as its
-settings home, as official OPL does, unless RiptOPL settings are already saved in the APA data
-home. The menu and Auto Loading use the same settings. See
+settings home, as official OPL does, and starts its BDM page so the exFAT games show. RiptOPL
+settings an older build saved in the APA data home are carried over and written to exFAT on the
+next save. The menu and Auto Loading use the same settings. See
 [docs/AUTOLAUNCH-GLOBAL-SETTINGS.md](docs/AUTOLAUNCH-GLOBAL-SETTINGS.md).
 
 Network configuration (`conf_network.cfg`), app lists, per-game settings, artwork, themes and VMCs

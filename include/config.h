@@ -277,6 +277,12 @@ int configReadMulti(int types);
 // 1 when the master set was last filled from official OPL's conf_opl.cfg rather than RiptOPL's own
 // file. Such a seed is read-only: it must never decide where RiptOPL saves.
 int configOplIsOfficialSeed(void);
+// A previous home -- a directory ending in '/' or ':' -- whose global files (RiptOPL's master settings,
+// conf_game/last/apps/network.cfg) are read, read-only, whenever the current home lacks that file
+// ("" or NULL disables). configOplIsCarryOver() is 1 when the master set was last filled that way.
+// Like the official seed, it never decides where RiptOPL saves; the first save writes to the home.
+void configSetCarryOverDir(const char *dir);
+int configOplIsCarryOver(void);
 int configWrite(config_set_t *configSet);
 int configWriteMulti(int types);
 void configClear(config_set_t *configSet);

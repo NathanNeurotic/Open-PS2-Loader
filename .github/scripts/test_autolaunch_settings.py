@@ -300,6 +300,28 @@ def check_pins():
     translate = function_text(config, 'static void configTranslateOfficialOpl(')
     check(translate is not None and 'ETH_MODE + (device - 5)' in translate and 'modified = 0' in translate,
           'configTranslateOfficialOpl: official default_device 5/6/7 must map to ETH/HDD/APP')
+    # RiptOPL settings carried over from the APA home outrank official's seed, and neither re-homes the
+    # set: the first save must land in the current (exFAT) home, not back on APA.
+    carry = read.find('configOpenCarryOver(CONFIG_OPL_FILENAME)') if read else -1
+    check(read is not None and 0 <= carry < read.find('CONFIG_OPL_FILENAME_OFFICIAL') and
+          'configMove(' not in read[carry:read.find('if (!fileBuffer)')],
+          'configRead: the APA carry-over must come before the official seed and never re-home the set')
+
+    # Retest of #545: a hybrid is homed on exFAT like official OPL. Only an explicit Custom Settings Path
+    # in the APA home keeps APA; RiptOPL settings found there are carried over instead of winning.
+    to_mass = function_text(text('src/opl.c'), 'static void resolveBootDirToMass(')
+    check(to_mass is not None and
+          'haveExfatHome && !bootHomeHasFile(gHDDPrefix, configPathRedirectFile)' in to_mass and
+          to_mass.find('configSetCarryOverDir(gHDDPrefix);') <
+          to_mass.find('adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT, APA settings carried over")') and
+          'haveExfatHome && !bootHomeHasRiptoplSettings(gHDDPrefix)' not in to_mass,
+          'resolveBootDirToMass: a hybrid must stay on exFAT when only RiptOPL settings sit on APA')
+    load = function_text(text('src/opl.c'), 'static void _loadConfig(')
+    check(load is not None and
+          re.search(r'gBootHomeHybridExfat && gBDMStartMode == START_MODE_DISABLED &&\s*'
+                    r'\(!\(result & CONFIG_OPL\) \|\| configOplIsOfficialSeed\(\) \|\| configOplIsCarryOver\(\)\)', load) and
+          'CONFIG_OPL_BDM_MODE, gBDMStartMode' in load,
+          '_loadConfig: a hybrid exFAT home without its own RiptOPL settings must start the BDM page Auto')
 
     iosupport = text('include/iosupport.h')
     check(re.search(r'BDM_MODE7,\s*ETH_MODE,\s*HDD_MODE,\s*APP_MODE,', iosupport),
