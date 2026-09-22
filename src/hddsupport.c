@@ -1768,6 +1768,14 @@ static int hddResolveHddPopstarter(char *elfOut, int elfLen)
 // __common payload never turns an otherwise-valid custom ELF into a launch failure.
 static void hddInstallPopstarterMcFromCommon(void)
 {
+    // The APA driver will not open a partition that is already open (getFileSlot -> -EBUSY), so when
+    // the live data home IS __common -- the default -- a pfs1: mount of it always fails. Read the
+    // payload through the pfs0: mount that already holds it; nothing is remounted either way.
+    if (gHDDPrefix != NULL && hddGetLiveOplHomeSelection() == HDD_OPL_HOME_COMMON) {
+        (void)vcdInstallPopstarterMc("pfs0:/");
+        return;
+    }
+
     fileXioUmount("pfs1:");
     if (fileXioMount("pfs1:", "hdd0:__common", FIO_MT_RDONLY) == 0) {
         (void)vcdInstallPopstarterMc("pfs1:/");
