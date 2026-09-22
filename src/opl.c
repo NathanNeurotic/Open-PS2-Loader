@@ -1719,6 +1719,11 @@ static int checkLoadConfigHDD(int types)
         snprintf(path, sizeof(path), "%s%s", gHDDPrefix, CONFIG_OPL_FILENAME_LEGACY);
         value = open(path, O_RDONLY);
     }
+    if (value < 0) {
+        // Official OPL's own +OPL/__common home: configRead reads it as a read-only seed.
+        snprintf(path, sizeof(path), "%s%s", gHDDPrefix, CONFIG_OPL_FILENAME_OFFICIAL);
+        value = open(path, O_RDONLY);
+    }
     if (value >= 0) {
         close(value);
         configEnd();
@@ -2340,11 +2345,13 @@ static void restoreRecoverySaveHome(const char *recoveredHome)
             configSetMove((char *)mcHome);
         else
             configSetMove(NULL); // no concrete MC is reachable: keep the normal fail-visible wildcard home
-    } else if (sameConcreteMcSlot(gBootDir, recoveredHome)) {
+    } else if (sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed()) {
         // A concrete MC boot that recovered its existing settings from the same card keeps that
         // exact directory as its save owner. In particular, a launcher that supplies only "mc1:"
         // as the boot CWD must not move a successfully read mc1:/OPL configuration to the card
-        // root (or to mc0 when both cards are inserted).
+        // root (or to mc0 when both cards are inserted). This applies to RiptOPL's OWN settings
+        // only: an official conf_opl.cfg is a read-only seed and must not pull our save home into
+        // official OPL's folder, so that case falls through to the boot dir below.
         configSetMove((char *)recoveredHome);
     } else if (gBootDir[0] != '\0') {
         configSetMove(gBootDir);
@@ -2438,7 +2445,9 @@ static int tryMissingConfigPathRecovery(int types)
 }
 
 
-static int tryAlternateDevice(int types, int autoLaunchMode)
+// The menu (_loadConfig) and autolaunch (miniInit) both call this with the same inputs, so both land on
+// the same settings home. Keep it that way: an autolaunch-only branch here is how #545 happened.
+static int tryAlternateDevice(int types)
 {
     char redirectPath[64];
     int value;
@@ -2477,20 +2486,8 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
         }
     }
 
-    // A BDM argv launch can keep its ELF on APA/PFS while its ISO and settings live at the ATA
-    // filesystem root (#545). Prefer that settings bundle over the unrelated PFS data home, but
-    // only after an explicit config.path redirect. Match the ATA driver, not whichever USB slot
-    // happened to enumerate first. The same bounded HDD readiness helper served the old BDM fallback.
-    if (autoLaunchMode == BDM_MODE && gBootHomeApa) {
-        char home[BDM_DEVICE_ROOT_MAX];
-        if (bdmHDDIsPresent(5000) && bdmGetDeviceRootByType(BDM_TYPE_ATA, home, sizeof(home))) {
-            value = tryReadRecoveryConfigHome(types, home);
-            if (value & CONFIG_OPL)
-                return value;
-        }
-    }
-
-    // For GUI/HDL launches, APA/PFS boot identity is authoritative. After an explicit redirect misses, ONLY the
+    // An APA launch that reaches here is authoritative for APA: an APA+exFAT hybrid was already homed on
+    // its exFAT volume by resolveBootDirToMass (#545). After an explicit redirect misses, ONLY the
     // deterministic existing-PFS ownership chain is eligible: __common/OPL/conf_hdd.cfg's valid
     // existing target, otherwise __common/OPL. Never import an unrelated MC/USB master config into
     // an FHDB/APA session; that can resurrect stale Custom Settings Path state and makes the next
@@ -2573,7 +2570,8 @@ static int tryAlternateDevice(int types, int autoLaunchMode)
             // already serving this config -- sysCheckMC() gated the whole branch.
             if (gBootHomeDeferred)
                 homeLeftOnCard = 1;
-            else if (sameConcreteMcSlot(gBootDir, concreteMcHome)) {
+            else if (sameConcreteMcSlot(gBootDir, concreteMcHome) && !configOplIsOfficialSeed()) {
+                // Not for an official conf_opl.cfg seed: that is read-only and never our save home.
                 configSetMove(concreteMcHome); // MC legacy config remains at the exact discovered home
                 // configSetMove already made the exact MC1/MC0 home the notification/save owner.
                 // Do not overwrite that with a compact/root boot CWD below: failure reporting must
@@ -2662,6 +2660,55 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
         gNeutrinoDevice = NEUTRINO_DEV_AUTO;
 }
 
+// Does a candidate settings home already belong to RiptOPL? Only our own master file (current or legacy
+// name) or a Custom Settings Path redirect counts. Official OPL's conf_opl.cfg is a read-only seed, not
+// ownership, so it never outranks settings the user has already saved with RiptOPL somewhere else.
+static int bootHomeHasRiptoplSettings(const char *home)
+{
+    const char *names[] = {CONFIG_OPL_FILENAME, CONFIG_OPL_FILENAME_LEGACY, configPathRedirectFile};
+    size_t len = strlen(home);
+    const char *sep = (len > 0 && (home[len - 1] == ':' || home[len - 1] == '/')) ? "" : "/";
+
+    for (unsigned int i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
+        char path[256];
+        int fd;
+
+        snprintf(path, sizeof(path), "%s%s%s", home, sep, names[i]);
+        fd = open(path, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// The exFAT volume of an APA+exFAT hybrid as "massN:/". The typed resolver loads only the BDM core and the
+// ATA transport and waits no longer than the bootstrap budget. No ELF name on purpose: the launcher ELF
+// lives on APA, and asking the resolver to prove it on exFAT would burn the whole budget before the folder
+// check matched.
+static int resolveHybridExfatHome(char *home, int homeLen)
+{
+    int bdmType = BDM_TYPE_UNKNOWN;
+
+    snprintf(home, homeLen, "ata0:/");
+    return bdmResolveBootDirBootstrap(home, homeLen, "", &bdmType) > 0 && bdmType == BDM_TYPE_ATA;
+}
+
+// Make the hybrid's exFAT volume the settings home: from here on the boot is an ordinary ATA-BDM boot,
+// so the boot-device reconcile enables the ATA transport and saves take the BDM path.
+static void adoptHybridExfatHome(const char *launch, const char *home)
+{
+    snprintf(gBootDir, sizeof(gBootDir), "%s", home);
+    gBootHomeApa = 0;
+    gBootHddCommonFallback = 0;
+    gBootHomeBdm = 1;
+    gBootDirBdmType = BDM_TYPE_ATA;
+    LOG("BOOT APA launch %s on an APA+exFAT hybrid -> settings home %s\n", launch, gBootDir);
+    configEnd();
+    configInit(gBootDir);
+}
+
 static void resolveBootDirToMass(void)
 {
     gBootHomeApa = 0;
@@ -2678,13 +2725,35 @@ static void resolveBootDirToMass(void)
     if (!strncmp(gBootDir, "hdd", 3) || !strncmp(gBootDir, "pfs", 3)) {
         if (hddLoadModulesReady()) {
             char before[sizeof(gBootDir)];
+            char exfatHome[BDM_DEVICE_ROOT_MAX];
+            int haveExfatHome = 0;
+
             snprintf(before, sizeof(before), "%s", gBootDir);
+
+            // APA+exFAT hybrid (PSBBN Definitive's "APA-Jail"): APA holds only the launchers, while the
+            // exFAT volume holds official OPL's conf_opl.cfg, the games, CFG and ART -- official OPL
+            // never loads APA on such a disk at all. An APA launch there is homed on the exFAT volume,
+            // in this order: RiptOPL settings on exFAT; RiptOPL settings already saved to the APA data
+            // home (existing installs keep their home); otherwise exFAT (official seed or first run).
+            // The first case never mounts PFS. The menu and autolaunch both come through here (#545).
+            if (hddIsApaMbrHybrid() && resolveHybridExfatHome(exfatHome, sizeof(exfatHome))) {
+                haveExfatHome = 1;
+                if (bootHomeHasRiptoplSettings(exfatHome)) {
+                    adoptHybridExfatHome(before, exfatHome);
+                    return;
+                }
+            }
 
             hddLoadSupportModules();
             if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0') {
                 DIR *dir = opendir(gHDDPrefix);
                 if (dir != NULL) {
                     closedir(dir);
+                    if (haveExfatHome && !bootHomeHasRiptoplSettings(gHDDPrefix)) {
+                        adoptHybridExfatHome(before, exfatHome);
+                        return;
+                    }
+
                     snprintf(gBootDir, sizeof(gBootDir), "%s", gHDDPrefix);
                     size_t rlen = strlen(gBootDir);
                     while (rlen > 0 && gBootDir[rlen - 1] == '/')
@@ -2704,6 +2773,12 @@ static void resolveBootDirToMass(void)
                     }
                     return;
                 }
+            }
+
+            // No usable APA data home. On a hybrid the exFAT volume is still a real, writable home.
+            if (haveExfatHome) {
+                adoptHybridExfatHome(before, exfatHome);
+                return;
             }
         }
         LOG("BOOT APA boot dir %s could not resolve an HDD data home; keeping launch identity for safe retry\n", gBootDir);
@@ -2828,7 +2903,7 @@ static void _loadConfig()
 
     if (lscstatus & CONFIG_OPL) {
         if (!(result & CONFIG_OPL)) {
-            result = tryAlternateDevice(lscstatus, IO_MODE_SELECTED_NONE);
+            result = tryAlternateDevice(lscstatus);
         }
 
         if (result & CONFIG_OPL) {
@@ -3137,8 +3212,14 @@ static void _loadConfig()
     }
 
     if (lscstatus & CONFIG_NETWORK) {
-        if (!(result & CONFIG_NETWORK)) {
-            result = tryAlternateDevice(lscstatus, IO_MODE_SELECTED_NONE);
+        // A missing conf_network.cfg only means network defaults once the master load above has run:
+        // that already did the whole discovery, or found the home. Re-running it re-reads every set --
+        // and a recovery miss ends in configEnd/configInit, which wiped the global game settings, last
+        // played and apps that had just loaded (and, with the official seed, could swap in official's
+        // sets over ours). Official homes rarely have a network file, so this was no longer a corner.
+        // loadConfig() has no caller that asks for network alone; keep that shape working anyway.
+        if (!(result & CONFIG_NETWORK) && !(lscstatus & CONFIG_OPL)) {
+            result = tryAlternateDevice(lscstatus);
         }
 
         if (result & CONFIG_NETWORK) {
@@ -4875,6 +4956,9 @@ static void deferredAudioInit(void)
 // --------------------- Auto Loading -----------------------
 // ----------------------------------------------------------
 
+// Extra delay(6) rounds autoLaunchBDMGame waits for mass0: to publish before giving up on the launch.
+#define AUTOLAUNCH_MASS0_RETRIES 8
+
 static void miniInit(int mode)
 {
     int ret;
@@ -4927,11 +5011,11 @@ static void miniInit(int mode)
     initialRet = ret;
 #endif
     if (CONFIG_ALL & CONFIG_OPL) {
-        // A mixed APA-boot/BDM-game launch has a distinct settings owner. Resolve its redirect or
-        // ATA root even if the initial PFS home contained a different master config. A missing
-        // CONFIG_GAME alone still never triggers discovery on any launch path.
-        if (!(ret & CONFIG_OPL) || (mode == BDM_MODE && gBootHomeApa)) {
-            ret = tryAlternateDevice(CONFIG_ALL, mode);
+        // Exactly the menu's discovery: resolveBootDirToMass above picked the same home (an APA+exFAT
+        // hybrid included), so the settings -- global game settings among them -- are the ones the menu
+        // shows and saves. A missing CONFIG_GAME alone still never triggers discovery on any launch path.
+        if (!(ret & CONFIG_OPL)) {
+            ret = tryAlternateDevice(CONFIG_ALL);
         }
 
         if (ret & CONFIG_OPL) {
@@ -5046,6 +5130,16 @@ static void autoLaunchHDDGame(char *argv[])
     configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchGame->startup);
 
     hddLaunchGame(NULL, -1, configSet);
+
+    // Only reached when the launch was refused. hddLaunchGame tears the mini session down only on the
+    // way to a handoff, so finish it here: main() then boots the menu, which must not inherit a live
+    // gAutoLaunchGame (every later menu launch would be treated as this autolaunch).
+    if (gAutoLaunchGame != NULL) {
+        LOG("AUTOLAUNCH HDD launch refused; falling back to the menu\n");
+        free(gAutoLaunchGame);
+        gAutoLaunchGame = NULL;
+        miniDeinit(configSet);
+    }
 }
 
 static void autoLaunchBDMGame(char *argv[])
@@ -5120,6 +5214,10 @@ static void autoLaunchBDMGame(char *argv[])
     // first -- the config path and the device identity disagreed whenever more than one mass
     // device was present.
     int selectedMassSlot = -1;
+    // Upstream retries mass0: forever, so a device that never publishes a filesystem hung the
+    // autolaunch on a black screen. Bound it (delay() ticks are ~0.25 s, so about 12 s) and let the
+    // menu boot instead, where the device and its error are visible.
+    int mass0Retries = 0;
     delay(8);
     // Loop through mass0: to mass4:
     for (int i = 0; i <= 4; i++) {
@@ -5154,8 +5252,8 @@ static void autoLaunchBDMGame(char *argv[])
                 break; // Exit the loop if "ata" device is found
             }
         } else {
-            // Retry for mass0: only
-            if (i == 0) {
+            // Retry for mass0: only, and only for a bounded time.
+            if (i == 0 && mass0Retries++ < AUTOLAUNCH_MASS0_RETRIES) {
                 delay(6);
                 i--;
             } else {
@@ -5165,10 +5263,17 @@ static void autoLaunchBDMGame(char *argv[])
         delay(6);
     }
 
-    // No mass device answered at all: keep the historical mass0: guess rather than an empty prefix,
-    // which would build a rootless config path.
-    if (selectedMassSlot < 0)
-        snprintf(apaDevicePrefix, sizeof(apaDevicePrefix), "mass0:");
+    // No mass device answered at all. The old mass0: guess could only build a path to a file that is
+    // not there, and the launch error behind it has no screen to show on.
+    if (selectedMassSlot < 0) {
+        LOG("AUTOLAUNCH no mass device answered; falling back to the menu\n");
+        free(gAutoLaunchDeviceData);
+        gAutoLaunchDeviceData = NULL;
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        miniDeinit(NULL);
+        return;
+    }
 
     // bdmDeviceRoot was never written on this path, so the launch legs that resolve paths through
     // it saw an empty string.
@@ -5191,6 +5296,19 @@ static void autoLaunchBDMGame(char *argv[])
         configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchBDMGame->startup);
 
     bdmLaunchGame(NULL, -1, configSet);
+
+    // Only reached when the launch was refused (missing ISO, fragmented image, unusable device).
+    // bdmLaunchGame tears the mini session down only on the way to a handoff; a Neutrino abort that
+    // already did so has cleared gAutoLaunchBDMGame. Finish it here, or main() would boot the menu with
+    // live autolaunch state and treat every later menu launch as this autolaunch.
+    if (gAutoLaunchBDMGame != NULL) {
+        LOG("AUTOLAUNCH BDM launch refused; falling back to the menu\n");
+        free(gAutoLaunchDeviceData);
+        gAutoLaunchDeviceData = NULL;
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        miniDeinit(configSet);
+    }
 }
 
 // --------------------- Main --------------------

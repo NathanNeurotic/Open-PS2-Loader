@@ -4438,6 +4438,16 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
     int terminate = 0;
     // Wrapped once up front, not per frame: the result depends only on `text` and the screen width.
     char wrapped[512];
+
+    // Same pre-GUI guard as guiWarning: autolaunch (miniInit) never runs rmInit/thmInit/guiInit or
+    // starts the pads, so a launch-path error box would draw through a NULL gsGlobal/gTheme and then
+    // wait forever for a button -- a black screen instead of a refused launch. Answer "back" (0, see
+    // the return below) so the caller unwinds and autolaunch falls back to the menu.
+    if (gTheme == NULL) {
+        LOG("guiMsgBox (pre-GUI): %s\n", text);
+        return 0;
+    }
+
     int lines = guiWrapText(text, screenWidth - 120, wrapped, sizeof(wrapped));
 
     sfxPlay(SFX_MESSAGE);
