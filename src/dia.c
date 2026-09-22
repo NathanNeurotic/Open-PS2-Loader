@@ -43,6 +43,8 @@ static int diaSettingsContext;
 
 // Right edge available to the keyboard's caret hint: CANCEL is drawn at x=500 on the same row.
 #define KEYB_HINT_END 490
+// Width of the keyboard's text field: it starts at x=50 and the separator lines end at x=615.
+#define KEYB_TEXT_W   540
 // Utility stuff
 #define KEYB_MODE     2
 #define KEYB_WIDTH    12
@@ -57,6 +59,32 @@ static void diaDrawBoundingBox(int x, int y, int w, int h, int focus)
     color &= gColFocus;
 
     rmDrawRect(x - 5, y, w + 10, h + 10, color);
+}
+
+// Rendered width of text[from..to), in the same 640-wide units the caret has always been placed in.
+// scratch must hold to - from + 1 bytes.
+static int diaKeybTextWidth(const char *text, int from, int to, char *scratch)
+{
+    memcpy(scratch, text + from, to - from);
+    scratch[to - from] = '\0';
+    return rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], scratch));
+}
+
+// Next / previous character start, so scrolling never begins the field inside a UTF-8 sequence.
+static int diaKeybNextChar(const char *text, int i, int limit)
+{
+    do {
+        i++;
+    } while (i < limit && (((unsigned char)text[i]) & 0xC0) == 0x80);
+    return i;
+}
+
+static int diaKeybPrevChar(const char *text, int i)
+{
+    do {
+        i--;
+    } while (i > 0 && (((unsigned char)text[i]) & 0xC0) == 0x80);
+    return i;
 }
 
 int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title)
@@ -75,6 +103,9 @@ int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title)
     // long as the keyboard is open and the caret held whatever state it was in (#466: "the cursor
     // is now complete but lacks the flicking behaviour").
     int caretFrame = 0;
+    // First byte shown in the text field. Values longer than the field (a full custom core path)
+    // scroll so the caret stays in view instead of running off the right edge of the screen.
+    int view = 0;
     char c[2] = "\0\0", *mask_buffer;
     static const char keyb0[KEYB_ITEMS] = {
         '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',
@@ -130,17 +161,30 @@ int diaShowKeyb(char *text, int maxLen, int hide_text, const char *title)
         // Text
         {
             const char *shown = hide_text ? mask_buffer : text;
-            fntRenderString(gTheme->fonts[0], 50, 120, ALIGN_NONE, 0, 0, shown, gTheme->textColor);
+            char pre[maxLen];
+            int n = (caret < len) ? caret : len;
+
+            // Horizontal scroll. The start of the field moves only when it has to: right when the
+            // caret passes the right edge, left when the caret passes the left edge, and back left
+            // whenever everything from one character further left fits again (after a delete near
+            // the end), so the field never shows a scrolled-away head beside empty space.
+            if (view > n)
+                view = n;
+            while (view < n && diaKeybTextWidth(shown, view, n, pre) > KEYB_TEXT_W)
+                view = diaKeybNextChar(shown, view, n);
+            while (view > 0) {
+                int prev = diaKeybPrevChar(shown, view);
+                if (diaKeybTextWidth(shown, prev, len, pre) > KEYB_TEXT_W)
+                    break;
+                view = prev;
+            }
+            fntRenderString(gTheme->fonts[0], 50, 120, ALIGN_NONE, KEYB_TEXT_W, 20, shown + view, gTheme->textColor);
 
             // Caret. Measured from the substring to its LEFT rather than assuming a character width,
             // because the theme font is proportional. Full row height -- UI_SPACING_H is HALF a row,
             // which is the "half cursor" reported on #466 -- and blinking, as the request asked.
-            char pre[maxLen];
-            int n = (caret < len) ? caret : len;
-            memcpy(pre, shown, n);
-            pre[n] = '\0';
             if ((caretFrame >> 4) & 1)
-                rmDrawRect(50 + rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], pre)), 120, 2, 20, gColWhite);
+                rmDrawRect(50 + diaKeybTextWidth(shown, view, n, pre), 120, 2, 20, gColWhite);
         }
 
         // separating line for simpler orientation
