@@ -919,7 +919,8 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS/%s.VCD", ps1Root, vcdName);
     vcdPrepareRetroGemBarcode(vcdFullPath);
-    deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the MMCE device mounted across the IOP reset
+    // Keep the MMCE game device plus any distinct custom POPSTARTER.ELF backend through handoff.
+    deinitEx(sbLoaderDeinitException(vcdElf), itemList->mode, oplPath2Mode(vcdElf));
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 

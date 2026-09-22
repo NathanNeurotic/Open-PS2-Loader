@@ -68,7 +68,12 @@ void vcdRequestDisplayId(const char *name);
 // disc. Cheap: ids re-resolve lazily as rows are settled on.
 void vcdInvalidateGameIds(void);
 
-// Build "<devPrefix>POPS/POPSTARTER.ELF" into out; returns 1 if that file exists, else 0.
+// Resolve only the final memory-card POPSTARTER.ELF tier. This performs no custom-path or
+// game-device probing, so callers that already attempted those tiers can fall back without
+// re-entering device/module bring-up under a teardown lock.
+int vcdResolvePopstarterMcElf(char *out, int outSize);
+
+// Resolve POPSTARTER.ELF in the normal order: custom path -> game device -> memory card.
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize);
 
 // Build the POPSTARTER argv[0] selector "<devPrefix>POPS/<prefix><name>.ELF" into out.

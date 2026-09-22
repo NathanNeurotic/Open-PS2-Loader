@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Vidéo Neutrino
   HINT_NEUTRINO_VIDEO: Force le mode vidéo GS de Neutrino (-gsm). Désactivé conserve le mode par défaut du jeu.
   NEUTRINO_PATH: Chemin ELF Neutrino
-  HINT_NEUTRINO_PATH: Chemin complet vers neutrino.elf (ex. mc0:NEUTRINO/neutrino.elf). Vide = détection automatique sur mc0/mc1.
   POPSTARTER_PATH: Chemin POPSTARTER.ELF
-  HINT_POPSTARTER_PATH: Chemin personnalisé pour POPSTARTER.ELF ; utilise le dossier POPS du périphérique si vide/absent. Le clavier est limité à 31 caractères ; chemins plus longs via settings_riptopl.cfg.
   BDMA_SOURCE: Source BDMA
   HINT_BDMA_SOURCE: Périphérique dont le dossier POPS contient les fichiers pilotes BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: Mode BDMA

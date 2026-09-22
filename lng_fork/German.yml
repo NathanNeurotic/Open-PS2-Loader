@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino Video
   HINT_NEUTRINO_VIDEO: Neutrinos GS-Ausgabe-Videomodus erzwingen (-gsm). Aus behält den Standard des Spiels.
   NEUTRINO_PATH: Neutrino ELF Pfad
-  HINT_NEUTRINO_PATH: Vollständiger Pfad zu neutrino.elf (z.B. mc0:NEUTRINO/neutrino.elf). Leer = automatische Erkennung auf mc0/mc1.
   POPSTARTER_PATH: POPSTARTER.ELF Pfad
-  HINT_POPSTARTER_PATH: Benutzerdefinierter POPSTARTER.ELF Pfad; fällt auf den POPS-Ordner des Geräts zurück, wenn leer/fehlend. Tastatur auf 31 Zeichen begrenzt; längere Pfade über settings_riptopl.cfg.
   BDMA_SOURCE: BDMA Quelle
   HINT_BDMA_SOURCE: Gerät, dessen POPS-Ordner die BDMAssault-Treiberdateien enthält (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: BDMA Modus

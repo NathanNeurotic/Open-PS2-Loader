@@ -812,110 +812,52 @@ static int vcdTryPopsAtRoot(const char *root, char *out, int outSize)
     return 0;
 }
 
-int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
+int vcdResolvePopstarterMcElf(char *out, int outSize)
 {
     if (out == NULL || outSize <= 0)
         return 0;
 
-    // POPSTARTER.ELF Device (gPopstarterDevice, General Settings): Custom free-text path | a device TYPE
-    // (mc/usb/mx4sio/mmce/ilink/exfat/apa) -> <root>:/POPS/POPSTARTER.ELF | Default -> the boot device (cwd)
-    // then the VCD's own device. Each candidate is open()-probed; a miss falls through to the next tier.
-    // NOTE: this serves the bdm/eth/mmce launch paths; the HDD VCD launch keeps its own freeze-guarded
-    // hddResolveHddPopstarter (__common/POPS only), so HDD VCDs always load POPSTARTER from the
-    // canonical APA loose-file home rather than the selected OPL data partition.
-
-    // GAME'S DEVICE: resolve ONLY on the VCD's own device (devPrefix); no boot-device (cwd) tier and
-    // no Default fallthrough. A miss returns 0 so the launch path shows "Missing POPSTARTER.ELF"
-    // (every caller does) instead of silently loading a boot-device copy the user did not pick.
-    if (gPopstarterDevice == POPS_DEV_GAME) {
-        if (devPrefix == NULL)
-            return 0;
-        snprintf(out, outSize, "%s%s%cPOPSTARTER.ELF", devPrefix, POPS_FOLDER, vcdSep(devPrefix));
-        int fd = open(out, O_RDONLY);
-        if (fd < 0)
-            return 0;
-        close(fd);
+    if (vcdTryPopsAtRoot("mc0", out, outSize) || vcdTryPopsAtRoot("mc1", out, outSize))
         return 1;
-    }
 
-    // CUSTOM: the free-text path wins, if it exists.
-    if (gPopstarterDevice == POPS_DEV_CUSTOM && gPopstarterPath[0] != '\0') {
-        int cfd = open(gPopstarterPath, O_RDONLY);
-        if (cfd >= 0) {
-            close(cfd);
-            snprintf(out, outSize, "%s", gPopstarterPath);
-            return 1;
-        }
-        // Custom set but missing -> fall through to Default below.
-    }
+    out[0] = '\0';
+    return 0;
+}
 
-    // A specific device TYPE -> resolve its live root, then probe <root>:/POPS/POPSTARTER.ELF.
-    {
-        int bt = -1;
-        switch (gPopstarterDevice) {
-            case POPS_DEV_MC:
-                if (vcdTryPopsAtRoot("mc0", out, outSize) || vcdTryPopsAtRoot("mc1", out, outSize))
-                    return 1;
-                break;
-            case POPS_DEV_MMCE:
-                if (vcdTryPopsAtRoot("mmce0", out, outSize) || vcdTryPopsAtRoot("mmce1", out, outSize))
-                    return 1;
-                break;
-            case POPS_DEV_USB:
-                bt = BDM_TYPE_USB;
-                break;
-            case POPS_DEV_MX4SIO:
-                bt = BDM_TYPE_SDC;
-                break;
-            case POPS_DEV_ILINK:
-                bt = BDM_TYPE_ILINK;
-                break;
-            case POPS_DEV_EXFAT_HDD:
-                bt = BDM_TYPE_ATA;
-                break;
-            case POPS_DEV_APA_HDD:
-                // TRAP, deliberately skipped: this resolver serves the bdm/eth/mmce launch paths, and
-                // every one of them deinit()s with its OWN mode excepted -- hddShutdown then unmounts
-                // pfs0: BEFORE sysLaunchPopstarter re-opens the resolved ELF, so a pfs0: path that
-                // open()-probes fine HERE is dead by the time it is read (black screen into deinit'd
-                // OPL). HDD-page VCD launches keep APA POPSTARTER via their own freeze-guarded
-                // hddResolveHddPopstarter, which mounts hdd0:__common/POPS rather than the selected
-                // OPL data partition; for the rest, fall through to the Default tiers below.
-                LOG("VCD POPSTARTER Device 'HDD (APA)' is HDD-page-only; falling back to Default for this launch\n");
-                break;
-            default:
-                break;
-        }
-        if (bt >= 0) {
-            char root[BDM_DEVICE_ROOT_MAX];
-            if (bdmGetDeviceRootByType(bt, root, sizeof(root))) {
-                char *colon = strchr(root, ':');
-                if (colon)
-                    *colon = '\0'; // "massN:/" -> "massN"
-                if (vcdTryPopsAtRoot(root, out, outSize))
-                    return 1;
-            }
-        }
-        // A TYPE was chosen but its device has no POPSTARTER.ELF -> fall through to Default.
-    }
+// Tier 1 of the POPSTARTER lookup, remembered: the gPopstarterPath value last resolved and the file
+// it resolved to ("" on a miss). vcdEquipBdma pre-probes beside that FILE -- an alias such as
+// mmce:/, usb:/ or smb:/ is not an openable directory -- and reuses the launch's own result rather
+// than bringing a storage stack up a second time.
+static char vcdCustomPopsFor[sizeof(gPopstarterPath)];
+static char vcdCustomPopsElf[256];
 
-    // DEFAULT (or any miss above): the VCD's OWN device first, then the boot device (cwd).
-    //
-    // This order is POPSLoader's, and it is deliberate there: its resolver takes the game device's
-    // own POPS/POPSTARTER.ELF ahead of the sidecar beside the loader, so that a per-device build
-    // can be used without being forced on anyone. We had those two tiers swapped.
-    //
-    // Why it matters beyond tidiness: POPSTARTER's IGR behaviour lives INSIDE the binary that gets
-    // executed -- config byte $424 selects the exit method, and the ELF loader that chains to
-    // mc0:/BOOT/BOOT.ELF on reset is POPSTARTER's own. On a console where the boot device and the
-    // game device each carry a POPS/POPSTARTER.ELF, this fork would run the boot device's copy
-    // while POPSLoader runs the game device's -- two different binaries, two different IGR
-    // behaviours, on the same console with the same card. Matching the reference implementation
-    // removes that as a variable.
-    //
-    // The explicit tiers above (POPS_DEV_CUSTOM, POPS_DEV_GAME and the device-TYPE picker) are
-    // untouched, so anyone who wants the boot-device copy can still name it.
-    if (devPrefix != NULL) {
+static const char *vcdResolveCustomPopstarter(void)
+{
+    snprintf(vcdCustomPopsFor, sizeof(vcdCustomPopsFor), "%s", gPopstarterPath);
+    if (gPopstarterPath[0] == '\0' ||
+        !sbResolveCustomLoaderPath(gPopstarterPath, vcdCustomPopsElf, sizeof(vcdCustomPopsElf)))
+        vcdCustomPopsElf[0] = '\0';
+    return vcdCustomPopsElf[0] != '\0' ? vcdCustomPopsElf : NULL;
+}
+
+int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
+{
+    const char *customElf;
+
+    if (out == NULL || outSize <= 0)
+        return 0;
+
+    // One deterministic policy, shared with Neutrino:
+    //   1) user-entered full POPSTARTER.ELF path,
+    //   2) the active VCD/game device,
+    //   3) mc0:/mc1:.
+    // The retired POPSTARTER device picker remains in the config schema only for downgrade
+    // compatibility; it no longer changes runtime lookup order.
+    customElf = vcdResolveCustomPopstarter();
+    if (customElf != NULL && snprintf(out, outSize, "%s", customElf) < outSize)
+        return 1;
+
+    if (devPrefix != NULL && devPrefix[0] != '\0') {
         snprintf(out, outSize, "%s%s%cPOPSTARTER.ELF", devPrefix, POPS_FOLDER, vcdSep(devPrefix));
         int fd = open(out, O_RDONLY);
         if (fd >= 0) {
@@ -924,18 +866,7 @@ int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
         }
     }
 
-    if (gBootDir[0] != '\0') {
-        size_t bl = strlen(gBootDir);
-        const char *joiner = (gBootDir[bl - 1] == '/') ? "" : "/"; // gBootDir ends in ':' or a folder name
-        snprintf(out, outSize, "%s%s%s/POPSTARTER.ELF", gBootDir, joiner, POPS_FOLDER);
-        int fd = open(out, O_RDONLY);
-        if (fd >= 0) {
-            close(fd);
-            return 1;
-        }
-    }
-
-    return 0;
+    return vcdResolvePopstarterMcElf(out, outSize);
 }
 
 void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *name, char *out, int outSize)
@@ -1324,16 +1255,26 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         const char *pre[2];
         int npre = 0;
 
-        if (gPopstarterDevice == POPS_DEV_CUSTOM && gPopstarterPath[0] != '\0') {
-            const char *s1 = strrchr(gPopstarterPath, '/');
-            const char *s2 = strrchr(gPopstarterPath, '\\'); // SMB custom paths use backslashes
+        // The folder of the file the custom path RESOLVED to, not of the typed string: an alias
+        // (mmce:/, usb:/, smb:/...) is not an openable directory. A launch resolved it moments ago;
+        // an equip outside a launch (the BDMA settings page) resolves it here once.
+        const char *customElf = NULL;
+        if (gPopstarterPath[0] != '\0') {
+            if (strcmp(vcdCustomPopsFor, gPopstarterPath) != 0)
+                vcdResolveCustomPopstarter();
+            if (vcdCustomPopsElf[0] != '\0')
+                customElf = vcdCustomPopsElf;
+        }
+        if (customElf != NULL) {
+            const char *s1 = strrchr(customElf, '/');
+            const char *s2 = strrchr(customElf, '\\'); // SMB paths use backslashes
             // Not `(s2 > s1)`: relationally comparing a possibly-NULL pointer is UB in ISO C.
             const char *sl = s1;
             if (s2 != NULL && (sl == NULL || s2 > sl))
                 sl = s2;
-            int n = (sl != NULL) ? (int)(sl - gPopstarterPath) + 1 : 0; // keep the separator
+            int n = (sl != NULL) ? (int)(sl - customElf) + 1 : 0; // keep the separator
             if (n > 0 && n < (int)sizeof(preBuf[0])) {
-                memcpy(preBuf[npre], gPopstarterPath, n);
+                memcpy(preBuf[npre], customElf, n);
                 preBuf[npre][n] = '\0';
                 pre[npre] = preBuf[npre];
                 npre++;

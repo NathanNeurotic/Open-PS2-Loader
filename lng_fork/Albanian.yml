@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Video Neutrino
   HINT_NEUTRINO_VIDEO: Detyro modalitetin e videos GS të Neutrino (-gsm). Joaktive mban parazgjedhjen e lojës.
   NEUTRINO_PATH: Shtegu ELF i Neutrino
-  HINT_NEUTRINO_PATH: Shtegu i plotë drejt neutrino.elf (p.sh. mc0:NEUTRINO/neutrino.elf). Bosh = zbulim automatik në mc0/mc1.
   POPSTARTER_PATH: Shtegu POPSTARTER.ELF
-  HINT_POPSTARTER_PATH: Shtegu i personalizuar POPSTARTER.ELF; kthehet pa zhurmë te dosja POPS e pajisjes nëse është bosh/mungon. Tastiera kufizohet në 31 karaktere; shtegje më të gjata nëpërmjet settings_riptopl.cfg.
   BDMA_SOURCE: Burimi BDMA
   HINT_BDMA_SOURCE: Pajisja dosja POPS e së cilës mban skedarët e drejtuesit BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: Modaliteti BDMA

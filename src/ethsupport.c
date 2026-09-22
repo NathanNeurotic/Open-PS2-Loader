@@ -37,8 +37,9 @@ static base_game_info_t *ethGames = NULL;
 static int ethPs1GameCount = 0;
 static base_game_info_t *ethPs1Games = NULL;
 
-// forward declaration
+// forward declarations
 static item_list_t ethGameList;
+static void smbLoadModules(void);
 
 static unsigned char ethReconnectQueued = 0;
 
@@ -188,6 +189,31 @@ int ethGetModulesLoaded(void)
 int ethIsSMBShareConnected(void)
 {
     return netGetModulesLoaded() && gNetworkStartup == 0 && ethPrefix[0] != '\0';
+}
+
+// A custom core path is an explicit request to use SMB even when the SMB game page is disabled.
+// Bring the configured share up synchronously so the resolver can open the ELF before teardown.
+// We still honor the one-NIC-stack invariant: an already-resident UDPFS/UDPBD stack cannot be
+// replaced safely mid-session, so that case fails closed and the resolver continues to its normal
+// game-device / memory-card fallback.
+int ethEnsureSMBShareConnected(void)
+{
+    if (ethIsSMBShareConnected())
+        return 1;
+    if (udpfsGetModulesLoaded() || bdmIsUDPBDLoaded())
+        return 0;
+    if (netInitSema() < 0)
+        return 0;
+
+    if (ethBase == NULL)
+        ethBase = "smb0:";
+
+    if (!netGetModulesLoaded() || !ethSmbModuleLoaded)
+        smbLoadModules();
+    else
+        ethInitSMB();
+
+    return ethIsSMBShareConnected();
 }
 
 // SMB's own teardown. netDeinitModules runs this inside the init lock, at the point in the
@@ -641,7 +667,8 @@ static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS%c%s.VCD", ethPrefix, separator, vcdName);
     vcdPrepareRetroGemBarcode(vcdFullPath);
-    deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the SMB mount alive across the IOP reset
+    // Keep the SMB game share plus any distinct custom POPSTARTER.ELF backend through handoff.
+    deinitEx(sbLoaderDeinitException(vcdElf), itemList->mode, oplPath2Mode(vcdElf));
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 

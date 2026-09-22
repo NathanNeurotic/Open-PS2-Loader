@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: فيديو Neutrino
   HINT_NEUTRINO_VIDEO: 'فرض وضع فيديو GS لـ Neutrino (-gsm). إيقاف يبقي الإعداد الافتراضي للعبة.'
   NEUTRINO_PATH: مسار Neutrino ELF
-  HINT_NEUTRINO_PATH: 'المسار الكامل لـ neutrino.elf (مثال mc0:NEUTRINO/neutrino.elf). فارغ = اكتشاف تلقائي على mc0/mc1.'
   POPSTARTER_PATH: 'مسار POPSTARTER.ELF'
-  HINT_POPSTARTER_PATH: مسار POPSTARTER.ELF مخصص؛ يعود تلقائياً إلى مجلد POPS في الجهاز إذا كان فارغاً أو مفقوداً. لوحة المفاتيح محدودة بـ 31 حرفاً؛ المسارات الأطول عبر settings_riptopl.cfg.
   BDMA_SOURCE: مصدر BDMA
   HINT_BDMA_SOURCE: الجهاز الذي يحتوي مجلد POPS على ملفات مشغّل BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: وضع BDMA

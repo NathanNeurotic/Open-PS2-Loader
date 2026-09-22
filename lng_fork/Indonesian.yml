@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Video Neutrino
   HINT_NEUTRINO_VIDEO: Paksa mode video output GS Neutrino (-gsm). Off mempertahankan default game.
   NEUTRINO_PATH: Path ELF Neutrino
-  HINT_NEUTRINO_PATH: Path lengkap ke neutrino.elf (misal mc0:NEUTRINO/neutrino.elf). Kosong = deteksi otomatis di mc0/mc1.
   POPSTARTER_PATH: Path POPSTARTER.ELF
-  HINT_POPSTARTER_PATH: Path POPSTARTER.ELF kustom; otomatis kembali ke folder POPS perangkat jika kosong/tidak ada. Keyboard maks 31 karakter; path lebih panjang via settings_riptopl.cfg.
   BDMA_SOURCE: Sumber BDMA
   HINT_BDMA_SOURCE: Perangkat yang folder POPS-nya menyimpan file driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: Mode BDMA

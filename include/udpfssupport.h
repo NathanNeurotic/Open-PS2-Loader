@@ -8,6 +8,9 @@
 
 void udpfsInit(item_list_t *itemList); // Init the udpfs: network-filesystem device (loads the UDPFS ioman IRX chain).
 int udpfsGetModulesLoaded(void);       // 1 if the UDPFS ioman NIC stack is loaded (SMB/UDPBD must not load on top).
+// Explicit-loader helper: synchronously load the UDPFS filesystem stack and wait briefly for the
+// server-backed root to answer. Fails closed if SMB/UDPBD already owns the NIC.
+int udpfsEnsureReady(u32 timeoutMs);
 item_list_t *udpfsGetObject(int initOnly);
 
 #endif

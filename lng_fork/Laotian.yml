@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino Video
   HINT_NEUTRINO_VIDEO: ບັງຄັບໂໝດວີດີໂອ GS output ຂອງ Neutrino (-gsm). ປິດຮັກສາຄ່າເລີ່ມຕົ້ນຂອງເກມ.
   NEUTRINO_PATH: ເສັ້ນທາງ Neutrino ELF
-  HINT_NEUTRINO_PATH: ເສັ້ນທາງເຕັມໄປຫາ neutrino.elf (ເຊັ່ນ mc0:NEUTRINO/neutrino.elf). ວ່າງ = ຊອກຫາອັດຕະໂນມັດໃນ mc0/mc1.
   POPSTARTER_PATH: ເສັ້ນທາງ POPSTARTER.ELF
-  HINT_POPSTARTER_PATH: ເສັ້ນທາງ POPSTARTER.ELF ກຳນົດເອງ; ໃຊ້ໂຟລເດີ POPS ຂອງອຸປະກອນໂດຍອັດຕະໂນມັດຖ້າຫາກວ່າງ/ບໍ່ພົບ. Keyboard ຈຳກັດ 31 ຕົວອັກສອນ; ເສັ້ນທາງຍາວກວ່ານັ້ນຜ່ານ settings_riptopl.cfg.
   BDMA_SOURCE: ແຫຼ່ງ BDMA
   HINT_BDMA_SOURCE: ອຸປະກອນທີ່ໂຟລເດີ POPS ມີໄຟລ໌ driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: BDMA Mode

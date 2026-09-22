@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino Video
   HINT_NEUTRINO_VIDEO: Tvinga Neutrinos GS-utdatavideoläge (-gsm). Av behåller spelets standard.
   NEUTRINO_PATH: Neutrino ELF Sökväg
-  HINT_NEUTRINO_PATH: Fullständig sökväg till neutrino.elf (t.ex. mc0:NEUTRINO/neutrino.elf). Tom = automatisk sökning på mc0/mc1.
   POPSTARTER_PATH: POPSTARTER.ELF Sökväg
-  HINT_POPSTARTER_PATH: Anpassad POPSTARTER.ELF-sökväg; faller tyst tillbaka till enhetens POPS-mapp om tom/saknas. Tangentbord begränsas till 31 tecken; längre sökvägar via settings_riptopl.cfg.
   BDMA_SOURCE: BDMA Källa
   HINT_BDMA_SOURCE: Enhet vars POPS-mapp innehåller dina BDMAssault-drivrutinsfiler (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: BDMA Läge

@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino ビデオ
   HINT_NEUTRINO_VIDEO: Neutrino の GS 出力ビデオモードを強制指定(-gsm)。Off でゲームのデフォルトを維持すん。
   NEUTRINO_PATH: Neutrino ELF パス
-  HINT_NEUTRINO_PATH: 'neutrino.elf のフルパス（例: mc0:NEUTRINO/neutrino.elf）。空白の場合は mc0/mc1 を自動検索すん。'
   POPSTARTER_PATH: POPSTARTER.ELF パス
-  HINT_POPSTARTER_PATH: カスタム POPSTARTER.ELF パス。空白・未検出の場合はデバイスの POPS フォルダーに自動フォールバックすん。キーボードは31文字まで、長いパスは settings_riptopl.cfg で設定可。
   BDMA_SOURCE: BDMA ソース
   HINT_BDMA_SOURCE: BDMAssault ドライバーファイル（usbd.irx.* / usbhdfsd.irx.*）を持つデバイス。
   BDMA_MODE: BDMA モード

@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: ویدیوی Neutrino
   HINT_NEUTRINO_VIDEO: تعیین اجباری حالت ویدیوی خروجی GS در Neutrino (-gsm). خاموش = حالت پیش‌فرض بازی.
   NEUTRINO_PATH: مسیر Neutrino ELF
-  HINT_NEUTRINO_PATH: مسیر کامل به neutrino.elf (مثلاً mc0:NEUTRINO/neutrino.elf). خالی = تشخیص خودکار روی mc0/mc1.
   POPSTARTER_PATH: 'مسیر POPSTARTER.ELF'
-  HINT_POPSTARTER_PATH: مسیر سفارشی POPSTARTER.ELF؛ در صورت خالی/نبودن به پوشه POPS دستگاه برمی‌گردد. صفحه‌کلید حداکثر ۳۱ کاراکتر؛ مسیرهای طولانی‌تر از طریق settings_riptopl.cfg.
   BDMA_SOURCE: منبع BDMA
   HINT_BDMA_SOURCE: دستگاهی که پوشه POPS آن فایل‌های درایور BDMAssault را دارد (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: حالت BDMA
