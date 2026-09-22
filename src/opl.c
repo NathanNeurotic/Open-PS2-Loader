@@ -1778,6 +1778,8 @@ static int gBootHomeDeferred = 0;
 // Used after config read because a stored HDD=Disabled value must not turn off the transport OPL
 // itself was launched from, and by discovery to prohibit an unrelated MC write fallback.
 static int gBootHomeApa = 0;
+// 1 while the settings home is an APA+exFAT hybrid's exFAT volume (set by adoptHybridExfatHome).
+static int gBootHomeHybridExfat = 0;
 
 // Basename of the ELF OPL was booted as (argv[0]); pairs with gBootDir. The BDM resolver uses it
 // to verify typed launch aliases and a legacy bare mass: token. An explicit massN: is already a
@@ -2472,6 +2474,8 @@ static int tryMissingConfigPathRecovery(int types)
 }
 
 
+static int resolveApaBootHome(void);
+
 // The menu (_loadConfig) and autolaunch (miniInit) both call this with the same inputs, so both land on
 // the same settings home. Keep it that way: an autolaunch-only branch here is how #545 happened.
 static int tryAlternateDevice(int types)
@@ -2484,9 +2488,18 @@ static int tryAlternateDevice(int types)
     // drive was settling, retry the EXISTING-PFS resolver before reading config.path. This adds no
     // new device class or fallback; checkLoadConfigHDD already performed the same synchronous HDD
     // work below, only too late to expose a PFS-hosted redirect.
+    //
+    // A failed ATA load is retryable, so the drive may first come up HERE, where the boot-time hybrid
+    // check never ran. Resolve through resolveApaBootHome, not a bare mount, or an APA+exFAT hybrid
+    // with a late drive lands on __common/OPL and misses its exFAT games (#545, CodeRabbit).
+    // Homed on exFAT, it is an ordinary ATA-BDM boot: read that home, then the discovery below runs
+    // exactly as it does for an on-time hybrid whose first read missed.
     if (gBootHomeApa && (gHDDPrefix == NULL || gHDDPrefix[0] == '\0')) {
-        if (hddLoadModulesReady())
-            hddLoadSupportModules();
+        if (hddLoadModulesReady() && resolveApaBootHome() && gBootHomeHybridExfat) {
+            value = configReadMulti(types);
+            if (value & CONFIG_OPL)
+                return value;
+        }
     }
 
     // The user's Custom Settings Path, if one was set, takes precedence over every discovery probe
@@ -2736,8 +2749,6 @@ static int bootHomeHasRiptoplSettings(const char *home)
     return bootHomeHasRiptoplMaster(home) || bootHomeHasFile(home, configPathRedirectFile);
 }
 
-// 1 while the settings home is an APA+exFAT hybrid's exFAT volume (set by adoptHybridExfatHome).
-static int gBootHomeHybridExfat = 0;
 // Why resolveBootDirToMass picked the home it did. Diagnostic builds show it (#545): testers can
 // photograph one line instead of reverse-engineering which home a boot chose.
 static const char *gBootHomeWhy = "not an APA launch";
@@ -2770,6 +2781,82 @@ static void adoptHybridExfatHome(const char *launch, const char *home, const cha
     configInit(gBootDir);
 }
 
+// The settings home of an APA launch, once the ATA stack is up: a hybrid's exFAT volume or the APA data home.
+// 1 = homed; 0 = neither is usable (the caller keeps the launch identity). resolveBootDirToMass runs this at boot,
+// and tryAlternateDevice runs it again when the drive only came up on its retry -- one decision, so a late drive
+// gets the same home an on-time one does (#545).
+static int resolveApaBootHome(void)
+{
+    char before[sizeof(gBootDir)];
+    char exfatHome[BDM_DEVICE_ROOT_MAX];
+    int hybrid = hddIsApaMbrHybrid();
+    int haveExfatHome = 0;
+
+    snprintf(before, sizeof(before), "%s", gBootDir);
+
+    // APA+exFAT hybrid (PSBBN Definitive's "APA-Jail"): APA holds only the launchers, while the
+    // exFAT volume holds official OPL's conf_opl.cfg, the games, CFG and ART -- official OPL
+    // never loads APA on such a disk at all, so its settings always live on exFAT. RiptOPL does
+    // the same. The one exception is a Custom Settings Path saved in the APA data home: an
+    // explicit instruction still decides. RiptOPL settings that older builds saved to the APA
+    // data home are CARRIED OVER, read-only, until the first save writes them to exFAT -- keeping
+    // them as the home instead made every tester of an older build save to __common/OPL and
+    // miss the exFAT games (#545 retest). The menu and autolaunch both come through here.
+    if (hybrid && resolveHybridExfatHome(exfatHome, sizeof(exfatHome))) {
+        haveExfatHome = 1;
+        if (bootHomeHasRiptoplSettings(exfatHome)) {
+            adoptHybridExfatHome(before, exfatHome, "hybrid: RiptOPL settings on exFAT");
+            return 1; // never mounts PFS
+        }
+    }
+
+    hddLoadSupportModules();
+    if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0') {
+        DIR *dir = opendir(gHDDPrefix);
+        if (dir != NULL) {
+            closedir(dir);
+            if (haveExfatHome && !bootHomeHasFile(gHDDPrefix, configPathRedirectFile)) {
+                if (bootHomeHasRiptoplMaster(gHDDPrefix)) {
+                    configSetCarryOverDir(gHDDPrefix);
+                    adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT, APA settings carried over");
+                } else {
+                    adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (official seed or first run)");
+                }
+                return 1;
+            }
+
+            gBootHomeWhy = haveExfatHome ? "hybrid: APA (Custom Settings Path in APA home)" :
+                           hybrid        ? "APA: hybrid, but exFAT did not mount in time" :
+                                           "APA data home";
+            snprintf(gBootDir, sizeof(gBootDir), "%s", gHDDPrefix);
+            size_t rlen = strlen(gBootDir);
+            while (rlen > 0 && gBootDir[rlen - 1] == '/')
+                gBootDir[--rlen] = '\0';
+
+            gBootHomeApa = 1;
+            if (!strcmp(gOPLPart, "hdd0:__common"))
+                gBootHddCommonFallback = 1;
+            if (gHDDStartMode == START_MODE_DISABLED)
+                gHDDStartMode = START_MODE_AUTO;
+
+            // Preserve rebuild-206's recursion guard: re-home only when resolution changed it.
+            if (strcmp(before, gBootDir) != 0) {
+                LOG("BOOT resolved APA launch %s -> data home %s (OPL part %s)\n", before, gBootDir, gOPLPart);
+                configEnd();
+                configInit(gBootDir);
+            }
+            return 1;
+        }
+    }
+
+    // No usable APA data home. On a hybrid the exFAT volume is still a real, writable home.
+    if (haveExfatHome) {
+        adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (APA data home unusable)");
+        return 1;
+    }
+    return 0;
+}
+
 static void resolveBootDirToMass(void)
 {
     gBootHomeApa = 0;
@@ -2787,75 +2874,8 @@ static void resolveBootDirToMass(void)
     // concepts. FHDB/uLE/HDD-OSD may launch from __sysconf/__common/__contents, but hddsupport
     // alone owns gOPLPart and mounts that data partition on pfs0:. Config follows gHDDPrefix.
     if (!strncmp(gBootDir, "hdd", 3) || !strncmp(gBootDir, "pfs", 3)) {
-        if (hddLoadModulesReady()) {
-            char before[sizeof(gBootDir)];
-            char exfatHome[BDM_DEVICE_ROOT_MAX];
-            int hybrid = hddIsApaMbrHybrid();
-            int haveExfatHome = 0;
-
-            snprintf(before, sizeof(before), "%s", gBootDir);
-
-            // APA+exFAT hybrid (PSBBN Definitive's "APA-Jail"): APA holds only the launchers, while the
-            // exFAT volume holds official OPL's conf_opl.cfg, the games, CFG and ART -- official OPL
-            // never loads APA on such a disk at all, so its settings always live on exFAT. RiptOPL does
-            // the same. The one exception is a Custom Settings Path saved in the APA data home: an
-            // explicit instruction still decides. RiptOPL settings that older builds saved to the APA
-            // data home are CARRIED OVER, read-only, until the first save writes them to exFAT -- keeping
-            // them as the home instead made every tester of an older build save to __common/OPL and
-            // miss the exFAT games (#545 retest). The menu and autolaunch both come through here.
-            if (hybrid && resolveHybridExfatHome(exfatHome, sizeof(exfatHome))) {
-                haveExfatHome = 1;
-                if (bootHomeHasRiptoplSettings(exfatHome)) {
-                    adoptHybridExfatHome(before, exfatHome, "hybrid: RiptOPL settings on exFAT");
-                    return; // never mounts PFS
-                }
-            }
-
-            hddLoadSupportModules();
-            if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0') {
-                DIR *dir = opendir(gHDDPrefix);
-                if (dir != NULL) {
-                    closedir(dir);
-                    if (haveExfatHome && !bootHomeHasFile(gHDDPrefix, configPathRedirectFile)) {
-                        if (bootHomeHasRiptoplMaster(gHDDPrefix)) {
-                            configSetCarryOverDir(gHDDPrefix);
-                            adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT, APA settings carried over");
-                        } else {
-                            adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (official seed or first run)");
-                        }
-                        return;
-                    }
-
-                    gBootHomeWhy = haveExfatHome ? "hybrid: APA (Custom Settings Path in APA home)" :
-                                   hybrid        ? "APA: hybrid, but exFAT did not mount in time" :
-                                                   "APA data home";
-                    snprintf(gBootDir, sizeof(gBootDir), "%s", gHDDPrefix);
-                    size_t rlen = strlen(gBootDir);
-                    while (rlen > 0 && gBootDir[rlen - 1] == '/')
-                        gBootDir[--rlen] = '\0';
-
-                    gBootHomeApa = 1;
-                    if (!strcmp(gOPLPart, "hdd0:__common"))
-                        gBootHddCommonFallback = 1;
-                    if (gHDDStartMode == START_MODE_DISABLED)
-                        gHDDStartMode = START_MODE_AUTO;
-
-                    // Preserve rebuild-206's recursion guard: re-home only when resolution changed it.
-                    if (strcmp(before, gBootDir) != 0) {
-                        LOG("BOOT resolved APA launch %s -> data home %s (OPL part %s)\n", before, gBootDir, gOPLPart);
-                        configEnd();
-                        configInit(gBootDir);
-                    }
-                    return;
-                }
-            }
-
-            // No usable APA data home. On a hybrid the exFAT volume is still a real, writable home.
-            if (haveExfatHome) {
-                adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (APA data home unusable)");
-                return;
-            }
-        }
+        if (hddLoadModulesReady() && resolveApaBootHome())
+            return;
         gBootHomeWhy = "APA: no data home mounted";
         LOG("BOOT APA boot dir %s could not resolve an HDD data home; keeping launch identity for safe retry\n", gBootDir);
         // The launch transport is still APA even though the persistent data home did not mount.
