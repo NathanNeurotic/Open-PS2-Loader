@@ -368,18 +368,19 @@ the display pickers above no longer allow is discarded, not forced.</div>
 <tr><td>Default Loader Core</td><td>&lt;OPL&gt; / Neutrino</td><td>Core for games whose per-game <em>Loader Core</em> is <em>Default</em>. <em>&lt;OPL&gt;</em> (the default) is the native core; <em>Neutrino</em> chains the external <code>neutrino.elf</code>. A per-game choice always wins. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 <tr><td>OSD Defaults</td><td>[sub-screen]</td><td>The global <a href="#osd-settings">OSD Settings</a>: the console language, screen size and video mode handed to games that do not set their own.</td></tr>
 <tr><td>GSM Defaults (All Games)</td><td>[sub-screen]</td><td>The global GSM settings. See <a href="gsm.html">GSM Video Modes</a>.</td></tr>
-<tr><td>Neutrino Device</td><td>Auto / Memory Card / Game's Device</td><td>Controls Neutrino ELF discovery. <em>Auto</em> checks a valid custom path, then the active game's prefix/device root, then the mounted APA HDD data home, then <code>mc0:</code>/<code>mc1:</code>. <em>Memory Card</em> tries the two memory-card slots first, then normal fallbacks. <em>Game's Device</em> searches only the active game's own device and has no memory-card fallback. For MMCE + GameID switching, keep Neutrino on <code>mmceN:</code> (or the MMCE Prefix Path), not the same slot's <code>mcN:</code>. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
+<tr><td>Neutrino Path</td><td>text (full path)</td><td>Where <code>neutrino.elf</code> is. <em>&lt;not set&gt;</em> (the default) looks on the active game's device, then <code>mc0:</code>/<code>mc1:</code>; a path you set is tried first, on any device, and falls back the same way when it is unavailable. Device aliases such as <code>usb:/</code>, <code>ata:/</code>, <code>mmce:/</code>, <code>hdd:/</code> and <code>smb:/</code> are accepted. For MMCE + GameID switching, keep Neutrino on <code>mmceN:</code> (or the MMCE Prefix Path), not the same slot's <code>mcN:</code>. Replaces the old <em>Neutrino Device</em> picker. See <a href="neutrino.html#neutrino-device">Neutrino Core</a>.</td></tr>
 <tr><td>Neutrino Video</td><td>Off / 240p / 480p / 1080i x1 / 1080i x2 / 1080i x3</td><td>Default Neutrino <code>-gsm</code> video mode for games whose per-game picker is <em>Default</em>. Off by default.</td></tr>
 <tr><td>Neutrino GSM Compatibility</td><td>Off / Type 1 (GSM/OPL) / Type 2 / Type 3</td><td>Field-flipping fix for games that shake or tear under a forced Neutrino video mode: the <code>:c</code> half of <code>-gsm</code>. Greyed until a Neutrino Video mode is set. Off by default.</td></tr>
 <tr><td>Neutrino Advanced Arguments</td><td>[sub-screen]</td><td>The structured global Neutrino arguments editor. These apply to every Neutrino game; per-game arguments add on top. Prefix a flag with <code>$</code> to disable it without deleting it. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 </tbody>
 </table>
 
-<details class="deep"><summary>Setting the Neutrino ELF path longer than 31 characters</summary>
-<p><em>Auto</em> covers the common locations automatically. If you need a fully custom path
-(e.g. <code>mass0:NEUTRINO/neutrino.elf</code>) you can set <code>neutrino_path</code> directly in
-<code>settings_riptopl.cfg</code>. In Auto mode, <code>sbResolveNeutrinoPath()</code> checks a valid
-custom path before the active game device; <em>Game's Device</em> deliberately ignores it.</p>
+<details class="deep"><summary>Neutrino Path spellings and upgrades</summary>
+<p>The editor takes the whole path and scrolls, so there is no 31-character limit any more. Typed
+aliases (<code>usb:/</code>, <code>ata:/</code>, <code>mx4sio:/</code>, <code>ilink:/</code>) search
+every mounted device of that family; <code>mass0:/</code> means exactly that slot. An old
+<em>Memory Card</em> or <em>HDD (APA)</em> picker choice becomes the matching path when you upgrade.
+The full rules are in <a href="neutrino.html#neutrino-device">Neutrino Core</a>.</p>
 </details>
 
 <h3 id="osd-settings">OSD Settings</h3>
@@ -406,8 +407,7 @@ This is an OPL core feature. See <a href="per-game-settings.html#osd-language">P
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>PS2/PS1 Game Display</td><td>Both (L3) / Mixed / PS2 / PS1</td><td>The same setting as on <a href="#display-settings">Interface</a>.</td></tr>
-<tr><td>POPSTARTER.ELF Device</td><td>Default / Memory Card / USB / MX4SIO / MMCE / HDD (exFAT) / HDD (APA) / Custom / Game's Device / iLink</td><td>Which device holds <code>POPS/POPSTARTER.ELF</code>. <em>Default</em> tries the boot device, then the VCD's own device. <em>Game's Device</em> uses only the VCD's device. <em>Custom</em> shows <em>POPSTARTER.ELF Path</em>. SMB PS1 VCDs also use an <code>SB.&lt;name&gt;.ELF</code> selector.</td></tr>
-<tr><td>POPSTARTER.ELF Path</td><td>text (path)</td><td>Shown only with <em>Custom</em>. Falls back to the device's <code>POPS</code> folder when blank or missing. The keyboard stops at 31 characters; longer paths go in <code>settings_riptopl.cfg</code>.</td></tr>
+<tr><td>POPSTARTER.ELF Path</td><td>text (full path)</td><td>Where <code>POPSTARTER.ELF</code> is. <em>&lt;not set&gt;</em> (the default) looks in the VCD's own <code>POPS</code> folder, then <code>mc0:</code>/<code>mc1:</code>; APA HDD VCDs use <code>__common/POPS</code>. A path you set is tried first, on any device, and falls back the same way when it is unavailable. The editor takes the whole path. Replaces the old <em>POPSTARTER.ELF Device</em> picker, whose device choice becomes the matching path when you upgrade. SMB PS1 VCDs also use an <code>SB.&lt;name&gt;.ELF</code> selector.</td></tr>
 <tr><td>RetroGEM Game ID</td><td>Off / On</td><td>Draws the game-ID barcode read by Pixel FX / RetroGEM / PS2Digital when a PS1 VCD launches. On by default.</td></tr>
 <tr><td>Ember Display Mode</td><td>Default / 240p / 480p</td><td>Output mode Ember uses. 240p or 480p is written to <code>settings.txt</code> in the launching device's <code>EMBER</code> folder; <em>Default</em> removes that setting again, and the file too if it held nothing else.</td></tr>
 <tr><td>VCD Games List Settings</td><td>[sub-screen]</td><td>See <a href="#vcd-list-settings">below</a>.</td></tr>
