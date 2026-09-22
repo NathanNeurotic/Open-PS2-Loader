@@ -272,14 +272,21 @@ def check_pins():
 
     support = text('src/supportbase.c')
     cheats = function_text(support, 'int sbCheatsMissingContinue(')
-    check(cheats is not None and 'guiMsgBox(text, 1, NULL))' in cheats and '== 2' not in cheats,
-          'sbCheatsMissingContinue: guiMsgBox returns 1 for accept, not 2')
+    # The accept branch itself, not just the call: a negated test (!guiMsgBox) or a comparison against
+    # anything other than truthiness would make "continue without cheats" cancel the launch again.
+    check(cheats is not None and
+          re.search(r'if \(guiMsgBox\(text, 1, NULL\)\)\s*return 1;', cheats) and
+          not re.search(r'!\s*guiMsgBox\(|guiMsgBox\([^;]*\)\s*[=!<>]=', cheats),
+          'sbCheatsMissingContinue: guiMsgBox returns 1 for accept -- continue the launch on a true result')
 
     ioman = text('src/ioman.c')
     io_init = function_text(ioman, 'void ioInit(')
-    check(io_init is not None and 'isIOBlocked = 0;' in io_init and
-          io_init.find('isIORunning') < io_init.find('gIOTerminate = 0;'),
-          'ioInit: a menu booted after a refused autolaunch must wait out the old worker and start unblocked')
+    # The wait must be uncapped (loop condition is ONLY the worker flag) and must finish before anything
+    # the old worker shares -- gIOTerminate, the queue, the static stack -- is reset or reused.
+    wait = re.search(r'for \([^;]*;\s*\*\(volatile int \*\)&isIORunning\s*;', io_init or '')
+    check(io_init is not None and wait is not None and 'isIOBlocked = 0;' in io_init and
+          wait.start() < io_init.find('gIOTerminate = 0;') < io_init.find('CreateThread('),
+          'ioInit: after a refused autolaunch, wait (uncapped) for the old worker before reusing its stack')
 
     config = text('src/config.c')
     free_body = function_text(config, 'void configFree(')

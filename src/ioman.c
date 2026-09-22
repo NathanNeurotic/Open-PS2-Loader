@@ -230,13 +230,18 @@ static void ioSimpleActionHandler(void *data)
 
 void ioInit(void)
 {
-    // A second ioInit happens only when a refused autolaunch falls back to the menu: miniDeinit has
-    // blocked the queue and asked the first worker to stop (ioEnd), but that worker runs below this
-    // thread and has not necessarily left yet. It lives on the static thread_stack reused below, and
-    // clearing gIOTerminate early would keep it alive beside the new one. Let it leave first -- bounded
-    // (~3 s), so a worker wedged in a device RPC cannot hold the menu hostage.
-    for (int i = 0; *(volatile int *)&isIORunning && i < 300; i++)
+    // A second ioInit happens only when a refused autolaunch falls back to the menu. miniDeinit's drain
+    // is bounded, so when it asks the first worker to stop (ioEnd) that worker may still be inside the
+    // one request it was running -- and it runs below this thread. Wait until it has actually left,
+    // with NO cap: it lives on the static thread_stack reused below, and resetting the queue, the
+    // semaphores and gIOTerminate while it is alive would put two threads on one stack. A cap would
+    // not save the menu anyway: the worker only blocks in bounded waits or IOP RPCs, and an RPC that
+    // never returns leaves that IOP service stuck for this thread's own calls too.
+    for (int waited = 0; *(volatile int *)&isIORunning; waited++) {
+        if (waited > 0 && waited % 100 == 0)
+            LOG("IOMAN ioInit: previous worker still finishing its request (%d s)\n", waited / 100);
         DelayThread(10 * 1000);
+    }
     // The new worker starts with an open queue, whatever the previous session left behind.
     isIOBlocked = 0;
 
