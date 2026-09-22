@@ -97,7 +97,8 @@ int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize);
 
 // First usable Neutrino core ELF, or NULL. Runtime order is fixed:
 // custom gNeutrinoPath -> active game's device (activePrefix) -> mc0/mc1.
-// The retired Neutrino device-picker config is ignored by this resolver.
+// A Memory Card / HDD (APA) choice migrated from the retired picker also gets that picker's
+// case-tolerant probe until the migrated path is edited (see configReadNeutrinoGlobals).
 const char *sbResolveNeutrinoPath(const char *activePrefix);
 
 // Deinit exception mask for an external ELF that is opened AFTER OPL's teardown. Every loader path

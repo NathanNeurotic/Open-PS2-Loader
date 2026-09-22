@@ -191,7 +191,7 @@ int gApplyGameID;
 int gEnableUSB;
 char gNeutrinoArgs[256];     // extra command-line flags appended to every Neutrino launch
 char gNeutrinoPath[256];     // optional full path; runtime order: custom -> game device -> mc0/mc1
-int gNeutrinoDevice;         // retired picker value retained in config for compatibility; runtime ignores it
+int gNeutrinoDevice;         // retired picker value; only MC/APA survive, as a migration marker (configReadNeutrinoGlobals)
 int gDefaultCoreLoader;      // global default Loader Core (0=<OPL>, 1=Neutrino); per-game $CoreLoader overrides, absent key = follow this
 int gNeutrinoVideoDefault;   // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game $NeutrinoVideo overrides
 int gNeutrinoGsmCompDefault; // global default -gsm ":c" field-flip half (0=off, 1-3=type)
@@ -2680,55 +2680,27 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
                 gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         }
     }
-    // The picker is retired, but explicit choices from older configs are user intent. Convert them
-    // into the new full-path aliases so the upgrade is visible in the UI and no hidden picker state
-    // changes what "<not set>" means. The hdd:/ alias resolves the already-selected live APA data home.
+    // Retired picker values (see the enum in opl.h). The device-specific choices -- USB, MX4SIO, MMCE,
+    // exFAT, iLink and the strict Game's Device -- were retired to Auto because their launches were not
+    // reliable, and they keep loading as Auto. Turning them into active paths here would re-enable
+    // exactly those launches and force-load their transports at launch time for users who never
+    // chose them again. Memory Card and HDD (APA) are the two choices the runtime still honours: they
+    // become the visible full path, and the old value stays behind as a marker so the resolver can
+    // repeat that picker's case-tolerant probe. _saveConfig writes both keys, so the marker has to
+    // survive a save and reload as well; it is dropped only once the path differs from its migrated
+    // form (the Settings page also resets it on any edit).
     if (gNeutrinoDevice < NEUTRINO_DEV_AUTO || gNeutrinoDevice > NEUTRINO_DEV_ILINK)
         gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-    if (gNeutrinoPath[0] != '\0') {
-        gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-    } else {
-        const char *migratedPath = NULL;
-        int preserveLegacyApa = 0;
-        switch (gNeutrinoDevice) {
-            case NEUTRINO_DEV_MC:
-                migratedPath = "mc:/NEUTRINO/neutrino.elf";
-                break;
-            case NEUTRINO_DEV_USB:
-                migratedPath = "usb:/neutrino/neutrino.elf";
-                break;
-            case NEUTRINO_DEV_MX4SIO:
-                migratedPath = "mx4sio:/neutrino/neutrino.elf";
-                break;
-            case NEUTRINO_DEV_MMCE:
-                migratedPath = "mmce:/neutrino/neutrino.elf";
-                break;
-            case NEUTRINO_DEV_EXFAT_HDD:
-                migratedPath = "ata:/neutrino/neutrino.elf";
-                break;
-            case NEUTRINO_DEV_APA_HDD:
-                migratedPath = "hdd:/neutrino/neutrino.elf";
-                preserveLegacyApa = 1;
-                break;
-            case NEUTRINO_DEV_ILINK:
-                migratedPath = "ilink:/neutrino/neutrino.elf";
-                break;
-            case NEUTRINO_DEV_GAME:
-                // The new default is Game Device -> MC, so the retired strict-game choice becomes
-                // the default policy rather than a hidden mode the user can no longer edit.
-                gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-                break;
-            default:
-                break;
-        }
-        if (migratedPath != NULL) {
-            snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", migratedPath);
-            // APA's retired picker historically probed four case variants on the case-sensitive
-            // PFS filesystem. Keep that one migration marker until the path is explicitly edited,
-            // so runtime can preserve the old installs without making arbitrary custom paths fuzzy.
-            if (!preserveLegacyApa)
-                gNeutrinoDevice = NEUTRINO_DEV_AUTO;
-        }
+    if (gNeutrinoPath[0] == '\0') {
+        if (gNeutrinoDevice == NEUTRINO_DEV_MC)
+            snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", NEUTRINO_MIGRATED_MC_PATH);
+        else if (gNeutrinoDevice == NEUTRINO_DEV_APA_HDD)
+            snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", NEUTRINO_MIGRATED_APA_PATH);
+        else
+            gNeutrinoDevice = NEUTRINO_DEV_AUTO;
+    } else if (!(gNeutrinoDevice == NEUTRINO_DEV_MC && !strcmp(gNeutrinoPath, NEUTRINO_MIGRATED_MC_PATH)) &&
+               !(gNeutrinoDevice == NEUTRINO_DEV_APA_HDD && !strcmp(gNeutrinoPath, NEUTRINO_MIGRATED_APA_PATH))) {
+        gNeutrinoDevice = NEUTRINO_DEV_AUTO; // an explicit full path is exact: no marker
     }
 }
 

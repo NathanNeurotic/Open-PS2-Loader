@@ -162,19 +162,24 @@ extern int smbCacheSize;
 
 extern int gApplyGameID; // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gEnableUSB;
-// Retired Neutrino Device picker values. Kept only to migrate older settings into the full-path
-// field; new UI/runtime policy is Custom Path -> Game Device -> mc0/mc1.
+// Retired Neutrino Device picker values. The UI/runtime policy is Custom Path -> Game Device ->
+// mc0/mc1; these survive only for config migration (configReadNeutrinoGlobals). Memory Card and
+// HDD (APA) become the visible full path below and keep their value as a marker while that path is
+// untouched: both old pickers probed several case variants on case-sensitive filesystems (mcman,
+// PFS), which an exact custom path does not.
 enum { NEUTRINO_DEV_AUTO = 0, // game device, then mc0/mc1
-       NEUTRINO_DEV_MC,       // mc0: / mc1:
-       // The following values are retained so old settings keep their numeric meaning while they
-       // are migrated to Auto at load time. They are intentionally no longer exposed by the UI.
-       NEUTRINO_DEV_USB,       // legacy: BDM "usb"        -> the mounted massN:
-       NEUTRINO_DEV_MX4SIO,    // legacy: BDM "mx4sio"/sdc -> the mounted massN:
-       NEUTRINO_DEV_MMCE,      // legacy: mmce0: / mmce1:
-       NEUTRINO_DEV_EXFAT_HDD, // legacy: BDM "ata" internal exFAT HDD -> the mounted massN:
-       NEUTRINO_DEV_APA_HDD,   // legacy: APA HDD: the mounted OPL data partition (pfs0:)
-       NEUTRINO_DEV_GAME,      // the active game's OWN device ONLY; retains its historical saved value
-       NEUTRINO_DEV_ILINK };   // legacy: BDM "ilink" -> the mounted massN:
+       NEUTRINO_DEV_MC,       // mc0: / mc1: -> NEUTRINO_MIGRATED_MC_PATH + marker
+       // The device-specific values below were retired to Auto because their launches were not
+       // reliable, and they still load as Auto -- except APA, which the runtime still honours.
+       NEUTRINO_DEV_USB,       // legacy: BDM "usb"        -> Auto
+       NEUTRINO_DEV_MX4SIO,    // legacy: BDM "mx4sio"/sdc -> Auto
+       NEUTRINO_DEV_MMCE,      // legacy: mmce0: / mmce1:  -> Auto
+       NEUTRINO_DEV_EXFAT_HDD, // legacy: BDM "ata" internal exFAT HDD -> Auto
+       NEUTRINO_DEV_APA_HDD,   // legacy: APA data home (pfs0:) -> NEUTRINO_MIGRATED_APA_PATH + marker
+       NEUTRINO_DEV_GAME,      // legacy: the active game's own device only -> Auto (game device first)
+       NEUTRINO_DEV_ILINK };   // legacy: BDM "ilink"      -> Auto
+#define NEUTRINO_MIGRATED_MC_PATH  "mc:/NEUTRINO/neutrino.elf"
+#define NEUTRINO_MIGRATED_APA_PATH "hdd:/neutrino/neutrino.elf"
 extern int gNeutrinoDevice;
 extern int gDefaultCoreLoader;
 extern int gNeutrinoVideoDefault;

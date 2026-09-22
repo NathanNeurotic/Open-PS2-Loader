@@ -1914,9 +1914,14 @@ static const char *sbResolveMigratedApaNeutrino(void)
         "neutrino/NEUTRINO.ELF",
         "NEUTRINO/NEUTRINO.ELF",
     };
-    char resolved[320];
+    // STATIC: sbNeutrinoResolved() hands back the pointer it is given, and the launch legs keep using
+    // the result long after this frame is gone (preflight, argv, the handoff after deinit).
+    static char resolved[320];
 
-    if (gNeutrinoDevice != NEUTRINO_DEV_APA_HDD)
+    // The marker only survives while gNeutrinoPath is the migrated hdd:/ alias, so the custom tier has
+    // just tried to bring the HDD up and mount the data home. If that failed, do not load or mount
+    // again once per case variant -- on a console without an HDD each attempt is a failed ATA load.
+    if (!hddModulesAreLoaded() || gHDDPrefix == NULL)
         return NULL;
 
     for (int i = 0; i < (int)(sizeof(variants) / sizeof(variants[0])); i++) {
@@ -1924,6 +1929,39 @@ static const char *sbResolveMigratedApaNeutrino(void)
             sbNeutrinoInstallComplete(resolved))
             return sbNeutrinoResolved(resolved);
     }
+    return NULL;
+}
+
+// The memory-card install spots: every folder/file case combination on mc0 and mc1. mcman compares
+// entry names case-sensitively, so each spelling really is a different file.
+static const char *sbProbeNeutrinoMc(void)
+{
+    static const char *candidates[] = {
+        NEUTRINO_PATH,
+        NEUTRINO_ALT_PATH,
+        "mc0:/neutrino/neutrino.elf",
+        "mc1:/neutrino/neutrino.elf",
+        "mc0:/neutrino/NEUTRINO.ELF",
+        "mc1:/neutrino/NEUTRINO.ELF",
+        "mc0:NEUTRINO/NEUTRINO.ELF",
+        "mc1:/NEUTRINO/NEUTRINO.ELF",
+    };
+    for (int i = 0; i < (int)(sizeof(candidates) / sizeof(candidates[0])); i++) {
+        if (sbFileExists(candidates[i]) && sbNeutrinoInstallComplete(candidates[i]))
+            return sbNeutrinoResolved(candidates[i]);
+    }
+    return NULL;
+}
+
+// An untouched migrated picker choice (the marker configReadNeutrinoGlobals keeps while the path is
+// still NEUTRINO_MIGRATED_*_PATH). The exact custom tier has already tried the visible path; this
+// repeats the old picker's case-tolerant probe of the same device, still ahead of the game device.
+static const char *sbResolveMigratedNeutrino(void)
+{
+    if (gNeutrinoDevice == NEUTRINO_DEV_MC)
+        return sbProbeNeutrinoMc();
+    if (gNeutrinoDevice == NEUTRINO_DEV_APA_HDD)
+        return sbResolveMigratedApaNeutrino();
     return NULL;
 }
 
@@ -1938,17 +1976,17 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
     //   1) user-entered full path,
     //   2) the active game's device,
     //   3) mc0:/mc1:.
-    // Retired picker values are migrated into gNeutrinoPath at config load, including APA via
-    // the semantic hdd:/ alias above. Runtime therefore has exactly the visible three-tier policy.
+    // A Memory Card or HDD (APA) choice from the retired picker was migrated into gNeutrinoPath at
+    // config load; while that path is untouched, tier 1 also repeats the old picker's case variants.
     if (gNeutrinoPath[0] != '\0' &&
         sbResolveCustomLoaderPath(gNeutrinoPath, custom, sizeof(custom)) &&
         sbNeutrinoInstallComplete(custom))
         return sbNeutrinoResolved(custom);
 
     {
-        const char *legacyApaHit = sbResolveMigratedApaNeutrino();
-        if (legacyApaHit != NULL)
-            return legacyApaHit;
+        const char *migratedHit = sbResolveMigratedNeutrino();
+        if (migratedHit != NULL)
+            return migratedHit;
     }
 
     {
@@ -1957,19 +1995,10 @@ const char *sbResolveNeutrinoPath(const char *activePrefix)
             return gameHit;
     }
 
-    static const char *candidates[] = {
-        NEUTRINO_PATH,
-        NEUTRINO_ALT_PATH,
-        "mc0:/neutrino/neutrino.elf",
-        "mc1:/neutrino/neutrino.elf",
-        "mc0:/neutrino/NEUTRINO.ELF",
-        "mc1:/neutrino/NEUTRINO.ELF",
-        "mc0:NEUTRINO/NEUTRINO.ELF",
-        "mc1:/NEUTRINO/NEUTRINO.ELF",
-    };
-    for (int i = 0; i < (int)(sizeof(candidates) / sizeof(candidates[0])); i++) {
-        if (sbFileExists(candidates[i]) && sbNeutrinoInstallComplete(candidates[i]))
-            return sbNeutrinoResolved(candidates[i]);
+    {
+        const char *mcHit = sbProbeNeutrinoMc();
+        if (mcHit != NULL)
+            return mcHit;
     }
 
     LOG("[NEUTRINO] no complete install found (custom -> game device -> mc0/mc1)\n");
