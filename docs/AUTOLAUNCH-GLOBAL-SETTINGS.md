@@ -55,14 +55,22 @@ The menu and Auto Loading run one discovery path. `miniInit` calls `resolveBootD
   loading `ps2hdd`. It requires a valid APA header, `0x55AA`, and a FAT/exFAT MBR entry that
   starts beyond the APA reserved area (`0x40000`). A residual `0x55AA` on a plain APA disk does
   not count. The exFAT root comes from the existing typed resolver (`ata0:/` → `massN:/`,
-  5 s budget, no ELF name). The settings home is chosen in this order:
-  1. RiptOPL settings (or a Custom Settings Path redirect) on the exFAT root. PFS is never
-     mounted in this case.
-  2. RiptOPL settings already saved to the APA data home. Existing installs keep their home.
-  3. Otherwise the exFAT root, where official's `conf_opl.cfg` seeds the first boot.
+  5 s budget, no ELF name). Like official OPL, the settings then always live on the exFAT root:
+  1. RiptOPL settings (or a Custom Settings Path redirect) on the exFAT root are used as they are.
+     PFS is never mounted in this case.
+  2. A Custom Settings Path saved in the APA data home is an explicit instruction, so that APA home
+     is kept and the redirect decides.
+  3. Otherwise the exFAT root is the home. Files an older build saved to the APA data home are
+     **carried over**, read-only, wherever the exFAT root lacks them: RiptOPL's master settings (ahead
+     of official's seed) and `conf_game`/`conf_last`/`conf_apps`/`conf_network.cfg`. Official's files
+     on exFAT always win. The first save writes everything to exFAT. With nothing to carry over,
+     official's `conf_opl.cfg` seeds the first boot, or defaults apply.
 
   An exFAT home is an ordinary ATA-BDM boot from then on. The boot-device reconcile enables
-  the ATA transport, and saves take the BDM path.
+  the ATA transport, and saves take the BDM path. Official OPL starts its BDM page Auto whenever it
+  finds its config on a BDM device; RiptOPL does the same on a hybrid's exFAT home while the master
+  is not its own saved file there (defaults, official's seed, or carried-over APA settings), so the
+  exFAT games appear with no setup. Once RiptOPL has saved on exFAT, the saved BDM start mode stands.
 - **Official `conf_opl.cfg` is a read-only seed.** If a folder holds neither RiptOPL name,
   `configRead` reads official's file from that folder.
   - The set keeps RiptOPL's filename, so the first save writes `settings_riptopl.cfg` and
@@ -95,7 +103,9 @@ only reads, and the exFAT side is written only when the user saves settings.
 | --- | --- |
 | PSBBN hybrid, official configs on exFAT, nothing from RiptOPL | Menu and Auto Loading home on `massN:/`, seeded from `conf_opl.cfg`; `conf_game.cfg` globals apply; exFAT games visible (`usb_mode=2`, `enable_bdm_hdd=1`). First save writes `settings_riptopl.cfg` there. |
 | PSBBN hybrid after a RiptOPL save on exFAT | RiptOPL's file wins; PFS is not mounted for settings. |
-| Hybrid with RiptOPL settings already on `__common/OPL` or `+OPL` | That APA home is kept, as before this change. |
+| Hybrid with RiptOPL settings already on `__common/OPL` or `+OPL` | Home moves to `massN:/`; those settings are carried over read-only and the BDM page starts Auto; the first save writes them to exFAT. |
+| Hybrid with a Custom Settings Path file in the APA home | That APA home is kept and the redirect decides. |
+| PSBBN hybrid, no settings anywhere | Home `massN:/`, defaults, BDM page Auto and HDD (exFAT) on, so the exFAT games show; the first save writes to exFAT. |
 | Hybrid whose exFAT volume never mounts within 5 s | Falls back to the APA path. |
 | Plain APA disk | Unchanged; a pure-APA official user's `+OPL/conf_opl.cfg` now seeds a first boot. |
 | Launcher `mc0:/APPS`, official settings in `mc0:/OPL` | Same-card recovery reads the seed; the save home stays the boot directory. |
@@ -108,9 +118,14 @@ Build `make clean` followed by `make OPLDIAG=1 release`. `__DEBUG` is unnecessar
 of `miniInit`, the diagnostic shows the following for eight seconds, then continues the launch:
 
 - the resolved `gBootDir`, the home before the first read, and the final `configGetHomePath()`;
+- why that home was chosen (for example `hybrid: exFAT, APA settings carried over`, or
+  `APA: hybrid, but exFAT did not mount in time`);
 - the initial and final read masks (`CONFIG_OPL=0x01`, `CONFIG_GAME=0x10`);
 - whether `CONFIG_GAME` is populated;
 - the time spent reading settings.
+
+A menu boot of the same build shows the chosen home, the reason, the BDM start mode and the
+HDD (exFAT) switch for about five seconds before the menu appears.
 
 ## Hardware gate
 
@@ -127,6 +142,6 @@ against the intended source revision.
 | Missing ISO on Auto Loading returns to the menu | Any BDM | Pending hardware |
 | Plain APA and MC launchers unchanged | APA HDD, MC | Pending hardware |
 
-A tester who pressed Save in RiptOPL's menu on a hybrid disk before this change has
-`settings_riptopl.cfg` in `__common/OPL`, and that APA home is kept. To test the out-of-the-box
-path, remove that file first.
+A tester who pressed Save in RiptOPL's menu on a hybrid disk with an older build has
+`settings_riptopl.cfg` in `__common/OPL`. Those settings are now carried over to the exFAT home,
+so nothing needs deleting; remove the file only to test a true first run.

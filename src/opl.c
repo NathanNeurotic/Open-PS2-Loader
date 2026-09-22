@@ -2660,28 +2660,40 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
         gNeutrinoDevice = NEUTRINO_DEV_AUTO;
 }
 
-// Does a candidate settings home already belong to RiptOPL? Only our own master file (current or legacy
-// name) or a Custom Settings Path redirect counts. Official OPL's conf_opl.cfg is a read-only seed, not
-// ownership, so it never outranks settings the user has already saved with RiptOPL somewhere else.
-static int bootHomeHasRiptoplSettings(const char *home)
+static int bootHomeHasFile(const char *home, const char *name)
 {
-    const char *names[] = {CONFIG_OPL_FILENAME, CONFIG_OPL_FILENAME_LEGACY, configPathRedirectFile};
     size_t len = strlen(home);
     const char *sep = (len > 0 && (home[len - 1] == ':' || home[len - 1] == '/')) ? "" : "/";
+    char path[256];
+    int fd;
 
-    for (unsigned int i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
-        char path[256];
-        int fd;
-
-        snprintf(path, sizeof(path), "%s%s%s", home, sep, names[i]);
-        fd = open(path, O_RDONLY);
-        if (fd >= 0) {
-            close(fd);
-            return 1;
-        }
-    }
-    return 0;
+    snprintf(path, sizeof(path), "%s%s%s", home, sep, name);
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return 0;
+    close(fd);
+    return 1;
 }
+
+// RiptOPL's own master settings file (current or legacy name) in a candidate home.
+static int bootHomeHasRiptoplMaster(const char *home)
+{
+    return bootHomeHasFile(home, CONFIG_OPL_FILENAME) || bootHomeHasFile(home, CONFIG_OPL_FILENAME_LEGACY);
+}
+
+// Does a candidate settings home already belong to RiptOPL? Only our own master file or a Custom
+// Settings Path redirect counts. Official OPL's conf_opl.cfg is a read-only seed, not ownership, so it
+// never outranks settings the user has already saved with RiptOPL somewhere else.
+static int bootHomeHasRiptoplSettings(const char *home)
+{
+    return bootHomeHasRiptoplMaster(home) || bootHomeHasFile(home, configPathRedirectFile);
+}
+
+// 1 while the settings home is an APA+exFAT hybrid's exFAT volume (set by adoptHybridExfatHome).
+static int gBootHomeHybridExfat = 0;
+// Why resolveBootDirToMass picked the home it did. Diagnostic builds show it (#545): testers can
+// photograph one line instead of reverse-engineering which home a boot chose.
+static const char *gBootHomeWhy = "not an APA launch";
 
 // The exFAT volume of an APA+exFAT hybrid as "massN:/". The typed resolver loads only the BDM core and the
 // ATA transport and waits no longer than the bootstrap budget. No ELF name on purpose: the launcher ELF
@@ -2697,14 +2709,16 @@ static int resolveHybridExfatHome(char *home, int homeLen)
 
 // Make the hybrid's exFAT volume the settings home: from here on the boot is an ordinary ATA-BDM boot,
 // so the boot-device reconcile enables the ATA transport and saves take the BDM path.
-static void adoptHybridExfatHome(const char *launch, const char *home)
+static void adoptHybridExfatHome(const char *launch, const char *home, const char *why)
 {
     snprintf(gBootDir, sizeof(gBootDir), "%s", home);
     gBootHomeApa = 0;
     gBootHddCommonFallback = 0;
     gBootHomeBdm = 1;
     gBootDirBdmType = BDM_TYPE_ATA;
-    LOG("BOOT APA launch %s on an APA+exFAT hybrid -> settings home %s\n", launch, gBootDir);
+    gBootHomeHybridExfat = 1;
+    gBootHomeWhy = why;
+    LOG("BOOT APA launch %s on an APA+exFAT hybrid -> settings home %s (%s)\n", launch, gBootDir, why);
     configEnd();
     configInit(gBootDir);
 }
@@ -2716,6 +2730,9 @@ static void resolveBootDirToMass(void)
     gBootHomeBdm = 0;
     gBootDirBdmType = BDM_TYPE_UNKNOWN;
     gBootHomeDeferred = 0;
+    gBootHomeHybridExfat = 0;
+    gBootHomeWhy = "not an APA launch";
+    configSetCarryOverDir(NULL);
     if (gBootDir[0] == '\0')
         return;
 
@@ -2726,21 +2743,24 @@ static void resolveBootDirToMass(void)
         if (hddLoadModulesReady()) {
             char before[sizeof(gBootDir)];
             char exfatHome[BDM_DEVICE_ROOT_MAX];
+            int hybrid = hddIsApaMbrHybrid();
             int haveExfatHome = 0;
 
             snprintf(before, sizeof(before), "%s", gBootDir);
 
             // APA+exFAT hybrid (PSBBN Definitive's "APA-Jail"): APA holds only the launchers, while the
             // exFAT volume holds official OPL's conf_opl.cfg, the games, CFG and ART -- official OPL
-            // never loads APA on such a disk at all. An APA launch there is homed on the exFAT volume,
-            // in this order: RiptOPL settings on exFAT; RiptOPL settings already saved to the APA data
-            // home (existing installs keep their home); otherwise exFAT (official seed or first run).
-            // The first case never mounts PFS. The menu and autolaunch both come through here (#545).
-            if (hddIsApaMbrHybrid() && resolveHybridExfatHome(exfatHome, sizeof(exfatHome))) {
+            // never loads APA on such a disk at all, so its settings always live on exFAT. RiptOPL does
+            // the same. The one exception is a Custom Settings Path saved in the APA data home: an
+            // explicit instruction still decides. RiptOPL settings that older builds saved to the APA
+            // data home are CARRIED OVER, read-only, until the first save writes them to exFAT -- keeping
+            // them as the home instead made every tester of an older build save to __common/OPL and
+            // miss the exFAT games (#545 retest). The menu and autolaunch both come through here.
+            if (hybrid && resolveHybridExfatHome(exfatHome, sizeof(exfatHome))) {
                 haveExfatHome = 1;
                 if (bootHomeHasRiptoplSettings(exfatHome)) {
-                    adoptHybridExfatHome(before, exfatHome);
-                    return;
+                    adoptHybridExfatHome(before, exfatHome, "hybrid: RiptOPL settings on exFAT");
+                    return; // never mounts PFS
                 }
             }
 
@@ -2749,11 +2769,19 @@ static void resolveBootDirToMass(void)
                 DIR *dir = opendir(gHDDPrefix);
                 if (dir != NULL) {
                     closedir(dir);
-                    if (haveExfatHome && !bootHomeHasRiptoplSettings(gHDDPrefix)) {
-                        adoptHybridExfatHome(before, exfatHome);
+                    if (haveExfatHome && !bootHomeHasFile(gHDDPrefix, configPathRedirectFile)) {
+                        if (bootHomeHasRiptoplMaster(gHDDPrefix)) {
+                            configSetCarryOverDir(gHDDPrefix);
+                            adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT, APA settings carried over");
+                        } else {
+                            adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (official seed or first run)");
+                        }
                         return;
                     }
 
+                    gBootHomeWhy = haveExfatHome ? "hybrid: APA (Custom Settings Path in APA home)" :
+                                   hybrid        ? "APA: hybrid, but exFAT did not mount in time" :
+                                                   "APA data home";
                     snprintf(gBootDir, sizeof(gBootDir), "%s", gHDDPrefix);
                     size_t rlen = strlen(gBootDir);
                     while (rlen > 0 && gBootDir[rlen - 1] == '/')
@@ -2777,10 +2805,11 @@ static void resolveBootDirToMass(void)
 
             // No usable APA data home. On a hybrid the exFAT volume is still a real, writable home.
             if (haveExfatHome) {
-                adoptHybridExfatHome(before, exfatHome);
+                adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (APA data home unusable)");
                 return;
             }
         }
+        gBootHomeWhy = "APA: no data home mounted";
         LOG("BOOT APA boot dir %s could not resolve an HDD data home; keeping launch identity for safe retry\n", gBootDir);
         // The launch transport is still APA even though the persistent data home did not mount.
         // Keep the real launch identity rather than inventing an unmounted pfs0:OPL home. The raw
@@ -3208,6 +3237,18 @@ static void _loadConfig()
                 *bootDevFlag = 1;
                 configSetInt(configGetByType(CONFIG_OPL), bootDevKey, *bootDevFlag);
             }
+        }
+
+        // The one place the rule above DOES grant the tab: an APA+exFAT hybrid homed on its exFAT volume,
+        // where every game lives. Official OPL starts its BDM page Auto whenever it finds its config on a
+        // BDM device, so there the games simply appear. Match that while the master is not the user's own
+        // RiptOPL file on exFAT -- defaults, official's seed, or settings carried over from the APA home,
+        // which were saved when the home was APA. Once RiptOPL has saved on exFAT, that choice stands.
+        if (gBootHomeHybridExfat && gBDMStartMode == START_MODE_DISABLED &&
+            (!(result & CONFIG_OPL) || configOplIsOfficialSeed() || configOplIsCarryOver())) {
+            LOG("CONFIG hybrid exFAT home without RiptOPL settings of its own -- BDM start mode Auto\n");
+            gBDMStartMode = START_MODE_AUTO;
+            configSetInt(configGetByType(CONFIG_OPL), CONFIG_OPL_BDM_MODE, gBDMStartMode);
         }
     }
 
@@ -4874,6 +4915,16 @@ static void init(void)
         guiSetBootStatus(_l(_STR_BOOT_LOADING_CONFIG));
         guiRenderGreetingScreen();
         _loadConfig(); // only try to restore config if emergency key is not being pressed
+#ifdef __OPLDIAG
+        // #545: which settings home this boot chose, and why, before the menu covers it. Untranslated
+        // developer text, diagnostic builds only -- a tester's photo answers what a log cannot.
+        {
+            char homeDiag[224];
+            snprintf(homeDiag, sizeof(homeDiag), "Settings home: %s\n%s\nBDM start mode: %d  HDD (exFAT): %d",
+                     configGetHomePath(), gBootHomeWhy, gBDMStartMode, gEnableBdmHDD);
+            guiWarning(homeDiag, 20);
+        }
+#endif
     } else {
         LOG("--- SKIPPING OPL CONFIG LOADING\n");
         applyConfig(-1, -1, 0);
@@ -5038,11 +5089,12 @@ static void miniInit(int mode)
              "Auto Loading config diagnostic (#545)\n"
              "mode=%d  config=%ld ms\n"
              "boot: %s\ninitial home: %s\nfinal home: %s\n"
+             "home chosen because: %s\n"
              "read=0x%02x  final=0x%02x  GAME bit=0x%02x\n"
              "CONFIG_GAME populated=%d\n"
              "Game continues after 8 seconds.",
              mode, (long)((clock() - configStart) / (CLOCKS_PER_SEC / 1000)),
-             gBootDir, initialHome, configGetHomePath(), initialRet, ret, CONFIG_GAME,
+             gBootDir, initialHome, configGetHomePath(), gBootHomeWhy, initialRet, ret, CONFIG_GAME,
              globalGame != NULL && globalGame->head != NULL);
     printf("%s\n", diagnostic);
     rmInit();

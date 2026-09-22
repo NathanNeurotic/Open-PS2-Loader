@@ -1137,6 +1137,26 @@ int configOplIsOfficialSeed(void)
     return configOplOfficialSeed;
 }
 
+// A second read-only source for the global sets: files RiptOPL saved in ANOTHER home, carried over
+// into the current one. An APA+exFAT hybrid is homed on its exFAT volume like official OPL, but builds
+// before that homed it on the APA data home, where an existing user's settings still sit (#545).
+// Each global file the current home lacks is read from there instead. The sets are NOT re-homed:
+// configWrite materializes a populated set whose file is absent, so the first save writes them all to
+// the current home and this goes quiet for good. Files the current home does have (official's
+// conf_game.cfg, say) always win.
+static char configCarryOverDir[64];
+static int configOplCarryOver = 0;
+
+void configSetCarryOverDir(const char *dir)
+{
+    snprintf(configCarryOverDir, sizeof(configCarryOverDir), "%s", dir != NULL ? dir : "");
+}
+
+int configOplIsCarryOver(void)
+{
+    return configOplCarryOver;
+}
+
 // Official OPL numbers its pages with five BDM slots (BDM 0-4, ETH 5, HDD 6, APP 7); RiptOPL has eight
 // (ETH_MODE 8, HDD_MODE 9, APP_MODE 10). Every other official master key has the same name and the same
 // meaning here, video mode indices included, so default_device is the only value that needs mapping.
@@ -1250,12 +1270,40 @@ static file_buffer_t *configOpenSingleShot(const char *path)
     return fb;
 }
 
+// Index of one of the global sets (configFiles), or -1 for a per-game or other set.
+static int configGlobalIndex(const config_set_t *configSet)
+{
+    for (int i = 0; i < CONFIG_INDEX_COUNT; i++) {
+        if (configSet == &configFiles[i])
+            return i;
+    }
+    return -1;
+}
+
+// "<dir><name>" for the carry-over directory, which always ends in '/' or ':' ("pfs0:OPL/", "pfs0:").
+static file_buffer_t *configOpenCarryOver(const char *name)
+{
+    char path[256];
+    file_buffer_t *fileBuffer;
+
+    snprintf(path, sizeof(path), "%s%s", configCarryOverDir, name);
+    fileBuffer = configOpenSingleShot(path);
+    if (fileBuffer == NULL)
+        fileBuffer = openFileBuffer(path, O_RDONLY, 0, 4096);
+    if (fileBuffer != NULL)
+        LOG("CONFIG no RiptOPL settings in this home; carrying over %s read-only\n", path);
+    return fileBuffer;
+}
+
 int configRead(config_set_t *configSet)
 {
     int fromOfficial = 0;
+    int fromCarryOver = 0;
 
-    if (configSet != NULL && configSet->type == CONFIG_OPL)
+    if (configSet != NULL && configSet->type == CONFIG_OPL) {
         configOplOfficialSeed = 0;
+        configOplCarryOver = 0;
+    }
     if (configSet != NULL && configPathIsRawApa(configSet->filename)) {
         LOG("CONFIG refusing raw APA read path %s; use a mounted pfsN: path\n", configSet->filename);
         return 0;
@@ -1282,6 +1330,14 @@ int configRead(config_set_t *configSet)
         }
     }
 
+    if (fileBuffer == NULL && configCarryOverDir[0] != '\0' && configSet->type != CONFIG_OPL) {
+        // A global file the current home lacks, carried over from the previous home (see above). The
+        // master set has its own, later rung: its legacy name comes first and official's seed after.
+        int index = configGlobalIndex(configSet);
+        if (index >= 0)
+            fileBuffer = configOpenCarryOver(configFilenames[index]);
+    }
+
     if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL) {
         // Migration: existing installs have the legacy conf_riptopl.cfg, not settings_riptopl.cfg.
         // Read the legacy file from the same dir so settings aren't lost; the next save writes the
@@ -1293,6 +1349,15 @@ int configRead(config_set_t *configSet)
             fileBuffer = openFileBuffer(legacyPath, O_RDONLY, 0, 4096);
         if (fileBuffer != NULL)
             LOG("CONFIG migrating settings from legacy %s\n", legacyPath);
+    }
+
+    if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL &&
+        configCarryOverDir[0] != '\0') {
+        // RiptOPL settings the user already saved in a previous home outrank official's seed below.
+        fileBuffer = configOpenCarryOver(CONFIG_OPL_FILENAME);
+        if (fileBuffer == NULL)
+            fileBuffer = configOpenCarryOver(CONFIG_OPL_FILENAME_LEGACY);
+        fromCarryOver = fileBuffer != NULL;
     }
 
     if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL) {
@@ -1326,6 +1391,8 @@ int configRead(config_set_t *configSet)
         configTranslateOfficialOpl(configSet);
         configOplOfficialSeed = 1;
     }
+    if (fromCarryOver && ret)
+        configOplCarryOver = 1;
     return ret;
 }
 
