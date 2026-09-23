@@ -15,7 +15,10 @@ typedef enum {
     GUI_OP_SELECT_MENU,
     GUI_OP_CLEAR_SUBMENU,
     GUI_OP_SORT,
-    GUI_OP_ADD_HINT
+    GUI_OP_ADD_HINT,
+#ifdef OPLUNA_UI
+    GUI_OP_OPLUNA_PUBLISH,
+#endif
 } gui_op_type_t;
 
 /** a single GUI update in a package form */
@@ -50,6 +53,9 @@ struct gui_update_t
             int icon_id;
             int text_id;
         } hint;
+#ifdef OPLUNA_UI
+        void *oplunaSource;
+#endif
     };
 };
 
@@ -63,6 +69,9 @@ extern int guiFrameId;
 #define GUI_SCREEN_INFO      2
 #define GUI_SCREEN_GAME_MENU 3
 #define GUI_SCREEN_APP_MENU  4
+#ifdef OPLUNA_UI
+#define GUI_SCREEN_OPLUNA    5
+#endif
 
 void guiSwitchScreen(int target);
 

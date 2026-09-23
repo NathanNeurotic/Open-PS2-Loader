@@ -51,6 +51,10 @@
 #include "include/cheatman.h"
 #include "include/sound.h"
 #include "include/xparam.h"
+#ifdef OPLUNA_UI
+#include "include/opluna.h"
+static int oplunaActionSource;
+#endif
 
 // FIXME: We should not need this function.
 //        Use newlib's 'stat' to get GMT time.
@@ -344,8 +348,12 @@ void moduleUpdateMenuInternal(opl_io_module_t *mod, int themeChanged, int langCh
 
         menuAddHint(&mod->menuItem, _STR_REFRESH, SELECT_ICON);
 
+#ifdef OPLUNA_UI
+        menuAddHint(&mod->menuItem, _STR_VIEW, R3_ICON);
+#else
         if (gFAVStartMode)
             menuAddHint(&mod->menuItem, _STR_FAV_HINT, R3_ICON);
+#endif
 
         // L3 moves the page around its ring of lists. Both and Mixed expose rings; PS2/PS1 pin an
         // ordinary device page, while Favorites and APPS retain their independent display rules.
@@ -680,6 +688,10 @@ static void itemExecTriangle(struct menu_item *curMenu)
 
     item_list_t *support = curMenu->userdata;
 
+#ifdef OPLUNA_UI
+    menuSetGameMenuReturnScreen(oplunaActionSource ? GUI_SCREEN_OPLUNA : GUI_SCREEN_MAIN);
+#endif
+
     if (support) {
         // A VCD is a POPSTARTER title, not a PS2-loader title. Route before the generic per-game
         // settings branch: that branch loads/creates CFG state and exposes controls that can never
@@ -709,6 +721,72 @@ static void itemExecTriangle(struct menu_item *curMenu)
     } else
         guiMsgBox("NULL Support object. Please report", 0, NULL);
 }
+
+#ifdef OPLUNA_UI
+/*
+ Copyright 2026, dnunezx
+ Licensed under the Academic Free License version 3.0.
+ */
+static menu_item_t *oplunaFocusNativeGame(int index)
+{
+    opluna_identity_t identity;
+    opl_io_module_t *module;
+    item_list_t *support;
+    submenu_list_t *entry;
+    const char *title, *startup;
+
+    if (oplunaIdentityAt(index, &identity) < 0 || identity.mode < 0 || identity.mode >= MODE_COUNT)
+        return NULL;
+    module = &list_support[identity.mode];
+    support = module->support;
+    if (support == NULL || !support->enabled || !module->menuItem.visible ||
+        support->itemGetCount == NULL || support->itemGetName == NULL ||
+        support->itemGetStartup == NULL || identity.itemId >= support->itemGetCount(support))
+        return NULL;
+
+    title = support->itemGetName(support, identity.itemId);
+    startup = support->itemGetStartup(support, identity.itemId);
+    if (title == NULL || startup == NULL ||
+        strcmp(title, identity.title) != 0 || strcmp(startup, identity.startup) != 0)
+        return NULL;
+
+    for (entry = module->subMenu; entry != NULL; entry = entry->next) {
+        if (entry->item.id == identity.itemId)
+            break;
+    }
+    if (entry == NULL || entry->item.isFolder)
+        return NULL;
+
+    module->menuItem.current = entry;
+    module->menuItem.pagestart = entry;
+    menuSetSelectedItem(&module->menuItem);
+    return &module->menuItem;
+}
+
+int oplunaSelectNativeGame(int index)
+{
+    return oplunaFocusNativeGame(index) != NULL ? 0 : -1;
+}
+
+int oplunaActivateGame(int index, int options)
+{
+    menu_item_t *menu = oplunaFocusNativeGame(index);
+    if (menu == NULL) {
+        guiMsgBox("This game changed. Please wait for Collection to refresh.", 0, NULL);
+        return -1;
+    }
+
+    oplunaActionSource = 1;
+    if (options)
+        itemExecTriangle(menu);
+    else {
+        oplunaCollectionEnd();
+        itemExecSelect(menu);
+    }
+    oplunaActionSource = 0;
+    return 0;
+}
+#endif
 
 static void initMenuForListSupport(opl_io_module_t *mod)
 {
@@ -834,6 +912,9 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
     } else {
         // If the module has a valid menu instance try to refresh the visibility state.
         mod->menuItem.visible = 0;
+#ifdef OPLUNA_UI
+        oplunaQueueSource(mode, NULL, 0);
+#endif
     }
 }
 
@@ -1206,6 +1287,9 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
     // read the new game list
     struct gui_update_t *gup = NULL;
     int count = mdl->support->itemUpdate(mdl->support);
+#ifdef OPLUNA_UI
+    oplunaQueueSource(mdl->support->mode, mdl->support, count);
+#endif
 
 #ifdef RETROACHIEVEMENTS
     // RA badges: recompute on every list rebuild. This runs on the I/O thread (itemUpdate
@@ -4779,6 +4863,9 @@ static void init(void)
     // handler for deffered menu updates
     ioRegisterHandler(IO_MENU_UPDATE_DEFFERED, &menuDeferredUpdate);
     cacheInit();
+#ifdef OPLUNA_UI
+    oplunaCollectionInit();
+#endif
 
     gSelectButton = (InitConsoleRegionData() == CONSOLE_REGION_JAPAN) ? KEY_CIRCLE : KEY_CROSS;
 
