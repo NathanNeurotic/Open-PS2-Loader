@@ -34,6 +34,9 @@
 #include "include/cheatman.h"
 #include "include/sound.h"
 #include "include/guigame.h"
+#ifdef OPLUNA_UI
+#include "include/opluna.h"
+#endif
 #include "include/texcache.h"
 #include "include/appsupport.h" // appGetObject() -- push a live Art Delay change onto the APPS list
 #include "include/tar.h"        // tarInvalidate -- re-arm the .tar probe when the toggle flips
@@ -157,11 +160,28 @@ typedef struct
     short inMenu;
 } gui_screen_handler_t;
 
-static gui_screen_handler_t screenHandlers[] = {{&menuHandleInputMain, &menuRenderMain, 0},
-                                                {&menuHandleInputMenu, &menuRenderMenu, 1},
-                                                {&menuHandleInputInfo, &menuRenderInfo, 1},
-                                                {&menuHandleInputGameMenu, &menuRenderGameMenu, 1},
-                                                {&menuHandleInputAppMenu, &menuRenderAppMenu, 1}};
+#ifdef OPLUNA_UI
+static void oplunaRenderScreen(void)
+{
+    oplunaCollectionRender(screenWidth, screenHeight);
+}
+
+static void oplunaHandleInput(void)
+{
+    oplunaCollectionHandleInput();
+}
+#endif
+
+static gui_screen_handler_t screenHandlers[] = {
+    {&menuHandleInputMain, &menuRenderMain, 0},
+    {&menuHandleInputMenu, &menuRenderMenu, 1},
+    {&menuHandleInputInfo, &menuRenderInfo, 1},
+    {&menuHandleInputGameMenu, &menuRenderGameMenu, 1},
+    {&menuHandleInputAppMenu, &menuRenderAppMenu, 1},
+#ifdef OPLUNA_UI
+    {&oplunaHandleInput, &oplunaRenderScreen, 0},
+#endif
+};
 
 // default screen handler (menu screen)
 static gui_screen_handler_t *screenHandler = &screenHandlers[GUI_SCREEN_MENU];
@@ -237,6 +257,10 @@ void guiInit(void)
 
 void guiEnd()
 {
+#ifdef OPLUNA_UI
+    oplunaCollectionEnd();
+    oplunaEnd();
+#endif
     if (gBackgroundTex.Mem)
         free(gBackgroundTex.Mem);
 
@@ -3467,6 +3491,12 @@ static void guiHandleOp(struct gui_update_t *item)
             menuHintsUnlock();
             break;
 
+#ifdef OPLUNA_UI
+        case GUI_OP_OPLUNA_PUBLISH:
+            oplunaApplySource(item->oplunaSource);
+            break;
+#endif
+
         default:
             LOG("GUI: ??? (%d)\n", item->type);
     }
@@ -3510,16 +3540,33 @@ static void guiHandleDeferredOps(void)
 
 void guiExecDeferredOps(void)
 {
-    // Clears deferred operations list by executing them.
+#ifdef OPLUNA_UI
+    // The I/O worker can call this outside the frame loop. Keep published
+    // library snapshots and menu items alive until the current frame ends.
+    guiLock();
+#endif
     guiHandleDeferredOps();
+#ifdef OPLUNA_UI
+    guiUnlock();
+#endif
 }
 
-static void guiDrawBusy(int alpha)
+static void guiDrawBusy(int alpha, int collectionPlacement)
 {
     if (gTheme->loadingIcon) {
         GSTEXTURE *texture = thmGetTexture(LOAD0_ICON + (guiFrameId >> 1) % gTheme->loadingIconCount);
         if (texture && texture->Mem) {
             u64 mycolor = GS_SETREG_RGBA(0x80, 0x80, 0x80, alpha);
+#ifdef OPLUNA_UI
+            if (collectionPlacement) {
+                int x, y;
+                oplunaCollectionLoadingPosition(screenWidth, screenHeight, 20, &x, &y);
+                rmDrawPixmap(texture, x, y, ALIGN_NONE, 20, 20, SCALING_NONE, mycolor, 0);
+                return;
+            }
+#else
+            (void)collectionPlacement;
+#endif
             rmDrawPixmap(texture, gTheme->loadingIcon->posX, gTheme->loadingIcon->posY, gTheme->loadingIcon->aligned, gTheme->loadingIcon->width, gTheme->loadingIcon->height, gTheme->loadingIcon->scaled, mycolor, 0);
         }
     }
@@ -3558,7 +3605,7 @@ int guiRenderProbeFrame(void)
     gProbeFrameActive = 1;
     guiShow();
     gProbeFrameActive = 0;
-    guiDrawBusy(0x80);
+    guiDrawBusy(0x80, 0);
     // Without this the escape hatch is invisible: the probe frame is the unchanged menu plus a
     // spinner, so nothing tells the user the wait can be abandoned at all.
     x = guiAlignSubMenuHints(1, hints, icons, gTheme->fonts[0], 12, 2);
@@ -4014,8 +4061,14 @@ static void guiDrawOverlays()
             busyAlpha += 0x02;
     }
 
-    if (!oplIsBootInProgress() && !gIntroSplashActive && busyAlpha > 0x00)
-        guiDrawBusy(busyAlpha);
+    if (!oplIsBootInProgress() && !gIntroSplashActive && busyAlpha > 0x00) {
+        int collectionPlacement = 0;
+#ifdef OPLUNA_UI
+        gui_screen_handler_t *visibleScreen = screenHandlerTarget != NULL && transIndex >= 13 ? screenHandlerTarget : screenHandler;
+        collectionPlacement = visibleScreen == &screenHandlers[GUI_SCREEN_OPLUNA];
+#endif
+        guiDrawBusy(busyAlpha, collectionPlacement);
+    }
 
 #ifdef __DEBUG
     char text[20];
@@ -4185,6 +4238,17 @@ static void guiShow()
     if (screenHandlerTarget) {
         u8 alpha;
         const u8 transition_frames = 26;
+#ifdef OPLUNA_UI
+        if (screenHandlerTarget == &screenHandlers[GUI_SCREEN_OPLUNA]) {
+            // Load the visible jackets while the native screen fades out.
+            // Keep the midpoint black until the whole stack can fade in.
+            oplunaCollectionPrepare();
+            if (transIndex == transition_frames / 2 && !oplunaCollectionReady()) {
+                rmDrawRect(0, 0, screenWidth, screenHeight, GS_SETREG_RGBA(0x00, 0x00, 0x00, 0x80));
+                return;
+            }
+        }
+#endif
         if (transIndex < (transition_frames / 2)) {
             // Fade-out old screen
             // index: 0..7
@@ -4195,6 +4259,12 @@ static void guiShow()
             // Fade-in new screen
             // index: 8..15
             // alpha: 8..1 * transition_step
+#ifdef OPLUNA_UI
+            // Keep Collection artwork visible through its fade-out. Release it
+            // only after the screen has reached full black.
+            if (transIndex == transition_frames / 2 && screenHandler == &screenHandlers[GUI_SCREEN_OPLUNA])
+                oplunaCollectionEnd();
+#endif
             screenHandlerTarget->renderScreen();
             alpha = fade((float)(transition_frames - transIndex) / (transition_frames / 2)) * 0x80;
         }
@@ -4774,7 +4844,7 @@ void guiShowGameID(const char *startup)
     for (frame = 0; frame < GAMEID_HOLD_FRAMES; frame++) {
         guiStartFrame();
         rmDrawRect(0, 0, screenWidth, screenHeight, GS_SETREG_RGBA(0x00, 0x00, 0x00, 0x80));
-        guiDrawBusy(0x80);
+        guiDrawBusy(0x80, 0);
         gameIDDrawBars(startup);
         guiEndFrame();
     }
@@ -4814,7 +4884,7 @@ void guiShowGameID(const char *startup)
     for (frame = 0; frame < 2; frame++) {
         guiStartFrame();
         rmDrawRect(0, 0, screenWidth, screenHeight, GS_SETREG_RGBA(0x00, 0x00, 0x00, 0x80));
-        guiDrawBusy(0x80);
+        guiDrawBusy(0x80, 0);
         guiEndFrame();
     }
 }

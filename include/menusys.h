@@ -152,6 +152,9 @@ void menuHandleInputAppMenu();
 
 // Sets the selected item if it is found in the menu list
 void menuSetSelectedItem(menu_item_t *item);
+#ifdef OPLUNA_UI
+void menuSetGameMenuReturnScreen(int screen);
+#endif
 
 /** Serialize menu_item_t::hints against the renderer.
  *
