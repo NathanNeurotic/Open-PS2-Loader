@@ -73,8 +73,11 @@ project implements it.</p>
 An entry here means another project has something RiptOPL does not; it does not mean the feature is scheduled.
 Re-audited on 2026-09-22 against <code>rebuild/main</code> at
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b">abf14079</a>.
-This pass completes the eight-project <b>Awaiting Comparison</b> backlog and re-audits
-<a href="#project-titan">Project Titan Magenta Edition</a>. The legacy-variant sweep adds confirmed gaps from
+This pass adds a source-level audit of <a href="#luna">LUNA</a> at
+<a href="https://github.com/dnunezx/LUNA/commit/23112ecce73823b13d11d57fda0abd5968808d7c"><code>main@23112ec</code></a>,
+a new visual loader derived from NHDDL and Neutrino, and retains the completed eight-project
+<b>Awaiting Comparison</b> audit plus the expanded <a href="#project-titan">Project Titan Magenta Edition</a> pass.
+The legacy-variant sweep adds confirmed gaps from
 <a href="#e2opl">E2OPL</a>, <a href="#modular-pademu">Modular PADEMU</a>, <a href="#uopl-historical">historical uOPL</a>,
 <a href="#rrve">exaconn's RRVE / wheel work</a> and <a href="#sopl">Stable OPL</a>, while moving OPL Daily Build,
 Grimdoomer OPL and X2P to <a href="#checked">Checked, nothing missing</a>. Titan was audited against upstream
@@ -102,6 +105,7 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>R</code></td><td><a href="https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher">RETROLauncher</a></td><td>A Lua launcher for retro emulators and PS2 games</td><td>1</td></tr>
     <tr><td><code>M</code></td><td><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2">Modulo R1</a></td><td>A Neutrino-based loader in beta</td><td>1</td></tr>
     <tr><td><code>N</code></td><td><a href="https://github.com/pcm720/nhddl">NHDDL</a></td><td>A deliberately small Neutrino front-end and launcher</td><td>2</td></tr>
+    <tr><td><code>LU</code></td><td><a href="https://github.com/dnunezx/LUNA">LUNA</a></td><td>An NHDDL/Neutrino-derived visual loader with a coordinated frontend/runtime</td><td>8</td></tr>
     <tr><td><code>L</code></td><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">Extended APA</a></td><td>An OPL build for internal HDDs larger than 2 TiB</td><td>1</td></tr>
     <tr><td><code>X</code></td><td><a href="https://sourceforge.net/projects/e2opl/">E2OPL</a></td><td>A historical OPL fork adding EXT2 USB storage</td><td>1</td></tr>
     <tr><td><code>MP</code></td><td><a href="https://github.com/belek666/Open-PS2-Loader/tree/modularPademu">Modular PADEMU</a></td><td>A historical modular controller-emulation branch</td><td>2</td></tr>
@@ -113,7 +117,7 @@ environments built on OPL, listed so the survey is complete.
 <p>Twelve more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
 
 <h2 id="at-a-glance">At a glance</h2>
-<p>All 62 entries in one list. Click a column heading to sort.</p>
+<p>All 70 entries in one list. Click a column heading to sort.</p>
 <table data-sortable>
   <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Source</th><th>Type</th></tr></thead>
   <tbody>
@@ -172,6 +176,14 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>M1</code></td><td>Choose between several network servers</td><td>Cheats, launching &amp; network</td><td>Modulo R1</td><td><span class="pill">Optional</span></td></tr>
     <tr><td><code>N1</code></td><td>Generic forward-boot CLI</td><td>Launcher integration</td><td>NHDDL</td><td><span class="pill">Optional</span></td></tr>
     <tr><td><code>N2</code></td><td>Reuse <code>SYS-CONF/IPCONFIG.DAT</code> for UDPFS IP</td><td>Cheats, launching &amp; network</td><td>NHDDL</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>LU1</code></td><td>Constellation spatial library view with Random Scan</td><td>Library &amp; menu</td><td>LUNA</td><td>Feature</td></tr>
+    <tr><td><code>LU2</code></td><td>Orbit depth-sorted ring library view</td><td>Library &amp; menu</td><td>LUNA</td><td>Feature</td></tr>
+    <tr><td><code>LU3</code></td><td>Grid fast-track paging with deferred artwork and page cascades</td><td>Library &amp; menu</td><td>LUNA</td><td>Feature</td></tr>
+    <tr><td><code>LU4</code></td><td>Animated rotating <code>ICO</code> disc-label artwork</td><td>Library &amp; menu</td><td>LUNA</td><td>Feature</td></tr>
+    <tr><td><code>LU5</code></td><td>Per-drive Favorites that travel with the game HDD</td><td>Library &amp; menu</td><td>LUNA</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>LU6</code></td><td>Staged temp-file writes for key persistent library state</td><td>Reliability / persistence</td><td>LUNA</td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>LU7</code></td><td>Neutrino physical power-button DEV9-safe shutdown</td><td>Game compatibility</td><td>LUNA</td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>LU8</code></td><td>Neutrino in-game return / IGR</td><td>Game compatibility</td><td>LUNA</td><td>Feature <span class="pill">WIP</span></td></tr>
     <tr><td><code>L1</code></td><td>APA HDDs over 2 TiB</td><td>Internal HDD</td><td>Extended APA</td><td><span class="badge unconfirmed">Not planned</span></td></tr>
     <tr><td><code>X1</code></td><td>EXT2 USB filesystem support</td><td>USB / game sources</td><td>E2OPL</td><td>Feature</td></tr>
     <tr><td><code>MP1</code></td><td>Xbox 360 controllers over USB</td><td>Controllers &amp; input</td><td>Modular PADEMU</td><td>Feature <span class="pill">Historical</span></td></tr>
@@ -356,6 +368,48 @@ arguments, and can hand VMCs to Neutrino. NHDDL's backend-forcing ELF filename s
 interface for selecting a device mode, not a separate game-loading capability, so they are not counted independently.
 </div>
 
+<h2 id="luna">LUNA</h2>
+<p><a href="https://github.com/dnunezx/LUNA">dnunezx/LUNA</a> &mdash; <b>Lightweight Unified Neutrino Access</b>, a
+new visual loader built from pinned NHDDL and Neutrino sources. Audited against current
+<a href="https://github.com/dnunezx/LUNA/commit/23112ecce73823b13d11d57fda0abd5968808d7c"><code>main@23112ec</code></a>;
+the published <a href="https://github.com/dnunezx/LUNA/releases/tag/v1.0.0-rc.1">v1.0.0-rc.1</a> tag points to
+<code>f758fa0b</code>. LUNA preserves NHDDL's scanning/launch contracts but adds an original multi-view frontend,
+per-drive state handling and Neutrino-side shutdown work.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>LU1</code></td><td><b>Constellation spatial library view with Random Scan</b></td><td>Places the ten-entry artwork window on an irregular constellation map and animates focus between spatial anchors. Square starts <b>Random Scan</b>: it chooses a different title, walks toward it one adjacent cache step at a time and cancels immediately on deliberate navigation. RiptOPL has no spatial-map or random-title browsing mode.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/ui/view_constellation.c">view_constellation.c</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/ui/gui.c">Random Scan control</a></td></tr>
+    <tr><td><code>LU2</code></td><td><b>Orbit depth-sorted ring library view</b></td><td>Renders the selected game at the front of a tilted ring while the other cached covers move around it with perspective narrowing, size/brightness/opacity depth falloff and explicit rear-to-front sorting. RiptOPL's Coverflow is a linear carousel and has no equivalent orbital presentation.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/ui/view_orbit.c">view_orbit.c</a></td></tr>
+    <tr><td><code>LU3</code></td><td><b>Grid fast-track paging with deferred artwork and page cascades</b></td><td>The 4&times;4 Grid keeps three page buffers and two selected-cover buffers. Shoulder taps request one page; holding L1/L2 or R1/R2 enters a 140 ms fast-track step loop after a 500 ms hold, suppressing intermediate PNG work until release. Normal page changes prepare the destination first and then run a staggered row cascade. The basic idea of a grid is already tracked as <a href="#oplattice">O1</a>; this row records LUNA's additional navigation/cache behavior rather than counting Grid twice.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/include/ui/navigation.h">navigation constants</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/ui/gui.c">Grid state/input</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/ui/view_grid.c">Grid renderer</a></td></tr>
+    <tr><td><code>LU4</code></td><td><b>Animated rotating <code>ICO</code> disc-label artwork</b></td><td>Classic view pairs the normal OPL <code>_COV.png</code> with <code>_ICO.png</code> disc art and rotates the disc texture continuously on a textured quad. RiptOPL already understands <code>ICO</code> as disc artwork and can toggle it at runtime, so the gap is specifically the animated disc presentation, not disc-art support itself.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/ui/view_classic.c">view_classic.c</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/NHDDL_FIDELITY.md">paired-art fidelity note</a></td></tr>
+    <tr><td><code>LU5</code></td><td><b>Per-drive Favorites that travel with the game HDD</b> <span class="pill">Optional</span></td><td>LUNA resolves Favorites against the selected title's metadata device and stores them under that drive's <code>/LUNA/favorites.txt</code>; swapping game HDDs therefore swaps the Favorites set with the library. RiptOPL deliberately keeps one cross-device <code>favourites.bin</code> beside its shared master configuration, so this is a different persistence model rather than missing Favorites functionality.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/favorites.c">favorites.c</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/favsupport.c">RiptOPL favsupport.c</a></td></tr>
+    <tr><td><code>LU6</code></td><td><b>Staged temp-file writes for key persistent library state</b> <span class="badge secondary">Fix</span></td><td>LUNA writes a complete temporary file before replacing <code>favorites.txt</code>, <code>lastTitle.bin</code> and the ISO title-ID <code>cache.bin</code>; readers can recover completed temporary last-title/cache records after interrupted replacement. RiptOPL has substantial config-write verification/restore logic, but its centralized Favorites store still opens <code>favourites.bin</code> with <code>O_TRUNC</code> and writes the replacement in place.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/favorites.c">Favorites staging</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/options.c">last-title staging</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/nhddl/src/devices/iso.c">cache staging</a></td></tr>
+    <tr><td><code>LU7</code></td><td><b>Neutrino physical power-button DEV9-safe shutdown</b> <span class="badge secondary">Fix</span></td><td>LUNA modifies Neutrino's IOP CD/DVD service so the native front-panel power event is handled by a priority-1 listener: it stops/synchronizes active emulated optical work, invokes DEV9's shutdown export when present, then issues the normal <code>sceCdPowerOff</code>. RiptOPL's OPL core already has its own orderly IGR/power-off path, but its <b>Neutrino</b> core does not include this coordinated DEV9 shutdown behavior.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/neutrino/iop/cdvdfsv/src/cdvdfsv.c">LUNA cdvdfsv.c</a><br><a href="https://github.com/NathanNeurotic/neutrino/blob/master/iop/cdvdfsv/src/cdvdfsv.c">RiptOPL Neutrino baseline</a></td></tr>
+    <tr><td><code>LU8</code></td><td><b>Neutrino in-game return / IGR</b> <span class="pill">WIP</span></td><td>LUNA extends the <b>Neutrino</b> runtime itself with a held <code>L1+L2+R1+R2+START+SELECT</code> IGR path. After 45 VBlank frames (roughly one second) it calls LUNA's shutdown RPC to quiesce optical/DEV9 activity, then uses the configured <code>eec.ExitPath</code> as the return ELF path, resets IOP and EE/GS state, and uses <code>ExecPS2()</code> to return directly to the memory-card ELF. RiptOPL has OPL-side IGR, but games launched through its current Neutrino core do <b>not</b> have Neutrino IGR, so this is a distinct missing runtime capability. LUNA's current README still labels in-game return Work in progress, so the gap is tracked as WIP rather than presented as a stable feature.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/neutrino/ee/ee_core/src/padhook.c">pad hook / combo</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/neutrino/ee/ee_core/src/luna_igr_rpc.c">EE IGR RPC client</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/neutrino/iop/cdvdfsv/src/cdvdfsv.c">IOP shutdown RPC</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/IGR.md">RiptOPL IGR scope</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">ℹ LUNA overlap and validation notes</div>
+LUNA inherits NHDDL's storage discovery, title cache, Neutrino arguments and launch handoff, so the existing N1/N2 audit is
+not duplicated here. Classic is still fundamentally a list, Collection overlaps RiptOPL's Coverflow, the basic Grid
+concept is already O1, and ordinary Favorites/disc-art support already exists in RiptOPL. LUNA's square
+<code>/ART/PSBBN/&lt;TITLE_ID&gt;.png</code> cache is treated as support for its new views rather than another standalone gap.
+Its HDD-only library filter and ATA-only <code>mass1:</code> probe shortcut are intentional scope/performance choices, not
+general capabilities RiptOPL lacks.
+</div>
+<div class="callout info"><div class="h">ℹ LU8 is source-backed but still marked WIP by LUNA</div>
+LUNA's source contains the Neutrino-side pad hook, <code>0x80000598</code> shutdown RPC and direct ELF-return
+path, while the v1.0.0-rc.1 release text and <code>FMCB.md</code> also describe direct return. The <b>current top-level
+README nevertheless marks in-game return as Work in progress</b>. LU8 is therefore counted because it is a concrete
+Neutrino capability RiptOPL does not have, but it remains explicitly labeled WIP rather than being represented as a
+finished or hardware-proven feature.
+</div>
+<div class="callout info"><div class="h">ℹ Hardware evidence scope</div>
+LUNA's current <code>FMCB.md</code> says the complete 2026-09-19 FMCB package passed user-reported testing on the tested
+fat PS2 / adapter setup, while the fidelity/build notes separately distinguish PCSX2 visual checks from physical-console
+proof for individual UI paths. The rows above describe code that exists in the published tree; they do not generalize
+one reported package pass to every console, adapter, storage mode or individual visual behavior.
+</div>
+
 <h2 id="extended-apa">Extended APA</h2>
 <p><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">L10N37/Open-PS2-Loader-Extended-APA</a> &mdash; an OPL
 build for internal HDDs formatted with PS2 HDD Manager's banked APA layout.</p>
@@ -469,6 +523,7 @@ The five sources above produced six confirmed entries.
 
 <h2 id="notes">Notes</h2>
 <ul>
+  <li><b>LUNA parity checked on 2026-09-22:</b> audited against <a href="https://github.com/dnunezx/LUNA/commit/23112ecce73823b13d11d57fda0abd5968808d7c"><code>main@23112ec</code></a> and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b"><code>rebuild/main@abf14079</code></a>. Eight source-backed gaps survived overlap checking. LU8 tracks LUNA's Neutrino in-game return because the implementation is present and RiptOPL's Neutrino core lacks IGR; it remains marked WIP because LUNA's current README has not promoted the feature to stable status.</li>
   <li><b>Previously awaiting variants fully audited on 2026-09-22:</b> E2OPL's historical SourceForge source; OPL Daily Build <a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds/commit/aa531a858c583104bfd577c4715339c8ce68d534"><code>aa531a85</code></a>; Modular PADEMU <a href="https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a"><code>66b93542</code></a>; Grimdoomer's large-capacity branch <a href="https://github.com/grimdoomer/Open-PS2-Loader/commit/d1f51be4452074c2352931e0b9c474da9242e481"><code>d1f51be4</code></a> plus its later BDM LBA fix branch; historical uOPL <a href="https://github.com/slimpuggamer/uOPL/commit/0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64"><code>0daf81fe</code></a>; X2P <a href="https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa/commit/160c3e18c508432323946fca9bb5cb989705f28e"><code>160c3e18</code></a>; exaconn master <a href="https://github.com/exaconn/Open-PS2-Loader/commit/73a4921dee722837c18150d0c0f1a7f3675e8349"><code>73a4921d</code></a> and negCon branch <a href="https://github.com/exaconn/Open-PS2-Loader/commit/f9717f7676a6d7db588a1c042c3eaff36ec414b0"><code>f9717f76</code></a>; and Stable OPL <a href="https://github.com/mystyq/Stable-Open-PS2-Loader/commit/770d5323928ff20990d07d70a5ce266a95e0f6c4"><code>770d5323</code></a>. Six new gaps survived code comparison; three projects moved to the no-gap table.</li>
   <li><b>Project Titan Magenta Edition parity checked on 2026-09-22:</b> audited against upstream <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>main@2a69c259</code></a> / <code>VERSION</code> 0.3.93-rc17 and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b"><code>rebuild/main@abf14079</code></a>. Titan's controller, Smart IGR and Store/Download documentation explicitly retains physical-target validation caveats; those rows describe source capability, not a hardware-compatibility guarantee.</li>
   <li><b>NHDDL parity checked on 2026-09-20:</b> RiptOPL already has the visual Game ID signal used by PixelFX/RetroGEM hardware, MMCE GameID switching for SD2PSX/MemCard PRO2 on cross-device launches, remembered last-played selection with optional autostart, persistent ISO metadata caching, and global/per-game Neutrino arguments. Those are therefore not N-series gaps.</li>
