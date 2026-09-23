@@ -5,7 +5,8 @@
 
 #define OPLUNA_IDENTITY_TEXT_CAP 192
 
-typedef struct {
+typedef struct
+{
     int mode;
     int itemId;
     char title[OPLUNA_IDENTITY_TEXT_CAP];

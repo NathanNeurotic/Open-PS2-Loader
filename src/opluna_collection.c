@@ -18,13 +18,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define COLLECTION_THUMB_COUNT 8
-#define COLLECTION_THUMB_SIZE 128
-#define COLLECTION_GLIDE_FRAMES 25
+#define COLLECTION_THUMB_COUNT      8
+#define COLLECTION_THUMB_SIZE       128
+#define COLLECTION_GLIDE_FRAMES     25
 #define COLLECTION_ART_RETRY_FRAMES 15
-#define COLLECTION_ART_FOCAL 1
-#define COLLECTION_ART_THUMB 2
-#define COLLECTION_ART_NEIGHBOR 3
+#define COLLECTION_ART_FOCAL        1
+#define COLLECTION_ART_THUMB        2
+#define COLLECTION_ART_NEIGHBOR     3
 
 static const int thumbnailPriority[] = {1, -1, 2, 3, 4, 5, 6, -2};
 #define COLLECTION_VISIBLE_THUMB_COUNT 7
@@ -362,7 +362,8 @@ static int thumbnailStillNeeded(int index)
     if (index == selectedIndex && focalCover->Mem == NULL)
         return 1;
     for (i = 0; i < (focalCover->Mem == NULL ? COLLECTION_VISIBLE_THUMB_COUNT :
-                     (int)(sizeof(thumbnailPriority) / sizeof(thumbnailPriority[0]))); i++) {
+                                               (int)(sizeof(thumbnailPriority) / sizeof(thumbnailPriority[0])));
+         i++) {
         if (index == wrapIndex(selectedIndex + thumbnailPriority[i], count) &&
             (index != outgoingIndex || outgoingCover->Mem == NULL))
             return 1;
@@ -526,7 +527,8 @@ static void loadNearbyThumbnail(void)
             return;
     }
     for (i = 0; i < (focalCover->Mem == NULL ? COLLECTION_VISIBLE_THUMB_COUNT :
-                     (int)(sizeof(thumbnailPriority) / sizeof(thumbnailPriority[0]))); i++) {
+                                               (int)(sizeof(thumbnailPriority) / sizeof(thumbnailPriority[0])));
+         i++) {
         int index = wrapIndex(selectedIndex + thumbnailPriority[i], count);
         int result;
         if (index == selectedIndex ||

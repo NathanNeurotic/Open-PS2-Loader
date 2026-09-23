@@ -53,12 +53,12 @@
 #define IO_CACHE_LOAD_ART         3 // io call to handle the loading of covers
 #define IO_COMPAT_UPDATE_DEFFERED 4
 #ifdef OPLUNA_UI
-#define IO_OPLUNA_LOAD_ART        5
-#define IO_REQ_TYPE_COUNT         6
+#define IO_OPLUNA_LOAD_ART 5
+#define IO_REQ_TYPE_COUNT  6
 #else
 // One past the highest id above -- sizes ioman's per-type diagnostic counters. Keep in step if a
 // new IO type is ever added, or that type simply goes uncounted (the accessors bounds-check).
-#define IO_REQ_TYPE_COUNT         5
+#define IO_REQ_TYPE_COUNT 5
 #endif
 
 // Codes have been planned to fit the design of the GUI functions within gui.c.

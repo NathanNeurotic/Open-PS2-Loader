@@ -70,7 +70,7 @@ extern int guiFrameId;
 #define GUI_SCREEN_GAME_MENU 3
 #define GUI_SCREEN_APP_MENU  4
 #ifdef OPLUNA_UI
-#define GUI_SCREEN_OPLUNA    5
+#define GUI_SCREEN_OPLUNA 5
 #endif
 
 void guiSwitchScreen(int target);

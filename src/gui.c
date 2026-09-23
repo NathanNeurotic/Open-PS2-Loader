@@ -172,13 +172,14 @@ static void oplunaHandleInput(void)
 }
 #endif
 
-static gui_screen_handler_t screenHandlers[] = {{&menuHandleInputMain, &menuRenderMain, 0},
-                                                {&menuHandleInputMenu, &menuRenderMenu, 1},
-                                                {&menuHandleInputInfo, &menuRenderInfo, 1},
-                                                {&menuHandleInputGameMenu, &menuRenderGameMenu, 1},
-                                                {&menuHandleInputAppMenu, &menuRenderAppMenu, 1},
+static gui_screen_handler_t screenHandlers[] = {
+    {&menuHandleInputMain, &menuRenderMain, 0},
+    {&menuHandleInputMenu, &menuRenderMenu, 1},
+    {&menuHandleInputInfo, &menuRenderInfo, 1},
+    {&menuHandleInputGameMenu, &menuRenderGameMenu, 1},
+    {&menuHandleInputAppMenu, &menuRenderAppMenu, 1},
 #ifdef OPLUNA_UI
-                                                {&oplunaHandleInput, &oplunaRenderScreen, 0},
+    {&oplunaHandleInput, &oplunaRenderScreen, 0},
 #endif
 };
 
@@ -4063,8 +4064,7 @@ static void guiDrawOverlays()
     if (!oplIsBootInProgress() && !gIntroSplashActive && busyAlpha > 0x00) {
         int collectionPlacement = 0;
 #ifdef OPLUNA_UI
-        gui_screen_handler_t *visibleScreen = screenHandlerTarget != NULL && transIndex >= 13
-                                                   ? screenHandlerTarget : screenHandler;
+        gui_screen_handler_t *visibleScreen = screenHandlerTarget != NULL && transIndex >= 13 ? screenHandlerTarget : screenHandler;
         collectionPlacement = visibleScreen == &screenHandlers[GUI_SCREEN_OPLUNA];
 #endif
         guiDrawBusy(busyAlpha, collectionPlacement);
