@@ -64,6 +64,7 @@ void sbSetDiscAttributes(config_set_t *config, int isPS1, int isCD); // #System/
 int sbTitleCompatDefault(config_set_t *configSet);
 int sbGetCompatModes(config_set_t *configSet);
 
+void sbEnsureIgrUsbDrivers(int compatmask);
 int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex);
 void sbUnprepare(void *pCommon);
 void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID);

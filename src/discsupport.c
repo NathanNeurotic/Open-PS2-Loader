@@ -140,6 +140,7 @@ void discLaunch(int (*progress)(void))
         return;
     }
     mmceSendGameID(startup, NULL, 0);
+    sbEnsureIgrUsbDrivers(0); // the one OPL-core launch that does not pass through sbPrepare
     deinit(NO_EXCEPTION, IO_MODE_SELECTED_ALL);
     // Keep PS2LOGO's disc-authentication path; the EE core supplies telemetry.
     sysLaunchLoaderElf(startup, "DISC_MODE", 0, NULL, 0, NULL, 1, 0);

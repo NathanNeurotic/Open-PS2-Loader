@@ -8,6 +8,7 @@
 #include "include/vcdsupport.h"   // vcdExtractGameId + VCD_ID_MAX -- VCD per-game CFG keying
 #include "include/gui.h"          // guiMsgBox (sbCheatsMissingContinue confirm)
 #include "include/ioman.h"
+#include "include/extern_irx.h" // usbd_irx + usbhdfsd_irx, written to SYS-CONF for a USB IGR Path
 #include "modules/iopcore/common/cdvd_config.h"
 #include "include/cheatman.h"
 #include "include/tar.h" // CHT/cht.tar cheat archives (#154)
@@ -764,12 +765,79 @@ int sbGetCompatModes(config_set_t *configSet)
 
 static const struct cdvdman_settings_common cdvdman_settings_common_sample = CDVDMAN_SETTINGS_DEFAULT_COMMON;
 
+// An IGR Path on USB (#731). After an IGR the EE core reboots the IOP from ROM and loads
+// mc0:/SYS-CONF/USBD.IRX + USBHDFSD.IRX before it can open a mass: ELF, or the mc1: pair when mc0 has
+// no USBD.IRX (ee_core/src/padhook.c, t_loadElf). Those are FMCB's files, so without FMCB the IGR
+// dropped to the PS2 browser. Offer to write ours when an OPL-core launch will need them: ask once per
+// session, never replace a file that is there, and never leave half a pair behind.
+void sbEnsureIgrUsbDrivers(int compatmask)
+{
+    static const char *names[2] = {"USBD.IRX", "USBHDFSD.IRX"};
+    static int asked = 0;
+    const void *data[2] = {usbd_irx, usbhdfsd_irx};
+    int size[2] = {size_usbd_irx, size_usbhdfsd_irx};
+    int have[2][2], wrote[2] = {0, 0};
+    int mc, i, need = 0, rc = 0;
+    char dir[16], path[2][32], msg[512];
+
+    if (asked || (compatmask & COMPAT_MODE_6) || strncmp(gExitPath, "mass", 4) != 0)
+        return;
+    if ((gAutoLaunchGame != NULL) || (gAutoLaunchBDMGame != NULL))
+        return; // nobody at the pad to answer
+
+    for (mc = 0; mc < 2; mc++) {
+        for (i = 0; i < 2; i++) {
+            snprintf(path[i], sizeof(path[i]), "mc%d:/SYS-CONF/%s", mc, names[i]);
+            have[mc][i] = sbFileExists(path[i]);
+        }
+    }
+    // The core commits to mc0 once mc0's USBD.IRX loads, and tries mc1 only when it does not.
+    if ((have[0][0] && have[0][1]) || (!have[0][0] && have[1][0] && have[1][1]))
+        return;
+    if (have[0][0] || vcdMcHasSpace("mc0:", 0) >= 0)
+        mc = 0;
+    else if (vcdMcHasSpace("mc1:", 0) >= 0)
+        mc = 1;
+    else
+        return; // no usable memory card to hold them
+
+    asked = 1;
+    snprintf(dir, sizeof(dir), "mc%d:/SYS-CONF", mc);
+    snprintf(msg, sizeof(msg), _l(_STR_IGR_USB_DRIVERS_PROMPT), dir);
+    if (!guiMsgBox(msg, 1, NULL))
+        return;
+
+    for (i = 0; i < 2; i++)
+        need += have[mc][i] ? 0 : size[i];
+    if (vcdMcHasSpace(dir, need) == 0)
+        rc = -2;
+    else
+        mkdir(dir, 0777); // fails harmlessly when it already exists
+    for (i = 0; i < 2 && rc == 0; i++) {
+        if (have[mc][i])
+            continue;
+        snprintf(path[i], sizeof(path[i]), "%s/%s", dir, names[i]);
+        rc = vcdSafeWriteFile(path[i], data[i], size[i]);
+        wrote[i] = (rc == 0);
+    }
+    LOG("IGR: USB drivers for %s -> %s (%d)\n", gExitPath, dir, rc);
+    if (rc != 0) {
+        for (i = 0; i < 2; i++) {
+            if (wrote[i])
+                unlink(path[i]); // the core would load the one and fail the other
+        }
+        snprintf(msg, sizeof(msg), _l(_STR_IGR_USB_DRIVERS_FAILED), dir);
+        guiMsgBox(msg, 0, NULL);
+    }
+}
+
 int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex)
 {
     int i;
     struct cdvdman_settings_common *settings;
 
     int compatmask = sbGetCompatModes(configSet);
+    sbEnsureIgrUsbDrivers(compatmask);
 
     char gameid[5];
     configGetDiscIDBinary(configSet, gameid);

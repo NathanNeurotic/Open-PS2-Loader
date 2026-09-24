@@ -459,7 +459,7 @@ per-game compatibility **Mode 6 - Disable
 IGR** is set, and under the **Neutrino core**, which has no IGR at all - which is why Mode 6 is greyed
 out there. PS1 titles use POPSTARTER's or Ember's own IGR, not this one.
 
-**IGR Path** (*Settings -> General & System*) boots a custom ELF from `mc0:`/`mc1:` on reset instead of
+**IGR Path** (*Settings -> General & System*) boots a custom ELF from `mc0:`/`mc1:` or a FAT32 USB drive (`mass:/`) on reset instead of
 returning to the browser. **IGR Bootcard Slot(s)** (*Settings -> Game Sources -> MMCE Settings*) sends a switch-to-bootcard
 command as the reset happens.
 
