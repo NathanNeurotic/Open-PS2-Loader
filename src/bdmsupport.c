@@ -2877,6 +2877,10 @@ int bdmUpdateDeviceData(item_list_t *itemList)
             return 0;
         }
 
+        // Attach order can hand this device a different massN slot than last boot; take the L3
+        // position remembered for its type before the first scan reads it.
+        libViewBdmAttach(itemList->mode, pDeviceData->bdmDeviceType);
+
         // Make the menu item visible.
         if (itemList->owner != NULL) {
             LOG("bdmUpdateDeviceData: setting device %d visible\n", itemList->mode);

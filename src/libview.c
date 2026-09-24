@@ -12,17 +12,31 @@
 // everywhere: Favorites' ring reads PS2 -> PS1 -> ELF -> All from there, so it opens on the plain
 // PS2 shelf and the all-in-one one is a press away. A position remembered from an earlier session
 // (libViewLoadFromConfig) overrides this, so it only decides where a fresh config starts.
-static unsigned char retainedView[MODE_COUNT];
+//
+// BDM pages keep their position per device TYPE, not per page: massN numbers follow attach order,
+// so a device can be mass0 one boot and mass1 the next, and each then opened on the other's view.
+// The entries at BDM_MODE + BDM_TYPE_* hold each type's saved position (five types fit the eight
+// BDM entries, so the saved strings keep their format), and each BDM page's live position sits past
+// MODE_COUNT, where libViewBdmAttach seeds it from the type of the device that just attached.
+#define LIB_VIEW_ENTRIES (MODE_COUNT + BDM_MODE_COUNT)
+static unsigned char retainedView[LIB_VIEW_ENTRIES];
 
 // Mixed has a different three-stop ring from Both. Keep its position separately so switching the
 // setting to Mixed always enters the combined list the first time, while later visits retain the
 // user's Mixed/PS2/PS1 position.
-static unsigned char mixedView[MODE_COUNT];
-static unsigned char mixedViewInitialized[MODE_COUNT];
+static unsigned char mixedView[LIB_VIEW_ENTRIES];
+static unsigned char mixedViewInitialized[LIB_VIEW_ENTRIES];
 static unsigned char libDirty[MODE_COUNT];
 static unsigned char pendingView[MODE_COUNT];
 static unsigned char pendingViewValid[MODE_COUNT];
 static unsigned char pendingViewUsesMixedRing[MODE_COUNT];
+static unsigned char bdmSlotType[BDM_MODE_COUNT]; // BDM_TYPE_* + 1 of the device on each BDM page; 0 = none
+
+// Where a mode's live position is kept (see LIB_VIEW_ENTRIES).
+static int libViewEntry(int mode)
+{
+    return (mode >= BDM_MODE && mode <= BDM_MODE_LAST) ? MODE_COUNT + mode - BDM_MODE : mode;
+}
 
 static int libViewIsDeviceMode(int mode)
 {
@@ -70,13 +84,13 @@ int libViewRingSize(int mode)
     return 1;
 }
 
-static int libViewMixedActive(int mode)
+static int libViewMixedActive(int entry)
 {
-    if (!mixedViewInitialized[mode]) {
-        mixedView[mode] = LIB_VIEW_MIXED;
-        mixedViewInitialized[mode] = 1;
+    if (!mixedViewInitialized[entry]) {
+        mixedView[entry] = LIB_VIEW_MIXED;
+        mixedViewInitialized[entry] = 1;
     }
-    return mixedView[mode];
+    return mixedView[entry];
 }
 
 int libViewActive(int mode)
@@ -99,10 +113,10 @@ int libViewActive(int mode)
         case GAME_VIEW_VCD:
             return LIB_VIEW_PS1;
         case GAME_VIEW_MIXED:
-            return libViewMixedActive(mode);
+            return libViewMixedActive(libViewEntry(mode));
         case GAME_VIEW_BOTH:
         default:
-            return retainedView[mode] == LIB_VIEW_PS1 ? LIB_VIEW_PS1 : LIB_VIEW_ISO;
+            return retainedView[libViewEntry(mode)] == LIB_VIEW_PS1 ? LIB_VIEW_PS1 : LIB_VIEW_ISO;
     }
 }
 
@@ -186,19 +200,39 @@ int libViewPendingTarget(int mode)
 
 void libViewCommitPending(int mode)
 {
+    int entry, saved;
+
     if (!libViewPending(mode))
         return;
 
-    if (pendingViewUsesMixedRing[mode])
-        mixedView[mode] = pendingView[mode];
-    else
-        retainedView[mode] = pendingView[mode];
+    // A BDM page also saves the position for the type of device on it.
+    entry = libViewEntry(mode);
+    saved = (entry != mode && bdmSlotType[mode - BDM_MODE]) ? BDM_MODE + bdmSlotType[mode - BDM_MODE] - 1 : entry;
+    if (pendingViewUsesMixedRing[mode]) {
+        mixedView[entry] = mixedView[saved] = pendingView[mode];
+        mixedViewInitialized[saved] = 1;
+    } else
+        retainedView[entry] = retainedView[saved] = pendingView[mode];
 }
 
 void libViewFinishPending(int mode)
 {
     if (mode >= 0 && mode < MODE_COUNT)
         pendingViewValid[mode] = 0;
+}
+
+void libViewBdmAttach(int mode, int bdmType)
+{
+    int entry = libViewEntry(mode);
+    int saved = BDM_MODE + bdmType;
+    int known = bdmType >= 0 && bdmType < BDM_MODE_COUNT; // an unrecognised driver opens on the defaults
+
+    if (entry == mode)
+        return;
+    bdmSlotType[mode - BDM_MODE] = known ? bdmType + 1 : 0;
+    retainedView[entry] = known ? retainedView[saved] : LIB_VIEW_ISO;
+    mixedView[entry] = (known && mixedViewInitialized[saved]) ? mixedView[saved] : LIB_VIEW_MIXED;
+    mixedViewInitialized[entry] = 1;
 }
 
 int libViewConsumeDirty(int mode)
@@ -228,7 +262,8 @@ void libViewMarkAllDirty(void)
   Both rings are per-mode arrays, so the obvious encoding -- a config key per mode -- would be
   thirty keys for one idea the user thinks of as "where I left that page". Instead each ring is one
   fixed-width string, ONE CHARACTER PER MODE, indexed by the IO_MODES enum: '0'..'5' is a LIB_VIEW_*
-  value, '-' means nothing is remembered for that mode and the compiled default stands.
+  value, '-' means nothing is remembered for that mode and the compiled default stands. The BDM
+  characters are the exception: they are per device type (see LIB_VIEW_ENTRIES).
 
   Nothing here writes to disk, and nothing runs while browsing: L3 only moves the values in RAM.
   The state is folded into the LAST config set -- the small one holding last_played -- at the moment
