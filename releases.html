@@ -212,9 +212,10 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 (for example <code>v1.2.0-Beta-2915-da28622</code>), is in the release notes header and on the
 loader's About screen.</p>
 
-<div class="callout info"><div class="h">ℹ Two loose ELFs, everything else in archives</div>
-The normalizer keeps exactly two floating loaders, the stable-named <code>RIPTOPL.ELF</code> and
-<code>RIPTOPL-RA.ELF</code> update downloads, beside the two standalone <code>.psu</code> saves, and
+<div class="callout info"><div class="h">ℹ At most two loose ELFs, everything else in archives</div>
+The normalizer keeps at most two floating loaders, the stable-named <code>RIPTOPL.ELF</code> and
+<code>RIPTOPL-RA.ELF</code> update downloads (each only when its <code>-OFFICIALROLLING</code> build
+succeeded), beside the standalone <code>.psu</code> saves, and
 deliberately removes every other floating ELF, checksum list, detailed changelog, and SDK/IRX
 manifest from the GitHub asset list. The other standard loaders are inside the unified package;
 DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</div>
