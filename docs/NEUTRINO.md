@@ -18,8 +18,10 @@ Neutrino ships `udpfs_bd.irx` without a matching `-bsd` token and RiptOPL launch
 `-bsd=udpfsbd`. Nothing of rickgaiser's is altered or removed.
 
 Neutrino is deliberately **UI-agnostic**: it has no interface of its own, and that is exactly what
-makes a front-end like this one possible. RiptOPL is one of several — **NHDDL**, **XEB+ Plugin**,
-**RETROLauncher**, **OSD-XMB** and **PSBBN/BBNL** all drive the same core.
+makes a front-end like this one possible. RiptOPL is one of several — **[LUNA](https://github.com/dnunezx/LUNA)**
+by **[darkladark](https://github.com/dnunezx)** (our #1 recommended alternative, for lightweight,
+customized Neutrino gameplay), **NHDDL**, **XEB+ Plugin**, **RETROLauncher**, **OSD-XMB** and
+**PSBBN/BBNL** all drive the same core.
 
 Report *launching* problems here — building the arguments and handing off are ours. Genuine Neutrino
 bugs belong on rickgaiser's tracker.
