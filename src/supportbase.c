@@ -776,7 +776,7 @@ void sbEnsureIgrUsbDrivers(int compatmask)
     static int asked = 0;
     const void *data[2] = {usbd_irx, usbhdfsd_irx};
     int size[2] = {size_usbd_irx, size_usbhdfsd_irx};
-    int have[2][2], wrote[2] = {0, 0};
+    int have[2][2] = {{0}}, wrote[2] = {0, 0};
     int mc, i, need = 0, rc = 0;
     char dir[16], path[2][32], msg[512];
 
@@ -785,14 +785,15 @@ void sbEnsureIgrUsbDrivers(int compatmask)
     if ((gAutoLaunchGame != NULL) || (gAutoLaunchBDMGame != NULL))
         return; // nobody at the pad to answer
 
-    for (mc = 0; mc < 2; mc++) {
+    // The core commits to mc0 once mc0's USBD.IRX loads, and tries mc1 only when it does not, so
+    // mc1 is not even looked at then (two memory card reads fewer on every launch).
+    for (mc = 0; mc < 2 && !have[0][0]; mc++) {
         for (i = 0; i < 2; i++) {
             snprintf(path[i], sizeof(path[i]), "mc%d:/SYS-CONF/%s", mc, names[i]);
             have[mc][i] = sbFileExists(path[i]);
         }
     }
-    // The core commits to mc0 once mc0's USBD.IRX loads, and tries mc1 only when it does not.
-    if ((have[0][0] && have[0][1]) || (!have[0][0] && have[1][0] && have[1][1]))
+    if ((have[0][0] && have[0][1]) || (have[1][0] && have[1][1]))
         return;
     if (have[0][0] || vcdMcHasSpace("mc0:", 0) >= 0)
         mc = 0;
