@@ -108,9 +108,10 @@ Neutrino bundle is unavailable.
 permanent link. It is the `-OFFICIALROLLING` flavour, and it is not a first install — the bare loader
 does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files. `RIPTOPL-RA.ELF`
 (<https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL-RA.ELF>) does the
-same for the RetroAchievements app: replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with it. Apart from
-those two files, GitHub does not publish bare loader ELFs or separate checksum/SDK manifests in the
-normalized asset set.
+same for the RetroAchievements app: replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with it. Both are
+copied from `-OFFICIALROLLING` builds, so a run in which that build failed publishes neither; update
+from the matching package then. Apart from those two files, GitHub does not publish bare loader ELFs
+or separate checksum/SDK manifests in the normalized asset set.
 The workflow can also publish `v*` tags, but no such stable release is currently offered here.
 
 

@@ -21,7 +21,7 @@ bring-up / unusable-IP fallback, and the misplaced RA settings rows.
 ## Status
 
 **Implemented, and telemetry has run end to end on real PS2 hardware** in oMrRexD's session for
-#702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
+PRs #702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
 v0.1.0-alpha.10. Launched from MMCE, Need for Speed: Underground 2 streamed 25,200 snapshots with none
 lost and unlocked an achievement with the overlay on screen; the same build also tracked the game from
 USB. That is one console, one game and a static address. DHCP, the other launch paths and the edge
@@ -215,10 +215,11 @@ same shape as the main package: `POPS/`, `EMBER/`, `neutrino/` and the PC-tool s
 `APP_RIPTOPL-RA.psu`. The PSU contains only the direct files of `APP_RIPTOPL-RA`; import it with a
 PS2 save manager for a memory-card installation, then copy the other folders separately.
 
-The ready app `APPS/APP_RIPTOPL-RA/` is the official-toolchain build (`OFFICIALROLLING`, `PADEMU=1`),
-the same loader the release also publishes on its own as `RIPTOPL-RA.ELF`. If that build is missing
-from a run, the ready app falls back to the labelled builds below, in the order listed. The archive
-keeps those labelled loader folders under `APPS/` for comparing builds:
+The ready app `APPS/APP_RIPTOPL-RA/` uses the official-toolchain build (`OFFICIALROLLING`,
+`PADEMU=1`) when that build succeeded, the same loader the release then also publishes on its own as
+`RIPTOPL-RA.ELF`. A run without it publishes no `RIPTOPL-RA.ELF`, and the ready app falls back to the
+labelled builds below, in the order listed. The archive keeps those labelled loader folders under
+`APPS/` for comparing builds:
 
 | Folder | Build |
 | --- | --- |

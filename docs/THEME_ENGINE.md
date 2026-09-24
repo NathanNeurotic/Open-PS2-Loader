@@ -241,7 +241,8 @@ art declared after it.
 Images keyed on the **`ICO`** suffix — an `ItemIcon`, a `GameImage` with `pattern=ICO`, or an
 `ItemsList` with `decorator=ICO` — are the theme's disc art. The user can hide them with **Disc Artwork**
 (*Settings → Interface → Artwork Settings*, on by default), and that removes the element's `default=`
-image as well, so plan a layout that still reads without them. Covers and backgrounds are unaffected.
+image as well, so plan a layout that still reads without them. Art keyed on any other suffix, such
+as `COV` covers and `BG` backgrounds, is unaffected; a `Background` with `pattern=ICO` is hidden too.
 
 ### Text element extras
 
