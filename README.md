@@ -696,6 +696,8 @@ To answer it once for good, add `REBOOTIOP=YES` or `REBOOTIOP=NO` to the app's `
 `REBOOT_IOP` also works as the key, and `1`/`0`, `TRUE`/`FALSE` or `ON`/`OFF` as the value; any other
 value brings the prompt back. A `conf_apps.cfg` entry reads the same line from its per-app file,
 `CFG/<ELF name>.cfg` on an enabled source (for `mass:APPS/MYAPP.ELF`, that is `CFG/MYAPP.ELF.cfg`).
+That also applies when `conf_apps.cfg` and a `title.cfg` list the same ELF: RiptOPL keeps the
+`conf_apps.cfg` entry, so a `REBOOTIOP` line in `title.cfg` has no effect there.
 
 POPSTARTER launches never ask: `POPSTARTER.ELF` and the `XX.`, `SB.`, `EL.` and `SM.` launcher ELFs
 keep their own PS1 launch path. An app on the APA HDD always gets the HDD cleanup before it starts,
