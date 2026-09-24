@@ -74,6 +74,10 @@ void libViewFinishPending(int mode);
 void libViewLoadFromConfig(config_set_t *configLast);
 void libViewStoreToConfig(config_set_t *configLast);
 
+// A BDM device of type bdmType (BDM_TYPE_*) attached to page `mode`: give the page the position saved
+// for that type, so it follows the device when attach order puts it on another massN slot.
+void libViewBdmAttach(int mode, int bdmType);
+
 // Dirty protocol consumed by support itemNeedsUpdate callbacks.
 int libViewConsumeDirty(int mode);
 void libViewMarkDirty(int mode);
