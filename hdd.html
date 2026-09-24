@@ -234,6 +234,18 @@ to a USB drive.</p></div>
 <p>The device prefix at runtime is <code>massN:/</code> (where <em>N</em> is the BDM slot index assigned at boot).
 In <code>conf_apps.cfg</code>, use <code>mass:</code> as the device prefix (the same as USB).</p>
 
+<h3 id="exfat-hybrid">APA + exFAT hybrid disks (PSBBN Definitive)</h3>
+<p>Some disks carry both formats. PSBBN Definitive's "APA-Jail" layout keeps its launchers on APA, and the games,
+<code>ART/</code>, <code>CFG/</code> and official OPL's settings on an exFAT partition. A RiptOPL launched from the
+APA side uses the <b>exFAT volume as its settings home</b>, as official OPL does. It turns the exFAT HDD on and,
+if the BDM page was off, starts it on <b>Auto</b>, so the exFAT games show up without touching any settings.</p>
+<ul class="checklist">
+<li>Settings an older RiptOPL build saved in the APA data home (<code>+OPL</code> or <code>__common/OPL/</code>) are
+carried over, and the next save writes them to exFAT.</li>
+<li>A <b>Custom Settings Path</b> saved in the APA data home still decides: RiptOPL then keeps its settings on APA.</li>
+<li>Once RiptOPL has saved its own settings on exFAT, the BDM start mode is whatever you choose.</li>
+</ul>
+
 <h3 id="exfat-ps1">PS1 games on exFAT (BDMA equip)</h3>
 <p>Put your <code>*.VCD</code> files in the drive's <code>POPS/</code> folder alongside
 <code>POPSTARTER.ELF</code>. Use <b>PS2/PS1 Game Display</b> to show the PS1 library separately,
