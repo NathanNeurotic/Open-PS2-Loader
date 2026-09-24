@@ -102,12 +102,15 @@ standard app is `APP_RIPTOPL` with `RIPTOPL.ELF`; the RA app is `APP_RIPTOPL-RA`
 folders separately where you use those features. A release fails packaging if a required
 Neutrino bundle is unavailable.
 
-**Already have RiptOPL installed?** The rolling release carries one loose loader asset,
+**Already have RiptOPL installed?** The rolling release carries a loose loader asset,
 `RIPTOPL.ELF`, for exactly that case: download it and overwrite the `RIPTOPL.ELF` you already have. Its name never changes, so
 <https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF> is a
 permanent link. It is the `-OFFICIALROLLING` flavour, and it is not a first install — the bare loader
-does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files. Apart from that one file, GitHub
-does not publish bare loader ELFs or separate checksum/SDK manifests in the normalized asset set.
+does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files. `RIPTOPL-RA.ELF`
+(<https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL-RA.ELF>) does the
+same for the RetroAchievements app: replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with it. Apart from
+those two files, GitHub does not publish bare loader ELFs or separate checksum/SDK manifests in the
+normalized asset set.
 The workflow can also publish `v*` tags, but no such stable release is currently offered here.
 
 

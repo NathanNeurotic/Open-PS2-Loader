@@ -262,6 +262,7 @@ pointed at the `master` lineage (`credits.html`, the licence).
 | RetroAchievements status said nothing had run on a PS2, and the ee_core note still told people to shrink `ra_snap_buf`/`ra_watch` | `docs/RETROACHIEVEMENTS.md`, `README.md`, site `retroachievements.html` | #702–#705 (oMrRexD's hardware session), hacan359's 2026-09-10 hashing check, `ee_core/linkfile` |
 | RA archive layout: the ready app is `APPS/APP_RIPTOPL-RA` built on `OFFICIALROLLING`, not the pinned ps2dev folder | `docs/RETROACHIEVEMENTS.md`, site `retroachievements.html` | `rolling-release.yml` |
 | Main package layout predated `APPS/`, `APPS/APP_RIPTOPL/`, `ART/` and `APP_RIPTOPL.psu` | site `install.html`, `releases.html` | #708, #710 |
+| The stable `RIPTOPL-RA.ELF` update loader and the standalone `.psu` assets were missing from the asset lists, which still said `RIPTOPL.ELF` was the only loose loader | `README.md`, `ROLLING_RELEASE.md`, site `releases.html` | `release-normalize.yml` (#708, #711, #712) |
 | IGS "off in release builds" contradicted `docs/IGR.md`: the `-extra1` variants ship it | `README.md` | `build_rolling_extras.sh` |
 | The **REBOOT IOP?** app-launch prompt and the `REBOOTIOP` key were undocumented | `README.md` §APPS, site `apps.html` | #688 |
 | **Disc Artwork** setting missing from the artwork settings; `ItemText` draw order and the `ICO` toggle missing for theme authors | site `settings.html`, `docs/THEME_ENGINE.md`, site `themes.html` | #697 |
