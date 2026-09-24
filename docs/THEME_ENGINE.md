@@ -234,6 +234,15 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | `BdmIndex` | The block-device mode indicator. |
 | `Coverflow` *(item)* | **This fork:** a cover-art carousel (see §8). |
 
+Elements are drawn in the order the theme declares them, with one exception: every `ItemText` is
+moved to the end of its screen's list, so the selected item's startup filename is never painted over by
+art declared after it.
+
+Images keyed on the **`ICO`** suffix — a `GameImage` with `pattern=ICO`, or an `ItemsList` with
+`decorator=ICO` — are the theme's disc art. The user can hide them with **Disc Artwork**
+(*Settings → Interface → Artwork Settings*, on by default), and that removes the element's `default=`
+image as well, so plan a layout that still reads without them. Covers and backgrounds are unaffected.
+
 ### Text element extras
 
 | Property | Used by | Notes |
