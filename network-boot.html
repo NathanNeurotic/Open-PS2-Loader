@@ -262,11 +262,14 @@ the RiptOPL source tree into your <code>neutrino/config/</code> folder.</p>
 <h2 id="requirements">Requirements</h2>
 
 <ul class="checklist">
-  <li><b>Static PS2 IP address</b> (UDPFS only). The UDPFS IOP modules (both Files and IMG)
-  have no DHCP client — they read the IP set in <b>Settings &rarr; Network</b> and use it
-  directly. If DHCP is currently on there, RiptOPL warns you when you select UDPFS as the
-  Protocol. (SMB can use DHCP or a static IP; it keeps its own address/port/share/credentials fields
-  on the Network page, hidden automatically when UDPFS is selected.)</li>
+  <li><b>Static PS2 IP address</b> (UDPFS and UDPBD). Their IOP modules (UDPFS in both Files and
+  IMG) have no DHCP client — they read the static IP fields in <b>Settings &rarr; Network</b> and use
+  them directly. While either is the Protocol, RiptOPL locks <b>IP Address Type</b> to Static and
+  enables those fields; your DHCP choice is kept as the SMB/HTTP preference and comes back when you
+  switch protocol. If DHCP is that kept preference, RiptOPL says so when you select a UDP protocol and
+  again as a boot notice. (SMB can use DHCP or a static IP; it keeps its own
+  address/port/share/credentials fields on the Network page, hidden automatically when either UDP
+  protocol is selected.)</li>
   <li><b>PC-side UDPFS server running on the same LAN</b>, matching the Access mode you chose.
   RiptOPL does <b>not</b> embed one. Open the package's <code>PS2-Servers.url</code> shortcut or visit
   <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> for the maintained UDPFS /
@@ -297,10 +300,12 @@ the RiptOPL source tree into your <code>neutrino/config/</code> folder.</p>
 
 <div class="steps">
 <div class="step">
-<h3>Set a static IP on the PS2 (UDPFS only)</h3>
-<p>For UDPFS (either access mode), go to <b>Settings &rarr; Network</b> and set a fixed
-IP address, subnet mask, and gateway; turn DHCP <b>off</b>. The UDPFS IOP modules read this address at
-module-load time and have no way to acquire a lease later. (SMB can stay on DHCP if you prefer.)</p>
+<h3>Set a static IP on the PS2 (UDPFS and UDPBD)</h3>
+<p>For UDPFS (either access mode) or UDPBD, go to <b>Settings &rarr; Network</b> and set a fixed
+IP address, subnet mask, and gateway. You do not have to turn DHCP off: selecting either UDP protocol
+locks <b>IP Address Type</b> to Static, and if you use DHCP for SMB or HTTP that choice is kept and comes
+back when you switch protocol. The UDP IOP modules read this address at module-load time and have no
+way to acquire a lease later.</p>
 </div>
 <div class="step">
 <h3>Pick your Network Protocol (and Access)</h3>
@@ -453,9 +458,11 @@ in IMG mode, only standard ISO images work.</p>
   Verify the PS2 has a physical Ethernet link before power-on.</td>
 </tr>
 <tr>
-  <td>"needs a static PS2 IP" warning when selecting UDPFS</td>
-  <td>DHCP is enabled on the Network page.</td>
-  <td>Go to <b>Settings &rarr; Network</b>, disable DHCP, and enter a static IP.</td>
+  <td>"UDPFS/UDPBD use the saved static PS2 IP" notice when selecting a UDP protocol or at boot</td>
+  <td>Your kept IP Address Type preference is DHCP, which SMB and HTTP still use. UDP always uses
+  the static fields.</td>
+  <td>Nothing to switch off. Check that the IP address, mask and gateway in
+  <b>Settings &rarr; Network</b> suit your LAN.</td>
 </tr>
 <tr>
   <td>List appears but game list is empty</td>

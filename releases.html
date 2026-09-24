@@ -121,16 +121,21 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 <tbody>
 <tr>
   <td><code>RIPTOPL-&lt;version&gt;.zip</code></td>
-  <td><b>The installable package.</b> Normally contains four explicitly labelled SDK loader folders
-  (a best-effort flavour can be absent when its build fails, and the release notes identify it):
+  <td><b>The installable package.</b> A ready-to-install app, <code>APPS/APP_RIPTOPL/</code>
+  (<code>RIPTOPL.ELF</code> with its icons, <code>title.cfg</code> and music: the
+  <code>-OFFICIALROLLING</code> build when available, otherwise the first available of the pinned and
+  ps2dev builds), the same app as one memory-card save, <code>APP_RIPTOPL.psu</code>, and its artwork
+  in <code>ART/</code>. Beside it, <code>APPS/</code> normally holds four explicitly labelled SDK loader
+  folders (a best-effort flavour can be absent when its build fails, and the release notes identify it):
   <code>APP_RIPTOPL-PS2DEVPINNED/</code> (#1, recommended pinned ps2dev),
   <code>APP_RIPTOPL-OFFICIALPINNED/</code> (#2, recommended official pin),
   <code>APP_RIPTOPL-PS2DEVROLLING/</code> (#3, moving ps2dev canary), and
-  <code>APP_RIPTOPL-OFFICIALROLLING/</code> (#4, moving official canary),
+  <code>APP_RIPTOPL-OFFICIALROLLING/</code> (#4, moving official canary). The package also has
   one canonical <code>POPS/</code> folder for POPSTARTER support (every BDMA pair stays loose there,
   including <code>usbd.irx.ilink</code> + <code>usbhdfsd.irx.ilink</code>; none is embedded),
   the bundled <code>EMBER/</code> and <code>neutrino/</code> folders, and five companion-tool shortcuts.
-  Start with <code>APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> when that best-effort flavour is present.
+  Install the ready app, or start with <code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> for a
+  pinned build when that best-effort flavour is present.
   The presence of the loose iLink pair documents package contents, not a hardware pass: revision
   2692's POPSTARTER iLink launch still returned to wLaunchELF in every flavour.</td>
 </tr>
@@ -138,7 +143,7 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   <td><code>RIPTOPL.ELF</code></td>
   <td><b>The loader on its own, for updating an install you already have.</b> Download it and
   overwrite your existing <code>RIPTOPL.ELF</code> — no archive to unpack, nothing else to copy.
-  Alone among the release assets its name never changes, so
+  Its name never changes (the same goes for <code>RIPTOPL-RA.ELF</code> below), so
   <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF">the
   download link</a> is permanent. It is the <code>-OFFICIALROLLING</code> flavour, and there is only
   one of these on purpose: four would put the "which do I pick?" question back in front of the
@@ -147,6 +152,22 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   Neutrino launches still need the package above. For a reproducible build to quote in a bug report,
   take a pinned folder from the package instead. Best-effort, like the flavour it is copied from: if
   that build fails the release ships without it.</td>
+</tr>
+<tr>
+  <td><code>RIPTOPL-RA.ELF</code></td>
+  <td><b>The RetroAchievements loader on its own</b>, for updating an RA install: replace
+  <code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code> with it.
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL-RA.ELF">Its
+  link</a> never changes either. It is the <code>-OFFICIALROLLING</code> <code>PADEMU=1</code> RA build,
+  the same one the RA package's ready app uses. Best-effort: if that build fails, the release ships
+  without it.</td>
+</tr>
+<tr>
+  <td><code>APP_RIPTOPL.psu</code>, <code>APP_RIPTOPL-RA.psu</code></td>
+  <td>The two packages' ready apps as standalone memory-card saves, for installing the app straight
+  onto a card with a PS2 save manager. Each holds only its app folder's own files, not
+  <code>POPS/</code>, <code>EMBER/</code> or <code>neutrino/</code>. <code>APP_RIPTOPL-RA.psu</code> is
+  published whenever the RA package is.</td>
 </tr>
 <tr>
   <td><code>RIPTOPL-&lt;version&gt;-src.zip</code></td>
@@ -159,12 +180,15 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 <tr>
   <td><code>RIPTOPL-RetroAchievements-*.zip</code></td>
   <td><b>RetroAchievements</b> build, as a complete package: the same <code>POPS/</code>,
-  <code>EMBER/</code>, <code>neutrino/</code> and PC-tool shortcuts as the main archive, with
-  <code>APP_RIPTOPL-RA-PINNED/</code> and <code>APP_RIPTOPL-RA-ROLLING/</code> loader folders (and a
-  <code>-nopademu</code> build of each) in place of the standard ones, plus
-  <code>xeRAbora.url</code> for the PC client the feature talks to. Take this one <i>instead of</i>
-  the main archive if you want achievements. <b>A development build</b>: it is written end to end
-  but has not been tested on real hardware yet. See
+  <code>EMBER/</code>, <code>neutrino/</code> and PC-tool shortcuts as the main archive, with a ready
+  RA app, <code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code> (the <code>-OFFICIALROLLING</code>
+  <code>PADEMU=1</code> build when available), its artwork and <code>APP_RIPTOPL-RA.psu</code> in place
+  of the standard app, labelled <code>APPS/APP_RIPTOPL-RA-PINNED/</code> and
+  <code>APPS/APP_RIPTOPL-RA-ROLLING/</code> ps2dev loader folders (and a <code>-nopademu</code> build of
+  each) for comparisons, plus <code>xeRAbora.url</code> for the PC client the feature talks to. Take
+  this one <i>instead of</i> the main archive if you want achievements. <b>A development build</b>:
+  telemetry has run on one real console, launched from MMCE and USB, but most launch paths are still
+  untested on hardware. See
   <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/RETROACHIEVEMENTS.md">docs/RETROACHIEVEMENTS.md</a>.</td>
 </tr>
 <tr>
@@ -188,11 +212,12 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 (for example <code>v1.2.0-Beta-2915-da28622</code>), is in the release notes header and on the
 loader's About screen.</p>
 
-<div class="callout info"><div class="h">ℹ One loose ELF, everything else in archives</div>
-The normalizer keeps exactly one floating loader, the stable-named <code>RIPTOPL.ELF</code> update
-download, and deliberately removes every other floating ELF, checksum list, detailed changelog, and
-SDK/IRX manifest from the GitHub asset list. The other standard loaders are inside the unified
-package; DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</div>
+<div class="callout info"><div class="h">ℹ Two loose ELFs, everything else in archives</div>
+The normalizer keeps exactly two floating loaders, the stable-named <code>RIPTOPL.ELF</code> and
+<code>RIPTOPL-RA.ELF</code> update downloads, beside the two standalone <code>.psu</code> saves, and
+deliberately removes every other floating ELF, checksum list, detailed changelog, and SDK/IRX
+manifest from the GitHub asset list. The other standard loaders are inside the unified package;
+DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</div>
 
 <span id="two-toolchains"></span>
 <h2 id="four-flavours">Four toolchain flavours, ordered for testing</h2>
@@ -268,7 +293,7 @@ release always reflects the freshest commit. A publishing-branch push and a simu
 <details class="deep"><summary>Why are there four toolchain flavours in the same release?</summary>
 <p>The moving ps2dev and official toolchain tags can advance independently and occasionally introduce
 regressions. Each lineage therefore has a digest-pinned control beside its moving canary. Start with
-<code>APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code>; if hardware behavior differs, test the other
+<code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code>; if hardware behavior differs, test the other
 labelled folders and report the exact in-app flavour suffix so application and SDK regressions can be
 separated.
 </p></details>
@@ -289,24 +314,32 @@ they are significantly slower.</p></details>
 <div class="step"><h3>Extract the package zip</h3>
 <p>Unzip <code>RIPTOPL-&lt;version&gt;.zip</code>. The contents are ready to
 copy to your memory card or USB drive root:</p>
-<pre>APP_RIPTOPL-PS2DEVPINNED/
-  RIPTOPL.ELF          ← #1 recommended pinned control
-APP_RIPTOPL-OFFICIALPINNED/
-  RIPTOPL.ELF          ← #2 official pinned control
-APP_RIPTOPL-PS2DEVROLLING/
-  RIPTOPL.ELF          ← #3 moving ps2dev canary
-APP_RIPTOPL-OFFICIALROLLING/
-  RIPTOPL.ELF          ← #4 moving official canary
+<pre>APPS/
+  APP_RIPTOPL/
+    RIPTOPL.ELF        ← ready-to-install app (-OFFICIALROLLING when available)
+  APP_RIPTOPL-PS2DEVPINNED/
+    RIPTOPL.ELF        ← #1 recommended pinned control
+  APP_RIPTOPL-OFFICIALPINNED/
+    RIPTOPL.ELF        ← #2 official pinned control
+  APP_RIPTOPL-PS2DEVROLLING/
+    RIPTOPL.ELF        ← #3 moving ps2dev canary
+  APP_RIPTOPL-OFFICIALROLLING/
+    RIPTOPL.ELF        ← #4 moving official canary
+ART/                   ← the app's artwork (RIPTOPL.ELF_*.png)
+APP_RIPTOPL.psu        ← APPS/APP_RIPTOPL/ as one memory-card save
 POPS/                  ← POPSTARTER.ELF and every loose BDMA variant (including .ilink)
 EMBER/                 ← official Ember core; add your own BIOS and games
 neutrino/              ← official Neutrino core (already extracted, drag-and-drop)
-PS2-Servers.url        ← link to the UDPFS / SMBv1 / UDPBD all-in-one PC launcher</pre>
+PS2-Servers.url        ← link to the UDPFS / SMBv1 / UDPBD all-in-one PC launcher
+                         (plus four more companion-tool shortcuts)</pre>
 </div>
 <div class="step"><h3>Install the ELF via your launch method</h3>
-<p>Copy <code>APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> to wherever your launch method (FMCB,
+<p>Copy <code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> to wherever your launch method (FMCB,
 FHDB, or equivalent) expects it. If that best-effort folder is absent in a run, use the next available
-flavour in the order above. The labelled folders can sit side by side; the <code>APP_</code> prefix is
-the OPL convention for homebrew apps stored on your device.</p>
+flavour in the order above. Or install the ready app instead: copy <code>APPS/APP_RIPTOPL/</code> into
+the device's <code>APPS/</code>, or import <code>APP_RIPTOPL.psu</code> onto a memory card with a PS2
+save manager. The labelled folders can sit side by side; the <code>APP_</code> prefix is the OPL
+convention for homebrew apps stored on your device.</p>
 </div>
 <div class="step"><h3>Set up Neutrino (optional)</h3>
 <p>The <code>neutrino/</code> folder is already extracted — copy the whole folder

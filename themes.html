@@ -284,6 +284,16 @@ work instead of hard-coding resolution-specific numbers.</p>
 </tbody>
 </table>
 
+<p>Elements are drawn in the order the theme declares them, with one exception: every <code>ItemText</code>
+is moved to the end of its screen's list, so the selected item's startup filename is never painted over
+by art declared after it.</p>
+
+<p>Images keyed on the <b><code>ICO</code></b> suffix — an <code>ItemIcon</code>, a <code>GameImage</code> with
+<code>pattern=ICO</code>, or an <code>ItemsList</code> with <code>decorator=ICO</code> — are the theme's disc art.
+The user can hide them with <b>Disc Artwork</b> (<i>Settings → Interface → Artwork Settings</i>, on by
+default), and that removes the element's <code>default=</code> image as well, so plan a layout that still
+reads without them. Covers and backgrounds are unaffected.</p>
+
 <h3>Text-element extras</h3>
 <table data-sortable>
 <thead><tr><th>Property</th><th>Used by</th><th>Notes</th></tr></thead>

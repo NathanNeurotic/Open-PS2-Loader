@@ -73,14 +73,19 @@ running it streams the handful of memory addresses that game's achievements depe
 else — talking to the RetroAchievements servers, deciding what unlocked, your login — happens on the
 PC.</p>
 <p>Based on the RetroAchievements implementation by <strong><a href="https://github.com/hacan359/Open-PS2-Loader/pull/1">hacan359 (yoba)</a></strong>.
-Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora PC client</a></strong> with RiptOPL's RA build.</p>
-<p>RiptOPL's real-hardware stabilization was contributed by <strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong>
-through PRs <strong>#702–#705</strong>, covering the ee_core stack squeeze, MMCE DEV9 dependency,
-cold-launch network bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
+Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora PC client</a></strong> with RiptOPL's RA build. Download the required <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10">v0.1.0-alpha.10 release</a></strong>.</p>
+<p>RiptOPL's real-hardware stabilization was contributed by <strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong> through
+PRs <strong>#702–#705</strong>, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
+bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
 <hr/>
 <h2 id="status">Status</h2>
-<p><strong>Implemented, with the USB/MMCE telemetry path now exercised on real PS2 hardware during oMrRexD's stabilization work.</strong>
-Broader launch paths and edge cases remain development-grade and should still be validated individually before being treated as finished.</p>
+<p><strong>Implemented, and telemetry has run end to end on real PS2 hardware</strong> in oMrRexD's session for
+#702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
+v0.1.0-alpha.10. Launched from MMCE, Need for Speed: Underground 2 streamed 25,200 snapshots with none
+lost and unlocked an achievement with the overlay on screen; the same build also tracked the game from
+USB. That is one console, one game and a static address. DHCP, the other launch paths and the edge
+cases below remain development-grade and should still be validated individually before being treated
+as finished.</p>
 <table>
 <thead>
 <tr>
@@ -95,7 +100,7 @@ Broader launch paths and edge cases remain development-grade and should still be
 </tr>
 <tr>
 <td>In-game telemetry (<code>raudp</code>, ee_core snapshots)</td>
-<td>written, <strong>not hardware-tested</strong></td>
+<td><strong>hardware-tested</strong> from MMCE and USB, static IP (#702–#704)</td>
 </tr>
 <tr>
 <td>Watch-list loading from <code>&lt;device&gt;/RA/&lt;serial&gt;.wl</code></td>
@@ -103,23 +108,23 @@ Broader launch paths and edge cases remain development-grade and should still be
 </tr>
 <tr>
 <td>Image hashing (ISO9660 walk + MD5)</td>
-<td>done</td>
+<td>done; images on a share and on a USB stick hashed to matching values on hardware (hacan359, 2026-09-10)</td>
 </tr>
 <tr>
 <td>Menu actions: check game support, test PC link</td>
-<td>written, <strong>not hardware-tested</strong></td>
+<td>both used on hardware: the support check's hashing by hacan359, the PC link test in #704</td>
 </tr>
 <tr>
 <td>List badges and the cover mark</td>
-<td>written, <strong>not hardware-tested</strong></td>
+<td>written, <strong>not yet confirmed on hardware</strong></td>
 </tr>
 <tr>
 <td>Unlock overlay</td>
-<td>written, <strong>not hardware-tested</strong></td>
+<td><strong>hardware-tested</strong>: the gold overlay showed over the running game on an unlock (#704)</td>
 </tr>
 <tr>
 <td>Settings: RA telemetry, RA badges</td>
-<td>done</td>
+<td>done; on the <strong>Network</strong> page since #705, where switching telemetry off and on was checked on hardware</td>
 </tr>
 <tr>
 <td>Disc in the tray</td>
@@ -147,14 +152,14 @@ Broader launch paths and edge cases remain development-grade and should still be
 <tr>
 <td>RetroAchievements badges</td>
 <td>On</td>
-<td>The <code>RA</code> prefix in the game list and the mark over the cover. Cosmetic, and it follows the master switch: badges stay dark while telemetry is off.</td>
+<td>The <code>RA </code> prefix in the game list and the mark over the cover. Cosmetic, and it follows the master switch: badges stay dark while telemetry is off.</td>
 </tr>
 </tbody>
 </table>
 <p>Two actions on a game's own menu:</p>
 <ul>
 <li><strong>check game support</strong> — hashes the image, asks the PC client about it, and writes
-  <code>&lt;device&gt;/RA/&lt;serial&gt;.wl</code> if the game is tracked.</li>
+<code>&lt;device&gt;/RA/&lt;serial&gt;.wl</code> if the game is tracked.</li>
 <li><strong>test PC link</strong> — confirms the console can find the client at all, without touching a game.</li>
 </ul>
 <p>A game the console has a watch list for shows the badge and the cover mark after the next list
@@ -165,7 +170,7 @@ refresh. Switch telemetry on and launch it.</p>
 RiptOPL's main menu:</p>
 <ol>
 <li>Choose <strong>RA: check disc support</strong>. RiptOPL hashes the disc's boot executable and asks the PC
-   client for its watch list. The check runs in the background and reports its result on screen.</li>
+client for its watch list. The check runs in the background and reports its result on screen.</li>
 <li>Enable <strong>RetroAchievements telemetry</strong> in <strong>Network</strong> settings.</li>
 <li>Choose <strong>RA: launch disc</strong>. This action requires a watch list for the disc currently in the tray.</li>
 </ol>
@@ -244,11 +249,27 @@ reports on hardware (2026-09-05) that this is not enough: a game with an achieve
 loading about a minute in from a share, so the send path disturbs the stream on its own.</strong> xeRAbora's
 own documentation says the same, and names the USB stick and the original disc as the only tested ways
 to play.</p>
-<p>That defect is upstream's and ours alike; we have not reproduced or ruled it out on our own hardware,
-because none of this has been hardware-tested here yet. Until it is, <strong>keep the images you play with
-achievements on a local device.</strong> The same reasoning applies to HTTP, which streams down the same path.</p>
+<p>That defect is upstream's and ours alike; we have not reproduced or ruled it out on our own hardware.
+The hardware testing so far (#702–#705) launched from MMCE and USB, never from a share. Until a share
+is tested, <strong>keep the images you play with achievements on a local device.</strong> The same reasoning
+applies to HTTP, which streams down the same path.</p>
 <p>HDD (APA) games are stored in HDLoader format and have no image file to hash, so while a watch list
 placed by hand still loads and streams, the console cannot work out the hash for them itself.</p>
+<h3 id="an-image-an-earlier-run-left-open-on-the-share-can-still-be-hashed">An image an earlier run left open on the share can still be hashed</h3>
+<p>Checking a game on a share used to fail outright once a console had played that game and been
+switched off: OPL logs off from nothing on power-down, the SMB session dies with the console, and a
+cheap server never reaps the handle. From then on the server refused every NT open of that file with
+a sharing violation, so "check game support" could only report that it could not open the image —
+while the game still <em>booted</em> off it, because the in-play open uses the older command, which the same
+server grants in compatibility mode.</p>
+<p>This flavour now carries its own <code>smbman</code> (<code>modules/network/smbman-ra</code>) that tries NT create first
+and falls back to the legacy open <strong>only</strong> when the server says the file is held, and <strong>only for a
+read</strong> — reaching past another handle to write is not something worth asking for. If both are
+refused, the hash log names the image as held instead of saying nothing. hacan359 confirmed this on
+hardware on 2026-09-10: two images held open by earlier runs hashed anyway, and the hashes matched
+the ones taken from a USB stick.</p>
+<p>Note this fixes <em>hashing</em>, not play: a game with an achievement set still stops about a minute in
+when streamed from a share, per the section above.</p>
 <h2 id="networking">Networking</h2>
 <p>Telemetry is UDP, sent by an IOP module that builds Ethernet frames by hand rather than going through
 the network stack — the stack's mailbox is shared with the game's own traffic, and 60 sends a second
@@ -257,8 +278,24 @@ pushed the game out of it.</p>
 network.</strong> OPL's own network settings supply it: whatever address, netmask and gateway are configured
 there are handed to the in-game Ethernet driver on every RA launch. If those are wrong or unset, the
 game runs normally but nothing reaches the PC.</p>
+<p>A launch with a watch list and telemetry on brings the menu's network up first when it is not up
+already, so it takes a moment longer. That is not optional: the in-game DEV9 driver does not power
+the network adapter on, it expects the menu to have done it, and without it no packet leaves the
+console. It is also how the console learns its address when it uses DHCP. If the network cannot
+come up -- no cable, no adapter, no usable IP address or DHCP lease -- the game launches without
+achievements and the menu shows a notice. With the adapter powered and no link, the in-game
+network driver would otherwise wait for a cable for ever and the game would never start.</p>
 <p>The PC client is found automatically: the console broadcasts a query on UDP port 18194 and the client
 answers. Nothing is stored between runs.</p>
+<p>The console integration follows <strong>xeRAbora v0.1.0-alpha.10</strong> (<code>ebd18ed6</code>, paired with console commit <code>0c5f61a3</code> / <code>6c7e9a79</code> and CodeRabbit hardening <code>136f2620</code>). This release brings significant stability improvements between OPL and RA:</p>
+<ul>
+<li><strong>Console pointer-chain resolution:</strong> Achievements that read through pointers previously never unlocked because the console only read a flat list of addresses (one measured set lost 22 of 50 achievements). In alpha.10, xeRAbora compiles pointer chains into nodes (parent, static offset, read size) sent as a tail after the watch addresses. <code>ee_core</code> walks the nodes once per frame and appends the dynamic <code>(address, value)</code> pair per node.</li>
+<li><strong>Null base and broken chain protection:</strong> If a chain's base pointer resolves to 0 (a null pointer or an out-of-range parent), RiptOPL forces the pair out as address 0 rather than adding the offset and reading random memory from the VBlank interrupt handler.</li>
+<li><strong>Interrupt memory safety:</strong> Addresses outside <code>0x00080000..0x02000000</code> (such as <code>0x00000000</code> found in some achievement sets like X-Men Origins) are never dereferenced in the interrupt handler. Reading outside mapped RAM caused TLB misses during VBlank and hung games on loading screens. Unreadable entries are reported as 0 so the snapshot maintains its structure.</li>
+<li><strong>PC client stability:</strong> xeRAbora v0.1.0-alpha.10 drops tracked leaderboards when the console disconnects instead of hanging stale on screen.</li>
+<li><strong>Snapshot delivery:</strong> Telemetry polls every 4 ms, sends each new snapshot once, retries busy or torn copies, repeats unchanged snapshots after ~1 second without a new one, and commits only the staged sequence once accepted.</li>
+</ul>
+<div class="callout amber"><div class="h">⚠ Important</div><strong>Client Version Compatibility:</strong> Always use <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10">xeRAbora v0.1.0-alpha.10</a></strong> with this build. Using earlier versions (alpha.8/alpha.9) lacks pointer-chain nodes and out-of-range memory handling, while arbitrary unverified versions risk protocol drift.</div>
 <hr/>
 <h2 id="files-on-the-card">Files on the card</h2>
 <pre><code>&lt;device root&gt;/RA/&lt;serial&gt;.wl        e.g. mass0:/RA/SLUS_210.65.wl
@@ -276,31 +313,96 @@ enumeration shared between the menu and the loader core, and make cannot see tha
 is now wrong.</p>
 <p>The rolling release publishes the flavour as its own archive, <strong><code>RIPTOPL-RetroAchievements-*.zip</code></strong>, built to the
 same shape as the main package: <code>POPS/</code>, <code>EMBER/</code>, <code>neutrino/</code> and the PC-tool shortcuts, with
-loader folders in place of the standard ones:</p>
+<code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code>, matching <code>ART/RIPTOPL-RA.ELF_*.png</code> artwork, and
+<code>APP_RIPTOPL-RA.psu</code>. The PSU contains only the direct files of <code>APP_RIPTOPL-RA</code>; import it with a
+PS2 save manager for a memory-card installation, then copy the other folders separately.</p>
+<p>The ready app <code>APPS/APP_RIPTOPL-RA/</code> is the official-toolchain build (<code>OFFICIALROLLING</code>, <code>PADEMU=1</code>),
+the same loader the release also publishes on its own as <code>RIPTOPL-RA.ELF</code>. If that build is missing
+from a run, the ready app falls back to the labelled builds below, in the order listed. The archive
+keeps those labelled loader folders under <code>APPS/</code> for comparing builds:</p>
 <table>
-<thead><tr><th>Folder</th><th>Build</th></tr></thead>
+<thead>
+<tr>
+<th>Folder</th>
+<th>Build</th>
+</tr>
+</thead>
 <tbody>
-<tr><td><code>APP_RIPTOPL-RA-PINNED/</code></td><td>Pinned ps2dev toolchain, <code>PADEMU=1</code> (the default). Start here.</td></tr>
-<tr><td><code>APP_RIPTOPL-RA-ROLLING/</code></td><td><code>ps2dev:latest</code>, <code>PADEMU=1</code></td></tr>
-<tr><td><code>APP_RIPTOPL-RA-PINNED-nopademu/</code></td><td>Pinned ps2dev toolchain, <code>PADEMU=0</code></td></tr>
-<tr><td><code>APP_RIPTOPL-RA-ROLLING-nopademu/</code></td><td><code>ps2dev:latest</code>, <code>PADEMU=0</code></td></tr>
+<tr>
+<td><code>APPS/APP_RIPTOPL-RA-PINNED/</code></td>
+<td>Pinned ps2dev toolchain, <code>PADEMU=1</code> (the ready app's first fallback). Start here for build comparisons.</td>
+</tr>
+<tr>
+<td><code>APPS/APP_RIPTOPL-RA-ROLLING/</code></td>
+<td><code>ps2dev:latest</code>, <code>PADEMU=1</code></td>
+</tr>
+<tr>
+<td><code>APPS/APP_RIPTOPL-RA-PINNED-nopademu/</code></td>
+<td>Pinned ps2dev toolchain, <code>PADEMU=0</code></td>
+</tr>
+<tr>
+<td><code>APPS/APP_RIPTOPL-RA-ROLLING-nopademu/</code></td>
+<td><code>ps2dev:latest</code>, <code>PADEMU=0</code></td>
+</tr>
 </tbody>
 </table>
-<p>RA is built with the ps2dev toolchain only, so these folders say <code>PINNED</code>/<code>ROLLING</code> where the main
+<p>The labelled folders are the two ps2dev builds, so they say <code>PINNED</code>/<code>ROLLING</code> where the main
 package says <code>PS2DEVPINNED</code>/<code>PS2DEVROLLING</code>. The names are kept short on purpose: a memory card file
 name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
-archive also carries <strong><code>xeRAbora.url</code></strong>, because the loader does nothing without the PC client.</p>
+archive also carries <strong><code>xeRAbora.url</code></strong> (pointing directly to the paired <a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10">v0.1.0-alpha.10 release</a>), because the loader does nothing without the PC client.</p>
 <p>It is deliberately <em>not</em> an entry in <code>RIPTOPL-VARIANTS-*.zip</code>: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
 diagnostic bundle rather than installable payload. The default build is unaffected by all of this — every RA source file and
 every call site is behind <code>#ifdef RETROACHIEVEMENTS</code>, and that is checked by comparing the two builds'
 symbol tables, loader core and embedded IOP modules. PR CI also builds the pinned
 <strong>PS2DEVPINNED-RA</strong> flavour and records the RA flag in its build manifest.</p>
+<h3 id="two-iop-modules-this-flavour-builds-instead-of-taking-from-the-sdk">Two IOP modules this flavour builds instead of taking from the SDK</h3>
+<p>Both are ps2sdk sources vendored with a marked change, the way <code>modules/network/ps2ips</code> already is,
+and both are selected by <code>USBD_MINI_IRX</code> / <code>SMBMAN_IRX</code> at the top of the Makefile.</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Why</th>
+<th>Diff from ps2sdk</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>modules/network/smbman-ra</code></td>
+<td>the held-image fix above</td>
+<td><code>smb.c</code> (35 lines) and <code>smb.h</code> (4); every other file byte-identical to ps2sdk master</td>
+</tr>
+<tr>
+<td><code>modules/usb/usbd-ra</code></td>
+<td>see below</td>
+<td><strong>nothing</strong> — byte-identical to ps2sdk <code>iop/usb/usbd</code> at <code>314d87e7</code> (2024-04-01); only the Makefile is ours</td>
+</tr>
+</tbody>
+</table>
+<p>⚠ <strong>The usbd swap is not a RetroAchievements feature.</strong> ps2sdk rewrote its USB host driver on
+2024-09-04 (<code>b1f7ff96</code>: 28 files, +4446/−3336), and since then a CD-era game run off a USB stick
+loses its controller <em>and</em> its sound at the game's first IOP reboot — Dynasty Warriors 2 on real
+hardware, reported by hacan359 on 2026-09-10, reproducing <strong>with official OPL as much as with this
+fork</strong>. Swapping only that one module fixes it. <code>usbd_mini.irx</code> is not a separate source tree:
+<code>iop/usb/usbd_mini/Makefile</code> points <code>IOP_SRC_DIR</code> at <code>iop/usb/usbd/src</code> and adds <code>-DMINI_DRIVER</code>, so
+the rewrite lands squarely on the module every RiptOPL flavour embeds straight from its container.</p>
+<p>It is therefore <strong>not</strong> gated: <code>USBD_MINI_IRX</code> sits outside the <code>RETROACHIEVEMENTS</code> conditional and
+every flavour gets the pre-rewrite driver. It is listed here only because this is where the module
+came from; it is not a RetroAchievements feature and does not depend on the flag.</p>
+<p>Hardware-checked by <strong>Zack on 2026-09-10</strong> before that promotion landed: no noticeable USB
+regressions on the promoted build. That is the check the promotion was waiting on — it is a
+no-regression result, not a confirmation that the Dynasty Warriors 2 case is cured here; that
+remains hacan359's finding on his own hardware. <code>backup/pre-usbd-forkwide-58fe5529</code> is the tree
+immediately before the swap, kept as a restore point.</p>
 <h2 id="before-this-is-called-finished">Before this is called finished</h2>
-<p>Nothing below has been done. The feature is written end to end and builds clean; it has not run on a
-PlayStation 2. Emulator testing gets you as far as: the menu boots, the RA entries render and
-navigate, the flag-off build is unchanged, and a game with no <code>.wl</code> does not crash. That is the
-ceiling — GS raster timing and real SMAP behaviour are not testable there.</p>
+<p>Most of the list below is still open. oMrRexD's hardware session for #702–#705 covered the nearest
+thing to <strong>3</strong>, launched from MMCE rather than USB (25,200 snapshots with none lost after a cold boot
+and a straight launch; the same build also tracked the game from USB), and <strong>13</strong>, the unlock overlay
+over a running game; a launch with telemetry switched off sent nothing, which is part of <strong>2</strong>.
+Everything else still needs a PlayStation 2. Emulator testing gets you as far as: the menu boots, the
+RA entries render and navigate, the flag-off build is unchanged, and a game with no <code>.wl</code> does not
+crash. That is the ceiling — GS raster timing and real SMAP behaviour are not testable there.</p>
 <p>Hand testers a <strong>run-pinned nightly.link build</strong>, never a bare artifact link.</p>
 <table>
 <thead>
@@ -416,40 +518,57 @@ ceiling — GS raster timing and real SMAP behaviour are not testable there.</p>
 </li>
 <li>
 <p><strong>The badge cache belongs to the I/O thread.</strong> <code>raBadgeRefresh</code> frees and reallocates it. Nothing
-  on the render path may read it — that is why a row carries <code>raBadged</code> as a plain int, resolved
-  when the row is built. Re-introducing a <code>raBadgeHas</code>-style call from a draw routine re-introduces
-  a use-after-free that only shows up as a rare hang.</p>
+on the render path may read it — that is why a row carries <code>raBadged</code> as a plain int, resolved
+when the row is built. Re-introducing a <code>raBadgeHas</code>-style call from a draw routine re-introduces
+a use-after-free that only shows up as a rare hang.</p>
 </li>
-<li><strong><code>MSG_DONTWAIT</code> is <code>0x08</code> on the menu path</strong>, from ps2sdk's <code>tcpip.h</code>. The <code>0x40</code> in SMSTCPIP
-  belongs to the in-game stack that serves <code>raudp</code>. They are different stacks; do not unify them.</li>
-<li><strong>The texture table is positional.</strong> <code>RA_MARK</code> in <code>enum INTERNAL_TEXTURE</code> and its row in
-  <code>internalDefault[]</code> are guarded by the same <code>#ifdef</code> for that reason. Guard one without the other
-  and the array silently goes one short.</li>
-<li><strong>Deleting <code>obj/</code> is mandatory</strong> after any change to <code>EECoreConfig_t</code>, <code>OPL_MODULE_ID</code> or the
-  submenu structs. This Makefile does not track header dependencies, so an incremental build can
-  pass locally while CI's <code>make clean</code> fails.</li>
-<li><strong><code>ee_core</code> has about 3 KB of headroom, and RA spends it.</strong> ram84 is 77312 bytes
-  (<code>ee_core/linkfile</code>). Without RA, an <code>EXTRA_FEATURES=1</code> ee_core comes to 74215; with RA and
-  without extras, 74067. Either fits; both together overflow by roughly 6.5 KB and <code>ld</code> refuses
-  with <code>.bss is not within region ram84</code>. That is why the release builds RA at the default
-  <code>EXTRA_FEATURES=0</code>, which is also what the main loader ships as — so the RA archive is the
-  shipping loader plus achievements, not a variant. <code>ra_snap_buf</code> and <code>ra_watch</code> are most of RA's
-  share; shrink them before trying to add anything else to that build.</li>
-<li><strong>PC integration uses xeRAbora</strong>, maintained by hacan359.</li>
-<li><strong>Physical discs use an EESYNC-only reset image.</strong> ROM CDVDMAN/CDVDFSV remain in place;
-  standalone DEV9 and SMSUTILS load before the telemetry network stack. Do not call OPL CDVDMAN's
-  shutdown RPC in this mode. Hash checks share the existing I/O worker; a launch refuses while a check
-  is pending, before probing or tearing down devices.</li>
+<li>
+<p><strong><code>MSG_DONTWAIT</code> is <code>0x08</code> on the menu path</strong>, from ps2sdk's <code>tcpip.h</code>. The <code>0x40</code> in SMSTCPIP
+belongs to the in-game stack that serves <code>raudp</code>. They are different stacks; do not unify them.</p>
+</li>
+<li>
+<p><strong>The texture table is positional.</strong> <code>RA_MARK</code> in <code>enum INTERNAL_TEXTURE</code> and its row in
+<code>internalDefault[]</code> are guarded by the same <code>#ifdef</code> for that reason. Guard one without the other
+and the array silently goes one short.</p>
+</li>
+<li>
+<p><strong>Deleting <code>obj/</code> is mandatory</strong> after any change to <code>EECoreConfig_t</code>, <code>OPL_MODULE_ID</code> or the
+submenu structs. This Makefile does not track header dependencies, so an incremental build can
+pass locally while CI's <code>make clean</code> fails.</p>
+</li>
+<li>
+<p><strong><code>ee_core</code>'s stack is whatever ram84 leaves above <code>.bss</code>.</strong> ram84 is 77312 bytes
+(<code>ee_core/linkfile</code>), and the link now fails when less than 3 KB of stack is left, so the next
+thing that grows <code>.bss</code> breaks the build rather than a console. RA's two buffers, <code>ra_snap_buf</code> and
+<code>ra_watch</code> (about 8 KB), used to live in <code>.bss</code>: they left the RA build 1920 bytes of stack, which
+overflowed at the first IOP reset. Since #702 they sit in a work area the launcher reserves at the
+end of module storage (<code>raWorkArea</code> in <code>EECoreConfig_t</code>), and only for a launch that has a watch
+list with telemetry on. When #702 landed, the stack left was 13312 bytes in the default build, 3348
+with <code>EXTRA_FEATURES=1</code>, and 9984 / 10112 in the RA builds (<code>PADEMU=1</code> / <code>0</code>). The release builds
+RA at the default <code>EXTRA_FEATURES=0</code>, which is also what the main loader ships as — so the RA
+archive is the shipping loader plus achievements, not a variant. Before #702, RA and
+<code>EXTRA_FEATURES=1</code> together overflowed ram84 by roughly 6.5 KB; that pairing has not been
+re-measured since.</p>
+</li>
+<li>
+<p><strong>PC integration uses xeRAbora</strong>, maintained by hacan359.</p>
+</li>
+<li>
+<p><strong>Physical discs use an EESYNC-only reset image.</strong> ROM CDVDMAN/CDVDFSV remain in place;
+standalone DEV9 and SMSUTILS load before the telemetry network stack. Do not call OPL CDVDMAN's
+shutdown RPC in this mode. Hash checks share the existing I/O worker; a launch refuses while a check
+is pending, before probing or tearing down devices.</p>
+</li>
 </ul>
 <hr/>
 <h2 id="credits">Credits</h2>
 <ul>
 <li><strong>hacan359 (yoba)</strong> — the RetroAchievements design, the console implementation this port follows,
-  and the PC client. Physical-disc integration follows the
-  <a href="https://github.com/hacan359/Open-PS2-Loader/tree/cb713e686acb2fb63de20aa44b3fd4e8c59ca680">upstream disc implementation</a>.</li>
+and the PC client. Physical-disc integration follows the
+<a href="https://github.com/hacan359/Open-PS2-Loader/tree/cb713e686acb2fb63de20aa44b3fd4e8c59ca680">upstream disc implementation</a>.</li>
 <li><strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong> — the real-hardware RA stabilization work merged through
-  PRs #702–#705: ee_core stack recovery, MMCE DEV9, launch-time network readiness/fallback, and the
-  RA settings-page correction, plus the hardware investigation that exposed those failures.</li>
+PRs #702–#705: ee_core stack recovery, MMCE DEV9, launch-time network readiness/fallback, and the
+RA settings-page correction, plus the hardware investigation that exposed those failures.</li>
 <li><code>src/md5.c</code>, <code>include/md5.h</code> — L. Peter Deutsch, zlib licence, vendored unchanged.</li>
 </ul>
 </main>

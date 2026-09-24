@@ -111,6 +111,7 @@ boot=RIPTOPL.ELF</pre>
 <tr><td><code>title</code></td><td>Yes</td><td>The name shown in the app list.</td></tr>
 <tr><td><code>boot</code></td><td>Yes</td><td>The ELF filename to launch, relative to the app's own folder.</td></tr>
 <tr><td><code>argv1</code></td><td>No</td><td>A single argument passed to the ELF on launch, as its first argument. Useful for homebrew that takes a path or a mode on its command line.</td></tr>
+<tr><td><code>REBOOTIOP</code></td><td>No</td><td>Answers the <b>REBOOT IOP?</b> launch prompt for this app once and for all: <code>YES</code> or <code>NO</code>. See <a href="#reboot-iop">Launching an app</a>.</td></tr>
 </tbody>
 </table>
 
@@ -158,6 +159,27 @@ read. This trips people up when adding a second list and wondering why nothing c
 <p>With a default mass-device prefix, the file goes at <code>mass0:/conf_apps.cfg</code>.
 <code>mass0:/OPL/conf_apps.cfg</code> is only found when <code>OPL/</code> is that source's <em>configured
 prefix</em> — it is not searched as an extra location.</p>
+
+<h2 id="reboot-iop">Launching an app: the REBOOT IOP? prompt</h2>
+<p>Launching an ordinary app ELF, from Apps or from an app in <a href="favourites.html">Favorites</a>, first
+asks <b>REBOOT IOP?</b>:</p>
+<table>
+<thead><tr><th>Button</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td><b>Cross</b> (YES)</td><td>Reset the IOP before the app starts, so it begins with a freshly reset I/O processor.</td></tr>
+<tr><td><b>Circle</b> (NO)</td><td>Start the app on the IOP as RiptOPL left it, with its drivers still loaded.</td></tr>
+<tr><td><b>Triangle</b></td><td>Cancel and stay in the list.</td></tr>
+</tbody>
+</table>
+<p>To answer it once for good, add <code>REBOOTIOP=YES</code> or <code>REBOOTIOP=NO</code> to the app's
+<code>title.cfg</code>. <code>REBOOT_IOP</code> also works as the key, and <code>1</code>/<code>0</code>,
+<code>TRUE</code>/<code>FALSE</code> or <code>ON</code>/<code>OFF</code> as the value; any other value brings the
+prompt back. A <code>conf_apps.cfg</code> entry reads the same line from its per-app file,
+<code>CFG/&lt;ELF name&gt;.cfg</code> on an enabled source (for <code>mass:APPS/MYAPP.ELF</code>, that is
+<code>CFG/MYAPP.ELF.cfg</code>).</p>
+<p>POPSTARTER launches never ask: <code>POPSTARTER.ELF</code> and the <code>XX.</code>, <code>SB.</code>,
+<code>EL.</code> and <code>SM.</code> launcher ELFs keep their own PS1 launch path. An app on the APA HDD always
+gets the HDD cleanup before it starts, whichever answer you give.</p>
 
 <h2 id="art">Cover art for apps</h2>
 <p>Apps use the same <code>ART/</code> folder as games, on the device the app itself lives on. The lookup key
