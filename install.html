@@ -219,6 +219,17 @@ do not assume it is always <code>mc0:/OPL/</code>.</p>
 
 <p>If you previously used an older RiptOPL build that saved as <code>conf_riptopl.cfg</code>, the new build automatically migrates your settings the next time it saves — you do not need to rename anything manually.</p>
 
+<h3 id="from-official-opl">Coming from official OPL</h3>
+<p>If the place RiptOPL reads its settings from has no RiptOPL settings but does have official OPL's
+<code>conf_opl.cfg</code>, RiptOPL starts from that file. Swapping <code>RIPTOPL.ELF</code> in for
+<code>OPNPS2LD.ELF</code> (in a PSBBN, OSDMenu or HDD-OSD launcher, or a plain memory card or USB install)
+therefore keeps the devices and options you already set. RiptOPL only <b>reads</b> that file and never writes it:
+the first save writes <code>settings_riptopl.cfg</code> to RiptOPL's own settings home.</p>
+
+<p><b>Auto Loading</b> (a game started straight from PSBBN, OSDMenu or another launcher) reads the same settings
+home as the menu, so global game settings apply the same way. If such a launch cannot go ahead, because the ISO
+is missing or the device cannot be used, RiptOPL opens its menu instead of stopping on a black screen.</p>
+
 <p>The config file is discovered and written in this priority order (first found wins on read; saves always go back to the same path it was read from):</p>
 
 <ul class="checklist">
