@@ -1538,8 +1538,11 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // VCD view: while this device shows its VCD list, skip the disc-folder heuristics (it refreshes on
     // L3 toggle / manual refresh only). The toggle's forced rescan is consumed ABOVE the device-tick
     // gate (see libViewConsumeDirty near the top) so the per-generation cache can't swallow it.
+    // Return `result`, not 0: on the connect pass it is 1, and that pass is what builds a newly
+    // attached device's first list. Returning 0 left a page whose remembered view was PS1 blank until
+    // L3 or a view change forced a rescan (found while investigating FifthFox's empty BDM pages).
     if (libListViewActive(itemList) == LIB_VIEW_PS1)
-        return 0;
+        return result;
 
     snprintf(path, sizeof(path), "%sCD", pDeviceData->bdmPrefix);
     if (stat(path, &st) != 0)
