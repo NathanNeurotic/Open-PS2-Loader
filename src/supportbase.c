@@ -791,7 +791,7 @@ void sbEnsureIgrUsbDrivers(int compatmask)
     const void *data[2] = {usbd_irx, usbhdfsd_irx};
     int size[2] = {size_usbd_irx, size_usbhdfsd_irx};
     int have[2][2] = {{0}}, wrote[2] = {0, 0};
-    int mc, i, need = 0, rc = 0;
+    int mc, i, need[2] = {0, 0}, rc = 0;
     char dir[16], path[2][32], msg[512];
 
     if (asked || (compatmask & COMPAT_MODE_6) || strncmp(gExitPath, "mass", 4) != 0)
@@ -809,7 +809,17 @@ void sbEnsureIgrUsbDrivers(int compatmask)
     }
     if ((have[0][0] && have[0][1]) || (have[1][0] && have[1][1]))
         return;
-    if (have[0][0] || vcdMcHasSpace("mc0:", 0) >= 0)
+    // Take a card with room for what it is missing, mc0 first as the core looks there first; mc0 is
+    // forced once it has USBD.IRX. With no room anywhere, offer on the first card present anyway, so the
+    // write fails with the "card full" message instead of the IGR silently dropping to the browser.
+    for (mc = 0; mc < 2; mc++)
+        for (i = 0; i < 2; i++)
+            need[mc] += have[mc][i] ? 0 : size[i];
+    if (have[0][0] || vcdMcHasSpace("mc0:", need[0]) == 1)
+        mc = 0;
+    else if (vcdMcHasSpace("mc1:", need[1]) == 1)
+        mc = 1;
+    else if (vcdMcHasSpace("mc0:", 0) >= 0)
         mc = 0;
     else if (vcdMcHasSpace("mc1:", 0) >= 0)
         mc = 1;
@@ -822,9 +832,7 @@ void sbEnsureIgrUsbDrivers(int compatmask)
     if (!guiMsgBox(msg, 1, NULL))
         return;
 
-    for (i = 0; i < 2; i++)
-        need += have[mc][i] ? 0 : size[i];
-    if (vcdMcHasSpace(dir, need) == 0)
+    if (vcdMcHasSpace(dir, need[mc]) == 0)
         rc = -2;
     else
         mkdir(dir, 0777); // fails harmlessly when it already exists
