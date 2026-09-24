@@ -166,13 +166,21 @@ RiptOPL equip failure from a POPSTARTER/BDMA runtime failure after handoff.
 </div>
 
 <h3>POPSTARTER.ELF path</h3>
-<p>By default RiptOPL looks for <code>POPSTARTER.ELF</code> in each device's <code>POPS</code>
-folder. To pin it to one device instead, set
-<b>Settings → PS Emulation Settings → POPSTARTER.ELF Device</b> — Default, Memory Card, USB, MX4SIO, MMCE,
-HDD (exFAT), HDD (APA), Custom, Game's Device, or iLink. The free-text <b>POPSTARTER.ELF Path</b> field
-below it only appears when the Device is set to <b>Custom</b>. The on-screen editor caps at 31
-characters; for a longer path set <code>popstarter_path</code> in
-<code>settings_riptopl.cfg</code> directly.</p>
+<p>RiptOPL looks for <code>POPSTARTER.ELF</code> in a fixed order:</p>
+<ol>
+<li><b>Settings → PS Emulation Settings → POPSTARTER.ELF Path</b>, when it is set. It is a full
+path on any device, for example <code>mmce0:/POPS/POPSTARTER.ELF</code> or
+<code>usb:/POPS/POPSTARTER.ELF</code>; the device aliases are the ones listed for the
+<a href="neutrino.html#neutrino-device">Neutrino Path</a>. The editor takes the whole path.</li>
+<li>The VCD's own device: its <code>POPS/POPSTARTER.ELF</code>. For an APA HDD VCD this is
+<code>hdd0:__common/POPS/POPSTARTER.ELF</code>.</li>
+<li><code>mc0:/POPS/POPSTARTER.ELF</code>, then <code>mc1:/POPS/POPSTARTER.ELF</code>.</li>
+</ol>
+<p>A path that is set but unavailable falls through to the next two steps. The path may be on a
+different device from the VCD; RiptOPL keeps both mounted until POPSTARTER has loaded. If you
+relocate <code>POPSTARTER.ELF</code>, keep the BDMA driver variants in the same folder: RiptOPL
+looks for them there first. The old <b>POPSTARTER.ELF Device</b> picker is gone; its device choice
+becomes the matching path when you upgrade.</p>
 
 <h2 id="ember">Ember — the second PS1 core</h2>
 

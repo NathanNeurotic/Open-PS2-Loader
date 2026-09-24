@@ -227,12 +227,11 @@ not applied for that launch. The MMCE mass-storage path <code>mmceN:</code> is n
 card switch; keeping Neutrino there allows both Neutrino and per-game GameID switching to work.
 </div>
 
-<p>The current <b>Neutrino Device</b> picker has three choices: <b>Auto</b>,
-<b>Memory Card</b>, and <b>Game's Device</b>. <b>Auto</b> is normally sufficient: it checks a
-custom path, then the active game's prefix and bare device root, then the APA HDD data home, and
-finally <code>mc0:</code>/<code>mc1:</code>. <b>Game's Device</b> is stricter: it searches only
-the active MMCE game device, with no custom-path or memory-card fallback, so a miss reports
-"not found" instead of silently using another copy.</p>
+<p>With <b>Neutrino Path</b> left at <em>&lt;not set&gt;</em>, RiptOPL checks the active game's
+prefix and bare device root, then <code>mc0:</code>/<code>mc1:</code>, so a copy on the MMCE game
+device is found first. To use one specific copy, set Neutrino Path to its full path, for example
+<code>mmce0:/neutrino/neutrino.elf</code>; it is tried before the automatic lookup. See
+<a href="neutrino.html#neutrino-device">Neutrino Core</a>.</p>
 
 <div class="callout info"><div class="h">ℹ USBExtreme (.ul) and ZSO on MMCE</div>
 USBExtreme multi-chunk format (<code>ul.*</code>) and ZSO compressed images are both supported on MMCE, subject
