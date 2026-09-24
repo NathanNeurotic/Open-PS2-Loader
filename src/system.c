@@ -1344,6 +1344,20 @@ static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
 // Returns 0 = OK to launch (synced / already-in-sync / benign leave-alone), <0 = abort the launch:
 // the toml is MISSING (neutrino cannot load its bsd config at all) or was mangled-then-restored (the
 // old ip survives, so the boot would black-screen on any other subnet).
+static const char *sysLastPathSeparator(const char *path)
+{
+    const char *slash;
+    const char *backslash;
+
+    if (path == NULL)
+        return NULL;
+    slash = strrchr(path, '/');
+    backslash = strrchr(path, '\\');
+    if (backslash != NULL && (slash == NULL || backslash > slash))
+        return backslash;
+    return slash;
+}
+
 static int sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *deviceName)
 {
     static char toml[4096]; // Δ6: raised from 2048 -- an annotated toml no longer gets skipped
@@ -1352,10 +1366,11 @@ static int sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *device
     char newIp[20];
     int fd, len;
 
-    const char *slash = strrchr(neutrinoPath, '/');
+    const char *slash = sysLastPathSeparator(neutrinoPath);
     if (slash == NULL)
         return 0; // custom flat path -- no dir to anchor on; old hand-edit contract
-    snprintf(tomlPath, sizeof(tomlPath), "%.*sconfig/bsd-%s.toml", (int)(slash - neutrinoPath) + 1, neutrinoPath, deviceName);
+    snprintf(tomlPath, sizeof(tomlPath), "%.*sconfig%cbsd-%s.toml",
+             (int)(slash - neutrinoPath) + 1, neutrinoPath, *slash, deviceName);
 
     fd = open(tomlPath, O_RDONLY);
     if (fd < 0) {
@@ -1637,9 +1652,9 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     int userHasCwd = neutrinoArgHasActiveFlag(gNeutrinoArgs, "-cwd=") ||
                      neutrinoArgHasActiveFlag(extraArgs, "-cwd=");
     if (!userHasCwd) {
-        const char *slash = strrchr(neutrinoPath, '/');
+        const char *slash = sysLastPathSeparator(neutrinoPath);
         if (slash != NULL) {
-            int dirLen = (int)(slash - neutrinoPath) + 1; // keep the trailing '/'
+            int dirLen = (int)(slash - neutrinoPath) + 1; // keep the device's native trailing separator
             snprintf(cwdArg, sizeof(cwdArg), "-cwd=%.*s", dirLen, neutrinoPath);
             if (argc < argvMax)
                 argv[argc++] = cwdArg;

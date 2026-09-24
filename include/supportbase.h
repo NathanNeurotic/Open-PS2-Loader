@@ -89,14 +89,23 @@ int sbLoadCheats(const char *path, const char *file);
 
 int sbFileExists(const char *path);
 
-// First existing Neutrino core ELF, or NULL. In AUTO mode (gNeutrinoDevice==0): custom gNeutrinoPath
-// -> the active game's device (activePrefix) -> mc0/mc1 install spots. An explicit Device picker
-// ignores activePrefix. Pass NULL when no game device applies.
+// Resolve one user-entered full ELF path into the filesystem path RiptOPL can actually open.
+// This activates the explicitly named storage stack when safe (USB/MX4SIO/iLink/exFAT BDM,
+// MMCE, SMB, UDPFS, UDPBD/UDPFS-BD, APA/PFS) and normalizes aliases to live namespaces such as
+// massN:/ or smb0:. Returns 1 only when the resolved file can be opened.
+int sbResolveCustomLoaderPath(const char *requested, char *out, int outSize);
+
+// First usable Neutrino core ELF, or NULL. Runtime order is fixed:
+// custom gNeutrinoPath -> active game's device (activePrefix) -> mc0/mc1.
+// A Memory Card / HDD (APA) choice migrated from the retired picker also gets that picker's
+// case-tolerant probe until the migrated path is edited (see configReadNeutrinoGlobals).
 const char *sbResolveNeutrinoPath(const char *activePrefix);
 
-// Deinit exception mask for the device holding a resolved neutrino.elf. UNMOUNT_EXCEPTION for every
-// device; APA (pfs) additionally needs KEEPIOP_EXCEPTION, because hddCleanUp's PDIOC_CLOSEALL would
-// drop the pfs descriptors before the keep-IOP handoff opens the ELF. Pass the resolved path.
+// Deinit exception mask for an external ELF that is opened AFTER OPL's teardown. Every loader path
+// keeps its mount; PFS additionally keeps the IOP-side descriptors because hddCleanUp's
+// PDIOC_CLOSEALL would otherwise invalidate the mount before the ELF loader opens it.
+int sbLoaderDeinitException(const char *loaderPath);
+// Backward-compatible Neutrino-named wrapper used by existing launch legs.
 int sbNeutrinoDeinitException(const char *neutrinoPath);
 
 // Structured view of the USER-settable Neutrino launch flags (the catch-all "Launch Args" box).

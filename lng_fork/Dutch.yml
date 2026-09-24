@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino Video
   HINT_NEUTRINO_VIDEO: Forceer Neutrino's GS-uitvoervideomodus (-gsm). Uit behoudt de standaard van het spel.
   NEUTRINO_PATH: Neutrino ELF-pad
-  HINT_NEUTRINO_PATH: Volledig pad naar neutrino.elf (bijv. mc0:NEUTRINO/neutrino.elf). Leeg = automatisch zoeken op mc0/mc1.
   POPSTARTER_PATH: POPSTARTER.ELF-pad
-  HINT_POPSTARTER_PATH: Aangepast POPSTARTER.ELF-pad; valt stil terug op de POPS-map van het apparaat indien leeg/ontbrekend. Toetsenbord beperkt tot 31 tekens; langere paden via settings_riptopl.cfg.
   BDMA_SOURCE: BDMA-bron
   HINT_BDMA_SOURCE: Apparaat waarvan de POPS-map de BDMAssault-stuurprogrammabestanden bevat (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: BDMA-modus

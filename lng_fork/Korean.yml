@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino 비디오
   HINT_NEUTRINO_VIDEO: Neutrino의 GS 출력 비디오 모드를 강제 설정합니다 (-gsm). Off는 게임 기본값을 유지합니다.
   NEUTRINO_PATH: Neutrino ELF 경로
-  HINT_NEUTRINO_PATH: 'neutrino.elf의 전체 경로 (예: mc0:NEUTRINO/neutrino.elf). 비워두면 mc0/mc1에서 자동 감지합니다.'
   POPSTARTER_PATH: POPSTARTER.ELF 경로
-  HINT_POPSTARTER_PATH: 사용자 지정 POPSTARTER.ELF 경로; 비어 있거나 없으면 장치 POPS 폴더로 자동 대체됩니다. 키보드 입력 31자 제한; 긴 경로는 settings_riptopl.cfg를 통해 설정하세요.
   BDMA_SOURCE: BDMA 소스
   HINT_BDMA_SOURCE: BDMAssault 드라이버 파일 (usbd.irx.* / usbhdfsd.irx.*)이 있는 POPS 폴더의 장치를 선택합니다.
   BDMA_MODE: BDMA 모드

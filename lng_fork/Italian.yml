@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Video Neutrino
   HINT_NEUTRINO_VIDEO: Forza la modalità video GS di Neutrino (-gsm). Off mantiene il default del gioco.
   NEUTRINO_PATH: Percorso ELF Neutrino
-  HINT_NEUTRINO_PATH: Percorso completo di neutrino.elf (es. mc0:NEUTRINO/neutrino.elf). Vuoto = rilevamento automatico su mc0/mc1.
   POPSTARTER_PATH: Percorso POPSTARTER.ELF
-  HINT_POPSTARTER_PATH: Percorso personalizzato POPSTARTER.ELF; usa la cartella POPS del dispositivo se vuoto/mancante. La tastiera accetta max 31 caratteri; percorsi più lunghi via settings_riptopl.cfg.
   BDMA_SOURCE: Sorgente BDMA
   HINT_BDMA_SOURCE: Dispositivo la cui cartella POPS contiene i file driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: Modalità BDMA

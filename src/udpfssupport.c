@@ -19,8 +19,10 @@
 #include "include/mmcesupport.h" // mmceSendGameID() cross-device game-id (#261)
 #include "modules/iopcore/common/cdvd_config.h"
 
+#include <ps2sdkapi.h>
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h>
+#include <delaythread.h>
 
 // udpfs is a network FILESYSTEM device: the iomanX device "udpfs:" is served by the udpfs_ioman IRX
 // chain (smap -> ministack(ip=) -> udpfs_ioman). Games are read straight off "udpfs:/" and boot through
@@ -97,6 +99,33 @@ static void udpfsLoadModules(void)
 int udpfsGetModulesLoaded(void)
 {
     return udpfsIomanModLoaded;
+}
+
+int udpfsEnsureReady(u32 timeoutMs)
+{
+    u64 start;
+
+    if (ethGetModulesLoaded() || bdmIsUDPBDLoaded())
+        return 0;
+
+    if (!udpfsIomanModLoaded)
+        udpfsLoadModules();
+    if (!udpfsIomanModLoaded)
+        return 0;
+
+    // A healthy, already-connected server returns on the first probe. A just-loaded ioman session
+    // can need a short discovery window, so only the explicit custom-path request pays this wait.
+    start = GetTimerSystemTime();
+    do {
+        struct stat st;
+        if (stat("udpfs:/", &st) == 0)
+            return 1;
+        if ((GetTimerSystemTime() - start) / (kBUSCLK / 1000) >= timeoutMs)
+            break;
+        DelayThread(100 * 1000);
+    } while (1);
+
+    return 0;
 }
 
 // True when the server answers. While the udpfs_ioman session is down, every call fails inside the IOP

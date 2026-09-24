@@ -23,6 +23,9 @@ int ethGetModulesLoaded(void);       // 1 if the SMB NIC stack is loaded (UDPBD 
 // stronger than "Network Protocol == SMB": callers must not turn a read-only import into a long
 // connection attempt or consume stale saved values.
 int ethIsSMBShareConnected(void);
+// Explicit-loader helper: synchronously bring up SMB and open the configured share when no
+// incompatible NIC stack is resident. Used only for a user-entered custom ELF path.
+int ethEnsureSMBShareConnected(void);
 // Queue a full live SMB reconnect: close the current session, apply the current Network Settings
 // (link mode + IP/DHCP), log on/open the share again, and rebuild the list. Safe to call repeatedly;
 // one request is coalesced while the IO worker is reconnecting.
