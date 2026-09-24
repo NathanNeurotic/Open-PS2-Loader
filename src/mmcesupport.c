@@ -1006,6 +1006,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         int coreLoaderEarly = gDefaultCoreLoader;
         configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoaderEarly);
         if (!coreLoaderEarly) {
+            sbEnsureIgrUsbDrivers(compatmask); // the OPL core's IGR path; must precede the switch below
             char vmcNameEarly[32];
             int vmcMask = 0, vs;
             for (vs = 0; vs < 2; vs++) {

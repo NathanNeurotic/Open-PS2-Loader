@@ -769,7 +769,9 @@ static const struct cdvdman_settings_common cdvdman_settings_common_sample = CDV
 // mc0:/SYS-CONF/USBD.IRX + USBHDFSD.IRX before it can open a mass: ELF, or the mc1: pair when mc0 has
 // no USBD.IRX (ee_core/src/padhook.c, t_loadElf). Those are FMCB's files, so without FMCB the IGR
 // dropped to the PS2 browser. Offer to write ours when an OPL-core launch will need them: ask once per
-// session, never replace a file that is there, and never leave half a pair behind.
+// session, never replace a file that is there, and never leave half a pair behind. Only OPL-core
+// launches call this (not sbPrepare, which UDPFS also runs): Neutrino never reads the IGR path. They
+// call it before any MMCE game-ID switch, so mc0: is still the boot card.
 void sbEnsureIgrUsbDrivers(int compatmask)
 {
     static const char *names[2] = {"USBD.IRX", "USBHDFSD.IRX"};
@@ -838,7 +840,6 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
     struct cdvdman_settings_common *settings;
 
     int compatmask = sbGetCompatModes(configSet);
-    sbEnsureIgrUsbDrivers(compatmask);
 
     char gameid[5];
     configGetDiscIDBinary(configSet, gameid);

@@ -52,7 +52,8 @@ back into a different launcher or a homebrew menu. The file must live **on a mem
 (`mc0:` or `mc1:`) or on a **FAT32 USB drive** (`mass:/…`); leave the setting blank to return to RiptOPL normally.
 After a reset the console can only reach USB through `USBD.IRX` and `USBHDFSD.IRX` in the memory card's
 `SYS-CONF` folder, the files FMCB installs. If they are missing, RiptOPL offers to copy its own there the first time you
-launch a game with a USB IGR Path. It never replaces files that are already there.
+launch a game on the OPL core with a USB IGR Path (Neutrino has no IGR, so its launches never ask). It never replaces
+files that are already there.
 
 If you use MMCE cards, **IGR Bootcard Slot(s)** (*Settings → Game Sources → MMCE Settings*) additionally sends a
 "switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is
