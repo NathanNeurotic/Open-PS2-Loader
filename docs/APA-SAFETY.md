@@ -97,4 +97,4 @@ Use a disposable APA disk with PS2 games, POPS containers, an Ember partition an
 3. **4Kn drive** (if available): an internal 4Kn disk formatted exFAT shows code 500, and one formatted APA is not detected. Neither is written to.
 4. **Exit to browser**, and **power off from the menu** while a cover is loading and while a list is still building. Reboot and confirm the disk still lists.
 5. **Code 402:** zero LBA 0–7 on the test disk from a PC and boot. Confirm code 402 appears, and that nothing is written. Then recover the disk with `apa_recover.py --repair`, boot again, and confirm everything lists.
-6. **APA + exFAT hybrid (APA-Jail):** confirm the exFAT side still mounts and saves settings.
+6. **APA + exFAT hybrid (APA-Jail):** confirm the exFAT side still mounts and saves settings. Launched from APA (for example PSBBN's `hdd0:__system:pfs:/launcher/OPNPS2LD.ELF`), RiptOPL should home its settings on the exFAT root; with RiptOPL settings already on exFAT it must not mount PFS at all. See [Auto Loading global settings](AUTOLAUNCH-GLOBAL-SETTINGS.md).

@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Video Neutrino
   HINT_NEUTRINO_VIDEO: Forțează modul video de ieșire GS al Neutrino (-gsm). Off păstrează implicit-ul jocului.
   NEUTRINO_PATH: Cale ELF Neutrino
-  HINT_NEUTRINO_PATH: Calea completă spre neutrino.elf (ex. mc0:NEUTRINO/neutrino.elf). Gol = detectare automată pe mc0/mc1.
   POPSTARTER_PATH: Cale POPSTARTER.ELF
-  HINT_POPSTARTER_PATH: Cale personalizată POPSTARTER.ELF; revine automat la dosarul POPS al dispozitivului dacă e gol/lipsă. Tastatura e limitată la 31 de caractere; căi mai lungi prin settings_riptopl.cfg.
   BDMA_SOURCE: Sursă BDMA
   HINT_BDMA_SOURCE: Dispozitivul al cărui dosar POPS conține fișierele driver BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: Mod BDMA

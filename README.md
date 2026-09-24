@@ -521,6 +521,15 @@ read and migrated on save. The normal settings home starts with the loader's boo
 uses discovery/fallbacks when that location cannot be used. **Custom Settings Path** can select a
 different home. Check the active location instead of assuming all settings are on `mc0:/OPL/`.
 
+If a place RiptOPL checks has no RiptOPL settings but does have official OPL's `conf_opl.cfg`,
+RiptOPL starts from that file. It is read-only: RiptOPL never writes it, and the next save writes
+`settings_riptopl.cfg` to RiptOPL's own settings home. On an APA + exFAT hybrid disk (PSBBN
+Definitive's "APA-Jail" layout), a RiptOPL launched from APA uses the exFAT volume as its
+settings home, as official OPL does, and starts its BDM page so the exFAT games show. RiptOPL
+settings an older build saved in the APA data home are carried over and written to exFAT on the
+next save. The menu and Auto Loading use the same settings. See
+[docs/AUTOLAUNCH-GLOBAL-SETTINGS.md](docs/AUTOLAUNCH-GLOBAL-SETTINGS.md).
+
 Network configuration (`conf_network.cfg`), app lists, per-game settings, artwork, themes and VMCs
 can still be shared with other OPL installations. Separate master filenames do not isolate these
 files. Favorites import from uOPL/wOPL is one-way: saving writes RiptOPL's own `OFAV` format.

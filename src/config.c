@@ -5,6 +5,7 @@
 */
 
 #include "include/opl.h"
+#include "include/iosupport.h" // ETH_MODE/HDD_MODE/APP_MODE: official conf_opl.cfg default_device mapping
 #include "include/diag.h"
 #include "include/util.h"
 #include "include/ioman.h"
@@ -443,6 +444,11 @@ void configMove(config_set_t *configSet, const char *fileName)
 
 void configFree(config_set_t *configSet)
 {
+    // Every early autolaunch bail-out calls miniDeinit(NULL). Without this guard configClear read
+    // NULL->head -- a TLB miss on hardware -- so a refused autolaunch crashed instead of reaching the menu.
+    if (configSet == NULL)
+        return;
+
     configClear(configSet);
     free(configSet->filename);
     free(configSet);
@@ -1089,16 +1095,79 @@ int configReadBuffer(config_set_t *configSet, const void *buffer, int size)
     return ret;
 }
 
+// Last character of the directory part of a config path. A device-root home has no '/' at all --
+// configBuildPath joins "mass0:" + name as "mass0:settings_riptopl.cfg" -- so the directory ends at
+// the later of the last '/' and the device ':'. Splitting on '/' alone turned such a sibling into a
+// bare relative name, which newlib resolves against the process CWD (the APA launch folder on a PSBBN
+// boot), so the fallback silently read the wrong place or nothing.
+static const char *configPathDirEnd(const char *path)
+{
+    const char *slash = strrchr(path, '/');
+    const char *colon = strrchr(path, ':');
+
+    if (colon != NULL && (slash == NULL || colon > slash))
+        return colon;
+    return slash;
+}
+
+// "<dir><name>" for a file living beside path.
+static void configBuildSiblingPath(const char *path, const char *name, char *out, int outSize)
+{
+    const char *dirEnd = configPathDirEnd(path);
+
+    if (dirEnd != NULL)
+        snprintf(out, outSize, "%.*s%s", (int)(dirEnd - path) + 1, path, name);
+    else
+        snprintf(out, outSize, "%s", name);
+}
+
 // RiptOPL master config was renamed conf_riptopl.cfg -> settings_riptopl.cfg. Given the built
 // "<dir>/settings_riptopl.cfg" path, produce its legacy "<dir>/conf_riptopl.cfg" sibling so an
 // existing install's settings still load (read-fallback); the next save writes the new name.
 static void configBuildLegacyOplPath(const char *path, char *out, int outSize)
 {
-    const char *slash = strrchr(path, '/');
-    if (slash != NULL)
-        snprintf(out, outSize, "%.*s%s", (int)(slash - path) + 1, path, CONFIG_OPL_FILENAME_LEGACY);
-    else
-        snprintf(out, outSize, "%s", CONFIG_OPL_FILENAME_LEGACY);
+    configBuildSiblingPath(path, CONFIG_OPL_FILENAME_LEGACY, out, outSize);
+}
+
+// Set whenever the master set was last filled from official OPL's conf_opl.cfg (see configRead).
+static int configOplOfficialSeed = 0;
+
+int configOplIsOfficialSeed(void)
+{
+    return configOplOfficialSeed;
+}
+
+// A second read-only source for the global sets: files RiptOPL saved in ANOTHER home, carried over
+// into the current one. An APA+exFAT hybrid is homed on its exFAT volume like official OPL, but builds
+// before that homed it on the APA data home, where an existing user's settings still sit (#545).
+// Each global file the current home lacks is read from there instead. The sets are NOT re-homed:
+// configWrite materializes a populated set whose file is absent, so the first save writes them all to
+// the current home and this goes quiet for good. Files the current home does have (official's
+// conf_game.cfg, say) always win.
+static char configCarryOverDir[64];
+static int configOplCarryOver = 0;
+
+void configSetCarryOverDir(const char *dir)
+{
+    snprintf(configCarryOverDir, sizeof(configCarryOverDir), "%s", dir != NULL ? dir : "");
+}
+
+int configOplIsCarryOver(void)
+{
+    return configOplCarryOver;
+}
+
+// Official OPL numbers its pages with five BDM slots (BDM 0-4, ETH 5, HDD 6, APP 7); RiptOPL has eight
+// (ETH_MODE 8, HDD_MODE 9, APP_MODE 10). Every other official master key has the same name and the same
+// meaning here, video mode indices included, so default_device is the only value that needs mapping.
+static void configTranslateOfficialOpl(config_set_t *configSet)
+{
+    int device;
+
+    if (configGetInt(configSet, CONFIG_OPL_DEFAULT_DEVICE, &device) && device >= 5 && device <= 7) {
+        configSetInt(configSet, CONFIG_OPL_DEFAULT_DEVICE, ETH_MODE + (device - 5));
+        configSet->modified = 0; // normalising a read-only seed is not a user edit
+    }
 }
 
 // wOPL does not only reformat -- for three files it RELOCATES the data and leaves nothing at the name
@@ -1126,14 +1195,14 @@ static int configBuildWoplPath(const char *path, char *out, int outSize)
         {"conf_game.cfg", "wopl_global_game.cfg"},
         {NULL, NULL},
     };
-    const char *slash;
+    const char *dirEnd;
     int dirLen, i;
 
     if (path == NULL)
         return 0;
 
-    slash = strrchr(path, '/');
-    dirLen = (slash != NULL) ? (int)(slash - path) + 1 : 0;
+    dirEnd = configPathDirEnd(path);
+    dirLen = (dirEnd != NULL) ? (int)(dirEnd - path) + 1 : 0;
 
     for (i = 0; map[i].ours != NULL; ++i) {
         const char *base = path + dirLen;
@@ -1201,8 +1270,40 @@ static file_buffer_t *configOpenSingleShot(const char *path)
     return fb;
 }
 
+// Index of one of the global sets (configFiles), or -1 for a per-game or other set.
+static int configGlobalIndex(const config_set_t *configSet)
+{
+    for (int i = 0; i < CONFIG_INDEX_COUNT; i++) {
+        if (configSet == &configFiles[i])
+            return i;
+    }
+    return -1;
+}
+
+// "<dir><name>" for the carry-over directory, which always ends in '/' or ':' ("pfs0:OPL/", "pfs0:").
+static file_buffer_t *configOpenCarryOver(const char *name)
+{
+    char path[256];
+    file_buffer_t *fileBuffer;
+
+    snprintf(path, sizeof(path), "%s%s", configCarryOverDir, name);
+    fileBuffer = configOpenSingleShot(path);
+    if (fileBuffer == NULL)
+        fileBuffer = openFileBuffer(path, O_RDONLY, 0, 4096);
+    if (fileBuffer != NULL)
+        LOG("CONFIG no RiptOPL settings in this home; carrying over %s read-only\n", path);
+    return fileBuffer;
+}
+
 int configRead(config_set_t *configSet)
 {
+    int fromOfficial = 0;
+    int fromCarryOver = 0;
+
+    if (configSet != NULL && configSet->type == CONFIG_OPL) {
+        configOplOfficialSeed = 0;
+        configOplCarryOver = 0;
+    }
     if (configSet != NULL && configPathIsRawApa(configSet->filename)) {
         LOG("CONFIG refusing raw APA read path %s; use a mounted pfsN: path\n", configSet->filename);
         return 0;
@@ -1229,6 +1330,14 @@ int configRead(config_set_t *configSet)
         }
     }
 
+    if (fileBuffer == NULL && configCarryOverDir[0] != '\0' && configSet->type != CONFIG_OPL) {
+        // A global file the current home lacks, carried over from the previous home (see above). The
+        // master set has its own, later rung: its legacy name comes first and official's seed after.
+        int index = configGlobalIndex(configSet);
+        if (index >= 0)
+            fileBuffer = configOpenCarryOver(configFilenames[index]);
+    }
+
     if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL) {
         // Migration: existing installs have the legacy conf_riptopl.cfg, not settings_riptopl.cfg.
         // Read the legacy file from the same dir so settings aren't lost; the next save writes the
@@ -1241,6 +1350,33 @@ int configRead(config_set_t *configSet)
         if (fileBuffer != NULL)
             LOG("CONFIG migrating settings from legacy %s\n", legacyPath);
     }
+
+    if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL &&
+        configCarryOverDir[0] != '\0') {
+        // RiptOPL settings the user already saved in a previous home outrank official's seed below.
+        fileBuffer = configOpenCarryOver(CONFIG_OPL_FILENAME);
+        if (fileBuffer == NULL)
+            fileBuffer = configOpenCarryOver(CONFIG_OPL_FILENAME_LEGACY);
+        fromCarryOver = fileBuffer != NULL;
+    }
+
+    if (fileBuffer == NULL && configSet->type == CONFIG_OPL && configSet->filename != NULL) {
+        // No RiptOPL settings here at all: honour official OPL's conf_opl.cfg from the same directory
+        // as a READ-ONLY seed (#545), so a drop-in replacement for OPNPS2LD.ELF -- PSBBN, OSDMenu and
+        // HDD-OSD autolaunchers, plain MC/USB installs -- starts with the settings the user already
+        // has instead of defaults. Unlike the wOPL fallback above, the set is NOT re-homed: filename
+        // stays settings_riptopl.cfg, so our first save writes our own file and official's is never
+        // touched. conf_game.cfg and the other sets already share official's names.
+        char officialPath[256];
+        configBuildSiblingPath(configSet->filename, CONFIG_OPL_FILENAME_OFFICIAL, officialPath, sizeof(officialPath));
+        fileBuffer = configOpenSingleShot(officialPath);
+        if (fileBuffer == NULL)
+            fileBuffer = openFileBuffer(officialPath, O_RDONLY, 0, 4096);
+        if (fileBuffer != NULL) {
+            LOG("CONFIG no RiptOPL settings; reading official %s read-only\n", officialPath);
+            fromOfficial = 1;
+        }
+    }
     if (!fileBuffer) {
         LOG("CONFIG No file %s.\n", configSet->filename);
         configSet->modified = 0;
@@ -1250,6 +1386,13 @@ int configRead(config_set_t *configSet)
     ret = configReadFileBuffer(fileBuffer, configSet);
 
     closeFileBuffer(fileBuffer);
+
+    if (fromOfficial && ret) {
+        configTranslateOfficialOpl(configSet);
+        configOplOfficialSeed = 1;
+    }
+    if (fromCarryOver && ret)
+        configOplCarryOver = 1;
     return ret;
 }
 

@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino Video
   HINT_NEUTRINO_VIDEO: "Neutrino'nun GS çıkış video modunu zorla (-gsm). Kapalı = oyunun varsayılanını kullan."
   NEUTRINO_PATH: Neutrino ELF Yolu
-  HINT_NEUTRINO_PATH: neutrino.elf için tam yol (ör. mc0:NEUTRINO/neutrino.elf). Boş = mc0/mc1 üzerinde otomatik algıla.
   POPSTARTER_PATH: POPSTARTER.ELF Yolu
-  HINT_POPSTARTER_PATH: Özel POPSTARTER.ELF yolu; boş/eksikse cihazın POPS klasörüne geri döner. Klavye 31 karakterle sınırlıdır; daha uzun yollar için settings_riptopl.cfg kullanın.
   BDMA_SOURCE: BDMA Kaynağı
   HINT_BDMA_SOURCE: BDMAssault sürücü dosyalarını (usbd.irx.* / usbhdfsd.irx.*) barındıran POPS klasörünün bulunduğu cihaz.
   BDMA_MODE: BDMA Modu

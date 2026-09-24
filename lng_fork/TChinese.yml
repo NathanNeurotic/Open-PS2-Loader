@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino 影像
   HINT_NEUTRINO_VIDEO: 強制指定 Neutrino 的 GS 輸出影像模式 (-gsm)。關閉則保留遊戲預設值。
   NEUTRINO_PATH: Neutrino ELF 路徑
-  HINT_NEUTRINO_PATH: neutrino.elf 的完整路徑（例如 mc0:NEUTRINO/neutrino.elf）。留空則自動在 mc0/mc1 偵測。
   POPSTARTER_PATH: POPSTARTER.ELF 路徑
-  HINT_POPSTARTER_PATH: 自訂 POPSTARTER.ELF 路徑；留空或找不到時自動改用裝置 POPS 資料夾。鍵盤輸入上限 31 字元；較長路徑請透過 settings_riptopl.cfg 設定。
   BDMA_SOURCE: BDMA 來源
   HINT_BDMA_SOURCE: 存放 BDMAssault 驅動程式檔案 (usbd.irx.* / usbhdfsd.irx.*) 之 POPS 資料夾所在裝置。
   BDMA_MODE: BDMA 模式

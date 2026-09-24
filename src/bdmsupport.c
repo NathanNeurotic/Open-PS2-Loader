@@ -59,6 +59,7 @@ static int bdmDeviceListInitialized = 0;
 
 void bdmInitDevicesData();
 int bdmUpdateDeviceData(item_list_t *itemList);
+static void bdmLoadCoreModules(int forceUsb);
 
 static unsigned int BdmGeneration = 0;
 // Drives BDM refused because their sectors are not 512 bytes (4K-sector drives, refused by design).
@@ -674,6 +675,82 @@ int bdmIsUDPBDLoaded(void)
 int bdmGetLoadedNetProtocol(void)
 {
     return (udpbdLoadedProtocol >= 0) ? udpbdLoadedProtocol : gNetBootProtocol;
+}
+
+// Custom ELF paths may deliberately live on a network block device whose game page is disabled.
+// Load exactly the requested wire protocol, never whichever protocol happens to be selected in the
+// menu. The two protocols bind different sockets but share the single SMAP NIC, so an already
+// resident SMB/UDPFS-filesystem stack -- or the OTHER block protocol -- makes this request
+// impossible until reboot and must fail closed.
+int bdmEnsureNetworkSourceModules(int protocol, u32 timeoutMs)
+{
+    char ipArg[24];
+    char root[BDM_DEVICE_ROOT_MAX];
+    int result = -1;
+    u64 start;
+
+    if (protocol != NET_BOOT_UDPBD && protocol != NET_BOOT_UDPFS)
+        return 0;
+    if (ethGetModulesLoaded() || udpfsGetModulesLoaded())
+        return 0;
+
+    // The transport IRX only publishes a BDM block device. A custom path needs the common BDM +
+    // FatFs filesystem infrastructure too so that device can become an openable massN: mount.
+    // Use the synchronous core-only path here: bdmLoadModules() would also queue every enabled
+    // optional transport on the IO worker, which is unrelated to resolving this one explicit path.
+    bdmLoadCoreModules(0);
+
+    WaitSema(bdmLoadModuleLock);
+
+    if (udpbdModLoaded) {
+        int same = udpbdLoadedProtocol == protocol;
+        SignalSema(bdmLoadModuleLock);
+        if (!same)
+            return 0;
+    } else {
+        sysInitDev9();
+        snprintf(ipArg, sizeof(ipArg), "ip=%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
+
+        if (protocol == NET_BOOT_UDPFS) {
+            result = bdmLoadOptionalModule("UDPFS_SMAP", &udpfs_smap_irx, size_udpfs_smap_irx);
+            if (result >= 0)
+                result = bdmLoadOptionalModuleArgs("UDPFS_MINISTACK", &udpfs_ministack_irx, size_udpfs_ministack_irx, (int)strlen(ipArg) + 1, ipArg);
+            if (result >= 0)
+                result = bdmLoadOptionalModule("UDPFS_BD", &udpfs_bd_irx, size_udpfs_bd_irx);
+        } else {
+            result = bdmLoadOptionalModuleArgs("SMAP_UDPBD", &smap_udpbd_irx, size_smap_udpbd_irx, (int)strlen(ipArg) + 1, ipArg);
+        }
+
+        if (result >= 0) {
+            udpbdModLoaded = 1;
+            udpbdLoadedProtocol = protocol;
+        } else {
+            sysShutdownDev9();
+        }
+        SignalSema(bdmLoadModuleLock);
+
+        if (result < 0)
+            return 0;
+    }
+
+    start = GetTimerSystemTime();
+    while (!bdmGetDeviceRootByType(BDM_TYPE_UDPBD, root, sizeof(root))) {
+        if ((GetTimerSystemTime() - start) / (kBUSCLK / 1000) >= timeoutMs)
+            return 0;
+        DelayThread(100 * 1000);
+    }
+    return 1;
+}
+
+// A typed custom ELF path (usb:/ata:/mx4sio:/ilink:) may name a family whose games page is off, so
+// its transport may not be resident. Load the core and exactly that transport, never the boot-dir
+// resolver's escalation ladder: a custom path that misses must not drag MX4SIO onto the pad bus or
+// wake the ATA stack on a console that never asked for them. bdmEnsureSourceModules returns at once
+// when the transport was already up, whether or not a device of the family is present.
+int bdmEnsureTypedSource(int bdmType, u32 timeoutMs)
+{
+    bdmLoadCoreModules(0);
+    return bdmEnsureSourceModules(bdmType, timeoutMs);
 }
 
 // True when this support's device is the UDPBD block device (its games are Neutrino-only).
@@ -1823,7 +1900,9 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS/%s.VCD", vcdPrefix, vcdName);
     vcdPrepareRetroGemBarcode(vcdFullPath);
 
-    deinit(UNMOUNT_EXCEPTION, itemList->mode); // keep the VCD device mounted across the IOP reset
+    // POPSTARTER.ELF may be on a different backend than the VCD. Keep both alive until the
+    // argv-preserving loader has opened the ELF; POPSTARTER performs its own IOP reset afterwards.
+    deinitEx(sbLoaderDeinitException(vcdElf), itemList->mode, oplPath2Mode(vcdElf));
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
@@ -2029,7 +2108,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // inside it resolves to <prefix>CD|DVD/<sub>/<name>.
     if (game != NULL && game->format == GAME_FORMAT_FOLDER)
         return;
-    sbSetBrowseSub(folderGetSub(itemList->mode));
+    // Autolaunch passes itemList == NULL (autoLaunchBDMGame), and an argv launch always names a file
+    // at the CD/DVD root. Reading itemList->mode there loads from virtual address 0, which the EE's
+    // default TLB leaves unmapped below 0x80000: a TLB-miss exception on real hardware, i.e. every BDM
+    // autolaunch hung on a black screen from the day folder browsing landed (#545).
+    sbSetBrowseSub(itemList != NULL ? folderGetSub(itemList->mode) : "");
 
     // VCD view: this device is showing PS1 VCDs -> hand off to POPSTARTER (by name) instead of the
     // disc / Neutrino path below (which is entirely disc-specific). The BDM_TYPE_ATA internal exFAT HDD
@@ -2073,7 +2156,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (!bdmDriverIsUSB(pDeviceData->bdmDriver) && !bdmDriverIsIlink(pDeviceData->bdmDriver) &&
         !bdmDriverIsMx4sio(pDeviceData->bdmDriver) && !bdmDriverIsATA(pDeviceData->bdmDriver)) {
         LOG("BDMSUPPORT launch aborted: device %d has no natively launchable driver token ('%s')\n",
-            itemList->mode, pDeviceData->bdmDriver);
+            itemList != NULL ? itemList->mode : -1, pDeviceData->bdmDriver);
         if (gAutoLaunchBDMGame == NULL)
             guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
         return;
@@ -2097,7 +2180,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // a missing device number and must not be blocked here.
     if (pDeviceData->massDeviceIndex < 0 && !bdmDriverIsATA(pDeviceData->bdmDriver)) {
         LOG("BDMSUPPORT launch aborted: device %d ('%s') never reported a device number\n",
-            itemList->mode, pDeviceData->bdmDriver);
+            itemList != NULL ? itemList->mode : -1, pDeviceData->bdmDriver);
         if (gAutoLaunchBDMGame == NULL)
             guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
         return;

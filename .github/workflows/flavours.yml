@@ -59,6 +59,8 @@ jobs:
         run: python3 .github/scripts/test_apa_recover.py
       - name: Check Apps launch paths and argument limits before teardown
         run: python3 .github/scripts/test_app_launch_args.py
+      - name: Check Auto Loading settings discovery and APA+exFAT hybrid detection
+        run: python3 .github/scripts/test_autolaunch_settings.py
       - name: Check that background music never holds audsrv across an open-ended wait
         run: python3 .github/scripts/test_audio_threads.py
 

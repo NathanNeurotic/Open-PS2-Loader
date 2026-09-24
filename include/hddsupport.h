@@ -106,6 +106,9 @@ int hddLoadModules(void);
 // Non-acquiring residency check for short-lived probes. Unlike hddLoadModulesReady(), this does
 // not increment the HDD module-use count.
 int hddModulesAreLoaded(void);
+// 1 for an APA+MBR hybrid ("APA-Jail", e.g. PSBBN Definitive): valid APA header plus a FAT/exFAT MBR
+// partition beyond the APA reserved area. Read-only two-sector probe; needs the ATA stack loaded.
+int hddIsApaMbrHybrid(void);
 
 // Load (or confirm) the ATA stack and report residency, evaluating hddLoadModules EXACTLY ONCE.
 // A function, not a macro taking the call as its argument: the earlier HDD_LOADMODULES_OK(
@@ -129,6 +132,12 @@ enum {
     HDD_OPL_HOME_PLUS = 1,
 };
 int hddGetOplHomeSelection(void);
+// Current live pfs0: data-home identity only; unlike hddGetOplHomeSelection(), this ignores a
+// staged/committed next-boot selection. Returns HDD_OPL_HOME_* or -1 for a legacy/custom redirect.
+int hddGetLiveOplHomeSelection(void);
+// Resolve a relative file path inside the already-selected live APA data home. This may load/mount
+// the normal HDD support stack, but never selects or mounts an arbitrary partition.
+int hddResolveLiveOplDataPath(const char *relativePath, char *out, int outSize);
 int hddOplHomeIsLegacy(void);
 int hddStageOplHomeSelection(int selection);
 // A successfully saved selector applies on the next boot, while pfs0: intentionally remains on

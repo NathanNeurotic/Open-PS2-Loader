@@ -432,14 +432,9 @@ struct UIItem diaVcdConfig[] = {
     {UI_ENUM, UICFG_GAMEVIEW, 1, 1, _STR_HINT_GAME_VIEW_MODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_DEVICE}}},
-    {UI_SPACER},
-    {UI_ENUM, CFG_POPSTARTER_DEVICE, 1, 1, _STR_HINT_POPSTARTER_DEVICE, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
     {UI_LABEL, CFG_LBL_POPSTARTER_PATH, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_PATH}}},
     {UI_SPACER},
-    {UI_STRING, CFG_POPSTARTER_PATH, 1, 1, _STR_HINT_POPSTARTER_PATH, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, CFG_POPSTARTER_PATH, 1, 1, _STR_HINT_POPSTARTER_PATH, 0, 0, {.stringvalue = {"", "", &guiPopstarterPathHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_RETROGEM_GAMEID}}},
@@ -919,9 +914,9 @@ struct UIItem diaNeutrinoDefaults[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NEUTRINO_DEFAULTS}}},
     {UI_SPLITTER},
 
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_DEVICE}}},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_PATH}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_NEUTRINO_DEVICE, 1, 1, _STR_HINT_NEUTRINO_DEVICE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_STRING, CFG_NEUTRINO_PATH, 1, 1, _STR_HINT_NEUTRINO_PATH, 0, 0, {.stringvalue = {"", "", &guiNeutrinoPathHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_VIDEO}}},

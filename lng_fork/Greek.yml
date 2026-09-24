@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Βίντεο Neutrino
   HINT_NEUTRINO_VIDEO: Εξαναγκασμός λειτουργίας βίντεο GS εξόδου Neutrino (-gsm). Ανενεργό διατηρεί την προεπιλογή του παιχνιδιού.
   NEUTRINO_PATH: Διαδρομή Neutrino ELF
-  HINT_NEUTRINO_PATH: Πλήρης διαδρομή προς neutrino.elf (π.χ. mc0:NEUTRINO/neutrino.elf). Κενό = αυτόματη ανίχνευση σε mc0/mc1.
   POPSTARTER_PATH: Διαδρομή POPSTARTER.ELF
-  HINT_POPSTARTER_PATH: Προσαρμοσμένη διαδρομή POPSTARTER.ELF· αν είναι κενή/ανύπαρκτη χρησιμοποιείται ο φάκελος POPS της συσκευής. Πληκτρολόγιο έως 31 χαρακτήρες· μεγαλύτερες διαδρομές μέσω settings_riptopl.cfg.
   BDMA_SOURCE: Πηγή BDMA
   HINT_BDMA_SOURCE: Συσκευή της οποίας ο φάκελος POPS περιέχει τα αρχεία οδηγού BDMAssault (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: Λειτουργία BDMA

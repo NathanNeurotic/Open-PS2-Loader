@@ -615,6 +615,59 @@ int hddDetectNonSonyFileSystem()
     return result;
 }
 
+// First sector past the APA reserved area (__mbr, partition table, error records, journal). Same bound
+// as the atad BDM write fence: no FAT/exFAT volume on a hybrid disk can start below it.
+#define HDD_APA_RESERVED_SECTORS 0x40000
+
+// An "APA-Jail" style hybrid (PSBBN Definitive and similar): sector 0 is a valid, checksummed APA header
+// AND a DOS MBR whose table carries a FAT/exFAT partition beyond the APA reserved area. Official OPL's
+// probe sees the MBR first and treats such a disk purely as BDM/exFAT, which is where its own settings,
+// games, CFG and ART live; the APA side holds only launchers. A residual 0x55AA on a plain APA disk
+// (GPT-capable formatters) carries no such entry and stays plain APA.
+//
+// Read-only: the same two-sector xhdd0: read as hddDetectNonSonyFileSystem, no ps2hdd. The caller must
+// already have the ATA stack loaded (hddLoadModules).
+int hddIsApaMbrHybrid(void)
+{
+    int hybrid = 0;
+    u8 *pSectorData = (u8 *)malloc(512 * 2);
+
+    if (pSectorData == NULL)
+        return 0;
+
+    if (fileXioDevctl("xhdd0:", ATA_DEVCTL_READ_PARTITION_SECTOR, NULL, 0, pSectorData, 512 * 2) >= 0 &&
+        memcmp(pSectorData + 4, "APA", 3) == 0 && hddApaHeaderValid(pSectorData) &&
+        pSectorData[0x1FE] == 0x55 && pSectorData[0x1FF] == 0xAA) {
+        for (int i = 0; i < 4 && !hybrid; i++) {
+            const u8 *entry = pSectorData + 0x1BE + i * 16;
+            u32 start = entry[8] | (entry[9] << 8) | (entry[10] << 16) | ((u32)entry[11] << 24);
+            u32 count = entry[12] | (entry[13] << 8) | (entry[14] << 16) | ((u32)entry[15] << 24);
+
+            if (count == 0 || start < HDD_APA_RESERVED_SECTORS)
+                continue;
+
+            switch (entry[4]) {
+                case 0x01: // FAT12
+                case 0x04: // FAT16 < 32 MB
+                case 0x06: // FAT16
+                case 0x07: // exFAT (shared with NTFS)
+                case 0x0B: // FAT32 CHS
+                case 0x0C: // FAT32 LBA
+                case 0x0E: // FAT16 LBA
+                    hybrid = 1;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    free(pSectorData);
+    if (hybrid)
+        LOG("HDD: APA+MBR hybrid disk (FAT/exFAT partition beside APA)\n");
+    return hybrid;
+}
+
 // Bring up only the APA/PFS support needed for a read-only pfs1: probe. This intentionally does
 // not discover, mount, or create the persistent pfs0: OPL data home: Settings uses it to validate
 // an already-existing selector target without changing the live data-home state.
@@ -1379,13 +1432,71 @@ static int hddPartitionMountableAt(const char *mountPoint, const char *partition
     return ret == 0;
 }
 
+int hddGetLiveOplHomeSelection(void)
+{
+    if (strcmp(gOPLPart, "hdd0:+OPL") == 0)
+        return HDD_OPL_HOME_PLUS;
+    if (strcmp(gOPLPart, "hdd0:__common") == 0)
+        return HDD_OPL_HOME_COMMON;
+    return -1;
+}
+
+int hddResolveLiveOplDataPath(const char *relativePath, char *out, int outSize)
+{
+    int fd;
+    const char *rel = relativePath;
+
+    if (out == NULL || outSize <= 0 || rel == NULL)
+        return 0;
+    out[0] = '\0';
+
+    if (!hddModulesAreLoaded() && !hddLoadModulesReady())
+        return 0;
+    hddLoadSupportModules();
+    if (gHDDPrefix == NULL)
+        return 0;
+
+    while (*rel == '/' || *rel == '\\')
+        rel++;
+
+    if (snprintf(out, outSize, "%s%s", gHDDPrefix, rel) >= outSize) {
+        out[0] = '\0';
+        return 0;
+    }
+    fd = open(out, O_RDONLY);
+    if (fd >= 0) {
+        close(fd);
+        return 1;
+    }
+
+    // __common uses pfs0:OPL/ as OPL's data-home prefix, but legacy core installs may live at
+    // that same already-mounted partition's root. This is still the live pfs0: mount; no APA
+    // partition is selected, remounted, or guessed here.
+    if (strcmp(gHDDPrefix, "pfs0:") != 0) {
+        if (snprintf(out, outSize, "pfs0:/%s", rel) >= outSize) {
+            out[0] = '\0';
+            return 0;
+        }
+        fd = open(out, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            return 1;
+        }
+    }
+
+    out[0] = '\0';
+    return 0;
+}
+
 int hddGetOplHomeSelection(void)
 {
     if (hddOplHomePending >= 0)
         return hddOplHomePending;
     if (hddOplHomeCommitted >= 0)
         return hddOplHomeCommitted;
-    return strcmp(gOPLPart, "hdd0:+OPL") == 0 ? HDD_OPL_HOME_PLUS : HDD_OPL_HOME_COMMON;
+
+    int live = hddGetLiveOplHomeSelection();
+    return live >= 0 ? live : HDD_OPL_HOME_COMMON;
 }
 
 int hddOplHomeIsLegacy(void)
@@ -1702,6 +1813,29 @@ static int hddResolveHddPopstarter(char *elfOut, int elfLen)
     return 0;
 }
 
+// A custom POPSTARTER.ELF may live somewhere other than the HDD game device, but moving the
+// executable must not bypass the established POPSTARTER dependency install. Borrow the dedicated
+// pfs1: scratch slot to copy any missing mc?:/POPSTARTER externals from __common/POPS without
+// disturbing pfs0: (which may itself hold the custom ELF or the normal OPL data home).
+// Best-effort, matching hddResolveHddPopstarter(): existing card files always win and a missing
+// __common payload never turns an otherwise-valid custom ELF into a launch failure.
+static void hddInstallPopstarterMcFromCommon(void)
+{
+    // The APA driver will not open a partition that is already open (getFileSlot -> -EBUSY), so when
+    // the live data home IS __common -- the default -- a pfs1: mount of it always fails. Read the
+    // payload through the pfs0: mount that already holds it; nothing is remounted either way.
+    if (gHDDPrefix != NULL && hddGetLiveOplHomeSelection() == HDD_OPL_HOME_COMMON) {
+        (void)vcdInstallPopstarterMc("pfs0:/");
+        return;
+    }
+
+    fileXioUmount("pfs1:");
+    if (fileXioMount("pfs1:", "hdd0:__common", FIO_MT_RDONLY) == 0) {
+        (void)vcdInstallPopstarterMc("pfs1:/");
+        fileXioUmount("pfs1:");
+    }
+}
+
 // Hand an APA/PFS Ember title off with pfs0: STILL MOUNTED on the partition that holds it.
 //
 // This is the one launch in OPL where the mount is not a means of finding an ELF but the thing the
@@ -1784,6 +1918,7 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
 static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *part)
 {
     char vcdElf[256], vcdSelector[320];
+    int customResolved = 0;
 
     if (name == NULL || name[0] == '\0' || part == NULL || part[0] == '\0')
         return;
@@ -1793,31 +1928,53 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
     else
         snprintf(vcdSelector, sizeof(vcdSelector), "%s.ELF", name); // GAME.ELF (pooled-container VCD)
 
-    // Resolve + keep pfs0: on the POPSTARTER.ELF partition. Quiesce art+IO first (this remounts pfs0:).
-    //
-    // The budget used to be 0 on both, i.e. no wait at all -- harmless while these were `return 1`
-    // stubs, and not harmless now that they are real. There is exactly ONE pfs0: slot, so the remount
-    // below is destructive to any HDD art read still running; a zero budget quiesced nothing and just
-    // reported success. Note cacheAbortMmce* only covers SIO2 requests, so the second call (which
-    // covers ALL of them) is the one that matters here and its result is the one worth honouring.
-    cacheAbortMmceImageLoadsTimed(HDD_ART_QUIESCE_MS);
-    if (!cacheCancelPendingImageLoadsTimed(HDD_ART_QUIESCE_MS)) {
-        LOG("HDD VCD: art did not quiesce; refusing the pfs0: remount\n");
-        guiMsgBox(_l(_STR_PLEASE_WAIT), 0, NULL);
-        return;
+    // Tier 1: an explicit full path is allowed to live anywhere. Resolve it BEFORE borrowing pfs0:
+    // for the APA game-device fallback, otherwise a custom pfs0: path could be invalidated by our
+    // own remount before it is handed to the ELF loader.
+    if (gPopstarterPath[0] != '\0')
+        customResolved = sbResolveCustomLoaderPath(gPopstarterPath, vcdElf, sizeof(vcdElf));
+
+    if (customResolved) {
+        // Serialize against the HDD VCD/settings users of pfs1: before borrowing that scratch mount
+        // to preserve the normal mc?:/POPSTARTER dependency staging. If the requested ELF itself is
+        // already on pfs1:, never remount it out from under the pending keep-IOP load.
+        ioBlockOps(1);
+        if (strncasecmp(vcdElf, "pfs1:", 5) != 0)
+            hddInstallPopstarterMcFromCommon();
+        // Success intentionally leaves IO blocked. deinitEx re-blocks and tears the menu down next.
+    } else {
+        // Tier 2: the HDD game's canonical POPSTARTER home. Resolve + keep pfs0: on __common/POPS.
+        // There is exactly one live pfs0: data-home mount, so quiesce workers before borrowing it.
+        cacheAbortMmceImageLoadsTimed(HDD_ART_QUIESCE_MS);
+        if (!cacheCancelPendingImageLoadsTimed(HDD_ART_QUIESCE_MS)) {
+            LOG("HDD VCD: art did not quiesce; refusing the pfs0: remount\n");
+            guiMsgBox(_l(_STR_PLEASE_WAIT), 0, NULL);
+            return;
+        }
+        ioBlockOps(1);
+
+        if (!hddResolveHddPopstarter(vcdElf, sizeof(vcdElf))) {
+            // The APA resolver restored pfs0: to the normal data home on failure. Custom was already
+            // attempted BEFORE ioBlockOps(1), so go straight to the final MC tier here. Re-entering
+            // the generic custom resolver while IO is blocked can try to start another storage stack
+            // or queue BDM work during teardown preparation.
+            if (!vcdResolvePopstarterMcElf(vcdElf, sizeof(vcdElf))) {
+                ioBlockOps(0);
+                guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+                return;
+            }
+        }
+        // Success intentionally leaves IO blocked. deinitEx re-blocks and tears the menu down next.
     }
-    ioBlockOps(1);
-    if (!hddResolveHddPopstarter(vcdElf, sizeof(vcdElf))) {
-        ioBlockOps(0); // resolver already restored pfs0: to the OPL data partition on failure
-        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
-        return;
-    }
-    // Success: leave IO blocked (deinit re-blocks anyway) and pfs0: on the POPSTARTER partition for the
-    // argv-preserving load below. POPSTARTER takes over and performs its own IOP reset.
+
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%s/%s.VCD", part, name);
     vcdPrepareRetroGemBarcode(vcdFullPath);
-    deinit(UNMOUNT_EXCEPTION, itemList->mode);
+
+    // The game data is APA, while POPSTARTER.ELF may be on a second device. Keep both backends
+    // available until sysLoadELFKeepIOP has loaded the target. A pfs-hosted ELF additionally needs
+    // KEEP_PFS_FDS_EXCEPTION so PDIOC_CLOSEALL cannot invalidate it before that open.
+    deinitEx(sbLoaderDeinitException(vcdElf), HDD_MODE, oplPath2Mode(vcdElf));
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
@@ -1886,11 +2043,10 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
         return 0;
     }
 
-    // NULL activePrefix: an HDL game has no POSIX prefix of its own (it is a raw APA partition), so
-    // there is no "co-located next to the games" install to probe for. The resolver still covers the
-    // internal HDD -- through the OPL data partition mounted on pfs0:, which it probes both for an
-    // explicit "HDD (APA)" pick and in AUTO -- alongside the custom path and mc0/mc1.
-    const char *neutrinoPath = sbResolveNeutrinoPath(NULL);
+    // HDL games are raw APA partitions, so their filesystem-visible "game device" for external
+    // support files is the selected OPL data home already mounted on pfs0:. This keeps the universal
+    // resolution order intact: custom full path -> game device (gHDDPrefix) -> mc0/mc1.
+    const char *neutrinoPath = sbResolveNeutrinoPath(gHDDPrefix);
     if (neutrinoPath == NULL) {
         guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
         return 0;
@@ -1960,7 +2116,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
         // handoff opens that ELF after this runs, and both the unmount and PDIOC_CLOSEALL would
         // pull it out from under the load. Neutrino resets the IOP itself moments later, which
         // reclaims the mount and the descriptors we leave behind here.
-        if ((sbNeutrinoDeinitException(neutrinoPath) & KEEPIOP_EXCEPTION) == 0) {
+        if ((sbNeutrinoDeinitException(neutrinoPath) & KEEP_PFS_FDS_EXCEPTION) == 0) {
             fileXioUmount("pfs0:");
             fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
         }
@@ -2313,20 +2469,24 @@ static void hddCleanUp(item_list_t *itemList, int exception)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
-        fileXioUmount("pfs1:");
 
+        // pfs1: is a scratch slot used by HDD scans/settings and historically gets torn down even
+        // when pfs0: is deliberately spared. Do not broaden UNMOUNT_EXCEPTION to pfs1: -- Apps and
+        // Ember also use that flag. Only a child ELF explicitly resolved from pfs1: gets the narrow
+        // KEEP_PFS1_EXCEPTION added by sbLoaderDeinitException().
+        if ((exception & KEEP_PFS1_EXCEPTION) == 0)
+            fileXioUmount("pfs1:");
         if ((exception & UNMOUNT_EXCEPTION) == 0)
             fileXioUmount(hddPrefix);
     }
 
     // UI may have loaded modules outside of HDD mode, so deinitialize regardless of the enabled status.
     if (hddSupportModulesLoaded) {
-        // PDIOC_CLOSEALL closes EVERY pfs descriptor in the IOP. That is free when the next thing to
-        // run resets the IOP and reclaims them anyway -- the assumption stated above, and the one
-        // every launch made until Ember. An Ember handoff keeps the IOP precisely so the child
-        // inherits this pfs0: mount and reads its game through it; closing the descriptors out from
-        // under it would leave Ember holding a mount it can no longer open anything on.
-        if ((exception & KEEPIOP_EXCEPTION) == 0)
+        // PDIOC_CLOSEALL closes EVERY pfs descriptor in the IOP. Ember/wLaunchELF keep the broader
+        // IOP state and therefore use KEEPIOP_EXCEPTION; an external Neutrino/POPSTARTER ELF hosted
+        // on PFS only needs those descriptors long enough for sysLoadELFKeepIOP to open the child,
+        // so it uses the narrower KEEP_PFS_FDS_EXCEPTION.
+        if ((exception & (KEEPIOP_EXCEPTION | KEEP_PFS_FDS_EXCEPTION)) == 0)
             fileXioDevctl("pfs:", PDIOC_CLOSEALL, NULL, 0, NULL, 0);
 
         // Whatever the handoff is, commit what has been written so far: the next thing to happen to

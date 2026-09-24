@@ -49,9 +49,7 @@ translations:
   NEUTRINO_VIDEO: Neutrino videó
   HINT_NEUTRINO_VIDEO: A Neutrino GS kimeneti videómódjának kényszerítése (-gsm). Ki = a játék alapértelmezettje marad.
   NEUTRINO_PATH: Neutrino ELF elérési út
-  HINT_NEUTRINO_PATH: 'Teljes elérési út a neutrino.elf fájlhoz (pl. mc0:NEUTRINO/neutrino.elf). Üresen = automatikus keresés mc0/mc1-en.'
   POPSTARTER_PATH: POPSTARTER.ELF elérési út
-  HINT_POPSTARTER_PATH: Egyéni POPSTARTER.ELF elérési út; üresen/hiányzóan az eszköz POPS mappájára vált vissza. A billentyűzet 31 karakterre korlátoz; hosszabb elérési utak a settings_riptopl.cfg-n keresztül adhatók meg.
   BDMA_SOURCE: BDMA forrás
   HINT_BDMA_SOURCE: Az az eszköz, amelynek POPS mappájában találhatók a BDMAssault illesztőprogram fájlok (usbd.irx.* / usbhdfsd.irx.*).
   BDMA_MODE: BDMA mód

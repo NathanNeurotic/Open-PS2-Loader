@@ -90,7 +90,8 @@ void menuDeferredUpdate(void *data);
 void moduleUpdateMenu(int mode, int themeChanged, int langChanged);
 void handleLwnbdSrv();
 void deinit(int exception, int modeSelected);
-// Neutrino keep-IOP handoff: deinit that spares a SECOND mode's mounts (the neutrino.elf device).
+// External-loader handoff: deinit that can spare a SECOND mode's mounts (for a cross-device
+// Neutrino/POPSTARTER ELF) until sysLoadELFKeepIOP has opened the child.
 void deinitEx(int exception, int modeSelected, int modeSelected2);
 extern int gDeinitTerminal; // 1 while deinit() runs for exit/poweroff, 0 for a game/app LAUNCH teardown.
 extern int gArtAbandoned;   // 1 when cacheEnd() could NOT join the art worker: a thread is still inside a
@@ -161,18 +162,25 @@ extern int smbCacheSize;
 
 extern int gApplyGameID; // Display the visual GameID barcode on launch (Pixel FX / RetroGEM HDMI auto-profiles)
 extern int gEnableUSB;
-// Neutrino Device picker: a driver-accurate device TYPE that holds <root>:/neutrino/neutrino.elf.
-enum { NEUTRINO_DEV_AUTO = 0, // game device, then mc0/mc1 (legacy behaviour)
-       NEUTRINO_DEV_MC,       // mc0: / mc1:
-       // The following values are retained so old settings keep their numeric meaning while they
-       // are migrated to Auto at load time. They are intentionally no longer exposed by the UI.
-       NEUTRINO_DEV_USB,       // legacy: BDM "usb"        -> the mounted massN:
-       NEUTRINO_DEV_MX4SIO,    // legacy: BDM "mx4sio"/sdc -> the mounted massN:
-       NEUTRINO_DEV_MMCE,      // legacy: mmce0: / mmce1:
-       NEUTRINO_DEV_EXFAT_HDD, // legacy: BDM "ata" internal exFAT HDD -> the mounted massN:
-       NEUTRINO_DEV_APA_HDD,   // legacy: APA HDD: the mounted OPL data partition (pfs0:)
-       NEUTRINO_DEV_GAME,      // the active game's OWN device ONLY; retains its historical saved value
-       NEUTRINO_DEV_ILINK };   // legacy: BDM "ilink" -> the mounted massN:
+// Retired Neutrino Device picker values. The UI/runtime policy is Custom Path -> Game Device ->
+// mc0/mc1; these survive only for config migration (configReadNeutrinoGlobals). Memory Card and
+// HDD (APA) become the visible full path below and keep their value as a marker while that path is
+// untouched: both old pickers probed several case variants on case-sensitive filesystems (mcman,
+// PFS), which an exact custom path does not.
+enum { NEUTRINO_DEV_AUTO = 0, // game device, then mc0/mc1
+       NEUTRINO_DEV_MC,       // mc0: / mc1: -> NEUTRINO_MIGRATED_MC_PATH + marker
+       // The device-specific values below were retired to Auto because their launches were not
+       // reliable, and they still load as Auto -- except APA, which the runtime still honours.
+       NEUTRINO_DEV_USB,       // legacy: BDM "usb"        -> Auto
+       NEUTRINO_DEV_MX4SIO,    // legacy: BDM "mx4sio"/sdc -> Auto
+       NEUTRINO_DEV_MMCE,      // legacy: mmce0: / mmce1:  -> Auto
+       NEUTRINO_DEV_EXFAT_HDD, // legacy: BDM "ata" internal exFAT HDD -> Auto
+       NEUTRINO_DEV_APA_HDD,   // legacy: APA data home (pfs0:) -> the migrated hdd:/ path (opl.c) + marker
+       NEUTRINO_DEV_GAME,      // legacy: the active game's own device only -> Auto (game device first)
+       NEUTRINO_DEV_ILINK };   // legacy: BDM "ilink"      -> Auto
+// The APA counterpart lives in opl.c: only the APA-owning sources may spell the raw hdd namespace
+// (test_apa_table_safety.py).
+#define NEUTRINO_MIGRATED_MC_PATH "mc:/NEUTRINO/neutrino.elf"
 extern int gNeutrinoDevice;
 extern int gDefaultCoreLoader;
 extern int gNeutrinoVideoDefault;
@@ -206,8 +214,9 @@ enum {
     EMBER_DISPLAY_480
 };
 extern int gEmberDisplay;
-// POPSTARTER.ELF Device picker: where PS1 VCD launches load POPS/POPSTARTER.ELF from.
-enum { POPS_DEV_DEFAULT = 0, // cwd (gBootDir) /POPS/, then the VCD's own device (back-compat fallback)
+// Retired POPSTARTER.ELF Device picker values. Older configs are migrated to full-path aliases;
+// current runtime policy is Custom Path -> Game Device -> mc0/mc1.
+enum { POPS_DEV_DEFAULT = 0, // legacy default value; current runtime ignores the picker
        POPS_DEV_MC,          // mc0: / mc1:
        POPS_DEV_USB,         // BDM "usb"        -> the mounted massN:
        POPS_DEV_MX4SIO,      // BDM "mx4sio"/sdc -> the mounted massN:
