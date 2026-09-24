@@ -80,7 +80,7 @@ bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
 <hr/>
 <h2 id="status">Status</h2>
 <p><strong>Implemented, and telemetry has run end to end on real PS2 hardware</strong> in oMrRexD's session for
-#702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
+PRs #702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
 v0.1.0-alpha.10. Launched from MMCE, Need for Speed: Underground 2 streamed 25,200 snapshots with none
 lost and unlocked an achievement with the overlay on screen; the same build also tracked the game from
 USB. That is one console, one game and a static address. DHCP, the other launch paths and the edge
@@ -316,10 +316,11 @@ same shape as the main package: <code>POPS/</code>, <code>EMBER/</code>, <code>n
 <code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code>, matching <code>ART/RIPTOPL-RA.ELF_*.png</code> artwork, and
 <code>APP_RIPTOPL-RA.psu</code>. The PSU contains only the direct files of <code>APP_RIPTOPL-RA</code>; import it with a
 PS2 save manager for a memory-card installation, then copy the other folders separately.</p>
-<p>The ready app <code>APPS/APP_RIPTOPL-RA/</code> is the official-toolchain build (<code>OFFICIALROLLING</code>, <code>PADEMU=1</code>),
-the same loader the release also publishes on its own as <code>RIPTOPL-RA.ELF</code>. If that build is missing
-from a run, the ready app falls back to the labelled builds below, in the order listed. The archive
-keeps those labelled loader folders under <code>APPS/</code> for comparing builds:</p>
+<p>The ready app <code>APPS/APP_RIPTOPL-RA/</code> uses the official-toolchain build (<code>OFFICIALROLLING</code>,
+<code>PADEMU=1</code>) when that build succeeded, the same loader the release then also publishes on its own as
+<code>RIPTOPL-RA.ELF</code>. A run without it publishes no <code>RIPTOPL-RA.ELF</code>, and the ready app falls back to the
+labelled builds below, in the order listed. The archive keeps those labelled loader folders under
+<code>APPS/</code> for comparing builds:</p>
 <table>
 <thead>
 <tr>
