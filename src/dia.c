@@ -766,7 +766,9 @@ static int diaRenderValue(int x, int y, const char *text, u64 color, int selecte
     char buf[256];
     int n = 0, i, lo, hi, mid;
 
-    if (avail <= 0 || diaTextWidth(text) <= avail)
+    if (avail <= 0) // no room left on this row: draw nothing rather than run past the edge
+        return x;
+    if (diaTextWidth(text) <= avail)
         return fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, text, color);
 
     for (i = 0; text[i] != '\0'; i++) {
@@ -794,6 +796,8 @@ static int diaRenderValue(int x, int y, const char *text, u64 color, int selecte
     }
 
     avail -= diaTextWidth("...");
+    if (avail < 0) // not even "..." fits
+        return x;
     for (lo = 0, hi = n; lo < hi;) { // most characters that fit ahead of the "..."
         mid = (lo + hi + 1) / 2;
         snprintf(buf, sizeof(buf), "%.*s", at[mid], text);
