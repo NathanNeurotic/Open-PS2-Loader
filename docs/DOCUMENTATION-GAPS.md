@@ -265,7 +265,7 @@ pointed at the `master` lineage (`credits.html`, the licence).
 | The stable `RIPTOPL-RA.ELF` update loader and the standalone `.psu` assets were missing from the asset lists, which still said `RIPTOPL.ELF` was the only loose loader | `README.md`, `ROLLING_RELEASE.md`, site `releases.html` | `release-normalize.yml` (#708, #711, #712) |
 | IGS "off in release builds" contradicted `docs/IGR.md`: the `-extra1` variants ship it | `README.md` | `build_rolling_extras.sh` |
 | The **REBOOT IOP?** app-launch prompt and the `REBOOTIOP` key were undocumented | `README.md` §APPS, site `apps.html` | #688 |
-| **Disc Artwork** setting missing from the artwork settings; `ItemText` draw order and the `ICO` toggle missing for theme authors | site `settings.html`, `docs/THEME_ENGINE.md`, site `themes.html` | #697 |
+| **Disc Artwork** setting missing from the artwork settings; `ItemText` draw order and the `ICO` toggle missing for theme authors; `docs/THEME_ENGINE.md` described `ItemIcon` as the list decorator, where it is an `ICO`-bound image | site `settings.html`, `docs/THEME_ENGINE.md`, site `themes.html` | #697 |
 | UDPFS/UDPBD now lock **IP Address Type** to Static and keep DHCP as the SMB/HTTP preference; the site still said to turn DHCP off | site `network-boot.html`, `settings.html` | #700 (`docs/NEUTRINO.md` already had it) |
 | PS1 Triangle menu now links **Global PS Emulation Settings** | `docs/CONTROLS.md`, site `controls.html`, `ps1-vcd.html` | #694 |
 | BGM plays only at the sample rates audsrv can convert; any other rate is silent | `docs/INTERFACE.md`, site `settings.html` | #726, ps2sdk `audsrv/src/upsamplers.c` |

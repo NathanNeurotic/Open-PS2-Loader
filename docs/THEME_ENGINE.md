@@ -225,7 +225,7 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | `MenuIcon` | The current device/menu icon. |
 | `MenuText` | The current menu name with left/right arrows. |
 | `ItemsList` *(item)* | The scrolling list of games/apps. (Auto-added if omitted.) |
-| `ItemIcon` *(item)* | Per-row decorator icons (uses the list's `decorator=` pattern). |
+| `ItemIcon` *(item)* | The selected item's icon: a `GameImage` bound to the `ICO` cache (64×64 by default). Per-row list icons come from the `ItemsList`'s own `decorator=` instead. |
 | `ItemCover` *(item)* | The selected item's cover, with optional `overlay`. |
 | `ItemText` *(item)* | The selected item's startup filename. |
 | `HintText` | Button hints for the list screen. |
@@ -238,8 +238,8 @@ Elements are drawn in the order the theme declares them, with one exception: eve
 moved to the end of its screen's list, so the selected item's startup filename is never painted over by
 art declared after it.
 
-Images keyed on the **`ICO`** suffix — a `GameImage` with `pattern=ICO`, or an `ItemsList` with
-`decorator=ICO` — are the theme's disc art. The user can hide them with **Disc Artwork**
+Images keyed on the **`ICO`** suffix — an `ItemIcon`, a `GameImage` with `pattern=ICO`, or an
+`ItemsList` with `decorator=ICO` — are the theme's disc art. The user can hide them with **Disc Artwork**
 (*Settings → Interface → Artwork Settings*, on by default), and that removes the element's `default=`
 image as well, so plan a layout that still reads without them. Covers and backgrounds are unaffected.
 
