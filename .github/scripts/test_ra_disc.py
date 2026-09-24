@@ -168,6 +168,8 @@ static void raHashLogClose(void) {}
 static int ioPutRequest(int mode,void(*fn)(void)) {(void)mode;(void)fn;queue_count++;return queued_result;}
 static int sbLoadWatchList(const char *p,const char *s) {assert(!strcmp(p,"mc0:/OPL/"));assert(!strcmp(s,"SLUS_201.74"));return watch_count;}
 static void mmceSendGameID(const char *s,const char *p,int mode) {assert(!strcmp(s,"SLUS_201.74"));assert(p==NULL && mode==0);}
+static int igr_checks;
+static void sbEnsureIgrUsbDrivers(int compat) {assert(compat==0 && !torn_down);igr_checks++;}
 static void deinit(int a,int b) {assert(a==NO_EXCEPTION && b==IO_MODE_SELECTED_ALL);torn_down++;}
 static void sysLaunchLoaderElf(const char*s,const char*m,int n,void*p,int k,void*q,int logo,unsigned flags) {
 assert(!strcmp(s,"SLUS_201.74") && !strcmp(m,"DISC_MODE"));assert(!n && !p && !k && !q && logo==1 && flags==0);assert(torn_down==1);launched++;
@@ -200,7 +202,7 @@ int main(void) {
     // discLaunch keys its error notice off that code being distinguishable (issue #465).
     probe_result=SYS_DISC_CANCELLED;assert(discIdentity(boot,startup,NULL)==SYS_DISC_CANCELLED);
     discLaunch(NULL);assert(!launched && !torn_down);
-    probe_result=0;discLaunch(NULL);assert(launched==1 && torn_down==1);
+    probe_result=0;discLaunch(NULL);assert(launched==1 && torn_down==1 && igr_checks==1);
     puts("PASS: disc identity, settings paths, busy/queue failure, telemetry and watch-list gates, cancel pass-through, PS2LOGO handoff");
 }
 '''

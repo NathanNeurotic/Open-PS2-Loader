@@ -737,6 +737,7 @@ static void httpLaunchGame(item_list_t *itemList, int id, config_set_t *configSe
     }
 
     compatmask = sbPrepare(game, configSet, size_http_cdvdman_irx, http_cdvdman_irx, &i);
+    sbEnsureIgrUsbDrivers(compatmask);
 
 #ifdef RETROACHIEVEMENTS
     // Settled before sysLaunchLoaderElf reads GetWatchCount(). Local, like the rest of HTTP's

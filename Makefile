@@ -135,7 +135,7 @@ FRONTEND_OBJS = pad.o xparam.o fntsys.o renderman.o menusys.o OSDHistory.o syste
 		dia.o ioman.o texcache.o themes.o supportbase.o bdmsupport.o netsupport.o ethsupport.o httpcatalog.o httpsupport.o udpfssupport.o hddsupport.o zso.o lz4.o \
 		appsupport.o mmcesupport.o artindex.o vcdsupport.o cuesupport.o libview.o retrogem.o folderbrowse.o gui.o guigame.o vmc_groups.o textures.o opl.o atlas.o nbns.o httpclient.o gsm.o cheatman.o sound.o ps2cnf.o tar.o
 
-IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o bdmevent.o \
+IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o usbhdfsd.o bdmevent.o \
 		bdm.o bdmfs_fatfs.o usbmass_bd.o iLinkman.o IEEE1394_bd.o mx4sio_bd.o \
 		ps2atad.o hdpro_atad.o poweroff.o ps2hdd.o xhdd.o genvmc.o lwnbdsvr.o \
 		ps2dev9.o smsutils.o ps2ip.o smap.o smap_udpbd.o udpfs_smap.o udpfs_ministack.o udpfs_bd.o udpfs_ioman.o isofs.o nbns-iop.o \
@@ -751,6 +751,13 @@ modules/usb/usbd-ra/usbd_mini.irx: $(wildcard modules/usb/usbd-ra/src/*.c) $(wil
 	$(MAKE) -C modules/usb/usbd-ra rebuild
 
 $(EE_ASM_DIR)usbd.c: $(USBD_MINI_IRX) | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+# Never loaded by the menu. It is only written, with usbd above, to mc?:/SYS-CONF/ for an IGR Path on
+# USB: after an IGR the EE core reboots the IOP from ROM and loads that pair from the memory card
+# (ee_core/src/padhook.c, t_loadElf). This legacy driver registers mass: through ROM ioman, which is
+# all that environment has (#731).
+$(EE_ASM_DIR)usbhdfsd.c: $(PS2SDK)/iop/irx/usbhdfsd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 $(EE_ASM_DIR)libsd.c: $(PS2SDK)/iop/irx/libsd.irx | $(EE_ASM_DIR)

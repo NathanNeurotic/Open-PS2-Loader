@@ -2292,6 +2292,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     }
 
     sbPrepare(NULL, configSet, size_irx, irx, &i);
+    sbEnsureIgrUsbDrivers(compatMode);
 
     if (gHDDPrefix != NULL) {
 #ifdef RETROACHIEVEMENTS

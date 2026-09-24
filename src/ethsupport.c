@@ -808,6 +808,7 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     }
 
     compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &i);
+    sbEnsureIgrUsbDrivers(compatmask);
 
 #ifdef RETROACHIEVEMENTS
     // RA: this game's watch list, settled before sysLaunchLoaderElf reads

@@ -1314,8 +1314,8 @@ static void menuNextPage()
     int displayed = ((items_list_t *)gTheme->itemsList->extended)->displayedItems;
 
     // Probe to the item one row past the bottom of the current page. If the end comes first, the
-    // whole list already fits on screen -> R1 is a no-op (don't over-scroll a sub-page list, which
-    // previously collapsed it to just the last item -- #48).
+    // rest of the list is already on screen, so never page onto it: that over-scroll collapsed a
+    // sub-page list to just its last item (#48).
     submenu_list_t *probe = cur;
     int n = displayed;
     while (n-- && probe)
@@ -1330,6 +1330,12 @@ static void menuNextPage()
 
         selected_item->item->current = cur;
         selected_item->item->pagestart = selected_item->item->current;
+    } else { // wrap to start
+        // Mirror of L1, which wraps from the first page to the last (menuPrevPage). Without this R1
+        // stopped dead at the end of the list while L1 kept cycling. Coverflow shows that at its
+        // worst: its one-row items list makes a page a single title, so holding R1 walked to the
+        // last game and stayed there (#729).
+        menuFirstPage();
     }
 }
 

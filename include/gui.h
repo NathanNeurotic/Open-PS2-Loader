@@ -147,6 +147,7 @@ int guiIoModeToDeviceType(int ioMode);
 void guiShowNeutrinoDefaults(void);
 int guiNeutrinoPathHandler(char *text, int maxLen);
 int guiPopstarterPathHandler(char *text, int maxLen);
+int guiExitPathHandler(char *text, int maxLen);
 void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize);
 int guiShowAudioConfig(void);
 int guiShowNetConfig(void);
