@@ -25,8 +25,11 @@ enum CONFIG_INDEX {
 // folder (e.g. a future $appdir "sidecar" config). configRead() falls back to the legacy name so
 // existing installs keep their settings -- the next save writes the new name (auto-migration).
 // Keep both as plain string literals so callers can string-concatenate them.
-#define CONFIG_OPL_FILENAME        "settings_riptopl.cfg"
-#define CONFIG_OPL_FILENAME_LEGACY "conf_riptopl.cfg"
+#define CONFIG_OPL_FILENAME          "settings_riptopl.cfg"
+#define CONFIG_OPL_FILENAME_LEGACY   "conf_riptopl.cfg"
+// Official OPL's master file. READ-ONLY seed when a directory holds neither RiptOPL name (#545):
+// read so a drop-in replacement starts from the user's existing settings, never written.
+#define CONFIG_OPL_FILENAME_OFFICIAL "conf_opl.cfg"
 
 #define CONFIG_SOURCE_DEFAULT 0
 #define CONFIG_SOURCE_USER    1
@@ -271,6 +274,15 @@ void configGetDiscIDBinary(config_set_t *configSet, void *dst);
 int configRead(config_set_t *configSet);
 int configReadBuffer(config_set_t *configSet, const void *buffer, int size);
 int configReadMulti(int types);
+// 1 when the master set was last filled from official OPL's conf_opl.cfg rather than RiptOPL's own
+// file. Such a seed is read-only: it must never decide where RiptOPL saves.
+int configOplIsOfficialSeed(void);
+// A previous home -- a directory ending in '/' or ':' -- whose global files (RiptOPL's master settings,
+// conf_game/last/apps/network.cfg) are read, read-only, whenever the current home lacks that file
+// ("" or NULL disables). configOplIsCarryOver() is 1 when the master set was last filled that way.
+// Like the official seed, it never decides where RiptOPL saves; the first save writes to the home.
+void configSetCarryOverDir(const char *dir);
+int configOplIsCarryOver(void);
 int configWrite(config_set_t *configSet);
 int configWriteMulti(int types);
 void configClear(config_set_t *configSet);

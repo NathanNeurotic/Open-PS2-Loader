@@ -1270,8 +1270,11 @@ int sbCheatsMissingContinue(void *pCommon, int cheatResult)
         return 1;
     }
 
-    // guiMsgBox: 2 == accept (gSelectButton), 1 == the other button. addAccept draws both icons.
-    if (guiMsgBox(text, 1, NULL) == 2)
+    // guiMsgBox returns 1 for accept (gSelectButton) and 0 for the other button -- it returns its
+    // internal terminate code minus one. Testing for 2 here made "continue without cheats" cancel the
+    // launch too, so a title with cheats enabled but no .cht file could never start from the menu.
+    // addAccept draws both icons.
+    if (guiMsgBox(text, 1, NULL))
         return 1;
 
     sbUnprepare(pCommon);

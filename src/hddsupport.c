@@ -615,6 +615,59 @@ int hddDetectNonSonyFileSystem()
     return result;
 }
 
+// First sector past the APA reserved area (__mbr, partition table, error records, journal). Same bound
+// as the atad BDM write fence: no FAT/exFAT volume on a hybrid disk can start below it.
+#define HDD_APA_RESERVED_SECTORS 0x40000
+
+// An "APA-Jail" style hybrid (PSBBN Definitive and similar): sector 0 is a valid, checksummed APA header
+// AND a DOS MBR whose table carries a FAT/exFAT partition beyond the APA reserved area. Official OPL's
+// probe sees the MBR first and treats such a disk purely as BDM/exFAT, which is where its own settings,
+// games, CFG and ART live; the APA side holds only launchers. A residual 0x55AA on a plain APA disk
+// (GPT-capable formatters) carries no such entry and stays plain APA.
+//
+// Read-only: the same two-sector xhdd0: read as hddDetectNonSonyFileSystem, no ps2hdd. The caller must
+// already have the ATA stack loaded (hddLoadModules).
+int hddIsApaMbrHybrid(void)
+{
+    int hybrid = 0;
+    u8 *pSectorData = (u8 *)malloc(512 * 2);
+
+    if (pSectorData == NULL)
+        return 0;
+
+    if (fileXioDevctl("xhdd0:", ATA_DEVCTL_READ_PARTITION_SECTOR, NULL, 0, pSectorData, 512 * 2) >= 0 &&
+        memcmp(pSectorData + 4, "APA", 3) == 0 && hddApaHeaderValid(pSectorData) &&
+        pSectorData[0x1FE] == 0x55 && pSectorData[0x1FF] == 0xAA) {
+        for (int i = 0; i < 4 && !hybrid; i++) {
+            const u8 *entry = pSectorData + 0x1BE + i * 16;
+            u32 start = entry[8] | (entry[9] << 8) | (entry[10] << 16) | ((u32)entry[11] << 24);
+            u32 count = entry[12] | (entry[13] << 8) | (entry[14] << 16) | ((u32)entry[15] << 24);
+
+            if (count == 0 || start < HDD_APA_RESERVED_SECTORS)
+                continue;
+
+            switch (entry[4]) {
+                case 0x01: // FAT12
+                case 0x04: // FAT16 < 32 MB
+                case 0x06: // FAT16
+                case 0x07: // exFAT (shared with NTFS)
+                case 0x0B: // FAT32 CHS
+                case 0x0C: // FAT32 LBA
+                case 0x0E: // FAT16 LBA
+                    hybrid = 1;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    free(pSectorData);
+    if (hybrid)
+        LOG("HDD: APA+MBR hybrid disk (FAT/exFAT partition beside APA)\n");
+    return hybrid;
+}
+
 // Bring up only the APA/PFS support needed for a read-only pfs1: probe. This intentionally does
 // not discover, mount, or create the persistent pfs0: OPL data home: Settings uses it to validate
 // an already-existing selector target without changing the live data-home state.

@@ -106,6 +106,9 @@ int hddLoadModules(void);
 // Non-acquiring residency check for short-lived probes. Unlike hddLoadModulesReady(), this does
 // not increment the HDD module-use count.
 int hddModulesAreLoaded(void);
+// 1 for an APA+MBR hybrid ("APA-Jail", e.g. PSBBN Definitive): valid APA header plus a FAT/exFAT MBR
+// partition beyond the APA reserved area. Read-only two-sector probe; needs the ATA stack loaded.
+int hddIsApaMbrHybrid(void);
 
 // Load (or confirm) the ATA stack and report residency, evaluating hddLoadModules EXACTLY ONCE.
 // A function, not a macro taking the call as its argument: the earlier HDD_LOADMODULES_OK(

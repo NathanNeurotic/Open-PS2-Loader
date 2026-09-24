@@ -2108,7 +2108,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // inside it resolves to <prefix>CD|DVD/<sub>/<name>.
     if (game != NULL && game->format == GAME_FORMAT_FOLDER)
         return;
-    sbSetBrowseSub(folderGetSub(itemList->mode));
+    // Autolaunch passes itemList == NULL (autoLaunchBDMGame), and an argv launch always names a file
+    // at the CD/DVD root. Reading itemList->mode there loads from virtual address 0, which the EE's
+    // default TLB leaves unmapped below 0x80000: a TLB-miss exception on real hardware, i.e. every BDM
+    // autolaunch hung on a black screen from the day folder browsing landed (#545).
+    sbSetBrowseSub(itemList != NULL ? folderGetSub(itemList->mode) : "");
 
     // VCD view: this device is showing PS1 VCDs -> hand off to POPSTARTER (by name) instead of the
     // disc / Neutrino path below (which is entirely disc-specific). The BDM_TYPE_ATA internal exFAT HDD
@@ -2152,7 +2156,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     if (!bdmDriverIsUSB(pDeviceData->bdmDriver) && !bdmDriverIsIlink(pDeviceData->bdmDriver) &&
         !bdmDriverIsMx4sio(pDeviceData->bdmDriver) && !bdmDriverIsATA(pDeviceData->bdmDriver)) {
         LOG("BDMSUPPORT launch aborted: device %d has no natively launchable driver token ('%s')\n",
-            itemList->mode, pDeviceData->bdmDriver);
+            itemList != NULL ? itemList->mode : -1, pDeviceData->bdmDriver);
         if (gAutoLaunchBDMGame == NULL)
             guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
         return;
@@ -2176,7 +2180,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // a missing device number and must not be blocked here.
     if (pDeviceData->massDeviceIndex < 0 && !bdmDriverIsATA(pDeviceData->bdmDriver)) {
         LOG("BDMSUPPORT launch aborted: device %d ('%s') never reported a device number\n",
-            itemList->mode, pDeviceData->bdmDriver);
+            itemList != NULL ? itemList->mode : -1, pDeviceData->bdmDriver);
         if (gAutoLaunchBDMGame == NULL)
             guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
         return;
