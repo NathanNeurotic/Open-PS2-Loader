@@ -69,8 +69,8 @@ features, code, and ideas from:
 
   - rickgaiser's OPL                https://github.com/rickgaiser/Open-PS2-Loader
   - sOPL (mystyq)                   https://github.com/mystyq/Stable-Open-PS2-Loader
-  - uOPL (Wolf3s)                   https://github.com/Wolf3s/uOPL
-  - wOPL (KrahJohlito)              https://github.com/KrahJohlito/wOPL
+  - uOPL / wOPL (KrahJohlito)       https://github.com/KrahJohlito/wOPL
+  - uOPL fork (Wolf3s)              https://github.com/Wolf3s
   - OPL DB (Jay-Jay-OPL)            https://github.com/Jay-Jay-OPL/OPL-Daily-Builds
   - POPSLoader                      https://github.com/NathanNeurotic/POPSLoader
   - OPL RetroGEM ID (CosmicScale)   https://github.com/CosmicScale/Open-PS2-Loader-Retro-GEM
@@ -172,11 +172,17 @@ Contributor, and our #1 recommended alternative loader:
 
 Special and sincere thanks to:
 
-  - Wolf3s and KrahJohlito - the driving force behind uOPL / wOPL, where much of
-    this fork's modern functionality originated. The Neutrino external-core loader
-    and the Coverflow and Favourites interfaces are all reimplementations of
-    features they designed and pioneered together. This fork is as much a tribute
-    to their work as anything else.
+  - KrahJohlito - the legend, and the single biggest influence on this fork.
+    Creator of uOPL (Unofficial Open PS2 Loader) and its continuation wOPL,
+    where the modern OPL experience was invented. The Neutrino external-core
+    loader, the Coverflow interface and the Favourites tab - the features that
+    define RiptOPL - were designed and pioneered by him, and everything this
+    fork does with them is a reimplementation of his work. We learned more
+    reading his code than anywhere else, and RiptOPL is, above all, a tribute
+    to it. Thank you.
+  - Wolf3s - for contributions across the wOPL effort and the wider OPL scene,
+    and for past work on an independent uOPL fork that kept unique features
+    and unmerged work alive. Thank you.
   - bbsan2k - for the MMCE (Memory Card Mass Storage) protocol that makes SD-via-
     memory-card loading through the PS2's memory-card slot possible.
   - saildot4k - for BDMA-ATA (exFAT internal-HDD block-device support), and the
