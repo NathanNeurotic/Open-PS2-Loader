@@ -1597,8 +1597,10 @@ struct UIItem diaAbout[] = {
 
     {UI_SPACER},
     // PSUManager is release-host tooling; credit techwritescode in both editions without
-    // adding a row to this non-scrolling dialog.
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"techwritescode (PSUManager) - ... and the anonymous ...", -1}}},
+    // adding a row to this non-scrolling dialog. darkladark (LUNA, #733) shares this row, the only
+    // one with room: at the default 17px font, "darkladark (LUNA)" would run past the right edge
+    // in 4:3 SD modes, so CREDITS and README carry his LUNA credit.
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"darkladark - techwritescode (PSUManager) - ... and the anonymous ...", -1}}},
     {UI_BREAK},
 
     {UI_BREAK},

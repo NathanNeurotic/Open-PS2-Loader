@@ -50,6 +50,8 @@ Review the LICENSE file for further details.<br><br>
 
 > 📖 **Full documentation & guides:** **<https://nathanneurotic.github.io/Open-PS2-Loader/>** — searchable setup and reference guides covering storage backends, the Neutrino core, PS1/VCD, the Theme Engine (with worked examples and an annotated sample theme), a full settings reference, and troubleshooting.
 
+> 🌙 **Our #1 recommended alternative: [LUNA](https://github.com/dnunezx/LUNA) by [darkladark](https://github.com/dnunezx).** *Lightweight Unified Neutrino Access* is a visual loader built on NHDDL and Neutrino for **lightweight, customized Neutrino gameplay**. If RiptOPL is more loader than you need, start there. darkladark also contributes to RiptOPL itself; see [Acknowledgements](#acknowledgements).
+
 ## Contents
 
 [Releases](#releases) · [Quick Start](#quick-start) · [Sources and cores](#introduction) ·
@@ -256,7 +258,9 @@ This build layers several features on top of upstream OPL:
 > latest build, re-fetched at publish time (download/extraction failures can omit it; check the release notes), under its **AFL-3.0** licence. We add exactly one file to
 > that folder — `config/bsd-udpfsbd.toml`, because Neutrino ships `udpfs_bd.irx` without a matching
 > `-bsd` token and RiptOPL launches UDPFS as `-bsd=udpfsbd`. Nothing of rickgaiser's is altered or
-> removed. RiptOPL is one of several front-ends built on Neutrino, alongside **NHDDL**, **XEB+
+> removed. RiptOPL is one of several front-ends built on Neutrino, alongside
+> **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)** (our #1
+> recommended alternative, for lightweight, customized Neutrino gameplay), **NHDDL**, **XEB+
 > Plugin**, **RETROLauncher**, **OSD-XMB** and **PSBBN/BBNL**. Please report *launching* problems to
 > **us** — the argument building and hand-off are ours — and genuine Neutrino bugs upstream.
 
@@ -868,6 +872,12 @@ With special and sincere thanks to:
   in-game DEV9 dependency, making cold telemetry launches bring networking up safely, and putting
   the RA controls back where they are actually read and saved. The fixes were narrow, well-tested,
   and explicitly kept from contaminating normal build behavior.
+- **[darkladark](https://github.com/dnunezx)** — creator of **[LUNA](https://github.com/dnunezx/LUNA)**
+  (*Lightweight Unified Neutrino Access*), his own visual loader built on NHDDL and Neutrino, with a
+  PS2-inspired glass interface and four switchable library views. LUNA is **our #1 recommended
+  alternative to RiptOPL** for lightweight, customized Neutrino gameplay. He also contributes to
+  RiptOPL directly: his [#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733) brings
+  LUNA's Collection cover-art screen to RiptOPL's renderer. Thank you for sharing your work with us.
 - **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
 - **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)** — for

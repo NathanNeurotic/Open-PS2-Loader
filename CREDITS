@@ -159,6 +159,17 @@ Maintained companion PC & mobile tools:
     https://github.com/TheRealNextria/PS2RD-CHT-Manager
     PC manager for the PS2RD .cht cheat files RiptOPL reads from device CHT folders.
 
+Contributor, and our #1 recommended alternative loader:
+
+  - LUNA, by darkladark (dnunezx)    https://github.com/dnunezx/LUNA
+                                     https://github.com/dnunezx
+    LUNA (Lightweight Unified Neutrino Access) is darkladark's own visual PS2
+    loader, built on NHDDL and Neutrino, with a PS2-inspired glass interface and
+    four switchable library views. It is our #1 recommended alternative to
+    RiptOPL for lightweight, customized Neutrino gameplay. darkladark also
+    contributes to RiptOPL directly: PR #733 brings LUNA's Collection cover-art
+    screen to RiptOPL's renderer. Thank you for sharing your work with us.
+
 Special and sincere thanks to:
 
   - Wolf3s and KrahJohlito - the driving force behind uOPL / wOPL, where much of
