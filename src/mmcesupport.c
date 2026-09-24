@@ -1177,6 +1177,10 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
             coreLoader = 0;
         }
+        // Falling back to the OPL core: the native branch above skipped the IGR driver check, and no
+        // card switch has happened yet on this path, so mc0: is still the boot card.
+        if (!coreLoader)
+            sbEnsureIgrUsbDrivers(compatmask);
 
         // VMC -> neutrino (#47): resolve any per-game VMC into discrete -mc0/-mc1 argv entries
         // (mmcePrefix ends in '/'); not the whitespace-tokenized extra-args buffer (spaced names).

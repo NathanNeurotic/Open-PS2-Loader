@@ -765,6 +765,18 @@ int sbGetCompatModes(config_set_t *configSet)
 
 static const struct cdvdman_settings_common cdvdman_settings_common_sample = CDVDMAN_SETTINGS_DEFAULT_COMMON;
 
+// Translated text is data, not a format string: a .lng line arrives unvalidated, and a stray %n or
+// extra %s in it would make snprintf write or read through `arg`. Put `arg` at the first "%s" instead.
+static void sbFillArg(char *out, int size, const char *tmpl, const char *arg)
+{
+    const char *at = strstr(tmpl, "%s");
+
+    if (at == NULL)
+        snprintf(out, size, "%s", tmpl);
+    else
+        snprintf(out, size, "%.*s%s%s", (int)(at - tmpl), tmpl, arg, at + 2);
+}
+
 // An IGR Path on USB (#731). After an IGR the EE core reboots the IOP from ROM and loads
 // mc0:/SYS-CONF/USBD.IRX + USBHDFSD.IRX before it can open a mass: ELF, or the mc1: pair when mc0 has
 // no USBD.IRX (ee_core/src/padhook.c, t_loadElf). Those are FMCB's files, so without FMCB the IGR
@@ -806,7 +818,7 @@ void sbEnsureIgrUsbDrivers(int compatmask)
 
     asked = 1;
     snprintf(dir, sizeof(dir), "mc%d:/SYS-CONF", mc);
-    snprintf(msg, sizeof(msg), _l(_STR_IGR_USB_DRIVERS_PROMPT), dir);
+    sbFillArg(msg, sizeof(msg), _l(_STR_IGR_USB_DRIVERS_PROMPT), dir);
     if (!guiMsgBox(msg, 1, NULL))
         return;
 
@@ -829,7 +841,7 @@ void sbEnsureIgrUsbDrivers(int compatmask)
             if (wrote[i])
                 unlink(path[i]); // the core would load the one and fail the other
         }
-        snprintf(msg, sizeof(msg), _l(_STR_IGR_USB_DRIVERS_FAILED), dir);
+        sbFillArg(msg, sizeof(msg), _l(_STR_IGR_USB_DRIVERS_FAILED), dir);
         guiMsgBox(msg, 0, NULL);
     }
 }
