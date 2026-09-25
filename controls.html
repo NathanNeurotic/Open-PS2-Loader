@@ -214,6 +214,7 @@ turned off per game with compatibility Mode 6. Full detail, including the limita
 <tbody>
 <tr><td><b>Start</b></td><td>Skip loading the config — boot with defaults</td></tr>
 <tr><td><b>Triangle + Cross</b></td><td>Force the menu to 480p progressive (recovery)</td></tr>
+<tr><td><b>Triangle + Circle</b></td><td>Force the menu to Auto, the region's interlaced mode (recovery)</td></tr>
 </tbody>
 </table>
 
@@ -238,6 +239,22 @@ exactly what some upscalers fail to sync, so it would leave you no better off. A
 menu only</b>, not games; a game that loses the picture needs its GSM override changed instead. Your display
 and cable must be able to do 480p progressive (component, VGA, or a capable HDMI adapter) for this to help.
 See <a href="troubleshooting.html">Troubleshooting</a>.</div>
+
+<h3 id="boot-interlaced">Triangle + Circle — force Auto (interlaced)</h3>
+<p>The recovery for the displays 480p cannot help: a TV that only takes interlaced signals, such as a CRT on
+composite or S-Video. Hold both while RiptOPL starts and it forces the video mode to <b>Auto</b>, the
+region's standard interlaced mode (NTSC 640×448i or PAL 640×512i), and writes that back to the config. Like
+Triangle + Cross, it affects the RiptOPL menu only.</p>
+
+<h3 id="keep-video-mode">Keeping a new video mode</h3>
+<p>After you change <b>Video Mode</b> in the settings, RiptOPL asks whether to keep it. To keep it,
+<b>hold</b> Accept until the bar under it fills (about 2 seconds). A quick tap does nothing. Back, or no
+answer for 10 seconds, goes back to the previous mode.</p>
+
+<div class="callout info"><div class="h">ℹ Why a hold, not a tap</div>
+A mode your TV can't show leaves you looking at a black screen, and the natural thing to do then is press
+buttons. A tap used to keep the mode, the next save wrote it to your settings, and every boot came up black.
+A hold can't happen by accident.</div>
 
 <h2 id="rumble">Rumble</h2>
 <p>RiptOPL can give a short vibration when you move the cursor, confirm, or go back. It is controlled by

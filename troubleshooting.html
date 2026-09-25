@@ -118,8 +118,13 @@ A successful retry after several changes does not establish which change fixed i
 
 <h2 id="no-display">No display on boot (blank or black screen)</h2>
 <p>Hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while RiptOPL initializes to force <b>480p for the menu</b>.
-The display and connection must accept that signal. Once visible, select a suitable mode under
-<b>Interface</b>, save, and retry. Holding <kbd>START</kbd> skips saved configuration and uses defaults.</p>
+The display and connection must accept that signal. On a TV that only takes interlaced signals (a CRT,
+for example), hold <kbd>Triangle</kbd> + <kbd>Circle</kbd> instead: it forces <b>Auto</b>, the region's
+interlaced mode. Once visible, select a suitable mode under <b>Interface</b>, save, and retry. Holding
+<kbd>START</kbd> skips saved configuration and uses defaults.</p>
+<p>Changing the video mode can't strand you this way: keeping a new mode takes a <b>hold</b> of Accept
+(about 2 seconds, until the bar fills), and Back or 10 seconds without an answer restores the previous
+mode. See <a href="controls.html#keep-video-mode">Keeping a new video mode</a>.</p>
 <h3 id="game-video">Menu works, but launching a game loses the picture</h3>
 <p>The menu recovery combo does not clear per-game GSM settings. Open the affected game's settings
 and disable/change its GSM override, or its Neutrino video options for that core. Check global video
@@ -275,6 +280,11 @@ shelf you last left it on.
       <td>Blank / black screen (unsupported video mode)</td>
       <td><code>Triangle + Cross</code></td>
       <td>Forces 480p for the menu only; requires a compatible display/connection</td>
+    </tr>
+    <tr>
+      <td>Blank / black screen on an interlaced-only TV (CRT)</td>
+      <td><code>Triangle + Circle</code></td>
+      <td>Forces Auto, the region's interlaced mode, for the menu only</td>
     </tr>
     <tr><td>Menu works; game video fails</td><td>No boot combo clears game overrides</td><td>Disable/change GSM or Neutrino video settings and check global defaults</td></tr>
   </tbody>
