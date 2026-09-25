@@ -97,6 +97,18 @@ jobs:
           cc -std=c99 -Wall -Wextra -Werror -pedantic modules/network/udpfs_ioman/tests/test_ack_sequence.c -o /tmp/test_udpfs_ack
           /tmp/test_udpfs_ack
 
+  site-sync-host-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+      - name: Check the generator for the site search index and RetroAchievements page
+        run: |
+          python3 -m venv "$RUNNER_TEMP/site-sync"
+          "$RUNNER_TEMP/site-sync/bin/pip" install --quiet beautifulsoup4==4.15.0 markdown-it-py==4.0.0
+          "$RUNNER_TEMP/site-sync/bin/python" .github/scripts/test_site_sync.py
+
   build-flavour:
     strategy:
       fail-fast: false
