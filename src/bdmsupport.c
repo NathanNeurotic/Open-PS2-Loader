@@ -12,6 +12,7 @@
 #include "include/textures.h"
 #include "include/texcache.h"
 #include "include/ioman.h"
+#include "include/launchdiag.h" // UDPBD hang-triage stage markers (inert unless a udp launch arms them)
 #include "include/system.h"
 #include "include/ethsupport.h"   // ethGetModulesLoaded() for the UDPBD<->SMB NIC interlock
 #include "include/udpfssupport.h" // udpfsGetModulesLoaded() -- symmetric backstop vs the udpfs_ioman filesystem stack
@@ -1901,6 +1902,8 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         coreLoader = 1;
     if (!coreLoader)
         return 0;
+    if (isUdp)
+        launchDiagMark(1); // arms gLaunchDiag; every later marker gates on it
 
     // Abort helper contract: on udp the launch is unbootable without Neutrino -- consume the
     // launch (autolaunch mirrors its normal teardown); on local devices fall back to native.
@@ -1941,6 +1944,8 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     // printf + exit = black screen). Count it now: udp consumes the launch, local falls native.
     if (!bdmNeutrinoFragBudgetOk(partname, &neutrinoVmc, isUdp))
         goto fail;
+    if (gLaunchDiag)
+        launchDiagMark(2);
 
     if (gRememberLastPlayed) {
         configSetStr(configGetByType(CONFIG_LAST), "last_played", game->startup);
@@ -1950,6 +1955,8 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     // Δ6 preflight (driver token + network toml sync) -- abort stays in a live menu.
     if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath) < 0)
         goto fail;
+    if (gLaunchDiag)
+        launchDiagMark(3);
 
     // MMCE cross-device game-id (#261) with the Δ3 -mc-covered-slot guard. Before deinit (uses game).
     // Same MX4SIO settle gate as the native leg below (CodeRabbit review of #248, vetted): a switch
@@ -1960,6 +1967,8 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         if (mmceGameIdSettle(5000) < 0)
             guiWarning(_l(_STR_MMCE_GAMEID_UNSETTLED), 6);
     }
+    if (gLaunchDiag)
+        launchDiagMark(4);
 
     // game->startup lives inside bdmGames / gAutoLaunchBDMGame, both freed below (deinitEx's
     // itemCleanUp, or the explicit free in the autolaunch branch). Copy it before the teardown so

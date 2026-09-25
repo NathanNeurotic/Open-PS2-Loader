@@ -55,6 +55,14 @@ DISABLE_PATCHED_FUNCTIONS();
 DISABLE_EXTRA_TIMERS_FUNCTIONS();
 PS2_DISABLE_AUTOSTART_PTHREAD();
 
+// LAUNCH_DIAG child-side markers. The parent build (src/launchdiag.c) paints GS BGCOLOUR at stages
+// 1-11; the child repaints it here so a stall inside THIS loader is distinguishable from a stall on
+// the parent side. 12 = child entered (SifLoadElf running), 13 = target loaded, ExecPS2 imminent.
+// Same register as ee_core's debug colors (ee_core/include/ee_core.h), 0xBBGGRR.
+#define LAUNCHDIAG_BGCOLOUR           (*(volatile unsigned int *)0x120000E0)
+#define LAUNCHDIAG_COLOR_CHILD_UP     0xFF80FF // pink
+#define LAUNCHDIAG_COLOR_CHILD_LOADED 0x00FF80 // spring green
+
 #define ELF_MAGIC            0x464c457f
 #define ELF_PT_LOAD          1
 #define ELF_PT_MIPS_REGINFO  0x70000000
@@ -283,6 +291,8 @@ int main(int argc, char *argv[])
     int reset_iop = 0;
     int cleanup_hdd = 0;
 
+    LAUNCHDIAG_BGCOLOUR = LAUNCHDIAG_COLOR_CHILD_UP; // stage 12: child is on the air
+
     if (argc < 2)
         return -EINVAL;
 
@@ -338,6 +348,7 @@ int main(int argc, char *argv[])
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
+        LAUNCHDIAG_BGCOLOUR = LAUNCHDIAG_COLOR_CHILD_LOADED; // stage 13: LOADFILE path loaded the target
         return ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, argc - 1, &argv[1]);
     }
 
@@ -351,6 +362,7 @@ int main(int argc, char *argv[])
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
+        LAUNCHDIAG_BGCOLOUR = LAUNCHDIAG_COLOR_CHILD_LOADED; // stage 13: fileXio rescue path loaded the target
         return ExecPS2((void *)entry, (void *)gp, argc - 1, &argv[1]);
     }
 

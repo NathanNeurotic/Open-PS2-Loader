@@ -6,6 +6,7 @@
 
 #include "include/opl.h"
 #include "include/ioman.h"
+#include "include/launchdiag.h" // UDPBD hang-triage stage markers (gated on gLaunchDiag)
 #include "include/gui.h"
 #include "include/guigame.h"
 #include "include/renderman.h"
@@ -4405,6 +4406,8 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     // frame flips and then persists on its own -- nothing draws again until the handoff -- so one
     // call covers the entire wait.
     guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
+    if (gLaunchDiag)
+        launchDiagMark(5); // "Please Wait" is up -- the io/art drain below runs next
 
     // Give up on the covers still QUEUED before draining. The drain waits on the ioman LIST, and the
     // worker keeps servicing it regardless of isIOBlocked, so without this the handoff pays for every
@@ -4436,6 +4439,8 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     // below is about to unmount that device and close its descriptors.
     gArtAbandoned = !cacheEnd(gDeinitTerminal);
     guiExecDeferredOps();
+    if (gLaunchDiag)
+        launchDiagMark(6); // io + art drain done -- the per-module teardown below runs next
 
 #ifdef PADEMU
     ds34usb_reset();
@@ -4453,6 +4458,8 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
         }
     }
 
+    if (gLaunchDiag)
+        launchDiagMark(7); // per-module teardown done -- audioEnd/ioEnd run next
     audioEnd();
     ioEnd();
     guiEnd();
@@ -4461,6 +4468,8 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     thmEnd();
     rmEnd();
     configEnd();
+    if (gLaunchDiag)
+        launchDiagMark(8); // deinitEx finished -- sysLaunchNeutrino runs next
 }
 
 void deinit(int exception, int modeSelected)
@@ -4478,6 +4487,8 @@ void deinit(int exception, int modeSelected)
     // frame flips and then persists on its own -- nothing draws again until the handoff -- so one
     // call covers the entire wait.
     guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
+    if (gLaunchDiag)
+        launchDiagMark(5); // "Please Wait" is up -- the io/art drain below runs next
 
     // Give up on the covers still QUEUED before draining. The drain waits on the ioman LIST, and the
     // worker keeps servicing it regardless of isIOBlocked, so without this the handoff pays for every
@@ -4509,6 +4520,8 @@ void deinit(int exception, int modeSelected)
     // below is about to unmount that device and close its descriptors.
     gArtAbandoned = !cacheEnd(gDeinitTerminal);
     guiExecDeferredOps();
+    if (gLaunchDiag)
+        launchDiagMark(6); // io + art drain done -- the per-module teardown below runs next
 
 #ifdef PADEMU
     ds34usb_reset();
