@@ -3033,15 +3033,23 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, &gEnableDiscArt);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
 
-            if (!(getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS))) {
-                configGetInt(configOPL, CONFIG_OPL_VMODE, &gVMode);
-            } else {
+            if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
                 // Recovery combo: force 480p PROGRESSIVE (EDTV 640x448p@60, vmode index 3), not
                 // Auto -- Auto resolves to region-default interlaced 480i/576i, which is exactly
                 // what some modern displays/upscalers fail to sync, leaving the user still blind.
                 LOG("--- Triangle + Cross held at boot - forcing Video Mode to 480p (recovery) ---\n");
                 gVMode = 3;
                 configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
+            } else if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CIRCLE)) {
+                // The other half of recovery. 480p is exactly what an interlaced-only set (a CRT;
+                // zackcage6, 09-25) can NOT show, so the combo above left those users as blind as
+                // before. Auto (index 0) is the region's standard interlaced mode, NTSC 640x448i or
+                // PAL 640x512i -- the one every PS2-era TV syncs.
+                LOG("--- Triangle + Circle held at boot - forcing Video Mode to Auto/interlaced (recovery) ---\n");
+                gVMode = 0;
+                configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
+            } else {
+                configGetInt(configOPL, CONFIG_OPL_VMODE, &gVMode);
             }
 
             configGetInt(configOPL, CONFIG_OPL_XOFF, &gXOff);

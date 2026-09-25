@@ -1342,3 +1342,5 @@ gui_strings:
   string: "Could not copy the USB drivers to %s (card full or not writable). The IGR will drop to the PS2 browser."
 - label: OFFICIAL_CFG_NOTIFICATION
   string: Official OPL settings loaded from %s
+- label: CFM_VMODE_HOLD_KEEP
+  string: Hold to keep
