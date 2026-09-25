@@ -18,7 +18,9 @@
 #include "include/ioman.h"      // LOG (kernel argv-budget refusal trace)
 #include "include/launchdiag.h" // UDPBD hang-triage stage markers (keep-IOP handoffs only)
 #include <sifrpc.h>
+#define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioOpen/fileXioDopen: the probe's second opinion (the child's own route)
+#include <delaythread.h> // DelayThread: the probe's bounded settle retry
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>

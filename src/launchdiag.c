@@ -4,7 +4,8 @@
 
 #if LAUNCH_DIAG
 
-#include <kernel.h>        // DelayThread
+#include <kernel.h>
+#include <delaythread.h>   // DelayThread: the held stages and the refusal blink
 #include "include/ioman.h" // LOG
 
 // Same register ee_core's debug colors write (ee_core/include/ee_core.h GS_BGCOLOUR).
