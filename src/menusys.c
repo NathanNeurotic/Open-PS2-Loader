@@ -1084,36 +1084,43 @@ char *submenuItemGetText(submenu_item_t *it)
         return it->text;
 }
 
-static void swap(submenu_list_t *a, submenu_list_t *b)
+// Folder browsing: folders group ahead of games; within each group sort by the on-screen title.
+static int submenuSortCompare(submenu_list_t *a, submenu_list_t *b, item_list_t *support)
 {
-    submenu_list_t *pa, *nb;
-    pa = a->prev;
-    nb = b->next;
+    const char *txt1, *txt2;
 
-    a->next = nb;
-    b->prev = pa;
-    b->next = a;
-    a->prev = b;
+    if (a->item.isFolder != b->item.isFolder)
+        return a->item.isFolder ? -1 : 1;
 
-    if (pa)
-        pa->next = b;
-
-    if (nb)
-        nb->prev = a;
+    txt1 = submenuItemGetText(&a->item);
+    txt2 = submenuItemGetText(&b->item);
+    if (!a->item.isFolder) {
+        txt1 = vcdDisplayNameForRow(support, a->item.id, txt1);
+        txt2 = vcdDisplayNameForRow(support, b->item.id, txt2);
+    }
+    return strcasecmp(txt1, txt2);
 }
 
-// Sorts the given submenu by comparing the on-screen titles
+/* Sorts the given submenu by comparing the on-screen titles.
+
+   A bottom-up merge sort over the linked list: O(n log n) comparisons and no extra memory. This was
+   a bubble sort, O(n^2), and it runs on every list rebuild while Sort Games Alphabetically is on
+   (the default) -- a rescan, an L3 view change, a device attach. The scan hands rows over in REVERSE
+   directory order (scanForISO prepends), which on a library copied in alphabetical order is the
+   bubble sort's worst case: its passes ran the whole list every time, so 1000 games cost ~1,000,000
+   comparisons, each a strcasecmp behind two display-name lookups, drained by the GUI thread between
+   frames. The merge sort needs about 5,000 for the same list, and a list already in order still
+   costs one pass, as it did before.
+
+   Both sorts are stable -- a tie keeps its current order -- and use the same comparison, so the
+   resulting order is identical, row for row. */
 void submenuSort(submenu_list_t **submenu, int mode)
 {
-    // a simple bubblesort
-    // *submenu = mergeSort(*submenu);
-    submenu_list_t *head;
-    int sorted = 0;
+    submenu_list_t *list, *p, *q, *e, *tail;
+    int insize, nmerges, psize, qsize, i;
 
     if ((submenu == NULL) || (*submenu == NULL) || ((*submenu)->next == NULL))
         return;
-
-    head = *submenu;
 
     item_list_t *support = NULL;
     if (mode >= 0 && mode < MODE_COUNT) {
@@ -1122,40 +1129,64 @@ void submenuSort(submenu_list_t **submenu, int mode)
             support = mod->support;
     }
 
-    while (!sorted) {
-        sorted = 1;
+    // Already in order (a rebuild of an unchanged, sorted source): one pass and done.
+    for (p = *submenu; p->next != NULL; p = p->next)
+        if (submenuSortCompare(p, p->next, support) > 0)
+            break;
+    if (p->next == NULL)
+        return;
 
-        submenu_list_t *tip = head;
+    // Merge runs of insize, doubling each pass, until one pass makes a single merge. Taking from the
+    // left run on a tie is what keeps the sort stable. prev links are rebuilt as each row is placed.
+    list = *submenu;
+    for (insize = 1;; insize *= 2) {
+        p = list;
+        list = NULL;
+        tail = NULL;
+        nmerges = 0;
 
-        while (tip->next) {
-            submenu_list_t *nxt = tip->next;
-
-            const char *raw1 = submenuItemGetText(&tip->item);
-            const char *raw2 = submenuItemGetText(&nxt->item);
-            const char *txt1 = tip->item.isFolder ? raw1 : vcdDisplayNameForRow(support, tip->item.id, raw1);
-            const char *txt2 = nxt->item.isFolder ? raw2 : vcdDisplayNameForRow(support, nxt->item.id, raw2);
-
-            // Folder browsing: folders group ahead of games; within each group sort by title.
-            int cmp;
-            if (tip->item.isFolder != nxt->item.isFolder)
-                cmp = tip->item.isFolder ? -1 : 1;
-            else
-                cmp = strcasecmp(txt1, txt2);
-
-            if (cmp > 0) {
-                swap(tip, nxt);
-
-                if (tip == head)
-                    head = nxt;
-
-                sorted = 0;
-            } else {
-                tip = tip->next;
+        while (p != NULL) {
+            nmerges++;
+            q = p;
+            psize = 0;
+            for (i = 0; i < insize && q != NULL; i++) {
+                psize++;
+                q = q->next;
             }
+            qsize = insize;
+
+            while (psize > 0 || (qsize > 0 && q != NULL)) {
+                if (psize == 0) {
+                    e = q;
+                    q = q->next;
+                    qsize--;
+                } else if (qsize == 0 || q == NULL || submenuSortCompare(p, q, support) <= 0) {
+                    e = p;
+                    p = p->next;
+                    psize--;
+                } else {
+                    e = q;
+                    q = q->next;
+                    qsize--;
+                }
+
+                if (tail != NULL)
+                    tail->next = e;
+                else
+                    list = e;
+                e->prev = tail;
+                tail = e;
+            }
+
+            p = q;
         }
+
+        tail->next = NULL;
+        if (nmerges <= 1)
+            break;
     }
 
-    *submenu = head;
+    *submenu = list;
 }
 
 // Folder browsing: return the device page we are leaving to its folder root, so a device is never

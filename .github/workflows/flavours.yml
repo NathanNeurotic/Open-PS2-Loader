@@ -87,6 +87,8 @@ jobs:
         run: python3 .github/scripts/test_bdm_cache.py
       - name: Check BDM partition I/O bounds and sector-size refusal
         run: python3 .github/scripts/test_bdm_partitions.py
+      - name: Check the game-list sort keeps the old order in O(n log n)
+        run: python3 .github/scripts/test_menu_sort.py
 
   udpfs-host-tests:
     runs-on: ubuntu-24.04
