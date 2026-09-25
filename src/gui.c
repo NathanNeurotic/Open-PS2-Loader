@@ -671,6 +671,29 @@ int guiIoModeToDeviceType(int ioMode)
     return 0;
 }
 
+// IGR Path gets the full-size backing buffer the core path fields use (below). gExitPath and the
+// core's ExitPath both hold 255 characters, but a UI_STRING row holds 31: the keyboard stopped at
+// 31, so an install path such as mass:/APPS/APP_RIPTOPL/RIPTOPL.ELF could not be typed, and the
+// page read the row back into gExitPath on every close, cutting a longer path from the settings
+// file to 31 characters. Either way the IGR then failed and fell back to the browser (#731).
+static char exitPathEdit[sizeof(gExitPath)];
+
+static void guiExitPathBegin(struct UIItem *ui)
+{
+    snprintf(exitPathEdit, sizeof(exitPathEdit), "%s", gExitPath);
+    diaSetString(ui, CFG_EXITTO, exitPathEdit);
+    // Blank still means the built-in fallback, so keep the dim "Default" placeholder.
+    diaSetShowDefaultWhenEmpty(ui, CFG_EXITTO, 1);
+}
+
+int guiExitPathHandler(char *text, int maxLen)
+{
+    if (!guiShowKeyboard(exitPathEdit, sizeof(exitPathEdit)))
+        return 0;
+    snprintf(text, maxLen, "%s", exitPathEdit);
+    return 1;
+}
+
 // Legacy standalone General editor. The Settings peer shell is the normal route, but this stays
 // functional for callers outside it and shares the same Language/GSM backends.
 void guiShowConfig()
@@ -681,8 +704,7 @@ void guiShowConfig()
 
     // Exit To auto-resolves a built-in default when blank, so show a dim "Default" placeholder
     // rather than "<not set>" -- the empty value (and thus the fallback) is kept.
-    diaSetShowDefaultWhenEmpty(diaConfig, CFG_EXITTO, 1);
-    diaSetString(diaConfig, CFG_EXITTO, gExitPath);
+    guiExitPathBegin(diaConfig);
     // Custom Settings Path: blank = the normal boot-dir/discovery home, so it gets the same dim
     // "Default" placeholder treatment rather than "<not set>".
     diaSetShowDefaultWhenEmpty(diaConfig, CFG_CUSTOMCFGPATH, 1);
@@ -708,7 +730,7 @@ reshow_config:
     }
     if (ret) {
         diaGetInt(diaConfig, UICFG_LANG, &langID);
-        diaGetString(diaConfig, CFG_EXITTO, gExitPath, sizeof(gExitPath));
+        snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
         diaGetString(diaConfig, CFG_CUSTOMCFGPATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
         diaGetInt(diaConfig, CFG_LASTPLAYED, &gRememberLastPlayed);
         diaGetInt(diaConfig, CFG_FOLDERNAV, &gEnableFolderNav);
@@ -2634,8 +2656,7 @@ static int guiSettingsShowGeneral(void)
     diaSetEnum(ui, UICFG_LANG, langNamesSnap != NULL ? langNamesSnap : (const char **)lngGetGuiList());
     diaSetInt(ui, UICFG_LANG, lngGetGuiValue());
 
-    diaSetShowDefaultWhenEmpty(ui, CFG_EXITTO, 1);
-    diaSetString(ui, CFG_EXITTO, gExitPath);
+    guiExitPathBegin(ui);
     diaSetShowDefaultWhenEmpty(ui, CFG_CUSTOMCFGPATH, 1);
     diaSetString(ui, CFG_CUSTOMCFGPATH, gCustomSettingsPath);
     diaSetInt(ui, CFG_LASTPLAYED, gRememberLastPlayed);
@@ -2659,7 +2680,7 @@ reshow_general:
 
     if (result != UIID_BTN_CANCEL && result != -1) {
         diaGetInt(ui, UICFG_LANG, &langID);
-        diaGetString(ui, CFG_EXITTO, gExitPath, sizeof(gExitPath));
+        snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
         diaGetString(ui, CFG_CUSTOMCFGPATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
         diaGetInt(ui, CFG_LASTPLAYED, &gRememberLastPlayed);
         diaGetInt(ui, CFG_FOLDERNAV, &gEnableFolderNav);

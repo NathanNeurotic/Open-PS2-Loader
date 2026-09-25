@@ -746,6 +746,70 @@ static int diaItemHeight(struct UIItem *item, int spacingH)
     return h;
 }
 
+// A row's value starts at the value column, and nothing stopped it at the screen edge. In 4:3, where
+// glyphs are drawn at full width (widescreen draws them at 3/4), a long one ran off the right side:
+// "NTSC 640x448i @60Hz 24bit (FLICKER-F" (#732). Fit it to the room left instead. The selected row
+// scrolls through the whole value; any other row ends in "...". Returns the end x, like fntRenderString.
+#define DIA_VALUE_MARGIN    20  // the dialog's left margin (x0), mirrored on the right
+#define DIA_MARQUEE_STEP_MS 200 // one character per step
+#define DIA_MARQUEE_PAUSE   5   // steps held at each end
+
+static int diaTextWidth(const char *text)
+{
+    return rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text));
+}
+
+static int diaRenderValue(int x, int y, const char *text, u64 color, int selected)
+{
+    int avail = screenWidth - DIA_VALUE_MARGIN - x;
+    short at[256]; // byte offset where each character starts, then the end
+    char buf[256];
+    int n = 0, i, lo, hi, mid;
+
+    if (avail <= 0) // no room left on this row: draw nothing rather than run past the edge
+        return x;
+    if (diaTextWidth(text) <= avail)
+        return fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, text, color);
+
+    for (i = 0; text[i] != '\0'; i++) {
+        if ((text[i] & 0xC0) == 0x80) // UTF-8 continuation byte
+            continue;
+        if (n == 255)
+            break;
+        at[n++] = i;
+    }
+    at[n] = i;
+
+    // Binary searches: this runs every frame, so measure O(log n) times, not once per character.
+    if (selected) {
+        for (lo = 0, hi = n; lo < hi;) { // first character from which the rest fits = the last stop
+            mid = (lo + hi) / 2;
+            if (diaTextWidth(&text[at[mid]]) <= avail)
+                hi = mid;
+            else
+                lo = mid + 1;
+        }
+        int step = (int)((clock() / (CLOCKS_PER_SEC / 1000) / DIA_MARQUEE_STEP_MS) % (lo + 2 * DIA_MARQUEE_PAUSE)) - DIA_MARQUEE_PAUSE;
+        step = step < 0 ? 0 : (step > lo ? lo : step);
+        fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, avail, 0, &text[at[step]], color);
+        return x + avail;
+    }
+
+    avail -= diaTextWidth("...");
+    if (avail < 0) // not even "..." fits
+        return x;
+    for (lo = 0, hi = n; lo < hi;) { // most characters that fit ahead of the "..."
+        mid = (lo + hi + 1) / 2;
+        snprintf(buf, sizeof(buf), "%.*s", at[mid], text);
+        if (diaTextWidth(buf) <= avail)
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    snprintf(buf, sizeof(buf), "%.*s...", at[lo], text);
+    return fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, buf, color);
+}
+
 static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int haveFocus, int spacingH, int *w, int *h)
 {
     // Don't draw controllable items that are not visible.
@@ -827,7 +891,7 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
 
         case UI_STRING: {
             if (strlen(item->stringvalue.text))
-                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, item->stringvalue.text, txtcol) - x;
+                *w = diaRenderValue(x, y, item->stringvalue.text, txtcol, selected) - x;
             else if (item->showDefaultWhenEmpty)
                 // Field has a built-in fallback when blank -- show a dim "Default" so it reads as
                 // intentional, not unset. The stored value stays empty, so the fallback still fires.
@@ -874,7 +938,7 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
             if (!tv)
                 tv = _l(_STR_NO_ITEMS);
 
-            *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, tv, txtcol) - x;
+            *w = diaRenderValue(x, y, tv, txtcol, selected) - x;
             break;
         }
 

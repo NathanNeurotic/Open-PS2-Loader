@@ -139,6 +139,7 @@ void discLaunch(int (*progress)(void))
         guiShowRANotice(_l(_STR_RA_DISC_CHECK_FIRST), NULL);
         return;
     }
+    sbEnsureIgrUsbDrivers(0); // before the MMCE switch below, so mc0: is still the boot card
     mmceSendGameID(startup, NULL, 0);
     deinit(NO_EXCEPTION, IO_MODE_SELECTED_ALL);
     // Keep PS2LOGO's disc-authentication path; the EE core supplies telemetry.

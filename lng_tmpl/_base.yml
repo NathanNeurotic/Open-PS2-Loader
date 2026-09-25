@@ -305,7 +305,7 @@ gui_strings:
 - label: BDM_PREFIX
   string: BDM Prefix Path
 - label: HINT_EXITPATH
-  string: "Boots a custom ELF after an IGR. Keep it on the memory card (mc0:/mc1:) -- the post-reset loader can't reach MMCE; for MMCE, chain through an MC loader like PS2BBL."
+  string: "Boots a custom ELF after an IGR. Use a memory card (mc0:/mc1:) or a FAT32 USB drive (mass:/); for USB, RiptOPL offers to add the drivers the reset needs to the memory card's SYS-CONF folder. MMCE can't be reached after the reset; chain through an MC loader like PS2BBL."
 - label: HINT_SPINDOWN
   string: Value in minute(s), 0 to disable spin down.
 - label: HDD_SPINDOWN
@@ -1336,3 +1336,7 @@ gui_strings:
   string: Global PS Emulation Settings
 - label: RA_NO_LINK_UNTRACKED
   string: Network unavailable -- launching without RetroAchievements this time.
+- label: IGR_USB_DRIVERS_PROMPT
+  string: "The IGR Path is on USB, but %s is missing USBD.IRX and USBHDFSD.IRX, which the console needs to reach USB after an In-Game Reset. Without them the IGR drops to the PS2 browser. Copy RiptOPL's drivers there now? FMCB, OpenTuna and other exploits load these files too and may behave differently with them. Existing files are never replaced. FAT32 USB only."
+- label: IGR_USB_DRIVERS_FAILED
+  string: "Could not copy the USB drivers to %s (card full or not writable). The IGR will drop to the PS2 browser."
