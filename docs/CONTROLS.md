@@ -24,7 +24,7 @@ Two settings change what you read below, so check them first if the tables do no
 | **Circle** | Go up one folder level *(or launch, if Circle is your select button)* |
 | **Triangle** | Per-game settings for the selected title |
 | **Square** | Game info page — cover, screenshots, size, disc type |
-| **L1 / R1** | Previous / next page of the list |
+| **L1 / R1** | Previous / next page of the list; both wrap around at the ends |
 | **L2** | Jump to the first page |
 | **R2** | Jump to the last page |
 | **L3** | Cycle this page's library view (PS2 / PS1 / Both / …) |

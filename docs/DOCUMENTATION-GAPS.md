@@ -49,11 +49,12 @@ What it needed to cover, from `ee_core/src/padhook.c` + `ee_core/include/padhook
 | Console **power button** ×1 | Power off |
 | Console **power button** ×2 | Reset back to RiptOPL |
 
-Plus the surrounding facts: the hook installs by patching `scePadPortOpen` / `scePad2CreateSocket`,
-so it only arms once the game opens a pad; `IGR Path` boots a custom ELF from `mc0:`/`mc1:` instead of
-returning to the browser; compat **Mode 6** disables the hook for games whose own input handling it
-disturbs; **Neutrino has no IGR at all** (which is *why* Mode 6 is greyed out under that core); and
-the MMCE `IGR Bootcard Slot(s)` option fires a switch-to-bootcard command on reset.
+Plus the surrounding facts: the hook installs by patching `scePadPortOpen` / `scePad2CreateSocket`, so
+it only arms once the game opens a pad; `IGR Path` boots a custom ELF from `mc0:`/`mc1:` or a FAT32 USB
+drive (`mass:/`, since #737) instead of returning to the browser; compat **Mode 6** disables the hook
+for games whose own input handling it disturbs; **Neutrino has no IGR at all** (which is *why* Mode 6
+is greyed out under that core); and the MMCE `IGR Bootcard Slot(s)` option fires a switch-to-bootcard
+command on reset.
 
 **Home:** new `docs/IGR.md` + new site page `igr.html` (or fold into a Controls page — see #2).
 **Sources:** `ee_core/src/padhook.c`, `ee_core/include/padhook.h`, `ee_core/src/cd_igr_rpc.c`,

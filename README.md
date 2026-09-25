@@ -400,7 +400,9 @@ This build layers several features on top of upstream OPL:
   notification, or pause). APPS and Favorites remain independent. Wherever L3 does something, the
   view you leave a page on is **remembered across sessions** — each device page, the Favorites
   shelf and the APPS split side keep their own position, restored the next time you boot (a
-  remembered view that the display setting no longer allows is simply dropped). Pressing L3 never
+  remembered view that the display setting no longer allows is simply dropped). BDM pages save one
+  position per device type (USB, iLink, MX4SIO, exFAT HDD, UDPBD), so a device keeps its view when the
+  `mass` slot numbers swap between boots. Pressing L3 never
   writes to storage: the positions ride along with a write that already happens — **launching a
   game, or saving settings** — so toggling and then powering off without doing either is the one
   case that is not kept. On a combined
@@ -482,7 +484,7 @@ command as the reset happens.
 | Circle | Go up one folder level |
 | Triangle | Per-game settings |
 | Square | Game info page |
-| L1 / R1 | Previous / next page |
+| L1 / R1 | Previous / next page (both wrap around at the ends) |
 | L2 / R2 | First / last page |
 | L3 | Cycle the page's library view |
 | R3 | Star or un-star as a Favorite |
