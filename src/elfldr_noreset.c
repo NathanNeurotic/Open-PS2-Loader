@@ -15,7 +15,8 @@
 */
 
 #include <kernel.h>
-#include "include/ioman.h" // LOG (kernel argv-budget refusal trace)
+#include "include/ioman.h"      // LOG (kernel argv-budget refusal trace)
+#include "include/launchdiag.h" // UDPBD hang-triage stage markers (keep-IOP handoffs only)
 #include <sifrpc.h>
 #include <string.h>
 #include <fcntl.h>
@@ -92,9 +93,14 @@ static int sysLoadELFCommon(const char *filename, const char *partition, int arg
 
     // Probe the target through our still-live mounts so a bad path fails fast in OPL
     // instead of inside the child loader (which can only fall through to OSDSYS).
-    if (filename == NULL || (fd = open(filename, O_RDONLY)) < 0)
+    if (filename == NULL || (fd = open(filename, O_RDONLY)) < 0) {
+        if (!resetIop && gLaunchDiag)
+            launchDiagMark(14); // refusal: probe open failed
         return -1;
+    }
     close(fd);
+    if (!resetIop && gLaunchDiag)
+        launchDiagMark(10); // ELF probe open OK -- the elfldr child handoff runs next
 
     // Kernel args-area budget, the last line of defense for EVERY handoff (Neutrino,
     // POPSTARTER, Apps): SetArg copies at most 15 strings into ONE 256-byte pool (NULs included) and
@@ -113,6 +119,8 @@ static int sysLoadELFCommon(const char *filename, const char *partition, int arg
         }
         if (argc + 1 + extra_args > 15 || pool > 256) {
             LOG("[ELFLDR] argv over the kernel budget (args=%d/15, pool=%d/256) -- refusing handoff\n", argc + 1 + extra_args, pool);
+            if (!resetIop && gLaunchDiag)
+                launchDiagMark(14); // refusal
             return -1;
         }
     }
@@ -130,8 +138,11 @@ static int sysLoadELFCommon(const char *filename, const char *partition, int arg
     wipeBramMem();
 
     eh = (elfldr_header_t *)elfldr_elf;
-    if (_lw((u32)&eh->ident) != ELFLDR_ELF_MAGIC)
+    if (_lw((u32)&eh->ident) != ELFLDR_ELF_MAGIC) {
+        if (!resetIop && gLaunchDiag)
+            launchDiagMark(14); // refusal: vendored child loader missing
         return -1;
+    }
 
     eph = (elfldr_pheader_t *)(elfldr_elf + eh->phoff);
     for (i = 0; i < eh->phnum; i++) {
@@ -148,6 +159,9 @@ static int sysLoadELFCommon(const char *filename, const char *partition, int arg
     sceSifExitRpc();
     FlushCache(0);
     FlushCache(2);
+
+    if (!resetIop && gLaunchDiag)
+        launchDiagMark(11); // ExecPS2 into the elfldr child is the next (and last) step on this side
 
     return ExecPS2((void *)eh->entry, NULL, argc + 1 + extra_args, new_argv);
 }
