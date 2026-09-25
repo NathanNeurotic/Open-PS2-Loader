@@ -92,6 +92,11 @@ track costs no extra RAM. It looks in this order and takes the first that works:
 That order is why a disk theme with its own `sound/bgm.ogg` ignores your Default Theme Music setting:
 the theme wins. To use your own track everywhere, pick a theme that ships no music of its own.
 
+The track plays through the console's `audsrv`, which only has converters for some sample rates:
+44.1 kHz, 48 kHz, 32 kHz, 22.05 kHz and 11.025 kHz in mono or stereo, and 24 kHz or 12 kHz in stereo
+only. A file at any other rate, such as 16 kHz, plays no music at all; the menu carries on silently.
+Re-encode it at 44.1 kHz if in doubt.
+
 ### Sound effects
 
 **SFX are PS2 ADPCM** (`.adp`, 44.1 kHz), supplied by the theme in its `sound/` folder. There are

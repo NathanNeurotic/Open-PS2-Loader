@@ -20,20 +20,24 @@ bring-up / unusable-IP fallback, and the misplaced RA settings rows.
 
 ## Status
 
-**Implemented, with the USB/MMCE telemetry path now exercised on real PS2 hardware during oMrRexD's
-stabilization work.** Broader launch paths and edge cases remain development-grade and should still be
-validated individually before being treated as finished.
+**Implemented, and telemetry has run end to end on real PS2 hardware** in oMrRexD's session for
+PRs #702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
+v0.1.0-alpha.10. Launched from MMCE, Need for Speed: Underground 2 streamed 25,200 snapshots with none
+lost and unlocked an achievement with the overlay on screen; the same build also tracked the game from
+USB. That is one console, one game and a static address. DHCP, the other launch paths and the edge
+cases below remain development-grade and should still be validated individually before being treated
+as finished.
 
 | Part | State |
 | --- | --- |
 | `RETROACHIEVEMENTS=1` build flavour | done |
-| In-game telemetry (`raudp`, ee_core snapshots) | written, **not hardware-tested** |
+| In-game telemetry (`raudp`, ee_core snapshots) | **hardware-tested** from MMCE and USB, static IP (#702–#704) |
 | Watch-list loading from `<device>/RA/<serial>.wl` | done |
-| Image hashing (ISO9660 walk + MD5) | done |
-| Menu actions: check game support, test PC link | written, **not hardware-tested** |
-| List badges and the cover mark | written, **not hardware-tested** |
-| Unlock overlay | written, **not hardware-tested** |
-| Settings: RA telemetry, RA badges | done |
+| Image hashing (ISO9660 walk + MD5) | done; images on a share and on a USB stick hashed to matching values on hardware (hacan359, 2026-09-10) |
+| Menu actions: check game support, test PC link | both used on hardware: the support check's hashing by hacan359, the PC link test in #704 |
+| List badges and the cover mark | written, **not yet confirmed on hardware** |
+| Unlock overlay | **hardware-tested**: the gold overlay showed over the running game on an unlock (#704) |
+| Settings: RA telemetry, RA badges | done; on the **Network** page since #705, where switching telemetry off and on was checked on hardware |
 | Disc in the tray | implemented in the RA build; **not hardware-tested** |
 
 ---
@@ -118,9 +122,10 @@ loading about a minute in from a share, so the send path disturbs the stream on 
 own documentation says the same, and names the USB stick and the original disc as the only tested ways
 to play.
 
-That defect is upstream's and ours alike; we have not reproduced or ruled it out on our own hardware,
-because none of this has been hardware-tested here yet. Until it is, **keep the images you play with
-achievements on a local device.** The same reasoning applies to HTTP, which streams down the same path.
+That defect is upstream's and ours alike; we have not reproduced or ruled it out on our own hardware.
+The hardware testing so far (#702–#705) launched from MMCE and USB, never from a share. Until a share
+is tested, **keep the images you play with achievements on a local device.** The same reasoning
+applies to HTTP, which streams down the same path.
 
 HDD (APA) games are stored in HDLoader format and have no image file to hash, so while a watch list
 placed by hand still loads and streams, the console cannot work out the hash for them itself.
@@ -208,17 +213,22 @@ The rolling release publishes the flavour as its own archive, **`RIPTOPL-RetroAc
 same shape as the main package: `POPS/`, `EMBER/`, `neutrino/` and the PC-tool shortcuts, with
 `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/RIPTOPL-RA.ELF_*.png` artwork, and
 `APP_RIPTOPL-RA.psu`. The PSU contains only the direct files of `APP_RIPTOPL-RA`; import it with a
-PS2 save manager for a memory-card installation, then copy the other folders separately. The
-archive also keeps these labelled loader folders for comparing builds:
+PS2 save manager for a memory-card installation, then copy the other folders separately.
+
+The ready app `APPS/APP_RIPTOPL-RA/` uses the official-toolchain build (`OFFICIALROLLING`,
+`PADEMU=1`) when that build succeeded, the same loader the release then also publishes on its own as
+`RIPTOPL-RA.ELF`. A run without it publishes no `RIPTOPL-RA.ELF`, and the ready app falls back to the
+labelled builds below, in the order listed. The archive keeps those labelled loader folders under
+`APPS/` for comparing builds:
 
 | Folder | Build |
 | --- | --- |
-| `APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` (the installable app's first choice). Start here for build comparisons. |
-| `APP_RIPTOPL-RA-ROLLING/` | `ps2dev:latest`, `PADEMU=1` |
-| `APP_RIPTOPL-RA-PINNED-nopademu/` | Pinned ps2dev toolchain, `PADEMU=0` |
-| `APP_RIPTOPL-RA-ROLLING-nopademu/` | `ps2dev:latest`, `PADEMU=0` |
+| `APPS/APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` (the ready app's first fallback). Start here for build comparisons. |
+| `APPS/APP_RIPTOPL-RA-ROLLING/` | `ps2dev:latest`, `PADEMU=1` |
+| `APPS/APP_RIPTOPL-RA-PINNED-nopademu/` | Pinned ps2dev toolchain, `PADEMU=0` |
+| `APPS/APP_RIPTOPL-RA-ROLLING-nopademu/` | `ps2dev:latest`, `PADEMU=0` |
 
-RA is built with the ps2dev toolchain only, so these folders say `PINNED`/`ROLLING` where the main
+The labelled folders are the two ps2dev builds, so they say `PINNED`/`ROLLING` where the main
 package says `PS2DEVPINNED`/`PS2DEVROLLING`. The names are kept short on purpose: a memory card file
 name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
 archive also carries **`xeRAbora.url`** (pointing directly to the paired [v0.1.0-alpha.10 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10)), because the loader does nothing without the PC client.
@@ -260,10 +270,13 @@ immediately before the swap, kept as a restore point.
 
 ## Before this is called finished
 
-Nothing below has been done. The feature is written end to end and builds clean; it has not run on a
-PlayStation 2. Emulator testing gets you as far as: the menu boots, the RA entries render and
-navigate, the flag-off build is unchanged, and a game with no `.wl` does not crash. That is the
-ceiling — GS raster timing and real SMAP behaviour are not testable there.
+Most of the list below is still open. oMrRexD's hardware session for #702–#705 covered the nearest
+thing to **3**, launched from MMCE rather than USB (25,200 snapshots with none lost after a cold boot
+and a straight launch; the same build also tracked the game from USB), and **13**, the unlock overlay
+over a running game; a launch with telemetry switched off sent nothing, which is part of **2**.
+Everything else still needs a PlayStation 2. Emulator testing gets you as far as: the menu boots, the
+RA entries render and navigate, the flag-off build is unchanged, and a game with no `.wl` does not
+crash. That is the ceiling — GS raster timing and real SMAP behaviour are not testable there.
 
 Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 
@@ -307,13 +320,18 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 * **Deleting `obj/` is mandatory** after any change to `EECoreConfig_t`, `OPL_MODULE_ID` or the
   submenu structs. This Makefile does not track header dependencies, so an incremental build can
   pass locally while CI's `make clean` fails.
-* **`ee_core` has about 3 KB of headroom, and RA spends it.** ram84 is 77312 bytes
-  (`ee_core/linkfile`). Without RA, an `EXTRA_FEATURES=1` ee_core comes to 74215; with RA and
-  without extras, 74067. Either fits; both together overflow by roughly 6.5 KB and `ld` refuses
-  with `.bss is not within region ram84`. That is why the release builds RA at the default
-  `EXTRA_FEATURES=0`, which is also what the main loader ships as — so the RA archive is the
-  shipping loader plus achievements, not a variant. `ra_snap_buf` and `ra_watch` are most of RA's
-  share; shrink them before trying to add anything else to that build.
+* **`ee_core`'s stack is whatever ram84 leaves above `.bss`.** ram84 is 77312 bytes
+  (`ee_core/linkfile`), and the link now fails when less than 3 KB of stack is left, so the next
+  thing that grows `.bss` breaks the build rather than a console. RA's two buffers, `ra_snap_buf` and
+  `ra_watch` (about 8 KB), used to live in `.bss`: they left the RA build 1920 bytes of stack, which
+  overflowed at the first IOP reset. Since #702 they sit in a work area the launcher reserves at the
+  end of module storage (`raWorkArea` in `EECoreConfig_t`), and only for a launch that has a watch
+  list with telemetry on. When #702 landed, the stack left was 13312 bytes in the default build, 3348
+  with `EXTRA_FEATURES=1`, and 9984 / 10112 in the RA builds (`PADEMU=1` / `0`). The release builds
+  RA at the default `EXTRA_FEATURES=0`, which is also what the main loader ships as — so the RA
+  archive is the shipping loader plus achievements, not a variant. Before #702, RA and
+  `EXTRA_FEATURES=1` together overflowed ram84 by roughly 6.5 KB; that pairing has not been
+  re-measured since.
 * **PC integration uses xeRAbora**, maintained by hacan359.
 * **Physical discs use an EESYNC-only reset image.** ROM CDVDMAN/CDVDFSV remain in place;
   standalone DEV9 and SMSUTILS load before the telemetry network stack. Do not call OPL CDVDMAN's

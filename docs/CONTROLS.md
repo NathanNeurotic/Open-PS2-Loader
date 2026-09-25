@@ -47,8 +47,10 @@ Every other button is unchanged.
 ### Notes on individual buttons
 
 **Triangle** adapts to what is selected. On a PS2 title it opens per-game settings; on a PS1 title it
-opens the VCD menu; on an entry in Apps it opens the app menu. Folder rows have no settings screen,
-so Triangle does nothing on them.
+opens the VCD menu, which offers **Global PS Emulation Settings** (straight to the global PS
+emulation settings page, because the PS2 per-game options do not apply to PS1 games) and **Rename**;
+on an entry in Apps it opens the app menu. Folder rows have no settings screen, so Triangle does
+nothing on them.
 
 **Square** opens the info page. Folder rows have no info page. On PS1 titles and direct HDD entries
 the size field is intentionally left blank rather than computed.

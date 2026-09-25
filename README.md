@@ -79,8 +79,9 @@ bundle, or build your own with `make DUALSENSE=1`.
 `neutrino/` and shortcuts — with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/` files and
 `APP_RIPTOPL-RA.psu` in place of the standard app, plus a shortcut to
 **xeRAbora**, the PC client the feature talks to. It is a **development build, not a finished
-feature** — both halves are now written, the menu side included, but none of it has run on a real
-console yet — and the standard ELF is completely unaffected by it. See
+feature** — telemetry has run end to end on one real console, launched from MMCE and USB
+(oMrRexD, #702–#705), but most launch paths and edge cases are still unvalidated — and the standard
+ELF is completely unaffected by it. See
 **[docs/RETROACHIEVEMENTS.md](docs/RETROACHIEVEMENTS.md)** for what it does, which launch paths can
 ever support it, and why.
 
@@ -103,12 +104,16 @@ standard app is `APP_RIPTOPL` with `RIPTOPL.ELF`; the RA app is `APP_RIPTOPL-RA`
 folders separately where you use those features. A release fails packaging if a required
 Neutrino bundle is unavailable.
 
-**Already have RiptOPL installed?** The rolling release carries one loose loader asset,
+**Already have RiptOPL installed?** The rolling release carries a loose loader asset,
 `RIPTOPL.ELF`, for exactly that case: download it and overwrite the `RIPTOPL.ELF` you already have. Its name never changes, so
 <https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF> is a
 permanent link. It is the `-OFFICIALROLLING` flavour, and it is not a first install — the bare loader
-does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files. Apart from that one file, GitHub
-does not publish bare loader ELFs or separate checksum/SDK manifests in the normalized asset set.
+does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files. `RIPTOPL-RA.ELF`
+(<https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL-RA.ELF>) does the
+same for the RetroAchievements app: replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with it. Both are
+copied from `-OFFICIALROLLING` builds, so a run in which that build failed publishes neither; update
+from the matching package then. Apart from those two files, GitHub does not publish bare loader ELFs
+or separate checksum/SDK manifests in the normalized asset set.
 The workflow can also publish `v*` tags, but no such stable release is currently offered here.
 
 
@@ -453,7 +458,7 @@ and then, still holding them, press the second half:
 | ---- | ---------- | ------ |
 | L1 + L2 + R1 + R2 | **Start + Select** | Reset - quit the game and return to RiptOPL |
 | L1 + L2 + R1 + R2 | **L3 + R3** | Power off the console |
-| L1 + L2 + R1 + R2 | **Up** | In-game screenshot (needs GSM on **and** an `IGS=1` build; off in release builds) |
+| L1 + L2 + R1 + R2 | **Up** | In-game screenshot (needs GSM on **and** an `IGS=1` build: off in the main release loader, on in the `-extra1` loaders in `RIPTOPL-VARIANTS-*.zip` — see [docs/IGR.md](docs/IGR.md#in-game-screenshots-igs)) |
 
 The console's own power button works too: **one press** powers off, **two presses** reset.
 
@@ -680,6 +685,27 @@ boot=RIPTOPL.ELF
 In this method, both the ELF and `title.cfg` must be in the same folder under `APPS`.
 
 > NOTE: In both methods, pay close attention to file names because, as already mentioned, OPL is case-sensitive.
+
+### The REBOOT IOP? prompt
+
+Launching an ordinary app ELF, from Apps or from an app in Favorites, first asks **REBOOT IOP?**:
+
+| Button | Result |
+| ------ | ------ |
+| **Cross** (YES) | Reset the IOP before the app starts, so it begins with a freshly reset I/O processor. |
+| **Circle** (NO) | Start the app on the IOP as RiptOPL left it, with its drivers still loaded. |
+| **Triangle** | Cancel and stay in the list. |
+
+To answer it once for good, add `REBOOTIOP=YES` or `REBOOTIOP=NO` to the app's `title.cfg`.
+`REBOOT_IOP` also works as the key, and `1`/`0`, `TRUE`/`FALSE` or `ON`/`OFF` as the value; any other
+value brings the prompt back. A `conf_apps.cfg` entry reads the same line from its per-app file,
+`CFG/<ELF name>.cfg` on an enabled source (for `mass:APPS/MYAPP.ELF`, that is `CFG/MYAPP.ELF.cfg`).
+That also applies when `conf_apps.cfg` and a `title.cfg` list the same ELF: RiptOPL keeps the
+`conf_apps.cfg` entry, so a `REBOOTIOP` line in `title.cfg` has no effect there.
+
+POPSTARTER launches never ask: `POPSTARTER.ELF` and the `XX.`, `SB.`, `EL.` and `SM.` launcher ELFs
+keep their own PS1 launch path. An app on the APA HDD always gets the HDD cleanup before it starts,
+whichever answer you give.
 
 ## Cheats
 
