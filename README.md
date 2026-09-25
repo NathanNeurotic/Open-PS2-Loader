@@ -458,7 +458,7 @@ and then, still holding them, press the second half:
 
 | Hold | Then press | Result |
 | ---- | ---------- | ------ |
-| L1 + L2 + R1 + R2 | **Start + Select** | Reset - quit the game and return to RiptOPL |
+| L1 + L2 + R1 + R2 | **Start + Select** | Reset - quit the game to the PS2 browser, or to the **IGR Path** ELF |
 | L1 + L2 + R1 + R2 | **L3 + R3** | Power off the console |
 | L1 + L2 + R1 + R2 | **Up** | In-game screenshot (needs GSM on **and** an `IGS=1` build: off in the main release loader, on in the `-extra1` loaders in `RIPTOPL-VARIANTS-*.zip` — see [docs/IGR.md](docs/IGR.md#in-game-screenshots-igs)) |
 
@@ -471,8 +471,9 @@ IGR** is set, and under the **Neutrino core**, which has no IGR at all - which i
 out there. PS1 titles use POPSTARTER's or Ember's own IGR, not this one.
 
 **IGR Path** (*Settings -> General & System*) boots a custom ELF from `mc0:`/`mc1:` or a FAT32 USB drive (`mass:/`) on reset instead of
-returning to the browser. **IGR Bootcard Slot(s)** (*Settings -> Game Sources -> MMCE Settings*) sends a switch-to-bootcard
-command as the reset happens.
+exiting to the PS2 browser; give it RiptOPL's own ELF to come back to RiptOPL. A USB path also needs two driver files on the
+memory card - see [docs/IGR.md](docs/IGR.md#where-a-reset-takes-you). **IGR Bootcard Slot(s)** (*Settings -> Game Sources ->
+MMCE Settings*) sends a switch-to-bootcard command as the reset happens.
 
 ### Game list
 

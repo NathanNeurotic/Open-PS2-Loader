@@ -126,7 +126,7 @@ These work inside a running game. Hold all four shoulder buttons, then press the
 
 | Hold | Then press | Result |
 |---|---|---|
-| L1 + L2 + R1 + R2 | **Start + Select** | Reset — return to RiptOPL |
+| L1 + L2 + R1 + R2 | **Start + Select** | Reset — quit to the PS2 browser, or to the `IGR Path` ELF |
 | L1 + L2 + R1 + R2 | **L3 + R3** | Power off the console |
 | L1 + L2 + R1 + R2 | **Up** | In-game screenshot *(needs GSM on and an IGS-enabled build)* |
 

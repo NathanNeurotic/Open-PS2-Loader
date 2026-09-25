@@ -43,18 +43,20 @@ What it needed to cover, from `ee_core/src/padhook.c` + `ee_core/include/padhook
 
 | Input | Result |
 |---|---|
-| Hold **L1+L2+R1+R2**, then **Start+Select** | Reset — return to RiptOPL (or boot the `IGR Path` ELF) |
+| Hold **L1+L2+R1+R2**, then **Start+Select** | Reset — exit to the PS2 browser (or boot the `IGR Path` ELF) |
 | Hold **L1+L2+R1+R2**, then **L3+R3** | Power off the console |
 | Hold **L1+L2+R1+R2**, then **Up** | In-Game Screenshot (IGS) — requires GSM on *and* an IGS-enabled build |
 | Console **power button** ×1 | Power off |
-| Console **power button** ×2 | Reset back to RiptOPL |
+| Console **power button** ×2 | Reset (same as Start+Select) |
 
 Plus the surrounding facts: the hook installs by patching `scePadPortOpen` / `scePad2CreateSocket`, so
-it only arms once the game opens a pad; `IGR Path` boots a custom ELF from `mc0:`/`mc1:` or a FAT32 USB
-drive (`mass:/`, since #737) instead of returning to the browser; compat **Mode 6** disables the hook
-for games whose own input handling it disturbs; **Neutrino has no IGR at all** (which is *why* Mode 6
-is greyed out under that core); and the MMCE `IGR Bootcard Slot(s)` option fires a switch-to-bootcard
-command on reset.
+it only arms once the game opens a pad; with `IGR Path` blank the reset calls `Exit(0)`, the PS2
+browser, not RiptOPL; `IGR Path` boots a custom ELF from `mc0:`/`mc1:` or a FAT32 USB drive (`mass:/`,
+since #737) instead, and a USB path needs `USBD.IRX` + `USBHDFSD.IRX` in `mc0:`/`mc1:` `SYS-CONF` or
+the reset drops to the PS2 browser (OPL-core menu launches offer to copy them; Auto Loading launches
+can't ask); compat **Mode 6** disables the hook for games whose own input handling it disturbs;
+**Neutrino has no IGR at all** (which is *why* Mode 6 is greyed out under that core); and the MMCE
+`IGR Bootcard Slot(s)` option fires a switch-to-bootcard command on reset.
 
 **Home:** new `docs/IGR.md` + new site page `igr.html` (or fold into a Controls page — see #2).
 **Sources:** `ee_core/src/padhook.c`, `ee_core/include/padhook.h`, `ee_core/src/cd_igr_rpc.c`,
