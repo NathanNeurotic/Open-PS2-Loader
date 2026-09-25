@@ -2810,7 +2810,15 @@ static int resolveApaBootHome(void)
         }
     }
 
-    hddLoadSupportModules();
+    // With the exFAT home in hand the APA home is only LOOKED at -- for settings to carry over or a
+    // Custom Settings Path -- so mount it without creating __common/OPL/, and let it go again unless
+    // settings are carried over from it. Otherwise every first run of an APA-Jail disk created that
+    // folder and toasted "__common partition mounted" for a partition OPL was not using (CosmicScale).
+    int apaHomeWasMounted = gHDDPrefix != NULL;
+    if (haveExfatHome)
+        hddInspectSupportHome();
+    else
+        hddLoadSupportModules();
     if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0') {
         DIR *dir = opendir(gHDDPrefix);
         if (dir != NULL) {
@@ -2820,6 +2828,8 @@ static int resolveApaBootHome(void)
                     configSetCarryOverDir(gHDDPrefix);
                     adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT, APA settings carried over");
                 } else {
+                    if (!apaHomeWasMounted)
+                        hddReleaseSupportHome();
                     adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (official seed or first run)");
                 }
                 return 1;
@@ -2851,6 +2861,8 @@ static int resolveApaBootHome(void)
 
     // No usable APA data home. On a hybrid the exFAT volume is still a real, writable home.
     if (haveExfatHome) {
+        if (!apaHomeWasMounted)
+            hddReleaseSupportHome();
         adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT (APA data home unusable)");
         return 1;
     }

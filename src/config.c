@@ -1633,9 +1633,10 @@ int configReadMulti(int types)
             if (configRead(configSet)) {
                 result |= configSet->type;
                 // Record the file source BEFORE higher-level recovery re-homes the live config sets
-                // for a future save. Load notifications must describe evidence, not ownership policy.
+                // for a future save. Load notifications must describe evidence, not ownership policy --
+                // including settings carried over from the previous home, which live THERE, not here.
                 if (configSet->type == CONFIG_OPL)
-                    configPrepareLoadNotification(configSet->filename);
+                    configPrepareLoadNotification(configOplCarryOver ? configCarryOverDir : configSet->filename);
             }
         }
     }

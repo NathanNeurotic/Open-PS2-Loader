@@ -316,6 +316,40 @@ def check_pins():
           apa_home.find('adoptHybridExfatHome(before, exfatHome, "hybrid: exFAT, APA settings carried over")') and
           'haveExfatHome && !bootHomeHasRiptoplSettings(gHDDPrefix)' not in apa_home,
           'resolveApaBootHome: a hybrid must stay on exFAT when only RiptOPL settings sit on APA')
+    # APA-Jail first run (CosmicScale, 2026-09-25): with the exFAT home in hand the APA home is only
+    # looked at, so the look must not create __common/OPL/, and a home that supplies nothing is let go
+    # (no "__common partition mounted" toast). Settings carried over still need it mounted.
+    carried = apa_home.find('"hybrid: exFAT, APA settings carried over"') if apa_home else -1
+    first_run = apa_home.find('"hybrid: exFAT (official seed or first run)"') if apa_home else -1
+    unusable = apa_home.find('"hybrid: exFAT (APA data home unusable)"') if apa_home else -1
+    check(apa_home is not None and
+          re.search(r'if \(haveExfatHome\)\s*hddInspectSupportHome\(\);\s*else\s*hddLoadSupportModules\(\);', apa_home) and
+          0 < carried < first_run < unusable and
+          'hddReleaseSupportHome' not in apa_home[apa_home.rfind('configSetCarryOverDir(gHDDPrefix);'):carried] and
+          'hddReleaseSupportHome();' in apa_home[carried:first_run] and
+          'hddReleaseSupportHome();' in apa_home[apa_home.rfind('if (haveExfatHome) {'):unusable],
+          'resolveApaBootHome: a hybrid must inspect the APA home without creating __common/OPL/ and '
+          'release it unless settings are carried over from it')
+    hdd = text('src/hddsupport.c')
+    mount = function_text(hdd, 'static void hddMountSupportHome(')
+    check(mount is not None and
+          re.search(r'if \(createCommonHome\)\s*\(void\)hddCheckOPLFolder\(hddPrefix\);', mount) and
+          mount.count('hddCheckOPLFolder(') == 1 and
+          re.search(r'void hddLoadSupportModules\(void\)\s*\{\s*hddMountSupportHome\(1\);', hdd) and
+          re.search(r'void hddInspectSupportHome\(void\)\s*\{\s*hddMountSupportHome\(0\);', hdd),
+          'hddsupport: only hddLoadSupportModules may create __common/OPL/; hddInspectSupportHome never does')
+    release = function_text(hdd, 'void hddReleaseSupportHome(')
+    check(release is not None and 'fileXioUmount(hddPrefix);' in release and 'gHDDPrefix = NULL;' in release and
+          "gOPLPart[0] = '\\0';" in release,
+          'hddReleaseSupportHome: must unmount pfs0: and forget the data partition')
+    multi = function_text(config, 'int configReadMulti(')
+    check(multi is not None and
+          'configPrepareLoadNotification(configOplCarryOver ? configCarryOverDir : configSet->filename);' in multi,
+          'configReadMulti: the load toast must name the carry-over home when settings came from there')
+    toast = function_text(text('src/gui.c'), 'static void guiShowNotifications(')
+    check(toast is not None and
+          'configOplIsOfficialSeed() ? _STR_OFFICIAL_CFG_NOTIFICATION : _STR_CFG_NOTIFICATION' in toast,
+          'guiShowNotifications: official OPL\'s seed must not be announced as RiptOPL settings')
     # One decision for an on-time drive and a late one. A failed ATA load is retryable, so the drive can
     # first come up in tryAlternateDevice's retry; a bare PFS mount there skipped the hybrid check and homed
     # the hybrid on __common/OPL (CodeRabbit on #725).
