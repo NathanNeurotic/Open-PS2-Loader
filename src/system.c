@@ -1459,14 +1459,14 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
-        launchDiagMark(14); // refusal
+        launchDiagRefuse(LAUNCHDIAG_REFUSE_ARGS); // blink code 1
         return;
     }
 
     const char *deviceName = getDeviceName(driver);
     if (!strcmp(deviceName, "unsupported")) {
         LOG("[NEUTRINO] unsupported device '%s', abort\n", driver);
-        launchDiagMark(14); // refusal
+        launchDiagRefuse(LAUNCHDIAG_REFUSE_ARGS); // blink code 1
         return;
     }
 
@@ -1683,7 +1683,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs);
     argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs);
     if (gLaunchDiag)
-        launchDiagMark(9); // argv fully composed -- the pool-fit check below is the last gate
+        launchDiagMark(9); // argv composed -- the pool-fit check BELOW can still refuse (blink code 2)
 
     // ExecPS2 argv BYTE budget (verified vs ps2sdk exit.c SetArg + the crt0 args struct): each hop
     // carries its strings in ONE 256-byte pool, every NUL included. Hop 1 packs the child's load
@@ -1704,7 +1704,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
         }
         if (pool > 256) {
             LOG("[NEUTRINO] argv pool %d bytes even at the core-args floor (256 max) -- refusing handoff\n", pool);
-            launchDiagMark(14); // refusal: nothing will repaint after the teardown
+            launchDiagRefuse(LAUNCHDIAG_REFUSE_CORE_ARGV); // blink code 2: nothing repaints after the teardown
             return;
         }
     }

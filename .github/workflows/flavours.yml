@@ -65,6 +65,8 @@ jobs:
         run: python3 .github/scripts/test_audio_threads.py
       - name: Check that a held button keeps repeating across the tick-counter wrap
         run: python3 .github/scripts/test_pad_repeat_clock.py
+      - name: Check that the handoff probe only refuses a target the child cannot load
+        run: python3 .github/scripts/test_handoff_probe.py
 
   ra-host-tests:
     runs-on: ubuntu-24.04

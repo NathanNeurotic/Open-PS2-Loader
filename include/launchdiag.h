@@ -19,15 +19,35 @@
 //   6  cyan         io/art drain done (module teardown next)
 //   7  orange       module cleanup done (audioEnd/ioEnd next)
 //   8  azure        deinitEx finished (sysLaunchNeutrino next)
-//   9  purple       argv composed + pool fits (sysLoadELFKeepIOP next)
+//   9  purple       argv composed (the 256-byte pool check is NEXT, not done -- it can still refuse)
 //   10 light yellow ELF probe open OK (elfldr next)
-//   11 rose         ExecPS2 into elfldr child imminent
+//   11 salmon       ExecPS2 into elfldr child imminent
 //   12 pink         elfldr child entered (SifLoadElf running)
 //   13 spring green target ELF loaded, ExecPS2 into it imminent
-//   14 dark gray    handoff REFUSED (argv budget / open failed / unsupported)
+//   15 silver       HELD ~2 s: the probe's open() failed but fileXio opened the same file -- continuing
+//   16 light blue   HELD ~2 s: the probe's open() failed, then a retry within ~3 s worked -- continuing
+//
+// REFUSALS no longer share one colour (the old stage 14). A refused handoff is past the teardown,
+// so nothing else can run: the screen PARKS on dark gray, flashes WHITE N times, pauses, and
+// repeats forever. Count the flashes:
+//   1  null argument / unsupported device at sysLaunchNeutrino entry
+//   2  core argv (loadpath + argv[0] + -bsd/-bsdfs/-dvd) over the 256-byte kernel pool
+//   3  target ELF will not open, but its device root DOES open (path/file problem on a live device)
+//   4  target ELF will not open, and its device root does NOT open either (device gone after teardown)
+//   5  child-loader argv over the kernel budget (15 strings / 256 bytes)
+//   6  embedded child-loader ELF has a bad magic
 //
 // Set LAUNCH_DIAG to 0 to strip every marker from the build.
 #define LAUNCH_DIAG 1
+
+enum LaunchDiagRefusal {
+    LAUNCHDIAG_REFUSE_ARGS = 1,
+    LAUNCHDIAG_REFUSE_CORE_ARGV = 2,
+    LAUNCHDIAG_REFUSE_OPEN_ROOT_OK = 3,
+    LAUNCHDIAG_REFUSE_OPEN_ROOT_GONE = 4,
+    LAUNCHDIAG_REFUSE_CHILD_BUDGET = 5,
+    LAUNCHDIAG_REFUSE_CHILD_MAGIC = 6,
+};
 
 #if LAUNCH_DIAG
 
@@ -36,12 +56,28 @@ extern int gLaunchDiag;
 
 void launchDiagMark(int stage);
 
+// Paint a stage colour and keep it on screen for ms milliseconds (the continuing stages 15/16).
+void launchDiagHold(int stage, int ms);
+
+// Post-teardown refusal. With gLaunchDiag armed this NEVER returns: it parks on the blink code
+// above. Unarmed it only LOGs and returns, so the caller's normal refusal path runs unchanged.
+void launchDiagRefuse(int code);
+
 #else
 
 #define gLaunchDiag 0
 static inline void launchDiagMark(int stage)
 {
     (void)stage;
+}
+static inline void launchDiagHold(int stage, int ms)
+{
+    (void)stage;
+    (void)ms;
+}
+static inline void launchDiagRefuse(int code)
+{
+    (void)code;
 }
 
 #endif
