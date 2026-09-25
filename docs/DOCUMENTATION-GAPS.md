@@ -6,7 +6,9 @@ documentation surfaces:
 * **Repo** — `README.md` and `docs/*.md`
 * **Site** — the GitHub Pages docs, published from the `gh-pages` branch of this repository
 
-Audited 2026-09-09 against `rebuild/main` @ `10301224`, site @ `d66803be`.
+Audited 2026-09-09 against `rebuild/main` @ `10301224`, site @ `d66803be`. Follow-up audit
+2026-09-24 against `rebuild/main` @ `97af27d9`, site @ `f3aff94f`: see
+[the section at the end](#follow-up-audit-2026-09-24).
 
 Legend: **Missing** = no explanation anywhere · **Setting-line only** = the option appears in a
 settings table with a one-line hint, but nothing tells a user what the feature *is* or how to use it ·
@@ -237,3 +239,38 @@ decision — see each item's **Status** line above.
 * **Fake DS3 Workaround only appears in Bluetooth mode** (Tier 2, item 8).
 
 * **`GSMSKIPVIDEOS` / "FMV Skip" is a dead string** with no live UI (Tier 2, item 6).
+
+---
+
+## Follow-up audit (2026-09-24)
+
+Against `rebuild/main` @ `97af27d9` and the site @ `f3aff94f`, covering the 66 PRs merged since the
+first audit. The wiki is generated from those two sources (`_tools/build.py` in the wiki repository)
+and rebuilt byte-identically from them, so it needs no separate fix: rebuild it once the corrections
+below are merged.
+
+**Checked mechanically, all clean:** every internal link and anchor in the Markdown docs and the site
+pages (about 1,900); every setting name the docs quote against the language template, old and new;
+every "on/off by default" claim for a toggle on the site's settings page and in the repo tables against
+`setDefaults()`; the release asset names against the release workflow. Only one site link still
+pointed at the `master` lineage (`credits.html`, the licence).
+
+**Stale or missing, now corrected:**
+
+| Finding | Where | Source of truth |
+|---|---|---|
+| RetroAchievements status said nothing had run on a PS2, and the ee_core note still told people to shrink `ra_snap_buf`/`ra_watch` | `docs/RETROACHIEVEMENTS.md`, `README.md`, site `retroachievements.html` | #702–#705 (oMrRexD's hardware session), hacan359's 2026-09-10 hashing check, `ee_core/linkfile` |
+| RA archive layout: the ready app is `APPS/APP_RIPTOPL-RA` built on `OFFICIALROLLING`, not the pinned ps2dev folder | `docs/RETROACHIEVEMENTS.md`, site `retroachievements.html` | `rolling-release.yml` |
+| Main package layout predated `APPS/`, `APPS/APP_RIPTOPL/`, `ART/` and `APP_RIPTOPL.psu` | site `install.html`, `releases.html` | #708, #710 |
+| The stable `RIPTOPL-RA.ELF` update loader and the standalone `.psu` assets were missing from the asset lists, which still said `RIPTOPL.ELF` was the only loose loader | `README.md`, `ROLLING_RELEASE.md`, site `releases.html` | `release-normalize.yml` (#708, #711, #712) |
+| IGS "off in release builds" contradicted `docs/IGR.md`: the `-extra1` variants ship it | `README.md` | `build_rolling_extras.sh` |
+| The **REBOOT IOP?** app-launch prompt and the `REBOOTIOP` key were undocumented | `README.md` §APPS, site `apps.html` | #688 |
+| **Disc Artwork** setting missing from the artwork settings; `ItemText` draw order and the `ICO` toggle missing for theme authors; `docs/THEME_ENGINE.md` described `ItemIcon` as the list decorator, where it is an `ICO`-bound image | site `settings.html`, `docs/THEME_ENGINE.md`, site `themes.html` | #697 |
+| UDPFS/UDPBD now lock **IP Address Type** to Static and keep DHCP as the SMB/HTTP preference; the site still said to turn DHCP off | site `network-boot.html`, `settings.html` | #700 (`docs/NEUTRINO.md` already had it) |
+| PS1 Triangle menu now links **Global PS Emulation Settings** | `docs/CONTROLS.md`, site `controls.html`, `ps1-vcd.html` | #694 |
+| BGM plays only at the sample rates audsrv can convert; any other rate is silent | `docs/INTERFACE.md`, site `settings.html` | #726, ps2sdk `audsrv/src/upsamplers.c` |
+| 12 of 341 search-index entries carried text that is no longer on the page | site `data/search-index.json` | the pages themselves |
+
+**Left as they are:** `fork-gaps.html` is a dated comparison snapshot and says so. The site's
+coverage of #737 (Coverflow R1, IGR Path on USB, 4:3 values) and #738 (BDM views per device type)
+belongs with those PRs once they merge; `docs/IGR.md` and the README already travel inside #737.
