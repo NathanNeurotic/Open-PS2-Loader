@@ -5049,10 +5049,8 @@ void guiManageCheats(void)
             int boxWidth = rmWideScale(25);
             int boxHeight = 17;
 
-            if (enabled) {
-                rmDrawRect(boxX, boxY + 3, boxWidth, boxHeight, gTheme->textColor);
-                rmDrawRect(boxX + 2, boxY + 5, boxWidth - 4, boxHeight - 4, gTheme->selTextColor);
-            }
+            if (enabled)
+                rmDrawFramedRect(boxX, boxY + 3, boxWidth, boxHeight, 2, gTheme->textColor, gTheme->selTextColor);
 
             u32 textColour = (i == selectedCheat) ? gTheme->selTextColor : gTheme->textColor;
             fntRenderString(gTheme->fonts[0], boxX + 35, boxY + 3, ALIGN_LEFT, 0, 0, gCheats[i].name, textColour);
