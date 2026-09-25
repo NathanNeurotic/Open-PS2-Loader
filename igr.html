@@ -65,13 +65,12 @@
   </nav>
   <main class="content">
 <h1>In-Game Reset (IGR)</h1>
-<p class="lead">In-Game Reset lets you leave a running game and come straight back to RiptOPL — or power the
-console off — without touching the console's own Reset button. It is a controller shortcut that works from
-inside the game.</p>
+<p class="lead">In-Game Reset lets you leave a running game — or power the console off — without touching the
+console's own Reset button. It is a controller shortcut that works from inside the game.</p>
 
 <p>RiptOPL installs a small hook into the running game that watches the controller for a reserved button
-combination. When it sees one, it tears the game down and either returns you to the browser or shuts the
-console down.</p>
+combination. When it sees one, it tears the game down and either leaves for the PS2 browser (or the ELF set in
+<b>IGR Path</b>) or shuts the console down.</p>
 
 <h2 id="combinations">The button combinations</h2>
 <p>Every combination starts the same way: <b>hold all four shoulder buttons — L1 + L2 + R1 + R2</b> — and
@@ -80,7 +79,7 @@ then, while still holding them, press the second half.</p>
 <table>
 <thead><tr><th>Hold</th><th>Then press</th><th>Result</th></tr></thead>
 <tbody>
-<tr><td>L1 + L2 + R1 + R2</td><td><b>Start + Select</b></td><td><b>Reset</b> — quit the game and return to RiptOPL</td></tr>
+<tr><td>L1 + L2 + R1 + R2</td><td><b>Start + Select</b></td><td><b>Reset</b> — quit the game; see <a href="#where-reset-goes">Where a reset takes you</a></td></tr>
 <tr><td>L1 + L2 + R1 + R2</td><td><b>L3 + R3</b></td><td><b>Power off</b> the console</td></tr>
 <tr><td>L1 + L2 + R1 + R2</td><td><b>Up</b></td><td><b>In-game screenshot</b> — see <a href="#igs">Screenshots</a></td></tr>
 </tbody>
@@ -96,7 +95,7 @@ analog light on.</p>
 <thead><tr><th>Power button</th><th>Result</th></tr></thead>
 <tbody>
 <tr><td>Press <b>once</b></td><td>Power off</td></tr>
-<tr><td>Press <b>twice</b></td><td>Reset — return to RiptOPL</td></tr>
+<tr><td>Press <b>twice</b></td><td>Reset — the same as Start + Select</td></tr>
 </tbody>
 </table>
 
@@ -108,14 +107,24 @@ This is the fallback when a game has stopped responding to the pad entirely — 
 pad hook having attached.</div>
 
 <h2 id="where-reset-goes">Where a reset takes you</h2>
-<p>By default a reset returns you to the RiptOPL browser, started fresh. It does not restore what you had
-selected: <b>Remember Last Played Game</b> (<em>Settings → General &amp; System</em>) is a separate setting, off by default,
-and it is what re-selects the last game you ran.</p>
+<p>With the <b>IGR Path</b> setting (<em>Settings → General &amp; System</em>) left blank, a reset exits to the
+<b>PS2 browser</b>, the same place the menu's own <b>Exit</b> goes. It does not come back to RiptOPL by itself.</p>
 
-<p>You can send it somewhere else with the <b>IGR Path</b> setting (<em>Settings → General &amp; System</em>). Point it at
-an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight back into a
-different launcher or a homebrew menu. The file must live <b>on a memory card</b> (<code>mc0:</code> or
-<code>mc1:</code>); leave the setting blank to return to RiptOPL normally.</p>
+<p>Point IGR Path at an ELF and that ELF is booted on reset instead: another launcher, a homebrew menu, or
+RiptOPL itself. To come straight back to RiptOPL, give it RiptOPL's own ELF —
+<code>mc0:/APP_RIPTOPL/RIPTOPL.ELF</code> if you imported <code>APP_RIPTOPL.psu</code> to the first memory card.
+RiptOPL then starts fresh. It does not restore what you had selected: <b>Remember Last Played Game</b>
+(<em>Settings → General &amp; System</em>) is a separate setting, off by default, and it is what re-selects the last
+game you ran.</p>
+
+<p>The ELF must live <b>on a memory card</b> (<code>mc0:</code> or <code>mc1:</code>) or on a <b>FAT32 USB drive</b>
+(<code>mass:/…</code>). After a reset the console can only reach USB through <code>USBD.IRX</code> and
+<code>USBHDFSD.IRX</code> in the memory card's <code>SYS-CONF</code> folder, the files FMCB installs; without them the
+reset drops to the PS2 browser instead. If they are missing, RiptOPL offers to copy its own there the first time you
+launch a game on the OPL core with a USB IGR Path (Neutrino has no IGR, so its launches never ask). It never replaces
+files that are already there. Games started by <b>Auto Loading</b> skip the offer, because nobody is at the menu to
+answer it: launch a game on the OPL core from the menu once, or copy the two files yourself, before relying on a USB
+IGR Path there.</p>
 
 <p>If you use MMCE cards, <b>IGR Bootcard Slot(s)</b> (<em>Settings → Game Sources → MMCE Settings</em>) additionally sends a
 "switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already
@@ -183,7 +192,9 @@ clicks. The screenshot combination uses <b>Up</b>, so it needs no analog mode.</
 fine and the problem is in the pad half.</p>
 
 <p><b>Reset takes me somewhere unexpected.</b> Check <b>IGR Path</b> in <em>Settings → General &amp; System</em>. A stale
-path left over from an earlier setup will boot that ELF instead of returning to the browser.</p>
+path left over from an earlier setup will boot that ELF instead of exiting to the PS2 browser. A USB path that lands
+in the PS2 browser anyway is missing its memory-card drivers — see <a href="#where-reset-goes">Where a reset takes
+you</a>.</p>
 
 <p><b>The game resets on its own during play.</b> A game that uses all four shoulders plus Start or Select in
 normal play can trigger IGR by accident. Set <b>Mode 6 — Disable IGR</b> for that title.</p>
