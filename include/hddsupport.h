@@ -124,6 +124,12 @@ static inline int hddLoadModulesReady(void)
 // hddLoadModulesReady() decision while enabling nested, source-level startup stages beneath it.
 int hddDiagLoadModulesReady(void);
 void hddLoadSupportModules(void);
+// Mount the EXISTING APA data home only to read it: never creates __common/OPL/. For a look that may
+// end in "not needed", such as the APA+exFAT hybrid boot deciding its settings home.
+void hddInspectSupportHome(void);
+// Unmount a data home that turned out not to be needed and forget it, so nothing reports it as OPL's
+// partition. The next hddLoadSupportModules() rediscovers and mounts it as usual.
+void hddReleaseSupportHome(void);
 
 // Normal APA data-home choices surfaced by Settings -> Game Sources. POPS loose files remain
 // separately owned by __common/POPS; this selector only controls OPL's regular data home.

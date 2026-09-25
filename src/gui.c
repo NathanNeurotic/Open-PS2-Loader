@@ -412,7 +412,9 @@ static void guiShowNotifications(void)
         }
 
         if (showCfgPopup) {
-            snprintf(notification, sizeof(notification), _l(_STR_CFG_NOTIFICATION), configGetLoadDir());
+            // Official OPL's conf_opl.cfg is only a read-only seed (#545): say so, or "Config loaded"
+            // reads as the user's RiptOPL settings on a device that has none (CosmicScale, APA-Jail).
+            snprintf(notification, sizeof(notification), _l(configOplIsOfficialSeed() ? _STR_OFFICIAL_CFG_NOTIFICATION : _STR_CFG_NOTIFICATION), configGetLoadDir());
             if ((col_pos = strchr(notification, ':')) != NULL)
                 *(col_pos + 1) = '\0';
 
@@ -3207,7 +3209,7 @@ static int guiSettingsShowIndex(int *page)
         if (guiDrawBGSettings() == 0)
             guiDrawBGPlasma();
 
-        fntRenderString(gTheme->fonts[0], screenWidth >> 1, 50, ALIGN_CENTER, 0, 0, "SETTINGS INDEX", gTheme->textColor);
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1, 50, ALIGN_CENTER, 0, 0, _l(_STR_SETTINGS), gTheme->textColor);
 
         y = (gTheme->usedHeight >> 1) - (spacing * (itemCount >> 1));
         for (int i = 0; i < itemCount; i++) {
@@ -4667,8 +4669,9 @@ void guiRenderTextScreen(const char *message)
     // -- so the menu underneath stayed clearly legible through the message. On a CRT that reads as
     // a transparent error with the settings menu showing through it, which is exactly what the
     // tester reported (and photographed) three times. Whatever is behind a status screen carries no
-    // information, so it is hidden. Interactive dialogs deliberately KEEP the translucent overlay
-    // (see guiConfirmVideoMode, where seeing the mode behind the prompt is the entire point).
+    // information, so it is hidden. Interactive dialogs keep the translucent overlay only when the
+    // caller chose what sits behind them (guiMsgBox with a ui, the prompts over the settings
+    // background); the video-mode, remove-settings and cheat-selection screens went opaque too.
     rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
     fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, message, gTheme->textColor);
@@ -4889,7 +4892,11 @@ int guiConfirmVideoMode(void)
 
         guiShow();
 
-        rmDrawRect(0, 0, screenWidth, screenHeight, gColDarker);
+        // Opaque, like the other prompts whose backdrop is just whatever guiShow() draws (guiMsgBox
+        // with no ui, guiWarning, guiPromptRebootIop). The prompt itself is what proves the new mode
+        // syncs. What showed through the old ~75% wash was the game list page -- not the Settings
+        // screen the mode was changed from -- and testers saw it empty behind the prompt.
+        rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
@@ -4934,7 +4941,8 @@ int guiGameShowRemoveSettings(config_set_t *configSet, config_set_t *configGame)
 
         guiShow();
 
-        rmDrawRect(0, 0, screenWidth, screenHeight, gColDarker);
+        // Opaque for the same reason as guiConfirmVideoMode: the backdrop is just guiShow().
+        rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
@@ -5021,7 +5029,9 @@ void guiManageCheats(void)
 
         guiShow();
 
-        rmDrawRect(0, 0, screenWidth, screenHeight, gColDarker);
+        // Opaque for the same reason as guiConfirmVideoMode: the backdrop is just guiShow(), and
+        // the cheat names are far easier to read on black than over the menu.
+        rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
@@ -5039,10 +5049,8 @@ void guiManageCheats(void)
             int boxWidth = rmWideScale(25);
             int boxHeight = 17;
 
-            if (enabled) {
-                rmDrawRect(boxX, boxY + 3, boxWidth, boxHeight, gTheme->textColor);
-                rmDrawRect(boxX + 2, boxY + 5, boxWidth - 4, boxHeight - 4, gTheme->selTextColor);
-            }
+            if (enabled)
+                rmDrawFramedRect(boxX, boxY + 3, boxWidth, boxHeight, 2, gTheme->textColor, gTheme->selTextColor);
 
             u32 textColour = (i == selectedCheat) ? gTheme->selTextColor : gTheme->textColor;
             fntRenderString(gTheme->fonts[0], boxX + 35, boxY + 3, ALIGN_LEFT, 0, 0, gCheats[i].name, textColour);

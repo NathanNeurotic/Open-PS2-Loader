@@ -400,7 +400,9 @@ This build layers several features on top of upstream OPL:
   notification, or pause). APPS and Favorites remain independent. Wherever L3 does something, the
   view you leave a page on is **remembered across sessions** — each device page, the Favorites
   shelf and the APPS split side keep their own position, restored the next time you boot (a
-  remembered view that the display setting no longer allows is simply dropped). Pressing L3 never
+  remembered view that the display setting no longer allows is simply dropped). BDM pages save one
+  position per device type (USB, iLink, MX4SIO, exFAT HDD, UDPBD), so a device keeps its view when the
+  `mass` slot numbers swap between boots. Pressing L3 never
   writes to storage: the positions ride along with a write that already happens — **launching a
   game, or saving settings** — so toggling and then powering off without doing either is the one
   case that is not kept. On a combined
@@ -456,7 +458,7 @@ and then, still holding them, press the second half:
 
 | Hold | Then press | Result |
 | ---- | ---------- | ------ |
-| L1 + L2 + R1 + R2 | **Start + Select** | Reset - quit the game and return to RiptOPL |
+| L1 + L2 + R1 + R2 | **Start + Select** | Reset - quit the game to the PS2 browser, or to the **IGR Path** ELF |
 | L1 + L2 + R1 + R2 | **L3 + R3** | Power off the console |
 | L1 + L2 + R1 + R2 | **Up** | In-game screenshot (needs GSM on **and** an `IGS=1` build: off in the main release loader, on in the `-extra1` loaders in `RIPTOPL-VARIANTS-*.zip` — see [docs/IGR.md](docs/IGR.md#in-game-screenshots-igs)) |
 
@@ -469,8 +471,9 @@ IGR** is set, and under the **Neutrino core**, which has no IGR at all - which i
 out there. PS1 titles use POPSTARTER's or Ember's own IGR, not this one.
 
 **IGR Path** (*Settings -> General & System*) boots a custom ELF from `mc0:`/`mc1:` or a FAT32 USB drive (`mass:/`) on reset instead of
-returning to the browser. **IGR Bootcard Slot(s)** (*Settings -> Game Sources -> MMCE Settings*) sends a switch-to-bootcard
-command as the reset happens.
+exiting to the PS2 browser; give it RiptOPL's own ELF to come back to RiptOPL. A USB path also needs two driver files on the
+memory card - see [docs/IGR.md](docs/IGR.md#where-a-reset-takes-you). **IGR Bootcard Slot(s)** (*Settings -> Game Sources ->
+MMCE Settings*) sends a switch-to-bootcard command as the reset happens.
 
 ### Game list
 
@@ -482,7 +485,7 @@ command as the reset happens.
 | Circle | Go up one folder level |
 | Triangle | Per-game settings |
 | Square | Game info page |
-| L1 / R1 | Previous / next page |
+| L1 / R1 | Previous / next page (both wrap around at the ends) |
 | L2 / R2 | First / last page |
 | L3 | Cycle the page's library view |
 | R3 | Star or un-star as a Favorite |

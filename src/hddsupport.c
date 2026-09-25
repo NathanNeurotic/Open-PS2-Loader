@@ -804,7 +804,9 @@ static int hddLoadCoreSupportModules(void)
     return 1;
 }
 
-void hddLoadSupportModules(void)
+// createCommonHome: make __common/OPL/ when __common is the data partition and the folder is missing.
+// Right when OPL will USE that home (the APA page, an APA settings save); wrong for a mere look.
+static void hddMountSupportHome(int createCommonHome)
 {
     int ret;
 
@@ -855,7 +857,8 @@ void hddLoadSupportModules(void)
     hddSupportErrToasted = 0;
     hddClearRecoveredErrors();
     if (!strcmp(gOPLPart, "hdd0:__common")) {
-        (void)hddCheckOPLFolder(hddPrefix);
+        if (createCommonHome)
+            (void)hddCheckOPLFolder(hddPrefix);
         gHDDPrefix = "pfs0:OPL/";
     } else {
         gHDDPrefix = "pfs0:";
@@ -864,6 +867,31 @@ void hddLoadSupportModules(void)
     // A prior list pass may have parked relative HDD artwork as unavailable while no persistent
     // PFS home existed. Re-arm those misses exactly when the home becomes usable again.
     cacheInvalidateFailMemo();
+}
+
+void hddLoadSupportModules(void)
+{
+    hddMountSupportHome(1);
+}
+
+// The APA+exFAT hybrid boot (resolveApaBootHome) only needs to know whether older RiptOPL settings or a
+// Custom Settings Path redirect sit in the APA home before it homes on exFAT. Mounting through
+// hddLoadSupportModules for that created __common/OPL/ on every first run of a PSBBN "APA-Jail" disk,
+// where APA holds only the launchers (CosmicScale, 2026-09-25).
+void hddInspectSupportHome(void)
+{
+    hddMountSupportHome(0);
+}
+
+void hddReleaseSupportHome(void)
+{
+    if (gHDDPrefix == NULL)
+        return;
+
+    fileXioUmount(hddPrefix);
+    gHDDPrefix = NULL;
+    gOPLPart[0] = '\0';
+    hddOplHomeAutoPlus = 0;
 }
 
 void hddInit(item_list_t *itemList)

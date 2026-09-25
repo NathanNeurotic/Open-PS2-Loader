@@ -66,6 +66,12 @@ The menu and Auto Loading run one discovery path. `miniInit` calls `resolveBootD
      on exFAT always win. The first save writes everything to exFAT. With nothing to carry over,
      official's `conf_opl.cfg` seeds the first boot, or defaults apply.
 
+     To look for those files the APA data home is mounted, but nothing is created in it: no
+     `__common/OPL/` folder on a disk that never had one. When nothing is carried over it is
+     unmounted again, so the menu does not announce "`__common` partition mounted" for a partition
+     it is not using. Carried-over settings are announced as loaded from the HDD, and official's
+     seed as "Official OPL settings loaded from `massN:`".
+
   An exFAT home is an ordinary ATA-BDM boot from then on. The boot-device reconcile enables
   the ATA transport, and saves take the BDM path. Official OPL starts its BDM page Auto whenever it
   finds its config on a BDM device; RiptOPL does the same on a hybrid's exFAT home while the master
@@ -94,18 +100,19 @@ The menu and Auto Loading run one discovery path. `miniInit` calls `resolveBootD
   compared `guiMsgBox`'s result with 2 while accept returns 1.
 
 Per-game CFG files still come from the game device. An absent `conf_game.cfg` never triggers
-discovery by itself. Nothing here creates, formats or edits APA partitions. The hybrid probe
-only reads, and the exFAT side is written only when the user saves settings.
+discovery by itself. Nothing here creates, formats or edits APA partitions, and on a hybrid
+nothing creates folders in them either. The hybrid probe only reads, and the exFAT side is
+written only when the user saves settings.
 
 ## Source review (not runtime tests)
 
 | Layout/state | Result |
 | --- | --- |
-| PSBBN hybrid, official configs on exFAT, nothing from RiptOPL | Menu and Auto Loading home on `massN:/`, seeded from `conf_opl.cfg`; `conf_game.cfg` globals apply; exFAT games visible (`usb_mode=2`, `enable_bdm_hdd=1`). First save writes `settings_riptopl.cfg` there. |
+| PSBBN hybrid, official configs on exFAT, nothing from RiptOPL | Menu and Auto Loading home on `massN:/`, seeded from `conf_opl.cfg` ("Official OPL settings loaded from mass0:"); `conf_game.cfg` globals apply; exFAT games visible (`usb_mode=2`, `enable_bdm_hdd=1`). `__common` is looked at, left without a new `OPL` folder, and unmounted. First save writes `settings_riptopl.cfg` there. |
 | PSBBN hybrid after a RiptOPL save on exFAT | RiptOPL's file wins; PFS is not mounted for settings. |
 | Hybrid with RiptOPL settings already on `__common/OPL` or `+OPL` | Home moves to `massN:/`; those settings are carried over read-only and the BDM page starts Auto; the first save writes them to exFAT. |
 | Hybrid with a Custom Settings Path file in the APA home | That APA home is kept and the redirect decides. |
-| PSBBN hybrid, no settings anywhere | Home `massN:/`, defaults, BDM page Auto and HDD (exFAT) on, so the exFAT games show; the first save writes to exFAT. |
+| PSBBN hybrid, no settings anywhere | Home `massN:/`, defaults, BDM page Auto and HDD (exFAT) on, so the exFAT games show; no "Config loaded" notice, no new `__common/OPL` folder, `__common` unmounted; the first save writes to exFAT. |
 | Hybrid whose exFAT volume never mounts within 5 s | Falls back to the APA path. |
 | Hybrid whose drive is not ready until the settings retry | Same home as when the drive is ready at boot: the retry runs the same hybrid check. |
 | Plain APA disk | Unchanged; a pure-APA official user's `+OPL/conf_opl.cfg` now seeds a first boot. |

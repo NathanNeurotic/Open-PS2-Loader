@@ -210,32 +210,27 @@ static int updateISOGameList(const char *path, const struct game_cache_list *cac
     char filename[256];
     FILE *file;
     const struct game_list_t *game;
-    int result, i, j, modified;
+    int result, i, modified;
     base_game_info_t *list;
 
     modified = 0;
     if (cache != NULL) {
         if ((head != NULL) && (count > 0)) {
-            game = head;
-
-            for (i = 0; i < count; i++) {
-                for (j = 0; j < cache->count; j++) {
-                    if (strncmp(cache->games[i].name, game->gameinfo.name, ISO_GAME_NAME_MAX + 1) == 0 && strncmp(cache->games[i].extension, game->gameinfo.extension, ISO_GAME_EXTENSION_MAX + 1) == 0)
-                        break;
-                }
-
-                if (j == cache->count) {
-                    LOG("updateISOGameList: game added.\n");
-                    modified = 1;
-                    break;
-                }
-
-                game = game->next;
-            }
-
-            if ((!modified) && (count != cache->count)) {
-                LOG("updateISOGameList: game removed.\n");
+            // The cache is written in list order, so an unchanged directory reproduces it position
+            // for position. Any difference in count, or at any position, means rewrite it. (This
+            // is what the old nested loop computed: its inner loop compared the same pair,
+            // cache->games[i], cache->count times, and read past the cache when games were added.)
+            if (count != cache->count) {
+                LOG("updateISOGameList: game count changed.\n");
                 modified = 1;
+            } else {
+                for (i = 0, game = head; i < count && game != NULL; i++, game = game->next) {
+                    if (strncmp(cache->games[i].name, game->gameinfo.name, ISO_GAME_NAME_MAX + 1) != 0 || strncmp(cache->games[i].extension, game->gameinfo.extension, ISO_GAME_EXTENSION_MAX + 1) != 0) {
+                        LOG("updateISOGameList: game added or reordered.\n");
+                        modified = 1;
+                        break;
+                    }
+                }
             }
         } else {
             modified = 0;
@@ -283,22 +278,52 @@ static int updateISOGameList(const char *path, const struct game_cache_list *cac
     return result;
 }
 
-// Queries for the game entry, based on filename. Only the new filename format is supported (filename.ext).
-static int queryISOGameListCache(const struct game_cache_list *cache, base_game_info_t *ginfo, const char *filename)
+// Is filename exactly this entry's name followed by its extension? The bounded reads also keep a
+// damaged games.bin entry (no terminator) from reading past its own fields.
+static int isoCacheEntryMatches(const base_game_info_t *game, const char *filename)
 {
-    char isoname[ISO_GAME_FNAME_MAX + 1];
-    int i;
+    const char *nameEnd = memchr(game->name, '\0', sizeof(game->name));
+    size_t nameLen;
 
-    for (i = 0; i < cache->count; i++) {
-        snprintf(isoname, sizeof(isoname), "%s%s", cache->games[i].name, cache->games[i].extension);
+    if (nameEnd == NULL || memchr(game->extension, '\0', sizeof(game->extension)) == NULL)
+        return 0;
+    nameLen = (size_t)(nameEnd - game->name);
+    return strncmp(filename, game->name, nameLen) == 0 && strcmp(filename + nameLen, game->extension) == 0;
+}
 
-        if (strcmp(filename, isoname) == 0) {
-            memcpy(ginfo, &cache->games[i], sizeof(base_game_info_t));
-            return 0;
+/* Queries for the game entry, based on filename. Only the new filename format is supported
+   (filename.ext).
+
+   *hint is the index of the previous match (start it at -1). updateISOGameList writes the cache in
+   list order, which is the REVERSE of the order the next scan reads the directory (scanForISO
+   prepends), so the next file is normally the entry just before the last one found -- or just
+   after it, if the order ever runs the other way. Those two are tried first; anything else falls
+   back to the full search. This used to be a full search with an snprintf per entry for EVERY
+   file, i.e. O(n^2) formatting work on the IO worker on every PS2 list scan. */
+static int queryISOGameListCache(const struct game_cache_list *cache, base_game_info_t *ginfo, const char *filename, int *hint)
+{
+    int i, found = -1;
+    int count = (int)cache->count;
+
+    if (*hint - 1 >= 0 && *hint - 1 < count && isoCacheEntryMatches(&cache->games[*hint - 1], filename))
+        found = *hint - 1;
+    else if (*hint + 1 >= 0 && *hint + 1 < count && isoCacheEntryMatches(&cache->games[*hint + 1], filename))
+        found = *hint + 1;
+    else {
+        for (i = 0; i < count; i++) {
+            if (isoCacheEntryMatches(&cache->games[i], filename)) {
+                found = i;
+                break;
+            }
         }
     }
 
-    return ENOENT;
+    if (found < 0)
+        return ENOENT;
+
+    memcpy(ginfo, &cache->games[found], sizeof(base_game_info_t));
+    *hint = found;
+    return 0;
 }
 
 // folderlist (folder-browse only, else NULL) collects subdirectory rows in a list SEPARATE from
@@ -314,6 +339,7 @@ static int scanForISO(char *path, char type, struct game_list_t **glist, struct 
     DIR *dir;
 
     int cacheLoaded = loadISOGameListCache(path, &cache) == 0;
+    int cacheHint = -1; // index of the last cache hit (queryISOGameListCache)
 
     if ((dir = opendir(path)) != NULL) {
         int pathLen = snprintf(fullpath, sizeof(fullpath), "%s", path);
@@ -383,7 +409,7 @@ static int scanForISO(char *path, char type, struct game_list_t **glist, struct 
                 game->startup[GAME_STARTUP_MAX - 1] = '\0';
                 strncpy(game->extension, &dirent->d_name[GAME_STARTUP_MAX + NameLen], sizeof(game->extension) - 1);
                 game->extension[sizeof(game->extension) - 1] = '\0';
-            } else if (cacheLoaded && queryISOGameListCache(&cache, &cachedGInfo, dirent->d_name) == 0) {
+            } else if (cacheLoaded && queryISOGameListCache(&cache, &cachedGInfo, dirent->d_name, &cacheHint) == 0) {
                 // use cached entry
                 memcpy(game, &cachedGInfo, sizeof(base_game_info_t));
             } else {

@@ -949,9 +949,9 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
             // Align to the right
             x -= *w;
 
-            rmDrawRect(x, y + 3, *w, *h, txtcol);
+            // One call, so a dark colour keeps its whole frame on a half-height framebuffer too.
             u64 dcol = GS_SETREG_RGBA(item->colourvalue.r, item->colourvalue.g, item->colourvalue.b, 0x80);
-            rmDrawRect(x + 2, y + 5, *w - 4, *h - 4, dcol);
+            rmDrawFramedRect(x, y + 3, *w, *h, 2, txtcol, dcol);
 
             break;
         }

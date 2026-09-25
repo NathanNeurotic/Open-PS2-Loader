@@ -115,6 +115,10 @@ void rmSetReflectionYOffset(int yoff);
 /** Queues a opaque rectangle to be rendered */
 void rmDrawRect(int x, int y, int w, int h, u64 color);
 
+/** Queues a rectangle of fillColor inside a frameColor border `border` virtual pixels wide, keeping at
+ * least one display pixel of border on every side in every video mode. */
+void rmDrawFramedRect(int x, int y, int w, int h, int border, u64 frameColor, u64 fillColor);
+
 /** Queues a single color line to be rendered */
 void rmDrawLine(int x1, int y1, int x2, int y2, u64 color);
 

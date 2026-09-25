@@ -43,8 +43,7 @@ struct pad_data_t
     int needsInit;  // reconnect-edge re-init pending; runs once the verified-idle gate opens (see readPads)
 };
 
-/// current time in miliseconds (last update time)
-static u32 curtime = 0;
+/// milliseconds between the last two polls (see padPollElapsedMs)
 static u32 time_since_last = 0;
 
 // PAD FAULT DISCRIMINATOR (debug HUD). A press is 60-100 ms, i.e. 4-6 frames, so losing one means
@@ -147,9 +146,7 @@ static int isPadReadyState(int state)
 // more misses, and the loop self-sustains as a ~1 s cadence of 300-900 ms input blackouts (the USB
 // "one move per second" hardware report; master's f0b039a6/fcb00dd8 measured the same shape). The
 // gate therefore advances only on polls where every attempted read succeeded (readPad's pollClean),
-// and an inter-poll gap above PAD_IDLE_MAX_CLEAN_GAP_MS breaks the run: gap time is unobserved, and
-// this also swallows the once-per-~29 s time_since_last wrap sample, which previously opened the
-// gate in a single step.
+// and an inter-poll gap above PAD_IDLE_MAX_CLEAN_GAP_MS breaks the run: gap time is unobserved.
 #define PAD_SELF_HEAL_IDLE_MS     1000
 #define PAD_IDLE_MAX_CLEAN_GAP_MS 100
 static u32 padIdleMs = 0;
@@ -490,13 +487,11 @@ static int getKeyDelay(int id, int repeat)
 }
 
 /*--    Menu rumble    ------------------------------------------------------------------------------
-Opt-in (gEnableRumble). The pulse is timed against RAW cpu_ticks() elapsed since it started, and
-NOT against time_since_last below -- that value is the difference of two ALREADY divided cpu_ticks()
-readings, so it goes wild once every ~29.1 s when the 32-bit tick counter wraps. On a decrementing
-"milliseconds left" counter a single bad sample adds ~29 s to the pulse: a motor latched on. An
-elapsed comparison in raw ticks is correct across one wrap by ordinary unsigned arithmetic, and a
-pulse is capped below at a fraction of a second, so one wrap is the most that can occur inside it.
-This is why the feature needs none of the pad-clock rework it was originally blocked on.
+Opt-in (gEnableRumble). The pulse is timed against RAW cpu_ticks() elapsed since it started. An
+elapsed comparison in raw ticks is correct across one wrap of the 32-bit tick counter (~29.1 s) by
+ordinary unsigned arithmetic, and a pulse is capped below at a fraction of a second, so one wrap is
+the most that can occur inside it. A decrementing "milliseconds left" counter would be the wrong
+shape here: one bad sample would latch a motor on.
 ----------------------------------------------------------------------------------------------------*/
 
 // Longest pulse we will ever hold a motor on for. Menu feedback, not a sustained buzz.
@@ -715,6 +710,41 @@ void padFreezeEdgeBaseline(int freeze)
     edgeBaselineFrozen = next;
 }
 
+/* Milliseconds since the previous call, for the key-repeat counters and the idle gate.
+
+   The difference is taken in RAW ticks, which unsigned arithmetic keeps correct across a wrap of the
+   32-bit counter (about every 29.1 s), and only then converted. This used to divide each reading
+   first and subtract the quotients: at the wrap the reading fell from ~29127 ms to ~0, the u32
+   difference came out near 2^32, and `delaycnt[i] -= time_since_last` in readPads() pushed every
+   held key's repeat counter UP by ~29 s, and each later wrap pushed it up again just before it ran
+   out. A held direction or L1/R1 therefore stopped at a random row and stayed stopped until it was
+   released (#729). The sub-millisecond remainder is carried into the next call, so
+   the repeat rate keeps the old long-run accuracy instead of losing a fraction of a ms per frame. */
+static u32 padPollElapsedMs(void)
+{
+    static u32 lastTicks = 0;
+    static u32 carryTicks = 0;
+    u32 now = cpu_ticks();
+    u32 ticks = (u32)(now - lastTicks) + carryTicks;
+
+    lastTicks = now;
+    carryTicks = ticks % CLOCKS_PER_MILISEC;
+    return ticks / CLOCKS_PER_MILISEC;
+}
+
+// A held key counts down to its next repeat (getKey); a released one rearms at the initial delay.
+static void padAdvanceRepeatTimers(u32 elapsedMs)
+{
+    int i;
+
+    for (i = 0; i < 16; ++i) {
+        if (getKeyPressed(i + 1))
+            delaycnt[i] -= elapsedMs;
+        else
+            delaycnt[i] = getKeyDelay(i + 1, 0);
+    }
+}
+
 /** polling method. Call every frame. */
 int readPads()
 {
@@ -725,10 +755,7 @@ int readPads()
         oldpaddata = paddata;
     paddata = 0;
 
-    // in ms.
-    u32 newtime = cpu_ticks() / CLOCKS_PER_MILISEC;
-    time_since_last = newtime - curtime;
-    curtime = newtime;
+    time_since_last = padPollElapsedMs();
 
     int rslt = 0;
 
@@ -793,12 +820,7 @@ int readPads()
         rumbleOffRepeats--;
     }
 
-    for (i = 0; i < 16; ++i) {
-        if (getKeyPressed(i + 1))
-            delaycnt[i] -= time_since_last;
-        else
-            delaycnt[i] = getKeyDelay(i + 1, 0);
-    }
+    padAdvanceRepeatTimers(time_since_last);
 
     return rslt;
 }

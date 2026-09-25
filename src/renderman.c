@@ -585,6 +585,30 @@ void rmDrawRect(int x, int y, int w, int h, u64 color)
     order++;
 }
 
+/* A frame and its fill, placed from the frame's EDGES in display pixels. Drawing them as two
+   rmDrawRect calls scaled each height on its own, and Y_SCALE truncates: on a 224-line framebuffer
+   (the flicker-free 448i/512i rows, 224p/256p) a 17-high swatch became 7 lines and its 13-high fill
+   6, so whichever of the 2px top or bottom borders rounded to a line left the other with none. A
+   dark colour swatch then read as an open box (zackcage6). Each side keeps at least one line. */
+void rmDrawFramedRect(int x, int y, int w, int h, int border, u64 frameColor, u64 fillColor)
+{
+    int x0 = X_SCALE(x), y0 = Y_SCALE(y), x1 = X_SCALE(x + w), y1 = Y_SCALE(y + h);
+    int bx = X_SCALE(border), by = Y_SCALE(border);
+
+    if (bx < 1)
+        bx = 1;
+    if (by < 1)
+        by = 1;
+
+    gsGlobal->PrimAlphaEnable = GS_SETTING_ON;
+    gsKit_prim_sprite(gsGlobal, x0 + fRenderXOff, y0 + fRenderYOff, x1 + fRenderXOff, y1 + fRenderYOff, order, frameColor);
+    order++;
+    if (x1 - x0 > 2 * bx && y1 - y0 > 2 * by) {
+        gsKit_prim_sprite(gsGlobal, x0 + bx + fRenderXOff, y0 + by + fRenderYOff, x1 - bx + fRenderXOff, y1 - by + fRenderYOff, order, fillColor);
+        order++;
+    }
+}
+
 void rmDrawLine(int x1, int y1, int x2, int y2, u64 color)
 {
     float fx1 = X_SCALE(x1) + fRenderXOff;
