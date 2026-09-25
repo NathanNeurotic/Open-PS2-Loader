@@ -4668,7 +4668,8 @@ void guiRenderTextScreen(const char *message)
     // a transparent error with the settings menu showing through it, which is exactly what the
     // tester reported (and photographed) three times. Whatever is behind a status screen carries no
     // information, so it is hidden. Interactive dialogs keep the translucent overlay only when the
-    // caller chose what sits behind them (guiMsgBox with a ui); the video-mode prompt went opaque too.
+    // caller chose what sits behind them (guiMsgBox with a ui, the prompts over the settings
+    // background); the video-mode, remove-settings and cheat-selection screens went opaque too.
     rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
     fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, message, gTheme->textColor);
@@ -4938,7 +4939,8 @@ int guiGameShowRemoveSettings(config_set_t *configSet, config_set_t *configGame)
 
         guiShow();
 
-        rmDrawRect(0, 0, screenWidth, screenHeight, gColDarker);
+        // Opaque for the same reason as guiConfirmVideoMode: the backdrop is just guiShow().
+        rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
@@ -5025,7 +5027,9 @@ void guiManageCheats(void)
 
         guiShow();
 
-        rmDrawRect(0, 0, screenWidth, screenHeight, gColDarker);
+        // Opaque for the same reason as guiConfirmVideoMode: the backdrop is just guiShow(), and
+        // the cheat names are far easier to read on black than over the menu.
+        rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
