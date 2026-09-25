@@ -115,7 +115,11 @@ and it is what re-selects the last game you ran.</p>
 <p>You can send it somewhere else with the <b>IGR Path</b> setting (<em>Settings → General &amp; System</em>). Point it at
 an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight back into a
 different launcher or a homebrew menu. The file must live <b>on a memory card</b> (<code>mc0:</code> or
-<code>mc1:</code>); leave the setting blank to return to RiptOPL normally.</p>
+<code>mc1:</code>) or on a <b>FAT32 USB drive</b> (<code>mass:/…</code>); leave the setting blank to return to RiptOPL normally.
+After a reset the console can only reach USB through <code>USBD.IRX</code> and <code>USBHDFSD.IRX</code> in the memory card's
+<code>SYS-CONF</code> folder, the files FMCB installs. If they are missing, RiptOPL offers to copy its own there the first time you
+launch a game on the OPL core with a USB IGR Path (Neutrino has no IGR, so its launches never ask). It never replaces
+files that are already there.</p>
 
 <p>If you use MMCE cards, <b>IGR Bootcard Slot(s)</b> (<em>Settings → Game Sources → MMCE Settings</em>) additionally sends a
 "switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is already
