@@ -1340,3 +1340,5 @@ gui_strings:
   string: "The IGR Path is on USB, but %s is missing USBD.IRX and USBHDFSD.IRX, which the console needs to reach USB after an In-Game Reset. Without them the IGR drops to the PS2 browser. Copy RiptOPL's drivers there now? FMCB, OpenTuna and other exploits load these files too and may behave differently with them. Existing files are never replaced. FAT32 USB only."
 - label: IGR_USB_DRIVERS_FAILED
   string: "Could not copy the USB drivers to %s (card full or not writable). The IGR will drop to the PS2 browser."
+- label: OFFICIAL_CFG_NOTIFICATION
+  string: Official OPL settings loaded from %s
