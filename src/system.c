@@ -23,7 +23,8 @@
 #define SYS_DISC_NODISC_MS   2000
 #include "include/opl.h"
 #include "include/gui.h"
-#include "include/lang.h" // _l(_STR_...) -- Neutrino preflight abort toasts
+#include "include/lang.h"       // _l(_STR_...) -- Neutrino preflight abort toasts
+#include "include/launchdiag.h" // UDPBD hang-triage stage markers (gated on gLaunchDiag)
 #include "include/ethsupport.h"
 #include "include/hddsupport.h"
 #include "include/util.h"
@@ -1458,12 +1459,14 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
+        launchDiagMark(14); // refusal
         return;
     }
 
     const char *deviceName = getDeviceName(driver);
     if (!strcmp(deviceName, "unsupported")) {
         LOG("[NEUTRINO] unsupported device '%s', abort\n", driver);
+        launchDiagMark(14); // refusal
         return;
     }
 
@@ -1472,16 +1475,17 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     // failure reproduces on NHDDL, so it is a Neutrino/backend interaction, not this launcher. The
     // mechanism (neutrino ee_core main.c): -logo routes the boot through rom0:PS2LOGO, and ee_core's
     // extra LoadExecPS2 pass reboots the IOP (New_Reset_Iop2) before PS2LOGO runs, dropping the
-    // resident stack a keep-IOP backend reads the game through. udpfs/udpfsbd are that same
+    // resident stack a keep-IOP backend reads the game through. udpfs/udpfsbd/udpbd are that same
     // keep-IOP class (HW, nuno6573: udpfs lists fine but every launch black-screens with the global
     // logo toggle on), so the GLOBAL PS2-Logo toggle is suppressed for all three until that is
     // fixed upstream. Keyed on deviceName, not driver: the udpfs BLOCK leg arrives here as driver
-    // "udp" and only resolves to "udpfsbd" above. Parity: NHDDL's logo toggle defaults off and
-    // wLaunchELF has no logo path at all, so neither sends -logo in practice. Deliberate escape
-    // hatch: a user-supplied "-logo" in the global/per-game Neutrino args still passes through the
-    // tokenizer untouched.
+    // "udp" and only resolves to "udpfsbd" above (the udpbd leg resolves to "udpbd" by protocol).
+    // Parity: NHDDL's logo toggle defaults off and wLaunchELF has no logo path at all, so neither
+    // sends -logo in practice. Deliberate escape hatch: a user-supplied "-logo" in the global or
+    // per-game Neutrino args still passes through the tokenizer untouched.
     if (EnablePS2Logo &&
-        (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd"))) {
+        (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") ||
+         !strcmp(deviceName, "udpbd"))) {
         LOG("[NEUTRINO] -logo suppressed on %s (issue #56 class: PS2LOGO pass reboots the IOP)\n", deviceName);
         EnablePS2Logo = 0;
     }
@@ -1542,7 +1546,16 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
             if (argc < argvMax)
                 argv[argc++] = bsdfs;
         }
-        snprintf(filePath, sizeof(filePath), "-dvd=%s%s", bsdfsDvdPrefix[fsOverride], path);
+        if (fsOverride == 3) {
+            // bdfs does not take a file path: its open() strcmp's the path against the raw bdm
+            // device tuple "<name><devNr>p<parNr>" (neutrino iop/bdfs/src/bdfs.c, and its own usage
+            // example "-dvd=bdfs:udp0p0"), so the old "-dvd=bdfs:massN:/..." could NEVER open --
+            // setup_dvd_iso failed and the whole neutrino boot silently returned. Compose the tuple
+            // from the live driver token instead (udp -> udp0p0, matching the example verbatim).
+            snprintf(filePath, sizeof(filePath), "-dvd=bdfs:%s0p0", driver);
+        } else {
+            snprintf(filePath, sizeof(filePath), "-dvd=%s%s", bsdfsDvdPrefix[fsOverride], path);
+        }
         if (argc < argvMax)
             argv[argc++] = filePath;
 
@@ -1669,6 +1682,8 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     // string (so a game can extend the global set). Both are tokenized on whitespace.
     argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs);
     argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs);
+    if (gLaunchDiag)
+        launchDiagMark(9); // argv fully composed -- the pool-fit check below is the last gate
 
     // ExecPS2 argv BYTE budget (verified vs ps2sdk exit.c SetArg + the crt0 args struct): each hop
     // carries its strings in ONE 256-byte pool, every NUL included. Hop 1 packs the child's load
@@ -1689,6 +1704,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
         }
         if (pool > 256) {
             LOG("[NEUTRINO] argv pool %d bytes even at the core-args floor (256 max) -- refusing handoff\n", pool);
+            launchDiagMark(14); // refusal: nothing will repaint after the teardown
             return;
         }
     }
