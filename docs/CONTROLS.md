@@ -24,7 +24,7 @@ Two settings change what you read below, so check them first if the tables do no
 | **Circle** | Go up one folder level *(or launch, if Circle is your select button)* |
 | **Triangle** | Per-game settings for the selected title |
 | **Square** | Game info page — cover, screenshots, size, disc type |
-| **L1 / R1** | Previous / next page of the list |
+| **L1 / R1** | Previous / next page of the list; both wrap around at the ends |
 | **L2** | Jump to the first page |
 | **R2** | Jump to the last page |
 | **L3** | Cycle this page's library view (PS2 / PS1 / Both / …) |
@@ -126,7 +126,7 @@ These work inside a running game. Hold all four shoulder buttons, then press the
 
 | Hold | Then press | Result |
 |---|---|---|
-| L1 + L2 + R1 + R2 | **Start + Select** | Reset — return to RiptOPL |
+| L1 + L2 + R1 + R2 | **Start + Select** | Reset — quit to the PS2 browser, or to the `IGR Path` ELF |
 | L1 + L2 + R1 + R2 | **L3 + R3** | Power off the console |
 | L1 + L2 + R1 + R2 | **Up** | In-game screenshot *(needs GSM on and an IGS-enabled build)* |
 

@@ -1,12 +1,11 @@
 # In-Game Reset (IGR)
 
-**In-Game Reset lets you leave a running game and come straight back to RiptOPL — or power the
-console off — without touching the console's own Reset button.** It is a controller shortcut that
-works from inside the game.
+**In-Game Reset lets you leave a running game — or power the console off — without touching the
+console's own Reset button.** It is a controller shortcut that works from inside the game.
 
 RiptOPL installs a small hook into the running game that watches the controller for a reserved
-button combination. When it sees one, it tears the game down and either returns you to the browser
-or shuts the console down.
+button combination. When it sees one, it tears the game down and either leaves for the PS2 browser
+(or the ELF set in **IGR Path**) or shuts the console down.
 
 ---
 
@@ -17,7 +16,7 @@ then, while still holding them, press the second half.
 
 | Hold | Then press | Result |
 |---|---|---|
-| L1 + L2 + R1 + R2 | **Start + Select** | **Reset** — quit the game and return to RiptOPL |
+| L1 + L2 + R1 + R2 | **Start + Select** | **Reset** — quit the game; see [Where a reset takes you](#where-a-reset-takes-you) |
 | L1 + L2 + R1 + R2 | **L3 + R3** | **Power off** the console |
 | L1 + L2 + R1 + R2 | **Up** | **In-Game Screenshot** — see [Screenshots](#in-game-screenshots-igs) |
 
@@ -31,7 +30,7 @@ The power button on the front of the console is hooked too, and does not need a 
 | Power button | Result |
 |---|---|
 | Press **once** | Power off |
-| Press **twice** | Reset — return to RiptOPL |
+| Press **twice** | Reset — the same as Start + Select |
 
 The second press has to land within **about a second** — RiptOPL waits ~50 vertical blanks after the
 first press to see whether another arrives, then acts on the count.
@@ -42,18 +41,24 @@ This is the fallback worth remembering when a game has stopped responding to the
 
 ## Where a reset takes you
 
-By default a reset returns you to the RiptOPL browser, started fresh. It does not restore what you
-had selected: **Remember Last Played Game** (*Settings → General & System*) is a separate setting, off by
-default, and it is what re-selects the last game you ran.
+With the **IGR Path** setting (*Settings → General & System*) left blank, a reset exits to the **PS2
+browser**, the same place the menu's own **Exit** goes. It does not come back to RiptOPL by itself.
 
-You can send it somewhere else instead with the **IGR Path** setting (*Settings → General & System*). Point it
-at an ELF and that ELF is booted on reset rather than the browser — a common use is to drop straight
-back into a different launcher or a homebrew menu. The file must live **on a memory card**
-(`mc0:` or `mc1:`) or on a **FAT32 USB drive** (`mass:/…`); leave the setting blank to return to RiptOPL normally.
-After a reset the console can only reach USB through `USBD.IRX` and `USBHDFSD.IRX` in the memory card's
-`SYS-CONF` folder, the files FMCB installs. If they are missing, RiptOPL offers to copy its own there the first time you
-launch a game on the OPL core with a USB IGR Path (Neutrino has no IGR, so its launches never ask). It never replaces
-files that are already there.
+Point IGR Path at an ELF and that ELF is booted on reset instead: another launcher, a homebrew menu,
+or RiptOPL itself. To come straight back to RiptOPL, give it RiptOPL's own ELF —
+`mc0:/APP_RIPTOPL/RIPTOPL.ELF` if you imported `APP_RIPTOPL.psu` to the first memory card. RiptOPL
+then starts fresh. It does not restore what you had selected: **Remember Last Played Game**
+(*Settings → General & System*) is a separate setting, off by default, and it is what re-selects the
+last game you ran.
+
+The ELF must live **on a memory card** (`mc0:` or `mc1:`) or on a **FAT32 USB drive** (`mass:/…`).
+After a reset the console can only reach USB through `USBD.IRX` and `USBHDFSD.IRX` in the memory
+card's `SYS-CONF` folder, the files FMCB installs; without them the reset drops to the PS2 browser
+instead. If they are missing, RiptOPL offers to copy its own there the first time you launch a game on
+the OPL core with a USB IGR Path (Neutrino has no IGR, so its launches never ask). It never replaces
+files that are already there. Games started by **Auto Loading** skip the offer, because nobody is at
+the menu to answer it: launch a game on the OPL core from the menu once, or copy the two files
+yourself, before relying on a USB IGR Path there.
 
 If you use MMCE cards, **IGR Bootcard Slot(s)** (*Settings → Game Sources → MMCE Settings*) additionally sends a
 "switch to bootcard" command to slot 0, slot 1, both, or neither as the reset happens, so the card is
@@ -123,7 +128,9 @@ Try the console power button as a cross-check: if that resets and the pad combin
 hook is fine and the problem is in the pad half.
 
 **Reset takes me somewhere unexpected.** Check **IGR Path** in *Settings → General & System*. A stale path
-left over from an earlier setup will boot that ELF instead of returning to the browser.
+left over from an earlier setup will boot that ELF instead of exiting to the PS2 browser. A USB path that
+lands in the PS2 browser anyway is missing its memory-card drivers — see
+[Where a reset takes you](#where-a-reset-takes-you).
 
 **The game resets on its own during play.** A game that uses all four shoulders plus Start or Select
 in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for that title.
