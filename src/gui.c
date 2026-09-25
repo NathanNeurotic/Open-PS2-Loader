@@ -3207,7 +3207,7 @@ static int guiSettingsShowIndex(int *page)
         if (guiDrawBGSettings() == 0)
             guiDrawBGPlasma();
 
-        fntRenderString(gTheme->fonts[0], screenWidth >> 1, 50, ALIGN_CENTER, 0, 0, "SETTINGS INDEX", gTheme->textColor);
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1, 50, ALIGN_CENTER, 0, 0, _l(_STR_SETTINGS), gTheme->textColor);
 
         y = (gTheme->usedHeight >> 1) - (spacing * (itemCount >> 1));
         for (int i = 0; i < itemCount; i++) {
