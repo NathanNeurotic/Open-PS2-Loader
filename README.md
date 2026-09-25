@@ -716,6 +716,8 @@ OPL accepts `.cht` files in PS2RD format. Name them after the game’s startup I
 Cheats are structured as hexadecimal codes, with proper headers as descriptions to identify their function.
 You can activate cheats via OPL's graphical interface. Navigate to a games settings, enable cheats and select the desired mode.
 
+If a game has no cheat file, what happens depends on where cheats were turned on. With cheats on in the **Global Settings** (every game), the game just starts without cheats. With cheats on in that game's **Per-game Settings**, RiptOPL lists where it looked and asks: Accept starts the game without cheats, Back returns to the menu. A cheat file that exists but can't be read always asks.
+
 ### Cheat Modes
 
   * Auto Select Cheats:  

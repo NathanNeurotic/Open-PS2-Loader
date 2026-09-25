@@ -1386,6 +1386,15 @@ int sbCheatsMissingContinue(void *pCommon, int cheatResult)
         return 1;
     }
 
+    // Cheats switched on for ALL games (the global default, no per-game $CheatsSource): most titles
+    // have no .cht at all, so a missing file is the expected case there, not something to stop
+    // every such launch for. Only a per-game enable -- the user asked for cheats on THIS title --
+    // or a file that exists but will not load still asks.
+    if (cheatResult == -ENOENT && GetCheatsFromGlobalDefault()) {
+        LOG("Cheats: no cheat file for this title (cheats on for all games) -- continuing\n");
+        return 1;
+    }
+
     // guiMsgBox returns 1 for accept (gSelectButton) and 0 for the other button -- it returns its
     // internal terminate code minus one. Testing for 2 here made "continue without cheats" cancel the
     // launch too, so a title with cheats enabled but no .cht file could never start from the menu.
