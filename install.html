@@ -94,11 +94,11 @@ do not assume it is always <code>mc0:/OPL/</code>.</div>
 </tbody>
 </table>
 
-<p>See <a href="releases.html">Releases</a> for the full asset listing and pull instructions. The short version: download the <code>RIPTOPL-&lt;version&gt;.zip</code> installable package, unzip it, and start with <code>APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> when that best-effort flavour is present.</p>
+<p>See <a href="releases.html">Releases</a> for the full asset listing and pull instructions. The short version: download the <code>RIPTOPL-&lt;version&gt;.zip</code> installable package, unzip it, and either install its ready app (<code>APPS/APP_RIPTOPL/</code>, or <code>APP_RIPTOPL.psu</code> on a memory card) or start with the pinned <code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> when that best-effort flavour is present.</p>
 
 <div class="callout info"><div class="h">ℹ Already have RiptOPL installed?</div>
 This page is for a <b>first</b> install. To update one you already have, skip the package: the
-release carries a single loose <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF"><code>RIPTOPL.ELF</code></a>
+release carries a loose <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF"><code>RIPTOPL.ELF</code></a>
 (the <code>-OFFICIALROLLING</code> flavour) whose filename and link never change. Download it and
 overwrite the <code>RIPTOPL.ELF</code> you already have — <code>POPS/</code>, <code>EMBER/</code>,
 <code>neutrino/</code> and your settings stay where they are. Use the full package instead if you
@@ -107,16 +107,19 @@ want a pinned flavour, or if any of those companion folders are missing.</div>
 <details class="deep"><summary>What is inside the installable zip?</summary>
 <p>The <code>RIPTOPL-&lt;version&gt;.zip</code> package contains:</p>
 <ul>
-  <li><code>APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> — #1 recommended primary, built with a digest-pinned ps2dev SDK.</li>
-  <li><code>APP_RIPTOPL-OFFICIALPINNED/RIPTOPL.ELF</code> — #2 recommended official pinned control.</li>
-  <li><code>APP_RIPTOPL-PS2DEVROLLING/RIPTOPL.ELF</code> — #3 moving <code>ps2dev:latest</code> canary and the required-to-compile flavour.</li>
-  <li><code>APP_RIPTOPL-OFFICIALROLLING/RIPTOPL.ELF</code> — #4 moving official <code>ps2homebrew:main</code> canary.</li>
+  <li><code>APPS/APP_RIPTOPL/</code> — the ready-to-install app: <code>RIPTOPL.ELF</code> with its icons, <code>title.cfg</code> and music. It is the <code>-OFFICIALROLLING</code> build when that flavour built; otherwise the first available of <code>-PS2DEVPINNED</code>, <code>-OFFICIALPINNED</code> and <code>-PS2DEVROLLING</code>, and the app's metadata records which. Copy the folder into a device's <code>APPS/</code>.</li>
+  <li><code>APP_RIPTOPL.psu</code> — the same app as one memory-card save, for a PS2 save manager to import. It holds only the app folder's own files.</li>
+  <li><code>ART/</code> — the app's matching artwork (<code>RIPTOPL.ELF_*.png</code>) for the device's <code>ART/</code> folder.</li>
+  <li><code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> — #1 recommended primary, built with a digest-pinned ps2dev SDK.</li>
+  <li><code>APPS/APP_RIPTOPL-OFFICIALPINNED/RIPTOPL.ELF</code> — #2 recommended official pinned control.</li>
+  <li><code>APPS/APP_RIPTOPL-PS2DEVROLLING/RIPTOPL.ELF</code> — #3 moving <code>ps2dev:latest</code> canary and the required-to-compile flavour.</li>
+  <li><code>APPS/APP_RIPTOPL-OFFICIALROLLING/RIPTOPL.ELF</code> — #4 moving official <code>ps2homebrew:main</code> canary. Each of these four labelled folders is a complete alternate app folder, with the same set of icon and metadata files as the ready app.</li>
   <li><code>POPS/</code> — the single canonical release folder for POPSTARTER support. It contains <code>POPSTARTER.ELF</code>, the SMB externals, <code>PATCH_5.BIN</code>, and every loose BDMA <code>usbd.irx.*</code> / <code>usbhdfsd.irx.*</code> pair, including <code>.ilink</code>. No BDMA pair is embedded in <code>RIPTOPL.ELF</code>, and there is no duplicate release-root <code>POPSTARTER/</code> folder. Only <code>POPS.ELF</code> — Sony's PS1 emulator — is not distributed here.</li>
   <li><code>EMBER/</code> — the bundled external Ember PS1 core, unmodified and ready for the user-supplied BIOS and games.</li>
   <li><code>neutrino/</code> — the bundled Neutrino external core, shipped extracted as a drag-and-drop folder (<code>neutrino.elf</code> + <code>config/</code> + <code>modules/</code>) used by per-game Neutrino launching and <b>network boot (UDPBD/UDPFS)</b> (pre-populated with the UDPFS config). Copy the <b>whole folder</b> to a resolver location. Ordinary non-MMCE setups may use <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code>; for MMCE games using GameID card switching, use the MMCE game device instead (<code>mmceN:/neutrino/</code>, or under its Prefix Path). No separate download is needed.</li>
   <li>Five <code>.url</code> shortcuts — <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a>, <a href="https://github.com/YouKnow-sys/udpfs-server">udpfs-server</a>, <a href="https://github.com/Luden02/OrbitPS2-Manager">OrbitPS2 Manager</a>, <a href="https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI">OPL PS1 AIO Converter GUI</a>, and <a href="https://github.com/TheRealNextria/PS2RD-CHT-Manager">PS2RD CHT Manager</a>. These are links to the maintained external tools; the tools themselves are not embedded in the RiptOPL package.</li>
 </ul>
-<p>The final GitHub asset set contains archives by purpose (including the separate experimental RA package): the unified package, exact source snapshot, variants, and the language/debug packs when those optional jobs produce them. Bare loader ELFs and build/checksum manifests are not separate public assets; standard loaders are inside the unified package, and DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</p>
+<p>The final GitHub asset set contains archives by purpose (including the separate experimental RA package): the unified package, exact source snapshot, variants, and the language/debug packs when those optional jobs produce them. Besides the archives, the release publishes up to two stable-name update loaders, <code>RIPTOPL.ELF</code> and <code>RIPTOPL-RA.ELF</code>, each only when its <code>-OFFICIALROLLING</code> build succeeded, and the ready apps as standalone saves: <code>APP_RIPTOPL.psu</code>, plus <code>APP_RIPTOPL-RA.psu</code> whenever the RA package is published. Other bare loader ELFs and build/checksum manifests are not separate public assets; the labelled standard loaders are inside the unified package, and DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</p>
 </details>
 
 <h2 id="install">Getting RIPTOPL.ELF onto your PS2</h2>
@@ -129,7 +132,7 @@ want a pinned flavour, or if any of those companion folders are missing.</div>
   </div>
   <div class="step">
     <h3>2. Copy RIPTOPL.ELF to your boot location</h3>
-    <p>Use the ELF from <code>APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> inside the zip when present; otherwise use the next available labelled flavour in the documented order. Where it goes depends on your boot method:</p>
+    <p>Use the ELF from <code>APPS/APP_RIPTOPL-PS2DEVPINNED/RIPTOPL.ELF</code> inside the zip when present; otherwise use the next available labelled flavour in the documented order. If you would rather install the ready app, copy the whole <code>APPS/APP_RIPTOPL/</code> folder into a device's <code>APPS/</code> (or import <code>APP_RIPTOPL.psu</code> onto a memory card) and point your launcher at the <code>RIPTOPL.ELF</code> inside it; that app is the <code>-OFFICIALROLLING</code> build when available. Where the ELF goes depends on your boot method:</p>
     <ul>
       <li><b>FMCB</b> — copy <code>RIPTOPL.ELF</code> to a folder on a device that your launcher can access, such as a USB drive or memory card, then add a FMCB menu entry pointing to it. A common convention is <code>mass:/APPS/RIPTOPL/RIPTOPL.ELF</code> or <code>mc0:/RIPTOPL/RIPTOPL.ELF</code>.</li>
       <li><b>FHDB</b> — copy into an HDD partition the same way FHDB expects its launch targets.</li>

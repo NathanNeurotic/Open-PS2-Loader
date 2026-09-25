@@ -239,7 +239,7 @@ hidden.</p>
 <tr><td>SMB Version</td><td>SMBv1 / SMB2</td><td>Which SMB dialect to speak. <em>SMBv1</em> is the default. Greyed unless <em>Protocol</em> is SMB, but the value is kept. Applies to browsing and in-game reading, from the next boot. See <a href="smb.html">SMB</a>.</td></tr>
 <tr><td>Advanced Options</td><td>Off / On</td><td>Makes <em>Ethernet Link Mode</em> and the SMB <em>Port</em> editable. On by default in RiptOPL.</td></tr>
 <tr><td>Ethernet Link Mode</td><td>Auto / 100Mbit Full-duplex / 100Mbit Half-duplex / 10Mbit Full-duplex / 10Mbit Half-duplex</td><td>Forces a link speed and duplex. <em>Auto</em> negotiates.</td></tr>
-<tr><td>IP Address Type</td><td>Static / DHCP</td><td>How the PS2 gets its address. <strong>UDPBD and UDPFS require Static</strong>: they do not use the SMB stack, so DHCP is never resolved for them.</td></tr>
+<tr><td>IP Address Type</td><td>Static / DHCP</td><td>How the PS2 gets its address. <strong>UDPBD and UDPFS require Static</strong>: they do not use the SMB stack, so DHCP is never resolved for them. While either is the Protocol, this row is locked to Static with the address fields enabled; your DHCP choice is kept as the SMB/HTTP preference and comes back when you switch protocol.</td></tr>
 <tr><td>IP Address</td><td>four octets</td><td>The PS2's static IP address.</td></tr>
 <tr><td>Mask</td><td>four octets</td><td>Subnet mask.</td></tr>
 <tr><td>Gateway</td><td>four octets</td><td>Default gateway.</td></tr>
@@ -338,6 +338,7 @@ the display pickers above no longer allow is discarded, not forced.</div>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
 <tr><td>Cover Art</td><td>Off / On</td><td>Loads cover art. When off, no art images are loaded even if present. On by default.</td></tr>
+<tr><td>Disc Artwork</td><td>Off / On</td><td>Shows the theme's disc art: every image keyed on the <code>ICO</code> suffix (<code>&lt;ID&gt;_ICO</code> in <code>ART/</code>), including the theme's own placeholder for it. Turn it off to hide the disc while keeping covers and backgrounds. On by default.</td></tr>
 <tr><td>Background Art</td><td>Off / On</td><td>Shows a game's background image (<code>&lt;ID&gt;_BG</code> in <code>ART/</code>) when the theme uses one. On by default.</td></tr>
 <tr><td>Cover Art .tar Archive</td><td>Off / On</td><td>Also reads art from an <code>ART/art.tar</code> archive alongside the loose image files. Off by default.</td></tr>
 <tr><td>Art Delay</td><td>0 (Instant) / 2 (Fast) / 5 (Medium) / 8 (Standard)</td><td>How many frames the cursor must rest on a title before its art starts loading. <em>0</em>, the default, loads straight away; a higher value skips art for titles you scroll past.</td></tr>
@@ -471,6 +472,11 @@ memory, so a long track costs no extra RAM. It looks in this order and takes the
 
 <p>That order is why a disk theme with its own <code>sound/bgm.ogg</code> ignores your Default Theme Music
 setting: the theme wins. To use your own track everywhere, pick a theme that ships no music of its own.</p>
+
+<p>The track plays through the console's <code>audsrv</code>, which only has converters for some sample rates:
+44.1, 48, 32, 22.05 and 11.025&nbsp;kHz in mono or stereo, and 24 or 12&nbsp;kHz in stereo only. A file at any
+other rate, such as 16&nbsp;kHz, plays no music at all; the menu carries on silently. Re-encode it at
+44.1&nbsp;kHz if in doubt.</p>
 
 <p><b>Sound effects are PS2 ADPCM</b> (<code>.adp</code>, 44.1&nbsp;kHz), supplied by the theme in its
 <code>sound/</code> folder. There are eight:</p>
