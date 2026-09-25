@@ -4667,8 +4667,8 @@ void guiRenderTextScreen(const char *message)
     // -- so the menu underneath stayed clearly legible through the message. On a CRT that reads as
     // a transparent error with the settings menu showing through it, which is exactly what the
     // tester reported (and photographed) three times. Whatever is behind a status screen carries no
-    // information, so it is hidden. Interactive dialogs deliberately KEEP the translucent overlay
-    // (see guiConfirmVideoMode, where seeing the mode behind the prompt is the entire point).
+    // information, so it is hidden. Interactive dialogs keep the translucent overlay only when the
+    // caller chose what sits behind them (guiMsgBox with a ui); the video-mode prompt went opaque too.
     rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
     fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, message, gTheme->textColor);
@@ -4889,7 +4889,11 @@ int guiConfirmVideoMode(void)
 
         guiShow();
 
-        rmDrawRect(0, 0, screenWidth, screenHeight, gColDarker);
+        // Opaque, like the other prompts whose backdrop is just whatever guiShow() draws (guiMsgBox
+        // with no ui, guiWarning, guiPromptRebootIop). The prompt itself is what proves the new mode
+        // syncs. What showed through the old ~75% wash was the game list page -- not the Settings
+        // screen the mode was changed from -- and testers saw it empty behind the prompt.
+        rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
