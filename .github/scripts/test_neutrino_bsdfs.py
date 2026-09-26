@@ -37,18 +37,19 @@ def function_text(signature):
 functions = ''.join(function_text(sig) for sig in (
     'static const char *getDeviceName(',
     'static int neutrinoArgHasActiveFlag(',
-    'static int neutrinoTypedBsdfs(',
     'static int neutrinoEffectiveBsdfs(',
     'int sysNeutrinoPreflight(',
 ))
 
-# sysLaunchNeutrino must shape -dvd from the same effective value the preflight checks, and emit its
-# own -bsdfs= only when the user did not type one.
+# sysLaunchNeutrino must shape -dvd from the same effective value the preflight checks, and emit that
+# value as its OWN -bsdfs= even when it was typed: ours is a core arg the budget never drops, the
+# user's is a tail token it may, and a bdfs: -dvd without -bsdfs=bd fails after the teardown
+# (CodeRabbit on #762, second pass).
 launch = function_text('void sysLaunchNeutrino(')
-if 'int fsOverride = neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs, &typedFs);' not in launch or \
-        'if (fsOverride && !typedFs) {' not in launch:
+if 'int fsOverride = neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs, &userDvd);' not in launch or \
+        'if (fsOverride) {' not in launch or '!typedFs' in launch:
     failures.append('sysLaunchNeutrino: must take fsOverride from neutrinoEffectiveBsdfs (shared with the preflight) '
-                    'and skip its own -bsdfs= when one was typed')
+                    'and always emit it as its own -bsdfs=')
 
 # Every Neutrino leg must hand the preflight what it will hand sysLaunchNeutrino.
 bdm = (root / 'src/bdmsupport.c').read_text(encoding='utf-8').replace('\r\n', '\n')
@@ -113,24 +114,38 @@ int main(void)
     scenario("-bsdfs= after --b belongs to the game",    "usb",  0,   "",             "--b -bsdfs=bd",   -1,   0, 0);
     scenario("typed bd on ATA",                          "ata",  0,   "",             "-bsdfs=bd",       -1,   0, 0);
     scenario("typed bd on mmce (no fs layer)",           "mmce", 0,   "",             "-bsdfs=bd",       -1,   0, 0);
+    /* "--b": everything after the FIRST one -- per-game args included -- belongs to the game */
+    scenario("global --b ends the per-game args",        "usb",  0,   "-bsdfs=bd --b", "-bsdfs=exfat",   -1,   1, 3);
+    scenario("global --b hides a per-game bd",           "usb",  0,   "--b",          "-bsdfs=bd",       -1,   0, 0);
+    scenario("-dvd= after --b is the game's",            "usb",  0,   "",             "-bsdfs=bd --b -dvd=bdfs:usb1p0", -1, 1, 3);
+    scenario("global -dvd= names the device",            "usb",  0,   "-dvd=bdfs:usb1p0", "-bsdfs=bd",   -1,   0, 0);
 
-    /* The value sysLaunchNeutrino shapes -dvd from, and whether it emits its own -bsdfs=. */
-    int typed;
+    /* The value sysLaunchNeutrino shapes -dvd from and emits as its own -bsdfs=, and what counts as
+       a -dvd= reaching Neutrino. */
+    int userDvd;
     snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", "");
-    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=bd", &typed) != 3 || typed != 1) {
-        printf("FAIL typed bd must shape -dvd as bd, with no -bsdfs of ours\n");
+    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=bd", &userDvd) != 3 || userDvd) {
+        printf("FAIL typed bd must shape -dvd as bd\n");
         fails++;
     }
-    if (neutrinoEffectiveBsdfs("usb", 3, NULL, &typed) != 3 || typed != 0) {
-        printf("FAIL picker bd must shape -dvd as bd and emit -bsdfs=bd\n");
+    if (neutrinoEffectiveBsdfs("usb", 3, NULL, &userDvd) != 3) {
+        printf("FAIL picker bd must shape -dvd as bd\n");
         fails++;
     }
-    if (neutrinoEffectiveBsdfs("usb", 3, "-bsdfs=hdl", &typed) != 2 || typed != 1) {
+    if (neutrinoEffectiveBsdfs("usb", 3, "-bsdfs=hdl", &userDvd) != 2) {
         printf("FAIL typed hdl beats picker bd\n");
         fails++;
     }
-    if (neutrinoEffectiveBsdfs("usb", 3, "-bsdfs=zfs", &typed) != 0 || typed != 1) {
-        printf("FAIL an unknown typed value leaves -dvd bare and still suppresses ours\n");
+    if (neutrinoEffectiveBsdfs("usb", 3, "-bsdfs=zfs", &userDvd) != 0) {
+        printf("FAIL an unknown typed value leaves -dvd bare (Neutrino decides)\n");
+        fails++;
+    }
+    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=bd -dvd=bdfs:usb1p0", &userDvd) != 3 || !userDvd) {
+        printf("FAIL a typed -dvd= before --b reaches Neutrino\n");
+        fails++;
+    }
+    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=bd --b -dvd=bdfs:usb1p0", &userDvd) != 3 || userDvd) {
+        printf("FAIL a -dvd= after --b does not reach Neutrino\n");
         fails++;
     }
     return fails ? 1 : 0;
@@ -157,4 +172,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('neutrino bsdfs: 23 preflight scenarios + 4 argv shapes OK (bd with no device number refused before teardown, typed or picked)')
+print('neutrino bsdfs: 27 preflight scenarios + 6 argv checks OK (bd with no device number refused before teardown, typed or picked; --b ends the Neutrino args)')
