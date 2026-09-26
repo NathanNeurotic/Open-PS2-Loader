@@ -59,6 +59,17 @@ system_c = (root / 'src/system.c').read_text(encoding='utf-8').replace('\r\n', '
 bdm_c = (root / 'src/bdmsupport.c').read_text(encoding='utf-8').replace('\r\n', '\n')
 if '"-dvd=bdfs:%s%dp0", driver, bdDevNr >= 0 ? bdDevNr : 0' not in system_c:
     failures.append('sysLaunchNeutrino: the bdfs tuple must use the caller\'s bdm device number')
+
+# Quick boot for every keep-IOP backend NHDDL gives it to (all but HDL): without -qb Neutrino resets
+# the IOP and rebuilds the stack the -dvd path points into (UDPBD: FatBaldDad, 09-25).
+# Only the condition of the -qb statement itself: the text between the last "if ((" before the -qb
+# flag check and that check. (Other rules, like -logo's, name the same devices.)
+qb_at = system_c.find('!neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb")')
+qb_if = system_c.rfind('if ((', 0, qb_at) if qb_at >= 0 else -1
+qb_cond = system_c[qb_if:qb_at] if qb_if >= 0 and qb_at - qb_if < 400 else None
+for dev in ('usb', 'ilink', 'udpfs', 'udpfsbd', 'udpbd'):
+    if qb_cond is None or ('!strcmp(deviceName, "%s")' % dev) not in qb_cond:
+        failures.append('sysLaunchNeutrino: -qb must be emitted for %s (NHDDL parity: every mode but HDL)' % dev)
 copy = bdm_c.find('int bdmDevNr = pDeviceData->massDeviceIndex;')
 if copy < 0 or copy > bdm_c.find('deinitEx(sbNeutrinoDeinitException(neutrinoPath)') or \
         'neutrinoBsdfs, bdmDevNr, &neutrinoVmc);' not in bdm_c:

@@ -1571,17 +1571,21 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
            did its job) and then the screen stays black, because Neutrino reset away the stack the
            game path depends on. -qb keeps the inherited environment and skips that reset.
 
-           USB, iLink, and UDPFS (both filesystem and block variants): all launch through this
+           USB, iLink, UDPFS (both filesystem and block variants) and UDPBD: all launch through this
            inherited environment. For UDPFS, an IOP reset destroys the resident ministack/ioman
            state and triggers an immediate secondary DISCOVERY from the same socket that collides
-           with active server streams; NHDDL parity passes -qb for all non-HDL modes. Other
-           backends stay on the normal boot path until hardware says otherwise. A user-typed -qb
-           in the global or per-game args wins -- do not emit a second copy.
+           with active server streams. UDPBD without -qb, on hardware (FatBaldDad, 09-25, PR #756):
+           the handoff reached Neutrino, then the link dropped, a NEW client rediscovered the server,
+           read the image's MBR and exFAT metadata, never read the game and quit to the browser --
+           Neutrino's own reset rebuilt the stack our -dvd path refers to. NHDDL passes -qb for every
+           mode except HDL (launcher.c), UDPBD included. Other backends stay on the normal boot path
+           until hardware says otherwise. A user-typed -qb in the global or per-game args wins -- do
+           not emit a second copy.
 
            Emitted ABOVE coreArgc so the pool-fit drop loop can never shed it: a dropped -qb would
            silently reinstate the reset and reproduce the black screen with no way to tell why. */
         if ((!strcmp(deviceName, "usb") || !strcmp(deviceName, "ilink") ||
-             !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd")) &&
+             !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") || !strcmp(deviceName, "udpbd")) &&
             argc < argvMax &&
             !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") && !neutrinoArgHasActiveFlag(extraArgs, "-qb"))
             argv[argc++] = "-qb";
