@@ -1329,16 +1329,57 @@ static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
     return 0;
 }
 
-// The per-game -bsdfs sysLaunchNeutrino actually emits: 0 = none (Auto, a fileid backend with no fs
-// layer, or a user-typed -bsdfs= that wins), else 1 exfat / 2 hdl / 3 bd. The preflight asks the same
-// question, so the two can never disagree about whether a launch is a bd launch.
-static int neutrinoBsdfsOverride(const char *deviceName, int neutrinoBsdfs, const char *extraArgs)
+// The value of the LAST active "-bsdfs=<v>" token in args, as 1 exfat / 2 hdl / 3 bd (0 = a value
+// Neutrino does not name). Whole whitespace-separated tokens only; a $-prefixed token is switched
+// off, and nothing after a "--b" break is Neutrino's (it goes to the game). *found: any active one.
+static int neutrinoTypedBsdfs(const char *args, int *found)
 {
-    if (neutrinoBsdfs < 1 || neutrinoBsdfs > 3 || !strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs"))
+    static const char *const names[] = {"", "exfat", "hdl", "bd"};
+    int value = 0;
+
+    *found = 0;
+    for (const char *p = args; p != NULL && *p != '\0';) {
+        while (*p == ' ' || *p == '\t')
+            p++;
+        const char *end = p;
+        while (*end != '\0' && *end != ' ' && *end != '\t')
+            end++;
+        int len = (int)(end - p);
+        if (len == 3 && !strncmp(p, "--b", 3))
+            break;
+        if (len > 7 && !strncmp(p, "-bsdfs=", 7)) {
+            *found = 1;
+            value = 0;
+            for (int i = 1; i <= 3; i++) {
+                if ((int)strlen(names[i]) == len - 7 && !strncmp(p + 7, names[i], len - 7))
+                    value = i;
+            }
+        }
+        p = end;
+    }
+    return value;
+}
+
+// The -bsdfs Neutrino will actually run with, so the preflight and the argv builder agree on it: a
+// typed -bsdfs= beats the per-game picker (per-game args are appended after the global ones and
+// Neutrino's parse is last-wins); mmce/udpfs are fileid backends with no fs layer. 1 exfat / 2 hdl /
+// 3 bd; 0 = Neutrino's own default (exfat) or a typed value it does not name. *typed: the user
+// supplied it, so no -bsdfs= of ours is emitted -- only the -dvd shape follows it.
+static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, const char *extraArgs, int *typed)
+{
+    int found, value;
+
+    *typed = 0;
+    if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs"))
         return 0;
-    if (neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsdfs=") || neutrinoArgHasActiveFlag(extraArgs, "-bsdfs="))
-        return 0;
-    return neutrinoBsdfs;
+    value = neutrinoTypedBsdfs(extraArgs, &found);
+    if (!found)
+        value = neutrinoTypedBsdfs(gNeutrinoArgs, &found);
+    if (found) {
+        *typed = 1;
+        return value;
+    }
+    return (neutrinoBsdfs >= 1 && neutrinoBsdfs <= 3) ? neutrinoBsdfs : 0;
 }
 
 // Hand the game off to an external Neutrino ELF instead of OPL's embedded core.
@@ -1460,8 +1501,12 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
     // -bsdfs=bd names the raw bdm device "<driver><devNr>p0". A mount that never reported its device
     // number cannot be named, and guessing 0 opens the WRONG device when two share a driver (a second
     // stick is usb1). ATA is exempt: one synthetic device, always 0 -- the native leg's device-number
-    // check in bdmLaunchGame exempts it for the same reason.
-    if (neutrinoBsdfsOverride(deviceName, neutrinoBsdfs, extraArgs) == 3 && bdDevNr < 0 && strcmp(deviceName, "ata") != 0) {
+    // check in bdmLaunchGame exempts it for the same reason. Whether bd came from the picker or was
+    // typed makes no difference; a typed -dvd= does -- the user has named the device themselves.
+    int typedFs;
+    if (neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs, &typedFs) == 3 && bdDevNr < 0 &&
+        strcmp(deviceName, "ata") != 0 && !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-dvd=") &&
+        !neutrinoArgHasActiveFlag(extraArgs, "-dvd=")) {
         LOG("[NEUTRINO] preflight: -bsdfs=bd on '%s' with no device number\n", driver);
         guiWarning(_l(_STR_NEUTRINO_BD_NO_DEVICE_NUMBER), 6);
         return -1;
@@ -1555,12 +1600,15 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
         // any ':'-bearing -dvd value is file-mode, opened through the selected fs). NEVER emitted
         // for mmce/udpfs: they are fileid backends with no filesystem layer (Neutrino forces
         // sBSDFS="no" there regardless -- this guard just keeps the argv clean). A user-typed
-        // -bsdfs= wins (skip the structured emit); a user-typed -dvd= also wins on its own because
-        // user tokens are appended after these and Neutrino's arg parse is last-wins.
+        // -bsdfs= wins over the picker: we emit no -bsdfs= of our own, but still shape -dvd for the
+        // value they typed -- a typed bd with our bare file path could never open (CodeRabbit, #762).
+        // A user-typed -dvd= wins on its own because user tokens are appended after these and
+        // Neutrino's arg parse is last-wins.
         static const char *const bsdfsTokens[] = {"", "exfat", "hdl", "bd"};
         static const char *const bsdfsDvdPrefix[] = {"", "", "hdl:", "bdfs:"};
-        int fsOverride = neutrinoBsdfsOverride(deviceName, neutrinoBsdfs, extraArgs);
-        if (fsOverride) {
+        int typedFs;
+        int fsOverride = neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs, &typedFs);
+        if (fsOverride && !typedFs) {
             snprintf(bsdfs, sizeof(bsdfs), "-bsdfs=%s", bsdfsTokens[fsOverride]);
             if (argc < argvMax)
                 argv[argc++] = bsdfs;
@@ -1571,8 +1619,9 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
             // example "-dvd=bdfs:udp0p0"), so the old "-dvd=bdfs:massN:/..." could NEVER open --
             // setup_dvd_iso failed and the whole neutrino boot silently returned. Compose the tuple
             // from the live driver token and the caller's bdm device number (a second stick on the
-            // same driver is usb1, not usb0); partition stays 0. Only ATA can arrive here with -1
-            // (one synthetic device, so 0 is right); sysNeutrinoPreflight refuses every other driver.
+            // same driver is usb1, not usb0); partition stays 0. -1 reaches here only for ATA (one
+            // synthetic device, so 0 is right) or beside a typed -dvd=, which replaces this one;
+            // sysNeutrinoPreflight refuses everything else.
             snprintf(filePath, sizeof(filePath), "-dvd=bdfs:%s%dp0", driver, bdDevNr >= 0 ? bdDevNr : 0);
         } else {
             snprintf(filePath, sizeof(filePath), "-dvd=%s%s", bsdfsDvdPrefix[fsOverride], path);
