@@ -1226,7 +1226,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino opens the mmce-hosted game through
         // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
         // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).
-        if (sysNeutrinoPreflight("mmce", neutrinoPath) < 0) // D6 pre-teardown validation
+        if (sysNeutrinoPreflight("mmce", neutrinoPath, 0, NULL, -1) < 0) // D6 pre-teardown validation
             return;
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
         deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode);

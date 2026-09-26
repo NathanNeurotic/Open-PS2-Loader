@@ -525,7 +525,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // launch with _STR_NEUTRINO_TOML_SYNC_FAILED on a toml that reads fine a moment earlier or
     // later. Preflighting first also means an abort leaves the card UNSWITCHED instead of dropping
     // the user back into the menu sitting on the per-game card.
-    if (sysNeutrinoPreflight("udpfs", neutrinoPath) < 0)
+    if (sysNeutrinoPreflight("udpfs", neutrinoPath, 0, NULL, -1) < 0)
         return;
 
     // MMCE cross-device game-id (#261): push the disc id to a present MMCE card before teardown frees

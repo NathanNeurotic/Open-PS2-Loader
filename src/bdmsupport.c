@@ -2039,7 +2039,7 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     }
 
     // Δ6 preflight (driver token + network toml sync) -- abort stays in a live menu.
-    if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath) < 0)
+    if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath, neutrinoBsdfs, neutrinoExtraArgs, bdmDevNr) < 0)
         goto fail;
     if (gLaunchDiag)
         launchDiagMark(3);
