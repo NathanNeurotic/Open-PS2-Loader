@@ -1386,6 +1386,15 @@ int sbCheatsMissingContinue(void *pCommon, int cheatResult)
         return 1;
     }
 
+    // Cheats switched on for ALL games (the global default, no per-game $CheatsSource): most titles
+    // have no .cht at all, so a missing file is the expected case there, not something to stop
+    // every such launch for. Only a per-game enable -- the user asked for cheats on THIS title --
+    // or a file that exists but will not load still asks.
+    if (cheatResult == -ENOENT && GetCheatsFromGlobalDefault()) {
+        LOG("Cheats: no cheat file for this title (cheats on for all games) -- continuing\n");
+        return 1;
+    }
+
     // guiMsgBox returns 1 for accept (gSelectButton) and 0 for the other button -- it returns its
     // internal terminate code minus one. Testing for 2 here made "continue without cheats" cancel the
     // launch too, so a title with cheats enabled but no .cht file could never start from the menu.
@@ -1435,6 +1444,9 @@ int sbLoadCheats(const char *path, const char *file)
     // cheats simply never loaded on longer BDM paths, with no diagnostic. Matches the fork.
     char cheatfile[256];
     int cheatMode = 0;
+    // Set when a cheat source EXISTS but would not load: that is a load failure the user must be told
+    // about, never "no cheats found" -- even when a later candidate (the other spelling) is absent.
+    int foundBroken = 0;
 
     cheatSearchLog[0] = 0;
 
@@ -1474,6 +1486,7 @@ int sbLoadCheats(const char *path, const char *file)
                     }
                     LOG("Error: cht.tar member failed to load; trying the loose file\n");
                 }
+                foundBroken = 1; // a usable-size member was there and did not load (or could not be buffered)
             }
         }
 
@@ -1495,16 +1508,23 @@ int sbLoadCheats(const char *path, const char *file)
 
             if ((cheatMode = load_cheats(cheatfile)) >= 0)
                 break;
+
+            // Distinguish absent from unreadable PER CANDIDATE. Probing only the last spelling tried
+            // called an existing-but-broken "<ID>.cht" absent whenever "<ID>.CHT" was missing.
+            int probe = open(cheatfile, O_RDONLY);
+            if (probe >= 0) {
+                close(probe);
+                foundBroken = 1;
+            }
         }
 
         if (cheatMode < 0) {
-            // Distinguish absent from unreadable so the launch legs' "No cheats found" branch fires
-            // for a merely-missing file instead of the scary "failed to load cheats" toast.
-            int probe = open(cheatfile, O_RDONLY);
-            if (probe < 0)
+            // Absent everywhere -> "No cheats found" (which cheats-on-for-all-games skips); anything
+            // that existed and failed -> the "failed to load cheats" message, never -ENOENT.
+            if (!foundBroken)
                 cheatMode = -ENOENT;
-            else
-                close(probe);
+            else if (cheatMode == -ENOENT)
+                cheatMode = -EIO;
             LOG("Error: failed to load cheats\n");
         } else {
             LOG("Cheats found\n");

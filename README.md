@@ -437,7 +437,7 @@ This build layers several features on top of upstream OPL:
   it no longer falls back to the first USB page.
 - **DualSense / DualShock 5 (USB):** optional controller support — available in the prebuilt
   `RIPTOPL-VARIANTS-*.zip` release bundle (one ELF per SDK flavour), or build with `make DUALSENSE=1`.
-- **1080p GSM video mode:** forced progressive 1080p (1920×1080) GSM mode is built directly into all standard builds (`make GSM1080P=1`). Full GSM documentation: **[docs/GSM.md](docs/GSM.md)**. Selecting 1080p in the per-game GSM picker is guarded by a **three-step confirmation**; if a game loses the picture, disable/change its GSM override before relaunching. **Triangle + Cross** at boot affects only the OPL menu and requires a 480p-capable display/connection.
+- **1080p GSM video mode:** forced progressive 1080p (1920×1080) GSM mode is built directly into all standard builds (`make GSM1080P=1`). Full GSM documentation: **[docs/GSM.md](docs/GSM.md)**. Selecting 1080p in the per-game GSM picker is guarded by a **three-step confirmation**; if a game loses the picture, disable/change its GSM override before relaunching. **Triangle + Cross** at boot affects only the OPL menu and requires a 480p-capable display/connection; **Triangle + Circle** forces the interlaced Auto mode instead.
 - **Ready-to-use defaults:** a fresh install boots with sensible options already enabled —
   widescreen, cover art, notifications, sound effects + boot sound, delete/rename, and
   the PS2 logo. Video mode stays **Auto**. Every storage device ships **off**, so the first boot
@@ -494,7 +494,8 @@ MMCE Settings*) sends a switch-to-bootcard command as the reset happens.
 
 Cross and Circle follow the **Select button** setting, except in the settings screens, where Cross is
 always OK and Circle always Cancel. Holding **Triangle + Cross at boot** forces the menu to 480p
-progressive as a recovery path for a display that cannot sync the saved video mode.
+progressive as a recovery path for a display that cannot sync the saved video mode; **Triangle +
+Circle** forces Auto (the region's interlaced mode) for a TV that can't take 480p.
 
 ## How to use
 
@@ -716,6 +717,8 @@ OPL accepts `.cht` files in PS2RD format. Name them after the game’s startup I
 Cheats are structured as hexadecimal codes, with proper headers as descriptions to identify their function.
 You can activate cheats via OPL's graphical interface. Navigate to a games settings, enable cheats and select the desired mode.
 
+If a game has no cheat file, what happens depends on where cheats were turned on. With cheats on in the **Global Settings** (every game), the game just starts without cheats. With cheats on in that game's **Per-game Settings**, RiptOPL lists where it looked and asks: Accept starts the game without cheats, Back returns to the menu. A cheat file that exists but can't be read always asks.
+
 ### Cheat Modes
 
   * Auto Select Cheats:  
@@ -809,8 +812,14 @@ Back up the device before any reformat; do not reformat solely because of the sc
 ### OPL does not display anything on boot
 
 Hold **Triangle + Cross** while RiptOPL initializes to force **480p for the OPL menu**. Your display
-and connection must accept 480p. Once visible, choose a suitable menu mode under **Interface** and
-save. **START** skips saved configuration and uses defaults if you need to undo a saved menu setup.
+and connection must accept 480p. On a TV that only takes interlaced signals (a CRT, for example),
+hold **Triangle + Circle** instead: it forces **Auto**, the region's interlaced mode. Once visible,
+choose a suitable menu mode under **Interface** and save. **START** skips saved configuration and
+uses defaults if you need to undo a saved menu setup.
+
+When you change the video mode, keeping it takes a **hold** of Accept (about 2 seconds, until the bar
+fills). A tap does nothing, and Back or 10 seconds without an answer restores the previous mode, so a
+mode your TV can't show can't be kept by pressing buttons blind.
 
 ### The internal HDD shows code 402, or "Formatted: NO" in another tool
 

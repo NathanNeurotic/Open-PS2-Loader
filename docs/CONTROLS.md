@@ -143,6 +143,7 @@ with compatibility Mode 6. Full detail, including the limitations, is in [IGR.md
 |---|---|
 | **Start** | Skip loading the config — boot with defaults |
 | **Triangle + Cross** | Force the menu to 480p progressive (recovery) |
+| **Triangle + Circle** | Force the menu to Auto, the region's interlaced mode (recovery) |
 
 ### Start — skip the config
 
@@ -166,6 +167,20 @@ interlaced mode, which is exactly what some upscalers fail to sync, so it would 
 off. And it affects **the RiptOPL menu only**, not games; a game that loses the picture needs its GSM
 override changed instead. Your display and cable must be able to do 480p progressive (component,
 VGA, or a capable HDMI adapter) for this to help.
+
+### Triangle + Circle — force Auto (interlaced)
+
+The recovery for the displays 480p cannot help: a TV that only takes interlaced signals, such as a
+CRT on composite or S-Video. Hold both while RiptOPL starts and it forces the video mode to **Auto**,
+the region's standard interlaced mode (NTSC 640×448i or PAL 640×512i), and writes that back to the
+config. Like Triangle + Cross, it affects the RiptOPL menu only.
+
+### Keeping a new video mode
+
+After you change **Video Mode** in the settings, RiptOPL asks whether to keep it. To keep it, **hold**
+Accept until the bar under it fills (about 2 seconds). A quick tap does nothing. Back, or no answer
+for 10 seconds, goes back to the previous mode. A mode your TV can't show leaves you looking at a
+black screen, so pressing buttons blind can't keep it by accident.
 
 ---
 

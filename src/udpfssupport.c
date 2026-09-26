@@ -540,7 +540,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
 
     // Hand off to Neutrino with the udpfs driver token. `partname` and `gameStartup` survive the deinit;
     // `game` does not and is not dereferenced past this point.
-    sysLaunchNeutrino("udpfs", partname, gameStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* udpfs is fileid, no fs layer */, &neutrinoVmc);
+    sysLaunchNeutrino("udpfs", partname, gameStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* udpfs is fileid, no fs layer */, -1, &neutrinoVmc);
 }
 
 static config_set_t *udpfsGetConfig(item_list_t *itemList, int id)

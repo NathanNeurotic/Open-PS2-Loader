@@ -26,8 +26,9 @@
 #include "include/cheatman.h"
 #include "include/ioman.h"
 
-static int gEnableCheat; // Enables PS2RD Cheat Engine - 0 for Off, 1 for On
-static int gCheatMode;   // Cheat Mode - 0 Enable all cheats, 1 Cheats selected by user
+static int gEnableCheat;     // Enables PS2RD Cheat Engine - 0 for Off, 1 for On
+static int gCheatMode;       // Cheat Mode - 0 Enable all cheats, 1 Cheats selected by user
+static int gCheatFromGlobal; // 1 = enabled by the all-games default, not by this game's own settings
 
 static u32 gCheatList[MAX_CHEATLIST]; // Store hooks/codes addr+val pairs
 cheat_entry_t *gCheats = NULL;        // lazily allocated in load_cheats (~1.03 MB); reclaims the old permanent BSS
@@ -55,6 +56,7 @@ void InitCheatsConfig(config_set_t *configSet)
     gCheatSource = 0;
     gEnableCheat = 0;
     gCheatMode = 0;
+    gCheatFromGlobal = 0;
     gEnableImage = 0;
 
     if (configGetInt(configSet, CONFIG_ITEM_CHEATSSOURCE, &gCheatSource)) {
@@ -66,6 +68,7 @@ void InitCheatsConfig(config_set_t *configSet)
     } else {
         if (configGetInt(configGame, CONFIG_ITEM_ENABLECHEAT, &gEnableCheat) && gEnableCheat) {
             configGetInt(configGame, CONFIG_ITEM_CHEATMODE, &gCheatMode);
+            gCheatFromGlobal = 1;
         }
         configGetInt(configGame, CONFIG_ITEM_ENABLEIMAGE, &gEnableImage);
     }
@@ -81,6 +84,11 @@ void InitCheatsConfig(config_set_t *configSet)
 int GetCheatsEnabled(void)
 {
     return gEnableCheat;
+}
+
+int GetCheatsFromGlobalDefault(void)
+{
+    return gCheatFromGlobal;
 }
 
 const u32 *GetCheatsList(void)

@@ -4865,13 +4865,16 @@ void guiWarning(const char *text, int count)
     delay(count);
 }
 
+#define VMODE_KEEP_HOLD_MS   2000 // how long Accept must be held to keep a new video mode
+#define VMODE_KEEP_BAR_WIDTH 200  // hold-progress bar at full length (virtual 640-wide pixels)
+
 int guiConfirmVideoMode(void)
 {
     // Elapsed form. This auto-revert is the ONLY thing that rescues a user whose new video mode
     // does not sync -- there is nothing on screen to read and nothing to aim at. A deadline that
     // straddles the clock() wrap would leave them there.
-    clock_t timeStart;
-    int terminate = 0;
+    clock_t timeStart, holdStart = 0;
+    int terminate = 0, holding = 0, holdPermille = 0;
 
     sfxPlay(SFX_MESSAGE);
 
@@ -4881,13 +4884,31 @@ int guiConfirmVideoMode(void)
 
         readPads();
 
+        // KEEPING the new mode takes a HOLD of Accept, not a tap. A mode the TV cannot show leaves the
+        // user blind, and a blind user taps buttons: one tap of Accept used to keep the dead mode, the
+        // next Save wrote it to the config, and every boot came up black until the .cfg was deleted
+        // (zackcage6, 09-25, interlaced-only TV). The hold has to START on this screen -- a button
+        // still down from the Settings dialog has no key-on edge here -- and letting go restarts it.
+        if (getKeyOn(gSelectButton)) {
+            holding = 1;
+            holdStart = clock();
+        } else if (!getKeyPressed(gSelectButton))
+            holding = 0;
+
+        holdPermille = 0;
+        if (holding) {
+            // To ms FIRST: scaling raw ticks by 1000 could overflow clock_t at a high tick rate.
+            int heldMs = (int)((clock() - holdStart) / (CLOCKS_PER_SEC / 1000));
+            holdPermille = (heldMs * 1000) / VMODE_KEEP_HOLD_MS;
+        }
+
         if (getKeyOn(gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE))
             terminate = 1;
-        else if (getKeyOn(gSelectButton))
+        else if (holdPermille >= 1000)
             terminate = 2;
-
-        // If the user fails to respond within the timeout period, deem it as a cancel operation.
-        if ((clock() - timeStart) >= (clock_t)OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS * (CLOCKS_PER_SEC / 1000))
+        // No answer within the timeout = cancel. Not while a hold is running: it settles within
+        // VMODE_KEEP_HOLD_MS either way, and a hold started at the last second should get to finish.
+        else if (!holding && (clock() - timeStart) >= (clock_t)OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS * (CLOCKS_PER_SEC / 1000))
             terminate = 1;
 
         guiShow();
@@ -4903,7 +4924,10 @@ int guiConfirmVideoMode(void)
 
         fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, _l(_STR_CFM_VMODE_CHG), gTheme->textColor);
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_BACK, gTheme->fonts[0], 500, 417, gTheme->textColor);
-        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_ACCEPT, gTheme->fonts[0], 70, 417, gTheme->textColor);
+        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_CFM_VMODE_HOLD_KEEP, gTheme->fonts[0], 70, 417, gTheme->textColor);
+        // Hold progress, just above the footer line: shows a sighted user the hold is registering.
+        if (holdPermille > 0)
+            rmDrawRect(70, 400, (VMODE_KEEP_BAR_WIDTH * (holdPermille > 1000 ? 1000 : holdPermille)) / 1000, 4, gTheme->selTextColor);
 
         guiEndFrame();
     }

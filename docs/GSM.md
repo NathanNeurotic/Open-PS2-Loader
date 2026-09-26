@@ -117,8 +117,8 @@ so fixing the global default will not repair a title you broke individually — 
 some games are affected.
 
 If the **menu itself** has no picture, that is not GSM — that is the global video mode setting. Hold
-**Triangle + Cross while RiptOPL boots** to force the menu to 480p progressive. See
-[CONTROLS.md](CONTROLS.md).
+**Triangle + Cross while RiptOPL boots** to force the menu to 480p progressive, or **Triangle +
+Circle** to force Auto (interlaced) on a TV that can't take 480p. See [CONTROLS.md](CONTROLS.md).
 
 ### The game runs but looks wrong
 
