@@ -362,7 +362,8 @@ This build layers several features on top of upstream OPL:
   memory cards and `settings.txt` are written straight through it.
 
   **Credit and licence — Ember is created by [Gageformer](https://github.com/Gageformer), and its
-  official release page is <https://github.com/Gageformer/Ember/releases>.** Ember is an
+  bundled release is [Ember Beta 2](https://github.com/Gageformer/Ember/releases/tag/Beta-2).**
+  The repository shortcut ships as `EMBER/Ember Official Webpage.url`. Ember is an
   independent PS1 emulator written from scratch for the PS2. It is bundled unmodified under the **Ember Public
   Beta Testing Licence**, which ships in the release package as `EMBER/LICENSE-BETA.txt` and governs
   the build it accompanies. That licence permits non-commercial bundling but prohibits selling,

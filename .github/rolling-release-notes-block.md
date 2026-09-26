@@ -41,7 +41,7 @@ appears twice.
 - **Guides:** [PS1 / VCD](https://nathanneurotic.github.io/Open-PS2-Loader/ps1-vcd.html) ·
   [internal HDD](https://nathanneurotic.github.io/Open-PS2-Loader/hdd.html)
 
-**Ember is by Gageformer** (<https://github.com/Gageformer/Ember/releases>), bundled unmodified under
+**Ember Beta 2 is by Gageformer** (<https://github.com/Gageformer/Ember/releases/tag/Beta-2>), bundled unmodified under
 the Ember Public Beta Testing Licence, shipped as `EMBER/LICENSE-BETA.txt`: free to use and to bundle
 non-commercially; no selling, modifying or repackaging; no BIOS or game content, ever. Report Ember
 problems to us first, since the launching is ours.
