@@ -99,6 +99,8 @@ jobs:
         run: python3 .github/scripts/test_bdm_partitions.py
       - name: Check the game-list sort keeps the old order in O(n log n)
         run: python3 .github/scripts/test_menu_sort.py
+      - name: Check a failed first PS2 scan runs once and names the folder
+        run: python3 .github/scripts/test_bdm_scan_retry.py
 
   udpfs-host-tests:
     runs-on: ubuntu-24.04

@@ -1432,23 +1432,17 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     if (folderConsumeDirty(itemList->mode))
         return 1;
 
-    // NEVER-SCANNED (-2) DEFEATS EVERY SHORT-CIRCUIT IN HERE -- note the condition, not just the body.
-    // bdmULSizePrev starts at -2 and only leaves it once a scan has actually run, so while it is -2
-    // this device has published no list yet and must be let through, INCLUDING while the page is still
-    // invisible -- exactly the state a device sits in between attaching and being shown. (The invisible
-    // bail below used to run first, making the old `!= -2` test on the miss-count line unreachable for
-    // a never-visible page; that test is now redundant and gone.)
+    // A NEVER-SCANNED slot (-2) skips this per-generation cache, INCLUDING while its page is still
+    // invisible, so bdmUpdateDeviceData keeps polling it until the page is published: a mount can
+    // answer Dopen before its identity ioctl is ready, and that deferral needs another look. Upstream
+    // has the same bypass.
     //
-    // Why this reaches far past the invisible case: the BDM list scans essentially ONCE, on the publish
-    // pass. Every later refresh hits bdmUpdateDeviceData's "no change to the device state" return 0
-    // below, so whatever the list held at that single instant is what the user has for the rest of the
-    // boot -- and sbReadList preserves its last-good list on a failed read, which on a FIRST scan
-    // means an empty list with no error shown. A network block device (UDPBD) is
-    // precisely where that instant can be too early: the volume is mounted but the server round-trip
-    // behind the CD/DVD opendir can still fail, and the page then reads "0 games" permanently and
-    // silently. UDPFS already rescues itself with the identical idea (udpfssupport.c:134-135,
-    // `if (udpfsULSizePrev == -2) result = 1;` -- deliberately above every gate); BDM had no
-    // equivalent. Same class as the PR #151 tab bug, one layer down.
+    // It does NOT buy a rescan. A published page whose first scan failed (sbReadList keeps -2 when
+    // neither CD nor DVD opens) returns on "no change" below, as upstream does, and bdmUpdateGameList
+    // says which folder it could not open. The #186 rescue that rescanned such a page instead did it on
+    // EVERY idle poll, forever, and each pass also rebuilt APPS and Favourites through
+    // menuDeferredUpdate -- so every L3, on every page, queued behind it (FifthFox: USB and MX4SIO
+    // both). SELECT, L3, a replug or a Game Sources apply is the retry.
     if (pDeviceData->bdmDeviceTick == BdmGeneration && pDeviceData->bdmULSizePrev != -2) {
         if (pOwner != NULL && pOwner->menuItem.visible == 0)
             return 0;
@@ -1488,40 +1482,11 @@ static int bdmNeedsUpdate(item_list_t *itemList)
             lastModuleLoadGen = BdmGeneration;
     }
 
-    // Check if the device has been connected or removed.
+    // Check if the device has been connected or removed. "No change" means nothing to do, including
+    // for a page whose first scan failed (see the -2 note above).
     result = bdmUpdateDeviceData(itemList);
-    // "No change to the device state" normally means there is nothing to do -- but a device that has
-    // NEVER scanned (bdmULSizePrev == -2) has no list to leave alone, and bdmUpdateDeviceData reports
-    // 0 on every poll once the device is connected and its identity is populated. Returning here would
-    // make the -2 bypass at the device-tick gate above a NO-OP, which is exactly what it was before
-    // this line changed (Gemini review of #186 -- it caught that my first cut fixed nothing).
-    //
-    // Falling through is safe and needs no new scan logic: result stays 0 past the connect/disconnect
-    // sfx branches, and the sbIsSameSize(bdmPrefix, bdmULSizePrev) check further down cannot match a
-    // sentinel of -2, so it sets result = 1 and the first scan publishes through the existing path.
-    // ... but ONLY for a slot that has actually CONNECTED (bdmPrefix populated by the connect pass).
-    // A NEVER-connected slot also sits at the -2 sentinel with result == 0, and letting it fall
-    // through reached sbCreateFolders() with an EMPTY prefix -- mkdir("CFG")/mkdir("THM")/... resolve
-    // relative to the CWD, i.e. the BOOT FOLDER, so an enabled-but-absent BDM device recreated the
-    // whole OPL library tree inside mmce0:/RIPTOPL/ (or wherever OPL lives) on every startup
-    // (AndrewBento, #214; FifthFox reported the same class). The #186 first-scan rescue only ever
-    // needed MOUNTED devices, which always have bdmPrefix set before any 0-result poll.
-    if (result == 0) {
-        // The -2 rescue applies ONLY to a device that is CONNECTED **and PUBLISHED**. Two #214-class
-        // holes otherwise: a NEVER-connected slot (bdmPrefix empty) reached sbCreateFolders("") --
-        // bare mkdir("CFG")/mkdir("THM")/... resolve against the CWD, i.e. the BOOT FOLDER
-        // (AndrewBento, #214); and a PRESENT but transport-WITHHELD device would get folders + scans
-        // on a page the user disabled, because bdmUpdateDeviceData populates bdmPrefix BEFORE its
-        // explicit-BDM-off/transport-disabled 0-returns (CodeRabbit review of #239 -- vetted against
-        // bdmUpdateDeviceData: the withhold paths run after bdmBuildGamePrefix). The #186 first-scan
-        // rescue only ever needed MOUNTED devices, whose connect pass sets BOTH the prefix and
-        // menuItem.visible before any 0-result poll.
-        int neverScanned = (pDeviceData->bdmULSizePrev == -2);
-        int connectedAndPublished = pDeviceData->bdmPrefix[0] != '\0' &&
-                                    itemList->owner != NULL && ((opl_io_module_t *)itemList->owner)->menuItem.visible;
-        if (!(neverScanned && connectedAndPublished))
-            return 0;
-    }
+    if (result == 0)
+        return 0;
 
     // If a device was added or removed play the appropriate UI sound.
     if (result == -1) {
@@ -1605,7 +1570,13 @@ static int bdmUpdateGameList(item_list_t *itemList)
         result += pDeviceData->bdmPs1GameCount;
     }
     if (view == LIB_VIEW_ISO || view == LIB_VIEW_MIXED) {
-        sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, folderGetSub(itemList->mode), &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
+        const char *sub = folderGetSub(itemList->mode);
+        sbReadList(&pDeviceData->bdmGames, pDeviceData->bdmPrefix, sub, &pDeviceData->bdmULSizePrev, &pDeviceData->bdmGameCount);
+        // Still -2 after a root scan = neither CD nor DVD would open and there is no ul.cfg. Say where
+        // it looked rather than leave a silently empty page. Only a connect, SELECT, L3 or
+        // delete/rename pass scans, so this cannot repeat on its own.
+        if (pDeviceData->bdmULSizePrev == -2 && sub[0] == '\0')
+            setErrorMessagePathCode(_STR_BDM_PS2_FOLDERS_UNREADABLE, pDeviceData->bdmPrefix, sbGetReadListError());
         result += pDeviceData->bdmGameCount;
     }
     return result;
