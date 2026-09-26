@@ -42,10 +42,11 @@ typedef struct neutrino_vmc_args
 // neutrinoBsdfs: per-game -bsdfs override, 0=Auto (per-device default), 1=exfat, 2=hdl, 3=bd.
 void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs);
 
-// Pre-deinit launch pre-flight: validates the driver token while every mount is up and the GUI
-// can still toast. Call BEFORE deinit in every Neutrino leg. Returns 0 = proceed; <0 = abort
-// the launch (a toast has already been shown).
-int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath);
+// Pre-deinit launch pre-flight: validates the driver token (and a -bsdfs=bd device number) while
+// every mount is up and the GUI can still toast. Call BEFORE deinit in every Neutrino leg, with the
+// same neutrinoBsdfs/extraArgs/bdDevNr it will pass to sysLaunchNeutrino. Returns 0 = proceed;
+// <0 = abort the launch (a toast has already been shown).
+int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutrinoBsdfs, const char *extraArgs, int bdDevNr);
 
 // Launch an external POPSTARTER.ELF for a PS1 VCD. selector = the target's argv[0]
 // "<POPS>/<prefix><name>.ELF" token. Caller deinit()s with UNMOUNT_EXCEPTION first.

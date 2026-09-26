@@ -98,6 +98,11 @@ The menu and Auto Loading run one discovery path. `miniInit` calls `resolveBootD
   - The `mass0:` wait is bounded to about 12 s.
 - **Cheats prompt (#265).** "Continue without cheats" had cancelled the launch, because the code
   compared `guiMsgBox`'s result with 2 while accept returns 1.
+- **Missing vs broken cheat files.** Only a cheat file that is not there at all counts as "no
+  cheats", which is silent when cheats are on for all games. A `cht.tar` member that is empty or
+  over 1 MB, or a loose `.cht` the device refuses (access denied, or held by another session), is
+  reported as failing to load. A generic I/O error still counts as missing, because an SMB share
+  answers a missing file with one.
 
 Per-game CFG files still come from the game device. An absent `conf_game.cfg` never triggers
 discovery by itself. Nothing here creates, formats or edits APA partitions, and on a hybrid

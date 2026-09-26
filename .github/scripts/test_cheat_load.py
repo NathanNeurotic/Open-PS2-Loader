@@ -9,6 +9,11 @@ It used to probe only the LAST spelling tried, so an existing-but-broken "<ID>.c
 whenever "<ID>.CHT" was missing, and a cht.tar member that failed to parse read as absent whenever
 the loose files were missing (CodeRabbit on PR #756).
 
+Two more "exists but reads as absent" cases (CodeRabbit's final #756 review): a cht.tar member that is
+empty or over CHT_TAR_MEMBER_MAX, and a loose file whose open() fails with EACCES or EBUSY. EIO stays
+"absent": SMB answers a missing file with -EIO, so counting it would prompt on every cheats-for-all-
+games launch from a share.
+
 This compiles sbCheatLogAppend and sbLoadCheats on the host with the tar engine, the .cht parser
 and open() replaced by a scripted device, and checks every combination that matters.
 """
@@ -66,7 +71,16 @@ static u32 tarRead(TarKind k, const TarEntryBase *e, void *dst, u32 n) { (void)k
 static int load_cheats_buf(const char *buf) { (void)buf; return tarParse; }
 static int isUpper(const char *p) { size_t n = strlen(p); return n >= 3 && !strcmp(p + n - 3, "CHT"); }
 static int load_cheats(const char *p) { return isUpper(p) ? upperLoad : lowerLoad; }
-static int open(const char *p, int f) { (void)f; return (isUpper(p) ? upperExists : lowerExists) ? 7 : -1; }
+/* exists: 1 = opens, 0 = absent (ENOENT), negative = open fails with that errno (-EACCES, -EIO...) */
+static int open(const char *p, int f)
+{
+    (void)f;
+    int e = isUpper(p) ? upperExists : lowerExists;
+    if (e > 0)
+        return 7;
+    errno = e < 0 ? -e : ENOENT;
+    return -1;
+}
 static int close(int fd) { (void)fd; return 0; }
 
 @FUNCTIONS@
@@ -97,7 +111,12 @@ int main(void)
     scenario("good <ID>.CHT (select mode)",            0, -1,   1,  1,  0,  0,  0,      1);
     scenario("broken tar member, no loose file",       0, -1,   0, -1,  1, 64, -1,      -1);
     scenario("good tar member",                        0, -1,   0, -1,  1, 64,  0,      0);
-    scenario("empty tar member, no loose file",        0, -1,   0, -1,  1,  0,  0,      -ENOENT);
+    scenario("empty tar member, no loose file",        0, -1,   0, -1,  1,  0,  0,      -1);
+    scenario("oversized tar member, no loose file",    0, -1,   0, -1,  1, 2000000, 0,  -1);
+    scenario("empty tar member, good loose file",      1,  0,   0, -1,  1,  0,  0,      0);
+    scenario("loose .cht refused (EACCES)",            -EACCES, -1, 0, -1, 0, 0, 0,     -1);
+    scenario("loose .CHT held by a dead session (EBUSY)", 0, -1, -EBUSY, -1, 0, 0, 0,   -1);
+    scenario("SMB not-found is EIO: still absent",     -EIO, -1, -EIO, -1, 0, 0, 0,     -ENOENT);
     scenario("broken tar member, good loose file",     1,  0,   0, -1,  1, 64, -1,      0);
     return fails ? 1 : 0;
 }
@@ -131,4 +150,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('cheat load: 10 device/tar scenarios OK (absent -> -ENOENT, broken -> load failure)')
+print('cheat load: 15 device/tar scenarios OK (absent -> -ENOENT, broken -> load failure)')
