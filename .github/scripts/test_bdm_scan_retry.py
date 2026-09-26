@@ -16,6 +16,10 @@ and checks:
 - a slot whose identity is not ready yet is still re-polled every pass (the -2 bypass upstream has);
 - a successful scan, a subfolder scan and the PS1 view raise no message.
 
+A second harness compiles the real span of src/supportbase.c (sbReadListErrno through sbReadList)
+against a scripted opendir: a folder that will not open records its errno, the next scan clears it,
+and a driver that fails without setting errno never reports a stale one.
+
 Run with --baseline <file> to point it at another bdmsupport.c (for example the pre-fix one from git)
 and watch the no-rescan and message cases fail.
 """
@@ -307,20 +311,176 @@ int main(void)
 }
 '''
 
-if not failures:
+# The error number in that message comes from the REAL scan: scanForISO records the errno of a CD/DVD
+# folder that will not open, and sbReadList clears it at the start of every scan. Compile that span of
+# src/supportbase.c (sbReadListErrno through sbReadList) against a scripted opendir.
+support = (root / 'src/supportbase.c').read_text(encoding='utf-8').replace('\r\n', '\n')
+span_start = support.find('static int sbReadListErrno;')
+span_end_match = re.search(r'^int sbReadList\([^;{]*\)\s*\{', support, re.M)
+if span_start < 0 or span_end_match is None:
+    failures.append('src/supportbase.c: sbReadListErrno ... sbReadList span not found')
+    scan_span = ''
+else:
+    scan_span = support[span_start:support.index('\n}', span_end_match.start())] + '\n}\n'
+
+SCAN_HARNESS = r'''
+#include <dirent.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+
+#define LOG(...) ((void)0)
+#define O_RDONLY 0
+#define FOLDER_SUB_MAX 128
+#define ISO_GAME_NAME_MAX 160
+#define ISO_GAME_EXTENSION_MAX 4
+#define UL_GAME_NAME_MAX 32
+#define GAME_STARTUP_MAX 12
+#define GAME_FORMAT_USBLD 0
+#define GAME_FORMAT_OLD_ISO 1
+#define GAME_FORMAT_ISO 2
+#define GAME_FORMAT_FOLDER 3
+#define SCECdPS2CD 0x12
+#define SCECdPS2DVD 0x14
+#define FIO_MT_RDONLY 0
+
+typedef struct
+{
+    char name[ISO_GAME_NAME_MAX + 1];
+    char startup[GAME_STARTUP_MAX + 1];
+    char extension[ISO_GAME_EXTENSION_MAX + 1];
+    unsigned char parts;
+    unsigned char media;
+    unsigned short format;
+    int sizeMB;
+} base_game_info_t;
+
+typedef struct
+{
+    char name[UL_GAME_NAME_MAX];
+    char startup[GAME_STARTUP_MAX];
+    unsigned char parts;
+    unsigned char media;
+} USBExtreme_game_entry_t;
+
+struct game_list_t
+{
+    base_game_info_t gameinfo;
+    struct game_list_t *next;
+};
+
+struct game_cache_list
+{
+    unsigned int count;
+    base_game_info_t *games;
+};
+
+static int gEnableFolderNav;
+
+/* Scripted device: which folder names refuse opendir, and with what errno. Opened folders are empty. */
+static const char *failPath1, *failPath2;
+static int failErrno;
+static int fakeDir;
+static DIR *stub_opendir(const char *path)
+{
+    if ((failPath1 && !strcmp(path, failPath1)) || (failPath2 && !strcmp(path, failPath2))) {
+        if (failErrno >= 0) /* -1: a driver that fails without setting errno */
+            errno = failErrno;
+        return NULL;
+    }
+    return (DIR *)&fakeDir;
+}
+static struct dirent *stub_readdir(DIR *d) { (void)d; return NULL; }
+static int stub_closedir(DIR *d) { (void)d; return 0; }
+#define opendir stub_opendir
+#define readdir stub_readdir
+#define closedir stub_closedir
+
+static int loadISOGameListCache(const char *path, struct game_cache_list *c) { (void)path; (void)c; errno = 99; return -1; }
+static void freeISOGameListCache(struct game_cache_list *c) { (void)c; }
+static int queryISOGameListCache(const struct game_cache_list *c, base_game_info_t *g, const char *n, int *h) { (void)c; (void)g; (void)n; (void)h; return ENOENT; }
+static int updateISOGameList(const char *p, const struct game_cache_list *c, const struct game_list_t *h, int n) { (void)p; (void)c; (void)h; (void)n; return 0; }
+static int isValidIsoName(char *name, int *len) { (void)name; *len = 0; return 0; }
+static int fileXioMount(const char *m, const char *p, int f) { (void)m; (void)p; (void)f; return -1; }
+static int fileXioUmount(const char *m) { (void)m; return 0; }
+static int GetStartupExecName(const char *p, char *o, int n) { (void)p; (void)o; (void)n; return -1; }
+static int openFile(const char *p, int f) { (void)p; (void)f; return -1; } /* no ul.cfg */
+static int getFileSize(int fd) { (void)fd; return 0; }
+static int stub_read(int fd, void *b, int n) { (void)fd; (void)b; (void)n; return 0; }
+static int stub_close(int fd) { (void)fd; return 0; }
+#define read stub_read
+#define close stub_close
+
+@SPAN@
+
+int main(void)
+{
+    base_game_info_t *list = NULL;
+    int fsize = -2, count = 0, failed = 0;
+
+    failPath1 = "mass0:CD";
+    failPath2 = "mass0:DVD";
+    failErrno = EIO;
+    sbReadList(&list, "mass0:", "", &fsize, &count);
+    if (fsize != -2 || sbGetReadListError() != EIO) {
+        printf("FAIL neither folder opens: fsize %d (want -2, list kept), error %d (want EIO=%d)\n", fsize, sbGetReadListError(), EIO);
+        failed = 1;
+    }
+
+    failPath1 = failPath2 = NULL;
+    sbReadList(&list, "mass0:", "", &fsize, &count);
+    if (fsize != -1 || sbGetReadListError() != 0) {
+        printf("FAIL both folders open: fsize %d (want -1), error %d (want 0: cleared by the new scan)\n", fsize, sbGetReadListError());
+        failed = 1;
+    }
+
+    failPath1 = "mass0:CD";
+    failErrno = ENOENT;
+    fsize = -2;
+    sbReadList(&list, "mass0:", "", &fsize, &count);
+    if (fsize != -1 || sbGetReadListError() != ENOENT) {
+        printf("FAIL only CD refuses: fsize %d (want -1, not a total failure), error %d (want ENOENT)\n", fsize, sbGetReadListError());
+        failed = 1;
+    }
+    /* A driver that fails without setting errno must not report the cache lookup's leftover (99). */
+    failPath1 = "mass0:CD";
+    failPath2 = "mass0:DVD";
+    failErrno = -1;
+    fsize = -2;
+    sbReadList(&list, "mass0:", "", &fsize, &count);
+    if (sbGetReadListError() != 0) {
+        printf("FAIL silent driver failure: error %d (want 0, not a stale errno)\n", sbGetReadListError());
+        failed = 1;
+    }
+    free(list);
+    if (!failed)
+        printf("bdm scan retry: real scan records and clears the folder error\n");
+    return failed;
+}
+'''
+
+
+def compile_and_run(name, program):
     with tempfile.TemporaryDirectory() as tmp:
-        c_file = Path(tmp) / 'harness.c'
-        exe = Path(tmp) / 'harness'
-        c_file.write_text(HARNESS.replace('@FUNCTIONS@', functions), encoding='utf-8')
+        c_file = Path(tmp) / (name + '.c')
+        exe = Path(tmp) / name
+        c_file.write_text(program, encoding='utf-8')
         build = subprocess.run(['cc', '-std=gnu99', '-Wall', '-Wno-unused-function', '-o', str(exe), str(c_file)],
                                capture_output=True, text=True)
         if build.returncode != 0:
-            failures.append('harness did not compile:\n' + build.stdout + build.stderr)
-        else:
-            run = subprocess.run([str(exe)], capture_output=True, text=True)
-            sys.stdout.write(run.stdout)
-            if run.returncode != 0:
-                failures.append('harness reported failures')
+            failures.append('%s harness did not compile:\n%s%s' % (name, build.stdout, build.stderr))
+            return
+        run = subprocess.run([str(exe)], capture_output=True, text=True)
+        sys.stdout.write(run.stdout)
+        if run.returncode != 0:
+            failures.append('%s harness reported failures' % name)
+
+
+if not failures:
+    compile_and_run('needs_update', HARNESS.replace('@FUNCTIONS@', functions))
+    compile_and_run('scan_error', SCAN_HARNESS.replace('@SPAN@', scan_span))
 
 # The removed rescue must stay removed: it is the only thing that made a failed page rescan per poll.
 if 'neverScanned && connectedAndPublished' in source:
