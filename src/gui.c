@@ -4922,8 +4922,10 @@ int guiConfirmVideoMode(void)
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
         fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, _l(_STR_CFM_VMODE_CHG), gTheme->textColor);
-        // How long until the automatic revert (zackcage6's idea). Hidden during a hold, which pauses
-        // the timeout; whole seconds rounded up, so it reads 10 .. 1 and never 0 while still up.
+        // How long until the automatic revert (zackcage6's idea). Hidden during a hold. A hold does NOT
+        // pause the deadline -- it only defers the revert check so a started hold can finish; let go
+        // early after the deadline and the next pass reverts. Whole seconds rounded up, so it reads
+        // 10 .. 1 and never 0 while still up.
         if (!holding) {
             int leftMs = OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS - (int)((clock() - timeStart) / (CLOCKS_PER_SEC / 1000));
             char countdown[64];

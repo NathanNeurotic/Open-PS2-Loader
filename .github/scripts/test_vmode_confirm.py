@@ -13,7 +13,8 @@ scripted frame loop (60 fps), and checks:
 - an Accept still held from the Settings dialog (no key-on edge here) never counts;
 - Back reverts at once; no input reverts at the timeout;
 - a hold started just before the timeout is allowed to finish;
-- the countdown (zackcage6, 09-26) reads 10 down to 1, never rises, and is hidden during a hold;
+- the countdown (zackcage6, 09-26) reads 10 down to 1, never rises, and is hidden during a hold --
+  which does NOT pause the deadline (a released hold continues from the original one);
 - the frame that keeps the mode draws the hold bar at FULL width;
 - nothing is rendered under the opaque prompt: rendering the menu there (guiShow) only cost frame
   time, and in heavy modes made the bar jump to ~4/5 and the keep land before it looked full.
@@ -103,7 +104,7 @@ static int getKeyOn(int id) { return id == KEY_CROSS ? (curAccept && !prevAccept
 static int getKeyPressed(int id) { return id == KEY_CROSS ? curAccept : curBack; }
 
 /* What each frame showed: the countdown's seconds (-1 = none) and the hold bar's width (0 = none). */
-static int shownSecs, barW, lastBarW, firstSecs, lastSecs, rose, shownInHold, holdFrom, holdTo;
+static int shownSecs, barW, lastBarW, firstSecs, lastSecs, rose, shownInHold, holdFrom, holdTo, watchFrame, secsAtWatch;
 static void guiStartFrame(void) { shownSecs = -1; barW = 0; }
 static void guiEndFrame(void)
 {
@@ -116,6 +117,8 @@ static void guiEndFrame(void)
         if (frame > holdFrom && frame < holdTo)
             shownInHold = 1;
     }
+    if (frame == watchFrame)
+        secsAtWatch = shownSecs;
     lastBarW = barW;
     frame++;
 }
@@ -151,6 +154,7 @@ static void reset(void)
     firstSecs = lastSecs = -1;
     rose = shownInHold = 0;
     holdFrom = holdTo = -1;
+    watchFrame = secsAtWatch = -1;
 }
 /* Accept already down when the prompt opens: the Settings dialog's last poll saw it too, so the
    prompt's first readPads finds it in the OLD pad data and there is no key-on edge. */
@@ -208,6 +212,13 @@ int main(void)
         printf("FAIL the frame that keeps the mode drew the bar %d wide (want the full %d)\n", lastBarW, VMODE_KEEP_BAR_WIDTH);
         fails++;
     }
+    /* A hold does NOT pause the deadline: hold 5.0 s .. 6.5 s, let go, and the count goes on from the
+       original deadline (3.5 s left -> "4"), not from where the hold began ("5"). */
+    reset(); hold(300, 90); watchFrame = 392; expect("released hold", 0, timeout60 - 1, timeout60 + 2);
+    if (secsAtWatch != 4) {
+        printf("FAIL after a released hold the countdown showed %d (want 4: the deadline kept running)\n", secsAtWatch);
+        fails++;
+    }
 
     return fails ? 1 : 0;
 }
@@ -253,4 +264,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('video mode confirm: 10 input scripts, countdown, full bar on keep, and both boot recovery combos OK')
+print('video mode confirm: 11 input scripts, countdown, full bar on keep, and both boot recovery combos OK')
