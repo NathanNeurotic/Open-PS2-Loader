@@ -38,7 +38,7 @@
 //   6  embedded child-loader ELF has a bad magic
 //
 // Set LAUNCH_DIAG to 0 to strip every marker from the build.
-#define LAUNCH_DIAG 0
+#define LAUNCH_DIAG 1
 
 enum LaunchDiagRefusal {
     LAUNCHDIAG_REFUSE_ARGS = 1,
