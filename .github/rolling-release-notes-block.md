@@ -95,8 +95,6 @@ launch problems to us; genuine Neutrino bugs belong upstream.
   `mc?:/POPSTARTER` ilink marker and both installed module sizes/hashes). The native OPL core still
   fails at game handoff.
 - **HTTP**, with Docmine17's OPL HTTP server: the catalog lists and an ISO boots.
-- **PC network servers:** with PS2-Servers, the list populates and an ISO boots over UDPFS or SMB
-  (UDPBD is confirmed).
 - **A USB / MX4SIO page with no PS2 games:** the message names the folder and the error number, and
   L3 stays quick on every page.
 - **Keeping a video mode:** holding Accept, the bar fills smoothly to the end; left alone, the
