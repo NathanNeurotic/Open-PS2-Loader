@@ -1344,3 +1344,5 @@ gui_strings:
   string: Official OPL settings loaded from %s
 - label: CFM_VMODE_HOLD_KEEP
   string: Hold to keep
+- label: BDM_PS2_FOLDERS_UNREADABLE
+  string: "Could not open the CD or DVD folder in %s (error %d), so that device lists no PS2 games. Press SELECT on its page to try again."
