@@ -139,6 +139,7 @@ paths are no longer limited to 31 characters.
 | Internal HDD (APA → HDL) | ✅ | ❌ **games boot, VMC is dropped with a warning** — Neutrino has no APA/pfs backing store to open the `.bin` from (NHDDL's HDL backend has the same no-VMC rule). The OPL core honors the same VMC normally. |
 | MMCE | ✅ | ✅ `-mcN=mmceN:/…VMC/<name>.bin` |
 | UDPFS (network boot — Files or Image) | ✅ **required** — no OPL core, Neutrino only (see §4) | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail |
+| UDPBD (network boot — served disk image) | ✅ **required** — no OPL core, Neutrino only (see §4). Hardware-confirmed 2026-09-26: Kingdom Hearts on PS2-Servers, with every Neutrino setting at its default (neutrino.elf found inside the served image, no per-game filesystem or args) | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; not yet tested on hardware |
 | SMB / ETH | ❌ (always launches with `<OPL>`; the core selector is locked and a stale Neutrino selection warns at launch) | n/a (OPL-core VMC works normally) |
 | USB Extreme split images (`.ul`) | ❌ (falls back to `<OPL>`) | n/a |
 | Compressed ISO (`.zso`) | ❌ (falls back to `<OPL>`) | n/a |
