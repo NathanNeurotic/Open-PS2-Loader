@@ -29,6 +29,10 @@ int ioRegisterHandler(int type, io_request_handler_t handler);
  * @note The data are not freed! */
 int ioPutRequest(int type, void *data);
 
+/** as ioPutRequest, but does nothing (and returns IO_OK) when an identical type+data request is
+ * already queued and has not started yet. One that is running does not count: it may already have
+ * read whatever the caller just changed. For handlers that read their inputs when they run. */
+int ioPutRequestUnlessWaiting(int type, void *data);
 
 
 /** removes all requests of a given type from the queue

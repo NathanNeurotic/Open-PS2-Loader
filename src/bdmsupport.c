@@ -1051,7 +1051,9 @@ static int bdmLoadUsbMassBd(void)
 
 static int bdmShouldQueueModuleLoad(void)
 {
-    if (!iUSBModLoaded)
+    // Mirror each load gate in bdmLoadBlockDeviceModules. With USB switched off the pass never loads
+    // it, so an ungated test here queued a pass that did nothing on every device event.
+    if (gEnableUSB && !iUSBModLoaded)
         return 1;
     if (gEnableILK && !iLinkModLoaded)
         return 1;
@@ -1311,8 +1313,13 @@ void bdmLoadModules(void)
 {
     bdmLoadCoreModules(0); // normal enumeration: USB residency follows gEnableUSB
 
-    // Normal enumeration retains the established asynchronous optional-transport load.
-    ioPutRequest(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules);
+    // Normal enumeration retains the established asynchronous optional-transport load -- ONE pass.
+    // Every BDM slot's bdmInit comes through here (eight at boot, then bdmEnumerateDevices asks a
+    // ninth time), and each extra pass retried any transport that had failed: BDM HDD with no drive
+    // was a full DEV9 + ATA load per pass before a single list was read. The pass reads the enable
+    // flags when it runs, so a waiting one already covers these; its one-shot MX4SIO/USB double tap
+    // is untouched.
+    ioPutRequestUnlessWaiting(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules);
 }
 
 static void bdmInit(item_list_t *itemList)
@@ -1478,7 +1485,7 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     if (bdmShouldQueueModuleLoad() && lastModuleLoadGen != BdmGeneration) {
         // Stamp only on an ACCEPTED request, so one rejected during a teardown block retries on the
         // next pass instead of being silently skipped until the next hotplug.
-        if (ioPutRequest(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules) == IO_OK)
+        if (ioPutRequestUnlessWaiting(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules) == IO_OK)
             lastModuleLoadGen = BdmGeneration;
     }
 
@@ -2665,7 +2672,8 @@ void bdmEnumerateDevices()
 
     // Because bdmLoadModules is called before the config file is loaded bdmLoadBlockDeviceModules will not have loaded any
     // optional bdm modules. Now that the config file has been loaded try loading any optional modules that weren't previously loaded.
-    ioPutRequest(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules);
+    // A pass still waiting reads the loaded config when it runs, so it is not queued twice.
+    ioPutRequestUnlessWaiting(IO_CUSTOM_SIMPLEACTION, &bdmLoadBlockDeviceModules);
 
     LOG("bdmEnumerateDevices done\n");
 }

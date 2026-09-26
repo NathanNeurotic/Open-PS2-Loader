@@ -1347,6 +1347,12 @@ void menuDeferredUpdate(void *data)
     if (!mod->support)
         return;
 
+    // An L3 flip changes which list this page shows, not which devices exist, so it cannot change
+    // APPS -- a walk of every device's APPS folder, MMCE over SIO2 included. Read it before the
+    // rebuild below commits the view. (Only L3 stages a view; libViewBdmAttach never does, so a
+    // device that attaches still rebuilds APPS.)
+    int viewFlip = libViewPending(mod->support->mode);
+
     // see if we have to update
     if (mod->support->itemNeedsUpdate(mod->support)) {
         updateMenuFromGameList(mod);
@@ -1354,7 +1360,7 @@ void menuDeferredUpdate(void *data)
         // If other modes have been updated, then the apps list should be updated too.
         // Exclude FAV: a FAV rebuild marking apps dirty would re-trigger the FAV resync below
         // (an apps refresh calls loadFavourites), looping forever once favNeedsUpdate fires.
-        if (mod->support->mode != APP_MODE && mod->support->mode != FAV_MODE) {
+        if (mod->support->mode != APP_MODE && mod->support->mode != FAV_MODE && !viewFlip) {
             shouldAppsUpdate = 1;
 
             // ...and SCHEDULE the pass that consumes that flag. Raising it is not enough: APPS has
@@ -1372,18 +1378,20 @@ void menuDeferredUpdate(void *data)
             //
             // Queue it here instead, exactly the way loadFavourites() below schedules FAV's rebuild.
             // Bounded, not a storm: itemNeedsUpdate returns 1 only on a REAL source change (a
-            // never-connected BDM slot returns 0 early), and duplicates self-coalesce because
-            // oplShouldAppsUpdate() clears the flag on the first pass, so any extra queued pass
-            // rebuilds nothing. Enqueueing from this IO worker is the established pattern here
-            // (bdmNeedsUpdate and loadFavourites both do it): ioPutRequest takes only gEndSemaId,
-            // which the worker does not hold while a handler runs.
+            // never-connected BDM slot returns 0 early), and an APPS pass that is still waiting
+            // reads shouldAppsUpdate when it runs, so a second one is not queued behind it (two
+            // sticks attaching together used to queue two). Enqueueing from this IO worker is the
+            // established pattern here (bdmNeedsUpdate and loadFavourites both do it): it takes
+            // only gEndSemaId, which the worker does not hold while a handler runs.
             opl_io_module_t *appMod = &list_support[APP_MODE];
             if (appMod->support != NULL && appMod->support->enabled)
-                ioPutRequest(IO_MENU_UPDATE_DEFFERED, &appMod->support->mode);
+                ioPutRequestUnlessWaiting(IO_MENU_UPDATE_DEFFERED, &appMod->support->mode);
         }
 
         // A source-list refresh may expose newly-loaded items to validate favourites
         // against. Re-sync the FAV tab (cheap/idempotent; skipped when FAV is disabled).
+        // An L3 flip still counts: favourites resolve against a device's PS1 or PS2 list
+        // (favResolveStoredId), and a flip can fill one that was never scanned.
         if (gFAVStartMode && mod->support->mode != FAV_MODE)
             loadFavourites();
     } else if (libViewPending(mod->support->mode)) {
