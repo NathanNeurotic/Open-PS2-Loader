@@ -235,7 +235,7 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 <tr><td><code>-bsd=&lt;usb|ilink|mx4sio|ata|mmce|udpbd|udpfsbd|udpfs&gt;</code></td><td>Always (the storage backend)</td></tr>
 <tr><td><code>-bsdfs=hdl</code></td><td>Internal HDD (APA) only</td></tr>
 <tr><td><code>-dvd=&lt;path&gt;</code> / <code>-dvd=hdl:&lt;partition&gt;</code></td><td>Always (the game image or partition)</td></tr>
-<tr><td><code>-qb</code></td><td>USB and iLink. RiptOPL's no-reset bridge preserves the mounted BDM environment; quick boot enters Neutrino's load environment without resetting that inherited stack away. An active user-supplied copy is never duplicated.</td></tr>
+<tr><td><code>-qb</code></td><td>USB, iLink, UDPBD and both UDPFS legs &mdash; the same set NHDDL uses (every mode except HDL). RiptOPL's no-reset bridge preserves the mounted BDM/UDPFS environment; quick boot enters Neutrino's load environment without resetting that inherited stack away. Without it, a UDPBD launch reconnected on its own after the reset, read the image's partition table and never reached the game. An active user-supplied copy is never duplicated.</td></tr>
 <tr><td><code>-gc=&lt;modes&gt;</code></td><td>Only when OPL compat modes are set for the game</td></tr>
 <tr><td><code>-dbc</code></td><td>Only when <b>Debug Colors</b> is enabled</td></tr>
 <tr><td><code>-logo</code></td><td>Only when <b>PS2 Logo</b> is enabled</td></tr>
@@ -267,7 +267,7 @@ Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Arg
 <table data-sortable>
 <thead><tr><th>Field</th><th>Argument emitted</th><th>Notes</th></tr></thead>
 <tbody>
-<tr><td>Quick Boot (-qb)</td><td><code>-qb</code></td><td>Enter Neutrino's load environment directly; emitted first if enabled and supplied automatically for USB/iLink</td></tr>
+<tr><td>Quick Boot (-qb)</td><td><code>-qb</code></td><td>Enter Neutrino's load environment directly; emitted first if enabled and supplied automatically for USB, iLink, UDPBD and UDPFS</td></tr>
 <tr><td>Debug Colors (-dbc)</td><td><code>-dbc</code></td><td>Neutrino's debug colour output; forwarding it here suppresses OPL's own auto-emitted copy</td></tr>
 <tr><td>PS2 Logo (-logo)</td><td><code>-logo</code></td><td>Show the PS2 logo; forwarding it here suppresses OPL's own auto-emitted copy</td></tr>
 <tr><td>Working Dir (-cwd)</td><td><code>-cwd=&lt;path&gt;</code></td><td>Override Neutrino's working directory</td></tr>
