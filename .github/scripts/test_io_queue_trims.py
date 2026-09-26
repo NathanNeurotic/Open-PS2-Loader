@@ -46,9 +46,16 @@ opl = read('src/opl.c')
 
 io_functions = ''.join(function_text(ioman, 'src/ioman.c', sig) for sig in (
     'static io_request_handler_t ioGetHandler(',
+    'static int ioAppendLocked(',
     'int ioPutRequest(',
     'int ioPutRequestUnlessWaiting(',
 ))
+# The scan and the append must be ONE gEndSemaId hold, or the GUI thread and the worker asking at
+# once can both miss each other and queue two (CodeRabbit on #764).
+unless = function_text(ioman, 'src/ioman.c', 'int ioPutRequestUnlessWaiting(')
+if unless.count('WaitSema(gEndSemaId)') != 1 or 'ioAppendLocked(type, data)' not in unless or 'ioPutRequest(' in unless:
+    failures.append('ioPutRequestUnlessWaiting: scan and append must share one gEndSemaId hold (ioAppendLocked), '
+                    'not release it and call ioPutRequest')
 should_queue = function_text(bdm, 'src/bdmsupport.c', 'static int bdmShouldQueueModuleLoad(')
 deferred = function_text(opl, 'src/opl.c', 'void menuDeferredUpdate(')
 module_pass = function_text(bdm, 'src/bdmsupport.c', 'static void bdmLoadBlockDeviceModules(')

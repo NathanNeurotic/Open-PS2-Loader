@@ -297,27 +297,18 @@ void ioInit(void)
     StartThread(gIOThreadId, NULL);
 }
 
-int ioPutRequest(int type, void *data)
+// Link a request at the queue tail. Caller holds gEndSemaId (and has checked isIOBlocked and the
+// handler); the caller also wakes the worker once the semaphore is released.
+static int ioAppendLocked(int type, void *data)
 {
-    if (isIOBlocked)
-        return IO_ERR_IO_BLOCKED;
-
-    // check the type before queueing
-    if (!ioGetHandler(type))
-        return IO_ERR_INVALID_HANDLER;
-
-    WaitSema(gEndSemaId);
-
     // We don't have to lock the tip of the queue...
     // If it exists, it won't be touched, if it does not exist, it is not being processed
     // Allocate FIRST and bail cleanly on OOM (fork parity): the old shape malloc'd straight into
     // gReqList/gReqEnd->next and then dereferenced the result, so an allocation failure was a NULL
     // write plus a corrupted queue tail -- with the semaphore held.
     struct io_request_t *req = (struct io_request_t *)malloc(sizeof(struct io_request_t));
-    if (!req) {
-        SignalSema(gEndSemaId);
+    if (!req)
         return IO_ERR_TOO_MANY_REQUESTS;
-    }
 
     if (!gReqEnd)
         gReqList = req;
@@ -333,31 +324,53 @@ int ioPutRequest(int type, void *data)
         gIoPending[type]++;
         gIoTotal[type]++;
     }
+    return IO_OK;
+}
 
+int ioPutRequest(int type, void *data)
+{
+    int result;
+
+    if (isIOBlocked)
+        return IO_ERR_IO_BLOCKED;
+
+    // check the type before queueing
+    if (!ioGetHandler(type))
+        return IO_ERR_INVALID_HANDLER;
+
+    WaitSema(gEndSemaId);
+    result = ioAppendLocked(type, data);
     SignalSema(gEndSemaId);
 
     // Worker thread cannot wake itself up (WakeupThread will return an error), but it will find the new request before sleeping.
-    WakeupThread(gIOThreadId);
-    return IO_OK;
+    if (result == IO_OK)
+        WakeupThread(gIOThreadId);
+    return result;
 }
 
 int ioPutRequestUnlessWaiting(int type, void *data)
 {
+    int result = IO_OK, found = 0;
+
     if (isIOBlocked)
         return IO_ERR_IO_BLOCKED;
+    if (!ioGetHandler(type))
+        return IO_ERR_INVALID_HANDLER;
 
     // gEndSemaId only, as ioPutRequest takes it: it is held for a link or an unlink and never across
     // a handler, so this is safe from the GUI thread. (gProcSemaId is held across the whole drain and
-    // must never be taken here -- see gIoPending.)
+    // must never be taken here -- see gIoPending.) The scan and the append are ONE hold, so the GUI
+    // thread and the worker asking at once cannot both miss each other and queue two (CodeRabbit).
     WaitSema(gEndSemaId);
-    for (struct io_request_t *r = gReqList; r != NULL; r = r->next) {
-        if (r != gReqRunning && r->type == type && r->data == data) {
-            SignalSema(gEndSemaId);
-            return IO_OK; // an identical request has not started: it will see whatever just changed
-        }
-    }
+    for (struct io_request_t *r = gReqList; r != NULL && !found; r = r->next)
+        found = (r != gReqRunning && r->type == type && r->data == data); // not started: sees the change
+    if (!found)
+        result = ioAppendLocked(type, data);
     SignalSema(gEndSemaId);
-    return ioPutRequest(type, data);
+
+    if (!found && result == IO_OK)
+        WakeupThread(gIOThreadId);
+    return result;
 }
 
 int ioRemoveRequests(int type)
