@@ -28,6 +28,7 @@ POPS/** binary
 # still wins for EMBER/Ember Official Webpage.url -- gitattributes is last-match-wins, and a Windows
 # internet shortcut is one of the few files that genuinely must check out with CRLF.
 EMBER/** binary
+Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/EMBER/** binary
 
 # PS2 memory-card browser save icons: the save-folder icon.sys and the .icn geometry/texture files
 # it names. POPS/** above already covers POPSTARTER's copies; these are the ones embedded in the

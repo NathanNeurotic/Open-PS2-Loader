@@ -244,3 +244,4 @@ jobs:
             OPNPS2LD-*.ELF
             BUILD-MANIFEST.txt
           if-no-files-found: error
+          retention-days: 14
