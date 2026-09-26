@@ -142,7 +142,10 @@ Core is Neutrino. They are greyed under <code>&lt;OPL&gt;</code>.</p>
   <li><b>Neutrino Filesystem</b> — overrides Neutrino's <code>-bsdfs</code> block-device filesystem.
   Values <em>Auto / exfat / hdl / bd</em> (<em>Auto</em> uses the per-device default). Greyed for backends
   that are not block-backed — MMCE, UDPFS, APA HDD and VCD entries. <code>hdl</code> and <code>bd</code>
-  are expert options. Config key: <code>$NeutrinoBsdfs</code>.</li>
+  are expert options: <code>bd</code> treats the whole block device as the disc, so it only fits a device (or a
+  UDPBD server) holding a single raw ISO, and it is refused before launch on a drive that never reported its
+  device number (see <a href="neutrino.html#launch-args">Launch arguments</a>). Leave <em>Auto</em> for a normal
+  FAT/exFAT device with games in <code>DVD/</code>. Config key: <code>$NeutrinoBsdfs</code>.</li>
 </ul>
 
 <table data-sortable>

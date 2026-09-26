@@ -153,6 +153,15 @@ fresh, prefer <b>UDPFS</b> (it also serves loose ISOs and transparent
 <code>.zso</code>/<code>.cso</code>/<code>.chd</code> — see below).
 </div>
 
+<div class="callout info"><div class="h">UDPBD is confirmed on a real PS2</div>
+Tested 2026-09-26: Kingdom Hearts launched over UDPBD from <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2
+Servers</a> with every Neutrino setting at its default — Neutrino Path blank (RiptOPL found
+<code>neutrino.elf</code> inside the served image) and no per-game filesystem or arguments. For an ordinary
+FAT/exFAT image with your games in <code>DVD/</code>, leave the game's <b>Neutrino Filesystem</b> on
+<b>Auto</b>: <code>bd</code> treats the whole block device as the disc, which only fits a server exporting a
+single raw ISO.
+</div>
+
 <div class="callout amber"><div class="h">Emulator-validated only</div>
 The UDPRDMA path (both <b>Files</b> and <b>IMG</b> modes) is validated on emulator so far —
 real-PS2 confirmation is pending.
