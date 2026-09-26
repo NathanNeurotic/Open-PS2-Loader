@@ -187,7 +187,10 @@ Special and sincere thanks to:
     memory-card loading through the PS2's memory-card slot possible.
   - saildot4k - for BDMA-ATA (exFAT internal-HDD block-device support), and the
     fixes, feedback, and oversight that shaped this fork's block-device work.
-  - Berion - for the artwork and theme design that has shaped how OPL looks.
+  - Berion - for the artwork and theme design that has shaped how OPL looks,
+    including Korium, whose graphics this fork's built-in theme is built from.
+  - KrahJohlito - for the original Korium theme script, revised and assembled
+    here as Korium Komblete.
   - AdityaKumar7209 - whose Modulo-R1 project inspired this fork's folder
     browsing in the game list. We didn't use their code; the idea of navigating
     game subfolders came from seeing it there.

@@ -3541,9 +3541,18 @@ static int thmLoad(const char *themePath)
     // element's own _default (or nothing), not our art. Gating the decode also reclaims the ~153 KB
     // of EE RAM on disk themes. The draw-site fallback is additionally gated on the built-in
     // (NULL-prefix) cache in drawAttributeImage, so this can never regress by re-widening one side.
-    if (!themePath)
+    if (!themePath) {
         for (i = ELF_FORMAT; i <= VMODE_PAL; i++)
             thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
+
+        // Players_1..4 are attribute-value glyphs exactly like the block above, but they live at
+        // the END of the enum: inserting them inside ELF_FORMAT..VMODE_PAL would shift UDPFS_ICON,
+        // and saved favourites store icon_id by value. Same built-in gate, explicit range -- without
+        // this thmGetTexture(PLAYERS_n) yields NULL and the badge silently falls back to the
+        // element's _default for every game.
+        for (i = PLAYERS_1; i <= PLAYERS_4; i++)
+            thmLoadResource(&newT->textures[i], i, NULL, GS_PSM_CT32, 1);
+    }
 
     // Optional settings/menu background (guiDrawBGSettings draws it instead of the plasma).
     // Theme-supplied only for now: a disk theme opts in with use_settings_bg=1 and ships its
