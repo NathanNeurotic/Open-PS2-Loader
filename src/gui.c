@@ -4911,18 +4911,27 @@ int guiConfirmVideoMode(void)
         else if (!holding && (clock() - timeStart) >= (clock_t)OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS * (CLOCKS_PER_SEC / 1000))
             terminate = 1;
 
-        guiShow();
-
-        // Opaque, like the other prompts whose backdrop is just whatever guiShow() draws (guiMsgBox
-        // with no ui, guiWarning, guiPromptRebootIop). The prompt itself is what proves the new mode
-        // syncs. What showed through the old ~75% wash was the game list page -- not the Settings
-        // screen the mode was changed from -- and testers saw it empty behind the prompt.
+        // Opaque, and NOTHING is drawn under it. The prompt itself is what proves the new mode syncs;
+        // what showed through the old ~75% wash was the game list page, which testers saw empty
+        // behind the prompt. Once the backdrop went opaque, rendering that page first (guiShow) was
+        // pure frame time -- in the heavy high-res modes enough that the hold bar advanced in big
+        // steps and the keep landed while it still looked 4/5 full (zackcage6, 09-26).
         rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
         fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, _l(_STR_CFM_VMODE_CHG), gTheme->textColor);
+        // How long until the automatic revert (zackcage6's idea). Hidden during a hold. A hold does NOT
+        // pause the deadline -- it only defers the revert check so a started hold can finish; let go
+        // early after the deadline and the next pass reverts. Whole seconds rounded up, so it reads
+        // 10 .. 1 and never 0 while still up.
+        if (!holding) {
+            int leftMs = OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS - (int)((clock() - timeStart) / (CLOCKS_PER_SEC / 1000));
+            char countdown[64];
+            snprintf(countdown, sizeof(countdown), _l(_STR_CFM_VMODE_REVERT_IN), leftMs > 0 ? (leftMs + 999) / 1000 : 1);
+            fntRenderString(gTheme->fonts[0], screenWidth >> 1, (gTheme->usedHeight >> 1) + 32, ALIGN_CENTER, 0, 0, countdown, gTheme->textColor);
+        }
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_BACK, gTheme->fonts[0], 500, 417, gTheme->textColor);
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_CFM_VMODE_HOLD_KEEP, gTheme->fonts[0], 70, 417, gTheme->textColor);
         // Hold progress, just above the footer line: shows a sighted user the hold is registering.

@@ -1348,3 +1348,5 @@ gui_strings:
   string: "Could not open the CD or DVD folder in %s (error %d), so that device lists no PS2 games. Press SELECT on its page to try again."
 - label: NEUTRINO_BD_NO_DEVICE_NUMBER
   string: "Neutrino Filesystem is set to bd, but this device never reported its device number, so Neutrino cannot be pointed at it. Set this game's Neutrino Filesystem to Auto or exfat."
+- label: CFM_VMODE_REVERT_IN
+  string: Reverting in %d s
