@@ -2098,7 +2098,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     // Δ6 pre-teardown validation. On failure fall back to the native core (same contract as
     // bdmTryNeutrinoLaunch's non-udp legs): HDL always boots natively, and the native path owns
     // the autolaunch teardown -- aborting here instead would leak gAutoLaunchGame/configSet.
-    if (sysNeutrinoPreflight("apa", neutrinoPath) < 0)
+    if (sysNeutrinoPreflight("apa", neutrinoPath, 0, NULL, -1) < 0)
         return 0;
 
     // Honesty toast: the OPL core honors $VMC_N on HDD (mcemu over pfs0:VMC/), but Neutrino has no

@@ -1346,3 +1346,5 @@ gui_strings:
   string: Hold to keep
 - label: BDM_PS2_FOLDERS_UNREADABLE
   string: "Could not open the CD or DVD folder in %s (error %d), so that device lists no PS2 games. Press SELECT on its page to try again."
+- label: NEUTRINO_BD_NO_DEVICE_NUMBER
+  string: "Neutrino Filesystem is set to bd, but this device never reported its device number, so Neutrino cannot be pointed at it. Set this game's Neutrino Filesystem to Auto or exfat."

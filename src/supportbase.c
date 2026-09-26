@@ -1476,27 +1476,29 @@ int sbLoadCheats(const char *path, const char *file)
             */
             if (entry == NULL && snprintf(member, sizeof(member), "%s.CHT", file) < (int)sizeof(member))
                 entry = tarFind(TAR_KIND_CHT, member);
-            // rawSize == 0 counts as a miss so an empty tar member never shadows a possibly-valid
-            // loose CHT/<id>.cht below; over-cap members likewise fall through.
-            if (entry != NULL && entry->rawSize > 0 && entry->rawSize <= CHT_TAR_MEMBER_MAX) {
-                // rawSize+1: tar members carry no NUL and the parser needs a terminator.
-                char *tarBuf = (char *)malloc(entry->rawSize + 1);
-                if (tarBuf != NULL) {
-                    if (tarRead(TAR_KIND_CHT, entry, tarBuf, entry->rawSize) == entry->rawSize) {
-                        tarBuf[entry->rawSize] = '\0';
-                        cheatMode = load_cheats_buf(tarBuf);
-                    } else
-                        cheatMode = -1;
-                    free(tarBuf);
-                    if (cheatMode >= 0) {
-                        LOG("Cheats found in CHT/cht.tar (%s)\n", tarGetDevicePrefix(TAR_KIND_CHT));
-                        if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL) && (cheatMode == 1))
-                            guiManageCheats();
-                        return cheatMode;
+            // A member that is there but empty or over the cap is a source that will not load, not "no
+            // cheats". It still falls through, so it never shadows a valid loose CHT/<id>.cht below.
+            if (entry != NULL) {
+                if (entry->rawSize > 0 && entry->rawSize <= CHT_TAR_MEMBER_MAX) {
+                    // rawSize+1: tar members carry no NUL and the parser needs a terminator.
+                    char *tarBuf = (char *)malloc(entry->rawSize + 1);
+                    if (tarBuf != NULL) {
+                        if (tarRead(TAR_KIND_CHT, entry, tarBuf, entry->rawSize) == entry->rawSize) {
+                            tarBuf[entry->rawSize] = '\0';
+                            cheatMode = load_cheats_buf(tarBuf);
+                        } else
+                            cheatMode = -1;
+                        free(tarBuf);
+                        if (cheatMode >= 0) {
+                            LOG("Cheats found in CHT/cht.tar (%s)\n", tarGetDevicePrefix(TAR_KIND_CHT));
+                            if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL) && (cheatMode == 1))
+                                guiManageCheats();
+                            return cheatMode;
+                        }
                     }
-                    LOG("Error: cht.tar member failed to load; trying the loose file\n");
                 }
-                foundBroken = 1; // a usable-size member was there and did not load (or could not be buffered)
+                LOG("Error: cht.tar member is empty, too large or failed to load; trying the loose file\n");
+                foundBroken = 1;
             }
         }
 
@@ -1521,9 +1523,16 @@ int sbLoadCheats(const char *path, const char *file)
 
             // Distinguish absent from unreadable PER CANDIDATE. Probing only the last spelling tried
             // called an existing-but-broken "<ID>.cht" absent whenever "<ID>.CHT" was missing.
+            errno = 0;
             int probe = open(cheatfile, O_RDONLY);
             if (probe >= 0) {
                 close(probe);
+                foundBroken = 1;
+            } else if (errno == EACCES || errno == EBUSY) {
+                // The driver found the file and refused it (SMB: access denied, or held by a dead
+                // session). NOT EIO: SMB answers a MISSING file with -EIO (smbman-ra smb.c, the
+                // default arm after STATUS_OBJECT_NAME_NOT_FOUND), so counting EIO would prompt on
+                // every cheats-for-all-games launch from a share.
                 foundBroken = 1;
             }
         }
