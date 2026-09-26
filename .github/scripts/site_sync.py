@@ -61,9 +61,9 @@ GROUP_CATEGORY = {"start": "start", "game sources": "devices", "features": "feat
                   "theme engine": "themes", "reference": "reference"}
 
 # GitHub alerts become the site's own callouts (assets/style.css defines info, amber and red).
-ALERTS = {"NOTE": ("info", "ℹ Note"), "TIP": ("info", "ℹ Tip"),
-          "IMPORTANT": ("amber", "⚠ Important"), "WARNING": ("amber", "⚠ Warning"),
-          "CAUTION": ("red", "⚠ Caution")}
+ALERTS = {"NOTE": ("info", "Note"), "TIP": ("info", "Tip"),
+          "IMPORTANT": ("amber", "Important"), "WARNING": ("amber", "Warning"),
+          "CAUTION": ("red", "Caution")}
 
 
 # ------------------------------------------------------------------------------------------------

@@ -122,7 +122,7 @@ class SiteSyncTests(unittest.TestCase):
         self.assertIn('href="https://example.com/"', body)
         self.assertIn("<table>", body)
         self.assertIn('<code class="language-bash">', body)
-        self.assertIn('<div class="callout amber"><div class="h">\u26a0 Important</div><strong>Heads up:</strong>', body)
+        self.assertIn('<div class="callout amber"><div class="h">Important</div><strong>Heads up:</strong>', body)
         self.assertNotIn("[!IMPORTANT]", body)
         self.assertNotIn("<blockquote>", body)
 
