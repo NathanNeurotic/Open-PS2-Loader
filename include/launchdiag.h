@@ -63,6 +63,10 @@ void launchDiagHold(int stage, int ms);
 // above. Unarmed it only LOGs and returns, so the caller's normal refusal path runs unchanged.
 void launchDiagRefuse(int code);
 
+// A udp launch that aborts back to a live menu clears the armed state, so a later launch from
+// another device never inherits its markers (or its non-returning refusal).
+void launchDiagDisarm(void);
+
 #else
 
 #define gLaunchDiag 0
@@ -78,6 +82,9 @@ static inline void launchDiagHold(int stage, int ms)
 static inline void launchDiagRefuse(int code)
 {
     (void)code;
+}
+static inline void launchDiagDisarm(void)
+{
 }
 
 #endif

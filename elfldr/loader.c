@@ -59,9 +59,18 @@ PS2_DISABLE_AUTOSTART_PTHREAD();
 // 1-11; the child repaints it here so a stall inside THIS loader is distinguishable from a stall on
 // the parent side. 12 = child entered (SifLoadElf running), 13 = target loaded, ExecPS2 imminent.
 // Same register as ee_core's debug colors (ee_core/include/ee_core.h), 0xBBGGRR.
+// Compiled in ONLY for a triage build (LAUNCH_DIAG in include/launchdiag.h, shared with the parent):
+// this child serves every handoff -- apps, POPSTARTER, Ember, Neutrino -- and has no way to know which
+// launch armed the parent's markers, so a triage build paints these on all of them.
+#include "../include/launchdiag.h"
 #define LAUNCHDIAG_BGCOLOUR           (*(volatile unsigned int *)0x120000E0)
 #define LAUNCHDIAG_COLOR_CHILD_UP     0xFF80FF // pink
 #define LAUNCHDIAG_COLOR_CHILD_LOADED 0x00FF80 // spring green
+#if LAUNCH_DIAG
+#define LAUNCHDIAG_CHILD_PAINT(color) (LAUNCHDIAG_BGCOLOUR = (color))
+#else
+#define LAUNCHDIAG_CHILD_PAINT(color) ((void)0)
+#endif
 
 #define ELF_MAGIC            0x464c457f
 #define ELF_PT_LOAD          1
@@ -291,7 +300,7 @@ int main(int argc, char *argv[])
     int reset_iop = 0;
     int cleanup_hdd = 0;
 
-    LAUNCHDIAG_BGCOLOUR = LAUNCHDIAG_COLOR_CHILD_UP; // stage 12: child is on the air
+    LAUNCHDIAG_CHILD_PAINT(LAUNCHDIAG_COLOR_CHILD_UP); // stage 12: child is on the air
 
     if (argc < 2)
         return -EINVAL;
@@ -348,7 +357,7 @@ int main(int argc, char *argv[])
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
-        LAUNCHDIAG_BGCOLOUR = LAUNCHDIAG_COLOR_CHILD_LOADED; // stage 13: LOADFILE path loaded the target
+        LAUNCHDIAG_CHILD_PAINT(LAUNCHDIAG_COLOR_CHILD_LOADED); // stage 13: LOADFILE path loaded the target
         return ExecPS2((void *)elfdata.epc, (void *)elfdata.gp, argc - 1, &argv[1]);
     }
 
@@ -362,7 +371,7 @@ int main(int argc, char *argv[])
         SifExitRpc();
         FlushCache(0);
         FlushCache(2);
-        LAUNCHDIAG_BGCOLOUR = LAUNCHDIAG_COLOR_CHILD_LOADED; // stage 13: fileXio rescue path loaded the target
+        LAUNCHDIAG_CHILD_PAINT(LAUNCHDIAG_COLOR_CHILD_LOADED); // stage 13: fileXio rescue path loaded the target
         return ExecPS2((void *)entry, (void *)gp, argc - 1, &argv[1]);
     }
 

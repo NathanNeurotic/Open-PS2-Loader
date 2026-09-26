@@ -2021,6 +2021,10 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     sbBuildVmcNeutrinoArgs(configSet, pDeviceData->bdmPrefix, &neutrinoVmc); // Δ2-validated -mc args
     sbCreatePath(game, partname, pDeviceData->bdmPrefix, "/", 0);            // -dvd target (multi-part was rejected above)
     snprintf(bdmCurrentDriver, sizeof(bdmCurrentDriver), "%s", pDeviceData->bdmDriver);
+    // The bdm device number behind this mount (USBMASS_IOCTL_GET_DEVICE_NUMBER, the same value the
+    // native leg binds) -- the <devNr> of a -bsdfs=bd "<driver><devNr>p0" tuple. Copied now: the
+    // teardown below frees pDeviceData.
+    int bdmDevNr = pDeviceData->massDeviceIndex;
 
     // Δ9: neutrino only discovers a blown fragment budget after its own IOP reset (debug
     // printf + exit = black screen). Count it now: udp consumes the launch, local falls native.
@@ -2073,10 +2077,12 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
 
     // gPS2Logo passes the user's preference straight through: Neutrino performs its own logo
     // read/validation for -logo, so the native path's CheckPS2Logo disc pass is not needed here.
-    sysLaunchNeutrino(bdmCurrentDriver, partname, bdmStartup, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, &neutrinoVmc);
+    sysLaunchNeutrino(bdmCurrentDriver, partname, bdmStartup, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdmDevNr, &neutrinoVmc);
     return 1;
 
 fail:
+    // Back to a live menu: a later launch from another device must not inherit this one's markers.
+    launchDiagDisarm();
     if (failResult && gAutoLaunchBDMGame != NULL) {
         miniDeinit(configSet); // mirror the normal autolaunch teardown (ioEnd/configEnd + frees configSet)
         free(gAutoLaunchBDMGame);

@@ -57,6 +57,11 @@ void launchDiagHold(int stage, int ms)
         DelayThread(ms * 1000);
 }
 
+void launchDiagDisarm(void)
+{
+    gLaunchDiag = 0;
+}
+
 void launchDiagRefuse(int code)
 {
     LOG("[LAUNCHDIAG] refusal code %d\n", code);

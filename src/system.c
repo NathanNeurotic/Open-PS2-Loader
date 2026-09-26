@@ -1455,7 +1455,7 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath)
     return 0;
 }
 
-void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, const neutrino_vmc_args_t *vmcArgs)
+void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
@@ -1551,8 +1551,9 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
             // device tuple "<name><devNr>p<parNr>" (neutrino iop/bdfs/src/bdfs.c, and its own usage
             // example "-dvd=bdfs:udp0p0"), so the old "-dvd=bdfs:massN:/..." could NEVER open --
             // setup_dvd_iso failed and the whole neutrino boot silently returned. Compose the tuple
-            // from the live driver token instead (udp -> udp0p0, matching the example verbatim).
-            snprintf(filePath, sizeof(filePath), "-dvd=bdfs:%s0p0", driver);
+            // from the live driver token and the caller's bdm device number (a second stick on the
+            // same driver is usb1, not usb0); partition stays 0. Unknown (-1) falls back to 0.
+            snprintf(filePath, sizeof(filePath), "-dvd=bdfs:%s%dp0", driver, bdDevNr >= 0 ? bdDevNr : 0);
         } else {
             snprintf(filePath, sizeof(filePath), "-dvd=%s%s", bsdfsDvdPrefix[fsOverride], path);
         }

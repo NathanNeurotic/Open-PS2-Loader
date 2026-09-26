@@ -130,11 +130,14 @@ static void hold(int fromFrame, int frames)
     acceptTo[nAccept] = fromFrame + frames;
     nAccept++;
 }
-static void expect(const char *name, int wantKeep, int wantMaxFrame)
+/* The answer AND when it came: a revert that fires before the timeout would take away the user's
+   chance to keep a mode that works, so timeout cases carry a lower bound as well as an upper one. */
+static void expect(const char *name, int wantKeep, int wantMinFrame, int wantMaxFrame)
 {
     int got = guiConfirmVideoMode();
-    if (got != wantKeep || (wantMaxFrame >= 0 && frame > wantMaxFrame)) {
-        printf("FAIL %s: returned %d after %d frames (want %d within %d)\n", name, got, frame, wantKeep, wantMaxFrame);
+    if (got != wantKeep || frame < wantMinFrame || (wantMaxFrame >= 0 && frame > wantMaxFrame)) {
+        printf("FAIL %s: returned %d after %d frames (want %d within %d..%d)\n", name, got, frame, wantKeep,
+               wantMinFrame, wantMaxFrame);
         fails++;
     }
 }
@@ -144,14 +147,14 @@ int main(void)
     const int hold60 = VMODE_KEEP_HOLD_MS * 60 / 1000, timeout60 = OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS * 60 / 1000;
     int i;
 
-    reset(); expect("no input -> revert at timeout", 0, timeout60 + 2);
-    reset(); hold(30, 3); expect("one tap of Accept -> revert", 0, timeout60 + 2);
-    reset(); for (i = 0; i < 20; i++) hold(20 + i * 20, 5); expect("20 blind taps -> revert", 0, timeout60 + 2);
-    reset(); hold(30, hold60 + 3); expect("full hold -> keep", 1, 30 + hold60 + 3);
-    reset(); hold(30, hold60 / 2); expect("half hold -> revert", 0, timeout60 + 2);
-    reset(); carryIn(hold60 * 3); expect("Accept held from Settings -> never keeps", 0, -1);
-    reset(); backAt = 45; expect("Back -> revert at once", 0, 47);
-    reset(); hold(timeout60 - 20, hold60 + 3); expect("hold started near timeout finishes", 1, timeout60 + hold60);
+    reset(); expect("no input -> revert at timeout", 0, timeout60 - 1, timeout60 + 2);
+    reset(); hold(30, 3); expect("one tap of Accept -> revert", 0, timeout60 - 1, timeout60 + 2);
+    reset(); for (i = 0; i < 20; i++) hold(20 + i * 20, 5); expect("20 blind taps -> revert", 0, timeout60 - 1, timeout60 + 2);
+    reset(); hold(30, hold60 + 3); expect("full hold -> keep", 1, 30 + hold60 - 1, 30 + hold60 + 3);
+    reset(); hold(30, hold60 / 2); expect("half hold -> revert", 0, timeout60 - 1, timeout60 + 2);
+    reset(); carryIn(hold60 * 3); expect("Accept held from Settings -> never keeps", 0, timeout60 - 1, -1);
+    reset(); backAt = 45; expect("Back -> revert at once", 0, 45, 47);
+    reset(); hold(timeout60 - 20, hold60 + 3); expect("hold started near timeout finishes", 1, timeout60 - 20 + hold60 - 1, timeout60 + hold60);
 
     return fails ? 1 : 0;
 }
@@ -175,7 +178,9 @@ def run_harness():
             return
         result = subprocess.run([str(exe)], capture_output=True, text=True)
         if result.returncode != 0:
-            failures.extend(line for line in result.stdout.splitlines() if line)
+            lines = [line for line in result.stdout.splitlines() if line]
+            # A crash prints nothing: never let a dead harness read as a pass.
+            failures.extend(lines or ['harness exited %d with no result:\n%s' % (result.returncode, result.stderr)])
 
 
 def check_boot_combos():

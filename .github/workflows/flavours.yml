@@ -69,6 +69,8 @@ jobs:
         run: python3 .github/scripts/test_handoff_probe.py
       - name: Check that a blind button press cannot keep a video mode the TV cannot show
         run: python3 .github/scripts/test_vmode_confirm.py
+      - name: Check that a broken cheat file is never reported as a missing one
+        run: python3 .github/scripts/test_cheat_load.py
 
   ra-host-tests:
     runs-on: ubuntu-24.04

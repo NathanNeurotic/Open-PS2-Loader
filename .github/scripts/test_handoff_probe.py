@@ -53,6 +53,24 @@ functions = ''.join(function_text(sig) for sig in (
     'static int probeTarget(',
 ))
 
+# -bsdfs=bd names the game's OWN bdm device ("<driver><devNr>p0"): a second stick on the same driver
+# is usb1, never usb0. The bdm leg must copy massDeviceIndex before the teardown frees pDeviceData.
+system_c = (root / 'src/system.c').read_text(encoding='utf-8').replace('\r\n', '\n')
+bdm_c = (root / 'src/bdmsupport.c').read_text(encoding='utf-8').replace('\r\n', '\n')
+if '"-dvd=bdfs:%s%dp0", driver, bdDevNr >= 0 ? bdDevNr : 0' not in system_c:
+    failures.append('sysLaunchNeutrino: the bdfs tuple must use the caller\'s bdm device number')
+copy = bdm_c.find('int bdmDevNr = pDeviceData->massDeviceIndex;')
+if copy < 0 or copy > bdm_c.find('deinitEx(sbNeutrinoDeinitException(neutrinoPath)') or \
+        'neutrinoBsdfs, bdmDevNr, &neutrinoVmc);' not in bdm_c:
+    failures.append('bdmTryNeutrinoLaunch: copy massDeviceIndex before deinitEx and pass it to sysLaunchNeutrino')
+
+# The child loader serves every handoff; its colours must compile out with LAUNCH_DIAG 0.
+loader = (root / 'elfldr/loader.c').read_text(encoding='utf-8').replace('\r\n', '\n')
+if re.search(r'^\s*LAUNCHDIAG_BGCOLOUR\s*=', loader, re.M) or \
+        not re.search(r'#if LAUNCH_DIAG\s*\n#define LAUNCHDIAG_CHILD_PAINT\(color\) \(LAUNCHDIAG_BGCOLOUR = \(color\)\)\s*\n#else\s*\n'
+                      r'#define LAUNCHDIAG_CHILD_PAINT\(color\) \(\(void\)0\)', loader):
+    failures.append('elfldr/loader.c: child colour writes must go through the LAUNCH_DIAG-gated LAUNCHDIAG_CHILD_PAINT')
+
 # The probe must be what sysLoadELFCommon actually calls, ahead of the stage-10 marker.
 common = function_text('static int sysLoadELFCommon(')
 call = common.find('probeTarget(filename, diag)')
@@ -149,7 +167,9 @@ def run_harness():
             return
         result = subprocess.run([str(exe)], capture_output=True, text=True)
         if result.returncode != 0:
-            failures.extend(line for line in result.stdout.splitlines() if line)
+            lines = [line for line in result.stdout.splitlines() if line]
+            # A crash prints nothing: never let a dead harness read as a pass.
+            failures.extend(lines or ['harness exited %d with no result:\n%s' % (result.returncode, result.stderr)])
 
 
 if not failures:
