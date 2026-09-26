@@ -61,6 +61,9 @@ struct io_handler_t
 /// Circular request queue
 static struct io_request_t *gReqList;
 static struct io_request_t *gReqEnd;
+// The request the worker is executing (still linked at the head until it returns), or NULL. Lets
+// ioPutRequestUnlessWaiting tell a request that is WAITING from one that has already started.
+static struct io_request_t *volatile gReqRunning;
 
 static struct io_handler_t gRequestHandlers[MAX_IO_HANDLERS];
 
@@ -184,10 +187,12 @@ static void ioWorkerThread(void *arg)
                 break;
 
             struct io_request_t *req = gReqList;
+            gReqRunning = req;
             ioProcessRequest(req);
 
             // lock the queue tip as well now
             WaitSema(gEndSemaId);
+            gReqRunning = NULL;
 
             if (req->type > 0 && req->type < IO_REQ_TYPE_COUNT && gIoPending[req->type] > 0)
                 gIoPending[req->type]--;
@@ -249,6 +254,7 @@ void ioInit(void)
     gHandlerCount = 0;
     gReqList = NULL;
     gReqEnd = NULL;
+    gReqRunning = NULL;
 
     gIOThreadId = 0;
 
@@ -333,6 +339,25 @@ int ioPutRequest(int type, void *data)
     // Worker thread cannot wake itself up (WakeupThread will return an error), but it will find the new request before sleeping.
     WakeupThread(gIOThreadId);
     return IO_OK;
+}
+
+int ioPutRequestUnlessWaiting(int type, void *data)
+{
+    if (isIOBlocked)
+        return IO_ERR_IO_BLOCKED;
+
+    // gEndSemaId only, as ioPutRequest takes it: it is held for a link or an unlink and never across
+    // a handler, so this is safe from the GUI thread. (gProcSemaId is held across the whole drain and
+    // must never be taken here -- see gIoPending.)
+    WaitSema(gEndSemaId);
+    for (struct io_request_t *r = gReqList; r != NULL; r = r->next) {
+        if (r != gReqRunning && r->type == type && r->data == data) {
+            SignalSema(gEndSemaId);
+            return IO_OK; // an identical request has not started: it will see whatever just changed
+        }
+    }
+    SignalSema(gEndSemaId);
+    return ioPutRequest(type, data);
 }
 
 int ioRemoveRequests(int type)

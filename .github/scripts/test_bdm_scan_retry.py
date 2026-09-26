@@ -127,6 +127,7 @@ static int folderConsumeDirty(int mode) { (void)mode; return 0; }
 static int bdmShouldQueueModuleLoad(void) { return 0; }
 static void bdmLoadBlockDeviceModules(void *arg) { (void)arg; }
 static int ioPutRequest(int type, void *data) { (void)type; (void)data; return IO_OK; }
+static int ioPutRequestUnlessWaiting(int type, void *data) { (void)type; (void)data; return IO_OK; }
 static int bdmUpdateDeviceData(item_list_t *itemList)
 {
     (void)itemList;
