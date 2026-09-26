@@ -15,8 +15,12 @@
   <a class="brand" href="index.html">
     <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
     RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
   <div class="search">
-    <span class="ico">🔎</span>
+    <span class="ico"></span>
     <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
     <kbd>/</kbd>
     <div id="results"></div>
@@ -24,50 +28,51 @@
 </header>
 <div class="layout">
   <nav class="sidebar">
-    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
     <h4>Start</h4>
-    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
-    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
     <h4>Game sources</h4>
-    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
-    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
-    <a href="smb.html" class="active"><span class="em">🌐</span>SMB (network share)</a>
-    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
-    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
-    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html" class="active"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
-    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
-    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
-    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
-    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
-    <a href="apps.html"><span class="em">🧰</span>Apps</a>
-    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
-    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
-    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
-    <a href="vmc.html"><span class="em">💾</span>VMC</a>
-    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
-    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
     <h4>Theme Engine</h4>
-    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
     <h4>Reference</h4>
-    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
-    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
-    <a href="languages.html"><span class="em">🌐</span>Languages</a>
-    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
-    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
-    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
-    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
-    <a href="releases.html"><span class="em">📦</span>Releases</a>
-    <a href="fork-gaps.html"><span class="em">🧭</span>Fork Feature Gaps</a>
-    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
-    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
-    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
 <h1>SMB (network share)</h1>
 <p class="lead">Load PS2 (and PS1) games directly from a shared folder on a Windows PC, Linux Samba server, or NAS over your local network. RiptOPL speaks <b>SMBv1</b> by default and can be switched to <b>SMB2</b> with the <b>SMB Version</b> row in Game Sources. No USB drive required — the PS2 mounts the share and reads ISOs straight off it.</p>
 
-<div class="callout info"><div class="h">ℹ SMB and Network Boot share the same adapter</div>
+<div class="callout info"><div class="h">SMB and Network Boot share the same adapter</div>
 The PS2 has one Ethernet port and one network driver. <b>SMB (ETH) and Network Boot (UDPBD/UDPFS) are mutually exclusive</b> — selecting one in <b>Game Sources</b> excludes the others. If you switch, you must save and restart for the change to take effect. See <a href="network-boot.html">Network Boot</a> for the UDPBD/UDPFS alternative.</div>
 
 <h2 id="requirements">What you need</h2>
@@ -78,7 +83,7 @@ The PS2 has one Ethernet port and one network driver. <b>SMB (ETH) and Network B
   <li>A static IP address for the PS2, <em>or</em> DHCP with a known/stable lease. A static IP is far simpler and avoids reconnection surprises.</li>
 </ul>
 
-<div class="callout info"><div class="h">ℹ Recommended on Windows: PS2 Servers</div>
+<div class="callout info"><div class="h">Recommended on Windows: PS2 Servers</div>
 RiptOPL no longer embeds a PC SMB server. Open <code>PS2-Servers.url</code> from the release package or
 visit <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a>, choose its SMBv1 server,
 select your games folder and follow the protocol-specific IP, port, share and credential values the
@@ -161,7 +166,7 @@ another already-configured SMB server.</p>
   </tbody>
 </table>
 
-<div class="callout info"><div class="h">ℹ Subfolder prefix (ETH Prefix)</div>
+<div class="callout info"><div class="h">Subfolder prefix (ETH Prefix)</div>
 If your share contains more than one OPL layout — for example you have multiple consoles sharing one NAS share — you can point OPL at a subfolder inside the share. Set <b>ETH Prefix Path</b> on <b>Settings → General &amp; System</b> (config key <code>eth_prefix</code>) to the subfolder name. OPL will prepend that path to every read/write inside the share. Leave it empty to use the share root directly.</div>
 
 <h3 id="save-connect">Saving and connecting</h3>
@@ -182,7 +187,7 @@ If your share contains more than one OPL layout — for example you have multipl
   </tbody>
 </table>
 
-<div class="callout info"><div class="h">ℹ SMB is interlocked with Network Boot</div>
+<div class="callout info"><div class="h">SMB is interlocked with Network Boot</div>
 Because <b>Protocol</b> is one exclusive picker, SMB and Network Boot (UDPBD/UDPFS) are mutually exclusive by construction: selecting <b>SMB</b> rules out UDPBD/UDPFS, and selecting either UDP transport rules out SMB. Both require the PS2's single Ethernet adapter; only one can be active at a time. The interlock is enforced both in the UI and at runtime in <code>ethsupport.c</code>, which refuses to bring up the SMB stack while UDPBD holds the adapter.</div>
 
 <h3 id="smb-version">SMB Version — SMBv1 or SMB2</h3>
@@ -199,17 +204,17 @@ Because <b>Protocol</b> is one exclusive picker, SMB and Network Boot (UDPBD/UDP
 
 <p>Both drivers register the same <code>smb0:</code> device name, so every path elsewhere in OPL — the folder layout, the ETH prefix, the config keys — is identical whichever one is loaded. Only one is ever resident at a time.</p>
 
-<div class="callout amber"><div class="h">⚠ An SMBv1-only server lists no games under SMB2</div>
+<div class="callout amber"><div class="h">An SMBv1-only server lists no games under SMB2</div>
 The whole session is one dialect; there is no negotiation down. If you set <b>SMB Version</b> to <b>SMB2</b> and your server only speaks SMBv1 — which includes the bundled
 <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2 Servers</a> SMBv1 server — the <b>ETH Games</b> tab comes up completely empty. That looks like a broken build but it is a configuration mismatch: put the row back on <b>SMBv1</b>, or run a server that speaks SMB2. OPL pops a message box saying as much each time you change the row to SMB2.</div>
 
-<div class="callout amber"><div class="h">⚠ Changing the dialect needs a restart if the network stack is already up</div>
+<div class="callout amber"><div class="h">Changing the dialect needs a restart if the network stack is already up</div>
 Each network transport loads its IOP module chain once per boot, and the in-game reader latches its dialect when <code>cdvdman</code> starts. If a network stack has already been brought up this session, switching between SMBv1 and SMB2 (or changing <b>Protocol</b>) does nothing until you restart OPL — OPL shows the same restart notice it uses for a protocol change. From a cold boot the new dialect applies straight away.</div>
 
-<div class="callout info"><div class="h">ℹ SMB3 is deliberately not offered</div>
+<div class="callout info"><div class="h">SMB3 is deliberately not offered</div>
 <b>SMB3</b> exists as a reserved value in the code but is not selectable: it mandates packet signing, which this tree does not implement. Offering it would be a picker that silently did something else. The row lists exactly two choices, and an unrecognised saved value is clamped back to SMBv1.</div>
 
-<div class="callout info"><div class="h">ℹ Share browsing behaves differently on SMB2</div>
+<div class="callout info"><div class="h">Share browsing behaves differently on SMB2</div>
 If you leave the <b>Share</b> field empty, OPL asks the driver to enumerate the server's shares and lists those on the ETH tab so you can pick one instead of games. The SMB2 driver does not implement share enumeration yet and reports zero shares, so under SMB2 that list comes up empty. On SMB2, fill in the <b>Share</b> name exactly as the server publishes it.</div>
 
 <h2 id="folder-layout">4. Game and folder layout</h2>
@@ -251,7 +256,7 @@ If you leave the <b>Share</b> field empty, OPL asks the driver to enumerate the 
   </div>
 </div>
 
-<div class="callout amber"><div class="h">⚠ The PS1 leg is SMBv1 regardless of the SMB Version row</div>
+<div class="callout amber"><div class="h">The PS1 leg is SMBv1 regardless of the SMB Version row</div>
 The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader. It does not reach POPSTARTER: the module set OPL checks for on the memory card is the SMBv1 one (<code>smbman.irx</code>), and POPSTARTER reads its own <code>SMBCONFIG.DAT</code>, not OPL's dialect choice. So a PS1 VCD launched over SMB still needs a server that answers <b>SMBv1</b>, even if you have set OPL to SMB2 for PS2 games. If your server is SMB2-only, PS2 games over SMB will work and PS1 VCDs over SMB will not.</div>
 
 <p>For deeper PS1 coverage — cover art by PS1 disc ID, the four <b>PS2/PS1 Game Display</b> modes, and BDMA module equipping for block devices — see <a href="ps1-vcd.html">PS1 Games (VCD)</a>.</p>
@@ -360,10 +365,10 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
 
 <h2 id="see-also">See also</h2>
 <div class="grid">
-  <a class="tile" href="network-boot.html"><span class="em">📡</span><b>Network Boot</b><span>UDPBD &amp; UDPFS — block-level streaming via Neutrino</span></a>
-  <a class="tile" href="ps1-vcd.html"><span class="em">💿</span><b>PS1 Games (VCD)</b><span>PS1 view, POPSTARTER config, BDMA equip</span></a>
-  <a class="tile" href="neutrino.html"><span class="em">⚛️</span><b>Neutrino Core</b><span>External loader core — per-game device &amp; args</span></a>
-  <a class="tile" href="nbd.html"><span class="em">🖧</span><b>NBD Server</b><span>Expose the internal HDD to a PC over the network</span></a>
+  <a class="tile" href="network-boot.html"><span class="icon icon-netboot"></span><b>Network Boot</b><span>UDPBD &amp; UDPFS — block-level streaming via Neutrino</span></a>
+  <a class="tile" href="ps1-vcd.html"><span class="icon icon-ps1"></span><b>PS1 Games (VCD)</b><span>PS1 view, POPSTARTER config, BDMA equip</span></a>
+  <a class="tile" href="neutrino.html"><span class="icon icon-neutrino"></span><b>Neutrino Core</b><span>External loader core — per-game device &amp; args</span></a>
+  <a class="tile" href="nbd.html"><span class="icon icon-nbd"></span><b>NBD Server</b><span>Expose the internal HDD to a PC over the network</span></a>
 </div>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>

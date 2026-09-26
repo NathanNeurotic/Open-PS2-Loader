@@ -15,8 +15,12 @@
   <a class="brand" href="index.html">
     <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
     RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
   <div class="search">
-    <span class="ico">🔎</span>
+    <span class="ico"></span>
     <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
     <kbd>/</kbd>
     <div id="results"></div>
@@ -24,44 +28,45 @@
 </header>
 <div class="layout">
   <nav class="sidebar">
-    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
     <h4>Start</h4>
-    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
-    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
     <h4>Game sources</h4>
-    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
-    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
-    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
-    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
-    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
-    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
-    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
-    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
-    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
-    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
-    <a href="apps.html"><span class="em">🧰</span>Apps</a>
-    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
-    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
-    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
-    <a href="vmc.html"><span class="em">💾</span>VMC</a>
-    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
-    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
     <h4>Theme Engine</h4>
-    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
     <h4>Reference</h4>
-    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
-    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
-    <a href="languages.html"><span class="em">🌐</span>Languages</a>
-    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
-    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
-    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
-    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
-    <a href="releases.html"><span class="em">📦</span>Releases</a>
-    <a href="fork-gaps.html" class="active"><span class="em">🧭</span>Fork Feature Gaps</a>
-    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
-    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
-    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html" class="active"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
 <h1>Fork Feature Gaps</h1>
@@ -69,7 +74,7 @@
 was checked against RiptOPL's own code rather than taken from another project's changelog, and links to where that
 project implements it.</p>
 
-<div class="callout info"><div class="h">ℹ A tracking list, not a roadmap</div>
+<div class="callout info"><div class="h">A tracking list, not a roadmap</div>
 An entry here means another project has something RiptOPL does not; it does not mean the feature is scheduled.
 Re-audited on 2026-09-22 against <code>rebuild/main</code> at
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b">abf14079</a>.
@@ -300,7 +305,7 @@ with <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition
     <tr><td><code>T10</code></td><td><b>Repository-backed package download pipeline</b> <span class="badge primary">Target pending</span></td><td>Titan can accept a static repository catalog, resolve package/dependency metadata, queue HTTP/HTTPS package downloads, verify size and SHA-256 plus TPKG structure, then atomically publish the package for installation. Its documentation calls this a Store foundation rather than a finished storefront and says real target downloads remain pending.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_STORE_ARCHITECTURE.md">Store architecture</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_DOWNLOAD_SERVICE.md">Download Service</a></td></tr>
   </tbody>
 </table>
-<div class="callout info"><div class="h">ℹ Titan validation and overlap notes</div>
+<div class="callout info"><div class="h">Titan validation and overlap notes</div>
 Titan distinguishes source/host-contract completion from physical-PS2 validation. In particular, Smart IGR, the modern-controller paths and Store/Download path are kept above because this page audits implemented code capabilities, but Titan's own hardware/target-pending labels are preserved rather than treating them as proven compatibility.<br><br>
 Several other Titan capabilities are real but do not get extra T-series IDs because the same RiptOPL gap is already represented elsewhere on this page: direct cover/background fetching overlaps <a href="#ps2-launcher">P2</a>, its native wLaunchELF work overlaps <a href="#boliviaos">B1</a>, Project NES overlaps <a href="#retrolauncher">R1</a>, its launch transition overlaps <a href="#ps2-launcher">P5</a>, and wired Xbox USB overlaps <a href="#ps2-launcher">P1</a>. Titan's Neutrino/UL launching, VMC support and ordinary PS2RD cheats also have RiptOPL equivalents and are not gaps by themselves.
 </div>
@@ -362,7 +367,7 @@ The two remaining differences below are launcher/network conveniences rather tha
     <tr><td><code>N2</code></td><td><b>Reuse <code>SYS-CONF/IPCONFIG.DAT</code> for UDPFS IP</b> <span class="pill">Optional</span></td><td>When no explicit <code>udpfs_ip</code> is supplied, NHDDL can obtain the PS2 network address from the wLaunchELF/uLaunchELF-style <code>SYS-CONF/IPCONFIG.DAT</code>. RiptOPL's <a href="network-boot.html">UDPFS</a> path currently uses its own Network settings and the active Neutrino TOML instead of inheriting that shared file.</td><td><a href="https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#udpfs">UDPFS documentation</a><br><a href="https://github.com/pcm720/nhddl/commit/81905e1f68f50ded828fe59a04f6313a9c4f21de">IPCONFIG.DAT fix</a></td></tr>
   </tbody>
 </table>
-<div class="callout info"><div class="h">ℹ What did not become a gap</div>
+<div class="callout info"><div class="h">What did not become a gap</div>
 NHDDL's visual Game ID output and SD2PSX/MemCard PRO2 per-title switching both have direct RiptOPL equivalents.
 RiptOPL also already remembers the last-played title, caches parsed ISO metadata, supports global and per-game Neutrino
 arguments, and can hand VMCs to Neutrino. NHDDL's backend-forcing ELF filename suffixes are a different configuration
@@ -390,7 +395,7 @@ per-drive state handling and Neutrino-side shutdown work.</p>
     <tr><td><code>LU8</code></td><td><b>Neutrino in-game return / IGR</b> <span class="pill">WIP</span></td><td>LUNA extends the <b>Neutrino</b> runtime itself with a held <code>L1+L2+R1+R2+START+SELECT</code> IGR path. After 45 VBlank frames (roughly one second) it calls LUNA's shutdown RPC to quiesce optical/DEV9 activity, then uses the configured <code>eec.ExitPath</code> as the return ELF path, resets IOP and EE/GS state, and uses <code>ExecPS2()</code> to return directly to the memory-card ELF. RiptOPL has OPL-side IGR, but games launched through its current Neutrino core do <b>not</b> have Neutrino IGR, so this is a distinct missing runtime capability. LUNA's current README still labels in-game return Work in progress, so the gap is tracked as WIP rather than presented as a stable feature.</td><td><a href="https://github.com/dnunezx/LUNA/blob/main/neutrino/ee/ee_core/src/padhook.c">pad hook / combo</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/neutrino/ee/ee_core/src/luna_igr_rpc.c">EE IGR RPC client</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/neutrino/iop/cdvdfsv/src/cdvdfsv.c">IOP shutdown RPC</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/IGR.md">RiptOPL IGR scope</a></td></tr>
   </tbody>
 </table>
-<div class="callout info"><div class="h">ℹ LUNA overlap and validation notes</div>
+<div class="callout info"><div class="h">LUNA overlap and validation notes</div>
 LUNA inherits NHDDL's storage discovery, title cache, Neutrino arguments and launch handoff, so the existing N1/N2 audit is
 not duplicated here. Classic is still fundamentally a list, Collection overlaps RiptOPL's Coverflow, the basic Grid
 concept is already O1, and ordinary Favorites/disc-art support already exists in RiptOPL. LUNA's square
@@ -398,14 +403,14 @@ concept is already O1, and ordinary Favorites/disc-art support already exists in
 Its HDD-only library filter and ATA-only <code>mass1:</code> probe shortcut are intentional scope/performance choices, not
 general capabilities RiptOPL lacks.
 </div>
-<div class="callout info"><div class="h">ℹ LU8 is source-backed but still marked WIP by LUNA</div>
+<div class="callout info"><div class="h">LU8 is source-backed but still marked WIP by LUNA</div>
 LUNA's source contains the Neutrino-side pad hook, <code>0x80000598</code> shutdown RPC and direct ELF-return
 path, while the v1.0.0-rc.1 release text and <code>FMCB.md</code> also describe direct return. The <b>current top-level
 README nevertheless marks in-game return as Work in progress</b>. LU8 is therefore counted because it is a concrete
 Neutrino capability RiptOPL does not have, but it remains explicitly labeled WIP rather than being represented as a
 finished or hardware-proven feature.
 </div>
-<div class="callout info"><div class="h">ℹ Hardware evidence scope</div>
+<div class="callout info"><div class="h">Hardware evidence scope</div>
 LUNA's current <code>FMCB.md</code> says the complete 2026-09-19 FMCB package passed user-reported testing on the tested
 fat PS2 / adapter setup, while the fidelity/build notes separately distinguish PCSX2 visual checks from physical-console
 proof for individual UI paths. The rows above describe code that exists in the published tree; they do not generalize
@@ -445,7 +450,7 @@ equivalent module in RiptOPL.</p>
     <tr><td><code>MP2</code></td><td><b>Generic USB HID gamepads</b> <span class="pill">Historical</span></td><td>A generic HID module parses a USB gamepad's HID report descriptor and maps buttons, hats and axes into the emulated DS2 report instead of requiring a controller-specific driver. This is separate from Titan's keyboard/mouse support and BoliviaOS's USB keyboard support.</td><td><a href="https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/hidusb/hidusb.c">hidusb.c</a></td></tr>
   </tbody>
 </table>
-<div class="callout info"><div class="h">ℹ Modular PADEMU status</div>
+<div class="callout info"><div class="h">Modular PADEMU status</div>
 These are historical source capabilities, not claims of current RiptOPL-era hardware validation. The branch head is
 <a href="https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a"><code>66b93542</code></a>
 from 2020. Its Xbox One USB module is not counted separately because modern Xbox One / Series USB support is already P1.
@@ -488,7 +493,7 @@ materially different.</p>
     <tr><td><code>S1</code></td><td><b>ATA DRDY waiting for slow-starting SMR / SSD drives</b> <span class="badge secondary">Fix</span></td><td>sOPL's in-game ATAD path adds an <code>ata_wait_until_ready()</code> loop that waits for BUSY to clear and DRDY to assert at driver start and around ATA commands. It was introduced specifically for newer SMR/SSD drives that can take longer to become ready. RiptOPL has its own post-ATAD settling and HDD-detection safeguards, but its current <code>cdvdman/atad.c</code> does not implement this in-driver DRDY wait strategy.</td><td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader/commit/3495d55b96ce72497b6a922ab540ac76a58ca74a">commit 3495d55b</a><br><a href="https://github.com/mystyq/Stable-Open-PS2-Loader/blob/master/modules/iopcore/cdvdman/atad.c">current atad.c</a></td></tr>
   </tbody>
 </table>
-<div class="callout info"><div class="h">ℹ sOPL TAR claims vs. audited source</div>
+<div class="callout info"><div class="h">sOPL TAR claims vs. audited source</div>
 The May 2026 sOPL release text advertises <code>ART/art.tar</code>, <code>CFG/cfg.tar</code> and <code>CHT/cht.tar</code>.
 The published <code>release</code> tag points to an older commit, while current <code>master</code> visibly carries the
 ART reader/cache path. This survey does not turn an unlocated release-note claim into a separate gap. More importantly,
@@ -497,7 +502,7 @@ RiptOPL <code>rebuild/main</code> now has a unified TAR engine for all three arc
 is a current RiptOPL gap regardless.
 </div>
 
-<div class="callout info"><div class="h">ℹ Awaiting Comparison cleared</div>
+<div class="callout info"><div class="h">Awaiting Comparison cleared</div>
 All eight variants that were previously reserved for comparison have now been audited. OPL Daily Build, Grimdoomer OPL
 and X2P produced no remaining unique RiptOPL gap and are recorded in <a href="#checked">Checked, nothing missing</a>.
 The five sources above produced six confirmed entries.

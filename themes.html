@@ -15,8 +15,12 @@
   <a class="brand" href="index.html">
     <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
     RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
   <div class="search">
-    <span class="ico">🔎</span>
+    <span class="ico"></span>
     <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
     <kbd>/</kbd>
     <div id="results"></div>
@@ -24,44 +28,45 @@
 </header>
 <div class="layout">
   <nav class="sidebar">
-    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
     <h4>Start</h4>
-    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
-    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
     <h4>Game sources</h4>
-    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
-    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
-    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
-    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
-    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
-    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
-    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
-    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
-    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
-    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
-    <a href="apps.html"><span class="em">🧰</span>Apps</a>
-    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
-    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
-    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
-    <a href="vmc.html"><span class="em">💾</span>VMC</a>
-    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
-    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
     <h4>Theme Engine</h4>
-    <a href="themes.html" class="active"><span class="em">🎨</span>Theme Engine</a>
+    <a href="themes.html" class="active"><span class="icon icon-themes"></span>Theme Engine</a>
     <h4>Reference</h4>
-    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
-    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
-    <a href="languages.html"><span class="em">🌐</span>Languages</a>
-    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
-    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
-    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
-    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
-    <a href="releases.html"><span class="em">📦</span>Releases</a>
-    <a href="fork-gaps.html"><span class="em">🧭</span>Fork Feature Gaps</a>
-    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
-    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
-    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
 <h1>Theme Engine</h1>
@@ -168,13 +173,13 @@ and <code>default</code> placeholder. Everything else on the page is untouched, 
 kind <em>is</em> the page's kind, so nothing is redirected at all. The same rule picks the info screen's cover from
 the matching <code>*Info*</code> family. In a Coverflow carousel the cover <b>width</b> stays uniform (so spacing
 stays even) and only the height follows each row's own element aspect.</p>
-<div class="callout info"><div class="h">ℹ Two cover caches on a mixed list</div>The games, apps and Favorites
+<div class="callout info"><div class="h">Two cover caches on a mixed list</div>The games, apps and Favorites
 families share one cover-art cache (deduplicated by <code>pattern</code>), while the <b>PS1/VCD view keeps its
 own</b> — separate PS2 and PS1 views reuse the device's game <em>list</em> indices, so a shared cache would thrash
 covers on every toggle. A mixed list therefore draws from <b>two</b> caches at once, PS1 rows from the VCD one and
 everything else from the shared one, and both are warmed.</div>
 
-<div class="callout info"><div class="h">⚠ Contiguous-numbering rule</div>Blocks are read <b>in order from 0
+<div class="callout info"><div class="h">Contiguous-numbering rule</div>Blocks are read <b>in order from 0
 and the engine stops at the first gap.</b> If you define <code>main0</code>, <code>main1</code>,
 <code>main3</code> (skipping <code>main2</code>), then <code>main3</code> is <b>never read</b>. When you delete
 a block, <b>renumber</b> the ones after it so there are no holes. The same applies inside each <code>info*</code>
@@ -392,7 +397,7 @@ attributes and the Coverflow carousel are silently absent.</li>
 <code>MenuIcon</code>/<code>HintText</code> block on <em>every</em> page (overlapping), and treats a
 second <code>ItemsList</code> as the apps list while still drawing it on the games screen. Per-device
 layouts are effectively RiptOPL-only.</li>
-<li><b>⚠ The one rule:</b> <b>always include one plain (unfiltered) <code>ItemsList</code></b>. A theme
+<li><b>The one rule:</b> <b>always include one plain (unfiltered) <code>ItemsList</code></b>. A theme
 with none — e.g. a Coverflow-only theme, or one where every list carries <code>devices=</code> —
 <em>crashes regular OPL on the first scroll</em> (a latent upstream bug in its default-list repair;
 RiptOPL fixed it on our side). Ship the plain list and the theme is safe everywhere.</li>
@@ -457,7 +462,7 @@ draw nothing here.</li>
 <code>&lt;id&gt;_COV.png</code>): <code>PS2_#System.png</code>, <code>CD_#Media.png</code>,
 <code>PS2DVD_#DiscType.png</code>. A <code>default=</code> gives the fallback badge.</li>
 </ul>
-<div class="callout amber"><div class="h">⚠ Disk-theme filename order</div>The file is
+<div class="callout amber"><div class="h">Disk-theme filename order</div>The file is
 <code>&lt;value&gt;_&lt;attribute&gt;</code>, <em>not</em> <code>&lt;attribute&gt;_&lt;value&gt;</code> —
 <code>PS2DVD_#DiscType.png</code> is correct, <code>#DiscType_PS2DVD.png</code> is never read. The
 <code>#</code> is a literal filename character, and the extension must be lower-case <code>.png</code>
@@ -524,7 +529,7 @@ unlocks the live <b>Coverflow Settings</b> menu.</p>
 </tbody>
 </table>
 
-<div class="callout info"><div class="h">⚠ Don't double-correct widescreen</div>The carousel applies the
+<div class="callout info"><div class="h">Don't double-correct widescreen</div>The carousel applies the
 widescreen / pixel-aspect correction itself at draw time, exactly like the stock cover path. Author your covers'
 aspect via the element's <code>width</code>:<code>height</code> only — never try to pre-stretch them. Games use a
 PS2-case <b>portrait</b> box (184×256); apps and PS1/VCD covers use a <b>square</b> box (184×184) to match their
@@ -856,11 +861,11 @@ info15:
 
 <h2 id="see-also">See also</h2>
 <div class="grid">
-<a class="tile" href="coverflow.html"><span class="em">🎴</span><b>Coverflow</b><span>The default theme &amp; its live settings</span></a>
-<a class="tile" href="ps1-vcd.html"><span class="em">💿</span><b>PS1 / PS1 view</b><span>Where the vcdMain family is used</span></a>
-<a class="tile" href="favourites.html"><span class="em">⭐</span><b>Favorites</b><span>The favsMain/favsInfo family</span></a>
-<a class="tile" href="settings.html"><span class="em">🔧</span><b>Settings Reference</b><span>Selecting &amp; applying a theme</span></a>
-<a class="tile" href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span><b>POPStarter docs ↗</b><span>PS1 internals: config table, IGR, cheats, multi-disc</span></a>
+<a class="tile" href="coverflow.html"><span class="icon icon-coverflow"></span><b>Coverflow</b><span>The default theme &amp; its live settings</span></a>
+<a class="tile" href="ps1-vcd.html"><span class="icon icon-ps1"></span><b>PS1 / PS1 view</b><span>Where the vcdMain family is used</span></a>
+<a class="tile" href="favourites.html"><span class="icon icon-favorites"></span><b>Favorites</b><span>The favsMain/favsInfo family</span></a>
+<a class="tile" href="settings.html"><span class="icon icon-settings"></span><b>Settings Reference</b><span>Selecting &amp; applying a theme</span></a>
+<a class="tile" href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span><b>POPStarter docs ↗</b><span>PS1 internals: config table, IGR, cheats, multi-disc</span></a>
 </div>
   </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>

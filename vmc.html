@@ -15,8 +15,12 @@
   <a class="brand" href="index.html">
     <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
     RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
   <div class="search">
-    <span class="ico">🔎</span>
+    <span class="ico"></span>
     <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
     <kbd>/</kbd>
     <div id="results"></div>
@@ -24,50 +28,51 @@
 </header>
 <div class="layout">
   <nav class="sidebar">
-    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
     <h4>Start</h4>
-    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
-    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
     <h4>Game sources</h4>
-    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
-    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
-    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
-    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
-    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
-    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
-    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
-    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
-    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
-    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
-    <a href="apps.html"><span class="em">🧰</span>Apps</a>
-    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
-    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
-    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
-    <a href="vmc.html" class="active"><span class="em">💾</span>VMC</a>
-    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
-    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html" class="active"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
     <h4>Theme Engine</h4>
-    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
     <h4>Reference</h4>
-    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
-    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
-    <a href="languages.html"><span class="em">🌐</span>Languages</a>
-    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
-    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
-    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
-    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
-    <a href="releases.html"><span class="em">📦</span>Releases</a>
-    <a href="fork-gaps.html"><span class="em">🧭</span>Fork Feature Gaps</a>
-    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
-    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
-    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
 <h1>Virtual Memory Cards (VMC)</h1>
 <p class="lead">OPL can emulate a PS2 Memory Card using an image file stored on your game drive. This lets games save without a physical card — or lets you keep one save-file set per game rather than sharing a single real card.</p>
 
-<div class="callout info"><div class="h">ℹ What is a VMC?</div>
+<div class="callout info"><div class="h">What is a VMC?</div>
 A Virtual Memory Card (VMC) is a <code>.bin</code> file that the IOP mcemu driver presents to the game as if it were a real Memory Card in slot 1 or slot 2. The PS2's kernel, and every game that reads from the card, sees an ordinary Memory Card — no special game support is required.
 </div>
 
@@ -85,7 +90,7 @@ A Virtual Memory Card (VMC) is a <code>.bin</code> file that the IOP mcemu drive
 
 <p>The folder must exist before OPL can create a VMC image inside it. On most devices OPL creates it for you the first time it initialises that device <em>after you have enabled the device in Game Sources</em> — not on first boot, so a device you have never turned on will not have one yet. If the <b>Configure VMC</b> screen reports an error locating the file, check that the <code>VMC/</code> folder is present on the drive.</p>
 
-<div class="callout info"><div class="h">ℹ File naming</div>
+<div class="callout info"><div class="h">File naming</div>
 Each VMC image is a plain file named <code>&lt;name&gt;.bin</code> — for example <code>MySaves_0.bin</code>. The name you type in the Configure VMC dialog is the base name without extension. OPL appends <code>.bin</code> automatically when reading or creating the file.
 </div>
 
@@ -102,7 +107,7 @@ Each VMC image is a plain file named <code>&lt;name&gt;.bin</code> — for examp
 </tbody>
 </table>
 
-<div class="callout info"><div class="h">ℹ Size labels use "Mb" notation</div>
+<div class="callout info"><div class="h">Size labels use "Mb" notation</div>
 The UI displays sizes as <b>8 Mb</b>, <b>16 Mb</b>, <b>32 Mb</b>, <b>64 Mb</b> — this is the notation OPL inherited from upstream. These correspond to megabyte image file sizes (8 MB file, 16 MB file, etc.). Use 8 Mb unless a specific game is known to need more space.
 </div>
 
@@ -142,7 +147,7 @@ The UI displays sizes as <b>8 Mb</b>, <b>16 Mb</b>, <b>32 Mb</b>, <b>64 Mb</b> �
 </tbody>
 </table>
 
-<div class="callout info"><div class="h">ℹ Reformat warning</div>
+<div class="callout info"><div class="h">Reformat warning</div>
 If you change the <b>Size</b> of an already-existing VMC image and press <b>Modify</b>, OPL will reformat the file. The UI shows the warning <em>"Changing the size will reformat the VMC."</em> This wipes all saves stored in that image. Back up any saves you need before resizing.
 </div>
 
@@ -155,7 +160,7 @@ If you change the <b>Size</b> of an already-existing VMC image and press <b>Modi
 <pre>VMC %s file is fragmented. Continue with Memory Card in slot %d?</pre>
 <p>Answering <b>Yes</b> allows the game to launch using the physical Memory Card in that slot instead. To resolve fragmentation permanently, delete the VMC image and recreate it on a freshly formatted or less-full drive, or copy the image off the drive and back again after the drive has been defragmented.</p>
 
-<div class="callout info"><div class="h">ℹ HDD VMC fragmentation</div>
+<div class="callout info"><div class="h">HDD VMC fragmentation</div>
 VMC images on an internal APA/PFS HDD are stored inside the PFS filesystem and are not subject to FAT-style fragmentation — the fragmentation warning will not appear for HDD-based VMCs.
 </div>
 
@@ -183,7 +188,7 @@ emulated — <code>-mc1</code> is accepted but the second port stays inactive �
 card geometry is hardcoded (≈ the first 4&nbsp;MB of the image is addressed). Prefer slot&nbsp;1 and
 8&nbsp;MB cards for predictable results.</p>
 
-<div class="callout info"><div class="h">ℹ VMC names with spaces</div>
+<div class="callout info"><div class="h">VMC names with spaces</div>
 Earlier OPL builds had a bug where VMC filenames containing spaces were truncated at launch because the args string was split on whitespace. RiptOPL delivers each <code>-mcN=</code> argument as a discrete argv entry, so spaces in VMC names are safe.
 </div>
 

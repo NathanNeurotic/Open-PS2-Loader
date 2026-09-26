@@ -15,79 +15,83 @@
   <a class="brand" href="index.html">
     <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
     RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
   <div class="search">
-    <span class="ico">🔎</span>
+    <span class="ico"></span>
     <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
     <kbd>/</kbd>
     <div id="results"></div>
   </div>
 </header>
+<canvas id="fall-leaves" class="fall-leaves-canvas" aria-hidden="true"></canvas>
 <div class="layout">
   <nav class="sidebar">
-    <a href="index.html" class="active"><span class="em">🏠</span>Home</a>
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html" class="active"><span class="icon icon-home"></span>Home</a>
     <h4>Start</h4>
-    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
-    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
     <h4>Game sources</h4>
-    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
-    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
-    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
-    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
-    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
-    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
-    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
-    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
-    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
-    <a href="favourites.html"><span class="em">⭐</span>Favorites</a>
-    <a href="apps.html"><span class="em">🧰</span>Apps</a>
-    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
-    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
-    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
-    <a href="vmc.html"><span class="em">💾</span>VMC</a>
-    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
-    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
     <h4>Theme Engine</h4>
-    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
     <h4>Reference</h4>
-    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
-    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
-    <a href="languages.html"><span class="em">🌐</span>Languages</a>
-    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
-    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
-    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
-    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
-    <a href="releases.html"><span class="em">📦</span>Releases</a>
-    <a href="fork-gaps.html"><span class="em">🧭</span>Fork Feature Gaps</a>
-    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
-    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
-    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
-<section class="callout info" id="external-tools"><div class="h">External Tools &amp; Services</div>
-<p><b><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a></b> by <b><a href="https://github.com/NathanNeurotic">Ripto</a></b> — all-in-one PC server launcher for <b>SMB, UDPFS, UDPBD and HTTP</b>.<br>
-<b><a href="https://github.com/YouKnow-sys/udpfs-server">udpfs-server</a></b> by <b><a href="https://github.com/YouKnow-sys">YouKnow-sys</a></b> — the same idea from a phone: an <b>Android</b> app that shares folders and disk images to the PS2 over <b>UDPFS</b>, found by broadcast so there is no server address to type in on the console. Built on <a href="https://github.com/pcm720/udpfsd">udpfsd</a> by pcm720; MIT licensed.<br>
-<b><a href="https://github.com/Luden02/OrbitPS2-Manager">OrbitPS2 Manager</a></b> by <b><a href="https://github.com/Luden02">Luden</a></b> — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management.<br>
-<b><a href="https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI">OPL PS1 AIO Converter GUI</a></b> by <b><a href="https://github.com/shaanhomebrew-cloud">shaan</a></b> — Windows all-in-one PS1/POPStarter preparation tool for BIN/CUE → VCD conversion and installation to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD.<br>
-<b><a href="https://github.com/hacan359/xerabora">xeRAbora</a></b> by <b><a href="https://github.com/hacan359">hacan359</a></b> — the PC client for <b>RetroAchievements</b> on real PS2 hardware. Required client: <b><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10">v0.1.0-alpha.10</a></b>. RiptOPL's RA build is paired with and requires <b>xeRAbora v0.1.0-alpha.10</b>. xeRAbora runs rcheevos, talks to the RetroAchievements servers, unlocks achievements and builds the per-game watch list. Shipped as a shortcut inside <code>RIPTOPL-RetroAchievements-*.zip</code>; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by <b><a href="https://github.com/oMrRexD">oMrRexD</a></b>, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.<br>
-<b><a href="https://github.com/Docmine17/Open-PS2-Loader-HTTP">OPL HTTP PC server</a></b> by <b><a href="https://github.com/Docmine17">Docmine17</a></b> — the PC side of RiptOPL’s <b>HTTP</b> protocol: a small static HTTP server with byte-range support that serves your <code>games.csv</code> catalog and streams the ISOs. RiptOPL works with it <b>unmodified</b> — no new API, no catalog conversion, no changed layout — with host conformance checks against the upstream server; PS2 hardware validation is still pending.<br>
-<b><a href="https://github.com/TheRealNextria/PS2RD-CHT-Manager">PS2RD CHT Manager</a></b> by <b><a href="https://github.com/TheRealNextria">TheRealNextria</a></b> — PC manager for the PS2RD <code>.cht</code> cheat files RiptOPL reads from your device's <code>CHT</code> folder.<br>
-<b><a href="https://github.com/Gageformer/Ember">Ember</a></b> by <b><a href="https://github.com/Gageformer">Gageformer</a></b> — a PS1 emulator running natively on the PS2, used as RiptOPL's second PS1 core alongside POPSTARTER. Ships as an <code>EMBER/</code> folder inside the release package, bundled unmodified under the Ember Public Beta Testing Licence (<code>EMBER/LICENSE-BETA.txt</code>); <a href="https://github.com/Gageformer/Ember/releases">releases</a>.<br>
-<b><a href="https://www.psx-place.com/resources/popstarter.683/">POPStarter</a></b> by <b>krHACKen</b> — a PS1 launcher built around Sony's native <b>POPS</b> emulator for the PS2, used as RiptOPL's primary PS1 core alongside Ember. POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains no Sony emulator binaries, libraries, or BIOS files; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on <a href="https://www.psx-place.com/resources/popstarter.683/">PSX-Place</a>.<br>
-<b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b> by <b><a href="https://github.com/rickgaiser">rickgaiser</a></b> — a small, fast, modular PS2 device emulator, and RiptOPL's second PS2 loader core alongside OPL's own. Ships as a ready-to-use <code>neutrino/</code> folder inside each installable ZIP (drag-and-drop to <code>mc?:/neutrino/</code>), under the <b>AFL-3.0</b> licence; <a href="https://github.com/rickgaiser/neutrino/releases">releases</a>.<br>
-<b><a href="https://git.techwritescode.dev/techwritescode/PSUManager">PSUManager</a></b> by <b>techwritescode</b> — the CC0 PS2 save-container implementation used by RiptOPL release tooling to independently validate <code>APP_RIPTOPL.psu</code> and <code>APP_RIPTOPL-RA.psu</code>. The exact upstream core and license used by CI are preserved in <code>third_party/PSUManager/</code>.</p></section><div class="hero">
+<div class="hero">
 <img class="hero-banner" src="assets/riptopl.png" alt="RiptOPL">
 <h1>RiptOPL <span class="g">Documentation</span></h1>
-<p class="lead">An opinionated fork of <b>Open PS2 Loader</b> aiming to be the "definitive build" — a cover-art
-<b>Coverflow</b> menu by default, a <b>Favorites</b> tab, per-game <b>Neutrino</b> external-core launching, a
-reorganized <b>Game Sources</b> category settings layout, PS1 support via POPSTARTER, and multiple local and network storage backends.</p>
+<div class="sys-strip">
+  <div class="sys-strip-row">
+    <span class="sys-pill">COVERFLOW 3D</span>
+    <span class="sys-pill">NEUTRINO CORE</span>
+    <span class="sys-pill">FAVORITES</span>
+    <span class="sys-pill">PS1 POPSTARTER + EMBER</span>
+  </div>
+  <div class="sys-strip-row">
+    <span class="sys-pill">UDPBD &amp; UDPFS</span>
+    <span class="sys-pill">APA &amp; EXFAT</span>
+  </div>
+</div>
 <div class="btn-row">
-  <a class="btn" href="getting-started.html">🚀 New here? Launch your first game</a>
+  <a class="btn" href="getting-started.html"><span class="icon icon-start"></span>Launch your first game</a>
   <a class="btn ghost" href="#sections">Browse the full reference</a>
 </div>
 </div>
 
-<div class="callout info"><div class="h">ℹ New to OPL? Read this first</div>Open PS2 Loader (OPL) is a 100% open-source
+<div class="callout info"><div class="h">New to OPL? Read this first</div>Open PS2 Loader (OPL) is a 100% open-source
 game/app loader for the PS2 and backward-compatible PS3. <b>RiptOPL</b> is a downstream fork with opinionated
 defaults and extra features layered on top. RiptOPL's master settings use <code>settings_riptopl.cfg</code> (with migration from
 <code>conf_riptopl.cfg</code>). That filename is separate from stock OPL's master config, but
@@ -99,7 +103,7 @@ do not assume it is always <code>mc0:/OPL/</code>. The <a href="getting-started.
 the sections below are the deep reference. For the canonical project, see
 <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</div>
 
-<div class="callout info" id="luna"><div class="h">🌙 Our #1 recommended alternative: LUNA</div>
+<div class="callout info" id="luna"><div class="h">Featured Alternative: LUNA</div>
 <b><a href="https://github.com/dnunezx/LUNA">LUNA</a></b> (<i>Lightweight Unified Neutrino Access</i>) by
 <b><a href="https://github.com/dnunezx">darkladark</a></b> is a visual loader built on NHDDL and Neutrino for
 <b>lightweight, customized Neutrino gameplay</b>. If RiptOPL is more loader than you need, start there.
@@ -125,28 +129,42 @@ publish Ember only; APA HDD supports <code>__.EMBER</code> and <code>__.EMBER0</
 <h2 id="sections">Full reference</h2>
 <p class="lead">Jump straight in, or use the search box up top to find any device, setting, or theme key instantly.</p>
 <div class="grid">
-<a class="tile" href="getting-started.html"><span class="em">🚀</span><b>Getting Started</b><span>First game, end-to-end</span></a>
-<a class="tile" href="usb.html"><span class="em">🔌</span><b>USB / MX4SIO / iLink</b><span>FAT32 &amp; exFAT mass devices</span></a>
-<a class="tile" href="mmce.html"><span class="em">🧩</span><b>MMCE</b><span>SD2PSX / MemCard PRO2</span></a>
-<a class="tile" href="smb.html"><span class="em">🌐</span><b>SMB</b><span>Network share</span></a>
-<a class="tile" href="hdd.html"><span class="em">💽</span><b>Internal HDD</b><span>APA/PFS &amp; exFAT (BDMA)</span></a>
-<a class="tile" href="network-boot.html"><span class="em">📡</span><b>Network Boot</b><span>UDPBD &amp; UDPFS</span></a>
-<a class="tile" href="ps1-vcd.html"><span class="em">💿</span><b>PS1 Games</b><span>POPSTARTER + Ember</span></a>
-<a class="tile" href="neutrino.html"><span class="em">⚛️</span><b>Neutrino Core</b><span>Device + Args pickers</span></a>
-<a class="tile" href="coverflow.html"><span class="em">🎴</span><b>Coverflow</b><span>The default theme</span></a>
-<a class="tile" href="http.html"><span class="em">🌐</span><b>HTTP</b><span>ISO catalog and range streaming; development feature</span></a>
-<a class="tile" href="retroachievements.html"><span class="em">🏆</span><b>RetroAchievements</b><span>RA build and xeRAbora; hardware validation pending</span></a>
-<a class="tile" href="favourites.html"><span class="em">⭐</span><b>Favorites</b><span>R3 to star · four L3 views</span></a>
-<a class="tile" href="themes.html"><span class="em">🎨</span><b>Theme Engine</b><span>Author your own themes</span></a>
-<a class="tile" href="languages.html"><span class="em">🌐</span><b>Languages</b><span>Install and pick a UI language</span></a>
-<a class="tile" href="pademu.html"><span class="em">🎮</span><b>PADEMU</b><span>DualShock 3/4 emulation</span></a>
-<a class="tile" href="apps.html"><span class="em">🧰</span><b>Apps</b><span>Launch your homebrew ELFs</span></a>
-<a class="tile" href="gsm.html"><span class="em">📺</span><b>GSM Video Modes</b><span>Force 480p/720p/1080i</span></a>
-<a class="tile" href="igr.html"><span class="em">🔄</span><b>In-Game Reset</b><span>Quit a game from the pad</span></a>
-<a class="tile" href="controls.html"><span class="em">🕹️</span><b>Controls</b><span>Every button, in one place</span></a>
-<a class="tile" href="settings.html"><span class="em">🔧</span><b>Settings Reference</b><span>Every menu &amp; option</span></a>
-<a class="tile" href="fork-gaps.html"><span class="em">🧭</span><b>Fork Feature Gaps</b><span>What other PS2 projects have that RiptOPL doesn't yet</span></a>
+<a class="tile" href="getting-started.html"><span class="icon icon-start"></span><b>Getting Started</b><span>First game, end-to-end</span></a>
+<a class="tile" href="usb.html"><span class="icon icon-usb"></span><b>USB / MX4SIO / iLink</b><span>FAT32 &amp; exFAT mass devices</span></a>
+<a class="tile" href="mmce.html"><span class="icon icon-mmce"></span><b>MMCE</b><span>SD2PSX / MemCard PRO2</span></a>
+<a class="tile" href="smb.html"><span class="icon icon-smb"></span><b>SMB</b><span>Network share</span></a>
+<a class="tile" href="hdd.html"><span class="icon icon-hdd"></span><b>Internal HDD</b><span>APA/PFS &amp; exFAT (BDMA)</span></a>
+<a class="tile" href="network-boot.html"><span class="icon icon-netboot"></span><b>Network Boot</b><span>UDPBD &amp; UDPFS</span></a>
+<a class="tile" href="ps1-vcd.html"><span class="icon icon-ps1"></span><b>PS1 Games</b><span>POPSTARTER + Ember</span></a>
+<a class="tile" href="neutrino.html"><span class="icon icon-neutrino"></span><b>Neutrino Core</b><span>Device + Args pickers</span></a>
+<a class="tile" href="coverflow.html"><span class="icon icon-coverflow"></span><b>Coverflow</b><span>The default theme</span></a>
+<a class="tile" href="http.html"><span class="icon icon-http"></span><b>HTTP</b><span>ISO catalog and range streaming; development feature</span></a>
+<a class="tile" href="retroachievements.html"><span class="icon icon-ra"></span><b>RetroAchievements</b><span>RA build and xeRAbora; hardware validation pending</span></a>
+<a class="tile" href="favourites.html"><span class="icon icon-favorites"></span><b>Favorites</b><span>R3 to star · four L3 views</span></a>
+<a class="tile" href="themes.html"><span class="icon icon-themes"></span><b>Theme Engine</b><span>Author your own themes</span></a>
+<a class="tile" href="languages.html"><span class="icon icon-languages"></span><b>Languages</b><span>Install and pick a UI language</span></a>
+<a class="tile" href="pademu.html"><span class="icon icon-pademu"></span><b>PADEMU</b><span>DualShock 3/4 emulation</span></a>
+<a class="tile" href="apps.html"><span class="icon icon-apps"></span><b>Apps</b><span>Launch your homebrew ELFs</span></a>
+<a class="tile" href="gsm.html"><span class="icon icon-gsm"></span><b>GSM Video Modes</b><span>Force 480p/720p/1080i</span></a>
+<a class="tile" href="igr.html"><span class="icon icon-igr"></span><b>In-Game Reset</b><span>Quit a game from the pad</span></a>
+<a class="tile" href="controls.html"><span class="icon icon-controls"></span><b>Controls</b><span>Every button, in one place</span></a>
+<a class="tile" href="settings.html"><span class="icon icon-settings"></span><b>Settings Reference</b><span>Every menu &amp; option</span></a>
+<a class="tile" href="fork-gaps.html"><span class="icon icon-fork-gaps"></span><b>Fork Feature Gaps</b><span>What other PS2 projects have that RiptOPL doesn't yet</span></a>
 </div>
+
+<h2 id="ecosystem">Companion Ecosystem &amp; Tools</h2>
+<section class="callout info" id="external-tools"><div class="h">External Tools &amp; Services</div>
+<p><b><a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a></b> by <b><a href="https://github.com/NathanNeurotic">Ripto</a></b> — all-in-one PC server launcher for <b>SMB, UDPFS, UDPBD and HTTP</b>.<br>
+<b><a href="https://github.com/YouKnow-sys/udpfs-server">udpfs-server</a></b> by <b><a href="https://github.com/YouKnow-sys">YouKnow-sys</a></b> — the same idea from a phone: an <b>Android</b> app that shares folders and disk images to the PS2 over <b>UDPFS</b>, found by broadcast so there is no server address to type in on the console. Built on <a href="https://github.com/pcm720/udpfsd">udpfsd</a> by pcm720; MIT licensed.<br>
+<b><a href="https://github.com/Luden02/OrbitPS2-Manager">OrbitPS2 Manager</a></b> by <b><a href="https://github.com/Luden02">Luden</a></b> — cross-platform PC library manager for importing discs, artwork/screenshots, ZSO compression, per-game settings and VMC management.<br>
+<b><a href="https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI">OPL PS1 AIO Converter GUI</a></b> by <b><a href="https://github.com/shaanhomebrew-cloud">shaan</a></b> — Windows all-in-one PS1/POPStarter preparation tool for BIN/CUE → VCD conversion and installation to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD.<br>
+<b><a href="https://github.com/hacan359/xerabora">xeRAbora</a></b> by <b><a href="https://github.com/hacan359">hacan359</a></b> — the PC client for <b>RetroAchievements</b> on real PS2 hardware. Required client: <b><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10">v0.1.0-alpha.10</a></b>. RiptOPL's RA build is paired with and requires <b>xeRAbora v0.1.0-alpha.10</b>. xeRAbora runs rcheevos, talks to the RetroAchievements servers, unlocks achievements and builds the per-game watch list. Shipped as a shortcut inside <code>RIPTOPL-RetroAchievements-*.zip</code>; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by <b><a href="https://github.com/oMrRexD">oMrRexD</a></b>, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.<br>
+<b><a href="https://github.com/Docmine17/Open-PS2-Loader-HTTP">OPL HTTP PC server</a></b> by <b><a href="https://github.com/Docmine17">Docmine17</a></b> — the PC side of RiptOPL’s <b>HTTP</b> protocol: a small static HTTP server with byte-range support that serves your <code>games.csv</code> catalog and streams the ISOs. RiptOPL works with it <b>unmodified</b> — no new API, no catalog conversion, no changed layout — with host conformance checks against the upstream server; PS2 hardware validation is still pending.<br>
+<b><a href="https://github.com/TheRealNextria/PS2RD-CHT-Manager">PS2RD CHT Manager</a></b> by <b><a href="https://github.com/TheRealNextria">TheRealNextria</a></b> — PC manager for the PS2RD <code>.cht</code> cheat files RiptOPL reads from your device's <code>CHT</code> folder.<br>
+<b><a href="https://github.com/Gageformer/Ember">Ember</a></b> by <b><a href="https://github.com/Gageformer">Gageformer</a></b> — a PS1 emulator running natively on the PS2, used as RiptOPL's second PS1 core alongside POPSTARTER. Ships as an <code>EMBER/</code> folder inside the release package, bundled unmodified under the Ember Public Beta Testing Licence (<code>EMBER/LICENSE-BETA.txt</code>); <a href="https://github.com/Gageformer/Ember/releases">releases</a>.<br>
+<b><a href="https://www.psx-place.com/resources/popstarter.683/">POPStarter</a></b> by <b>krHACKen</b> — a PS1 launcher built around Sony's native <b>POPS</b> emulator for the PS2, used as RiptOPL's primary PS1 core alongside Ember. POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains no Sony emulator binaries, libraries, or BIOS files; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on <a href="https://www.psx-place.com/resources/popstarter.683/">PSX-Place</a>.<br>
+<b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b> by <b><a href="https://github.com/rickgaiser">rickgaiser</a></b> — a small, fast, modular PS2 device emulator, and RiptOPL's second PS2 loader core alongside OPL's own. Ships as a ready-to-use <code>neutrino/</code> folder inside each installable ZIP (drag-and-drop to <code>mc?:/neutrino/</code>), under the <b>AFL-3.0</b> licence; <a href="https://github.com/rickgaiser/neutrino/releases">releases</a>.<br>
+<b><a href="https://git.techwritescode.dev/techwritescode/PSUManager">PSUManager</a></b> by <b>techwritescode</b> — the CC0 PS2 save-container implementation used by RiptOPL release tooling to independently validate <code>APP_RIPTOPL.psu</code> and <code>APP_RIPTOPL-RA.psu</code>. The exact upstream core and license used by CI are preserved in <code>third_party/PSUManager/</code>.</p></section>
 
 <details class="deep"><summary>What's the difference between OPL, RiptOPL, and wOPL?</summary>
 <p><b>Open PS2 Loader (OPL)</b> is the canonical, community-maintained loader at
@@ -168,4 +186,159 @@ canonical project.</p></details>
   <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
 </footer>
 <script src="assets/app.js"></script>
+<script>
+(function () {
+  var canvas = document.getElementById('fall-leaves');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+  var dpr = window.devicePixelRatio || 1;
+
+  function resize() {
+    dpr = window.devicePixelRatio || 1;
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  var PALETTE = [
+    { fill: 'rgba(235, 45, 60, ',  vein: 'rgba(175, 20, 35, ' },  // Maple crimson
+    { fill: 'rgba(255, 102, 0, ',  vein: 'rgba(190, 65, 0, ' },   // Fiery orange
+    { fill: 'rgba(255, 160, 0, ',  vein: 'rgba(200, 115, 0, ' },  // Golden amber
+    { fill: 'rgba(240, 200, 35, ', vein: 'rgba(185, 145, 15, ' }, // Autumn ochre
+    { fill: 'rgba(195, 75, 35, ',  vein: 'rgba(140, 45, 15, ' },  // Russet bronze
+    { fill: 'rgba(220, 60, 45, ',  vein: 'rgba(165, 30, 20, ' }   // Deep vermilion
+  ];
+
+  function drawMaple(c, s) {
+    c.beginPath();
+    c.moveTo(0, -s);
+    c.bezierCurveTo(-s * 0.25, -s * 0.7, -s * 0.35, -s * 0.5, -s * 0.7, -s * 0.5);
+    c.bezierCurveTo(-s * 0.5, -s * 0.25, -s * 0.45, -s * 0.1, -s * 0.8, s * 0.15);
+    c.bezierCurveTo(-s * 0.5, s * 0.2, -s * 0.3, s * 0.2, -s * 0.35, s * 0.45);
+    c.bezierCurveTo(-s * 0.15, s * 0.4, -s * 0.05, s * 0.5, 0, s * 0.55);
+    c.bezierCurveTo(s * 0.05, s * 0.5, s * 0.15, s * 0.4, s * 0.35, s * 0.45);
+    c.bezierCurveTo(s * 0.3, s * 0.2, s * 0.5, s * 0.2, s * 0.8, s * 0.15);
+    c.bezierCurveTo(s * 0.45, -s * 0.1, s * 0.5, -s * 0.25, s * 0.7, -s * 0.5);
+    c.bezierCurveTo(s * 0.35, -s * 0.5, s * 0.25, -s * 0.7, 0, -s);
+    c.closePath();
+  }
+
+  function drawBirch(c, s) {
+    c.beginPath();
+    c.moveTo(0, -s);
+    c.bezierCurveTo(-s * 0.55, -s * 0.4, -s * 0.55, s * 0.3, 0, s * 0.55);
+    c.bezierCurveTo(s * 0.55, s * 0.3, s * 0.55, -s * 0.4, 0, -s);
+    c.closePath();
+  }
+
+  function drawOak(c, s) {
+    c.beginPath();
+    c.moveTo(0, -s);
+    c.bezierCurveTo(-s * 0.3, -s * 0.75, -s * 0.5, -s * 0.6, -s * 0.45, -s * 0.4);
+    c.bezierCurveTo(-s * 0.25, -s * 0.3, -s * 0.6, -s * 0.1, -s * 0.5, s * 0.2);
+    c.bezierCurveTo(-s * 0.3, s * 0.25, -s * 0.35, s * 0.45, 0, s * 0.6);
+    c.bezierCurveTo(s * 0.35, s * 0.45, s * 0.3, s * 0.25, s * 0.5, s * 0.2);
+    c.bezierCurveTo(s * 0.6, -s * 0.1, s * 0.25, -s * 0.3, s * 0.45, -s * 0.4);
+    c.bezierCurveTo(s * 0.5, -s * 0.6, s * 0.3, -s * 0.75, 0, -s);
+    c.closePath();
+  }
+
+  function createLeaf(scatterY) {
+    var color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+    var size = 11 + Math.random() * 12; // 11px to 23px
+    return {
+      x: Math.random() * (width + 80) - 40,
+      y: scatterY ? (Math.random() * height) : (-30 - Math.random() * 30),
+      size: size,
+      type: Math.floor(Math.random() * 3), // 0=maple, 1=birch, 2=oak
+      color: color,
+      alpha: 0.75 + Math.random() * 0.22,
+      vy: 0.7 + Math.random() * 0.9,       // gentle descent
+      wind: 0.15 + Math.random() * 0.35,   // slight gentle rightward breeze
+      sway: Math.random() * Math.PI * 2,
+      swaySpeed: 0.015 + Math.random() * 0.02,
+      swayAmp: 0.8 + Math.random() * 1.2,
+      flipX: Math.random() * Math.PI * 2,
+      flipSpeedX: 0.02 + Math.random() * 0.03,
+      flipY: Math.random() * Math.PI * 2,
+      flipSpeedY: 0.01 + Math.random() * 0.02,
+      angle: Math.random() * Math.PI * 2,
+      rotSpeed: (Math.random() - 0.5) * 0.02
+    };
+  }
+
+  var leaves = [];
+  var COUNT = 52;
+  for (var i = 0; i < COUNT; i++) {
+    leaves.push(createLeaf(true)); // distribute across whole height initially
+  }
+
+  function tick() {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    for (var j = 0; j < leaves.length; j++) {
+      var l = leaves[j];
+
+      // Physics update
+      l.sway += l.swaySpeed;
+      l.flipX += l.flipSpeedX;
+      l.flipY += l.flipSpeedY;
+      l.angle += l.rotSpeed;
+
+      l.x += Math.sin(l.sway) * l.swayAmp + l.wind;
+      l.y += l.vy;
+
+      // Wrap around
+      if (l.y > height + 35 || l.x < -60 || l.x > width + 60) {
+        leaves[j] = createLeaf(false);
+        continue;
+      }
+
+      // 3D fold simulation
+      var foldX = Math.cos(l.flipX);
+      var foldY = Math.sin(l.flipY);
+      var faceBrightness = 0.85 + 0.15 * Math.abs(foldX);
+
+      ctx.save();
+      ctx.translate(l.x, l.y);
+      ctx.rotate(l.angle);
+      ctx.scale(foldX, foldY);
+
+      // Render leaf body
+      ctx.fillStyle = l.color.fill + (l.alpha * faceBrightness) + ')';
+      if (l.type === 0) {
+        drawMaple(ctx, l.size);
+      } else if (l.type === 1) {
+        drawBirch(ctx, l.size);
+      } else {
+        drawOak(ctx, l.size);
+      }
+      ctx.fill();
+
+      // Render leaf stem & spine vein
+      ctx.strokeStyle = l.color.vein + (l.alpha * faceBrightness * 0.7) + ')';
+      ctx.lineWidth = Math.max(0.7, l.size * 0.05);
+      ctx.beginPath();
+      ctx.moveTo(0, -l.size * 0.8);
+      ctx.lineTo(0, l.size * 0.75);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+})();
+</script>
 </body></html>

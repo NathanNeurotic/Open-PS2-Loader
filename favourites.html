@@ -15,8 +15,12 @@
   <a class="brand" href="index.html">
     <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
     RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
   <div class="search">
-    <span class="ico">🔎</span>
+    <span class="ico"></span>
     <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
     <kbd>/</kbd>
     <div id="results"></div>
@@ -24,51 +28,52 @@
 </header>
 <div class="layout">
   <nav class="sidebar">
-    <a href="index.html"><span class="em">🏠</span>Home</a>
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
     <h4>Start</h4>
-    <a href="getting-started.html"><span class="em">🚀</span>Getting Started</a>
-    <a href="install.html"><span class="em">📥</span>Install &amp; First Boot</a>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
     <h4>Game sources</h4>
-    <a href="usb.html"><span class="em">🔌</span>USB / MX4SIO / iLink</a>
-    <a href="mmce.html"><span class="em">🧩</span>MMCE</a>
-    <a href="smb.html"><span class="em">🌐</span>SMB (network share)</a>
-    <a href="hdd.html"><span class="em">💽</span>Internal HDD (APA &amp; exFAT)</a>
-    <a href="network-boot.html"><span class="em">📡</span>Network Boot (UDPBD/UDPFS)</a>
-    <a href="http.html"><span class="em">🌐</span>HTTP</a>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
-    <a href="ps1-vcd.html"><span class="em">💿</span>PS1 Games</a>
-    <a href="neutrino.html"><span class="em">⚛️</span>Neutrino Core</a>
-    <a href="coverflow.html"><span class="em">🎴</span>Coverflow</a>
-    <a href="favourites.html" class="active"><span class="em">⭐</span>Favorites</a>
-    <a href="apps.html"><span class="em">🧰</span>Apps</a>
-    <a href="per-game-settings.html"><span class="em">🎚️</span>Per-game Settings</a>
-    <a href="gsm.html"><span class="em">📺</span>GSM Video Modes</a>
-    <a href="igr.html"><span class="em">🔄</span>In-Game Reset</a>
-    <a href="vmc.html"><span class="em">💾</span>VMC</a>
-    <a href="cheats.html"><span class="em">🎮</span>Cheats</a>
-    <a href="retroachievements.html"><span class="em">🏆</span>RetroAchievements</a>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html" class="active"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
     <h4>Theme Engine</h4>
-    <a href="themes.html"><span class="em">🎨</span>Theme Engine</a>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
     <h4>Reference</h4>
-    <a href="settings.html"><span class="em">🔧</span>Settings Reference</a>
-    <a href="controls.html"><span class="em">🕹️</span>Controls</a>
-    <a href="languages.html"><span class="em">🌐</span>Languages</a>
-    <a href="pademu.html"><span class="em">🎮</span>PADEMU</a>
-    <a href="nbd.html"><span class="em">🖧</span>NBD Server</a>
-    <a href="zso.html"><span class="em">🗜️</span>ZSO Format</a>
-    <a href="ps3-bc.html"><span class="em">🎯</span>PS3 BC</a>
-    <a href="releases.html"><span class="em">📦</span>Releases</a>
-    <a href="fork-gaps.html"><span class="em">🧭</span>Fork Feature Gaps</a>
-    <a href="troubleshooting.html"><span class="em">🛠️</span>Troubleshooting</a>
-    <a href="credits.html"><span class="em">🙏</span>Credits &amp; Sources</a>
-    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="em">📚</span>POPStarter docs ↗</a>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
 <h1>Favorites</h1>
 <p class="lead">Press <b>R3</b> on any game or app to star it. A virtual <b>Favorites</b> page gathers every starred
 title from every connected device into one list — no matter which drive it lives on.</p>
 
-<div class="callout info"><div class="h">ℹ Favorites Page Start Mode ships Off</div>
+<div class="callout info"><div class="h">Favorites Page Start Mode ships Off</div>
 The Favorites tab ships <b>Off</b> under <b>Settings → Game Sources → Favorites Page Start Mode</b> — set it to
 <b>Manual</b> or <b>Auto</b> before the tab appears and R3 does anything. Use <b>Manual</b> to show the tab and
 control it yourself, <b>Auto</b> to have OPL manage it the same way it manages other device tabs, or
@@ -121,7 +126,7 @@ all forward to the source device as if you had selected the game there directly.
 your artwork, themes, and VMCs — typically <code>mc0:/OPL/</code> or the root of whichever device holds your OPL
 config.</p>
 
-<div class="callout info"><div class="h">ℹ Shared with uOPL and wOPL</div>
+<div class="callout info"><div class="h">Shared with uOPL and wOPL</div>
 <code>favourites.bin</code> sits in the <b>shared OPL folder</b>, not in the RiptOPL-private settings area. If you
 have an existing <code>favourites.bin</code> written by <b>uOPL</b> or <b>wOPL</b>, RiptOPL will read it
 automatically on first boot and carry your starred games over. Your favorites will then be saved in RiptOPL's own
@@ -161,7 +166,7 @@ read.</p>
   </tbody>
 </table>
 
-<div class="callout info"><div class="h">ℹ R3 only works when Favorites Page Start Mode is on</div>
+<div class="callout info"><div class="h">R3 only works when Favorites Page Start Mode is on</div>
 When Favorites Page Start Mode is set to <b>Off</b>, pressing R3 does nothing — no star is set and nothing is written
 to disk. Enable the tab first.</div>
 
@@ -178,7 +183,7 @@ to disk. Enable the tab first.</div>
 own core; ELF rows use the app path; PS2 rows retain normal game options. All four stops remain
 available regardless of how ordinary device game pages are displayed.</p>
 
-<div class="callout info"><div class="h">ℹ Where you leave it is where you come back</div>The shelf you
+<div class="callout info"><div class="h">Where you leave it is where you come back</div>The shelf you
 were last on is <b>remembered across reboots</b>, so Favorites only opens on PS2 until you move it.
 The same applies to every page L3 does something on — each device page and the APPS split side keep
 their own position. Pressing L3 never writes to storage: a position rides along with a write that
@@ -187,7 +192,7 @@ without doing either is the one case that is not kept. If a remembered view stop
 <b>PS2/PS1 Game Display</b> from Mixed to Both, say — it is discarded and the page opens on its
 default rather than on a view with no rows.</div>
 
-<div class="callout info"><div class="h">ℹ Covers in All in One keep their own shape</div>A PS2 case is
+<div class="callout info"><div class="h">Covers in All in One keep their own shape</div>A PS2 case is
 portrait; a PS1 jewel case and an app box are square. On the mixed shelf every row's cover is drawn
 at the size its <em>own</em> media uses, instead of one shape being stretched onto all three — so
 PS1 and app covers stay square beside portrait PS2 covers. Themes size the three boxes with the
