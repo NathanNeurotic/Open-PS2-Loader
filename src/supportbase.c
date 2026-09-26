@@ -326,6 +326,13 @@ static int queryISOGameListCache(const struct game_cache_list *cache, base_game_
     return 0;
 }
 
+static int sbReadListErrno; // see sbGetReadListError
+
+int sbGetReadListError(void)
+{
+    return sbReadListErrno;
+}
+
 // folderlist (folder-browse only, else NULL) collects subdirectory rows in a list SEPARATE from
 // glist so they never reach the games.bin cache (updateISOGameList would otherwise cache them as
 // phantom entries and poison its change-detection). Folder rows are not counted in the return value.
@@ -341,6 +348,7 @@ static int scanForISO(char *path, char type, struct game_list_t **glist, struct 
     int cacheLoaded = loadISOGameListCache(path, &cache) == 0;
     int cacheHint = -1; // index of the last cache hit (queryISOGameListCache)
 
+    errno = 0; // so the failure branch reads THIS opendir's errno
     if ((dir = opendir(path)) != NULL) {
         int pathLen = snprintf(fullpath, sizeof(fullpath), "%s", path);
         if (pathLen < 0 || pathLen >= (int)sizeof(fullpath) - 1) {
@@ -448,6 +456,7 @@ static int scanForISO(char *path, char type, struct game_list_t **glist, struct 
         // of blanking it on a transient wedge (MMCE<->MX4SIO SIO2 contention). Crucially, do NOT call
         // updateISOGameList here -- writing count 0 would rewrite the on-disk list cache to EMPTY,
         // persisting a transient failure across reboots.
+        sbReadListErrno = errno;
         if (cacheLoaded)
             freeISOGameListCache(&cache);
         return -1;
@@ -510,6 +519,7 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
     // Make this the active subpath for the path composers used before the next scan (size stat /
     // launch). A device leg also re-sets it explicitly at launch time.
     sbSetBrowseSub(sub);
+    sbReadListErrno = 0;
 
     // Build into a LOCAL list and leave the caller's *list/*gamecount/*fsize UNTOUCHED until we know
     // the scan actually reached the device. On a TOTAL device-read failure (every directory's opendir

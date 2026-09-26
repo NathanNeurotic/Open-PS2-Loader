@@ -59,7 +59,10 @@ the size field is intentionally left blank rather than computed.
 itself, R3 removes the selected entry. See [the Favorites docs](https://nathanneurotic.github.io/Open-PS2-Loader/favourites.html).
 
 **Select / Refresh** is also the retry for a device page that failed to populate — a network share
-that was not up when RiptOPL started, for example.
+that was not up when RiptOPL started, for example. A USB, MX4SIO, iLink, UDPBD or BDM HDD page whose
+`CD` and `DVD` folders both fail to open says so once, naming where it looked and the error number
+(for example `mass0:` and `5`). It is not retried in the background, so nothing else waits behind it;
+press Select on that page to scan it again.
 
 ---
 
