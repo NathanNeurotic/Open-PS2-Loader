@@ -8,11 +8,12 @@ neutrinoEffectiveBsdfs sysLaunchNeutrino builds its argv from, so the two cannot
 
 bd TYPED into the Neutrino args counts too (CodeRabbit on #762): it used to switch our own -bsdfs off
 and leave a bare file path in -dvd, which bd can never open -- after the teardown. The effective value
-is the last active typed token (per-game args after global ones), else the picker; a typed -dvd=
-names the device itself, so it is never refused.
+is the last active typed token (per-game args after global ones, the first "--b" ending them), else
+the picker. A typed -dvd= does NOT exempt a launch: it is a tail token the argv budget can drop,
+which would leave our device-0 tuple in charge (CodeRabbit's security review of #762).
 
-This compiles neutrinoArgHasActiveFlag, neutrinoTypedBsdfs, neutrinoEffectiveBsdfs, getDeviceName and
-sysNeutrinoPreflight from src/system.c on the host and checks every case that decides the refusal.
+This compiles neutrinoArgHasActiveFlag, neutrinoEffectiveBsdfs, getDeviceName and sysNeutrinoPreflight
+from src/system.c on the host and checks every case that decides the refusal.
 """
 from pathlib import Path
 import re
@@ -46,7 +47,7 @@ functions = ''.join(function_text(sig) for sig in (
 # user's is a tail token it may, and a bdfs: -dvd without -bsdfs=bd fails after the teardown
 # (CodeRabbit on #762, second pass).
 launch = function_text('void sysLaunchNeutrino(')
-if 'int fsOverride = neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs, &userDvd);' not in launch or \
+if 'int fsOverride = neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs);' not in launch or \
         'if (fsOverride) {' not in launch or '!typedFs' in launch:
     failures.append('sysLaunchNeutrino: must take fsOverride from neutrinoEffectiveBsdfs (shared with the preflight) '
                     'and always emit it as its own -bsdfs=')
@@ -106,7 +107,7 @@ int main(void)
     /* bd typed into the args (CodeRabbit on #762) */
     scenario("typed per-game bd, picker Auto",           "usb",  0,   "",             "-bsdfs=bd",       -1,   1, 3);
     scenario("typed global bd, picker Auto",             "usb",  0,   "-bsdfs=bd",    NULL,              -1,   1, 3);
-    scenario("typed bd + typed -dvd= names the device",  "usb",  0,   "",             "-bsdfs=bd -dvd=bdfs:usb1p0", -1, 0, 0);
+    scenario("typed bd + typed -dvd= is still refused",  "usb",  0,   "",             "-bsdfs=bd -dvd=bdfs:usb1p0", -1, 1, 3);
     scenario("typed bd, device number known",            "usb",  0,   "",             "-bsdfs=bd",        1,   0, 0);
     scenario("per-game exfat beats global bd",           "usb",  0,   "-bsdfs=bd",    "-bsdfs=exfat",    -1,   0, 0);
     scenario("per-game bd beats global exfat",           "usb",  0,   "-bsdfs=exfat", "-bsdfs=bd",       -1,   1, 3);
@@ -118,34 +119,29 @@ int main(void)
     scenario("global --b ends the per-game args",        "usb",  0,   "-bsdfs=bd --b", "-bsdfs=exfat",   -1,   1, 3);
     scenario("global --b hides a per-game bd",           "usb",  0,   "--b",          "-bsdfs=bd",       -1,   0, 0);
     scenario("-dvd= after --b is the game's",            "usb",  0,   "",             "-bsdfs=bd --b -dvd=bdfs:usb1p0", -1, 1, 3);
-    scenario("global -dvd= names the device",            "usb",  0,   "-dvd=bdfs:usb1p0", "-bsdfs=bd",   -1,   0, 0);
+    scenario("global -dvd= is still refused",            "usb",  0,   "-dvd=bdfs:usb1p0", "-bsdfs=bd",   -1,   1, 3);
+    scenario("typed -dvd= with a known number proceeds", "usb",  0,   "",             "-bsdfs=bd -dvd=bdfs:usb1p0",  1, 0, 0);
 
-    /* The value sysLaunchNeutrino shapes -dvd from and emits as its own -bsdfs=, and what counts as
-       a -dvd= reaching Neutrino. */
-    int userDvd;
+    /* The value sysLaunchNeutrino shapes -dvd from and emits as its own -bsdfs=. */
     snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", "");
-    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=bd", &userDvd) != 3 || userDvd) {
+    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=bd") != 3) {
         printf("FAIL typed bd must shape -dvd as bd\n");
         fails++;
     }
-    if (neutrinoEffectiveBsdfs("usb", 3, NULL, &userDvd) != 3) {
+    if (neutrinoEffectiveBsdfs("usb", 3, NULL) != 3) {
         printf("FAIL picker bd must shape -dvd as bd\n");
         fails++;
     }
-    if (neutrinoEffectiveBsdfs("usb", 3, "-bsdfs=hdl", &userDvd) != 2) {
+    if (neutrinoEffectiveBsdfs("usb", 3, "-bsdfs=hdl") != 2) {
         printf("FAIL typed hdl beats picker bd\n");
         fails++;
     }
-    if (neutrinoEffectiveBsdfs("usb", 3, "-bsdfs=zfs", &userDvd) != 0) {
+    if (neutrinoEffectiveBsdfs("usb", 3, "-bsdfs=zfs") != 0) {
         printf("FAIL an unknown typed value leaves -dvd bare (Neutrino decides)\n");
         fails++;
     }
-    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=bd -dvd=bdfs:usb1p0", &userDvd) != 3 || !userDvd) {
-        printf("FAIL a typed -dvd= before --b reaches Neutrino\n");
-        fails++;
-    }
-    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=bd --b -dvd=bdfs:usb1p0", &userDvd) != 3 || userDvd) {
-        printf("FAIL a -dvd= after --b does not reach Neutrino\n");
+    if (neutrinoEffectiveBsdfs("usb", 3, "--b -bsdfs=exfat") != 3) {
+        printf("FAIL a -bsdfs= after --b is the game's, so the picker stands\n");
         fails++;
     }
     return fails ? 1 : 0;
@@ -172,4 +168,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('neutrino bsdfs: 27 preflight scenarios + 6 argv checks OK (bd with no device number refused before teardown, typed or picked; --b ends the Neutrino args)')
+print('neutrino bsdfs: 28 preflight scenarios + 5 argv checks OK (bd with no device number refused before teardown, typed or picked, even beside a typed -dvd=; --b ends the Neutrino args)')
