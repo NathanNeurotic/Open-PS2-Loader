@@ -153,7 +153,7 @@ case-sensitive. The other old choices load as <em>&lt;not set&gt;</em>.</p>
 <tr><td>Internal ATA (BDM block device)</td><td>Yes</td></tr>
 <tr><td>Internal HDD (APA partition &rarr; HDL)</td><td>Yes</td></tr>
 <tr><td>MMCE (SD2PSX / MemCard PRO2)</td><td>Yes</td></tr>
-<tr><td>UDPBD / UDPFS (network block device)</td><td>Yes — and <b>required</b>; no OPL core backend exists for these (see <a href="network-boot.html">Network Boot</a>)</td></tr>
+<tr><td>UDPBD / UDPFS (network block device)</td><td>Yes — and <b>required</b>; no OPL core backend exists for these (see <a href="network-boot.html">Network Boot</a>). Both work on a real PS2; the UDPBD test (2026-09-26) used every Neutrino setting at its default.</td></tr>
 <tr><td>SMB / Ethernet</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
 <tr><td>USB Extreme split images (<code>.ul</code>)</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
 <tr><td>Compressed ISO (<code>.zso</code>)</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
@@ -239,6 +239,7 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 <tbody>
 <tr><td><code>-bsd=&lt;usb|ilink|mx4sio|ata|mmce|udpbd|udpfsbd|udpfs&gt;</code></td><td>Always (the storage backend)</td></tr>
 <tr><td><code>-bsdfs=hdl</code></td><td>Internal HDD (APA) only</td></tr>
+<tr><td><code>-bsdfs=&lt;exfat|hdl|bd&gt;</code></td><td>Only when the game's <b>Neutrino Filesystem</b> is set off Auto, or when you type <code>-bsdfs=</code> into the arguments — a typed one wins over the picker (per-game arguments over global ones, the last one wins, nothing after <code>--b</code>). Block devices only, never MMCE/UDPFS. <code>hdl</code>/<code>bd</code> also reshape <code>-dvd</code> to <code>hdl:</code>/<code>bdfs:</code>, and a typed <code>-dvd=</code> wins if it is forwarded (a long argument list can drop it). <code>bd</code> names the drive as <code>&lt;driver&gt;&lt;N&gt;p0</code> (a second USB stick is <code>usb1p0</code>) from the device number the drive reported; if it never reported one, the launch is refused while the menu is still up rather than guessed as device 0 — whether <code>bd</code> was picked or typed, even beside a typed <code>-dvd=</code>. ATA is exempt (one device, always 0).</td></tr>
 <tr><td><code>-dvd=&lt;path&gt;</code> / <code>-dvd=hdl:&lt;partition&gt;</code></td><td>Always (the game image or partition)</td></tr>
 <tr><td><code>-qb</code></td><td>USB, iLink, UDPBD and both UDPFS legs &mdash; the same set NHDDL uses (every mode except HDL). RiptOPL's no-reset bridge preserves the mounted BDM/UDPFS environment; quick boot enters Neutrino's load environment without resetting that inherited stack away. Without it, a UDPBD launch reconnected on its own after the reset, read the image's partition table and never reached the game. An active user-supplied copy is never duplicated.</td></tr>
 <tr><td><code>-gc=&lt;modes&gt;</code></td><td>Only when OPL compat modes are set for the game</td></tr>
