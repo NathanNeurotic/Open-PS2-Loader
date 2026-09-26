@@ -280,7 +280,8 @@ This build layers several features on top of upstream OPL:
   loads live (a restart is only needed to *switch away* from a protocol already loaded). Confirming
   Network Settings applies the current values and reconnects immediately; if the first connection
   fails, press **Select / Refresh** on the failed network page to retry it. Run it from the
-  **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. See the
+  **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. Confirmed
+  on a real PS2 (Kingdom Hearts, 2026-09-26) with every Neutrino setting left at its default. See the
   network-boot section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--the-network-protocol-selector)**.
 - **HTTP library (new):** point RiptOPL at a server meeting the [HTTP client response profile](docs/HTTP.md), and it reads a `games.csv` catalog and streams the ISOs straight off it
   through OPL’s own core. The PC side is **[Docmine17](https://github.com/Docmine17)’s**
@@ -717,7 +718,7 @@ OPL accepts `.cht` files in PS2RD format. Name them after the game’s startup I
 Cheats are structured as hexadecimal codes, with proper headers as descriptions to identify their function.
 You can activate cheats via OPL's graphical interface. Navigate to a games settings, enable cheats and select the desired mode.
 
-If a game has no cheat file, what happens depends on where cheats were turned on. With cheats on in the **Global Settings** (every game), the game just starts without cheats. With cheats on in that game's **Per-game Settings**, RiptOPL lists where it looked and asks: Accept starts the game without cheats, Back returns to the menu. A cheat file that exists but can't be read always asks.
+If a game has no cheat file, what happens depends on where cheats were turned on. With cheats on in the **Global Settings** (every game), the game just starts without cheats. With cheats on in that game's **Per-game Settings**, RiptOPL lists where it looked and asks: Accept starts the game without cheats, Back returns to the menu. A cheat file that exists but can't be read always asks: that includes a `cht.tar` member that is empty, over 1 MB or won't parse, and a loose file the device refuses (access denied, or held by another session). A generic I/O error still counts as missing, because an SMB share reports a missing file that way.
 
 ### Cheat Modes
 
@@ -819,7 +820,9 @@ uses defaults if you need to undo a saved menu setup.
 
 When you change the video mode, keeping it takes a **hold** of Accept (about 2 seconds, until the bar
 fills). A tap does nothing, and Back or 10 seconds without an answer restores the previous mode, so a
-mode your TV can't show can't be kept by pressing buttons blind.
+mode your TV can't show can't be kept by pressing buttons blind. The prompt counts those seconds down;
+holding Accept hides the count but doesn't stop it, so a hold you started always finishes, while letting
+go early after the time is up goes straight back.
 
 ### The internal HDD shows code 402, or "Formatted: NO" in another tool
 
@@ -837,6 +840,15 @@ data; this will not change. It mostly affects large desktop external drives whos
 4K sectors. The same drive in a generic enclosure usually presents 512-byte sectors, but it must be
 **reformatted** after the move. A drive that is 4K natively (4Kn) stays 4K in any enclosure. Ordinary
 512e drives (4K physical, 512 logical) are not affected.
+
+### A USB / MX4SIO / exFAT page lists no PS2 games
+
+If RiptOPL says *Could not open the CD or DVD folder in mass0: (error 5)*, neither folder would open at
+the path it names (the device plus your BDM Prefix Path, if set). Error 5 is an I/O error (check the
+device on a PC), 2 means the folder is missing and couldn't be created, 13 is access denied. An empty
+folder never shows this: RiptOPL creates `CD` and `DVD` itself and simply lists nothing. It scans once
+and does not retry in the background; press **Select** on that page to scan again. Details:
+[Troubleshooting](https://nathanneurotic.github.io/Open-PS2-Loader/troubleshooting.html#ps2-folders-unreadable).
 
 ### The menu works, but launching a game loses the picture
 
