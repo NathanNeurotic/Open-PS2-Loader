@@ -52,8 +52,6 @@ typedef struct load_image_request
     // streaming PNG reader. For the device #340 is actually about, NOT ISSUING the read is the only
     // lever -- which is what the SIO2 defer in artPop is for.
     volatile int abortRequested;
-    // Priority level (1 = active selection tier, 0 = speculative lookahead)
-    unsigned char priority;
     // Resolved on the GUI THREAD at enqueue: does this cover ride SIO2, the controller's own bus?
     // Not resolvable on the worker -- answering it reads the support's private device data, which a
     // background rescan rewrites underneath. One byte, copied in, is immune.
@@ -477,7 +475,6 @@ static void artPush(load_image_request_t *req)
     req->next = NULL;
     req->prev = gArtReqEnd;
     req->queueEpoch = gArtQueueEpoch;
-    req->priority = 0;
     if (gArtReqEnd)
         gArtReqEnd->next = req;
     else
@@ -487,37 +484,17 @@ static void artPush(load_image_request_t *req)
     EIntr();
 }
 
-static void artPushPriority(load_image_request_t *req)
+static void artPushFront(load_image_request_t *req)
 {
     DIntr();
+    req->prev = NULL;
+    req->next = gArtReqList;
     req->queueEpoch = gArtQueueEpoch;
-    req->priority = 1;
-
-    if (gArtReqList == NULL) {
-        req->prev = NULL;
-        req->next = NULL;
-        gArtReqList = req;
-        gArtReqEnd = req;
-    } else if (!gArtReqList->priority) {
-        // Queue head is non-priority; insert req at the head
-        req->prev = NULL;
-        req->next = gArtReqList;
+    if (gArtReqList)
         gArtReqList->prev = req;
-        gArtReqList = req;
-    } else {
-        // Walk priority items to append at the end of the priority section (FIFO within priority)
-        load_image_request_t *curr = gArtReqList;
-        while (curr->next != NULL && curr->next->priority) {
-            curr = curr->next;
-        }
-        req->prev = curr;
-        req->next = curr->next;
-        if (curr->next != NULL)
-            curr->next->prev = req;
-        else
-            gArtReqEnd = req;
-        curr->next = req;
-    }
+    else
+        gArtReqEnd = req;
+    gArtReqList = req;
     gArtQueuedCount++;
     EIntr();
 }
@@ -528,39 +505,25 @@ static void artPromote(load_image_request_t *req)
         return;
 
     DIntr();
-    // Guard against promoting the request the worker is already executing, or one already marked priority.
-    if (gArtCurrentReq != req && req->queueEpoch == gArtQueueEpoch && !req->priority) {
-        req->priority = 1;
+    // The selected cover can be a warmed neighbour buried in a deep queue. This used to scan the
+    // singly-linked FIFO under DIntr(), making one selection's priority handoff O(queue depth) and
+    // extending the interrupts-off window as browsing filled cache slots. The intrusive back link
+    // keeps this splice O(1); no allocation, free, or device work occurs in the bracket.
+    // Guard against promoting the request the worker is already executing, or one already at head.
+    if (gArtCurrentReq != req && req->queueEpoch == gArtQueueEpoch && req->prev != NULL) {
+        load_image_request_t *prev = req->prev;
+        load_image_request_t *next = req->next;
 
-        if (req->prev != NULL) {
-            load_image_request_t *prev = req->prev;
-            load_image_request_t *next = req->next;
+        prev->next = next;
+        if (next)
+            next->prev = prev;
+        else
+            gArtReqEnd = prev;
 
-            prev->next = next;
-            if (next)
-                next->prev = prev;
-            else
-                gArtReqEnd = prev;
-
-            if (!gArtReqList->priority) {
-                req->prev = NULL;
-                req->next = gArtReqList;
-                gArtReqList->prev = req;
-                gArtReqList = req;
-            } else {
-                load_image_request_t *curr = gArtReqList;
-                while (curr->next != NULL && curr->next->priority) {
-                    curr = curr->next;
-                }
-                req->prev = curr;
-                req->next = curr->next;
-                if (curr->next != NULL)
-                    curr->next->prev = req;
-                else
-                    gArtReqEnd = req;
-                curr->next = req;
-            }
-        }
+        req->prev = NULL;
+        req->next = gArtReqList;
+        gArtReqList->prev = req;
+        gArtReqList = req;
     }
     EIntr();
 }
@@ -1357,6 +1320,22 @@ static int cacheResolveArtArchive(item_list_t *list, const char *value, char *pa
     return 0;
 }
 
+// Abort every background still queued or loading for a game other than `value`. Scans EVERY slot:
+// initMutableImage floors each per-game art cache at 2, so the `cache->count == 1` guard this used to
+// sit behind made it dead code, and an abandoned background kept its decode running in front of the
+// next cover (#772). Marking it aborted rather than dropping it keeps one owner for the request: the
+// worker releases it on its own terms, whether it is still queued or already inside the read.
+static void cacheAbortOtherBackgrounds(image_cache_t *cache, const char *value)
+{
+    int i;
+
+    for (i = 0; i < cache->count; i++) {
+        cache_entry_t *entry = &cache->content[i];
+        if (entry->qr != NULL && entry->key[0] != '\0' && strcmp(entry->key, value) != 0)
+            ((load_image_request_t *)entry->qr)->abortRequested = 1;
+    }
+}
+
 GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value, int isPriority)
 {
     int i, rtime;
@@ -1506,22 +1485,13 @@ GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cache
             return NULL;
     }
 
-    // LATEST SELECTION WINS on a one-slot background cache. With one slot there is no eviction to
-    // fall back on: a background queued or loading for a selection the user has already left owns
-    // the only slot until it finishes, so the cover for where they ARE cannot even be requested
-    // until the abandoned one has been read off the device in full -- seconds, on the evidence
-    // above. The stale-stamp cancellation in cacheLoadImage cannot help, because the row it belongs
-    // to may still be on screen and still stamping.
-    //
-    // LATEST SELECTION WINS on background cache. With a focused game selection, any background
-    // queued or loading for an abandoned selection is aborted so the new selection is not delayed.
-    if (cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0) {
-        for (int b = 0; b < cache->count; b++) {
-            cache_entry_t *bentry = &cache->content[b];
-            if (bentry->qr != NULL && bentry->key[0] != '\0' && strcmp(bentry->key, value) != 0)
-                ((load_image_request_t *)bentry->qr)->abortRequested = 1;
-        }
-    }
+    // LATEST SELECTION WINS on the background cache. A background queued or loading for a selection
+    // the user has already left holds its slot until it finishes, so the cover for where they ARE
+    // waits behind somebody else's scenery -- seconds, on the evidence above. The stale-stamp
+    // cancellation in cacheLoadImage cannot help, because the row it belongs to may still be on
+    // screen and still stamping.
+    if (cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0)
+        cacheAbortOtherBackgrounds(cache, value);
 
 
     cache_entry_t *currEntry, *oldestEntry = NULL;
@@ -1659,10 +1629,11 @@ GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cache
         // switch would otherwise do.
         cache->activeRequests++;
 
-        // Priority requests push into the high-priority selection tier (FIFO within priority) unless
+        // artPush takes its own DIntr bracket and does the gArtQueuedCount++ inside it. It cannot
+        // fail: no allocation, no queue cap. Priority requests push to the head of the FIFO unless
         // an SIO2 request is being made while a direction is held (which falls back to tail to protect #340).
         if (isPriority && !(req->sio2 && gArtNavActive))
-            artPushPriority(req);
+            artPushFront(req);
         else
             artPush(req);
         cacheWakeArtWorker();
