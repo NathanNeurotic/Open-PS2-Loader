@@ -878,3 +878,95 @@ RetroGEM game-ID parity and `settings.txt` display passthrough remain separate c
 * Library folders live at the **root of each activated device** — never on `mc`, never in cwd.
   Settings live in cwd.
 * `SifExitRpc()` before `ExecPS2()` in `elfldr` must stay.
+
+---
+
+## Part 10 — Ember Beta 2 settings (design, 2026-09-27)
+
+Beta 2 (bundled since a9c0ed54; `LICENSE-BETA.txt` unchanged, blob `8d05830c`) grew from one setting to
+four, and added a per-game settings file. TwistedZeon asked for them in RiptOPL; Nathan: global rows
+plus a per-game menu, and "fast, reliable and easy, not a whole new system".
+
+### What Ember reads (verified in the bundled stripped `ember.elf`, not just the README)
+
+| Key | Values (default first) | Main `EMBER/settings.txt` | `EMBER/games/<Name>/settings.txt` |
+|---|---|---|---|
+| `display` | `480` (= **480i**), `240`, `480p` (component/HDMI only; composite shows nothing) | yes | ignored ("belongs in the main settings.txt") |
+| `dither` | `on`, `off` | yes | ignored |
+| `shading` | `15`, `24` (experimental) | yes | yes, overrides the main file |
+| `controller` | `auto`, `analog`, `d2a` | yes | yes, overrides the main file |
+
+One loader, called twice: `settings.txt` with a game-file flag of 0, then `"%s/settings.txt"` built on
+`"games/%s"` with the flag set. Up to 8191 bytes are read. `#`/`;` lines are comments, unknown keys are
+skipped, and `key: value` takes an optional space after the colon.
+
+**Existing bug this fixes:** our Display row labels value 2 "480p", but it writes `display:480`, which is
+480i in both betas. It has never produced 480p.
+
+### The rule (one sentence each, no new file format)
+
+* **Global.** RiptOPL's four Ember rows own those four keys in the launched device's `EMBER/settings.txt`,
+  exactly as the display row already does: **Default removes the key** (Ember's default applies), a value
+  writes it. Settings live in RiptOPL's config; each device's file is brought in line at launch.
+* **Per game.** A game's `games/<Name>/settings.txt` is touched **only if that game has Ember settings saved
+  in RiptOPL** (its CFG holds the Ember keys). Games never set in RiptOPL keep whatever their file says,
+  so hand-written files -- the flow Gage's README recommends -- are left alone. Once a game is set in
+  RiptOPL, the same rule applies: Default removes, a value writes.
+* **Everything else in either file is kept**: comments, unknown keys, other keys. A file is removed only
+  when RiptOPL removed the last line in it (today's display behaviour).
+
+### UI
+
+* **PS Emulation Settings** (the composed POPSTARTER page, next to the existing row): Ember Display Mode
+  `Default / 240p / 480i / 480p`, Ember Dithering `Default / On / Off`, Ember Shading
+  `Default / 15-bit / 24-bit (experimental)`, Ember Controller `Default / Auto / Analog / D2A`. The
+  Controller hint says per-game is the better place (Gage's advice); the 480p hint says composite shows no
+  picture.
+* **Ember Game Settings**: a new entry in the PS1 Triangle menu, shown only on Ember rows, opening Controller
+  `Default / Auto / Analog / D2A` and Shading `Default / 15-bit / 24-bit`. OK saves both keys to the game's
+  CFG, which is what makes the game RiptOPL-managed; "Default" means "follow the global row". On a
+  Favourites row it edits the same CFG the device page does (the favourite proxies its source row's
+  config); if that proxy cannot be written, the entry shows the existing "use the device page" message,
+  exactly as Rename does there.
+
+### Config keys
+
+* Global (`conf_opl` config): `ember_display` 0 Default, 1 = `240`, 2 = `480`, 3 = `480p` -- value 2 keeps
+  its meaning, so nobody's saved choice changes; only its label does. `ember_dither` 0/1 on/2 off,
+  `ember_shading` 0/1 = `15`/2 = `24`, `ember_controller` 0/1 auto/2 analog/3 d2a. Out-of-range values read
+  as 0.
+* Per game (`CFG/<FolderName>.cfg`): `$EmberController` (0-3), `$EmberShading` (0-2). Present = managed.
+
+**Required fix first:** `sbPopulateConfig` keys every non-`.VCD` row by `startup`, and an Ember row's
+`startup` is its folder name cut to 12 characters -- "Crash Bandicoot (USA)" and "Crash Bandicoot 2 ..."
+would share `CFG/Crash Bandic.cfg`. Ember rows (`.CUE`) must key by the full folder name like `.VCD` rows.
+The same function also stats a nonexistent `CD/`/`DVD/` ISO path for them and badges them as PS2; both are
+fixed with the key.
+
+### Launch data flow
+
+`itemExecSelect` already loads the selected row's CFG (`menuLoadConfig`) for every row and passes it to
+`itemLaunch`; the Ember legs ignore it today. Each of the five legs (BDM incl. UDPBD, SMB, APA, MMCE,
+UDPFS) replaces `cueApplyDisplaySetting(prefix)` with `cueApplySettings(prefix, name, configSet)`, at the
+same point. On APA the call stays after the RDWR remount, with `configSet` passed down to
+`hddDoLaunchEmber`. Best-effort as today: never a launch gate, writes only when content changes, restores
+the original on a failed write.
+
+The text rewrite is one pure function (buffer in, wanted key/value-or-remove list, buffer out) used for
+both files, so it is host-testable. It matches a key case-insensitively, after leading whitespace and with
+optional whitespace before the colon, so a hand-written `Display : 240` is replaced rather than left to
+fight ours.
+
+### Testing
+
+Host test for the rewriter: each key, Default removal, CRLF input, comments and unknown keys kept, delete-
+when-empty, no write when unchanged, the per-game file untouched for an unmanaged game. Source checks that
+all five legs call `cueApplySettings` and none still calls the display-only function. Labels are appended at
+the END of `lng_tmpl/_base.yml`; `HINT_EMBER_DISPLAY` gets a value-only edit. Docs in the same PR: README
+Ember section, the Settings Index, and the site/wiki pages that describe Ember settings. **No hardware test
+yet**: TwistedZeon or zack to confirm 480p, dither off, 24-bit and D2A actually take effect.
+
+### Out of scope (follow-ups)
+
+`SharedMC.txt` (one game using another folder's cards), the new `<folder>/<disc file>` argument for
+multi-disc games, and showing a file's current values inside the menus.
