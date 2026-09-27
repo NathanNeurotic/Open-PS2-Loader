@@ -12,7 +12,12 @@ scripted frame loop (60 fps), and checks:
 - holding Accept for the full hold time keeps it, and a shorter hold does not;
 - an Accept still held from the Settings dialog (no key-on edge here) never counts;
 - Back reverts at once; no input reverts at the timeout;
-- a hold started just before the timeout is allowed to finish.
+- a hold started just before the timeout is allowed to finish;
+- the countdown (zackcage6, 09-26) reads 10 down to 1, never rises, and is hidden during a hold --
+  which does NOT pause the deadline (a released hold continues from the original one);
+- the frame that keeps the mode draws the hold bar at FULL width;
+- nothing is rendered under the opaque prompt: rendering the menu there (guiShow) only cost frame
+  time, and in heavy modes made the bar jump to ~4/5 and the keep land before it looked full.
 
 It also pins the boot recovery combos in src/opl.c: Triangle + Cross forces 480p and Triangle +
 Circle forces Auto (the region's interlaced mode) for interlaced-only TVs.
@@ -48,9 +53,12 @@ def define(source, name, where):
 
 
 confirm = function_text(gui, 'int guiConfirmVideoMode(', 'src/gui.c')
+if 'guiShow()' in confirm:
+    failures.append('guiConfirmVideoMode: must not render the menu (guiShow) under its opaque backdrop')
 
 HARNESS = r'''
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef long clock_t;
 typedef unsigned long long u64;
@@ -62,7 +70,7 @@ typedef unsigned long long u64;
 enum { KEY_CROSS = 1, KEY_CIRCLE = 2 };
 enum { CROSS_ICON, CIRCLE_ICON };
 enum { SFX_MESSAGE, SFX_CANCEL, SFX_CONFIRM };
-enum { _STR_CFM_VMODE_CHG, _STR_BACK, _STR_CFM_VMODE_HOLD_KEEP };
+enum { _STR_CFM_VMODE_CHG, _STR_BACK, _STR_CFM_VMODE_HOLD_KEEP, _STR_CFM_VMODE_REVERT_IN };
 
 struct theme { void *fonts[1]; int usedHeight; u64 textColor, selTextColor; };
 static struct theme themeData;
@@ -94,15 +102,42 @@ static void readPads(void)
 }
 static int getKeyOn(int id) { return id == KEY_CROSS ? (curAccept && !prevAccept) : (curBack && !prevBack); }
 static int getKeyPressed(int id) { return id == KEY_CROSS ? curAccept : curBack; }
-static void guiStartFrame(void) {}
-static void guiEndFrame(void) { frame++; }
+
+/* What each frame showed: the countdown's seconds (-1 = none) and the hold bar's width (0 = none). */
+static int shownSecs, barW, lastBarW, firstSecs, lastSecs, rose, shownInHold, holdFrom, holdTo, watchFrame, secsAtWatch;
+static void guiStartFrame(void) { shownSecs = -1; barW = 0; }
+static void guiEndFrame(void)
+{
+    if (shownSecs >= 0) {
+        if (firstSecs < 0)
+            firstSecs = shownSecs;
+        if (lastSecs >= 0 && shownSecs > lastSecs)
+            rose = 1;
+        lastSecs = shownSecs;
+        if (frame > holdFrom && frame < holdTo)
+            shownInHold = 1;
+    }
+    if (frame == watchFrame)
+        secsAtWatch = shownSecs;
+    lastBarW = barW;
+    frame++;
+}
 static void guiShow(void) {}
 static void sfxPlay(int s) { (void)s; }
-static const char *_l(int id) { (void)id; return ""; }
-static void rmDrawRect(int x, int y, int w, int h, u64 c) { (void)x; (void)y; (void)w; (void)h; (void)c; }
+static const char *_l(int id) { return id == _STR_CFM_VMODE_REVERT_IN ? "%d" : ""; }
+static void rmDrawRect(int x, int y, int w, int h, u64 c)
+{
+    (void)x; (void)c;
+    if (y == 400 && h == 4)
+        barW = w;
+}
 static void rmDrawLine(int a, int b, int c, int d, u64 e) { (void)a; (void)b; (void)c; (void)d; (void)e; }
 static void fntRenderString(void *f, int x, int y, int a, int w, int h, const char *s, u64 c)
-{ (void)f; (void)x; (void)y; (void)a; (void)w; (void)h; (void)s; (void)c; }
+{
+    (void)f; (void)x; (void)y; (void)a; (void)w; (void)h; (void)c;
+    if (s[0] >= '0' && s[0] <= '9')
+        shownSecs = atoi(s);
+}
 static void guiDrawIconAndText(int i, int s, void *f, int x, int y, u64 c)
 { (void)i; (void)s; (void)f; (void)x; (void)y; (void)c; }
 
@@ -116,6 +151,10 @@ static void reset(void)
     backAt = -1;
     acceptHeldAtEntry = 0;
     curAccept = prevAccept = curBack = prevBack = 0;
+    firstSecs = lastSecs = -1;
+    rose = shownInHold = 0;
+    holdFrom = holdTo = -1;
+    watchFrame = secsAtWatch = -1;
 }
 /* Accept already down when the prompt opens: the Settings dialog's last poll saw it too, so the
    prompt's first readPads finds it in the OLD pad data and there is no key-on edge. */
@@ -155,6 +194,31 @@ int main(void)
     reset(); carryIn(hold60 * 3); expect("Accept held from Settings -> never keeps", 0, timeout60 - 1, -1);
     reset(); backAt = 45; expect("Back -> revert at once", 0, 45, 47);
     reset(); hold(timeout60 - 20, hold60 + 3); expect("hold started near timeout finishes", 1, timeout60 - 20 + hold60 - 1, timeout60 + hold60);
+
+    /* Countdown: 10 .. 1 with no input, never rising. */
+    reset(); expect("countdown run", 0, timeout60 - 1, timeout60 + 2);
+    if (firstSecs != OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS / 1000 || lastSecs != 1 || rose) {
+        printf("FAIL countdown: first %d, last %d, rose %d (want %d, 1, 0)\n", firstSecs, lastSecs, rose,
+               OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS / 1000);
+        fails++;
+    }
+    /* A hold hides it (the timeout is paused), and the frame that keeps the mode shows the FULL bar. */
+    reset(); hold(30, hold60 + 3); holdFrom = 30; holdTo = 30 + hold60; expect("full hold (bar/countdown)", 1, 30 + hold60 - 1, 30 + hold60 + 3);
+    if (shownInHold) {
+        printf("FAIL the countdown must be hidden while Accept is held\n");
+        fails++;
+    }
+    if (lastBarW != VMODE_KEEP_BAR_WIDTH) {
+        printf("FAIL the frame that keeps the mode drew the bar %d wide (want the full %d)\n", lastBarW, VMODE_KEEP_BAR_WIDTH);
+        fails++;
+    }
+    /* A hold does NOT pause the deadline: hold 5.0 s .. 6.5 s, let go, and the count goes on from the
+       original deadline (3.5 s left -> "4"), not from where the hold began ("5"). */
+    reset(); hold(300, 90); watchFrame = 392; expect("released hold", 0, timeout60 - 1, timeout60 + 2);
+    if (secsAtWatch != 4) {
+        printf("FAIL after a released hold the countdown showed %d (want 4: the deadline kept running)\n", secsAtWatch);
+        fails++;
+    }
 
     return fails ? 1 : 0;
 }
@@ -200,4 +264,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('video mode confirm: 8 input scripts and both boot recovery combos OK')
+print('video mode confirm: 11 input scripts, countdown, full bar on keep, and both boot recovery combos OK')
