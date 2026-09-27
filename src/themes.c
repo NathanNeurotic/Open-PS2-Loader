@@ -1158,10 +1158,13 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
                 theme_elems_t *fam = drawElem->family ? drawElem->family : (gTheme ? &gTheme->mainElems : NULL);
                 if (gEnableDiscArt && fam != NULL) {
                     struct theme_element *icoElem = thmFindElemBySuffix(fam, "ICO", NULL);
-                    if (icoElem != NULL && icoElem->extended != NULL) {
-                        mutable_image_t *icoImg = (mutable_image_t *)icoElem->extended;
-                        if (icoImg != NULL && icoImg->cache != NULL)
-                            getGameImageTextureEx(icoImg->cache, menu->item->userdata, &item->item, 1);
+                    if (icoElem != NULL) {
+                        icoElem = thmGetElemForItem(menu, item, icoElem);
+                        if (icoElem != NULL && icoElem->extended != NULL) {
+                            mutable_image_t *icoImg = (mutable_image_t *)icoElem->extended;
+                            if (icoImg != NULL && icoImg->cache != NULL)
+                                getGameImageTextureEx(icoImg->cache, menu->item->userdata, &item->item, 1);
+                        }
                     }
                 }
             }
