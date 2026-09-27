@@ -228,6 +228,8 @@ static int thmElemSkipsDevice(const theme_element_t *elem, int iconId)
     return 0;
 }
 
+static theme_element_t *thmFindElemBySuffix(theme_elems_t *elems, const char *suffix, theme_element_t *like);
+
 // Nav-side twin of drawItemsList's gate: pick the FILTERED ItemsList that covers this page, else
 // the family's slot element (fallback). menusys assigns gTheme->itemsList through this so paging
 // math (displayedItems) always reads the exact element whose rows are on screen.
@@ -1118,27 +1120,17 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
         if (!gEnableDiscArt && isDiscArtCache(gameImage->cache))
             return;
 
-        // A per-game BACKGROUND must never be REQUESTED before the cover. This function draws both,
-        // and the theme's Background element is the FIRST in the list (painter's order), so on the
-        // settle frame its request reached the empty queue first and became the executing head --
-        // and the head cannot be jumped by any amount of priority, because the worker is already
-        // inside it. A full-screen PNG is ~5x the pixels of a cover, so the cover the user is
-        // actually waiting for sat behind the better part of a second of somebody else's scenery.
-        // That is the whole gap to official OPL, whose built-in theme has no per-game background on
-        // the main page at all (it uses a static image), and it explains why a device with no _BG
-        // art in its set feels fine while one with a full art set does not.
-        //
-        // So hold the background back: request it only once the cover has had its turn -- an extra
-        // idle margin beyond the art delay AND an idle art path. Until then draw whatever is already
-        // cached, which keeps a background that IS loaded on screen instead of flickering to the
-        // default. Nothing is lost but the order.
+        // Active selection art trio (COV, ICO, BG): all three share Tier 1 priority.
+        // Background is drawn first in painter's order, so it pre-requests COV and ICO before
+        // requesting BG. In the FIFO priority queue, this stacks them in the optimal decode order:
+        // COV (fast box art) -> ICO (fast disc) -> BG (wallpaper). All three complete together
+        // for the selected game before any off-screen neighbor lookaheads run.
         int isBackground = (drawElem->type == ELEM_TYPE_BACKGROUND);
         GSTEXTURE *texture;
-        int coverflowCoverSettled = 1;
 
         if (isBackground) {
-            // Prioritize the highlighted game's cover before the background so the small cover
-            // is read and displayed first before starting the larger background read.
+            // Prioritize the highlighted game's cover (COV) and disc (ICO) before the background (BG)
+            // so the small cover and disc are read and displayed first before starting the larger background read.
             if (gTheme != NULL && !item->item.isFolder) {
                 if (gTheme->itemsList != NULL && gTheme->itemsList->extended != NULL) {
                     items_list_t *itemsList = (items_list_t *)gTheme->itemsList->extended;
@@ -1157,33 +1149,29 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
                     if (cfElem != NULL && cfElem->extended != NULL) {
                         mutable_image_t *cfImg = (mutable_image_t *)cfElem->extended;
                         if (cfImg != NULL && cfImg->cache != NULL) {
-                            GSTEXTURE *coverTexture = getGameImageTextureEx(cfImg->cache, menu->item->userdata, &item->item, 1);
-
-                            // Coverflow draws after the Background element. If its selected cover is still
-                            // pending, starting a full-screen BG read here would occupy the art worker before
-                            // the carousel gets to enqueue its visible neighbours. Hold only this background
-                            // request for that short window. A loaded cover, disabled art, or a confirmed
-                            // absent cover (-2) releases the gate immediately.
-                            if (gEnableArt && coverTexture == NULL && cfImg->cache->userId >= 0 &&
-                                cfImg->cache->userId < gTheme->gameCacheCount && item->item.cache_id != NULL &&
-                                item->item.cache_id[cfImg->cache->userId] != -2)
-                                coverflowCoverSettled = 0;
+                            getGameImageTextureEx(cfImg->cache, menu->item->userdata, &item->item, 1);
                         }
+                    }
+                }
+
+                // Pre-request the highlighted game's disc/icon (ICO) if present in this family
+                theme_elems_t *fam = drawElem->family ? drawElem->family : (gTheme ? &gTheme->mainElems : NULL);
+                if (gEnableDiscArt && fam != NULL) {
+                    struct theme_element *icoElem = thmFindElemBySuffix(fam, "ICO", NULL);
+                    if (icoElem != NULL && icoElem->extended != NULL) {
+                        mutable_image_t *icoImg = (mutable_image_t *)icoElem->extended;
+                        if (icoImg != NULL && icoImg->cache != NULL)
+                            getGameImageTextureEx(icoImg->cache, menu->item->userdata, &item->item, 1);
                     }
                 }
             }
 
-            // List mode keeps master's immediate background request. Coverflow is different: its
-            // Background element is painted before the carousel, so on a cold selection the large BG read
-            // could start before the side covers even reach the queue. Draw an already-cached background
-            // while the selected cover settles; the same frame's Coverflow draw then gets first claim on
-            // visible-neighbour reads. This is admission ordering, not an artificial frame delay.
-            if (coverflowCoverSettled)
-                texture = getGameImageTexture(gameImage->cache, menu->item->userdata, &item->item);
-            else
-                texture = getGameImageCached(gameImage->cache, &item->item);
+            // High priority (isPriority = 1) for the active selection's background as well.
+            // In the FIFO priority queue, COV and ICO run first (fast decodes), followed immediately
+            // by BG, all ahead of off-screen neighbor lookaheads.
+            texture = getGameImageTextureEx(gameImage->cache, menu->item->userdata, &item->item, 1);
         } else {
-            // PRIORITY: the highlighted game's own cover, the one image the user is looking for.
+            // PRIORITY: the highlighted game's own cover or icon.
             texture = getGameImageTextureEx(gameImage->cache, menu->item->userdata, &item->item, 1);
         }
 
