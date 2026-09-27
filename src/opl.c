@@ -200,6 +200,9 @@ int gNeutrinoElfArg;         // default-on (settings key only, no UI): auto-emit
 int gDefaultGameView;
 int gAppsDisplay;
 int gEmberDisplay;
+int gEmberDither;
+int gEmberShading;
+int gEmberController;
 char gPopstarterPath[256];         // optional full path; runtime order: custom -> game device -> mc0/mc1
 int gPopstarterDevice;             // retired picker value retained in config for compatibility; runtime ignores it
 int gPopstarterRetroGemGameID = 1; // RetroGEM Game ID optical barcode for VCD launches (1=on, default)
@@ -3011,6 +3014,53 @@ static void resolveBootDirToMass(void)
     }
 }
 
+// One Ember setting's stored value, or EMBER_SETTING_UNSET when the key is absent or out of range. An
+// out-of-range value (hand-edited, or from a later build) must not be written into anyone's file.
+static int emberSettingGet(config_set_t *config, const char *key, int count)
+{
+    int value;
+
+    if (!configGetInt(config, key, &value) || value < 0 || value >= count)
+        return EMBER_SETTING_UNSET;
+    return value;
+}
+
+// Store one Ember setting only once the user has changed it here; unset means no key at all.
+static void emberSettingSet(config_set_t *config, const char *key, int value)
+{
+    if (value == EMBER_SETTING_UNSET)
+        configRemoveKey(config, key);
+    else
+        configSetInt(config, key, value);
+}
+
+static void emberLoadSettings(config_set_t *configOPL)
+{
+    int present;
+
+    gEmberDisplay = emberSettingGet(configOPL, CONFIG_OPL_EMBER_DISPLAY_MODE, EMBER_DISPLAY_COUNT);
+    // One-time migration from the old key, only while the new one is absent. The old key was written
+    // on EVERY save whether or not anyone touched the row, so its 0 cannot be told apart from "never
+    // set" and reads as unset. 1 (240) and 2 (480 -- which was always 480i to Ember) were chosen by the
+    // user and carry over unchanged, so nobody's picture changes. emberSaveSettings drops the old key.
+    if (!configGetInt(configOPL, CONFIG_OPL_EMBER_DISPLAY_MODE, &present)) {
+        int legacy = emberSettingGet(configOPL, CONFIG_OPL_EMBER_DISPLAY, EMBER_DISPLAY_480 + 1);
+        gEmberDisplay = (legacy > EMBER_DISPLAY_DEFAULT) ? legacy : EMBER_SETTING_UNSET;
+    }
+    gEmberDither = emberSettingGet(configOPL, CONFIG_OPL_EMBER_DITHER, EMBER_DITHER_COUNT);
+    gEmberShading = emberSettingGet(configOPL, CONFIG_OPL_EMBER_SHADING, EMBER_SHADING_COUNT);
+    gEmberController = emberSettingGet(configOPL, CONFIG_OPL_EMBER_CONTROLLER, EMBER_CONTROLLER_COUNT);
+}
+
+static void emberSaveSettings(config_set_t *configOPL)
+{
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_DISPLAY_MODE, gEmberDisplay);
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_DITHER, gEmberDither);
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_SHADING, gEmberShading);
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_CONTROLLER, gEmberController);
+    configRemoveKey(configOPL, CONFIG_OPL_EMBER_DISPLAY); // migrated on load; never written again
+}
+
 static void _loadConfig()
 {
     int value, themeID = -1, langID = -1;
@@ -3140,10 +3190,7 @@ static void _loadConfig()
             // rather than clamped, so that page opens on its default instead of on a view with no
             // rows. Reading it before those two would validate against stale settings.
             libViewLoadFromConfig(configGetByType(CONFIG_LAST));
-            if (!configGetInt(configOPL, CONFIG_OPL_EMBER_DISPLAY, &gEmberDisplay))
-                gEmberDisplay = EMBER_DISPLAY_LEAVE;
-            if (gEmberDisplay < EMBER_DISPLAY_LEAVE || gEmberDisplay > EMBER_DISPLAY_480)
-                gEmberDisplay = EMBER_DISPLAY_LEAVE;
+            emberLoadSettings(configOPL);
             // A boot default-view locked to one type (VCD or ISO) must force the same one-shot
             // rescan the settings dialog does on a view change (gui.c). Without it, libViewActive()
             // short-circuits bdm/hdd/eth NeedsUpdate before the initial-scan trigger and the
@@ -3739,7 +3786,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
-        configSetInt(configOPL, CONFIG_OPL_EMBER_DISPLAY, gEmberDisplay);
+        emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_RETROGEM_GAMEID, gPopstarterRetroGemGameID);
         configSetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, gBdmaSource);
@@ -4953,7 +5000,11 @@ static void setDefaults(void)
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;
-    gEmberDisplay = EMBER_DISPLAY_LEAVE; // write nothing to a device's EMBER/settings.txt until asked
+    // Nothing is set until the user changes it here, so no device's settings.txt is touched until asked.
+    gEmberDisplay = EMBER_SETTING_UNSET;
+    gEmberDither = EMBER_SETTING_UNSET;
+    gEmberShading = EMBER_SETTING_UNSET;
+    gEmberController = EMBER_SETTING_UNSET;
     gBdmaSource = VCD_BDMA_SRC_USB;
     gBdmaMode = VCD_BDMA_FAT32;
     gBdmaApplyOnLaunch = 1;             // auto-equip on launch by default

@@ -204,16 +204,42 @@ enum {
     APPS_DISPLAY_SPLIT      // Apps <-> PS1ELF via L3; [PS1] in the title selects PS1ELF
 };
 extern int gAppsDisplay;
-// Ember's own display mode, written to <EmberFolder>/settings.txt on the device being launched.
-// LEAVE is the default and writes NOTHING: a display preference must not create a file on a user's
-// device unless they asked for one, and it is also the only value that respects a settings.txt the
-// user wrote by hand.
+// Ember's own settings, brought into the settings.txt files Ember reads when a game launches
+// (cueApplySettings). Each one is EMBER_SETTING_UNSET until the user CHANGES it in RiptOPL: an unset
+// setting is never written or removed, so a settings.txt somebody wrote by hand keeps working.
+// Changing one back to its Default (0) removes that key again, so Ember's own default applies.
+// The values index the menu rows directly; see docs/EMBER-INTEGRATION-PLAN.md, Part 10.
+#define EMBER_SETTING_UNSET -1
 enum {
-    EMBER_DISPLAY_LEAVE = 0,
+    EMBER_DISPLAY_DEFAULT = 0,
     EMBER_DISPLAY_240,
-    EMBER_DISPLAY_480
+    EMBER_DISPLAY_480, // "display:480" is 480i to Ember -- it always was, whatever the row once said
+    EMBER_DISPLAY_480P,
+    EMBER_DISPLAY_COUNT
+};
+enum {
+    EMBER_DITHER_DEFAULT = 0,
+    EMBER_DITHER_ON,
+    EMBER_DITHER_OFF,
+    EMBER_DITHER_COUNT
+};
+enum {
+    EMBER_SHADING_DEFAULT = 0,
+    EMBER_SHADING_15,
+    EMBER_SHADING_24,
+    EMBER_SHADING_COUNT
+};
+enum {
+    EMBER_CONTROLLER_DEFAULT = 0,
+    EMBER_CONTROLLER_AUTO,
+    EMBER_CONTROLLER_ANALOG,
+    EMBER_CONTROLLER_D2A,
+    EMBER_CONTROLLER_COUNT
 };
 extern int gEmberDisplay;
+extern int gEmberDither;
+extern int gEmberShading;
+extern int gEmberController;
 // Retired POPSTARTER.ELF Device picker values. Older configs are migrated to full-path aliases;
 // current runtime policy is Custom Path -> Game Device -> mc0/mc1.
 enum { POPS_DEV_DEFAULT = 0, // legacy default value; current runtime ignores the picker

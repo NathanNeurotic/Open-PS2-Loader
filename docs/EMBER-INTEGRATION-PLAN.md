@@ -903,39 +903,47 @@ skipped, and `key: value` takes an optional space after the colon.
 **Existing bug this fixes:** our Display row labels value 2 "480p", but it writes `display:480`, which is
 480i in both betas. It has never produced 480p.
 
-### The rule (one sentence each, no new file format)
+### The rule: RiptOPL only touches an Ember setting you have changed in RiptOPL
 
-* **Global.** RiptOPL's four Ember rows own those four keys in the launched device's `EMBER/settings.txt`,
-  exactly as the display row already does: **Default removes the key** (Ember's default applies), a value
-  writes it. Settings live in RiptOPL's config; each device's file is brought in line at launch.
-* **Per game.** A game's `games/<Name>/settings.txt` is touched **only if that game has Ember settings saved
-  in RiptOPL** (its CFG holds the Ember keys). Games never set in RiptOPL keep whatever their file says,
-  so hand-written files -- the flow Gage's README recommends -- are left alone. Once a game is set in
-  RiptOPL, the same rule applies: Default removes, a value writes.
-* **Everything else in either file is kept**: comments, unknown keys, other keys. A file is removed only
-  when RiptOPL removed the last line in it (today's display behaviour).
+* **Never changed in RiptOPL** (the menu shows Default): RiptOPL leaves that key alone in every file, so a
+  `settings.txt` written by hand -- the flow Gage's README recommends -- keeps working exactly as written.
+* **Changed to a value**: RiptOPL writes it (replacing any line for that key) when a game launches.
+* **Changed back to Default**: RiptOPL removes that key, so Ember's own default (or, in a game's file,
+  the main file) applies again. Without this a value, once set, could never be taken back.
+* Global settings go to the launched device's `EMBER/settings.txt`; a game's Controller/Shading go to
+  its `games/<Name>/settings.txt`. **Every other line is always kept** (comments, unknown keys); a file
+  is removed only when RiptOPL removed the last line in it (today's display behaviour).
+
+The only state is whether the key exists in RiptOPL's config: present = changed in RiptOPL. No marker
+lines, nothing new on disk. This rule was chosen over "Default always removes" (today's display row)
+because that silently deleted hand-written settings the first time a game launched through RiptOPL --
+even for users who never opened the Ember rows.
 
 ### UI
 
 * **PS Emulation Settings** (the composed POPSTARTER page, next to the existing row): Ember Display Mode
   `Default / 240p / 480i / 480p`, Ember Dithering `Default / On / Off`, Ember Shading
   `Default / 15-bit / 24-bit (experimental)`, Ember Controller `Default / Auto / Analog / D2A`. The
-  Controller hint says per-game is the better place (Gage's advice); the 480p hint says composite shows no
-  picture.
+  Controller hint says per-game is the better place (Gage's advice). Choosing **480p** asks for
+  confirmation first ("composite shows no picture"), since it is the one choice that can blank the
+  screen; Back keeps the previous mode.
 * **Ember Game Settings**: a new entry in the PS1 Triangle menu, shown only on Ember rows, opening Controller
-  `Default / Auto / Analog / D2A` and Shading `Default / 15-bit / 24-bit`. OK saves both keys to the game's
-  CFG, which is what makes the game RiptOPL-managed; "Default" means "follow the global row". On a
+  `Default / Auto / Analog / D2A` and Shading `Default / 15-bit / 24-bit`. OK saves only the rows you
+  changed, to the game's CFG; "Default" means "follow the global row". On a
   Favourites row it edits the same CFG the device page does (the favourite proxies its source row's
   config); if that proxy cannot be written, the entry shows the existing "use the device page" message,
   exactly as Rename does there.
 
 ### Config keys
 
-* Global (`conf_opl` config): `ember_display` 0 Default, 1 = `240`, 2 = `480`, 3 = `480p` -- value 2 keeps
-  its meaning, so nobody's saved choice changes; only its label does. `ember_dither` 0/1 on/2 off,
-  `ember_shading` 0/1 = `15`/2 = `24`, `ember_controller` 0/1 auto/2 analog/3 d2a. Out-of-range values read
-  as 0.
-* Per game (`CFG/<FolderName>.cfg`): `$EmberController` (0-3), `$EmberShading` (0-2). Present = managed.
+* Global (main config), each present only once changed in RiptOPL: `ember_display_mode` 0 Default,
+  1 = `240`, 2 = `480` (480i), 3 = `480p`; `ember_dither` 0 / 1 on / 2 off; `ember_shading` 0 / 1 = `15` /
+  2 = `24`; `ember_controller` 0 / 1 auto / 2 analog / 3 d2a. Out-of-range values read as "not set".
+* Migration: the old `ember_display` is read once, only when `ember_display_mode` is absent -- 1 and 2
+  carry over as set (the user chose them; 2 always meant 480i), 0 becomes "not set" -- and is dropped
+  on the next save. Nobody's picture changes.
+* Per game (`CFG/<FolderName>.cfg`): `$EmberController` (0-3), `$EmberShading` (0-2), each present only
+  once changed in RiptOPL.
 
 **Required fix first:** `sbPopulateConfig` keys every non-`.VCD` row by `startup`, and an Ember row's
 `startup` is its folder name cut to 12 characters -- "Crash Bandicoot (USA)" and "Crash Bandicoot 2 ..."
@@ -959,8 +967,9 @@ fight ours.
 
 ### Testing
 
-Host test for the rewriter: each key, Default removal, CRLF input, comments and unknown keys kept, delete-
-when-empty, no write when unchanged, the per-game file untouched for an unmanaged game. Source checks that
+Host test for the rewriter: each key, "not set" leaves every line of that key alone, Default removes it,
+CRLF input, comments and unknown keys kept, delete-when-empty, no write when unchanged, and the display
+migration from the old key. Source checks that
 all five legs call `cueApplySettings` and none still calls the display-only function. Labels are appended at
 the END of `lng_tmpl/_base.yml`; `HINT_EMBER_DISPLAY` gets a value-only edit. Docs in the same PR: README
 Ember section, the Settings Index, and the site/wiki pages that describe Ember settings. **No hardware test

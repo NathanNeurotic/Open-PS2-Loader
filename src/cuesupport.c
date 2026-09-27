@@ -259,9 +259,12 @@ void cueApplyDisplaySetting(const char *devPrefix)
     const char *want;
     int fd, len = 0, out = 0, i, lineStart;
 
-    if (devPrefix == NULL)
+    // Never changed in RiptOPL: leave the file exactly as it is, hand-written lines included.
+    if (devPrefix == NULL || gEmberDisplay == EMBER_SETTING_UNSET)
         return;
-    want = (gEmberDisplay == EMBER_DISPLAY_480) ? "display:480" : "display:240";
+    want = (gEmberDisplay == EMBER_DISPLAY_480P) ? "display:480p" :
+           (gEmberDisplay == EMBER_DISPLAY_480)  ? "display:480" :
+                                                   "display:240";
 
     snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, cueEmberFolder(), cueSep(devPrefix),
              EMBER_SETTINGS_NAME);
@@ -269,7 +272,7 @@ void cueApplyDisplaySetting(const char *devPrefix)
     // Read whatever is there. An absent file is the normal first-run case, not an error: on 240/480
     // we create it below, and on Default there is nothing to clear and nothing to create.
     fd = open(path, O_RDONLY);
-    if (fd < 0 && gEmberDisplay == EMBER_DISPLAY_LEAVE)
+    if (fd < 0 && gEmberDisplay == EMBER_DISPLAY_DEFAULT)
         return;
     if (fd >= 0) {
         len = read(fd, before, sizeof(before) - 1);
@@ -318,7 +321,7 @@ void cueApplyDisplaySetting(const char *devPrefix)
     // On Default we append NOTHING, so `out` now holds the file with our key stripped out. That is
     // what makes Default mean default: setting 240p and then changing back would otherwise leave
     // display:240 on the device forever, with the menu claiming Default while Ember still ran 240p.
-    if (gEmberDisplay != EMBER_DISPLAY_LEAVE) {
+    if (gEmberDisplay != EMBER_DISPLAY_DEFAULT) {
         int n = snprintf(&after[out], sizeof(after) - out, "%s\n", want);
         if (n < 0 || n >= (int)sizeof(after) - out) {
             LOG("[CUE] no room for the display line in %s -- left untouched\n", path);

@@ -137,7 +137,7 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList);
 //
 // settings.txt is OPTIONAL, and this function keeps it that way:
 //
-//   EMBER_DISPLAY_LEAVE ("Default") never CREATES the file. If one exists it clears our display key
+//   EMBER_DISPLAY_DEFAULT ("Default") never CREATES the file. If one exists it clears our display key
 //   out of it, and removes the file entirely when that key was the only thing in it. Default has to
 //   clear rather than merely abstain, or picking 240p once and changing back would strand
 //   display:240 on the device forever while the menu claimed Default.
