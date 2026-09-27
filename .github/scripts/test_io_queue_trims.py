@@ -105,6 +105,11 @@ static unsigned int gIoTotal[IO_REQ_TYPE_COUNT];
 static int semaHeld;
 static void WaitSema(int s) { (void)s; semaHeld++; }
 static void SignalSema(int s) { (void)s; semaHeld--; }
+/* Every queue node must be allocated and linked inside the gEndSemaId hold, or a scan on the other
+   thread can walk a half-linked list (CodeRabbit on #764). */
+static int unlockedAllocs;
+static void *lockedMalloc(size_t n) { unlockedAllocs += semaHeld <= 0; return malloc(n); }
+#define malloc(n) lockedMalloc(n)
 static void WakeupThread(int t) { (void)t; }
 static void handler(void *d) { (void)d; }
 
@@ -169,6 +174,10 @@ int main(void)
     }
     if (semaHeld != 0) {
         printf("FAIL gEndSemaId left held (%d)\n", semaHeld);
+        failed = 1;
+    }
+    if (unlockedAllocs != 0) {
+        printf("FAIL %d queue node(s) allocated outside the gEndSemaId hold\n", unlockedAllocs);
         failed = 1;
     }
     if (!failed)
