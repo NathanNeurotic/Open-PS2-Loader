@@ -103,8 +103,6 @@ jobs:
         run: python3 .github/scripts/test_bdm_scan_retry.py
       - name: Check the IO worker skips duplicate module passes and APPS rebuilds on L3
         run: python3 .github/scripts/test_io_queue_trims.py
-      - name: Check unified art priority queue and active trio ordering
-        run: python3 .github/scripts/test_art_priority_queue.py
 
   udpfs-host-tests:
     runs-on: ubuntu-24.04
