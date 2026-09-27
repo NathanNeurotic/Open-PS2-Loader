@@ -97,8 +97,9 @@ launch problems to us; genuine Neutrino bugs belong upstream.
 - **HTTP**, with Docmine17's OPL HTTP server: the catalog lists and an ISO boots.
 - **A USB / MX4SIO page with no PS2 games:** the message names the folder and the error number, and
   L3 stays quick on every page.
-- **Keeping a video mode:** holding Accept, the bar fills smoothly to the end; left alone, the
-  countdown reads 10 to 1 and the old mode comes back.
+- **Keeping a video mode:** holding Accept, the bar runs the whole width of the bottom line and sits
+  full for a moment before the mode is kept; left alone, the countdown reads 10 to 1 and the old
+  mode comes back.
 - **VMC → Neutrino** on USB, exFAT or MX4SIO (internal APA can't yet: upstream neutrino#132).
 - **GameID barcode:** your Pixel FX / RetroGEM / PS2Digital loads the per-game profile.
 - **Mixed cover sizing:** PS1 and app covers square, PS2 covers portrait, on your own theme too.
