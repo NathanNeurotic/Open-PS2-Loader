@@ -129,7 +129,11 @@ size field is intentionally left blank rather than computed.</p>
 <a href="favourites.html">Favorites</a> page itself, R3 removes the selected entry.</p>
 
 <p><b>Select / Refresh</b> is also the retry for a device page that failed to populate — a network share that
-was not up when RiptOPL started, for example.</p>
+was not up when RiptOPL started, for example. A USB, MX4SIO, iLink, UDPBD or BDM HDD page whose <code>CD</code>
+and <code>DVD</code> folders both fail to open says so once, naming where it looked and the error number (for
+example <code>mass0:</code> and <code>5</code>). It is not retried in the background, so nothing else waits
+behind it; press Select on that page to scan it again. See
+<a href="troubleshooting.html#ps2-folders-unreadable">Troubleshooting</a> for what the number means.</p>
 
 <h2 id="menus">Main menu and dialogs</h2>
 <p>Menus have two states, and the same buttons do different things in each.</p>
@@ -254,7 +258,9 @@ Triangle + Cross, it affects the RiptOPL menu only.</p>
 <h3 id="keep-video-mode">Keeping a new video mode</h3>
 <p>After you change <b>Video Mode</b> in the settings, RiptOPL asks whether to keep it. To keep it,
 <b>hold</b> Accept until the bar under it fills (about 2 seconds). A quick tap does nothing. Back, or no
-answer for 10 seconds, goes back to the previous mode.</p>
+answer for 10 seconds, goes back to the previous mode; the prompt counts those seconds down
+(<em>Reverting in 7 s</em>). The count is hidden while you hold Accept, but the 10 seconds keep running: a
+hold you started always gets to finish, while letting go early after the time is up goes straight back.</p>
 
 <div class="callout info"><div class="h">Why a hold, not a tap</div>
 A mode your TV can't show leaves you looking at a black screen, and the natural thing to do then is press

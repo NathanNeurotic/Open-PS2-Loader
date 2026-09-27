@@ -153,9 +153,13 @@ fresh, prefer <b>UDPFS</b> (it also serves loose ISOs and transparent
 <code>.zso</code>/<code>.cso</code>/<code>.chd</code> — see below).
 </div>
 
-<div class="callout amber"><div class="h">Emulator-validated only</div>
-The UDPRDMA path (both <b>Files</b> and <b>IMG</b> modes) is validated on emulator so far —
-real-PS2 confirmation is pending.
+<div class="callout info"><div class="h">UDPBD, UDPFS and SMB work on a real PS2</div>
+All three have launched games on real hardware from <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2
+Servers</a>. The UDPBD test (2026-09-26, Kingdom Hearts) used every Neutrino setting at its default —
+Neutrino Path blank (RiptOPL found <code>neutrino.elf</code> inside the served image) and no per-game
+filesystem or arguments. For an ordinary FAT/exFAT image with your games in <code>DVD/</code>, leave the
+game's <b>Neutrino Filesystem</b> on <b>Auto</b>: <code>bd</code> treats the whole block device as the disc,
+which only fits a server exporting a single raw ISO.
 </div>
 
 <h2 id="smb-version">SMB Version — SMBv1 or SMB2</h2>
@@ -231,8 +235,7 @@ compression) and matches how NHDDL and pcm720's server are designed. <b>IMG</b> 
 existing <code>massN:</code> block pipeline (a disk image the PS2 mounts with its own FAT/exFAT
 drivers) — handy if you already keep a block image or want the exact same shape as USB/HDD. Pick
 whichever fits how you store your games. (If you already run the old <code>udpbd-server</code>, that's a
-separate <b>UDPBD</b> choice — see above — not a UDPFS mode.) <b>Hardware note:</b>
-the UDPRDMA path (both modes) is validated on emulator only so far — real-PS2 confirmation is pending.</p>
+separate <b>UDPBD</b> choice — see above — not a UDPFS mode.)</p>
 </details>
 
 <details class="deep"><summary>Which PC-side UDPFS server do I run?</summary>

@@ -180,6 +180,44 @@ the APA partition table, so the HDD library is managed from a PC with HDL-Dump.<
   </div>
 </div>
 
+<h2 id="ps2-folders-unreadable">PS2 list empty — "Could not open the CD or DVD folder"</h2>
+
+<p><b>Symptom:</b> A USB, MX4SIO, iLink, UDPBD or internal exFAT page shows no PS2 games (its PS1 view may be fine),
+and RiptOPL says <em>Could not open the CD or DVD folder in mass0: (error 5), so that device lists no PS2 games.
+Press SELECT on its page to try again.</em></p>
+
+<p>RiptOPL tried to open both the <code>CD</code> and the <code>DVD</code> folder at the path it names, neither
+would open, and there is no <code>ul.cfg</code> either. The path is the device plus your <b>BDM Prefix Path</b>,
+if you set one (<code>mass0:OPL/</code>, for example). An empty or missing folder on a healthy device does
+<em>not</em> cause this: RiptOPL creates <code>CD</code> and <code>DVD</code> the first time it sees a device, and
+an empty folder is simply an empty list.</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>Read the error number</h3>
+    <p><b>5</b> — input/output error: the device refused the read. Usually a failing card or stick, a damaged
+    filesystem, or a device dropping off the bus. <b>2</b> — the folder is not there and could not be created
+    (a full or read-only device, or a Prefix Path pointing somewhere that cannot be created). <b>13</b> — access
+    denied. <b>0</b> — the driver failed without saying why. Any other number: include it in your report.</p>
+  </div>
+  <div class="step">
+    <h3>Check the path it names</h3>
+    <p>If it includes a BDM Prefix Path, make sure that folder exists on that device and holds your
+    <code>CD</code>/<code>DVD</code> folders. PS1 games are read from the device root, which is why that view can
+    still work.</p>
+  </div>
+  <div class="step">
+    <h3>Check the device on a PC</h3>
+    <p>For error 5, run a filesystem check (or reformat and re-copy) before anything else.</p>
+  </div>
+  <div class="step">
+    <h3>Press Select to try again</h3>
+    <p>RiptOPL does not keep retrying on its own. It used to rescan such a page every couple of seconds for as long
+    as it was up, rebuilding Apps and Favorites each time, which made L3 and everything else wait on every page.
+    Now it scans once, tells you, and waits for you.</p>
+  </div>
+</div>
+
 <h2 id="ilink-handoff-status">iLink — revision 2692 handoff failures</h2>
 
 <p><b>Test control:</b> On an SCPH-39001 with the same IEEE 1394 HDD, Ember launched in all four

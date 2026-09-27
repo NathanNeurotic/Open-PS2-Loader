@@ -101,8 +101,10 @@ uppercase spelling:</p>
 <code>&lt;startup&gt;.cht</code> members at a device root — and looks there <b>first</b>, searched
 across devices in the tar engine's own device order (the member name is retried with an uppercase
 <code>.CHT</code> extension as well). The loose file above is the fallback: a tar miss, an empty
-member, an oversize member, or a member that fails to parse all fall through to
-<code>CHT/&lt;startup&gt;.cht</code> rather than failing the launch.</p>
+member, a member over 1&nbsp;MB, or a member that fails to parse all fall through to
+<code>CHT/&lt;startup&gt;.cht</code> rather than failing the launch. If that loose file is missing too, a
+member that was there but empty, too large or unparseable is reported as a cheat file that failed to load
+— never as "no cheats".</p>
 
 <p>The format is plain text in <b>PS2RD format</b>: a cheat is a description line (the cheat name)
 followed by one or more hex code lines. A code line is exactly 16 hex digits — two groups of 8 —
@@ -231,7 +233,11 @@ lists known-working codes for specific titles.</p>
   <li><b>Per-game Settings</b> (this game only): RiptOPL shows <em>No cheats found</em> and lists every
       place it looked. <b>Accept</b> starts the game without cheats; <b>Back</b> returns to the menu.</li>
 </ul>
-<p>A cheat file that exists but can't be read always shows a message, however cheats were turned on.</p>
+<p>A cheat file that exists but can't be read always shows a message, however cheats were turned on. That
+covers a <code>cht.tar</code> member that is empty, over 1&nbsp;MB or won't parse, and a loose
+<code>.cht</code> the device refuses to open — access denied, or held open by another session on a network
+share. One exception: a generic I/O error while opening still counts as <em>missing</em>, because an SMB
+share reports a file that isn't there that way.</p>
 
 <h2 id="cheat-modes">Cheat modes</h2>
 <p>The <b>PS2RD Cheat Engine Mode</b> setting has two options:</p>
