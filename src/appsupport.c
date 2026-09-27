@@ -1083,7 +1083,9 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
         target_argv[0] = isPops ? filename : normFilename;
         target_argc = 1;
 
-        if (configGetStr(configSet, CONFIG_ITEM_ALTSTARTUP, &argv1) != 0) {
+        // Folder Apps synthesize an empty AltStartup when argv1 is absent. Ordinary Apps
+        // must receive no extra argument in that case; retain the POPSTARTER contract.
+        if (configGetStr(configSet, CONFIG_ITEM_ALTSTARTUP, &argv1) != 0 && (isPops || argv1[0] != '\0')) {
             // Copy before deinit(): argv1 points into the config heap which
             // deinit() -> configEnd() frees just below; passing it to the loader
             // afterward would be a use-after-free (A6).
