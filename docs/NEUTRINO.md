@@ -232,8 +232,8 @@ For the full list of flags Neutrino accepts, see the
 ## 4. Network boot — the Network Protocol selector
 
 RiptOPL streams games from a PC over the LAN, chosen with the **Game Sources → Network
-Connectivity** row (**Off** / Manual / Auto) plus the **Network → Protocol** selector — **SMB / UDPFS /
-UDPBD / HTTP**. HTTP uses OPL’s core and has its own [guide](HTTP.md). **UDPFS** is the modern
+Connectivity** row (**Off** / Manual / Auto) plus the **Protocol** selector — **SMB / UDPFS /
+UDPBD / HTTP** — shown indented under it and on **Network** (one setting, both places). HTTP uses OPL’s core and has its own [guide](HTTP.md). **UDPFS** is the modern
 network-boot protocol (Rick Gaiser's **UDPRDMA** transport); **UDPBD** is the older SUDPBDv2 protocol,
 kept for users still running the `udpbd-server`. Both appear in OPL as their own games list — with
 covers and per-game settings — and boot via the external Neutrino core. **SMB** uses
