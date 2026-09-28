@@ -252,9 +252,12 @@ if not failures:
                     .replace('@ENUMS@', global_enums).replace('@FUNCTIONS@', global_functions))
 
 # The load and save must actually be called from the config load/save paths.
-if 'emberLoadSettings(configOPL);' not in opl_c:
+config_paths = re.sub(r'/\*.*?\*/|//[^\n]*', '', opl_c, flags=re.S)
+load_config = function_text(config_paths, 'src/opl.c', 'static void _loadConfig(')
+save_config = function_text(config_paths, 'src/opl.c', 'static void _saveConfig(')
+if 'emberLoadSettings(configOPL);' not in load_config:
     failures.append('src/opl.c: _loadConfig does not call emberLoadSettings(configOPL)')
-if 'emberSaveSettings(configOPL);' not in opl_c:
+if 'emberSaveSettings(configOPL);' not in save_config:
     failures.append('src/opl.c: the settings save does not call emberSaveSettings(configOPL)')
 if re.search(r'configSetInt\(configOPL, CONFIG_OPL_EMBER_DISPLAY,', opl_c):
     failures.append('src/opl.c: the legacy ember_display key is still written directly')
