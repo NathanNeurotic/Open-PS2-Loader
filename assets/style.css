@@ -870,12 +870,12 @@ dl.credits { margin: 0 0 8px; }
 .hero-banner {
   display: block;
   width: 100%;
-  max-width: 360px;
+  max-width: 420px;
   height: auto;
   margin: 0 0 18px;
   border-radius: 0;
-  border: 1px solid rgba(0, 180, 255, 0.45);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.9), 0 0 24px rgba(0, 100, 255, 0.25);
+  border: none;
+  box-shadow: none;
 }
 .hero h1 {
   font-size: 44px;
