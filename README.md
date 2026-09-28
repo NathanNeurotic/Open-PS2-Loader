@@ -294,7 +294,9 @@ This build layers several features on top of upstream OPL:
   **Network Connectivity** row (Off / Manual / Auto), and **Network** holds **Protocol**
   (**SMB / UDPFS / UDPBD / HTTP**), **SMB Version** (SMBv1 / SMB2, live only while Protocol is SMB),
   and **Access** (Files / IMG — locked to Files
-  for SMB/HTTP and to IMG for UDPBD, free only for UDPFS). UDPFS launches via `-bsd=udpfsbd` with a
+  for SMB/HTTP and to IMG for UDPBD, free only for UDPFS). **Default Menu → ETH Games** opens
+  whichever page that protocol's games are on (for UDPBD / UDPFS IMG, the network drive's page if it
+  has attached by the time the menu appears). UDPFS launches via `-bsd=udpfsbd` with a
   bundled `bsd-udpfsbd.toml`. Use the
   **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher for UDPFS,
   SMB and UDPBD; advanced users can run **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** directly.

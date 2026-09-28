@@ -5148,6 +5148,25 @@ static void deferredInit(void)
     // main screen worth selecting and the start menu stays -- previously ANY unregistered pick
     // silently parked every boot on the start menu with no explanation.
     int bootMode = gDefaultDevice;
+    // "ETH Games" is the Default Menu entry for the network, whichever protocol the Network page picked.
+    // Only SMB registers ETH_MODE; the other protocols put their games on a different page, so an
+    // unresolved ETH_MODE had no support and every UDPFS/HTTP boot fell through to MMCE/Apps below.
+    if (bootMode == ETH_MODE) {
+        if (gNetworkProtocol == NET_PROTO_UDPFS)
+            bootMode = UDPFS_MODE;
+        else if (gNetworkProtocol == NET_PROTO_HTTP)
+            bootMode = HTTP_MODE;
+        else if (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD) {
+            // Block transports appear as a massN: page, and only once the device has attached; if it
+            // has not by now, the fallback below applies as before.
+            for (int i = BDM_MODE; i <= BDM_MODE_LAST; i++) {
+                if (list_support[i].support != NULL && bdmModeIsUDPBD(i)) {
+                    bootMode = i;
+                    break;
+                }
+            }
+        }
+    }
     if (list_support[bootMode].support == NULL) {
         if (list_support[MMCE_MODE].support != NULL)
             bootMode = MMCE_MODE;
