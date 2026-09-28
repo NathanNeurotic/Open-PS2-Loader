@@ -30,9 +30,6 @@ extern int size_poeveticanew_raw;
 // freetype vars
 static FT_Library font_library;
 
-static s32 gFontSemaId;
-static ee_sema_t gFontSema;
-
 static GSCLUT fontClut;
 
 static const float fDPI = 72.0f;
@@ -87,6 +84,38 @@ typedef struct
 
 /// Array of font definitions
 static font_t fonts[FNT_MAX_COUNT];
+
+/* ONE LOCK FOR ALL FONT STATE, HELD FOR THE WHOLE OPERATION.
+
+   The slots, their FreeType faces, the glyph caches and atlases, and the render scratch globals
+   below are shared by the GUI thread, which draws text every frame, and the IO worker, which loads
+   theme and language fonts (thmAddElements -> thmLoad -> thmLoadFonts runs from a device's
+   NeedsUpdate). Every load ends in fntUpdateAspectRatio, which FREES every font's glyph cache and
+   atlases and resizes every face.
+
+   Readers used to take this semaphore only to fetch &fonts[id] and then render unlocked, so the
+   worker could flush the caches under a glyph the GUI thread was drawing: a use-after-free that
+   froze the GUI thread mid-frame. At boot that is the configured theme being found on a storage
+   device that comes up late (BDM HDD, after the ATA settle) while the splash is drawing its status
+   line -- a random hang with "Loading storage drivers..." frozen on screen.
+
+   Public entry points take the lock; the static helpers assume it is held. File reads stay outside
+   it, so the GUI keeps drawing while a font is read from a slow device. */
+static s32 gFontSemaId;
+static ee_sema_t gFontSema;
+
+static void fntLock(void)
+{
+    WaitSema(gFontSemaId);
+}
+
+static void fntUnlock(void)
+{
+    SignalSema(gFontSemaId);
+}
+
+static void fntUpdateAspectRatioLocked(void);
+static int fntCalcDimensionsLocked(font_t *font, const char *str);
 
 static rm_quad_t quad;
 static uint32_t codepoint, state;
@@ -226,28 +255,40 @@ static void fntDeleteSlot(font_t *font)
 
 void fntRelease(int id)
 {
-    if (id > FNT_DEFAULT && id < FNT_MAX_COUNT)
+    if (id > FNT_DEFAULT && id < FNT_MAX_COUNT) {
+        fntLock();
         fntDeleteSlot(&fonts[id]);
+        fntUnlock();
+    }
 }
 
-static int fntLoadSlot(font_t *font, char *path, int fontSize)
+// The slow half of a load, done WITHOUT the lock: read the font file (or point at the built-in
+// one). *owned is set when the buffer was allocated here and must end up in font->dataPtr.
+static void *fntReadData(char *path, int *bufferSize, int *owned)
 {
-    void *buffer = NULL;
-    int bufferSize = -1;
+    void *buffer;
 
-    fntInitSlot(font);
-
-    if (path) {
-        buffer = readFile(path, -1, &bufferSize);
-        if (!buffer) {
-            LOG("FNTSYS Font file loading failed: %s\n", path);
-            return FNT_ERROR;
-        }
-        font->dataPtr = buffer;
-    } else {
-        buffer = &poeveticanew_raw;
-        bufferSize = size_poeveticanew_raw;
+    *owned = 0;
+    if (path == NULL) {
+        *bufferSize = size_poeveticanew_raw;
+        return &poeveticanew_raw;
     }
+
+    buffer = readFile(path, -1, bufferSize);
+    if (!buffer) {
+        LOG("FNTSYS Font file loading failed: %s\n", path);
+        return NULL;
+    }
+    *owned = 1;
+    return buffer;
+}
+
+// Lock held. Takes ownership of an owned buffer (freed with the slot, including on failure).
+static int fntLoadSlotLocked(font_t *font, void *buffer, int bufferSize, int owned, int fontSize)
+{
+    fntInitSlot(font);
+    if (owned)
+        font->dataPtr = buffer;
 
     // load the font via memory handle
     int error = FT_New_Memory_Face(font_library, (FT_Byte *)buffer, bufferSize, 0, &font->face);
@@ -259,7 +300,7 @@ static int fntLoadSlot(font_t *font, char *path, int fontSize)
 
     font->isValid = 1;
     font->fontSize = fontSize;
-    fntUpdateAspectRatio();
+    fntUpdateAspectRatioLocked();
 
     return 0;
 }
@@ -290,40 +331,50 @@ void fntInit()
 
 int fntLoadFile(char *path, int fontSize)
 {
-    font_t *font;
-    int i = 1;
-    for (; i < FNT_MAX_COUNT; i++) {
-        font = &fonts[i];
-        if (!font->isValid) {
-            if (fntLoadSlot(font, path, fontSize) != FNT_ERROR)
-                return i;
+    int bufferSize, owned, i, result = FNT_ERROR;
+    void *buffer = fntReadData(path, &bufferSize, &owned);
+
+    if (buffer == NULL)
+        return FNT_ERROR;
+
+    fntLock();
+    for (i = 1; i < FNT_MAX_COUNT; i++) {
+        if (!fonts[i].isValid) {
+            if (fntLoadSlotLocked(&fonts[i], buffer, bufferSize, owned, fontSize) != FNT_ERROR)
+                result = i;
+            owned = 0; // the slot owns (or already freed) it either way
             break;
         }
     }
+    fntUnlock();
 
-    return FNT_ERROR;
+    if (owned) // no free slot
+        free(buffer);
+
+    return result;
 }
 
 int fntLoadDefault(char *path)
 {
     font_t newFont, oldFont;
+    int bufferSize, owned, result = -1;
+    void *buffer = fntReadData(path, &bufferSize, &owned);
 
-    if (fntLoadSlot(&newFont, path, FNTSYS_DEFAULT_SIZE) != FNT_ERROR) {
-        // copy over the new font definition
-        // we have to lock this phase, as the old font may still be used
-        // Note: No check for concurrency is done here, which is kinda funky!
-        WaitSema(gFontSemaId);
+    if (buffer == NULL)
+        return -1;
+
+    // The swap and the delete of the old font happen under the same lock the renderers hold, so no
+    // draw can be using the old face, cache or atlases when they go.
+    fntLock();
+    if (fntLoadSlotLocked(&newFont, buffer, bufferSize, owned, FNTSYS_DEFAULT_SIZE) != FNT_ERROR) {
         memcpy(&oldFont, &fonts[FNT_DEFAULT], sizeof(font_t));
         memcpy(&fonts[FNT_DEFAULT], &newFont, sizeof(font_t));
-        SignalSema(gFontSemaId);
-
-        // delete the old font
         fntDeleteSlot(&oldFont);
-
-        return 0;
+        result = 0;
     }
+    fntUnlock();
 
-    return -1;
+    return result;
 }
 
 void fntEnd()
@@ -331,8 +382,10 @@ void fntEnd()
     LOG("FNTSYS End\n");
     // release all the fonts
     int id;
+    fntLock();
     for (id = 0; id < FNT_MAX_COUNT; ++id)
         fntDeleteSlot(&fonts[id]);
+    fntUnlock();
 
     // deinit freetype system
     FT_Done_FreeType(font_library);
@@ -437,6 +490,13 @@ static fnt_glyph_cache_entry_t *fntCacheGlyph(font_t *font, uint32_t gid)
 
 void fntUpdateAspectRatio()
 {
+    fntLock();
+    fntUpdateAspectRatioLocked();
+    fntUnlock();
+}
+
+static void fntUpdateAspectRatioLocked(void)
+{
     int i;
     int w, h, wn, hn;
     float ws, hs;
@@ -500,10 +560,8 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
 {
     if (string == NULL)
         return 0;
-    // wait for font lock to unlock
-    WaitSema(gFontSemaId);
+    fntLock();
     font_t *font = &fonts[id];
-    SignalSema(gFontSemaId);
 
     // Convert to native display resolution
     x = rmScaleX(x);
@@ -513,9 +571,9 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
 
     if (aligned & ALIGN_HCENTER) {
         if (width) {
-            x -= min(fntCalcDimensions(id, string), width) >> 1;
+            x -= min(fntCalcDimensionsLocked(font, string), width) >> 1;
         } else {
-            x -= fntCalcDimensions(id, string) >> 1;
+            x -= fntCalcDimensionsLocked(font, string) >> 1;
         }
     }
 
@@ -581,6 +639,7 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
         pen_x += glyph->shx >> 6;
     }
 
+    fntUnlock();
     return rmUnScaleX(pen_x);
 }
 
@@ -626,10 +685,8 @@ static void fntRenderSubRTL(font_t *font, const char *startRTL, const char *stri
 
 int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t height, const char *string, u64 colour)
 {
-    // wait for font lock to unlock
-    WaitSema(gFontSemaId);
+    fntLock();
     font_t *font = &fonts[id];
-    SignalSema(gFontSemaId);
 
     // Convert to native display resolution
     x = rmScaleX(x);
@@ -639,9 +696,9 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
 
     if (aligned & ALIGN_HCENTER) {
         if (width) {
-            x -= min(fntCalcDimensions(id, string), width) >> 1;
+            x -= min(fntCalcDimensionsLocked(font, string), width) >> 1;
         } else {
-            x -= fntCalcDimensions(id, string) >> 1;
+            x -= fntCalcDimensionsLocked(font, string) >> 1;
         }
     }
 
@@ -727,6 +784,7 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
         fntRenderSubRTL(font, startRTL, string, glyphRTL, pen_xRTL, y);
     }
 
+    fntUnlock();
     return rmUnScaleX(pen_x);
 }
 #endif
@@ -790,13 +848,24 @@ void fntFitString(int id, char *string, size_t width)
 
 int fntCalcDimensions(int id, const char *str)
 {
+    int w;
+
     if (str == NULL)
         return 0;
+
+    fntLock();
+    w = fntCalcDimensionsLocked(&fonts[id], str);
+    fntUnlock();
+
+    return w;
+}
+
+static int fntCalcDimensionsLocked(font_t *font, const char *str)
+{
     int w = 0;
 
-    WaitSema(gFontSemaId);
-    font_t *font = &fonts[id];
-    SignalSema(gFontSemaId);
+    if (str == NULL)
+        return 0;
 
     uint32_t codepoint;
     uint32_t state = UTF8_ACCEPT;
