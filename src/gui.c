@@ -3061,7 +3061,7 @@ static int guiSettingsShowPopstarter(void)
     const struct UIItem *parts[] = {diaVcdConfig, diaBdmaConfig};
     const int skipIDs[] = {VCD_BDMA_BUTTON};
     // "480" is 480i to Ember -- it always was; this row used to call it 480p.
-    const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480i", NULL};
+    const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480i", "480p", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
     // A setting never changed in RiptOPL is UNSET and shows as Default; it only becomes stored when
     // the user actually picks something else (see emberSettingFromRow).
