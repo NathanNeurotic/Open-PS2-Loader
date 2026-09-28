@@ -418,6 +418,7 @@ typedef struct
 
 #define EMBER_GAMES_FOLDER "games"
 #define EMBER_SETTINGS_NAME "settings.txt"
+#define LOG(...) ((void)0)
 @DEFINES@
 @ENUMS@
 
