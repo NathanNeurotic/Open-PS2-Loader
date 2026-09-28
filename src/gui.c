@@ -780,13 +780,116 @@ int guiNetProtocolNeedsRestart(void)
     return gNetworkProtocol != resident;
 }
 
+// The Protocol row -- SMB(0) / UDPFS(1) / UDPBD(2) / HTTP(3) -- appears on the Network page AND,
+// indented under Network Connectivity, on Game Sources. It is one setting shown twice: both rows read
+// and write gNetworkProtocol through these helpers, so neither page can disagree with the other.
+static const char *guiNetProtocolNames[] = {"SMB", "UDPFS", "UDPBD", "HTTP", NULL}; // protocol names, not translated
+
+// OFF has no protocol memory, so it shows SMB -- the protocol a user reaches by turning Connectivity on.
+static int guiNetProtocolToPicker(int protocol)
+{
+    if (protocol == NET_PROTO_HTTP)
+        return 3;
+    if (protocol == NET_PROTO_UDPBD)
+        return 2;
+    if (protocol == NET_PROTO_UDPFS || protocol == NET_PROTO_UDPFSBD)
+        return 1;
+    return 0;
+}
+
+// Fold the rows back into gNetworkProtocol. Connectivity Off stores OFF whatever the picker says (the
+// stack does not run at all). Access (Files 0 / IMG 1) is consulted only for UDPFS.
+static int guiNetProtocolFromPicker(int startMode, int picker, int access)
+{
+    if (startMode == START_MODE_DISABLED)
+        return NET_PROTO_OFF;
+    if (picker == 3)
+        return NET_PROTO_HTTP;
+    if (picker == 2)
+        return NET_PROTO_UDPBD;
+    if (picker == 1)
+        return access ? NET_PROTO_UDPFSBD : NET_PROTO_UDPFS;
+    return NET_PROTO_SMB;
+}
+
+// After either page set gNetworkProtocol: re-derive the legacy shadows downstream consumers read, then
+// give the same notices in the same order from both pages -- the UDP static-IP note, what to expect
+// from the new tab, and LAST the restart note when another stack is already resident.
+static void guiNetProtocolApplied(int netProtocolWas)
+{
+    gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
+    gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
+    // SMB's start mode IS the network start row (Auto = boot connect, Manual = on-entry); every
+    // non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
+    gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
+
+    if (gNetworkProtocol == netProtocolWas)
+        return;
+
+    // UDP transports always use the saved static PS2 IP fields. If the user's preserved SMB/HTTP
+    // preference is DHCP, explain that the UDP transport is using Static by design.
+    int nowUdp = (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD);
+    int wasUdp = (netProtocolWas == NET_PROTO_UDPFS || netProtocolWas == NET_PROTO_UDPFSBD || netProtocolWas == NET_PROTO_UDPBD);
+    if (nowUdp && !wasUdp && ps2_ip_use_dhcp)
+        guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
+
+    // "Nothing happens" guard: enabling a network protocol gives NO feedback -- the UDPFS tab joins the
+    // ring silently (Manual start waits for a Confirm-press inside it), and the block transports show a
+    // tab only once the PC server answers. Tell the user what to expect + which PC server to run.
+    if (gNetworkProtocol == NET_PROTO_HTTP)
+        guiMsgBox(_l(_STR_HTTP_TAB_HINT), 0, NULL);
+    else if (gNetworkProtocol == NET_PROTO_UDPFS)
+        guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
+    else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
+        guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
+
+    // Each network transport loads its IOP module chain once per boot (the load latch is not cleared
+    // live). If a stack is already up and the protocol changed away from the one actually running,
+    // the switch takes effect only after a restart -- say so instead of silently doing nothing. The
+    // OFFER to restart lives on the Save Settings path (see guiNetProtocolNeedsRestart): these
+    // dialogs only touch RAM, and acting now would tear OPL down before the choice was written.
+    if (guiNetProtocolNeedsRestart())
+        guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
+}
+
+// Game Sources: the indented Protocol row greys while Connectivity is Off.
+static void guiSourcesNetRowsUpdate(struct UIItem *ui)
+{
+    int startMode = START_MODE_DISABLED;
+
+    diaGetInt(ui, CFG_NETSTART, &startMode);
+    diaSetEnabled(ui, CFG_NETPROTOCOL, startMode != START_MODE_DISABLED);
+}
+
+static void guiSourcesNetRowsBegin(struct UIItem *ui, const char **deviceModes)
+{
+    diaSetEnum(ui, CFG_NETSTART, deviceModes);
+    diaSetInt(ui, CFG_NETSTART, gNetStartMode);
+    diaSetEnum(ui, CFG_NETPROTOCOL, guiNetProtocolNames);
+    diaSetInt(ui, CFG_NETPROTOCOL, guiNetProtocolToPicker(gNetworkProtocol));
+    guiSourcesNetRowsUpdate(ui); // the first frame renders before the updater runs
+}
+
+// Game Sources read-back. Access is not on this page, so UDPFS keeps the Access it already had.
+static void guiSourcesNetRowsRead(struct UIItem *ui)
+{
+    int netProtocolWas = gNetworkProtocol;
+    int picker = guiNetProtocolToPicker(gNetworkProtocol);
+
+    diaGetInt(ui, CFG_NETSTART, &gNetStartMode);
+    diaGetInt(ui, CFG_NETPROTOCOL, &picker);
+    gNetworkProtocol = guiNetProtocolFromPicker(gNetStartMode, picker, netProtocolWas == NET_PROTO_UDPFSBD);
+    guiNetProtocolApplied(netProtocolWas);
+}
+
 // guiShowDeviceConfig is retained for the legacy entry point outside the Settings peer shell.
 // Keep its APA selector semantics identical to the shell: merely opening/saving another field
 // must not normalize a legacy custom hdd_partition, while an explicit selector interaction may.
 
 static int guiDeviceConfigUpdater(int modified)
 {
-    (void)modified;
+    if (modified)
+        guiSourcesNetRowsUpdate(diaDeviceConfig);
     return 0;
 }
 
@@ -820,9 +923,8 @@ void guiShowDeviceConfig(void)
 
     // Network Start Mode (Off/Manual/Auto) == gNetStartMode (START_MODE_*); the SAME three options
     // (and indices) as every other device's start row, so reuse the localized deviceModes.
-    // The Protocol/Access rows live on the Network page.
-    diaSetEnum(diaDeviceConfig, CFG_NETSTART, deviceModes);
-    diaSetInt(diaDeviceConfig, CFG_NETSTART, gNetStartMode);
+    // The indented Protocol row is the Network page's Protocol setting (guiSourcesNetRowsBegin).
+    guiSourcesNetRowsBegin(diaDeviceConfig, deviceModes);
 
     // MMCE Start Mode
     diaSetEnum(diaDeviceConfig, CFG_MMCEMODE, deviceModes);
@@ -837,8 +939,6 @@ reshow_device:
         goto reshow_device;
     }
     if (ret) {
-        int netProtocolWas = gNetworkProtocol;
-
         diaGetInt(diaDeviceConfig, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(diaDeviceConfig, CFG_BDMMODE, &gBDMStartMode);
@@ -852,39 +952,8 @@ reshow_device:
         diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
         diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
 
-        // Network Start Mode read-back: Start=Off disables network start;
-        // preserve the user's configured gNetworkProtocol (defaulting to SMB only if uninitialized).
-        diaGetInt(diaDeviceConfig, CFG_NETSTART, &gNetStartMode);
-        if (gNetStartMode == START_MODE_DISABLED)
-            gNetworkProtocol = NET_PROTO_OFF;
-        else if (gNetworkProtocol == NET_PROTO_OFF)
-            gNetworkProtocol = NET_PROTO_SMB;
-        gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
-        gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
-        // SMB's start mode IS the network start row (Auto = boot connect, Manual = on-entry);
-        // every non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
-        gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
-
-        // "Nothing happens" guard: enabling a network protocol gives NO feedback -- the UDPFS tab
-        // joins the ring silently (Manual start waits for a Confirm-press inside it), and the block
-        // transports show a tab only once the PC server answers.
-        if (gNetworkProtocol != netProtocolWas) {
-            if (gNetworkProtocol == NET_PROTO_HTTP)
-                guiMsgBox(_l(_STR_HTTP_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFS)
-                guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
-                guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
-        }
-
-        // Each network transport loads its IOP module chain once per boot (the load latch is not
-        // cleared live). If a stack is already up and the Start toggle changed the protocol away from
-        // the one actually running, the switch takes effect only after a restart -- say so instead of
-        // silently doing nothing. The OFFER to restart deliberately lives on the SAVE path and not
-        // here: this dialog only touches RAM, and Save Changes is a separate menu action, so acting
-        // on it now would tear OPL down before the choice was ever written to disk.
-        if (gNetworkProtocol != netProtocolWas && guiNetProtocolNeedsRestart())
-            guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
+        // Network Connectivity + the indented Protocol row (shared with the Network page).
+        guiSourcesNetRowsRead(diaDeviceConfig);
 
         // A BDM tab can be latched hidden (bdmNeedsUpdate short-circuits until the device generation
         // bumps). Re-evaluate device visibility now so re-enabling a device here brings its tab back
@@ -1310,15 +1379,14 @@ int guiShowNetConfig(void)
     const char *ethOpModes[] = {_l(_STR_AUTO), _l(_STR_ETH_100MFDX), _l(_STR_ETH_100MHDX), _l(_STR_ETH_10MFDX), _l(_STR_ETH_10MHDX), NULL};
     const char *addrConfModes[] = {_l(_STR_ADDR_TYPE_IP), _l(_STR_ADDR_TYPE_NETBIOS), NULL};
     const char *ipAddrConfModes[] = {_l(_STR_IP_ADDRESS_TYPE_STATIC), _l(_STR_IP_ADDRESS_TYPE_DHCP), NULL};
-    const char *netProtocols[] = {"SMB", "UDPFS", "UDPBD", "HTTP", NULL}; // UDPBD = SUDPBDv2 server -- protocol names, not translated
-    const char *udpfsModes[] = {"Files", "IMG", NULL};                    // Access: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
+    const char *udpfsModes[] = {"Files", "IMG", NULL}; // Access: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
     // NOTE(rebuild): SMBv1 only until item 4 re-adds the SMB2 dialect; the row shows the active
     // dialect and stays greyed (netConfigUpdater keeps it disabled).
     const char *smbDialects[] = {"SMBv1", NULL};
     diaSetEnum(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ipAddrConfModes);
     diaSetEnum(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, addrConfModes);
     diaSetEnum(diaNetConfig, NETCFG_ETHOPMODE, ethOpModes);
-    diaSetEnum(diaNetConfig, CFG_NETPROTOCOL, netProtocols);
+    diaSetEnum(diaNetConfig, CFG_NETPROTOCOL, guiNetProtocolNames); // UDPBD = SUDPBDv2 server
     diaSetEnum(diaNetConfig, CFG_UDPFSMODE, udpfsModes);
     diaSetEnum(diaNetConfig, CFG_SMBDIALECT, smbDialects);
 
@@ -1370,10 +1438,7 @@ int guiShowNetConfig(void)
     //   Access:   Files(0)/IMG(1); IMG only distinct for UDPFS (-> UDPFSBD backend)
     // A NET_PROTO_OFF backend has no protocol memory, so seed the protocol row to SMB -- the common
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
-    int netProtoVal = (gNetworkProtocol == NET_PROTO_HTTP)                                           ? 3 :
-                      (gNetworkProtocol == NET_PROTO_UDPBD)                                          ? 2 :
-                      (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD) ? 1 :
-                                                                                                       0; // SMB / OFF
+    int netProtoVal = guiNetProtocolToPicker(gNetworkProtocol); // SMB / OFF -> 0
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
     int netAccessVal = (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD) ? 1 : 0;
     for (i = 0; i < 4; ++i)
@@ -1472,49 +1537,8 @@ reshow_network:
         // shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) downstream consumers read.
         // NOTE(rebuild): the fork also reads the SMB dialect row back here (item 4).
         int netProtocolWas = gNetworkProtocol;
-        if (gNetStartMode == START_MODE_DISABLED)
-            gNetworkProtocol = NET_PROTO_OFF;
-        else
-            gNetworkProtocol = (netProtoVal2 == 0)  ? NET_PROTO_SMB :
-                               (netProtoVal2 == 3)  ? NET_PROTO_HTTP :
-                               (netProtoVal2 == 2)  ? NET_PROTO_UDPBD :
-                               (netAccessVal2 == 1) ? NET_PROTO_UDPFSBD :
-                                                      NET_PROTO_UDPFS; // UDPFS + Files
-        gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
-        gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
-        // SMB's start mode IS the network start row (Auto = boot connect, Manual = on-entry);
-        // every non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
-        gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
-
-        // UDP transports always use the saved static PS2 IP fields. If the user's preserved
-        // SMB/HTTP preference is DHCP, explain that the UDP transport is using Static by design.
-        int nowUdp = (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD);
-        int wasUdp = (netProtocolWas == NET_PROTO_UDPFS || netProtocolWas == NET_PROTO_UDPFSBD || netProtocolWas == NET_PROTO_UDPBD);
-        if (nowUdp && !wasUdp && ps2_ip_use_dhcp)
-            guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
-
-        // "Nothing happens" guard: enabling a network protocol gives NO feedback -- the UDPFS tab
-        // joins the ring silently and then waits for a Confirm-press inside it (Manual start), and
-        // the block transports show a tab only once the PC server answers. Tell the user what to
-        // expect + which PC server to run, right at the moment they turn it on. Shown BEFORE the
-        // restart notice below: when a restart is pending, the restart message must be the LAST
-        // word so the guidance reads as "after that".
-        if (gNetworkProtocol != netProtocolWas) {
-            if (gNetworkProtocol == NET_PROTO_HTTP)
-                guiMsgBox(_l(_STR_HTTP_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFS)
-                guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
-                guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
-        }
-
-        // Each network transport loads its IOP module chain once per boot (the load latch is not cleared
-        // live). If a stack is already up and the user picked a protocol other than the one actually
-        // running, the switch takes effect only after a restart -- say so instead of silently doing
-        // nothing. The OFFER to restart lives on the Save Settings path (see guiNetProtocolNeedsRestart),
-        // since this dialog only touches RAM.
-        if (gNetworkProtocol != netProtocolWas && guiNetProtocolNeedsRestart())
-            guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
+        gNetworkProtocol = guiNetProtocolFromPicker(gNetStartMode, netProtoVal2, netAccessVal2);
+        guiNetProtocolApplied(netProtocolWas);
 
         applyConfig(-1, -1, 0);
 
@@ -2706,7 +2730,8 @@ reshow_general:
 
 static int guiSettingsSourcesUpdater(int modified)
 {
-    (void)modified;
+    if (modified && guiSettingsActiveDialog != NULL)
+        guiSourcesNetRowsUpdate(guiSettingsActiveDialog);
     return 0;
 }
 
@@ -2740,8 +2765,7 @@ static int guiSettingsShowSources(void)
     diaSetInt(ui, CFG_ENABLEBDMHDD, gEnableBdmHDD);
     diaSetEnabled(ui, CFG_ENABLEBDMHDD, 1);
     diaSetEnabled(ui, CFG_HDDMODE, 1);
-    diaSetEnum(ui, CFG_NETSTART, deviceModes);
-    diaSetInt(ui, CFG_NETSTART, gNetStartMode);
+    guiSourcesNetRowsBegin(ui, deviceModes);
     diaSetEnum(ui, CFG_MMCEMODE, deviceModes);
     diaSetInt(ui, CFG_MMCEMODE, gMMCEStartMode);
     diaSetEnabled(ui, CFG_MMCEMODE, 1);
@@ -2763,8 +2787,6 @@ reshow_sources:
     }
 
     if (result != UIID_BTN_CANCEL && result != -1) {
-        int netProtocolWas = gNetworkProtocol;
-
         diaGetInt(ui, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(ui, CFG_BDMMODE, &gBDMStartMode);
@@ -2776,25 +2798,7 @@ reshow_sources:
         diaGetInt(ui, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(ui, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
         diaGetInt(ui, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
-        diaGetInt(ui, CFG_NETSTART, &gNetStartMode);
-        if (gNetStartMode == START_MODE_DISABLED)
-            gNetworkProtocol = NET_PROTO_OFF;
-        else if (gNetworkProtocol == NET_PROTO_OFF)
-            gNetworkProtocol = NET_PROTO_SMB;
-        gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
-        gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
-        gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
-
-        if (gNetworkProtocol != netProtocolWas) {
-            if (gNetworkProtocol == NET_PROTO_HTTP)
-                guiMsgBox(_l(_STR_HTTP_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFS)
-                guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
-                guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
-        }
-        if (gNetworkProtocol != netProtocolWas && guiNetProtocolNeedsRestart())
-            guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
+        guiSourcesNetRowsRead(ui);
 
         bdmForceDeviceRefresh();
         applyConfig(-1, -1, 0);
