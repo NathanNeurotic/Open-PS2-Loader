@@ -73,6 +73,7 @@ enum APP_MENU_IDs {
     APP_RENAME = 0,
     APP_DELETE,
     APP_GLOBAL_PS_SETTINGS,
+    APP_EMBER_GAME_SETTINGS,
 };
 
 // global menu variables
@@ -704,7 +705,7 @@ void menuInitAppMenu(void)
     appMenuCurrent = appMenu;
 }
 
-void menuInitVcdMenu(void)
+void menuInitVcdMenu(int isEmber)
 {
     if (appMenu)
         submenuDestroy(&appMenu);
@@ -713,6 +714,9 @@ void menuInitVcdMenu(void)
     // owns per-game emulator settings. Link to the existing GLOBAL PS emulation page instead, and
     // keep this item-operation path free of PS2 per-game CFG reads/creation.
     submenuAppendItem(&appMenu, -1, NULL, APP_GLOBAL_PS_SETTINGS, _STR_GLOBAL_PS_EMULATION_SETTINGS);
+    // Ember reads a per-game settings.txt; POPSTARTER has nothing equivalent, so only Ember rows get it.
+    if (isEmber)
+        submenuAppendItem(&appMenu, -1, NULL, APP_EMBER_GAME_SETTINGS, _STR_EMBER_GAME_SETTINGS);
     submenuAppendItem(&appMenu, -1, NULL, APP_RENAME, _STR_RENAME);
 
     appMenuCurrent = appMenu;
@@ -2189,6 +2193,8 @@ void menuHandleInputAppMenu()
             menuDeleteGame(&appMenu);
         } else if (menuID == APP_GLOBAL_PS_SETTINGS) {
             guiShowPsEmulationSettings();
+        } else if (menuID == APP_EMBER_GAME_SETTINGS) {
+            guiShowEmberGameSettings();
         }
         // so the exit press wont propagate twice
         readPads();

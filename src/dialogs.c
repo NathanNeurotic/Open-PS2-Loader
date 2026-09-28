@@ -449,6 +449,18 @@ struct UIItem diaVcdConfig[] = {
     {UI_SPACER},
     {UI_ENUM, CFG_EMBER_DISPLAY, 1, 1, _STR_HINT_EMBER_DISPLAY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_DITHER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_DITHER, 1, 1, _STR_HINT_EMBER_DITHER, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_SHADING}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_SHADING, 1, 1, _STR_HINT_EMBER_SHADING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_CONTROLLER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_CONTROLLER, 1, 1, _STR_HINT_EMBER_CONTROLLER, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
 
 
     // Legacy sub-pages remain callable outside the Settings shell; the peer page skips this row
@@ -555,6 +567,24 @@ struct UIItem diaVcdUsbMode[] = {
     {UI_BREAK},
     {UI_BUTTON, VCDUSB_BTN_EXFAT, 1, 1, -1, 0, 0, {.label = {NULL, _STR_VCD_USB_MODE_EXFAT}}},
     {UI_BREAK},
+
+    // end of dialog
+    {UI_TERMINATOR}};
+
+// Ember Game Settings (PS1 Triangle menu, Ember rows only): this game's Controller, kept in its CFG
+// and written to EMBER/games/<Name>/settings.txt at launch. Default = follow the global row. Controller
+// only, on Gageformer's advice (per-game is meant for the controller; 24-bit shading can cause issues),
+// although Ember also reads shading from a game's file.
+struct UIItem diaEmberGameConfig[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_EMBER_GAME_SETTINGS}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_CONTROLLER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_CONTROLLER, 1, 1, _STR_HINT_EMBER_GAME_SETTING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
 
     // end of dialog
     {UI_TERMINATOR}};
