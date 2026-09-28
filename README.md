@@ -292,7 +292,8 @@ This build layers several features on top of upstream OPL:
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
   alongside UDPBD. **Game Sources** holds the **Network Connectivity** row (Off / Manual / Auto) with
   **Protocol** (**SMB / UDPFS / UDPBD / HTTP**) indented under it; the same **Protocol** row is on
-  **Network** too, and changing it on either page changes both. **Network** also holds
+  **Network** too, and changing it on either page changes both. Setting Connectivity to **Off** keeps
+  your protocol: turning it back on brings the same one back. **Network** also holds
   **SMB Version** (SMBv1 / SMB2, live only while Protocol is SMB),
   and **Access** (Files / IMG — locked to Files
   for SMB/HTTP and to IMG for UDPBD, free only for UDPFS). **Default Menu → ETH Games** opens

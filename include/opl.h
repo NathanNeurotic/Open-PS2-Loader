@@ -314,6 +314,10 @@ enum NETWORK_PROTOCOL {
 };
 extern int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend; the three above are derived shadows
 extern int gNetStartMode;    // START_MODE_* -- network start row (Off/Manual/Auto); DISABLED <=> protocol OFF
+// The protocol the user last CHOSE -- never OFF. gNetworkProtocol becomes OFF while Connectivity is Off
+// (every consumer reads that as "no network"), so this is what the Protocol rows show then, and what
+// turning Connectivity back on restores.
+extern int gNetProtocolPick;
 
 extern int gAutosort;
 extern int gAutoRefresh;

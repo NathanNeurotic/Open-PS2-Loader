@@ -229,6 +229,7 @@ int gEnableBdmHDD;
 int gEnableUDPBD;
 int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived from gNetworkProtocol)
 int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
+int gNetProtocolPick; // last protocol chosen, never OFF (see opl.h)
 int gNetStartMode;    // START_MODE_* -- the Off/Manual/Auto network start row (see the 3-row Network setting)
 int gAutosort;
 int gAutoRefresh;
@@ -3315,6 +3316,15 @@ static void _loadConfig()
                 gETHStartMode = START_MODE_DISABLED;
             }
 
+            // The remembered pick. A live protocol is the pick by definition; with none (Off), use the
+            // saved pick, or SMB when there is none yet. Taken BEFORE the reconcile below, so a file that
+            // names a protocol but has its start row Off still remembers that protocol.
+            if (gNetworkProtocol != NET_PROTO_OFF)
+                gNetProtocolPick = gNetworkProtocol;
+            else if (!configGetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, &gNetProtocolPick) ||
+                     gNetProtocolPick <= NET_PROTO_OFF || gNetProtocolPick > NET_PROTO_HTTP)
+                gNetProtocolPick = NET_PROTO_SMB;
+
             // Network start row (Off/Manual/Auto). A config predating this field has no net_start_mode
             // key -- derive it from the protocol we just resolved so an existing user keeps working:
             //   OFF   -> Off (Row 1); SMB -> its persisted eth_mode (so a prior SMB=Auto survives);
@@ -3824,6 +3834,7 @@ static void _saveConfig()
         // NOTE(rebuild): the fork also persists the SMB dialect here (item 4).
         configSetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, gNetworkProtocol);
         configSetInt(configOPL, CONFIG_OPL_NET_START_MODE, gNetStartMode);
+        configSetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, gNetProtocolPick);
         configSetInt(configOPL, CONFIG_OPL_SFX, gEnableSFX);
         configSetInt(configOPL, CONFIG_OPL_RUMBLE, gEnableRumble);
         configSetInt(configOPL, CONFIG_OPL_BOOT_SND, gEnableBootSND);
@@ -5052,6 +5063,7 @@ static void setDefaults(void)
     // and forces a device refresh already. A saved net protocol in the config overrides this.
     gNetworkProtocol = NET_PROTO_OFF;
     gNetStartMode = START_MODE_DISABLED; // Off in the 3-row Network setting; migration reconciles old configs
+    gNetProtocolPick = NET_PROTO_SMB;
 
     frameCounter = 0;
 

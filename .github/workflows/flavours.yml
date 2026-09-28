@@ -73,6 +73,8 @@ jobs:
         run: python3 .github/scripts/test_cheat_load.py
       - name: Check that a -bsdfs=bd launch without a device number is refused before teardown
         run: python3 .github/scripts/test_neutrino_bsdfs.py
+      - name: Check that turning Network Connectivity off and on keeps the chosen protocol
+        run: python3 .github/scripts/test_net_protocol_pick.py
 
   ra-host-tests:
     runs-on: ubuntu-24.04
