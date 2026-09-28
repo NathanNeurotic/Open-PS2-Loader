@@ -1369,4 +1369,4 @@ gui_strings:
 - label: EMBER_GAME_SETTINGS
   string: Ember Game Settings
 - label: HINT_EMBER_GAME_SETTING
-  string: "This game only: written to its EMBER/games/<name>/settings.txt at launch. Default follows the global Ember row in PS Emulation Settings."
+  string: "This game only: written to its EMBER/games/<name>/settings.txt at launch. Left on Default, a value already in that file is kept; changed back to Default, it is removed and the global Ember row applies."

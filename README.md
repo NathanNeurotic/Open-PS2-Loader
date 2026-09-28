@@ -385,8 +385,10 @@ This build layers several features on top of upstream OPL:
 
   **Per game:** on an Ember title, **Triangle → Ember Game Settings** sets that game's *Ember
   Controller*. It is saved in the game's `CFG/<Folder Name>.cfg` and written to
-  `EMBER/games/<Folder Name>/settings.txt` at launch, overriding the global row; **Default** follows the
-  global row again. On a Favourites entry it edits the same setting as on the device page. Controller
+  `EMBER/games/<Folder Name>/settings.txt` at launch, overriding the global row. Left on **Default**, it
+  leaves any `controller` line already in that game's file alone; changed back to **Default** after a
+  choice, it removes that line so the global row applies. On a Favourites entry it edits the same
+  setting as on the device page. Controller
   is the only per-game setting, on Ember's author's advice.
 
 - **Alternate POPSTARTER builds:** the release package ships

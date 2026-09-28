@@ -931,7 +931,9 @@ even for users who never opened the Ember rows.
   `Default / Auto / Analog / D2A`. **Controller only** (2026-09-28): Gageformer said the game file was
   meant for the controller and 24-bit shading can cause issues, so Shading stays a global row. The
   launch path still honours a `$EmberShading` in a game's CFG, so adding the row later is UI-only.
-  OK saves only a row you changed, to the game's CFG; "Default" means "follow the global row". On a
+  OK saves only a row you changed, to the game's CFG. A row never changed stays out of the CFG, so a
+  hand-written value in the game's settings.txt is kept; a choice changed back to "Default" is stored
+  as 0 and removes the key, so the global row applies. On a
   Favourites row it edits the same CFG the device page does (the favourite builds its config from the
   same device prefix and folder name); a failed write shows the usual "error saving settings" message.
   **Built** in the follow-up to #776, with the CUE CFG-key fix below.
