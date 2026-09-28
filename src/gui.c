@@ -3382,6 +3382,48 @@ void guiShowPsEmulationSettings(void)
     guiShowSettingsFromPage(SETTINGS_POPSTARTER, 0);
 }
 
+// One per-game Ember setting from the row's CFG, or UNSET when absent / out of range.
+static int emberGameSettingGet(config_set_t *configSet, const char *key, int count)
+{
+    int value;
+
+    if (!configGetInt(configSet, key, &value) || value < 0 || value >= count)
+        return EMBER_SETTING_UNSET;
+    return value;
+}
+
+// PS1 Triangle -> Ember Game Settings (Controller only -- see diaEmberGameConfig). The same rule as
+// the global rows: a row never changed here
+// stays out of the CFG (the game's settings.txt keeps whatever it has); a changed row is stored, and
+// Default stored means "remove it from the game's file", so the global row applies again. The CFG is
+// the one the launch reads (menuLoadConfig -> cueApplySettings); on a favourite it is its source
+// row's CFG, so both places show and edit the same values.
+void guiShowEmberGameSettings(void)
+{
+    const char *controllerStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "Analog", "D2A", NULL};
+    config_set_t *configSet = gameMenuLoadConfig(NULL);
+    int controller, controllerShown;
+
+    if (configSet == NULL)
+        return;
+
+    controller = emberGameSettingGet(configSet, CONFIG_ITEM_EMBER_CONTROLLER, EMBER_CONTROLLER_COUNT);
+    controllerShown = emberSettingShown(controller);
+
+    diaSetEnum(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerStrs);
+    diaSetInt(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerShown);
+
+    if (diaExecuteDialog(diaEmberGameConfig, -1, 1, NULL) != UIID_BTN_OK)
+        return;
+
+    int newController = emberSettingFromRow(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerShown, controller);
+    if (newController == controller)
+        return;
+
+    configSetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, newController);
+    menuSaveConfig(); // a failed write raises the usual "error saving settings" message
+}
+
 int guiShowKeyboard(char *value, int maxLength)
 {
     char tmp[maxLength];

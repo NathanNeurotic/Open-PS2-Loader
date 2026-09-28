@@ -320,6 +320,37 @@ for row, var in (('CFG_EMBER_DISPLAY', 'gEmberDisplay'), ('CFG_EMBER_DITHER', 'g
 if page and '_STR_EMBER_480P_CONFIRM' not in page:
     failures.append('src/gui.c: choosing Ember 480p does not ask for confirmation')
 
+# --- Ember Game Settings (per game) -------------------------------------------------------------
+
+# An Ember row's CFG is keyed by its full folder name: its startup is that name cut to 12 characters,
+# which made two "Crash Bandic..." games share one CFG, and a Favourites proxy has no startup at all.
+populate = function_text(read('src/supportbase.c'), 'src/supportbase.c', 'config_set_t *sbPopulateConfig(')
+if populate and not re.search(r'isPs1\s*=\s*isVcd\s*\|\|\s*cueIsCueEntry\(game\)', populate):
+    failures.append('src/supportbase.c: sbPopulateConfig does not treat an Ember row as PS1')
+if populate and 'cfgKey = isPs1 ? game->name : game->startup' not in populate:
+    failures.append('src/supportbase.c: sbPopulateConfig does not key an Ember row by its full name')
+
+menusys_c = read('src/menusys.c')
+vcd_menu = function_text(menusys_c, 'src/menusys.c', 'void menuInitVcdMenu(')
+if vcd_menu and not re.search(r'if \(isEmber\)\s*submenuAppendItem\(&appMenu, -1, NULL, APP_EMBER_GAME_SETTINGS', vcd_menu):
+    failures.append('src/menusys.c: Ember Game Settings is not offered only on Ember rows')
+if 'guiShowEmberGameSettings();' not in menusys_c:
+    failures.append('src/menusys.c: APP_EMBER_GAME_SETTINGS does not open guiShowEmberGameSettings')
+if 'menuInitVcdMenu(kind == FAV_KIND_CUE);' not in read('src/opl.c'):
+    failures.append('src/opl.c: the PS1 Triangle menu is not told whether the row is an Ember row')
+
+game_page = function_text(gui_c, 'src/gui.c', 'void guiShowEmberGameSettings(')
+# Controller only (Gageformer: per-game is for the controller; 24-bit shading can cause issues).
+for key, row in (('CONFIG_ITEM_EMBER_CONTROLLER', 'CFG_EMBER_CONTROLLER'),):
+    if game_page and f'emberSettingFromRow(diaEmberGameConfig, {row},' not in game_page:
+        failures.append(f'src/gui.c: Ember Game Settings does not read {row} back changed-only')
+    if game_page and f'configSetInt(configSet, {key},' not in game_page:
+        failures.append(f'src/gui.c: Ember Game Settings never stores {key}')
+if game_page and 'CONFIG_ITEM_EMBER_SHADING' in game_page:
+    failures.append('src/gui.c: Ember Game Settings offers Shading, which Gageformer asked to keep global')
+if game_page and 'menuSaveConfig()' not in game_page:
+    failures.append('src/gui.c: Ember Game Settings does not save the CFG')
+
 row_function = function_text(gui_c, 'src/gui.c', 'static int emberSettingFromRow(')
 if row_function:
     compile_and_run('ember_row', ROW_HARNESS.replace('@FUNCTIONS@', row_function))

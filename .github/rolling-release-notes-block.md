@@ -32,7 +32,8 @@ appears twice.
   partition.
 - **Ember settings:** *PS Emulation Settings → Ember Display Mode / Dithering / Shading / Controller*.
   A row you change is written to `EMBER/settings.txt` on that device at launch; a row never changed
-  leaves a hand-written setting alone, and changing it back to Default removes the key.
+  leaves a hand-written setting alone, and changing it back to Default removes the key. Per game:
+  *Triangle → Ember Game Settings* sets that title's controller.
 - **UDPFS and UDPBD** list Ember titles only: POPSTARTER's IOP reset can't restore either network
   transport.
 - **POPSTARTER builds:** `POPS/POPSTARTER VERSIONS/` holds MAIN, DEBUG, USBDELAY, USBDELAY_DEBUG and

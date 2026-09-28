@@ -383,6 +383,12 @@ This build layers several features on top of upstream OPL:
   changing a row back to **Default** removes the key again (and the file, if that was all it held).
   Every other line in the file is kept.
 
+  **Per game:** on an Ember title, **Triangle → Ember Game Settings** sets that game's *Ember
+  Controller*. It is saved in the game's `CFG/<Folder Name>.cfg` and written to
+  `EMBER/games/<Folder Name>/settings.txt` at launch, overriding the global row; **Default** follows the
+  global row again. On a Favourites entry it edits the same setting as on the device page. Controller
+  is the only per-game setting, on Ember's author's advice.
+
 - **Alternate POPSTARTER builds:** the release package ships
   `POPS/POPSTARTER VERSIONS/` containing five builds of POPSTARTER — **MAIN**, **DEBUG**,
   **USBDELAY**, **USBDELAY_DEBUG** and **USBDELAY_LONGER_DEBUG**. To switch, copy the

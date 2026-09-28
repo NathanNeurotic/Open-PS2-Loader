@@ -6,6 +6,7 @@
 #include "include/supportbase.h"
 #include "include/folderbrowse.h" // FOLDER_SUB_MAX + folder-browse subpath state
 #include "include/vcdsupport.h"   // vcdExtractGameId + VCD_ID_MAX -- VCD per-game CFG keying
+#include "include/cuesupport.h"   // cueIsCueEntry -- Ember rows key their CFG by folder name too
 #include "include/gui.h"          // guiMsgBox (sbCheatsMissingContinue confirm)
 #include "include/ioman.h"
 #include "include/extern_irx.h" // usbd_irx + usbhdfsd_irx, written to SYS-CONF for a USB IGR Path
@@ -1136,8 +1137,14 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     // (Disc 1)" and "(Disc 2)" both become "Final Fantas" and SHARE one CFG file, silently
     // cross-applying per-game core/VMC/video/GSM settings. Real PS2 disc IDs are 11 chars and fit,
     // which is why the official base never exhibits this; VCD names do not.
+    //
+    // An Ember (.CUE) row has the same problem -- its startup is the game FOLDER name cut to 12
+    // ("Crash Bandicoot (USA)" and "Crash Bandicoot 2 ..." shared CFG/Crash Bandic.cfg), and a
+    // Favourites proxy has no startup at all (CFG/.cfg) -- so it keys by the full name as well. It is a
+    // PS1 row for the size stat and disc badges below, too.
     const int isVcd = !strcasecmp(game->extension, ".VCD");
-    const char *cfgKey = isVcd ? game->name : game->startup;
+    const int isPs1 = isVcd || cueIsCueEntry(game);
+    const char *cfgKey = isPs1 ? game->name : game->startup;
 
     snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, cfgKey);
     config_set_t *config = configAlloc(0, NULL, path);
@@ -1175,7 +1182,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     else
         subseg[0] = '\0';
 
-    if (sbConfigStatSize && !isVcd && game->sizeMB == 0) {
+    if (sbConfigStatSize && !isPs1 && game->sizeMB == 0) {
         char gamepath[256];
 
         if (game->format == GAME_FORMAT_ISO) {
@@ -1223,8 +1230,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     // library except APA-HDD -- while the adjacent #Media badge drew fine, leaving a visible hole
     // in the shipped Coverflow theme.
     if (game->format != GAME_FORMAT_FOLDER) {
-        int isPS1 = isVcd;
-        sbSetDiscAttributes(config, isPS1, isPS1 || game->media == SCECdPS2CD);
+        sbSetDiscAttributes(config, isPs1, isPs1 || game->media == SCECdPS2CD);
     }
 
     // #Startup is the GAME ID a theme displays. A PS2 game has a real disc id in game->startup; a

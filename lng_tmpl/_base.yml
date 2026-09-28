@@ -1361,8 +1361,12 @@ gui_strings:
 - label: EMBER_CONTROLLER
   string: Ember Controller
 - label: HINT_EMBER_CONTROLLER
-  string: "Ember controller mode: Auto, Analog or D2A. Written to settings.txt in the launched device's EMBER folder. Default leaves a hand-written setting alone."
+  string: "Ember controller mode: Auto, Analog or D2A. Usually best set per game (Triangle > Ember Game Settings), which overrides this. Default leaves a hand-written setting alone."
 - label: EMBER_480P_CONFIRM
   string: "Ember 480p shows no picture over composite. Use 480p?"
 - label: EMBER_SHADING_24
   string: 24-bit (experimental)
+- label: EMBER_GAME_SETTINGS
+  string: Ember Game Settings
+- label: HINT_EMBER_GAME_SETTING
+  string: "This game only: written to its EMBER/games/<name>/settings.txt at launch. Default follows the global Ember row in PS Emulation Settings."

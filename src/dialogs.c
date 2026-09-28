@@ -571,6 +571,24 @@ struct UIItem diaVcdUsbMode[] = {
     // end of dialog
     {UI_TERMINATOR}};
 
+// Ember Game Settings (PS1 Triangle menu, Ember rows only): this game's Controller, kept in its CFG
+// and written to EMBER/games/<Name>/settings.txt at launch. Default = follow the global row. Controller
+// only, on Gageformer's advice (per-game is meant for the controller; 24-bit shading can cause issues),
+// although Ember also reads shading from a game's file.
+struct UIItem diaEmberGameConfig[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_EMBER_GAME_SETTINGS}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_CONTROLLER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_CONTROLLER, 1, 1, _STR_HINT_EMBER_GAME_SETTING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
+
+    // end of dialog
+    {UI_TERMINATOR}};
+
 // POPSTARTER overwrite confirmation: shown when POPSTARTER Network Settings would
 // overwrite existing resolved mc0:/ or mc1:/POPSTARTER/*.DAT files. Keep = preserve existing files
 // (no write, return to editor); Replace = overwrite with current dialog values;

@@ -690,7 +690,10 @@ static void itemExecTriangle(struct menu_item *curMenu)
         // affect a POPSTARTER handoff. libListViewActive also covers a forced-VCD Favourites proxy.
         if (itemSelectedView(curMenu, support) == LIB_VIEW_PS1) {
             if (menuCheckParentalLock() == 0) {
-                menuInitVcdMenu();
+                // The row names its core: a favourite by its stored kind, a device row by its extension.
+                int kind = (support->mode == FAV_MODE) ? favGetItemKind(curMenu->current->item.id) :
+                                                         itemFavKind(support, curMenu->current->item.id, curMenu->current->item.text);
+                menuInitVcdMenu(kind == FAV_KIND_CUE);
                 guiSwitchScreen(GUI_SCREEN_APP_MENU);
             }
             return;

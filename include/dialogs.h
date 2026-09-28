@@ -398,6 +398,7 @@ extern struct UIItem diaBdmaConfig[];
 extern struct UIItem diaVcdListConfig[];
 extern struct UIItem diaPopsNetConfig[];
 extern struct UIItem diaPopsOverwrite[];
+extern struct UIItem diaEmberGameConfig[];
 extern struct UIItem diaMmceCommConfig[];
 extern struct UIItem diaMmcePathConfig[];
 extern struct UIItem diaSecurityConfig[];

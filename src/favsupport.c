@@ -712,6 +712,11 @@ int favGetItemView(int id)
     return favValidIndex(id) ? favKindView(favArray[id].kind) : -1;
 }
 
+int favGetItemKind(int id)
+{
+    return favValidIndex(id) ? favArray[id].kind : -1;
+}
+
 static int favGetRowView(item_list_t *itemList, int id)
 {
     (void)itemList;
