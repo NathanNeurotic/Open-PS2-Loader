@@ -400,6 +400,126 @@ if apply_fn and not re.search(r'if \(nGlobal > 0\)', apply_fn):
 if apply_fn and not re.search(r'if \(nGame > 0\)', apply_fn):
     failures.append('cueApplySettings: a game\'s settings.txt must only be touched when that game has a setting')
 
+APPLY_HARNESS = r'''
+#include <stdio.h>
+#include <string.h>
+
+typedef struct
+{
+    int controllerPresent, controller;
+    int shadingPresent, shading;
+} config_set_t;
+
+typedef struct
+{
+    const char *key;
+    const char *value;
+} cue_setting_t;
+
+#define EMBER_GAMES_FOLDER "games"
+#define EMBER_SETTINGS_NAME "settings.txt"
+@DEFINES@
+@ENUMS@
+
+int gEmberDisplay = EMBER_SETTING_UNSET;
+int gEmberDither = EMBER_SETTING_UNSET;
+int gEmberShading = EMBER_SETTING_UNSET;
+int gEmberController = EMBER_SETTING_UNSET;
+
+static int globalTouches, gameTouches;
+
+static int configGetInt(config_set_t *cfg, const char *key, int *value)
+{
+    if (strcmp(key, CONFIG_ITEM_EMBER_CONTROLLER) == 0 && cfg->controllerPresent) {
+        *value = cfg->controller;
+        return 1;
+    }
+    if (strcmp(key, CONFIG_ITEM_EMBER_SHADING) == 0 && cfg->shadingPresent) {
+        *value = cfg->shading;
+        return 1;
+    }
+    return 0;
+}
+static const char *cueEmberFolder(void) { return "EMBER"; }
+static char cueSep(const char *prefix) { (void)prefix; return '/'; }
+static int cueNameLaunchable(const char *name) { return name != NULL && name[0] != 0; }
+static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, int count)
+{
+    (void)want;
+    (void)count;
+    if (strstr(path, "/games/") != NULL)
+        gameTouches++;
+    else
+        globalTouches++;
+}
+
+@FUNCTIONS@
+
+static int fails;
+static void reset(config_set_t *cfg)
+{
+    memset(cfg, 0, sizeof(*cfg));
+    gEmberDisplay = EMBER_SETTING_UNSET;
+    gEmberDither = EMBER_SETTING_UNSET;
+    gEmberShading = EMBER_SETTING_UNSET;
+    gEmberController = EMBER_SETTING_UNSET;
+    globalTouches = gameTouches = 0;
+}
+static void expect(const char *what, int globalWant, int gameWant)
+{
+    if (globalTouches != globalWant || gameTouches != gameWant) {
+        printf("FAIL %s: touched global=%d game=%d, want %d %d\n", what,
+               globalTouches, gameTouches, globalWant, gameWant);
+        fails++;
+    }
+}
+
+int main(void)
+{
+    config_set_t cfg;
+
+    reset(&cfg);
+    cueApplySettings("mass0:/", "Game", &cfg);
+    expect("empty global and game lists do no file I/O", 0, 0);
+
+    reset(&cfg);
+    gEmberDisplay = EMBER_DISPLAY_240;
+    cueApplySettings("mass0:/", "Game", &cfg);
+    expect("one global setting touches only main settings", 1, 0);
+
+    reset(&cfg);
+    cfg.shadingPresent = 1;
+    cfg.shading = EMBER_SHADING_24;
+    cueApplySettings("mass0:/", "Game", &cfg);
+    expect("one game setting touches only game settings", 0, 1);
+
+    reset(&cfg);
+    cfg.controllerPresent = 1;
+    cfg.controller = EMBER_CONTROLLER_DEFAULT;
+    cueApplySettings("mass0:/", "Game", &cfg);
+    expect("per-game Default touches game settings to remove its key", 0, 1);
+
+    reset(&cfg);
+    cfg.controllerPresent = 1;
+    cfg.controller = EMBER_CONTROLLER_D2A;
+    cueApplySettings("mass0:/", NULL, &cfg);
+    expect("no game identity means no game file access", 0, 0);
+
+    if (!fails)
+        printf("ember settings: apply guards prevent file access for empty setting lists\n");
+    return fails ? 1 : 0;
+}
+'''
+
+if apply_fn:
+    apply_functions = function_text(cue_c, 'src/cuesupport.c', 'static void cueWantSetting(') + apply_fn
+    apply_defines = (defines(config_h, 'include/config.h',
+                             ('CONFIG_ITEM_EMBER_CONTROLLER', 'CONFIG_ITEM_EMBER_SHADING')) +
+                     defines(opl_h, 'include/opl.h', ('EMBER_SETTING_UNSET',)))
+    if apply_functions.count('{') >= 2:
+        compile_and_run('ember_apply', APPLY_HARNESS.replace('@DEFINES@', apply_defines)
+                        .replace('@ENUMS@', ember_enums(opl_h)).replace('@FUNCTIONS@', apply_functions))
+
 if failures:
     print('Ember settings checks FAILED:')
     for failure in failures:
