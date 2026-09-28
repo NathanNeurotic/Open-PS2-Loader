@@ -1643,7 +1643,7 @@ footer {
   border-top: 1px solid var(--line);
 }
 
-/* ---- PS2 OSDSYS Cursor Orbs Canvas (Front Page) ---- */
+/* ---- PS2 OSDSYS Cursor Orbs Canvas (every page; assets/orbs.js) ---- */
 .ps2-orbs-canvas {
   position: fixed;
   top: 0;
