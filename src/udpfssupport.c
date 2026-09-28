@@ -378,8 +378,6 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
     char emberElf[256], biosPath[288];
     char launchName[CUE_NAME_MAX];
 
-    (void)configSet; // Ember titles carry no per-game loader settings
-
     if (cueName == NULL || cueName[0] == '\0')
         return;
     if (!cueNameLaunchable(cueName)) {
@@ -395,7 +393,7 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
         return;
     }
 
-    cueApplyDisplaySetting(udpfsPrefix); // best-effort marker, never a launch gate
+    cueApplySettings(udpfsPrefix, cueName, configSet); // best-effort marker, never a launch gate
     if (!cueGameHasImage(udpfsPrefix, cueName)) {
         guiMsgBox(_l(_STR_EMBER_NO_DISC), 0, NULL);
         return;

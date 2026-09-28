@@ -3035,6 +3035,17 @@ static int guiSettingsPopstarterUpdater(int modified)
     return 0;
 }
 
+// An Ember settings row after OK: the row's value if the user changed it, otherwise the setting as it
+// was. That is what keeps a setting never changed in RiptOPL UNSET -- showing Default and pressing OK
+// must not start managing a key someone may have written into settings.txt by hand.
+static int emberSettingFromRow(struct UIItem *ui, int id, int shown, int current)
+{
+    int picked = shown;
+
+    diaGetInt(ui, id, &picked);
+    return (picked != shown) ? picked : current;
+}
+
 // PS Emulation Settings: PS1-via-POPSTARTER launch config (optional POPSTARTER.ELF full path).
 //
 // This page COMPOSES a copy of diaVcdConfig + diaBdmaConfig and drives that copy, so a new row
@@ -3049,8 +3060,12 @@ static int guiSettingsShowPopstarter(void)
 {
     const struct UIItem *parts[] = {diaVcdConfig, diaBdmaConfig};
     const int skipIDs[] = {VCD_BDMA_BUTTON};
-    const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480p", NULL};
+    // "480" is 480i to Ember -- it always was; this row used to call it 480p.
+    const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480i", "480p", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
+    // A setting never changed in RiptOPL is UNSET and shows as Default; it only becomes stored when
+    // the user actually picks something else (see emberSettingFromRow).
+    int emberDisplayShown = (gEmberDisplay == EMBER_SETTING_UNSET) ? EMBER_DISPLAY_DEFAULT : gEmberDisplay;
     int result;
 
     if (ui == NULL)
@@ -3061,7 +3076,7 @@ static int guiSettingsShowPopstarter(void)
     // the template instead leaves the row on screen with no enum list and silently discards every
     // change, which is exactly the bug this line replaced.
     diaSetEnum(ui, CFG_EMBER_DISPLAY, emberDisplayStrs);
-    diaSetInt(ui, CFG_EMBER_DISPLAY, gEmberDisplay);
+    diaSetInt(ui, CFG_EMBER_DISPLAY, emberDisplayShown);
     guiSetGameViewPicker(ui);
 
     guiCorePathBegin(ui, CFG_POPSTARTER_PATH, popstarterPathEdit, sizeof(popstarterPathEdit), gPopstarterPath);
@@ -3086,7 +3101,7 @@ reshow_popstarter:
         int gameViewChanged = guiReadGameViewPicker(ui);
 
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
-        diaGetInt(ui, CFG_EMBER_DISPLAY, &gEmberDisplay);
+        gEmberDisplay = emberSettingFromRow(ui, CFG_EMBER_DISPLAY, emberDisplayShown, gEmberDisplay);
         snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", popstarterPathEdit);
         // Runtime ignores the retired picker, but keeping CUSTOM in the persisted compatibility
         // key means a downgrade still honours the full path the user entered here.

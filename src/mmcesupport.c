@@ -837,8 +837,6 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
     char emberElf[256], biosPath[288];
     char ps1Root[sizeof(mmcePrefix)];
 
-    (void)configSet; // an Ember title carries no per-game loader settings
-
     if (cueName == NULL || cueName[0] == '\0')
         return;
     if (!cueNameLaunchable(cueName)) {
@@ -870,7 +868,7 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
     // mis-filled folder otherwise drops the user into the PS1 BIOS shell with no explanation.
     // Leave Ember's display marker before the handoff, like the BDMA equip does for POPSTARTER.
     // Best-effort: never a launch gate.
-    cueApplyDisplaySetting(ps1Root);
+    cueApplySettings(ps1Root, cueName, configSet);
 
     if (!cueGameHasImage(ps1Root, cueName)) {
         guiMsgBox(_l(_STR_EMBER_NO_DISC), 0, NULL);

@@ -678,8 +678,6 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
 {
     char emberElf[256], biosPath[288];
 
-    (void)configSet; // an Ember title carries no per-game loader settings (see guigame.c)
-
     if (!gPCShareName[0] || cueName == NULL || cueName[0] == '\0')
         return;
 
@@ -696,7 +694,7 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
         guiMsgBox(_l(_STR_EMBER_BIOS_MISSING), 0, NULL);
         return;
     }
-    cueApplyDisplaySetting(ethPrefix); // best-effort marker, never a launch gate
+    cueApplySettings(ethPrefix, cueName, configSet); // best-effort marker, never a launch gate
     if (!cueGameHasImage(ethPrefix, cueName)) {
         guiMsgBox(_l(_STR_EMBER_NO_DISC), 0, NULL);
         return;
