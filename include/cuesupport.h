@@ -77,6 +77,7 @@
 #define __CUESUPPORT_H
 
 #include "include/iosupport.h"
+#include "include/config.h"      // config_set_t for cueApplySettings
 #include "include/supportbase.h" // base_game_info_t
 
 // Ember joins argv[1..] with spaces into a 192-byte buffer, then snprintf()s "games/%s" into a
