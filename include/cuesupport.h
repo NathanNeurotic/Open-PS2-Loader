@@ -138,9 +138,6 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList);
 // Best-effort: settings I/O never blocks launch, and a failed truncating write restores the original.
 void cueApplySettings(const char *devPrefix, const char *name, config_set_t *configSet);
 
-// Compatibility wrapper until each Ember launch path passes the selected folder name + config set.
-void cueApplyDisplaySetting(const char *devPrefix);
-
 // Does this game folder actually hold something Ember can mount -- a *.cue, *.bin or *.exe at its
 // top level? Costs ONE directory read, so callers use it on the LAUNCH path only (before deinit,
 // while a dialog can still be drawn) and never on the scan path, where it would be one directory

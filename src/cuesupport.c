@@ -548,11 +548,6 @@ void cueApplySettings(const char *devPrefix, const char *name, config_set_t *con
     }
 }
 
-void cueApplyDisplaySetting(const char *devPrefix)
-{
-    cueApplySettings(devPrefix, NULL, NULL);
-}
-
 int cueGameHasImage(const char *devPrefix, const char *name)
 {
     char gamesDir[288];

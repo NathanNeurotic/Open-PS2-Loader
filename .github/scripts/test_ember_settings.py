@@ -68,6 +68,7 @@ def compile_and_run(name, program):
 opl_c = read('src/opl.c')
 opl_h = read('include/opl.h')
 config_h = read('include/config.h')
+cuesupport_h = read('include/cuesupport.h')
 
 # --- Global settings: load, migration, save (src/opl.c) ------------------------------------------
 
@@ -443,7 +444,6 @@ static int configGetInt(config_set_t *cfg, const char *key, int *value)
 }
 static const char *cueEmberFolder(void) { return "EMBER"; }
 static char cueSep(const char *prefix) { (void)prefix; return '/'; }
-static int cueNameLaunchable(const char *name) { return name != NULL && name[0] != 0; }
 static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, int count)
 {
     (void)want;
@@ -506,6 +506,12 @@ int main(void)
     cueApplySettings("mass0:/", NULL, &cfg);
     expect("no game identity means no game file access", 0, 0);
 
+    reset(&cfg);
+    cfg.shadingPresent = 1;
+    cfg.shading = EMBER_SHADING_24;
+    cueApplySettings("mass0:/", "../x", &cfg);
+    expect("path-like game names do not touch game settings", 0, 0);
+
     if (!fails)
         printf("ember settings: apply guards prevent file access for empty setting lists\n");
     return fails ? 1 : 0;
@@ -513,13 +519,26 @@ int main(void)
 '''
 
 if apply_fn:
-    apply_functions = function_text(cue_c, 'src/cuesupport.c', 'static void cueWantSetting(') + apply_fn
+    apply_functions = (function_text(cue_c, 'src/cuesupport.c', 'int cueNameLaunchable(') +
+                       function_text(cue_c, 'src/cuesupport.c', 'static void cueWantSetting(') +
+                       apply_fn)
     apply_defines = (defines(config_h, 'include/config.h',
                              ('CONFIG_ITEM_EMBER_CONTROLLER', 'CONFIG_ITEM_EMBER_SHADING')) +
+                     defines(cuesupport_h, 'include/cuesupport.h', ('CUE_NAME_LAUNCH_MAX',)) +
                      defines(opl_h, 'include/opl.h', ('EMBER_SETTING_UNSET',)))
-    if apply_functions.count('{') >= 2:
+    if apply_functions.count('{') >= 3:
         compile_and_run('ember_apply', APPLY_HARNESS.replace('@DEFINES@', apply_defines)
                         .replace('@ENUMS@', ember_enums(opl_h)).replace('@FUNCTIONS@', apply_functions))
+
+# All five Ember launch legs call cueApplySettings with the game name and configSet.
+for rel in ('src/bdmsupport.c', 'src/ethsupport.c', 'src/hddsupport.c', 'src/mmcesupport.c', 'src/udpfssupport.c'):
+    content = read(rel)
+    if 'cueApplySettings(' not in content:
+        failures.append('%s: does not call cueApplySettings' % rel)
+    if 'cueApplyDisplaySetting(' in content:
+        failures.append('%s: still calls the legacy cueApplyDisplaySetting' % rel)
+if 'cueApplyDisplaySetting(' in read('src/cuesupport.c'):
+    failures.append('src/cuesupport.c: legacy cueApplyDisplaySetting is still present')
 
 if failures:
     print('Ember settings checks FAILED:')

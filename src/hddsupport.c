@@ -1879,7 +1879,7 @@ static void hddInstallPopstarterMcFromCommon(void)
 //   UNMOUNT_EXCEPTION keeps hddCleanUp from unmounting pfs0:.
 //   KEEPIOP_EXCEPTION keeps it from issuing PDIOC_CLOSEALL, which would drop every pfs descriptor in
 //   the IOP -- harmless before an IOP reset, fatal before a handoff that does not reset.
-static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char *part)
+static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char *part, config_set_t *configSet)
 {
     char emberElf[256], biosPath[288], mountSrc[APA_IDMAX + 6];
 
@@ -1932,7 +1932,7 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
         guiMsgBox(_l(_STR_EMBER_NO_DISC), 0, NULL);
         return;
     }
-    cueApplyDisplaySetting("pfs0:/"); // best-effort marker, never a launch gate -- needs the RDWR mount
+    cueApplySettings("pfs0:/", name, configSet); // best-effort marker, never a launch gate -- needs the RDWR mount
 
     // Past this point pfs0: stays where it is and IO stays blocked; deinit re-blocks anyway.
     deinit(UNMOUNT_EXCEPTION | KEEPIOP_EXCEPTION, itemList->mode);
@@ -2042,7 +2042,7 @@ static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
         return;
     }
     if (isEmber) {
-        hddDoLaunchEmber(itemList, resolvedName, resolvedPart);
+        hddDoLaunchEmber(itemList, resolvedName, resolvedPart, configSet);
         return;
     }
     hddDoLaunchVcd(itemList, resolvedName, resolvedPart);
@@ -2190,7 +2190,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         guiUnlock();
 
         if (isEmber)
-            hddDoLaunchEmber(itemList, vcdName, vcdPart);
+            hddDoLaunchEmber(itemList, vcdName, vcdPart, configSet);
         else
             hddDoLaunchVcd(itemList, vcdName, vcdPart);
         return;
