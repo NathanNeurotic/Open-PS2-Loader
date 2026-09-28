@@ -163,9 +163,15 @@ static void bdm_try_mount(struct bdm_mounts *mount)
     // copy 4096 bytes into a 512-byte buffer and corrupt IOP memory. Such a device cannot be mounted
     // anyway, so never offer it to a driver. Tell the callback once, so the loader can say why the
     // drive never appears (bdmevent counts refused devices in its snapshot).
+    // A sectorSize of 0 is a device that never reported one (usbmass_bd registers a USB device even when
+    // its warmup failed); it is refused the same way, but it is not a 4K drive and bdmevent does not
+    // count it as one.
     if (mount->bd->sectorSize != 512) {
         if (!mount->refused) {
-            M_PRINTF("%s%dp%d: %u-byte sectors are not supported, not mounting\n", mount->bd->name, mount->bd->devNr, mount->bd->parNr, mount->bd->sectorSize);
+            if (mount->bd->sectorSize == 0)
+                M_PRINTF("%s%dp%d: device never reported its sector size, not mounting\n", mount->bd->name, mount->bd->devNr, mount->bd->parNr);
+            else
+                M_PRINTF("%s%dp%d: %u-byte sectors are not supported, not mounting\n", mount->bd->name, mount->bd->devNr, mount->bd->parNr, mount->bd->sectorSize);
             mount->refused = 1;
             if (g_cb != NULL)
                 SetEventFlag(bdm_event, BDM_EVENT_CB_MOUNT);

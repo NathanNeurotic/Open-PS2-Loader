@@ -394,11 +394,17 @@ struct UIItem diaDeviceConfig[] = {
     {UI_BOOL, CFG_ENABLEILK, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    // Network Start Mode (Off/Manual/Auto) gates whether/when the stack loads; Protocol, Access and
-    // SMB Version live on the Network page now.
+    // Network Start Mode (Off/Manual/Auto) gates whether/when the stack loads. The indented Protocol
+    // row under it is the SAME setting as the Network page's Protocol row (both read and write
+    // gNetworkProtocol), shown here so the two network choices sit together; it greys while
+    // Connectivity is Off. Access and SMB Version stay on the Network page.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Network Connectivity", -1}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NETSTART, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      Protocol", -1}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_NETPROTOCOL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Applications Page Start Mode", -1}}},
