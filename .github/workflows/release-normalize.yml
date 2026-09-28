@@ -56,9 +56,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # GitHub's release API returns the odd transient HTTP 500; one of those on 48537d39 killed this
+          # job at the download and left rolling with its raw, un-normalized asset set. Retry instead.
+          retry() { for n in 1 2 3 4; do "$@" && return 0; echo "Attempt $n failed: $*"; sleep $((n * 15)); done; return 1; }
           rm -rf release-work variants-work package-work
           mkdir -p release-work
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release-work --clobber
+          retry gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release-work --clobber
           echo 'Downloaded assets:'
           find release-work -maxdepth 1 -type f -printf '%f\n' | sort
 
@@ -131,12 +134,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # GitHub's release API returns the odd transient HTTP 500; one of those on 48537d39 killed this
+          # job at the download and left rolling with its raw, un-normalized asset set. Retry instead.
+          retry() { for n in 1 2 3 4; do "$@" && return 0; echo "Attempt $n failed: $*"; sleep $((n * 15)); done; return 1; }
           for zip in release-work/RIPTOPL-*.zip; do
             [[ -f "$zip" ]] || continue
             case "$(basename "$zip")" in
               *-src.zip|RIPTOPL-LANGS-*.zip|RIPTOPL-DEBUG-*.zip) continue ;;
             esac
-            gh release upload "$TAG" "$zip" --repo "$GITHUB_REPOSITORY" --clobber
+            retry gh release upload "$TAG" "$zip" --repo "$GITHUB_REPOSITORY" --clobber
           done
 
       - name: Remove floating build files and manifests
