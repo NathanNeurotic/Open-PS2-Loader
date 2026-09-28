@@ -224,22 +224,31 @@ exactly as it does for a <code>*.VCD</code>. Files inside can be named anything;
 per-game memory cards (<code>MC1.vmc</code>, <code>MC2.vmc</code>) into that same game folder, so it
 has to be on writable media.</p>
 
-<h3>Ember display mode</h3>
-<p>Ember can output 240p or 480p, and there is a setting for it at
-<b>Settings → PS Emulation Settings → Ember Display Mode</b>. Ember's <code>settings.txt</code> is
-an optional file and RiptOPL keeps it that way:</p>
+<h3>Ember settings</h3>
+<p>Ember reads an optional <code>settings.txt</code>. RiptOPL can write it for you from four rows on
+<b>Settings → PS Emulation Settings</b>, and a fifth per game:</p>
 
 <table data-sortable>
-  <thead><tr><th>Value</th><th>What RiptOPL does</th></tr></thead>
+  <thead><tr><th>Row</th><th>Values</th><th>Written to</th></tr></thead>
   <tbody>
-    <tr><td><b>Default</b></td><td>Never creates the file. If one exists, the display key is removed from it — and the file itself is removed when that key was all it held.</td></tr>
-    <tr><td><b>240p</b> / <b>480p</b></td><td>Writes the key to <code>&lt;device&gt;:/EMBER/settings.txt</code> when you launch an Ember title, on that device only — creating the file if it is not there, updating it in place if it is.</td></tr>
+    <tr><td><b>Ember Display Mode</b></td><td>Default / 240p / 480i / 480p</td><td><code>&lt;device&gt;:/EMBER/settings.txt</code> (<code>display</code>). <b>480p</b> needs component or HDMI — composite shows no picture — so choosing it asks first.</td></tr>
+    <tr><td><b>Ember Dithering</b></td><td>Default / On / Off</td><td><code>EMBER/settings.txt</code> (<code>dither</code>)</td></tr>
+    <tr><td><b>Ember Shading</b></td><td>Default / 15-bit / 24-bit (experimental)</td><td><code>EMBER/settings.txt</code> (<code>shading</code>). 24-bit can cause issues.</td></tr>
+    <tr><td><b>Ember Controller</b></td><td>Default / Auto / Analog / D2A</td><td><code>EMBER/settings.txt</code> (<code>controller</code>)</td></tr>
+    <tr><td><b>Triangle → Ember Game Settings</b> (per game)</td><td>Default / Auto / Analog / D2A</td><td><code>EMBER/games/&lt;Folder Name&gt;/settings.txt</code> (<code>controller</code>), overriding the global row for that game. Saved in the game's <code>CFG/&lt;Folder Name&gt;.cfg</code>; on a Favourites entry it edits the same setting as on the device page.</td></tr>
   </tbody>
 </table>
 
-<p>Any other lines in that file — comments, or keys a future Ember adds — are preserved throughout.
-Ember's own default is 480p, so leaving this on <b>Default</b> and having no file mean the same
-thing.</p>
+<p><b>RiptOPL only touches a setting you have changed in RiptOPL.</b> A row left on <b>Default</b>
+leaves that key alone in every file, so a <code>settings.txt</code> written by hand keeps working
+exactly as written. A row you change is written when you launch an Ember title, on that device
+only — creating the file if it is not there, updating it in place if it is. Changing a row back to
+<b>Default</b> removes the key again (and the file, if that key was all it held), so Ember's own
+default — or, for a game, the global row — applies. Every other line in the file is kept.</p>
+
+<p>Controller is the only per-game setting, on Ember's author's advice: per-game settings are meant
+for the controller, and 24-bit shading can cause issues. Earlier builds labelled Ember's
+<code>480</code> as "480p"; it has always been 480i, and the 480i / 480p rows now say so.</p>
 
 <h3>Device support</h3>
 <p>Ember titles are supported on <b>USB, MX4SIO, iLink, exFAT-ATA, MMCE, SMB, APA/PFS HDD,
@@ -407,7 +416,8 @@ hanging silently.</p>
   <li>The per-game Loader Core, GSM, Cheats, PADEMU, and OSD options do not apply to PS1 games;
   POPSTARTER ignores them and the UI reflects this. <b>Triangle</b> on a PS1 title offers
   <b>Global PS Emulation Settings</b> instead, which opens the global PS emulation settings page, plus
-  <b>Rename</b>.</li>
+  <b>Rename</b>. An Ember title also offers <b>Ember Game Settings</b> (its Ember Controller; see
+  <a href="#ember">Ember</a>).</li>
   <li>SMB PS1 requires POPSTARTER's own network modules on the memory card in addition to the
   network config files.</li>
 </ul>

@@ -122,7 +122,7 @@ sizes are on <a href="#general-settings">General &amp; System</a>.</p>
 <table data-sortable>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td>Default Menu</td><td>BDM Games / ETH Games / HDD Games / Apps / MMCE / Favorites</td><td>Which tab is shown first on boot. Default <em>Apps</em>.</td></tr>
+<tr><td>Default Menu</td><td>BDM Games / ETH Games / HDD Games / Apps / MMCE / Favorites</td><td>Which tab is shown first on boot. Default <em>Apps</em>. <em>ETH Games</em> means the network: it opens whichever page the chosen <em>Protocol</em> puts its games on (the UDPFS or HTTP page, or for UDPBD / UDPFS IMG the network drive's page if it has attached by the time the menu appears).</td></tr>
 <tr><td>HDD (APA) Start Mode</td><td>Off / Manual / Auto</td><td>OPL's native APA/PFS HDD mode. Coexists with <em>Internal HDD (exFAT)</em>: one shared <code>ata_bd</code> stack serves both, and each drive is matched by its partition layout at mount time (APA is refused on an MBR/GPT/exFAT disk). See <a href="hdd.html">Internal HDD</a>.</td></tr>
 <tr><td>MMCE Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for MMCE (SD2PSX / MemCard PRO2) game loading. See <a href="mmce.html">MMCE</a>.</td></tr>
 <tr><td>MMCE Settings</td><td>[sub-screen]</td><td>Slot, IGR bootcard, GameID and timing options for MMCE. See <a href="#mmce-settings">MMCE Settings</a> below.</td></tr>
@@ -131,7 +131,8 @@ sizes are on <a href="#general-settings">General &amp; System</a>.</p>
 <tr><td>USB</td><td>Off / On</td><td>The USB mass-storage driver. See <a href="usb.html">USB / MX4SIO / iLink</a>.</td></tr>
 <tr><td>MX4SIO</td><td>Off / On</td><td>The MX4SIO SD-card adapter driver.</td></tr>
 <tr><td>iLink</td><td>Off / On</td><td>The iLink (IEEE 1394) mass-storage driver.</td></tr>
-<tr><td>Network Connectivity</td><td>Off / Manual / Auto</td><td>Whether and when the network stack starts. <em>Off</em> (the default) leaves the network adapter alone; <em>Manual</em> waits until you open the tab; <em>Auto</em> starts immediately. What it connects to is set on the <a href="#network-settings">Network</a> page.</td></tr>
+<tr><td>Network Connectivity</td><td>Off / Manual / Auto</td><td>Whether and when the network stack starts. <em>Off</em> (the default) leaves the network adapter alone; <em>Manual</em> waits until you open the tab; <em>Auto</em> starts immediately. What it connects to is the <em>Protocol</em> row below it.</td></tr>
+<tr><td>&nbsp;&nbsp;&nbsp;Protocol</td><td>SMB / UDPFS / UDPBD / HTTP</td><td>Indented under Network Connectivity. The same setting as <a href="#network-settings">Network &rarr; Protocol</a>: changing it on either page changes both. Greyed while Connectivity is <em>Off</em>; the protocol you chose is kept and comes back when you turn Connectivity on again. <em>Access</em> (Files / IMG) stays on the Network page.</td></tr>
 <tr><td>Applications Page Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for the Apps tab. See <a href="apps.html">Apps</a>.</td></tr>
 <tr><td>Favorites Page Start Mode</td><td>Off / Manual / Auto</td><td>Startup mode for the Favorites tab. <em>Off</em> hides the tab. See <a href="favourites.html">Favorites</a>.</td></tr>
 </tbody>
@@ -239,7 +240,7 @@ hidden.</p>
 <table data-sortable>
 <thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
 <tbody>
-<tr><td>Protocol</td><td>SMB / UDPFS / UDPBD / HTTP</td><td>Only one protocol can own the network adapter in a session. First activation can start live; changing an already loaded protocol needs a restart. UDPFS and UDPBD need a static PS2 IP. See <a href="network-boot.html">Network Boot</a> and <a href="http.html">HTTP</a>.</td></tr>
+<tr><td>Protocol</td><td>SMB / UDPFS / UDPBD / HTTP</td><td>Also shown, indented under Network Connectivity, on <a href="#game-sources">Game Sources</a>; it is one setting. Only one protocol can own the network adapter in a session. First activation can start live; changing an already loaded protocol needs a restart. UDPFS and UDPBD need a static PS2 IP. See <a href="network-boot.html">Network Boot</a> and <a href="http.html">HTTP</a>.</td></tr>
 <tr><td>Access</td><td>Files / IMG</td><td><em>Files</em> serves loose ISOs from a folder (<code>-bsd=udpfs</code>); <em>IMG</em> serves a disk image as a block device (<code>-bsd=udpfsbd</code>). Only UDPFS lets you choose: SMB and HTTP lock it to <em>Files</em>, UDPBD to <em>IMG</em>.</td></tr>
 <tr><td>SMB Version</td><td>SMBv1 / SMB2</td><td>Which SMB dialect to speak. <em>SMBv1</em> is the default. Greyed unless <em>Protocol</em> is SMB, but the value is kept. Applies to browsing and in-game reading, from the next boot. See <a href="smb.html">SMB</a>.</td></tr>
 <tr><td>Advanced Options</td><td>Off / On</td><td>Makes <em>Ethernet Link Mode</em> and the SMB <em>Port</em> editable. On by default in RiptOPL.</td></tr>
@@ -417,7 +418,10 @@ This is an OPL core feature. See <a href="per-game-settings.html#osd-language">P
 <tr><td>PS2/PS1 Game Display</td><td>Both (L3) / Mixed / PS2 / PS1</td><td>The same setting as on <a href="#display-settings">Interface</a>.</td></tr>
 <tr><td>POPSTARTER.ELF Path</td><td>text (full path)</td><td>Where <code>POPSTARTER.ELF</code> is. <em>&lt;not set&gt;</em> (the default) looks in the VCD's own <code>POPS</code> folder, then <code>mc0:</code>/<code>mc1:</code>; APA HDD VCDs use <code>__common/POPS</code>. A path you set is tried first, on any device, and falls back the same way when it is unavailable. The editor takes the whole path. Replaces the old <em>POPSTARTER.ELF Device</em> picker, whose device choice becomes the matching path when you upgrade. SMB PS1 VCDs also use an <code>SB.&lt;name&gt;.ELF</code> selector.</td></tr>
 <tr><td>RetroGEM Game ID</td><td>Off / On</td><td>Draws the game-ID barcode read by Pixel FX / RetroGEM / PS2Digital when a PS1 VCD launches. On by default.</td></tr>
-<tr><td>Ember Display Mode</td><td>Default / 240p / 480p</td><td>Output mode Ember uses. 240p or 480p is written to <code>settings.txt</code> in the launching device's <code>EMBER</code> folder; <em>Default</em> removes that setting again, and the file too if it held nothing else.</td></tr>
+<tr><td>Ember Display Mode</td><td>Default / 240p / 480i / 480p</td><td>Output mode Ember uses, written to <code>settings.txt</code> in the launching device's <code>EMBER</code> folder. <em>480p</em> needs component or HDMI (composite shows no picture), so choosing it asks first. RiptOPL used to label 480i as "480p"; it has always written 480i.</td></tr>
+<tr><td>Ember Dithering</td><td>Default / On / Off</td><td>Ember's dithering, written to the same <code>settings.txt</code>.</td></tr>
+<tr><td>Ember Shading</td><td>Default / 15-bit / 24-bit (experimental)</td><td>Ember's colour depth, written to the same <code>settings.txt</code>. 24-bit is experimental and can cause issues in some games.</td></tr>
+<tr><td>Ember Controller</td><td>Default / Auto / Analog / D2A</td><td>Ember's controller mode, written to the same <code>settings.txt</code>. Usually best set per game with <b>Triangle &rarr; Ember Game Settings</b>, which overrides this row. For all four Ember rows, <em>Default</em> leaves a hand-written value alone, and changing a row back to <em>Default</em> removes it. See <a href="ps1-vcd.html#ember">Ember</a>.</td></tr>
 <tr><td>VCD Games List Settings</td><td>[sub-screen]</td><td>See <a href="#vcd-list-settings">below</a>.</td></tr>
 <tr><td>POPSTARTER Network Settings</td><td>[sub-screen]</td><td>POPSTARTER's own network files, needed for PS1 over SMB. See <a href="#pops-network-settings">POPSTARTER Network Settings</a>.</td></tr>
 <tr><td>VCD BDMA Apply on Launch</td><td>Off / On</td><td>On by default. Launching a PS1 VCD then equips its matching exFAT driver on the memory card first, and <em>BDMA Source</em> and <em>BDMA Mode</em> are hidden. Turn it off to manage those yourself.</td></tr>
@@ -518,6 +522,7 @@ supplying only some of the eight falls back to the built-in sound for the rest. 
 <li><b>Controller Emulation</b> and <b>Controller Macros</b> — per-game pad emulation and macros. See <a href="pademu.html">PADEMU</a>.</li>
 <li><b>OSD Settings</b> — OSD language, screen size and video mode. See <a href="#osd-settings">OSD Settings</a> above.</li>
 <li><b>Save Changes</b>, <b>Test Changes</b> and <b>Remove Settings</b> — save this game's settings, launch with them unsaved, or delete them.</li>
+<li>On a PS1 title the menu is shorter: <b>Global PS Emulation Settings</b>, <b>Ember Game Settings</b> (Ember titles only: this game's Ember Controller) and <b>Rename</b>. See <a href="ps1-vcd.html#ember">Ember</a>.</li>
 <li><b>Rename</b> and <b>Delete</b> — only with <em>Write Operations</em> on, and never for PS2 games on the internal HDD. See <a href="hdd.html#disk-safety">Disk safety</a>.</li>
 </ul>
 
