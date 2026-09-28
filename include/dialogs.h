@@ -98,7 +98,10 @@ enum UI_ITEMS {
     CFG_LBL_POPSTARTER_PATH,
     CFG_POPSTARTER_PATH,
     CFG_POPSTARTER_RETROGEM_GAMEID,
-    CFG_EMBER_DISPLAY, // Ember's own display mode, written to its settings.txt at launch
+    CFG_EMBER_DISPLAY,    // Ember's own display mode, written to its settings.txt at launch
+    CFG_EMBER_DITHER,     // Ember settings.txt "dither"
+    CFG_EMBER_SHADING,    // Ember settings.txt "shading"
+    CFG_EMBER_CONTROLLER, // Ember settings.txt "controller"
 
     CFG_BDMA_APPLY,
     CFG_LBL_BDMASOURCE,

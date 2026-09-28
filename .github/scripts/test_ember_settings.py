@@ -303,6 +303,23 @@ int main(void)
 }
 '''
 
+# Every Ember row is on the PS1 page, gets its enum on the composed `ui`, and is read back through
+# emberSettingFromRow -- a row wired any other way renders empty or never saves (see gui.c).
+dialogs_c = read('src/dialogs.c')
+page = function_text(gui_c, 'src/gui.c', 'static int guiSettingsShowPopstarter(')
+for row, var in (('CFG_EMBER_DISPLAY', 'gEmberDisplay'), ('CFG_EMBER_DITHER', 'gEmberDither'),
+                 ('CFG_EMBER_SHADING', 'gEmberShading'), ('CFG_EMBER_CONTROLLER', 'gEmberController')):
+    if f'{{UI_ENUM, {row},' not in dialogs_c:
+        failures.append(f'src/dialogs.c: no {row} row on the PS1 page')
+    if page and f'diaSetEnum(ui, {row},' not in page:
+        failures.append(f'src/gui.c: {row} gets no enum list on the composed page')
+    if page and f'emberSettingFromRow(ui, {row},' not in page:
+        failures.append(f'src/gui.c: {row} is not read back through emberSettingFromRow')
+    if page and f'{var} = emberSettingShown' not in page and f'Shown = emberSettingShown({var})' not in page:
+        failures.append(f'src/gui.c: {var} is not shown through emberSettingShown')
+if page and '_STR_EMBER_480P_CONFIRM' not in page:
+    failures.append('src/gui.c: choosing Ember 480p does not ask for confirmation')
+
 row_function = function_text(gui_c, 'src/gui.c', 'static int emberSettingFromRow(')
 if row_function:
     compile_and_run('ember_row', ROW_HARNESS.replace('@FUNCTIONS@', row_function))

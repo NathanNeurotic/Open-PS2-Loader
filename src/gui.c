@@ -3046,6 +3046,12 @@ static int emberSettingFromRow(struct UIItem *ui, int id, int shown, int current
     return (picked != shown) ? picked : current;
 }
 
+// What an Ember row shows for a stored setting: UNSET (never changed in RiptOPL) shows as Default.
+static int emberSettingShown(int current)
+{
+    return (current == EMBER_SETTING_UNSET) ? 0 : current;
+}
+
 // PS Emulation Settings: PS1-via-POPSTARTER launch config (optional POPSTARTER.ELF full path).
 //
 // This page COMPOSES a copy of diaVcdConfig + diaBdmaConfig and drives that copy, so a new row
@@ -3062,10 +3068,16 @@ static int guiSettingsShowPopstarter(void)
     const int skipIDs[] = {VCD_BDMA_BUTTON};
     // "480" is 480i to Ember -- it always was; this row used to call it 480p.
     const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480i", "480p", NULL};
+    const char *emberDitherStrs[] = {_l(_STR_DEFAULT), _l(_STR_ON), _l(_STR_OFF), NULL};
+    const char *emberShadingStrs[] = {_l(_STR_DEFAULT), "15-bit", _l(_STR_EMBER_SHADING_24), NULL};
+    const char *emberControllerStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "Analog", "D2A", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
     // A setting never changed in RiptOPL is UNSET and shows as Default; it only becomes stored when
     // the user actually picks something else (see emberSettingFromRow).
-    int emberDisplayShown = (gEmberDisplay == EMBER_SETTING_UNSET) ? EMBER_DISPLAY_DEFAULT : gEmberDisplay;
+    int emberDisplayShown = emberSettingShown(gEmberDisplay);
+    int emberDitherShown = emberSettingShown(gEmberDither);
+    int emberShadingShown = emberSettingShown(gEmberShading);
+    int emberControllerShown = emberSettingShown(gEmberController);
     int result;
 
     if (ui == NULL)
@@ -3077,6 +3089,12 @@ static int guiSettingsShowPopstarter(void)
     // change, which is exactly the bug this line replaced.
     diaSetEnum(ui, CFG_EMBER_DISPLAY, emberDisplayStrs);
     diaSetInt(ui, CFG_EMBER_DISPLAY, emberDisplayShown);
+    diaSetEnum(ui, CFG_EMBER_DITHER, emberDitherStrs);
+    diaSetInt(ui, CFG_EMBER_DITHER, emberDitherShown);
+    diaSetEnum(ui, CFG_EMBER_SHADING, emberShadingStrs);
+    diaSetInt(ui, CFG_EMBER_SHADING, emberShadingShown);
+    diaSetEnum(ui, CFG_EMBER_CONTROLLER, emberControllerStrs);
+    diaSetInt(ui, CFG_EMBER_CONTROLLER, emberControllerShown);
     guiSetGameViewPicker(ui);
 
     guiCorePathBegin(ui, CFG_POPSTARTER_PATH, popstarterPathEdit, sizeof(popstarterPathEdit), gPopstarterPath);
@@ -3101,7 +3119,15 @@ reshow_popstarter:
         int gameViewChanged = guiReadGameViewPicker(ui);
 
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
-        gEmberDisplay = emberSettingFromRow(ui, CFG_EMBER_DISPLAY, emberDisplayShown, gEmberDisplay);
+        int emberDisplay = emberSettingFromRow(ui, CFG_EMBER_DISPLAY, emberDisplayShown, gEmberDisplay);
+        // 480p is the one choice that can blank the screen (composite shows nothing): ask first, and
+        // keep the previous mode if the answer is no.
+        if (emberDisplay == EMBER_DISPLAY_480P && gEmberDisplay != EMBER_DISPLAY_480P && !guiMsgBox(_l(_STR_EMBER_480P_CONFIRM), 1, NULL))
+            emberDisplay = gEmberDisplay;
+        gEmberDisplay = emberDisplay;
+        gEmberDither = emberSettingFromRow(ui, CFG_EMBER_DITHER, emberDitherShown, gEmberDither);
+        gEmberShading = emberSettingFromRow(ui, CFG_EMBER_SHADING, emberShadingShown, gEmberShading);
+        gEmberController = emberSettingFromRow(ui, CFG_EMBER_CONTROLLER, emberControllerShown, gEmberController);
         snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", popstarterPathEdit);
         // Runtime ignores the retired picker, but keeping CUSTOM in the persisted compatibility
         // key means a downgrade still honours the full path the user entered here.

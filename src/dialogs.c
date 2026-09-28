@@ -449,6 +449,18 @@ struct UIItem diaVcdConfig[] = {
     {UI_SPACER},
     {UI_ENUM, CFG_EMBER_DISPLAY, 1, 1, _STR_HINT_EMBER_DISPLAY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_DITHER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_DITHER, 1, 1, _STR_HINT_EMBER_DITHER, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_SHADING}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_SHADING, 1, 1, _STR_HINT_EMBER_SHADING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_CONTROLLER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_CONTROLLER, 1, 1, _STR_HINT_EMBER_CONTROLLER, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
 
 
     // Legacy sub-pages remain callable outside the Settings shell; the peer page skips this row

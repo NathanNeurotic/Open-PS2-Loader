@@ -372,14 +372,16 @@ This build layers several features on top of upstream OPL:
   supply your own, from hardware and media you lawfully own. Please report Ember problems to *us*
   first rather than to Gageformer: the launching is ours.
 
-  **Ember display mode.** The **PS Emulation Settings** page carries an *Ember Display Mode* setting
-  (**Default** / **240p** / **480p**). Ember's `settings.txt` is an optional file, and this keeps it
-  that way. Choose **240p** or **480p** and RiptOPL writes that key into
-  `<device>:/EMBER/settings.txt` when you launch an Ember title — creating the file if it is not
-  there, updating it in place if it is, and on the launching device only. Choose **Default** and it
-  goes back to having no setting: the key is removed, and so is the file if that key was all it
-  held. Any other lines you or a future Ember put in there are preserved throughout, and *Default*
-  never creates a file that was not already there.
+  **Ember settings.** The **PS Emulation Settings** page carries four Ember rows: *Ember Display Mode*
+  (**Default** / **240p** / **480i** / **480p**), *Ember Dithering* (**Default** / **On** / **Off**),
+  *Ember Shading* (**Default** / **15-bit** / **24-bit (experimental)**) and *Ember Controller*
+  (**Default** / **Auto** / **Analog** / **D2A**). When you launch an Ember title, RiptOPL writes
+  those settings into `<device>:/EMBER/settings.txt` on the launching device, creating the file if it is not
+  there and updating it in place if it is. **480p** needs component or HDMI (composite shows no
+  picture), so picking it asks first. RiptOPL only touches a setting you have changed here: a row
+  left on **Default** leaves that key alone, so a `settings.txt` written by hand keeps working;
+  changing a row back to **Default** removes the key again (and the file, if that was all it held).
+  Every other line in the file is kept.
 
 - **Alternate POPSTARTER builds:** the release package ships
   `POPS/POPSTARTER VERSIONS/` containing five builds of POPSTARTER — **MAIN**, **DEBUG**,

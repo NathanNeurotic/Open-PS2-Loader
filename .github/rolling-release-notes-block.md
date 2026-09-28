@@ -30,8 +30,9 @@ appears twice.
   into that folder, so the device must be writable. On the internal APA drive, `EMBER/` goes on its
   own `__.EMBER` partition (`__.EMBER0`–`__.EMBER9` for more), while cover art stays on your OPL
   partition.
-- **Ember display mode:** *PS Emulation Settings → Ember Display Mode*. 240p or 480p writes
-  `EMBER/settings.txt` on that device at launch; Default removes the key again.
+- **Ember settings:** *PS Emulation Settings → Ember Display Mode / Dithering / Shading / Controller*.
+  A row you change is written to `EMBER/settings.txt` on that device at launch; a row never changed
+  leaves a hand-written setting alone, and changing it back to Default removes the key.
 - **UDPFS and UDPBD** list Ember titles only: POPSTARTER's IOP reset can't restore either network
   transport.
 - **POPSTARTER builds:** `POPS/POPSTARTER VERSIONS/` holds MAIN, DEBUG, USBDELAY, USBDELAY_DEBUG and
