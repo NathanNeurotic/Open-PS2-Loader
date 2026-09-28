@@ -175,13 +175,13 @@ If your share contains more than one OPL layout — for example you have multipl
 
 <h2 id="enable-smb">3. Enable SMB in Game Sources</h2>
 
-<p>The <b>Network</b> page stores the <em>how</em>: protocol, address and credentials. <b>Game Sources</b> stores the <em>whether</em>. For SMB, set <b>Network Connectivity</b> on Game Sources to Manual or Auto, then on the Network page set <b>Protocol</b> to SMB and <b>SMB Version</b> to the dialect your server speaks:</p>
+<p>The <b>Network</b> page stores the <em>how</em>: protocol, address and credentials. <b>Game Sources</b> stores the <em>whether</em>. For SMB, set <b>Network Connectivity</b> on Game Sources to Manual or Auto and the <b>Protocol</b> under it to SMB, then on the Network page set <b>SMB Version</b> to the dialect your server speaks:</p>
 
 <table data-sortable>
   <thead><tr><th>Row</th><th>Values</th><th>What it does</th></tr></thead>
   <tbody>
     <tr><td><b>Network Connectivity</b> (Game Sources)</td><td>Off / Manual / Auto</td><td>The network <em>start mode</em>, using the same three options as every other device. <b>Off</b> loads no network transport at all. <b>Manual</b> registers the <b>ETH Games</b> tab and connects when you navigate into it — boot stays fast and you only pay the connection cost on entry. <b>Auto</b> brings the stack up during startup instead.</td></tr>
-    <tr><td><b>Protocol</b> (Network)</td><td>SMB / UDPFS / UDPBD / HTTP</td><td>Which transport owns the single Ethernet adapter. <b>SMB</b> is the network-share client documented on this page; UDPFS and UDPBD select Network Boot instead — see <a href="network-boot.html">Network Boot</a>.</td></tr>
+    <tr><td><b>Protocol</b> (Game Sources, under Network Connectivity, and Network)</td><td>SMB / UDPFS / UDPBD / HTTP</td><td>Which transport owns the single Ethernet adapter. One setting shown on both pages. <b>SMB</b> is the network-share client documented on this page; UDPFS and UDPBD select Network Boot instead — see <a href="network-boot.html">Network Boot</a>.</td></tr>
     <tr><td><b>SMB Version</b> (Network)</td><td>SMBv1 / SMB2</td><td>Which SMB dialect to speak. <b>SMBv1</b> is the default. Live only while <b>Protocol</b> is SMB, and greyed out otherwise — but the value is kept, so detouring through UDPFS and back does not silently reset you to SMBv1. See <a href="#smb-version">SMB Version</a> below.</td></tr>
     <tr><td><b>Access</b> (Network)</td><td>Files / IMG</td><td>Only meaningful for UDPFS. Under <b>SMB</b> it is locked to <b>Files</b> and greyed out; under UDPBD it is locked to <b>IMG</b>. You never need to touch it for an SMB setup.</td></tr>
   </tbody>
@@ -383,4 +383,5 @@ The <b>SMB Version</b> setting governs OPL's own browsing and its in-game reader
   <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
 </footer>
 <script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
 </body></html>

@@ -70,21 +70,23 @@
   </nav>
   <main class="content">
 <h1>Network Boot (SMB / UDP)</h1>
-<p class="lead">UDPFS and UDPBD stream PS2 games from a PC and require Neutrino. Set <b>Network Connectivity</b> (Off / Manual / Auto) in <b>Game Sources</b>, then choose <b>Protocol</b> in <b>Network</b>. The picker contains SMB / UDPFS / UDPBD / HTTP. SMB and <a href="http.html">HTTP</a> use OPL's own core; HTTP has separate setup and limits.</p>
+<p class="lead">UDPFS and UDPBD stream PS2 games from a PC and require Neutrino. Set <b>Network Connectivity</b> (Off / Manual / Auto) in <b>Game Sources</b> and choose the <b>Protocol</b> indented under it (the same row is on the <b>Network</b> page). The picker contains SMB / UDPFS / UDPBD / HTTP. SMB and <a href="http.html">HTTP</a> use OPL's own core; HTTP has separate setup and limits.</p>
 
 <div class="callout info"><div class="h">Four rows, Off by default</div>
 The old <b>Network Boot</b> ON/OFF toggle and the separate <b>Net Boot Protocol</b> picker are retired
 placeholders. The network is now four rows. <b>Network Connectivity</b>, on Game Sources, is an
-<b>Off / Manual / Auto</b> start mode and defaults to <b>Off</b> (no network device). On the Network page,
-<b>Protocol</b> chooses <b>SMB / UDPFS / UDPBD / HTTP</b>, and <b>SMB Version</b> and <b>Access</b>
-qualify the chosen protocol. UDPFS needs a static PS2 IP and a matching
+<b>Off / Manual / Auto</b> start mode and defaults to <b>Off</b> (no network device).
+<b>Protocol</b> chooses <b>SMB / UDPFS / UDPBD / HTTP</b>; it sits indented under Network Connectivity on
+Game Sources and on the Network page, as one setting. <b>SMB Version</b> and <b>Access</b>, on the Network
+page, qualify the chosen protocol. Turning Connectivity <b>Off</b> keeps your protocol for when you turn it
+back on. UDPFS needs a static PS2 IP and a matching
 PC-side server. Pick a protocol only when you have those pieces in place. Local devices
 (USB / internal HDD / MMCE) are independent and browse alongside whichever network protocol you choose.
 </div>
 
 <h2 id="protocols">The Network rows</h2>
 
-<p><b>Game Sources</b> holds <b>Network Connectivity</b>. <b>Network</b> holds <b>Protocol</b>, <b>SMB Version</b> and <b>Access</b>. The SMB version is editable for SMB. Access is Files/IMG for UDPFS, locked to Files for SMB/HTTP and IMG for UDPBD. The first protocol can start while the NIC is unused; switching an already loaded protocol requires restarting RiptOPL.</p>
+<p><b>Game Sources</b> holds <b>Network Connectivity</b> with <b>Protocol</b> indented under it. <b>Network</b> holds the same <b>Protocol</b> row, plus <b>SMB Version</b> and <b>Access</b>. The SMB version is editable for SMB. Access is Files/IMG for UDPFS, locked to Files for SMB/HTTP and IMG for UDPBD. The first protocol can start while the NIC is unused; switching an already loaded protocol requires restarting RiptOPL.</p>
 
 <table data-sortable>
 <thead><tr><th>Choice</th><th>Wire protocol</th><th>On the PS2</th><th>PC server</th><th>Core</th></tr></thead>
@@ -318,8 +320,9 @@ way to acquire a lease later.</p>
 <div class="step">
 <h3>Pick your Network Protocol (and Access)</h3>
 <p>In <b>Settings &rarr; Game Sources</b>, set <b>Network Connectivity</b> to <b>Manual</b> or
-<b>Auto</b>. Then, on <b>Settings &rarr; Network</b>, set <b>Protocol</b> to <b>SMB</b>, <b>UDPFS</b>, or
-<b>UDPBD</b>. Set Network Connectivity back to <b>Off</b> to disable networking. When Protocol = <b>SMB</b>, pick the <b>SMB Version</b> — <b>SMBv1</b>
+<b>Auto</b>, and set the <b>Protocol</b> under it (or on <b>Settings &rarr; Network</b>) to <b>SMB</b>,
+<b>UDPFS</b>, <b>UDPBD</b> or <b>HTTP</b>. Set Network Connectivity back to <b>Off</b> to disable networking;
+the protocol is kept for when you turn it back on. When Protocol = <b>SMB</b>, pick the <b>SMB Version</b> — <b>SMBv1</b>
 (default) or <b>SMB2</b>. The <b>Access</b> row (<b>Files</b> / <b>IMG</b>) is always present, but it is
 only free to change under <b>UDPFS</b>: under SMB it is locked to <b>Files</b> and under UDPBD to
 <b>IMG</b>, greyed in both cases. Because the PS2 has a single
@@ -404,7 +407,8 @@ independent of these rows and browse alongside whichever network protocol you pi
 <table data-sortable>
 <thead><tr><th>Key</th><th>Type</th><th>Default</th><th>Meaning</th></tr></thead>
 <tbody>
-<tr><td><code>network_protocol</code></td><td>int (0–4)</td><td><code>0</code></td><td><b>Authoritative selector.</b> User-facing: <code>0</code>=Off, <code>1</code>=SMB, <code>2</code>=UDPFS (Access = Files). <code>3</code>=UDPFSBD is the internal value for Access = IMG — the picker maps both <code>2</code> and <code>3</code> onto the single "UDPFS" menu entry, and the <b>Access</b> row picks between them. <code>4</code>=UDPBD is a <b>first-class value</b> for the retained UDPBD (SUDPBDv2) choice: it is <b>preserved as-is on load</b>, never migrated, so users still on the old <code>udpbd-server</code> keep it.</td></tr>
+<tr><td><code>network_protocol</code></td><td>int (0–5)</td><td><code>0</code></td><td><b>Authoritative selector.</b> User-facing: <code>0</code>=Off, <code>1</code>=SMB, <code>2</code>=UDPFS (Access = Files), <code>5</code>=HTTP. <code>3</code>=UDPFSBD is the internal value for Access = IMG — the picker maps both <code>2</code> and <code>3</code> onto the single "UDPFS" menu entry, and the <b>Access</b> row picks between them. <code>4</code>=UDPBD is a <b>first-class value</b> for the retained UDPBD (SUDPBDv2) choice: it is <b>preserved as-is on load</b>, never migrated, so users still on the old <code>udpbd-server</code> keep it.</td></tr>
+<tr><td><code>net_protocol_pick</code></td><td>int (1–5)</td><td><code>1</code></td><td>The protocol last <b>chosen</b> (never Off), using the <code>network_protocol</code> values. <code>network_protocol</code> is <code>0</code> while Network Connectivity is Off; this is what the Protocol rows show then, and what turning Connectivity back on restores.</td></tr>
 <tr><td><code>net_start_mode</code></td><td>int (0–2)</td><td><code>0</code></td><td><b>Network Connectivity</b>: <code>0</code>=Off, <code>1</code>=Manual, <code>2</code>=Auto. Reconciled with <code>network_protocol</code> on load — a protocol of Off forces this to Off, and a live protocol with an Off (or out-of-range) start mode is floored to Manual.</td></tr>
 <tr><td><code>smb_dialect</code></td><td>int (0/1)</td><td><code>0</code></td><td>Row 3 <b>SMB Version</b>: <code>0</code>=SMBv1 (default), <code>1</code>=SMB2. Only meaningful while the protocol is SMB; the value is kept (not reset) when the row is greyed. SMB3 is reserved internally and is not a selectable value.</td></tr>
 <tr><td><code>enable_udpbd</code></td><td>bool (0/1)</td><td><code>0</code></td><td><b>Legacy back-compat shadow</b> (superseded by <code>network_protocol</code>). Still dual-written: <code>1</code> whenever the protocol resolves to UDPFSBD (IMG) <em>or</em> UDPBD — both block-device transports set it.</td></tr>
@@ -461,7 +465,7 @@ in IMG mode, only standard ISO images work.</p>
 <tr>
   <td>No network games list appears</td>
   <td>Network Protocol is Off, or the IOP module failed to load (no network link at boot).</td>
-  <td>Check <b>Game Sources &rarr; Network Protocol</b> is <b>Manual</b> or <b>Auto</b> (not Off),
+  <td>Check <b>Game Sources &rarr; Network Connectivity</b> is <b>Manual</b> or <b>Auto</b> (not Off),
   and that <b>Protocol</b> is set to your chosen transport.
   Verify the PS2 has a physical Ethernet link before power-on.</td>
 </tr>
@@ -527,4 +531,5 @@ the OPL built-in core and does not require Neutrino).</p>
   <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
 </footer>
 <script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
 </body></html>
