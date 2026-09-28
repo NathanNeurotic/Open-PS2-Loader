@@ -5072,7 +5072,7 @@ void guiManageCheats(void)
 
         int renderedCheats = 0;
         for (int i = offset; renderedCheats < visibleCheats && i < cheatCount; i++) {
-            if (strlen(gCheats[i].name) == 0)
+            if (gCheats[i].name[0] == '\0')
                 continue;
 
             int enabled = gCheats[i].enabled;
