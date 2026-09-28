@@ -303,6 +303,100 @@ row_function = function_text(gui_c, 'src/gui.c', 'static int emberSettingFromRow
 if row_function:
     compile_and_run('ember_row', ROW_HARNESS.replace('@FUNCTIONS@', row_function))
 
+# --- The settings.txt rewrite (src/cuesupport.c) ------------------------------------------------
+
+cue_c = read('src/cuesupport.c')
+
+REWRITE_HARNESS = r'''
+#include <stdio.h>
+#include <string.h>
+#include <strings.h>
+
+#define EMBER_SETTING_UNSET -1
+typedef struct
+{
+    const char *key;
+    const char *value;
+} cue_setting_t;
+
+@FUNCTIONS@
+
+static int fails;
+static void expect(const char *what, const char *before, const cue_setting_t *want, int n, const char *wantOut)
+{
+    char out[256];
+    int len = cueRewriteSettings(before, (int)strlen(before), want, n, out, sizeof(out));
+    if (len < 0 || len != (int)strlen(wantOut) || memcmp(out, wantOut, len) != 0) {
+        printf("FAIL %s: got [%.*s] (%d), want [%s]\n", what, len < 0 ? 0 : len, out, len, wantOut);
+        fails++;
+    }
+}
+
+int main(void)
+{
+    const cue_setting_t ditherOff[] = {{"dither", "off"}};
+    const cue_setting_t dropDisplay[] = {{"display", NULL}};
+    const cue_setting_t dropBoth[] = {{"display", NULL}, {"dither", NULL}};
+    const cue_setting_t two[] = {{"display", "480p"}, {"dither", "on"}};
+    char small[5];
+
+    expect("new key into an empty file", "", ditherOff, 1, "dither:off\n");
+    expect("replace, keeping comments and other keys", "Dither : on\r\n# my notes\nfoo: 1\n", ditherOff, 1,
+           "# my notes\nfoo: 1\ndither:off\n");
+    expect("remove one key, keep the rest", "display: 240\ncontroller: d2a\n", dropDisplay, 1, "controller: d2a\n");
+    expect("a key not asked about is left alone", "shading: 24\n", ditherOff, 1, "shading: 24\ndither:off\n");
+    expect("leading blanks and upper case still match", "  DISPLAY:480\n", dropDisplay, 1, "");
+    expect("comment lines are never keys", "# display: 240\n; dither: off\n", dropBoth, 2, "# display: 240\n; dither: off\n");
+    expect("a longer key is not ours", "displayx: 1\n", dropDisplay, 1, "displayx: 1\n");
+    expect("several keys, written in order", "", two, 2, "display:480p\ndither:on\n");
+    expect("every line of the key goes, once written", "dither:on\ndither:off\n", ditherOff, 1, "dither:off\n");
+    expect("no final newline", "foo:1", ditherOff, 1, "foo:1\ndither:off\n");
+    expect("nothing asked: file kept as is", "foo: 1\n# x\n", ditherOff, 0, "foo: 1\n# x\n");
+    if (cueRewriteSettings("", 0, ditherOff, 1, small, sizeof(small)) != -1) {
+        printf("FAIL a result that does not fit must return -1\n");
+        fails++;
+    }
+
+    /* Unset settings produce no work at all, so a hand-written file is never opened for writing. */
+    {
+        cue_setting_t list[4];
+        int n = 0;
+        static const char *const values[] = {NULL, "on", "off"};
+        cueWantSetting(list, &n, "dither", EMBER_SETTING_UNSET, values, 3);
+        cueWantSetting(list, &n, "dither", 7, values, 3);
+        if (n != 0) {
+            printf("FAIL an unset or out-of-range setting must add nothing (added %d)\n", n);
+            fails++;
+        }
+        cueWantSetting(list, &n, "dither", 0, values, 3);
+        cueWantSetting(list, &n, "dither", 2, values, 3);
+        if (n != 2 || list[0].value != NULL || strcmp(list[1].value, "off") != 0) {
+            printf("FAIL Default must mean remove (NULL) and 2 must mean off\n");
+            fails++;
+        }
+    }
+
+    if (!fails)
+        printf("ember settings: settings.txt rewrite keeps every line it was not asked about\n");
+    return fails ? 1 : 0;
+}
+'''
+
+rewrite_functions = ''.join(function_text(cue_c, 'src/cuesupport.c', sig) for sig in (
+    'static int cueLineSetsKey(',
+    'int cueRewriteSettings(',
+    'static void cueWantSetting(',
+))
+if rewrite_functions.count('{') >= 3:
+    compile_and_run('ember_rewrite', REWRITE_HARNESS.replace('@FUNCTIONS@', rewrite_functions))
+
+# cueApplySettings only opens a file when it has something to do there.
+apply_fn = function_text(cue_c, 'src/cuesupport.c', 'void cueApplySettings(')
+if apply_fn and not re.search(r'if \(nGlobal > 0\)', apply_fn):
+    failures.append('cueApplySettings: the main settings.txt must only be touched when a global setting is set')
+if apply_fn and not re.search(r'if \(nGame > 0\)', apply_fn):
+    failures.append('cueApplySettings: a game\'s settings.txt must only be touched when that game has a setting')
+
 if failures:
     print('Ember settings checks FAILED:')
     for failure in failures:
