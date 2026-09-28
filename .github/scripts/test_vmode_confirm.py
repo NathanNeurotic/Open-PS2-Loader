@@ -15,7 +15,9 @@ scripted frame loop (60 fps), and checks:
 - a hold started just before the timeout is allowed to finish;
 - the countdown (zackcage6, 09-26) reads 10 down to 1, never rises, and is hidden during a hold --
   which does NOT pause the deadline (a released hold continues from the original one);
-- the frame that keeps the mode draws the hold bar at FULL width;
+- the hold bar runs along the footer line and FULL means it reaches the line's right-hand end (#774:
+  a fixed 200 px bar ended ~40% across the screen and read as stuck halfway), and it reads full a
+  moment BEFORE the mode is kept, so the user sees it complete, then it completes;
 - nothing is rendered under the opaque prompt: rendering the menu there (guiShow) only cost frame
   time, and in heavy modes made the bar jump to ~4/5 and the keep land before it looked full.
 
@@ -65,7 +67,7 @@ typedef unsigned long long u64;
 #define CLOCKS_PER_SEC 1000
 #define OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS @TIMEOUT@
 #define VMODE_KEEP_HOLD_MS @HOLD@
-#define VMODE_KEEP_BAR_WIDTH 200
+#define VMODE_KEEP_BAR_FULL_MS @BARFULL@
 #define ALIGN_CENTER 0
 enum { KEY_CROSS = 1, KEY_CIRCLE = 2 };
 enum { CROSS_ICON, CIRCLE_ICON };
@@ -103,8 +105,10 @@ static void readPads(void)
 static int getKeyOn(int id) { return id == KEY_CROSS ? (curAccept && !prevAccept) : (curBack && !prevBack); }
 static int getKeyPressed(int id) { return id == KEY_CROSS ? curAccept : curBack; }
 
-/* What each frame showed: the countdown's seconds (-1 = none) and the hold bar's width (0 = none). */
-static int shownSecs, barW, lastBarW, firstSecs, lastSecs, rose, shownInHold, holdFrom, holdTo, watchFrame, secsAtWatch;
+/* What each frame showed: the countdown's seconds (-1 = none), the hold bar's left edge and width
+   (0 = none), and the footer line the bar is meant to run along. */
+static int shownSecs, barX, barW, lastBarW, firstSecs, lastSecs, rose, shownInHold, holdFrom, holdTo, watchFrame, secsAtWatch;
+static int lineX1 = -1, lineX2 = -1, firstFullFrame, barOffLine;
 static void guiStartFrame(void) { shownSecs = -1; barW = 0; }
 static void guiEndFrame(void)
 {
@@ -119,6 +123,10 @@ static void guiEndFrame(void)
     }
     if (frame == watchFrame)
         secsAtWatch = shownSecs;
+    if (barW > 0 && barX != lineX1)
+        barOffLine = 1;
+    if (barW > 0 && barW == lineX2 - lineX1 && firstFullFrame < 0)
+        firstFullFrame = frame;
     lastBarW = barW;
     frame++;
 }
@@ -127,11 +135,21 @@ static void sfxPlay(int s) { (void)s; }
 static const char *_l(int id) { return id == _STR_CFM_VMODE_REVERT_IN ? "%d" : ""; }
 static void rmDrawRect(int x, int y, int w, int h, u64 c)
 {
-    (void)x; (void)c;
-    if (y == 400 && h == 4)
+    (void)c;
+    if (y == 400 && h == 4) {
+        barX = x;
         barW = w;
+    }
 }
-static void rmDrawLine(int a, int b, int c, int d, u64 e) { (void)a; (void)b; (void)c; (void)d; (void)e; }
+/* The footer line: the horizontal one at y 410, just under the bar. */
+static void rmDrawLine(int a, int b, int c, int d, u64 e)
+{
+    (void)e;
+    if (b == 410 && d == 410) {
+        lineX1 = a;
+        lineX2 = c;
+    }
+}
 static void fntRenderString(void *f, int x, int y, int a, int w, int h, const char *s, u64 c)
 {
     (void)f; (void)x; (void)y; (void)a; (void)w; (void)h; (void)c;
@@ -152,6 +170,8 @@ static void reset(void)
     acceptHeldAtEntry = 0;
     curAccept = prevAccept = curBack = prevBack = 0;
     firstSecs = lastSecs = -1;
+    firstFullFrame = -1;
+    barOffLine = 0;
     rose = shownInHold = 0;
     holdFrom = holdTo = -1;
     watchFrame = secsAtWatch = -1;
@@ -202,15 +222,35 @@ int main(void)
                OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS / 1000);
         fails++;
     }
-    /* A hold hides it (the timeout is paused), and the frame that keeps the mode shows the FULL bar. */
+    /* A hold hides the countdown. The bar runs along the footer line from its left end, FULL is the
+       whole line (#774), and it reads full a moment before the keep -- but not so early that it stops
+       showing progress. */
     reset(); hold(30, hold60 + 3); holdFrom = 30; holdTo = 30 + hold60; expect("full hold (bar/countdown)", 1, 30 + hold60 - 1, 30 + hold60 + 3);
     if (shownInHold) {
         printf("FAIL the countdown must be hidden while Accept is held\n");
         fails++;
     }
-    if (lastBarW != VMODE_KEEP_BAR_WIDTH) {
-        printf("FAIL the frame that keeps the mode drew the bar %d wide (want the full %d)\n", lastBarW, VMODE_KEEP_BAR_WIDTH);
+    if (lineX1 < 0 || lineX2 <= lineX1) {
+        printf("FAIL no footer line was drawn at y 410 to measure the bar against\n");
         fails++;
+    } else {
+        const int keepFrame = frame - 1, full = lineX2 - lineX1;
+        if (barOffLine) {
+            printf("FAIL the hold bar does not start at the footer line's left end (%d)\n", lineX1);
+            fails++;
+        }
+        if (lastBarW != full) {
+            printf("FAIL the frame that keeps the mode drew the bar %d wide (want the whole footer line, %d)\n", lastBarW, full);
+            fails++;
+        }
+        if (firstFullFrame < 0 || keepFrame - firstFullFrame < 12) {
+            printf("FAIL the bar must read full at least 0.2 s before the keep (full at frame %d, kept at %d)\n", firstFullFrame, keepFrame);
+            fails++;
+        }
+        if (firstFullFrame >= 0 && firstFullFrame - 30 < hold60 * 3 / 4) {
+            printf("FAIL the bar read full after %d of %d hold frames -- too early to show progress\n", firstFullFrame - 30, hold60);
+            fails++;
+        }
     }
     /* A hold does NOT pause the deadline: hold 5.0 s .. 6.5 s, let go, and the count goes on from the
        original deadline (3.5 s left -> "4"), not from where the hold began ("5"). */
@@ -228,6 +268,7 @@ int main(void)
 def run_harness():
     program = (HARNESS.replace('@TIMEOUT@', define(opl_h, 'OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS', 'include/opl.h'))
                .replace('@HOLD@', define(gui, 'VMODE_KEEP_HOLD_MS', 'src/gui.c'))
+               .replace('@BARFULL@', define(gui, 'VMODE_KEEP_BAR_FULL_MS', 'src/gui.c'))
                .replace('@CONFIRM@', confirm))
     if failures:
         return
@@ -264,4 +305,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('video mode confirm: 11 input scripts, countdown, full bar on keep, and both boot recovery combos OK')
+print('video mode confirm: 11 input scripts, countdown, footer-length bar full before the keep, and both boot recovery combos OK')

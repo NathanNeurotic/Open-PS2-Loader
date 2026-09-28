@@ -181,7 +181,8 @@ config. Like Triangle + Cross, it affects the RiptOPL menu only.
 ### Keeping a new video mode
 
 After you change **Video Mode** in the settings, RiptOPL asks whether to keep it. To keep it, **hold**
-Accept until the bar under it fills (about 2 seconds). A quick tap does nothing. Back, or no answer
+Accept for about 2 seconds: a bar grows along the line at the bottom of the prompt, reaches its
+right-hand end, and a moment later the mode is kept. A quick tap does nothing. Back, or no answer
 for 10 seconds, goes back to the previous mode; the prompt counts those seconds down ("Reverting in
 7 s"). The count is hidden while you hold Accept, but the 10 seconds keep running: a hold you started
 always gets to finish, while letting go early after the time is up goes straight back. A mode your TV

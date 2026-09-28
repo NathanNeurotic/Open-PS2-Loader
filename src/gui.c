@@ -4865,8 +4865,8 @@ void guiWarning(const char *text, int count)
     delay(count);
 }
 
-#define VMODE_KEEP_HOLD_MS   2000 // how long Accept must be held to keep a new video mode
-#define VMODE_KEEP_BAR_WIDTH 200  // hold-progress bar at full length (virtual 640-wide pixels)
+#define VMODE_KEEP_HOLD_MS     2000 // how long Accept must be held to keep a new video mode
+#define VMODE_KEEP_BAR_FULL_MS 1750 // the hold bar reads full this far in -- a beat BEFORE the keep
 
 int guiConfirmVideoMode(void)
 {
@@ -4874,7 +4874,7 @@ int guiConfirmVideoMode(void)
     // does not sync -- there is nothing on screen to read and nothing to aim at. A deadline that
     // straddles the clock() wrap would leave them there.
     clock_t timeStart, holdStart = 0;
-    int terminate = 0, holding = 0, holdPermille = 0;
+    int terminate = 0, holding = 0, holdPermille = 0, barPermille = 0;
 
     sfxPlay(SFX_MESSAGE);
 
@@ -4896,10 +4896,12 @@ int guiConfirmVideoMode(void)
             holding = 0;
 
         holdPermille = 0;
+        barPermille = 0;
         if (holding) {
             // To ms FIRST: scaling raw ticks by 1000 could overflow clock_t at a high tick rate.
             int heldMs = (int)((clock() - holdStart) / (CLOCKS_PER_SEC / 1000));
             holdPermille = (heldMs * 1000) / VMODE_KEEP_HOLD_MS;
+            barPermille = (heldMs * 1000) / VMODE_KEEP_BAR_FULL_MS;
         }
 
         if (getKeyOn(gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE))
@@ -4934,9 +4936,13 @@ int guiConfirmVideoMode(void)
         }
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_BACK, gTheme->fonts[0], 500, 417, gTheme->textColor);
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_CFM_VMODE_HOLD_KEEP, gTheme->fonts[0], 70, 417, gTheme->textColor);
-        // Hold progress, just above the footer line: shows a sighted user the hold is registering.
+        // Hold progress, just above the footer line and exactly as long as it, so FULL is unmistakable:
+        // the bar has reached the line's right-hand end. It used to be a fixed 200 px from x 70, which
+        // ended ~40% across the screen and read as stuck halfway (zackcage6, #774). It also reads full
+        // VMODE_KEEP_HOLD_MS - VMODE_KEEP_BAR_FULL_MS before the keep, so the user SEES it complete --
+        // before, it only reached full on the very frame the prompt closed.
         if (holdPermille > 0)
-            rmDrawRect(70, 400, (VMODE_KEEP_BAR_WIDTH * (holdPermille > 1000 ? 1000 : holdPermille)) / 1000, 4, gTheme->selTextColor);
+            rmDrawRect(50, 400, ((screenWidth - 100) * (barPermille > 1000 ? 1000 : barPermille)) / 1000, 4, gTheme->selTextColor);
 
         guiEndFrame();
     }
