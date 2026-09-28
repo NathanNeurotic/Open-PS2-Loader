@@ -685,6 +685,8 @@ static void fntRenderSubRTL(font_t *font, const char *startRTL, const char *stri
 
 int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t height, const char *string, u64 colour)
 {
+    if (string == NULL)
+        return 0;
     fntLock();
     font_t *font = &fonts[id];
 
