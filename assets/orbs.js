@@ -1,8 +1,9 @@
 /* PS2 OSDSYS cursor orbs -- loaded on every page after app.js (moved out of index.html's inline
    script so the animation is not front-page only). Creates #ps2-orbs itself when a page has none. */
 (function () {
-  // Visitors who asked their system for reduced motion get no animation at all (and no canvas).
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  // Deliberately animates for everyone, prefers-reduced-motion included: the owner's call (09-28),
+  // since Windows reports reduced motion whenever "Animation effects" is off, which hid the orbs
+  // from people who never asked for less motion on this site.
 
   // One canvas per page. index.html used to carry it (and this whole script) inline, so the orbs
   // only ever ran on the front page; every page now loads this file after app.js.
