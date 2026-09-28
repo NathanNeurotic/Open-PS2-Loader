@@ -1,6 +1,9 @@
 /* PS2 OSDSYS cursor orbs -- loaded on every page after app.js (moved out of index.html's inline
    script so the animation is not front-page only). Creates #ps2-orbs itself when a page has none. */
 (function () {
+  // Visitors who asked their system for reduced motion get no animation at all (and no canvas).
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
   // One canvas per page. index.html used to carry it (and this whole script) inline, so the orbs
   // only ever ran on the front page; every page now loads this file after app.js.
   var canvas = document.getElementById('ps2-orbs');
@@ -49,10 +52,8 @@
     }
   }
 
+  // mousemove bubbles from document to window, so one listener sees every move.
   window.addEventListener('mousemove', function (e) {
-    onPointerMove(e.clientX, e.clientY);
-  });
-  document.addEventListener('mousemove', function (e) {
     onPointerMove(e.clientX, e.clientY);
   });
 
@@ -89,12 +90,15 @@
   function tick(now) {
     var dt = Math.min((now - lastTime) / 1000, 0.05);
     lastTime = now;
+    // Everything below was tuned per 60 Hz frame; f scales it so 120/144 Hz screens move the same.
+    var f = dt * 60;
 
-    // Fluid spring cursor tracking
+    // Fluid spring cursor tracking (0.16 per 60 Hz frame, compounded for the real frame time)
     var dx = mouse.targetX - mouse.x;
     var dy = mouse.targetY - mouse.y;
-    mouse.x += dx * 0.16;
-    mouse.y += dy * 0.16;
+    var follow = 1 - Math.pow(1 - 0.16, f);
+    mouse.x += dx * follow;
+    mouse.y += dy * follow;
     mouse.speed = Math.sqrt(dx * dx + dy * dy);
 
     // Spawn subtle stardust trail when cursor moves
@@ -125,9 +129,9 @@
     // 1. Update and render stardust particles
     for (var p = particles.length - 1; p >= 0; p--) {
       var pt = particles[p];
-      pt.x += pt.vx;
-      pt.y += pt.vy;
-      pt.life -= pt.decay;
+      pt.x += pt.vx * f;
+      pt.y += pt.vy * f;
+      pt.life -= pt.decay * f;
       if (pt.life <= 0) {
         particles.splice(p, 1);
         continue;
