@@ -289,6 +289,11 @@ def main():
     if 'sectorSize != 512' not in bdmevent or 'unsupportedSectorCount' not in bdmevent:
         print('bdmevent: the snapshot no longer counts devices refused for their sector size')
         sys.exit(1)
+    # usbmass_bd registers a USB device whose warmup failed with sectorSize 0; that is not a 4K drive,
+    # and counting it raised a false code 500 (2026-09-28).
+    if not re.search(r'sectorSize != 0 && device->sectorSize != 512\)\s*packet->unsupportedSectorCount\+\+', bdmevent):
+        print('bdmevent: a device that never reported its sector size (0) is counted as a 4K drive')
+        sys.exit(1)
 
     with tempfile.TemporaryDirectory() as tmp:
         stubs = Path(tmp) / 'stubs'
