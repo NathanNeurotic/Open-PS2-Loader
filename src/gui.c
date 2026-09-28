@@ -785,7 +785,13 @@ int guiNetProtocolNeedsRestart(void)
 // and write gNetworkProtocol through these helpers, so neither page can disagree with the other.
 static const char *guiNetProtocolNames[] = {"SMB", "UDPFS", "UDPBD", "HTTP", NULL}; // protocol names, not translated
 
-// OFF has no protocol memory, so it shows SMB -- the protocol a user reaches by turning Connectivity on.
+// What the Protocol rows show: the live protocol, or while Connectivity is Off (live = OFF) the one the
+// user last chose, so switching Off and back on never loses it.
+static int guiNetProtocolShown(void)
+{
+    return (gNetworkProtocol != NET_PROTO_OFF) ? gNetworkProtocol : gNetProtocolPick;
+}
+
 static int guiNetProtocolToPicker(int protocol)
 {
     if (protocol == NET_PROTO_HTTP)
@@ -804,12 +810,9 @@ static int guiNetProtocolAccess(int protocol)
     return (protocol == NET_PROTO_UDPFSBD || protocol == NET_PROTO_UDPBD) ? 1 : 0;
 }
 
-// Fold the rows back into gNetworkProtocol. Connectivity Off stores OFF whatever the picker says (the
-// stack does not run at all). Access (Files 0 / IMG 1) is consulted only for UDPFS.
-static int guiNetProtocolFromPicker(int startMode, int picker, int access)
+// The protocol the rows name. Access (Files 0 / IMG 1) is consulted only for UDPFS.
+static int guiNetProtocolFromPicker(int picker, int access)
 {
-    if (startMode == START_MODE_DISABLED)
-        return NET_PROTO_OFF;
     if (picker == 3)
         return NET_PROTO_HTTP;
     if (picker == 2)
@@ -817,6 +820,14 @@ static int guiNetProtocolFromPicker(int startMode, int picker, int access)
     if (picker == 1)
         return access ? NET_PROTO_UDPFSBD : NET_PROTO_UDPFS;
     return NET_PROTO_SMB;
+}
+
+// Fold the rows back: the picked protocol is always remembered, and becomes live unless Connectivity is
+// Off -- then gNetworkProtocol is OFF (the stack does not run at all) and the pick waits for it.
+static void guiNetProtocolStore(int picker, int access)
+{
+    gNetProtocolPick = guiNetProtocolFromPicker(picker, access);
+    gNetworkProtocol = (gNetStartMode == START_MODE_DISABLED) ? NET_PROTO_OFF : gNetProtocolPick;
 }
 
 // After either page set gNetworkProtocol: re-derive the legacy shadows downstream consumers read, then
@@ -873,7 +884,7 @@ static void guiSourcesNetRowsBegin(struct UIItem *ui, const char **deviceModes)
     diaSetEnum(ui, CFG_NETSTART, deviceModes);
     diaSetInt(ui, CFG_NETSTART, gNetStartMode);
     diaSetEnum(ui, CFG_NETPROTOCOL, guiNetProtocolNames);
-    diaSetInt(ui, CFG_NETPROTOCOL, guiNetProtocolToPicker(gNetworkProtocol));
+    diaSetInt(ui, CFG_NETPROTOCOL, guiNetProtocolToPicker(guiNetProtocolShown()));
     guiSourcesNetRowsUpdate(ui); // the first frame renders before the updater runs
 }
 
@@ -882,11 +893,12 @@ static void guiSourcesNetRowsBegin(struct UIItem *ui, const char **deviceModes)
 static void guiSourcesNetRowsRead(struct UIItem *ui)
 {
     int netProtocolWas = gNetworkProtocol;
-    int picker = guiNetProtocolToPicker(gNetworkProtocol);
+    int access = guiNetProtocolAccess(guiNetProtocolShown());
+    int picker = guiNetProtocolToPicker(guiNetProtocolShown());
 
     diaGetInt(ui, CFG_NETSTART, &gNetStartMode);
     diaGetInt(ui, CFG_NETPROTOCOL, &picker);
-    gNetworkProtocol = guiNetProtocolFromPicker(gNetStartMode, picker, guiNetProtocolAccess(netProtocolWas));
+    guiNetProtocolStore(picker, access);
     guiNetProtocolApplied(netProtocolWas);
 }
 
@@ -1446,9 +1458,9 @@ int guiShowNetConfig(void)
     //   Access:   Files(0)/IMG(1); IMG only distinct for UDPFS (-> UDPFSBD backend)
     // A NET_PROTO_OFF backend has no protocol memory, so seed the protocol row to SMB -- the common
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
-    int netProtoVal = guiNetProtocolToPicker(gNetworkProtocol); // SMB / OFF -> 0
+    int netProtoVal = guiNetProtocolToPicker(guiNetProtocolShown()); // while Off: the remembered pick
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
-    int netAccessVal = guiNetProtocolAccess(gNetworkProtocol);
+    int netAccessVal = guiNetProtocolAccess(guiNetProtocolShown());
     for (i = 0; i < 4; ++i)
         diaSetInt(diaNetConfig, NETCFG_HTTP_IP_0 + i, gHttpServerIp[i]);
     diaSetInt(diaNetConfig, NETCFG_HTTP_PORT, gHttpPort);
@@ -1545,7 +1557,7 @@ reshow_network:
         // shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) downstream consumers read.
         // NOTE(rebuild): the fork also reads the SMB dialect row back here (item 4).
         int netProtocolWas = gNetworkProtocol;
-        gNetworkProtocol = guiNetProtocolFromPicker(gNetStartMode, netProtoVal2, netAccessVal2);
+        guiNetProtocolStore(netProtoVal2, netAccessVal2);
         guiNetProtocolApplied(netProtocolWas);
 
         applyConfig(-1, -1, 0);
