@@ -797,6 +797,13 @@ static int guiNetProtocolToPicker(int protocol)
     return 0;
 }
 
+// The Access row's value for a protocol: IMG (1) for the udpfs block backend AND for UDPBD (IMG-locked),
+// Files (0) otherwise. Both pages use it, so switching UDPBD -> UDPFS keeps IMG on either page.
+static int guiNetProtocolAccess(int protocol)
+{
+    return (protocol == NET_PROTO_UDPFSBD || protocol == NET_PROTO_UDPBD) ? 1 : 0;
+}
+
 // Fold the rows back into gNetworkProtocol. Connectivity Off stores OFF whatever the picker says (the
 // stack does not run at all). Access (Files 0 / IMG 1) is consulted only for UDPFS.
 static int guiNetProtocolFromPicker(int startMode, int picker, int access)
@@ -870,7 +877,8 @@ static void guiSourcesNetRowsBegin(struct UIItem *ui, const char **deviceModes)
     guiSourcesNetRowsUpdate(ui); // the first frame renders before the updater runs
 }
 
-// Game Sources read-back. Access is not on this page, so UDPFS keeps the Access it already had.
+// Game Sources read-back. Access is not on this page, so UDPFS takes the Access the Network page would
+// show for the current protocol (guiNetProtocolAccess).
 static void guiSourcesNetRowsRead(struct UIItem *ui)
 {
     int netProtocolWas = gNetworkProtocol;
@@ -878,7 +886,7 @@ static void guiSourcesNetRowsRead(struct UIItem *ui)
 
     diaGetInt(ui, CFG_NETSTART, &gNetStartMode);
     diaGetInt(ui, CFG_NETPROTOCOL, &picker);
-    gNetworkProtocol = guiNetProtocolFromPicker(gNetStartMode, picker, netProtocolWas == NET_PROTO_UDPFSBD);
+    gNetworkProtocol = guiNetProtocolFromPicker(gNetStartMode, picker, guiNetProtocolAccess(netProtocolWas));
     guiNetProtocolApplied(netProtocolWas);
 }
 
@@ -1440,7 +1448,7 @@ int guiShowNetConfig(void)
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
     int netProtoVal = guiNetProtocolToPicker(gNetworkProtocol); // SMB / OFF -> 0
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
-    int netAccessVal = (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD) ? 1 : 0;
+    int netAccessVal = guiNetProtocolAccess(gNetworkProtocol);
     for (i = 0; i < 4; ++i)
         diaSetInt(diaNetConfig, NETCFG_HTTP_IP_0 + i, gHttpServerIp[i]);
     diaSetInt(diaNetConfig, NETCFG_HTTP_PORT, gHttpPort);
