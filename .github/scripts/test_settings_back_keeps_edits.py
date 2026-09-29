@@ -213,6 +213,15 @@ for where, source, needle in (
 if (root / 'include/compatupd.h').exists():
     failures.append('include/compatupd.h: obsolete compatibility updater API should be removed')
 
+# Preserve numeric/UI identity around removed rows so deleting the feature cannot silently retag
+# surviving menu/dialog controls. The retired constants must never be rendered or handled.
+if 'MENU_RETIRED_NETWORK_UPDATE' not in menusys_c:
+    failures.append('src/menusys.c: retired Network Update slot must remain reserved')
+if 'COMPAT_RETIRED_DOWNLOAD_DEFAULTS' not in dialogs_h:
+    failures.append('include/dialogs.h: retired Download Defaults slot must remain reserved')
+if 'if (it->item.id == MENU_NBD)' not in menusys_c:
+    failures.append('src/menusys.c: main-menu spacing must key off the live NBD row, not enum arithmetic')
+
 # --- Network page: reconnect only on OK/Reconnect or a real change (compiled and run) -----------
 
 net = function_text(gui_c, 'src/gui.c', 'int guiShowNetConfig(')
