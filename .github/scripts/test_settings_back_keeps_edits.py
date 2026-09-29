@@ -164,6 +164,12 @@ if index:
     if exit_pos < 0 or restore_pos < 0 or return_pos < 0 or restore_pos > return_pos:
         failures.append('Exit without saving must restore source state before leaving Settings')
 
+    save_pos = index.find('if (menuSaveSettings() > 0)')
+    recapture_pos = index.find('guiSettingsCaptureSourceState();', save_pos)
+    pending_clear = index.find('guiSettingsSavePending = 0;', save_pos)
+    if save_pos < 0 or recapture_pos < 0 or pending_clear < 0 or not (save_pos < recapture_pos < pending_clear):
+        failures.append('a successful in-shell Save Changes must become the new discard baseline')
+
 # --- Network page: reconnect only on OK/Reconnect or a real change (compiled and run) -----------
 
 net = function_text(gui_c, 'src/gui.c', 'int guiShowNetConfig(')
