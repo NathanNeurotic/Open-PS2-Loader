@@ -881,103 +881,82 @@ RetroGEM game-ID parity and `settings.txt` display passthrough remain separate c
 
 ---
 
-## Part 10 — Ember Beta 2 settings (design, 2026-09-27)
+## Part 10 — Ember Beta 2 settings (updated 2026-09-28)
 
-Beta 2 (bundled since a9c0ed54; `LICENSE-BETA.txt` unchanged, blob `8d05830c`) grew from one setting to
-four, and added a per-game settings file. TwistedZeon asked for them in RiptOPL; Nathan: global rows
-plus a per-game menu, and "fast, reliable and easy, not a whole new system".
+The current Ember Beta 2 contract, confirmed by Gageformer and reflected in Ember's README, has five
+global keys. Four of them may also be overridden per game. RiptOPL mirrors that model instead of
+inventing a second settings scheme.
 
-### What Ember reads (verified in the bundled stripped `ember.elf`, not just the README)
+### What Ember reads
 
 | Key | Values (default first) | Main `EMBER/settings.txt` | `EMBER/games/<Name>/settings.txt` |
 |---|---|---|---|
-| `display` | `480` (= **480i**), `240`, `480p` (component/HDMI only; composite shows nothing) | yes | ignored ("belongs in the main settings.txt") |
-| `dither` | `on`, `off` | yes | ignored |
-| `shading` | `15`, `24` (experimental) | yes | yes, overrides the main file |
-| `controller` | `auto`, `analog`, `d2a` | yes | yes, overrides the main file |
+| `display` | `480` (= **480i**), `240`, `480p` | yes | no |
+| `timing` | `auto`, `ntsc`, `pal` | yes | yes |
+| `dither` | `on`, `off` | yes | yes |
+| `shading` | `15`, `24` (experimental) | yes | yes |
+| `controller` | `auto`, `analog`, `d2a` | yes | yes |
 
-One loader, called twice: `settings.txt` with a game-file flag of 0, then `"%s/settings.txt"` built on
-`"games/%s"` with the flag set. Up to 8191 bytes are read. `#`/`;` lines are comments, unknown keys are
-skipped, and `key: value` takes an optional space after the colon.
+Per-game values override the main file. If a per-game key is absent, Ember uses the global value.
+Display is intentionally global-only. Timing exists because not every PAL game correctly accounts for
+performance speed: Auto follows the disc region, NTSC forces 60 Hz and PAL forces 50 Hz.
 
-**Existing bug this fixes:** our Display row labels value 2 "480p", but it writes `display:480`, which is
-480i in both betas. It has never produced 480p.
+### RiptOPL global behavior
 
-### The rule: RiptOPL only touches an Ember setting you have changed in RiptOPL
+**PS Emulation Settings** exposes:
 
-* **Never changed in RiptOPL** (the menu shows Default): RiptOPL leaves that key alone in every file, so a
-  `settings.txt` written by hand -- the flow Gage's README recommends -- keeps working exactly as written.
-* **Changed to a value**: RiptOPL writes it (replacing any line for that key) when a game launches.
-* **Changed back to Default**: RiptOPL removes that key, so Ember's own default (or, in a game's file,
-  the main file) applies again. Without this a value, once set, could never be taken back.
-* Global settings go to the launched device's `EMBER/settings.txt`; a game's Controller/Shading go to
-  its `games/<Name>/settings.txt`. **Every other line is always kept** (comments, unknown keys); a file
-  is removed only when RiptOPL removed the last line in it (today's display behaviour).
+* Display: `Default / 240p / 480i / 480p`
+* Timing: `Default / Auto / NTSC / PAL`
+* Dithering: `Default / On / Off`
+* Shading: `Default / 15-bit / 24-bit (experimental)`
+* Controller: `Default / Auto / Analog / D2A`
 
-The only state is whether the key exists in RiptOPL's config: present = changed in RiptOPL. No marker
-lines, nothing new on disk. This rule was chosen over "Default always removes" (today's display row)
-because that silently deleted hand-written settings the first time a game launched through RiptOPL --
-even for users who never opened the Ember rows.
+Global settings retain the changed-only rule used by the first Ember settings implementation. A row
+never changed in RiptOPL does not touch a hand-written main `EMBER/settings.txt`. Selecting a value
+starts managing that key; changing it back to Default removes the key. Choosing 480p still asks for
+confirmation because composite output shows no picture.
 
-### UI
+The main-config keys are `ember_display_mode`, `ember_timing`, `ember_dither`,
+`ember_shading` and `ember_controller`. Out-of-range values load as unset. The old
+`ember_display` migration remains unchanged.
 
-* **PS Emulation Settings** (the composed POPSTARTER page, next to the existing row): Ember Display Mode
-  `Default / 240p / 480i / 480p`, Ember Dithering `Default / On / Off`, Ember Shading
-  `Default / 15-bit / 24-bit (experimental)`, Ember Controller `Default / Auto / Analog / D2A`. The
-  Controller hint says per-game is the better place (Gage's advice). Choosing **480p** asks for
-  confirmation first ("composite shows no picture"), since it is the one choice that can blank the
-  screen; Back keeps the previous mode.
-* **Ember Game Settings**: a new entry in the PS1 Triangle menu, shown only on Ember rows, opening Controller
-  `Default / Auto / Analog / D2A`. **Controller only** (2026-09-28): Gageformer said the game file was
-  meant for the controller and 24-bit shading can cause issues, so Shading stays a global row. The
-  launch path still honours a `$EmberShading` in a game's CFG, so adding the row later is UI-only.
-  OK saves only a row you changed, to the game's CFG. A row never changed stays out of the CFG, so a
-  hand-written value in the game's settings.txt is kept; a choice changed back to "Default" is stored
-  as 0 and removes the key, so the global row applies. On a
-  Favourites row it edits the same CFG the device page does (the favourite builds its config from the
-  same device prefix and folder name); a failed write shows the usual "error saving settings" message.
-  **Built** in the follow-up to #776, with the CUE CFG-key fix below.
+### RiptOPL per-game behavior
 
-### Config keys
+**Triangle → Ember Game Settings** is shown only on Ember rows and exposes Timing, Dithering, Shading
+and Controller. Display remains global-only.
 
-* Global (main config), each present only once changed in RiptOPL: `ember_display_mode` 0 Default,
-  1 = `240`, 2 = `480` (480i), 3 = `480p`; `ember_dither` 0 / 1 on / 2 off; `ember_shading` 0 / 1 = `15` /
-  2 = `24`; `ember_controller` 0 / 1 auto / 2 analog / 3 d2a. Out-of-range values read as "not set".
-* Migration: the old `ember_display` is read once, only when `ember_display_mode` is absent -- 1 and 2
-  carry over as set (the user chose them; 2 always meant 480i), 0 becomes "not set" -- and is dropped
-  on the next save. Nobody's picture changes.
-* Per game (`CFG/<FolderName>.cfg`): `$EmberController` (0-3), `$EmberShading` (0-2), each present only
-  once changed in RiptOPL.
+For the per-game editor, **Default means inherit global**. Confirming the dialog stores value 0 in the
+game CFG. At launch, `cueApplySettings()` interprets that as removal of the corresponding key from
+`EMBER/games/<Name>/settings.txt`, allowing Ember's global value to apply. A non-Default value is
+written as the per-game override.
 
-**Required fix first:** `sbPopulateConfig` keys every non-`.VCD` row by `startup`, and an Ember row's
-`startup` is its folder name cut to 12 characters -- "Crash Bandicoot (USA)" and "Crash Bandicoot 2 ..."
-would share `CFG/Crash Bandic.cfg`. Ember rows (`.CUE`) must key by the full folder name like `.VCD` rows.
-The same function also stats a nonexistent `CD/`/`DVD/` ISO path for them and badges them as PS2; both are
-fixed with the key.
+Per-game CFG keys:
+
+* `$EmberTiming`: 0 Default, 1 Auto, 2 NTSC, 3 PAL
+* `$EmberDither`: 0 Default, 1 On, 2 Off
+* `$EmberShading`: 0 Default, 1 15-bit, 2 24-bit
+* `$EmberController`: 0 Default, 1 Auto, 2 Analog, 3 D2A
+
+The CFG remains keyed by the full Ember folder name, including from Favourites. Saving uses the normal
+per-game `menuSaveConfig()` path; a failed write reports the standard path/errno error.
 
 ### Launch data flow
 
-`itemExecSelect` already loads the selected row's CFG (`menuLoadConfig`) for every row and passes it to
-`itemLaunch`; the Ember legs ignore it today. Each of the five legs (BDM incl. UDPBD, SMB, APA, MMCE,
-UDPFS) replaces `cueApplyDisplaySetting(prefix)` with `cueApplySettings(prefix, name, configSet)`, at the
-same point. On APA the call stays after the RDWR remount, with `configSet` passed down to
-`hddDoLaunchEmber`. Best-effort as today: never a launch gate, writes only when content changes, restores
-the original on a failed write.
+All Ember launch backends call `cueApplySettings(prefix, name, configSet)`. The writer preserves
+comments and unknown keys, only rewrites managed keys, skips unchanged writes, and restores the
+original file after a failed truncating write. The global list now contains five settings; the
+per-game list contains the four keys Ember actually accepts there.
 
-The text rewrite is one pure function (buffer in, wanted key/value-or-remove list, buffer out) used for
-both files, so it is host-testable. It matches a key case-insensitively, after leading whitespace and with
-optional whitespace before the colon, so a hand-written `Display : 240` is replaced rather than left to
-fight ours.
+### Validation
 
-### Testing
+`.github/scripts/test_ember_settings.py` covers global load/save, enum wiring, the per-game editor,
+the settings.txt rewriter and no-I/O guards. Hardware validation should specifically confirm:
 
-Host test for the rewriter: each key, "not set" leaves every line of that key alone, Default removes it,
-CRLF input, comments and unknown keys kept, delete-when-empty, no write when unchanged, and the display
-migration from the old key. Source checks that
-all five legs call `cueApplySettings` and none still calls the display-only function. Labels are appended at
-the END of `lng_tmpl/_base.yml`; `HINT_EMBER_DISPLAY` gets a value-only edit. Docs in the same PR: README
-Ember section, the Settings Index, and the site/wiki pages that describe Ember settings. **No hardware test
-yet**: TwistedZeon or zack to confirm 480p, dither off, 24-bit and D2A actually take effect.
+1. Global Timing persists and produces Auto/NTSC/PAL behavior.
+2. Per-game Timing, Dithering, Shading and Controller persist after reopening the editor.
+3. A per-game non-Default value overrides global.
+4. Returning a per-game row to Default removes that game-file key and restores global inheritance.
+5. The same CFG is edited from a Favourites entry.
 
 ### Out of scope (follow-ups)
 
