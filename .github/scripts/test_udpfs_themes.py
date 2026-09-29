@@ -55,9 +55,15 @@ if needs:
 
     discover = needs.find("!udpfsThemesScanned && udpfsIomanModLoaded && udpfsServerAnswers()")
     dirty = needs.find("libViewConsumeDirty(itemList->mode)")
+    folder = needs.find("folderConsumeDirty(itemList->mode)")
+    waiting = needs.find("if (udpfsWaitingForServer)")
     ps1 = needs.find("libListViewActive(itemList) == LIB_VIEW_PS1")
     if discover >= 0 and dirty >= 0 and discover > dirty:
         failures.append("theme discovery must run before the dirty-view early return")
+    if discover >= 0 and folder >= 0 and discover > folder:
+        failures.append("theme discovery must run before the folder-dirty early return")
+    if discover >= 0 and waiting >= 0 and discover > waiting:
+        failures.append("theme discovery must run before the server-wait early return")
     if discover >= 0 and ps1 >= 0 and discover > ps1:
         failures.append("theme discovery must run before the PS1-view early return")
 
