@@ -1876,9 +1876,18 @@ static void hddInstallPopstarterMcFromCommon(void)
 //   RDWR, not RDONLY. Ember writes memory cards and settings.txt through this mount. The POPSTARTER
 //   resolver mounts read-only because its mount dies at the IOP reset moments later; this one has to
 //   survive and stay writable.
+//   WRITE-THROUGH as well (HDD_PFS_MT_WRITETHROUGH). FIO_MT_RDWR is 0x00: writable, but PFS keeps every
+//   write in its RAM cache until an unmount or a sync -- it commits on close/write/ioctl ONLY when the
+//   mount flags carry 0x02 (ps2sdk libpfs PFS_FIO_ATTR_WRITEABLE; pfs_fio.c pfsFioCloseFileSlot,
+//   pfsFioWrite, openFile, fileTransferRemainder, pfsFioChstat; pfs_fioctl.c). Ember closes its files
+//   but never syncs or unmounts, and PS1 play ends in a reset or power-off, so its memory cards (and
+//   the settings.txt written below) lived only in that cache: the game said "saved", and after a
+//   restart there was no .vmc at all (weaver8185, Gageformer/Ember#69).
 //   UNMOUNT_EXCEPTION keeps hddCleanUp from unmounting pfs0:.
 //   KEEPIOP_EXCEPTION keeps it from issuing PDIOC_CLOSEALL, which would drop every pfs descriptor in
 //   the IOP -- harmless before an IOP reset, fatal before a handoff that does not reset.
+#define HDD_PFS_MT_WRITETHROUGH 0x02 // ps2sdk libpfs PFS_FIO_ATTR_WRITEABLE: commit on every write/close
+
 static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char *part, config_set_t *configSet)
 {
     char emberElf[256], biosPath[288], mountSrc[APA_IDMAX + 6];
@@ -1905,7 +1914,7 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
 
     snprintf(mountSrc, sizeof(mountSrc), "hdd0:%s", part);
     fileXioUmount(hddPrefix);
-    if (fileXioMount(hddPrefix, mountSrc, FIO_MT_RDWR) < 0) {
+    if (fileXioMount(hddPrefix, mountSrc, FIO_MT_RDWR | HDD_PFS_MT_WRITETHROUGH) < 0) {
         hddRestoreDataHome();
         ioBlockOps(0);
         guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
