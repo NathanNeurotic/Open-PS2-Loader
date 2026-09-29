@@ -390,9 +390,11 @@ static void itemInitSupport(item_list_t *support)
 {
     support->itemInit(support);
     moduleUpdateMenuInternal((opl_io_module_t *)support->owner, 0, 0);
-    // Manual refreshing can only be done if either auto refresh is disabled or auto refresh is disabled for the item.
-    if (!gAutoRefresh || (support->updateDelay == MENU_UPD_DELAY_NOUPDATE) || support->mode == MMCE_MODE)
-        ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
+
+    // A support that was just started has no populated submenu yet, so always build it once now.
+    // Automatic Refresh controls later periodic rescans; it must never suppress this first list
+    // population and leave a Manual source enabled-but-empty until a background cadence happens.
+    ioPutRequest(IO_MENU_UPDATE_DEFFERED, &support->mode);
 }
 
 static void itemExecSelect(struct menu_item *curMenu)
