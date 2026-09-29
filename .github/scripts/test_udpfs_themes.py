@@ -11,6 +11,7 @@ scanned" check (TwistedZeon, 09-29: remembered PS1 page blank until L3, and no T
 scan belongs to UDPFS itself, not to a global libview flag (zackcage6, Beta-3335: boot popup).
 """
 from pathlib import Path
+import re
 import sys
 
 root = Path(__file__).resolve().parents[2]
@@ -42,7 +43,11 @@ if "static int udpfsThemesScanned = 0;" not in src:
 
 waiter = function_body(src, "static void udpfsSetWaitingForServer(int waiting)")
 if waiter:
-    if "(waiting || !udpfsThemesScanned) ? MENU_UPD_DELAY_GENREFRESH : UDPFS_MODE_UPDATE_DELAY" not in waiter:
+    cadence = re.compile(
+        r"\(\s*waiting\s*\|\|\s*!udpfsThemesScanned\s*\)\s*\?\s*"
+        r"MENU_UPD_DELAY_GENREFRESH\s*:\s*UDPFS_MODE_UPDATE_DELAY"
+    )
+    if not cadence.search(waiter):
         failures.append("failed THM discovery must keep the general-refresh retry cadence alive")
 
 init = function_body(src, "void udpfsInit(item_list_t *itemList)")
