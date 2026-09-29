@@ -386,24 +386,22 @@ This build layers several features on top of upstream OPL:
   supply your own, from hardware and media you lawfully own. Please report Ember problems to *us*
   first rather than to Gageformer: the launching is ours.
 
-  **Ember settings.** The **PS Emulation Settings** page carries four Ember rows: *Ember Display Mode*
-  (**Default** / **240p** / **480i** / **480p**), *Ember Dithering* (**Default** / **On** / **Off**),
-  *Ember Shading* (**Default** / **15-bit** / **24-bit (experimental)**) and *Ember Controller*
-  (**Default** / **Auto** / **Analog** / **D2A**). When you launch an Ember title, RiptOPL writes
-  those settings into `<device>:/EMBER/settings.txt` on the launching device, creating the file if it is not
-  there and updating it in place if it is. **480p** needs component or HDMI (composite shows no
-  picture), so picking it asks first. RiptOPL only touches a setting you have changed here: a row
-  left on **Default** leaves that key alone, so a `settings.txt` written by hand keeps working;
-  changing a row back to **Default** removes the key again (and the file, if that was all it held).
-  Every other line in the file is kept.
+  **Ember settings.** The **PS Emulation Settings** page carries five Ember rows: *Ember Display Mode*
+  (**Default** / **240p** / **480i** / **480p**), *Ember Timing* (**Default** / **Auto** / **NTSC** /
+  **PAL**), *Ember Dithering* (**Default** / **On** / **Off**), *Ember Shading* (**Default** /
+  **15-bit** / **24-bit (experimental)**) and *Ember Controller* (**Default** / **Auto** / **Analog** /
+  **D2A**). At launch RiptOPL updates `<device>:/EMBER/settings.txt` on the game's device. **480p**
+  needs component or HDMI (composite shows no picture), so picking it asks first. Global rows remain
+  changed-only: a row never changed in RiptOPL leaves a hand-written key alone; changing it back to
+  **Default** removes that global key. Unknown lines and comments are preserved.
 
-  **Per game:** on an Ember title, **Triangle → Ember Game Settings** sets that game's *Ember
-  Controller*. It is saved in the game's `CFG/<Folder Name>.cfg` and written to
-  `EMBER/games/<Folder Name>/settings.txt` at launch, overriding the global row. Left on **Default**, it
-  leaves any `controller` line already in that game's file alone; changed back to **Default** after a
-  choice, it removes that line so the global row applies. On a Favourites entry it edits the same
-  setting as on the device page. Controller
-  is the only per-game setting, on Ember's author's advice.
+  **Per game:** on an Ember title, **Triangle → Ember Game Settings** exposes *Timing*, *Dithering*,
+  *Shading* and *Controller*. Ember reads those four keys from
+  `EMBER/games/<Folder Name>/settings.txt`; *Display* remains global-only. The choices are stored in
+  `CFG/<Folder Name>.cfg` and applied at launch. **Default means inherit the global Ember setting**:
+  RiptOPL removes that game's corresponding key; any non-Default value overrides the global one. On
+  a Favourites entry the same source-game CFG is edited.
+
 
 - **Alternate POPSTARTER builds:** the release package ships
   `POPS/POPSTARTER VERSIONS/` containing five builds of POPSTARTER — **MAIN**, **DEBUG**,

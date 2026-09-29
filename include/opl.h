@@ -218,6 +218,13 @@ enum {
     EMBER_DISPLAY_COUNT
 };
 enum {
+    EMBER_TIMING_DEFAULT = 0,
+    EMBER_TIMING_AUTO,
+    EMBER_TIMING_NTSC,
+    EMBER_TIMING_PAL,
+    EMBER_TIMING_COUNT
+};
+enum {
     EMBER_DITHER_DEFAULT = 0,
     EMBER_DITHER_ON,
     EMBER_DITHER_OFF,
@@ -237,6 +244,7 @@ enum {
     EMBER_CONTROLLER_COUNT
 };
 extern int gEmberDisplay;
+extern int gEmberTiming;
 extern int gEmberDither;
 extern int gEmberShading;
 extern int gEmberController;

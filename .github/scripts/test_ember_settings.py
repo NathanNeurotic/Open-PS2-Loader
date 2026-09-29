@@ -1,9 +1,8 @@
 """Ember Beta 2 settings (docs/EMBER-INTEGRATION-PLAN.md, Part 10).
 
-The rule under test: RiptOPL only touches an Ember setting the user has CHANGED in RiptOPL. A setting
-never changed here is EMBER_SETTING_UNSET, is never written or removed, and so a settings.txt somebody
-wrote by hand keeps working. Changing one back to Default removes that key, so Ember's own default
-applies again.
+Global rows remain changed-only so existing hand-written EMBER/settings.txt files are preserved until
+the user changes a row. Per-game rows follow Ember's native inheritance rule: Default removes that
+game override so the global value applies; Timing, Dithering, Shading and Controller can override it.
 
 Everything below is compiled from the production source text, not a copy of it.
 """
@@ -43,8 +42,8 @@ def defines(source, where, names):
 
 def ember_enums(source):
     blocks = re.findall(r'^enum \{[^}]*\bEMBER_[A-Z0-9_]+[^}]*\};', source, re.M)
-    if len(blocks) < 4:
-        failures.append('include/opl.h: expected the four Ember setting enums, found %d' % len(blocks))
+    if len(blocks) < 5:
+        failures.append('include/opl.h: expected the five Ember setting enums, found %d' % len(blocks))
     return '\n'.join(blocks) + '\n'
 
 
@@ -72,8 +71,8 @@ cuesupport_h = read('include/cuesupport.h')
 
 # --- Global settings: load, migration, save (src/opl.c) ------------------------------------------
 
-CONFIG_KEYS = ('CONFIG_OPL_EMBER_DISPLAY', 'CONFIG_OPL_EMBER_DISPLAY_MODE', 'CONFIG_OPL_EMBER_DITHER',
-               'CONFIG_OPL_EMBER_SHADING', 'CONFIG_OPL_EMBER_CONTROLLER')
+CONFIG_KEYS = ('CONFIG_OPL_EMBER_DISPLAY', 'CONFIG_OPL_EMBER_DISPLAY_MODE', 'CONFIG_OPL_EMBER_TIMING',
+               'CONFIG_OPL_EMBER_DITHER', 'CONFIG_OPL_EMBER_SHADING', 'CONFIG_OPL_EMBER_CONTROLLER')
 
 GLOBALS_HARNESS = r'''
 #include <stdio.h>
@@ -127,16 +126,18 @@ static int has(const char *key, int *value) { return configGetInt(&cfg, key, val
 
 @DEFINES@
 @ENUMS@
-int gEmberDisplay = 99, gEmberDither = 99, gEmberShading = 99, gEmberController = 99;
+int gEmberDisplay = 99, gEmberTiming = 99, gEmberDither = 99, gEmberShading = 99, gEmberController = 99;
 
 @FUNCTIONS@
 
 static int fails;
-static void expect4(const char *what, int d, int di, int s, int c)
+static void expect5(const char *what, int d, int t, int di, int s, int c)
 {
-    if (gEmberDisplay != d || gEmberDither != di || gEmberShading != s || gEmberController != c) {
-        printf("FAIL %s: got display %d dither %d shading %d controller %d, want %d %d %d %d\n", what,
-               gEmberDisplay, gEmberDither, gEmberShading, gEmberController, d, di, s, c);
+    if (gEmberDisplay != d || gEmberTiming != t || gEmberDither != di ||
+        gEmberShading != s || gEmberController != c) {
+        printf("FAIL %s: got display %d timing %d dither %d shading %d controller %d, want %d %d %d %d %d\n",
+               what, gEmberDisplay, gEmberTiming, gEmberDither, gEmberShading, gEmberController,
+               d, t, di, s, c);
         fails++;
     }
 }
@@ -149,58 +150,61 @@ int main(void)
     /* A config that never saw these keys: nothing is set, so no settings.txt is ever touched. */
     clearStore();
     emberLoadSettings(&cfg);
-    expect4("fresh config", U, U, U, U);
+    expect5("fresh config", U, U, U, U, U);
 
     /* Each key keeps every value in its range, including 0 (= changed back to Default). */
     clearStore();
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY_MODE, EMBER_DISPLAY_480P);
+    configSetInt(&cfg, CONFIG_OPL_EMBER_TIMING, EMBER_TIMING_PAL);
     configSetInt(&cfg, CONFIG_OPL_EMBER_DITHER, EMBER_DITHER_OFF);
     configSetInt(&cfg, CONFIG_OPL_EMBER_SHADING, EMBER_SHADING_24);
     configSetInt(&cfg, CONFIG_OPL_EMBER_CONTROLLER, EMBER_CONTROLLER_D2A);
     emberLoadSettings(&cfg);
-    expect4("every top value", EMBER_DISPLAY_480P, EMBER_DITHER_OFF, EMBER_SHADING_24, EMBER_CONTROLLER_D2A);
+    expect5("every top value", EMBER_DISPLAY_480P, EMBER_TIMING_PAL, EMBER_DITHER_OFF, EMBER_SHADING_24, EMBER_CONTROLLER_D2A);
     clearStore();
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY_MODE, 0);
+    configSetInt(&cfg, CONFIG_OPL_EMBER_TIMING, 0);
     configSetInt(&cfg, CONFIG_OPL_EMBER_DITHER, 0);
     configSetInt(&cfg, CONFIG_OPL_EMBER_SHADING, 0);
     configSetInt(&cfg, CONFIG_OPL_EMBER_CONTROLLER, 0);
     emberLoadSettings(&cfg);
-    expect4("changed back to Default", 0, 0, 0, 0);
+    expect5("changed back to Default", 0, 0, 0, 0, 0);
 
     /* Out of range reads as never set -- a hand-edited or future value must not be written. */
     clearStore();
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY_MODE, EMBER_DISPLAY_COUNT);
+    configSetInt(&cfg, CONFIG_OPL_EMBER_TIMING, EMBER_TIMING_COUNT);
     configSetInt(&cfg, CONFIG_OPL_EMBER_DITHER, -3);
     configSetInt(&cfg, CONFIG_OPL_EMBER_SHADING, 7);
     configSetInt(&cfg, CONFIG_OPL_EMBER_CONTROLLER, EMBER_CONTROLLER_COUNT);
     emberLoadSettings(&cfg);
-    expect4("out of range", U, U, U, U);
+    expect5("out of range", U, U, U, U, U);
 
     /* Migration from the old key. It was written on every save, so its 0 cannot be told from "never
        touched" and reads as unset; 1 (240) and 2 (480i -- it always was) were chosen and carry over. */
     clearStore();
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY, 2);
     emberLoadSettings(&cfg);
-    expect4("legacy ember_display=2", EMBER_DISPLAY_480, U, U, U);
+    expect5("legacy ember_display=2", EMBER_DISPLAY_480, U, U, U, U);
     clearStore();
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY, 1);
     emberLoadSettings(&cfg);
-    expect4("legacy ember_display=1", EMBER_DISPLAY_240, U, U, U);
+    expect5("legacy ember_display=1", EMBER_DISPLAY_240, U, U, U, U);
     clearStore();
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY, 0);
     emberLoadSettings(&cfg);
-    expect4("legacy ember_display=0", U, U, U, U);
+    expect5("legacy ember_display=0", U, U, U, U, U);
     clearStore();
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY, 3); /* the old build never wrote 3 */
     emberLoadSettings(&cfg);
-    expect4("legacy ember_display=3", U, U, U, U);
+    expect5("legacy ember_display=3", U, U, U, U, U);
 
     /* The new key wins whenever it is present, even at 0. */
     clearStore();
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY, 1);
     configSetInt(&cfg, CONFIG_OPL_EMBER_DISPLAY_MODE, 0);
     emberLoadSettings(&cfg);
-    expect4("new key beats legacy", 0, U, U, U);
+    expect5("new key beats legacy", 0, U, U, U, U);
 
     /* Save writes only what was changed, and always drops the legacy key after migrating it. */
     clearStore();
@@ -307,8 +311,9 @@ int main(void)
 # emberSettingFromRow -- a row wired any other way renders empty or never saves (see gui.c).
 dialogs_c = read('src/dialogs.c')
 page = function_text(gui_c, 'src/gui.c', 'static int guiSettingsShowPopstarter(')
-for row, var in (('CFG_EMBER_DISPLAY', 'gEmberDisplay'), ('CFG_EMBER_DITHER', 'gEmberDither'),
-                 ('CFG_EMBER_SHADING', 'gEmberShading'), ('CFG_EMBER_CONTROLLER', 'gEmberController')):
+for row, var in (('CFG_EMBER_DISPLAY', 'gEmberDisplay'), ('CFG_EMBER_TIMING', 'gEmberTiming'),
+                 ('CFG_EMBER_DITHER', 'gEmberDither'), ('CFG_EMBER_SHADING', 'gEmberShading'),
+                 ('CFG_EMBER_CONTROLLER', 'gEmberController')):
     if f'{{UI_ENUM, {row},' not in dialogs_c:
         failures.append(f'src/dialogs.c: no {row} row on the PS1 page')
     if page and f'diaSetEnum(ui, {row},' not in page:
@@ -340,14 +345,16 @@ if 'menuInitVcdMenu(kind == FAV_KIND_CUE);' not in read('src/opl.c'):
     failures.append('src/opl.c: the PS1 Triangle menu is not told whether the row is an Ember row')
 
 game_page = function_text(gui_c, 'src/gui.c', 'void guiShowEmberGameSettings(')
-# Controller only (Gageformer: per-game is for the controller; 24-bit shading can cause issues).
-for key, row in (('CONFIG_ITEM_EMBER_CONTROLLER', 'CFG_EMBER_CONTROLLER'),):
-    if game_page and f'emberSettingFromRow(diaEmberGameConfig, {row},' not in game_page:
-        failures.append(f'src/gui.c: Ember Game Settings does not read {row} back changed-only')
+for key, row in (
+    ('CONFIG_ITEM_EMBER_TIMING', 'CFG_EMBER_TIMING'),
+    ('CONFIG_ITEM_EMBER_DITHER', 'CFG_EMBER_DITHER'),
+    ('CONFIG_ITEM_EMBER_SHADING', 'CFG_EMBER_SHADING'),
+    ('CONFIG_ITEM_EMBER_CONTROLLER', 'CFG_EMBER_CONTROLLER'),
+):
+    if game_page and f'diaGetInt(diaEmberGameConfig, {row},' not in game_page:
+        failures.append(f'src/gui.c: Ember Game Settings does not read {row} back')
     if game_page and f'configSetInt(configSet, {key},' not in game_page:
         failures.append(f'src/gui.c: Ember Game Settings never stores {key}')
-if game_page and 'CONFIG_ITEM_EMBER_SHADING' in game_page:
-    failures.append('src/gui.c: Ember Game Settings offers Shading, which Gageformer asked to keep global')
 if game_page and 'menuSaveConfig()' not in game_page:
     failures.append('src/gui.c: Ember Game Settings does not save the CFG')
 
@@ -455,8 +462,10 @@ APPLY_HARNESS = r'''
 
 typedef struct
 {
-    int controllerPresent, controller;
+    int timingPresent, timing;
+    int ditherPresent, dither;
     int shadingPresent, shading;
+    int controllerPresent, controller;
 } config_set_t;
 
 typedef struct
@@ -472,6 +481,7 @@ typedef struct
 @ENUMS@
 
 int gEmberDisplay = EMBER_SETTING_UNSET;
+int gEmberTiming = EMBER_SETTING_UNSET;
 int gEmberDither = EMBER_SETTING_UNSET;
 int gEmberShading = EMBER_SETTING_UNSET;
 int gEmberController = EMBER_SETTING_UNSET;
@@ -480,6 +490,14 @@ static int globalTouches, gameTouches;
 
 static int configGetInt(config_set_t *cfg, const char *key, int *value)
 {
+    if (strcmp(key, CONFIG_ITEM_EMBER_TIMING) == 0 && cfg->timingPresent) {
+        *value = cfg->timing;
+        return 1;
+    }
+    if (strcmp(key, CONFIG_ITEM_EMBER_DITHER) == 0 && cfg->ditherPresent) {
+        *value = cfg->dither;
+        return 1;
+    }
     if (strcmp(key, CONFIG_ITEM_EMBER_CONTROLLER) == 0 && cfg->controllerPresent) {
         *value = cfg->controller;
         return 1;
@@ -509,6 +527,7 @@ static void reset(config_set_t *cfg)
 {
     memset(cfg, 0, sizeof(*cfg));
     gEmberDisplay = EMBER_SETTING_UNSET;
+    gEmberTiming = EMBER_SETTING_UNSET;
     gEmberDither = EMBER_SETTING_UNSET;
     gEmberShading = EMBER_SETTING_UNSET;
     gEmberController = EMBER_SETTING_UNSET;
@@ -535,6 +554,14 @@ int main(void)
     gEmberDisplay = EMBER_DISPLAY_240;
     cueApplySettings("mass0:/", "Game", &cfg);
     expect("one global setting touches only main settings", 1, 0);
+
+    reset(&cfg);
+    cfg.timingPresent = 1;
+    cfg.timing = EMBER_TIMING_NTSC;
+    cfg.ditherPresent = 1;
+    cfg.dither = EMBER_DITHER_OFF;
+    cueApplySettings("mass0:/", "Game", &cfg);
+    expect("per-game timing/dither touch only game settings", 0, 1);
 
     reset(&cfg);
     cfg.shadingPresent = 1;
@@ -571,7 +598,8 @@ if apply_fn:
                        function_text(cue_c, 'src/cuesupport.c', 'static void cueWantSetting(') +
                        apply_fn)
     apply_defines = (defines(config_h, 'include/config.h',
-                             ('CONFIG_ITEM_EMBER_CONTROLLER', 'CONFIG_ITEM_EMBER_SHADING')) +
+                             ('CONFIG_ITEM_EMBER_TIMING', 'CONFIG_ITEM_EMBER_DITHER',
+                              'CONFIG_ITEM_EMBER_SHADING', 'CONFIG_ITEM_EMBER_CONTROLLER')) +
                      defines(cuesupport_h, 'include/cuesupport.h', ('CUE_NAME_LAUNCH_MAX',)) +
                      defines(opl_h, 'include/opl.h', ('EMBER_SETTING_UNSET',)))
     if apply_functions.count('{') >= 3:

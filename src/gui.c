@@ -3092,6 +3092,7 @@ static int guiSettingsShowPopstarter(void)
     const int skipIDs[] = {VCD_BDMA_BUTTON};
     // "480" is 480i to Ember -- it always was; this row used to call it 480p.
     const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480i", "480p", NULL};
+    const char *emberTimingStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "NTSC", "PAL", NULL};
     const char *emberDitherStrs[] = {_l(_STR_DEFAULT), _l(_STR_ON), _l(_STR_OFF), NULL};
     const char *emberShadingStrs[] = {_l(_STR_DEFAULT), "15-bit", _l(_STR_EMBER_SHADING_24), NULL};
     const char *emberControllerStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "Analog", "D2A", NULL};
@@ -3099,6 +3100,7 @@ static int guiSettingsShowPopstarter(void)
     // A setting never changed in RiptOPL is UNSET and shows as Default; it only becomes stored when
     // the user actually picks something else (see emberSettingFromRow).
     int emberDisplayShown = emberSettingShown(gEmberDisplay);
+    int emberTimingShown = emberSettingShown(gEmberTiming);
     int emberDitherShown = emberSettingShown(gEmberDither);
     int emberShadingShown = emberSettingShown(gEmberShading);
     int emberControllerShown = emberSettingShown(gEmberController);
@@ -3113,6 +3115,8 @@ static int guiSettingsShowPopstarter(void)
     // change, which is exactly the bug this line replaced.
     diaSetEnum(ui, CFG_EMBER_DISPLAY, emberDisplayStrs);
     diaSetInt(ui, CFG_EMBER_DISPLAY, emberDisplayShown);
+    diaSetEnum(ui, CFG_EMBER_TIMING, emberTimingStrs);
+    diaSetInt(ui, CFG_EMBER_TIMING, emberTimingShown);
     diaSetEnum(ui, CFG_EMBER_DITHER, emberDitherStrs);
     diaSetInt(ui, CFG_EMBER_DITHER, emberDitherShown);
     diaSetEnum(ui, CFG_EMBER_SHADING, emberShadingStrs);
@@ -3149,6 +3153,7 @@ reshow_popstarter:
         if (emberDisplay == EMBER_DISPLAY_480P && gEmberDisplay != EMBER_DISPLAY_480P && !guiMsgBox(_l(_STR_EMBER_480P_CONFIRM), 1, NULL))
             emberDisplay = gEmberDisplay;
         gEmberDisplay = emberDisplay;
+        gEmberTiming = emberSettingFromRow(ui, CFG_EMBER_TIMING, emberTimingShown, gEmberTiming);
         gEmberDither = emberSettingFromRow(ui, CFG_EMBER_DITHER, emberDitherShown, gEmberDither);
         gEmberShading = emberSettingFromRow(ui, CFG_EMBER_SHADING, emberShadingShown, gEmberShading);
         gEmberController = emberSettingFromRow(ui, CFG_EMBER_CONTROLLER, emberControllerShown, gEmberController);
@@ -3275,6 +3280,13 @@ static int guiSettingsShowIndex(int *page)
             guiDrawBGPlasma();
 
         fntRenderString(gTheme->fonts[0], screenWidth >> 1, 50, ALIGN_CENTER, 0, 0, _l(_STR_SETTINGS), gTheme->textColor);
+
+        // Keep the exact running build visible on the Settings hub so bug reports do not require
+        // opening About/Credits just to discover the version. OPL_VERSION already includes the
+        // release/revision/hash/toolchain suffix used everywhere else in the build.
+        char versionLine[80];
+        snprintf(versionLine, sizeof(versionLine), "RiptOPL %s", OPL_VERSION);
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1, 72, ALIGN_CENTER, 0, 0, versionLine, gTheme->textColor);
 
         y = (gTheme->usedHeight >> 1) - (spacing * (itemCount >> 1));
         for (int i = 0; i < itemCount; i++) {
@@ -3416,34 +3428,57 @@ static int emberGameSettingGet(config_set_t *configSet, const char *key, int cou
     return value;
 }
 
-// PS1 Triangle -> Ember Game Settings (Controller only -- see diaEmberGameConfig). The same rule as
-// the global rows: a row never changed here
-// stays out of the CFG (the game's settings.txt keeps whatever it has); a changed row is stored, and
-// Default stored means "remove it from the game's file", so the global row applies again. The CFG is
-// the one the launch reads (menuLoadConfig -> cueApplySettings); on a favourite it is its source
-// row's CFG, so both places show and edit the same values.
+// PS1 Triangle -> Ember Game Settings. Ember accepts timing, dither, shading and controller in
+// a game's settings.txt; display is deliberately global-only. In this editor Default means inherit
+// the global Ember setting. Confirming Default stores 0 in the game's CFG so cueApplySettings removes
+// that per-game key at launch instead of preserving a stale hand-written override.
 void guiShowEmberGameSettings(void)
 {
+    const char *timingStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "NTSC", "PAL", NULL};
+    const char *ditherStrs[] = {_l(_STR_DEFAULT), _l(_STR_ON), _l(_STR_OFF), NULL};
+    const char *shadingStrs[] = {_l(_STR_DEFAULT), "15-bit", _l(_STR_EMBER_SHADING_24), NULL};
     const char *controllerStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "Analog", "D2A", NULL};
     config_set_t *configSet = gameMenuLoadConfig(NULL);
-    int controller, controllerShown;
+    int timing, dither, shading, controller;
+    int newTiming, newDither, newShading, newController;
 
     if (configSet == NULL)
         return;
 
+    timing = emberGameSettingGet(configSet, CONFIG_ITEM_EMBER_TIMING, EMBER_TIMING_COUNT);
+    dither = emberGameSettingGet(configSet, CONFIG_ITEM_EMBER_DITHER, EMBER_DITHER_COUNT);
+    shading = emberGameSettingGet(configSet, CONFIG_ITEM_EMBER_SHADING, EMBER_SHADING_COUNT);
     controller = emberGameSettingGet(configSet, CONFIG_ITEM_EMBER_CONTROLLER, EMBER_CONTROLLER_COUNT);
-    controllerShown = emberSettingShown(controller);
 
+    diaSetEnum(diaEmberGameConfig, CFG_EMBER_TIMING, timingStrs);
+    diaSetInt(diaEmberGameConfig, CFG_EMBER_TIMING, emberSettingShown(timing));
+    diaSetEnum(diaEmberGameConfig, CFG_EMBER_DITHER, ditherStrs);
+    diaSetInt(diaEmberGameConfig, CFG_EMBER_DITHER, emberSettingShown(dither));
+    diaSetEnum(diaEmberGameConfig, CFG_EMBER_SHADING, shadingStrs);
+    diaSetInt(diaEmberGameConfig, CFG_EMBER_SHADING, emberSettingShown(shading));
     diaSetEnum(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerStrs);
-    diaSetInt(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerShown);
+    diaSetInt(diaEmberGameConfig, CFG_EMBER_CONTROLLER, emberSettingShown(controller));
 
     if (diaExecuteDialog(diaEmberGameConfig, -1, 1, NULL) != UIID_BTN_OK)
         return;
 
-    int newController = emberSettingFromRow(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerShown, controller);
-    if (newController == controller)
+    newTiming = 0;
+    newDither = 0;
+    newShading = 0;
+    newController = 0;
+    diaGetInt(diaEmberGameConfig, CFG_EMBER_TIMING, &newTiming);
+    diaGetInt(diaEmberGameConfig, CFG_EMBER_DITHER, &newDither);
+    diaGetInt(diaEmberGameConfig, CFG_EMBER_SHADING, &newShading);
+    diaGetInt(diaEmberGameConfig, CFG_EMBER_CONTROLLER, &newController);
+
+    // An absent CFG key is displayed as Default, but OK makes that inheritance explicit. This is
+    // intentional: Ember defines a missing game key as "use the global settings.txt value".
+    if (newTiming == timing && newDither == dither && newShading == shading && newController == controller)
         return;
 
+    configSetInt(configSet, CONFIG_ITEM_EMBER_TIMING, newTiming);
+    configSetInt(configSet, CONFIG_ITEM_EMBER_DITHER, newDither);
+    configSetInt(configSet, CONFIG_ITEM_EMBER_SHADING, newShading);
     configSetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, newController);
     menuSaveConfig(); // a failed write raises the usual "error saving settings" message
 }

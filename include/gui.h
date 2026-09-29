@@ -134,7 +134,7 @@ void guiShowConfig();
 void guiShowUIConfig();
 void guiShowSettings(void);
 void guiShowPsEmulationSettings(void); // PS1 Triangle shortcut to the global PS emulation page
-void guiShowEmberGameSettings(void);   // PS1 Triangle, Ember rows: this game's Controller / Shading
+void guiShowEmberGameSettings(void);   // PS1 Triangle, Ember rows: timing/dither/shading/controller
 // Settings-layout category pages (rebuild step 06)
 void guiShowDeviceConfig(void);
 int guiShowControllerConfig(void);
