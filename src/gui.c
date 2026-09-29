@@ -29,7 +29,6 @@
 #include "include/hddsupport.h" // staged normal APA OPL-home selector
 #include "include/vcdsupport.h" // POPStarter pages: BDMA equip, list options, POPS net config
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
-#include "include/compatupd.h"
 #include "include/pggsm.h"
 #include "include/cheatman.h"
 #include "include/sound.h"
@@ -523,49 +522,6 @@ void guiShowRANotices(void)
     guiRenderRANotices(10, 35);
 }
 #endif
-
-static void guiShowNetCompatUpdateResult(int result)
-{
-    switch (result) {
-        case OPL_COMPAT_UPDATE_STAT_DONE:
-            // Completed with no errors.
-            guiMsgBox(_l(_STR_NET_UPDATE_DONE), 0, NULL);
-            break;
-        case OPL_COMPAT_UPDATE_STAT_ERROR:
-            // Completed with errors.
-            guiMsgBox(_l(_STR_NET_UPDATE_FAILED), 0, NULL);
-            break;
-        case OPL_COMPAT_UPDATE_STAT_CONN_ERROR:
-            // Completed with errors.
-            guiMsgBox(_l(_STR_NET_UPDATE_CONN_FAILED), 0, NULL);
-            break;
-        case OPL_COMPAT_UPDATE_STAT_ABORTED:
-            // User-aborted.
-            guiMsgBox(_l(_STR_NET_UPDATE_CANCELLED), 0, NULL);
-            break;
-    }
-}
-
-void guiShowNetCompatUpdateSingle(int id, item_list_t *support, config_set_t *configSet)
-{
-    int ConfigSource, result;
-
-    ConfigSource = CONFIG_SOURCE_DEFAULT;
-    configGetInt(configSet, CONFIG_ITEM_CONFIGSOURCE, &ConfigSource);
-
-    if (guiMsgBox(_l(_STR_CONFIRMATION_SETTINGS_UPDATE), 1, NULL)) {
-        guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
-
-        if ((ethLoadInitModules()) == 0) {
-            if ((result = oplUpdateGameCompatSingle(id, support, configSet)) == OPL_COMPAT_UPDATE_STAT_DONE) {
-                configSetInt(configSet, CONFIG_ITEM_CONFIGSOURCE, CONFIG_SOURCE_DLOAD);
-            }
-            guiShowNetCompatUpdateResult(result);
-        } else {
-            ethDisplayErrorStatus();
-        }
-    }
-}
 
 static int guiUpdater(int modified)
 {
