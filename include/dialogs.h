@@ -267,14 +267,6 @@ enum UI_ITEMS {
     VMC_PROGRESS,
     VMC_REFRESH,
 
-    NETUPD_OPT_UPD_ALL_LBL,
-    NETUPD_OPT_UPD_ALL,
-    NETUPD_PROGRESS_LBL,
-    NETUPD_PROGRESS_PERC_LBL,
-    NETUPD_PROGRESS,
-    NETUPD_BTN_START,
-    NETUPD_BTN_CANCEL,
-
     OSD_LANGUAGE_SOURCE,
     OSD_LANGUAGE_ENABLE,
     OSD_LANGUAGE_VALUE,
@@ -381,7 +373,6 @@ extern struct UIItem diaCheatConfig[];
 extern struct UIItem diaConfig[];
 extern struct UIItem diaAbout[];
 extern struct UIItem diaVMC[];
-extern struct UIItem diaNetCompatUpdate[];
 
 extern struct UIItem diaOSDConfig[];
 extern struct UIItem diaCoverflowConfig[];
