@@ -84,8 +84,8 @@ if update:
     if "udpfsSetWaitingForServer(!answeredBefore || (!reached && !udpfsServerAnswers()));" not in update:
         failures.append("a scan that started before the server answered must keep polling")
 
-    if "if (answeredBefore) // only a scan that reached the server counts as the first one\n            udpfsPs1Scanned = 1;" not in update:
-        failures.append("the PS1 first-scan latch must only be set by a scan that reached the server")
+    if "if (answeredBefore && r >= 0) // only a scan that reached the server AND read the list counts\n            udpfsPs1Scanned = 1;" not in update:
+        failures.append("the PS1 first-scan latch must only be set by a scan that reached the server and succeeded")
 
 # A remembered PS1 page gets its first scan from UDPFS itself (as MMCE and BDM do), NOT from marking
 # every restored page dirty in libview -- that forced a scan of every empty BDM slot at boot and raised

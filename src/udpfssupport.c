@@ -329,7 +329,7 @@ static int udpfsUpdateGameList(item_list_t *itemList)
         // UDPFS can keep Ember's inherited IOP/mount alive, but POPSTARTER resets the IOP and has no
         // udpfs: driver to restore. Publish ONLY Ember rows so every title on this page can launch.
         int r = cueFillGameList(udpfsPrefix, &udpfsPs1Games);
-        if (answeredBefore) // only a scan that reached the server counts as the first one
+        if (answeredBefore && r >= 0) // only a scan that reached the server AND read the list counts
             udpfsPs1Scanned = 1;
         if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
             udpfsPs1GameCount = r;
