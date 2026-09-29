@@ -1582,7 +1582,7 @@ static int bdmUpdateGameList(item_list_t *itemList)
         // Still -2 after a root scan = neither CD nor DVD would open and there is no ul.cfg. Say where
         // it looked rather than leave a silently empty page. Only a connect, SELECT, L3 or
         // delete/rename pass scans, so this cannot repeat on its own.
-        if (pDeviceData->bdmULSizePrev == -2 && sub[0] == '\0')
+        if (pDeviceData->bdmULSizePrev == -2 && sub[0] == '\0' && pDeviceData->bdmPrefix[0] != '\0')
             setErrorMessagePathCode(_STR_BDM_PS2_FOLDERS_UNREADABLE, pDeviceData->bdmPrefix, sbGetReadListError());
         result += pDeviceData->bdmGameCount;
     }

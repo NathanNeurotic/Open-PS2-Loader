@@ -39,7 +39,8 @@ static int udpfsPs1GameCount = 0;
 static base_game_info_t *udpfsPs1Games = NULL;
 static int udpfsIomanModLoaded = 0;
 static int udpfsWaitingForServer = 0; // the last scan got no answer from the server; see udpfsSetWaitingForServer
-static int udpfsThemesScanned = 0;    // THM is registered once per active UDPFS session, after the server answers
+static int udpfsThemesScanned = 0;
+static int udpfsPs1Scanned = 0; // a PS1-view scan has reached the server this session; see udpfsNeedsUpdate    // THM is registered once per active UDPFS session, after the server answers
 
 // forward declaration
 static item_list_t udpfsGameList;
@@ -162,6 +163,7 @@ void udpfsInit(item_list_t *itemList)
 
     udpfsBase = "udpfs:";
     udpfsThemesScanned = 0;
+    udpfsPs1Scanned = 0;
     // The games live directly at the device root; no share/prefix to prepend (unlike SMB).
     snprintf(udpfsPrefix, sizeof(udpfsPrefix), "udpfs:/");
     udpfsULSizePrev = -2;
@@ -260,8 +262,12 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
     // per poll instead of an empty rebuild every two seconds. Ahead of the PS1 early-out so Ember heals too.
     if (udpfsWaitingForServer)
         return udpfsServerAnswers();
+    // The PS1 view refreshes on L3 / SELECT only -- but it must still get its FIRST scan. A page
+    // restored onto a remembered PS1 view (Remember Last Played on an Ember title) otherwise returned
+    // here forever and stayed blank until the user toggled L3 (TwistedZeon, 09-29). MMCE and BDM
+    // build that first list the same way (mmcePs1Scanned; bdmNeedsUpdate's connect pass).
     if (libListViewActive(itemList) == LIB_VIEW_PS1)
-        return 0;
+        return !udpfsPs1Scanned;
 
     if (udpfsULSizePrev == -2)
         result = 1;
@@ -323,6 +329,8 @@ static int udpfsUpdateGameList(item_list_t *itemList)
         // UDPFS can keep Ember's inherited IOP/mount alive, but POPSTARTER resets the IOP and has no
         // udpfs: driver to restore. Publish ONLY Ember rows so every title on this page can launch.
         int r = cueFillGameList(udpfsPrefix, &udpfsPs1Games);
+        if (answeredBefore) // only a scan that reached the server counts as the first one
+            udpfsPs1Scanned = 1;
         if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
             udpfsPs1GameCount = r;
     }

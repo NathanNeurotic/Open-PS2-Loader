@@ -4,8 +4,9 @@ UDPFS is a network filesystem whose server can become reachable after its menu s
 Theme discovery must therefore wait for the server, run before view-specific early returns, and avoid
 re-registering the same remote themes on every refresh. A scan that started before the server answered
 must keep the page polling (its "empty" result proves nothing), and a page whose L3 position was restored
-at boot must still do its first scan -- the PS1 early return in NeedsUpdate sits before the "never
-scanned" check (TwistedZeon, 09-29: remembered PS1 page blank until L3, and no THM themes).
+onto PS1 must still do its first scan -- the PS1 early return in NeedsUpdate sits before the "never
+scanned" check (TwistedZeon, 09-29: remembered PS1 page blank until L3, and no THM themes). That first
+scan belongs to UDPFS itself, not to a global libview flag (zackcage6, Beta-3335: boot popup).
 """
 from pathlib import Path
 import sys
@@ -83,12 +84,22 @@ if update:
     if "udpfsSetWaitingForServer(!answeredBefore || (!reached && !udpfsServerAnswers()));" not in update:
         failures.append("a scan that started before the server answered must keep polling")
 
+    if "if (answeredBefore) // only a scan that reached the server counts as the first one\n            udpfsPs1Scanned = 1;" not in update:
+        failures.append("the PS1 first-scan latch must only be set by a scan that reached the server")
+
+# A remembered PS1 page gets its first scan from UDPFS itself (as MMCE and BDM do), NOT from marking
+# every restored page dirty in libview -- that forced a scan of every empty BDM slot at boot and raised
+# "Could not open the CD or DVD folder in (error 5)" on every boot (zackcage6, Beta-3335).
+if needs and "if (libListViewActive(itemList) == LIB_VIEW_PS1)\n        return !udpfsPs1Scanned;" not in needs:
+    failures.append("udpfsNeedsUpdate must give a remembered PS1 page its first scan")
+if init and "udpfsPs1Scanned = 0;" not in init:
+    failures.append("udpfsInit must re-arm the PS1 first scan")
 load = function_body(libview, "void libViewLoadFromConfig(config_set_t *configLast)")
-if load:
-    if "libViewDecodeRing(value, retainedView, restored);" not in load:
-        failures.append("libViewLoadFromConfig must record which modes had a view restored")
-    if "if (restored[mode] || mixedViewInitialized[mode])\n            libDirty[mode] = 1;" not in load:
-        failures.append("a page restored onto a remembered view must be marked for its first scan")
+if load and "libDirty" in load:
+    failures.append("libViewLoadFromConfig must not mark restored pages dirty (it scans empty BDM slots at boot)")
+bdm = (root / "src/bdmsupport.c").read_text(encoding="utf-8").replace("\r\n", "\n")
+if "sub[0] == '\\0' && pDeviceData->bdmPrefix[0] != '\\0')\n            setErrorMessagePathCode(_STR_BDM_PS2_FOLDERS_UNREADABLE" not in bdm:
+    failures.append("the CD/DVD-unreadable popup must never fire for a slot with no device path")
 
 if failures:
     print("UDPFS theme discovery checks FAILED:")

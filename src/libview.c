@@ -313,18 +313,13 @@ static void libViewDecodeRing(const char *in, unsigned char *view, unsigned char
 void libViewLoadFromConfig(config_set_t *configLast)
 {
     const char *value;
-    unsigned char restored[MODE_COUNT];
-    int mode;
 
     if (configLast == NULL)
         return;
 
-    for (mode = 0; mode < MODE_COUNT; mode++)
-        restored[mode] = 0;
-
     value = NULL;
     if (configGetStr(configLast, CONFIG_LAST_LIB_VIEW_RETAINED, &value) && value != NULL)
-        libViewDecodeRing(value, retainedView, restored);
+        libViewDecodeRing(value, retainedView, NULL);
 
     // The Mixed ring carries its own "has been visited" flag: an unvisited page must enter on the
     // combined list the first time (libViewMixedActive), and restoring a position has to satisfy
@@ -332,16 +327,6 @@ void libViewLoadFromConfig(config_set_t *configLast)
     value = NULL;
     if (configGetStr(configLast, CONFIG_LAST_LIB_VIEW_MIXED, &value) && value != NULL)
         libViewDecodeRing(value, mixedView, mixedViewInitialized);
-
-    // A page restored onto a non-default view (a remembered PS1 page, say) must still do its first
-    // scan. Device NeedsUpdate functions return early for the PS1 view BEFORE their "never scanned"
-    // check -- the same short-circuit opl.c's locked Game Display case already marks dirty for -- so
-    // a remembered PS1 page came up blank until the user toggled L3 (TwistedZeon, UDPFS, 09-29).
-    // A dirty flag only forces the one scan the page was about to need anyway.
-    for (mode = 0; mode < MODE_COUNT; mode++) {
-        if (restored[mode] || mixedViewInitialized[mode])
-            libDirty[mode] = 1;
-    }
 }
 
 void libViewStoreToConfig(config_set_t *configLast)
