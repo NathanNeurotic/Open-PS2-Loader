@@ -122,6 +122,8 @@ jobs:
         run: |
           cc -std=c99 -Wall -Wextra -Werror -pedantic modules/network/udpfs_ioman/tests/test_ack_sequence.c -o /tmp/test_udpfs_ack
           /tmp/test_udpfs_ack
+      - name: Check UDPFS themes are registered only after the server answers
+        run: python3 .github/scripts/test_udpfs_themes.py
 
   site-sync-host-tests:
     runs-on: ubuntu-24.04
