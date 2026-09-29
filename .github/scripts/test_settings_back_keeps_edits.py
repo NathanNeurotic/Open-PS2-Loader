@@ -14,6 +14,8 @@ Checked here, from the production source:
   live SMB session depends on and reconnects only on OK/Reconnect or a real change (compiled + run).
 - Exit without saving restores the source activation/routing snapshot captured when Settings opened,
   so an applied-but-unsaved source change cannot leave the game page empty/off (#806, zackcage6).
+- both obsolete compatibility download paths are absent: the Start-menu bulk Network Update and the
+  per-game Compatibility Settings -> Download Defaults action/backend.
 """
 from pathlib import Path
 import re
@@ -61,6 +63,9 @@ menusys_c = read('src/menusys.c')
 dialogs_c = read('src/dialogs.c')
 dialogs_h = read('include/dialogs.h')
 gui_h = read('include/gui.h')
+guigame_c = read('src/guigame.c')
+opl_c = read('src/opl.c')
+opl_h = read('include/opl.h')
 
 # --- dia.c: Circle on a Settings page -> Index, ahead of the generic Cancel ----------------------
 
@@ -183,23 +188,30 @@ if index:
     if save_pos < 0 or recapture_pos < 0 or pending_clear < 0 or not (save_pos < recapture_pos < pending_clear):
         failures.append('a successful in-shell Save Changes must become the new discard baseline')
 
-# --- Obsolete Start-menu Network Update removed, per-game downloader retained --------------------
+# --- Obsolete compatibility download feature is gone end-to-end -------------------------------
 
 for where, source, needle in (
     ('src/menusys.c', menusys_c, 'MENU_NETWORK_UPDATE'),
-    ('src/menusys.c', menusys_c, 'guiShowNetCompatUpdate();'),
+    ('src/menusys.c', menusys_c, 'guiShowNetCompatUpdate'),
     ('src/dialogs.c', dialogs_c, 'diaNetCompatUpdate'),
+    ('src/dialogs.c', dialogs_c, 'COMPAT_DL_DEFAULTS'),
     ('include/dialogs.h', dialogs_h, 'NETUPD_OPT_UPD_ALL'),
     ('include/dialogs.h', dialogs_h, 'diaNetCompatUpdate'),
-    ('include/gui.h', gui_h, 'void guiShowNetCompatUpdate(void);'),
+    ('include/dialogs.h', dialogs_h, 'COMPAT_DL_DEFAULTS'),
+    ('src/gui.c', gui_c, 'guiShowNetCompatUpdate'),
+    ('include/gui.h', gui_h, 'guiShowNetCompatUpdate'),
+    ('src/guigame.c', guigame_c, 'COMPAT_DL_DEFAULTS'),
+    ('src/opl.c', opl_c, 'oplUpdateGameCompat'),
+    ('src/opl.c', opl_c, 'CompatUpdateStatus'),
+    ('src/opl.c', opl_c, 'IO_COMPAT_UPDATE_DEFFERED'),
+    ('include/opl.h', opl_h, 'IO_COMPAT_UPDATE_DEFFERED'),
+    ('include/opl.h', opl_h, 'OPL_COMPAT_UPDATE_STAT_'),
 ):
     if needle in source:
-        failures.append('%s: obsolete bulk Network Update UI still contains %s' % (where, needle))
+        failures.append('%s: obsolete compatibility downloader still contains %s' % (where, needle))
 
-# Compatibility Settings -> Download Defaults is a separate per-game action. Keep that path until it
-# is deliberately reviewed/replaced rather than deleting it as collateral with the Start-menu tool.
-if 'guiShowNetCompatUpdateSingle' not in gui_c or 'guiShowNetCompatUpdateSingle' not in gui_h:
-    failures.append('per-game Download Defaults compatibility fetch must remain available')
+if (root / 'include/compatupd.h').exists():
+    failures.append('include/compatupd.h: obsolete compatibility updater API should be removed')
 
 # --- Network page: reconnect only on OK/Reconnect or a real change (compiled and run) -----------
 
