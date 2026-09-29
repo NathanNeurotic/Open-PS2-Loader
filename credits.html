@@ -68,7 +68,7 @@
     <a href="credits.html" class="active"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
-  <main class="content">
+  <main class="content credits-page">
 <h1>Credits &amp; Sources</h1>
 <p class="lead">RiptOPL is a downstream fork of <b>Open PS2 Loader</b> — a labor of love, not a replacement for upstream.
 Every feature in this fork began as someone else's code and someone else's ideas.
@@ -100,7 +100,7 @@ hominem.te.esse, SP193, and many contributors listed in the
 <p>RiptOPL is a direct agglomeration of the wider OPL family. The following projects each
 contributed code, ideas, or directly-ported features:</p>
 
-<table data-sortable>
+<table class="credits-source-table" data-sortable>
 <thead><tr><th>Project</th><th>Author(s)</th><th>What came from it</th><th>Source</th></tr></thead>
 <tbody>
 <tr>
@@ -183,33 +183,40 @@ contributed code, ideas, or directly-ported features:</p>
 <p>Beyond the repositories above, these individuals deserve particular recognition for contributions
 that directly shaped this fork.</p>
 
-<div class="steps">
+<dl class="credits credits-detailed">
 
-<div class="step">
-<h3>KrahJohlito — uOPL / wOPL</h3>
+<div class="credit">
+<dt>KrahJohlito — uOPL / wOPL</dt>
+<dd>
 <p>The legend, and the single biggest influence on this fork. Creator of <b>uOPL (Unofficial Open PS2
 Loader)</b> and its continuation <b>wOPL</b>, where the modern OPL experience was invented. The Neutrino
 external-core launcher, the Coverflow interface, and the Favorites tab — the features that define
 RiptOPL — were designed and pioneered by him, and everything this fork does with them is a
 reimplementation of his work. We learned more reading his code than anywhere else. RiptOPL is,
 above all, a tribute to it.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>Wolf3s — the wider OPL scene</h3>
+<div class="credit">
+<dt>Wolf3s — the wider OPL scene</dt>
+<dd>
 <p>For contributions across the wOPL effort and the wider OPL scene, and for past work on an independent
 <b>uOPL</b> fork that kept unique features and unmerged work alive.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>bbsan2k — MMCE Protocol</h3>
+<div class="credit">
+<dt>bbsan2k — MMCE Protocol</dt>
+<dd>
 <p>Author of the <b>MMCE (Memory Card Mass Storage)</b> protocol that makes SD-card game loading
 through the PS2's memory-card slot possible. OPL's entire MMCE device path — and everything
 this fork builds on top of it — traces directly back to that work.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>rickgaiser — Neutrino (second PS2 core)</h3>
+<div class="credit">
+<dt>rickgaiser — Neutrino (second PS2 core)</dt>
+<dd>
 <p>Author of <b><a href="https://github.com/rickgaiser/neutrino">Neutrino</a></b>, a
 <i>"Small, Fast and Modular PS2 Device Emulator"</i> — and RiptOPL's <b>second PS2 loader core</b>
 alongside OPL's own.
@@ -228,10 +235,12 @@ same core, and are worth a look if you want a different shape of launcher over i
 <i>launching</i> problems to
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">us</a> — building the arguments
 and handing off are ours — and genuine Neutrino bugs upstream.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>Gageformer — Ember (second PS1 core)</h3>
+<div class="credit">
+<dt>Gageformer — Ember (second PS1 core)</dt>
+<dd>
 <p>Author of <b><a href="https://github.com/Gageformer/Ember/releases">Ember</a></b>, an independent PlayStation 1 emulator written from
 scratch for the PlayStation 2 — original recompiler, memory model, geometry pipeline and graphics
 translation. It ships inside the release
@@ -244,10 +253,12 @@ build it accompanies. Please report Ember problems to
 launching is ours.</p>
 <p>Ember's own licence credits <b><a href="https://github.com/stenzek/duckstation">DuckStation</a></b>
 as a correctness reference for a small number of routines. Ember is not a fork or port of it.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>hacan359 (yoba) — RetroAchievements</h3>
+<div class="credit">
+<dt>hacan359 (yoba) — RetroAchievements</dt>
+<dd>
 <p>Author of <b>RetroAchievements support for real PlayStation 2 hardware</b>, and of the PC client
 it talks to, <b><a href="https://github.com/hacan359/xerabora">xeRAbora</a></b> (MIT). The console works out <i>which</i> game an image is and streams the
 handful of memory addresses that game's achievements watch, while everything above the wire —
@@ -257,10 +268,12 @@ console side stays small enough to live inside a loader.</p>
 as its own <code>RIPTOPL-RetroAchievements-*.zip</code> build with a shortcut to xeRAbora inside. Please report
 <i>RiptOPL</i> problems to <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">us</a>
 first, not to him — the loader side is ours.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3><a href="https://github.com/oMrRexD">oMrRexD</a> — RetroAchievements stabilization</h3>
+<div class="credit">
+<dt><a href="https://github.com/oMrRexD">oMrRexD</a> — RetroAchievements stabilization</dt>
+<dd>
 <p>Contributor of the <b>real-hardware investigation and stabilization pass</b> that made RiptOPL's
 RetroAchievements build reliably boot and communicate on the tested USB/MMCE paths. His PRs
 <b>#702–#705</b> traced and fixed the ee_core stack squeeze, restored the MMCE DEV9 dependency,
@@ -269,10 +282,12 @@ the RA controls back to the Network page where they are actually read and saved.
 <p>The work was deliberately kept narrow and isolated from normal builds, and the fixes were backed
 by testing on a real PlayStation 2. That contribution is part of the reason the RA port moved from
 "builds" to something that could actually be exercised on hardware.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3 id="darkladark"><a href="https://github.com/dnunezx">darkladark</a> — LUNA</h3>
+<div class="credit">
+<dt><a href="https://github.com/dnunezx">darkladark</a> — LUNA</dt>
+<dd>
 <p>Creator of <b><a href="https://github.com/dnunezx/LUNA">LUNA</a></b> (<i>Lightweight Unified Neutrino
 Access</i>), his own visual loader built on NHDDL and Neutrino, with a PS2-inspired glass interface
 and four switchable library views. LUNA is <b>our #1 recommended alternative to RiptOPL</b> for
@@ -280,80 +295,101 @@ lightweight, customized Neutrino gameplay: if RiptOPL is more loader than you ne
 <p>He also contributes to RiptOPL directly: his
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733">#733</a> brings LUNA's Collection
 cover-art screen to RiptOPL's renderer. Thank you for sharing your work with us.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>saildot4k — BDMA-ATA / exFAT HDD</h3>
+<div class="credit">
+<dt>saildot4k — BDMA-ATA / exFAT HDD</dt>
+<dd>
 <p>Contributor of <b>BDMA-ATA</b> (exFAT internal-HDD block-device support via BDMAssault),
 plus the fixes, feedback, and ongoing oversight that shaped this fork's block-device work.
 Getting exFAT HDD right — for both PS2 and PS1 titles — would not have happened without that
 collaboration.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>Aerosol — UDPFS and VMC testing</h3>
+<div class="credit">
+<dt>Aerosol — UDPFS and VMC testing</dt>
+<dd>
 <p>Tested UDPFS across Linux, Windows and direct connections, identified the explicit-bind
 workaround, and confirmed that CRLF config output could leave a carriage return in a VMC
 filename. Converting the config to LF restored VMC loading.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>Testers — Testing &amp; Feedback</h3>
+<div class="credit">
+<dt>Testers — Testing &amp; Feedback</dt>
+<dd>
 <p>For dedicated <b>testing, bug reports, and real-hardware feedback</b> that has repeatedly
 caught issues and shaped fixes across this fork. Hands-on QA on real PS2 hardware is what turns
 a build that compiles into a build that actually works. Credited in the OPL CREDITS file:
 <b>eliminator1403</b>, <b>lucaslmgv</b>, <b>AndrewBento</b>, <b>AcidReach</b>, <b>bodvenomz</b>,
 <b>nuno6573</b>, <b>Blade1984</b>, and <b>zackcage6</b>.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>AdityaKumar7209 — Modulo-R1 (folder browsing idea)</h3>
+<div class="credit">
+<dt>AdityaKumar7209 — Modulo-R1 (folder browsing idea)</dt>
+<dd>
 <p>Whose <a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2"><b>Modulo-R1</b></a>
 project inspired this fork's <b>folder browsing</b> in the game list.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>Irfanlesnar — PS2-Launcher</h3>
+<div class="credit">
+<dt>Irfanlesnar — PS2-Launcher</dt>
+<dd>
 <p>Creator of <a href="https://github.com/Irfanlesnar/PS2-Launcher"><b>PS2-Launcher</b></a>,
 whose UI and feature ideas contributed to the wider OPL fork ecosystem and inspired parts of
 RiptOPL's presentation.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>pcm720 — udpfsd / nhddl</h3>
+<div class="credit">
+<dt>pcm720 — udpfsd / nhddl</dt>
+<dd>
 <p>For <a href="https://github.com/pcm720/udpfsd"><b>udpfsd</b></a> and
 <a href="https://github.com/pcm720/nhddl"><b>nhddl</b></a>, key foundations for modern PS2
 network streaming and Neutrino HDD-launch conventions.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>Berion — Artwork &amp; Theme Design</h3>
+<div class="credit">
+<dt>Berion — Artwork &amp; Theme Design</dt>
+<dd>
 <p>Responsible for the UI design and artwork that has defined how OPL looks for years. The
 visual language this fork builds on — icon style, layout sensibility, theme conventions —
 owes a great deal to that craft. Berion is credited as UI designer in the original OPL
 CREDITS file.</p>
+</dd>
 </div>
 
-<div class="step">
-<h3>Ifcaro &amp; jimmikaelkael — OPL Origins</h3>
+<div class="credit">
+<dt>Ifcaro &amp; jimmikaelkael — OPL Origins</dt>
+<dd>
 <p>The <b>original Open PS2 Loader authors</b> (copyright 2009). Without their decision to write
 OPL in the open — and license it under the Academic Free License — none of the downstream
 work described on this page would have been possible. Everything starts here.</p>
+</dd>
 </div>
 
-</div>
+</dl>
 
 <h2 id="the-name">The Name</h2>
 
-<div class="step">
-<h3>Akilluminati47 — the name RiptOPL</h3>
+<dl class="credits credits-detailed credits-single">
+<div class="credit">
+<dt>Akilluminati47 — the name RiptOPL</dt>
+<dd>
 <p><b>RiptOPL is named by <a href="https://github.com/akilluminati47">Akilluminati47</a>.</b> He came up
 with it before the project existed, and it stuck. Every release, every build and every thread
 carries a name he thought of first — which is the sort of contribution that is easy to forget
 precisely because it is on everything.</p>
 <p>He also <b>funds this fork's development</b> — a generosity that keeps the rolling builds
 coming and is deeply appreciated.</p>
+</dd>
 </div>
+</dl>
 
 <h2 id="companion-tools">Companion Tools</h2>
 
