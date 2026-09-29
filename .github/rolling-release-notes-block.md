@@ -30,10 +30,11 @@ appears twice.
   into that folder, so the device must be writable. On the internal APA drive, `EMBER/` goes on its
   own `__.EMBER` partition (`__.EMBER0`–`__.EMBER9` for more), while cover art stays on your OPL
   partition.
-- **Ember settings:** *PS Emulation Settings → Ember Display Mode / Dithering / Shading / Controller*.
-  A row you change is written to `EMBER/settings.txt` on that device at launch; a row never changed
-  leaves a hand-written setting alone, and changing it back to Default removes the key. Per game:
-  *Triangle → Ember Game Settings* sets that title's controller.
+- **Ember settings:** *PS Emulation Settings → Display / Timing / Dithering / Shading / Controller*.
+  Global rows are applied to `EMBER/settings.txt` on that device at launch. Per game,
+  *Triangle → Ember Game Settings* exposes Timing, Dithering, Shading and Controller; Default inherits
+  the global value, while a non-Default choice overrides it in `EMBER/games/<Game Name>/settings.txt`.
+  Display remains global-only.
 - **UDPFS and UDPBD** list Ember titles only: POPSTARTER's IOP reset can't restore either network
   transport.
 - **POPSTARTER builds:** `POPS/POPSTARTER VERSIONS/` holds MAIN, DEBUG, USBDELAY, USBDELAY_DEBUG and

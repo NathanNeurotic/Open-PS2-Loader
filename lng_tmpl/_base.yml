@@ -1353,15 +1353,15 @@ gui_strings:
 - label: EMBER_DITHER
   string: Ember Dithering
 - label: HINT_EMBER_DITHER
-  string: "Ember dithering (on or off), written to settings.txt in the launched device's EMBER folder. Default leaves a hand-written setting alone."
+  string: "Ember dithering (On or Off), written to the launched device's EMBER/settings.txt. A per-game value overrides this."
 - label: EMBER_SHADING
   string: Ember Shading
 - label: HINT_EMBER_SHADING
-  string: "Ember colour depth: 15-bit, or 24-bit (experimental). Written to settings.txt in the launched device's EMBER folder. Default leaves a hand-written setting alone."
+  string: "Ember colour depth: 15-bit, or 24-bit (experimental). Written to the launched device's EMBER/settings.txt. A per-game value overrides this."
 - label: EMBER_CONTROLLER
   string: Ember Controller
 - label: HINT_EMBER_CONTROLLER
-  string: "Ember controller mode: Auto, Analog or D2A. Usually best set per game (Triangle > Ember Game Settings), which overrides this. Default leaves a hand-written setting alone."
+  string: "Ember controller mode: Auto, Analog or D2A. Usually best set per game (Triangle > Ember Game Settings), which overrides this."
 - label: EMBER_480P_CONFIRM
   string: "Ember 480p shows no picture over composite. Use 480p?"
 - label: EMBER_SHADING_24
@@ -1369,4 +1369,8 @@ gui_strings:
 - label: EMBER_GAME_SETTINGS
   string: Ember Game Settings
 - label: HINT_EMBER_GAME_SETTING
-  string: "This game only: written to its EMBER/games/<name>/settings.txt at launch. Left on Default, a value already in that file is kept; changed back to Default, it is removed and the global Ember row applies."
+  string: "This game only. Default inherits the global Ember setting; Timing, Dithering, Shading or Controller overrides it. RiptOPL writes the result to EMBER/games/<name>/settings.txt at launch."
+- label: EMBER_TIMING
+  string: Ember Timing
+- label: HINT_EMBER_TIMING
+  string: "Ember video timing: Auto follows the disc region, NTSC forces 60 Hz, PAL forces 50 Hz. Written to the launched device's EMBER/settings.txt."

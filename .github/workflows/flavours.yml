@@ -63,6 +63,8 @@ jobs:
         run: python3 .github/scripts/test_autolaunch_settings.py
       - name: Check that background music never holds audsrv across an open-ended wait
         run: python3 .github/scripts/test_audio_threads.py
+      - name: Check that background music survives a card that loses the file's descriptor
+        run: python3 .github/scripts/test_bgm_source.py
       - name: Check that a held button keeps repeating across the tick-counter wrap
         run: python3 .github/scripts/test_pad_repeat_clock.py
       - name: Check that the handoff probe only refuses a target the child cannot load
@@ -122,6 +124,8 @@ jobs:
         run: |
           cc -std=c99 -Wall -Wextra -Werror -pedantic modules/network/udpfs_ioman/tests/test_ack_sequence.c -o /tmp/test_udpfs_ack
           /tmp/test_udpfs_ack
+      - name: Check UDPFS themes are registered only after the server answers
+        run: python3 .github/scripts/test_udpfs_themes.py
 
   site-sync-host-tests:
     runs-on: ubuntu-24.04

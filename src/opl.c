@@ -200,6 +200,7 @@ int gNeutrinoElfArg;         // default-on (settings key only, no UI): auto-emit
 int gDefaultGameView;
 int gAppsDisplay;
 int gEmberDisplay;
+int gEmberTiming;
 int gEmberDither;
 int gEmberShading;
 int gEmberController;
@@ -3051,6 +3052,7 @@ static void emberLoadSettings(config_set_t *configOPL)
         int legacy = emberSettingGet(configOPL, CONFIG_OPL_EMBER_DISPLAY, EMBER_DISPLAY_480 + 1);
         gEmberDisplay = (legacy > EMBER_DISPLAY_DEFAULT) ? legacy : EMBER_SETTING_UNSET;
     }
+    gEmberTiming = emberSettingGet(configOPL, CONFIG_OPL_EMBER_TIMING, EMBER_TIMING_COUNT);
     gEmberDither = emberSettingGet(configOPL, CONFIG_OPL_EMBER_DITHER, EMBER_DITHER_COUNT);
     gEmberShading = emberSettingGet(configOPL, CONFIG_OPL_EMBER_SHADING, EMBER_SHADING_COUNT);
     gEmberController = emberSettingGet(configOPL, CONFIG_OPL_EMBER_CONTROLLER, EMBER_CONTROLLER_COUNT);
@@ -3059,6 +3061,7 @@ static void emberLoadSettings(config_set_t *configOPL)
 static void emberSaveSettings(config_set_t *configOPL)
 {
     emberSettingSet(configOPL, CONFIG_OPL_EMBER_DISPLAY_MODE, gEmberDisplay);
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_TIMING, gEmberTiming);
     emberSettingSet(configOPL, CONFIG_OPL_EMBER_DITHER, gEmberDither);
     emberSettingSet(configOPL, CONFIG_OPL_EMBER_SHADING, gEmberShading);
     emberSettingSet(configOPL, CONFIG_OPL_EMBER_CONTROLLER, gEmberController);
@@ -5016,6 +5019,7 @@ static void setDefaults(void)
     gPopstarterRetroGemGameID = 1;
     // Nothing is set until the user changes it here, so no device's settings.txt is touched until asked.
     gEmberDisplay = EMBER_SETTING_UNSET;
+    gEmberTiming = EMBER_SETTING_UNSET;
     gEmberDither = EMBER_SETTING_UNSET;
     gEmberShading = EMBER_SETTING_UNSET;
     gEmberController = EMBER_SETTING_UNSET;
