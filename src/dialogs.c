@@ -1717,31 +1717,6 @@ struct UIItem diaAbout[] = {
     // end of dialog
     {UI_TERMINATOR}};
 
-// Network Update Menu
-struct UIItem diaNetCompatUpdate[] = {
-    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NET_UPDATE}}},
-    {UI_SPLITTER},
-
-    {UI_LABEL, NETUPD_OPT_UPD_ALL_LBL, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NET_UPDATE_ALL}}},
-    {UI_SPACER},
-    {UI_BOOL, NETUPD_OPT_UPD_ALL, 0, 1, _STR_NET_UPDATE_HINT, 0, 0, {.intvalue = {0, 0, 0, 1}}},
-    {UI_BREAK},
-
-    {UI_LABEL, NETUPD_PROGRESS_LBL, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VMC_PROGRESS}}},
-    {UI_SPACER},
-    {UI_INT, NETUPD_PROGRESS, 0, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 100}}},
-    {UI_LABEL, NETUPD_PROGRESS_PERC_LBL, 1, 1, -1, 0, 0, {.label = {"%", -1}}},
-    {UI_BREAK},
-
-    // buttons
-    {UI_BUTTON, NETUPD_BTN_START, 1, 1, -1, 0, 0, {.label = {NULL, _STR_START}}},
-    {UI_SPACER},
-    {UI_BUTTON, NETUPD_BTN_CANCEL, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CANCEL}}},
-    {UI_BREAK},
-
-    // end of dialog
-    {UI_TERMINATOR}};
-
 // Audio Settings Menu
 struct UIItem diaAudioConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_AUDIO_SETTINGS}}},
