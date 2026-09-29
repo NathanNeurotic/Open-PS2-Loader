@@ -77,6 +77,8 @@ jobs:
         run: python3 .github/scripts/test_neutrino_bsdfs.py
       - name: Check that turning Network Connectivity off and on keeps the chosen protocol
         run: python3 .github/scripts/test_net_protocol_pick.py
+      - name: Check that long theme text stops at the next element and scrolls instead of overlapping
+        run: python3 .github/scripts/test_theme_text_room.py
 
   ra-host-tests:
     runs-on: ubuntu-24.04

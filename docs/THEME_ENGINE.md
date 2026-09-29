@@ -255,6 +255,21 @@ as `COV` covers and `BG` backgrounds, is unaffected; a `Background` with `patter
 | `show_run` | `InfoHintText` | **This fork:** `0` hides the Run hint, for a theme that draws its own launch prompt. Back is always shown. Default `1`. |
 | `title` | `AttributeText` | Override the auto label for the attribute. |
 
+**Long text never draws over other elements (*this fork*).** When a theme loads, each single-line text
+element (`StaticText`, `AttributeText`, `ItemText`, the game count) and each `ItemsList` works out how
+far its text can run on its row before it reaches another element of the same screen, or the screen
+edge. Text longer than that scrolls inside the space, one character at a time, pausing at each end. In a
+list only the highlighted row scrolls; the other rows end in "…".
+
+- An element the text **starts inside** (a banner or panel you draw the text on) doesn't count; only
+  what the text would run **into** does.
+- A `width` you set still limits the text. It now scrolls there instead of being cut off.
+- Centred text gets the same room on both sides.
+- `wrap=1` text keeps wrapping as before.
+- An image with no `width`/`height` is sized from its `default` image. A cover (`GameImage`) with
+  neither is treated as 140×200.
+- If the space works out smaller than about three characters, the element is drawn exactly as before.
+
 ### List extras
 
 | Property | Used by | Notes |

@@ -106,6 +106,11 @@ typedef struct theme_element
     // devices a filtered sibling covers without needing to know its family at draw time.
     int deviceFilter;
     int deviceCoverage;
+    // Text elements (and ItemsList rows): how wide their text may run before it reaches another element
+    // of the same screen or the screen edge, computed once at theme load (thmComputeTextRooms). Longer
+    // text scrolls inside that width instead of drawing over the neighbour. 0 = not computed / not a text
+    // element / too small to trust -> drawn exactly as before.
+    int textRoom;
 
     // The family this element was parsed into (main/info x games/apps/favs/vcd). Non-owning, set
     // once at parse time. The per-row cover redirect (thmGetElemForItem) uses it to stay on the
