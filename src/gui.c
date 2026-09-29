@@ -78,6 +78,23 @@ static int guiSettingsCurrentPage;
 static int guiSettingsSavePending;
 static char guiSettingsPageIndicator[32];
 
+// Settings pages apply their values live while the shell stays open. Keep the source-selection half
+// of that live state transactional: "Exit without saving" must restore the device/network state that
+// was active when Settings opened instead of leaving a Manual/disabled source empty until X starts it
+// again (#806, zackcage6). This is intentionally limited to source activation/routing; page-specific
+// visual/audio edits keep their established live-preview behaviour until a broader transaction model
+// replaces it.
+typedef struct
+{
+    int defaultDevice;
+    int bdmStartMode, hddStartMode, appStartMode, mmceStartMode, favStartMode;
+    int enableUSB, enableILK, enableMX4SIO, enableBdmHDD;
+    int networkProtocol, netStartMode, netProtocolPick;
+    int ethStartMode, enableUDPBD, netBootProtocol;
+} gui_settings_source_state_t;
+
+static gui_settings_source_state_t guiSettingsSourceState;
+
 static int guiSettingsIsShellResult(int result);
 static int guiSettingsPageResult(int result);
 static int guiSettingsPromptSave(void);
@@ -3235,6 +3252,55 @@ enum gui_settings_prompt_result {
     SETTINGS_PROMPT_CONTINUE
 };
 
+static void guiSettingsCaptureSourceState(void)
+{
+    guiSettingsSourceState.defaultDevice = gDefaultDevice;
+    guiSettingsSourceState.bdmStartMode = gBDMStartMode;
+    guiSettingsSourceState.hddStartMode = gHDDStartMode;
+    guiSettingsSourceState.appStartMode = gAPPStartMode;
+    guiSettingsSourceState.mmceStartMode = gMMCEStartMode;
+    guiSettingsSourceState.favStartMode = gFAVStartMode;
+    guiSettingsSourceState.enableUSB = gEnableUSB;
+    guiSettingsSourceState.enableILK = gEnableILK;
+    guiSettingsSourceState.enableMX4SIO = gEnableMX4SIO;
+    guiSettingsSourceState.enableBdmHDD = gEnableBdmHDD;
+    guiSettingsSourceState.networkProtocol = gNetworkProtocol;
+    guiSettingsSourceState.netStartMode = gNetStartMode;
+    guiSettingsSourceState.netProtocolPick = gNetProtocolPick;
+    guiSettingsSourceState.ethStartMode = gETHStartMode;
+    guiSettingsSourceState.enableUDPBD = gEnableUDPBD;
+    guiSettingsSourceState.netBootProtocol = gNetBootProtocol;
+}
+
+static void guiSettingsRestoreSourceState(void)
+{
+    gDefaultDevice = guiSettingsSourceState.defaultDevice;
+    gBDMStartMode = guiSettingsSourceState.bdmStartMode;
+    gHDDStartMode = guiSettingsSourceState.hddStartMode;
+    gAPPStartMode = guiSettingsSourceState.appStartMode;
+    gMMCEStartMode = guiSettingsSourceState.mmceStartMode;
+    gFAVStartMode = guiSettingsSourceState.favStartMode;
+    gEnableUSB = guiSettingsSourceState.enableUSB;
+    gEnableILK = guiSettingsSourceState.enableILK;
+    gEnableMX4SIO = guiSettingsSourceState.enableMX4SIO;
+    gEnableBdmHDD = guiSettingsSourceState.enableBdmHDD;
+    gNetworkProtocol = guiSettingsSourceState.networkProtocol;
+    gNetStartMode = guiSettingsSourceState.netStartMode;
+    gNetProtocolPick = guiSettingsSourceState.netProtocolPick;
+    gETHStartMode = guiSettingsSourceState.ethStartMode;
+    gEnableUDPBD = guiSettingsSourceState.enableUDPBD;
+    gNetBootProtocol = guiSettingsSourceState.netBootProtocol;
+
+    // Game Sources can have already forced a BDM re-enumeration and every Settings page that calls
+    // applyConfig(..., 0) can have rebuilt source visibility. Re-apply the captured routing now so
+    // the list/menu state matches the values we just restored. This is the programmatic equivalent
+    // of the X press zackcage6 needed to recover the blank page, but it restores the original source
+    // instead of merely starting whichever page happens to be selected.
+    bdmForceDeviceRefresh();
+    applyConfig(-1, -1, 0);
+    menuReinitMainMenu();
+}
+
 static int guiSettingsPromptSave(void)
 {
     int promptHints[3] = {_STR_SETTINGS_SAVE, _STR_SETTINGS_EXIT_WITHOUT_SAVING, _STR_SETTINGS_CONTINUE_EDITING};
@@ -3372,6 +3438,7 @@ static int guiSettingsShowIndex(int *page)
                 }
             } else if (promptResult == SETTINGS_PROMPT_EXIT) {
                 hddDiscardOplHomeSelection();
+                guiSettingsRestoreSourceState();
                 guiSettingsSavePending = 0;
                 return 0;
             }
@@ -3388,6 +3455,7 @@ static void guiShowSettingsFromPage(int page, int showIndexFirst)
 
     guiSettingsShellActive = 1;
     guiSettingsSavePending = 0;
+    guiSettingsCaptureSourceState();
     if (showIndexFirst && !guiSettingsShowIndex(&page)) {
         hddDiscardOplHomeSelection();
         guiSettingsShellActive = 0;
