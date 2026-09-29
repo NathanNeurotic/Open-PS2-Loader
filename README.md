@@ -1,13 +1,20 @@
 
-<p align="center"><img alt="RiptOPL" src="https://raw.githubusercontent.com/NathanNeurotic/Open-PS2-Loader/rebuild/main/docs/assets/riptopl.png" /></p>
-
-
+<p align="center"><a href="#"><img alt="RiptOPL" src="https://raw.githubusercontent.com/NathanNeurotic/Open-PS2-Loader/rebuild/main/docs/assets/riptopl.png" /></p>
 
 <p align="center">
-  <img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" />
+  <img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" /></p></a>
 </p>
 
+## Community Contributors
 
+A heartfelt thank you to developers who have contributed pull requests directly to this fork:
+
+### [@oMrRexD](https://github.com/oMrRexD) (MrRexD)
+- **[#789](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/789)** (`fix(fntsys)`): **Font Lock Concurrency Fix** — Held the font semaphore lock across draw, measure, and load operations in `src/fntsys.c`. This resolved a critical boot-freeze race condition where background font/theme loading on the IO worker thread freed glyph caches and texture atlases while the GUI rendering thread was actively drawing text. Tested across 111 consecutive clean boots on real hardware (SCPH-50001 with SD2PSX and exFAT BDM HDD).
+- **[#705](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/705)** (`dialogs`): **RetroAchievements Settings UI** — Restored the RetroAchievements configuration rows to the Network settings dialog page where they are displayed, configured, and persisted.
+- **[#704](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/704)** (`RA`): **Menu Network Telemetry Initialization** — Safely initialized and brought the networking stack up from the menu prior to cold telemetry game launches.
+- **[#703](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/703)** (`Makefile`): **MMCE DEV9 Integration** — Linked MMCE's CDVD driver with the in-game DEV9 network stack in RetroAchievements builds.
+- **[#702](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/702)** (`ee_core`): **EE Core Stack Protection** — Relocated RetroAchievements buffers out of `.bss` to protect the EE stack from memory pressure and instability during game execution.
 
 # RiptOPL
 **An opinionated [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**
