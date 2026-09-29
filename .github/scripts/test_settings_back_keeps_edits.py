@@ -12,6 +12,8 @@ Checked here, from the production source:
 - every page applies its rows for any result other than Cancel, so DIA_RESULT_INDEX applies them.
 - the Network page no longer reconnects SMB on an exit that changed nothing: it snapshots what a
   live SMB session depends on and reconnects only on OK/Reconnect or a real change (compiled + run).
+- Exit without saving restores the source activation/routing snapshot captured when Settings opened,
+  so an applied-but-unsaved source change cannot leave the game page empty/off (#806, zackcage6).
 """
 from pathlib import Path
 import re
@@ -129,6 +131,38 @@ for sig in PAGES:
 audio = function_text(gui_c, 'src/gui.c', 'int guiShowAudioConfig(')
 if audio and 'guiSettingsPageResult(result)' not in audio:
     failures.append('guiShowAudioConfig: must return through guiSettingsPageResult(result)')
+
+# --- Exit without saving: restore the source state captured at Settings entry --------------------
+
+capture = function_text(gui_c, 'src/gui.c', 'static void guiSettingsCaptureSourceState(')
+restore = function_text(gui_c, 'src/gui.c', 'static void guiSettingsRestoreSourceState(')
+shell = function_text(gui_c, 'src/gui.c', 'static void guiShowSettingsFromPage(')
+index = function_text(gui_c, 'src/gui.c', 'static int guiSettingsShowIndex(')
+
+SOURCE_FIELDS = (
+    'gDefaultDevice', 'gBDMStartMode', 'gHDDStartMode', 'gAPPStartMode', 'gMMCEStartMode',
+    'gFAVStartMode', 'gEnableUSB', 'gEnableILK', 'gEnableMX4SIO', 'gEnableBdmHDD',
+    'gNetworkProtocol', 'gNetStartMode', 'gNetProtocolPick', 'gETHStartMode',
+    'gEnableUDPBD', 'gNetBootProtocol',
+)
+for field in SOURCE_FIELDS:
+    if capture and field not in capture:
+        failures.append('guiSettingsCaptureSourceState: missing %s' % field)
+    if restore and field not in restore:
+        failures.append('guiSettingsRestoreSourceState: missing %s' % field)
+
+if shell and 'guiSettingsCaptureSourceState();' not in shell:
+    failures.append('guiShowSettingsFromPage: must capture source state before any Settings page can apply edits')
+if restore:
+    for needle in ('bdmForceDeviceRefresh();', 'applyConfig(-1, -1, 0);', 'menuReinitMainMenu();'):
+        if needle not in restore:
+            failures.append('guiSettingsRestoreSourceState: missing %s' % needle)
+if index:
+    exit_pos = index.find('promptResult == SETTINGS_PROMPT_EXIT')
+    restore_pos = index.find('guiSettingsRestoreSourceState();', exit_pos)
+    return_pos = index.find('return 0;', exit_pos)
+    if exit_pos < 0 or restore_pos < 0 or return_pos < 0 or restore_pos > return_pos:
+        failures.append('Exit without saving must restore source state before leaving Settings')
 
 # --- Network page: reconnect only on OK/Reconnect or a real change (compiled and run) -----------
 
