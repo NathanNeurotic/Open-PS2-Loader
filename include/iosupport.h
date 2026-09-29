@@ -89,7 +89,7 @@ enum ERROR_CODE {
 
 #define MODE_FLAG_NO_COMPAT  0x01 // no compat support
 #define MODE_FLAG_COMPAT_DMA 0x02 // Supports DMA compat flags
-#define MODE_FLAG_NO_UPDATE  0x04 // Network update not supported.
+#define MODE_FLAG_NO_UPDATE  0x04 // Retired updater capability bit; keep the flag value stable for existing support definitions.
 
 #define COMPAT_MODE_1 0x01 // Accurate Reads
 #define COMPAT_MODE_2 0x02 // Alternative data read method (Synchronous)
