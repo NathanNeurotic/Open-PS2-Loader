@@ -1134,9 +1134,6 @@ struct UIItem diaCompatConfig[] = {
     {UI_BOOL, COMPAT_MODE_BASE + 6, 1, 1, _STR_HINT_MODE7, -10, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_BUTTON, COMPAT_DL_DEFAULTS, 1, 1, -1, 0, 0, {.label = {NULL, _STR_DL_DEFAULTS}}},
-    {UI_SPLITTER},
-
     {UI_SPACER},
     {UI_BUTTON, COMPAT_NEUTRINO_ARGS, 1, 1, _STR_HINT_NEUTRINO_ARGS, 0, 0, {.label = {NULL, _STR_NEUTRINO_ARGS}}},
     {UI_BREAK},
