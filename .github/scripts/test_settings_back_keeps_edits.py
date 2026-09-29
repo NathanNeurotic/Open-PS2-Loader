@@ -138,7 +138,9 @@ if audio and 'guiSettingsPageResult(result)' not in audio:
 
 # --- Exit without saving: restore the source state captured at Settings entry --------------------
 
+read_source = function_text(gui_c, 'src/gui.c', 'static void guiSettingsReadSourceState(')
 capture = function_text(gui_c, 'src/gui.c', 'static void guiSettingsCaptureSourceState(')
+changed = function_text(gui_c, 'src/gui.c', 'static int guiSettingsSourceStateChanged(')
 restore = function_text(gui_c, 'src/gui.c', 'static void guiSettingsRestoreSourceState(')
 shell = function_text(gui_c, 'src/gui.c', 'static void guiShowSettingsFromPage(')
 index = function_text(gui_c, 'src/gui.c', 'static int guiSettingsShowIndex(')
@@ -147,17 +149,24 @@ SOURCE_FIELDS = (
     'gDefaultDevice', 'gBDMStartMode', 'gHDDStartMode', 'gAPPStartMode', 'gMMCEStartMode',
     'gFAVStartMode', 'gEnableUSB', 'gEnableILK', 'gEnableMX4SIO', 'gEnableBdmHDD',
     'gNetworkProtocol', 'gNetStartMode', 'gNetProtocolPick', 'gETHStartMode',
-    'gEnableUDPBD', 'gNetBootProtocol',
+    'gEnableUDPBD', 'gNetBootProtocol', 'gMMCESlot', 'gMMCEIGRSlot',
+    'gMMCEEnableGameID', 'gMMCEAckWaitCycles', 'gMMCEUseAlarms', 'gMMCEPrefix',
 )
 for field in SOURCE_FIELDS:
-    if capture and field not in capture:
-        failures.append('guiSettingsCaptureSourceState: missing %s' % field)
+    if read_source and field not in read_source:
+        failures.append('guiSettingsReadSourceState: missing %s' % field)
     if restore and field not in restore:
         failures.append('guiSettingsRestoreSourceState: missing %s' % field)
 
+if capture and 'guiSettingsReadSourceState(&guiSettingsSourceState);' not in capture:
+    failures.append('guiSettingsCaptureSourceState: must snapshot through the complete source-state reader')
+if changed and 'memcmp(&current, &guiSettingsSourceState, sizeof(current)) != 0' not in changed:
+    failures.append('guiSettingsSourceStateChanged: must compare the complete captured source state')
 if shell and 'guiSettingsCaptureSourceState();' not in shell:
     failures.append('guiShowSettingsFromPage: must capture source state before any Settings page can apply edits')
 if restore:
+    if 'if (!guiSettingsSourceStateChanged())' not in restore:
+        failures.append('guiSettingsRestoreSourceState: must avoid a device refresh when no source state changed')
     for needle in ('bdmForceDeviceRefresh();', 'applyConfig(-1, -1, 0);', 'menuReinitMainMenu();'):
         if needle not in restore:
             failures.append('guiSettingsRestoreSourceState: missing %s' % needle)
