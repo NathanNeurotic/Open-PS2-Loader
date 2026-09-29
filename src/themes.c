@@ -522,8 +522,12 @@ static void thmComputeTextRooms(theme_elems_t *elems)
         for (other = elems->first; other != NULL && count < (int)(sizeof(boxes) / sizeof(boxes[0])); other = other->next) {
             if (other == elem)
                 continue;
-            // devices=-filtered alternates of the same element are never on screen together.
-            if (other->type == elem->type && (other->deviceFilter || elem->deviceFilter))
+            // A devices=-filtered MenuIcon/ItemsList/HintText is drawn on ONE page only (the types
+            // thmElemSkipsDevice gates; any other type with devices= is drawn everywhere, so it stays
+            // an obstacle). Counting it on every page boxed the built-in Coverflow title into 196 units
+            // because of the Favorites icon (zackcage6, Beta-3335).
+            if (other->deviceFilter && (other->type == ELEM_TYPE_MENU_ICON || other->type == ELEM_TYPE_ITEMS_LIST ||
+                                        other->type == ELEM_TYPE_HINT_TEXT))
                 continue;
             if (thmElemBox(other, &boxes[count]))
                 count++;

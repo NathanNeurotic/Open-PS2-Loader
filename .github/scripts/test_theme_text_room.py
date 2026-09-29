@@ -219,6 +219,16 @@ if 'fntRenderStringFit(' not in function_text(dia, 'static int diaRenderValue(',
 if 'diaTextWidth' in dia or 'DIA_MARQUEE' in dia:
     failures.append('dia.c: a private copy of the scroller is back')
 
+# A devices=-filtered element is on one page only; counting it everywhere boxed the built-in Coverflow
+# title into 196 units because of the Favorites icon (zackcage6, Beta-3335).
+rooms = function_text(themes, 'static void thmComputeTextRooms(', 'src/themes.c')
+if rooms and 'if (other->deviceFilter && (other->type == ELEM_TYPE_MENU_ICON || other->type == ELEM_TYPE_ITEMS_LIST ||' not in rooms:
+    failures.append('thmComputeTextRooms: only the device-gated types (MenuIcon/ItemsList/HintText) may be skipped as obstacles')
+# ...and the built-in Coverflow title spans the top instead of a 400-unit box.
+coverflow = (root / 'misc/theme_coverflow.cfg').read_text(encoding='utf-8').replace('\r\n', '\n')
+if not re.search(r'^main15:\n\ttype=ItemsList\n(?:\t.*\n)*?\twidth=DIM_INF\n', coverflow, re.M):
+    failures.append('misc/theme_coverflow.cfg: the Coverflow title list must span the top (width=DIM_INF)')
+
 if failures:
     for failure in failures:
         print(failure)
