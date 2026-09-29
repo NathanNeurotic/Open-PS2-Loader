@@ -54,6 +54,8 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_NEUTRINO_VIDEO   "$NeutrinoVideo"
 #define CONFIG_ITEM_NEUTRINO_GSMCOMP "$NeutrinoGsmComp" // -gsm ":c" field-flip half (0=off, 1-3=type); only emitted when $NeutrinoVideo is set
 #define CONFIG_ITEM_NEUTRINO_BSDFS   "$NeutrinoBsdfs"   // -bsdfs override (parity-audit #11): 0=Auto, 1=exfat, 2=hdl, 3=bd; block-backed devices only
+#define CONFIG_ITEM_EMBER_CONTROLLER "$EmberController" // per-game Ember controller override; absent = follow global settings.txt
+#define CONFIG_ITEM_EMBER_SHADING    "$EmberShading"    // per-game Ember shading override; absent = follow global settings.txt
 #define CONFIG_ITEM_DNAS             "$DNAS"
 #define CONFIG_ITEM_CONFIGSOURCE     "$ConfigSource"
 
@@ -108,7 +110,11 @@ enum CONFIG_INDEX {
 // and that set is the one already rewritten when a game launches.
 #define CONFIG_LAST_LIB_VIEW_RETAINED         "lib_view_retained"
 #define CONFIG_LAST_LIB_VIEW_MIXED            "lib_view_mixed"
-#define CONFIG_OPL_EMBER_DISPLAY              "ember_display" // EMBER_DISPLAY_*: Ember settings.txt display mode
+#define CONFIG_OPL_EMBER_DISPLAY              "ember_display"      // LEGACY: read once to migrate, never written
+#define CONFIG_OPL_EMBER_DISPLAY_MODE         "ember_display_mode" // EMBER_DISPLAY_*; absent = never changed here
+#define CONFIG_OPL_EMBER_DITHER               "ember_dither"       // EMBER_DITHER_*; absent = never changed here
+#define CONFIG_OPL_EMBER_SHADING              "ember_shading"      // EMBER_SHADING_*; absent = never changed here
+#define CONFIG_OPL_EMBER_CONTROLLER           "ember_controller"   // EMBER_CONTROLLER_*; absent = never changed here
 #define CONFIG_OPL_VMODE                      "vmode"
 #define CONFIG_OPL_XOFF                       "xoff"
 #define CONFIG_OPL_YOFF                       "yoff"
@@ -175,6 +181,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_NET_BOOT_PROTOCOL    "net_boot_protocol"
 #define CONFIG_OPL_NETWORK_PROTOCOL     "network_protocol"
 #define CONFIG_OPL_NET_START_MODE       "net_start_mode"
+#define CONFIG_OPL_NET_PROTOCOL_PICK    "net_protocol_pick" // last protocol chosen (never Off); kept while Connectivity is Off
 #define CONFIG_OPL_SMB_DIALECT          "smb_dialect"
 #define CONFIG_OPL_SWAP_SEL_BUTTON      "swap_select_btn"
 #define CONFIG_OPL_PARENTAL_LOCK_PWD    "parental_lock_password"

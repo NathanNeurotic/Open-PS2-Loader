@@ -1879,7 +1879,7 @@ static void hddInstallPopstarterMcFromCommon(void)
 //   UNMOUNT_EXCEPTION keeps hddCleanUp from unmounting pfs0:.
 //   KEEPIOP_EXCEPTION keeps it from issuing PDIOC_CLOSEALL, which would drop every pfs descriptor in
 //   the IOP -- harmless before an IOP reset, fatal before a handoff that does not reset.
-static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char *part)
+static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char *part, config_set_t *configSet)
 {
     char emberElf[256], biosPath[288], mountSrc[APA_IDMAX + 6];
 
@@ -1932,7 +1932,7 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
         guiMsgBox(_l(_STR_EMBER_NO_DISC), 0, NULL);
         return;
     }
-    cueApplyDisplaySetting("pfs0:/"); // best-effort marker, never a launch gate -- needs the RDWR mount
+    cueApplySettings("pfs0:/", name, configSet); // best-effort marker, never a launch gate -- needs the RDWR mount
 
     // Past this point pfs0: stays where it is and IO stays blocked; deinit re-blocks anyway.
     deinit(UNMOUNT_EXCEPTION | KEEPIOP_EXCEPTION, itemList->mode);
@@ -2042,7 +2042,7 @@ static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
         return;
     }
     if (isEmber) {
-        hddDoLaunchEmber(itemList, resolvedName, resolvedPart);
+        hddDoLaunchEmber(itemList, resolvedName, resolvedPart, configSet);
         return;
     }
     hddDoLaunchVcd(itemList, resolvedName, resolvedPart);
@@ -2098,7 +2098,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     // Δ6 pre-teardown validation. On failure fall back to the native core (same contract as
     // bdmTryNeutrinoLaunch's non-udp legs): HDL always boots natively, and the native path owns
     // the autolaunch teardown -- aborting here instead would leak gAutoLaunchGame/configSet.
-    if (sysNeutrinoPreflight("apa", neutrinoPath) < 0)
+    if (sysNeutrinoPreflight("apa", neutrinoPath, 0, NULL, -1) < 0)
         return 0;
 
     // Honesty toast: the OPL core honors $VMC_N on HDD (mcemu over pfs0:VMC/), but Neutrino has no
@@ -2152,7 +2152,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
 
     LOG("[NEUTRINO] apa partition_name=[%s]\n", apaPart);
     // gPS2Logo passes the preference straight through (Neutrino does its own logo work).
-    sysLaunchNeutrino("apa", apaPart, apaStartup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11 inert: APA is always -bsdfs=hdl */, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
+    sysLaunchNeutrino("apa", apaPart, apaStartup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11 inert: APA is always -bsdfs=hdl */, -1, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
     return 1;
 }
 
@@ -2190,7 +2190,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         guiUnlock();
 
         if (isEmber)
-            hddDoLaunchEmber(itemList, vcdName, vcdPart);
+            hddDoLaunchEmber(itemList, vcdName, vcdPart, configSet);
         else
             hddDoLaunchVcd(itemList, vcdName, vcdPart);
         return;

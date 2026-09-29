@@ -1,0 +1,308 @@
+"""A video mode the TV cannot show must not be kept by a blind button press (zackcage6, 09-25).
+
+guiConfirmVideoMode (src/gui.c) is the only thing between a user and a menu they cannot see: after a
+mode change it asks to keep the new mode and reverts on Back or on a 10 s timeout. It used to keep the
+mode on one TAP of Accept, and a user looking at a black screen taps buttons -- the dead mode was kept,
+saved with the next Save, and every boot came up black until the .cfg was deleted.
+
+This compiles guiConfirmVideoMode on the host with the pads, clock() and drawing replaced by a
+scripted frame loop (60 fps), and checks:
+
+- a tap, or a burst of taps, of Accept does NOT keep the mode (it reverts at the timeout);
+- holding Accept for the full hold time keeps it, and a shorter hold does not;
+- an Accept still held from the Settings dialog (no key-on edge here) never counts;
+- Back reverts at once; no input reverts at the timeout;
+- a hold started just before the timeout is allowed to finish;
+- the countdown (zackcage6, 09-26) reads 10 down to 1, never rises, and is hidden during a hold --
+  which does NOT pause the deadline (a released hold continues from the original one);
+- the hold bar runs along the footer line and FULL means it reaches the line's right-hand end (#774:
+  a fixed 200 px bar ended ~40% across the screen and read as stuck halfway), and it reads full a
+  moment BEFORE the mode is kept, so the user sees it complete, then it completes;
+- nothing is rendered under the opaque prompt: rendering the menu there (guiShow) only cost frame
+  time, and in heavy modes made the bar jump to ~4/5 and the keep land before it looked full.
+
+It also pins the boot recovery combos in src/opl.c: Triangle + Cross forces 480p and Triangle +
+Circle forces Auto (the region's interlaced mode) for interlaced-only TVs.
+"""
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+root = Path(__file__).resolve().parents[2]
+gui = (root / 'src/gui.c').read_text(encoding='utf-8').replace('\r\n', '\n')
+opl = (root / 'src/opl.c').read_text(encoding='utf-8').replace('\r\n', '\n')
+opl_h = (root / 'include/opl.h').read_text(encoding='utf-8').replace('\r\n', '\n')
+failures = []
+
+
+def function_text(source, signature, where):
+    match = re.search(r'^' + re.escape(signature) + r'[^;{]*\)\s*\{', source, re.M)
+    if match is None:
+        failures.append('%s: %s...) not found' % (where, signature))
+        return ''
+    end = source.index('\n}', match.start())
+    return source[match.start():end] + '\n}\n'
+
+
+def define(source, name, where):
+    match = re.search(r'^#define ' + name + r'\s+(\d+)', source, re.M)
+    if match is None:
+        failures.append('%s: #define %s not found' % (where, name))
+        return '0'
+    return match.group(1)
+
+
+confirm = function_text(gui, 'int guiConfirmVideoMode(', 'src/gui.c')
+if 'guiShow()' in confirm:
+    failures.append('guiConfirmVideoMode: must not render the menu (guiShow) under its opaque backdrop')
+
+HARNESS = r'''
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef long clock_t;
+typedef unsigned long long u64;
+#define CLOCKS_PER_SEC 1000
+#define OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS @TIMEOUT@
+#define VMODE_KEEP_HOLD_MS @HOLD@
+#define VMODE_KEEP_BAR_FULL_MS @BARFULL@
+#define ALIGN_CENTER 0
+enum { KEY_CROSS = 1, KEY_CIRCLE = 2 };
+enum { CROSS_ICON, CIRCLE_ICON };
+enum { SFX_MESSAGE, SFX_CANCEL, SFX_CONFIRM };
+enum { _STR_CFM_VMODE_CHG, _STR_BACK, _STR_CFM_VMODE_HOLD_KEEP, _STR_CFM_VMODE_REVERT_IN };
+
+struct theme { void *fonts[1]; int usedHeight; u64 textColor, selTextColor; };
+static struct theme themeData;
+static struct theme *gTheme = &themeData;
+static int screenWidth = 640, screenHeight = 480, gSelectButton = KEY_CROSS;
+static const u64 gColBlack = 0, gColWhite = 1;
+
+/* Scripted input: frame f has the Accept/Back buttons down per the script. 60 fps clock. */
+static int frame, acceptFrom[32], acceptTo[32], nAccept, backAt, acceptHeldAtEntry;
+static int curAccept, prevAccept, curBack, prevBack;
+
+static clock_t clock(void) { return (clock_t)(frame * 1000 / 60); }
+static int acceptDown(int f)
+{
+    int i;
+    if (acceptHeldAtEntry && f < acceptHeldAtEntry)
+        return 1;
+    for (i = 0; i < nAccept; i++)
+        if (f >= acceptFrom[i] && f < acceptTo[i])
+            return 1;
+    return 0;
+}
+static void readPads(void)
+{
+    prevAccept = curAccept;
+    prevBack = curBack;
+    curAccept = acceptDown(frame);
+    curBack = (backAt >= 0 && frame == backAt);
+}
+static int getKeyOn(int id) { return id == KEY_CROSS ? (curAccept && !prevAccept) : (curBack && !prevBack); }
+static int getKeyPressed(int id) { return id == KEY_CROSS ? curAccept : curBack; }
+
+/* What each frame showed: the countdown's seconds (-1 = none), the hold bar's left edge and width
+   (0 = none), and the footer line the bar is meant to run along. */
+static int shownSecs, barX, barW, lastBarW, firstSecs, lastSecs, rose, shownInHold, holdFrom, holdTo, watchFrame, secsAtWatch;
+static int lineX1 = -1, lineX2 = -1, firstFullFrame, barOffLine;
+static void guiStartFrame(void) { shownSecs = -1; barW = 0; }
+static void guiEndFrame(void)
+{
+    if (shownSecs >= 0) {
+        if (firstSecs < 0)
+            firstSecs = shownSecs;
+        if (lastSecs >= 0 && shownSecs > lastSecs)
+            rose = 1;
+        lastSecs = shownSecs;
+        if (frame > holdFrom && frame < holdTo)
+            shownInHold = 1;
+    }
+    if (frame == watchFrame)
+        secsAtWatch = shownSecs;
+    if (barW > 0 && barX != lineX1)
+        barOffLine = 1;
+    if (barW > 0 && barW == lineX2 - lineX1 && firstFullFrame < 0)
+        firstFullFrame = frame;
+    lastBarW = barW;
+    frame++;
+}
+static void guiShow(void) {}
+static void sfxPlay(int s) { (void)s; }
+static const char *_l(int id) { return id == _STR_CFM_VMODE_REVERT_IN ? "%d" : ""; }
+static void rmDrawRect(int x, int y, int w, int h, u64 c)
+{
+    (void)c;
+    if (y == 400 && h == 4) {
+        barX = x;
+        barW = w;
+    }
+}
+/* The footer line: the horizontal one at y 410, just under the bar. */
+static void rmDrawLine(int a, int b, int c, int d, u64 e)
+{
+    (void)e;
+    if (b == 410 && d == 410) {
+        lineX1 = a;
+        lineX2 = c;
+    }
+}
+static void fntRenderString(void *f, int x, int y, int a, int w, int h, const char *s, u64 c)
+{
+    (void)f; (void)x; (void)y; (void)a; (void)w; (void)h; (void)c;
+    if (s[0] >= '0' && s[0] <= '9')
+        shownSecs = atoi(s);
+}
+static void guiDrawIconAndText(int i, int s, void *f, int x, int y, u64 c)
+{ (void)i; (void)s; (void)f; (void)x; (void)y; (void)c; }
+
+@CONFIRM@
+
+static int fails;
+static void reset(void)
+{
+    frame = 0;
+    nAccept = 0;
+    backAt = -1;
+    acceptHeldAtEntry = 0;
+    curAccept = prevAccept = curBack = prevBack = 0;
+    firstSecs = lastSecs = -1;
+    firstFullFrame = -1;
+    barOffLine = 0;
+    rose = shownInHold = 0;
+    holdFrom = holdTo = -1;
+    watchFrame = secsAtWatch = -1;
+}
+/* Accept already down when the prompt opens: the Settings dialog's last poll saw it too, so the
+   prompt's first readPads finds it in the OLD pad data and there is no key-on edge. */
+static void carryIn(int frames)
+{
+    acceptHeldAtEntry = frames;
+    curAccept = 1;
+}
+static void hold(int fromFrame, int frames)
+{
+    acceptFrom[nAccept] = fromFrame;
+    acceptTo[nAccept] = fromFrame + frames;
+    nAccept++;
+}
+/* The answer AND when it came: a revert that fires before the timeout would take away the user's
+   chance to keep a mode that works, so timeout cases carry a lower bound as well as an upper one. */
+static void expect(const char *name, int wantKeep, int wantMinFrame, int wantMaxFrame)
+{
+    int got = guiConfirmVideoMode();
+    if (got != wantKeep || frame < wantMinFrame || (wantMaxFrame >= 0 && frame > wantMaxFrame)) {
+        printf("FAIL %s: returned %d after %d frames (want %d within %d..%d)\n", name, got, frame, wantKeep,
+               wantMinFrame, wantMaxFrame);
+        fails++;
+    }
+}
+
+int main(void)
+{
+    const int hold60 = VMODE_KEEP_HOLD_MS * 60 / 1000, timeout60 = OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS * 60 / 1000;
+    int i;
+
+    reset(); expect("no input -> revert at timeout", 0, timeout60 - 1, timeout60 + 2);
+    reset(); hold(30, 3); expect("one tap of Accept -> revert", 0, timeout60 - 1, timeout60 + 2);
+    reset(); for (i = 0; i < 20; i++) hold(20 + i * 20, 5); expect("20 blind taps -> revert", 0, timeout60 - 1, timeout60 + 2);
+    reset(); hold(30, hold60 + 3); expect("full hold -> keep", 1, 30 + hold60 - 1, 30 + hold60 + 3);
+    reset(); hold(30, hold60 / 2); expect("half hold -> revert", 0, timeout60 - 1, timeout60 + 2);
+    reset(); carryIn(hold60 * 3); expect("Accept held from Settings -> never keeps", 0, timeout60 - 1, -1);
+    reset(); backAt = 45; expect("Back -> revert at once", 0, 45, 47);
+    reset(); hold(timeout60 - 20, hold60 + 3); expect("hold started near timeout finishes", 1, timeout60 - 20 + hold60 - 1, timeout60 + hold60);
+
+    /* Countdown: 10 .. 1 with no input, never rising. */
+    reset(); expect("countdown run", 0, timeout60 - 1, timeout60 + 2);
+    if (firstSecs != OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS / 1000 || lastSecs != 1 || rose) {
+        printf("FAIL countdown: first %d, last %d, rose %d (want %d, 1, 0)\n", firstSecs, lastSecs, rose,
+               OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS / 1000);
+        fails++;
+    }
+    /* A hold hides the countdown. The bar runs along the footer line from its left end, FULL is the
+       whole line (#774), and it reads full a moment before the keep -- but not so early that it stops
+       showing progress. */
+    reset(); hold(30, hold60 + 3); holdFrom = 30; holdTo = 30 + hold60; expect("full hold (bar/countdown)", 1, 30 + hold60 - 1, 30 + hold60 + 3);
+    if (shownInHold) {
+        printf("FAIL the countdown must be hidden while Accept is held\n");
+        fails++;
+    }
+    if (lineX1 < 0 || lineX2 <= lineX1) {
+        printf("FAIL no footer line was drawn at y 410 to measure the bar against\n");
+        fails++;
+    } else {
+        const int keepFrame = frame - 1, full = lineX2 - lineX1;
+        if (barOffLine) {
+            printf("FAIL the hold bar does not start at the footer line's left end (%d)\n", lineX1);
+            fails++;
+        }
+        if (lastBarW != full) {
+            printf("FAIL the frame that keeps the mode drew the bar %d wide (want the whole footer line, %d)\n", lastBarW, full);
+            fails++;
+        }
+        if (firstFullFrame < 0 || keepFrame - firstFullFrame < 12) {
+            printf("FAIL the bar must read full at least 0.2 s before the keep (full at frame %d, kept at %d)\n", firstFullFrame, keepFrame);
+            fails++;
+        }
+        if (firstFullFrame >= 0 && firstFullFrame - 30 < hold60 * 3 / 4) {
+            printf("FAIL the bar read full after %d of %d hold frames -- too early to show progress\n", firstFullFrame - 30, hold60);
+            fails++;
+        }
+    }
+    /* A hold does NOT pause the deadline: hold 5.0 s .. 6.5 s, let go, and the count goes on from the
+       original deadline (3.5 s left -> "4"), not from where the hold began ("5"). */
+    reset(); hold(300, 90); watchFrame = 392; expect("released hold", 0, timeout60 - 1, timeout60 + 2);
+    if (secsAtWatch != 4) {
+        printf("FAIL after a released hold the countdown showed %d (want 4: the deadline kept running)\n", secsAtWatch);
+        fails++;
+    }
+
+    return fails ? 1 : 0;
+}
+'''
+
+
+def run_harness():
+    program = (HARNESS.replace('@TIMEOUT@', define(opl_h, 'OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS', 'include/opl.h'))
+               .replace('@HOLD@', define(gui, 'VMODE_KEEP_HOLD_MS', 'src/gui.c'))
+               .replace('@BARFULL@', define(gui, 'VMODE_KEEP_BAR_FULL_MS', 'src/gui.c'))
+               .replace('@CONFIRM@', confirm))
+    if failures:
+        return
+    with tempfile.TemporaryDirectory() as tmp:
+        src = Path(tmp) / 'confirm.c'
+        exe = Path(tmp) / 'confirm'
+        src.write_text(program, encoding='utf-8')
+        build = subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Werror', '-Wno-unused-function', '-o', str(exe), str(src)],
+                               capture_output=True, text=True)
+        if build.returncode != 0:
+            failures.append('harness did not compile:\n' + build.stderr)
+            return
+        result = subprocess.run([str(exe)], capture_output=True, text=True)
+        if result.returncode != 0:
+            lines = [line for line in result.stdout.splitlines() if line]
+            # A crash prints nothing: never let a dead harness read as a pass.
+            failures.extend(lines or ['harness exited %d with no result:\n%s' % (result.returncode, result.stderr)])
+
+
+def check_boot_combos():
+    load = function_text(opl, 'static void _loadConfig(', 'src/opl.c')
+    cross = re.search(r'if \(getKeyPressed\(KEY_TRIANGLE\) && getKeyPressed\(KEY_CROSS\)\) \{[^}]*gVMode = 3;', load)
+    circle = re.search(r'else if \(getKeyPressed\(KEY_TRIANGLE\) && getKeyPressed\(KEY_CIRCLE\)\) \{[^}]*gVMode = 0;', load)
+    saved = re.search(r'\} else \{\s*configGetInt\(configOPL, CONFIG_OPL_VMODE, &gVMode\);', load)
+    if not (cross and circle and saved and cross.start() < circle.start() < saved.start()):
+        failures.append('_loadConfig: Triangle+Cross -> 480p (3), Triangle+Circle -> Auto (0), else the saved mode')
+
+
+run_harness()
+check_boot_combos()
+
+if failures:
+    print('Video mode confirm checks FAILED:')
+    for failure in failures:
+        print(' - ' + failure)
+    sys.exit(1)
+print('video mode confirm: 11 input scripts, countdown, footer-length bar full before the keep, and both boot recovery combos OK')

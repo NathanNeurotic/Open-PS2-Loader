@@ -378,8 +378,6 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
     char emberElf[256], biosPath[288];
     char launchName[CUE_NAME_MAX];
 
-    (void)configSet; // Ember titles carry no per-game loader settings
-
     if (cueName == NULL || cueName[0] == '\0')
         return;
     if (!cueNameLaunchable(cueName)) {
@@ -395,7 +393,7 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
         return;
     }
 
-    cueApplyDisplaySetting(udpfsPrefix); // best-effort marker, never a launch gate
+    cueApplySettings(udpfsPrefix, cueName, configSet); // best-effort marker, never a launch gate
     if (!cueGameHasImage(udpfsPrefix, cueName)) {
         guiMsgBox(_l(_STR_EMBER_NO_DISC), 0, NULL);
         return;
@@ -525,7 +523,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // launch with _STR_NEUTRINO_TOML_SYNC_FAILED on a toml that reads fine a moment earlier or
     // later. Preflighting first also means an abort leaves the card UNSWITCHED instead of dropping
     // the user back into the menu sitting on the per-game card.
-    if (sysNeutrinoPreflight("udpfs", neutrinoPath) < 0)
+    if (sysNeutrinoPreflight("udpfs", neutrinoPath, 0, NULL, -1) < 0)
         return;
 
     // MMCE cross-device game-id (#261): push the disc id to a present MMCE card before teardown frees
@@ -540,7 +538,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
 
     // Hand off to Neutrino with the udpfs driver token. `partname` and `gameStartup` survive the deinit;
     // `game` does not and is not dereferenced past this point.
-    sysLaunchNeutrino("udpfs", partname, gameStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* udpfs is fileid, no fs layer */, &neutrinoVmc);
+    sysLaunchNeutrino("udpfs", partname, gameStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* udpfs is fileid, no fs layer */, -1, &neutrinoVmc);
 }
 
 static config_set_t *udpfsGetConfig(item_list_t *itemList, int id)

@@ -77,6 +77,7 @@
 #define __CUESUPPORT_H
 
 #include "include/iosupport.h"
+#include "include/config.h"      // config_set_t for cueApplySettings
 #include "include/supportbase.h" // base_game_info_t
 
 // Ember joins argv[1..] with spaces into a 192-byte buffer, then snprintf()s "games/%s" into a
@@ -131,23 +132,11 @@ int cueNameLaunchable(const char *name);
 // treats an absent POPS folder -- so a device with only one of the two never looks like a failure.
 int cueScanDir(const char *devPrefix, cue_entry_t **outList);
 
-// Apply the Ember display mode to <devPrefix><EmberFolder>/settings.txt, the same way the BDMA
-// equip leaves its marker beside POPSTARTER. Called on the LAUNCH path only, so the file lands on
-// the device actually being launched and nowhere else.
-//
-// settings.txt is OPTIONAL, and this function keeps it that way:
-//
-//   EMBER_DISPLAY_LEAVE ("Default") never CREATES the file. If one exists it clears our display key
-//   out of it, and removes the file entirely when that key was the only thing in it. Default has to
-//   clear rather than merely abstain, or picking 240p once and changing back would strand
-//   display:240 on the device forever while the menu claimed Default.
-//
-//   EMBER_DISPLAY_240 / _480 create the file if absent, or update the key in place if present.
-//
-// Lines other than "display:" are PRESERVED. Ember ignores keys it does not know (it logs and moves
-// on), so a key it gains later, or one a user added, must survive us rewriting this file.
-// Best-effort by design: a failure here is never a launch gate -- Ember runs fine without the file.
-void cueApplyDisplaySetting(const char *devPrefix);
+// Apply managed Ember settings on launch. Global settings go to EMBER/settings.txt; per-game
+// Controller/Shading from configSet go to EMBER/games/<name>/settings.txt. Unset settings leave the
+// corresponding key untouched; Default removes only that key. Unknown keys/comments are preserved.
+// Best-effort: settings I/O never blocks launch, and a failed truncating write restores the original.
+void cueApplySettings(const char *devPrefix, const char *name, config_set_t *configSet);
 
 // Does this game folder actually hold something Ember can mount -- a *.cue, *.bin or *.exe at its
 // top level? Costs ONE directory read, so callers use it on the LAUNCH path only (before deinit,

@@ -6,6 +6,7 @@
 
 #include "include/opl.h"
 #include "include/ioman.h"
+#include "include/launchdiag.h" // UDPBD hang-triage stage markers (gated on gLaunchDiag)
 #include "include/gui.h"
 #include "include/guigame.h"
 #include "include/renderman.h"
@@ -199,6 +200,9 @@ int gNeutrinoElfArg;         // default-on (settings key only, no UI): auto-emit
 int gDefaultGameView;
 int gAppsDisplay;
 int gEmberDisplay;
+int gEmberDither;
+int gEmberShading;
+int gEmberController;
 char gPopstarterPath[256];         // optional full path; runtime order: custom -> game device -> mc0/mc1
 int gPopstarterDevice;             // retired picker value retained in config for compatibility; runtime ignores it
 int gPopstarterRetroGemGameID = 1; // RetroGEM Game ID optical barcode for VCD launches (1=on, default)
@@ -225,6 +229,7 @@ int gEnableBdmHDD;
 int gEnableUDPBD;
 int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived from gNetworkProtocol)
 int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
+int gNetProtocolPick; // last protocol chosen, never OFF (see opl.h)
 int gNetStartMode;    // START_MODE_* -- the Off/Manual/Auto network start row (see the 3-row Network setting)
 int gAutosort;
 int gAutoRefresh;
@@ -686,7 +691,10 @@ static void itemExecTriangle(struct menu_item *curMenu)
         // affect a POPSTARTER handoff. libListViewActive also covers a forced-VCD Favourites proxy.
         if (itemSelectedView(curMenu, support) == LIB_VIEW_PS1) {
             if (menuCheckParentalLock() == 0) {
-                menuInitVcdMenu();
+                // The row names its core: a favourite by its stored kind, a device row by its extension.
+                int kind = (support->mode == FAV_MODE) ? favGetItemKind(curMenu->current->item.id) :
+                                                         itemFavKind(support, curMenu->current->item.id, curMenu->current->item.text);
+                menuInitVcdMenu(kind == FAV_KIND_CUE);
                 guiSwitchScreen(GUI_SCREEN_APP_MENU);
             }
             return;
@@ -1346,6 +1354,12 @@ void menuDeferredUpdate(void *data)
     if (!mod->support)
         return;
 
+    // An L3 flip changes which list this page shows, not which devices exist, so it cannot change
+    // APPS -- a walk of every device's APPS folder, MMCE over SIO2 included. Read it before the
+    // rebuild below commits the view. (Only L3 stages a view; libViewBdmAttach never does, so a
+    // device that attaches still rebuilds APPS.)
+    int viewFlip = libViewPending(mod->support->mode);
+
     // see if we have to update
     if (mod->support->itemNeedsUpdate(mod->support)) {
         updateMenuFromGameList(mod);
@@ -1353,7 +1367,7 @@ void menuDeferredUpdate(void *data)
         // If other modes have been updated, then the apps list should be updated too.
         // Exclude FAV: a FAV rebuild marking apps dirty would re-trigger the FAV resync below
         // (an apps refresh calls loadFavourites), looping forever once favNeedsUpdate fires.
-        if (mod->support->mode != APP_MODE && mod->support->mode != FAV_MODE) {
+        if (mod->support->mode != APP_MODE && mod->support->mode != FAV_MODE && !viewFlip) {
             shouldAppsUpdate = 1;
 
             // ...and SCHEDULE the pass that consumes that flag. Raising it is not enough: APPS has
@@ -1371,18 +1385,20 @@ void menuDeferredUpdate(void *data)
             //
             // Queue it here instead, exactly the way loadFavourites() below schedules FAV's rebuild.
             // Bounded, not a storm: itemNeedsUpdate returns 1 only on a REAL source change (a
-            // never-connected BDM slot returns 0 early), and duplicates self-coalesce because
-            // oplShouldAppsUpdate() clears the flag on the first pass, so any extra queued pass
-            // rebuilds nothing. Enqueueing from this IO worker is the established pattern here
-            // (bdmNeedsUpdate and loadFavourites both do it): ioPutRequest takes only gEndSemaId,
-            // which the worker does not hold while a handler runs.
+            // never-connected BDM slot returns 0 early), and an APPS pass that is still waiting
+            // reads shouldAppsUpdate when it runs, so a second one is not queued behind it (two
+            // sticks attaching together used to queue two). Enqueueing from this IO worker is the
+            // established pattern here (bdmNeedsUpdate and loadFavourites both do it): it takes
+            // only gEndSemaId, which the worker does not hold while a handler runs.
             opl_io_module_t *appMod = &list_support[APP_MODE];
             if (appMod->support != NULL && appMod->support->enabled)
-                ioPutRequest(IO_MENU_UPDATE_DEFFERED, &appMod->support->mode);
+                ioPutRequestUnlessWaiting(IO_MENU_UPDATE_DEFFERED, &appMod->support->mode);
         }
 
         // A source-list refresh may expose newly-loaded items to validate favourites
         // against. Re-sync the FAV tab (cheap/idempotent; skipped when FAV is disabled).
+        // An L3 flip still counts: favourites resolve against a device's PS1 or PS2 list
+        // (favResolveStoredId), and a flip can fill one that was never scanned.
         if (gFAVStartMode && mod->support->mode != FAV_MODE)
             loadFavourites();
     } else if (libViewPending(mod->support->mode)) {
@@ -3002,6 +3018,53 @@ static void resolveBootDirToMass(void)
     }
 }
 
+// One Ember setting's stored value, or EMBER_SETTING_UNSET when the key is absent or out of range. An
+// out-of-range value (hand-edited, or from a later build) must not be written into anyone's file.
+static int emberSettingGet(config_set_t *config, const char *key, int count)
+{
+    int value;
+
+    if (!configGetInt(config, key, &value) || value < 0 || value >= count)
+        return EMBER_SETTING_UNSET;
+    return value;
+}
+
+// Store one Ember setting only once the user has changed it here; unset means no key at all.
+static void emberSettingSet(config_set_t *config, const char *key, int value)
+{
+    if (value == EMBER_SETTING_UNSET)
+        configRemoveKey(config, key);
+    else
+        configSetInt(config, key, value);
+}
+
+static void emberLoadSettings(config_set_t *configOPL)
+{
+    int present;
+
+    gEmberDisplay = emberSettingGet(configOPL, CONFIG_OPL_EMBER_DISPLAY_MODE, EMBER_DISPLAY_COUNT);
+    // One-time migration from the old key, only while the new one is absent. The old key was written
+    // on EVERY save whether or not anyone touched the row, so its 0 cannot be told apart from "never
+    // set" and reads as unset. 1 (240) and 2 (480 -- which was always 480i to Ember) were chosen by the
+    // user and carry over unchanged, so nobody's picture changes. emberSaveSettings drops the old key.
+    if (!configGetInt(configOPL, CONFIG_OPL_EMBER_DISPLAY_MODE, &present)) {
+        int legacy = emberSettingGet(configOPL, CONFIG_OPL_EMBER_DISPLAY, EMBER_DISPLAY_480 + 1);
+        gEmberDisplay = (legacy > EMBER_DISPLAY_DEFAULT) ? legacy : EMBER_SETTING_UNSET;
+    }
+    gEmberDither = emberSettingGet(configOPL, CONFIG_OPL_EMBER_DITHER, EMBER_DITHER_COUNT);
+    gEmberShading = emberSettingGet(configOPL, CONFIG_OPL_EMBER_SHADING, EMBER_SHADING_COUNT);
+    gEmberController = emberSettingGet(configOPL, CONFIG_OPL_EMBER_CONTROLLER, EMBER_CONTROLLER_COUNT);
+}
+
+static void emberSaveSettings(config_set_t *configOPL)
+{
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_DISPLAY_MODE, gEmberDisplay);
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_DITHER, gEmberDither);
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_SHADING, gEmberShading);
+    emberSettingSet(configOPL, CONFIG_OPL_EMBER_CONTROLLER, gEmberController);
+    configRemoveKey(configOPL, CONFIG_OPL_EMBER_DISPLAY); // migrated on load; never written again
+}
+
 static void _loadConfig()
 {
     int value, themeID = -1, langID = -1;
@@ -3032,15 +3095,23 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, &gEnableDiscArt);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
 
-            if (!(getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS))) {
-                configGetInt(configOPL, CONFIG_OPL_VMODE, &gVMode);
-            } else {
+            if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
                 // Recovery combo: force 480p PROGRESSIVE (EDTV 640x448p@60, vmode index 3), not
                 // Auto -- Auto resolves to region-default interlaced 480i/576i, which is exactly
                 // what some modern displays/upscalers fail to sync, leaving the user still blind.
                 LOG("--- Triangle + Cross held at boot - forcing Video Mode to 480p (recovery) ---\n");
                 gVMode = 3;
                 configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
+            } else if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CIRCLE)) {
+                // The other half of recovery. 480p is exactly what an interlaced-only set (a CRT;
+                // zackcage6, 09-25) can NOT show, so the combo above left those users as blind as
+                // before. Auto (index 0) is the region's standard interlaced mode, NTSC 640x448i or
+                // PAL 640x512i -- the one every PS2-era TV syncs.
+                LOG("--- Triangle + Circle held at boot - forcing Video Mode to Auto/interlaced (recovery) ---\n");
+                gVMode = 0;
+                configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
+            } else {
+                configGetInt(configOPL, CONFIG_OPL_VMODE, &gVMode);
             }
 
             configGetInt(configOPL, CONFIG_OPL_XOFF, &gXOff);
@@ -3123,10 +3194,7 @@ static void _loadConfig()
             // rather than clamped, so that page opens on its default instead of on a view with no
             // rows. Reading it before those two would validate against stale settings.
             libViewLoadFromConfig(configGetByType(CONFIG_LAST));
-            if (!configGetInt(configOPL, CONFIG_OPL_EMBER_DISPLAY, &gEmberDisplay))
-                gEmberDisplay = EMBER_DISPLAY_LEAVE;
-            if (gEmberDisplay < EMBER_DISPLAY_LEAVE || gEmberDisplay > EMBER_DISPLAY_480)
-                gEmberDisplay = EMBER_DISPLAY_LEAVE;
+            emberLoadSettings(configOPL);
             // A boot default-view locked to one type (VCD or ISO) must force the same one-shot
             // rescan the settings dialog does on a view change (gui.c). Without it, libViewActive()
             // short-circuits bdm/hdd/eth NeedsUpdate before the initial-scan trigger and the
@@ -3247,6 +3315,15 @@ static void _loadConfig()
             } else {
                 gETHStartMode = START_MODE_DISABLED;
             }
+
+            // The remembered pick. A live protocol is the pick by definition; with none (Off), use the
+            // saved pick, or SMB when there is none yet. Taken BEFORE the reconcile below, so a file that
+            // names a protocol but has its start row Off still remembers that protocol.
+            if (gNetworkProtocol != NET_PROTO_OFF)
+                gNetProtocolPick = gNetworkProtocol;
+            else if (!configGetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, &gNetProtocolPick) ||
+                     gNetProtocolPick <= NET_PROTO_OFF || gNetProtocolPick > NET_PROTO_HTTP)
+                gNetProtocolPick = NET_PROTO_SMB;
 
             // Network start row (Off/Manual/Auto). A config predating this field has no net_start_mode
             // key -- derive it from the protocol we just resolved so an existing user keeps working:
@@ -3722,7 +3799,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
-        configSetInt(configOPL, CONFIG_OPL_EMBER_DISPLAY, gEmberDisplay);
+        emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_RETROGEM_GAMEID, gPopstarterRetroGemGameID);
         configSetInt(configOPL, CONFIG_OPL_BDMA_SOURCE, gBdmaSource);
@@ -3757,6 +3834,7 @@ static void _saveConfig()
         // NOTE(rebuild): the fork also persists the SMB dialect here (item 4).
         configSetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, gNetworkProtocol);
         configSetInt(configOPL, CONFIG_OPL_NET_START_MODE, gNetStartMode);
+        configSetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, gNetProtocolPick);
         configSetInt(configOPL, CONFIG_OPL_SFX, gEnableSFX);
         configSetInt(configOPL, CONFIG_OPL_RUMBLE, gEnableRumble);
         configSetInt(configOPL, CONFIG_OPL_BOOT_SND, gEnableBootSND);
@@ -4642,6 +4720,8 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     // frame flips and then persists on its own -- nothing draws again until the handoff -- so one
     // call covers the entire wait.
     guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
+    if (gLaunchDiag)
+        launchDiagMark(5); // "Please Wait" is up -- the io/art drain below runs next
 
     // Give up on the covers still QUEUED before draining. The drain waits on the ioman LIST, and the
     // worker keeps servicing it regardless of isIOBlocked, so without this the handoff pays for every
@@ -4673,6 +4753,8 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     // below is about to unmount that device and close its descriptors.
     gArtAbandoned = !cacheEnd(gDeinitTerminal);
     guiExecDeferredOps();
+    if (gLaunchDiag)
+        launchDiagMark(6); // io + art drain done -- the per-module teardown below runs next
 
 #ifdef PADEMU
     ds34usb_reset();
@@ -4690,6 +4772,8 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
         }
     }
 
+    if (gLaunchDiag)
+        launchDiagMark(7); // per-module teardown done -- audioEnd/ioEnd run next
     audioEnd();
     ioEnd();
     guiEnd();
@@ -4698,6 +4782,8 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     thmEnd();
     rmEnd();
     configEnd();
+    if (gLaunchDiag)
+        launchDiagMark(8); // deinitEx finished -- sysLaunchNeutrino runs next
 }
 
 void deinit(int exception, int modeSelected)
@@ -4715,6 +4801,8 @@ void deinit(int exception, int modeSelected)
     // frame flips and then persists on its own -- nothing draws again until the handoff -- so one
     // call covers the entire wait.
     guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
+    if (gLaunchDiag)
+        launchDiagMark(5); // "Please Wait" is up -- the io/art drain below runs next
 
     // Give up on the covers still QUEUED before draining. The drain waits on the ioman LIST, and the
     // worker keeps servicing it regardless of isIOBlocked, so without this the handoff pays for every
@@ -4746,6 +4834,8 @@ void deinit(int exception, int modeSelected)
     // below is about to unmount that device and close its descriptors.
     gArtAbandoned = !cacheEnd(gDeinitTerminal);
     guiExecDeferredOps();
+    if (gLaunchDiag)
+        launchDiagMark(6); // io + art drain done -- the per-module teardown below runs next
 
 #ifdef PADEMU
     ds34usb_reset();
@@ -4924,7 +5014,11 @@ static void setDefaults(void)
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;
-    gEmberDisplay = EMBER_DISPLAY_LEAVE; // write nothing to a device's EMBER/settings.txt until asked
+    // Nothing is set until the user changes it here, so no device's settings.txt is touched until asked.
+    gEmberDisplay = EMBER_SETTING_UNSET;
+    gEmberDither = EMBER_SETTING_UNSET;
+    gEmberShading = EMBER_SETTING_UNSET;
+    gEmberController = EMBER_SETTING_UNSET;
     gBdmaSource = VCD_BDMA_SRC_USB;
     gBdmaMode = VCD_BDMA_FAT32;
     gBdmaApplyOnLaunch = 1;             // auto-equip on launch by default
@@ -4978,6 +5072,7 @@ static void setDefaults(void)
     // and forces a device refresh already. A saved net protocol in the config overrides this.
     gNetworkProtocol = NET_PROTO_OFF;
     gNetStartMode = START_MODE_DISABLED; // Off in the 3-row Network setting; migration reconciles old configs
+    gNetProtocolPick = NET_PROTO_SMB;
 
     frameCounter = 0;
 
@@ -5077,6 +5172,25 @@ static void deferredInit(void)
     // main screen worth selecting and the start menu stays -- previously ANY unregistered pick
     // silently parked every boot on the start menu with no explanation.
     int bootMode = gDefaultDevice;
+    // "ETH Games" is the Default Menu entry for the network, whichever protocol the Network page picked.
+    // Only SMB registers ETH_MODE; the other protocols put their games on a different page, so an
+    // unresolved ETH_MODE had no support and every UDPFS/HTTP boot fell through to MMCE/Apps below.
+    if (bootMode == ETH_MODE) {
+        if (gNetworkProtocol == NET_PROTO_UDPFS)
+            bootMode = UDPFS_MODE;
+        else if (gNetworkProtocol == NET_PROTO_HTTP)
+            bootMode = HTTP_MODE;
+        else if (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD) {
+            // Block transports appear as a massN: page, and only once the device has attached; if it
+            // has not by now, the fallback below applies as before.
+            for (int i = BDM_MODE; i <= BDM_MODE_LAST; i++) {
+                if (list_support[i].support != NULL && bdmModeIsUDPBD(i)) {
+                    bootMode = i;
+                    break;
+                }
+            }
+        }
+    }
     if (list_support[bootMode].support == NULL) {
         if (list_support[MMCE_MODE].support != NULL)
             bootMode = MMCE_MODE;

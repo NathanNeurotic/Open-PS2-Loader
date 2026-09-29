@@ -1,13 +1,23 @@
 
-<p align="center"><img alt="RiptOPL" src="https://raw.githubusercontent.com/NathanNeurotic/Open-PS2-Loader/rebuild/main/docs/assets/riptopl.png" /></p>
-
-
+<p align="center"><a href="#"><img alt="RiptOPL" src="https://raw.githubusercontent.com/NathanNeurotic/Open-PS2-Loader/rebuild/main/docs/assets/riptopl.png" /></p></a>
 
 <p align="center">
-  <img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" />
+  <a href="#"><img width="400" height="92" alt="AI-Assisted-Software-Lovers-Only" src="https://github.com/user-attachments/assets/71335775-9fe3-4507-ac2c-caa851abb24c" /></p></a>
 </p>
 
+## Community Contributors
 
+A heartfelt thank you to developers who have contributed pull requests directly to this fork. Anyone who opens a pull request against RiptOPL is featured here at the top of the README in recognition of their support for the project and solidarity with its maintainer:
+
+### [@oMrRexD](https://github.com/oMrRexD) (MrRexD)
+- **[#789](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/789)** (`fix(fntsys)`): **Font Lock Concurrency Fix** — Held the font semaphore lock across draw, measure, and load operations in `src/fntsys.c`. This resolved a critical boot-freeze race condition where background font/theme loading on the IO worker thread freed glyph caches and texture atlases while the GUI rendering thread was actively drawing text. Tested across 111 consecutive clean boots on real hardware (SCPH-50001 with SD2PSX and exFAT BDM HDD).
+- **[#705](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/705)** (`dialogs`): **RetroAchievements Settings UI** — Restored the RetroAchievements configuration rows to the Network settings dialog page where they are displayed, configured, and persisted.
+- **[#704](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/704)** (`RA`): **Menu Network Telemetry Initialization** — Safely initialized and brought the networking stack up from the menu prior to cold telemetry game launches.
+- **[#703](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/703)** (`Makefile`): **MMCE DEV9 Integration** — Linked MMCE's CDVD driver with the in-game DEV9 network stack in RetroAchievements builds.
+- **[#702](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/702)** (`ee_core`): **EE Core Stack Protection** — Relocated RetroAchievements buffers out of `.bss` to protect the EE stack from memory pressure and instability during game execution.
+
+### [@dnunezx](https://github.com/dnunezx) (darkladark)
+- **[#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)** (`Cover art flow`): **LUNA Collection View** — Brought LUNA's Collection cover-art screen into RiptOPL's renderer, adapting it to RiptOPL's existing game lists, settings, and launch callbacks. Added R3 access to Collection, moved the existing favorite shortcut to L2 + R3, fixed artwork handling while scrolling, and built/tested the result in PCSX2.
 
 # RiptOPL
 **An opinionated [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**
@@ -145,7 +155,7 @@ contains and how to pull it.
 1. Extract the normal installable archive. Copy `APPS/APP_RIPTOPL/` to your device's `APPS/` directory, or import `APP_RIPTOPL.psu` with a PS2 save manager to install that app on a memory card. The supplied app uses `-OFFICIALROLLING` when that build is available; the labelled ELF folders provide [other build choices](ROLLING_RELEASE.md#which-build-should-i-use).
 2. Copy `ART/` to the device's artwork directory. For Neutrino, copy the complete `neutrino/` folder to `mc0:/neutrino/` or `mc1:/neutrino/`. Install the `POPS/` and `EMBER/` companions for PS1 as described in [PS1 games](#ps1-games-two-cores-one-list). The PSU contains the app files only.
 3. Prepare your game's source: `CD/` or `DVD/` for folder-based PS2 libraries, HDLoader partitions for APA, or `games.csv` for HTTP. See [How to use](#how-to-use).
-4. In **Settings → Game Sources**, enable the device and its start mode. For a network source, set **Network Connectivity** to **Manual** or **Auto**, then choose the protocol in **Network** and enter your server's settings.
+4. In **Settings → Game Sources**, enable the device and its start mode. For a network source, set **Network Connectivity** to **Manual** or **Auto** and pick the **Protocol** under it, then enter your server's settings in **Network**.
 5. Use the server's Test action where available, then choose **Save Changes** before launching a game. A successful menu test is not proof that gameplay works.
 6. Launch one test game. If it fails, record the exact build, SDK flavour, source and core before changing settings; see [Frequent Issues](#frequent-issues).
 
@@ -280,7 +290,8 @@ This build layers several features on top of upstream OPL:
   loads live (a restart is only needed to *switch away* from a protocol already loaded). Confirming
   Network Settings applies the current values and reconnects immediately; if the first connection
   fails, press **Select / Refresh** on the failed network page to retry it. Run it from the
-  **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. See the
+  **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. Confirmed
+  on a real PS2 (Kingdom Hearts, 2026-09-26) with every Neutrino setting left at its default. See the
   network-boot section of **[docs/NEUTRINO.md](docs/NEUTRINO.md#4-network-boot--the-network-protocol-selector)**.
 - **HTTP library (new):** point RiptOPL at a server meeting the [HTTP client response profile](docs/HTTP.md), and it reads a `games.csv` catalog and streams the ISOs straight off it
   through OPL’s own core. The PC side is **[Docmine17](https://github.com/Docmine17)’s**
@@ -289,11 +300,15 @@ This build layers several features on top of upstream OPL:
   server**. No VMC, no Neutrino and no PS1 over HTTP, and it has **not been hardware-tested yet**.
   See **[docs/HTTP.md](docs/HTTP.md)**.
 - **UDPFS network boot (Neutrino):** a newer network transport (Neutrino's UDPRDMA) offered
-  alongside UDPBD. The network controls are split across two pages: **Game Sources** holds the
-  **Network Connectivity** row (Off / Manual / Auto), and **Network** holds **Protocol**
-  (**SMB / UDPFS / UDPBD / HTTP**), **SMB Version** (SMBv1 / SMB2, live only while Protocol is SMB),
+  alongside UDPBD. **Game Sources** holds the **Network Connectivity** row (Off / Manual / Auto) with
+  **Protocol** (**SMB / UDPFS / UDPBD / HTTP**) indented under it; the same **Protocol** row is on
+  **Network** too, and changing it on either page changes both. Setting Connectivity to **Off** keeps
+  your protocol: turning it back on brings the same one back. **Network** also holds
+  **SMB Version** (SMBv1 / SMB2, live only while Protocol is SMB),
   and **Access** (Files / IMG — locked to Files
-  for SMB/HTTP and to IMG for UDPBD, free only for UDPFS). UDPFS launches via `-bsd=udpfsbd` with a
+  for SMB/HTTP and to IMG for UDPBD, free only for UDPFS). **Default Menu → ETH Games** opens
+  whichever page that protocol's games are on (for UDPBD / UDPFS IMG, the network drive's page if it
+  has attached by the time the menu appears). UDPFS launches via `-bsd=udpfsbd` with a
   bundled `bsd-udpfsbd.toml`. Use the
   **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher for UDPFS,
   SMB and UDPBD; advanced users can run **[pcm720/udpfsd](https://github.com/pcm720/udpfsd)** directly.
@@ -362,7 +377,8 @@ This build layers several features on top of upstream OPL:
   memory cards and `settings.txt` are written straight through it.
 
   **Credit and licence — Ember is created by [Gageformer](https://github.com/Gageformer), and its
-  official release page is <https://github.com/Gageformer/Ember/releases>.** Ember is an
+  bundled release is [Ember Beta 2](https://github.com/Gageformer/Ember/releases/tag/Beta-2).**
+  The repository shortcut ships as `EMBER/Ember Official Webpage.url`. Ember is an
   independent PS1 emulator written from scratch for the PS2. It is bundled unmodified under the **Ember Public
   Beta Testing Licence**, which ships in the release package as `EMBER/LICENSE-BETA.txt` and governs
   the build it accompanies. That licence permits non-commercial bundling but prohibits selling,
@@ -370,14 +386,24 @@ This build layers several features on top of upstream OPL:
   supply your own, from hardware and media you lawfully own. Please report Ember problems to *us*
   first rather than to Gageformer: the launching is ours.
 
-  **Ember display mode.** The **PS Emulation Settings** page carries an *Ember Display Mode* setting
-  (**Default** / **240p** / **480p**). Ember's `settings.txt` is an optional file, and this keeps it
-  that way. Choose **240p** or **480p** and RiptOPL writes that key into
-  `<device>:/EMBER/settings.txt` when you launch an Ember title — creating the file if it is not
-  there, updating it in place if it is, and on the launching device only. Choose **Default** and it
-  goes back to having no setting: the key is removed, and so is the file if that key was all it
-  held. Any other lines you or a future Ember put in there are preserved throughout, and *Default*
-  never creates a file that was not already there.
+  **Ember settings.** The **PS Emulation Settings** page carries four Ember rows: *Ember Display Mode*
+  (**Default** / **240p** / **480i** / **480p**), *Ember Dithering* (**Default** / **On** / **Off**),
+  *Ember Shading* (**Default** / **15-bit** / **24-bit (experimental)**) and *Ember Controller*
+  (**Default** / **Auto** / **Analog** / **D2A**). When you launch an Ember title, RiptOPL writes
+  those settings into `<device>:/EMBER/settings.txt` on the launching device, creating the file if it is not
+  there and updating it in place if it is. **480p** needs component or HDMI (composite shows no
+  picture), so picking it asks first. RiptOPL only touches a setting you have changed here: a row
+  left on **Default** leaves that key alone, so a `settings.txt` written by hand keeps working;
+  changing a row back to **Default** removes the key again (and the file, if that was all it held).
+  Every other line in the file is kept.
+
+  **Per game:** on an Ember title, **Triangle → Ember Game Settings** sets that game's *Ember
+  Controller*. It is saved in the game's `CFG/<Folder Name>.cfg` and written to
+  `EMBER/games/<Folder Name>/settings.txt` at launch, overriding the global row. Left on **Default**, it
+  leaves any `controller` line already in that game's file alone; changed back to **Default** after a
+  choice, it removes that line so the global row applies. On a Favourites entry it edits the same
+  setting as on the device page. Controller
+  is the only per-game setting, on Ember's author's advice.
 
 - **Alternate POPSTARTER builds:** the release package ships
   `POPS/POPSTARTER VERSIONS/` containing five builds of POPSTARTER — **MAIN**, **DEBUG**,
@@ -437,7 +463,7 @@ This build layers several features on top of upstream OPL:
   it no longer falls back to the first USB page.
 - **DualSense / DualShock 5 (USB):** optional controller support — available in the prebuilt
   `RIPTOPL-VARIANTS-*.zip` release bundle (one ELF per SDK flavour), or build with `make DUALSENSE=1`.
-- **1080p GSM video mode:** forced progressive 1080p (1920×1080) GSM mode is built directly into all standard builds (`make GSM1080P=1`). Full GSM documentation: **[docs/GSM.md](docs/GSM.md)**. Selecting 1080p in the per-game GSM picker is guarded by a **three-step confirmation**; if a game loses the picture, disable/change its GSM override before relaunching. **Triangle + Cross** at boot affects only the OPL menu and requires a 480p-capable display/connection.
+- **1080p GSM video mode:** forced progressive 1080p (1920×1080) GSM mode is built directly into all standard builds (`make GSM1080P=1`). Full GSM documentation: **[docs/GSM.md](docs/GSM.md)**. Selecting 1080p in the per-game GSM picker is guarded by a **three-step confirmation**; if a game loses the picture, disable/change its GSM override before relaunching. **Triangle + Cross** at boot affects only the OPL menu and requires a 480p-capable display/connection; **Triangle + Circle** forces the interlaced Auto mode instead.
 - **Ready-to-use defaults:** a fresh install boots with sensible options already enabled —
   widescreen, cover art, notifications, sound effects + boot sound, delete/rename, and
   the PS2 logo. Video mode stays **Auto**. Every storage device ships **off**, so the first boot
@@ -494,7 +520,8 @@ MMCE Settings*) sends a switch-to-bootcard command as the reset happens.
 
 Cross and Circle follow the **Select button** setting, except in the settings screens, where Cross is
 always OK and Circle always Cancel. Holding **Triangle + Cross at boot** forces the menu to 480p
-progressive as a recovery path for a display that cannot sync the saved video mode.
+progressive as a recovery path for a display that cannot sync the saved video mode; **Triangle +
+Circle** forces Auto (the region's interlaced mode) for a TV that can't take 480p.
 
 ## How to use
 
@@ -593,8 +620,8 @@ are supported using the folder structure above.
 > session.
 >
 > **RiptOPL network defaults:** the network protocol selector defaults to **Off** — under
-> **Game Sources** set **Network Connectivity** to **Manual** or **Auto**, then in **Network** set
-> **Protocol** to **SMB**, before the **NET Games** tab appears. The Network page
+> **Game Sources** set **Network Connectivity** to **Manual** or **Auto** and **Protocol** (under it,
+> or on **Network**) to **SMB**, before the **NET Games** tab appears. The Network page
 > ships static defaults (PS2 `192.168.1.10`, PC `192.168.1.100`, share `games`, user `guest`);
 > adjust them to your LAN. The default **SMB Port is `1111`** — a non-privileged port (>1024), so a server
 > binds it without admin/root. The **Network** page opens with **Advanced Options** on, so
@@ -716,6 +743,8 @@ OPL accepts `.cht` files in PS2RD format. Name them after the game’s startup I
 Cheats are structured as hexadecimal codes, with proper headers as descriptions to identify their function.
 You can activate cheats via OPL's graphical interface. Navigate to a games settings, enable cheats and select the desired mode.
 
+If a game has no cheat file, what happens depends on where cheats were turned on. With cheats on in the **Global Settings** (every game), the game just starts without cheats. With cheats on in that game's **Per-game Settings**, RiptOPL lists where it looked and asks: Accept starts the game without cheats, Back returns to the menu. A cheat file that exists but can't be read always asks: that includes a `cht.tar` member that is empty, over 1 MB or won't parse, and a loose file the device refuses (access denied, or held by another session). A generic I/O error still counts as missing, because an SMB share reports a missing file that way.
+
 ### Cheat Modes
 
   * Auto Select Cheats:  
@@ -809,8 +838,16 @@ Back up the device before any reformat; do not reformat solely because of the sc
 ### OPL does not display anything on boot
 
 Hold **Triangle + Cross** while RiptOPL initializes to force **480p for the OPL menu**. Your display
-and connection must accept 480p. Once visible, choose a suitable menu mode under **Interface** and
-save. **START** skips saved configuration and uses defaults if you need to undo a saved menu setup.
+and connection must accept 480p. On a TV that only takes interlaced signals (a CRT, for example),
+hold **Triangle + Circle** instead: it forces **Auto**, the region's interlaced mode. Once visible,
+choose a suitable menu mode under **Interface** and save. **START** skips saved configuration and
+uses defaults if you need to undo a saved menu setup.
+
+When you change the video mode, keeping it takes a **hold** of Accept (about 2 seconds, until the bar
+fills). A tap does nothing, and Back or 10 seconds without an answer restores the previous mode, so a
+mode your TV can't show can't be kept by pressing buttons blind. The prompt counts those seconds down;
+holding Accept hides the count but doesn't stop it, so a hold you started always finishes, while letting
+go early after the time is up goes straight back.
 
 ### The internal HDD shows code 402, or "Formatted: NO" in another tool
 
@@ -828,6 +865,15 @@ data; this will not change. It mostly affects large desktop external drives whos
 4K sectors. The same drive in a generic enclosure usually presents 512-byte sectors, but it must be
 **reformatted** after the move. A drive that is 4K natively (4Kn) stays 4K in any enclosure. Ordinary
 512e drives (4K physical, 512 logical) are not affected.
+
+### A USB / MX4SIO / exFAT page lists no PS2 games
+
+If RiptOPL says *Could not open the CD or DVD folder in mass0: (error 5)*, neither folder would open at
+the path it names (the device plus your BDM Prefix Path, if set). Error 5 is an I/O error (check the
+device on a PC), 2 means the folder is missing and couldn't be created, 13 is access denied. An empty
+folder never shows this: RiptOPL creates `CD` and `DVD` itself and simply lists nothing. It scans once
+and does not retry in the background; press **Select** on that page to scan again. Details:
+[Troubleshooting](https://nathanneurotic.github.io/Open-PS2-Loader/troubleshooting.html#ps2-folders-unreadable).
 
 ### The menu works, but launching a game loses the picture
 

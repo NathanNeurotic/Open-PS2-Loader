@@ -278,6 +278,17 @@ def check_pins():
           re.search(r'if \(guiMsgBox\(text, 1, NULL\)\)\s*return 1;', cheats) and
           not re.search(r'!\s*guiMsgBox\(|guiMsgBox\([^;]*\)\s*[=!<>]=', cheats),
           'sbCheatsMissingContinue: guiMsgBox returns 1 for accept -- continue the launch on a true result')
+    # Cheats on for ALL games + a title with no .cht: continue with no prompt. Must sit BEFORE the
+    # prompt, must be keyed on -ENOENT (a file that exists but will not load still asks), and the flag
+    # must only ever be raised on the global branch of InitCheatsConfig.
+    silent = re.search(r'if \(cheatResult == -ENOENT && GetCheatsFromGlobalDefault\(\)\) \{[^}]*return 1;', cheats or '')
+    check(silent is not None and silent.start() < cheats.find('guiMsgBox('),
+          'sbCheatsMissingContinue: a missing .cht with cheats on for all games must continue without a prompt')
+    init = function_text(text('src/cheatman.c'), 'void InitCheatsConfig(')
+    per_game, _, global_branch = (init or '').partition('} else {')
+    check(init is not None and 'gCheatFromGlobal = 0;' in per_game and 'gCheatFromGlobal = 1;' not in per_game and
+          'gCheatFromGlobal = 1;' in global_branch,
+          'InitCheatsConfig: gCheatFromGlobal is reset each launch and set only by the all-games default')
 
     ioman = text('src/ioman.c')
     io_init = function_text(ioman, 'void ioInit(')

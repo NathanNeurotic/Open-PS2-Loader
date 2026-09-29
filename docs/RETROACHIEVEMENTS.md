@@ -250,7 +250,7 @@ and both are selected by `USBD_MINI_IRX` / `SMBMAN_IRX` at the top of the Makefi
 | `modules/network/smbman-ra` | the held-image fix above | `smb.c` (35 lines) and `smb.h` (4); every other file byte-identical to ps2sdk master |
 | `modules/usb/usbd-ra` | see below | **nothing** — byte-identical to ps2sdk `iop/usb/usbd` at `314d87e7` (2024-04-01); only the Makefile is ours |
 
-⚠ **The usbd swap is not a RetroAchievements feature.** ps2sdk rewrote its USB host driver on
+**The usbd swap is not a RetroAchievements feature.** ps2sdk rewrote its USB host driver on
 2024-09-04 (`b1f7ff96`: 28 files, +4446/−3336), and since then a CD-era game run off a USB stick
 loses its controller *and* its sound at the game's first IOP reboot — Dynasty Warriors 2 on real
 hardware, reported by hacan359 on 2026-09-10, reproducing **with official OPL as much as with this

@@ -1320,6 +1320,22 @@ static int cacheResolveArtArchive(item_list_t *list, const char *value, char *pa
     return 0;
 }
 
+// Abort every background still queued or loading for a game other than `value`. Scans EVERY slot:
+// initMutableImage floors each per-game art cache at 2, so the `cache->count == 1` guard this used to
+// sit behind made it dead code, and an abandoned background kept its decode running in front of the
+// next cover (#772). Marking it aborted rather than dropping it keeps one owner for the request: the
+// worker releases it on its own terms, whether it is still queued or already inside the read.
+static void cacheAbortOtherBackgrounds(image_cache_t *cache, const char *value)
+{
+    int i;
+
+    for (i = 0; i < cache->count; i++) {
+        cache_entry_t *entry = &cache->content[i];
+        if (entry->qr != NULL && entry->key[0] != '\0' && strcmp(entry->key, value) != 0)
+            ((load_image_request_t *)entry->qr)->abortRequested = 1;
+    }
+}
+
 GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cacheId, int *UID, char *value, int isPriority)
 {
     int i, rtime;
@@ -1469,20 +1485,13 @@ GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cache
             return NULL;
     }
 
-    // LATEST SELECTION WINS on a one-slot background cache. With one slot there is no eviction to
-    // fall back on: a background queued or loading for a selection the user has already left owns
-    // the only slot until it finishes, so the cover for where they ARE cannot even be requested
-    // until the abandoned one has been read off the device in full -- seconds, on the evidence
-    // above. The stale-stamp cancellation in cacheLoadImage cannot help, because the row it belongs
-    // to may still be on screen and still stamping.
-    //
-    // Marking it aborted rather than dropping it keeps one owner for the request: the worker
-    // releases it on its own terms, whether it is still queued or already inside the read.
-    if (cache->count == 1 && cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0) {
-        cache_entry_t *only = &cache->content[0];
-        if (only->qr != NULL && only->key[0] != '\0' && strcmp(only->key, value) != 0)
-            ((load_image_request_t *)only->qr)->abortRequested = 1;
-    }
+    // LATEST SELECTION WINS on the background cache. A background queued or loading for a selection
+    // the user has already left holds its slot until it finishes, so the cover for where they ARE
+    // waits behind somebody else's scenery -- seconds, on the evidence above. The stale-stamp
+    // cancellation in cacheLoadImage cannot help, because the row it belongs to may still be on
+    // screen and still stamping.
+    if (cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0)
+        cacheAbortOtherBackgrounds(cache, value);
 
 
     cache_entry_t *currEntry, *oldestEntry = NULL;

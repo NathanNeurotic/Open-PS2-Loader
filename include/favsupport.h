@@ -44,6 +44,9 @@ int favGetItemSourceMode(int id);
 // All-in-One shelf uses this to keep row-specific menus honest even though the page view is ALL.
 int favGetItemView(int id);
 
+// FAV_KIND_* of one displayed favourite, or -1 when id is invalid (which core a PS1 favourite uses).
+int favGetItemKind(int id);
+
 // Source device mode of the favourite whose art-cache value (source startup / VCD name) matches,
 // or -1 if none does. Used by texcache's cacheGetEffectiveMode so MMCE idle
 // deferral, abort, and worker-priority rules follow the device a FAV-tab read

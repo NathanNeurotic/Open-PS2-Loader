@@ -74,6 +74,8 @@ extern cheat_entry_t *gCheats;
 
 void InitCheatsConfig(config_set_t *configSet);
 int GetCheatsEnabled(void);
+/** 1 when this launch's cheats come from the all-games default (no per-game $CheatsSource). */
+int GetCheatsFromGlobalDefault(void);
 const u32 *GetCheatsList(void);
 int load_cheats(const char *cheatfile);
 int load_cheats_buf(const char *buf); // buf must be NUL-terminated (tar members carry no NUL)

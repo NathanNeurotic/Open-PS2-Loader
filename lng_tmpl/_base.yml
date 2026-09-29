@@ -1170,7 +1170,7 @@ gui_strings:
 - label: EMBER_DISPLAY
   string: Ember Display Mode
 - label: HINT_EMBER_DISPLAY
-  string: Output mode Ember uses for PS1 games. 240p or 480p is written to settings.txt in the launched device's EMBER folder. Default removes that setting again, and the file too if it held nothing else.
+  string: "Output mode Ember uses for PS1 games, written to settings.txt in the launched device's EMBER folder. 480p needs component or HDMI. Default leaves a hand-written setting alone; picking Default after a change removes it again."
 - label: BDMA_SRC_ILINK
   string: iLink
 - label: BDMA_MODE_ILINK
@@ -1342,3 +1342,31 @@ gui_strings:
   string: "Could not copy the USB drivers to %s (card full or not writable). The IGR will drop to the PS2 browser."
 - label: OFFICIAL_CFG_NOTIFICATION
   string: Official OPL settings loaded from %s
+- label: CFM_VMODE_HOLD_KEEP
+  string: Hold to keep
+- label: BDM_PS2_FOLDERS_UNREADABLE
+  string: "Could not open the CD or DVD folder in %s (error %d), so that device lists no PS2 games. Press SELECT on its page to try again."
+- label: NEUTRINO_BD_NO_DEVICE_NUMBER
+  string: "Neutrino Filesystem is set to bd, but this device never reported its device number, so Neutrino cannot be pointed at it. Set this game's Neutrino Filesystem to Auto or exfat."
+- label: CFM_VMODE_REVERT_IN
+  string: Reverting in %d s
+- label: EMBER_DITHER
+  string: Ember Dithering
+- label: HINT_EMBER_DITHER
+  string: "Ember dithering (on or off), written to settings.txt in the launched device's EMBER folder. Default leaves a hand-written setting alone."
+- label: EMBER_SHADING
+  string: Ember Shading
+- label: HINT_EMBER_SHADING
+  string: "Ember colour depth: 15-bit, or 24-bit (experimental). Written to settings.txt in the launched device's EMBER folder. Default leaves a hand-written setting alone."
+- label: EMBER_CONTROLLER
+  string: Ember Controller
+- label: HINT_EMBER_CONTROLLER
+  string: "Ember controller mode: Auto, Analog or D2A. Usually best set per game (Triangle > Ember Game Settings), which overrides this. Default leaves a hand-written setting alone."
+- label: EMBER_480P_CONFIRM
+  string: "Ember 480p shows no picture over composite. Use 480p?"
+- label: EMBER_SHADING_24
+  string: 24-bit (experimental)
+- label: EMBER_GAME_SETTINGS
+  string: Ember Game Settings
+- label: HINT_EMBER_GAME_SETTING
+  string: "This game only: written to its EMBER/games/<name>/settings.txt at launch. Left on Default, a value already in that file is kept; changed back to Default, it is removed and the global Ember row applies."

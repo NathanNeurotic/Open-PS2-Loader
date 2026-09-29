@@ -63,7 +63,7 @@ enum UI_ITEMS {
     CFG_ENABLEUDPBD,     // legacy: kept as an unused placeholder (superseded by CFG_NETPROTOCOL)
     CFG_NETBOOTPROTOCOL, // legacy: kept as an unused placeholder (superseded by CFG_NETPROTOCOL)
     CFG_NETSTART,        // network start mode row: Off / Manual / Auto (== START_MODE_*)
-    CFG_NETPROTOCOL,     // protocol row: SMB / UDPFS / UDPBD (Off moved to CFG_NETSTART)
+    CFG_NETPROTOCOL,     // protocol row: SMB / UDPFS / UDPBD / HTTP -- on Network AND Game Sources
     CFG_UDPFSMODE,       // access row: Files (udpfs_ioman filesystem) vs IMG (udpfs_bd block/massN:); locked per protocol
     CFG_SMBDIALECT,      // SMB version row: SMBv1 / SMB2; only enabled while the protocol row is SMB
     CFG_LASTPLAYED,
@@ -98,7 +98,10 @@ enum UI_ITEMS {
     CFG_LBL_POPSTARTER_PATH,
     CFG_POPSTARTER_PATH,
     CFG_POPSTARTER_RETROGEM_GAMEID,
-    CFG_EMBER_DISPLAY, // Ember's own display mode, written to its settings.txt at launch
+    CFG_EMBER_DISPLAY,    // Ember's own display mode, written to its settings.txt at launch
+    CFG_EMBER_DITHER,     // Ember settings.txt "dither"
+    CFG_EMBER_SHADING,    // Ember settings.txt "shading"
+    CFG_EMBER_CONTROLLER, // Ember settings.txt "controller"
 
     CFG_BDMA_APPLY,
     CFG_LBL_BDMASOURCE,
@@ -395,6 +398,7 @@ extern struct UIItem diaBdmaConfig[];
 extern struct UIItem diaVcdListConfig[];
 extern struct UIItem diaPopsNetConfig[];
 extern struct UIItem diaPopsOverwrite[];
+extern struct UIItem diaEmberGameConfig[];
 extern struct UIItem diaMmceCommConfig[];
 extern struct UIItem diaMmcePathConfig[];
 extern struct UIItem diaSecurityConfig[];

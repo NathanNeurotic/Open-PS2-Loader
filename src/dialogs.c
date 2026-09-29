@@ -394,11 +394,17 @@ struct UIItem diaDeviceConfig[] = {
     {UI_BOOL, CFG_ENABLEILK, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
-    // Network Start Mode (Off/Manual/Auto) gates whether/when the stack loads; Protocol, Access and
-    // SMB Version live on the Network page now.
+    // Network Start Mode (Off/Manual/Auto) gates whether/when the stack loads. The indented Protocol
+    // row under it is the SAME setting as the Network page's Protocol row (both read and write
+    // gNetworkProtocol), shown here so the two network choices sit together; it greys while
+    // Connectivity is Off. Access and SMB Version stay on the Network page.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Network Connectivity", -1}}},
     {UI_SPACER},
     {UI_ENUM, CFG_NETSTART, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      Protocol", -1}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_NETPROTOCOL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Applications Page Start Mode", -1}}},
@@ -448,6 +454,18 @@ struct UIItem diaVcdConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_DISPLAY}}},
     {UI_SPACER},
     {UI_ENUM, CFG_EMBER_DISPLAY, 1, 1, _STR_HINT_EMBER_DISPLAY, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_DITHER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_DITHER, 1, 1, _STR_HINT_EMBER_DITHER, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_SHADING}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_SHADING, 1, 1, _STR_HINT_EMBER_SHADING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_CONTROLLER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_CONTROLLER, 1, 1, _STR_HINT_EMBER_CONTROLLER, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
 
@@ -555,6 +573,24 @@ struct UIItem diaVcdUsbMode[] = {
     {UI_BREAK},
     {UI_BUTTON, VCDUSB_BTN_EXFAT, 1, 1, -1, 0, 0, {.label = {NULL, _STR_VCD_USB_MODE_EXFAT}}},
     {UI_BREAK},
+
+    // end of dialog
+    {UI_TERMINATOR}};
+
+// Ember Game Settings (PS1 Triangle menu, Ember rows only): this game's Controller, kept in its CFG
+// and written to EMBER/games/<Name>/settings.txt at launch. Default = follow the global row. Controller
+// only, on Gageformer's advice (per-game is meant for the controller; 24-bit shading can cause issues),
+// although Ember also reads shading from a game's file.
+struct UIItem diaEmberGameConfig[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_EMBER_GAME_SETTINGS}}},
+    {UI_SPLITTER},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_CONTROLLER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_CONTROLLER, 1, 1, _STR_HINT_EMBER_GAME_SETTING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
 
     // end of dialog
     {UI_TERMINATOR}};

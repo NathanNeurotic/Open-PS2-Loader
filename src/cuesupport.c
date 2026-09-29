@@ -251,136 +251,301 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
 // folder holding just a .bin is still a valid game.
 static const char *const cueDiscExts[] = {".cue", ".exe", ".bin"};
 
-void cueApplyDisplaySetting(const char *devPrefix)
+typedef struct
 {
-    char path[320];
-    char before[512];
-    char after[512];
-    const char *want;
-    int fd, len = 0, out = 0, i, lineStart;
+    const char *key;
+    const char *value;
+} cue_setting_t;
 
-    if (devPrefix == NULL)
-        return;
-    want = (gEmberDisplay == EMBER_DISPLAY_480) ? "display:480" : "display:240";
+#define CUE_SETTINGS_MAX 8191
 
-    snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, cueEmberFolder(), cueSep(devPrefix),
-             EMBER_SETTINGS_NAME);
+static int cueLineSetsKey(const char *line, int lineLen, const char *key)
+{
+    int i = 0;
+    int keyLen;
 
-    // Read whatever is there. An absent file is the normal first-run case, not an error: on 240/480
-    // we create it below, and on Default there is nothing to clear and nothing to create.
-    fd = open(path, O_RDONLY);
-    if (fd < 0 && gEmberDisplay == EMBER_DISPLAY_LEAVE)
-        return;
-    if (fd >= 0) {
-        len = read(fd, before, sizeof(before) - 1);
-        close(fd);
-        if (len < 0)
-            len = 0;
-        // A read that FILLED the buffer means the file may continue past what we hold. Rewriting
-        // from that prefix would O_TRUNC away everything beyond it -- silently deleting settings
-        // that belong to the user or to a future Ember, which is the exact opposite of this
-        // function's promise to preserve them. Leave the file completely alone instead.
-        //
-        // An Ember settings.txt is a couple of short lines, so this is a pathological case rather
-        // than a real one; a file that big is a reason to keep our hands off it, not to grow a
-        // buffer. Refusing an exactly-full read costs nothing but the display key this launch.
-        if (len == (int)sizeof(before) - 1) {
-            LOG("[CUE] %s is larger than we can safely rewrite -- left untouched\n", path);
-            return;
-        }
+    if (line == NULL || key == NULL || lineLen <= 0)
+        return 0;
+
+    while (i < lineLen && (line[i] == ' ' || line[i] == '\t'))
+        i++;
+    if (i >= lineLen || line[i] == '#' || line[i] == ';')
+        return 0;
+
+    keyLen = (int)strlen(key);
+    if (keyLen <= 0 || i + keyLen > lineLen || strncasecmp(&line[i], key, keyLen) != 0)
+        return 0;
+
+    i += keyLen;
+    while (i < lineLen && (line[i] == ' ' || line[i] == '\t'))
+        i++;
+
+    return i < lineLen && line[i] == ':';
+}
+
+int cueRewriteSettings(const char *before, int len, const cue_setting_t *want, int wantCount, char *after, int afterSize)
+{
+    int out = 0;
+    int lineStart;
+    int j;
+
+    if (before == NULL || after == NULL || len < 0 || afterSize < 0 || wantCount < 0)
+        return -1;
+    if (wantCount > 0 && want == NULL)
+        return -1;
+
+    if (wantCount == 0) {
+        if (len > afterSize)
+            return -1;
+        if (len > 0)
+            memcpy(after, before, len);
+        return len;
     }
-    before[len] = 0;
 
-    // Copy every line EXCEPT an existing display: line, then append ours. Keeping the other lines
-    // is the point: Ember ignores unknown keys, so anything else in here belongs to the user or to
-    // a future Ember, and neither is ours to delete.
-    for (i = 0, lineStart = 0; i <= len; i++) {
-        if (i != len && before[i] != 0x0A)
+    lineStart = 0;
+    while (lineStart < len) {
+        int lineEnd = lineStart;
+        int lineLen;
+        int managed = 0;
+
+        while (lineEnd < len && before[lineEnd] != '\n')
+            lineEnd++;
+
+        lineLen = lineEnd - lineStart;
+        if (lineLen > 0 && before[lineStart + lineLen - 1] == '\r')
+            lineLen--;
+
+        for (j = 0; j < wantCount; j++) {
+            if (cueLineSetsKey(&before[lineStart], lineLen, want[j].key)) {
+                managed = 1;
+                break;
+            }
+        }
+
+        if (!managed) {
+            if (out + lineLen + 1 > afterSize)
+                return -1;
+            if (lineLen > 0) {
+                memcpy(&after[out], &before[lineStart], lineLen);
+                out += lineLen;
+            }
+            after[out++] = '\n';
+        }
+
+        lineStart = (lineEnd < len) ? lineEnd + 1 : len;
+    }
+
+    for (j = 0; j < wantCount; j++) {
+        int keyLen;
+        int valueLen;
+
+        if (want[j].value == NULL)
             continue;
-        int lineLen = i - lineStart;
-        if (lineLen > 0 && before[lineStart + lineLen - 1] == 0x0D)
-            lineLen--; // tolerate CRLF, which a PC-side editor will leave behind
-        if (lineLen > 0 && strncasecmp(&before[lineStart], "display:", 8) != 0) {
-            if (out + lineLen + 1 >= (int)sizeof(after))
-                break; // pathological file: keep what fits rather than truncate mid-line
-            memcpy(&after[out], &before[lineStart], lineLen);
-            out += lineLen;
-            after[out++] = 0x0A;
-        }
-        lineStart = i + 1;
+
+        keyLen = (int)strlen(want[j].key);
+        valueLen = (int)strlen(want[j].value);
+        if (out + keyLen + 1 + valueLen + 1 > afterSize)
+            return -1;
+
+        memcpy(&after[out], want[j].key, keyLen);
+        out += keyLen;
+        after[out++] = ':';
+        memcpy(&after[out], want[j].value, valueLen);
+        out += valueLen;
+        after[out++] = '\n';
     }
-    // snprintf returns what it WOULD have written, so adding it blindly can push `out` PAST the end
-    // of the buffer and make the write() below over-read into whatever follows on the stack -- and
-    // this is a path that writes to the user's memory card or USB stick. If our own line does not
-    // fit, leave the file completely alone: a settings.txt we mangled is worse than one we never
-    // touched, and Ember runs fine without the key.
-    //
-    // On Default we append NOTHING, so `out` now holds the file with our key stripped out. That is
-    // what makes Default mean default: setting 240p and then changing back would otherwise leave
-    // display:240 on the device forever, with the menu claiming Default while Ember still ran 240p.
-    if (gEmberDisplay != EMBER_DISPLAY_LEAVE) {
-        int n = snprintf(&after[out], sizeof(after) - out, "%s\n", want);
-        if (n < 0 || n >= (int)sizeof(after) - out) {
-            LOG("[CUE] no room for the display line in %s -- left untouched\n", path);
+
+    return out;
+}
+
+static void cueWantSetting(cue_setting_t *list, int *count, const char *key, int setting, const char *const *values, int valueCount)
+{
+    if (list == NULL || count == NULL || key == NULL || values == NULL)
+        return;
+    if (setting < 0 || setting >= valueCount)
+        return;
+
+    list[*count].key = key;
+    list[*count].value = (setting == 0) ? NULL : values[setting];
+    (*count)++;
+}
+
+static int cueSettingsHaveValue(const cue_setting_t *want, int wantCount)
+{
+    int i;
+
+    for (i = 0; i < wantCount; i++) {
+        if (want[i].value != NULL)
+            return 1;
+    }
+    return 0;
+}
+
+static int cueWriteAll(int fd, const char *data, int len)
+{
+    int done = 0;
+
+    while (done < len) {
+        int wrote = write(fd, &data[done], len - done);
+        if (wrote <= 0)
+            return 0;
+        done += wrote;
+    }
+    return 1;
+}
+
+static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, int wantCount)
+{
+    char *before;
+    char *after;
+    int fd;
+    int len = 0;
+    int out;
+    int existed = 0;
+
+    if (path == NULL || want == NULL || wantCount <= 0)
+        return;
+
+    before = (char *)malloc(CUE_SETTINGS_MAX + 1);
+    after = (char *)malloc(CUE_SETTINGS_MAX + 1);
+    if (before == NULL || after == NULL) {
+        free(before);
+        free(after);
+        LOG("[CUE] no memory to update %s -- left untouched\n", path);
+        return;
+    }
+
+    fd = open(path, O_RDONLY);
+    if (fd >= 0) {
+        existed = 1;
+        len = read(fd, before, CUE_SETTINGS_MAX + 1);
+        close(fd);
+        if (len < 0) {
+            LOG("[CUE] cannot read %s -- left untouched\n", path);
+            free(before);
+            free(after);
             return;
         }
-        out += n;
-    }
-
-    // Nothing left to write. The file existed only to carry the key we just cleared, so remove it
-    // rather than leave an empty one behind -- settings.txt is optional, and Default means there
-    // should not be one. Only ever reached on Default: every other value appended a line above.
-    //
-    // This deletes a file, so it is deliberately narrow. It cannot fire while ANY other line
-    // survived the copy (a comment, a key we do not know, a key a future Ember adds) -- those all
-    // count toward `out` and are rewritten instead. len > 0 keeps us from unlinking a file that was
-    // already empty when we found it, which would be deleting something we never wrote to.
-    if (out == 0) {
-        if (len > 0) {
-            if (unlink(path) == 0)
-                LOG("[CUE] nothing left to keep in %s -- removed for Default\n", path);
-            else
-                LOG("[CUE] cannot remove %s -- Ember keeps its previous display mode\n", path);
+        if (len > CUE_SETTINGS_MAX) {
+            LOG("[CUE] %s is larger than Ember's settings buffer -- left untouched\n", path);
+            free(before);
+            free(after);
+            return;
         }
+    } else if (!cueSettingsHaveValue(want, wantCount)) {
+        free(before);
+        free(after);
         return;
     }
 
-    // Only touch the device when the content actually changes. This runs on every Ember launch, and
-    // a needless write is a needless card/stick write.
-    if (out == len && memcmp(after, before, out) == 0)
+    out = cueRewriteSettings(before, len, want, wantCount, after, CUE_SETTINGS_MAX);
+    if (out < 0) {
+        LOG("[CUE] rewritten settings would not fit in %s -- left untouched\n", path);
+        free(before);
+        free(after);
         return;
+    }
+
+    if (out == len && (out == 0 || memcmp(after, before, out) == 0)) {
+        free(before);
+        free(after);
+        return;
+    }
+
+    if (out == 0) {
+        if (existed && len > 0) {
+            if (unlink(path) == 0)
+                LOG("[CUE] nothing left to keep in %s -- removed\n", path);
+            else
+                LOG("[CUE] cannot remove %s -- previous settings remain\n", path);
+        }
+        free(before);
+        free(after);
+        return;
+    }
 
     fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
     if (fd < 0) {
-        LOG("[CUE] cannot write %s -- launching without applying the display mode\n", path);
+        LOG("[CUE] cannot write %s -- launching with the previous Ember settings\n", path);
+        free(before);
+        free(after);
         return;
     }
-    if (write(fd, after, out) != out) {
+
+    if (!cueWriteAll(fd, after, out)) {
         close(fd);
-        // O_TRUNC already emptied the file, so a failed or short write leaves it truncated with the
-        // user's other keys and comments gone -- the one outcome this whole function exists to
-        // avoid. We still hold the original bytes in `before` (the copy loop only ever read from
-        // it), so put them back.
-        //
-        // This is best-effort, not atomic: the restore can fail too. It is worth doing anyway
-        // because the realistic cause is a full card, and the truncate above just freed at least as
-        // many bytes as we are writing back. A temp-file-and-rename would be atomic but relies on
-        // rename() behaving across mass:/mmce:, which it does not do dependably here.
-        if (len > 0) {
+        if (existed) {
             fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
             if (fd >= 0) {
-                int back = write(fd, before, len);
+                int restored = (len == 0) || cueWriteAll(fd, before, len);
                 close(fd);
-                (void)back; // read only by LOG, which compiles to nothing in a release build
                 LOG("[CUE] write failed on %s -- original %s\n", path,
-                    (back == len) ? "restored" : "COULD NOT be restored");
-                return;
+                    restored ? "restored" : "COULD NOT be restored");
+            } else {
+                LOG("[CUE] write failed on %s -- original COULD NOT be restored\n", path);
             }
+        } else {
+            unlink(path);
+            LOG("[CUE] write failed on new %s -- partial file removed\n", path);
         }
-        LOG("[CUE] write failed on %s\n", path);
+        free(before);
+        free(after);
         return;
     }
+
     close(fd);
+    free(before);
+    free(after);
+}
+
+void cueApplySettings(const char *devPrefix, const char *name, config_set_t *configSet)
+{
+    static const char *const displayValues[] = {NULL, "240", "480", "480p"};
+    static const char *const ditherValues[] = {NULL, "on", "off"};
+    static const char *const shadingValues[] = {NULL, "15", "24"};
+    static const char *const controllerValues[] = {NULL, "auto", "analog", "d2a"};
+    cue_setting_t global[4];
+    cue_setting_t game[2];
+    int nGlobal = 0;
+    int nGame = 0;
+    int value;
+    int n;
+    char path[768];
+    char sep;
+
+    if (devPrefix == NULL)
+        return;
+
+    cueWantSetting(global, &nGlobal, "display", gEmberDisplay, displayValues, EMBER_DISPLAY_COUNT);
+    cueWantSetting(global, &nGlobal, "dither", gEmberDither, ditherValues, EMBER_DITHER_COUNT);
+    cueWantSetting(global, &nGlobal, "shading", gEmberShading, shadingValues, EMBER_SHADING_COUNT);
+    cueWantSetting(global, &nGlobal, "controller", gEmberController, controllerValues, EMBER_CONTROLLER_COUNT);
+
+    if (configSet != NULL && name != NULL && name[0] != '\0' && cueNameLaunchable(name)) {
+        if (configGetInt(configSet, CONFIG_ITEM_EMBER_SHADING, &value))
+            cueWantSetting(game, &nGame, "shading", value, shadingValues, EMBER_SHADING_COUNT);
+        if (configGetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, &value))
+            cueWantSetting(game, &nGame, "controller", value, controllerValues, EMBER_CONTROLLER_COUNT);
+    }
+
+    sep = cueSep(devPrefix);
+
+    if (nGlobal > 0) {
+        n = snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, cueEmberFolder(), sep, EMBER_SETTINGS_NAME);
+        if (n > 0 && n < (int)sizeof(path))
+            cueRewriteSettingsFile(path, global, nGlobal);
+        else
+            LOG("[CUE] Ember settings path is too long -- global settings left untouched\n");
+    }
+
+    if (nGame > 0) {
+        n = snprintf(path, sizeof(path), "%s%s%c%s%c%s%c%s", devPrefix, cueEmberFolder(), sep,
+                     EMBER_GAMES_FOLDER, sep, name, sep, EMBER_SETTINGS_NAME);
+        if (n > 0 && n < (int)sizeof(path))
+            cueRewriteSettingsFile(path, game, nGame);
+        else
+            LOG("[CUE] Ember game settings path is too long -- per-game settings left untouched\n");
+    }
 }
 
 int cueGameHasImage(const char *devPrefix, const char *name)

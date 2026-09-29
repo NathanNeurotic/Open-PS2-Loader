@@ -65,6 +65,16 @@ jobs:
         run: python3 .github/scripts/test_audio_threads.py
       - name: Check that a held button keeps repeating across the tick-counter wrap
         run: python3 .github/scripts/test_pad_repeat_clock.py
+      - name: Check that the handoff probe only refuses a target the child cannot load
+        run: python3 .github/scripts/test_handoff_probe.py
+      - name: Check that a blind button press cannot keep a video mode the TV cannot show
+        run: python3 .github/scripts/test_vmode_confirm.py
+      - name: Check that a broken cheat file is never reported as a missing one
+        run: python3 .github/scripts/test_cheat_load.py
+      - name: Check that a -bsdfs=bd launch without a device number is refused before teardown
+        run: python3 .github/scripts/test_neutrino_bsdfs.py
+      - name: Check that turning Network Connectivity off and on keeps the chosen protocol
+        run: python3 .github/scripts/test_net_protocol_pick.py
 
   ra-host-tests:
     runs-on: ubuntu-24.04
@@ -91,6 +101,14 @@ jobs:
         run: python3 .github/scripts/test_bdm_partitions.py
       - name: Check the game-list sort keeps the old order in O(n log n)
         run: python3 .github/scripts/test_menu_sort.py
+      - name: Check a failed first PS2 scan runs once and names the folder
+        run: python3 .github/scripts/test_bdm_scan_retry.py
+      - name: Check the IO worker skips duplicate module passes and APPS rebuilds on L3
+        run: python3 .github/scripts/test_io_queue_trims.py
+      - name: Check the selected cover is read first and an abandoned background is aborted (#772)
+        run: python3 .github/scripts/test_art_queue_order.py
+      - name: Check Ember settings are only written once changed in RiptOPL
+        run: python3 .github/scripts/test_ember_settings.py
 
   udpfs-host-tests:
     runs-on: ubuntu-24.04
@@ -232,3 +250,4 @@ jobs:
             OPNPS2LD-*.ELF
             BUILD-MANIFEST.txt
           if-no-files-found: error
+          retention-days: 14

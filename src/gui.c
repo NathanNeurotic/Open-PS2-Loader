@@ -780,13 +780,136 @@ int guiNetProtocolNeedsRestart(void)
     return gNetworkProtocol != resident;
 }
 
+// The Protocol row -- SMB(0) / UDPFS(1) / UDPBD(2) / HTTP(3) -- appears on the Network page AND,
+// indented under Network Connectivity, on Game Sources. It is one setting shown twice: both rows read
+// and write gNetworkProtocol through these helpers, so neither page can disagree with the other.
+static const char *guiNetProtocolNames[] = {"SMB", "UDPFS", "UDPBD", "HTTP", NULL}; // protocol names, not translated
+
+// What the Protocol rows show: the live protocol, or while Connectivity is Off (live = OFF) the one the
+// user last chose, so switching Off and back on never loses it.
+static int guiNetProtocolShown(void)
+{
+    return (gNetworkProtocol != NET_PROTO_OFF) ? gNetworkProtocol : gNetProtocolPick;
+}
+
+static int guiNetProtocolToPicker(int protocol)
+{
+    if (protocol == NET_PROTO_HTTP)
+        return 3;
+    if (protocol == NET_PROTO_UDPBD)
+        return 2;
+    if (protocol == NET_PROTO_UDPFS || protocol == NET_PROTO_UDPFSBD)
+        return 1;
+    return 0;
+}
+
+// The Access row's value for a protocol: IMG (1) for the udpfs block backend AND for UDPBD (IMG-locked),
+// Files (0) otherwise. Both pages use it, so switching UDPBD -> UDPFS keeps IMG on either page.
+static int guiNetProtocolAccess(int protocol)
+{
+    return (protocol == NET_PROTO_UDPFSBD || protocol == NET_PROTO_UDPBD) ? 1 : 0;
+}
+
+// The protocol the rows name. Access (Files 0 / IMG 1) is consulted only for UDPFS.
+static int guiNetProtocolFromPicker(int picker, int access)
+{
+    if (picker == 3)
+        return NET_PROTO_HTTP;
+    if (picker == 2)
+        return NET_PROTO_UDPBD;
+    if (picker == 1)
+        return access ? NET_PROTO_UDPFSBD : NET_PROTO_UDPFS;
+    return NET_PROTO_SMB;
+}
+
+// Fold the rows back: the picked protocol is always remembered, and becomes live unless Connectivity is
+// Off -- then gNetworkProtocol is OFF (the stack does not run at all) and the pick waits for it.
+static void guiNetProtocolStore(int picker, int access)
+{
+    gNetProtocolPick = guiNetProtocolFromPicker(picker, access);
+    gNetworkProtocol = (gNetStartMode == START_MODE_DISABLED) ? NET_PROTO_OFF : gNetProtocolPick;
+}
+
+// After either page set gNetworkProtocol: re-derive the legacy shadows downstream consumers read, then
+// give the same notices in the same order from both pages -- the UDP static-IP note, what to expect
+// from the new tab, and LAST the restart note when another stack is already resident.
+static void guiNetProtocolApplied(int netProtocolWas)
+{
+    gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
+    gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
+    // SMB's start mode IS the network start row (Auto = boot connect, Manual = on-entry); every
+    // non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
+    gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
+
+    if (gNetworkProtocol == netProtocolWas)
+        return;
+
+    // UDP transports always use the saved static PS2 IP fields. If the user's preserved SMB/HTTP
+    // preference is DHCP, explain that the UDP transport is using Static by design.
+    int nowUdp = (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD);
+    int wasUdp = (netProtocolWas == NET_PROTO_UDPFS || netProtocolWas == NET_PROTO_UDPFSBD || netProtocolWas == NET_PROTO_UDPBD);
+    if (nowUdp && !wasUdp && ps2_ip_use_dhcp)
+        guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
+
+    // "Nothing happens" guard: enabling a network protocol gives NO feedback -- the UDPFS tab joins the
+    // ring silently (Manual start waits for a Confirm-press inside it), and the block transports show a
+    // tab only once the PC server answers. Tell the user what to expect + which PC server to run.
+    if (gNetworkProtocol == NET_PROTO_HTTP)
+        guiMsgBox(_l(_STR_HTTP_TAB_HINT), 0, NULL);
+    else if (gNetworkProtocol == NET_PROTO_UDPFS)
+        guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
+    else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
+        guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
+
+    // Each network transport loads its IOP module chain once per boot (the load latch is not cleared
+    // live). If a stack is already up and the protocol changed away from the one actually running,
+    // the switch takes effect only after a restart -- say so instead of silently doing nothing. The
+    // OFFER to restart lives on the Save Settings path (see guiNetProtocolNeedsRestart): these
+    // dialogs only touch RAM, and acting now would tear OPL down before the choice was written.
+    if (guiNetProtocolNeedsRestart())
+        guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
+}
+
+// Game Sources: the indented Protocol row greys while Connectivity is Off.
+static void guiSourcesNetRowsUpdate(struct UIItem *ui)
+{
+    int startMode = START_MODE_DISABLED;
+
+    diaGetInt(ui, CFG_NETSTART, &startMode);
+    diaSetEnabled(ui, CFG_NETPROTOCOL, startMode != START_MODE_DISABLED);
+}
+
+static void guiSourcesNetRowsBegin(struct UIItem *ui, const char **deviceModes)
+{
+    diaSetEnum(ui, CFG_NETSTART, deviceModes);
+    diaSetInt(ui, CFG_NETSTART, gNetStartMode);
+    diaSetEnum(ui, CFG_NETPROTOCOL, guiNetProtocolNames);
+    diaSetInt(ui, CFG_NETPROTOCOL, guiNetProtocolToPicker(guiNetProtocolShown()));
+    guiSourcesNetRowsUpdate(ui); // the first frame renders before the updater runs
+}
+
+// Game Sources read-back. Access is not on this page, so UDPFS takes the Access the Network page would
+// show for the current protocol (guiNetProtocolAccess).
+static void guiSourcesNetRowsRead(struct UIItem *ui)
+{
+    int netProtocolWas = gNetworkProtocol;
+    int access = guiNetProtocolAccess(guiNetProtocolShown());
+    int picker = guiNetProtocolToPicker(guiNetProtocolShown());
+
+    diaGetInt(ui, CFG_NETSTART, &gNetStartMode);
+    diaGetInt(ui, CFG_NETPROTOCOL, &picker);
+    guiNetProtocolStore(picker, access);
+    guiNetProtocolApplied(netProtocolWas);
+}
+
 // guiShowDeviceConfig is retained for the legacy entry point outside the Settings peer shell.
 // Keep its APA selector semantics identical to the shell: merely opening/saving another field
 // must not normalize a legacy custom hdd_partition, while an explicit selector interaction may.
 
 static int guiDeviceConfigUpdater(int modified)
 {
-    (void)modified;
+    if (modified)
+        guiSourcesNetRowsUpdate(diaDeviceConfig);
     return 0;
 }
 
@@ -820,9 +943,8 @@ void guiShowDeviceConfig(void)
 
     // Network Start Mode (Off/Manual/Auto) == gNetStartMode (START_MODE_*); the SAME three options
     // (and indices) as every other device's start row, so reuse the localized deviceModes.
-    // The Protocol/Access rows live on the Network page.
-    diaSetEnum(diaDeviceConfig, CFG_NETSTART, deviceModes);
-    diaSetInt(diaDeviceConfig, CFG_NETSTART, gNetStartMode);
+    // The indented Protocol row is the Network page's Protocol setting (guiSourcesNetRowsBegin).
+    guiSourcesNetRowsBegin(diaDeviceConfig, deviceModes);
 
     // MMCE Start Mode
     diaSetEnum(diaDeviceConfig, CFG_MMCEMODE, deviceModes);
@@ -837,8 +959,6 @@ reshow_device:
         goto reshow_device;
     }
     if (ret) {
-        int netProtocolWas = gNetworkProtocol;
-
         diaGetInt(diaDeviceConfig, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(diaDeviceConfig, CFG_BDMMODE, &gBDMStartMode);
@@ -852,39 +972,8 @@ reshow_device:
         diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
         diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
 
-        // Network Start Mode read-back: Start=Off disables network start;
-        // preserve the user's configured gNetworkProtocol (defaulting to SMB only if uninitialized).
-        diaGetInt(diaDeviceConfig, CFG_NETSTART, &gNetStartMode);
-        if (gNetStartMode == START_MODE_DISABLED)
-            gNetworkProtocol = NET_PROTO_OFF;
-        else if (gNetworkProtocol == NET_PROTO_OFF)
-            gNetworkProtocol = NET_PROTO_SMB;
-        gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
-        gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
-        // SMB's start mode IS the network start row (Auto = boot connect, Manual = on-entry);
-        // every non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
-        gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
-
-        // "Nothing happens" guard: enabling a network protocol gives NO feedback -- the UDPFS tab
-        // joins the ring silently (Manual start waits for a Confirm-press inside it), and the block
-        // transports show a tab only once the PC server answers.
-        if (gNetworkProtocol != netProtocolWas) {
-            if (gNetworkProtocol == NET_PROTO_HTTP)
-                guiMsgBox(_l(_STR_HTTP_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFS)
-                guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
-                guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
-        }
-
-        // Each network transport loads its IOP module chain once per boot (the load latch is not
-        // cleared live). If a stack is already up and the Start toggle changed the protocol away from
-        // the one actually running, the switch takes effect only after a restart -- say so instead of
-        // silently doing nothing. The OFFER to restart deliberately lives on the SAVE path and not
-        // here: this dialog only touches RAM, and Save Changes is a separate menu action, so acting
-        // on it now would tear OPL down before the choice was ever written to disk.
-        if (gNetworkProtocol != netProtocolWas && guiNetProtocolNeedsRestart())
-            guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
+        // Network Connectivity + the indented Protocol row (shared with the Network page).
+        guiSourcesNetRowsRead(diaDeviceConfig);
 
         // A BDM tab can be latched hidden (bdmNeedsUpdate short-circuits until the device generation
         // bumps). Re-evaluate device visibility now so re-enabling a device here brings its tab back
@@ -1310,15 +1399,14 @@ int guiShowNetConfig(void)
     const char *ethOpModes[] = {_l(_STR_AUTO), _l(_STR_ETH_100MFDX), _l(_STR_ETH_100MHDX), _l(_STR_ETH_10MFDX), _l(_STR_ETH_10MHDX), NULL};
     const char *addrConfModes[] = {_l(_STR_ADDR_TYPE_IP), _l(_STR_ADDR_TYPE_NETBIOS), NULL};
     const char *ipAddrConfModes[] = {_l(_STR_IP_ADDRESS_TYPE_STATIC), _l(_STR_IP_ADDRESS_TYPE_DHCP), NULL};
-    const char *netProtocols[] = {"SMB", "UDPFS", "UDPBD", "HTTP", NULL}; // UDPBD = SUDPBDv2 server -- protocol names, not translated
-    const char *udpfsModes[] = {"Files", "IMG", NULL};                    // Access: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
+    const char *udpfsModes[] = {"Files", "IMG", NULL}; // Access: Files=udpfs_ioman filesystem, IMG=udpfs_bd block
     // NOTE(rebuild): SMBv1 only until item 4 re-adds the SMB2 dialect; the row shows the active
     // dialect and stays greyed (netConfigUpdater keeps it disabled).
     const char *smbDialects[] = {"SMBv1", NULL};
     diaSetEnum(diaNetConfig, NETCFG_PS2_IP_ADDR_TYPE, ipAddrConfModes);
     diaSetEnum(diaNetConfig, NETCFG_SHARE_ADDR_TYPE, addrConfModes);
     diaSetEnum(diaNetConfig, NETCFG_ETHOPMODE, ethOpModes);
-    diaSetEnum(diaNetConfig, CFG_NETPROTOCOL, netProtocols);
+    diaSetEnum(diaNetConfig, CFG_NETPROTOCOL, guiNetProtocolNames); // UDPBD = SUDPBDv2 server
     diaSetEnum(diaNetConfig, CFG_UDPFSMODE, udpfsModes);
     diaSetEnum(diaNetConfig, CFG_SMBDIALECT, smbDialects);
 
@@ -1370,12 +1458,9 @@ int guiShowNetConfig(void)
     //   Access:   Files(0)/IMG(1); IMG only distinct for UDPFS (-> UDPFSBD backend)
     // A NET_PROTO_OFF backend has no protocol memory, so seed the protocol row to SMB -- the common
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
-    int netProtoVal = (gNetworkProtocol == NET_PROTO_HTTP)                                           ? 3 :
-                      (gNetworkProtocol == NET_PROTO_UDPBD)                                          ? 2 :
-                      (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD) ? 1 :
-                                                                                                       0; // SMB / OFF
+    int netProtoVal = guiNetProtocolToPicker(guiNetProtocolShown()); // while Off: the remembered pick
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
-    int netAccessVal = (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD) ? 1 : 0;
+    int netAccessVal = guiNetProtocolAccess(guiNetProtocolShown());
     for (i = 0; i < 4; ++i)
         diaSetInt(diaNetConfig, NETCFG_HTTP_IP_0 + i, gHttpServerIp[i]);
     diaSetInt(diaNetConfig, NETCFG_HTTP_PORT, gHttpPort);
@@ -1472,49 +1557,8 @@ reshow_network:
         // shadows (gEnableUDPBD / gNetBootProtocol / gETHStartMode) downstream consumers read.
         // NOTE(rebuild): the fork also reads the SMB dialect row back here (item 4).
         int netProtocolWas = gNetworkProtocol;
-        if (gNetStartMode == START_MODE_DISABLED)
-            gNetworkProtocol = NET_PROTO_OFF;
-        else
-            gNetworkProtocol = (netProtoVal2 == 0)  ? NET_PROTO_SMB :
-                               (netProtoVal2 == 3)  ? NET_PROTO_HTTP :
-                               (netProtoVal2 == 2)  ? NET_PROTO_UDPBD :
-                               (netAccessVal2 == 1) ? NET_PROTO_UDPFSBD :
-                                                      NET_PROTO_UDPFS; // UDPFS + Files
-        gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
-        gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
-        // SMB's start mode IS the network start row (Auto = boot connect, Manual = on-entry);
-        // every non-SMB protocol forces the SMB/ETH stack off so only one transport claims the NIC.
-        gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
-
-        // UDP transports always use the saved static PS2 IP fields. If the user's preserved
-        // SMB/HTTP preference is DHCP, explain that the UDP transport is using Static by design.
-        int nowUdp = (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD);
-        int wasUdp = (netProtocolWas == NET_PROTO_UDPFS || netProtocolWas == NET_PROTO_UDPFSBD || netProtocolWas == NET_PROTO_UDPBD);
-        if (nowUdp && !wasUdp && ps2_ip_use_dhcp)
-            guiMsgBox(_l(_STR_UDPBD_NEEDS_STATIC_IP), 0, NULL);
-
-        // "Nothing happens" guard: enabling a network protocol gives NO feedback -- the UDPFS tab
-        // joins the ring silently and then waits for a Confirm-press inside it (Manual start), and
-        // the block transports show a tab only once the PC server answers. Tell the user what to
-        // expect + which PC server to run, right at the moment they turn it on. Shown BEFORE the
-        // restart notice below: when a restart is pending, the restart message must be the LAST
-        // word so the guidance reads as "after that".
-        if (gNetworkProtocol != netProtocolWas) {
-            if (gNetworkProtocol == NET_PROTO_HTTP)
-                guiMsgBox(_l(_STR_HTTP_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFS)
-                guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
-                guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
-        }
-
-        // Each network transport loads its IOP module chain once per boot (the load latch is not cleared
-        // live). If a stack is already up and the user picked a protocol other than the one actually
-        // running, the switch takes effect only after a restart -- say so instead of silently doing
-        // nothing. The OFFER to restart lives on the Save Settings path (see guiNetProtocolNeedsRestart),
-        // since this dialog only touches RAM.
-        if (gNetworkProtocol != netProtocolWas && guiNetProtocolNeedsRestart())
-            guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
+        guiNetProtocolStore(netProtoVal2, netAccessVal2);
+        guiNetProtocolApplied(netProtocolWas);
 
         applyConfig(-1, -1, 0);
 
@@ -2706,7 +2750,8 @@ reshow_general:
 
 static int guiSettingsSourcesUpdater(int modified)
 {
-    (void)modified;
+    if (modified && guiSettingsActiveDialog != NULL)
+        guiSourcesNetRowsUpdate(guiSettingsActiveDialog);
     return 0;
 }
 
@@ -2740,8 +2785,7 @@ static int guiSettingsShowSources(void)
     diaSetInt(ui, CFG_ENABLEBDMHDD, gEnableBdmHDD);
     diaSetEnabled(ui, CFG_ENABLEBDMHDD, 1);
     diaSetEnabled(ui, CFG_HDDMODE, 1);
-    diaSetEnum(ui, CFG_NETSTART, deviceModes);
-    diaSetInt(ui, CFG_NETSTART, gNetStartMode);
+    guiSourcesNetRowsBegin(ui, deviceModes);
     diaSetEnum(ui, CFG_MMCEMODE, deviceModes);
     diaSetInt(ui, CFG_MMCEMODE, gMMCEStartMode);
     diaSetEnabled(ui, CFG_MMCEMODE, 1);
@@ -2763,8 +2807,6 @@ reshow_sources:
     }
 
     if (result != UIID_BTN_CANCEL && result != -1) {
-        int netProtocolWas = gNetworkProtocol;
-
         diaGetInt(ui, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(ui, CFG_BDMMODE, &gBDMStartMode);
@@ -2776,25 +2818,7 @@ reshow_sources:
         diaGetInt(ui, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(ui, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
         diaGetInt(ui, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
-        diaGetInt(ui, CFG_NETSTART, &gNetStartMode);
-        if (gNetStartMode == START_MODE_DISABLED)
-            gNetworkProtocol = NET_PROTO_OFF;
-        else if (gNetworkProtocol == NET_PROTO_OFF)
-            gNetworkProtocol = NET_PROTO_SMB;
-        gEnableUDPBD = (gNetworkProtocol == NET_PROTO_UDPBD || gNetworkProtocol == NET_PROTO_UDPFSBD);
-        gNetBootProtocol = (gNetworkProtocol == NET_PROTO_UDPFSBD) ? NET_BOOT_UDPFS : NET_BOOT_UDPBD;
-        gETHStartMode = (gNetworkProtocol == NET_PROTO_SMB) ? gNetStartMode : START_MODE_DISABLED;
-
-        if (gNetworkProtocol != netProtocolWas) {
-            if (gNetworkProtocol == NET_PROTO_HTTP)
-                guiMsgBox(_l(_STR_HTTP_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFS)
-                guiMsgBox(_l(_STR_NET_UDPFS_TAB_HINT), 0, NULL);
-            else if (gNetworkProtocol == NET_PROTO_UDPFSBD || gNetworkProtocol == NET_PROTO_UDPBD)
-                guiMsgBox(_l(_STR_NET_UDPBD_TAB_HINT), 0, NULL);
-        }
-        if (gNetworkProtocol != netProtocolWas && guiNetProtocolNeedsRestart())
-            guiMsgBox(_l(_STR_NETBOOT_RESTART), 0, NULL);
+        guiSourcesNetRowsRead(ui);
 
         bdmForceDeviceRefresh();
         applyConfig(-1, -1, 0);
@@ -3035,6 +3059,23 @@ static int guiSettingsPopstarterUpdater(int modified)
     return 0;
 }
 
+// An Ember settings row after OK: the row's value if the user changed it, otherwise the setting as it
+// was. That is what keeps a setting never changed in RiptOPL UNSET -- showing Default and pressing OK
+// must not start managing a key someone may have written into settings.txt by hand.
+static int emberSettingFromRow(struct UIItem *ui, int id, int shown, int current)
+{
+    int picked = shown;
+
+    diaGetInt(ui, id, &picked);
+    return (picked != shown) ? picked : current;
+}
+
+// What an Ember row shows for a stored setting: UNSET (never changed in RiptOPL) shows as Default.
+static int emberSettingShown(int current)
+{
+    return (current == EMBER_SETTING_UNSET) ? 0 : current;
+}
+
 // PS Emulation Settings: PS1-via-POPSTARTER launch config (optional POPSTARTER.ELF full path).
 //
 // This page COMPOSES a copy of diaVcdConfig + diaBdmaConfig and drives that copy, so a new row
@@ -3049,8 +3090,18 @@ static int guiSettingsShowPopstarter(void)
 {
     const struct UIItem *parts[] = {diaVcdConfig, diaBdmaConfig};
     const int skipIDs[] = {VCD_BDMA_BUTTON};
-    const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480p", NULL};
+    // "480" is 480i to Ember -- it always was; this row used to call it 480p.
+    const char *emberDisplayStrs[] = {_l(_STR_DEFAULT), "240p", "480i", "480p", NULL};
+    const char *emberDitherStrs[] = {_l(_STR_DEFAULT), _l(_STR_ON), _l(_STR_OFF), NULL};
+    const char *emberShadingStrs[] = {_l(_STR_DEFAULT), "15-bit", _l(_STR_EMBER_SHADING_24), NULL};
+    const char *emberControllerStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "Analog", "D2A", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 2, skipIDs, 1, -1, 1);
+    // A setting never changed in RiptOPL is UNSET and shows as Default; it only becomes stored when
+    // the user actually picks something else (see emberSettingFromRow).
+    int emberDisplayShown = emberSettingShown(gEmberDisplay);
+    int emberDitherShown = emberSettingShown(gEmberDither);
+    int emberShadingShown = emberSettingShown(gEmberShading);
+    int emberControllerShown = emberSettingShown(gEmberController);
     int result;
 
     if (ui == NULL)
@@ -3061,7 +3112,13 @@ static int guiSettingsShowPopstarter(void)
     // the template instead leaves the row on screen with no enum list and silently discards every
     // change, which is exactly the bug this line replaced.
     diaSetEnum(ui, CFG_EMBER_DISPLAY, emberDisplayStrs);
-    diaSetInt(ui, CFG_EMBER_DISPLAY, gEmberDisplay);
+    diaSetInt(ui, CFG_EMBER_DISPLAY, emberDisplayShown);
+    diaSetEnum(ui, CFG_EMBER_DITHER, emberDitherStrs);
+    diaSetInt(ui, CFG_EMBER_DITHER, emberDitherShown);
+    diaSetEnum(ui, CFG_EMBER_SHADING, emberShadingStrs);
+    diaSetInt(ui, CFG_EMBER_SHADING, emberShadingShown);
+    diaSetEnum(ui, CFG_EMBER_CONTROLLER, emberControllerStrs);
+    diaSetInt(ui, CFG_EMBER_CONTROLLER, emberControllerShown);
     guiSetGameViewPicker(ui);
 
     guiCorePathBegin(ui, CFG_POPSTARTER_PATH, popstarterPathEdit, sizeof(popstarterPathEdit), gPopstarterPath);
@@ -3086,7 +3143,15 @@ reshow_popstarter:
         int gameViewChanged = guiReadGameViewPicker(ui);
 
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
-        diaGetInt(ui, CFG_EMBER_DISPLAY, &gEmberDisplay);
+        int emberDisplay = emberSettingFromRow(ui, CFG_EMBER_DISPLAY, emberDisplayShown, gEmberDisplay);
+        // 480p is the one choice that can blank the screen (composite shows nothing): ask first, and
+        // keep the previous mode if the answer is no.
+        if (emberDisplay == EMBER_DISPLAY_480P && gEmberDisplay != EMBER_DISPLAY_480P && !guiMsgBox(_l(_STR_EMBER_480P_CONFIRM), 1, NULL))
+            emberDisplay = gEmberDisplay;
+        gEmberDisplay = emberDisplay;
+        gEmberDither = emberSettingFromRow(ui, CFG_EMBER_DITHER, emberDitherShown, gEmberDither);
+        gEmberShading = emberSettingFromRow(ui, CFG_EMBER_SHADING, emberShadingShown, gEmberShading);
+        gEmberController = emberSettingFromRow(ui, CFG_EMBER_CONTROLLER, emberControllerShown, gEmberController);
         snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", popstarterPathEdit);
         // Runtime ignores the retired picker, but keeping CUSTOM in the persisted compatibility
         // key means a downgrade still honours the full path the user entered here.
@@ -3339,6 +3404,48 @@ void guiShowPsEmulationSettings(void)
     // page. The shell still owns Save Changes and navigation, and returning leaves the caller's
     // selected PS1 title/menu intact.
     guiShowSettingsFromPage(SETTINGS_POPSTARTER, 0);
+}
+
+// One per-game Ember setting from the row's CFG, or UNSET when absent / out of range.
+static int emberGameSettingGet(config_set_t *configSet, const char *key, int count)
+{
+    int value;
+
+    if (!configGetInt(configSet, key, &value) || value < 0 || value >= count)
+        return EMBER_SETTING_UNSET;
+    return value;
+}
+
+// PS1 Triangle -> Ember Game Settings (Controller only -- see diaEmberGameConfig). The same rule as
+// the global rows: a row never changed here
+// stays out of the CFG (the game's settings.txt keeps whatever it has); a changed row is stored, and
+// Default stored means "remove it from the game's file", so the global row applies again. The CFG is
+// the one the launch reads (menuLoadConfig -> cueApplySettings); on a favourite it is its source
+// row's CFG, so both places show and edit the same values.
+void guiShowEmberGameSettings(void)
+{
+    const char *controllerStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "Analog", "D2A", NULL};
+    config_set_t *configSet = gameMenuLoadConfig(NULL);
+    int controller, controllerShown;
+
+    if (configSet == NULL)
+        return;
+
+    controller = emberGameSettingGet(configSet, CONFIG_ITEM_EMBER_CONTROLLER, EMBER_CONTROLLER_COUNT);
+    controllerShown = emberSettingShown(controller);
+
+    diaSetEnum(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerStrs);
+    diaSetInt(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerShown);
+
+    if (diaExecuteDialog(diaEmberGameConfig, -1, 1, NULL) != UIID_BTN_OK)
+        return;
+
+    int newController = emberSettingFromRow(diaEmberGameConfig, CFG_EMBER_CONTROLLER, controllerShown, controller);
+    if (newController == controller)
+        return;
+
+    configSetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, newController);
+    menuSaveConfig(); // a failed write raises the usual "error saving settings" message
 }
 
 int guiShowKeyboard(char *value, int maxLength)
@@ -4865,13 +4972,16 @@ void guiWarning(const char *text, int count)
     delay(count);
 }
 
+#define VMODE_KEEP_HOLD_MS     2000 // how long Accept must be held to keep a new video mode
+#define VMODE_KEEP_BAR_FULL_MS 1750 // the hold bar reads full this far in -- a beat BEFORE the keep
+
 int guiConfirmVideoMode(void)
 {
     // Elapsed form. This auto-revert is the ONLY thing that rescues a user whose new video mode
     // does not sync -- there is nothing on screen to read and nothing to aim at. A deadline that
     // straddles the clock() wrap would leave them there.
-    clock_t timeStart;
-    int terminate = 0;
+    clock_t timeStart, holdStart = 0;
+    int terminate = 0, holding = 0, holdPermille = 0, barPermille = 0;
 
     sfxPlay(SFX_MESSAGE);
 
@@ -4881,29 +4991,65 @@ int guiConfirmVideoMode(void)
 
         readPads();
 
+        // KEEPING the new mode takes a HOLD of Accept, not a tap. A mode the TV cannot show leaves the
+        // user blind, and a blind user taps buttons: one tap of Accept used to keep the dead mode, the
+        // next Save wrote it to the config, and every boot came up black until the .cfg was deleted
+        // (zackcage6, 09-25, interlaced-only TV). The hold has to START on this screen -- a button
+        // still down from the Settings dialog has no key-on edge here -- and letting go restarts it.
+        if (getKeyOn(gSelectButton)) {
+            holding = 1;
+            holdStart = clock();
+        } else if (!getKeyPressed(gSelectButton))
+            holding = 0;
+
+        holdPermille = 0;
+        barPermille = 0;
+        if (holding) {
+            // To ms FIRST: scaling raw ticks by 1000 could overflow clock_t at a high tick rate.
+            int heldMs = (int)((clock() - holdStart) / (CLOCKS_PER_SEC / 1000));
+            holdPermille = (heldMs * 1000) / VMODE_KEEP_HOLD_MS;
+            barPermille = (heldMs * 1000) / VMODE_KEEP_BAR_FULL_MS;
+        }
+
         if (getKeyOn(gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE))
             terminate = 1;
-        else if (getKeyOn(gSelectButton))
+        else if (holdPermille >= 1000)
             terminate = 2;
-
-        // If the user fails to respond within the timeout period, deem it as a cancel operation.
-        if ((clock() - timeStart) >= (clock_t)OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS * (CLOCKS_PER_SEC / 1000))
+        // No answer within the timeout = cancel. Not while a hold is running: it settles within
+        // VMODE_KEEP_HOLD_MS either way, and a hold started at the last second should get to finish.
+        else if (!holding && (clock() - timeStart) >= (clock_t)OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS * (CLOCKS_PER_SEC / 1000))
             terminate = 1;
 
-        guiShow();
-
-        // Opaque, like the other prompts whose backdrop is just whatever guiShow() draws (guiMsgBox
-        // with no ui, guiWarning, guiPromptRebootIop). The prompt itself is what proves the new mode
-        // syncs. What showed through the old ~75% wash was the game list page -- not the Settings
-        // screen the mode was changed from -- and testers saw it empty behind the prompt.
+        // Opaque, and NOTHING is drawn under it. The prompt itself is what proves the new mode syncs;
+        // what showed through the old ~75% wash was the game list page, which testers saw empty
+        // behind the prompt. Once the backdrop went opaque, rendering that page first (guiShow) was
+        // pure frame time -- in the heavy high-res modes enough that the hold bar advanced in big
+        // steps and the keep landed while it still looked 4/5 full (zackcage6, 09-26).
         rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
 
         rmDrawLine(50, 75, screenWidth - 50, 75, gColWhite);
         rmDrawLine(50, 410, screenWidth - 50, 410, gColWhite);
 
         fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, _l(_STR_CFM_VMODE_CHG), gTheme->textColor);
+        // How long until the automatic revert (zackcage6's idea). Hidden during a hold. A hold does NOT
+        // pause the deadline -- it only defers the revert check so a started hold can finish; let go
+        // early after the deadline and the next pass reverts. Whole seconds rounded up, so it reads
+        // 10 .. 1 and never 0 while still up.
+        if (!holding) {
+            int leftMs = OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS - (int)((clock() - timeStart) / (CLOCKS_PER_SEC / 1000));
+            char countdown[64];
+            snprintf(countdown, sizeof(countdown), _l(_STR_CFM_VMODE_REVERT_IN), leftMs > 0 ? (leftMs + 999) / 1000 : 1);
+            fntRenderString(gTheme->fonts[0], screenWidth >> 1, (gTheme->usedHeight >> 1) + 32, ALIGN_CENTER, 0, 0, countdown, gTheme->textColor);
+        }
         guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON, _STR_BACK, gTheme->fonts[0], 500, 417, gTheme->textColor);
-        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_ACCEPT, gTheme->fonts[0], 70, 417, gTheme->textColor);
+        guiDrawIconAndText(gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON, _STR_CFM_VMODE_HOLD_KEEP, gTheme->fonts[0], 70, 417, gTheme->textColor);
+        // Hold progress, just above the footer line and exactly as long as it, so FULL is unmistakable:
+        // the bar has reached the line's right-hand end. It used to be a fixed 200 px from x 70, which
+        // ended ~40% across the screen and read as stuck halfway (zackcage6, #774). It also reads full
+        // VMODE_KEEP_HOLD_MS - VMODE_KEEP_BAR_FULL_MS before the keep, so the user SEES it complete --
+        // before, it only reached full on the very frame the prompt closed.
+        if (holdPermille > 0)
+            rmDrawRect(50, 400, ((screenWidth - 100) * (barPermille > 1000 ? 1000 : barPermille)) / 1000, 4, gTheme->selTextColor);
 
         guiEndFrame();
     }
@@ -5039,7 +5185,7 @@ void guiManageCheats(void)
 
         int renderedCheats = 0;
         for (int i = offset; renderedCheats < visibleCheats && i < cheatCount; i++) {
-            if (strlen(gCheats[i].name) == 0)
+            if (gCheats[i].name[0] == '\0')
                 continue;
 
             int enabled = gCheats[i].enabled;

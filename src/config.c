@@ -218,7 +218,7 @@ static int parsePrefix(char *line, char *prefix, size_t prefixSize)
 
 static int configKeyValidate(const char *key)
 {
-    if (strlen(key) == 0)
+    if (key[0] == '\0')
         return 0;
 
     return !strchr(key, '=');

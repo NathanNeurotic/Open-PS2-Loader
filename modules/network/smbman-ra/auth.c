@@ -52,7 +52,12 @@ unsigned char *NTLM_Password_Hash(const unsigned char *password, unsigned char *
     memset(passwd_buf, 0, sizeof(passwd_buf));
 
     /* turn the password to unicode */
-    for (i = 0, j = 0; (unsigned int)i < strlen((const char *)password); i++, j += 2)
+    // Bound the expansion: each input byte writes 2 bytes into passwd_buf[512], so a password longer
+    // than 255 characters walked straight off the end of this buffer. Also hoist strlen out of the loop.
+    unsigned int pass_len = strlen((const char *)password);
+    if (pass_len > 255)
+        pass_len = 255;
+    for (i = 0, j = 0; (unsigned int)i < pass_len; i++, j += 2)
         passwd_buf[j] = password[i];
 
     /* get the message digest */

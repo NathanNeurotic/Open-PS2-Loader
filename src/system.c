@@ -23,7 +23,8 @@
 #define SYS_DISC_NODISC_MS   2000
 #include "include/opl.h"
 #include "include/gui.h"
-#include "include/lang.h" // _l(_STR_...) -- Neutrino preflight abort toasts
+#include "include/lang.h"       // _l(_STR_...) -- Neutrino preflight abort toasts
+#include "include/launchdiag.h" // UDPBD hang-triage stage markers (gated on gLaunchDiag)
 #include "include/ethsupport.h"
 #include "include/hddsupport.h"
 #include "include/util.h"
@@ -1328,6 +1329,48 @@ static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
     return 0;
 }
 
+// The -bsdfs Neutrino will actually run with, so the preflight and the argv builder agree on it.
+// Read the user tokens the way Neutrino parses them: the global args, then the per-game args (the
+// order appendArgTokens adds them), last one wins, a $-prefixed token is switched off, and the FIRST
+// "--b" anywhere ends it -- everything after it, per-game args included, goes to the game. A typed
+// -bsdfs= found that way beats the per-game picker. mmce/udpfs are fileid backends with no fs layer.
+// Returns 1 exfat / 2 hdl / 3 bd; 0 = Neutrino's own default (exfat) or a typed value it does not
+// name.
+static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, const char *extraArgs)
+{
+    static const char *const names[] = {"", "exfat", "hdl", "bd"};
+    const char *sources[2] = {gNeutrinoArgs, extraArgs};
+    int typed = 0, value = 0;
+
+    for (int s = 0; s < 2; s++) {
+        for (const char *p = sources[s]; p != NULL && *p != '\0';) {
+            while (*p == ' ' || *p == '\t')
+                p++;
+            const char *end = p;
+            while (*end != '\0' && *end != ' ' && *end != '\t')
+                end++;
+            int len = (int)(end - p);
+            if (len == 3 && !strncmp(p, "--b", 3))
+                goto parsed;
+            if (len > 7 && !strncmp(p, "-bsdfs=", 7)) {
+                typed = 1;
+                value = 0;
+                for (int i = 1; i <= 3; i++) {
+                    if ((int)strlen(names[i]) == len - 7 && !strncmp(p + 7, names[i], len - 7))
+                        value = i;
+                }
+            }
+            p = end;
+        }
+    }
+parsed:
+    if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs"))
+        return 0;
+    if (typed)
+        return value;
+    return (neutrinoBsdfs >= 1 && neutrinoBsdfs <= 3) ? neutrinoBsdfs : 0;
+}
+
 // Hand the game off to an external Neutrino ELF instead of OPL's embedded core.
 // Hardened vs the wOPL original: NULL-guarded; an "unsupported" device aborts
 // (never launches -bsd=unsupported); DISTINCT argv buffers (wOPL reused ONE
@@ -1430,8 +1473,9 @@ static int sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *device
 // Δ6 (NHDDL parity): everything that can FAIL a Neutrino launch and is checkable pre-teardown runs
 // HERE, called by every device leg BEFORE deinitEx -- the GUI is alive for a toast and nothing has
 // been torn down, so a failure is "stay in the menu", not a post-teardown black screen. Returns
-// 0 = proceed; <0 = abort (a toast was shown).
-int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath)
+// 0 = proceed; <0 = abort (a toast was shown). neutrinoBsdfs/extraArgs/bdDevNr are what the leg will
+// pass to sysLaunchNeutrino (0 / NULL / -1 for legs without a block device).
+int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutrinoBsdfs, const char *extraArgs, int bdDevNr)
 {
     if (driver == NULL || neutrinoPath == NULL)
         return -1;
@@ -1440,6 +1484,19 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath)
     if (!strcmp(deviceName, "unsupported")) {
         LOG("[NEUTRINO] preflight: unsupported device '%s'\n", driver);
         guiWarning(_l(_STR_NEUTRINO_DEV_UNSUPPORTED), 6);
+        return -1;
+    }
+
+    // -bsdfs=bd names the raw bdm device "<driver><devNr>p0". A mount that never reported its device
+    // number cannot be named, and guessing 0 opens the WRONG device when two share a driver (a second
+    // stick is usb1). ATA is exempt: one synthetic device, always 0 -- the native leg's device-number
+    // check in bdmLaunchGame exempts it for the same reason. Whether bd came from the picker or was
+    // typed makes no difference. Nor does a typed -dvd=: it is a tail token the argv budget can
+    // drop, which would leave our device-0 tuple in charge after the teardown (CodeRabbit, #762).
+    // The native leg refuses a device with no number outright; this refuses only its bd launches.
+    if (neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs) == 3 && bdDevNr < 0 && strcmp(deviceName, "ata") != 0) {
+        LOG("[NEUTRINO] preflight: -bsdfs=bd on '%s' with no device number\n", driver);
+        guiWarning(_l(_STR_NEUTRINO_BD_NO_DEVICE_NUMBER), 6);
         return -1;
     }
 
@@ -1454,16 +1511,18 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath)
     return 0;
 }
 
-void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, const neutrino_vmc_args_t *vmcArgs)
+void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
+        launchDiagRefuse(LAUNCHDIAG_REFUSE_ARGS); // blink code 1
         return;
     }
 
     const char *deviceName = getDeviceName(driver);
     if (!strcmp(deviceName, "unsupported")) {
         LOG("[NEUTRINO] unsupported device '%s', abort\n", driver);
+        launchDiagRefuse(LAUNCHDIAG_REFUSE_ARGS); // blink code 1
         return;
     }
 
@@ -1472,16 +1531,17 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     // failure reproduces on NHDDL, so it is a Neutrino/backend interaction, not this launcher. The
     // mechanism (neutrino ee_core main.c): -logo routes the boot through rom0:PS2LOGO, and ee_core's
     // extra LoadExecPS2 pass reboots the IOP (New_Reset_Iop2) before PS2LOGO runs, dropping the
-    // resident stack a keep-IOP backend reads the game through. udpfs/udpfsbd are that same
+    // resident stack a keep-IOP backend reads the game through. udpfs/udpfsbd/udpbd are that same
     // keep-IOP class (HW, nuno6573: udpfs lists fine but every launch black-screens with the global
     // logo toggle on), so the GLOBAL PS2-Logo toggle is suppressed for all three until that is
     // fixed upstream. Keyed on deviceName, not driver: the udpfs BLOCK leg arrives here as driver
-    // "udp" and only resolves to "udpfsbd" above. Parity: NHDDL's logo toggle defaults off and
-    // wLaunchELF has no logo path at all, so neither sends -logo in practice. Deliberate escape
-    // hatch: a user-supplied "-logo" in the global/per-game Neutrino args still passes through the
-    // tokenizer untouched.
+    // "udp" and only resolves to "udpfsbd" above (the udpbd leg resolves to "udpbd" by protocol).
+    // Parity: NHDDL's logo toggle defaults off and wLaunchELF has no logo path at all, so neither
+    // sends -logo in practice. Deliberate escape hatch: a user-supplied "-logo" in the global or
+    // per-game Neutrino args still passes through the tokenizer untouched.
     if (EnablePS2Logo &&
-        (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd"))) {
+        (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") ||
+         !strcmp(deviceName, "udpbd"))) {
         LOG("[NEUTRINO] -logo suppressed on %s (issue #56 class: PS2LOGO pass reboots the IOP)\n", deviceName);
         EnablePS2Logo = 0;
     }
@@ -1528,21 +1588,33 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
         // any ':'-bearing -dvd value is file-mode, opened through the selected fs). NEVER emitted
         // for mmce/udpfs: they are fileid backends with no filesystem layer (Neutrino forces
         // sBSDFS="no" there regardless -- this guard just keeps the argv clean). A user-typed
-        // -bsdfs= wins (skip the structured emit); a user-typed -dvd= also wins on its own because
-        // user tokens are appended after these and Neutrino's arg parse is last-wins.
+        // -bsdfs= wins over the picker, and -dvd is shaped for it: a typed bd with our bare file
+        // path could never open (CodeRabbit, #762). We emit the effective value OURSELVES even when
+        // it was typed: this slot is a core arg the budget below never drops, while the user's copy
+        // is a tail token it may -- keeping a bdfs: -dvd without its -bsdfs=bd would fail after the
+        // teardown. The duplicate agrees with theirs (it IS their last token). A user-typed -dvd=
+        // wins on its own because user tokens are appended after these and Neutrino's arg parse is
+        // last-wins.
         static const char *const bsdfsTokens[] = {"", "exfat", "hdl", "bd"};
         static const char *const bsdfsDvdPrefix[] = {"", "", "hdl:", "bdfs:"};
-        int fsOverride = 0;
-        if (neutrinoBsdfs >= 1 && neutrinoBsdfs <= 3 &&
-            strcmp(deviceName, "mmce") != 0 && strcmp(deviceName, "udpfs") != 0 &&
-            !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsdfs=") && !neutrinoArgHasActiveFlag(extraArgs, "-bsdfs="))
-            fsOverride = neutrinoBsdfs;
+        int fsOverride = neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs);
         if (fsOverride) {
             snprintf(bsdfs, sizeof(bsdfs), "-bsdfs=%s", bsdfsTokens[fsOverride]);
             if (argc < argvMax)
                 argv[argc++] = bsdfs;
         }
-        snprintf(filePath, sizeof(filePath), "-dvd=%s%s", bsdfsDvdPrefix[fsOverride], path);
+        if (fsOverride == 3) {
+            // bdfs does not take a file path: its open() strcmp's the path against the raw bdm
+            // device tuple "<name><devNr>p<parNr>" (neutrino iop/bdfs/src/bdfs.c, and its own usage
+            // example "-dvd=bdfs:udp0p0"), so the old "-dvd=bdfs:massN:/..." could NEVER open --
+            // setup_dvd_iso failed and the whole neutrino boot silently returned. Compose the tuple
+            // from the live driver token and the caller's bdm device number (a second stick on the
+            // same driver is usb1, not usb0); partition stays 0. -1 reaches here only for ATA (one
+            // synthetic device, so 0 is right); sysNeutrinoPreflight refuses every other driver.
+            snprintf(filePath, sizeof(filePath), "-dvd=bdfs:%s%dp0", driver, bdDevNr >= 0 ? bdDevNr : 0);
+        } else {
+            snprintf(filePath, sizeof(filePath), "-dvd=%s%s", bsdfsDvdPrefix[fsOverride], path);
+        }
         if (argc < argvMax)
             argv[argc++] = filePath;
 
@@ -1557,17 +1629,21 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
            did its job) and then the screen stays black, because Neutrino reset away the stack the
            game path depends on. -qb keeps the inherited environment and skips that reset.
 
-           USB, iLink, and UDPFS (both filesystem and block variants): all launch through this
+           USB, iLink, UDPFS (both filesystem and block variants) and UDPBD: all launch through this
            inherited environment. For UDPFS, an IOP reset destroys the resident ministack/ioman
            state and triggers an immediate secondary DISCOVERY from the same socket that collides
-           with active server streams; NHDDL parity passes -qb for all non-HDL modes. Other
-           backends stay on the normal boot path until hardware says otherwise. A user-typed -qb
-           in the global or per-game args wins -- do not emit a second copy.
+           with active server streams. UDPBD without -qb, on hardware (FatBaldDad, 09-25, PR #756):
+           the handoff reached Neutrino, then the link dropped, a NEW client rediscovered the server,
+           read the image's MBR and exFAT metadata, never read the game and quit to the browser --
+           Neutrino's own reset rebuilt the stack our -dvd path refers to. NHDDL passes -qb for every
+           mode except HDL (launcher.c), UDPBD included. Other backends stay on the normal boot path
+           until hardware says otherwise. A user-typed -qb in the global or per-game args wins -- do
+           not emit a second copy.
 
            Emitted ABOVE coreArgc so the pool-fit drop loop can never shed it: a dropped -qb would
            silently reinstate the reset and reproduce the black screen with no way to tell why. */
         if ((!strcmp(deviceName, "usb") || !strcmp(deviceName, "ilink") ||
-             !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd")) &&
+             !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") || !strcmp(deviceName, "udpbd")) &&
             argc < argvMax &&
             !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") && !neutrinoArgHasActiveFlag(extraArgs, "-qb"))
             argv[argc++] = "-qb";
@@ -1669,6 +1745,8 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     // string (so a game can extend the global set). Both are tokenized on whitespace.
     argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs);
     argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs);
+    if (gLaunchDiag)
+        launchDiagMark(9); // argv composed -- the pool-fit check BELOW can still refuse (blink code 2)
 
     // ExecPS2 argv BYTE budget (verified vs ps2sdk exit.c SetArg + the crt0 args struct): each hop
     // carries its strings in ONE 256-byte pool, every NUL included. Hop 1 packs the child's load
@@ -1689,6 +1767,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
         }
         if (pool > 256) {
             LOG("[NEUTRINO] argv pool %d bytes even at the core-args floor (256 max) -- refusing handoff\n", pool);
+            launchDiagRefuse(LAUNCHDIAG_REFUSE_CORE_ARGV); // blink code 2: nothing repaints after the teardown
             return;
         }
     }

@@ -837,8 +837,6 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
     char emberElf[256], biosPath[288];
     char ps1Root[sizeof(mmcePrefix)];
 
-    (void)configSet; // an Ember title carries no per-game loader settings
-
     if (cueName == NULL || cueName[0] == '\0')
         return;
     if (!cueNameLaunchable(cueName)) {
@@ -870,7 +868,7 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
     // mis-filled folder otherwise drops the user into the PS1 BIOS shell with no explanation.
     // Leave Ember's display marker before the handoff, like the BDMA equip does for POPSTARTER.
     // Best-effort: never a launch gate.
-    cueApplyDisplaySetting(ps1Root);
+    cueApplySettings(ps1Root, cueName, configSet);
 
     if (!cueGameHasImage(ps1Root, cueName)) {
         guiMsgBox(_l(_STR_EMBER_NO_DISC), 0, NULL);
@@ -1226,11 +1224,11 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // Neutrino keep-IOP handoff (sysLoadELFKeepIOP): Neutrino opens the mmce-hosted game through
         // OUR mmceman mount and its config/modules from the neutrino.elf device (-cwd) before its own
         // IOP reset -- keep BOTH mounted. An MC-hosted neutrino needs no exception (-1 second slot).
-        if (sysNeutrinoPreflight("mmce", neutrinoPath) < 0) // D6 pre-teardown validation
+        if (sysNeutrinoPreflight("mmce", neutrinoPath, 0, NULL, -1) < 0) // D6 pre-teardown validation
             return;
         int neutrinoDevMode = oplPath2Mode(neutrinoPath);
         deinitEx(sbNeutrinoDeinitException(neutrinoPath), itemList->mode, neutrinoDevMode);
-        sysLaunchNeutrino("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, &neutrinoVmc);
+        sysLaunchNeutrino("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11: mmce is fileid, no fs layer */, -1, &neutrinoVmc);
         return;
     }
 

@@ -6,6 +6,7 @@
 #include "include/supportbase.h"
 #include "include/folderbrowse.h" // FOLDER_SUB_MAX + folder-browse subpath state
 #include "include/vcdsupport.h"   // vcdExtractGameId + VCD_ID_MAX -- VCD per-game CFG keying
+#include "include/cuesupport.h"   // cueIsCueEntry -- Ember rows key their CFG by folder name too
 #include "include/gui.h"          // guiMsgBox (sbCheatsMissingContinue confirm)
 #include "include/ioman.h"
 #include "include/extern_irx.h" // usbd_irx + usbhdfsd_irx, written to SYS-CONF for a USB IGR Path
@@ -326,6 +327,13 @@ static int queryISOGameListCache(const struct game_cache_list *cache, base_game_
     return 0;
 }
 
+static int sbReadListErrno; // see sbGetReadListError
+
+int sbGetReadListError(void)
+{
+    return sbReadListErrno;
+}
+
 // folderlist (folder-browse only, else NULL) collects subdirectory rows in a list SEPARATE from
 // glist so they never reach the games.bin cache (updateISOGameList would otherwise cache them as
 // phantom entries and poison its change-detection). Folder rows are not counted in the return value.
@@ -341,6 +349,7 @@ static int scanForISO(char *path, char type, struct game_list_t **glist, struct 
     int cacheLoaded = loadISOGameListCache(path, &cache) == 0;
     int cacheHint = -1; // index of the last cache hit (queryISOGameListCache)
 
+    errno = 0; // so the failure branch reads THIS opendir's errno
     if ((dir = opendir(path)) != NULL) {
         int pathLen = snprintf(fullpath, sizeof(fullpath), "%s", path);
         if (pathLen < 0 || pathLen >= (int)sizeof(fullpath) - 1) {
@@ -448,6 +457,7 @@ static int scanForISO(char *path, char type, struct game_list_t **glist, struct 
         // of blanking it on a transient wedge (MMCE<->MX4SIO SIO2 contention). Crucially, do NOT call
         // updateISOGameList here -- writing count 0 would rewrite the on-disk list cache to EMPTY,
         // persisting a transient failure across reboots.
+        sbReadListErrno = errno;
         if (cacheLoaded)
             freeISOGameListCache(&cache);
         return -1;
@@ -510,6 +520,7 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
     // Make this the active subpath for the path composers used before the next scan (size stat /
     // launch). A device leg also re-sets it explicitly at launch time.
     sbSetBrowseSub(sub);
+    sbReadListErrno = 0;
 
     // Build into a LOCAL list and leave the caller's *list/*gamecount/*fsize UNTOUCHED until we know
     // the scan actually reached the device. On a TOTAL device-read failure (every directory's opendir
@@ -1126,8 +1137,14 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     // (Disc 1)" and "(Disc 2)" both become "Final Fantas" and SHARE one CFG file, silently
     // cross-applying per-game core/VMC/video/GSM settings. Real PS2 disc IDs are 11 chars and fit,
     // which is why the official base never exhibits this; VCD names do not.
+    //
+    // An Ember (.CUE) row has the same problem -- its startup is the game FOLDER name cut to 12
+    // ("Crash Bandicoot (USA)" and "Crash Bandicoot 2 ..." shared CFG/Crash Bandic.cfg), and a
+    // Favourites proxy has no startup at all (CFG/.cfg) -- so it keys by the full name as well. It is a
+    // PS1 row for the size stat and disc badges below, too.
     const int isVcd = !strcasecmp(game->extension, ".VCD");
-    const char *cfgKey = isVcd ? game->name : game->startup;
+    const int isPs1 = isVcd || cueIsCueEntry(game);
+    const char *cfgKey = isPs1 ? game->name : game->startup;
 
     snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, cfgKey);
     config_set_t *config = configAlloc(0, NULL, path);
@@ -1165,7 +1182,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     else
         subseg[0] = '\0';
 
-    if (sbConfigStatSize && !isVcd && game->sizeMB == 0) {
+    if (sbConfigStatSize && !isPs1 && game->sizeMB == 0) {
         char gamepath[256];
 
         if (game->format == GAME_FORMAT_ISO) {
@@ -1213,8 +1230,7 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
     // library except APA-HDD -- while the adjacent #Media badge drew fine, leaving a visible hole
     // in the shipped Coverflow theme.
     if (game->format != GAME_FORMAT_FOLDER) {
-        int isPS1 = isVcd;
-        sbSetDiscAttributes(config, isPS1, isPS1 || game->media == SCECdPS2CD);
+        sbSetDiscAttributes(config, isPs1, isPs1 || game->media == SCECdPS2CD);
     }
 
     // #Startup is the GAME ID a theme displays. A PS2 game has a real disc id in game->startup; a
@@ -1386,6 +1402,15 @@ int sbCheatsMissingContinue(void *pCommon, int cheatResult)
         return 1;
     }
 
+    // Cheats switched on for ALL games (the global default, no per-game $CheatsSource): most titles
+    // have no .cht at all, so a missing file is the expected case there, not something to stop
+    // every such launch for. Only a per-game enable -- the user asked for cheats on THIS title --
+    // or a file that exists but will not load still asks.
+    if (cheatResult == -ENOENT && GetCheatsFromGlobalDefault()) {
+        LOG("Cheats: no cheat file for this title (cheats on for all games) -- continuing\n");
+        return 1;
+    }
+
     // guiMsgBox returns 1 for accept (gSelectButton) and 0 for the other button -- it returns its
     // internal terminate code minus one. Testing for 2 here made "continue without cheats" cancel the
     // launch too, so a title with cheats enabled but no .cht file could never start from the menu.
@@ -1435,6 +1460,9 @@ int sbLoadCheats(const char *path, const char *file)
     // cheats simply never loaded on longer BDM paths, with no diagnostic. Matches the fork.
     char cheatfile[256];
     int cheatMode = 0;
+    // Set when a cheat source EXISTS but would not load: that is a load failure the user must be told
+    // about, never "no cheats found" -- even when a later candidate (the other spelling) is absent.
+    int foundBroken = 0;
 
     cheatSearchLog[0] = 0;
 
@@ -1454,26 +1482,29 @@ int sbLoadCheats(const char *path, const char *file)
             */
             if (entry == NULL && snprintf(member, sizeof(member), "%s.CHT", file) < (int)sizeof(member))
                 entry = tarFind(TAR_KIND_CHT, member);
-            // rawSize == 0 counts as a miss so an empty tar member never shadows a possibly-valid
-            // loose CHT/<id>.cht below; over-cap members likewise fall through.
-            if (entry != NULL && entry->rawSize > 0 && entry->rawSize <= CHT_TAR_MEMBER_MAX) {
-                // rawSize+1: tar members carry no NUL and the parser needs a terminator.
-                char *tarBuf = (char *)malloc(entry->rawSize + 1);
-                if (tarBuf != NULL) {
-                    if (tarRead(TAR_KIND_CHT, entry, tarBuf, entry->rawSize) == entry->rawSize) {
-                        tarBuf[entry->rawSize] = '\0';
-                        cheatMode = load_cheats_buf(tarBuf);
-                    } else
-                        cheatMode = -1;
-                    free(tarBuf);
-                    if (cheatMode >= 0) {
-                        LOG("Cheats found in CHT/cht.tar (%s)\n", tarGetDevicePrefix(TAR_KIND_CHT));
-                        if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL) && (cheatMode == 1))
-                            guiManageCheats();
-                        return cheatMode;
+            // A member that is there but empty or over the cap is a source that will not load, not "no
+            // cheats". It still falls through, so it never shadows a valid loose CHT/<id>.cht below.
+            if (entry != NULL) {
+                if (entry->rawSize > 0 && entry->rawSize <= CHT_TAR_MEMBER_MAX) {
+                    // rawSize+1: tar members carry no NUL and the parser needs a terminator.
+                    char *tarBuf = (char *)malloc(entry->rawSize + 1);
+                    if (tarBuf != NULL) {
+                        if (tarRead(TAR_KIND_CHT, entry, tarBuf, entry->rawSize) == entry->rawSize) {
+                            tarBuf[entry->rawSize] = '\0';
+                            cheatMode = load_cheats_buf(tarBuf);
+                        } else
+                            cheatMode = -1;
+                        free(tarBuf);
+                        if (cheatMode >= 0) {
+                            LOG("Cheats found in CHT/cht.tar (%s)\n", tarGetDevicePrefix(TAR_KIND_CHT));
+                            if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL) && (cheatMode == 1))
+                                guiManageCheats();
+                            return cheatMode;
+                        }
                     }
-                    LOG("Error: cht.tar member failed to load; trying the loose file\n");
                 }
+                LOG("Error: cht.tar member is empty, too large or failed to load; trying the loose file\n");
+                foundBroken = 1;
             }
         }
 
@@ -1495,16 +1526,30 @@ int sbLoadCheats(const char *path, const char *file)
 
             if ((cheatMode = load_cheats(cheatfile)) >= 0)
                 break;
+
+            // Distinguish absent from unreadable PER CANDIDATE. Probing only the last spelling tried
+            // called an existing-but-broken "<ID>.cht" absent whenever "<ID>.CHT" was missing.
+            errno = 0;
+            int probe = open(cheatfile, O_RDONLY);
+            if (probe >= 0) {
+                close(probe);
+                foundBroken = 1;
+            } else if (errno == EACCES || errno == EBUSY) {
+                // The driver found the file and refused it (SMB: access denied, or held by a dead
+                // session). NOT EIO: SMB answers a MISSING file with -EIO (smbman-ra smb.c, the
+                // default arm after STATUS_OBJECT_NAME_NOT_FOUND), so counting EIO would prompt on
+                // every cheats-for-all-games launch from a share.
+                foundBroken = 1;
+            }
         }
 
         if (cheatMode < 0) {
-            // Distinguish absent from unreadable so the launch legs' "No cheats found" branch fires
-            // for a merely-missing file instead of the scary "failed to load cheats" toast.
-            int probe = open(cheatfile, O_RDONLY);
-            if (probe < 0)
+            // Absent everywhere -> "No cheats found" (which cheats-on-for-all-games skips); anything
+            // that existed and failed -> the "failed to load cheats" message, never -ENOENT.
+            if (!foundBroken)
                 cheatMode = -ENOENT;
-            else
-                close(probe);
+            else if (cheatMode == -ENOENT)
+                cheatMode = -EIO;
             LOG("Error: failed to load cheats\n");
         } else {
             LOG("Cheats found\n");

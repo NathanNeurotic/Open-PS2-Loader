@@ -122,9 +122,18 @@ class SiteSyncTests(unittest.TestCase):
         self.assertIn('href="https://example.com/"', body)
         self.assertIn("<table>", body)
         self.assertIn('<code class="language-bash">', body)
-        self.assertIn('<div class="callout amber"><div class="h">\u26a0 Important</div><strong>Heads up:</strong>', body)
+        self.assertIn('<div class="callout amber"><div class="h">Important</div><strong>Heads up:</strong>', body)
         self.assertNotIn("[!IMPORTANT]", body)
         self.assertNotIn("<blockquote>", body)
+
+    def test_alert_headings_are_plain(self):
+        # The redesigned site draws callouts without glyph prefixes; every alert kind must render its
+        # heading as a plain word, not only the one the fixture happens to use (CodeRabbit on #766).
+        expected = {"NOTE": ("info", "Note"), "TIP": ("info", "Tip"), "IMPORTANT": ("amber", "Important"),
+                    "WARNING": ("amber", "Warning"), "CAUTION": ("red", "Caution")}
+        for kind, (cls, heading) in expected.items():
+            body = site_sync.render_markdown("> [!%s]\n> Body text.\n" % kind)
+            self.assertIn('<div class="callout %s"><div class="h">%s</div>' % (cls, heading), body, kind)
 
     def test_check_write_and_idempotency(self):
         ra = self.site / "retroachievements.html"

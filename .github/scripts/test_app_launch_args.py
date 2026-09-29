@@ -130,7 +130,8 @@ int main(void)
         assert(got_argc == 2 && !strcmp(got_argv[0], qualified));
         assert(!strcmp(got_argv[1], "hdd0:__.EMBER/EMBER/launcHER.CNF"));
         run(apa, "", reset, 0);
-        assert(got_argc == 2 && got_argv[1][0] == 0);
+        assert(launched == 1 && !errors && got_argc == 1);
+        assert(!strcmp(got_argv[0], qualified));
 
         const char *paths[] = {"mass0:/APPS/launcHER.elf", "mc0:/BOOT/launcHER.elf",
                                "mmce0:/APPS/launcHER.elf"};
@@ -139,6 +140,12 @@ int main(void)
             assert(launched == 1 && !errors);
             assert(!strcmp(got_path, paths[i]) && !strcmp(got_argv[0], paths[i]));
             assert(got_partition[0] == 0 && got_cleanup == 0);
+            // appGetConfig synthesizes an empty AltStartup for folder Apps with no argv1.
+            run(paths[i], "", reset, 0);
+            assert(launched == 1 && !errors && !sdk_launch && got_argc == 1);
+            assert(!strcmp(got_argv[0], paths[i]) && got_reset == reset);
+            run(paths[i], "game", reset, 0);
+            assert(got_argc == 2 && !strcmp(got_argv[1], "game"));
         }
 
         // NULs, duplicate load path and reset flag all count toward the first hop.
@@ -177,6 +184,10 @@ int main(void)
     assert(sdk_launch == 1 && got_argc == 1);
     assert(!strcmp(got_path, apa) && !strcmp(got_partition, "hdd0:CustomApps:"));
     assert(!strcmp(got_argv[0], "game"));
+    run(apa, "", 0, 1);
+    assert(sdk_launch == 1 && got_argc == 1 && got_argv[0][0] == 0);
+    run(apa, NULL, 0, 1);
+    assert(sdk_launch == 1 && got_argc == 0);
     puts("PASS: APA pfs handoff, HDD cleanup, reset choices, optional argv[1], other devices, POPSTARTER, 256/257-byte boundary");
     return 0;
 }

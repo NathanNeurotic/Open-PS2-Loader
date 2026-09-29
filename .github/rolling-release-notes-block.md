@@ -30,8 +30,10 @@ appears twice.
   into that folder, so the device must be writable. On the internal APA drive, `EMBER/` goes on its
   own `__.EMBER` partition (`__.EMBER0`–`__.EMBER9` for more), while cover art stays on your OPL
   partition.
-- **Ember display mode:** *PS Emulation Settings → Ember Display Mode*. 240p or 480p writes
-  `EMBER/settings.txt` on that device at launch; Default removes the key again.
+- **Ember settings:** *PS Emulation Settings → Ember Display Mode / Dithering / Shading / Controller*.
+  A row you change is written to `EMBER/settings.txt` on that device at launch; a row never changed
+  leaves a hand-written setting alone, and changing it back to Default removes the key. Per game:
+  *Triangle → Ember Game Settings* sets that title's controller.
 - **UDPFS and UDPBD** list Ember titles only: POPSTARTER's IOP reset can't restore either network
   transport.
 - **POPSTARTER builds:** `POPS/POPSTARTER VERSIONS/` holds MAIN, DEBUG, USBDELAY, USBDELAY_DEBUG and
@@ -41,7 +43,7 @@ appears twice.
 - **Guides:** [PS1 / VCD](https://nathanneurotic.github.io/Open-PS2-Loader/ps1-vcd.html) ·
   [internal HDD](https://nathanneurotic.github.io/Open-PS2-Loader/hdd.html)
 
-**Ember is by Gageformer** (<https://github.com/Gageformer/Ember/releases>), bundled unmodified under
+**Ember Beta 2 is by Gageformer** (<https://github.com/Gageformer/Ember/releases/tag/Beta-2>), bundled unmodified under
 the Ember Public Beta Testing Licence, shipped as `EMBER/LICENSE-BETA.txt`: free to use and to bundle
 non-commercially; no selling, modifying or repackaging; no BIOS or game content, ever. Report Ember
 problems to us first, since the launching is ours.
@@ -62,14 +64,18 @@ launch problems to us; genuine Neutrino bugs belong upstream.
   PS2 or PS1. APPS can move `[PS1]`-titled ELFs to their own L3 view. Favorites (R3 to star) cycles
   All in One, PS2, PS1 and ELF; the file is still `favourites.bin`. Each page remembers its L3 view
   across reboots, mixed lists keep every cover's own shape, and Start or Settings returns you to the
-  page you left.
+  page you left. A device page whose `CD`/`DVD` folders won't open says so once, with the error,
+  instead of rescanning in the background, and an L3 flip no longer rebuilds Apps.
 - **Cores:** OPL's own or Neutrino, per game, with global and per-game Neutrino arguments (`$`
   disables a flag; *Test launch* boots without saving). Per-game VMCs are shared with Neutrino on
   writable BDM devices.
 - **Network:** SMB, UDPFS, UDPBD and HTTP. Confirming Network Settings reconnects straight away, and
   *Select / Refresh* retries a failed network page. PC servers: PS2-Servers, below.
 - **Video:** Coverflow render mode. GameID barcodes for Pixel FX / RetroGEM / PS2Digital (Interface,
-  off by default) and for POPSTARTER launches (PS Emulation Settings, on by default).
+  off by default) and for POPSTARTER launches (PS Emulation Settings, on by default). Keeping a new
+  video mode takes a hold of Accept, with a countdown to the automatic revert.
+- **Cheats:** can be on for every game; a game with no `.cht` just starts, and a cheat file that
+  exists but won't load always says so.
 - **Storage safety:** on the internal HDD, RiptOPL is a game loader, not a partition manager. It
   writes only inside PFS partitions and never edits the APA table, so HDL games and one-game `PP.*`
   PS1 installs are deleted and renamed on a PC. A table that can't be read shows **code 402: don't
@@ -91,7 +97,11 @@ launch problems to us; genuine Neutrino bugs belong upstream.
   `mc?:/POPSTARTER` ilink marker and both installed module sizes/hashes). The native OPL core still
   fails at game handoff.
 - **HTTP**, with Docmine17's OPL HTTP server: the catalog lists and an ISO boots.
-- **PC network servers:** with PS2-Servers, the list populates and an ISO boots over your protocol.
+- **A USB / MX4SIO page with no PS2 games:** the message names the folder and the error number, and
+  L3 stays quick on every page.
+- **Keeping a video mode:** holding Accept, the bar runs the whole width of the bottom line and sits
+  full for a moment before the mode is kept; left alone, the countdown reads 10 to 1 and the old
+  mode comes back.
 - **VMC → Neutrino** on USB, exFAT or MX4SIO (internal APA can't yet: upstream neutrino#132).
 - **GameID barcode:** your Pixel FX / RetroGEM / PS2Digital loads the per-game profile.
 - **Mixed cover sizing:** PS1 and app covers square, PS2 covers portrait, on your own theme too.

@@ -170,6 +170,7 @@ jobs:
           name: rolling-assets-pinned
           path: rolling
           if-no-files-found: error
+          retention-days: 14
 
   build-rolling-ps2dev-latest:
     runs-on: ubuntu-24.04
@@ -305,6 +306,7 @@ jobs:
           name: rolling-assets-ps2dev-latest
           path: rolling
           if-no-files-found: error
+          retention-days: 14
 
   build-rolling-officialsdk:
     runs-on: ubuntu-24.04
@@ -406,6 +408,7 @@ jobs:
           name: rolling-assets-officialsdk
           path: rolling
           if-no-files-found: error
+          retention-days: 14
 
   build-rolling-official-pinned:
     runs-on: ubuntu-24.04
@@ -484,6 +487,7 @@ jobs:
           name: rolling-assets-official-pinned
           path: rolling
           if-no-files-found: error
+          retention-days: 14
 
   publish-rolling:
     needs: [build-rolling-pinned, build-rolling-ps2dev-latest, build-rolling-officialsdk, build-rolling-official-pinned]
@@ -788,6 +792,9 @@ jobs:
             echo "       its licence breaches section 2(a) of that licence. Refusing to publish." >&2
             exit 1
           fi
+          # The repository shortcut must accompany the bundled Ember build.
+          test -s "$PKG/EMBER/Ember Official Webpage.url"
+          grep -Fxq 'URL=https://github.com/Gageformer/Ember' <(tr -d '\r' < "$PKG/EMBER/Ember Official Webpage.url")
           # A PS1 BIOS is copyrighted and must never be redistributed. The folder ships with a
           # zero-byte file whose NAME tells the user to supply their own; guard against one ever
           # being committed by accident.
