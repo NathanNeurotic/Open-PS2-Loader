@@ -3343,8 +3343,14 @@ static int guiSettingsShowIndex(int *page)
         } else if (getKeyOn(KEY_CROSS)) {
             sfxPlay(SFX_CONFIRM);
             if (selected == SETTINGS_PAGE_COUNT) {
-                if (menuSaveSettings() > 0)
+                if (menuSaveSettings() > 0) {
+                    // A successful in-shell save becomes the new discard baseline. Otherwise,
+                    // saving once and later choosing "Exit without saving" would wrongly restore
+                    // the source state from before Settings was opened, undoing a state that is
+                    // already persisted on disk.
+                    guiSettingsCaptureSourceState();
                     guiSettingsSavePending = 0;
+                }
             } else {
                 *page = selected;
                 return 1;
