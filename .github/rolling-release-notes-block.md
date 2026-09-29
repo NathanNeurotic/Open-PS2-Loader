@@ -103,6 +103,9 @@ launch problems to us; genuine Neutrino bugs belong upstream.
 - **Keeping a video mode:** holding Accept, the bar runs the whole width of the bottom line and sits
   full for a moment before the mode is kept; left alone, the countdown reads 10 to 1 and the old
   mode comes back.
+- **Settings, Back (Circle):** a change on a settings screen survives backing out to the index, the
+  same as flipping pages with L1/R1; leaving Settings asks to save. Backing out of the Network screen
+  without changing anything does not drop an SMB connection.
 - **VMC → Neutrino** on USB, exFAT or MX4SIO (internal APA can't yet: upstream neutrino#132).
 - **GameID barcode:** your Pixel FX / RetroGEM / PS2Digital loads the per-game profile.
 - **Mixed cover sizing:** PS1 and app covers square, PS2 covers portrait, on your own theme too.
