@@ -1176,10 +1176,18 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             sysLoadELFApp(normFilename, partition, target_argc, target_argv, rebootIop, mode == HDD_MODE);
         }
     } else {
-        // Which file, and why: the dialog alone cannot tell a missing file from a device that did not
-        // answer (UDPFS apps list but refuse to open, TwistedZeon 09-29). LOG is OPLDIAG-only.
-        LOG("APPS launch: cannot open '%s' (fd %d, errno %d)\n", filename, fd, errno);
+#ifdef __OPLDIAG
+        char diagnostic[768];
+
+        // OPLDIAG does not imply DEBUG, so LOG() is compiled out in the field-diagnostic build.
+        // Put the failure details in the dialog itself so a tester can capture them without a TTY.
+        snprintf(diagnostic, sizeof(diagnostic),
+                 "%s\n\nAPPS diagnostic:\n%s\nfd %d, errno %d",
+                 _l(_STR_ERR_FILE_INVALID), filename, fd, errno);
+        guiMsgBox(diagnostic, 0, NULL);
+#else
         guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+#endif
     }
 }
 

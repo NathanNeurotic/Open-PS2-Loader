@@ -164,6 +164,19 @@ int main(void)
     fntRenderStringFit(0, 0, 0, ALIGN_NONE, 100, "\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9", 0, 0);
     expectStr("utf-8 cut on a character boundary", drawn, "\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9\xc3\xa9...");
 
+    /* Four-byte UTF-8 can hit the 256-byte scratch buffer before the 255-character index cap.
+       The prefix must stay whole and leave three bytes for the ellipsis. */
+    {
+        char longUtf8[70 * 4 + 1];
+        int j;
+        for (j = 0; j < 70; j++)
+            memcpy(&longUtf8[j * 4], "\xf0\x9f\x98\x80", 4);
+        longUtf8[70 * 4] = '\0';
+        fntRenderStringFit(0, 0, 0, ALIGN_NONE, 680, longUtf8, 0, 0);
+        expectInt("long utf-8 stays within scratch buffer", (int)strlen(drawn), 255);
+        expectStr("long utf-8 keeps ellipsis", &drawn[252], "...");
+    }
+
     expectInt("no room: draws nothing", fntRenderStringFit(0, 50, 0, ALIGN_NONE, 0, "x", 0, 1), 50);
 
     if (!fails)

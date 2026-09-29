@@ -852,6 +852,9 @@ int fntRenderStringFit(int id, int x, int y, short aligned, int room, const char
     room -= fntTextWidth(id, "...");
     if (room < 0) // not even "..." fits
         return x;
+    // buf must hold the complete UTF-8 prefix plus "...". Cap by byte offset, not character count.
+    while (n > 0 && at[n] > (int)sizeof(buf) - 4)
+        n--;
     for (lo = 0, hi = n; lo < hi;) { // most characters that fit ahead of the "..."
         mid = (lo + hi + 1) / 2;
         snprintf(buf, sizeof(buf), "%.*s", at[mid], string);
