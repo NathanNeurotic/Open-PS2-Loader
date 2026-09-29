@@ -2,7 +2,9 @@
 
 UDPFS is a network filesystem whose server can become reachable after its menu support is initialized.
 Theme discovery must therefore wait for the server, run before view-specific early returns, and avoid
-re-registering the same remote themes on every refresh. A scan that started before the server answered
+re-registering the same remote themes on every refresh. It must not latch merely because udpfs:/ answers:
+udpfs:/THM itself has to open successfully, and a failed first attempt must keep the lightweight retry
+cadence alive even when Automatic Refresh is off. A scan that started before the server answered
 must keep the page polling (its "empty" result proves nothing), and a page whose L3 position was restored
 onto PS1 must still do its first scan -- the PS1 early return in NeedsUpdate sits before the "never
 scanned" check (TwistedZeon, 09-29: remembered PS1 page blank until L3, and no THM themes). That first
@@ -38,6 +40,11 @@ def function_body(source, signature):
 if "static int udpfsThemesScanned = 0;" not in src:
     failures.append("missing one-session UDPFS theme-scan latch")
 
+waiter = function_body(src, "static void udpfsSetWaitingForServer(int waiting)")
+if waiter:
+    if "(waiting || !udpfsThemesScanned) ? MENU_UPD_DELAY_GENREFRESH : UDPFS_MODE_UPDATE_DELAY" not in waiter:
+        failures.append("failed THM discovery must keep the general-refresh retry cadence alive")
+
 init = function_body(src, "void udpfsInit(item_list_t *itemList)")
 if init:
     for needle in ("thmReinit(udpfsBase);", "udpfsThemesScanned = 0;"):
@@ -49,14 +56,24 @@ if init:
 discover = function_body(src, "static void udpfsDiscoverThemes(void)")
 if discover:
     expected = (
-        "!udpfsThemesScanned && udpfsIomanModLoaded && udpfsServerAnswers()",
+        "if (udpfsThemesScanned || !udpfsIomanModLoaded || !udpfsServerAnswers())",
         'snprintf(themePath, sizeof(themePath), "%sTHM", udpfsPrefix);',
+        "dir = opendir(themePath);",
+        "if (dir == NULL)",
+        "closedir(dir);",
         'thmAddElements(themePath, "/", 1);',
         "udpfsThemesScanned = 1;",
+        "udpfsSetWaitingForServer(udpfsWaitingForServer);",
     )
     for needle in expected:
         if needle not in discover:
             failures.append(f"udpfsDiscoverThemes missing {needle}")
+
+    probe = discover.find("dir = opendir(themePath);")
+    bail = discover.find("if (dir == NULL)")
+    latch = discover.find("udpfsThemesScanned = 1;")
+    if probe < 0 or bail < 0 or latch < 0 or not (probe < bail < latch):
+        failures.append("THM discovery must probe the directory and bail before setting the scan latch")
 
 needs = function_body(src, "static int udpfsNeedsUpdate(item_list_t *itemList)")
 if needs:
@@ -81,6 +98,10 @@ if update:
         failures.append("the pre-scan server check must come before the Ember scan")
     if "if (answeredBefore)\n        udpfsDiscoverThemes();" not in update:
         failures.append("a scan that reaches the server must also register its themes")
+    folders = update.find("sbCreateFolders(udpfsPrefix, 1);")
+    discover_after = update.find("udpfsDiscoverThemes();")
+    if folders < 0 or discover_after < 0 or discover_after < folders:
+        failures.append("UDPFS must create the standard folders before attempting THM discovery")
     if "udpfsSetWaitingForServer(!answeredBefore || (!reached && !udpfsServerAnswers()));" not in update:
         failures.append("a scan that started before the server answered must keep polling")
 
@@ -107,4 +128,4 @@ if failures:
         print(" - " + failure)
     sys.exit(1)
 
-print("UDPFS: server-gated THM registration, pre-scan polling decision and restored-view first scan verified")
+print("UDPFS: THM open-success latch/retry, server polling and restored-view first scan verified")
