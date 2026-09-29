@@ -69,6 +69,8 @@ jobs:
         run: python3 .github/scripts/test_handoff_probe.py
       - name: Check that a blind button press cannot keep a video mode the TV cannot show
         run: python3 .github/scripts/test_vmode_confirm.py
+      - name: Check the two-column Settings layout (split, rows, widths)
+        run: python3 .github/scripts/test_settings_two_columns.py
       - name: Check that a broken cheat file is never reported as a missing one
         run: python3 .github/scripts/test_cheat_load.py
       - name: Check that a -bsdfs=bd launch without a device number is refused before teardown

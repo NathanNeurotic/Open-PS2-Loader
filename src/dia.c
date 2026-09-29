@@ -754,14 +754,127 @@ static int diaItemHeight(struct UIItem *item, int spacingH)
 #define DIA_MARQUEE_STEP_MS 200 // one character per step
 #define DIA_MARQUEE_PAUSE   5   // steps held at each end
 
+// ---- Two-column Settings pages (SPIKE: branch spike/settings-two-columns) ----------------------
+// A Settings page that would otherwise scroll is laid out in two columns under its title, so every
+// row is on screen at once. A page that already fits keeps its single column, untouched. Inside a
+// column, widths come from the column rather than the screen: a label keeps a larger share of the
+// narrower space and stops with "..." before its value; a value stops at the column edge (the
+// selected one still scrolls through its whole text).
+#define DIA_COL_GUTTER      20 // between the columns
+#define DIA_COL_LABEL_SCALE 14 // tenths: a -40 (40% of the screen) label takes 56% of a column
+#define DIA_COL_VALUE_MIN   70 // a label never squeezes its value below this
+#define DIA_COL_MAX_ROWS    64
+#define DIA_COL_MAX_CTLS    96
+
+static int diaColLeft, diaColRight, diaColWidth; // the column being drawn; diaColWidth 0 = full width
+static struct UIItem *diaColUI;                  // the page the last frame laid out in two columns
+static struct
+{
+    struct UIItem *item;
+    int col, y; // column (0 left, 1 right) and content-space row y, for Left/Right between columns
+} diaColCtl[DIA_COL_MAX_CTLS];
+static int diaColCtlCount;
+
+// Which body row starts the RIGHT column: the split that makes the taller column shortest. rowH[] are
+// the rows' advances in order (height plus the spacing after it). 0 = keep one column: it fits in
+// `avail`, or there is nothing to split.
+static int diaColumnSplit(const int *rowH, int rowCount, int avail)
+{
+    int total = 0, left = 0, best = 0, bestMax, i;
+
+    for (i = 0; i < rowCount; i++)
+        total += rowH[i];
+    if (total <= avail || rowCount < 2)
+        return 0;
+
+    bestMax = total;
+    for (i = 0; i + 1 < rowCount; i++) {
+        int taller;
+
+        left += rowH[i];
+        taller = (left > total - left) ? left : total - left;
+        if (taller < bestMax) {
+            bestMax = taller;
+            best = i + 1;
+        }
+    }
+    return best;
+}
+
+// Measure a page's rows exactly as diaRenderUI commits them -- a row ends where the loop advances y --
+// and find its title block: the rows up to and including the first splitter, when that splitter is
+// one of the first three rows. Returns the row count, or -1 when the page cannot go into columns: too
+// many rows, or a row holding more than one value (an IP address) that would not fit half the width.
+static int diaMeasureRows(struct UIItem *ui, int spacingH, int *rowH, int maxRows, int *titleRows)
+{
+    struct UIItem *rc;
+    int n = 0, hmax = 0, values = 0, multi = 0, splitter = -1;
+
+    for (rc = ui; rc->type != UI_TERMINATOR; rc++) {
+        int h;
+
+        if (diaShouldBreakLine(rc)) {
+            if (hmax > 0) {
+                if (n >= maxRows)
+                    return -1;
+                rowH[n++] = hmax + spacingH;
+            }
+            hmax = 0;
+            values = 0;
+        }
+
+        h = diaItemHeight(rc, spacingH);
+        hmax = (h > hmax) ? h : hmax;
+        if (rc->type >= UI_OK && rc->visible && ++values > 1)
+            multi = 1;
+        if (rc->type == UI_SPLITTER && splitter < 0)
+            splitter = n;
+
+        if (diaShouldBreakLineAfter(rc)) {
+            if (hmax > 0) {
+                if (n >= maxRows)
+                    return -1;
+                rowH[n++] = hmax + spacingH;
+            }
+            hmax = 0;
+            values = 0;
+        }
+    }
+    if (hmax > 0) {
+        if (n >= maxRows)
+            return -1;
+        rowH[n++] = hmax; // the last row has no spacing after it
+    }
+
+    *titleRows = (splitter >= 0 && splitter < 3) ? splitter + 1 : 0;
+    return multi ? -1 : n;
+}
+
+// An item's fixed width in pixels. Negative means percent of the screen; inside a column it is a share
+// of the column instead, scaled up so a label keeps room to read.
+static int diaFixedWidth(struct UIItem *item)
+{
+    int w;
+
+    if (item->fixedWidth >= 0)
+        return item->fixedWidth;
+    if (diaColWidth == 0)
+        return item->fixedWidth * screenWidth / -100;
+
+    w = -item->fixedWidth * DIA_COL_LABEL_SCALE * diaColWidth / 1000;
+    return (w > diaColWidth - DIA_COL_VALUE_MIN) ? diaColWidth - DIA_COL_VALUE_MIN : w;
+}
+
 static int diaTextWidth(const char *text)
 {
     return rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text));
 }
 
-static int diaRenderValue(int x, int y, const char *text, u64 color, int selected)
+// Draw text that must stop at `right`: whole when it fits, else the selected row scrolls through it
+// and any other row ends in "...". Returns the end x, like fntRenderString.
+static int diaRenderFit(int x, int y, const char *text, u64 color, int selected, int right)
 {
-    int avail = screenWidth - DIA_VALUE_MARGIN - x;
+    int avail = right - x;
     short at[256]; // byte offset where each character starts, then the end
     char buf[256];
     int n = 0, i, lo, hi, mid;
@@ -810,6 +923,12 @@ static int diaRenderValue(int x, int y, const char *text, u64 color, int selecte
     return fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, buf, color);
 }
 
+// A value stops at the column edge -- the screen edge, less the margin, when there is one column.
+static int diaRenderValue(int x, int y, const char *text, u64 color, int selected)
+{
+    return diaRenderFit(x, y, text, color, selected, diaColWidth ? diaColRight : screenWidth - DIA_VALUE_MARGIN);
+}
+
 static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int haveFocus, int spacingH, int *w, int *h)
 {
     // Don't draw controllable items that are not visible.
@@ -838,10 +957,16 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
         case UI_LABEL: {
             // width is text length in pixels...
             const char *txt = diaGetLocalisedText(item->label.text, item->label.stringId);
-            if (txt && strlen(txt))
+            if (!(txt && strlen(txt)))
+                txt = _l(_STR_NOT_SET);
+            if (diaColWidth != 0) {
+                // In a column: a label stops short of its value, anything else at the column edge.
+                int right = diaColRight;
+                if (item->fixedWidth < 0 && x + diaFixedWidth(item) - UI_SPACER_MINIMAL / 2 < right)
+                    right = x + diaFixedWidth(item) - UI_SPACER_MINIMAL / 2;
+                *w = diaRenderFit(x, y, txt, txtcol, selected, right) - x;
+            } else
                 *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, txt, txtcol) - x;
-            else
-                *w = fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, 0, 0, _l(_STR_NOT_SET), txtcol) - x;
 
             break;
         }
@@ -854,7 +979,7 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
             // to ODD lines
             ypos &= ~1;
 
-            rmDrawLine(x, ypos, x + UI_BREAK_LEN, ypos, gColWhite);
+            rmDrawLine(x, ypos, x + (diaColWidth ? diaColWidth : UI_BREAK_LEN), ypos, gColWhite);
             break;
         }
 
@@ -961,11 +1086,7 @@ static void diaRenderItem(int x, int y, struct UIItem *item, int selected, int h
         diaDrawBoundingBox(x, y, *w, *h, haveFocus);
 
     if (item->fixedWidth != 0) {
-        int newSize;
-        if (item->fixedWidth < 0)
-            newSize = item->fixedWidth * screenWidth / -100;
-        else
-            newSize = item->fixedWidth;
+        int newSize = diaFixedWidth(item);
         if (*w < newSize)
             *w = newSize;
     }
@@ -1000,6 +1121,34 @@ void diaSetSettingsContext(int enabled)
     diaSettingsContext = enabled;
 }
 
+// Where the layout is on a two-column page (see diaRenderUI).
+typedef struct
+{
+    int x0, rightX, colW, colTop, titleRows, rightRow, rows, rowX0, col;
+} dia_col_flow_t;
+
+// A row just ended at the render loop's y advance: after the title block the left column begins; at
+// the split row the flow moves to the top of the right column.
+static void diaColumnRowDone(dia_col_flow_t *f, int *y)
+{
+    f->rows++;
+    if (diaColUI == NULL)
+        return;
+    if (f->rows == f->titleRows) {
+        diaColLeft = f->x0;
+        diaColRight = f->x0 + f->colW;
+        diaColWidth = f->colW;
+    }
+    if (f->rows == f->rightRow) {
+        f->rowX0 = f->rightX;
+        f->col = 1;
+        *y = f->colTop - diaScrollOffset;
+        diaColLeft = f->rightX;
+        diaColRight = f->rightX + f->colW;
+        diaColWidth = f->colW;
+    }
+}
+
 /// renders whole ui screen (for given dialog setup)
 void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFocus)
 {
@@ -1012,6 +1161,34 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     int settingsContext = settingsShell || diaSettingsContext;
     int spacingH = settingsContext ? UI_SETTINGS_SPACING_H : UI_SPACING_H;
 
+    // Two columns (spike): only a Settings page that would otherwise scroll, and only when every row
+    // holds a single value. The title block stays full width above both columns.
+    dia_col_flow_t flow = {x0, 0, 0, y0, 0, -1, 0, x0, 0};
+    diaColUI = NULL;
+    diaColCtlCount = 0;
+    diaColLeft = diaColRight = diaColWidth = 0;
+    if (settingsShell) {
+        int rowAdvance[DIA_COL_MAX_ROWS], i, split;
+        int n = diaMeasureRows(ui, spacingH, rowAdvance, DIA_COL_MAX_ROWS, &flow.titleRows);
+
+        if (n > flow.titleRows + 1) {
+            for (i = 0; i < flow.titleRows; i++)
+                flow.colTop += rowAdvance[i];
+            split = diaColumnSplit(&rowAdvance[flow.titleRows], n - flow.titleRows, (gTheme->usedHeight - 40) - flow.colTop);
+            if (split > 0) {
+                flow.rightRow = flow.titleRows + split;
+                flow.colW = (screenWidth - 2 * x0 - DIA_COL_GUTTER) / 2;
+                flow.rightX = x0 + flow.colW + DIA_COL_GUTTER;
+                diaColUI = ui;
+                if (flow.titleRows == 0) { // no title block: the left column starts at the top
+                    diaColLeft = x0;
+                    diaColRight = x0 + flow.colW;
+                    diaColWidth = flow.colW;
+                }
+            }
+        }
+    }
+
     // render all items (shifted up by the scroll offset for tall dialogs)
     struct UIItem *rc = ui;
     int x = x0, y = y0 - diaScrollOffset, hmax = 0;
@@ -1022,11 +1199,12 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
         int w = 0, h = 0;
 
         if (diaShouldBreakLine(rc)) {
-            x = x0;
-
-            if (hmax > 0)
+            if (hmax > 0) {
                 y += hmax + spacingH;
+                diaColumnRowDone(&flow, &y);
+            }
 
+            x = flow.rowX0;
             hmax = 0;
         }
 
@@ -1059,6 +1237,14 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             curBot = y + h;
         }
 
+        // Where each control landed, for Left/Right between the columns (content-space y).
+        if (diaColUI != NULL && diaIsControllable(rc) && diaColCtlCount < DIA_COL_MAX_CTLS) {
+            diaColCtl[diaColCtlCount].item = rc;
+            diaColCtl[diaColCtlCount].col = flow.col;
+            diaColCtl[diaColCtlCount].y = y + diaScrollOffset;
+            diaColCtlCount++;
+        }
+
         if (w > 0)
             x += w + UI_SPACING_V;
 
@@ -1068,16 +1254,20 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             contentBottom = y + h; // track content bottom (screen-space) for the maxScroll clamp
 
         if (diaShouldBreakLineAfter(rc)) {
-            x = x0;
-
-            if (hmax > 0)
+            if (hmax > 0) {
                 y += hmax + spacingH;
+                diaColumnRowDone(&flow, &y);
+            }
 
+            x = flow.rowX0;
             hmax = 0;
         }
 
         rc++;
     }
+
+    // Everything below draws at full width, and so must any other dialog drawn after this one.
+    diaColLeft = diaColRight = diaColWidth = 0;
 
     // Cursor-follow scroll: re-clamp the offset so the focused row stays on-screen, above the
     // bottom hint bar. Self-correcting each frame; remains 0 for dialogs that fit (no scroll).
@@ -1415,6 +1605,52 @@ static struct UIItem *diaGetNextLine(struct UIItem *cur, struct UIItem *ui)
     return cur;
 }
 
+// Left/Right on a two-column page: first to a neighbour on the same row (none exist today -- a page
+// with multi-value rows stays one column -- but it keeps the move honest), then across to the row
+// nearest in height in the other column. NULL when the page is not in columns, so the caller keeps
+// its ordinary behaviour; `cur` when there is no column that way.
+static struct UIItem *diaColumnStep(struct UIItem *cur, struct UIItem *ui, int dir)
+{
+    struct UIItem *step, *best = NULL;
+    int i, curCol = -1, curY = 0, want, bestD = 0;
+
+    if (diaColUI != ui || cur == NULL)
+        return NULL;
+    for (i = 0; i < diaColCtlCount; i++) {
+        if (diaColCtl[i].item == cur) {
+            curCol = diaColCtl[i].col;
+            curY = diaColCtl[i].y;
+            break;
+        }
+    }
+    if (curCol < 0)
+        return NULL;
+
+    step = (dir < 0) ? diaGetPrevControl(cur, ui) : diaGetNextControl(cur, cur);
+    for (i = 0; i < diaColCtlCount; i++) {
+        if (diaColCtl[i].item == step && step != cur && diaColCtl[i].col == curCol && diaColCtl[i].y == curY)
+            return step;
+    }
+
+    want = curCol + dir;
+    if (want < 0 || want > 1)
+        return cur;
+    for (i = 0; i < diaColCtlCount; i++) {
+        int d;
+
+        if (diaColCtl[i].col != want)
+            continue;
+        d = diaColCtl[i].y - curY;
+        if (d < 0)
+            d = -d;
+        if (best == NULL || d < bestD) {
+            best = diaColCtl[i].item;
+            bestD = d;
+        }
+    }
+    return best ? best : cur;
+}
+
 static int diaPadSettings[16];
 
 static void diaStoreScrollSpeed(void)
@@ -1531,16 +1767,24 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
                 return DIA_RESULT_NEXT;
             }
 
+            // On a two-column page Left/Right move between the columns (diaColumnStep); anywhere
+            // else they keep stepping through the controls in order.
             if (getKey(KEY_LEFT)) {
-                newf = diaGetPrevControl(cur, ui);
-                if (newf == cur)
-                    newf = diaGetLastControl(ui);
+                newf = diaColumnStep(cur, ui, -1);
+                if (newf == NULL) {
+                    newf = diaGetPrevControl(cur, ui);
+                    if (newf == cur)
+                        newf = diaGetLastControl(ui);
+                }
             }
 
             if (getKey(KEY_RIGHT)) {
-                newf = diaGetNextControl(cur, cur);
-                if (newf == cur)
-                    newf = diaGetFirstControl(ui);
+                newf = diaColumnStep(cur, ui, 1);
+                if (newf == NULL) {
+                    newf = diaGetNextControl(cur, cur);
+                    if (newf == cur)
+                        newf = diaGetFirstControl(ui);
+                }
             }
 
             if (getKey(KEY_UP)) {
