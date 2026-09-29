@@ -93,15 +93,20 @@ a control is currently being edited.
 
 ### Settings screens
 
-The settings screens pin the confirm and cancel buttons: **Cross is always OK and Circle is always
-Cancel there**, whichever way the global Select button setting is configured. This is deliberate — it
+The settings screens pin the confirm and back buttons: **Cross is always OK and Circle is always
+Back there**, whichever way the global Select button setting is configured. This is deliberate — it
 keeps the settings UI stable no matter how the browser is set up.
 
 | Button | Action |
 |---|---|
-| **L1 / R1** | Move to the previous / next settings screen |
+| **L1 / R1** | Move to the previous / next settings screen, keeping what you changed |
 | **Cross** | OK |
-| **Circle** | Cancel |
+| **Circle** | Back to the Settings index, keeping what you changed |
+
+Every way off a settings screen keeps your changes, so flipping pages and backing out behave the same.
+Nothing is written until you leave Settings: RiptOPL then asks whether to **Save**, **Exit without
+saving** (the changes last until you restart, but are not saved), or **Continue editing**. A box opened from a settings screen (for example the VCD list options)
+is not a screen of its own — Circle still cancels that box.
 
 ### On-screen keyboard
 

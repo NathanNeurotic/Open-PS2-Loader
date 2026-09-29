@@ -1393,9 +1393,49 @@ static int netConfigUpdater(int modified)
     return 0;
 }
 
+// Everything a live SMB session depends on. The Network page snapshots it before the dialog so that
+// an exit which changed none of it -- Back, or L1/R1 past the page -- does not drop and redo the
+// session; only OK/Reconnect or a real change does. Strings are copied as strings into a zeroed
+// struct, so bytes past a terminator can never read as a change.
+typedef struct
+{
+    int dhcp, ps2Ip[4], netmask[4], gateway[4], dns[4], pcIp[4], pcPort, pcNetBIOS, opMode, protocol;
+    char pcNBAddress[17], shareName[32], userName[32], password[32];
+} gui_smb_link_t;
+
+static void guiSmbLinkCapture(gui_smb_link_t *link)
+{
+    memset(link, 0, sizeof(*link));
+    link->dhcp = ps2_ip_use_dhcp;
+    memcpy(link->ps2Ip, ps2_ip, sizeof(link->ps2Ip));
+    memcpy(link->netmask, ps2_netmask, sizeof(link->netmask));
+    memcpy(link->gateway, ps2_gateway, sizeof(link->gateway));
+    memcpy(link->dns, ps2_dns, sizeof(link->dns));
+    memcpy(link->pcIp, pc_ip, sizeof(link->pcIp));
+    link->pcPort = gPCPort;
+    link->pcNetBIOS = gPCShareAddressIsNetBIOS;
+    link->opMode = gETHOpMode;
+    link->protocol = gNetworkProtocol;
+    snprintf(link->pcNBAddress, sizeof(link->pcNBAddress), "%s", gPCShareNBAddress);
+    snprintf(link->shareName, sizeof(link->shareName), "%s", gPCShareName);
+    snprintf(link->userName, sizeof(link->userName), "%s", gPCUserName);
+    snprintf(link->password, sizeof(link->password), "%s", gPCPassword);
+}
+
+static int guiSmbLinkChanged(const gui_smb_link_t *before)
+{
+    gui_smb_link_t now;
+
+    guiSmbLinkCapture(&now);
+    return memcmp(before, &now, sizeof(now)) != 0;
+}
+
 int guiShowNetConfig(void)
 {
     size_t i;
+    // What the live SMB session was built from, before this page changes anything.
+    gui_smb_link_t smbBefore;
+    guiSmbLinkCapture(&smbBefore);
     const char *ethOpModes[] = {_l(_STR_AUTO), _l(_STR_ETH_100MFDX), _l(_STR_ETH_100MHDX), _l(_STR_ETH_10MFDX), _l(_STR_ETH_10MHDX), NULL};
     const char *addrConfModes[] = {_l(_STR_ADDR_TYPE_IP), _l(_STR_ADDR_TYPE_NETBIOS), NULL};
     const char *ipAddrConfModes[] = {_l(_STR_IP_ADDRESS_TYPE_STATIC), _l(_STR_IP_ADDRESS_TYPE_DHCP), NULL};
@@ -1562,12 +1602,16 @@ reshow_network:
 
         applyConfig(-1, -1, 0);
 
-        // OK is an Apply action for the live SMB stack, not merely a RAM/config edit. A failed
-        // startup may already have queued this through initAllSupport(); ethRequestReconnect
-        // coalesces the duplicate. Protocol changes that disagree with the resident NIC remain
-        // restart-only and are deliberately excluded here.
+        // OK is an Apply action for the live SMB stack, not merely a RAM/config edit -- and after a
+        // failed connect it is labelled Reconnect, so it reconnects even with nothing changed. Any
+        // other way off the page (Back, L1/R1) keeps the edits too, but reconnects only when the SMB
+        // link actually changed: backing out of a page untouched must not drop the session. A
+        // failed startup may already have queued this through initAllSupport();
+        // ethRequestReconnect coalesces the duplicate. Protocol changes that disagree with the
+        // resident NIC remain restart-only and are deliberately excluded here.
         if (gNetworkProtocol == NET_PROTO_SMB && gETHStartMode != START_MODE_DISABLED &&
-            !guiNetProtocolNeedsRestart())
+            !guiNetProtocolNeedsRestart() &&
+            (result == NETCFG_OK || result == NETCFG_RECONNECT || guiSmbLinkChanged(&smbBefore)))
             ethRequestReconnect();
     }
 
