@@ -32,6 +32,8 @@
 
 enum MENU_IDs {
     MENU_SETTINGS = 0,
+    // Retired Network Update slot. Keep subsequent menu IDs stable even though the item itself is gone.
+    MENU_RETIRED_NETWORK_UPDATE,
     MENU_NBD,
     MENU_ABOUT,
     MENU_SAVE_CHANGES,
@@ -1437,7 +1439,9 @@ void menuRenderMenu()
         // render, advance
         fntRenderString(gTheme->fonts[0], 320, y, ALIGN_CENTER, 0, 0, submenuItemGetText(&it->item), (cp == sitem) ? gTheme->selTextColor : gTheme->textColor);
         y += spacing;
-        if (cp == (MENU_ABOUT - 1))
+        // Group the live service/settings actions above the informational/exit actions.
+        // Key this to the actual row ID, not enum arithmetic, so retired/reserved IDs cannot move the gap.
+        if (it->item.id == MENU_NBD)
             y += spacing / 2;
     }
 
