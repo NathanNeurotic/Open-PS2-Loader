@@ -66,6 +66,8 @@ gui_h = read('include/gui.h')
 guigame_c = read('src/guigame.c')
 opl_c = read('src/opl.c')
 opl_h = read('include/opl.h')
+config_h = read('include/config.h')
+iosupport_h = read('include/iosupport.h')
 
 # --- dia.c: Circle on a Settings page -> Index, ahead of the generic Cancel ----------------------
 
@@ -221,6 +223,22 @@ if 'COMPAT_RETIRED_DOWNLOAD_DEFAULTS' not in dialogs_h:
     failures.append('include/dialogs.h: retired Download Defaults slot must remain reserved')
 if 'if (it->item.id == MENU_NBD)' not in menusys_c:
     failures.append('src/menusys.c: main-menu spacing must key off the live NBD row, not enum arithmetic')
+
+# Removal of the fetcher must not rewrite the per-game compatibility/config ABI. Old downloaded
+# configs still need to load as such, and the actual compatibility mode/core keys remain untouched.
+for where, source, needle in (
+    ('include/config.h', config_h, '#define CONFIG_SOURCE_DLOAD   2'),
+    ('include/config.h', config_h, 'CONFIG_ITEM_COMPAT'),
+    ('include/config.h', config_h, 'CONFIG_ITEM_DMA'),
+    ('include/config.h', config_h, 'CONFIG_ITEM_CORE_LOADER'),
+    ('include/config.h', config_h, 'CONFIG_ITEM_NEUTRINO_ARGS'),
+    ('include/iosupport.h', iosupport_h, '#define COMPAT_MODE_1 0x01'),
+    ('include/iosupport.h', iosupport_h, '#define COMPAT_MODE_6 0x20'),
+    ('include/dialogs.h', dialogs_h, 'COMPAT_MODE_BASE = 250'),
+    ('include/dialogs.h', dialogs_h, 'COMPAT_MODE_BASE = 200'),
+):
+    if needle not in source:
+        failures.append('%s: updater removal must preserve %s' % (where, needle))
 
 # --- Network page: reconnect only on OK/Reconnect or a real change (compiled and run) -----------
 
