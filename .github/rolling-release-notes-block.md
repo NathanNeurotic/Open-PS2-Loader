@@ -110,8 +110,9 @@ launch problems to us; genuine Neutrino bugs belong upstream.
   change cannot leave the active game page blank/off (#806).
 - **UDPFS themes:** Auto boot keeps retrying `udpfs:/THM` until that directory itself is reachable;
   a root connection that comes up slightly earlier can no longer permanently suppress themes.
-- **Start menu:** the obsolete bulk **Network Update** screen is removed. The separate per-game
-  Compatibility Settings → Download Defaults action is unchanged.
+- **Compatibility downloads:** the obsolete **Network Update** screen and the per-game
+  **Compatibility Settings → Download Defaults** action/backend are removed; both relied on the same
+  dead legacy compatibility service.
 - **VMC → Neutrino** on USB, exFAT or MX4SIO (internal APA can't yet: upstream neutrino#132).
 - **GameID barcode:** your Pixel FX / RetroGEM / PS2Digital loads the per-game profile.
 - **Mixed cover sizing:** PS1 and app covers square, PS2 covers portrait, on your own theme too.
