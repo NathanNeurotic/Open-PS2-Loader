@@ -3281,6 +3281,13 @@ static int guiSettingsShowIndex(int *page)
 
         fntRenderString(gTheme->fonts[0], screenWidth >> 1, 50, ALIGN_CENTER, 0, 0, _l(_STR_SETTINGS), gTheme->textColor);
 
+        // Keep the exact running build visible on the Settings hub so bug reports do not require
+        // opening About/Credits just to discover the version. OPL_VERSION already includes the
+        // release/revision/hash/toolchain suffix used everywhere else in the build.
+        char versionLine[80];
+        snprintf(versionLine, sizeof(versionLine), "RiptOPL %s", OPL_VERSION);
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1, 72, ALIGN_CENTER, 0, 0, versionLine, gTheme->textColor);
+
         y = (gTheme->usedHeight >> 1) - (spacing * (itemCount >> 1));
         for (int i = 0; i < itemCount; i++) {
             fntRenderString(gTheme->fonts[0], screenWidth >> 1, y, ALIGN_CENTER, 0, 0, labels[i], (i == selected) ? gTheme->selTextColor : gTheme->textColor);
