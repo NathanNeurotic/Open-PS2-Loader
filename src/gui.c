@@ -91,6 +91,8 @@ typedef struct
     int enableUSB, enableILK, enableMX4SIO, enableBdmHDD;
     int networkProtocol, netStartMode, netProtocolPick;
     int ethStartMode, enableUDPBD, netBootProtocol;
+    int mmceSlot, mmceIgrSlot, mmceEnableGameID, mmceAckWaitCycles, mmceUseAlarms;
+    char mmcePrefix[sizeof(gMMCEPrefix)];
 } gui_settings_source_state_t;
 
 static gui_settings_source_state_t guiSettingsSourceState;
@@ -3176,28 +3178,54 @@ enum gui_settings_prompt_result {
     SETTINGS_PROMPT_CONTINUE
 };
 
+static void guiSettingsReadSourceState(gui_settings_source_state_t *state)
+{
+    memset(state, 0, sizeof(*state));
+    state->defaultDevice = gDefaultDevice;
+    state->bdmStartMode = gBDMStartMode;
+    state->hddStartMode = gHDDStartMode;
+    state->appStartMode = gAPPStartMode;
+    state->mmceStartMode = gMMCEStartMode;
+    state->favStartMode = gFAVStartMode;
+    state->enableUSB = gEnableUSB;
+    state->enableILK = gEnableILK;
+    state->enableMX4SIO = gEnableMX4SIO;
+    state->enableBdmHDD = gEnableBdmHDD;
+    state->networkProtocol = gNetworkProtocol;
+    state->netStartMode = gNetStartMode;
+    state->netProtocolPick = gNetProtocolPick;
+    state->ethStartMode = gETHStartMode;
+    state->enableUDPBD = gEnableUDPBD;
+    state->netBootProtocol = gNetBootProtocol;
+    state->mmceSlot = gMMCESlot;
+    state->mmceIgrSlot = gMMCEIGRSlot;
+    state->mmceEnableGameID = gMMCEEnableGameID;
+    state->mmceAckWaitCycles = gMMCEAckWaitCycles;
+    state->mmceUseAlarms = gMMCEUseAlarms;
+    snprintf(state->mmcePrefix, sizeof(state->mmcePrefix), "%s", gMMCEPrefix);
+}
+
 static void guiSettingsCaptureSourceState(void)
 {
-    guiSettingsSourceState.defaultDevice = gDefaultDevice;
-    guiSettingsSourceState.bdmStartMode = gBDMStartMode;
-    guiSettingsSourceState.hddStartMode = gHDDStartMode;
-    guiSettingsSourceState.appStartMode = gAPPStartMode;
-    guiSettingsSourceState.mmceStartMode = gMMCEStartMode;
-    guiSettingsSourceState.favStartMode = gFAVStartMode;
-    guiSettingsSourceState.enableUSB = gEnableUSB;
-    guiSettingsSourceState.enableILK = gEnableILK;
-    guiSettingsSourceState.enableMX4SIO = gEnableMX4SIO;
-    guiSettingsSourceState.enableBdmHDD = gEnableBdmHDD;
-    guiSettingsSourceState.networkProtocol = gNetworkProtocol;
-    guiSettingsSourceState.netStartMode = gNetStartMode;
-    guiSettingsSourceState.netProtocolPick = gNetProtocolPick;
-    guiSettingsSourceState.ethStartMode = gETHStartMode;
-    guiSettingsSourceState.enableUDPBD = gEnableUDPBD;
-    guiSettingsSourceState.netBootProtocol = gNetBootProtocol;
+    guiSettingsReadSourceState(&guiSettingsSourceState);
+}
+
+static int guiSettingsSourceStateChanged(void)
+{
+    gui_settings_source_state_t current;
+
+    guiSettingsReadSourceState(&current);
+    return memcmp(&current, &guiSettingsSourceState, sizeof(current)) != 0;
 }
 
 static void guiSettingsRestoreSourceState(void)
 {
+    // Most Settings pages are not source pages. Avoid a full device refresh on a discard that only
+    // changed visual/audio/launch options; doing so would manufacture exactly the kind of storage
+    // churn this path exists to prevent.
+    if (!guiSettingsSourceStateChanged())
+        return;
+
     gDefaultDevice = guiSettingsSourceState.defaultDevice;
     gBDMStartMode = guiSettingsSourceState.bdmStartMode;
     gHDDStartMode = guiSettingsSourceState.hddStartMode;
@@ -3214,6 +3242,12 @@ static void guiSettingsRestoreSourceState(void)
     gETHStartMode = guiSettingsSourceState.ethStartMode;
     gEnableUDPBD = guiSettingsSourceState.enableUDPBD;
     gNetBootProtocol = guiSettingsSourceState.netBootProtocol;
+    gMMCESlot = guiSettingsSourceState.mmceSlot;
+    gMMCEIGRSlot = guiSettingsSourceState.mmceIgrSlot;
+    gMMCEEnableGameID = guiSettingsSourceState.mmceEnableGameID;
+    gMMCEAckWaitCycles = guiSettingsSourceState.mmceAckWaitCycles;
+    gMMCEUseAlarms = guiSettingsSourceState.mmceUseAlarms;
+    snprintf(gMMCEPrefix, sizeof(gMMCEPrefix), "%s", guiSettingsSourceState.mmcePrefix);
 
     // Game Sources can have already forced a BDM re-enumeration and every Settings page that calls
     // applyConfig(..., 0) can have rebuilt source visibility. Re-apply the captured routing now so
