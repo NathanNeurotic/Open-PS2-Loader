@@ -414,6 +414,9 @@ gui_strings:
   string: 'Error: failed to load cheat file.'
 - label: NO_CHEATS_FOUND
   string: No cheats found.
+# Legacy updater strings are intentionally retained in-place even though the UI/backend is gone.
+# External lang_*.lng files are positional, so removing/reordering these entries would shift every
+# later string ID for users with an older language pack. NET_UPDATE also remains the About-credit heading.
 - label: DL_DEFAULTS
   string: Download Defaults
 - label: NET_UPDATE
