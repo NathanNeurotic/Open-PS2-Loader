@@ -39,8 +39,8 @@ static int udpfsPs1GameCount = 0;
 static base_game_info_t *udpfsPs1Games = NULL;
 static int udpfsIomanModLoaded = 0;
 static int udpfsWaitingForServer = 0; // the last scan got no answer from the server; see udpfsSetWaitingForServer
-static int udpfsThemesScanned = 0; // THM is registered once per active UDPFS session, after THM opens
-static int udpfsPs1Scanned = 0;    // a PS1-view scan has reached the server this session; see udpfsNeedsUpdate
+static int udpfsThemesScanned = 0;    // THM is registered once per active UDPFS session, after THM opens
+static int udpfsPs1Scanned = 0;       // a PS1-view scan has reached the server this session; see udpfsNeedsUpdate
 
 // forward declaration
 static item_list_t udpfsGameList;
