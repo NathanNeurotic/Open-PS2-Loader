@@ -39,6 +39,7 @@ static int udpfsPs1GameCount = 0;
 static base_game_info_t *udpfsPs1Games = NULL;
 static int udpfsIomanModLoaded = 0;
 static int udpfsWaitingForServer = 0; // the last scan got no answer from the server; see udpfsSetWaitingForServer
+static int udpfsThemesScanned = 0;    // THM is registered once per active UDPFS session, after the server answers
 
 // forward declaration
 static item_list_t udpfsGameList;
@@ -152,7 +153,15 @@ static void udpfsSetWaitingForServer(int waiting)
 void udpfsInit(item_list_t *itemList)
 {
     LOG("UDPFSSUPPORT Init\n");
+
+    // A settings re-apply can re-enter this initializer while UDPFS themes are already registered.
+    // Remove only the old udpfs:-backed entries before scanning the refreshed server again, matching
+    // SMB's reconnect behavior and avoiding duplicate theme names in the picker.
+    if (udpfsBase != NULL)
+        thmReinit(udpfsBase);
+
     udpfsBase = "udpfs:";
+    udpfsThemesScanned = 0;
     // The games live directly at the device root; no share/prefix to prepend (unlike SMB).
     snprintf(udpfsPrefix, sizeof(udpfsPrefix), "udpfs:/");
     udpfsULSizePrev = -2;
@@ -218,6 +227,19 @@ static base_game_info_t *udpfsActiveGame(item_list_t *itemList, int id)
 static int udpfsNeedsUpdate(item_list_t *itemList)
 {
     int result = 0;
+
+    // Theme discovery used to be missing entirely from the UDPFS filesystem backend: BDM, MMCE,
+    // SMB and APA all register their THM directories when the device becomes usable, while UDPFS
+    // only scanned games/art. Wait until the server-backed root actually answers, then register
+    // udpfs:/THM exactly once for this session. thmAddElements(..., forceRefresh=1) also reapplies a
+    // saved UDPFS theme as soon as it appears. Keep this before every view-specific early return so
+    // a remembered PS1/Ember page cannot suppress theme discovery.
+    if (!udpfsThemesScanned && udpfsIomanModLoaded && udpfsServerAnswers()) {
+        char themePath[64];
+        snprintf(themePath, sizeof(themePath), "%sTHM", udpfsPrefix);
+        thmAddElements(themePath, "/", 1);
+        udpfsThemesScanned = 1;
+    }
 
     // PS1/Ember view: force a rescan once on toggle, then refresh on toggle only (skip disc heuristics).
     if (libViewConsumeDirty(itemList->mode))
