@@ -7,7 +7,7 @@
 
 ## Community Contributors
 
-A heartfelt thank you to developers who have contributed pull requests directly to this fork:
+A heartfelt thank you to developers who have contributed pull requests directly to this fork. Anyone who opens a pull request against RiptOPL is featured here at the top of the README in recognition of their support for the project and solidarity with its maintainer:
 
 ### [@oMrRexD](https://github.com/oMrRexD) (MrRexD)
 - **[#789](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/789)** (`fix(fntsys)`): **Font Lock Concurrency Fix** — Held the font semaphore lock across draw, measure, and load operations in `src/fntsys.c`. This resolved a critical boot-freeze race condition where background font/theme loading on the IO worker thread freed glyph caches and texture atlases while the GUI rendering thread was actively drawing text. Tested across 111 consecutive clean boots on real hardware (SCPH-50001 with SD2PSX and exFAT BDM HDD).
@@ -15,6 +15,9 @@ A heartfelt thank you to developers who have contributed pull requests directly 
 - **[#704](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/704)** (`RA`): **Menu Network Telemetry Initialization** — Safely initialized and brought the networking stack up from the menu prior to cold telemetry game launches.
 - **[#703](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/703)** (`Makefile`): **MMCE DEV9 Integration** — Linked MMCE's CDVD driver with the in-game DEV9 network stack in RetroAchievements builds.
 - **[#702](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/702)** (`ee_core`): **EE Core Stack Protection** — Relocated RetroAchievements buffers out of `.bss` to protect the EE stack from memory pressure and instability during game execution.
+
+### [@dnunezx](https://github.com/dnunezx) (darkladark)
+- **[#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733)** (`Cover art flow`): **LUNA Collection View** — Brought LUNA's Collection cover-art screen into RiptOPL's renderer, adapting it to RiptOPL's existing game lists, settings, and launch callbacks. Added R3 access to Collection, moved the existing favorite shortcut to L2 + R3, fixed artwork handling while scrolling, and built/tested the result in PCSX2.
 
 # RiptOPL
 **An opinionated [Open PS2 Loader](https://github.com/ps2homebrew/Open-PS2-Loader) fork — aiming to be the "definitive build."**
