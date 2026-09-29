@@ -616,6 +616,17 @@ for rel in ('src/bdmsupport.c', 'src/ethsupport.c', 'src/hddsupport.c', 'src/mmc
 if 'cueApplyDisplaySetting(' in read('src/cuesupport.c'):
     failures.append('src/cuesupport.c: legacy cueApplyDisplaySetting is still present')
 
+# --- APA HDD: the partition Ember inherits must be WRITE-THROUGH (src/hddsupport.c) -----------------
+# FIO_MT_RDWR is 0x00. PFS commits on write/close only when the mount flags carry 0x02 (ps2sdk libpfs
+# PFS_FIO_ATTR_WRITEABLE); otherwise writes wait in its RAM cache for an unmount or sync that Ember never
+# issues, and a reset loses the memory cards (Gageformer/Ember#69).
+hdd_c = read('src/hddsupport.c')
+if not re.search(r'^#define HDD_PFS_MT_WRITETHROUGH 0x02\b', hdd_c, re.M):
+    failures.append('src/hddsupport.c: HDD_PFS_MT_WRITETHROUGH must be 0x02 (libpfs PFS_FIO_ATTR_WRITEABLE)')
+ember_leg = function_text(hdd_c, 'src/hddsupport.c', 'static void hddDoLaunchEmber(')
+if ember_leg and 'fileXioMount(hddPrefix, mountSrc, FIO_MT_RDWR | HDD_PFS_MT_WRITETHROUGH)' not in ember_leg:
+    failures.append('src/hddsupport.c: the Ember partition must be mounted write-through, or its saves never reach the disk')
+
 if failures:
     print('Ember settings checks FAILED:')
     for failure in failures:
