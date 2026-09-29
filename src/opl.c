@@ -51,6 +51,7 @@
 #include "include/sound.h"
 #include "include/xparam.h"
 
+#define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioDopen/fileXioIoctl2/fileXioDclose used by BDM autolaunch
 #include <unistd.h>
 #include <sys/stat.h> // mkdir() -- create mc?:/OPL before mirroring the settings-path redirect.
