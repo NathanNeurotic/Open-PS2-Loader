@@ -15,7 +15,6 @@
 #include "include/supportbase.h"
 #include "include/vcdsupport.h" // VCD games are POPSTARTER-only (Loader Core is N/A)
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
-#include "include/compatupd.h"
 #include "include/cheatman.h"
 #include "include/system.h"
 #include "include/guigame.h"
@@ -1164,7 +1163,6 @@ static void guiGameSetCoreAwareState(void)
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 6, neutrino);  // Mode 7 -gc=7 fix buffer overrun: Neutrino only
-    diaSetEnabled(diaCompatConfig, COMPAT_DL_DEFAULTS, !neutrino);   // OPL compat-bitmask downloader
 }
 
 static int guiGameCompatUpdater(int modified)
@@ -1275,9 +1273,6 @@ reshow_compat:
             else
                 guiMsgBox(_l(_STR_ERROR_LOADING_ID), 0, NULL);
         }
-
-        if (result == COMPAT_DL_DEFAULTS)
-            guiShowNetCompatUpdateSingle(id, support, configSet);
 
         diaGetInt(diaCompatConfig, COMPAT_DMA, &dmaMode);
         diaGetInt(diaCompatConfig, COMPAT_LOADER, &coreLoader);
