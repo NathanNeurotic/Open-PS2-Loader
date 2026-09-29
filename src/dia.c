@@ -1509,6 +1509,17 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
                 cur = newf;
             }
 
+            // Circle on a Settings PAGE goes back to the Settings Index KEEPING what was changed, the
+            // same as L1/R1 keeps it when flipping pages -- it used to be Cancel, which dropped the
+            // page's edits while a flip kept them (FifthFox). Leaving Settings is where the user
+            // decides: Save / Exit without saving / Continue. Sub-dialogs opened from a page are not
+            // the shell UI, so for them Circle stays Cancel.
+            if (settingsShell && getKeyOn(KEY_CIRCLE)) {
+                diaRestoreScrollSpeed();
+                sfxPlay(SFX_CANCEL);
+                return DIA_RESULT_INDEX;
+            }
+
             // Cancel button breaks focus or exits with false result
             if (getKeyOn(settingsContext ? KEY_CIRCLE : (gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE))) {
                 diaRestoreScrollSpeed();
