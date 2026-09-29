@@ -48,12 +48,12 @@
 #define OPL_PARENTAL_LOCK_MASTER_PASS "989765"
 
 // IO type IDs
-#define IO_CUSTOM_SIMPLEACTION    1 // handler for parameter-less actions
-#define IO_MENU_UPDATE_DEFFERED   2
-#define IO_CACHE_LOAD_ART         3 // io call to handle the loading of covers
+#define IO_CUSTOM_SIMPLEACTION  1 // handler for parameter-less actions
+#define IO_MENU_UPDATE_DEFFERED 2
+#define IO_CACHE_LOAD_ART       3 // io call to handle the loading of covers
 // One past the highest id above -- sizes ioman's per-type diagnostic counters. Keep in step if a
 // new IO type is ever added, or that type simply goes uncounted (the accessors bounds-check).
-#define IO_REQ_TYPE_COUNT 4
+#define IO_REQ_TYPE_COUNT       4
 
 
 #define OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS 10000
