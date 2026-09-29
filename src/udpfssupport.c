@@ -224,22 +224,31 @@ static base_game_info_t *udpfsActiveGame(item_list_t *itemList, int id)
     return &games[id];
 }
 
-static int udpfsNeedsUpdate(item_list_t *itemList)
+// Theme discovery used to be missing entirely from the UDPFS filesystem backend: BDM, MMCE, SMB and
+// APA all register their THM directories when the device becomes usable, while UDPFS only scanned
+// games/art. Once the server-backed root actually answers, register udpfs:/THM exactly once for this
+// session. thmAddElements(..., forceRefresh=1) also reapplies a saved UDPFS theme as soon as it
+// appears. Called from BOTH udpfsNeedsUpdate and udpfsUpdateGameList: from NeedsUpdate alone it
+// needed the server to answer on one particular call, and once a list scan reached the server the
+// page stopped being polled -- so a server that came up between that check and the scan never had
+// its themes registered.
+static void udpfsDiscoverThemes(void)
 {
-    int result = 0;
-
-    // Theme discovery used to be missing entirely from the UDPFS filesystem backend: BDM, MMCE,
-    // SMB and APA all register their THM directories when the device becomes usable, while UDPFS
-    // only scanned games/art. Wait until the server-backed root actually answers, then register
-    // udpfs:/THM exactly once for this session. thmAddElements(..., forceRefresh=1) also reapplies a
-    // saved UDPFS theme as soon as it appears. Keep this before every view-specific early return so
-    // a remembered PS1/Ember page cannot suppress theme discovery.
     if (!udpfsThemesScanned && udpfsIomanModLoaded && udpfsServerAnswers()) {
         char themePath[64];
         snprintf(themePath, sizeof(themePath), "%sTHM", udpfsPrefix);
         thmAddElements(themePath, "/", 1);
         udpfsThemesScanned = 1;
     }
+}
+
+static int udpfsNeedsUpdate(item_list_t *itemList)
+{
+    int result = 0;
+
+    // Keep this before every view-specific early return so a remembered PS1/Ember page cannot
+    // suppress theme discovery.
+    udpfsDiscoverThemes();
 
     // PS1/Ember view: force a rescan once on toggle, then refresh on toggle only (skip disc heuristics).
     if (libViewConsumeDirty(itemList->mode))
@@ -292,12 +301,20 @@ static int udpfsUpdateGameList(item_list_t *itemList)
 {
     int view = libListViewActive(itemList);
     int reached = 0;
+    int answeredBefore;
     if (udpfsIomanModLoaded == 0)
         return udpfsActiveGameCount(itemList);
 
+    // Asked BEFORE scanning: a scan that started while the server was not answering cannot be trusted
+    // even when it "succeeds" -- the Ember scan reports an unreachable server as "no titles" -- so
+    // such a pass always keeps polling, and the next poll rescans once the server answers.
+    answeredBefore = udpfsServerAnswers();
+    if (answeredBefore)
+        udpfsDiscoverThemes();
+
     // Latch only once the server can hear us. A scan that ran before it answered used to latch here, so
     // the CD/DVD folders were never created for the rest of the boot.
-    if (!udpfsFoldersCreated && udpfsServerAnswers()) {
+    if (!udpfsFoldersCreated && answeredBefore) {
         sbCreateFolders(udpfsPrefix, 1);
         udpfsFoldersCreated = 1;
     }
@@ -318,7 +335,7 @@ static int udpfsUpdateGameList(item_list_t *itemList)
     // Only a readable CD/DVD scan proves the server answered. A share without those folders, or the PS1
     // view (whose empty result can't tell "no titles" from "no answer"), asks the server itself before
     // deciding to wait -- otherwise a working server would be polled and rescanned every two seconds.
-    udpfsSetWaitingForServer(!reached && !udpfsServerAnswers());
+    udpfsSetWaitingForServer(!answeredBefore || (!reached && !udpfsServerAnswers()));
     return udpfsActiveGameCount(itemList);
 }
 

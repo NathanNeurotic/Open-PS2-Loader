@@ -31,6 +31,8 @@ STUBS = r'''
 #include <strings.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <errno.h>
+#define LOG(...) ((void)0) /* OPLDIAG-only logging in the real build */
 #define O_RDONLY 0
 #define MAX_BDM_DEVICES 10
 #define HDD_MODE 1

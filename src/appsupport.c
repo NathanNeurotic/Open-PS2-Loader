@@ -18,6 +18,7 @@
 #include "include/libview.h"
 
 #include <elf-loader.h>
+#include <errno.h>
 
 static int appForceUpdate = 1;
 static int appItemCount = 0;
@@ -1174,8 +1175,12 @@ static void appLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
             deinit(UNMOUNT_EXCEPTION | (rebootIop == 0 ? KEEPIOP_EXCEPTION : 0), IO_MODE_SELECTED_ALL_SPARE);
             sysLoadELFApp(normFilename, partition, target_argc, target_argv, rebootIop, mode == HDD_MODE);
         }
-    } else
+    } else {
+        // Which file, and why: the dialog alone cannot tell a missing file from a device that did not
+        // answer (UDPFS apps list but refuse to open, TwistedZeon 09-29). LOG is OPLDIAG-only.
+        LOG("APPS launch: cannot open '%s' (fd %d, errno %d)\n", filename, fd, errno);
         guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
+    }
 }
 
 static config_set_t *appGetConfig(item_list_t *itemList, int id)
