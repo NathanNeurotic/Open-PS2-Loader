@@ -182,7 +182,7 @@ directory scan, not a file scan, and the identity is the directory name with no 
   EMBER/
     ember.elf                       <- required; its presence is what enables Ember rows
     bios.bin                        <- required at launch (512 KB, user-supplied, never shipped)
-    settings.txt                    <- optional, Ember's own (key:value; only `display:240|480`)
+    settings.txt                    <- optional global Ember settings (display/timing/dither/shading/controller)
     games/
       Spyro 2 (Ripto's Rage)/       <- one directory per title; the NAME is the launch argument
         game.cue
