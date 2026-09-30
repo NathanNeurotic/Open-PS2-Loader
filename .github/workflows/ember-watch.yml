@@ -1,0 +1,155 @@
+name: Ember Watch
+
+# Keeps the bundled Ember (Gageformer's PS1 core, EMBER/ember.elf) level with its official release.
+#
+# Unlike Neutrino, Ember is COMMITTED in the repo -- in EMBER/ and in the example release kit -- so a new
+# upstream build needs a commit, not just a rebuild. Every 6 hours this compares the SHA-256 GitHub
+# publishes for the latest release's ember.elf with ours. That catches both a new release and a same-tag
+# hotfix (Gageformer replaced Beta-2's ember.elf in place on 2026-09-28 with no new tag).
+#
+# On a change it downloads the asset, checks it against GitHub's digest and that it really is a 32-bit
+# little-endian MIPS ELF, updates both copies -- and the licence, which must ship with the ELF, if
+# upstream changed it -- commits to rebuild/main, and starts Rolling Release and Korium Sync itself (a
+# push made with GITHUB_TOKEN starts no workflow on its own). Anything unexpected stops it without
+# touching the repo.
+
+on:
+  schedule:
+    - cron: "23 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write # dispatch rolling-release.yml and korium-sync.yml after the commit
+
+concurrency:
+  group: ember-watch
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      EMBER_REPO: Gageformer/Ember
+    steps:
+      - name: Checkout rebuild/main
+        uses: actions/checkout@v6
+        with:
+          ref: rebuild/main
+
+      - name: Compare the bundled Ember with the latest official release
+        id: cmp
+        run: |
+          set -eu
+          # One API call; the fields come back tab-separated.
+          FIELDS="$(gh api "repos/$EMBER_REPO/releases/latest" --jq \
+            '[.tag_name, .html_url, ([.assets[] | select(.name == "ember.elf")][0] | (.digest // ""), (.updated_at // ""))] | @tsv' 2>/dev/null || true)"
+          if [ -z "$FIELDS" ]; then
+            echo "Could not read Ember's latest release (transient?); nothing to do."
+            exit 0
+          fi
+          IFS="$(printf '\t')" read -r TAG URL DIGEST UPDATED <<EOF_FIELDS
+          $FIELDS
+          EOF_FIELDS
+          UP="${DIGEST#sha256:}"
+          OURS="$(sha256sum EMBER/ember.elf | cut -d' ' -f1)"
+          echo "upstream $TAG ember.elf = [$UP] (updated $UPDATED)"
+          echo "bundled  ember.elf        = [$OURS]"
+          case "$DIGEST" in
+            sha256:?*) ;;
+            *) DIGEST="" ;;
+          esac
+          if [ -z "$DIGEST" ]; then
+            echo "The latest release has no ember.elf with a published SHA-256; nothing to do."
+            exit 0
+          fi
+          if [ "$UP" = "$OURS" ]; then
+            echo "Already bundling the latest Ember. Nothing to do."
+            exit 0
+          fi
+          {
+            echo "changed=yes"
+            echo "tag=$TAG"
+            echo "url=$URL"
+            echo "sha=$UP"
+            echo "updated=$UPDATED"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Download, verify and bundle the new Ember
+        if: steps.cmp.outputs.changed == 'yes'
+        env:
+          TAG: ${{ steps.cmp.outputs.tag }}
+          SHA: ${{ steps.cmp.outputs.sha }}
+        run: |
+          set -eu
+          mkdir -p "$RUNNER_TEMP/ember"
+          gh release download "$TAG" --repo "$EMBER_REPO" --pattern ember.elf --dir "$RUNNER_TEMP/ember" --clobber
+          NEW="$RUNNER_TEMP/ember/ember.elf"
+          GOT="$(sha256sum "$NEW" | cut -d' ' -f1)"
+          if [ "$GOT" != "$SHA" ]; then
+            echo "Downloaded ember.elf is $GOT, but the release says $SHA -- refusing to bundle it." >&2
+            exit 1
+          fi
+          # A 32-bit (class 1), little-endian (data 1) MIPS (e_machine 8) ELF, within a sane size.
+          python3 - "$NEW" <<'PY'
+          import struct, sys
+          data = open(sys.argv[1], 'rb').read()
+          if len(data) < 64 * 1024 or len(data) > 16 * 1024 * 1024:
+              sys.exit('ember.elf size %d is outside 64 KB..16 MB' % len(data))
+          if data[:4] != b'\x7fELF' or data[4] != 1 or data[5] != 1:
+              sys.exit('ember.elf is not a 32-bit little-endian ELF')
+          if struct.unpack_from('<H', data, 18)[0] != 8:
+              sys.exit('ember.elf is not a MIPS executable')
+          print('ember.elf: 32-bit little-endian MIPS ELF, %d bytes' % len(data))
+          PY
+          KIT="Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/EMBER"
+          cp -f "$NEW" EMBER/ember.elf
+          if [ -d "$KIT" ]; then cp -f "$NEW" "$KIT/ember.elf"; fi
+
+          # The licence must ship with the ELF. Keep ours level with the tag's; if upstream has none, keep ours.
+          if gh api "repos/$EMBER_REPO/contents/LICENSE-BETA.txt?ref=$TAG" --jq '.content' > "$RUNNER_TEMP/ember/lic.b64" 2>/dev/null \
+             && base64 -d "$RUNNER_TEMP/ember/lic.b64" > "$RUNNER_TEMP/ember/LICENSE-BETA.txt" 2>/dev/null \
+             && [ -s "$RUNNER_TEMP/ember/LICENSE-BETA.txt" ]; then
+            cp -f "$RUNNER_TEMP/ember/LICENSE-BETA.txt" EMBER/LICENSE-BETA.txt
+            if [ -d "$KIT" ]; then cp -f "$RUNNER_TEMP/ember/LICENSE-BETA.txt" "$KIT/LICENSE-BETA.txt"; fi
+          else
+            echo "No LICENSE-BETA.txt at $TAG upstream; keeping the bundled licence."
+          fi
+          git status --short
+
+      - name: Commit to rebuild/main and publish
+        if: steps.cmp.outputs.changed == 'yes'
+        env:
+          TAG: ${{ steps.cmp.outputs.tag }}
+          SHA: ${{ steps.cmp.outputs.sha }}
+          URL: ${{ steps.cmp.outputs.url }}
+          UPDATED: ${{ steps.cmp.outputs.updated }}
+        run: |
+          set -eu
+          if git diff --quiet; then
+            echo "Nothing changed on disk after bundling; nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A EMBER "Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/EMBER"
+          git commit -q -F - <<EOF
+          bundle: update Ember to the official $TAG build ($UPDATED)
+
+          Automatic update by Ember Watch. The ember.elf matches the release asset's
+          published SHA-256 and is a 32-bit little-endian MIPS ELF.
+
+          SHA-256: $SHA
+          Release: $URL
+          EOF
+          for attempt in 1 2 3; do
+            if git push origin HEAD:rebuild/main; then
+              break
+            fi
+            [ "$attempt" = 3 ] && { echo "Could not push after 3 attempts." >&2; exit 1; }
+            git pull --rebase -q origin rebuild/main
+          done
+          echo "Bundled Ember $TAG ($SHA) on rebuild/main; starting the rolling builds."
+          gh workflow run rolling-release.yml --repo "$GITHUB_REPOSITORY" --ref rebuild/main
+          gh workflow run korium-sync.yml --repo "$GITHUB_REPOSITORY" --ref rebuild/main
