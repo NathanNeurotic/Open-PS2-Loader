@@ -636,9 +636,14 @@ if popstarter_page:
     for name in ('emberTiming', 'emberDither', 'emberShading', 'emberController'):
         if '(%s != g%s && %s > 0)' % (name, name[0].upper() + name[1:], name) not in popstarter_page:
             failures.append('guiSettingsShowPopstarter: the global-Ember warning must cover a newly set %s' % name)
-base_yml = read('lng_tmpl/_base.yml')
-if not base_yml.rstrip().splitlines()[-2].strip() == '- label: EMBER_GLOBAL_WARNING':
-    failures.append('lng_tmpl/_base.yml: EMBER_GLOBAL_WARNING must be appended at the END (labels are positional)')
+# Labels are positional: EMBER_GLOBAL_WARNING was APPENDED after HINT_EMBER_TIMING (the last label when it
+# landed). Later labels may follow it; it must never move ahead of the ones that existed before it.
+base_labels = [line.strip()[len('- label: '):] for line in read('lng_tmpl/_base.yml').splitlines()
+               if line.strip().startswith('- label: ')]
+if 'EMBER_GLOBAL_WARNING' not in base_labels:
+    failures.append('lng_tmpl/_base.yml: EMBER_GLOBAL_WARNING label is missing')
+elif 'HINT_EMBER_TIMING' in base_labels and base_labels.index('EMBER_GLOBAL_WARNING') < base_labels.index('HINT_EMBER_TIMING'):
+    failures.append('lng_tmpl/_base.yml: EMBER_GLOBAL_WARNING must stay after HINT_EMBER_TIMING (labels are positional)')
 
 if failures:
     print('Ember settings checks FAILED:')
