@@ -1482,7 +1482,6 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
     diaStoreScrollSpeed();
 
     int settingsShell = diaSettingsShellUI == ui && diaSettingsIndicator != NULL;
-    int settingsContext = settingsShell || diaSettingsContext;
 
     // slower controls for dialogs
     setButtonDelay(KEY_UP, diaScrollDelay());
