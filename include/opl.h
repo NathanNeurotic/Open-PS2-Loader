@@ -412,6 +412,14 @@ extern int RemainSecs, DisableCron;
 extern clock_t CronStart;
 
 extern unsigned char gDefaultBgColor[3];
+// RiptOPL's plasma: near-black to deep blue. Official OPL's light cyan (0x28C5F9 over black) made the
+// menu read as stock OPL. bgColor is the plasma's bright end and is used for nothing else.
+#define RIPTOPL_PLASMA_BG_R    0x0C
+#define RIPTOPL_PLASMA_BG_G    0x3A
+#define RIPTOPL_PLASMA_BG_B    0xA8
+#define RIPTOPL_PLASMA_BLEND_R 0x00
+#define RIPTOPL_PLASMA_BLEND_G 0x02
+#define RIPTOPL_PLASMA_BLEND_B 0x0A
 extern unsigned char gDefaultTextColor[3];
 extern unsigned char gDefaultSelTextColor[3];
 extern unsigned char gDefaultUITextColor[3];
