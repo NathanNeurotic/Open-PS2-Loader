@@ -29,7 +29,6 @@
 #include "include/hddsupport.h" // staged normal APA OPL-home selector
 #include "include/vcdsupport.h" // POPStarter pages: BDMA equip, list options, POPS net config
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
-#include "include/compatupd.h"
 #include "include/pggsm.h"
 #include "include/cheatman.h"
 #include "include/sound.h"
@@ -78,7 +77,27 @@ static int guiSettingsCurrentPage;
 static int guiSettingsSavePending;
 static char guiSettingsPageIndicator[32];
 
+// Settings pages apply their values live while the shell stays open. Keep the source-selection half
+// of that live state transactional: "Exit without saving" must restore the device/network state that
+// was active when Settings opened instead of leaving a Manual/disabled source empty until X starts it
+// again (#806, zackcage6). This is intentionally limited to source activation/routing; page-specific
+// visual/audio edits keep their established live-preview behaviour until a broader transaction model
+// replaces it.
+typedef struct
+{
+    int defaultDevice;
+    int bdmStartMode, hddStartMode, appStartMode, mmceStartMode, favStartMode;
+    int enableUSB, enableILK, enableMX4SIO, enableBdmHDD;
+    int networkProtocol, netStartMode, netProtocolPick;
+    int ethStartMode, enableUDPBD, netBootProtocol;
+    int mmceSlot, mmceIgrSlot, mmceEnableGameID, mmceAckWaitCycles, mmceUseAlarms;
+    char mmcePrefix[sizeof(gMMCEPrefix)];
+} gui_settings_source_state_t;
+
+static gui_settings_source_state_t guiSettingsSourceState;
+
 static int guiSettingsIsShellResult(int result);
+static int guiSettingsLeftUntouched(struct UIItem *ui, int result, const char *pathEdit, const char *pathValue);
 static int guiSettingsPageResult(int result);
 static int guiSettingsPromptSave(void);
 static void guiSettingsBeginDialog(struct UIItem *ui);
@@ -504,125 +523,6 @@ void guiShowRANotices(void)
     guiRenderRANotices(10, 35);
 }
 #endif
-
-static int guiNetCompatUpdRefresh(int modified)
-{
-    int result;
-    unsigned int done, total;
-
-    if ((result = oplGetUpdateGameCompatStatus(&done, &total)) == OPL_COMPAT_UPDATE_STAT_WIP) {
-        diaSetInt(diaNetCompatUpdate, NETUPD_PROGRESS, (done == 0 || total == 0) ? 0 : (int)((float)done / total * 100.0f));
-    }
-
-    return result;
-}
-
-static void guiShowNetCompatUpdateResult(int result)
-{
-    switch (result) {
-        case OPL_COMPAT_UPDATE_STAT_DONE:
-            // Completed with no errors.
-            guiMsgBox(_l(_STR_NET_UPDATE_DONE), 0, NULL);
-            break;
-        case OPL_COMPAT_UPDATE_STAT_ERROR:
-            // Completed with errors.
-            guiMsgBox(_l(_STR_NET_UPDATE_FAILED), 0, NULL);
-            break;
-        case OPL_COMPAT_UPDATE_STAT_CONN_ERROR:
-            // Completed with errors.
-            guiMsgBox(_l(_STR_NET_UPDATE_CONN_FAILED), 0, NULL);
-            break;
-        case OPL_COMPAT_UPDATE_STAT_ABORTED:
-            // User-aborted.
-            guiMsgBox(_l(_STR_NET_UPDATE_CANCELLED), 0, NULL);
-            break;
-    }
-}
-
-void guiShowNetCompatUpdate(void)
-{
-    int ret, UpdateAll;
-    u8 done, started;
-    void *UpdateFunction;
-
-    diaSetVisible(diaNetCompatUpdate, NETUPD_BTN_START, 1);
-    diaSetVisible(diaNetCompatUpdate, NETUPD_BTN_CANCEL, 0);
-    diaSetVisible(diaNetCompatUpdate, NETUPD_PROGRESS_LBL, 0);
-    diaSetVisible(diaNetCompatUpdate, NETUPD_PROGRESS_PERC_LBL, 0);
-    diaSetVisible(diaNetCompatUpdate, NETUPD_PROGRESS, 0);
-    diaSetInt(diaNetCompatUpdate, NETUPD_OPT_UPD_ALL, 0);
-    diaSetEnabled(diaNetCompatUpdate, NETUPD_OPT_UPD_ALL, 1);
-
-    done = 0;
-    started = 0;
-    UpdateFunction = NULL;
-    while (!done) {
-        ret = diaExecuteDialog(diaNetCompatUpdate, -1, 1, UpdateFunction);
-        switch (ret) {
-            case NETUPD_BTN_START:
-                if (guiMsgBox(_l(_STR_CONFIRMATION_SETTINGS_UPDATE), 1, NULL)) {
-                    guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
-
-                    if ((ret = ethLoadInitModules()) == 0) {
-                        diaSetVisible(diaNetCompatUpdate, NETUPD_BTN_START, 0);
-                        diaSetVisible(diaNetCompatUpdate, NETUPD_BTN_CANCEL, 1);
-                        diaSetVisible(diaNetCompatUpdate, NETUPD_PROGRESS_LBL, 1);
-                        diaSetVisible(diaNetCompatUpdate, NETUPD_PROGRESS_PERC_LBL, 1);
-                        diaSetVisible(diaNetCompatUpdate, NETUPD_PROGRESS, 1);
-                        diaSetEnabled(diaNetCompatUpdate, NETUPD_OPT_UPD_ALL, 0);
-
-                        diaGetInt(diaNetCompatUpdate, NETUPD_OPT_UPD_ALL, &UpdateAll);
-                        oplUpdateGameCompat(UpdateAll);
-                        UpdateFunction = &guiNetCompatUpdRefresh;
-                        started = 1;
-                    } else {
-                        ethDisplayErrorStatus();
-                    }
-                }
-                break;
-            case UIID_BTN_CANCEL: // If the user pressed the cancel button.
-            case NETUPD_BTN_CANCEL:
-                if (started) {
-                    if (guiMsgBox(_l(_STR_CONFIRMATION_CANCEL_UPDATE), 1, NULL)) {
-                        guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
-                        oplAbortUpdateGameCompat();
-                        // The process truly ends when the UI callback gets the update from the worker thread that the process has ended.
-                    }
-                } else {
-                    done = 1;
-                    started = 0;
-                }
-                break;
-            default:
-                guiShowNetCompatUpdateResult(ret);
-                done = 1;
-                started = 0;
-                UpdateFunction = NULL;
-                break;
-        }
-    }
-}
-
-void guiShowNetCompatUpdateSingle(int id, item_list_t *support, config_set_t *configSet)
-{
-    int ConfigSource, result;
-
-    ConfigSource = CONFIG_SOURCE_DEFAULT;
-    configGetInt(configSet, CONFIG_ITEM_CONFIGSOURCE, &ConfigSource);
-
-    if (guiMsgBox(_l(_STR_CONFIRMATION_SETTINGS_UPDATE), 1, NULL)) {
-        guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
-
-        if ((ethLoadInitModules()) == 0) {
-            if ((result = oplUpdateGameCompatSingle(id, support, configSet)) == OPL_COMPAT_UPDATE_STAT_DONE) {
-                configSetInt(configSet, CONFIG_ITEM_CONFIGSOURCE, CONFIG_SOURCE_DLOAD);
-            }
-            guiShowNetCompatUpdateResult(result);
-        } else {
-            ethDisplayErrorStatus();
-        }
-    }
-}
 
 static int guiUpdater(int modified)
 {
@@ -1550,7 +1450,7 @@ reshow_network:
         guiShowPopsNetConfig();
         goto reshow_network;
     }
-    if (result) {
+    if (result && !guiSettingsLeftUntouched(diaNetConfig, result, NULL, NULL)) {
         int netProtoVal2, netAccessVal2;
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
         diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
@@ -2672,6 +2572,27 @@ static int guiSettingsIsShellResult(int result)
     return guiSettingsIsPeerResult(result) || result == DIA_RESULT_INDEX;
 }
 
+// Back / L1 / R1 off a page whose rows the user did not change. Such an exit applies nothing, as
+// Back did before #793 made it keep edits. Since then every Back ran the page's apply block, and on
+// Game Sources, General, Launch, PS1 and Network that block is a full device re-apply
+// (applyConfig(..., 0), plus bdmForceDeviceRefresh on Game Sources) -- so merely opening Settings,
+// entering a page and backing out re-applied every source and left the USB page blank (#806,
+// zackcage6, Beta-3338). With nothing changed there is nothing to apply; an explicit OK or an edited
+// row still applies exactly as before.
+//
+// A long-path row (IGR/Exit path on General, Neutrino path on Launch, POPSTARTER path on PS1) shows
+// only a 31-character preview; the value lives in a full-size edit buffer that THAT page seeds from
+// its global when it opens, so an edit past the preview is caught by comparing the page's own buffer.
+// Only its own: the other pages' buffers stay empty until their page first opens, and comparing them
+// would make every other page look edited (pathEdit/pathValue are NULL on pages without such a row).
+static int guiSettingsLeftUntouched(struct UIItem *ui, int result, const char *pathEdit, const char *pathValue)
+{
+    if (!guiSettingsIsShellResult(result) || diaHasChanges(ui))
+        return 0;
+
+    return pathEdit == NULL || strcmp(pathEdit, pathValue) == 0;
+}
+
 static int guiSettingsPageResult(int result)
 {
     // L1/R1 peer paging and an explicit Index request pass straight back to the shell loop.
@@ -2768,7 +2689,7 @@ reshow_general:
         goto reshow_general;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, exitPathEdit, gExitPath)) {
         diaGetInt(ui, UICFG_LANG, &langID);
         snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
         diaGetString(ui, CFG_CUSTOMCFGPATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
@@ -2850,7 +2771,7 @@ reshow_sources:
         result = UIID_BTN_OK;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, NULL, NULL)) {
         diaGetInt(ui, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(ui, CFG_BDMMODE, &gBDMStartMode);
@@ -3080,7 +3001,7 @@ reshow_launch:
         goto reshow_launch;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, neutrinoPathEdit, gNeutrinoPath)) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
         if (strcmp(gNeutrinoPath, neutrinoPathEdit) != 0)
@@ -3187,7 +3108,7 @@ reshow_popstarter:
         goto reshow_popstarter;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, popstarterPathEdit, gPopstarterPath)) {
         int gameViewChanged = guiReadGameViewPicker(ui);
 
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
@@ -3234,6 +3155,87 @@ enum gui_settings_prompt_result {
     SETTINGS_PROMPT_EXIT,
     SETTINGS_PROMPT_CONTINUE
 };
+
+static void guiSettingsReadSourceState(gui_settings_source_state_t *state)
+{
+    memset(state, 0, sizeof(*state));
+    state->defaultDevice = gDefaultDevice;
+    state->bdmStartMode = gBDMStartMode;
+    state->hddStartMode = gHDDStartMode;
+    state->appStartMode = gAPPStartMode;
+    state->mmceStartMode = gMMCEStartMode;
+    state->favStartMode = gFAVStartMode;
+    state->enableUSB = gEnableUSB;
+    state->enableILK = gEnableILK;
+    state->enableMX4SIO = gEnableMX4SIO;
+    state->enableBdmHDD = gEnableBdmHDD;
+    state->networkProtocol = gNetworkProtocol;
+    state->netStartMode = gNetStartMode;
+    state->netProtocolPick = gNetProtocolPick;
+    state->ethStartMode = gETHStartMode;
+    state->enableUDPBD = gEnableUDPBD;
+    state->netBootProtocol = gNetBootProtocol;
+    state->mmceSlot = gMMCESlot;
+    state->mmceIgrSlot = gMMCEIGRSlot;
+    state->mmceEnableGameID = gMMCEEnableGameID;
+    state->mmceAckWaitCycles = gMMCEAckWaitCycles;
+    state->mmceUseAlarms = gMMCEUseAlarms;
+    snprintf(state->mmcePrefix, sizeof(state->mmcePrefix), "%s", gMMCEPrefix);
+}
+
+static void guiSettingsCaptureSourceState(void)
+{
+    guiSettingsReadSourceState(&guiSettingsSourceState);
+}
+
+static int guiSettingsSourceStateChanged(void)
+{
+    gui_settings_source_state_t current;
+
+    guiSettingsReadSourceState(&current);
+    return memcmp(&current, &guiSettingsSourceState, sizeof(current)) != 0;
+}
+
+static void guiSettingsRestoreSourceState(void)
+{
+    // Most Settings pages are not source pages. Avoid a full device refresh on a discard that only
+    // changed visual/audio/launch options; doing so would manufacture exactly the kind of storage
+    // churn this path exists to prevent.
+    if (!guiSettingsSourceStateChanged())
+        return;
+
+    gDefaultDevice = guiSettingsSourceState.defaultDevice;
+    gBDMStartMode = guiSettingsSourceState.bdmStartMode;
+    gHDDStartMode = guiSettingsSourceState.hddStartMode;
+    gAPPStartMode = guiSettingsSourceState.appStartMode;
+    gMMCEStartMode = guiSettingsSourceState.mmceStartMode;
+    gFAVStartMode = guiSettingsSourceState.favStartMode;
+    gEnableUSB = guiSettingsSourceState.enableUSB;
+    gEnableILK = guiSettingsSourceState.enableILK;
+    gEnableMX4SIO = guiSettingsSourceState.enableMX4SIO;
+    gEnableBdmHDD = guiSettingsSourceState.enableBdmHDD;
+    gNetworkProtocol = guiSettingsSourceState.networkProtocol;
+    gNetStartMode = guiSettingsSourceState.netStartMode;
+    gNetProtocolPick = guiSettingsSourceState.netProtocolPick;
+    gETHStartMode = guiSettingsSourceState.ethStartMode;
+    gEnableUDPBD = guiSettingsSourceState.enableUDPBD;
+    gNetBootProtocol = guiSettingsSourceState.netBootProtocol;
+    gMMCESlot = guiSettingsSourceState.mmceSlot;
+    gMMCEIGRSlot = guiSettingsSourceState.mmceIgrSlot;
+    gMMCEEnableGameID = guiSettingsSourceState.mmceEnableGameID;
+    gMMCEAckWaitCycles = guiSettingsSourceState.mmceAckWaitCycles;
+    gMMCEUseAlarms = guiSettingsSourceState.mmceUseAlarms;
+    snprintf(gMMCEPrefix, sizeof(gMMCEPrefix), "%s", guiSettingsSourceState.mmcePrefix);
+
+    // Game Sources can have already forced a BDM re-enumeration and every Settings page that calls
+    // applyConfig(..., 0) can have rebuilt source visibility. Re-apply the captured routing now so
+    // the list/menu state matches the values we just restored. This is the programmatic equivalent
+    // of the X press zackcage6 needed to recover the blank page, but it restores the original source
+    // instead of merely starting whichever page happens to be selected.
+    bdmForceDeviceRefresh();
+    applyConfig(-1, -1, 0);
+    menuReinitMainMenu();
+}
 
 static int guiSettingsPromptSave(void)
 {
@@ -3353,8 +3355,14 @@ static int guiSettingsShowIndex(int *page)
         } else if (getKeyOn(KEY_CROSS)) {
             sfxPlay(SFX_CONFIRM);
             if (selected == SETTINGS_PAGE_COUNT) {
-                if (menuSaveSettings() > 0)
+                if (menuSaveSettings() > 0) {
+                    // A successful in-shell save becomes the new discard baseline. Otherwise,
+                    // saving once and later choosing "Exit without saving" would wrongly restore
+                    // the source state from before Settings was opened, undoing a state that is
+                    // already persisted on disk.
+                    guiSettingsCaptureSourceState();
                     guiSettingsSavePending = 0;
+                }
             } else {
                 *page = selected;
                 return 1;
@@ -3372,6 +3380,7 @@ static int guiSettingsShowIndex(int *page)
                 }
             } else if (promptResult == SETTINGS_PROMPT_EXIT) {
                 hddDiscardOplHomeSelection();
+                guiSettingsRestoreSourceState();
                 guiSettingsSavePending = 0;
                 return 0;
             }
@@ -3388,6 +3397,7 @@ static void guiShowSettingsFromPage(int page, int showIndexFirst)
 
     guiSettingsShellActive = 1;
     guiSettingsSavePending = 0;
+    guiSettingsCaptureSourceState();
     if (showIndexFirst && !guiSettingsShowIndex(&page)) {
         hddDiscardOplHomeSelection();
         guiSettingsShellActive = 0;

@@ -1598,6 +1598,33 @@ void diaSetItemType(struct UIItem *ui, int id, UIItemType type)
     item->type = type;
 }
 
+// 1 when any value row now differs from what the page put there. diaSetInt/diaSetString store the
+// value as the row's def as well, and editing a row (unlike Cancel, which restores it) leaves def
+// alone -- so def is exactly "what this page showed when it opened". A row the page never set keeps
+// its static initializer; if that has def != current it reads as changed, the safe direction.
+int diaHasChanges(struct UIItem *ui)
+{
+    for (; ui->type != UI_TERMINATOR; ui++) {
+        switch (ui->type) {
+            case UI_INT:
+            case UI_BOOL:
+            case UI_ENUM:
+                if (ui->intvalue.current != ui->intvalue.def)
+                    return 1;
+                break;
+            case UI_STRING:
+            case UI_PASSWORD:
+                if (strncmp(ui->stringvalue.text, ui->stringvalue.def, sizeof(ui->stringvalue.text)) != 0)
+                    return 1;
+                break;
+            default:
+                break;
+        }
+    }
+
+    return 0;
+}
+
 int diaGetInt(struct UIItem *ui, int id, int *value)
 {
     struct UIItem *item = diaFindByID(ui, id);

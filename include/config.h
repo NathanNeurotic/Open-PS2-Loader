@@ -33,7 +33,7 @@ enum CONFIG_INDEX {
 
 #define CONFIG_SOURCE_DEFAULT 0
 #define CONFIG_SOURCE_USER    1
-#define CONFIG_SOURCE_DLOAD   2 // Downloaded from the network
+#define CONFIG_SOURCE_DLOAD   2 // Legacy downloaded-defaults marker; retained so old per-game configs still identify/display correctly.
 
 // Items for per-game config files.
 #define CONFIG_ITEM_NAME             "#Name"
