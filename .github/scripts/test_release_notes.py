@@ -58,14 +58,14 @@ class ReleaseNotesTests(unittest.TestCase):
 
     def test_release_history_is_bounded_and_pinned(self):
         body = self.render()
-        changes = body.split("## Changelog\n", 1)[1]
+        changes = body.split("## Changelog\n", 1)[1].split("## Downloads\n", 1)[0]
         self.assertEqual(10, len([x for x in changes.splitlines() if x.startswith("- ")]))
         self.assertIn(f"Fix loader \\[edge case\\] ([{self.fix_sha[:8]}](https://github.com/owner/repo/commit/{self.fix_sha}))", changes)
         self.assertNotIn("Merge rebuild/main", changes)
         self.assertNotIn("Not in this release", changes)
         self.assertNotIn("- Change 0 ", changes)
-        self.assertTrue(body.endswith(f"[Full changelog](https://github.com/owner/repo/commits/{self.sha})\n"))
-        self.assertEqual(["## Downloads", "## Credits", "## Changelog"],
+        self.assertIn(f"[Full changelog](https://github.com/owner/repo/commits/{self.sha})", changes)
+        self.assertEqual(["## Changelog", "## Downloads", "## Credits"],
                          [x for x in body.splitlines() if x.startswith("## ")])
 
     def test_actual_downloads_and_short_credits(self):
