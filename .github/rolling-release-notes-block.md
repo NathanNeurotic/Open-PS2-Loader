@@ -105,7 +105,8 @@ launch problems to us; genuine Neutrino bugs belong upstream.
   mode comes back.
 - **Settings, Back (Circle):** a change on a settings screen survives backing out to the index, the
   same as flipping pages with L1/R1; leaving Settings asks to save. Backing out of the Network screen
-  without changing anything does not drop an SMB connection. Choosing **Exit without saving** now
+  without changing anything does not drop an SMB connection. Backing out of a screen you did not
+  change re-applies nothing, so it no longer empties the USB game list (#806). Choosing **Exit without saving** now
   restores the source activation/routing state from the last successful save, so an unsaved source
   change cannot leave the active game page blank/off (#806).
 - **UDPFS themes:** Auto boot keeps retrying `udpfs:/THM` until that directory itself is reachable;

@@ -9,7 +9,12 @@ Checked here, from the production source:
 - dia.c: on a Settings PAGE (the shell UI), Circle returns DIA_RESULT_INDEX, before the generic
   Cancel; sub-dialogs opened from a page are not the shell UI and keep Circle = Cancel.
 - gui.c: guiSettingsPageResult arms the save prompt for DIA_RESULT_INDEX (compiled and run).
-- every page applies its rows for any result other than Cancel, so DIA_RESULT_INDEX applies them.
+- every page applies its rows for any result other than Cancel, so DIA_RESULT_INDEX applies them --
+  except that Back/L1/R1 off a page whose rows were NOT changed applies nothing. The pages whose
+  apply is a full device re-apply (General, Game Sources, Network, Launch, PS1) gate on
+  guiSettingsLeftUntouched; diaHasChanges (compiled + run) compares every value row with the def
+  the page set. Merely entering Game Sources and backing out re-applied every source and blanked
+  the USB page (#806, zackcage6, Beta-3338).
 - the Network page no longer reconnects SMB on an exit that changed nothing: it snapshots what a
   live SMB session depends on and reconnects only on OK/Reconnect or a real change (compiled + run).
 - Exit without saving restores the source activation/routing snapshot captured when Settings opened,
@@ -131,17 +136,105 @@ if page_functions.count('{') >= 3:
 PAGES = ('static int guiSettingsShowGeneral(', 'static int guiSettingsShowSources(', 'int guiShowNetConfig(',
          'static int guiSettingsShowInterface(', 'static int guiSettingsShowLaunch(',
          'static int guiSettingsShowPopstarter(', 'int guiShowControllerConfig(')
+# Pages whose apply block is a full device re-apply: an untouched Back/L1/R1 must skip it (#806).
+DEVICE_PAGES = {
+    'static int guiSettingsShowGeneral(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result))',
+    'static int guiSettingsShowSources(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result))',
+    'int guiShowNetConfig(': 'if (result && !guiSettingsLeftUntouched(diaNetConfig, result))',
+    'static int guiSettingsShowLaunch(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result))',
+    'static int guiSettingsShowPopstarter(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result))',
+}
 for sig in PAGES:
     body = function_text(gui_c, 'src/gui.c', sig)
     if not body:
         continue
-    if 'if (result != UIID_BTN_CANCEL && result != -1)' not in body and 'if (result) {' not in body:
+    if sig in DEVICE_PAGES:
+        if DEVICE_PAGES[sig] not in body:
+            failures.append('%s...): its full re-apply must be skipped when Back/L1/R1 left it untouched (#806)' % sig)
+    elif 'if (result != UIID_BTN_CANCEL && result != -1)' not in body and 'if (result) {' not in body:
         failures.append('%s...): its rows must apply for every result except Cancel' % sig)
     if 'guiSettingsPageResult(result)' not in body:
         failures.append('%s...): must return through guiSettingsPageResult(result)' % sig)
 audio = function_text(gui_c, 'src/gui.c', 'int guiShowAudioConfig(')
 if audio and 'guiSettingsPageResult(result)' not in audio:
     failures.append('guiShowAudioConfig: must return through guiSettingsPageResult(result)')
+
+# --- an untouched page: which exits count, and the long-path edit buffers -----------------------
+
+untouched = function_text(gui_c, 'src/gui.c', 'static int guiSettingsLeftUntouched(')
+if untouched:
+    if 'if (!guiSettingsIsShellResult(result) || diaHasChanges(ui))' not in untouched:
+        failures.append('guiSettingsLeftUntouched: only an unchanged Back/L1/R1 counts as untouched')
+    for buffer, value in (('exitPathEdit', 'gExitPath'), ('neutrinoPathEdit', 'gNeutrinoPath'),
+                          ('popstarterPathEdit', 'gPopstarterPath')):
+        if 'strcmp(%s, %s) == 0' % (buffer, value) not in untouched:
+            failures.append('guiSettingsLeftUntouched: must compare the full-size %s with %s' % (buffer, value))
+
+CHANGES_HARNESS = r'''
+#include <stdio.h>
+#include <string.h>
+
+@TYPES@
+@FUNCTIONS@
+
+static int fails;
+static struct UIItem ui[5];
+static void reset(void)
+{
+    memset(ui, 0, sizeof(ui));
+    ui[0].type = UI_LABEL;
+    ui[1].type = UI_BOOL;
+    ui[1].intvalue.def = ui[1].intvalue.current = 1;
+    ui[2].type = UI_ENUM;
+    ui[2].intvalue.def = ui[2].intvalue.current = 3;
+    ui[3].type = UI_STRING;
+    strcpy(ui[3].stringvalue.def, "mass:/");
+    strcpy(ui[3].stringvalue.text, "mass:/");
+    ui[4].type = UI_TERMINATOR;
+}
+static void expect(const char *what, int want)
+{
+    if (diaHasChanges(ui) != want) {
+        printf("FAIL %s: diaHasChanges=%d, want %d\n", what, !want, want);
+        fails++;
+    }
+}
+
+int main(void)
+{
+    reset();
+    expect("a page opened and left alone", 0);
+    reset();
+    ui[1].intvalue.current = 0;
+    expect("a toggled row", 1);
+    reset();
+    ui[2].intvalue.current = 1;
+    expect("a changed choice", 1);
+    reset();
+    strcpy(ui[3].stringvalue.text, "mmce:/");
+    expect("an edited string", 1);
+    reset();
+    ui[2].intvalue.current = 1;
+    ui[2].intvalue.current = 3;
+    expect("a row changed and changed back", 0);
+    reset();
+    ui[0].label.stringId = 99;
+    expect("a label row", 0);
+    if (!fails)
+        printf("settings back: an untouched page is recognised, any edited value row is not\n");
+    return fails ? 1 : 0;
+}
+'''
+
+dia_h = read('include/dia.h')
+item_enum = re.search(r'^typedef enum \{.*?\} UIItemType;', dia_h, re.M | re.S)
+item_struct = re.search(r'^struct UIItem\s*\{.*?^\};', dia_h, re.M | re.S)
+has_changes = function_text(dia_c, 'src/dia.c', 'int diaHasChanges(')
+if item_enum is None or item_struct is None:
+    failures.append('include/dia.h: UIItemType / struct UIItem not found')
+elif has_changes:
+    types = 'typedef unsigned long long u64;\n' + item_enum.group(0) + '\n' + item_struct.group(0)
+    compile_and_run('dia_has_changes', CHANGES_HARNESS.replace('@TYPES@', types).replace('@FUNCTIONS@', has_changes))
 
 # --- Exit without saving: restore the source state captured at Settings entry --------------------
 

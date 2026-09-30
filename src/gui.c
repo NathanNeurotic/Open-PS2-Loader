@@ -97,6 +97,7 @@ typedef struct
 static gui_settings_source_state_t guiSettingsSourceState;
 
 static int guiSettingsIsShellResult(int result);
+static int guiSettingsLeftUntouched(struct UIItem *ui, int result);
 static int guiSettingsPageResult(int result);
 static int guiSettingsPromptSave(void);
 static void guiSettingsBeginDialog(struct UIItem *ui);
@@ -1449,7 +1450,7 @@ reshow_network:
         guiShowPopsNetConfig();
         goto reshow_network;
     }
-    if (result) {
+    if (result && !guiSettingsLeftUntouched(diaNetConfig, result)) {
         int netProtoVal2, netAccessVal2;
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
         diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
@@ -2571,6 +2572,26 @@ static int guiSettingsIsShellResult(int result)
     return guiSettingsIsPeerResult(result) || result == DIA_RESULT_INDEX;
 }
 
+// Back / L1 / R1 off a page whose rows the user did not change. Such an exit applies nothing, as
+// Back did before #793 made it keep edits. Since then every Back ran the page's apply block, and on
+// Game Sources, General, Launch, PS1 and Network that block is a full device re-apply
+// (applyConfig(..., 0), plus bdmForceDeviceRefresh on Game Sources) -- so merely opening Settings,
+// entering a page and backing out re-applied every source and left the USB page blank (#806,
+// zackcage6, Beta-3338). With nothing changed there is nothing to apply; an explicit OK or an edited
+// row still applies exactly as before.
+//
+// The long-path rows (IGR/Exit path, Neutrino path, POPSTARTER path) show only a 31-character preview;
+// the value lives in a full-size edit buffer seeded from its global when the page opens, so an edit
+// past the preview is caught by comparing those buffers too.
+static int guiSettingsLeftUntouched(struct UIItem *ui, int result)
+{
+    if (!guiSettingsIsShellResult(result) || diaHasChanges(ui))
+        return 0;
+
+    return strcmp(exitPathEdit, gExitPath) == 0 && strcmp(neutrinoPathEdit, gNeutrinoPath) == 0 &&
+           strcmp(popstarterPathEdit, gPopstarterPath) == 0;
+}
+
 static int guiSettingsPageResult(int result)
 {
     // L1/R1 peer paging and an explicit Index request pass straight back to the shell loop.
@@ -2667,7 +2688,7 @@ reshow_general:
         goto reshow_general;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result)) {
         diaGetInt(ui, UICFG_LANG, &langID);
         snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
         diaGetString(ui, CFG_CUSTOMCFGPATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
@@ -2749,7 +2770,7 @@ reshow_sources:
         result = UIID_BTN_OK;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result)) {
         diaGetInt(ui, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(ui, CFG_BDMMODE, &gBDMStartMode);
@@ -2979,7 +3000,7 @@ reshow_launch:
         goto reshow_launch;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result)) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
         if (strcmp(gNeutrinoPath, neutrinoPathEdit) != 0)
@@ -3086,7 +3107,7 @@ reshow_popstarter:
         goto reshow_popstarter;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result)) {
         int gameViewChanged = guiReadGameViewPicker(ui);
 
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
