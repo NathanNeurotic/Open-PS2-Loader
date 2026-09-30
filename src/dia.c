@@ -1118,7 +1118,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     int uiY = gTheme->usedHeight - 32;
     if (settingsContext) {
         int uiHints[3] = {_STR_SELECT, _STR_BACK, _STR_ENTER};
-        int uiIcons[3] = {CROSS_ICON, CIRCLE_ICON, TRIANGLE_ICON};
+        int uiIcons[3] = {guiConfirmIcon(), guiCancelIcon(), TRIANGLE_ICON};
         int uiX = guiAlignSubMenuHints(intFocus ? 3 : 2, uiHints, uiIcons, gTheme->fonts[0], 12, 2);
 
         if (settingsShell) {
@@ -1183,8 +1183,10 @@ static void diaResetValue(struct UIItem *item)
 
 static int diaHandleInput(struct UIItem *item, int *modified, int settingsContext)
 {
-    int selectButton = settingsContext ? KEY_CROSS : gSelectButton;
-    int cancelButton = settingsContext ? KEY_CIRCLE : (gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE);
+    // Settings follows the user's Select Button like every other screen (it used to force Cross).
+    (void)settingsContext;
+    int selectButton = guiConfirmKey();
+    int cancelButton = guiCancelKey();
 
     // circle loses focus, sets old values first
     if (getKeyOn(cancelButton)) {
@@ -1562,21 +1564,21 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
             // page's edits while a flip kept them (FifthFox). Leaving Settings is where the user
             // decides: Save / Exit without saving / Continue. Sub-dialogs opened from a page are not
             // the shell UI, so for them Circle stays Cancel.
-            if (settingsShell && getKeyOn(KEY_CIRCLE)) {
+            if (settingsShell && getKeyOn(guiCancelKey())) {
                 diaRestoreScrollSpeed();
                 sfxPlay(SFX_CANCEL);
                 return DIA_RESULT_INDEX;
             }
 
             // Cancel button breaks focus or exits with false result
-            if (getKeyOn(settingsContext ? KEY_CIRCLE : (gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE))) {
+            if (getKeyOn(guiCancelKey())) {
                 diaRestoreScrollSpeed();
                 sfxPlay(SFX_CANCEL);
                 return UIID_BTN_CANCEL;
             }
 
             // see what key events we have
-            if (getKeyOn(settingsContext ? KEY_CROSS : gSelectButton)) {
+            if (getKeyOn(guiConfirmKey())) {
                 haveFocus = 1;
                 sfxPlay(SFX_CONFIRM);
 
