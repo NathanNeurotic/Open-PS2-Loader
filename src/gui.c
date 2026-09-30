@@ -1809,7 +1809,7 @@ static int guiReadPopsNet(int source, vcd_popsnet_t *out)
         guiEndFrame();
 
         readPads();
-        if (getKeyOn(KEY_CIRCLE)) {
+        if (getKeyOn(guiCancelKey())) {
             guiPopsNetReadAbandoned = 1;
             return GUI_POPSNET_READ_ABORTED;
         }
@@ -3240,7 +3240,7 @@ static void guiSettingsRestoreSourceState(void)
 static int guiSettingsPromptSave(void)
 {
     int promptHints[3] = {_STR_SETTINGS_SAVE, _STR_SETTINGS_EXIT_WITHOUT_SAVING, _STR_SETTINGS_CONTINUE_EDITING};
-    int promptIcons[3] = {CROSS_ICON, CIRCLE_ICON, TRIANGLE_ICON};
+    int promptIcons[3] = {guiConfirmIcon(), guiCancelIcon(), TRIANGLE_ICON};
 
     sfxPlay(SFX_MESSAGE);
     while (1) {
@@ -3270,11 +3270,11 @@ static int guiSettingsPromptSave(void)
         guiEndFrame();
 
         readPads();
-        if (getKeyOn(KEY_CROSS)) {
+        if (getKeyOn(guiConfirmKey())) {
             sfxPlay(SFX_CONFIRM);
             return SETTINGS_PROMPT_SAVE;
         }
-        if (getKeyOn(KEY_CIRCLE)) {
+        if (getKeyOn(guiCancelKey())) {
             sfxPlay(SFX_CANCEL);
             return SETTINGS_PROMPT_EXIT;
         }
@@ -3288,7 +3288,7 @@ static int guiSettingsPromptSave(void)
 static void guiDrawSettingsIndexHints(void)
 {
     int hints[2] = {_STR_SELECT, _STR_BACK};
-    int icons[2] = {CROSS_ICON, CIRCLE_ICON};
+    int icons[2] = {guiConfirmIcon(), guiCancelIcon()};
     int x = guiAlignSubMenuHints(2, hints, icons, gTheme->fonts[0], 12, 2);
     int y = gTheme->usedHeight - 32;
 
@@ -3352,7 +3352,7 @@ static int guiSettingsShowIndex(int *page)
         } else if (getKey(KEY_DOWN)) {
             sfxPlay(SFX_CURSOR);
             selected = (selected + 1) % itemCount;
-        } else if (getKeyOn(KEY_CROSS)) {
+        } else if (getKeyOn(guiConfirmKey())) {
             sfxPlay(SFX_CONFIRM);
             if (selected == SETTINGS_PAGE_COUNT) {
                 if (menuSaveSettings() > 0) {
@@ -3367,7 +3367,7 @@ static int guiSettingsShowIndex(int *page)
                 *page = selected;
                 return 1;
             }
-        } else if (getKeyOn(KEY_START) || getKeyOn(KEY_CIRCLE)) {
+        } else if (getKeyOn(KEY_START) || getKeyOn(guiCancelKey())) {
             sfxPlay(SFX_CANCEL);
             if (!guiSettingsSavePending)
                 return 0;
@@ -4715,6 +4715,29 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
     return terminate - 1;
 }
 
+// Settings, its save prompt and the Reboot IOP prompt used to hard-wire Cross = confirm / Circle = back
+// (Settings redesign, #527), so with Circle chosen as the confirm button those screens ran the other way
+// round from the rest of RiptOPL (volventura, PSX-Place). Everything asks here instead.
+int guiConfirmKey(void)
+{
+    return gSelectButton;
+}
+
+int guiCancelKey(void)
+{
+    return gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE;
+}
+
+int guiConfirmIcon(void)
+{
+    return gSelectButton == KEY_CIRCLE ? CIRCLE_ICON : CROSS_ICON;
+}
+
+int guiCancelIcon(void)
+{
+    return gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON;
+}
+
 int guiPromptRebootIop(void)
 {
     int terminate = 0;
@@ -4726,9 +4749,9 @@ int guiPromptRebootIop(void)
 
         readPads();
 
-        if (getKeyOn(KEY_CROSS))
+        if (getKeyOn(guiConfirmKey()))
             terminate = 1;
-        else if (getKeyOn(KEY_CIRCLE))
+        else if (getKeyOn(guiCancelKey()))
             terminate = 2;
         else if (getKeyOn(KEY_TRIANGLE))
             terminate = 3;
@@ -4742,9 +4765,9 @@ int guiPromptRebootIop(void)
 
         fntRenderString(gTheme->fonts[0], screenWidth >> 1, gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0, "REBOOT IOP?", gTheme->textColor);
 
-        guiDrawIconAndLiteralText(CROSS_ICON, "YES", gTheme->fonts[0], 70, 417, gTheme->textColor);
+        guiDrawIconAndLiteralText(guiConfirmIcon(), "YES", gTheme->fonts[0], 70, 417, gTheme->textColor);
         guiDrawIconAndLiteralText(TRIANGLE_ICON, _l(_STR_CANCEL), gTheme->fonts[0], 285, 417, gTheme->textColor);
-        guiDrawIconAndLiteralText(CIRCLE_ICON, "NO", gTheme->fonts[0], 500, 417, gTheme->textColor);
+        guiDrawIconAndLiteralText(guiCancelIcon(), "NO", gTheme->fonts[0], 500, 417, gTheme->textColor);
 
         guiEndFrame();
     }
