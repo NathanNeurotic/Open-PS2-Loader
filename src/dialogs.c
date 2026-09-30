@@ -455,6 +455,10 @@ struct UIItem diaVcdConfig[] = {
     {UI_SPACER},
     {UI_ENUM, CFG_EMBER_DISPLAY, 1, 1, _STR_HINT_EMBER_DISPLAY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_TIMING}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_TIMING, 1, 1, _STR_HINT_EMBER_TIMING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_DITHER}}},
     {UI_SPACER},
     {UI_ENUM, CFG_EMBER_DITHER, 1, 1, _STR_HINT_EMBER_DITHER, 0, 0, {.intvalue = {0, 0}}},
@@ -577,14 +581,26 @@ struct UIItem diaVcdUsbMode[] = {
     // end of dialog
     {UI_TERMINATOR}};
 
-// Ember Game Settings (PS1 Triangle menu, Ember rows only): this game's Controller, kept in its CFG
-// and written to EMBER/games/<Name>/settings.txt at launch. Default = follow the global row. Controller
-// only, on Gageformer's advice (per-game is meant for the controller; 24-bit shading can cause issues),
-// although Ember also reads shading from a game's file.
+// Ember Game Settings (PS1 Triangle menu, Ember rows only): every setting Ember accepts in a
+// game's own settings.txt. Display remains global-only. Default means inherit the global Ember value;
+// confirming the dialog stores that inheritance explicitly in the game's CFG so launch removes the
+// corresponding per-game key.
 struct UIItem diaEmberGameConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_EMBER_GAME_SETTINGS}}},
     {UI_SPLITTER},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_TIMING}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_TIMING, 1, 1, _STR_HINT_EMBER_GAME_SETTING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_DITHER}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_DITHER, 1, 1, _STR_HINT_EMBER_GAME_SETTING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_SHADING}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_EMBER_SHADING, 1, 1, _STR_HINT_EMBER_GAME_SETTING, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EMBER_CONTROLLER}}},
     {UI_SPACER},
     {UI_ENUM, CFG_EMBER_CONTROLLER, 1, 1, _STR_HINT_EMBER_GAME_SETTING, 0, 0, {.intvalue = {0, 0}}},
@@ -1117,9 +1133,6 @@ struct UIItem diaCompatConfig[] = {
     {UI_SPACER},
     {UI_BOOL, COMPAT_MODE_BASE + 6, 1, 1, _STR_HINT_MODE7, -10, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
-
-    {UI_BUTTON, COMPAT_DL_DEFAULTS, 1, 1, -1, 0, 0, {.label = {NULL, _STR_DL_DEFAULTS}}},
-    {UI_SPLITTER},
 
     {UI_SPACER},
     {UI_BUTTON, COMPAT_NEUTRINO_ARGS, 1, 1, _STR_HINT_NEUTRINO_ARGS, 0, 0, {.label = {NULL, _STR_NEUTRINO_ARGS}}},
@@ -1696,31 +1709,6 @@ struct UIItem diaAbout[] = {
 
     // buttons
     {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
-    {UI_BREAK},
-
-    // end of dialog
-    {UI_TERMINATOR}};
-
-// Network Update Menu
-struct UIItem diaNetCompatUpdate[] = {
-    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NET_UPDATE}}},
-    {UI_SPLITTER},
-
-    {UI_LABEL, NETUPD_OPT_UPD_ALL_LBL, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NET_UPDATE_ALL}}},
-    {UI_SPACER},
-    {UI_BOOL, NETUPD_OPT_UPD_ALL, 0, 1, _STR_NET_UPDATE_HINT, 0, 0, {.intvalue = {0, 0, 0, 1}}},
-    {UI_BREAK},
-
-    {UI_LABEL, NETUPD_PROGRESS_LBL, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VMC_PROGRESS}}},
-    {UI_SPACER},
-    {UI_INT, NETUPD_PROGRESS, 0, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 100}}},
-    {UI_LABEL, NETUPD_PROGRESS_PERC_LBL, 1, 1, -1, 0, 0, {.label = {"%", -1}}},
-    {UI_BREAK},
-
-    // buttons
-    {UI_BUTTON, NETUPD_BTN_START, 1, 1, -1, 0, 0, {.label = {NULL, _STR_START}}},
-    {UI_SPACER},
-    {UI_BUTTON, NETUPD_BTN_CANCEL, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CANCEL}}},
     {UI_BREAK},
 
     // end of dialog

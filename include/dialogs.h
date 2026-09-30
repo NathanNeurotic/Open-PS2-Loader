@@ -99,6 +99,7 @@ enum UI_ITEMS {
     CFG_POPSTARTER_PATH,
     CFG_POPSTARTER_RETROGEM_GAMEID,
     CFG_EMBER_DISPLAY,    // Ember's own display mode, written to its settings.txt at launch
+    CFG_EMBER_TIMING,     // Ember settings.txt "timing"
     CFG_EMBER_DITHER,     // Ember settings.txt "dither"
     CFG_EMBER_SHADING,    // Ember settings.txt "shading"
     CFG_EMBER_CONTROLLER, // Ember settings.txt "controller"
@@ -242,7 +243,8 @@ enum UI_ITEMS {
     COMPAT_DMA = 100,
     COMPAT_ALTSTARTUP,
     COMPAT_GAMEID,
-    COMPAT_DL_DEFAULTS,
+    // Retired Download Defaults button slot. Preserve later per-game dialog IDs.
+    COMPAT_RETIRED_DOWNLOAD_DEFAULTS,
     COMPAT_LOADER,
     COMPAT_NEUTRINO_ARGS,
     COMPAT_NEUTRINO_VIDEO,
@@ -265,14 +267,6 @@ enum UI_ITEMS {
     VMC_STATUS,
     VMC_PROGRESS,
     VMC_REFRESH,
-
-    NETUPD_OPT_UPD_ALL_LBL,
-    NETUPD_OPT_UPD_ALL,
-    NETUPD_PROGRESS_LBL,
-    NETUPD_PROGRESS_PERC_LBL,
-    NETUPD_PROGRESS,
-    NETUPD_BTN_START,
-    NETUPD_BTN_CANCEL,
 
     OSD_LANGUAGE_SOURCE,
     OSD_LANGUAGE_ENABLE,
@@ -380,7 +374,6 @@ extern struct UIItem diaCheatConfig[];
 extern struct UIItem diaConfig[];
 extern struct UIItem diaAbout[];
 extern struct UIItem diaVMC[];
-extern struct UIItem diaNetCompatUpdate[];
 
 extern struct UIItem diaOSDConfig[];
 extern struct UIItem diaCoverflowConfig[];

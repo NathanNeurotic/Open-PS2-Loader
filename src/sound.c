@@ -16,6 +16,7 @@
 #include "include/pad.h"
 
 // Silence unused variable warnings from vorbisfile.h
+static ov_callbacks OV_CALLBACKS_DEFAULT __attribute__((unused));
 static ov_callbacks OV_CALLBACKS_NOCLOSE __attribute__((unused));
 static ov_callbacks OV_CALLBACKS_STREAMONLY __attribute__((unused));
 static ov_callbacks OV_CALLBACKS_STREAMONLY_NOCLOSE __attribute__((unused));
@@ -677,8 +678,124 @@ static void bgmIoThread(void *arg)
     SignalSema(outSema);
 }
 
+/* The music file, as the decoder sees it. vorbisfile reads through these callbacks instead of a bare
+   FILE*, so a stream whose descriptor dies under it can be reopened and resumed at the same byte.
+
+   Why it dies: SD2PSX (sd2psxtd firmware, 1.4.0 and develop) keeps the descriptor of the command in
+   progress in an int, but its close/read/write/lseek handlers receive the descriptor into that int's
+   LOW BYTE only. A failed open or stat -- the ul.cfg probe of every MMCE refresh, a cover that does
+   not exist -- stores -1 there first, so the next read or lseek of ANY file that is still open goes to
+   a negative descriptor and fails. For the music that read came back empty mid-file, the decoder took
+   it for the end of the stream, the rewind failed the same way, and the music stopped for good a few
+   seconds into the menu. A successful open writes the whole int again, so reopening is the cure. */
+#define BGM_REOPEN_TRIES    4
+#define BGM_REOPEN_RETRY_US (20 * 1000)
+
+typedef struct
+{
+    FILE *f;
+    long pos;  // where the decoder believes it is
+    long size; // -1 when the size could not be read
+    char path[256];
+} bgm_source_t;
+
+static int bgmSourceReopen(bgm_source_t *src)
+{
+    int tries;
+
+    for (tries = 0; tries < BGM_REOPEN_TRIES; tries++) {
+        FILE *f = fopen(src->path, "rb");
+        if (f != NULL) {
+            if (fseek(f, src->pos, SEEK_SET) == 0) {
+                // Only now close the dead handle: the open above left the card's descriptor state
+                // whole, so this close reaches the right file instead of leaking it.
+                fclose(src->f);
+                src->f = f;
+                LOG("BGM: reopened %s at %ld\n", src->path, src->pos);
+                return 1;
+            }
+            fclose(f);
+        }
+        DelayThread(BGM_REOPEN_RETRY_US);
+    }
+    LOG("BGM: cannot reopen %s at %ld\n", src->path, src->pos);
+    return 0;
+}
+
+static size_t bgmSourceRead(void *ptr, size_t size, size_t nmemb, void *datasource)
+{
+    bgm_source_t *src = (bgm_source_t *)datasource;
+    int tries = 0;
+
+    if (size == 0 || nmemb == 0)
+        return 0;
+    while (1) {
+        size_t r = fread(ptr, size, nmemb, src->f);
+        if (r > 0) {
+            src->pos += (long)(r * size);
+            return r;
+        }
+        // Nothing read. At the real end of the file that is the end of the stream; before it, the
+        // descriptor is gone -- reopen and read again.
+        if (src->size >= 0 && src->pos >= src->size)
+            return 0;
+        if (tries++ >= BGM_REOPEN_TRIES || !bgmSourceReopen(src))
+            return 0;
+    }
+}
+
+static int bgmSourceSeek(void *datasource, ogg_int64_t offset, int whence)
+{
+    bgm_source_t *src = (bgm_source_t *)datasource;
+    long target, keep;
+
+    if (whence == SEEK_SET)
+        target = (long)offset;
+    else if (whence == SEEK_CUR)
+        target = src->pos + (long)offset;
+    else if (whence == SEEK_END && src->size >= 0)
+        target = src->size + (long)offset;
+    else
+        return -1;
+    if (target < 0)
+        return -1;
+
+    if (fseek(src->f, target, SEEK_SET) != 0) {
+        keep = src->pos;
+        src->pos = target;
+        if (!bgmSourceReopen(src)) {
+            src->pos = keep;
+            return -1;
+        }
+    }
+    src->pos = target;
+    return 0;
+}
+
+static long bgmSourceTell(void *datasource)
+{
+    return ((bgm_source_t *)datasource)->pos;
+}
+
+static int bgmSourceClose(void *datasource)
+{
+    bgm_source_t *src = (bgm_source_t *)datasource;
+    int ret = fclose(src->f);
+
+    free(src);
+    return ret;
+}
+
+static ov_callbacks bgmSourceCallbacks = {
+    bgmSourceRead,
+    bgmSourceSeek,
+    bgmSourceClose,
+    bgmSourceTell,
+};
+
 static int bgmTryLoadPath(const char *bgmPath, const char *source)
 {
+    bgm_source_t *src;
     FILE *bgmFile = fopen(bgmPath, "rb");
 
     if (bgmFile == NULL) {
@@ -686,13 +803,30 @@ static int bgmTryLoadPath(const char *bgmPath, const char *source)
         return 0;
     }
 
-    if (ov_open_callbacks(bgmFile, vorbisFile, NULL, 0, OV_CALLBACKS_DEFAULT) == 0) {
-        LOG("BGM: Loaded %s BGM %s\n", source, bgmPath);
+    src = malloc(sizeof(bgm_source_t));
+    if (src == NULL) {
+        fclose(bgmFile);
+        return 0;
+    }
+    src->f = bgmFile;
+    src->pos = 0;
+    snprintf(src->path, sizeof(src->path), "%s", bgmPath);
+    src->size = -1;
+    if (fseek(bgmFile, 0, SEEK_END) == 0)
+        src->size = ftell(bgmFile);
+    if (fseek(bgmFile, 0, SEEK_SET) != 0) {
+        bgmSourceClose(src);
+        return 0;
+    }
+
+    if (ov_open_callbacks(src, vorbisFile, NULL, 0, bgmSourceCallbacks) == 0) {
+        LOG("BGM: Loaded %s BGM %s (%ld bytes)\n", source, bgmPath, src->size);
         return 1;
     }
 
+    // A failed ov_open_callbacks leaves the datasource to the caller.
     LOG("BGM: %s BGM is not a valid Ogg bitstream: %s\n", source, bgmPath);
-    fclose(bgmFile);
+    bgmSourceClose(src);
     memset(vorbisFile, 0, sizeof(OggVorbis_File));
     return 0;
 }

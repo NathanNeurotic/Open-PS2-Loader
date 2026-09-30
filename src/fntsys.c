@@ -13,6 +13,7 @@
 #include "include/atlas.h"
 
 #include <sys/types.h>
+#include <time.h> // clock(): fntRenderStringFit's scroll timing
 #include <ft2build.h>
 
 #include FT_FREETYPE_H
@@ -790,6 +791,81 @@ int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t he
     return rmUnScaleX(pen_x);
 }
 #endif
+
+// Draw `string` in a window `room` units wide (the same unscaled units as x), starting at x -- or centred
+// on x when `aligned` has ALIGN_HCENTER, exactly where fntRenderString would centre it. Text that fits is
+// drawn exactly as fntRenderString draws it. Text that does not: with `scroll` it scrolls through the whole
+// string, one character per FNT_MARQUEE_STEP_MS, holding FNT_MARQUEE_PAUSE steps at each end; without it,
+// it is cut to end in "...". Returns the end x, like fntRenderString.
+//
+// Shared by the settings dialogs (dia.c, #732: values ran off the edge on 4:3) and theme text (themes.c),
+// which stops long text at the next theme element instead of drawing over it.
+#define FNT_MARQUEE_STEP_MS 200 // one character per step
+#define FNT_MARQUEE_PAUSE   5   // steps held at each end
+
+static int fntTextWidth(int id, const char *text)
+{
+    return rmUnScaleX(fntCalcDimensions(id, text));
+}
+
+int fntRenderStringFit(int id, int x, int y, short aligned, int room, const char *string, u64 colour, int scroll)
+{
+    short at[256]; // byte offset where each character starts, then the end
+    char buf[256];
+    int n = 0, i, lo, hi, mid;
+
+    if (string == NULL || room <= 0) // no room at all: draw nothing rather than run past the limit
+        return x;
+    if (fntTextWidth(id, string) <= room)
+        return fntRenderString(id, x, y, aligned, 0, 0, string, colour);
+
+    // Too long: the window itself is what gets placed. fntRenderString centres by the drawn width, so a
+    // centred element's window is centred on x; the text then runs left to right inside it.
+    if (aligned & ALIGN_HCENTER)
+        x -= room / 2;
+    aligned &= ~(ALIGN_HCENTER | ALIGN_RIGHT);
+
+    for (i = 0; string[i] != '\0'; i++) {
+        if ((string[i] & 0xC0) == 0x80) // UTF-8 continuation byte
+            continue;
+        if (n == 255)
+            break;
+        at[n++] = i;
+    }
+    at[n] = i;
+
+    // Binary searches: this runs every frame, so measure O(log n) times, not once per character.
+    if (scroll) {
+        for (lo = 0, hi = n; lo < hi;) { // first character from which the rest fits = the last stop
+            mid = (lo + hi) / 2;
+            if (fntTextWidth(id, &string[at[mid]]) <= room)
+                hi = mid;
+            else
+                lo = mid + 1;
+        }
+        int step = (int)((clock() / (CLOCKS_PER_SEC / 1000) / FNT_MARQUEE_STEP_MS) % (lo + 2 * FNT_MARQUEE_PAUSE)) - FNT_MARQUEE_PAUSE;
+        step = step < 0 ? 0 : (step > lo ? lo : step);
+        fntRenderString(id, x, y, aligned, room, 0, &string[at[step]], colour);
+        return x + room;
+    }
+
+    room -= fntTextWidth(id, "...");
+    if (room < 0) // not even "..." fits
+        return x;
+    // buf must hold the complete UTF-8 prefix plus "...". Cap by byte offset, not character count.
+    while (n > 0 && at[n] > (int)sizeof(buf) - 4)
+        n--;
+    for (lo = 0, hi = n; lo < hi;) { // most characters that fit ahead of the "..."
+        mid = (lo + hi + 1) / 2;
+        snprintf(buf, sizeof(buf), "%.*s", at[mid], string);
+        if (fntTextWidth(id, buf) <= room)
+            lo = mid;
+        else
+            hi = mid - 1;
+    }
+    snprintf(buf, sizeof(buf), "%.*s...", at[lo], string);
+    return fntRenderString(id, x, y, aligned, 0, 0, buf, colour);
+}
 
 void fntFitString(int id, char *string, size_t width)
 {

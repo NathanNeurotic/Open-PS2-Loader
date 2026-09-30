@@ -31,6 +31,8 @@ STUBS = r'''
 #include <strings.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <errno.h>
+#define __OPLDIAG
 #define O_RDONLY 0
 #define MAX_BDM_DEVICES 10
 #define HDD_MODE 1
@@ -54,14 +56,21 @@ enum { VCD_POPSNET_SMB_MISSING, VCD_POPSNET_NEED_STATIC,
 static struct { const char *title; } appsList[] = {{"launcHER"}};
 static char gOPLPart[128];
 static int is_pops, reset_iop, errors, torn_down, launched, sdk_launch;
-static int got_argc, got_reset, got_cleanup;
-static char got_path[512], got_partition[256], got_argv[2][512];
+static int got_argc, got_reset, got_cleanup, mock_fd = 1, mock_errno;
+static char got_path[512], got_partition[256], got_argv[2][512], last_msg[1024];
 static int appVisibleToMaster(item_list_t *items, int id) { return id; }
 static void configGetStrCopy(config_set_t *c, int key, char *out, size_t size)
 { snprintf(out, size, "%s", c->path); }
 static int configGetStr(config_set_t *c, int key, const char **out)
 { *out = c->arg; return c->arg != NULL; }
-static int mock_open(const char *path, int flags) { return 1; }
+static int mock_open(const char *path, int flags)
+{
+    (void)path;
+    (void)flags;
+    if (mock_fd < 0)
+        errno = mock_errno;
+    return mock_fd;
+}
 static int mock_close(int fd) { return 0; }
 #define open mock_open
 #define close mock_close
@@ -74,9 +83,18 @@ static int appIsPopstarterElf(const char *path, const char *title) { return is_p
 static int appGetRebootIopConfig(config_set_t *c) { return reset_iop; }
 static int guiPromptRebootIop(void) { return 0; }
 static void mmceReset(void) {}
+static int appIsEmberElf(const char *path) { (void)path; return 0; }
+static int cueNameLaunchable(const char *name) { (void)name; return 1; }
+static void sysLaunchEmber(const char *path, const char *game) { (void)path; (void)game; }
 static const char *_l(int id) { return "error"; }
 static void guiMsgBox(const char *text, int mode, void *data)
-{ assert(!torn_down); errors++; }
+{
+    (void)mode;
+    (void)data;
+    assert(!torn_down);
+    errors++;
+    snprintf(last_msg, sizeof(last_msg), "%s", text);
+}
 static void deinit(int exception, int mode) { torn_down++; }
 static int captureLoad(const char *path, const char *partition, int argc, char **argv, int reset, int cleanup)
 {
@@ -113,6 +131,7 @@ static void run(const char *path, const char *arg, int reset, int pops)
     reset_iop = reset;
     is_pops = pops;
     errors = torn_down = launched = sdk_launch = got_argc = got_cleanup = 0;
+    last_msg[0] = '\0';
     memset(got_argv, 0, sizeof(got_argv));
     appLaunchItem(NULL, 0, &config);
 }
@@ -188,7 +207,21 @@ int main(void)
     assert(sdk_launch == 1 && got_argc == 1 && got_argv[0][0] == 0);
     run(apa, NULL, 0, 1);
     assert(sdk_launch == 1 && got_argc == 0);
-    puts("PASS: APA pfs handoff, HDD cleanup, reset choices, optional argv[1], other devices, POPSTARTER, 256/257-byte boundary");
+    // OPLDIAG must expose open() failure evidence without relying on DEBUG/LOG.
+    mock_fd = -1;
+    mock_errno = EIO;
+    run("mass0:/APPS/missing.elf", NULL, 0, 0);
+    assert(errors == 1 && !torn_down && !launched);
+    assert(strstr(last_msg, "mass0:/APPS/missing.elf") != NULL);
+    assert(strstr(last_msg, "fd -1, errno") != NULL);
+    {
+        char errno_text[32];
+        snprintf(errno_text, sizeof(errno_text), "errno %d", EIO);
+        assert(strstr(last_msg, errno_text) != NULL);
+    }
+    mock_fd = 1;
+
+    puts("PASS: APA pfs handoff, HDD cleanup, reset choices, optional argv[1], other devices, POPSTARTER, argument boundary, OPLDIAG open failure");
     return 0;
 }
 '''

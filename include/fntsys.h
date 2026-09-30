@@ -32,6 +32,10 @@ void fntUpdateAspectRatio();
 /** Renders a text with specified window dimensions */
 int fntRenderString(int id, int x, int y, short aligned, size_t width, size_t height, const char *string, u64 colour);
 
+/** Renders a string limited to `room` units: whole if it fits, else scrolling (scroll=1) or ending in "..." (scroll=0).
+    Centred on x for ALIGN_HCENTER, like fntRenderString. Returns the end x. */
+int fntRenderStringFit(int id, int x, int y, short aligned, int room, const char *string, u64 colour, int scroll);
+
 /** replaces spaces with newlines so that the text fits into the specified width.
  * @note A destrutive operation - modifies the given string!
  */

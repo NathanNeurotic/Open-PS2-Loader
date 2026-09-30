@@ -48,20 +48,13 @@
 #define OPL_PARENTAL_LOCK_MASTER_PASS "989765"
 
 // IO type IDs
-#define IO_CUSTOM_SIMPLEACTION    1 // handler for parameter-less actions
-#define IO_MENU_UPDATE_DEFFERED   2
-#define IO_CACHE_LOAD_ART         3 // io call to handle the loading of covers
-#define IO_COMPAT_UPDATE_DEFFERED 4
+#define IO_CUSTOM_SIMPLEACTION  1 // handler for parameter-less actions
+#define IO_MENU_UPDATE_DEFFERED 2
+#define IO_CACHE_LOAD_ART       3 // io call to handle the loading of covers
 // One past the highest id above -- sizes ioman's per-type diagnostic counters. Keep in step if a
 // new IO type is ever added, or that type simply goes uncounted (the accessors bounds-check).
-#define IO_REQ_TYPE_COUNT         5
+#define IO_REQ_TYPE_COUNT       4
 
-// Codes have been planned to fit the design of the GUI functions within gui.c.
-#define OPL_COMPAT_UPDATE_STAT_WIP        0
-#define OPL_COMPAT_UPDATE_STAT_DONE       1
-#define OPL_COMPAT_UPDATE_STAT_ERROR      -1
-#define OPL_COMPAT_UPDATE_STAT_CONN_ERROR -2
-#define OPL_COMPAT_UPDATE_STAT_ABORTED    -3
 
 #define OPL_VMODE_CHANGE_CONFIRMATION_TIMEOUT_MS 10000
 
@@ -218,6 +211,13 @@ enum {
     EMBER_DISPLAY_COUNT
 };
 enum {
+    EMBER_TIMING_DEFAULT = 0,
+    EMBER_TIMING_AUTO,
+    EMBER_TIMING_NTSC,
+    EMBER_TIMING_PAL,
+    EMBER_TIMING_COUNT
+};
+enum {
     EMBER_DITHER_DEFAULT = 0,
     EMBER_DITHER_ON,
     EMBER_DITHER_OFF,
@@ -237,6 +237,7 @@ enum {
     EMBER_CONTROLLER_COUNT
 };
 extern int gEmberDisplay;
+extern int gEmberTiming;
 extern int gEmberDither;
 extern int gEmberShading;
 extern int gEmberController;

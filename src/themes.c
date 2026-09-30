@@ -387,15 +387,177 @@ static mutable_text_t *initMutableText(const char *themePath, config_set_t *them
     return mutableText;
 }
 
+// Collision-aware text ////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Long text used to draw straight over whatever sat next to it: a List title ran across the cover, an
+// attribute value across the next label. At theme load each text element gets a room -- how far it may
+// run on its row before it reaches another element of the SAME screen or the screen edge -- and text
+// longer than that scrolls inside it (fntRenderStringFit), like a settings value does (#732).
+//
+// Backdrops are not obstacles: an element the text STARTS inside (a banner or panel the theme draws the
+// text on) is ignored. Only what the text would run INTO counts.
+
+#define THM_TEXT_GAP      4   // keep this much space before the neighbour
+#define THM_TEXT_MIN_ROOM 40  // a smaller room is more likely a misread layout than a real one: keep the old draw
+#define THM_COVER_W       140 // an image with no declared size and no default image: OPL's cover art size
+#define THM_COVER_H       200
+
+typedef struct
+{
+    int x0, y0, x1, y1;
+} thm_box_t;
+
+// Room for text starting at sx on the row band [ry0, ry1): rightward to the nearest box or the screen
+// edge; centred text (it grows both ways) gets twice the nearer side. Boxes the text starts inside are
+// backdrops and ignored.
+static int thmTextRoom(int sx, int ry0, int ry1, int centred, const thm_box_t *boxes, int count, int screenW)
+{
+    int right = screenW - sx, left = sx, i;
+
+    for (i = 0; i < count; i++) {
+        const thm_box_t *b = &boxes[i];
+        if (b->y1 <= ry0 || b->y0 >= ry1)
+            continue; // not on this row
+        if (b->x0 <= sx && sx < b->x1)
+            continue; // the text starts inside it: a backdrop
+        if (b->x0 > sx) {
+            if (b->x0 - sx < right)
+                right = b->x0 - sx;
+        } else if (sx - b->x1 < left) {
+            left = sx - b->x1;
+        }
+    }
+    right -= THM_TEXT_GAP;
+    left -= THM_TEXT_GAP;
+    if (centred)
+        return 2 * (left < right ? left : right);
+    return right;
+}
+
+static int thmIsTextElem(int type)
+{
+    return type == ELEM_TYPE_ATTRIBUTE_TEXT || type == ELEM_TYPE_STATIC_TEXT || type == ELEM_TYPE_ITEM_TEXT ||
+           type == ELEM_TYPE_GAME_COUNT_TEXT;
+}
+
+// The row a single line of text occupies (fntRenderString's vertical placement, one MENU_ITEM_HEIGHT line).
+static void thmTextRow(const theme_element_t *elem, int *y0, int *y1)
+{
+    *y0 = (elem->aligned & ALIGN_VCENTER) ? elem->posY - MENU_ITEM_HEIGHT / 2 : elem->posY;
+    *y1 = *y0 + MENU_ITEM_HEIGHT;
+}
+
+// An element's box as an obstacle. Text and lists are their start point on their row (their far edge
+// depends on what they show). Returns 0 for elements with no knowable box.
+static int thmElemBox(const theme_element_t *elem, thm_box_t *box)
+{
+    int w = elem->width, h = elem->height;
+
+    if (thmIsTextElem(elem->type) || elem->type == ELEM_TYPE_MENU_TEXT || elem->type == ELEM_TYPE_HINT_TEXT ||
+        elem->type == ELEM_TYPE_INFO_HINT_TEXT) {
+        box->x0 = box->x1 = elem->posX;
+        thmTextRow(elem, &box->y0, &box->y1);
+        return 1;
+    }
+    if (elem->type == ELEM_TYPE_ITEMS_LIST) {
+        box->x0 = box->x1 = elem->posX;
+        box->y0 = elem->posY;
+        box->y1 = elem->posY + elem->height;
+        return 1;
+    }
+    if (elem->type != ELEM_TYPE_ATTRIBUTE_IMAGE && elem->type != ELEM_TYPE_GAME_IMAGE && elem->type != ELEM_TYPE_STATIC_IMAGE &&
+        elem->type != ELEM_TYPE_MENU_ICON && elem->type != ELEM_TYPE_BDM_INDEX && elem->type != ELEM_TYPE_COVERFLOW)
+        return 0; // background, loading icon: never obstacles
+
+    if (w == DIM_UNDEF || h == DIM_UNDEF) {
+        const mutable_image_t *image = NULL;
+        if (elem->type == ELEM_TYPE_ATTRIBUTE_IMAGE || elem->type == ELEM_TYPE_GAME_IMAGE || elem->type == ELEM_TYPE_STATIC_IMAGE)
+            image = (const mutable_image_t *)elem->extended;
+        if (image != NULL && image->defaultTexture != NULL && image->defaultTexture->source.Width > 0) {
+            if (w == DIM_UNDEF)
+                w = image->defaultTexture->source.Width;
+            if (h == DIM_UNDEF)
+                h = image->defaultTexture->source.Height;
+        } else if (elem->type == ELEM_TYPE_GAME_IMAGE) {
+            if (w == DIM_UNDEF)
+                w = THM_COVER_W;
+            if (h == DIM_UNDEF)
+                h = THM_COVER_H;
+        } else {
+            return 0;
+        }
+    }
+    box->x0 = (elem->aligned & ALIGN_HCENTER) ? elem->posX - w / 2 : elem->posX;
+    box->y0 = (elem->aligned & ALIGN_VCENTER) ? elem->posY - h / 2 : elem->posY;
+    box->x1 = box->x0 + w;
+    box->y1 = box->y0 + h;
+    return 1;
+}
+
+static void thmComputeTextRooms(theme_elems_t *elems)
+{
+    thm_box_t boxes[64];
+    theme_element_t *elem, *other;
+
+    for (elem = elems->first; elem != NULL; elem = elem->next) {
+        int sx, ry0, ry1, count = 0, room;
+
+        elem->textRoom = 0;
+        if (elem->type == ELEM_TYPE_ITEMS_LIST) {
+            const items_list_t *list = (const items_list_t *)elem->extended;
+            sx = elem->posX + ((list != NULL && list->decoratorImage != NULL) ? DECORATOR_SIZE : 0);
+            ry0 = elem->posY;
+            ry1 = elem->posY + elem->height;
+        } else if (thmIsTextElem(elem->type)) {
+            // Word-wrapped text already fits its box by wrapping.
+            if (elem->type != ELEM_TYPE_ITEM_TEXT && elem->extended != NULL &&
+                ((const mutable_text_t *)elem->extended)->sizingMode == SIZING_WRAP)
+                continue;
+            sx = elem->posX;
+            thmTextRow(elem, &ry0, &ry1);
+        } else {
+            continue;
+        }
+
+        for (other = elems->first; other != NULL && count < (int)(sizeof(boxes) / sizeof(boxes[0])); other = other->next) {
+            if (other == elem)
+                continue;
+            // A devices=-filtered MenuIcon/ItemsList/HintText is drawn on ONE page only (the types
+            // thmElemSkipsDevice gates; any other type with devices= is drawn everywhere, so it stays
+            // an obstacle). Counting it on every page boxed the built-in Coverflow title into 196 units
+            // because of the Favorites icon (zackcage6, Beta-3335).
+            if (other->deviceFilter && (other->type == ELEM_TYPE_MENU_ICON || other->type == ELEM_TYPE_ITEMS_LIST ||
+                                        other->type == ELEM_TYPE_HINT_TEXT))
+                continue;
+            if (thmElemBox(other, &boxes[count]))
+                count++;
+        }
+
+        room = thmTextRoom(sx, ry0, ry1, (elem->aligned & ALIGN_HCENTER) != 0, boxes, count, screenWidth);
+        // A width the theme declared still bounds the text; it now scrolls there instead of being cut.
+        if (elem->width != DIM_UNDEF && elem->width > 0 && elem->width < room)
+            room = elem->width;
+        elem->textRoom = (room >= THM_TEXT_MIN_ROOM) ? room : 0;
+    }
+}
+
+// Draw one line of an element's text: inside its room (scrolling when longer) once one is known,
+// otherwise exactly as before. Returns the end x.
+static int thmDrawElemText(theme_element_t *elem, int sizingMode, const char *text, int scroll)
+{
+    if (elem->textRoom > 0 && sizingMode != SIZING_WRAP)
+        return fntRenderStringFit(elem->font, elem->posX, elem->posY, elem->aligned, elem->textRoom, text, elem->color, scroll);
+    if (sizingMode == SIZING_NONE)
+        return fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, text, elem->color);
+    return fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, text, elem->color);
+}
+
 // StaticText ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void drawStaticText(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
     mutable_text_t *mutableText = (mutable_text_t *)elem->extended;
-    if (mutableText->sizingMode == SIZING_NONE)
-        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, mutableText->value, elem->color);
-    else
-        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, mutableText->value, elem->color);
+    thmDrawElemText(elem, mutableText->sizingMode, mutableText->value, 1);
 }
 
 static void initStaticText(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
@@ -435,7 +597,7 @@ static void drawGameCountText(struct menu_list *menu, struct submenu_list *item,
         }
     }
 
-    fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, mutableText->value, elem->color);
+    thmDrawElemText(elem, SIZING_NONE, mutableText->value, 1);
 }
 
 static void initGameCountText(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
@@ -502,35 +664,22 @@ static void drawAttributeText(struct menu_list *menu, struct submenu_list *item,
             if (mutableText->displayMode == DISPLAY_NEVER) {
                 if (!strncmp(mutableText->alias, _l(_STR_SIZE), strlen(_l(_STR_SIZE)))) {
                     snprintf(result, sizeof(result), "%s MiB", mutableText->currentValue);
-                    if (mutableText->sizingMode == SIZING_NONE)
-                        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, result, elem->color);
-                    else
-                        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, result, elem->color);
+                    thmDrawElemText(elem, mutableText->sizingMode, result, 1);
                 } else {
-                    if (mutableText->sizingMode == SIZING_NONE)
-                        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, mutableText->currentValue, elem->color);
-                    else
-                        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, mutableText->currentValue, elem->color);
+                    thmDrawElemText(elem, mutableText->sizingMode, mutableText->currentValue, 1);
                 }
             } else {
                 if (!strncmp(mutableText->alias, _l(_STR_SIZE), strlen(_l(_STR_SIZE))))
                     snprintf(result, sizeof(result), "%s%s MiB", mutableText->alias, mutableText->currentValue);
                 else
                     snprintf(result, sizeof(result), "%s%s", mutableText->alias, mutableText->currentValue);
-                if (mutableText->sizingMode == SIZING_NONE)
-                    fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, result, elem->color);
-                else
-                    fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, result, elem->color);
+                thmDrawElemText(elem, mutableText->sizingMode, result, 1);
             }
             return;
         }
     }
-    if (mutableText->displayMode == DISPLAY_ALWAYS) {
-        if (mutableText->sizingMode == SIZING_NONE)
-            fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, mutableText->alias, elem->color);
-        else
-            fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, elem->width, elem->height, mutableText->alias, elem->color);
-    }
+    if (mutableText->displayMode == DISPLAY_ALWAYS)
+        thmDrawElemText(elem, mutableText->sizingMode, mutableText->alias, 1);
 }
 
 static void initAttributeText(const char *themePath, config_set_t *themeConfig, theme_t *theme, theme_element_t *elem, const char *name)
@@ -1841,6 +1990,7 @@ static theme_element_t *initBasic(const char *themePath, config_set_t *themeConf
     elem->drawElem = NULL;
     elem->endElem = &endBasic;
     elem->next = NULL;
+    elem->textRoom = 0;
 
     snprintf(elemProp, sizeof(elemProp), "%s_x", name);
     if (configGetStr(themeConfig, elemProp, &temp)) {
@@ -2140,11 +2290,17 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                 else if (itemsList->decoratorImage->defaultTexture)
                     rmDrawPixmap(&itemsList->decoratorImage->defaultTexture->source, posX, posY, elem->aligned, DECORATOR_SIZE, DECORATOR_SIZE, elem->scaled, gDefaultCol, 0);
 
-                textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, dispText, color);
+                if (elem->textRoom > 0)
+                    textEndX = fntRenderStringFit(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->textRoom, dispText, color, ps == item);
+                else
+                    textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, dispText, color);
             } else {
                 // Decorator-less Lists use the same center-out warming above; their separate COV
                 // element draws the selected cover. No additional per-visible-row reads start here.
-                textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, dispText, color);
+                if (elem->textRoom > 0)
+                    textEndX = fntRenderStringFit(elem->font, elem->posX, posY, elem->aligned, elem->textRoom, dispText, color, ps == item);
+                else
+                    textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, dispText, color);
             }
 
             if (ps->item.favourited) {
@@ -2205,12 +2361,11 @@ static void drawItemText(struct menu_list *menu, struct submenu_list *item, conf
                     char vcdId[VCD_ID_MAX];
                     if (vcdDisplayIdCached(startup, vcdId, sizeof(vcdId)) ||
                         vcdExtractGameId(startup, vcdId, sizeof(vcdId))) {
-                        fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0, vcdId, elem->color);
+                        thmDrawElemText(elem, SIZING_NONE, vcdId, 1);
                         return;
                     }
                 }
-                fntRenderString(elem->font, elem->posX, elem->posY, elem->aligned, 0, 0,
-                                vcdDisplayNameForRow(support, item->item.id, startup), elem->color);
+                thmDrawElemText(elem, SIZING_NONE, vcdDisplayNameForRow(support, item->item.id, startup), 1);
             }
         }
     }
@@ -2740,6 +2895,21 @@ static void validateGUIElems(const char *themePath, config_set_t *themeConfig, t
     thmComputeDeviceCoverage(&theme->favsVcdInfoElems);
     thmComputeDeviceCoverage(&theme->favsAppsMainElems);
     thmComputeDeviceCoverage(&theme->favsAppsInfoElems);
+
+    // Where each text element's text must stop so it never draws over a neighbour. After the list
+    // pass above: the decorator decides where a list's rows start.
+    thmComputeTextRooms(&theme->mainElems);
+    thmComputeTextRooms(&theme->infoElems);
+    thmComputeTextRooms(&theme->appsMainElems);
+    thmComputeTextRooms(&theme->appsInfoElems);
+    thmComputeTextRooms(&theme->favsMainElems);
+    thmComputeTextRooms(&theme->favsInfoElems);
+    thmComputeTextRooms(&theme->vcdMainElems);
+    thmComputeTextRooms(&theme->vcdInfoElems);
+    thmComputeTextRooms(&theme->favsVcdMainElems);
+    thmComputeTextRooms(&theme->favsVcdInfoElems);
+    thmComputeTextRooms(&theme->favsAppsMainElems);
+    thmComputeTextRooms(&theme->favsAppsInfoElems);
 
     // Keep list-row decorator covers from evicting the selected cover.
     splitDecoratorCoverCache(theme, theme->gamesItemsList);

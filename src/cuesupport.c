@@ -501,11 +501,12 @@ static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, 
 void cueApplySettings(const char *devPrefix, const char *name, config_set_t *configSet)
 {
     static const char *const displayValues[] = {NULL, "240", "480", "480p"};
+    static const char *const timingValues[] = {NULL, "auto", "ntsc", "pal"};
     static const char *const ditherValues[] = {NULL, "on", "off"};
     static const char *const shadingValues[] = {NULL, "15", "24"};
     static const char *const controllerValues[] = {NULL, "auto", "analog", "d2a"};
-    cue_setting_t global[4];
-    cue_setting_t game[2];
+    cue_setting_t global[5];
+    cue_setting_t game[4];
     int nGlobal = 0;
     int nGame = 0;
     int value;
@@ -517,11 +518,16 @@ void cueApplySettings(const char *devPrefix, const char *name, config_set_t *con
         return;
 
     cueWantSetting(global, &nGlobal, "display", gEmberDisplay, displayValues, EMBER_DISPLAY_COUNT);
+    cueWantSetting(global, &nGlobal, "timing", gEmberTiming, timingValues, EMBER_TIMING_COUNT);
     cueWantSetting(global, &nGlobal, "dither", gEmberDither, ditherValues, EMBER_DITHER_COUNT);
     cueWantSetting(global, &nGlobal, "shading", gEmberShading, shadingValues, EMBER_SHADING_COUNT);
     cueWantSetting(global, &nGlobal, "controller", gEmberController, controllerValues, EMBER_CONTROLLER_COUNT);
 
     if (configSet != NULL && name != NULL && name[0] != '\0' && cueNameLaunchable(name)) {
+        if (configGetInt(configSet, CONFIG_ITEM_EMBER_TIMING, &value))
+            cueWantSetting(game, &nGame, "timing", value, timingValues, EMBER_TIMING_COUNT);
+        if (configGetInt(configSet, CONFIG_ITEM_EMBER_DITHER, &value))
+            cueWantSetting(game, &nGame, "dither", value, ditherValues, EMBER_DITHER_COUNT);
         if (configGetInt(configSet, CONFIG_ITEM_EMBER_SHADING, &value))
             cueWantSetting(game, &nGame, "shading", value, shadingValues, EMBER_SHADING_COUNT);
         if (configGetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, &value))

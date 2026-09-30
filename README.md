@@ -10,6 +10,7 @@
 A heartfelt thank you to developers who have contributed pull requests directly to this fork. Anyone who opens a pull request against RiptOPL is featured here at the top of the README in recognition of their support for the project and solidarity with its maintainer:
 
 ### [@oMrRexD](https://github.com/oMrRexD) (MrRexD)
+- **[#795](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/795)** (`fix(sound)`): **MMCE Background Music Recovery** — Made the music decoder recover when SD2PSX/MMCE firmware invalidates its long-lived file descriptor after a failed lookup. Added tracked stream position/size, bounded reopen-and-resume handling for failed reads/seeks, and host coverage for descriptor loss so theme music keeps playing instead of stopping permanently.
 - **[#789](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/789)** (`fix(fntsys)`): **Font Lock Concurrency Fix** — Held the font semaphore lock across draw, measure, and load operations in `src/fntsys.c`. This resolved a critical boot-freeze race condition where background font/theme loading on the IO worker thread freed glyph caches and texture atlases while the GUI rendering thread was actively drawing text. Tested across 111 consecutive clean boots on real hardware (SCPH-50001 with SD2PSX and exFAT BDM HDD).
 - **[#705](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/705)** (`dialogs`): **RetroAchievements Settings UI** — Restored the RetroAchievements configuration rows to the Network settings dialog page where they are displayed, configured, and persisted.
 - **[#704](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/704)** (`RA`): **Menu Network Telemetry Initialization** — Safely initialized and brought the networking stack up from the menu prior to cold telemetry game launches.
@@ -207,7 +208,7 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 - **MMCE support:** OPL supports MMCE devices using the Memory Card Mass Storage protocol for SD-based loading through the Memory Card slot.
 - **MX4SIO support:** OPL supports MX4SIO adapters for SD-based loading through the Memory Card slot. See the **USB/MMCE/MX4SIO/iLink** section for filesystem and layout guidance.
 - **Internal HDD exFAT support:** the internal ATA HDD can be loaded as **exFAT** — mounted through the Block Device Manager (BDMAssault / "BDMA") into the same `massN:` namespace as USB/MX4SIO — in addition to APA/PFS, including GPT partitioning for large disks, for PS2 **and** PS1 (POPSTARTER) games. See the **HDD** section for formatting, the BDMA equip, and fragmentation guidance.
-- **Themes:** Place theme assets in the `THM` folder, then select and apply themes from OPL settings. This fork ships a built-in **`<Coverflow>`** cover-carousel theme (the default) — see the [Theme Engine reference](docs/THEME_ENGINE.md) to author your own themes.
+- **Themes:** Place theme assets in the `THM` folder, then select and apply themes from OPL settings. **UDPFS Files** also reads `udpfs:/THM` once the server is reachable: with Network Connectivity **Auto** this is available during boot; with **Manual** it appears after the UDPFS page starts the connection. This fork ships a built-in **`<Coverflow>`** cover-carousel theme (the default) — see the [Theme Engine reference](docs/THEME_ENGINE.md) to author your own themes.
 - **Cheats / PS2RD:** OPL supports PS2RD `.cht` cheat files from the `CHT` folder, with both auto-apply and launch-time selection modes.
 - **Pad emulation (DS3/DS4):** On any build with PADEMU (the default), a DualShock 3 or DualShock 4 plugged into the console's USB port can navigate the OPL menu right away, with nothing to enable first. To play games with it, turn on **Pad Emulator** under **Settings**, then **Controller Settings** (globally, or per game via **Game Settings**). One caveat: pad emulation shares the SIO2 bus with MX4SIO SD-card loading, so running both can cause a game to hang on a black screen; leave Pad Emulator off if you boot from an MX4SIO card.
 - **GSM (video mode handling):** Builds that include GSM allow game video mode handling/overrides for display compatibility.
@@ -386,24 +387,22 @@ This build layers several features on top of upstream OPL:
   supply your own, from hardware and media you lawfully own. Please report Ember problems to *us*
   first rather than to Gageformer: the launching is ours.
 
-  **Ember settings.** The **PS Emulation Settings** page carries four Ember rows: *Ember Display Mode*
-  (**Default** / **240p** / **480i** / **480p**), *Ember Dithering* (**Default** / **On** / **Off**),
-  *Ember Shading* (**Default** / **15-bit** / **24-bit (experimental)**) and *Ember Controller*
-  (**Default** / **Auto** / **Analog** / **D2A**). When you launch an Ember title, RiptOPL writes
-  those settings into `<device>:/EMBER/settings.txt` on the launching device, creating the file if it is not
-  there and updating it in place if it is. **480p** needs component or HDMI (composite shows no
-  picture), so picking it asks first. RiptOPL only touches a setting you have changed here: a row
-  left on **Default** leaves that key alone, so a `settings.txt` written by hand keeps working;
-  changing a row back to **Default** removes the key again (and the file, if that was all it held).
-  Every other line in the file is kept.
+  **Ember settings.** The **PS Emulation Settings** page carries five Ember rows: *Ember Display Mode*
+  (**Default** / **240p** / **480i** / **480p**), *Ember Timing* (**Default** / **Auto** / **NTSC** /
+  **PAL**), *Ember Dithering* (**Default** / **On** / **Off**), *Ember Shading* (**Default** /
+  **15-bit** / **24-bit (experimental)**) and *Ember Controller* (**Default** / **Auto** / **Analog** /
+  **D2A**). At launch RiptOPL updates `<device>:/EMBER/settings.txt` on the game's device. **480p**
+  needs component or HDMI (composite shows no picture), so picking it asks first. Global rows remain
+  changed-only: a row never changed in RiptOPL leaves a hand-written key alone; changing it back to
+  **Default** removes that global key. Unknown lines and comments are preserved.
 
-  **Per game:** on an Ember title, **Triangle → Ember Game Settings** sets that game's *Ember
-  Controller*. It is saved in the game's `CFG/<Folder Name>.cfg` and written to
-  `EMBER/games/<Folder Name>/settings.txt` at launch, overriding the global row. Left on **Default**, it
-  leaves any `controller` line already in that game's file alone; changed back to **Default** after a
-  choice, it removes that line so the global row applies. On a Favourites entry it edits the same
-  setting as on the device page. Controller
-  is the only per-game setting, on Ember's author's advice.
+  **Per game:** on an Ember title, **Triangle → Ember Game Settings** exposes *Timing*, *Dithering*,
+  *Shading* and *Controller*. Ember reads those four keys from
+  `EMBER/games/<Folder Name>/settings.txt`; *Display* remains global-only. The choices are stored in
+  `CFG/<Folder Name>.cfg` and applied at launch. **Default means inherit the global Ember setting**:
+  RiptOPL removes that game's corresponding key; any non-Default value overrides the global one. On
+  a Favourites entry the same source-game CFG is edited.
+
 
 - **Alternate POPSTARTER builds:** the release package ships
   `POPS/POPSTARTER VERSIONS/` containing five builds of POPSTARTER — **MAIN**, **DEBUG**,

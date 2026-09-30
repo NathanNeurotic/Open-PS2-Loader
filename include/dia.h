@@ -109,6 +109,7 @@ void diaSetShowDefaultWhenEmpty(struct UIItem *ui, int id, int show);
 void diaSetVisible(struct UIItem *ui, int id, int visible);
 void diaSetItemType(struct UIItem *ui, int id, UIItemType type);
 int diaGetInt(struct UIItem *ui, int id, int *value);
+int diaHasChanges(struct UIItem *ui);
 int diaSetInt(struct UIItem *ui, int id, int value);
 int diaGetString(struct UIItem *ui, int id, char *value, int length);
 int diaSetString(struct UIItem *ui, int id, const char *text);

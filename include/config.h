@@ -33,7 +33,7 @@ enum CONFIG_INDEX {
 
 #define CONFIG_SOURCE_DEFAULT 0
 #define CONFIG_SOURCE_USER    1
-#define CONFIG_SOURCE_DLOAD   2 // Downloaded from the network
+#define CONFIG_SOURCE_DLOAD   2 // Legacy downloaded-defaults marker; retained so old per-game configs still identify/display correctly.
 
 // Items for per-game config files.
 #define CONFIG_ITEM_NAME             "#Name"
@@ -54,8 +54,10 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_NEUTRINO_VIDEO   "$NeutrinoVideo"
 #define CONFIG_ITEM_NEUTRINO_GSMCOMP "$NeutrinoGsmComp" // -gsm ":c" field-flip half (0=off, 1-3=type); only emitted when $NeutrinoVideo is set
 #define CONFIG_ITEM_NEUTRINO_BSDFS   "$NeutrinoBsdfs"   // -bsdfs override (parity-audit #11): 0=Auto, 1=exfat, 2=hdl, 3=bd; block-backed devices only
-#define CONFIG_ITEM_EMBER_CONTROLLER "$EmberController" // per-game Ember controller override; absent = follow global settings.txt
-#define CONFIG_ITEM_EMBER_SHADING    "$EmberShading"    // per-game Ember shading override; absent = follow global settings.txt
+#define CONFIG_ITEM_EMBER_TIMING     "$EmberTiming"     // per-game Ember timing override; 0 = inherit global
+#define CONFIG_ITEM_EMBER_DITHER     "$EmberDither"     // per-game Ember dithering override; 0 = inherit global
+#define CONFIG_ITEM_EMBER_SHADING    "$EmberShading"    // per-game Ember shading override; 0 = inherit global
+#define CONFIG_ITEM_EMBER_CONTROLLER "$EmberController" // per-game Ember controller override; 0 = inherit global
 #define CONFIG_ITEM_DNAS             "$DNAS"
 #define CONFIG_ITEM_CONFIGSOURCE     "$ConfigSource"
 
@@ -112,6 +114,7 @@ enum CONFIG_INDEX {
 #define CONFIG_LAST_LIB_VIEW_MIXED            "lib_view_mixed"
 #define CONFIG_OPL_EMBER_DISPLAY              "ember_display"      // LEGACY: read once to migrate, never written
 #define CONFIG_OPL_EMBER_DISPLAY_MODE         "ember_display_mode" // EMBER_DISPLAY_*; absent = never changed here
+#define CONFIG_OPL_EMBER_TIMING               "ember_timing"       // EMBER_TIMING_*; absent = never changed here
 #define CONFIG_OPL_EMBER_DITHER               "ember_dither"       // EMBER_DITHER_*; absent = never changed here
 #define CONFIG_OPL_EMBER_SHADING              "ember_shading"      // EMBER_SHADING_*; absent = never changed here
 #define CONFIG_OPL_EMBER_CONTROLLER           "ember_controller"   // EMBER_CONTROLLER_*; absent = never changed here
