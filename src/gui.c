@@ -97,7 +97,7 @@ typedef struct
 static gui_settings_source_state_t guiSettingsSourceState;
 
 static int guiSettingsIsShellResult(int result);
-static int guiSettingsLeftUntouched(struct UIItem *ui, int result);
+static int guiSettingsLeftUntouched(struct UIItem *ui, int result, const char *pathEdit, const char *pathValue);
 static int guiSettingsPageResult(int result);
 static int guiSettingsPromptSave(void);
 static void guiSettingsBeginDialog(struct UIItem *ui);
@@ -1450,7 +1450,7 @@ reshow_network:
         guiShowPopsNetConfig();
         goto reshow_network;
     }
-    if (result && !guiSettingsLeftUntouched(diaNetConfig, result)) {
+    if (result && !guiSettingsLeftUntouched(diaNetConfig, result, NULL, NULL)) {
         int netProtoVal2, netAccessVal2;
         diaGetInt(diaNetConfig, CFG_NETPROTOCOL, &netProtoVal2);
         diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netAccessVal2);
@@ -2580,16 +2580,17 @@ static int guiSettingsIsShellResult(int result)
 // zackcage6, Beta-3338). With nothing changed there is nothing to apply; an explicit OK or an edited
 // row still applies exactly as before.
 //
-// The long-path rows (IGR/Exit path, Neutrino path, POPSTARTER path) show only a 31-character preview;
-// the value lives in a full-size edit buffer seeded from its global when the page opens, so an edit
-// past the preview is caught by comparing those buffers too.
-static int guiSettingsLeftUntouched(struct UIItem *ui, int result)
+// A long-path row (IGR/Exit path on General, Neutrino path on Launch, POPSTARTER path on PS1) shows
+// only a 31-character preview; the value lives in a full-size edit buffer that THAT page seeds from
+// its global when it opens, so an edit past the preview is caught by comparing the page's own buffer.
+// Only its own: the other pages' buffers stay empty until their page first opens, and comparing them
+// would make every other page look edited (pathEdit/pathValue are NULL on pages without such a row).
+static int guiSettingsLeftUntouched(struct UIItem *ui, int result, const char *pathEdit, const char *pathValue)
 {
     if (!guiSettingsIsShellResult(result) || diaHasChanges(ui))
         return 0;
 
-    return strcmp(exitPathEdit, gExitPath) == 0 && strcmp(neutrinoPathEdit, gNeutrinoPath) == 0 &&
-           strcmp(popstarterPathEdit, gPopstarterPath) == 0;
+    return pathEdit == NULL || strcmp(pathEdit, pathValue) == 0;
 }
 
 static int guiSettingsPageResult(int result)
@@ -2688,7 +2689,7 @@ reshow_general:
         goto reshow_general;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result)) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, exitPathEdit, gExitPath)) {
         diaGetInt(ui, UICFG_LANG, &langID);
         snprintf(gExitPath, sizeof(gExitPath), "%s", exitPathEdit);
         diaGetString(ui, CFG_CUSTOMCFGPATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
@@ -2770,7 +2771,7 @@ reshow_sources:
         result = UIID_BTN_OK;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result)) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, NULL, NULL)) {
         diaGetInt(ui, CFG_DEFDEVICE, &deviceModeIndex);
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(ui, CFG_BDMMODE, &gBDMStartMode);
@@ -3000,7 +3001,7 @@ reshow_launch:
         goto reshow_launch;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result)) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, neutrinoPathEdit, gNeutrinoPath)) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
         if (strcmp(gNeutrinoPath, neutrinoPathEdit) != 0)
@@ -3107,7 +3108,7 @@ reshow_popstarter:
         goto reshow_popstarter;
     }
 
-    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result)) {
+    if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, popstarterPathEdit, gPopstarterPath)) {
         int gameViewChanged = guiReadGameViewPicker(ui);
 
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);

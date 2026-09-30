@@ -138,11 +138,11 @@ PAGES = ('static int guiSettingsShowGeneral(', 'static int guiSettingsShowSource
          'static int guiSettingsShowPopstarter(', 'int guiShowControllerConfig(')
 # Pages whose apply block is a full device re-apply: an untouched Back/L1/R1 must skip it (#806).
 DEVICE_PAGES = {
-    'static int guiSettingsShowGeneral(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result))',
-    'static int guiSettingsShowSources(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result))',
-    'int guiShowNetConfig(': 'if (result && !guiSettingsLeftUntouched(diaNetConfig, result))',
-    'static int guiSettingsShowLaunch(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result))',
-    'static int guiSettingsShowPopstarter(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result))',
+    'static int guiSettingsShowGeneral(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, exitPathEdit, gExitPath))',
+    'static int guiSettingsShowSources(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, NULL, NULL))',
+    'int guiShowNetConfig(': 'if (result && !guiSettingsLeftUntouched(diaNetConfig, result, NULL, NULL))',
+    'static int guiSettingsShowLaunch(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, neutrinoPathEdit, gNeutrinoPath))',
+    'static int guiSettingsShowPopstarter(': 'if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, popstarterPathEdit, gPopstarterPath))',
 }
 for sig in PAGES:
     body = function_text(gui_c, 'src/gui.c', sig)
@@ -165,10 +165,13 @@ untouched = function_text(gui_c, 'src/gui.c', 'static int guiSettingsLeftUntouch
 if untouched:
     if 'if (!guiSettingsIsShellResult(result) || diaHasChanges(ui))' not in untouched:
         failures.append('guiSettingsLeftUntouched: only an unchanged Back/L1/R1 counts as untouched')
-    for buffer, value in (('exitPathEdit', 'gExitPath'), ('neutrinoPathEdit', 'gNeutrinoPath'),
-                          ('popstarterPathEdit', 'gPopstarterPath')):
-        if 'strcmp(%s, %s) == 0' % (buffer, value) not in untouched:
-            failures.append('guiSettingsLeftUntouched: must compare the full-size %s with %s' % (buffer, value))
+    # Each page passes ITS OWN long-path buffer (CodeRabbit #807): another page's buffer is still
+    # empty until that page opens, so comparing it would make every page look edited.
+    if 'return pathEdit == NULL || strcmp(pathEdit, pathValue) == 0;' not in untouched:
+        failures.append('guiSettingsLeftUntouched: must compare only the page\'s own long-path buffer')
+    for buffer in ('exitPathEdit', 'neutrinoPathEdit', 'popstarterPathEdit'):
+        if buffer in untouched:
+            failures.append('guiSettingsLeftUntouched: must not read %s itself; the page passes its own' % buffer)
 
 CHANGES_HARNESS = r'''
 #include <stdio.h>
