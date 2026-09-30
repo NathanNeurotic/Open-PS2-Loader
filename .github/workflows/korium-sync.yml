@@ -1,0 +1,96 @@
+name: Korium Sync
+
+# Keeps the Korium test line (PR #687, test/korium-audit-remediation) level with rebuild/main, so the
+# "rolling-korium" release is always the same build as "rolling" apart from the built-in theme.
+#
+# On every push to rebuild/main this merges rebuild/main into the Korium branch -- the same MERGE (never
+# a rebase) that was done by hand before -- and pushes it. A merge that conflicts is NOT resolved here:
+# a conflict means rebuild/main changed a file Korium also changes (its theme cfgs, texture tables,
+# THEME_ENGINE.md, a Korium hunk in opl.c/themes.c), and that needs a person. The job aborts the
+# merge, names the conflicting files on PR #687, and fails; the Korium release stays on its last build.
+#
+# A push made with the workflow's GITHUB_TOKEN starts no other workflow, so after a clean push this
+# dispatches Rolling Release on the Korium branch itself (workflow_dispatch is the documented exception).
+
+on:
+  push:
+    branches:
+      - rebuild/main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+  pull-requests: write
+
+concurrency:
+  group: korium-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      KORIUM_BRANCH: test/korium-audit-remediation
+    steps:
+      - name: Checkout the Korium branch
+        uses: actions/checkout@v6
+        with:
+          ref: test/korium-audit-remediation
+          fetch-depth: 0
+
+      - name: Merge rebuild/main into the Korium branch
+        id: merge
+        run: |
+          set -eu
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --quiet origin rebuild/main
+          MAIN=$(git rev-parse FETCH_HEAD)
+
+          if git merge-base --is-ancestor "$MAIN" HEAD; then
+            echo "The Korium branch already contains rebuild/main ${MAIN:0:8}; nothing to do."
+            echo "pushed=no" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git merge --no-ff -m "Merge rebuild/main (${MAIN:0:8}) into Korium parity branch" "$MAIN"; then
+            git push origin "HEAD:$KORIUM_BRANCH"
+            echo "Merged rebuild/main ${MAIN:0:8} into $KORIUM_BRANCH."
+            echo "pushed=yes" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          FILES=$(git diff --name-only --diff-filter=U)
+          git merge --abort
+          {
+            echo "**Korium Sync could not merge rebuild/main \`${MAIN:0:8}\` automatically.** These files conflict:"
+            echo
+            echo "$FILES" | sed 's/^/- `/; s/$/`/'
+            echo
+            echo "Merge rebuild/main into \`$KORIUM_BRANCH\` by hand, keeping the Korium side of the theme changes. The Korium rolling release stays on its last build until then. ([run]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID))"
+          } > conflict.md
+          PR=$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$KORIUM_BRANCH" --state open --json number --jq '.[0].number' || true)
+          if [ -n "$PR" ]; then
+            gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file conflict.md || true
+          fi
+          cat conflict.md >> "$GITHUB_STEP_SUMMARY"
+          echo "Merge conflict -- see the summary." >&2
+          exit 1
+
+      # Dispatch whenever the rolling-korium release is not already built from the Korium tip -- not only
+      # after a new push. A run whose push landed but whose dispatch failed would otherwise find the branch
+      # "already synced" on a rerun and skip it, leaving the release stale (CodeRabbit #811). The publish
+      # re-targets the rolling-korium tag to the commit it built, so a match means there is nothing to do.
+      - name: Publish the Korium rolling release
+        run: |
+          set -eu
+          HEAD_SHA=$(git rev-parse HEAD)
+          RELEASED=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/rolling-korium" --jq .object.sha 2>/dev/null || echo none)
+          if [ "${{ steps.merge.outputs.pushed }}" != "yes" ] && [ "$RELEASED" = "$HEAD_SHA" ]; then
+            echo "rolling-korium is already built from ${HEAD_SHA:0:8}; nothing to publish."
+            exit 0
+          fi
+          gh workflow run rolling-release.yml --repo "$GITHUB_REPOSITORY" --ref "$KORIUM_BRANCH"
+          echo "Dispatched Rolling Release on $KORIUM_BRANCH (${HEAD_SHA:0:8}; release was at ${RELEASED:0:8})."

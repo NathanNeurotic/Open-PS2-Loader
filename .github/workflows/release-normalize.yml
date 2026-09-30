@@ -17,7 +17,10 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-normalize-${{ github.event_name == 'workflow_run' && 'rolling' || github.event.release.tag_name || inputs.tag }}
+  # One group per RELEASE, whatever started the run: the same mapping as "Resolve release tag" below, so a
+  # manual tag=rolling run and a workflow_run from rebuild/main never normalize the same release at once
+  # (--clobber deletes an asset before re-uploading it), while rolling and rolling-korium stay independent.
+  group: release-normalize-${{ github.event_name == 'release' && github.event.release.tag_name || github.event_name == 'workflow_run' && (startsWith(github.event.workflow_run.head_branch, 'v') && github.event.workflow_run.head_branch || github.event.workflow_run.head_branch == 'test/korium-audit-remediation' && 'rolling-korium' || 'rolling') || inputs.tag }}
   cancel-in-progress: false
 
 jobs:
@@ -43,6 +46,8 @@ jobs:
             REF="${{ github.event.workflow_run.head_branch }}"
             if [[ "$REF" == v* ]]; then
               TAG="$REF"
+            elif [[ "$REF" == "test/korium-audit-remediation" ]]; then
+              TAG="rolling-korium" # the Korium edition of rolling (see rolling-release.yml)
             else
               TAG="rolling"
             fi
