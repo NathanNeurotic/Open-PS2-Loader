@@ -34,7 +34,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Resolve release tag
         shell: bash
@@ -170,17 +170,18 @@ jobs:
             gh release delete-asset "$TAG" "$asset" --repo "$GITHUB_REPOSITORY" --yes || true
           done
 
-      - name: Rewrite release notes with standard header and external tools
+      - name: Rewrite compact release notes with final assets and changelog
         shell: bash
         run: |
           set -euo pipefail
-          BODY="release-work/original-notes.md"
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body --jq '.body' > "$BODY"
-
-          # The Download section is written by rolling-release.yml from the archives that actually
-          # built; this pass only adds the banners and External Tools & Services (from README).
-          python3 .github/scripts/normalize_release_notes.py "$BODY" > release-work/notes.md
-
+          # Read the final API asset list after cleanup, not the stale download directory.
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body,assets > release-work/release.json
+          # The moving tag can have changed since checkout. Pin the notes to its actual commit.
+          git fetch --force origin "refs/tags/$TAG:refs/tags/$TAG"
+          python3 .github/scripts/test_release_notes.py
+          python3 .github/scripts/normalize_release_notes.py \
+            --release-json release-work/release.json --tag "$TAG" --revision "refs/tags/$TAG" \
+            --repository "$GITHUB_REPOSITORY" --server "$GITHUB_SERVER_URL" > release-work/notes.md
           gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file release-work/notes.md
 
       - name: Verify final release asset set
