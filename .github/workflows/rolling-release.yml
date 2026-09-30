@@ -517,6 +517,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      actions: write # dispatch Normalize Release Assets when this run was itself dispatched by a workflow
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # The rolling channel this ref publishes: rebuild/main -> "rolling" (GitHub's Latest); the Korium
@@ -1359,6 +1360,15 @@ jobs:
             echo "Re-targeting tag $TAG -> $GITHUB_SHA"
             gh api "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" -X PATCH -f sha="$GITHUB_SHA" -F force=true >/dev/null
           fi
+
+      # Normalize Release Assets normally follows this workflow through `workflow_run`. That event is not
+      # raised for a run that a workflow itself started with GITHUB_TOKEN -- which is how korium-sync.yml
+      # starts every Korium build -- so the first rolling-korium release was left with its raw 24-asset
+      # set. Start it directly in that one case. A person's push or dispatch still gets the workflow_run
+      # pass, so this never runs twice for the same publish.
+      - name: Normalize the release (runs started by a workflow)
+        if: ${{ github.actor == 'github-actions[bot]' && !startsWith(github.ref, 'refs/tags/v') }}
+        run: gh workflow run release-normalize.yml --repo "$GITHUB_REPOSITORY" --ref rebuild/main -f tag="$ROLLING_TAG"
 
       # --- MEGA archival (publishing-branch rolling builds only) -------------------------------
       # The GitHub 'rolling' release above keeps OVERWRITING the latest build. To keep a PERMANENT
