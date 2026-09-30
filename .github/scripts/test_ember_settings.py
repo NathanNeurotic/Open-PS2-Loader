@@ -627,6 +627,19 @@ ember_leg = function_text(hdd_c, 'src/hddsupport.c', 'static void hddDoLaunchEmb
 if ember_leg and 'fileXioMount(hddPrefix, mountSrc, FIO_MT_RDWR | HDD_PFS_MT_WRITETHROUGH)' not in ember_leg:
     failures.append('src/hddsupport.c: the Ember partition must be mounted write-through, or its saves never reach the disk')
 
+# Global Timing / Dithering / Shading / Controller reach every PS1 game; newly setting one warns and points at
+# the per-game menu (FifthFox: Arcade's Greatest Hits 1 crashed; Gageformer: only Display belongs globally).
+popstarter_page = function_text(gui_c, 'src/gui.c', 'static int guiSettingsShowPopstarter(')
+if popstarter_page:
+    if 'guiMsgBox(_l(_STR_EMBER_GLOBAL_WARNING), 0, NULL);' not in popstarter_page:
+        failures.append('guiSettingsShowPopstarter: newly setting a global Ember Timing/Dithering/Shading/Controller must warn')
+    for name in ('emberTiming', 'emberDither', 'emberShading', 'emberController'):
+        if '(%s != g%s && %s > 0)' % (name, name[0].upper() + name[1:], name) not in popstarter_page:
+            failures.append('guiSettingsShowPopstarter: the global-Ember warning must cover a newly set %s' % name)
+base_yml = read('lng_tmpl/_base.yml')
+if not base_yml.rstrip().splitlines()[-2].strip() == '- label: EMBER_GLOBAL_WARNING':
+    failures.append('lng_tmpl/_base.yml: EMBER_GLOBAL_WARNING must be appended at the END (labels are positional)')
+
 if failures:
     print('Ember settings checks FAILED:')
     for failure in failures:

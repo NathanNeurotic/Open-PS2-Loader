@@ -3118,10 +3118,21 @@ reshow_popstarter:
         if (emberDisplay == EMBER_DISPLAY_480P && gEmberDisplay != EMBER_DISPLAY_480P && !guiMsgBox(_l(_STR_EMBER_480P_CONFIRM), 1, NULL))
             emberDisplay = gEmberDisplay;
         gEmberDisplay = emberDisplay;
-        gEmberTiming = emberSettingFromRow(ui, CFG_EMBER_TIMING, emberTimingShown, gEmberTiming);
-        gEmberDither = emberSettingFromRow(ui, CFG_EMBER_DITHER, emberDitherShown, gEmberDither);
-        gEmberShading = emberSettingFromRow(ui, CFG_EMBER_SHADING, emberShadingShown, gEmberShading);
-        gEmberController = emberSettingFromRow(ui, CFG_EMBER_CONTROLLER, emberControllerShown, gEmberController);
+        int emberTiming = emberSettingFromRow(ui, CFG_EMBER_TIMING, emberTimingShown, gEmberTiming);
+        int emberDither = emberSettingFromRow(ui, CFG_EMBER_DITHER, emberDitherShown, gEmberDither);
+        int emberShading = emberSettingFromRow(ui, CFG_EMBER_SHADING, emberShadingShown, gEmberShading);
+        int emberController = emberSettingFromRow(ui, CFG_EMBER_CONTROLLER, emberControllerShown, gEmberController);
+        // Global Timing / Dithering / Shading / Controller go into EMBER/settings.txt and reach EVERY PS1
+        // game; some cannot take them (Arcade's Greatest Hits 1, a 2D MAME package, crashed -- FifthFox).
+        // Gageformer: only Display belongs there. Warn when one of these is newly set (not back to
+        // Default), pointing at the per-game menu; the choice itself is kept.
+        if ((emberTiming != gEmberTiming && emberTiming > 0) || (emberDither != gEmberDither && emberDither > 0) ||
+            (emberShading != gEmberShading && emberShading > 0) || (emberController != gEmberController && emberController > 0))
+            guiMsgBox(_l(_STR_EMBER_GLOBAL_WARNING), 0, NULL);
+        gEmberTiming = emberTiming;
+        gEmberDither = emberDither;
+        gEmberShading = emberShading;
+        gEmberController = emberController;
         snprintf(gPopstarterPath, sizeof(gPopstarterPath), "%s", popstarterPathEdit);
         // Runtime ignores the retired picker, but keeping CUSTOM in the persisted compatibility
         // key means a downgrade still honours the full path the user entered here.
