@@ -102,11 +102,13 @@ def render(assets, tag, revision, repository, server, version, neutrino, readme)
     # Neutrino Watch consumes this exact phrase, including the following space.
     marker = f"<!-- Neutrino Included build: {neutrino} -->\n\n" if neutrino else ""
     return (
-        header + "\n\n[Installation and guides](https://nathanneurotic.github.io/Open-PS2-Loader/)\n\n"
+        header + "\n\n"
+        + "## Changelog\n\nLatest 10 commits included in this build:\n\n" + changes
+        + f"\n\n[Full changelog]({base}/commits/{sha})\n\n"
         + "## Downloads\n\n" + "\n".join(downloads)
+        + "\n\n[Installation and guides](https://nathanneurotic.github.io/Open-PS2-Loader/)"
         + "\n\n## Credits\n\n" + credits(readme)
-        + "\n\n" + marker + "## Changelog\n\nLatest 10 commits included in this build:\n\n" + changes
-        + f"\n\n[Full changelog]({base}/commits/{sha})\n"
+        + "\n\n" + marker
     )
 
 
