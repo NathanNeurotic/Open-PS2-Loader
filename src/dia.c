@@ -1181,10 +1181,9 @@ static void diaResetValue(struct UIItem *item)
     }
 }
 
-static int diaHandleInput(struct UIItem *item, int *modified, int settingsContext)
+static int diaHandleInput(struct UIItem *item, int *modified)
 {
     // Settings follows the user's Select Button like every other screen (it used to force Cross).
-    (void)settingsContext;
     int selectButton = guiConfirmKey();
     int cancelButton = guiCancelKey();
 
@@ -1503,7 +1502,7 @@ int diaExecuteDialog(struct UIItem *ui, int uiId, short inMenu, int (*updater)(i
 
         if (haveFocus) {
             modified = 1;
-            haveFocus = diaHandleInput(cur, &modified, settingsContext);
+            haveFocus = diaHandleInput(cur, &modified);
 
             if (!haveFocus) {
                 setButtonDelay(KEY_UP, diaScrollDelay());

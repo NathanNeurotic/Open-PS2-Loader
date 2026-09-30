@@ -7,7 +7,7 @@ guiCancelKey (and the matching icons).
 
 Checked here:
 - the four helpers, compiled and run, for both Select Button settings;
-- none of those screens reads KEY_CROSS / KEY_CIRCLE or draws CROSS_ICON / CIRCLE_ICON directly.
+- none of those screens names KEY_CROSS / KEY_CIRCLE (in any form) or draws CROSS_ICON / CIRCLE_ICON directly.
 """
 from pathlib import Path
 import re
@@ -84,7 +84,9 @@ if not failures:
             if run.returncode != 0:
                 failures.append('confirm harness reported failures')
 
-HARDWIRED = re.compile(r'getKeyOn\(KEY_(?:CROSS|CIRCLE)\)|\b(?:CROSS|CIRCLE)_ICON\b')
+# ANY Cross/Circle key or icon token -- getKeyOn, getKey, a ternary on gSelectButton -- is a hard-wire
+# here; these screens take both from the helpers (CodeRabbit #818).
+HARDWIRED = re.compile(r'\bKEY_(?:CROSS|CIRCLE)\b|\b(?:CROSS|CIRCLE)_ICON\b')
 for where, source, signature in (
     ('src/gui.c', gui_c, 'static int guiSettingsPromptSave('),
     ('src/gui.c', gui_c, 'static void guiDrawSettingsIndexHints('),
