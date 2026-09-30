@@ -79,6 +79,18 @@ jobs:
           echo "Merge conflict -- see the summary." >&2
           exit 1
 
+      # Dispatch whenever the rolling-korium release is not already built from the Korium tip -- not only
+      # after a new push. A run whose push landed but whose dispatch failed would otherwise find the branch
+      # "already synced" on a rerun and skip it, leaving the release stale (CodeRabbit #811). The publish
+      # re-targets the rolling-korium tag to the commit it built, so a match means there is nothing to do.
       - name: Publish the Korium rolling release
-        if: steps.merge.outputs.pushed == 'yes'
-        run: gh workflow run rolling-release.yml --repo "$GITHUB_REPOSITORY" --ref "$KORIUM_BRANCH"
+        run: |
+          set -eu
+          HEAD_SHA=$(git rev-parse HEAD)
+          RELEASED=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/rolling-korium" --jq .object.sha 2>/dev/null || echo none)
+          if [ "${{ steps.merge.outputs.pushed }}" != "yes" ] && [ "$RELEASED" = "$HEAD_SHA" ]; then
+            echo "rolling-korium is already built from ${HEAD_SHA:0:8}; nothing to publish."
+            exit 0
+          fi
+          gh workflow run rolling-release.yml --repo "$GITHUB_REPOSITORY" --ref "$KORIUM_BRANCH"
+          echo "Dispatched Rolling Release on $KORIUM_BRANCH (${HEAD_SHA:0:8}; release was at ${RELEASED:0:8})."
