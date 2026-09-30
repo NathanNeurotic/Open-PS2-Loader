@@ -1464,3 +1464,33 @@ jobs:
           # and the regular ELFs for all four SDK flavours. Credentials come from the job-level
           # USERNAME/PASSWORD env, which this action reads by those exact names.
           args: put -c ${{ env.MEGA_UPLOAD_FILES }} ${{ env.MEGA_REMOTE_DIR }}
+
+  # Normalize Release Assets normally follows this workflow through `workflow_run`. That event is not raised
+  # for a run that a workflow itself started with GITHUB_TOKEN -- which is how korium-sync.yml starts every
+  # Korium build -- so the first rolling-korium release was left with its raw 24-asset set. Start it
+  # directly in that one case; a person's push or dispatch still gets the workflow_run pass.
+  #
+  # A job of its own so `actions: write` never reaches publish-rolling, which holds the MEGA credentials and
+  # runs a third-party action (CodeRabbit #812). It follows publish-rolling but must not depend on the MEGA
+  # archive succeeding, hence !cancelled(); the release tag having moved to this run's commit is the proof
+  # that the publish itself completed.
+  normalize-workflow-published:
+    needs: publish-rolling
+    if: ${{ !cancelled() && github.actor == 'github-actions[bot]' && (github.ref == 'refs/heads/rebuild/main' || github.ref == 'refs/heads/test/korium-audit-remediation') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ROLLING_TAG: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && 'rolling-korium' || 'rolling' }}
+    steps:
+      - name: Normalize the release this run published
+        run: |
+          set -eu
+          AT=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$ROLLING_TAG" --jq .object.sha 2>/dev/null || echo none)
+          if [ "$AT" != "$GITHUB_SHA" ]; then
+            echo "$ROLLING_TAG is at ${AT:0:8}, not this run's ${GITHUB_SHA:0:8}: nothing was published, nothing to normalize."
+            exit 0
+          fi
+          gh workflow run release-normalize.yml --repo "$GITHUB_REPOSITORY" --ref rebuild/main -f tag="$ROLLING_TAG"
+          echo "Dispatched Normalize Release Assets for $ROLLING_TAG."
