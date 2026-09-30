@@ -627,6 +627,24 @@ ember_leg = function_text(hdd_c, 'src/hddsupport.c', 'static void hddDoLaunchEmb
 if ember_leg and 'fileXioMount(hddPrefix, mountSrc, FIO_MT_RDWR | HDD_PFS_MT_WRITETHROUGH)' not in ember_leg:
     failures.append('src/hddsupport.c: the Ember partition must be mounted write-through, or its saves never reach the disk')
 
+# Global Timing / Dithering / Shading / Controller reach every PS1 game; newly setting one warns and points at
+# the per-game menu (FifthFox: Arcade's Greatest Hits 1 crashed; Gageformer: only Display belongs globally).
+popstarter_page = function_text(gui_c, 'src/gui.c', 'static int guiSettingsShowPopstarter(')
+if popstarter_page:
+    if 'guiMsgBox(_l(_STR_EMBER_GLOBAL_WARNING), 0, NULL);' not in popstarter_page:
+        failures.append('guiSettingsShowPopstarter: newly setting a global Ember Timing/Dithering/Shading/Controller must warn')
+    for name in ('emberTiming', 'emberDither', 'emberShading', 'emberController'):
+        if '(%s != g%s && %s > 0)' % (name, name[0].upper() + name[1:], name) not in popstarter_page:
+            failures.append('guiSettingsShowPopstarter: the global-Ember warning must cover a newly set %s' % name)
+# Labels are positional: EMBER_GLOBAL_WARNING was APPENDED after HINT_EMBER_TIMING (the last label when it
+# landed). Later labels may follow it; it must never move ahead of the ones that existed before it.
+base_labels = [line.strip()[len('- label: '):] for line in read('lng_tmpl/_base.yml').splitlines()
+               if line.strip().startswith('- label: ')]
+if 'EMBER_GLOBAL_WARNING' not in base_labels:
+    failures.append('lng_tmpl/_base.yml: EMBER_GLOBAL_WARNING label is missing')
+elif 'HINT_EMBER_TIMING' in base_labels and base_labels.index('EMBER_GLOBAL_WARNING') < base_labels.index('HINT_EMBER_TIMING'):
+    failures.append('lng_tmpl/_base.yml: EMBER_GLOBAL_WARNING must stay after HINT_EMBER_TIMING (labels are positional)')
+
 if failures:
     print('Ember settings checks FAILED:')
     for failure in failures:
