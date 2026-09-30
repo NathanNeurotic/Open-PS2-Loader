@@ -51,6 +51,10 @@ on:
       # around for history, and a push to it must never republish the rolling channel with
       # pre-rebuild code. Deliberately not a trigger.
       - rebuild/main
+      # The Korium test line (PR #687): the same build with the Korium built-in theme, published to its
+      # own "rolling-korium" release. korium-sync.yml keeps it merged with rebuild/main and dispatches
+      # this workflow on it (a push made by a workflow's GITHUB_TOKEN starts no workflow by itself).
+      - test/korium-audit-remediation
     tags:
       - 'v*'
   workflow_dispatch:
@@ -111,6 +115,8 @@ jobs:
       - name: Mark workspace safe and fetch history
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Resolve release channel (rolling / rolling-korium)
+        run: sh .github/scripts/release_channel.sh >> "$GITHUB_ENV"
       - name: Install menu-coherent mmceman (#254)
         run: sh .github/scripts/install_coherent_mmce.sh
 
@@ -221,6 +227,8 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
+      - name: Resolve release channel (rolling / rolling-korium)
+        run: sh .github/scripts/release_channel.sh >> "$GITHUB_ENV"
 
       - name: Refuse a dirty checkout before versioning
         run: |
@@ -337,6 +345,8 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
+      - name: Resolve release channel (rolling / rolling-korium)
+        run: sh .github/scripts/release_channel.sh >> "$GITHUB_ENV"
 
       - name: Install menu-coherent mmceman (#254)
         run: sh .github/scripts/install_coherent_mmce.sh
@@ -442,6 +452,8 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --prune --unshallow || true
+      - name: Resolve release channel (rolling / rolling-korium)
+        run: sh .github/scripts/release_channel.sh >> "$GITHUB_ENV"
 
       - name: Install menu-coherent mmceman (#254)
         run: sh .github/scripts/install_coherent_mmce.sh
@@ -500,12 +512,18 @@ jobs:
     # withholding only the publish. master is excluded on purpose: it is the abandoned lineage, and
     # a push to it publishing over the rolling channel would ship pre-rebuild code as Latest. This
     # gate is belt-and-braces with the push trigger above, which no longer lists master either.
-    if: ${{ github.ref == 'refs/heads/rebuild/main' || startsWith(github.ref, 'refs/tags/v') }}
+    # The Korium test line publishes too, but only to its own rolling-korium release (ROLLING_TAG below).
+    if: ${{ github.ref == 'refs/heads/rebuild/main' || github.ref == 'refs/heads/test/korium-audit-remediation' || startsWith(github.ref, 'refs/tags/v') }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # The rolling channel this ref publishes: rebuild/main -> "rolling" (GitHub's Latest); the Korium
+      # test line -> "rolling-korium", identical but for the built-in theme, and never Latest.
+      ROLLING_TAG: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && 'rolling-korium' || 'rolling' }}
+      ROLLING_TITLE: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && 'Rolling (Korium)' || 'Rolling' }}
+      ROLLING_LATEST: ${{ github.ref == 'refs/heads/test/korium-audit-remediation' && '--latest=false' || '--latest' }}
       OPL_VERSION: ${{ needs.build-rolling-ps2dev-latest.outputs.version }}
       # Human-readable label for the FALLBACK (-PS2DEVPINNED) build, shown in the release notes.
       # This flavour is a DIGEST PIN of ps2dev:latest, so the label is the date the pin was taken.
@@ -1121,7 +1139,7 @@ jobs:
           set -eu
           # Same tag the Publish step below resolves, needed here to print a working download URL
           # for the one-click ELF. Keep the two in step if either is ever changed.
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then REL_TAG="${GITHUB_REF_NAME}"; else REL_TAG="rolling"; fi
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then REL_TAG="${GITHUB_REF_NAME}"; else REL_TAG="$ROLLING_TAG"; fi
           HAS_PS2DEVPINNED=no
           [ -f "rolling/${VERSIONED_BASE}-PS2DEVPINNED.ELF" ] && HAS_PS2DEVPINNED=yes
           HAS_OFFICIALROLLING=no
@@ -1137,6 +1155,10 @@ jobs:
               printf '**RiptOPL %s**: tagged release.\n\n' "$OPL_VERSION"
             else
               printf '**RiptOPL Rolling**: rebuilt on every merge to `%s`. A development build, not a stable release.\n\n' "$GITHUB_REF_NAME"
+            fi
+            if [ "$ROLLING_TAG" = "rolling-korium" ]; then
+              printf '**Korium edition.** The same build as [Rolling](%s/%s/releases/tag/rolling), kept in sync with it automatically; the only difference is the built-in theme, Korium Komblete.\n\n' \
+                "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY"
             fi
             printf '`%s` · [commit %s](%s/%s/commit/%s) · built %s UTC · [build run](%s/%s/actions/runs/%s)\n\n' \
               "$OPL_VERSION" "${GITHUB_SHA:0:8}" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA" \
@@ -1236,7 +1258,7 @@ jobs:
               *) RELEASE_FLAGS="--prerelease=false --latest=false";;
             esac
           else
-            TAG="rolling"; TITLE="Rolling"; RELEASE_FLAGS="--prerelease=false --latest"; TARGET="--target $GITHUB_SHA"
+            TAG="$ROLLING_TAG"; TITLE="$ROLLING_TITLE"; RELEASE_FLAGS="--prerelease=false $ROLLING_LATEST"; TARGET="--target $GITHUB_SHA"
           fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Updating existing release: $TAG"
@@ -1279,7 +1301,7 @@ jobs:
             # afterwards -- still-draft fails the job loudly rather than leaving users with an
             # invisible download page. promote-rolling-latest.yml re-asserts it again after this
             # workflow finishes.
-            if [ "$TAG" = "rolling" ]; then
+            if [ "$TAG" = "$ROLLING_TAG" ] && [[ "${GITHUB_REF}" != refs/tags/v* ]]; then
               RELEASE_ID=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" --jq .id 2>/dev/null || echo "")
               if [ -n "$RELEASE_ID" ]; then
                 # Compare against the value BEFORE the flip, not against today's date. A rolling
@@ -1289,11 +1311,11 @@ jobs:
                 # set -eu is active in this step, so a failed draft=true aborts the script: this
                 # trap is what puts the channel back. INT/TERM are covered too, because a cancelled
                 # job does not run a bare EXIT trap.
-                trap 'gh release edit "rolling" --draft=false --prerelease=false --latest >/dev/null 2>&1 || true' EXIT INT TERM
+                trap 'gh release edit "$TAG" --draft=false --prerelease=false $ROLLING_LATEST >/dev/null 2>&1 || true' EXIT INT TERM
                 gh release edit "$TAG" --draft=true >/dev/null
                 # Re-assert the channel's intended state on the way back up: a draft cannot hold the
                 # Latest marker, so it has to be claimed again as part of republishing.
-                gh release edit "$TAG" --draft=false --prerelease=false --latest >/dev/null
+                gh release edit "$TAG" --draft=false --prerelease=false $ROLLING_LATEST >/dev/null
                 trap - EXIT INT TERM
                 GOT=$(gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" --jq .published_at 2>/dev/null || echo "")
                 # Only a comparison between two SUCCESSFUL reads proves anything. A failed read
@@ -1310,7 +1332,7 @@ jobs:
                 DRAFT=$(gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" --jq .draft 2>/dev/null || echo "")
                 if [ "$DRAFT" = "true" ]; then
                   echo "WARNING: rolling is still a draft after the refresh; republishing" >&2
-                  gh release edit "$TAG" --draft=false --prerelease=false --latest >/dev/null 2>&1 || true
+                  gh release edit "$TAG" --draft=false --prerelease=false $ROLLING_LATEST >/dev/null 2>&1 || true
                   DRAFT=$(gh api "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" --jq .draft 2>/dev/null || echo "")
                 fi
                 if [ "$DRAFT" = "true" ]; then
@@ -1347,7 +1369,7 @@ jobs:
       # forks skip it cleanly. master was dropped 2026-09-02 along with its publish trigger: the
       # old lineage must not archive over the new one's history either.
       - name: Build all-in-one MEGA archive
-        if: github.ref == 'refs/heads/rebuild/main' && env.USERNAME != '' && env.PASSWORD != ''
+        if: (github.ref == 'refs/heads/rebuild/main' || github.ref == 'refs/heads/test/korium-audit-remediation') && env.USERNAME != '' && env.PASSWORD != ''
         run: |
           set -eu
           # Validate the payload BEFORE archiving so a broken publish fails loudly instead of pushing
@@ -1430,7 +1452,7 @@ jobs:
           ls -la mega-out
 
       - name: Upload archive and regular ELFs in all 4 flavours to MEGA
-        if: github.ref == 'refs/heads/rebuild/main' && env.USERNAME != '' && env.PASSWORD != ''
+        if: (github.ref == 'refs/heads/rebuild/main' || github.ref == 'refs/heads/test/korium-audit-remediation') && env.USERNAME != '' && env.PASSWORD != ''
         # Pinned to a full commit SHA rather than @master: this third-party action runs with the
         # MEGA credentials, so freeze it to a reviewed snapshot instead of trusting whatever is on
         # its master branch at build time. bf698c6 == the action's v1.4.0 release == the master HEAD

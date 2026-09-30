@@ -109,7 +109,9 @@ TTY_APPROACH ?= UDP
 #   moves it, so a missed code path can never silently collide two different
 #   binaries under one string.
 CODE_ANCHOR = $(shell git log -1 --format=%H -- . ':(exclude).github' ':(exclude)agent-file-drop' ':(exclude)frame_builds' ':(exclude)notes' ':(exclude)obj' ':(exclude).claude' ':(exclude).agents' ':(exclude).codex' ':(exclude).codex-tmp-nhddl' ':(exclude).codex-tmp-wle-r3z' 2>/dev/null)
-REVISION = $(shell expr $(shell git rev-list --count HEAD) + 2)
+# ?= so a release channel can pin it: the Korium rolling line passes the revision of the rebuild/main
+# commit it was synced to (.github/scripts/release_channel.sh), so both lines number the same code alike.
+REVISION ?= $(shell expr $(shell git rev-list --count HEAD) + 2)
 
 GIT_HASH = $(shell git rev-parse --short=7 $(if $(CODE_ANCHOR),$(CODE_ANCHOR),HEAD) 2>/dev/null)
 ifeq ($(shell git diff --quiet; echo $$?),1)
@@ -122,7 +124,7 @@ endif
 # Only v* release tags name a build; checkpoint tags (rebuild-NN etc.) must not hijack the
 # version string or drop the toolchain-flavour suffix.
 GIT_TAG = $(shell git describe --exact-match --tags --match "v*" 2>/dev/null)
-OPL_VERSION = v$(VERSION).$(SUBVERSION).$(PATCHLEVEL)$(if $(EXTRAVERSION),-$(EXTRAVERSION))-$(REVISION)$(if $(GIT_HASH),-$(GIT_HASH))$(if $(DIRTY),$(DIRTY))$(if $(LOCALVERSION),-$(LOCALVERSION))
+OPL_VERSION = v$(VERSION).$(SUBVERSION).$(PATCHLEVEL)$(if $(EXTRAVERSION),-$(EXTRAVERSION))-$(REVISION)$(if $(RELEASE_CHANNEL),-$(RELEASE_CHANNEL))$(if $(GIT_HASH),-$(GIT_HASH))$(if $(DIRTY),$(DIRTY))$(if $(LOCALVERSION),-$(LOCALVERSION))
 
 ifneq ($(GIT_TAG),)
 ifneq ($(GIT_TAG),latest)
