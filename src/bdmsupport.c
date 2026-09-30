@@ -2605,6 +2605,15 @@ void bdmInitSemaphore()
     bdmLoadModuleLock = CreateSema(&semaphore);
 }
 
+// This slot's device is mounted and fully identified, with a published list. Such a page is kept
+// through a settings re-apply (bdmInitDevicesData) and restored as-is when it reappears
+// (bdmUpdateDeviceData) -- nothing about the device changed, so there is nothing to hide or re-read.
+static int bdmSlotIdentified(const bdm_device_data_t *pDeviceData)
+{
+    return pDeviceData != NULL && pDeviceData->bdmDeviceRoot[0] != '\0' && pDeviceData->bdmDriver[0] != '\0' &&
+           pDeviceData->bdmDeviceType != BDM_TYPE_UNKNOWN && pDeviceData->bdmULSizePrev != -2;
+}
+
 void bdmInitDevicesData()
 {
     // If the device list hasn't been initialized do it now.
@@ -2632,8 +2641,16 @@ void bdmInitDevicesData()
 
         // If bdm support is set to auto then make the page invisible and reset the bdm tick counter, when a bdm device is mounted it will dynamically be made visible.
         // If bdm support is set to manual then only make the first page visible.
+        //
+        // A page whose device is still mounted and identified is NOT hidden here, only re-checked (tick
+        // reset). This runs on every settings apply (applyConfig -> initAllSupport), and hiding the page
+        // the user is on sent them, on return from the Start menu, to the first visible tab
+        // (refreshMenuPosition) -- APPS, Favourites -- until the next device poll brought the page back
+        // (#806, zackcage6, Beta-3383). The poll still hides it if the device is gone (the debounced
+        // removal path) or its transport was switched off (bdmNeedsUpdate).
         if (bdmDeviceList[i].owner != NULL) {
             opl_io_module_t *pOwner = (opl_io_module_t *)bdmDeviceList[i].owner;
+            bdm_device_data_t *pDeviceData = (bdm_device_data_t *)bdmDeviceList[i].priv;
 
             int effectiveMode = bdmEffectiveStartMode();
             if (effectiveMode == START_MODE_DISABLED) {
@@ -2642,13 +2659,15 @@ void bdmInitDevicesData()
                 // If BDM has already been started then make the page invisible and reset the bdm tick counter so visibility status is refreshed
                 // according to device state.
                 if (bdmDeviceModeStarted == 1) {
-                    pOwner->menuItem.visible = 0;
-                    ((bdm_device_data_t *)bdmDeviceList[i].priv)->bdmDeviceTick = -1;
+                    if (!bdmSlotIdentified(pDeviceData))
+                        pOwner->menuItem.visible = 0;
+                    pDeviceData->bdmDeviceTick = -1;
                 } else
                     pOwner->menuItem.visible = (i == 0 ? 1 : 0);
             } else if (effectiveMode == START_MODE_AUTO) {
-                pOwner->menuItem.visible = 0;
-                ((bdm_device_data_t *)bdmDeviceList[i].priv)->bdmDeviceTick = -1;
+                if (!bdmSlotIdentified(pDeviceData))
+                    pOwner->menuItem.visible = 0;
+                pDeviceData->bdmDeviceTick = -1;
             }
 
             LOG("bdmInitDevicesData: setting device %d %s\n", i, (pOwner->menuItem.visible != 0 ? "visible" : "invisible"));
@@ -2776,9 +2795,7 @@ int bdmUpdateDeviceData(item_list_t *itemList)
     //
     // So: if this slot already knows what it is and has published a list, a reappearance restores
     // the page and nothing else. Nothing about the device changed, so there is nothing to re-read.
-    if (dir >= 0 && visible == 0 &&
-        pDeviceData->bdmDeviceRoot[0] != '\0' && pDeviceData->bdmDriver[0] != '\0' &&
-        pDeviceData->bdmDeviceType != BDM_TYPE_UNKNOWN && pDeviceData->bdmULSizePrev != -2) {
+    if (dir >= 0 && visible == 0 && bdmSlotIdentified(pDeviceData)) {
         if (itemList->owner != NULL) {
             ((opl_io_module_t *)itemList->owner)->menuItem.visible = 1;
             moduleUpdateMenu(itemList->mode, 0, 0);
