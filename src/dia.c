@@ -18,6 +18,9 @@
 // UI spacing of the dialogues (pixels between consecutive items)
 #define UI_SPACING_H          10
 #define UI_SETTINGS_SPACING_H 10
+// Smallest gap a Settings page may shrink to so it fits without scrolling (diaSettingsFitGap): rows are
+// then 10 + 7 = 17 px apart, the default font's size, so lines touch but never overlap.
+#define UI_SETTINGS_MIN_GAP   7
 #define UI_SPACING_V          2
 // spacer ui element width (simulates tab)
 #define UI_SPACER_WIDTH       50
@@ -948,6 +951,49 @@ void diaSetSettingsContext(int enabled)
     diaSettingsContext = enabled;
 }
 
+// The lowest pixel the dialog would reach (content space, from `top`) with rows `gap` apart. Walks the
+// items exactly as diaRenderUI lays them out, with diaItemHeight standing in for diaRenderItem's *h.
+static int diaLayoutBottom(struct UIItem *ui, int spacingH, int gap, int top)
+{
+    int y = top, hmax = 0, bottom = top;
+
+    for (; ui->type != UI_TERMINATOR; ui++) {
+        int h;
+
+        if (diaShouldBreakLine(ui)) {
+            if (hmax > 0)
+                y += hmax + gap;
+            hmax = 0;
+        }
+        h = diaItemHeight(ui, spacingH);
+        if (h > hmax)
+            hmax = h;
+        if (y + h > bottom)
+            bottom = y + h;
+        if (diaShouldBreakLineAfter(ui)) {
+            if (hmax > 0)
+                y += hmax + gap;
+            hmax = 0;
+        }
+    }
+    return bottom;
+}
+
+// Settings pages FIT the screen before they scroll. A page a few rows too tall (General & System,
+// Interface, Network) put its OK below the hint bar and made the user scroll for it. Shrink the gap
+// between rows just enough to fit -- never below UI_SETTINGS_MIN_GAP -- and leave a page that already
+// fits exactly as it was. A page that still does not fit at the minimum keeps scrolling as before.
+static int diaSettingsFitGap(struct UIItem *ui, int spacingH, int top, int visibleBottom)
+{
+    int gap;
+
+    for (gap = spacingH; gap > UI_SETTINGS_MIN_GAP; gap--) {
+        if (diaLayoutBottom(ui, spacingH, gap, top) <= visibleBottom)
+            break;
+    }
+    return gap;
+}
+
 /// renders whole ui screen (for given dialog setup)
 void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFocus)
 {
@@ -959,6 +1005,8 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
     int settingsShell = (ui == diaSettingsShellUI && diaSettingsIndicator != NULL);
     int settingsContext = settingsShell || diaSettingsContext;
     int spacingH = settingsContext ? UI_SETTINGS_SPACING_H : UI_SPACING_H;
+    // Rows keep their height (spacingH); only the gap between them tightens, and only on a Settings page.
+    int gapH = settingsContext ? diaSettingsFitGap(ui, spacingH, y0, gTheme->usedHeight - 40) : spacingH;
 
     // render all items (shifted up by the scroll offset for tall dialogs)
     struct UIItem *rc = ui;
@@ -973,7 +1021,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             x = x0;
 
             if (hmax > 0)
-                y += hmax + spacingH;
+                y += hmax + gapH;
 
             hmax = 0;
         }
@@ -1019,7 +1067,7 @@ void diaRenderUI(struct UIItem *ui, short inMenu, struct UIItem *cur, int haveFo
             x = x0;
 
             if (hmax > 0)
-                y += hmax + spacingH;
+                y += hmax + gapH;
 
             hmax = 0;
         }
