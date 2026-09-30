@@ -1377,3 +1377,5 @@ gui_strings:
   string: Ember Timing
 - label: HINT_EMBER_TIMING
   string: "Ember video timing: Auto follows the disc region, NTSC forces 60 Hz, PAL forces 50 Hz. Written to the launched device's EMBER/settings.txt."
+- label: EMBER_GLOBAL_WARNING
+  string: "These Ember settings apply to every PS1 game, and some games crash with them. To change one game only, use Triangle > Ember Game Settings on that game."
