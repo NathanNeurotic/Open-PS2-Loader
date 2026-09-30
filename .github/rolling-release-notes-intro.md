@@ -15,4 +15,6 @@
 - **Report everything, even something you saw fixed before.** Reports are tracked against this
   lineage, regressions happen, and a duplicate costs nothing. Name your flavour: *Start menu → About*
   shows it.
+- **Prefer the Korium theme?** **[Rolling (Korium)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium)**
+  is this same build with the Korium Komblete built-in theme, kept in sync automatically.
 - **Guides** for every device, core and setting: <https://nathanneurotic.github.io/Open-PS2-Loader/>

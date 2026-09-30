@@ -17,7 +17,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-normalize-${{ github.event_name == 'workflow_run' && 'rolling' || github.event.release.tag_name || inputs.tag }}
+  group: release-normalize-${{ github.event_name == 'workflow_run' && format('rolling-{0}', github.event.workflow_run.head_branch) || github.event.release.tag_name || inputs.tag }}
   cancel-in-progress: false
 
 jobs:
@@ -43,6 +43,8 @@ jobs:
             REF="${{ github.event.workflow_run.head_branch }}"
             if [[ "$REF" == v* ]]; then
               TAG="$REF"
+            elif [[ "$REF" == "test/korium-audit-remediation" ]]; then
+              TAG="rolling-korium" # the Korium edition of rolling (see rolling-release.yml)
             else
               TAG="rolling"
             fi
