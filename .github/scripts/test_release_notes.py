@@ -58,35 +58,38 @@ class ReleaseNotesTests(unittest.TestCase):
 
     def test_release_history_is_bounded_and_pinned(self):
         body = self.render()
-        changes = body.split("## Changelog\n", 1)[1].split("## Downloads\n", 1)[0]
+        changes = body.split("<summary>Changelog</summary>\n", 1)[1].split("</details>", 1)[0]
         self.assertEqual(10, len([x for x in changes.splitlines() if x.startswith("- ")]))
         self.assertIn(f"Fix loader \\[edge case\\] ([{self.fix_sha[:8]}](https://github.com/owner/repo/commit/{self.fix_sha}))", changes)
         self.assertNotIn("Merge rebuild/main", changes)
         self.assertNotIn("Not in this release", changes)
         self.assertNotIn("- Change 0 ", changes)
         self.assertIn(f"[Full changelog](https://github.com/owner/repo/commits/{self.sha})", changes)
-        self.assertEqual(["## Changelog", "## Downloads", "## Credits"],
-                         [x for x in body.splitlines() if x.startswith("## ")])
+        self.assertEqual(["<summary>Changelog</summary>", "<summary>Downloads</summary>", "<summary>Credits</summary>"],
+                         [x for x in body.splitlines() if x.startswith("<summary>")])
 
     def test_actual_downloads_and_short_credits(self):
         body = self.render(assets=["RIPTOPL.ELF"])
-        downloads = body.split("## Downloads\n", 1)[1].split("## Credits", 1)[0]
+        downloads = body.split("<summary>Downloads</summary>\n", 1)[1].split("</details>", 1)[0]
         self.assertEqual(1, downloads.count("\n- "))
         self.assertNotIn("RIPTOPL-RA.ELF", downloads)
-        credit_block = body.split("## Credits\n", 1)[1].split("## Changelog", 1)[0]
+        credit_block = body.split("<summary>Credits</summary>\n", 1)[1].split("</details>", 1)[0]
         self.assertIn("Gageformer", credit_block)
         self.assertIn("https://github.com/Gageformer/Ember/releases", credit_block)
         self.assertIn("https://github.com/rickgaiser/neutrino", credit_block)
         self.assertIn("https://github.com/hacan359/xerabora", credit_block)
         self.assertNotIn("—", credit_block)
         self.assertNotIn("<img", body)
+        self.assertEqual(3, body.count("<details>\n<summary>"))
+        self.assertEqual(3, body.count("\n\n</details>"))
+        self.assertNotIn("<details open", body)
         self.assertLess(len(body), 8000)
 
     def test_channels_and_tagged_releases(self):
         for tag in ("rolling", "rolling-korium", "v1.2.3"):
             body = self.render(tag=tag)
             self.assertIn(f"/releases/download/{tag}/RIPTOPL.ELF", body)
-            self.assertIn("## Changelog", body)
+            self.assertIn("<summary>Changelog</summary>", body)
             self.assertEqual("Korium Komblete" in body, tag == "rolling-korium")
 
     def test_transient_uploads_not_advertised(self):
