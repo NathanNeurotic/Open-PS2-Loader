@@ -3255,6 +3255,19 @@ static void _loadConfig()
                 gArtDelay = 0;
             configGetInt(configOPL, CONFIG_OPL_FOLDER_NAV, &gEnableFolderNav);
             configGetColor(configOPL, CONFIG_OPL_PLAS_BLEND_COLOR, gDefaultPlasBlendColor);
+            // Every settings save writes both plasma colours, so a config saved before the new defaults
+            // holds the OLD pair -- official OPL's cyan over black -- even for someone who never touched
+            // the Colors page. Exactly that pair means "never customised": give it the new defaults. Any
+            // other value is a real choice and is kept.
+            if (gDefaultBgColor[0] == 0x28 && gDefaultBgColor[1] == 0xC5 && gDefaultBgColor[2] == 0xF9 &&
+                gDefaultPlasBlendColor[0] == 0x00 && gDefaultPlasBlendColor[1] == 0x00 && gDefaultPlasBlendColor[2] == 0x00) {
+                gDefaultBgColor[0] = RIPTOPL_PLASMA_BG_R;
+                gDefaultBgColor[1] = RIPTOPL_PLASMA_BG_G;
+                gDefaultBgColor[2] = RIPTOPL_PLASMA_BG_B;
+                gDefaultPlasBlendColor[0] = RIPTOPL_PLASMA_BLEND_R;
+                gDefaultPlasBlendColor[1] = RIPTOPL_PLASMA_BLEND_G;
+                gDefaultPlasBlendColor[2] = RIPTOPL_PLASMA_BLEND_B;
+            }
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_COUNT, &gCoverflowCount);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_SCALE, &gCoverflowCenterScale);
             configGetInt(configOPL, CONFIG_OPL_COVERFLOW_ANIM, &gCoverflowAnimSpeed);
@@ -4599,9 +4612,9 @@ void deinit(int exception, int modeSelected)
 
 void setDefaultColors(void)
 {
-    gDefaultBgColor[0] = 0x28;
-    gDefaultBgColor[1] = 0xC5;
-    gDefaultBgColor[2] = 0xF9;
+    gDefaultBgColor[0] = RIPTOPL_PLASMA_BG_R;
+    gDefaultBgColor[1] = RIPTOPL_PLASMA_BG_G;
+    gDefaultBgColor[2] = RIPTOPL_PLASMA_BG_B;
 
     gDefaultTextColor[0] = 0xFF;
     gDefaultTextColor[1] = 0xFF;
@@ -4795,9 +4808,9 @@ static void setDefaults(void)
     // every device wait for the worst device's constraint is not a trade worth a default.
     gArtDelay = 0;
     gEnableFolderNav = 0;
-    gDefaultPlasBlendColor[0] = 0x00;
-    gDefaultPlasBlendColor[1] = 0x00;
-    gDefaultPlasBlendColor[2] = 0x00;
+    gDefaultPlasBlendColor[0] = RIPTOPL_PLASMA_BLEND_R;
+    gDefaultPlasBlendColor[1] = RIPTOPL_PLASMA_BLEND_G;
+    gDefaultPlasBlendColor[2] = RIPTOPL_PLASMA_BLEND_B;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
     gEnableBdmHDD = 0;
