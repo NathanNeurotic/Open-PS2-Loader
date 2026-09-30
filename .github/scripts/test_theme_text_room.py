@@ -224,10 +224,17 @@ if 'diaTextWidth' in dia or 'DIA_MARQUEE' in dia:
 rooms = function_text(themes, 'static void thmComputeTextRooms(', 'src/themes.c')
 if rooms and 'if (other->deviceFilter && (other->type == ELEM_TYPE_MENU_ICON || other->type == ELEM_TYPE_ITEMS_LIST ||' not in rooms:
     failures.append('thmComputeTextRooms: only the device-gated types (MenuIcon/ItemsList/HintText) may be skipped as obstacles')
-# ...and the built-in Coverflow title spans the top instead of a 400-unit box.
+# ...and the built-in Coverflow title spans the top instead of a 400-unit box. Found by TYPE, not by
+# slot number: the main page's ItemsList is the carousel's title line, and its mainN index differs
+# between built-in layouts (main15 here, main2 on the Korium test line).
 coverflow = (root / 'misc/theme_coverflow.cfg').read_text(encoding='utf-8').replace('\r\n', '\n')
-if not re.search(r'^main15:\n\ttype=ItemsList\n(?:\t.*\n)*?\twidth=DIM_INF\n', coverflow, re.M):
-    failures.append('misc/theme_coverflow.cfg: the Coverflow title list must span the top (width=DIM_INF)')
+title_lists = [block for block in re.findall(r'^main\d+:\n((?:\t.*\n)*)', coverflow, re.M)
+               if re.search(r'^\ttype=ItemsList$', block, re.M)]
+if not title_lists:
+    failures.append('misc/theme_coverflow.cfg: no main-page ItemsList (the Coverflow title list) found')
+for block in title_lists:
+    if not re.search(r'^\twidth=DIM_INF$', block, re.M):
+        failures.append('misc/theme_coverflow.cfg: the Coverflow title list must span the top (width=DIM_INF)')
 
 if failures:
     for failure in failures:
