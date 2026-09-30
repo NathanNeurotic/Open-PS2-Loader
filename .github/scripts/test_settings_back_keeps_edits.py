@@ -77,10 +77,11 @@ iosupport_h = read('include/iosupport.h')
 # --- dia.c: Circle on a Settings page -> Index, ahead of the generic Cancel ----------------------
 
 execute = function_text(dia_c, 'src/dia.c', 'int diaExecuteDialog(')
-back = re.search(r'if \(settingsShell && getKeyOn\(KEY_CIRCLE\)\) \{[^}]*return DIA_RESULT_INDEX;', execute)
+# "Back" is the user's cancel button -- Circle by default, Cross when Circle is chosen as confirm.
+back = re.search(r'if \(settingsShell && getKeyOn\(guiCancelKey\(\)\)\) \{[^}]*return DIA_RESULT_INDEX;', execute)
 cancel = execute.find('return UIID_BTN_CANCEL;')
 if back is None:
-    failures.append('diaExecuteDialog: Circle on a Settings page must return DIA_RESULT_INDEX (keep the edits)')
+    failures.append('diaExecuteDialog: the cancel button on a Settings page must return DIA_RESULT_INDEX (keep the edits)')
 elif cancel < 0 or back.start() > cancel:
     failures.append('diaExecuteDialog: the Settings-page Circle branch must come before the generic Cancel')
 

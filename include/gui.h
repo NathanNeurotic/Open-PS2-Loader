@@ -116,6 +116,12 @@ struct gui_update_t *guiOpCreate(gui_op_type_t type);
 int guiShowKeyboard(char *value, int maxLength);
 int guiMsgBox(const char *text, int addAccept, struct UIItem *ui);
 int guiPromptRebootIop(void);
+// The user's Confirm / Cancel buttons (Select Button setting) and their icons. Every screen asks these
+// instead of assuming Cross = confirm.
+int guiConfirmKey(void);
+int guiCancelKey(void);
+int guiConfirmIcon(void);
+int guiCancelIcon(void);
 
 void guiUpdateScrollSpeed(void);
 void guiUpdateScreenScale(void);
