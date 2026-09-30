@@ -84,6 +84,15 @@ jobs:
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
 
+  release-notes-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check compact release notes and changelog
+        run: python3 .github/scripts/test_release_notes.py
+
   ra-host-tests:
     runs-on: ubuntu-24.04
     steps:

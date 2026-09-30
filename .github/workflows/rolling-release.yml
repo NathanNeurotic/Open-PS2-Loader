@@ -539,7 +539,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Download ps2dev-latest rolling assets
         # The required version-authority build (its job failing already failed the workflow).
@@ -1136,111 +1136,14 @@ jobs:
 
       - name: Build release notes
         run: |
-          set -eu
-          # Same tag the Publish step below resolves, needed here to print a working download URL
-          # for the one-click ELF. Keep the two in step if either is ever changed.
+          set -euo pipefail
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then REL_TAG="${GITHUB_REF_NAME}"; else REL_TAG="$ROLLING_TAG"; fi
-          HAS_PS2DEVPINNED=no
-          [ -f "rolling/${VERSIONED_BASE}-PS2DEVPINNED.ELF" ] && HAS_PS2DEVPINNED=yes
-          HAS_OFFICIALROLLING=no
-          [ -f "rolling/${VERSIONED_BASE}-OFFICIALROLLING.ELF" ] && HAS_OFFICIALROLLING=yes
-          [ -f "rolling/${VERSIONED_BASE}-OFFICIALPINNED.ELF" ] && HAS_OFFICIALPINNED=yes
-          {
-            # THE NOTES ARE ASSEMBLED FROM FOUR PLACES, each owning different facts (details in
-            # .github/rolling-release-notes-block.md): this step generates what changes per run --
-            # header, Download, Recently merged; the two tracked .md files carry the evergreen text;
-            # normalize_release_notes.py later adds the banners and External Tools & Services. Edit
-            # those files, never a release body. set -eu makes a missing file fail the publish.
-            if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-              printf '**RiptOPL %s**: tagged release.\n\n' "$OPL_VERSION"
-            else
-              printf '**RiptOPL Rolling**: rebuilt on every merge to `%s`. A development build, not a stable release.\n\n' "$GITHUB_REF_NAME"
-            fi
-            if [ "$ROLLING_TAG" = "rolling-korium" ]; then
-              printf '**Korium edition.** The same build as [Rolling](%s/%s/releases/tag/rolling), kept in sync with it automatically; the only difference is the built-in theme, Korium Komblete.\n\n' \
-                "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY"
-            fi
-            printf '`%s` · [commit %s](%s/%s/commit/%s) · built %s UTC · [build run](%s/%s/actions/runs/%s)\n\n' \
-              "$OPL_VERSION" "${GITHUB_SHA:0:8}" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_SHA" \
-              "$(date -u '+%Y-%m-%d %H:%M')" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
-            cat .github/rolling-release-notes-intro.md
-
-            printf '\n## Download\n\n'
-            printf -- '- **New install:** the `RIPTOPL-<version>.zip` package contains `APPS/APP_RIPTOPL/`, `ART/`, `APP_RIPTOPL.psu`, `POPS/`, `EMBER/`, `neutrino/` and companion shortcuts. The ready app uses the %s build. The PSU contains only the app files; install the other folders separately. [Install guide](https://github.com/NathanNeurotic/Open-PS2-Loader#quick-start)\n' "${INSTALL_FLAVOUR:-OFFICIALROLLING}"
-            if [ -f rolling/RIPTOPL.ELF ]; then
-              printf -- '- **Updating:** download **[RIPTOPL.ELF](%s/%s/releases/download/%s/RIPTOPL.ELF)** and overwrite yours. It is the %s flavour and the link never changes, but it does not bring `POPS/`, `EMBER/`, `neutrino/` or languages.\n' \
-                "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG" "${ONECLICK_FLAVOUR:-OFFICIALROLLING}"
-            fi
-            if [ -f rolling/RIPTOPL-RA.ELF ]; then
-              printf -- '- **RetroAchievements update:** **[RIPTOPL-RA.ELF](%s/%s/releases/download/%s/RIPTOPL-RA.ELF)** is the OFFICIALROLLING PADEMU1 RA loader as a stable standalone download. When updating the packaged RA app, replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with this file (rename it to `RIPTOPL-RA.ELF`).\n' \
-                "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG"
-            fi
-            if [ -f rolling/APP_RIPTOPL.psu ]; then
-              printf -- '- **PSU install:** **[APP_RIPTOPL.psu](%s/%s/releases/download/%s/APP_RIPTOPL.psu)** installs the standard ready app directly to a memory card.\n' \
-                "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG"
-            fi
-            if [ -f rolling/APP_RIPTOPL-RA.psu ]; then
-              printf -- '- **RA PSU install:** **[APP_RIPTOPL-RA.psu](%s/%s/releases/download/%s/APP_RIPTOPL-RA.psu)** installs the RetroAchievements ready app directly to a memory card.\n' \
-                "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$REL_TAG"
-            fi
-            # neutrino-watch.yml reads the bundled version back from "Included build: <ver> " -- keep
-            # that exact phrase, followed by a space.
-            if [ -z "${NEUTRINO_VER:-}" ]; then
-              echo 'ERROR: full installable ZIP was built without a Neutrino version' >&2
-              exit 1
-            fi
-            printf -- '- **Neutrino:** Included build: %s (official, as the `neutrino/` folder).\n' "$NEUTRINO_VER"
-            if ls rolling/RIPTOPL-RetroAchievements-*.zip >/dev/null 2>&1; then
-              printf -- '- `RIPTOPL-RetroAchievements-*.zip`: the complete RA kit with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching artwork and `APP_RIPTOPL-RA.psu`, plus the shared cores and shortcuts. PC client: [xeRAbora GitHub](https://github.com/hacan359/xerabora) · [required v0.1.0-alpha.10 download](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.10). A development build, not hardware-tested.\n'
-            fi
-            if [ -f "rolling/RIPTOPL-VARIANTS-${ASSET_VERSION:-rolling}.zip" ]; then
-              printf -- '- `RIPTOPL-VARIANTS-*.zip`: EXTRA_FEATURES (IGS, RTL), PADEMU and DualSense (DS5, USB) loaders. For DS5, prefer `-PS2DEVPINNED-ds5`.\n'
-            fi
-            if [ -f "rolling/RIPTOPL-DEBUG-${ASSET_VERSION:-rolling}.zip" ]; then
-              printf -- '- `RIPTOPL-DEBUG-*.zip`: debug builds (iopcore, ingame, eesio, ppctty, DTL-T10000) for diagnosing a problem.\n'
-            fi
-            if ls rolling/RIPTOPL-LANGS-*.zip >/dev/null 2>&1; then
-              printf -- '- `RIPTOPL-LANGS-*.zip`: extra UI languages and fonts. Delete any `lang_*.lng` from a pre-rebuild build first: those number their strings differently and show the wrong text. Packs from this line stay compatible.\n'
-            fi
-            printf -- '- `*-src.zip`: the source snapshot of this commit.\n'
-
-            printf '\n**Which flavour?** Every `APPS/APP_RIPTOPL-*` folder holds the same RiptOPL code, built with a different SDK toolchain:\n\n'
-            printf '| Folder | Toolchain | Use it for |\n'
-            printf '| --- | --- | --- |\n'
-            if [ "$HAS_PS2DEVPINNED" = yes ]; then
-              printf '| `APP_RIPTOPL-PS2DEVPINNED` | %s, by digest | **Recommended.** Reproducible |\n' "$SDK_VER"
-            fi
-            if [ "${HAS_OFFICIALPINNED:-}" = yes ]; then
-              printf '| `APP_RIPTOPL-OFFICIALPINNED` | official OPL CI container, by digest | Reproducible, second SDK lineage |\n'
-            fi
-            printf '| `APP_RIPTOPL-PS2DEVROLLING` | `ps2dev:latest` | Triage: newest SDK, can regress (#102) |\n'
-            if [ "$HAS_OFFICIALROLLING" = yes ]; then
-              printf '| `APP_RIPTOPL-OFFICIALROLLING` | `ps2homebrew:main` | Triage against official OPL'"'"'s toolchain |\n'
-            fi
-            printf '\nA failure on only a rolling flavour points at the SDK; a failure on both a PS2DEV and an OFFICIAL flavour points at RiptOPL.\n'
-            if [ "$HAS_PS2DEVPINNED" != yes ]; then
-              printf '\nThe pinned PS2DEVPINNED build failed this run, so its folder is missing.\n'
-            fi
-            printf '\n'
-
-            cat .github/rolling-release-notes-block.md
-
-            # The newest merged PRs, so "what changed" is never hand-maintained and never stale.
-            # Best-effort: an API hiccup drops the section rather than failing the publish.
-            if [[ "${GITHUB_REF}" != refs/tags/v* ]]; then
-              MERGED="$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=closed&base=${GITHUB_REF_NAME}&sort=updated&direction=desc&per_page=50" \
-                --jq '[.[] | select(.merged_at != null)] | sort_by(.merged_at) | reverse | .[:8] | .[] | "- #\(.number) \(.title)"' 2>/dev/null || true)"
-              if [ -n "$MERGED" ]; then
-                printf '\n## Recently merged\n\n'
-                printf '%s\n' "$MERGED"
-                printf '\nFull history: [commits on %s](%s/%s/commits/%s)\n' "$GITHUB_REF_NAME" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_REF_NAME"
-              fi
-            fi
-          } > notes.md
-          echo "PS2DEVPINNED flavour present: $HAS_PS2DEVPINNED"
+          python3 .github/scripts/test_release_notes.py
+          python3 .github/scripts/normalize_release_notes.py \
+            --assets-dir rolling --tag "$REL_TAG" --revision "$GITHUB_SHA" \
+            --repository "$GITHUB_REPOSITORY" --server "$GITHUB_SERVER_URL" \
+            --version "$OPL_VERSION" --neutrino-version "$NEUTRINO_VER" > notes.md
           cat notes.md
-          echo "Assets to publish:"
-          ls -la rolling
 
       - name: Publish (rolling on the publishing branch, curated release on a v* tag)
         run: |
