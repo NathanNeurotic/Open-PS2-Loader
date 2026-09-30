@@ -241,21 +241,39 @@ static base_game_info_t *udpfsActiveGame(item_list_t *itemList, int id)
 // the root/game paths can win that race before THM is ready; latching that failed attempt made themes
 // disappear for the whole session. Probe THM itself first. A successful open (even if empty) is the
 // proof that completes discovery; a failed open keeps the lightweight background retry armed.
+//
+// ANY CASE. The share is a PC folder, and on a case-sensitive server (Linux) "thm" and "THM" are two
+// different folders. Worse, sbCreateFolders makes an empty "THM" beside a user's "thm", and a fixed
+// "THM" open then found that empty one and latched with no themes. So list the root and scan every
+// folder whose name is THM in any case -- an empty auto-created one costs nothing.
 static void udpfsDiscoverThemes(void)
 {
-    char themePath[64];
-    DIR *dir;
+    char themePath[128];
+    DIR *root, *dir;
+    struct dirent *entry;
+    int found = 0;
 
     if (udpfsThemesScanned || !udpfsIomanModLoaded || !udpfsServerAnswers())
         return;
 
-    snprintf(themePath, sizeof(themePath), "%sTHM", udpfsPrefix);
-    dir = opendir(themePath);
-    if (dir == NULL)
+    root = opendir(udpfsPrefix);
+    if (root == NULL)
         return;
+    while ((entry = readdir(root)) != NULL) {
+        if (strcasecmp(entry->d_name, "THM") != 0)
+            continue;
+        snprintf(themePath, sizeof(themePath), "%s%s", udpfsPrefix, entry->d_name);
+        dir = opendir(themePath); // a directory, whatever d_type the driver reports
+        if (dir == NULL)
+            continue;
+        closedir(dir);
+        thmAddElements(themePath, "/", 1);
+        found = 1;
+    }
+    closedir(root);
 
-    closedir(dir);
-    thmAddElements(themePath, "/", 1);
+    if (!found)
+        return;
     udpfsThemesScanned = 1;
     // If server-waiting is already clear, retire the temporary general-refresh cadence now that
     // theme discovery really completed. If the server is still considered down, preserve that wait.
