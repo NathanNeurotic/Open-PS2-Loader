@@ -165,17 +165,16 @@ It moves the cursor when nothing is being edited, and changes a setting once a c
 one control state, not two different bindings.</div>
 
 <h3 id="settings-screens">Settings screens</h3>
-<div class="callout info"><div class="h">Settings pins Cross and Circle</div>
-In the settings screens <b>Cross is always OK and Circle is always Cancel</b>, whichever way the global Select
-button setting is configured. This is deliberate — it keeps the settings UI stable no matter how the browser
-is set up.</div>
+<div class="callout info"><div class="h">Settings follow the Select Button setting</div>
+The settings screens, their save prompt, and the reboot-IOP prompt use the configured <b>Select Button</b>
+for confirm and back. Changing the browser's Select Button setting changes these screens too.</div>
 
 <table>
 <thead><tr><th>Button</th><th>Action</th></tr></thead>
 <tbody>
 <tr><td><b>L1 / R1</b></td><td>Move to the previous / next settings screen</td></tr>
-<tr><td><b>Cross</b></td><td>OK</td></tr>
-<tr><td><b>Circle</b></td><td>Cancel</td></tr>
+<tr><td><b>Configured confirm button</b></td><td>OK</td></tr>
+<tr><td><b>Configured cancel/back button</b></td><td>Back to the Settings index, keeping changes in RAM</td></tr>
 </tbody>
 </table>
 <p>See the <a href="settings.html">Settings Reference</a> for what each screen contains.</p>

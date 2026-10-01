@@ -335,7 +335,6 @@ boot changing only the menu to 480p (<b>Triangle + Circle</b> forces the interla
 <li><b>Neutrino Launch Args</b> and <b>Neutrino Video</b> picker are active and editable.</li>
 <li><b>Compat Modes 4 (Skip Videos) and 6 (Disable IGR)</b> are greyed — these are OPL ee-core features with no Neutrino equivalent. OPL never forwards them.</li>
 <li><b>Mode 7</b> is available (Neutrino-only; see above).</li>
-<li><b>Download Defaults</b> is greyed — it pulls OPL bitmask data that does not map to <code>-gc</code>.</li>
 <li>The <b>Configure GSM</b>, <b>Cheat Settings</b>, <b>Controller Emulation</b> and <b>OSD Settings</b> screens show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
 <li><b>VMC</b> and the rest of <b>Game Settings</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on BDM devices (USB/iLink/MX4SIO/exFAT&nbsp;HDD/UDPBD), MMCE and UDPFS. The one exception is <b>APA HDD</b>: Neutrino has no APA/pfs backing store to open the <code>.bin</code> from, so the game boots <em>without</em> the VMC and OPL shows a warning (the OPL core honors the same card normally). See <a href="vmc.html#neutrino-vmc">VMC with the Neutrino core</a>.</li>
 <li><b>UDPBD / UDPFS games</b> have no OPL core backend, so the Loader Core selector is locked to Neutrino for them and cannot be changed.</li>
