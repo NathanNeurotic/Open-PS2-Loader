@@ -93,15 +93,15 @@ a control is currently being edited.
 
 ### Settings screens
 
-The settings screens pin the confirm and back buttons: **Cross is always OK and Circle is always
-Back there**, whichever way the global Select button setting is configured. This is deliberate — it
-keeps the settings UI stable no matter how the browser is set up.
+The settings screens use the configured **Select Button** setting for confirm and back. If you
+change the browser's Select Button setting, the settings screens, their save prompt, and the
+reboot-IOP prompt follow that choice too.
 
 | Button | Action |
 |---|---|
 | **L1 / R1** | Move to the previous / next settings screen, keeping what you changed |
-| **Cross** | OK |
-| **Circle** | Back to the Settings index, keeping what you changed |
+| **Configured confirm button** | OK |
+| **Configured cancel/back button** | Back to the Settings index, keeping what you changed |
 
 Every way off a settings screen keeps your changes, so flipping pages and backing out behave the same.
 Nothing is written until you leave Settings: RiptOPL then asks whether to **Save**, **Exit without

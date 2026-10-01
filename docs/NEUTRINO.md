@@ -358,8 +358,7 @@ When a game's core is **Neutrino**:
   > 1080p mode used by the native OPL core.
   OPL compat **mode 4 (Skip Videos)** and **mode 6 (Disable IGR)** are greyed —
   they're OPL ee-core features with **no Neutrino equivalent** (Neutrino has no in-game reset, and
-  no PSS/BIK video-skip), so OPL never forwards them. **Download Defaults** is greyed too (it pulls
-  OPL-bitmask data that doesn't map to `-gc`). Modes 1/2/3/5 *do* map to `-gc`, and a Neutrino-only
+  no PSS/BIK video-skip), so OPL never forwards them. Modes 1/2/3/5 *do* map to `-gc`, and a Neutrino-only
   **mode 7** (greyed under the OPL core — the inverse of 4/6) maps to `-gc=7` (fix games that overrun
   an IOP buffer).
 - **Neutrino GSM Compatibility** (Compatibility screen, beside Neutrino Video) — **Off / Type 1
