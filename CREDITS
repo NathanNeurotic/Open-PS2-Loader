@@ -176,8 +176,12 @@ Our daughter project:
     https://github.com/akilluminati47/RIPPS2
     Web-theme beta: https://akilluminati47.github.io/RIPPS2/
     PS2-inspired front end; the custom OPL theme and RIPPS2.elf are planned next.
-    The project is still alpha, with ps2build and a C++ edition coming in
-    collaboration with techwritescode.
+    The project is still alpha.
+
+Planned collaboration:
+
+  - A ps2build C++ edition, in collaboration with techwritescode.
+    https://git.techwritescode.dev/techwritescode/PSUManager
 
 Special and sincere thanks to:
 
