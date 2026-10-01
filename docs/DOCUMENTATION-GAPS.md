@@ -165,7 +165,7 @@ if that build fails), and `release-normalize.yml` folds them into the variants a
 ### 9. Parental lock
 
 **Status: DONE** — `docs/INTERFACE.md` + expanded `settings.html#parental-lock`. Now states what the lock
-actually gates (Settings, per-game screens, rename/delete, network update, NBD — **not** launching games,
+actually gates (Settings, per-game screens, rename/delete, NBD — **not** launching games,
 so it is not a content filter), that a correct password unlocks for the whole session, and that the master
 override **deletes the password and saves** rather than granting one-time access, and cannot be set as
 your own.
