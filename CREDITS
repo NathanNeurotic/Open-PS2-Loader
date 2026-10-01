@@ -170,6 +170,15 @@ Contributor, and our #1 recommended alternative loader:
     contributes to RiptOPL directly: PR #733 brings LUNA's Collection cover-art
     screen to RiptOPL's renderer. Thank you for sharing your work with us.
 
+Our daughter project:
+
+  - RIPPS2, by Akilluminati47
+    https://github.com/akilluminati47/RIPPS2
+    Web-theme beta: https://akilluminati47.github.io/RIPPS2/
+    PS2-inspired front end; the custom OPL theme and RIPPS2.elf are planned next.
+    The project is still alpha, with ps2build and a C++ edition coming in
+    collaboration with techwritescode.
+
 Special and sincere thanks to:
 
   - KrahJohlito - the legend, and the single biggest influence on this fork.
