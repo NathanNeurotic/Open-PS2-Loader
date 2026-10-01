@@ -7,8 +7,7 @@ Two settings change what you read below, so check them first if the tables do no
 * **Select Button** (*Settings → Controller Settings*) swaps which face button confirms. The tables use
   **Cross = confirm, Circle = back**, which is the default everywhere except **Japanese consoles**,
   where RiptOPL starts with Circle as confirm to match the regional convention. If Circle is your
-  select button, swap those two everywhere *except* the Settings screens (see the note under
-  [Settings screens](#settings-screens)).
+  select button, swap those two everywhere, including the Settings screens.
 * **Coverflow** (*Settings → Interface*) rotates the navigation axis on the game list. Both layouts
   are given below.
 
