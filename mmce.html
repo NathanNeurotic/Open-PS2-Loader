@@ -87,7 +87,7 @@ namespace alongside USB. If your adapter does not expose the MMCE protocol, see 
 <div class="step"><h3>Prepare the SD card</h3>
 <p>Format the SD card as <b>FAT32</b> or <b>exFAT</b> with an MBR partition table. Create the standard OPL folder
 tree at the card root: <code>DVD/</code>, <code>CD/</code>, <code>ART/</code>, <code>CFG/</code>, <code>VMC/</code>,
-<code>THM/</code>, <code>CHT/</code>, <code>APPS/</code>. Copy PS2 game ISOs into <code>DVD/</code> (DVD-format
+<code>THM/</code>, <code>CHT/</code>, <code>APPS/</code>, and <code>EMBER/</code> (Ember PS1 games). Copy PS2 game ISOs into <code>DVD/</code> (DVD-format
 titles) or <code>CD/</code> (CD-format titles). Defragment game files — ideally copy to PC, reformat, copy back.
 Up to 64 fragments per file are tolerated since OPL v1.2.0 beta rev1893, but contiguous files are strongly
 preferred for reliability.</p></div>
@@ -122,6 +122,7 @@ automatically on first launch.</p>
 <tr><td><code>CHT/</code></td><td>Cheat files</td></tr>
 <tr><td><code>APPS/</code></td><td>Homebrew ELFs</td></tr>
 <tr><td><code>LNG/</code></td><td>Language packs</td></tr>
+<tr><td><code>EMBER/</code></td><td>Ember PS1 emulator, BIOS, settings, and game folders</td></tr>
 </tbody>
 </table>
 <p>The device prefix is <code>mmce0:/</code> (slot 0) or <code>mmce1:/</code> (slot 1). In
