@@ -37,6 +37,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: rebuild/main
+          fetch-depth: 0
 
       - name: Compare the bundled Ember with the latest official release
         id: cmp
@@ -103,22 +104,35 @@ jobs:
               sys.exit('ember.elf is not a MIPS executable')
           print('ember.elf: 32-bit little-endian MIPS ELF, %d bytes' % len(data))
           PY
+
+          # The licence must ship with the ELF, so settle it BEFORE touching either ELF copy. Keep ours only
+          # when upstream confirms it has no LICENSE-BETA.txt at this tag (HTTP 404); any other failure --
+          # timeout, rate limit, server error, bad Base64, empty content -- stops the update (CodeRabbit #820).
+          LIC="$RUNNER_TEMP/ember/LICENSE-BETA.txt"
+          if gh api "repos/$EMBER_REPO/contents/LICENSE-BETA.txt?ref=$TAG" --jq '.content' > "$RUNNER_TEMP/ember/lic.b64" 2> "$RUNNER_TEMP/ember/lic.err"; then
+            if ! base64 -d "$RUNNER_TEMP/ember/lic.b64" > "$LIC" || [ ! -s "$LIC" ]; then
+              echo "Upstream LICENSE-BETA.txt at $TAG did not decode to a non-empty file -- stopping." >&2
+              exit 1
+            fi
+          elif grep -q "HTTP 404" "$RUNNER_TEMP/ember/lic.err"; then
+            echo "No LICENSE-BETA.txt at $TAG upstream; keeping the bundled licence."
+            LIC=""
+          else
+            echo "Could not read upstream LICENSE-BETA.txt at $TAG -- stopping:" >&2
+            cat "$RUNNER_TEMP/ember/lic.err" >&2
+            exit 1
+          fi
+
           KIT="Example/APP_RIPTOPL-OFFICIALROLLING-VERSION.ZIP/EMBER"
           cp -f "$NEW" EMBER/ember.elf
           if [ -d "$KIT" ]; then cp -f "$NEW" "$KIT/ember.elf"; fi
-
-          # The licence must ship with the ELF. Keep ours level with the tag's; if upstream has none, keep ours.
-          if gh api "repos/$EMBER_REPO/contents/LICENSE-BETA.txt?ref=$TAG" --jq '.content' > "$RUNNER_TEMP/ember/lic.b64" 2>/dev/null \
-             && base64 -d "$RUNNER_TEMP/ember/lic.b64" > "$RUNNER_TEMP/ember/LICENSE-BETA.txt" 2>/dev/null \
-             && [ -s "$RUNNER_TEMP/ember/LICENSE-BETA.txt" ]; then
-            cp -f "$RUNNER_TEMP/ember/LICENSE-BETA.txt" EMBER/LICENSE-BETA.txt
-            if [ -d "$KIT" ]; then cp -f "$RUNNER_TEMP/ember/LICENSE-BETA.txt" "$KIT/LICENSE-BETA.txt"; fi
-          else
-            echo "No LICENSE-BETA.txt at $TAG upstream; keeping the bundled licence."
+          if [ -n "$LIC" ]; then
+            cp -f "$LIC" EMBER/LICENSE-BETA.txt
+            if [ -d "$KIT" ]; then cp -f "$LIC" "$KIT/LICENSE-BETA.txt"; fi
           fi
           git status --short
 
-      - name: Commit to rebuild/main and publish
+      - name: Commit to rebuild/main
         if: steps.cmp.outputs.changed == 'yes'
         env:
           TAG: ${{ steps.cmp.outputs.tag }}
@@ -150,6 +164,42 @@ jobs:
             [ "$attempt" = 3 ] && { echo "Could not push after 3 attempts." >&2; exit 1; }
             git pull --rebase -q origin rebuild/main
           done
-          echo "Bundled Ember $TAG ($SHA) on rebuild/main; starting the rolling builds."
-          gh workflow run rolling-release.yml --repo "$GITHUB_REPOSITORY" --ref rebuild/main
-          gh workflow run korium-sync.yml --repo "$GITHUB_REPOSITORY" --ref rebuild/main
+          echo "Bundled Ember $TAG ($SHA) on rebuild/main."
+
+      # Runs on EVERY tick, not only after a commit, so a dispatch that failed after the push is retried
+      # on the next run instead of being lost once the digests match (CodeRabbit #820): a push made with
+      # GITHUB_TOKEN starts no workflow, so nothing else would ever publish it. Each rolling release must
+      # contain the commit that last changed EMBER/ember.elf; if one does not and its build is not already
+      # running, start it. Each channel is checked on its own.
+      - name: Make sure both rolling releases carry the bundled Ember
+        run: |
+          set -eu
+          R="$GITHUB_REPOSITORY"
+          KORIUM=test/korium-audit-remediation
+          git fetch -q origin rebuild/main "+refs/heads/$KORIUM:refs/remotes/origin/$KORIUM"
+          EMBER_COMMIT="$(git log -1 --format=%H origin/rebuild/main -- EMBER/ember.elf)"
+          running() { gh run list --repo "$R" --workflow "$1" --branch "$2" --limit 20 --json status --jq '[.[] | select(.status != "completed")] | length'; }
+          contains() { # does release tag $1 contain EMBER_COMMIT?
+            at="$(gh api "repos/$R/git/ref/tags/$1" --jq .object.sha 2>/dev/null || true)"
+            [ -n "$at" ] && git cat-file -e "$at^{commit}" 2>/dev/null && git merge-base --is-ancestor "$EMBER_COMMIT" "$at"
+          }
+
+          if contains rolling; then
+            echo "rolling carries the bundled Ember (${EMBER_COMMIT:0:8})."
+          elif [ "$(running rolling-release.yml rebuild/main)" != 0 ]; then
+            echo "rolling lacks ${EMBER_COMMIT:0:8}, but a Rolling Release build is already running."
+          else
+            echo "rolling lacks ${EMBER_COMMIT:0:8}: starting Rolling Release."
+            gh workflow run rolling-release.yml --repo "$R" --ref rebuild/main
+          fi
+
+          # Korium Sync merges rebuild/main into the Korium branch and starts its build when the
+          # rolling-korium tag is behind; it is the one entry point for that channel.
+          if contains rolling-korium; then
+            echo "rolling-korium carries the bundled Ember."
+          elif [ "$(running korium-sync.yml rebuild/main)" != 0 ] || [ "$(running rolling-release.yml "$KORIUM")" != 0 ]; then
+            echo "rolling-korium lacks ${EMBER_COMMIT:0:8}, but its sync or build is already running."
+          else
+            echo "rolling-korium lacks ${EMBER_COMMIT:0:8}: starting Korium Sync."
+            gh workflow run korium-sync.yml --repo "$R" --ref rebuild/main
+          fi
