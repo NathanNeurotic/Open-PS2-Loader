@@ -64,10 +64,10 @@ DS5 over USB is supported in the code, and has been hardware-validated, but it i
 default build** (`DUALSENSE ?= 0`). The entire DS5 path is behind `#ifdef DS5_ENABLE`, so a default
 build behaves identically to the build that is already hardware-proven.
 
-**You do not have to build it yourself.** CI produces a ready-made DualSense loader as a separate
-named asset for each SDK flavour — look for the `-ds5.ELF` downloads on the release. They are
-built best-effort: if that build fails for a given run, the asset is skipped for that run rather than
-holding up the release, so it will not always be present.
+**You do not have to build it yourself.** CI bundles the ready-made DualSense loaders inside the
+`RIPTOPL-VARIANTS-*.zip` release asset, alongside the other variant ELFs. The variant build is
+best-effort: if it fails for a given run, the DS5 loader may be absent from that archive rather than
+holding up the normal release.
 
 ---
 

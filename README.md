@@ -517,8 +517,8 @@ MMCE Settings*) sends a switch-to-bootcard command as the reset happens.
 | Start | Main menu |
 | Select | Refresh the current list |
 
-Cross and Circle follow the **Select button** setting, except in the settings screens, where Cross is
-always OK and Circle always Cancel. Holding **Triangle + Cross at boot** forces the menu to 480p
+Cross and Circle follow the configured **Select Button** setting, including in the settings screens.
+Holding **Triangle + Cross at boot** forces the menu to 480p
 progressive as a recovery path for a display that cannot sync the saved video mode; **Triangle +
 Circle** forces Auto (the region's interlaced mode) for a TV that can't take 480p.
 
