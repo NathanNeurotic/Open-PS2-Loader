@@ -357,6 +357,8 @@ for key, row in (
         failures.append(f'src/gui.c: Ember Game Settings never stores {key}')
 if game_page and 'menuSaveConfig()' not in game_page:
     failures.append('src/gui.c: Ember Game Settings does not save the CFG')
+if game_page and 'menuSaveEmberGameSettings(configSet)' not in game_page:
+    failures.append('src/gui.c: Ember Game Settings does not save settings.txt before launch')
 
 row_function = function_text(gui_c, 'src/gui.c', 'static int emberSettingFromRow(')
 if row_function:
@@ -449,12 +451,13 @@ rewrite_functions = ''.join(function_text(cue_c, 'src/cuesupport.c', sig) for si
 if rewrite_functions.count('{') >= 3:
     compile_and_run('ember_rewrite', REWRITE_HARNESS.replace('@FUNCTIONS@', rewrite_functions))
 
-# cueApplySettings only opens a file when it has something to do there.
+# The launch path and explicit save only open a file when they have something to do there.
 apply_fn = function_text(cue_c, 'src/cuesupport.c', 'void cueApplySettings(')
+save_game_fn = function_text(cue_c, 'src/cuesupport.c', 'int cueSaveGameSettings(')
 if apply_fn and not re.search(r'if \(nGlobal > 0\)', apply_fn):
     failures.append('cueApplySettings: the main settings.txt must only be touched when a global setting is set')
-if apply_fn and not re.search(r'if \(nGame > 0\)', apply_fn):
-    failures.append('cueApplySettings: a game\'s settings.txt must only be touched when that game has a setting')
+if save_game_fn and not re.search(r'if \(nGame == 0\)\s*return 1;', save_game_fn):
+    failures.append('cueSaveGameSettings: a game with no managed setting must not touch settings.txt')
 
 APPLY_HARNESS = r'''
 #include <stdio.h>
@@ -486,7 +489,8 @@ int gEmberDither = EMBER_SETTING_UNSET;
 int gEmberShading = EMBER_SETTING_UNSET;
 int gEmberController = EMBER_SETTING_UNSET;
 
-static int globalTouches, gameTouches;
+static int globalTouches, gameTouches, writeResult = 1;
+static char lastGamePath[768];
 
 static int configGetInt(config_set_t *cfg, const char *key, int *value)
 {
@@ -510,14 +514,16 @@ static int configGetInt(config_set_t *cfg, const char *key, int *value)
 }
 static const char *cueEmberFolder(void) { return "EMBER"; }
 static char cueSep(const char *prefix) { (void)prefix; return '/'; }
-static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, int count)
+static int cueRewriteSettingsFile(const char *path, const cue_setting_t *want, int count)
 {
     (void)want;
     (void)count;
-    if (strstr(path, "/games/") != NULL)
+    if (strstr(path, "/games/") != NULL) {
         gameTouches++;
-    else
+        snprintf(lastGamePath, sizeof(lastGamePath), "%s", path);
+    } else
         globalTouches++;
+    return writeResult;
 }
 
 @FUNCTIONS@
@@ -532,6 +538,8 @@ static void reset(config_set_t *cfg)
     gEmberShading = EMBER_SETTING_UNSET;
     gEmberController = EMBER_SETTING_UNSET;
     globalTouches = gameTouches = 0;
+    lastGamePath[0] = '\0';
+    writeResult = 1;
 }
 static void expect(const char *what, int globalWant, int gameWant)
 {
@@ -587,15 +595,33 @@ int main(void)
     cueApplySettings("mass0:/", "../x", &cfg);
     expect("path-like game names do not touch game settings", 0, 0);
 
+    reset(&cfg);
+    gEmberDisplay = EMBER_DISPLAY_240;
+    cfg.shadingPresent = 1;
+    cfg.shading = EMBER_SHADING_24;
+    if (!cueSaveGameSettings("mass0:/", "Game", &cfg))
+        fails++;
+    expect("explicit game save does not write global settings", 0, 1);
+    if (strcmp(lastGamePath, "mass0:/EMBER/games/Game/settings.txt") != 0) {
+        printf("FAIL explicit save used wrong game path: %s\n", lastGamePath);
+        fails++;
+    }
+    writeResult = 0;
+    if (cueSaveGameSettings("mass0:/", "Game", &cfg) != 0) {
+        printf("FAIL failed settings.txt write reported success\n");
+        fails++;
+    }
+
     if (!fails)
         printf("ember settings: apply guards prevent file access for empty setting lists\n");
     return fails ? 1 : 0;
 }
 '''
 
-if apply_fn:
+if apply_fn and save_game_fn:
     apply_functions = (function_text(cue_c, 'src/cuesupport.c', 'int cueNameLaunchable(') +
                        function_text(cue_c, 'src/cuesupport.c', 'static void cueWantSetting(') +
+                       save_game_fn +
                        apply_fn)
     apply_defines = (defines(config_h, 'include/config.h',
                              ('CONFIG_ITEM_EMBER_TIMING', 'CONFIG_ITEM_EMBER_DITHER',

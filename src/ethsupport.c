@@ -996,6 +996,13 @@ static char *ethGetPrefix(item_list_t *itemList)
     return ethPrefix;
 }
 
+static int ethSaveCueSettings(item_list_t *itemList, int id, const char *name, config_set_t *configSet)
+{
+    (void)itemList;
+    (void)id;
+    return gPCShareName[0] && cueSaveGameSettings(ethPrefix, name, configSet);
+}
+
 const char *ethGetSMBPrefix(void)
 {
     return ethPrefix;
@@ -1005,7 +1012,7 @@ static item_list_t ethGameList = {
     ETH_MODE, 1, 0, 0, MENU_MIN_INACTIVE_FRAMES, ETH_MODE_UPDATE_DELAY, NULL, NULL, &ethGetTextId, &ethGetPrefix, &ethInit, &ethNeedsUpdate,
     &ethUpdateGameList, &ethGetGameCount, &ethGetGame, &ethGetGameName, &ethGetGameNameLength, &ethGetGameStartup, &ethDeleteGame, &ethRenameGame,
     &ethLaunchGame, &ethGetConfig, &ethGetImage, &ethCleanUp, &ethShutdown, &ethCheckVMC, &ethGetIconId, &ethLaunchVcd,
-    ITEM_VIEW_NATIVE, NULL, &ethLaunchCue, &ethGetItemView, &ethGetSourceId};
+    ITEM_VIEW_NATIVE, NULL, &ethLaunchCue, &ethGetItemView, &ethGetSourceId, &ethSaveCueSettings};
 
 int ethGetNetConfig(u8 *ip_address, u8 *netmask, u8 *gateway)
 {

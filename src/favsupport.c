@@ -816,6 +816,21 @@ static void favLaunchItem(item_list_t *itemList, int id, config_set_t *configSet
     o->itemLaunch(o, favArray[id].id, configSet);
 }
 
+static int favSaveCueSettings(item_list_t *itemList, int id, const char *name, config_set_t *configSet)
+{
+    item_list_t ownerView;
+    item_list_t *owner;
+    (void)itemList;
+
+    // Names are the complete Ember folder identities. Resolve the same owner as launch, even if
+    // its page is currently showing PS2 games.
+    if (!favValidIndex(id) || favArray[id].kind != FAV_KIND_CUE || strcmp(favArray[id].text, name) != 0)
+        return 0;
+    owner = favOwnerView(id, &ownerView);
+    return owner != NULL && owner->itemSaveCueSettings != NULL &&
+           owner->itemSaveCueSettings(owner, favArray[id].id, name, configSet);
+}
+
 // Art proxy: the cache passes the source item's startup as `value`. Find the favourite whose
 // source startup matches and forward to its owner's image lookup.
 static int favGetImage(item_list_t *itemList, char *folder, int isRelative, char *value, char *suffix, GSTEXTURE *resultTex, short psm)
@@ -1107,4 +1122,4 @@ static item_list_t favItemList = {
     FAV_MODE, -1, 0, 0, MENU_MIN_INACTIVE_FRAMES, FAV_MODE_UPDATE_DELAY, NULL, NULL, &favGetTextId, NULL, &favInit, &favNeedsUpdate, &favUpdateItemList,
     &favGetItemCount, NULL, &favGetItemName, &favGetItemNameLength, &favGetItemStartup, &favDeleteItem, &favRenameItem, &favLaunchItem,
     &favGetConfig, &favGetImage, &favCleanUp, &favShutdown, &favCheckVMC, &favGetIconId,
-    NULL, ITEM_VIEW_NATIVE, NULL, NULL, &favGetRowView, NULL};
+    NULL, ITEM_VIEW_NATIVE, NULL, NULL, &favGetRowView, NULL, &favSaveCueSettings};

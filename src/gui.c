@@ -3538,14 +3538,19 @@ void guiShowEmberGameSettings(void)
 
     // An absent CFG key is displayed as Default, but OK makes that inheritance explicit. This is
     // intentional: Ember defines a missing game key as "use the global settings.txt value".
-    if (newTiming == timing && newDither == dither && newShading == shading && newController == controller)
-        return;
+    if (newTiming != timing || newDither != dither || newShading != shading || newController != controller) {
+        configSetInt(configSet, CONFIG_ITEM_EMBER_TIMING, newTiming);
+        configSetInt(configSet, CONFIG_ITEM_EMBER_DITHER, newDither);
+        configSetInt(configSet, CONFIG_ITEM_EMBER_SHADING, newShading);
+        configSetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, newController);
+        if (!menuSaveConfig()) // the normal CFG error message includes its path and errno
+            return;
+    }
 
-    configSetInt(configSet, CONFIG_ITEM_EMBER_TIMING, newTiming);
-    configSetInt(configSet, CONFIG_ITEM_EMBER_DITHER, newDither);
-    configSetInt(configSet, CONFIG_ITEM_EMBER_SHADING, newShading);
-    configSetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, newController);
-    menuSaveConfig(); // a failed write raises the usual "error saving settings" message
+    if (menuSaveEmberGameSettings(configSet))
+        guiMsgBox(_l(_STR_GAME_SETTINGS_SAVED), 0, NULL);
+    else
+        guiMsgBox(_l(_STR_ERROR_SAVING_SETTINGS), 0, NULL);
 }
 
 int guiShowKeyboard(char *value, int maxLength)

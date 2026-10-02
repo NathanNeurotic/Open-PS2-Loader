@@ -134,6 +134,7 @@ char *menuItemGetText(menu_item_t *it);
 config_set_t *menuLoadConfig();
 config_set_t *gameMenuLoadConfig(struct UIItem *ui);
 int menuSaveConfig();
+int menuSaveEmberGameSettings(config_set_t *configSet);
 int menuSaveSettings(void);
 // Queue an async re-read of the current item's config WITH the #Size stat enabled. The scroll-path
 // load skips that stat (see sbSetConfigStatSize); the info screen calls this so #Size still resolves.
