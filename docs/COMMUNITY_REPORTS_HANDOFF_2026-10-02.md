@@ -9,6 +9,16 @@ comparison:
 to eliminator1403. The build numbers have not yet been mapped to exact commits
 or release assets.
 
+## Implementation checkpoint
+
+Draft PR [#825](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/825)
+contains four separate, pushed commits for immediate per-game Ember settings
+saves and no-art PS1 identification/save-card guidance. Its focused host checks
+and GitHub format/build workflows passed at commit `8126c058`; real-console
+testing is still required. The original dirty `migrate/riptopl-korium`
+checkout was preserved. This document remains the report and evidence ledger;
+PR #825 records exactly which fixes were committed and which were withheld.
+
 ## Working rules and current checkout
 
 - Repository: `NathanNeurotic/Open-PS2-Loader`. The separately named
@@ -35,19 +45,20 @@ or release assets.
 
 | ID | Report and desired outcome | What is established | What remains unknown |
 | --- | --- | --- | --- |
-| E1 | TwistedZeon wants per-game Ember `settings.txt` written from the menu, without launching the game. | An uncommitted implementation makes confirming **Ember Game Settings** save it immediately. The focused host test passed on October 2. | Console behavior and slow/failed writes on each supported device. |
+| E1 | TwistedZeon wants per-game Ember `settings.txt` written from the menu, without launching the game. | PR #825 commits the immediate-save implementation; focused host tests and CI builds passed. | Console behavior and slow/failed writes on each supported device. |
 | I1 | FifthFox's iLink drive sometimes needs a recent drive reboot to launch PS2 ISOs. After reformatting a drive previously used on a Mac, exFAT was visible but still would not launch PS2 games after reboot; FAT32 worked better in that setup. A later Seagate drive and PS2 logo enabled successful Jak and Daxter launch with four compatibility modes. | These are tester observations, not isolated causes. | Exact build, drive/enclosure, partition scheme, filesystem, four modes, console, game ID, and results with one variable changed at a time. |
 | I2 | FifthFox reports "Neutrino (MC) runs via iLink" with PS2 logo and a custom argument. | This is a valuable new console success report. | Whether "MC" means the Neutrino ELF location, exact ELF/ISO locations and argument bytes, Neutrino version, persistence across cold boots and multiple titles. |
 | I3 | FifthFox asks whether freeing memory before launch or using a lighter interface would improve iLink reliability. | Launch teardown already stops art requests and releases menu resources before handoff. | Whether remaining EE/IOP memory, drive readiness, or timing causes the failures. |
-| V1 | TwistedZeon reports that a PAL game is "flipping" on an NTSC interlaced CRT under Neutrino and explicitly asks for 480i. | The new 5.27-second clip shows the Neutrino Video picker on the CRT, but no game output. RiptOPL offers Off, 240p, 480p, and 1080i modes; upstream documents no forced NTSC 480i mode. | Exact game, cable/CRT, what "flipping" looks like during gameplay (roll, field shake, or periodic loss), and whether native OPL-core GSM works for that title. |
+| V1 | TwistedZeon reports that a PAL game is "flipping" on an NTSC interlaced CRT under Neutrino and explicitly asks for 480i. | The clip shows the video picker, not game output. A later screenshot confirms the field-flip picker is disabled while Video is Default. Upstream parses `-gsm=:1` but does not enable GSM without a forced video mode; it exposes no forced NTSC 480i. | Exact game, cable/CRT, what "flipping" looks like during gameplay (roll, field shake, or periodic loss), and whether native OPL-core GSM works for that title. |
 | T1 | zackcage6 says the font in the pictured RiptOPL settings view looks "sluggish" and is hard to read on the CRT; they suggest changing the font or rendering it for interlace. | The main RiptOPL interface already offers NTSC/PAL interlaced `FLICKER-FREE` modes, and themes can load alternate fonts. Neither has been tested for this report. | Exact build, theme/font, interface video mode, CRT/cable, whether "sluggish" means visual flicker/blur or slow UI response, and whether the alternate mode improves legibility. |
 | A1 | eliminator1403 reports slow art in Beta 3420 Korium and names 3248 as the last good build. | Recent art scheduling and built-in background changes exist; the most suspicious September 26 priority feature was rolled back September 27. | Exact release commits, same-device A/B timings, source type, theme, art settings, and whether the slowdown affects PS1, PS2, or both. |
 | P1 | Aislinn wants a useful error when PS1 prerequisites are missing. | Launch paths already show several missing POPSTARTER/Ember/BIOS messages; missing Ember core can remove Ember rows at scan time. | Which missing item and path produced the reported lack of guidance, and whether the title was a VCD or Ember folder. |
-| P2 | Aislinn mistook PS1 007 entries for PS2 titles without cover art, then could not open the expected PS2 game/VMC menu. | PS1 rows intentionally open a different Triangle menu, without PS2 per-game VMC options. | Which list mode/theme/view made the row's PS1 identity unclear, and what save-card workflow the tester expected. |
+| P2 | Aislinn mistook PS1 007 entries for PS2 titles without cover art, then could not open the expected PS2 game/VMC menu. | PS1 rows intentionally open a different Triangle menu. PR #825 adds a PS1 row label and save-card guidance there. | Console legibility in each theme/view and what save-card workflow the tester expected. |
 
 ## E1 — Save Ember per-game settings before launch
 
-The current uncommitted work already implements the requested behavior.
+At this document's original checkout snapshot, the implementation was
+uncommitted; its focused source changes are now committed in PR #825.
 `src/gui.c:3489` confirms the Ember per-game editor; `src/menusys.c:608`
 routes its save through the selected support's `itemSaveCueSettings` callback;
 `src/cuesupport.c:507` updates only managed per-game keys in
@@ -160,6 +171,29 @@ output, so it cannot establish the visual failure mode or prove that a field
 flip setting would fix it. `1080i` is interlaced, but it is HDTV timing rather
 than the standard-definition 480i/576i signal their CRT needs. The available
 `240p` and `480p` choices do not supply a forced NTSC 480i mode.
+
+The October 2 follow-up screenshot adds a concrete UI reproduction. TwistedZeon
+said that leaving **Neutrino Video** on **Default** disables **Neutrino GSM
+Compatibility**, so they cannot select a field-flipping type without changing
+video mode; they checked again and confirmed this. darkladark said Luna selects
+`fp2` (480p/576p) when compatibility is enabled from Default. This is a report
+about Luna's behavior, not a tested fix for TwistedZeon's interlaced CRT.
+
+The dependency is deeper than RiptOPL's greyed picker. Neutrino's loader parser
+accepts an empty video component with a compatibility value, such as
+`-gsm=:1`, but its EE core calls `EnableGSM()` only when `GsmVideoMode` is not
+`NONE`. As a result, enabling RiptOPL's picker and emitting `-gsm=:1` would
+store a setting that parses yet does not activate the field-flipping hook in
+the inspected upstream commit. RiptOPL currently emits the compatibility
+component only with a forced video mode. Source references:
+[parser](https://github.com/ps2max32/neutrino/blob/7be8de2798c99af433c91993e021746a54d6800d/ee/loader/src/main.c#L215-L274),
+[GSM enable gate](https://github.com/ps2max32/neutrino/blob/7be8de2798c99af433c91993e021746a54d6800d/ee/ee_core/src/main.c#L82-L90),
+and [field-flipping hook](https://github.com/ps2max32/neutrino/blob/7be8de2798c99af433c91993e021746a54d6800d/ee/ee_core/src/gsm_api.c#L647-L690).
+Confirm the exact Neutrino ELF version in the tester's setup before extending
+this conclusion to that build. Forcing `fp2` selects progressive 480p/576p,
+which may be unusable on the reported CRT. Do not silently select it from
+Default. The issue remains open pending a game-output clip or another upstream
+method for interlaced field-flip compatibility without forced progressive mode.
 
 First determine whether "flipping" means vertical roll due to 50 Hz/PAL on
 an NTSC-only CRT, or field shake with an otherwise visible signal. The former
@@ -302,6 +336,10 @@ Test no-cover PS1 and PS2 rows in Both, Mixed, PS1-only, and Favorites views;
 test VCD and Ember rows separately; test missing POPSTARTER, missing
 `ember.elf`, missing `bios.bin`, and an unreadable device separately. Check
 localization and that normal PS2 Game Settings/VMC behavior is unchanged.
+
+The first two presentation actions above are implemented in PR #825. They
+remain unverified on a console; the missing-component case lacks the reported
+file/path and was deliberately left without a speculative code change.
 
 ## Suggested implementation sequence and completion gates
 
