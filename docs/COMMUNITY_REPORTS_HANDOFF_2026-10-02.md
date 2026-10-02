@@ -1,9 +1,10 @@
 # Community reports handoff — October 2, 2026
 
 This handoff collects the RiptOPL reports from TwistedZeon, FifthFox,
-eliminator1403, and Aislinn. It is a triage and implementation guide, not a
-claim that the reported behavior has been reproduced or fixed. The screenshot
-supplied later in the conversation adds one concrete artwork comparison:
+eliminator1403, Aislinn, and zackcage6. It is a triage and implementation
+guide, not a claim that the reported behavior has been reproduced or fixed.
+The screenshot supplied later in the conversation adds one concrete artwork
+comparison:
 **3248 loaded artwork normally; Beta 3420 Korium loads it slowly**, according
 to eliminator1403. The build numbers have not yet been mapped to exact commits
 or release assets.
@@ -39,6 +40,7 @@ or release assets.
 | I2 | FifthFox reports "Neutrino (MC) runs via iLink" with PS2 logo and a custom argument. | This is a valuable new console success report. | Whether "MC" means the Neutrino ELF location, exact ELF/ISO locations and argument bytes, Neutrino version, persistence across cold boots and multiple titles. |
 | I3 | FifthFox asks whether freeing memory before launch or using a lighter interface would improve iLink reliability. | Launch teardown already stops art requests and releases menu resources before handoff. | Whether remaining EE/IOP memory, drive readiness, or timing causes the failures. |
 | V1 | TwistedZeon reports that a PAL game is "flipping" on an NTSC interlaced CRT under Neutrino and explicitly asks for 480i. | The new 5.27-second clip shows the Neutrino Video picker on the CRT, but no game output. RiptOPL offers Off, 240p, 480p, and 1080i modes; upstream documents no forced NTSC 480i mode. | Exact game, cable/CRT, what "flipping" looks like during gameplay (roll, field shake, or periodic loss), and whether native OPL-core GSM works for that title. |
+| T1 | zackcage6 says the font in the pictured RiptOPL settings view looks "sluggish" and is hard to read on the CRT; they suggest changing the font or rendering it for interlace. | The main RiptOPL interface already offers NTSC/PAL interlaced `FLICKER-FREE` modes, and themes can load alternate fonts. Neither has been tested for this report. | Exact build, theme/font, interface video mode, CRT/cable, whether "sluggish" means visual flicker/blur or slow UI response, and whether the alternate mode improves legibility. |
 | A1 | eliminator1403 reports slow art in Beta 3420 Korium and names 3248 as the last good build. | Recent art scheduling and built-in background changes exist; the most suspicious September 26 priority feature was rolled back September 27. | Exact release commits, same-device A/B timings, source type, theme, art settings, and whether the slowdown affects PS1, PS2, or both. |
 | P1 | Aislinn wants a useful error when PS1 prerequisites are missing. | Launch paths already show several missing POPSTARTER/Ember/BIOS messages; missing Ember core can remove Ember rows at scan time. | Which missing item and path produced the reported lack of guidance, and whether the title was a VCD or Ember folder. |
 | P2 | Aislinn mistook PS1 007 entries for PS2 titles without cover art, then could not open the expected PS2 game/VMC menu. | PS1 rows intentionally open a different Triangle menu, without PS2 per-game VMC options. | Which list mode/theme/view made the row's PS1 identity unclear, and what save-card workflow the tester expected. |
@@ -167,6 +169,35 @@ GSM picker includes interlaced **NTSC** (`src/guigame.c:455`,
 `src/gsm.c:108`); have the tester try that as a targeted workaround. A CRT
 that cannot sync to 480p should not be asked to test 480p/1080i as a fix.
 
+## T1 — CRT font legibility and perceived sluggishness
+
+In the latest screenshot, zackcage6 describes the **font** in the pictured
+settings view as "sluggish + not easily view-able" and asks whether the font
+should change or be rendered for interlace. The screenshot shows text on a CRT,
+but does not identify the build, theme, selected RiptOPL interface video mode,
+connection, or whether "sluggish" refers to motion/response time versus
+flicker, ghosting, or soft glyph edges. Keep this report separate from
+TwistedZeon's PAL-game output problem; a menu font change cannot establish a
+Neutrino PAL-to-NTSC fix.
+
+The **Interface → Video Mode** picker already exposes NTSC/PAL 640-wide
+interlaced `FLICKER-FREE` entries (`src/gui.c:2839`), distinct from the
+per-game **Neutrino Video** picker. In this checkout they use `GS_FRAME` with
+the same interlaced CRT timing as the corresponding `GS_FIELD` modes
+(`src/renderman.c:65-82`). The source notes reduced line flicker on thin text
+at the cost of half the framebuffer's vertical detail; it may improve or
+worsen perceived sharpness on this CRT. The built-in Korium theme uses the
+embedded default font, while folder themes can select a font file and size
+(`misc/conf_theme_OPL.cfg:17`, `src/themes.c:3359-3382`).
+
+For a controlled console comparison, record the current interface mode,
+theme/font, cable, display model, and build. Photograph or film the same
+settings page with standard NTSC 640x448i and `FLICKER-FREE` NTSC 640x448i,
+holding camera exposure/shutter and theme constant. Compare static legibility
+and actual navigation response separately; only then try an alternate font or
+size if the video mode does not solve the reported issue. Do not assume
+Neutrino's per-game `-gsm` setting changes RiptOPL menu text rendering.
+
 ## A1 — Slow cover art in 3420 versus 3248
 
 The earlier screenshot supplies the missing comparison: eliminator1403 called **3248**
@@ -294,6 +325,9 @@ localization and that normal PS2 Game Settings/VMC behavior is unchanged.
    isolate timing and a measurable condition or bounded wait. Treat Neutrino
    CRT output as an upstream-capability question; validate the native OPL GSM
    workaround where compatible.
+6. **Check T1 on the reported CRT.** Compare the existing main-interface
+   interlaced modes and measure UI response before changing glyph assets or
+   rendering. Keep Neutrino game-video settings out of this menu-font test.
 
 For every code change: inspect the exact diff and `git diff --check`, use a
 focused behavior test when the behavior can be host-tested, build the relevant
