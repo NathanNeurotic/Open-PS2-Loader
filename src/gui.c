@@ -3495,8 +3495,8 @@ static int emberGameSettingGet(config_set_t *configSet, const char *key, int cou
 
 // PS1 Triangle -> Ember Game Settings. Ember accepts timing, dither, shading and controller in
 // a game's settings.txt; display is deliberately global-only. In this editor Default means inherit
-// the global Ember setting. Confirming Default stores 0 in the game's CFG so cueApplySettings removes
-// that per-game key at launch instead of preserving a stale hand-written override.
+// the global Ember setting. Confirming Default stores 0 in the game's CFG and removes that per-game
+// key immediately; launch reapplies the same managed values if the file changed outside RiptOPL.
 void guiShowEmberGameSettings(void)
 {
     const char *timingStrs[] = {_l(_STR_DEFAULT), _l(_STR_AUTO), "NTSC", "PAL", NULL};

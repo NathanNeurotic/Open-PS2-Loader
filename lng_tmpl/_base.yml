@@ -1372,7 +1372,7 @@ gui_strings:
 - label: EMBER_GAME_SETTINGS
   string: Ember Game Settings
 - label: HINT_EMBER_GAME_SETTING
-  string: "This game only. Default inherits the global Ember setting; Timing, Dithering, Shading or Controller overrides it. RiptOPL writes the result to EMBER/games/<name>/settings.txt at launch."
+  string: "This game only. Default inherits the global Ember setting; Timing, Dithering, Shading or Controller overrides it. Press OK to write EMBER/games/<name>/settings.txt before launch."
 - label: EMBER_TIMING
   string: Ember Timing
 - label: HINT_EMBER_TIMING
