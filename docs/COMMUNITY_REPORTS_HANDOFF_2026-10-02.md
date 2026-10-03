@@ -380,6 +380,18 @@ hits. A slow `O:` miss points to directory lookup; small opens but large
 to scheduling or contention. This is instrumentation for confirming the code
 path, not a request to reconfigure the tester's setup.
 
+October 3 A/B follow-up: the [ART770 run](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/37143757153)
+restores PR #770 scheduling on the Korium base; the [ART773 run](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/37143714039)
+uses the same Korium runtime source without that change. Both OFFICIALROLLING
+builds passed CI. zackcage6 reported similar core behavior in both and said
+ordinary loose artwork (not ART.TAR) appeared about one second slower than the
+Inception theme, with artwork toggles tried both ways. That observation weakens
+PR #770 scheduling as the cause of *their* difference, but compares themes and
+does not resolve eliminator1403's 3248-versus-3420 report. eliminator1403
+replied "404" to the artifact links; GitHub Actions artifacts require a signed-in
+viewer. The artifacts still exist, but there is no A/B console result from the
+original reporter. Keep the report open and avoid a speculative renderer change.
+
 ## P1/P2 — PS1 prerequisites, row identity, and memory-card guidance
 
 Aislinn mistook PS1 007 entries for PS2 games when covers were absent, tried
