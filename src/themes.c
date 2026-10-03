@@ -2273,6 +2273,11 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
             if (ps->item.isFolder) {
                 snprintf(folderBuf, sizeof(folderBuf), "%s/", dispText);
                 dispText = folderBuf;
+            } else if (libListRowView(list, ps->item.id) == LIB_VIEW_PS1) {
+                // Keep the core visible when no cover or decorator art is available, including
+                // Mixed and Favourites lists. This changes presentation, never the stored name.
+                snprintf(folderBuf, sizeof(folderBuf), "[PS1] %s", dispText);
+                dispText = folderBuf;
             }
 
             if (itemsList->decoratorImage &&
@@ -2359,11 +2364,14 @@ static void drawItemText(struct menu_list *menu, struct submenu_list *item, conf
                 // lands, the filename's own id prefix is shown, then the title as before.
                 if (libListRowView(support, item->item.id) == LIB_VIEW_PS1) {
                     char vcdId[VCD_ID_MAX];
+                    char labelledText[256];
+                    const char *text = vcdDisplayNameForRow(support, item->item.id, startup);
                     if (vcdDisplayIdCached(startup, vcdId, sizeof(vcdId)) ||
-                        vcdExtractGameId(startup, vcdId, sizeof(vcdId))) {
-                        thmDrawElemText(elem, SIZING_NONE, vcdId, 1);
-                        return;
-                    }
+                        vcdExtractGameId(startup, vcdId, sizeof(vcdId)))
+                        text = vcdId;
+                    snprintf(labelledText, sizeof(labelledText), "[PS1] %s", text);
+                    thmDrawElemText(elem, SIZING_NONE, labelledText, 1);
+                    return;
                 }
                 thmDrawElemText(elem, SIZING_NONE, vcdDisplayNameForRow(support, item->item.id, startup), 1);
             }

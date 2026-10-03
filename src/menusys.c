@@ -2145,6 +2145,12 @@ void menuRenderAppMenu()
     // app title
     fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0, selected_item->item->current->item.text, gTheme->selTextColor);
 
+    // A PS1 row opens this smaller menu, not the PS2 VMC editor. Say why the missing PS2 control
+    // is intentional without claiming that Ember and POPSTARTER store their cards identically.
+    if (appMenu->item.id == APP_GLOBAL_PS_SETTINGS)
+        fntRenderStringFit(gTheme->fonts[0], 320, 43, ALIGN_CENTER, 600,
+                           _l(_STR_PS1_SAVE_GUIDANCE), gTheme->textColor, 0);
+
     for (it = appMenu; it; it = it->next, cp++) {
         // render, advance
         fntRenderString(gTheme->fonts[0], 320, y, ALIGN_CENTER, 0, 0, submenuItemGetText(&it->item), (cp == sitem) ? gTheme->selTextColor : gTheme->textColor);
