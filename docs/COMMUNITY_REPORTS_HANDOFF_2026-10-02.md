@@ -20,6 +20,7 @@ temporary local paths are not required:
 - [Neutrino picker clip](./community-report-evidence/2026-10-02/neutrino-picker-clip.mp4)
 - [CRT font report](./community-report-evidence/2026-10-02/crt-font-report.png)
 - [Default video and field-flip compatibility follow-up](./community-report-evidence/2026-10-02/neutrino-default-field-flip.png)
+- [October 3 iLink/Neutrino follow-up](./community-report-evidence/2026-10-03/ilink-neutrino-followup.png)
 
 The clip records the menu interaction, not the game's rolling/flipping output.
 
@@ -61,8 +62,9 @@ PR #825 records exactly which fixes were committed and which were withheld.
 | --- | --- | --- | --- |
 | E1 | TwistedZeon wants per-game Ember `settings.txt` written from the menu, without launching the game. | PR #825 commits the immediate-save implementation; focused host tests and CI builds passed. | Console behavior and slow/failed writes on each supported device. |
 | I1 | FifthFox's iLink drive sometimes needs a recent drive reboot to launch PS2 ISOs. After reformatting a drive previously used on a Mac, exFAT was visible but still would not launch PS2 games after reboot; FAT32 worked better in that setup. A later Seagate drive and PS2 logo enabled successful Jak and Daxter launch with four compatibility modes. | These are tester observations, not isolated causes. | Exact build, drive/enclosure, partition scheme, filesystem, four modes, console, game ID, and results with one variable changed at a time. |
-| I2 | FifthFox reports "Neutrino (MC) runs via iLink" with PS2 logo and a custom argument. | This is a valuable new console success report. | Whether "MC" means the Neutrino ELF location, exact ELF/ISO locations and argument bytes, Neutrino version, persistence across cold boots and multiple titles. |
-| I3 | FifthFox asks whether freeing memory before launch or using a lighter interface would improve iLink reliability. | Launch teardown already stops art requests and releases menu resources before handoff. | Whether remaining EE/IOP memory, drive readiness, or timing causes the failures. |
+| I2 | FifthFox initially reported "Neutrino (MC) runs via iLink" with PS2 logo and a custom argument, but on October 3 said they **cannot repeat** that success. They suspect the logo must run after compatibility modes to slow a drive/enclosure handshake. | This is an intermittent result, not a stable working combination. The source appends auto compatibility modes before auto `-logo`, but that ordering does not prove a timing cause. | Exact build, Neutrino ELF/ISO locations and version, full stored/effective args, whether `-logo` reached Neutrino, cold-start repetitions, and measured iLink readiness. |
+| I3 | FifthFox tried a custom text-only theme to keep memory available but did not gain a repeatable launch; an AI suggested disabling Coverflow, and FifthFox could not find an option. Native OPL launches with individual modes seem robust in their tests. | Launch teardown already stops art requests and releases menu resources. Coverflow is theme-defined; the built-in `<OPL>` theme is an alternate view. | Active theme, its declared elements, memory measurements before/after teardown, and controlled same-game native/Neutrino comparisons. |
+| I4 | FifthFox says RiptOPL removes `-logo` from custom Neutrino arguments, sees two logo controls in launcher settings but none in the game menu, and wants the full effective Neutrino argv visible per game. | Current source has a per-game **Neutrino Launch Args → Logo** toggle and passes global/per-game active `-logo` tokens to its argv builder; iLink is not in the automatic logo-suppression list. User-supplied tail arguments may be dropped if the 256-byte launch pool is full. | Which field was edited, the saved `$NeutrinoArgs`/global `neutrino_args` values, whether the UI merely moved `-logo` from Extra to its checkbox, and the final argv on the tester's build. |
 | V1 | TwistedZeon reports that a PAL game is "flipping" on an NTSC interlaced CRT under Neutrino and explicitly asks for 480i. | The clip shows the video picker, not game output. A later screenshot confirms the field-flip picker is disabled while Video is Default. Upstream parses `-gsm=:1` but does not enable GSM without a forced video mode; it exposes no forced NTSC 480i. | Exact game, cable/CRT, what "flipping" looks like during gameplay (roll, field shake, or periodic loss), and whether native OPL-core GSM works for that title. |
 | T1 | zackcage6 says the font in the pictured RiptOPL settings view looks "sluggish" and is hard to read on the CRT; they suggest changing the font or rendering it for interlace. | The main RiptOPL interface already offers NTSC/PAL interlaced `FLICKER-FREE` modes, and themes can load alternate fonts. Neither has been tested for this report. | Exact build, theme/font, interface video mode, CRT/cable, whether "sluggish" means visual flicker/blur or slow UI response, and whether the alternate mode improves legibility. |
 | A1 | eliminator1403 reports slow art in Beta 3420 Korium and names 3248 as the last good build. | The current Beta 3420 Korium release names source `1a663941`; `f83e6f9f` is a version-3248 commit-count candidate with different art scheduling, but its tester ELF is unverified. | Exact 3248 asset/hash, same-device A/B timings, source type, theme, art settings, and whether the slowdown affects PS1, PS2, or both. |
@@ -134,6 +136,34 @@ documented compatibility modes are 0, 1, 2, 3, 5, and 7; its mode 1 is labeled
 do not have identical meanings. Source: `src/system.c:1234` and the official
 Neutrino README at <https://github.com/ps2max32/neutrino>.
 
+**October 3 correction:** FifthFox [could not repeat the Neutrino/iLink
+success](./community-report-evidence/2026-10-03/ilink-neutrino-followup.png).
+They now suspect the PS2 logo must be triggered after compatibility modes to
+give their enclosure time to handshake. They say RiptOPL removes `-logo` from
+custom arguments, that two launcher-menu locations expose logo controls but
+their custom game menu does not, and that seeing the full effective Neutrino
+arguments in the game menu would help. Their text-only theme experiment did not
+make the launch repeatable. They also report native OPL launches with individual
+modes as relatively robust. None of this isolates a memory or timing cause.
+
+At the current PR #825 source, the per-game Compatibility dialog has a
+**Neutrino Launch Args** button (`src/guigame.c:1256`) whose structured
+sub-screen has a **Logo** checkbox (`src/dialogs.c:1856`); the global launcher
+menu has its own PS2 Logo setting and Neutrino args editor. The parser moves a
+typed `-logo` into that checkbox and reassembles the stored args with `-logo`
+(`src/supportbase.c:2202-2261`). Thus a token disappearing from the **Extra**
+field alone would not show that it was removed from the saved or launched args.
+The iLink backend passes the global logo preference to Neutrino and is not in
+`sysLaunchNeutrino()`'s automatic logo-suppression list. Auto-generated `-gc`
+precedes auto-generated `-logo`, and global then per-game user tokens come
+after those (`src/system.c:1660-1747`). Command-line order does not by itself
+establish the order or duration of Neutrino's later boot operations. The
+256-byte argv pool check may drop
+tail user tokens, including a typed per-game `-logo`, without on-screen notice
+(`src/system.c:1753-1772`). These are source possibilities, not a diagnosis of
+FifthFox's build. Obtain their saved config and final argv before changing
+argument order or promising that the logo delay fixes the drive handshake.
+
 Do not infer that FAT32 is universally required for iLink or that exFAT fails
 because of memory. Neutrino documents FAT32 and exFAT for block devices;
 FifthFox's result could depend on the bridge, enclosure, spin-up state, driver
@@ -164,8 +194,9 @@ Minimum tester matrix, on one known-good drive/enclosure and one ISO:
 5. If a console diagnostic build is needed, log the iLink device and partition
    state at handoff; prefer that evidence over a blind sleep.
 
-Treat the new successes as confirmed *for the reported console/configuration*
-and do not generalize them to all iLink drives, POPSTARTER, or exFAT.
+Treat the native launches as individual tester observations; the earlier
+Neutrino success is now explicitly **unrepeatable**. Do not generalize any of
+them to all iLink drives, POPSTARTER, or exFAT.
 
 ## V1 — PAL game on an NTSC interlaced CRT with Neutrino
 
