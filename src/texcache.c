@@ -52,6 +52,8 @@ typedef struct load_image_request
     // streaming PNG reader. For the device #340 is actually about, NOT ISSUING the read is the only
     // lever -- which is what the SIO2 defer in artPop is for.
     volatile int abortRequested;
+    // Priority level (1 = active selection tier, 0 = speculative lookahead)
+    unsigned char priority;
     // Resolved on the GUI THREAD at enqueue: does this cover ride SIO2, the controller's own bus?
     // Not resolvable on the worker -- answering it reads the support's private device data, which a
     // background rescan rewrites underneath. One byte, copied in, is immune.
@@ -475,6 +477,7 @@ static void artPush(load_image_request_t *req)
     req->next = NULL;
     req->prev = gArtReqEnd;
     req->queueEpoch = gArtQueueEpoch;
+    req->priority = 0;
     if (gArtReqEnd)
         gArtReqEnd->next = req;
     else
@@ -484,17 +487,37 @@ static void artPush(load_image_request_t *req)
     EIntr();
 }
 
-static void artPushFront(load_image_request_t *req)
+static void artPushPriority(load_image_request_t *req)
 {
     DIntr();
-    req->prev = NULL;
-    req->next = gArtReqList;
     req->queueEpoch = gArtQueueEpoch;
-    if (gArtReqList)
-        gArtReqList->prev = req;
-    else
+    req->priority = 1;
+
+    if (gArtReqList == NULL) {
+        req->prev = NULL;
+        req->next = NULL;
+        gArtReqList = req;
         gArtReqEnd = req;
-    gArtReqList = req;
+    } else if (!gArtReqList->priority) {
+        // Queue head is non-priority; insert req at the head
+        req->prev = NULL;
+        req->next = gArtReqList;
+        gArtReqList->prev = req;
+        gArtReqList = req;
+    } else {
+        // Walk priority items to append at the end of the priority section (FIFO within priority)
+        load_image_request_t *curr = gArtReqList;
+        while (curr->next != NULL && curr->next->priority) {
+            curr = curr->next;
+        }
+        req->prev = curr;
+        req->next = curr->next;
+        if (curr->next != NULL)
+            curr->next->prev = req;
+        else
+            gArtReqEnd = req;
+        curr->next = req;
+    }
     gArtQueuedCount++;
     EIntr();
 }
@@ -505,25 +528,39 @@ static void artPromote(load_image_request_t *req)
         return;
 
     DIntr();
-    // The selected cover can be a warmed neighbour buried in a deep queue. This used to scan the
-    // singly-linked FIFO under DIntr(), making one selection's priority handoff O(queue depth) and
-    // extending the interrupts-off window as browsing filled cache slots. The intrusive back link
-    // keeps this splice O(1); no allocation, free, or device work occurs in the bracket.
-    // Guard against promoting the request the worker is already executing, or one already at head.
-    if (gArtCurrentReq != req && req->queueEpoch == gArtQueueEpoch && req->prev != NULL) {
-        load_image_request_t *prev = req->prev;
-        load_image_request_t *next = req->next;
+    // Guard against promoting the request the worker is already executing, or one already marked priority.
+    if (gArtCurrentReq != req && req->queueEpoch == gArtQueueEpoch && !req->priority) {
+        req->priority = 1;
 
-        prev->next = next;
-        if (next)
-            next->prev = prev;
-        else
-            gArtReqEnd = prev;
+        if (req->prev != NULL) {
+            load_image_request_t *prev = req->prev;
+            load_image_request_t *next = req->next;
 
-        req->prev = NULL;
-        req->next = gArtReqList;
-        gArtReqList->prev = req;
-        gArtReqList = req;
+            prev->next = next;
+            if (next)
+                next->prev = prev;
+            else
+                gArtReqEnd = prev;
+
+            if (!gArtReqList->priority) {
+                req->prev = NULL;
+                req->next = gArtReqList;
+                gArtReqList->prev = req;
+                gArtReqList = req;
+            } else {
+                load_image_request_t *curr = gArtReqList;
+                while (curr->next != NULL && curr->next->priority) {
+                    curr = curr->next;
+                }
+                req->prev = curr;
+                req->next = curr->next;
+                if (curr->next != NULL)
+                    curr->next->prev = req;
+                else
+                    gArtReqEnd = req;
+                curr->next = req;
+            }
+        }
     }
     EIntr();
 }
@@ -1629,11 +1666,10 @@ GSTEXTURE *cacheGetTextureEx(image_cache_t *cache, item_list_t *list, int *cache
         // switch would otherwise do.
         cache->activeRequests++;
 
-        // artPush takes its own DIntr bracket and does the gArtQueuedCount++ inside it. It cannot
-        // fail: no allocation, no queue cap. Priority requests push to the head of the FIFO unless
+        // Priority requests push into the high-priority selection tier (FIFO within priority) unless
         // an SIO2 request is being made while a direction is held (which falls back to tail to protect #340).
         if (isPriority && !(req->sio2 && gArtNavActive))
-            artPushFront(req);
+            artPushPriority(req);
         else
             artPush(req);
         cacheWakeArtWorker();
