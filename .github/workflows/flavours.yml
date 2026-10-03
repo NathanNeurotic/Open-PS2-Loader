@@ -269,7 +269,7 @@ jobs:
         if: ${{ success() }}
         uses: actions/upload-artifact@v6
         with:
-          name: OPL-${{ matrix.flavour }}
+          name: KORIUM-ART773-${{ matrix.flavour }}
           path: |
             RIPTOPL-*.ELF
             OPNPS2LD-*.ELF
