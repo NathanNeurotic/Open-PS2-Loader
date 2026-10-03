@@ -164,6 +164,15 @@ tail user tokens, including a typed per-game `-logo`, without on-screen notice
 FifthFox's build. Obtain their saved config and final argv before changing
 argument order or promising that the logo delay fixes the drive handshake.
 
+Coverflow is a theme element, with separate built-in `<OPL>` and `<Coverflow>`
+theme choices (`src/themes.c:3464`, `src/themes.c:3767-3779`). Selecting
+`<OPL>` is a controlled no-Coverflow UI comparison. If FifthFox's text-only
+theme truly declares no Coverflow element, it has already removed that drawing
+path; repeating the same failure would argue against Coverflow rendering as
+the sole cause. The reported lack of an obvious toggle is a discoverability
+issue, but a new switch should not be presented as a memory or iLink fix
+without a measured comparison.
+
 Do not infer that FAT32 is universally required for iLink or that exFAT fails
 because of memory. Neutrino documents FAT32 and exFAT for block devices;
 FifthFox's result could depend on the bridge, enclosure, spin-up state, driver
