@@ -286,7 +286,7 @@ and actual navigation response separately; only then try an alternate font or
 size if the video mode does not solve the reported issue. Do not assume
 Neutrino's per-game `-gsm` setting changes RiptOPL menu text rendering.
 
-## A1 — Slow cover art in 3420 versus 3248
+## A1 — Slow artwork in 3420 versus 3248
 
 The [artwork screenshot](./community-report-evidence/2026-10-02/art-last-good-3248.png)
 supplies the comparison: eliminator1403 called **3248**
@@ -322,10 +322,11 @@ The later
 [`68405e23`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/68405e2392d3bb6606f46863365cb0f1f844784b)
 rollback removed that tier and restored front-of-queue promotion/background
 admission after **other** testers reported late or out-of-order art. Beta 3420
-contains the rollback and subsequent background-cancellation fix. A slower
-cover relative to this candidate is plausible, but the rollback was itself a
-response to a regression. Do not reapply PR #770 wholesale without the exact
-3248 asset and same-device timing evidence.
+contains the rollback and subsequent background-cancellation fix. This is a
+specific reason that a **background** may appear later in 3420; it does not by
+itself establish a slower COV read. The rollback was itself a response to a
+regression. Do not reapply PR #770 wholesale without the exact 3248 asset and
+same-device timing evidence.
 The later screenshot also shows eliminator1403 uploading a 1.41 MB
 `RIPTOPL.ELF` at 11:00 AM, but its bytes and build identity were not supplied.
 Do not assume that attachment is build 3248, Beta 3420, or a confirmed fix.
@@ -347,6 +348,39 @@ Relevant source history in this branch:
 - Later commits in this checkout changed theme layout/discovery, but a review
   of `src/texcache.c`, `src/textures.c`, and `src/artindex.c` history found no
   newer cover read/decode rewrite that itself proves this report's cause.
+
+More precise source comparison, checked against the **published Korium tree**
+`1a663941` on October 3:
+
+- The candidate `f83e6f9f` built-in `<OPL>` list declares `Background` and
+  `ItemCover`, but no `ItemIcon`. Korium's list declares `Background`,
+  `ItemCover`, and `ItemIcon` (`misc/conf_theme_OPL.cfg`). Disc Art is enabled
+  by default, so Korium can request an extra `ICO` lookup/read for the selected
+  game, including an expensive miss on some devices. This predicts a difference
+  in **list mode** that may vanish with Disc Art off; it does not predict the
+  same difference in Coverflow, which has no `ItemIcon` in either theme.
+- Candidate `f83e6f9f` submitted selected COV, ICO (if present), and BG to one
+  priority tier. In 3420 the selected COV is promoted to the queue front, BG
+  is ordinary work, and Coverflow withholds a new BG request until its selected
+  cover settles (`src/themes.c:1260-1335`, `src/texcache.c:484-510`). If the
+  tester means the full background scene by "art," later appearance is partly
+  expected from this policy. Undoing it would risk the earlier out-of-order
+  regression; the code does not show a general COV decoder slowdown.
+- Korium changes **Background Art** to off only for a fresh configuration
+  (`src/opl.c:4797`). A prior saved `enable_bgart=1` is loaded and retained.
+  Consequently two consoles running the same 3420 ELF may enqueue different
+  art. The default Art Delay remains zero; check its saved value too.
+- `src/artindex.c` has no source delta between this candidate and the published
+  3420 tree. The changed `src/textures.c` entries bind built-in/static PNGs;
+  they are not a demonstrated rewrite of the per-game cover read or decoder.
+
+This source comparison gives a controlled first split: time **COV, ICO, and BG
+separately** on the same device and theme. With Background Art and Disc Art off
+and Art Delay zero, a genuinely slow selected COV needs its own I/O/cache
+investigation. If only ICO is late, test Korium's added ItemIcon path; if only
+BG is late, test the intentional background scheduling and saved toggle. The
+single report does not identify which texture was late, so no source edit is
+justified yet.
 
 Use the same storage, game, art files, theme, view, and build flavor for the
 3248/3420 A/B. First compare Background Art off/on; then Disc Art and ART.TAR
