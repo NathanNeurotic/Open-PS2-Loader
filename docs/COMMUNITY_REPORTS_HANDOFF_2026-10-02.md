@@ -376,17 +376,20 @@ file/path and was deliberately left without a speculative code change.
 
 ## Suggested implementation sequence and completion gates
 
-1. **Resolve evidence first.** Map 3248 and Beta 3420 to permanent commits,
-   exact Actions runs and assets; collect the art A/B and iLink matrix. Capture
-   Aislinn's source/view/theme and the missing PS1 prerequisite. This step
-   can proceed without editing source.
-2. **Finish E1 as its own narrow change.** Review the existing dirty patch,
-   correct demonstrated failure paths, run its host test and a representative
-   build, then request console checks on writable Ember devices. Do not
-   overwrite or commit unrelated dirty work.
-3. **Address P1/P2 as a UI and guidance change.** Use row identity already in
-   the menu/view model; add only the messages the reproduced flows require.
-   Keep POPSTARTER and Ember contracts separate. Validate without cover art.
+1. **Resolve remaining evidence.** Obtain the tester's exact 3248 ELF/archive
+   hash to confirm its source, then collect the same-device art A/B and iLink
+   matrix. Beta 3420's current published source and a PR #770 merge-build
+   artifact are recorded above; neither identifies the tester's 3248 binary.
+   Capture Aislinn's source/view/theme and the missing PS1 prerequisite.
+2. **Console-check E1 and P2.** PR #825 commits the narrow Ember save and PS1
+   row/menu guidance changes, with host checks and CI builds passed. Validate
+   pre-launch writes, Default behavior and failures on writable Ember devices;
+   inspect no-cover PS1 and PS2 rows in each view and theme on a real console.
+   Preserve the original dirty checkout and keep POPSTARTER and Ember tests
+   distinct.
+3. **Reproduce P1 before changing its error path.** Identify which PS1 core,
+   file, and path were missing and whether the user saw a VCD or Ember folder.
+   Add only the guidance that the reproduced flow lacks.
 4. **Fix A1 only after timing isolates a cause.** Compare the confirmed
    3248/3420 source delta and make the smallest scheduling, lookup, or theme
    change supported by the HUD and console A/B. Do not reinstall a broad
