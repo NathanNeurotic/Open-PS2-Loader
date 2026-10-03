@@ -6,8 +6,9 @@ guide, not a claim that the reported behavior has been reproduced or fixed.
 The screenshot supplied later in the conversation adds one concrete artwork
 comparison:
 **3248 loaded artwork normally; Beta 3420 Korium loads it slowly**, according
-to eliminator1403. The build numbers have not yet been mapped to exact commits
-or release assets.
+to eliminator1403. Beta 3420 Korium now has release and tag provenance below.
+Build 3248 still lacks the tester's exact ELF or archive, so its matching
+commit-count candidate is not a proven asset mapping.
 
 ## Implementation checkpoint
 
@@ -51,7 +52,7 @@ PR #825 records exactly which fixes were committed and which were withheld.
 | I3 | FifthFox asks whether freeing memory before launch or using a lighter interface would improve iLink reliability. | Launch teardown already stops art requests and releases menu resources before handoff. | Whether remaining EE/IOP memory, drive readiness, or timing causes the failures. |
 | V1 | TwistedZeon reports that a PAL game is "flipping" on an NTSC interlaced CRT under Neutrino and explicitly asks for 480i. | The clip shows the video picker, not game output. A later screenshot confirms the field-flip picker is disabled while Video is Default. Upstream parses `-gsm=:1` but does not enable GSM without a forced video mode; it exposes no forced NTSC 480i. | Exact game, cable/CRT, what "flipping" looks like during gameplay (roll, field shake, or periodic loss), and whether native OPL-core GSM works for that title. |
 | T1 | zackcage6 says the font in the pictured RiptOPL settings view looks "sluggish" and is hard to read on the CRT; they suggest changing the font or rendering it for interlace. | The main RiptOPL interface already offers NTSC/PAL interlaced `FLICKER-FREE` modes, and themes can load alternate fonts. Neither has been tested for this report. | Exact build, theme/font, interface video mode, CRT/cable, whether "sluggish" means visual flicker/blur or slow UI response, and whether the alternate mode improves legibility. |
-| A1 | eliminator1403 reports slow art in Beta 3420 Korium and names 3248 as the last good build. | Recent art scheduling and built-in background changes exist; the most suspicious September 26 priority feature was rolled back September 27. | Exact release commits, same-device A/B timings, source type, theme, art settings, and whether the slowdown affects PS1, PS2, or both. |
+| A1 | eliminator1403 reports slow art in Beta 3420 Korium and names 3248 as the last good build. | The current Beta 3420 Korium release names source `1a663941`; `f83e6f9f` is a version-3248 commit-count candidate with different art scheduling, but its tester ELF is unverified. | Exact 3248 asset/hash, same-device A/B timings, source type, theme, art settings, and whether the slowdown affects PS1, PS2, or both. |
 | P1 | Aislinn wants a useful error when PS1 prerequisites are missing. | Launch paths already show several missing POPSTARTER/Ember/BIOS messages; missing Ember core can remove Ember rows at scan time. | Which missing item and path produced the reported lack of guidance, and whether the title was a VCD or Ember folder. |
 | P2 | Aislinn mistook PS1 007 entries for PS2 titles without cover art, then could not open the expected PS2 game/VMC menu. | PS1 rows intentionally open a different Triangle menu. PR #825 adds a PS1 row label and save-card guidance there. | Console legibility in each theme/view and what save-card workflow the tester expected. |
 
@@ -234,11 +235,33 @@ Neutrino's per-game `-gsm` setting changes RiptOPL menu text rendering.
 
 ## A1 — Slow cover art in 3420 versus 3248
 
-The earlier screenshot supplies the missing comparison: eliminator1403 called **3248**
+The earlier screenshot supplies the comparison: eliminator1403 called **3248**
 the last good version and **Beta 3420 Korium** slow. It does not supply the
-device, theme, art files, whether backgrounds are enabled, or timings. Verify
-release asset/Actions provenance before treating those numbers as exact source
-revisions.
+device, theme, art files, whether backgrounds are enabled, or timings.
+
+The Makefile computes a normal revision as `git rev-list --count HEAD + 2`.
+The Korium release workflow instead pins that number to its last common
+`rebuild/main` commit. As checked on October 2, the
+[rolling-korium release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-korium)
+lists `RIPTOPL-DEBUG-v1.2.0-Beta-3420-Korium.zip` and names source
+[`1a663941`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/1a6639410beaf8dd9c5505be0f470fd5f5a60259).
+The moving `rolling-korium` tag points to that commit; its merge base with
+`rebuild/main` is `65d4b89a` (commit count 3418, hence revision 3420).
+This establishes the **current published** Beta 3420 source, but the tester's
+downloaded ELF has not been hashed against the release asset.
+
+[`f83e6f9f`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/f83e6f9f6166015dbdecb8b6f024c988daf58b1b)
+has commit count 3246 and thus could display revision **3248** on its branch.
+It is the PR #770 tip, not a proven match for the tester's 3248 ELF. That code
+has a separate priority tier for the selected cover, icon and background, and
+pre-requests small images before the large background. The later
+[`68405e23`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/68405e2392d3bb6606f46863365cb0f1f844784b)
+rollback removed that tier and restored front-of-queue promotion/background
+admission after **other** testers reported late or out-of-order art. Beta 3420
+contains the rollback and subsequent background-cancellation fix. A slower
+cover relative to this candidate is plausible, but the rollback was itself a
+response to a regression. Do not reapply PR #770 wholesale without the exact
+3248 asset and same-device timing evidence.
 The later screenshot also shows eliminator1403 uploading a 1.41 MB
 `RIPTOPL.ELF` at 11:00 AM, but its bytes and build identity were not supplied.
 Do not assume that attachment is build 3248, Beta 3420, or a confirmed fix.
