@@ -3,12 +3,25 @@
 This handoff collects the RiptOPL reports from TwistedZeon, FifthFox,
 eliminator1403, Aislinn, and zackcage6. It is a triage and implementation
 guide, not a claim that the reported behavior has been reproduced or fixed.
-The screenshot supplied later in the conversation adds one concrete artwork
-comparison:
+The [artwork comparison screenshot](./community-report-evidence/2026-10-02/art-last-good-3248.png)
+adds one concrete artwork comparison:
 **3248 loaded artwork normally; Beta 3420 Korium loads it slowly**, according
 to eliminator1403. Beta 3420 Korium now has release and tag provenance below.
 Build 3248 still lacks the tester's exact ELF or archive, so its matching
 commit-count candidate is not a proven asset mapping.
+
+## Preserved report evidence
+
+These are the original user-provided captures, kept with this handoff so their
+temporary local paths are not required:
+
+- [Art version comparison and attached ELF message](./community-report-evidence/2026-10-02/art-last-good-3248.png)
+- [Neutrino picker and 480i request](./community-report-evidence/2026-10-02/neutrino-480i-picker.png)
+- [Neutrino picker clip](./community-report-evidence/2026-10-02/neutrino-picker-clip.mp4)
+- [CRT font report](./community-report-evidence/2026-10-02/crt-font-report.png)
+- [Default video and field-flip compatibility follow-up](./community-report-evidence/2026-10-02/neutrino-default-field-flip.png)
+
+The clip records the menu interaction, not the game's rolling/flipping output.
 
 ## Implementation checkpoint
 
@@ -163,17 +176,17 @@ The official Neutrino README describes unforced output as 480i/576i and its
 forced low-resolution modes as automatically PAL/NTSC. Do not add a menu label
 for NTSC 480i without upstream support for such an argument.
 
-In the later screenshot, TwistedZeon explicitly says **"No 480i"** and
+In the [picker screenshot](./community-report-evidence/2026-10-02/neutrino-480i-picker.png), TwistedZeon explicitly says **"No 480i"** and
 clarifies: **"I'm trying to play a pal game on ntsc but the video is
-flipping."** The attached 5.27-second video at
-`C:\Users\natha\Downloads\PXL_20261002_181340020.TS.mp4` shows the RiptOPL
+flipping."** The preserved [5.27-second video](./community-report-evidence/2026-10-02/neutrino-picker-clip.mp4) shows the RiptOPL
 Neutrino Video picker being cycled on a CRT. It does **not** show the game's
 output, so it cannot establish the visual failure mode or prove that a field
 flip setting would fix it. `1080i` is interlaced, but it is HDTV timing rather
 than the standard-definition 480i/576i signal their CRT needs. The available
 `240p` and `480p` choices do not supply a forced NTSC 480i mode.
 
-The October 2 follow-up screenshot adds a concrete UI reproduction. TwistedZeon
+The October 2 [follow-up screenshot](./community-report-evidence/2026-10-02/neutrino-default-field-flip.png)
+adds a concrete UI reproduction. TwistedZeon
 said that leaving **Neutrino Video** on **Default** disables **Neutrino GSM
 Compatibility**, so they cannot select a field-flipping type without changing
 video mode; they checked again and confirmed this. darkladark said Luna selects
@@ -206,7 +219,7 @@ that cannot sync to 480p should not be asked to test 480p/1080i as a fix.
 
 ## T1 — CRT font legibility and perceived sluggishness
 
-In the latest screenshot, zackcage6 describes the **font** in the pictured
+In the [font report screenshot](./community-report-evidence/2026-10-02/crt-font-report.png), zackcage6 describes the **font** in the pictured
 settings view as "sluggish + not easily view-able" and asks whether the font
 should change or be rendered for interlace. The screenshot shows text on a CRT,
 but does not identify the build, theme, selected RiptOPL interface video mode,
@@ -235,7 +248,8 @@ Neutrino's per-game `-gsm` setting changes RiptOPL menu text rendering.
 
 ## A1 — Slow cover art in 3420 versus 3248
 
-The earlier screenshot supplies the comparison: eliminator1403 called **3248**
+The [artwork screenshot](./community-report-evidence/2026-10-02/art-last-good-3248.png)
+supplies the comparison: eliminator1403 called **3248**
 the last good version and **Beta 3420 Korium** slow. It does not supply the
 device, theme, art files, whether backgrounds are enabled, or timings.
 
