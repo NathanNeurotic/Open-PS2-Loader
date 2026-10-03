@@ -7,8 +7,9 @@ The [artwork comparison screenshot](./community-report-evidence/2026-10-02/art-l
 adds one concrete artwork comparison:
 **3248 loaded artwork normally; Beta 3420 Korium loads it slowly**, according
 to eliminator1403. Beta 3420 Korium now has release and tag provenance below.
-Build 3248 still lacks the tester's exact ELF or archive, so its matching
-commit-count candidate is not a proven asset mapping.
+The September 27 build history narrows revision 3248 to the PR #770 source
+line. The exact ELF is unnecessary for comparing the source changes; the
+remaining uncertainty is whether that branch build was the tester's binary.
 
 ## Preserved report evidence
 
@@ -67,7 +68,7 @@ PR #825 records exactly which fixes were committed and which were withheld.
 | I4 | FifthFox says RiptOPL removes `-logo` from custom Neutrino arguments, sees two logo controls in launcher settings but none in the game menu, and wants the full effective Neutrino argv visible per game. | Current source has a per-game **Neutrino Launch Args → Logo** toggle and passes global/per-game active `-logo` tokens to its argv builder; iLink is not in the automatic logo-suppression list. User-supplied tail arguments may be dropped if the 256-byte launch pool is full. | Which field was edited, the saved `$NeutrinoArgs`/global `neutrino_args` values, whether the UI merely moved `-logo` from Extra to its checkbox, and the final argv on the tester's build. |
 | V1 | TwistedZeon reports that a PAL game is "flipping" on an NTSC interlaced CRT under Neutrino and explicitly asks for 480i. | The clip shows the video picker, not game output. A later screenshot confirms the field-flip picker is disabled while Video is Default. Upstream parses `-gsm=:1` but does not enable GSM without a forced video mode; it exposes no forced NTSC 480i. | Exact game, cable/CRT, what "flipping" looks like during gameplay (roll, field shake, or periodic loss), and whether native OPL-core GSM works for that title. |
 | T1 | zackcage6 says the font in the pictured RiptOPL settings view looks "sluggish" and is hard to read on the CRT; they suggest changing the font or rendering it for interlace. | The main RiptOPL interface already offers NTSC/PAL interlaced `FLICKER-FREE` modes, and themes can load alternate fonts. Neither has been tested for this report. | Exact build, theme/font, interface video mode, CRT/cable, whether "sluggish" means visual flicker/blur or slow UI response, and whether the alternate mode improves legibility. |
-| A1 | eliminator1403 reports slow art in Beta 3420 Korium and names 3248 as the last good build. | The current Beta 3420 Korium release names source `1a663941`; `f83e6f9f` is a version-3248 commit-count candidate with different art scheduling, but its tester ELF is unverified. | Exact 3248 asset/hash, same-device A/B timings, source type, theme, art settings, and whether the slowdown affects PS1, PS2, or both. |
+| A1 | eliminator1403 reports slow art in Beta 3420 Korium and names 3248 as the last good build. | September 27 build history points to PR #770 head `f83e6f9f` as the revision-3248 source line; Beta 3420 Korium names source `1a663941`. PR #773 reverted the active-art priority tier between them. | Identify whether the visibly late texture is COV, ICO, or BG; compare the two source paths and validate a narrow fix on hardware. |
 | P1 | Aislinn wants a useful error when PS1 prerequisites are missing. | Launch paths already show several missing POPSTARTER/Ember/BIOS messages; missing Ember core can remove Ember rows at scan time. | Which missing item and path produced the reported lack of guidance, and whether the title was a VCD or Ember folder. |
 | P2 | Aislinn mistook PS1 007 entries for PS2 titles without cover art, then could not open the expected PS2 game/VMC menu. | PS1 rows intentionally open a different Triangle menu. PR #825 adds a PS1 row label and save-card guidance there. | Console legibility in each theme/view and what save-card workflow the tester expected. |
 
@@ -289,9 +290,10 @@ Neutrino's per-game `-gsm` setting changes RiptOPL menu text rendering.
 ## A1 — Slow artwork in 3420 versus 3248
 
 The [artwork screenshot](./community-report-evidence/2026-10-02/art-last-good-3248.png)
-supplies the comparison: eliminator1403 called **3248**
-the last good version and **Beta 3420 Korium** slow. It does not supply the
-device, theme, art files, whether backgrounds are enabled, or timings.
+supplies the comparison: eliminator1403 called **3248** the last good version
+and **Beta 3420 Korium** slow. Treat this as a build regression report. The
+same tester's settings produced different results across those builds; do not
+attribute the difference to a user configuration change.
 
 The Makefile computes a normal revision as `git rev-list --count HEAD + 2`.
 The Korium release workflow instead pins that number to its last common
@@ -301,23 +303,21 @@ lists `RIPTOPL-DEBUG-v1.2.0-Beta-3420-Korium.zip` and names source
 [`1a663941`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/1a6639410beaf8dd9c5505be0f470fd5f5a60259).
 The moving `rolling-korium` tag points to that commit; its merge base with
 `rebuild/main` is `65d4b89a` (commit count 3418, hence revision 3420).
-This establishes the **current published** Beta 3420 source, but the tester's
-downloaded ELF has not been hashed against the release asset.
+This establishes the published Beta 3420 source line.
 
-[`f83e6f9f`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/f83e6f9f6166015dbdecb8b6f024c988daf58b1b)
-has commit count 3246 and thus could display revision **3248** on its branch.
-It is the PR #770 tip, not a proven match for the tester's 3248 ELF. That code
-has a separate priority tier for the selected cover, icon and background, and
-pre-requests small images before the large background. The successful
-[PR #770 build-flavours run](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/36293060322)
-for head `f83e6f9f` still has six unexpired artifacts as of October 2. The
-`OPL-OFFICIALROLLING` artifact is ID `10923036654` (ZIP SHA-256
-`9632905c6ee207f49f71a05a922594575ec8c15c08921266b8e6694a22d58872`),
-with an October 11 expiry reported by GitHub. The workflow's default PR
-checkout uses GitHub's merge ref, so this artifact may have a different
-revision number and source tree from a direct `f83e6f9f` build. It is useful
-for investigating that art implementation, not a confirmed 3248 binary or
-proof that it matches eliminator1403's last-good ELF.
+The September 27 [build-flavours history](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/workflows/flavours.yml)
+contains a successful [PR #770 run](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/36293060322)
+at head [`f83e6f9f`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/f83e6f9f6166015dbdecb8b6f024c988daf58b1b).
+That branch head has 3246 commits and computes revision **3248** under its
+Makefile. The adjacent successful runs were 3247 at `7527919a` and 3246 at
+`7273b222`; the next `rebuild/main` rolling run was 3249 at merge `f8b739b6`.
+No successful mainline rolling run in that interval has revision 3248. This
+identifies the 3248 **source line** without obtaining an ELF. The PR workflow's
+default checkout is a merge ref, so run metadata alone cannot prove its ELF
+printed 3248 or that this was eliminator1403's downloaded binary.
+
+The `f83e6f9f` source gives the active cover, icon, and background one priority
+tier and requests the small selected images before the background.
 The later
 [`68405e23`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/68405e2392d3bb6606f46863365cb0f1f844784b)
 rollback removed that tier and restored front-of-queue promotion/background
@@ -325,18 +325,17 @@ admission after **other** testers reported late or out-of-order art. Beta 3420
 contains the rollback and subsequent background-cancellation fix. This is a
 specific reason that a **background** may appear later in 3420; it does not by
 itself establish a slower COV read. The rollback was itself a response to a
-regression. Do not reapply PR #770 wholesale without the exact 3248 asset and
-same-device timing evidence.
+regression. Do not reapply PR #770 wholesale: it was reverted because it
+caused other art-order problems.
 The later screenshot also shows eliminator1403 uploading a 1.41 MB
 `RIPTOPL.ELF` at 11:00 AM, but its bytes and build identity were not supplied.
 Do not assume that attachment is build 3248, Beta 3420, or a confirmed fix.
 
 Relevant source history in this branch:
 
-- September 16: `6057c6c2` added per-game `BG` art to the built-in main list,
-  gated by **Background Art**. That setting defaults off (`src/opl.c:4797`),
-  but a user's saved value may turn it on. Large background PNGs can occupy
-  the single art worker ahead of a cover. See `misc/conf_theme_OPL.cfg:27`.
+- September 16: `6057c6c2` added per-game `BG` art to the built-in main list.
+  Large background PNGs can occupy the single art worker ahead of a cover.
+  See `misc/conf_theme_OPL.cfg:27`.
 - September 26: `7273b222` introduced a new priority tier for COV/ICO/BG.
   The source-backed late/out-of-order mechanism was older requests retaining
   priority ahead of a new selection, plus a removed Coverflow BG admission
@@ -352,47 +351,34 @@ Relevant source history in this branch:
 More precise source comparison, checked against the **published Korium tree**
 `1a663941` on October 3:
 
-- The candidate `f83e6f9f` built-in `<OPL>` list declares `Background` and
+- The revision-3248 branch source `f83e6f9f` built-in `<OPL>` list declares `Background` and
   `ItemCover`, but no `ItemIcon`. Korium's list declares `Background`,
-  `ItemCover`, and `ItemIcon` (`misc/conf_theme_OPL.cfg`). Disc Art is enabled
-  by default, so Korium can request an extra `ICO` lookup/read for the selected
-  game, including an expensive miss on some devices. This predicts a difference
-  in **list mode** that may vanish with Disc Art off; it does not predict the
-  same difference in Coverflow, which has no `ItemIcon` in either theme.
-- Candidate `f83e6f9f` submitted selected COV, ICO (if present), and BG to one
+  `ItemCover`, and `ItemIcon` (`misc/conf_theme_OPL.cfg`). Korium can request
+  an extra `ICO` lookup/read for the selected game, including a miss on some
+  devices. This is a source difference in **list mode**; neither theme has an
+  `ItemIcon` in Coverflow.
+- Revision-3248 source `f83e6f9f` submitted selected COV, ICO (if present), and BG to one
   priority tier. In 3420 the selected COV is promoted to the queue front, BG
   is ordinary work, and Coverflow withholds a new BG request until its selected
   cover settles (`src/themes.c:1260-1335`, `src/texcache.c:484-510`). If the
   tester means the full background scene by "art," later appearance is partly
   expected from this policy. Undoing it would risk the earlier out-of-order
   regression; the code does not show a general COV decoder slowdown.
-- Korium changes **Background Art** to off only for a fresh configuration
-  (`src/opl.c:4797`). A prior saved `enable_bgart=1` is loaded and retained.
-  Consequently two consoles running the same 3420 ELF may enqueue different
-  art. The default Art Delay remains zero; check its saved value too.
-- `src/artindex.c` has no source delta between this candidate and the published
+- `src/artindex.c` has no source delta between `f83e6f9f` and the published
   3420 tree. The changed `src/textures.c` entries bind built-in/static PNGs;
   they are not a demonstrated rewrite of the per-game cover read or decoder.
 
-This source comparison gives a controlled first split: time **COV, ICO, and BG
-separately** on the same device and theme. With Background Art and Disc Art off
-and Art Delay zero, a genuinely slow selected COV needs its own I/O/cache
-investigation. If only ICO is late, test Korium's added ItemIcon path; if only
-BG is late, test the intentional background scheduling and saved toggle. The
-single report does not identify which texture was late, so no source edit is
-justified yet.
-
-Use the same storage, game, art files, theme, view, and build flavor for the
-3248/3420 A/B. First compare Background Art off/on; then Disc Art and ART.TAR
-if enabled. **Interface → Artwork Settings** exposes these controls and Art
-Delay (`src/gui.c:2186`); default Art Delay is zero, so a saved nonzero value
-should be recorded. The existing **Settings → Advanced → Debug** HUD at
+The source establishes a specific scheduling change and a possible extra icon
+request; it does not establish that selected COV decoding became slower. The
+next diagnostic is to identify which texture appears late in the existing
+report, then compare COV/ICO/BG request and completion timing in builds on the
+same console. The existing **Settings → Advanced → Debug** HUD at
 `src/gui.c:4292` reports `Q/A/D/X`, last load `ms`, last successful `ok ms`
 and decoded dimensions, staged-open times `O:`, error counts, and art-index
 hits. A slow `O:` miss points to directory lookup; small opens but large
 `ok ms` point to read/decode cost; growing queues with low completions point
-to scheduling or contention. Do not call any of these the cause until the
-same-device A/B shows it.
+to scheduling or contention. This is instrumentation for confirming the code
+path, not a request to reconfigure the tester's setup.
 
 ## P1/P2 — PS1 prerequisites, row identity, and memory-card guidance
 
@@ -464,11 +450,10 @@ file/path and was deliberately left without a speculative code change.
 
 ## Suggested implementation sequence and completion gates
 
-1. **Resolve remaining evidence.** Obtain the tester's exact 3248 ELF/archive
-   hash to confirm its source, then collect the same-device art A/B and iLink
-   matrix. Beta 3420's current published source and a PR #770 merge-build
-   artifact are recorded above; neither identifies the tester's 3248 binary.
-   Capture Aislinn's source/view/theme and the missing PS1 prerequisite.
+1. **Resolve remaining evidence.** Use the revision-3248 branch and Beta 3420
+   source histories above to isolate the art scheduling path; then validate a
+   narrow change on hardware. Keep the iLink matrix separate. Capture
+   Aislinn's source/view/theme and the missing PS1 prerequisite.
 2. **Console-check E1 and P2.** PR #825 commits the narrow Ember save and PS1
    row/menu guidance changes, with host checks and CI builds passed. Validate
    pre-launch writes, Default behavior and failures on writable Ember devices;
@@ -478,10 +463,10 @@ file/path and was deliberately left without a speculative code change.
 3. **Reproduce P1 before changing its error path.** Identify which PS1 core,
    file, and path were missing and whether the user saw a VCD or Ember folder.
    Add only the guidance that the reproduced flow lacks.
-4. **Fix A1 only after timing isolates a cause.** Compare the confirmed
+4. **Fix A1 only after isolating the code path.** Compare the documented
    3248/3420 source delta and make the smallest scheduling, lookup, or theme
-   change supported by the HUD and console A/B. Do not reinstall a broad
-   priority system just because covers feel slow.
+   change supported by HUD and console timing. Do not reinstall PR #770's
+   broad priority system; other testers reported ordering regressions in it.
 5. **Investigate I1/I2 and V1 separately.** Preserve the successful iLink
    combinations as test cases; add a readiness delay only if controlled tests
    isolate timing and a measurable condition or bounded wait. Treat Neutrino
