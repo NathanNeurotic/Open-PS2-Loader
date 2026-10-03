@@ -254,13 +254,16 @@ downloaded ELF has not been hashed against the release asset.
 has commit count 3246 and thus could display revision **3248** on its branch.
 It is the PR #770 tip, not a proven match for the tester's 3248 ELF. That code
 has a separate priority tier for the selected cover, icon and background, and
-pre-requests small images before the large background. The
-successful [PR #770 build-flavours run](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/36293060322)
-at `f83e6f9f` still has six unexpired artifacts as of October 2. The
+pre-requests small images before the large background. The successful
+[PR #770 build-flavours run](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/36293060322)
+for head `f83e6f9f` still has six unexpired artifacts as of October 2. The
 `OPL-OFFICIALROLLING` artifact is ID `10923036654` (ZIP SHA-256
 `9632905c6ee207f49f71a05a922594575ec8c15c08921266b8e6694a22d58872`),
-with an October 11 expiry reported by GitHub. It is a reproducible candidate
-for a 3248 comparison, not proof that it is eliminator1403's last-good ELF.
+with an October 11 expiry reported by GitHub. The workflow's default PR
+checkout uses GitHub's merge ref, so this artifact may have a different
+revision number and source tree from a direct `f83e6f9f` build. It is useful
+for investigating that art implementation, not a confirmed 3248 binary or
+proof that it matches eliminator1403's last-good ELF.
 The later
 [`68405e23`](https://github.com/NathanNeurotic/Open-PS2-Loader/commit/68405e2392d3bb6606f46863365cb0f1f844784b)
 rollback removed that tier and restored front-of-queue promotion/background
