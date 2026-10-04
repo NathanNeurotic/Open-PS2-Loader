@@ -181,7 +181,7 @@ settings:
 > post-2692 change corrects the mismatch; only a new hardware pass can establish whether it was the
 > complete cause, so this remains **pending retest** rather than being documented as proven.
 
-On top of those, you can pass **extra Neutrino flags** (e.g. media-type or video tweaks)
+On top of those, you can pass **extra Neutrino flags**
 in two places. Both are **appended after** the auto-built arguments; **global first, then
 per-game**, so a game can extend the global set.
 
@@ -199,7 +199,14 @@ Both rows are **buttons** that open the same structured sub-screen rather than o
 field: **Quick Boot** (`-qb`), **Debug Colors** (`-dbc`), **PS2 Logo** (`-logo`), **Working Dir**
 (`-cwd`), **Config** (`-cfg`), **Boot ELF** (`-elf`), `-ata0`, `-ata0id`, `-ata1`, plus a
 free-text **Extra** field for everything else. OPL reassembles the fields in the order Neutrino
-accepts, with the Extra / `--b` tail last.
+accepts, with the Extra / `--b` tail last. Select any text field to edit its full value with the
+on-screen keyboard; the row displays a short preview. The complete assembled argument string must
+fit its 255-character saved limit, and the editor refuses to save an overlong result instead of
+silently truncating it. At launch, OPL composes the full global, per-game, and automatic arguments
+and checks the 14-entry / 256-byte ExecPS2 budget before leaving the menu. If either limit is
+exceeded, a manual launch shows a warning and stays in the menu so no requested argument is
+silently lost. HDD autolaunch falls back to the native core, as it does for other Neutrino
+preflight failures.
 
 Quick Boot means **enter Neutrino's load environment directly**; it is not merely a boot-screen
 toggle. RiptOPL supplies it automatically for USB, iLink, and UDPFS handoffs, so enabling the field
@@ -208,26 +215,50 @@ yourself on those devices changes nothing and does not add a duplicate.
 The stored format is unchanged — a space-separated string, e.g.:
 
 ```
--mt=dvd -gsm=1
+-cfg=custom -qb
 ```
 
-> **Editor length:** each on-screen field still edits at most 31 characters (the same limit as
-> Custom ELF / Game ID), but fields you don't touch keep their full stored value, so editing one
-> field no longer truncates the others. Edit `neutrino_args` / `$NeutrinoArgs` directly in the
-> config file only when a single field needs more than 31 characters — OPL reads and forwards the
-> full string at launch.
+The **Extra Args** field accepts Neutrino flags not given their own row, including `-bsdfs`,
+`-mc0`/`-mc1`, `-gc`, and `--b` for an ELF's own arguments. RiptOPL normally derives the game
+device (`-bsd`) and ISO (`-dvd`) and provides VMC, compatibility, and video controls elsewhere in
+the GUI. Overrides of those boot-critical values are expert settings: the chosen backend and image
+path still have to agree, and a missing VMC file can prevent boot.
 
-### Automatic `-elf=` (enabled by default; config key only)
+| Upstream option | On-console control (global and per-game where applicable) |
+|---|---|
+| `-bsd`, `-dvd` | Derived from the selected game source and image; an override can be entered in either Extra Args field. |
+| `-bsdfs` | Per-game **Neutrino Filesystem** picker, or either Extra Args field for a global/default or a custom value. |
+| `-gsm` | Global **Neutrino Video** and **Neutrino GSM Compatibility** defaults; per-game pickers override them. |
+| `-gc` | Per-game compatibility switches; either Extra Args field can also carry a manual value. |
+| `-mc0`, `-mc1` | Per-game VMC controls; either Extra Args field can carry a manual path. |
+| `-elf`, `-cwd`, `-cfg`, `-ata0`, `-ata0id`, `-ata1`, `-qb`, `-dbc`, `-logo` | Named controls in both Advanced Arguments screens. Automatic `-elf` also has a global toggle. |
+| `--b` and ELF arguments | Enter in Extra Args. If both scopes use `--b`, RiptOPL collects the Neutrino options first and passes one combined ELF-argument tail, global then per-game. |
 
-RiptOPL defaults `neutrino_elf_arg` to `1` (there is deliberately no settings-screen row for
-this), making every Neutrino launch also pass
+All of these controls are reachable from RiptOPL's GUI. The Extra Args field retains a way to
+enter new Neutrino options if upstream adds them before RiptOPL has a named control.
+
+### Automatic `-elf=` (enabled by default)
+
+**Game Launching → Auto Boot ELF (-elf)** controls `neutrino_elf_arg`. It defaults on, making
+Neutrino launches also pass
 `-elf=cdrom0:\<STARTUP>;1` -- the game's boot-file path -- so Neutrino's per-GameID
 `config/<GameID>.toml` compatibility lookup can resolve before its IOP reset. It is only
 emitted for retail-shaped startups (`AAAA_NNN.NN`) and never when your own args already carry
-an `-elf=`. Set `neutrino_elf_arg = 0` by hand to disable it if a launch misbehaves.
+an `-elf=`. Turn it off in the GUI if a launch misbehaves. For a single game, the per-game **Boot
+ELF** field can supply `auto` (Neutrino's own disc lookup) or a specific ELF path, which suppresses
+the generated boot path for that game.
+
+### Video-mode limits
+
+Neutrino's current `-gsm` modes are 240p/288p, 480p/576p, and 1080i x1–x3; the low-resolution
+modes follow the game's PAL/NTSC choice. **Off** keeps its native 480i/576i output. Neither
+Neutrino's documented CLI nor NHDDL's game-video GUI supplies a force-NTSC-480i option for a PAL
+game. NHDDL's `video: ntsc` setting changes **NHDDL's own menu**, not Neutrino's game output.
+The upstream loader parses `-gsm=:1` through `:3`, but its EE core does not enable GSM when no
+video mode is selected, so field compatibility alone is not an effective substitute.
 
 For the full list of flags Neutrino accepts, see the
-[Neutrino documentation](https://github.com/rickgaiser/neutrino).
+[Neutrino documentation](https://github.com/ps2max32/neutrino/blob/master/README.md).
 
 ## 4. Network boot — the Network Protocol selector
 

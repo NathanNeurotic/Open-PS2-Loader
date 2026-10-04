@@ -1705,21 +1705,23 @@ int sbNeutrinoDeinitException(const char *neutrinoPath)
 
 // ---- Neutrino launch-args parse / assemble (the "Launch Args" picker) ----------------
 // naAppend joins a token onto out with a single separating space; naAppendKV joins "<key><val>".
-static void naAppend(char *out, int outSize, const char *tok)
+static int naAppend(char *out, int outSize, const char *tok)
 {
-    int len = (int)strlen(out);
-    if (len >= outSize - 1) // already full (or malformed) -- nothing more fits
-        return;
-    if (len > 0)
+    size_t len = strlen(out), tokenLen = strlen(tok);
+    int separator = len > 0;
+    if (outSize <= 0 || len + separator + tokenLen >= (size_t)outSize)
+        return 0;
+    if (separator)
         out[len++] = ' ';
-    snprintf(out + len, outSize - len, "%s", tok);
+    memcpy(out + len, tok, tokenLen + 1);
+    return 1;
 }
 
-static void naAppendKV(char *out, int outSize, const char *key, const char *val)
+static int naAppendKV(char *out, int outSize, const char *key, const char *val)
 {
-    char tmp[96];
-    snprintf(tmp, sizeof(tmp), "%s%s", key, val);
-    naAppend(out, outSize, tmp);
+    char tmp[256];
+    int len = snprintf(tmp, sizeof(tmp), "%s%s", key, val);
+    return len >= 0 && len < (int)sizeof(tmp) && naAppend(out, outSize, tmp);
 }
 
 int sbFileExists(const char *path)
@@ -2239,31 +2241,33 @@ void neutrinoArgsParse(const char *in, neutrino_args_t *na)
     }
 }
 
-void neutrinoArgsAssemble(const neutrino_args_t *na, char *out, int outSize)
+int neutrinoArgsAssemble(const neutrino_args_t *na, char *out, int outSize)
 {
     if (out == NULL || outSize <= 0)
-        return;
+        return 0;
     out[0] = '\0';
+    int ok = 1;
     if (na->qb)
-        naAppend(out, outSize, "-qb");
+        ok &= naAppend(out, outSize, "-qb");
     if (na->dbc)
-        naAppend(out, outSize, "-dbc");
+        ok &= naAppend(out, outSize, "-dbc");
     if (na->logo)
-        naAppend(out, outSize, "-logo");
+        ok &= naAppend(out, outSize, "-logo");
     if (na->cwd[0])
-        naAppendKV(out, outSize, "-cwd=", na->cwd);
+        ok &= naAppendKV(out, outSize, "-cwd=", na->cwd);
     if (na->cfg[0])
-        naAppendKV(out, outSize, "-cfg=", na->cfg);
+        ok &= naAppendKV(out, outSize, "-cfg=", na->cfg);
     if (na->elf[0])
-        naAppendKV(out, outSize, "-elf=", na->elf);
+        ok &= naAppendKV(out, outSize, "-elf=", na->elf);
     if (na->ata0[0])
-        naAppendKV(out, outSize, "-ata0=", na->ata0);
+        ok &= naAppendKV(out, outSize, "-ata0=", na->ata0);
     if (na->ata0id[0])
-        naAppendKV(out, outSize, "-ata0id=", na->ata0id);
+        ok &= naAppendKV(out, outSize, "-ata0id=", na->ata0id);
     if (na->ata1[0])
-        naAppendKV(out, outSize, "-ata1=", na->ata1);
+        ok &= naAppendKV(out, outSize, "-ata1=", na->ata1);
     if (na->extra[0]) // extra (may hold "--b ...") goes LAST so the break + ELF args stay at the tail
-        naAppend(out, outSize, na->extra);
+        ok &= naAppend(out, outSize, na->extra);
+    return ok;
 }
 
 // Resolve the per-game VMC slots ($VMC_0/$VMC_1) into discrete Neutrino "-mcN=<prefix>VMC/<name>.bin"

@@ -114,20 +114,20 @@ int sbNeutrinoDeinitException(const char *neutrinoPath);
 // Structured view of the USER-settable Neutrino launch flags (the catch-all "Launch Args" box).
 typedef struct
 {
-    int qb;          // -qb (quick-boot)
-    int dbc;         // -dbc (debug colors)
-    int logo;        // -logo (PS2 logo)
-    char cwd[64];    // -cwd=
-    char cfg[64];    // -cfg=
-    char elf[64];    // -elf=
-    char ata0[64];   // -ata0=
-    char ata0id[64]; // -ata0id=
-    char ata1[64];   // -ata1=
-    char extra[64];  // unrecognised/free tokens, space-joined; "--b ..." preserved at the tail
+    int qb;           // -qb (quick-boot)
+    int dbc;          // -dbc (debug colors)
+    int logo;         // -logo (PS2 logo)
+    char cwd[256];    // -cwd=
+    char cfg[256];    // -cfg=
+    char elf[256];    // -elf=
+    char ata0[256];   // -ata0=
+    char ata0id[256]; // -ata0id=
+    char ata1[256];   // -ata1=
+    char extra[256];  // unrecognised/free tokens, space-joined; "--b ..." preserved at the tail
 } neutrino_args_t;
 // Parse an args string into the struct; assemble it back in a Neutrino-accepted order (--b last).
 void neutrinoArgsParse(const char *in, neutrino_args_t *na);
-void neutrinoArgsAssemble(const neutrino_args_t *na, char *out, int outSize);
+int neutrinoArgsAssemble(const neutrino_args_t *na, char *out, int outSize); // 0 if the result would be truncated
 
 // Fully-formed Neutrino -mcN VMC args for both slots, resolved from the per-game config
 // BEFORE deinit frees it. vmcPrefix = the device prefix VMC/ lives under.

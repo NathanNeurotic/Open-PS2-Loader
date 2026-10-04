@@ -94,6 +94,7 @@ enum UI_ITEMS {
     CFG_NEUTRINO_PATH,
     CFG_NEUTRINO_VIDEO,   // global default Neutrino -gsm video mode (gNeutrinoVideoDefault); per-game "Default" follows it
     CFG_NEUTRINO_GSMCOMP, // global default -gsm ":c" comp half (gNeutrinoGsmCompDefault)
+    CFG_NEUTRINO_ELF_ARG, // auto-supply the game's boot ELF to Neutrino
     CFG_POPSTARTER_DEVICE,
     CFG_LBL_POPSTARTER_PATH,
     CFG_POPSTARTER_PATH,

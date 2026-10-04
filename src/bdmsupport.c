@@ -2017,6 +2017,10 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     // Δ6 preflight (driver token + network toml sync) -- abort stays in a live menu.
     if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath, neutrinoBsdfs, neutrinoExtraArgs, bdmDevNr) < 0)
         goto fail;
+    if (sysNeutrinoArgsPreflight(bdmCurrentDriver, partname, game->startup, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdmDevNr, &neutrinoVmc) < 0) {
+        failResult = 1; // an overfull Neutrino argv must not silently fall back to the native core
+        goto fail;
+    }
     if (gLaunchDiag)
         launchDiagMark(3);
 
