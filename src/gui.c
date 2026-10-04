@@ -2071,6 +2071,7 @@ void guiShowNeutrinoDefaults(void)
     diaSetEnum(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, neutrinoGsmCompDefStrs);
     diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
     diaSetEnabled(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, gNeutrinoVideoDefault != 0);
+    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
 
     int ret;
 reshow_neutrino:
@@ -2088,6 +2089,7 @@ reshow_neutrino:
         snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
+        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
 
         applyConfig(-1, -1, 0);
     }
@@ -2096,10 +2098,35 @@ reshow_neutrino:
 // Neutrino Launch Args sub-screen: edit the user-settable Neutrino flags as structured fields and
 // reassemble them in a Neutrino-accepted order (--b last). Used for both the global args (here) and
 // the per-game args. argsBuf in/out is the stored "Launch Args" string.
-void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize)
+// UI_STRING holds only a 31-character preview. The callbacks edit the complete backing fields, so
+// a path or argument can be changed on the console without hand-editing a config file.
+static neutrino_args_t neutrinoArgsEdit;
+
+#define NEUTRINO_ARG_HANDLER(name, field)                                             \
+    int guiNeutrinoArgs##name##Handler(char *text, int maxLen)                        \
+    {                                                                                 \
+        if (!guiShowKeyboard(neutrinoArgsEdit.field, sizeof(neutrinoArgsEdit.field))) \
+            return 0;                                                                 \
+        snprintf(text, maxLen, "%s", neutrinoArgsEdit.field);                         \
+        return 1;                                                                     \
+    }
+
+NEUTRINO_ARG_HANDLER(Cwd, cwd)
+NEUTRINO_ARG_HANDLER(Cfg, cfg)
+NEUTRINO_ARG_HANDLER(Elf, elf)
+NEUTRINO_ARG_HANDLER(Ata0, ata0)
+NEUTRINO_ARG_HANDLER(Ata0id, ata0id)
+NEUTRINO_ARG_HANDLER(Ata1, ata1)
+NEUTRINO_ARG_HANDLER(Extra, extra)
+#undef NEUTRINO_ARG_HANDLER
+
+int guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize)
 {
+    if (argsBuf == NULL || bufSize <= 0)
+        return 0;
     neutrino_args_t na;
     neutrinoArgsParse(argsBuf, &na);
+    neutrinoArgsEdit = na;
 
     diaSetInt(diaNeutrinoArgs, NARGS_QB, na.qb ? 1 : 0);
     diaSetInt(diaNeutrinoArgs, NARGS_DBC, na.dbc ? 1 : 0);
@@ -2112,59 +2139,22 @@ void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize)
     diaSetString(diaNeutrinoArgs, NARGS_ATA1, na.ata1);
     diaSetString(diaNeutrinoArgs, NARGS_EXTRA, na.extra);
 
-    // Baseline = the fields AS POPULATED (the UI caps each string at 31 chars). Comparing the
-    // post-dialog fields against this tells us which fields the user actually edited, so untouched
-    // fields can keep their FULL parsed value instead of the truncated UI copy.
-    neutrino_args_t pop;
-    diaGetInt(diaNeutrinoArgs, NARGS_QB, &pop.qb);
-    diaGetInt(diaNeutrinoArgs, NARGS_DBC, &pop.dbc);
-    diaGetInt(diaNeutrinoArgs, NARGS_LOGO, &pop.logo);
-    diaGetString(diaNeutrinoArgs, NARGS_CWD, pop.cwd, sizeof(pop.cwd));
-    diaGetString(diaNeutrinoArgs, NARGS_CFG, pop.cfg, sizeof(pop.cfg));
-    diaGetString(diaNeutrinoArgs, NARGS_ELF, pop.elf, sizeof(pop.elf));
-    diaGetString(diaNeutrinoArgs, NARGS_ATA0, pop.ata0, sizeof(pop.ata0));
-    diaGetString(diaNeutrinoArgs, NARGS_ATA0ID, pop.ata0id, sizeof(pop.ata0id));
-    diaGetString(diaNeutrinoArgs, NARGS_ATA1, pop.ata1, sizeof(pop.ata1));
-    diaGetString(diaNeutrinoArgs, NARGS_EXTRA, pop.extra, sizeof(pop.extra));
-
-    if (diaExecuteDialog(diaNeutrinoArgs, -1, 1, NULL)) {
-        neutrino_args_t out;
+    while (diaExecuteDialog(diaNeutrinoArgs, -1, 1, NULL)) {
         char after[256];
-        diaGetInt(diaNeutrinoArgs, NARGS_QB, &out.qb);
-        diaGetInt(diaNeutrinoArgs, NARGS_DBC, &out.dbc);
-        diaGetInt(diaNeutrinoArgs, NARGS_LOGO, &out.logo);
-        diaGetString(diaNeutrinoArgs, NARGS_CWD, out.cwd, sizeof(out.cwd));
-        diaGetString(diaNeutrinoArgs, NARGS_CFG, out.cfg, sizeof(out.cfg));
-        diaGetString(diaNeutrinoArgs, NARGS_ELF, out.elf, sizeof(out.elf));
-        diaGetString(diaNeutrinoArgs, NARGS_ATA0, out.ata0, sizeof(out.ata0));
-        diaGetString(diaNeutrinoArgs, NARGS_ATA0ID, out.ata0id, sizeof(out.ata0id));
-        diaGetString(diaNeutrinoArgs, NARGS_ATA1, out.ata1, sizeof(out.ata1));
-        diaGetString(diaNeutrinoArgs, NARGS_EXTRA, out.extra, sizeof(out.extra));
-        // Per-field merge: adopt only the fields the user actually changed; untouched fields keep
-        // their FULL parsed value (na) so editing one field never truncates the others to 31 chars.
-        if (out.qb != pop.qb)
-            na.qb = out.qb;
-        if (out.dbc != pop.dbc)
-            na.dbc = out.dbc;
-        if (out.logo != pop.logo)
-            na.logo = out.logo;
-        if (strcmp(out.cwd, pop.cwd) != 0)
-            snprintf(na.cwd, sizeof(na.cwd), "%s", out.cwd);
-        if (strcmp(out.cfg, pop.cfg) != 0)
-            snprintf(na.cfg, sizeof(na.cfg), "%s", out.cfg);
-        if (strcmp(out.elf, pop.elf) != 0)
-            snprintf(na.elf, sizeof(na.elf), "%s", out.elf);
-        if (strcmp(out.ata0, pop.ata0) != 0)
-            snprintf(na.ata0, sizeof(na.ata0), "%s", out.ata0);
-        if (strcmp(out.ata0id, pop.ata0id) != 0)
-            snprintf(na.ata0id, sizeof(na.ata0id), "%s", out.ata0id);
-        if (strcmp(out.ata1, pop.ata1) != 0)
-            snprintf(na.ata1, sizeof(na.ata1), "%s", out.ata1);
-        if (strcmp(out.extra, pop.extra) != 0)
-            snprintf(na.extra, sizeof(na.extra), "%s", out.extra);
-        neutrinoArgsAssemble(&na, after, sizeof(after));
+        na = neutrinoArgsEdit;
+        diaGetInt(diaNeutrinoArgs, NARGS_QB, &na.qb);
+        diaGetInt(diaNeutrinoArgs, NARGS_DBC, &na.dbc);
+        diaGetInt(diaNeutrinoArgs, NARGS_LOGO, &na.logo);
+        int afterSize = bufSize < (int)sizeof(after) ? bufSize : (int)sizeof(after);
+        if (!neutrinoArgsAssemble(&na, after, afterSize)) {
+            guiMsgBox(_l(_STR_NEUTRINO_ARGS_TOO_LONG), 0, NULL);
+            continue;
+        }
+        int changed = strcmp(argsBuf, after) != 0;
         snprintf(argsBuf, bufSize, "%s", after);
+        return changed;
     }
+    return 0;
 }
 
 
@@ -2983,6 +2973,7 @@ static int guiSettingsShowLaunch(void)
     diaSetEnum(ui, CFG_NEUTRINO_GSMCOMP, neutrinoGsmCompDefStrs);
     diaSetInt(ui, CFG_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
     diaSetEnabled(ui, CFG_NEUTRINO_GSMCOMP, gNeutrinoVideoDefault != 0);
+    diaSetInt(ui, CFG_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
     guiSettingsBeginDialog(ui);
 
 reshow_launch:
@@ -2997,7 +2988,8 @@ reshow_launch:
         goto reshow_launch;
     }
     if (result == CFG_NEUTRINO_ARGS) {
-        guiShowNeutrinoArgsConfig(gNeutrinoArgs, sizeof(gNeutrinoArgs));
+        if (guiShowNeutrinoArgsConfig(gNeutrinoArgs, sizeof(gNeutrinoArgs)))
+            guiSettingsSavePending = 1;
         goto reshow_launch;
     }
 
@@ -3009,6 +3001,7 @@ reshow_launch:
         snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
         diaGetInt(ui, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(ui, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
+        diaGetInt(ui, CFG_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
     }

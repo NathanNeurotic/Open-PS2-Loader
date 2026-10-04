@@ -792,7 +792,9 @@ gui_strings:
 - label: HINT_MODE7
   string: Neutrino only -- fix games that overrun an IOP buffer (-gc=7)
 - label: HINT_NEUTRINO_ARGS
-  string: Extra Neutrino flags, space-separated (e.g. -mt=dvd). Global applies to all games; per-game adds on top. Prefix a flag with $ to disable it without deleting.
+  string: Advanced Neutrino options. Global applies to all games; per-game adds on top. Extra accepts other supported flags. Prefix a flag with $ to disable it without deleting.
+- label: HINT_NEUTRINO_AUTO_ELF
+  string: Pass the game's boot ELF to Neutrino for per-title config lookup. On by default; a manually set Boot ELF option takes precedence.
 - label: HINT_NEUTRINO_BSDFS
   string: Force Neutrino's block-device filesystem (-bsdfs). Auto = per-device default. hdl/bd are expert options; pair them with a matching -dvd= in the launch args if the auto path shape doesn't fit.
 - label: HINT_NEUTRINO_DEVICE
@@ -848,7 +850,7 @@ gui_strings:
 - label: NARGS_ATA1
   string: ATA1 Image (-ata1)
 - label: NARGS_AUTO_NOTE
-  string: 'Auto: -bsd -dvd -gc -gsm -mc -dbc -logo'
+  string: 'Auto: game device and ISO, per-game compatibility and VMC, selected video mode'
 - label: NARGS_CFG
   string: Config (-cfg)
 - label: NARGS_CWD
@@ -867,6 +869,10 @@ gui_strings:
   string: Network Protocol
 - label: NEUTRINO_ARGS
   string: Neutrino Launch Args
+- label: NEUTRINO_ARGS_TOO_LONG
+  string: Neutrino arguments exceed the saved length. Shorten a field before saving.
+- label: NEUTRINO_AUTO_ELF
+  string: Auto Boot ELF (-elf)
 - label: NEUTRINO_BSDFS
   string: Neutrino Filesystem
 - label: NEUTRINO_DEFAULTS

@@ -1258,11 +1258,12 @@ static int convertCompatmaskToModes(int compatmask)
     return atoi(result);
 }
 
-// Split a whitespace-separated argument string into individual argv entries appended
-// after the auto-built ones. `buf` receives a bounded mutable copy of `src`, and the
-// tokens point into it, so `buf` must stay live until the argv is consumed. Returns
-// the updated argc; never exceeds argvMax.
-static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bufSize, const char *src)
+// Append either Neutrino options (before --b) or ELF arguments (after --b) from one
+// scope. Each pass copies src because strtok edits buf; both buffers stay live until
+// ExecPS2 consumes argv. A global --b must not turn per-game Neutrino options into
+// ELF arguments, so the two scopes are assembled before their tails.
+static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bufSize,
+                           const char *src, int elfArgs, int *hasBreak)
 {
     if (src == NULL || src[0] == '\0')
         return argc;
@@ -1270,11 +1271,18 @@ static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bu
     snprintf(buf, bufSize, "%s", src);
 
     char *tok = strtok(buf, " \t");
+    int afterBreak = 0;
     while (tok != NULL && argc < argvMax) {
+        if (!afterBreak && strcmp(tok, "--b") == 0) {
+            afterBreak = 1;
+            *hasBreak = 1;
+            tok = strtok(NULL, " \t");
+            continue;
+        }
         // A leading '$' marks a user-disabled flag (NHDDL convention): keep it in the
         // args field for easy re-enabling, but don't forward it to Neutrino. Neutrino
         // flags are all '-'-prefixed, so '$' never collides with a real argument.
-        if (tok[0] != '$')
+        if (afterBreak == elfArgs && tok[0] != '$')
             argv[argc++] = tok;
         tok = strtok(NULL, " \t");
     }
@@ -1315,24 +1323,26 @@ static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
         return 0;
     size_t flen = strlen(flag);
     int keyPrefix = (flen > 0 && flag[flen - 1] == '=');
-    const char *p = args;
-    while ((p = strstr(p, flag)) != NULL) {
-        int disabled = (p > args && *(p - 1) == '$');
-        const char *tokStart = disabled ? p - 1 : p;
-        int startOk = (tokStart == args) || (tokStart[-1] == ' ') || (tokStart[-1] == '\t');
-        char after = p[flen];
-        int endOk = keyPrefix || after == '\0' || after == ' ' || after == '\t';
-        if (startOk && endOk && !disabled)
-            return 1; // a whole-token, non-$-disabled occurrence -> the user is forwarding this flag
-        p += flen;
+    for (const char *p = args; *p != '\0';) {
+        while (*p == ' ' || *p == '\t')
+            p++;
+        const char *end = p;
+        while (*end != '\0' && *end != ' ' && *end != '\t')
+            end++;
+        size_t len = end - p;
+        if (len == 3 && !strncmp(p, "--b", 3))
+            break;
+        if (len >= flen && !strncmp(p, flag, flen) && (keyPrefix || len == flen))
+            return 1;
+        p = end;
     }
     return 0;
 }
 
 // The -bsdfs Neutrino will actually run with, so the preflight and the argv builder agree on it.
 // Read the user tokens the way Neutrino parses them: the global args, then the per-game args (the
-// order appendArgTokens adds them), last one wins, a $-prefixed token is switched off, and the FIRST
-// "--b" anywhere ends it -- everything after it, per-game args included, goes to the game. A typed
+// order appendArgTokens adds them), last one wins, a $-prefixed token is switched off, and --b
+// ends Neutrino options within each scope. Their ELF tails are appended after both scopes. A typed
 // -bsdfs= found that way beats the per-game picker. mmce/udpfs are fileid backends with no fs layer.
 // Returns 1 exfat / 2 hdl / 3 bd; 0 = Neutrino's own default (exfat) or a typed value it does not
 // name.
@@ -1351,7 +1361,7 @@ static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, con
                 end++;
             int len = (int)(end - p);
             if (len == 3 && !strncmp(p, "--b", 3))
-                goto parsed;
+                break;
             if (len > 7 && !strncmp(p, "-bsdfs=", 7)) {
                 typed = 1;
                 value = 0;
@@ -1363,7 +1373,6 @@ static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, con
             p = end;
         }
     }
-parsed:
     if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs"))
         return 0;
     if (typed)
@@ -1696,7 +1705,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     }
 
     // Parity Delta-10, enabled by default via settings_riptopl.cfg "neutrino_elf_arg"=1
-    // (deliberately no UI row): hand neutrino the boot ELF path directly so its per-GameID
+    // (exposed in Game Launching): hand neutrino the boot ELF path directly so its per-GameID
     // config/<GameID>.toml compat lookup can resolve pre-reset. Shape-guarded to AAAA_NNN.NN
     // startups and skipped when the user already forwards an -elf= (structured field or free
     // text) -- neutrino must see exactly one.
@@ -1743,8 +1752,13 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 
     // Append user-supplied Neutrino flags: global defaults first, then the per-game
     // string (so a game can extend the global set). Both are tokenized on whitespace.
-    argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs);
-    argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs);
+    int globalBreak = 0, gameBreak = 0;
+    argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs, 0, &globalBreak);
+    argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs, 0, &gameBreak);
+    if ((globalBreak || gameBreak) && argc < argvMax)
+        argv[argc++] = "--b";
+    argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs, 1, &globalBreak);
+    argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs, 1, &gameBreak);
     if (gLaunchDiag)
         launchDiagMark(9); // argv composed -- the pool-fit check BELOW can still refuse (blink code 2)
 

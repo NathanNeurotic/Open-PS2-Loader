@@ -8,7 +8,7 @@ neutrinoEffectiveBsdfs sysLaunchNeutrino builds its argv from, so the two cannot
 
 bd TYPED into the Neutrino args counts too (CodeRabbit on #762): it used to switch our own -bsdfs off
 and leave a bare file path in -dvd, which bd can never open -- after the teardown. The effective value
-is the last active typed token (per-game args after global ones, the first "--b" ending them), else
+is the last active typed token (per-game args after global ones, with "--b" ending each scope), else
 the picker. A typed -dvd= does NOT exempt a launch: it is a tail token the argv budget can drop,
 which would leave our device-0 tuple in charge (CodeRabbit's security review of #762).
 
@@ -37,6 +37,7 @@ def function_text(signature):
 
 functions = ''.join(function_text(sig) for sig in (
     'static const char *getDeviceName(',
+    'static int appendArgTokens(',
     'static int neutrinoArgHasActiveFlag(',
     'static int neutrinoEffectiveBsdfs(',
     'int sysNeutrinoPreflight(',
@@ -115,9 +116,9 @@ int main(void)
     scenario("-bsdfs= after --b belongs to the game",    "usb",  0,   "",             "--b -bsdfs=bd",   -1,   0, 0);
     scenario("typed bd on ATA",                          "ata",  0,   "",             "-bsdfs=bd",       -1,   0, 0);
     scenario("typed bd on mmce (no fs layer)",           "mmce", 0,   "",             "-bsdfs=bd",       -1,   0, 0);
-    /* "--b": everything after the FIRST one -- per-game args included -- belongs to the game */
-    scenario("global --b ends the per-game args",        "usb",  0,   "-bsdfs=bd --b", "-bsdfs=exfat",   -1,   1, 3);
-    scenario("global --b hides a per-game bd",           "usb",  0,   "--b",          "-bsdfs=bd",       -1,   0, 0);
+    /* Each scope's --b ends its own Neutrino flags, preserving per-game overrides. */
+    scenario("per-game exfat after global --b",          "usb",  0,   "-bsdfs=bd --b", "-bsdfs=exfat",   -1,   0, 0);
+    scenario("per-game bd after global --b",             "usb",  0,   "--b",          "-bsdfs=bd",       -1,   1, 3);
     scenario("-dvd= after --b is the game's",            "usb",  0,   "",             "-bsdfs=bd --b -dvd=bdfs:usb1p0", -1, 1, 3);
     scenario("global -dvd= is still refused",            "usb",  0,   "-dvd=bdfs:usb1p0", "-bsdfs=bd",   -1,   1, 3);
     scenario("typed -dvd= with a known number proceeds", "usb",  0,   "",             "-bsdfs=bd -dvd=bdfs:usb1p0",  1, 0, 0);
@@ -144,6 +145,36 @@ int main(void)
         printf("FAIL a -bsdfs= after --b is the game's, so the picker stands\n");
         fails++;
     }
+    snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", "--b -bsdfs=bd");
+    if (neutrinoEffectiveBsdfs("usb", 0, "-bsdfs=exfat") != 1) {
+        printf("FAIL per-game exfat must survive a global ELF-argument tail\n");
+        fails++;
+    }
+    if (neutrinoArgHasActiveFlag("--b -elf=cdrom0:FOO;1", "-elf=")) {
+        printf("FAIL ELF arguments after --b must not suppress generated Neutrino flags\n");
+        fails++;
+    }
+    {
+        char globalBuf[256], gameBuf[256], *argv[14];
+        int argc = 0, globalBreak = 0, gameBreak = 0;
+        const char *global = "-dbc --b -elf=global.elf";
+        const char *game = "-bsdfs=exfat $-qb --b level=2";
+        argc = appendArgTokens(argv, argc, 14, globalBuf, sizeof(globalBuf), global, 0, &globalBreak);
+        argc = appendArgTokens(argv, argc, 14, gameBuf, sizeof(gameBuf), game, 0, &gameBreak);
+        if (globalBreak || gameBreak) argv[argc++] = "--b";
+        argc = appendArgTokens(argv, argc, 14, globalBuf, sizeof(globalBuf), global, 1, &globalBreak);
+        argc = appendArgTokens(argv, argc, 14, gameBuf, sizeof(gameBuf), game, 1, &gameBreak);
+        const char *want[] = {"-dbc", "-bsdfs=exfat", "--b", "-elf=global.elf", "level=2"};
+        if (argc != 5) {
+            printf("FAIL global/per-game --b argument count: %d\n", argc);
+            fails++;
+        } else {
+            for (int i = 0; i < argc; i++) if (strcmp(argv[i], want[i])) {
+                printf("FAIL global/per-game --b order at %d: %s\n", i, argv[i]);
+                fails++;
+            }
+        }
+    }
     return fails ? 1 : 0;
 }
 '''
@@ -168,4 +199,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('neutrino bsdfs: 28 preflight scenarios + 5 argv checks OK (bd with no device number refused before teardown, typed or picked, even beside a typed -dvd=; --b ends the Neutrino args)')
+print('neutrino bsdfs: 28 preflight scenarios + 8 argv checks OK (bd without device number refused before teardown; per-game options survive global --b)')

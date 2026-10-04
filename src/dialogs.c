@@ -983,6 +983,11 @@ struct UIItem diaNeutrinoDefaults[] = {
     {UI_ENUM, CFG_NEUTRINO_GSMCOMP, 1, 1, _STR_HINT_NEUTRINO_GSM_COMP, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NEUTRINO_AUTO_ELF}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_NEUTRINO_ELF_ARG, 1, 1, _STR_HINT_NEUTRINO_AUTO_ELF, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Neutrino Advanced Arguments", -1}}},
     {UI_SPACER},
     {UI_BUTTON, CFG_NEUTRINO_ARGS, 1, 1, _STR_HINT_NEUTRINO_ARGS, 0, 0, {.label = {NULL, _STR_MODIFY}}},
@@ -1860,37 +1865,37 @@ struct UIItem diaNeutrinoArgs[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_CWD}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_CWD, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, NARGS_CWD, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsCwdHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_CFG}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_CFG, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, NARGS_CFG, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsCfgHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_ELF}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_ELF, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, NARGS_ELF, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsElfHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_ATA0}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_ATA0, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, NARGS_ATA0, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta0Handler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_ATA0ID}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_ATA0ID, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, NARGS_ATA0ID, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta0idHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_ATA1}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_ATA1, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, NARGS_ATA1, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta1Handler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_EXTRA}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_EXTRA, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, NARGS_EXTRA, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsExtraHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_AUTO_NOTE}}},
