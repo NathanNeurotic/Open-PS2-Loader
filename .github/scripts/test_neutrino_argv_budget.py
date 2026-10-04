@@ -31,6 +31,10 @@ for filename in ("bdmsupport.c", "hddsupport.c", "mmcesupport.c", "udpfssupport.
     assert "sysNeutrinoArgsPreflight(" in leg, filename
     assert leg.index("sysNeutrinoArgsPreflight(") < leg.index("sysLaunchNeutrino("), filename
 
+bdm = (root / "src/bdmsupport.c").read_text(encoding="utf-8")
+assert re.search(r"if \(sysNeutrinoArgsPreflight\([^;]+?\) < 0\) \{\s*failResult = 1;", bdm), \
+    "BDM budget refusal must not fall back to the native core"
+
 harness = r'''
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +50,8 @@ typedef struct { char arg[NEUTRINO_VMC_SLOTS][160]; } neutrino_vmc_args_t;
 
 static char gNeutrinoArgs[256];
 static int gNeutrinoElfArg = 1, gEnableDebug, gLaunchDiag;
-static int lastWarning, loads, refuses;
+static int lastWarning, loads, refuses, lastArgc;
+static char lastArgs[14][256];
 static int bdmGetLoadedNetProtocol(void) { return 0; }
 static int convertCompatmaskToModes(int mask) { return mask; }
 static const char *_l(int id) { lastWarning = id; return ""; }
@@ -54,7 +59,13 @@ static void guiWarning(const char *msg, int secs) { (void)msg; (void)secs; }
 static void launchDiagRefuse(int reason) { (void)reason; refuses++; }
 static void launchDiagMark(int stage) { (void)stage; }
 static int sysLoadELFKeepIOP(const char *path, const char *args, int argc, char **argv)
-{ (void)path; (void)args; (void)argc; (void)argv; loads++; return 0; }
+{
+    (void)path; (void)args;
+    lastArgc = argc;
+    for (int i = 0; i < argc; i++) snprintf(lastArgs[i], sizeof(lastArgs[i]), "%s", argv[i]);
+    loads++;
+    return 0;
+}
 
 @FUNCTIONS@
 
@@ -90,8 +101,20 @@ int main(void)
     failures += check("byte pool", longArg, "", NULL, -1);
     failures += check("VMC consumes budget", "-cfg=long-name", "", &vmc, -1);
 
-    snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", many);
+    /* Exactly 14 target entries must retain each token after the second --b pass. */
+    snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "-a -b -c -d -e -f --b tail");
     int beforeLoads = loads;
+    if (sysRunNeutrinoLaunch("usb", "mass0:/DVD/SLUS_123.45.iso", "SLUS_123.45", 0, 0,
+                             "mass0:/NEUTRINO/neutrino.elf", "", 0, 0, 0, 0, NULL, 0) != 0 ||
+        loads != beforeLoads + 1 || lastArgc != 14 ||
+        strcmp(lastArgs[6], "-a") || strcmp(lastArgs[11], "-f") ||
+        strcmp(lastArgs[12], "--b") || strcmp(lastArgs[13], "tail")) {
+        puts("FAIL boundary argv must preserve each token without concatenated suffixes");
+        failures++;
+    }
+
+    snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", many);
+    beforeLoads = loads;
     int beforeRefuses = refuses;
     if (sysRunNeutrinoLaunch("usb", "mass0:/DVD/SLUS_123.45.iso", "SLUS_123.45", 0, 0,
                              "mass0:/NEUTRINO/neutrino.elf", "", 0, 0, 0, 0, NULL, 0) != -1 ||
@@ -113,4 +136,4 @@ with tempfile.TemporaryDirectory() as tmp:
     result = subprocess.run([str(exe)], capture_output=True, text=True)
     assert result.returncode == 0, result.stdout + result.stderr
 
-print("neutrino argv budget: count, bytes, VMC, pre-teardown refusal, and fallback guard OK")
+print("neutrino argv budget: count, bytes, VMC, 14-entry token integrity, and pre-teardown refusal OK")
