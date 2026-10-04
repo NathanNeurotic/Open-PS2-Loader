@@ -1003,7 +1003,7 @@ work it is built on:
 
 Enormous thanks to the testers who run rolling builds on real consoles and file the
 reports that shape the fixes — **eliminator1403, lucaslmgv, AndrewBento, AcidReach, bodvenomz,
-nuno6573, zackcage6 and Blade1984**.
+nuno6573, zackcage6, Blade1984 and Aislinn🏳️‍⚧️**.
 
 ### The name (this fork)
 
