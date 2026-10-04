@@ -926,9 +926,10 @@ The main-config keys are `ember_display_mode`, `ember_timing`, `ember_dither`,
 and Controller. Display remains global-only.
 
 For the per-game editor, **Default means inherit global**. Confirming the dialog stores value 0 in the
-game CFG. At launch, `cueApplySettings()` interprets that as removal of the corresponding key from
-`EMBER/games/<Name>/settings.txt`, allowing Ember's global value to apply. A non-Default value is
-written as the per-game override.
+game CFG and immediately removes the corresponding key from `EMBER/games/<Name>/settings.txt`,
+allowing Ember's global value to apply. A non-Default value is written as the per-game override.
+Launch also reapplies the managed values if the file changed outside RiptOPL. When no per-game key
+has been managed, confirming an unchanged dialog does not create an empty settings file.
 
 Per-game CFG keys:
 

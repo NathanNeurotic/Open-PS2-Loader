@@ -394,7 +394,7 @@ static int cueWriteAll(int fd, const char *data, int len)
     return 1;
 }
 
-static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, int wantCount)
+static int cueRewriteSettingsFile(const char *path, const cue_setting_t *want, int wantCount)
 {
     char *before;
     char *after;
@@ -404,7 +404,7 @@ static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, 
     int existed = 0;
 
     if (path == NULL || want == NULL || wantCount <= 0)
-        return;
+        return 0;
 
     before = (char *)malloc(CUE_SETTINGS_MAX + 1);
     after = (char *)malloc(CUE_SETTINGS_MAX + 1);
@@ -412,7 +412,7 @@ static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, 
         free(before);
         free(after);
         LOG("[CUE] no memory to update %s -- left untouched\n", path);
-        return;
+        return 0;
     }
 
     fd = open(path, O_RDONLY);
@@ -424,18 +424,18 @@ static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, 
             LOG("[CUE] cannot read %s -- left untouched\n", path);
             free(before);
             free(after);
-            return;
+            return 0;
         }
         if (len > CUE_SETTINGS_MAX) {
             LOG("[CUE] %s is larger than Ember's settings buffer -- left untouched\n", path);
             free(before);
             free(after);
-            return;
+            return 0;
         }
     } else if (!cueSettingsHaveValue(want, wantCount)) {
         free(before);
         free(after);
-        return;
+        return 1;
     }
 
     out = cueRewriteSettings(before, len, want, wantCount, after, CUE_SETTINGS_MAX);
@@ -443,33 +443,36 @@ static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, 
         LOG("[CUE] rewritten settings would not fit in %s -- left untouched\n", path);
         free(before);
         free(after);
-        return;
+        return 0;
     }
 
     if (out == len && (out == 0 || memcmp(after, before, out) == 0)) {
         free(before);
         free(after);
-        return;
+        return 1;
     }
 
     if (out == 0) {
+        int removed = 1;
         if (existed && len > 0) {
             if (unlink(path) == 0)
                 LOG("[CUE] nothing left to keep in %s -- removed\n", path);
-            else
+            else {
                 LOG("[CUE] cannot remove %s -- previous settings remain\n", path);
+                removed = 0;
+            }
         }
         free(before);
         free(after);
-        return;
+        return removed;
     }
 
     fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
     if (fd < 0) {
-        LOG("[CUE] cannot write %s -- launching with the previous Ember settings\n", path);
+        LOG("[CUE] cannot write %s -- previous Ember settings remain\n", path);
         free(before);
         free(after);
-        return;
+        return 0;
     }
 
     if (!cueWriteAll(fd, after, out)) {
@@ -490,12 +493,52 @@ static void cueRewriteSettingsFile(const char *path, const cue_setting_t *want, 
         }
         free(before);
         free(after);
-        return;
+        return 0;
     }
 
-    close(fd);
+    out = close(fd);
     free(before);
     free(after);
+    if (out < 0)
+        LOG("[CUE] cannot close %s -- Ember settings save unconfirmed\n", path);
+    return out >= 0;
+}
+
+int cueSaveGameSettings(const char *devPrefix, const char *name, config_set_t *configSet)
+{
+    static const char *const timingValues[] = {NULL, "auto", "ntsc", "pal"};
+    static const char *const ditherValues[] = {NULL, "on", "off"};
+    static const char *const shadingValues[] = {NULL, "15", "24"};
+    static const char *const controllerValues[] = {NULL, "auto", "analog", "d2a"};
+    cue_setting_t game[4];
+    int nGame = 0;
+    int value, n;
+    char path[768];
+    char sep;
+
+    if (devPrefix == NULL || name == NULL || name[0] == '\0' ||
+        !cueNameLaunchable(name) || configSet == NULL)
+        return 0;
+
+    if (configGetInt(configSet, CONFIG_ITEM_EMBER_TIMING, &value))
+        cueWantSetting(game, &nGame, "timing", value, timingValues, EMBER_TIMING_COUNT);
+    if (configGetInt(configSet, CONFIG_ITEM_EMBER_DITHER, &value))
+        cueWantSetting(game, &nGame, "dither", value, ditherValues, EMBER_DITHER_COUNT);
+    if (configGetInt(configSet, CONFIG_ITEM_EMBER_SHADING, &value))
+        cueWantSetting(game, &nGame, "shading", value, shadingValues, EMBER_SHADING_COUNT);
+    if (configGetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, &value))
+        cueWantSetting(game, &nGame, "controller", value, controllerValues, EMBER_CONTROLLER_COUNT);
+    if (nGame == 0)
+        return 1;
+
+    sep = cueSep(devPrefix);
+    n = snprintf(path, sizeof(path), "%s%s%c%s%c%s%c%s", devPrefix, cueEmberFolder(), sep,
+                 EMBER_GAMES_FOLDER, sep, name, sep, EMBER_SETTINGS_NAME);
+    if (n <= 0 || n >= (int)sizeof(path)) {
+        LOG("[CUE] Ember game settings path is too long -- per-game settings left untouched\n");
+        return 0;
+    }
+    return cueRewriteSettingsFile(path, game, nGame);
 }
 
 void cueApplySettings(const char *devPrefix, const char *name, config_set_t *configSet)
@@ -506,13 +549,9 @@ void cueApplySettings(const char *devPrefix, const char *name, config_set_t *con
     static const char *const shadingValues[] = {NULL, "15", "24"};
     static const char *const controllerValues[] = {NULL, "auto", "analog", "d2a"};
     cue_setting_t global[5];
-    cue_setting_t game[4];
     int nGlobal = 0;
-    int nGame = 0;
-    int value;
     int n;
     char path[768];
-    char sep;
 
     if (devPrefix == NULL)
         return;
@@ -523,35 +562,15 @@ void cueApplySettings(const char *devPrefix, const char *name, config_set_t *con
     cueWantSetting(global, &nGlobal, "shading", gEmberShading, shadingValues, EMBER_SHADING_COUNT);
     cueWantSetting(global, &nGlobal, "controller", gEmberController, controllerValues, EMBER_CONTROLLER_COUNT);
 
-    if (configSet != NULL && name != NULL && name[0] != '\0' && cueNameLaunchable(name)) {
-        if (configGetInt(configSet, CONFIG_ITEM_EMBER_TIMING, &value))
-            cueWantSetting(game, &nGame, "timing", value, timingValues, EMBER_TIMING_COUNT);
-        if (configGetInt(configSet, CONFIG_ITEM_EMBER_DITHER, &value))
-            cueWantSetting(game, &nGame, "dither", value, ditherValues, EMBER_DITHER_COUNT);
-        if (configGetInt(configSet, CONFIG_ITEM_EMBER_SHADING, &value))
-            cueWantSetting(game, &nGame, "shading", value, shadingValues, EMBER_SHADING_COUNT);
-        if (configGetInt(configSet, CONFIG_ITEM_EMBER_CONTROLLER, &value))
-            cueWantSetting(game, &nGame, "controller", value, controllerValues, EMBER_CONTROLLER_COUNT);
-    }
-
-    sep = cueSep(devPrefix);
-
     if (nGlobal > 0) {
-        n = snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, cueEmberFolder(), sep, EMBER_SETTINGS_NAME);
+        n = snprintf(path, sizeof(path), "%s%s%c%s", devPrefix, cueEmberFolder(), cueSep(devPrefix), EMBER_SETTINGS_NAME);
         if (n > 0 && n < (int)sizeof(path))
             cueRewriteSettingsFile(path, global, nGlobal);
         else
             LOG("[CUE] Ember settings path is too long -- global settings left untouched\n");
     }
-
-    if (nGame > 0) {
-        n = snprintf(path, sizeof(path), "%s%s%c%s%c%s%c%s", devPrefix, cueEmberFolder(), sep,
-                     EMBER_GAMES_FOLDER, sep, name, sep, EMBER_SETTINGS_NAME);
-        if (n > 0 && n < (int)sizeof(path))
-            cueRewriteSettingsFile(path, game, nGame);
-        else
-            LOG("[CUE] Ember game settings path is too long -- per-game settings left untouched\n");
-    }
+    if (configSet != NULL && name != NULL && name[0] != '\0' && cueNameLaunchable(name))
+        cueSaveGameSettings(devPrefix, name, configSet);
 }
 
 int cueGameHasImage(const char *devPrefix, const char *name)

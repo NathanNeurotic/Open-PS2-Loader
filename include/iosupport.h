@@ -213,6 +213,10 @@ typedef struct _item_list_t
     /// keeps its master discovery id while showing a filtered subset. NULL means identity mapping.
     /// APPENDED for positional-initializer compatibility.
     int (*itemGetSourceId)(item_list_t *itemList, int id);
+
+    /// Persist Ember's per-game settings without launching the title. The name is the complete
+    /// EMBER/games/ folder name, including when called through a Favourites proxy.
+    int (*itemSaveCueSettings)(item_list_t *itemList, int id, const char *name, config_set_t *configSet);
 } item_list_t;
 
 #define ITEM_VIEW_NATIVE    0

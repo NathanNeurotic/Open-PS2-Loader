@@ -704,9 +704,16 @@ static char *udpfsGetPrefix(item_list_t *itemList)
     return udpfsPrefix;
 }
 
+static int udpfsSaveCueSettings(item_list_t *itemList, int id, const char *name, config_set_t *configSet)
+{
+    (void)itemList;
+    (void)id;
+    return cueSaveGameSettings(udpfsPrefix, name, configSet);
+}
+
 static item_list_t udpfsGameList = {
     UDPFS_MODE, 1, 0, 0, MENU_MIN_INACTIVE_FRAMES, UDPFS_MODE_UPDATE_DELAY, NULL, NULL, &udpfsGetTextId, &udpfsGetPrefix, &udpfsInit, &udpfsNeedsUpdate,
     &udpfsUpdateGameList, &udpfsGetGameCount, &udpfsGetGame, &udpfsGetGameName, &udpfsGetGameNameLength, &udpfsGetGameStartup, &udpfsDeleteGame, &udpfsRenameGame,
     &udpfsLaunchGame, &udpfsGetConfig, &udpfsGetImage, &udpfsCleanUp, &udpfsShutdown, &udpfsCheckVMC, &udpfsGetIconId,
     /* itemLaunchVcd */ NULL, /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &udpfsLaunchCue,
-    &udpfsGetItemView, &udpfsGetSourceId};
+    &udpfsGetItemView, &udpfsGetSourceId, &udpfsSaveCueSettings};

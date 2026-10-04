@@ -1365,8 +1365,20 @@ static char *mmceGetPrefix(item_list_t *itemList)
     return mmcePrefix;
 }
 
+static int mmceSaveCueSettings(item_list_t *itemList, int id, const char *name, config_set_t *configSet)
+{
+    char ps1Root[64];
+    (void)itemList;
+    (void)id;
+
+    if (!cacheAbortMmceImageLoadsTimed(MMCE_ART_ABORT_WAIT_TICKS))
+        return 0;
+    mmceGetDeviceRoot(ps1Root, sizeof(ps1Root));
+    return cueSaveGameSettings(ps1Root, name, configSet);
+}
+
 static item_list_t mmceGameList = {
     MMCE_MODE, 2, 0, 0, MENU_MIN_INACTIVE_FRAMES, MMCE_MODE_UPDATE_DELAY, NULL, NULL, &mmceGetTextId, &mmceGetPrefix, &mmceInit, &mmceNeedsUpdate,
     &mmceUpdateGameList, &mmceGetGameCount, &mmceGetGame, &mmceGetGameName, &mmceGetGameNameLength, &mmceGetGameStartup, &mmceDeleteGame, &mmceRenameGame,
     &mmceLaunchGame, &mmceGetConfig, &mmceGetImage, &mmceCleanUp, &mmceShutdown, &mmceCheckVMC, &mmceGetIconId, &mmceLaunchVcd,
-    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &mmceLaunchCue, &mmceGetItemView, &mmceGetSourceId};
+    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &mmceLaunchCue, &mmceGetItemView, &mmceGetSourceId, &mmceSaveCueSettings};

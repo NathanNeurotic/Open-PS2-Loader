@@ -2705,6 +2705,35 @@ static char *hddGetPrefix(item_list_t *itemList)
     return gHDDPrefix;
 }
 
+static int hddSaveCueSettings(item_list_t *itemList, int id, const char *name, config_set_t *configSet)
+{
+    char mountSrc[APA_IDMAX + 6];
+    int idx, result = 0;
+    (void)itemList;
+    (void)id;
+
+    if (name == NULL || !cueNameLaunchable(name))
+        return 0;
+
+    // The scan and this write share pfs1:. Leave the live pfs0: data-home mount alone.
+    ioBlockOps(1);
+    idx = hddFindVcdByName(name);
+    if (idx < 0) {
+        hddBuildVcdGameList();
+        idx = hddFindVcdByName(name);
+    }
+    if (idx >= 0 && cueIsCueEntry(&hddVcdGames[idx])) {
+        snprintf(mountSrc, sizeof(mountSrc), "hdd0:%s", hddVcdParts[idx]);
+        fileXioUmount("pfs1:");
+        if (fileXioMount("pfs1:", mountSrc, FIO_MT_RDWR | HDD_PFS_MT_WRITETHROUGH) == 0) {
+            result = cueSaveGameSettings("pfs1:/", name, configSet);
+            fileXioUmount("pfs1:");
+        }
+    }
+    ioBlockOps(0);
+    return result;
+}
+
 int hddGetArtArchivePath(item_list_t *itemList, char *out, int outSize)
 {
     (void)itemList;
@@ -2720,4 +2749,4 @@ static item_list_t hddGameList = {
     HDD_MODE, 0, 0, MODE_FLAG_COMPAT_DMA, MENU_MIN_INACTIVE_FRAMES, HDD_MODE_UPDATE_DELAY, NULL, NULL, &hddGetTextId, &hddGetPrefix, &hddInit, &hddNeedsUpdate, &hddUpdateGameList,
     &hddGetGameCount, &hddGetGame, &hddGetGameName, &hddGetGameNameLength, &hddGetGameStartup, NULL, &hddRenameGame,
     &hddLaunchGame, &hddGetConfig, &hddGetImage, &hddCleanUp, &hddShutdown, &hddCheckVMC, &hddGetIconId, &hddLaunchVcd, 0, &hddGetArtArchivePath,
-    &hddLaunchVcd, &hddGetItemView, &hddGetSourceId};
+    &hddLaunchVcd, &hddGetItemView, &hddGetSourceId, &hddSaveCueSettings};
