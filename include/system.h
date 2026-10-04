@@ -48,6 +48,10 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 // <0 = abort the launch (a toast has already been shown).
 int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutrinoBsdfs, const char *extraArgs, int bdDevNr);
 
+// Compose the exact launch argv while the GUI is still live. Refuses a launch that would exceed
+// the 14-entry or 256-byte ExecPS2 budget, with a visible warning instead of dropping arguments.
+int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs);
+
 // Launch an external POPSTARTER.ELF for a PS1 VCD. selector = the target's argv[0]
 // "<POPS>/<prefix><name>.ELF" token. Caller deinit()s with UNMOUNT_EXCEPTION first.
 void sysLaunchPopstarter(const char *popstarterElf, const char *selector);

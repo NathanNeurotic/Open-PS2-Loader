@@ -202,8 +202,11 @@ free-text **Extra** field for everything else. OPL reassembles the fields in the
 accepts, with the Extra / `--b` tail last. Select any text field to edit its full value with the
 on-screen keyboard; the row displays a short preview. The complete assembled argument string must
 fit its 255-character saved limit, and the editor refuses to save an overlong result instead of
-silently truncating it. At launch Neutrino's smaller combined argv budget can still drop optional
-tail arguments, especially when both global and per-game options are long.
+silently truncating it. At launch, OPL composes the full global, per-game, and automatic arguments
+and checks the 14-entry / 256-byte ExecPS2 budget before leaving the menu. If either limit is
+exceeded, a manual launch shows a warning and stays in the menu so no requested argument is
+silently lost. HDD autolaunch falls back to the native core, as it does for other Neutrino
+preflight failures.
 
 Quick Boot means **enter Neutrino's load environment directly**; it is not merely a boot-screen
 toggle. RiptOPL supplies it automatically for USB, iLink, and UDPFS handoffs, so enabling the field

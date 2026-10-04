@@ -47,7 +47,7 @@ functions = ''.join(function_text(sig) for sig in (
 # value as its OWN -bsdfs= even when it was typed: ours is a core arg the budget never drops, the
 # user's is a tail token it may, and a bdfs: -dvd without -bsdfs=bd fails after the teardown
 # (CodeRabbit on #762, second pass).
-launch = function_text('void sysLaunchNeutrino(')
+launch = function_text('static int sysRunNeutrinoLaunch(')
 if 'int fsOverride = neutrinoEffectiveBsdfs(deviceName, neutrinoBsdfs, extraArgs);' not in launch or \
         'if (fsOverride) {' not in launch or '!typedFs' in launch:
     failures.append('sysLaunchNeutrino: must take fsOverride from neutrinoEffectiveBsdfs (shared with the preflight) '

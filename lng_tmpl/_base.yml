@@ -871,6 +871,8 @@ gui_strings:
   string: Neutrino Launch Args
 - label: NEUTRINO_ARGS_TOO_LONG
   string: Neutrino arguments exceed the saved length. Shorten a field before saving.
+- label: NEUTRINO_LAUNCH_ARGS_OVERFLOW
+  string: Neutrino launch arguments exceed the safe limit. Shorten the global or game arguments.
 - label: NEUTRINO_AUTO_ELF
   string: Auto Boot ELF (-elf)
 - label: NEUTRINO_BSDFS
