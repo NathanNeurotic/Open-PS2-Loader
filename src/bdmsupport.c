@@ -2589,11 +2589,23 @@ static char *bdmGetPrefix(item_list_t *itemList)
     return pDeviceData->bdmPrefix;
 }
 
+static int bdmSaveCueSettings(item_list_t *itemList, int id, const char *name, config_set_t *configSet)
+{
+    bdm_device_data_t *device = (bdm_device_data_t *)itemList->priv;
+    char ps1Prefix[64];
+    (void)id;
+
+    if (device == NULL || (device->bdmDeviceType == BDM_TYPE_SDC && !cacheAbortMmceImageLoadsTimed(500)))
+        return 0;
+    bdmBuildPs1Prefix(ps1Prefix, sizeof(ps1Prefix), itemList->mode);
+    return cueSaveGameSettings(ps1Prefix, name, configSet);
+}
+
 static item_list_t bdmGameList = {
     BDM_MODE, 2, 0, 0, MENU_MIN_INACTIVE_FRAMES, BDM_MODE_UPDATE_DELAY, NULL, NULL, &bdmGetTextId, &bdmGetPrefix, &bdmInit, &bdmNeedsUpdate,
     &bdmUpdateGameList, &bdmGetGameCount, &bdmGetGame, &bdmGetGameName, &bdmGetGameNameLength, &bdmGetGameStartup, &bdmDeleteGame, &bdmRenameGame,
     &bdmLaunchGame, &bdmGetConfig, &bdmGetImage, &bdmCleanUp, &bdmShutdown, &bdmCheckVMC, &bdmGetIconId, &bdmLaunchVcd,
-    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &bdmLaunchCue, &bdmGetItemView, &bdmGetSourceId};
+    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &bdmLaunchCue, &bdmGetItemView, &bdmGetSourceId, &bdmSaveCueSettings};
 
 void bdmInitSemaphore()
 {

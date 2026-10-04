@@ -403,7 +403,9 @@ This build layers several features on top of upstream OPL:
   **Per game:** on an Ember title, **Triangle → Ember Game Settings** exposes *Timing*, *Dithering*,
   *Shading* and *Controller*. Ember reads those four keys from
   `EMBER/games/<Folder Name>/settings.txt`; *Display* remains global-only. The choices are stored in
-  `CFG/<Folder Name>.cfg` and applied at launch. **Default means inherit the global Ember setting**:
+  `CFG/<Folder Name>.cfg`. Pressing **OK** saves the CFG and applies those choices to the title's
+  `settings.txt` immediately, without launching it; launch reapplies them if needed.
+  **Default means inherit the global Ember setting**:
   RiptOPL removes that game's corresponding key; any non-Default value overrides the global one. On
   a Favourites entry the same source-game CFG is edited.
 

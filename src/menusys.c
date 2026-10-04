@@ -605,6 +605,27 @@ int menuSaveConfig()
     return menuSaveResult;
 }
 
+int menuSaveEmberGameSettings(config_set_t *configSet)
+{
+    item_list_t *support;
+    int id;
+    char *name;
+
+    if (selected_item == NULL || selected_item->item == NULL ||
+        selected_item->item->current == NULL || configSet == NULL)
+        return 0;
+    support = selected_item->item->userdata;
+    id = selected_item->item->current->item.id;
+    if (support == NULL || support->itemGetName == NULL || support->itemSaveCueSettings == NULL)
+        return 0;
+    name = support->itemGetName(support, id);
+    if (name == NULL || name[0] == '\0')
+        return 0;
+
+    guiRenderTextScreen(_l(_STR_SAVING_SETTINGS));
+    return support->itemSaveCueSettings(support, id, name, configSet);
+}
+
 int menuSaveSettings(void)
 {
     int result;

@@ -132,8 +132,12 @@ int cueNameLaunchable(const char *name);
 // treats an absent POPS folder -- so a device with only one of the two never looks like a failure.
 int cueScanDir(const char *devPrefix, cue_entry_t **outList);
 
+// Persist only the managed per-game keys before launch; 1 means written or already correct.
+// The folder must already exist. Default removes only its corresponding override.
+int cueSaveGameSettings(const char *devPrefix, const char *name, config_set_t *configSet);
+
 // Apply managed Ember settings on launch. Global settings go to EMBER/settings.txt; per-game
-// Controller/Shading from configSet go to EMBER/games/<name>/settings.txt. Unset settings leave the
+// Timing/Dither/Shading/Controller from configSet go to EMBER/games/<name>/settings.txt. Unset settings leave the
 // corresponding key untouched; Default removes only that key. Unknown keys/comments are preserved.
 // Best-effort: settings I/O never blocks launch, and a failed truncating write restores the original.
 void cueApplySettings(const char *devPrefix, const char *name, config_set_t *configSet);
