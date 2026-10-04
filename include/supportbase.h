@@ -114,13 +114,13 @@ int sbNeutrinoDeinitException(const char *neutrinoPath);
 // Structured view of the USER-settable Neutrino launch flags (the catch-all "Launch Args" box).
 typedef struct
 {
-    int qb;          // -qb (quick-boot)
-    int dbc;         // -dbc (debug colors)
-    int logo;        // -logo (PS2 logo)
-    char cwd[256];   // -cwd=
-    char cfg[256];   // -cfg=
-    char elf[256];   // -elf=
-    char ata0[256];  // -ata0=
+    int qb;           // -qb (quick-boot)
+    int dbc;          // -dbc (debug colors)
+    int logo;         // -logo (PS2 logo)
+    char cwd[256];    // -cwd=
+    char cfg[256];    // -cfg=
+    char elf[256];    // -elf=
+    char ata0[256];   // -ata0=
     char ata0id[256]; // -ata0id=
     char ata1[256];   // -ata1=
     char extra[256];  // unrecognised/free tokens, space-joined; "--b ..." preserved at the tail
