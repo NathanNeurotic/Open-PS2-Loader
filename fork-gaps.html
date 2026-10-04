@@ -98,6 +98,9 @@ target/hardware-validation caveats below. The 2026-09-20 pass added <a href="#nh
 Every entry has a short ID whose prefix names its source (see <a href="#sources">Sources surveyed</a>), so it can be
 referenced in issues and chat. Entries in the <b>Beyond game loading</b> area are general-purpose tools from PS2
 environments built on OPL, listed so the survey is complete.
+The 2026-10-04 addition compares <a href="#orbit">ORBIT</a> at
+<a href="https://github.com/danielnuld/ps2-launcher/commit/d015baf7e4c004fa5db6964dc6bedd16484ea45d"><code>d015baf7</code></a>
+with RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/dc6206f60bf8175d88946c175e839d59ada9d9ab"><code>rebuild/main@dc6206f6</code></a>.
 </div>
 
 <h2 id="sources">Sources surveyed</h2>
@@ -110,6 +113,7 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>U</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pulls">Upstream OPL</a></td><td>Pull requests not yet merged into Open PS2 Loader</td><td>6</td></tr>
     <tr><td><code>B</code></td><td><a href="https://boliviaos.site/">BoliviaOS</a></td><td>A multifunction PS2 environment built on OPL</td><td>7</td></tr>
     <tr><td><code>P</code></td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher">PS2-Launcher</a></td><td>An OPL-based launcher with a console-style interface</td><td>5</td></tr>
+    <tr><td><code>OR</code></td><td><a href="https://github.com/danielnuld/ps2-launcher">ORBIT</a></td><td>A Neutrino-based PS2 launcher with console-side saves, achievements and a companion game catalog</td><td>5</td></tr>
     <tr><td><code>T</code></td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">Project Titan Magenta Edition</a></td><td>A PS2 operating-system/system-platform project with integrated game engines</td><td>10</td></tr>
     <tr><td><code>E</code></td><td><a href="https://github.com/officialjuicedesigns/OPL-Evolution">OPL-Evolution</a></td><td>An experimental OPL fork with a unified dashboard</td><td>1</td></tr>
     <tr><td><code>H</code></td><td><a href="https://github.com/hacan359/xerabora">xeRAbora</a></td><td>RetroAchievements for real PS2 hardware</td><td>1</td></tr>
@@ -128,7 +132,7 @@ environments built on OPL, listed so the survey is complete.
 <p>Twelve more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
 
 <h2 id="at-a-glance">At a glance</h2>
-<p>All 81 entries in one list. Click a column heading to sort.</p>
+<p>All 86 entries in one list. Click a column heading to sort.</p>
 <table data-sortable>
   <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Source</th><th>Type</th></tr></thead>
   <tbody>
@@ -182,6 +186,11 @@ environments built on OPL, listed so the survey is complete.
     <tr><td><code>P3</code></td><td>One games list across every device</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
     <tr><td><code>P4</code></td><td>Hold SELECT to leave a game</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
     <tr><td><code>P5</code></td><td>Launch transition animation</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>OR1</code></td><td>Animated PS2 save icons on game cards</td><td>Library &amp; menu</td><td>ORBIT</td><td>Feature</td></tr>
+    <tr><td><code>OR2</code></td><td>Create a per-game VMC on first play</td><td>Memory cards</td><td>ORBIT</td><td>Feature</td></tr>
+    <tr><td><code>OR3</code></td><td>RetroAchievements telemetry with Neutrino games</td><td>RetroAchievements</td><td>ORBIT</td><td>Feature</td></tr>
+    <tr><td><code>OR4</code></td><td>Browse achievement titles and progress on the console</td><td>RetroAchievements</td><td>ORBIT</td><td>Feature</td></tr>
+    <tr><td><code>OR5</code></td><td>Companion catalog for UDPFS games</td><td>Cheats, launching &amp; network</td><td>ORBIT</td><td><span class="pill">Optional</span></td></tr>
     <tr><td><code>T1</code></td><td>Graphics patches kept apart from cheats</td><td>Cheats, launching &amp; network</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
     <tr><td><code>T2</code></td><td>Installable TPKG apps, in-process runtime and SDK</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
     <tr><td><code>T3</code></td><td>Smart IGR overlay with Resume / Return</td><td>Game compatibility</td><td>Project Titan Magenta Edition</td><td>Feature <span class="badge primary">Hardware pending</span></td></tr>
@@ -332,6 +341,25 @@ console-style interface. Checked against its published v4.0 source, not only its
     <tr><td><code>P5</code></td><td><b>Launch transition animation</b></td><td>An animated transition as a game starts. OPL-Evolution adapted it too.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c">src/opl.c</a></td></tr>
   </tbody>
 </table>
+
+<h2 id="orbit">ORBIT</h2>
+<p><a href="https://github.com/danielnuld/ps2-launcher">danielnuld/ps2-launcher</a> by
+<a href="https://github.com/danielnuld">danielnuld</a> &mdash; a standalone PS2 launcher built around Neutrino.
+Audited against <a href="https://github.com/danielnuld/ps2-launcher/commit/d015baf7e4c004fa5db6964dc6bedd16484ea45d"><code>d015baf7</code></a>
+and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/dc6206f60bf8175d88946c175e839d59ada9d9ab"><code>rebuild/main@dc6206f6</code></a>.
+These are capability differences, not claims that every game or storage device has passed on a console.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>OR1</code></td><td><b>Animated PS2 save icons on game cards</b></td><td>Reads a game's newest save from a physical or virtual memory card, parses its <code>icon.sys</code> and 3D icon mesh, and renders the animated model on the selected game's card. RiptOPL stamps its own memory-card save icon but does not parse and display each game's save model.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/icon.c">icon.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a></td></tr>
+    <tr><td><code>OR2</code></td><td><b>Create a per-game VMC on first play</b></td><td>With virtual cards selected, creates an 8 MB card on the game's device when play starts; a UDPFS game asks the companion server to provide its card. RiptOPL can create and assign per-game VMCs through its settings dialog, but does not do this automatically at first launch. ORBIT's own phase-14 report records host and PCSX2 checks and leaves the physical-console VMC gate open.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/vmc.c">vmc.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase14-results.md">phase-14 evidence</a></td></tr>
+    <tr><td><code>OR3</code></td><td><b>RetroAchievements telemetry with Neutrino games</b></td><td>ORBIT passes a watch list to its Neutrino fork and loads an in-game agent that streams watched memory to xeRAbora. RiptOPL's RA flavour loads telemetry through its own OPL core and explicitly excludes Neutrino and UDPFS launches. ORBIT reports one real-console UDPFS/Neutrino session with snapshots; that does not establish broad game compatibility.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/third_party/neutrino-igr/ra.c">Neutrino agent</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md">console report</a></td></tr>
+    <tr><td><code>OR4</code></td><td><b>Browse achievement titles and progress on the console</b></td><td>The selected game's panel lists individual achievement titles, descriptions, points and earned state. RiptOPL's RA support check shows the title and aggregate counts returned by the PC client, but has no per-achievement browser. ORBIT's phase-16b report records host/PCSX2 checks for this panel and leaves the console check open.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/achievements.c">achievements.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase16b-results.md">phase-16b evidence</a></td></tr>
+    <tr><td><code>OR5</code></td><td><b>Companion catalog for UDPFS games</b> <span class="pill">Optional</span></td><td>An HTTP companion service lists titles, paths, IDs and precomputed RA hashes for games whose ISO data is served through UDPFS, without mounting UDPFS in the menu. RiptOPL already lists UDPFS files through its filesystem driver and has a separate <code>games.csv</code> catalog for HTTP streaming; this row tracks ORBIT's distinct UDPFS catalog workflow, not a missing ability to list or launch UDPFS games.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/tools/orbit_catalog.py">orbit_catalog.py</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md">console report</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">ORBIT overlap and validation</div>
+ORBIT's on-console HTTPS cover fetch overlaps <a href="#ps2-launcher">P2</a>; its combined-source library and animated launch screen overlap P3 and P5; and its resumable Neutrino in-game menu overlaps the capability tracked in <a href="#project-titan">T3</a> and <a href="#luna">LU8</a>. ORBIT's <a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase13-results.md">phase-13 report</a> records a menu pass in one game at 480p, with other video modes and later core builds needing separate checks. Those overlaps receive no new OR-series IDs. ORBIT's standard-source and Neutrino per-game options, PS1/Apps paths and two interface languages also have RiptOPL counterparts.</div>
 
 <h2 id="project-titan">Project Titan Magenta Edition</h2>
 <p><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">sobecapaklebs-dev/project-titan-magenta-edition</a>
