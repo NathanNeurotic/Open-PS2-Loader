@@ -83,6 +83,10 @@ jobs:
         run: python3 .github/scripts/test_cheat_load.py
       - name: Check that a -bsdfs=bd launch without a device number is refused before teardown
         run: python3 .github/scripts/test_neutrino_bsdfs.py
+      - name: Check Neutrino argument editing preserves full values and rejects overlong saves
+        run: python3 .github/scripts/test_neutrino_args_editor.py
+      - name: Check Neutrino launch arguments fit before teardown without dropping tokens
+        run: python3 .github/scripts/test_neutrino_argv_budget.py
       - name: Check that turning Network Connectivity off and on keeps the chosen protocol
         run: python3 .github/scripts/test_net_protocol_pick.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping

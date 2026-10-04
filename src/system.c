@@ -1258,11 +1258,12 @@ static int convertCompatmaskToModes(int compatmask)
     return atoi(result);
 }
 
-// Split a whitespace-separated argument string into individual argv entries appended
-// after the auto-built ones. `buf` receives a bounded mutable copy of `src`, and the
-// tokens point into it, so `buf` must stay live until the argv is consumed. Returns
-// the updated argc; never exceeds argvMax.
-static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bufSize, const char *src)
+// Append either Neutrino options (before --b) or ELF arguments (after --b) from one
+// scope. Each pass copies src because strtok edits buf; both buffers stay live until
+// ExecPS2 consumes argv. A global --b must not turn per-game Neutrino options into
+// ELF arguments, so the two scopes are assembled before their tails.
+static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bufSize,
+                           const char *src, int elfArgs, int *hasBreak)
 {
     if (src == NULL || src[0] == '\0')
         return argc;
@@ -1270,11 +1271,18 @@ static int appendArgTokens(char **argv, int argc, int argvMax, char *buf, int bu
     snprintf(buf, bufSize, "%s", src);
 
     char *tok = strtok(buf, " \t");
+    int afterBreak = 0;
     while (tok != NULL && argc < argvMax) {
+        if (!afterBreak && strcmp(tok, "--b") == 0) {
+            afterBreak = 1;
+            *hasBreak = 1;
+            tok = strtok(NULL, " \t");
+            continue;
+        }
         // A leading '$' marks a user-disabled flag (NHDDL convention): keep it in the
         // args field for easy re-enabling, but don't forward it to Neutrino. Neutrino
         // flags are all '-'-prefixed, so '$' never collides with a real argument.
-        if (tok[0] != '$')
+        if (afterBreak == elfArgs && tok[0] != '$')
             argv[argc++] = tok;
         tok = strtok(NULL, " \t");
     }
@@ -1315,24 +1323,26 @@ static int neutrinoArgHasActiveFlag(const char *args, const char *flag)
         return 0;
     size_t flen = strlen(flag);
     int keyPrefix = (flen > 0 && flag[flen - 1] == '=');
-    const char *p = args;
-    while ((p = strstr(p, flag)) != NULL) {
-        int disabled = (p > args && *(p - 1) == '$');
-        const char *tokStart = disabled ? p - 1 : p;
-        int startOk = (tokStart == args) || (tokStart[-1] == ' ') || (tokStart[-1] == '\t');
-        char after = p[flen];
-        int endOk = keyPrefix || after == '\0' || after == ' ' || after == '\t';
-        if (startOk && endOk && !disabled)
-            return 1; // a whole-token, non-$-disabled occurrence -> the user is forwarding this flag
-        p += flen;
+    for (const char *p = args; *p != '\0';) {
+        while (*p == ' ' || *p == '\t')
+            p++;
+        const char *end = p;
+        while (*end != '\0' && *end != ' ' && *end != '\t')
+            end++;
+        size_t len = end - p;
+        if (len == 3 && !strncmp(p, "--b", 3))
+            break;
+        if (len >= flen && !strncmp(p, flag, flen) && (keyPrefix || len == flen))
+            return 1;
+        p = end;
     }
     return 0;
 }
 
 // The -bsdfs Neutrino will actually run with, so the preflight and the argv builder agree on it.
 // Read the user tokens the way Neutrino parses them: the global args, then the per-game args (the
-// order appendArgTokens adds them), last one wins, a $-prefixed token is switched off, and the FIRST
-// "--b" anywhere ends it -- everything after it, per-game args included, goes to the game. A typed
+// order appendArgTokens adds them), last one wins, a $-prefixed token is switched off, and --b
+// ends Neutrino options within each scope. Their ELF tails are appended after both scopes. A typed
 // -bsdfs= found that way beats the per-game picker. mmce/udpfs are fileid backends with no fs layer.
 // Returns 1 exfat / 2 hdl / 3 bd; 0 = Neutrino's own default (exfat) or a typed value it does not
 // name.
@@ -1351,7 +1361,7 @@ static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, con
                 end++;
             int len = (int)(end - p);
             if (len == 3 && !strncmp(p, "--b", 3))
-                goto parsed;
+                break;
             if (len > 7 && !strncmp(p, "-bsdfs=", 7)) {
                 typed = 1;
                 value = 0;
@@ -1363,7 +1373,6 @@ static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, con
             p = end;
         }
     }
-parsed:
     if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs"))
         return 0;
     if (typed)
@@ -1511,19 +1520,21 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
     return 0;
 }
 
-void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
+static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs, int checkOnly)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
         LOG("[NEUTRINO] null arg, abort\n");
-        launchDiagRefuse(LAUNCHDIAG_REFUSE_ARGS); // blink code 1
-        return;
+        if (!checkOnly)
+            launchDiagRefuse(LAUNCHDIAG_REFUSE_ARGS); // blink code 1
+        return -1;
     }
 
     const char *deviceName = getDeviceName(driver);
     if (!strcmp(deviceName, "unsupported")) {
         LOG("[NEUTRINO] unsupported device '%s', abort\n", driver);
-        launchDiagRefuse(LAUNCHDIAG_REFUSE_ARGS); // blink code 1
-        return;
+        if (!checkOnly)
+            launchDiagRefuse(LAUNCHDIAG_REFUSE_ARGS); // blink code 1
+        return -1;
     }
 
     // HW-confirmed (issue #56, AndrewBento, PSXMemCard Gen2): Neutrino's -logo on the mmce backend
@@ -1553,13 +1564,13 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     char compatModes[32] = ""; // stays empty when no compat modes are forwarded (B1)
     char globalArgsBuf[256];   // mutable copy of gNeutrinoArgs for tokenizing (tokens point in)
     char extraArgsBuf[256];    // mutable copy of the per-game extraArgs for tokenizing
-    char *argv[16];            // target argv[0] + auto args + tokenized user flags (kernel-budgeted)
+    char *argv[32];            // compose beyond the kernel budget so overflow is detected, never silently truncated
     int argc = 0;
     // 14, NOT sizeof(argv): the kernel args area holds at most 15 strings per ExecPS2 hop (ps2sdk
     // exit.c SetArg, SETARG_MAX_ARGS 15 -- and ExecPS2 forwards the UNCLAMPED count, so overflowing
     // makes the kernel read string bytes as argv pointers). Hop 1 prepends the elfldr child's load
     // path, spending one slot, so the target argv must stay <= 14 entries.
-    const int argvMax = 14;
+    const int argvMax = sizeof(argv) / sizeof(argv[0]);
 
     // Target argv[0] = neutrino.elf's own path (NHDDL convention). sysLoadELFKeepIOP forwards
     // argv verbatim -- argv[0] included -- so this must be supplied explicitly here (POPSTARTER
@@ -1640,19 +1651,14 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
            until hardware says otherwise. A user-typed -qb in the global or per-game args wins -- do
            not emit a second copy.
 
-           Emitted ABOVE coreArgc so the pool-fit drop loop can never shed it: a dropped -qb would
-           silently reinstate the reset and reproduce the black screen with no way to tell why. */
+           Composed before the budget check so an overfull launch is refused rather than silently
+           losing -qb and reproducing the black screen. */
         if ((!strcmp(deviceName, "usb") || !strcmp(deviceName, "ilink") ||
              !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") || !strcmp(deviceName, "udpbd")) &&
             argc < argvMax &&
             !neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") && !neutrinoArgHasActiveFlag(extraArgs, "-qb"))
             argv[argc++] = "-qb";
     }
-
-    // Everything up to and including -dvd/-qb is the boot-critical core: the pool-fit drop loop below
-    // must never shed these. A fixed floor of 3 silently stopped covering -dvd once the optional
-    // -bsdfs slots in front of it (argv[3]) -- record the real core count instead.
-    const int coreArgc = argc;
 
     // Only forward -gc when at least one compat mode is set: Neutrino treats
     // -gc=0 as an explicit mode (IOP fast reads), NOT a no-op, so passing it for
@@ -1696,7 +1702,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     }
 
     // Parity Delta-10, enabled by default via settings_riptopl.cfg "neutrino_elf_arg"=1
-    // (deliberately no UI row): hand neutrino the boot ELF path directly so its per-GameID
+    // (exposed in Game Launching): hand neutrino the boot ELF path directly so its per-GameID
     // config/<GameID>.toml compat lookup can resolve pre-reset. Shape-guarded to AAAA_NNN.NN
     // startups and skipped when the user already forwards an -elf= (structured field or free
     // text) -- neutrino must see exactly one.
@@ -1743,34 +1749,36 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 
     // Append user-supplied Neutrino flags: global defaults first, then the per-game
     // string (so a game can extend the global set). Both are tokenized on whitespace.
-    argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs);
-    argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs);
-    if (gLaunchDiag)
-        launchDiagMark(9); // argv composed -- the pool-fit check BELOW can still refuse (blink code 2)
+    int globalBreak = 0, gameBreak = 0;
+    argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs, 0, &globalBreak);
+    argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs, 0, &gameBreak);
+    if ((globalBreak || gameBreak) && argc < argvMax)
+        argv[argc++] = "--b";
+    argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs, 1, &globalBreak);
+    argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs, 1, &gameBreak);
+    if (gLaunchDiag && !checkOnly)
+        launchDiagMark(9); // argv composed -- the budget check below can still refuse (blink code 2)
 
     // ExecPS2 argv BYTE budget (verified vs ps2sdk exit.c SetArg + the crt0 args struct): each hop
     // carries its strings in ONE 256-byte pool, every NUL included. Hop 1 packs the child's load
     // path PLUS this argv -- neutrinoPath is counted TWICE (loadpath and target argv[0]). SetArg's
-    // copy is UNbounded, so exceeding the pool corrupts rather than truncates. Fit by dropping tail
-    // args (user extras sit last; each drop LOGged); the boot-critical core (argv[0]/-bsd/
-    // [-bsdfs]/-dvd, counted as coreArgc above) must survive or nothing can boot anyway -- past
-    // that, refuse and let the LOG name the overage.
+    // copy is UNbounded, so exceeding the pool corrupts rather than truncates. Refuse the whole
+    // launch before teardown when preflighting; never silently discard a requested option.
     {
         int pool = (int)strlen(neutrinoPath) + 1; // hop-1 child argv[0] = the load path
         int i;
         for (i = 0; i < argc; i++)
             pool += (int)strlen(argv[i]) + 1;
-        while (pool > 256 && argc > coreArgc) {
-            argc--;
-            pool -= (int)strlen(argv[argc]) + 1;
-            LOG("[NEUTRINO] argv pool over 256 bytes -- dropping tail arg: %s\n", argv[argc]);
-        }
-        if (pool > 256) {
-            LOG("[NEUTRINO] argv pool %d bytes even at the core-args floor (256 max) -- refusing handoff\n", pool);
-            launchDiagRefuse(LAUNCHDIAG_REFUSE_CORE_ARGV); // blink code 2: nothing repaints after the teardown
-            return;
+        if (argc > 14 || pool > 256) {
+            LOG("[NEUTRINO] argv exceeds launch budget: %d entries (14 max), %d bytes (256 max)\n", argc, pool);
+            if (!checkOnly)
+                launchDiagRefuse(LAUNCHDIAG_REFUSE_CORE_ARGV); // blink code 2 if the preflight was bypassed
+            return -1;
         }
     }
+
+    if (checkOnly)
+        return 0;
 
     // Log the FULL argv (not just bsd/dvd/compat) so the VMC -mc args are verifiable on hardware (#47).
     LOG("[NEUTRINO] elf=%s argc=%d\n", neutrinoPath, argc);
@@ -1787,6 +1795,21 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
     // the game device and the neutrino.elf device mounted (deinitEx).
     if (sysLoadELFKeepIOP(neutrinoPath, "", argc, argv) < 0)
         LOG("[NEUTRINO] keep-IOP handoff failed for %s\n", neutrinoPath);
+    return 0;
+}
+
+int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
+{
+    if (sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1) < 0) {
+        guiWarning(_l(_STR_NEUTRINO_LAUNCH_ARGS_OVERFLOW), 6);
+        return -1;
+    }
+    return 0;
+}
+
+void sysLaunchNeutrino(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
+{
+    sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 0);
 }
 
 // Hand off to an external POPSTARTER.ELF to boot a PS1 VCD. The caller resolves the per-device

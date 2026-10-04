@@ -153,7 +153,14 @@ void guiShowNeutrinoDefaults(void);
 int guiNeutrinoPathHandler(char *text, int maxLen);
 int guiPopstarterPathHandler(char *text, int maxLen);
 int guiExitPathHandler(char *text, int maxLen);
-void guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize);
+int guiShowNeutrinoArgsConfig(char *argsBuf, int bufSize); // 1 when the saved args changed
+int guiNeutrinoArgsCwdHandler(char *text, int maxLen);
+int guiNeutrinoArgsCfgHandler(char *text, int maxLen);
+int guiNeutrinoArgsElfHandler(char *text, int maxLen);
+int guiNeutrinoArgsAta0Handler(char *text, int maxLen);
+int guiNeutrinoArgsAta0idHandler(char *text, int maxLen);
+int guiNeutrinoArgsAta1Handler(char *text, int maxLen);
+int guiNeutrinoArgsExtraHandler(char *text, int maxLen);
 int guiShowAudioConfig(void);
 int guiShowNetConfig(void);
 

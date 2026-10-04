@@ -2109,6 +2109,8 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     // the autolaunch teardown -- aborting here instead would leak gAutoLaunchGame/configSet.
     if (sysNeutrinoPreflight("apa", neutrinoPath, 0, NULL, -1) < 0)
         return 0;
+    if (sysNeutrinoArgsPreflight("apa", apaPart, game->startup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, NULL) < 0)
+        return gAutoLaunchGame == NULL ? 1 : 0; // autolaunch needs the native path to own its teardown
 
     // Honesty toast: the OPL core honors $VMC_N on HDD (mcemu over pfs0:VMC/), but Neutrino has no
     // APA/pfs backing store to open the .bin from post-reset -- its APA support is -bsd=ata
