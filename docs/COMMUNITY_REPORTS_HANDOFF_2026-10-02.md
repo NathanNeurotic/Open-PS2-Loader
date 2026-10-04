@@ -27,13 +27,15 @@ The clip records the menu interaction, not the game's rolling/flipping output.
 
 ## Implementation checkpoint
 
-Draft PR [#825](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/825)
-contains four separate, pushed commits for immediate per-game Ember settings
-saves and no-art PS1 identification/save-card guidance. Its focused host checks
-and GitHub format/build workflows passed at commit `8126c058`; real-console
-testing is still required. The original dirty `migrate/riptopl-korium`
-checkout was preserved. This document remains the report and evidence ledger;
-PR #825 records exactly which fixes were committed and which were withheld.
+As of October 3, [#825](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/825)
+is merged for immediate per-game Ember settings saves, and
+[#826](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/826) is merged for
+PS1 row labels and save-card guidance. Focused host checks and GitHub
+format/build workflows passed for both; real-console testing is still required.
+The original dirty `migrate/riptopl-korium` checkout was preserved. This
+document remains the report and evidence ledger. The short
+[tech contributor roadmap](./TECH_CONTRIBUTOR_ROADMAP_2026-10-03.md) lists the
+next work in practical order.
 
 ## Working rules and current checkout
 
@@ -61,7 +63,7 @@ PR #825 records exactly which fixes were committed and which were withheld.
 
 | ID | Report and desired outcome | What is established | What remains unknown |
 | --- | --- | --- | --- |
-| E1 | TwistedZeon wants per-game Ember `settings.txt` written from the menu, without launching the game. | PR #825 commits the immediate-save implementation; focused host tests and CI builds passed. | Console behavior and slow/failed writes on each supported device. |
+| E1 | TwistedZeon wants per-game Ember `settings.txt` written from the menu, without launching the game. | PR #825 merged the immediate-save implementation; focused host tests and CI builds passed. | Console behavior and slow/failed writes on each supported device. |
 | I1 | FifthFox's iLink drive sometimes needs a recent drive reboot to launch PS2 ISOs. After reformatting a drive previously used on a Mac, exFAT was visible but still would not launch PS2 games after reboot; FAT32 worked better in that setup. A later Seagate drive and PS2 logo enabled successful Jak and Daxter launch with four compatibility modes. | These are tester observations, not isolated causes. | Exact build, drive/enclosure, partition scheme, filesystem, four modes, console, game ID, and results with one variable changed at a time. |
 | I2 | FifthFox initially reported "Neutrino (MC) runs via iLink" with PS2 logo and a custom argument, but on October 3 said they **cannot repeat** that success. They suspect the logo must run after compatibility modes to slow a drive/enclosure handshake. | This is an intermittent result, not a stable working combination. The source appends auto compatibility modes before auto `-logo`, but that ordering does not prove a timing cause. | Exact build, Neutrino ELF/ISO locations and version, full stored/effective args, whether `-logo` reached Neutrino, cold-start repetitions, and measured iLink readiness. |
 | I3 | FifthFox tried a custom text-only theme to keep memory available but did not gain a repeatable launch; an AI suggested disabling Coverflow, and FifthFox could not find an option. Native OPL launches with individual modes seem robust in their tests. | Launch teardown already stops art requests and releases menu resources. Coverflow is theme-defined; the built-in `<OPL>` theme is an alternate view. | Active theme, its declared elements, memory measurements before/after teardown, and controlled same-game native/Neutrino comparisons. |
@@ -70,12 +72,12 @@ PR #825 records exactly which fixes were committed and which were withheld.
 | T1 | zackcage6 says the font in the pictured RiptOPL settings view looks "sluggish" and is hard to read on the CRT; they suggest changing the font or rendering it for interlace. | The main RiptOPL interface already offers NTSC/PAL interlaced `FLICKER-FREE` modes, and themes can load alternate fonts. Neither has been tested for this report. | Exact build, theme/font, interface video mode, CRT/cable, whether "sluggish" means visual flicker/blur or slow UI response, and whether the alternate mode improves legibility. |
 | A1 | eliminator1403 reports slow art in Beta 3420 Korium and names 3248 as the last good build. | September 27 build history points to PR #770 head `f83e6f9f` as the revision-3248 source line; Beta 3420 Korium names source `1a663941`. PR #773 reverted the active-art priority tier between them. | Identify whether the visibly late texture is COV, ICO, or BG; compare the two source paths and validate a narrow fix on hardware. |
 | P1 | Aislinn wants a useful error when PS1 prerequisites are missing. | Launch paths already show several missing POPSTARTER/Ember/BIOS messages; missing Ember core can remove Ember rows at scan time. | Which missing item and path produced the reported lack of guidance, and whether the title was a VCD or Ember folder. |
-| P2 | Aislinn mistook PS1 007 entries for PS2 titles without cover art, then could not open the expected PS2 game/VMC menu. | PS1 rows intentionally open a different Triangle menu. PR #825 adds a PS1 row label and save-card guidance there. | Console legibility in each theme/view and what save-card workflow the tester expected. |
+| P2 | Aislinn mistook PS1 007 entries for PS2 titles without cover art, then could not open the expected PS2 game/VMC menu. | PS1 rows intentionally open a different Triangle menu. PR #826 merged a PS1 row label and save-card guidance there. | Console legibility in each theme/view and what save-card workflow the tester expected. |
 
 ## E1 — Save Ember per-game settings before launch
 
 At this document's original checkout snapshot, the implementation was
-uncommitted; its focused source changes are now committed in PR #825.
+uncommitted; its focused source changes are now merged through PR #825.
 `src/gui.c:3489` confirms the Ember per-game editor; `src/menusys.c:608`
 routes its save through the selected support's `itemSaveCueSettings` callback;
 `src/cuesupport.c:507` updates only managed per-game keys in
@@ -147,7 +149,7 @@ arguments in the game menu would help. Their text-only theme experiment did not
 make the launch repeatable. They also report native OPL launches with individual
 modes as relatively robust. None of this isolates a memory or timing cause.
 
-At the current PR #825 source, the per-game Compatibility dialog has a
+At the source snapshot recorded in PR #825, the per-game Compatibility dialog has a
 **Neutrino Launch Args** button (`src/guigame.c:1256`) whose structured
 sub-screen has a **Logo** checkbox (`src/dialogs.c:1856`); the global launcher
 menu has its own PS2 Logo setting and Neutrino args editor. The parser moves a
@@ -456,7 +458,7 @@ test VCD and Ember rows separately; test missing POPSTARTER, missing
 `ember.elf`, missing `bios.bin`, and an unreadable device separately. Check
 localization and that normal PS2 Game Settings/VMC behavior is unchanged.
 
-The first two presentation actions above are implemented in PR #825. They
+The first two presentation actions above are merged through PR #826. They
 remain unverified on a console; the missing-component case lacks the reported
 file/path and was deliberately left without a speculative code change.
 
@@ -466,8 +468,8 @@ file/path and was deliberately left without a speculative code change.
    source histories above to isolate the art scheduling path; then validate a
    narrow change on hardware. Keep the iLink matrix separate. Capture
    Aislinn's source/view/theme and the missing PS1 prerequisite.
-2. **Console-check E1 and P2.** PR #825 commits the narrow Ember save and PS1
-   row/menu guidance changes, with host checks and CI builds passed. Validate
+2. **Console-check E1 and P2.** PR #825 merged the narrow Ember save, and PR
+   #826 merged the PS1 row/menu guidance, with host checks and CI builds passed. Validate
    pre-launch writes, Default behavior and failures on writable Ember devices;
    inspect no-cover PS1 and PS2 rows in each view and theme on a real console.
    Preserve the original dirty checkout and keep POPSTARTER and Ember tests
