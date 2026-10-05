@@ -35,6 +35,10 @@ def function_text(source, where, signature):
 dia_c = read('src/dia.c')
 dia_h = read('include/dia.h')
 dialogs_c = read('src/dialogs.c')
+dialogs_h = read('include/dialogs.h')
+themes_c = read('src/themes.c')
+config_h = read('include/config.h')
+lang_base = read('lng_tmpl/_base.yml')
 opl_c = read('src/opl.c')
 opl_h = read('include/opl.h')
 
@@ -173,6 +177,27 @@ old_pair = ('gDefaultBgColor[0] == 0x28 && gDefaultBgColor[1] == 0xC5 && gDefaul
             '                gDefaultPlasBlendColor[0] == 0x00 && gDefaultPlasBlendColor[1] == 0x00 && gDefaultPlasBlendColor[2] == 0x00')
 if load and old_pair not in load:
     failures.append('_loadConfig: a config holding exactly the old default pair must get the new plasma')
+
+# --- optional PS1/PS2 labels ----------------------------------------------------------------------
+
+if 'UICFG_GAME_TYPE_LABELS' not in dialogs_h:
+    failures.append('dialogs.h: game type labels need a stable dialog id')
+if '_STR_GAME_TYPE_LABELS' not in dialogs_c or 'UICFG_GAME_TYPE_LABELS' not in dialogs_c:
+    failures.append('dialogs.c: Interface settings must expose the game type labels toggle')
+if '#define CONFIG_OPL_GAME_TYPE_LABELS' not in config_h:
+    failures.append('config.h: game type labels must have a persisted master-config key')
+if 'gGameTypeLabels = 0;' not in defaults:
+    failures.append('setDefaults: [PS1]/[PS2] list labels must default Off')
+if ('CONFIG_OPL_GAME_TYPE_LABELS, &gGameTypeLabels' not in load or
+        'CONFIG_OPL_GAME_TYPE_LABELS, gGameTypeLabels' not in opl_c):
+    failures.append('opl.c: game type labels preference must load and save')
+draw_items = function_text(themes_c, 'src/themes.c', 'static void drawItemsList(')
+if draw_items and not ('gGameTypeLabels' in draw_items and
+                       '"[PS1] %s"' in draw_items and '"[PS2] %s"' in draw_items and
+                       'list->mode != APP_MODE' in draw_items):
+    failures.append('drawItemsList: opt-in labels must distinguish PS1/PS2 without labelling Apps')
+if '- label: GAME_TYPE_LABELS\n  string: Show [PS1]/[PS2] Labels' not in lang_base:
+    failures.append('lng_tmpl/_base.yml: game type labels setting needs an internal-English fallback')
 
 if failures:
     print('Settings fit / plasma checks FAILED:')
