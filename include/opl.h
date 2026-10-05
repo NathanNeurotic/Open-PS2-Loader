@@ -179,6 +179,7 @@ extern int gDefaultCoreLoader;
 extern int gNeutrinoVideoDefault;
 extern int gNeutrinoGsmCompDefault;
 extern int gNeutrinoElfArg;
+extern int gNeutrinoShowArgs;
 extern char gNeutrinoArgs[256];
 extern char gNeutrinoPath[256];
 // Default game-list view for VCD-capable device pages.
