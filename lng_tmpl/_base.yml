@@ -1397,3 +1397,11 @@ gui_strings:
   string: "Neutrino will start with these arguments. Launch?"
 - label: HINT_NARGS_EXTRA
   string: "Other Neutrino flags, separated by spaces. A flag with its own row above (such as -logo) moves into that row when saved, and is still sent."
+- label: AUTO_CREATE_VMC
+  string: Create VMC on First Launch
+- label: HINT_AUTO_CREATE_VMC
+  string: "Launching a PS2 game with no VMC in slot 1 creates an 8 MB card on the game's device, named as the VMC screen suggests (shared by every disc of the game), and assigns it. Not for the internal HDD under Neutrino."
+- label: AUTO_VMC_CREATING
+  string: "Creating this game's VMC..."
+- label: AUTO_VMC_FAILED
+  string: "Could not create this game's VMC. The game starts without one."
