@@ -271,6 +271,11 @@ hidden.</p>
 <b>HTTP base path</b> (default <code>/</code>) and <b>Test HTTP server</b>. They are separate from the SMB
 fields, so pointing HTTP elsewhere never changes SMB. See <a href="http.html">HTTP</a>.</p>
 
+<h3 id="network-retroachievements">RetroAchievements</h3>
+<p>In the <a href="retroachievements.html">RetroAchievements</a> build only, this page ends with
+<b>RetroAchievements telemetry</b> and <b>RetroAchievements badges</b>. They are shown whatever the
+Protocol is: telemetry uses the network driver the game launch loads, not the menu's.</p>
+
 <h3 id="pops-network-settings">POPSTARTER Network Settings</h3>
 <p>The <b>POPSTARTER Network Settings</b> row (also on <a href="#vcd-settings">PS Emulation Settings</a>)
 opens POPSTARTER's own network files, <code>IPCONFIG.DAT</code> and <code>SMBCONFIG.DAT</code>, which PS1
@@ -281,9 +286,7 @@ games over SMB need. They are not RiptOPL's settings.</p>
 folder. Nothing is written until you press OK.</li>
 <li>The fields are the PS2's IP address type, IP, mask and gateway, then the SMB server's address, port,
 share, user and password.</li>
-<li>OK writes only what you actually changed. On a first setup, with neither file on the card, saving the SMB values writes <code>IPCONFIG.DAT</code> too, as DHCP unless a complete static IP is entered. In the <a href="retroachievements.html">RetroAchievements</a>
-build, the screen also holds the <b>RetroAchievements telemetry</b> and <b>RetroAchievements badges</b>
-switches.</li>
+<li>OK writes only what you actually changed. On a first setup, with neither file on the card, saving the SMB values writes <code>IPCONFIG.DAT</code> too, as DHCP unless a complete static IP is entered.</li>
 </ul>
 
 <div class="callout info"><div class="h">i Apply and reconnect immediately</div>Confirming the Network
@@ -516,21 +519,21 @@ supplying only some of the eight falls back to the built-in sound for the rest. 
 <a href="per-game-settings.html">Per-game Settings</a> page.</p>
 
 <ul class="checklist">
-<li><b>Game Settings</b> — Loader Core, DMA Mode, Game ID, Custom ELF, compatibility Modes 1–7, Download Defaults, and the Neutrino overrides (Neutrino Launch Args, Neutrino Video, Neutrino GSM Compatibility, Neutrino Filesystem). See <a href="neutrino.html">Neutrino Core</a>.</li>
+<li><b>Game Settings</b> — Loader Core, DMA Mode, Game ID, Custom ELF, compatibility Modes 1–7, and the Neutrino overrides (Neutrino Launch Args, Neutrino Video, Neutrino GSM Compatibility, Neutrino Filesystem). See <a href="neutrino.html">Neutrino Core</a>.</li>
 <li><b>Cheat Settings</b> — PS2RD Cheat Engine, its mode, and PS2RD Cheat Image. Global or per-game. See <a href="cheats.html">Cheats</a>.</li>
 <li><b>Configure GSM</b> — GSM Selector, forced video mode, H-POS and V-POS, Emulate FIELD Flipping. Global or per-game. OPL core only. See <a href="gsm.html">GSM Video Modes</a>.</li>
 <li><b>Configure VMC</b> — VMC Slot 1 and Slot 2 assignment, image creation and deletion, and keeping a physical card in a slot. See <a href="vmc.html">VMC</a>.</li>
 <li><b>Controller Emulation</b> and <b>Controller Macros</b> — per-game pad emulation and macros. See <a href="pademu.html">PADEMU</a>.</li>
 <li><b>OSD Settings</b> — OSD language, screen size and video mode. See <a href="#osd-settings">OSD Settings</a> above.</li>
 <li><b>Save Changes</b>, <b>Test Changes</b> and <b>Remove Settings</b> — save this game's settings, launch with them unsaved, or delete them.</li>
-<li>On a PS1 title the menu is shorter: <b>Global PS Emulation Settings</b>, <b>Ember Game Settings</b> (Ember titles only: this game's Ember Controller) and <b>Rename</b>. See <a href="ps1-vcd.html#ember">Ember</a>.</li>
+<li>On a PS1 title the menu is shorter: <b>Global PS Emulation Settings</b>, <b>Ember Game Settings</b> (Ember titles only: this game's Ember Timing, Dithering, Shading and Controller, written to its <code>settings.txt</code> when you press OK) and <b>Rename</b>. See <a href="ps1-vcd.html#ember">Ember</a>.</li>
 <li><b>Rename</b> and <b>Delete</b> — only with <em>Write Operations</em> on, and never for PS2 games on the internal HDD. See <a href="hdd.html#disk-safety">Disk safety</a>.</li>
 </ul>
 
 <details class="deep"><summary>Which settings are greyed out under the Neutrino core?</summary>
 <p>OPL-only features are unavailable when a game is set to use the Neutrino core. In the per-game
 <b>Game Settings</b> screen the following are greyed (shown with a <em>"Not used with Neutrino"</em>
-hint): Modes 4 and 6 (Skip Videos and Disable IGR), Download Defaults, and the Configure GSM, Cheat
+hint): Modes 4 and 6 (Skip Videos and Disable IGR), and the Configure GSM, Cheat
 Settings and Controller Emulation / Controller Macros screens. Modes 1/2/3/5 stay active because they map
 directly to Neutrino's <code>-gc=</code> flag. Mode 7 is Neutrino-only and is available (passes
 <code>-gc=7</code> to Neutrino). DMA Mode, Game ID, Custom ELF, and VMC settings remain active regardless

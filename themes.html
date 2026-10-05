@@ -84,7 +84,7 @@ theme doesn't supply falls back to OPL's embedded default assets.</div>
 
 <h2 id="file-structure">1 · File &amp; folder structure</h2>
 <p>Themes live in the <code>THM</code> support folder. Each theme is its <em>own</em> sub-folder whose name
-<b>must start with <code>thm_</code></b>; the loader strips that prefix to form the name you see in the theme
+<b>must start with <code>thm_</code></b> (in any letter case: <code>THM_</code> and <code>Thm_</code> work too, and on a case-sensitive UDPFS server a <code>thm</code> or <code>Thm</code> support folder is found as well); the loader strips that prefix to form the name you see in the theme
 picker. Inside the folder, all the artwork/fonts sit alongside a single <code>conf_theme.cfg</code>.</p>
 <pre>THM/
   thm_MyTheme/
@@ -236,8 +236,10 @@ all, since font loading is skipped for buffer-loaded built-in themes).</p>
 </table>
 <div class="callout info"><div class="h">i Tinting the plasma</div>The plasma background is a gradient
 between two colours: <code>plasma_blend_color</code> is the <b>low</b> end and <code>bg_color</code> the
-<b>high</b> end. Setting only <code>bg_color</code> keeps the classic look, because
-<code>plasma_blend_color</code> defaults to black. Set both to tint the whole gradient.</div>
+<b>high</b> end. A key the theme leaves out follows <b>Settings → Colors</b>, whose RiptOPL defaults are
+<code>#0C3AA8</code> (high) over <code>#00020A</code> (low), a near-black blue. Set
+<code>plasma_blend_color=#000000</code> for the classic black low end, or set both to tint the whole
+gradient.</div>
 
 <h2 id="common-properties">4 · Common element properties</h2>
 <p>Every element block starts with <code>type=&lt;ElementType&gt;</code> (see §5). Almost all of them also
@@ -311,6 +313,22 @@ backgrounds, is unaffected; a <code>Background</code> with <code>pattern=ICO</co
 <tr><td><code>title</code></td><td><code>AttributeText</code></td><td>Override the auto-localised label for the attribute.</td></tr>
 </tbody>
 </table>
+
+<h3 id="text-room">Long text never draws over other elements — <em>this fork</em></h3>
+<p>When a theme loads, each single-line text element (<code>StaticText</code>, <code>AttributeText</code>,
+<code>ItemText</code>, the game count) and each <code>ItemsList</code> works out how far its text can run
+on its row before it reaches another element of the same screen, or the screen edge. Longer text scrolls
+inside that space, one character at a time, pausing at each end. In a list only the highlighted row
+scrolls; the other rows end in "…".</p>
+<ul>
+<li>An element the text <b>starts inside</b> (a banner or panel you draw the text on) does not count; only
+what the text would run <b>into</b> does.</li>
+<li>A <code>width</code> you set still limits the text. It now scrolls there instead of being cut off.</li>
+<li>Centred text gets the same room on both sides. <code>wrap=1</code> text keeps wrapping as before.</li>
+<li>An image with no <code>width</code>/<code>height</code> is sized from its <code>default</code> image; a
+cover (<code>GameImage</code>) with neither is treated as 140×200.</li>
+<li>If the space works out smaller than about three characters, the element is drawn exactly as before.</li>
+</ul>
 
 <h3>List extras</h3>
 <table data-sortable>
