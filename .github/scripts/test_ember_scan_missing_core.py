@@ -71,11 +71,40 @@ functions = ''.join(function_text(cue, 'src/cuesupport.c', sig) for sig in (
     'int cueScanDir(',
 ))
 
-# Every launch leg must name the file it looked for, not just say "Missing ember.elf".
-for rel in ('src/bdmsupport.c', 'src/ethsupport.c', 'src/mmcesupport.c', 'src/udpfssupport.c', 'src/hddsupport.c'):
+# Every launch leg must name the file it looked for, not just say "Missing ember.elf" -- and with the
+# buffer that holds THAT file's path (CodeRabbit, #836: rejecting the old calls alone would also pass a
+# leg that dropped its dialog or passed the wrong buffer).
+EXPECTED = {
+    'src/bdmsupport.c': ['guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf)',
+                         'guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath)',
+                         'vcdDescribePopstarterLookup(vcdPrefix, vcdElf, sizeof(vcdElf))',
+                         'guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf)'],
+    'src/ethsupport.c': ['guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf)',
+                         'guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath)',
+                         'vcdDescribePopstarterLookup(ethPrefix, vcdElf, sizeof(vcdElf))',
+                         'guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf)'],
+    'src/mmcesupport.c': ['guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf)',
+                          'guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath)',
+                          'vcdDescribePopstarterLookup(ps1Root, vcdElf, sizeof(vcdElf))',
+                          'guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf)'],
+    'src/udpfssupport.c': ['guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf)',
+                           'guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath)'],
+    'src/hddsupport.c': ['hddShowEmberMissing(_STR_EMBER_NOT_FOUND, mountSrc, emberElf)',
+                         'hddShowEmberMissing(_STR_EMBER_BIOS_MISSING, mountSrc, biosPath)',
+                         'guiMsgBoxMissing(_l(_STR_ERR_FILE_INVALID), mountSrc)',
+                         'vcdDescribePopstarterLookup("hdd0:__common/", vcdElf, sizeof(vcdElf))',
+                         'guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf)'],
+}
+for rel, calls in EXPECTED.items():
     text = read(rel)
     if re.search(r'guiMsgBox\(_l\(_STR_(EMBER_NOT_FOUND|EMBER_BIOS_MISSING|POPSTARTER_NOT_FOUND)\)', text):
         failures.append('%s: a PS1 "missing" message still shows no path (use guiMsgBoxMissing)' % rel)
+    for call in calls:
+        if call not in text:
+            failures.append('%s: expected %s' % (rel, call))
+# A partition that would not mount was never searched: it must not claim the ELF is missing.
+if 'guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), mountSrc)' in read('src/hddsupport.c'):
+    failures.append('src/hddsupport.c: a failed partition mount must not say "Missing ember.elf"')
 
 HARNESS = r'''
 #include <stdio.h>
@@ -195,6 +224,70 @@ if not failures:
             run = subprocess.run([str(exe)], capture_output=True, text=True, check=False)
             if run.returncode != 0:
                 failures.extend(run.stdout.strip().splitlines() or ['scan harness exited %d' % run.returncode])
+
+# What the user actually reads: the helpers that format the second line, compiled from the source.
+gui = read('src/gui.c')
+hdd = read('src/hddsupport.c')
+vcd = read('src/vcdsupport.c')
+vcd_defines = defines(read('include/system.h'), 'include/system.h', ('POPS_FOLDER',))
+MESSAGES = r'''
+#include <stdio.h>
+#include <string.h>
+struct UIItem;
+#define APA_IDMAX 32
+@DEFINES@
+static char gPopstarterPath[256];
+static char shown[512];
+static int boxes;
+static int guiMsgBox(const char *text, int addAccept, struct UIItem *ui) { (void)addAccept; (void)ui; boxes++; snprintf(shown, sizeof(shown), "%s", text); return 0; }
+static char *_l(int id) { static char t[32]; snprintf(t, sizeof(t), "MSG%d", id); return t; }
+@FUNCTIONS@
+static int fails;
+#define CHECK(c, m) do { if (!(c)) { printf("FAIL %s: got [%s]\n", m, shown); fails++; } } while (0)
+int main(void)
+{
+    char out[256];
+    guiMsgBoxMissing("Missing ember.elf", "mass0:/EMBER/ember.elf");
+    CHECK(!strcmp(shown, "Missing ember.elf\nmass0:/EMBER/ember.elf"), "message, then the path on its own line");
+    guiMsgBoxMissing("Missing ember.elf", "");
+    CHECK(!strcmp(shown, "Missing ember.elf"), "an empty path shows the bare message");
+    guiMsgBoxMissing("Missing ember.elf", NULL);
+    CHECK(!strcmp(shown, "Missing ember.elf"), "a NULL path shows the bare message");
+    guiMsgBoxMissing("100% sure %s", "mass0:/x");
+    CHECK(!strcmp(shown, "100% sure %s\nmass0:/x"), "the translated label is text, never a format");
+    hddShowEmberMissing(7, "hdd0:__.EMBER", "pfs0:/EMBER/ember.elf");
+    CHECK(!strcmp(shown, "MSG7\nhdd0:__.EMBER/EMBER/ember.elf"), "the HDD names the partition, not pfs0:");
+    vcdDescribePopstarterLookup("mass0:/", out, sizeof(out));
+    snprintf(shown, sizeof(shown), "%s", out);
+    CHECK(!strcmp(out, "mass0:/POPS/POPSTARTER.ELF"), "POPSTARTER is looked for in the device's POPS folder");
+    vcdDescribePopstarterLookup("hdd0:__common/", out, sizeof(out));
+    snprintf(shown, sizeof(shown), "%s", out);
+    CHECK(!strcmp(out, "hdd0:__common/POPS/POPSTARTER.ELF"), "the HDD's POPSTARTER home is __common");
+    snprintf(gPopstarterPath, sizeof(gPopstarterPath), "mc0:/MINE/POPSTARTER.ELF");
+    vcdDescribePopstarterLookup("mass0:/", out, sizeof(out));
+    snprintf(shown, sizeof(shown), "%s", out);
+    CHECK(!strcmp(out, "mc0:/MINE/POPSTARTER.ELF"), "a custom POPSTARTER.ELF Path is the one named");
+    return fails ? 1 : 0;
+}
+'''
+helpers = (function_text(gui, 'src/gui.c', 'void guiMsgBoxMissing(') +
+           function_text(hdd, 'src/hddsupport.c', 'static void hddShowEmberMissing(') +
+           function_text(vcd, 'src/vcdsupport.c', 'static char vcdSep(') +
+           function_text(vcd, 'src/vcdsupport.c', 'void vcdDescribePopstarterLookup('))
+if not failures:
+    program = MESSAGES.replace('@DEFINES@', vcd_defines).replace('@FUNCTIONS@', helpers)
+    with tempfile.TemporaryDirectory() as tmp:
+        src = Path(tmp) / 'messages.c'
+        exe = Path(tmp) / ('messages' + ('.exe' if sys.platform == 'win32' else ''))
+        src.write_text(program, encoding='utf-8')
+        build = subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Werror', '-Wno-unused-function', '-Wno-format-truncation',
+                                '-o', str(exe), str(src)], capture_output=True, text=True, check=False)
+        if build.returncode != 0:
+            failures.append('message harness did not compile:\n' + build.stderr)
+        else:
+            run = subprocess.run([str(exe)], capture_output=True, text=True, check=False)
+            if run.returncode != 0:
+                failures.extend(run.stdout.strip().splitlines() or ['message harness exited %d' % run.returncode])
 
 if failures:
     print('\n'.join(failures))

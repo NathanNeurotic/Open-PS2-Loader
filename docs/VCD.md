@@ -295,7 +295,9 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
    `hdd0:__.EMBER/EMBER/ember.elf` or `hdd0:__common/POPS/POPSTARTER.ELF`; with a custom
    **POPSTARTER.ELF Path** set, that path). Put the file there and launch again. Ember game folders
    stay listed while `ember.elf` is missing, so a missing or misnamed core shows up as this message
-   instead of an empty Ember library.
+   instead of an empty Ember library. On the internal HDD, "Error, could not run the item." with a
+   partition name (`hdd0:__.EMBER`) means that partition itself would not mount, so nothing inside
+   it was checked yet.
 
 ## 8. Notes & limitations
 

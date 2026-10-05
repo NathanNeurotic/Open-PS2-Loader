@@ -1929,7 +1929,9 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
     if (fileXioMount(hddPrefix, mountSrc, FIO_MT_RDWR | HDD_PFS_MT_WRITETHROUGH) < 0) {
         hddRestoreDataHome();
         ioBlockOps(0);
-        guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), mountSrc);
+        // The partition itself would not mount: nothing was looked up inside it yet, so this is not
+        // "Missing ember.elf". Say the item could not be run, and name the partition (CodeRabbit, #836).
+        guiMsgBoxMissing(_l(_STR_ERR_FILE_INVALID), mountSrc);
         return;
     }
 
