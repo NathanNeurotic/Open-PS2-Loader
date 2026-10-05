@@ -20,11 +20,15 @@ checks passed; the console check is still open.
 Pick **one**, whichever is interesting. A clear diagnosis is useful even
 without a PR:
 
-- **Slow art:** find out whether the late image is a cover, icon, or background.
-- **Neutrino logo:** check whether a custom `-logo` survives from the game menu
-  into the actual launch arguments.
-- **PS1 error message:** reproduce one missing Ember or POPSTARTER component
-  and fix the on-screen guidance if it is unclear.
+- **Neutrino arguments:** with [#835](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/835),
+  turn on **Show Launch Arguments** and confirm on a console that a per-game
+  `-logo` appears in the list.
+- **PS1 error messages:** with [#836](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/836),
+  remove `ember.elf`, `bios.bin` or `POPSTARTER.ELF` one at a time and confirm
+  the games still list and the message names the right path.
+
+Slow art (A1) is resolved: the reporter says the latest builds load artwork
+normally.
 
 The iLink reliability, PAL/NTSC CRT, and font reports remain in the full
 handoff until someone can reproduce them. This is a pick-one list, not a job
