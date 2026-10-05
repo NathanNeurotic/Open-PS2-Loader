@@ -2273,11 +2273,18 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
             if (ps->item.isFolder) {
                 snprintf(folderBuf, sizeof(folderBuf), "%s/", dispText);
                 dispText = folderBuf;
-            } else if (libListRowView(list, ps->item.id) == LIB_VIEW_PS1) {
-                // Keep the core visible when no cover or decorator art is available, including
-                // Mixed and Favourites lists. This changes presentation, never the stored name.
-                snprintf(folderBuf, sizeof(folderBuf), "[PS1] %s", dispText);
-                dispText = folderBuf;
+            } else if (gGameTypeLabels && list->mode != APP_MODE) {
+                // Optional presentation-only console labels for mixed/Favourites/device game lists.
+                // Do not mutate the stored name (rename/favourite identity depends on it), and never
+                // label Apps/PS1ELF rows: those are executables, not PS1/PS2 disc-library entries.
+                int rowView = libListRowView(list, ps->item.id);
+                if (rowView == LIB_VIEW_PS1) {
+                    snprintf(folderBuf, sizeof(folderBuf), "[PS1] %s", dispText);
+                    dispText = folderBuf;
+                } else if (rowView == LIB_VIEW_ISO) {
+                    snprintf(folderBuf, sizeof(folderBuf), "[PS2] %s", dispText);
+                    dispText = folderBuf;
+                }
             }
 
             if (itemsList->decoratorImage &&
