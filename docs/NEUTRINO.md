@@ -208,6 +208,10 @@ exceeded, a manual launch shows a warning and stays in the menu so no requested 
 silently lost. HDD autolaunch falls back to the native core, as it does for other Neutrino
 preflight failures.
 
+A flag that has its own row is **moved into that row** when you save: type `-logo` into Extra and,
+after saving, Extra no longer shows it but the **PS2 Logo** row is on. It is still sent, exactly
+once. To check what a launch really passes, use **Show Launch Arguments** (below).
+
 Quick Boot means **enter Neutrino's load environment directly**; it is not merely a boot-screen
 toggle. RiptOPL supplies it automatically for USB, iLink, and UDPFS handoffs, so enabling the field
 yourself on those devices changes nothing and does not add a duplicate.
@@ -247,6 +251,17 @@ emitted for retail-shaped startups (`AAAA_NNN.NN`) and never when your own args 
 an `-elf=`. Turn it off in the GUI if a launch misbehaves. For a single game, the per-game **Boot
 ELF** field can supply `auto` (Neutrino's own disc lookup) or a specific ELF path, which suppresses
 the generated boot path for that game.
+
+### See the exact launch arguments
+
+**Game Launching → Neutrino Defaults → Show Launch Arguments** (`neutrino_show_args`, off by
+default) shows, before every Neutrino launch, the complete argument list Neutrino will receive:
+the automatic arguments, the global and per-game ones, and the VMC paths, in order. An argument
+that contains a space (a spaced ISO or VMC path) is shown in quotes; it is still one argument.
+**Accept** launches; **Back** returns to the menu without launching. The list is the one the
+launch itself uses, not a reconstruction, so it settles questions such as whether a per-game
+`-logo` made it through. It appears only after the argument budget check passes, and never on an
+autolaunch (there is no menu to answer it).
 
 ### Video-mode limits
 

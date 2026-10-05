@@ -56,7 +56,7 @@ Review the LICENSE file for further details.<br><br>
 ![Network](https://img.shields.io/badge/Network-SMB%20%C2%B7%20UDPBD%20%C2%B7%20UDPFS%20%C2%B7%20HTTP-2ea043?style=flat&labelColor=0b3d18)
 ![PS2 Cores](https://img.shields.io/badge/PS2%20Cores-OPL%20%C2%B7%20Neutrino-2ea043?style=flat&labelColor=0b3d18)
 ![PS1 Cores](https://img.shields.io/badge/PS1%20Cores-POPStarter%20%C2%B7%20Ember-2ea043?style=flat&labelColor=0b3d18)
-![RetroAchievements](https://img.shields.io/badge/RetroAchievements-dev%20build%2C%20untested-orange?style=flat&labelColor=7a3e00)
+![RetroAchievements](https://img.shields.io/badge/RetroAchievements-dev%20build%2C%20partly%20hardware--tested-orange?style=flat&labelColor=7a3e00)
 
 [![Discord](https://img.shields.io/discord/1275875800318476381?style=flat&logo=Discord)](https://tinyurl.com/PS2SPACE)
 [![Documentation](https://img.shields.io/badge/Documentation-RiptOPL-skyblue?style=flat&logo=githubpages&logoColor=white&labelColor=navy)](https://nathanneurotic.github.io/Open-PS2-Loader/)

@@ -1520,6 +1520,46 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
     return 0;
 }
 
+// sysRunNeutrinoLaunch's preflight result when the user backed out of the argument preview: the
+// launch stops, but nothing is wrong with the arguments, so no overflow warning follows.
+#define NEUTRINO_LAUNCH_DECLINED -2
+
+// One readable line for the launch preview: entries joined by single spaces, and an entry that
+// itself contains a space or tab (a spaced ISO or VMC path) wrapped in quotes, so it still reads as
+// the ONE argument Neutrino receives. The budget check has already capped the strings at 256 bytes.
+static void sysFormatNeutrinoArgv(char *out, int outSize, int argc, char *const *argv)
+{
+    int len = 0;
+    int i;
+
+    if (out == NULL || outSize <= 0)
+        return;
+    out[0] = '\0';
+    for (i = 0; i < argc && len < outSize - 1; i++) {
+        int quote = strchr(argv[i], ' ') != NULL || strchr(argv[i], '\t') != NULL;
+        int n = snprintf(out + len, outSize - len, "%s%s%s%s", i ? " " : "", quote ? "\"" : "", argv[i], quote ? "\"" : "");
+        if (n < 0)
+            break;
+        len += n;
+    }
+}
+
+// Settings > Game Launching > Show Launch Arguments: before the teardown, show the exact argv this
+// launch will hand to Neutrino -- the array sysRunNeutrinoLaunch just composed, not a reconstruction --
+// and let the user back out. Autolaunch has no menu to answer it, so it launches as configured.
+// Returns 1 = launch, 0 = the user chose Back.
+static int sysNeutrinoConfirmArgv(int argc, char *const *argv)
+{
+    char joined[384];
+    char text[480];
+
+    if (!gNeutrinoShowArgs || !guiIsActive())
+        return 1;
+    sysFormatNeutrinoArgv(joined, sizeof(joined), argc, argv);
+    snprintf(text, sizeof(text), "%s\n\n%s", _l(_STR_NEUTRINO_ARGS_CONFIRM), joined);
+    return guiMsgBox(text, 1, NULL);
+}
+
 static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs, int checkOnly)
 {
     if (neutrinoPath == NULL || driver == NULL || path == NULL) {
@@ -1778,7 +1818,7 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
     }
 
     if (checkOnly)
-        return 0;
+        return sysNeutrinoConfirmArgv(argc, argv) ? 0 : NEUTRINO_LAUNCH_DECLINED;
 
     // Log the FULL argv (not just bsd/dvd/compat) so the VMC -mc args are verifiable on hardware (#47).
     LOG("[NEUTRINO] elf=%s argc=%d\n", neutrinoPath, argc);
@@ -1800,7 +1840,10 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
 
 int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
 {
-    if (sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1) < 0) {
+    int result = sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1);
+    if (result == NEUTRINO_LAUNCH_DECLINED)
+        return -1; // Back on the argument preview: stay in the menu, nothing to warn about
+    if (result < 0) {
         guiWarning(_l(_STR_NEUTRINO_LAUNCH_ARGS_OVERFLOW), 6);
         return -1;
     }

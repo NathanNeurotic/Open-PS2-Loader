@@ -185,6 +185,7 @@ int gDefaultCoreLoader;      // global default Loader Core (0=<OPL>, 1=Neutrino)
 int gNeutrinoVideoDefault;   // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game $NeutrinoVideo overrides
 int gNeutrinoGsmCompDefault; // global default -gsm ":c" field-flip half (0=off, 1-3=type)
 int gNeutrinoElfArg;         // default-on (settings key only, no UI): auto-emit -elf=cdrom0: on Neutrino launches
+int gNeutrinoShowArgs;       // default-off: show the composed Neutrino argv and ask before each launch
 int gDefaultGameView;
 int gAppsDisplay;
 int gEmberDisplay;
@@ -2683,6 +2684,7 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
     configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
     configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath, sizeof(gNeutrinoPath));
     configGetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
+    configGetInt(configOPL, CONFIG_OPL_NEUTRINO_SHOW_ARGS, &gNeutrinoShowArgs);
     // Global default Loader Core (0=<OPL>, 1=Neutrino). Absent in legacy configs -> keep the reset
     // default (0/<OPL>), so existing installs behave exactly as before this key existed.
     configGetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, &gDefaultCoreLoader);
@@ -3821,6 +3823,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
+        configSetInt(configOPL, CONFIG_OPL_NEUTRINO_SHOW_ARGS, gNeutrinoShowArgs);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_BGART, gEnableBGArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, gEnableArtTar);
         configSetInt(configOPL, CONFIG_OPL_ART_DELAY, gArtDelay);
@@ -4761,6 +4764,7 @@ static void setDefaults(void)
     gNeutrinoVideoDefault = 0; // no global -gsm until the user opts in
     gNeutrinoGsmCompDefault = 0;
     gNeutrinoElfArg = 1; // auto-emit the game ELF for Neutrino compatibility lookup by default
+    gNeutrinoShowArgs = 0;
     gDefaultGameView = GAME_VIEW_BOTH;
     gAppsDisplay = APPS_DISPLAY_MIXED;
     gPopstarterDevice = POPS_DEV_DEFAULT;
