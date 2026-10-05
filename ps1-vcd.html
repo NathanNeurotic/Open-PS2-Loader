@@ -225,17 +225,18 @@ per-game memory cards (<code>MC1.vmc</code>, <code>MC2.vmc</code>) into that sam
 has to be on writable media.</p>
 
 <h3>Ember settings</h3>
-<p>Ember reads an optional <code>settings.txt</code>. RiptOPL can write it for you from four rows on
-<b>Settings → PS Emulation Settings</b>, and a fifth per game:</p>
+<p>Ember reads an optional <code>settings.txt</code>. RiptOPL can write it for you from five rows on
+<b>Settings → PS Emulation Settings</b>, and four more per game:</p>
 
 <table data-sortable>
   <thead><tr><th>Row</th><th>Values</th><th>Written to</th></tr></thead>
   <tbody>
     <tr><td><b>Ember Display Mode</b></td><td>Default / 240p / 480i / 480p</td><td><code>&lt;device&gt;:/EMBER/settings.txt</code> (<code>display</code>). <b>480p</b> needs component or HDMI — composite shows no picture — so choosing it asks first.</td></tr>
+    <tr><td><b>Ember Timing</b></td><td>Default / Auto / NTSC / PAL</td><td><code>EMBER/settings.txt</code> (<code>timing</code>). <em>Auto</em> follows the disc region; NTSC forces 60 Hz and PAL 50 Hz.</td></tr>
     <tr><td><b>Ember Dithering</b></td><td>Default / On / Off</td><td><code>EMBER/settings.txt</code> (<code>dither</code>)</td></tr>
     <tr><td><b>Ember Shading</b></td><td>Default / 15-bit / 24-bit (experimental)</td><td><code>EMBER/settings.txt</code> (<code>shading</code>). 24-bit can cause issues.</td></tr>
     <tr><td><b>Ember Controller</b></td><td>Default / Auto / Analog / D2A</td><td><code>EMBER/settings.txt</code> (<code>controller</code>)</td></tr>
-    <tr><td><b>Triangle → Ember Game Settings</b> (per game)</td><td>Default / Auto / Analog / D2A</td><td><code>EMBER/games/&lt;Folder Name&gt;/settings.txt</code> (<code>controller</code>), overriding the global row for that game. Saved in the game's <code>CFG/&lt;Folder Name&gt;.cfg</code>; on a Favourites entry it edits the same setting as on the device page.</td></tr>
+    <tr><td><b>Triangle → Ember Game Settings</b> (per game)</td><td>Ember Timing, Dithering, Shading and Controller, each with the same values as the global row</td><td><code>EMBER/games/&lt;Folder Name&gt;/settings.txt</code> (<code>timing</code>, <code>dither</code>, <code>shading</code>, <code>controller</code>), overriding the global rows for that game. Written as soon as you press OK, before any launch, and applied again at launch. An untouched <em>Default</em> keeps a value already in the file; changing a row back to <em>Default</em> removes that override. Display Mode stays global. Saved in the game's <code>CFG/&lt;Folder Name&gt;.cfg</code>; on a Favourites entry it edits the same setting as on the device page.</td></tr>
   </tbody>
 </table>
 
@@ -416,7 +417,7 @@ hanging silently.</p>
   <li>The per-game Loader Core, GSM, Cheats, PADEMU, and OSD options do not apply to PS1 games;
   POPSTARTER ignores them and the UI reflects this. <b>Triangle</b> on a PS1 title offers
   <b>Global PS Emulation Settings</b> instead, which opens the global PS emulation settings page, plus
-  <b>Rename</b>. An Ember title also offers <b>Ember Game Settings</b> (its Ember Controller; see
+  <b>Rename</b>. An Ember title also offers <b>Ember Game Settings</b> (its Ember Timing, Dithering, Shading and Controller; see
   <a href="#ember">Ember</a>).</li>
   <li>SMB PS1 requires POPSTARTER's own network modules on the memory card in addition to the
   network config files.</li>
