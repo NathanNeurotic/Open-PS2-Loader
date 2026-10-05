@@ -210,11 +210,16 @@ run('launch',prefix+s+test)
 
 # Exercise the actual interrupt handler up to the point where it would suspend
 # game threads. Hardware register reads/writes use host bytes in this harness.
+# The pad and power-button checks live in IGR_CheckInputs (shared with the
+# polling thread of standard builds, upstream OPL #1762), so compile it too.
 s=(root/'ee_core/src/padhook.c').read_text(encoding='utf-8')
+check=s[s.index('static void IGR_CheckInputs'):]
+check=check[:check.index('\n}\n')+3]
 s=s[s.index('static int IGR_Intc_Handler'):]
 s=s[:s.index('    // If power button or combo is press')]
 s=s.replace('    int i;','    (void)cause;')
 s+='    return Pad_Data.combo_type;\n}\n'
+s=check+s
 prefix=r'''
 #include <assert.h>
 #include <stdio.h>
