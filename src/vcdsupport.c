@@ -869,6 +869,18 @@ int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
     return vcdResolvePopstarterMcElf(out, outSize);
 }
 
+void vcdDescribePopstarterLookup(const char *devPrefix, char *out, int outSize)
+{
+    if (out == NULL || outSize <= 0)
+        return;
+    if (gPopstarterPath[0] != '\0')
+        snprintf(out, outSize, "%s", gPopstarterPath);
+    else if (devPrefix != NULL && devPrefix[0] != '\0')
+        snprintf(out, outSize, "%s%s%cPOPSTARTER.ELF", devPrefix, POPS_FOLDER, vcdSep(devPrefix));
+    else
+        out[0] = '\0';
+}
+
 void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *name, char *out, int outSize)
 {
     if (out == NULL || outSize <= 0)

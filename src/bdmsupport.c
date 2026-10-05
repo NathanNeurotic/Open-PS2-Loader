@@ -1735,14 +1735,15 @@ static void bdmLaunchCue(item_list_t *itemList, const char *cueName, config_set_
 
     bdmBuildPs1Prefix(ps1Prefix, sizeof(ps1Prefix), itemList->mode); // device ROOT: EMBER/ lives there
 
+    // The resolvers leave the path they tried in their buffer, so the message can name it.
     if (!cueResolveEmber(ps1Prefix, emberElf, sizeof(emberElf))) {
-        guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf);
         return;
     }
     // Ember needs a user-supplied bios.bin beside it and says nothing useful when it is missing --
     // it just runs the PS1 BIOS shell. Check while we can still explain.
     if (!cueResolveEmberBios(ps1Prefix, biosPath, sizeof(biosPath))) {
-        guiMsgBox(_l(_STR_EMBER_BIOS_MISSING), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
     // The scan lists folders without reading inside them -- that would be a directory read per row
@@ -1794,7 +1795,8 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     }
     bdmBuildPs1Prefix(vcdPrefix, sizeof(vcdPrefix), itemList->mode); // device root, NOT gBDMPrefix -- POPSTARTER reads <root>/POPS only
     if (!vcdResolvePopstarter(vcdPrefix, vcdElf, sizeof(vcdElf))) {
-        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        vcdDescribePopstarterLookup(vcdPrefix, vcdElf, sizeof(vcdElf));
+        guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf);
         return;
     }
     // vcdBuildSelector emits the BARE POPSTARTER label ("mass:/POPS/XX.<name>.ELF"), NOT this live
