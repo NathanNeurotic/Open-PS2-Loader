@@ -188,6 +188,7 @@ int gNeutrinoElfArg;         // default-on (settings key only, no UI): auto-emit
 int gNeutrinoShowArgs;       // default-off: show the composed Neutrino argv and ask before each launch
 int gDefaultGameView;
 int gAppsDisplay;
+int gGameTypeLabels;
 int gEmberDisplay;
 int gEmberTiming;
 int gEmberDither;
@@ -3182,6 +3183,8 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, &gAppsDisplay);
             if (gAppsDisplay < APPS_DISPLAY_MIXED || gAppsDisplay > APPS_DISPLAY_SPLIT)
                 gAppsDisplay = APPS_DISPLAY_MIXED;
+            configGetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, &gGameTypeLabels);
+            gGameTypeLabels = gGameTypeLabels ? 1 : 0;
             // Where the user left each L3 page last session. Read from the LAST set (the same
             // configReadMulti above filled it), but sequenced HERE, after the two display settings
             // above: the restore validates every remembered position against what its mode can
@@ -3806,6 +3809,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, gApplyGameID);
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
+        configSetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, gGameTypeLabels);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
@@ -4767,6 +4771,7 @@ static void setDefaults(void)
     gNeutrinoShowArgs = 0;
     gDefaultGameView = GAME_VIEW_BOTH;
     gAppsDisplay = APPS_DISPLAY_MIXED;
+    gGameTypeLabels = 0; // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;
