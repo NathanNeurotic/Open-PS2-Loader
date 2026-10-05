@@ -621,6 +621,30 @@ void rmDrawLine(int x1, int y1, int x2, int y2, u64 color)
     order++;
 }
 
+void rmDrawTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv, const u64 *colors)
+{
+    float sx = iDisplayWidth / 640.0f, sy = iDisplayHeight / 480.0f;
+    int i;
+
+    gsGlobal->PrimAlphaEnable = GS_SETTING_OFF;
+    gsKit_set_test(gsGlobal, GS_ATEST_OFF);
+    // One bind for the batch: nothing else binds between these triangles, so it stays resident.
+    if (txt != NULL)
+        gsKit_TexManager_bind(gsGlobal, txt);
+    for (i = 0; i < count; i++, xy += 6, uv += 6, colors += 3) {
+        float x0 = xy[0] * sx + fRenderXOff, y0 = xy[1] * sy + fRenderYOff;
+        float x1 = xy[2] * sx + fRenderXOff, y1 = xy[3] * sy + fRenderYOff;
+        float x2 = xy[4] * sx + fRenderXOff, y2 = xy[5] * sy + fRenderYOff;
+
+        if (txt != NULL)
+            gsKit_prim_triangle_goraud_texture_3d(gsGlobal, txt, x0, y0, order, uv[0], uv[1], x1, y1, order, uv[2], uv[3],
+                                                  x2, y2, order, uv[4], uv[5], colors[0], colors[1], colors[2]);
+        else
+            gsKit_prim_triangle_gouraud_3d(gsGlobal, x0, y0, order, x1, y1, order, x2, y2, order, colors[0], colors[1], colors[2]);
+    }
+    order++;
+}
+
 void rmSetDisplayOffset(int x, int y)
 {
     gsKit_set_display_offset(gsGlobal, x * rm_mode_table[vmode].VCK, y);

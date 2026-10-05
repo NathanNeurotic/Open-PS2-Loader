@@ -243,6 +243,12 @@ This build layers several features on top of upstream OPL:
   cover is read from the archive and *falls back to the loose `.png`* when it isn't there, so the
   two coexist. A small `art_cache.bin` index written beside the archive lets later boots skip the
   re-scan. The format matches wOPL/sOPL art packs, so existing `.tar` packs work unchanged.
+- **3D save icons (opt-in, not yet hardware-tested):** turn on **3D Save Icons** under **Interface →
+  Artwork Settings** (default **off**) and the selected PS2 game's own save icon spins next to its
+  cover, animated and lit the way the PS2 browser shows it. It is read from the game's per-game VMC
+  when it has one, otherwise from the newest save on the memory cards. Both built-in themes show it;
+  other themes add a `SaveIcon` element
+  (**[Theme Engine reference §9](docs/THEME_ENGINE.md#9-the-saveicon-element-this-fork)**).
 - **Favorites tab:** press **R3** on any game to star it; a virtual **Favorites** page
   (alongside the device tabs, switched on in **Game Sources**) gathers your starred games
   from every device into one list, and a star marks favorited titles everywhere. Favorites
