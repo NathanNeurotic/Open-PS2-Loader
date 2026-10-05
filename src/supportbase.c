@@ -731,6 +731,27 @@ u32 sbGetISO9660MaxLBA(const char *path)
     return maxLBA;
 }
 
+// The real media size, for CDVDMAN's out-of-bounds read emulation (upstream OPL #1763). The ISO9660
+// PVD cannot be trusted for it: badly mastered discs understate it and read past the volume by raw
+// LBA. totalBytes is the summed size of every part; a ZSO reports its uncompressed sector count.
+u32 sbGetMediaLsnCount(const char *path, u64 totalBytes)
+{
+    u32 lsnCount;
+    int fd;
+
+    lsnCount = 0;
+    if ((fd = open(path, O_RDONLY, 0666)) >= 0) {
+        if (ProbeZISO(fd))
+            lsnCount = ziso_total_block;
+        close(fd);
+    }
+
+    if (lsnCount == 0)
+        lsnCount = (u32)(totalBytes / 2048);
+
+    return lsnCount;
+}
+
 int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset)
 {
     int result = -1, fd;
@@ -917,6 +938,7 @@ int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman,
         settings->media = game->media;
     }
     settings->flags = 0;
+    settings->mediaLsnCount = 0; // each device leg measures it after sbPrepare; 0 = trust the PVD
 
     if (compatmask & COMPAT_MODE_1) {
         settings->flags |= IOPCORE_COMPAT_ACCU_READS;
