@@ -248,6 +248,7 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 <tr><td><code>-logo</code></td><td>Only when <b>PS2 Logo</b> is enabled</td></tr>
 <tr><td><code>-gsm=&lt;mode&gt;</code></td><td>Only when a <b>Neutrino Video</b> mode resolves — the per-game picker, or the global <b>Settings → Game Launching → Neutrino Defaults → Neutrino Video</b> default when the per-game picker is “Default” (see §5)</td></tr>
 <tr><td><code>-mc0=&lt;path&gt;</code> / <code>-mc1=&lt;path&gt;</code></td><td>Only when a per-game VMC is configured for that slot</td></tr>
+<tr><td><code>-cfg=riptopl-cheats</code></td><td>Only when cheats are on for the game and at least one code is enabled. The codes are written to <code>riptopl-cheats.toml</code> first (see <a href="cheats.html#neutrino">Cheats</a>). It goes after your own options; Neutrino keeps only the last <code>-cfg</code>, so a <code>-cfg=</code> you forward still loads, through that file's <code>depends</code>.</td></tr>
 </tbody>
 </table>
 
@@ -348,7 +349,8 @@ boot changing only the menu to 480p (<b>Triangle + Circle</b> forces the interla
 <li><b>Neutrino Launch Args</b> and <b>Neutrino Video</b> picker are active and editable.</li>
 <li><b>Compat Modes 4 (Skip Videos) and 6 (Disable IGR)</b> are greyed — these are OPL ee-core features with no Neutrino equivalent. OPL never forwards them.</li>
 <li><b>Mode 7</b> is available (Neutrino-only; see above).</li>
-<li>The <b>Configure GSM</b>, <b>Cheat Settings</b>, <b>Controller Emulation</b> and <b>OSD Settings</b> screens show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
+<li>The <b>Configure GSM</b>, <b>Controller Emulation</b> and <b>OSD Settings</b> screens show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
+<li><b>Cheat Settings</b> works on both cores; only its <b>PS2RD Cheat Image</b> row is greyed, because Neutrino has no cheat-image support. See <a href="cheats.html#neutrino">Cheats with the Neutrino core</a>.</li>
 <li><b>VMC</b> and the rest of <b>Game Settings</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on BDM devices (USB/iLink/MX4SIO/exFAT&nbsp;HDD/UDPBD), MMCE and UDPFS. The one exception is <b>APA HDD</b>: Neutrino has no APA/pfs backing store to open the <code>.bin</code> from, so the game boots <em>without</em> the VMC and OPL shows a warning (the OPL core honors the same card normally). See <a href="vmc.html#neutrino-vmc">VMC with the Neutrino core</a>.</li>
 <li><b>UDPBD / UDPFS games</b> have no OPL core backend, so the Loader Core selector is locked to Neutrino for them and cannot be changed.</li>
 </ul>
@@ -358,7 +360,7 @@ boot changing only the menu to 480p (<b>Triangle + Circle</b> forces the interla
 <p>The screen is unchanged from classic OPL. The Neutrino Launch Args field and Neutrino Video picker are greyed (they are never read on the OPL path). Mode 7 is greyed. Modes 4 and 6 are available as usual.</p>
 
 <details class="deep"><summary>What does Neutrino actually honor from OPL's per-game settings?</summary>
-<p>Neutrino honors: the storage backend + image path (<code>-bsd</code> / <code>-dvd</code>, automatic), the compat mode subset that maps to <code>-gc</code> (Modes 1/2/3/5/7), VMC via <code>-mc0</code>/<code>-mc1</code> (BDM/MMCE/UDPFS — not APA HDD), <code>-logo</code> (PS2 logo), <code>-dbc</code> (debug colors), the Neutrino Video picker (<code>-gsm</code>; per-game with a global default in Settings), and the free-text <b>Neutrino Launch Args</b> field. It does <b>not</b> honor: Cheats (OPL patches EE RAM), OPL GSM (OPL patches the GS registers), IGR (OPL's in-game reset hook), PADEMU (OPL's USB gamepad emulation), or OSD Language — all are OPL-embedded-core features with no Neutrino equivalent.</p>
+<p>Neutrino honors: the storage backend + image path (<code>-bsd</code> / <code>-dvd</code>, automatic), the compat mode subset that maps to <code>-gc</code> (Modes 1/2/3/5/7), VMC via <code>-mc0</code>/<code>-mc1</code> (BDM/MMCE/UDPFS — not APA HDD), <code>-logo</code> (PS2 logo), <code>-dbc</code> (debug colors), the Neutrino Video picker (<code>-gsm</code>; per-game with a global default in Settings), the free-text <b>Neutrino Launch Args</b> field, and PS2RD cheats (handed over in <code>riptopl-cheats.toml</code>; see <a href="cheats.html#neutrino">Cheats</a>). It does <b>not</b> honor: the PS2RD Cheat Image (<code>.img</code>), OPL GSM (OPL patches the GS registers), IGR (OPL's in-game reset hook), PADEMU (OPL's USB gamepad emulation), or OSD Language — all are OPL-embedded-core features with no Neutrino equivalent.</p>
 </details>
 
 <h2 id="network-boot">7. Network boot — UDPBD / UDPFS</h2>
