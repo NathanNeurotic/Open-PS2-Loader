@@ -412,17 +412,23 @@ static void itemExecSelect(struct menu_item *curMenu)
                 if (curMenu->current == NULL)
                     return; // a deferred source refresh replaced the row while config IO was pending
                 int launchId = curMenu->current->item.id;
-                // Create VMC on First Launch. It can run for seconds (genvmc) and saves the config
-                // through deferred IO, so re-check the row afterwards: a refresh that replaced the
-                // list must not start a different game.
-                if (!guiGameAutoCreateVmc(support, launchId, configSet))
-                    return;
-                if (curMenu->current == NULL || curMenu->current->item.id != launchId)
-                    return;
                 char gameIdStartup[128] = {0};
                 char *startup = support->itemGetStartup(support, launchId);
                 if (startup != NULL)
                     snprintf(gameIdStartup, sizeof(gameIdStartup), "%s", startup);
+                // Create VMC on First Launch. It can run for seconds (genvmc) and saves the config
+                // through deferred IO, and a source refresh in that window renumbers the rows. A row id
+                // is only a list index, so a different game can land on the same one: match the game
+                // by its startup id instead -- the key the refresh keeps the cursor on -- and launch
+                // the row it sits on now. Anything else stays in the menu.
+                if (!guiGameAutoCreateVmc(support, launchId, configSet))
+                    return;
+                if (curMenu->current == NULL || curMenu->current->item.isFolder)
+                    return;
+                launchId = curMenu->current->item.id;
+                startup = support->itemGetStartup(support, launchId);
+                if (strcmp(startup != NULL ? startup : "", gameIdStartup) != 0)
+                    return;
                 // Flash the GameID barcode (Pixel FX/RetroGEM HDMI auto-profile) before handoff. Use
                 // the stack copy: the hold renders/unlocks for many frames while source lists may refresh.
                 guiShowGameID(gameIdStartup);
