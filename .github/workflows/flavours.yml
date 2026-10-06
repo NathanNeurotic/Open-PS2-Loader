@@ -112,6 +112,8 @@ jobs:
           persist-credentials: false
       - name: Check compact release notes and changelog
         run: python3 .github/scripts/test_release_notes.py
+      - name: Check a rolling publish never leaves the release missing files when GitHub fails mid-way
+        run: python3 .github/scripts/test_rolling_publish_order.py
 
   ra-host-tests:
     runs-on: ubuntu-24.04
