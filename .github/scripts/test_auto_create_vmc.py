@@ -35,6 +35,14 @@ if not (0 <= call < flash < launch):
 if 'curMenu->current->item.id != launchId' not in select:
     failures.append('opl.c itemExecSelect: the row must be re-checked after the VMC creation')
 
+# A failed creation must not leave a half-written card behind: a later launch would reuse it.
+genvmc = (root / 'modules/vmc/genvmc/genvmc.c').read_text(encoding='utf-8').replace('\r\n', '\n')
+failed = genvmc[genvmc.index('    if (r < 0) {', genvmc.index('vmc_mcformat(param->VMC_filename')):]
+failed = failed[:failed.index('goto exit;')]
+cleanup, report = failed.find('if (r != -101)\n            remove(param->VMC_filename);'), failed.find('genvmc_stats.VMC_status = GENVMC_STAT_AVAIL;')
+if not (0 <= cleanup < report):
+    failures.append('genvmc.c: every failure after the open must remove the partial file before reporting')
+
 HARNESS = r'''
 #include <stdio.h>
 #include <string.h>
@@ -125,9 +133,12 @@ static void reset(void)
 
 static void skipped(const char *why)
 {
-    int r = guiGameAutoCreateVmc(&dev, 0, &cfg);
-    if (r != 1 || checkCalls || saves || msgs || cfgVmc[0] != (cfgVmc[0] ? cfgVmc[0] : 0))
-        printf("FAIL %s: r=%d checks=%d saves=%d msgs=%d\n", why, r, checkCalls, saves, msgs), fails++;
+    char before[32];
+    int r;
+    snprintf(before, sizeof(before), "%s", cfgVmc);
+    r = guiGameAutoCreateVmc(&dev, 0, &cfg);
+    if (r != 1 || checkCalls || saves || msgs || strcmp(before, cfgVmc))
+        printf("FAIL %s: r=%d checks=%d saves=%d msgs=%d slot1 %s -> %s\n", why, r, checkCalls, saves, msgs, before, cfgVmc), fails++;
 }
 
 int main(void)
