@@ -315,6 +315,93 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, char *VMCName, int
     return result;
 }
 
+// Settings > Game Launching > Create VMC on First Launch (fork-gaps OR2, ORBIT parity). A PS2 game
+// launched with nothing in VMC slot 1 gets a card: the name the VMC dialog suggests (the title's
+// group id, so every disc of a multi-disc game shares one), 8 MB, on the game's own device -- where
+// both cores look for it -- assigned to slot 1 and saved before the launch reads the config. A file
+// already there under that name is assigned, never recreated.
+//
+// Skipped silently: the setting off, a PS1 or app row, a slot already set or switched off, a source
+// with no writable side (HTTP), and APA under Neutrino, which has no VMC at all. A failed creation
+// says so and the game starts without a card, as before. Back during creation stops it and stays in
+// the menu. Returns 1 to go on with the launch, 0 to stay in the menu.
+#define AUTO_VMC_SIZE_MB    8
+#define AUTO_VMC_MAX_FRAMES (120 * 60) // two minutes of status polls before giving up on genvmc
+int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
+{
+    statusVMCparam_t status;
+    char vmc[32], assigned[32], progress[96];
+    char *startup;
+    int disabled = 0, coreLoader, sourceMode, frames, aborted = 0;
+
+    if (!gAutoCreateVmc || support == NULL || configSet == NULL || support->itemCheckVMC == NULL ||
+        support->itemGetStartup == NULL || !guiIsActive())
+        return 1;
+    if (support->mode == APP_MODE || libListRowView(support, id) == LIB_VIEW_PS1)
+        return 1;
+
+    sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(id) : support->mode;
+    if (sourceMode == HTTP_MODE)
+        return 1;
+    coreLoader = gDefaultCoreLoader;
+    configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
+    if (coreLoader == 2)
+        coreLoader = gDefaultCoreLoader;
+    if (sourceMode == HDD_MODE && coreLoader == 1)
+        return 1;
+
+    assigned[0] = '\0';
+    configGetVMC(configSet, assigned, sizeof(assigned), 0);
+    configGetVMCDisable(configSet, 0, &disabled);
+    if (assigned[0] != '\0' || disabled)
+        return 1;
+
+    startup = support->itemGetStartup(support, id);
+    if (startup == NULL || startup[0] == '\0')
+        return 1;
+    snprintf(vmc, sizeof(vmc), "%s_%d", getGroupIdForTitleId(startup), 0);
+
+    if (support->itemCheckVMC(support, vmc, 0) == -1) {
+        support->itemCheckVMC(support, vmc, AUTO_VMC_SIZE_MB);
+
+        memset(&status, 0, sizeof(status));
+        status.VMC_status = 1;
+        for (frames = 0; status.VMC_status != 0; frames++) {
+            if (frames >= AUTO_VMC_MAX_FRAMES) {
+                fileXioDevctl("genvmc:", 0xC0DE0002, NULL, 0, NULL, 0);
+                status.VMC_error = -1;
+                break;
+            }
+            if (fileXioDevctl("genvmc:", 0xC0DE0003, NULL, 0, (void *)&status, sizeof(status)) != 0)
+                status.VMC_status = 1; // no answer yet; keep polling until the cap above
+
+            readPads();
+            if (!aborted && getKeyOn(guiCancelKey())) {
+                fileXioDevctl("genvmc:", 0xC0DE0002, NULL, 0, NULL, 0); // genvmc removes the partial file
+                aborted = 1;
+            }
+
+            snprintf(progress, sizeof(progress), "%s %d%%", _l(_STR_AUTO_VMC_CREATING), status.VMC_progress);
+            guiRenderTextScreen(progress);
+        }
+
+        if (aborted)
+            return 0;
+        if (status.VMC_error != 0) {
+            LOG("GUIGAME auto VMC %s failed: %d\n", vmc, status.VMC_error);
+            guiMsgBox(_l(_STR_AUTO_VMC_FAILED), 0, NULL);
+            return 1;
+        }
+        // Same report as the VMC dialog: only a definite 0 speaks (-1 = the store cannot answer).
+        if (sysVMCContiguity() == 0)
+            guiMsgBox(_l(_STR_VMC_FRAGMENTED_ON_CREATE), 0, NULL);
+    }
+
+    configSetVMC(configSet, vmc, 0);
+    menuSaveConfig(); // the normal CFG error message covers a failed write; the launch goes on
+    return 1;
+}
+
 void guiGameShowVMCMenu(int id, item_list_t *support)
 {
     int result = -1;
@@ -561,7 +648,7 @@ static int guiGameCheatUpdater(int modified)
     return 0;
 }
 
-void guiGameShowCheatConfig(void)
+void guiGameShowCheatConfig(int neutrinoCore)
 {
     // configure the enumerations
     const char *settingsSource[] = {_l(_STR_GLOBAL_SETTINGS), _l(_STR_PERGAME_SETTINGS), NULL};
@@ -570,6 +657,8 @@ void guiGameShowCheatConfig(void)
     diaSetEnum(diaCheatConfig, CHTCFG_CHEATSOURCE, settingsSource);
     diaSetEnum(diaCheatConfig, CHTCFG_CHEATMODE, cheatmodeNames);
     diaSetEnabled(diaCheatConfig, CHTCFG_CHEATMODE, EnableCheat);
+    // Neutrino takes .cht codes but has no PS2RD cheat image: that row only applies to the OPL core.
+    diaSetEnabled(diaCheatConfig, CHTCFG_ENABLEIMAGE, !neutrinoCore);
 
     diaExecuteDialog(diaCheatConfig, -1, 1, &guiGameCheatUpdater);
 }

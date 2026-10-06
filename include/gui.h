@@ -115,7 +115,10 @@ struct gui_update_t *guiOpCreate(gui_op_type_t type);
 
 int guiShowKeyboard(char *value, int maxLength);
 int guiMsgBox(const char *text, int addAccept, struct UIItem *ui);
+int guiIsActive(void);
 int guiPromptRebootIop(void);
+// A missing-file message box naming the file that was looked for ("<message>\n<path>").
+void guiMsgBoxMissing(const char *message, const char *path);
 // The user's Confirm / Cancel buttons (Select Button setting) and their icons. Every screen asks these
 // instead of assuming Cross = confirm.
 int guiConfirmKey(void);
@@ -232,7 +235,7 @@ int guiConfirmVideoMode(void);
 
 int guiGameShowRemoveSettings(config_set_t *configSet, config_set_t *configGame);
 
-void guiManageCheats(void);
+void guiManageCheats(config_set_t *configSet);
 
 #ifdef RETROACHIEVEMENTS
 /* RA: two-line notice popup, set from the I/O thread (the check/test actions run

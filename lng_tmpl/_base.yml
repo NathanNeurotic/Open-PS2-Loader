@@ -1389,3 +1389,23 @@ gui_strings:
   string: "These Ember settings apply to every PS1 game, and some games crash with them. To change one game only, use Triangle > Ember Game Settings on that game."
 - label: PS1_SAVE_GUIDANCE
   string: "PS1 saves depend on Ember or POPSTARTER; PS2 VMC settings do not apply."
+- label: NEUTRINO_SHOW_ARGS
+  string: Show Launch Arguments
+- label: HINT_NEUTRINO_SHOW_ARGS
+  string: "Before each Neutrino launch, show every argument Neutrino will receive and ask to continue. Back returns to the menu without launching."
+- label: NEUTRINO_ARGS_CONFIRM
+  string: "Neutrino will start with these arguments. Launch?"
+- label: HINT_NARGS_EXTRA
+  string: "Other Neutrino flags, separated by spaces. A flag with its own row above (such as -logo) moves into that row when saved, and is still sent."
+- label: GAME_TYPE_LABELS
+  string: Show [PS1]/[PS2] Labels
+- label: NEUTRINO_CHEATS_WRITE_FAILED
+  string: "The cheat list could not be saved into the Neutrino folder, so Neutrino cannot use it. Launch without cheats?"
+- label: AUTO_CREATE_VMC
+  string: Create VMC on First Launch
+- label: HINT_AUTO_CREATE_VMC
+  string: "Launching a PS2 game with no VMC in slot 1 creates an 8 MB card on the game's device, named as the VMC screen suggests (shared by every disc of the game), and assigns it. Not for the internal HDD under Neutrino."
+- label: AUTO_VMC_CREATING
+  string: "Creating this game's VMC..."
+- label: AUTO_VMC_FAILED
+  string: "Could not create this game's VMC. The game starts without one."

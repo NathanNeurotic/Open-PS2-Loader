@@ -56,7 +56,7 @@ Review the LICENSE file for further details.<br><br>
 ![Network](https://img.shields.io/badge/Network-SMB%20%C2%B7%20UDPBD%20%C2%B7%20UDPFS%20%C2%B7%20HTTP-2ea043?style=flat&labelColor=0b3d18)
 ![PS2 Cores](https://img.shields.io/badge/PS2%20Cores-OPL%20%C2%B7%20Neutrino-2ea043?style=flat&labelColor=0b3d18)
 ![PS1 Cores](https://img.shields.io/badge/PS1%20Cores-POPStarter%20%C2%B7%20Ember-2ea043?style=flat&labelColor=0b3d18)
-![RetroAchievements](https://img.shields.io/badge/RetroAchievements-dev%20build%2C%20untested-orange?style=flat&labelColor=7a3e00)
+![RetroAchievements](https://img.shields.io/badge/RetroAchievements-dev%20build%2C%20partly%20hardware--tested-orange?style=flat&labelColor=7a3e00)
 
 [![Discord](https://img.shields.io/discord/1275875800318476381?style=flat&logo=Discord)](https://tinyurl.com/PS2SPACE)
 [![Documentation](https://img.shields.io/badge/Documentation-RiptOPL-skyblue?style=flat&logo=githubpages&logoColor=white&labelColor=navy)](https://nathanneurotic.github.io/Open-PS2-Loader/)
@@ -217,6 +217,11 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 - **Pad emulation (DS3/DS4):** On any build with PADEMU (the default), a DualShock 3 or DualShock 4 plugged into the console's USB port can navigate the OPL menu right away, with nothing to enable first. To play games with it, turn on **Pad Emulator** under **Settings**, then **Controller Settings** (globally, or per game via **Game Settings**). One caveat: pad emulation shares the SIO2 bus with MX4SIO SD-card loading, so running both can cause a game to hang on a black screen; leave Pad Emulator off if you boot from an MX4SIO card.
 - **GSM (video mode handling):** Builds that include GSM allow game video mode handling/overrides for display compatibility.
 - **VMC (Virtual Memory Cards):** Create and use VMC images (8MB to 64MB) via the `VMC` folder and per-game options.
+  **Create VMC on First Launch** (*Settings → Game Launching*, off by default) does it for you: a PS2 game launched
+  with nothing in VMC slot 1 gets an 8 MB card on its own device, named as the VMC screen suggests (so every disc of a
+  multi-disc game shares one), assigned and saved before the game starts. An existing card of that name is reused.
+  Back during creation cancels the launch. It skips PS1 and app rows, HTTP, and the internal APA HDD under Neutrino
+  (which has no VMC); a fragmented new card gets the same warning as the VMC screen.
 - **Per-game settings workflow:** Highlight a game, open **Game Settings**, adjust options (such as compatibility modes, cheats, GSM, PADEMU, and VMC), then save so settings persist per title.
 - **App launching (APPS + config methods):** OPL can launch homebrew ELFs using either `conf_apps.cfg` entries or per-app `title.cfg` metadata in `APPS` subfolders.
 
@@ -424,8 +429,8 @@ This build layers several features on top of upstream OPL:
   are certain you do not need SMB; the alternate builds are here for the `USBDELAY` cases.
 
 - **Where POPSTARTER's VCDs come from:** the PS1 library belongs to a device page, not a separate
-  device tab. The shared **PS2/PS1 Game Display** setting is shown on both **Interface** and
-  **PS Emulation Settings**. **Both (L3)** (the default) switches between separate PS2 and PS1
+  device tab. The **PS2/PS1 Game Display** setting on **Interface** decides how it is shown.
+  **Both (L3)** (the default) switches between separate PS2 and PS1
   views; **Mixed** starts with both in one list and L3 cycles Mixed → PS2 → PS1; **PS2** and **PS1**
   lock every applicable device page to one library and make L3 fully inert (no hint, sound,
   notification, or pause). APPS and Favorites remain independent. Wherever L3 does something, the
@@ -452,8 +457,8 @@ This build layers several features on top of upstream OPL:
   network pages list **Ember titles only**: Ember inherits the live connection, while POPSTARTER's
   IOP reset cannot restore either network transport. See **[docs/VCD.md](docs/VCD.md)**.
 - **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —
-  under Neutrino it greys the panels Neutrino ignores (GSM, Cheats, PADEMU, OSD Language and the
-  OPL-only compat modes) and offers a structured **Neutrino Video** picker (Off / 240p / 480p /
+  under Neutrino it greys the panels Neutrino ignores (GSM, PADEMU, OSD Language and the
+  OPL-only compat modes; cheats work on both cores) and offers a structured **Neutrino Video** picker (Off / 240p / 480p /
   1080i) plus a Neutrino-only **Mode 7** (`-gc=7`). Its global **Default Device** picker can also
   target a complete `neutrino/` folder on iLink explicitly. iLink is a FAT-model Neutrino backend;
   post-2692 builds automatically pair `-bsd=ilink` with `-qb` so Neutrino keeps the mounted iLink
@@ -462,7 +467,7 @@ This build layers several features on top of upstream OPL:
   instead of one flat list — **Game Sources** (device selection + start modes), **General & System**,
   **Network**, **Interface** (theme, artwork, Coverflow, PS2/PS1 Game Display), **Game Launching**
   (incl. the global Neutrino/OSD defaults), **PS Emulation Settings** (both PS1 cores: POPSTARTER
-  and Ember, plus the same PS2/PS1 Game Display picker shown on Interface), **Controller Settings** and
+  and Ember), **Controller Settings** and
   **Audio Settings** — each with chained sub-pages, plus a **Save Changes** entry at the foot of the
   index. Leaving the start/settings menu returns to the page you paused on when it is still visible;
   it no longer falls back to the first USB page.
@@ -563,7 +568,9 @@ HDDs are also able to be formatted as exFAT to avoid the 2TB limitation.  Please
 `settings_riptopl.cfg` holds RiptOPL's master settings; an older `conf_riptopl.cfg` is imported on
 read and migrated on save. The normal settings home starts with the loader's boot directory and
 uses discovery/fallbacks when that location cannot be used. **Custom Settings Path** can select a
-different home. Check the active location instead of assuming all settings are on `mc0:/OPL/`.
+different home, a memory card included: `mc1:` saves to the card root, and `mc1:/OPL` saves to that
+folder, which RiptOPL creates (with its browser icon) on the first save. Check the active location
+instead of assuming all settings are on `mc0:/OPL/`.
 
 If a place RiptOPL checks has no RiptOPL settings but does have official OPL's `conf_opl.cfg`,
 RiptOPL starts from that file. It is read-only: RiptOPL never writes it, and the next save writes
@@ -756,7 +763,9 @@ If a game has no cheat file, what happens depends on where cheats were turned on
 This mode will enable and apply all cheat codes in your `.cht` file to your game automatically.
 
   * Select Game Cheats:  
-When enabled a cheat selection menu will appear when you launch a game. You can navigate the menu and disable undesired cheats for this launch session. Master Codes cannot be disabled as they are required for any other cheats to be applied.
+When enabled a cheat selection menu appears when you launch a game. Turn on the cheats you want, then press **Start**. Your picks are **remembered for that game** and shown ticked the next time, matched by cheat name, so a cheat file that gains or reorders cheats keeps them. The first time, only the master code is on. Master codes (`Mastercode`, `Master Code`, `Enable Code (Must Be On)`) are always on and can't be switched off, because every other code needs them. An autolaunch uses the remembered picks without showing the menu.
+
+Cheats work the same way for games launched through **Neutrino**: same settings, same file, same menu. See [Cheats under Neutrino](docs/NEUTRINO.md#cheats-under-neutrino).
 
 ## NBD Server
 

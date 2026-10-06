@@ -1479,6 +1479,169 @@ static int sysSyncNeutrinoUdpfsToml(const char *neutrinoPath, const char *device
     return 0;
 }
 
+// Neutrino cheats. Neutrino reads PS2RD codes from a config file's eecore.cheats array (rickgaiser/neutrino
+// 0469cc31; the bundled build has it, v1.8.0 itself does not), so a launch with cheats writes one into
+// Neutrino's folder and names it with -cfg=. Set pre-teardown by sysNeutrinoHandCheats, read by
+// sysRunNeutrinoLaunch for its preflight and its real run alike, so both compose the same argv.
+#define NEUTRINO_CHEAT_CFG "riptopl-cheats"
+
+static char sysNeutrinoCheatArg[24];     // "-cfg=riptopl-cheats", or "" for no cheats
+static char sysNeutrinoCheatStartup[32]; // the game that file was written for
+
+// The value of the last ACTIVE `flag` (a key prefix such as "-cwd=") in the global then the per-game
+// args, read the way Neutrino reads them: last one wins, a $-prefixed token is switched off and --b
+// ends the options in each scope. 1 = found.
+static int neutrinoArgActiveValue(const char *extraArgs, const char *flag, char *out, int outSize)
+{
+    const char *sources[2] = {gNeutrinoArgs, extraArgs};
+    int flen = (int)strlen(flag), found = 0;
+
+    for (int s = 0; s < 2; s++) {
+        for (const char *p = sources[s]; p != NULL && *p != '\0';) {
+            while (*p == ' ' || *p == '\t')
+                p++;
+            const char *end = p;
+            while (*end != '\0' && *end != ' ' && *end != '\t')
+                end++;
+            int len = (int)(end - p);
+            if (len == 3 && !strncmp(p, "--b", 3))
+                break;
+            if (len > flen && !strncmp(p, flag, flen)) {
+                snprintf(out, outSize, "%.*s", len - flen, p + flen);
+                found = 1;
+            }
+            p = end;
+        }
+    }
+    return found;
+}
+
+// Where Neutrino will look for -cfg=NEUTRINO_CHEAT_CFG: config/ under its working directory -- the -cwd=
+// the user forwards, else the folder holding neutrino.elf, which is what sysRunNeutrinoLaunch passes --
+// or that directory itself in the flat layout, which Neutrino falls back to when config/system.toml is
+// absent. 0 = built; -1 = no directory to anchor on.
+static int sysNeutrinoCheatPath(const char *neutrinoPath, const char *extraArgs, char *out, int outSize)
+{
+    char dir[256], probe[300];
+    char sep = '/';
+    int fd, len;
+
+    if (neutrinoArgActiveValue(extraArgs, "-cwd=", dir, sizeof(dir))) {
+        len = (int)strlen(dir);
+        if (len == 0)
+            return -1;
+        if (strchr(dir, '\\') != NULL)
+            sep = '\\';
+        if (dir[len - 1] != '/' && dir[len - 1] != '\\' && dir[len - 1] != ':' && len + 1 < (int)sizeof(dir)) {
+            dir[len++] = sep;
+            dir[len] = '\0';
+        }
+    } else {
+        const char *slash = sysLastPathSeparator(neutrinoPath);
+        if (slash == NULL)
+            return -1;
+        snprintf(dir, sizeof(dir), "%.*s", (int)(slash - neutrinoPath) + 1, neutrinoPath);
+        sep = *slash;
+    }
+    // hddN: is the raw APA namespace, where O_CREAT CREATES A PARTITION (config.c's configPathIsRawApa
+    // guards its own writes the same way). A custom Neutrino path can name it; never open anything
+    // there -- only mounted filesystems (pfsN:, massN:, mcN:, ...) take the file.
+    if (!strncmp(dir, "hdd", 3) && dir[3] >= '0' && dir[3] <= '9' && dir[4] == ':')
+        return -1;
+
+    snprintf(probe, sizeof(probe), "%sconfig%csystem.toml", dir, sep);
+    fd = open(probe, O_RDONLY);
+    if (fd >= 0) {
+        close(fd);
+        snprintf(out, outSize, "%sconfig%c%s.toml", dir, sep, NEUTRINO_CHEAT_CFG);
+    } else
+        snprintf(out, outSize, "%s%s.toml", dir, NEUTRINO_CHEAT_CFG);
+    return 0;
+}
+
+// A -cfg name we can safely quote into a TOML string: no quote, backslash or control character.
+static int sysNeutrinoCfgNameSafe(const char *name)
+{
+    for (; *name != '\0'; name++) {
+        if (*name == '"' || *name == '\\' || (unsigned char)*name < 0x20)
+            return 0;
+    }
+    return 1;
+}
+
+// The enabled codes as a Neutrino config file. `depends` keeps a -cfg the user forwards: Neutrino reads
+// only the last -cfg -- this one -- and loads theirs through it. 0 = written in full.
+static int sysWriteNeutrinoCheats(const char *path, const char *startup, const char *userCfg, const u32 *list, int pairs)
+{
+    int size = 512 + pairs * 32, len, fd, written, i;
+    char *text = malloc(size);
+
+    if (text == NULL)
+        return -1;
+    len = snprintf(text, size,
+                   "# Written by RiptOPL for every Neutrino launch with cheats on: the game's enabled\n"
+                   "# PS2RD codes. Rewritten each time; safe to delete.\n"
+                   "name = \"RiptOPL cheats for %s\"\n",
+                   startup);
+    if (userCfg[0] != '\0')
+        len += snprintf(text + len, size - len, "depends = [\"%s\"]\n", userCfg);
+    len += snprintf(text + len, size - len, "eecore.cheats = [\n");
+    for (i = 0; i < pairs; i++)
+        len += snprintf(text + len, size - len, "    0x%08X, 0x%08X,\n", (unsigned int)list[i * 2], (unsigned int)list[i * 2 + 1]);
+    len += snprintf(text + len, size - len, "]\n");
+
+    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd < 0) {
+        free(text);
+        return -1;
+    }
+    written = write(fd, text, len);
+    close(fd);
+    free(text);
+    if (written != len) {
+        unlink(path); // never leave half a list where a later launch could name it
+        return -1;
+    }
+    return 0;
+}
+
+int sysNeutrinoHandCheats(const char *startup, const char *neutrinoPath, const char *extraArgs)
+{
+    char path[320], userCfg[64];
+    const u32 *list;
+    int pairs;
+
+    sysNeutrinoCheatArg[0] = '\0';
+    sysNeutrinoCheatStartup[0] = '\0';
+    if (!GetCheatsEnabled() || startup == NULL || neutrinoPath == NULL)
+        return 0;
+
+    set_cheats_list();
+    list = GetCheatsList();
+    for (pairs = 0; pairs < MAX_CHEATLIST / 2 && list[pairs * 2] != 0; pairs++)
+        ;
+    if (pairs == 0) {
+        LOG("[NEUTRINO] cheats on, but none enabled for %s -- nothing to hand over\n", startup);
+        return 0;
+    }
+
+    if (!neutrinoArgActiveValue(extraArgs, "-cfg=", userCfg, sizeof(userCfg)) || !strcmp(userCfg, NEUTRINO_CHEAT_CFG) ||
+        !sysNeutrinoCfgNameSafe(userCfg))
+        userCfg[0] = '\0';
+    if (sysNeutrinoCheatPath(neutrinoPath, extraArgs, path, sizeof(path)) < 0 ||
+        sysWriteNeutrinoCheats(path, startup, userCfg, list, pairs) < 0) {
+        LOG("[NEUTRINO] cheats for %s could not be written next to %s\n", startup, neutrinoPath);
+        // A read-only share or a full card: an autolaunch has no one to ask and goes on without them.
+        if (gAutoLaunchGame != NULL || gAutoLaunchBDMGame != NULL)
+            return 0;
+        return guiMsgBox(_l(_STR_NEUTRINO_CHEATS_WRITE_FAILED), 1, NULL) ? 0 : -1;
+    }
+    snprintf(sysNeutrinoCheatArg, sizeof(sysNeutrinoCheatArg), "-cfg=%s", NEUTRINO_CHEAT_CFG);
+    snprintf(sysNeutrinoCheatStartup, sizeof(sysNeutrinoCheatStartup), "%s", startup);
+    LOG("[NEUTRINO] %d cheat code(s) for %s -> %s\n", pairs, startup, path);
+    return 0;
+}
+
 // Δ6 (NHDDL parity): everything that can FAIL a Neutrino launch and is checkable pre-teardown runs
 // HERE, called by every device leg BEFORE deinitEx -- the GUI is alive for a toast and nothing has
 // been torn down, so a failure is "stay in the menu", not a post-teardown black screen. Returns
@@ -1518,6 +1681,46 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
         }
     }
     return 0;
+}
+
+// sysRunNeutrinoLaunch's preflight result when the user backed out of the argument preview: the
+// launch stops, but nothing is wrong with the arguments, so no overflow warning follows.
+#define NEUTRINO_LAUNCH_DECLINED -2
+
+// One readable line for the launch preview: entries joined by single spaces, and an entry that
+// itself contains a space or tab (a spaced ISO or VMC path) wrapped in quotes, so it still reads as
+// the ONE argument Neutrino receives. The budget check has already capped the strings at 256 bytes.
+static void sysFormatNeutrinoArgv(char *out, int outSize, int argc, char *const *argv)
+{
+    int len = 0;
+    int i;
+
+    if (out == NULL || outSize <= 0)
+        return;
+    out[0] = '\0';
+    for (i = 0; i < argc && len < outSize - 1; i++) {
+        int quote = strchr(argv[i], ' ') != NULL || strchr(argv[i], '\t') != NULL;
+        int n = snprintf(out + len, outSize - len, "%s%s%s%s", i ? " " : "", quote ? "\"" : "", argv[i], quote ? "\"" : "");
+        if (n < 0)
+            break;
+        len += n;
+    }
+}
+
+// Settings > Game Launching > Show Launch Arguments: before the teardown, show the exact argv this
+// launch will hand to Neutrino -- the array sysRunNeutrinoLaunch just composed, not a reconstruction --
+// and let the user back out. Autolaunch has no menu to answer it, so it launches as configured.
+// Returns 1 = launch, 0 = the user chose Back.
+static int sysNeutrinoConfirmArgv(int argc, char *const *argv)
+{
+    char joined[384];
+    char text[480];
+
+    if (!gNeutrinoShowArgs || !guiIsActive())
+        return 1;
+    sysFormatNeutrinoArgv(joined, sizeof(joined), argc, argv);
+    snprintf(text, sizeof(text), "%s\n\n%s", _l(_STR_NEUTRINO_ARGS_CONFIRM), joined);
+    return guiMsgBox(text, 1, NULL);
 }
 
 static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs, int checkOnly)
@@ -1752,6 +1955,10 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
     int globalBreak = 0, gameBreak = 0;
     argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs, 0, &globalBreak);
     argc = appendArgTokens(argv, argc, argvMax, extraArgsBuf, sizeof(extraArgsBuf), extraArgs, 0, &gameBreak);
+    // Cheats (sysNeutrinoHandCheats): after the user's own options, so the -cfg Neutrino keeps -- its
+    // last -- is ours, which loads theirs through `depends`. Only for the game the file was written for.
+    if (sysNeutrinoCheatArg[0] != '\0' && startup != NULL && !strcmp(startup, sysNeutrinoCheatStartup) && argc < argvMax)
+        argv[argc++] = sysNeutrinoCheatArg;
     if ((globalBreak || gameBreak) && argc < argvMax)
         argv[argc++] = "--b";
     argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs, 1, &globalBreak);
@@ -1778,7 +1985,7 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
     }
 
     if (checkOnly)
-        return 0;
+        return sysNeutrinoConfirmArgv(argc, argv) ? 0 : NEUTRINO_LAUNCH_DECLINED;
 
     // Log the FULL argv (not just bsd/dvd/compat) so the VMC -mc args are verifiable on hardware (#47).
     LOG("[NEUTRINO] elf=%s argc=%d\n", neutrinoPath, argc);
@@ -1800,7 +2007,10 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
 
 int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
 {
-    if (sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1) < 0) {
+    int result = sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1);
+    if (result == NEUTRINO_LAUNCH_DECLINED)
+        return -1; // Back on the argument preview: stay in the menu, nothing to warn about
+    if (result < 0) {
         guiWarning(_l(_STR_NEUTRINO_LAUNCH_ARGS_OVERFLOW), 6);
         return -1;
     }
