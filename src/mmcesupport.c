@@ -978,9 +978,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     void *irx = &mmce_cdvdman_irx;
     int irx_size = size_mmce_cdvdman_irx;
     compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
+    if (compatmask < 0) // sbPrepare failed (patch zone not found): `index` is unset -- bail before using
+        return;         // it. (The old `if (settings == NULL)` guard was dead: irx + index is never NULL.)
     settings = (struct cdvdman_settings_mmce *)((u8 *)irx + index);
-    if (settings == NULL)
-        return;
 
     // Persist last-played BEFORE any card switch below: on an FMCB-on-MMCE setup this write goes to
     // the card's mcN: surface, and after a GameID switch it would land inside the per-game virtual
@@ -1140,6 +1140,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                 fileXioClose(vmc_fds[0]);
             if (vmc_fds[1] >= 0)
                 fileXioClose(vmc_fds[1]);
+            // Back to the menu, so undo sbPrepare too: it finds its patch zone by the pristine pattern,
+            // and a zone left filled in fails every later MMCE launch until the console is reset.
+            sbUnprepare(&settings->common);
             return;
         }
         settings->port = detectedPort;
@@ -1262,6 +1265,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             fileXioClose(vmc_fds[0]);
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
+        // And the same patch-zone restore, for the same reason: the next MMCE launch has to find it.
+        sbUnprepare(&settings->common);
         guiWarning(_l(_STR_ERR_FILE_INVALID), 8); // batch S5: never bail silently
         return;
     }
