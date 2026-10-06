@@ -277,10 +277,11 @@ longer names can be set by editing the <code>.cfg</code> file directly.
 
 <h2 id="cheats">Cheat Settings</h2>
 <p>The <b>Cheat Settings</b> screen lets you enable or disable PS2RD cheat codes loaded from a
-<code>.cht</code> file in the <code>CHT/</code> folder. Cheats are applied by OPL's built-in core at
-launch; <b>this panel is an OPL core feature</b> and is not available under Neutrino.</p>
-<p>If the game's Loader Core is set to Neutrino, opening Cheat Settings displays the message
-<em>"This setting is not used with the Neutrino core."</em></p>
+<code>.cht</code> file in the <code>CHT/</code> folder. It works on <b>both cores</b>: OPL's built-in core applies
+the codes itself, and a Neutrino game gets them handed over in <code>riptopl-cheats.toml</code>. With the
+Neutrino core only the <b>PS2RD Cheat Image</b> row is greyed &mdash; Neutrino has no cheat-image support.</p>
+<p>In <b>Select Game Cheats</b> mode the cheats you pick are remembered for that game, by name, and are already
+ticked the next time it launches, on either core.</p>
 <p>For the cheat file format and a full how-to, see <a href="cheats.html">Cheats</a> and the
 <a href="https://nathanneurotic.github.io/POPSLoader/cheats.html">POPStarter cheats reference</a>.</p>
 
@@ -326,7 +327,7 @@ will be silently ignored at launch.</p>
     <tr><td>Mode 4 — Skip Videos</td><td><b>Active</b></td><td>Greyed (no Neutrino equivalent)</td></tr>
     <tr><td>Mode 6 — Disable IGR</td><td><b>Active</b></td><td>Greyed (no Neutrino equivalent)</td></tr>
     <tr><td>Mode 7 — Fix IOP buffer overrun</td><td>Greyed (no OPL effect)</td><td><b>Active</b></td></tr>
-    <tr><td>Cheats panel</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>
+    <tr><td>Cheats panel</td><td><b>Active</b></td><td><b>Active</b> (PS2RD Cheat Image row greyed)</td></tr>
     <tr><td>GSM panel</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>
     <tr><td>PADEMU / Pad Macro panels</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>
     <tr><td>OSD Language panel</td><td><b>Active</b></td><td>Shows "not used with Neutrino core"</td></tr>

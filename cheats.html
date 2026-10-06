@@ -256,18 +256,39 @@ share reports a file that isn't there that way.</p>
     </tr>
     <tr>
       <td><b>Select Game Cheats</b></td>
-      <td>A cheat selection menu appears at launch time. You can navigate the list and disable
-          individual cheats for that session. <b>Master Codes cannot be disabled</b> — they are
-          required for any other codes to function and are always applied.</td>
+      <td>A cheat selection menu appears at launch time: tick the cheats you want and press Start.
+          <b>Your picks are remembered for that game</b> and are already ticked next time, on either core.
+          They are matched by cheat name, so a <code>.cht</code> that gains or reorders cheats keeps them.
+          The first time, only the Master Codes are on. <b>Master Codes cannot be disabled</b> — they are
+          required for any other codes to function and are always applied. A game started by
+          Auto Loading runs its remembered picks without showing the menu.</td>
     </tr>
   </tbody>
 </table>
 
 <div class="callout info"><div class="h">Master Codes</div>
 A Master Code (sometimes called a "must be on" or "activator" code) is a prerequisite hook that
-the cheat engine must write before any other codes in the file take effect. OPL identifies these
-by their address type and always keeps them enabled, even in <b>Select Game Cheats</b> mode.
+the cheat engine must write before any other codes in the file take effect. OPL recognises them by
+their heading &mdash; <code>Mastercode</code>, <code>Master Code</code> or <code>Enable Code (Must Be On)</code>, in any
+case and spacing &mdash; and always keeps them enabled, even in <b>Select Game Cheats</b> mode.
 You will see them in the selection menu but cannot toggle them off.</div>
+
+<h2 id="neutrino">Cheats with the Neutrino core</h2>
+<p>A game set to the Neutrino core uses the same <code>.cht</code> file, the same settings and the same
+selection menu. At launch RiptOPL writes the enabled codes to <code>riptopl-cheats.toml</code> where Neutrino
+reads its configs &mdash; its <code>config/</code> folder, the Neutrino folder itself for a flat install, or a
+<code>-cwd=</code> you forward &mdash; and adds <code>-cfg=riptopl-cheats</code> to the launch. The file is
+rewritten every time and is safe to delete.</p>
+<ul class="checklist">
+<li>No enabled codes means no file and no <code>-cfg</code>.</li>
+<li>A <code>-cfg=</code> of your own still loads: Neutrino keeps only its last <code>-cfg</code>, which is ours, and
+ours names yours in its <code>depends</code>.</li>
+<li>If the folder will not take the file (a read-only share, a full card), RiptOPL asks before launching
+without cheats. Auto Loading launches without them.</li>
+<li>The <b>PS2RD Cheat Image</b> (<code>.img</code>) is OPL-core only and is greyed for a Neutrino game.</li>
+<li><b>Show Launch Arguments</b> (see <a href="neutrino.html#show-args">Neutrino Core</a>) shows the
+<code>-cfg</code> before you launch.</li>
+</ul>
 
 <h2 id="ps2rd-image">PS2RD Cheat Image (.img)</h2>
 <p>In addition to text <code>.cht</code> codes, OPL supports a <b>prebuilt PS2RD cheat image</b>
@@ -338,6 +359,12 @@ if the source is set to Global). The relevant config keys are:</p>
       <td><code>$EnableImage</code></td>
       <td>0 = Off, 1 = On</td>
       <td>Loads and applies the prebuilt <code>.img</code> binary patch alongside (or instead of) text codes.</td>
+    </tr>
+    <tr>
+      <td><code>$CheatSel000</code>, <code>$CheatSel001</code>, &hellip;</td>
+      <td>a cheat name</td>
+      <td>The optional cheats picked in Select Game Cheats mode, one name per key. Rewritten on every pick;
+          Master Codes are never stored.</td>
     </tr>
   </tbody>
 </table>
