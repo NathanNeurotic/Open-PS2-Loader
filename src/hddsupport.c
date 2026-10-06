@@ -2191,6 +2191,9 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     return 1;
 }
 
+// Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
+static int hddMcemuSlots[2] = {-2, -2};
+
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, size_irx = 0;
@@ -2313,15 +2316,15 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                     } else
                         LOG("VMC error\n");
                 }
+            } else
+                hdd_vmc_infos.active = 0; // no card for this slot: write it inactive, so a card from an aborted launch cannot linger
 
-                for (i = 0; i < size_hdd_mcemu_irx; i++) {
-                    if (((u32 *)&hdd_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                        if (hdd_vmc_infos.active)
-                            size_mcemu_irx = size_hdd_mcemu_irx;
-                        memcpy(&((u32 *)&hdd_mcemu_irx)[i], &hdd_vmc_infos, sizeof(hdd_vmc_infos_t));
-                        break;
-                    }
-                }
+            // This write covers the slot's marker, so its position is found once and reused (sbMcemuSlotWord).
+            int slotWord = sbMcemuSlotWord(&hdd_mcemu_irx, size_hdd_mcemu_irx, vmc_id, hddMcemuSlots);
+            if (slotWord >= 0) {
+                if (hdd_vmc_infos.active)
+                    size_mcemu_irx = size_hdd_mcemu_irx;
+                memcpy(&((u32 *)&hdd_mcemu_irx)[slotWord], &hdd_vmc_infos, sizeof(hdd_vmc_infos_t));
             }
         }
     }
@@ -2354,7 +2357,10 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         irx = &hdd_cdvdman_irx;
     }
 
-    sbPrepare(NULL, configSet, size_irx, irx, &i);
+    // sbPrepare sets `i` only when it finds the patch zone. Without one, `i` is uninitialised or left over
+    // from the VMC loops above, and every settings write below would land at that offset.
+    if (sbPrepare(NULL, configSet, size_irx, irx, &i) < 0)
+        return;
     sbEnsureIgrUsbDrivers(compatMode);
 
     if (gHDDPrefix != NULL) {
