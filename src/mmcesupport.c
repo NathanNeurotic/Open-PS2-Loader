@@ -923,9 +923,12 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
+// Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
+static int mmceMcemuSlots[2] = {-2, -2};
+
 void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
-    int i, index, compatmask = 0;
+    int index, compatmask = 0;
     int EnablePS2Logo = 0;
     int result;
 
@@ -979,9 +982,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     void *irx = &mmce_cdvdman_irx;
     int irx_size = size_mmce_cdvdman_irx;
     compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
+    if (compatmask < 0) // sbPrepare failed (patch zone not found): `index` is unset -- bail before using
+        return;         // it. (The old `if (settings == NULL)` guard was dead: irx + index is never NULL.)
     settings = (struct cdvdman_settings_mmce *)((u8 *)irx + index);
-    if (settings == NULL)
-        return;
 
     // Persist last-played BEFORE any card switch below: on an FMCB-on-MMCE setup this write goes to
     // the card's mcN: surface, and after a GameID switch it would land inside the per-game virtual
@@ -1052,14 +1055,12 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             }
         }
 
-        u32 max_words = size_mmce_mcemu_irx / sizeof(u32);
-        for (i = 0; i < max_words; i++) {
-            if (((u32 *)&mmce_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (mmce_vmc_infos.active)
-                    size_mcemu_irx = size_mmce_mcemu_irx;
-                memcpy(&((u32 *)&mmce_mcemu_irx)[i], &mmce_vmc_infos, sizeof(mmce_vmc_infos_t));
-                break;
-            }
+        // This write covers the slot's marker, so its position is found once and reused (sbMcemuSlotWord).
+        int slotWord = sbMcemuSlotWord(&mmce_mcemu_irx, size_mmce_mcemu_irx, vmc_id, mmceMcemuSlots);
+        if (slotWord >= 0) {
+            if (mmce_vmc_infos.active)
+                size_mcemu_irx = size_mmce_mcemu_irx;
+            memcpy(&((u32 *)&mmce_mcemu_irx)[slotWord], &mmce_vmc_infos, sizeof(mmce_vmc_infos_t));
         }
     }
 
@@ -1141,6 +1142,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                 fileXioClose(vmc_fds[0]);
             if (vmc_fds[1] >= 0)
                 fileXioClose(vmc_fds[1]);
+            // Back to the menu, so undo sbPrepare too: it finds its patch zone by the pristine pattern,
+            // and a zone left filled in fails every later MMCE launch until the console is reset.
+            sbUnprepare(&settings->common);
             return;
         }
         settings->port = detectedPort;
@@ -1263,6 +1267,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             fileXioClose(vmc_fds[0]);
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
+        // And the same patch-zone restore, for the same reason: the next MMCE launch has to find it.
+        sbUnprepare(&settings->common);
         guiWarning(_l(_STR_ERR_FILE_INVALID), 8); // batch S5: never bail silently
         return;
     }

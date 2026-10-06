@@ -319,8 +319,13 @@ if 'if (pCommon != NULL)\n        sbUnprepare(pCommon);' not in support:
     failures.append('supportbase.c: sbCheatsMissingContinue must accept NULL from the lean Neutrino legs')
 lean = function(support, 'int sbNeutrinoLoadCheats(')
 if not (lean.find('InitCheatsConfig(configSet);') < lean.find('sbLoadCheats(prefix, startup, configSet)') <
-        lean.find('sbCheatsMissingContinue(NULL, result)') < lean.find('sysNeutrinoHandCheats(')):
+        lean.find('sbCheatsMissingContinue(NULL, result)') < lean.find('return sysNeutrinoHandCheats(startup, neutrinoPath, extraArgs);')):
     failures.append('supportbase.c: sbNeutrinoLoadCheats must read the settings, load, ask, then hand over')
+# An APA disk without its OPL partition has no data home: gHDDPrefix is NULL and there is no CHT/ to read.
+# The helper must not format a NULL prefix; it launches without cheats and clears the last hand-over.
+if not (0 <= lean.find('if (prefix == NULL)\n        return sysNeutrinoHandCheats(NULL, neutrinoPath, extraArgs);') <
+        lean.find('sbLoadCheats(prefix, startup, configSet)')):
+    failures.append('supportbase.c: sbNeutrinoLoadCheats must handle a NULL prefix (no data home) before loading')
 
 if 'gCheats[cheat_index].enabled = (gCheatMode == 0) || cheatConfigIsMasterCode(gCheats[cheat_index].name);' not in text('src/cheatman.c'):
     failures.append('cheatman.c: Select mode must start from the master codes alone')
