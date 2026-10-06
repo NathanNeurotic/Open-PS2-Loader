@@ -2245,12 +2245,26 @@ static int createMcSettingsFolder(const char *path)
         closedir(dir);
         return 0;
     }
-    errno = 0;
-    if (mkdir(folder, 0777) < 0) {
-        gLastSaveErrno = errno != 0 ? errno : EIO;
-        return -1;
+    // Each missing level in turn, since mkdir makes only the last one: "mc1:/APPS/OPL" on a card
+    // without APPS needs both.
+    for (size_t i = 6; i <= len; i++) {
+        if ((folder[i] != '/' && folder[i] != '\0') || folder[i - 1] == '/')
+            continue;
+        char end = folder[i];
+        folder[i] = '\0';
+        dir = opendir(folder);
+        if (dir != NULL)
+            closedir(dir);
+        else {
+            errno = 0;
+            if (mkdir(folder, 0777) < 0) {
+                gLastSaveErrno = errno != 0 ? errno : EIO;
+                return -1;
+            }
+            LOG("CONFIG created settings folder %s\n", folder);
+        }
+        folder[i] = end;
     }
-    LOG("CONFIG created settings folder %s\n", folder);
     return 0;
 }
 

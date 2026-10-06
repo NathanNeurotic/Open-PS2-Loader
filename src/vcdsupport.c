@@ -1738,21 +1738,45 @@ static int vcdInstallPopstarterMcAt(const char *devPrefix, const char *mcDir)
     return firstError;
 }
 
+// 1 when <devPrefix>POPS/ holds at least one of POPStarter's card modules -- the only reason an install
+// may MAKE a POPSTARTER folder. Icons alone are not one: they exist to draw a folder, not to need it.
+static int vcdPopstarterModulesAt(const char *devPrefix)
+{
+    char src[320];
+
+    if (devPrefix == NULL || devPrefix[0] == '\0')
+        return 0;
+    for (unsigned int i = 0; i < sizeof(vcdPopstarterMcFile) / sizeof(vcdPopstarterMcFile[0]); i++) {
+        if (strstr(vcdPopstarterMcFile[i], ".irx") == NULL)
+            continue;
+        snprintf(src, sizeof(src), "%s%s%c%s", devPrefix, POPS_FOLDER, vcdSep(devPrefix), vcdPopstarterMcFile[i]);
+        int fd = open(src, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int vcdInstallPopstarterMc(const char *devPrefix)
 {
-    char mcDir[64], srcDir[96];
+    char mcDir[64];
     int result;
 
-    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
-        return -3;
+    // A card that has the folder gets whatever it is missing. One without it only gets a folder when
+    // this device has POPStarter modules to put there: a POPS/ folder without them needs nothing on the
+    // card, and an empty folder draws in the browser as Corrupted Data.
+    if (!vcdFindPopstarterMc(mcDir, sizeof(mcDir))) {
+        if (!vcdPopstarterModulesAt(devPrefix))
+            return 0;
+        if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
+            return -3;
+    }
     result = vcdInstallPopstarterMcAt(devPrefix, mcDir);
-    // The install copies POPStarter's icons when this device's POPS/ has them; when it did not, the
+    // The install brings POPStarter's own icons when this device's POPS/ has them; when it did not, the
     // folder still gets one (RiptOPL's, retitled) rather than drawing as Corrupted Data.
-    if (devPrefix != NULL)
-        snprintf(srcDir, sizeof(srcDir), "%s%s%c", devPrefix, POPS_FOLDER, vcdSep(devPrefix));
-    else
-        srcDir[0] = '\0';
-    vcdStampPopstarterIcons(mcDir, srcDir);
+    vcdStampPopstarterIcons(mcDir, NULL);
     return result;
 }
 
@@ -2366,10 +2390,18 @@ vcd_popsnet_ensure_t vcdPreparePopstarterSmbLaunch(const char *smbPrefix)
         return VCD_POPSNET_IO_ERROR;
     if (cfg.ipInvalid || cfg.smbInvalid)
         return VCD_POPSNET_INVALID;
+    // No POPSTARTER folder yet and no modules on the share to fill one: the launch cannot run, and a
+    // folder made now would sit empty -- drawn in the browser as Corrupted Data.
+    DIR *homeDir = opendir(cfg.home);
+    if (homeDir != NULL)
+        closedir(homeDir);
+    else if (errno == ENOENT && !vcdPopstarterModulesAt(smbPrefix))
+        return VCD_POPSNET_SMB_MISSING;
     if (!vcdEnsurePopstarterNetDir(cfg.home))
         return VCD_POPSNET_IO_ERROR;
     if (smbPrefix != NULL && smbPrefix[0] != '\0')
         installRes = vcdInstallPopstarterMcAt(smbPrefix, cfg.home);
+    vcdStampPopstarterIcons(cfg.home, NULL); // POPStarter's own icons came with the install when the share has them
     if (!vcdSmbModulesPresentAt(cfg.home)) {
         if (installRes == -2 || installRes == -3)
             return VCD_POPSNET_IO_ERROR;

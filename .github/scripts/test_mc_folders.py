@@ -6,8 +6,9 @@ nothing made the folder. A user with no interest in POPStarter: RiptOPL put an e
 on the card that the browser shows as Corrupted Data -- merely READING the BDMA setting created it.
 
 Compiles the real normalizeMcPath / createMcSettingsFolder (src/opl.c) and the real POPSTARTER folder
-code (src/vcdsupport.c: find, resolve, icon stamp, BDMA mode read, environment check) against an
-in-memory memory card, then checks the wiring of every flow that creates a folder.
+code (src/vcdsupport.c: find, resolve, icon stamp, BDMA mode read, environment check, the PS1 launch
+install) against an in-memory memory card that, like a real one, makes one folder level at a time,
+then checks the wiring of every flow that creates a folder.
 """
 from pathlib import Path
 import re
@@ -59,6 +60,12 @@ pieces = '\n\n'.join([
     block(vcd, r'^static const bdma_pair_sig_t vcdBdmaPairSig\[VCD_BDMA_MODE_COUNT\] = \{.*?\};'),
     function(vcd, 'static int vcdGetFileSize('),
     function(vcd, 'int vcdBdmaEnvironmentValid('),
+    '#define POPS_FOLDER "POPS"',
+    function(vcd, 'static char vcdSep('),
+    block(vcd, r'^static const char \*vcdPopstarterMcFile\[9\] = \{[^;]*\};'),
+    function(vcd, 'static int vcdInstallPopstarterMcAt('),
+    function(vcd, 'static int vcdPopstarterModulesAt('),
+    function(vcd, 'int vcdInstallPopstarterMc('),
 ])
 
 HARNESS = r'''
@@ -95,7 +102,16 @@ static DIR theDir;
 static int isDir(const char *p) { for (int i = 0; i < ndirs; i++) if (!strcmp(dirs[i], p)) return 1; return 0; }
 static DIR *opendir(const char *p) { return isDir(p) ? &theDir : NULL; }
 static int closedir(DIR *d) { (void)d; return 0; }
-static int mkdir(const char *p, int mode) { (void)mode; mkdirs++; if (mkdirFails) { errno = EIO; return -1; } if (!isDir(p)) snprintf(dirs[ndirs++], 96, "%s", p); return 0; }
+static int mkdir(const char *p, int mode)
+{
+    char parent[96]; const char *sl = strrchr(p, '/');
+    (void)mode; mkdirs++;
+    if (mkdirFails) { errno = EIO; return -1; }
+    snprintf(parent, sizeof(parent), "%.*s", sl ? (int)(sl - p) : 0, p);
+    if (sl && sl - p > 4 && !isDir(parent)) { errno = ENOENT; return -1; }   /* like a card: one level at a time */
+    if (!isDir(p)) snprintf(dirs[ndirs++], 96, "%s", p);
+    return 0;
+}
 static int findFile(const char *p) { for (int i = 0; i < 64; i++) if (files[i].used && !strcmp(files[i].path, p)) return i; return -1; }
 static int putFile(const char *p, const void *d, int len)
 {
@@ -146,6 +162,9 @@ int main(void)
     reset(); createMcSettingsFolder("mc1:/OPL"); mkdirs = 0; r = createMcSettingsFolder("mc1:/OPL"); printf("folder again r=%d mkdirs=%d\n", r, mkdirs);
     reset(); mkdirFails = 1; gLastSaveErrno = 0; r = createMcSettingsFolder("mc1:/OPL"); printf("folder fail r=%d errno=%d\n", r, gLastSaveErrno == EIO);
     reset(); r = createMcSettingsFolder("mass0:/OPL"); printf("folder notcard r=%d mkdirs=%d\n", r, mkdirs);
+    reset(); r = createMcSettingsFolder("mc1:/APPS/OPL/"); a = isDir("mc1:/APPS"); b = isDir("mc1:/APPS/OPL");
+    printf("folder nested r=%d mkdirs=%d exists=%d,%d\n", r, mkdirs, a, b);
+    reset(); snprintf(dirs[ndirs++], 96, "mc1:/APPS"); r = createMcSettingsFolder("mc1:/APPS/OPL"); printf("folder under r=%d mkdirs=%d\n", r, mkdirs);
 
     /* POPSTARTER: reading never makes the folder. */
     reset();
@@ -168,6 +187,20 @@ int main(void)
     /* ...and with no source set, RiptOPL's icon retitled POPSTARTER, one list.icn for all three views. */
     reset(); vcdResolvePopstarterMc(out, sizeof(out)); vcdStampPopstarterIcons(out, "mass0:/POPS/");
     hexfile("fallback list.icn", "mc0:/POPSTARTER/list.icn"); hexfile("fallback icon.sys", "mc0:/POPSTARTER/icon.sys");
+
+    /* The PS1 launch install: a POPS/ folder with only icons needs nothing on the card... */
+    reset(); snprintf(dirs[ndirs++], 96, "mass0:/POPS"); putFile("mass0:/POPS/list.icn", "LST", 3);
+    r = vcdInstallPopstarterMc("mass0:/"); a = vcdFindPopstarterMc(out, sizeof(out));
+    printf("install iconsonly r=%d mkdirs=%d found=%d\n", r, mkdirs, a);
+    /* ...one with a module gets the folder, the module and icons... */
+    reset(); snprintf(dirs[ndirs++], 96, "mass0:/POPS"); putFile("mass0:/POPS/smbman.irx", "SMB", 3);
+    r = vcdInstallPopstarterMc("mass0:/");
+    a = findFile("mc0:/POPSTARTER/smbman.irx") >= 0; b = findFile("mc0:/POPSTARTER/icon.sys") >= 0; c = findFile("mc0:/POPSTARTER/list.icn") >= 0;
+    printf("install modules mkdirs=%d smbman=%d icon=%d list=%d\n", mkdirs, a, b, c);
+    /* ...and a folder already there without icons (an older build's) gets them on the next launch. */
+    reset(); vcdResolvePopstarterMc(out, sizeof(out)); mkdirs = 0;
+    r = vcdInstallPopstarterMc("mass0:/"); a = findFile("mc0:/POPSTARTER/icon.sys") >= 0;
+    printf("install existing mkdirs=%d icon=%d\n", mkdirs, a);
     return 0;
 }
 '''
@@ -187,7 +220,7 @@ lines = list(got)
 want_head = ['norm mc1: -> mc1:/', 'norm mc1:OPL -> mc1:/OPL', 'norm mc1:/OPL -> mc1:/OPL', 'norm mc0:APPS/X -> mc0:/APPS/X',
              'norm mmce0: -> mmce0:', 'norm mc?:OPL -> mc?:OPL', 'norm mass0:/OPL -> mass0:/OPL',
              'folder root r=0 mkdirs=0', 'folder new r=0 mkdirs=1 exists=1', 'folder again r=0 mkdirs=0', 'folder fail r=-1 errno=1',
-             'folder notcard r=0 mkdirs=0',
+             'folder notcard r=0 mkdirs=0', 'folder nested r=0 mkdirs=2 exists=1,1', 'folder under r=0 mkdirs=1',
              'read mode=0 found=0 valid fat32=1 valid usbexfat=0 mkdirs=0',
              'resolve r=1 dir=mc0:/POPSTARTER mkdirs=1', 'resolve again r=1 mkdirs=1']
 if lines[:len(want_head)] != want_head:
@@ -209,6 +242,11 @@ else:
             failures.append('fallback icon.sys: title %r, break %d, names %r' % (title, struct.unpack_from('<H', fallback, 6)[0], names))
         if fallback[:0xC0] [8:] != icon_sys[:0xC0][8:] or fallback[0x1C4:] != icon_sys[0x1C4:]:
             failures.append('the fallback may only change the title, its break and the three names')
+for line, why in (('install iconsonly r=0 mkdirs=0 found=0', 'a POPS/ folder with no modules must not put a folder on the card'),
+                  ('install modules mkdirs=1 smbman=1 icon=1 list=1', 'a POPS/ folder with modules gets the card folder, the modules and icons'),
+                  ('install existing mkdirs=0 icon=1', 'an existing folder without icons must get them on the next launch')):
+    if line not in got:
+        failures.append('PS1 launch install: %s (output %r)' % (why, [l for l in lines if l.startswith('install')]))
 
 # ---- the wiring --------------------------------------------------------------------------------
 
@@ -242,8 +280,15 @@ if not (0 <= first_find < not_found < create < stamp < stage):
 if not re.search(r'if \(mode == VCD_BDMA_FAT32\) \{(?:(?!\n    \}).)*?if \(!haveDir\)\s*return 0;', equip, re.S):
     failures.append('vcdsupport.c vcdEquipBdma: FAT32 needs no folder -- with none there, nothing to do')
 install = function(vcd, 'int vcdInstallPopstarterMc(')
-if not (0 <= install.find('vcdInstallPopstarterMcAt(devPrefix, mcDir)') < install.find('vcdStampPopstarterIcons(mcDir, srcDir);')):
-    failures.append('vcdsupport.c vcdInstallPopstarterMc: the folder it makes must end with icons')
+if not (0 <= install.find('vcdFindPopstarterMc(mcDir, sizeof(mcDir))') < install.find('if (!vcdPopstarterModulesAt(devPrefix))') <
+        install.find('vcdResolvePopstarterMc(mcDir, sizeof(mcDir))') < install.find('vcdInstallPopstarterMcAt(devPrefix, mcDir)') <
+        install.find('vcdStampPopstarterIcons(mcDir, NULL);')):
+    failures.append('vcdsupport.c vcdInstallPopstarterMc: make the folder only for modules to install, and end with icons')
+smb = function(vcd, 'vcd_popsnet_ensure_t vcdPreparePopstarterSmbLaunch(')
+if not (0 <= smb.find('else if (errno == ENOENT && !vcdPopstarterModulesAt(smbPrefix))\n        return VCD_POPSNET_SMB_MISSING;') <
+        smb.find('vcdEnsurePopstarterNetDir(cfg.home)') < smb.find('vcdInstallPopstarterMcAt(smbPrefix, cfg.home)') <
+        smb.find('vcdStampPopstarterIcons(cfg.home, NULL);')):
+    failures.append('vcdsupport.c vcdPreparePopstarterSmbLaunch: no folder when the share has no modules for it; icons on the one it makes')
 net = function(vcd, 'int vcdWritePopstarterNetFiles(')
 if not (0 <= net.find('vcdEnsurePopstarterNetDir(dir)') < net.find('vcdStampPopstarterIcons(dir, NULL);') < net.find('vcdSafeWriteFile(')):
     failures.append('vcdsupport.c vcdWritePopstarterNetFiles: the folder it makes must get icons before the config files')
