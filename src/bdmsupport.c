@@ -2083,11 +2083,16 @@ fail:
     return failResult;
 }
 
+// Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
+static int bdmMcemuSlots[2] = {-2, -2};
+
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, fd, iop_fd, index, compatmask = 0;
     int EnablePS2Logo = 0;
     int result;
+    u64 isoTotalBytes = 0;
+    int isoSizeKnown = 1;
     u64 startingLBA;
     unsigned int startCluster;
     char partname[256], filename[32];
@@ -2258,13 +2263,12 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         } else
             LOG("VMC error\n");
 
-        for (i = 0; i < size_bdm_mcemu_irx; i++) {
-            if (((u32 *)&bdm_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (bdm_vmc_infos.active)
-                    size_mcemu_irx = size_bdm_mcemu_irx;
-                memcpy(&((u32 *)&bdm_mcemu_irx)[i], &bdm_vmc_infos, sizeof(bdm_vmc_infos_t));
-                break;
-            }
+        // This write covers the slot's marker, so its position is found once and reused (sbMcemuSlotWord).
+        int slotWord = sbMcemuSlotWord(&bdm_mcemu_irx, size_bdm_mcemu_irx, vmc_id, bdmMcemuSlots);
+        if (slotWord >= 0) {
+            if (bdm_vmc_infos.active)
+                size_mcemu_irx = size_bdm_mcemu_irx;
+            memcpy(&((u32 *)&bdm_mcemu_irx)[slotWord], &bdm_vmc_infos, sizeof(bdm_vmc_infos_t));
         }
     }
 
@@ -2331,8 +2335,16 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         iso_frag->frag_count += iFragCount;
         iTotalFragCount += iFragCount;
 
+        // A part whose size cannot be read makes the whole size unknown: a partial or wrapped total
+        // would be a wrong bound, and an unknown one keeps CDVDMAN on the PVD (sbGetMediaLsnCount).
+        s64 partBytes = lseek64(fd, 0, SEEK_END);
+        if (partBytes > 0)
+            isoTotalBytes += (u64)partBytes;
+        else
+            isoSizeKnown = 0;
+
         if ((gPS2Logo) && (i == 0))
-            EnablePS2Logo = CheckPS2Logo(fd, 0);
+            EnablePS2Logo = CheckPS2Logo(fd, 0); // seeks to 0 itself
 
         close(fd);
     }
@@ -2340,6 +2352,11 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // Initialize layer 1 information.
     sbCreatePath(game, partname, pDeviceData->bdmPrefix, "/", 0);
     layer1_start = sbGetISO9660MaxLBA(partname);
+
+    // Real media size, for CDVDMAN's out-of-bounds read emulation (upstream OPL #1763). The ISO9660
+    // PVD cannot be trusted for this: badly mastered discs understate it and read data past the end
+    // of the volume by raw LBA.
+    settings->common.mediaLsnCount = sbGetMediaLsnCount(partname, isoSizeKnown ? isoTotalBytes : 0);
 
     switch (game->format) {
         case GAME_FORMAT_USBLD:

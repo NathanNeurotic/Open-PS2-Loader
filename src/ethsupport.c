@@ -22,6 +22,7 @@
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioDevctl(ethBase, SMB_***)
+#include <ps2sdkapi.h>   // lseek64
 
 #include "include/nbns.h"
 #include "httpclient.h"
@@ -713,6 +714,9 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
     sysLaunchEmber(emberElf, cueName);
 }
 
+// Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
+static int ethMcemuSlots[2] = {-2, -2};
+
 static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, compatmask;
@@ -791,13 +795,12 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
             }
         }
 
-        for (i = 0; i < size_smb_mcemu_irx; i++) {
-            if (((u32 *)&smb_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (smb_vmc_infos.active)
-                    size_mcemu_irx = size_smb_mcemu_irx;
-                memcpy(&((u32 *)&smb_mcemu_irx)[i], &smb_vmc_infos, sizeof(smb_vmc_infos_t));
-                break;
-            }
+        // This write covers the slot's marker, so its position is found once and reused (sbMcemuSlotWord).
+        int slotWord = sbMcemuSlotWord(&smb_mcemu_irx, size_smb_mcemu_irx, vmc_id, ethMcemuSlots);
+        if (slotWord >= 0) {
+            if (smb_vmc_infos.active)
+                size_mcemu_irx = size_smb_mcemu_irx;
+            memcpy(&((u32 *)&smb_mcemu_irx)[slotWord], &smb_vmc_infos, sizeof(smb_vmc_infos_t));
         }
     }
 
@@ -807,6 +810,8 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     }
 
     compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &i);
+    if (compatmask < 0) // sbPrepare failed (patch zone not found) and never set `i`: it still holds the
+        return;         // VMC loop's counter, so every settings write below would land at a wrong offset.
     sbEnsureIgrUsbDrivers(compatmask);
 
 #ifdef RETROACHIEVEMENTS
@@ -860,6 +865,27 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     strcpy(settings->smb_user, gPCUserName);
     strcpy(settings->smb_password, gPCPassword);
 
+    // Sum the size of all parts, for CDVDMAN's out-of-bounds read emulation (upstream OPL #1763).
+    // One part that cannot be opened or sized makes the whole size unknown: a partial total would be
+    // too small a bound and refuse reads in the missing part, while an unknown size keeps the driver
+    // on the PVD, as before (sbGetMediaLsnCount).
+    u64 isoTotalBytes = 0;
+    int isoSizeKnown = 1;
+    int part;
+    for (part = 0; part < game->parts; part++) {
+        sbCreatePath(game, partname, ethPrefix, "\\", part);
+        int fd = open(partname, O_RDONLY, 0666);
+        s64 partBytes = -1;
+        if (fd >= 0) {
+            partBytes = lseek64(fd, 0, SEEK_END);
+            close(fd);
+        }
+        if (partBytes > 0)
+            isoTotalBytes += (u64)partBytes;
+        else
+            isoSizeKnown = 0;
+    }
+
     // Initialize layer 1 information.
     sbCreatePath(game, partname, ethPrefix, "\\", 0);
 
@@ -872,6 +898,10 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     }
 
     layer1_start = sbGetISO9660MaxLBA(partname);
+
+    // Real media size; the ISO9660 PVD cannot be trusted for this (badly mastered discs understate
+    // it and read data past the end of the volume by raw LBA).
+    settings->common.mediaLsnCount = sbGetMediaLsnCount(partname, isoSizeKnown ? isoTotalBytes : 0);
 
     switch (game->format) {
         case GAME_FORMAT_USBLD:

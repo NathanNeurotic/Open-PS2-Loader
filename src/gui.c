@@ -987,8 +987,8 @@ static void guiFreeNameList(const char **list)
     free((void *)list);
 }
 
-// One persisted four-mode PS2/PS1 picker is presented on both Interface and PS Emulation. Keeping its
-// enum setup/readback here prevents two visually identical rows from acquiring different semantics.
+// The persisted four-mode PS2/PS1 picker lives on Interface only; both Interface entry points
+// (guiShowUIConfig, guiSettingsShowInterface) share this enum setup/readback so they cannot drift.
 // Saved values keep their historical ABI (Both=0, PS2=1, PS1=2, Mixed=3), while the picker uses
 // the user-facing order requested by the display model.
 static const char *guiGameViewNames[] = {"Both (L3)", "Mixed", "PS2", "PS1", NULL};
@@ -3097,7 +3097,6 @@ static int guiSettingsShowPopstarter(void)
     diaSetInt(ui, CFG_EMBER_SHADING, emberShadingShown);
     diaSetEnum(ui, CFG_EMBER_CONTROLLER, emberControllerStrs);
     diaSetInt(ui, CFG_EMBER_CONTROLLER, emberControllerShown);
-    guiSetGameViewPicker(ui);
 
     guiCorePathBegin(ui, CFG_POPSTARTER_PATH, popstarterPathEdit, sizeof(popstarterPathEdit), gPopstarterPath);
     diaSetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, gPopstarterRetroGemGameID);
@@ -3118,8 +3117,6 @@ reshow_popstarter:
     }
 
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, popstarterPathEdit, gPopstarterPath)) {
-        int gameViewChanged = guiReadGameViewPicker(ui);
-
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
         int emberDisplay = emberSettingFromRow(ui, CFG_EMBER_DISPLAY, emberDisplayShown, gEmberDisplay);
         // 480p is the one choice that can blank the screen (composite shows nothing): ask first, and
@@ -3148,8 +3145,6 @@ reshow_popstarter:
         gPopstarterDevice = (gPopstarterPath[0] != '\0') ? POPS_DEV_CUSTOM : POPS_DEV_DEFAULT;
         guiSaveBdmaSettings(ui);
         applyConfig(-1, -1, 0);
-        if (gameViewChanged)
-            guiRefreshGameViews();
         menuReinitMainMenu();
     }
 
