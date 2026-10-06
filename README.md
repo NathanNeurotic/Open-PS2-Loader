@@ -217,6 +217,11 @@ This section is a fast feature map to improve discoverability of core OPL capabi
 - **Pad emulation (DS3/DS4):** On any build with PADEMU (the default), a DualShock 3 or DualShock 4 plugged into the console's USB port can navigate the OPL menu right away, with nothing to enable first. To play games with it, turn on **Pad Emulator** under **Settings**, then **Controller Settings** (globally, or per game via **Game Settings**). One caveat: pad emulation shares the SIO2 bus with MX4SIO SD-card loading, so running both can cause a game to hang on a black screen; leave Pad Emulator off if you boot from an MX4SIO card.
 - **GSM (video mode handling):** Builds that include GSM allow game video mode handling/overrides for display compatibility.
 - **VMC (Virtual Memory Cards):** Create and use VMC images (8MB to 64MB) via the `VMC` folder and per-game options.
+  **Create VMC on First Launch** (*Settings → Game Launching*, off by default) does it for you: a PS2 game launched
+  with nothing in VMC slot 1 gets an 8 MB card on its own device, named as the VMC screen suggests (so every disc of a
+  multi-disc game shares one), assigned and saved before the game starts. An existing card of that name is reused.
+  Back during creation cancels the launch. It skips PS1 and app rows, HTTP, and the internal APA HDD under Neutrino
+  (which has no VMC); a fragmented new card gets the same warning as the VMC screen.
 - **Per-game settings workflow:** Highlight a game, open **Game Settings**, adjust options (such as compatibility modes, cheats, GSM, PADEMU, and VMC), then save so settings persist per title.
 - **App launching (APPS + config methods):** OPL can launch homebrew ELFs using either `conf_apps.cfg` entries or per-app `title.cfg` metadata in `APPS` subfolders.
 
@@ -569,7 +574,9 @@ HDDs are also able to be formatted as exFAT to avoid the 2TB limitation.  Please
 `settings_riptopl.cfg` holds RiptOPL's master settings; an older `conf_riptopl.cfg` is imported on
 read and migrated on save. The normal settings home starts with the loader's boot directory and
 uses discovery/fallbacks when that location cannot be used. **Custom Settings Path** can select a
-different home. Check the active location instead of assuming all settings are on `mc0:/OPL/`.
+different home, a memory card included: `mc1:` saves to the card root, and `mc1:/OPL` saves to that
+folder, which RiptOPL creates (with its browser icon) on the first save. Check the active location
+instead of assuming all settings are on `mc0:/OPL/`.
 
 If a place RiptOPL checks has no RiptOPL settings but does have official OPL's `conf_opl.cfg`,
 RiptOPL starts from that file. It is read-only: RiptOPL never writes it, and the next save writes

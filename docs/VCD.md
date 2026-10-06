@@ -195,8 +195,14 @@ block-device modules (the BDMAssault / "BDMA" drivers). RiptOPL
 *equips* them for you from the BDMA rows on **Settings → PS Emulation Settings** — RiptOPL copies the selected
 loose pair from a device's `POPS/` folder onto your memory card:
 
-RiptOPL prefers an existing `mc0:/POPSTARTER` or `mc1:/POPSTARTER` folder. On first setup it
-creates the folder on the first present card (slot 1, then slot 2). Both replacement modules are
+RiptOPL prefers an existing `mc0:/POPSTARTER` or `mc1:/POPSTARTER` folder. It **creates** one only
+when it has something to put in it: a BDMA driver pair it found, a POPSTARTER launch's install, or a
+POPStarter network-settings save. Opening the settings, reading the BDMA mode, or choosing FAT32 (no
+external driver) never creates it. A new folder goes on the first present card (slot 1, then
+slot 2) and always gets its browser icon first: POPStarter's own `icon.sys`/`list.icn`/`del.icn`
+from the `POPS/` folder the files come from, or RiptOPL's icon titled POPSTARTER when that folder has
+none. It therefore never shows as Corrupted Data. An icon-less folder left by an older build can
+simply be deleted from the PS2 browser if you don't use POPStarter. Both replacement modules are
 staged before the live pair is changed, so a failed copy leaves the previous pair available.
 
 - **VCD BDMA Apply on Launch** *(default On)* — POPSTARTER does its own IOP reset and reloads

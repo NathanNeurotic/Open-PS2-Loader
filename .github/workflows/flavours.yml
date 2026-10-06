@@ -77,6 +77,8 @@ jobs:
         run: python3 .github/scripts/test_save_icons.py
       - name: Check Back on a Settings page keeps its edits and only a real change reconnects SMB
         run: python3 .github/scripts/test_settings_back_keeps_edits.py
+      - name: Check a memory-card settings path saves and POPSTARTER is made only when needed, with icons
+        run: python3 .github/scripts/test_mc_folders.py
       - name: Check Settings pages fit before they scroll, BDM rows indent, and RiptOPL's plasma
         run: python3 .github/scripts/test_settings_fit.py
       - name: Check Settings and its prompts follow the user's confirm button
@@ -95,6 +97,8 @@ jobs:
         run: python3 .github/scripts/test_net_protocol_pick.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
+      - name: Check Create VMC on First Launch creates, reuses, skips and reports correctly
+        run: python3 .github/scripts/test_auto_create_vmc.py
 
   release-notes-tests:
     runs-on: ubuntu-24.04

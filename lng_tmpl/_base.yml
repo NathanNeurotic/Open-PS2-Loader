@@ -1401,6 +1401,14 @@ gui_strings:
   string: Show [PS1]/[PS2] Labels
 - label: NEUTRINO_CHEATS_WRITE_FAILED
   string: "The cheat list could not be saved into the Neutrino folder, so Neutrino cannot use it. Launch without cheats?"
+- label: AUTO_CREATE_VMC
+  string: Create VMC on First Launch
+- label: HINT_AUTO_CREATE_VMC
+  string: "Launching a PS2 game with no VMC in slot 1 creates an 8 MB card on the game's device, named as the VMC screen suggests (shared by every disc of the game), and assigns it. Not for the internal HDD under Neutrino."
+- label: AUTO_VMC_CREATING
+  string: "Creating this game's VMC..."
+- label: AUTO_VMC_FAILED
+  string: "Could not create this game's VMC. The game starts without one."
 - label: SAVE_ICONS
   string: "3D Save Icons"
 - label: HINT_SAVE_ICONS

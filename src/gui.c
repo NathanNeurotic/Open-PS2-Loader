@@ -2979,6 +2979,7 @@ static int guiSettingsShowLaunch(void)
     diaSetEnum(ui, CFG_DEFAULT_CORE, defaultCoreStrs);
     diaSetInt(ui, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     diaSetInt(ui, CFG_PS2LOGO, gPS2Logo);
+    diaSetInt(ui, CFG_AUTO_CREATE_VMC, gAutoCreateVmc);
     guiCorePathBegin(ui, CFG_NEUTRINO_PATH, neutrinoPathEdit, sizeof(neutrinoPathEdit), gNeutrinoPath);
     diaSetEnum(ui, CFG_NEUTRINO_VIDEO, neutrinoVideoDefStrs);
     diaSetInt(ui, CFG_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
@@ -3009,6 +3010,7 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, neutrinoPathEdit, gNeutrinoPath)) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
+        diaGetInt(ui, CFG_AUTO_CREATE_VMC, &gAutoCreateVmc);
         if (strcmp(gNeutrinoPath, neutrinoPathEdit) != 0)
             gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
