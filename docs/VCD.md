@@ -28,8 +28,8 @@ launch.
 
 ## 2. Choose Both, Mixed, PS2, or PS1
 
-The same **PS2/PS1 Game Display** picker appears on both **Interface** and
-**PS Emulation Settings**. They edit one persisted setting:
+The **PS2/PS1 Game Display** picker is on **Settings → Interface**. It is one global setting
+for every device page:
 
 | Value | Behavior |
 | --- | --- |
