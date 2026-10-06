@@ -429,8 +429,8 @@ This build layers several features on top of upstream OPL:
   are certain you do not need SMB; the alternate builds are here for the `USBDELAY` cases.
 
 - **Where POPSTARTER's VCDs come from:** the PS1 library belongs to a device page, not a separate
-  device tab. The shared **PS2/PS1 Game Display** setting is shown on both **Interface** and
-  **PS Emulation Settings**. **Both (L3)** (the default) switches between separate PS2 and PS1
+  device tab. The **PS2/PS1 Game Display** setting on **Interface** decides how it is shown.
+  **Both (L3)** (the default) switches between separate PS2 and PS1
   views; **Mixed** starts with both in one list and L3 cycles Mixed → PS2 → PS1; **PS2** and **PS1**
   lock every applicable device page to one library and make L3 fully inert (no hint, sound,
   notification, or pause). APPS and Favorites remain independent. Wherever L3 does something, the
@@ -467,7 +467,7 @@ This build layers several features on top of upstream OPL:
   instead of one flat list — **Game Sources** (device selection + start modes), **General & System**,
   **Network**, **Interface** (theme, artwork, Coverflow, PS2/PS1 Game Display), **Game Launching**
   (incl. the global Neutrino/OSD defaults), **PS Emulation Settings** (both PS1 cores: POPSTARTER
-  and Ember, plus the same PS2/PS1 Game Display picker shown on Interface), **Controller Settings** and
+  and Ember), **Controller Settings** and
   **Audio Settings** — each with chained sub-pages, plus a **Save Changes** entry at the foot of the
   index. Leaving the start/settings menu returns to the page you paused on when it is still visible;
   it no longer falls back to the first USB page.

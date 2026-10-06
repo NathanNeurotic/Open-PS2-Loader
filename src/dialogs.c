@@ -433,13 +433,8 @@ struct UIItem diaVcdConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_POPSTARTER}}},
     {UI_SPLITTER},
 
-    // The same persisted global picker shown on Interface. Both templates use UICFG_GAMEVIEW, so
-    // either page edits one value and the L3 gate cannot drift between them.
-    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GAME_VIEW_MODE}}},
-    {UI_SPACER},
-    {UI_ENUM, UICFG_GAMEVIEW, 1, 1, _STR_HINT_GAME_VIEW_MODE, 0, 0, {.intvalue = {0, 0}}},
-    {UI_BREAK},
-
+    // PS2/PS1 Game Display is NOT on this page: it decides how every device lists its games, so it
+    // lives on Interface only (it was mirrored here once; CosmicScale, 10-06).
     {UI_LABEL, CFG_LBL_POPSTARTER_PATH, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_PATH}}},
     {UI_SPACER},
     {UI_STRING, CFG_POPSTARTER_PATH, 1, 1, _STR_HINT_POPSTARTER_PATH, 0, 0, {.stringvalue = {"", "", &guiPopstarterPathHandler}}},
