@@ -766,6 +766,8 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     int vmc_id, size_mcemu_irx = 0;
     smb_vmc_infos_t smb_vmc_infos;
     vmc_superblock_t vmc_superblock;
+    // A static, because the first launch writes over the markers that sbPatchVmcSpec finds the slots by.
+    static int vmcSpecWord[2] = {-1, -1};
 
     for (vmc_id = 0; vmc_id < 2; vmc_id++) {
         memset(&smb_vmc_infos, 0, sizeof(smb_vmc_infos_t));
@@ -791,14 +793,8 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
             }
         }
 
-        for (i = 0; i < size_smb_mcemu_irx; i++) {
-            if (((u32 *)&smb_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (smb_vmc_infos.active)
-                    size_mcemu_irx = size_smb_mcemu_irx;
-                memcpy(&((u32 *)&smb_mcemu_irx)[i], &smb_vmc_infos, sizeof(smb_vmc_infos_t));
-                break;
-            }
-        }
+        if (sbPatchVmcSpec(&smb_mcemu_irx, size_smb_mcemu_irx, vmc_id, &smb_vmc_infos, sizeof(smb_vmc_infos_t), vmcSpecWord) && smb_vmc_infos.active)
+            size_mcemu_irx = size_smb_mcemu_irx;
     }
 
     if (gRememberLastPlayed) {

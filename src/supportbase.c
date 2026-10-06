@@ -1006,6 +1006,43 @@ void sbUnprepare(void *pCommon)
     memcpy(pCommon, &cdvdman_settings_common_sample, sizeof(struct cdvdman_settings_common));
 }
 
+/*
+  mcemu reads its VMC settings from vmcSpec[slot] inside its own image, so the native legs write them
+  into the embedded IRX before they launch. vmcSpec[slot] is found by its starting value: `active`
+  begins as 0xC0DEFAC0 + slot (modules/mcemu/mcemu_var.c). The first write replaces that marker, and
+  nothing puts it back. When every launch searched for it, a launch that went back to the menu after
+  the write left the next one nothing to find, and that game ran without its VMC, saving to the real
+  memory card instead.
+
+  Putting the marker back would have to happen on every way back to the menu: declined prompts, a
+  cancelled cheats prompt, failed opens, the Neutrino aborts, and any return added later. Remembering
+  where the marker was needs none of them. So each slot is searched for once, specWord[slot] keeps the
+  word it was found at, and every later launch writes there. The caller keeps specWord in a static,
+  one per IRX, because the IRX itself no longer says where the slot is.
+*/
+int sbPatchVmcSpec(void *mcemu_irx, int size_mcemu_irx, int slot, const void *vmc_infos, int size_vmc_infos, int *specWord)
+{
+    u32 *words = (u32 *)mcemu_irx;
+    int i;
+
+    if (specWord[slot] < 0) {
+        // The IRX size is in bytes, and the whole of vmc_infos has to fit after the marker.
+        for (i = 0; i * (int)sizeof(u32) + size_vmc_infos <= size_mcemu_irx; i++) {
+            if (words[i] == 0xC0DEFAC0 + slot) {
+                specWord[slot] = i;
+                break;
+            }
+        }
+        if (specWord[slot] < 0) {
+            LOG("sbPatchVmcSpec: VMC slot %d not found in the mcemu IRX.\n", slot);
+            return 0;
+        }
+    }
+
+    memcpy(&words[specWord[slot]], vmc_infos, size_vmc_infos);
+    return 1;
+}
+
 void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID)
 {
     char path[256];

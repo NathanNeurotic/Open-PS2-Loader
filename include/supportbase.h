@@ -69,6 +69,9 @@ int sbGetCompatModes(config_set_t *configSet);
 void sbEnsureIgrUsbDrivers(int compatmask);
 int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex);
 void sbUnprepare(void *pCommon);
+// Writes one VMC slot's settings into an embedded mcemu IRX. 1 = written, 0 = no such slot. specWord is the
+// caller's static int[2], starting at {-1, -1}; supportbase.c says why it has to outlive the launch.
+int sbPatchVmcSpec(void *mcemu_irx, int size_mcemu_irx, int slot, const void *vmc_infos, int size_vmc_infos, int *specWord);
 void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID);
 void sbCreatePath(const base_game_info_t *game, char *path, const char *prefix, const char *sep, int part);
 void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id);

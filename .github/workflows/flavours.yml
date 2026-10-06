@@ -93,6 +93,8 @@ jobs:
         run: python3 .github/scripts/test_net_protocol_pick.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
+      - name: Check every native launch hands mcemu its VMC slots, even after one went back to the menu
+        run: python3 .github/scripts/test_mcemu_vmc_patch.py
 
   release-notes-tests:
     runs-on: ubuntu-24.04

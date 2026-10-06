@@ -2248,6 +2248,8 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int part_valid = 0, size_mcemu_irx = 0, nparts;
     hdd_vmc_infos_t hdd_vmc_infos;
     memset(&hdd_vmc_infos, 0, sizeof(hdd_vmc_infos_t));
+    // A static, because the first launch writes over the markers that sbPatchVmcSpec finds the slots by.
+    static int vmcSpecWord[2] = {-1, -1};
 
     configGetVMC(configSet, vmc_name[0], sizeof(vmc_name[0]), 0);
     configGetVMC(configSet, vmc_name[1], sizeof(vmc_name[1]), 1);
@@ -2272,9 +2274,9 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         pfs_blockinfo_t blocks[11];
 
         for (vmc_id = 0; vmc_id < 2; vmc_id++) {
+            hdd_vmc_infos.active = 0;
             if (vmc_name[vmc_id][0]) {
                 have_error = 1;
-                hdd_vmc_infos.active = 0;
                 if (sysCheckVMC(gHDDPrefix, "/", vmc_name[vmc_id], 0, &vmc_superblock) > 0) {
                     hdd_vmc_infos.flags = vmc_superblock.mc_flag & 0xFF;
                     hdd_vmc_infos.flags |= 0x100;
@@ -2313,16 +2315,13 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                     } else
                         LOG("VMC error\n");
                 }
-
-                for (i = 0; i < size_hdd_mcemu_irx; i++) {
-                    if (((u32 *)&hdd_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                        if (hdd_vmc_infos.active)
-                            size_mcemu_irx = size_hdd_mcemu_irx;
-                        memcpy(&((u32 *)&hdd_mcemu_irx)[i], &hdd_vmc_infos, sizeof(hdd_vmc_infos_t));
-                        break;
-                    }
-                }
             }
+
+            // Write both slots, set up or not. A slot left alone keeps what an earlier launch wrote there
+            // before it went back to the menu, and if that was an active VMC, mcemu would mount that
+            // other game's card next to this one.
+            if (sbPatchVmcSpec(&hdd_mcemu_irx, size_hdd_mcemu_irx, vmc_id, &hdd_vmc_infos, sizeof(hdd_vmc_infos_t), vmcSpecWord) && hdd_vmc_infos.active)
+                size_mcemu_irx = size_hdd_mcemu_irx;
         }
     }
 

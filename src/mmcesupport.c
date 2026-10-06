@@ -925,7 +925,7 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
 
 void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
-    int i, index, compatmask = 0;
+    int index, compatmask = 0;
     int EnablePS2Logo = 0;
     int result;
 
@@ -1028,6 +1028,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int vmc_fds[2] = {-1, -1}; // track VMC fds to close on the Neutrino handoff path (B3)
     mmce_vmc_infos_t mmce_vmc_infos;
     vmc_superblock_t vmc_superblock;
+    // A static, because the first launch writes over the markers that sbPatchVmcSpec finds the slots by.
+    static int vmcSpecWord[2] = {-1, -1};
 
     for (vmc_id = 0; vmc_id < 2; vmc_id++) {
         memset(&mmce_vmc_infos, 0, sizeof(mmce_vmc_infos));
@@ -1052,15 +1054,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             }
         }
 
-        u32 max_words = size_mmce_mcemu_irx / sizeof(u32);
-        for (i = 0; i < max_words; i++) {
-            if (((u32 *)&mmce_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (mmce_vmc_infos.active)
-                    size_mcemu_irx = size_mmce_mcemu_irx;
-                memcpy(&((u32 *)&mmce_mcemu_irx)[i], &mmce_vmc_infos, sizeof(mmce_vmc_infos_t));
-                break;
-            }
-        }
+        if (sbPatchVmcSpec(&mmce_mcemu_irx, size_mmce_mcemu_irx, vmc_id, &mmce_vmc_infos, sizeof(mmce_vmc_infos_t), vmcSpecWord) && mmce_vmc_infos.active)
+            size_mcemu_irx = size_mmce_mcemu_irx;
     }
 
     // Initialize layer 1 information.

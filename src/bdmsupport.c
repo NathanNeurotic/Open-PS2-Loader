@@ -2198,6 +2198,8 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     int vmc_id, size_mcemu_irx = 0;
     bdm_vmc_infos_t bdm_vmc_infos;
     vmc_superblock_t vmc_superblock;
+    // A static, because the first launch writes over the markers that sbPatchVmcSpec finds the slots by.
+    static int vmcSpecWord[2] = {-1, -1};
 
     for (vmc_id = 0; vmc_id < 2; vmc_id++) {
         memset(&bdm_vmc_infos, 0, sizeof(bdm_vmc_infos_t));
@@ -2258,14 +2260,8 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         } else
             LOG("VMC error\n");
 
-        for (i = 0; i < size_bdm_mcemu_irx; i++) {
-            if (((u32 *)&bdm_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (bdm_vmc_infos.active)
-                    size_mcemu_irx = size_bdm_mcemu_irx;
-                memcpy(&((u32 *)&bdm_mcemu_irx)[i], &bdm_vmc_infos, sizeof(bdm_vmc_infos_t));
-                break;
-            }
-        }
+        if (sbPatchVmcSpec(&bdm_mcemu_irx, size_bdm_mcemu_irx, vmc_id, &bdm_vmc_infos, sizeof(bdm_vmc_infos_t), vmcSpecWord) && bdm_vmc_infos.active)
+            size_mcemu_irx = size_bdm_mcemu_irx;
     }
 
     void *irx = NULL;
