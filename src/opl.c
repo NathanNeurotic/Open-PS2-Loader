@@ -2291,9 +2291,9 @@ static int prepareCustomSettingsPath(char *path, int pathLen)
 // Last-resort READ-ONLY discovery for a missing/stale config.path. This exists to recover the
 // chicken-and-egg custom-settings value from an already-existing config; it never creates a config,
 // never changes APA metadata, and never makes an arbitrary discovered device the permanent save home.
-// A known non-MC local boot self-migrates the loaded in-memory sets back to its normal boot home. A
-// concrete MC boot preserves the same-card directory it recovered, so its first save cannot relocate
-// an already-working MC1 configuration to the card root or the other slot. If the recovered config
+// A known local boot self-migrates the loaded in-memory sets back to its normal boot home -- beside the
+// ELF, MC boots included. Only an MC boot handed the bare card ("mc1:") keeps the same-card directory
+// it recovered, so its first save cannot land loose in the card root or on the other slot. If the recovered config
 // contains Custom Settings Path, _saveConfig will honor it and regenerate config.path on the user's
 // next explicit Save Changes.
 static int tryReadRecoveryConfigHome(int types, const char *home)
@@ -2325,6 +2325,12 @@ static int bootHomeIsConcreteMc(void)
 {
     return !strncmp(gBootDir, "mc", 2) &&
            (gBootDir[2] == '0' || gBootDir[2] == '1') && gBootDir[3] == ':';
+}
+
+// The launcher handed over the bare card ("mc1:" / "mc1:/"): there is no boot folder to save beside.
+static int bootHomeIsMcRoot(void)
+{
+    return bootHomeIsConcreteMc() && (gBootDir[4] == '\0' || (gBootDir[4] == '/' && gBootDir[5] == '\0'));
 }
 
 static int bootHomeIsKnownMmce(void)
@@ -2447,13 +2453,14 @@ static void restoreRecoverySaveHome(const char *recoveredHome)
             configSetMove((char *)mcHome);
         else
             configSetMove(NULL); // no concrete MC is reachable: keep the normal fail-visible wildcard home
-    } else if (sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed()) {
-        // A concrete MC boot that recovered its existing settings from the same card keeps that
-        // exact directory as its save owner. In particular, a launcher that supplies only "mc1:"
-        // as the boot CWD must not move a successfully read mc1:/OPL configuration to the card
-        // root (or to mc0 when both cards are inserted). This applies to RiptOPL's OWN settings
-        // only: an official conf_opl.cfg is a read-only seed and must not pull our save home into
-        // official OPL's folder, so that case falls through to the boot dir below.
+    } else if (sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed() && bootHomeIsMcRoot()) {
+        // A launcher that supplies only "mc1:" as the boot CWD leaves no folder to save beside, so a
+        // configuration recovered from the same card (mc1:/OPL) keeps that folder rather than moving
+        // to the card root (or to mc0 when both cards are inserted). Every other MC boot saves beside
+        // its ELF like any other boot -- settings follow the CWD -- through the branch below: an
+        // mc1:/APP_RIPTOPL boot that found older settings in mc1:/OPL reads them once and writes its
+        // next save beside the ELF, instead of keeping mc1:/OPL as its home for good. This applies to
+        // RiptOPL's OWN settings only: an official conf_opl.cfg is a read-only seed and never our home.
         configSetMove((char *)recoveredHome);
     } else if (gBootDir[0] != '\0') {
         configSetMove(gBootDir);
@@ -5411,11 +5418,48 @@ static void autoLaunchBDMGame(char *argv[])
 }
 
 // --------------------- Main --------------------
+// "mc?:" names no card. A launcher that hands over its configured wildcard leaves the slot to us,
+// and the file helpers would then use whichever card checkMC() prefers -- mc0 whenever both are
+// inserted -- so an mc1 install read and saved its settings on the other card. The card holding the
+// booted ELF (or, with no ELF name, the boot folder) is the boot card. Runs after reset() has loaded
+// the card driver; when neither card answers, the wildcard stays and nothing changes.
+static void resolveMcWildcardBootDir(void)
+{
+    char probe[sizeof(gBootDir) + sizeof(gBootElfName) + 8];
+    const char *rest;
+    DIR *dir;
+    int slot, fd;
+
+    if (strncmp(gBootDir, "mc?:", 4))
+        return;
+    rest = gBootDir + 4;
+    while (*rest == '/')
+        rest++;
+    for (slot = 0; slot < 2; slot++) {
+        if (gBootElfName[0] != '\0') {
+            snprintf(probe, sizeof(probe), "mc%d:/%s%s%s", slot, rest, rest[0] != '\0' ? "/" : "", gBootElfName);
+            fd = open(probe, O_RDONLY);
+            if (fd < 0)
+                continue;
+            close(fd);
+        } else {
+            snprintf(probe, sizeof(probe), "mc%d:/%s", slot, rest);
+            dir = opendir(probe);
+            if (dir == NULL)
+                continue;
+            closedir(dir);
+        }
+        gBootDir[2] = (char)('0' + slot);
+        return;
+    }
+}
+
 // Memory-card roots require an explicit slash for file creation (mc1:/FILE, not mc1:FILE).
 // Some launchers provide an equivalent compact path such as mc1:APPS/OPL.ELF or leave getcwd()
 // at mc1:. Normalize the generic device representation once, without any launcher-specific branch.
 static void normalizeMcBootDir(void)
 {
+    resolveMcWildcardBootDir();
     normalizeMcPath(gBootDir, sizeof(gBootDir));
 }
 

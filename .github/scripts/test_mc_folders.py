@@ -46,6 +46,10 @@ icon_sys = (root / 'misc/icon.sys').read_bytes()
 pieces = '\n\n'.join([
     function(opl, 'static void normalizeMcPath('),
     function(opl, 'static int createMcSettingsFolder('),
+    function(opl, 'static void resolveMcWildcardBootDir('),
+    function(opl, 'static void normalizeMcBootDir('),
+    function(opl, 'static int bootHomeIsConcreteMc('),
+    function(opl, 'static int bootHomeIsMcRoot('),
     block(vcd, r'^static const char \*vcdBdmaSuffix\[VCD_BDMA_MODE_COUNT\] = \{[^;]*\};'),
     block(vcd, r'^static const char \*vcdBdmaModule\[2\] = \{[^;]*\};'),
     block(vcd, r'^#define VCD_BDMA_MARKER .*?$'),
@@ -82,6 +86,7 @@ HARNESS = r'''
 #define SEEK_END 2
 enum { VCD_BDMA_FAT32 = 0, VCD_BDMA_USBEXFAT, VCD_BDMA_MX4SIO, VCD_BDMA_MMCE, VCD_BDMA_ATA, VCD_BDMA_ILINK, VCD_BDMA_MODE_COUNT };
 static char gCustomSettingsPath[64];
+static char gBootDir[256], gBootElfName[64];
 static volatile int gLastSaveErrno;
 
 /* An in-memory card: folders and files by full path. */
@@ -201,6 +206,40 @@ int main(void)
     reset(); vcdResolvePopstarterMc(out, sizeof(out)); mkdirs = 0;
     r = vcdInstallPopstarterMc("mass0:/"); a = findFile("mc0:/POPSTARTER/icon.sys") >= 0;
     printf("install existing mkdirs=%d icon=%d\n", mkdirs, a);
+
+    /* A launcher's mc?: wildcard boot dir becomes the card that holds the booted ELF. */
+    struct { const char *dir, *elf; int on0, on1; } boots[] = {
+        {"mc?:/APP_RIPTOPL", "RIPTOPL.ELF", 0, 1}, {"mc?:/APP_RIPTOPL", "RIPTOPL.ELF", 1, 1},
+        {"mc?:/APP_RIPTOPL", "RIPTOPL.ELF", 0, 0}, {"mc?:APP_RIPTOPL", "RIPTOPL.ELF", 0, 1},
+        {"mc?:/APP_RIPTOPL", "", 0, 1}, {"mc1:APP_RIPTOPL", "RIPTOPL.ELF", 1, 0}, {"mc?:", "RIPTOPL.ELF", 0, 1},
+        {NULL, NULL, 0, 0}};
+    for (int i = 0; boots[i].dir; i++) {
+        reset();
+        for (int s = 0; s < 2; s++) {
+            if (!(s ? boots[i].on1 : boots[i].on0))
+                continue;
+            char d[32], f[64];
+            snprintf(d, sizeof(d), "mc%d:/APP_RIPTOPL", s);
+            snprintf(dirs[ndirs++], 96, "%s", d);
+            snprintf(f, sizeof(f), "%s/RIPTOPL.ELF", d);
+            putFile(f, "ELF", 3);
+            snprintf(f, sizeof(f), "mc%d:/RIPTOPL.ELF", s);
+            putFile(f, "ELF", 3);
+        }
+        snprintf(gBootDir, sizeof(gBootDir), "%s", boots[i].dir);
+        snprintf(gBootElfName, sizeof(gBootElfName), "%s", boots[i].elf);
+        normalizeMcBootDir();
+        printf("boot %s [%s] mc0=%d mc1=%d -> %s\n", boots[i].dir, boots[i].elf, boots[i].on0, boots[i].on1, gBootDir);
+    }
+
+    /* Only a bare card boot dir keeps a recovered same-card folder as its save home. */
+    const char *roots[] = {"mc1:", "mc1:/", "mc1:/APP_RIPTOPL", "mc0:/", "mc?:", "mass0:/", NULL};
+    printf("root:");
+    for (int i = 0; roots[i]; i++) {
+        snprintf(gBootDir, sizeof(gBootDir), "%s", roots[i]);
+        printf(" %d", bootHomeIsMcRoot());
+    }
+    printf("\n");
     return 0;
 }
 '''
@@ -213,7 +252,7 @@ with tempfile.TemporaryDirectory() as tmp:
                            capture_output=True, text=True, check=False)
     if build.returncode != 0:
         sys.exit('harness did not compile:\n' + build.stderr)
-    got = dict(line.split(':', 1) if ':' in line and not line.startswith(('norm', 'folder', 'read', 'resolve')) else (line, '')
+    got = dict(line.split(':', 1) if ':' in line and not line.startswith(('norm', 'folder', 'read', 'resolve', 'boot', 'root')) else (line, '')
                for line in subprocess.run([str(exe)], capture_output=True, text=True, check=False).stdout.splitlines())
 
 lines = list(got)
@@ -242,6 +281,16 @@ else:
             failures.append('fallback icon.sys: title %r, break %d, names %r' % (title, struct.unpack_from('<H', fallback, 6)[0], names))
         if fallback[:0xC0] [8:] != icon_sys[:0xC0][8:] or fallback[0x1C4:] != icon_sys[0x1C4:]:
             failures.append('the fallback may only change the title, its break and the three names')
+for line, why in (('boot mc?:/APP_RIPTOPL [RIPTOPL.ELF] mc0=0 mc1=1 -> mc1:/APP_RIPTOPL', 'an mc?: boot must take the card that holds the ELF'),
+                  ('boot mc?:/APP_RIPTOPL [RIPTOPL.ELF] mc0=1 mc1=1 -> mc0:/APP_RIPTOPL', 'with the ELF on both cards, mc0 as before'),
+                  ('boot mc?:/APP_RIPTOPL [RIPTOPL.ELF] mc0=0 mc1=0 -> mc?:/APP_RIPTOPL', 'with neither card answering, nothing changes'),
+                  ('boot mc?:APP_RIPTOPL [RIPTOPL.ELF] mc0=0 mc1=1 -> mc1:/APP_RIPTOPL', 'a compact mc?:FOLDER resolves and gains its slash'),
+                  ('boot mc?:/APP_RIPTOPL [] mc0=0 mc1=1 -> mc1:/APP_RIPTOPL', 'without an ELF name the boot folder decides'),
+                  ('boot mc1:APP_RIPTOPL [RIPTOPL.ELF] mc0=1 mc1=0 -> mc1:/APP_RIPTOPL', 'a concrete slot is never second-guessed'),
+                  ('boot mc?: [RIPTOPL.ELF] mc0=0 mc1=1 -> mc1:/', 'an ELF in a card root resolves to that root'),
+                  ('root: 1 1 0 1 0 0', 'only a bare mcN: boot dir is the card root')):
+    if line not in got:
+        failures.append('memory-card boot dir: %s (output %r)' % (why, [l for l in lines if l.startswith(('boot', 'root'))]))
 for line, why in (('install iconsonly r=0 mkdirs=0 found=0', 'a POPS/ folder with no modules must not put a folder on the card'),
                   ('install modules mkdirs=1 smbman=1 icon=1 list=1', 'a POPS/ folder with modules gets the card folder, the modules and icons'),
                   ('install existing mkdirs=0 icon=1', 'an existing folder without icons must get them on the next launch')):
@@ -261,8 +310,12 @@ if not (0 <= prepare.find('normalizeMcPath(path, (size_t)pathLen);') < prepare.f
     failures.append('opl.c prepareCustomSettingsPath: card paths must be normalized for both the save and the boot-time read')
 if 'createMcSettingsFolder' in prepare:
     failures.append('opl.c prepareCustomSettingsPath: the boot-time read must never create a folder')
-if 'normalizeMcPath(gBootDir, sizeof(gBootDir));' not in function(opl, 'static void normalizeMcBootDir('):
-    failures.append('opl.c normalizeMcBootDir must share normalizeMcPath')
+boot_norm = function(opl, 'static void normalizeMcBootDir(')
+if not (0 <= boot_norm.find('resolveMcWildcardBootDir();') < boot_norm.find('normalizeMcPath(gBootDir, sizeof(gBootDir));')):
+    failures.append('opl.c normalizeMcBootDir must resolve an mc?: boot dir, then share normalizeMcPath')
+restore = function(opl, 'static void restoreRecoverySaveHome(')
+if 'sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed() && bootHomeIsMcRoot()' not in restore:
+    failures.append('opl.c restoreRecoverySaveHome: only a bare mcN: boot may keep a recovered folder; others save beside the ELF')
 
 mkdirs = re.findall(r'^static [^\n]*?(\w+)\([^)]*\)\n\{(?:(?!\n\}).)*?mkdir\(', vcd, re.M | re.S)
 if sorted(mkdirs) != ['vcdEnsurePopstarterNetDir', 'vcdResolvePopstarterMc']:
