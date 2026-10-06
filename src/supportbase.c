@@ -1578,6 +1578,11 @@ int sbNeutrinoLoadCheats(const char *prefix, const char *startup, config_set_t *
     int result;
 
     InitCheatsConfig(configSet);
+    // No data home mounted (an APA disk without its OPL partition): there is no CHT/ folder to read,
+    // so launch without cheats, as the native HDD leg does. The NULL startup still clears the last
+    // launch's hand-over, so its file cannot ride along on this one.
+    if (prefix == NULL)
+        return sysNeutrinoHandCheats(NULL, neutrinoPath, extraArgs);
     if (GetCheatsEnabled() && (result = sbLoadCheats(prefix, startup, configSet)) < 0 && !sbCheatsMissingContinue(NULL, result))
         return -1;
     return sysNeutrinoHandCheats(startup, neutrinoPath, extraArgs);
