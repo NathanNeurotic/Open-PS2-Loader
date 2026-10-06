@@ -1163,16 +1163,26 @@ jobs:
           else
             TAG="$ROLLING_TAG"; TITLE="$ROLLING_TITLE"; RELEASE_FLAGS="--prerelease=false $ROLLING_LATEST"; TARGET="--target $GITHUB_SHA"
           fi
+          # GitHub's release API returns the odd transient HTTP 500, so every call that changes the
+          # release is retried, as release-normalize.yml does (#783). Failures go to stderr, so a
+          # retried read still captures only its output.
+          retry() { for n in 1 2 3 4; do "$@" && return 0; echo "Attempt $n failed: $*" >&2; sleep $((n * 15)); done; return 1; }
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Updating existing release: $TAG"
-            # Remove every existing asset first so renamed/stale builds from prior
-            # runs cannot accumulate; then upload the current fixed-name set.
-            for asset in $(gh release view "$TAG" --json assets --jq '.assets[].name'); do
-              echo "Deleting old asset: $asset"
-              gh release delete-asset "$TAG" "$asset" --yes || true
+            # UPLOAD FIRST, then remove only the assets this run did not replace. This used to delete
+            # every asset up front: on 2026-10-06 GitHub answered HTTP 500 between those deletes and
+            # the upload, and the public release sat for hours without RIPTOPL.ELF, APP_RIPTOPL.psu
+            # and the DEBUG and VARIANTS packages. Now the old files stay until the new set is up
+            # (same-name ones are replaced in place, and a retry re-uploads one a failed --clobber
+            # dropped), and a failure still fails the step, so Normalize does not run on it.
+            OLD_ASSETS=$(retry gh release view "$TAG" --json assets --jq '.assets[].name')
+            retry gh release upload "$TAG" rolling/* --clobber
+            retry gh release edit "$TAG" --title "$TITLE" --notes-file notes.md $RELEASE_FLAGS
+            for asset in $OLD_ASSETS; do
+              [ -e "rolling/$asset" ] && continue # same name: --clobber already replaced it
+              echo "Deleting stale asset: $asset"
+              retry gh release delete-asset "$TAG" "$asset" --yes
             done
-            gh release edit "$TAG" --title "$TITLE" --notes-file notes.md $RELEASE_FLAGS
-            gh release upload "$TAG" rolling/* --clobber
             # REFRESH THE ROLLING RELEASE DATE. `gh release edit` updates the body and the assets
             # but never touches published_at, which is what GitHub renders as the relative time --
             # so a package rebuilt today sat under "last month" and read as abandoned. Recreating
