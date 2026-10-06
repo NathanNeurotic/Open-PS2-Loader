@@ -35,11 +35,12 @@ if not (0 <= call < flash < launch):
 # Row ids are list indices, so the re-check must compare the game's startup id (captured before the
 # creation) and re-take launchId from the row the game sits on now -- never trust the old index.
 capture = select.find('snprintf(gameIdStartup, sizeof(gameIdStartup), "%s", startup);')
+gate = select.find("if (gameIdStartup[0] != '\\0') {")
 retake = select.find('launchId = curMenu->current->item.id;', call)
-compare = select.find('if (strcmp(startup != NULL ? startup : "", gameIdStartup) != 0)', call)
-if not (0 <= capture < call < retake < compare < flash):
-    failures.append('opl.c itemExecSelect: capture the startup id before the VMC creation, then re-take '
-                    'launchId from the current row and compare startup ids before the launch')
+compare = select.find('if (startup == NULL || strcmp(startup, gameIdStartup) != 0)', call)
+if not (0 <= capture < gate < call < retake < compare < flash):
+    failures.append('opl.c itemExecSelect: capture the startup id, then -- only for a row that has one -- create the '
+                    'VMC, re-take launchId from the current row and require the same non-empty startup id')
 if 'curMenu->current->item.id != launchId' in select:
     failures.append('opl.c itemExecSelect: a bare row-index re-check passes when another game lands on that row')
 
