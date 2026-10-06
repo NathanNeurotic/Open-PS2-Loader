@@ -97,6 +97,8 @@ jobs:
         run: python3 .github/scripts/test_patch_zone_restore.py
       - name: Check a launch that returned to the menu leaves the next one its VMC slots
         run: python3 .github/scripts/test_mcemu_slots.py
+      - name: Check the media size CDVDMAN bounds reads by is exact or unknown, never a partial guess
+        run: python3 .github/scripts/test_media_lsn_count.py
       - name: Check that turning Network Connectivity off and on keeps the chosen protocol
         run: python3 .github/scripts/test_net_protocol_pick.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping

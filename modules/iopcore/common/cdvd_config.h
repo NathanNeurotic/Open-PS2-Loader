@@ -33,6 +33,7 @@ struct cdvdman_settings_common
     u8 zso_cache;
     u8 fakemodule_flags;
     u8 padding;
+    u32 mediaLsnCount; // Real sector count of the media. 0 = fall back to the ISO9660 PVD Volume Space Size.
 } __attribute__((packed));
 
 struct cdvdman_settings_hdd
@@ -79,10 +80,12 @@ struct cdvdman_settings_http
 #define offsetof(type, member) __builtin_offsetof(type, member)
 #endif
 
-typedef char cdvdmanSettingsHttpAssertUri[(offsetof(struct cdvdman_settings_http, uri) == 36) ? 1 : -1];
-typedef char cdvdmanSettingsHttpAssertSizeLo[(offsetof(struct cdvdman_settings_http, size_lo) == 804) ? 1 : -1];
-typedef char cdvdmanSettingsHttpAssertSizeHi[(offsetof(struct cdvdman_settings_http, size_hi) == 808) ? 1 : -1];
-typedef char cdvdmanSettingsHttpAssertTotalSize[(sizeof(struct cdvdman_settings_http) == 812) ? 1 : -1];
+// Tripwires for the HTTP layout, which the EE launch fills and device-http.c reads. Both compile from
+// this header; the offsets moved by 4 when the common block gained mediaLsnCount (upstream OPL #1763).
+typedef char cdvdmanSettingsHttpAssertUri[(offsetof(struct cdvdman_settings_http, uri) == 40) ? 1 : -1];
+typedef char cdvdmanSettingsHttpAssertSizeLo[(offsetof(struct cdvdman_settings_http, size_lo) == 808) ? 1 : -1];
+typedef char cdvdmanSettingsHttpAssertSizeHi[(offsetof(struct cdvdman_settings_http, size_hi) == 812) ? 1 : -1];
+typedef char cdvdmanSettingsHttpAssertTotalSize[(sizeof(struct cdvdman_settings_http) == 816) ? 1 : -1];
 
 #define BDM_MAX_FILES 1  // ISO
 #define BDM_MAX_FRAGS 64 // 64 * 8bytes = 512bytes
@@ -126,9 +129,9 @@ struct cdvdman_settings_mmce
     int use_alarms;
 } __attribute__((packed));
 
-#define CDVDMAN_SETTINGS_DEFAULT_COMMON                    \
-    {                                                      \
-        0x68, 0x68, 0x1234, 0x39393939, "DSKID", 16, 8, 16 \
+#define CDVDMAN_SETTINGS_DEFAULT_COMMON                                \
+    {                                                                  \
+        0x68, 0x68, 0x1234, 0x39393939, "DSKID", 16, 8, 16, 0x87654321 \
     }
 #define CDVDMAN_SETTINGS_DEFAULT_HDD 0x12345678
 #define CDVDMAN_SETTINGS_DEFAULT_SMB                          \
