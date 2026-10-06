@@ -1151,6 +1151,18 @@ extern unsigned int size_save_icn;
 // del.icn). icon.sys last: its presence then means the set is whole.
 static const char *vcdPopsIconFile[3] = {"list.icn", "del.icn", "icon.sys"};
 
+// 1 when a and b name the same file: the card driver reads "mc0:/X/y" and "mc0:X/y" alike.
+static int vcdSamePath(const char *a, const char *b)
+{
+    const char *ca = strchr(a, ':'), *cb = strchr(b, ':');
+
+    if (ca == NULL || cb == NULL || ca - a != cb - b || strncmp(a, b, (size_t)(ca - a)) != 0)
+        return 0;
+    ca += ca[1] == '/' ? 2 : 1;
+    cb += cb[1] == '/' ? 2 : 1;
+    return strcmp(ca, cb) == 0;
+}
+
 // A POPSTARTER folder the browser can draw: icon.sys and the .icn files it names. One already there is
 // the user's (or POPStarter's own install) and is left alone. Otherwise POPStarter's own set from
 // srcDir (a POPS/ folder, separator included), and failing that RiptOPL's built-in icon retitled
@@ -1173,6 +1185,14 @@ static void vcdStampPopstarterIcons(const char *mcDir, const char *srcDir)
         for (i = 0; i < 3; i++) {
             snprintf(src, sizeof(src), "%s%s", srcDir, vcdPopsIconFile[i]);
             snprintf(dst, sizeof(dst), "%s/%s", mcDir, vcdPopsIconFile[i]);
+            // srcDir can be this very folder (a driver pair beside a POPSTARTER.ELF on the card). A file
+            // there is already in place, and copying it onto itself would truncate -- then unlink -- it.
+            if (vcdSamePath(src, dst)) {
+                if ((fd = open(dst, O_RDONLY)) < 0)
+                    break;
+                close(fd);
+                continue;
+            }
             if (vcdSafeCopyFile(src, dst) != 0)
                 break;
         }
@@ -1182,8 +1202,13 @@ static void vcdStampPopstarterIcons(const char *mcDir, const char *srcDir)
 
     if (size_icon_sys < VCD_ICON_SYS_NAMES + 3 * 0x40 || size_icon_sys > sizeof(sys))
         return;
+    // A list.icn already here (POPStarter's own, with no icon.sys beside it) serves the retitled
+    // icon.sys just as well: keep it, write RiptOPL's only when there is none.
     snprintf(dst, sizeof(dst), "%s/list.icn", mcDir);
-    if (vcdSafeWriteFile(dst, save_icn, (int)size_save_icn) != 0)
+    fd = open(dst, O_RDONLY);
+    if (fd >= 0)
+        close(fd);
+    else if (vcdSafeWriteFile(dst, save_icn, (int)size_save_icn) != 0)
         return;
     memcpy(sys, icon_sys, size_icon_sys);
     memset(sys + VCD_ICON_SYS_TITLE, 0, 68);

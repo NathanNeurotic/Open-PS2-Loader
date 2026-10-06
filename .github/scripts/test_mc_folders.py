@@ -56,6 +56,7 @@ pieces = '\n\n'.join([
     block(vcd, r'^#define VCD_ICON_SYS_TITLE .*?$'),
     block(vcd, r'^#define VCD_ICON_SYS_NAMES .*?$'),
     block(vcd, r'^static const char \*vcdPopsIconFile\[3\] = \{[^;]*\};'),
+    function(vcd, 'static int vcdSamePath('),
     function(vcd, 'static void vcdStampPopstarterIcons('),
     function(vcd, 'static int vcdFindPopstarterMc('),
     function(vcd, 'static int vcdResolvePopstarterMc('),
@@ -142,7 +143,15 @@ static int read(int fd, void *buf, int n) { int i = fds[fd] - 1; int left = file
 static int lseek(int fd, int off, int whence) { int i = fds[fd] - 1; fdPos[fd] = whence == SEEK_END ? files[i].len + off : off; return fdPos[fd]; }
 static int close(int fd) { fds[fd] = 0; return 0; }
 static int unlink(const char *p) { int i = findFile(p); if (i >= 0) files[i].used = 0; return 0; }
-static int vcdSafeCopyFile(const char *src, const char *dst) { int i = findFile(src); if (i < 0) return -1; return putFile(dst, files[i].data, files[i].len) == 0 ? 0 : -3; }
+/* Like the real one: the source opens first, then the destination with O_TRUNC -- so a file copied onto
+   itself is destroyed, and the failure path unlinks what is left. */
+static int vcdSafeCopyFile(const char *src, const char *dst)
+{
+    int i = findFile(src);
+    if (i < 0) return -1;
+    if (!strcmp(src, dst)) { files[i].used = 0; return -3; }
+    return putFile(dst, files[i].data, files[i].len) == 0 ? 0 : -3;
+}
 static int vcdSafeWriteFile(const char *dst, const void *buf, int len) { return putFile(dst, buf, len) == 0 ? 0 : -3; }
 
 unsigned char icon_sys[] = {@ICON_SYS@};
@@ -192,6 +201,20 @@ int main(void)
     /* ...and with no source set, RiptOPL's icon retitled POPSTARTER, one list.icn for all three views. */
     reset(); vcdResolvePopstarterMc(out, sizeof(out)); vcdStampPopstarterIcons(out, "mass0:/POPS/");
     hexfile("fallback list.icn", "mc0:/POPSTARTER/list.icn"); hexfile("fallback icon.sys", "mc0:/POPSTARTER/icon.sys");
+    /* The source can be this very folder: its icons stay whole and still get an icon.sys. */
+    reset(); vcdResolvePopstarterMc(out, sizeof(out));
+    putFile("mc0:/POPSTARTER/list.icn", "LST", 3); putFile("mc0:/POPSTARTER/del.icn", "DEL", 3);
+    vcdStampPopstarterIcons(out, "mc0:/POPSTARTER/");
+    a = findFile("mc0:/POPSTARTER/icon.sys") >= 0;
+    hexfile("self list.icn", "mc0:/POPSTARTER/list.icn"); hexfile("self del.icn", "mc0:/POPSTARTER/del.icn");
+    printf("self icon.sys=%d same=%d,%d,%d,%d\n", a, vcdSamePath("mc0:/POPSTARTER/a", "mc0:POPSTARTER/a"),
+           vcdSamePath("mc0:/POPSTARTER/a", "mc1:/POPSTARTER/a"), vcdSamePath("mass0:/POPS/a", "mc0:/POPS/a"),
+           vcdSamePath("mc0:/POPSTARTER/a", "mc0:/POPSTARTER/b"));
+    /* ...and with no source, a list.icn already there is kept under the retitled icon.sys. */
+    reset(); vcdResolvePopstarterMc(out, sizeof(out)); putFile("mc0:/POPSTARTER/list.icn", "LST", 3);
+    vcdStampPopstarterIcons(out, NULL);
+    a = findFile("mc0:/POPSTARTER/icon.sys") >= 0;
+    hexfile("keep list.icn", "mc0:/POPSTARTER/list.icn"); printf("keep icon.sys=%d\n", a);
 
     /* The PS1 launch install: a POPS/ folder with only icons needs nothing on the card... */
     reset(); snprintf(dirs[ndirs++], 96, "mass0:/POPS"); putFile("mass0:/POPS/list.icn", "LST", 3);
@@ -281,6 +304,12 @@ else:
             failures.append('fallback icon.sys: title %r, break %d, names %r' % (title, struct.unpack_from('<H', fallback, 6)[0], names))
         if fallback[:0xC0] [8:] != icon_sys[:0xC0][8:] or fallback[0x1C4:] != icon_sys[0x1C4:]:
             failures.append('the fallback may only change the title, its break and the three names')
+if got.get('self list.icn', '').strip() != b'LST'.hex() or got.get('self del.icn', '').strip() != b'DEL'.hex():
+    failures.append('icons already in the folder the source names must not be copied onto themselves (truncated)')
+if 'self icon.sys=1 same=1,0,0,0' not in got:
+    failures.append('a same-folder source must still end with an icon.sys; vcdSamePath %r' % [l for l in lines if l.startswith('self icon')])
+if got.get('keep list.icn', '').strip() != b'LST'.hex() or 'keep icon.sys=1' not in got:
+    failures.append('the fallback must keep a list.icn already in the folder and still write icon.sys')
 for line, why in (('boot mc?:/APP_RIPTOPL [RIPTOPL.ELF] mc0=0 mc1=1 -> mc1:/APP_RIPTOPL', 'an mc?: boot must take the card that holds the ELF'),
                   ('boot mc?:/APP_RIPTOPL [RIPTOPL.ELF] mc0=1 mc1=1 -> mc0:/APP_RIPTOPL', 'with the ELF on both cards, mc0 as before'),
                   ('boot mc?:/APP_RIPTOPL [RIPTOPL.ELF] mc0=0 mc1=0 -> mc?:/APP_RIPTOPL', 'with neither card answering, nothing changes'),
