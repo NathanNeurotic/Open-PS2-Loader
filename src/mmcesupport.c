@@ -856,11 +856,11 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
     mmceGetDeviceRoot(ps1Root, sizeof(ps1Root));
 
     if (!cueResolveEmber(ps1Root, emberElf, sizeof(emberElf))) {
-        guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf); // the resolvers leave the tried path
         return;
     }
     if (!cueResolveEmberBios(ps1Root, biosPath, sizeof(biosPath))) {
-        guiMsgBox(_l(_STR_EMBER_BIOS_MISSING), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
     // The scan lists folders without reading inside them -- that would be a directory read per row
@@ -903,7 +903,8 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
     mmceGetDeviceRoot(ps1Root, sizeof(ps1Root));
 
     if (!vcdResolvePopstarter(ps1Root, vcdElf, sizeof(vcdElf))) {
-        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        vcdDescribePopstarterLookup(ps1Root, vcdElf, sizeof(vcdElf));
+        guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf);
         return;
     }
     vcdBuildSelector(ps1Root, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));

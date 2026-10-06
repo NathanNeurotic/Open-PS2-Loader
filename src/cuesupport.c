@@ -174,13 +174,21 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
     // titles that had scanned perfectly -- stayed empty. USB and APA were fine because their driver
     // does report ENOENT.
     //
-    // A plain open() of ember.elf has none of that ambiguity. If the core is not readable there is
-    // no Ember library to list, whatever the reason: we could not launch a row from it either.
+    // A plain open() of ember.elf has none of that ambiguity, so the core decides how a games
+    // directory that will not open is read. With the core present, the errno split below applies.
+    // Without it, an unopenable games directory is ALWAYS "nothing here" (0), never -1, whatever
+    // errno the driver reports -- the FifthFox guarantee above, on every driver.
+    //
+    // A missing core no longer hides a games directory that DOES open (Aislinn, October 2026). It
+    // used to return 0 straight away, so a missing or misnamed ember.elf made every Ember game
+    // vanish with no message anywhere. Now the folders still list, and launching one says
+    // "Missing ember.elf" and names the path it looked for -- the one place it can be explained.
     // gamesDir is scratch for the probe here -- cueResolveEmber writes the ELF path into it and we
     // discard that, then rebuild it as the games directory below. One buffer, not two, on a stack
     // this platform keeps small.
-    if (!cueResolveEmber(devPrefix, gamesDir, sizeof(gamesDir)))
-        return 0;
+    int coreReadable = cueResolveEmber(devPrefix, gamesDir, sizeof(gamesDir));
+    if (!coreReadable)
+        LOG("[CUE] no readable ember.elf at '%s' -- listing games anyway, launch will say so\n", gamesDir);
 
     cueBuildGamesDir(devPrefix, gamesDir, sizeof(gamesDir));
     if (gamesDir[0] == '\0')
@@ -193,8 +201,8 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
         // folder and no EMBER folder is the ordinary case and MUST report 0 ("readable, nothing
         // here"), not a failure -- ps1FillGameList treats a failure from either half as a reason to
         // keep the whole last-good list, so getting this wrong would freeze the PS1 page of every
-        // device that only uses one core.
-        if (errno == ENOENT)
+        // device that only uses one core. Without a core there is no library to preserve.
+        if (!coreReadable || errno == ENOENT)
             return 0;
         // Anything else: the directory could not be READ (bus contended, device mid-detach). Signal
         // failure so the caller preserves its last-good list rather than blanking the page.
