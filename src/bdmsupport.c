@@ -2081,6 +2081,9 @@ fail:
     return failResult;
 }
 
+// Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
+static int bdmMcemuSlots[2] = {-2, -2};
+
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
     int i, fd, iop_fd, index, compatmask = 0;
@@ -2256,13 +2259,12 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         } else
             LOG("VMC error\n");
 
-        for (i = 0; i < size_bdm_mcemu_irx; i++) {
-            if (((u32 *)&bdm_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (bdm_vmc_infos.active)
-                    size_mcemu_irx = size_bdm_mcemu_irx;
-                memcpy(&((u32 *)&bdm_mcemu_irx)[i], &bdm_vmc_infos, sizeof(bdm_vmc_infos_t));
-                break;
-            }
+        // This write covers the slot's marker, so its position is found once and reused (sbMcemuSlotWord).
+        int slotWord = sbMcemuSlotWord(&bdm_mcemu_irx, size_bdm_mcemu_irx, vmc_id, bdmMcemuSlots);
+        if (slotWord >= 0) {
+            if (bdm_vmc_infos.active)
+                size_mcemu_irx = size_bdm_mcemu_irx;
+            memcpy(&((u32 *)&bdm_mcemu_irx)[slotWord], &bdm_vmc_infos, sizeof(bdm_vmc_infos_t));
         }
     }
 

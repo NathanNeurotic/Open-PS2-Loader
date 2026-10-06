@@ -1006,6 +1006,25 @@ void sbUnprepare(void *pCommon)
     memcpy(pCommon, &cdvdman_settings_common_sample, sizeof(struct cdvdman_settings_common));
 }
 
+int sbMcemuSlotWord(const void *irx, int size, int slot, int *cache)
+{
+    if (slot < 0 || slot > 1)
+        return -1;
+    if (cache[slot] == -2) {
+        const u32 *words = (const u32 *)irx;
+        int count = size / (int)sizeof(u32), i;
+
+        cache[slot] = -1;
+        for (i = 0; i < count; i++) {
+            if (words[i] == 0xC0DEFAC0 + (u32)slot) {
+                cache[slot] = i;
+                break;
+            }
+        }
+    }
+    return cache[slot];
+}
+
 void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID)
 {
     char path[256];
