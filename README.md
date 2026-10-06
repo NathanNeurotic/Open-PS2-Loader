@@ -563,7 +563,9 @@ HDDs are also able to be formatted as exFAT to avoid the 2TB limitation.  Please
 `settings_riptopl.cfg` holds RiptOPL's master settings; an older `conf_riptopl.cfg` is imported on
 read and migrated on save. The normal settings home starts with the loader's boot directory and
 uses discovery/fallbacks when that location cannot be used. **Custom Settings Path** can select a
-different home. Check the active location instead of assuming all settings are on `mc0:/OPL/`.
+different home, a memory card included: `mc1:` saves to the card root, and `mc1:/OPL` saves to that
+folder, which RiptOPL creates (with its browser icon) on the first save. Check the active location
+instead of assuming all settings are on `mc0:/OPL/`.
 
 If a place RiptOPL checks has no RiptOPL settings but does have official OPL's `conf_opl.cfg`,
 RiptOPL starts from that file. It is read-only: RiptOPL never writes it, and the next save writes
