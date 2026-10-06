@@ -264,6 +264,7 @@ char gExitPath[256];
 char gCustomSettingsPath[64];
 int gEnableDebug;
 int gPS2Logo;
+int gAutoCreateVmc; // default-off: create + assign a per-game VMC on a PS2 game's first launch
 int gDefaultDevice;
 int gEnableWrite;
 char gBDMPrefix[32];
@@ -415,6 +416,22 @@ static void itemExecSelect(struct menu_item *curMenu)
                 char *startup = support->itemGetStartup(support, launchId);
                 if (startup != NULL)
                     snprintf(gameIdStartup, sizeof(gameIdStartup), "%s", startup);
+                // Create VMC on First Launch. It can run for seconds (genvmc) and saves the config
+                // through deferred IO, and a source refresh in that window renumbers the rows. A row id
+                // is only a list index, so a different game can land on the same one: match the game
+                // by its startup id instead -- the key the refresh keeps the cursor on -- and launch
+                // the row it sits on now. Anything else stays in the menu. A row with no startup id
+                // has no VMC to make and nothing to match by, so it skips both and launches as before.
+                if (gameIdStartup[0] != '\0') {
+                    if (!guiGameAutoCreateVmc(support, launchId, configSet))
+                        return;
+                    if (curMenu->current == NULL || curMenu->current->item.isFolder)
+                        return;
+                    launchId = curMenu->current->item.id;
+                    startup = support->itemGetStartup(support, launchId);
+                    if (startup == NULL || strcmp(startup, gameIdStartup) != 0)
+                        return;
+                }
                 // Flash the GameID barcode (Pixel FX/RetroGEM HDMI auto-profile) before handoff. Use
                 // the stack copy: the hold renders/unlocks for many frames while source lists may refresh.
                 guiShowGameID(gameIdStartup);
@@ -3202,6 +3219,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_YSENSITIVITY, &gYSensitivity);
             configGetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, &gEnableDebug);
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
+            configGetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, &gAutoCreateVmc);
             configGetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, &gHDDGameListCache);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetStrCopy(configOPL, CONFIG_OPL_CUSTOM_SETTINGS_PATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
@@ -3848,6 +3866,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_OVERSCAN, gOverscan);
         configSetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, gEnableDebug);
         configSetInt(configOPL, CONFIG_OPL_PS2LOGO, gPS2Logo);
+        configSetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, gAutoCreateVmc);
         configSetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, gHDDGameListCache);
         configSetStr(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath);
         configSetStr(configOPL, CONFIG_OPL_CUSTOM_SETTINGS_PATH, gCustomSettingsPath);
@@ -4795,7 +4814,8 @@ static void setDefaults(void)
     gAutosort = 1;
     gAutoRefresh = 0;
     gEnableDebug = 0;
-    gPS2Logo = 1; // opinionated defaults: the fork ships ready-to-use
+    gPS2Logo = 1;       // opinionated defaults: the fork ships ready-to-use
+    gAutoCreateVmc = 0; // off: never move someone's saves from their physical card unasked
     gHDDGameListCache = 0;
     gEnableWrite = 1;
     gRememberLastPlayed = 0;
