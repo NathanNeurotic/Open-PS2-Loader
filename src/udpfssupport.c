@@ -543,7 +543,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     if (compatmask < 0)
         return;
 
-    if ((result = sbLoadCheats(udpfsPrefix, game->startup)) < 0) {
+    if ((result = sbLoadCheats(udpfsPrefix, game->startup, configSet)) < 0) {
         // #265: let the user back out instead of sitting through the whole load. The helper does
         // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
         // udpfs never assigns `settings` (Neutrino reads the game, not an OPL cdvdman), but
@@ -612,6 +612,12 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // the user back into the menu sitting on the per-game card.
     if (sysNeutrinoPreflight("udpfs", neutrinoPath, 0, NULL, -1) < 0)
         return;
+    // Cheats: loaded above (sbLoadCheats) and handed to Neutrino here. Backing out undoes sbPrepare's
+    // scratch patch, as the cheats-missing path does, and stays in the menu.
+    if (sysNeutrinoHandCheats(game->startup, neutrinoPath, neutrinoExtraArgs) < 0) {
+        sbUnprepare((u8 *)(&smb_cdvdman_irx) + index);
+        return;
+    }
     if (sysNeutrinoArgsPreflight("udpfs", partname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0)
         return;
 

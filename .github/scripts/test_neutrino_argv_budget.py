@@ -61,6 +61,7 @@ harness = r'''
 typedef struct { char arg[NEUTRINO_VMC_SLOTS][160]; } neutrino_vmc_args_t;
 
 static char gNeutrinoArgs[256];
+static char sysNeutrinoCheatArg[24], sysNeutrinoCheatStartup[32]; /* set by sysNeutrinoHandCheats */
 static int gNeutrinoElfArg = 1, gEnableDebug, gLaunchDiag;
 static int gNeutrinoShowArgs, guiActive = 1, msgAnswer = 1, msgCalls;
 static char msgText[512];
@@ -213,6 +214,46 @@ int main(void)
         puts("FAIL with Show Launch Arguments off the preflight must not ask");
         failures++;
     }
+
+    /* Cheats (sysNeutrinoHandCheats): our -cfg comes after the user's own options and before --b,
+       so the -cfg Neutrino keeps -- its last -- is ours; and only the game it was written for gets it. */
+    snprintf(sysNeutrinoCheatArg, sizeof(sysNeutrinoCheatArg), "-cfg=riptopl-cheats");
+    snprintf(sysNeutrinoCheatStartup, sizeof(sysNeutrinoCheatStartup), "SLUS_123.45");
+    snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "-a --b tail");
+    beforeLoads = loads;
+    if (sysRunNeutrinoLaunch("usb", "mass0:/DVD/SLUS_123.45.iso", "SLUS_123.45", 0, 0,
+                             "mass0:/NEUTRINO/neutrino.elf", "-cfg=mine", 0, 0, 0, 0, NULL, 0) != 0 ||
+        loads != beforeLoads + 1) {
+        puts("FAIL a launch with cheats must compose and hand off");
+        failures++;
+    } else {
+        int mine = -1, ours = -1, brk = -1;
+        for (int i = 0; i < lastArgc; i++) {
+            if (!strcmp(lastArgs[i], "-cfg=mine"))
+                mine = i;
+            if (!strcmp(lastArgs[i], "-cfg=riptopl-cheats"))
+                ours = i;
+            if (!strcmp(lastArgs[i], "--b"))
+                brk = i;
+        }
+        if (!(mine >= 0 && mine < ours && ours < brk)) {
+            printf("FAIL the cheats -cfg must follow the user's options and precede --b (mine=%d ours=%d --b=%d)\n", mine, ours, brk);
+            failures++;
+        }
+    }
+    gNeutrinoArgs[0] = '\0';
+    if (sysRunNeutrinoLaunch("usb", "mass0:/DVD/SLUS_999.99.iso", "SLUS_999.99", 0, 0,
+                             "mass0:/NEUTRINO/neutrino.elf", "", 0, 0, 0, 0, NULL, 0) != 0) {
+        puts("FAIL a launch for another game must still compose");
+        failures++;
+    }
+    for (int i = 0; i < lastArgc; i++) {
+        if (!strcmp(lastArgs[i], "-cfg=riptopl-cheats")) {
+            puts("FAIL another game must never be handed this game's cheats");
+            failures++;
+        }
+    }
+    sysNeutrinoCheatArg[0] = '\0';
     return failures ? 1 : 0;
 }
 '''

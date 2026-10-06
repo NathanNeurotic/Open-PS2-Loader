@@ -1940,12 +1940,13 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, const neutrino_vmc_args_
 
 // Δ8 (NHDDL parity): the LEAN Neutrino launch path. Everything bdmLaunchGame's native flow
 // prepares -- VMC superblock prompts + mcemu patching, sbPrepare's cdvdman patch, per-part
-// fragment lists (with a hard abort past 64 frags), layer-1 probing, cheats (with dialogs),
-// PS2RD images, ATA DMA setup -- exists for the EMBEDDED cdvdman core; Neutrino re-derives all
-// of it from -bsd/-dvd after its own IOP reset. Paying for that work meant a Neutrino launch
-// could DIE on native-only failures (the fragmented-ISO abort, an interactive cheats dialog
-// mid-launch, a VMC-superblock cancel whose result the launch then ignored). NHDDL's whole
-// pre-handoff is ~3 file operations; this is ours.
+// fragment lists (with a hard abort past 64 frags), layer-1 probing, PS2RD images, ATA DMA
+// setup -- exists for the EMBEDDED cdvdman core; Neutrino re-derives all of it from -bsd/-dvd
+// after its own IOP reset. Paying for that work meant a Neutrino launch could DIE on native-only
+// failures (the fragmented-ISO abort, a VMC-superblock cancel whose result the launch then
+// ignored). NHDDL's whole pre-handoff is ~3 file operations; this is ours. Cheats are the one
+// native step taken here too, since Neutrino gained them (sbNeutrinoLoadCheats); with cheats off
+// -- the default -- they cost nothing.
 // Returns 1 = handled (handed off, or aborted with the user informed -- caller returns);
 // 0 = proceed with the native launch (core is OPL, or Neutrino unavailable on a non-udp device).
 static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, bdm_device_data_t *pDeviceData, config_set_t *configSet)
@@ -2017,6 +2018,13 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
     // Δ6 preflight (driver token + network toml sync) -- abort stays in a live menu.
     if (sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath, neutrinoBsdfs, neutrinoExtraArgs, bdmDevNr) < 0)
         goto fail;
+    // Cheats: the same per-game settings, .cht and Select-mode picker as the native leg, handed to
+    // Neutrino as a config file. After the preflight, so a launch that falls back to the native
+    // core asks nothing twice; backing out returns to the menu, never to the other core.
+    if (sbNeutrinoLoadCheats(pDeviceData->bdmPrefix, game->startup, configSet, neutrinoPath, neutrinoExtraArgs) < 0) {
+        failResult = 1;
+        goto fail;
+    }
     if (sysNeutrinoArgsPreflight(bdmCurrentDriver, partname, game->startup, compatmask, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdmDevNr, &neutrinoVmc) < 0) {
         failResult = 1; // an overfull Neutrino argv must not silently fall back to the native core
         goto fail;
@@ -2360,7 +2368,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // launch. Absent is normal -- the game is simply not tracked.
     sbLoadWatchList(pDeviceData->bdmPrefix, game->startup);
 #endif
-    if ((result = sbLoadCheats(pDeviceData->bdmPrefix, game->startup)) < 0) {
+    if ((result = sbLoadCheats(pDeviceData->bdmPrefix, game->startup, configSet)) < 0) {
         // #265: let the user back out instead of sitting through the whole load. The helper does
         // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
         if (!sbCheatsMissingContinue(&settings->common, result))

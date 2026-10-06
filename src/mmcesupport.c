@@ -1101,7 +1101,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // launch. Absent is normal -- the game is simply not tracked.
     sbLoadWatchList(mmcePrefix, game->startup);
 #endif
-    if ((result = sbLoadCheats(mmcePrefix, game->startup)) < 0) {
+    if ((result = sbLoadCheats(mmcePrefix, game->startup, configSet)) < 0) {
         // #265: let the user back out instead of sitting through the whole load. The helper does
         // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
         if (!sbCheatsMissingContinue(&settings->common, result)) {
@@ -1205,6 +1205,12 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             fileXioClose(vmc_fds[1]);
         if (sysNeutrinoPreflight("mmce", neutrinoPath, 0, NULL, -1) < 0) // D6 pre-teardown validation
             return;
+        // Cheats: loaded above with the native preparation this leg shares; hand them to Neutrino.
+        // Backing out undoes that preparation and stays in the menu.
+        if (sysNeutrinoHandCheats(mmceStartup, neutrinoPath, neutrinoExtraArgs) < 0) {
+            sbUnprepare(&settings->common);
+            return;
+        }
         if (sysNeutrinoArgsPreflight("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0)
             return;
         // GameID for the NEUTRINO core (issue #68): the native OPL-core launch deliberately does
