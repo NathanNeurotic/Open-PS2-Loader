@@ -235,7 +235,7 @@ int guiConfirmVideoMode(void);
 
 int guiGameShowRemoveSettings(config_set_t *configSet, config_set_t *configGame);
 
-void guiManageCheats(void);
+void guiManageCheats(config_set_t *configSet);
 
 #ifdef RETROACHIEVEMENTS
 /* RA: two-line notice popup, set from the I/O thread (the check/test actions run
