@@ -2206,12 +2206,62 @@ static int prepareHddSettingsFallback(char *path, int pathLen)
 // paths are handled first and rewritten to OPL's already-mounted pfs0: data partition; BDM paths
 // keep the existing transport resolver. HDD targets have a deterministic safe fallback in
 // _saveConfig(); non-HDD explicit targets still fail rather than scattering settings elsewhere.
+// A memory card only creates a file through "mcN:/FILE", never "mcN:FILE" -- and a bare "mc1:" (a
+// launcher's CWD, or what anyone types for "save my settings on mc1") or a compact "mc1:APPS/X" is
+// exactly that shape. Insert the slash so every memory-card home has the one form file creation takes.
+static void normalizeMcPath(char *path, size_t size)
+{
+    size_t len;
+
+    if (strncmp(path, "mc", 2) || (path[2] != '0' && path[2] != '1') || path[3] != ':' || path[4] == '/')
+        return;
+    len = strlen(path);
+    if (len + 1 >= size)
+        return;
+    memmove(&path[5], &path[4], len - 3);
+    path[4] = '/';
+}
+
+// The folder of a memory-card Custom Settings Path, made when it is not there yet: settings go to "a
+// folder you choose", and the per-file O_CREAT that writes them cannot make one. Save-time only -- the
+// boot-time read must never create anything. 0 = ready (or not a card path); -1 = it could not be made,
+// with gLastSaveErrno saying why.
+static int createMcSettingsFolder(const char *path)
+{
+    char folder[sizeof(gCustomSettingsPath)];
+    size_t len;
+    DIR *dir;
+
+    if (strncmp(path, "mc", 2) || (path[2] != '0' && path[2] != '1') || path[3] != ':')
+        return 0;
+    snprintf(folder, sizeof(folder), "%s", path);
+    len = strlen(folder);
+    while (len > 5 && folder[len - 1] == '/')
+        folder[--len] = '\0';
+    if (len <= 5) // "mcN:/": the card root is always there
+        return 0;
+    dir = opendir(folder);
+    if (dir != NULL) {
+        closedir(dir);
+        return 0;
+    }
+    errno = 0;
+    if (mkdir(folder, 0777) < 0) {
+        gLastSaveErrno = errno != 0 ? errno : EIO;
+        return -1;
+    }
+    LOG("CONFIG created settings folder %s\n", folder);
+    return 0;
+}
+
 static int prepareCustomSettingsPath(char *path, int pathLen)
 {
     int bdmType = BDM_TYPE_UNKNOWN;
 
     if (path == NULL || path[0] == '\0')
         return 0;
+
+    normalizeMcPath(path, (size_t)pathLen);
 
     if (isApaSettingsPath(path))
         return prepareCustomApaSettingsPath(path, pathLen);
@@ -3984,6 +4034,14 @@ static void _saveConfig()
                 return;
             }
         } else {
+            // A memory-card folder has to exist before the per-file O_CREAT below (#mc1: "settings
+            // not saving on mc1"). Made here, at save time, never by the boot-time read.
+            if (createMcSettingsFolder(customSettingsTarget) < 0) {
+                LOG("CONFIG custom settings folder %s could not be created (errno %d)\n", customSettingsTarget, gLastSaveErrno);
+                lscret = 0;
+                lscstatus = 0;
+                return;
+            }
             configSetMove(customSettingsTarget);
             customSettingsExplicit = 1;
         }
@@ -5344,16 +5402,7 @@ static void autoLaunchBDMGame(char *argv[])
 // at mc1:. Normalize the generic device representation once, without any launcher-specific branch.
 static void normalizeMcBootDir(void)
 {
-    if (strncmp(gBootDir, "mc", 2) || (gBootDir[2] != '0' && gBootDir[2] != '1') ||
-        gBootDir[3] != ':' || gBootDir[4] == '/')
-        return;
-
-    size_t len = strlen(gBootDir);
-    if (len + 1 >= sizeof(gBootDir))
-        return;
-
-    memmove(&gBootDir[5], &gBootDir[4], len - 3);
-    gBootDir[4] = '/';
+    normalizeMcPath(gBootDir, sizeof(gBootDir));
 }
 
 static void setBootDir(const char *bootPath)
