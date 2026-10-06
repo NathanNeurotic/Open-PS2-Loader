@@ -1399,6 +1399,8 @@ gui_strings:
   string: "Other Neutrino flags, separated by spaces. A flag with its own row above (such as -logo) moves into that row when saved, and is still sent."
 - label: GAME_TYPE_LABELS
   string: Show [PS1]/[PS2] Labels
+- label: NEUTRINO_CHEATS_WRITE_FAILED
+  string: "The cheat list could not be saved into the Neutrino folder, so Neutrino cannot use it. Launch without cheats?"
 - label: SAVE_ICONS
   string: "3D Save Icons"
 - label: HINT_SAVE_ICONS

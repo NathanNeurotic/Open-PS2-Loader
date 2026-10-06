@@ -32,6 +32,7 @@
 #include "include/saveicon.h"   // saveIconReset -- 3D Save Icons switched off
 #include "include/pggsm.h"
 #include "include/cheatman.h"
+#include "include/cheatconfig.h"
 #include "include/sound.h"
 #include "include/guigame.h"
 #include "include/texcache.h"
@@ -5281,7 +5282,7 @@ int guiGameShowRemoveSettings(config_set_t *configSet, config_set_t *configGame)
     return 1;
 }
 
-void guiManageCheats(void)
+void guiManageCheats(config_set_t *configSet)
 {
     int offset = 0;
     int terminate = 0;
@@ -5314,7 +5315,7 @@ void guiManageCheats(void)
         }
 
         if (getKeyOn(gSelectButton)) {
-            if (!(strncasecmp(gCheats[selectedCheat].name, "mastercode", 10) == 0 || strncasecmp(gCheats[selectedCheat].name, "master code", 11) == 0))
+            if (!cheatConfigIsMasterCode(gCheats[selectedCheat].name))
                 gCheats[selectedCheat].enabled = !gCheats[selectedCheat].enabled;
         }
 
@@ -5322,7 +5323,7 @@ void guiManageCheats(void)
             // Disable All: clear every cheat's enabled flag in one press. Skip the mastercode (the
             // per-cheat toggle can't touch it either -- it is the engine enabler, not a cheat).
             for (int i = 0; i < cheatCount; i++) {
-                if (!(strncasecmp(gCheats[i].name, "mastercode", 10) == 0 || strncasecmp(gCheats[i].name, "master code", 11) == 0))
+                if (!cheatConfigIsMasterCode(gCheats[i].name))
                     gCheats[i].enabled = 0;
             }
             sfxPlay(SFX_CURSOR);
@@ -5369,5 +5370,10 @@ void guiManageCheats(void)
         guiEndFrame();
     }
 
+    // Remember these picks for the game's next launch, on either core (upstream #1748). A save that
+    // fails only costs the memory of them: this launch still runs with what was just chosen.
+    cheatConfigSaveSelections(configSet);
+    if (configSet != NULL && !configWrite(configSet))
+        LOG("CHEATS: could not save this game's cheat picks\n");
     sfxPlay(SFX_CONFIRM);
 }
