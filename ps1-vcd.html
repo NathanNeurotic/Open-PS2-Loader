@@ -186,6 +186,7 @@ different device from the VCD; RiptOPL keeps both mounted until POPSTARTER has l
 relocate <code>POPSTARTER.ELF</code>, keep the BDMA driver variants in the same folder: RiptOPL
 looks for them there first. The old <b>POPSTARTER.ELF Device</b> picker is gone; its device choice
 becomes the matching path when you upgrade.</p>
+<p>When none of them has it, the launch says <b>Missing POPSTARTER.ELF</b> and names the path it looked at: your <b>POPSTARTER.ELF Path</b> when it is set, otherwise the device's <code>POPS/POPSTARTER.ELF</code> (on the internal HDD, <code>hdd0:__common/POPS/POPSTARTER.ELF</code>).</p>
 
 <h2 id="ember">Ember — the second PS1 core</h2>
 
@@ -223,6 +224,10 @@ exactly as it does for a <code>*.VCD</code>. Files inside can be named anything;
 <code>.cue</code> is preferred over <code>.exe</code> over <code>.bin</code>. Ember writes its
 per-game memory cards (<code>MC1.vmc</code>, <code>MC2.vmc</code>) into that same game folder, so it
 has to be on writable media.</p>
+
+<div class="callout info"><div class="h">When a piece is missing</div>
+Ember games stay in the list even when <code>ember.elf</code> is missing or misnamed, so you can see them. Launching one then says what is missing and names the exact path RiptOPL looked at, for example <code>mass0:/EMBER/ember.elf</code> or <code>mass0:/EMBER/bios.bin</code>. On the internal HDD it names the partition, such as <code>hdd0:__.EMBER/EMBER/ember.elf</code>.
+</div>
 
 <h3>Ember settings</h3>
 <p>Ember reads an optional <code>settings.txt</code>. RiptOPL can write it for you from five rows on

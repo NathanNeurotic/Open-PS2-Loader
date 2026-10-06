@@ -235,7 +235,7 @@ therefore keeps the devices and options you already set. RiptOPL only <b>reads</
 the first save writes <code>settings_riptopl.cfg</code> to RiptOPL's own settings home.</p>
 
 <p><b>Auto Loading</b> (a game started straight from PSBBN, OSDMenu or another launcher) reads the same settings
-home as the menu, so global game settings apply the same way. If such a launch cannot go ahead, because the ISO
+home as the menu, so global game settings apply the same way, and it starts the game on the core you chose: the game's own <b>Loader Core</b>, or the <b>Default Loader Core</b> when the game is set to Default, Neutrino included. If such a launch cannot go ahead, because the ISO
 is missing or the device cannot be used, RiptOPL opens its menu instead of stopping on a black screen.</p>
 
 <p>The config file is discovered and written in this priority order (first found wins on read; saves always go back to the same path it was read from):</p>

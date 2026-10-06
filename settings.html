@@ -303,6 +303,7 @@ settings or saving the whole configuration.</div>
 <tbody>
 <tr><td>PS2/PS1 Game Display</td><td>Both (L3) / Mixed / PS2 / PS1</td><td><em>Both (L3)</em> keeps separate PS2 and PS1 pages toggled with L3. <em>Mixed</em> combines them and L3 cycles Mixed / PS2 / PS1. <em>PS2</em> or <em>PS1</em> shows only that type and fully disables L3. APPS and Favorites use their own rules. The same setting as on PS Emulation Settings. See <a href="ps1-vcd.html">PS1 Games</a>.</td></tr>
 <tr><td>Applications Display</td><td>Mixed / Apps / PS1ELF (L3)</td><td><em>Mixed</em> shows every ELF in one APPS list with L3 disabled. <em>Apps / PS1ELF (L3)</em> moves titles containing <code>[PS1]</code> to a second L3 page; launch behaviour is unchanged.</td></tr>
+<tr><td>Show [PS1]/[PS2] Labels</td><td>Off / On</td><td>Starts each disc-game row with <code>[PS1]</code> or <code>[PS2]</code>, which helps in the <em>Mixed</em> view. Off by default. Display only: names, sorting, renames and favourites are unchanged, and app and folder rows are never labelled.</td></tr>
 <tr><td>Video Mode</td><td>Auto / PAL / NTSC / &hellip;</td><td>Output mode for the <b>menu</b>. <em>Auto</em> follows the console. The two <em>FLICKER-FREE</em> entries at the end of the list send the same 480i/576i signal but read both fields from the same lines, so thin lines and font edges stop strobing on a CRT &mdash; at the cost of half the vertical detail. After a change, <b>hold</b> Accept to keep the new mode; a tap does nothing, and Back or 10 seconds restores the old one (see <a href="controls.html#keep-video-mode">Keeping a new video mode</a>). Games use GSM instead; see <a href="gsm.html">GSM Video Modes</a>.</td></tr>
 <tr><td>Theme</td><td><em>installed themes</em></td><td>Active theme. The default is <em>Coverflow</em>. Themes are read from <code>THM/</code> on each device. See <a href="themes.html">Theme Engine</a>.</td></tr>
 <tr><td>Coverflow Settings</td><td>[sub-screen]</td><td>See <a href="#coverflow-settings">Coverflow Settings</a>.</td></tr>
@@ -378,11 +379,23 @@ the display pickers above no longer allow is discarded, not forced.</div>
 <tbody>
 <tr><td>PS2 Logo</td><td>Off / On</td><td>Shows the PS2 logo before a game, when the disc logo is valid and matches the console's region. On by default.</td></tr>
 <tr><td>Default Loader Core</td><td>&lt;OPL&gt; / Neutrino</td><td>Core for games whose per-game <em>Loader Core</em> is <em>Default</em>. <em>&lt;OPL&gt;</em> (the default) is the native core; <em>Neutrino</em> chains the external <code>neutrino.elf</code>. A per-game choice always wins. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
+<tr><td>Neutrino Defaults</td><td>[sub-screen]</td><td>The global Neutrino settings. See <a href="#neutrino-defaults">Neutrino Defaults</a>.</td></tr>
 <tr><td>OSD Defaults</td><td>[sub-screen]</td><td>The global <a href="#osd-settings">OSD Settings</a>: the console language, screen size and video mode handed to games that do not set their own.</td></tr>
 <tr><td>GSM Defaults (All Games)</td><td>[sub-screen]</td><td>The global GSM settings. See <a href="gsm.html">GSM Video Modes</a>.</td></tr>
+</tbody>
+</table>
+
+<h3 id="neutrino-defaults">Neutrino Defaults</h3>
+<p>Opened from Game Launching. Games whose per-game pickers are <em>Default</em> follow these, and the arguments here go to every Neutrino launch.</p>
+
+<table data-sortable>
+<thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead>
+<tbody>
 <tr><td>Neutrino Path</td><td>text (full path)</td><td>Where <code>neutrino.elf</code> is. <em>&lt;not set&gt;</em> (the default) looks on the active game's device, then <code>mc0:</code>/<code>mc1:</code>; a path you set is tried first, on any device, and falls back the same way when it is unavailable. Device aliases such as <code>usb:/</code>, <code>ata:/</code>, <code>mmce:/</code>, <code>hdd:/</code> and <code>smb:/</code> are accepted. For MMCE + GameID switching, keep Neutrino on <code>mmceN:</code> (or the MMCE Prefix Path), not the same slot's <code>mcN:</code>. Replaces the old <em>Neutrino Device</em> picker. See <a href="neutrino.html#neutrino-device">Neutrino Core</a>.</td></tr>
 <tr><td>Neutrino Video</td><td>Off / 240p / 480p / 1080i x1 / 1080i x2 / 1080i x3</td><td>Default Neutrino <code>-gsm</code> video mode for games whose per-game picker is <em>Default</em>. Off by default.</td></tr>
 <tr><td>Neutrino GSM Compatibility</td><td>Off / Type 1 (GSM/OPL) / Type 2 / Type 3</td><td>Field-flipping fix for games that shake or tear under a forced Neutrino video mode: the <code>:c</code> half of <code>-gsm</code>. Greyed until a Neutrino Video mode is set. Off by default.</td></tr>
+<tr><td>Auto Boot ELF (-elf)</td><td>Off / On</td><td>Passes the game's boot ELF to Neutrino, for example <code>-elf=cdrom0:\SLUS_123.45;1</code>, so Neutrino can find a per-title config. On by default; a Boot ELF you set in the arguments takes precedence. See <a href="neutrino.html#launch-args">Neutrino Core</a>.</td></tr>
+<tr><td>Show Launch Arguments</td><td>Off / On</td><td>Just before a Neutrino launch hands over, shows every argument Neutrino will receive. <b>Accept</b> launches; <b>Back</b> stays in the menu. Auto Loading never asks. Off by default. See <a href="neutrino.html#show-args">Neutrino Core</a>.</td></tr>
 <tr><td>Neutrino Advanced Arguments</td><td>[sub-screen]</td><td>The structured global Neutrino arguments editor. These apply to every Neutrino game; per-game arguments add on top. Prefix a flag with <code>$</code> to disable it without deleting it. See <a href="neutrino.html">Neutrino Core</a>.</td></tr>
 </tbody>
 </table>

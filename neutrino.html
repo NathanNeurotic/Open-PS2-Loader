@@ -241,11 +241,12 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 <tr><td><code>-bsdfs=hdl</code></td><td>Internal HDD (APA) only</td></tr>
 <tr><td><code>-bsdfs=&lt;exfat|hdl|bd&gt;</code></td><td>Only when the game's <b>Neutrino Filesystem</b> is set off Auto, or when you type <code>-bsdfs=</code> into the arguments — a typed one wins over the picker (per-game arguments over global ones, the last one wins, nothing after <code>--b</code>). Block devices only, never MMCE/UDPFS. <code>hdl</code>/<code>bd</code> also reshape <code>-dvd</code> to <code>hdl:</code>/<code>bdfs:</code>, and a typed <code>-dvd=</code> wins if it is forwarded (a long argument list can drop it). <code>bd</code> names the drive as <code>&lt;driver&gt;&lt;N&gt;p0</code> (a second USB stick is <code>usb1p0</code>) from the device number the drive reported; if it never reported one, the launch is refused while the menu is still up rather than guessed as device 0 — whether <code>bd</code> was picked or typed, even beside a typed <code>-dvd=</code>. ATA is exempt (one device, always 0).</td></tr>
 <tr><td><code>-dvd=&lt;path&gt;</code> / <code>-dvd=hdl:&lt;partition&gt;</code></td><td>Always (the game image or partition)</td></tr>
+<tr><td><code>-elf=cdrom0:\&lt;startup&gt;;1</code></td><td>When <b>Auto Boot ELF (-elf)</b> is on (the default, <b>Settings &rarr; Game Launching &rarr; Neutrino Defaults</b>) and you have not forwarded an <code>-elf=</code> yourself. Neutrino uses it to find a per-title config.</td></tr>
 <tr><td><code>-qb</code></td><td>USB, iLink, UDPBD and both UDPFS legs &mdash; the same set NHDDL uses (every mode except HDL). RiptOPL's no-reset bridge preserves the mounted BDM/UDPFS environment; quick boot enters Neutrino's load environment without resetting that inherited stack away. Without it, a UDPBD launch reconnected on its own after the reset, read the image's partition table and never reached the game. An active user-supplied copy is never duplicated.</td></tr>
 <tr><td><code>-gc=&lt;modes&gt;</code></td><td>Only when OPL compat modes are set for the game</td></tr>
 <tr><td><code>-dbc</code></td><td>Only when <b>Debug Colors</b> is enabled</td></tr>
 <tr><td><code>-logo</code></td><td>Only when <b>PS2 Logo</b> is enabled</td></tr>
-<tr><td><code>-gsm=&lt;mode&gt;</code></td><td>Only when a <b>Neutrino Video</b> mode resolves — the per-game picker, or the global <b>Settings → Game Launching → Neutrino Video</b> default when the per-game picker is “Default” (see §5)</td></tr>
+<tr><td><code>-gsm=&lt;mode&gt;</code></td><td>Only when a <b>Neutrino Video</b> mode resolves — the per-game picker, or the global <b>Settings → Game Launching → Neutrino Defaults → Neutrino Video</b> default when the per-game picker is “Default” (see §5)</td></tr>
 <tr><td><code>-mc0=&lt;path&gt;</code> / <code>-mc1=&lt;path&gt;</code></td><td>Only when a per-game VMC is configured for that slot</td></tr>
 </tbody>
 </table>
@@ -255,7 +256,7 @@ PS2 has one network adapter, so the other protocols stay unavailable until you r
 <p>On top of the auto-built arguments you can pass <b>extra Neutrino flags</b> in two places. Both sets are appended after the auto-built arguments; global first, then per-game, so a game can extend or override the global defaults.</p>
 
 <ul class="checklist">
-<li><b>Global (every Neutrino launch):</b> <b>Settings &rarr; Game Launching &rarr; Neutrino Advanced Arguments</b> &mdash; config key <code>neutrino_args</code> in <code>settings_riptopl.cfg</code>.</li>
+<li><b>Global (every Neutrino launch):</b> <b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Neutrino Advanced Arguments</b> &mdash; config key <code>neutrino_args</code> in <code>settings_riptopl.cfg</code>.</li>
 <li><b>Per game (one title only):</b> <b>Triangle &rarr; Game Settings &rarr; Neutrino Launch Args</b> &mdash; config key <code>$NeutrinoArgs</code> in the game's <code>.cfg</code>.</li>
 </ul>
 
@@ -268,7 +269,7 @@ Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Arg
 
 <h3 id="args-subscreen">Structured Neutrino Args sub-screen</h3>
 
-<p>Both the <b>global</b> entry (<b>Settings &rarr; Game Launching &rarr; Neutrino Advanced Arguments</b>) and the <b>per-game</b> field (<b>Triangle &rarr; Game Settings &rarr; Neutrino Launch Args</b>) are buttons that open the <em>same</em> companion sub-screen. It breaks the argument string into named fields — Quick Boot (<code>-qb</code>), Debug Colors (<code>-dbc</code>), PS2 Logo (<code>-logo</code>), Working Dir (<code>-cwd</code>), Config (<code>-cfg</code>), Boot ELF (<code>-elf</code>), ATA0 Image (<code>-ata0</code>), ATA0 ID (<code>-ata0id</code>), ATA1 Image (<code>-ata1</code>), plus a free-form <b>Extra</b> field — reassembles them in a valid canonical order with <code>--b</code> kept last, and writes the result back as a single flat string: the global into <code>neutrino_args</code>, the per-game value into <code>$NeutrinoArgs</code> (each game edited independently).</p>
+<p>Both the <b>global</b> entry (<b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Neutrino Advanced Arguments</b>) and the <b>per-game</b> field (<b>Triangle &rarr; Game Settings &rarr; Neutrino Launch Args</b>) are buttons that open the <em>same</em> companion sub-screen. It breaks the argument string into named fields — Quick Boot (<code>-qb</code>), Debug Colors (<code>-dbc</code>), PS2 Logo (<code>-logo</code>), Working Dir (<code>-cwd</code>), Config (<code>-cfg</code>), Boot ELF (<code>-elf</code>), ATA0 Image (<code>-ata0</code>), ATA0 ID (<code>-ata0id</code>), ATA1 Image (<code>-ata1</code>), plus a free-form <b>Extra</b> field — reassembles them in a valid canonical order with <code>--b</code> kept last, and writes the result back as a single flat string: the global into <code>neutrino_args</code>, the per-game value into <code>$NeutrinoArgs</code> (each game edited independently).</p>
 
 <table data-sortable>
 <thead><tr><th>Field</th><th>Argument emitted</th><th>Notes</th></tr></thead>
@@ -293,6 +294,18 @@ Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Arg
 <p><code>-dbc</code>, <code>-logo</code>, and <code>-gsm</code> are the exceptions: they have dedicated controls (the <b>Debug Colors</b> and <b>PS2 Logo</b> toggles in the args sub-screen, and the <b>Neutrino Video</b> picker), and if you do forward one of them yourself OPL suppresses its own auto-emitted copy so exactly one reaches Neutrino. A copy disabled with a leading <code>$</code> does not count as forwarded, so OPL still emits its own in that case.</p>
 </div>
 
+<h3 id="show-args">See the exact arguments: Show Launch Arguments</h3>
+
+<p><b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Show Launch Arguments</b> (off by default; config key <code>neutrino_show_args</code>) shows the complete argument list just before a Neutrino launch hands over. It is the list the launch passes, not a reconstruction: the auto-built arguments, then yours. Entries are separated by spaces, and a path with spaces in it is shown in quotes so it still reads as one argument.</p>
+
+<ul class="checklist">
+<li><b>Accept</b> launches. <b>Back</b> stays in the menu.</li>
+<li>A list too long for the hand-over (14 entries or 256 bytes) is refused before the preview, as it always is.</li>
+<li>Auto Loading never asks: there is nobody at the menu to answer.</li>
+</ul>
+
+<p>In the arguments sub-screen, a flag typed into <b>Extra</b> that has its own row &mdash; <code>-logo</code>, say &mdash; moves into that row when you save. It is still sent; it just shows in its row instead of in Extra.</p>
+
 <h2 id="neutrino-video">5. Per-game Neutrino Video (-gsm)</h2>
 
 <p>When a game's Loader Core is set to <b>Neutrino</b>, a <b>Neutrino Video</b> picker appears in <b>Game Settings</b>. This is the Neutrino-side stand-in for the OPL GSM panel (which is an OPL-core-only feature and is greyed under Neutrino). The picker maps to Neutrino's <code>-gsm</code> flag:</p>
@@ -306,7 +319,7 @@ Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Arg
 <tr><td>1080i x1</td><td><code>-gsm=1080ix1</code></td></tr>
 <tr><td>1080i x2</td><td><code>-gsm=1080ix2</code></td></tr>
 <tr><td>1080i x3</td><td><code>-gsm=1080ix3</code></td></tr>
-<tr><td>Default</td><td><em>follows the global <b>Settings → Game Launching → Neutrino Video</b> value (no per-game key saved)</em></td></tr>
+<tr><td>Default</td><td><em>follows the global <b>Settings → Game Launching → Neutrino Defaults → Neutrino Video</b> value (no per-game key saved)</em></td></tr>
 </tbody>
 </table>
 
