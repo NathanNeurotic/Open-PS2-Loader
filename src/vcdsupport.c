@@ -869,6 +869,18 @@ int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize)
     return vcdResolvePopstarterMcElf(out, outSize);
 }
 
+void vcdDescribePopstarterLookup(const char *devPrefix, char *out, int outSize)
+{
+    if (out == NULL || outSize <= 0)
+        return;
+    if (gPopstarterPath[0] != '\0')
+        snprintf(out, outSize, "%s", gPopstarterPath);
+    else if (devPrefix != NULL && devPrefix[0] != '\0')
+        snprintf(out, outSize, "%s%s%cPOPSTARTER.ELF", devPrefix, POPS_FOLDER, vcdSep(devPrefix));
+    else
+        out[0] = '\0';
+}
+
 void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *name, char *out, int outSize)
 {
     if (out == NULL || outSize <= 0)
@@ -1136,13 +1148,103 @@ static const char *vcdBdmaModule[2] = {"usbd.irx", "usbhdfsd.irx"};
 
 #define VCD_BDMA_MARKER "bdma_config.txt"
 
-// Resolve the memory-card POPSTARTER folder (where the modules live). Prefer an existing folder;
-// otherwise create it on the first present card. A slot-2-only first-time setup must not silently
-// select absent mc0:, and mkdir/probe failure must reach the caller.
-static int vcdResolvePopstarterMc(char *out, int outSize)
+// RiptOPL's own browser icon (src/util.c writes it into settings folders).
+extern unsigned char icon_sys[];
+extern unsigned int size_icon_sys;
+extern unsigned char save_icn[];
+extern unsigned int size_save_icn;
+
+// icon.sys (ps2sdk mcIcon): the title is 68 bytes of Shift-JIS at 0xC0, its line break a byte offset
+// at 0x06, and the three icon file names 64 bytes each from 0x104.
+#define VCD_ICON_SYS_TITLE 0xC0
+#define VCD_ICON_SYS_NAMES 0x104
+
+// POPStarter's own icon set, as every release ships it in POPS/ (its icon.sys names list.icn and
+// del.icn). icon.sys last: its presence then means the set is whole.
+static const char *vcdPopsIconFile[3] = {"list.icn", "del.icn", "icon.sys"};
+
+// 1 when a and b name the same file: the card driver reads "mc0:/X/y" and "mc0:X/y" alike.
+static int vcdSamePath(const char *a, const char *b)
+{
+    const char *ca = strchr(a, ':'), *cb = strchr(b, ':');
+
+    if (ca == NULL || cb == NULL || ca - a != cb - b || strncmp(a, b, (size_t)(ca - a)) != 0)
+        return 0;
+    ca += ca[1] == '/' ? 2 : 1;
+    cb += cb[1] == '/' ? 2 : 1;
+    return strcmp(ca, cb) == 0;
+}
+
+// A POPSTARTER folder the browser can draw: icon.sys and the .icn files it names. One already there is
+// the user's (or POPStarter's own install) and is left alone. Otherwise POPStarter's own set from
+// srcDir (a POPS/ folder, separator included), and failing that RiptOPL's built-in icon retitled
+// POPSTARTER, its three views all naming one list.icn. Best effort: a folder without icons still
+// works, it just draws as Corrupted Data.
+static void vcdStampPopstarterIcons(const char *mcDir, const char *srcDir)
+{
+    unsigned char sys[1024];
+    char src[320], dst[96];
+    int fd, i, n = 0;
+    const char *title = "POPSTARTER";
+
+    snprintf(dst, sizeof(dst), "%s/icon.sys", mcDir);
+    fd = open(dst, O_RDONLY);
+    if (fd >= 0) {
+        close(fd);
+        return;
+    }
+    if (srcDir != NULL && srcDir[0] != '\0') {
+        for (i = 0; i < 3; i++) {
+            snprintf(src, sizeof(src), "%s%s", srcDir, vcdPopsIconFile[i]);
+            snprintf(dst, sizeof(dst), "%s/%s", mcDir, vcdPopsIconFile[i]);
+            // srcDir can be this very folder (a driver pair beside a POPSTARTER.ELF on the card). A file
+            // there is already in place, and copying it onto itself would truncate -- then unlink -- it.
+            if (vcdSamePath(src, dst)) {
+                if ((fd = open(dst, O_RDONLY)) < 0)
+                    break;
+                close(fd);
+                continue;
+            }
+            if (vcdSafeCopyFile(src, dst) != 0)
+                break;
+        }
+        if (i == 3)
+            return;
+    }
+
+    if (size_icon_sys < VCD_ICON_SYS_NAMES + 3 * 0x40 || size_icon_sys > sizeof(sys))
+        return;
+    // A list.icn already here (POPStarter's own, with no icon.sys beside it) serves the retitled
+    // icon.sys just as well: keep it, write RiptOPL's only when there is none.
+    snprintf(dst, sizeof(dst), "%s/list.icn", mcDir);
+    fd = open(dst, O_RDONLY);
+    if (fd >= 0)
+        close(fd);
+    else if (vcdSafeWriteFile(dst, save_icn, (int)size_save_icn) != 0)
+        return;
+    memcpy(sys, icon_sys, size_icon_sys);
+    memset(sys + VCD_ICON_SYS_TITLE, 0, 68);
+    for (; *title != '\0' && n + 2 <= 68; title++) { // A-Z as full-width Shift-JIS (0x8260 = 'A')
+        sys[VCD_ICON_SYS_TITLE + n++] = 0x82;
+        sys[VCD_ICON_SYS_TITLE + n++] = (unsigned char)(0x60 + (*title - 'A'));
+    }
+    sys[6] = (unsigned char)n; // one line: the break falls after the whole title
+    sys[7] = 0;
+    for (i = 0; i < 3; i++) {
+        memset(sys + VCD_ICON_SYS_NAMES + 0x40 * i, 0, 0x40);
+        memcpy(sys + VCD_ICON_SYS_NAMES + 0x40 * i, "list.icn", 8);
+    }
+    snprintf(dst, sizeof(dst), "%s/icon.sys", mcDir);
+    vcdSafeWriteFile(dst, sys, (int)size_icon_sys);
+}
+
+// The memory-card POPSTARTER folder that already exists (mc0 first). Never creates one: reading a
+// setting -- the BDMA page, a launch's environment check -- must not sprout a folder on a card that
+// never had POPStarter. That empty folder showed up in the browser as Corrupted Data (reported
+// 10-05, from a user who does not use POPStarter at all).
+static int vcdFindPopstarterMc(char *out, int outSize)
 {
     static const char *cards[2] = {"mc0:/POPSTARTER", "mc1:/POPSTARTER"};
-    static const char *roots[2] = {"mc0:/", "mc1:/"};
 
     if (out == NULL || outSize <= 0)
         return 0;
@@ -1156,6 +1258,22 @@ static int vcdResolvePopstarterMc(char *out, int outSize)
             return 1;
         }
     }
+    return 0;
+}
+
+// The POPSTARTER folder for something that must WRITE there: the existing one, else a new one on the
+// first present card. A slot-2-only first-time setup must not silently select absent mc0:, and
+// mkdir/probe failure must reach the caller. Whoever writes into it also gives it its icons
+// (vcdStampPopstarterIcons), so the browser never shows it as Corrupted Data.
+static int vcdResolvePopstarterMc(char *out, int outSize)
+{
+    static const char *cards[2] = {"mc0:/POPSTARTER", "mc1:/POPSTARTER"};
+    static const char *roots[2] = {"mc0:/", "mc1:/"};
+
+    if (vcdFindPopstarterMc(out, outSize))
+        return 1;
+    if (out == NULL || outSize <= 0)
+        return 0;
 
     for (int i = 0; i < 2; i++) {
         DIR *root = opendir(roots[i]);
@@ -1191,7 +1309,7 @@ static int vcdWriteBdmaMarker(const char *mcDir, int mode)
 int vcdReadBdmaMode(void)
 {
     char mcDir[64];
-    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
+    if (!vcdFindPopstarterMc(mcDir, sizeof(mcDir)))
         return VCD_BDMA_FAT32;
     char path[96];
     snprintf(path, sizeof(path), "%s/%s", mcDir, VCD_BDMA_MARKER);
@@ -1221,18 +1339,19 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
     if (mode < 0 || mode >= VCD_BDMA_MODE_COUNT || source < 0 || source >= VCD_BDMA_SRC_COUNT)
         return -1;
 
+    // The POPSTARTER folder is only MADE once there is a driver pair to put in it (below). Until then
+    // only an existing one is used: an equip that finds nothing must not leave an empty folder behind.
     char mcDir[64];
-    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir))) {
-        if (diag != NULL && diagSize > 0)
-            snprintf(diag, diagSize, "No writable PS2 memory card is available.");
-        return -3;
-    }
-
+    int haveDir = vcdFindPopstarterMc(mcDir, sizeof(mcDir));
     char dst0[96], dst1[96];
-    snprintf(dst0, sizeof(dst0), "%s/%s", mcDir, vcdBdmaModule[0]);
-    snprintf(dst1, sizeof(dst1), "%s/%s", mcDir, vcdBdmaModule[1]);
 
     if (mode == VCD_BDMA_FAT32) {
+        // FAT32 is POPStarter's built-in driver: nothing to install. A card with no POPSTARTER folder
+        // is already in that state, so only an existing folder has a pair to remove.
+        if (!haveDir)
+            return 0;
+        snprintf(dst0, sizeof(dst0), "%s/%s", mcDir, vcdBdmaModule[0]);
+        snprintf(dst1, sizeof(dst1), "%s/%s", mcDir, vcdBdmaModule[1]);
         // FAT32 fallback: remove the exFAT modules so POPStarter uses its built-in driver.
         unlink(dst0);
         unlink(dst1);
@@ -1380,6 +1499,29 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize)
         return -4;
     }
 
+    // A pair to install: now the folder has to exist, made with its icons before anything else lands
+    // in it -- POPStarter's own from the folder the pair came from, else RiptOPL's.
+    if (!haveDir && !vcdResolvePopstarterMc(mcDir, sizeof(mcDir))) {
+        if (diag != NULL && diagSize > 0)
+            snprintf(diag, diagSize, "No writable PS2 memory card is available.");
+        return -3;
+    }
+    {
+        char srcDir[96];
+        const char *s1 = strrchr(src0, '/');
+        const char *s2 = strrchr(src0, '\\');
+        const char *sl = s1;
+        if (s2 != NULL && (sl == NULL || s2 > sl))
+            sl = s2;
+        if (sl != NULL && (int)(sl - src0) + 1 < (int)sizeof(srcDir))
+            snprintf(srcDir, sizeof(srcDir), "%.*s", (int)(sl - src0) + 1, src0);
+        else
+            srcDir[0] = '\0';
+        vcdStampPopstarterIcons(mcDir, srcDir);
+    }
+    snprintf(dst0, sizeof(dst0), "%s/%s", mcDir, vcdBdmaModule[0]);
+    snprintf(dst1, sizeof(dst1), "%s/%s", mcDir, vcdBdmaModule[1]);
+
     // Stage BOTH replacements before touching either live module. vcdSafeCopyFile removes a partial
     // destination on failure, which is safe for these private staging names but not for a live driver.
     // Staging guarantees both variant files were fully READ off the source device (the realistic torn-
@@ -1467,8 +1609,8 @@ int vcdBdmaEnvironmentValid(int mode)
         return 0;
 
     char mcDir[64];
-    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
-        return 0;
+    if (!vcdFindPopstarterMc(mcDir, sizeof(mcDir)))
+        return mode == VCD_BDMA_FAT32; // no folder = no external pair = exactly the FAT32 environment
 
     char p0[96], p1[96];
     snprintf(p0, sizeof(p0), "%s/%s", mcDir, vcdBdmaModule[0]);
@@ -1502,7 +1644,7 @@ static int vcdBdmaManualPairMatches(int mode)
         return 0;
 
     char mcDir[64], markerPath[96];
-    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
+    if (!vcdFindPopstarterMc(mcDir, sizeof(mcDir)))
         return 0;
 
     snprintf(markerPath, sizeof(markerPath), "%s/%s", mcDir, VCD_BDMA_MARKER);
@@ -1633,13 +1775,46 @@ static int vcdInstallPopstarterMcAt(const char *devPrefix, const char *mcDir)
     return firstError;
 }
 
+// 1 when <devPrefix>POPS/ holds at least one of POPStarter's card modules -- the only reason an install
+// may MAKE a POPSTARTER folder. Icons alone are not one: they exist to draw a folder, not to need it.
+static int vcdPopstarterModulesAt(const char *devPrefix)
+{
+    char src[320];
+
+    if (devPrefix == NULL || devPrefix[0] == '\0')
+        return 0;
+    for (unsigned int i = 0; i < sizeof(vcdPopstarterMcFile) / sizeof(vcdPopstarterMcFile[0]); i++) {
+        if (strstr(vcdPopstarterMcFile[i], ".irx") == NULL)
+            continue;
+        snprintf(src, sizeof(src), "%s%s%c%s", devPrefix, POPS_FOLDER, vcdSep(devPrefix), vcdPopstarterMcFile[i]);
+        int fd = open(src, O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int vcdInstallPopstarterMc(const char *devPrefix)
 {
     char mcDir[64];
+    int result;
 
-    if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
-        return -3;
-    return vcdInstallPopstarterMcAt(devPrefix, mcDir);
+    // A card that has the folder gets whatever it is missing. One without it only gets a folder when
+    // this device has POPStarter modules to put there: a POPS/ folder without them needs nothing on the
+    // card, and an empty folder draws in the browser as Corrupted Data.
+    if (!vcdFindPopstarterMc(mcDir, sizeof(mcDir))) {
+        if (!vcdPopstarterModulesAt(devPrefix))
+            return 0;
+        if (!vcdResolvePopstarterMc(mcDir, sizeof(mcDir)))
+            return -3;
+    }
+    result = vcdInstallPopstarterMcAt(devPrefix, mcDir);
+    // The install brings POPStarter's own icons when this device's POPS/ has them; when it did not, the
+    // folder still gets one (RiptOPL's, retitled) rather than drawing as Corrupted Data.
+    vcdStampPopstarterIcons(mcDir, NULL);
+    return result;
 }
 
 static int vcdSmbModulesPresentAt(const char *mcDir)
@@ -2118,6 +2293,7 @@ int vcdWritePopstarterNetFiles(const vcd_popsnet_t *cfg, int writeSmb, int write
     dir = cfg->home[0] != '\0' ? cfg->home : cfg->createDir;
     if (dir[0] == '\0' || !vcdEnsurePopstarterNetDir(dir))
         return -3;
+    vcdStampPopstarterIcons(dir, NULL); // a folder this save may just have made must draw in the browser
 
     if (writeSmb) {
         int len = vcdBuildSmbConfig(cfg, buf, sizeof(buf));
@@ -2251,10 +2427,18 @@ vcd_popsnet_ensure_t vcdPreparePopstarterSmbLaunch(const char *smbPrefix)
         return VCD_POPSNET_IO_ERROR;
     if (cfg.ipInvalid || cfg.smbInvalid)
         return VCD_POPSNET_INVALID;
+    // No POPSTARTER folder yet and no modules on the share to fill one: the launch cannot run, and a
+    // folder made now would sit empty -- drawn in the browser as Corrupted Data.
+    DIR *homeDir = opendir(cfg.home);
+    if (homeDir != NULL)
+        closedir(homeDir);
+    else if (errno == ENOENT && !vcdPopstarterModulesAt(smbPrefix))
+        return VCD_POPSNET_SMB_MISSING;
     if (!vcdEnsurePopstarterNetDir(cfg.home))
         return VCD_POPSNET_IO_ERROR;
     if (smbPrefix != NULL && smbPrefix[0] != '\0')
         installRes = vcdInstallPopstarterMcAt(smbPrefix, cfg.home);
+    vcdStampPopstarterIcons(cfg.home, NULL); // POPStarter's own icons came with the install when the share has them
     if (!vcdSmbModulesPresentAt(cfg.home)) {
         if (installRes == -2 || installRes == -3)
             return VCD_POPSNET_IO_ERROR;

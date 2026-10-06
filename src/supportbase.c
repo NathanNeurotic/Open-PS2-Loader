@@ -12,7 +12,8 @@
 #include "include/extern_irx.h" // usbd_irx + usbhdfsd_irx, written to SYS-CONF for a USB IGR Path
 #include "modules/iopcore/common/cdvd_config.h"
 #include "include/cheatman.h"
-#include "include/tar.h" // CHT/cht.tar cheat archives (#154)
+#include "include/cheatconfig.h" // remembered Select-mode picks (upstream #1748)
+#include "include/tar.h"         // CHT/cht.tar cheat archives (#154)
 #ifdef RETROACHIEVEMENTS
 #include "include/rawatch.h" // RA watch lists, loaded next to the cheats
 #include "include/ranet.h"   // raAskPC/raNetTestLink -- the menu-side PC client exchange
@@ -1027,6 +1028,25 @@ void sbUnprepare(void *pCommon)
     memcpy(pCommon, &cdvdman_settings_common_sample, sizeof(struct cdvdman_settings_common));
 }
 
+int sbMcemuSlotWord(const void *irx, int size, int slot, int *cache)
+{
+    if (slot < 0 || slot > 1)
+        return -1;
+    if (cache[slot] == -2) {
+        const u32 *words = (const u32 *)irx;
+        int count = size / (int)sizeof(u32), i;
+
+        cache[slot] = -1;
+        for (i = 0; i < count; i++) {
+            if (words[i] == 0xC0DEFAC0 + (u32)slot) {
+                cache[slot] = i;
+                break;
+            }
+        }
+    }
+    return cache[slot];
+}
+
 void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID)
 {
     char path[256];
@@ -1440,7 +1460,9 @@ int sbCheatsMissingContinue(void *pCommon, int cheatResult)
     if (guiMsgBox(text, 1, NULL))
         return 1;
 
-    sbUnprepare(pCommon);
+    // NULL from a launch that never ran sbPrepare (the lean Neutrino legs): nothing to undo.
+    if (pCommon != NULL)
+        sbUnprepare(pCommon);
     LOG("Cheats error: user cancelled the launch\n");
 
     return 0;
@@ -1475,7 +1497,18 @@ void sbSetDiscAttributes(config_set_t *config, int isPS1, int isCD)
     configSetStr(config, CONFIG_ITEM_DISCTYPE, isPS1 ? "PS1CD" : (isCD ? "PS2CD" : "PS2DVD"));
 }
 
-int sbLoadCheats(const char *path, const char *file)
+// Select mode (cheatMode 1): the game's remembered picks first (upstream #1748), then the picker --
+// except on an autolaunch, which has no one at the pad and runs the remembered picks as they are.
+static void sbCheatsSelect(int cheatMode, config_set_t *configSet)
+{
+    if (cheatMode != 1)
+        return;
+    cheatConfigLoadSelections(configSet);
+    if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL))
+        guiManageCheats(configSet);
+}
+
+int sbLoadCheats(const char *path, const char *file, config_set_t *configSet)
 {
     // 256, not 64: the path prefix here is a full device root (e.g. "mass0:/" plus an OPL data
     // folder), and a 64-byte buffer silently TRUNCATED the "<path>CHT/<file>.cht" it builds -- so
@@ -1519,8 +1552,7 @@ int sbLoadCheats(const char *path, const char *file)
                         free(tarBuf);
                         if (cheatMode >= 0) {
                             LOG("Cheats found in CHT/cht.tar (%s)\n", tarGetDevicePrefix(TAR_KIND_CHT));
-                            if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL) && (cheatMode == 1))
-                                guiManageCheats();
+                            sbCheatsSelect(cheatMode, configSet);
                             return cheatMode;
                         }
                     }
@@ -1575,12 +1607,26 @@ int sbLoadCheats(const char *path, const char *file)
             LOG("Error: failed to load cheats\n");
         } else {
             LOG("Cheats found\n");
-            if ((gAutoLaunchGame == NULL) && (gAutoLaunchBDMGame == NULL) && (cheatMode == 1))
-                guiManageCheats();
+            sbCheatsSelect(cheatMode, configSet);
         }
     }
 
     return cheatMode;
+}
+
+int sbNeutrinoLoadCheats(const char *prefix, const char *startup, config_set_t *configSet, const char *neutrinoPath, const char *extraArgs)
+{
+    int result;
+
+    InitCheatsConfig(configSet);
+    // No data home mounted (an APA disk without its OPL partition): there is no CHT/ folder to read,
+    // so launch without cheats, as the native HDD leg does. The NULL startup still clears the last
+    // launch's hand-over, so its file cannot ride along on this one.
+    if (prefix == NULL)
+        return sysNeutrinoHandCheats(NULL, neutrinoPath, extraArgs);
+    if (GetCheatsEnabled() && (result = sbLoadCheats(prefix, startup, configSet)) < 0 && !sbCheatsMissingContinue(NULL, result))
+        return -1;
+    return sysNeutrinoHandCheats(startup, neutrinoPath, extraArgs);
 }
 
 // Δ1 (NHDDL-parity): a resolved neutrino.elf is only USABLE if its install is complete. Neutrino

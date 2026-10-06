@@ -179,6 +179,7 @@ extern int gDefaultCoreLoader;
 extern int gNeutrinoVideoDefault;
 extern int gNeutrinoGsmCompDefault;
 extern int gNeutrinoElfArg;
+extern int gNeutrinoShowArgs;
 extern char gNeutrinoArgs[256];
 extern char gNeutrinoPath[256];
 // Default game-list view for VCD-capable device pages.
@@ -191,6 +192,7 @@ enum {
     GAME_VIEW_MIXED // combined PS2 + PS1 list; L3 cycles Mixed -> PS2 -> PS1
 };
 extern int gDefaultGameView;
+extern int gGameTypeLabels; // optional [PS1]/[PS2] prefixes in game lists; default off
 
 enum {
     APPS_DISPLAY_MIXED = 0, // all ELFs together; L3 disabled (back-compatible default)
@@ -392,6 +394,7 @@ extern char gCustomSettingsPath[64];
 extern int gEnableDebug;
 
 extern int gPS2Logo;
+extern int gAutoCreateVmc;
 
 // Default device
 extern int gDefaultDevice;

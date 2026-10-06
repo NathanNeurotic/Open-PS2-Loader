@@ -51,6 +51,13 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
 // Compose the exact launch argv while the GUI is still live. Refuses a launch that would exceed
 // the 14-entry or 256-byte ExecPS2 budget, with a visible warning instead of dropping arguments.
 int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs);
+// Cheats for a Neutrino launch, PRE-teardown, after this game's cheats were loaded (sbLoadCheats --
+// or sbNeutrinoLoadCheats for a leg that skips the native preparation): the enabled codes go into
+// riptopl-cheats.toml where Neutrino resolves -cfg= (config/ beside neutrino.elf, or the -cwd= the user
+// forwards), and the next sysLaunchNeutrino for this startup names it. Every Neutrino leg calls it, so
+// a launch without cheats clears the last one's. 0 = launch (with the cheats, or without them by the
+// user's choice); <0 = the file could not be written and the user chose to stay in the menu.
+int sysNeutrinoHandCheats(const char *startup, const char *neutrinoPath, const char *extraArgs);
 
 // Launch an external POPSTARTER.ELF for a PS1 VCD. selector = the target's argv[0]
 // "<POPS>/<prefix><name>.ELF" token. Caller deinit()s with UNMOUNT_EXCEPTION first.

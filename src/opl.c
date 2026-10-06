@@ -185,8 +185,10 @@ int gDefaultCoreLoader;      // global default Loader Core (0=<OPL>, 1=Neutrino)
 int gNeutrinoVideoDefault;   // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game $NeutrinoVideo overrides
 int gNeutrinoGsmCompDefault; // global default -gsm ":c" field-flip half (0=off, 1-3=type)
 int gNeutrinoElfArg;         // default-on (settings key only, no UI): auto-emit -elf=cdrom0: on Neutrino launches
+int gNeutrinoShowArgs;       // default-off: show the composed Neutrino argv and ask before each launch
 int gDefaultGameView;
 int gAppsDisplay;
+int gGameTypeLabels;
 int gEmberDisplay;
 int gEmberTiming;
 int gEmberDither;
@@ -262,6 +264,7 @@ char gExitPath[256];
 char gCustomSettingsPath[64];
 int gEnableDebug;
 int gPS2Logo;
+int gAutoCreateVmc; // default-off: create + assign a per-game VMC on a PS2 game's first launch
 int gDefaultDevice;
 int gEnableWrite;
 char gBDMPrefix[32];
@@ -413,6 +416,22 @@ static void itemExecSelect(struct menu_item *curMenu)
                 char *startup = support->itemGetStartup(support, launchId);
                 if (startup != NULL)
                     snprintf(gameIdStartup, sizeof(gameIdStartup), "%s", startup);
+                // Create VMC on First Launch. It can run for seconds (genvmc) and saves the config
+                // through deferred IO, and a source refresh in that window renumbers the rows. A row id
+                // is only a list index, so a different game can land on the same one: match the game
+                // by its startup id instead -- the key the refresh keeps the cursor on -- and launch
+                // the row it sits on now. Anything else stays in the menu. A row with no startup id
+                // has no VMC to make and nothing to match by, so it skips both and launches as before.
+                if (gameIdStartup[0] != '\0') {
+                    if (!guiGameAutoCreateVmc(support, launchId, configSet))
+                        return;
+                    if (curMenu->current == NULL || curMenu->current->item.isFolder)
+                        return;
+                    launchId = curMenu->current->item.id;
+                    startup = support->itemGetStartup(support, launchId);
+                    if (startup == NULL || strcmp(startup, gameIdStartup) != 0)
+                        return;
+                }
                 // Flash the GameID barcode (Pixel FX/RetroGEM HDMI auto-profile) before handoff. Use
                 // the stack copy: the hold renders/unlocks for many frames while source lists may refresh.
                 guiShowGameID(gameIdStartup);
@@ -2204,12 +2223,76 @@ static int prepareHddSettingsFallback(char *path, int pathLen)
 // paths are handled first and rewritten to OPL's already-mounted pfs0: data partition; BDM paths
 // keep the existing transport resolver. HDD targets have a deterministic safe fallback in
 // _saveConfig(); non-HDD explicit targets still fail rather than scattering settings elsewhere.
+// A memory card only creates a file through "mcN:/FILE", never "mcN:FILE" -- and a bare "mc1:" (a
+// launcher's CWD, or what anyone types for "save my settings on mc1") or a compact "mc1:APPS/X" is
+// exactly that shape. Insert the slash so every memory-card home has the one form file creation takes.
+static void normalizeMcPath(char *path, size_t size)
+{
+    size_t len;
+
+    if (strncmp(path, "mc", 2) || (path[2] != '0' && path[2] != '1') || path[3] != ':' || path[4] == '/')
+        return;
+    len = strlen(path);
+    if (len + 1 >= size)
+        return;
+    memmove(&path[5], &path[4], len - 3);
+    path[4] = '/';
+}
+
+// The folder of a memory-card Custom Settings Path, made when it is not there yet: settings go to "a
+// folder you choose", and the per-file O_CREAT that writes them cannot make one. Save-time only -- the
+// boot-time read must never create anything. 0 = ready (or not a card path); -1 = it could not be made,
+// with gLastSaveErrno saying why.
+static int createMcSettingsFolder(const char *path)
+{
+    char folder[sizeof(gCustomSettingsPath)];
+    size_t len;
+    DIR *dir;
+
+    if (strncmp(path, "mc", 2) || (path[2] != '0' && path[2] != '1') || path[3] != ':')
+        return 0;
+    snprintf(folder, sizeof(folder), "%s", path);
+    len = strlen(folder);
+    while (len > 5 && folder[len - 1] == '/')
+        folder[--len] = '\0';
+    if (len <= 5) // "mcN:/": the card root is always there
+        return 0;
+    dir = opendir(folder);
+    if (dir != NULL) {
+        closedir(dir);
+        return 0;
+    }
+    // Each missing level in turn, since mkdir makes only the last one: "mc1:/APPS/OPL" on a card
+    // without APPS needs both.
+    for (size_t i = 6; i <= len; i++) {
+        if ((folder[i] != '/' && folder[i] != '\0') || folder[i - 1] == '/')
+            continue;
+        char end = folder[i];
+        folder[i] = '\0';
+        dir = opendir(folder);
+        if (dir != NULL)
+            closedir(dir);
+        else {
+            errno = 0;
+            if (mkdir(folder, 0777) < 0) {
+                gLastSaveErrno = errno != 0 ? errno : EIO;
+                return -1;
+            }
+            LOG("CONFIG created settings folder %s\n", folder);
+        }
+        folder[i] = end;
+    }
+    return 0;
+}
+
 static int prepareCustomSettingsPath(char *path, int pathLen)
 {
     int bdmType = BDM_TYPE_UNKNOWN;
 
     if (path == NULL || path[0] == '\0')
         return 0;
+
+    normalizeMcPath(path, (size_t)pathLen);
 
     if (isApaSettingsPath(path))
         return prepareCustomApaSettingsPath(path, pathLen);
@@ -2225,9 +2308,9 @@ static int prepareCustomSettingsPath(char *path, int pathLen)
 // Last-resort READ-ONLY discovery for a missing/stale config.path. This exists to recover the
 // chicken-and-egg custom-settings value from an already-existing config; it never creates a config,
 // never changes APA metadata, and never makes an arbitrary discovered device the permanent save home.
-// A known non-MC local boot self-migrates the loaded in-memory sets back to its normal boot home. A
-// concrete MC boot preserves the same-card directory it recovered, so its first save cannot relocate
-// an already-working MC1 configuration to the card root or the other slot. If the recovered config
+// A known local boot self-migrates the loaded in-memory sets back to its normal boot home -- beside the
+// ELF, MC boots included. Only an MC boot handed the bare card ("mc1:") keeps the same-card directory
+// it recovered, so its first save cannot land loose in the card root or on the other slot. If the recovered config
 // contains Custom Settings Path, _saveConfig will honor it and regenerate config.path on the user's
 // next explicit Save Changes.
 static int tryReadRecoveryConfigHome(int types, const char *home)
@@ -2259,6 +2342,12 @@ static int bootHomeIsConcreteMc(void)
 {
     return !strncmp(gBootDir, "mc", 2) &&
            (gBootDir[2] == '0' || gBootDir[2] == '1') && gBootDir[3] == ':';
+}
+
+// The launcher handed over the bare card ("mc1:" / "mc1:/"): there is no boot folder to save beside.
+static int bootHomeIsMcRoot(void)
+{
+    return bootHomeIsConcreteMc() && (gBootDir[4] == '\0' || (gBootDir[4] == '/' && gBootDir[5] == '\0'));
 }
 
 static int bootHomeIsKnownMmce(void)
@@ -2381,13 +2470,14 @@ static void restoreRecoverySaveHome(const char *recoveredHome)
             configSetMove((char *)mcHome);
         else
             configSetMove(NULL); // no concrete MC is reachable: keep the normal fail-visible wildcard home
-    } else if (sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed()) {
-        // A concrete MC boot that recovered its existing settings from the same card keeps that
-        // exact directory as its save owner. In particular, a launcher that supplies only "mc1:"
-        // as the boot CWD must not move a successfully read mc1:/OPL configuration to the card
-        // root (or to mc0 when both cards are inserted). This applies to RiptOPL's OWN settings
-        // only: an official conf_opl.cfg is a read-only seed and must not pull our save home into
-        // official OPL's folder, so that case falls through to the boot dir below.
+    } else if (sameConcreteMcSlot(gBootDir, recoveredHome) && !configOplIsOfficialSeed() && bootHomeIsMcRoot()) {
+        // A launcher that supplies only "mc1:" as the boot CWD leaves no folder to save beside, so a
+        // configuration recovered from the same card (mc1:/OPL) keeps that folder rather than moving
+        // to the card root (or to mc0 when both cards are inserted). Every other MC boot saves beside
+        // its ELF like any other boot -- settings follow the CWD -- through the branch below: an
+        // mc1:/APP_RIPTOPL boot that found older settings in mc1:/OPL reads them once and writes its
+        // next save beside the ELF, instead of keeping mc1:/OPL as its home for good. This applies to
+        // RiptOPL's OWN settings only: an official conf_opl.cfg is a read-only seed and never our home.
         configSetMove((char *)recoveredHome);
     } else if (gBootDir[0] != '\0') {
         configSetMove(gBootDir);
@@ -2683,6 +2773,7 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
     configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_ARGS, gNeutrinoArgs, sizeof(gNeutrinoArgs));
     configGetStrCopy(configOPL, CONFIG_OPL_NEUTRINO_PATH, gNeutrinoPath, sizeof(gNeutrinoPath));
     configGetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
+    configGetInt(configOPL, CONFIG_OPL_NEUTRINO_SHOW_ARGS, &gNeutrinoShowArgs);
     // Global default Loader Core (0=<OPL>, 1=Neutrino). Absent in legacy configs -> keep the reset
     // default (0/<OPL>), so existing installs behave exactly as before this key existed.
     configGetInt(configOPL, CONFIG_OPL_DEFAULT_CORE, &gDefaultCoreLoader);
@@ -3128,6 +3219,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_YSENSITIVITY, &gYSensitivity);
             configGetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, &gEnableDebug);
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
+            configGetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, &gAutoCreateVmc);
             configGetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, &gHDDGameListCache);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetStrCopy(configOPL, CONFIG_OPL_CUSTOM_SETTINGS_PATH, gCustomSettingsPath, sizeof(gCustomSettingsPath));
@@ -3180,6 +3272,8 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, &gAppsDisplay);
             if (gAppsDisplay < APPS_DISPLAY_MIXED || gAppsDisplay > APPS_DISPLAY_SPLIT)
                 gAppsDisplay = APPS_DISPLAY_MIXED;
+            configGetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, &gGameTypeLabels);
+            gGameTypeLabels = gGameTypeLabels ? 1 : 0;
             // Where the user left each L3 page last session. Read from the LAST set (the same
             // configReadMulti above filled it), but sequenced HERE, after the two display settings
             // above: the restore validates every remembered position against what its mode can
@@ -3772,6 +3866,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_OVERSCAN, gOverscan);
         configSetInt(configOPL, CONFIG_OPL_DISABLE_DEBUG, gEnableDebug);
         configSetInt(configOPL, CONFIG_OPL_PS2LOGO, gPS2Logo);
+        configSetInt(configOPL, CONFIG_OPL_AUTO_CREATE_VMC, gAutoCreateVmc);
         configSetInt(configOPL, CONFIG_OPL_HDD_GAME_LIST_CACHE, gHDDGameListCache);
         configSetStr(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath);
         configSetStr(configOPL, CONFIG_OPL_CUSTOM_SETTINGS_PATH, gCustomSettingsPath);
@@ -3804,6 +3899,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_APPLY_GAMEID, gApplyGameID);
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
+        configSetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, gGameTypeLabels);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
@@ -3821,6 +3917,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_DEVTYPE, gNeutrinoDevice);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
+        configSetInt(configOPL, CONFIG_OPL_NEUTRINO_SHOW_ARGS, gNeutrinoShowArgs);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_BGART, gEnableBGArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, gEnableArtTar);
         configSetInt(configOPL, CONFIG_OPL_ART_DELAY, gArtDelay);
@@ -3977,6 +4074,14 @@ static void _saveConfig()
                 return;
             }
         } else {
+            // A memory-card folder has to exist before the per-file O_CREAT below (#mc1: "settings
+            // not saving on mc1"). Made here, at save time, never by the boot-time read.
+            if (createMcSettingsFolder(customSettingsTarget) < 0) {
+                LOG("CONFIG custom settings folder %s could not be created (errno %d)\n", customSettingsTarget, gLastSaveErrno);
+                lscret = 0;
+                lscstatus = 0;
+                return;
+            }
             configSetMove(customSettingsTarget);
             customSettingsExplicit = 1;
         }
@@ -4709,7 +4814,8 @@ static void setDefaults(void)
     gAutosort = 1;
     gAutoRefresh = 0;
     gEnableDebug = 0;
-    gPS2Logo = 1; // opinionated defaults: the fork ships ready-to-use
+    gPS2Logo = 1;       // opinionated defaults: the fork ships ready-to-use
+    gAutoCreateVmc = 0; // off: never move someone's saves from their physical card unasked
     gHDDGameListCache = 0;
     gEnableWrite = 1;
     gRememberLastPlayed = 0;
@@ -4761,8 +4867,10 @@ static void setDefaults(void)
     gNeutrinoVideoDefault = 0; // no global -gsm until the user opts in
     gNeutrinoGsmCompDefault = 0;
     gNeutrinoElfArg = 1; // auto-emit the game ELF for Neutrino compatibility lookup by default
+    gNeutrinoShowArgs = 0;
     gDefaultGameView = GAME_VIEW_BOTH;
     gAppsDisplay = APPS_DISPLAY_MIXED;
+    gGameTypeLabels = 0; // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;
@@ -5330,21 +5438,49 @@ static void autoLaunchBDMGame(char *argv[])
 }
 
 // --------------------- Main --------------------
+// "mc?:" names no card. A launcher that hands over its configured wildcard leaves the slot to us,
+// and the file helpers would then use whichever card checkMC() prefers -- mc0 whenever both are
+// inserted -- so an mc1 install read and saved its settings on the other card. The card holding the
+// booted ELF (or, with no ELF name, the boot folder) is the boot card. Runs after reset() has loaded
+// the card driver; when neither card answers, the wildcard stays and nothing changes.
+static void resolveMcWildcardBootDir(void)
+{
+    char probe[sizeof(gBootDir) + sizeof(gBootElfName) + 8];
+    const char *rest;
+    DIR *dir;
+    int slot, fd;
+
+    if (strncmp(gBootDir, "mc?:", 4))
+        return;
+    rest = gBootDir + 4;
+    while (*rest == '/')
+        rest++;
+    for (slot = 0; slot < 2; slot++) {
+        if (gBootElfName[0] != '\0') {
+            snprintf(probe, sizeof(probe), "mc%d:/%s%s%s", slot, rest, rest[0] != '\0' ? "/" : "", gBootElfName);
+            fd = open(probe, O_RDONLY);
+            if (fd < 0)
+                continue;
+            close(fd);
+        } else {
+            snprintf(probe, sizeof(probe), "mc%d:/%s", slot, rest);
+            dir = opendir(probe);
+            if (dir == NULL)
+                continue;
+            closedir(dir);
+        }
+        gBootDir[2] = (char)('0' + slot);
+        return;
+    }
+}
+
 // Memory-card roots require an explicit slash for file creation (mc1:/FILE, not mc1:FILE).
 // Some launchers provide an equivalent compact path such as mc1:APPS/OPL.ELF or leave getcwd()
 // at mc1:. Normalize the generic device representation once, without any launcher-specific branch.
 static void normalizeMcBootDir(void)
 {
-    if (strncmp(gBootDir, "mc", 2) || (gBootDir[2] != '0' && gBootDir[2] != '1') ||
-        gBootDir[3] != ':' || gBootDir[4] == '/')
-        return;
-
-    size_t len = strlen(gBootDir);
-    if (len + 1 >= sizeof(gBootDir))
-        return;
-
-    memmove(&gBootDir[5], &gBootDir[4], len - 3);
-    gBootDir[4] = '/';
+    resolveMcWildcardBootDir();
+    normalizeMcPath(gBootDir, sizeof(gBootDir));
 }
 
 static void setBootDir(const char *bootPath)

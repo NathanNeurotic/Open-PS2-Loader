@@ -31,6 +31,7 @@
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
 #include "include/pggsm.h"
 #include "include/cheatman.h"
+#include "include/cheatconfig.h"
 #include "include/sound.h"
 #include "include/guigame.h"
 #include "include/texcache.h"
@@ -985,8 +986,8 @@ static void guiFreeNameList(const char **list)
     free((void *)list);
 }
 
-// One persisted four-mode PS2/PS1 picker is presented on both Interface and PS Emulation. Keeping its
-// enum setup/readback here prevents two visually identical rows from acquiring different semantics.
+// The persisted four-mode PS2/PS1 picker lives on Interface only; both Interface entry points
+// (guiShowUIConfig, guiSettingsShowInterface) share this enum setup/readback so they cannot drift.
 // Saved values keep their historical ABI (Both=0, PS2=1, PS1=2, Mixed=3), while the picker uses
 // the user-facing order requested by the display model.
 static const char *guiGameViewNames[] = {"Both (L3)", "Mixed", "PS2", "PS1", NULL};
@@ -1102,6 +1103,7 @@ reshow_ui:
     diaSetInt(diaUIConfig, UICFG_AUTOSORT, gAutosort);
     diaSetInt(diaUIConfig, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
+    diaSetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL);
     guiSetGameViewPicker(diaUIConfig);
     guiSetAppsViewPicker(diaUIConfig);
@@ -1142,6 +1144,7 @@ reshow_ui:
         diaGetInt(diaUIConfig, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
+        diaGetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
@@ -2072,6 +2075,7 @@ void guiShowNeutrinoDefaults(void)
     diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
     diaSetEnabled(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, gNeutrinoVideoDefault != 0);
     diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
+    diaSetInt(diaNeutrinoDefaults, CFG_NEUTRINO_SHOW_ARGS, gNeutrinoShowArgs);
 
     int ret;
 reshow_neutrino:
@@ -2090,6 +2094,7 @@ reshow_neutrino:
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
         diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
+        diaGetInt(diaNeutrinoDefaults, CFG_NEUTRINO_SHOW_ARGS, &gNeutrinoShowArgs);
 
         applyConfig(-1, -1, 0);
     }
@@ -2858,6 +2863,7 @@ static int guiSettingsShowInterface(void)
     diaSetInt(ui, UICFG_AUTOSORT, gAutosort);
     diaSetInt(ui, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
+    diaSetInt(ui, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -2902,6 +2908,7 @@ reshow_interface:
         diaGetInt(ui, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
+        diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
@@ -2967,6 +2974,7 @@ static int guiSettingsShowLaunch(void)
     diaSetEnum(ui, CFG_DEFAULT_CORE, defaultCoreStrs);
     diaSetInt(ui, CFG_DEFAULT_CORE, gDefaultCoreLoader);
     diaSetInt(ui, CFG_PS2LOGO, gPS2Logo);
+    diaSetInt(ui, CFG_AUTO_CREATE_VMC, gAutoCreateVmc);
     guiCorePathBegin(ui, CFG_NEUTRINO_PATH, neutrinoPathEdit, sizeof(neutrinoPathEdit), gNeutrinoPath);
     diaSetEnum(ui, CFG_NEUTRINO_VIDEO, neutrinoVideoDefStrs);
     diaSetInt(ui, CFG_NEUTRINO_VIDEO, gNeutrinoVideoDefault);
@@ -2974,6 +2982,7 @@ static int guiSettingsShowLaunch(void)
     diaSetInt(ui, CFG_NEUTRINO_GSMCOMP, gNeutrinoGsmCompDefault);
     diaSetEnabled(ui, CFG_NEUTRINO_GSMCOMP, gNeutrinoVideoDefault != 0);
     diaSetInt(ui, CFG_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
+    diaSetInt(ui, CFG_NEUTRINO_SHOW_ARGS, gNeutrinoShowArgs);
     guiSettingsBeginDialog(ui);
 
 reshow_launch:
@@ -2996,12 +3005,14 @@ reshow_launch:
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, neutrinoPathEdit, gNeutrinoPath)) {
         diaGetInt(ui, CFG_DEFAULT_CORE, &gDefaultCoreLoader);
         diaGetInt(ui, CFG_PS2LOGO, &gPS2Logo);
+        diaGetInt(ui, CFG_AUTO_CREATE_VMC, &gAutoCreateVmc);
         if (strcmp(gNeutrinoPath, neutrinoPathEdit) != 0)
             gNeutrinoDevice = NEUTRINO_DEV_AUTO;
         snprintf(gNeutrinoPath, sizeof(gNeutrinoPath), "%s", neutrinoPathEdit);
         diaGetInt(ui, CFG_NEUTRINO_VIDEO, &gNeutrinoVideoDefault);
         diaGetInt(ui, CFG_NEUTRINO_GSMCOMP, &gNeutrinoGsmCompDefault);
         diaGetInt(ui, CFG_NEUTRINO_ELF_ARG, &gNeutrinoElfArg);
+        diaGetInt(ui, CFG_NEUTRINO_SHOW_ARGS, &gNeutrinoShowArgs);
         applyConfig(-1, -1, 0);
         menuReinitMainMenu();
     }
@@ -3081,7 +3092,6 @@ static int guiSettingsShowPopstarter(void)
     diaSetInt(ui, CFG_EMBER_SHADING, emberShadingShown);
     diaSetEnum(ui, CFG_EMBER_CONTROLLER, emberControllerStrs);
     diaSetInt(ui, CFG_EMBER_CONTROLLER, emberControllerShown);
-    guiSetGameViewPicker(ui);
 
     guiCorePathBegin(ui, CFG_POPSTARTER_PATH, popstarterPathEdit, sizeof(popstarterPathEdit), gPopstarterPath);
     diaSetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, gPopstarterRetroGemGameID);
@@ -3102,8 +3112,6 @@ reshow_popstarter:
     }
 
     if (result != UIID_BTN_CANCEL && result != -1 && !guiSettingsLeftUntouched(ui, result, popstarterPathEdit, gPopstarterPath)) {
-        int gameViewChanged = guiReadGameViewPicker(ui);
-
         diaGetInt(ui, CFG_POPSTARTER_RETROGEM_GAMEID, &gPopstarterRetroGemGameID);
         int emberDisplay = emberSettingFromRow(ui, CFG_EMBER_DISPLAY, emberDisplayShown, gEmberDisplay);
         // 480p is the one choice that can blank the screen (composite shows nothing): ask first, and
@@ -3132,8 +3140,6 @@ reshow_popstarter:
         gPopstarterDevice = (gPopstarterPath[0] != '\0') ? POPS_DEV_CUSTOM : POPS_DEV_DEFAULT;
         guiSaveBdmaSettings(ui);
         applyConfig(-1, -1, 0);
-        if (gameViewChanged)
-            guiRefreshGameViews();
         menuReinitMainMenu();
     }
 
@@ -4644,6 +4650,14 @@ static int guiWrapText(const char *text, int innerW, char *out, int outSize)
     return lines;
 }
 
+// 1 once the interactive menu is up; 0 on the autolaunch path, where miniInit never runs thmInit.
+// The same test guiMsgBox and guiWarning use to stay quiet there, for callers that must not ASK a
+// question nobody can answer (an unanswered guiMsgBox reads as "back").
+int guiIsActive(void)
+{
+    return gTheme != NULL;
+}
+
 int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
 {
     int terminate = 0;
@@ -4722,6 +4736,22 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
     }
 
     return terminate - 1;
+}
+
+// "<message>\n<path>": a missing-file message that names the file it looked for, so a missing core,
+// BIOS or POPSTARTER.ELF can be fixed without guessing which device or folder was meant. The message
+// is a translated label used as plain text, never as a format string. An empty path shows the bare
+// message.
+void guiMsgBoxMissing(const char *message, const char *path)
+{
+    char text[384];
+
+    if (path == NULL || path[0] == '\0') {
+        guiMsgBox(message, 0, NULL);
+        return;
+    }
+    snprintf(text, sizeof(text), "%s\n%s", message, path);
+    guiMsgBox(text, 0, NULL);
 }
 
 // Settings, its save prompt and the Reboot IOP prompt used to hard-wire Cross = confirm / Circle = back
@@ -5244,7 +5274,7 @@ int guiGameShowRemoveSettings(config_set_t *configSet, config_set_t *configGame)
     return 1;
 }
 
-void guiManageCheats(void)
+void guiManageCheats(config_set_t *configSet)
 {
     int offset = 0;
     int terminate = 0;
@@ -5277,7 +5307,7 @@ void guiManageCheats(void)
         }
 
         if (getKeyOn(gSelectButton)) {
-            if (!(strncasecmp(gCheats[selectedCheat].name, "mastercode", 10) == 0 || strncasecmp(gCheats[selectedCheat].name, "master code", 11) == 0))
+            if (!cheatConfigIsMasterCode(gCheats[selectedCheat].name))
                 gCheats[selectedCheat].enabled = !gCheats[selectedCheat].enabled;
         }
 
@@ -5285,7 +5315,7 @@ void guiManageCheats(void)
             // Disable All: clear every cheat's enabled flag in one press. Skip the mastercode (the
             // per-cheat toggle can't touch it either -- it is the engine enabler, not a cheat).
             for (int i = 0; i < cheatCount; i++) {
-                if (!(strncasecmp(gCheats[i].name, "mastercode", 10) == 0 || strncasecmp(gCheats[i].name, "master code", 11) == 0))
+                if (!cheatConfigIsMasterCode(gCheats[i].name))
                     gCheats[i].enabled = 0;
             }
             sfxPlay(SFX_CURSOR);
@@ -5332,5 +5362,10 @@ void guiManageCheats(void)
         guiEndFrame();
     }
 
+    // Remember these picks for the game's next launch, on either core (upstream #1748). A save that
+    // fails only costs the memory of them: this launch still runs with what was just chosen.
+    cheatConfigSaveSelections(configSet);
+    if (configSet != NULL && !configWrite(configSet))
+        LOG("CHEATS: could not save this game's cheat picks\n");
     sfxPlay(SFX_CONFIRM);
 }

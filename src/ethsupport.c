@@ -640,7 +640,8 @@ static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     if (!gPCShareName[0] || vcdName == NULL || vcdName[0] == '\0' || !strcasecmp(vcdName, "POPSTARTER")) // reserved-name belt: the scanner no longer lists it (#154); strcasecmp -- FAT is case-insensitive
         return;
     if (!vcdResolvePopstarter(ethPrefix, vcdElf, sizeof(vcdElf))) {
-        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        vcdDescribePopstarterLookup(ethPrefix, vcdElf, sizeof(vcdElf));
+        guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf);
         return;
     }
     {
@@ -688,11 +689,11 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
         return;
     }
     if (!cueResolveEmber(ethPrefix, emberElf, sizeof(emberElf))) {
-        guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf); // the resolvers leave the tried path
         return;
     }
     if (!cueResolveEmberBios(ethPrefix, biosPath, sizeof(biosPath))) {
-        guiMsgBox(_l(_STR_EMBER_BIOS_MISSING), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
     cueApplySettings(ethPrefix, cueName, configSet); // best-effort marker, never a launch gate
@@ -712,6 +713,9 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
     sysLaunchEmber(emberElf, cueName);
 }
+
+// Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
+static int ethMcemuSlots[2] = {-2, -2};
 
 static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
@@ -791,13 +795,12 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
             }
         }
 
-        for (i = 0; i < size_smb_mcemu_irx; i++) {
-            if (((u32 *)&smb_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (smb_vmc_infos.active)
-                    size_mcemu_irx = size_smb_mcemu_irx;
-                memcpy(&((u32 *)&smb_mcemu_irx)[i], &smb_vmc_infos, sizeof(smb_vmc_infos_t));
-                break;
-            }
+        // This write covers the slot's marker, so its position is found once and reused (sbMcemuSlotWord).
+        int slotWord = sbMcemuSlotWord(&smb_mcemu_irx, size_smb_mcemu_irx, vmc_id, ethMcemuSlots);
+        if (slotWord >= 0) {
+            if (smb_vmc_infos.active)
+                size_mcemu_irx = size_smb_mcemu_irx;
+            memcpy(&((u32 *)&smb_mcemu_irx)[slotWord], &smb_vmc_infos, sizeof(smb_vmc_infos_t));
         }
     }
 
@@ -807,6 +810,8 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     }
 
     compatmask = sbPrepare(game, configSet, size_smb_cdvdman_irx, smb_cdvdman_irx, &i);
+    if (compatmask < 0) // sbPrepare failed (patch zone not found) and never set `i`: it still holds the
+        return;         // VMC loop's counter, so every settings write below would land at a wrong offset.
     sbEnsureIgrUsbDrivers(compatmask);
 
 #ifdef RETROACHIEVEMENTS
@@ -815,7 +820,7 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     // launch. Absent is normal -- the game is simply not tracked.
     sbLoadWatchList(ethPrefix, game->startup);
 #endif
-    if ((result = sbLoadCheats(ethPrefix, game->startup)) < 0) {
+    if ((result = sbLoadCheats(ethPrefix, game->startup, configSet)) < 0) {
         // #265: let the user back out instead of sitting through the whole load. The helper does
         // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
         // `settings` is not assigned until below, so derive the common block from the IRX base.

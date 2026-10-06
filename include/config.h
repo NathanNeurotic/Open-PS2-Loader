@@ -75,10 +75,12 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_GSMFIELDFIX         "$GSMFIELDFix"
 
 // Per-Game CHEAT keys. -Bat-
-#define CONFIG_ITEM_CHEATSSOURCE "$CheatsSource"
-#define CONFIG_ITEM_ENABLECHEAT  "$EnableCheat"
-#define CONFIG_ITEM_CHEATMODE    "$CheatMode"
-#define CONFIG_ITEM_ENABLEIMAGE  "$EnableImage"
+#define CONFIG_ITEM_CHEATSSOURCE           "$CheatsSource"
+#define CONFIG_ITEM_ENABLECHEAT            "$EnableCheat"
+#define CONFIG_ITEM_CHEATMODE              "$CheatMode"
+#define CONFIG_ITEM_ENABLEIMAGE            "$EnableImage"
+// Remembered Select-mode picks: "$CheatSel000", "$CheatSel001", ... each holding one cheat NAME.
+#define CONFIG_ITEM_CHEAT_SELECTION_PREFIX "$CheatSel"
 
 #define CONFIG_ITEM_PADEMUSOURCE     "$PADEMUSource"
 #define CONFIG_ITEM_ENABLEPADEMU     "$EnablePadEmu"
@@ -106,6 +108,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_WIDESCREEN                 "wide_screen"
 #define CONFIG_OPL_DEFAULT_GAME_VIEW          "default_game_view"
 #define CONFIG_OPL_APPS_DISPLAY               "apps_display"
+#define CONFIG_OPL_GAME_TYPE_LABELS           "game_type_labels" // show [PS1]/[PS2] prefixes in game lists; default off
 // Remembered L3 position, one character per IO mode -- see libViewStoreToConfig in src/libview.c.
 // Two keys because the Both/Favorites/APPS ring and the device Mixed ring keep separate positions.
 // These live in the LAST set, beside "last_played": both are browse position rather than settings,
@@ -124,6 +127,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_OVERSCAN                   "overscan"
 #define CONFIG_OPL_DISABLE_DEBUG              "disable_debug"
 #define CONFIG_OPL_PS2LOGO                    "ps2logo"
+#define CONFIG_OPL_AUTO_CREATE_VMC            "auto_create_vmc"           // default-off: a PS2 launch with an empty VMC slot 1 creates/assigns one
 #define CONFIG_OPL_DEFAULT_CORE               "default_core"              // global default Loader Core (0=<OPL>, 1=Neutrino); a game's per-game "$CoreLoader" overrides it, absent = follow this
 #define CONFIG_OPL_NEUTRINO_VIDEO             "neutrino_video_default"    // global default Neutrino -gsm video mode (0=Off..5=1080i x3); per-game "$NeutrinoVideo" overrides, absent = follow this
 #define CONFIG_OPL_NEUTRINO_GSMCOMP           "neutrino_gsm_comp_default" // global default -gsm ":c" field-flip half (0=off, 1-3=type); per-game "$NeutrinoGsmComp" overrides, absent = follow this
@@ -132,6 +136,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_NEUTRINO_DEVICE            "neutrino_device"            // legacy device-INDEX (mc0/mass0/mmce0); read-only, migrated
 #define CONFIG_OPL_NEUTRINO_DEVTYPE           "neutrino_devtype"           // device-TYPE (NEUTRINO_DEV_*); the live key
 #define CONFIG_OPL_NEUTRINO_ELF_ARG           "neutrino_elf_arg"           // default-on GUI toggle: auto-emit -elf=cdrom0:\<startup>;1 (parity Delta-10)
+#define CONFIG_OPL_NEUTRINO_SHOW_ARGS         "neutrino_show_args"         // default-off GUI toggle: show the composed Neutrino argv and ask before each launch
 #define CONFIG_OPL_POPSTARTER_PATH            "popstarter_path"            // free-text custom path (used only when device=Custom)
 #define CONFIG_OPL_POPSTARTER_DEVICE          "popstarter_device"          // device TYPE holding POPS/POPSTARTER.ELF (POPS_DEV_*)
 #define CONFIG_OPL_POPSTARTER_RETROGEM_GAMEID "popstarter_retrogem_gameid" // RetroGEM Game ID optical barcode for VCD launches

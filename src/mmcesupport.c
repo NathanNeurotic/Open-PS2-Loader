@@ -856,11 +856,11 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
     mmceGetDeviceRoot(ps1Root, sizeof(ps1Root));
 
     if (!cueResolveEmber(ps1Root, emberElf, sizeof(emberElf))) {
-        guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf); // the resolvers leave the tried path
         return;
     }
     if (!cueResolveEmberBios(ps1Root, biosPath, sizeof(biosPath))) {
-        guiMsgBox(_l(_STR_EMBER_BIOS_MISSING), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
     // The scan lists folders without reading inside them -- that would be a directory read per row
@@ -903,7 +903,8 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
     mmceGetDeviceRoot(ps1Root, sizeof(ps1Root));
 
     if (!vcdResolvePopstarter(ps1Root, vcdElf, sizeof(vcdElf))) {
-        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        vcdDescribePopstarterLookup(ps1Root, vcdElf, sizeof(vcdElf));
+        guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf);
         return;
     }
     vcdBuildSelector(ps1Root, VCD_PREFIX_MASS, vcdName, vcdSelector, sizeof(vcdSelector));
@@ -922,9 +923,12 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
     sysLaunchPopstarter(vcdElf, vcdSelector);
 }
 
+// Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
+static int mmceMcemuSlots[2] = {-2, -2};
+
 void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
-    int i, index, compatmask = 0;
+    int index, compatmask = 0;
     int EnablePS2Logo = 0;
     int result;
 
@@ -978,9 +982,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     void *irx = &mmce_cdvdman_irx;
     int irx_size = size_mmce_cdvdman_irx;
     compatmask = sbPrepare(game, configSet, irx_size, irx, &index);
+    if (compatmask < 0) // sbPrepare failed (patch zone not found): `index` is unset -- bail before using
+        return;         // it. (The old `if (settings == NULL)` guard was dead: irx + index is never NULL.)
     settings = (struct cdvdman_settings_mmce *)((u8 *)irx + index);
-    if (settings == NULL)
-        return;
 
     // Persist last-played BEFORE any card switch below: on an FMCB-on-MMCE setup this write goes to
     // the card's mcN: surface, and after a GameID switch it would land inside the per-game virtual
@@ -1051,14 +1055,12 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             }
         }
 
-        u32 max_words = size_mmce_mcemu_irx / sizeof(u32);
-        for (i = 0; i < max_words; i++) {
-            if (((u32 *)&mmce_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                if (mmce_vmc_infos.active)
-                    size_mcemu_irx = size_mmce_mcemu_irx;
-                memcpy(&((u32 *)&mmce_mcemu_irx)[i], &mmce_vmc_infos, sizeof(mmce_vmc_infos_t));
-                break;
-            }
+        // This write covers the slot's marker, so its position is found once and reused (sbMcemuSlotWord).
+        int slotWord = sbMcemuSlotWord(&mmce_mcemu_irx, size_mmce_mcemu_irx, vmc_id, mmceMcemuSlots);
+        if (slotWord >= 0) {
+            if (mmce_vmc_infos.active)
+                size_mcemu_irx = size_mmce_mcemu_irx;
+            memcpy(&((u32 *)&mmce_mcemu_irx)[slotWord], &mmce_vmc_infos, sizeof(mmce_vmc_infos_t));
         }
     }
 
@@ -1066,8 +1068,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // which predates MMCE in this fork). A part whose size cannot be read adds nothing rather than
     // wrapping the total; with no size at all the driver keeps using the PVD, as before.
     u64 isoTotalBytes = 0;
-    for (i = 0; i < game->parts; i++) {
-        sbCreatePath(game, partname, mmcePrefix, "/", i);
+    int part;
+    for (part = 0; part < game->parts; part++) {
+        sbCreatePath(game, partname, mmcePrefix, "/", part);
         int fd = open(partname, O_RDONLY, 0666);
         if (fd >= 0) {
             s64 partBytes = lseek64(fd, 0, SEEK_END);
@@ -1117,7 +1120,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // launch. Absent is normal -- the game is simply not tracked.
     sbLoadWatchList(mmcePrefix, game->startup);
 #endif
-    if ((result = sbLoadCheats(mmcePrefix, game->startup)) < 0) {
+    if ((result = sbLoadCheats(mmcePrefix, game->startup, configSet)) < 0) {
         // #265: let the user back out instead of sitting through the whole load. The helper does
         // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
         if (!sbCheatsMissingContinue(&settings->common, result)) {
@@ -1156,6 +1159,9 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                 fileXioClose(vmc_fds[0]);
             if (vmc_fds[1] >= 0)
                 fileXioClose(vmc_fds[1]);
+            // Back to the menu, so undo sbPrepare too: it finds its patch zone by the pristine pattern,
+            // and a zone left filled in fails every later MMCE launch until the console is reset.
+            sbUnprepare(&settings->common);
             return;
         }
         settings->port = detectedPort;
@@ -1219,10 +1225,21 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             fileXioClose(vmc_fds[0]);
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
-        if (sysNeutrinoPreflight("mmce", neutrinoPath, 0, NULL, -1) < 0) // D6 pre-teardown validation
+        // Every way back to the menu from here undoes the native preparation this leg shares
+        // (sbPrepare above): a zone left patched fails the next MMCE launch's sbPrepare.
+        if (sysNeutrinoPreflight("mmce", neutrinoPath, 0, NULL, -1) < 0) { // D6 pre-teardown validation
+            sbUnprepare(&settings->common);
             return;
-        if (sysNeutrinoArgsPreflight("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0)
+        }
+        // Cheats: loaded above with the native preparation; hand them to Neutrino.
+        if (sysNeutrinoHandCheats(mmceStartup, neutrinoPath, neutrinoExtraArgs) < 0) {
+            sbUnprepare(&settings->common);
             return;
+        }
+        if (sysNeutrinoArgsPreflight("mmce", mmcePartname, mmceStartup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0) {
+            sbUnprepare(&settings->common);
+            return;
+        }
         // GameID for the NEUTRINO core (issue #68): the native OPL-core launch deliberately does
         // NOT push a launcher GameID (see the issue-#50 note below -- in OPL core the in-game
         // card is OPL's mcemu, and a mid-launch re-switch froze early-MC-probing games). That
@@ -1267,6 +1284,8 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             fileXioClose(vmc_fds[0]);
         if (vmc_fds[1] >= 0)
             fileXioClose(vmc_fds[1]);
+        // And the same patch-zone restore, for the same reason: the next MMCE launch has to find it.
+        sbUnprepare(&settings->common);
         guiWarning(_l(_STR_ERR_FILE_INVALID), 8); // batch S5: never bail silently
         return;
     }

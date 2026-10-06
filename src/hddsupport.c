@@ -1139,8 +1139,9 @@ static int hddBuildVcdGameList(void)
                 continue;
             }
 
-            // cueScanDir gates itself on open()ing the core, so an __.EMBER partition that does
-            // not actually hold an install costs this mount plus one failed open and returns 0.
+            // An __.EMBER partition that does not actually hold an install costs this mount, a failed
+            // open of the core and a failed opendir, and returns 0. One with game folders but no core
+            // still lists them; the launch then names the missing ember.elf (cueScanDir).
             cue_entry_t *cues = NULL;
             int n = cueScanDir("pfs1:/", &cues);
             fileXioUmount("pfs1:");
@@ -1888,6 +1889,17 @@ static void hddInstallPopstarterMcFromCommon(void)
 //   the IOP -- harmless before an IOP reset, fatal before a handoff that does not reset.
 #define HDD_PFS_MT_WRITETHROUGH 0x02 // ps2sdk libpfs PFS_FIO_ATTR_WRITEABLE: commit on every write/close
 
+// A missing Ember file is named by its partition, not by pfs0: -- an internal mount point the user
+// never sees: "hdd0:__.EMBER/EMBER/ember.elf". pfsPath is what the resolver tried ("pfs0:/EMBER/...").
+static void hddShowEmberMissing(int msgId, const char *mountSrc, const char *pfsPath)
+{
+    char shown[APA_IDMAX + 6 + 288];
+    const char *rest = strchr(pfsPath, ':');
+
+    snprintf(shown, sizeof(shown), "%s%s", mountSrc, rest != NULL ? rest + 1 : pfsPath);
+    guiMsgBoxMissing(_l(msgId), shown);
+}
+
 static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char *part, config_set_t *configSet)
 {
     char emberElf[256], biosPath[288], mountSrc[APA_IDMAX + 6];
@@ -1917,7 +1929,9 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
     if (fileXioMount(hddPrefix, mountSrc, FIO_MT_RDWR | HDD_PFS_MT_WRITETHROUGH) < 0) {
         hddRestoreDataHome();
         ioBlockOps(0);
-        guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
+        // The partition itself would not mount: nothing was looked up inside it yet, so this is not
+        // "Missing ember.elf". Say the item could not be run, and name the partition (CodeRabbit, #836).
+        guiMsgBoxMissing(_l(_STR_ERR_FILE_INVALID), mountSrc);
         return;
     }
 
@@ -1926,13 +1940,13 @@ static void hddDoLaunchEmber(item_list_t *itemList, const char *name, const char
     if (!cueResolveEmber("pfs0:/", emberElf, sizeof(emberElf))) {
         hddRestoreDataHome();
         ioBlockOps(0);
-        guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
+        hddShowEmberMissing(_STR_EMBER_NOT_FOUND, mountSrc, emberElf);
         return;
     }
     if (!cueResolveEmberBios("pfs0:/", biosPath, sizeof(biosPath))) {
         hddRestoreDataHome();
         ioBlockOps(0);
-        guiMsgBox(_l(_STR_EMBER_BIOS_MISSING), 0, NULL);
+        hddShowEmberMissing(_STR_EMBER_BIOS_MISSING, mountSrc, biosPath);
         return;
     }
     if (!cueGameHasImage("pfs0:/", name)) {
@@ -1997,7 +2011,10 @@ static void hddDoLaunchVcd(item_list_t *itemList, const char *name, const char *
             // or queue BDM work during teardown preparation.
             if (!vcdResolvePopstarterMcElf(vcdElf, sizeof(vcdElf))) {
                 ioBlockOps(0);
-                guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+                // Name what the user can fix: their own path when set, else the APA home of
+                // POPSTARTER (hdd0:__common/POPS/POPSTARTER.ELF), not the internal pfs0: mount.
+                vcdDescribePopstarterLookup("hdd0:__common/", vcdElf, sizeof(vcdElf));
+                guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf);
                 return;
             }
         }
@@ -2047,7 +2064,10 @@ static void hddLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     }
     ioBlockOps(0); // resolvedName/resolvedPart are now independent of the mutable backing arrays
     if (idx < 0) {
-        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        // The game itself is not on any PS1 partition (a favourite of a removed or renamed title).
+        // This used to say "Missing POPSTARTER.ELF", which sent users after the wrong file -- and
+        // was wrong outright for an Ember title.
+        guiMsgBox(_l(_STR_ERR_FILE_INVALID), 0, NULL);
         return;
     }
     if (isEmber) {
@@ -2109,6 +2129,10 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     // the autolaunch teardown -- aborting here instead would leak gAutoLaunchGame/configSet.
     if (sysNeutrinoPreflight("apa", neutrinoPath, 0, NULL, -1) < 0)
         return 0;
+    // Cheats, as on BDM: this game's settings, its pfs0:CHT/ file and the picker, handed to Neutrino.
+    // Backing out stays in the menu; an autolaunch never reaches that question.
+    if (sbNeutrinoLoadCheats(gHDDPrefix, game->startup, configSet, neutrinoPath, neutrinoExtraArgs) < 0)
+        return gAutoLaunchGame == NULL ? 1 : 0;
     if (sysNeutrinoArgsPreflight("apa", apaPart, game->startup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, NULL) < 0)
         return gAutoLaunchGame == NULL ? 1 : 0; // autolaunch needs the native path to own its teardown
 
@@ -2166,6 +2190,9 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     sysLaunchNeutrino("apa", apaPart, apaStartup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0 /* #11 inert: APA is always -bsdfs=hdl */, -1, NULL /* HDD VMC->neutrino deferred (APA/pfs) */);
     return 1;
 }
+
+// Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
+static int hddMcemuSlots[2] = {-2, -2};
 
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
@@ -2289,15 +2316,15 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
                     } else
                         LOG("VMC error\n");
                 }
+            } else
+                hdd_vmc_infos.active = 0; // no card for this slot: write it inactive, so a card from an aborted launch cannot linger
 
-                for (i = 0; i < size_hdd_mcemu_irx; i++) {
-                    if (((u32 *)&hdd_mcemu_irx)[i] == (0xC0DEFAC0 + vmc_id)) {
-                        if (hdd_vmc_infos.active)
-                            size_mcemu_irx = size_hdd_mcemu_irx;
-                        memcpy(&((u32 *)&hdd_mcemu_irx)[i], &hdd_vmc_infos, sizeof(hdd_vmc_infos_t));
-                        break;
-                    }
-                }
+            // This write covers the slot's marker, so its position is found once and reused (sbMcemuSlotWord).
+            int slotWord = sbMcemuSlotWord(&hdd_mcemu_irx, size_hdd_mcemu_irx, vmc_id, hddMcemuSlots);
+            if (slotWord >= 0) {
+                if (hdd_vmc_infos.active)
+                    size_mcemu_irx = size_hdd_mcemu_irx;
+                memcpy(&((u32 *)&hdd_mcemu_irx)[slotWord], &hdd_vmc_infos, sizeof(hdd_vmc_infos_t));
             }
         }
     }
@@ -2330,7 +2357,10 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         irx = &hdd_cdvdman_irx;
     }
 
-    sbPrepare(NULL, configSet, size_irx, irx, &i);
+    // sbPrepare sets `i` only when it finds the patch zone. Without one, `i` is uninitialised or left over
+    // from the VMC loops above, and every settings write below would land at that offset.
+    if (sbPrepare(NULL, configSet, size_irx, irx, &i) < 0)
+        return;
     sbEnsureIgrUsbDrivers(compatMode);
 
     if (gHDDPrefix != NULL) {
@@ -2340,7 +2370,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // launch. Absent is normal -- the game is simply not tracked.
         sbLoadWatchList(gHDDPrefix, game->startup);
 #endif
-        if ((result = sbLoadCheats(gHDDPrefix, game->startup)) < 0) {
+        if ((result = sbLoadCheats(gHDDPrefix, game->startup, configSet)) < 0) {
             // #265: let the user back out instead of sitting through the whole load. The helper does
             // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
             // `settings` is not assigned until below, so derive the common block from the IRX base.

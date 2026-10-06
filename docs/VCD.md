@@ -28,8 +28,8 @@ launch.
 
 ## 2. Choose Both, Mixed, PS2, or PS1
 
-The same **PS2/PS1 Game Display** picker appears on both **Interface** and
-**PS Emulation Settings**. They edit one persisted setting:
+The **PS2/PS1 Game Display** picker is on **Settings → Interface**. It is one global setting
+for every device page:
 
 | Value | Behavior |
 | --- | --- |
@@ -195,8 +195,14 @@ block-device modules (the BDMAssault / "BDMA" drivers). RiptOPL
 *equips* them for you from the BDMA rows on **Settings → PS Emulation Settings** — RiptOPL copies the selected
 loose pair from a device's `POPS/` folder onto your memory card:
 
-RiptOPL prefers an existing `mc0:/POPSTARTER` or `mc1:/POPSTARTER` folder. On first setup it
-creates the folder on the first present card (slot 1, then slot 2). Both replacement modules are
+RiptOPL prefers an existing `mc0:/POPSTARTER` or `mc1:/POPSTARTER` folder. It **creates** one only
+when it has something to put in it: a BDMA driver pair it found, a POPSTARTER launch's install, or a
+POPStarter network-settings save. Opening the settings, reading the BDMA mode, or choosing FAT32 (no
+external driver) never creates it. A new folder goes on the first present card (slot 1, then
+slot 2) and always gets its browser icon first: POPStarter's own `icon.sys`/`list.icn`/`del.icn`
+from the `POPS/` folder the files come from, or RiptOPL's icon titled POPSTARTER when that folder has
+none. It therefore never shows as Corrupted Data. An icon-less folder left by an older build can
+simply be deleted from the PS2 browser if you don't use POPStarter. Both replacement modules are
 staged before the live pair is changed, so a failed copy leaves the previous pair available.
 
 - **VCD BDMA Apply on Launch** *(default On)* — POPSTARTER does its own IOP reset and reloads
@@ -289,6 +295,15 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
 8. **UDPFS or UDPBD shows Ember but no VCDs?** That is expected. POPSTARTER cannot restore either
    network transport after its IOP reset, so those two PS1 pages intentionally publish Ember rows
    only.
+9. **"Missing ember.elf", "Missing bios.bin beside ember.elf" or "Missing POPSTARTER.ELF" on
+   launch?** The message's second line is the exact file RiptOPL looked for, for example
+   `mass0:/EMBER/ember.elf` or `mass0:/POPS/POPSTARTER.ELF` (on the internal HDD,
+   `hdd0:__.EMBER/EMBER/ember.elf` or `hdd0:__common/POPS/POPSTARTER.ELF`; with a custom
+   **POPSTARTER.ELF Path** set, that path). Put the file there and launch again. Ember game folders
+   stay listed while `ember.elf` is missing, so a missing or misnamed core shows up as this message
+   instead of an empty Ember library. On the internal HDD, "Error, could not run the item." with a
+   partition name (`hdd0:__.EMBER`) means that partition itself would not mount, so nothing inside
+   it was checked yet.
 
 ## 8. Notes & limitations
 

@@ -737,6 +737,8 @@ static void httpLaunchGame(item_list_t *itemList, int id, config_set_t *configSe
     }
 
     compatmask = sbPrepare(game, configSet, size_http_cdvdman_irx, http_cdvdman_irx, &i);
+    if (compatmask < 0) // sbPrepare failed (patch zone not found): `i` is unset -- bail before using it.
+        return;
     sbEnsureIgrUsbDrivers(compatmask);
 
 #ifdef RETROACHIEVEMENTS
@@ -744,7 +746,7 @@ static void httpLaunchGame(item_list_t *itemList, int id, config_set_t *configSe
     // per-game data -- there is no writable server side to put a watch list on.
     sbLoadWatchList(httpGetLocalPrefix(), startup);
 #endif
-    if ((result = sbLoadCheats(httpGetLocalPrefix(), startup)) < 0) {
+    if ((result = sbLoadCheats(httpGetLocalPrefix(), startup, configSet)) < 0) {
         if (!sbCheatsMissingContinue((u8 *)(&http_cdvdman_irx) + i, result))
             return;
     }

@@ -69,6 +69,12 @@ int sbGetCompatModes(config_set_t *configSet);
 void sbEnsureIgrUsbDrivers(int compatmask);
 int sbPrepare(base_game_info_t *game, config_set_t *configSet, int size_cdvdman, void **cdvdman_irx, int *patchindex);
 void sbUnprepare(void *pCommon);
+// Where VMC slot `slot` (0/1) lives in an embedded mcemu image, as a u32 word index; -1 when the image has
+// no such slot. A launch writes the slot's VMC settings over its marker (0xC0DEFAC0 + slot) and nothing
+// writes the marker back, so a launch that returned to the menu left the next one unable to find it -- and
+// that game silently ran without its VMC. The slot is found once, while the image is pristine, and the
+// position is reused from then on. cache is two ints per image, both -2 until searched.
+int sbMcemuSlotWord(const void *irx, int size, int slot, int *cache);
 void sbRebuildULCfg(base_game_info_t **list, const char *prefix, int gamecount, int excludeID);
 void sbCreatePath(const base_game_info_t *game, char *path, const char *prefix, const char *sep, int part);
 void sbDelete(base_game_info_t **list, const char *prefix, const char *sep, int gamecount, int id);
@@ -88,7 +94,11 @@ u32 sbGetISO9660MaxLBA(const char *path);
 u32 sbGetMediaLsnCount(const char *path, u64 totalBytes);
 int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset);
 
-int sbLoadCheats(const char *path, const char *file);
+int sbLoadCheats(const char *path, const char *file, config_set_t *configSet);
+// The cheats of a Neutrino launch whose leg skips the native preparation (BDM, APA): this game's cheat
+// settings, its .cht from <prefix>CHT/ (Select mode: remembered picks, then the picker), then
+// sysNeutrinoHandCheats. 0 = launch; <0 = the user chose to stay in the menu.
+int sbNeutrinoLoadCheats(const char *prefix, const char *startup, config_set_t *configSet, const char *neutrinoPath, const char *extraArgs);
 
 
 int sbFileExists(const char *path);

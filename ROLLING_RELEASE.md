@@ -53,7 +53,7 @@ checksums remain in the workflow log/immutable MEGA archive rather than beside t
 The permanent MEGA archive keeps the versioned `…-OFFICIALROLLING.ELF` rather than the stable copy,
 since the two are byte-identical and only the versioned name identifies what it is.
 
-The current UI presents the same **PS2/PS1 Game Display** setting on Interface and PS Emulation:
+The current UI presents the **PS2/PS1 Game Display** setting on Interface:
 **Both (L3)** switches separate device libraries; **Mixed** combines them and L3 cycles
 Mixed → PS2 → PS1; **PS2** and **PS1** lock one library and make L3 fully inert. APPS is independent:
 it can remain one Mixed ELF list or split Apps / `[PS1]`-titled ELFs across L3. Favorites is also
