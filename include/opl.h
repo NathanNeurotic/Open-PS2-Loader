@@ -192,6 +192,7 @@ enum {
     GAME_VIEW_MIXED // combined PS2 + PS1 list; L3 cycles Mixed -> PS2 -> PS1
 };
 extern int gDefaultGameView;
+extern int gGameTypeLabels; // optional [PS1]/[PS2] prefixes in game lists; default off
 
 enum {
     APPS_DISPLAY_MIXED = 0, // all ELFs together; L3 disabled (back-compatible default)

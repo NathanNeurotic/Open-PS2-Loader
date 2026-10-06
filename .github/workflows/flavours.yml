@@ -138,6 +138,8 @@ jobs:
         run: python3 .github/scripts/test_art_queue_order.py
       - name: Check Ember settings are only written once changed in RiptOPL
         run: python3 .github/scripts/test_ember_settings.py
+      - name: Check a missing Ember core still lists its games and never fails the PS1 scan
+        run: python3 .github/scripts/test_ember_scan_missing_core.py
 
   udpfs-host-tests:
     runs-on: ubuntu-24.04

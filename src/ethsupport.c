@@ -639,7 +639,8 @@ static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     if (!gPCShareName[0] || vcdName == NULL || vcdName[0] == '\0' || !strcasecmp(vcdName, "POPSTARTER")) // reserved-name belt: the scanner no longer lists it (#154); strcasecmp -- FAT is case-insensitive
         return;
     if (!vcdResolvePopstarter(ethPrefix, vcdElf, sizeof(vcdElf))) {
-        guiMsgBox(_l(_STR_POPSTARTER_NOT_FOUND), 0, NULL);
+        vcdDescribePopstarterLookup(ethPrefix, vcdElf, sizeof(vcdElf));
+        guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), vcdElf);
         return;
     }
     {
@@ -687,11 +688,11 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
         return;
     }
     if (!cueResolveEmber(ethPrefix, emberElf, sizeof(emberElf))) {
-        guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf); // the resolvers leave the tried path
         return;
     }
     if (!cueResolveEmberBios(ethPrefix, biosPath, sizeof(biosPath))) {
-        guiMsgBox(_l(_STR_EMBER_BIOS_MISSING), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
     cueApplySettings(ethPrefix, cueName, configSet); // best-effort marker, never a launch gate

@@ -735,6 +735,11 @@ struct UIItem diaUIConfig[] = {
     {UI_ENUM, UICFG_APPSVIEW, 1, 1, _STR_HINT_APPS_DISPLAY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GAME_TYPE_LABELS}}},
+    {UI_SPACER},
+    {UI_BOOL, UICFG_GAME_TYPE_LABELS, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VMODE}}},
     {UI_SPACER},
     {UI_ENUM, UICFG_VMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},

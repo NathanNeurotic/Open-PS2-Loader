@@ -598,13 +598,19 @@ check *before* `deinit()` so we can still draw a dialog:
 
 | Condition | Message |
 | --- | --- |
-| `ember.elf` missing at the resolved path | `EMBER_NOT_FOUND` |
-| `bios.bin` missing | `EMBER_BIOS_MISSING` |
+| `ember.elf` missing at the resolved path | `EMBER_NOT_FOUND`, with that path on a second line |
+| `bios.bin` missing | `EMBER_BIOS_MISSING`, with that path on a second line |
 | Name contains `/`, `:`, `\` or is `..` | `EMBER_NAME_BAD_CHARS` |
 | Name longer than `CUE_NAME_LAUNCH_MAX` | `EMBER_NAME_TOO_LONG` |
 | `games/` empty or unreadable | `EMBER_NO_GAMES` (list-level, not a dialog) |
 
 We deliberately do **not** pre-verify a `.cue`/`.bin`/`.exe` inside the folder (§3, scanner rules).
+
+A missing core does not hide the library (October 2026, Aislinn's report): the scan still lists the
+`games/` folders when `ember.elf` will not open, so the launch can name the missing file. Without the
+core, a `games/` directory that will not open always scans as empty, never as a read failure, so a
+device with only a POPS library keeps its PS1 list (the FifthFox iLink rule).
+`.github/scripts/test_ember_scan_missing_core.py` pins both.
 
 ---
 

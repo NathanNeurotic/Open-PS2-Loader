@@ -117,6 +117,8 @@ int guiShowKeyboard(char *value, int maxLength);
 int guiMsgBox(const char *text, int addAccept, struct UIItem *ui);
 int guiIsActive(void);
 int guiPromptRebootIop(void);
+// A missing-file message box naming the file that was looked for ("<message>\n<path>").
+void guiMsgBoxMissing(const char *message, const char *path);
 // The user's Confirm / Cancel buttons (Select Button setting) and their icons. Every screen asks these
 // instead of assuming Cross = confirm.
 int guiConfirmKey(void);

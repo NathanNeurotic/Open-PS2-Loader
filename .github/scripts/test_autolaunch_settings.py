@@ -392,6 +392,28 @@ def check_pins():
     mini = function_text(opl, 'static void miniInit(')
     check(mini is not None and 'resolveBootDirToMass();' in mini and 'gBootHomeApa' not in mini,
           'miniInit: autolaunch must run exactly the menu discovery')
+
+    # #844 / CosmicScale: Auto Loading must resolve Loader Core exactly like an interactive launch.
+    # miniInit owns the global half, while each device launch owns the per-game override. These
+    # checks are deliberately outside any RETROACHIEVEMENTS condition: the RA flavour compiles the
+    # same launch path, and flavours.yml builds it with RETROACHIEVEMENTS=1 on every PR.
+    neutrino_globals = function_text(opl, 'static void configReadNeutrinoGlobals(')
+    check(mini is not None and 'configReadNeutrinoGlobals(configOPL);' in mini,
+          'miniInit: Auto Loading must read the Neutrino/global Loader Core settings')
+    check(neutrino_globals is not None and
+          'CONFIG_OPL_DEFAULT_CORE, &gDefaultCoreLoader' in neutrino_globals,
+          'configReadNeutrinoGlobals: Auto Loading must inherit the global Loader Core default')
+    hdd_neutrino = function_text(hdd, 'static int hddTryNeutrinoLaunch(')
+    check(hdd_neutrino is not None and
+          'int coreLoader = gDefaultCoreLoader;' in hdd_neutrino and
+          'CONFIG_ITEM_CORE_LOADER, &coreLoader' in hdd_neutrino,
+          'hddTryNeutrinoLaunch: per-game $CoreLoader must override the global default during Auto Loading')
+    bdm_neutrino = function_text(bdm, 'static int bdmTryNeutrinoLaunch(')
+    check(bdm_neutrino is not None and
+          'int coreLoader = gDefaultCoreLoader;' in bdm_neutrino and
+          'CONFIG_ITEM_CORE_LOADER, &coreLoader' in bdm_neutrino,
+          'bdmTryNeutrinoLaunch: per-game $CoreLoader must override the global default during Auto Loading')
+
     check(re.search(r'!\(result & CONFIG_NETWORK\) && !\(lscstatus & CONFIG_OPL\)', opl),
           '_loadConfig: a missing conf_network.cfg must not re-run discovery after the master load')
     restore = function_text(opl, 'static void restoreRecoverySaveHome(')
