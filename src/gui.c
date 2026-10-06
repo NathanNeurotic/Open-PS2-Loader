@@ -4740,6 +4740,22 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
     return terminate - 1;
 }
 
+// "<message>\n<path>": a missing-file message that names the file it looked for, so a missing core,
+// BIOS or POPSTARTER.ELF can be fixed without guessing which device or folder was meant. The message
+// is a translated label used as plain text, never as a format string. An empty path shows the bare
+// message.
+void guiMsgBoxMissing(const char *message, const char *path)
+{
+    char text[384];
+
+    if (path == NULL || path[0] == '\0') {
+        guiMsgBox(message, 0, NULL);
+        return;
+    }
+    snprintf(text, sizeof(text), "%s\n%s", message, path);
+    guiMsgBox(text, 0, NULL);
+}
+
 // Settings, its save prompt and the Reboot IOP prompt used to hard-wire Cross = confirm / Circle = back
 // (Settings redesign, #527), so with Circle chosen as the confirm button those screens ran the other way
 // round from the rest of RiptOPL (volventura, PSX-Place). Everything asks here instead.

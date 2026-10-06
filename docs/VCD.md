@@ -289,6 +289,15 @@ Work down this ladder; each step isolates a different stage (from the #154 foren
 8. **UDPFS or UDPBD shows Ember but no VCDs?** That is expected. POPSTARTER cannot restore either
    network transport after its IOP reset, so those two PS1 pages intentionally publish Ember rows
    only.
+9. **"Missing ember.elf", "Missing bios.bin beside ember.elf" or "Missing POPSTARTER.ELF" on
+   launch?** The message's second line is the exact file RiptOPL looked for, for example
+   `mass0:/EMBER/ember.elf` or `mass0:/POPS/POPSTARTER.ELF` (on the internal HDD,
+   `hdd0:__.EMBER/EMBER/ember.elf` or `hdd0:__common/POPS/POPSTARTER.ELF`; with a custom
+   **POPSTARTER.ELF Path** set, that path). Put the file there and launch again. Ember game folders
+   stay listed while `ember.elf` is missing, so a missing or misnamed core shows up as this message
+   instead of an empty Ember library. On the internal HDD, "Error, could not run the item." with a
+   partition name (`hdd0:__.EMBER`) means that partition itself would not mount, so nothing inside
+   it was checked yet.
 
 ## 8. Notes & limitations
 

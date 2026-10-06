@@ -472,11 +472,11 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
         return;
     }
     if (!cueResolveEmber(udpfsPrefix, emberElf, sizeof(emberElf))) {
-        guiMsgBox(_l(_STR_EMBER_NOT_FOUND), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_NOT_FOUND), emberElf); // the resolvers leave the tried path
         return;
     }
     if (!cueResolveEmberBios(udpfsPrefix, biosPath, sizeof(biosPath))) {
-        guiMsgBox(_l(_STR_EMBER_BIOS_MISSING), 0, NULL);
+        guiMsgBoxMissing(_l(_STR_EMBER_BIOS_MISSING), biosPath);
         return;
     }
 
