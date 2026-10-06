@@ -1102,6 +1102,7 @@ reshow_ui:
     diaSetInt(diaUIConfig, UICFG_AUTOSORT, gAutosort);
     diaSetInt(diaUIConfig, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
+    diaSetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL);
     guiSetGameViewPicker(diaUIConfig);
     guiSetAppsViewPicker(diaUIConfig);
@@ -1142,6 +1143,7 @@ reshow_ui:
         diaGetInt(diaUIConfig, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
+        diaGetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
@@ -2860,6 +2862,7 @@ static int guiSettingsShowInterface(void)
     diaSetInt(ui, UICFG_AUTOSORT, gAutosort);
     diaSetInt(ui, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
+    diaSetInt(ui, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -2904,6 +2907,7 @@ reshow_interface:
         diaGetInt(ui, UICFG_AUTOSORT, &gAutosort);
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
+        diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
@@ -4736,6 +4740,22 @@ int guiMsgBox(const char *text, int addAccept, struct UIItem *ui)
     }
 
     return terminate - 1;
+}
+
+// "<message>\n<path>": a missing-file message that names the file it looked for, so a missing core,
+// BIOS or POPSTARTER.ELF can be fixed without guessing which device or folder was meant. The message
+// is a translated label used as plain text, never as a format string. An empty path shows the bare
+// message.
+void guiMsgBoxMissing(const char *message, const char *path)
+{
+    char text[384];
+
+    if (path == NULL || path[0] == '\0') {
+        guiMsgBox(message, 0, NULL);
+        return;
+    }
+    snprintf(text, sizeof(text), "%s\n%s", message, path);
+    guiMsgBox(text, 0, NULL);
 }
 
 // Settings, its save prompt and the Reboot IOP prompt used to hard-wire Cross = confirm / Circle = back

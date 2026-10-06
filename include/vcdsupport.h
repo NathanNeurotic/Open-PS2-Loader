@@ -76,6 +76,11 @@ int vcdResolvePopstarterMcElf(char *out, int outSize);
 // Resolve POPSTARTER.ELF in the normal order: custom path -> game device -> memory card.
 int vcdResolvePopstarter(const char *devPrefix, char *out, int outSize);
 
+// The path a "Missing POPSTARTER.ELF" message names after vcdResolvePopstarter failed: the user's own
+// POPSTARTER.ELF Path when one is set (the location they chose, tried first), else this device's
+// <root>POPS/POPSTARTER.ELF. No device access.
+void vcdDescribePopstarterLookup(const char *devPrefix, char *out, int outSize);
+
 // Build the POPSTARTER argv[0] selector "<devPrefix>POPS/<prefix><name>.ELF" into out.
 void vcdBuildSelector(const char *devPrefix, const char *prefix, const char *name, char *out, int outSize);
 

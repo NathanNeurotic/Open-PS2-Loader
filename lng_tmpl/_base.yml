@@ -1397,6 +1397,8 @@ gui_strings:
   string: "Neutrino will start with these arguments. Launch?"
 - label: HINT_NARGS_EXTRA
   string: "Other Neutrino flags, separated by spaces. A flag with its own row above (such as -logo) moves into that row when saved, and is still sent."
+- label: GAME_TYPE_LABELS
+  string: Show [PS1]/[PS2] Labels
 - label: AUTO_CREATE_VMC
   string: Create VMC on First Launch
 - label: HINT_AUTO_CREATE_VMC
