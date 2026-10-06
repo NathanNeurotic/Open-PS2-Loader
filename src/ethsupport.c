@@ -815,7 +815,7 @@ static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet
     // launch. Absent is normal -- the game is simply not tracked.
     sbLoadWatchList(ethPrefix, game->startup);
 #endif
-    if ((result = sbLoadCheats(ethPrefix, game->startup)) < 0) {
+    if ((result = sbLoadCheats(ethPrefix, game->startup, configSet)) < 0) {
         // #265: let the user back out instead of sitting through the whole load. The helper does
         // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
         // `settings` is not assigned until below, so derive the common block from the IRX base.

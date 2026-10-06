@@ -24,6 +24,7 @@
 
 #include <unistd.h>
 #include "include/cheatman.h"
+#include "include/cheatconfig.h"
 #include "include/ioman.h"
 
 static int gEnableCheat;     // Enables PS2RD Cheat Engine - 0 for Off, 1 for On
@@ -359,8 +360,10 @@ static int parse_buf(const char *buf)
                         cheat_index++; // Move to the next cheat entry
                         strncpy(gCheats[cheat_index].name, temp_name, CHEAT_NAME_MAX);
                         gCheats[cheat_index].name[CHEAT_NAME_MAX] = NUL;
-                        gCheats[cheat_index].enabled = 1; // Set cheat as enabled
-                        temp_name[0] = NUL;               // Clear temp_name after use
+                        // Auto mode runs every cheat; Select mode starts from the master codes
+                        // alone, and the game's remembered picks are applied on top (cheatconfig.c).
+                        gCheats[cheat_index].enabled = (gCheatMode == 0) || cheatConfigIsMasterCode(gCheats[cheat_index].name);
+                        temp_name[0] = NUL; // Clear temp_name after use
                     }
                     // Add the cheat code to the current cheat entry
                     if (cheat_index >= 0 && code_index < MAX_CHEATLIST)

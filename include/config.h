@@ -75,10 +75,12 @@ enum CONFIG_INDEX {
 #define CONFIG_ITEM_GSMFIELDFIX         "$GSMFIELDFix"
 
 // Per-Game CHEAT keys. -Bat-
-#define CONFIG_ITEM_CHEATSSOURCE "$CheatsSource"
-#define CONFIG_ITEM_ENABLECHEAT  "$EnableCheat"
-#define CONFIG_ITEM_CHEATMODE    "$CheatMode"
-#define CONFIG_ITEM_ENABLEIMAGE  "$EnableImage"
+#define CONFIG_ITEM_CHEATSSOURCE           "$CheatsSource"
+#define CONFIG_ITEM_ENABLECHEAT            "$EnableCheat"
+#define CONFIG_ITEM_CHEATMODE              "$CheatMode"
+#define CONFIG_ITEM_ENABLEIMAGE            "$EnableImage"
+// Remembered Select-mode picks: "$CheatSel000", "$CheatSel001", ... each holding one cheat NAME.
+#define CONFIG_ITEM_CHEAT_SELECTION_PREFIX "$CheatSel"
 
 #define CONFIG_ITEM_PADEMUSOURCE     "$PADEMUSource"
 #define CONFIG_ITEM_ENABLEPADEMU     "$EnablePadEmu"

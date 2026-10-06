@@ -2072,10 +2072,8 @@ void menuHandleInputGameMenu()
             if (menuID == GAME_COMPAT_SETTINGS) {
             guiGameShowCompatConfig(selected_item->item->current->item.id, selected_item->item->userdata, itemConfig);
         } else if (menuID == GAME_CHEAT_SETTINGS) {
-            if (gameMenuCoreIsNeutrino())
-                guiMsgBox(_l(_STR_NEUTRINO_SETTING_NA), 0, NULL);
-            else
-                guiGameShowCheatConfig();
+            // Both cores run cheats now; only the PS2RD .img row is OPL-core-only.
+            guiGameShowCheatConfig(gameMenuCoreIsNeutrino());
         } else if (menuID == GAME_GSM_SETTINGS) {
             if (gameMenuCoreIsNeutrino())
                 guiMsgBox(_l(_STR_NEUTRINO_SETTING_NA), 0, NULL);

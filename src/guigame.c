@@ -648,7 +648,7 @@ static int guiGameCheatUpdater(int modified)
     return 0;
 }
 
-void guiGameShowCheatConfig(void)
+void guiGameShowCheatConfig(int neutrinoCore)
 {
     // configure the enumerations
     const char *settingsSource[] = {_l(_STR_GLOBAL_SETTINGS), _l(_STR_PERGAME_SETTINGS), NULL};
@@ -657,6 +657,8 @@ void guiGameShowCheatConfig(void)
     diaSetEnum(diaCheatConfig, CHTCFG_CHEATSOURCE, settingsSource);
     diaSetEnum(diaCheatConfig, CHTCFG_CHEATMODE, cheatmodeNames);
     diaSetEnabled(diaCheatConfig, CHTCFG_CHEATMODE, EnableCheat);
+    // Neutrino takes .cht codes but has no PS2RD cheat image: that row only applies to the OPL core.
+    diaSetEnabled(diaCheatConfig, CHTCFG_ENABLEIMAGE, !neutrinoCore);
 
     diaExecuteDialog(diaCheatConfig, -1, 1, &guiGameCheatUpdater);
 }

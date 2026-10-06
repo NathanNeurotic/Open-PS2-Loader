@@ -412,9 +412,11 @@ When a game's core is **Neutrino**:
   a field-flipping fix for shake/tear. The comp half is **never** emitted without a video mode (a
   bare `:<comp>` aborts Neutrino's boot), so the row greys out while the effective video mode is
   Off; **Default** follows the global **Settings** value.
-- **GSM, Cheats, PADEMU, OSD Language** panels are OPL-core-only; opening one shows
+- **GSM, PADEMU, OSD Language** panels are OPL-core-only; opening one shows
   *"not used with the Neutrino core"* instead of editing dead options (use the Neutrino Video
   picker above for video forcing).
+- **Cheats** work on both cores (see [Cheats under Neutrino](#cheats-under-neutrino)). Only the
+  panel's **PS2RD image** row is greyed: Neutrino takes `.cht` codes but has no cheat-image support.
 - **VMC** and **Compatibility** stay available — both are honored under Neutrino. VMC becomes
   discrete `-mc0`/`-mc1` args on **BDM devices (USB/iLink/MX4SIO/exFAT HDD/UDPBD), MMCE and
   UDPFS**; the one exception is **APA HDD**, where no `-mc` args can be emitted (Neutrino has no
@@ -427,9 +429,30 @@ When a game's core is **`<OPL>`** the screen is unchanged from classic OPL, exce
 Args field and Neutrino Video picker are greyed (never read on the OPL path).
 
 > What Neutrino honors per game: the storage backend + image (`-bsd`/`-dvd`, automatic),
-> compat subset (`-gc`), VMC (`-mc0`/`-mc1`), `-logo`, and the free-text **Neutrino Launch
-> Args** (the catch-all for everything else, with `$`-disable). Cheats, GSM hacks, IGR/IGS,
-> PADEMU and OSD-language are OPL-embedded-core features with no Neutrino equivalent.
+> compat subset (`-gc`), VMC (`-mc0`/`-mc1`), `-logo`, cheats (`-cfg=`, below), and the free-text
+> **Neutrino Launch Args** (the catch-all for everything else, with `$`-disable). GSM hacks,
+> IGR/IGS, PADEMU, OSD-language and PS2RD cheat images are OPL-embedded-core features with no
+> Neutrino equivalent.
+
+### Cheats under Neutrino
+
+Neutrino runs PS2RD cheat codes (rickgaiser/neutrino `0469cc3`, in the Neutrino build RiptOPL
+ships; Neutrino v1.8.0 itself predates it). Nothing changes for you: the same **Cheat Settings**,
+the same `CHT/<startup>.cht` (or `CHT/cht.tar`) file and the same **Select Game Cheats** picker
+work for a Neutrino game exactly as for an OPL-core one, and the picks you make are remembered per
+game for both cores.
+
+How the codes reach Neutrino: at launch RiptOPL writes the enabled codes to
+**`riptopl-cheats.toml`** in Neutrino's own config folder (`neutrino/config/`, or the `neutrino/`
+folder itself for a flat install, or the `-cwd=` you forward) and adds `-cfg=riptopl-cheats` to the
+launch. The file is rewritten for every Neutrino launch with cheats on and is safe to delete.
+
+- A `-cfg=` you forward in your own Neutrino args still loads: Neutrino keeps only the last `-cfg`,
+  which is RiptOPL's, and that file loads yours through `depends`.
+- Every cheat switched off means no file and no `-cfg` at all.
+- If the Neutrino folder can't take the file (a read-only share, a full card), RiptOPL asks before
+  launching without cheats. An autolaunch, with no one to ask, launches without them.
+- **Show Launch Arguments** shows the `-cfg=riptopl-cheats` among the rest.
 
 ### VMC under Neutrino — how it actually works
 

@@ -24,7 +24,7 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
 // Returns the child dialog result so Settings peer pages can preserve their shared Save Changes
 // contract after editing the global defaults.
 int guiGameShowGSConfig(int forceGlobal);
-void guiGameShowCheatConfig(void);
+void guiGameShowCheatConfig(int neutrinoCore); // 1 = the game runs on Neutrino: the PS2RD image row is off
 
 #ifdef PADEMU
 void guiGameShowPadEmuConfig(int forceGlobal);

@@ -457,8 +457,8 @@ This build layers several features on top of upstream OPL:
   network pages list **Ember titles only**: Ember inherits the live connection, while POPSTARTER's
   IOP reset cannot restore either network transport. See **[docs/VCD.md](docs/VCD.md)**.
 - **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —
-  under Neutrino it greys the panels Neutrino ignores (GSM, Cheats, PADEMU, OSD Language and the
-  OPL-only compat modes) and offers a structured **Neutrino Video** picker (Off / 240p / 480p /
+  under Neutrino it greys the panels Neutrino ignores (GSM, PADEMU, OSD Language and the
+  OPL-only compat modes; cheats work on both cores) and offers a structured **Neutrino Video** picker (Off / 240p / 480p /
   1080i) plus a Neutrino-only **Mode 7** (`-gc=7`). Its global **Default Device** picker can also
   target a complete `neutrino/` folder on iLink explicitly. iLink is a FAT-model Neutrino backend;
   post-2692 builds automatically pair `-bsd=ilink` with `-qb` so Neutrino keeps the mounted iLink
@@ -761,7 +761,9 @@ If a game has no cheat file, what happens depends on where cheats were turned on
 This mode will enable and apply all cheat codes in your `.cht` file to your game automatically.
 
   * Select Game Cheats:  
-When enabled a cheat selection menu will appear when you launch a game. You can navigate the menu and disable undesired cheats for this launch session. Master Codes cannot be disabled as they are required for any other cheats to be applied.
+When enabled a cheat selection menu appears when you launch a game. Turn on the cheats you want, then press **Start**. Your picks are **remembered for that game** and shown ticked the next time, matched by cheat name, so a cheat file that gains or reorders cheats keeps them. The first time, only the master code is on. Master codes (`Mastercode`, `Master Code`, `Enable Code (Must Be On)`) are always on and can't be switched off, because every other code needs them. An autolaunch uses the remembered picks without showing the menu.
+
+Cheats work the same way for games launched through **Neutrino**: same settings, same file, same menu. See [Cheats under Neutrino](docs/NEUTRINO.md#cheats-under-neutrino).
 
 ## NBD Server
 
