@@ -101,6 +101,8 @@ environments built on OPL, listed so the survey is complete.
 The 2026-10-04 addition compares <a href="#orbit">ORBIT</a> at
 <a href="https://github.com/danielnuld/ps2-launcher/commit/d015baf7e4c004fa5db6964dc6bedd16484ea45d"><code>d015baf7</code></a>
 with RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/dc6206f60bf8175d88946c175e839d59ada9d9ab"><code>rebuild/main@dc6206f6</code></a>.
+The 2026-10-06 update adds <a href="#ps2-launcher">PS2-Launcher</a> v5.0.0 and re-checks ORBIT v1.0.2, both against RiptOPL
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/e74ddcecda6132dd6098960643d9dbefea832784"><code>rebuild/main@e74ddcec</code></a>.
 </div>
 
 <h2 id="sources">Sources surveyed</h2>
@@ -110,10 +112,10 @@ with RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/d
     <tr><td><code>W</code></td><td><a href="https://github.com/ps2homebrew/wOPL">wOPL</a></td><td>The continuation of KrahJohlito's uOPL</td><td>6</td></tr>
     <tr><td><code>O</code></td><td><a href="https://github.com/coffeedevsolutions/OPLattice">OPLattice</a></td><td>Grid themes, the SHELF interface and theme tooling</td><td>15</td></tr>
     <tr><td><code>OH</code></td><td><a href="https://github.com/coffeedevsolutions/OPHTML">OPHTML</a></td><td>HTML/CSS declarative UI compiler, zero-allocation C99 runtime and standalone Neutrino console launcher</td><td>11</td></tr>
-    <tr><td><code>U</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pulls">Upstream OPL</a></td><td>Pull requests not yet merged into Open PS2 Loader</td><td>6</td></tr>
+    <tr><td><code>U</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pulls">Upstream OPL</a></td><td>Pull requests not yet merged into Open PS2 Loader</td><td>5</td></tr>
     <tr><td><code>B</code></td><td><a href="https://boliviaos.site/">BoliviaOS</a></td><td>A multifunction PS2 environment built on OPL</td><td>7</td></tr>
-    <tr><td><code>P</code></td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher">PS2-Launcher</a></td><td>An OPL-based launcher with a console-style interface</td><td>5</td></tr>
-    <tr><td><code>OR</code></td><td><a href="https://github.com/danielnuld/ps2-launcher">ORBIT</a></td><td>A Neutrino-based PS2 launcher with console-side saves, achievements and a companion game catalog</td><td>5</td></tr>
+    <tr><td><code>P</code></td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher">PS2-Launcher</a></td><td>An OPL-based launcher with a console-style interface</td><td>7</td></tr>
+    <tr><td><code>OR</code></td><td><a href="https://github.com/danielnuld/ps2-launcher">ORBIT</a></td><td>A Neutrino-based PS2 launcher with console-side saves, achievements and a companion game catalog</td><td>4</td></tr>
     <tr><td><code>T</code></td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">Project Titan Magenta Edition</a></td><td>A PS2 operating-system/system-platform project with integrated game engines</td><td>10</td></tr>
     <tr><td><code>E</code></td><td><a href="https://github.com/officialjuicedesigns/OPL-Evolution">OPL-Evolution</a></td><td>An experimental OPL fork with a unified dashboard</td><td>1</td></tr>
     <tr><td><code>H</code></td><td><a href="https://github.com/hacan359/xerabora">xeRAbora</a></td><td>RetroAchievements for real PS2 hardware</td><td>1</td></tr>
@@ -185,8 +187,9 @@ with RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/d
     <tr><td><code>P3</code></td><td>One games list across every device</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
     <tr><td><code>P4</code></td><td>Hold SELECT to leave a game</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
     <tr><td><code>P5</code></td><td>Launch transition animation</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>P6</code></td><td>More USB controllers: Steam Controller, Shanwan PS3 clones, ANT Esports GP300</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>P7</code></td><td>Connected controller count on screen</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
     <tr><td><code>OR1</code></td><td>Animated PS2 save icons on game cards</td><td>Library &amp; menu</td><td>ORBIT</td><td>Feature</td></tr>
-    <tr><td><code>OR2</code></td><td>Create a per-game VMC on first play</td><td>Memory cards</td><td>ORBIT</td><td>Feature</td></tr>
     <tr><td><code>OR3</code></td><td>RetroAchievements telemetry with Neutrino games</td><td>RetroAchievements</td><td>ORBIT</td><td>Feature</td></tr>
     <tr><td><code>OR4</code></td><td>Browse achievement titles and progress on the console</td><td>RetroAchievements</td><td>ORBIT</td><td>Feature</td></tr>
     <tr><td><code>OR5</code></td><td>Companion catalog for UDPFS games</td><td>Cheats, launching &amp; network</td><td>ORBIT</td><td><span class="pill">Optional</span></td></tr>
@@ -328,29 +331,44 @@ site lists.</p>
 
 <h2 id="ps2-launcher">PS2-Launcher</h2>
 <p><a href="https://github.com/Irfanlesnar/PS2-Launcher">Irfanlesnar/PS2-Launcher</a> &mdash; an OPL-based launcher with a
-console-style interface. Checked against its published v4.0 source, not only its README.</p>
+console-style interface. Checked against its published v4.0 source, not only its README.
+<a href="https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0">v5.0.0</a> (2026-10-06) is checked from its
+release notes and README: the repository's v5.0.0 commit changed only <code>README.md</code> and <code>CREDITS.md</code>,
+so v5.0's code is not published.</p>
 <table>
   <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
   <tbody>
-    <tr><td><code>P1</code></td><td><b>Xbox One and Series controllers over USB</b></td><td>Wired Xbox controllers through a new IOP driver. RiptOPL supports DualShock 3, DualShock 4 and DualSense.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/tree/main/modules/xboxusb">modules/xboxusb</a></td></tr>
+    <tr><td><code>P1</code></td><td><b>Xbox One and Series controllers over USB</b></td><td>Wired Xbox controllers through a new IOP driver. RiptOPL supports DualShock 3, DualShock 4 and DualSense. v5.0 adds Xbox 360 pads, the gap tracked as <a href="#modular-pademu">MP1</a>.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/tree/main/modules/xboxusb">modules/xboxusb</a></td></tr>
     <tr><td><code>P2</code></td><td><b>Download covers from the PS2</b></td><td>Fetches missing covers, or refreshes all of them, over the network from the console.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c">src/opl.c</a><br><a href="https://irfanlesnar.github.io/PS2-Launcher-Manager/">PS2-Launcher-Manager</a></td></tr>
-    <tr><td><code>P3</code></td><td><b>One games list across every device</b></td><td>A single Games list combining every connected source, part of its console-style interface.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c">src/opl.c</a></td></tr>
+    <tr><td><code>P3</code></td><td><b>One games list across every device</b></td><td>A single Games list combining every connected source, part of its console-style interface. v5.0 adds sorting that list by device.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c">src/opl.c</a></td></tr>
     <tr><td><code>P4</code></td><td><b>Hold SELECT to leave a game</b></td><td>Holding SELECT for 7&ndash;10 seconds in a game returns to the launcher, an alternative to the multi-button <a href="igr.html">in-game reset</a> combo.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/ee_core/src/padhook.c">ee_core/src/padhook.c</a></td></tr>
     <tr><td><code>P5</code></td><td><b>Launch transition animation</b></td><td>An animated transition as a game starts. OPL-Evolution adapted it too.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c">src/opl.c</a></td></tr>
+    <tr><td><code>P6</code></td><td><b>More USB controllers: Steam Controller, Shanwan PS3 clones, ANT Esports GP300</b></td><td>v5.0 lists the Steam Controller (2026), Shanwan PS3 clone pads and the ANT Esports GP300 Pro V2 wireless controller. RiptOPL's USB driver accepts only Sony's DualShock 3, DualShock 4 and DualSense IDs and has no clone-specific handling.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0">v5.0.0 release notes</a></td></tr>
+    <tr><td><code>P7</code></td><td><b>Connected controller count on screen</b></td><td>The v5.0 interface shows how many controllers are connected. RiptOPL only says when no controller is detected.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0">v5.0.0 release notes</a></td></tr>
   </tbody>
 </table>
+<div class="callout info"><div class="h">PS2-Launcher v5.0 overlap</div>
+v5.0's Files tab (browse devices, copy, paste and delete files, launch games and ELFs) overlaps <a href="#boliviaos">B1</a>,
+and its Xbox 360 support overlaps <a href="#modular-pademu">MP1</a>; those receive no new P-series IDs. Already in RiptOPL:
+MMCE storage, the full in-game resolution list (RiptOPL also has 720p, 1080i and 1080p), the IGR Path setting, per-game
+OSD language, and multitap emulation for extra players (set up in <a href="pademu.html">Controller Emulation</a>
+rather than assigned automatically). Its new SMB IP options are not itemised; RiptOPL already offers DHCP or
+a static address with gateway and DNS, and reaches the server by IP or name. The faster Apps tab is a performance change,
+not a capability.</div>
 
 <h2 id="orbit">ORBIT</h2>
 <p><a href="https://github.com/danielnuld/ps2-launcher">danielnuld/ps2-launcher</a> by
 <a href="https://github.com/danielnuld">danielnuld</a> &mdash; a standalone PS2 launcher built around Neutrino.
 Audited against <a href="https://github.com/danielnuld/ps2-launcher/commit/d015baf7e4c004fa5db6964dc6bedd16484ea45d"><code>d015baf7</code></a>
 and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/dc6206f60bf8175d88946c175e839d59ada9d9ab"><code>rebuild/main@dc6206f6</code></a>.
+Re-checked on 2026-10-06 against <a href="https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2">v1.0.2</a>:
+v1.0.1 and v1.0.2 are fixes (a 1024-game limit, cover loading, DNS with DHCP, and MemCard PRO 2 game IDs on every
+launch, which RiptOPL already sends), so they add no entries. OR2 has since shipped in RiptOPL (see <a href="#notes">Notes</a>).
 These are capability differences, not claims that every game or storage device has passed on a console.</p>
 <table>
   <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
   <tbody>
     <tr><td><code>OR1</code></td><td><b>Animated PS2 save icons on game cards</b></td><td>Reads a game's newest save from a physical or virtual memory card, parses its <code>icon.sys</code> and 3D icon mesh, and renders the animated model on the selected game's card. RiptOPL stamps its own memory-card save icon but does not parse and display each game's save model.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/icon.c">icon.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a></td></tr>
-    <tr><td><code>OR2</code></td><td><b>Create a per-game VMC on first play</b></td><td>With virtual cards selected, creates an 8 MB card on the game's device when play starts; a UDPFS game asks the companion server to provide its card. RiptOPL can create and assign per-game VMCs through its settings dialog, but does not do this automatically at first launch. ORBIT's own phase-14 report records host and PCSX2 checks and leaves the physical-console VMC gate open.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/vmc.c">vmc.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase14-results.md">phase-14 evidence</a></td></tr>
     <tr><td><code>OR3</code></td><td><b>RetroAchievements telemetry with Neutrino games</b></td><td>ORBIT passes a watch list to its Neutrino fork and loads an in-game agent that streams watched memory to xeRAbora. RiptOPL's RA flavour loads telemetry through its own OPL core and explicitly excludes Neutrino and UDPFS launches. ORBIT reports one real-console UDPFS/Neutrino session with snapshots; that does not establish broad game compatibility.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/third_party/neutrino-igr/ra.c">Neutrino agent</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md">console report</a></td></tr>
     <tr><td><code>OR4</code></td><td><b>Browse achievement titles and progress on the console</b></td><td>The selected game's panel lists individual achievement titles, descriptions, points and earned state. RiptOPL's RA support check shows the title and aggregate counts returned by the PC client, but has no per-achievement browser. ORBIT's phase-16b report records host/PCSX2 checks for this panel and leaves the console check open.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/achievements.c">achievements.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase16b-results.md">phase-16b evidence</a></td></tr>
     <tr><td><code>OR5</code></td><td><b>Companion catalog for UDPFS games</b> <span class="pill">Optional</span></td><td>An HTTP companion service lists titles, paths, IDs and precomputed RA hashes for games whose ISO data is served through UDPFS, without mounting UDPFS in the menu. RiptOPL already lists UDPFS files through its filesystem driver and has a separate <code>games.csv</code> catalog for HTTP streaming; this row tracks ORBIT's distinct UDPFS catalog workflow, not a missing ability to list or launch UDPFS games.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/tools/orbit_catalog.py">orbit_catalog.py</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md">console report</a></td></tr>
@@ -616,10 +634,14 @@ The five sources above produced six confirmed entries.
   index sidecars for all three archive kinds, the <code>&lt;name&gt;_show_run</code> theme key,
   RetroAchievements for <a href="retroachievements.html#physical-discs">physical discs</a>, per-game OSD language,
   virtual memory card creation, and the older USB driver that upstream PR #1752 proposes pinning.</li>
-  <li><b>Shipped since the survey</b> (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a>):
-  Ratchet &amp; Clank 3 over SMB (was U5, from upstream PR #1761), Pro Evolution Soccer 2 defaulting to Accurate Reads
-  (was U7, see <a href="per-game-settings.html#compatibility-modes">Compatibility Modes</a>), and Galician and Serbian
-  UI languages (was U8, see <a href="languages.html#naming">Languages</a>). IDs are not reused.</li>
+  <li><b>Shipped since the survey:</b> Ratchet &amp; Clank 3 over SMB (was U5, from upstream PR #1761), Pro Evolution
+  Soccer 2 defaulting to Accurate Reads (was U7, see <a href="per-game-settings.html#compatibility-modes">Compatibility
+  Modes</a>) and Galician and Serbian UI languages (was U8, see <a href="languages.html#naming">Languages</a>), all in
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a>; remembered per-game cheat selections
+  (was U2, from upstream PR #1748, in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/846">PR #846</a>, see
+  <a href="cheats.html#cheat-modes">Cheat modes</a>); and Create VMC on First Launch (was OR2, in
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/842">PR #842</a>, see
+  <a href="settings.html#game-launching">Game Launching</a>). IDs are not reused.</li>
   <li><b>wOPL's config format:</b> wOPL moved to libconfig. RiptOPL reads and writes both formats, so files the two
   loaders share, such as an app's <code>title.cfg</code>, keep working in both.</li>
   <li><b>Device names:</b> RiptOPL accepts <code>usb0:</code> and <code>ata0:</code> style names for its boot path and
