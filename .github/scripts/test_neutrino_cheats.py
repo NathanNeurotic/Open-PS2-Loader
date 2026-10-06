@@ -92,6 +92,13 @@ int main(void)
     configSetStr(&cfg, "$CheatSel001", "Not In This File");
     cheatConfigLoadSelections(&cfg);
     show("unknown");                                /* a saved name no longer present is ignored */
+
+    const char *twice[] = {"Mastercode", "Infinite Ammo", "Infinite Ammo", "Max Money", NULL};
+    fill(twice);
+    table[1].enabled = table[2].enabled = 1;
+    cheatConfigSaveSelections(&cfg);
+    cheatConfigLoadSelections(&cfg);
+    show("twice");                                  /* a repeated name: each saved copy restores its own */
     return 0;
 }
 '''
@@ -179,7 +186,8 @@ with tempfile.TemporaryDirectory() as tmp:
             'keys: $CheatSel000=Infinite Health $CheatSel001=Moon Jump',
             'reordered: 1 0 1 1 0',
             'keys: $CheatSel000=Max Money',
-            'unknown: 0 1 1 0 0']
+            'unknown: 0 1 1 0 0',
+            'twice: 1 1 1 0']
     if out != want:
         failures.append('remembered picks:\n  got  %r\n  want %r' % (out, want))
 
@@ -280,9 +288,21 @@ if not re.search(r'if \(sbNeutrinoLoadCheats\([^;]+\) < 0\) \{\s*failResult = 1;
     failures.append('bdmsupport.c: backing out of the cheats must return to the menu, never to the other core')
 if not re.search(r'if \(sbNeutrinoLoadCheats\([^;]+\) < 0\)\s*return gAutoLaunchGame == NULL \? 1 : 0;', text('src/hddsupport.c')):
     failures.append('hddsupport.c: backing out of the cheats must stay in the menu')
-for leg, undo in (('src/mmcesupport.c', 'sbUnprepare(&settings->common);'), ('src/udpfssupport.c', 'sbUnprepare((u8 *)(&smb_cdvdman_irx) + index);')):
-    if not re.search(r'if \(sysNeutrinoHandCheats\([^;]+\) < 0\) \{\s*' + re.escape(undo) + r'\s*return;', text(leg)):
-        failures.append('%s: backing out must undo the native preparation and stay in the menu' % leg)
+# A way back to the menu after sbPrepare must restore the IRX patch zone: sbPrepare finds it by the
+# pristine sample, so a zone left patched fails the next launch. MMCE launches that IRX natively, so each
+# Neutrino abort undoes it; UDPFS only borrows the SMB IRX as scratch and restores it right after the
+# cheats step, before any later return.
+mmce = text('src/mmcesupport.c')
+for call in ('sysNeutrinoPreflight(', 'sysNeutrinoHandCheats(', 'sysNeutrinoArgsPreflight('):
+    if not re.search(r'if \(' + re.escape(call) + r'[^;]+\) < 0\) \{(?: //[^\n]*)?\s*sbUnprepare\(&settings->common\);\s*return;', mmce):
+        failures.append('mmcesupport.c: %s failing must undo the native preparation and stay in the menu' % call[:-1])
+udpfs = text('src/udpfssupport.c')
+restore = udpfs.find('sbUnprepare((u8 *)(&smb_cdvdman_irx) + index);\n    sbLoadImage(')
+if not (0 <= udpfs.find('sbCheatsMissingContinue((u8 *)(&smb_cdvdman_irx) + index, result)') < restore <
+        udpfs.find('_STR_NET_NEEDS_NEUTRINO')):
+    failures.append('udpfssupport.c: restore the scratch zone right after the cheats step, before any later return')
+if not re.search(r'if \(sysNeutrinoHandCheats\([^;]+\) < 0\)\s*return;', udpfs):
+    failures.append('udpfssupport.c: backing out of the cheats hand-off must stay in the menu')
 
 support = text('src/supportbase.c')
 calls = re.findall(r'sbLoadCheats\(([^;]*?)\)\) < 0', '\n'.join(text('src/' + f) for f in (

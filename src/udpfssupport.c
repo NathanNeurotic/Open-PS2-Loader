@@ -551,6 +551,11 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
         if (!sbCheatsMissingContinue((u8 *)(&smb_cdvdman_irx) + index, result))
             return;
     }
+    // The scratch patch has done its job (the compat mask, and the cheats step's way back out above).
+    // Restore the zone NOW, so every return below -- format, no neutrino.elf, the preflights, the
+    // cheats hand-off -- leaves it pristine: smb_cdvdman_irx is the SMB leg's IRX too, and a zone left
+    // patched fails the next SMB or UDPFS launch's sbPrepare ("unable to locate patch zone").
+    sbUnprepare((u8 *)(&smb_cdvdman_irx) + index);
     sbLoadImage(udpfsPrefix, game->startup);
 
     if (gPS2Logo) {
@@ -612,12 +617,9 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // the user back into the menu sitting on the per-game card.
     if (sysNeutrinoPreflight("udpfs", neutrinoPath, 0, NULL, -1) < 0)
         return;
-    // Cheats: loaded above (sbLoadCheats) and handed to Neutrino here. Backing out undoes sbPrepare's
-    // scratch patch, as the cheats-missing path does, and stays in the menu.
-    if (sysNeutrinoHandCheats(game->startup, neutrinoPath, neutrinoExtraArgs) < 0) {
-        sbUnprepare((u8 *)(&smb_cdvdman_irx) + index);
+    // Cheats: loaded above (sbLoadCheats) and handed to Neutrino here. Backing out stays in the menu.
+    if (sysNeutrinoHandCheats(game->startup, neutrinoPath, neutrinoExtraArgs) < 0)
         return;
-    }
     if (sysNeutrinoArgsPreflight("udpfs", partname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0)
         return;
 

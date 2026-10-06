@@ -79,8 +79,10 @@ void cheatConfigLoadSelections(config_set_t *configSet)
         snprintf(key, sizeof(key), "%s%03d", CONFIG_ITEM_CHEAT_SELECTION_PREFIX, n);
         if (!configGetStrCopy(configSet, key, saved, sizeof(saved)))
             break;
+        // The first cheat of that name not already back on: a .cht that repeats a name (one per player,
+        // say) saves it once per pick, so each saved copy restores its own cheat.
         for (i = 0; i < MAX_CODES && gCheats[i].name[0] != NUL; i++) {
-            if (!cheatConfigIsMasterCode(gCheats[i].name) && cheatConfigNamesMatch(gCheats[i].name, saved)) {
+            if (!gCheats[i].enabled && !cheatConfigIsMasterCode(gCheats[i].name) && cheatConfigNamesMatch(gCheats[i].name, saved)) {
                 gCheats[i].enabled = 1;
                 break;
             }
