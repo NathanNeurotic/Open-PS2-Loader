@@ -87,7 +87,11 @@ void sbCreateFolders(const char *path, int createDiscImgFolders);
 u32 sbGetISO9660MaxLBA(const char *path);
 int sbProbeISO9660(const char *path, base_game_info_t *game, u32 layer1_offset);
 
-int sbLoadCheats(const char *path, const char *file);
+int sbLoadCheats(const char *path, const char *file, config_set_t *configSet);
+// The cheats of a Neutrino launch whose leg skips the native preparation (BDM, APA): this game's cheat
+// settings, its .cht from <prefix>CHT/ (Select mode: remembered picks, then the picker), then
+// sysNeutrinoHandCheats. 0 = launch; <0 = the user chose to stay in the menu.
+int sbNeutrinoLoadCheats(const char *prefix, const char *startup, config_set_t *configSet, const char *neutrinoPath, const char *extraArgs);
 
 
 int sbFileExists(const char *path);

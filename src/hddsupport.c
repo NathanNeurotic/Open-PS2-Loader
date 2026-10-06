@@ -2129,6 +2129,10 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     // the autolaunch teardown -- aborting here instead would leak gAutoLaunchGame/configSet.
     if (sysNeutrinoPreflight("apa", neutrinoPath, 0, NULL, -1) < 0)
         return 0;
+    // Cheats, as on BDM: this game's settings, its pfs0:CHT/ file and the picker, handed to Neutrino.
+    // Backing out stays in the menu; an autolaunch never reaches that question.
+    if (sbNeutrinoLoadCheats(gHDDPrefix, game->startup, configSet, neutrinoPath, neutrinoExtraArgs) < 0)
+        return gAutoLaunchGame == NULL ? 1 : 0;
     if (sysNeutrinoArgsPreflight("apa", apaPart, game->startup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, NULL) < 0)
         return gAutoLaunchGame == NULL ? 1 : 0; // autolaunch needs the native path to own its teardown
 
@@ -2360,7 +2364,7 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         // launch. Absent is normal -- the game is simply not tracked.
         sbLoadWatchList(gHDDPrefix, game->startup);
 #endif
-        if ((result = sbLoadCheats(gHDDPrefix, game->startup)) < 0) {
+        if ((result = sbLoadCheats(gHDDPrefix, game->startup, configSet)) < 0) {
             // #265: let the user back out instead of sitting through the whole load. The helper does
             // the sbUnprepare itself -- see include/supportbase.h; skipping it breaks the NEXT launch.
             // `settings` is not assigned until below, so derive the common block from the IRX base.
