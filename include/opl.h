@@ -394,6 +394,7 @@ extern char gCustomSettingsPath[64];
 extern int gEnableDebug;
 
 extern int gPS2Logo;
+extern int gAutoCreateVmc;
 
 // Default device
 extern int gDefaultDevice;

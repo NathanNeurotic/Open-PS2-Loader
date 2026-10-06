@@ -572,11 +572,18 @@ static void VMC_create_thread(void *args)
         r = vmc_mccopy(param->VMC_filename, param->VMC_card_slot, &genvmc_stats.VMC_progress, genvmc_stats.VMC_msg);
 
     if (r < 0) {
+        // Any failure after the open leaves a truncated, half-written card behind. Remove it before
+        // reporting, or the next look finds "a VMC by that name" and uses a broken one (Create VMC on
+        // First Launch reuses an existing file rather than overwrite it). Nothing is removed for the
+        // failures that come BEFORE the open -- vmc_mccopy's source-card checks (-98 no card, -99
+        // unreadable, -100 not formatted) and the open itself (-101): the name may belong to a VMC
+        // this job never touched.
+        if (r != -98 && r != -99 && r != -100 && r != -101)
+            remove(param->VMC_filename);
         genvmc_stats.VMC_status = GENVMC_STAT_AVAIL;
         genvmc_stats.VMC_error = r;
 
         if (r == -1000) { // user abort
-            remove(param->VMC_filename);
             strcpy(genvmc_stats.VMC_msg, "VMC file creation aborted");
             SignalSema(genvmc_abort_finished_sema);
         } else
