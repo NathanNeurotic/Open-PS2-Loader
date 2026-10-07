@@ -201,6 +201,7 @@ static int retrogemTitlePrefixChar(char c)
 static int retrogemCleanTitleID(const char *raw, char *out, size_t maxLen)
 {
     const char *p = raw;
+    size_t len;
     int i;
 
     if (raw == NULL || out == NULL || maxLen < RETROGEM_GAMEID_MAX)
@@ -220,12 +221,19 @@ static int retrogemCleanTitleID(const char *raw, char *out, size_t maxLen)
         !strncasecmp(p, "PP.", 3) || !strncmp(p, "__.", 3))
         p += 3;
 
+    // All accepted serial spellings need at least ten characters. Guard before indexed reads so
+    // a malformed short BOOT token or path component cannot make this metadata parser read beyond
+    // its terminating NUL.
+    len = strlen(p);
+    if (len < 10)
+        return 0;
+
     for (i = 0; i < 4; i++) {
         if (!retrogemTitlePrefixChar(p[i]))
             return 0;
     }
 
-    if (p[4] == '_' &&
+    if (len >= 11 && p[4] == '_' &&
         isdigit((unsigned char)p[5]) && isdigit((unsigned char)p[6]) && isdigit((unsigned char)p[7]) &&
         p[8] == '.' && isdigit((unsigned char)p[9]) && isdigit((unsigned char)p[10])) {
         for (i = 0; i < 11; i++)
