@@ -59,6 +59,17 @@ On the console, set **Network Connectivity** to **Manual** or **Auto** in **Game
 Use **Test** before saving. It tells you which part failed — unreachable, catalog missing, catalog
 unreadable, or the server not returning the exact bytes asked for — rather than one generic error.
 
+### Quick start: actually launching a game
+
+Once **Test HTTP server** passes with a non-empty catalog:
+
+1. Save or leave Settings with the HTTP values active.
+2. Open the **HTTP Games** page from the main menu. If Network Connectivity is **Manual**, opening the page starts the connection; **Auto** starts it at boot.
+3. Pick a title from the catalog and launch it normally. HTTP always uses RiptOPL's native **<OPL>** core; the global **Default Loader Core** does not turn HTTP into a Neutrino launch.
+4. If the HTTP page is empty, re-run **Test HTTP server** first. A successful empty-catalog test only proves the server is reachable; it does not give the menu a game to list.
+
+The server does not need a writable share. The menu reads `games.csv`, and the in-game HTTP driver requests sectors from the ISO with byte ranges.
+
 An empty catalog is a valid answer, and Test says so plainly: it proves the server is there, and
 proves nothing at all about whether byte ranges work.
 
