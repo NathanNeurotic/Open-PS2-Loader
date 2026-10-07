@@ -150,6 +150,13 @@ turns the hook off for that title. If a game misbehaves in a way that started wh
 RiptOPL, this is the mode to try — at the cost of losing IGR for that game. See
 <a href="per-game-settings.html">Per-game Settings</a>.</p>
 
+<p>Fewer games should need it now. IGR used to watch the pad from a <b>VBLANK interrupt handler</b>, and merely
+registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the handler did. It now
+polls the pad from its own low-priority thread, woken by a timer about once a frame, and registers nothing on VBLANK
+(official OPL #1762, ported here). The <b>RetroAchievements</b> loader is the exception: its per-frame memory snapshots
+and unlock notice must run inside that interrupt, so it keeps the handler, and the games it upsets still need Mode 6
+there.</p>
+
 <h3>Under the Neutrino core</h3>
 <div class="callout amber"><div class="h">Neutrino has no IGR</div>
 This is a property of that loader, not a RiptOPL limitation, and it is why <b>Mode 6 is greyed out</b>
@@ -196,6 +203,10 @@ clicks. The screenshot combination uses <b>Up</b>, so it needs no analog mode.</
 <p>Try the console power button as a cross-check: if that resets and the pad combination does not, the hook is
 fine and the problem is in the pad half.</p>
 
+<p><b>IGR stopped answering in a game that worked on an older build.</b> Report the title. IGR now polls the pad
+from a low-priority thread (see <a href="#limitations">When IGR is not available</a>), and a game that never lets
+such a thread run would starve it. The power button does not depend on the pad and is the quickest cross-check.</p>
+
 <p><b>Reset takes me somewhere unexpected.</b> Check <b>IGR Path</b> in <em>Settings → General &amp; System</em>. A stale
 path left over from an earlier setup will boot that ELF instead of exiting to the PS2 browser. A USB path that lands
 in the PS2 browser anyway is missing its memory-card drivers — see <a href="#where-reset-goes">Where a reset takes
@@ -208,7 +219,7 @@ normal play can trigger IGR by accident. Set <b>Mode 6 — Disable IGR</b> for t
 <table>
 <thead><tr><th>File</th><th>Role</th></tr></thead>
 <tbody>
-<tr><td><code>ee_core/src/padhook.c</code></td><td>The hook itself: pad pattern matching, the VBLANK interrupt handler, combo dispatch, the IGR thread</td></tr>
+<tr><td><code>ee_core/src/padhook.c</code></td><td>The hook itself: pad pattern matching, the polling IGR thread and its one-frame alarm (the VBLANK interrupt handler in RetroAchievements builds only), combo dispatch</td></tr>
 <tr><td><code>ee_core/include/padhook.h</code></td><td>The combo constants (<code>IGR_COMBO_R1_L1_R2_L2</code>, <code>IGR_COMBO_START_SELECT</code>, <code>IGR_COMBO_R3_L3</code>, <code>IGR_COMBO_UP</code>)</td></tr>
 <tr><td><code>ee_core/src/cd_igr_rpc.c</code></td><td>IOP-side reset RPC</td></tr>
 <tr><td><code>ee_core/src/igs_api.c</code></td><td>Screenshot capture and BMP writing</td></tr>
