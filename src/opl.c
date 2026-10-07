@@ -2012,8 +2012,12 @@ static int writeConfigPathRedirect(const char *path)
                 int n2 = write(fd, "\n", 1);
                 close(fd);
                 mirrorOk = (n1 == (int)strlen(path) && n2 == 1);
-                if (mirrorOk)
+                if (mirrorOk) {
                     LOG("CONFIG mirrored settings path to %s\n", mcPath);
+                    // The mkdir above can be this card's first OPL folder: without its icon set the
+                    // browser shows it as Corrupted Data.
+                    checkMCSaveIcons(mcPath);
+                }
             }
             if (!mirrorOk)
                 LOG("CONFIG could not mirror settings path to %s\n", mcPath);
@@ -4835,10 +4839,12 @@ static void setDefaults(void)
     gEnableArt = 1;
     gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
     gWideScreen = 1;
-    gEnableSFX = 1; // safe now: sfxPlay dispatches asynchronously (#340)
+    // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
+    // Saved configs keep their own choice; the Audio page turns each one on live.
+    gEnableSFX = 0;
     gEnableRumble = 1;
-    gEnableBootSND = 1;
-    gEnableBGM = 1; // inert without a bgm.ogg on the card
+    gEnableBootSND = 0;
+    gEnableBGM = 0;
     gSFXVolume = 90;
     gBootSndVolume = 90;
     gBGMVolume = 90;

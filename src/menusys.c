@@ -626,12 +626,10 @@ int menuSaveEmberGameSettings(config_set_t *configSet)
     return support->itemSaveCueSettings(support, id, name, configSet);
 }
 
-int menuSaveSettings(void)
+// The save itself, without the restart offer that follows it in menuSaveSettings.
+static int menuSaveAllSettings(void)
 {
     int result;
-
-    if (menuCheckParentalLock() != 0)
-        return 0;
 
     guiGameSaveOSDLanguageGlobalConfig(configGetByType(CONFIG_GAME));
 #ifdef PADEMU
@@ -645,6 +643,18 @@ int menuSaveSettings(void)
     result = saveConfig(CONFIG_OPL | CONFIG_NETWORK | CONFIG_GAME | CONFIG_LAST, 1);
     menuSetParentalLockCheckState(1); // Re-enable parental lock check.
 
+    return result;
+}
+
+int menuSaveSettings(void)
+{
+    int result;
+
+    if (menuCheckParentalLock() != 0)
+        return 0;
+
+    result = menuSaveAllSettings();
+
     // SMB, UDPFS and UDPBD share the one SMAP NIC and cannot coexist -- each loader refuses to
     // start while either of the others is resident, and each loads its IOP chain once per boot.
     // Once a stack is up, a changed protocol applies after a restart.
@@ -652,6 +662,17 @@ int menuSaveSettings(void)
         sysExecExit();
 
     return result;
+}
+
+// The network page's "restart now?" Yes: the user already agreed, so save and restart without asking
+// again. A failed save stays in OPL -- restarting would throw the protocol change away.
+void menuSaveSettingsAndRestart(void)
+{
+    if (menuCheckParentalLock() != 0)
+        return;
+
+    if (menuSaveAllSettings() > 0)
+        sysExecExit();
 }
 
 static void menuInitMainMenu(void)
