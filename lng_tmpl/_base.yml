@@ -1409,3 +1409,7 @@ gui_strings:
   string: "Creating this game's VMC..."
 - label: AUTO_VMC_FAILED
   string: "Could not create this game's VMC. The game starts without one."
+- label: SAVE_ICONS
+  string: "3D Save Icons"
+- label: HINT_SAVE_ICONS
+  string: "Shows the selected game's save icon, spinning, where the theme has a spot for it. Reads the game's own VMC first, then the memory cards."

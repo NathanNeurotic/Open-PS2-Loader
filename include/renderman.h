@@ -122,6 +122,11 @@ void rmDrawFramedRect(int x, int y, int w, int h, int border, u64 frameColor, u6
 /** Queues a single color line to be rendered */
 void rmDrawLine(int x1, int y1, int x2, int y2, u64 color);
 
+/** Queues count opaque Gouraud-shaded triangles in the order given, in virtual 640x480 coordinates:
+ * xy and uv hold two floats per vertex, colors one RGBAQ per vertex, three vertices per triangle.
+ * Textured from txt (uv in texels) when it is not NULL, otherwise the vertex colours alone. */
+void rmDrawTriangles(GSTEXTURE *txt, int count, const float *xy, const float *uv, const u64 *colors);
+
 /** Starts the frame - first to call every frame */
 void rmStartFrame(void);
 

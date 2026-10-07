@@ -75,6 +75,8 @@ jobs:
         run: python3 .github/scripts/test_handoff_probe.py
       - name: Check that a blind button press cannot keep a video mode the TV cannot show
         run: python3 .github/scripts/test_vmode_confirm.py
+      - name: Check 3D save icons parse real icons and card images, and refuse damaged ones
+        run: python3 .github/scripts/test_save_icons.py
       - name: Check Back on a Settings page keeps its edits and only a real change reconnects SMB
         run: python3 .github/scripts/test_settings_back_keeps_edits.py
       - name: Check a memory-card settings path saves and POPSTARTER is made only when needed, with icons

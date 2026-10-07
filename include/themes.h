@@ -144,6 +144,9 @@ typedef struct theme_elems
     // Set only when this family contains ItemText, the element that consumes the optional deep
     // VCD display ID. Keeps cosmetic disc-image inspection completely demand-driven.
     unsigned char needsVcdDisplayId;
+    // Set when this family contains a SaveIcon, which reads the row's per-game VMC names: the
+    // per-game config is then fetched for it, but only while 3D Save Icons is switched on.
+    unsigned char needsSaveIconConfig;
 } theme_elems_t;
 
 typedef struct

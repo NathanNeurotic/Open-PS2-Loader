@@ -1648,7 +1648,10 @@ static void menuRenderElements(theme_elems_t *elems)
     // AttributeText, GameCountText and AttributeImage (themes.c), and those are precisely the only
     // three draw functions that consume the config argument. It is per-FAMILY, so the info screen
     // still loads what it needs the moment it is shown.
-    if (elems->needsItemConfig && menuCanRequestItemConfig(list))
+    //
+    // SaveIcon reads the row's VMC names from that config too -- but only while 3D Save Icons is on,
+    // so the setting left off costs a theme with the element nothing.
+    if ((elems->needsItemConfig || (elems->needsSaveIconConfig && gEnableSaveIcons)) && menuCanRequestItemConfig(list))
         _menuRequestConfig();
 
     // Deep VCD ID inspection is cosmetic and must be explicit-theme-demand only. ItemText is

@@ -717,6 +717,14 @@ int favGetItemKind(int id)
     return favValidIndex(id) ? favArray[id].kind : -1;
 }
 
+char *favGetItemPrefix(int id)
+{
+    item_list_t ownerView;
+    item_list_t *o = favOwnerView(id, &ownerView);
+
+    return (o != NULL && o->itemGetPrefix != NULL) ? o->itemGetPrefix(o) : NULL;
+}
+
 static int favGetRowView(item_list_t *itemList, int id)
 {
     (void)itemList;
