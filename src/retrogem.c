@@ -28,16 +28,16 @@
 // PVD timestamp mappings cover PS1 discs whose SYSTEM.CNF is absent or boots a generic target such
 // as PSX.EXE. The table is derived from OSDMenu's AFL-3.0 game_id_table.h, also used by
 // r3LaunchELF_ATTDASH.
-#define PS1_SECTOR_DATA_SIZE         2048
-#define PS1_RAW_SECTOR_SIZE          2352
-#define PS1_VCD_IMAGE_OFFSET         0x100000L
-#define PS1_PVD_LBA                  16
-#define PS1_PVD_SEARCH_SECTORS       16
-#define PS1_ROOT_RECORD_OFFSET       156
-#define PS1_MAX_ROOT_DIR_SECTORS     64
-#define PS1_PVD_TIMESTAMP_OFFSET     0x32D
-#define PS1_PVD_TIMESTAMP_LEN        16
-#define PS1_SYSTEM_CNF_MAX           4096
+#define PS1_SECTOR_DATA_SIZE     2048
+#define PS1_RAW_SECTOR_SIZE      2352
+#define PS1_VCD_IMAGE_OFFSET     0x100000L
+#define PS1_PVD_LBA              16
+#define PS1_PVD_SEARCH_SECTORS   16
+#define PS1_ROOT_RECORD_OFFSET   156
+#define PS1_MAX_ROOT_DIR_SECTORS 64
+#define PS1_PVD_TIMESTAMP_OFFSET 0x32D
+#define PS1_PVD_TIMESTAMP_LEN    16
+#define PS1_SYSTEM_CNF_MAX       4096
 
 typedef struct
 {
@@ -172,8 +172,7 @@ static const ps1_generic_game_id_t ps1_generic_game_ids[] = {
     {"1995103122331500", "SCPS_100.16"},
 };
 
-typedef enum
-{
+typedef enum {
     PS1_IMAGE_COOKED_2048 = 0,
     PS1_IMAGE_RAW_2352
 } ps1_image_layout_t;
