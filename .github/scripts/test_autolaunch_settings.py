@@ -433,6 +433,17 @@ def check_pins():
     check(mini_deinit is not None and 'ethDeinitModules();' in mini_deinit,
           'miniDeinit: Auto Loading must tear down pre-launch network modules')
 
+    hdd_launch = function_text(hdd, 'void hddLaunchGame(')
+    bdm_launch = function_text(text('src/bdmsupport.c'), 'void bdmLaunchGame(')
+    order = (r'\bminiDeinit\s*\(\s*configSet\s*\)\s*;.*'
+             r'\bsysLaunchLoaderElf\s*\(')
+    check(hdd_launch is not None and
+          re.search(order, hdd_launch, re.S) is not None,
+          'hddLaunchGame: Auto Loading must tear down before the native loader handoff')
+    check(bdm_launch is not None and
+          re.search(order, bdm_launch, re.S) is not None,
+          'bdmLaunchGame: Auto Loading must tear down before the native loader handoff')
+
 
 run_hybrid_harness()
 run_path_harness()

@@ -2846,9 +2846,12 @@ static void configReadNetworkGlobals(config_set_t *configNet)
     configGetStrCopy(configNet, CONFIG_NET_HTTP_BASE_PATH, gHttpBasePath, sizeof(gHttpBasePath));
     httpNormalizeBasePath(gHttpBasePath, sizeof(gHttpBasePath));
 
-    configGetStrCopy(configNet, CONFIG_NET_SMB_SHARE, gPCShareName, sizeof(gPCShareName));
-    configGetStrCopy(configNet, CONFIG_NET_SMB_USER, gPCUserName, sizeof(gPCUserName));
-    configGetStrCopy(configNet, CONFIG_NET_SMB_PASSW, gPCPassword, sizeof(gPCPassword));
+    if (configGetStr(configNet, CONFIG_NET_SMB_SHARE, &temp))
+        configGetStrCopy(configNet, CONFIG_NET_SMB_SHARE, gPCShareName, sizeof(gPCShareName));
+    if (configGetStr(configNet, CONFIG_NET_SMB_USER, &temp))
+        configGetStrCopy(configNet, CONFIG_NET_SMB_USER, gPCUserName, sizeof(gPCUserName));
+    if (configGetStr(configNet, CONFIG_NET_SMB_PASSW, &temp))
+        configGetStrCopy(configNet, CONFIG_NET_SMB_PASSW, gPCPassword, sizeof(gPCPassword));
 
     if (configGetStr(configNet, CONFIG_NET_PS2_IP, &temp))
         sscanf(temp, "%d.%d.%d.%d", &ps2_ip[0], &ps2_ip[1], &ps2_ip[2], &ps2_ip[3]);
