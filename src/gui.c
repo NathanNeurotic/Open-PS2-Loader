@@ -79,25 +79,6 @@ static int guiSettingsCurrentPage;
 static int guiSettingsSavePending;
 static char guiSettingsPageIndicator[32];
 
-// Settings pages apply their values live while the shell stays open. Keep the source-selection half
-// of that live state transactional: "Exit without saving" must restore the device/network state that
-// was active when Settings opened instead of leaving a Manual/disabled source empty until X starts it
-// again (#806, zackcage6). This is intentionally limited to source activation/routing; page-specific
-// visual/audio edits keep their established live-preview behaviour until a broader transaction model
-// replaces it.
-typedef struct
-{
-    int defaultDevice;
-    int bdmStartMode, hddStartMode, appStartMode, mmceStartMode, favStartMode;
-    int enableUSB, enableILK, enableMX4SIO, enableBdmHDD;
-    int networkProtocol, netStartMode, netProtocolPick;
-    int ethStartMode, enableUDPBD, netBootProtocol;
-    int mmceSlot, mmceIgrSlot, mmceEnableGameID, mmceAckWaitCycles, mmceUseAlarms;
-    char mmcePrefix[sizeof(gMMCEPrefix)];
-} gui_settings_source_state_t;
-
-static gui_settings_source_state_t guiSettingsSourceState;
-
 static int guiSettingsIsShellResult(int result);
 static int guiSettingsLeftUntouched(struct UIItem *ui, int result, const char *pathEdit, const char *pathValue);
 static int guiSettingsPageResult(int result);
@@ -3186,87 +3167,6 @@ enum gui_settings_prompt_result {
     SETTINGS_PROMPT_CONTINUE
 };
 
-static void guiSettingsReadSourceState(gui_settings_source_state_t *state)
-{
-    memset(state, 0, sizeof(*state));
-    state->defaultDevice = gDefaultDevice;
-    state->bdmStartMode = gBDMStartMode;
-    state->hddStartMode = gHDDStartMode;
-    state->appStartMode = gAPPStartMode;
-    state->mmceStartMode = gMMCEStartMode;
-    state->favStartMode = gFAVStartMode;
-    state->enableUSB = gEnableUSB;
-    state->enableILK = gEnableILK;
-    state->enableMX4SIO = gEnableMX4SIO;
-    state->enableBdmHDD = gEnableBdmHDD;
-    state->networkProtocol = gNetworkProtocol;
-    state->netStartMode = gNetStartMode;
-    state->netProtocolPick = gNetProtocolPick;
-    state->ethStartMode = gETHStartMode;
-    state->enableUDPBD = gEnableUDPBD;
-    state->netBootProtocol = gNetBootProtocol;
-    state->mmceSlot = gMMCESlot;
-    state->mmceIgrSlot = gMMCEIGRSlot;
-    state->mmceEnableGameID = gMMCEEnableGameID;
-    state->mmceAckWaitCycles = gMMCEAckWaitCycles;
-    state->mmceUseAlarms = gMMCEUseAlarms;
-    snprintf(state->mmcePrefix, sizeof(state->mmcePrefix), "%s", gMMCEPrefix);
-}
-
-static void guiSettingsCaptureSourceState(void)
-{
-    guiSettingsReadSourceState(&guiSettingsSourceState);
-}
-
-static int guiSettingsSourceStateChanged(void)
-{
-    gui_settings_source_state_t current;
-
-    guiSettingsReadSourceState(&current);
-    return memcmp(&current, &guiSettingsSourceState, sizeof(current)) != 0;
-}
-
-static void guiSettingsRestoreSourceState(void)
-{
-    // Most Settings pages are not source pages. Avoid a full device refresh on a discard that only
-    // changed visual/audio/launch options; doing so would manufacture exactly the kind of storage
-    // churn this path exists to prevent.
-    if (!guiSettingsSourceStateChanged())
-        return;
-
-    gDefaultDevice = guiSettingsSourceState.defaultDevice;
-    gBDMStartMode = guiSettingsSourceState.bdmStartMode;
-    gHDDStartMode = guiSettingsSourceState.hddStartMode;
-    gAPPStartMode = guiSettingsSourceState.appStartMode;
-    gMMCEStartMode = guiSettingsSourceState.mmceStartMode;
-    gFAVStartMode = guiSettingsSourceState.favStartMode;
-    gEnableUSB = guiSettingsSourceState.enableUSB;
-    gEnableILK = guiSettingsSourceState.enableILK;
-    gEnableMX4SIO = guiSettingsSourceState.enableMX4SIO;
-    gEnableBdmHDD = guiSettingsSourceState.enableBdmHDD;
-    gNetworkProtocol = guiSettingsSourceState.networkProtocol;
-    gNetStartMode = guiSettingsSourceState.netStartMode;
-    gNetProtocolPick = guiSettingsSourceState.netProtocolPick;
-    gETHStartMode = guiSettingsSourceState.ethStartMode;
-    gEnableUDPBD = guiSettingsSourceState.enableUDPBD;
-    gNetBootProtocol = guiSettingsSourceState.netBootProtocol;
-    gMMCESlot = guiSettingsSourceState.mmceSlot;
-    gMMCEIGRSlot = guiSettingsSourceState.mmceIgrSlot;
-    gMMCEEnableGameID = guiSettingsSourceState.mmceEnableGameID;
-    gMMCEAckWaitCycles = guiSettingsSourceState.mmceAckWaitCycles;
-    gMMCEUseAlarms = guiSettingsSourceState.mmceUseAlarms;
-    snprintf(gMMCEPrefix, sizeof(gMMCEPrefix), "%s", guiSettingsSourceState.mmcePrefix);
-
-    // Game Sources can have already forced a BDM re-enumeration and every Settings page that calls
-    // applyConfig(..., 0) can have rebuilt source visibility. Re-apply the captured routing now so
-    // the list/menu state matches the values we just restored. This is the programmatic equivalent
-    // of the X press zackcage6 needed to recover the blank page, but it restores the original source
-    // instead of merely starting whichever page happens to be selected.
-    bdmForceDeviceRefresh();
-    applyConfig(-1, -1, 0);
-    menuReinitMainMenu();
-}
-
 static int guiSettingsPromptSave(void)
 {
     int promptHints[3] = {_STR_SETTINGS_SAVE, _STR_SETTINGS_EXIT_WITHOUT_SAVING, _STR_SETTINGS_CONTINUE_EDITING};
@@ -3385,14 +3285,8 @@ static int guiSettingsShowIndex(int *page)
         } else if (getKeyOn(guiConfirmKey())) {
             sfxPlay(SFX_CONFIRM);
             if (selected == SETTINGS_PAGE_COUNT) {
-                if (menuSaveSettings() > 0) {
-                    // A successful in-shell save becomes the new discard baseline. Otherwise,
-                    // saving once and later choosing "Exit without saving" would wrongly restore
-                    // the source state from before Settings was opened, undoing a state that is
-                    // already persisted on disk.
-                    guiSettingsCaptureSourceState();
+                if (menuSaveSettings() > 0)
                     guiSettingsSavePending = 0;
-                }
             } else {
                 *page = selected;
                 return 1;
@@ -3409,8 +3303,11 @@ static int guiSettingsShowIndex(int *page)
                     return 0;
                 }
             } else if (promptResult == SETTINGS_PROMPT_EXIT) {
+                // The edits STAY live: "without saving" means not written to disk, as the prompt says
+                // ("Your changes are currently active") and as stock OPL behaves, so a network setup can
+                // be tried without saving it (Vapor, 10-06). Only the HDD home pick is dropped -- it is
+                // a pending disk commit, not a live setting.
                 hddDiscardOplHomeSelection();
-                guiSettingsRestoreSourceState();
                 guiSettingsSavePending = 0;
                 return 0;
             }
@@ -3427,7 +3324,6 @@ static void guiShowSettingsFromPage(int page, int showIndexFirst)
 
     guiSettingsShellActive = 1;
     guiSettingsSavePending = 0;
-    guiSettingsCaptureSourceState();
     if (showIndexFirst && !guiSettingsShowIndex(&page)) {
         hddDiscardOplHomeSelection();
         guiSettingsShellActive = 0;
