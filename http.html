@@ -173,6 +173,15 @@ port <strong>1100</strong>.</p>
 </table>
 <p>Use <strong>Test</strong> before saving. It tells you which part failed — unreachable, catalog missing, catalog
 unreadable, or the server not returning the exact bytes asked for — rather than one generic error.</p>
+<div class="callout info"><div class="h">Quick start: actually launching a game</div>
+<ol>
+<li>Once <strong>Test HTTP server</strong> passes with a non-empty catalog, save or leave Settings with the HTTP values active.</li>
+<li>Open the <strong>HTTP Games</strong> page from the main menu. With Network Connectivity on <strong>Manual</strong>, opening the page starts the connection; <strong>Auto</strong> starts it at boot.</li>
+<li>Pick a catalog title and launch it normally. HTTP always uses RiptOPL's native <strong>&lt;OPL&gt;</strong> core; the global <strong>Default Loader Core</strong> does not turn HTTP into a Neutrino launch.</li>
+<li>If the page is empty, re-run <strong>Test HTTP server</strong>. A successful empty-catalog test proves the server is reachable, but gives the menu no game to list.</li>
+</ol>
+The server does not need a writable share. The menu reads <code>games.csv</code>; the in-game HTTP driver then requests ISO sectors with HTTP byte ranges.
+</div>
 <p>An empty catalog is a valid answer, and Test says so plainly: it proves the server is there, and
 proves nothing at all about whether byte ranges work.</p>
 <p>The first protocol selected while the adapter is unused can start immediately. Switching away from an already loaded protocol requires restarting RiptOPL; the UI reports that requirement. Only one protocol can own the adapter in a session.</p>
