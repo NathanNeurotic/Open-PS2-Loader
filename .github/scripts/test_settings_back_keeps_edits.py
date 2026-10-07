@@ -17,8 +17,9 @@ Checked here, from the production source:
   the USB page (#806, zackcage6, Beta-3338).
 - the Network page no longer reconnects SMB on an exit that changed nothing: it snapshots what a
   live SMB session depends on and reconnects only on OK/Reconnect or a real change (compiled + run).
-- Exit without saving restores the source activation/routing snapshot captured when Settings opened,
-  so an applied-but-unsaved source change cannot leave the game page empty/off (#806, zackcage6).
+- Exit without saving KEEPS every edit live for this session -- it only skips the disk write, as the
+  prompt says ("Your changes are currently active") and as stock OPL does. A network setup can be
+  tried without saving it (Vapor, 10-06). The old source-state revert (#807) is gone.
 - both obsolete compatibility download paths are absent: the Start-menu bulk Network Update and the
   per-game Compatibility Settings -> Download Defaults action/backend.
 """
@@ -240,52 +241,27 @@ elif has_changes:
     types = 'typedef unsigned long long u64;\n' + item_enum.group(0) + '\n' + item_struct.group(0)
     compile_and_run('dia_has_changes', CHANGES_HARNESS.replace('@TYPES@', types).replace('@FUNCTIONS@', has_changes))
 
-# --- Exit without saving: restore the source state captured at Settings entry --------------------
+# --- Exit without saving: the session keeps the edits -------------------------------------------
 
-read_source = function_text(gui_c, 'src/gui.c', 'static void guiSettingsReadSourceState(')
-capture = function_text(gui_c, 'src/gui.c', 'static void guiSettingsCaptureSourceState(')
-changed = function_text(gui_c, 'src/gui.c', 'static int guiSettingsSourceStateChanged(')
-restore = function_text(gui_c, 'src/gui.c', 'static void guiSettingsRestoreSourceState(')
-shell = function_text(gui_c, 'src/gui.c', 'static void guiShowSettingsFromPage(')
 index = function_text(gui_c, 'src/gui.c', 'static int guiSettingsShowIndex(')
 
-SOURCE_FIELDS = (
-    'gDefaultDevice', 'gBDMStartMode', 'gHDDStartMode', 'gAPPStartMode', 'gMMCEStartMode',
-    'gFAVStartMode', 'gEnableUSB', 'gEnableILK', 'gEnableMX4SIO', 'gEnableBdmHDD',
-    'gNetworkProtocol', 'gNetStartMode', 'gNetProtocolPick', 'gETHStartMode',
-    'gEnableUDPBD', 'gNetBootProtocol', 'gMMCESlot', 'gMMCEIGRSlot',
-    'gMMCEEnableGameID', 'gMMCEAckWaitCycles', 'gMMCEUseAlarms', 'gMMCEPrefix',
-)
-for field in SOURCE_FIELDS:
-    if read_source and field not in read_source:
-        failures.append('guiSettingsReadSourceState: missing %s' % field)
-    if restore and field not in restore:
-        failures.append('guiSettingsRestoreSourceState: missing %s' % field)
-
-if capture and 'guiSettingsReadSourceState(&guiSettingsSourceState);' not in capture:
-    failures.append('guiSettingsCaptureSourceState: must snapshot through the complete source-state reader')
-if changed and 'memcmp(&current, &guiSettingsSourceState, sizeof(current)) != 0' not in changed:
-    failures.append('guiSettingsSourceStateChanged: must compare the complete captured source state')
-if shell and 'guiSettingsCaptureSourceState();' not in shell:
-    failures.append('guiShowSettingsFromPage: must capture source state before any Settings page can apply edits')
-if restore:
-    if 'if (!guiSettingsSourceStateChanged())' not in restore:
-        failures.append('guiSettingsRestoreSourceState: must avoid a device refresh when no source state changed')
-    for needle in ('bdmForceDeviceRefresh();', 'applyConfig(-1, -1, 0);', 'menuReinitMainMenu();'):
-        if needle not in restore:
-            failures.append('guiSettingsRestoreSourceState: missing %s' % needle)
+# No snapshot/revert machinery may come back: "without saving" is not "undo".
+for name in ('guiSettingsCaptureSourceState', 'guiSettingsRestoreSourceState',
+             'guiSettingsSourceStateChanged', 'guiSettingsReadSourceState', 'gui_settings_source_state_t'):
+    if name in gui_c:
+        failures.append('src/gui.c: %s is back -- Exit without saving must keep the session edits live' % name)
 if index:
     exit_pos = index.find('promptResult == SETTINGS_PROMPT_EXIT')
-    restore_pos = index.find('guiSettingsRestoreSourceState();', exit_pos)
     return_pos = index.find('return 0;', exit_pos)
-    if exit_pos < 0 or restore_pos < 0 or return_pos < 0 or restore_pos > return_pos:
-        failures.append('Exit without saving must restore source state before leaving Settings')
-
-    save_pos = index.find('if (menuSaveSettings() > 0)')
-    recapture_pos = index.find('guiSettingsCaptureSourceState();', save_pos)
-    pending_clear = index.find('guiSettingsSavePending = 0;', save_pos)
-    if save_pos < 0 or recapture_pos < 0 or pending_clear < 0 or not (save_pos < recapture_pos < pending_clear):
-        failures.append('a successful in-shell Save Changes must become the new discard baseline')
+    if exit_pos < 0 or return_pos < 0:
+        failures.append('guiSettingsShowIndex: Exit without saving branch not found')
+    else:
+        branch = index[exit_pos:return_pos]
+        for forbidden in ('applyConfig(', 'bdmForceDeviceRefresh(', 'menuReinitMainMenu('):
+            if forbidden in branch:
+                failures.append('Exit without saving must not re-apply/revert settings (%s found)' % forbidden)
+        if 'guiSettingsSavePending = 0;' not in branch:
+            failures.append('Exit without saving must clear the pending-save flag')
 
 # --- Obsolete compatibility download feature is gone end-to-end -------------------------------
 
