@@ -810,6 +810,11 @@ struct UIItem diaArtworkConfig[] = {
     {UI_BOOL, UICFG_ENABLE_BGART, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SAVE_ICONS}}},
+    {UI_SPACER},
+    {UI_BOOL, UICFG_ENABLE_SAVE_ICONS, 1, 1, _STR_HINT_SAVE_ICONS, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_ART_TAR}}},
     {UI_SPACER},
     {UI_BOOL, UICFG_ENABLE_ART_TAR, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},

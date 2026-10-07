@@ -207,6 +207,7 @@ int gVcdFirstDiscOnly;             // hide discs 2+ of multi-disc PS1 sets
 char gBootDir[256];                // boot directory (cwd) OPL launched from; "" if undeterminable
 int gEnableILK;
 int gEnableBGArt;
+int gEnableSaveIcons;
 int gEnableArtTar;                       // .tar art packs (item 45); no UI until gate D
 int gArtDelay;                           // inactivity frames before art loads; safe default until gate D tunes it
 int gEnableFolderNav;                    // folder browsing in game lists (item 34)
@@ -3340,6 +3341,7 @@ static void _loadConfig()
             configGetInt(configOPL, CONFIG_OPL_VCD_SHOW_PP_POPS, &gVcdShowPpPops);
             configReadNeutrinoGlobals(configOPL); // shared with miniInit's autolaunch path
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BGART, &gEnableBGArt);
+            configGetInt(configOPL, CONFIG_OPL_ENABLE_SAVE_ICONS, &gEnableSaveIcons);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, &gEnableArtTar);
             configGetInt(configOPL, CONFIG_OPL_ART_DELAY, &gArtDelay);
             // Keep the stored domain identical to the Artwork page's enum {0,2,5,8} (item 45), so a
@@ -3919,6 +3921,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_ELF_ARG, gNeutrinoElfArg);
         configSetInt(configOPL, CONFIG_OPL_NEUTRINO_SHOW_ARGS, gNeutrinoShowArgs);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_BGART, gEnableBGArt);
+        configSetInt(configOPL, CONFIG_OPL_ENABLE_SAVE_ICONS, gEnableSaveIcons);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_ART_TAR, gEnableArtTar);
         configSetInt(configOPL, CONFIG_OPL_ART_DELAY, gArtDelay);
         configSetInt(configOPL, CONFIG_OPL_FOLDER_NAV, gEnableFolderNav);
@@ -4894,6 +4897,9 @@ static void setDefaults(void)
     // every config set on the mc?:OPL default regardless of what OPL actually booted from.
     // setBootDir() already zeroes the buffer at its own entry, so nothing needs a reset here.
     gEnableBGArt = 1; // fork parity; gEnableArt is 1 above, so this is live
+    // Off until it has run on hardware: it reads the memory cards (and a game's VMC) on the IO worker
+    // that also serves cover art.
+    gEnableSaveIcons = 0;
     gEnableArtTar = 0;
     // NO SETTLE BY DEFAULT. This is the number of INACTIVE frames the menu must see before art is
     // even asked for, and it shipped at 8 -- the slowest of the four values the UI offers {0,2,5,8}

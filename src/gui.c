@@ -29,6 +29,7 @@
 #include "include/hddsupport.h" // staged normal APA OPL-home selector
 #include "include/vcdsupport.h" // POPStarter pages: BDMA equip, list options, POPS net config
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
+#include "include/saveicon.h"   // saveIconReset -- 3D Save Icons switched off
 #include "include/pggsm.h"
 #include "include/cheatman.h"
 #include "include/cheatconfig.h"
@@ -2183,6 +2184,7 @@ void guiShowArtworkConfig(void)
     diaSetInt(diaArtworkConfig, UICFG_COVERART, gEnableArt);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_DISCART, gEnableDiscArt);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_BGART, gEnableBGArt);
+    diaSetInt(diaArtworkConfig, UICFG_ENABLE_SAVE_ICONS, gEnableSaveIcons);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_ART_TAR, gEnableArtTar);
     diaSetEnum(diaArtworkConfig, UICFG_ART_DELAY, artDelayNames);
     diaSetInt(diaArtworkConfig, UICFG_ART_DELAY, artDelayToEnum(gArtDelay));
@@ -2192,6 +2194,9 @@ void guiShowArtworkConfig(void)
         diaGetInt(diaArtworkConfig, UICFG_COVERART, &gEnableArt);
         diaGetInt(diaArtworkConfig, UICFG_ENABLE_DISCART, &gEnableDiscArt);
         diaGetInt(diaArtworkConfig, UICFG_ENABLE_BGART, &gEnableBGArt);
+        diaGetInt(diaArtworkConfig, UICFG_ENABLE_SAVE_ICONS, &gEnableSaveIcons);
+        if (!gEnableSaveIcons)
+            saveIconReset(); // hand back the model, its texture and the work buffers
         {
             // Re-arm the .tar probe when the toggle actually flips. tarFind's "no archive anywhere"
             // latch is write-once and process-wide, so a user who turns the loader on after boot would

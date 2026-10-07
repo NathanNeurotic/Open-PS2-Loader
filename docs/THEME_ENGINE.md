@@ -233,6 +233,7 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | `LoadingIcon` | The animated loading spinner. |
 | `BdmIndex` | The block-device mode indicator. |
 | `Coverflow` *(item)* | **This fork:** a cover-art carousel (see §8). |
+| `SaveIcon` *(item)* | **This fork:** the selected PS2 game's 3D save icon, spinning (see §9). |
 
 Elements are drawn in the order the theme declares them, with one exception: every `ItemText` is
 moved to the end of its screen's list, so the selected item's startup filename is never painted over by
@@ -341,7 +342,7 @@ Rules worth knowing:
 RiptOPL themes are designed to load on regular/upstream OPL and degrade gracefully — one theme can
 serve both. Regular OPL's parser never aborts on fork content: keys it doesn't know (`devices=`,
 `reflection_offset`, `overlay2`, `plasma_blend_color`, the entire `favsMain*`, `vcdMain*`,
-`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`) are skipped without
+`favsVcdMain*` and `favsAppsMain*` families…) are simply never read, and unknown element types (`Coverflow`, `SaveIcon`) are skipped without
 stopping the parse. What to expect there:
 
 - **Invisible:** all pure-key extras above — regular OPL renders the theme as if they weren't
@@ -565,7 +566,40 @@ while a Coverflow theme is active). They apply to *any* Coverflow theme:
 
 ---
 
-## 9. A note on coordinates & scaling
+## 9. The SaveIcon element (this fork)
+
+`type=SaveIcon` draws the selected PS2 game's own save icon — the 3D model the PS2 browser shows —
+spinning, and moving too when the icon is animated. It comes from:
+
+1. the game's **per-game VMC** (slot 1, then slot 2) when one is assigned and switched on, else
+2. the **memory cards** in the console: the newest save of that game on either card. Slot 2 is
+   skipped while MX4SIO is enabled, because that is where an MX4SIO sits.
+
+`x`/`y`/`aligned` place the element and `width`/`height` (64×64 by default) give the box the whole icon
+fits in, at every angle of its turn; `scaled=1` (the default) narrows it on a 16:9 screen like any
+image. Lighting comes from the save's own `icon.sys`.
+
+It draws **nothing** while the user's **3D Save Icons** setting is off (*Settings → Interface →
+Artwork Settings*, off by default), on a row that is not a PS2 game (apps, PS1 titles), or when the
+game has no readable save. A theme can place it unconditionally, but should not put anything under it
+that depends on it being there. The cards are read only once the cursor has rested on a game for a
+quarter of a second, on the worker that also loads cover art.
+
+```
+main19:
+	type=SaveIcon
+	x=-128
+	y=86
+	width=64
+	height=52
+```
+
+Both built-in themes place one: `<OPL>` above the cover and `<Coverflow>` under the centre cover, and
+both between the two screenshots of the info page.
+
+---
+
+## 10. A note on coordinates & scaling
 
 - All positions/sizes are authored on a **640×480** canvas; OPL scales to the active video
   mode.

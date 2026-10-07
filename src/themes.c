@@ -13,6 +13,7 @@
 #include "include/favsupport.h"
 #include "include/vcdsupport.h" // vcdDisplayName -- display-only VCD game-ID prefix hide
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
+#include "include/saveicon.h"   // SaveIcon: the selected game's 3D save icon
 #ifdef RETROACHIEVEMENTS
 #include "include/rabadge.h" // RA: mark over the cover
 #endif
@@ -102,6 +103,7 @@ enum ELEM_ATTRIBUTE_TYPE {
     ELEM_TYPE_BDM_INDEX,
     ELEM_TYPE_GAME_COUNT_TEXT,
     ELEM_TYPE_COVERFLOW,
+    ELEM_TYPE_SAVE_ICON,
     ELEM_TYPE_COUNT
 };
 
@@ -131,7 +133,8 @@ static const char *elementsType[ELEM_TYPE_COUNT] = {
     "LoadingIcon",
     "BdmIndex",
     "GameCountText",
-    "Coverflow"};
+    "Coverflow",
+    "SaveIcon"};
 
 // Per-device element filter (theme key devices=usb,hdd,... on MenuIcon/ItemsList/HintText) /////////////////////////////////
 //
@@ -2356,6 +2359,60 @@ static void initItemsList(const char *themePath, config_set_t *themeConfig, them
     elem->drawElem = &drawItemsList;
 }
 
+// SaveIcon (fork-gaps OR1): the selected PS2 game's save icon -- from the game's own VMC, else a
+// memory card -- spinning in the element's box. Draws nothing while 3D Save Icons is off, on a row
+// that is not a PS2 game, or when no save is found, so a theme can place it unconditionally.
+static void drawSaveIcon(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
+{
+    char vmc[2][SAVEICON_PATH_SIZE];
+    const char *startup = NULL;
+    item_list_t *support = NULL;
+    float xScale;
+    int w, h, cx, cy, slot;
+
+    vmc[0][0] = vmc[1][0] = '\0';
+    if (gEnableSaveIcons && menu != NULL && menu->item != NULL && item != NULL)
+        support = menu->item->userdata;
+    if (support != NULL && support->itemGetStartup != NULL && support->mode != APP_MODE &&
+        libListRowView(support, item->item.id) == LIB_VIEW_ISO)
+        startup = support->itemGetStartup(support, item->item.id);
+    if (startup != NULL && config != NULL) {
+        // The same path itemCheckVMC opens: <device prefix>VMC<separator><name>.bin.
+        char *prefix = support->mode == FAV_MODE ? favGetItemPrefix(item->item.id) :
+                                                   (support->itemGetPrefix != NULL ? support->itemGetPrefix(support) : NULL);
+        for (slot = 0; slot < 2 && prefix != NULL; slot++) {
+            char name[32];
+            int disabled = 0, len = strlen(prefix);
+            name[0] = '\0';
+            configGetVMC(config, name, sizeof(name), slot);
+            configGetVMCDisable(config, slot, &disabled);
+            if (name[0] != '\0' && !disabled)
+                snprintf(vmc[slot], sizeof(vmc[slot]), "%sVMC%s%s.bin", prefix, (len > 0 && prefix[len - 1] == '\\') ? "\\" : "/", name);
+        }
+    }
+    saveIconSelect(startup, vmc[0], vmc[1], config != NULL);
+    if (startup == NULL)
+        return;
+
+    // The element's box, placed the way rmSetupQuad places an image of that size.
+    w = elem->width > 0 ? elem->width : 64;
+    h = elem->height > 0 ? elem->height : 64;
+    xScale = (elem->scaled & SCALING_RATIO) ? rmWideScale(1024) / 1024.0f : 1.0f;
+    if (elem->aligned & ALIGN_HCENTER)
+        cx = elem->posX;
+    else if (elem->aligned & ALIGN_RIGHT)
+        cx = elem->posX - (int)(w * xScale) / 2;
+    else
+        cx = elem->posX + (int)(w * xScale) / 2;
+    if (elem->aligned & ALIGN_VCENTER)
+        cy = elem->posY;
+    else if (elem->aligned & ALIGN_BOTTOM)
+        cy = elem->posY - h / 2;
+    else
+        cy = elem->posY + h / 2;
+    saveIconDraw(cx, cy, w, h, xScale);
+}
+
 static void drawItemText(struct menu_list *menu, struct submenu_list *item, config_set_t *config, struct theme_element *elem)
 {
     if (menu != NULL && menu->item != NULL && item != NULL) {
@@ -3089,6 +3146,10 @@ static int addGUIElem(const char *themePath, config_set_t *themeConfig, theme_t 
                 // like wOPL); initCoverflow points gTheme->coverflow at the FIRST as the active flag.
                 elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_GAME_IMAGE, screenWidth >> 1, screenHeight >> 1, ALIGN_CENTER, 150, 210, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
                 initCoverflow(themePath, themeConfig, theme, elem, name);
+            } else if (!strcmp(elementsType[ELEM_TYPE_SAVE_ICON], type)) {
+                elems->needsSaveIconConfig = 1;
+                elem = initBasic(themePath, themeConfig, theme, name, ELEM_TYPE_SAVE_ICON, screenWidth >> 1, screenHeight >> 1, ALIGN_CENTER, 64, 64, SCALING_RATIO, gDefaultCol, theme->fonts[0]);
+                elem->drawElem = &drawSaveIcon;
             }
 
             if (elem) {
