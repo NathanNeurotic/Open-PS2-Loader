@@ -423,6 +423,16 @@ def check_pins():
     check(resolve is not None and 'bdmResolveBootDirBootstrap(home, homeLen, "", &bdmType)' in resolve,
           'resolveHybridExfatHome: pass no ELF name (the launcher ELF is on APA, not exFAT)')
 
+    # RetroAchievements on autolaunch: miniInit must inherit the telemetry and network globals,
+    # and miniDeinit must tear down the pre-launch network stack.
+    check(mini is not None and 'CONFIG_OPL_RA_TELEMETRY, &gRATelemetry' in mini,
+          'miniInit: Auto Loading must read the RetroAchievements telemetry setting')
+    check(mini is not None and 'configReadNetworkGlobals' in mini,
+          'miniInit: Auto Loading must read network globals')
+    mini_deinit = function_text(opl, 'void miniDeinit(')
+    check(mini_deinit is not None and 'ethDeinitModules();' in mini_deinit,
+          'miniDeinit: Auto Loading must tear down pre-launch network modules')
+
 
 run_hybrid_harness()
 run_path_harness()
