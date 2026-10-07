@@ -2012,8 +2012,12 @@ static int writeConfigPathRedirect(const char *path)
                 int n2 = write(fd, "\n", 1);
                 close(fd);
                 mirrorOk = (n1 == (int)strlen(path) && n2 == 1);
-                if (mirrorOk)
+                if (mirrorOk) {
                     LOG("CONFIG mirrored settings path to %s\n", mcPath);
+                    // The mkdir above can be this card's first OPL folder: without its icon set the
+                    // browser shows it as Corrupted Data.
+                    checkMCSaveIcons(mcPath);
+                }
             }
             if (!mirrorOk)
                 LOG("CONFIG could not mirror settings path to %s\n", mcPath);

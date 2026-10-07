@@ -303,7 +303,8 @@ This build layers several features on top of upstream OPL:
   like a local drive. UDPBD launches via Neutrino, is mutually exclusive with SMB (they share
   the one network adapter), and needs a static PS2 IP (the default is `192.168.1.10`); the
   fork's **network protocol defaults to Off** — pick UDPFS or UDPBD in **Network** and it
-  loads live (a restart is only needed to *switch away* from a protocol already loaded). Confirming
+  loads live (a restart is only needed to *switch away* from a protocol already loaded, and RiptOPL
+  offers to save and restart right there, and again when you press OK on Network). Confirming
   Network Settings applies the current values and reconnects immediately; if the first connection
   fails, press **Select / Refresh** on the failed network page to retry it. Run it from the
   **[PS2 Servers](https://github.com/NathanNeurotic/PS2-Servers)** all-in-one PC launcher. Confirmed

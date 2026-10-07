@@ -136,6 +136,7 @@ config_set_t *gameMenuLoadConfig(struct UIItem *ui);
 int menuSaveConfig();
 int menuSaveEmberGameSettings(config_set_t *configSet);
 int menuSaveSettings(void);
+void menuSaveSettingsAndRestart(void);
 // Queue an async re-read of the current item's config WITH the #Size stat enabled. The scroll-path
 // load skips that stat (see sbSetConfigStatSize); the info screen calls this so #Size still resolves.
 void menuRequestInfoSize(void);
