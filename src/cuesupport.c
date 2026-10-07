@@ -23,6 +23,7 @@
 #include "include/textures.h"   // texDiscoverLoad + ERR_BAD_FILE (folder cover fallback)
 #include "include/vcdsupport.h" // vcdFillGameList + vcdSortKey -- the POPSTARTER half of the union
 #include "include/cuesupport.h"
+#include "include/retrogem.h"
 
 // Path separator for a device prefix: '\\' for SMB (its prefix ends in a backslash), else '/'.
 // Auto-detected from the trailing character so one code path serves mass/mmce/pfs and SMB alike.
@@ -581,15 +582,18 @@ void cueApplySettings(const char *devPrefix, const char *name, config_set_t *con
         cueSaveGameSettings(devPrefix, name, configSet);
 }
 
-int cueGameHasImage(const char *devPrefix, const char *name)
+int cueResolveGameImage(const char *devPrefix, const char *name, char *out, int outSize)
 {
     char gamesDir[288];
     char gameDir[320];
     struct dirent *de;
     DIR *dir;
+    int best = (int)(sizeof(cueDiscExts) / sizeof(cueDiscExts[0]));
     int found = 0;
-    unsigned int i;
 
+    if (out == NULL || outSize <= 0)
+        return 0;
+    out[0] = '\0';
     if (devPrefix == NULL || name == NULL || name[0] == '\0')
         return 0;
 
@@ -600,29 +604,62 @@ int cueGameHasImage(const char *devPrefix, const char *name)
 
     dir = opendir(gameDir);
     if (dir == NULL) {
-        // The probe itself failed -- the folder may be there and merely unreadable this instant.
-        // Never let a failed PROBE block a launch: report "has an image" and let Ember be the judge.
-        LOG("[CUE] cannot probe '%s' -- launching anyway\n", gameDir);
-        return 1;
+        LOG("[CUE] cannot probe '%s' while resolving Ember disc image\n", gameDir);
+        return -1;
     }
 
-    while (!found && (de = readdir(dir)) != NULL) {
+    while ((de = readdir(dir)) != NULL) {
         int len = (int)strlen(de->d_name);
+        unsigned int i;
+
         if (len < 5)
-            continue; // shortest possible match is "x.cue"
+            continue;
         for (i = 0; i < sizeof(cueDiscExts) / sizeof(cueDiscExts[0]); i++) {
-            if (strcasecmp(de->d_name + len - 4, cueDiscExts[i]) == 0) {
-                found = 1;
+            if (strcasecmp(de->d_name + len - 4, cueDiscExts[i]) == 0 && (int)i < best) {
+                int n = snprintf(out, outSize, "%s%c%s", gameDir, cueSep(devPrefix), de->d_name);
+                if (n > 0 && n < outSize) {
+                    best = (int)i; // Ember priority: .cue, then .exe, then .bin.
+                    found = 1;
+                }
                 break;
             }
         }
     }
     closedir(dir);
 
-    if (!found)
-        LOG("[CUE] '%s' holds no .cue/.bin/.exe\n", gameDir);
     return found;
 }
+
+int cueGameHasImage(const char *devPrefix, const char *name)
+{
+    char imagePath[640];
+    int result = cueResolveGameImage(devPrefix, name, imagePath, sizeof(imagePath));
+
+    if (result < 0) {
+        // Never let a failed probe block a launch. Ember may still be able to read the folder.
+        return 1;
+    }
+    if (!result)
+        LOG("[CUE] game folder holds no .cue/.bin/.exe\n");
+    return result;
+}
+
+void cuePrepareRetroGemBarcode(const char *devPrefix, const char *name)
+{
+    char imagePath[640];
+    char gameID[RETROGEM_GAMEID_MAX];
+
+    if (!gPopstarterRetroGemGameID || devPrefix == NULL || name == NULL || name[0] == '\0')
+        return;
+
+    // Best-effort metadata only. A transient read failure must never turn GameID into a launch gate.
+    if (cueResolveGameImage(devPrefix, name, imagePath, sizeof(imagePath)) != 1)
+        return;
+
+    if (retrogemGetPs1ImageGameID(imagePath, gameID, sizeof(gameID)) && gameID[0] != '\0')
+        displayRetroGemGameID(gameID, 2);
+}
+
 
 int cueRenameGame(const char *devPrefix, const char *oldName, const char *newName)
 {
