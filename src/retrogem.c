@@ -17,17 +17,15 @@
 #include "include/vcdsupport.h"
 #include "include/retrogem.h"
 
-// Full PS1 GameID resolver used by both POPSTARTER VCD and Ember image launches.
+// PS1 GameID resolver used by both POPSTARTER VCD and Ember image launches.
 //
-// The VCD reader is intentionally format-aware. POPStarter .VCD files carry a 1 MiB header and
-// then raw 2352-byte CD sectors; treating them like a plain ISO (the old implementation did) means
-// SYSTEM.CNF usually cannot be reached and the fallback silently becomes the filename. Ember's
-// .BIN images are raw 2352-byte sectors without the VCD header. CUE files are resolved to the data
-// track's FILE entry before reading the image.
+// CosmicScale supplied his PSBBN Definitive Project title-ID extractor directly for this work and
+// granted permission to use/adapt its GameID extraction logic. Keep the console implementation on
+// that standard path: read ISO9660, find SYSTEM.CNF, parse BOOT/BOOT2, and normalize the executable
+// serial. CUE sheets are followed to their data-track image first.
 //
-// PVD timestamp mappings cover PS1 discs whose SYSTEM.CNF is absent or boots a generic target such
-// as PSX.EXE. The table is derived from OSDMenu's AFL-3.0 game_id_table.h, also used by
-// r3LaunchELF_ATTDASH.
+// POPStarter VCD needs one format-specific adjustment before applying the same extraction: the disc
+// image begins after its 1 MiB VCD header. Ember BIN images begin at sector 0.
 #define PS1_SECTOR_DATA_SIZE     2048
 #define PS1_RAW_SECTOR_SIZE      2352
 #define PS1_VCD_IMAGE_OFFSET     0x100000L
@@ -35,142 +33,7 @@
 #define PS1_PVD_SEARCH_SECTORS   16
 #define PS1_ROOT_RECORD_OFFSET   156
 #define PS1_MAX_ROOT_DIR_SECTORS 64
-#define PS1_PVD_TIMESTAMP_OFFSET 0x32D
-#define PS1_PVD_TIMESTAMP_LEN    16
 #define PS1_SYSTEM_CNF_MAX       4096
-
-typedef struct
-{
-    const char timestamp[17];
-    const char game_id[12];
-} ps1_generic_game_id_t;
-
-static const ps1_generic_game_id_t ps1_generic_game_ids[] = {
-    {"1994111009000000", "SLPS_000.01"},
-    {"1994110702000000", "SLPS_000.02"},
-    {"1994102615231700", "SLPS_000.03"},
-    {"1994110218594700", "SLPS_000.04"},
-    {"1995030218052000", "SLPS_000.04"},
-    {"1994110722360400", "SLPS_000.05"},
-    {"1994120610494900", "SLPS_000.05"},
-    {"1994110407000000", "SLPS_000.06"},
-    {"1994111419300000", "SLPS_000.07"},
-    {"1994121808190700", "SLPS_000.08"},
-    {"1994121917000000", "SLPS_000.09"},
-    {"1995052918000000", "SLPS_000.10"},
-    {"1994110220020600", "SLPS_000.11"},
-    {"1994121518000000", "SLPS_000.13"},
-    {"1994103000000000", "SLPS_000.14"},
-    {"1994101813262400", "SLPS_000.15"},
-    {"1994112617300000", "SLPS_000.16"},
-    {"1994121517300000", "SLPS_000.16"},
-    {"1994111013000000", "SLPS_000.17"},
-    {"1994111522183200", "SLPS_000.18"},
-    {"1994112918000000", "SLPS_000.19"},
-    {"1994111721302100", "SLPS_000.20"},
-    {"1994100617242100", "SLPS_000.21"},
-    {"1995030215000000", "SLPS_000.22"},
-    {"1994122718351900", "SLPS_000.23"},
-    {"1994092920284600", "SLPS_000.24"},
-    {"1994113012000000", "SLPS_000.25"},
-    {"1995012512000000", "SLPS_000.25"},
-    {"1995041921063500", "SLPS_000.26"},
-    {"1994121500000000", "SLPS_000.27"},
-    {"1994121017582300", "SLPS_000.28"},
-    {"1995022623000000", "SLPS_000.29"},
-    {"1995050116000000", "SLPS_000.30"},
-    {"1995060613000000", "SLPS_000.30"},
-    {"1995021802000000", "SLPS_000.31"},
-    {"1995021615022900", "SLPS_000.32"},
-    {"1995080809000000", "SLPS_000.33"},
-    {"1995100209000000", "SLPS_000.33"},
-    {"1995071821394900", "SLPS_000.34"},
-    {"1995042506300000", "SLPS_000.35"},
-    {"1995011411551700", "SLPS_000.37"},
-    {"1995041311392800", "SLPS_000.38"},
-    {"1995031205000000", "SLPS_000.40"},
-    {"1995061612000000", "SLPS_000.40"},
-    {"1995040509000000", "SLPS_000.41"},
-    {"1995052612000000", "SLPS_000.43"},
-    {"1995042500000000", "SLPS_000.44"},
-    {"1995033100003000", "SLPS_000.47"},
-    {"1995041400000000", "SLPS_000.48"},
-    {"1995050413421800", "SLPS_000.50"},
-    {"1995040509595900", "SLPS_000.51"},
-    {"1995030103150000", "SLPS_000.52"},
-    {"1995100409235300", "SLPS_000.53"},
-    {"1995060504013600", "SLPS_000.55"},
-    {"1995060319142200", "SLPS_000.55"},
-    {"1995060402110800", "SLPS_000.55"},
-    {"1995081612000000", "SLPS_000.59"},
-    {"1995051201000000", "SLPS_000.60"},
-    {"1995051700000000", "SLPS_000.61"},
-    {"1995051002471900", "SLPS_000.63"},
-    {"1995083112000000", "SLPS_000.65"},
-    {"1995111700000000", "SLPS_000.65"},
-    {"1996033100000000", "SLPS_000.65"},
-    {"1995051816000000", "SLPS_000.66"},
-    {"1995061418000000", "SLPS_000.67"},
-    {"1995061911303400", "SLPS_000.68"},
-    {"1995072800300000", "SLPS_000.68"},
-    {"1995061207000000", "SLPS_000.69"},
-    {"1995062922000000", "SLPS_000.70"},
-    {"1995040719355400", "SLPS_000.71"},
-    {"1995061806364400", "SLPS_000.73"},
-    {"1995051015300000", "SLPS_000.77"},
-    {"1995070302000000", "SLPS_000.78"},
-    {"1995070523450000", "SLPS_000.83"},
-    {"1995072522004900", "SLPS_000.85"},
-    {"1995070613170000", "SLPS_000.88"},
-    {"1995082517551900", "SLPS_000.89"},
-    {"1995082109402500", "SLPS_000.90"},
-    {"1995053117000000", "SLPS_000.91"},
-    {"1995081100000000", "SLPS_000.92"},
-    {"1995071011035200", "SLPS_000.93"},
-    {"1995090510000000", "SLPS_000.94"},
-    {"1995083123000000", "SLPS_000.94"},
-    {"1995100601300000", "SLPS_000.99"},
-    {"1995081001450000", "SLPS_001.01"},
-    {"1995080316000000", "SLPS_001.03"},
-    {"1995081020000000", "SLPS_001.04"},
-    {"1995090722000000", "SLPS_001.08"},
-    {"1995090516062841", "SLPS_001.13"},
-    {"1995082016003000", "SLPS_001.28"},
-    {"1995102101350000", "SLPS_001.33"},
-    {"1995102102521200", "SLPS_001.33"},
-    {"1995102105003200", "SLPS_001.33"},
-    {"1995100910002200", "SLPS_001.37"},
-    {"1995101801325900", "SLPS_001.42"},
-    {"1995113010450000", "SLPS_001.46"},
-    {"1995092205430500", "SLPS_001.52"},
-    {"1995121620000000", "SLPS_001.73"},
-    {"1995122811000000", "SLPS_001.90"},
-    {"1995111622323000", "SLPS_002.01"},
-    {"1995121418400300", "SLPS_002.30"},
-    {"1996010800000000", "SLPS_002.61"},
-    {"1996022700000000", "SLPS_003.21"},
-    {"1996020413401600", "SLPS_003.36"},
-    {"1996030619500500", "SLPS_003.37"},
-    {"1996072211000000", "SLPS_005.49"},
-    {"1997011500000000", "SLPS_007.19"},
-    {"1997031012200700", "SLPS_008.78"},
-    {"1997050817540700", "SLPS_008.95"},
-    {"1998061000000000", "SLPS_013.34"},
-    {"1998040820350000", "SLPS_015.58"},
-    {"1994112112000000", "SCPS_100.01"},
-    {"1995011010000000", "SCPS_100.01"},
-    {"1995030717020700", "SCPS_100.02"},
-    {"1994103110000000", "SCPS_100.03"},
-    {"1995022100000000", "SCPS_100.04"},
-    {"1995032500000000", "SCPS_100.06"},
-    {"1995032400000000", "SCPS_100.07"},
-    {"1995052420065100", "SCPS_100.08"},
-    {"1995061723590000", "SCPS_100.09"},
-    {"1995080914422700", "SCPS_100.10"},
-    {"1995071219364500", "SCPS_100.12"},
-    {"1995092719000000", "SCPS_100.14"},
-    {"1995103122331500", "SCPS_100.16"},
-};
 
 typedef enum {
     PS1_IMAGE_COOKED_2048 = 0,
@@ -411,24 +274,6 @@ static int retrogemParseSystemCnf(const char *cnf, char *gameID, size_t maxLen)
     return 0;
 }
 
-static int retrogemLookupTimestamp(const unsigned char *pvd, char *gameID, size_t maxLen)
-{
-    char timestamp[PS1_PVD_TIMESTAMP_LEN + 1];
-    size_t i;
-
-    memcpy(timestamp, pvd + PS1_PVD_TIMESTAMP_OFFSET, PS1_PVD_TIMESTAMP_LEN);
-    timestamp[PS1_PVD_TIMESTAMP_LEN] = '\0';
-
-    for (i = 0; i < sizeof(ps1_generic_game_ids) / sizeof(ps1_generic_game_ids[0]); i++) {
-        if (!strncmp(timestamp, ps1_generic_game_ids[i].timestamp, PS1_PVD_TIMESTAMP_LEN)) {
-            snprintf(gameID, maxLen, "%s", ps1_generic_game_ids[i].game_id);
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
 static int retrogemParseReader(ps1_image_reader_t *reader, char *gameID, size_t maxLen)
 {
     unsigned char pvd[PS1_SECTOR_DATA_SIZE];
@@ -484,7 +329,7 @@ static int retrogemParseReader(ps1_image_reader_t *reader, char *gameID, size_t 
         }
     }
 
-    return retrogemLookupTimestamp(pvd, gameID, maxLen);
+    return 0;
 }
 
 static int retrogemTryImageLayout(const char *path, long baseOffset, ps1_image_layout_t layout,
@@ -504,47 +349,6 @@ static int retrogemTryImageLayout(const char *path, long baseOffset, ps1_image_l
     result = retrogemParseReader(&reader, gameID, maxLen);
     fclose(file);
     return result;
-}
-
-static const char *retrogemFinalName(const char *path)
-{
-    const char *name = path;
-    const char *p;
-
-    if (path == NULL)
-        return NULL;
-    p = strrchr(path, '/');
-    if (p != NULL)
-        name = p + 1;
-    p = strrchr(path, '\\');
-    if (p != NULL && p + 1 > name)
-        name = p + 1;
-    p = strrchr(path, ':');
-    if (p != NULL && p + 1 > name)
-        name = p + 1;
-    return name;
-}
-
-static int retrogemPathFallback(const char *path, char *gameID, size_t maxLen)
-{
-    const char *p;
-    const char *name;
-
-    if (path == NULL)
-        return 0;
-
-    // POPStarter HDD partition labels can carry the serial even when IMAGE0.VCD cannot be read.
-    for (p = path; *p != '\0'; p++) {
-        if ((!strncasecmp(p, "PP.", 3) || !strncmp(p, "__.", 3)) &&
-            retrogemCleanTitleID(p, gameID, maxLen))
-            return 1;
-    }
-
-    name = retrogemFinalName(path);
-    if (name != NULL && retrogemCleanTitleID(name, gameID, maxLen))
-        return 1;
-
-    return 0;
 }
 
 static int retrogemHasExt(const char *path, const char *ext)
@@ -708,7 +512,7 @@ static int retrogemGetDiscImageGameID(const char *path, int isVcd, char *gameID,
     if (retrogemTryImageLayout(path, 0, PS1_IMAGE_COOKED_2048, gameID, maxLen))
         return 1;
 
-    return retrogemPathFallback(path, gameID, maxLen);
+    return 0;
 }
 
 int retrogemGetVcdGameID(const char *vcdPath, char *gameID, size_t maxLen)
@@ -731,18 +535,17 @@ int retrogemGetPs1ImageGameID(const char *imagePath, char *gameID, size_t maxLen
         return retrogemGetVcdGameID(imagePath, gameID, maxLen);
 
     if (retrogemHasExt(imagePath, ".CUE")) {
-        if (retrogemCueResolveDataFile(imagePath, dataPath, sizeof(dataPath)) &&
-            retrogemGetDiscImageGameID(dataPath, 0, gameID, maxLen))
-            return 1;
-        return retrogemPathFallback(imagePath, gameID, maxLen);
+        if (retrogemCueResolveDataFile(imagePath, dataPath, sizeof(dataPath)))
+            return retrogemGetDiscImageGameID(dataPath, 0, gameID, maxLen);
+        return 0;
     }
 
     if (retrogemHasExt(imagePath, ".BIN") || retrogemHasExt(imagePath, ".ISO"))
         return retrogemGetDiscImageGameID(imagePath, 0, gameID, maxLen);
 
-    // A bare PS-X EXE has no ISO9660 filesystem or trustworthy disc serial. Only emit a GameID when
-    // its filename itself is a strict serial, rather than inventing one from the Ember folder name.
-    return retrogemPathFallback(imagePath, gameID, maxLen);
+    // A bare PS-X EXE has no disc filesystem to extract a serial from. Do not invent a GameID from
+    // its filename or Ember folder name.
+    return 0;
 }
 
 static u8 retrogemCalculateCRC(const u8 *data, int len)
