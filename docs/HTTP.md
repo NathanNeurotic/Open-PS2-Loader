@@ -62,7 +62,7 @@ unreadable, or the server not returning the exact bytes asked for — rather tha
 An empty catalog is a valid answer, and Test says so plainly: it proves the server is there, and
 proves nothing at all about whether byte ranges work.
 
-The first protocol selected while the adapter is unused can start immediately. Switching away from an already loaded protocol requires restarting RiptOPL; the UI reports that requirement. Only one protocol can own the adapter in a session.
+The first protocol selected while the adapter is unused can start immediately. Switching away from an already loaded protocol requires restarting RiptOPL; the settings page offers to save and restart on the spot (and again on the Network page's OK), and Save Settings offers it too. Only one protocol can own the adapter in a session.
 
 ---
 
