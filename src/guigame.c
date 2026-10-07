@@ -1249,6 +1249,11 @@ static void guiGameSetCoreAwareState(void)
     // -bsdfs override: Neutrino-only AND block-backed-device-only (mmce/udpfs have no fs layer;
     // APA is always hdl). The launch side guards independently -- this grey is just honest UI.
     diaSetEnabled(diaCompatConfig, COMPAT_NEUTRINO_BSDFS, neutrino && bsdfsDeviceCapable);
+    // The stored $DNAS value is consumed by the native OPL core. Neutrino derives its title identity
+    // from the launched disc/ELF and never reads CONFIG_ITEM_DNAS, so keep these controls honest while
+    // preserving the saved value for users who switch the game back to the OPL core.
+    diaSetEnabled(diaCompatConfig, COMPAT_GAMEID, !neutrino);
+    diaSetEnabled(diaCompatConfig, COMPAT_LOADFROMDISC, !neutrino);
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 3, !neutrino); // Mode 4 Skip Videos: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 5, !neutrino); // Mode 6 Disable IGR: OPL core only
     diaSetEnabled(diaCompatConfig, COMPAT_MODE_BASE + 6, neutrino);  // Mode 7 -gc=7 fix buffer overrun: Neutrino only
