@@ -1163,16 +1163,47 @@ jobs:
           else
             TAG="$ROLLING_TAG"; TITLE="$ROLLING_TITLE"; RELEASE_FLAGS="--prerelease=false $ROLLING_LATEST"; TARGET="--target $GITHUB_SHA"
           fi
+          # GitHub's release API returns the odd transient HTTP 500, so every call that changes the
+          # release is retried, as release-normalize.yml does (#783). Failures go to stderr, so a
+          # retried read still captures only its output.
+          retry() { for n in 1 2 3 4; do "$@" && return 0; echo "Attempt $n failed: $*" >&2; sleep $((n * 15)); done; return 1; }
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Updating existing release: $TAG"
-            # Remove every existing asset first so renamed/stale builds from prior
-            # runs cannot accumulate; then upload the current fixed-name set.
-            for asset in $(gh release view "$TAG" --json assets --jq '.assets[].name'); do
-              echo "Deleting old asset: $asset"
-              gh release delete-asset "$TAG" "$asset" --yes || true
-            done
-            gh release edit "$TAG" --title "$TITLE" --notes-file notes.md $RELEASE_FLAGS
-            gh release upload "$TAG" rolling/* --clobber
+            # UPLOAD FIRST, then remove only the assets this run did not replace. This used to delete
+            # every asset up front: on 2026-10-06 GitHub answered HTTP 500 between those deletes and
+            # the upload, and the public release sat for hours without RIPTOPL.ELF, APP_RIPTOPL.psu
+            # and the DEBUG and VARIANTS packages. Now the old files stay until the new set is up, and
+            # a failure still fails the step, so Normalize does not run on it. Names are read one per
+            # line, because an asset name may contain spaces.
+            OLD_ASSETS=$(retry gh release view "$TAG" --json assets --jq '.assets[].name')
+            # --clobber deletes a same-name asset just before uploading its replacement, so an upload
+            # that never succeeds could still drop a fixed-name download such as RIPTOPL.ELF. Keep a
+            # copy of every asset this run replaces, and put back any that went missing before failing.
+            rm -rf replaced && mkdir replaced
+            while IFS= read -r asset; do
+              if [ -n "$asset" ] && [ -e "rolling/$asset" ]; then
+                retry gh release download "$TAG" --pattern "$asset" --dir replaced --clobber </dev/null
+              fi
+            done <<< "$OLD_ASSETS"
+            if ! retry gh release upload "$TAG" rolling/* --clobber; then
+              NOW=$(retry gh release view "$TAG" --json assets --jq '.assets[].name' || true)
+              for f in replaced/*; do
+                [ -e "$f" ] || continue
+                if ! grep -qxF "$(basename "$f")" <<< "$NOW"; then
+                  echo "Restoring the previous $(basename "$f"), which the failed upload removed" >&2
+                  retry gh release upload "$TAG" "$f" </dev/null || true
+                fi
+              done
+              echo "ERROR: the release upload kept failing; the previous downloads were kept" >&2
+              exit 1
+            fi
+            retry gh release edit "$TAG" --title "$TITLE" --notes-file notes.md $RELEASE_FLAGS
+            while IFS= read -r asset; do
+              [ -n "$asset" ] || continue
+              [ -e "rolling/$asset" ] && continue # same name: --clobber already replaced it
+              echo "Deleting stale asset: $asset"
+              retry gh release delete-asset "$TAG" "$asset" --yes </dev/null
+            done <<< "$OLD_ASSETS"
             # REFRESH THE ROLLING RELEASE DATE. `gh release edit` updates the body and the assets
             # but never touches published_at, which is what GitHub renders as the relative time --
             # so a package rebuilt today sat under "last month" and read as abandoned. Recreating

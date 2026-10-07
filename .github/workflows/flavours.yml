@@ -69,6 +69,8 @@ jobs:
         run: python3 .github/scripts/test_bgm_source.py
       - name: Check that a held button keeps repeating across the tick-counter wrap
         run: python3 .github/scripts/test_pad_repeat_clock.py
+      - name: Check IGR polls without a VBLANK handler, except in RetroAchievements builds
+        run: python3 .github/scripts/test_igr_polling.py
       - name: Check that the handoff probe only refuses a target the child cannot load
         run: python3 .github/scripts/test_handoff_probe.py
       - name: Check that a blind button press cannot keep a video mode the TV cannot show
@@ -114,6 +116,8 @@ jobs:
           persist-credentials: false
       - name: Check compact release notes and changelog
         run: python3 .github/scripts/test_release_notes.py
+      - name: Check a rolling publish never leaves the release missing files when GitHub fails mid-way
+        run: python3 .github/scripts/test_rolling_publish_order.py
 
   ra-host-tests:
     runs-on: ubuntu-24.04
