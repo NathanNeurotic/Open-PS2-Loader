@@ -56,8 +56,8 @@ On the console, set **Network Connectivity** to **Manual** or **Auto** in **Game
 | HTTP base path | `/` unless your catalog and images live in a subfolder |
 | Test HTTP server | fetches the catalog, parses it, and reads one real byte range |
 
-Use **Test** before saving. It tells you which part failed — unreachable, catalog missing, catalog
-unreadable, or the server not returning the exact bytes asked for — rather than one generic error.
+Use **Test** before saving. It reports whether the server is unreachable, the catalog request fails,
+or the server does not return the exact bytes requested.
 
 ### Quick start: actually launching a game
 
