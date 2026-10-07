@@ -262,6 +262,8 @@ if index:
                 failures.append('Exit without saving must not re-apply/revert settings (%s found)' % forbidden)
         if 'guiSettingsSavePending = 0;' not in branch:
             failures.append('Exit without saving must clear the pending-save flag')
+        if 'hddDiscardOplHomeSelection();' not in branch:
+            failures.append('Exit without saving must discard the pending HDD OPL-home selection')
 
 # --- Obsolete compatibility download feature is gone end-to-end -------------------------------
 
