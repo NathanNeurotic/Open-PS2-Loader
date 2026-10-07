@@ -875,6 +875,8 @@ static void mmceLaunchCue(item_list_t *itemList, const char *cueName, config_set
         return;
     }
 
+    cuePrepareRetroGemBarcode(ps1Root, cueName);
+
     // UNMOUNT_EXCEPTION is load-bearing: Ember cannot remount the card it reads the game from.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
     sysLaunchEmber(emberElf, cueName);
