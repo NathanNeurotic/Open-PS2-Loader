@@ -982,7 +982,7 @@ gui_strings:
 - label: NETBOOT_RESTART
   string: Restart OPL to apply the network boot protocol change.
 - label: NET_UDPFS_TAB_HINT
-  string: UDPFS on -- open the new UDPFS tab and press Confirm to connect. PC side runs udpfsd -fsroot <games folder>.
+  string: UDPFS on -- leave Settings, open the UDPFS Games page and press Confirm to connect. PC side runs udpfsd -fsroot <games folder>.
 - label: NET_UDPBD_TAB_HINT
   string: Network block device on -- its tab appears once the PC server answers (udpfsd -bdpath for UDPFS Image, udpbd-server for UDPBD).
 - label: NEUTRINO_TOO_FRAGMENTED_NET
@@ -1413,3 +1413,5 @@ gui_strings:
   string: "3D Save Icons"
 - label: HINT_SAVE_ICONS
   string: "Shows the selected game's save icon, spinning, where the theme has a spot for it. Reads the game's own VMC first, then the memory cards."
+- label: NETBOOT_RESTART_NOW
+  string: "The network protocol changes after a restart. Save settings and restart OPL now?"
