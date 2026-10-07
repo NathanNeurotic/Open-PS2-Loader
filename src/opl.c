@@ -433,9 +433,12 @@ static void itemExecSelect(struct menu_item *curMenu)
                     if (startup == NULL || strcmp(startup, gameIdStartup) != 0)
                         return;
                 }
-                // Flash the GameID barcode (Pixel FX/RetroGEM HDMI auto-profile) before handoff. Use
-                // the stack copy: the hold renders/unlocks for many frames while source lists may refresh.
-                guiShowGameID(gameIdStartup);
+                // Native PS2/app launches can identify from their startup token. PS1 disc-image rows
+                // cannot: their stored startup is a VCD filename or Ember folder name, not the disc serial.
+                // Those rows resolve the real SYSTEM.CNF/PVD GameID in their core-specific launch path.
+                int launchView = support->itemGetView != NULL ? support->itemGetView(support, launchId) : libListViewActive(support);
+                if (launchView != LIB_VIEW_PS1)
+                    guiShowGameID(gameIdStartup);
                 support->itemLaunch(support, launchId, configSet);
             }
         } else {
