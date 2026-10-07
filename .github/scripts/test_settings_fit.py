@@ -36,6 +36,7 @@ dia_c = read('src/dia.c')
 dia_h = read('include/dia.h')
 dialogs_c = read('src/dialogs.c')
 dialogs_h = read('include/dialogs.h')
+guigame_c = read('src/guigame.c')
 themes_c = read('src/themes.c')
 config_h = read('include/config.h')
 lang_base = read('lng_tmpl/_base.yml')
@@ -183,6 +184,8 @@ if load and old_pair not in load:
 if ('Global default only where both cores are supported. UDPFS/UDPBD always use Neutrino; SMB/HTTP always use <OPL>.' not in lang_base or
         'UDPFS/UDPBD are Neutrino-only; SMB/HTTP are <OPL>-only.' not in lang_base):
     failures.append('lng_tmpl/_base.yml: loader-core hints must name the forced-core network sources')
+if 'sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support)' not in guigame_c:
+    failures.append('guigame.c: UDPFS Files and UDP block-device games must lock Loader Core to Neutrino')
 
 # --- optional PS1/PS2 labels ----------------------------------------------------------------------
 

@@ -1314,9 +1314,9 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     // this). SMB likewise: ethsupport has no Neutrino launch leg, the effective core is always <OPL>.
     coreNeverNeutrino = (support != NULL && ((libViewActive(support->mode) == LIB_VIEW_PS1) || support->mode == ETH_MODE || sourceMode == HTTP_MODE));
 
-    // UDPBD games have no OPL core backend -- they always launch via Neutrino
-    // (bdmsupport.c forces it). Lock the selector to Neutrino so the screen matches;
-    // re-enable it for every other device (the dialog struct is reused across games).
+    // UDPFS (Files and IMG) and UDPBD have no OPL core backend -- they always launch via Neutrino.
+    // Lock the selector to Neutrino so the screen matches; sourceMode catches UDPFS Files (and a
+    // Favourite that points back to it), while bdmSupportIsUDPBD catches the UDP block-device page.
     if (support != NULL && (libViewActive(support->mode) == LIB_VIEW_PS1)) {
         // VCD (PS1) games launch ONLY via POPSTARTER -- neither OPL's core nor Neutrino is used, so the
         // Loader Core choice is meaningless. Pin it to the inert "Default" row (index 2 -> no per-game
@@ -1331,7 +1331,7 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
         // honesty for keys set elsewhere (e.g. via Favourites) is the toast in ethLaunchGame.
         diaSetInt(diaCompatConfig, COMPAT_LOADER, 2);
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
-    } else if (bdmSupportIsUDPBD(support)) {
+    } else if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support)) {
         diaSetInt(diaCompatConfig, COMPAT_LOADER, 1);
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
     } else {
