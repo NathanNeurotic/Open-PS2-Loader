@@ -36,6 +36,7 @@ dia_c = read('src/dia.c')
 dia_h = read('include/dia.h')
 dialogs_c = read('src/dialogs.c')
 dialogs_h = read('include/dialogs.h')
+guigame_c = read('src/guigame.c')
 themes_c = read('src/themes.c')
 config_h = read('include/config.h')
 lang_base = read('lng_tmpl/_base.yml')
@@ -159,6 +160,17 @@ if render:
 for label in ('Internal HDD (exFAT)', 'USB', 'MX4SIO', 'iLink'):
     if '{.label = {"      %s", -1}}' % label not in dialogs_c:
         failures.append('dialogs.c: "%s" must be indented under BDM Devices Start Mode' % label)
+
+# --- per-game DNAS ID clarity --------------------------------------------------------------------
+
+if '{UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_DNAS_ID}}},' not in dialogs_c:
+    failures.append('dialogs.c: the per-game DNAS field must be labelled DNAS ID, not generic Game ID')
+if '- label: DNAS_ID\\n  string: DNAS ID' not in lang_base:
+    failures.append('lng_tmpl/_base.yml: DNAS ID needs an internal-English fallback')
+core_aware = function_text(guigame_c, 'src/guigame.c', 'static void guiGameSetCoreAwareState(')
+if core_aware and ('diaSetEnabled(diaCompatConfig, COMPAT_GAMEID, !neutrino);' not in core_aware or
+                   'diaSetEnabled(diaCompatConfig, COMPAT_LOADFROMDISC, !neutrino);' not in core_aware):
+    failures.append('guiGameSetCoreAwareState: DNAS entry/read controls must disable under Neutrino')
 
 # --- plasma defaults and the old-pair migration ----------------------------------------------------
 

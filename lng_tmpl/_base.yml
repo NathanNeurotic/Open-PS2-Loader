@@ -1655,3 +1655,5 @@ gui_strings:
   string: "TV shape handed to the game."
 - label: HINT_OSD_VMODE
   string: "Video mode handed to the game."
+- label: DNAS_ID
+  string: DNAS ID
