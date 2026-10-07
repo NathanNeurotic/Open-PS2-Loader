@@ -288,6 +288,7 @@ work instead of hard-coding resolution-specific numbers.</p>
 <tr><td><code>LoadingIcon</code></td><td>The animated loading spinner (only one per theme).</td></tr>
 <tr><td><code>BdmIndex</code></td><td>The block-device (BDM) mode indicator — shows which mass device slot is active.</td></tr>
 <tr><td><code>Coverflow</code> <b>(item)</b></td><td><b>This fork:</b> a centred cover-art carousel (see §9).</td></tr>
+<tr><td><code>SaveIcon</code> <b>(item)</b></td><td><b>This fork:</b> the selected PS2 game's own 3D save icon, spinning (see §10). Draws nothing unless the user turns on <b>3D Save Icons</b>.</td></tr>
 </tbody>
 </table>
 
@@ -612,7 +613,32 @@ while a Coverflow theme is active). They apply to <em>any</em> Coverflow theme a
 live in the theme (a global key — see §3). For the in-menu walkthrough of these settings, see
 <a href="coverflow.html">Coverflow</a>.</p>
 
-<h2 id="coordinates">10 · Coordinates &amp; scaling</h2>
+<h2 id="saveicon">10 · The SaveIcon element</h2>
+<p><b>This fork.</b> <code>type=SaveIcon</code> draws the selected PS2 game's own save icon — the 3D model the PS2
+browser shows — spinning, and moving too when the icon is animated. It comes from:</p>
+<ol>
+  <li>the game's <b>per-game VMC</b> (slot 1, then slot 2) when one is assigned and switched on, else</li>
+  <li>the <b>memory cards</b> in the console: the newest save of that game on either card. Slot 2 is skipped while
+  MX4SIO is enabled, because that is where an MX4SIO sits.</li>
+</ol>
+<p><code>x</code>/<code>y</code>/<code>aligned</code> place the element and <code>width</code>/<code>height</code>
+(64×64 by default) give the box the whole icon fits in, at every angle of its turn; <code>scaled=1</code> (the
+default) narrows it on a 16:9 screen like any image. Lighting comes from the save's own <code>icon.sys</code>.</p>
+<p>It draws <b>nothing</b> while the user's <b>3D Save Icons</b> setting is off (<i>Settings → Interface → Artwork
+Settings</i>, off by default), on a row that is not a PS2 game (apps, PS1 titles), or when the game has no readable
+save. A theme can place it unconditionally, but should not put anything under it that depends on it being there. The
+cards are read only once the cursor has rested on a game for a quarter of a second, on the worker that also loads
+cover art.</p>
+<pre>main19:
+	type=SaveIcon
+	x=-128
+	y=86
+	width=64
+	height=52</pre>
+<p>Both built-in themes place one: <code>&lt;OPL&gt;</code> above the cover and <code>&lt;Coverflow&gt;</code> under the
+centre cover, and both between the two screenshots of the info page.</p>
+
+<h2 id="coordinates">11 · Coordinates &amp; scaling</h2>
 <div class="steps">
 <div class="step"><h3>Author on 640×480</h3><p>All positions/sizes are written for a virtual 640×480 canvas. OPL
 scales that to the active video mode at draw time — you never hard-code 480p vs. 1080i numbers.</p></div>
@@ -624,7 +650,7 @@ right/bottom edge; <code>POS_MID</code> centres; <code>DIM_INF</code> fills. Pre
 a layout survives resolution changes.</p></div>
 </div>
 
-<h2 id="worked-examples">11 · Worked examples</h2>
+<h2 id="worked-examples">12 · Worked examples</h2>
 
 <h3>An info-page metadata label</h3>
 <pre>info3:
@@ -665,7 +691,7 @@ a layout survives resolution changes.</p></div>
     overlay_ulx=1    overlay_uly=1    overlay_urx=199  overlay_ury=1
     overlay_llx=1    overlay_lly=149  overlay_lrx=199  overlay_lry=149</pre>
 
-<h2 id="complete-sample">12 · A complete, annotated sample theme</h2>
+<h2 id="complete-sample">13 · A complete, annotated sample theme</h2>
 <p>This is the shipped default <code>&lt;OPL&gt;</code> theme (<code>misc/conf_theme_OPL.cfg</code>), annotated.
 It is a full, valid <code>conf_theme.cfg</code> — copy it into <code>THM/thm_MyTheme/</code>, edit, and you have
 a working theme. Note the contiguous numbering and the single <code>appsMain5</code> override that swaps the
