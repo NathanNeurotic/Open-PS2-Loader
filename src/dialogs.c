@@ -19,81 +19,81 @@ struct UIItem diaNetConfig[] = {
     // for SMB and locks it to IMG for UDPBD (same rules guiDeviceUpdater used to apply).
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Protocol", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_NETPROTOCOL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_NETPROTOCOL, 1, 1, _STR_HINT_NET_PROTOCOL, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Access", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_UDPFSMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_UDPFSMODE, 1, 1, _STR_HINT_UDPFS_ACCESS, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, NETCFG_LBL_SMBDIALECT, 1, 1, -1, -40, 0, {.label = {"SMB Version", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_SMBDIALECT, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_SMBDIALECT, 1, 1, _STR_HINT_SMB_VERSION, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SHOW_ADVANCED_OPTS}}},
     {UI_SPACER},
-    {UI_BOOL, NETCFG_SHOW_ADVANCED_OPTS, 1, 1, -1, 0, 0, {.intvalue = {1, 0}}}, // RiptOPL: advanced ON by default (port/op-mode editable)
+    {UI_BOOL, NETCFG_SHOW_ADVANCED_OPTS, 1, 1, _STR_HINT_NET_ADVANCED, 0, 0, {.intvalue = {1, 0}}}, // RiptOPL: advanced ON by default (port/op-mode editable)
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ETH_OPMODE}}},
     {UI_SPACER},
-    {UI_ENUM, NETCFG_ETHOPMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, NETCFG_ETHOPMODE, 1, 1, _STR_HINT_ETH_LINK_MODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // ---- IP address type ----
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_IP_ADDRESS_TYPE}}},
     {UI_SPACER},
-    {UI_ENUM, NETCFG_PS2_IP_ADDR_TYPE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, NETCFG_PS2_IP_ADDR_TYPE, 1, 1, _STR_HINT_IP_ADDR_TYPE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // ---- IP address ----
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_IP_ADDRESS}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_PS2_IP_ADDR_0, 1, 1, -1, 0, 0, {.intvalue = {192, 192, 0, 255}}},
+    {UI_INT, NETCFG_PS2_IP_ADDR_0, 1, 1, _STR_HINT_PS2_IP, 0, 0, {.intvalue = {192, 192, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_IP_ADDR_1, 1, 1, -1, 0, 0, {.intvalue = {168, 168, 0, 255}}},
+    {UI_INT, NETCFG_PS2_IP_ADDR_1, 1, 1, _STR_HINT_PS2_IP, 0, 0, {.intvalue = {168, 168, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_IP_ADDR_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_PS2_IP_ADDR_2, 1, 1, _STR_HINT_PS2_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_IP_ADDR_3, 1, 1, -1, 0, 0, {.intvalue = {10, 10, 0, 255}}},
+    {UI_INT, NETCFG_PS2_IP_ADDR_3, 1, 1, _STR_HINT_PS2_IP, 0, 0, {.intvalue = {10, 10, 0, 255}}},
     {UI_BREAK},
 
     //  ---- Netmask ----
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MASK}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_PS2_NETMASK_0, 1, 1, -1, 0, 0, {.intvalue = {255, 255, 0, 255}}},
+    {UI_INT, NETCFG_PS2_NETMASK_0, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {255, 255, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_NETMASK_1, 1, 1, -1, 0, 0, {.intvalue = {255, 255, 0, 255}}},
+    {UI_INT, NETCFG_PS2_NETMASK_1, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {255, 255, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_NETMASK_2, 1, 1, -1, 0, 0, {.intvalue = {255, 255, 0, 255}}},
+    {UI_INT, NETCFG_PS2_NETMASK_2, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {255, 255, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_NETMASK_3, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_PS2_NETMASK_3, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_BREAK},
 
     //  ---- Gateway ----
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GATEWAY}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_PS2_GATEWAY_0, 1, 1, -1, 0, 0, {.intvalue = {192, 192, 0, 255}}},
+    {UI_INT, NETCFG_PS2_GATEWAY_0, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {192, 192, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_GATEWAY_1, 1, 1, -1, 0, 0, {.intvalue = {168, 168, 0, 255}}},
+    {UI_INT, NETCFG_PS2_GATEWAY_1, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {168, 168, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_GATEWAY_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_PS2_GATEWAY_2, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_GATEWAY_3, 1, 1, -1, 0, 0, {.intvalue = {1, 1, 0, 255}}},
+    {UI_INT, NETCFG_PS2_GATEWAY_3, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {1, 1, 0, 255}}},
     {UI_BREAK},
 
     //  ---- DNS server ----
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DNS_SERVER}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_PS2_DNS_0, 1, 1, -1, 0, 0, {.intvalue = {192, 192, 0, 255}}},
+    {UI_INT, NETCFG_PS2_DNS_0, 1, 1, _STR_HINT_DNS, 0, 0, {.intvalue = {192, 192, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_DNS_1, 1, 1, -1, 0, 0, {.intvalue = {168, 168, 0, 255}}},
+    {UI_INT, NETCFG_PS2_DNS_1, 1, 1, _STR_HINT_DNS, 0, 0, {.intvalue = {168, 168, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_DNS_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_PS2_DNS_2, 1, 1, _STR_HINT_DNS, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_PS2_DNS_3, 1, 1, -1, 0, 0, {.intvalue = {1, 1, 0, 255}}},
+    {UI_INT, NETCFG_PS2_DNS_3, 1, 1, _STR_HINT_DNS, 0, 0, {.intvalue = {1, 1, 0, 255}}},
     {UI_BREAK},
 
     //  ---- SMB Server ----
@@ -102,24 +102,24 @@ struct UIItem diaNetConfig[] = {
 
     {UI_LABEL, NETCFG_LBL_SHARE_ADDR_TYPE, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADDRESS_TYPE}}},
     {UI_SPACER},
-    {UI_ENUM, NETCFG_SHARE_ADDR_TYPE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, NETCFG_SHARE_ADDR_TYPE, 1, 1, _STR_HINT_SMB_ADDR_TYPE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, NETCFG_LBL_SHARE_ADDRESS, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADDRESS}}},
     {UI_SPACER},
-    {UI_STRING, NETCFG_SHARE_NB_ADDR, 1, 0, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
-    {UI_INT, NETCFG_SHARE_IP_ADDR_0, 1, 1, -1, 0, 0, {.intvalue = {192, 192, 0, 255}}},
+    {UI_STRING, NETCFG_SHARE_NB_ADDR, 1, 0, _STR_HINT_SMB_ADDRESS, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_INT, NETCFG_SHARE_IP_ADDR_0, 1, 1, _STR_HINT_SMB_ADDRESS, 0, 0, {.intvalue = {192, 192, 0, 255}}},
     {UI_LABEL, NETCFG_SHARE_IP_ADDR_DOT_0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_SHARE_IP_ADDR_1, 1, 1, -1, 0, 0, {.intvalue = {168, 168, 0, 255}}},
+    {UI_INT, NETCFG_SHARE_IP_ADDR_1, 1, 1, _STR_HINT_SMB_ADDRESS, 0, 0, {.intvalue = {168, 168, 0, 255}}},
     {UI_LABEL, NETCFG_SHARE_IP_ADDR_DOT_1, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_SHARE_IP_ADDR_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_SHARE_IP_ADDR_2, 1, 1, _STR_HINT_SMB_ADDRESS, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, NETCFG_SHARE_IP_ADDR_DOT_2, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_SHARE_IP_ADDR_3, 1, 1, -1, 0, 0, {.intvalue = {1, 1, 0, 255}}},
+    {UI_INT, NETCFG_SHARE_IP_ADDR_3, 1, 1, _STR_HINT_SMB_ADDRESS, 0, 0, {.intvalue = {1, 1, 0, 255}}},
     {UI_BREAK},
 
     {UI_LABEL, NETCFG_LBL_SHARE_PORT, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PORT}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_SHARE_PORT, 1, 1, -1, 0, 0, {.intvalue = {1111, 1111, 0, 65535}}}, // RiptOPL default SMB port 1111 (non-privileged; was 445)
+    {UI_INT, NETCFG_SHARE_PORT, 1, 1, _STR_HINT_SMB_PORT, 0, 0, {.intvalue = {1111, 1111, 0, 65535}}}, // RiptOPL default SMB port 1111 (non-privileged; was 445)
     {UI_BREAK},
 
     //  ---- SMB share name ----
@@ -130,7 +130,7 @@ struct UIItem diaNetConfig[] = {
 
     {UI_LABEL, NETCFG_LBL_SHARE_USER, 1, 1, -1, -40, 0, {.label = {NULL, _STR_USER}}},
     {UI_SPACER},
-    {UI_STRING, NETCFG_SHARE_USERNAME, 1, 1, -1, 0, 0, {.stringvalue = {"GUEST", "GUEST", NULL}}},
+    {UI_STRING, NETCFG_SHARE_USERNAME, 1, 1, _STR_HINT_SMB_USER, 0, 0, {.stringvalue = {"GUEST", "GUEST", NULL}}},
     {UI_BREAK},
 
     {UI_LABEL, NETCFG_LBL_SHARE_PASSWORD, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PASSWORD}}},
@@ -143,30 +143,30 @@ struct UIItem diaNetConfig[] = {
     //  donor's fork does. Hidden whole unless the protocol row is HTTP.
     {UI_LABEL, NETCFG_LBL_HTTP_SERVER, 1, 1, -1, -40, 0, {.label = {NULL, _STR_HTTP_SERVER}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_HTTP_IP_0, 1, 1, -1, 0, 0, {.intvalue = {192, 192, 0, 255}}},
+    {UI_INT, NETCFG_HTTP_IP_0, 1, 1, _STR_HINT_HTTP_SERVER, 0, 0, {.intvalue = {192, 192, 0, 255}}},
     {UI_LABEL, NETCFG_HTTP_DOT_0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_HTTP_IP_1, 1, 1, -1, 0, 0, {.intvalue = {168, 168, 0, 255}}},
+    {UI_INT, NETCFG_HTTP_IP_1, 1, 1, _STR_HINT_HTTP_SERVER, 0, 0, {.intvalue = {168, 168, 0, 255}}},
     {UI_LABEL, NETCFG_HTTP_DOT_1, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_HTTP_IP_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_HTTP_IP_2, 1, 1, _STR_HINT_HTTP_SERVER, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, NETCFG_HTTP_DOT_2, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_HTTP_IP_3, 1, 1, -1, 0, 0, {.intvalue = {10, 10, 0, 255}}},
+    {UI_INT, NETCFG_HTTP_IP_3, 1, 1, _STR_HINT_HTTP_SERVER, 0, 0, {.intvalue = {10, 10, 0, 255}}},
     {UI_BREAK},
 
     // 1100 is Docmine17's PC server default and therefore what an unconfigured install should try
     // first. Any port is accepted, 80 and 8080 included.
     {UI_LABEL, NETCFG_LBL_HTTP_PORT, 1, 1, -1, -40, 0, {.label = {NULL, _STR_HTTP_PORT}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_HTTP_PORT, 1, 1, -1, 0, 0, {.intvalue = {1100, 1100, 1, 65535}}},
+    {UI_INT, NETCFG_HTTP_PORT, 1, 1, _STR_HINT_HTTP_PORT, 0, 0, {.intvalue = {1100, 1100, 1, 65535}}},
     {UI_BREAK},
 
     {UI_LABEL, NETCFG_LBL_HTTP_BASE, 1, 1, -1, -40, 0, {.label = {NULL, _STR_HTTP_BASE_PATH}}},
     {UI_SPACER},
-    {UI_STRING, NETCFG_HTTP_BASE, 1, 1, -1, 0, 0, {.stringvalue = {"/", "/", NULL}}},
+    {UI_STRING, NETCFG_HTTP_BASE, 1, 1, _STR_HINT_HTTP_BASE, 0, 0, {.stringvalue = {"/", "/", NULL}}},
     {UI_BREAK},
 
     {UI_LABEL, NETCFG_LBL_HTTP_TEST, 1, 1, -1, -40, 0, {.label = {NULL, _STR_HTTP_TEST}}},
     {UI_SPACER},
-    {UI_BUTTON, NETCFG_HTTP_TEST, 1, 1, -1, 0, 0, {.label = {NULL, _STR_TEST}}},
+    {UI_BUTTON, NETCFG_HTTP_TEST, 1, 1, _STR_HINT_HTTP_TEST, 0, 0, {.label = {NULL, _STR_TEST}}},
     {UI_BREAK},
 
 #ifdef RETROACHIEVEMENTS
@@ -176,12 +176,12 @@ struct UIItem diaNetConfig[] = {
     // belong to THIS page: guiShowNetConfig reads and writes them through diaNetConfig.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_TELEMETRY}}},
     {UI_SPACER},
-    {UI_BOOL, NETCFG_RA_TELEMETRY, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, NETCFG_RA_TELEMETRY, 1, 1, _STR_HINT_RA_TELEMETRY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_BADGES}}},
     {UI_SPACER},
-    {UI_BOOL, NETCFG_RA_BADGES, 1, 1, -1, 0, 0, {.intvalue = {1, 0}}},
+    {UI_BOOL, NETCFG_RA_BADGES, 1, 1, _STR_HINT_RA_BADGES, 0, 0, {.intvalue = {1, 0}}},
     {UI_BREAK},
 #endif
 
@@ -189,7 +189,7 @@ struct UIItem diaNetConfig[] = {
     // SMB server data it relates to, without duplicating any of that state in this page.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_NETWORK_SETTINGS}}},
     {UI_SPACER},
-    {UI_BUTTON, NETCFG_POPSTARTER_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, NETCFG_POPSTARTER_BUTTON, 1, 1, _STR_HINT_POPS_NET_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     // buttons
@@ -221,51 +221,51 @@ struct UIItem diaPopsNetConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_IP_ADDRESS_TYPE}}},
     {UI_SPACER},
-    {UI_ENUM, NETCFG_POPS_IPTYPE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, NETCFG_POPS_IPTYPE, 1, 1, _STR_HINT_POPS_IP_TYPE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_IP_ADDRESS}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_POPS_IP_0, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_IP_0, 1, 1, _STR_HINT_POPS_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_IP_1, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_IP_1, 1, 1, _STR_HINT_POPS_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_IP_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_IP_2, 1, 1, _STR_HINT_POPS_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_IP_3, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_IP_3, 1, 1, _STR_HINT_POPS_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MASK}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_POPS_MASK_0, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_MASK_0, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_MASK_1, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_MASK_1, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_MASK_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_MASK_2, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_MASK_3, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_MASK_3, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GATEWAY}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_POPS_GW_0, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_GW_0, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_GW_1, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_GW_1, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_GW_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_GW_2, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_GW_3, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_GW_3, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADDRESS}}},
     {UI_SPACER},
-    {UI_INT, NETCFG_POPS_SMB_IP_0, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_SMB_IP_0, 1, 1, _STR_HINT_POPS_SMB_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_SMB_IP_1, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_SMB_IP_1, 1, 1, _STR_HINT_POPS_SMB_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_SMB_IP_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_SMB_IP_2, 1, 1, _STR_HINT_POPS_SMB_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
-    {UI_INT, NETCFG_POPS_SMB_IP_3, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_INT, NETCFG_POPS_SMB_IP_3, 1, 1, _STR_HINT_POPS_SMB_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PORT}}},
@@ -275,7 +275,7 @@ struct UIItem diaPopsNetConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SHARE}}},
     {UI_SPACER},
-    {UI_STRING, NETCFG_POPS_SMB_SHARE, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, NETCFG_POPS_SMB_SHARE, 1, 1, _STR_HINT_POPS_SMB_SHARE, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_USER}}},
@@ -303,7 +303,7 @@ struct UIItem diaConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LASTPLAYED}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_LASTPLAYED, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_LASTPLAYED, 1, 1, _STR_HINT_LASTPLAYED, 0, 0, {.intvalue = {0, 0}}},
     {UI_SPACER},
     {UI_LABEL, CFG_LBL_AUTOSTARTLAST, 1, 1, -1, 0, 0, {.label = {NULL, _STR_AUTOSTARTLAST}}},
     {UI_SPACER},
@@ -317,7 +317,7 @@ struct UIItem diaConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LANGUAGE}}},
     {UI_SPACER},
-    {UI_ENUM, UICFG_LANG, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, UICFG_LANG, 1, 1, _STR_HINT_LANGUAGE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_EXITTO}}},
@@ -332,7 +332,7 @@ struct UIItem diaConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GSM_DEFAULTS}}},
     {UI_SPACER},
-    {UI_BUTTON, GENERAL_GSM_DEFAULTS_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, GENERAL_GSM_DEFAULTS_BUTTON, 1, 1, _STR_HINT_GSM_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     // buttons
@@ -351,7 +351,7 @@ struct UIItem diaDeviceConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DEFDEVICE}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_DEFDEVICE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_DEFDEVICE, 1, 1, _STR_HINT_DEFDEVICE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"HDD (APA) Start Mode", -1}}},
@@ -361,12 +361,12 @@ struct UIItem diaDeviceConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"MMCE Start Mode", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_MMCEMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_MMCEMODE, 1, 1, _STR_HINT_MMCE_MODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"MMCE Settings", -1}}},
     {UI_SPACER},
-    {UI_BUTTON, MMCE_SETTINGS_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, MMCE_SETTINGS_BUTTON, 1, 1, _STR_HINT_MMCE_SETTINGS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"BDM Devices Start Mode", -1}}},
@@ -383,17 +383,17 @@ struct UIItem diaDeviceConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      USB", -1}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_ENABLEUSB, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_ENABLEUSB, 1, 1, _STR_HINT_ENABLE_USB, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      MX4SIO", -1}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_ENABLEMX4SIO, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_ENABLEMX4SIO, 1, 1, _STR_HINT_ENABLE_MX4SIO, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      iLink", -1}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_ENABLEILK, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_ENABLEILK, 1, 1, _STR_HINT_ENABLE_ILINK, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // Network Start Mode (Off/Manual/Auto) gates whether/when the stack loads. The indented Protocol
@@ -402,21 +402,21 @@ struct UIItem diaDeviceConfig[] = {
     // Connectivity is Off. Access and SMB Version stay on the Network page.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Network Connectivity", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_NETSTART, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_NETSTART, 1, 1, _STR_HINT_NETSTART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      Protocol", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_NETPROTOCOL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_NETPROTOCOL, 1, 1, _STR_HINT_NET_PROTOCOL, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Applications Page Start Mode", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_APPMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_APPMODE, 1, 1, _STR_HINT_APPMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Favorites Page Start Mode", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_FAVMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_FAVMODE, 1, 1, _STR_HINT_FAVMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // buttons
@@ -474,15 +474,15 @@ struct UIItem diaVcdConfig[] = {
     // and composes the BDMA fields inline below.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BDMA_SETTINGS}}},
     {UI_SPACER},
-    {UI_BUTTON, VCD_BDMA_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, VCD_BDMA_BUTTON, 1, 1, _STR_HINT_BDMA_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"VCD Games List Settings", -1}}},
     {UI_SPACER},
-    {UI_BUTTON, VCD_LIST_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, VCD_LIST_BUTTON, 1, 1, _STR_HINT_VCD_LIST_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_POPSTARTER_NETWORK_SETTINGS}}},
     {UI_SPACER},
-    {UI_BUTTON, VCD_NET_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, VCD_NET_BUTTON, 1, 1, _STR_HINT_POPS_NET_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     // buttons
@@ -638,7 +638,7 @@ struct UIItem diaMmceConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCE_SLOT}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_MMCESLOT, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 1}}},
+    {UI_ENUM, CFG_MMCESLOT, 1, 1, _STR_HINT_MMCE_SLOT, 0, 0, {.intvalue = {0, 0, 0, 1}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCEIGR_SLOT}}},
@@ -648,17 +648,17 @@ struct UIItem diaMmceConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Send GameID on Launch", -1}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_MMCEGAMEID, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_MMCEGAMEID, 1, 1, _STR_HINT_MMCE_GAMEID, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // Legacy action rows. The Settings page skips these and composes both editors inline below.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COMM_SETTINGS}}},
     {UI_SPACER},
-    {UI_BUTTON, MMCE_COMM_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, MMCE_COMM_BUTTON, 1, 1, _STR_HINT_MMCE_COMM_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_PATH_SETTINGS}}},
     {UI_SPACER},
-    {UI_BUTTON, MMCE_PATH_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, MMCE_PATH_BUTTON, 1, 1, _STR_HINT_MMCE_PATH_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     // buttons
@@ -703,7 +703,7 @@ struct UIItem diaMmcePathConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MMCE_PREFIX}}},
     {UI_SPACER},
-    {UI_STRING, CFG_MMCEPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, CFG_MMCEPREFIX, 1, 1, _STR_HINT_MMCE_PREFIX, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
     // buttons
@@ -732,55 +732,55 @@ struct UIItem diaUIConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GAME_TYPE_LABELS}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_GAME_TYPE_LABELS, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_GAME_TYPE_LABELS, 1, 1, _STR_HINT_GAME_TYPE_LABELS, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VMODE}}},
     {UI_SPACER},
-    {UI_ENUM, UICFG_VMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, UICFG_VMODE, 1, 1, _STR_HINT_MENU_VMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_THEME}}},
     {UI_SPACER},
-    {UI_ENUM, UICFG_THEME, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, UICFG_THEME, 1, 1, _STR_HINT_THEME, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // Theme-specific presentation controls stay together.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_SETTINGS}}},
     {UI_SPACER},
-    {UI_BUTTON, UICFG_COVERFLOW_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, UICFG_COVERFLOW_BUTTON, 1, 1, _STR_HINT_COVERFLOW_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ARTWORK_SETTINGS}}},
     {UI_SPACER},
-    {UI_BUTTON, UICFG_ARTWORK_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, UICFG_ARTWORK_BUTTON, 1, 1, _STR_HINT_ARTWORK_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COLORS_SETTINGS}}},
     {UI_SPACER},
-    {UI_BUTTON, UICFG_COLORS_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, UICFG_COLORS_BUTTON, 1, 1, _STR_HINT_COLORS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"VCD Games List Settings", -1}}},
     {UI_SPACER},
-    {UI_BUTTON, UICFG_GAME_LIST_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, UICFG_GAME_LIST_BUTTON, 1, 1, _STR_HINT_VCD_LIST_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LANGUAGE}}},
     {UI_SPACER},
-    {UI_ENUM, UICFG_LANG, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, UICFG_LANG, 1, 1, _STR_HINT_LANGUAGE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_NOTIFICATIONS}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_NOTIFICATIONS, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_NOTIFICATIONS, 1, 1, _STR_HINT_NOTIFICATIONS, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_AUTOSORT}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_AUTOSORT, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_AUTOSORT, 1, 1, _STR_HINT_AUTOSORT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_AUTOREFRESH}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_AUTOREFRESH, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_AUTOREFRESH, 1, 1, _STR_HINT_AUTOREFRESH, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // buttons
@@ -797,17 +797,17 @@ struct UIItem diaArtworkConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERART}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_COVERART, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_COVERART, 1, 1, _STR_HINT_COVERART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Disc Artwork", -1}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_ENABLE_DISCART, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_ENABLE_DISCART, 1, 1, _STR_HINT_DISCART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Background Art", -1}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_ENABLE_BGART, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_ENABLE_BGART, 1, 1, _STR_HINT_BGART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SAVE_ICONS}}},
@@ -817,12 +817,12 @@ struct UIItem diaArtworkConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_ART_TAR}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_ENABLE_ART_TAR, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_ENABLE_ART_TAR, 1, 1, _STR_HINT_ART_TAR, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Art Delay", -1}}},
     {UI_SPACER},
-    {UI_ENUM, UICFG_ART_DELAY, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, UICFG_ART_DELAY, 1, 1, _STR_HINT_ART_DELAY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // buttons
@@ -839,35 +839,35 @@ struct UIItem diaColorsConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_TXTCOLOR}}},
     {UI_SPACER},
-    {UI_COLOUR, UICFG_TXTCOL, 1, 1, -1, -10, 17, {.colourvalue = {0, 0}}},
+    {UI_COLOUR, UICFG_TXTCOL, 1, 1, _STR_HINT_TXTCOLOR, -10, 17, {.colourvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_SELCOLOR}}},
     {UI_SPACER},
-    {UI_COLOUR, UICFG_SELCOL, 1, 1, -1, -10, 17, {.colourvalue = {0, 0}}},
+    {UI_COLOUR, UICFG_SELCOL, 1, 1, _STR_HINT_SELCOLOR, -10, 17, {.colourvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_UICOLOR}}},
     {UI_SPACER},
-    {UI_COLOUR, UICFG_UICOL, 1, 1, -1, -10, 17, {.colourvalue = {0, 0}}},
+    {UI_COLOUR, UICFG_UICOL, 1, 1, _STR_HINT_UICOLOR, -10, 17, {.colourvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_TITLECOLOR}}},
     {UI_SPACER},
-    {UI_COLOUR, UICFG_TITLECOL, 1, 1, -1, -10, 17, {.colourvalue = {0, 0}}},
+    {UI_COLOUR, UICFG_TITLECOL, 1, 1, _STR_HINT_TITLECOLOR, -10, 17, {.colourvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_BGCOLOR}}},
     {UI_SPACER},
-    {UI_COLOUR, UICFG_BGCOL, 1, 1, -1, -10, 17, {.colourvalue = {0, 0}}},
+    {UI_COLOUR, UICFG_BGCOL, 1, 1, _STR_HINT_BGCOLOR, -10, 17, {.colourvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_PLASCOLOR}}},
     {UI_SPACER},
-    {UI_COLOUR, UICFG_PLASCOL, 1, 1, -1, -10, 17, {.colourvalue = {0, 0}}},
+    {UI_COLOUR, UICFG_PLASCOL, 1, 1, _STR_HINT_PLASCOLOR, -10, 17, {.colourvalue = {0, 0}}},
     {UI_BREAK},
 
-    {UI_BUTTON, UICFG_RESETCOL, 1, 1, -1, 0, 0, {.label = {NULL, _STR_RESETCOLOR}}},
+    {UI_BUTTON, UICFG_RESETCOL, 1, 1, _STR_HINT_RESETCOLOR, 0, 0, {.label = {NULL, _STR_RESETCOLOR}}},
     {UI_BREAK},
 
     // buttons
@@ -886,32 +886,32 @@ struct UIItem diaDisplayConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_VMODE}}},
     {UI_SPACER},
-    {UI_ENUM, UICFG_VMODE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, UICFG_VMODE, 1, 1, _STR_HINT_MENU_VMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_WIDE_SCREEN}}},
     {UI_SPACER},
-    {UI_BOOL, UICFG_WIDESCREEN, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, UICFG_WIDESCREEN, 1, 1, _STR_HINT_WIDESCREEN, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_XOFFSET}}},
     {UI_SPACER},
-    {UI_INT, UICFG_XOFF, 1, 1, -1, 0, 0, {.intvalue = {0, 0, -300, 300}}},
+    {UI_INT, UICFG_XOFF, 1, 1, _STR_HINT_XOFF, 0, 0, {.intvalue = {0, 0, -300, 300}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_YOFFSET}}},
     {UI_SPACER},
-    {UI_INT, UICFG_YOFF, 1, 1, -1, 0, 0, {.intvalue = {0, 0, -300, 300}}},
+    {UI_INT, UICFG_YOFF, 1, 1, _STR_HINT_YOFF, 0, 0, {.intvalue = {0, 0, -300, 300}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_OVERSCAN}}},
     {UI_SPACER},
-    {UI_INT, UICFG_OVERSCAN, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 100}}},
+    {UI_INT, UICFG_OVERSCAN, 1, 1, _STR_HINT_MENU_OVERSCAN, 0, 0, {.intvalue = {0, 0, 0, 100}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Show GameID Barcode (Pixel FX)", -1}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_APPLYGAMEID, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_APPLYGAMEID, 1, 1, _STR_HINT_APPLYGAMEID, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // The GLOBAL half of GSM: the $EnableGSM/$GSMVMode/... block in the global config, which every
@@ -919,7 +919,7 @@ struct UIItem diaDisplayConfig[] = {
     // mode of the OPL MENU, this is the video mode games are launched in.
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GSM_DEFAULTS}}},
     {UI_SPACER},
-    {UI_BUTTON, DISPLAY_GSM_DEFAULTS_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, DISPLAY_GSM_DEFAULTS_BUTTON, 1, 1, _STR_HINT_GSM_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     // buttons
@@ -952,16 +952,16 @@ struct UIItem diaLaunchConfig[] = {
 
     // Modify actions. Neutrino's actual default fields are composed below; OSD defaults retain the
     // existing structured editor, but the page exposes it as one native action row.
-    {UI_BUTTON, LAUNCH_NEUTRINO_DEFAULTS_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NEUTRINO_DEFAULTS}}},
+    {UI_BUTTON, LAUNCH_NEUTRINO_DEFAULTS_BUTTON, 1, 1, _STR_HINT_NEUTRINO_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_NEUTRINO_DEFAULTS}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_OSD_DEFAULTS}}},
     {UI_SPACER},
-    {UI_BUTTON, LAUNCH_OSD_DEFAULTS_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, LAUNCH_OSD_DEFAULTS_BUTTON, 1, 1, _STR_HINT_OSD_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GSM_DEFAULTS}}},
     {UI_SPACER},
-    {UI_BUTTON, LAUNCH_GSM_DEFAULTS_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODIFY}}},
+    {UI_BUTTON, LAUNCH_GSM_DEFAULTS_BUTTON, 1, 1, _STR_HINT_GSM_DEFAULTS_BUTTON, 0, 0, {.label = {NULL, _STR_MODIFY}}},
     {UI_BREAK},
 
     // buttons
@@ -1024,7 +1024,7 @@ struct UIItem diaSecurityConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_WRITE}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_ENWRITEOP, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_ENWRITEOP, 1, 1, _STR_HINT_ENWRITEOP, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_BREAK},
@@ -1049,18 +1049,18 @@ struct UIItem diaAdvancedConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DEBUG}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_DEBUG, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_DEBUG, 1, 1, _STR_HINT_DEBUG, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"BDM Prefix Path", -1}}},
     {UI_SPACER},
-    {UI_STRING, CFG_BDMPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, CFG_BDMPREFIX, 1, 1, _STR_HINT_BDMPREFIX, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"ETH Prefix Path", -1}}},
     {UI_SPACER},
-    {UI_STRING, CFG_ETHPREFIX, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, CFG_ETHPREFIX, 1, 1, _STR_HINT_ETHPREFIX, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"HDD Spindown", -1}}},
@@ -1072,22 +1072,22 @@ struct UIItem diaAdvancedConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_CACHE_HDD_GAME_LIST}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_HDDGAMELISTCACHE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_HDDGAMELISTCACHE, 1, 1, _STR_HINT_HDDGAMELISTCACHE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"BDM Cache", -1}}},
     {UI_SPACER},
-    {UI_INT, CFG_BDMCACHE, 1, 1, -1, 0, 0, {.intvalue = {16, 8, 0, 32, NULL}}},
+    {UI_INT, CFG_BDMCACHE, 1, 1, _STR_HINT_BDMCACHE, 0, 0, {.intvalue = {16, 8, 0, 32, NULL}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"HDD Cache", -1}}},
     {UI_SPACER},
-    {UI_INT, CFG_HDDCACHE, 1, 1, -1, 0, 0, {.intvalue = {8, 0, 0, 32, NULL}}},
+    {UI_INT, CFG_HDDCACHE, 1, 1, _STR_HINT_HDDCACHE, 0, 0, {.intvalue = {8, 0, 0, 32, NULL}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"SMB Cache", -1}}},
     {UI_SPACER},
-    {UI_INT, CFG_SMBCACHE, 1, 1, -1, 0, 0, {.intvalue = {16, 4, 0, 32, NULL}}},
+    {UI_INT, CFG_SMBCACHE, 1, 1, _STR_HINT_SMBCACHE, 0, 0, {.intvalue = {16, 4, 0, 32, NULL}}},
     {UI_BREAK},
 
     // buttons
@@ -1105,24 +1105,24 @@ struct UIItem diaCompatConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_CORE_LOADER}}},
     {UI_SPACER},
-    {UI_ENUM, COMPAT_LOADER, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, COMPAT_LOADER, 1, 1, _STR_HINT_CORE_LOADER, 0, 0, {.intvalue = {0, 0}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_DMA_MODE}}},
     {UI_SPACER},
-    {UI_ENUM, COMPAT_DMA, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, COMPAT_DMA, 1, 1, _STR_HINT_DMA_MODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_GAME_ID}}},
     {UI_SPACER},
-    {UI_STRING, COMPAT_GAMEID, 1, 1, -1, 0, 0, {.stringvalue = {"", "", NULL}}},
+    {UI_STRING, COMPAT_GAMEID, 1, 1, _STR_HINT_DNAS_GAMEID, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_SPACER},
-    {UI_BUTTON, COMPAT_LOADFROMDISC, 1, 1, -1, 0, 0, {.label = {NULL, _STR_LOAD_FROM_DISC}}},
+    {UI_BUTTON, COMPAT_LOADFROMDISC, 1, 1, _STR_HINT_LOAD_FROM_DISC, 0, 0, {.label = {NULL, _STR_LOAD_FROM_DISC}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_ALTSTARTUP}}},
     {UI_SPACER},
-    {UI_STRING, COMPAT_ALTSTARTUP, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiGameAltStartupNameHandler}}},
+    {UI_STRING, COMPAT_ALTSTARTUP, 1, 1, _STR_HINT_ALTSTARTUP, 0, 0, {.stringvalue = {"", "", &guiGameAltStartupNameHandler}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_MODE1}}},
@@ -1187,15 +1187,15 @@ struct UIItem diaVMCConfig[] = {
     // VMC
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_VMC_SLOT1}}},
     {UI_SPACER},
-    {UI_BUTTON, COMPAT_VMC1_DEFINE, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BUTTON, COMPAT_VMC1_DEFINE, 1, 1, _STR_HINT_VMC_DEFINE, 0, 0, {.label = {NULL, -1}}},
     {UI_SPACER},
-    {UI_BUTTON, COMPAT_VMC1_ACTION, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BUTTON, COMPAT_VMC1_ACTION, 1, 1, _STR_HINT_VMC_ACTION, 0, 0, {.label = {NULL, -1}}},
     {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_VMC_SLOT2}}},
     {UI_SPACER},
-    {UI_BUTTON, COMPAT_VMC2_DEFINE, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BUTTON, COMPAT_VMC2_DEFINE, 1, 1, _STR_HINT_VMC_DEFINE, 0, 0, {.label = {NULL, -1}}},
     {UI_SPACER},
-    {UI_BUTTON, COMPAT_VMC2_ACTION, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BUTTON, COMPAT_VMC2_ACTION, 1, 1, _STR_HINT_VMC_ACTION, 0, 0, {.label = {NULL, -1}}},
     {UI_BREAK},
     {UI_SPLITTER},
 
@@ -1224,7 +1224,7 @@ struct UIItem diaVMC[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_VMC_NAME}}},
     {UI_SPACER},
-    {UI_STRING, VMC_NAME, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiGameVmcNameHandler}}},
+    {UI_STRING, VMC_NAME, 1, 1, _STR_HINT_VMC_NAME, 0, 0, {.stringvalue = {"", "", &guiGameVmcNameHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_SIZE}}},
@@ -1246,9 +1246,9 @@ struct UIItem diaVMC[] = {
     {UI_BREAK},
 
     // buttons
-    {UI_BUTTON, VMC_BUTTON_CREATE, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
+    {UI_BUTTON, VMC_BUTTON_CREATE, 1, 1, _STR_HINT_VMC_CREATE, 0, 0, {.label = {NULL, -1}}},
     {UI_SPACER},
-    {UI_BUTTON, VMC_BUTTON_DELETE, 1, 1, -1, 0, 0, {.label = {NULL, _STR_DELETE}}},
+    {UI_BUTTON, VMC_BUTTON_DELETE, 1, 1, _STR_HINT_VMC_DELETE, 0, 0, {.label = {NULL, _STR_DELETE}}},
     {UI_BREAK},
 
     // end of dialog
@@ -1261,7 +1261,7 @@ struct UIItem diaGSConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
     {UI_SPACER},
-    {UI_ENUM, GSMCFG_GSMSOURCE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, GSMCFG_GSMSOURCE, 1, 1, _STR_HINT_SETTINGS_SOURCE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
     {UI_BREAK},
 
@@ -1304,7 +1304,7 @@ struct UIItem diaCheatConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
     {UI_SPACER},
-    {UI_ENUM, CHTCFG_CHEATSOURCE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CHTCFG_CHEATSOURCE, 1, 1, _STR_HINT_SETTINGS_SOURCE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
     {UI_BREAK},
 
@@ -1337,7 +1337,7 @@ struct UIItem diaPadEmuConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -50, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
     {UI_SPACER},
-    {UI_ENUM, PADCFG_PADEMU_SOURCE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, PADCFG_PADEMU_SOURCE, 1, 1, _STR_HINT_SETTINGS_SOURCE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
     {UI_BREAK},
 
@@ -1590,7 +1590,7 @@ struct UIItem diaPadMacroConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -50, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
     {UI_SPACER},
-    {UI_ENUM, PADMACRO_CFG_SOURCE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, PADMACRO_CFG_SOURCE, 1, 1, _STR_HINT_SETTINGS_SOURCE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
     {UI_BREAK},
 
@@ -1602,9 +1602,9 @@ struct UIItem diaPadMacroConfig[] = {
     {UI_LABEL, 0, 1, 1, -1, -20, 0, {.label = {NULL, _STR_RIGHT_ANALOG}}},
     {UI_ENUM, PADMACRO_SLOWDOWN_R, 1, 1, _STR_HINT_PADMACRO_SLOWDOWN_AXIS, -20, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
-    {UI_ENUM, PADMACRO_SLOWDOWN_TOGGLE_L, 1, 1, -1, -40, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, PADMACRO_SLOWDOWN_TOGGLE_L, 1, 1, _STR_HINT_PADMACRO_TOGGLE, -40, 0, {.intvalue = {0, 0}}},
     {UI_SPACER},
-    {UI_ENUM, PADMACRO_SLOWDOWN_TOGGLE_R, 1, 1, -1, -40, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, PADMACRO_SLOWDOWN_TOGGLE_R, 1, 1, _STR_HINT_PADMACRO_TOGGLE, -40, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
     {UI_BREAK},
 
@@ -1743,32 +1743,32 @@ struct UIItem diaAudioConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SFX}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_SFX, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_SFX, 1, 1, _STR_HINT_SFX, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BOOT_SND}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_BOOT_SND, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_BOOT_SND, 1, 1, _STR_HINT_BOOT_SND, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BGM}}},
     {UI_SPACER},
-    {UI_BOOL, CFG_BGM, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, CFG_BGM, 1, 1, _STR_HINT_BGM, 0, 0, {.intvalue = {0, 0}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SFX_VOLUME}}},
     {UI_SPACER},
-    {UI_INT, CFG_SFX_VOLUME, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 100}}},
+    {UI_INT, CFG_SFX_VOLUME, 1, 1, _STR_HINT_SFX_VOLUME, 0, 0, {.intvalue = {0, 0, 0, 100}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BOOT_SND_VOLUME}}},
     {UI_SPACER},
-    {UI_INT, CFG_BOOT_SND_VOLUME, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 100}}},
+    {UI_INT, CFG_BOOT_SND_VOLUME, 1, 1, _STR_HINT_BOOT_SND_VOLUME, 0, 0, {.intvalue = {0, 0, 0, 100}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_BGM_VOLUME}}},
     {UI_SPACER},
-    {UI_INT, CFG_BGM_VOLUME, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 100}}},
+    {UI_INT, CFG_BGM_VOLUME, 1, 1, _STR_HINT_BGM_VOLUME, 0, 0, {.intvalue = {0, 0, 0, 100}}},
     {UI_SPLITTER},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_DEF_BGM_PATH}}},
@@ -1788,22 +1788,22 @@ struct UIItem diaControllerConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SCROLLING}}},
     {UI_SPACER},
-    {UI_ENUM, UICFG_SCROLL, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, UICFG_SCROLL, 1, 1, _STR_HINT_SCROLL, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SELECTBUTTON}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_SELECTBUTTON, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_SELECTBUTTON, 1, 1, _STR_HINT_SELECTBUTTON, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_XSENSITIVITY}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_XSENSITIVITY, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_XSENSITIVITY, 1, 1, _STR_HINT_XSENSITIVITY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_YSENSITIVITY}}},
     {UI_SPACER},
-    {UI_ENUM, CFG_YSENSITIVITY, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, CFG_YSENSITIVITY, 1, 1, _STR_HINT_YSENSITIVITY, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // NOTE(rebuild): checklist item 44 ("Left Stick Navigation") is deliberately NOT re-added -- the
@@ -1819,9 +1819,9 @@ struct UIItem diaControllerConfig[] = {
     {UI_BOOL, CFG_RUMBLE, 1, 1, _STR_HINT_RUMBLE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 #ifdef PADEMU
-    {UI_BUTTON, PADEMU_GLOBAL_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CONTROLLER_EMULATION}}},
+    {UI_BUTTON, PADEMU_GLOBAL_BUTTON, 1, 1, _STR_HINT_PADEMU_GLOBAL, 0, 0, {.label = {NULL, _STR_CONTROLLER_EMULATION}}},
     {UI_BREAK},
-    {UI_BUTTON, PADMACRO_GLOBAL_BUTTON, 1, 1, -1, 0, 0, {.label = {NULL, _STR_CONTROLLER_MACROS}}},
+    {UI_BUTTON, PADMACRO_GLOBAL_BUTTON, 1, 1, _STR_HINT_PADMACRO_GLOBAL, 0, 0, {.label = {NULL, _STR_CONTROLLER_MACROS}}},
     {UI_BREAK},
 #endif
     // buttons
@@ -1835,22 +1835,22 @@ struct UIItem diaCoverflowConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_COUNT}}},
     {UI_SPACER},
-    {UI_ENUM, COVERFLOW_CFG_COUNT, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, COVERFLOW_CFG_COUNT, 1, 1, _STR_HINT_COVERFLOW_COUNT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_SCALE}}},
     {UI_SPACER},
-    {UI_ENUM, COVERFLOW_CFG_SCALE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, COVERFLOW_CFG_SCALE, 1, 1, _STR_HINT_COVERFLOW_SCALE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_ANIM}}},
     {UI_SPACER},
-    {UI_ENUM, COVERFLOW_CFG_ANIM, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, COVERFLOW_CFG_ANIM, 1, 1, _STR_HINT_COVERFLOW_ANIM, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_COVERFLOW_DIM}}},
     {UI_SPACER},
-    {UI_BOOL, COVERFLOW_CFG_DIM, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, COVERFLOW_CFG_DIM, 1, 1, _STR_HINT_COVERFLOW_DIM, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // buttons
@@ -1865,47 +1865,47 @@ struct UIItem diaNeutrinoArgs[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_QB}}},
     {UI_SPACER},
-    {UI_BOOL, NARGS_QB, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, NARGS_QB, 1, 1, _STR_HINT_NARGS_QB, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_DBC}}},
     {UI_SPACER},
-    {UI_BOOL, NARGS_DBC, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, NARGS_DBC, 1, 1, _STR_HINT_NARGS_DBC, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_LOGO}}},
     {UI_SPACER},
-    {UI_BOOL, NARGS_LOGO, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, NARGS_LOGO, 1, 1, _STR_HINT_NARGS_LOGO, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_CWD}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_CWD, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsCwdHandler}}},
+    {UI_STRING, NARGS_CWD, 1, 1, _STR_HINT_NARGS_CWD, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsCwdHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_CFG}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_CFG, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsCfgHandler}}},
+    {UI_STRING, NARGS_CFG, 1, 1, _STR_HINT_NARGS_CFG, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsCfgHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_ELF}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_ELF, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsElfHandler}}},
+    {UI_STRING, NARGS_ELF, 1, 1, _STR_HINT_NARGS_ELF, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsElfHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_ATA0}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_ATA0, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta0Handler}}},
+    {UI_STRING, NARGS_ATA0, 1, 1, _STR_HINT_NARGS_ATA0, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta0Handler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_ATA0ID}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_ATA0ID, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta0idHandler}}},
+    {UI_STRING, NARGS_ATA0ID, 1, 1, _STR_HINT_NARGS_ATA0ID, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta0idHandler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_ATA1}}},
     {UI_SPACER},
-    {UI_STRING, NARGS_ATA1, 1, 1, -1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta1Handler}}},
+    {UI_STRING, NARGS_ATA1, 1, 1, _STR_HINT_NARGS_ATA1, 0, 0, {.stringvalue = {"", "", &guiNeutrinoArgsAta1Handler}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_NARGS_EXTRA}}},
@@ -1928,13 +1928,13 @@ struct UIItem diaOSDConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_SETTINGS_SOURCE}}},
     {UI_SPACER},
-    {UI_ENUM, OSD_LANGUAGE_SOURCE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, OSD_LANGUAGE_SOURCE, 1, 1, _STR_HINT_SETTINGS_SOURCE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ENABLE_LNG}}},
     {UI_SPACER},
-    {UI_BOOL, OSD_LANGUAGE_ENABLE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BOOL, OSD_LANGUAGE_ENABLE, 1, 1, _STR_HINT_OSD_ENABLE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -41, 0, {.label = {NULL, _STR_OSD_SETTINGS_LNG}}},
@@ -1944,12 +1944,12 @@ struct UIItem diaOSDConfig[] = {
 
     {UI_LABEL, 0, 1, 1, -1, -41, 0, {.label = {NULL, _STR_OSD_SETTINGS_TVASPECT}}},
     {UI_SPACER},
-    {UI_ENUM, OSD_TVASPECT_VALUE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, OSD_TVASPECT_VALUE, 1, 1, _STR_HINT_OSD_TVASPECT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -41, 0, {.label = {NULL, _STR_OSD_SETTINGS_VMODE}}},
     {UI_SPACER},
-    {UI_ENUM, OSD_VMODE_VALUE, 1, 1, -1, 0, 0, {.intvalue = {0, 0}}},
+    {UI_ENUM, OSD_VMODE_VALUE, 1, 1, _STR_HINT_OSD_VMODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
     // buttons

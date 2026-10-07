@@ -1415,3 +1415,243 @@ gui_strings:
   string: "Shows the selected game's save icon, spinning, where the theme has a spot for it. Reads the game's own VMC first, then the memory cards."
 - label: NETBOOT_RESTART_NOW
   string: "The network protocol changes after a restart. Save settings and restart OPL now?"
+- label: HINT_NET_PROTOCOL
+  string: "Which network service RiptOPL uses: an SMB share, UDPFS, UDPBD or HTTP. The same setting as on Game Sources. Switching away from one that is already running needs a restart."
+- label: HINT_UDPFS_ACCESS
+  string: "UDPFS only. Files reads loose ISOs from the server's games folder; IMG reads a disk image as a drive. SMB and HTTP always use Files, UDPBD always IMG."
+- label: HINT_SMB_VERSION
+  string: "Which SMB version to speak to the PC share."
+- label: HINT_NET_ADVANCED
+  string: "Unlocks Ethernet Link Mode and the SMB Port for editing."
+- label: HINT_ETH_LINK_MODE
+  string: "Forces the network link speed and duplex. Leave it on Auto unless the link keeps dropping."
+- label: HINT_IP_ADDR_TYPE
+  string: "Static uses the address below; DHCP asks your router. UDPFS and UDPBD always use Static."
+- label: HINT_PS2_IP
+  string: "The PS2's own IP address. Pick one no other device uses, in the same range as your PC."
+- label: HINT_NETMASK
+  string: "Subnet mask, usually 255.255.255.0."
+- label: HINT_GATEWAY
+  string: "Your router's address, usually the same first three numbers ending in .1."
+- label: HINT_DNS
+  string: "DNS server address. Usually the same as the gateway."
+- label: HINT_SMB_ADDR_TYPE
+  string: "Reach the PC by its IP address or by its NetBIOS (computer) name."
+- label: HINT_SMB_ADDRESS
+  string: "The PC sharing your games: its IP address, or its computer name when Address Type is NetBIOS."
+- label: HINT_SMB_PORT
+  string: "SMB port. It must match the PC: PS2 Servers uses 1111, Windows and Samba shares use 445."
+- label: HINT_SMB_USER
+  string: "SMB user name. guest works for most shares."
+- label: HINT_HTTP_SERVER
+  string: "IP address of the HTTP game server."
+- label: HINT_HTTP_PORT
+  string: "Port the HTTP game server listens on."
+- label: HINT_HTTP_BASE
+  string: "Folder on the HTTP server that holds games.csv. / is the server root."
+- label: HINT_HTTP_TEST
+  string: "Tries the HTTP server with the values above and reports what it found."
+- label: HINT_RA_TELEMETRY
+  string: "Master switch for RetroAchievements. Off launches games with no network stack or snapshots, the same as a normal build."
+- label: HINT_RA_BADGES
+  string: "Marks games that have achievements in the list. Stays dark while telemetry is off."
+- label: HINT_POPS_NET_BUTTON
+  string: "Edits POPSTARTER's own network files (IPCONFIG.DAT, SMBCONFIG.DAT), which PS1 games over SMB need."
+- label: HINT_POPS_IP_TYPE
+  string: "How the PS2 gets its address while a PS1 game runs over SMB: Static or DHCP."
+- label: HINT_POPS_IP
+  string: "The PS2's IP address while a PS1 game runs over SMB."
+- label: HINT_POPS_SMB_IP
+  string: "IP address of the PC sharing your PS1 games."
+- label: HINT_POPS_SMB_SHARE
+  string: "Share name on that PC that holds the POPS folder."
+- label: HINT_LASTPLAYED
+  string: "Starts on the game you launched last time."
+- label: HINT_LANGUAGE
+  string: "Menu language. Add more by putting lang_*.lng files in an LNG folder."
+- label: HINT_GSM_DEFAULTS_BUTTON
+  string: "Video mode fixes every game gets unless it has its own GSM settings."
+- label: HINT_DEFDEVICE
+  string: "The page RiptOPL opens on at boot."
+- label: HINT_MMCE_MODE
+  string: "Games on an SD2PSX or MemCard PRO2. Auto starts at boot, Manual when you open the page, Off hides it."
+- label: HINT_MMCE_SETTINGS_BUTTON
+  string: "Slot, IGR bootcard, GameID and timing options for MMCE."
+- label: HINT_ENABLE_USB
+  string: "Loads the USB storage driver."
+- label: HINT_ENABLE_MX4SIO
+  string: "Loads the MX4SIO SD card adapter driver."
+- label: HINT_ENABLE_ILINK
+  string: "Loads the iLink (FireWire) storage driver."
+- label: HINT_NETSTART
+  string: "Starts the network: Auto at boot, Manual when you open its page. Off leaves the network adapter alone."
+- label: HINT_APPMODE
+  string: "The Apps page. Auto starts at boot, Manual when you open it, Off hides it."
+- label: HINT_FAVMODE
+  string: "The Favorites page. Auto starts at boot, Manual when you open it, Off hides it."
+- label: HINT_BDMA_BUTTON
+  string: "Which exFAT driver POPSTARTER uses for PS1 games on USB, MX4SIO, MMCE, HDD or iLink."
+- label: HINT_VCD_LIST_BUTTON
+  string: "How PS1 games are listed: hide game IDs, show only disc 1, show HDD PP partitions."
+- label: HINT_MMCE_SLOT
+  string: "Which memory card slot the MMCE device is in. Auto finds it."
+- label: HINT_MMCE_GAMEID
+  string: "Tells the MMCE device which game is starting, so it can switch to that game's memory card."
+- label: HINT_MMCE_COMM_BUTTON
+  string: "Timing options for the MMCE link. Change them only if games freeze or load slowly."
+- label: HINT_MMCE_PATH_BUTTON
+  string: "Where on the MMCE card the game folders live."
+- label: HINT_MMCE_PREFIX
+  string: "Subfolder on the MMCE card that holds CD, DVD and the other OPL folders. Blank uses the card root."
+- label: HINT_GAME_TYPE_LABELS
+  string: "Starts each game name with [PS1] or [PS2]. Display only."
+- label: HINT_MENU_VMODE
+  string: "Video output for the menu. Games use GSM instead. Hold Confirm to keep a new mode."
+- label: HINT_THEME
+  string: "The menu's look. Themes are read from the THM folder on each device."
+- label: HINT_COVERFLOW_BUTTON
+  string: "Cover count, size, animation and dimming for the Coverflow theme."
+- label: HINT_ARTWORK_BUTTON
+  string: "Which art loads: covers, disc art, backgrounds and save icons."
+- label: HINT_COLORS_BUTTON
+  string: "Text, highlight, dialog and background colors."
+- label: HINT_NOTIFICATIONS
+  string: "Brief notices when a config, theme or language file loads."
+- label: HINT_AUTOSORT
+  string: "Sorts game lists A to Z. Off keeps the order they were found."
+- label: HINT_AUTOREFRESH
+  string: "Adds games from newly connected devices without a manual refresh."
+- label: HINT_COVERART
+  string: "Loads cover art from the ART folder."
+- label: HINT_DISCART
+  string: "Shows disc art (<ID>_ICO). Off hides the disc but keeps covers and backgrounds."
+- label: HINT_BGART
+  string: "Shows a game's background (<ID>_BG) when the theme uses one."
+- label: HINT_ART_TAR
+  string: "Also reads art packed in ART/art.tar."
+- label: HINT_ART_DELAY
+  string: "How long the cursor rests on a game before its art loads. Higher skips art while you scroll fast."
+- label: HINT_TXTCOLOR
+  string: "Color of normal menu text."
+- label: HINT_SELCOLOR
+  string: "Color of the highlighted item."
+- label: HINT_UICOLOR
+  string: "Background tint of dialog boxes."
+- label: HINT_TITLECOLOR
+  string: "Color of game titles in the list."
+- label: HINT_BGCOLOR
+  string: "Menu background color."
+- label: HINT_PLASCOLOR
+  string: "Color blended into the animated background."
+- label: HINT_RESETCOLOR
+  string: "Restores RiptOPL's built-in colors, not the theme's."
+- label: HINT_WIDESCREEN
+  string: "Draws the menu for a 16:9 TV."
+- label: HINT_XOFF
+  string: "Moves the menu left or right on screen."
+- label: HINT_YOFF
+  string: "Moves the menu up or down on screen."
+- label: HINT_MENU_OVERSCAN
+  string: "Shrinks the menu inward if the TV cuts off its edges."
+- label: HINT_APPLYGAMEID
+  string: "Shows a barcode as a game starts, so Pixel FX, RetroGEM and PS2Digital devices switch profiles."
+- label: HINT_NEUTRINO_DEFAULTS_BUTTON
+  string: "Neutrino's path, video mode and arguments for every game."
+- label: HINT_OSD_DEFAULTS_BUTTON
+  string: "Console language, screen size and video mode handed to games."
+- label: HINT_ENWRITEOP
+  string: "Allows renaming and deleting games and creating VMCs. Never touches the HDD partition table."
+- label: HINT_DEBUG
+  string: "Developer aid: colored screens while a game boots, and art-loading counters in the menu."
+- label: HINT_BDMPREFIX
+  string: "Subfolder on USB, MX4SIO, iLink and exFAT drives that holds the game folders. Blank uses the drive root."
+- label: HINT_ETHPREFIX
+  string: "Subfolder on the SMB share that holds the game folders. Blank uses the share root."
+- label: HINT_HDDGAMELISTCACHE
+  string: "Remembers the APA HDD game list to speed up later scans."
+- label: HINT_BDMCACHE
+  string: "Read-ahead cache for USB and other BDM drives in game. Bigger can smooth streaming but uses more memory."
+- label: HINT_HDDCACHE
+  string: "Read-ahead cache for the internal HDD in game."
+- label: HINT_SMBCACHE
+  string: "Read-ahead cache for SMB in game."
+- label: HINT_CORE_LOADER
+  string: "Which core starts this game. Default follows Game Launching."
+- label: HINT_DMA_MODE
+  string: "Internal HDD transfer mode for this game. Lower it if the game stutters or freezes."
+- label: HINT_DNAS_GAMEID
+  string: "Disc ID for DNAS online games. Load From Disc reads it from the original disc."
+- label: HINT_LOAD_FROM_DISC
+  string: "Reads the DNAS ID from the original disc in the drive."
+- label: HINT_ALTSTARTUP
+  string: "Boots this ELF from the disc image instead of the one SYSTEM.CNF names."
+- label: HINT_VMC_DEFINE
+  string: "Pick, create or resize this slot's virtual memory card."
+- label: HINT_VMC_ACTION
+  string: "Use Generic gives this slot a shared card; Reset clears the choice."
+- label: HINT_VMC_NAME
+  string: "Name of the card file, kept in the VMC folder."
+- label: HINT_VMC_CREATE
+  string: "Creates the card, or applies a new size to it."
+- label: HINT_VMC_DELETE
+  string: "Deletes this card file."
+- label: HINT_SETTINGS_SOURCE
+  string: "Global uses the shared settings; Per Game keeps these just for this game."
+- label: HINT_PADMACRO_TOGGLE
+  string: "While Button Pressed slows the stick only while you hold the button; Toggled By Button switches it on and off."
+- label: HINT_SFX
+  string: "Menu sound effects."
+- label: HINT_BOOT_SND
+  string: "Plays a sound when RiptOPL starts."
+- label: HINT_BGM
+  string: "Plays the theme's music, or your Default Theme Music file."
+- label: HINT_SFX_VOLUME
+  string: "Volume of the menu sound effects."
+- label: HINT_BOOT_SND_VOLUME
+  string: "Volume of the startup sound."
+- label: HINT_BGM_VOLUME
+  string: "Volume of the background music."
+- label: HINT_SCROLL
+  string: "How fast lists scroll while you hold a direction."
+- label: HINT_SELECTBUTTON
+  string: "Which button confirms: Cross or Circle."
+- label: HINT_XSENSITIVITY
+  string: "How easily the left stick moves the cursor left and right. Off ignores it."
+- label: HINT_YSENSITIVITY
+  string: "How easily the left stick moves the cursor up and down. Off ignores it."
+- label: HINT_PADEMU_GLOBAL
+  string: "DualShock 3/4 over USB or Bluetooth, and multitap, for every game."
+- label: HINT_PADMACRO_GLOBAL
+  string: "Stick slow-down, axis invert and turbo for every game."
+- label: HINT_COVERFLOW_COUNT
+  string: "How many covers show at once."
+- label: HINT_COVERFLOW_SCALE
+  string: "How much bigger the center cover is."
+- label: HINT_COVERFLOW_ANIM
+  string: "Speed of the slide when scrolling. Off snaps instantly."
+- label: HINT_COVERFLOW_DIM
+  string: "Darkens the side covers."
+- label: HINT_NARGS_QB
+  string: "Enters Neutrino's loader without an IOP reset. Added automatically for USB, iLink, UDPBD and UDPFS."
+- label: HINT_NARGS_DBC
+  string: "Neutrino shows colored debug screens while it boots."
+- label: HINT_NARGS_LOGO
+  string: "Shows the PS2 logo before the game. Skipped on MMCE and UDPFS."
+- label: HINT_NARGS_CWD
+  string: "Neutrino's working folder, where it looks for its config files."
+- label: HINT_NARGS_CFG
+  string: "Loads an extra Neutrino config, config/<name>.toml."
+- label: HINT_NARGS_ELF
+  string: "Boots this ELF instead of the disc's own and finds its per-title config."
+- label: HINT_NARGS_ATA0
+  string: "Disk image for Neutrino's emulated HDD 0."
+- label: HINT_NARGS_ATA0ID
+  string: "ID file for Neutrino's emulated HDD 0."
+- label: HINT_NARGS_ATA1
+  string: "Disk image for Neutrino's emulated HDD 1."
+- label: HINT_OSD_ENABLE
+  string: "Hands the settings below to the game. Off uses the console's own."
+- label: HINT_OSD_TVASPECT
+  string: "TV shape handed to the game."
+- label: HINT_OSD_VMODE
+  string: "Video mode handed to the game."
