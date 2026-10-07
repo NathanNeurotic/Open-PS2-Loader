@@ -1113,7 +1113,7 @@ struct UIItem diaCompatConfig[] = {
     {UI_ENUM, COMPAT_DMA, 1, 1, _STR_HINT_DMA_MODE, 0, 0, {.intvalue = {0, 0}}},
     {UI_SPLITTER},
 
-    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_GAME_ID}}},
+    {UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_DNAS_ID}}},
     {UI_SPACER},
     {UI_STRING, COMPAT_GAMEID, 1, 1, _STR_HINT_DNAS_GAMEID, 0, 0, {.stringvalue = {"", "", NULL}}},
     {UI_SPACER},

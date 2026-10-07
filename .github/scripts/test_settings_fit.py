@@ -161,6 +161,17 @@ for label in ('Internal HDD (exFAT)', 'USB', 'MX4SIO', 'iLink'):
     if '{.label = {"      %s", -1}}' % label not in dialogs_c:
         failures.append('dialogs.c: "%s" must be indented under BDM Devices Start Mode' % label)
 
+# --- per-game DNAS ID clarity --------------------------------------------------------------------
+
+if '{UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_DNAS_ID}}},' not in dialogs_c:
+    failures.append('dialogs.c: the per-game DNAS field must be labelled DNAS ID, not generic Game ID')
+if '- label: DNAS_ID\n  string: DNAS ID' not in lang_base:
+    failures.append('lng_tmpl/_base.yml: DNAS ID needs an internal-English fallback')
+core_aware = function_text(guigame_c, 'src/guigame.c', 'static void guiGameSetCoreAwareState(')
+if core_aware and ('diaSetEnabled(diaCompatConfig, COMPAT_GAMEID, !neutrino);' not in core_aware or
+                   'diaSetEnabled(diaCompatConfig, COMPAT_LOADFROMDISC, !neutrino);' not in core_aware):
+    failures.append('guiGameSetCoreAwareState: DNAS entry/read controls must disable under Neutrino')
+
 # --- plasma defaults and the old-pair migration ----------------------------------------------------
 
 for name, value in (('BG_R', '0x0C'), ('BG_G', '0x3A'), ('BG_B', '0xA8'),
