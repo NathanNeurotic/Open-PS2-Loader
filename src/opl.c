@@ -4839,10 +4839,12 @@ static void setDefaults(void)
     gEnableArt = 1;
     gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
     gWideScreen = 1;
-    gEnableSFX = 1; // safe now: sfxPlay dispatches asynchronously (#340)
+    // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
+    // Saved configs keep their own choice; the Audio page turns each one on live.
+    gEnableSFX = 0;
     gEnableRumble = 1;
-    gEnableBootSND = 1;
-    gEnableBGM = 1; // inert without a bgm.ogg on the card
+    gEnableBootSND = 0;
+    gEnableBGM = 0;
     gSFXVolume = 90;
     gBootSndVolume = 90;
     gBGMVolume = 90;
