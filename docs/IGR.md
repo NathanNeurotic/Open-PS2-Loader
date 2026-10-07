@@ -81,6 +81,17 @@ compatibility **Mode 6 — Disable IGR** turns the hook off for that title. If a
 way that started when you launched it through RiptOPL, this is the mode to try — at the cost of
 losing IGR for that game.
 
+Fewer games should need it now. IGR used to watch the pad from a **VBLANK interrupt handler**, and
+merely registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the
+handler did. It now polls the pad from its own low-priority thread, woken by a timer about once a
+frame, and registers nothing on VBLANK (official OPL #1762, ported here). The
+**RetroAchievements** loader is the exception: its per-frame memory snapshots and unlock notice must
+run inside that interrupt, so it keeps the handler, and the games it upsets still need Mode 6 there.
+
+If IGR stops responding in a game that used to answer it on an older build, report the title. A
+game that never lets a low-priority thread run would starve the polling thread; the power button
+does not depend on the pad and is the quickest cross-check.
+
 **Under the Neutrino core.** Neutrino has no IGR at all. This is not a RiptOPL limitation but a
 property of that loader, and it is why Mode 6 is greyed out whenever the Loader Core is set to
 Neutrino — there is no hook there to disable. To leave a Neutrino-launched game, use the console's
@@ -141,7 +152,7 @@ in normal play can trigger IGR by accident. Set **Mode 6 — Disable IGR** for t
 
 | File | Role |
 |---|---|
-| `ee_core/src/padhook.c` | The hook itself: pad pattern matching, the VBLANK interrupt handler, combo dispatch, the IGR thread |
+| `ee_core/src/padhook.c` | The hook itself: pad pattern matching, the polling IGR thread and its one-frame alarm (the VBLANK interrupt handler in RetroAchievements builds only), combo dispatch |
 | `ee_core/include/padhook.h` | The combo constants (`IGR_COMBO_R1_L1_R2_L2`, `IGR_COMBO_START_SELECT`, `IGR_COMBO_R3_L3`, `IGR_COMBO_UP`) |
 | `ee_core/src/cd_igr_rpc.c` | IOP-side reset RPC |
 | `ee_core/src/igs_api.c` | Screenshot capture and BMP writing |
