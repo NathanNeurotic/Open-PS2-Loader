@@ -165,7 +165,7 @@ for label in ('Internal HDD (exFAT)', 'USB', 'MX4SIO', 'iLink'):
 
 if '{UI_LABEL, 0, 1, 1, -1, -30, 0, {.label = {NULL, _STR_DNAS_ID}}},' not in dialogs_c:
     failures.append('dialogs.c: the per-game DNAS field must be labelled DNAS ID, not generic Game ID')
-if '- label: DNAS_ID\\n  string: DNAS ID' not in lang_base:
+if '- label: DNAS_ID\n  string: DNAS ID' not in lang_base:
     failures.append('lng_tmpl/_base.yml: DNAS ID needs an internal-English fallback')
 core_aware = function_text(guigame_c, 'src/guigame.c', 'static void guiGameSetCoreAwareState(')
 if core_aware and ('diaSetEnabled(diaCompatConfig, COMPAT_GAMEID, !neutrino);' not in core_aware or
