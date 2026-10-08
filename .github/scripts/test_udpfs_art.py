@@ -177,10 +177,12 @@ int main(void)
     reset();
     rootNames[0] = "art";
     udpfsDiscoverArtFolder();
+    int rootBeforeImage = rootOpens, foldersBeforeImage = folderOpens;
     udpfsGetImage(NULL, "ART", 1, "SLUS_123.45", "COV", &texture, 0);
     check("lowercase art resolves", udpfsArtCaseIndex == 7 && invalidations == 1 &&
           strcmp(imagePath, "udpfs:/art/SLUS_123.45_COV") == 0);
-    check("per-image lookup makes no directory probes", rootOpens == 1 && folderOpens == 0);
+    check("per-image lookup makes no directory probes",
+          rootOpens == rootBeforeImage && folderOpens == foldersBeforeImage);
 
     reset();
     rootNames[0] = "ART"; rootNames[1] = "art";
