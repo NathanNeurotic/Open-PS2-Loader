@@ -280,7 +280,8 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, char *VMCName, int
                 // blaming "fragmented" for an out-of-space would point at the wrong fix.
                 if (vmc_check_layout) {
                     vmc_check_layout = 0;
-                    if (vmc_status.VMC_error == 0 && sysVMCContiguity() == 0)
+                    if ((coreLoader == 2 ? gDefaultCoreLoader : coreLoader) != 1 &&
+                        vmc_status.VMC_error == 0 && sysVMCContiguity() == 0)
                         guiMsgBox(_l(_STR_VMC_FRAGMENTED_ON_CREATE), 0, diaVMC);
                 }
 
@@ -393,7 +394,7 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
             return 1;
         }
         // Same report as the VMC dialog: only a definite 0 speaks (-1 = the store cannot answer).
-        if (sysVMCContiguity() == 0)
+        if (coreLoader != 1 && sysVMCContiguity() == 0)
             guiMsgBox(_l(_STR_VMC_FRAGMENTED_ON_CREATE), 0, NULL);
     }
 

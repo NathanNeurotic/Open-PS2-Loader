@@ -206,8 +206,10 @@ static int mc_writecluster(int fd, int cluster, void *buf, int dup)
         lseek(fd, cluster * mcdi->cluster_size, SEEK_SET);
         size = mcdi->cluster_size * dup;
         r = write(fd, buf, size);
-        if (r != size)
+        if (r != size) {
+            SignalSema(genvmc_abort_sema);
             return -1;
+        }
     }
 
     SignalSema(genvmc_abort_sema);
