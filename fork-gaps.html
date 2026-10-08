@@ -70,12 +70,12 @@
   </nav>
   <main class="content">
 <h1>Fork Feature Gaps</h1>
-<p class="lead">Features and fixes that other PS2 loaders, forks and launchers have and RiptOPL does not have yet. Each entry
+<p class="lead">Features, fixes and companion workflows that other PS2 loaders, forks and utilities offer beyond RiptOPL and the PS2-Servers ecosystem. Each entry
 was checked against RiptOPL's own code rather than taken from another project's changelog, and links to where that
 project implements it.</p>
 
 <div class="callout info"><div class="h">A tracking list, not a roadmap</div>
-An entry means another project implements a capability RiptOPL lacks; it does not promise a port.
+An entry documents a source-specific capability absent from RiptOPL or its PS2-Servers companion, with optional design choices and experimental features separately labelled. An entry does not promise a port.
 Source comparisons refreshed on <b>2026-10-08 UTC</b> (2026-10-07 Pacific); RA merge reconciled on <b>2026-10-08 Pacific</b> against
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/9ef8d643a739d88a4f4b5fd055a209d0b27299c4"><code>rebuild/main@9ef8d643</code></a>.
 This pass rechecks changed OPHTML, LUNA, xeRAbora/OPL-RA and PS2-Launcher sources, verifies the surveyed repositories' current revisions,
@@ -88,8 +88,8 @@ Stable IDs are never reassigned. Tools and developer APIs are distinguished from
 <table>
   <thead><tr><th>Code</th><th>Source</th><th>What it is</th><th>Gaps</th></tr></thead>
   <tbody>
-    <tr><td><code>CA</code></td><td><a href="https://github.com/Rian6/caduceus">Caduceus (PC)</a></td><td>Windows game-library manager, bundled OPLServer SMB host and xeRAbora-based achievement companion; compared against PS2-Servers below</td><td>0 new*</td></tr>
-    <tr><td><code>CO</code></td><td><a href="https://github.com/Rian6/caduceus-opl">Caduceus OPL</a></td><td>XMB-style OPL console client paired with Caduceus, including a console achievement browser; related to already-listed OR4</td><td>0 new*</td></tr>
+    <tr><td><code>CA</code></td><td><a href="https://github.com/Rian6/caduceus">Caduceus (PC)</a></td><td>Windows game-library manager, bundled OPLServer SMB host and xeRAbora-based achievement companion; compared against PS2-Servers below</td><td>7</td></tr>
+    <tr><td><code>CO</code></td><td><a href="https://github.com/Rian6/caduceus-opl">Caduceus OPL</a></td><td>XMB-style OPL console client paired with Caduceus, including a console achievement browser; related to already-listed OR4</td><td>7</td></tr>
     <tr><td><code>W</code></td><td><a href="https://github.com/ps2homebrew/wOPL">wOPL</a></td><td>The continuation of KrahJohlito's uOPL</td><td>4</td></tr>
     <tr><td><code>O</code></td><td><a href="https://github.com/coffeedevsolutions/OPLattice">OPLattice</a></td><td>Grid themes, the SHELF interface and theme tooling</td><td>15</td></tr>
     <tr><td><code>OH</code></td><td><a href="https://github.com/coffeedevsolutions/OPHTML">OPHTML</a></td><td>HTML/CSS declarative UI compiler, zero-allocation C99 runtime and standalone Neutrino console launcher</td><td>12</td></tr>
@@ -115,10 +115,24 @@ Stable IDs are never reassigned. Tools and developer APIs are distinguished from
 <p>Twelve more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
 
 <h2 id="at-a-glance">At a glance</h2>
-<p>All 82 entries in one list. Click a column heading to sort.</p>
+<p>All 96 source-attributed entries in one list. CO3 overlaps the existing OR4 feature rather than representing an additional unique capability. Click a column heading to sort.</p>
 <table data-sortable>
   <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Source</th><th>Type</th></tr></thead>
   <tbody>
+    <tr><td><code>CA1</code></td><td>Curated SQLite desktop catalogue</td><td>PC library</td><td>Caduceus (PC)</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>CA2</code></td><td>ISO import, installed status and transfer queue</td><td>PC library</td><td>Caduceus (PC)</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>CA3</code></td><td>Cover conversion, migration and repair</td><td>PC artwork</td><td>Caduceus (PC)</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>CA4</code></td><td>PC RetroAchievements account/live progress dashboard</td><td>PC RetroAchievements</td><td>Caduceus (PC)</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>CA5</code></td><td>Live game detection and Discord presence</td><td>PC companion</td><td>Caduceus (PC)</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>CA6</code></td><td>Importable catalogue and safe SQLite backups</td><td>PC reliability</td><td>Caduceus (PC)</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>CA7</code></td><td>Guided first-run PS2 connection setup</td><td>PC onboarding</td><td>Caduceus (PC)</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>CO1</code></td><td>Interpolated XMB category and game-list rail</td><td>Console UI</td><td>Caduceus OPL</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>CO2</code></td><td>Game-details card with automatic RA checks</td><td>Console RetroAchievements</td><td>Caduceus OPL</td><td>Feature</td></tr>
+    <tr><td><code>CO3</code></td><td>Browse RA account achievements on the console</td><td>Console RetroAchievements</td><td>Caduceus OPL</td><td>Feature <a href="#orbit">overlaps OR4</a></td></tr>
+    <tr><td><code>CO4</code></td><td>Text-and-points in-game unlock card</td><td>Console RetroAchievements</td><td>Caduceus OPL</td><td><span class="badge primary">Experimental</span></td></tr>
+    <tr><td><code>CO5</code></td><td>RA session-ready launch gating</td><td>Console launching</td><td>Caduceus OPL</td><td>Feature</td></tr>
+    <tr><td><code>CO6</code></td><td>SMB ECHO and conditional reconnect on Refresh</td><td>Console network</td><td>Caduceus OPL</td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>CO7</code></td><td>Async initialize manual devices upon category focus</td><td>Console device handling</td><td>Caduceus OPL</td><td><span class="pill">Optional</span></td></tr>
     <tr><td><code>W1</code></td><td>Themes loaded from a <code>.tar</code> archive</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
     <tr><td><code>W2</code></td><td><code>wsX</code> widescreen X position</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
     <tr><td><code>W3</code></td><td>PADEMU, GSM and cheat status icons</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
@@ -550,6 +564,26 @@ The five sources above produced six confirmed entries.
 
 
 <h2 id="caduceus-companion">Caduceus &amp; Caduceus OPL versus PS2-Servers &amp; RiptOPL</h2>
+<h3 id="caduceus-gaps">Verified Caduceus gaps: CA1–CA7 and CO1–CO7</h3>
+<p><b>14 source-specific entries, not 14 unrelated feature concepts.</b> These include seven missing PC companion capabilities and seven console UI, integration or behavior differences. CO3 overlaps existing OR4; CO1 and CO7 are optional design choices; CO4 is experimental and not equivalent to a validated physical-console feature.</p>
+<table><thead><tr><th>ID</th><th>Feature</th><th>Evidence and actual gap</th><th>Source</th></tr></thead><tbody>
+<tr><td><code>CA1</code></td><td><b>Curated SQLite desktop catalogue</b> <span class="pill">PC companion</span></td><td>Game search, editable metadata and cover-backed catalogue; PS2-Servers manages roots/protocols rather than a persistent indexed game collection.</td><td><a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/main.ts#L95-L170">Implementation code</a></td></tr>
+<tr><td><code>CA2</code></td><td><b>ISO import, installed status and transfer queue</b> <span class="pill">PC companion</span></td><td>Local ISO ingestion, installed-library status and tracked transfers are managed from a single PC interface; PS2-Servers exposes directory roots.</td><td><a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/src/GettingStarted.tsx#L10-L17">Implementation code</a></td></tr>
+<tr><td><code>CA3</code></td><td><b>Cover conversion, migration and repair</b> <span class="pill">PC companion</span></td><td>Host checks valid covers and safely converts/resizes legacy JPEG to PNG; RiptOPL supports PNG display but PS2-Servers does not offer this manager.</td><td><a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/cover-art.ts#L5-L30">Implementation code</a></td></tr>
+<tr><td><code>CA4</code></td><td><b>PC RetroAchievements account/live progress dashboard</b> <span class="pill">PC companion</span></td><td>Integrated account, compatibility, unlock-event and xeRAbora controls beyond the standalone client RiptOPL currently uses.</td><td><a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/main.ts#L42-L63">Implementation code</a></td></tr>
+<tr><td><code>CA5</code></td><td><b>Live game detection and Discord presence</b> <span class="pill">PC companion</span></td><td>Windows monitor samples open game-file handles and reconciles them with RA activity for game-aware presence and cover; more than existing U6 launch announcement.</td><td><a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/opl-activity.ts#L4-L35">Implementation code</a></td></tr>
+<tr><td><code>CA6</code></td><td><b>Importable catalogue and safe SQLite backups</b> <span class="pill">PC companion</span></td><td>Snapshot with SQLite VACUUM INTO, temporary file and atomic rename; catalogue import/backup is not a raw game/cover/VMC backup.</td><td><a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/catalog-backup.ts#L6-L20">Implementation code</a></td></tr>
+<tr><td><code>CA7</code></td><td><b>Guided first-run PS2 connection setup</b> <span class="pill">PC companion</span></td><td>Step-by-step interactive console/server/network/ISO wizard inside the desktop app; PS2-Servers has documentation but not an equivalent first-run workflow.</td><td><a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/src/GettingStarted.tsx#L5-L20">Implementation code</a></td></tr>
+<tr><td><code>CO1</code></td><td><b>Interpolated XMB category and game-list rail</b> <span class="pill">Optional</span></td><td>Fixed XMB category navigation with eased horizontal/vertical list motion, category glyphs and cover previews; alternative to RiptOPL themes, not missing basic menu navigation.</td><td><a href="https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1088-L1242">Implementation code</a></td></tr>
+<tr><td><code>CO2</code></td><td><b>Game-details card with automatic RA checks</b> </td><td>Opening the game card starts async hash/catalogue lookup and presents image support plus live session status; RiptOPL offers manual support checks but not this integrated screen.</td><td><a href="https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1367-L1505">Implementation code</a></td></tr>
+<tr><td><code>CO3</code></td><td><b>Browse RA account achievements on the console</b> </td><td>Paginates account games, achievement icons, points, descriptions, dates and earned/locked/hardcore filters; the same high-level gap is already tracked under OR4.</td><td><a href="https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/menusys.c#L1589-L1683">Implementation code</a></td></tr>
+<tr><td><code>CO4</code></td><td><b>Text-and-points in-game unlock card</b> <span class="badge primary">Experimental</span></td><td>Extends the RA event to include title and points and draws a 192x40 in-game card. The opt-in --achievements build is experimental; RiptOPL already has a simpler hardware-tested gold pulse.</td><td><a href="https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/ee_core/src/ra_overlay.c#L185-L360">Implementation code</a></td></tr>
+<tr><td><code>CO5</code></td><td><b>RA session-ready launch gating</b> </td><td>Checks the paired account/PC readiness before loading a watch list; stale or offline sessions launch normally without RA. RiptOPL has general link failure handling, not this account-coupled UX.</td><td><a href="https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/supportbase.c#L950-L968">Implementation code</a></td></tr>
+<tr><td><code>CO6</code></td><td><b>SMB ECHO and conditional reconnect on Refresh</b> <span class="badge secondary">Fix</span></td><td>On normal Refresh, tests whether SMB is healthy and reconnects only when failed. RiptOPL retries known error states but does not ECHO the apparently healthy connection on ordinary refresh.</td><td><a href="https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/ethsupport.c#L426-L458">Implementation code</a></td></tr>
+<tr><td><code>CO7</code></td><td><b>Async initialize manual devices upon category focus</b> <span class="pill">Optional</span></td><td>On entering a disabled device category, queues source initialization in the I/O worker rather than requiring a second confirm; possible UX gain with IOP/performance trade-offs.</td><td><a href="https://github.com/Rian6/caduceus-opl/blob/2a98a9d7361f8e33f421244bc88c318eab3bdf2f/src/opl.c#L272-L298">Implementation code</a></td></tr>
+</tbody></table>
+<p><b>Audited code:</b> The <a href="https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f">actual OPL snapshot</a> was compared against <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/tree/7452341a076d3e7a5e14e613429c7eca594f4888">RiptOPL code</a>, and the <a href="https://github.com/Rian6/caduceus/tree/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc">Caduceus desktop modules</a> against <a href="https://github.com/NathanNeurotic/PS2-Servers/tree/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5">PS2-Servers</a>. RiptOPL already has normal RA hashing, watch lists, SMB reconnect, PNG artwork support and an in-game unlock indicator; none is newly counted as missing. CO4 is richer presentation, not a missing RA notification system. CO6 is a more proactive check, not missing basic SMB recovery. Caduceus OPL's custom account protocol needs a companion endpoint and cannot be obtained just by swapping SMB servers.</p>
+
 <p><a href="https://github.com/Rian6/caduceus">Rian6/Caduceus</a> is the Windows-side application (Electron/React/TypeScript/SQLite) that manages a game catalogue and launches the separately sourced <a href="https://github.com/elmariolo/OPL-Server">OPLServer</a> SMB server. <a href="https://github.com/Rian6/caduceus-opl">Rian6/Caduceus OPL</a> is its cooperating console-side OPL derivative. That is a <b>tightly paired host + console loader</b>, not one interchangeable executable. Their source repositories are distinct; the OPL source is also tracked as an <code>opl-snapshot</code> submodule.</p>
 <p>Our comparable pairing is <a href="https://github.com/NathanNeurotic/PS2-Servers">PS2-Servers</a> (host-side network service) and <a href="https://github.com/NathanNeurotic/Open-PS2-Loader">RiptOPL</a> (PS2 launcher). PS2-Servers deliberately serves multiple kinds of PS2 clients; Caduceus invests more heavily in a companion library and account experience. The table identifies <b>host-side product gaps</b> as well as console-side differences, without treating them as interchangeable RiptOPL feature gaps.</p>
 <div class="callout info"><div class="h">Comparison scope and counting</div>
@@ -557,7 +591,7 @@ Source checked on 2026-10-08: <a href="https://github.com/Rian6/caduceus/tree/31
 <a href="https://github.com/Rian6/caduceus-opl/tree/cc1713a893a976c9b26ae1dd9975c200a461edfe"><code>caduceus-opl/main@cc1713a8</code></a> (console gitlink <a href="https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f"><code>opl-snapshot@2a98a9d7</code></a>),
 <a href="https://github.com/NathanNeurotic/PS2-Servers/tree/c1eb1e5aecd9e8359dc5b7799fc7f135a81f51d5"><code>PS2-Servers/main@c1eb1e5a</code></a>, and
 <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/tree/7452341a076d3e7a5e14e613429c7eca594f4888"><code>RiptOPL/rebuild/main@7452341a</code></a>.
-*No new numbered RiptOPL gaps are counted here: console achievement browsing is already tracked as <a href="#orbit">OR4</a>, Discord rich presence as <a href="#upstream-prs">U6</a>, and an in-game unlock overlay already exists in RiptOPL. PC-companion opportunities below are a separate comparison, not missing console transport protocols. Source/release evidence is not universal physical-PS2 validation.</div>
+Seven CA-series and seven CO-series source-attributed gaps are now listed, including optional and experimental distinctions. Console achievement browsing overlaps <a href="#orbit">OR4</a>, PC game-aware Discord presence goes beyond <a href="#upstream-prs">U6</a>, and RiptOPL already has an in-game RA unlock overlay. Source/release evidence is not universal physical-PS2 validation.</div>
 <table>
   <thead><tr><th>Capability</th><th>Caduceus + Caduceus OPL</th><th>PS2-Servers + RiptOPL</th><th>Gap / interpretation for us</th></tr></thead>
   <tbody>
@@ -604,7 +638,7 @@ Source checked on 2026-10-08: <a href="https://github.com/Rian6/caduceus/tree/31
 
 <h2 id="refresh-deltas">What changed in this refresh</h2>
 <ul>
-<li><b>Caduceus pair:</b> the Windows-side library/RA companion and its paired OPL fork are now compared with PS2-Servers + RiptOPL. No new numbered RiptOPL gaps are added; on-console achievement browsing overlaps OR4, and in-game unlock notices already exist in RiptOPL.</li>
+<li><b>Caduceus pair:</b> the Windows-side library/RA companion and its paired OPL fork are now compared with PS2-Servers + RiptOPL. 14 CA/CO source-attributed entries were added after code inspection; CO3 overlaps OR4 and CO4 is richer experimental notification rendering, not an absent RiptOPL unlock overlay.</li>
 <li><b>OPHTML:</b> source is ahead of the v0.10.0 release. The reusable console-core archive is new OH12; per-game compatibility settings and last-played restoration overlap existing RiptOPL features. Planned cover decoding, search, Favorites and IGR are not counted as delivered features.</li>
 <li><b>LUNA:</b> the actual frontend/runtime gitlinks replace the old September snapshot. LU9/LU10/LU11 cover the new case-grid, experimental Scroll view and restricted APA/PFS Neutrino VMC implementation. Retired views are no longer counted; the current README's FAT-PS2 IGR report replaces the stale WIP description.</li>
 <li><b>xeRAbora:</b> H2/H3 were reconciled after the alpha.15 port in PR #881. The PC client is maintained upstream. Original-disc RA and pointer chains already existed; RA with Neutrino remains OR3.</li>
