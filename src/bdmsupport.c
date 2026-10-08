@@ -1276,8 +1276,7 @@ static void bdmLoadBlockDeviceModules(void)
             DelayThread(250 * 1000);
         if (waitedMs > 0)
             LOG("[BDM] iLink root %s after ~%d ms\n", waitedMs < 3000 ? "appeared" : "not found", waitedMs);
-        if (waitedMs >= 3000)
-            bdmForceDeviceRefresh(); // exactly one second look, as with MX4SIO/USB
+        bdmForceDeviceRefresh(); // publish either a newly ready root or the final absent result
     }
 }
 
