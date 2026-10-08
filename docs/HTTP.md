@@ -32,7 +32,7 @@ until that changes.
 | Byte-range validation | done, and covered by host tests |
 | Network settings, Test action | written, **not hardware-tested** |
 | Game list, artwork, per-game settings | written, **not hardware-tested** |
-| Launching a game | written, **not hardware-tested** â€” this is the least proven part |
+| Launching a game | written, **not hardware-tested** — this is the least proven part |
 | DVD9 (dual layer) | probe implemented, **never seen a real dual-layer read** |
 | Virtual memory cards | deliberately unavailable |
 | Neutrino, PS1/VCD, Ember | deliberately unavailable |
@@ -46,7 +46,7 @@ On the PC, run an HTTP server meeting the profile above, with your ISOs under it
 and put a `games.csv` beside them. Docmine17's `http_server.py` does exactly this and defaults to
 port **1100**.
 
-On the console, set **Network Connectivity** to **Manual** or **Auto** in **Game Sources**, then open **Settings â†’ Network**:
+On the console, set **Network Connectivity** to **Manual** or **Auto** in **Game Sources**, then open **Settings → Network**:
 
 | Row | What it is |
 | --- | --- |
@@ -87,7 +87,7 @@ SLUS_200.01,"Example, The",DVD,DVD/example-the.iso
 SLES_512.34,Short One,CD,CD/Short One.iso
 ```
 
-`STARTUP,TITLE,MEDIA,PATH` â€” the boot identifier, the name shown on screen, `CD` or `DVD`, and the
+`STARTUP,TITLE,MEDIA,PATH` — the boot identifier, the name shown on screen, `CD` or `DVD`, and the
 path to the image relative to your base path. The title and the filename need not resemble each
 other.
 
@@ -108,13 +108,13 @@ Blank lines and lines starting with `#` are ignored. Both LF and CRLF work, and 
 newline is fine. A field containing a comma or a quote can be double-quoted, `""` being a literal
 quote.
 
-A row RiptOPL cannot use is skipped and the rest of the library still loads â€” one typo does not
+A row RiptOPL cannot use is skipped and the rest of the library still loads — one typo does not
 cost you every game. What gets a row skipped: no startup ID, a startup longer than 12 characters, a
 media field that is not exactly `CD` or `DVD`, a path that escapes your base directory, an absolute
 URL, or a filename that is not an image.
 
 If a row names a path explicitly, that path is what gets requested. It is never quietly retried
-under a name derived from the title â€” that is how you end up launching a different disc than the
+under a name derived from the title — that is how you end up launching a different disc than the
 one you picked.
 
 ---
@@ -124,15 +124,15 @@ one you picked.
 | Feature | Over HTTP |
 | --- | --- |
 | PS2 ISO, CD and DVD5 | the supported target |
-| DVD9 | implemented, unproven â€” see Status |
+| DVD9 | implemented, unproven — see Status |
 | Per-game settings, artwork, cheats | yes, stored locally (see below) |
 | Favourites, last played | yes |
 | Saving to a physical memory card | yes |
-| Virtual memory cards | **no** â€” nothing writes to the server, so there is nowhere to keep one |
-| Neutrino core | **no** â€” it would need its own HTTP backend |
+| Virtual memory cards | **no** — nothing writes to the server, so there is nowhere to keep one |
+| Neutrino core | **no** — it would need its own HTTP backend |
 | PS1 / VCD / Ember | **no** |
-| ZSO and other compressed images | **no** â€” they are listed but refuse to launch |
-| HTTPS, passwords, redirects | **no** â€” this is plain LAN HTTP |
+| ZSO and other compressed images | **no** — they are listed but refuse to launch |
+| HTTPS, passwords, redirects | **no** — this is plain LAN HTTP |
 
 The PS2 logo animation is skipped on HTTP launches. Checking it means reading the logo out of the
 image through a file handle, and HTTP has no filesystem to open one on.
@@ -141,7 +141,7 @@ image through a file handle, and HTTP has no filesystem to open one on.
 
 Folder-based sources keep `CFG/`, `ART/` and `CHT/` under the configured library prefix; APA uses its selected PFS data home.
 HTTP cannot: the server is read-only and there is no drive to write to. So HTTP keeps them **with
-your settings** instead â€” under RiptOPLâ€™s active local settings home (boot-directory/discovery or Custom Settings Path).
+your settings** instead — under RiptOPL’s active local settings home (boot-directory/discovery or Custom Settings Path).
 
 That is the one deliberate exception to the usual rule, and it is why covers and per-game options
 for HTTP games go next to `settings_riptopl.cfg` rather than on the server.
@@ -173,7 +173,7 @@ then reports a disc error. It will not sit there reconnecting forever.
   `pc/http/fixtures/` hold them to it and `pc/http/tests/compare_catalog.py` proves it. Change one,
   change all three, in the same commit.
 * **Run the host tests.** `sh pc/http/tests/run.sh` compiles the real sources and exercises the
-  parsers directly â€” header framing, range validation, truncation, and every catalog fixture in
+  parsers directly — header framing, range validation, truncation, and every catalog fixture in
   three line-ending forms.
 * **`modules/network/common/httpstream.inc` is shared** by the menu RPC module and the in-game
   cdvdman driver. Both IRX rules depend on it in the top-level Makefile, because make cannot see
@@ -188,6 +188,5 @@ then reports a disc error. It will not sit there reconnecting forever.
 
 ## Credits
 
-* **[Docmine17](https://github.com/Docmine17)** â€” the HTTP design, the byte-range reader this port
+* **[Docmine17](https://github.com/Docmine17)** — the HTTP design, the byte-range reader this port
   follows, and the PC server.
-
