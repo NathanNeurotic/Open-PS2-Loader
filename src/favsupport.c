@@ -1126,8 +1126,18 @@ item_list_t *favGetObject(int initOnly)
     return &favItemList;
 }
 
+static int favGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int ember,
+                            char *directory, int directorySize, char *partition, int partitionSize)
+{
+    item_list_t view;
+    item_list_t *owner = favOwnerView(id, &view);
+    (void)itemList;
+    return owner != NULL && owner->itemGetPs1SaveDir != NULL &&
+           owner->itemGetPs1SaveDir(owner, favArray[id].id, name, ember, directory, directorySize, partition, partitionSize);
+}
+
 static item_list_t favItemList = {
     FAV_MODE, -1, 0, 0, MENU_MIN_INACTIVE_FRAMES, FAV_MODE_UPDATE_DELAY, NULL, NULL, &favGetTextId, NULL, &favInit, &favNeedsUpdate, &favUpdateItemList,
     &favGetItemCount, NULL, &favGetItemName, &favGetItemNameLength, &favGetItemStartup, &favDeleteItem, &favRenameItem, &favLaunchItem,
     &favGetConfig, &favGetImage, &favCleanUp, &favShutdown, &favCheckVMC, &favGetIconId,
-    NULL, ITEM_VIEW_NATIVE, NULL, NULL, &favGetRowView, NULL, &favSaveCueSettings};
+    NULL, ITEM_VIEW_NATIVE, NULL, NULL, &favGetRowView, NULL, &favSaveCueSettings, &favGetPs1SaveDir};
