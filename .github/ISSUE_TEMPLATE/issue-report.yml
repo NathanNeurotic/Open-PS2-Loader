@@ -12,6 +12,14 @@ body:
         LOADER: UDPFS; SETTINGS CHANGED: UDPFS enabled; VMC: Not applicable; PADEMU: Enabled.
         Chassis revision is optional; add it if known.
 
+        **Choose the tracker for the component that fails:**
+        - RiptOPL menus, settings, device discovery, or launch handoff: [RiptOPL issues](https://github.com/NathanNeurotic/Open-PS2-Loader/issues).
+        - A game compatibility issue reproduced directly in Neutrino with the same game, device and settings: [Neutrino issues](https://github.com/ps2max32/neutrino/issues).
+        - A PS1 game issue reproduced directly in Ember: [Ember issues](https://github.com/Gageformer/Ember/issues).
+        - For another loader/core, use that project's issue tracker and include its exact version.
+        If you cannot isolate the component, report here with the core and comparison results; we can help route it.
+
+
   - type: checkboxes
     id: terms
     attributes:
@@ -105,6 +113,15 @@ body:
         - Enabled
         - Disabled
         - Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: core-comparison
+    attributes:
+      label: Core and direct-launch comparison
+      description: Name the core and its exact version. For a game failure, state whether it also occurs when that core is launched directly with the same game, device and settings. Write Not tested if you cannot compare.
+      placeholder: "Core: Neutrino v...; direct launch: same failure / works / not tested; game and Game ID: ..."
     validations:
       required: true
 
