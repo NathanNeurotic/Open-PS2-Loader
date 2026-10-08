@@ -1166,7 +1166,7 @@ static void bdmLoadBlockDeviceModules(void)
         }
         bdmDiagBootStageEnd(networkStage, networkResult);
         // Release the dev9 reference taken above if the load failed -- otherwise a failing/retrying
-        // UDPBD/UDPFS (both gates re-enter on every device refresh while !udpbdModLoaded) inflates the
+        // UDPBD/UDPFS (both gates previously re-entered every refresh on partial failure) inflated the
         // refcounted dev9InitCount and a later HDD/ETH teardown can never power dev9 down. On success
         // the reference is intentionally kept (the device stays mounted). Mirrors ETH/HDD pairing.
         if (!udpbdNicClaimed)
