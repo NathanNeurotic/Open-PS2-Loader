@@ -2790,8 +2790,22 @@ static int hddGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int
 {
     int i = hddGetSourceId(itemList, id), n;
     base_game_info_t *game = hddActiveVcd(i);
-    if (game == &hddEmptyVcd || hddVcdParts == NULL || name == NULL ||
-        strcmp(game->name, name) != 0 || cueIsCueEntry(game) != ember)
+    if (hddVcdParts == NULL || name == NULL)
+        return 0;
+    if (game == &hddEmptyVcd || strcmp(game->name, name) != 0) {
+        // Favourites can retain a source id from before a refresh. Resolve a unique name,
+        // but never choose an arbitrary partition when names collide.
+        i = -1;
+        for (int candidate = 0; candidate < hddVcdGameCount; candidate++) {
+            if (strcmp(hddVcdGames[candidate].name, name) == 0) {
+                if (i >= 0)
+                    return 0;
+                i = candidate;
+            }
+        }
+        game = hddActiveVcd(i);
+    }
+    if (game == &hddEmptyVcd || cueIsCueEntry(game) != ember)
         return 0;
     if (ember) {
         char mountSource[APA_IDMAX + 6];

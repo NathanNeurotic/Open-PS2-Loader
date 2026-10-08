@@ -28,6 +28,7 @@ static const char *cueEmberFolder(void) { return "EMBER"; }
 typedef struct { int view; } item_list_t;
 typedef struct { char name[64]; int ember; } base_game_info_t;
 static base_game_info_t hddEmptyVcd, hddVcdGames[2] = {{"Same title", 1}, {"Same title", 1}};
+static int hddVcdGameCount = 2;
 static char parts[2][APA_IDMAX+1] = {"__common", "__.POPS2"};
 static char (*hddVcdParts)[APA_IDMAX+1] = parts;
 static char gOPLPart[40] = "hdd0:__common", *gHDDPrefix = "pfs0:/OPL/";
@@ -50,6 +51,13 @@ static void checkPaths(void) {
     assert(hddGetPs1SaveDir(&mixed, 6, "Same title", 1, dir, sizeof(dir), part, sizeof(part)) && !strcmp(part, "hdd0:__.POPS2"));
     assert(!hddGetPs1SaveDir(&ps1, 2, "Same title", 1, dir, sizeof(dir), part, sizeof(part)));
     assert(!hddGetPs1SaveDir(&ps1, 0, "Stale title", 1, dir, sizeof(dir), part, sizeof(part)));
+    strcpy(hddVcdGames[1].name, "Unique title");
+    assert(hddGetPs1SaveDir(&ps1, 2, "Unique title", 1, dir, sizeof(dir), part, sizeof(part)) && !strcmp(part, "hdd0:__.POPS2"));
+    assert(hddGetPs1SaveDir(&ps1, 0, "Unique title", 1, dir, sizeof(dir), part, sizeof(part)) && !strcmp(part, "hdd0:__.POPS2"));
+    assert(!hddGetPs1SaveDir(&ps1, 2, "Unique title", 0, dir, sizeof(dir), part, sizeof(part)));
+    hddVcdParts=NULL;
+    assert(!hddGetPs1SaveDir(&ps1, 2, "Unique title", 1, dir, sizeof(dir), part, sizeof(part)));
+    hddVcdParts=parts;
     hddVcdGames[0].ember=0;
     assert(hddGetPs1SaveDir(&ps1, 0, "Same title", 0, dir, sizeof(dir), part, sizeof(part)) && !part[0] && !strcmp(dir, "pfs0:/POPS/Same title"));
     gHDDPrefix=NULL;
