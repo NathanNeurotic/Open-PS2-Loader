@@ -189,6 +189,13 @@ int main(void)
     CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && lastMsg == _STR_VMC_FRAGMENTED_ON_CREATE && !strcmp(cfgVmc, "SLUS_GROUP_0"),
           "a fragmented card gets the VMC dialog's warning and is still assigned, as the dialog does");
 
+    reset(); fragmented = 1; cfgCore = 1;
+    CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && msgs == 0 && saves == 1,
+          "Neutrino does not inherit the native single-fragment warning");
+    reset(); fragmented = 1; cfgCore = 2; gDefaultCoreLoader = 1;
+    CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && msgs == 0 && saves == 1,
+          "Default following Neutrino does not inherit the native warning");
+
     reset(); cancelAtPoll = 2;
     CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 0 && aborts == 1 && !cfgVmc[0] && !saves,
           "Back aborts genvmc and stays in the menu");
