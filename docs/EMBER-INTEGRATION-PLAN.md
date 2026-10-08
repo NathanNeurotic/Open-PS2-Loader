@@ -222,9 +222,15 @@ Two further limits, both measured:
 
 ### Verifying a folder actually holds a disc
 
-The scan lists directories without reading inside them: that would be one directory read per row on
-every refresh, which MMCE and SMB cannot afford. Instead `cueGameHasImage()` runs once on the
-**launch** path, before `deinit`, while a dialog can still be drawn. An empty or mis-filled folder
+The scan lists a folder only when it holds a `.cue` / `.exe` / `.bin` at its top level — exactly
+what `io_find_disc` accepts, one level deep. The check rides the per-folder `opendir` the scan
+already pays to prove each entry really is a directory (`d_type` is not trusted across our drivers),
+so it adds no extra directory opens per refresh and stops at the first match. Folders without an
+image — stray empties, or the group-VMC folders game installers create under `EMBER/games/` — are
+skipped, never listed: a row whose X button cannot work is worse than no row.
+
+`cueGameHasImage()` still runs once on the **launch** path, before `deinit`, while a dialog can
+still be drawn: the library can change between scan and launch, and an empty or mis-filled folder
 otherwise drops the user into the PS1 BIOS shell with no explanation. A probe that itself fails to
 read reports success — never block a launch on a failed probe.
 

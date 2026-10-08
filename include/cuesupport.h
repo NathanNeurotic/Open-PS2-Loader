@@ -14,7 +14,8 @@
       POPS/   holds loose *.VCD FILES        -> scan for files, identity = basename minus ".VCD"
       EMBER/  holds ember.elf, bios.bin and
               a games/ folder of per-game
-              DIRECTORIES                    -> scan a subfolder for DIRECTORIES, identity = the
+              DIRECTORIES                    -> scan a subfolder for DIRECTORIES holding a
+                                                top-level *.cue, *.exe or *.bin, identity = the
                                                 directory name (there is no extension to strip)
 
   WHICH LAYOUTS EMBER ACCEPTS, AND WHY WE LIST ONLY ONE. Ember's resolver is looser than its README:
@@ -126,7 +127,11 @@ void cueBuildGamesDir(const char *devPrefix, char *out, int outSize);
 // a name STARTING with ".." (main+0x4210 -- not only the exact string ".."). Pure string work.
 int cueNameLaunchable(const char *name);
 
-// Scan "<devPrefix><EmberFolder>/games/" for game SUBDIRECTORIES. Returns the count; *outList is a
+// Scan "<devPrefix><EmberFolder>/games/" for game SUBDIRECTORIES -- and a subdirectory only counts
+// when it holds a *.cue/*.exe/*.bin at its top level (exactly what io_find_disc accepts, one level
+// deep). Folders without one -- stray empties, the group-VMC folders game installers drop into
+// games/ -- are skipped, never listed: a row whose X button cannot work is worse than no row.
+// Returns the count; *outList is a
 // calloc'd cue_entry_t array the caller frees. Returns -1 only when the directory could not be READ
 // (contended bus): an absent EMBER folder is 0, "readable, nothing here", exactly as the VCD scan
 // treats an absent POPS folder -- so a device with only one of the two never looks like a failure.
@@ -143,18 +148,17 @@ int cueSaveGameSettings(const char *devPrefix, const char *name, config_set_t *c
 void cueApplySettings(const char *devPrefix, const char *name, config_set_t *configSet);
 
 // Does this game folder actually hold something Ember can mount -- a *.cue, *.bin or *.exe at its
-// top level? Costs ONE directory read, so callers use it on the LAUNCH path only (before deinit,
-// while a dialog can still be drawn) and never on the scan path, where it would be one directory
-// read per row on every refresh -- unaffordable on MMCE and SMB. An empty or mis-filled folder is a
-// user mistake rather than a normal state, so paying for it once per launch is the right trade.
-// Returns 1 when an image is present, 0 when the folder is readable and holds none, and 1 when the
-// folder cannot be read at all (never block a launch on a probe that itself failed).
+// top level? The scan already filters on the same test, folded into the per-folder opendir its
+// is-a-directory probe always paid, so this remains as the LAUNCH-time recheck (before deinit,
+// while a dialog can still be drawn): the library can change between scan and launch, and a probe
+// failure must never block a launch. Returns 1 when an image is present, 0 when the folder is
+// readable and holds none, and 1 when the folder cannot be read at all (let Ember be the judge).
+int cueGameHasImage(const char *devPrefix, const char *name);
+
 // Resolve the exact disc image Ember would select for this game folder using Ember's priority
 // (.cue, then .exe, then .bin). Returns 1 and writes the full path, 0 if readable but empty,
 // -1 if the folder itself could not be probed. Launch identity remains the folder name.
 int cueResolveGameImage(const char *devPrefix, const char *name, char *out, int outSize);
-
-int cueGameHasImage(const char *devPrefix, const char *name);
 
 // Resolve the selected Ember image's actual PS1 serial and emit the RetroGEM optical barcode.
 // Best-effort launch metadata only: no GameID/read failure may block Ember.

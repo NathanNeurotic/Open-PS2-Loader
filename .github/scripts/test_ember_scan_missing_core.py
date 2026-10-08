@@ -12,6 +12,11 @@ library and no EMBER folder must read as "nothing here" (0), never as an unreada
 
 This compiles cueScanDir and its helpers from src/cuesupport.c against a fake filesystem and checks
 both rules, plus that every launch leg names the path it looked for.
+
+The scan also skips folders that hold no launchable image (a top-level *.cue/*.exe/*.bin -- what
+Ember's io_find_disc accepts): empty folders and the group-VMC folders game installers drop into
+EMBER/games/ otherwise show up as dead rows (CosmicScale, October 2026). The fixture's "empty_"
+folders model those; the image check rides the per-folder probe the scan already performs.
 """
 from pathlib import Path
 import re
@@ -67,9 +72,18 @@ functions = ''.join(function_text(cue, 'src/cuesupport.c', sig) for sig in (
     'int cueResolveEmber(',
     'void cueBuildGamesDir(',
     'int cueNameLaunchable(',
-    'static int cueEntryIsDir(',
+    'static int cueNameIsDiscImage(',
+    'static int cueEntryIsGame(',
     'int cueScanDir(',
 ))
+
+# cueNameIsDiscImage matches against the same extension table the scan uses -- extract it verbatim
+# so the fixture can never drift from what Ember accepts.
+exts = re.search(r'^static const char \*const cueDiscExts\[\] = \{[^}]*\};', cue, re.M)
+if exts is None:
+    failures.append('src/cuesupport.c: cueDiscExts table not found')
+else:
+    functions = exts.group(0) + '\n\n' + functions
 
 # Every launch leg must name the file it looked for, not just say "Missing ember.elf" -- and with the
 # buffer that holds THAT file's path (CodeRabbit, #836: rejecting the old calls alone would also pass a
@@ -130,14 +144,14 @@ static int fake_errno;
 @ENTRY@
 
 struct dirent { char d_name[256]; };
-typedef struct { int isGames; int pos; } DIR;
+typedef struct { int isGames; int hasImage; int pos; } DIR;
 
 static const char *coreFile;           /* the one path open() accepts; NULL = ember.elf missing */
 static int gamesOpens;                 /* does EMBER/games open at all? */
 static int gamesErrno;                 /* errno when it does not */
-static const char *const *gameNames;   /* its entries; names starting "file_" are files */
+static const char *const *gameNames;   /* its entries; "file_*" are files, "empty_*" folders hold no image */
 static DIR gamesDir, probeDir;
-static struct dirent ent;
+static struct dirent ent, probeEnt;    /* separate storage: a probe reads WHILE the games dir is mid-enumeration */
 #define GAMES_PATH "mass0:/EMBER/games"
 
 static int open(const char *path, int flags) { (void)flags; return coreFile != NULL && !strcmp(path, coreFile) ? 3 : -1; }
@@ -154,14 +168,26 @@ static DIR *opendir(const char *path)
         gamesDir.pos = 0;
         return &gamesDir;
     }
-    if (!strncmp(path, GAMES_PATH "/", n + 1) && strncmp(path + n + 1, "file_", 5) != 0)
+    if (!strncmp(path, GAMES_PATH "/", n + 1) && strncmp(path + n + 1, "file_", 5) != 0) {
+        probeDir.isGames = 0;
+        probeDir.hasImage = strncmp(path + n + 1, "empty_", 6) != 0;
+        probeDir.pos = 0;
         return &probeDir; /* a game folder answers its probe */
+    }
     errno = ENOENT;
     return NULL;
 }
 static struct dirent *readdir(DIR *d)
 {
-    if (!d->isGames || gameNames == NULL || gameNames[d->pos] == NULL)
+    if (!d->isGames) {
+        /* a folder probe: the folder holds "game.cue" unless it is an empty_ folder */
+        if (!d->hasImage || d->pos != 0)
+            return NULL;
+        d->pos++;
+        snprintf(probeEnt.d_name, sizeof(probeEnt.d_name), "game.cue");
+        return &probeEnt;
+    }
+    if (gameNames == NULL || gameNames[d->pos] == NULL)
         return NULL;
     snprintf(ent.d_name, sizeof(ent.d_name), "%s", gameNames[d->pos++]);
     return &ent;
@@ -171,7 +197,7 @@ static int closedir(DIR *d) { (void)d; return 0; }
 @FUNCTIONS@
 
 static int fails;
-static const char *const games[] = {".", "..", "Alpha", "Beta", "file_readme.txt", NULL};
+static const char *const games[] = {".", "..", "Alpha", "Beta", "empty_GroupVMC", "file_readme.txt", NULL};
 
 static void expect(const char *what, const char *core, int opens, int err, int want)
 {
@@ -292,4 +318,4 @@ if not failures:
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('ember scan: a missing core still lists game folders, never fails the scan; launch messages name the path')
+print('ember scan: a missing core still lists game folders, never fails the scan; image-less folders are skipped; launch messages name the path')
