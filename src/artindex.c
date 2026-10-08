@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <errno.h>
 #include <kernel.h>
 
 #include "include/opl.h"
@@ -199,6 +200,11 @@ static art_index_dir_t *artIndexBuild(const char *dir)
     int overflowed = 0;
     struct dirent *e;
 
+    // POSIX readdir returns NULL for BOTH end-of-directory and an I/O error. In particular,
+    // UDPFS can lose a session halfway through this sweep: publishing the entries collected
+    // before that failure as a complete index would permanently hide every omitted cover.
+    // A completed enumeration is the ONLY time a negative cache answer is safe.
+    errno = 0;
     while ((e = readdir(d)) != NULL) {
         if (e->d_name[0] == '\0' || e->d_name[0] == '.')
             continue;
@@ -211,7 +217,17 @@ static art_index_dir_t *artIndexBuild(const char *dir)
         hashes[n++] = artIndexHash(e->d_name);
     }
 
+    int readError = errno;
     closedir(d);
+
+    if (readError != 0) {
+        // A failed sweep is unknown, not empty. Keep this slot invalid so subsequent
+        // image loads use the ordinary file-open path; healthy directories still index once.
+        gArtIndexSweepFailed++;
+        LOG("ARTINDEX: '%s' listing failed (errno %d) -- probing files directly\n", dir, readError);
+        free(hashes);
+        return slot;
+    }
 
     if (overflowed) {
         // A partial listing is the one thing that could make this answer "absent" about a file that
