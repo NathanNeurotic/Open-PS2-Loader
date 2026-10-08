@@ -154,6 +154,8 @@ jobs:
         run: python3 .github/scripts/test_menu_sort.py
       - name: Check a failed first PS2 scan runs once and names the folder
         run: python3 .github/scripts/test_bdm_scan_retry.py
+      - name: Check iLink readiness always publishes its final device refresh
+        run: python3 .github/scripts/test_ilink_readiness.py
       - name: Check a settings re-apply keeps the page of a USB/BDM device that is still there (#806)
         run: python3 .github/scripts/test_bdm_keep_page_on_reapply.py
       - name: Check the IO worker skips duplicate module passes and APPS rebuilds on L3
