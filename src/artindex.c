@@ -204,10 +204,13 @@ static art_index_dir_t *artIndexBuild(const char *dir)
     // UDPFS can lose a session halfway through this sweep: publishing the entries collected
     // before that failure as a complete index would permanently hide every omitted cover.
     // A completed enumeration is the ONLY time a negative cache answer is safe.
+    int readError = 0;
     for (;;) {
         errno = 0;
-        if ((e = readdir(d)) == NULL)
+        if ((e = readdir(d)) == NULL) {
+            readError = errno;
             break;
+        }
         if (e->d_name[0] == '\0' || e->d_name[0] == '.')
             continue;
 
@@ -219,7 +222,6 @@ static art_index_dir_t *artIndexBuild(const char *dir)
         hashes[n++] = artIndexHash(e->d_name);
     }
 
-    int readError = errno;
     closedir(d);
 
     if (readError != 0) {
