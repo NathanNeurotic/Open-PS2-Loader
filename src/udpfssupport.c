@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
 #include "include/supportbase.h"
@@ -721,9 +722,19 @@ static int udpfsSaveCueSettings(item_list_t *itemList, int id, const char *name,
     return cueSaveGameSettings(udpfsPrefix, name, configSet);
 }
 
+static int udpfsGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int ember,
+                              char *directory, int directorySize, char *partition, int partitionSize)
+{
+    (void)itemList;
+    (void)id;
+    (void)partitionSize;
+    partition[0] = '\0';
+    return ember && saveIconPs1Directory(udpfsPrefix, name, 1, directory, directorySize);
+}
+
 static item_list_t udpfsGameList = {
     UDPFS_MODE, 1, 0, 0, MENU_MIN_INACTIVE_FRAMES, UDPFS_MODE_UPDATE_DELAY, NULL, NULL, &udpfsGetTextId, &udpfsGetPrefix, &udpfsInit, &udpfsNeedsUpdate,
     &udpfsUpdateGameList, &udpfsGetGameCount, &udpfsGetGame, &udpfsGetGameName, &udpfsGetGameNameLength, &udpfsGetGameStartup, &udpfsDeleteGame, &udpfsRenameGame,
     &udpfsLaunchGame, &udpfsGetConfig, &udpfsGetImage, &udpfsCleanUp, &udpfsShutdown, &udpfsCheckVMC, &udpfsGetIconId,
     /* itemLaunchVcd */ NULL, /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &udpfsLaunchCue,
-    &udpfsGetItemView, &udpfsGetSourceId, &udpfsSaveCueSettings};
+    &udpfsGetItemView, &udpfsGetSourceId, &udpfsSaveCueSettings, &udpfsGetPs1SaveDir};
