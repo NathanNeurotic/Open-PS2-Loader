@@ -93,6 +93,8 @@ jobs:
         run: python3 .github/scripts/test_neutrino_args_editor.py
       - name: Check Neutrino launch arguments fit before teardown without dropping tokens
         run: python3 .github/scripts/test_neutrino_argv_budget.py
+      - name: Check Neutrino pad emulation warnings and forced-core settings
+        run: python3 .github/scripts/test_neutrino_pademu.py
       - name: Check cheats reach Neutrino and Select-mode picks are remembered on both cores
         run: python3 .github/scripts/test_neutrino_cheats.py
       - name: Check every way back to the menu after sbPrepare restores the cdvdman patch zone

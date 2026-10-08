@@ -1657,3 +1657,5 @@ gui_strings:
   string: "Video mode handed to the game."
 - label: DNAS_ID
   string: DNAS ID
+- label: NEUTRINO_PADEMU_WARN
+  string: "Pad emulation is unavailable with Neutrino. Use a PS2 controller or a source that supports the <OPL> core."
