@@ -8,10 +8,10 @@
   about an image; the console keeps it in memory and as a file next to
   the game, the same way OPL keeps cheats in CHT/.
 
-  Why a list of values instead of memory ranges: NFS Underground 2 has
-  482 addresses spread over 192 KB in tight clusters. As contiguous
-  ranges that is 24 ranges and 3152 bytes, three packets per frame. As
-  individual values it is about 1350 bytes, two packets.
+  Why a list of values instead of memory ranges: a set's addresses come
+  in tight clusters spread over a wide span, and ranges covering the
+  clusters carry two to three times the bytes the values themselves
+  take, so a packet more per frame.
 
   Values in the snapshot follow watch list order, so addresses are not
   sent over the wire: the PC client generated the list and knows it.
@@ -23,31 +23,39 @@
 #define RA_WATCH_MAGIC   0x4C574152 /* "RAWL" in little-endian */
 #define RA_WATCH_VERSION 1
 
-/* Entry ceiling. NFS Underground 2 needs 482, X-Men 39. This leaves
-   headroom over both, and at four bytes per entry the array stays at
-   4 KB. */
-#define RA_WATCH_MAX 1024
+/* Entry ceiling. Most sets need a few hundred entries; a set with
+   subsets can need over two thousand. The list does not live inside
+   ee_core: the loader places it behind the IOP modules in module
+   storage, sized to the set, so this number costs nothing until a set
+   uses it. 16 KB at the ceiling. */
+#define RA_WATCH_MAX 4096
 
 /* A snapshot is split across several UDP packets. One packet carries
    1472 bytes: 1500 MTU minus 20 IP minus 8 UDP, the limit without
    fragmentation.
 
-   HEADER. Ceiling for the text header built in raudp.c (162 bytes with
+   HEADER. Ceiling for the text header built in raudp.c (184 bytes with
    the current field table). raudp measures the real header length in
    ra_head_build() and derives the value bytes per packet from it, so
    this constant only sizes buffers; it must not be smaller than the
-   real header. */
-#define RA_SNAP_HEAD_BYTES 167
+   real header, or a snapshot that fits the buffer needs more parts
+   than RA_SNAP_PARTS allows and loses its tail. */
+#define RA_SNAP_HEAD_BYTES 191
 
 /* Bytes of values in one packet. */
 #define RA_SNAP_CHUNK_BYTES (1472 - RA_SNAP_HEAD_BYTES)
 
-/* Packets per snapshot.
+/* Packets per snapshot: the buffer on both sides.
 
    The measured send ceiling is 215 packets per second at 1472 bytes
    (see the raudp.c header). Four parts per frame at 60 fps would need
-   240 and drop packets; three need 180 and leave headroom. */
-#define RA_SNAP_PARTS 3
+   240 and drop packets; three need 180 and leave headroom. So the wire
+   carries at most RA_SNAP_PARTS_PER_FRAME parts a frame: a set that
+   needs more is sent every second or third frame (ee_core/src/ra.c),
+   and a set that fits three parts is sent every frame, as it always
+   was. A set with subsets can need six parts. */
+#define RA_SNAP_PARTS           9
+#define RA_SNAP_PARTS_PER_FRAME 3
 
 #define RA_SNAP_MAX_BYTES (RA_SNAP_CHUNK_BYTES * RA_SNAP_PARTS)
 
@@ -106,10 +114,10 @@ struct ra_watch_file
 
 #define RA_NODE_MAGIC 0x4C4E4152 /* "RANL" in little-endian */
 
-/* Node ceiling. ee_core resolves chains from its own copy, and it lives
-   in 77 KB of low memory shared with everything else the loader leaves
-   behind, so this number is what its arrays cost: 16 bytes per node
-   there. The snapshot ceiling binds next, at 8 bytes per node. */
+/* Node ceiling. Nodes travel with the list into module storage, 16
+   bytes each there (the node, then two scratch words per frame). A set
+   with subsets can carry several dozen. The snapshot ceiling binds
+   next, at 8 bytes per node. */
 #define RA_NODE_MAX 128
 
 /* Bytes one node adds to a snapshot: the resolved address and the value. */

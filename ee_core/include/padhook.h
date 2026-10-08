@@ -24,6 +24,9 @@ void Install_IGR(void);
 void Remove_Padhook(void);
 void Reset_Padhook(void);
 void IGR_Exit(s32 exit_code);
+#ifdef RETROACHIEVEMENTS
+void IGR_RequestReset(void);
+#endif
 
 // DEV9 Registers
 #define DEV9_R_1460 ((volatile u16 *)0xBF801460)

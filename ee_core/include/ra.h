@@ -10,8 +10,8 @@
 #define RA_PROBE 0
 #endif
 
-/* Copy the watch list out of the loader config before the game
-   overwrites loader memory. Call once during ee_core init. */
+/* Use the persistent module-storage block prepared by the loader.
+   Call once during ee_core init. */
 void RA_SetupWatchList(void);
 
 /* Per-frame hook, called from the VBLANK_END interrupt handler. */

@@ -47,6 +47,19 @@ static u32 ra_seq, ra_fail, ra_us, ra_us_max, ra_rxq, ra_skip, ra_snap_bad, ra_s
 static int ra_err, ra_sent_any, ra_rx_in_game = 1;
 static u32 ra_disc_us;
 static unsigned packets, failed_packet, advance_packet, busy, drains, polls, heartbeats;
+static u32 ra_hb_rx, ra_hb_rau, ra_ee_event = 1;
+static struct ra_event ra_event;
+typedef struct { void *src, *dest; int size, attr; } SifDmaTransfer_t;
+static unsigned events, control_acks;
+static void SysClock2USec(iop_sys_clock_t *t, u32 *sec, u32 *us) {
+    (void)t; *sec = 10; *us = 0;
+}
+static int sceSifSetDma(SifDmaTransfer_t *dma, int n) {
+    assert(n == 1 && dma->size == sizeof(ra_event)); events++; return events;
+}
+static void ra_ctl_send(const char *p, int n) {
+    assert(n > 5 && !memcmp(p, "RAK1 ", 5)); control_acks++;
+}
 static unsigned tick, limit, produce, quiet;
 static jmp_buf finished;
 static void ra_fmt(u8 *, u32, int);
@@ -135,8 +148,10 @@ int main(void) {
     ra_send_one();
     assert(!packets && !ra_seq && ra_snap_pending() == 1 && ra_snap_bad == 1);
     *(u32 *)(storage + RA_SNAP_TRAILER_OFF(8)) = 1;
+    ra_snap->read_cycles = 12345; ra_snap->frame_cycles = 10000000;
     ra_send_one();
     assert(packets == 1 && ra_sent_sq == 1 && ra_snap_pending() == 0);
+    assert(field(RA_F_RC) == 12345 && field(RA_F_FC) == 9999999);
     puts("PASS: busy and torn snapshots remain pending, then send successfully");
     for (unsigned fail = 1; fail <= RA_SNAP_PARTS; fail++) {
         reset(); snapshot(41, RA_SNAP_MAX_BYTES); failed_packet = fail;
@@ -165,18 +180,27 @@ int main(void) {
     reset(); busy = 1; loop(20);
     assert(!packets && ra_skip == 20);
     puts("PASS: new-only sending, idle keepalive, RX guard, quiet period and header-only cadence");
+    ra_handle_pc("RAR1 ", 5);
+    assert(events == 1 && control_acks == 1 && ra_event.kind == RA_EVENT_RESET);
+    ra_handle_pc("RAU1 1234567890", 15);
+    assert(events == 2 && ra_event.kind == RA_EVENT_UNLOCK);
+    ra_handle_pc("RAU1 1234567890", 15);
+    assert(events == 2); /* duplicate unlock is one event */
+    ra_handle_pc("RAX1 ", 5); assert(events == 2);
+    puts("PASS: read-cost fields, PC reset event, unlock deduplication and unknown-event rejection");
 }
 '''
 program = (prefix + constants + '\n' + fields + '\n' +
            '\n'.join(function(n) for n in ('ra_fmt', 'ra_fmt_err', 'ra_copy',
-                                         'ra_send_one', 'ra_snap_pending', 'ra_thread')) + stubs)
+                                         'ra_send_one', 'ra_snap_pending', 'ra_thread',
+                                         'ra_dec_at', 'ra_fmt_hex8', 'ra_handle_pc')) + stubs)
 with tempfile.TemporaryDirectory(prefix='ra-sender-') as work:
     path = Path(work) / 'sender.c'
     exe = Path(work) / 'sender'
-    path.write_text(program)
+    path.write_text(program, encoding='utf-8')
     # IOP pointers are 32-bit; on a 64-bit host the copy helper only examines
     # their low alignment bits. Suppress that one target-size warning.
     subprocess.run(['gcc', '-std=gnu99', '-O2', '-fno-strict-aliasing', '-Wall', '-Wextra',
-                    '-Werror', '-Wno-pointer-to-int-cast', '-I', str(root),
+                    '-Werror', '-Wno-pointer-to-int-cast', '-Wno-int-to-pointer-cast', '-I', str(root),
                     str(path), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
