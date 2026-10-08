@@ -10,7 +10,7 @@ This compiles the real protocol helpers from src/gui.c on the host and checks:
 - storing with Connectivity Off keeps the pick and leaves the live protocol OFF;
 - turning Connectivity back on restores the pick (UDPFS Files and IMG, UDPBD, HTTP, SMB);
 - picking a different protocol on the Network page while Off is remembered too;
-- UDPBD -> UDPFS keeps IMG (the Access both pages derive from the shown protocol);
+- UDPBD -> UDPFS restores UDPFS's independent Files/IMG preference; UDPBD cannot overwrite it;
 
 and pins the load / save / default halves in src/opl.c.
 """
@@ -48,7 +48,7 @@ HARNESS = r'''
 
 enum { NET_PROTO_OFF = 0, NET_PROTO_SMB = 1, NET_PROTO_UDPFS = 2, NET_PROTO_UDPFSBD = 3, NET_PROTO_UDPBD = 4, NET_PROTO_HTTP = 5 };
 enum { START_MODE_DISABLED = 0, START_MODE_MANUAL = 1, START_MODE_AUTO = 2 };
-static int gNetworkProtocol, gNetProtocolPick, gNetStartMode;
+static int gNetworkProtocol, gNetProtocolPick, gNetStartMode, gUdpfsAccessMode;
 
 @HELPERS@
 
@@ -107,15 +107,28 @@ int main(void)
     expect("pick while Off: live stays OFF", gNetworkProtocol, NET_PROTO_OFF);
     expect("pick while Off: remembered", gNetProtocolPick, NET_PROTO_HTTP);
 
-    /* UDPBD -> UDPFS keeps IMG: Access comes from the shown protocol. */
+    /* A UDPBD IMG-locked row cannot overwrite UDPFS's saved Files. */
     gNetworkProtocol = NET_PROTO_UDPBD;
     gNetProtocolPick = NET_PROTO_UDPBD;
     gNetStartMode = START_MODE_AUTO;
-    guiNetProtocolStore(1, guiNetProtocolAccess(guiNetProtocolShown()));
-    expect("UDPBD -> UDPFS keeps IMG", gNetworkProtocol, NET_PROTO_UDPFSBD);
+    gUdpfsAccessMode = 0;
+    guiNetProtocolStore(1, gUdpfsAccessMode); /* Game Sources. */
+    expect("UDPBD -> UDPFS restores Files", gNetworkProtocol, NET_PROTO_UDPFS);
+    expect("UDPFS preference remains Files", gUdpfsAccessMode, 0);
+
+    /* Explicit UDPFS IMG is independent and survives UDPBD and Off/On. */
+    guiNetProtocolStore(1, 1); /* Network page user selected IMG. */
+    expect("UDPFS IMG explicit", gNetworkProtocol, NET_PROTO_UDPFSBD);
+    guiNetProtocolStore(2, 1);
+    expect("UDPBD preserves UDPFS IMG", gUdpfsAccessMode, 1);
+    guiNetProtocolStore(1, gUdpfsAccessMode);
+    expect("UDPBD -> UDPFS restores explicit IMG", gNetworkProtocol, NET_PROTO_UDPFSBD);
+    visitSetConnectivity(START_MODE_DISABLED);
+    visitSetConnectivity(START_MODE_AUTO);
+    expect("UDPFS IMG survives Off/On", gNetworkProtocol, NET_PROTO_UDPFSBD);
 
     if (!fails)
-        printf("net protocol pick: Connectivity off/on keeps the chosen protocol\n");
+        printf("net protocol pick: independent UDPFS Access and Connectivity off/on OK\n");
     return fails ? 1 : 0;
 }
 '''
@@ -138,6 +151,14 @@ if helpers and not failures:
 # The persisted halves (src/opl.c).
 if 'configSetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, gNetProtocolPick);' not in opl:
     failures.append('src/opl.c: the settings save does not write net_protocol_pick')
+if 'configSetInt(configOPL, CONFIG_OPL_UDPFS_ACCESS, gUdpfsAccessMode);' not in opl:
+    failures.append('src/opl.c: UDPFS-specific Access must be saved')
+if 'CONFIG_OPL_UDPFS_ACCESS, &gUdpfsAccessMode' not in opl:
+    failures.append('src/opl.c: UDPFS-specific Access must be loaded')
+if 'int access = gUdpfsAccessMode;' not in gui:
+    failures.append('src/gui.c: Game Sources must use UDPFS Access, not UDPBD Access')
+if 'diaSetInt(diaNetConfig, CFG_UDPFSMODE, netConfigUdpfsAccess);' not in gui:
+    failures.append('src/gui.c: Network editor must restore UDPFS Access on protocol change')
 if not re.search(r'if \(gNetworkProtocol != NET_PROTO_OFF\)\s*gNetProtocolPick = gNetworkProtocol;\s*else if \(!configGetInt\(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK', opl):
     failures.append('src/opl.c: the load does not take the pick from a live protocol, else net_protocol_pick')
 load_pick = opl.find('CONFIG_OPL_NET_PROTOCOL_PICK, &gNetProtocolPick')

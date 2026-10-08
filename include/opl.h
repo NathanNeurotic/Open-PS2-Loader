@@ -322,6 +322,8 @@ extern int gNetStartMode;    // START_MODE_* -- network start row (Off/Manual/Au
 // (every consumer reads that as "no network"), so this is what the Protocol rows show then, and what
 // turning Connectivity back on restores.
 extern int gNetProtocolPick;
+// UDPFS-specific Access preference: Files(0) or IMG(1). UDPBD must never change it.
+extern int gUdpfsAccessMode;
 
 extern int gAutosort;
 extern int gAutoRefresh;
