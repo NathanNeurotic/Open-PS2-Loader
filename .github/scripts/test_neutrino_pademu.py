@@ -87,6 +87,8 @@ int main(void) {
     gAutoLaunchGame=&game; sysNeutrinoWarnPadEmu(&game); assert(notices == 2);
     gAutoLaunchGame=NULL; gAutoLaunchBDMGame=&game;
     sysNeutrinoWarnPadEmu(&game); assert(notices == 2); gAutoLaunchBDMGame=NULL;
+    support.mode=FAV_MODE; menu.current=NULL; view=0; gDefaultCoreLoader=0; game.core_present=0;
+    assert(!gameMenuCoreIsNeutrino()); menu.current=&row;
     for (int favourite=0; favourite<2; favourite++) {
         for (int mode=ETH_MODE; mode<=HDD_MODE; mode++) {
             if (mode == FAV_MODE) continue;

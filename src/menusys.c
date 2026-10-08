@@ -2013,7 +2013,7 @@ static int gameMenuCoreIsNeutrino(void)
     if (selected_item != NULL && selected_item->item != NULL) {
         item_list_t *support = (item_list_t *)selected_item->item->userdata;
         if (support != NULL) {
-            int sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(selected_item->item->current->item.id) : support->mode;
+            int sourceMode = support->mode == FAV_MODE ? (selected_item->item->current != NULL ? favGetItemSourceMode(selected_item->item->current->item.id) : -1) : support->mode;
             if (menuSelectedRowView(support) == LIB_VIEW_PS1 || sourceMode == ETH_MODE || sourceMode == HTTP_MODE)
                 return 0;
             if (sourceMode == UDPFS_MODE || bdmModeIsUDPBD(sourceMode))
