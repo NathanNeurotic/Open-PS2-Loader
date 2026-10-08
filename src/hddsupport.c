@@ -2136,6 +2136,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     if (sysNeutrinoArgsPreflight("apa", apaPart, game->startup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, NULL) < 0)
         return gAutoLaunchGame == NULL ? 1 : 0; // autolaunch needs the native path to own its teardown
 
+    sysNeutrinoWarnPadEmu(configSet);
     // Honesty toast: the OPL core honors $VMC_N on HDD (mcemu over pfs0:VMC/), but Neutrino has no
     // APA/pfs backing store to open the .bin from post-reset -- its APA support is -bsd=ata
     // -bsdfs=hdl, game image only (NHDDL's HDL backend has the same no-VMC rule). No -mc args can

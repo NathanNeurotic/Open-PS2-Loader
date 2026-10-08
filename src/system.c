@@ -1642,6 +1642,27 @@ int sysNeutrinoHandCheats(const char *startup, const char *neutrinoPath, const c
     return 0;
 }
 
+void sysNeutrinoWarnPadEmu(config_set_t *configSet)
+{
+#ifdef PADEMU
+    // Match sbPrepare's inheritance: a present per-game source key selects the per-game values.
+    // Read the config directly: APA's Neutrino path need not have called sbPrepare for this game.
+    int source = 0, enabled = 0;
+    config_set_t *settings = configGetByType(CONFIG_GAME);
+    if (configGetInt(configSet, CONFIG_ITEM_PADEMUSOURCE, &source))
+        settings = configSet;
+    configGetInt(settings, CONFIG_ITEM_ENABLEPADEMU, &enabled);
+    if (enabled) {
+        LOG("[NEUTRINO] pad emulation configured but unsupported\n");
+        // Autolaunch runs before the interactive menu: never leave it waiting for a modal.
+        if (gAutoLaunchGame == NULL && gAutoLaunchBDMGame == NULL)
+            guiMsgBox(_l(_STR_NEUTRINO_PADEMU_WARN), 0, NULL);
+    }
+#else
+    (void)configSet;
+#endif
+}
+
 // Δ6 (NHDDL parity): everything that can FAIL a Neutrino launch and is checkable pre-teardown runs
 // HERE, called by every device leg BEFORE deinitEx -- the GUI is alive for a toast and nothing has
 // been torn down, so a failure is "stay in the menu", not a post-teardown black screen. Returns

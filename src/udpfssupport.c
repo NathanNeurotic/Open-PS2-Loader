@@ -623,6 +623,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     if (sysNeutrinoArgsPreflight("udpfs", partname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0)
         return;
 
+    sysNeutrinoWarnPadEmu(configSet);
     // MMCE cross-device game-id (#261): push the disc id to a present MMCE card before teardown frees
     // `game`. Neutrino path forwarded so a Neutrino launch protects the MMCE hand-off timing.
     mmceSendGameID(game->startup, neutrinoPath,
