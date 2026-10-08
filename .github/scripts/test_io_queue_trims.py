@@ -189,7 +189,7 @@ int main(void)
 SHOULD_HARNESS = r'''
 #include <stdio.h>
 static int gEnableUSB, iUSBModLoaded, gEnableILK, iLinkModLoaded, gEnableMX4SIO, mx4sioModLoaded;
-static int gEnableBdmHDD, hddModLoaded, gEnableUDPBD, udpbdModLoaded;
+static int gEnableBdmHDD, hddModLoaded, gEnableUDPBD, udpbdNicClaimed;
 static int ethGetModulesLoaded(void) { return 0; }
 static int udpfsGetModulesLoaded(void) { return 0; }
 
@@ -206,6 +206,11 @@ int main(void)
     if (bdmShouldQueueModuleLoad() != 0) { printf("FAIL USB on and loaded: no pass is needed\n"); failed = 1; }
     gEnableUSB = 0; iUSBModLoaded = 0; gEnableMX4SIO = 1;
     if (bdmShouldQueueModuleLoad() != 1) { printf("FAIL USB off must not hide an MX4SIO that still needs loading\n"); failed = 1; }
+    gEnableMX4SIO = 0;
+    gEnableUDPBD = 1;
+    if (bdmShouldQueueModuleLoad() != 1) { printf("FAIL unloaded UDPBD needs a pass\n"); failed = 1; }
+    udpbdNicClaimed = 1; /* SMAP loaded, but downstream chain may have failed. */
+    if (bdmShouldQueueModuleLoad() != 0) { printf("FAIL partial UDPBD NIC must not retry/rebind\n"); failed = 1; }
     if (!failed)
         printf("io queue: USB off asks for no module pass; other transports still do\n");
     return failed;

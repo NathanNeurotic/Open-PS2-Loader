@@ -686,8 +686,8 @@ static int guiNetProtocolToPicker(int protocol)
     return 0;
 }
 
-// The Access row's value for a protocol: IMG (1) for the udpfs block backend AND for UDPBD (IMG-locked),
-// Files (0) otherwise. Both pages use it, so switching UDPBD -> UDPFS keeps IMG on either page.
+// Display-only Access for the currently shown protocol. UDPBD's IMG-locked value
+// must never become the saved UDPFS Access preference (gUdpfsAccessMode).
 static int guiNetProtocolAccess(int protocol)
 {
     return (protocol == NET_PROTO_UDPFSBD || protocol == NET_PROTO_UDPBD) ? 1 : 0;
@@ -709,6 +709,8 @@ static int guiNetProtocolFromPicker(int picker, int access)
 // Off -- then gNetworkProtocol is OFF (the stack does not run at all) and the pick waits for it.
 static void guiNetProtocolStore(int picker, int access)
 {
+    if (picker == 1)
+        gUdpfsAccessMode = access ? 1 : 0;
     gNetProtocolPick = guiNetProtocolFromPicker(picker, access);
     gNetworkProtocol = (gNetStartMode == START_MODE_DISABLED) ? NET_PROTO_OFF : gNetProtocolPick;
 }
@@ -781,12 +783,11 @@ static void guiSourcesNetRowsBegin(struct UIItem *ui, const char **deviceModes)
     guiSourcesNetRowsUpdate(ui); // the first frame renders before the updater runs
 }
 
-// Game Sources read-back. Access is not on this page, so UDPFS takes the Access the Network page would
-// show for the current protocol (guiNetProtocolAccess).
+// Game Sources has no Access row. Restore UDPFS's own preference, not UDPBD's IMG.
 static void guiSourcesNetRowsRead(struct UIItem *ui)
 {
     int netProtocolWas = gNetworkProtocol;
-    int access = guiNetProtocolAccess(guiNetProtocolShown());
+    int access = gUdpfsAccessMode;
     int picker = guiNetProtocolToPicker(guiNetProtocolShown());
 
     diaGetInt(ui, CFG_NETSTART, &gNetStartMode);
@@ -1177,6 +1178,7 @@ static char httpTestBase[HTTP_BASE_PATH_MAX], httpTestMessage[128];
 // selecting a UDP protocol can force Static without permanently clobbering that preference.
 static int netConfigDhcpPreference;
 static int netConfigLastProtocol = -1;
+static int netConfigUdpfsAccess; // pending UDPFS Files/IMG preference, not UDPBD's forced IMG
 
 static void httpTestWorker(void)
 {
@@ -1197,6 +1199,13 @@ static int netConfigUpdater(int modified)
         isSMB = netProto == 0;
         isHTTP = netProto == 3;
         isUdp = netProto == 1 || netProto == 2;
+
+        // Preserve UDPFS Access across in-dialog switches. A forced UDPBD IMG
+        // never overwrites a user-selected UDPFS Files (or explicit IMG).
+        if (netConfigLastProtocol == 1 && netProto != 1)
+            diaGetInt(diaNetConfig, CFG_UDPFSMODE, &netConfigUdpfsAccess);
+        if (netProto == 1 && netConfigLastProtocol != 1)
+            diaSetInt(diaNetConfig, CFG_UDPFSMODE, netConfigUdpfsAccess);
 
         // UDPFS/UDPBD always bind the configured static PS2 IP; their ministack has no DHCP client.
         // Force the effective row to Static while either protocol is selected, but remember the
@@ -1267,9 +1276,8 @@ static int netConfigUpdater(int modified)
         for (i = 0; i < 4; i++)
             diaSetVisible(diaNetConfig, NETCFG_HTTP_IP_0 + i, isHTTP);
 
-        // Protocol: lock Access to Files for SMB and to IMG for UDPBD (only UDPFS offers the free
-        // toggle) -- snap the value so a stale IMG left over from UDPFS can never mis-derive to
-        // UDPFSBD under SMB, AND grey the control so the lock is visible.
+        // SMB/HTTP lock Access to Files; UDPBD locks it to IMG. Only UDPFS
+        // exposes a mutable value, restored from its independent preference.
         // NOTE(rebuild): the SMB Version row stays greyed at SMBv1 until item 4 lands (the fork
         // enables it while SMB is the selected protocol).
         diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, 0);
@@ -1395,7 +1403,7 @@ int guiShowNetConfig(void)
     // default a user reaches when they switch the Game Sources Start row from Off to Manual/Auto.
     int netProtoVal = guiNetProtocolToPicker(guiNetProtocolShown()); // while Off: the remembered pick
     // IMG for the udpfs block backend AND UDPBD (IMG-locked), so the seed already matches the lock.
-    int netAccessVal = guiNetProtocolAccess(guiNetProtocolShown());
+    int netAccessVal = (netProtoVal == 1) ? gUdpfsAccessMode : guiNetProtocolAccess(guiNetProtocolShown());
     for (i = 0; i < 4; ++i)
         diaSetInt(diaNetConfig, NETCFG_HTTP_IP_0 + i, gHttpServerIp[i]);
     diaSetInt(diaNetConfig, NETCFG_HTTP_PORT, gHttpPort);
@@ -1408,6 +1416,7 @@ int guiShowNetConfig(void)
     diaSetEnabled(diaNetConfig, CFG_UDPFSMODE, netProtoVal == 1);
     diaSetEnabled(diaNetConfig, CFG_SMBDIALECT, 0); // NOTE(rebuild): greyed until item 4
     netConfigDhcpPreference = ps2_ip_use_dhcp;
+    netConfigUdpfsAccess = gUdpfsAccessMode;
     netConfigLastProtocol = -1;
     netConfigUpdater(1);
 
@@ -1493,6 +1502,8 @@ reshow_network:
         // NOTE(rebuild): the fork also reads the SMB dialect row back here (item 4).
         int netProtocolWas = gNetworkProtocol;
         guiNetProtocolStore(netProtoVal2, netAccessVal2);
+        if (netProtoVal2 != 1)
+            gUdpfsAccessMode = netConfigUdpfsAccess; // retain pending preference even if switching away
         guiNetProtocolApplied(netProtocolWas);
         // OK is this page's apply button. A protocol change made on Game Sources (or declined here
         // earlier) is still waiting on a restart, so OK offers it again rather than doing nothing.

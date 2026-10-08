@@ -39,6 +39,7 @@ static base_game_info_t *udpfsGames = NULL;
 static int udpfsPs1GameCount = 0;
 static base_game_info_t *udpfsPs1Games = NULL;
 static int udpfsIomanModLoaded = 0;
+static int udpfsNicClaimed = 0;       // SMAP resident, even if later modules fail; requires IOP reset
 static int udpfsWaitingForServer = 0; // the last scan got no answer from the server; see udpfsSetWaitingForServer
 static int udpfsThemesScanned = 0;    // THM is registered once per active UDPFS session, after THM opens
 static int udpfsPs1Scanned = 0;       // a PS1-view scan has reached the server this session; see udpfsNeedsUpdate
@@ -62,6 +63,10 @@ static void udpfsLoadModules(void)
 
     if (udpfsIomanModLoaded)
         return;
+    if (udpfsNicClaimed) {
+        LOG("UDPFSSUPPORT: partial NIC chain resident, requires IOP reset\n");
+        return;
+    }
 
     // NIC-exclusivity: the SMAP adapter registers a single "SMAP_driver". The SMB/ETH stack and the
     // UDPBD/udpfs_bd block chain both own it, so refuse to bring up the UDPFS ioman stack on top of
@@ -82,6 +87,7 @@ static void udpfsLoadModules(void)
 
     LOG("[UDPFS_SMAP]:\n");
     if (sysLoadModuleBuffer(&udpfs_smap_irx, size_udpfs_smap_irx, 0, NULL) >= 0) {
+        udpfsNicClaimed = 1; // first loaded SMAP owns NIC even after partial failure
         LOG("[UDPFS_MINISTACK]:\n");
         if (sysLoadModuleBuffer(&udpfs_ministack_irx, size_udpfs_ministack_irx, (int)strlen(ipArg) + 1, ipArg) >= 0) {
             LOG("[UDPFS_IOMAN]:\n");
@@ -93,15 +99,16 @@ static void udpfsLoadModules(void)
         }
     }
 
-    // Release the dev9 reference taken above if any load failed -- otherwise a failing/retrying UDPFS
-    // inflates the refcounted dev9InitCount and a later HDD/ETH teardown can never power dev9 down.
+    // Release DEV9 only if SMAP never loaded. A partially initialized SMAP
+    // still requires DEV9 and cannot safely be replaced without IOP reset.
     LOG("UDPFSSUPPORT: module chain failed to load\n");
-    sysShutdownDev9();
+    if (!udpfsNicClaimed)
+        sysShutdownDev9();
 }
 
 int udpfsGetModulesLoaded(void)
 {
-    return udpfsIomanModLoaded;
+    return udpfsNicClaimed; // NIC interlock must catch partial module loads
 }
 
 int udpfsEnsureReady(u32 timeoutMs)
