@@ -9,6 +9,10 @@
 
 > **Planned collaboration: ps2build C++ edition.** A ps2build C++ edition is planned in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**.
 
+## Test builds and save-card recovery
+
+For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves.
+
 ## Community Contributors
 
 A heartfelt thank you to developers who have contributed pull requests directly to this fork. Anyone who opens a pull request against RiptOPL is featured here at the top of the README in recognition of their support for the project and solidarity with its maintainer:
