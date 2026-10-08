@@ -35,6 +35,8 @@ static char gOPLPart[40] = "hdd0:__common", *gHDDPrefix = "pfs0:/OPL/";
 static int hddGetSourceId(item_list_t *list, int id) { return id - (list->view == 2 ? 5 : 0); }
 static base_game_info_t *hddActiveVcd(int id) { return id < 0 || id > 1 ? &hddEmptyVcd : &hddVcdGames[id]; }
 static int cueIsCueEntry(const base_game_info_t *game) { return game->ember; }
+static char udpfsPrefix[40] = "udpfs:/";
+@UDPFS@
 @HDD@
 static void checkPaths(void) {
     char dir[SAVEICON_PATH_SIZE], part[SAVEICON_PATH_SIZE], small[8], longName[160];
@@ -42,6 +44,9 @@ static void checkPaths(void) {
     assert(saveIconPs1Directory("mass3:/", "Game", 0, dir, sizeof(dir)) && !strcmp(dir, "mass3:/POPS/Game"));
     assert(saveIconPs1Directory("mmce1:/", "Game", 1, dir, sizeof(dir)) && !strcmp(dir, "mmce1:/EMBER/games/Game"));
     assert(saveIconPs1Directory("smb:/share\\", "Game", 1, dir, sizeof(dir)) && !strcmp(dir, "smb:/share\\EMBER\\games\\Game"));
+    assert(udpfsGetPs1SaveDir(&ps1, 9, "Game", 1, dir, sizeof(dir), part, sizeof(part)) && !part[0] && !strcmp(dir, "udpfs:/EMBER/games/Game"));
+    assert(!udpfsGetPs1SaveDir(&ps1, 9, "Game", 0, dir, sizeof(dir), part, sizeof(part)));
+    assert(!udpfsGetPs1SaveDir(&ps1, 9, "../Game", 1, dir, sizeof(dir), part, sizeof(part)));
     memset(longName, 'A', sizeof(longName)-1); longName[sizeof(longName)-1]=0;
     assert(saveIconPs1Directory("smb:/a-long-share-prefix\\", longName, 1, dir, sizeof(dir)));
     assert(!saveIconPs1Directory("mass0:/", "Game", 0, small, sizeof(small)));
@@ -69,6 +74,7 @@ for placeholder, path, signature in (
         ('@CUE_GAMES@', 'src/cuesupport.c', 'void cueBuildGamesDir('),
         ('@CUE_NAME@', 'src/cuesupport.c', 'int cueNameLaunchable('),
         ('@DIRECTORY@', 'src/saveicon.c', 'int saveIconPs1Directory('),
+        ('@UDPFS@', 'src/udpfssupport.c', 'static int udpfsGetPs1SaveDir('),
         ('@HDD@', 'src/hddsupport.c', 'static int hddGetPs1SaveDir(')):
     paths = paths.replace(placeholder, function(path, signature))
 
@@ -120,7 +126,8 @@ def image(frames=1):
     card[:2] = b'MC'
     checksum(card, 0)
     struct.pack_into('<IIH', card, 128, 0x51, 8192, 0xffff)
-    card[138:150] = b'BASLUS-12345A'
+    card[138:151] = b'BASLUS-12345A'
+    assert len(card) == 131072
     checksum(card, 1)
     off = 8192
     card[off:off + 4] = bytes([ord('S'), ord('C'), 0x10 + frames, 1])

@@ -13,12 +13,9 @@
 #define RETROGEM_GAMEID_MAX 12
 
 /**
- * Extracts an 11-character PS1 Game ID (e.g., SLUS_000.01 or SLUS-00001) from a .VCD image file
- * using a 4-tier resolution ladder:
- *   1. ISO 9660 SYSTEM.CNF parsing
- *   2. PVD Volume Creation Timestamp lookup
- *   3. Partition / Subpath parsing
- *   4. Filename fallback
+ * Extract an 11-character PS1 Game ID from the boot executable named by SYSTEM.CNF
+ * in the VCD disc filesystem. No timestamp, partition-name or filename fallbacks are used;
+ * an unresolved image returns failure instead of inventing a Game ID.
  *
  * @param vcdPath Full path to the .VCD file or partition item
  * @param gameID Output buffer for the 11-character Game ID (plus NUL terminator)
@@ -29,9 +26,9 @@ int retrogemGetVcdGameID(const char *vcdPath, char *gameID, size_t maxLen);
 
 /**
  * Resolve a PS1 Game ID from an actual disc image used by a PS1 core. Supports POPStarter VCD,
- * raw/cooked BIN/ISO and CUE sheets (the CUE is followed to its data-track FILE). A bare PS-X EXE
- * only resolves when its filename itself carries a strict serial; folder/display names are never
- * invented as Game IDs.
+ * raw/cooked BIN/ISO and CUE sheets (the CUE is followed to its data-track FILE).
+ * Resolution uses the disc's SYSTEM.CNF; bare PS-X EXE files are unresolved, and
+ * folder/display names are never invented as Game IDs.
  */
 int retrogemGetPs1ImageGameID(const char *imagePath, char *gameID, size_t maxLen);
 
