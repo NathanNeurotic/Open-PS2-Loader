@@ -375,6 +375,9 @@ boot changing only the menu to 480p (<b>Triangle + Circle</b> forces the interla
 <a class="tile" href="vmc.html"><span class="icon icon-vmc"></span><b>VMC</b><span>Virtual memory cards — works under Neutrino too</span></a>
 <a class="tile" href="ps1-vcd.html"><span class="icon icon-ps1"></span><b>PS1 Games (VCD)</b><span>Separate path — always POPSTARTER, never Neutrino</span></a>
 </div>
+<h2 id="automatic-install-check">When automatic installation lookup skips a folder</h2>
+<p>An ELF alone is not a complete Neutrino installation. The resolver checks for <code>config/system.toml</code> or the supported flat-layout <code>system.toml</code> alongside it. Both <code>mc0:/neutrino/neutrino.elf</code> and <code>mc1:/neutrino/neutrino.elf</code> are fallback candidates. Keep the bundled <code>config/</code> and <code>modules/</code> folders when copying the installation. A selected valid custom installation or complete installation on the game's device can take precedence over the memory-card fallback.</p>
+<p>If manual selection works but automatic lookup fails, report the exact loader revision, active game device, custom path and folder tree. Do not conclude that slot 2 is unsupported from that symptom alone.</p>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>
