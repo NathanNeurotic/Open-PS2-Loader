@@ -347,6 +347,9 @@ settings (IGR hotkeys, multi-disc, cheats), see the
 written to the game's <code>settings.txt</code> as soon as you press OK.
 </div>
 
+<h3 id="custom-elf-save-recovery">A Custom ELF path changed after saving</h3>
+<p>The config round-trip fix in PR #885 prevents backslashes from multiplying after repeated saves. If an older build already expanded or truncated your Custom ELF value, updating does not reconstruct the original path: re-enter the correct path once, save, reopen the settings and check it remains intact. A white screen alone does not identify this bug; compare the displayed path with the original ELF location.</p>
+
 <h2 id="save-test-remove">Save Changes, Test Changes, Remove Settings</h2>
 
 <h3>Save Changes</h3>

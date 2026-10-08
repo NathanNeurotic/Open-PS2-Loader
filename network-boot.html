@@ -179,9 +179,13 @@ An SMBv1-only server lists <b>nothing</b> under <b>SMB2</b>. If your share stops
 switch to SMB2, switch back to SMBv1 or point RiptOPL at a server that speaks SMB2.
 </div>
 
+<h2 id="saved-protocol-switching">Switching protocols with saved settings</h2>
+<p>UDPFS remembers its own Files/IMG choice independently of UDPBD, which always uses IMG. Switching to UDPBD and back should restore your previous UDPFS choice; a fresh configuration defaults to Files. Set Access on the Network page and make sure the PC server serves the matching folder or disk image.</p>
+<p>Once a network driver has loaded, changing its protocol or UDPFS Access requires a restart. If restarting the application leaves the old connection active or the new protocol unavailable, fully restart the console and relaunch RiptOPL with the saved settings. Deleting your configuration is not the normal way to apply a protocol change. For a report, record both the old and new protocol, UDPFS Access, whether you restarted the application or console, and the server version.</p>
+
 <h2 id="udpfs-vs-udpfsbd">Access — Files vs IMG</h2>
 
-<p>The <b>Access</b> row is always present in Game Sources, but it is only free to change while
+<p>The <b>Access</b> row is on <b>Settings &rarr; Network</b>, alongside Protocol. Game Sources shows Connectivity and Protocol, but no Access row. Access is only free to change while
 <b>Protocol</b> = <b>UDPFS</b> — under SMB it is value-locked to <b>Files</b> and under UDPBD to
 <b>IMG</b>, greyed in both cases. Its two values are <b>Files</b> (default) and <b>IMG</b>.
 They are the <b>same UDPFS protocol</b> in two shapes: Files is
