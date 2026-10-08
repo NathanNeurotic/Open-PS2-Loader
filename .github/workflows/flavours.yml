@@ -109,7 +109,8 @@ jobs:
         run: python3 .github/scripts/test_media_lsn_count.py
       - name: Check that turning Network Connectivity off and on keeps the chosen protocol
         run: python3 .github/scripts/test_net_protocol_pick.py
-          python3 .github/scripts/test_config_escape_roundtrip.py
+      - name: Check quoted config values survive repeated save and reload
+        run: python3 .github/scripts/test_config_escape_roundtrip.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
       - name: Check custom theme font reads start with an unknown file size
