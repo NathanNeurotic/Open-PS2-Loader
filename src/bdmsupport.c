@@ -2031,6 +2031,7 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         failResult = 1; // an overfull Neutrino argv must not silently fall back to the native core
         goto fail;
     }
+    sysNeutrinoWarnPadEmu(configSet);
     if (gLaunchDiag)
         launchDiagMark(3);
 
