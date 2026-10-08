@@ -15,35 +15,38 @@ program = r'''
 typedef unsigned long long u64;
 #define O_RDONLY 0
 #define USBMASS_IOCTL_GET_LBA 1
-#define USBMASS_IOCTL_CHECK_CHAIN 2
+#define USBMASS_IOCTL_GET_FRAGLIST 2
 #define LOG(...) ((void)0)
 static char gVMCCreatePath[256];
-static int openResult=4, result, suppliesLba, chain, calls, closes;
+static int openResult=4, result, suppliesLba, fragments, calls, closes;
 static int open(const char *path, int flags) { (void)path; (void)flags; return openResult; }
 static int close(int fd) { (void)fd; closes++; return 0; }
 static int ps2sdk_get_iop_fd(int fd) { return fd+10; }
 static int fileXioIoctl2(int fd, int cmd, void *arg, int arglen, void *out, int outlen) {
     (void)arg; (void)arglen;
-    assert(fd == 14 && cmd == USBMASS_IOCTL_GET_LBA && outlen == sizeof(u64));
-    if (suppliesLba) *(u64 *)out = 0x123456789ULL;
-    return result;
-}
-static int fileXioIoctl(int fd, int cmd, const char *arg) {
-    (void)arg; assert(fd == 14 && cmd == USBMASS_IOCTL_CHECK_CHAIN); calls++; return chain;
+    assert(fd == 14);
+    if (cmd == USBMASS_IOCTL_GET_LBA) {
+        assert(outlen == sizeof(u64));
+        if (suppliesLba) *(u64 *)out = 0x123456789ULL;
+        return result;
+    }
+    assert(cmd == USBMASS_IOCTL_GET_FRAGLIST && out == NULL && outlen == 0);
+    calls++; return fragments;
 }
 @FUNCTION@
 int main(void) {
     assert(sysVMCContiguity() == -1 && closes == 0);
     strcpy(gVMCCreatePath, "mmce0:/VMC/card.bin");
     // Actual mmceman contract: successful unsupported ioctl, output untouched; ioctl returns 0.
-    result=0; suppliesLba=0; chain=0;
+    result=0; suppliesLba=0; fragments=0;
     assert(sysVMCContiguity() == -1 && calls == 0 && closes == 1);
-    suppliesLba=1; chain=1;
+    suppliesLba=1; fragments=1;
     assert(sysVMCContiguity() == 1 && calls == 1 && closes == 2);
-    chain=0; assert(sysVMCContiguity() == 0 && calls == 2 && closes == 3);
-    chain=-5; assert(sysVMCContiguity() == -1 && calls == 3 && closes == 4);
-    result=-1; assert(sysVMCContiguity() == -1 && calls == 3 && closes == 5);
-    openResult=-1; assert(sysVMCContiguity() == -1 && closes == 5);
+    fragments=2; assert(sysVMCContiguity() == 0 && calls == 2 && closes == 3);
+    fragments=-5; assert(sysVMCContiguity() == -1 && calls == 3 && closes == 4);
+    fragments=0; assert(sysVMCContiguity() == -1 && calls == 4 && closes == 5);
+    result=-1; assert(sysVMCContiguity() == -1 && calls == 4 && closes == 6);
+    openResult=-1; assert(sysVMCContiguity() == -1 && closes == 6);
     return 0;
 }
 '''.replace('@FUNCTION@', function)
@@ -53,4 +56,4 @@ with tempfile.TemporaryDirectory() as temp:
     cfile.write_text(program, encoding='utf-8')
     subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror', str(cfile), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
-print('VMC completion: unsupported MMCE ioctl stays unknown; real FATFS chain checks remain enforced')
+print('VMC completion: unsupported MMCE ioctl stays unknown; positive fragment counts distinguish contiguous, fragmented and failed/empty queries')

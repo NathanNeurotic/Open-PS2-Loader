@@ -222,6 +222,7 @@ int gEnableUDPBD;
 int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived from gNetworkProtocol)
 int gNetworkProtocol; // enum NETWORK_PROTOCOL -- authoritative backend selector (Off/SMB/UDPBD/UDPFSBD/UDPFS)
 int gNetProtocolPick; // last protocol chosen, never OFF (see opl.h)
+int gUdpfsAccessMode; // UDPFS Files/IMG preference, independent of UDPBD
 int gNetStartMode;    // START_MODE_* -- the Off/Manual/Auto network start row (see the 3-row Network setting)
 int gAutosort;
 int gAutoRefresh;
@@ -3476,6 +3477,12 @@ static void _loadConfig()
                      gNetProtocolPick <= NET_PROTO_OFF || gNetProtocolPick > NET_PROTO_HTTP)
                 gNetProtocolPick = NET_PROTO_SMB;
 
+            // Recover UDPFS Access independently of UDPBD. Older configs have no key: infer
+            // IMG only if their active/remembered protocol really was UDPFSBD, else Files.
+            if (!configGetInt(configOPL, CONFIG_OPL_UDPFS_ACCESS, &gUdpfsAccessMode) ||
+                (gUdpfsAccessMode != 0 && gUdpfsAccessMode != 1))
+                gUdpfsAccessMode = (gNetProtocolPick == NET_PROTO_UDPFSBD) ? 1 : 0;
+
             // Network start row (Off/Manual/Auto). A config predating this field has no net_start_mode
             // key -- derive it from the protocol we just resolved so an existing user keeps working:
             //   OFF   -> Off (Row 1); SMB -> its persisted eth_mode (so a prior SMB=Auto survives);
@@ -3960,6 +3967,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_NETWORK_PROTOCOL, gNetworkProtocol);
         configSetInt(configOPL, CONFIG_OPL_NET_START_MODE, gNetStartMode);
         configSetInt(configOPL, CONFIG_OPL_NET_PROTOCOL_PICK, gNetProtocolPick);
+        configSetInt(configOPL, CONFIG_OPL_UDPFS_ACCESS, gUdpfsAccessMode);
         configSetInt(configOPL, CONFIG_OPL_SFX, gEnableSFX);
         configSetInt(configOPL, CONFIG_OPL_RUMBLE, gEnableRumble);
         configSetInt(configOPL, CONFIG_OPL_BOOT_SND, gEnableBootSND);
@@ -4961,6 +4969,7 @@ static void setDefaults(void)
     gNetworkProtocol = NET_PROTO_OFF;
     gNetStartMode = START_MODE_DISABLED; // Off in the 3-row Network setting; migration reconciles old configs
     gNetProtocolPick = NET_PROTO_SMB;
+    gUdpfsAccessMode = 0; // UDPFS Files; never inherit UDPBD's forced IMG
 
     frameCounter = 0;
 
