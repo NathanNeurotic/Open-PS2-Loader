@@ -1,0 +1,468 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PS1 Games · RiptOPL Docs</title>
+<meta name="description" content="Play PS1 games on PS2 through two cores: POPSTARTER (.VCD) and Ember (.cue), in one list.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html" class="active"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>PS1 Games</h1>
+<p class="lead">RiptOPL can list and launch your PlayStation 1 games right alongside your PS2 library,
+on the same device. It does this through <b>two</b> cores — <b>POPSTARTER</b> for <code>*.VCD</code>
+images and <b>Ember</b> for game folders containing <code>*.cue</code>, <code>*.bin</code>, or
+<code>*.exe</code> discs. Ordinary devices merge both into one <b>PS1</b> list. Neither uses OPL's built-in core or Neutrino, so this is a self-contained path with
+its own storage layout and settings.</p>
+
+<table data-sortable>
+  <thead><tr><th>Core</th><th>Format</th><th>Lives in</th></tr></thead>
+  <tbody>
+    <tr><td><b>POPSTARTER</b></td><td><code>*.VCD</code></td><td><code>&lt;device&gt;:/POPS/</code></td></tr>
+    <tr><td><b>Ember</b></td><td><code>*.cue</code> / <code>*.bin</code> / <code>*.exe</code></td><td><code>&lt;device&gt;:/EMBER/games/&lt;Game Name&gt;/</code></td></tr>
+  </tbody>
+</table>
+
+<p>The two are interleaved and sorted as one library, so a game you keep for both cores simply
+appears twice. Which core runs a title is a property of that row, decided when you launch it —
+there is nothing to configure and no third toggle.</p>
+
+<div class="callout info"><div class="h">POPSTARTER internals are on the sister site</div>
+This page covers the RiptOPL side: where to put your files, how the PS1 view works, and the BDMA
+exFAT equip. For POPSTARTER itself — the 32-byte per-game config table, cheats, IGR/hotkeys,
+multi-disc setups, and memory-card storage — see the
+<a href="https://nathanneurotic.github.io/POPSLoader/"><b>POPStarter docs</b></a>:
+<a href="https://nathanneurotic.github.io/POPSLoader/config.html">config table</a> ·
+<a href="https://nathanneurotic.github.io/POPSLoader/cheats.html">cheats</a> ·
+<a href="https://nathanneurotic.github.io/POPSLoader/igr.html">IGR &amp; hotkeys</a> ·
+<a href="https://nathanneurotic.github.io/POPSLoader/multidisc.html">multi-disc</a> ·
+<a href="https://nathanneurotic.github.io/POPSLoader/storage.html">storage</a>.
+</div>
+
+<h2 id="vcd-view">PS2 and PS1 libraries on each device</h2>
+
+<p>Every supported game page holds a PS2 list and a PS1 list:</p>
+<ul class="checklist">
+  <li>its <b>PS2 games</b> (ISO / ZSO / UL format), and</li>
+  <li>its <b>PS1 games</b> — POPSTARTER <code>*.VCD</code> images and Ember <code>*.cue</code>
+      titles together, in one list.</li>
+</ul>
+<p><b>PS2/PS1 Game Display</b> controls whether these are separate L3-switched views, a combined
+list with filters, or one locked library. They remain views of the same device page — with the same
+covers, favorites, and per-game settings — rather than separate device tabs.</p>
+
+<div class="callout info"><div class="h">UDPFS and UDPBD list Ember only</div>
+Their PS1 pages are enabled, but never publish POPSTARTER/VCD rows. Ember inherits the already-live
+<code>udpfs:</code> or network block-device mount; POPSTARTER resets the IOP and cannot restore either
+transport. Hiding rows that cannot launch keeps the network PS1 page honest.
+</div>
+
+<h2 id="default-game-view">PS2/PS1 Game Display</h2>
+
+<p>The picker is on <b>Settings → Interface</b>. It is one global setting for every device
+page:</p>
+
+<table data-sortable>
+  <thead><tr><th>Value</th><th>Behavior</th></tr></thead>
+  <tbody>
+    <tr><td><b>Both (L3)</b> (default)</td><td>Each device page has separate PS2 and PS1 views; L3 switches between them and each page retains its own position.</td></tr>
+    <tr><td><b>Mixed</b></td><td>Each device starts with PS2 and PS1 rows combined; L3 cycles <b>Mixed → PS2 → PS1</b> on that page. In the combined list each row's cover is drawn at its own media's size, so PS1 covers stay square beside portrait PS2 covers.</td></tr>
+    <tr><td><b>PS2</b></td><td>Applicable device pages show PS2 only; L3 is fully inert, with no hint, sound, notification, or pause.</td></tr>
+    <tr><td><b>PS1</b></td><td>Applicable device pages show PS1 only; L3 is fully inert, with no hint, sound, notification, or pause.</td></tr>
+  </tbody>
+</table>
+
+<p>APPS and Favorites do not inherit this setting. Favorites always has its independent
+<b>PS2 → PS1 → ELF → All in One</b> ring, opening on PS2. <b>Applications Display</b> either keeps
+all ELFs in one inert Mixed list or splits Apps / titles containing <code>[PS1]</code>
+(case-insensitive) across L3; either side still launches an ordinary ELF. Switching back to an
+L3-enabled device mode restores each device page's retained position.</p>
+
+<div class="callout info"><div class="h">Positions survive a reboot</div>Wherever L3 does something,
+the view you leave a page on is <b>remembered across sessions</b> — every device page, the Favorites
+shelf and the APPS split side keep their own. Pressing L3 never writes to storage: a position rides
+along with a write that already happens — <b>launching a game, or saving settings</b> — so toggling
+and then powering off without doing either is the one case that is not kept. A remembered view that this
+picker no longer allows (you moved from <b>Mixed</b> to <b>Both</b>, say) is discarded rather than
+forced, so the page opens on its default instead of on a view with no rows.</div>
+
+<h2 id="launch">How PS1 games launch</h2>
+
+<p>A PS1 row carries its own core. A <code>*.VCD</code> row boots through
+<code>POPSTARTER.ELF</code>; an Ember row boots through <code>ember.elf</code>. Neither ever uses
+OPL's built-in core or Neutrino, so on any PS1 game the per-game <b>Loader Core</b> selector is an
+inert label and changing it has no effect. The same applies to GSM, Cheats, PADEMU and the other
+PS2-specific per-game options — neither PS1 core reads them.</p>
+
+<p>POPSTARTER only needs the VCD's <em>name</em> to do its job. RiptOPL hands it the selected title
+and POPSTARTER locates the matching <code>*.VCD</code> file itself. Ember is handed the name of the
+game <em>folder</em> and finds its own disc image inside it.</p>
+
+<p>For an iLink VCD, RiptOPL uses the same local block-device handoff as USB and MX4SIO:
+<code>mass:/POPS/XX.&lt;game&gt;.ELF</code>. The normal <code>XX.</code> filename rules therefore
+apply unchanged.</p>
+
+<div class="callout amber"><div class="h">iLink POPSTARTER is wired, not yet hardware-confirmed</div>
+Revision 2692 still returned POPSTARTER to wLaunchELF from iLink on an SCPH-39001 in all four SDK
+flavours, while Ember passed from the same drive. The selector and external equip documented here
+are present, but that test result is not a pass. Use the card-file checks below to distinguish a
+RiptOPL equip failure from a POPSTARTER/BDMA runtime failure after handoff.
+</div>
+
+<h3>POPSTARTER.ELF path</h3>
+<p>RiptOPL looks for <code>POPSTARTER.ELF</code> in a fixed order:</p>
+<ol>
+<li><b>Settings → PS Emulation Settings → POPSTARTER.ELF Path</b>, when it is set. It is a full
+path on any device, for example <code>mmce0:/POPS/POPSTARTER.ELF</code> or
+<code>usb:/POPS/POPSTARTER.ELF</code>; the device aliases are the ones listed for the
+<a href="neutrino.html#neutrino-device">Neutrino Path</a>. The editor takes the whole path.</li>
+<li>The VCD's own device: its <code>POPS/POPSTARTER.ELF</code>. For an APA HDD VCD this is
+<code>hdd0:__common/POPS/POPSTARTER.ELF</code>.</li>
+<li><code>mc0:/POPS/POPSTARTER.ELF</code>, then <code>mc1:/POPS/POPSTARTER.ELF</code>.</li>
+</ol>
+<p>A path that is set but unavailable falls through to the next two steps. The path may be on a
+different device from the VCD; RiptOPL keeps both mounted until POPSTARTER has loaded. If you
+relocate <code>POPSTARTER.ELF</code>, keep the BDMA driver variants in the same folder: RiptOPL
+looks for them there first. The old <b>POPSTARTER.ELF Device</b> picker is gone; its device choice
+becomes the matching path when you upgrade.</p>
+<p>When none of them has it, the launch says <b>Missing POPSTARTER.ELF</b> and names the path it looked at: your <b>POPSTARTER.ELF Path</b> when it is set, otherwise the device's <code>POPS/POPSTARTER.ELF</code> (on the internal HDD, <code>hdd0:__common/POPS/POPSTARTER.ELF</code>).</p>
+
+<h2 id="ember">Ember — the second PS1 core</h2>
+
+<p><b><a href="https://github.com/Gageformer/Ember/releases">Ember</a> is created by Gageformer.</b> It is an independent PlayStation 1
+emulator written from scratch for the PS2, bundled unmodified under the <b>Ember Public Beta Testing Licence</b>.
+That licence ships in the release package as <code>EMBER/LICENSE-BETA.txt</code> and governs the
+build it accompanies; please read it. In short: free to use and to bundle non-commercially, no
+selling, and no modifying or repackaging the build.</p>
+
+<div class="callout info"><div class="h">Report Ember problems to us first</div>
+The launching is ours and most issues turn out to be on our side. Please raise them on the
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">RiptOPL issue tracker</a> rather
+than with Gageformer.
+</div>
+
+<h3>Setting Ember up</h3>
+<p>The release package contains a ready-made <code>EMBER/</code> folder. Copy it to the <b>root</b>
+of a device, right beside <code>POPS/</code>. Then add <b>your own PS1 BIOS</b> as
+<code>EMBER/bios.bin</code> — it must be exactly <b>512 KB</b>. A BIOS is copyrighted and is never
+distributed with RiptOPL or with Ember, so the folder ships with a placeholder file whose name
+reminds you. Give each game its own folder:</p>
+
+<pre><code>&lt;device&gt;:/EMBER/
+    ember.elf
+    bios.bin                       &lt;- yours, 512 KB, not included
+    settings.txt                   &lt;- optional, see below
+    games/
+        Spyro 2 (Ripto's Rage)/
+            whatever.cue
+            whatever.bin</code></pre>
+
+<p>The <b>folder name</b> is what you see in the list, and it is also the key for cover art and
+per-game settings — so <code>ART/Spyro 2 (Ripto's Rage)_COV.png</code> on that device just works,
+exactly as it does for a <code>*.VCD</code>. Files inside can be named anything;
+<code>.cue</code> is preferred over <code>.exe</code> over <code>.bin</code>. Ember writes its
+per-game memory cards (<code>MC1.vmc</code>, <code>MC2.vmc</code>) into that same game folder, so it
+has to be on writable media.</p>
+
+<div class="callout info"><div class="h">When a piece is missing</div>
+Ember games stay in the list even when <code>ember.elf</code> is missing or misnamed, so you can see them. Launching one then says what is missing and names the exact path RiptOPL looked at, for example <code>mass0:/EMBER/ember.elf</code> or <code>mass0:/EMBER/bios.bin</code>. On the internal HDD it names the partition, such as <code>hdd0:__.EMBER/EMBER/ember.elf</code>.
+</div>
+
+<h3>Ember settings</h3>
+<p>Ember reads an optional <code>settings.txt</code>. RiptOPL can write it for you from five rows on
+<b>Settings → PS Emulation Settings</b>, and four more per game:</p>
+
+<table data-sortable>
+  <thead><tr><th>Row</th><th>Values</th><th>Written to</th></tr></thead>
+  <tbody>
+    <tr><td><b>Ember Display Mode</b></td><td>Default / 240p / 480i / 480p</td><td><code>&lt;device&gt;:/EMBER/settings.txt</code> (<code>display</code>). <b>480p</b> needs component or HDMI — composite shows no picture — so choosing it asks first.</td></tr>
+    <tr><td><b>Ember Timing</b></td><td>Default / Auto / NTSC / PAL</td><td><code>EMBER/settings.txt</code> (<code>timing</code>). <em>Auto</em> follows the disc region; NTSC forces 60 Hz and PAL 50 Hz.</td></tr>
+    <tr><td><b>Ember Dithering</b></td><td>Default / On / Off</td><td><code>EMBER/settings.txt</code> (<code>dither</code>)</td></tr>
+    <tr><td><b>Ember Shading</b></td><td>Default / 15-bit / 24-bit (experimental)</td><td><code>EMBER/settings.txt</code> (<code>shading</code>). 24-bit can cause issues.</td></tr>
+    <tr><td><b>Ember Controller</b></td><td>Default / Auto / Analog / D2A</td><td><code>EMBER/settings.txt</code> (<code>controller</code>)</td></tr>
+    <tr><td><b>Triangle → Ember Game Settings</b> (per game)</td><td>Ember Timing, Dithering, Shading and Controller, each with the same values as the global row</td><td><code>EMBER/games/&lt;Folder Name&gt;/settings.txt</code> (<code>timing</code>, <code>dither</code>, <code>shading</code>, <code>controller</code>), overriding the global rows for that game. Written as soon as you press OK, before any launch, and applied again at launch. An untouched <em>Default</em> keeps a value already in the file; changing a row back to <em>Default</em> removes that override. Display Mode stays global. Saved in the game's <code>CFG/&lt;Folder Name&gt;.cfg</code>; on a Favourites entry it edits the same setting as on the device page.</td></tr>
+  </tbody>
+</table>
+
+<p><b>RiptOPL only touches a setting you have changed in RiptOPL.</b> A row left on <b>Default</b>
+leaves that key alone in every file, so a <code>settings.txt</code> written by hand keeps working
+exactly as written. A row you change is written when you launch an Ember title, on that device
+only — creating the file if it is not there, updating it in place if it is. Changing a row back to
+<b>Default</b> removes the key again (and the file, if that key was all it held), so Ember's own
+default — or, for a game, the global row — applies. Every other line in the file is kept.</p>
+
+<p>Controller is the only per-game setting, on Ember's author's advice: per-game settings are meant
+for the controller, and 24-bit shading can cause issues. Earlier builds labelled Ember's
+<code>480</code> as "480p"; it has always been 480i, and the 480i / 480p rows now say so.</p>
+
+<h3>Device support</h3>
+<p>Ember titles are supported on <b>USB, MX4SIO, iLink, exFAT-ATA, MMCE, SMB, APA/PFS HDD,
+UDPFS and UDPBD</b>. Ordinary device pages merge Ember folders with their POPSTARTER rows; the two
+UDP network pages are Ember-only. A device with no <code>EMBER/</code> library simply contributes no
+Ember rows, and every ordinary device's POPSTARTER library lists exactly as before.</p>
+
+<h2 id="file-layout">Where to put your VCD files</h2>
+
+<table data-sortable>
+  <thead><tr><th>Device</th><th>Location</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>USB / MMCE / MX4SIO / iLink / SMB</td>
+      <td>A <code>POPS/</code> folder at the device root, containing <code>POPSTARTER.ELF</code> and your <code>*.VCD</code> files.</td>
+    </tr>
+    <tr>
+      <td>Internal HDD (APA/PFS)</td>
+      <td>The dedicated APA partitions <code>__.POPS</code>, <code>__.POPS0</code> … <code>__.POPS9</code>. Each partition holds its <code>*.VCD</code> files at the partition root.</td>
+    </tr>
+    <tr>
+      <td>Internal HDD (exFAT / BDM)</td>
+      <td><code>massN:/POPS/</code> — the same layout as USB, accessed through the BDM mass-device namespace. Requires the <a href="#bdma">BDMA exFAT equip</a>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout info"><div class="h">Cover art and per-game config by disc ID</div>
+If a VCD's filename follows the PS1 disc-ID pattern <code>SXXX_NNN.NN.Title.VCD</code>, RiptOPL
+keys cover art and per-game config off that PS1 ID — so covers load from your <code>ART/</code>
+folder exactly as they do for PS2 games. Any other <code>*.VCD</code> filename is still listed and
+launched; it just won't auto-match art by ID.
+</div>
+
+<h2 id="bdma">exFAT support — the BDMA equip</h2>
+
+<p>POPSTARTER's stock driver handles ordinary USB FAT32. USB exFAT and the MX4SIO, MMCE, ATA and
+iLink transports need matching external block-device modules (the BDMAssault / "BDMA" drivers). RiptOPL
+<em>equips</em> them onto your memory card from <b>Settings → PS Emulation Settings</b> — you supply the module
+files, RiptOPL copies the right pair to <code>mc?:/POPSTARTER/</code>. <b>VCD BDMA Apply on Launch</b>
+ships <b>On</b>, so by default the matching pair is equipped automatically immediately before each VCD
+launch and the manual <b>BDMA Source</b> / <b>BDMA Mode</b> pickers stay hidden; turn it <b>Off</b> to
+equip by hand instead.</p>
+
+<div class="callout info"><div class="h">You supply the BDMA module files</div>
+RiptOPL embeds none of the BDMA modules (no ELF bloat). The module files must be present in a
+<code>POPS/</code> folder RiptOPL can read: with <b>VCD BDMA Apply on Launch</b> <b>On</b> (the
+default) that is the game's own device; with it <b>Off</b>, whichever device you select as the
+<b>BDMA Source</b>. RiptOPL also pre-checks your boot device's <code>POPS/</code> folder — and the
+folder holding a custom <code>POPSTARTER.ELF</code>, if you set one — ahead of either. The release
+<code>POPS/</code> folder includes what ships with the build; check the
+<a href="releases.html">Releases</a> page for details.
+For iLink the loose source pair is <code>usbd.irx.ilink</code> +
+<code>usbhdfsd.irx.ilink</code>. RiptOPL removes only the <code>.ilink</code> suffix when it
+copies them to the card as <code>usbd.irx</code> + <code>usbhdfsd.irx</code>.
+</div>
+
+<div class="callout info"><div class="h">Verify an iLink equip after a failed launch</div>
+The card should contain <code>mc?:/POPSTARTER/bdma_config.txt</code> with exactly <code>ilink</code>,
+<code>usbd.irx</code> at 48,500 bytes (SHA-256
+<code>5EA4818BA1CF5207F6D7CADB4C13B5AFA88C37C260750C21155B079A8C18F369</code>), and
+<code>usbhdfsd.irx</code> at 23,452 bytes (SHA-256
+<code>145CF1C0AF130EA7AC5CEC6696AA7E60B5C66A2AC46B8DEA94DB17BB3B911BCC</code>). Missing or different
+files identify RiptOPL's external-equip leg; exact files narrow the remaining failure to the
+POPSTARTER/BDMA reinitialization leg.
+</div>
+
+<h3>BDMA Mode</h3>
+<p>Shown only when <b>VCD BDMA Apply on Launch</b> is <b>Off</b>. Selects which driver variant
+POPSTARTER should use:</p>
+<table data-sortable>
+  <thead><tr><th>BDMA Mode value</th><th>Effect</th></tr></thead>
+  <tbody>
+    <tr><td><b>USB (FAT32)</b></td><td>Removes any previously equipped exFAT modules, so POPSTARTER falls back to its built-in FAT32 driver. Use this for standard FAT32 USB drives.</td></tr>
+    <tr><td><b>USB (exFAT)</b></td><td>Equips the USB exFAT BDMAssault modules.</td></tr>
+    <tr><td><b>MX4SIO (exFAT)</b></td><td>Equips the MX4SIO exFAT BDMAssault modules.</td></tr>
+    <tr><td><b>MMCE (exFAT)</b></td><td>Equips the MMCE exFAT BDMAssault modules.</td></tr>
+    <tr><td><b>HDD (exFAT)</b></td><td>Equips the internal ATA HDD BDMAssault modules. Requires <em>Internal HDD (exFAT)</em> enabled in Game Sources.</td></tr>
+    <tr><td><b>iLink</b></td><td>Equips the iLink / IEEE 1394 BDMAssault modules from the <code>.ilink</code> pair.</td></tr>
+  </tbody>
+</table>
+
+<h3>BDMA Source</h3>
+<p>Shown only when <b>VCD BDMA Apply on Launch</b> is <b>Off</b> — with it <b>On</b> the source is
+the game's own device family instead. Selects which device RiptOPL reads the module files from (the
+device whose <code>POPS/</code> folder holds the variant you want to equip): <b>USB</b>,
+<b>MX4SIO</b>, <b>MMCE</b>, <b>iLink</b>, or
+<b>Internal HDD</b>. RiptOPL identifies the device by its block-device <em>driver</em>
+(<code>usb</code> / <code>mx4sio</code> / <code>ata</code> / <code>ilink</code> / <code>mmce</code>) and reads from that
+specific device, so pick the one your module files actually sit on. For an internally attached exFAT
+HDD choose <b>Internal HDD</b> — RiptOPL reads it from its mounted <code>massN:</code> root (the exFAT
+volume mounted through the BDM mass-device namespace, never a typed <code>ata0:</code> filesystem), so its
+<code>POPS/usbd.irx.ata</code> + <code>POPS/usbhdfsd.irx.ata</code> are found.</p>
+
+<p>SMB is network-only, so the BDMA equip does not apply to it.</p>
+
+<h3>The equip step</h3>
+<div class="steps">
+  <div class="step">
+    <h3>Place module files</h3>
+    <p>Copy the appropriate BDMA variant's module files into the <code>POPS/</code> folder of the
+    device you will select as the Source (USB, MX4SIO, MMCE, iLink, or the internal HDD).</p>
+  </div>
+  <div class="step">
+    <h3>Turn VCD BDMA Apply on Launch off</h3>
+    <p>In <b>Settings → PS Emulation Settings</b>, set <b>VCD BDMA Apply on Launch</b> to <b>Off</b>. The
+    <b>BDMA Source</b> and <b>BDMA Mode</b> pickers are hidden while it is On (the default).</p>
+  </div>
+  <div class="step">
+    <h3>Set BDMA Source</h3>
+    <p>In <b>Settings → PS Emulation Settings</b>, set <b>BDMA Source</b> to the device that holds the
+    module files.</p>
+  </div>
+  <div class="step">
+    <h3>Set BDMA Mode</h3>
+    <p>Set <b>BDMA Mode</b> to the variant matching your target drive type (e.g. <b>USB (exFAT)</b>
+    for an exFAT USB stick, <b>HDD (exFAT)</b> for the internal ATA drive, or <b>iLink</b> for
+    IEEE 1394 storage).</p>
+  </div>
+  <div class="step">
+    <h3>Save settings</h3>
+    <p>Save. RiptOPL copies the modules from Source's <code>POPS/</code> onto
+    <code>mc?:/POPSTARTER/</code> and records the equipped variant in a marker file there
+    (<code>bdma_config.txt</code>) so the settings UI reflects what's actually installed.
+    POPSTARTER will use the new modules on next launch.</p>
+  </div>
+</div>
+
+<h2 id="smb-ps1">PS1 over SMB</h2>
+
+<p>PS1 games on an SMB share need POPSTARTER's own network config
+(<code>IPCONFIG.DAT</code> + <code>SMBCONFIG.DAT</code>) on the memory card, plus its SMB
+modules. Edit those files from <b>POPSTARTER Network Settings</b>, on <b>Settings → PS Emulation
+Settings</b> or <b>Settings → Network</b>. The screen shows what the files on the memory card already
+contain, can import both from the connected share's <code>POPS</code> folder, and writes back only what you
+change. On a first setup, with neither file on the card, saving the SMB values writes <code>IPCONFIG.DAT</code> too, as DHCP unless a complete static IP is entered. See <a href="settings.html#pops-network-settings">POPSTARTER Network Settings</a>.</p>
+
+<p>The SMB modules themselves ship in the release's <code>POPS/</code> folder — copy them to
+<code>mc?:/POPSTARTER/</code>. If they are missing, an SMB VCD launch warns you rather than
+hanging silently.</p>
+
+<h2 id="hdd-ps1">Internal HDD — APA partitions and exFAT</h2>
+
+<p>The internal HDD supports PS1 games through two paths that coexist:</p>
+<ul class="checklist">
+  <li><b>APA/PFS partitions</b> — the traditional POPS APA volumes (<code>__.POPS</code>,
+  <code>__.POPS0</code> … <code>__.POPS9</code>). RiptOPL scans all of them and lists their
+  <code>*.VCD</code> files in the HDD device's PS1 view. No BDMA equip is needed here because
+  POPSTARTER reads PFS natively.</li>
+  <li><b>exFAT HDD (BDM)</b> — enable <em>Internal HDD (exFAT)</em> in Game Sources. The exFAT volume
+  mounts as a normal BDM block device (one of the <code>massN:</code> slots) and its
+  <code>POPS/</code> folder appears in the same PS1 view as USB. Equip the
+  <b>HDD (exFAT)</b> BDMA mode so POPSTARTER can read back off the exFAT volume at launch time.</li>
+</ul>
+
+<p>For the full HDD setup guide, including the APA/exFAT layout and how to enable BDM HDD, see
+<a href="hdd.html">Internal HDD (APA &amp; exFAT)</a>.</p>
+
+<h2 id="limitations">Notes &amp; limitations</h2>
+<ul class="checklist">
+  <li>The PS1 view reuses the normal device pipeline, so covers, favorites, and the theme all work
+  exactly as they do for disc games.</li>
+  <li>POPSTARTER, every loose BDMA pair (including <code>.ilink</code>), and the POPS patch file
+  ship as separate files in the release <code>POPS/</code> folder — RiptOPL does not embed any of them.</li>
+  <li>The per-game Loader Core, GSM, Cheats, PADEMU, and OSD options do not apply to PS1 games;
+  POPSTARTER ignores them and the UI reflects this. <b>Triangle</b> on a PS1 title offers
+  <b>Global PS Emulation Settings</b> instead, which opens the global PS emulation settings page, plus
+  <b>Rename</b>. An Ember title also offers <b>Ember Game Settings</b> (its Ember Timing, Dithering, Shading and Controller; see
+  <a href="#ember">Ember</a>).</li>
+  <li>SMB PS1 requires POPSTARTER's own network modules on the memory card in addition to the
+  network config files.</li>
+</ul>
+
+<h2 id="popstarter-internals">POPSTARTER internals — sister site</h2>
+<p>The following topics are fully documented on the
+<a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a> site and are not
+re-documented here:</p>
+
+<div class="grid">
+  <a class="tile" href="https://nathanneurotic.github.io/POPSLoader/config.html">
+    <span class="icon icon-settings"></span><b>Config table</b><span>The 32-byte per-game POPSTARTER config</span>
+  </a>
+  <a class="tile" href="https://nathanneurotic.github.io/POPSLoader/cheats.html">
+    <span class="icon icon-cheats"></span><b>Cheats</b><span>PS1 cheat code syntax and application</span>
+  </a>
+  <a class="tile" href="https://nathanneurotic.github.io/POPSLoader/igr.html">
+    <span class="icon icon-igr"></span><b>IGR &amp; hotkeys</b><span>In-game reset and controller shortcuts</span>
+  </a>
+  <a class="tile" href="https://nathanneurotic.github.io/POPSLoader/multidisc.html">
+    <span class="icon icon-ps1"></span><b>Multi-disc</b><span>Swapping discs mid-game</span>
+  </a>
+  <a class="tile" href="https://nathanneurotic.github.io/POPSLoader/storage.html">
+    <span class="icon icon-vmc"></span><b>Storage</b><span>Memory card layout for POPS saves and modules</span>
+  </a>
+</div>
+
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

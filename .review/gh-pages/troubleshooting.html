@@ -1,0 +1,363 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Troubleshooting · RiptOPL Docs</title>
+<meta name="description" content="Fixes for common boot, display, and device problems.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html" class="active"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Troubleshooting</h1>
+<p class="lead">Step-by-step fixes for the most common RiptOPL problems — boot hangs, blank screens, video mode locks, white-screen game failures, BDMA driver errors, and PS1/VCD list issues.</p>
+
+<div class="callout info"><div class="h">i Still stuck after reading this page?</div>
+Report RiptOPL regressions in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">our issue tracker</a>.
+Include version/SHA, SDK flavour, console model, game ID, source/protocol, core, steps, settings and any
+known-good build comparison. The <a href="https://www.psx-place.com/threads/open-ps2-loader-game-bug-reports.19401/">upstream OPL forum</a> remains a community resource. For PS1 internals (IGR, cheats, multi-disc, config table), see the sister
+<a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.
+</div>
+
+<h2 id="freeze-logo">OPL freezes on the logo or grey screen</h2>
+
+<p><b>Symptom:</b> RiptOPL hangs at the animated logo or a grey screen on every boot — the game list never appears.</p>
+<p><b>First isolation check:</b> Try skipping saved configuration. A bad config is one possible cause; a startup screen alone does not identify the failing subsystem.</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>Skip config on boot</h3>
+    <p>Power on your PS2 and immediately hold <code>START</code> while RiptOPL initializes. Keep it held until the interface appears. This tells OPL to skip loading the saved config and boot with defaults instead. Expect to land on the <b>start menu with no game-list tabs</b> — that is what the defaults look like, since every device ships off — not on a game list.</p>
+  </div>
+  <div class="step">
+    <h3>Open and re-save settings</h3>
+    <p>With the loader running (config skipped), open <b>Settings</b> and configure the options you need — at minimum, enable the device mode(s) you use. Then <b>Save</b> so a fresh, valid <code>settings_riptopl.cfg</code> is written.</p>
+  </div>
+  <div class="step">
+    <h3>Verify the fix</h3>
+    <p>Reboot OPL normally (without holding any buttons). If it reaches the game list or settings screen without freezing, the bad config has been replaced. If it still freezes, record the exact build and active settings location and report the result; do not assume the file lives on the memory card.</p>
+  </div>
+</div>
+
+<details class="deep"><summary>Why does RiptOPL have its own config file?</summary>
+<p>RiptOPL's master settings use <code>settings_riptopl.cfg</code> (with migration from
+<code>conf_riptopl.cfg</code>). That filename is separate from stock OPL's master config, but
+<code>conf_network.cfg</code>, app lists, per-game configuration and support files can still be shared.
+Favorites import from uOPL/wOPL is <b>one-way</b>: the next write saves RiptOPL's own <code>OFAV</code>
+format to <code>favourites.bin</code>, which those loaders cannot read back. Keep an original copy if
+you use them too. The settings home follows boot-directory discovery or <b>Custom Settings Path</b>;
+do not assume it is always <code>mc0:/OPL/</code>.</p>
+</details>
+
+<h2 id="white-screen">Game stops on a white screen</h2>
+<p>A white or black launch screen alone does not diagnose fragmentation or a corrupt dump. Record
+the build/SDK, console, game ID, source and core before changing anything.</p>
+<ol><li>Check the image against a known-good dump and verify that the copy completed.</li>
+<li>Try the title with game overrides disabled, checking inherited global defaults as well.</li>
+<li>If the loader reports a fragment-limit error, try a fresh sequential copy with sufficient free
+space. OPL's BDM table is shared across game image parts; Neutrino counts ISO and VMC fragments
+together against its 64-entry block-device budget.</li>
+<li>Compare a known-good build on the same setup and report where the launch stops.</li></ol>
+<p>Back up all data before considering a reformat. Do not reformat solely because of a screen colour.
+A successful retry after several changes does not establish which change fixed it.</p>
+
+<h2 id="no-display">No display on boot (blank or black screen)</h2>
+<p>Hold <kbd>Triangle</kbd> + <kbd>Cross</kbd> while RiptOPL initializes to force <b>480p for the menu</b>.
+The display and connection must accept that signal. On a TV that only takes interlaced signals (a CRT,
+for example), hold <kbd>Triangle</kbd> + <kbd>Circle</kbd> instead: it forces <b>Auto</b>, the region's
+interlaced mode. Once visible, select a suitable mode under <b>Interface</b>, save, and retry. Holding
+<kbd>START</kbd> skips saved configuration and uses defaults.</p>
+<p>Changing the video mode can't strand you this way: keeping a new mode takes a <b>hold</b> of Accept
+(about 2 seconds, until the bar fills), and Back or 10 seconds without an answer restores the previous
+mode. See <a href="controls.html#keep-video-mode">Keeping a new video mode</a>.</p>
+<h3 id="game-video">Menu works, but launching a game loses the picture</h3>
+<p>The menu recovery combo does not clear per-game GSM settings. Open the affected game's settings
+and disable/change its GSM override, or its Neutrino video options for that core. Check global video
+defaults too. Retry with the game's normal output before adding overrides again.</p>
+
+<h2 id="hdd-code-402">Internal HDD — code 402, 500, or "Formatted: NO"</h2>
+<p><b>Code 402:</b> the HDD answered, but its APA partition table can't be read. wLaunchELF shows the same
+disk as <b>"Connected: YES / Formatted: NO"</b>. Your games are almost certainly still on it.
+<b>Do not format it.</b> Stop using the disk, then follow the recovery steps under
+<a href="hdd.html#disk-safety">Internal HDD — Disk safety and code 402</a>. Code <b>401</b> means the
+drive did not answer at all.</p>
+<p><b>Code 500:</b> a drive was not mounted because its sectors are not 512 bytes, as on a 4Kn drive.
+This applies to any USB, iLink, MX4SIO or internal exFAT drive: RiptOPL only reads 512-byte sectors.
+Ordinary 512e drives are unaffected.</p>
+<p><b>Delete is missing on the HDD, or Rename on an HDD PS2 game:</b> by design. RiptOPL does not edit
+the APA partition table, so the HDD library is managed from a PC with HDL-Dump.</p>
+
+<h2 id="vcd-list-empty">PS1/VCD — "my VCDs don't show up" (works elsewhere)</h2>
+
+<p><b>Symptom:</b> A device lists PS2 games fine (or works in another loader), but its PS1 view is empty — or a listed VCD does nothing when selected.</p>
+
+<p>Work down this ladder; each step isolates a different stage:</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>Does the device page appear at all?</h3>
+    <p>If not, it's the device enables, not VCD. Every device ships <b>OFF</b> on a fresh install, so check <b>Game Sources</b> first: USB/MX4SIO/iLink need their own toggles on <em>and</em> <b>BDM Devices Start Mode</b> set to Manual or Auto, and the <b>internal exFAT</b> page additionally needs <b>Internal HDD (exFAT)</b> ON. The two internal-HDD backends are <b>no longer mutually exclusive</b> — APA (HDD start mode) and exFAT/BDM-ATA may both be enabled at once, since one shared ATA stack serves both, so leaving APA on does not suppress the exFAT page.</p>
+  </div>
+  <div class="step">
+    <h3>Do PS2 ISOs list from the device?</h3>
+    <p>If yes, the filesystem/mount layer is proven working, so "but it works in another loader" adds no new information past this step. The release publishes four labelled flavours: <code>PS2DEVPINNED</code>, <code>OFFICIALPINNED</code>, <code>PS2DEVROLLING</code>, and <code>OFFICIALROLLING</code>. Start with the pinned primary control, and report the exact in-app suffix if behavior differs across flavours.</p>
+  </div>
+  <div class="step">
+    <h3>Check PS2/PS1 Game Display</h3>
+    <p><b>Both (L3)</b> switches separate PS2 and PS1 views. <b>Mixed</b> combines them and L3 cycles Mixed / PS2 / PS1. The locked <b>PS2</b> and <b>PS1</b> modes intentionally make L3 fully inert; choose PS1 to pin the PS1 view without L3.</p>
+  </div>
+  <div class="step">
+    <h3>Check the folder — root, not your games prefix</h3>
+    <p>VCDs are scanned from <code>&lt;device-root&gt;:/POPS/*.VCD</code>. The game-folder prefix (<code>usb_prefix</code> etc.) is deliberately <b>not</b> applied, because POPSTARTER itself only reads <code>/POPS</code> at the root. A <code>POPS</code> folder inside your games subfolder will never be found.</p>
+  </div>
+  <div class="step">
+    <h3>Check the filename</h3>
+    <p>Basenames longer than <b>160 characters</b> and the reserved name <b>POPSTARTER.VCD</b> are skipped at scan (the debug log says which) — previously they listed but could never launch (a dead ✕ button). Rename the file.</p>
+  </div>
+  <div class="step">
+    <h3>Fails only after selecting a game?</h3>
+    <p>Then scanning is fine and the handoff is the suspect: is <code>POPSTARTER.ELF</code> present in <code>/POPS</code> (or <code>__common/POPS</code> on APA)? On exFAT the BDMA equip below is best-effort — a failed equip toasts but the launch still proceeds and may land on the OSD.</p>
+  </div>
+</div>
+
+<h2 id="ps2-folders-unreadable">PS2 list empty — "Could not open the CD or DVD folder"</h2>
+
+<p><b>Symptom:</b> A USB, MX4SIO, iLink, UDPBD or internal exFAT page shows no PS2 games (its PS1 view may be fine),
+and RiptOPL says <em>Could not open the CD or DVD folder in mass0: (error 5), so that device lists no PS2 games.
+Press SELECT on its page to try again.</em></p>
+
+<p>RiptOPL tried to open both the <code>CD</code> and the <code>DVD</code> folder at the path it names, neither
+would open, and there is no <code>ul.cfg</code> either. The path is the device plus your <b>BDM Prefix Path</b>,
+if you set one (<code>mass0:OPL/</code>, for example). An empty or missing folder on a healthy device does
+<em>not</em> cause this: RiptOPL creates <code>CD</code> and <code>DVD</code> the first time it sees a device, and
+an empty folder is simply an empty list.</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>Read the error number</h3>
+    <p><b>5</b> — input/output error: the device refused the read. Usually a failing card or stick, a damaged
+    filesystem, or a device dropping off the bus. <b>2</b> — the folder is not there and could not be created
+    (a full or read-only device, or a Prefix Path pointing somewhere that cannot be created). <b>13</b> — access
+    denied. <b>0</b> — the driver failed without saying why. Any other number: include it in your report.</p>
+  </div>
+  <div class="step">
+    <h3>Check the path it names</h3>
+    <p>If it includes a BDM Prefix Path, make sure that folder exists on that device and holds your
+    <code>CD</code>/<code>DVD</code> folders. PS1 games are read from the device root, which is why that view can
+    still work.</p>
+  </div>
+  <div class="step">
+    <h3>Check the device on a PC</h3>
+    <p>For error 5, run a filesystem check (or reformat and re-copy) before anything else.</p>
+  </div>
+  <div class="step">
+    <h3>Press Select to try again</h3>
+    <p>RiptOPL does not keep retrying on its own. It used to rescan such a page every couple of seconds for as long
+    as it was up, rebuilding Apps and Favorites each time, which made L3 and everything else wait on every page.
+    Now it scans once, tells you, and waits for you.</p>
+  </div>
+</div>
+
+<h2 id="ilink-handoff-status">iLink — revision 2692 handoff failures</h2>
+
+<p><b>Test control:</b> On an SCPH-39001 with the same IEEE 1394 HDD, Ember launched in all four
+revision 2692 flavours. Native OPL, Neutrino, and POPSTARTER did not. Both pinned and rolling builds
+from both SDK lineages failed, so the result is not isolated to one compiler image.</p>
+
+<ul class="checklist">
+  <li><b>What Ember proves:</b> RiptOPL can enumerate and read the iLink disk, select the title, and
+  transfer control while keeping the live stack. This rules out a blanket menu-side iLink or drive
+  visibility failure.</li>
+  <li><b>Neutrino:</b> revision 2692 sent <code>-bsd=ilink</code> but did not auto-send
+  <code>-qb</code>. The post-2692 build corrects that source-confirmed RiptOPL-side mismatch so its
+  inherited-stack handoff enters Neutrino's load environment directly. Hardware retest must still
+  establish whether that mismatch was the complete cause.</li>
+  <li><b>POPSTARTER:</b> after a failed attempt, confirm
+  <code>mc?:/POPSTARTER/bdma_config.txt</code> contains exactly <code>ilink</code>,
+  <code>usbd.irx</code> is 48,500 bytes (SHA-256
+  <code>5EA4818BA1CF5207F6D7CADB4C13B5AFA88C37C260750C21155B079A8C18F369</code>), and
+  <code>usbhdfsd.irx</code> is 23,452 bytes (SHA-256
+  <code>145CF1C0AF130EA7AC5CEC6696AA7E60B5C66A2AC46B8DEA94DB17BB3B911BCC</code>). A mismatch is on
+  RiptOPL's external-equip leg; exact files narrow the failure to POPSTARTER/BDMA after handoff.</li>
+  <li><b>Native OPL:</b> the existing iLink alias and dependency corrections are present, but the
+  revision 2692 failures show they were not sufficient. No regular IOP module is replaced by this
+  follow-up. The next useful control is current official OPL on the same console, adapter, disk, and
+  ISO; that separates an upstream iLink reinitialization limitation from a RiptOPL regression.</li>
+</ul>
+
+<h2 id="bdma-module-not-found">BDMA — "module files not found on source device"</h2>
+
+<p><b>Symptom:</b> You have set a <b>BDMA Mode</b> (e.g. <code>USB (exFAT)</code>, <code>MX4SIO (exFAT)</code>, <code>HDD (exFAT)</code>, or <code>iLink</code>) and a <b>BDMA Source</b>, but when you save or apply the equip RiptOPL reports that the module files were not found on the source device.</p>
+
+<p><b>Cause:</b> The BDMA module files (<code>.irx</code> driver pair for the chosen variant) are missing from or in the wrong location on the source device. RiptOPL does not embed these files — you supply them from the release's <code>POPS/</code> folder.</p>
+
+<div class="steps">
+  <div class="step">
+    <h3>Locate the module files</h3>
+    <p>The BDMA module files ship loose inside the RiptOPL release archive; none is embedded in <code>RIPTOPL.ELF</code>. Find the <code>POPS/</code> folder in the release zip — it contains the driver variants for each equip mode, including <code>usbd.irx.ilink</code> + <code>usbhdfsd.irx.ilink</code> for iLink.</p>
+  </div>
+  <div class="step">
+    <h3>Copy them to the correct location</h3>
+    <p>Place the module files in a <code>POPS/</code> folder at the root of whichever device you have set as the <b>BDMA Source</b> — USB, MX4SIO, MMCE, iLink, or Internal HDD. The path must be exactly:</p>
+    <pre>POPS/        ← folder at device root
+  POPSTARTER.ELF
+  &lt;module files for your chosen variant&gt;</pre>
+  </div>
+  <div class="step">
+    <h3>Note: the source must match the device's driver</h3>
+    <p>RiptOPL resolves the <b>BDMA Source</b> by its block-device <b>driver</b>, not by scanning the whole <code>massN:</code> namespace. A <b>USB</b> source reads only <code>usb</code> slots; <b>MX4SIO</b> reads only <code>mx4sio</code> slots; <b>iLink</b> reads only <code>ilink</code> slots; and <b>Internal HDD</b> reads only the <code>ata</code> (exFAT) HDD. Set the source to match the driver of the device where the loose pair actually lives.</p>
+  </div>
+  <div class="step">
+    <h3>Re-apply the equip</h3>
+    <p>With the files in place, open <b>Settings → PS Emulation Settings</b> — the BDMA rows are on that page, not on General &amp; System — set <b>BDMA Source</b> / <b>BDMA Mode</b>, and save. (The two manual pickers are hidden while <b>VCD BDMA Apply on Launch</b> is ON, because that option equips automatically; turn it off to set them by hand.) RiptOPL will copy the modules to <code>mc?:/POPSTARTER/</code> and record the equipped state in a marker file (compatible with POPSLoader).</p>
+  </div>
+</div>
+
+<details class="deep"><summary>What exactly does "equipping" BDMA do?</summary>
+<p>POPSTARTER's built-in path handles ordinary USB FAT32; the other supported block transports use matching external modules. When you change BDMA Mode or Source and save, RiptOPL copies the chosen suffixed pair from your source device's <code>POPS/</code> folder to <code>mc?:/POPSTARTER/</code>, removing the variant suffix on the card. For example, <code>*.ilink</code> becomes plain <code>usbd.irx</code> + <code>usbhdfsd.irx</code>. Setting <b>BDMA Mode</b> back to <code>USB (FAT32)</code> removes the external pair so POPSTARTER falls back to its built-in driver. SMB is excluded because it is network-only and has no block device to equip.</p>
+</details>
+
+<h2 id="vcd-list-not-showing">PS1 / VCD list not showing after a settings change</h2>
+
+<p><b>Symptom:</b> You have VCD files on a device but after changing <b>PS2/PS1 Game Display</b>, enabling a device, or changing BDMA settings, the PS1 list is empty or appears stuck on PS2.</p>
+
+<p><b>Fix:</b> First distinguish a pinned view from missing content:</p>
+
+<ul class="checklist">
+  <li>If <b>PS2/PS1 Game Display</b> is <b>PS2</b> or <b>PS1</b>, L3 is completely disabled by design — no hint, sound, notification, pause, or response. Choose <b>Both (L3)</b> or <b>Mixed</b> on either <b>Interface</b> or <b>PS Emulation Settings</b> to enable an L3 ring.</li>
+  <li>Under <b>Both (L3)</b>, L3 switches PS2 / PS1. Under <b>Mixed</b>, it cycles Mixed / PS2 / PS1. A setting change queues the affected lists automatically; a separate restart is not required.</li>
+  <li>If the PS1 list still appears empty, confirm the <code>*.VCD</code> files are in a <code>POPS/</code> folder at the device root (USB / MMCE / MX4SIO / iLink / SMB) or, for the internal APA HDD, inside the correct <code>__.POPS</code> / <code>__.POPS0</code>–<code>__.POPS9</code> partitions. Files in any other location are not scanned.</li>
+  <li>For exFAT HDD, confirm <b>Internal HDD (exFAT)</b> is enabled in <b>Game Sources</b> and that the HDD has mounted — the game list should show an <b>HDD Games</b> entry. VCDs on the exFAT HDD live in <code>massN:/POPS/</code>.</li>
+</ul>
+
+<div class="callout info"><div class="h">i UDPFS / UDPBD are Ember-only PS1 pages</div>
+No VCD rows on either network page is expected, not a failed scan. POPSTARTER cannot restore those
+connections after its IOP reset; Ember inherits the live mount, so only Ember titles are listed.
+</div>
+
+<div class="callout info"><div class="h">i Favorites always has four views</div>
+Press L3 on Favorites to cycle <b>PS2 → PS1 → ELF → All in One</b>. This independent ring is not
+pinned or disabled by PS2/PS1 Game Display. The page opens on PS2 and then comes back to whichever
+shelf you last left it on.
+</div>
+
+<h2 id="quick-reference">Quick-reference button combos</h2>
+<p>Boot combos only. For every button RiptOPL responds to — the game list, menus, and the in-game
+<a href="igr.html">In-Game Reset</a> combinations — see <a href="controls.html">Controls</a>.</p>
+
+<table data-sortable>
+  <thead>
+    <tr>
+      <th>Problem</th>
+      <th>Boot combo</th>
+      <th>Effect</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Freeze on logo / grey screen (bad config)</td>
+      <td><code>START</code></td>
+      <td>Skips config load; boots with defaults</td>
+    </tr>
+    <tr>
+      <td>Blank / black screen (unsupported video mode)</td>
+      <td><code>Triangle + Cross</code></td>
+      <td>Forces 480p for the menu only; requires a compatible display/connection</td>
+    </tr>
+    <tr>
+      <td>Blank / black screen on an interlaced-only TV (CRT)</td>
+      <td><code>Triangle + Circle</code></td>
+      <td>Forces Auto, the region's interlaced mode, for the menu only</td>
+    </tr>
+    <tr><td>Menu works; game video fails</td><td>No boot combo clears game overrides</td><td>Disable/change GSM or Neutrino video settings and check global defaults</td></tr>
+  </tbody>
+</table>
+
+<h2 id="more-help">More help</h2>
+
+<div class="grid">
+  <a class="tile" href="ps1-vcd.html"><span class="icon icon-ps1"></span><b>PS1 Games (VCD)</b><span>Full setup guide for POPSTARTER and BDMA</span></a>
+  <a class="tile" href="neutrino.html"><span class="icon icon-neutrino"></span><b>Neutrino Core</b><span>Troubleshoot Neutrino launch failures</span></a>
+  <a class="tile" href="network-boot.html"><span class="icon icon-netboot"></span><b>Network Boot</b><span>UDPBD / UDPFS setup and common errors</span></a>
+  <a class="tile" href="gsm.html"><span class="icon icon-gsm"></span><b>GSM Video Modes</b><span>Game launches but the screen goes black?</span></a>
+  <a class="tile" href="igr.html"><span class="icon icon-igr"></span><b>In-Game Reset</b><span>Cannot quit a game from the pad?</span></a>
+  <a class="tile" href="controls.html"><span class="icon icon-controls"></span><b>Controls</b><span>Every button, plus the 480p boot recovery combo</span></a>
+  <a class="tile" href="settings.html"><span class="icon icon-settings"></span><b>Settings Reference</b><span>Every option explained</span></a>
+  <a class="tile" href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span><b>POPStarter docs</b><span>PS1 config, IGR, cheats, multi-disc</span></a>
+  <a class="tile" href="https://www.psx-place.com/threads/open-ps2-loader-game-bug-reports.19401/"><span class="icon icon-start"></span><b>Bug report thread</b><span>Report game-specific compatibility issues</span></a>
+</div>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

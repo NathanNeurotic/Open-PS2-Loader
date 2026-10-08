@@ -1,0 +1,682 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fork Feature Gaps · RiptOPL Docs</title>
+<meta name="description" content="Features and fixes other PS2 loaders, forks and launchers have that RiptOPL does not yet, with links to each project.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html" class="active"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Fork Feature Gaps</h1>
+<p class="lead">Features and fixes that other PS2 loaders, forks and launchers have and RiptOPL does not have yet. Each entry
+was checked against RiptOPL's own code rather than taken from another project's changelog, and links to where that
+project implements it.</p>
+
+<div class="callout info"><div class="h">A tracking list, not a roadmap</div>
+An entry means another project implements a capability RiptOPL lacks; it does not promise a port.
+Refreshed on <b>2026-10-08 UTC</b> (2026-10-07 Pacific) against
+<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/6af23cada40ffb9563599e47d397ab1800b5879e"><code>rebuild/main@6af23cad</code></a>.
+This pass rechecks changed OPHTML, LUNA, xeRAbora/OPL-RA and PS2-Launcher sources, verifies the surveyed repositories' current revisions,
+and reconciles already implemented RiptOPL features. Existing historical rows retain their original evidence unless explicitly updated.
+See <a href="#audit-revisions">revision and validation scope</a> and <a href="#notes">retired IDs</a>.
+Stable IDs are never reassigned. Tools and developer APIs are distinguished from game-loading features; source, emulator and console evidence are separate.
+</div>
+
+<h2 id="sources">Sources surveyed</h2>
+<table>
+  <thead><tr><th>Code</th><th>Source</th><th>What it is</th><th>Gaps</th></tr></thead>
+  <tbody>
+    <tr><td><code>W</code></td><td><a href="https://github.com/ps2homebrew/wOPL">wOPL</a></td><td>The continuation of KrahJohlito's uOPL</td><td>4</td></tr>
+    <tr><td><code>O</code></td><td><a href="https://github.com/coffeedevsolutions/OPLattice">OPLattice</a></td><td>Grid themes, the SHELF interface and theme tooling</td><td>15</td></tr>
+    <tr><td><code>OH</code></td><td><a href="https://github.com/coffeedevsolutions/OPHTML">OPHTML</a></td><td>HTML/CSS declarative UI compiler, zero-allocation C99 runtime and standalone Neutrino console launcher</td><td>12</td></tr>
+    <tr><td><code>U</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pulls">Upstream OPL</a></td><td>Upstream changes and historical proposals not implemented in RiptOPL</td><td>3</td></tr>
+    <tr><td><code>B</code></td><td><a href="https://boliviaos.site/">BoliviaOS</a></td><td>A multifunction PS2 environment built on OPL</td><td>7</td></tr>
+    <tr><td><code>P</code></td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher">PS2-Launcher</a></td><td>An OPL-based launcher with a console-style interface</td><td>7</td></tr>
+    <tr><td><code>OR</code></td><td><a href="https://github.com/danielnuld/ps2-launcher">ORBIT</a></td><td>A Neutrino-based PS2 launcher with console-side saves, achievements and a companion game catalog</td><td>3</td></tr>
+    <tr><td><code>T</code></td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">Project Titan Magenta Edition</a></td><td>A PS2 operating-system/system-platform project with integrated game engines</td><td>10</td></tr>
+    <tr><td><code>E</code></td><td><a href="https://github.com/officialjuicedesigns/OPL-Evolution">OPL-Evolution</a></td><td>An experimental OPL fork with a unified dashboard</td><td>1</td></tr>
+    <tr><td><code>H</code></td><td><a href="https://github.com/hacan359/xerabora">xeRAbora</a></td><td>RetroAchievements for real PS2 hardware</td><td>2</td></tr>
+    <tr><td><code>R</code></td><td><a href="https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher">RETROLauncher</a></td><td>A Lua launcher for retro emulators and PS2 games</td><td>1</td></tr>
+    <tr><td><code>M</code></td><td><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2">Modulo R1</a></td><td>A Neutrino-based loader in beta</td><td>1</td></tr>
+    <tr><td><code>N</code></td><td><a href="https://github.com/pcm720/nhddl">NHDDL</a></td><td>A deliberately small Neutrino front-end and launcher</td><td>2</td></tr>
+    <tr><td><code>LU</code></td><td><a href="https://github.com/dnunezx/LUNA">LUNA</a></td><td>An NHDDL/Neutrino-derived visual loader with a coordinated frontend/runtime, by <a href="https://github.com/dnunezx">darkladark</a></td><td>9</td></tr>
+    <tr><td><code>L</code></td><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">Extended APA</a></td><td>An OPL build for internal HDDs larger than 2 TiB</td><td>1</td></tr>
+    <tr><td><code>X</code></td><td><a href="https://sourceforge.net/projects/e2opl/">E2OPL</a></td><td>A historical OPL fork adding EXT2 USB storage</td><td>1</td></tr>
+    <tr><td><code>MP</code></td><td><a href="https://github.com/belek666/Open-PS2-Loader/tree/modularPademu">Modular PADEMU</a></td><td>A historical modular controller-emulation branch</td><td>2</td></tr>
+    <tr><td><code>K</code></td><td><a href="https://github.com/slimpuggamer/uOPL/tree/uOPL-1">uOPL (historical)</a></td><td>KrahJohlito-era uOPL before the later wOPL line</td><td>1</td></tr>
+    <tr><td><code>RR</code></td><td><a href="https://github.com/exaconn/Open-PS2-Loader">RRVE / exaconn OPL</a></td><td>The former RRVE repository, now carrying wheel and negCon experiments</td><td>1</td></tr>
+    <tr><td><code>S</code></td><td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader">Stable OPL</a></td><td>A stability-focused OPL fork with storage-driver changes</td><td>1</td></tr>
+  </tbody>
+</table>
+<p>Twelve more projects were checked and had nothing RiptOPL lacks &mdash; see <a href="#checked">Checked, nothing missing</a>.</p>
+
+<h2 id="at-a-glance">At a glance</h2>
+<p>All 84 entries in one list. Click a column heading to sort.</p>
+<table data-sortable>
+  <thead><tr><th>ID</th><th>Feature</th><th>Area</th><th>Source</th><th>Type</th></tr></thead>
+  <tbody>
+    <tr><td><code>W1</code></td><td>Themes loaded from a <code>.tar</code> archive</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
+    <tr><td><code>W2</code></td><td><code>wsX</code> widescreen X position</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
+    <tr><td><code>W3</code></td><td>PADEMU, GSM and cheat status icons</td><td>Theme engine</td><td>wOPL</td><td>Feature</td></tr>
+    <tr><td><code>W6</code></td><td>Info page without list navigation</td><td>Library &amp; menu</td><td>wOPL</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>O1</code></td><td>Grid game list</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O2</code></td><td><code>GameImage offset</code> for non-selected games</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O3</code></td><td>Recently played list</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O4</code></td><td>Sort modes</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O5</code></td><td><code>MenuTabs</code> device tab strip</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O6</code></td><td><code>GameCountText</code> prefix and suffix</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O7</code></td><td><code>x_scaled</code> widescreen alignment</td><td>Theme engine</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O8</code></td><td>VRAM texture budget clamp</td><td>Theme engine</td><td>OPLattice</td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>O9</code></td><td>Play stats</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O10</code></td><td>SHELF sidebar interface</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O11</code></td><td>App subtitles</td><td>Library &amp; menu</td><td>OPLattice</td><td>Feature</td></tr>
+    <tr><td><code>O12</code></td><td>Art conversion and VRAM checker</td><td>PC tools</td><td>OPLattice</td><td>Tool</td></tr>
+    <tr><td><code>O13</code></td><td>In-game screenshot importer</td><td>PC tools</td><td>OPLattice</td><td>Tool</td></tr>
+    <tr><td><code>O14</code></td><td>Browser theme previewer</td><td>PC tools</td><td>OPLattice</td><td>Tool</td></tr>
+    <tr><td><code>O15</code></td><td>Device staging and card sync scripts</td><td>PC tools</td><td>OPLattice</td><td>Tool</td></tr>
+    <tr><td><code>OH1</code></td><td>Declarative HTML/CSS flexbox compilation to zero-allocation C99 GS command list</td><td>Theme engine</td><td>OPHTML</td><td>Feature</td></tr>
+    <tr><td><code>OH2</code></td><td>Pre-resolved pairwise HarfBuzz font kerning on EE</td><td>Theme engine</td><td>OPHTML</td><td>Feature</td></tr>
+    <tr><td><code>OH3</code></td><td>Instant 1-byte palette theme switching without VRAM re-upload</td><td>Theme engine</td><td>OPHTML</td><td>Feature</td></tr>
+    <tr><td><code>OH4</code></td><td>Runtime 2D coordinate offsets for motion and expanding layouts</td><td>Theme engine</td><td>OPHTML</td><td>Feature</td></tr>
+    <tr><td><code>OH5</code></td><td>Runtime focus-subtree visibility masking with auto-bypassing navigation</td><td>Theme engine</td><td>OPHTML</td><td>Feature</td></tr>
+    <tr><td><code>OH6</code></td><td>Automated CRT overscan safe area and multi-layer alpha contrast linter</td><td>PC tools</td><td>OPHTML</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>OH7</code></td><td>Interactive web browser theme simulator and testbed</td><td>PC tools</td><td>OPHTML</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>OH8</code></td><td>Static VRAM budgeting and layout compiler</td><td>PC tools</td><td>OPHTML</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>OH9</code></td><td>Headless Play! emulator CI testbed with input scripting and frame diffs</td><td>PC tools</td><td>OPHTML</td><td><span class="pill">Tool</span></td></tr>
+    <tr><td><code>OH10</code></td><td>Fuzzed <code>.uib</code> loader with EE bus-alignment and malformed blob hardening</td><td>Theme engine</td><td>OPHTML</td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>OH11</code></td><td>Hard compiler safety limits for untrusted themes</td><td>Theme engine</td><td>OPHTML</td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>U1</code></td><td>Per-game parental lock</td><td>Cheats, launching &amp; network</td><td>Upstream OPL</td><td>Feature</td></tr>
+    <tr><td><code>U6</code></td><td>Launch announcement for Discord rich presence</td><td>Cheats, launching &amp; network</td><td>Upstream OPL</td><td>Feature</td></tr>
+    <tr><td><code>U9</code></td><td>Bluetooth controller input lag</td><td>Controllers &amp; input</td><td>Upstream OPL</td><td><span class="badge primary">Investigate</span></td></tr>
+    <tr><td><code>B1</code></td><td>File explorer</td><td>Beyond game loading</td><td>BoliviaOS</td><td>Feature</td></tr>
+    <tr><td><code>B2</code></td><td>Music player</td><td>Beyond game loading</td><td>BoliviaOS</td><td>Feature</td></tr>
+    <tr><td><code>B3</code></td><td>Image and font viewers</td><td>Beyond game loading</td><td>BoliviaOS</td><td>Feature</td></tr>
+    <tr><td><code>B4</code></td><td>Text editor, code editor and terminal</td><td>Beyond game loading</td><td>BoliviaOS</td><td>Feature</td></tr>
+    <tr><td><code>B5</code></td><td>Memory card format and repair</td><td>Beyond game loading</td><td>BoliviaOS</td><td>Feature</td></tr>
+    <tr><td><code>B6</code></td><td>USB keyboard</td><td>Controllers &amp; input</td><td>BoliviaOS</td><td>Feature</td></tr>
+    <tr><td><code>B7</code></td><td>PDF viewer</td><td>Beyond game loading</td><td>BoliviaOS</td><td>Feature</td></tr>
+    <tr><td><code>P1</code></td><td>Xbox One and Series controllers over USB</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>P2</code></td><td>Download covers from the PS2</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>P3</code></td><td>One games list across every device</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>P4</code></td><td>Hold SELECT to leave a game</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>P5</code></td><td>Launch transition animation</td><td>Library &amp; menu</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>P6</code></td><td>More USB controllers: Steam Controller, Shanwan PS3 clones, ANT Esports GP300</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>P7</code></td><td>Connected controller count on screen</td><td>Controllers &amp; input</td><td>PS2-Launcher</td><td>Feature</td></tr>
+    <tr><td><code>OR3</code></td><td>RetroAchievements telemetry with Neutrino games</td><td>RetroAchievements</td><td>ORBIT</td><td>Feature</td></tr>
+    <tr><td><code>OR4</code></td><td>Browse achievement titles and progress on the console</td><td>RetroAchievements</td><td>ORBIT</td><td>Feature</td></tr>
+    <tr><td><code>OR5</code></td><td>Companion catalog for UDPFS games</td><td>Cheats, launching &amp; network</td><td>ORBIT</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>T1</code></td><td>Graphics patches kept apart from cheats</td><td>Cheats, launching &amp; network</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T2</code></td><td>Installable TPKG apps, in-process runtime and SDK</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T3</code></td><td>Smart IGR overlay with Resume / Return</td><td>Game compatibility</td><td>Project Titan Magenta Edition</td><td>Feature <span class="badge primary">Hardware pending</span></td></tr>
+    <tr><td><code>T4</code></td><td>Named user profiles with per-profile VMC</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T5</code></td><td>Notification center and background-progress UI</td><td>Library &amp; menu</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T6</code></td><td>Integrated lightweight web browser</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T7</code></td><td>Transactional <code>.pup</code> system updater</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T8</code></td><td>Installable animated scene themes with audio</td><td>Theme engine</td><td>Project Titan Magenta Edition</td><td>Feature</td></tr>
+    <tr><td><code>T9</code></td><td>Xbox Bluetooth/BLE plus USB keyboard and mouse input</td><td>Controllers &amp; input</td><td>Project Titan Magenta Edition</td><td>Feature <span class="badge primary">Hardware pending</span></td></tr>
+    <tr><td><code>T10</code></td><td>Repository-backed package download pipeline</td><td>Beyond game loading</td><td>Project Titan Magenta Edition</td><td>Feature <span class="badge primary">Target pending</span></td></tr>
+    <tr><td><code>E1</code></td><td>Controller, memory card, storage and network status</td><td>Library &amp; menu</td><td>OPL-Evolution</td><td>Feature</td></tr>
+    <tr><td><code>R1</code></td><td>Retro emulator ROM libraries</td><td>Beyond game loading</td><td>RETROLauncher</td><td>Feature</td></tr>
+    <tr><td><code>M1</code></td><td>Choose between several network servers</td><td>Cheats, launching &amp; network</td><td>Modulo R1</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>N1</code></td><td>Generic forward-boot CLI</td><td>Launcher integration</td><td>NHDDL</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>N2</code></td><td>Reuse <code>SYS-CONF/IPCONFIG.DAT</code> for UDPFS IP</td><td>Cheats, launching &amp; network</td><td>NHDDL</td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>LU2</code></td><td>Orbit depth-sorted ring library view</td><td>Library &amp; menu</td><td><a href="https://github.com/dnunezx/LUNA">LUNA</a></td><td>Feature</td></tr>
+    <tr><td><code>LU4</code></td><td>Animated rotating <code>ICO</code> disc-label artwork</td><td>Library &amp; menu</td><td><a href="https://github.com/dnunezx/LUNA">LUNA</a></td><td>Feature</td></tr>
+    <tr><td><code>LU5</code></td><td>Per-drive Favorites that travel with the game HDD</td><td>Library &amp; menu</td><td><a href="https://github.com/dnunezx/LUNA">LUNA</a></td><td><span class="pill">Optional</span></td></tr>
+    <tr><td><code>LU6</code></td><td>Staged temp-file writes for key persistent library state</td><td>Reliability / persistence</td><td><a href="https://github.com/dnunezx/LUNA">LUNA</a></td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>LU7</code></td><td>Neutrino physical power-button DEV9-safe shutdown</td><td>Game compatibility</td><td><a href="https://github.com/dnunezx/LUNA">LUNA</a></td><td><span class="badge secondary">Fix</span></td></tr>
+    <tr><td><code>LU8</code></td><td>Neutrino in-game return / IGR</td><td>Game compatibility</td><td><a href="https://github.com/dnunezx/LUNA">LUNA</a></td><td>Feature <span class="pill">WIP</span></td></tr>
+    <tr><td><code>L1</code></td><td>APA HDDs over 2 TiB</td><td>Internal HDD</td><td>Extended APA</td><td><span class="badge unconfirmed">Not planned</span></td></tr>
+    <tr><td><code>X1</code></td><td>EXT2 USB filesystem support</td><td>USB / game sources</td><td>E2OPL</td><td>Feature</td></tr>
+    <tr><td><code>MP1</code></td><td>Xbox 360 controllers over USB</td><td>Controllers &amp; input</td><td>Modular PADEMU</td><td>Feature <span class="pill">Historical</span></td></tr>
+    <tr><td><code>MP2</code></td><td>Generic USB HID gamepads</td><td>Controllers &amp; input</td><td>Modular PADEMU</td><td>Feature <span class="pill">Historical</span></td></tr>
+    <tr><td><code>K1</code></td><td>Write debug logs to a BDM device</td><td>Developer / diagnostics</td><td>uOPL (historical)</td><td>Feature <span class="pill">Debug build</span></td></tr>
+    <tr><td><code>RR1</code></td><td>USB Driving Force wheel with negCon presentation</td><td>Controllers &amp; input</td><td>RRVE / exaconn OPL</td><td>Feature <span class="pill">Experimental</span></td></tr>
+    <tr><td><code>S1</code></td><td>ATA DRDY waiting for slow-starting SMR / SSD drives</td><td>Internal HDD</td><td>Stable OPL</td><td><span class="badge secondary">Fix</span></td></tr>
+      <tr><td><code>OH12</code></td><td>Reusable console-launcher core archive</td><td>Launcher integration</td><td>OPHTML</td><td>Feature</td></tr>
+    <tr><td><code>H2</code></td><td>Larger achievement sets with bounded snapshot cadence</td><td>RetroAchievements</td><td>xeRAbora</td><td>Feature</td></tr>
+    <tr><td><code>LU9</code></td><td>Projected 3D game-case grid</td><td>Library &amp; menu</td><td>LUNA</td><td>Feature</td></tr>
+    <tr><td><code>LU10</code></td><td>Animated ambient-orb Scroll library view</td><td>Library &amp; menu</td><td>LUNA</td><td><span class="pill">Experimental</span></td></tr>
+    <tr><td><code>LU11</code></td><td>Neutrino VMC backing on APA/PFS</td><td>Game compatibility</td><td>LUNA</td><td>Feature</td></tr>
+<tr><td><code>H3</code></td><td>Alignment-safe reads for direct achievement watches</td><td>RetroAchievements</td><td>xeRAbora</td><td><span class="badge secondary">Fix</span></td></tr>
+</tbody>
+</table>
+
+<h2 id="wopl">wOPL</h2>
+<p><a href="https://github.com/ps2homebrew/wOPL">ps2homebrew/wOPL</a> &mdash; much of RiptOPL's Coverflow, Favorites and
+Neutrino work started here. These are the parts RiptOPL does not have yet.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>W1</code></td><td><b>Themes loaded from a <code>.tar</code> archive</b></td><td>Several themes packed into <code>THM/thm.tar</code>, with fonts and images read straight from the archive.</td><td><a href="https://github.com/ps2homebrew/wOPL/pull/370">PR #370</a><br><a href="https://github.com/ps2homebrew/wOPL/pull/378">PR #378</a></td></tr>
+    <tr><td><code>W2</code></td><td><b><code>wsX</code> widescreen X position</b></td><td>A separate X coordinate per element for 16:9, so one theme file serves both 4:3 and widescreen.</td><td><a href="https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c">src/themes.c</a></td></tr>
+    <tr><td><code>W3</code></td><td><b>PADEMU, GSM and cheat status icons</b></td><td>On/off images showing each game's pad emulation, GSM and cheat settings, with built-in default images.</td><td><a href="https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/textures.c">src/textures.c</a><br><a href="https://github.com/ps2homebrew/wOPL/blob/wOPL-base/src/themes.c">src/themes.c</a></td></tr>
+    <tr><td><code>W6</code></td><td><b>Info page without list navigation</b> <span class="pill">Optional</span></td><td>Up, down and page buttons no longer move through the list from a game's info page. A design choice rather than a missing capability.</td><td><a href="https://github.com/ps2homebrew/wOPL/pull/308">PR #308</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="oplattice">OPLattice</h2>
+<p><a href="https://github.com/coffeedevsolutions/OPLattice">coffeedevsolutions/OPLattice</a> &mdash; nine patches to
+OPL's theme engine and menus, a sidebar interface, themes and PC tooling.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>O1</code></td><td><b>Grid game list</b></td><td>A tile layout for the game list (<code>columns</code>, <code>cell_width</code>, <code>gap</code>, <code>frame</code>) with two-axis navigation.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch">patch 01</a></td></tr>
+    <tr><td><code>O2</code></td><td><b><code>GameImage offset</code> for non-selected games</b></td><td>An image element can draw the game a set number of places down the page, which makes hero and filmstrip layouts possible.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/01-opl-tile-grid.patch">patch 01</a></td></tr>
+    <tr><td><code>O3</code></td><td><b>Recently played list</b></td><td>The last 8 games launched, newest first, shown with <code>RecentImage</code> and <code>RecentText</code> elements. RiptOPL remembers only the last one.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch">patch 02</a></td></tr>
+    <tr><td><code>O4</code></td><td><b>Sort modes</b></td><td>A to Z, Z to A, most recent first, or as scanned. OPLattice cycles them with <b>R3</b>, which RiptOPL uses for Favorites.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/02-opl-sort-and-recent.patch">patch 02</a></td></tr>
+    <tr><td><code>O5</code></td><td><b><code>MenuTabs</code> device tab strip</b></td><td>Every device drawn at once with the active one highlighted, plus per-device label overrides.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch">patch 03</a></td></tr>
+    <tr><td><code>O6</code></td><td><b><code>GameCountText</code> prefix and suffix</b></td><td>Themes set their own wording around the game count.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch">patch 03</a></td></tr>
+    <tr><td><code>O7</code></td><td><b><code>x_scaled</code> widescreen alignment</b></td><td>Elements keep their position relative to a centred layout when widescreen is on.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/03-opl-menu-tabs.patch">patch 03</a></td></tr>
+    <tr><td><code>O8</code></td><td><b>VRAM texture budget clamp</b> <span class="badge secondary">Fix</span></td><td>Caps texture size to the video memory left after the framebuffers, so an oversized theme image is rejected instead of risking a hang in hi-res modes.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/07-texture-safety.patch">patch 07</a></td></tr>
+    <tr><td><code>O9</code></td><td><b>Play stats</b></td><td>A launch count and playtime for each game.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/08-play-stats.patch">patch 08</a></td></tr>
+    <tr><td><code>O10</code></td><td><b>SHELF sidebar interface</b></td><td>An opt-in sidebar with Home, Library, Apps and Settings pages. It opens with <b>L3</b>, which RiptOPL uses to switch between PS2 and PS1 views.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch">patch 09</a></td></tr>
+    <tr><td><code>O11</code></td><td><b>App subtitles</b></td><td>An optional <code>subtitle</code> key in an app's <code>title.cfg</code>.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/patches/09-shelf-sidebar.patch">patch 09</a></td></tr>
+    <tr><td><code>O12</code></td><td><b>Art conversion and VRAM checker</b> <span class="pill">Tool</span></td><td>Converts art to indexed PNG8 and reports how much memory each theme's art cache will use.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/palettize-art.py">palettize-art.py</a><br><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/check-art.py">check-art.py</a></td></tr>
+    <tr><td><code>O13</code></td><td><b>In-game screenshot importer</b> <span class="pill">Tool</span></td><td>Turns in-game screenshot BMPs from the memory card into the <code>_SCR.png</code> images the info page shows.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/tools/import-igs.py">import-igs.py</a></td></tr>
+    <tr><td><code>O14</code></td><td><b>Browser theme previewer</b> <span class="pill">Tool</span></td><td>A single HTML file that renders a theme's layout before it goes on a console.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/blob/main/opl-theme-previewer.html">opl-theme-previewer.html</a></td></tr>
+    <tr><td><code>O15</code></td><td><b>Device staging and card sync scripts</b> <span class="pill">Tool</span></td><td>Scripts that copy a build onto a USB device or HDD and sync a memory card.</td><td><a href="https://github.com/coffeedevsolutions/OPLattice/tree/main/tools">tools/</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="ophtml">OPHTML</h2>
+<p><a href="https://github.com/coffeedevsolutions/OPHTML">coffeedevsolutions/OPHTML</a> by <a href="https://github.com/coffeedevsolutions">coffeedevsolutions</a> (Blake Coffee) &mdash; an HTML/CSS declarative UI compiler and zero-allocation C99 GS runtime (<code>OPHTML / ps2ui</code>), by the creator of <a href="#oplattice">OPLattice</a>. While the repository also contains a standalone game launcher (<code>console/ophtml.elf</code>) booting ISOs via Neutrino and an SD2PSX memory-card loader (<code>channel6</code>), those launcher features overlap capabilities already native to RiptOPL (see callout below). Audited against <a href="https://github.com/coffeedevsolutions/OPHTML/commit/03a5d56f724055f4d46e0eaf44806e95f0202cb1"><code>main@03a5d56</code></a> (post-v0.10.0 source, format v7). The latest published release remains v0.10.0; the reusable console core, settings resolver and memory-card state changes are source additions planned for 0.11.0.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>OH1</code></td><td><b>Declarative HTML/CSS flexbox compilation to zero-allocation C99 GS command list</b></td><td>Compiles modern CSS flexbox layouts (direction, wrap, alignment, justification, gap, percentage sizing, border radius) and dynamic UTF-8 text slots with multibyte truncation guards on the PC into a static <code>.uib</code> binary command list. The C99 runtime executes inside a pre-computed static arena (~7&ndash;8 KiB for an entire 6-screen app) and never calls <code>malloc</code>, measures text, or lays out elements on the PS2.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/tree/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout">@ophtml/layout</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c">runtime/ps2ui.c</a></td></tr>
+    <tr><td><code>OH2</code></td><td><b>Pre-resolved pairwise HarfBuzz font kerning on EE</b></td><td>Measures kerning pairs at compile time via HarfBuzz and pre-resolves pairwise advance adjustments to exact pixel values per font size into compact tables. The C99 pen evaluates pairwise kerning in real-time on the EE with zero floating-point division or font-scaling overhead.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/fontgen.py">ps2ui_bake/fontgen.py</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c">ps2ui.c kerning</a></td></tr>
+    <tr><td><code>OH3</code></td><td><b>Instant 1-byte palette theme switching without VRAM re-upload</b></td><td>Multiple themes (such as light and dark modes) share the same geometry, textures, and fonts in a single blob, differing only by a row in the tint table. Calling <code>ps2ui_theme_set()</code> updates a context pointer instantly with 0 bytes of VRAM transfer, requiring no asset reloading or GS re-initialization.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.h">ps2ui.h</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c">ps2ui.c</a></td></tr>
+    <tr><td><code>OH4</code></td><td><b>Runtime 2D coordinate offsets for motion and expanding layouts</b></td><td><code>ps2ui_offset_set(ctx, dx, dy)</code> offsets all primitive and texture coordinates at render time, allowing smooth programmatic translations, sliding sidebars (such as expanding navigation rails), carousels, and parallax scrolling layers on static baked geometry without re-baking.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c">ps2ui.c offset</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md">BACKLOG F27</a></td></tr>
+    <tr><td><code>OH5</code></td><td><b>Runtime focus-subtree visibility masking with auto-bypassing navigation</b></td><td>A 256-bit bitmask in <code>ps2ui_visible_set()</code> suppresses rendering of entire focusable subtrees (including backgrounds and borders) for empty or inactive elements. Crucially, <code>ps2ui_move()</code> automatically routes gamepad focus <i>past</i> hidden nodes rather than trapping navigation on invisible elements.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c">ps2ui.c visibility</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/BACKLOG.md">BACKLOG F21</a></td></tr>
+    <tr><td><code>OH6</code></td><td><b>Automated CRT overscan safe area and multi-layer alpha contrast linter</b> <span class="pill">Tool</span></td><td>Build-time static analysis tool enforcing NTSC/PAL CRT action-safe and title-safe margins. Evaluates text contrast across translucent alpha scrims by compositing against worst-case black and white background scenes underneath, and validates seated-distance legibility (11px/14px thresholds based on visual arcminutes).</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout/src/lint.js">layout/src/lint.js</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/docs/findings.md">findings.md (F-046)</a></td></tr>
+    <tr><td><code>OH7</code></td><td><b>Interactive web browser theme simulator and testbed</b> <span class="pill">Tool</span></td><td><code>ps2ui serve</code> launches a local HTTP server that replays baked GS draw commands server-side and serves an interactive web preview with keyboard/controller D-pad navigation, theme switching, multi-screen navigation, and live slot text editing without requiring a PS2 console or emulator.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/serve.py">ps2ui_bake/serve.py</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/serve_page.html">serve_page.html</a></td></tr>
+    <tr><td><code>OH8</code></td><td><b>Static VRAM budgeting and layout compiler</b> <span class="pill">Tool</span></td><td>Models GS VRAM allocation at compile time, tracking 8 KiB page boundaries and 256 B block alignment groups for framebuffers, Z-buffers, CLUT palettes, and texture pages. Prevents console crashes and hangs by refusing over-budget themes at bake time with an itemized memory breakdown.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/vram.py">ps2ui_bake/vram.py</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/tools/check-vram-model.py">check-vram-model.py</a></td></tr>
+    <tr><td><code>OH9</code></td><td><b>Headless Play! emulator CI testbed with input scripting and frame diffs</b> <span class="pill">Tool</span></td><td>Continuous integration harness that builds the console ELF, boots it headlessly in the Play! emulator under xvfb, injects scripted gamepad inputs (Down, R1, L1), captures GS framebuffers, and asserts pixel-level image diffs against Python reference renders.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/.github/workflows/hw.yml">.github/workflows/hw.yml</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/console/tests/play_input.py">play_input.py</a></td></tr>
+    <tr><td><code>OH10</code></td><td><b>Fuzzed <code>.uib</code> loader with EE bus-alignment and malformed blob hardening</b> <span class="badge secondary">Fix</span></td><td>Runtime loader hardened with LibFuzzer and ASan/UBSan against corrupted or malicious blobs. Enforces strict 4-byte struct alignment and 16-byte glyph/kern table alignment (<code>PS2UI_ERR_ALIGN</code>) to protect against unaligned EE memory access bus errors when reading untrusted themes from storage.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/tests/fuzz_load.c">fuzz_load.c</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/runtime/ps2ui.c">ps2ui.c alignment</a></td></tr>
+    <tr><td><code>OH11</code></td><td><b>Hard compiler safety limits for untrusted themes</b> <span class="badge secondary">Fix</span></td><td>Compile-time safety ceilings that reject untrusted or maliciously crafted themes exceeding safe hardware parameters: canvas max 2048px (hardware scanout ceiling), max 10,000 DOM elements, max 64 nesting levels, and max 32 megapixel source images.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/baker/ps2ui_bake/caps.py">caps.py</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/packages/layout/src/limits.js">limits.js</a></td></tr>
+      <tr><td><code>OH12</code></td><td><b>Reusable console-launcher core archive</b></td><td>Exports <code>libophtml-console.a</code> and an umbrella header for third-party launchers to reuse scanning, storage initialization, Neutrino argument construction, settings resolution and launch handoff while supplying their own main, UI and IOP module table. RiptOPL has internal equivalents but does not publish this kind of independently linkable launcher SDK. This is a developer integration gap, not additional game compatibility.</td><td><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/console/ophtml_console.h">Public core header</a><br><a href="https://github.com/coffeedevsolutions/OPHTML/blob/03a5d56f724055f4d46e0eaf44806e95f0202cb1/examples/console-min/Makefile">Out-of-tree consumer</a></td></tr>
+</tbody>
+</table>
+<div class="callout info"><div class="h">What did not become a gap: The console launcher &amp; runtime overlap</div>
+OPHTML also contains a standalone console game launcher (<code>console/ophtml.elf</code>) and sample environments (<code>opl-env</code>, <code>channel6</code>), its core game-loading and management capabilities directly overlap existing RiptOPL infrastructure and are not counted as gaps:
+<ul>
+  <li><b>Neutrino No-IOP-Reset launch handoff:</b> OPHTML launches Neutrino using <code>-qb</code>, <code>-bsd=</code>, and <code>-dvd=</code> through <code>LoadELFFromFileWithPartitionNoReset</code>. RiptOPL already has full native No-IOP-Reset handoff (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/elfldr_noreset.c"><code>src/elfldr_noreset.c</code></a>), copying the child loader into BIOS-unused memory at <code>0x84000</code> and passing target paths and arguments to <code>ExecPS2</code> so Neutrino can read its config and ISO without resetting OPL's live storage mounts.</li>
+  <li><b>In-memory ISO9660 volume &amp; <code>SYSTEM.CNF</code> title ID extraction:</b> OPHTML traverses sector 16 PVD records and parses <code>SYSTEM.CNF</code> in memory. RiptOPL already performs sector 16 PVD root-directory traversal in memory to extract <code>BOOT2</code> game IDs and creation timestamps (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/retrogem.c"><code>src/retrogem.c</code></a> and <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/ps2cnf.c"><code>src/ps2cnf.c</code></a>).</li>
+  <li><b>Dynamic cover art streaming &amp; VRAM texture caching:</b> OPHTML's streaming texture slots overlap RiptOPL's dedicated async texture worker (<a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/texcache.c"><code>src/texcache.c</code></a>), which provides lookahead caching, multi-epoch invalidation, chunked staging, memory clamps, and SIO2 controller-bus read throttling.</li>
+  <li><b>Virtualized list windowing &amp; selection binding:</b> OPHTML's <code>ps2ui_list</code> windowing and selection clamping are standard OPL core features in RiptOPL's item and GUI management.</li>
+  <li><b>Multi-device &amp; SD2PSX/MMCE support:</b> USB, internal HDD, MX4SIO, and MMCE channel support are already implemented in RiptOPL's storage drivers and RetroGEM/SD2PSX integration.</li>
+</ul>
+</div>
+<div class="callout info"><div class="h">Validation status and emulator testing</div>
+OPHTML v0.10.0's <code>ophtml.elf</code> launcher has booted and proven its D-pad navigation and list virtualisation inside the Play! emulator in CI (via automated pad input injection and frame diffing). However, because Play! does not emulate USB, HDD or memory card controllers, physical-console bench cases C1&ndash;C8 remain formally <code>[open]</code> pending physical-console reports. Conversely, its underlying <code>ps2ui</code> GS rasterization runtime has undergone extensive physical PS2 hardware validation across multiple test sessions (documented in <code>docs/bench-phase1.md</code> and <code>docs/bench-phase2.md</code>).
+</div>
+
+<p>The new OPL compatibility resolver maps only verified modes 2, 3 and 5; GSM and VMC CFG mapping remain unfinished. Last-played restoration overlaps RiptOPL. The launch breadcrumb records an attempted handoff but is not a proven hang detector or retry UI; it is not counted as one.</p>
+
+<h2 id="upstream-prs">Upstream OPL pull requests</h2>
+<p><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pulls">ps2homebrew/Open-PS2-Loader</a> &mdash; RiptOPL derives from upstream OPL. A gap can be merged upstream or remain a proposal; its upstream state is not its RiptOPL implementation state.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>U1</code></td><td><b>Per-game parental lock</b></td><td>A Parental Lock toggle in a game's settings; starting that game asks for the parental lock password. Upstream #1779 merged on 2026-10-05; RiptOPL has a settings/write parental gate but not this per-game launch lock.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1779">PR #1779</a></td></tr>
+    <tr><td><code>U6</code></td><td><b>Launch announcement for Discord rich presence</b></td><td>When a game starts, a small UDP broadcast carries its title ID so a PC listener can set Discord rich presence.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1736">PR #1736</a></td></tr>
+    <tr><td><code>U9</code></td><td><b>Bluetooth controller input lag</b> <span class="badge primary">Investigate</span></td><td>Shortens <a href="pademu.html">PADEMU</a> Bluetooth polling delays to remove input lag. As submitted it also turns off rumble and the menu's pad delay, so it is a lead rather than a finished fix. Upstream #1675 closed without merge on 2026-10-05; retain it as a historical investigation, not an active upstream PR.</td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/pull/1675">PR #1675</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="boliviaos">BoliviaOS</h2>
+<p><a href="https://boliviaos.site/">boliviaos.site</a> &mdash; an OPL-based environment that adds file management,
+media and system tools around game loading. Its source is not published, so these entries come from the features its
+site lists.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>B1</code></td><td><b>File explorer</b></td><td>Browse and move files across memory cards, USB, HDD and host from inside the loader, with transfers checked against the source.</td><td><a href="https://boliviaos.site/">boliviaos.site</a></td></tr>
+    <tr><td><code>B2</code></td><td><b>Music player</b></td><td>Plays MP3 and OGG files with ID3 tags and a spectrum visualizer.</td><td><a href="https://boliviaos.site/">boliviaos.site</a></td></tr>
+    <tr><td><code>B3</code></td><td><b>Image and font viewers</b></td><td>Views JPG and PNG images with zoom and transparency inspection, and TrueType fonts with Unicode coverage.</td><td><a href="https://boliviaos.site/">boliviaos.site</a></td></tr>
+    <tr><td><code>B4</code></td><td><b>Text editor, code editor and terminal</b></td><td>Edits <code>.txt</code> and <code>.cfg</code> files, with a JavaScript editor and a command terminal.</td><td><a href="https://boliviaos.site/">boliviaos.site</a></td></tr>
+    <tr><td><code>B5</code></td><td><b>Memory card format and repair</b></td><td>Low-level memory card formatting and repair through Memory Card Annihilator.</td><td><a href="https://boliviaos.site/">boliviaos.site</a><br><a href="https://github.com/ffgriever-pl/Memory-Card-Annihilator">Memory Card Annihilator</a></td></tr>
+    <tr><td><code>B6</code></td><td><b>USB keyboard</b></td><td>USB HID keyboard input.</td><td><a href="https://boliviaos.site/">boliviaos.site</a></td></tr>
+    <tr><td><code>B7</code></td><td><b>PDF viewer</b></td><td>Reads PDF documents. The site lists it as still in development.</td><td><a href="https://boliviaos.site/">boliviaos.site</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="ps2-launcher">PS2-Launcher</h2>
+<p><a href="https://github.com/Irfanlesnar/PS2-Launcher">Irfanlesnar/PS2-Launcher</a> &mdash; an OPL-based launcher with a
+console-style interface. Checked against its published v4.0 source, not only its README.
+<a href="https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0">v5.0.0</a> (2026-10-06) is checked from its
+release notes and README: the repository's v5.0.0 commit changed only <code>README.md</code> and <code>CREDITS.md</code>,
+so v5.0's code is not published.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>P1</code></td><td><b>Xbox One and Series controllers over USB</b></td><td>Wired Xbox controllers through a new IOP driver. RiptOPL supports DualShock 3, DualShock 4 and DualSense. v5.0 adds Xbox 360 pads, the gap tracked as <a href="#modular-pademu">MP1</a>.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/tree/main/modules/xboxusb">modules/xboxusb</a></td></tr>
+    <tr><td><code>P2</code></td><td><b>Download covers from the PS2</b></td><td>Fetches missing covers, or refreshes all of them, over the network from the console.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c">src/opl.c</a><br><a href="https://irfanlesnar.github.io/PS2-Launcher-Manager/">PS2-Launcher-Manager</a></td></tr>
+    <tr><td><code>P3</code></td><td><b>One games list across every device</b></td><td>A single Games list combining every connected source, part of its console-style interface. v5.0 adds sorting that list by device.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c">src/opl.c</a></td></tr>
+    <tr><td><code>P4</code></td><td><b>Hold SELECT to leave a game</b></td><td>Holding SELECT for 7&ndash;10 seconds in a game returns to the launcher, an alternative to the multi-button <a href="igr.html">in-game reset</a> combo.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/ee_core/src/padhook.c">ee_core/src/padhook.c</a></td></tr>
+    <tr><td><code>P5</code></td><td><b>Launch transition animation</b></td><td>An animated transition as a game starts. OPL-Evolution adapted it too.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/blob/main/src/opl.c">src/opl.c</a></td></tr>
+    <tr><td><code>P6</code></td><td><b>More USB controllers: Steam Controller, Shanwan PS3 clones, ANT Esports GP300</b></td><td>v5.0 lists the Steam Controller (2026), Shanwan PS3 clone pads and the ANT Esports GP300 Pro V2 wireless controller. RiptOPL's USB driver accepts only Sony's DualShock 3, DualShock 4 and DualSense IDs and has no clone-specific handling.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0">v5.0.0 release notes</a></td></tr>
+    <tr><td><code>P7</code></td><td><b>Connected controller count on screen</b></td><td>The v5.0 interface shows how many controllers are connected. RiptOPL only says when no controller is detected.</td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/releases/tag/v5.0.0">v5.0.0 release notes</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">PS2-Launcher v5.0 overlap</div>
+v5.0's Files tab (browse devices, copy, paste and delete files, launch games and ELFs) overlaps <a href="#boliviaos">B1</a>,
+and its Xbox 360 support overlaps <a href="#modular-pademu">MP1</a>; those receive no new P-series IDs. Already in RiptOPL:
+MMCE storage, the full in-game resolution list (RiptOPL also has 720p, 1080i and 1080p), the IGR Path setting, per-game
+OSD language, and multitap emulation for extra players (set up in <a href="pademu.html">Controller Emulation</a>
+rather than assigned automatically). Its new SMB IP options are not itemised; RiptOPL already offers DHCP or
+a static address with gateway and DNS, and reaches the server by IP or name. The faster Apps tab is a performance change,
+not a capability.</div>
+
+<h2 id="orbit">ORBIT</h2>
+<p><a href="https://github.com/danielnuld/ps2-launcher">danielnuld/ps2-launcher</a> by
+<a href="https://github.com/danielnuld">danielnuld</a> &mdash; a standalone PS2 launcher built around Neutrino.
+Audited against <a href="https://github.com/danielnuld/ps2-launcher/commit/d015baf7e4c004fa5db6964dc6bedd16484ea45d"><code>d015baf7</code></a>
+and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/dc6206f60bf8175d88946c175e839d59ada9d9ab"><code>rebuild/main@dc6206f6</code></a>.
+Re-checked on 2026-10-06 against <a href="https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2">v1.0.2</a>:
+v1.0.1 and v1.0.2 are fixes (a 1024-game limit, cover loading, DNS with DHCP, and MemCard PRO 2 game IDs on every
+launch, which RiptOPL already sends), so they add no entries. OR1 and OR2 have since shipped in RiptOPL (see <a href="#notes">Notes</a>).
+These are capability differences, not claims that every game or storage device has passed on a console.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>OR3</code></td><td><b>RetroAchievements telemetry with Neutrino games</b></td><td>ORBIT passes a watch list to its Neutrino fork and loads an in-game agent that streams watched memory to xeRAbora. RiptOPL's RA flavour loads telemetry through its own OPL core and explicitly excludes Neutrino and UDPFS launches. ORBIT reports one real-console UDPFS/Neutrino session with snapshots; that does not establish broad game compatibility.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/third_party/neutrino-igr/ra.c">Neutrino agent</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md">console report</a></td></tr>
+    <tr><td><code>OR4</code></td><td><b>Browse achievement titles and progress on the console</b></td><td>The selected game's panel lists individual achievement titles, descriptions, points and earned state. RiptOPL's RA support check shows the title and aggregate counts returned by the PC client, but has no per-achievement browser. ORBIT's phase-16b report records host/PCSX2 checks for this panel and leaves the console check open.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/achievements.c">achievements.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase16b-results.md">phase-16b evidence</a></td></tr>
+    <tr><td><code>OR5</code></td><td><b>Companion catalog for UDPFS games</b> <span class="pill">Optional</span></td><td>An HTTP companion service lists titles, paths, IDs and precomputed RA hashes for games whose ISO data is served through UDPFS, without mounting UDPFS in the menu. RiptOPL already lists UDPFS files through its filesystem driver and has a separate <code>games.csv</code> catalog for HTTP streaming; this row tracks ORBIT's distinct UDPFS catalog workflow, not a missing ability to list or launch UDPFS games.</td><td><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/launcher.c">launcher.c</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/tools/orbit_catalog.py">orbit_catalog.py</a><br><a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase17-results.md">console report</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">ORBIT overlap and validation</div>
+ORBIT's on-console HTTPS cover fetch overlaps <a href="#ps2-launcher">P2</a>; its combined-source library and animated launch screen overlap P3 and P5; and its resumable Neutrino in-game menu overlaps the capability tracked in <a href="#project-titan">T3</a> and <a href="#luna">LU8</a>. ORBIT's <a href="https://github.com/danielnuld/ps2-launcher/blob/d015baf7e4c004fa5db6964dc6bedd16484ea45d/docs/phase13-results.md">phase-13 report</a> records a menu pass in one game at 480p, with other video modes and later core builds needing separate checks. Those overlaps receive no new OR-series IDs. ORBIT's standard-source and Neutrino per-game options, PS1/Apps paths and two interface languages also have RiptOPL counterparts.</div>
+
+<h2 id="project-titan">Project Titan Magenta Edition</h2>
+<p><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">sobecapaklebs-dev/project-titan-magenta-edition</a>
+&mdash; a PS2 operating-system/system-platform project with its own shell, services, application runtime and integrated
+Titan Neutrino / Titan UL game engines. Re-audited against <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>main@2a69c259</code></a>
+with <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/VERSION"><code>VERSION</code> 0.3.93-rc17</a>.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>T1</code></td><td><b>Graphics patches kept apart from cheats</b></td><td>Graphics patches such as widescreen live in <code>ENH/&lt;id&gt;.enh</code>, separate from gameplay cheats in <code>CHT/</code>. Per-game selections persist independently and graphics patches can carry <code>@auto</code> / <code>@experimental</code> metadata. RiptOPL currently feeds these through its normal cheat path instead of a separate enhancement class.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_GAME_PATCHES.md">TITAN_GAME_PATCHES.md</a></td></tr>
+    <tr><td><code>T2</code></td><td><b>Installable TPKG apps, in-process runtime and SDK</b></td><td>TPKG v2 can install native R5900 application modules that execute inside Titan's application runtime and consume shared UI, input, notification, storage and media services. A public App/Game SDK lets software target Titan itself rather than only launching a separate ELF.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition#product-components">README</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_PACKAGE_FORMAT.md">TPKG format</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/reference/TITAN_STANDALONE_SDK.md">SDK</a></td></tr>
+    <tr><td><code>T3</code></td><td><b>Smart IGR overlay with Resume / Return</b> <span class="badge primary">Hardware pending</span></td><td>For titles with a safe compatibility profile, Titan can suspend the running title, show a small in-game overlay, then resume the same threads without ResetEE/GS/IOP or return through the engine cleanup path. Unknown titles fail closed to return-only/legacy behavior. RiptOPL's IGR returns out of the game; it has no equivalent resumable in-game overlay.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_SMART_IGR.md">TITAN_SMART_IGR.md</a></td></tr>
+    <tr><td><code>T4</code></td><td><b>Named user profiles with per-profile VMC</b></td><td>Up to four named users can be created, selected and renamed, each carrying its own avatar and VMC path. RiptOPL has per-game VMC configuration but no system-wide user/profile layer that selects an exclusive VMC by user.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_user_profile.h">titan_user_profile.h</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/services/titan_profile_storage.c">titan_profile_storage.c</a></td></tr>
+    <tr><td><code>T5</code></td><td><b>Notification center and background-progress UI</b></td><td>A system Notifications page and top status/ticker surface alerts plus background activity and download progress, including transfer bytes, percentage and speed. RiptOPL has transient dialogs/status text but no comparable system notification/activity service.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_notifications.h">titan_notifications.h</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/kernel/src/ui/titan_shell_catalog.c">titan_shell_catalog.c</a></td></tr>
+    <tr><td><code>T6</code></td><td><b>Integrated lightweight web browser</b></td><td>An installed system app stays inside the running shell and provides URL entry, lightweight HTML text/link parsing, scrolling and back/forward history. HTTP uses PS2IP directly; HTTPS is translated through Titan's configurable Stream Bridge. RiptOPL has network game protocols but no interactive web browser.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/apps/internet-browser/README.md">Internet / Titan Browser</a></td></tr>
+    <tr><td><code>T7</code></td><td><b>Transactional <code>.pup</code> system updater</b></td><td>Settings can discover forward-only TPUP update packages, verify table/payload CRCs, stage files privately and roll back already-published files if a multi-file update fails. RiptOPL updates are distributed as release artifacts rather than installed by an in-console transactional updater.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/SYSTEM_UPDATE_PUP.md">SYSTEM_UPDATE_PUP.md</a></td></tr>
+    <tr><td><code>T8</code></td><td><b>Installable animated scene themes with audio</b></td><td><code>.tthm</code> packages can provide full HOME/TOP scene frames, reversible transition keyframes, bounded idle loops, background music, navigation/interface sounds and icon styling. RiptOPL's theme engine does not have Titan's packaged state/keyframe scene-animation model.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/THEME_AUTHORING.md">THEME_AUTHORING.md</a></td></tr>
+    <tr><td><code>T9</code></td><td><b>Xbox Bluetooth/BLE plus USB keyboard and mouse input</b> <span class="badge primary">Hardware pending</span></td><td>Titan's Unified Input has source paths for Bluetooth-capable Xbox One and Xbox Series pads over Bluetooth/BLE, plus USB keyboard and mouse input. Wired Xbox USB is already counted as <a href="#ps2-launcher">P1</a>; this row counts Titan's additional Bluetooth/HID input classes. Titan explicitly labels these host-contract PASS but physical-PS2 validation pending.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/history/imported-root-artifacts/TITAN_MODERN_CONTROLLER_MATRIX.md">Modern Controller Matrix</a></td></tr>
+    <tr><td><code>T10</code></td><td><b>Repository-backed package download pipeline</b> <span class="badge primary">Target pending</span></td><td>Titan can accept a static repository catalog, resolve package/dependency metadata, queue HTTP/HTTPS package downloads, verify size and SHA-256 plus TPKG structure, then atomically publish the package for installation. Its documentation calls this a Store foundation rather than a finished storefront and says real target downloads remain pending.</td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_STORE_ARCHITECTURE.md">Store architecture</a><br><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/blob/main/docs/TITAN_DOWNLOAD_SERVICE.md">Download Service</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">Titan validation and overlap notes</div>
+Titan distinguishes source/host-contract completion from physical-PS2 validation. In particular, Smart IGR, the modern-controller paths and Store/Download path are kept above because this page audits implemented code capabilities, but Titan's own hardware/target-pending labels are preserved rather than treating them as proven compatibility.<br><br>
+Several other Titan capabilities are real but do not get extra T-series IDs because the same RiptOPL gap is already represented elsewhere on this page: direct cover/background fetching overlaps <a href="#ps2-launcher">P2</a>, its native wLaunchELF work overlaps <a href="#boliviaos">B1</a>, Project NES overlaps <a href="#retrolauncher">R1</a>, its launch transition overlaps <a href="#ps2-launcher">P5</a>, and wired Xbox USB overlaps <a href="#ps2-launcher">P1</a>. Titan's Neutrino/UL launching, VMC support and ordinary PS2RD cheats also have RiptOPL equivalents and are not gaps by themselves.
+</div>
+
+<h2 id="opl-evolution">OPL-Evolution</h2>
+<p><a href="https://github.com/officialjuicedesigns/OPL-Evolution">officialjuicedesigns/OPL-Evolution</a> &mdash; an
+experimental OPL fork with a unified PS2 and PS1 dashboard.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>E1</code></td><td><b>Controller, memory card, storage and network status</b></td><td>A status strip showing each controller port, both memory card slots, the storage source and the network state.</td><td><a href="https://github.com/officialjuicedesigns/OPL-Evolution/blob/evo-development/src/evo_ui.c">src/evo_ui.c</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="xerabora">xeRAbora</h2>
+<p><a href="https://github.com/hacan359/xerabora">hacan359/xerabora</a> &mdash; the PC client RiptOPL's
+<a href="retroachievements.html">RetroAchievements</a> build talks to. Its console code lives on hacan359's OPL fork,
+branch <a href="https://github.com/hacan359/Open-PS2-Loader/tree/ra"><code>ra</code></a>.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+      <tr><td><code>H2</code></td><td><b>Larger achievement sets with bounded snapshot cadence</b></td><td>The newer console implementation raises the watch ceiling from 1,024 to 4,096 entries, places the watch block in module storage and permits up to nine snapshot parts while budgeting at most three parts per video frame. Large sets are sampled less often rather than exceeding the sender budget. RiptOPL still uses the 1,024-entry / three-part limits; pointer chains themselves already exist and are no longer H1. Porting this requires coordinated client, loader, EE and IOP changes; installing alpha.15 alone is not a verified upgrade.</td><td><a href="https://github.com/hacan359/Open-PS2-Loader/blob/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a/modules/network/common/ra_watch.h">Watch and packet ceilings</a><br><a href="https://github.com/hacan359/Open-PS2-Loader/blob/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a/ee_core/src/ra.c">Snapshot cadence</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/6af23cada40ffb9563599e47d397ab1800b5879e/modules/network/common/ra_watch.h">RiptOPL limits</a></td></tr>
+<tr><td><code>H3</code></td><td><b>Alignment-safe reads for direct achievement watches</b></td><td>Newer EE telemetry uses native halfword/word loads only when the watched address is aligned; otherwise it reads the value byte by byte. It also bounds each write against the declared snapshot length. RiptOPL checks RAM bounds but directly dereferences 2- and 4-byte direct watches without an alignment check; its watch-list loader checks header limits without rejecting unaligned direct addresses. Pointer-chain reads are already bytewise, so the gap concerns direct watches. This is a source-confirmed safety difference, not a reproduced cause of a reported game failure.</td><td><a href="https://github.com/hacan359/Open-PS2-Loader/blob/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a/ee_core/src/ra.c">Upstream direct-watch reads</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/6af23cada40ffb9563599e47d397ab1800b5879e/ee_core/src/ra.c">RiptOPL direct-watch reads</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/6af23cada40ffb9563599e47d397ab1800b5879e/src/rawatch.c">RiptOPL watch-file validation</a></td></tr>
+</tbody>
+</table>
+
+<h2 id="retrolauncher">RETROLauncher</h2>
+<p><a href="https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher">Spaghetticode-Boon-Tobias/RETROLauncher</a>
+&mdash; a launcher written in Lua for the Enceladus environment, covering retro emulators alongside PS2 and PS1 games.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>R1</code></td><td><b>Retro emulator ROM libraries</b></td><td>Libraries of retro ROMs launched through emulators such as RetroArch, SNESticle and TempGBA.</td><td><a href="https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher#readme">README</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="modulo-r1">Modulo R1</h2>
+<p><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2">AdityaKumar7209/Modulo-R1-Beta-Preview---PS2</a>
+&mdash; a Neutrino-based loader in beta. Only its PC server source is published.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>M1</code></td><td><b>Choose between several network servers</b> <span class="pill">Optional</span></td><td>Lists every UDPFS server found on the network and lets you pick one. RiptOPL already finds a server automatically &mdash; see <a href="network-boot.html">Network Boot</a>.</td><td><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2#readme">README</a></td></tr>
+  </tbody>
+</table>
+
+
+<h2 id="nhddl">NHDDL</h2>
+<p><a href="https://github.com/pcm720/nhddl">pcm720/nhddl</a> &mdash; a deliberately small Neutrino front-end whose
+README explicitly keeps OPL-only features such as PADEMU, IGR and cheats out of scope unless Neutrino itself provides
+them. Audited against the released <a href="https://github.com/pcm720/nhddl/tree/v1.2.2">v1.2.2</a> code and documentation.
+The core features most likely to look unique at first glance are already present in RiptOPL: PixelFX/RetroGEM visual
+Game ID signalling, per-title SD2PSX/MemCard PRO2 card switching, cover art, persistent title caching, remembered
+last-played selection, global and per-game Neutrino arguments, VMC handoff and the principal Neutrino storage backends.
+The two remaining differences below are launcher/network conveniences rather than missing game-source support.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>N1</code></td><td><b>Generic forward-boot CLI</b> <span class="pill">Optional</span></td><td>Launching NHDDL with <code>-mode=&lt;type&gt;</code> and <code>-dvd=&lt;path&gt;</code> bypasses its UI and hands the target straight to Neutrino; <code>-noinit</code> can reuse an environment whose modules are already loaded. RiptOPL has positional HDD/BDM autolaunch entry points, but not an equivalent documented generic backend/path command line.</td><td><a href="https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#forward-boot-mode">Forward Boot Mode</a></td></tr>
+    <tr><td><code>N2</code></td><td><b>Reuse <code>SYS-CONF/IPCONFIG.DAT</code> for UDPFS IP</b> <span class="pill">Optional</span></td><td>When no explicit <code>udpfs_ip</code> is supplied, NHDDL can obtain the PS2 network address from the wLaunchELF/uLaunchELF-style <code>SYS-CONF/IPCONFIG.DAT</code>. RiptOPL's <a href="network-boot.html">UDPFS</a> path currently uses its own Network settings and the active Neutrino TOML instead of inheriting that shared file.</td><td><a href="https://github.com/pcm720/nhddl/blob/v1.2.2/README.md#udpfs">UDPFS documentation</a><br><a href="https://github.com/pcm720/nhddl/commit/81905e1f68f50ded828fe59a04f6313a9c4f21de">IPCONFIG.DAT fix</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">What did not become a gap</div>
+NHDDL's visual Game ID output and SD2PSX/MemCard PRO2 per-title switching both have direct RiptOPL equivalents.
+RiptOPL also already remembers the last-played title, caches parsed ISO metadata, supports global and per-game Neutrino
+arguments, and can hand VMCs to Neutrino. NHDDL's backend-forcing ELF filename suffixes are a different configuration
+interface for selecting a device mode, not a separate game-loading capability, so they are not counted independently.
+</div>
+
+<h2 id="luna">LUNA</h2>
+<p><a href="https://github.com/dnunezx/LUNA">LUNA</a> by <a href="https://github.com/dnunezx">darkladark</a> is a visual NHDDL/Neutrino-derived loader.
+Current comparison: <a href="https://github.com/dnunezx/LUNA/commit/475f7b2513e739cf63af9cd4ed8c84280e93a762"><code>475f7b25</code></a>,
+pinning frontend <code>e9554ce6</code> and runtime <code>02cbf4f2</code>. These are separate repositories; implementation links below point to their exact gitlink revisions.
+The current views are List, Collections, 3D, Orbit and experimental Scroll. Constellation (LU1) and the old flat Grid (LU3) are historical, not current capabilities.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>LU2</code></td><td><b>Orbit depth-sorted ring library view</b></td><td>Renders the selected game at the front of a tilted ring while the other cached covers move around it with perspective narrowing, size/brightness/opacity depth falloff and explicit rear-to-front sorting. RiptOPL's Coverflow is a linear carousel and has no equivalent orbital presentation.</td><td><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_orbit.c">view_orbit.c</a></td></tr>
+    <tr><td><code>LU4</code></td><td><b>Animated rotating <code>ICO</code> disc-label artwork</b></td><td>Classic view pairs the normal OPL <code>_COV.png</code> with <code>_ICO.png</code> disc art and rotates the disc texture continuously on a textured quad. RiptOPL already understands <code>ICO</code> as disc artwork and can toggle it at runtime, so the gap is specifically the animated disc presentation, not disc-art support itself.</td><td><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_classic.c">view_classic.c</a><br><a href="https://github.com/dnunezx/LUNA/blob/main/NHDDL_FIDELITY.md">paired-art fidelity note</a></td></tr>
+    <tr><td><code>LU5</code></td><td><b>Per-drive Favorites that travel with the game HDD</b> <span class="pill">Optional</span></td><td>LUNA resolves Favorites against the selected title's metadata device and stores them under that drive's <code>/LUNA/favorites.txt</code>; swapping game HDDs therefore swaps the Favorites set with the library. RiptOPL deliberately keeps one cross-device <code>favourites.bin</code> beside its shared master configuration, so this is a different persistence model rather than missing Favorites functionality.</td><td><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c">favorites.c</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/src/favsupport.c">RiptOPL favsupport.c</a></td></tr>
+    <tr><td><code>LU6</code></td><td><b>Staged temp-file writes for key persistent library state</b> <span class="badge secondary">Fix</span></td><td>LUNA writes a complete temporary file before replacing <code>favorites.txt</code>, <code>lastTitle.bin</code> and the ISO title-ID <code>cache.bin</code>; readers can recover completed temporary last-title/cache records after interrupted replacement. RiptOPL has substantial config-write verification/restore logic, but its centralized Favorites store still opens <code>favourites.bin</code> with <code>O_TRUNC</code> and writes the replacement in place.</td><td><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/favorites.c">Favorites staging</a><br><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/options.c">last-title staging</a><br><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/devices/iso.c">cache staging</a></td></tr>
+    <tr><td><code>LU7</code></td><td><b>Neutrino physical power-button DEV9-safe shutdown</b> <span class="badge secondary">Fix</span></td><td>LUNA modifies Neutrino's IOP CD/DVD service so the native front-panel power event is handled by a priority-1 listener: it stops/synchronizes active emulated optical work, invokes DEV9's shutdown export when present, then issues the normal <code>sceCdPowerOff</code>. RiptOPL's OPL core already has its own orderly IGR/power-off path, but its <b>Neutrino</b> core does not include this coordinated DEV9 shutdown behavior.</td><td><a href="https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c">LUNA cdvdfsv.c</a><br><a href="https://github.com/NathanNeurotic/neutrino/blob/master/iop/cdvdfsv/src/cdvdfsv.c">RiptOPL Neutrino baseline</a></td></tr>
+    <tr><td><code>LU8</code></td><td><b>Neutrino in-game return / IGR</b></td><td>LUNA extends the <b>Neutrino</b> runtime itself with a held <code>L1+L2+R1+R2+START+SELECT</code> IGR path. After 45 VBlank frames (roughly one second) it calls LUNA's shutdown RPC to quiesce optical/DEV9 activity, then uses the configured <code>eec.ExitPath</code> as the return ELF path, resets IOP and EE/GS state, and uses <code>ExecPS2()</code> to return directly to the memory-card ELF. RiptOPL has OPL-side IGR, but games launched through its current Neutrino core do <b>not</b> have Neutrino IGR, so this is a distinct missing runtime capability. The current README reports a physical FAT-PS2 test and requires installation on a memory card; this remains narrower than validation across all console and storage combinations.</td><td><a href="https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/padhook.c">pad hook / combo</a><br><a href="https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/ee_core/src/luna_igr_rpc.c">EE IGR RPC client</a><br><a href="https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/iop/cdvdfsv/src/cdvdfsv.c">IOP shutdown RPC</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/IGR.md">RiptOPL IGR scope</a></td></tr>
+      <tr><td><code>LU9</code></td><td><b>Projected 3D game-case grid</b></td><td>A 6&times;4 projected game-case view with focus zoom and turn, sleeve shimmer, a selected-cover preview, scrolling titles and staggered entrance/exit transitions. The current frontend replaces the earlier flat Grid; it is not the same feature as O1 or the historical LU3. RiptOPL has Coverflow and list/theme views but no equivalent projected case-grid renderer.</td><td><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_3d.c">Case-grid renderer</a><br><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/include/ui/navigation.h">6x4 geometry</a></td></tr>
+    <tr><td><code>LU10</code></td><td><b>Animated ambient-orb Scroll library view</b></td><td>An explicitly experimental library presentation pairing scrolling title/logo artwork with animated ambient orbs. RiptOPL has animated backgrounds and title lists, but no corresponding selectable orb/scroll library view. The comparison concerns the complete browsing presentation, not generic animation support.</td><td><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/view_scroll.c">Scroll renderer</a><br><a href="https://github.com/dnunezx/nhddl-luna/blob/e9554ce6affa133fd776a7e1265580608832821e/src/ui/gui.c">Scroll navigation</a></td></tr>
+    <tr><td><code>LU11</code></td><td><b>Neutrino VMC backing on APA/PFS</b></td><td>Maps raw VMC files from an APA/PFS metadata partition into direct ATA extents for the Neutrino runtime. Requires normal boot, 8 KiB PFS zones, no indirect inode segments, and a shared 64-fragment budget for game plus both cards. The loader validates image geometry and mapping before launch. RiptOPL currently drops Neutrino VMC arguments for APA games because its bundled runtime lacks this PFS backing path. LUNA still requests a physical-console save/reboot/reload test; source implementation does not establish broad game compatibility.</td><td><a href="https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/pfs_vmc.c">PFS extent mapping</a><br><a href="https://github.com/dnunezx/neutrino-luna/blob/02cbf4f2a0bafcba71904f7d9d8fcda6ddd65f15/ee/loader/src/main.c">Loader restrictions</a><br><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/6af23cada40ffb9563599e47d397ab1800b5879e/docs/NEUTRINO.md">RiptOPL APA VMC restriction</a></td></tr>
+</tbody>
+</table>
+<div class="callout info"><div class="h">Current overlap and validation scope</div>
+Storage-source toggles, rescans, card creation/assignment, optional music and cheat selection are not counted again: RiptOPL already has those categories of functionality.
+LUNA's current README reports in-game return on a physical FAT PS2, while APA/PFS VMC save/reboot/reload and artwork performance on optional storage still need console testing.
+The older Constellation/Grid descriptions and HDD-only filter are superseded by the current frontend; neither describes today's selectable library views.
+</div>
+
+<h2 id="extended-apa">Extended APA</h2>
+<p><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">L10N37/Open-PS2-Loader-Extended-APA</a> &mdash; an OPL
+build for internal HDDs formatted with PS2 HDD Manager's banked APA layout.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>L1</code></td><td><b>APA HDDs over 2 TiB</b> <span class="badge unconfirmed">Not planned</span></td><td>Splits a large internal HDD into APA &ldquo;banks&rdquo; and lists and launches games from every bank. RiptOPL stays on the standard APA layout &mdash; see <a href="hdd.html#apa-pfs">Internal HDD</a>.</td><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA/blob/main/EXTENDED_APA.md">EXTENDED_APA.md</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="e2opl">E2OPL</h2>
+<p><a href="https://sourceforge.net/projects/e2opl/">E2OPL</a> &mdash; a historical OPL branch whose defining change was
+read-only EXT2 support for USB storage. Its published README requires the EXT2 partition to be first, uses 4096-byte
+blocks and supports ISO files rather than USBExtreme splitting.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>X1</code></td><td><b>EXT2 USB filesystem support</b></td><td>Loads PS2 ISO images from a read-only EXT2 USB partition, avoiding FAT32's 4 GiB file limit and fragmentation requirement. RiptOPL supports FAT/exFAT-style BDM filesystems but has no EXT2 filesystem driver, so this remains a distinct storage-format capability even though exFAT solves most of the same practical problem today.</td><td><a href="https://sourceforge.net/projects/e2opl/">SourceForge project</a><br><a href="https://sourceforge.net/p/e2opl/code/HEAD/tree/trunk/README">source README</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="modular-pademu">Open PS2 Loader Modular PADEMU</h2>
+<p><a href="https://github.com/belek666/Open-PS2-Loader/tree/modularPademu">belek666/Open-PS2-Loader <code>modularPademu</code></a>
+&mdash; a 2020 experimental branch that split PADEMU into controller-specific modules. DS3/DS4 overlap modern OPL,
+and its Xbox One USB path overlaps <a href="#ps2-launcher">P1</a>; the two controller classes below still have no
+equivalent module in RiptOPL.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>MP1</code></td><td><b>Xbox 360 controllers over USB</b> <span class="pill">Historical</span></td><td>A dedicated wired-Xbox-360 module recognizes Microsoft and several third-party VID/PID pairs, translates reports to DualShock 2 input and drives LEDs/rumble. RiptOPL has no <code>xbox360usb</code> PADEMU module.</td><td><a href="https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/xbox360usb/xbox360usb.c">xbox360usb.c</a></td></tr>
+    <tr><td><code>MP2</code></td><td><b>Generic USB HID gamepads</b> <span class="pill">Historical</span></td><td>A generic HID module parses a USB gamepad's HID report descriptor and maps buttons, hats and axes into the emulated DS2 report instead of requiring a controller-specific driver. This is separate from Titan's keyboard/mouse support and BoliviaOS's USB keyboard support.</td><td><a href="https://github.com/belek666/Open-PS2-Loader/blob/modularPademu/modules/pademu/hidusb/hidusb.c">hidusb.c</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">Modular PADEMU status</div>
+These are historical source capabilities, not claims of current RiptOPL-era hardware validation. The branch head is
+<a href="https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a"><code>66b93542</code></a>
+from 2020. Its Xbox One USB module is not counted separately because modern Xbox One / Series USB support is already P1.
+</div>
+
+<h2 id="uopl-historical">uOPL (historical)</h2>
+<p><a href="https://github.com/slimpuggamer/uOPL/tree/uOPL-1">slimpuggamer/uOPL <code>uOPL-1</code></a> &mdash; the
+historical uOPL line mirrored by <a href="https://github.com/NathanNeurotic/uOPL">NathanNeurotic/uOPL</a>. Most of the
+features that once distinguished it are now directly present in RiptOPL: Favorites, Coverflow, per-game Neutrino,
+Mode 7, legacy <code>mass:</code> app paths, the extra theme keys, one-button Disable All in the cheat selector and
+cancellation of pending artwork work during launch.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>K1</code></td><td><b>Write debug logs to a BDM device</b> <span class="pill">Debug build</span></td><td>Debug builds can switch <code>LOG()</code> from the normal debug transport to a block-device file and append messages to <code>mass0:opllog.txt</code>. RiptOPL still has UDP/PPC/DECI2-style debug output, but no equivalent <b>BD Debug Log</b> setting or file-backed BDM logger.</td><td><a href="https://github.com/slimpuggamer/uOPL/blob/uOPL-1/include/ioman.h">include/ioman.h</a><br><a href="https://github.com/slimpuggamer/uOPL/blob/uOPL-1/src/ioman.c">src/ioman.c</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="rrve">RRVE / exaconn OPL wheel work</h2>
+<p><a href="https://github.com/exaconn/Open-PS2-Loader">exaconn/Open-PS2-Loader</a> &mdash; the repository previously
+listed here as the wOPL Ridge Racer V Edition. Its current 2026 source has moved beyond that label and contains
+Logitech wheel work on <code>master</code>, plus a companion
+<a href="https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition"><code>Driving-Force-2-negCon-Edition</code></a>
+branch. The entry below describes the code that actually exists now rather than inferring features from the old RRVE name.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>RR1</code></td><td><b>USB Driving Force wheel with negCon presentation</b> <span class="pill">Experimental</span></td><td>The DS34 USB path recognizes Logitech wheel devices, parses wheel/pedal reports and applies a spring/auto-centering command. The companion branch presents that wheel through the PS1 <code>negCon</code> protocol (<code>0x23</code>) instead of only emulating a normal DS2, which is useful to titles designed around negCon-style analog steering. RiptOPL's DS34 USB driver has no Logitech <code>dfreport</code> / negCon path.</td><td><a href="https://github.com/exaconn/Open-PS2-Loader/commit/3ab34d2028e3da9592b99b4681a7cdb324e3a070">Logitech definitions</a><br><a href="https://github.com/exaconn/Open-PS2-Loader/commit/e70e6cbddf39a68497c28b302d19695ee2ce753a">auto-centering</a><br><a href="https://github.com/exaconn/Open-PS2-Loader/tree/Driving-Force-2-negCon-Edition">negCon branch</a></td></tr>
+  </tbody>
+</table>
+
+<h2 id="sopl">Stable Open PS2 Loader (sOPL)</h2>
+<p><a href="https://github.com/mystyq/Stable-Open-PS2-Loader">mystyq/Stable-Open-PS2-Loader</a> &mdash; a
+stability-focused fork. Its artwork TAR caching, large-list work, BDM HDD support, game-size fixes, MMCE work and
+other older changes either exist in RiptOPL or have since been superseded there. One lower-level ATA behavior remains
+materially different.</p>
+<table>
+  <thead><tr><th>ID</th><th>Feature</th><th>What it does</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td><code>S1</code></td><td><b>ATA DRDY waiting for slow-starting SMR / SSD drives</b> <span class="badge secondary">Fix</span></td><td>sOPL's in-game ATAD path adds an <code>ata_wait_until_ready()</code> loop that waits for BUSY to clear and DRDY to assert at driver start and around ATA commands. It was introduced specifically for newer SMR/SSD drives that can take longer to become ready. RiptOPL has its own post-ATAD settling and HDD-detection safeguards, but its current <code>cdvdman/atad.c</code> does not implement this in-driver DRDY wait strategy.</td><td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader/commit/3495d55b96ce72497b6a922ab540ac76a58ca74a">commit 3495d55b</a><br><a href="https://github.com/mystyq/Stable-Open-PS2-Loader/blob/master/modules/iopcore/cdvdman/atad.c">current atad.c</a></td></tr>
+  </tbody>
+</table>
+<div class="callout info"><div class="h">sOPL TAR claims vs. audited source</div>
+The May 2026 sOPL release text advertises <code>ART/art.tar</code>, <code>CFG/cfg.tar</code> and <code>CHT/cht.tar</code>.
+The published <code>release</code> tag points to an older commit, while current <code>master</code> visibly carries the
+ART reader/cache path. This survey does not turn an unlocated release-note claim into a separate gap. More importantly,
+RiptOPL <code>rebuild/main</code> now has a unified TAR engine for all three archive kinds, including
+<code>art_cache.bin</code>, <code>cfg_cache.bin</code> and <code>cht_cache.bin</code>, so none of those archive features
+is a current RiptOPL gap regardless.
+</div>
+
+<div class="callout info"><div class="h">Awaiting Comparison cleared</div>
+All eight variants that were previously reserved for comparison have now been audited. OPL Daily Build, Grimdoomer OPL
+and X2P produced no remaining unique RiptOPL gap and are recorded in <a href="#checked">Checked, nothing missing</a>.
+The five sources above produced six confirmed entries.
+</div>
+
+<h2 id="checked">Checked, nothing missing</h2>
+<p>Surveyed with the rest. Everything these offer is already in RiptOPL or does not apply to it.</p>
+<table>
+  <thead><tr><th>Project</th><th>Why nothing is listed</th></tr></thead>
+  <tbody>
+    <tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a></td><td>RiptOPL is built on its master branch. Selected upstream changes and proposals are listed above under <a href="#upstream-prs">Upstream OPL pull requests</a>.</td></tr>
+    <tr><td><a href="https://github.com/ps2-mmce/Open-PS2-Loader">ps2-mmce/Open-PS2-Loader</a></td><td>MMCE support, switching MMCEs to the boot card during in-game reset, and VMC groups are all in RiptOPL; the rest are upstream fixes.</td></tr>
+    <tr><td><a href="https://github.com/Docmine17/Open-PS2-Loader-HTTP">Docmine17/Open-PS2-Loader-HTTP</a></td><td>RiptOPL's <a href="http.html">HTTP</a> protocol comes from this project. Its only later change is an example <code>games.csv</code>.</td></tr>
+    <tr><td><a href="https://github.com/NathanNeurotic/xerabora">NathanNeurotic/xerabora</a></td><td>RiptOPL's paired client fork already includes pointer-chain support. Later upstream console/runtime differences are H2/H3; the client version is not a promise of compatible console support.</td></tr>
+    <tr><td><a href="https://github.com/SvenGDK/Open-PS2-Loader">SvenGDK/Open-PS2-Loader</a></td><td>An OPL v1.0.0 build for PSX DESR consoles. Everything it lists is in upstream OPL 1.2, which RiptOPL is based on.</td></tr>
+    <tr><td><a href="https://github.com/rodrigo1593-dev/oplfork">rodrigo1593-dev/oplfork</a></td><td>Two experiments with PADEMU module loading. The same author's Bluetooth change is U9.</td></tr>
+    <tr><td><a href="https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats">PS2-Widescreen/OPL-Widescreen-Cheats</a></td><td>A widescreen cheat collection that works with RiptOPL's <a href="cheats.html">cheat engine</a> as it is.</td></tr>
+    <tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader-lang">ps2homebrew/Open-PS2-Loader-lang</a></td><td>RiptOPL builds its <a href="languages.html">UI languages</a> from this repository, including Galician and Serbian.</td></tr>
+    <tr><td><a href="https://github.com/ps2homebrew/HDLGameInstaller">ps2homebrew/HDLGameInstaller</a></td><td>A separate app that installs games into APA partitions. RiptOPL does not write APA partitions.</td></tr>
+    <tr><td><a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds">Open PS2 Loader Daily Build (OPL DB / OPL TA)</a></td><td>Its historical ELM/PS1 page is superseded by RiptOPL's dedicated <a href="ps1-vcd.html">PS1 Games</a> view and current POPSTARTER/Ember paths. Its theme sound effects, startup audio and related theme assets are also already present or extended in RiptOPL's current sound/theme engine.</td></tr>
+    <tr><td><a href="https://github.com/grimdoomer/Open-PS2-Loader">grimdoomer/Open-PS2-Loader</a></td><td>The exFAT/GPT internal-HDD path that made this fork distinctive is already part of RiptOPL's <a href="hdd.html">internal HDD</a> support. Its later 64-bit BDM LBA / VMC-range safety work is also present in RiptOPL's current <code>bdmsupport.c</code>.</td></tr>
+    <tr><td><a href="https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa">X2P (Xbox-to-PlayStation)</a></td><td>X2P intentionally removes OPL features and presents a themed, USB-focused subset; it is not an Xbox emulator. Its sound/theme stack (SFX, startup audio and streamed OGG BGM) is already present and more extensively integrated in RiptOPL, so the audit found no net-added capability.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="refresh-deltas">What changed in this refresh</h2>
+<ul>
+<li><b>OPHTML:</b> source is ahead of the v0.10.0 release. The reusable console-core archive is new OH12; per-game compatibility settings and last-played restoration overlap existing RiptOPL features. Planned cover decoding, search, Favorites and IGR are not counted as delivered features.</li>
+<li><b>LUNA:</b> the actual frontend/runtime gitlinks replace the old September snapshot. LU9/LU10/LU11 cover the new case-grid, experimental Scroll view and restricted APA/PFS Neutrino VMC implementation. Retired views are no longer counted; the current README's FAT-PS2 IGR report replaces the stale WIP description.</li>
+<li><b>xeRAbora:</b> the upstream client is alpha.15, while RiptOPL remains paired with alpha.10. H1 already exists; H2 records the larger-set console/runtime work and H3 the alignment-safe direct reads rather than claiming a client-only upgrade solves it. Original-disc RA already exists in RiptOPL and is not added as another gap.</li>
+<li><b>PS2-Launcher:</b> the existing v5.0.0 comparison still applies at <code>46bad5a4</code>. Its later commit documents a controller rather than adding another implementation; the seven existing gaps remain.</li>
+<li><b>ORBIT and Titan:</b> the current ORBIT master is the already compared v1.0.2 merge; Titan remains at the previously audited <code>2a69c259</code>. No new gaps are asserted for unchanged snapshots.</li>
+<li><b>Upstream OPL:</b> #1779 is now merged upstream but remains U1 here; #1736 remains open; #1675 closed without merge and is explicitly historical. A closed proposal is not a shipped fix.</li>
+<li><b>wOPL:</b> W4 and W5 are already implemented in RiptOPL. W1/W2/W3/W6 remain, preserving their original evidence and design-choice labels.</li>
+</ul>
+
+<h2 id="audit-revisions">Revision and validation scope</h2>
+<p>Live repository revisions checked on 2026-10-08 UTC. A revision check establishes what source is current, not that every branch, release or hardware path was retested. The selected comparisons above were checked in source; unchanged historical variants retain their pinned branch evidence. NHDDL uses its maintained <code>main</code> branch rather than the repository default <code>legacy</code>.</p>
+<details><summary>Surveyed repository revisions</summary><table><thead><tr><th>Repository</th><th>Branch</th><th>Revision</th><th>Scope this pass</th></tr></thead><tbody>
+<tr><td><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2">AdityaKumar7209/Modulo-R1-Beta-Preview---PS2</a></td><td><code>main</code></td><td><a href="https://github.com/AdityaKumar7209/Modulo-R1-Beta-Preview---PS2/commit/13bdb68ce85dd18effd1acb9ac4e4f2ffb4038bd"><code>13bdb68c</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/Docmine17/Open-PS2-Loader-HTTP">Docmine17/Open-PS2-Loader-HTTP</a></td><td><code>master</code></td><td><a href="https://github.com/Docmine17/Open-PS2-Loader-HTTP/commit/6ee5bef262f0e7ea8dff1ae464d7e25aad8174f8"><code>6ee5bef2</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/Irfanlesnar/PS2-Launcher">Irfanlesnar/PS2-Launcher</a></td><td><code>main</code></td><td><a href="https://github.com/Irfanlesnar/PS2-Launcher/commit/46bad5a4a469c51e45eb1ed879fe43c100b8cb7b"><code>46bad5a4</code></a></td><td>Selected implementation differences checked</td></tr>
+<tr><td><a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds">Jay-Jay-OPL/OPL-Daily-Builds</a></td><td><code>master</code></td><td><a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds/commit/aa531a858c583104bfd577c4715339c8ce68d534"><code>aa531a85</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA">L10N37/Open-PS2-Loader-Extended-APA</a></td><td><code>main</code></td><td><a href="https://github.com/L10N37/Open-PS2-Loader-Extended-APA/commit/5cb8058907204501f425b5c170316063ef18f69a"><code>5cb80589</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader">NathanNeurotic/Open-PS2-Loader</a></td><td><code>rebuild/main</code></td><td><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/6af23cada40ffb9563599e47d397ab1800b5879e"><code>6af23cad</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/NathanNeurotic/neutrino">NathanNeurotic/neutrino</a></td><td><code>master</code></td><td><a href="https://github.com/NathanNeurotic/neutrino/commit/a7b673648254942e11315c9006c4c7bb776e58a1"><code>a7b67364</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/NathanNeurotic/uOPL">NathanNeurotic/uOPL</a></td><td><code>wOPL-base</code></td><td><a href="https://github.com/NathanNeurotic/uOPL/commit/4ae7414877ba566177ef1130de29ce850a5e15b3"><code>4ae74148</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/NathanNeurotic/xerabora">NathanNeurotic/xerabora</a></td><td><code>main</code></td><td><a href="https://github.com/NathanNeurotic/xerabora/commit/ebd18ed68a28c901f437d0ec381e52fc26d5698a"><code>ebd18ed6</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats">PS2-Widescreen/OPL-Widescreen-Cheats</a></td><td><code>main</code></td><td><a href="https://github.com/PS2-Widescreen/OPL-Widescreen-Cheats/commit/f5b67cd6586eedf0ee30cba7b754e4209bc14180"><code>f5b67cd6</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher">Spaghetticode-Boon-Tobias/RETROLauncher</a></td><td><code>main</code></td><td><a href="https://github.com/Spaghetticode-Boon-Tobias/RETROLauncher/commit/e6f95081d71c43d58f2c3790ac9528828554c683"><code>e6f95081</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/SvenGDK/Open-PS2-Loader">SvenGDK/Open-PS2-Loader</a></td><td><code>main</code></td><td><a href="https://github.com/SvenGDK/Open-PS2-Loader/commit/b7e6498143c6f8a7aff544cd13c57564d7cb1255"><code>b7e64981</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/belek666/Open-PS2-Loader">belek666/Open-PS2-Loader</a></td><td><code>master</code></td><td><a href="https://github.com/belek666/Open-PS2-Loader/commit/41f7cf0b782628ef237527598225a2f628a376dd"><code>41f7cf0b</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/coffeedevsolutions/OPHTML">coffeedevsolutions/OPHTML</a></td><td><code>main</code></td><td><a href="https://github.com/coffeedevsolutions/OPHTML/commit/03a5d56f724055f4d46e0eaf44806e95f0202cb1"><code>03a5d56f</code></a></td><td>Selected implementation differences checked</td></tr>
+<tr><td><a href="https://github.com/coffeedevsolutions/OPLattice">coffeedevsolutions/OPLattice</a></td><td><code>main</code></td><td><a href="https://github.com/coffeedevsolutions/OPLattice/commit/32f3fd7bcefc96d9130fc27b364e2e8d41de9540"><code>32f3fd7b</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/danielnuld/ps2-launcher">danielnuld/ps2-launcher</a></td><td><code>master</code></td><td><a href="https://github.com/danielnuld/ps2-launcher/commit/28a23666fbc8b11b5edabcfff0f780b2b2161219"><code>28a23666</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/dnunezx/LUNA">dnunezx/LUNA</a></td><td><code>main</code></td><td><a href="https://github.com/dnunezx/LUNA/commit/475f7b2513e739cf63af9cd4ed8c84280e93a762"><code>475f7b25</code></a></td><td>Selected implementation differences checked</td></tr>
+<tr><td><a href="https://github.com/exaconn/Open-PS2-Loader">exaconn/Open-PS2-Loader</a></td><td><code>master</code></td><td><a href="https://github.com/exaconn/Open-PS2-Loader/commit/73a4921dee722837c18150d0c0f1a7f3675e8349"><code>73a4921d</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/ffgriever-pl/Memory-Card-Annihilator">ffgriever-pl/Memory-Card-Annihilator</a></td><td><code>master</code></td><td><a href="https://github.com/ffgriever-pl/Memory-Card-Annihilator/commit/769d581db10b02134591b9e3de1747007bce59e2"><code>769d581d</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/grimdoomer/Open-PS2-Loader">grimdoomer/Open-PS2-Loader</a></td><td><code>master</code></td><td><a href="https://github.com/grimdoomer/Open-PS2-Loader/commit/24340b5ec9303d209a73efcdd68e741f48641aec"><code>24340b5e</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/hacan359/Open-PS2-Loader">hacan359/Open-PS2-Loader</a></td><td><code>ra</code></td><td><a href="https://github.com/hacan359/Open-PS2-Loader/commit/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a"><code>f4d559a3</code></a></td><td>Selected implementation differences checked</td></tr>
+<tr><td><a href="https://github.com/hacan359/xerabora">hacan359/xerabora</a></td><td><code>main</code></td><td><a href="https://github.com/hacan359/xerabora/commit/d36ee3a54c8769825c99756f908367b2cc2622f3"><code>d36ee3a5</code></a></td><td>Selected implementation differences checked</td></tr>
+<tr><td><a href="https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa">koraxial/Xbox-2-PlayStation-Emulator-AlFa</a></td><td><code>master</code></td><td><a href="https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa/commit/160c3e18c508432323946fca9bb5cb989705f28e"><code>160c3e18</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader">mystyq/Stable-Open-PS2-Loader</a></td><td><code>master</code></td><td><a href="https://github.com/mystyq/Stable-Open-PS2-Loader/commit/770d5323928ff20990d07d70a5ce266a95e0f6c4"><code>770d5323</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/officialjuicedesigns/OPL-Evolution">officialjuicedesigns/OPL-Evolution</a></td><td><code>evo-development</code></td><td><a href="https://github.com/officialjuicedesigns/OPL-Evolution/commit/47119b7128f347eb046c52a48dee36a9559b2d1b"><code>47119b71</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/pcm720/nhddl">pcm720/nhddl</a></td><td><code>main</code></td><td><a href="https://github.com/pcm720/nhddl/commit/821b6c9b4a19678d33a4166fd2abdd0034dcaba2"><code>821b6c9b</code></a></td><td>Selected implementation differences checked</td></tr>
+<tr><td><a href="https://github.com/ps2-mmce/Open-PS2-Loader">ps2-mmce/Open-PS2-Loader</a></td><td><code>master</code></td><td><a href="https://github.com/ps2-mmce/Open-PS2-Loader/commit/e2090114e8e70d8966438b96dfa87a452ff54153"><code>e2090114</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/ps2homebrew/HDLGameInstaller">ps2homebrew/HDLGameInstaller</a></td><td><code>main</code></td><td><a href="https://github.com/ps2homebrew/HDLGameInstaller/commit/ec37c81f8edb6fc45e2be51c86a322780641275a"><code>ec37c81f</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a></td><td><code>master</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader/commit/4cc74baabb73be9ca43f817474b321cd70fbcc2d"><code>4cc74baa</code></a></td><td>Selected implementation differences checked</td></tr>
+<tr><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader-lang">ps2homebrew/Open-PS2-Loader-lang</a></td><td><code>main</code></td><td><a href="https://github.com/ps2homebrew/Open-PS2-Loader-lang/commit/b23b743d9f8c65e7a305db945f442e5755019221"><code>b23b743d</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/ps2homebrew/wOPL">ps2homebrew/wOPL</a></td><td><code>wOPL-base</code></td><td><a href="https://github.com/ps2homebrew/wOPL/commit/4ae7414877ba566177ef1130de29ce850a5e15b3"><code>4ae74148</code></a></td><td>Selected implementation differences checked</td></tr>
+<tr><td><a href="https://github.com/rodrigo1593-dev/oplfork">rodrigo1593-dev/oplfork</a></td><td><code>main</code></td><td><a href="https://github.com/rodrigo1593-dev/oplfork/commit/0dbb0d354b6587b8aee65b1b75fe5609abaaff38"><code>0dbb0d35</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/slimpuggamer/uOPL">slimpuggamer/uOPL</a></td><td><code>uOPL-1</code></td><td><a href="https://github.com/slimpuggamer/uOPL/commit/0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64"><code>0daf81fe</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+<tr><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition">sobecapaklebs-dev/project-titan-magenta-edition</a></td><td><code>main</code></td><td><a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>2a69c259</code></a></td><td>Revision checked; existing detailed evidence retained</td></tr>
+</tbody></table></details>
+
+<h2 id="notes">Notes</h2>
+<p><b>2026-10-08 retired IDs:</b> W4 (live disc-art toggle), W5 (pad tick-wrap fix) and H1 (pointer chains) are already implemented in RiptOPL, in <code>src/themes.c</code>, <code>src/pad.c</code> and <code>ee_core/src/ra.c</code> respectively. LU1 and LU3 describe removed LUNA views from the earlier snapshot; their IDs remain reserved. OR1/OR2 remain retired, with PS1 save-icon coverage now extended to VCD and Ember by PR #876.</p>
+<ul>
+  <li><b>OPHTML parity checked on 2026-09-27:</b> <a href="https://github.com/coffeedevsolutions/OPHTML">OPHTML / ps2ui</a> by <a href="https://github.com/coffeedevsolutions">coffeedevsolutions</a> (Blake Coffee), audited against <a href="https://github.com/coffeedevsolutions/OPHTML/commit/60810bd2ec0e2656d7425603e760ac010883f53a"><code>main@60810bd</code></a> (version 0.10.0, <code>.uib</code> format v7). While publicly titled as a web-technology UI toolkit, the source contains an embedded OPL-compatible game launcher (<code>ophtml.elf</code>) and environment. Overlapping launcher features (Neutrino no-reset launch in <code>src/elfldr_noreset.c</code>, ISO9660 SYSTEM.CNF extraction in <code>src/retrogem.c</code>, texture streaming in <code>src/texcache.c</code>, and list windowing) were excluded as existing RiptOPL parity, leaving 11 genuine code-level gaps: declarative flexbox compilation to zero-allocation C99 GS runtime, pre-resolved pairwise HarfBuzz kerning on the EE, instant 1-byte palette theme switching, runtime 2D coordinate offsets, focus subtree visibility masking with automatic D-pad bypass, automated CRT overscan &amp; multi-layer alpha contrast linter, browser-based theme simulation, static VRAM budgeting, Play! emulator CI testing, EE bus-alignment fuzzer hardening, and compiler safety ceilings.</li>
+  <li><b>LUNA parity checked on 2026-09-22:</b> <a href="https://github.com/dnunezx/LUNA">LUNA</a> by <a href="https://github.com/dnunezx">darkladark</a>, audited against <a href="https://github.com/dnunezx/LUNA/commit/23112ecce73823b13d11d57fda0abd5968808d7c"><code>main@23112ec</code></a> and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b"><code>rebuild/main@abf14079</code></a>. Eight source-backed gaps survived overlap checking. LU8 tracks LUNA's Neutrino in-game return because the implementation is present and RiptOPL's Neutrino core lacks IGR; it remains marked WIP because LUNA's current README has not promoted the feature to stable status.</li>
+  <li><b>Previously awaiting variants fully audited on 2026-09-22:</b> E2OPL's historical SourceForge source; OPL Daily Build <a href="https://github.com/Jay-Jay-OPL/OPL-Daily-Builds/commit/aa531a858c583104bfd577c4715339c8ce68d534"><code>aa531a85</code></a>; Modular PADEMU <a href="https://github.com/belek666/Open-PS2-Loader/commit/66b935422bc83619fc30187418cbf189c375002a"><code>66b93542</code></a>; Grimdoomer's large-capacity branch <a href="https://github.com/grimdoomer/Open-PS2-Loader/commit/d1f51be4452074c2352931e0b9c474da9242e481"><code>d1f51be4</code></a> plus its later BDM LBA fix branch; historical uOPL <a href="https://github.com/slimpuggamer/uOPL/commit/0daf81fe035f5d29e5ca653cd8e4fe588fe9ea64"><code>0daf81fe</code></a>; X2P <a href="https://github.com/koraxial/Xbox-2-PlayStation-Emulator-AlFa/commit/160c3e18c508432323946fca9bb5cb989705f28e"><code>160c3e18</code></a>; exaconn master <a href="https://github.com/exaconn/Open-PS2-Loader/commit/73a4921dee722837c18150d0c0f1a7f3675e8349"><code>73a4921d</code></a> and negCon branch <a href="https://github.com/exaconn/Open-PS2-Loader/commit/f9717f7676a6d7db588a1c042c3eaff36ec414b0"><code>f9717f76</code></a>; and Stable OPL <a href="https://github.com/mystyq/Stable-Open-PS2-Loader/commit/770d5323928ff20990d07d70a5ce266a95e0f6c4"><code>770d5323</code></a>. Six new gaps survived code comparison; three projects moved to the no-gap table.</li>
+  <li><b>Project Titan Magenta Edition parity checked on 2026-09-22:</b> audited against upstream <a href="https://github.com/sobecapaklebs-dev/project-titan-magenta-edition/commit/2a69c259c80e351da118cb416de1e6f0129e2816"><code>main@2a69c259</code></a> / <code>VERSION</code> 0.3.93-rc17 and RiptOPL <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/commit/abf14079e66ae5a5f3f943011dbe3356e2e1152b"><code>rebuild/main@abf14079</code></a>. Titan's controller, Smart IGR and Store/Download documentation explicitly retains physical-target validation caveats; those rows describe source capability, not a hardware-compatibility guarantee.</li>
+  <li><b>NHDDL parity checked on 2026-09-20:</b> RiptOPL already has the visual Game ID signal used by PixelFX/RetroGEM hardware, MMCE GameID switching for SD2PSX/MemCard PRO2 on cross-device launches, remembered last-played selection with optional autostart, persistent ISO metadata caching, and global/per-game Neutrino arguments. Those are therefore not N-series gaps.</li>
+  <li><b>Already in RiptOPL, so not listed:</b> the fix from wOPL PR #435 (remember the last played game when it is
+  the first list entry), <a href="cheats.html#ps2rd-image">PS2RD cheat images (<code>.img</code>)</a>, cover art from
+  <code>ART/art.tar</code> (<a href="settings.html#display-settings">Interface settings</a>), per-game configs from
+  <code>CFG/cfg.tar</code>, cheats from <a href="cheats.html#cht-files"><code>CHT/cht.tar</code></a>, persistent TAR
+  index sidecars for all three archive kinds, the <code>&lt;name&gt;_show_run</code> theme key,
+  RetroAchievements for <a href="retroachievements.html#physical-discs">physical discs</a>, per-game OSD language,
+  virtual memory card creation, and the older USB driver that upstream PR #1752 proposes pinning.</li>
+  <li><b>Shipped since the survey:</b> Ratchet &amp; Clank 3 over SMB (was U5, from upstream PR #1761), Pro Evolution
+  Soccer 2 defaulting to Accurate Reads (was U7, see <a href="per-game-settings.html#compatibility-modes">Compatibility
+  Modes</a>) and Galician and Serbian UI languages (was U8, see <a href="languages.html#naming">Languages</a>), all in
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/658">PR #658</a>; remembered per-game cheat selections
+  (was U2, from upstream PR #1748, in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/846">PR #846</a>, see
+  <a href="cheats.html#cheat-modes">Cheat modes</a>); Create VMC on First Launch (was OR2, in
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/842">PR #842</a>, see
+  <a href="settings.html#game-launching">Game Launching</a>); out-of-bounds reads checked against the real media size
+  (was U3, from upstream PR #1763, in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/840">PR #840</a>);
+  in-game reset without the VBLANK interrupt (was U4, from upstream PR #1762, in
+  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/841">PR #841</a>, see <a href="igr.html#limitations">In-Game
+  Reset</a>); and animated 3D save icons (was OR1, in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/843">PR
+  #843</a>, see <a href="settings.html#artwork-settings">Artwork Settings</a>). IDs are not reused.</li>
+  <li><b>wOPL's config format:</b> wOPL moved to libconfig. RiptOPL reads and writes both formats, so files the two
+  loaders share, such as an app's <code>title.cfg</code>, keep working in both.</li>
+  <li><b>Device names:</b> RiptOPL accepts <code>usb0:</code> and <code>ata0:</code> style names for its boot path and
+  ties each launch to its device by driver name, but reads files through <code>massN:</code>. wOPL uses the typed
+  names throughout. That is a different approach rather than a missing feature, so it is not counted.</li>
+  <li><b>TAR archive status:</b> the older survey note about <code>CFG/cfg.tar</code> is obsolete. RiptOPL
+  <code>rebuild/main</code> now has one indexed/persistently cached TAR engine for <code>ART/art.tar</code>,
+  <code>CFG/cfg.tar</code> and <code>CHT/cht.tar</code>. Consequently, sOPL's TAR work is not a current gap, and an
+  archive claim is counted only when its implementation can be located in the audited source.</li>
+</ul>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>
