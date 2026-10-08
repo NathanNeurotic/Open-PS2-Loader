@@ -625,7 +625,7 @@ browser shows — spinning, and moving too when the icon is animated. It comes f
 (64×64 by default) give the box the whole icon fits in, at every angle of its turn; <code>scaled=1</code> (the
 default) narrows it on a 16:9 screen like any image. Lighting comes from the save's own <code>icon.sys</code>.</p>
 <p>It draws <b>nothing</b> while the user's <b>3D Save Icons</b> setting is off (<i>Settings → Interface → Artwork
-Settings</i>, off by default), on a row that is not a PS2 game (apps, PS1 titles), or when the game has no readable
+Settings</i>, off by default), on an app row, or when the game has no readable
 save. A theme can place it unconditionally, but should not put anything under it that depends on it being there. The
 cards are read only once the cursor has rested on a game for a quarter of a second, on the worker that also loads
 cover art.</p>
@@ -637,6 +637,8 @@ cover art.</p>
 	height=52</pre>
 <p>Both built-in themes place one: <code>&lt;OPL&gt;</code> above the cover and <code>&lt;Coverflow&gt;</code> under the
 centre cover, and both between the two screenshots of the info page.</p>
+
+<p>For a PS1 row, the same element draws the card's 2D icon rather than a PS2 3D model. It reads POPSTARTER's <code>SLOT0.VMC</code>/<code>SLOT1.VMC</code> in the VCD save folder or Ember's <code>MC1.vmc</code>/<code>MC2.vmc</code> in the game folder. No icon is expected before a save exists. See <a href="ps1-vcd.html#save-icons">PS1 save icons</a>.</p>
 
 <h2 id="coordinates">11 · Coordinates &amp; scaling</h2>
 <div class="steps">
