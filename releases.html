@@ -215,6 +215,11 @@ manifest from the GitHub asset list. The other standard loaders are inside the u
 DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</div>
 
 <span id="two-toolchains"></span>
+<h2 id="test-artifacts">Download a PR or Actions test build</h2>
+<p>A test artifact is a ZIP attached to a successful GitHub Actions run, rather than an asset on the Releases page. Open the supplied run link, check that its source commit matches the fix you are testing, then choose the requested artifact under <b>Artifacts</b>. GitHub normally requires you to sign in to download it. Expired artifacts need a new build.</p>
+<p>For an <b>official rolling toolchain</b> test, choose <code>OPL-OFFICIALROLLING</code>. <code>OPL-OFFICIALPINNED</code> is the separate pinned official toolchain; <code>OPL-PS2DEVROLLING</code> uses the moving ps2dev toolchain. The word rolling in the artifact name identifies the toolchain, not proof that the commit has been published in the rolling release.</p>
+<p>Extract the ZIP and read <code>BUILD-MANIFEST.txt</code> for the source commit, flavour and build configuration. Launch the supplied ELF requested in the test instructions. These artifacts contain loader builds and their manifest; keep a complete installed package for companion cores, modules and artwork. Report the exact commit and flavour alongside the console, device, filesystem, core and changed settings.</p>
+
 <h2 id="four-flavours">Four toolchain flavours, ordered for testing</h2>
 
 <p>Every release attempts four labelled flavours of the same RiptOPL source, in this recommended order:</p>

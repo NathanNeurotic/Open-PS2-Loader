@@ -163,6 +163,11 @@ If you change the <b>Size</b> of an already-existing VMC image and press <b>Modi
 <p>When you press <b>Create</b> (or <b>Modify</b>), OPL loads the <code>genvmc</code> IOP module and hands it the target path and size. The module formats the image in the background, writing a valid PS2 Memory Card superblock and cluster structure. The Progress bar updates live while this happens. Creation of an 8 MB VMC typically takes a few seconds on USB; larger sizes take proportionally longer.</p>
 <p>Once the progress bar reaches 100% the button label changes to <b>OK</b>. Pressing OK confirms the new or updated VMC and returns you to the VMC slot picker.</p>
 
+<h2 id="creation-recovery">Recover from a failed VMC creation</h2>
+<p>Before deleting, resizing or recreating any card that may contain saves, back up its <code>VMC/&lt;name&gt;.bin</code> file. Deleting a VMC deletes its saves; recreating one is not a safe first diagnostic.</p>
+<p>Separate an actual creation failure (format/write error, unfinished progress or missing file) from a completed card that receives a layout warning. Check the destination path, free space, device connection and whether the share is writable. A full console restart can clear a stuck creation session, but does not change a file's on-disk fragmentation.</p>
+<p>Report the card size, selected game core, filesystem, exact error and stage, and whether the same unchanged card works after a full restart. For Neutrino, record a fragment-budget or file-open failure separately from a native single-fragment warning. See <a href="troubleshooting.html#report-details">the bug-report checklist</a>; include VMC and PADEMU state.</p>
+
 <h2 id="fragmentation">Creation errors and fragmentation warnings</h2>
 <p>Creating a valid card image and placing it in a layout the launch core can use are separate steps. A newly created 8 MB file can occupy multiple extents even when the drive has plenty of free space. Free space alone does not prove contiguity.</p>
 <p>For the native OPL core on FAT32/exFAT BDM storage, VMC writes use a contiguous sector range. RiptOPL checks the layout before enabling the card. A fragmentation prompt offers to launch with the physical memory card instead; declining returns to the menu. Do not bypass this check.</p>

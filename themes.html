@@ -913,7 +913,10 @@ info15:
 <a class="tile" href="settings.html"><span class="icon icon-settings"></span><b>Settings Reference</b><span>Selecting &amp; applying a theme</span></a>
 <a class="tile" href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span><b>POPStarter docs ↗</b><span>PS1 internals: config table, IGR, cheats, multi-disc</span></a>
 </div>
-  </main>
+  <h2 id="udpfs-artwork">Artwork on UDPFS shares</h2>
+<p>For UDPFS Files mode, place game artwork in the share's <code>ART/</code> directory using the normal title-ID and artwork-suffix naming convention described above. On a case-sensitive server, RiptOPL's #888 resolver recognizes ASCII case variants such as <code>art/</code>. It prefers canonical <code>ART/</code> when populated, or a populated alternative when canonical ART is empty. Keep one artwork directory to avoid ambiguous split collections.</p>
+<p>This resolves the directory spelling, not every filename's case. Match the game startup ID and expected suffix exactly on case-sensitive shares. An interrupted directory index is discarded so ordinary file lookup can continue. If artwork remains missing, verify that the server shares the intended root, the files are present and readable, and the same files load from another device. Include the RiptOPL commit and server version in the report.</p>
+</main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>
 <footer>
