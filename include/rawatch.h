@@ -22,6 +22,12 @@ struct ra_node *GetNodeList(void);
 int GetNodeCount(void);
 void ClearWatchList(void);
 
+/* Copy the checked list and its snapshot work area behind the IOP modules. */
+void *PlaceWatchBlock(void *at);
+unsigned int *GetWatchBlockList(void);
+struct ra_node *GetWatchBlockNodes(void);
+void *GetWatchBlockSnap(void);
+
 /* One line in the launch log: what happened plus two numbers. Compiled away
    unless this is an __OPLDIAG build. */
 void raLaunchNote(const char *what, int a, int b);

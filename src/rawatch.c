@@ -8,11 +8,10 @@
   The PC client builds the file from the game's achievement set on
   RetroAchievements. The format is modules/network/common/ra_watch.h.
 
-  The list lives in a static array of the loader; ee_core copies it during its
-  initialisation, while loader memory is still intact. This is the same trick
-  the cheat list uses (cheatman.c + cheat_api.c).
+  The loader places the list, chains and sized snapshot buffer behind the IOP
+  modules, where the kernel protects them for the game's lifetime.
 
-  Upstream design and implementation: hacan359.
+  Upstream design and implementation: hacan359; alpha.15 console f4d559a3.
 */
 
 #include <stdio.h>
@@ -20,6 +19,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdint.h>
 #ifdef __OPLDIAG
 #include <sys/stat.h> /* mkdir, for the launch log */
 #endif
@@ -28,6 +28,7 @@
 #include "include/ioman.h"
 #include "include/rawatch.h"
 #include "modules/network/common/ra_watch.h"
+#include "modules/network/common/ra_snap.h"
 
 static unsigned int gWatchList[RA_WATCH_MAX];
 static int gWatchCount = 0;
@@ -64,6 +65,28 @@ struct ra_node *GetNodeList(void)
 int GetNodeCount(void)
 {
     return gNodeCount;
+}
+
+static int CheckEntries(const unsigned int *ents, int count, int bytes)
+{
+    int i, sum = 0;
+
+    for (i = 0; i < count; i++) {
+        unsigned int size = RA_WATCH_SIZE(ents[i]);
+
+        if (size != 1 && size != 2 && size != 4) {
+            LOG("RA: entry %d reads %u bytes; refusing the list\n", i, size);
+            return -1;
+        }
+        sum += (int)size;
+    }
+
+    if (sum != bytes) {
+        LOG("RA: entries add up to %d bytes, header says %d; refusing the list\n", sum, bytes);
+        return -1;
+    }
+
+    return 0;
 }
 
 /* Takes the chain list if it is sound, drops all of it otherwise.
@@ -117,12 +140,75 @@ static void TakeNodes(const struct ra_node *nodes, unsigned int count)
     LOG("RA: %d pointer chains\n", gNodeCount);
 }
 
+/* Entries, chain scratch words and an aligned snapshot follow the IOP modules.
+   The kernel protects this block for the game, without growing ee_core .bss. */
+static u32 *gBlockList = NULL;
+static struct ra_node *gBlockNodes = NULL;
+static void *gBlockSnap = NULL;
+
+static void *align64(const void *p)
+{
+    return (void *)(((uintptr_t)p + 63) & ~(uintptr_t)63);
+}
+
+void *PlaceWatchBlock(void *at)
+{
+    u32 *words;
+    u8 *snap;
+    int nwords;
+
+    gBlockList = NULL;
+    gBlockNodes = NULL;
+    gBlockSnap = NULL;
+
+    if (gWatchCount <= 0)
+        return at;
+
+    words = (u32 *)align64(at);
+    nwords = gWatchCount + gNodeCount * 4;
+
+    memcpy(words, gWatchList, gWatchCount * sizeof(u32));
+    if (gNodeCount > 0) {
+        memcpy(&words[gWatchCount], gNodeList, gNodeCount * sizeof(struct ra_node));
+        memset(&words[gWatchCount + gNodeCount * 2], 0, gNodeCount * 2 * sizeof(u32));
+        gBlockNodes = (struct ra_node *)&words[gWatchCount];
+    }
+    gBlockList = words;
+
+    snap = (u8 *)align64(&words[nwords]);
+    gBlockSnap = snap;
+    snap += RA_SNAP_TOTAL_FOR(gWatchBytes + gNodeCount * RA_NODE_PAIR_BYTES);
+
+    LOG("RA: list block at %p, %d words, snapshot at %p, ends %p\n", words, nwords, gBlockSnap, snap);
+    raLaunchNote("list-block", (int)((u8 *)snap - (u8 *)words), (int)(u32)words);
+
+    return align64(snap);
+}
+
+u32 *GetWatchBlockList(void)
+{
+    return gBlockList;
+}
+
+struct ra_node *GetWatchBlockNodes(void)
+{
+    return gBlockNodes;
+}
+
+void *GetWatchBlockSnap(void)
+{
+    return gBlockSnap;
+}
+
 void ClearWatchList(void)
 {
     gWatchCount = 0;
     gWatchBytes = 0;
     gNodeCount = 0;
     gWatchStartup[0] = '\0';
+    gBlockList = NULL;
+    gBlockNodes = NULL;
+    gBlockSnap = NULL;
 }
 
 /* Appends one line per event while a game launches.
@@ -189,6 +275,9 @@ int SetWatchList(const void *data, int len, const char *startup)
         return -7;
 
     memcpy(gWatchList, (const unsigned char *)data + sizeof(*hdr), need);
+
+    if (CheckEntries(gWatchList, (int)hdr->count, (int)hdr->bytes) != 0)
+        return -8;
 
     gWatchCount = (int)hdr->count;
     gWatchBytes = (int)hdr->bytes;
@@ -285,6 +374,11 @@ int LoadWatchListFile(const char *file, const char *startup)
         LOG("RA: short read on the list: %d of %u\n", got, (unsigned)(hdr.count * sizeof(unsigned int)));
         close(fd);
         return -7;
+    }
+
+    if (CheckEntries(gWatchList, (int)hdr.count, (int)hdr.bytes) != 0) {
+        close(fd);
+        return -8;
     }
 
     gWatchCount = (int)hdr.count;

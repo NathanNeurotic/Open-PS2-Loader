@@ -254,38 +254,21 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
         void *snap = SifAllocIopHeap(RA_SNAP_TOTAL);
 
         if (snap != NULL) {
-            /* argv[1]: the IOP snapshot, EE event and EE badge buffer
-               addresses, eight hex digits each; then whether raudp may read
-               from the network in play, then the game's serial.
-               argv[2]: SMAP's ipconfig strings -- raudp finds the PC itself. */
-            char args[45 + IPCONFIG_MAX_LEN];
+            /* Shared offsets keep the EE/IOP load contract in agreement. */
+            char args[RA_ARG_MAX + 1 + IPCONFIG_MAX_LEN];
             int k, n;
 
             ra_snap_iop = (unsigned int)snap;
-            RA_Hex32(ra_snap_iop, &args[0]);
-            args[8] = ',';
-            RA_Hex32((unsigned int)RA_OverlayEventBuffer(), &args[9]);
-            args[17] = ',';
-            RA_Hex32((unsigned int)RA_OverlayBadgeBuffer(), &args[18]);
-
-            /* Both roads raudp takes to the PC cost the game something when it
-               streams its own disc over this NIC: the raw one frees the SMAP
-               receive descriptors that stream arrives in, the lwIP one queues
-               on the mailbox the SMB or HTTP client waits on. A game from a
-               share loads for ever with either, so tell raudp to stop looking.
-               Sending is unaffected and stays on. HTTP_MODE is ours -- upstream
-               has no HTTP protocol -- but it streams down the same path and
-               carries the same defect. */
-            args[26] = ',';
-            args[27] = (config->GameMode == ETH_MODE || config->GameMode == HTTP_MODE) ? '0' : '1';
-
-            /* The serial seeds the packet header, so the PC has it before the
-               first snapshot is written. */
-            args[28] = ',';
-            for (n = 0; n < 15 && config->GameID[n] != '\0'; n++)
-                args[29 + n] = config->GameID[n];
-            args[29 + n] = '\0';
-            n += 30;
+            RA_Hex32(ra_snap_iop, &args[RA_ARG_SNAP]);
+            args[RA_ARG_EVENT - 1] = ',';
+            RA_Hex32((unsigned int)RA_OverlayEventBuffer(), &args[RA_ARG_EVENT]);
+            args[RA_ARG_RX - 1] = ',';
+            args[RA_ARG_RX] = (config->GameMode == ETH_MODE || config->GameMode == HTTP_MODE) ? '0' : '1';
+            args[RA_ARG_ID - 1] = ',';
+            for (n = 0; n < RA_ARG_ID_MAX && config->GameID[n] != '\0'; n++)
+                args[RA_ARG_ID + n] = config->GameID[n];
+            args[RA_ARG_ID + n] = '\0';
+            n += RA_ARG_ID + 1;
 
             for (k = 0; k < g_ipconfig_len && k < IPCONFIG_MAX_LEN; k++)
                 args[n + k] = g_ipconfig[k];
