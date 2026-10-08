@@ -772,8 +772,7 @@ static int udpfsGetImage(item_list_t *itemList, char *folder, int isRelative, ch
     if (isRelative) {
         const char *imageFolder = strcmp(folder, "ART") == 0 ? udpfsArtCaseNames[udpfsArtCaseIndex] : folder;
         snprintf(path, sizeof(path), "%s%s/%s_%s", udpfsPrefix, imageFolder, value, suffix);
-    }
-    else
+    } else
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
     int r = texDiscoverLoad(resultTex, path, -1);
     // ART LIVES IN THE ART FOLDER, and nowhere else. A PS1 cover is
