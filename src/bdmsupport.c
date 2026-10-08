@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
 #include "include/supportbase.h"
@@ -1253,6 +1254,31 @@ static void bdmLoadBlockDeviceModules(void)
         bdmProbeMassSlots("after-usb-settle"); // forces FatFs's lazy mount on every slot
         bdmForceDeviceRefresh();               // exactly one second probe, covering every slot
     }
+
+    // iLink initial discovery: an SBP-2 HDD can still be spinning up when IEEE1394_bd links. The
+    // bd driver polls TEST UNIT READY until the drive answers and only THEN registers the disk, so
+    // a drive that needed a long spin-up simply appears late -- but anything that concluded "no
+    // iLink device" before that never looks again on its own. Same one-shot shape as the MX4SIO
+    // probe above, except it POLLS for the root instead of sleeping blind: a drive that is already
+    // ready costs nothing, a drive mid-spin is caught the moment it registers, and an absent drive
+    // costs one bounded wait on this IO worker, once per boot. Late arrivals after the deadline are
+    // still published by the bdmevent handler as usual; the single forced refresh covers a mount
+    // whose event was spent before the menu could act on it.
+    static int ilinkProbeDone = 0;
+    if (!gEnableILK)
+        ilinkProbeDone = 0;
+    else if (iLinkModLoaded && !ilinkProbeDone) {
+        char ilkRoot[16];
+        int waitedMs;
+
+        ilinkProbeDone = 1;
+        for (waitedMs = 0; waitedMs < 3000 && !bdmGetDeviceRootByType(BDM_TYPE_ILINK, ilkRoot, sizeof(ilkRoot)); waitedMs += 250)
+            DelayThread(250 * 1000);
+        if (waitedMs > 0)
+            LOG("[BDM] iLink root %s after ~%d ms\n", waitedMs < 3000 ? "appeared" : "not found", waitedMs);
+        if (waitedMs >= 3000)
+            bdmForceDeviceRefresh(); // exactly one second look, as with MX4SIO/USB
+    }
 }
 
 // Bring up only the common BDM infrastructure. Literal massN: boot resolution uses this path so an
@@ -1770,6 +1796,10 @@ static void bdmLaunchCue(item_list_t *itemList, const char *cueName, config_set_
     // before teardown. This is especially load-bearing for the newly reachable UDPBD Ember path.
     snprintf(launchName, sizeof(launchName), "%s", cueName);
 
+    // GameID is launch metadata, not Ember identity: resolve it from the actual .cue/.bin/.exe
+    // while the source device and GUI are still alive. A miss is best-effort and never blocks.
+    cuePrepareRetroGemBarcode(ps1Prefix, launchName);
+
     // UNMOUNT_EXCEPTION is load-bearing here, not defensive: Ember never resets the IOP, so the
     // device it reads its game from must still be mounted when it starts.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
@@ -2031,6 +2061,7 @@ static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, b
         failResult = 1; // an overfull Neutrino argv must not silently fall back to the native core
         goto fail;
     }
+    sysNeutrinoWarnPadEmu(configSet);
     if (gLaunchDiag)
         launchDiagMark(3);
 
@@ -2632,11 +2663,22 @@ static int bdmSaveCueSettings(item_list_t *itemList, int id, const char *name, c
     return cueSaveGameSettings(ps1Prefix, name, configSet);
 }
 
+static int bdmGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int ember,
+                            char *directory, int directorySize, char *partition, int partitionSize)
+{
+    char root[64];
+    (void)id;
+    (void)partitionSize;
+    partition[0] = '\0';
+    bdmBuildPs1Prefix(root, sizeof(root), itemList->mode);
+    return saveIconPs1Directory(root, name, ember, directory, directorySize);
+}
+
 static item_list_t bdmGameList = {
     BDM_MODE, 2, 0, 0, MENU_MIN_INACTIVE_FRAMES, BDM_MODE_UPDATE_DELAY, NULL, NULL, &bdmGetTextId, &bdmGetPrefix, &bdmInit, &bdmNeedsUpdate,
     &bdmUpdateGameList, &bdmGetGameCount, &bdmGetGame, &bdmGetGameName, &bdmGetGameNameLength, &bdmGetGameStartup, &bdmDeleteGame, &bdmRenameGame,
     &bdmLaunchGame, &bdmGetConfig, &bdmGetImage, &bdmCleanUp, &bdmShutdown, &bdmCheckVMC, &bdmGetIconId, &bdmLaunchVcd,
-    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &bdmLaunchCue, &bdmGetItemView, &bdmGetSourceId, &bdmSaveCueSettings};
+    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &bdmLaunchCue, &bdmGetItemView, &bdmGetSourceId, &bdmSaveCueSettings, &bdmGetPs1SaveDir};
 
 void bdmInitSemaphore()
 {

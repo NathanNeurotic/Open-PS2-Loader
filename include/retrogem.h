@@ -28,6 +28,14 @@
 int retrogemGetVcdGameID(const char *vcdPath, char *gameID, size_t maxLen);
 
 /**
+ * Resolve a PS1 Game ID from an actual disc image used by a PS1 core. Supports POPStarter VCD,
+ * raw/cooked BIN/ISO and CUE sheets (the CUE is followed to its data-track FILE). A bare PS-X EXE
+ * only resolves when its filename itself carries a strict serial; folder/display names are never
+ * invented as Game IDs.
+ */
+int retrogemGetPs1ImageGameID(const char *imagePath, char *gameID, size_t maxLen);
+
+/**
  * Renders the RetroGEM optical barcode signal onto the GS framebuffer for the specified number
  * of frames immediately before ELF execution.
  *

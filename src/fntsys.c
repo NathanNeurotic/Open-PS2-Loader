@@ -270,6 +270,7 @@ static void *fntReadData(char *path, int *bufferSize, int *owned)
     void *buffer;
 
     *owned = 0;
+    *bufferSize = -1;
     if (path == NULL) {
         *bufferSize = size_poeveticanew_raw;
         return &poeveticanew_raw;

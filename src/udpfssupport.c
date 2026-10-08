@@ -491,6 +491,8 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
     // separately owned string, but following one lifetime rule keeps both launch paths safe.
     snprintf(launchName, sizeof(launchName), "%s", cueName);
 
+    cuePrepareRetroGemBarcode(udpfsPrefix, launchName);
+
     // UNMOUNT_EXCEPTION is load-bearing: Ember inherits this live mount. udpfsCleanUp keeps the
     // socket/module chain resident for the whole boot, so no network reinitialization is attempted.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
@@ -623,6 +625,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     if (sysNeutrinoArgsPreflight("udpfs", partname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0)
         return;
 
+    sysNeutrinoWarnPadEmu(configSet);
     // MMCE cross-device game-id (#261): push the disc id to a present MMCE card before teardown frees
     // `game`. Neutrino path forwarded so a Neutrino launch protects the MMCE hand-off timing.
     mmceSendGameID(game->startup, neutrinoPath,

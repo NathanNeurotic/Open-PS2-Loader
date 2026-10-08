@@ -778,7 +778,7 @@ gui_strings:
 - label: HINT_BDMA_SOURCE
   string: Device whose POPS folder holds your BDMAssault driver files (usbd.irx.* / usbhdfsd.irx.*); iLink uses the .ilink suffix.
 - label: HINT_DEFAULT_CORE
-  string: Global default core for games whose per-game Loader Core is set to Default. <OPL> is the native core; Neutrino chains the external neutrino.elf. A per-game choice always overrides this.
+  string: Global default only where both cores are supported. UDPFS/UDPBD always use Neutrino; SMB/HTTP always use <OPL>. A per-game Loader Core choice overrides this where available.
 - label: HINT_ENABLEIMAGE
   string: Apply a prebuilt PS2RD .img patch to your game.
 - label: HINT_FOLDER_NAV
@@ -808,7 +808,7 @@ gui_strings:
 - label: HINT_POPSTARTER_PATH
   string: "Where is POPSTARTER.ELF located? <not set> = Game Device -> mc0/mc1. A custom full path is tried first. Examples: mass0:/POPS/POPSTARTER.ELF | ata:/POPS/POPSTARTER.ELF | mmce0:/POPS/POPSTARTER.ELF | mc0:/POPS/POPSTARTER.ELF | pfs0:/POPS/POPSTARTER.ELF"
 - label: HINT_POPSTARTER_RETROGEM_GAMEID
-  string: Render optical barcode for Pixel FX / RetroGEM / PS2Digital on PS1 VCD launch
+  string: Render the real disc Game ID barcode for Pixel FX / RetroGEM / PS2Digital on PS1 launches (POPSTARTER VCD and Ember)
 - label: HINT_POPS_IMPORT
   string: Read POPSTARTER IPCONFIG.DAT and SMBCONFIG.DAT from the connected SMB share's POPS directory. Nothing is written until you confirm with OK.
 - label: HINT_POPS_PORT
@@ -900,13 +900,13 @@ gui_strings:
 - label: POPSTARTER_PATH
   string: POPSTARTER.ELF Path
 - label: POPSTARTER_RETROGEM_GAMEID
-  string: RetroGEM Game ID
+  string: PS1 RetroGEM Game ID
 - label: POPSTARTER_NETWORK_SETTINGS
   string: POPSTARTER Network Settings
 - label: GAMEID_MODE_ALL
   string: On (All)
 - label: GAMEID_MODE_POPSTARTER
-  string: On (POPSTARTER only)
+  string: On (PS1 only)
 - label: GAMEID_MODE_PS2
   string: On (PS2 only)
 - label: GAMEID_MODE_OFF
@@ -1576,7 +1576,7 @@ gui_strings:
 - label: HINT_SMBCACHE
   string: "Read-ahead cache for SMB in game."
 - label: HINT_CORE_LOADER
-  string: "Which core starts this game. Default follows Game Launching."
+  string: "Core for this game where both are supported. UDPFS/UDPBD are Neutrino-only; SMB/HTTP are <OPL>-only. Default follows Game Launching."
 - label: HINT_DMA_MODE
   string: "Internal HDD transfer mode for this game. Lower it if the game stutters or freezes."
 - label: HINT_DNAS_GAMEID
@@ -1657,3 +1657,5 @@ gui_strings:
   string: "Video mode handed to the game."
 - label: DNAS_ID
   string: DNAS ID
+- label: NEUTRINO_PADEMU_WARN
+  string: "Pad emulation is unavailable with Neutrino. Use a PS2 controller or a source that supports the <OPL> core."

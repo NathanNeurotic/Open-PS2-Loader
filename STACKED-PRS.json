@@ -1,0 +1,114 @@
+{
+  "purpose": "Combined console test only; do not merge",
+  "base": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+  "prs": [
+    {
+      "number": 864,
+      "title": "ux(network): clarify forced cores and HTTP launch flow",
+      "head": "ux/core-scope-http-quickstart",
+      "sha": "ed5ce795389de81b7f13ec0ed1e8cc12632e86ba",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": false
+    },
+    {
+      "number": 867,
+      "title": "[DIAG] fix(bdm): one-shot readiness probe for iLink boot discovery",
+      "head": "fix/ilink-boot-readiness",
+      "sha": "d8b501676d6f48ad3441625baec6379b63456f55",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": true
+    },
+    {
+      "number": 869,
+      "title": "retrogem: resolve proper PS1 GameIDs for POPSTARTER and Ember",
+      "head": "feat/ps1-retrogem-gameid",
+      "sha": "fa322cb37c0554a315efed52dfe4b34adcb2c291",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": true
+    },
+    {
+      "number": 870,
+      "title": "fix(ui): keep long settings hints on-screen",
+      "head": "fix/hint-screen-bounds",
+      "sha": "85558d5535247b0150bea78732cd440a607b6b1e",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": false
+    },
+    {
+      "number": 871,
+      "title": "credits: add Vapor to RiptOPL testing acknowledgements",
+      "head": "credits/vapor-qa",
+      "sha": "519acd6b4c71ee95fc9734a84987de8ec17fe6a0",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": false
+    },
+    {
+      "number": 873,
+      "title": "fix(ra): support RetroAchievements on autolaunch paths (PSBBN)",
+      "head": "fix/ra-psbbn-autolaunch",
+      "sha": "1914cbfa959a8e2131b647e34cf20cfa801595d7",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": false
+    },
+    {
+      "number": 874,
+      "title": "fix(fonts): restore custom theme font loading",
+      "head": "fix/custom-font-load-size",
+      "sha": "8efeb2a8a562de7807d754628d5b6d4d8bb7d91b",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": false
+    },
+    {
+      "number": 875,
+      "title": "fix(neutrino): warn when configured pad emulation is unavailable",
+      "head": "codex/neutrino-pademu",
+      "sha": "bfb3212cbb609b14edf74d7506e5c8f0b94e65b7",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": false
+    },
+    {
+      "number": 876,
+      "title": "Show PS1 save icons from VCD and Ember VMCs",
+      "head": "codex/ps1-save-icons",
+      "sha": "4f6b10a987dd395711e33356f70d9097d68bc57b",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": false
+    },
+    {
+      "number": 877,
+      "title": "Fix false VMC fragmentation warnings on MMCE",
+      "head": "codex/vmc-creation",
+      "sha": "554c273982f13bc3c42d29193c07c014b90ab83e",
+      "base": "rebuild/main",
+      "base_sha": "7b2d1de8128d3c25f91b8584a494145e097c10f0",
+      "head_repo": "NathanNeurotic/Open-PS2-Loader",
+      "draft": false
+    }
+  ],
+  "excluded": [
+    687,
+    733
+  ],
+  "website_only": 872,
+  "flavour": "STACK-TEST-RA-DIAG",
+  "RETROACHIEVEMENTS": 1,
+  "OPLDIAG": 1
+}
