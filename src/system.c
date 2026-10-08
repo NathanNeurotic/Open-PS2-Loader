@@ -2395,14 +2395,15 @@ static char gVMCCreatePath[256] = {0};
 // defragment, so on a used volume a fresh VMC can land in pieces -- which the user otherwise only
 // learns mid-launch, as an error about a card they thought they had just made.
 //
-// 1 contiguous, 0 FRAGMENTED, -1 unknown. GET_LBA is probed first because bdmfs_fatfs answers
-// CHECK_CHAIN with a bare 1/0 and never an error. MMCE also returns success for unsupported
+// 1 contiguous, 0 FRAGMENTED, -1 unknown. bdmfs_fatfs CHECK_CHAIN collapses
+// every non-single-fragment result to 0, so query the count instead. GET_LBA is probed
+// first because MMCE also returns success for unsupported
 // ioctls WITHOUT writing the output: require GET_LBA to replace its sentinel before trusting
-// CHECK_CHAIN, or an unsupported query looks exactly like a fragmented file.
+// GET_FRAGLIST, or an unsupported query looks exactly like a fragmented file.
 int sysVMCContiguity(void)
 {
     u64 startingLBA = (u64)-1;
-    int fd, iop_fd, chain;
+    int fd, iop_fd, fragments;
 
     if (gVMCCreatePath[0] == '\0')
         return -1;
@@ -2415,16 +2416,16 @@ int sysVMCContiguity(void)
     if (fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_LBA, NULL, 0, &startingLBA, sizeof(startingLBA)) != 0 ||
         startingLBA == (u64)-1) {
         close(fd);
-        return -1; // not a fatfs-backed device: CHECK_CHAIN below would be meaningless
+        return -1; // not a fatfs-backed device: the fragment query below would be meaningless
     }
 
-    chain = fileXioIoctl(iop_fd, USBMASS_IOCTL_CHECK_CHAIN, "");
+    fragments = fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_FRAGLIST, NULL, 0, NULL, 0);
     close(fd);
 
-    LOG("SYSTEM VMC contiguity check on %s: chain=%d\n", gVMCCreatePath, chain);
-    if (chain == 1)
+    LOG("SYSTEM VMC contiguity check on %s: fragments=%d\n", gVMCCreatePath, fragments);
+    if (fragments == 1)
         return 1;
-    if (chain == 0)
+    if (fragments > 1)
         return 0;
     return -1; // anything else is the ioctl itself failing, not a verdict about the file
 }
