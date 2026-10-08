@@ -2,19 +2,25 @@
 from pathlib import Path
 import subprocess
 import tempfile
+import re
 
 root = Path(__file__).resolve().parents[2]
 
 
 def function(path, signature):
     source = (root / path).read_text(encoding="utf-8")
+    # Keep offsets while hiding C comments and literals from the brace scanner.
+    masked = re.sub(r'//[^\n]*|/\*.*?\*/|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'',
+                    lambda match: " " * len(match.group()), source, flags=re.DOTALL)
     start = source.index(signature)
-    brace = source.index("{", start)
+    brace = masked.index("{", start)
     depth = 1
     end = brace + 1
-    while depth:
-        depth += (source[end] == "{") - (source[end] == "}")
+    while depth and end < len(source):
+        depth += (masked[end] == "{") - (masked[end] == "}")
         end += 1
+    if depth:
+        raise ValueError(f"Unterminated function: {path}: {signature}")
     return source[start:end]
 
 
