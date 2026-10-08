@@ -38,6 +38,7 @@ def run_harness(label, code):
         src.write_text(code, encoding="utf-8")
         build = subprocess.run(
             ["cc", "-std=gnu99", "-O0", "-Wall", "-Wextra", "-Werror",
+             "-Wno-unused-parameter",
              "-o", str(exe), str(src)],
             capture_output=True, text=True, check=False,
         )
