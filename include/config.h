@@ -191,6 +191,7 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_NETWORK_PROTOCOL     "network_protocol"
 #define CONFIG_OPL_NET_START_MODE       "net_start_mode"
 #define CONFIG_OPL_NET_PROTOCOL_PICK    "net_protocol_pick" // last protocol chosen (never Off); kept while Connectivity is Off
+#define CONFIG_OPL_UDPFS_ACCESS         "udpfs_access" // UDPFS-specific Files(0)/IMG(1), independent of UDPBD
 #define CONFIG_OPL_SMB_DIALECT          "smb_dialect"
 #define CONFIG_OPL_SWAP_SEL_BUTTON      "swap_select_btn"
 #define CONFIG_OPL_PARENTAL_LOCK_PWD    "parental_lock_password"
