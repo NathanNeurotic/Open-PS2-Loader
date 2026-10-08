@@ -1,0 +1,392 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Neutrino Core · RiptOPL Docs</title>
+<meta name="description" content="Per-game external Neutrino core: device, args, where it works.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html" class="active"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Neutrino Core</h1>
+<p class="lead">RiptOPL can hand any individual game to an <b>external <a href="https://github.com/rickgaiser/neutrino">Neutrino</a> ELF</b> instead of OPL's built-in EE core. The choice is made <b>per game</b>, leaving other titles on the default OPL core untouched. This is useful for titles that boot more reliably under Neutrino, or when you want fine-grained control over Neutrino's own launch flags.</p>
+
+<p><b>Neutrino is created by <a href="https://github.com/rickgaiser">rickgaiser</a></b> — a
+<i>"Small, Fast and Modular PS2 Device Emulator"</i>. The
+release package bundles the official latest build as a ready-to-use <code>neutrino/</code> folder
+under its <b>AFL-3.0</b> licence; see <a href="credits.html#special-thanks">Credits</a> for the full
+attribution. Report <i>launching</i> problems to us and genuine Neutrino bugs upstream.</p>
+
+<div class="callout info"><div class="h">These features are specific to RiptOPL</div>
+The <b>Loader Core</b> selector, the <b>Neutrino Path</b> setting, the structured <b>Launch Args</b> sub-screen, and the per-game <b>Neutrino Video</b> picker are all additions in this fork. They do not exist in stock OPL or wOPL.
+</div>
+
+<h2 id="install">1. Install Neutrino</h2>
+
+<p>The release package includes a complete <code>neutrino/</code> folder: copy the <b>whole folder</b>
+to a location RiptOPL can keep available through the handoff. On ordinary non-MMCE setups,
+<code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code> is supported. A memory card is the last
+automatic location OPL looks, not the first.</p>
+
+<div class="callout amber"><div class="h">MMCE users: place Neutrino on the MMCE game device</div>
+If you use <b>Send GameID on Launch</b>, put the complete folder on <code>mmceN:</code> rather than
+relying on the same slot's <code>mcN:</code> view: use <code>mmceN:/neutrino/</code>, or put
+<code>neutrino/</code> under the configured MMCE Prefix Path. The GameID command switches the
+emulated memory-card view. An <code>mcN:</code>-hosted Neutrino would be displaced by that switch,
+so RiptOPL detects the collision and <b>skips the GameID switch for that launch</b> to keep the
+loader readable. An <code>mmceN:</code> install is not affected, so the per-game card switch can
+still occur. The automatic lookup deliberately probes the active game device before the memory cards.
+</div>
+
+<p>The lookup order is fixed:</p>
+
+<table data-sortable>
+<thead><tr><th>Priority</th><th>Where OPL looks</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><b>Neutrino Path</b>, when it is set (<b>Settings → Game Launching → Neutrino Defaults</b>) — see <a href="#neutrino-device">§3</a></td></tr>
+<tr><td>2</td><td>The active game's own device: <code>&lt;games prefix&gt;/neutrino/</code>, then <code>&lt;device root&gt;/neutrino/</code>. For an APA HDD game this is the OPL data home already mounted on <code>pfs0:</code> (<code>+OPL</code> or <code>__common/OPL</code>)</td></tr>
+<tr><td>3</td><td><code>mc0:</code> / <code>mc1:</code>: <code>NEUTRINO/neutrino.elf</code> and its lowercase / <code>NEUTRINO.ELF</code> variants</td></tr>
+</tbody>
+</table>
+
+<p>A Neutrino Path that is set but unavailable does not strand the launch: the lookup carries on to the game device and the memory cards. If none of them holds a complete install when you launch a game set to the Neutrino core, OPL shows a warning and falls back to the <code>&lt;OPL&gt;</code> core for that launch only.</p>
+
+<div class="callout amber"><div class="h">Upgrading with Neutrino on the APA HDD</div>
+Older builds also searched the APA HDD's OPL data home automatically for games on <em>other</em>
+devices. That search is gone. If Neutrino lives in <code>hdd0:/+OPL/neutrino/</code> or
+<code>hdd0:/__common/OPL/neutrino/</code> and you use it for USB, MMCE or network games, set
+<b>Neutrino Path</b> to <code>hdd:/neutrino/neutrino.elf</code>. HDD games still find it through the
+game-device tier.
+</div>
+
+<p>The old <b>Neutrino Device</b> picker is gone. If it was set to <b>Memory Card</b> or <b>HDD (APA)</b>,
+that choice now appears as the matching Neutrino Path, and until you edit it RiptOPL also tries the
+other folder/file spellings the picker accepted, because memory cards and APA partitions are
+case-sensitive. The other old choices load as <em>&lt;not set&gt;</em>.</p>
+
+<h3>Network boot exception</h3>
+
+<p>The <a href="network-boot.html">UDPBD / UDPFS</a> feature ships its <b>own bundled Neutrino</b> — a drag-and-drop <code>neutrino/</code> folder (<code>neutrino.elf</code> plus <code>config/</code> and <code>modules/</code>) in the release zip, pre-populated with the UDPFS config. Per-game Neutrino use still needs you to supply <code>neutrino.elf</code> at the paths above.</p>
+
+<h2 id="per-game-core">2. Pick the core per game</h2>
+
+<div class="steps">
+<div class="step"><h3>Open Game Settings</h3>
+<p>Highlight a game, press <b>Triangle</b> and choose <b>Game Settings</b>.</p>
+</div>
+<div class="step"><h3>Set Loader Core</h3>
+<p>Change <b>Loader Core</b> to <b><code>Neutrino</code></b>. The other option is <b><code>&lt;OPL&gt;</code></b> (the built-in core; default for every game).</p>
+</div>
+<div class="step"><h3>Save</h3>
+<p>Save. The selection is written as <code>$CoreLoader</code> in that game's <code>.cfg</code> file.</p>
+</div>
+</div>
+
+<h3 id="where-it-works">Where Neutrino works</h3>
+
+<table data-sortable>
+<thead><tr><th>Game source</th><th>Neutrino?</th></tr></thead>
+<tbody>
+<tr><td>USB / MX4SIO</td><td>Yes</td></tr>
+<tr><td>iLink / IEEE 1394 (FAT PS2 models only)</td><td>Supported and wired; the post-2692 build adds quick boot for RiptOPL's inherited-stack handoff and is pending hardware retest</td></tr>
+<tr><td>Internal ATA (BDM block device)</td><td>Yes</td></tr>
+<tr><td>Internal HDD (APA partition &rarr; HDL)</td><td>Yes</td></tr>
+<tr><td>MMCE (SD2PSX / MemCard PRO2)</td><td>Yes</td></tr>
+<tr><td>UDPBD / UDPFS (network block device)</td><td>Yes — and <b>required</b>; no OPL core backend exists for these (see <a href="network-boot.html">Network Boot</a>). Both work on a real PS2; the UDPBD test (2026-09-26) used every Neutrino setting at its default.</td></tr>
+<tr><td>SMB / Ethernet</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
+<tr><td>USB Extreme split images (<code>.ul</code>)</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
+<tr><td>Compressed ISO (<code>.zso</code>)</td><td>No — falls back to <code>&lt;OPL&gt;</code></td></tr>
+</tbody>
+</table>
+
+<div class="callout amber"><div class="h">Revision 2692 iLink result</div>
+On an SCPH-39001, Neutrino failed from iLink in all four SDK flavours. Revision 2692 emitted the
+documented <code>-bsd=ilink</code> token but did not add <code>-qb</code>. RiptOPL's bridge deliberately
+preserves the mounted iLink environment, while Neutrino documents <code>-qb</code> as direct entry into
+its load environment, so that omission is a source-confirmed handoff mismatch consistent with the
+failure. The post-2692 correction below still needs a hardware pass to prove whether it was the
+complete cause; this page does not call it a pass yet.
+</div>
+
+<div class="callout info"><div class="h">i Upstream rates iLink lowest of every backend</div>
+Neutrino's own backend table scores iLink / IEEE1394 device compatibility at <b>10</b>, against 80 for
+USB, 60 for MX4SIO and 100 for MMCE, ATA, UDPBD and UDPFS, and lists it for <b>FAT PS2 models</b> only.
+A passing <code>-qb</code> retest is therefore necessary but may not be sufficient &mdash; some iLink
+enclosures are expected to fail upstream as well.
+</div>
+
+<p>Unsupported sources fall back to the <code>&lt;OPL&gt;</code> core automatically with an on-screen warning. No manual intervention is needed — OPL detects the format and adjusts.</p>
+
+<div class="callout info"><div class="h">PS1 games are a separate path</div>
+PlayStation 1 titles always boot through their own core — <b>POPSTARTER.ELF</b> for <code>*.VCD</code>, <b>ember.elf</b> for Ember titles — never OPL's core and never Neutrino. The Loader Core selector is locked and has no effect for PS1 games. See <a href="ps1-vcd.html">PS1 Games (VCD)</a>.
+</div>
+
+<h2 id="neutrino-device">3. Neutrino Path</h2>
+
+<p><b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Neutrino Path</b> is a full-path
+text field. It shows <em>&lt;not set&gt;</em> until you enter a path, which keeps the automatic
+lookup. The row is only a preview: selecting it opens the full-size editor, which takes the whole
+path and scrolls to keep the cursor in view. It replaced the old <b>Neutrino Device</b> picker.</p>
+
+<p>The path may be on a <b>different device from the game</b>. RiptOPL keeps both the game's device and
+Neutrino's device mounted through the handoff, so it can, for example, load <code>neutrino.elf</code>
+from <code>mmce0:</code> and launch an APA HDD game. These spellings are accepted:</p>
+
+<table data-sortable>
+<thead><tr><th>Meaning</th><th>Accepted examples</th></tr></thead>
+<tbody>
+<tr><td>USB</td><td><code>usb:/...</code>, <code>usb0:/...</code></td></tr>
+<tr><td>Internal exFAT HDD</td><td><code>ata:/...</code>, <code>ata0:/...</code></td></tr>
+<tr><td>MX4SIO</td><td><code>mx4:/...</code>, <code>mx4sio:/...</code>, <code>massX:/...</code></td></tr>
+<tr><td>iLink</td><td><code>ilink:/...</code></td></tr>
+<tr><td>A mounted BDM slot</td><td><code>mass:/...</code> (every mounted slot), <code>mass0:/...</code> (that one slot)</td></tr>
+<tr><td>MMCE</td><td><code>mmce:/...</code>, <code>mmce0:/...</code>, <code>mmce1:/...</code></td></tr>
+<tr><td>Memory card</td><td><code>mc:/...</code>, <code>mc?:/...</code>, <code>mc0:/...</code>, <code>mc1:/...</code></td></tr>
+<tr><td>SMB share</td><td><code>smb:/...</code></td></tr>
+<tr><td>UDPFS files</td><td><code>udpfs:/...</code></td></tr>
+<tr><td>UDPFS / UDPBD disk</td><td><code>udpfsd:/...</code>, <code>udpfsbd:/...</code>, <code>udpbd:/...</code></td></tr>
+<tr><td>APA HDD OPL data home</td><td><code>hdd:/...</code>, <code>hdd0:/...</code></td></tr>
+<tr><td>Mounted PFS partition</td><td><code>pfs:/...</code>, <code>pfs0:/...</code></td></tr>
+</tbody>
+</table>
+
+<ul class="checklist">
+<li><b>BDM devices are matched against what is mounted now.</b> A typed alias (<code>usb:</code>,
+<code>ata:</code>, <code>mx4sio:</code>, <code>ilink:</code>) searches every mounted device of that
+family, identified by its driver. Only when none is mounted does RiptOPL load that one driver and
+wait briefly: 2 s, or 5 s for the internal HDD. <code>mass0:</code> means exactly that slot and loads
+nothing; slot numbers follow the order devices mounted in.</li>
+<li><b>APA:</b> <code>hdd:/</code> resolves only inside the OPL data home that is already mounted. It
+never mounts another partition, and a nonzero <code>hddN:</code> is refused.</li>
+<li><b>Network paths</b> start their network stack when no other network protocol is running. The
+PS2 has one network adapter, so the other protocols stay unavailable until you reboot.</li>
+<li><b>HTTP URLs cannot be used.</b> HTTP games are streamed by the in-game driver, and there is no
+<code>http:</code> filesystem to load <code>neutrino.elf</code> from.</li>
+</ul>
+
+<p>The game-device probe accepts the normal <code>NEUTRINO/neutrino.elf</code> /
+<code>neutrino/neutrino.elf</code> case variants. For MMCE this means, for example,
+<code>mmce0:/OPL/neutrino/neutrino.elf</code> when <code>OPL</code> is the Prefix Path, then
+<code>mmce0:/neutrino/neutrino.elf</code> at the bare root.</p>
+
+<h2 id="launch-args">4. Launch arguments</h2>
+
+<p>OPL always builds the <b>mandatory Neutrino arguments</b> automatically from the game and its settings — most of which you never type yourself (<code>-dbc</code>, <code>-logo</code> and <code>-gsm</code> are the three exceptions: forward one yourself and OPL drops its own copy — see the callout at the end of this section, and §5):</p>
+
+<table data-sortable>
+<thead><tr><th>Auto-emitted argument</th><th>When emitted</th></tr></thead>
+<tbody>
+<tr><td><code>-bsd=&lt;usb|ilink|mx4sio|ata|mmce|udpbd|udpfsbd|udpfs&gt;</code></td><td>Always (the storage backend)</td></tr>
+<tr><td><code>-bsdfs=hdl</code></td><td>Internal HDD (APA) only</td></tr>
+<tr><td><code>-bsdfs=&lt;exfat|hdl|bd&gt;</code></td><td>Only when the game's <b>Neutrino Filesystem</b> is set off Auto, or when you type <code>-bsdfs=</code> into the arguments — a typed one wins over the picker (per-game arguments over global ones, the last one wins, nothing after <code>--b</code>). Block devices only, never MMCE/UDPFS. <code>hdl</code>/<code>bd</code> also reshape <code>-dvd</code> to <code>hdl:</code>/<code>bdfs:</code>, and a typed <code>-dvd=</code> wins if it is forwarded (a long argument list can drop it). <code>bd</code> names the drive as <code>&lt;driver&gt;&lt;N&gt;p0</code> (a second USB stick is <code>usb1p0</code>) from the device number the drive reported; if it never reported one, the launch is refused while the menu is still up rather than guessed as device 0 — whether <code>bd</code> was picked or typed, even beside a typed <code>-dvd=</code>. ATA is exempt (one device, always 0).</td></tr>
+<tr><td><code>-dvd=&lt;path&gt;</code> / <code>-dvd=hdl:&lt;partition&gt;</code></td><td>Always (the game image or partition)</td></tr>
+<tr><td><code>-elf=cdrom0:\&lt;startup&gt;;1</code></td><td>When <b>Auto Boot ELF (-elf)</b> is on (the default, <b>Settings &rarr; Game Launching &rarr; Neutrino Defaults</b>) and you have not forwarded an <code>-elf=</code> yourself. Neutrino uses it to find a per-title config.</td></tr>
+<tr><td><code>-qb</code></td><td>USB, iLink, UDPBD and both UDPFS legs &mdash; the same set NHDDL uses (every mode except HDL). RiptOPL's no-reset bridge preserves the mounted BDM/UDPFS environment; quick boot enters Neutrino's load environment without resetting that inherited stack away. Without it, a UDPBD launch reconnected on its own after the reset, read the image's partition table and never reached the game. An active user-supplied copy is never duplicated.</td></tr>
+<tr><td><code>-gc=&lt;modes&gt;</code></td><td>Only when OPL compat modes are set for the game</td></tr>
+<tr><td><code>-dbc</code></td><td>Only when <b>Debug Colors</b> is enabled</td></tr>
+<tr><td><code>-logo</code></td><td>Only when <b>PS2 Logo</b> is enabled</td></tr>
+<tr><td><code>-gsm=&lt;mode&gt;</code></td><td>Only when a <b>Neutrino Video</b> mode resolves — the per-game picker, or the global <b>Settings → Game Launching → Neutrino Defaults → Neutrino Video</b> default when the per-game picker is “Default” (see §5)</td></tr>
+<tr><td><code>-mc0=&lt;path&gt;</code> / <code>-mc1=&lt;path&gt;</code></td><td>Only when a per-game VMC is configured for that slot</td></tr>
+<tr><td><code>-cfg=riptopl-cheats</code></td><td>Only when cheats are on for the game and at least one code is enabled. The codes are written to <code>riptopl-cheats.toml</code> first (see <a href="cheats.html#neutrino">Cheats</a>). It goes after your own options; Neutrino keeps only the last <code>-cfg</code>, so a <code>-cfg=</code> you forward still loads, through that file's <code>depends</code>.</td></tr>
+</tbody>
+</table>
+
+<h3 id="extra-args">Global and per-game extra args</h3>
+
+<p>On top of the auto-built arguments you can pass <b>extra Neutrino flags</b> in two places. Both sets are appended after the auto-built arguments; global first, then per-game, so a game can extend or override the global defaults.</p>
+
+<ul class="checklist">
+<li><b>Global (every Neutrino launch):</b> <b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Neutrino Advanced Arguments</b> &mdash; config key <code>neutrino_args</code> in <code>settings_riptopl.cfg</code>.</li>
+<li><b>Per game (one title only):</b> <b>Triangle &rarr; Game Settings &rarr; Neutrino Launch Args</b> &mdash; config key <code>$NeutrinoArgs</code> in the game's <code>.cfg</code>.</li>
+</ul>
+
+<p>Arguments are space-separated. Example:</p>
+<pre>-mt=dvd -gsm=1</pre>
+
+<div class="callout info"><div class="h">Editing long argument strings</div>
+Both the global Neutrino Advanced Arguments and the per-game Neutrino Launch Args open a <b>structured sub-screen</b> (see below) whose individual fields each hold up to 31 visible characters. If you need a longer value in a single field, edit <code>neutrino_args</code> (global, in <code>settings_riptopl.cfg</code>) or <code>$NeutrinoArgs</code> (per game, in the game's <code>.cfg</code>) directly — OPL reads and forwards the full string at launch. The editor preserves every field you do not touch at its full stored length, so opening and closing the dialog never truncates a hand-edited value.
+</div>
+
+<h3 id="args-subscreen">Structured Neutrino Args sub-screen</h3>
+
+<p>Both the <b>global</b> entry (<b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Neutrino Advanced Arguments</b>) and the <b>per-game</b> field (<b>Triangle &rarr; Game Settings &rarr; Neutrino Launch Args</b>) are buttons that open the <em>same</em> companion sub-screen. It breaks the argument string into named fields — Quick Boot (<code>-qb</code>), Debug Colors (<code>-dbc</code>), PS2 Logo (<code>-logo</code>), Working Dir (<code>-cwd</code>), Config (<code>-cfg</code>), Boot ELF (<code>-elf</code>), ATA0 Image (<code>-ata0</code>), ATA0 ID (<code>-ata0id</code>), ATA1 Image (<code>-ata1</code>), plus a free-form <b>Extra</b> field — reassembles them in a valid canonical order with <code>--b</code> kept last, and writes the result back as a single flat string: the global into <code>neutrino_args</code>, the per-game value into <code>$NeutrinoArgs</code> (each game edited independently).</p>
+
+<table data-sortable>
+<thead><tr><th>Field</th><th>Argument emitted</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>Quick Boot (-qb)</td><td><code>-qb</code></td><td>Enter Neutrino's load environment directly; emitted first if enabled and supplied automatically for USB, iLink, UDPBD and UDPFS</td></tr>
+<tr><td>Debug Colors (-dbc)</td><td><code>-dbc</code></td><td>Neutrino's debug colour output; forwarding it here suppresses OPL's own auto-emitted copy</td></tr>
+<tr><td>PS2 Logo (-logo)</td><td><code>-logo</code></td><td>Show the PS2 logo; forwarding it here suppresses OPL's own auto-emitted copy</td></tr>
+<tr><td>Working Dir (-cwd)</td><td><code>-cwd=&lt;path&gt;</code></td><td>Override Neutrino's working directory</td></tr>
+<tr><td>Config (-cfg)</td><td><code>-cfg=&lt;path&gt;</code></td><td>Point Neutrino at an alternate config file</td></tr>
+<tr><td>Boot ELF (-elf)</td><td><code>-elf=&lt;path&gt;</code></td><td>Launch a different ELF instead of the disc boot ELF</td></tr>
+<tr><td>ATA0 Image (-ata0)</td><td><code>-ata0=&lt;path&gt;</code></td><td>Override the primary ATA image path</td></tr>
+<tr><td>ATA0 ID</td><td><code>-ata0id=&lt;id&gt;</code></td><td>Override the ATA0 device ID string</td></tr>
+<tr><td>ATA1 Image (-ata1)</td><td><code>-ata1=&lt;path&gt;</code></td><td>Override the secondary ATA image path</td></tr>
+<tr><td>Extra</td><td>(verbatim)</td><td>Any other flags, including <code>--b</code> and everything after it (passed to the booted ELF); placed last</td></tr>
+</tbody>
+</table>
+
+<p>The canonical reassembly order is: <code>-qb</code> &rarr; <code>-dbc</code> &rarr; <code>-logo</code> &rarr; <code>-cwd</code> &rarr; <code>-cfg</code> &rarr; <code>-elf</code> &rarr; <code>-ata0</code> &rarr; <code>-ata0id</code> &rarr; <code>-ata1</code> &rarr; Extra. The Extra slot also collects any flags the parser does not recognise, preserving them verbatim. <code>--b</code> and everything following it is always kept at the tail (those tokens are arguments forwarded to the booted ELF, not to Neutrino itself).</p>
+
+<div class="callout info"><div class="h">Auto-emitted flags are never typed</div>
+<code>-bsd</code>, <code>-dvd</code>, <code>-gc</code>, and <code>-mc0</code>/<code>-mc1</code> are always constructed from the game settings by OPL. Do not enter them in the Extra field or the Launch Args text box — doing so produces a duplicate that Neutrino may reject or misinterpret. Use the dedicated UI controls (compat modes, VMC slots, etc.) to set those values instead.
+<p><code>-dbc</code>, <code>-logo</code>, and <code>-gsm</code> are the exceptions: they have dedicated controls (the <b>Debug Colors</b> and <b>PS2 Logo</b> toggles in the args sub-screen, and the <b>Neutrino Video</b> picker), and if you do forward one of them yourself OPL suppresses its own auto-emitted copy so exactly one reaches Neutrino. A copy disabled with a leading <code>$</code> does not count as forwarded, so OPL still emits its own in that case.</p>
+</div>
+
+<h3 id="show-args">See the exact arguments: Show Launch Arguments</h3>
+
+<p><b>Settings &rarr; Game Launching &rarr; Neutrino Defaults &rarr; Show Launch Arguments</b> (off by default; config key <code>neutrino_show_args</code>) shows the complete argument list just before a Neutrino launch hands over. It is the list the launch passes, not a reconstruction: the auto-built arguments, then yours. Entries are separated by spaces, and a path with spaces in it is shown in quotes so it still reads as one argument.</p>
+
+<ul class="checklist">
+<li><b>Accept</b> launches. <b>Back</b> stays in the menu.</li>
+<li>A list too long for the hand-over (14 entries or 256 bytes) is refused before the preview, as it always is.</li>
+<li>Auto Loading never asks: there is nobody at the menu to answer.</li>
+</ul>
+
+<p>In the arguments sub-screen, a flag typed into <b>Extra</b> that has its own row &mdash; <code>-logo</code>, say &mdash; moves into that row when you save. It is still sent; it just shows in its row instead of in Extra.</p>
+
+<h2 id="neutrino-video">5. Per-game Neutrino Video (-gsm)</h2>
+
+<p>When a game's Loader Core is set to <b>Neutrino</b>, a <b>Neutrino Video</b> picker appears in <b>Game Settings</b>. This is the Neutrino-side stand-in for the OPL GSM panel (which is an OPL-core-only feature and is greyed under Neutrino). The picker maps to Neutrino's <code>-gsm</code> flag:</p>
+
+<table data-sortable>
+<thead><tr><th>Picker value</th><th>Neutrino flag emitted</th></tr></thead>
+<tbody>
+<tr><td>Off (default)</td><td>(nothing emitted)</td></tr>
+<tr><td>240p</td><td><code>-gsm=fp1</code></td></tr>
+<tr><td>480p</td><td><code>-gsm=fp2</code></td></tr>
+<tr><td>1080i x1</td><td><code>-gsm=1080ix1</code></td></tr>
+<tr><td>1080i x2</td><td><code>-gsm=1080ix2</code></td></tr>
+<tr><td>1080i x3</td><td><code>-gsm=1080ix3</code></td></tr>
+<tr><td>Default</td><td><em>follows the global <b>Settings → Game Launching → Neutrino Defaults → Neutrino Video</b> value (no per-game key saved)</em></td></tr>
+</tbody>
+</table>
+
+<p><b>Global default:</b> the same picker also exists in <b>Settings</b> (with its GSM-comp half). Games whose per-game picker is “Default” follow it — so one global change forces e.g. <code>-gsm=1080ix3</code> for every Neutrino game. An explicit per-game value — <em>including Off</em> — overrides the global.</p>
+<div class="callout info"><div class="h">i The “1080p impression” trick</div>On 1080-class displays,
+<b>1080i x3</b> (<code>-gsm=1080ix3</code>) is the community workaround for progressive-looking output —
+the same effect previously reached by launching Neutrino from PS2BBLE/OSDmenu with
+<code>-gsm=1080ix3</code>. Set it per game, or globally and leave games on “Default”. True 1080p is not
+one of Neutrino's <code>-gsm</code> modes — its option remains <code>1080i</code>. RiptOPL's native
+<em>OPL</em> core separately provides a hardware-confirmed forced-progressive 1080p GSM mode in every
+standard loader; it is guarded by a three-step confirmation, with <b>Triangle + Cross</b> at console
+boot changing only the menu to 480p (<b>Triangle + Circle</b> forces the interlaced Auto mode instead). A game video override must be changed in game settings; the display/connection must accept 480p for menu recovery.</div>
+<p>The picker is the <em>default</em> source for <code>-gsm</code>. If you manually type <code>-gsm=&lt;value&gt;</code> into the <b>Neutrino Launch Args</b> field, that value wins — OPL emits only one <code>-gsm</code> argument, because Neutrino aborts on a duplicate or malformed value.</p>
+
+<h3 id="mode7">Mode 7 — fix IOP buffer overrun (<code>-gc=7</code>)</h3>
+
+<p>The compat modes list contains a Neutrino-only entry: <b>Mode 7</b>. This maps to <code>-gc=7</code> and targets a small class of games that overrun an IOP buffer during loading. It is greyed out when the Loader Core is set to <code>&lt;OPL&gt;</code> (the inverse of Modes 4 and 6, which are greyed under Neutrino). Enable it in <b>Game Settings</b> when the game's core is Neutrino.</p>
+
+<h2 id="core-aware-settings">6. Core-aware per-game settings</h2>
+
+<p>The per-game settings screen adapts to the <b>Loader Core</b> chosen for each title, so you only see controls the selected core actually honors.</p>
+
+<h3>When Loader Core = Neutrino</h3>
+
+<ul class="checklist">
+<li><b>Neutrino Launch Args</b> and <b>Neutrino Video</b> picker are active and editable.</li>
+<li><b>Compat Modes 4 (Skip Videos) and 6 (Disable IGR)</b> are greyed — these are OPL ee-core features with no Neutrino equivalent. OPL never forwards them.</li>
+<li><b>Mode 7</b> is available (Neutrino-only; see above).</li>
+<li>The <b>Configure GSM</b>, <b>Controller Emulation</b> and <b>OSD Settings</b> screens show a "not used with the Neutrino core" message instead of dead controls. Use the Neutrino Video picker for video forcing.</li>
+<li><b>Cheat Settings</b> works on both cores; only its <b>PS2RD Cheat Image</b> row is greyed, because Neutrino has no cheat-image support. See <a href="cheats.html#neutrino">Cheats with the Neutrino core</a>.</li>
+<li><b>VMC</b> and the rest of <b>Game Settings</b> remain fully available — VMC is passed to Neutrino as <code>-mc0</code>/<code>-mc1</code> arguments on BDM devices (USB/iLink/MX4SIO/exFAT&nbsp;HDD/UDPBD), MMCE and UDPFS. The one exception is <b>APA HDD</b>: Neutrino has no APA/pfs backing store to open the <code>.bin</code> from, so the game boots <em>without</em> the VMC and OPL shows a warning (the OPL core honors the same card normally). See <a href="vmc.html#neutrino-vmc">VMC with the Neutrino core</a>.</li>
+<li><b>UDPBD / UDPFS games</b> have no OPL core backend, so the Loader Core selector is locked to Neutrino for them and cannot be changed.</li>
+</ul>
+
+<h3>When Loader Core = &lt;OPL&gt;</h3>
+
+<p>The screen is unchanged from classic OPL. The Neutrino Launch Args field and Neutrino Video picker are greyed (they are never read on the OPL path). Mode 7 is greyed. Modes 4 and 6 are available as usual.</p>
+
+<details class="deep"><summary>What does Neutrino actually honor from OPL's per-game settings?</summary>
+<p>Neutrino honors: the storage backend + image path (<code>-bsd</code> / <code>-dvd</code>, automatic), the compat mode subset that maps to <code>-gc</code> (Modes 1/2/3/5/7), VMC via <code>-mc0</code>/<code>-mc1</code> (BDM/MMCE/UDPFS — not APA HDD), <code>-logo</code> (PS2 logo), <code>-dbc</code> (debug colors), the Neutrino Video picker (<code>-gsm</code>; per-game with a global default in Settings), the free-text <b>Neutrino Launch Args</b> field, and PS2RD cheats (handed over in <code>riptopl-cheats.toml</code>; see <a href="cheats.html#neutrino">Cheats</a>). It does <b>not</b> honor: the PS2RD Cheat Image (<code>.img</code>), OPL GSM (OPL patches the GS registers), IGR (OPL's in-game reset hook), PADEMU (OPL's USB gamepad emulation), or OSD Language — all are OPL-embedded-core features with no Neutrino equivalent.</p>
+</details>
+
+<h2 id="network-boot">7. Network boot — UDPBD / UDPFS</h2>
+
+<p>UDPBD and UDPFS stream games from a PC over the LAN as network block devices. The block protocols (UDPBD and UDPFS-Image) share the BDM block tab — labelled <b>UDPBD Games</b> or <b>UDPFSBD Games</b> depending on which one is active — while UDPFS-Files is a separate filesystem device with its own <b>UDPFS Games</b> tab. Only one can be active per boot anyway (a single NIC), so the two never appear side by side. Either list carries covers and per-game settings. Because there is no OPL cdvdman backend for network block devices, these games <b>always and only launch via Neutrino</b> — OPL forces the Neutrino core automatically, and if <code>neutrino.elf</code> is missing it warns and returns to the menu (there is no <code>&lt;OPL&gt;</code> fallback).</p>
+
+<p>Full setup, server instructions, and the UDPBD vs UDPFS protocol comparison are on the <a href="network-boot.html">Network Boot</a> page.</p>
+
+<div class="grid">
+<a class="tile" href="network-boot.html"><span class="icon icon-netboot"></span><b>Network Boot</b><span>UDPBD &amp; UDPFS setup, server requirements, static IP</span></a>
+<a class="tile" href="per-game-settings.html"><span class="icon icon-settings-pergame"></span><b>Per-game Settings</b><span>Every per-game option explained</span></a>
+<a class="tile" href="vmc.html"><span class="icon icon-vmc"></span><b>VMC</b><span>Virtual memory cards — works under Neutrino too</span></a>
+<a class="tile" href="ps1-vcd.html"><span class="icon icon-ps1"></span><b>PS1 Games (VCD)</b><span>Separate path — always POPSTARTER, never Neutrino</span></a>
+</div>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>
