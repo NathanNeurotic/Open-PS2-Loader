@@ -21,7 +21,7 @@
 #define SAVEICON_MAX_FILE   (512 * 1024) // largest icon file read
 #define SAVEICON_SYS_SIZE   964          // icon.sys
 #define SAVEICON_SYS_LIST   0x104        // icon.sys: list-icon file name (64 bytes)
-#define SAVEICON_PATH_SIZE  192          // a per-game VMC path: device prefix + "VMC/" + name + ".bin"
+#define SAVEICON_PATH_SIZE  384          // device/share prefix + PS1 game folder or PS2 VMC path
 
 typedef struct
 {

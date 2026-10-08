@@ -2788,27 +2788,23 @@ int hddGetArtArchivePath(item_list_t *itemList, char *out, int outSize)
 static int hddGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int ember,
                             char *directory, int directorySize, char *partition, int partitionSize)
 {
-    int i, n;
-    (void)itemList;
-    (void)id;
-    if (ember) {
-        for (i = 0; i < hddVcdGameCount; i++) {
-            if (cueIsCueEntry(&hddVcdGames[i]) && !strcmp(hddVcdGames[i].name, name)) {
-                char mountSource[APA_IDMAX + 6];
-                snprintf(mountSource, sizeof(mountSource), "hdd0:%s", hddVcdParts[i]);
-                if (!strcmp(gOPLPart, mountSource)) {
-                    partition[0] = '\0';
-                    return saveIconPs1Directory("pfs0:/", name, 1, directory, directorySize);
-                }
-                n = snprintf(partition, partitionSize, "hdd0:%s", hddVcdParts[i]);
-                return n > 0 && n < partitionSize &&
-                       saveIconPs1Directory("pfs1:/", name, 1, directory, directorySize);
-            }
-        }
+    int i = hddGetSourceId(itemList, id), n;
+    base_game_info_t *game = hddActiveVcd(i);
+    if (game == &hddEmptyVcd || hddVcdParts == NULL || name == NULL ||
+        strcmp(game->name, name) != 0 || cueIsCueEntry(game) != ember)
         return 0;
+    if (ember) {
+        char mountSource[APA_IDMAX + 6];
+        snprintf(mountSource, sizeof(mountSource), "hdd0:%s", hddVcdParts[i]);
+        if (gHDDPrefix != NULL && !strcmp(gOPLPart, mountSource)) {
+            partition[0] = '\0';
+            return saveIconPs1Directory("pfs0:/", name, 1, directory, directorySize);
+        }
+        n = snprintf(partition, partitionSize, "%s", mountSource);
+        return n > 0 && n < partitionSize && saveIconPs1Directory("pfs1:/", name, 1, directory, directorySize);
     }
     // POPSTARTER's VMC/support home is __common/POPS, independently of the VCD data partition.
-    if (!strcmp(gOPLPart, "hdd0:__common")) {
+    if (gHDDPrefix != NULL && !strcmp(gOPLPart, "hdd0:__common")) {
         partition[0] = '\0';
         return saveIconPs1Directory("pfs0:/", name, 0, directory, directorySize);
     }

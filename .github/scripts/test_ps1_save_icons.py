@@ -5,11 +5,71 @@ import subprocess
 import tempfile
 
 root = Path(__file__).resolve().parents[2]
+
+
+def function(path, signature):
+    source = (root / path).read_text(encoding='utf-8')
+    start = source.index(signature)
+    # These definitions close at column zero; inner blocks are indented.
+    end = source.index('\n}\n', start) + 3
+    return source[start:end]
+
+
+paths = r'''
+#include <assert.h>
+#define CUE_NAME_LAUNCH_MAX 180
+#define EMBER_GAMES_FOLDER "games"
+static const char *cueEmberFolder(void) { return "EMBER"; }
+@CUE_SEP@
+@CUE_GAMES@
+@CUE_NAME@
+@DIRECTORY@
+#define APA_IDMAX 32
+typedef struct { int view; } item_list_t;
+typedef struct { char name[64]; int ember; } base_game_info_t;
+static base_game_info_t hddEmptyVcd, hddVcdGames[2] = {{"Same title", 1}, {"Same title", 1}};
+static char parts[2][APA_IDMAX+1] = {"__common", "__.POPS2"};
+static char (*hddVcdParts)[APA_IDMAX+1] = parts;
+static char gOPLPart[40] = "hdd0:__common", *gHDDPrefix = "pfs0:/OPL/";
+static int hddGetSourceId(item_list_t *list, int id) { return id - (list->view == 2 ? 5 : 0); }
+static base_game_info_t *hddActiveVcd(int id) { return id < 0 || id > 1 ? &hddEmptyVcd : &hddVcdGames[id]; }
+static int cueIsCueEntry(const base_game_info_t *game) { return game->ember; }
+@HDD@
+static void checkPaths(void) {
+    char dir[SAVEICON_PATH_SIZE], part[SAVEICON_PATH_SIZE], small[8], longName[160];
+    item_list_t ps1 = {1}, mixed = {2};
+    assert(saveIconPs1Directory("mass3:/", "Game", 0, dir, sizeof(dir)) && !strcmp(dir, "mass3:/POPS/Game"));
+    assert(saveIconPs1Directory("mmce1:/", "Game", 1, dir, sizeof(dir)) && !strcmp(dir, "mmce1:/EMBER/games/Game"));
+    assert(saveIconPs1Directory("smb:/share\\", "Game", 1, dir, sizeof(dir)) && !strcmp(dir, "smb:/share\\EMBER\\games\\Game"));
+    memset(longName, 'A', sizeof(longName)-1); longName[sizeof(longName)-1]=0;
+    assert(saveIconPs1Directory("smb:/a-long-share-prefix\\", longName, 1, dir, sizeof(dir)));
+    assert(!saveIconPs1Directory("mass0:/", "Game", 0, small, sizeof(small)));
+    assert(!saveIconPs1Directory("mass0:/", "../Game", 0, dir, sizeof(dir)));
+    assert(hddGetPs1SaveDir(&ps1, 0, "Same title", 1, dir, sizeof(dir), part, sizeof(part)) && !part[0] && !strcmp(dir, "pfs0:/EMBER/games/Same title"));
+    assert(hddGetPs1SaveDir(&ps1, 1, "Same title", 1, dir, sizeof(dir), part, sizeof(part)) && !strcmp(part, "hdd0:__.POPS2"));
+    assert(hddGetPs1SaveDir(&mixed, 6, "Same title", 1, dir, sizeof(dir), part, sizeof(part)) && !strcmp(part, "hdd0:__.POPS2"));
+    assert(!hddGetPs1SaveDir(&ps1, 2, "Same title", 1, dir, sizeof(dir), part, sizeof(part)));
+    assert(!hddGetPs1SaveDir(&ps1, 0, "Stale title", 1, dir, sizeof(dir), part, sizeof(part)));
+    hddVcdGames[0].ember=0;
+    assert(hddGetPs1SaveDir(&ps1, 0, "Same title", 0, dir, sizeof(dir), part, sizeof(part)) && !part[0] && !strcmp(dir, "pfs0:/POPS/Same title"));
+    gHDDPrefix=NULL;
+    assert(hddGetPs1SaveDir(&ps1, 0, "Same title", 0, dir, sizeof(dir), part, sizeof(part)) && !strcmp(part, "hdd0:__common"));
+}
+'''
+for placeholder, path, signature in (
+        ('@CUE_SEP@', 'src/cuesupport.c', 'static char cueSep('),
+        ('@CUE_GAMES@', 'src/cuesupport.c', 'void cueBuildGamesDir('),
+        ('@CUE_NAME@', 'src/cuesupport.c', 'int cueNameLaunchable('),
+        ('@DIRECTORY@', 'src/saveicon.c', 'int saveIconPs1Directory('),
+        ('@HDD@', 'src/hddsupport.c', 'static int hddGetPs1SaveDir(')):
+    paths = paths.replace(placeholder, function(path, signature))
+
 harness = r'''
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "include/saveicon.h"
+@PATHS@
 static unsigned char card[131072];
 static int limit;
 static int rd(void *ctx, unsigned int off, void *buf, int size) {
@@ -18,6 +78,7 @@ static int rd(void *ctx, unsigned int off, void *buf, int size) {
     memcpy(buf, card+off, size); return size;
 }
 int main(int argc, char **argv) {
+    checkPaths();
     saveicon_model_t model;
     FILE *file = fopen(argv[1], "rb");
     if (!file) return 2;
@@ -35,6 +96,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 '''
+harness = harness.replace('@PATHS@', paths)
 
 
 def checksum(card, frame):

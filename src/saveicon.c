@@ -653,14 +653,19 @@ int saveIconPs1Directory(const char *root, const char *name, int ember, char *ou
     int n, len = strlen(root);
     char sep = len > 0 && root[len - 1] == '\\' ? '\\' : '/';
 
-    if (!cueNameLaunchable(name))
+    if (name == NULL || name[0] == '\0' || strchr(name, '/') != NULL || strchr(name, '\\') != NULL ||
+        strchr(name, ':') != NULL || !strcmp(name, ".") || !strcmp(name, "..") ||
+        (ember && !cueNameLaunchable(name)))
         return 0;
     if (strlen(root) + strlen(cueEmberFolder()) + strlen("/games") >= sizeof(base))
         return 0;
     if (ember)
         cueBuildGamesDir(root, base, sizeof(base));
-    else if (snprintf(base, sizeof(base), "%sPOPS", root) >= sizeof(base))
-        return 0;
+    else {
+        n = snprintf(base, sizeof(base), "%sPOPS", root);
+        if (n <= 0 || n >= (int)sizeof(base))
+            return 0;
+    }
     n = snprintf(out, outSize, "%s%c%s", base, sep, name);
     return n > 0 && n < outSize;
 }
@@ -1190,6 +1195,7 @@ void saveIconReset(void)
     memset(&siPending, 0, sizeof(siPending));
     siPendingState = SI_NONE;
     siWantKey[0] = '\0';
+    siWantPs1 = 0;
     siUnlock();
     siRetireShown();
     siFreeRetired();
