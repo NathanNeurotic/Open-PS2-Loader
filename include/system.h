@@ -2,6 +2,7 @@
 #define __SYSTEM_H
 
 #include "include/mcemu.h"
+#include "include/config.h"
 
 #define SYS_LOAD_MC_MODULES   0x01
 #define SYS_LOAD_USB_MODULES  0x02
@@ -47,6 +48,7 @@ void sysLaunchNeutrino(const char *driver, const char *path, const char *startup
 // same neutrinoBsdfs/extraArgs/bdDevNr it will pass to sysLaunchNeutrino. Returns 0 = proceed;
 // <0 = abort the launch (a toast has already been shown).
 int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutrinoBsdfs, const char *extraArgs, int bdDevNr);
+void sysNeutrinoWarnPadEmu(config_set_t *configSet);
 
 // Compose the exact launch argv while the GUI is still live. Refuses a launch that would exceed
 // the 14-entry or 256-byte ExecPS2 budget, with a visible warning instead of dropping arguments.

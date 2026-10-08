@@ -525,7 +525,7 @@ if 'needsSaveIconConfig = 1' not in init or 'drawSaveIcon' not in init:
 draw = themes[themes.index('static void drawSaveIcon('):]
 draw = draw[:draw.index('\n}\n')]
 for needle, why in (('gEnableSaveIcons', 'the setting must gate the element'),
-                    ('libListRowView(support, item->item.id) == LIB_VIEW_ISO', 'only PS2 rows have PS2 saves'),
+                    ('libListRowView(support, item->item.id) != LIB_VIEW_ISO', 'exclude non-game rows from PS2 save lookup'),
                     ('APP_MODE', 'apps have no saves'),
                     ('configGetVMCDisable', 'a slot switched off is not where the save is'),
                     ('favGetItemPrefix', "a favourite's VMC is on its source device"),

@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
 #include "include/supportbase.h"
@@ -1041,11 +1042,21 @@ const char *ethGetSMBPrefix(void)
     return ethPrefix;
 }
 
+static int ethGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int ember,
+                            char *directory, int directorySize, char *partition, int partitionSize)
+{
+    (void)itemList;
+    (void)id;
+    (void)partitionSize;
+    partition[0] = '\0';
+    return gPCShareName[0] && saveIconPs1Directory(ethPrefix, name, ember, directory, directorySize);
+}
+
 static item_list_t ethGameList = {
     ETH_MODE, 1, 0, 0, MENU_MIN_INACTIVE_FRAMES, ETH_MODE_UPDATE_DELAY, NULL, NULL, &ethGetTextId, &ethGetPrefix, &ethInit, &ethNeedsUpdate,
     &ethUpdateGameList, &ethGetGameCount, &ethGetGame, &ethGetGameName, &ethGetGameNameLength, &ethGetGameStartup, &ethDeleteGame, &ethRenameGame,
     &ethLaunchGame, &ethGetConfig, &ethGetImage, &ethCleanUp, &ethShutdown, &ethCheckVMC, &ethGetIconId, &ethLaunchVcd,
-    ITEM_VIEW_NATIVE, NULL, &ethLaunchCue, &ethGetItemView, &ethGetSourceId, &ethSaveCueSettings};
+    ITEM_VIEW_NATIVE, NULL, &ethLaunchCue, &ethGetItemView, &ethGetSourceId, &ethSaveCueSettings, &ethGetPs1SaveDir};
 
 int ethGetNetConfig(u8 *ip_address, u8 *netmask, u8 *gateway)
 {

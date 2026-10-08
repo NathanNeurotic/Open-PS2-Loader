@@ -190,6 +190,15 @@ old_pair = ('gDefaultBgColor[0] == 0x28 && gDefaultBgColor[1] == 0xC5 && gDefaul
 if load and old_pair not in load:
     failures.append('_loadConfig: a config holding exactly the old default pair must get the new plasma')
 
+# --- loader-core scope stays honest ---------------------------------------------------------------
+
+if ('Global default only where both cores are supported. UDPFS/UDPBD always use Neutrino; SMB/HTTP always use <OPL>.' not in lang_base or
+        'UDPFS/UDPBD are Neutrino-only; SMB/HTTP are <OPL>-only.' not in lang_base):
+    failures.append('lng_tmpl/_base.yml: loader-core hints must name the forced-core network sources')
+if ('sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support)' not in guigame_c or
+        'bdmModeIsUDPBD(sourceMode)' not in guigame_c):
+    failures.append('guigame.c: UDPFS Files and UDP block-device games must lock Loader Core to Neutrino')
+
 # --- optional PS1/PS2 labels ----------------------------------------------------------------------
 
 if 'UICFG_GAME_TYPE_LABELS' not in dialogs_h:

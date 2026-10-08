@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
 #include "include/supportbase.h"
@@ -1247,6 +1248,7 @@ void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
             sbUnprepare(&settings->common);
             return;
         }
+        sysNeutrinoWarnPadEmu(configSet);
         // GameID for the NEUTRINO core (issue #68): the native OPL-core launch deliberately does
         // NOT push a launcher GameID (see the issue-#50 note below -- in OPL core the in-game
         // card is OPL's mcemu, and a mid-launch re-switch froze early-MC-probing games). That
@@ -1421,8 +1423,20 @@ static int mmceSaveCueSettings(item_list_t *itemList, int id, const char *name, 
     return cueSaveGameSettings(ps1Root, name, configSet);
 }
 
+static int mmceGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int ember,
+                             char *directory, int directorySize, char *partition, int partitionSize)
+{
+    char root[64];
+    (void)itemList;
+    (void)id;
+    (void)partitionSize;
+    partition[0] = '\0';
+    mmceGetDeviceRoot(root, sizeof(root));
+    return saveIconPs1Directory(root, name, ember, directory, directorySize);
+}
+
 static item_list_t mmceGameList = {
     MMCE_MODE, 2, 0, 0, MENU_MIN_INACTIVE_FRAMES, MMCE_MODE_UPDATE_DELAY, NULL, NULL, &mmceGetTextId, &mmceGetPrefix, &mmceInit, &mmceNeedsUpdate,
     &mmceUpdateGameList, &mmceGetGameCount, &mmceGetGame, &mmceGetGameName, &mmceGetGameNameLength, &mmceGetGameStartup, &mmceDeleteGame, &mmceRenameGame,
     &mmceLaunchGame, &mmceGetConfig, &mmceGetImage, &mmceCleanUp, &mmceShutdown, &mmceCheckVMC, &mmceGetIconId, &mmceLaunchVcd,
-    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &mmceLaunchCue, &mmceGetItemView, &mmceGetSourceId, &mmceSaveCueSettings};
+    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &mmceLaunchCue, &mmceGetItemView, &mmceGetSourceId, &mmceSaveCueSettings, &mmceGetPs1SaveDir};
