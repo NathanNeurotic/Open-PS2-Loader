@@ -371,7 +371,7 @@ static int udpfsArtFolderHasFiles(unsigned int variant)
     snprintf(path, sizeof(path), "%s%s", udpfsPrefix, udpfsArtCaseNames[variant]);
     dir = opendir(path);
     if (dir == NULL)
-        return 0;
+        return -1; // root entry may be a file named "art", not a directory
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_name[0] != '.') {
             found = 1;
@@ -424,7 +424,7 @@ static void udpfsDiscoverArtFolder(void)
         }
     }
     if (candidates && (candidates & (candidates - 1u))) {
-        if (!udpfsArtFolderHasFiles(chosen)) {
+        if (udpfsArtFolderHasFiles(chosen) <= 0) {
             for (unsigned int i = 0; i < 8; i++) {
                 if (i != chosen && (candidates & (1u << i)) && udpfsArtFolderHasFiles(i)) {
                     chosen = i;
@@ -433,6 +433,12 @@ static void udpfsDiscoverArtFolder(void)
             }
         }
     }
+
+    // For a single noncanonical entry, verify that it is actually a directory.
+    // d_type is unreliable over this filesystem, so an open probe is necessary.
+    // The common canonical ART path still takes no additional directory open.
+    if (chosen != 0 && !(candidates & (candidates - 1u)) && udpfsArtFolderHasFiles(chosen) < 0)
+        chosen = 0;
 
     udpfsArtCaseChecked = 1;
     if (chosen != udpfsArtCaseIndex) {
