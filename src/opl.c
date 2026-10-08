@@ -2823,6 +2823,48 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
     }
 }
 
+// Shared reader for network settings (IP / DHCP / SMB / HTTP globals). Factored out so _loadConfig
+// and miniInit stay consistent.
+static void configReadNetworkGlobals(config_set_t *configNet)
+{
+    const char *temp;
+
+    configGetInt(configNet, CONFIG_NET_ETH_LINKM, &gETHOpMode);
+
+    configGetInt(configNet, CONFIG_NET_PS2_DHCP, &ps2_ip_use_dhcp);
+    configGetInt(configNet, CONFIG_NET_SMB_NBNS, &gPCShareAddressIsNetBIOS);
+    configGetStrCopy(configNet, CONFIG_NET_SMB_NB_ADDR, gPCShareNBAddress, sizeof(gPCShareNBAddress));
+
+    if (configGetStr(configNet, CONFIG_NET_SMB_IP_ADDR, &temp))
+        sscanf(temp, "%d.%d.%d.%d", &pc_ip[0], &pc_ip[1], &pc_ip[2], &pc_ip[3]);
+
+    configGetInt(configNet, CONFIG_NET_SMB_PORT, &gPCPort);
+
+    if (configGetStr(configNet, CONFIG_NET_HTTP_IP_ADDR, &temp))
+        sscanf(temp, "%d.%d.%d.%d", &gHttpServerIp[0], &gHttpServerIp[1], &gHttpServerIp[2], &gHttpServerIp[3]);
+    configGetInt(configNet, CONFIG_NET_HTTP_PORT, &gHttpPort);
+    configGetStrCopy(configNet, CONFIG_NET_HTTP_BASE_PATH, gHttpBasePath, sizeof(gHttpBasePath));
+    httpNormalizeBasePath(gHttpBasePath, sizeof(gHttpBasePath));
+
+    if (configGetStr(configNet, CONFIG_NET_SMB_SHARE, &temp))
+        configGetStrCopy(configNet, CONFIG_NET_SMB_SHARE, gPCShareName, sizeof(gPCShareName));
+    if (configGetStr(configNet, CONFIG_NET_SMB_USER, &temp))
+        configGetStrCopy(configNet, CONFIG_NET_SMB_USER, gPCUserName, sizeof(gPCUserName));
+    if (configGetStr(configNet, CONFIG_NET_SMB_PASSW, &temp))
+        configGetStrCopy(configNet, CONFIG_NET_SMB_PASSW, gPCPassword, sizeof(gPCPassword));
+
+    if (configGetStr(configNet, CONFIG_NET_PS2_IP, &temp))
+        sscanf(temp, "%d.%d.%d.%d", &ps2_ip[0], &ps2_ip[1], &ps2_ip[2], &ps2_ip[3]);
+    if (configGetStr(configNet, CONFIG_NET_PS2_NETM, &temp))
+        sscanf(temp, "%d.%d.%d.%d", &ps2_netmask[0], &ps2_netmask[1], &ps2_netmask[2], &ps2_netmask[3]);
+    if (configGetStr(configNet, CONFIG_NET_PS2_GATEW, &temp))
+        sscanf(temp, "%d.%d.%d.%d", &ps2_gateway[0], &ps2_gateway[1], &ps2_gateway[2], &ps2_gateway[3]);
+    if (configGetStr(configNet, CONFIG_NET_PS2_DNS, &temp))
+        sscanf(temp, "%d.%d.%d.%d", &ps2_dns[0], &ps2_dns[1], &ps2_dns[2], &ps2_dns[3]);
+
+    configGetStrCopy(configNet, CONFIG_NET_NBD_DEFAULT_EXPORT, gExportName, sizeof(gExportName));
+}
+
 static int bootHomeHasFile(const char *home, const char *name)
 {
     size_t len = strlen(home);
@@ -3559,38 +3601,8 @@ static void _loadConfig()
 
         if (result & CONFIG_NETWORK) {
             config_set_t *configNet = configGetByType(CONFIG_NETWORK);
-
-            configGetInt(configNet, CONFIG_NET_ETH_LINKM, &gETHOpMode);
-
-            configGetInt(configNet, CONFIG_NET_PS2_DHCP, &ps2_ip_use_dhcp);
-            configGetInt(configNet, CONFIG_NET_SMB_NBNS, &gPCShareAddressIsNetBIOS);
-            configGetStrCopy(configNet, CONFIG_NET_SMB_NB_ADDR, gPCShareNBAddress, sizeof(gPCShareNBAddress));
-
-            if (configGetStr(configNet, CONFIG_NET_SMB_IP_ADDR, &temp))
-                sscanf(temp, "%d.%d.%d.%d", &pc_ip[0], &pc_ip[1], &pc_ip[2], &pc_ip[3]);
-
-            configGetInt(configNet, CONFIG_NET_SMB_PORT, &gPCPort);
-
-            if (configGetStr(configNet, CONFIG_NET_HTTP_IP_ADDR, &temp))
-                sscanf(temp, "%d.%d.%d.%d", &gHttpServerIp[0], &gHttpServerIp[1], &gHttpServerIp[2], &gHttpServerIp[3]);
-            configGetInt(configNet, CONFIG_NET_HTTP_PORT, &gHttpPort);
-            configGetStrCopy(configNet, CONFIG_NET_HTTP_BASE_PATH, gHttpBasePath, sizeof(gHttpBasePath));
-            httpNormalizeBasePath(gHttpBasePath, sizeof(gHttpBasePath));
-
-            configGetStrCopy(configNet, CONFIG_NET_SMB_SHARE, gPCShareName, sizeof(gPCShareName));
-            configGetStrCopy(configNet, CONFIG_NET_SMB_USER, gPCUserName, sizeof(gPCUserName));
-            configGetStrCopy(configNet, CONFIG_NET_SMB_PASSW, gPCPassword, sizeof(gPCPassword));
-
-            if (configGetStr(configNet, CONFIG_NET_PS2_IP, &temp))
-                sscanf(temp, "%d.%d.%d.%d", &ps2_ip[0], &ps2_ip[1], &ps2_ip[2], &ps2_ip[3]);
-            if (configGetStr(configNet, CONFIG_NET_PS2_NETM, &temp))
-                sscanf(temp, "%d.%d.%d.%d", &ps2_netmask[0], &ps2_netmask[1], &ps2_netmask[2], &ps2_netmask[3]);
-            if (configGetStr(configNet, CONFIG_NET_PS2_GATEW, &temp))
-                sscanf(temp, "%d.%d.%d.%d", &ps2_gateway[0], &ps2_gateway[1], &ps2_gateway[2], &ps2_gateway[3]);
-            if (configGetStr(configNet, CONFIG_NET_PS2_DNS, &temp))
-                sscanf(temp, "%d.%d.%d.%d", &ps2_dns[0], &ps2_dns[1], &ps2_dns[2], &ps2_dns[3]);
-
-            configGetStrCopy(configNet, CONFIG_NET_NBD_DEFAULT_EXPORT, gExportName, sizeof(gExportName));
+            if (configNet != NULL)
+                configReadNetworkGlobals(configNet);
         }
     }
 
@@ -5170,6 +5182,10 @@ static void miniInit(int mode)
             configGetInt(configOPL, CONFIG_OPL_PS2LOGO, &gPS2Logo);
             configGetStrCopy(configOPL, CONFIG_OPL_EXIT_PATH, gExitPath, sizeof(gExitPath));
             configGetInt(configOPL, CONFIG_OPL_HDD_SPINDOWN, &gHDDSpindown);
+#ifdef RETROACHIEVEMENTS
+            configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
+            configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+#endif
             // Honor ALL the Neutrino-launch globals on the autolaunch/argv path exactly like the
             // interactive _loadConfig -- not just the default core. An autolaunched keyless "Default"
             // game must resolve the SAME neutrino.elf (device pick / custom path) with the SAME global
@@ -5181,6 +5197,12 @@ static void miniInit(int mode)
                 configGetInt(configOPL, CONFIG_OPL_BDM_CACHE, &bdmCacheSize);
             } else if (mode == HDD_MODE)
                 configGetInt(configOPL, CONFIG_OPL_HDD_CACHE, &hddCacheSize);
+        }
+
+        if (ret & CONFIG_NETWORK) {
+            config_set_t *configNet = configGetByType(CONFIG_NETWORK);
+            if (configNet != NULL)
+                configReadNetworkGlobals(configNet);
         }
     }
 #ifdef __OPLDIAG
@@ -5225,6 +5247,11 @@ void miniDeinit(config_set_t *configSet)
     ds34bt_reset();
 #endif
     configFree(configSet);
+
+#ifdef RETROACHIEVEMENTS
+    if (ethGetModulesLoaded())
+        ethDeinitModules();
+#endif
 
     ioEnd();
     configEnd();
