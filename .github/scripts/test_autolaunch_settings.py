@@ -423,6 +423,27 @@ def check_pins():
     check(resolve is not None and 'bdmResolveBootDirBootstrap(home, homeLen, "", &bdmType)' in resolve,
           'resolveHybridExfatHome: pass no ELF name (the launcher ELF is on APA, not exFAT)')
 
+    # RetroAchievements on autolaunch: miniInit must inherit the telemetry and network globals,
+    # and miniDeinit must tear down the pre-launch network stack.
+    check(mini is not None and 'CONFIG_OPL_RA_TELEMETRY, &gRATelemetry' in mini,
+          'miniInit: Auto Loading must read the RetroAchievements telemetry setting')
+    check(mini is not None and 'configReadNetworkGlobals' in mini,
+          'miniInit: Auto Loading must read network globals')
+    mini_deinit = function_text(opl, 'void miniDeinit(')
+    check(mini_deinit is not None and 'ethDeinitModules();' in mini_deinit,
+          'miniDeinit: Auto Loading must tear down pre-launch network modules')
+
+    hdd_launch = function_text(hdd, 'void hddLaunchGame(')
+    bdm_launch = function_text(text('src/bdmsupport.c'), 'void bdmLaunchGame(')
+    order = (r'\bminiDeinit\s*\(\s*configSet\s*\)\s*;.*'
+             r'\bsysLaunchLoaderElf\s*\(')
+    check(hdd_launch is not None and
+          re.search(order, hdd_launch, re.S) is not None,
+          'hddLaunchGame: Auto Loading must tear down before the native loader handoff')
+    check(bdm_launch is not None and
+          re.search(order, bdm_launch, re.S) is not None,
+          'bdmLaunchGame: Auto Loading must tear down before the native loader handoff')
+
 
 run_hybrid_harness()
 run_path_harness()

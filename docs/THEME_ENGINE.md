@@ -233,7 +233,7 @@ Set with `type=`. Elements marked **item** redraw when you move the selection.
 | `LoadingIcon` | The animated loading spinner. |
 | `BdmIndex` | The block-device mode indicator. |
 | `Coverflow` *(item)* | **This fork:** a cover-art carousel (see §8). |
-| `SaveIcon` *(item)* | **This fork:** the selected PS2 game's 3D save icon, spinning (see §9). |
+| `SaveIcon` *(item)* | **This fork:** a PS2 game's spinning 3D save icon or a PS1 game's animated VMC icon (see §9). |
 
 Elements are drawn in the order the theme declares them, with one exception: every `ItemText` is
 moved to the end of its screen's list, so the selected item's startup filename is never painted over by
@@ -579,8 +579,16 @@ spinning, and moving too when the icon is animated. It comes from:
 fits in, at every angle of its turn; `scaled=1` (the default) narrows it on a 16:9 screen like any
 image. Lighting comes from the save's own `icon.sys`.
 
+For PS1 titles, the same element displays the save's original 16×16 icon, including its one to three
+animation frames. It reads `SLOT0.VMC` then `SLOT1.VMC` from `POPS/<VCD basename>/`, or `MC1.vmc`
+then `MC2.vmc` from the listed Ember game folder. APA POPSTARTER cards live in `__common/POPS/`;
+Ember cards stay in the game's owning partition. Favourites use their source device's location.
+Ember's single-hop `SharedMC.txt` redirects are supported. The first valid active save in the
+dedicated card supplies the icon; PS1 cards have no save timestamps. Deleted saves and damaged
+card chains are ignored. PS1 icons retain their pixel art rather than acquiring a 3D spin.
+
 It draws **nothing** while the user's **3D Save Icons** setting is off (*Settings → Interface →
-Artwork Settings*, off by default), on a row that is not a PS2 game (apps, PS1 titles), or when the
+Artwork Settings*, off by default), on an app row, or when the
 game has no readable save. A theme can place it unconditionally, but should not put anything under it
 that depends on it being there. The cards are read only once the cursor has rested on a game for a
 quarter of a second, on the worker that also loads cover art.

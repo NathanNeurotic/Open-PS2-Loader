@@ -1,5 +1,6 @@
 #include "sys/fcntl.h"
 #include "include/opl.h"
+#include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
 #include "include/supportbase.h"
@@ -2136,6 +2137,7 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     if (sysNeutrinoArgsPreflight("apa", apaPart, game->startup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, NULL) < 0)
         return gAutoLaunchGame == NULL ? 1 : 0; // autolaunch needs the native path to own its teardown
 
+    sysNeutrinoWarnPadEmu(configSet);
     // Honesty toast: the OPL core honors $VMC_N on HDD (mcemu over pfs0:VMC/), but Neutrino has no
     // APA/pfs backing store to open the .bin from post-reset -- its APA support is -bsd=ata
     // -bsdfs=hdl, game image only (NHDDL's HDL backend has the same no-VMC rule). No -mc args can
@@ -2784,8 +2786,49 @@ int hddGetArtArchivePath(item_list_t *itemList, char *out, int outSize)
     return (n > 0 && n < outSize) ? 1 : -1;
 }
 
+static int hddGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int ember,
+                            char *directory, int directorySize, char *partition, int partitionSize)
+{
+    int i = hddGetSourceId(itemList, id), n;
+    base_game_info_t *game = hddActiveVcd(i);
+    if (hddVcdParts == NULL || name == NULL)
+        return 0;
+    if (game == &hddEmptyVcd || strcmp(game->name, name) != 0) {
+        // Favourites can retain a source id from before a refresh. Resolve a unique name,
+        // but never choose an arbitrary partition when names collide.
+        i = -1;
+        for (int candidate = 0; candidate < hddVcdGameCount; candidate++) {
+            if (strcmp(hddVcdGames[candidate].name, name) == 0) {
+                if (i >= 0)
+                    return 0;
+                i = candidate;
+            }
+        }
+        game = hddActiveVcd(i);
+    }
+    if (game == &hddEmptyVcd || cueIsCueEntry(game) != ember)
+        return 0;
+    if (ember) {
+        char mountSource[APA_IDMAX + 6];
+        snprintf(mountSource, sizeof(mountSource), "hdd0:%s", hddVcdParts[i]);
+        if (gHDDPrefix != NULL && !strcmp(gOPLPart, mountSource)) {
+            partition[0] = '\0';
+            return saveIconPs1Directory("pfs0:/", name, 1, directory, directorySize);
+        }
+        n = snprintf(partition, partitionSize, "%s", mountSource);
+        return n > 0 && n < partitionSize && saveIconPs1Directory("pfs1:/", name, 1, directory, directorySize);
+    }
+    // POPSTARTER's VMC/support home is __common/POPS, independently of the VCD data partition.
+    if (gHDDPrefix != NULL && !strcmp(gOPLPart, "hdd0:__common")) {
+        partition[0] = '\0';
+        return saveIconPs1Directory("pfs0:/", name, 0, directory, directorySize);
+    }
+    n = snprintf(partition, partitionSize, "hdd0:__common");
+    return n > 0 && n < partitionSize && saveIconPs1Directory("pfs1:/", name, 0, directory, directorySize);
+}
+
 static item_list_t hddGameList = {
     HDD_MODE, 0, 0, MODE_FLAG_COMPAT_DMA, MENU_MIN_INACTIVE_FRAMES, HDD_MODE_UPDATE_DELAY, NULL, NULL, &hddGetTextId, &hddGetPrefix, &hddInit, &hddNeedsUpdate, &hddUpdateGameList,
     &hddGetGameCount, &hddGetGame, &hddGetGameName, &hddGetGameNameLength, &hddGetGameStartup, NULL, &hddRenameGame,
     &hddLaunchGame, &hddGetConfig, &hddGetImage, &hddCleanUp, &hddShutdown, &hddCheckVMC, &hddGetIconId, &hddLaunchVcd, 0, &hddGetArtArchivePath,
-    &hddLaunchVcd, &hddGetItemView, &hddGetSourceId, &hddSaveCueSettings};
+    &hddLaunchVcd, &hddGetItemView, &hddGetSourceId, &hddSaveCueSettings, &hddGetPs1SaveDir};
