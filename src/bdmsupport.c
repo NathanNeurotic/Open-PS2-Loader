@@ -1254,6 +1254,30 @@ static void bdmLoadBlockDeviceModules(void)
         bdmProbeMassSlots("after-usb-settle"); // forces FatFs's lazy mount on every slot
         bdmForceDeviceRefresh();               // exactly one second probe, covering every slot
     }
+
+    // iLink initial discovery: an SBP-2 HDD can still be spinning up when IEEE1394_bd links. The
+    // bd driver polls TEST UNIT READY until the drive answers and only THEN registers the disk, so
+    // a drive that needed a long spin-up simply appears late -- but anything that concluded "no
+    // iLink device" before that never looks again on its own. Same one-shot shape as the MX4SIO
+    // probe above, except it POLLS for the root instead of sleeping blind: a drive that is already
+    // ready costs nothing, a drive mid-spin is caught the moment it registers, and an absent drive
+    // costs one bounded wait on this IO worker, once per boot. Late arrivals after the deadline are
+    // still published by the bdmevent handler as usual; the single forced refresh covers a mount
+    // whose event was spent before the menu could act on it.
+    static int ilinkProbeDone = 0;
+    if (!gEnableILK)
+        ilinkProbeDone = 0;
+    else if (iLinkModLoaded && !ilinkProbeDone) {
+        char ilkRoot[16];
+        int waitedMs;
+
+        ilinkProbeDone = 1;
+        for (waitedMs = 0; waitedMs < 3000 && !bdmGetDeviceRootByType(BDM_TYPE_ILINK, ilkRoot, sizeof(ilkRoot)); waitedMs += 250)
+            DelayThread(250 * 1000);
+        if (waitedMs > 0)
+            LOG("[BDM] iLink root %s after ~%d ms\n", waitedMs < 3000 ? "appeared" : "not found", waitedMs);
+        bdmForceDeviceRefresh(); // publish either a newly ready root or the final absent result
+    }
 }
 
 // Bring up only the common BDM infrastructure. Literal massN: boot resolution uses this path so an
