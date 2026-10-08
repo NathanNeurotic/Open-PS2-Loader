@@ -217,6 +217,10 @@ typedef struct _item_list_t
     /// Persist Ember's per-game settings without launching the title. The name is the complete
     /// EMBER/games/ folder name, including when called through a Favourites proxy.
     int (*itemSaveCueSettings)(item_list_t *itemList, int id, const char *name, config_set_t *configSet);
+    // String-only PS1 save location. partition is empty except for an APA pfs1: read-only mount.
+    // Name and core kind identify rows independently of the device's current view (Favourites).
+    int (*itemGetPs1SaveDir)(item_list_t *itemList, int id, const char *name, int ember,
+                             char *directory, int directorySize, char *partition, int partitionSize);
 } item_list_t;
 
 #define ITEM_VIEW_NATIVE    0

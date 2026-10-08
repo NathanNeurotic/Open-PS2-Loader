@@ -4,7 +4,8 @@
 /*
   3D save icons (fork-gaps OR1, ORBIT parity): the selected PS2 game's newest save -- in the game's own
   per-game VMC first, then on a physical memory card -- with its list icon spun, animated and lit
-  inside a theme's SaveIcon element.
+  inside a theme's SaveIcon element. PS1 titles use their dedicated 128 KiB VMC's original
+  16x16 icon and animation frames in the same element.
 
   Written from the published PS2 save formats (the icon.sys layout matches ps2sdk's mcIcon, the card
   filesystem matches OPL's own vmc_superblock_t); no code from other launchers. Threading: the IO
@@ -41,6 +42,7 @@ typedef struct
     int keyCount[SAVEICON_MAX_SHAPES];
     saveicon_key_t *keys[SAVEICON_MAX_SHAPES];
     unsigned short *texels; // SAVEICON_TEX_SIZE^2 A1B5G5R5, or NULL for an untextured icon
+    int ps1Frames;          // 1..3: texels instead holds consecutive 16x16 PS1 icon frames
 } saveicon_model_t;
 
 typedef struct
@@ -75,11 +77,19 @@ float saveIconShapeWeights(const saveicon_model_t *model, float t, float *weight
 typedef int (*saveicon_read_t)(void *ctx, unsigned int offset, void *buf, int size);
 int saveIconFromCardImage(saveicon_read_t readFn, void *ctx, unsigned int imageSize, const char *serial,
                           saveicon_model_t *model, saveicon_light_t *light);
+// Raw 128 KiB PS1 card. Prefer the matching product code when supplied; otherwise the first
+// valid active save in this game's card. Deleted saves and damaged directory chains are ignored.
+int saveIconFromPs1CardImage(saveicon_read_t readFn, void *ctx, unsigned int imageSize, const char *serial,
+                             saveicon_model_t *model);
 
 // GUI thread, every frame the element draws. startup = the selected PS2 game's boot file (NULL or ""
 // for none); vmc0/vmc1 = full paths of its per-game VMCs ("" for a slot without one), meaningful only
 // when vmcKnown (its per-game config has loaded). Cheap; the cards are read once the row settles.
 void saveIconSelect(const char *startup, const char *vmc0, const char *vmc1, int vmcKnown);
+// PS1 game directory, and optional APA mount source. No IO on the GUI thread.
+void saveIconSelectPs1(const char *directory, const char *partition, int ember);
+// Compose the dedicated game directory; root ends in its separator. String work only.
+int saveIconPs1Directory(const char *root, const char *name, int ember, char *out, int outSize);
 // GUI thread. Draws the selected game's icon, once loaded, centred on (cx, cy) and fitted to a w x h
 // box, all in virtual 640x480 units; xScale narrows x for a 16:9 display (1.0 at 4:3).
 void saveIconDraw(int cx, int cy, int w, int h, float xScale);

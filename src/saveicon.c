@@ -565,7 +565,103 @@ done:
     return ok;
 }
 
+// PSX-SPX Memory Card Data Format: 128-byte frames, 15 save blocks, 4-bit 16x16 icons.
+static int siPs1Checksum(const unsigned char *frame)
+{
+    unsigned char sum = 0;
+    int i;
+    for (i = 0; i < 127; i++)
+        sum ^= frame[i];
+    return sum == frame[127];
+}
+
+int saveIconFromPs1CardImage(saveicon_read_t readFn, void *ctx, unsigned int imageSize, const char *serial,
+                             saveicon_model_t *model)
+{
+    unsigned char directory[16][128], data[512];
+    int block, pass;
+
+    memset(model, 0, sizeof(*model));
+    if (imageSize != 131072 || readFn(ctx, 0, directory, sizeof(directory)) != sizeof(directory) ||
+        directory[0][0] != 'M' || directory[0][1] != 'C' || !siPs1Checksum(directory[0]))
+        return 0;
+    // With no disc id (common for named Ember folders), the dedicated card's first save wins.
+    for (pass = 0; pass < ((serial != NULL && serial[0]) ? 2 : 1); pass++) {
+        for (block = 1; block < 16; block++) {
+            unsigned char *entry = directory[block];
+            unsigned int bytes = siRd32(entry + 4), next;
+            unsigned int seen = 0;
+            char filename[21];
+            int current = block, count = 0, valid = 1, frames, pixel;
+
+            if (siRd32(entry) != 0x51 || !siPs1Checksum(entry) || bytes == 0 || bytes > 15 * 8192 || bytes % 8192)
+                continue;
+            memcpy(filename, entry + 10, 20);
+            filename[20] = '\0';
+            if (serial != NULL && serial[0] && pass == 0 && !saveIconFolderMatches(filename, serial))
+                continue;
+            do {
+                unsigned char *part = directory[current];
+                unsigned int type = siRd32(part);
+                if ((seen & (1u << current)) || !siPs1Checksum(part) ||
+                    (count == 0 ? type != 0x51 : (type != 0x52 && type != 0x53))) {
+                    valid = 0;
+                    break;
+                }
+                seen |= 1u << current;
+                count++;
+                next = siRd16u(part + 8);
+                if (next == 0xFFFF)
+                    break;
+                if (next >= 15 || type == 0x53) {
+                    valid = 0;
+                    break;
+                }
+                current = next + 1;
+            } while (count < 15);
+            if (!valid || next != 0xFFFF || (unsigned int)count != bytes / 8192 ||
+                (count > 1 && siRd32(directory[current]) != 0x53) ||
+                readFn(ctx, block * 8192, data, sizeof(data)) != sizeof(data) ||
+                data[0] != 'S' || data[1] != 'C' || data[2] < 0x11 || data[2] > 0x13)
+                continue;
+            frames = data[2] - 0x10;
+            model->texels = siAllocTexels(frames * 256 * sizeof(unsigned short));
+            if (model->texels == NULL)
+                return 0;
+            for (pixel = 0; pixel < frames * 256; pixel++) {
+                int packed = data[128 + pixel / 2];
+                int index = (packed >> ((pixel & 1) * 4)) & 15;
+                unsigned short color = siRd16u(data + 96 + index * 2);
+                model->texels[pixel] = color == 0 ? 0 : color | 0x8000;
+            }
+            model->ps1Frames = frames;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 #ifndef SAVEICON_HOST_TEST
+#include "include/cuesupport.h"
+#include <fileXio_rpc.h>
+
+int saveIconPs1Directory(const char *root, const char *name, int ember, char *out, int outSize)
+{
+    char base[SAVEICON_PATH_SIZE];
+    int n, len = strlen(root);
+    char sep = len > 0 && root[len - 1] == '\\' ? '\\' : '/';
+
+    if (!cueNameLaunchable(name))
+        return 0;
+    if (strlen(root) + strlen(cueEmberFolder()) + strlen("/games") >= sizeof(base))
+        return 0;
+    if (ember)
+        cueBuildGamesDir(root, base, sizeof(base));
+    else if (snprintf(base, sizeof(base), "%sPOPS", root) >= sizeof(base))
+        return 0;
+    n = snprintf(out, outSize, "%s%c%s", base, sep, name);
+    return n > 0 && n < outSize;
+}
 
 // ---- loading (IO worker) --------------------------------------------------------------------
 
@@ -694,6 +790,7 @@ static int siSema = -1;
 static char siWantKey[SI_KEY_SIZE];
 static char siWantStartup[16];
 static char siWantVmc[2][SAVEICON_PATH_SIZE];
+static int siWantPs1; // 1 POPSTARTER, 2 Ember
 // Under siSema. A finished load, published by the IO worker and adopted by the GUI thread.
 static char siPendingKey[SI_KEY_SIZE];
 static int siPendingState;
@@ -710,6 +807,7 @@ static saveicon_model_t siShown;
 static saveicon_light_t siShownLight;
 static int siShownLit;
 static GSTEXTURE siTex;
+static GSTEXTURE siPs1Tex[3];
 static clock_t siShownSince;
 static float siPivot[3], siRadius, siHalfHeight;
 // The model last replaced, kept two more frames: a hires frame can still be drawing from it.
@@ -742,19 +840,73 @@ static void siLoadAction(void)
     char key[SI_KEY_SIZE], startup[16], vmc[2][SAVEICON_PATH_SIZE], serial[16];
     saveicon_model_t model;
     saveicon_light_t light;
-    int found = 0, slot;
+    int found = 0, slot, ps1;
 
     siLock();
     memcpy(key, siWantKey, sizeof(key));
     memcpy(startup, siWantStartup, sizeof(startup));
     memcpy(vmc, siWantVmc, sizeof(vmc));
+    ps1 = siWantPs1;
     siUnlock();
     if (key[0] == '\0')
         return;
 
     memset(&model, 0, sizeof(model));
     memset(&light, 0, sizeof(light));
-    if (saveIconSerialForStartup(startup, serial, sizeof(serial))) {
+    if (ps1) {
+        char directory[SAVEICON_PATH_SIZE], path[SAVEICON_PATH_SIZE];
+        int mounted = 0;
+        char sep = strchr(vmc[0], '\\') != NULL ? '\\' : '/';
+        snprintf(directory, sizeof(directory), "%s", vmc[0]);
+        if (vmc[1][0]) {
+            fileXioUmount("pfs1:");
+            mounted = fileXioMount("pfs1:", vmc[1], FIO_MT_RDONLY) == 0;
+        }
+        if (!vmc[1][0] || mounted) {
+            // Ember's optional shared card redirects to one sibling game folder, never a path.
+            if (ps1 == 2) {
+                unsigned char *shared;
+                int size = 0, n = snprintf(path, sizeof(path), "%s%cSharedMC.txt", directory, sep);
+                shared = n > 0 && n < sizeof(path) ? siReadFile(path, CUE_NAME_LAUNCH_MAX + 2, &size) : NULL;
+                if (shared != NULL) {
+                    char name[CUE_NAME_LAUNCH_MAX + 3], target[SAVEICON_PATH_SIZE];
+                    char *slash = strrchr(directory, '/'), *backslash = strrchr(directory, '\\');
+                    struct stat st;
+                    if (backslash != NULL && (slash == NULL || backslash > slash))
+                        slash = backslash;
+                    memcpy(name, shared, size);
+                    name[size] = '\0';
+                    while (size > 0 && (name[size - 1] == '\n' || name[size - 1] == '\r'))
+                        name[--size] = '\0';
+                    if (slash != NULL && cueNameLaunchable(name) && memchr(name, '\0', size) == NULL) {
+                        int parentLen = slash - directory;
+                        n = snprintf(target, sizeof(target), "%.*s%c%s", parentLen, directory, *slash, name);
+                        if (n > 0 && n < sizeof(target) && strcmp(target, directory) != 0 &&
+                            stat(target, &st) == 0 && S_ISDIR(st.st_mode)) {
+                            n = snprintf(path, sizeof(path), "%s%cSharedMC.txt", target, sep);
+                            // Ember refuses chained redirects; use the original folder then.
+                            if (n > 0 && n < sizeof(path) && stat(path, &st) < 0)
+                                snprintf(directory, sizeof(directory), "%s", target);
+                        }
+                    }
+                    free(shared);
+                }
+            }
+            for (slot = 0; slot < 2 && !found; slot++) {
+                int fd, size, n = snprintf(path, sizeof(path), ps1 == 2 ? "%s%cMC%d.vmc" : "%s%cSLOT%d.VMC", directory, sep, ps1 == 2 ? slot + 1 : slot);
+                if (n <= 0 || n >= sizeof(path))
+                    continue;
+                fd = open(path, O_RDONLY);
+                if (fd < 0)
+                    continue;
+                size = lseek(fd, 0, SEEK_END);
+                found = size > 0 && saveIconFromPs1CardImage(&siFdRead, &fd, size, NULL, &model);
+                close(fd);
+            }
+        }
+        if (mounted)
+            fileXioUmount("pfs1:");
+    } else if (saveIconSerialForStartup(startup, serial, sizeof(serial))) {
         // The game's own VMC first: when it has one, that is where its saves are.
         for (slot = 0; slot < 2 && !found; slot++) {
             if (vmc[slot][0] != '\0')
@@ -789,14 +941,19 @@ static void siFreeRetired(void)
 
 static void siRetireShown(void)
 {
+    int frame;
     if (siShownState == SI_MODEL) {
-        if (siShown.texels != NULL)
+        if (siShown.ps1Frames) {
+            for (frame = 0; frame < siShown.ps1Frames; frame++)
+                rmUnloadTexture(&siPs1Tex[frame]);
+        } else if (siShown.texels != NULL)
             rmUnloadTexture(&siTex);
         siFreeRetired();
         siRetired = siShown;
         memset(&siShown, 0, sizeof(siShown));
     }
     memset(&siTex, 0, sizeof(siTex));
+    memset(siPs1Tex, 0, sizeof(siPs1Tex));
     siShownState = SI_NONE;
     siShownKey[0] = '\0';
 }
@@ -873,7 +1030,18 @@ static void siAdoptPending(void)
             if (siPendingState == SI_MODEL) {
                 siShown = siPending;
                 siShownLight = siPendingLight;
-                if (siShown.texels != NULL) {
+                if (siShown.ps1Frames) {
+                    int frame;
+                    for (frame = 0; frame < siShown.ps1Frames; frame++) {
+                        GSTEXTURE *tex = &siPs1Tex[frame];
+                        tex->Width = tex->Height = 16;
+                        tex->PSM = GS_PSM_CT16;
+                        tex->Mem = (u32 *)(siShown.texels + frame * 256);
+                        tex->Filter = GS_FILTER_NEAREST;
+                        tex->ClutStorageMode = GS_CLUT_STORAGE_CSM1;
+                        tex->Delayed = 1;
+                    }
+                } else if (siShown.texels != NULL) {
                     siTex.Width = SAVEICON_TEX_SIZE;
                     siTex.Height = SAVEICON_TEX_SIZE;
                     siTex.PSM = GS_PSM_CT16;
@@ -882,8 +1050,10 @@ static void siAdoptPending(void)
                     siTex.ClutStorageMode = GS_CLUT_STORAGE_CSM1;
                     siTex.Delayed = 1;
                 }
-                siMeasure();
-                siPrepareLight();
+                if (!siShown.ps1Frames) {
+                    siMeasure();
+                    siPrepareLight();
+                }
                 siShownSince = clock();
                 siOrderValid = 0;
             }
@@ -903,6 +1073,7 @@ static void siSetWant(const char *key, const char *startup, const char *vmc0, co
     snprintf(siWantStartup, sizeof(siWantStartup), "%s", startup);
     snprintf(siWantVmc[0], sizeof(siWantVmc[0]), "%s", vmc0);
     snprintf(siWantVmc[1], sizeof(siWantVmc[1]), "%s", vmc1);
+    siWantPs1 = 0;
     siUnlock();
 }
 
@@ -912,7 +1083,7 @@ void saveIconSelect(const char *startup, const char *vmc0, const char *vmc1, int
 
     if (startup == NULL)
         startup = "";
-    if (strcmp(startup, siSelStartup) != 0) {
+    if (strcmp(startup, siSelStartup) != 0 || siWantPs1) {
         snprintf(siSelStartup, sizeof(siSelStartup), "%s", startup);
         siSelSince = clock();
         siQueuedKey[0] = '\0';
@@ -936,6 +1107,35 @@ void saveIconSelect(const char *startup, const char *vmc0, const char *vmc1, int
         memcpy(siQueuedKey, siWantKey, sizeof(siQueuedKey));
         if (ioPutRequestUnlessWaiting(IO_CUSTOM_SIMPLEACTION, (void *)&siLoadAction) != IO_OK)
             siQueuedKey[0] = '\0'; // try again next frame
+    }
+}
+
+void saveIconSelectPs1(const char *directory, const char *partition, int ember)
+{
+    char key[SI_KEY_SIZE];
+    int kind = ember ? 2 : 1;
+
+    if (directory == NULL || directory[0] == '\0' || partition == NULL ||
+        strlen(directory) >= SAVEICON_PATH_SIZE || strlen(partition) >= SAVEICON_PATH_SIZE) {
+        saveIconSelect(NULL, "", "", 1);
+        return;
+    }
+    snprintf(key, sizeof(key), "PS1%d|%s|%s", kind, directory, partition);
+    if (strcmp(key, siWantKey) != 0) {
+        siSelStartup[0] = '\0';
+        siSelSince = clock();
+        siQueuedKey[0] = '\0';
+        siLock();
+        snprintf(siWantKey, sizeof(siWantKey), "%s", key);
+        snprintf(siWantVmc[0], sizeof(siWantVmc[0]), "%s", directory);
+        snprintf(siWantVmc[1], sizeof(siWantVmc[1]), "%s", partition);
+        siWantPs1 = kind;
+        siUnlock();
+    }
+    if (clock() - siSelSince >= (clock_t)SI_SETTLE_US && strcmp(key, siShownKey) != 0 && strcmp(key, siQueuedKey) != 0) {
+        snprintf(siQueuedKey, sizeof(siQueuedKey), "%s", key);
+        if (ioPutRequestUnlessWaiting(IO_CUSTOM_SIMPLEACTION, (void *)&siLoadAction) != IO_OK)
+            siQueuedKey[0] = '\0';
     }
 }
 
@@ -1030,10 +1230,20 @@ void saveIconDraw(int cx, int cy, int w, int h, float xScale)
     int v, s, i, k, tris;
 
     siAdoptPending();
-    if (siRetired.verts != 0 && ++siRetiredFrames > 2)
+    if ((siRetired.verts != 0 || siRetired.texels != NULL) && ++siRetiredFrames > 2)
         siFreeRetired();
     if (siShownState != SI_MODEL || siWantKey[0] == '\0' || strcmp(siShownKey, siWantKey) != 0 || w <= 0 || h <= 0)
         return;
+    if (siShown.ps1Frames) {
+        int side = w < h ? w : h;
+        int drawW = (int)(side * xScale);
+        int frame = (int)(((float)(clock() - siShownSince) / CLOCKS_PER_SEC) /
+                          (siShown.ps1Frames == 2 ? 0.32f : 0.22f)) %
+                    siShown.ps1Frames;
+        rmDrawPixmap(&siPs1Tex[frame], cx - drawW / 2, cy - side / 2, ALIGN_NONE,
+                     drawW, side, SCALING_NONE, gDefaultCol, 0);
+        return;
+    }
     if (!siEnsureBuffers(siShown.verts))
         return;
     tris = siShown.verts / 3;
