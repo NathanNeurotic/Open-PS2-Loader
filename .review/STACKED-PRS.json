@@ -1,0 +1,25 @@
+{
+  "purpose": "Review only; do not merge into production",
+  "code_base": "9ef8d643a739d88a4f4b5fd055a209d0b27299c4",
+  "site_base": "5ebb1bff55496c0d9bac703d14ed391a0af2d53c",
+  "sources": {
+    "882": "36e71a84aa672dca31866680d7066182a051cfa6",
+    "883": "b9df2959437b268858b733b63657f883cbdc730f",
+    "884": "30a3b69cb19c6f75f35e97eea067708de97734fc",
+    "885": "7b466ebde6594ab7d39a6ecdcc01911c41f1aa7a"
+  },
+  "site_path_mapping": {
+    ".review/gh-pages/data/search-index.json": "data/search-index.json",
+    ".review/gh-pages/fork-gaps.html": "fork-gaps.html",
+    ".review/gh-pages/neutrino.html": "neutrino.html",
+    ".review/gh-pages/ps1-vcd.html": "ps1-vcd.html",
+    ".review/gh-pages/settings.html": "settings.html",
+    ".review/gh-pages/themes.html": "themes.html",
+    ".review/gh-pages/troubleshooting.html": "troubleshooting.html",
+    ".review/gh-pages/vmc.html": "vmc.html"
+  },
+  "excluded_prs": [
+    687,
+    733
+  ]
+}
