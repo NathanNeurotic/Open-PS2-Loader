@@ -1,15 +1,19 @@
 /*
   RetroAchievements unlock notice: a gold pulse over the running game. The
   PC sends RAU1, raudp DMAs a struct ra_event into the buffer below, the
-  VBLANK handler plays it with PMODE and BGCOLOR writes only. Why a flash
-  and not a picture: lab/overlay/README.md in the control repo. Licenced
-  under Academic Free License version 3.0, like the rest of ee_core.
+  VBLANK handler plays it with PMODE and BGCOLOR writes only. The same
+  buffer carries the PC's reset request (RAR1), handed to padhook. Why a flash
+  and not a picture: the GS blends its two circuits across the whole
+  raster, and VRAM cannot be written under a running game, so there is
+  nowhere to draw. Licenced under Academic Free License version 3.0,
+  like the rest of ee_core.
 */
 
 #ifdef RETROACHIEVEMENTS
 #include "ee_core.h"
 #include "coreconfig.h"
 #include "ra_overlay.h"
+#include "padhook.h"
 #include "../../modules/network/common/ra_snap.h"
 
 /* GS privileged registers, mapped by the TLB entry in tlb.c. Write-only,
@@ -27,8 +31,8 @@
 #define RA_OVL_GOLD  0x20A0FF
 #define RA_OVL_BLACK 0x000000
 
-/* The pulse the owner picked: 12 frames down to the game at half weight,
-   48 frames back. About a second at 60 Hz. */
+/* The pulse: 12 frames down to the game at half weight, 48 frames back.
+   About a second at 60 Hz. */
 #define RA_OVL_DOWN  12
 #define RA_OVL_UP    48
 #define RA_OVL_FLOOR 0x80
@@ -53,14 +57,6 @@ void *RA_OverlayEventBuffer(void)
     return &ra_ovl_event;
 }
 
-/* No badge buffer in the flash build: raudp sees the zero address and
-   keeps the chunks to itself. The badge road -- delivery proven, the
-   upload's cost not yet worth it -- is parked in the lab. */
-void *RA_OverlayBadgeBuffer(void)
-{
-    return NULL;
-}
-
 /* The GS paints BGCOLOR in the border too, so the colour follows the blend
    curve: full at the deepest point, black at either end. k is 0..256. */
 static unsigned int ra_ovl_scale(unsigned int colour, int k)
@@ -74,14 +70,19 @@ static unsigned int ra_ovl_scale(unsigned int colour, int k)
 
 void RA_OverlayOnVblank(unsigned int frames)
 {
-    volatile struct ra_event *e = (volatile struct ra_event *)UNCACHED_SEG(&ra_ovl_event);
+    const volatile struct ra_event *e = (const volatile struct ra_event *)UNCACHED_SEG(&ra_ovl_event);
     unsigned int phase;
     int alp, k;
 
     /* A new event restarts the flash, even mid-flash: two unlocks close
-       together read as two pulses, not one long one. */
+       together read as two pulses, not one long one. A reset event goes
+       to the IGR road instead and draws nothing. */
     if (e->magic == RA_EVENT_MAGIC && e->seq != ra_ovl_seen) {
         ra_ovl_seen = e->seq;
+        if (e->kind == RA_EVENT_RESET) {
+            IGR_RequestReset();
+            return;
+        }
         ra_ovl_start = frames;
         ra_ovl_running = 1;
     }

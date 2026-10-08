@@ -75,33 +75,13 @@ struct EECoreConfig_t
     int MMCEIGRSettings;
 
 #ifdef RETROACHIEVEMENTS
-    /* RetroAchievements watch list: the memory addresses sampled once per
-       frame, packed one per word (see modules/network/common/ra_watch.h), and
-       the size of one snapshot. The pointer leads into loader memory, which
-       the game overwrites, so ee_core copies the list during init -- the same
-       trick SetupCheats() uses (see ra.c).
-
-       APPENDED, never inserted: an out-of-date .o that still holds the old
-       layout would otherwise read these through the wrong offsets. const for
-       the same reason gCheatList is -- the producer hands over a const buffer
-       and ee_core only ever reads it, and without the qualifier the
-       assignment in sysLaunchLoaderElf silently discards it. */
-    const u32 *raWatchList;
+    /* Persistent module-storage block, prepared by PlaceWatchBlock. */
+    u32 *raWatchList;
     int raWatchCount;
     int raSnapBytes;
-    /* Pointer chains: the address to read is held in memory and moves,
-       so ee_core resolves them each frame. Same story, same copy. */
-    const void *raNodeList;
+    void *raNodeList;
     int raNodeCount;
-    /* Where the snapshot buffer and the watch list copy live (RA_EE_WORK_BYTES,
-       64-byte aligned), or NULL when there is nothing to watch. It is carved
-       out of module storage by the launcher instead of sitting in ee_core's
-       .bss: ee_core's stack is whatever ram84 leaves above .bss (see
-       ee_core/linkfile), and these 8 KB left it under 2 KB -- the first IOP
-       reset then ran the stack into libkernel's SIF data and hung, on every
-       device. Module storage is kept for the whole game: the kernel wipes
-       user memory only from ModuleStorageEnd up. */
-    void *raWorkArea;
+    void *raSnapBuf;
 #endif
 };
 

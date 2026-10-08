@@ -19,8 +19,8 @@
   still transmitting the previous frame, holding the mutex the whole
   time. Waiting there starves the stack thread and the game (audio,
   loading). So before sending we look at the transmitter's busy bit and
-  defer our snapshot when it is set and retry on the next poll. The game
-  has priority; deferrals are counted and reported in the packet header.
+  skip our frame when it is set. The game has priority; skipped frames
+  are counted and reported in the packet header.
 
   Finding the PC. Bypassing the stack also means no ARP, so the
   destination MAC must come from somewhere. Once, at start-up, this
@@ -36,12 +36,13 @@
   stays silent and the query repeats, every second at first and then
   every 30 seconds, so the PC client may start after the game.
 
-  The socket stays open afterwards for the one thing that travels the
-  other way: "RAU1 <id> <points>" from the PC when an achievement
-  unlocks. It is polled without waiting once per telemetry period, and
-  each unlock is handed to ee_core as a small record DMA'd into a buffer
-  there (struct ra_event), where the VBLANK handler picks it up and shows
-  the notice over the game.
+  The socket stays open afterwards for what travels the other way:
+  "RAU1 <id> <points>" from the PC when an achievement unlocks, and
+  "RAR1" when the PC asks the console to leave the game for the loader.
+  It is polled without waiting once per telemetry period, and each
+  message is handed to ee_core as a small record DMA'd into a buffer
+  there (struct ra_event), where the VBLANK handler picks it up: a
+  notice over the game, or the in-game reset.
 
   Licenced under Academic Free License version 3.0, like ee_core.
 */
@@ -79,7 +80,7 @@ static u8 ra_dst_mac[6];
 
 /* The EE lands a snapshot every frame, 16.7 ms. Polling four times a
    frame and sending only a new seq catches each one; sleeping a whole
-   frame plus the work per pass missed one in twelve (lab/skips, 08.09). */
+   frame plus the work per pass falls behind and misses one in twelve. */
 #define RA_POLL_US         4000
 #define RA_IDLE_TICKS      4    /* no snapshot: one header-only packet per frame */
 #define RA_KEEPALIVE_TICKS 250  /* a second without a new snapshot: repeat the last */
@@ -99,19 +100,16 @@ static u8 ra_dst_mac[6];
 static u8 ra_frame[RA_FRAME_LEN] __attribute__((aligned(16)));
 static u8 *ra_payload = &ra_frame[RA_HDR_LEN];
 
-/* May this module look for the PC while a game runs? Off when the game
-   streams its own disc over the same NIC -- a share (ETH_MODE) or an HTTP
-   host. Both roads to the PC take something the game needs: the raw one
-   frees every SMAP receive descriptor it walks, and the disc stream arrives
-   through that ring; the lwIP one posts to the stack mailbox the SMB or HTTP
-   client is waiting on. Either way the game reaches its first menu and loads
-   for ever. ee_core decides and says so in a load argument. Sending is
-   unaffected and stays on. */
+/* Looking for the PC while a game runs. Off on SMB and HTTP: both roads to
+   the PC read from resources the game needs. The raw one frees every
+   SMAP receive descriptor it walks, and the game streams its disc
+   through that ring; the lwIP one posts to the stack mailbox the SMB
+   client waits on. ee_core decides and says so in a load argument. */
 static int ra_rx_in_game = 1;
 
-/* The game's serial, from the same argument, so the very first packets carry
-   it instead of fifteen zeroes -- the snapshot has it too, but not before the
-   EE has written one. */
+/* The game's serial, from the same argument. The snapshot carries it
+   too, but a game RetroAchievements does not know has no watch list and
+   therefore no snapshot, and the PC would see a header of zeroes. */
 static char ra_game_id[16] = {0};
 
 /* Counters reported in every packet. */
@@ -139,22 +137,11 @@ static u32 ra_ee_event = 0;
    for the DMA, and kept whole between sends. */
 static struct ra_event ra_event __attribute__((aligned(16)));
 
-/* Badge buffer in ee_core, third address in the load argument. 0 when
-   ee_core did not give one; badge chunks are then dropped. */
-static u32 ra_ee_badge = 0;
-
-/* The badge assembling in IOP RAM, one per game session: the PC repeats the
-   series against loss, later chunks add nothing. */
-static struct ra_badge ra_badge __attribute__((aligned(16)));
-static u32 ra_badge_mask = 0; /* bit per chunk received */
-static int ra_badge_done = 0;
-
 /* Counters for the heartbeat: what this side saw, said to the
    PC every ten seconds, because a silent link cannot be told apart
    from a dead one by staring at the screen. */
 static u32 ra_hb_rx = 0;  /* datagrams that reached ra_poll_pc */
 static u32 ra_hb_rau = 0; /* unlock notices among them */
-static u32 ra_hb_rab = 0; /* badge chunks accepted */
 
 /* Discovery socket, kept open for the PC's messages. */
 static int ra_sock = -1;
@@ -162,8 +149,8 @@ static int ra_sock = -1;
 /* ---- Packet header ---------------------------------------------------
    Text header, then the raw snapshot bytes. Fields are fixed width so
    the PC client can parse them without a tokenizer, and the layout is
-   computed here instead of by hand: hand-counted offsets kept going
-   wrong during development.
+   computed here instead of by hand, so a field change cannot leave an
+   offset stale.
 
      RA15 seq=000000 sz=0000 us=00000 mx=00000 rxq=000 fail=000000
           err=+000 sk=000000 lk=0000 sq=000000 ds=000000 bad=0000
@@ -178,6 +165,8 @@ static int ra_sock = -1;
    err  last error code           np   number of parts
    sk   sends deferred, tx busy   id   game serial, padded with '~'
    lk   link mode: speed (100/010/999) and duplex (F/H)
+   rc   EE ticks the reads for this snapshot took
+   fc   EE ticks between the last two VBLANKs: rc/fc is the share of a frame
 
    "id" must stay last: the PC client finds the binary tail as the
    offset of " id=" plus 4 plus 15 plus one space. */
@@ -205,6 +194,8 @@ static struct ra_field ra_fields[] = {
     {"vb", 4, 0},
     {"pt", 1, 0},
     {"np", 1, 0},
+    {"rc", 7, 0},
+    {"fc", 7, 0},
     {"id", 15, 0},
 };
 
@@ -227,6 +218,8 @@ enum ra_field_id {
     RA_F_VB,
     RA_F_PT,
     RA_F_NP,
+    RA_F_RC, /* EE ticks spent reading this snapshot */
+    RA_F_FC, /* EE ticks per frame, to read rc as a share of the frame */
     RA_F_ID,
 };
 
@@ -239,7 +232,7 @@ static int ra_head_len = 0;
 static u32 ra_chunk = RA_SNAP_CHUNK_BYTES;
 
 /* Serial as-is, padded with '~'. Not '_': serials contain underscores
-   (SLUS_210.65). Only valid once ra_head_build has set the field offsets. */
+   (SLUS_210.65). */
 static void ra_id_put(const char *src)
 {
     int i;
@@ -597,8 +590,8 @@ static void ra_send_one(void)
 {
     USE_SMAP_REGS;
     iop_sys_clock_t t0, t1;
-    u32 nb = 0, parts = 1, part, staged_sq = 0;
-    int ret, sent = 1;
+    u32 nb = 0, parts = 1, part, sq = 0;
+    int sent = 1;
 
     ra_rxq = SMAP_REG8(SMAP_R_RXFIFO_FRAME_CNT);
 
@@ -622,9 +615,9 @@ static void ra_send_one(void)
        taken from the header before the copy; the trailer word after the
        values is the last to arrive. A trailer or header that no longer
        matches after the copy means a newer snapshot overwrote part of
-       what was copied: retry the snapshot on the next poll. */
+       what was copied: the snapshot is torn and dropped. */
     if (ra_snap != NULL) {
-        u32 sq = ra_snap->seq;
+        sq = ra_snap->seq;
 
         if (ra_snap->magic == RA_SNAP_MAGIC) {
             const u8 *src = (const u8 *)ra_snap + RA_SNAP_HDR;
@@ -642,10 +635,11 @@ static void ra_send_one(void)
                 ra_snap_bad++;
                 return; /* the next poll copies it whole */
             } else {
-                staged_sq = sq;
                 ra_fmt(&ra_payload[RA_OFF(RA_F_SQ)], sq, 6);
                 ra_fmt(&ra_payload[RA_OFF(RA_F_DS)], ra_snap->dma_skip, 6);
                 ra_fmt(&ra_payload[RA_OFF(RA_F_N)], ra_snap->count, 4);
+                ra_fmt(&ra_payload[RA_OFF(RA_F_RC)], ra_snap->read_cycles > 9999999 ? 9999999 : ra_snap->read_cycles, 7);
+                ra_fmt(&ra_payload[RA_OFF(RA_F_FC)], ra_snap->frame_cycles > 9999999 ? 9999999 : ra_snap->frame_cycles, 7);
 
                 ra_id_put((const char *)ra_snap->game_id);
             }
@@ -667,6 +661,7 @@ static void ra_send_one(void)
     for (part = 0; part < parts; part++) {
         u32 off = part * ra_chunk;
         u32 len = nb > off ? nb - off : 0;
+        int ret;
 
         if (len > ra_chunk)
             len = ra_chunk;
@@ -695,11 +690,10 @@ static void ra_send_one(void)
     if (ra_us > ra_us_max)
         ra_us_max = ra_us;
 
-    /* Commit only the staged sequence, after every part was accepted.
-       The EE may already have DMAed the next snapshot while we sent this
-       one. A failed part leaves this sequence pending for the next poll. */
+    /* The seq taken before the copy, not the buffer's current one: a
+       snapshot that landed during the sends is still pending. */
     if (nb > 0 && sent) {
-        ra_sent_sq = staged_sq;
+        ra_sent_sq = sq;
         ra_sent_any = 1;
     }
 }
@@ -798,21 +792,10 @@ static int ra_discover(void)
 
         tries++;
         if (tries >= RA_DISC_FAST) {
-            /* The endless slow re-query exists so the PC client may start
-               after the game. On a share it must not: every poll posts to the
-               stack mailbox the SMB or HTTP client is waiting on, and there
-               that is the road the game's own disc arrives by -- the same
-               reason ra_rx_in_game shuts the in-play reads down. Discovery
-               runs before that gate is reached, so bound it here instead:
-               the fast phase gets ten seconds, inside the start-up hold-off,
-               and then the stack is left alone for the rest of the session.
-               Nothing that worked is lost -- with no PC there is no address
-               to send telemetry to either. */
             if (!ra_rx_in_game) {
                 lwip_close(s);
                 return 0;
             }
-
             DelayThread(RA_DISC_SLOW_US);
             if (ra_disc_us < 0xF0000000)
                 ra_disc_us += RA_DISC_SLOW_US;
@@ -834,71 +817,6 @@ static u32 ra_dec_at(const char *s, int max)
     return v;
 }
 
-/* A badge chunk: "RAB1 ii tt " (11 bytes) and 512 raw pixels. The sixteenth
-   distinct chunk goes to the EE in one SIF DMA, answered with "RAK2 <mask>
-   <dma>". */
-static void ra_take_badge(const char *rx, int got)
-{
-    u32 idx = ra_dec_at(&rx[5], 2);
-    u32 total = ra_dec_at(&rx[8], 2);
-    char ack[24];
-    int dma = 0, n;
-
-    if (got != 11 + RA_BADGE_CHUNK || total != RA_BADGE_CHUNKS || idx >= RA_BADGE_CHUNKS)
-        return;
-    if (ra_badge_done)
-        return;
-
-    {
-        u8 *dst = &ra_badge.px[idx * RA_BADGE_CHUNK];
-        int i;
-
-        for (i = 0; i < RA_BADGE_CHUNK; i++)
-            dst[i] = (u8)rx[11 + i];
-    }
-    ra_hb_rab++;
-    ra_badge_mask |= (u32)1 << idx;
-
-    if (ra_badge_mask != ((u32)1 << RA_BADGE_CHUNKS) - 1)
-        return;
-
-    ra_badge.magic = RA_BADGE_MAGIC;
-    ra_badge.len = RA_BADGE_BYTES;
-    ra_badge.seq++;
-    ra_badge_done = 1;
-
-    if (ra_ee_badge != 0) {
-        /* Two transfers, pixels first: SIF DMA fills memory upward, and
-           the EE takes the header's magic as "the badge is here". Sent
-           as one transfer the magic would land before the pixels. */
-        SifDmaTransfer_t dmat[2];
-
-        dmat[0].src = ra_badge.px;
-        dmat[0].dest = (void *)(ra_ee_badge + 16);
-        dmat[0].size = RA_BADGE_BYTES;
-        dmat[0].attr = 0;
-        dmat[1].src = &ra_badge;
-        dmat[1].dest = (void *)ra_ee_badge;
-        dmat[1].size = 16;
-        dmat[1].attr = 0;
-        dma = sceSifSetDma(dmat, 2);
-    }
-
-    n = 0;
-    ack[n++] = 'R';
-    ack[n++] = 'A';
-    ack[n++] = 'K';
-    ack[n++] = '2';
-    ack[n++] = ' ';
-    ra_fmt_hex8(&ack[n], ra_ee_badge);
-    n += 8;
-    ack[n++] = ' ';
-    ra_fmt_err((u8 *)&ack[n], dma);
-    n += 4;
-    ack[n] = '\0';
-    ra_ctl_send(ack, n);
-}
-
 /* One message from the PC, whichever road it came in on. */
 static void ra_handle_pc(char *rx, int got)
 {
@@ -910,24 +828,26 @@ static void ra_handle_pc(char *rx, int got)
 
     ra_hb_rx++;
 
-    if (rx[0] == 'R' && rx[1] == 'A' && rx[2] == 'B' && rx[3] == '1' && rx[4] == ' ') {
-        ra_take_badge(rx, got);
-        return;
-    }
-
-    if (rx[0] != 'R' || rx[1] != 'A' || rx[2] != 'U' || rx[3] != '1' || rx[4] != ' ')
+    if (rx[0] != 'R' || rx[1] != 'A' || rx[3] != '1' || rx[4] != ' ')
         return;
 
-    ra_hb_rau++;
-
-    /* Every notice arrives twice, unicast and broadcast (the console
-       answers no ARP in play). The same achievement within a few seconds is
-       one pulse. */
-    {
+    if (rx[2] == 'R') {
+        /* "RAR1": leave the game for the loader. The second copy of the
+           datagram never matters: the first one ends this module. */
+        ra_event.magic = RA_EVENT_MAGIC;
+        ra_event.seq++;
+        ra_event.kind = RA_EVENT_RESET;
+        ra_event.arg = 0;
+    } else if (rx[2] == 'U') {
+        /* Every notice arrives twice, unicast and broadcast (the console
+           answers no ARP in play). The same achievement within a few
+           seconds is one pulse. */
         static u32 last_id = 0xFFFFFFFF;
         static u32 last_sec = 0;
         iop_sys_clock_t clk;
         u32 sec, usec, id;
+
+        ra_hb_rau++;
 
         id = ra_dec_at(&rx[5], 10);
         GetSystemTime(&clk);
@@ -942,6 +862,8 @@ static void ra_handle_pc(char *rx, int got)
         ra_event.seq++;
         ra_event.kind = RA_EVENT_UNLOCK;
         ra_event.arg = id;
+    } else {
+        return;
     }
 
     if (ra_ee_event != 0) {
@@ -980,8 +902,7 @@ static void ra_poll_pc(void)
 {
     struct sockaddr_in from;
     socklen_t fromlen = sizeof(from);
-    /* Room for the largest message: a badge chunk of 11 + 512 bytes. */
-    char rx[576];
+    char rx[128]; /* an unlock notice is a few dozen bytes */
     int got;
 
     if (ra_sock < 0)
@@ -996,10 +917,17 @@ static void ra_poll_pc(void)
     ra_handle_pc(rx, got);
 }
 
-/* The raw receive road: in play nothing drains the SMAP RX FIFO (it sits
-   full, ARP dies with it), so this thread walks the receive BDs itself, as
-   HandleRxIntr does. It must be the ring's only consumer while a game runs. */
-static u8 ra_rxfrm[608] __attribute__((aligned(4)));
+/* The raw receive road. Once the game runs, the in-game SMAP driver's
+   interrupt path no longer drains the receive FIFO: the frame counter
+   climbs to 64 and stays there, and with it lwIP receive and ARP are
+   dead. So this thread walks the receive descriptors itself, the way
+   HandleRxIntr does: read the frame at the descriptor's pointer, hand a
+   UDP datagram for our port to ra_handle_pc, drop everything else, mark
+   the descriptor empty, decrement the counter. It must be the ring's
+   only consumer while a game runs. */
+/* An unlock notice is a frame of about 60 bytes; anything longer is
+   not for us and is dropped unread. */
+static u8 ra_rxfrm[256] __attribute__((aligned(4)));
 static int ra_rx_bdi = 0;
 
 static void ra_drain_rx(void)
@@ -1011,7 +939,6 @@ static void ra_drain_rx(void)
     for (budget = 0; budget < 16; budget++) {
         volatile smap_bd_t *bd;
         u16 cs, len, ptr;
-        int words, i, up;
 
         if (SMAP_REG8(SMAP_R_RXFIFO_FRAME_CNT) == 0)
             return;
@@ -1031,6 +958,7 @@ static void ra_drain_rx(void)
 
         if (!(cs & SMAP_BD_RX_ERROR) && len >= 60 && len <= (u16)sizeof(ra_rxfrm)) {
             u32 *w = (u32 *)ra_rxfrm;
+            int words, i, up;
 
             SMAP_REG16(SMAP_R_RXFIFO_RD_PTR) = ptr;
             words = ((int)len + 3) / 4;
@@ -1060,9 +988,10 @@ static void ra_drain_rx(void)
     }
 }
 
-/* Every ten seconds: "RAH1 <datagrams> <unlocks> <chunks> <mask> <done>".
+/* Every ten seconds: "RAH1 <datagrams> <unlocks> 000000 00000000 0".
    No heartbeat means the send path is down; zero datagrams means nothing
-   from the PC survives the trip. */
+   from the PC survives the trip. The last three fields belonged to the
+   badge upload and stay as zeros so the client's parser keeps working. */
 static void ra_heartbeat(void)
 {
     char hb[48];
@@ -1079,13 +1008,13 @@ static void ra_heartbeat(void)
     ra_fmt((u8 *)&hb[n], ra_hb_rau, 6);
     n += 6;
     hb[n++] = ' ';
-    ra_fmt((u8 *)&hb[n], ra_hb_rab, 6);
+    ra_fmt((u8 *)&hb[n], 0, 6);
     n += 6;
     hb[n++] = ' ';
-    ra_fmt_hex8(&hb[n], ra_badge_mask);
+    ra_fmt_hex8(&hb[n], 0);
     n += 8;
     hb[n++] = ' ';
-    hb[n++] = ra_badge_done ? '1' : '0';
+    hb[n++] = '0';
     hb[n] = '\0';
     ra_ctl_send(hb, n);
 }
@@ -1135,16 +1064,11 @@ int _shutdown(void)
     return 0;
 }
 
-/* Arguments, built by ee_core (iopmgr.c). argv[1] is a comma-separated list,
-   each field optional from the left:
-     snapshot buffer address in IOP RAM, eight hex digits
-     event buffer address in EE RAM, eight hex digits
-     badge buffer address in EE RAM, eight hex digits
-     '1' or '0': may this module read from the network while a game runs
-     the game's serial, up to fifteen characters
+/* Arguments, built by ee_core (iopmgr.c). argv[1] is laid out by the
+   RA_ARG_* offsets in ra_snap.h, each field optional from the left.
    argv[2] is the own IP in dotted form (followed by netmask and gateway,
-   which this module does not need). argv[0] is the module name, inserted by
-   the IOP loader. */
+   which this module does not need). argv[0] is the module name, inserted
+   by the IOP loader. */
 int _start(int argc, char *argv[])
 {
     iop_thread_t thread;
@@ -1153,22 +1077,20 @@ int _start(int argc, char *argv[])
     if (argc >= 2 && argv[1] != NULL) {
         int len;
 
-        for (len = 0; len < 44 && argv[1][len] != '\0'; len++)
+        for (len = 0; len < RA_ARG_MAX && argv[1][len] != '\0'; len++)
             ;
 
-        if (len >= 8)
-            ra_snap = (volatile struct ra_snap *)ra_hex_at(argv[1], 0, 8);
-        if (len >= 17 && argv[1][8] == ',')
-            ra_ee_event = ra_hex_at(argv[1], 9, 8);
-        if (len >= 26 && argv[1][17] == ',')
-            ra_ee_badge = ra_hex_at(argv[1], 18, 8);
-        if (len >= 28 && argv[1][26] == ',')
-            ra_rx_in_game = argv[1][27] != '0';
-        if (len >= 29 && argv[1][28] == ',') {
+        if (len >= RA_ARG_SNAP + 8)
+            ra_snap = (volatile struct ra_snap *)ra_hex_at(argv[1], RA_ARG_SNAP, 8);
+        if (len >= RA_ARG_EVENT + 8 && argv[1][RA_ARG_EVENT - 1] == ',')
+            ra_ee_event = ra_hex_at(argv[1], RA_ARG_EVENT, 8);
+        if (len >= RA_ARG_RX + 1 && argv[1][RA_ARG_RX - 1] == ',')
+            ra_rx_in_game = argv[1][RA_ARG_RX] != '0';
+        if (len >= RA_ARG_ID + 1 && argv[1][RA_ARG_ID - 1] == ',') {
             int i;
 
-            for (i = 0; i < 15 && argv[1][29 + i] != '\0'; i++)
-                ra_game_id[i] = argv[1][29 + i];
+            for (i = 0; i < RA_ARG_ID_MAX && argv[1][RA_ARG_ID + i] != '\0'; i++)
+                ra_game_id[i] = argv[1][RA_ARG_ID + i];
             ra_game_id[i] = '\0';
         }
     }
