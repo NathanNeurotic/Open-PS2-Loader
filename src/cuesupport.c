@@ -109,32 +109,44 @@ int cueNameLaunchable(const char *name)
     return 1;
 }
 
-// Is this directory entry a game folder? Settled by opening it, never by d_type.
+// The extensions Ember's io_find_disc accepts, in ITS priority order (.cue beats .exe beats .bin).
+// We only test presence, so the order is documentation rather than logic -- but it is the reason a
+// folder holding just a .bin is still a valid game. Case-insensitive, as io_find_disc's own
+// strcasecmp is.
+static const char *const cueDiscExts[] = {".cue", ".exe", ".bin"};
+
+// 1 when d_name (length len) carries one of Ember's launchable image extensions.
+static int cueNameIsDiscImage(const char *name, int len)
+{
+    unsigned int i;
+
+    if (len < 5)
+        return 0; // shortest possible match is "x.cue"
+    for (i = 0; i < sizeof(cueDiscExts) / sizeof(cueDiscExts[0]); i++) {
+        if (strcasecmp(name + len - 4, cueDiscExts[i]) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+// Is this directory entry a game folder? Settled by opening it, never by d_type: d_type is not
+// dependable across this project's drivers (the MMCE theme scan learned that the hard way --
+// mmceman on some clones reports a d_type that does not describe the entry), and a driver that
+// mislabels a FILE as DT_DIR would put a stray file in the PS1 list with an X button that cannot
+// work. The probe costs one opendir per entry, bounded by the number of folders.
 //
-// The previous version of this comment argued that d_type is "a documented liar on MMCE clones" and
-// then trusted it whenever it said DT_DIR. That is the unsafe direction of the same claim: a liar
-// answering DT_DIR about a FILE is precisely the failure mode, and it put stray files in the PS1
-// list with an X button that could not work. A liar is not half-trustworthy.
-static int cueEntryIsDir(const char *devPrefix, const char *gamesDir, const struct dirent *de)
+// And being a folder is not enough. An Ember game is a folder holding a *.cue / *.exe / *.bin at
+// its TOP level -- io_find_disc does not recurse -- so a folder without one is a row whose X button
+// cannot work: an empty folder, or the group-VMC folders game installers drop into EMBER/games/
+// (reported by CosmicScale, October 2026). The image test rides the same opendir the dir probe
+// already pays for and stops at the first match, so the scan costs no extra directory opens.
+static int cueEntryIsGame(const char *devPrefix, const char *gamesDir, const struct dirent *de)
 {
     char probe[320];
+    struct dirent *sub;
     DIR *d;
+    int found = 0;
 
-    // ALWAYS PROBE. There used to be a `d_type == DT_DIR` fast path here that returned 1 without
-    // checking anything, and it is the reason stray files showed up as games in the PS1 list.
-    //
-    // d_type is not dependable across this project's drivers -- the MMCE theme scan already learned
-    // that the hard way and opendir-probes for exactly this reason (mmceman on some clones reports
-    // a d_type that does not describe the entry). A driver that mislabels a FILE as DT_DIR got that
-    // file listed as an Ember game, with an X button that could never work.
-    //
-    // The fallback was always here; it was just unreachable whenever d_type lied. Trusting the
-    // probe alone costs one opendir per entry in EMBER/games/, which is the same call the old
-    // fallback made and is bounded by the number of game folders.
-    //
-    // This does NOT change what an Ember game IS. A game is still a FOLDER under EMBER/games/ --
-    // that is Ember's own contract and it stays. All this decides is whether the thing we are
-    // looking at really is a folder.
     // Separator comes from the DEVICE, not a hardcoded slash. cueBuildGamesDir already builds
     // gamesDir with cueSep(), so a prefix ending in a backslash would otherwise be probed as
     // "smb0:\\EMBER\\games/NAME" -- mixed, and rejected by any handler that cares. Latent today
@@ -143,8 +155,14 @@ static int cueEntryIsDir(const char *devPrefix, const char *gamesDir, const stru
     d = opendir(probe);
     if (d == NULL)
         return 0;
+
+    while (!found && (sub = readdir(d)) != NULL)
+        found = cueNameIsDiscImage(sub->d_name, (int)strlen(sub->d_name));
     closedir(d);
-    return 1;
+
+    if (!found)
+        LOG("[CUE] skip (folder holds no .cue/.exe/.bin): %s\n", de->d_name);
+    return found;
 }
 
 int cueScanDir(const char *devPrefix, cue_entry_t **outList)
@@ -237,8 +255,8 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
             LOG("[CUE] skip (name > %d chars): %s\n", ISO_GAME_NAME_MAX, de->d_name);
             continue;
         }
-        if (!cueEntryIsDir(devPrefix, gamesDir, de))
-            continue; // loose files in games/ (a stray readme, a leftover archive) are not games
+        if (!cueEntryIsGame(devPrefix, gamesDir, de))
+            continue; // loose files, and folders holding nothing Ember can mount, are not games
 
         snprintf(list[count].name, sizeof(list[count].name), "%s", de->d_name);
         count++;
@@ -254,11 +272,6 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
     *outList = list;
     return count;
 }
-
-// The extensions Ember's io_find_disc accepts, in ITS priority order (.cue beats .exe beats .bin).
-// We only test presence, so the order is documentation rather than logic -- but it is the reason a
-// folder holding just a .bin is still a valid game.
-static const char *const cueDiscExts[] = {".cue", ".exe", ".bin"};
 
 typedef struct
 {
