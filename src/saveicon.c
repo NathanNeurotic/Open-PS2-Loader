@@ -643,7 +643,9 @@ int saveIconFromPs1CardImage(saveicon_read_t readFn, void *ctx, unsigned int ima
 
 #ifndef SAVEICON_HOST_TEST
 #include "include/cuesupport.h"
+#define NEWLIB_PORT_AWARE // Only APA mount/unmount use fileXio; every file read uses POSIX.
 #include <fileXio_rpc.h>
+#include <io_common.h>
 
 int saveIconPs1Directory(const char *root, const char *name, int ember, char *out, int outSize)
 {
