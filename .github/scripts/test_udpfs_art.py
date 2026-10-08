@@ -90,7 +90,7 @@ static int invalidations, rootOpens, folderOpens, imageCalls;
 static char imagePath[256];
 static const char *rootNames[12];
 static const char *folderNames[8][4];
-static int rootReadError;
+static int rootReadError, folderOpenError[8];
 static DIR rootDir, folders[8];
 static struct dirent returnedEntry;
 
@@ -113,6 +113,7 @@ static DIR *opendir(const char *path)
         snprintf(full, sizeof(full), "udpfs:/%s", udpfsArtCaseNames[i]);
         if (strcmp(path, full) == 0) {
             folderOpens++;
+            if (folderOpenError[i]) { errno = ENOTDIR; return NULL; }
             folders[i].kind = i;
             folders[i].pos = 0;
             return &folders[i];
@@ -153,6 +154,7 @@ static void reset(void)
 {
     memset(rootNames, 0, sizeof(rootNames));
     memset(folderNames, 0, sizeof(folderNames));
+    memset(folderOpenError, 0, sizeof(folderOpenError));
     udpfsArtCaseIndex = 0;
     udpfsArtCaseChecked = invalidations = rootOpens = folderOpens = imageCalls = 0;
     rootReadError = 0;
@@ -198,6 +200,31 @@ int main(void)
     udpfsDiscoverArtFolder();
     check("populated canonical spelling wins", udpfsArtCaseIndex == 0 &&
           invalidations == 0 && folderOpens == 1);
+
+    reset();
+    rootNames[0] = "ART"; rootNames[1] = "Art"; rootNames[2] = "art";
+    folderOpenError[3] = 1;
+    folderNames[7][0] = "SLUS_123.45_COV.png";
+    udpfsDiscoverArtFolder();
+    check("failed open is not populated", udpfsArtCaseIndex == 7);
+
+    reset();
+    rootNames[0] = "Art"; rootNames[1] = "art";
+    folderOpenError[3] = 1;
+    udpfsDiscoverArtFolder();
+    check("unusable preferred entry falls back to an empty directory", udpfsArtCaseIndex == 7);
+
+    reset();
+    rootNames[0] = "Art"; rootNames[1] = "art";
+    folderOpenError[3] = folderOpenError[7] = 1;
+    udpfsDiscoverArtFolder();
+    check("all unusable entries fall back to canonical ART", udpfsArtCaseIndex == 0);
+
+    reset();
+    rootNames[0] = "art";
+    folderOpenError[7] = 1;
+    udpfsDiscoverArtFolder();
+    check("single file masquerading as art is rejected", udpfsArtCaseIndex == 0);
 
     reset();
     rootNames[0] = "art";

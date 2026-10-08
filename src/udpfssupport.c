@@ -424,13 +424,27 @@ static void udpfsDiscoverArtFolder(void)
         }
     }
     if (candidates && (candidates & (candidates - 1u))) {
-        if (udpfsArtFolderHasFiles(chosen) <= 0) {
+        int chosenState = udpfsArtFolderHasFiles(chosen);
+        if (chosenState <= 0) {
+            unsigned int fallback = chosenState == 0 ? chosen : 0;
+            int haveFallback = chosenState == 0;
+            int foundPopulated = 0;
             for (unsigned int i = 0; i < 8; i++) {
-                if (i != chosen && (candidates & (1u << i)) && udpfsArtFolderHasFiles(i)) {
+                if (i == chosen || !(candidates & (1u << i)))
+                    continue;
+                int candidateState = udpfsArtFolderHasFiles(i);
+                if (candidateState > 0) {
                     chosen = i;
+                    foundPopulated = 1;
                     break;
                 }
+                if (candidateState == 0 && !haveFallback) {
+                    fallback = i;
+                    haveFallback = 1;
+                }
             }
+            if (!foundPopulated)
+                chosen = haveFallback ? fallback : 0;
         }
     }
 
