@@ -285,3 +285,11 @@ pointed at the `master` lineage (`credits.html`, the licence).
 **Left as they are:** `fork-gaps.html` is a dated comparison snapshot and says so. The site's
 coverage of #737 (Coverflow R1, IGR Path on USB, 4:3 values) and #738 (BDM views per device type)
 belongs with those PRs once they merge; `docs/IGR.md` and the README already travel inside #737.
+
+## Follow-up audit 2026-10-08
+
+Audited main 7452341a, site ca35a7e5 and Wiki fb8d04c. All 32 site pages passed local-link, anchor and unique-ID checks. Earlier DONE entries are historical checkpoints, not a claim of complete feature or console validation.
+
+New missing guidance: Actions/PR artifact selection, companion-core updates, saved UDPFS protocol changes, Custom ELF path recovery, UDPFS artwork directory casing and safe VMC creation diagnostics. Repository references now live in TEST-BUILDS.md and VMC.md. Site additions are in #890 (376 regenerated search entries); matching Wiki sections were published in f122515. The source correction locating Access on Settings > Network is included. No hardware pass, contiguous allocation guarantee or unmerged #889 behavior is documented as released.
+
+Remaining validation: VMC allocation/save/reboot on affected hardware; saved-config protocol changes; UDPFS artwork; font reports #868/#757. These are runtime evidence gaps, not missing setup instructions solved by adding text.
