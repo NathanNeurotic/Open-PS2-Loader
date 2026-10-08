@@ -661,60 +661,246 @@ static int diaShouldBreakLineAfter(struct UIItem *ui)
     return (ui->type == UI_SPLITTER);
 }
 
+static int diaHintUtf8CharLen(const char *p)
+{
+    unsigned char c;
+
+    if (p == NULL || p[0] == '\0')
+        return 0;
+
+    c = (unsigned char)p[0];
+    if ((c & 0x80) == 0)
+        return 1;
+    if ((c & 0xE0) == 0xC0 && p[1] != '\0' && ((unsigned char)p[1] & 0xC0) == 0x80)
+        return 2;
+    if ((c & 0xF0) == 0xE0 && p[1] != '\0' && p[2] != '\0' &&
+        ((unsigned char)p[1] & 0xC0) == 0x80 && ((unsigned char)p[2] & 0xC0) == 0x80)
+        return 3;
+    if ((c & 0xF8) == 0xF0 && p[1] != '\0' && p[2] != '\0' && p[3] != '\0' &&
+        ((unsigned char)p[1] & 0xC0) == 0x80 && ((unsigned char)p[2] & 0xC0) == 0x80 &&
+        ((unsigned char)p[3] & 0xC0) == 0x80)
+        return 4;
+
+    // Invalid/truncated UTF-8: consume one byte so a bad translation can never stall hint layout.
+    return 1;
+}
+
+static int diaHintGlyphWidth(const char *p, int bytes)
+{
+    char glyph[5];
+
+    if (bytes <= 0 || bytes > 4)
+        return 0;
+
+    memcpy(glyph, p, bytes);
+    glyph[bytes] = '\0';
+    return rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], glyph));
+}
+
+static void diaHintEllipsize(char *wrapped, int *wlen, int lineStart, int innerW, int capacity)
+{
+    const int ellipsisW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], "..."));
+
+    if (wrapped == NULL || wlen == NULL || capacity < 4)
+        return;
+
+    wrapped[*wlen] = '\0';
+    while (*wlen > lineStart &&
+           rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], &wrapped[lineStart])) + ellipsisW > innerW) {
+        int cut = *wlen - 1;
+
+        while (cut > lineStart && (((unsigned char)wrapped[cut] & 0xC0) == 0x80))
+            cut--;
+        *wlen = cut;
+        wrapped[*wlen] = '\0';
+    }
+
+    if (*wlen + 3 < capacity) {
+        wrapped[(*wlen)++] = '.';
+        wrapped[(*wlen)++] = '.';
+        wrapped[(*wlen)++] = '.';
+        wrapped[*wlen] = '\0';
+    }
+}
+
 static void diaDrawHint(int text_id)
 {
     char *text = _l(text_id);
+    char wrapped[768];
+    const int wrappedSize = sizeof(wrapped);
+    const int hintBottom = gTheme->usedHeight - 32;
+    int boxW;
+    int innerW;
+    int x;
+    int y;
+    int boxH;
+    int maxLines;
+    int lines = 1;
+    int lineW = 0;
+    int lineStart = 0;
+    int wlen = 0;
+    int truncated = 0;
+    int spaceW;
+    const char *p = text;
 
-    // Size the box to the hint, but never wider than (almost) the full screen, and clamp the left
-    // edge so the start is always on-screen (a long hint used to start off the left edge -- #48).
-    int boxW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text)) + 10;
+    // Keep every edge of the hint bubble on-screen. Use the widest useful bubble for long text so
+    // wrapping creates the fewest possible lines.
+    boxW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], text)) + 10;
     if (boxW > screenWidth - 20)
         boxW = screenWidth - 20;
-    int x = screenWidth - boxW - 10;
+    if (boxW < 20)
+        boxW = 20;
+
+    x = screenWidth - boxW - 10;
     if (x < 10)
         x = 10;
-    int innerW = boxW - 10;
+    innerW = boxW - 10;
 
-    // fntRenderString does NOT word-wrap: it lays the string on ONE line and clips at the box edge
-    // (only an explicit '\n' starts a new line). So pre-wrap here -- greedily pack words up to innerW,
-    // inserting '\n' between lines. Without this a long hint (e.g. the Neutrino args hint) rendered as
-    // a single clipped, unreadable line that ran off the box -- the remaining #48 hint complaint.
-    char wrapped[384];
-    int wlen = 0, lineW = 0, lines = 1;
-    int spaceW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], " "));
-    const char *p = text;
-    while (*p) {
-        while (*p == ' ') // skip runs of spaces; we re-insert our own single separators
+    // Reserve 10 px above the hint and the existing 32 px footer below it. In the ordinary case
+    // this allows far more lines than any settings hint needs; the cap prevents pathological or bad
+    // translations from driving y negative.
+    maxLines = (hintBottom - 20) / MENU_ITEM_HEIGHT;
+    if (maxLines < 1)
+        maxLines = 1;
+
+    spaceW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], " "));
+
+    while (*p != '\0' && !truncated) {
+        const char *wordStart;
+        int wordLen;
+        int wordW;
+
+        // Explicit line breaks in translated strings remain line breaks.
+        if (*p == '\r' || *p == '\n') {
+            if (*p == '\r' && p[1] == '\n')
+                p++;
             p++;
-        if (!*p)
-            break;
-        char word[96];
-        int k = 0;
-        while (*p && *p != ' ' && k < (int)sizeof(word) - 1)
-            word[k++] = *p++;
-        word[k] = '\0';
-        int wordW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], word));
 
-        if (lineW > 0 && (lineW + spaceW + wordW) > innerW) { // word doesn't fit -> new line
-            if (wlen < (int)sizeof(wrapped) - 1)
-                wrapped[wlen++] = '\n';
+            if (lines >= maxLines || wlen >= wrappedSize - 1) {
+                truncated = (*p != '\0');
+                break;
+            }
+            wrapped[wlen++] = '\n';
             lines++;
             lineW = 0;
-        } else if (lineW > 0) { // same line -> re-insert the separating space
-            if (wlen < (int)sizeof(wrapped) - 1)
-                wrapped[wlen++] = ' ';
-            lineW += spaceW;
+            lineStart = wlen;
+            continue;
         }
-        for (int i = 0; i < k && wlen < (int)sizeof(wrapped) - 1; i++)
-            wrapped[wlen++] = word[i];
-        lineW += wordW;
+
+        // Collapse runs of horizontal whitespace to one separator between words.
+        while (*p == ' ' || *p == '\t')
+            p++;
+        if (*p == '\0')
+            break;
+        if (*p == '\r' || *p == '\n')
+            continue;
+
+        wordStart = p;
+        while (*p != '\0' && *p != ' ' && *p != '\t' && *p != '\r' && *p != '\n')
+            p++;
+        wordLen = (int)(p - wordStart);
+
+        // Normal words use the font's complete-string measurement so kerning/spacing stays exact.
+        if (wordLen < 256) {
+            char word[256];
+
+            memcpy(word, wordStart, wordLen);
+            word[wordLen] = '\0';
+            wordW = rmUnScaleX(fntCalcDimensions(gTheme->fonts[0], word));
+
+            if (wordW <= innerW) {
+                if (lineW > 0 && lineW + spaceW + wordW > innerW) {
+                    if (lines >= maxLines || wlen >= wrappedSize - 1) {
+                        truncated = 1;
+                        break;
+                    }
+                    wrapped[wlen++] = '\n';
+                    lines++;
+                    lineW = 0;
+                    lineStart = wlen;
+                } else if (lineW > 0) {
+                    if (wlen >= wrappedSize - 1) {
+                        truncated = 1;
+                        break;
+                    }
+                    wrapped[wlen++] = ' ';
+                    lineW += spaceW;
+                }
+
+                if (wlen + wordLen >= wrappedSize) {
+                    truncated = 1;
+                    break;
+                }
+                memcpy(&wrapped[wlen], wordStart, wordLen);
+                wlen += wordLen;
+                lineW += wordW;
+                continue;
+            }
+        }
+
+        // An over-wide token (URL, path, hash, malformed translation, etc.) has no whitespace where
+        // ordinary word wrapping can break it. Split only that token, and only at UTF-8 character
+        // boundaries, so it cannot escape the box or corrupt localized text.
+        if (lineW > 0) {
+            if (lines >= maxLines || wlen >= wrappedSize - 1) {
+                truncated = 1;
+                break;
+            }
+            wrapped[wlen++] = '\n';
+            lines++;
+            lineW = 0;
+            lineStart = wlen;
+        }
+
+        {
+            const char *q = wordStart;
+            const char *wordEnd = wordStart + wordLen;
+
+            while (q < wordEnd) {
+                int charBytes = diaHintUtf8CharLen(q);
+                int glyphW;
+
+                if (charBytes <= 0 || q + charBytes > wordEnd)
+                    charBytes = 1;
+                glyphW = diaHintGlyphWidth(q, charBytes);
+
+                if (lineW > 0 && lineW + glyphW > innerW) {
+                    if (lines >= maxLines || wlen >= wrappedSize - 1) {
+                        truncated = 1;
+                        break;
+                    }
+                    wrapped[wlen++] = '\n';
+                    lines++;
+                    lineW = 0;
+                    lineStart = wlen;
+                }
+
+                if (wlen + charBytes >= wrappedSize) {
+                    truncated = 1;
+                    break;
+                }
+                memcpy(&wrapped[wlen], q, charBytes);
+                wlen += charBytes;
+                lineW += glyphW;
+                q += charBytes;
+            }
+        }
     }
+
     wrapped[wlen] = '\0';
+    if (truncated)
+        diaHintEllipsize(wrapped, &wlen, lineStart, innerW, wrappedSize);
 
-    int boxH = lines * MENU_ITEM_HEIGHT + 10;
-    int y = gTheme->usedHeight - 32 - boxH;
+    boxH = lines * MENU_ITEM_HEIGHT + 10;
+    if (boxH > hintBottom - 10)
+        boxH = hintBottom - 10;
+    if (boxH < MENU_ITEM_HEIGHT + 10)
+        boxH = MENU_ITEM_HEIGHT + 10;
 
-    // render hint on the lower side of the screen.
+    y = hintBottom - boxH;
+    if (y < 10)
+        y = 10;
+
     rmDrawRect(x, y, boxW, boxH, gColDarker);
     fntRenderString(gTheme->fonts[0], x + 5, y + 5, ALIGN_NONE, innerW, boxH - 5, wrapped, gTheme->textColor);
 }

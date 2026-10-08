@@ -1642,6 +1642,27 @@ int sysNeutrinoHandCheats(const char *startup, const char *neutrinoPath, const c
     return 0;
 }
 
+void sysNeutrinoWarnPadEmu(config_set_t *configSet)
+{
+#ifdef PADEMU
+    // Match sbPrepare's inheritance: a present per-game source key selects the per-game values.
+    // Read the config directly: APA's Neutrino path need not have called sbPrepare for this game.
+    int source = 0, enabled = 0;
+    config_set_t *settings = configGetByType(CONFIG_GAME);
+    if (configGetInt(configSet, CONFIG_ITEM_PADEMUSOURCE, &source))
+        settings = configSet;
+    configGetInt(settings, CONFIG_ITEM_ENABLEPADEMU, &enabled);
+    if (enabled) {
+        LOG("[NEUTRINO] pad emulation configured but unsupported\n");
+        // Autolaunch runs before the interactive menu: never leave it waiting for a modal.
+        if (gAutoLaunchGame == NULL && gAutoLaunchBDMGame == NULL)
+            guiMsgBox(_l(_STR_NEUTRINO_PADEMU_WARN), 0, NULL);
+    }
+#else
+    (void)configSet;
+#endif
+}
+
 // Δ6 (NHDDL parity): everything that can FAIL a Neutrino launch and is checkable pre-teardown runs
 // HERE, called by every device leg BEFORE deinitEx -- the GUI is alive for a toast and nothing has
 // been torn down, so a failure is "stay in the menu", not a post-teardown black screen. Returns
@@ -2383,11 +2404,12 @@ static char gVMCCreatePath[256] = {0};
 // learns mid-launch, as an error about a card they thought they had just made.
 //
 // 1 contiguous, 0 FRAGMENTED, -1 unknown. GET_LBA is probed first because bdmfs_fatfs answers
-// CHECK_CHAIN with a bare 1/0 and never an error, so a store that cannot do LBA lookups at all
-// (mmce, pfs, SMB, udpfs) would otherwise return a 0 meaning only "not my ioctl".
+// CHECK_CHAIN with a bare 1/0 and never an error. MMCE also returns success for unsupported
+// ioctls WITHOUT writing the output: require GET_LBA to replace its sentinel before trusting
+// CHECK_CHAIN, or an unsupported query looks exactly like a fragmented file.
 int sysVMCContiguity(void)
 {
-    u64 startingLBA;
+    u64 startingLBA = (u64)-1;
     int fd, iop_fd, chain;
 
     if (gVMCCreatePath[0] == '\0')
@@ -2398,7 +2420,8 @@ int sysVMCContiguity(void)
         return -1;
 
     iop_fd = ps2sdk_get_iop_fd(fd);
-    if (fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_LBA, NULL, 0, &startingLBA, sizeof(startingLBA)) != 0) {
+    if (fileXioIoctl2(iop_fd, USBMASS_IOCTL_GET_LBA, NULL, 0, &startingLBA, sizeof(startingLBA)) != 0 ||
+        startingLBA == (u64)-1) {
         close(fd);
         return -1; // not a fatfs-backed device: CHECK_CHAIN below would be meaningless
     }

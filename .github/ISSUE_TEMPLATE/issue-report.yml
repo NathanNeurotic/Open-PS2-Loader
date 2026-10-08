@@ -1,16 +1,24 @@
 name: Issue report
-description: Create a report to help us improve
+description: Report a reproducible bug with your console, build, loader and settings
 title: "[ISSUE]: "
 labels: [bug]
 body:
   - type: markdown
     attributes:
       value: |
-        ### __Disclaimer:__
-        Issue reports for the OPL app that was not downloaded from the official GitHub repo releases section or official Mega mirror are not accepted.
-        Issue reports for 3rd party HDD adapters (like Gamestar) are not accepted.
-        Issue reports for consoles with installed and enabled modchip are not accepted.
-        Before posting the issue confirm that you meet the below requirements.
+        Please report the exact build and configuration used when the issue occurred.
+        Preview and combined test builds are welcome; include their artifact link and build flavour.
+        Example: PS2 MODEL: SCPH-30001; OPL VERSION: RiptOPL V3 (exact revision/build flavour);
+        LOADER: UDPFS; SETTINGS CHANGED: UDPFS enabled; VMC: Not applicable; PADEMU: Enabled.
+        Chassis revision is optional; add it if known.
+
+        **Choose the tracker for the component that fails:**
+        - RiptOPL menus, settings, device discovery, or launch handoff: [RiptOPL issues](https://github.com/NathanNeurotic/Open-PS2-Loader/issues).
+        - A game compatibility issue reproduced directly in Neutrino with the same game, device and settings: [Neutrino issues](https://github.com/ps2max32/neutrino/issues).
+        - A PS1 game issue reproduced directly in Ember: [Ember issues](https://github.com/Gageformer/Ember/issues).
+        - For another loader/core, use that project's issue tracker and include its exact version.
+        If you cannot isolate the component, report here with the core and comparison results; we can help route it.
+
 
   - type: checkboxes
     id: terms
@@ -18,8 +26,8 @@ body:
       label: Checks
       description: "Check before posting"
       options:
-        - label: I have checked existing [__OPL issues__](https://github.com/ps2homebrew/Open-PS2-Loader/issues) for duplicates and found none
-        - label: I am using the [latest version released](https://github.com/ps2homebrew/Open-PS2-Loader/releases).
+        - label: I have checked existing [__OPL issues__](https://github.com/NathanNeurotic/Open-PS2-Loader/issues) for duplicates and found none
+        - label: I have provided the exact version, build flavour and download source below.
 
   - type: textarea
     id: explanation
@@ -39,7 +47,7 @@ body:
   - type: input
     id: console
     attributes:
-      label: Console model
+      label: "PS2 MODEL:"
       description: You can see it on the console sticker or inside OSDSYS (press triangle on main menu)
       placeholder: SCPH-?????
     validations:
@@ -48,37 +56,93 @@ body:
   - type: input
     id: oplver
     attributes:
-      label: "OPL version / revision"
+      label: "OPL VERSION:"
       description: "Open OPL, press START and look for the About option; the version number will be at the top."
-      placeholder: "e.g. OPL Beta 1.2.0 2241 (Note: 'Latest Version' is not a valid answer)"
+      placeholder: "Exact About-screen version, build flavour, commit SHA or artifact link; do not write latest."
     validations:
       required: true
 
   - type: dropdown
     id: mode
     attributes:
-      label: "In which device(s) have you experienced this issue?"
+      label: "LOADER (MMCE, HDD, SMB, ETC):"
       multiple: true
       options:
-        - Neither
+        - Not related to a loader
+        - MMCE
         - USB
         - SMB
         - HDD
         - iLink
         - MX4SIO
+        - UDPBD
+        - UDPFS
+        - HTTP
+        - Apps
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: settings-changed
+    attributes:
+      label: "SETTINGS CHANGED:"
+      description: List global and per-game settings changed from defaults, including core (Native/Neutrino/Ember/POPSTARTER), GSM, cheats and compatibility modes. Write None if unchanged.
+      placeholder: "Core: Neutrino; global settings: ...; per-game settings: ...; or None"
     validations:
       required: true
 
   - type: dropdown
-    id: extra-features
+    id: vmc
     attributes:
-      label: "Which extra features are enabled?"
-      multiple: true
+      label: "VMC ENABLED/DISABLED:"
+      description: State the setting used when the issue occurred. If enabled, include card size and slots in the context below.
       options:
-        - Neither
-        - VMC
-        - PADEMU
-        - GSM
+        - Enabled
+        - Disabled
+        - Not applicable
+    validations:
+      required: true
+
+  - type: dropdown
+    id: pademu
+    attributes:
+      label: "PADEMU ENABLED/DISABLED:"
+      description: State the setting used when the issue occurred. If enabled, include controller and adapter details below.
+      options:
+        - Enabled
+        - Disabled
+        - Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: core-comparison
+    attributes:
+      label: Core and direct-launch comparison
+      description: Name the core and its exact version. For a game failure, state whether it also occurs when that core is launched directly with the same game, device and settings. Write Not tested if you cannot compare.
+      placeholder: "Core: Neutrino v...; direct launch: same failure / works / not tested; game and Game ID: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Provide the steps from launching OPL to the failure, and how often it happens.
+      placeholder: |
+        1. Launch ...
+        2. Select ...
+        3. Observe ...
+        Frequency: every time / intermittent
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected and actual behavior
+      description: Describe what should happen and what actually happens. Include exact error text or where the screen freezes.
     validations:
       required: true
 
@@ -99,8 +163,3 @@ body:
       placeholder: "game affected is Kingdom Hearts: II Final Mix [SLPM_666.75], http://redump.org/disc/7733/"
     validations:
       required: true
-
-  - type: markdown
-    attributes:
-      value: |
-        You could also test it on other versions, such as: the [Stable Version](https://github.com/ps2homebrew/Open-PS2-Loader/releases/tag/v1.1.0) or other beta versions available in the [MEGA repository](https://mega.nz/folder/Ndwi1bAK#oLWNhH_g-h0p4BoT4c556A)

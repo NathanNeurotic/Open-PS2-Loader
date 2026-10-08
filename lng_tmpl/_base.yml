@@ -778,7 +778,7 @@ gui_strings:
 - label: HINT_BDMA_SOURCE
   string: Device whose POPS folder holds your BDMAssault driver files (usbd.irx.* / usbhdfsd.irx.*); iLink uses the .ilink suffix.
 - label: HINT_DEFAULT_CORE
-  string: Global default core for games whose per-game Loader Core is set to Default. <OPL> is the native core; Neutrino chains the external neutrino.elf. A per-game choice always overrides this.
+  string: Global default only where both cores are supported. UDPFS/UDPBD always use Neutrino; SMB/HTTP always use <OPL>. A per-game Loader Core choice overrides this where available.
 - label: HINT_ENABLEIMAGE
   string: Apply a prebuilt PS2RD .img patch to your game.
 - label: HINT_FOLDER_NAV
@@ -1576,7 +1576,7 @@ gui_strings:
 - label: HINT_SMBCACHE
   string: "Read-ahead cache for SMB in game."
 - label: HINT_CORE_LOADER
-  string: "Which core starts this game. Default follows Game Launching."
+  string: "Core for this game where both are supported. UDPFS/UDPBD are Neutrino-only; SMB/HTTP are <OPL>-only. Default follows Game Launching."
 - label: HINT_DMA_MODE
   string: "Internal HDD transfer mode for this game. Lower it if the game stutters or freezes."
 - label: HINT_DNAS_GAMEID
@@ -1657,3 +1657,5 @@ gui_strings:
   string: "Video mode handed to the game."
 - label: DNAS_ID
   string: DNAS ID
+- label: NEUTRINO_PADEMU_WARN
+  string: "Pad emulation is unavailable with Neutrino. Use a PS2 controller or a source that supports the <OPL> core."
