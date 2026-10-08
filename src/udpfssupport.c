@@ -11,6 +11,7 @@
 #include "include/renderman.h"
 #include "include/themes.h"
 #include "include/textures.h"
+#include "include/texcache.h"
 #include "include/ioman.h"
 #include "include/system.h"
 #include "include/extern_irx.h"
@@ -24,6 +25,7 @@
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h>
 #include <delaythread.h>
+#include <errno.h>
 
 // udpfs is a network FILESYSTEM device: the iomanX device "udpfs:" is served by the udpfs_ioman IRX
 // chain (smap -> ministack(ip=) -> udpfs_ioman). Games are read straight off "udpfs:/" and boot through
@@ -43,6 +45,14 @@ static int udpfsNicClaimed = 0;       // SMAP resident, even if later modules fa
 static int udpfsWaitingForServer = 0; // the last scan got no answer from the server; see udpfsSetWaitingForServer
 static int udpfsThemesScanned = 0;    // THM is registered once per active UDPFS session, after THM opens
 static int udpfsPs1Scanned = 0;       // a PS1-view scan has reached the server this session; see udpfsNeedsUpdate
+
+// UDPFS shares may be case-sensitive. These are immutable strings: the art worker reads
+// only a small index, which the list worker publishes once after the server answers.
+// No root scans, directory probes or string-case searches occur on the per-image hot path.
+static const char *const udpfsArtCaseNames[8] = {
+    "ART", "ARt", "ArT", "Art", "aRT", "aRt", "arT", "art"};
+static volatile unsigned int udpfsArtCaseIndex = 0;
+static int udpfsArtCaseChecked = 0;
 
 // forward declaration
 static item_list_t udpfsGameList;
@@ -176,6 +186,8 @@ void udpfsInit(item_list_t *itemList)
     udpfsBase = "udpfs:";
     udpfsThemesScanned = 0;
     udpfsPs1Scanned = 0;
+    udpfsArtCaseIndex = 0;
+    udpfsArtCaseChecked = 0;
     // The games live directly at the device root; no share/prefix to prepend (unlike SMB).
     snprintf(udpfsPrefix, sizeof(udpfsPrefix), "udpfs:/");
     udpfsULSizePrev = -2;
@@ -345,6 +357,130 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
     return result;
 }
 
+// Check the remote share's ART spelling once after its root can be fully enumerated.
+// The ordinary path remains udpfs:/ART, including on newly created shares. If a
+// case-sensitive server has both an empty auto-created ART and a populated art,
+// use the populated directory instead. Collision probes happen only at discovery.
+static int udpfsArtFolderHasFiles(unsigned int variant)
+{
+    char path[64];
+    DIR *dir;
+    struct dirent *entry;
+    int found = 0;
+
+    snprintf(path, sizeof(path), "%s%s", udpfsPrefix, udpfsArtCaseNames[variant]);
+    dir = opendir(path);
+    if (dir == NULL)
+        return -1; // root entry may be a file named "art", not a directory
+    for (;;) {
+        errno = 0;
+        entry = readdir(dir);
+        if (entry == NULL) {
+            if (errno != 0)
+                found = -2; // transient read failure; discovery must retry
+            break;
+        }
+        if (entry->d_name[0] != '.') {
+            found = 1;
+            break;
+        }
+    }
+    closedir(dir);
+    return found;
+}
+
+static void udpfsDiscoverArtFolder(void)
+{
+    DIR *root;
+    struct dirent *entry;
+    unsigned int candidates = 0;
+    unsigned int chosen = 0;
+    int readError;
+
+    if (udpfsArtCaseChecked || !udpfsIomanModLoaded || !udpfsServerAnswers())
+        return;
+
+    root = opendir(udpfsPrefix);
+    if (root == NULL)
+        return;
+
+    for (;;) {
+        errno = 0;
+        if ((entry = readdir(root)) == NULL)
+            break;
+        if (strlen(entry->d_name) == 3 && strcasecmp(entry->d_name, "ART") == 0) {
+            for (unsigned int i = 0; i < 8; i++) {
+                if (strcmp(entry->d_name, udpfsArtCaseNames[i]) == 0) {
+                    candidates |= 1u << i;
+                    break;
+                }
+            }
+        }
+    }
+    readError = errno;
+    closedir(root);
+    if (readError != 0)
+        return; // incomplete root enumeration must not become a permanent resolution
+
+    // Prefer the conventional spelling unless it is empty and another spelling is
+    // populated. A single ART folder requires no extra directory opens at all.
+    if (candidates != 0 && !(candidates & 1u)) {
+        for (unsigned int i = 1; i < 8; i++) {
+            if (candidates & (1u << i)) {
+                chosen = i;
+                break;
+            }
+        }
+    }
+    if (candidates && (candidates & (candidates - 1u))) {
+        int chosenState = udpfsArtFolderHasFiles(chosen);
+        if (chosenState == -2)
+            return;
+        if (chosenState <= 0) {
+            unsigned int fallback = chosenState == 0 ? chosen : 0;
+            int haveFallback = chosenState == 0;
+            int foundPopulated = 0;
+            for (unsigned int i = 0; i < 8; i++) {
+                if (i == chosen || !(candidates & (1u << i)))
+                    continue;
+                int candidateState = udpfsArtFolderHasFiles(i);
+                if (candidateState == -2)
+                    return;
+                if (candidateState > 0) {
+                    chosen = i;
+                    foundPopulated = 1;
+                    break;
+                }
+                if (candidateState == 0 && !haveFallback) {
+                    fallback = i;
+                    haveFallback = 1;
+                }
+            }
+            if (!foundPopulated)
+                chosen = haveFallback ? fallback : 0;
+        }
+    }
+
+    // For a single noncanonical entry, verify that it is actually a directory.
+    // d_type is unreliable over this filesystem, so an open probe is necessary.
+    // The common canonical ART path still takes no additional directory open.
+    if (chosen != 0 && !(candidates & (candidates - 1u))) {
+        int chosenState = udpfsArtFolderHasFiles(chosen);
+        if (chosenState == -2)
+            return;
+        if (chosenState < 0)
+            chosen = 0;
+    }
+
+    udpfsArtCaseChecked = 1;
+    if (chosen != udpfsArtCaseIndex) {
+        udpfsArtCaseIndex = chosen;
+        // A cover requested before discovery might be parked as missing under ART.
+        // Re-arm that absent verdict once; healthy/default ART requires no invalidation.
+        cacheInvalidateFailMemo();
+    }
+}
+
 static int udpfsFoldersCreated = 0;
 
 static int udpfsUpdateGameList(item_list_t *itemList)
@@ -359,6 +495,11 @@ static int udpfsUpdateGameList(item_list_t *itemList)
     // even when it "succeeds" -- the Ember scan reports an unreachable server as "no titles" -- so
     // such a pass always keeps polling, and the next poll rescans once the server answers.
     answeredBefore = udpfsServerAnswers();
+
+    // Resolve an existing lowercase ART before sbCreateFolders creates an empty ART
+    // beside it. This one-time discovery never runs from the art worker.
+    if (answeredBefore)
+        udpfsDiscoverArtFolder();
 
     // Latch only once the server can hear us. A scan that ran before it answered used to latch here, so
     // the CD/DVD folders were never created for the rest of the boot.
@@ -660,9 +801,10 @@ static int udpfsGetImage(item_list_t *itemList, char *folder, int isRelative, ch
 {
     char path[256];
 
-    if (isRelative)
-        snprintf(path, sizeof(path), "%s%s/%s_%s", udpfsPrefix, folder, value, suffix);
-    else
+    if (isRelative) {
+        const char *imageFolder = strcmp(folder, "ART") == 0 ? udpfsArtCaseNames[udpfsArtCaseIndex] : folder;
+        snprintf(path, sizeof(path), "%s%s/%s_%s", udpfsPrefix, imageFolder, value, suffix);
+    } else
         snprintf(path, sizeof(path), "%s%s_%s", folder, value, suffix);
     int r = texDiscoverLoad(resultTex, path, -1);
     // ART LIVES IN THE ART FOLDER, and nowhere else. A PS1 cover is

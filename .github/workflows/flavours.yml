@@ -183,6 +183,8 @@ jobs:
           /tmp/test_udpfs_ack
       - name: Check UDPFS themes are registered only after the server answers
         run: python3 .github/scripts/test_udpfs_themes.py
+      - name: Check UDPFS artwork index integrity and case-sensitive ART paths
+        run: python3 .github/scripts/test_udpfs_art.py
 
   site-sync-host-tests:
     runs-on: ubuntu-24.04
