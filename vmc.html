@@ -163,14 +163,15 @@ If you change the <b>Size</b> of an already-existing VMC image and press <b>Modi
 <p>When you press <b>Create</b> (or <b>Modify</b>), OPL loads the <code>genvmc</code> IOP module and hands it the target path and size. The module formats the image in the background, writing a valid PS2 Memory Card superblock and cluster structure. The Progress bar updates live while this happens. Creation of an 8 MB VMC typically takes a few seconds on USB; larger sizes take proportionally longer.</p>
 <p>Once the progress bar reaches 100% the button label changes to <b>OK</b>. Pressing OK confirms the new or updated VMC and returns you to the VMC slot picker.</p>
 
-<h2 id="fragmentation">Fragmentation warning</h2>
-<p>VMC images on FAT32 or exFAT drives can become fragmented if the file was not written contiguously. OPL checks for fragmentation at launch time. If the assigned VMC file is fragmented, you will see:</p>
+<h2 id="fragmentation">Creation errors and fragmentation warnings</h2>
+<p>Creating a valid card image and placing it in a layout the launch core can use are separate steps. A newly created 8 MB file can occupy multiple extents even when the drive has plenty of free space. Free space alone does not prove contiguity.</p>
+<p>For the native OPL core on FAT32/exFAT BDM storage, VMC writes use a contiguous sector range. RiptOPL checks the layout before enabling the card. A fragmentation prompt offers to launch with the physical memory card instead; declining returns to the menu. Do not bypass this check.</p>
 <pre>VMC %s file is fragmented. Continue with Memory Card in slot %d?</pre>
-<p>Answering <b>Yes</b> allows the game to launch using the physical Memory Card in that slot instead. To resolve fragmentation permanently, delete the VMC image and recreate it on a freshly formatted or less-full drive, or copy the image off the drive and back again after the drive has been defragmented.</p>
-
-<div class="callout info"><div class="h">HDD VMC fragmentation</div>
-VMC images on an internal APA/PFS HDD are stored inside the PFS filesystem and are not subject to FAT-style fragmentation — the fragmentation warning will not appear for HDD-based VMCs.
-</div>
+<p>On MMCE, unsupported filesystem queries previously produced a false creation-time fragmentation warning. <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/877">PR #877</a> distinguishes unsupported queries from a definite layout result. It does not establish that USB or internal exFAT reports have the same cause.</p>
+<div class="callout amber"><div class="h">Preserve your saves</div>Back up an existing VMC before changing its allocation or recreating it. Modify/reformat can destroy saves. Copying a backup back to the drive can change its layout, but does not guarantee a contiguous allocation; verify before use. Do not delete your only saved copy to try a different allocation.</div>
+<p><b>APA/PFS HDD:</b> the native HDD VMC driver has its own bounded inode/block mapping. It can also display a fragmentation warning when that mapping cannot be obtained; APA is not exempt from allocation limits. Internal exFAT HDD uses the BDM path instead.</p>
+<p><b>Neutrino:</b> its BDM mapping can use multiple extents, with a shared 64-fragment budget across the game and memory-card files in the bundled runtime. A native OPL contiguity warning and a Neutrino fragment-budget failure are different checks. Record the selected core and the exact point where the error appears.</p>
+<p>For a creation failure, record the error text/code, whether progress completed, whether the file remains, PS2 model, RiptOPL version, loader/device, FAT32/exFAT/APA filesystem, changed settings, VMC and PADEMU state. Include whether the same card works after a retry or only until reboot. See <a href="troubleshooting.html#vmc-errors">VMC troubleshooting</a>.</p>
 
 <h2 id="access-errors">Access errors at launch</h2>
 <p>If a VMC file cannot be opened at game launch — for example, because the file is missing or the drive is not ready — OPL shows:</p>
@@ -190,8 +191,7 @@ VMC images on an internal APA/PFS HDD are stored inside the PFS filesystem and a
 <p><b>Rules that follow from Neutrino's design:</b> the <code>.bin</code> must already exist —
 Neutrino opens it read-write with no create and <em>aborts the whole boot</em> if it can't, which is
 why RiptOPL creates cards at config time (per-game VMC menu) and verifies at launch, skipping a
-missing card with a warning instead of black-screening. Upstream caveats (Neutrino's
-<code>mc_emu</code>, as of mid-2026): only <b>port&nbsp;1 (<code>-mc0</code>)</b> is actually
+missing card with a warning instead of black-screening. Bundled-runtime caveats (<a href="https://github.com/rickgaiser/neutrino/blob/7be8de2/iop/mc_emu/src/mcemu_var.c">Neutrino's <code>mc_emu</code> at <code>7be8de2</code></a>): only <b>port&nbsp;1 (<code>-mc0</code>)</b> is actually
 emulated — <code>-mc1</code> is accepted but the second port stays inactive — and the advertised
 card geometry is hardcoded (≈ the first 4&nbsp;MB of the image is addressed). Prefer slot&nbsp;1 and
 8&nbsp;MB cards for predictable results.</p>
@@ -208,7 +208,7 @@ Earlier OPL builds had a bug where VMC filenames containing spaces were truncate
 <p>VMC image files are plain binary files and are not tied to any particular OPL build. A VMC created in RiptOPL can be read by stock OPL, wOPL, or uOPL — and vice versa — as long as the image is stored at the path those builds expect. Artwork, themes, VMCs, and favorites are shared between RiptOPL and other OPL variants on the same drive.</p>
 
 <details class="deep"><summary>Can I use a real Memory Card dump as a VMC?</summary>
-<p>In principle, a raw Memory Card dump in the correct PS2 format (valid superblock, matching size) should work as a VMC image — but this depends on how the dump was made. Tools that produce a bit-for-bit dump of the card's flash layout are compatible. Dumps made by software that reconstructs a logical filesystem may not match the expected superblock format that OPL validates. The safest approach is to create a fresh VMC in OPL and use a save manager (such as MyMC or OPL itself via the built-in transfer feature, if available) to copy individual saves into it.</p>
+<p>In principle, a raw Memory Card dump in the correct PS2 format (valid superblock, matching size) should work as a VMC image — but this depends on how the dump was made. The image must contain 512-byte data pages without the physical card's ECC/spare bytes; a raw flash dump including those bytes is not directly compatible. Dumps made by software that reconstructs a logical filesystem may not match the expected superblock format that OPL validates. The safest approach is to create a fresh VMC in OPL and use a save manager (such as MyMC with a supported PS2 card image) to copy individual saves into it.</p>
 </details>
 
 <details class="deep"><summary>Can I assign the same VMC file to multiple games?</summary>

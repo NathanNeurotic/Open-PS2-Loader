@@ -346,6 +346,19 @@ shelf you last left it on.
   <a class="tile" href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span><b>POPStarter docs</b><span>PS1 config, IGR, cheats, multi-disc</span></a>
   <a class="tile" href="https://www.psx-place.com/threads/open-ps2-loader-game-bug-reports.19401/"><span class="icon icon-start"></span><b>Bug report thread</b><span>Report game-specific compatibility issues</span></a>
 </div>
+<h2 id="vmc-errors">VMC creation or layout errors</h2>
+<ol><li>Back up any existing card. Record the exact error text and whether it appears during creation, after progress finishes, or during launch.</li><li>Check that the game's device has a writable <code>VMC/</code> directory and enough space. For network cards, verify the server/share allows writes.</li><li>Use the current rolling release before comparing MMCE behavior; its unsupported-query fix does not prove that a USB card is contiguous.</li><li>Record the core (OPL or Neutrino), transport and filesystem. Native BDM VMC needs contiguous storage; Neutrino's game and card mappings share a fragment budget. See <a href="vmc.html#fragmentation">VMC layout checks</a>.</li><li>If retrying changes the result, include the before/after error, card filename and whether reboot brings it back. Avoid recreating a card containing the only copy of your saves.</li></ol>
+<h2 id="report-details">Details to include in a bug report</h2>
+<pre>PS2 MODEL:
+OPL VERSION:
+LOADER (MMCE, HDD, SMB, UDPFS, ETC):
+CORE (OPL / Neutrino / POPSTARTER / Ember):
+FILESYSTEM:
+SETTINGS CHANGED:
+VMC ENABLED/DISABLED:
+PADEMU ENABLED/DISABLED:
+EXACT ERROR AND REPRODUCTION STEPS:</pre>
+<p>Report a RiptOPL UI, configuration or handoff regression in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">RiptOPL's tracker</a>. If the game failure also reproduces in standalone Neutrino with the same arguments and files, report it to <a href="https://github.com/rickgaiser/neutrino/issues">Neutrino</a> and link the related report. Include a known-good version comparison when available; a black screen alone does not identify the responsible component.</p>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>
