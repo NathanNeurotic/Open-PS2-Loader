@@ -1,4 +1,5 @@
 #include "include/opl.h"
+#include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
 #include "include/supportbase.h"
@@ -2633,11 +2634,22 @@ static int bdmSaveCueSettings(item_list_t *itemList, int id, const char *name, c
     return cueSaveGameSettings(ps1Prefix, name, configSet);
 }
 
+static int bdmGetPs1SaveDir(item_list_t *itemList, int id, const char *name, int ember,
+                            char *directory, int directorySize, char *partition, int partitionSize)
+{
+    char root[64];
+    (void)id;
+    (void)partitionSize;
+    partition[0] = '\0';
+    bdmBuildPs1Prefix(root, sizeof(root), itemList->mode);
+    return saveIconPs1Directory(root, name, ember, directory, directorySize);
+}
+
 static item_list_t bdmGameList = {
     BDM_MODE, 2, 0, 0, MENU_MIN_INACTIVE_FRAMES, BDM_MODE_UPDATE_DELAY, NULL, NULL, &bdmGetTextId, &bdmGetPrefix, &bdmInit, &bdmNeedsUpdate,
     &bdmUpdateGameList, &bdmGetGameCount, &bdmGetGame, &bdmGetGameName, &bdmGetGameNameLength, &bdmGetGameStartup, &bdmDeleteGame, &bdmRenameGame,
     &bdmLaunchGame, &bdmGetConfig, &bdmGetImage, &bdmCleanUp, &bdmShutdown, &bdmCheckVMC, &bdmGetIconId, &bdmLaunchVcd,
-    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &bdmLaunchCue, &bdmGetItemView, &bdmGetSourceId, &bdmSaveCueSettings};
+    /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &bdmLaunchCue, &bdmGetItemView, &bdmGetSourceId, &bdmSaveCueSettings, &bdmGetPs1SaveDir};
 
 void bdmInitSemaphore()
 {

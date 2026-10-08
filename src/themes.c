@@ -14,6 +14,7 @@
 #include "include/vcdsupport.h" // vcdDisplayName -- display-only VCD game-ID prefix hide
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
 #include "include/saveicon.h"   // SaveIcon: the selected game's 3D save icon
+#include "include/cuesupport.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rabadge.h" // RA: mark over the cover
 #endif
@@ -2368,15 +2369,27 @@ static void drawSaveIcon(struct menu_list *menu, struct submenu_list *item, conf
     const char *startup = NULL;
     item_list_t *support = NULL;
     float xScale;
-    int w, h, cx, cy, slot;
+    int w, h, cx, cy, slot, ps1 = 0, ember = 0;
 
     vmc[0][0] = vmc[1][0] = '\0';
     if (gEnableSaveIcons && menu != NULL && menu->item != NULL && item != NULL)
         support = menu->item->userdata;
-    if (support != NULL && support->itemGetStartup != NULL && support->mode != APP_MODE &&
-        libListRowView(support, item->item.id) == LIB_VIEW_ISO)
+    if (support != NULL && support->itemGetStartup != NULL && support->mode != APP_MODE) {
         startup = support->itemGetStartup(support, item->item.id);
-    if (startup != NULL && config != NULL) {
+        ps1 = libListRowView(support, item->item.id) == LIB_VIEW_PS1;
+        if (ps1) {
+            if (support->mode == FAV_MODE)
+                ember = favGetItemKind(item->item.id) == FAV_KIND_CUE;
+            else if (support->itemGet != NULL)
+                ember = cueIsCueEntry(support->itemGet(support, item->item.id));
+            if (support->itemGetPs1SaveDir == NULL ||
+                !support->itemGetPs1SaveDir(support, item->item.id, startup, ember,
+                                            vmc[0], sizeof(vmc[0]), vmc[1], sizeof(vmc[1])))
+                startup = NULL;
+        } else if (libListRowView(support, item->item.id) != LIB_VIEW_ISO)
+            startup = NULL;
+    }
+    if (startup != NULL && !ps1 && config != NULL) {
         // The same path itemCheckVMC opens: <device prefix>VMC<separator><name>.bin.
         char *prefix = support->mode == FAV_MODE ? favGetItemPrefix(item->item.id) :
                                                    (support->itemGetPrefix != NULL ? support->itemGetPrefix(support) : NULL);
@@ -2390,7 +2403,10 @@ static void drawSaveIcon(struct menu_list *menu, struct submenu_list *item, conf
                 snprintf(vmc[slot], sizeof(vmc[slot]), "%sVMC%s%s.bin", prefix, (len > 0 && prefix[len - 1] == '\\') ? "\\" : "/", name);
         }
     }
-    saveIconSelect(startup, vmc[0], vmc[1], config != NULL);
+    if (ps1 && startup != NULL)
+        saveIconSelectPs1(vmc[0], vmc[1], ember);
+    else
+        saveIconSelect(startup, vmc[0], vmc[1], config != NULL);
     if (startup == NULL)
         return;
 
