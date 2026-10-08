@@ -129,24 +129,11 @@ static int cueNameIsDiscImage(const char *name, int len)
     return 0;
 }
 
-// Is this directory entry a game folder? Settled by opening it, never by d_type.
-//
-// The previous version of this comment argued that d_type is "a documented liar on MMCE clones" and
-// then trusted it whenever it said DT_DIR. That is the unsafe direction of the same claim: a liar
-// answering DT_DIR about a FILE is precisely the failure mode, and it put stray files in the PS1
-// list with an X button that could not work. A liar is not half-trustworthy.
-//
-// ALWAYS PROBE. There used to be a `d_type == DT_DIR` fast path here that returned 1 without
-// checking anything, and it is the reason stray files showed up as games in the PS1 list.
-//
-// d_type is not dependable across this project's drivers -- the MMCE theme scan already learned
-// that the hard way and opendir-probes for exactly this reason (mmceman on some clones reports
-// a d_type that does not describe the entry). A driver that mislabels a FILE as DT_DIR got that
-// file listed as an Ember game, with an X button that could never work.
-//
-// The fallback was always here; it was just unreachable whenever d_type lied. Trusting the
-// probe alone costs one opendir per entry in EMBER/games/, which is the same call the old
-// fallback made and is bounded by the number of game folders.
+// Is this directory entry a game folder? Settled by opening it, never by d_type: d_type is not
+// dependable across this project's drivers (the MMCE theme scan learned that the hard way --
+// mmceman on some clones reports a d_type that does not describe the entry), and a driver that
+// mislabels a FILE as DT_DIR would put a stray file in the PS1 list with an X button that cannot
+// work. The probe costs one opendir per entry, bounded by the number of folders.
 //
 // And being a folder is not enough. An Ember game is a folder holding a *.cue / *.exe / *.bin at
 // its TOP level -- io_find_disc does not recurse -- so a folder without one is a row whose X button
