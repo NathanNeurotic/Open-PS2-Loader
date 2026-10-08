@@ -709,6 +709,8 @@ static void ethLaunchCue(item_list_t *itemList, const char *cueName, config_set_
     // network configuration of its own, and writing POPSTARTER's files for an Ember launch would
     // be a side effect with no purpose.
 
+    cuePrepareRetroGemBarcode(ethPrefix, cueName);
+
     // UNMOUNT_EXCEPTION is load-bearing: Ember reads its game through the SMB mount that is live
     // right now, so that mount must survive the teardown.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);

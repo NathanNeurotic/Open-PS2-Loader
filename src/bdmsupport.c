@@ -1795,6 +1795,10 @@ static void bdmLaunchCue(item_list_t *itemList, const char *cueName, config_set_
     // before teardown. This is especially load-bearing for the newly reachable UDPBD Ember path.
     snprintf(launchName, sizeof(launchName), "%s", cueName);
 
+    // GameID is launch metadata, not Ember identity: resolve it from the actual .cue/.bin/.exe
+    // while the source device and GUI are still alive. A miss is best-effort and never blocks.
+    cuePrepareRetroGemBarcode(ps1Prefix, launchName);
+
     // UNMOUNT_EXCEPTION is load-bearing here, not defensive: Ember never resets the IOP, so the
     // device it reads its game from must still be mounted when it starts.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
