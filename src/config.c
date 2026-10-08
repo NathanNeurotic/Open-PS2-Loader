@@ -712,6 +712,7 @@ static void cfgReadLibconfigLine(char *line, char *group, size_t groupSize, conf
     char *p = line, *eq, *end, *v;
     char key[CONFIG_KEY_NAME_LEN], composed[2 * CONFIG_KEY_NAME_LEN];
     size_t klen, vlen;
+    int quoted = 0;
 
     while (isWS(*p))
         ++p;
@@ -769,6 +770,7 @@ static void cfgReadLibconfigLine(char *line, char *group, size_t groupSize, conf
         ++v;
 
     if (v < end && *v == '"') { // quoted string: strip the quotes
+        quoted = 1;
         ++v;
         if (end > v && end[-1] == '"')
             --end;
@@ -782,8 +784,20 @@ static void cfgReadLibconfigLine(char *line, char *group, size_t groupSize, conf
 
     { // libconfig bools -> the 0/1 our getters expect
         char val[CONFIG_KEY_VALUE_LEN];
-        memcpy(val, v, vlen);
-        val[vlen] = '\0';
+        if (quoted) {
+            // Undo writer escaping before the stored-value limit: repeated saves must not
+            // double separators or truncate a path based on its escaped file representation.
+            size_t i = 0;
+            while (v < end && i < sizeof(val) - 1) {
+                if (*v == '\\' && v + 1 < end && (v[1] == '\\' || v[1] == '"'))
+                    ++v;
+                val[i++] = *v++;
+            }
+            val[i] = '\0';
+        } else {
+            memcpy(val, v, vlen);
+            val[vlen] = '\0';
+        }
 
         if (strcmp(val, "true") == 0)
             strcpy(val, "1");
