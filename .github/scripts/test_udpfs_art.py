@@ -90,7 +90,7 @@ static int invalidations, rootOpens, folderOpens, imageCalls;
 static char imagePath[256];
 static const char *rootNames[12];
 static const char *folderNames[8][4];
-static int rootReadError, folderOpenError[8];
+static int rootReadError, folderOpenError[8], folderReadError[8], successfulReadErrno;
 static DIR rootDir, folders[8];
 static struct dirent returnedEntry;
 
@@ -131,7 +131,11 @@ static struct dirent *readdir(DIR *dir)
             errno = EIO;
     } else {
         name = folderNames[dir->kind][dir->pos++];
+        if (!name && folderReadError[dir->kind])
+            errno = EIO;
     }
+    if (name && successfulReadErrno)
+        errno = EIO;
     if (!name)
         return NULL;
     snprintf(returnedEntry.d_name, sizeof(returnedEntry.d_name), "%s", name);
@@ -157,7 +161,8 @@ static void reset(void)
     memset(folderOpenError, 0, sizeof(folderOpenError));
     udpfsArtCaseIndex = 0;
     udpfsArtCaseChecked = invalidations = rootOpens = folderOpens = imageCalls = 0;
-    rootReadError = 0;
+    rootReadError = successfulReadErrno = 0;
+    memset(folderReadError, 0, sizeof(folderReadError));
     serverOnline = 1;
 }
 static void check(const char *label, int ok)
@@ -235,6 +240,41 @@ int main(void)
     rootReadError = 0;
     udpfsDiscoverArtFolder();
     check("root enumeration may recover", udpfsArtCaseChecked && udpfsArtCaseIndex == 7);
+
+    reset();
+    rootNames[0] = "ART";
+    successfulReadErrno = 1;
+    udpfsDiscoverArtFolder();
+    check("successful read errno does not poison EOF", udpfsArtCaseChecked && rootOpens == 1);
+    udpfsDiscoverArtFolder();
+    check("completed discovery does not rescan", rootOpens == 1);
+
+    reset();
+    rootNames[0] = "ART"; rootNames[1] = "art";
+    folderReadError[0] = 1;
+    folderNames[7][0] = "cover.png";
+    udpfsDiscoverArtFolder();
+    check("canonical scan error does not latch", !udpfsArtCaseChecked);
+    folderReadError[0] = 0;
+    udpfsDiscoverArtFolder();
+    check("canonical scan recovers", udpfsArtCaseChecked && udpfsArtCaseIndex == 7);
+
+    reset();
+    rootNames[0] = "ART"; rootNames[1] = "art";
+    folderReadError[7] = 1;
+    udpfsDiscoverArtFolder();
+    check("alternative scan error does not latch", !udpfsArtCaseChecked);
+
+    reset();
+    rootNames[0] = "art";
+    folderReadError[7] = 1;
+    udpfsDiscoverArtFolder();
+    check("single candidate scan error does not latch", !udpfsArtCaseChecked);
+    folderReadError[7] = 0;
+    folderNames[7][0] = ".";
+    successfulReadErrno = 1;
+    udpfsDiscoverArtFolder();
+    check("empty folder with successful-read errno is usable", udpfsArtCaseChecked && udpfsArtCaseIndex == 7);
 
     reset();
     serverOnline = 0;

@@ -372,7 +372,14 @@ static int udpfsArtFolderHasFiles(unsigned int variant)
     dir = opendir(path);
     if (dir == NULL)
         return -1; // root entry may be a file named "art", not a directory
-    while ((entry = readdir(dir)) != NULL) {
+    for (;;) {
+        errno = 0;
+        entry = readdir(dir);
+        if (entry == NULL) {
+            if (errno != 0)
+                found = -2; // transient read failure; discovery must retry
+            break;
+        }
         if (entry->d_name[0] != '.') {
             found = 1;
             break;
@@ -397,8 +404,10 @@ static void udpfsDiscoverArtFolder(void)
     if (root == NULL)
         return;
 
-    errno = 0;
-    while ((entry = readdir(root)) != NULL) {
+    for (;;) {
+        errno = 0;
+        if ((entry = readdir(root)) == NULL)
+            break;
         if (strlen(entry->d_name) == 3 && strcasecmp(entry->d_name, "ART") == 0) {
             for (unsigned int i = 0; i < 8; i++) {
                 if (strcmp(entry->d_name, udpfsArtCaseNames[i]) == 0) {
@@ -425,6 +434,8 @@ static void udpfsDiscoverArtFolder(void)
     }
     if (candidates && (candidates & (candidates - 1u))) {
         int chosenState = udpfsArtFolderHasFiles(chosen);
+        if (chosenState == -2)
+            return;
         if (chosenState <= 0) {
             unsigned int fallback = chosenState == 0 ? chosen : 0;
             int haveFallback = chosenState == 0;
@@ -433,6 +444,8 @@ static void udpfsDiscoverArtFolder(void)
                 if (i == chosen || !(candidates & (1u << i)))
                     continue;
                 int candidateState = udpfsArtFolderHasFiles(i);
+                if (candidateState == -2)
+                    return;
                 if (candidateState > 0) {
                     chosen = i;
                     foundPopulated = 1;
@@ -451,8 +464,13 @@ static void udpfsDiscoverArtFolder(void)
     // For a single noncanonical entry, verify that it is actually a directory.
     // d_type is unreliable over this filesystem, so an open probe is necessary.
     // The common canonical ART path still takes no additional directory open.
-    if (chosen != 0 && !(candidates & (candidates - 1u)) && udpfsArtFolderHasFiles(chosen) < 0)
-        chosen = 0;
+    if (chosen != 0 && !(candidates & (candidates - 1u))) {
+        int chosenState = udpfsArtFolderHasFiles(chosen);
+        if (chosenState == -2)
+            return;
+        if (chosenState < 0)
+            chosen = 0;
+    }
 
     udpfsArtCaseChecked = 1;
     if (chosen != udpfsArtCaseIndex) {
