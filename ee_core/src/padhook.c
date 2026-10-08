@@ -317,7 +317,7 @@ static void IGR_PollUntilRequested(void)
 #ifdef RETROACHIEVEMENTS
 void IGR_RequestReset(void)
 {
-    /* The VBLANK handler below reads combo_type on its next tick and
+    /* The existing IGR loop reads combo_type on its next iteration and
        runs the reset from there; this only leaves the request. A reset
        already under way is not replaced. */
     if (Pad_Data.combo_type == 0x00)
