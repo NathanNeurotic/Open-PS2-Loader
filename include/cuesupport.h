@@ -149,7 +149,16 @@ void cueApplySettings(const char *devPrefix, const char *name, config_set_t *con
 // user mistake rather than a normal state, so paying for it once per launch is the right trade.
 // Returns 1 when an image is present, 0 when the folder is readable and holds none, and 1 when the
 // folder cannot be read at all (never block a launch on a probe that itself failed).
+// Resolve the exact disc image Ember would select for this game folder using Ember's priority
+// (.cue, then .exe, then .bin). Returns 1 and writes the full path, 0 if readable but empty,
+// -1 if the folder itself could not be probed. Launch identity remains the folder name.
+int cueResolveGameImage(const char *devPrefix, const char *name, char *out, int outSize);
+
 int cueGameHasImage(const char *devPrefix, const char *name);
+
+// Resolve the selected Ember image's actual PS1 serial and emit the RetroGEM optical barcode.
+// Best-effort launch metadata only: no GameID/read failure may block Ember.
+void cuePrepareRetroGemBarcode(const char *devPrefix, const char *name);
 
 // 1 when a published row is an Ember title rather than a POPSTARTER one. THE row-kind test; use it
 // for launch dispatch and art fallback instead of asking which view the page is on.

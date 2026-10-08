@@ -492,6 +492,8 @@ static void udpfsLaunchCue(item_list_t *itemList, const char *cueName, config_se
     // separately owned string, but following one lifetime rule keeps both launch paths safe.
     snprintf(launchName, sizeof(launchName), "%s", cueName);
 
+    cuePrepareRetroGemBarcode(udpfsPrefix, launchName);
+
     // UNMOUNT_EXCEPTION is load-bearing: Ember inherits this live mount. udpfsCleanUp keeps the
     // socket/module chain resident for the whole boot, so no network reinitialization is attempted.
     deinit(UNMOUNT_EXCEPTION, itemList->mode);
