@@ -188,6 +188,7 @@ int main(void) {
 #define RETROACHIEVEMENTS
 #define RA_MODE_CADUCEUS 1
 static int gRATelemetry=1, gRAMode=1, count=1, network=1;
+static int gRAHostIp[4];
 static unsigned char rapops_irx[sizeof(struct rapops_cfg)];
 static unsigned int size_rapops_irx=sizeof(rapops_irx);
 static int raVcdBootName(const char *p,char *s,int n) {(void)p;snprintf(s,n,"SLUS_012.15");return 0;}
