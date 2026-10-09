@@ -899,9 +899,9 @@ modules/network/rapull/rapull.irx: $(RAPULL_DEPS) | modules/network/rapull
 	$(MAKE) -C modules/network/rapull rebuild
 
 # PS1 under POPS: carries DEV9, SMSUTILS, SMSTCPIP, SMAP, raudp and rapull
-RAPOPS_DEPS := $(wildcard modules/network/rapops/*.c) modules/network/rapops/blobs.S \
-               modules/network/common/rapops_cfg.h modules/network/common/ra_snap.h \
-               modules/network/rapops/imports.lst modules/network/rapops/Makefile \
+RAPOPS_DEPS := $(wildcard modules/network/rapops/*.c) $(wildcard modules/network/rapops/*.h) \
+               modules/network/rapops/blobs.S $(wildcard modules/network/common/*.h) \
+               modules/network/rapops/irx_imports.h modules/network/rapops/imports.lst modules/network/rapops/Makefile \
                modules/network/raudp/raudp.irx modules/network/SMSTCPIP/SMSTCPIP.irx \
                modules/network/smap-ingame/smap.irx modules/network/SMSUTILS/SMSUTILS.irx \
                modules/network/rapull/rapull.irx
