@@ -139,6 +139,12 @@ static u32 g_raReplyIP;
 static u32 g_raVerifiedIP;
 static int g_raVerifiedMode = -1;
 static u8 g_raVerifiedSMBHost[4];
+static int g_raVerifiedCompanionHost[4];
+
+static int raHostIsExplicit(void)
+{
+    return (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) != 0;
+}
 
 void raNetForgetPeer(void)
 {
@@ -153,12 +159,14 @@ static void raNetRememberPeer(u32 ip)
     g_raVerifiedIP = ip;
     g_raVerifiedMode = gRAMode;
     memcpy(g_raVerifiedSMBHost, pc_ip, sizeof(g_raVerifiedSMBHost));
+    memcpy(g_raVerifiedCompanionHost, gRAHostIp, sizeof(g_raVerifiedCompanionHost));
 }
 
 unsigned int raNetPeerIP(void)
 {
     if (g_raVerifiedMode != gRAMode ||
-        memcmp(g_raVerifiedSMBHost, pc_ip, sizeof(g_raVerifiedSMBHost)) != 0)
+        memcmp(g_raVerifiedSMBHost, pc_ip, sizeof(g_raVerifiedSMBHost)) != 0 ||
+        memcmp(g_raVerifiedCompanionHost, gRAHostIp, sizeof(g_raVerifiedCompanionHost)) != 0)
         return 0;
     return g_raVerifiedIP;
 }
@@ -312,22 +320,34 @@ static void broadcast_target(struct sockaddr_in *to)
     to->sin_addr.s_addr = htonl(INADDR_BROADCAST);
 }
 
-/* Caduceus's paired catalogue is tied to the configured SMB server. Its
-   readiness, support check and link test must use that same PC, rather than
-   discovering an unrelated LAN service and then sending a game watch list
-   or pairing request to the wrong host. Xerabora keeps legacy broadcast. */
-static int caduceus_target(struct sockaddr_in *to)
+/* A dedicated RA host is optional. Without it, retain the existing
+   Caduceus-to-SMB host binding and Xerabora's broadcast discovery. An
+   override is a unicast destination for either mode and never changes the
+   SMB/HTTP game server or allows an arbitrary responder to replace it. */
+static int configured_ra_target(struct sockaddr_in *to, int port)
 {
-    if (!(pc_ip[0] | pc_ip[1] | pc_ip[2] | pc_ip[3]) ||
-        (pc_ip[0] == 255 && pc_ip[1] == 255 &&
-         pc_ip[2] == 255 && pc_ip[3] == 255))
+    const int *host = raHostIsExplicit() ? gRAHostIp : pc_ip;
+    int i;
+
+    if (!(host[0] | host[1] | host[2] | host[3]) ||
+        (host[0] == 255 && host[1] == 255 &&
+         host[2] == 255 && host[3] == 255))
         return 0;
+    for (i = 0; i < 4; i++)
+        if (host[i] < 0 || host[i] > 255)
+            return 0;
+
     memset(to, 0, sizeof(*to));
     to->sin_family = AF_INET;
-    to->sin_port = htons(RA_CADUCEUS_PORT);
-    to->sin_addr.s_addr = ((u32)pc_ip[0]) | ((u32)pc_ip[1] << 8) |
-                          ((u32)pc_ip[2] << 16) | ((u32)pc_ip[3] << 24);
+    to->sin_port = htons(port);
+    to->sin_addr.s_addr = ((u32)host[0]) | ((u32)host[1] << 8) |
+                          ((u32)host[2] << 16) | ((u32)host[3] << 24);
     return 1;
+}
+
+static int caduceus_target(struct sockaddr_in *to)
+{
+    return configured_ra_target(to, RA_CADUCEUS_PORT);
 }
 
 /* Discover without the capability, then send paired account requests only to
@@ -423,6 +443,11 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
         return -1;
 
     broadcast_target(&to);
+    if (gRAMode != RA_MODE_CADUCEUS && raHostIsExplicit() &&
+        !configured_ra_target(&to, RA_PORT)) {
+        disconnect(sock);
+        return -2;
+    }
 
     if (gRAMode == RA_MODE_CADUCEUS) {
         int session;
@@ -779,6 +804,13 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
     }
 
     broadcast_target(&to);
+    if (gRAMode != RA_MODE_CADUCEUS && raHostIsExplicit() &&
+        !configured_ra_target(&to, RA_PORT)) {
+        disconnect(sock);
+        snprintf(line1, sz1, "%s", _l(_STR_RA_TEST_NO_ANSWER));
+        snprintf(line2, sz2, "%s", _l(_STR_RA_TEST_NO_ANSWER2));
+        return 0;
+    }
     if (gRAMode == RA_MODE_CADUCEUS) {
         int session;
         if (!caduceus_target(&to)) {
