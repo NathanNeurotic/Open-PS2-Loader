@@ -81,8 +81,8 @@ with tempfile.TemporaryDirectory() as tmp:
 # Production menu exchange: validate bridge before disclosing the capability,
 # match page nonce and keep WAIT polling on the same host.
 network=(root/'src/ranet.c').read_text()
-target_a=network.index('static int caduceus_target(')
-target_b=network.index('\n}',target_a)+2
+target_a=network.index('static int raHostIsExplicit(')
+target_b=network.index('/* Discover without the capability',target_a)
 target=network[target_a:target_b]
 a=network.index('int raCaduceusPage(');b=network.index('\n}',a)+2
 network=network[a:b]
@@ -94,6 +94,7 @@ harness=r"""
 typedef unsigned char u8;
 typedef unsigned int u32;
 static u8 pc_ip[4]={42,0,0,0};
+static int gRAHostIp[4];
 struct sockaddr_in {int sin_family, sin_port;struct {unsigned s_addr;} sin_addr;};
 #define AF_INET 2
 #define INADDR_BROADCAST 0xffffffffu
