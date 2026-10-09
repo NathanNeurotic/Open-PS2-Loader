@@ -357,6 +357,7 @@ void *RA_OverlayEventBuffer(void)
 {
     struct ra_event *e = (struct ra_event *)UNCACHED_SEG(&ra_ovl_event);
     e->magic = e->seq = e->kind = e->arg = e->commit = 0;
+    ra_ovl_seen = 0;
     if (g_ee_core_config.raClientMode == 0)
         return RA_PulseEventBuffer();
     return &ra_ovl_event;
