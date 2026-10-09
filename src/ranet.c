@@ -70,6 +70,7 @@
 
 #ifdef RETROACHIEVEMENTS
 
+#include "include/rahash.h"
 #include "include/opl.h"
 #include "include/util.h"
 #include "include/ioman.h"
@@ -639,6 +640,14 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
                 }
             }
             saved++;
+            /* Bind the VCD's per-path watch list to this exact RA content
+               hash ONLY after its file has been completely persisted. If
+               local storage refuses an update, do not authorize an older
+               on-disk watch list with a new image hash. The SMB fallback
+               gets its own guard only when that copy actually succeeds. */
+            if (serial[0] == 'P' && strlen(serial) == 15 &&
+                raVcdWatchGuardStore(where[w], serial, hash) != 0)
+                LOG("RA: VCD guard was not saved: %s\n", file);
             LOG("RA: list saved: %s (%d bytes)\n", file, total);
         }
 
