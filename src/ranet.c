@@ -131,8 +131,36 @@
 
 /* Alignment is mandatory: rule 1 in the header. */
 static char g_rx[2048] __attribute__((aligned(64)));
+/* The last UDP responder is transient (and may not have passed protocol
+   validation). Only a completed watch-list exchange or a verified link
+   check can select a passive game's RA destination. */
 static u32 g_raReplyIP;
-unsigned int raNetPeerIP(void) { return g_raReplyIP; }
+static u32 g_raVerifiedIP;
+static int g_raVerifiedMode = -1;
+static u8 g_raVerifiedSMBHost[4];
+
+void raNetForgetPeer(void)
+{
+    g_raVerifiedIP = 0;
+    g_raVerifiedMode = -1;
+}
+
+static void raNetRememberPeer(u32 ip)
+{
+    if (ip == 0 || ip == htonl(INADDR_BROADCAST))
+        return;
+    g_raVerifiedIP = ip;
+    g_raVerifiedMode = gRAMode;
+    memcpy(g_raVerifiedSMBHost, pc_ip, sizeof(g_raVerifiedSMBHost));
+}
+
+unsigned int raNetPeerIP(void)
+{
+    if (g_raVerifiedMode != gRAMode ||
+        memcmp(g_raVerifiedSMBHost, pc_ip, sizeof(g_raVerifiedSMBHost)) != 0)
+        return 0;
+    return g_raVerifiedIP;
+}
 static unsigned char g_wl[RA_MAX_BYTES];
 
 /* The NIC settlement (design doc, decided 2026-09-03): RA's menu check is a
@@ -347,6 +375,8 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
     int sock, got;
     int total = 0, chunks = 0, received = 0, i;
 
+    /* A failed or mismatched new check must not reuse an old peer. */
+    raNetForgetPeer();
     if (info != NULL && infosz > 0)
         info[0] = '\0';
     if (info2 != NULL && info2sz > 0)
@@ -532,8 +562,10 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
        on whether the file reached the medium: on a USB stick writes sit
        in the USB driver's cache and the file may appear later, or never
        if the power goes off. */
-    if (SetWatchList(g_wl, total, serial) > 0)
+    if (SetWatchList(g_wl, total, serial) > 0) {
+        raNetRememberPeer(g_raReplyIP);
         raHashStep("8-list-in-memory");
+    }
     else
         raHashStep("8x-list-not-parsed");
 
@@ -638,13 +670,16 @@ void raLaunchNetworkUp(void)
         } else
             session = -1;
         if (session != 0) {
+            raNetForgetPeer();
             ClearWatchList();
             guiWarning(_l(_STR_CAD_UNTRACKED), 6);
             return;
         }
+        raNetRememberPeer(g_raReplyIP);
     }
 
     if (!linkUp) {
+        raNetForgetPeer();
         LOG("RA: network unavailable, launching without telemetry\n");
         ClearWatchList();
         guiWarning(_l(_STR_RA_NO_LINK_UNTRACKED), 6);
@@ -656,6 +691,7 @@ void raLaunchNetworkUp(void)
    answered; the round trip is measured with clock(). */
 int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
 {
+    raNetForgetPeer();
     struct sockaddr_in to, from;
     socklen_t fromlen;
     char myaddr[32], req[64];
@@ -722,7 +758,8 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
             /* 192: a multiple of 64 (rule 3) that leaves room for the
                terminating zero from the memset above. */
             got = recvfrom(sock, rx, sizeof(rx) - 64, RA_MSG_DONTWAIT, (struct sockaddr *)&from, &fromlen);
-            if (got >= 4 && strncmp(rx, "RAO1", 4) == 0)
+            if (got >= 4 && strncmp(rx, "RAO1", 4) == 0 &&
+                (to.sin_addr.s_addr == htonl(INADDR_BROADCAST) || from.sin_addr.s_addr == to.sin_addr.s_addr))
                 found = 1;
             else
                 DelayThread(RA_POLL_MS * 1000);
@@ -738,6 +775,7 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
         return 0;
     }
 
+    raNetRememberPeer(from.sin_addr.s_addr);
     {
         const char *ver = (got > 8 && strncmp(rx, "RAO1 OK ", 8) == 0) ? rx + 8 : "";
         unsigned int a = ntohl(from.sin_addr.s_addr);
