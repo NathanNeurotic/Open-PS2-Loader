@@ -83,7 +83,7 @@ typedef unsigned long long u64;
 
 typedef struct { u16 libpad; u16 libversion; u8 *pad_buf; int vb_count; int pos_combo1; int pos_combo2;
                  int pos_state; int pos_frame; u8 combo_type; u8 prev_frame; } paddata_t;
-typedef struct { int press; int vb_count; } powerbuttondata_t;
+typedef struct { int press; int vb_count; int latched; } powerbuttondata_t;
 /* Match the layout and fields of ps2sdk's ee_thread_t, not a success-only subset. */
 typedef struct {
     int status;
@@ -260,13 +260,35 @@ int main(void)
     armPad();
     Power_Button.press = 1;
     Power_Button.vb_count = 17;
+    Power_Button.latched = 1;
     Pad_Data.combo_type = IGR_COMBO_START_SELECT;
     Install_IGR();
     CHECK(Pad_Data.pad_buf == padBuf && Pad_Data.combo_type == IGR_COMBO_START_SELECT &&
-          Power_Button.press == 1 && Power_Button.vb_count == 17,
-          "repeated IGR installation does not discard live pad or power-button state");
+          Power_Button.press == 1 && Power_Button.vb_count == 17 && Power_Button.latched == 1,
+          "repeated IGR installation preserves live input and power state");
+
+    /* The physical button IRQ may remain asserted for multiple polling frames
+       when Mechacon cancellation is delayed. Count only the first edge. */
+    g_cfg.GameMode = 0;
+    Pad_Data.pad_buf = NULL;
     Pad_Data.combo_type = 0;
-    Power_Button.press = Power_Button.vb_count = 0;
+    Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
+    ndin = 0x20; poff = 0x04; scmd = 0;
+    for (int k = 0; k < 54; ++k)
+        IGR_CheckInputs();
+    CHECK(Power_Button.press == 1 && Power_Button.latched == 1 &&
+          Pad_Data.combo_type == IGR_COMBO_R3_L3,
+          "held CDVD event requests power-off, not false double-press reset");
+    CHECK(scmd == 0x1B, "single event still issues hardware cancel");
+    poff = 0;
+    IGR_CheckInputs();
+    CHECK(Power_Button.latched == 0, "input re-arms when hardware status clears");
+    poff = 0x04;
+    IGR_CheckInputs();
+    CHECK(Power_Button.press == 2, "new event counts as second press");
+    Pad_Data.combo_type = 0;
+    Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
+    ndin = poff = scmd = 0;
 @CHECKS@
     return fails ? 1 : 0;
 }
