@@ -79,6 +79,7 @@ struct EECoreConfig_t
     u32 *raWatchList;
     int raWatchCount;
     int raClientMode;
+    int raHostPinned; /* Explicit companion IP overrides legacy broadcast. */
     int raSnapBytes;
     void *raNodeList;
     int raNodeCount;
