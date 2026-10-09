@@ -298,7 +298,14 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
     to.sin_port = htons(RA_CADUCEUS_PORT);
-    to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    /* Only the configured SMB server may supply the paired account bridge.
+       Never send the capability to an arbitrary broadcast responder. */
+    if (!(pc_ip[0] | pc_ip[1] | pc_ip[2] | pc_ip[3])) {
+        disconnect(sock);
+        return -2;
+    }
+    to.sin_addr.s_addr = ((u32)pc_ip[0]) | ((u32)pc_ip[1] << 8) |
+                         ((u32)pc_ip[2] << 16) | ((u32)pc_ip[3] << 24);
     got = ask(sock, &to, "CADQ2 " RA_PROBE_HASH, g_rx, sizeof(g_rx));
     session = got > 0 ? raCaduceusSessionReply(g_rx, RA_PROBE_HASH) : -2;
     if (session != 0) {
