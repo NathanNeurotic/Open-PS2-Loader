@@ -88,6 +88,7 @@ static menu_list_t *selected_item;
 #ifdef RETROACHIEVEMENTS
 static void menuOpenAchievements(const char *hash);
 static char achImagePath[256], achImageStartup[16];
+static int achImageVcd, achReturnScreen;
 #endif
 static int actionStatus;
 static int menuSaveResult; // last per-game configWrite() result, published by _menuSaveConfig
@@ -776,6 +777,8 @@ void menuInitVcdMenu(int isEmber)
     if (!isEmber) {
         submenuAppendItem(&appMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
         submenuAppendItem(&appMenu, -1, NULL, GAME_RA_TEST, _STR_RA_TEST_LINK);
+        if (gRAMode == RA_MODE_CADUCEUS)
+            submenuAppendItem(&appMenu, -1, _l(_STR_CAD_VIEW_ACHIEVEMENTS), GAME_RA_ACHIEVEMENTS, -1);
     }
 #endif
 
@@ -2275,6 +2278,55 @@ void menuRenderAppMenu()
     guiDrawSubMenuHints();
 }
 
+#ifdef RETROACHIEVEMENTS
+/* Browsing a PS1 set is independent from instrumenting POPStarter. Caduceus
+   can resolve an RA PS1 hash via its paired game-ID service, while RiptOPL
+   continues to restrict PS1 in-game telemetry to supported USB devices. */
+static void menuOpenSelectedVcdAchievements(void)
+{
+    item_list_t *support;
+    const char *prefix, *colon, *name;
+    char path[256];
+    int gid, mode, rootLen;
+
+    if (gRAMode != RA_MODE_CADUCEUS || selected_item == NULL ||
+        selected_item->item == NULL || selected_item->item->current == NULL)
+        return;
+    support = selected_item->item->userdata;
+    if (support == NULL)
+        return;
+    gid = selected_item->item->current->item.id;
+    mode = support->mode == FAV_MODE ? favGetItemSourceMode(gid) : support->mode;
+    prefix = support->mode == FAV_MODE ? favGetItemPrefix(gid) :
+                                            (support->itemGetPrefix ? support->itemGetPrefix(support) : NULL);
+    name = support->itemGetName ? support->itemGetName(support, gid) : NULL;
+
+    /* Match the already validated USB VCD support-check path, including
+       Favorites. Do not silently probe unrelated/unsupported devices. */
+    colon = prefix ? strchr(prefix, ':') : NULL;
+    if (!bdmModeIsUSB(mode) || !colon || !name || !*name ||
+        menuSelectedRowView(support) != LIB_VIEW_PS1 ||
+        (support->mode == FAV_MODE && favGetItemKind(gid) != FAV_KIND_VCD)) {
+        guiShowRANotice(_l(_STR_CAD_HASH_UNSUPPORTED), NULL);
+        return;
+    }
+    rootLen = (int)(colon - prefix) + 1;
+    if (snprintf(path, sizeof(path), "%.*s/POPS/%s.VCD", rootLen, prefix, name) >= (int)sizeof(path)) {
+        guiShowRANotice(_l(_STR_CAD_HASH_UNSUPPORTED), NULL);
+        return;
+    }
+
+    if (achievementsRequestVcd(path)) {
+        snprintf(achImagePath, sizeof(achImagePath), "%s", path);
+        achImageStartup[0] = '\0';
+        menuOpenAchievements("image");
+        achImageVcd = 1;
+        achReturnScreen = GUI_SCREEN_APP_MENU;
+    } else
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+}
+#endif
+
 void menuHandleInputAppMenu()
 {
     if (!appMenu)
@@ -2320,6 +2372,8 @@ void menuHandleInputAppMenu()
         } else if (menuID == GAME_RA_TEST) {
             sbTestPCLinkDeferred();
             guiShowRANotice(_l(_STR_RA_LOOKING_FOR_PC), NULL);
+        } else if (menuID == GAME_RA_ACHIEVEMENTS) {
+            menuOpenSelectedVcdAchievements();
 #endif
         }
         // so the exit press wont propagate twice
@@ -2349,6 +2403,8 @@ static void menuCardText(int x, int y, int w, int h, const char *text, u64 color
 static void menuOpenAchievements(const char *hash)
 {
     achFromCard = hash != NULL;
+    achReturnScreen = GUI_SCREEN_GAME_MENU;
+    achImageVcd = 0;
     achKind = hash ? 'A' : 'G';
     snprintf(achTarget, sizeof(achTarget), "%s", hash ? hash : "0");
     achPage = achLibraryPage = achFilter = achSelected = 0;
@@ -2471,7 +2527,7 @@ void menuHandleInputAchievements(void)
     }
     if (cancel) {
         if (achFromCard)
-            guiSwitchScreen(GUI_SCREEN_GAME_MENU);
+            guiSwitchScreen(achReturnScreen);
         else if (achKind == 'A') {
             achKind = 'G';
             achPage = achLibraryPage;
@@ -2486,7 +2542,10 @@ void menuHandleInputAchievements(void)
         return;
     if (getKeyOn(KEY_SELECT)) {
         if (achFromCard && !strcmp(achTarget, "image")) {
-            achievementsRequestImage(achImagePath, achImageStartup);
+            if (achImageVcd)
+                achievementsRequestVcd(achImagePath);
+            else
+                achievementsRequestImage(achImagePath, achImageStartup);
             return;
         }
         achievementReload();
