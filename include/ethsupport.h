@@ -30,6 +30,10 @@ int ethEnsureSMBShareConnected(void);
 // (link mode + IP/DHCP), log on/open the share again, and rebuild the list. Safe to call repeatedly;
 // one request is coalesced while the IO worker is reconnecting.
 void ethRequestReconnect(void);
+// Explicit ETH Refresh: probe an apparently healthy SMB session on the serialized IO worker,
+// reconnect only if ECHO fails, otherwise invalidate the view and rescan in place.
+// Never probes every-frame/automatic refreshes or switches the active NIC protocol.
+void ethRequestCheckedRefresh(void);
 void ethDisplayErrorStatus(void); // Displays the current error status (if any). GUI must be already initialized.
 int ethGetNetConfig(u8 *ip_address, u8 *netmask, u8 *gateway);
 int ethApplyConfig(void);
