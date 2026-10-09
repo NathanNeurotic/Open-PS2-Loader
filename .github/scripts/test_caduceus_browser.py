@@ -15,7 +15,7 @@ prefix = r"""
 #define IO_CUSTOM_SIMPLEACTION 1
 #define O_RDONLY 0
 static void (*worker)(void);
-static int queue_fail, nic_busy, file_length = 64, network_fail, hashed;
+static int queue_fail, nic_busy, file_length = 64, network_fail, hashed, hashed_vcd;
 static char key_data[80], received[200];
 static const char *reply = "OK\tG\t0\t1\t0\t0\t0\tUser\tLibrary\n42\t10\t2\t1\t20\t-\tGame\t\t";
 static int sbHashGameBusy(void) { return 0; }
@@ -28,6 +28,13 @@ static int read(int fd, void *out, int size) { int n=file_length<size?file_lengt
 static int close(int fd) { return 0; }
 static int ioPutRequest(int type, void (*fn)(void)) { worker=fn; return queue_fail?-1:0; }
 static int raHashIsoDirect(const char *path, const char *startup, char *out) { hashed++; memset(out,'b',32);out[32]=0;return 0; }
+static int raHashVcd(const char *path, char *boot, int max, char *out) {
+    assert(!strcmp(path,"mass0:/POPS/First.VCD"));
+    hashed_vcd++;
+    snprintf(boot,max,"PSX.EXE");
+    memset(out,'c',32);out[32]=0;
+    return 0;
+}
 static int raCaduceusPage(const char *request, unsigned serial, char *out, int size) {
     strcpy(received,request); snprintf(out,size,"%s",reply); return network_fail?-1:0;
 }
@@ -59,6 +66,9 @@ int main(void) {
  network_fail=1;assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_ERROR);network_fail=0;
  assert(achievementsRequestImage("mass0:DVD/Game.iso","SLUS_123.45"));worker();
  assert(hashed==1 && strstr(received," A 0 0 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb "));
+ assert(achievementsRequestVcd("mass0:/POPS/First.VCD"));worker();
+ assert(hashed_vcd==1 && hashed==1 && strstr(received," A 0 0 cccccccccccccccccccccccccccccccc "));
+ assert(!achievementsRequestVcd(""));
  nic_busy=1;assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_OFFLINE);
  puts("PASS: browser parser, empty fields, malformed data, pairing bounds, worker isolation, ISO target and network failure");
 }
@@ -141,8 +151,8 @@ ui=r"""
 #include <string.h>
 #include "include/achievements.h"
 enum {KEY_CROSS=1,KEY_CIRCLE,KEY_START,KEY_SELECT,KEY_SQUARE,KEY_L1,KEY_R1,KEY_UP,KEY_DOWN};
-enum {GUI_SCREEN_GAME_MENU=3,GUI_SCREEN_MENU=1,SFX_CURSOR};
-static int achFromCard,achKind,achPage,achLibraryPage,achFilter,achSelected,achNeedsPage;
+enum {GUI_SCREEN_GAME_MENU=3,GUI_SCREEN_MENU=1,GUI_SCREEN_APP_MENU=4,SFX_CURSOR};
+static int achFromCard,achKind,achPage,achLibraryPage,achFilter,achSelected,achNeedsPage,achImageVcd,achReturnScreen;
 static char achTarget[33],achImagePath[256],achImageStartup[16];
 static int achIconIds[3],gSelectButton=KEY_CROSS,key,busy,screen,retries;
 static achievement_page_t current;
@@ -156,13 +166,16 @@ static void guiSwitchScreen(int id) {screen=id;}
 static void menuInitMainMenu(void) {}
 static void sfxPlay(int effect) {}
 static int achievementsRequestImage(const char *p,const char *s) {retries++;return 1;}
-""".replace('static void achievementsSnapshot','void achievementsSnapshot').replace('static int achievementsBusy','int achievementsBusy').replace('static int achievementsRequestImage','int achievementsRequestImage')
+static int achievementsRequestVcd(const char *p) {retries+=10;return 1;}
+""".replace('static void achievementsSnapshot','void achievementsSnapshot').replace('static int achievementsBusy','int achievementsBusy').replace('static int achievementsRequestImage','int achievementsRequestImage').replace('static int achievementsRequestVcd','int achievementsRequestVcd')
 uicheck=r"""
 int main(void) {
  achFromCard=1;achKind='A';strcpy(achTarget,"image");current.state=ACH_ERROR;
  key=KEY_SQUARE;menuHandleInputAchievements();assert(!achNeedsPage);
  key=KEY_SELECT;menuHandleInputAchievements();assert(retries==1 && !achNeedsPage);
- busy=1;key=KEY_CIRCLE;menuHandleInputAchievements();assert(screen==GUI_SCREEN_GAME_MENU);busy=0;
+ achImageVcd=1;achReturnScreen=GUI_SCREEN_APP_MENU;
+ key=KEY_SELECT;menuHandleInputAchievements();assert(retries==11 && !achNeedsPage);
+ busy=1;key=KEY_CIRCLE;menuHandleInputAchievements();assert(screen==GUI_SCREEN_APP_MENU);busy=0;
  achFromCard=0;achKind='G';current.state=ACH_READY;current.count=1;current.entries[0].id=42;
  key=KEY_CROSS;menuHandleInputAchievements();assert(achKind=='A' && !strcmp(achTarget,"42") && achNeedsPage);
  achNeedsPage=0;current.kind='A';current.total=6;achFilter=3;
