@@ -15,6 +15,7 @@ static unsigned int serial;
 static char requestKind;
 static int requestPage;
 static char imagePath[256], imageStartup[16];
+static int imageIsVcd;
 /* Empty fields are significant; strtok would merge them. */
 static char *field(char **cursor, char separator)
 {
@@ -127,7 +128,11 @@ static void loadPage(void)
         goto done;
     }
     if (imagePath[0]) {
-        if (raHashIsoDirect(imagePath, imageStartup, hash) != 0)
+        if (imageIsVcd) {
+            char boot[16];
+            if (raHashVcd(imagePath, boot, sizeof(boot), hash) != 0)
+                goto done;
+        } else if (raHashIsoDirect(imagePath, imageStartup, hash) != 0)
             goto done;
         snprintf(request, sizeof(request), "CADA1 %u A 0 0 %s", serial, hash);
     }
@@ -157,6 +162,7 @@ static void loadPage(void)
         result.state = ACH_ERROR;
 done:
     imagePath[0] = imageStartup[0] = 0;
+    imageIsVcd = 0;
     memset(key, 0, sizeof(key));
     memset(request, 0, sizeof(request));
     __asm__ volatile("" ::
@@ -182,32 +188,33 @@ int achievementsRequest(char kind, int page, int filter, const char *target)
     }
     return 1;
 }
-int achievementsRequestImage(const char *path, const char *startup)
+static int requestImage(const char *path, const char *startup, int isVcd)
 {
-    if (busy || sbHashGameBusy() || discCheckBusy() || !path || !startup ||
-        strlen(path) >= sizeof(imagePath) || strlen(startup) >= sizeof(imageStartup))
+    if (busy || sbHashGameBusy() || discCheckBusy() || !path || !*path ||
+        (!isVcd && !startup) || strlen(path) >= sizeof(imagePath) ||
+        (startup && strlen(startup) >= sizeof(imageStartup)))
         return 0;
     requestKind = 'A';
     requestPage = 0;
-    strcpy(imagePath, path);
-    strcpy(imageStartup, startup);
+    snprintf(imagePath, sizeof(imagePath), "%s", path);
+    snprintf(imageStartup, sizeof(imageStartup), "%s", startup ? startup : "");
+    imageIsVcd = isVcd;
     busy = 1;
     serial++;
     if (ioPutRequest(IO_CUSTOM_SIMPLEACTION, &loadPage) != IO_OK) {
         busy = 0;
+        imagePath[0] = imageStartup[0] = 0;
+        imageIsVcd = 0;
         return 0;
     }
     return 1;
 }
-void achievementsSnapshot(achievement_page_t *out)
+int achievementsRequestImage(const char *path, const char *startup)
 {
-    memset(out, 0, sizeof(*out));
-    if (busy) {
-        out->state = ACH_LOADING;
-        return;
-    }
-    __asm__ volatile("" ::
-                         : "memory");
-    *out = result;
+    return requestImage(path, startup, 0);
+}
+int achievementsRequestVcd(const char *path)
+{
+    return requestImage(path, NULL, 1);
 }
 #endif
