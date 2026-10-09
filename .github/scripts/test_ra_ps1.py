@@ -78,7 +78,10 @@ with tempfile.TemporaryDirectory(prefix='ra-ps1-') as directory:
 #include <stdlib.h>
 #endif
 #include "include/md5.h"
+#include "include/hdl_layout.h"
 typedef void (*ra_step_fn)(const char *);
+static int hddReadSectors(unsigned int lba,unsigned int n,void *out)
+    {(void)lba;(void)n;(void)out;return -1;}
 typedef struct { unsigned char trycount, spindlctrl, datapattern, pad; } sceCdRMode;
 enum { SCECdErNO=0, SCECdSecS2048=0, SCECdSpinNom=1, SCECdSpinStm=2 };
 #define LOG(...) ((void)0)
