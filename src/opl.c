@@ -233,6 +233,7 @@ int gEnableNotifications;
 #ifdef RETROACHIEVEMENTS
 int gRATelemetry;
 int gRAMode;
+int gRAHostIp[4];
 int gRABadges;
 #endif
 int gEnableArt;
@@ -2845,6 +2846,26 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
 
 // Shared reader for network settings (IP / DHCP / SMB / HTTP globals). Factored out so _loadConfig
 // and miniInit stay consistent.
+static void configReadRAHost(config_set_t *configOPL)
+{
+#ifdef RETROACHIEVEMENTS
+    const char *value;
+    int a, b, c, d;
+    char extra;
+    if (configGetStr(configOPL, CONFIG_OPL_RA_HOST_IP, &value) &&
+        sscanf(value, "%d.%d.%d.%d%c", &a, &b, &c, &d, &extra) == 4 &&
+        a >= 0 && a <= 255 && b >= 0 && b <= 255 &&
+        c >= 0 && c <= 255 && d >= 0 && d <= 255) {
+        gRAHostIp[0] = a;
+        gRAHostIp[1] = b;
+        gRAHostIp[2] = c;
+        gRAHostIp[3] = d;
+    }
+#else
+    (void)configOPL;
+#endif
+}
+
 static void configReadNetworkGlobals(config_set_t *configNet)
 {
     const char *temp;
@@ -3241,6 +3262,7 @@ static void _loadConfig()
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            configReadRAHost(configOPL);
             gRAMode = RA_MODE_XERABORA;
             configGetInt(configOPL, CONFIG_OPL_RA_MODE, &gRAMode);
             if (gRAMode != RA_MODE_CADUCEUS)
@@ -3905,6 +3927,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, gRATelemetry);
         configSetInt(configOPL, CONFIG_OPL_RA_BADGES, gRABadges);
         configSetInt(configOPL, CONFIG_OPL_RA_MODE, gRAMode);
+        snprintf(temp, sizeof(temp), "%d.%d.%d.%d", gRAHostIp[0], gRAHostIp[1], gRAHostIp[2], gRAHostIp[3]);
+        configSetStr(configOPL, CONFIG_OPL_RA_HOST_IP, temp);
 #endif
         configSetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, gEnableArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, gEnableDiscArt);
@@ -4878,6 +4902,7 @@ static void setDefaults(void)
     gEnableNotifications = 1;
 #ifdef RETROACHIEVEMENTS
     gRAMode = RA_MODE_XERABORA;
+    memset(gRAHostIp, 0, sizeof(gRAHostIp));
     gRATelemetry = 0; // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
     gRABadges = 1;    // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
 #endif
@@ -5210,6 +5235,7 @@ static void miniInit(int mode)
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            configReadRAHost(configOPL);
             gRAMode = RA_MODE_XERABORA;
             configGetInt(configOPL, CONFIG_OPL_RA_MODE, &gRAMode);
             if (gRAMode != RA_MODE_CADUCEUS)
