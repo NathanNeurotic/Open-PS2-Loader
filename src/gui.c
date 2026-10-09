@@ -7,6 +7,7 @@
 #include "include/opl.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/achievements.h"
+#include "include/ranet.h"
 #endif
 #include "include/gui.h"
 #include "include/diag.h" // gLastDeferredTimedOut -- a bounded wait that expired means the handler never ran
@@ -1557,6 +1558,11 @@ reshow_network:
             guiNetProtocolNeedsRestart())
             guiNetProtocolOfferRestart();
 
+        /* Any applied network/RA settings invalidate the peer selected by
+           a previous menu query, without doing new discovery here. */
+#ifdef RETROACHIEVEMENTS
+        raNetForgetPeer();
+#endif
         applyConfig(-1, -1, 0);
 #ifdef RETROACHIEVEMENTS
         if (gRAMode != previousRAMode)
