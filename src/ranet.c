@@ -292,10 +292,12 @@ static int open_pc_socket(char *myaddr, int sz, u8 ip[4])
     if (bind(sock, (struct sockaddr *)&me, sizeof(me)) < 0) {
         LOG("RA: bind failed\n");
         raHashStep("6x-bind-failed");
+        disconnect(sock);
+        return -1; /* Replies must reach the fixed RA_MY_PORT, not an ephemeral port. */
     }
 
-    ethGetNetConfig(ip, mask, gw);
-    if (ip[0] | ip[1] | ip[2] | ip[3])
+    memset(ip, 0, 4);
+    if (ethGetNetConfig(ip, mask, gw) >= 0 && (ip[0] | ip[1] | ip[2] | ip[3]))
         snprintf(myaddr, sz, " %d.%d.%d.%d %d", ip[0], ip[1], ip[2], ip[3], RA_MY_PORT);
 
     return sock;
@@ -363,6 +365,21 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
     }
     disconnect(sock);
     return -2;
+}
+
+/* Chunk offsets use a fixed 896-byte stride. Accepting short intermediate
+   chunks leaves gaps in g_wl even when the received byte sum matches total.
+   Check the advertised chunk count and every exact payload length before
+   copying or publishing an achievement watch list. */
+static int raExpectedChunkLength(int total, int chunks, int index)
+{
+    int remaining;
+    if (total <= 0 || total > RA_MAX_BYTES ||
+        chunks != (total + RA_CHUNK - 1) / RA_CHUNK ||
+        index < 0 || index >= chunks)
+        return -1;
+    remaining = total - index * RA_CHUNK;
+    return remaining > RA_CHUNK ? RA_CHUNK : remaining;
 }
 
 int raAskPC(const char *hash, const char *serial, const char *savepath,
@@ -502,7 +519,7 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
     }
 
     if (sscanf(g_rx + 8, "%d %d", &total, &chunks) != 2 ||
-        total <= 0 || total > RA_MAX_BYTES || chunks <= 0) {
+        raExpectedChunkLength(total, chunks, 0) < 0) {
         LOG("RA: malformed reply: %s\n", g_rx);
         disconnect(sock);
         return -3;
@@ -541,7 +558,7 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
             return -5;
         }
 
-        if (len < 0 || len > RA_CHUNK || i * RA_CHUNK + len > RA_MAX_BYTES || hdr == 0 || hdr + len > got) {
+        if (len != raExpectedChunkLength(total, chunks, i) || hdr == 0 || hdr + len > got) {
             LOG("RA: chunk %d does not fit\n", i);
             disconnect(sock);
             return -6;
@@ -562,11 +579,12 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
        on whether the file reached the medium: on a USB stick writes sit
        in the USB driver's cache and the file may appear later, or never
        if the power goes off. */
-    if (SetWatchList(g_wl, total, serial) > 0) {
-        raNetRememberPeer(g_raReplyIP);
-        raHashStep("8-list-in-memory");
-    } else
+    if (SetWatchList(g_wl, total, serial) <= 0) {
         raHashStep("8x-list-not-parsed");
+        return -6; /* Do not persist an invalid list as though support was confirmed. */
+    }
+    raNetRememberPeer(g_raReplyIP);
+    raHashStep("8-list-in-memory");
 
     /* And as a file, for future launches and so the game gets its badge
        in the list. Two copies: next to the game (the loader reads from
@@ -596,10 +614,16 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
                 continue;
             }
 
-            fwrite(g_wl, 1, (size_t)total, f);
-            fclose(f);
+            {
+                size_t written = fwrite(g_wl, 1, (size_t)total, f);
+                int closed = fclose(f);
+                if (written != (size_t)total || closed != 0) {
+                    LOG("RA: short/failed watch-list write: %s\n", file);
+                    unlink(file);
+                    continue;
+                }
+            }
             saved++;
-
             LOG("RA: list saved: %s (%d bytes)\n", file, total);
         }
 
