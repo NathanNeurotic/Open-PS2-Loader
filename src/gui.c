@@ -1558,7 +1558,7 @@ reshow_network:
             guiNetProtocolNeedsRestart())
             guiNetProtocolOfferRestart();
 
-            /* Any applied network/RA settings invalidate the peer selected by
+        /* Any applied network/RA settings invalidate the peer selected by
            a previous menu query, without doing new discovery here. */
 #ifdef RETROACHIEVEMENTS
         raNetForgetPeer();
