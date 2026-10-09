@@ -5,9 +5,10 @@
 #ifdef RETROACHIEVEMENTS
 
 #define RA_BROWSER_PAGE_SIZE 3
-#define RA_BROWSER_TEXT 100
+#define RA_BROWSER_TEXT      100
 
-typedef struct {
+typedef struct
+{
     unsigned int id, total, earned, hardcore, points;
     char icon[33];
     char title[64];
@@ -15,7 +16,8 @@ typedef struct {
     char date[20];
 } ra_browser_entry_t;
 
-typedef struct {
+typedef struct
+{
     int state, count, page, total, earned, maximum;
     unsigned int game_id;
     char user[28], title[64];
