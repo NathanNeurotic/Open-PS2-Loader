@@ -96,7 +96,7 @@ harness=r"""
 #include "modules/network/common/ra_client.h"
 typedef unsigned char u8;
 typedef unsigned int u32;
-static u8 pc_ip[4]={42,0,0,0};
+static int pc_ip[4]={42,0,0,0};
 static int gRAHostIp[4];
 struct sockaddr_in {int sin_family, sin_port;struct {unsigned s_addr;} sin_addr;};
 #define AF_INET 2
