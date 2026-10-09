@@ -2102,7 +2102,6 @@ static void menuCheckSelectedGameSupport(void)
                 guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
         }
     }
-
 }
 #endif
 
