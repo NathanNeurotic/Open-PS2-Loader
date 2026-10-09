@@ -13,6 +13,7 @@ prefix=r"""
 #include <string.h>
 #define RETROACHIEVEMENTS 1
 #define RA_EXPERIMENTAL_CARD_DMA 1
+#include "include/ra_features.h"
 #define UNCACHED_SEG(p) (p)
 typedef uint64_t u64;
 typedef uint32_t u32;
