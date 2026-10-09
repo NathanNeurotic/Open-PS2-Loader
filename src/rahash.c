@@ -625,6 +625,43 @@ static int hash_psx(const struct ra_src *src, char *boot, int boot_max, char *ou
     return 0;
 }
 
+/* PS1 image identity is the VCD path, not BOOT from SYSTEM.CNF. The latter
+   can be shared by many distinct PS1 games (especially PSX.EXE homebrew).
+   Retain the client's 15-byte serial ABI; derive a stable per-image key
+   without rereading the VCD's executable each time a game launches.
+   Including the mounted device root prevents two simultaneous USB volumes
+   with identically named VCDs from sharing the in-memory watch list. */
+int raVcdWatchKey(const char *vcdpath, char *out, int out_size)
+{
+    static const char hex[] = "0123456789abcdef";
+    md5_state_t md5;
+    md5_byte_t digest[16];
+    const unsigned char *p;
+    int i;
+
+    if (vcdpath == NULL || !vcdpath[0] || out == NULL || out_size < 16)
+        return -1;
+
+    md5_init(&md5);
+    for (p = (const unsigned char *)vcdpath; *p; p++) {
+        unsigned char c = *p;
+        if (c >= 'A' && c <= 'Z')
+            c += 'a' - 'A';
+        if (c == '\\')
+            c = '/';
+        md5_append(&md5, &c, 1);
+    }
+    md5_finish(&md5, digest);
+
+    out[0] = 'P';
+    for (i = 0; i < 7; i++) {
+        out[i * 2 + 1] = hex[digest[i] >> 4];
+        out[i * 2 + 2] = hex[digest[i] & 15];
+    }
+    out[15] = '\0';
+    return 0;
+}
+
 int raVcdBootName(const char *vcdpath, char *boot, int boot_max)
 {
     struct ra_src src = {open(vcdpath, O_RDONLY), RA_SRC_VCD};
