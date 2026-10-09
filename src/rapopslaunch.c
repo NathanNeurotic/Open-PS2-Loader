@@ -30,8 +30,10 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
         return 0; /* No support check/list: ordinary POPStarter launch. */
     if (!slotFree)
         return -1; /* FAT does not enforce O_EXCL: refuse the user-owned slot explicitly. */
+    /* A stale watch list must never make an otherwise playable PS1 game
+       unlaunchable when the adapter is down or has no usable IP. */
     if (ethGetNetConfig(ip, mask, gw) < 0 || !(ip[0] | ip[1] | ip[2] | ip[3]))
-        return -1;
+        return 0;
     if (snprintf(path, sizeof(path), "%sPOPS/MODULE_9.IRX", root) >= (int)sizeof(path))
         return -1;
     irx = malloc(size_rapops_irx);
