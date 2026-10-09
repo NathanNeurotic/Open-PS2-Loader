@@ -275,7 +275,7 @@ build permutation, and the release workflow excludes it from the permanent MEGA 
 diagnostic bundle rather than installable payload. The default build is unaffected by all of this — every RA source file and
 every call site is behind `#ifdef RETROACHIEVEMENTS`, and that is checked by comparing the two builds'
 symbol tables, loader core and embedded IOP modules. PR CI also builds the pinned
-**PS2DEVPINNED-RA** flavour and records the RA flag in its build manifest.
+**OFFICIALROLLING-RA** flavour and records the RA flag in its build manifest.
 
 ### Two IOP modules this flavour builds instead of taking from the SDK
 

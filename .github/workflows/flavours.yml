@@ -259,11 +259,11 @@ jobs:
             digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             pinned: "yes (2026-08-13)"
             opldiag: "1"
-          # RA is separately compiled; keep its disc core and modules covered on PRs.
-          - flavour: PS2DEVPINNED-RA
-            image: ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
-            digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
-            pinned: "yes (2026-08-13)"
+          # RA follows the official rolling toolchain used by the release app.
+          - flavour: OFFICIALROLLING-RA
+            image: ghcr.io/ps2homebrew/ps2homebrew:main
+            digest: ""
+            pinned: "no (tracks ps2homebrew:main)"
             opldiag: "0"
             ra: "1"
     runs-on: ubuntu-24.04
