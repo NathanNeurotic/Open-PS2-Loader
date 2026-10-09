@@ -63,7 +63,7 @@ static int sceSifSetDma(SifDmaTransfer_t *dma, int n) {
 static void ra_ctl_send(const char *p, int n) {
     assert(n > 5 && !memcmp(p, "RAK1 ", 5)); control_acks++;
 }
-static unsigned tick, limit, produce, quiet;
+static unsigned tick, limit, produce;
 static jmp_buf finished;
 static void ra_handle_pc(char *, int);
 static void ra_fmt(u8 *, u32, int);
@@ -83,7 +83,8 @@ static int ra_tx_busy(void) { return busy; }
 static void GetSystemTime(iop_sys_clock_t *t) { *t = 0; }
 static u32 ra_usec_delta(iop_sys_clock_t *a, iop_sys_clock_t *b) { (void)a; (void)b; return 1; }
 static int SMAPSendPacket(const void *, unsigned);
-static int ra_discover(void) { return 1; }
+static unsigned quiet;
+static int ra_discover(void) { assert(quiet == 1); return 1; }
 static void ra_frame_init(void);
 static void ra_drain_rx(void) { drains++; }
 static void ra_poll_pc(void) { polls++; }
@@ -109,7 +110,7 @@ static int SMAPSendPacket(const void *p, unsigned len) {
 static void ra_frame_init(void) { ra_head_build(); }
 static void DelayThread(unsigned us) {
     if (us != RA_POLL_US) {
-        assert(us == RA_QUIET_US - ra_disc_us);
+        assert(us == RA_QUIET_US);
         quiet++;
         return;
     }
@@ -177,7 +178,7 @@ int main(void) {
     puts("PASS: DMA advancement during multipart send and sequence wraparound");
     reset(); produce = 1; loop(2500);
     assert(packets == 625 && drains == 625 && polls == 625 && heartbeats == 1);
-    reset(); ra_disc_us = 0; ra_rx_in_game = 0; loop(501);
+    reset(); ra_rx_in_game = 0; loop(501);
     assert(packets == 3 && !drains && !polls && quiet == 1);
     reset(); ra_snap = NULL; loop(16);
     assert(packets == 4 && !ra_sent_any);
