@@ -51,7 +51,8 @@ int etharp_lookup_mac(u32 ip,u8 *mac) { return !arp_only_gateway || ip==ra_gatew
 int lwip_sendto(int s,const char *body,int n,int flags,struct sockaddr *dest,int len) {
     struct sockaddr_in *to=(struct sockaddr_in*)dest;
     sent_port=to->sin_port;
-    if(sent_port==18197) { assert(n==38 && !memcmp(body,RA_CADUCEUS_PROBE,38)); bridge_sends++; }
+    if(sent_port==18197) { assert(n==38 && !memcmp(body,RA_CADUCEUS_PROBE,38));
+        assert(to->sin_addr.s_addr==ra_server_ip && ra_server_ip==42); bridge_sends++; }
     else { assert(sent_port==18194 && !memcmp(body,"RAP1 ",5)); engine_sends++;
            if(ra_caduceus) assert(to->sin_addr.s_addr==42); }
     return n;
@@ -61,6 +62,7 @@ int lwip_recvfrom(int s,void*a,int b,char*out,int max,int flags,struct sockaddr 
     from->sin_addr.s_addr=42;
     from->sin_port=sent_port;
     if(sent_port==18197) {
+        if(scenario==5) from->sin_addr.s_addr=99; /* Foreign bridge must be ignored. */
         const char *msg=scenario==1?"CADR2 " RA_PROBE_HASH " OFFLINE NO":
                         scenario==2?"CADR2 ffffffffffffffffffffffffffffffff READY NO":
                                     "CADR2 " RA_PROBE_HASH " READY UNKNOWN";
@@ -82,12 +84,14 @@ int main(void) {
         assert(raCaduceusSessionReply(short_reply,RA_PROBE_HASH)==-3); }
     assert(ra_discover()==1 && bridge_sends==0 && engine_sends==1);
     ra_caduceus=1; engine_sends=0;
+    assert(ra_discover()==0 && bridge_sends==0 && engine_sends==0);
+    ra_server_ip=42;
     assert(ra_discover()==1 && bridge_sends==1 && engine_sends==1 && ra_dst_ip==42);
-    for(scenario=1;scenario<=4;scenario++) {
+    for(scenario=1;scenario<=5;scenario++) {
         bridge_sends=engine_sends=closed=0;
         ticks=0;
         if(!setjmp(deadline)) { ra_discover(); assert(0); }
-        if(scenario<3) assert(engine_sends==0);
+        if(scenario<3 || scenario==5) assert(engine_sends==0);
         if(scenario==4) assert(engine_sends>0); /* RAO1 NO must never select a peer. */
     }
     scenario=0; ra_rx_in_game = 0; ra_server_ip = 123; bridge_sends = engine_sends = 0;
@@ -98,7 +102,7 @@ int main(void) {
     ra_server_ip = 123; assert(ra_discover() == 1);
     ra_server_ip = 1; assert(ra_discover() == 0);
     ra_server_ip = 123; ra_netmask_ip = 0; assert(ra_discover() == 0);
-    puts("PASS: Xerabora/Caduceus discovery, offline, wrong peer, subnet-aware gateway and missing-mask guards");
+    puts("PASS: Xerabora broadcast, Caduceus pinned-host discovery, spoofed bridge refusal, offline and gateway guards");
 }
 '''
 with tempfile.TemporaryDirectory() as tmp:
