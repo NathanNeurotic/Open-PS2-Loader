@@ -33,7 +33,7 @@ Every tracked Caduceus launch rechecks its session. If the bridge is offline or 
 
 The wire format follows [Caduceus's bridge implementation](https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts). Caduceus's bundled engine version can differ from the standalone version recommended above; protocol compatibility does not establish identical game coverage or timing. This new mode has host tests for discovery, malformed/offline replies and host selection; **Caduceus end-to-end console tracking remains unverified**. The Xerabora hardware results below apply only to the tested Xerabora configuration.
 
-Both modes retain the existing restrictions: external Neutrino and PS1 launches do not load RiptOPL's telemetry core, UDP storage owns the NIC and blocks menu RA queries, and SMB/HTTP never let RA drain the game?s receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host?s ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. Choosing Caduceus does not bypass these guards or add hardcore support.
+Both modes retain the existing restrictions: external Neutrino and PS1 launches do not load RiptOPL's telemetry core, UDP storage owns the NIC and blocks menu RA queries, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. Choosing Caduceus does not bypass these guards or add hardcore support.
 
 ### Caduceus achievement browser and in-game cards
 
