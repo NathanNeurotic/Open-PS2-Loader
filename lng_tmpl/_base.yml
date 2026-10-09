@@ -1662,6 +1662,10 @@ gui_strings:
 
 - label: RA_MODE
   string: RA Mode
+- label: RA_HOST_IP
+  string: RA companion IP (0.0.0.0 = automatic)
+- label: HINT_RA_HOST_IP
+  string: "Optional dedicated RetroAchievements PC IPv4. Use 0.0.0.0 for legacy SMB/HTTP fallback or Xerabora discovery. Does not alter game-server settings."
 - label: HINT_RA_MODE
   string: Choose the PC client. Xerabora is the default; Caduceus checks its signed-in session first.
 - label: RA_CADUCEUS_OFFLINE
