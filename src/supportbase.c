@@ -2557,15 +2557,8 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
                 goto vcd_fail;
             q = raAskPC(hash, watchKey, path, info, sizeof(info), info2, sizeof(info2));
             raHashLogAdd(name, boot, hash);
-            if (q == 0) {
-                /* The PC supplied this list for the just-computed content
-                   hash. Without a persisted guard, a later path-identical
-                   VCD could inherit it. A failed guard write is untracked on
-                   next launch, rather than authorizing stale achievements. */
-                if (raVcdWatchGuardStore(path, watchKey, hash) != 0)
-                    raHashStep("8x-vcd-guard-not-saved");
+            if (q == 0)
                 guiShowRANotice(info[0] ? info : _l(_STR_RA_SUPPORTED), info2[0] ? info2 : _l(_STR_RA_START_TO_TRACK));
-            }
             else if (q == 1)
                 guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
             else if (q == -9)
