@@ -39,6 +39,7 @@ harness += peer
 harness += r"""
 int main(void) {
     gRAMode=RA_MODE_CADUCEUS;
+    assert(!raHostIsExplicit());
     g_raReplyIP=42;
     assert(raNetPeerIP()==0); /* Unvalidated datagram is never a launch peer. */
     raNetRememberPeer(42);
@@ -51,6 +52,7 @@ int main(void) {
     assert(raNetPeerIP()==0); /* Changed SMB server invalidates selected host. */
     pc_ip[3]=10;
     gRAHostIp[0]=10;
+    assert(raHostIsExplicit());
     assert(raNetPeerIP()==0); /* Changing the dedicated companion invalidates it too. */
     gRAHostIp[0]=0;
     raNetForgetPeer();
