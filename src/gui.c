@@ -1555,12 +1555,13 @@ reshow_network:
         // OK is this page's apply button. A protocol change made on Game Sources (or declined here
         // earlier) is still waiting on a restart, so OK offers it again rather than doing nothing.
         if (gNetworkProtocol == netProtocolWas && (result == NETCFG_OK || result == NETCFG_RECONNECT) &&
-            guiNetProtocolNeedsRestart())
+            guiNetProtocolNeedsRestart()) {
             guiNetProtocolOfferRestart();
+        }
 
+#ifdef RETROACHIEVEMENTS
         /* Any applied network/RA settings invalidate the peer selected by
            a previous menu query, without doing new discovery here. */
-#ifdef RETROACHIEVEMENTS
         raNetForgetPeer();
 #endif
         applyConfig(-1, -1, 0);
