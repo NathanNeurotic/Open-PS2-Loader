@@ -51,6 +51,8 @@ static u32 ra_hb_rx, ra_hb_rau, ra_ee_event = 1;
 static struct ra_event ra_event;
 typedef struct { void *src, *dest; int size, attr; } SifDmaTransfer_t;
 static unsigned events, control_acks;
+static int sceSifDmaStat(int id) { (void)id; return -1; }
+static int SMAPReadNotice(void *out, unsigned capacity) { (void)out; (void)capacity; return 0; }
 static void SysClock2USec(iop_sys_clock_t *t, u32 *sec, u32 *us) {
     (void)t; *sec = 10; *us = 0;
 }
@@ -62,6 +64,7 @@ static void ra_ctl_send(const char *p, int n) {
 }
 static unsigned tick, limit, produce, quiet;
 static jmp_buf finished;
+static void ra_handle_pc(char *, int);
 static void ra_fmt(u8 *, u32, int);
 static void ra_fmt_err(u8 *, int);
 static void snapshot(u32 seq, u32 bytes) {

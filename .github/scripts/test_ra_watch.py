@@ -33,7 +33,9 @@ static struct ra_node gNodeList[RA_NODE_MAX];
 static char gWatchStartup[16];
 static u32 *gBlockList;
 static struct ra_node *gBlockNodes;
-static void *gBlockSnap;
+static void *gBlockSnap, *gBlockOverlay;
+static int gRAMode;
+#define RA_MODE_CADUCEUS 1
 static void raLaunchNote(const char *s, int a, int b) {(void)s; (void)a; (void)b;}
 '''
 loader = '\n'.join(function(watch, n) for n in (

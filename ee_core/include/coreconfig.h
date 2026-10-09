@@ -83,6 +83,8 @@ struct EECoreConfig_t
     void *raNodeList;
     int raNodeCount;
     void *raSnapBuf;
+    void *raOverlayBuf;
+    char raHost[16];
 #endif
 };
 

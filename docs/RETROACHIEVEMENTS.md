@@ -25,15 +25,27 @@ This selector chooses the PC service protocol; it does not enable telemetry by i
 | Mode | Menu and launch behavior |
 |---|---|
 | Xerabora | Existing xeRAbora discovery, watch-list transfer and in-game telemetry |
-| Caduceus | Check the Caduceus signed-in session, then use its xeRAbora-compatible engine for watch lists and telemetry |
+| Caduceus | Signed-in session checks, compatible watch lists/telemetry, account and game achievement browsing, and in-game title/points cards |
 
-Caduceus adds a UDP **18197** catalog/session bridge (`CADQ2` / `CADR2`). Once a ready bridge is found, RiptOPL requests watch lists from the engine on that same PC at UDP **18194**. The in-game module repeats bridge discovery before contacting that PC's engine; a standalone Xerabora reply cannot substitute for the Caduceus bridge. UDP **18195** is the console's telemetry/notice port, and UDP **18196** is its menu reply port. Permit these connections in the companion PC's firewall. Run one intended achievement service per host to avoid port conflicts.
+Caduceus adds a UDP **18197** catalog/session bridge (`CADQ2` / `CADR2`). Once a ready bridge is found, RiptOPL requests watch lists from the engine on that same PC at UDP **18194**. For local-device launches, the in-game module repeats bridge discovery before contacting that PC's engine; a standalone Xerabora reply cannot substitute for the Caduceus bridge. UDP **18195** is the console's telemetry/notice port, and UDP **18196** is its menu reply port. Permit these connections in the companion PC's firewall. Run one intended achievement service per host to avoid port conflicts.
 
 If Caduceus reports **OFFLINE**, sign in through the companion service and retry. RiptOPL never stores your RetroAchievements password or API key. A successful bridge query only proves the session bridge answered; the subsequent watch-list transfer and game telemetry must also succeed. An unknown catalog hash is not interpreted as an offline session: the engine's watch-list result remains authoritative.
 
 The wire format follows [Caduceus's bridge implementation](https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts). Caduceus's bundled engine version can differ from the standalone version recommended above; protocol compatibility does not establish identical game coverage or timing. This new mode has host tests for discovery, malformed/offline replies and host selection; **Caduceus end-to-end console tracking remains unverified**. The Xerabora hardware results below apply only to the tested Xerabora configuration.
 
-Both modes retain the existing restrictions: external Neutrino and PS1 launches do not load RiptOPL's telemetry core, UDP storage owns the NIC and blocks menu RA queries, and SMB/HTTP retain the existing receive-during-game restriction. Choosing Caduceus does not bypass these guards or add hardcore support.
+Both modes retain the existing restrictions: external Neutrino and PS1 launches do not load RiptOPL's telemetry core, UDP storage owns the NIC and blocks menu RA queries, and SMB/HTTP never let RA drain the game?s receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host?s ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. Choosing Caduceus does not bypass these guards or add hardcore support.
+
+### Caduceus achievement browser and in-game cards
+
+Choose **Caduceus achievements** from the main menu to browse account games and progress. Select a game to see its achievements, points, descriptions and unlock dates. **L1/R1** changes pages, **Square** cycles All / Earned / Locked / Hardcore, **Select** refreshes, and Back returns to the previous view. Hardcore is a filter for existing account history; it does not enable hardcore tracking.
+
+For a local ISO, **View achievements** in the game's menu hashes the image and opens that game's set directly. Formats that cannot be hashed on the console can still be browsed through the account library. The browser uses the I/O worker; Back remains available during network requests. Requests finish with bounded retries and cannot overwrite each other's shared state.
+
+The browser requires a configured, accessible SMB share containing **ART/CADUCEUS.KEY**, created by the companion service, even when games are on USB, MMCE or internal exFAT storage. The key is a 64-character pairing capability, not an RA password/API key. The service also supplies optional **ART/<icon-key>_RA.png** badge images; only the visible page is cached. Permit UDP **18198** for browser queries. Pairing requests go to the discovered Caduceus host, never to LAN broadcast. Restrict the share to trusted devices: the LAN protocol is unencrypted. To revoke pairing, stop the service, remove its key file and restart it.
+
+Caduceus unlock notices display a compact upper-right card with a trophy, achievement title and points. Older notices without a title show the achievement ID. Duplicate notices are suppressed, while a richer title-bearing copy can upgrade a legacy notice. Xerabora mode retains its gold pulse. The new card and browser are adapted from [Rian6's PS2 implementation](https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f), under AFL-3.0.
+
+**The card renderer remains experimental and requires console validation.** It uses a bounded, loader-owned packet, skips busy GIF transfers and unsupported framebuffers, and records game display writes without forcing a video mode. It reserves about 30 KiB only for Caduceus launches with a watch list; if the reservation would cross protected memory bounds, telemetry continues without the card. No host test can establish game timing or graphics compatibility. The existing network-share stability warning still applies.
 
 ---
 

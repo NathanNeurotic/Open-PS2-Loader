@@ -163,7 +163,12 @@ static gui_screen_handler_t screenHandlers[] = {{&menuHandleInputMain, &menuRend
                                                 {&menuHandleInputMenu, &menuRenderMenu, 1},
                                                 {&menuHandleInputInfo, &menuRenderInfo, 1},
                                                 {&menuHandleInputGameMenu, &menuRenderGameMenu, 1},
-                                                {&menuHandleInputAppMenu, &menuRenderAppMenu, 1}};
+                                                {&menuHandleInputAppMenu, &menuRenderAppMenu, 1}
+#ifdef RETROACHIEVEMENTS
+                                                ,
+                                                {&menuHandleInputAchievements, &menuRenderAchievements, 1}
+#endif
+};
 
 // default screen handler (menu screen)
 static gui_screen_handler_t *screenHandler = &screenHandlers[GUI_SCREEN_MENU];

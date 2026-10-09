@@ -132,6 +132,7 @@
 /* Alignment is mandatory: rule 1 in the header. */
 static char g_rx[2048] __attribute__((aligned(64)));
 static u32 g_raReplyIP;
+unsigned int raNetPeerIP(void) { return g_raReplyIP; }
 static unsigned char g_wl[RA_MAX_BYTES];
 
 /* The NIC settlement (design doc, decided 2026-09-03): RA's menu check is a
@@ -278,6 +279,50 @@ static void broadcast_target(struct sockaddr_in *to)
     to->sin_family = AF_INET;
     to->sin_port = htons(RA_PORT);
     to->sin_addr.s_addr = htonl(INADDR_BROADCAST);
+}
+
+/* Discover without the capability, then send paired account requests only to
+   that bridge. WAIT retries stay pinned and never move to another PC. */
+int raCaduceusPage(const char *request, unsigned int serial, char *out, int size)
+{
+    struct sockaddr_in to;
+    char address[32], expected[32];
+    u8 ip[4];
+    int sock, attempt, got;
+    if (raNetNicBusy() || gRAMode != RA_MODE_CADUCEUS || !out || size < 1)
+        return -1;
+    out[0] = 0;
+    sock = open_pc_socket(address, sizeof(address), ip);
+    if (sock < 0)
+        return -1;
+    memset(&to, 0, sizeof(to));
+    to.sin_family = AF_INET;
+    to.sin_port = htons(RA_CADUCEUS_PORT);
+    to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+    got = ask(sock, &to, "CADQ2 " RA_PROBE_HASH, g_rx, sizeof(g_rx));
+    if (got <= 0 || raCaduceusSessionReply(g_rx, RA_PROBE_HASH) == -2) {
+        disconnect(sock);
+        return -2;
+    }
+    to.sin_addr.s_addr = g_raReplyIP;
+    to.sin_port = htons(18198);
+    snprintf(expected, sizeof(expected), "CADB1 %u ", serial);
+    for (attempt = 0; attempt < 40; attempt++) {
+        got = ask(sock, &to, request, g_rx, sizeof(g_rx));
+        if (got <= 0)
+            break;
+        if (strncmp(g_rx, expected, strlen(expected)))
+            continue;
+        if (!strcmp(g_rx + strlen(expected), "WAIT")) {
+            DelayThread(250000);
+            continue;
+        }
+        snprintf(out, size, "%s", g_rx + strlen(expected));
+        disconnect(sock);
+        return 0;
+    }
+    disconnect(sock);
+    return -2;
 }
 
 int raAskPC(const char *hash, const char *serial, const char *savepath,

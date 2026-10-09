@@ -69,6 +69,7 @@ extern struct irx_export_table _exp_raudp;
    gives SMAP). The PC's IP and MAC come from discovery. Own MAC is read
    from the controller registers. All IPs are in network byte order. */
 static u32 ra_src_ip = 0;
+static u32 ra_server_ip = 0, ra_gateway_ip = 0;
 static u32 ra_dst_ip = 0;
 static u8 ra_dst_mac[6];
 
@@ -139,7 +140,7 @@ static u32 ra_ee_event = 0;
 
 /* The record being sent, in IOP RAM: SIF DMA copies from here. Aligned
    for the DMA, and kept whole between sends. */
-static struct ra_event ra_event __attribute__((aligned(16)));
+static struct ra_event ra_event __attribute__((aligned(64)));
 
 /* Counters for the heartbeat: what this side saw, said to the
    PC every ten seconds, because a silent link cannot be told apart
@@ -738,6 +739,26 @@ static int ra_discover(void)
     int bridge_found = 0;
     int s, on = 1, len, tries = 0, w, got;
 
+    /* SMB owns the receive stack while loading/streaming the ISO. Never open
+       or poll a discovery socket in that mode. SMB traffic already resolves
+       the host (or gateway) in ARP; use that passive information for TX only.
+       Missing host/MAC disables telemetry rather than disturbing the game. */
+    if (!ra_rx_in_game) {
+        if (ra_server_ip == 0 || ra_server_ip == INADDR_BROADCAST)
+            return 0;
+        for (tries = 0; tries < RA_DISC_POLLS; tries++) {
+            int have_mac = etharp_lookup_mac(ra_server_ip, ra_dst_mac);
+            if (!have_mac && ra_gateway_ip != 0)
+                have_mac = etharp_lookup_mac(ra_gateway_ip, ra_dst_mac);
+            if (have_mac) {
+                ra_dst_ip = ra_server_ip;
+                return 1;
+            }
+            DelayThread(RA_DISC_POLL_US);
+        }
+        return 0;
+    }
+
     s = lwip_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (s < 0)
         return 0;
@@ -847,17 +868,16 @@ static u32 ra_dec_at(const char *s, int max)
 /* One message from the PC, whichever road it came in on. */
 static void ra_handle_pc(char *rx, int got)
 {
+    static int pending_dma;
     char ack[48];
     int dma = 0, n;
-
     if (got < 5)
         return;
-
+    if (pending_dma > 0 && sceSifDmaStat(pending_dma) >= 0)
+        return;
     ra_hb_rx++;
-
     if (rx[0] != 'R' || rx[1] != 'A' || rx[3] != '1' || rx[4] != ' ')
         return;
-
     if (rx[2] == 'R') {
         /* "RAR1": leave the game for the loader. The second copy of the
            datagram never matters: the first one ends this module. */
@@ -871,38 +891,63 @@ static void ra_handle_pc(char *rx, int got)
            seconds is one pulse. */
         static u32 last_id = 0xFFFFFFFF;
         static u32 last_sec = 0;
+        static int last_title = 0;
         iop_sys_clock_t clk;
-        u32 sec, usec, id;
-
+        u32 sec, usec, id, points;
         ra_hb_rau++;
-
-        id = ra_dec_at(&rx[5], 10);
+        if (got <= 5 || rx[5] < '0' || rx[5] > '9')
+            return;
+        id = ra_dec_at(&rx[5], got - 5 < 10 ? got - 5 : 10);
+        if (!id)
+            return;
+        points = 0;
+        {
+            int pos = 5;
+            while (pos < got && rx[pos] >= '0' && rx[pos] <= '9')
+                pos++;
+            while (pos < got && rx[pos] == ' ')
+                pos++;
+            if (pos < got)
+                points = ra_dec_at(&rx[pos], 6);
+            while (pos < got && rx[pos] >= '0' && rx[pos] <= '9')
+                pos++;
+            while (pos < got && rx[pos] == ' ')
+                pos++;
+            {
+                int i = 0;
+                while (pos < got && rx[pos] && i < 63) {
+                    unsigned char c = rx[pos++];
+                    ra_event.title[i++] = (c >= 32 && c < 127) ? c : ' ';
+                }
+                ra_event.title[i] = 0;
+            }
+            if (points > 0xFFFFFF)
+                points = 0xFFFFFF;
+        }
         GetSystemTime(&clk);
         SysClock2USec(&clk, &sec, &usec);
-
-        if (id == last_id && sec - last_sec < 3)
+        if (id == last_id && sec - last_sec < 3 && (last_title || !ra_event.title[0]))
             return;
+        last_title = ra_event.title[0] != 0;
         last_id = id;
         last_sec = sec;
-
         ra_event.magic = RA_EVENT_MAGIC;
         ra_event.seq++;
-        ra_event.kind = RA_EVENT_UNLOCK;
+        ra_event.kind = RA_EVENT_MAKE_UNLOCK(points);
         ra_event.arg = id;
     } else {
         return;
     }
-
+    ra_event.commit = ra_event.seq;
     if (ra_ee_event != 0) {
         SifDmaTransfer_t dmat;
-
         dmat.src = &ra_event;
         dmat.dest = (void *)ra_ee_event;
         dmat.size = sizeof(ra_event);
         dmat.attr = 0;
         dma = sceSifSetDma(&dmat, 1);
+        pending_dma = dma;
     }
-
     /* "RAK1 <seq> <ee-buffer> <dma-id>": the PC logs it, which is how a
        notice that never showed is traced to its link. */
     n = 0;
@@ -1076,6 +1121,14 @@ static void ra_thread(void *arg)
             ra_send_one();
             idle = 0;
         }
+        if (!ra_rx_in_game && iter % RA_IDLE_TICKS == 0) {
+            char notice[129];
+            int length = SMAPReadNotice(notice, 128);
+            if (length > 0) {
+                notice[length] = 0;
+                ra_handle_pc(notice, length);
+            }
+        }
         if (ra_rx_in_game && iter % RA_IDLE_TICKS == 0) {
             ra_drain_rx();
             ra_poll_pc();
@@ -1119,14 +1172,27 @@ int _start(int argc, char *argv[])
         if (len >= RA_ARG_ID + 1 && argv[1][RA_ARG_ID - 1] == ',') {
             int i;
 
-            for (i = 0; i < RA_ARG_ID_MAX && argv[1][RA_ARG_ID + i] != '\0'; i++)
+            for (i = 0; i < RA_ARG_ID_MAX && argv[1][RA_ARG_ID + i] != '\0' && argv[1][RA_ARG_ID + i] != ' '; i++)
                 ra_game_id[i] = argv[1][RA_ARG_ID + i];
             ra_game_id[i] = '\0';
         }
+        if (len > RA_ARG_HOST && argv[1][RA_ARG_HOST - 1] == ',')
+            ra_server_ip = inet_addr(&argv[1][RA_ARG_HOST]);
     }
 
-    if (argc >= 3 && argv[2] != NULL)
+    if (argc >= 3 && argv[2] != NULL) {
+        const char *gateway = argv[2];
+        int field;
         ra_src_ip = inet_addr(argv[2]);
+        for (field = 0; field < 2; field++) {
+            while (*gateway && *gateway != ' ')
+                gateway++;
+            while (*gateway == ' ')
+                gateway++;
+        }
+        if (*gateway)
+            ra_gateway_ip = inet_addr(gateway);
+    }
 
     /* Without an own address there is nothing to put in the discovery
        request or the IP header. Staying silent beats sending garbage. */

@@ -145,6 +145,9 @@ static void TakeNodes(const struct ra_node *nodes, unsigned int count)
 static u32 *gBlockList = NULL;
 static struct ra_node *gBlockNodes = NULL;
 static void *gBlockSnap = NULL;
+static void *gBlockOverlay = NULL;
+
+void *GetWatchBlockOverlay(void) { return gBlockOverlay; }
 
 static void *align64(const void *p)
 {
@@ -160,6 +163,7 @@ void *PlaceWatchBlock(void *at)
     gBlockList = NULL;
     gBlockNodes = NULL;
     gBlockSnap = NULL;
+    gBlockOverlay = NULL;
 
     if (gWatchCount <= 0)
         return at;
@@ -178,6 +182,16 @@ void *PlaceWatchBlock(void *at)
     snap = (u8 *)align64(&words[nwords]);
     gBlockSnap = snap;
     snap += RA_SNAP_TOTAL_FOR(gWatchBytes + gNodeCount * RA_NODE_PAIR_BYTES);
+    snap = align64(snap);
+    if (gRAMode == RA_MODE_CADUCEUS) {
+        const unsigned int packetBytes = (6 * 16 + 192 * 40 * 4 + 63) & ~63;
+        unsigned int limit = (u32)at < 0x00100000 ? 0x00100000 : 0x02000000;
+        if ((u32)snap <= limit && packetBytes <= limit - (u32)snap) {
+            gBlockOverlay = snap;
+            snap += packetBytes;
+        } else
+            raLaunchNote("overlay-no-room", packetBytes, (u32)snap);
+    }
 
     LOG("RA: list block at %p, %d words, snapshot at %p, ends %p\n", words, nwords, gBlockSnap, snap);
     raLaunchNote("list-block", (int)((u8 *)snap - (u8 *)words), (int)(u32)words);
@@ -209,6 +223,7 @@ void ClearWatchList(void)
     gBlockList = NULL;
     gBlockNodes = NULL;
     gBlockSnap = NULL;
+    gBlockOverlay = NULL;
 }
 
 /* Appends one line per event while a game launches.

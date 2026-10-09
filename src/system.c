@@ -48,6 +48,7 @@
 #include "include/xparam.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rawatch.h"
+#include "include/ranet.h"
 #include "modules/network/common/ra_snap.h"
 #endif
 
@@ -2249,6 +2250,12 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     config->raNodeList = GetWatchBlockNodes();
     config->raNodeCount = GetNodeCount();
     config->raSnapBuf = GetWatchBlockSnap();
+    config->raOverlayBuf = GetWatchBlockOverlay();
+    {
+        u32 peer = raNetPeerIP();
+        const u8 *host = peer ? (const u8 *)&peer : pc_ip;
+        snprintf(config->raHost, sizeof(config->raHost), "%u.%u.%u.%u", host[0], host[1], host[2], host[3]);
+    }
 
     // The last point where the list is still ours: from here it goes into ee_core
     // with no feedback. A zero shows up in the launch log directly, rather than as

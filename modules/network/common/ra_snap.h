@@ -1,7 +1,6 @@
 /*
   RA: layout of the game-memory snapshot that ee_core writes into IOP
   memory every frame and the raudp IOP module reads from there.
-
   Why DMA into a buffer instead of a SIF command: a SIF command number is
   an index into the handler table, and in-game that table belongs to the
   game (OPL's own side allocates exactly one slot, see SifSetCmdBuffer in src/system.c). An
@@ -10,7 +9,6 @@
   tables are left alone: ee_core allocates a buffer in the IOP heap with
   SifAllocIopHeap, passes the address to the module as a load argument,
   and writes to it directly from then on.
-
   Torn writes: DMA is not atomic and copies from the start of the buffer
   to the end, so seq is repeated in a trailer word placed AFTER the
   values (RA_SNAP_TRAILER_OFF). The reader takes seq from the header,
@@ -19,18 +17,13 @@
   The seq_end field inside the header cannot detect this: it is written
   before the values arrive.
 */
-
 #ifndef __RA_SNAP_H__
 #define __RA_SNAP_H__
-
 #define RA_SNAP_MAGIC 0x52415331 /* "RAS1" */
-
 #include "ra_watch.h"
-
 /* Snapshot header, 64 bytes, a multiple of 16 as SIF DMA requires. The
    values follow, packed back to back in watch list order. Addresses are
    not sent: the PC client generated the watch list and knows the order.
-
    The tear check uses the trailer word after the values, not seq_end. */
 struct ra_snap
 {
@@ -55,36 +48,37 @@ struct ra_snap
     unsigned int pad[2];
     /* followed by bytes bytes of values, then the trailer word */
 };
-
-#define RA_SNAP_HDR ((int)sizeof(struct ra_snap))
-
+#define RA_SNAP_HDR                  ((int)sizeof(struct ra_snap))
 /* Offset of the trailer word (a copy of seq) after the values, 4-aligned */
-#define RA_SNAP_TRAILER_OFF(bytes) (RA_SNAP_HDR + (((bytes) + 3) & ~3))
-
+#define RA_SNAP_TRAILER_OFF(bytes)   (RA_SNAP_HDR + (((bytes) + 3) & ~3))
 /* Transfer size, trailer included, rounded up to 16: SIF DMA moves quadwords */
-#define RA_SNAP_DMA_SIZE(bytes) ((RA_SNAP_TRAILER_OFF(bytes) + 4 + 15) & ~15)
-
+#define RA_SNAP_DMA_SIZE(bytes)      ((RA_SNAP_TRAILER_OFF(bytes) + 4 + 15) & ~15)
 /* Buffer size on both sides: the largest transfer, rounded up to a
    64-byte cache line so the EE buffer shares no line with other data */
-#define RA_SNAP_TOTAL_FOR(bytes) ((RA_SNAP_DMA_SIZE(bytes) + 63) & ~63)
-#define RA_SNAP_TOTAL            RA_SNAP_TOTAL_FOR(RA_SNAP_MAX_BYTES)
-
-/* PC -> game side: raudp DMAs this 16-byte record into an ee_core buffer
+#define RA_SNAP_TOTAL_FOR(bytes)     ((RA_SNAP_DMA_SIZE(bytes) + 63) & ~63)
+#define RA_SNAP_TOTAL                RA_SNAP_TOTAL_FOR(RA_SNAP_MAX_BYTES)
+/* PC -> game side: raudp DMAs this 128-byte record into an ee_core buffer
    whose address came as a load argument; the VBLANK handler treats a new
    seq as a new event. */
-#define RA_EVENT_MAGIC 0x52414531 /* "RAE1" */
-
-#define RA_EVENT_UNLOCK 1 /* an achievement unlocked; arg is its id */
-#define RA_EVENT_RESET  2 /* leave the game for the loader, as the IGR combo does */
-
+#define RA_EVENT_MAGIC               0x52414531 /* "RAE1" */
+#define RA_EVENT_UNLOCK              1          /* an achievement unlocked; arg is its id */
+#define RA_EVENT_RESET               2          /* leave the game for the loader, as the IGR combo does */
+/* Fixed cache-line isolated event with bounded ASCII title: the low byte is RA_EVENT_* and unlock
+   points travel in the upper 24 bits. Old senders that leave them zero are
+   still valid. */
+#define RA_EVENT_KIND_MASK           0xFFu
+#define RA_EVENT_POINTS(k)           ((unsigned int)(k) >> 8)
+#define RA_EVENT_MAKE_UNLOCK(points) (RA_EVENT_UNLOCK | ((unsigned int)(points) << 8))
 struct ra_event
 {
     unsigned int magic; /* RA_EVENT_MAGIC */
     unsigned int seq;   /* increments per event; 0 means none yet */
     unsigned int kind;  /* RA_EVENT_* */
     unsigned int arg;
+    char title[64];
+    unsigned int reserved[11];
+    unsigned int commit; /* last DMA word: must match seq */
 };
-
 /* The load argument ee_core hands raudp as argv[1], comma separated:
      RA_ARG_SNAP   eight hex digits, the snapshot buffer in IOP RAM
      RA_ARG_EVENT  eight hex digits, the event buffer in EE RAM
@@ -99,6 +93,6 @@ struct ra_event
 #define RA_ARG_RX     18
 #define RA_ARG_ID     20
 #define RA_ARG_ID_MAX 15
-#define RA_ARG_MAX    (RA_ARG_ID + RA_ARG_ID_MAX) /* characters before the terminator */
-
-#endif /* __RA_SNAP_H__ */
+#define RA_ARG_HOST   (RA_ARG_ID + RA_ARG_ID_MAX + 1)
+#define RA_ARG_MAX    (RA_ARG_HOST + 15) /* characters before the terminator */
+#endif                                   /* __RA_SNAP_H__ */

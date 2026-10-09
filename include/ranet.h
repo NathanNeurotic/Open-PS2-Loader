@@ -29,4 +29,7 @@ void raLaunchNetworkUp(void);
    of text for the notice popup. Returns 1 when a PC client answered. */
 int raNetTestLink(char *line1, int sz1, char *line2, int sz2);
 
+unsigned int raNetPeerIP(void);
+int raCaduceusPage(const char *request, unsigned int serial, char *out, int size);
+
 #endif

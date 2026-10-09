@@ -268,8 +268,13 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
             args[RA_ARG_ID - 1] = ',';
             for (n = 0; n < RA_ARG_ID_MAX && config->GameID[n] != '\0'; n++)
                 args[RA_ARG_ID + n] = config->GameID[n];
-            args[RA_ARG_ID + n] = '\0';
-            n += RA_ARG_ID + 1;
+            for (; n < RA_ARG_ID_MAX; n++)
+                args[RA_ARG_ID + n] = ' ';
+            args[RA_ARG_HOST - 1] = ',';
+            for (n = 0; n < 15 && config->raHost[n]; n++)
+                args[RA_ARG_HOST + n] = config->raHost[n];
+            args[RA_ARG_HOST + n] = '\0';
+            n += RA_ARG_HOST + 1;
 
             for (k = 0; k < g_ipconfig_len && k < IPCONFIG_MAX_LEN; k++)
                 args[n + k] = g_ipconfig[k];

@@ -90,3 +90,5 @@ GS_MODE_DTV_1080P=0x54
 .equ Adapted_DISPLAY2,             8 # DWORD
 .equ Interlace_FRAME_Mode_Flag,   16 # BYTE -> Double Height for SMODE2's INT=1 (Interlace Mode) and FFMD=1 (FRAME Mode. Read every line)
 .equ SMODE2_adaptation,           17 # BYTE -> Adapted SMODE2 patch value
+
+.equ TRACK_ONLY, 19

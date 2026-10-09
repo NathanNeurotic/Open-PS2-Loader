@@ -62,7 +62,7 @@ GSMSourceGSRegs:    .space 88
 GSMDestGSRegs:      .space 88
 
 .globl GSMFlags
-GSMFlags: .space 19
+GSMFlags: .space 20
 
 .p2align 4                                          # align 16 bytes (IMPORTANT!!!)
 
@@ -153,6 +153,16 @@ Hook_SetGsCrt:
 
 # -----------------------------------------------------------------------------------------
 
+    /* RA can install this hook only to keep the GS write breakpoint alive.
+       In that mode preserve the game's original SetGsCrt arguments exactly. */
+    la      $t0, GSMFlags
+    lbu     $v1, TRACK_ONLY($t0)
+    beqz    $v1, Apply_GSM_SetGsCrt
+    sync.l                                          # preserve the original call's ordering
+    b       Call_SetGsCrt
+    nop
+
+Apply_GSM_SetGsCrt:
     la      $v0, GSMDestSetGsCrt
     lh      $a0, Target_INT($v0)
     lh      $a1, Target_MODE($v0)
@@ -477,6 +487,45 @@ have_some_write:                                    # Opcode is a write, so we m
     jal     get_access_info
     nop
     ld      $a1, 0($a1)                             # a1 = value in rt
+
+    /* RetroAchievements can reuse this handler as a passive recorder. In
+       TRACK_ONLY mode record the display values RA needs, then execute the
+       game's write unchanged. Do not enter any GSM adaptation path. */
+    lbu     $v1, TRACK_ONLY($s2)
+    beqz    $v1, normal_GS_write
+    nop
+
+    addi    $v1, $v0, -GS_PMODE
+    beqz    $v1, track_PMODE_write
+    addi    $v1, $v0, -GS_DISPFB1
+    beqz    $v1, track_DISPFB1_write
+    addi    $v1, $v0, -GS_DISPFB2
+    beqz    $v1, track_DISPFB2_write
+    addi    $v1, $v0, -GS_DISPLAY1
+    beqz    $v1, track_DISPLAY1_write
+    addi    $v1, $v0, -GS_DISPLAY2
+    beqz    $v1, track_DISPLAY2_write
+    nop
+    b       not_wanted_reg
+    nop
+
+track_PMODE_write:
+    b       not_wanted_reg
+    sd      $a1, Source_PMODE($s0)
+track_DISPFB1_write:
+    b       not_wanted_reg
+    sd      $a1, Source_DISPFB1($s0)
+track_DISPFB2_write:
+    b       not_wanted_reg
+    sd      $a1, Source_DISPFB2($s0)
+track_DISPLAY1_write:
+    b       not_wanted_reg
+    sd      $a1, Source_DISPLAY1($s0)
+track_DISPLAY2_write:
+    b       not_wanted_reg
+    sd      $a1, Source_DISPLAY2($s0)
+
+normal_GS_write:
 
     addi    $v1, $v0, -GS_PMODE
     beqz    $v1, have_PMODE_write                   # in case of  dest == GS_reg_PMODE
@@ -1213,7 +1262,13 @@ Enable_GSBreakpoint:
 # Trap writes to GS registers, so as to control their values
 
     li      $a0, TRAP_BASE                          # Address base for trapping
-    li      $a1, TRAP_MASK                          # Address mask for trapping
+    li      $a1, TRAP_MASK                          # Address mask for GSM
+    la      $t0, GSMFlags
+    lbu     $t0, TRACK_ONLY($t0)
+    beqz    $t0, gs_trap_address_ready
+    nop
+    li      $a1, 0x1FFFFF0F                         # RA: exclude CSR/IMR status page
+ gs_trap_address_ready:
                                                     # Trapping range is extended to match all kernel access segments
 
     sync.l                                          # Synchronize pipeline. Wait for any preceding loads to complete.
@@ -1232,6 +1287,12 @@ Enable_GSBreakpoint:
     sync.p                                          # Await instruction completion
 
     li      $a2, 0x60280000                         # Data read & write breakpoint on (DRE, DWE, DUE, DKE = 1). Syscalls are run in kernel mode, for the EE.
+    la      $t0, GSMFlags
+    lbu     $t0, TRACK_ONLY($t0)
+    beqz    $t0, gs_trap_control_ready
+    nop
+    li      $a2, 0x20280000                         # RA: writes only, never poll reads
+ gs_trap_control_ready:
     mtbpc   $a2
 
     sync.p                                          # Await instruction completion

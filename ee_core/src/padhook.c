@@ -401,6 +401,10 @@ static void IGR_Thread(void *arg)
             DPRINTF("Stopping GSM...\n");
             DisableGSM();
         }
+#ifdef RETROACHIEVEMENTS
+        else if (config->raOverlayBuf)
+            DisableGSTracker();
+#endif
 
         if (config->gCheatList) {
             if (EnableDebug)

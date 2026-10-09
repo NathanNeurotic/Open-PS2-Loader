@@ -11,6 +11,7 @@ harness = r'''
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <setjmp.h>
 #include <string.h>
 #include "modules/network/common/ra_client.h"
 typedef uint32_t u32;
@@ -33,14 +34,16 @@ struct sockaddr_in { int sin_family; unsigned short sin_port; struct { u32 s_add
 #define RA_DISC_POLL_US 1
 #define RA_DISC_SLOW_US 1
 #define htons(x) (x)
-static int ra_caduceus, ra_rx_in_game, ra_sock, scenario, sent_port, bridge_sends, engine_sends, closed;
-static u32 ra_src_ip = 1, ra_dst_ip, ra_disc_us;
+static int ra_caduceus, ra_rx_in_game = 1, ra_sock, scenario, sent_port, bridge_sends, engine_sends, closed;
+static u32 ra_src_ip = 1, ra_dst_ip, ra_disc_us, ra_server_ip, ra_gateway_ip;
 static u8 ra_dst_mac[6];
 int lwip_socket(int a,int b,int c) { return 7; }
 int lwip_setsockopt(int a,int b,int c,void*d,int e) { return 0; }
 int lwip_bind(int a,struct sockaddr*b,int c) { return 0; }
 void lwip_close(int s) { closed++; }
-void DelayThread(int t) {}
+static jmp_buf deadline;
+static int ticks;
+void DelayThread(int t) { if(scenario && ++ticks > 30) longjmp(deadline,1); }
 int ra_fmt_ip(char *out,u32 ip) { strcpy(out,"1.2.3.4"); return 7; }
 void ra_fmt(u8*out,unsigned int n,int len) { memcpy(out,"18195",5); }
 int etharp_lookup_mac(u32 ip,u8 *mac) { return 1; }
@@ -80,9 +83,13 @@ int main(void) {
     assert(ra_discover()==1 && bridge_sends==1 && engine_sends==1 && ra_dst_ip==42);
     for(scenario=1;scenario<=3;scenario++) {
         bridge_sends=engine_sends=closed=0;
-        assert(ra_discover()==0 && closed==1);
+        ticks=0;
+        if(!setjmp(deadline)) { ra_discover(); assert(0); }
         if(scenario<3) assert(engine_sends==0);
     }
+    scenario=0; ra_rx_in_game = 0; ra_server_ip = 123; bridge_sends = engine_sends = 0;
+    assert(ra_discover() == 1 && ra_dst_ip == 123 && !bridge_sends && !engine_sends);
+    ra_server_ip = 0; assert(ra_discover() == 0);
     puts("PASS: Xerabora default, Caduceus bridge/engine discovery, offline, wrong hash and wrong host");
 }
 '''

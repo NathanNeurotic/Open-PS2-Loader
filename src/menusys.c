@@ -19,6 +19,7 @@
 #include "include/system.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/discsupport.h"
+#include "include/achievements.h"
 #endif
 #include "include/ioman.h"
 #include "include/sound.h"
@@ -43,6 +44,7 @@ enum MENU_IDs {
     MENU_MMCE,
 #ifdef RETROACHIEVEMENTS
     MENU_RA_DISC_CHECK,
+    MENU_RA_ACHIEVEMENTS,
     MENU_RA_DISC_LAUNCH,
 #endif
 };
@@ -67,6 +69,7 @@ enum GAME_MENU_IDs {
     // on these enum positions, so RA entries must not shift the existing ones.
     GAME_RA_CHECK,
     GAME_RA_TEST,
+    GAME_RA_ACHIEVEMENTS,
 #endif
 };
 
@@ -81,6 +84,9 @@ enum APP_MENU_IDs {
 static menu_list_t *menu;
 static menu_list_t *selected_item;
 
+#ifdef RETROACHIEVEMENTS
+static void menuOpenAchievements(const char *hash);
+#endif
 static int actionStatus;
 static int menuSaveResult; // last per-game configWrite() result, published by _menuSaveConfig
 static int itemConfigId;
@@ -683,6 +689,8 @@ static void menuInitMainMenu(void)
     // initialize the menu
     submenuAppendItem(&mainMenu, -1, NULL, MENU_LAUNCH_PS2_DISC, _STR_LAUNCH_PS2_DISC);
 #ifdef RETROACHIEVEMENTS
+    if (gRAMode == RA_MODE_CADUCEUS)
+        submenuAppendItem(&mainMenu, -1, "Caduceus achievements", MENU_RA_ACHIEVEMENTS, -1);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_CHECK, _STR_RA_DISC_CHECK);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_LAUNCH, _STR_RA_DISC_LAUNCH);
 #endif
@@ -730,6 +738,8 @@ void menuInitGameMenu(item_list_t *support)
 #ifdef RETROACHIEVEMENTS
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_TEST, _STR_RA_TEST_LINK);
+    if (gRAMode == RA_MODE_CADUCEUS)
+        submenuAppendItem(&gameMenu, -1, "View achievements", GAME_RA_ACHIEVEMENTS, -1);
 #endif
 
     gameMenuCurrent = gameMenu;
@@ -1570,7 +1580,9 @@ void menuHandleInputMenu()
         sfxPlay(SFX_CONFIRM);
 
 #ifdef RETROACHIEVEMENTS
-        if (id == MENU_RA_DISC_CHECK) {
+        if (id == MENU_RA_ACHIEVEMENTS) {
+            menuOpenAchievements(NULL);
+        } else if (id == MENU_RA_DISC_CHECK) {
             if (discCheckSupportDeferred())
                 guiShowRANotice(_l(_STR_RA_DISC_CHECKING), NULL);
             else
@@ -2093,6 +2105,23 @@ void menuHandleInputGameMenu()
                         guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
                 }
             }
+        } else if (menuID == GAME_RA_ACHIEVEMENTS) {
+            item_list_t *support = selected_item->item->userdata;
+            int gid = selected_item->item->current->item.id;
+            if (menuSelectedRowView(support) == LIB_VIEW_PS1 || support->mode == HDD_MODE ||
+                !support->itemGet || !support->itemGetPrefix) {
+                guiShowRANotice("Browse this game through Caduceus achievements in the main menu.", NULL);
+            } else {
+                base_game_info_t *g = support->itemGet(support, gid);
+                const char *prefix = support->itemGetPrefix(support);
+                char path[256];
+                if (g && prefix && (g->format == GAME_FORMAT_ISO || g->format == GAME_FORMAT_OLD_ISO)) {
+                    sbCreatePath(g, path, prefix, "/", 0);
+                    if (achievementsRequestImage(path, g->startup))
+                        menuOpenAchievements("image");
+                } else
+                    guiShowRANotice("This format cannot be hashed. Browse the account library instead.", NULL);
+            }
         } else if (menuID == GAME_RA_TEST) {
             sbTestPCLinkDeferred();
             guiShowRANotice(_l(_STR_RA_LOOKING_FOR_PC), NULL);
@@ -2257,3 +2286,198 @@ void menuHandleInputAppMenu()
         guiSwitchScreen(GUI_SCREEN_MAIN);
     }
 }
+
+
+#ifdef RETROACHIEVEMENTS
+static int achFromCard, achKind, achPage, achLibraryPage, achFilter, achSelected, achNeedsPage;
+static char achTarget[33];
+static image_cache_t *achIcons;
+static int achIconIds[ACH_PAGE_SIZE] = {-1, -1, -1}, achIconUids[ACH_PAGE_SIZE];
+#define CAD_TEXT   gTheme->textColor
+#define CAD_MUTED  gTheme->textColor
+#define CAD_ACCENT gTheme->selTextColor
+#define CAD_BORDER gColDarker
+#define CAD_PANEL  gColDarker
+static void menuCardText(int x, int y, int w, int h, const char *text, u64 color)
+{
+    fntRenderString(gTheme->fonts[0], x, y, ALIGN_NONE, w, h, text, color);
+}
+static void menuOpenAchievements(const char *hash)
+{
+    achFromCard = hash != NULL;
+    achKind = hash ? 'A' : 'G';
+    snprintf(achTarget, sizeof(achTarget), "%s", hash ? hash : "0");
+    achPage = achLibraryPage = achFilter = achSelected = 0;
+    achNeedsPage = hash == NULL;
+    guiSwitchScreen(GUI_SCREEN_ACHIEVEMENTS);
+}
+
+static void achievementReload(void)
+{
+    achNeedsPage = 1;
+    achSelected = 0;
+    for (int i = 0; i < ACH_PAGE_SIZE; i++)
+        achIconIds[i] = -1;
+}
+
+static GSTEXTURE *achievementIcon(int row, const char *key)
+{
+    if (!key[0])
+        return NULL;
+    item_list_t *provider = NULL;
+    for (menu_list_t *it = menu; it; it = it->next) {
+        item_list_t *support = it->item->userdata;
+        if (support && support->mode == ETH_MODE && support->enabled) {
+            provider = support;
+            break;
+        }
+    }
+    if (!provider)
+        return NULL;
+    if (!achIcons)
+        achIcons = cacheInitCache(-1, "ART", 1, "RA", ACH_PAGE_SIZE);
+    if (!achIcons)
+        return NULL;
+    return cacheGetTexture(achIcons, provider, &achIconIds[row], &achIconUids[row], (char *)key);
+}
+
+void menuRenderAchievements(void)
+{
+    achievement_page_t page;
+    char text[160];
+    static const char *filters[] = {"All", "Earned", "Locked", "Hardcore"};
+    guiDrawBGPlasma();
+    if (achNeedsPage && !(sbHashGameBusy() || discCheckBusy() || achievementsBusy()) && achievementsRequest(achKind, achPage, achFilter, achTarget)) {
+        achNeedsPage = 0;
+        for (int i = 0; i < ACH_PAGE_SIZE; i++)
+            achIconIds[i] = -1;
+    }
+    achievementsSnapshot(&page);
+    if (achNeedsPage)
+        page.state = ACH_LOADING;
+    menuCardText(36, 28, 380, 24, "ACHIEVEMENTS", CAD_ACCENT);
+    menuCardText(436, 28, 170, 24, page.user, CAD_MUTED);
+    rmDrawLine(36, 59, 604, 59, CAD_BORDER);
+    menuCardText(36, 74, 560, 42, achKind == 'G' ? "RetroAchievements account library" : page.title, CAD_TEXT);
+    if (page.state == ACH_READY) {
+        if (achFromCard && page.gameId > 0)
+            snprintf(achTarget, sizeof(achTarget), "%d", page.gameId);
+        int pages = (page.total + ACH_PAGE_SIZE - 1) / ACH_PAGE_SIZE;
+        snprintf(text, sizeof(text), "%d / %d", page.total ? page.page + 1 : 0, pages);
+        menuCardText(518, 132, 90, 20, text, CAD_MUTED);
+        if (achKind == 'A') {
+            snprintf(text, sizeof(text), "%d / %d earned  |  %s", page.earned, page.maximum, filters[achFilter]);
+            menuCardText(36, 132, 470, 22, text, CAD_ACCENT);
+            rmDrawRect(36, 120, 568, 3, CAD_BORDER);
+            if (page.maximum)
+                rmDrawRect(36, 120, 568 * page.earned / page.maximum, 3, CAD_ACCENT);
+        } else {
+            snprintf(text, sizeof(text), page.total == 1 ? "%d game in account" : "%d games in account", page.total);
+            menuCardText(36, 132, 460, 22, text, CAD_MUTED);
+        }
+        if (achSelected >= page.count)
+            achSelected = 0;
+        for (int i = 0; i < page.count; i++) {
+            achievement_entry_t *entry = &page.entries[i];
+            int y = 164 + i * 65;
+            rmDrawRect(36, y, 568, 59, i == achSelected ? CAD_BORDER : CAD_PANEL);
+            if (i == achSelected)
+                rmDrawRect(36, y, 3, 59, CAD_ACCENT);
+            GSTEXTURE *icon = achievementIcon(i, entry->icon);
+            if (icon && icon->Mem)
+                rmDrawPixmap(icon, 45, y + 5, ALIGN_NONE, 48, 48, SCALING_RATIO, gDefaultCol);
+            else {
+                rmDrawRect(58, y + 13, 20, 17, CAD_MUTED);
+                rmDrawRect(65, y + 30, 6, 10, CAD_MUTED);
+                rmDrawRect(58, y + 40, 20, 3, CAD_MUTED);
+            }
+            menuCardText(108, y + 7, 480, 20, entry->title, i == achSelected ? CAD_TEXT : CAD_MUTED);
+            if (achKind == 'G')
+                snprintf(text, sizeof(text), "%d / %d achievements  |  %d hardcore", entry->earned, entry->total, entry->hardcore);
+            else
+                snprintf(text, sizeof(text), "%d pts  |  %s", entry->points, entry->hardcore ? "Hardcore" : entry->earned ? "Earned" :
+                                                                                                                            "Locked");
+            menuCardText(108, y + 32, 480, 20, text, entry->earned ? CAD_ACCENT : CAD_MUTED);
+        }
+        if (page.count) {
+            achievement_entry_t *entry = &page.entries[achSelected];
+            menuCardText(36, 367, 560, 42, entry->description, CAD_TEXT);
+            if (achKind == 'A' && entry->date[0])
+                menuCardText(36, 408, 560, 20, entry->date, CAD_MUTED);
+        } else
+            menuCardText(36, 195, 555, 60, achKind == 'G' ? "No games with progress in this account." : "No achievements match this filter.", CAD_MUTED);
+    } else {
+        const char *message = page.state == ACH_LOADING     ? "Loading achievements..." :
+                              page.state == ACH_OFFLINE     ? "Sign in to Caduceus and pair ART/CADUCEUS.KEY on your SMB share." :
+                              page.state == ACH_UNSUPPORTED ? "This game is not in the Caduceus catalog. Refresh the catalog on the PC." :
+                                                              "Cannot query Caduceus. Check the connection, then press Select to retry.";
+        menuCardText(48, 188, 535, 110, message, CAD_TEXT);
+        menuCardText(48, 315, 535, 40, "Back returns to OPL. Select refreshes this page.", CAD_MUTED);
+    }
+    rmDrawLine(36, 433, 604, 433, CAD_BORDER);
+    menuCardText(36, 442, 465, 22, achKind == 'G' ? "L1/R1: page   Confirm: open   Select: refresh" : "L1/R1: page   Square: filter   Select: refresh", CAD_MUTED);
+    GSTEXTURE *back = thmGetTexture(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON);
+    if (back && back->Mem)
+        rmDrawPixmap(back, 519, 442, ALIGN_NONE, 16, 16, SCALING_RATIO, gDefaultCol);
+    menuCardText(542, 442, 65, 22, "Back", CAD_TEXT);
+}
+
+void menuHandleInputAchievements(void)
+{
+    achievement_page_t page;
+    achievementsSnapshot(&page);
+    int cancel = getKeyOn(gSelectButton == KEY_CIRCLE ? KEY_CROSS : KEY_CIRCLE);
+    if (getKeyOn(KEY_START) && !achFromCard && achKind == 'G') {
+        menuInitMainMenu();
+        guiSwitchScreen(GUI_SCREEN_MENU);
+        return;
+    }
+    if (cancel) {
+        if (achFromCard)
+            guiSwitchScreen(GUI_SCREEN_GAME_MENU);
+        else if (achKind == 'A') {
+            achKind = 'G';
+            achPage = achLibraryPage;
+            achFilter = 0;
+            strcpy(achTarget, "0");
+            achievementReload();
+        } else
+            guiSwitchScreen(GUI_SCREEN_MENU);
+        return;
+    }
+    if ((sbHashGameBusy() || discCheckBusy() || achievementsBusy()) || achNeedsPage)
+        return;
+    if (getKeyOn(KEY_SELECT)) {
+        achievementReload();
+        return;
+    }
+    if (getKeyOn(KEY_SQUARE) && achKind == 'A') {
+        achFilter = (achFilter + 1) % 4;
+        achPage = 0;
+        achievementReload();
+        return;
+    }
+    if (page.state != ACH_READY)
+        return;
+    if (getKeyOn(KEY_L1) && achPage > 0) {
+        achPage--;
+        achievementReload();
+    } else if (getKeyOn(KEY_R1) && (achPage + 1) * ACH_PAGE_SIZE < page.total) {
+        achPage++;
+        achievementReload();
+    } else if (getKey(KEY_UP) && page.count) {
+        achSelected = (achSelected + page.count - 1) % page.count;
+        sfxPlay(SFX_CURSOR);
+    } else if (getKey(KEY_DOWN) && page.count) {
+        achSelected = (achSelected + 1) % page.count;
+        sfxPlay(SFX_CURSOR);
+    } else if (getKeyOn(gSelectButton) && achKind == 'G' && page.count) {
+        achLibraryPage = achPage;
+        snprintf(achTarget, sizeof(achTarget), "%d", page.entries[achSelected].id);
+        achKind = 'A';
+        achPage = achFilter = 0;
+        achievementReload();
+    }
+}
+
+#endif
