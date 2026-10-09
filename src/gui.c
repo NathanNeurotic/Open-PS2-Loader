@@ -9,6 +9,9 @@
 #include "include/diag.h" // gLastDeferredTimedOut -- a bounded wait that expired means the handler never ran
 #include "include/renderman.h"
 #include "include/menusys.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/ra_browser.h"
+#endif
 #include "include/fntsys.h"
 #include "include/ioman.h"
 #include "include/lang.h"
@@ -163,7 +166,11 @@ static gui_screen_handler_t screenHandlers[] = {{&menuHandleInputMain, &menuRend
                                                 {&menuHandleInputMenu, &menuRenderMenu, 1},
                                                 {&menuHandleInputInfo, &menuRenderInfo, 1},
                                                 {&menuHandleInputGameMenu, &menuRenderGameMenu, 1},
-                                                {&menuHandleInputAppMenu, &menuRenderAppMenu, 1}};
+                                                {&menuHandleInputAppMenu, &menuRenderAppMenu, 1}
+#ifdef RETROACHIEVEMENTS
+                                                 ,{&raBrowserHandleInput, &raBrowserRender, 1}
+#endif
+};
 
 // default screen handler (menu screen)
 static gui_screen_handler_t *screenHandler = &screenHandlers[GUI_SCREEN_MENU];
