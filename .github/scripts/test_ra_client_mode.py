@@ -35,6 +35,7 @@ struct sockaddr_in { int sin_family; unsigned short sin_port; struct { u32 s_add
 #define RA_DISC_SLOW_US 1
 #define htons(x) (x)
 static int ra_caduceus, ra_rx_in_game = 1, ra_sock, scenario, sent_port, bridge_sends, engine_sends, closed;
+static int ra_host_pinned;
 static u32 ra_src_ip = 1, ra_dst_ip, ra_disc_us, ra_server_ip, ra_gateway_ip, ra_netmask_ip;
 static int arp_only_gateway;
 static u8 ra_dst_mac[6];
@@ -54,7 +55,7 @@ int lwip_sendto(int s,const char *body,int n,int flags,struct sockaddr *dest,int
     if(sent_port==18197) { assert(n==38 && !memcmp(body,RA_CADUCEUS_PROBE,38));
         assert(to->sin_addr.s_addr==ra_server_ip && ra_server_ip==42); bridge_sends++; }
     else { assert(sent_port==18194 && !memcmp(body,"RAP1 ",5)); engine_sends++;
-           if(ra_caduceus) assert(to->sin_addr.s_addr==42); }
+           if(ra_caduceus || ra_host_pinned) assert(to->sin_addr.s_addr==42); }
     return n;
 }
 int lwip_recvfrom(int s,void*a,int b,char*out,int max,int flags,struct sockaddr *sender,socklen_t*len) {
@@ -94,6 +95,14 @@ int main(void) {
         if(scenario<3 || scenario==5) assert(engine_sends==0);
         if(scenario==4) assert(engine_sends>0); /* RAO1 NO must never select a peer. */
     }
+    /* Xerabora with explicit host is unicast, never any LAN responder. */
+    scenario=0; ra_caduceus=0; ra_host_pinned=1; ra_server_ip=42;
+    engine_sends=0;
+    assert(ra_discover()==1 && engine_sends==1 && ra_dst_ip==42);
+    scenario=3; ticks=0; engine_sends=0;
+    if(!setjmp(deadline)) { ra_discover(); assert(0); }
+    assert(engine_sends>0); /* Foreign peer cannot verify the pinned host. */
+    ra_host_pinned=0;
     scenario=0; ra_rx_in_game = 0; ra_server_ip = 123; bridge_sends = engine_sends = 0;
     assert(ra_discover() == 1 && ra_dst_ip == 123 && !bridge_sends && !engine_sends);
     ra_server_ip = 0; assert(ra_discover() == 0);
