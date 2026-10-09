@@ -72,6 +72,7 @@ with tempfile.TemporaryDirectory(prefix='ra-ps1-') as directory:
         physical = (200 + 4 * logical) if logical < 16 else (1024 + 4 * (logical - 16))
         at = 0x100000 + logical * 2352 + 24
         hdisk[physical * 512:physical * 512 + 2048] = raw[at:at + 2048]
+    hdisk[100 * 512 + 172:100 * 512 + 172 + len(b'SLUS_012.15')] = b'SLUS_012.15'
     struct.pack_into('<i', hdisk, 100 * 512 + 240, 2)
     struct.pack_into('<III', hdisk, 100 * 512 + 244, 0, 200, 16 * 2048)
     struct.pack_into('<III', hdisk, 100 * 512 + 256, 16, 1024, 24 * 2048)
@@ -153,6 +154,8 @@ int main(void) {
     assert(raVcdWatchGuardStore("","Pbad",hash)<0); /* bad key input */
     /* HDL read-only hashing crosses separated APA extents and shares the
        ISO content hash; corrupt partition counts/overlaps must fail closed. */
+    assert(raHashHdl(100,"SLUS_012.15",hash)==0);
+    assert(raHashHdl(100,"SLES_999.99",hash)<0 && !hash[0]); /* Stale list. */
     assert(raHashHdl(100,"SLUS_012.15",hash)==0);
     assert(!strcmp(hash,"''' + hashlib.md5(b"SLUS_012.15" + payload).hexdigest() + r'''")); /* replaced by Python below */
     FILE *disk=fopen("hdd.raw","r+b"); assert(disk);
