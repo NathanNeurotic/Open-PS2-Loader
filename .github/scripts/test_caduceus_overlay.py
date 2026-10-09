@@ -12,6 +12,7 @@ prefix=r"""
 #include <stdio.h>
 #include <string.h>
 #define RETROACHIEVEMENTS 1
+#define RA_EXPERIMENTAL_CARD_DMA 1
 #define UNCACHED_SEG(p) (p)
 typedef uint64_t u64;
 typedef uint32_t u32;
@@ -60,7 +61,22 @@ int main(void) {
  puts("PASS: card bounds, sliced rasterization, GIF busy guard, CT32/CT16 packet lengths, torn events, reset and Xerabora dispatch");
 }
 """
+fallback_tests=r"""
+struct ra_gs_source_regs GSMSourceGSRegs;
+int main(void) {
+ g_ee_core_config.raClientMode=1;
+ assert(RA_OverlayEventBuffer()==pulse_buffer);
+ RA_OverlayOnVblank(1);
+ assert(pulses==1 && GIF_D2_QWC==0);
+ puts("PASS: Caduceus production fallback uses pulse without GIF DMA");
+}
+"""
 with tempfile.TemporaryDirectory() as tmp:
- path=Path(tmp);(path/'test.c').write_text(prefix+source+tests)
- subprocess.run(['cc','-std=gnu99','-Wno-pointer-to-int-cast','-I',str(root),str(path/'test.c'),'-o',str(path/'test.exe')],check=True)
- subprocess.run([str(path/'test.exe')],check=True)
+ path=Path(tmp)
+ for name, headers, body in [
+  ('experimental',prefix,tests),
+  ('production',prefix.replace('#define RA_EXPERIMENTAL_CARD_DMA 1\n',''),fallback_tests),
+ ]:
+  (path/'test.c').write_text(headers+source+body)
+  subprocess.run(['cc','-std=gnu99','-Wno-pointer-to-int-cast','-I',str(root),str(path/'test.c'),'-o',str(path/'test.exe')],check=True)
+  subprocess.run([str(path/'test.exe')],check=True)
