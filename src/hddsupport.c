@@ -587,7 +587,7 @@ int hddDetectNonSonyFileSystem()
     // only earn a false "table cannot be read" (402) on a healthy disk. Treat it like any GPT disk:
     // silent, APA stack never loaded, the BDM side free to mount its GPT volumes.
     if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
-        LOG("hddDetectNonSonyFileSystem: found GPT partition data (GPT/APA hybrids are not supported)\n");
+        LOG("hddDetectNonSonyFileSystem: found GPT partition data (use BDM; APA stack skipped)\n");
         result = 1;
     } else if (memcmp((const char *)&pSectorData[4], "APA", 3) == 0) {
         if (hddApaHeaderValid(pSectorData)) {
