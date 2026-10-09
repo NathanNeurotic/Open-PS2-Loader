@@ -155,6 +155,8 @@ jobs:
         run: python3 .github/scripts/test_caduceus_browser.py
       - name: Check Xerabora and Caduceus discovery and offline sessions
         run: python3 .github/scripts/test_ra_client_mode.py
+      - name: Check passive RA host stays bound to a verified peer and current settings
+        run: python3 .github/scripts/test_ra_verified_peer.py
 
   bdm-host-tests:
     runs-on: ubuntu-24.04
