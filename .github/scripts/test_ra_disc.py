@@ -60,6 +60,7 @@ prefix=r'''
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "include/md5.h"

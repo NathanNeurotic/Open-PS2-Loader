@@ -16,4 +16,7 @@ int raHashIsoDirect(const char *isopath, const char *startup, char *out33);
 
 int raHashDisc(const char *bootPath, const char *startup, char *out33);
 
+int raVcdBootName(const char *vcdpath, char *boot, int boot_max);
+int raHashVcd(const char *vcdpath, char *boot, int boot_max, char *out33);
+
 #endif

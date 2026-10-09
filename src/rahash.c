@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -82,9 +83,17 @@ static void step_num(const char *what, unsigned int a, unsigned int b, int c)
   bug it exists to avoid.
 */
 
-#define ISO_SECTOR     2048
-#define ISO_PVD_LBA    16
-#define RA_SRC_DISC_FD (-100)
+#define ISO_SECTOR  2048
+#define ISO_PVD_LBA 16
+enum ra_src_kind { RA_SRC_ISO,
+                   RA_SRC_VCD,
+                   RA_SRC_DISC };
+struct ra_src
+{
+    int fd;
+    enum ra_src_kind kind;
+};
+static const struct ra_src g_disc = {-1, RA_SRC_DISC};
 
 static unsigned int le32(const unsigned char *p)
 {
@@ -155,25 +164,60 @@ static int disc_read_at(long long off, void *buf, int len)
     return len;
 }
 
-static int read_at(int fd, long long off, void *buf, int len)
+#define VCD_HEADER     0x100000
+#define VCD_RAW_SECTOR 2352
+#define VCD_DATA_OFF   24
+
+static int vcd_read_at(int fd, long long off, void *buf, int len)
 {
-    if (fd == RA_SRC_DISC_FD)
+    int done = 0;
+
+    while (done < len) {
+        long long pos = off + done;
+        long long lba = pos / ISO_SECTOR;
+        int in = (int)(pos % ISO_SECTOR);
+        int want = ISO_SECTOR - in;
+        int got;
+
+        if (want > len - done)
+            want = len - done;
+
+        if (lseek64(fd, VCD_HEADER + lba * VCD_RAW_SECTOR + VCD_DATA_OFF + in, SEEK_SET) < 0)
+            return -1;
+
+        got = read(fd, (char *)buf + done, want);
+        if (got <= 0)
+            return done > 0 ? done : -1;
+
+        done += got;
+        if (got < want)
+            break;
+    }
+
+    return done;
+}
+
+static int read_at(const struct ra_src *src, long long off, void *buf, int len)
+{
+    if (src->kind == RA_SRC_DISC)
         return disc_read_at(off, buf, len);
 
-    if (lseek64(fd, off, SEEK_SET) < 0)
+    if (src->kind == RA_SRC_VCD)
+        return vcd_read_at(src->fd, off, buf, len);
+    if (lseek64(src->fd, off, SEEK_SET) < 0)
         return -1;
 
-    return read(fd, buf, len);
+    return read(src->fd, buf, len);
 }
 
 /* Finds a directory entry. Returns 0 and fills lba/size. */
-static int find_entry(int fd, unsigned int dir_lba, unsigned int dir_size,
+static int find_entry(const struct ra_src *src, unsigned int dir_lba, unsigned int dir_size,
                       const char *want, unsigned int *out_lba, unsigned int *out_size)
 {
     unsigned int done = 0;
 
     while (done < dir_size) {
-        int got = read_at(fd, (long long)(dir_lba)*ISO_SECTOR + done, g_chunk, ISO_SECTOR);
+        int got = read_at(src, (long long)(dir_lba)*ISO_SECTOR + done, g_chunk, ISO_SECTOR);
         int p = 0;
         /* Parse only as far as the DIRECTORY runs, which is not always as far as the sector we
            just read. A well-formed ISO9660 sizes every directory extent in whole 2048-byte
@@ -220,7 +264,7 @@ static int find_entry(int fd, unsigned int dir_lba, unsigned int dir_size,
                 int i, same = 1;
 
                 for (i = 0; i < namelen && want[i] != '\0'; i++) {
-                    if (rec[33 + i] != (unsigned char)want[i]) {
+                    if (tolower(rec[33 + i]) != tolower((unsigned char)want[i])) {
                         same = 0;
                         break;
                     }
@@ -244,12 +288,12 @@ static int find_entry(int fd, unsigned int dir_lba, unsigned int dir_size,
 }
 
 /* Root directory of the volume. */
-static int read_root(int fd, unsigned int *root_lba, unsigned int *root_size)
+static int read_root(const struct ra_src *src, unsigned int *root_lba, unsigned int *root_size)
 {
     static unsigned char pvd[ISO_SECTOR] __attribute__((aligned(64)));
 
     /* Primary volume descriptor: sector 16, "CD001" at offset 1 */
-    if (read_at(fd, (long long)ISO_PVD_LBA * ISO_SECTOR, pvd, ISO_SECTOR) != ISO_SECTOR ||
+    if (read_at(src, (long long)ISO_PVD_LBA * ISO_SECTOR, pvd, ISO_SECTOR) != ISO_SECTOR ||
         pvd[1] != 'C' || pvd[2] != 'D' || pvd[3] != '0' || pvd[4] != '0' || pvd[5] != '1') {
         step("2-no-cd001");
         return -1;
@@ -265,7 +309,7 @@ static int read_root(int fd, unsigned int *root_lba, unsigned int *root_size)
 }
 
 /* MD5( name || contents of that file ), the way RetroAchievements does it. */
-static int hash_boot_exec(int fd, const char *startup, char *out33)
+static int hash_boot_exec(const struct ra_src *src, const char *startup, char *out33)
 {
     md5_state_t md5;
     md5_byte_t digest[16];
@@ -273,10 +317,10 @@ static int hash_boot_exec(int fd, const char *startup, char *out33)
     long long off;
     int i;
 
-    if (read_root(fd, &root_lba, &root_size) != 0)
+    if (read_root(src, &root_lba, &root_size) != 0)
         return -2;
 
-    if (find_entry(fd, root_lba, root_size, startup, &elf_lba, &elf_size) != 0) {
+    if (find_entry(src, root_lba, root_size, startup, &elf_lba, &elf_size) != 0) {
         step("3-elf-not-in-directory");
         return -3;
     }
@@ -296,7 +340,7 @@ static int hash_boot_exec(int fd, const char *startup, char *out33)
 
     while (left > 0) {
         int want = left > RA_HASH_CHUNK ? RA_HASH_CHUNK : (int)left;
-        int got = read_at(fd, off, g_chunk, want);
+        int got = read_at(src, off, g_chunk, want);
 
         if (got <= 0) {
             step("4-read-broke-off");
@@ -348,7 +392,8 @@ int raHashIsoDirect(const char *isopath, const char *startup, char *out33)
         return err == EBUSY ? -6 : -1;
     }
 
-    ret = hash_boot_exec(fd, startup, out33);
+    struct ra_src src = {fd, RA_SRC_ISO};
+    ret = hash_boot_exec(&src, startup, out33);
     close(fd);
 
     return ret;
@@ -397,5 +442,232 @@ int raHashDisc(const char *bootPath, const char *startup, char *out33)
         return 0;
 
     // Some ROM file drivers cannot read an extent that direct sector reads can.
-    return hash_boot_exec(RA_SRC_DISC_FD, startup, out33);
+    return hash_boot_exec(&g_disc, startup, out33);
+}
+
+/* 32 lowercase hex digits and the terminator. */
+static void md5_hex(const md5_byte_t *digest, char *out33)
+{
+    static const char hex[] = "0123456789abcdef";
+    int i;
+
+    for (i = 0; i < 16; i++) {
+        out33[i * 2] = hex[(digest[i] >> 4) & 0xF];
+        out33[i * 2 + 1] = hex[digest[i] & 0xF];
+    }
+    out33[32] = '\0';
+}
+
+/* ------------------------------------------------------------------ */
+/* PS1 through POPS (rc_hash_psx in rcheevos)                         */
+
+/* path under the root, parts split by '\', e.g. "DATA\MAIN.EXE" */
+static int find_path(const struct ra_src *src, const char *path, unsigned int *out_lba, unsigned int *out_size)
+{
+    unsigned int lba, size;
+    char part[64];
+
+    if (read_root(src, &lba, &size) != 0)
+        return -1;
+
+    while (*path == '\\')
+        path++;
+
+    while (*path != '\0') {
+        int n = 0;
+
+        while (path[n] != '\0' && path[n] != '\\')
+            n++;
+        if (n >= (int)sizeof(part))
+            return -2;
+
+        memcpy(part, path, n);
+        part[n] = '\0';
+
+        if (find_entry(src, lba, size, part, &lba, &size) != 0)
+            return -2;
+
+        path += n;
+        while (*path == '\\')
+            path++;
+    }
+
+    *out_lba = lba;
+    *out_size = size;
+    return 0;
+}
+
+/* "BOOT = cdrom:\SLUS_012.15;1" -> "SLUS_012.15". As in rcheevos, only a
+   line that starts with BOOT counts, and BOOT2 does not. */
+static int parse_boot_psx(const char *cnf, char *out, int max)
+{
+    const char *p = cnf;
+
+    while (*p != '\0') {
+        if (strncmp(p, "BOOT", 4) == 0) {
+            const char *q = p + 4;
+
+            while (*q == ' ' || *q == '\t')
+                q++;
+
+            if (*q == '=') {
+                int len = 0;
+
+                q++;
+                while (*q == ' ' || *q == '\t')
+                    q++;
+                if (strncmp(q, "cdrom:", 6) == 0)
+                    q += 6;
+                while (*q == '\\')
+                    q++;
+
+                while (q[len] != '\0' && q[len] != ';' && q[len] != ' ' &&
+                       q[len] != '\t' && q[len] != '\r' && q[len] != '\n')
+                    len++;
+
+                if (len <= 0 || len >= max)
+                    return -7;
+
+                memcpy(out, q, len);
+                out[len] = '\0';
+                return 0;
+            }
+        }
+
+        while (*p != '\0' && *p != '\n')
+            p++;
+        if (*p == '\n')
+            p++;
+    }
+
+    return -5;
+}
+
+static int psx_boot_name(const struct ra_src *src, char *boot, int boot_max)
+{
+    char cnf[ISO_SECTOR];
+    unsigned int lba, size;
+    int got;
+
+    boot[0] = '\0';
+
+    if (find_path(src, "SYSTEM.CNF", &lba, &size) != 0 || size == 0)
+        return -2;
+    if (size > sizeof(cnf) - 1)
+        size = sizeof(cnf) - 1;
+
+    got = read_at(src, (long long)lba * ISO_SECTOR, cnf, (int)size);
+    if (got <= 0)
+        return -4;
+    cnf[got] = '\0';
+
+    return parse_boot_psx(cnf, boot, boot_max);
+}
+
+static int hash_psx(const struct ra_src *src, char *boot, int boot_max, char *out33)
+{
+    unsigned char head[32];
+    unsigned int lba, size, left;
+    md5_state_t md5;
+    md5_byte_t digest[16];
+    long long off;
+
+    if (psx_boot_name(src, boot, boot_max) != 0 || find_path(src, boot, &lba, &size) != 0) {
+        /* the BIOS falls back to PSX.EXE, and so does rcheevos */
+        if (boot_max < (int)sizeof("PSX.EXE") || find_path(src, "PSX.EXE", &lba, &size) != 0) {
+            step("3-psx-no-exe");
+            return -3;
+        }
+        strcpy(boot, "PSX.EXE");
+    }
+    step("3-psx-exe-found");
+
+    /* the size in the PS-X EXE header leaves out the 2048-byte header */
+    off = (long long)lba * ISO_SECTOR;
+    if (read_at(src, off, head, sizeof(head)) != sizeof(head))
+        return -5;
+    if (memcmp(head, "PS-X EXE", 8) == 0) {
+        unsigned int payload = le32(&head[28]);
+        if (payload > RA_HASH_MAX_EXEC - ISO_SECTOR)
+            return -4;
+        size = payload + ISO_SECTOR;
+    }
+
+    if (size == 0 || size > RA_HASH_MAX_EXEC) {
+        step("3-odd-exe-size");
+        return -4;
+    }
+
+    md5_init(&md5);
+    md5_append(&md5, (const md5_byte_t *)boot, (int)strlen(boot));
+
+    left = size;
+    while (left > 0) {
+        int want = left > RA_HASH_CHUNK ? RA_HASH_CHUNK : (int)left;
+        int got = read_at(src, off, g_chunk, want);
+
+        if (got <= 0) {
+            step("4-read-broke-off");
+            return -5;
+        }
+
+        md5_append(&md5, (const md5_byte_t *)g_chunk, got);
+        off += got;
+        left -= (unsigned int)got;
+    }
+
+    md5_finish(&md5, digest);
+    md5_hex(digest, out33);
+
+    step("5-psx-hashed");
+    LOG("RA: psx hash %s = %s (%u bytes)\n", boot, out33, size);
+
+    return 0;
+}
+
+int raVcdBootName(const char *vcdpath, char *boot, int boot_max)
+{
+    struct ra_src src = {open(vcdpath, O_RDONLY), RA_SRC_VCD};
+    int ret;
+
+    boot[0] = '\0';
+    if (src.fd < 0)
+        return -1;
+
+    ret = psx_boot_name(&src, boot, boot_max);
+    if (ret == 0) {
+        unsigned int lba, size;
+        ret = find_path(&src, boot, &lba, &size);
+    }
+    if (ret != 0 && boot_max >= (int)sizeof("PSX.EXE")) {
+        unsigned int lba, size;
+        if (find_path(&src, "PSX.EXE", &lba, &size) == 0) {
+            strcpy(boot, "PSX.EXE");
+            ret = 0;
+        }
+    }
+    close(src.fd);
+
+    return ret;
+}
+
+int raHashVcd(const char *vcdpath, char *boot, int boot_max, char *out33)
+{
+    struct ra_src src = {-1, RA_SRC_VCD};
+    int ret;
+
+    out33[0] = '\0';
+    boot[0] = '\0';
+
+    step("1-opening-vcd");
+    src.fd = open(vcdpath, O_RDONLY);
+    if (src.fd < 0) {
+        step("1-open-failed");
+        return -1;
+    }
+
+    ret = hash_psx(&src, boot, boot_max, out33);
+    close(src.fd);
+
+    return ret;
 }

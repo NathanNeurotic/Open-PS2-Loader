@@ -2531,6 +2531,38 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
         return;
     }
 
+    if (!strcasecmp(ext, ".VCD")) {
+        char root[64], boot[16];
+        const char *colon = strchr(path, ':');
+        int n = colon ? (int)(colon - path) + 1 : 0;
+        int ret;
+        if (!n || n + 2 > (int)sizeof(root))
+            goto vcd_done;
+        memcpy(root, path, n);
+        root[n++] = '/';
+        root[n] = '\0';
+        if (snprintf(iso, sizeof(iso), "%sPOPS/%s%s", root, name, ext) >= (int)sizeof(iso))
+            goto vcd_done;
+        ret = raHashVcd(iso, boot, sizeof(boot), hash);
+        if (ret == 0) {
+            int q = raAskPC(hash, boot, path, info, sizeof(info), info2, sizeof(info2));
+            raHashLogAdd(name, boot, hash);
+            if (q == 0)
+                guiShowRANotice(info[0] ? info : _l(_STR_RA_SUPPORTED), info2[0] ? info2 : _l(_STR_RA_START_TO_TRACK));
+            else if (q == 1)
+                guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
+            else if (q == -9)
+                guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
+            else
+                guiShowRANotice(_l(_STR_RA_PC_NO_ANSWER), _l(_STR_RA_PC_NO_ANSWER2));
+        } else
+            guiShowRANotice("The PS1 image could not be hashed", name);
+    vcd_done:
+        raHashSetStepLog(NULL);
+        raHashLogClose();
+        return;
+    }
+
     for (i = 0; dirs[i] != NULL; i++) {
         int ret;
 

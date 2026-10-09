@@ -2084,8 +2084,25 @@ void menuHandleInputGameMenu()
             int gid = selected_item->item->current->item.id;
 
             if (menuSelectedRowView(support) == LIB_VIEW_PS1) {
-                // PS1/VCD rows launch through POPSTARTER or Ember, never ee_core.
-                guiShowRANotice(_l(_STR_RA_NA_PS1), NULL);
+                int sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(gid) : support->mode;
+                base_game_info_t favorite;
+                base_game_info_t *g = support->itemGet ? support->itemGet(support, gid) : NULL;
+                const char *prefix = support->mode == FAV_MODE ? favGetItemPrefix(gid) :
+                                                                 (support->itemGetPrefix ? support->itemGetPrefix(support) : NULL);
+                if (support->mode == FAV_MODE && favGetItemKind(gid) == FAV_KIND_VCD) {
+                    memset(&favorite, 0, sizeof(favorite));
+                    snprintf(favorite.name, sizeof(favorite.name), "%s", support->itemGetName(support, gid));
+                    strcpy(favorite.extension, ".VCD");
+                    favorite.format = GAME_FORMAT_ISO;
+                    g = &favorite;
+                }
+                if (bdmModeIsUSB(sourceMode) && g && prefix && !strcasecmp(g->extension, ".VCD")) {
+                    if (sbHashGameDeferred(prefix, g->name, g->extension, g->startup, g->format))
+                        guiShowRANotice(_l(_STR_RA_CHECKING_IMAGE), NULL);
+                    else
+                        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+                } else
+                    guiShowRANotice("PS1 achievements require a USB VCD through POPStarter", NULL);
             } else if (support->mode == UDPFS_MODE) {
                 // UDPFS is Neutrino-only in this fork.
                 guiShowRANotice(_l(_STR_RA_NA_UDPFS), NULL);

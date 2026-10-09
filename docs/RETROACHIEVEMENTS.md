@@ -33,7 +33,7 @@ Every tracked Caduceus launch rechecks its session. If the bridge is offline or 
 
 The wire format follows [Caduceus's bridge implementation](https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts). Caduceus's bundled engine version can differ from the standalone version recommended above; protocol compatibility does not establish identical game coverage or timing. This new mode has host tests for discovery, malformed/offline replies and host selection; **Caduceus end-to-end console tracking remains unverified**. The Xerabora hardware results below apply only to the tested Xerabora configuration.
 
-Both modes retain the existing restrictions: external Neutrino and PS1 launches do not load RiptOPL's telemetry core, UDP storage owns the NIC and blocks menu RA queries, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. For saved watch lists launched without a fresh RA peer discovery, SMB/HTTP passive telemetry targets the configured SMB/HTTP game server; a separate RA-service host requires a previously verified peer or future explicit RA-host configuration. Choosing Caduceus does not bypass these guards or add hardcore support.
+Both modes retain the existing restrictions: external Neutrino and Ember launches do not load RiptOPL's telemetry core (USB POPStarter uses its own IOP reader), UDP storage owns the NIC and blocks menu RA queries, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. For saved watch lists launched without a fresh RA peer discovery, SMB/HTTP passive telemetry targets the configured SMB/HTTP game server; a separate RA-service host requires a previously verified peer or future explicit RA-host configuration. Choosing Caduceus does not bypass these guards or add hardcore support.
 
 ### Caduceus achievement browser and in-game cards
 
@@ -138,9 +138,10 @@ Telemetry lives inside OPL's own loader core, which only exists for launches OPL
 | HTTP | local watch-list loading is wired into OPL-core launch; combined HTTP/RA operation is not hardware-validated, and it shares the ETH/SMB risk below |
 | Neutrino core (`$CoreLoader`) | **no** |
 | UDPFS | **no** |
-| PS1 / VCD (POPSTARTER, Ember) | **no** |
+| PS1 / USB VCD (POPStarter) | **yes, experimental; console validation pending** |
+| PS1 / Ember, MMCE, APA HDD, SMB and non-USB BDM | **no** |
 
-Neutrino, UDPFS and PS1 hand the console over to an external ELF and never load OPL's core, so there is
+Neutrino, UDPFS and Ember hand the console over to an external ELF and never load OPL's core, so there is
 nothing to take a snapshot from. This is structural, not an oversight.
 
 ### Do not expect a game with achievements to run from a network share
@@ -327,7 +328,8 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 | 7 | Menu check, protocol = Off | RA raises the stack, same result |
 | 8 | Menu check, protocol = UDPBD / UDPFS | clean refusal + hash written to `RA/hashes.txt`, no wedge |
 | 9 | Neutrino-core game | clean refusal, no hash attempt |
-| 10 | PS1/VCD entry | clean refusal |
+| 10 | USB PS1/VCD entry | support check, then POPStarter telemetry after the startup delay |
+| 11 | Ember or non-USB PS1 entry | clean refusal |
 | 11 | HDD/APA entry | the check refuses; a watch list still loads |
 | 12 | Badge + cover mark | appear after refresh, correct game, correct device |
 | 13 | Unlock overlay | gold pulse on `RAU1`, game keeps running |
@@ -342,7 +344,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 
 ## Notes for anyone changing this code
 
-* **Telemetry requires an OPL-core launch.** BDM, ETH/SMB, HDD/APA and MMCE have this path; HTTP also loads an existing watch list from its local settings prefix. Neutrino and the PS1 cores run external ELFs, so OPL's telemetry core does not run there. Treat HTTP/RA interoperability as unvalidated until tested.
+* **Telemetry requires an OPL-core launch.** BDM, ETH/SMB, HDD/APA and MMCE have this path; HTTP also loads an existing watch list from its local settings prefix. Neutrino and Ember run external ELFs, so OPL's telemetry core does not run there. USB POPStarter uses a separate IOP telemetry module. Treat HTTP/RA interoperability as unvalidated until tested.
 
 * **The badge cache belongs to the I/O thread.** `raBadgeRefresh` frees and reallocates it. Nothing
   on the render path may read it — that is why a row carries `raBadged` as a plain int, resolved
@@ -385,3 +387,46 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
   PRs #702–#705: ee_core stack recovery, MMCE DEV9, launch-time network readiness/fallback, and the
   RA settings-page correction, plus the hardware investigation that exposed those failures.
 * `src/md5.c`, `include/md5.h` — L. Peter Deutsch, zlib licence, vendored unchanged.
+
+## PS1 achievements through USB POPStarter
+
+Adapted from hacan359/Open-PS2-Loader commit `531aad4584d65d1779b744739b81402150c7669c`
+(xeRAbora alpha.16). Use the RA build and a stock `POPS/POPSTARTER.ELF`, with
+`.VCD` games in that USB device's root `POPS/` folder. RiptOPL retains its PS1
+view and mixed view, existing POPStarter resolver, and filename-based game settings.
+Choose the existing USB driver mode in Settings > PS emulation: **FAT32** for
+FAT32, **exFAT** for exFAT, or **Ask** to choose on each launch. The exFAT driver
+pair and memory-card preparation follow the existing [VCD setup](VCD.md).
+
+Select **RA: check game support** once for the USB VCD, then launch it normally.
+The support check hashes the executable named by the image's `SYSTEM.CNF`, with
+`PSX.EXE` fallback, following RetroAchievements' PS1 algorithm. Watch lists are
+stored under the existing library's `RA/` prefix. Favorites use their source
+USB device and VCD filename. Remembered menu launches use the same POPStarter path and an already checked
+watch list. The command-line BDM autolaunch entry point remains PS2-image-only. The separate Caduceus achievement browser
+still directs PS1 users to the paired account library.
+
+The loader creates `POPS/MODULE_9.IRX` only for a tracked USB launch. That module
+contains the configured network modules and PS1 watch list. POPStarter loads it
+after resetting the IOP; `rapull` reads PS1 RAM from POPS through SIF, starting
+**25 seconds after launch**, and `raudp` sends snapshots to the selected xeRAbora
+or Caduceus companion. Unlock notifications appear on the companion; there is
+no console gold pulse or Caduceus card for PS1. Scratchpad addresses are not
+available in this upstream reader; multi-window reads are not synchronized to
+a game frame. Boot names must fit the protocol's 15-character game identity.
+
+A user-owned `MODULE_9.IRX` is never overwritten or deleted. For a tracked launch,
+move it yourself if you want to use the reserved telemetry slot. RiptOPL marks
+its own module and removes stale copies before later BDM POPStarter launches, including launches
+from a standard build. A failed cleanup or telemetry write aborts before teardown.
+No support list, disabled telemetry, or unavailable network launches normally
+without installing telemetry. Failed PS1 memory reads do not publish fabricated
+zero snapshots or reuse a failed read as a new frame.
+
+**Validation gate:** host fixtures and a successful ELF build do not prove POPS
+compatibility. Test the same console with USB FAT32 and exFAT: support check,
+boot, play past the 25-second delay, observe sustained memory snapshots and an
+actual unlock, exit and relaunch another title, then launch without achievements.
+Also test Favorites, remembered launches, a missing/offline companion, and an existing
+user `MODULE_9.IRX`. MMCE, APA HDD, SMB, MX4SIO and iLink PS1 telemetry remain
+unsupported here until they have a deliberate integration and hardware validation.

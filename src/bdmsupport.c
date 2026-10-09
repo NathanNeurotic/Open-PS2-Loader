@@ -8,6 +8,9 @@
 #include "include/supportbase.h"
 #include "include/bdmsupport.h"
 #include "include/vcdsupport.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/rapopslaunch.h"
+#endif
 #include "include/cuesupport.h" // PS1 rows can belong to either core; the ROW decides
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
 #include "include/folderbrowse.h"
@@ -777,6 +780,13 @@ int bdmSupportIsUDPBD(const item_list_t *support)
     if (support->mode < BDM_MODE || support->mode > BDM_MODE_LAST)
         return 0;
     return ((bdm_device_data_t *)support->priv)->bdmDeviceType == BDM_TYPE_UDPBD;
+}
+
+int bdmModeIsUSB(int mode)
+{
+    if (mode < BDM_MODE || mode > BDM_MODE_LAST || bdmDeviceList[mode - BDM_MODE].priv == NULL)
+        return 0;
+    return ((bdm_device_data_t *)bdmDeviceList[mode - BDM_MODE].priv)->bdmDeviceType == BDM_TYPE_USB;
 }
 
 // True when this BDM mode slot is the UDPBD block device.
@@ -1965,6 +1975,20 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
 
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS/%s.VCD", vcdPrefix, vcdName);
+    /* A stale module must be removed even by a standard/non-RA build. */
+    int raModule = vcdRemoveRaModule(vcdPrefix);
+    if (raModule == -2) {
+        guiMsgBox("Cannot remove the previous PS1 achievement module", 0, NULL);
+        return;
+    }
+#ifdef RETROACHIEVEMENTS
+    if (pDeviceData->bdmDeviceType == BDM_TYPE_USB) {
+        if (raPopsPrepare(vcdPrefix, pDeviceData->bdmPrefix, vcdFullPath, raModule == 0) < 0) {
+            guiMsgBox("Cannot prepare PS1 achievements. Preserve or move POPS/MODULE_9.IRX and check device write access.", 0, NULL);
+            return;
+        }
+    }
+#endif
     vcdPrepareRetroGemBarcode(vcdFullPath);
 
     // POPSTARTER.ELF may be on a different backend than the VCD. Keep both alive until the

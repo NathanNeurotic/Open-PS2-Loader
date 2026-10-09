@@ -1,0 +1,15 @@
+thbase_IMPORTS_start
+I_CreateThread
+I_StartThread
+I_DelayThread
+I_ExitDeleteThread
+thbase_IMPORTS_end
+
+sysmem_IMPORTS_start
+I_AllocSysMemory
+I_FreeSysMemory
+sysmem_IMPORTS_end
+
+sifcmd_IMPORTS_start
+I_sceSifGetOtherData
+sifcmd_IMPORTS_end

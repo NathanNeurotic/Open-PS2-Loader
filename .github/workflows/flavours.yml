@@ -139,6 +139,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Check PS1 VCD identification, module ownership and POPS snapshot reads
+        run: python3 .github/scripts/test_ra_ps1.py
       - name: Check disc hashing, reset image and launch gates
         run: python3 .github/scripts/test_ra_disc.py
       - name: Check RA language isolation and stable string IDs

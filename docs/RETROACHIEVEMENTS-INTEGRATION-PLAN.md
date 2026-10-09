@@ -1,3 +1,7 @@
+> Historical PS2 integration plan. USB PS1/VCD support now uses the separate
+> `rapops`/`rapull` IOP path described in [the current RA guide](RETROACHIEVEMENTS.md#ps1-achievements-through-usb-popstarter).
+> The ee_core-only PS1 exclusions below describe the original plan.
+
 # RetroAchievements integration plan (RiptOPL)
 
 > **Internal engineering document.** This is an implementation plan for contributors, not user
