@@ -82,3 +82,13 @@ unmodified xeRAbora alpha.16 snapshot parser and protocol headers. Direct values
 pointer-node pairs, serial identity, duplicate suppression and stale-list refusal
 pass. Existing client-mode tests cover Caduceus routing and legacy xeRAbora flags.
 This is protocol/host evidence, not a running-client or console test.
+
+## Follow-up review: PS1 watch identity and menu reachability
+
+- The dedicated POPStarter VCD menu now exposes RA support-check and link-test actions, also for VCD Favorites through their source USB device. Ember remains unsupported.
+- PS1 watch files, RAQ1 serials and POPS snapshot game IDs now use a matching, 15-character per-image key derived from the normalized VCD path. The embedded BOOT/PSX.EXE filename is retained for the RetroAchievements content hash, not used as a session identifier. Moving, renaming or replacing a VCD requires checking support again.
+- Every invalid VCD path and hash failure produces a localized error and hash-log entry.
+- RAPOPS incremental dependencies include its module headers and all shared network headers, avoiding stale embedded bridge ABI layouts.
+- PS1 with a stored watch list but no usable network IP launches normally without telemetry. An occupied user-owned MODULE_9.IRX remains a deliberate block for tracked injection.
+- Added host fixtures for image-key uniqueness, filesystem case/separator normalization, alternate USB roots, key propagation into MODULE_9.IRX, and offline launch fallback.
+- Source changes were made on PR #894; console acceptance (FAT32/exFAT real hardware, telemetry, legitimate unlocks and untouched user modules) remains outstanding regardless of host and compile results.
