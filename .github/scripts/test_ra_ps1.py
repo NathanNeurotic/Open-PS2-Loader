@@ -167,6 +167,7 @@ int main(void) {
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include "modules/network/common/rapops_cfg.h"
 #define RETROACHIEVEMENTS
 #define RA_MODE_CADUCEUS 1
@@ -187,8 +188,17 @@ static int ethGetNetConfig(unsigned char *ip,unsigned char *m,unsigned char *g) 
     ip[0]=192;ip[1]=168;ip[2]=1;ip[3]=2;memset(m,255,4);memset(g,0,4);return network ? 0 : -1;
 }
 /* Match PS2 FAT's actual behavior: exclusive creation is ignored. */
-static int fat_open(const char *p,int flags,int mode) {return open(p,flags & ~O_EXCL,mode);}
+static int fail_create, fail_write;
+static int fat_open(const char *p,int flags,int mode) {
+    if (fail_create) { errno=EACCES; return -1; }
+    return open(p,flags & ~O_EXCL,mode);
+}
+static ssize_t fat_write(int fd,const void *data,size_t count) {
+    if (fail_write) { errno=ENOSPC; return -1; }
+    return write(fd,data,count);
+}
 #define open fat_open
+#define write fat_write
 ''' + source + r'''
 int main(void) {
     memcpy(rapops_irx,RAPOPS_MAGIC,8);
@@ -208,7 +218,18 @@ int main(void) {
     assert(cfg.client_mode==1 && cfg.count==1 && cfg.bytes==4 && !strcmp(cfg.game_id,"P123456789abcde"));
     assert(!strcmp(loaded_key,cfg.game_id));
     unlink("POPS/MODULE_9.IRX");
-    puts("PASS: occupied user slot preserved even when O_EXCL is ignored; untracked/disabled launch; embedded configuration");
+    fail_create=1;
+    assert(raPopsPrepare("","","game.vcd",1)==0);
+    assert(access("POPS/MODULE_9.IRX",0)<0);
+    fail_create=0;
+    fail_write=1;
+    assert(raPopsPrepare("","","game.vcd",1)==0);
+    assert(access("POPS/MODULE_9.IRX",0)<0); /* Partial module removed. */
+    fail_write=0;
+    memset(rapops_irx,0,sizeof(rapops_irx));
+    assert(raPopsPrepare("","","game.vcd",1)==0); /* Absent embedded magic. */
+    assert(access("POPS/MODULE_9.IRX",0)<0);
+    puts("PASS: occupied user slot preserved even when O_EXCL ignored; optional create/write/embedded-config errors fail open");
 }
 ''')
 
