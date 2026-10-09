@@ -145,9 +145,9 @@ jobs:
         run: python3 .github/scripts/test_ra_watch.py
       - name: Check RA snapshot scheduling and transmission retries
         run: python3 .github/scripts/test_ra_sender.py
-      - name: Check Caduceus achievement browsing and pairing
-        run: python3 .github/scripts/test_caduceus_browser.py
-      - name: Check Xerabora and Caduceus discovery and offline sessions
+        - name: Check Caduceus achievement browsing and pairing
+          run: python3 .github/scripts/test_caduceus_browser.py
+        - name: Check Xerabora and Caduceus discovery and offline sessions
         run: python3 .github/scripts/test_ra_client_mode.py
 
   bdm-host-tests:
