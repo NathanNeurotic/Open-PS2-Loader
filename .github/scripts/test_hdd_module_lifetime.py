@@ -104,7 +104,7 @@ int main(void)
 
     gDeinitTerminal = 0;
     hddShutdown(NULL);
-    CHECK(hddModulesLoadCount == 0 && idleOps == 1, "page shutdown sends idle once");
+    CHECK(hddModulesLoadCount == 0 && idleOps == 0, "non-terminal shutdown must not idle ATA under BDM");
     CHECK(shutdownDev9 == 0, "non-terminal shutdown preserves DEV9 for other devices");
 
     CHECK(hddLoadModules() == HDD_LOADMODULES_STATUS_ALREADYLOADED, "page reentry reuses resident ATA");
@@ -112,10 +112,10 @@ int main(void)
 
     gDeinitTerminal = 1;
     hddShutdown(NULL);
-    CHECK(hddModulesLoadCount == 0 && idleOps == 2, "terminal shutdown idles once");
+    CHECK(hddModulesLoadCount == 0 && idleOps == 1, "terminal shutdown idles ATA once");
     CHECK(shutdownDev9 == 1, "terminal shutdown releases DEV9 exactly once");
     hddShutdown(NULL);
-    CHECK(shutdownDev9 == 1 && idleOps == 2, "repeated shutdown does not release DEV9 twice");
+    CHECK(shutdownDev9 == 1 && idleOps == 1, "repeated shutdown does not release DEV9 twice");
 
     /* New IOP generation, one failed first load, then retry. */
     hddModulesLoaded = hddModulesLoadCount = 0;
