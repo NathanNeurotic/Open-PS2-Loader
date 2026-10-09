@@ -328,7 +328,13 @@ int main(void) {
     assert(!sbHashGameDeferred("p","n","iso","SLUS_201.74",1) && requests==7);
     worker();assert(!sbHashGameBusy() && hashes==1);
     assert(sbHashGameDeferred("p","n","iso","SLUS_201.74",1));
-    puts("PASS: failed image-hash submissions release busy state and allow a later request");
+    worker();assert(!sbHashGameBusy() && hashes==2);
+    assert(!sbHashHdlDeferred(NULL,"n","SLUS_201.74",100));
+    assert(!sbHashHdlDeferred("p","n","SLUS_201.74",0));
+    assert(sbHashHdlDeferred("p","n","SLUS_201.74",100));
+    assert(sbHashGameBusy() && !sbHashGameDeferred("p","n","iso","SLUS_201.74",1));
+    worker();assert(!sbHashGameBusy() && hashes==3);
+    puts("PASS: queued image/HDL support checks, serialization and failed submission recovery");
 }
 ''')
 
