@@ -359,6 +359,21 @@ VMC ENABLED/DISABLED:
 PADEMU ENABLED/DISABLED:
 EXACT ERROR AND REPRODUCTION STEPS:</pre>
 <p>Report a RiptOPL UI, configuration or handoff regression in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues">RiptOPL's tracker</a>. If the game failure also reproduces in standalone Neutrino with the same arguments and files, report it to <a href="https://github.com/rickgaiser/neutrino/issues">Neutrino</a> and link the related report. Include a known-good version comparison when available; a black screen alone does not identify the responsible component.</p>
+<h2 id="setup-setup-questions-and-reporting-launch-failures">Setup questions and reporting launch failures</h2>
+<h2 id="setup-which-build-should-i-download">Which build should I download?</h2>
+<p>The ready-to-copy app and the unsuffixed standalone release ELF deliberately prefer <strong>OFFICIALROLLING</strong> when available. <strong>PS2DEVPINNED</strong> is the recommended conservative comparison build because its toolchain is pinned. These are different policies: the package default is not a claim that a moving SDK is the most reproducible choice.</p>
+<p>Use a named flavour from the same release when comparing behavior. Record its complete suffix; a successful build does not prove that it boots on your console. Keep the disk, configuration and selected core unchanged during a comparison. A failure in one flavour is evidence to investigate, not proof by itself of an SDK defect.</p>
+<h2 id="setup-does-browser-mean-the-memory-card-browser">Does Browser mean the memory-card browser?</h2>
+<p>Exiting to <strong>Browser</strong> hands control to the PS2's <strong>OSDSYS</strong> system interface. Seeing OSDSYS is expected. The eventual screen also depends on the console's installed boot/menu modifications. This option does not launch wLaunchELF's file browser. If you want a particular homebrew menu, configure its ELF as the exit target instead.</p>
+<h2 id="setup-why-is-another-language-unavailable">Why is another language unavailable?</h2>
+<p>English is built in. Other menu languages need the matching <code>lang_*.lng</code> files and, when required, their fonts on an enabled, readable source. Keep the language pack aligned with your build: older packs can lack new strings, which fall back to English. Apply the interface language and save settings to retain it across boots. This is separate from a game's language setting and the console's OSDSYS language.</p>
+<h2 id="setup-neutrino-worked-then-returned-to-osdsys">Neutrino worked, then returned to OSDSYS</h2>
+<p>Follow <a href="neutrino.html">the complete Neutrino installation and path guide</a>. RiptOPL may remain in <code>APPS/</code>; moving its own folder to the card root is not a general fix. An explicit Neutrino path must point to an ELF accompanied by its complete installation.</p>
+<p>Record the exact build, game, game device, Neutrino installation path/version, selected core, VMC state and forced video setting. Include any displayed error and whether failure occurs before or after Neutrino takes control. Compare with forced video off and physical memory cards only after recording the original settings. A reset alone cannot distinguish an ELF handoff problem, runtime module failure, game incompatibility or unsupported launch option.</p>
+<h2 id="setup-more-noise-at-startup">More noise at startup</h2>
+<p>Enabling an internal HDD source can initialize and spin up the disk even if another source is the startup page. Describe whether the noise comes from the HDD, optical drive or fan, and which sources are enabled. A report of increased noise alone does not identify a software regression or justify changing disk power behavior.</p>
+<h2 id="setup-riptopl-neutrino-and-other-frontends">RiptOPL, Neutrino and other frontends</h2>
+<p>Neutrino is a game-loading core; RiptOPL can launch it or use OPL's native core. LUNA is another frontend for Neutrino. Choosing a frontend and choosing a core are separate decisions. Consult each project's own release and supported-device documentation before moving a working setup; a different frontend is not automatically a fix for a storage or runtime problem.</p>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>
