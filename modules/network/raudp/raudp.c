@@ -825,7 +825,9 @@ static int ra_discover(void)
             }
             if (ra_caduceus && from.sin_addr.s_addr != to.sin_addr.s_addr)
                 continue;
-            if (got >= 4 && rx[0] == 'R' && rx[1] == 'A' && rx[2] == 'O' && rx[3] == '1') {
+            /* A syntactically similar RAO1 error is not a verified peer.
+               Require the successful discovery reply in both RA modes. */
+            if (got >= 8 && memcmp(rx, "RAO1 OK ", 8) == 0) {
                 u32 ip = from.sin_addr.s_addr;
 
                 /* The reply came through the stack, so the stack has
