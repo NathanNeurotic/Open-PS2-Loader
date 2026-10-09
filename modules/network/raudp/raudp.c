@@ -601,6 +601,17 @@ static void ra_send_one(void)
 
     ra_rxq = SMAP_REG8(SMAP_R_RXFIFO_FRAME_CNT);
 
+    /* In SMB/HTTP passive mode the game's disc stream owns SMAP RX.
+       Never inject an achievement snapshot while a received game packet
+       is waiting for the streaming driver. We only read the FIFO count;
+       do not advance descriptors or poll a socket. The unsent snapshot
+       stays pending and a later quiet poll may send the current values.
+       This is a safety improvement, not proof of SMB/HTTP RA compatibility. */
+    if (!ra_rx_in_game && ra_rxq != 0) {
+        ra_skip++;
+        return;
+    }
+
     /* Checked once per snapshot, not per part: dropping the last part
        of three would waste the two already sent. Busy means the whole
        snapshot waits for the next poll. Pushing into a busy controller
