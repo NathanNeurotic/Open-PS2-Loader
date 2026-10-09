@@ -696,7 +696,7 @@ gui_strings:
 - label: CHEAT_SELECTION
   string: Cheat Selection
 - label: HDD_HINT
-  string: Only one HDD allowed, enabling locks APA or GPT.
+  string: 'APA: HDD Games. exFAT (MBR/GPT): BDM Games. Both may be enabled.'
 - label: ERROR_SAVING_SETTINGS_TO
   string: Could not write settings to %s (error %d)
 - label: LAUNCH_PS2_DISC

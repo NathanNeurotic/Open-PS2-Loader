@@ -1123,8 +1123,16 @@ static void bdmLoadBlockDeviceModules(void)
         bdmDiagBootStageBegin("DEV9/ATAD/XHDD");
         int hddResult = hddDiagLoadModulesReady();
         bdmDiagBootStageEnd("DEV9/ATAD/XHDD", hddResult);
-        if (hddResult)
+        if (hddResult) {
+            // Module residency does not imply that ATAD's boot-time IDENTIFY succeeded. The
+            // HDD loader settles AFTER ATAD/XHDD init; with APA Off there is no partition-sector
+            // devctl afterward to re-probe and register a late drive with BDM. Ask once now through
+            // XHDD's read-only sceAtaInit path. Keep the residency latch even for an absent drive,
+            // so idle refreshes do not reload modules or run an unbounded spin-up retry loop.
+            int ataResult = fileXioDevctl("xhdd0:", ATA_DEVCTL_IS_48BIT, NULL, 0, NULL, 0);
+            LOG("bdmLoadBlockDeviceModules post-settle ATA probe: %d\n", ataResult);
             hddModLoaded = 1;
+        }
     }
 
     // Network block device (UDPBD or UDPFS, picked by gNetBootProtocol). NIC-exclusive with the SMB/ETH
@@ -1432,6 +1440,31 @@ static void bdmReportUnsupportedDrives(void)
     BdmUnsupportedSectorReported = count;
 }
 
+static int bdmRefreshGamePrefix(item_list_t *itemList)
+{
+    bdm_device_data_t *device = itemList->priv;
+    char prefix[sizeof(device->bdmPrefix)];
+
+    if (device->bdmDeviceRoot[0] == '\0' || bdmTransportEnabled(device->bdmDeviceType) == 0)
+        return 0;
+    bdmBuildGamePrefix(prefix, sizeof(prefix), device->bdmDeviceRoot);
+    if (strcmp(prefix, device->bdmPrefix) == 0)
+        return 0;
+
+    // A settings apply keeps mounted slots identified. Rebuild their library path anyway when
+    // usb_prefix changes, before the generation cache can retain the old (possibly empty) list.
+    // PS1 uses the device root, so only the PS2 store and its browse state belong to the old path.
+    snprintf(device->bdmPrefix, sizeof(device->bdmPrefix), "%s", prefix);
+    free(device->bdmGames);
+    device->bdmGames = NULL;
+    device->bdmGameCount = 0;
+    device->bdmULSizePrev = -2;
+    device->bdmModifiedCDPrev = device->bdmModifiedDVDPrev = 0;
+    device->FoldersCreated = device->ThemesLoaded = device->LanguagesLoaded = 0;
+    folderReset(itemList->mode);
+    return 1;
+}
+
 static int bdmNeedsUpdate(item_list_t *itemList)
 {
     char path[256];
@@ -1448,6 +1481,9 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     bdmReportUnsupportedDrives();
 
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
+
+    if (bdmRefreshGamePrefix(itemList))
+        return 1;
 
     // Check for forced refresh from deleting or renaming a game.
     if (pDeviceData->ForceRefresh != 0) {
