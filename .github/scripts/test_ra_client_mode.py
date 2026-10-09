@@ -35,7 +35,8 @@ struct sockaddr_in { int sin_family; unsigned short sin_port; struct { u32 s_add
 #define RA_DISC_SLOW_US 1
 #define htons(x) (x)
 static int ra_caduceus, ra_rx_in_game = 1, ra_sock, scenario, sent_port, bridge_sends, engine_sends, closed;
-static u32 ra_src_ip = 1, ra_dst_ip, ra_disc_us, ra_server_ip, ra_gateway_ip;
+static u32 ra_src_ip = 1, ra_dst_ip, ra_disc_us, ra_server_ip, ra_gateway_ip, ra_netmask_ip;
+static int arp_only_gateway;
 static u8 ra_dst_mac[6];
 int lwip_socket(int a,int b,int c) { return 7; }
 int lwip_setsockopt(int a,int b,int c,void*d,int e) { return 0; }
@@ -46,7 +47,7 @@ static int ticks;
 void DelayThread(int t) { if(scenario && ++ticks > 30) longjmp(deadline,1); }
 int ra_fmt_ip(char *out,u32 ip) { strcpy(out,"1.2.3.4"); return 7; }
 void ra_fmt(u8*out,unsigned int n,int len) { memcpy(out,"18195",5); }
-int etharp_lookup_mac(u32 ip,u8 *mac) { return 1; }
+int etharp_lookup_mac(u32 ip,u8 *mac) { return !arp_only_gateway || ip==ra_gateway_ip; }
 int lwip_sendto(int s,const char *body,int n,int flags,struct sockaddr *dest,int len) {
     struct sockaddr_in *to=(struct sockaddr_in*)dest;
     sent_port=to->sin_port;
@@ -90,7 +91,12 @@ int main(void) {
     scenario=0; ra_rx_in_game = 0; ra_server_ip = 123; bridge_sends = engine_sends = 0;
     assert(ra_discover() == 1 && ra_dst_ip == 123 && !bridge_sends && !engine_sends);
     ra_server_ip = 0; assert(ra_discover() == 0);
-    puts("PASS: Xerabora default, Caduceus bridge/engine discovery, offline, wrong hash and wrong host");
+    /* Only an off-subnet RA peer can inherit the gateway's ARP address. */
+    arp_only_gateway = 1; ra_gateway_ip = 88; ra_netmask_ip = 255;
+    ra_server_ip = 123; assert(ra_discover() == 1);
+    ra_server_ip = 1; assert(ra_discover() == 0);
+    ra_server_ip = 123; ra_netmask_ip = 0; assert(ra_discover() == 0);
+    puts("PASS: Xerabora/Caduceus discovery, offline, wrong peer, subnet-aware gateway and missing-mask guards");
 }
 '''
 with tempfile.TemporaryDirectory() as tmp:
