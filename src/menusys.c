@@ -2385,7 +2385,7 @@ void menuRenderAchievements(void)
                 rmDrawRect(36, y, 3, 59, CAD_ACCENT);
             GSTEXTURE *icon = achievementIcon(i, entry->icon);
             if (icon && icon->Mem)
-                rmDrawPixmap(icon, 45, y + 5, ALIGN_NONE, 48, 48, SCALING_RATIO, gDefaultCol);
+                rmDrawPixmap(icon, 45, y + 5, ALIGN_NONE, 48, 48, SCALING_RATIO, gDefaultCol, 0);
             else {
                 rmDrawRect(58, y + 13, 20, 17, CAD_MUTED);
                 rmDrawRect(65, y + 30, 6, 10, CAD_MUTED);
@@ -2418,7 +2418,7 @@ void menuRenderAchievements(void)
     menuCardText(36, 442, 465, 22, achKind == 'G' ? "L1/R1: page   Confirm: open   Select: refresh" : "L1/R1: page   Square: filter   Select: refresh", CAD_MUTED);
     GSTEXTURE *back = thmGetTexture(gSelectButton == KEY_CIRCLE ? CROSS_ICON : CIRCLE_ICON);
     if (back && back->Mem)
-        rmDrawPixmap(back, 519, 442, ALIGN_NONE, 16, 16, SCALING_RATIO, gDefaultCol);
+        rmDrawPixmap(back, 519, 442, ALIGN_NONE, 16, 16, SCALING_RATIO, gDefaultCol, 0);
     menuCardText(542, 442, 65, 22, "Back", CAD_TEXT);
 }
 
