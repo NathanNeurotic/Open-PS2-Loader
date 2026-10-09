@@ -772,6 +772,12 @@ void menuInitVcdMenu(int isEmber)
     if (isEmber)
         submenuAppendItem(&appMenu, -1, NULL, APP_EMBER_GAME_SETTINGS, _STR_EMBER_GAME_SETTINGS);
     submenuAppendItem(&appMenu, -1, NULL, APP_RENAME, _STR_RENAME);
+#ifdef RETROACHIEVEMENTS
+    if (!isEmber) {
+        submenuAppendItem(&appMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
+        submenuAppendItem(&appMenu, -1, NULL, GAME_RA_TEST, _STR_RA_TEST_LINK);
+    }
+#endif
 
     appMenuCurrent = appMenu;
 }
@@ -2040,39 +2046,11 @@ static int gameMenuCoreIsNeutrino(void)
     return coreLoader;
 }
 
-void menuHandleInputGameMenu()
-{
-    if (!gameMenu)
-        return;
-
-    if (!gameMenuCurrent)
-        gameMenuCurrent = gameMenu;
-
-    if (getKey(KEY_UP)) {
-        sfxPlay(SFX_CURSOR);
-        if (gameMenuCurrent->prev)
-            gameMenuCurrent = gameMenuCurrent->prev;
-        else // rewind to the last item
-            while (gameMenuCurrent->next)
-                gameMenuCurrent = gameMenuCurrent->next;
-    }
-
-    if (getKey(KEY_DOWN)) {
-        sfxPlay(SFX_CURSOR);
-        if (gameMenuCurrent->next)
-            gameMenuCurrent = gameMenuCurrent->next;
-        else
-            gameMenuCurrent = gameMenu;
-    }
-
-    if (getKeyOn(gSelectButton)) {
-        // execute the item via looking at the id of it
-        int menuID = gameMenuCurrent->item.id;
-
-        sfxPlay(SFX_CONFIRM);
-
 #ifdef RETROACHIEVEMENTS
-        if (menuID == GAME_RA_CHECK) {
+/* Shared by the PS2 game menu and the dedicated VCD menu. The latter lives on
+   GUI_SCREEN_APP_MENU and must not require PS2 per-game config or core menus. */
+static void menuCheckSelectedGameSupport(void)
+{
             /* RA: hash the selected image, on demand. Hashing every image during the scan would
                hold the console on the splash screen: the scan runs before the menu appears and
                each image has to be opened and read.
@@ -2124,7 +2102,44 @@ void menuHandleInputGameMenu()
                         guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
                 }
             }
-        } else if (menuID == GAME_RA_ACHIEVEMENTS) {
+
+}
+#endif
+
+void menuHandleInputGameMenu()
+{
+    if (!gameMenu)
+        return;
+
+    if (!gameMenuCurrent)
+        gameMenuCurrent = gameMenu;
+
+    if (getKey(KEY_UP)) {
+        sfxPlay(SFX_CURSOR);
+        if (gameMenuCurrent->prev)
+            gameMenuCurrent = gameMenuCurrent->prev;
+        else // rewind to the last item
+            while (gameMenuCurrent->next)
+                gameMenuCurrent = gameMenuCurrent->next;
+    }
+
+    if (getKey(KEY_DOWN)) {
+        sfxPlay(SFX_CURSOR);
+        if (gameMenuCurrent->next)
+            gameMenuCurrent = gameMenuCurrent->next;
+        else
+            gameMenuCurrent = gameMenu;
+    }
+
+    if (getKeyOn(gSelectButton)) {
+        // execute the item via looking at the id of it
+        int menuID = gameMenuCurrent->item.id;
+
+        sfxPlay(SFX_CONFIRM);
+
+#ifdef RETROACHIEVEMENTS
+        if (menuID == GAME_RA_CHECK) {
+            menuCheckSelectedGameSupport();        } else if (menuID == GAME_RA_ACHIEVEMENTS) {
             item_list_t *support = selected_item->item->userdata;
             int gid = selected_item->item->current->item.id;
             if (menuSelectedRowView(support) == LIB_VIEW_PS1 || support->mode == HDD_MODE ||
@@ -2300,6 +2315,13 @@ void menuHandleInputAppMenu()
             guiShowPsEmulationSettings();
         } else if (menuID == APP_EMBER_GAME_SETTINGS) {
             guiShowEmberGameSettings();
+#ifdef RETROACHIEVEMENTS
+        } else if (menuID == GAME_RA_CHECK) {
+            menuCheckSelectedGameSupport();
+        } else if (menuID == GAME_RA_TEST) {
+            sbTestPCLinkDeferred();
+            guiShowRANotice(_l(_STR_RA_LOOKING_FOR_PC), NULL);
+#endif
         }
         // so the exit press wont propagate twice
         readPads();
