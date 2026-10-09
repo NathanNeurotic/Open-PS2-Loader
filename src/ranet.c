@@ -757,7 +757,7 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
             /* 192: a multiple of 64 (rule 3) that leaves room for the
                terminating zero from the memset above. */
             got = recvfrom(sock, rx, sizeof(rx) - 64, RA_MSG_DONTWAIT, (struct sockaddr *)&from, &fromlen);
-            if (got >= 4 && strncmp(rx, "RAO1", 4) == 0 &&
+            if (got >= 8 && strncmp(rx, "RAO1 OK ", 8) == 0 &&
                 (to.sin_addr.s_addr == htonl(INADDR_BROADCAST) || from.sin_addr.s_addr == to.sin_addr.s_addr))
                 found = 1;
             else
