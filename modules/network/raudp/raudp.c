@@ -69,7 +69,7 @@ extern struct irx_export_table _exp_raudp;
    gives SMAP). The PC's IP and MAC come from discovery. Own MAC is read
    from the controller registers. All IPs are in network byte order. */
 static u32 ra_src_ip = 0;
-static u32 ra_server_ip = 0, ra_gateway_ip = 0;
+static u32 ra_server_ip = 0, ra_gateway_ip = 0, ra_netmask_ip = 0;
 static u32 ra_dst_ip = 0;
 static u8 ra_dst_mac[6];
 
@@ -748,7 +748,9 @@ static int ra_discover(void)
             return 0;
         for (tries = 0; tries < RA_DISC_POLLS; tries++) {
             int have_mac = etharp_lookup_mac(ra_server_ip, ra_dst_mac);
-            if (!have_mac && ra_gateway_ip != 0)
+            /* Gateway ARP is valid only when the RA peer is off-subnet. */
+            if (!have_mac && ra_gateway_ip != 0 && ra_netmask_ip != 0 &&
+                ((ra_server_ip ^ ra_src_ip) & ra_netmask_ip) != 0)
                 have_mac = etharp_lookup_mac(ra_gateway_ip, ra_dst_mac);
             if (have_mac) {
                 ra_dst_ip = ra_server_ip;
@@ -1184,19 +1186,13 @@ int _start(int argc, char *argv[])
             ra_server_ip = inet_addr(&argv[1][RA_ARG_HOST]);
     }
 
-    if (argc >= 3 && argv[2] != NULL) {
-        const char *gateway = argv[2];
-        int field;
+    /* SMAP passes NUL-delimited IP, netmask and gateway arguments. */
+    if (argc >= 3 && argv[2] != NULL)
         ra_src_ip = inet_addr(argv[2]);
-        for (field = 0; field < 2; field++) {
-            while (*gateway && *gateway != ' ')
-                gateway++;
-            while (*gateway == ' ')
-                gateway++;
-        }
-        if (*gateway)
-            ra_gateway_ip = inet_addr(gateway);
-    }
+    if (argc >= 4 && argv[3] != NULL)
+        ra_netmask_ip = inet_addr(argv[3]);
+    if (argc >= 5 && argv[4] != NULL)
+        ra_gateway_ip = inet_addr(argv[4]);
 
     /* Without an own address there is nothing to put in the discovery
        request or the IP header. Staying silent beats sending garbage. */
