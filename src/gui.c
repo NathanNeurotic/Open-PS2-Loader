@@ -1437,6 +1437,8 @@ int guiShowNetConfig(void)
     static const char *raModes[] = {"Xerabora", "Caduceus", NULL};
     diaSetEnum(diaNetConfig, NETCFG_RA_MODE, raModes);
     diaSetInt(diaNetConfig, NETCFG_RA_MODE, gRAMode);
+    for (i = 0; i < 4; ++i)
+        diaSetInt(diaNetConfig, NETCFG_RA_HOST_IP_0 + i, gRAHostIp[i]);
     diaSetInt(diaNetConfig, NETCFG_RA_TELEMETRY, gRATelemetry);
     diaSetInt(diaNetConfig, NETCFG_RA_BADGES, gRABadges);
 #endif
@@ -1527,6 +1529,8 @@ reshow_network:
 #ifdef RETROACHIEVEMENTS
         int previousRAMode = gRAMode;
         diaGetInt(diaNetConfig, NETCFG_RA_MODE, &gRAMode);
+        for (i = 0; i < 4; ++i)
+            diaGetInt(diaNetConfig, NETCFG_RA_HOST_IP_0 + i, &gRAHostIp[i]);
         diaGetInt(diaNetConfig, NETCFG_RA_TELEMETRY, &gRATelemetry);
         diaGetInt(diaNetConfig, NETCFG_RA_BADGES, &gRABadges);
 #endif
