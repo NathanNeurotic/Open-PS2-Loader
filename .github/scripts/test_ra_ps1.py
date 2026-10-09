@@ -199,6 +199,9 @@ int main(void) {
     count=0;assert(raPopsPrepare("","","game.vcd",0)==0);
     count=1;gRATelemetry=0;assert(raPopsPrepare("","","game.vcd",0)==0);
     gRATelemetry=1;unlink("POPS/MODULE_9.IRX");
+    network=0;assert(raPopsPrepare("","","game.vcd",1)==0);
+    assert(access("POPS/MODULE_9.IRX",0)!=0); /* Offline plays without tracking. */
+    network=1;
     assert(raPopsPrepare("","","game.vcd",1)==0);
     struct rapops_cfg cfg;f=fopen("POPS/MODULE_9.IRX","rb");
     assert(fread(&cfg,1,sizeof(cfg),f)==sizeof(cfg));fclose(f);
