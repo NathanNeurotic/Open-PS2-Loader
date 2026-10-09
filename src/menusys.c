@@ -19,6 +19,7 @@
 #include "include/system.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/discsupport.h"
+#include "include/ra_browser.h"
 #endif
 #include "include/ioman.h"
 #include "include/sound.h"
@@ -44,6 +45,7 @@ enum MENU_IDs {
 #ifdef RETROACHIEVEMENTS
     MENU_RA_DISC_CHECK,
     MENU_RA_DISC_LAUNCH,
+    MENU_RA_ACCOUNT_BROWSER,
 #endif
 };
 
@@ -67,6 +69,7 @@ enum GAME_MENU_IDs {
     // on these enum positions, so RA entries must not shift the existing ones.
     GAME_RA_CHECK,
     GAME_RA_TEST,
+    GAME_RA_ACCOUNT_BROWSER,
 #endif
 };
 
@@ -685,6 +688,7 @@ static void menuInitMainMenu(void)
 #ifdef RETROACHIEVEMENTS
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_CHECK, _STR_RA_DISC_CHECK);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_LAUNCH, _STR_RA_DISC_LAUNCH);
+    submenuAppendItem(&mainMenu, -1, "RA: Account achievements", MENU_RA_ACCOUNT_BROWSER, -1);
 #endif
     submenuAppendItem(&mainMenu, -1, NULL, MENU_SETTINGS, _STR_SETTINGS);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_NBD, _STR_STARTNBD);
@@ -730,6 +734,7 @@ void menuInitGameMenu(item_list_t *support)
 #ifdef RETROACHIEVEMENTS
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_TEST, _STR_RA_TEST_LINK);
+    submenuAppendItem(&gameMenu, -1, "RA: Browse account", GAME_RA_ACCOUNT_BROWSER, -1);
 #endif
 
     gameMenuCurrent = gameMenu;
@@ -1570,7 +1575,9 @@ void menuHandleInputMenu()
         sfxPlay(SFX_CONFIRM);
 
 #ifdef RETROACHIEVEMENTS
-        if (id == MENU_RA_DISC_CHECK) {
+        if (id == MENU_RA_ACCOUNT_BROWSER) {
+            raBrowserOpen(0);
+        } else if (id == MENU_RA_DISC_CHECK) {
             if (discCheckSupportDeferred())
                 guiShowRANotice(_l(_STR_RA_DISC_CHECKING), NULL);
             else
@@ -2058,7 +2065,9 @@ void menuHandleInputGameMenu()
         sfxPlay(SFX_CONFIRM);
 
 #ifdef RETROACHIEVEMENTS
-        if (menuID == GAME_RA_CHECK) {
+        if (menuID == GAME_RA_ACCOUNT_BROWSER) {
+            raBrowserOpen(1);
+        } else if (menuID == GAME_RA_CHECK) {
             /* RA: hash the selected image, on demand. Hashing every image during the scan would
                hold the console on the splash screen: the scan runs before the menu appears and
                each image has to be opened and read.
