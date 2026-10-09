@@ -15,6 +15,9 @@ void raHashSetStepLog(ra_step_fn fn);
 int raHashIsoDirect(const char *isopath, const char *startup, char *out33);
 
 int raHashDisc(const char *bootPath, const char *startup, char *out33);
+/* Read-only HDLoader APA logical-sector hashing, using CDVDMAN-compatible
+   part_specs from the installed partition descriptor. */
+int raHashHdl(unsigned int start_sector, const char *startup, char *out33);
 
 int raVcdBootName(const char *vcdpath, char *boot, int boot_max);
 int raHashVcd(const char *vcdpath, char *boot, int boot_max, char *out33);
