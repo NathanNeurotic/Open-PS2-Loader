@@ -48,7 +48,7 @@ enum {
 #define ERROR_HDD_IF_NOT_DETECTED 400
 #define _STR_HDD_NOT_CONNECTED_ERROR "missing HDD"
 #define PDIOC_CLOSEALL 1
-#define LOG(...) ((void)0)
+#define LOG(...) do { if (0) printf(__VA_ARGS__); } while (0)
 #define hddDiagBootStageBegin(...) ((void)0)
 #define hddDiagBootStageEnd(...) ((void)0)
 #define hddDiagBootStageEndVoid(...) ((void)0)
