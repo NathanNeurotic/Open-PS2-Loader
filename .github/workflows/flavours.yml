@@ -71,6 +71,8 @@ jobs:
         run: python3 .github/scripts/test_pad_repeat_clock.py
       - name: Check IGR polls without a VBLANK handler, except in RetroAchievements builds
         run: python3 .github/scripts/test_igr_polling.py
+      - name: Check repeated HDD/APA probes preserve one DEV9 owner and retry failed loads
+        run: python3 .github/scripts/test_hdd_module_lifetime.py
       - name: Check that the handoff probe only refuses a target the child cannot load
         run: python3 .github/scripts/test_handoff_probe.py
       - name: Check that a blind button press cannot keep a video mode the TV cannot show
