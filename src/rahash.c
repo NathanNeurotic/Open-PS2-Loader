@@ -33,6 +33,8 @@
 #include "include/ioman.h"
 #include "include/md5.h"
 #include "include/rahash.h"
+#include "include/hdl_layout.h"
+#include "include/hdd.h"
 
 #include <ps2sdkapi.h> // lseek64: images can exceed 2 GB
 
@@ -87,13 +89,15 @@ static void step_num(const char *what, unsigned int a, unsigned int b, int c)
 #define ISO_PVD_LBA 16
 enum ra_src_kind { RA_SRC_ISO,
                    RA_SRC_VCD,
-                   RA_SRC_DISC };
+                   RA_SRC_DISC,
+                   RA_SRC_HDL };
 struct ra_src
 {
     int fd;
     enum ra_src_kind kind;
+    const hdl_layout_header_t *hdl;
 };
-static const struct ra_src g_disc = {-1, RA_SRC_DISC};
+static const struct ra_src g_disc = {-1, RA_SRC_DISC, NULL};
 
 static unsigned int le32(const unsigned char *p)
 {
@@ -197,6 +201,81 @@ static int vcd_read_at(int fd, long long off, void *buf, int len)
     return done;
 }
 
+/* HDLoader maps ISO logical sectors through the descriptor at the head
+   of the APA game partition, just as CDVDMAN's DeviceReadSectors does. This
+   reader never mounts a partition, touches metadata or writes ATA sectors.
+   Reject invalid/overlapping physical or logical extents before hashing. */
+static int hdl_valid_map(const hdl_layout_header_t *map)
+{
+    int i, j;
+
+    if (map->num_partitions < 1 || map->num_partitions > HDL_LAYOUT_PARTS)
+        return 0;
+    for (i = 0; i < map->num_partitions; i++) {
+        const hdl_layout_part_t *a = &map->part_specs[i];
+        unsigned int count, raw_count;
+        if (!a->part_size || a->part_size % ISO_SECTOR)
+            return 0;
+        count = a->part_size / ISO_SECTOR;
+        raw_count = a->part_size / 512;
+        if (count > 0xffffffffU - a->part_offset ||
+            raw_count > 0xffffffffU - a->data_start)
+            return 0;
+        for (j = 0; j < i; j++) {
+            const hdl_layout_part_t *b = &map->part_specs[j];
+            unsigned int other_count = b->part_size / ISO_SECTOR;
+            unsigned int other_raw_count = b->part_size / 512;
+            if (a->part_offset < b->part_offset + other_count &&
+                b->part_offset < a->part_offset + count)
+                return 0;
+            if (a->data_start < b->data_start + other_raw_count &&
+                b->data_start < a->data_start + raw_count)
+                return 0;
+        }
+    }
+    return 1;
+}
+
+static unsigned char g_hdl_sector[ISO_SECTOR] __attribute__((aligned(64)));
+
+static int hdl_read_at(const hdl_layout_header_t *map, long long off, void *buf, int len)
+{
+    int done = 0;
+    if (!map || off < 0 || len <= 0)
+        return -1;
+
+    while (done < len) {
+        unsigned long long position = (unsigned long long)off + done;
+        unsigned long long sector = position / ISO_SECTOR;
+        unsigned int within = (unsigned int)(position % ISO_SECTOR);
+        unsigned int raw_lba = 0;
+        int n, i, found = 0;
+
+        if (sector > 0xffffffffU)
+            return -1;
+        for (i = 0; i < map->num_partitions; i++) {
+            const hdl_layout_part_t *part = &map->part_specs[i];
+            unsigned int count = part->part_size / ISO_SECTOR;
+            if (sector >= part->part_offset &&
+                sector - part->part_offset < count) {
+                raw_lba = part->data_start +
+                          ((unsigned int)(sector - part->part_offset) << 2);
+                found = 1;
+                break;
+            }
+        }
+        if (!found || hddReadSectors(raw_lba, 4, g_hdl_sector) != 0)
+            return -1;
+
+        n = ISO_SECTOR - within;
+        if (n > len - done)
+            n = len - done;
+        memcpy((unsigned char *)buf + done, g_hdl_sector + within, n);
+        done += n;
+    }
+    return done;
+}
+
 static int read_at(const struct ra_src *src, long long off, void *buf, int len)
 {
     if (src->kind == RA_SRC_DISC)
@@ -204,6 +283,8 @@ static int read_at(const struct ra_src *src, long long off, void *buf, int len)
 
     if (src->kind == RA_SRC_VCD)
         return vcd_read_at(src->fd, off, buf, len);
+    if (src->kind == RA_SRC_HDL)
+        return hdl_read_at(src->hdl, off, buf, len);
     if (lseek64(src->fd, off, SEEK_SET) < 0)
         return -1;
 
@@ -392,11 +473,39 @@ int raHashIsoDirect(const char *isopath, const char *startup, char *out33)
         return err == EBUSY ? -6 : -1;
     }
 
-    struct ra_src src = {fd, RA_SRC_ISO};
+    struct ra_src src = {fd, RA_SRC_ISO, NULL};
     ret = hash_boot_exec(&src, startup, out33);
     close(fd);
 
     return ret;
+}
+
+/* Automatic PS2 RA hashing for an installed HDLoader APA game. Read-only
+   access through the already resident HDD device; no conversion to ISO,
+   partition writes, cache flushing or extra mount. The same ISO9660 walker
+   and boot-executable MD5 algorithm as a normal image are reused. */
+int raHashHdl(unsigned int start_sector, const char *startup, char *out33)
+{
+    hdl_layout_header_t header __attribute__((aligned(64)));
+    struct ra_src src;
+    int result;
+
+    if (!startup || !startup[0] || !out33)
+        return -1;
+    out33[0] = '\0';
+    if (start_sector == 0 || hddReadSectors(start_sector, 2, &header) != 0)
+        return -1;
+    if (!hdl_valid_map(&header)) {
+        step("hdl-invalid-map");
+        return -2;
+    }
+    src.fd = -1;
+    src.kind = RA_SRC_HDL;
+    src.hdl = &header;
+    result = hash_boot_exec(&src, startup, out33);
+    if (result != 0)
+        out33[0] = '\0';
+    return result;
 }
 
 // Hash the same boot executable through the ROM filesystem first. Exact length
@@ -735,7 +844,7 @@ int raVcdWatchGuardMatches(const char *watchRoot, const char *watchKey, const ch
 
 int raVcdBootName(const char *vcdpath, char *boot, int boot_max)
 {
-    struct ra_src src = {open(vcdpath, O_RDONLY), RA_SRC_VCD};
+    struct ra_src src = {open(vcdpath, O_RDONLY), RA_SRC_VCD, NULL};
     int ret;
 
     boot[0] = '\0';
@@ -761,7 +870,7 @@ int raVcdBootName(const char *vcdpath, char *boot, int boot_max)
 
 int raHashVcd(const char *vcdpath, char *boot, int boot_max, char *out33)
 {
-    struct ra_src src = {-1, RA_SRC_VCD};
+    struct ra_src src = {-1, RA_SRC_VCD, NULL};
     int ret;
 
     out33[0] = '\0';
