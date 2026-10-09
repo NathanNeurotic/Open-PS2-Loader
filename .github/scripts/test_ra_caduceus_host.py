@@ -9,8 +9,8 @@ import tempfile
 
 root = Path(__file__).resolve().parents[2]
 src = (root / "src/ranet.c").read_text()
-start = src.index("static int caduceus_target(struct sockaddr_in *to)")
-end = src.index("\n}\n", start) + 2
+start = src.index("static int raHostIsExplicit(void)")
+end = src.index("/* Discover without the capability", start)
 helper = src[start:end]
 sections = {
     "account browser": src[src.index("int raCaduceusPage("):src.index("static int raExpectedChunkLength(")],
@@ -37,6 +37,7 @@ struct sockaddr_in {
 #define RA_CADUCEUS_PORT 18197
 #define htons(x) (x)
 static u8 pc_ip[4];
+static int gRAHostIp[4];
 """ + helper + r"""
 int main(void)
 {
@@ -53,7 +54,10 @@ int main(void)
     assert(target.sin_addr.s_addr == 0x0a01a8c0u);
     memset(pc_ip, 255, sizeof(pc_ip));
     assert(!caduceus_target(&target)); /* Broadcast is not a paired host. */
-    puts("PASS: Caduceus menu/browser/launch/link targets require configured unicast peer");
+    gRAHostIp[0] = 10; gRAHostIp[1] = 0; gRAHostIp[2] = 0; gRAHostIp[3] = 7;
+    assert(caduceus_target(&target) && target.sin_addr.s_addr == 0x0700000au);
+    assert(configured_ra_target(&target, 18194) && target.sin_port == 18194);
+    puts("PASS: Caduceus fallback, optional RA override and unicast validation");
     return 0;
 }
 """
