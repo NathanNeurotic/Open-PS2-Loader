@@ -33,7 +33,7 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef unsigned iop_sys_clock_t;
 #define USE_SMAP_REGS
-#define SMAP_REG8(x) 0
+#define SMAP_REG8(x) rx_backlog
 #define RA_PAYLOAD 1472
 #define RA_HDR_LEN 42
 #define RA_FRAME_LEN (RA_HDR_LEN + RA_PAYLOAD)
@@ -45,6 +45,7 @@ static volatile struct ra_snap *ra_snap = (void *)storage;
 static char ra_game_id[16] = "SLUS_210.65";
 static u32 ra_seq, ra_fail, ra_us, ra_us_max, ra_rxq, ra_skip, ra_snap_bad, ra_sent_sq;
 static int ra_err, ra_sent_any, ra_rx_in_game = 1;
+static unsigned rx_backlog;
 static u32 ra_disc_us;
 static unsigned packets, failed_packet, advance_packet, busy, drains, polls, heartbeats;
 static u32 ra_hb_rx, ra_hb_rau, ra_ee_event = 1;
@@ -122,6 +123,7 @@ static void reset(void) {
     ra_err = ra_sent_any = 0;
     packets = failed_packet = advance_packet = busy = drains = polls = heartbeats = 0;
     tick = limit = produce = quiet = 0;
+    rx_backlog = 0;
     ra_disc_us = RA_QUIET_US;
     ra_rx_in_game = 1;
     snapshot(1, 8);
@@ -180,11 +182,20 @@ int main(void) {
     assert(packets == 625 && drains == 625 && polls == 625 && heartbeats == 1);
     reset(); ra_rx_in_game = 0; loop(501);
     assert(packets == 3 && !drains && !polls && quiet == 1);
+    reset(); ra_rx_in_game = 0; rx_backlog = 2;
+    ra_send_one();
+    assert(!packets && ra_skip == 1 && ra_snap_pending() == 1);
+    rx_backlog = 0;
+    ra_send_one();
+    assert(packets == 1 && ra_snap_pending() == 0);
+    reset(); ra_rx_in_game = 1; rx_backlog = 2;
+    ra_send_one(); /* Local games may consume SMAP receive directly. */
+    assert(packets == 1);
     reset(); ra_snap = NULL; loop(16);
     assert(packets == 4 && !ra_sent_any);
     reset(); busy = 1; loop(20);
     assert(!packets && ra_skip == 20);
-    puts("PASS: new-only sending, idle keepalive, RX guard, quiet period and header-only cadence");
+    puts("PASS: passive SMB/HTTP RX backpressure, local game sampling, idle keepalive and quiet period");
     ra_handle_pc("RAR1 ", 5);
     assert(events == 1 && control_acks == 1 && ra_event.kind == RA_EVENT_RESET);
     ra_handle_pc("RAU1 1234567890", 15);
