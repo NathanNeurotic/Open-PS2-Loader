@@ -335,6 +335,9 @@ extern int gRATelemetry;
 #define RA_MODE_XERABORA 0
 #define RA_MODE_CADUCEUS 1
 extern int gRAMode;
+/* Optional dedicated RA companion host; 0.0.0.0 retains legacy SMB/HTTP
+   fallback and Xerabora broadcast discovery. This never changes SMB games. */
+extern int gRAHostIp[4];
 // List badges and the cover mark. Cosmetic, and subordinate to gRATelemetry: badges advertise a
 // feature, so they stay dark while the feature is switched off.
 extern int gRABadges;
