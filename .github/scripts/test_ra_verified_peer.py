@@ -33,6 +33,7 @@ typedef uint8_t u8;
 #define RA_MODE_CADUCEUS 1
 static int gRAMode;
 static u8 pc_ip[4] = {192, 168, 1, 10};
+static int gRAHostIp[4];
 """
 harness += peer
 harness += r"""
@@ -49,6 +50,9 @@ int main(void) {
     pc_ip[3]=11;
     assert(raNetPeerIP()==0); /* Changed SMB server invalidates selected host. */
     pc_ip[3]=10;
+    gRAHostIp[0]=10;
+    assert(raNetPeerIP()==0); /* Changing the dedicated companion invalidates it too. */
+    gRAHostIp[0]=0;
     raNetForgetPeer();
     assert(raNetPeerIP()==0);
     raNetRememberPeer(INADDR_BROADCAST);
