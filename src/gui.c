@@ -5,6 +5,9 @@
  */
 
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#endif
 #include "include/gui.h"
 #include "include/diag.h" // gLastDeferredTimedOut -- a bounded wait that expired means the handler never ran
 #include "include/renderman.h"
@@ -1367,6 +1370,12 @@ static int guiSmbLinkChanged(const gui_smb_link_t *before)
 
 int guiShowNetConfig(void)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return 0;
+    }
+#endif
     size_t i;
     // What the live SMB session was built from, before this page changes anything.
     gui_smb_link_t smbBefore;

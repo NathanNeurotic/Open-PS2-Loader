@@ -124,3 +124,50 @@ with tempfile.TemporaryDirectory() as tmp:
  path=Path(tmp);(path/'network.c').write_text(harness+network+checks)
  subprocess.run(['cc','-std=gnu99','-I',str(root),str(path/'network.c'),'-o',str(path/'network.exe')],check=True)
  subprocess.run([str(path/'network.exe')],check=True)
+
+menu=(root/'src/menusys.c').read_text()
+def function(name):
+ a=menu.index('static void '+name+'(') if name=='achievementReload' else menu.index('void '+name+'(')
+ b=menu.index('\n}',a)+2
+ return menu[a:b]
+ui=r"""
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include "include/achievements.h"
+enum {KEY_CROSS=1,KEY_CIRCLE,KEY_START,KEY_SELECT,KEY_SQUARE,KEY_L1,KEY_R1,KEY_UP,KEY_DOWN};
+enum {GUI_SCREEN_GAME_MENU=3,GUI_SCREEN_MENU=1,SFX_CURSOR};
+static int achFromCard,achKind,achPage,achLibraryPage,achFilter,achSelected,achNeedsPage;
+static char achTarget[33],achImagePath[256],achImageStartup[16];
+static int achIconIds[3],gSelectButton=KEY_CROSS,key,busy,screen,retries;
+static achievement_page_t current;
+static void achievementsSnapshot(achievement_page_t *out) {*out=current;}
+static int achievementsBusy(void) {return busy;}
+static int sbHashGameBusy(void) {return 0;}
+static int discCheckBusy(void) {return 0;}
+static int getKeyOn(int k) {return key==k;}
+static int getKey(int k) {return key==k;}
+static void guiSwitchScreen(int id) {screen=id;}
+static void menuInitMainMenu(void) {}
+static void sfxPlay(int effect) {}
+static int achievementsRequestImage(const char *p,const char *s) {retries++;return 1;}
+""".replace('static void achievementsSnapshot','void achievementsSnapshot').replace('static int achievementsBusy','int achievementsBusy').replace('static int achievementsRequestImage','int achievementsRequestImage')
+uicheck=r"""
+int main(void) {
+ achFromCard=1;achKind='A';strcpy(achTarget,"image");current.state=ACH_ERROR;
+ key=KEY_SQUARE;menuHandleInputAchievements();assert(!achNeedsPage);
+ key=KEY_SELECT;menuHandleInputAchievements();assert(retries==1 && !achNeedsPage);
+ busy=1;key=KEY_CIRCLE;menuHandleInputAchievements();assert(screen==GUI_SCREEN_GAME_MENU);busy=0;
+ achFromCard=0;achKind='G';current.state=ACH_READY;current.count=1;current.entries[0].id=42;
+ key=KEY_CROSS;menuHandleInputAchievements();assert(achKind=='A' && !strcmp(achTarget,"42") && achNeedsPage);
+ achNeedsPage=0;current.kind='A';current.total=6;achFilter=3;
+ key=KEY_SQUARE;menuHandleInputAchievements();assert(achFilter==0 && achPage==0 && achNeedsPage);
+ achNeedsPage=0;key=KEY_R1;menuHandleInputAchievements();assert(achPage==1 && achNeedsPage);
+ key=KEY_CIRCLE;menuHandleInputAchievements();assert(achKind=='G' && !strcmp(achTarget,"0"));
+ puts("PASS: browser navigation, paging, filters, image retry and Back during worker I/O");
+}
+"""
+with tempfile.TemporaryDirectory() as tmp:
+ path=Path(tmp);(path/'ui.c').write_text(ui+function('achievementReload')+function('menuHandleInputAchievements')+uicheck)
+ subprocess.run(['cc','-std=gnu99','-I',str(root),str(path/'ui.c'),'-o',str(path/'ui.exe')],check=True)
+ subprocess.run([str(path/'ui.exe')],check=True)

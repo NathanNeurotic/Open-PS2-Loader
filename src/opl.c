@@ -5,6 +5,9 @@
 */
 
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#endif
 #include "include/ioman.h"
 #include "include/launchdiag.h" // UDPBD hang-triage stage markers (gated on gLaunchDiag)
 #include "include/gui.h"
@@ -393,6 +396,12 @@ static void itemInitSupport(item_list_t *support)
 
 static void itemExecSelect(struct menu_item *curMenu)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return;
+    }
+#endif
     item_list_t *support = curMenu->userdata;
     sfxPlay(SFX_CONFIRM);
     // That confirm just armed a rumble pulse, and everything below blocks the GUI thread without

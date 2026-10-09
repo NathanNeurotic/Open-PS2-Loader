@@ -2123,7 +2123,8 @@ void menuHandleInputGameMenu()
                         snprintf(achImagePath, sizeof(achImagePath), "%s", path);
                         snprintf(achImageStartup, sizeof(achImageStartup), "%s", g->startup);
                         menuOpenAchievements("image");
-                    }
+                    } else
+                        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
                 } else
                     guiShowRANotice(_l(_STR_CAD_HASH_UNSUPPORTED), NULL);
             }
@@ -2453,7 +2454,7 @@ void menuHandleInputAchievements(void)
         achievementReload();
         return;
     }
-    if (getKeyOn(KEY_SQUARE) && achKind == 'A') {
+    if (getKeyOn(KEY_SQUARE) && achKind == 'A' && page.state == ACH_READY) {
         achFilter = (achFilter + 1) % 4;
         achPage = 0;
         achievementReload();
