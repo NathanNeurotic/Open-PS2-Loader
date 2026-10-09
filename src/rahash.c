@@ -495,6 +495,13 @@ int raHashHdl(unsigned int start_sector, const char *startup, char *out33)
     out33[0] = '\0';
     if (start_sector == 0 || hddReadSectors(start_sector, 2, &header) != 0)
         return -1;
+    /* The selected HDL entry's boot executable must match the descriptor
+       read from this exact installed partition. A stale list or an ATA
+       re-enumeration must never hash a different game's executable. */
+    if (strncmp(startup, header.startup, sizeof(header.startup)) != 0) {
+        step("hdl-stale-startup");
+        return -2;
+    }
     if (!hdl_valid_map(&header)) {
         step("hdl-invalid-map");
         return -2;
