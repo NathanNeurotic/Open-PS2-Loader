@@ -34,6 +34,31 @@ The internal exFAT HDD mounts into the shared `massN:` namespace. `mass0:` does 
 - **Booting and loading games are different:** support for an exFAT game disk does not make that disk a FreeHDBoot/APA boot installation. Launch RiptOPL using an available boot method, then use its BDM list.
 - **PS1 uses a separate runtime:** place VCDs in `POPS/` and use the matching BDMA exFAT setup for POPSTARTER. PS2 exFAT support alone does not install that runtime. See [VCD setup](VCD.md).
 
+## APA-Jail: APA/PFS and exFAT on the same disk
+
+**APA-Jail is a hybrid layout, not another filesystem or an option you enable in RiptOPL.** It lets APA/PFS storage for PSBBN/system data coexist with an exFAT area for game files and homebrew. The [PSBBN Definitive Project](https://github.com/CosmicScale/PSBBN-Definitive-Project) uses APA-Jail, developed by Berion. Use that project's installation tools and instructions to create or maintain its layout; ordinary PC repartitioning can destroy the APA side.
+
+RiptOPL recognizes the supported **APA+MBR hybrid** by a valid, checksummed APA header plus an MBR FAT/exFAT partition entry beyond the APA reserved area. An MBR signature alone does not make a plain APA disk an APA-Jail disk. This is distinct from a **GPT/APA hybrid**, which the embedded APA driver does not support: its APA stack is skipped, although accessible GPT FAT/exFAT volumes can still use BDM. Plain exFAT disks support both MBR and GPT; that does not imply all mixed APA/GPT layouts are supported.
+
+### Games and settings on APA-Jail
+
+Games stored as files on the exFAT side belong in its `DVD/`, `CD/` and `POPS/` folders and appear through **BDM → Internal HDD (exFAT)**. The **HDD (APA)** list is for HDLoader game partitions; it does not list those exFAT files. RiptOPL may itself be launched from the APA side without moving the game files there.
+
+For an APA launch on a recognized hybrid, RiptOPL normally adopts the mounted exFAT volume as its settings home:
+
+- Existing RiptOPL settings on exFAT are preferred first.
+- Otherwise, a **Custom Settings Path** saved in the APA data home keeps that explicit routing in force.
+- Without that redirect, older RiptOPL settings in `+OPL` or `__common/OPL/` are read as carry-over settings. The next save writes to the exFAT home; this is not a destructive move or deletion of the old settings.
+- On a first run, an official-OPL seed, or APA carry-over, the exFAT home enables the ATA BDM transport and starts a disabled BDM list on **Auto**. Once RiptOPL has saved its own settings there, your saved BDM start-mode choice is respected.
+
+This depends on the exFAT volume mounting successfully. If it is not available during discovery, RiptOPL can use an accessible APA data home instead. Check the reported settings path and the actual volume before deleting configurations or assuming a save failed. RiptOPL's master file is `settings_riptopl.cfg`; official OPL's `conf_opl.cfg` is a separate file. Network, artwork, per-game files and other shared data still need their correct paths.
+
+### Safety and troubleshooting
+
+RiptOPL is not an APA-Jail partition manager. Its APA driver refuses partition-table modifications, and the ATA BDM write fence protects the first 128 MiB of an APA disk. Those guards do not validate every possible hybrid layout or make an overlapping partition safe. Back up valuable data, use the layout's own maintenance tools, and do not convert an installed APA-Jail disk to GPT or reformat it to fix an empty list.
+
+For missing games, check the **exFAT BDM list**, its transport/start settings and prefix first. For missing settings, check which home was selected and whether an APA Custom Settings Path is present. **Code 402 is not an instruction to format.** See [APA safety and recovery](APA-SAFETY.md).
+
 ## HDD detected, but games missing
 
 Check the game list and path before changing the disk:
