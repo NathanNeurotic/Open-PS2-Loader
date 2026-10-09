@@ -24,6 +24,12 @@ Record the exact build, game, game device, Neutrino installation path/version, s
 
 Enabling an internal HDD source can initialize and spin up the disk even if another source is the startup page. Describe whether the noise comes from the HDD, optical drive or fan, and which sources are enabled. A report of increased noise alone does not identify a software regression or justify changing disk power behavior.
 
+## What do Neutrino's 1080i x1, x2 and x3 mean?
+
+All three select **1080i output**. They change the display scaling, rather than making the game render at a new resolution or frame rate. In Neutrino's scaling code, the nominal horizontal mapping uses factors of 1, 2 and 3 respectively (640, 1280 and 1920 relative to its 640-wide baseline); x1 also halves its target framebuffer/display height before calculating the scaling. These numbers describe the output mapping, not newly rendered game detail. The result depends on the game's framebuffer/field mode and your display's handling of interlaced output.
+
+Start with forced video **Off** when diagnosing a launch or display failure, and choose a preset per game after establishing a working baseline. x3 is not a 1080p mode and is not universally the best choice. See [Neutrino's scaling implementation](https://github.com/ps2max32/neutrino/blob/7be8de2798c99af433c91993e021746a54d6800d/ee/ee_core/src/gsm_api.c).
+
 ## RiptOPL, Neutrino and other frontends
 
 Neutrino is a game-loading core; RiptOPL can launch it or use OPL's native core. LUNA is another frontend for Neutrino. Choosing a frontend and choosing a core are separate decisions. Consult each project's own release and supported-device documentation before moving a working setup; a different frontend is not automatically a fix for a storage or runtime problem.

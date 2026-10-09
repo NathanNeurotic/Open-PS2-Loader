@@ -572,7 +572,7 @@ For APA, RiptOPL uses existing partitions only: a usable `hdd_partition` selecti
 `hdd0:__common/OPL/conf_hdd.cfg`, then an existing `+OPL`, then `__common/OPL/`.
 If no suitable data partition exists it fails without creating one. See [HDD](#hdd).
 
-HDDs are also able to be formatted as exFAT to avoid the 2TB limitation.  Please see below in the `HDD` section for more details on this configuration.
+An internal HDD can use GPT partitioning with exFAT to address capacity beyond MBR's conventional 2 TiB limit. exFAT alone does not remove that limit from an MBR disk. See [exFAT storage](docs/EXFAT.md) for setup and driver/hardware limitations.
 
 ### Where your files live
 
@@ -672,9 +672,9 @@ Sources**. For PS2, 48-bit LBA internal HDDs are supported. The HDD can be forma
 	- When formatting drives for the exFAT filesystem, please make sure the `Allocation unit size` is set to `Default`.
 	- **PS1 games:** PS1 `*.VCD` titles in the HDD's `POPS/` folder list under the **L3** PS1 view like any other device. To boot them, use the BDMA rows on **Settings → PS Emulation Settings**. **VCD BDMA Apply on Launch** is on by default and equips the matching exFAT driver automatically; turn it off to reveal the manual **BDMA Source** / **BDMA Mode** pickers and set **BDMA Mode → HDD (exFAT)** by hand so POPSTARTER can read the exFAT volume. See **[docs/VCD.md](docs/VCD.md)**.
 
-## APPS
-
 For internal exFAT HDD setup, MBR/GPT choices, large-file benefits, fragmentation and VMC limits, and an empty-game-list checklist, read **[exFAT storage](docs/EXFAT.md)**. APA and exFAT use different game lists; enabling APA is not required for a plain exFAT disk.
+
+## APPS
 
 There are two supported methods for adding apps to OPL. Keep both available and choose the one that fits your setup:
 
