@@ -29,7 +29,10 @@ void raLaunchNetworkUp(void);
    of text for the notice popup. Returns 1 when a PC client answered. */
 int raNetTestLink(char *line1, int sz1, char *line2, int sz2);
 
+/* Verified for the current RA mode and SMB host. An unrelated UDP response
+   never becomes the passive game's destination. */
 unsigned int raNetPeerIP(void);
+void raNetForgetPeer(void);
 int raCaduceusPage(const char *request, unsigned int serial, char *out, int size);
 
 #endif
