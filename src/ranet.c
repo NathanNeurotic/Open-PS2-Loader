@@ -311,6 +311,24 @@ static void broadcast_target(struct sockaddr_in *to)
     to->sin_addr.s_addr = htonl(INADDR_BROADCAST);
 }
 
+/* Caduceus's paired catalogue is tied to the configured SMB server. Its
+   readiness, support check and link test must use that same PC, rather than
+   discovering an unrelated LAN service and then sending a game watch list
+   or pairing request to the wrong host. Xerabora keeps legacy broadcast. */
+static int caduceus_target(struct sockaddr_in *to)
+{
+    if (!(pc_ip[0] | pc_ip[1] | pc_ip[2] | pc_ip[3]) ||
+        (pc_ip[0] == 255 && pc_ip[1] == 255 &&
+         pc_ip[2] == 255 && pc_ip[3] == 255))
+        return 0;
+    memset(to, 0, sizeof(*to));
+    to->sin_family = AF_INET;
+    to->sin_port = htons(RA_CADUCEUS_PORT);
+    to->sin_addr.s_addr = ((u32)pc_ip[0]) | ((u32)pc_ip[1] << 8) |
+                          ((u32)pc_ip[2] << 16) | ((u32)pc_ip[3] << 24);
+    return 1;
+}
+
 /* Discover without the capability, then send paired account requests only to
    that bridge. WAIT retries stay pinned and never move to another PC. */
 int raCaduceusPage(const char *request, unsigned int serial, char *out, int size)
@@ -325,17 +343,11 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
     sock = open_pc_socket(address, sizeof(address), ip);
     if (sock < 0)
         return -1;
-    memset(&to, 0, sizeof(to));
-    to.sin_family = AF_INET;
-    to.sin_port = htons(RA_CADUCEUS_PORT);
-    /* Only the configured SMB server may supply the paired account bridge.
-       Never send the capability to an arbitrary broadcast responder. */
-    if (!(pc_ip[0] | pc_ip[1] | pc_ip[2] | pc_ip[3])) {
+    /* The account browser and game tracking use exactly the same host. */
+    if (!caduceus_target(&to)) {
         disconnect(sock);
         return -2;
     }
-    to.sin_addr.s_addr = ((u32)pc_ip[0]) | ((u32)pc_ip[1] << 8) |
-                         ((u32)pc_ip[2] << 16) | ((u32)pc_ip[3] << 24);
     got = ask(sock, &to, "CADQ2 " RA_PROBE_HASH, g_rx, sizeof(g_rx));
     session = got > 0 ? raCaduceusSessionReply(g_rx, RA_PROBE_HASH) : -2;
     if (session != 0) {
@@ -413,7 +425,10 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
 
     if (gRAMode == RA_MODE_CADUCEUS) {
         int session;
-        to.sin_port = htons(RA_CADUCEUS_PORT);
+        if (!caduceus_target(&to)) {
+            disconnect(sock);
+            return -2;
+        }
         snprintf(req, sizeof(req), "CADQ2 %s", hash);
         got = ask(sock, &to, req, g_rx, sizeof(g_rx));
         session = got > 0 ? raCaduceusSessionReply(g_rx, hash) : -2;
@@ -684,14 +699,13 @@ void raLaunchNetworkUp(void)
         char address[32];
         int got, session;
         sock = open_pc_socket(address, sizeof(address), ip);
-        if (sock >= 0) {
-            broadcast_target(&to);
-            to.sin_port = htons(RA_CADUCEUS_PORT);
+        if (sock >= 0 && caduceus_target(&to)) {
             got = ask(sock, &to, RA_CADUCEUS_PROBE, g_rx, sizeof(g_rx));
             session = got > 0 ? raCaduceusSessionReply(g_rx, RA_PROBE_HASH) : -2;
-            disconnect(sock);
         } else
             session = -1;
+        if (sock >= 0)
+            disconnect(sock);
         if (session != 0) {
             raNetForgetPeer();
             ClearWatchList();
@@ -753,7 +767,12 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
     broadcast_target(&to);
     if (gRAMode == RA_MODE_CADUCEUS) {
         int session;
-        to.sin_port = htons(RA_CADUCEUS_PORT);
+        if (!caduceus_target(&to)) {
+            disconnect(sock);
+            snprintf(line1, sz1, "%s", _l(_STR_RA_TEST_NO_ANSWER));
+            snprintf(line2, sz2, "%s", _l(_STR_RA_CADUCEUS_SIGN_IN));
+            return 0;
+        }
         got = ask(sock, &to, RA_CADUCEUS_PROBE, rx, sizeof(rx));
         session = got > 0 ? raCaduceusSessionReply(rx, RA_PROBE_HASH) : -2;
         if (session != 0) {
