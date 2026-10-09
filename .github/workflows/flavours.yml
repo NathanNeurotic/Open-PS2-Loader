@@ -163,6 +163,8 @@ jobs:
         run: python3 .github/scripts/test_ra_chunk_integrity.py
       - name: Check passive RA host stays bound to a verified peer and current settings
         run: python3 .github/scripts/test_ra_verified_peer.py
+      - name: Check Caduceus menu and in-game host selection are consistent
+        run: python3 .github/scripts/test_ra_caduceus_host.py
 
   bdm-host-tests:
     runs-on: ubuntu-24.04
