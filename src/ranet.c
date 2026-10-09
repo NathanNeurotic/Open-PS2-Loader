@@ -673,9 +673,14 @@ void raLaunchNetworkUp(void)
     if (!gRATelemetry || GetWatchCount() <= 0)
         return;
 
-    /* UDPBD/UDPFS own the NIC and are not telemetry launch paths. */
-    if (raNetNicBusy())
+    /* UDPBD/UDPFS own the NIC. A saved watch list may already be loaded,
+       but leaving it armed would embed RA telemetry in a network-backed
+       launch despite refusing the menu network handoff. Fail open instead. */
+    if (raNetNicBusy()) {
+        raNetForgetPeer();
+        ClearWatchList();
         return;
+    }
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock >= 0) {
