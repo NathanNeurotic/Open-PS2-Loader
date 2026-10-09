@@ -79,6 +79,8 @@ harness=r"""
 #include <string.h>
 #include "modules/network/common/ra_client.h"
 typedef unsigned char u8;
+typedef unsigned int u32;
+static u8 pc_ip[4]={42,0,0,0};
 struct sockaddr_in {int sin_family, sin_port;struct {unsigned s_addr;} sin_addr;};
 #define AF_INET 2
 #define INADDR_BROADCAST 0xffffffffu
@@ -96,7 +98,7 @@ static int ask(int s,struct sockaddr_in *to,const char *req,char *out,int max) {
  calls++;
  if(to->sin_port==18197) {
   assert(!strcmp(req,RA_CADUCEUS_PROBE));
-  assert(to->sin_addr.s_addr==INADDR_BROADCAST);
+  assert(to->sin_addr.s_addr==42);
   g_raReplyIP=42;
   strcpy(out,scenario==1?"garbage":scenario==2?"CADR2 " RA_PROBE_HASH " OFFLINE UNKNOWN":"CADR2 " RA_PROBE_HASH " READY UNKNOWN");
  } else {
@@ -109,6 +111,9 @@ static int ask(int s,struct sockaddr_in *to,const char *req,char *out,int max) {
 checks=r"""
 int main(void) {
  char out[1024];
+ pc_ip[0]=0;calls=closed=0;
+ assert(raCaduceusPage("CADA1 7 G 0 0 0 secret",7,out,sizeof(out))==-2);
+ assert(!calls && closed==1);pc_ip[0]=42;
  for(scenario=0;scenario<4;scenario++) {
   queries=closed=calls=0;
   int result=raCaduceusPage("CADA1 7 G 0 0 0 secret",7,out,sizeof(out));
@@ -117,7 +122,7 @@ int main(void) {
   else if(scenario==2) assert(!result && !queries && !strcmp(out,"OFFLINE"));
   else assert(!result && queries==3 && !strncmp(out,"OK\tG",4));
  }
- puts("PASS: bridge validation before capability, offline, nonce matching and pinned WAIT retries");
+ puts("PASS: trusted-host binding before capability, missing-host fail-closed, offline, nonce matching and pinned WAIT retries");
 }
 """
 with tempfile.TemporaryDirectory() as tmp:
