@@ -66,6 +66,10 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
         const unsigned char *host = (const unsigned char *)&peer;
         snprintf(cfg->host, sizeof(cfg->host), "%u.%u.%u.%u", host[0], host[1], host[2], host[3]);
     }
+    else if (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) {
+        snprintf(cfg->host, sizeof(cfg->host), "%u.%u.%u.%u",
+                 gRAHostIp[0], gRAHostIp[1], gRAHostIp[2], gRAHostIp[3]);
+    }
     cfg->count = GetWatchCount();
     cfg->bytes = GetWatchBytes();
     cfg->node_count = GetNodeCount();
