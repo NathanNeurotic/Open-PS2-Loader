@@ -300,6 +300,11 @@ int main(void) {
 
 s=(root/'src/supportbase.c').read_text(encoding='utf-8')
 s=s[s.index('static char ra_hash_path'):s.index('static void sbTestPCLinkWorker')]
+# Queue mechanics are the subject of this fixture; the full, real HDL hash
+# and PC exchange are tested separately, so replace just that callback.
+hdl_start=s.index('static void sbHashHdlGame(')
+hdl_end=s.index('int sbHashHdlDeferred(',hdl_start)
+s=s[:hdl_start]+s[hdl_end:]
 prefix=r'''
 #include <assert.h>
 #include <stdio.h>
@@ -308,6 +313,7 @@ static int result, requests, hashes;
 static void (*worker)(void);
 static int ioPutRequest(int kind,void (*fn)(void)) {assert(kind==IO_CUSTOM_SIMPLEACTION);requests++;worker=fn;return result;}
 static void sbHashGame(const char *p,const char*n,const char*e,const char*s,int f) {(void)p;(void)n;(void)e;(void)s;(void)f;hashes++;}
+static void sbHashHdlGame(const char *p,const char*n,const char*s,unsigned x) {(void)p;(void)n;(void)s;(void)x;hashes++;}
 '''
 run('image_queue',prefix+s+r'''
 int main(void) {
