@@ -827,7 +827,7 @@ static int ra_discover(void)
                 continue;
             /* A syntactically similar RAO1 error is not a verified peer.
                Require the successful discovery reply in both RA modes. */
-            if (got >= 8 && memcmp(rx, "RAO1 OK ", 8) == 0) {
+            if (got >= 8 && raClientStarts(rx, "RAO1 OK ")) {
                 u32 ip = from.sin_addr.s_addr;
 
                 /* The reply came through the stack, so the stack has
