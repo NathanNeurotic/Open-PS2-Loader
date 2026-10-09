@@ -14,7 +14,7 @@
 
 int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, int slotFree)
 {
-    char boot[16], watchKey[16], path[256];
+    char boot[16], watchKey[16], contentHash[33], path[256];
     unsigned char ip[4], mask[4], gw[4];
     unsigned char *irx;
     struct rapops_cfg *cfg = NULL;
@@ -25,9 +25,14 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
     if (!gRATelemetry)
         return 0;
     if (raVcdWatchKey(vcdPath, watchKey, sizeof(watchKey)) != 0 ||
-        raVcdBootName(vcdPath, boot, sizeof(boot)) != 0 ||
         sbLoadWatchList(watchRoot, watchKey) <= 0 || GetWatchCount() <= 0)
         return 0; /* No support check/list: ordinary POPStarter launch. */
+    /* A VCD replacement at the same path retains the same 15-byte protocol
+       serial, but MUST NOT inherit another image's watch list. Rehash the
+       executable rather than treating a matching path or timestamp as proof. */
+    if (raHashVcd(vcdPath, boot, sizeof(boot), contentHash) != 0 ||
+        !raVcdWatchGuardMatches(watchRoot, watchKey, contentHash))
+        return 0; /* Missing/old guard: game boots normally, untracked. */
     if (!slotFree)
         return -1; /* FAT does not enforce O_EXCL: refuse the user-owned slot explicitly. */
     /* A stale watch list must never make an otherwise playable PS1 game
