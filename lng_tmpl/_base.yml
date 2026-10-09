@@ -1283,9 +1283,9 @@ gui_strings:
 - label: RA_NA_PS1
   string: RA tracking is not available for PS1 games
 - label: RA_NA_HDD
-  string: HDLoader games have no image file to hash
+  string: APA game information or HDD settings home unavailable
 - label: RA_NA_HDD2
-  string: Build the .wl in xeRAbora and place it in RA/ on the share
+  string: Set a valid HDD settings home and refresh before checking support
 - label: RA_TELEMETRY
   string: RetroAchievements telemetry
 - label: RA_BADGES
