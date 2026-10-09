@@ -1,31 +1,15 @@
 #include "include/opl.h"
 #include "include/hdd.h"
+#include "include/hdl_layout.h"
 #include "include/ioman.h"
 #include "include/hddsupport.h"
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h>
 
-typedef struct // size = 1024
-{
-    u32 checksum; // HDL uses 0xdeadfeed magic here
-    u32 magic;
-    char gamename[160];
-    u8 hdl_compat_flags;
-    u8 ops2l_compat_flags;
-    u8 dma_type;
-    u8 dma_mode;
-    char startup[60];
-    u32 layer1_start;
-    u32 discType;
-    int num_partitions;
-    struct
-    {
-        u32 part_offset; // in MB
-        u32 data_start;  // in sectors
-        u32 part_size;   // in KB
-    } part_specs[65];
-} hdl_apa_header;
+/* HDLoader's 1024-byte metadata and partition extents are also used by
+   the read-only RA image walker. Keep one layout definition. */
+typedef hdl_layout_header_t hdl_apa_header;
 
 #define HDL_GAME_DATA_OFFSET 0x100000 // Sector 0x800 in the extended attribute area.
 #define HDL_FS_MAGIC         0x1337
