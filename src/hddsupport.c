@@ -2616,23 +2616,18 @@ static void hddShutdown(item_list_t *itemList)
     }
 
     if (hddModulesLoadCount > 0) {
-        hddModulesLoadCount -= 1;
-        if (hddModulesLoadCount == 0) {
-            // DEV9 will remain active if ETH is in use, so put the HDD in IDLE state.
-            // The HDD should still enter standby state after 21 minutes & 15 seconds, as per the ATAD defaults.
-            hddSetIdleImmediate();
-        }
+        // The single logical ATA owner is released once per shutdown. A non-terminal
+        // game launch must NOT idle the HDD: the selected game may still need ATA via
+        // BDM (massN:) after this cleanup, just like POPSTARTER's post-deinit ELF read.
+        // The next page entry can reuse the resident modules and the retained DEV9 owner.
+        hddModulesLoadCount = 0;
 
-        // Only shut down dev9 from here, if it was initialized from here before -- and only on a
-        // TERMINAL teardown (exit/poweroff). On the launch path this shutdown runs for every
-        // non-selected page, and powering DEV9 off here kills the ATA bus BEFORE bdmLaunchVcd's
-        // post-deinit POPSTARTER.ELF read from the ATA-backed massN: mount -- the elf-loader then
-        // returns into deinit'd OPL: the 4236edf6-class black-screen freeze (PCSX2 masks it; its
-        // emulated DEV9 power-off is inert). ee_core/POPSTARTER reset the IOP right after, so the
-        // launch path needs no power-off. hddLoadModules is now idempotent: its single
-        // logical latch pairs with the one DEV9 owner acquired on the first real load.
-        if (gDeinitTerminal)
+        // On a real exit/poweroff, flush happened above. Issue idle before dropping our
+        // DEV9 reference; other users (ETH/UDPBD) may keep DEV9 itself powered.
+        if (gDeinitTerminal) {
+            hddSetIdleImmediate();
             sysShutdownDev9();
+        }
     }
 }
 
