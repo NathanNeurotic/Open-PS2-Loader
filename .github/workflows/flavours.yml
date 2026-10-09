@@ -300,7 +300,7 @@ jobs:
             NM=ee-nm
           fi
           "$NM" opl.elf > menu-symbols.txt
-          "$NM" ee_core/ee_core.elf > core-symbols.txt
+          sed -n -E 's/^[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+([A-Za-z0-9_]+)[[:space:]]*$/ \1/p' ee_core/ee_core.map > core-symbols.txt
           if [ "$RA_BUILD" = 1 ]; then
             grep -q ' raCaduceusPage$' menu-symbols.txt
             grep -q ' gRAMode$' menu-symbols.txt
