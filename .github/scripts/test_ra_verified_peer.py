@@ -10,7 +10,7 @@ import tempfile
 root = Path(__file__).resolve().parents[2]
 source = (root / "src/ranet.c").read_text()
 start = source.index("static u32 g_raReplyIP;")
-end = source.index("/* The NIC settlement", start)
+end = source.index("static unsigned char g_wl[RA_MAX_BYTES];", start)
 peer = source[start:end]
 assert "raNetForgetPeer();" in source[source.index("int raAskPC("):source.index("    if (raNetNicBusy())",source.index("int raAskPC("))]
 assert "raNetRememberPeer(g_raReplyIP);" in source
