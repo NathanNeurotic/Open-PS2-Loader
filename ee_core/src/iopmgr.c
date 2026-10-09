@@ -270,7 +270,7 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
             RA_Hex32((unsigned int)RA_OverlayEventBuffer(), &args[RA_ARG_EVENT]);
             args[RA_ARG_RX - 1] = ',';
             args[RA_ARG_RX] = '0' + ((config->GameMode == ETH_MODE || config->GameMode == HTTP_MODE) ? 0 : 1) +
-                              (config->raClientMode == 1 ? 2 : 0);
+                              (config->raClientMode == 1 ? 2 : 0) + (config->raHostPinned ? 4 : 0);
             args[RA_ARG_ID - 1] = ',';
             for (n = 0; n < RA_ARG_ID_MAX && config->GameID[n] != '\0'; n++)
                 args[RA_ARG_ID + n] = config->GameID[n];
