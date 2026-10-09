@@ -1274,7 +1274,6 @@ Enable_GSBreakpoint:
     li      $a0, TRAP_BASE                          # Address base for trapping
     li      $a1, TRAP_MASK                          # Address mask for GSM
 #ifdef RETROACHIEVEMENTS
-#ifdef RETROACHIEVEMENTS
     la      $t0, GSMFlags
     lbu     $t0, TRACK_ONLY($t0)
     beqz    $t0, gs_trap_address_ready
@@ -1301,6 +1300,7 @@ Enable_GSBreakpoint:
     sync.p                                          # Await instruction completion
 
     li      $a2, 0x60280000                         # Data read & write breakpoint on (DRE, DWE, DUE, DKE = 1). Syscalls are run in kernel mode, for the EE.
+#ifdef RETROACHIEVEMENTS
     la      $t0, GSMFlags
     lbu     $t0, TRACK_ONLY($t0)
     beqz    $t0, gs_trap_control_ready
