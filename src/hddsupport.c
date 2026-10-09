@@ -1,5 +1,8 @@
 #include "sys/fcntl.h"
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#endif
 #include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
@@ -2199,6 +2202,13 @@ static int hddMcemuSlots[2] = {-2, -2};
 
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return;
+    }
+#endif
+
     int i, size_irx = 0;
     int EnablePS2Logo = 0;
     int result;

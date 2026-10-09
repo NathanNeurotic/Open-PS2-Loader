@@ -12,6 +12,8 @@ static volatile int busy;
 static achievement_page_t result;
 static char request[180];
 static unsigned int serial;
+static char requestKind;
+static int requestPage;
 static char imagePath[256], imageStartup[16];
 /* Empty fields are significant; strtok would merge them. */
 static char *field(char **cursor, char separator)
@@ -150,7 +152,8 @@ static void loadPage(void)
     strncat(request, key, sizeof(request) - strlen(request) - 1);
     memset(key, 0, sizeof(key));
     if (raCaduceusPage(request, serial, response, sizeof(response)) != 0 ||
-        !achievementsParse(response, &result))
+        !achievementsParse(response, &result) ||
+        (result.state == ACH_READY && (result.kind != requestKind || result.page != requestPage)))
         result.state = ACH_ERROR;
 done:
     imagePath[0] = imageStartup[0] = 0;
@@ -168,6 +171,8 @@ int achievementsRequest(char kind, int page, int filter, const char *target)
         strspn(target, "0123456789abcdef") != strlen(target))
         return 0;
     imagePath[0] = 0;
+    requestKind = kind;
+    requestPage = page;
     busy = 1;
     serial++;
     snprintf(request, sizeof(request), "CADA1 %u %c %d %d %s", serial, kind, page, filter, target);
@@ -182,6 +187,8 @@ int achievementsRequestImage(const char *path, const char *startup)
     if (busy || sbHashGameBusy() || discCheckBusy() || !path || !startup ||
         strlen(path) >= sizeof(imagePath) || strlen(startup) >= sizeof(imageStartup))
         return 0;
+    requestKind = 'A';
+    requestPage = 0;
     strcpy(imagePath, path);
     strcpy(imageStartup, startup);
     busy = 1;

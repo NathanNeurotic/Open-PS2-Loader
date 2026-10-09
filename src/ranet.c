@@ -288,7 +288,7 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
     struct sockaddr_in to;
     char address[32], expected[32];
     u8 ip[4];
-    int sock, attempt, got;
+    int sock, attempt, got, session;
     if (raNetNicBusy() || gRAMode != RA_MODE_CADUCEUS || !out || size < 1)
         return -1;
     out[0] = 0;
@@ -300,8 +300,13 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
     to.sin_port = htons(RA_CADUCEUS_PORT);
     to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
     got = ask(sock, &to, "CADQ2 " RA_PROBE_HASH, g_rx, sizeof(g_rx));
-    if (got <= 0 || raCaduceusSessionReply(g_rx, RA_PROBE_HASH) == -2) {
+    session = got > 0 ? raCaduceusSessionReply(g_rx, RA_PROBE_HASH) : -2;
+    if (session != 0) {
         disconnect(sock);
+        if (session == -9) {
+            snprintf(out, size, "OFFLINE");
+            return 0;
+        }
         return -2;
     }
     to.sin_addr.s_addr = g_raReplyIP;
@@ -611,6 +616,26 @@ void raLaunchNetworkUp(void)
         linkUp = ethGetNetConfig(ip, mask, gateway) >= 0 &&
                  (ip[0] | ip[1] | ip[2] | ip[3]) != 0 &&
                  (!ps2_ip_use_dhcp || ethGetDHCPStatus() > 0);
+
+    if (linkUp && gRAMode == RA_MODE_CADUCEUS) {
+        struct sockaddr_in to;
+        char address[32];
+        int got, session;
+        sock = open_pc_socket(address, sizeof(address), ip);
+        if (sock >= 0) {
+            broadcast_target(&to);
+            to.sin_port = htons(RA_CADUCEUS_PORT);
+            got = ask(sock, &to, RA_CADUCEUS_PROBE, g_rx, sizeof(g_rx));
+            session = got > 0 ? raCaduceusSessionReply(g_rx, RA_PROBE_HASH) : -2;
+            disconnect(sock);
+        } else
+            session = -1;
+        if (session != 0) {
+            ClearWatchList();
+            guiWarning(_l(_STR_CAD_UNTRACKED), 6);
+            return;
+        }
+    }
 
     if (!linkUp) {
         LOG("RA: network unavailable, launching without telemetry\n");

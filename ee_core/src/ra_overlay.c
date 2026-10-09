@@ -204,7 +204,7 @@ static int draw_card(void)
 {
     u64 fb, display;
     unsigned int fbp, fbw, psm, dbx, dby;
-    int width, visible_width, x, y, pixel_dirty, header_dirty;
+    int width, visible_width, visible_height, x, y, pixel_dirty, header_dirty;
     u64 transfer_fb, transfer_pos;
     char id[12], pts[12], line[20];
     int i, j;
@@ -233,6 +233,9 @@ static int draw_card(void)
     visible_width /= (int)(((display >> 23) & 0xF) + 1);
     if (visible_width < RA_CARD_W + 8 || visible_width > width)
         visible_width = width;
+    visible_height = (int)(((display >> 44) & 0x7FF) + 1) / (int)(((display >> 27) & 3) + 1);
+    if (visible_height < RA_CARD_H + 18)
+        return 0;
     x = (int)dbx + visible_width - RA_CARD_W - RA_CARD_MARGIN;
     y = (int)dby + 18;
     if (x < (int)dbx)

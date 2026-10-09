@@ -153,6 +153,8 @@ enum { IO_CUSTOM_SIMPLEACTION, IO_OK, NO_EXCEPTION, IO_MODE_SELECTED_ALL };
 static int gRATelemetry, image_busy, probe_result, watch_count, queued_result=IO_OK;
 static int launched, torn_down, queue_count;
 static const char *probe_path="cdrom0:\\\\SLUS_201.74;1", *home="mc0:/OPL";
+static int browser_busy;
+static int achievementsBusy(void) {return browser_busy;}
 static int sbHashGameBusy(void) {return image_busy;}
 static int sysGetDiscBootPath(char *p,int n,int(*fn)(void)) {(void)fn;snprintf(p,n,"%s",probe_path);return probe_result;}
 static const char *configGetHomePath(void) {return home;}
@@ -189,6 +191,7 @@ int main(void) {
     memset(long_home,'x',sizeof(long_home)-1);long_home[sizeof(long_home)-1]=0;home=long_home;
     assert(discSupportPrefix(prefix,sizeof(prefix))<0);
     home=NULL;assert(discSupportPrefix(prefix,sizeof(prefix))<0);home="mc0:/OPL";
+    browser_busy=1;assert(discCheckBusy());browser_busy=0;
     image_busy=1;assert(!discCheckSupportDeferred() && queue_count==0);image_busy=0;
     queued_result=-1;assert(!discCheckSupportDeferred() && !discCheckBusy());
     queued_result=IO_OK;assert(discCheckSupportDeferred() && discCheckBusy());

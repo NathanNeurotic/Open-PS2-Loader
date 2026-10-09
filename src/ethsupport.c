@@ -1,4 +1,7 @@
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#endif
 #include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
@@ -722,6 +725,13 @@ static int ethMcemuSlots[2] = {-2, -2};
 
 static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return;
+    }
+#endif
+
     int i, compatmask;
     int EnablePS2Logo = 0;
     int result;

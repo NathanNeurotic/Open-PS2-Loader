@@ -39,7 +39,7 @@ int main(void) {
  memset(packet,0xCD,sizeof(packet));
  GSMSourceGSRegs.pmode=1;
  GSMSourceGSRegs.dispfb1=(10ull<<9);
- GSMSourceGSRegs.display1=(639ull<<32);
+ GSMSourceGSRegs.display1=(639ull<<32)|(479ull<<44);
  event->magic=RA_EVENT_MAGIC;event->seq=1;event->commit=0;event->kind=RA_EVENT_MAKE_UNLOCK(25);event->arg=123;
  strcpy(event->title,"Test achievement");
  RA_OverlayOnVblank(2);assert(!ra_ovl_running);

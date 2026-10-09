@@ -2253,8 +2253,11 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     config->raOverlayBuf = GetWatchBlockOverlay();
     {
         u32 peer = raNetPeerIP();
-        const u8 *host = peer ? (const u8 *)&peer : pc_ip;
-        snprintf(config->raHost, sizeof(config->raHost), "%u.%u.%u.%u", host[0], host[1], host[2], host[3]);
+        if (peer) {
+            const u8 *host = (const u8 *)&peer;
+            snprintf(config->raHost, sizeof(config->raHost), "%u.%u.%u.%u", host[0], host[1], host[2], host[3]);
+        } else
+            snprintf(config->raHost, sizeof(config->raHost), "%u.%u.%u.%u", pc_ip[0], pc_ip[1], pc_ip[2], pc_ip[3]);
     }
 
     // The last point where the list is still ours: from here it goes into ee_core

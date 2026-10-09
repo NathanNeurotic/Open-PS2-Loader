@@ -17,12 +17,13 @@
 #include "include/iosupport.h"
 #include "include/mmcesupport.h"
 #include "include/discsupport.h"
+#include "include/achievements.h"
 
 static volatile int discBusy;
 
 int discCheckBusy(void)
 {
-    return discBusy || sbHashGameBusy();
+    return discBusy || sbHashGameBusy() || achievementsBusy();
 }
 
 // The watch-list format keys games by their root boot executable (up to 15 chars).

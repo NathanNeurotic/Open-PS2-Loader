@@ -67,3 +67,60 @@ with tempfile.TemporaryDirectory() as tmp:
  path=Path(tmp);(path/'test.c').write_text(prefix+source+tests)
  subprocess.run(['cc','-std=gnu99','-I',str(root),str(path/'test.c'),'-o',str(path/'test.exe')],check=True)
  subprocess.run([str(path/'test.exe')],check=True)
+
+# Production menu exchange: validate bridge before disclosing the capability,
+# match page nonce and keep WAIT polling on the same host.
+network=(root/'src/ranet.c').read_text()
+a=network.index('int raCaduceusPage(');b=network.index('\n}',a)+2
+network=network[a:b]
+harness=r"""
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include "modules/network/common/ra_client.h"
+typedef unsigned char u8;
+struct sockaddr_in {int sin_family, sin_port;struct {unsigned s_addr;} sin_addr;};
+#define AF_INET 2
+#define INADDR_BROADCAST 0xffffffffu
+#define htonl(x) (x)
+#define htons(x) (x)
+#define RA_MODE_CADUCEUS 1
+static int gRAMode=1, scenario, calls, queries, closed;
+static unsigned g_raReplyIP;
+static char g_rx[2048];
+static int raNetNicBusy(void) {return 0;}
+static int open_pc_socket(char *a,int size,u8 *ip) {return 7;}
+static void disconnect(int s) {closed++;}
+static void DelayThread(int us) {}
+static int ask(int s,struct sockaddr_in *to,const char *req,char *out,int max) {
+ calls++;
+ if(to->sin_port==18197) {
+  assert(!strcmp(req,RA_CADUCEUS_PROBE));
+  assert(to->sin_addr.s_addr==INADDR_BROADCAST);
+  g_raReplyIP=42;
+  strcpy(out,scenario==1?"garbage":scenario==2?"CADR2 " RA_PROBE_HASH " OFFLINE UNKNOWN":"CADR2 " RA_PROBE_HASH " READY UNKNOWN");
+ } else {
+  queries++;assert(to->sin_port==18198 && to->sin_addr.s_addr==42 && strstr(req,"secret"));
+  strcpy(out,scenario==3 && queries==1?"CADB1 99 OK":queries<3?"CADB1 7 WAIT":"CADB1 7 OK\tG\t0\t0\t0\t0\t0\tu\tt");
+ }
+ return strlen(out);
+}
+"""
+checks=r"""
+int main(void) {
+ char out[1024];
+ for(scenario=0;scenario<4;scenario++) {
+  queries=closed=calls=0;
+  int result=raCaduceusPage("CADA1 7 G 0 0 0 secret",7,out,sizeof(out));
+  assert(closed==1);
+  if(scenario==1) assert(result<0 && !queries);
+  else if(scenario==2) assert(!result && !queries && !strcmp(out,"OFFLINE"));
+  else assert(!result && queries==3 && !strncmp(out,"OK\tG",4));
+ }
+ puts("PASS: bridge validation before capability, offline, nonce matching and pinned WAIT retries");
+}
+"""
+with tempfile.TemporaryDirectory() as tmp:
+ path=Path(tmp);(path/'network.c').write_text(harness+network+checks)
+ subprocess.run(['cc','-std=gnu99','-I',str(root),str(path/'network.c'),'-o',str(path/'network.exe')],check=True)
+ subprocess.run([str(path/'network.exe')],check=True)
