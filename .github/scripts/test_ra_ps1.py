@@ -110,31 +110,46 @@ int main(void) {
     run('hash_ps1', prefix + source + checks, [root/'src/md5.c'])
 
     (tmp/'POPS').mkdir()
-    source = (root/'src/rapopslaunch.c').read_text()
-    source = source[source.index('int raPopsRemoveModule('):source.index('int raPopsPrepare(')]
+    source = (root/'src/vcdsupport.c').read_text()
+    source = source[source.index('static int vcdRaModuleStatus('):]
     run('ownership', '''
 #include <assert.h>
 #include <stdio.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+static char vcdSep(const char *p) {(void)p;return '/';}
+static int replies[3], replypos, fail_remove;
+static int module_unlink(const char *p) {if(fail_remove) {errno=EACCES;return -1;}return unlink(p);}
+#define unlink module_unlink
+static int guiMsgBox(const char *s,int confirm,void *unused) {(void)s;(void)unused;return confirm?replies[replypos++]:0;}
 ''' + source + '''
 int main(void) {
-    assert(raPopsRemoveModule("")==0);
+    assert(vcdRemoveRaModule("")==0);
     FILE *f=fopen("POPS/MODULE_9.IRX","wb");fputs("user module",f);fclose(f);
-    assert(raPopsRemoveModule("")==-1);
+    assert(vcdRemoveRaModule("")==-1);
     assert(access("POPS/MODULE_9.IRX",0)==0);
     f=fopen("POPS/MODULE_9.IRX","wb");
     for(int i=0;i<4093;i++) fputc(0,f);
     fputs("RIPTRA01",f);fclose(f);
-    assert(raPopsRemoveModule("")==0);
+    replies[0]=0;replies[1]=0;replypos=0;
+    assert(vcdConfirmCleanLaunch("")==0 && access("POPS/MODULE_9.IRX",0)==0);
+    replies[0]=0;replies[1]=1;replypos=0;
+    assert(vcdConfirmCleanLaunch("")==1 && access("POPS/MODULE_9.IRX",0)==0);
+    replies[0]=1;replypos=0;
+    assert(vcdConfirmCleanLaunch("")==1);
     assert(access("POPS/MODULE_9.IRX",0)<0);
-    puts("PASS: user module preserved; owned module spanning read boundary removed; absent module accepted");
+    f=fopen("POPS/MODULE_9.IRX","wb");fputs("RIPTRA01",f);fclose(f);
+    fail_remove=1;replies[0]=1;replies[1]=0;replypos=0;
+    assert(vcdConfirmCleanLaunch("")==0 && access("POPS/MODULE_9.IRX",0)==0);
+    replies[0]=1;replies[1]=1;replypos=0;
+    assert(vcdConfirmCleanLaunch("")==1 && access("POPS/MODULE_9.IRX",0)==0);
+    fail_remove=0;assert(vcdRemoveRaModule("")==0);
+    puts("PASS: user module preserved; owned module across read boundary; delete, continue anyway and cancel choices");
 }
 ''')
 
     source = re.sub(r'^#include.*$', '', (root/'src/rapopslaunch.c').read_text(), flags=re.M)
-    source = source[:source.index('int raPopsRemoveModule(')] + source[source.index('int raPopsPrepare('):]
     run('prepare', r'''
 #include <assert.h>
 #include <stdio.h>

@@ -311,7 +311,6 @@ jobs:
             grep -q ' raCaduceusPage$' menu-symbols.txt
             grep -q ' gRAMode$' menu-symbols.txt
             grep -q ' raPopsPrepare$' menu-symbols.txt
-            grep -q ' raPopsRemoveModule$' menu-symbols.txt
             grep -q ' rapops_irx$' menu-symbols.txt
             grep -q ' RA_OverlayOnVblank$' core-symbols.txt
           else

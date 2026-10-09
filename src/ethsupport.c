@@ -715,6 +715,8 @@ static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     char separator = (prefixLen > 0 && ethPrefix[prefixLen - 1] == '\\') ? '\\' : '/';
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS%c%s.VCD", ethPrefix, separator, vcdName);
+    if (!vcdConfirmCleanLaunch(ethPrefix))
+        return;
     vcdPrepareRetroGemBarcode(vcdFullPath);
     // Keep the SMB game share plus any distinct custom POPSTARTER.ELF backend through handoff.
     deinitEx(sbLoaderDeinitException(vcdElf), itemList->mode, oplPath2Mode(vcdElf));

@@ -71,10 +71,12 @@ cache coherence, scratchpad coverage or compatibility across game titles. The re
 inherits the reference's PS1 RAM location and 25-second startup delay; its reads are
 not synchronized to a game frame. These remain explicit hardware limitations.
 
-RA isolation follow-up: module ownership cleanup and USB RA eligibility are compiled
-only in the RA flavour. Standard-build CI rejects their symbols and the rapops blob.
-Switching a USB stick back to a standard build requires removing the RA-created
-MODULE_9.IRX once; the standard loader does not manage RA files.
+RA isolation follow-up: the USB RA eligibility helper and telemetry remain RA-only.
+At the maintainer's request, standard builds retain shared VCD launch hygiene:
+recognize an owned MODULE_9.IRX, offer deletion, then offer Continue anyway or Cancel
+if deletion is declined or fails. BDM standard launches and SMB/MMCE launches check
+before handoff. RA BDM launches automatically replace owned modules as needed.
+No RA runtime or companion dependency is introduced into standard builds.
 The host PS1 suite also compiles the production sender header builder against the
 unmodified xeRAbora alpha.16 snapshot parser and protocol headers. Direct values,
 pointer-node pairs, serial identity, duplicate suppression and stale-list refusal

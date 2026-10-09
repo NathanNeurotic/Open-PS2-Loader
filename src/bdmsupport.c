@@ -1979,7 +1979,7 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS/%s.VCD", vcdPrefix, vcdName);
 #ifdef RETROACHIEVEMENTS
-    int raModule = raPopsRemoveModule(vcdPrefix);
+    int raModule = vcdRemoveRaModule(vcdPrefix);
     if (raModule == -2) {
         guiMsgBox("Cannot remove the previous PS1 achievement module", 0, NULL);
         return;
@@ -1990,6 +1990,9 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
             return;
         }
     }
+#else
+    if (!vcdConfirmCleanLaunch(vcdPrefix))
+        return;
 #endif
     vcdPrepareRetroGemBarcode(vcdFullPath);
 
