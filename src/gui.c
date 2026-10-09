@@ -1373,7 +1373,7 @@ int guiShowNetConfig(void)
 #ifdef RETROACHIEVEMENTS
     if (achievementsBusy()) {
         guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
-        return 0;
+        return guiSettingsPageResult(UIID_BTN_CANCEL);
     }
 #endif
     size_t i;
@@ -1524,6 +1524,7 @@ reshow_network:
         }
         diaGetInt(diaNetConfig, NETCFG_ETHOPMODE, &gETHOpMode);
 #ifdef RETROACHIEVEMENTS
+        int previousRAMode = gRAMode;
         diaGetInt(diaNetConfig, NETCFG_RA_MODE, &gRAMode);
         diaGetInt(diaNetConfig, NETCFG_RA_TELEMETRY, &gRATelemetry);
         diaGetInt(diaNetConfig, NETCFG_RA_BADGES, &gRABadges);
@@ -1557,6 +1558,10 @@ reshow_network:
             guiNetProtocolOfferRestart();
 
         applyConfig(-1, -1, 0);
+#ifdef RETROACHIEVEMENTS
+        if (gRAMode != previousRAMode)
+            menuReinitMainMenu();
+#endif
 
         // OK is an Apply action for the live SMB stack, not merely a RAM/config edit -- and after a
         // failed connect it is labelled Reconnect, so it reconnects even with nothing changed. Any
