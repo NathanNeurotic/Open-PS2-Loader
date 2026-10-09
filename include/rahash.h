@@ -24,4 +24,10 @@ int raHashVcd(const char *vcdpath, char *boot, int boot_max, char *out33);
    PSX.EXE or the same homebrew BOOT name. Use this for both RAQ1 and POPS frames. */
 int raVcdWatchKey(const char *vcdpath, char *out, int out_size);
 
+/* Persist and require the RetroAchievements PS1 content hash beside a VCD's
+   path-keyed .wl. A missing or mismatched guard means untracked launch, never
+   a guessed match after a file has been replaced at the same path. */
+int raVcdWatchGuardStore(const char *watchRoot, const char *watchKey, const char *hash);
+int raVcdWatchGuardMatches(const char *watchRoot, const char *watchKey, const char *hash);
+
 #endif
