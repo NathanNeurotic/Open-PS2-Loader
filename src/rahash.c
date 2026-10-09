@@ -236,7 +236,11 @@ static int hdl_valid_map(const hdl_layout_header_t *map)
     return 1;
 }
 
-static unsigned char g_hdl_sector[ISO_SECTOR] __attribute__((aligned(64)));
+/* Eight KiB per bounded read amortizes the expensive EE/IOP fileXio
+   round trip over up to four adjacent ISO sectors, without assuming that
+   adjacent logical sectors from two APA partitions are physically adjacent. */
+#define HDL_READ_SECTORS 4
+static unsigned char g_hdl_sector[HDL_READ_SECTORS * ISO_SECTOR] __attribute__((aligned(64)));
 
 static int hdl_read_at(const hdl_layout_header_t *map, long long off, void *buf, int len)
 {
@@ -248,7 +252,7 @@ static int hdl_read_at(const hdl_layout_header_t *map, long long off, void *buf,
         unsigned long long position = (unsigned long long)off + done;
         unsigned long long sector = position / ISO_SECTOR;
         unsigned int within = (unsigned int)(position % ISO_SECTOR);
-        unsigned int raw_lba = 0;
+        unsigned int raw_lba = 0, batch = 0;
         int n, i, found = 0;
 
         if (sector > 0xffffffffU)
@@ -258,16 +262,20 @@ static int hdl_read_at(const hdl_layout_header_t *map, long long off, void *buf,
             unsigned int count = part->part_size / ISO_SECTOR;
             if (sector >= part->part_offset &&
                 sector - part->part_offset < count) {
-                raw_lba = part->data_start +
-                          ((unsigned int)(sector - part->part_offset) << 2);
+                unsigned int relative = (unsigned int)(sector - part->part_offset);
+                raw_lba = part->data_start + (relative << 2);
+                batch = count - relative;
+                if (batch > HDL_READ_SECTORS)
+                    batch = HDL_READ_SECTORS;
                 found = 1;
                 break;
             }
         }
-        if (!found || hddReadSectors(raw_lba, 4, g_hdl_sector) != 0)
+        if (!found || !batch ||
+            hddReadSectors(raw_lba, batch * 4, g_hdl_sector) != 0)
             return -1;
 
-        n = ISO_SECTOR - within;
+        n = batch * ISO_SECTOR - within;
         if (n > len - done)
             n = len - done;
         memcpy((unsigned char *)buf + done, g_hdl_sector + within, n);
