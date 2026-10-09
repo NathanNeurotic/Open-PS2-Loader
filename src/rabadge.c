@@ -107,7 +107,7 @@ static int badgeVcdKey(item_list_t *support, int idx, const char *prefix, char *
     return raVcdWatchKey(path, out, outSize) == 0 ? 1 : -1;
 }
 
-static int watchListExists(const char *prefix, const char *serial)
+static int watchListExists(const char *prefix, const char *serial, int localOnly)
 {
     char path[256];
     struct stat st;
@@ -121,7 +121,7 @@ static int watchListExists(const char *prefix, const char *serial)
 
     /* The same fallback the loader uses: lists prepared on the PC live
        on the share. */
-    if (strncmp(prefix, "smb0:", 5) != 0) {
+    if (!localOnly && strncmp(prefix, "smb0:", 5) != 0) {
         snprintf(path, sizeof(path), "smb0:RA/%s.wl", serial);
         if (stat(path, &st) == 0 && st.st_size > 0)
             return 1;
@@ -182,7 +182,10 @@ void raBadgeRefresh(item_list_t *support, int count)
         else if (ps1 < 0)
             serial = NULL;
 
-        if (watchListExists(rowPrefix, serial))
+        /* The PS1 POPS reader loads the watch list only from its game
+           device. Do not probe SMB for every untracked USB VCD: that is
+           both slow and can show a badge for a list POPStarter cannot use. */
+        if (watchListExists(rowPrefix, serial, ps1 > 0))
             snprintf(dst, RA_BADGE_TEXT, "%s%s", RA_BADGE,
                      support->itemGetName(support, i));
         else
