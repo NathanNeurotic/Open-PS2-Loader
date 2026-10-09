@@ -137,7 +137,8 @@ void raBadgeRefresh(item_list_t *support, int count)
     int i;
 
     if (support == NULL || support->itemGetName == NULL ||
-        support->itemGetStartup == NULL || support->itemGetPrefix == NULL)
+        support->itemGetStartup == NULL ||
+        (support->itemGetPrefix == NULL && support->mode != FAV_MODE))
         return;
 
     slot = slotFor(support);
