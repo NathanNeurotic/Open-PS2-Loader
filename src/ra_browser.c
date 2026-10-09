@@ -76,7 +76,8 @@ static unsigned int as_uint(const char *s)
 
 static void copy_text(char *dst, size_t n, const char *src)
 {
-    if (!src) src = "";
+    if (!src)
+        src = "";
     snprintf(dst, n, "%s", src);
 }
 
@@ -88,7 +89,8 @@ static int parse_page(char *reply, ra_browser_page_t *out)
         return 0;
     header = reply + 3;
     line = strchr(header, '\n');
-    if (line) *line++ = 0;
+    if (line)
+        *line++ = 0;
     if (fields(header, column, 8) != 8 || (column[0][0] != 'G' && column[0][0] != 'A'))
         return 0;
     out->page = as_uint(column[1]);
@@ -102,7 +104,8 @@ static int parse_page(char *reply, ra_browser_page_t *out)
         for (; i < RA_BROWSER_PAGE_SIZE && *line; i++) {
             ra_browser_entry_t *entry = &out->entries[i];
             next = strchr(line, '\n');
-            if (next) *next++ = 0;
+            if (next)
+                *next++ = 0;
             if (fields(line, column, 9) != 9)
                 return 0;
             entry->id = as_uint(column[0]);
@@ -114,7 +117,10 @@ static int parse_page(char *reply, ra_browser_page_t *out)
             copy_text(entry->title, sizeof(entry->title), column[6]);
             copy_text(entry->description, sizeof(entry->description), column[7]);
             copy_text(entry->date, sizeof(entry->date), column[8]);
-            if (!next) { i++; break; }
+            if (!next) {
+                i++;
+                break;
+            }
             line = next;
         }
     }
@@ -183,7 +189,8 @@ done:
     memset(key, 0, sizeof(key));
     /* The I/O thread is the only writer, the renderer reads only when pending=0. */
     shown = next;
-    __asm__ volatile("" ::: "memory");
+    __asm__ volatile("" ::
+                         : "memory");
     pending = 0;
 }
 
@@ -243,15 +250,10 @@ void raBrowserRender(void)
     page = shown;
     browser_line(40, 30, "RETROACHIEVEMENTS", 1);
     if (page.state != RA_BROWSER_READY) {
-        const char *msg = page.state == RA_BROWSER_NET_BUSY
-            ? "UDPFS/UDPBD owns the network; account browsing is unavailable."
-            : page.state == RA_BROWSER_OFFLINE
-            ? "Connect SMB and sign in to RA on PS2-Servers (Caduceus mode)."
-            : page.state == RA_BROWSER_UNSUPPORTED
-            ? "No achievements found for this game."
-            : page.state == RA_BROWSER_BUSY
-            ? "Account server is busy. Press Select to retry."
-            : "Unable to load progress. Press Select to retry.";
+        const char *msg = page.state == RA_BROWSER_NET_BUSY ? "UDPFS/UDPBD owns the network; account browsing is unavailable." : page.state == RA_BROWSER_OFFLINE ? "Connect SMB and sign in to RA on PS2-Servers (Caduceus mode)." :
+                                                                                                                             page.state == RA_BROWSER_UNSUPPORTED ? "No achievements found for this game." :
+                                                                                                                             page.state == RA_BROWSER_BUSY        ? "Account server is busy. Press Select to retry." :
+                                                                                                                                                                    "Unable to load progress. Press Select to retry.";
         browser_line(40, 120, msg, 0);
         browser_line(40, 380, "Select: retry    Cancel: return", 0);
         return;
@@ -287,8 +289,7 @@ void raBrowserRender(void)
         browser_line(40, 370, entry->description, 0);
     }
     browser_line(40, 425,
-                 view_kind == 'G' ? "L1/R1: page  Confirm: game's achievements  Select: reload  Back: exit"
-                                  : "L1/R1: page  Square: filter  Select: reload  Back: library", 0);
+                 view_kind == 'G' ? "L1/R1: page  Confirm: game's achievements  Select: reload  Back: exit" : "L1/R1: page  Square: filter  Select: reload  Back: library", 0);
 }
 
 void raBrowserHandleInput(void)
@@ -315,13 +316,19 @@ void raBrowserHandleInput(void)
     if (shown.state != RA_BROWSER_READY)
         return;
     if (getKeyOn(KEY_UP)) {
-        if (view_row > 0) view_row--;
+        if (view_row > 0)
+            view_row--;
         sfxPlay(SFX_CURSOR);
     } else if (getKeyOn(KEY_DOWN)) {
-        if (view_row + 1 < shown.count) view_row++;
+        if (view_row + 1 < shown.count)
+            view_row++;
         sfxPlay(SFX_CURSOR);
     } else if (getKeyOn(KEY_L1)) {
-        if (view_page > 0) { view_page--; view_row = 0; queue_page(); }
+        if (view_page > 0) {
+            view_page--;
+            view_row = 0;
+            queue_page();
+        }
     } else if (getKeyOn(KEY_R1)) {
         if ((view_page + 1) * RA_BROWSER_PAGE_SIZE < shown.total) {
             view_page++;
