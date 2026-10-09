@@ -227,8 +227,11 @@ jobs:
         include:
           # --- PINNED: reproducible. Give these to testers. ---
           # ps2dev, pinned 2026-08-13.
+          # GHCR and Docker Hub are published from the same ps2dev image manifests.
+          # Keep the 2026-08-13 digest unchanged for pinned comparability; avoid
+          # anonymous Docker Hub pulls which fail on hosted runners (HTTP 429).
           - flavour: PS2DEVPINNED
-            image: ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
+            image: ghcr.io/ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             pinned: "yes (2026-08-13)"
             opldiag: "0"
@@ -240,7 +243,7 @@ jobs:
             opldiag: "0"
           # --- ROLLING: early warning. Expect these to move without us changing anything. ---
           - flavour: PS2DEVROLLING
-            image: ps2dev/ps2dev:latest
+            image: ghcr.io/ps2dev/ps2dev:latest
             digest: ""
             pinned: "no (tracks ps2dev/ps2dev:latest)"
             opldiag: "0"
@@ -257,7 +260,7 @@ jobs:
           # It is NOT a DEBUG build: no TTY link, no -g. Everything else matches its pinned twin,
           # so a result gathered here is directly comparable with one gathered on PS2DEVPINNED.
           - flavour: PS2DEVPINNED-DIAG
-            image: ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
+            image: ghcr.io/ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             pinned: "yes (2026-08-13)"
             opldiag: "1"
