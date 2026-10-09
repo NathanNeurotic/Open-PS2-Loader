@@ -43,7 +43,10 @@ unsigned int ra_snap_iop = 0;
    watch loads exactly what the default build loads. */
 static int RA_TelemetryWanted(struct EECoreConfig_t *config)
 {
-    return config->raWatchList != NULL && config->raWatchCount > 0 && config->raSnapBytes > 0;
+    return config->raWatchList != NULL && config->raWatchCount > 0 &&
+           config->raSnapBuf != NULL && config->raSnapBytes > 0 &&
+           config->raNodeCount >= 0 && config->raNodeCount <= RA_NODE_MAX &&
+           config->raSnapBytes <= RA_SNAP_MAX_BYTES - config->raNodeCount * RA_NODE_PAIR_BYTES;
 }
 
 /* Eight hex digits; there is no sprintf in ee_core. The buffer addresses travel
@@ -248,10 +251,13 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
     /* RetroAchievements telemetry, loaded LAST because it imports
        SMAPSendPacket from the SMAP driver above. The snapshot buffer is
        allocated here, while the IOP heap is up and the game has not started,
-       and its address handed to the module as a load argument -- RA_SNAP_TOTAL
-       covers the header plus the values of the largest supported watch list. */
+       and its address handed to the module as a load argument. Size it to
+       this game's direct watches and pointer-chain pairs rather than the
+       global worst-case capacity; no extra IOP heap is used for small sets. */
+    ra_snap_iop = 0;
     if (RA_TelemetryWanted(config) && RA_PROBE != 1 && RA_PROBE != 2 && RA_PROBE != 3) {
-        void *snap = SifAllocIopHeap(RA_SNAP_TOTAL);
+        unsigned int bytes = config->raSnapBytes + config->raNodeCount * RA_NODE_PAIR_BYTES;
+        void *snap = SifAllocIopHeap(RA_SNAP_TOTAL_FOR(bytes));
 
         if (snap != NULL) {
             /* Shared offsets keep the EE/IOP load contract in agreement. */
@@ -279,7 +285,12 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
             for (k = 0; k < g_ipconfig_len && k < IPCONFIG_MAX_LEN; k++)
                 args[n + k] = g_ipconfig[k];
 
-            LoadOPLModule(OPL_MODULE_ID_RAUDP, 0, n + k, args);
+            if (LoadOPLModule(OPL_MODULE_ID_RAUDP, 0, n + k, args) < 1) {
+                /* Optional telemetry failed. Reclaim its snapshot allocation
+                   and leave the game's launch and other IOP modules alone. */
+                ra_snap_iop = 0;
+                SifFreeIopHeap(snap);
+            }
         } else {
             /* No buffer, so nothing can be sent. Leaving ra_snap_iop at zero
                makes ra.c's per-frame path a no-op, and there is no reason to
