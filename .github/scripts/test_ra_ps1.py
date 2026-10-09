@@ -63,6 +63,19 @@ with tempfile.TemporaryDirectory(prefix='ra-ps1-') as directory:
     fixture('nested.vcd', 'D\\G.EXE')
     fixture('fallback.vcd', cnf=False, fallback=True)
     fixture('overflow.vcd', overflow=True)
+    # Split a synthetic HDL game's logical ISO across two separated ATA
+    # extents. Its real 1024-byte map lives at the APA game start sector.
+    # No partition table or real HDD is opened or modified by this test.
+    raw = (tmp / 'retail.vcd').read_bytes()
+    hdisk = bytearray(1150 * 512)
+    for logical in range(40):
+        physical = (200 + 4 * logical) if logical < 16 else (1024 + 4 * (logical - 16))
+        at = 0x100000 + logical * 2352 + 24
+        hdisk[physical * 512:physical * 512 + 2048] = raw[at:at + 2048]
+    struct.pack_into('<i', hdisk, 100 * 512 + 240, 2)
+    struct.pack_into('<III', hdisk, 100 * 512 + 244, 0, 200, 16 * 2048)
+    struct.pack_into('<III', hdisk, 100 * 512 + 256, 16, 1024, 24 * 2048)
+    (tmp / 'hdd.raw').write_bytes(hdisk)
     (tmp / 'truncated.vcd').write_bytes((tmp / 'retail.vcd').read_bytes()[:0x100000+26*2352])
     source = re.sub(r'^#include.*$', '', (root/'src/rahash.c').read_text(), flags=re.M)
     prefix = r'''
@@ -80,8 +93,13 @@ with tempfile.TemporaryDirectory(prefix='ra-ps1-') as directory:
 #include "include/md5.h"
 #include "include/hdl_layout.h"
 typedef void (*ra_step_fn)(const char *);
-static int hddReadSectors(unsigned int lba,unsigned int n,void *out)
-    {(void)lba;(void)n;(void)out;return -1;}
+static int hddReadSectors(unsigned int lba,unsigned int n,void *out) {
+    FILE *f=fopen("hdd.raw","rb");int ok=0;
+    if(!f)return -1;
+    if(!fseek(f,(long)lba*512,SEEK_SET) && fread(out,512,n,f)==n)ok=1;
+    fclose(f);
+    return ok?0:-1;
+}
 typedef struct { unsigned char trycount, spindlctrl, datapattern, pad; } sceCdRMode;
 enum { SCECdErNO=0, SCECdSecS2048=0, SCECdSpinNom=1, SCECdSpinStm=2 };
 #define LOG(...) ((void)0)
@@ -133,6 +151,26 @@ int main(void) {
     assert(!guard); /* Only keyed sidecar is created. */
     assert(raVcdWatchGuardMatches("",key,hash)==1);
     assert(raVcdWatchGuardStore("","Pbad",hash)<0); /* bad key input */
+    /* HDL read-only hashing crosses separated APA extents and shares the
+       ISO content hash; corrupt partition counts/overlaps must fail closed. */
+    assert(raHashHdl(100,"SLUS_012.15",hash)==0);
+    assert(!strcmp(hash,"''' + hashlib.md5(b"SLUS_012.15" + payload).hexdigest() + r'''")); /* replaced by Python below */
+    FILE *disk=fopen("hdd.raw","r+b"); assert(disk);
+    int bad_count=66;
+    assert(!fseek(disk,100*512+240,SEEK_SET));
+    assert(fwrite(&bad_count,4,1,disk)==1);
+    fclose(disk);
+    assert(raHashHdl(100,"SLUS_012.15",hash)<0 && !hash[0]);
+    disk=fopen("hdd.raw","r+b");assert(disk);
+    bad_count=2;
+    assert(!fseek(disk,100*512+240,SEEK_SET));
+    assert(fwrite(&bad_count,4,1,disk)==1);
+    int overlap=10;
+    assert(!fseek(disk,100*512+256,SEEK_SET));
+    assert(fwrite(&overlap,4,1,disk)==1);
+    fclose(disk);
+    assert(raHashHdl(100,"SLUS_012.15",hash)<0 && !hash[0]);
+    puts("PASS: HDL two-extent read-only hash, bounded partition count and overlap rejection");
     puts("PASS: PS1 hashes and stale-VCD guard, missing, mismatched and malformed sidecars");
 }
 '''
