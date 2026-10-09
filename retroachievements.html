@@ -83,6 +83,7 @@ Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora
 PRs <strong>#702–#705</strong>, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
 bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
 <h2 id="ra-mode-xerabora-or-caduceus">RA Mode: Xerabora or Caduceus</h2>
+<div class="callout info"><div class="h">Pending source change</div><p>The Caduceus selector is implemented in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/894">PR #894</a>. It is not yet merged or guaranteed present in published release downloads. The instructions below apply to builds containing that change. Existing Xerabora support remains available.</p></div>
 <p>In the <strong>RA build</strong>, open <strong>Settings → Network → RA Mode</strong> and choose <strong>Xerabora</strong> (the default) or <strong>Caduceus</strong>. Save settings to retain the choice. Old configurations without <code>ra_mode</code> keep Xerabora. The normal build has no RA mode row or telemetry code.</p>
 <p>This selector chooses the PC service protocol; it does not enable telemetry by itself. Keep <strong>RA Telemetry</strong> enabled when you want tracking. No PC application or server binaries are bundled by this change; the companion service is managed separately through PS2-Servers.</p>
 <table>
