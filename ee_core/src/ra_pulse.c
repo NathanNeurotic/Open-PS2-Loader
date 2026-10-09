@@ -53,6 +53,8 @@ void *RA_PulseEventBuffer(void)
     e->seq = 0;
     e->kind = 0;
     e->arg = 0;
+    e->commit = 0;
+    ra_ovl_seen = 0;
 
     return &ra_pulse_event;
 }
