@@ -38,7 +38,7 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
         return -1;
     irx = malloc(size_rapops_irx);
     if (!irx)
-        return -1;
+        return 0; /* Optional telemetry: low memory must not block the game. */
     memcpy(irx, &rapops_irx, size_rapops_irx);
     for (i = 0; i + sizeof(*cfg) <= size_rapops_irx; i += 4) {
         if (memcmp(irx + i, RAPOPS_MAGIC, 8) == 0) {
@@ -46,8 +46,10 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
             break;
         }
     }
-    if (!cfg)
+    if (!cfg) {
+        result = 0; /* No valid embedded config; nothing has been installed. */
         goto done;
+    }
     n = snprintf(cfg->ipcfg, sizeof(cfg->ipcfg), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]) + 1;
     n += snprintf(cfg->ipcfg + n, sizeof(cfg->ipcfg) - n, "%u.%u.%u.%u", mask[0], mask[1], mask[2], mask[3]) + 1;
     n += snprintf(cfg->ipcfg + n, sizeof(cfg->ipcfg) - n, "%u.%u.%u.%u", gw[0], gw[1], gw[2], gw[3]) + 1;
@@ -71,8 +73,10 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
     /* Ownership/absence was checked before preparation. O_EXCL is only a supplementary
        guard on backends that implement it; PS2 FAT currently ignores that flag. */
     fd = open(path, O_WRONLY | O_CREAT | O_EXCL, 0644);
-    if (fd < 0)
+    if (fd < 0) {
+        result = 0; /* Read-only/absent USB path: launch without telemetry. */
         goto done;
+    }
     while (off < (int)size_rapops_irx) {
         n = write(fd, irx + off, size_rapops_irx - off);
         if (n <= 0)
@@ -82,8 +86,9 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
     result = off == (int)size_rapops_irx ? 0 : -1;
     if (close(fd) < 0)
         result = -1;
-    if (result < 0)
-        unlink(path);
+    if (result < 0 && unlink(path) == 0)
+        result = 0; /* A failed install that was fully removed is safe to skip.
+                       If removal fails, block to avoid booting a corrupt module. */
 done:
     free(irx);
     return result;
