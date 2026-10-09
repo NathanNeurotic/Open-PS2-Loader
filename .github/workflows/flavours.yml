@@ -290,6 +290,32 @@ jobs:
       - name: Compile -> make clean release (${{ matrix.flavour }})
         run: make --trace clean && make --trace LOCALVERSION=${{ matrix.flavour }} OPLDIAG=${{ matrix.opldiag }} RETROACHIEVEMENTS=${{ matrix.ra || '0' }} release
 
+      - name: Verify RA isolation in linked menu and game core
+        env:
+          RA_BUILD: ${{ matrix.ra || '0' }}
+        run: |
+          if command -v mips64r5900el-ps2-elf-nm >/dev/null 2>&1; then
+            NM=mips64r5900el-ps2-elf-nm
+          else
+            NM=ee-nm
+          fi
+          "$NM" opl.elf > menu-symbols.txt
+          "$NM" ee_core/ee_core.elf > core-symbols.txt
+          if [ "$RA_BUILD" = 1 ]; then
+            grep -q ' raCaduceusPage$' menu-symbols.txt
+            grep -q ' gRAMode$' menu-symbols.txt
+            grep -q ' RA_OverlayOnVblank$' core-symbols.txt
+          else
+            if grep -E ' (RA_[A-Za-z0-9_]*|ra[A-Z][A-Za-z0-9_]*|ach[A-Z][A-Za-z0-9_]*|gRAMode|raudp_irx|size_raudp_irx)$' menu-symbols.txt core-symbols.txt; then
+              echo 'RA implementation leaked into a standard ELF' >&2
+              exit 1
+            fi
+            if LC_ALL=C grep -aE 'Caduceus|Xerabora|CADUCEUS.KEY' opl.elf ee_core/ee_core.elf; then
+              echo 'RA client text leaked into a standard ELF' >&2
+              exit 1
+            fi
+          fi
+
       # Written AFTER the build so the compiler probe reflects what actually compiled. Every probe is
       # `|| true`: this file is a diagnostic and must never be the reason a good build fails to ship.
       # A rolling flavour has no digest to record here (the tag is resolved by the runner before this
