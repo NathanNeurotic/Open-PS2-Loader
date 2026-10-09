@@ -129,7 +129,7 @@ int main(void) {
     FILE *guard=fopen("RA/P", "rb");
     assert(!guard); /* Only keyed sidecar is created. */
     assert(raVcdWatchGuardMatches("",key,hash)==1);
-    assert(raVcdWatchGuardStore("",key2,hash)<0); /* bad key input */
+    assert(raVcdWatchGuardStore("","Pbad",hash)<0); /* bad key input */
     puts("PASS: PS1 hashes and stale-VCD guard, missing, mismatched and malformed sidecars");
 }
 '''
