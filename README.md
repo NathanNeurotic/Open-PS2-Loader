@@ -11,7 +11,7 @@
 
 ## Test builds and save-card recovery
 
-For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves.
+For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves. For build flavours, app placement, Browser/OSDSYS and launch-failure reports, see [Setup questions](docs/SETUP-QUESTIONS.md).
 
 ## Community Contributors
 
@@ -673,6 +673,8 @@ Sources**. For PS2, 48-bit LBA internal HDDs are supported. The HDD can be forma
 	- **PS1 games:** PS1 `*.VCD` titles in the HDD's `POPS/` folder list under the **L3** PS1 view like any other device. To boot them, use the BDMA rows on **Settings → PS Emulation Settings**. **VCD BDMA Apply on Launch** is on by default and equips the matching exFAT driver automatically; turn it off to reveal the manual **BDMA Source** / **BDMA Mode** pickers and set **BDMA Mode → HDD (exFAT)** by hand so POPSTARTER can read the exFAT volume. See **[docs/VCD.md](docs/VCD.md)**.
 
 ## APPS
+
+For internal exFAT HDD setup, MBR/GPT choices, large-file benefits, fragmentation and VMC limits, and an empty-game-list checklist, read **[exFAT storage](docs/EXFAT.md)**. APA and exFAT use different game lists; enabling APA is not required for a plain exFAT disk.
 
 There are two supported methods for adding apps to OPL. Keep both available and choose the one that fits your setup:
 
