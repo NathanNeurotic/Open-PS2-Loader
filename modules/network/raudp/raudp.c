@@ -76,6 +76,7 @@ static u8 ra_dst_mac[6];
 #include "../common/ra_client.h"
 
 static int ra_caduceus;
+static int ra_host_pinned;
 
 #define RA_DST_PORT 18194 /* PC client listens here */
 #define RA_SRC_PORT 18195 /* our port: discovery socket and telemetry source */
@@ -742,7 +743,8 @@ static int ra_discover(void)
     /* Caduceus has a single configured companion host, shared with its paired
        browser. A missing address must not cause a broadcast to an arbitrary PC.
        Xerabora's existing automatic LAN discovery remains unchanged. */
-    if (ra_caduceus && (ra_server_ip == 0 || ra_server_ip == INADDR_BROADCAST))
+    if ((ra_caduceus || ra_host_pinned) &&
+        (ra_server_ip == 0 || ra_server_ip == INADDR_BROADCAST))
         return 0;
 
     /* SMB owns the receive stack while loading/streaming the ISO. Never open
@@ -783,7 +785,7 @@ static int ra_discover(void)
 
     to.sin_family = AF_INET;
     to.sin_port = htons(RA_DST_PORT);
-    to.sin_addr.s_addr = ra_caduceus ? ra_server_ip : INADDR_BROADCAST;
+    to.sin_addr.s_addr = (ra_caduceus || ra_host_pinned) ? ra_server_ip : INADDR_BROADCAST;
 
     req[0] = 'R';
     req[1] = 'A';
@@ -830,7 +832,8 @@ static int ra_discover(void)
                 }
                 continue;
             }
-            if (ra_caduceus && from.sin_addr.s_addr != to.sin_addr.s_addr)
+            if ((ra_caduceus || ra_host_pinned) &&
+                from.sin_addr.s_addr != to.sin_addr.s_addr)
                 continue;
             /* A syntactically similar RAO1 error is not a verified peer.
                Require the successful discovery reply in both RA modes. */
@@ -1185,6 +1188,7 @@ int _start(int argc, char *argv[])
             int flags = argv[1][RA_ARG_RX] - '0';
             ra_rx_in_game = flags & 1;
             ra_caduceus = (flags & 2) != 0;
+            ra_host_pinned = (flags & 4) != 0;
         }
         if (len >= RA_ARG_ID + 1 && argv[1][RA_ARG_ID - 1] == ',') {
             int i;
