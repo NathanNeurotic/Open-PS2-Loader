@@ -70,7 +70,9 @@ struct GSMFlags
     u8 DISPLAY_fix;
     u8 FIELD_fix;
     u8 gs576P_param;
+#ifdef RETROACHIEVEMENTS
     u8 track_only;
+#endif
 } __attribute__((packed));
 
 extern struct GSMDestSetGsCrt GSMDestSetGsCrt;
@@ -195,7 +197,9 @@ static void Remove_GSHandler(void)
 /*-------------------------------------------*/
 void EnableGSM(void)
 {
+#ifdef RETROACHIEVEMENTS
     GSMFlags.track_only = 0;
+#endif
     // Install Hook SetGsCrt
     Install_Hook_SetGsCrt();
     // Install Display Handler
