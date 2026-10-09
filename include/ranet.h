@@ -27,5 +27,8 @@ void raLaunchNetworkUp(void);
 /* Broadcasts a discovery request and reports the outcome as two lines
    of text for the notice popup. Returns 1 when a PC client answered. */
 int raNetTestLink(char *line1, int sz1, char *line2, int sz2);
+/* Caduceus-compatible account progress browsing; reply has CADB1 prefix removed.
+ * 0 success, -8 NIC owned by another transport, other negative network/protocol failure. */
+int raNetAccountPage(const char *request, unsigned int nonce, char *out, int size);
 
 #endif

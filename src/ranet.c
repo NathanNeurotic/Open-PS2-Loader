@@ -556,6 +556,66 @@ void raLaunchNetworkUp(void)
 /* Link test for the menu: broadcasts every 250 ms for up to three seconds.
    The reply's source address and the version in its text tell what
    answered; the round trip is measured with clock(). */
+/* Read-only Caduceus account browser endpoint, provided by PS2-Servers when
+ * RetroAchievements is set to Caduceus mode. Bound the WAIT loop; never use a
+ * second IOP network stack while UDPBD/UDPFS owns SMAP. This is intentionally
+ * separate from RAQ1 watch-list acquisition on UDP 18194. */
+int raNetAccountPage(const char *request, unsigned int nonce, char *out, int size)
+{
+    struct sockaddr_in to;
+    char myaddr[32], expected[32];
+    u8 own_ip[4];
+    int sock, pass, attempt, got, heard;
+    if (!request || !out || size < 16)
+        return -1;
+    out[0] = '\0';
+    if (raNetNicBusy())
+        return -8;
+    sock = open_pc_socket(myaddr, sizeof(myaddr), own_ip);
+    if (sock < 0)
+        return -2;
+    snprintf(expected, sizeof(expected), "CADB1 %u ", nonce);
+    for (pass = 0; pass < 2; pass++) {
+        heard = 0;
+        memset(&to, 0, sizeof(to));
+        to.sin_family = AF_INET;
+        to.sin_port = htons(18198);
+        if (pass == 0 && (pc_ip[0] | pc_ip[1] | pc_ip[2] | pc_ip[3])) {
+            to.sin_addr.s_addr = htonl(((u32)pc_ip[0] << 24) |
+                                       ((u32)pc_ip[1] << 16) | ((u32)pc_ip[2] << 8) | pc_ip[3]);
+        } else {
+            if (pass == 0)
+                pass = 1; /* no configured host: don't broadcast twice */
+            to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+        }
+        for (attempt = 0; attempt < 8; attempt++) {
+            got = ask(sock, &to, request, g_rx, sizeof(g_rx));
+            if (got <= 0) {
+                if (!heard)
+                    break; /* configured address may be stale: try broadcast */
+                disconnect(sock);
+                return -2;
+            }
+            if (strncmp(g_rx, expected, strlen(expected)) != 0) {
+                disconnect(sock);
+                return -3; /* unrelated reply, never interpret its payload */
+            }
+            heard = 1;
+            if (strncmp(g_rx + strlen(expected), "WAIT", 4) == 0) {
+                DelayThread(200000);
+                continue;
+            }
+            snprintf(out, size, "%s", g_rx + strlen(expected));
+            disconnect(sock);
+            return 0;
+        }
+        if (heard)
+            break;
+    }
+    disconnect(sock);
+    return -2;
+}
+
 int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
 {
     struct sockaddr_in to, from;
