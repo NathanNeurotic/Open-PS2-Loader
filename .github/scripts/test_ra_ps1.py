@@ -100,7 +100,7 @@ int main(void) {
         checks += f'assert(raHashVcd("{file}",boot,sizeof(boot),hash)==0);\n'
         checks += f'assert(!strcmp(boot,"{escaped}") && !strcmp(hash,"{expected}"));\n'
         checks += f'assert(raVcdBootName("{file}",boot,sizeof(boot))==0 && !strcmp(boot,"{escaped}"));\n'
-    checks += '''
+    checks += r'''
     assert(raHashVcd("truncated.vcd",boot,sizeof(boot),hash)<0 && hash[0]==0);
     assert(raHashVcd("overflow.vcd",boot,sizeof(boot),hash)<0 && hash[0]==0);
     assert(raHashVcd("missing.vcd",boot,sizeof(boot),hash)<0 && hash[0]==0);
