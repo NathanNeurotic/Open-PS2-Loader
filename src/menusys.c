@@ -2297,8 +2297,10 @@ static void menuOpenSelectedVcdAchievements(void)
         return;
     gid = selected_item->item->current->item.id;
     mode = support->mode == FAV_MODE ? favGetItemSourceMode(gid) : support->mode;
-    prefix = support->mode == FAV_MODE ? favGetItemPrefix(gid) :
-                                            (support->itemGetPrefix ? support->itemGetPrefix(support) : NULL);
+    if (support->mode == FAV_MODE)
+        prefix = favGetItemPrefix(gid);
+    else
+        prefix = support->itemGetPrefix ? support->itemGetPrefix(support) : NULL;
     name = support->itemGetName ? support->itemGetName(support, gid) : NULL;
 
     /* Match the already validated USB VCD support-check path, including
