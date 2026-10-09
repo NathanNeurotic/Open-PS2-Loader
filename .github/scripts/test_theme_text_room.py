@@ -212,7 +212,7 @@ for family in ('mainElems', 'infoElems', 'appsMainElems', 'appsInfoElems', 'favs
     if validate and 'thmComputeTextRooms(&theme->%s);' % family not in validate:
         failures.append('validateGUIElems: %s gets no text rooms' % family)
 items = function_text(themes, 'static void drawItemsList(', 'src/themes.c')
-if items and items.count('elem->textRoom, dispText, color, ps == item);') != 2:
+if items and items.count('textRoom, dispText, color, ps == item);') != 2:
     failures.append('drawItemsList: the highlighted row (and only it) must scroll inside the room, with and without a decorator')
 if 'fntRenderStringFit(' not in function_text(dia, 'static int diaRenderValue(', 'src/dia.c'):
     failures.append('dia.c: settings values no longer use the shared scroller')

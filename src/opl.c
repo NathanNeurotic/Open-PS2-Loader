@@ -681,8 +681,14 @@ static void itemExecFav(struct menu_item *curMenu)
             if (removeFavouriteByIdAndText(support->mode, sourceId, it->text, kind))
                 it->favourited = 0; // only clear the star once the store write succeeded
         } else {
-            if (addFavouriteItem(support->mode, sourceId, it->icon_id, it->text_id, it->text, kind))
+            guiShowToast(_l(_STR_FAV_SAVING));
+            if (addFavouriteItem(support->mode, sourceId, it->icon_id, it->text_id, it->text, kind)) {
                 it->favourited = 1; // only show the star once the store write succeeded
+                guiShowToast(_l(_STR_FAV_SAVED));
+            } else {
+                guiShowToast(_l(_STR_FAV_SAVE_FAILED));
+                return;
+            }
         }
     }
 

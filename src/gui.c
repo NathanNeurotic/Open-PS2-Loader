@@ -395,6 +395,33 @@ static void guiRenderNotifications(char *string, int y)
     fntRenderString(gTheme->fonts[0], x - 5, y + 5, ALIGN_NONE, 0, 0, string, gTheme->textColor);
 }
 
+// Feedback for a user action; independent of courtesy notification preferences.
+static char actionToast[128];
+static clock_t actionToastStart;
+
+static void guiRenderToast(void)
+{
+    if (!actionToast[0])
+        return;
+    if ((clock_t)(clock() - actionToastStart) >= 3000 * (CLOCKS_PER_SEC / 1000)) {
+        actionToast[0] = '\0';
+        return;
+    }
+    guiRenderNotifications(actionToast, gTheme->usedHeight - MENU_ITEM_HEIGHT - 20);
+}
+
+void guiShowToast(const char *text)
+{
+    snprintf(actionToast, sizeof(actionToast), "%s", text);
+    actionToastStart = clock();
+    // Present the saving message BEFORE the synchronous storage write starts.
+    guiStartFrame();
+    guiShow();
+    guiDrawOverlays();
+    guiRenderToast();
+    guiEndFrame();
+}
+
 static void guiShowNotifications(void)
 {
     char notification[128];
@@ -4461,6 +4488,8 @@ void guiMainLoop(void)
         // something the user just asked for), independent of gEnableNotifications.
         guiShowRANotices();
 #endif
+
+        guiRenderToast();
 
         // handle deferred operations
         guiHandleDeferredOps();

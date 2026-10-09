@@ -233,6 +233,7 @@ void guiSetBootStatusSticky(const char *label);
 void guiSetBootStatusStickyCopy(const char *label);
 
 void guiWarning(const char *text, int count);
+void guiShowToast(const char *text);
 
 int guiConfirmVideoMode(void);
 

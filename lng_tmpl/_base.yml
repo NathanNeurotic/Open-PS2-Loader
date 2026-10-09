@@ -1668,3 +1668,9 @@ gui_strings:
   string: Caduceus RA session is offline.
 - label: RA_CADUCEUS_SIGN_IN
   string: Sign in to RetroAchievements in Caduceus, then try again.
+- label: FAV_SAVING
+  string: "Saving to Favorites..."
+- label: FAV_SAVED
+  string: "Saved to Favorites"
+- label: FAV_SAVE_FAILED
+  string: "Could not save to Favorites"
