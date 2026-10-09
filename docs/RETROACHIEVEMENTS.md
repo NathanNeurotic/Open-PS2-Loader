@@ -132,7 +132,7 @@ Telemetry lives inside OPL's own loader core, which only exists for launches OPL
 | --- | --- |
 | BDM — USB, iLink, MX4SIO, ATA/exFAT | yes |
 | ETH / SMB | wired, but **known bad upstream** — see below |
-| HDD (APA) | yes — but see the note below |
+| HDD (APA) | yes; installed HDLoader games now support read-only automatic hashing (hardware acceptance pending) |
 | MMCE | yes |
 | Physical PS2 disc, **RA: launch disc** | implemented; **not hardware-tested** |
 | HTTP | local watch-list loading is wired into OPL-core launch; combined HTTP/RA operation is not hardware-validated, and it shares the ETH/SMB risk below |
@@ -159,8 +159,16 @@ The hardware testing so far (#702–#705) launched from MMCE and USB, never from
 is tested, **keep the images you play with achievements on a local device.** The same reasoning
 applies to HTTP, which streams down the same path.
 
-HDD (APA) games are stored in HDLoader format and have no image file to hash, so while a watch list
-placed by hand still loads and streams, the console cannot work out the hash for them itself.
+**HDD (APA) / HDLoader games** have a new **read-only automatic support check**.
+The check reads the installed game's 1024-byte HDLoader descriptor, validates its
+logical-to-ATA sector map, and hashes the boot executable through the same
+ISO9660 walker as normal ISO images. It never rewrites an APA partition or
+converts the game. The resulting watch list is saved under the accessible
+HDD settings home in `RA/<startup>.wl`; an existing manually supplied list
+still loads. The check is deferred to the I/O worker, requires a valid HDD data
+home and ATA access, and rejects invalid or overlapping partition mappings.
+A synthetic split-partition test matches the ISO content hash, but **real
+APA hardware validation and performance remain pending**.
 
 ### An image an earlier run left open on the share can still be hashed
 
