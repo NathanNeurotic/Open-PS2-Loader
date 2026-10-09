@@ -29,6 +29,10 @@
 #include "include/util.h"
 #include "include/supportbase.h"
 #include "include/rabadge.h"
+#include "include/rahash.h"
+#include "include/bdmsupport.h"
+#include "include/favsupport.h"
+#include "include/libview.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -65,12 +69,50 @@ static struct ra_badge_slot *slotFor(item_list_t *support)
     return NULL;
 }
 
+/* PS1 VCD artwork/config identity remains its filename. RA identity differs:
+   the PS1 watch list and POPStarter telemetry use a per-image key derived
+   from the full VCD path. Resolve it here, on the existing I/O refresh worker,
+   without reading any VCD sectors or changing the game's display identity.
+   Returns 1 for tracked-eligible VCD, 0 for a normal PS2/non-VCD row,
+   -1 for an unsupported PS1 row that must not show an RA badge. */
+static int badgeVcdKey(item_list_t *support, int idx, const char *prefix, char *out, int outSize)
+{
+    char path[256];
+    const char *colon;
+    const char *name;
+    int isVcd, sourceMode, n;
+
+    if (libListRowView(support, idx) != LIB_VIEW_PS1)
+        return 0;
+
+    if (support->mode == FAV_MODE) {
+        isVcd = favGetItemKind(idx) == FAV_KIND_VCD;
+        sourceMode = favGetItemSourceMode(idx);
+    } else {
+        const base_game_info_t *game = support->itemGet ? support->itemGet(support, idx) : NULL;
+        isVcd = game != NULL && !strcasecmp(game->extension, ".VCD");
+        sourceMode = support->mode;
+    }
+
+    if (!isVcd || !bdmModeIsUSB(sourceMode) || !prefix)
+        return -1;
+    colon = strchr(prefix, ':');
+    name = support->itemGetName(support, idx);
+    if (!colon || !name || !name[0])
+        return -1;
+
+    n = (int)(colon - prefix) + 1;
+    if (snprintf(path, sizeof(path), "%.*s/POPS/%s.VCD", n, prefix, name) >= (int)sizeof(path))
+        return -1;
+    return raVcdWatchKey(path, out, outSize) == 0 ? 1 : -1;
+}
+
 static int watchListExists(const char *prefix, const char *serial)
 {
     char path[256];
     struct stat st;
 
-    if (serial == NULL || serial[0] == '\0')
+    if (prefix == NULL || serial == NULL || serial[0] == '\0')
         return 0;
 
     snprintf(path, sizeof(path), "%sRA/%s.wl", prefix, serial);
@@ -117,8 +159,8 @@ void raBadgeRefresh(item_list_t *support, int count)
     if (count <= 0)
         return;
 
-    prefix = support->itemGetPrefix(support);
-    if (prefix == NULL)
+    prefix = support->mode == FAV_MODE ? NULL : support->itemGetPrefix(support);
+    if (support->mode != FAV_MODE && prefix == NULL)
         return;
 
     slot->text = malloc((size_t)count * RA_BADGE_TEXT);
@@ -130,8 +172,16 @@ void raBadgeRefresh(item_list_t *support, int count)
     for (i = 0; i < count; i++) {
         char *dst = slot->text + (size_t)i * RA_BADGE_TEXT;
         const char *serial = support->itemGetStartup(support, i);
+        const char *rowPrefix = support->mode == FAV_MODE ? favGetItemPrefix(i) : prefix;
+        char ps1Key[16];
+        int ps1 = badgeVcdKey(support, i, rowPrefix, ps1Key, sizeof(ps1Key));
 
-        if (watchListExists(prefix, serial))
+        if (ps1 > 0)
+            serial = ps1Key;
+        else if (ps1 < 0)
+            serial = NULL;
+
+        if (watchListExists(rowPrefix, serial))
             snprintf(dst, RA_BADGE_TEXT, "%s%s", RA_BADGE,
                      support->itemGetName(support, i));
         else
