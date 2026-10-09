@@ -51,7 +51,8 @@ static u32 ra_hb_rx, ra_hb_rau, ra_ee_event = 1;
 static struct ra_event ra_event;
 typedef struct { void *src, *dest; int size, attr; } SifDmaTransfer_t;
 static unsigned events, control_acks;
-static int sceSifDmaStat(int id) { (void)id; return -1; }
+static int event_dma_busy;
+static int sceSifDmaStat(int id) { (void)id; return event_dma_busy ? 0 : -1; }
 static int SMAPReadNotice(void *out, unsigned capacity) { (void)out; (void)capacity; return 0; }
 static void SysClock2USec(iop_sys_clock_t *t, u32 *sec, u32 *us) {
     (void)t; *sec = 10; *us = 0;
@@ -190,6 +191,16 @@ int main(void) {
     ra_handle_pc("RAU1 1234567890", 15);
     assert(events == 2); /* duplicate unlock is one event */
     ra_handle_pc("RAX1 ", 5); assert(events == 2);
+    ra_handle_pc("RAU1 1234567890 25 First title", 30);
+    assert(events == 3 && !strcmp(ra_event.title,"First title") && RA_EVENT_POINTS(ra_event.kind)==25 && ra_event.commit==ra_event.seq);
+    ra_handle_pc("RAU1 1234567890 25 First title", 30);assert(events==3);
+    event_dma_busy=1;ra_handle_pc("RAU1 50 1 Next",14);assert(events==3);event_dma_busy=0;
+    ra_handle_pc("RAU1 50 1 Next",14);assert(events==4 && !strcmp(ra_event.title,"Next"));
+    char padded[128]="RAU1 51 10";
+    ra_handle_pc(padded,128);assert(events==5 && !ra_event.title[0] && RA_EVENT_POINTS(ra_event.kind)==10);
+    ra_handle_pc("RAU1 4294967296 5 Bad",21);assert(events==5);
+    ra_handle_pc("RAU1 ",5);assert(events==5);
+    puts("PASS: title/points, richer duplicate upgrade, padded legacy notices, DMA ownership and overflowing IDs");
     puts("PASS: read-cost fields, PC reset event, unlock deduplication and unknown-event rejection");
 }
 '''

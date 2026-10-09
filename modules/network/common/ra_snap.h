@@ -85,7 +85,8 @@ struct ra_event
      RA_ARG_RX     ASCII flags 0..3: bit 0 permits network reads while
                    the game runs; bit 1 selects the Caduceus bridge.
                    Legacy 0/1 retain Xerabora discovery.
-     RA_ARG_ID     the game's serial, up to RA_ARG_ID_MAX characters
+     RA_ARG_ID     the game's serial, space-padded to RA_ARG_ID_MAX
+     RA_ARG_HOST   selected companion IPv4 (for passive SMB/HTTP TX)
    argv[2] is SMAP's ipconfig string. Both sides build and parse the
    argument by these offsets. */
 #define RA_ARG_SNAP   0

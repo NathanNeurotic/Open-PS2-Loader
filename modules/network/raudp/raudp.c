@@ -859,8 +859,12 @@ static u32 ra_dec_at(const char *s, int max)
     u32 v = 0;
     int i;
 
-    for (i = 0; i < max && s[i] >= '0' && s[i] <= '9'; i++)
-        v = v * 10 + (u32)(s[i] - '0');
+    for (i = 0; i < max && s[i] >= '0' && s[i] <= '9'; i++) {
+        u32 digit = (u32)(s[i] - '0');
+        if (v > (0xFFFFFFFFu - digit) / 10)
+            return 0;
+        v = v * 10 + digit;
+    }
 
     return v;
 }
@@ -897,7 +901,7 @@ static void ra_handle_pc(char *rx, int got)
         ra_hb_rau++;
         if (got <= 5 || rx[5] < '0' || rx[5] > '9')
             return;
-        id = ra_dec_at(&rx[5], got - 5 < 10 ? got - 5 : 10);
+        id = ra_dec_at(&rx[5], got - 5);
         if (!id)
             return;
         points = 0;
@@ -908,7 +912,7 @@ static void ra_handle_pc(char *rx, int got)
             while (pos < got && rx[pos] == ' ')
                 pos++;
             if (pos < got)
-                points = ra_dec_at(&rx[pos], 6);
+                points = ra_dec_at(&rx[pos], got - pos);
             while (pos < got && rx[pos] >= '0' && rx[pos] <= '9')
                 pos++;
             while (pos < got && rx[pos] == ' ')
