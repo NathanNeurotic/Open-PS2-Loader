@@ -19,4 +19,9 @@ int raHashDisc(const char *bootPath, const char *startup, char *out33);
 int raVcdBootName(const char *vcdpath, char *boot, int boot_max);
 int raHashVcd(const char *vcdpath, char *boot, int boot_max, char *out33);
 
+/* Per-image 15-character telemetry/watch key derived from the normalized VCD path.
+   The PS1 boot executable cannot serve as an identity: multiple images can have
+   PSX.EXE or the same homebrew BOOT name. Use this for both RAQ1 and POPS frames. */
+int raVcdWatchKey(const char *vcdpath, char *out, int out_size);
+
 #endif
