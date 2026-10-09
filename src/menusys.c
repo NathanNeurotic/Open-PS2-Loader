@@ -2054,10 +2054,9 @@ static void menuCheckSelectedGameSupport(void)
     /* RA: hash the selected image, on demand. Hashing every image during the scan would
        hold the console on the splash screen: the scan runs before the menu appears and
        each image has to be opened and read.
-       Every refusal SAYS why -- a silent no-op reads as broken, and hashing an image
-       nothing will ever watch is worse. Only the four legs that reach sysLaunchLoaderElf
-       (BDM, ETH/SMB, HDD/APA, MMCE) can ever carry telemetry; the rest exec an external
-       ELF and ee_core never loads. */
+       Report every unsupported path explicitly. OPL-core PS2 launches use
+       their in-game telemetry module; USB VCDs use a separate POPStarter
+       bridge. Other external PS1 cores remain unsupported. */
     item_list_t *support = selected_item->item->userdata;
     int gid = selected_item->item->current->item.id;
 
