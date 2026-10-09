@@ -662,6 +662,77 @@ int raVcdWatchKey(const char *vcdpath, char *out, int out_size)
     return 0;
 }
 
+/* A path-only session key identifies the VCD for the 15-byte wire format,
+   but not its contents. Bind the persisted watch list to the precise RA hash
+   that was checked with the PC. The guard is advisory, never a launch block. */
+static int raVcdGuardPath(const char *root, const char *key, char *out, int size)
+{
+    int n, i;
+
+    if (!root || !key || key[0] != 'P' || strlen(key) != 15 ||
+        !out || size < 1)
+        return -1;
+    for (i = 1; i < 15; i++)
+        if (!((key[i] >= '0' && key[i] <= '9') ||
+              (key[i] >= 'a' && key[i] <= 'f')))
+            return -1;
+    n = snprintf(out, size, "%sRA/%s.md5", root, key);
+    return n >= 0 && n < size ? 0 : -1;
+}
+
+static int raVcdValidContentHash(const char *hash)
+{
+    int i;
+    if (!hash || strlen(hash) != 32)
+        return 0;
+    for (i = 0; i < 32; i++)
+        if (!((hash[i] >= '0' && hash[i] <= '9') ||
+              (hash[i] >= 'a' && hash[i] <= 'f')))
+            return 0;
+    return 1;
+}
+
+int raVcdWatchGuardStore(const char *watchRoot, const char *watchKey, const char *hash)
+{
+    char path[256];
+    FILE *f;
+    size_t wrote;
+    int closed;
+
+    if (!raVcdValidContentHash(hash) ||
+        raVcdGuardPath(watchRoot, watchKey, path, sizeof(path)) != 0)
+        return -1;
+    f = fopen(path, "wb");
+    if (!f)
+        return -1;
+    wrote = fwrite(hash, 1, 32, f);
+    closed = fclose(f);
+    if (wrote != 32 || closed != 0) {
+        unlink(path); /* A partial guard must not authorize a stale list. */
+        return -1;
+    }
+    return 0;
+}
+
+int raVcdWatchGuardMatches(const char *watchRoot, const char *watchKey, const char *hash)
+{
+    char path[256], recorded[33];
+    FILE *f;
+    size_t len;
+    int extra;
+
+    if (!raVcdValidContentHash(hash) ||
+        raVcdGuardPath(watchRoot, watchKey, path, sizeof(path)) != 0)
+        return 0;
+    f = fopen(path, "rb");
+    if (!f)
+        return 0;
+    len = fread(recorded, 1, 32, f);
+    extra = fgetc(f); /* Reject truncated/extended/corrupt guards. */
+    fclose(f);
+    return len == 32 && extra == EOF && memcmp(recorded, hash, 32) == 0;
+}
+
 int raVcdBootName(const char *vcdpath, char *boot, int boot_max)
 {
     struct ra_src src = {open(vcdpath, O_RDONLY), RA_SRC_VCD};
