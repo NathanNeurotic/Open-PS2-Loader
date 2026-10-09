@@ -11,6 +11,7 @@
 #include "ee_core.h"
 #include "coreconfig.h"
 #include "ra_overlay.h"
+#include "../../include/ra_features.h"
 #include "padhook.h"
 #include "../../modules/network/common/ra_snap.h"
 #define GIF_D2_CHCR         (*(volatile u32 *)0x1000A000)
@@ -33,9 +34,6 @@
 /* Neither an idle GIF channel nor a DISPFB write proves the game has
    completed its pending IMAGE transfer. Disable this unsynchronized DMA
    path by default; allow opt-in only for controlled renderer experiments. */
-#ifndef RA_EXPERIMENTAL_CARD_DMA
-#define RA_EXPERIMENTAL_CARD_DMA 0
-#endif
 /* The GS privileged display registers are write-only/unreliable to read back
    on retail hardware. GSM already has a write breakpoint that records every
    value a game sends there. RA enables that tracker in pass-through mode when
