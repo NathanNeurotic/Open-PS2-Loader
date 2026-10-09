@@ -78,6 +78,7 @@ struct EECoreConfig_t
     /* Persistent module-storage block, prepared by PlaceWatchBlock. */
     u32 *raWatchList;
     int raWatchCount;
+    int raClientMode;
     int raSnapBytes;
     void *raNodeList;
     int raNodeCount;

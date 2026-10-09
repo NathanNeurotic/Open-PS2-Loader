@@ -7,7 +7,8 @@
    does not know the image, -7 when the PC was still identifying it after
    the waiting rounds, -8 when the NIC is owned by a UDP transport and the
    ask was refused without touching the network, another negative value when
-   the PC did not answer or the transfer broke.
+   the PC did not answer or the transfer broke. -9 means the selected
+   Caduceus bridge answered but its RA session is offline.
    info (may be NULL) receives the game title, info2 (may be NULL) the
    achievement counts as the PC reported them, e.g. info "Need for Speed:
    Underground 2" and info2 "76 achievements: 3 unlocked, 10 unsupported".

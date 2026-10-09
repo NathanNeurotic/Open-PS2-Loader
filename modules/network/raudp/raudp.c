@@ -72,6 +72,10 @@ static u32 ra_src_ip = 0;
 static u32 ra_dst_ip = 0;
 static u8 ra_dst_mac[6];
 
+#include "../common/ra_client.h"
+
+static int ra_caduceus;
+
 #define RA_DST_PORT 18194 /* PC client listens here */
 #define RA_SRC_PORT 18195 /* our port: discovery socket and telemetry source */
 
@@ -730,7 +734,8 @@ static int ra_discover(void)
 {
     struct sockaddr_in me, to, from;
     socklen_t fromlen;
-    char req[48], rx[64];
+    char req[48], rx[192];
+    int bridge_found = 0;
     int s, on = 1, len, tries = 0, w, got;
 
     s = lwip_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -763,7 +768,14 @@ static int ra_discover(void)
     req[len] = '\0';
 
     for (;;) {
-        lwip_sendto(s, req, len, 0, (struct sockaddr *)&to, sizeof(to));
+        if (ra_caduceus && !bridge_found) {
+            to.sin_port = htons(RA_CADUCEUS_PORT);
+            lwip_sendto(s, RA_CADUCEUS_PROBE, sizeof(RA_CADUCEUS_PROBE) - 1, 0,
+                        (struct sockaddr *)&to, sizeof(to));
+        } else {
+            to.sin_port = htons(RA_DST_PORT);
+            lwip_sendto(s, req, len, 0, (struct sockaddr *)&to, sizeof(to));
+        }
 
         for (w = 0; w < RA_DISC_POLLS; w++) {
             DelayThread(RA_DISC_POLL_US);
@@ -772,9 +784,24 @@ static int ra_discover(void)
             /* Eight arguments: SMSTCPIP's recvfrom splits an SMB header
                from the payload. We want the whole datagram in rx. */
             fromlen = sizeof(from);
-            got = lwip_recvfrom(s, NULL, 0, rx, sizeof(rx), MSG_DONTWAIT,
+            got = lwip_recvfrom(s, NULL, 0, rx, sizeof(rx) - 1, MSG_DONTWAIT,
                                 (struct sockaddr *)&from, &fromlen);
 
+            if (ra_caduceus && !bridge_found) {
+                if (got > 0) {
+                    rx[got] = '\0';
+                    if (from.sin_port == htons(RA_CADUCEUS_PORT) &&
+                        raCaduceusSessionReply(rx, RA_PROBE_HASH) == 0) {
+                        bridge_found = 1;
+                        tries = -1;
+                        to.sin_addr.s_addr = from.sin_addr.s_addr;
+                        break;
+                    }
+                }
+                continue;
+            }
+            if (ra_caduceus && from.sin_addr.s_addr != to.sin_addr.s_addr)
+                continue;
             if (got >= 4 && rx[0] == 'R' && rx[1] == 'A' && rx[2] == 'O' && rx[3] == '1') {
                 u32 ip = from.sin_addr.s_addr;
 
@@ -1084,8 +1111,11 @@ int _start(int argc, char *argv[])
             ra_snap = (volatile struct ra_snap *)ra_hex_at(argv[1], RA_ARG_SNAP, 8);
         if (len >= RA_ARG_EVENT + 8 && argv[1][RA_ARG_EVENT - 1] == ',')
             ra_ee_event = ra_hex_at(argv[1], RA_ARG_EVENT, 8);
-        if (len >= RA_ARG_RX + 1 && argv[1][RA_ARG_RX - 1] == ',')
-            ra_rx_in_game = argv[1][RA_ARG_RX] != '0';
+        if (len >= RA_ARG_RX + 1 && argv[1][RA_ARG_RX - 1] == ',') {
+            int flags = argv[1][RA_ARG_RX] - '0';
+            ra_rx_in_game = flags & 1;
+            ra_caduceus = (flags & 2) != 0;
+        }
         if (len >= RA_ARG_ID + 1 && argv[1][RA_ARG_ID - 1] == ',') {
             int i;
 

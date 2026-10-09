@@ -1392,6 +1392,9 @@ int guiShowNetConfig(void)
     diaSetString(diaNetConfig, NETCFG_SHARE_PASSWORD, gPCPassword);
     diaSetInt(diaNetConfig, NETCFG_ETHOPMODE, gETHOpMode);
 #ifdef RETROACHIEVEMENTS
+    static const char *raModes[] = {"Xerabora", "Caduceus", NULL};
+    diaSetEnum(diaNetConfig, NETCFG_RA_MODE, raModes);
+    diaSetInt(diaNetConfig, NETCFG_RA_MODE, gRAMode);
     diaSetInt(diaNetConfig, NETCFG_RA_TELEMETRY, gRATelemetry);
     diaSetInt(diaNetConfig, NETCFG_RA_BADGES, gRABadges);
 #endif
@@ -1480,6 +1483,7 @@ reshow_network:
         }
         diaGetInt(diaNetConfig, NETCFG_ETHOPMODE, &gETHOpMode);
 #ifdef RETROACHIEVEMENTS
+        diaGetInt(diaNetConfig, NETCFG_RA_MODE, &gRAMode);
         diaGetInt(diaNetConfig, NETCFG_RA_TELEMETRY, &gRATelemetry);
         diaGetInt(diaNetConfig, NETCFG_RA_BADGES, &gRABadges);
 #endif

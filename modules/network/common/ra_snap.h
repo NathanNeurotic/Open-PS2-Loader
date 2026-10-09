@@ -88,8 +88,9 @@ struct ra_event
 /* The load argument ee_core hands raudp as argv[1], comma separated:
      RA_ARG_SNAP   eight hex digits, the snapshot buffer in IOP RAM
      RA_ARG_EVENT  eight hex digits, the event buffer in EE RAM
-     RA_ARG_RX     '1' or '0', whether raudp may read from the network
-                   while the game runs
+     RA_ARG_RX     ASCII flags 0..3: bit 0 permits network reads while
+                   the game runs; bit 1 selects the Caduceus bridge.
+                   Legacy 0/1 retain Xerabora discovery.
      RA_ARG_ID     the game's serial, up to RA_ARG_ID_MAX characters
    argv[2] is SMAP's ipconfig string. Both sides build and parse the
    argument by these offsets. */
