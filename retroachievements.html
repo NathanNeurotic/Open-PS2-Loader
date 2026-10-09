@@ -138,6 +138,28 @@ as finished.</p>
 </tbody>
 </table>
 <hr/>
+<h2 id="browse-account-achievements-on-the-ps2-experimental">Browse account achievements on the PS2 (experimental)</h2>
+<p>The RA build exposes <strong>RA: Account achievements</strong> from the Start menu and
+<strong>RA: Browse account</strong> from a PS2 game's settings menu. This is an account-wide
+browser; it does <strong>not</strong> yet jump directly to the selected game's achievement set.
+L1/R1 changes pages, Confirm opens a game's achievement list, Square rotates
+All/Earned/Locked/Hardcore filters, Select retries, and Back returns.</p>
+<p>Run PS2-Servers with <strong>RetroAchievements → Caduceus</strong>, sign in via the local
+account page, and configure the <strong>same SMB games root</strong> for the console and
+the RA pairing service. The PC creates <code>ART/CADUCEUS.KEY</code> in that share;
+the console reads it from <code>smb0:</code> before requesting account progress on
+UDP <strong>18198</strong>. The key grants <em>read-only</em> account-progress access: keep
+the share private, never publish the key, and revoke it by regenerating it.
+The console never receives the password, Web API key or RA login token.</p>
+<p><strong>RA-flavour only:</strong> the default ELF, telemetry module and regular xeRAbora
+workflow are unchanged. The browser refuses to bring up SMB while UDPBD
+or UDPFS owns the NIC. Offline status cannot prevent normal game launches.
+No in-game device scan, automatic hashing or background network work is added.</p>
+<p>This first version displays text progress (game titles, earned/hardcore
+counts, points, descriptions, dates and pagination). It does not yet load
+64×64 achievement icons, localize its strings or navigate directly from
+the current game-info screen. Those remain CO2/CO3 presentation tasks.
+Physical-PS2 validation is still required for UI layout and resource ownership.</p>
 <h2 id="using-it">Using it</h2>
 <p>Two settings, on the <strong>Network</strong> settings page:</p>
 <table>
