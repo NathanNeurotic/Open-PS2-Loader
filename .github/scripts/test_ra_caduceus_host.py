@@ -39,7 +39,7 @@ struct sockaddr_in {
 #define AF_INET 2
 #define RA_CADUCEUS_PORT 18197
 #define htons(x) (x)
-static u8 pc_ip[4];
+static int pc_ip[4];
 static int gRAHostIp[4];
 """ + helper + r"""
 int main(void)
