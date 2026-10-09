@@ -417,8 +417,10 @@ a game frame. Boot names must fit the protocol's 15-character game identity.
 
 A user-owned `MODULE_9.IRX` is never overwritten or deleted. For a tracked launch,
 move it yourself if you want to use the reserved telemetry slot. RiptOPL marks
-its own module and removes stale copies before later BDM POPStarter launches, including launches
-from a standard build. A failed cleanup or telemetry write aborts before teardown.
+its own module and the RA build removes stale copies before later BDM POPStarter launches.
+The standard build contains no RA module management. Before switching the same USB
+stick to a standard build, remove the RA-created `POPS/MODULE_9.IRX` once; otherwise
+POPStarter itself can still load that external module. A failed cleanup or telemetry write aborts before teardown.
 No support list, disabled telemetry, or unavailable network launches normally
 without installing telemetry. Failed PS1 memory reads do not publish fabricated
 zero snapshots or reuse a failed read as a new frame.

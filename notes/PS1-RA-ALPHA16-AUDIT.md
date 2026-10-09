@@ -33,7 +33,7 @@ PS1/mixed views, POPStarter resolver, memory-card preparation and USB driver sel
 It does not copy the reference's replacement listing/launcher/driver-management code.
 
 The reference unconditionally overwrites `POPS/MODULE_9.IRX`. RiptOPL instead
-recognizes its own module, removes stale copies before BDM POPStarter launches,
+recognizes its own module in the RA build, removes stale copies before BDM POPStarter launches,
 and refuses an occupied user slot only when telemetry would actually be installed.
 PS2SDK's FAT driver translates create/truncate/append but does not enforce
 `O_EXCL`, so the refusal is explicit and tested with an open stub that ignores
@@ -70,3 +70,13 @@ Host checks, a linked ELF and CI artifacts cannot establish POPS SIF service tim
 cache coherence, scratchpad coverage or compatibility across game titles. The reader
 inherits the reference's PS1 RAM location and 25-second startup delay; its reads are
 not synchronized to a game frame. These remain explicit hardware limitations.
+
+RA isolation follow-up: module ownership cleanup and USB RA eligibility are compiled
+only in the RA flavour. Standard-build CI rejects their symbols and the rapops blob.
+Switching a USB stick back to a standard build requires removing the RA-created
+MODULE_9.IRX once; the standard loader does not manage RA files.
+The host PS1 suite also compiles the production sender header builder against the
+unmodified xeRAbora alpha.16 snapshot parser and protocol headers. Direct values,
+pointer-node pairs, serial identity, duplicate suppression and stale-list refusal
+pass. Existing client-mode tests cover Caduceus routing and legacy xeRAbora flags.
+This is protocol/host evidence, not a running-client or console test.

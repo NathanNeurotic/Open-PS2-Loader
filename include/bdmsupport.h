@@ -122,7 +122,9 @@ int bdmEnsureTypedSource(int bdmType, u32 timeoutMs);
 // reboot while the loaded IRX cannot.
 int bdmGetLoadedNetProtocol(void);
 int bdmSupportIsUDPBD(const item_list_t *support); // 1 if this support is the UDPBD block device (its games are Neutrino-only)
+#ifdef RETROACHIEVEMENTS
 int bdmModeIsUSB(int mode);
+#endif
 int bdmModeIsUDPBD(int mode); // 1 if this BDM mode slot is the UDPBD block device
 
 // Re-evaluate every BDM device's presence + page visibility on the next refresh (bumps the latch

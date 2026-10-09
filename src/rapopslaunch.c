@@ -12,6 +12,39 @@
 #include "modules/network/common/rapops_cfg.h"
 #include <errno.h>
 
+int raPopsRemoveModule(const char *root)
+{
+    char path[256];
+    unsigned char buf[4096];
+    const char magic[] = "RIPTRA01";
+    int fd, got, matched = 0, owned = 0;
+    if (snprintf(path, sizeof(path), "%sPOPS/MODULE_9.IRX", root) >= (int)sizeof(path))
+        return -2;
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return errno == ENOENT ? 0 : -2;
+    while ((got = read(fd, buf, sizeof(buf))) > 0) {
+        for (int i = 0; i < got; i++) {
+            if (buf[i] == (unsigned char)magic[matched]) {
+                if (++matched == 8) {
+                    owned = 1;
+                    break;
+                }
+            } else {
+                matched = buf[i] == (unsigned char)magic[0] ? 1 : 0;
+            }
+        }
+        if (owned)
+            break;
+    }
+    close(fd);
+    if (got < 0)
+        return -2;
+    if (!owned)
+        return -1; /* Never delete or overwrite a user's MODULE_9.IRX. */
+    return unlink(path) == 0 ? 0 : -2;
+}
+
 int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, int slotFree)
 {
     char serial[16], path[256];
