@@ -582,7 +582,7 @@ int raNetAccountPage(const char *request, unsigned int nonce, char *out, int siz
         to.sin_port = htons(18198);
         if (pass == 0 && (pc_ip[0] | pc_ip[1] | pc_ip[2] | pc_ip[3])) {
             to.sin_addr.s_addr = htonl(((u32)pc_ip[0] << 24) |
-                ((u32)pc_ip[1] << 16) | ((u32)pc_ip[2] << 8) | pc_ip[3]);
+                                       ((u32)pc_ip[1] << 16) | ((u32)pc_ip[2] << 8) | pc_ip[3]);
         } else {
             if (pass == 0)
                 pass = 1; /* no configured host: don't broadcast twice */
