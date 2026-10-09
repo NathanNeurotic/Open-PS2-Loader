@@ -210,6 +210,10 @@ enum UI_ITEMS {
     // RA rows on the Network page. Guarded in lockstep with their rows in diaNetConfig --
     // guard one and not the other and the array carries an id the enum does not define.
     NETCFG_RA_MODE,
+    NETCFG_RA_HOST_IP_0,
+    NETCFG_RA_HOST_IP_1,
+    NETCFG_RA_HOST_IP_2,
+    NETCFG_RA_HOST_IP_3,
     NETCFG_RA_TELEMETRY,
     NETCFG_RA_BADGES,
 #endif
