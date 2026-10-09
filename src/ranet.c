@@ -565,8 +565,7 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
     if (SetWatchList(g_wl, total, serial) > 0) {
         raNetRememberPeer(g_raReplyIP);
         raHashStep("8-list-in-memory");
-    }
-    else
+    } else
         raHashStep("8x-list-not-parsed");
 
     /* And as a file, for future launches and so the game gets its badge
