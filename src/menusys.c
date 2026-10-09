@@ -2089,10 +2089,18 @@ static void menuCheckSelectedGameSupport(void)
     } else if (gameMenuCoreIsNeutrino()) {
         guiShowRANotice(_l(_STR_RA_NA_NEUTRINO), NULL);
     } else if (support->mode == HDD_MODE) {
-        /* HDLoader entries (hdl_game_info_t) have no filename and no extension, so there
-           is nothing to hash. Watch lists still LOAD from RA/ at launch; the .wl has to
-           be built on the PC. */
-        guiShowRANotice(_l(_STR_RA_NA_HDD), _l(_STR_RA_NA_HDD2));
+        /* HDLoader's game descriptor maps logical ISO9660 sectors across APA
+           extents. Hash that mapping read-only on the I/O worker, never by
+           opening a guessed filename or modifying a partition. */
+        hdl_game_info_t *g = support->itemGet ? (hdl_game_info_t *)support->itemGet(support, gid) : NULL;
+        const char *prefix = support->itemGetPrefix ? support->itemGetPrefix(support) : NULL;
+        if (g && g->start_sector && g->startup[0] && prefix && prefix[0]) {
+            if (sbHashHdlDeferred(prefix, g->name, g->startup, g->start_sector))
+                guiShowRANotice(_l(_STR_RA_CHECKING_IMAGE), NULL);
+            else
+                guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        } else
+            guiShowRANotice(_l(_STR_RA_NA_HDD), _l(_STR_RA_NA_HDD2));
     } else if (support->itemGet != NULL && support->itemGetPrefix != NULL) {
         base_game_info_t *g = (base_game_info_t *)support->itemGet(support, gid);
         const char *prefix = support->itemGetPrefix(support);
