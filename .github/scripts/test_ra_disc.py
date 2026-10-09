@@ -237,7 +237,7 @@ static struct { int GameMode; } cfg;
 #define UNCACHED_SEG(x) (x)
 static struct { u8 *pad_buf; int pos_state,pos_frame,pos_combo1,pos_combo2;
  int libpad,vb_count,prev_frame,combo_type; } Pad_Data;
-static struct { int press,vb_count; } Power_Button;
+static struct { int press,vb_count,latched; } Power_Button;
 static u8 ndin=0x20, poff=0x04, sdin=0x55, scmd=0x55;
 #define CDVD_R_NDIN (&ndin)
 #define CDVD_R_POFF (&poff)
@@ -261,8 +261,13 @@ int main(void) {
     assert(IGR_Intc_Handler(0)==IGR_COMBO_START_SELECT); /* return combo still reaches teardown */
     cfg.GameMode=OTHER_MODE;pad[3]=IGR_COMBO_R3_L3;
     assert(IGR_Intc_Handler(0)==IGR_COMBO_R3_L3);
-    assert(sdin==0 && scmd==0x1b && Power_Button.press==1 && kernel_enters==1);
-    puts("PASS: disc power-off combo cannot suspend game threads; physical button untouched; normal mode preserved");
+    assert(sdin==0 && scmd==0x1b && Power_Button.press==1 && Power_Button.latched==1 && kernel_enters==1);
+    /* Holding the same status must not create a false double press in RA. */
+    for (int i=0;i<51;i++) IGR_CheckInputs();
+    assert(Power_Button.press==1 && Pad_Data.combo_type==IGR_COMBO_R3_L3);
+    poff=0; IGR_CheckInputs(); assert(!Power_Button.latched);
+    poff=4; IGR_CheckInputs(); assert(Power_Button.press==2);
+    puts("PASS: RA disc leaves ROM power-off untouched; sustained physical button counts once and rearms");
 }
 '''
 run('power_input',prefix+s+test)
