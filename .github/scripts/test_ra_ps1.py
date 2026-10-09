@@ -73,6 +73,7 @@ with tempfile.TemporaryDirectory(prefix='ra-ps1-') as directory:
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/stat.h>
 #ifdef _WIN32
 #include <stdlib.h>
 #endif
@@ -114,7 +115,22 @@ int main(void) {
     assert(strcmp(key,key2)!=0); /* A second simultaneously mounted USB. */
     assert(raVcdWatchKey("mass0:/POPS/First.VCD",key2,15)<0);
     assert(raVcdWatchKey("",key2,sizeof(key2))<0);
-    puts("PASS: PS1 hashes match independent MD5 fixtures, nested/fallback boot, truncated/overflow rejection");
+    /* A watch list's path key is not proof that its contents are unchanged. */
+    assert(raVcdWatchGuardMatches("",key,hash)==0); /* Old pre-guard list. */
+    assert(raVcdWatchGuardStore("",key,"bad")<0);
+    assert(raHashVcd("retail.vcd",boot,sizeof(boot),hash)==0);
+    assert(raVcdWatchGuardStore("",key,hash)<0); /* RA directory absent. */
+    assert(mkdir("RA",0777)==0);
+    assert(raVcdWatchGuardStore("",key,hash)==0);
+    assert(raVcdWatchGuardMatches("",key,hash)==1);
+    hash[0] = hash[0]=='a' ? 'b':'a';
+    assert(raVcdWatchGuardMatches("",key,hash)==0); /* Different content. */
+    assert(raHashVcd("retail.vcd",boot,sizeof(boot),hash)==0);
+    FILE *guard=fopen("RA/P", "rb");
+    assert(!guard); /* Only keyed sidecar is created. */
+    assert(raVcdWatchGuardMatches("",key,hash)==1);
+    assert(raVcdWatchGuardStore("",key2,hash)<0); /* bad key input */
+    puts("PASS: PS1 hashes and stale-VCD guard, missing, mismatched and malformed sidecars");
 }
 '''
     run('hash_ps1', prefix + source + checks, [root/'src/md5.c'])
@@ -176,6 +192,11 @@ static unsigned char rapops_irx[sizeof(struct rapops_cfg)];
 static unsigned int size_rapops_irx=sizeof(rapops_irx);
 static int raVcdBootName(const char *p,char *s,int n) {(void)p;snprintf(s,n,"SLUS_012.15");return 0;}
 static int raVcdWatchKey(const char *p,char *s,int n) {(void)p;snprintf(s,n,"P123456789abcde");return 0;}
+static int good_guard=1;
+static int raHashVcd(const char *p,char *boot,int n,char *hash)
+    {(void)p;snprintf(boot,n,"SLUS_012.15");snprintf(hash,33,"123456789abcdef0123456789abcdef0");return 0;}
+static int raVcdWatchGuardMatches(const char *r,const char *k,const char *h)
+    {(void)r;(void)k;(void)h;return good_guard;}
 static char loaded_key[16];
 static int sbLoadWatchList(const char *p,const char *s) {(void)p;snprintf(loaded_key,sizeof(loaded_key),"%s",s);return count;}
 static int GetWatchCount(void) {return count;}
@@ -208,6 +229,9 @@ int main(void) {
     assert(!strcmp(buf,"user module"));
     count=0;assert(raPopsPrepare("","","game.vcd",0)==0);
     count=1;gRATelemetry=0;assert(raPopsPrepare("","","game.vcd",0)==0);
+    gRATelemetry=1;good_guard=0;
+    assert(raPopsPrepare("","","game.vcd",0)==0); /* Stale list never blocks normal launch. */
+    good_guard=1;
     gRATelemetry=1;unlink("POPS/MODULE_9.IRX");
     network=0;assert(raPopsPrepare("","","game.vcd",1)==0);
     assert(access("POPS/MODULE_9.IRX",0)!=0); /* Offline plays without tracking. */
