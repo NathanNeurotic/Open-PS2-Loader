@@ -94,8 +94,10 @@ with tempfile.TemporaryDirectory(prefix='ra-ps1-') as directory:
 #include "include/md5.h"
 #include "include/hdl_layout.h"
 typedef void (*ra_step_fn)(const char *);
+static unsigned max_hdd_sectors;
 static int hddReadSectors(unsigned int lba,unsigned int n,void *out) {
     FILE *f=fopen("hdd.raw","rb");int ok=0;
+    if(n>max_hdd_sectors)max_hdd_sectors=n;
     if(!f)return -1;
     if(!fseek(f,(long)lba*512,SEEK_SET) && fread(out,512,n,f)==n)ok=1;
     fclose(f);
@@ -155,6 +157,7 @@ int main(void) {
     /* HDL read-only hashing crosses separated APA extents and shares the
        ISO content hash; corrupt partition counts/overlaps must fail closed. */
     assert(raHashHdl(100,"SLUS_012.15",hash)==0);
+    assert(max_hdd_sectors>4 && max_hdd_sectors<=16); /* Bounded, batched raw reads. */
     assert(raHashHdl(100,"SLES_999.99",hash)<0 && !hash[0]); /* Stale list. */
     assert(raHashHdl(100,"SLUS_012.15",hash)==0);
     assert(!strcmp(hash,"''' + hashlib.md5(b"SLUS_012.15" + payload).hexdigest() + r'''")); /* replaced by Python below */
