@@ -23,6 +23,7 @@ prefix = r'''
 #include <stdio.h>
 #include <string.h>
 #include "modules/network/common/ra_snap.h"
+#include "include/ra_features.h"
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef uint32_t u32;
@@ -86,7 +87,9 @@ int main(void) {
     assert(sizeof(struct ra_snap) == 64);
     list(4096, 1);
     assert(SetWatchList(packet, sizeof(packet), "SLUS_210.65") == 4096);
+    gRAMode = RA_MODE_CADUCEUS;
     void *end = PlaceWatchBlock(block + 1);
+    assert(gBlockOverlay == NULL); /* Caduceus keeps only the safe gold pulse. */
     assert(end <= (void *)(block + sizeof(block)) && ((uintptr_t)end & 63) == 0);
     assert(((uintptr_t)gBlockList & 63) == 0 && ((uintptr_t)gBlockSnap & 63) == 0);
     assert((u8 *)gBlockSnap >= (u8 *)(gBlockList + 4096));
