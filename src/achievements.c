@@ -217,4 +217,17 @@ int achievementsRequestVcd(const char *path)
 {
     return requestImage(path, NULL, 1);
 }
+void achievementsSnapshot(achievement_page_t *out)
+{
+    if (!out)
+        return;
+    memset(out, 0, sizeof(*out));
+    if (busy) {
+        out->state = ACH_LOADING;
+        return;
+    }
+    __asm__ volatile("" ::
+                         : "memory");
+    *out = result;
+}
 #endif
