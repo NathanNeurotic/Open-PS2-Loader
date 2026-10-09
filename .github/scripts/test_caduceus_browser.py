@@ -81,6 +81,9 @@ with tempfile.TemporaryDirectory() as tmp:
 # Production menu exchange: validate bridge before disclosing the capability,
 # match page nonce and keep WAIT polling on the same host.
 network=(root/'src/ranet.c').read_text()
+target_a=network.index('static int caduceus_target(')
+target_b=network.index('\n}',target_a)+2
+target=network[target_a:target_b]
 a=network.index('int raCaduceusPage(');b=network.index('\n}',a)+2
 network=network[a:b]
 harness=r"""
@@ -136,7 +139,7 @@ int main(void) {
 }
 """
 with tempfile.TemporaryDirectory() as tmp:
- path=Path(tmp);(path/'network.c').write_text(harness+network+checks)
+ path=Path(tmp);(path/'network.c').write_text(harness+target+network+checks)
  subprocess.run(['cc','-std=gnu99','-I',str(root),str(path/'network.c'),'-o',str(path/'network.exe')],check=True)
  subprocess.run([str(path/'network.exe')],check=True)
 
