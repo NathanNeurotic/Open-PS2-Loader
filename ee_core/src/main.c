@@ -17,6 +17,7 @@
 #ifdef RETROACHIEVEMENTS
 #include "ra.h"
 #include "ra_overlay.h"
+#include "../../include/ra_features.h"
 #endif
 
 int isInit = 0;
@@ -131,7 +132,7 @@ static int eecoreInit(int argc, char **argv)
         EnableGSM();
     }
 
-#ifdef RETROACHIEVEMENTS
+#if defined(RETROACHIEVEMENTS) && RA_EXPERIMENTAL_CARD_DMA
     if (!config->EnableGSMOp && config->raOverlayBuf)
         EnableGSTracker();
 #endif
