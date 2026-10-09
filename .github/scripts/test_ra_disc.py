@@ -64,7 +64,10 @@ prefix=r'''
 #include <fcntl.h>
 #include <unistd.h>
 #include "include/md5.h"
+#include "include/hdl_layout.h"
 typedef void (*ra_step_fn)(const char *);
+static int hddReadSectors(unsigned int lba,unsigned int count,void *buffer)
+    {(void)lba;(void)count;(void)buffer;return -1;}
 typedef struct { unsigned char trycount,spindlctrl,datapattern,pad; } sceCdRMode;
 enum { SCECdErNO=0,SCECdSecS2048=0,SCECdSpinNom=1,SCECdSpinStm=2 };
 #define LOG(...) ((void)0)
