@@ -82,6 +82,31 @@ Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora
 <p>RiptOPL's real-hardware stabilization was contributed by <strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong> through
 PRs <strong>#702–#705</strong>, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
 bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
+<h2 id="ra-mode-xerabora-or-caduceus">RA Mode: Xerabora or Caduceus</h2>
+<p>In the <strong>RA build</strong>, open <strong>Settings → Network → RA Mode</strong> and choose <strong>Xerabora</strong> (the default) or <strong>Caduceus</strong>. Save settings to retain the choice. Old configurations without <code>ra_mode</code> keep Xerabora. The normal build has no RA mode row or telemetry code.</p>
+<p>This selector chooses the PC service protocol; it does not enable telemetry by itself. Keep <strong>RA Telemetry</strong> enabled when you want tracking. No PC application or server binaries are bundled by this change; the companion service is managed separately through PS2-Servers.</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Menu and launch behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Xerabora</td>
+<td>Existing xeRAbora discovery, watch-list transfer and in-game telemetry</td>
+</tr>
+<tr>
+<td>Caduceus</td>
+<td>Check the Caduceus signed-in session, then use its xeRAbora-compatible engine for watch lists and telemetry</td>
+</tr>
+</tbody>
+</table>
+<p>Caduceus adds a UDP <strong>18197</strong> catalog/session bridge (<code>CADQ2</code> / <code>CADR2</code>). Once a ready bridge is found, RiptOPL requests watch lists from the engine on that same PC at UDP <strong>18194</strong>. The in-game module repeats bridge discovery before contacting that PC's engine; a standalone Xerabora reply cannot substitute for the Caduceus bridge. UDP <strong>18195</strong> is the console's telemetry/notice port, and UDP <strong>18196</strong> is its menu reply port. Permit these connections in the companion PC's firewall. Run one intended achievement service per host to avoid port conflicts.</p>
+<p>If Caduceus reports <strong>OFFLINE</strong>, sign in through the companion service and retry. RiptOPL never stores your RetroAchievements password or API key. A successful bridge query only proves the session bridge answered; the subsequent watch-list transfer and game telemetry must also succeed. An unknown catalog hash is not interpreted as an offline session: the engine's watch-list result remains authoritative.</p>
+<p>The wire format follows <a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts">Caduceus's bridge implementation</a>. Caduceus's bundled engine version can differ from the standalone version recommended above; protocol compatibility does not establish identical game coverage or timing. This new mode has host tests for discovery, malformed/offline replies and host selection; <strong>Caduceus end-to-end console tracking remains unverified</strong>. The Xerabora hardware results below apply only to the tested Xerabora configuration.</p>
+<p>Both modes retain the existing restrictions: external Neutrino and PS1 launches do not load RiptOPL's telemetry core, UDP storage owns the NIC and blocks menu RA queries, and SMB/HTTP retain the existing receive-during-game restriction. Choosing Caduceus does not bypass these guards or add hardcore support.</p>
 <hr/>
 <h2 id="status">Status</h2>
 <p><strong>Implemented, and telemetry has run end to end on real PS2 hardware</strong> in oMrRexD's session for
