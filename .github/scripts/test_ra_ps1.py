@@ -92,7 +92,7 @@ int main(void) {
 #ifdef _WIN32
     _set_fmode(_O_BINARY);
 #endif
-    char boot[16], hash[33];
+    char boot[16], hash[33], key[16], key2[16];
 '''
     for file, boot in [('retail.vcd', 'SLUS_012.15'), ('nested.vcd', 'D\\G.EXE'), ('fallback.vcd', 'PSX.EXE')]:
         expected = hashlib.md5(boot.encode() + payload).hexdigest()
@@ -104,6 +104,16 @@ int main(void) {
     assert(raHashVcd("truncated.vcd",boot,sizeof(boot),hash)<0 && hash[0]==0);
     assert(raHashVcd("overflow.vcd",boot,sizeof(boot),hash)<0 && hash[0]==0);
     assert(raHashVcd("missing.vcd",boot,sizeof(boot),hash)<0 && hash[0]==0);
+    assert(raVcdWatchKey("mass0:/POPS/First.VCD",key,sizeof(key))==0);
+    assert(strlen(key)==15 && key[0]=='P');
+    assert(raVcdWatchKey("mass0:/POPS/Second.VCD",key2,sizeof(key2))==0);
+    assert(strcmp(key,key2)!=0); /* Both images can contain the same BOOT. */
+    assert(raVcdWatchKey("MASS0:\\POPS\\FIRST.vcd",key2,sizeof(key2))==0);
+    assert(!strcmp(key,key2)); /* Case and separator folding for FAT roots. */
+    assert(raVcdWatchKey("mass1:/POPS/First.VCD",key2,sizeof(key2))==0);
+    assert(strcmp(key,key2)!=0); /* A second simultaneously mounted USB. */
+    assert(raVcdWatchKey("mass0:/POPS/First.VCD",key2,15)<0);
+    assert(raVcdWatchKey("",key2,sizeof(key2))<0);
     puts("PASS: PS1 hashes match independent MD5 fixtures, nested/fallback boot, truncated/overflow rejection");
 }
 '''
@@ -164,7 +174,9 @@ static int gRATelemetry=1, gRAMode=1, count=1, network=1;
 static unsigned char rapops_irx[sizeof(struct rapops_cfg)];
 static unsigned int size_rapops_irx=sizeof(rapops_irx);
 static int raVcdBootName(const char *p,char *s,int n) {(void)p;snprintf(s,n,"SLUS_012.15");return 0;}
-static int sbLoadWatchList(const char *p,const char *s) {(void)p;(void)s;return count;}
+static int raVcdWatchKey(const char *p,char *s,int n) {(void)p;snprintf(s,n,"P123456789abcde");return 0;}
+static char loaded_key[16];
+static int sbLoadWatchList(const char *p,const char *s) {(void)p;snprintf(loaded_key,sizeof(loaded_key),"%s",s);return count;}
 static int GetWatchCount(void) {return count;}
 static int GetWatchBytes(void) {return 4;}
 static int GetNodeCount(void) {return 0;}
@@ -190,7 +202,8 @@ int main(void) {
     assert(raPopsPrepare("","","game.vcd",1)==0);
     struct rapops_cfg cfg;f=fopen("POPS/MODULE_9.IRX","rb");
     assert(fread(&cfg,1,sizeof(cfg),f)==sizeof(cfg));fclose(f);
-    assert(cfg.client_mode==1 && cfg.count==1 && cfg.bytes==4 && !strcmp(cfg.game_id,"SLUS_012.15"));
+    assert(cfg.client_mode==1 && cfg.count==1 && cfg.bytes==4 && !strcmp(cfg.game_id,"P123456789abcde"));
+    assert(!strcmp(loaded_key,cfg.game_id));
     unlink("POPS/MODULE_9.IRX");
     puts("PASS: occupied user slot preserved even when O_EXCL is ignored; untracked/disabled launch; embedded configuration");
 }
@@ -255,7 +268,7 @@ typedef unsigned char u8;
 typedef unsigned int u32;
 #define RA_PAYLOAD 1472
 static u8 ra_payload[RA_PAYLOAD];
-static char ra_game_id[16]="SLUS_012.15";
+static char ra_game_id[16]="P123456789abcde";
 static unsigned char values[RA_SNAP_MAX_BYTES];
 static int have, nodes;
 static unsigned char *watchlist_values(void) {return values;}
