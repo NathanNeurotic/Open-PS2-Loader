@@ -67,6 +67,7 @@ int lwip_recvfrom(int s,void*a,int b,char*out,int max,int flags,struct sockaddr 
         strcpy(out,msg); return strlen(msg);
     }
     if(scenario==3) from->sin_addr.s_addr=99;
+    if(scenario==4) { strcpy(out,"RAO1 NO"); return 7; }
     strcpy(out,"RAO1 OK test"); return 12;
 }
 '''
@@ -82,11 +83,12 @@ int main(void) {
     assert(ra_discover()==1 && bridge_sends==0 && engine_sends==1);
     ra_caduceus=1; engine_sends=0;
     assert(ra_discover()==1 && bridge_sends==1 && engine_sends==1 && ra_dst_ip==42);
-    for(scenario=1;scenario<=3;scenario++) {
+    for(scenario=1;scenario<=4;scenario++) {
         bridge_sends=engine_sends=closed=0;
         ticks=0;
         if(!setjmp(deadline)) { ra_discover(); assert(0); }
         if(scenario<3) assert(engine_sends==0);
+        if(scenario==4) assert(engine_sends>0); /* RAO1 NO must never select a peer. */
     }
     scenario=0; ra_rx_in_game = 0; ra_server_ip = 123; bridge_sends = engine_sends = 0;
     assert(ra_discover() == 1 && ra_dst_ip == 123 && !bridge_sends && !engine_sends);
