@@ -239,7 +239,7 @@ to a USB drive.</p></div>
 In <code>conf_apps.cfg</code>, use <code>mass:</code> as the device prefix (the same as USB).</p>
 
 <h3 id="exfat-hybrid">APA-Jail / APA + exFAT hybrid disks</h3>
-<p>APA-Jail lets APA/PFS system storage coexist with an MBR exFAT game area. Games stored as files appear through the exFAT BDM list. For an APA launch, RiptOPL normally uses exFAT for settings, with existing settings and explicit redirects deciding the final home. See the <a href="#guide-apa-jail-apa-pfs-and-exfat-on-the-same-disk">complete APA-Jail guide below</a> for migration, exceptions, supported layouts and safety.</p>
+<p>APA-Jail lets APA/PFS system storage coexist with an MBR exFAT game area. Games stored as files appear through the exFAT BDM list. For an APA launch, RiptOPL normally uses exFAT for settings, with existing settings and explicit redirects deciding the final home. See the <a href="#guide-apa-jail-apapfs-and-exfat-on-the-same-disk">complete APA-Jail guide below</a> for migration, exceptions, supported layouts and safety.</p>
 <h3 id="exfat-ps1">PS1 games on exFAT (BDMA equip)</h3>
 <p>Put your <code>*.VCD</code> files in the drive's <code>POPS/</code> folder alongside
 <code>POPSTARTER.ELF</code>. Use <b>PS2/PS1 Game Display</b> to show the PS1 library separately,
@@ -370,6 +370,7 @@ HDD and network boot at the same time.</li>
 </tbody>
 </table>
 <p>MBR with 512-byte logical sectors has the conventional approximately 2 TiB addressing limit. GPT permits partition addresses beyond that limit; this is not a guarantee that every disk capacity, adapter or partition layout has been tested. Neither choice changes the speed of the ATA connection. A supported hybrid APA/exFAT layout can expose both sources, but constructing one is an advanced partitioning task, not a requirement for ordinary exFAT use.</p>
+<p><strong>GPT/exFAT is enabled through BDM; it is not blocked by the APA safety check.</strong> RiptOPL registers both MBR and GPT partition drivers. Selecting the separate HDD (APA) source does not make a GPT/exFAT volume an APA disk. This follows the distinction in <a href="https://github.com/grimdoomer/Open-PS2-Loader/blob/d1f51be4452074c2352931e0b9c474da9242e481/src/hddsupport.c">grimdoomer's large-capacity HDD implementation</a>: GPT/exFAT uses the block-device path, while the APA/PFS stack is skipped for non-APA media.</p>
 <p>Use a disk exposing <strong>512-byte logical sectors</strong>. A 512e disk has 4 KiB physical sectors but presents 512-byte logical sectors and is acceptable. A 4Kn disk presents 4096-byte logical sectors and is unsupported. Back up existing files before formatting or changing the partition table; conversion is not a troubleshooting step for an empty game list.</p>
 <h2 id="guide-set-up-an-internal-exfat-hdd">Set up an internal exFAT HDD</h2>
 <ol>
@@ -392,7 +393,39 @@ HDD and network boot at the same time.</li>
 </ul>
 <h2 id="guide-apa-jail-apapfs-and-exfat-on-the-same-disk">APA-Jail: APA/PFS and exFAT on the same disk</h2>
 <p><strong>APA-Jail is a hybrid layout, not another filesystem or an option you enable in RiptOPL.</strong> It lets APA/PFS storage for PSBBN/system data coexist with an exFAT area for game files and homebrew. The <a href="https://github.com/CosmicScale/PSBBN-Definitive-Project">PSBBN Definitive Project</a> uses APA-Jail, developed by Berion. Use that project's installation tools and instructions to create or maintain its layout; ordinary PC repartitioning can destroy the APA side.</p>
-<p>RiptOPL recognizes the supported <strong>APA+MBR hybrid</strong> by a valid, checksummed APA header plus an MBR FAT/exFAT partition entry beyond the APA reserved area. An MBR signature alone does not make a plain APA disk an APA-Jail disk. This is distinct from a <strong>GPT/APA hybrid</strong>, which the embedded APA driver does not support: its APA stack is skipped, although accessible GPT FAT/exFAT volumes can still use BDM. Plain exFAT disks support both MBR and GPT; that does not imply all mixed APA/GPT layouts are supported.</p>
+<p>RiptOPL recognizes the supported <strong>APA+MBR hybrid</strong> by a valid, checksummed APA header plus an MBR FAT/exFAT partition entry beyond the APA reserved area. An MBR signature alone does not make a plain APA disk an APA-Jail disk.</p>
+<table>
+<thead>
+<tr>
+<th>Disk layout</th>
+<th>BDM FAT/exFAT access</th>
+<th>APA/PFS access</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plain MBR/exFAT</td>
+<td>Supported</td>
+<td>Not an APA disk</td>
+</tr>
+<tr>
+<td>Plain GPT/exFAT</td>
+<td>Supported</td>
+<td>Not an APA disk</td>
+</tr>
+<tr>
+<td>Recognized APA+MBR/exFAT (APA-Jail)</td>
+<td>Supported</td>
+<td>Supported for a valid APA layout</td>
+</tr>
+<tr>
+<td>Mixed GPT+APA metadata</td>
+<td>GPT FAT/exFAT volumes still use BDM</td>
+<td>Not implemented by the currently embedded APA driver</td>
+</tr>
+</tbody>
+</table>
+<p>The last row is an <strong>APA-driver limitation, not a ban on GPT</strong>. The current APA build uses the traditional APA journal/error-sector layout; a GPT-aware APA build needs a different layout. Its APA stack is skipped on GPT media, leaving BDM's GPT driver enabled. Do not remove that separation merely to force the APA page to open a GPT disk.</p>
 <h3 id="guide-games-and-settings-on-apa-jail">Games and settings on APA-Jail</h3>
 <p>Games stored as files on the exFAT side belong in its <code>DVD/</code>, <code>CD/</code> and <code>POPS/</code> folders and appear through <strong>BDM → Internal HDD (exFAT)</strong>. The <strong>HDD (APA)</strong> list is for HDLoader game partitions; it does not list those exFAT files. RiptOPL may itself be launched from the APA side without moving the game files there.</p>
 <p>For an APA launch on a recognized hybrid, RiptOPL normally adopts the mounted exFAT volume as its settings home:</p>
