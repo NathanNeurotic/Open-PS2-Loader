@@ -16,6 +16,11 @@ assert "raNetForgetPeer();" in source[source.index("int raAskPC("):source.index(
 assert "raNetRememberPeer(g_raReplyIP);" in source
 assert "raNetRememberPeer(from.sin_addr.s_addr);" in source
 assert "raNetForgetPeer();" in (root/"src/gui.c").read_text()
+launch = source[source.index("void raLaunchNetworkUp("):source.index("int raNetTestLink(")]
+busy_guard = launch[launch.index("if (raNetNicBusy())"):launch.index("sock = socket(")]
+assert "ClearWatchList();" in busy_guard and "raNetForgetPeer();" in busy_guard, (
+    "UDPBD/UDPFS launches must not retain live telemetry while owning the NIC"
+)
 harness = r"""
 #include <assert.h>
 #include <stdint.h>
