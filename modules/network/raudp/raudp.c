@@ -739,6 +739,12 @@ static int ra_discover(void)
     int bridge_found = 0;
     int s, on = 1, len, tries = 0, w, got;
 
+    /* Caduceus has a single configured companion host, shared with its paired
+       browser. A missing address must not cause a broadcast to an arbitrary PC.
+       Xerabora's existing automatic LAN discovery remains unchanged. */
+    if (ra_caduceus && (ra_server_ip == 0 || ra_server_ip == INADDR_BROADCAST))
+        return 0;
+
     /* SMB owns the receive stack while loading/streaming the ISO. Never open
        or poll a discovery socket in that mode. SMB traffic already resolves
        the host (or gateway) in ARP; use that passive information for TX only.
@@ -777,7 +783,7 @@ static int ra_discover(void)
 
     to.sin_family = AF_INET;
     to.sin_port = htons(RA_DST_PORT);
-    to.sin_addr.s_addr = INADDR_BROADCAST;
+    to.sin_addr.s_addr = ra_caduceus ? ra_server_ip : INADDR_BROADCAST;
 
     req[0] = 'R';
     req[1] = 'A';
@@ -814,6 +820,7 @@ static int ra_discover(void)
                 if (got > 0) {
                     rx[got] = '\0';
                     if (from.sin_port == htons(RA_CADUCEUS_PORT) &&
+                        from.sin_addr.s_addr == ra_server_ip &&
                         raCaduceusSessionReply(rx, RA_PROBE_HASH) == 0) {
                         bridge_found = 1;
                         tries = -1;
