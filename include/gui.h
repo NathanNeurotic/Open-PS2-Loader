@@ -63,6 +63,9 @@ extern int guiFrameId;
 #define GUI_SCREEN_INFO      2
 #define GUI_SCREEN_GAME_MENU 3
 #define GUI_SCREEN_APP_MENU  4
+#ifdef RETROACHIEVEMENTS
+#define GUI_SCREEN_RA_BROWSER 5
+#endif
 
 void guiSwitchScreen(int target);
 
