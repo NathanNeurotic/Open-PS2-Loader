@@ -229,6 +229,7 @@ int gAutoRefresh;
 int gEnableNotifications;
 #ifdef RETROACHIEVEMENTS
 int gRATelemetry;
+int gRAMode;
 int gRABadges;
 #endif
 int gEnableArt;
@@ -3225,6 +3226,10 @@ static void _loadConfig()
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            gRAMode = RA_MODE_XERABORA;
+            configGetInt(configOPL, CONFIG_OPL_RA_MODE, &gRAMode);
+            if (gRAMode != RA_MODE_CADUCEUS)
+                gRAMode = RA_MODE_XERABORA;
 #endif
             configGetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, &gEnableArt);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, &gEnableDiscArt);
@@ -3884,6 +3889,7 @@ static void _saveConfig()
 #ifdef RETROACHIEVEMENTS
         configSetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, gRATelemetry);
         configSetInt(configOPL, CONFIG_OPL_RA_BADGES, gRABadges);
+        configSetInt(configOPL, CONFIG_OPL_RA_MODE, gRAMode);
 #endif
         configSetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, gEnableArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, gEnableDiscArt);
@@ -4856,6 +4862,7 @@ static void setDefaults(void)
     gETHPrefix[0] = '\0';
     gEnableNotifications = 1;
 #ifdef RETROACHIEVEMENTS
+    gRAMode = RA_MODE_XERABORA;
     gRATelemetry = 0; // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
     gRABadges = 1;    // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
 #endif
@@ -5188,6 +5195,10 @@ static void miniInit(int mode)
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            gRAMode = RA_MODE_XERABORA;
+            configGetInt(configOPL, CONFIG_OPL_RA_MODE, &gRAMode);
+            if (gRAMode != RA_MODE_CADUCEUS)
+                gRAMode = RA_MODE_XERABORA;
 #endif
             // Honor ALL the Neutrino-launch globals on the autolaunch/argv path exactly like the
             // interactive _loadConfig -- not just the default core. An autolaunched keyless "Default"

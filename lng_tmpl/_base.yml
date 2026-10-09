@@ -1659,3 +1659,12 @@ gui_strings:
   string: DNAS ID
 - label: NEUTRINO_PADEMU_WARN
   string: "Pad emulation is unavailable with Neutrino. Use a PS2 controller or a source that supports the <OPL> core."
+
+- label: RA_MODE
+  string: RA Mode
+- label: HINT_RA_MODE
+  string: Choose the PC client. Xerabora is the default; Caduceus checks its signed-in session first.
+- label: RA_CADUCEUS_OFFLINE
+  string: Caduceus RA session is offline.
+- label: RA_CADUCEUS_SIGN_IN
+  string: Sign in to RetroAchievements in Caduceus, then try again.

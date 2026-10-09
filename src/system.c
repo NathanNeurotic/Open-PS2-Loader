@@ -2244,6 +2244,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     // which case ee_core sees NULL and never starts the telemetry path.
     config->raWatchList = GetWatchBlockList();
     config->raWatchCount = GetWatchCount();
+    config->raClientMode = gRAMode;
     config->raSnapBytes = GetWatchBytes();
     config->raNodeList = GetWatchBlockNodes();
     config->raNodeCount = GetNodeCount();

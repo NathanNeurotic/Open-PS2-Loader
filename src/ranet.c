@@ -95,6 +95,8 @@
 #include <string.h>
 #include <time.h> /* clock(): round trip of the link test */
 
+#include "modules/network/common/ra_client.h"
+
 #define RA_PORT          18194
 #define RA_MY_PORT       18196 /* own port: the PC replies here directly, past NAT */
 #define RA_CHUNK         896   /* agreed with the PC; rule 3 in the header */
@@ -129,6 +131,7 @@
 
 /* Alignment is mandatory: rule 1 in the header. */
 static char g_rx[2048] __attribute__((aligned(64)));
+static u32 g_raReplyIP;
 static unsigned char g_wl[RA_MAX_BYTES];
 
 /* The NIC settlement (design doc, decided 2026-09-03): RA's menu check is a
@@ -173,7 +176,11 @@ static int ask(int sock, struct sockaddr_in *to, const char *req, char *out, int
             got = recvfrom(sock, out, asklen, RA_MSG_DONTWAIT, (struct sockaddr *)&from, &fromlen);
 
             if (got > 0) {
+                if (to->sin_addr.s_addr != htonl(INADDR_BROADCAST) &&
+                    from.sin_addr.s_addr != to->sin_addr.s_addr)
+                    continue;
                 out[got] = '\0';
+                g_raReplyIP = from.sin_addr.s_addr;
                 return got;
             }
 
@@ -299,6 +306,20 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
         return -1;
 
     broadcast_target(&to);
+
+    if (gRAMode == RA_MODE_CADUCEUS) {
+        int session;
+        to.sin_port = htons(RA_CADUCEUS_PORT);
+        snprintf(req, sizeof(req), "CADQ2 %s", hash);
+        got = ask(sock, &to, req, g_rx, sizeof(g_rx));
+        session = got > 0 ? raCaduceusSessionReply(g_rx, hash) : -2;
+        if (session != 0) {
+            disconnect(sock);
+            return session;
+        }
+        to.sin_addr.s_addr = g_raReplyIP;
+        to.sin_port = htons(RA_PORT);
+    }
 
     snprintf(req, sizeof(req), "RAQ1 %s %s%s", hash, serial, myaddr);
     LOG("RA: asking the PC about %s\n", hash);
@@ -594,6 +615,20 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
     }
 
     broadcast_target(&to);
+    if (gRAMode == RA_MODE_CADUCEUS) {
+        int session;
+        to.sin_port = htons(RA_CADUCEUS_PORT);
+        got = ask(sock, &to, RA_CADUCEUS_PROBE, rx, sizeof(rx));
+        session = got > 0 ? raCaduceusSessionReply(rx, RA_PROBE_HASH) : -2;
+        if (session != 0) {
+            disconnect(sock);
+            snprintf(line1, sz1, "%s", _l(session == -9 ? _STR_RA_CADUCEUS_OFFLINE : _STR_RA_TEST_NO_ANSWER));
+            snprintf(line2, sz2, "%s", _l(_STR_RA_CADUCEUS_SIGN_IN));
+            return 0;
+        }
+        to.sin_addr.s_addr = g_raReplyIP;
+        to.sin_port = htons(RA_PORT);
+    }
     snprintf(req, sizeof(req), "RAP1%s", myaddr);
 
     t0 = clock();

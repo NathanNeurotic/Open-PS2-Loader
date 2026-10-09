@@ -2569,6 +2569,8 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
             } else if (q == 1) {
                 raHashStep("7-pc-does-not-know-image");
                 guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
+            } else if (q == -9) {
+                guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
             } else if (q == -7) {
                 raHashStep("7-pc-still-identifying");
                 guiShowRANotice(_l(_STR_RA_STILL_IDENTIFYING), _l(_STR_RA_TRY_AGAIN));
