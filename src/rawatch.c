@@ -27,6 +27,7 @@
 #include "include/opl.h"
 #include "include/ioman.h"
 #include "include/rawatch.h"
+#include "include/ra_features.h"
 #include "modules/network/common/ra_watch.h"
 #include "modules/network/common/ra_snap.h"
 
@@ -183,6 +184,8 @@ void *PlaceWatchBlock(void *at)
     gBlockSnap = snap;
     snap += RA_SNAP_TOTAL_FOR(gWatchBytes + gNodeCount * RA_NODE_PAIR_BYTES);
     snap = align64(snap);
+    /* The Caduceus runtime selector is independent of the experimental card. */
+#if RA_EXPERIMENTAL_CARD_DMA
     if (gRAMode == RA_MODE_CADUCEUS) {
         const unsigned int packetBytes = (6 * 16 + 192 * 40 * 4 + 63) & ~63;
         unsigned int limit = (u32)at < 0x00100000 ? 0x00100000 : 0x02000000;
@@ -192,6 +195,7 @@ void *PlaceWatchBlock(void *at)
         } else
             raLaunchNote("overlay-no-room", packetBytes, (u32)snap);
     }
+#endif
 
     LOG("RA: list block at %p, %d words, snapshot at %p, ends %p\n", words, nwords, gBlockSnap, snap);
     raLaunchNote("list-block", (int)((u8 *)snap - (u8 *)words), (int)(u32)words);
