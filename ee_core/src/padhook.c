@@ -564,21 +564,21 @@ static void Set_libpad_Params(void *addr)
 // Install IGR thread, and Pad interrupt handler
 void Install_IGR(void)
 {
-    ee_thread_t thread_param;
-
-    // Reset power button data
-    Power_Button.press = 0;
-    Pad_Data.pad_buf = NULL;
-    Power_Button.vb_count = 0;
-
-    // Init runtime Pad_Data information
-    Pad_Data.vb_count = 0;
-    Pad_Data.combo_type = 0x00;
-    Pad_Data.prev_frame = 0x00;
-
-    // Do not install the IGR thread or interrupt handler more than once.
+    // Pad-open hooks call this again when a game changes or reopens its pad buffer. Once the
+    // worker is running, do not erase its live pad pointer, pending combo or power-button
+    // counter: doing so can cancel a shutdown request without creating another worker.
     if (IGR_Thread_ID < 0) {
-        // Create and start IGR thread
+        // The kernel reads the whole ee_thread_t, including attr/option/current_priority.
+        // Stack garbage in those fields can make CreateThread fail on real hardware.
+        ee_thread_t thread_param = {0};
+
+        Power_Button.press = 0;
+        Power_Button.vb_count = 0;
+        Pad_Data.pad_buf = NULL;
+        Pad_Data.vb_count = 0;
+        Pad_Data.combo_type = 0x00;
+        Pad_Data.prev_frame = 0x00;
+
         thread_param.gp_reg = &_gp;
         thread_param.func = IGR_Thread;
         thread_param.stack = (void *)IGR_Stack;
@@ -586,19 +586,27 @@ void Install_IGR(void)
         thread_param.initial_priority = 127;
         IGR_Thread_ID = CreateThread(&thread_param);
 
-        if (IGR_Thread_ID >= 0)
-            StartThread(IGR_Thread_ID, NULL);
+        if (IGR_Thread_ID >= 0 && StartThread(IGR_Thread_ID, NULL) < 0) {
+            // The thread exists but is not running. Discard it so a later pad-open
+            // or reset hook can retry rather than permanently latching a dead worker.
+            DeleteThread(IGR_Thread_ID);
+            IGR_Thread_ID = -1;
+        }
+        if (IGR_Thread_ID < 0)
+            DPRINTF("IGR: could not start polling thread; will retry on next hook\n");
     }
 
 #ifdef IGR_VBLANK_HANDLER
-    if (IGR_Intc_ID < 0) {
-        // Create IGR interrupt handler
-        IGR_Intc_ID = AddIntcHandler(kINTC_VBLANK_END, IGR_Intc_Handler, 0);
-        EnableIntc(kINTC_VBLANK_END);
+    // Never arm the RA VBLANK interrupt if the worker it would wake did not start.
+    if (IGR_Thread_ID >= 0 && IGR_Intc_ID < 0) {
+        int handler = AddIntcHandler(kINTC_VBLANK_END, IGR_Intc_Handler, 0);
+        if (handler >= 0) {
+            IGR_Intc_ID = handler;
+            EnableIntc(kINTC_VBLANK_END);
+        }
     }
 #else
-    // Deliberately nothing on VBLANK_END: merely registering a handler there black-screens some
-    // games (upstream OPL #1762). IGR_Thread polls instead.
+    // Standard builds must not register a VBLANK handler (upstream OPL #1762).
     IGR_Intc_ID = -1;
 #endif
 }
