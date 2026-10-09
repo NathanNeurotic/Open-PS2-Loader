@@ -342,6 +342,49 @@ static void ethReconnectSMB(void)
     ethReconnectQueued = 0;
 }
 
+// User-requested ETH Refresh is different from the periodic list checker: the directory
+// timestamps can be unchanged even after the SMB server restarts and an old TCP session dies.
+// Check once on the IO worker, not the rendering/pad thread. A healthy session stays open so
+// BGM/ART reads are not interrupted. A dead session takes the existing, serialized reconnect
+// path, including its menu-row lifetime and NIC-protocol safeguards.
+static void ethCheckedRefreshSMB(void)
+{
+    smbEcho_in_t echo;
+
+    if (gNetworkStartup != 0 || !ethSmbModuleLoaded || ethBase == NULL) {
+        ethReconnectSMB(); // clears ethReconnectQueued after scheduling the rebuild
+        return;
+    }
+
+    memset(&echo, 0, sizeof(echo));
+    strcpy(echo.echo, "OPL REFRESH");
+    echo.len = strlen(echo.echo);
+    if (fileXioDevctl(ethBase, SMB_DEVCTL_ECHO, &echo, sizeof(echo), NULL, 0) < 0) {
+        LOG("ETH: explicit Refresh found a stale SMB session; reconnecting\n");
+        ethReconnectSMB();
+        return;
+    }
+
+    // ECHO succeeded: leave SMB/ART handles alone and refresh either active PS1/PS2 view.
+    libViewMarkDirty(ETH_MODE);
+    ioPutRequest(IO_MENU_UPDATE_DEFFERED, &ethGameList.mode);
+    ethReconnectQueued = 0;
+}
+
+void ethRequestCheckedRefresh(void)
+{
+    if (gNetworkProtocol != NET_PROTO_SMB || gETHStartMode == START_MODE_DISABLED)
+        return;
+    if (ethReconnectQueued)
+        return;
+    if (!ethGameList.enabled || netInitSema() < 0)
+        return;
+
+    ethReconnectQueued = 1; // shared coalescing guard with normal SMB reconnect
+    if (ioPutRequest(IO_CUSTOM_SIMPLEACTION, &ethCheckedRefreshSMB) != IO_OK)
+        ethReconnectQueued = 0;
+}
+
 void ethRequestReconnect(void)
 {
     // A protocol switch while another NIC stack is resident is restart-only. Do not let Refresh on
