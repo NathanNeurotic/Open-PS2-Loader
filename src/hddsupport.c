@@ -1572,8 +1572,8 @@ int hddStageOplHomeSelection(int selection)
         return 0;
     }
 
-    // Use only the already-resident ATA stack. The selector is a short-lived proof, not an owner
-    // of a module reference; hddLoadModulesReady() would retain one on every stage/save cycle.
+    // Reuse the ATA stack if resident; otherwise allow a first load. Readiness probes
+    // are idempotent and do not retain additional module references on later stages/saves.
     // Do not call hddLoadSupportModules here: its normal data-home recovery may mount pfs0: and
     // create OPL folders, neither of which belongs to a source selector proof.
     // "COULD NOT CHECK" IS NOT "DOES NOT EXIST". These two arms used to return 0, the same value the
@@ -1586,7 +1586,7 @@ int hddStageOplHomeSelection(int selection)
     // guarantees they are resident when the user opens Settings, and when they are not, the check
     // can never pass -- so the row reported "not found" (before) or "busy" (after that was
     // corrected) on every single attempt, with no sequence of user actions able to fix it. A
-    // setting that cannot be changed is a worse outcome than an extra hddModulesLoadCount bump.
+    // setting that cannot be changed is worse than loading the ATA stack once.
     //
     // Affordable here specifically: this runs on the io worker behind guiHandleDeferedIO's spinner
     // with a 15 s budget, which is exactly the machinery for a load that may take a second.
