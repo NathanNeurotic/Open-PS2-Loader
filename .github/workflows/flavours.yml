@@ -145,6 +145,8 @@ jobs:
         run: python3 .github/scripts/test_ra_language_isolation.py
       - name: Check RA watch validation, persistent layout and EE sampling
         run: python3 .github/scripts/test_ra_watch.py
+      - name: Check RA launch resources, optional IOP module failures and production GS isolation
+        run: python3 .github/scripts/test_ra_launch_resources.py
       - name: Check RA snapshot scheduling and transmission retries
         run: python3 .github/scripts/test_ra_sender.py
       - name: Check Caduceus in-game card bounds and event handling
