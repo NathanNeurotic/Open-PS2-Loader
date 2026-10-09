@@ -56,7 +56,7 @@ typedef struct EECoreConfig_t {
     int raWatchCount, raSnapBytes, raNodeCount;
     void *raSnapBuf;
     char GameID[16], raHost[16];
-    int GameMode, raClientMode;
+    int GameMode, raClientMode, raHostPinned;
 } EECoreConfig_t;
 static int EnableDebug, module_result, module_calls, allocations, frees, fail_alloc;
 static unsigned last_size, ra_snap_iop;
