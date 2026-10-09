@@ -123,15 +123,15 @@ static int scanFails = 1;      /* sbReadList: 1 = neither CD nor DVD opens (keep
 static int scans, messages, lastMessageError, scanGameCount;
 static char lastMessagePath[64];
 static char gBDMPrefix[32], lastScanPrefix[64];
-static int folderResets;
-static void folderReset(int mode) { (void)mode; folderResets++; }
+static int folderResets, folderDirty;
+static void folderReset(int mode) { (void)mode; folderResets++; if (browseSub[0]) folderDirty = 1; browseSub = ""; }
 
 static int bdmEffectiveStartMode(void) { return START_MODE_AUTO; }
 static void bdmReportUnsupportedDrives(void) {}
 static int bdmTransportEnabled(int type) { (void)type; return 1; }
 static void moduleUpdateMenu(int mode, int a, int b) { (void)mode; (void)a; (void)b; }
 static int libViewConsumeDirty(int mode) { (void)mode; int d = dirty; dirty = 0; return d; }
-static int folderConsumeDirty(int mode) { (void)mode; return 0; }
+static int folderConsumeDirty(int mode) { (void)mode; int d = folderDirty; folderDirty = 0; return d; }
 static int bdmShouldQueueModuleLoad(void) { return 0; }
 static void bdmLoadBlockDeviceModules(void *arg) { (void)arg; }
 static int ioPutRequest(int type, void *data) { (void)type; (void)data; return IO_OK; }
@@ -199,7 +199,7 @@ static void reset(void)
     scans = messages = lastMessageError = 0;
     lastMessagePath[0] = '\0';
     gBDMPrefix[0] = lastScanPrefix[0] = '\0';
-    folderResets = 0;
+    folderResets = folderDirty = 0;
     scanGameCount = 0;
 }
 
@@ -332,6 +332,7 @@ int main(void)
     owner.menuItem.visible = 1;
     scanFails = 0;
     scanGameCount = 1;
+    browseSub = "OLD-SUB";
     pass();
     CHECK(scans == 1 && !strcmp(lastScanPrefix, "mass2:") && dev.bdmGameCount == 1,
           "cleared prefix: scans=%d path=%s games=%d, want one root scan and one game", scans, lastScanPrefix, dev.bdmGameCount);

@@ -1462,6 +1462,7 @@ static int bdmRefreshGamePrefix(item_list_t *itemList)
     device->bdmModifiedCDPrev = device->bdmModifiedDVDPrev = 0;
     device->FoldersCreated = device->ThemesLoaded = device->LanguagesLoaded = 0;
     folderReset(itemList->mode);
+    folderConsumeDirty(itemList->mode); // this return already requests the scan at the new root
     return 1;
 }
 
