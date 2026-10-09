@@ -82,8 +82,11 @@ with tempfile.TemporaryDirectory() as tmp:
 # match page nonce and keep WAIT polling on the same host.
 network=(root/'src/ranet.c').read_text()
 target_a=network.index('static int raHostIsExplicit(')
+target_b=network.index('\n}',target_a)+2
+target=network[target_a:target_b] + '\n'
+target_a=network.index('static int configured_ra_target(')
 target_b=network.index('/* Discover without the capability',target_a)
-target=network[target_a:target_b]
+target+=network[target_a:target_b]
 a=network.index('int raCaduceusPage(');b=network.index('\n}',a)+2
 network=network[a:b]
 harness=r"""
