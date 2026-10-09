@@ -12,6 +12,7 @@
 #include "include/ethsupport.h"
 #include "include/supportbase.h"
 #include "include/iosupport.h"
+#include "include/ioman.h"
 #include "include/gui.h"
 #include "include/pad.h"
 #include "include/menusys.h"
@@ -347,3 +348,5 @@ void raBrowserHandleInput(void)
         queue_page();
     }
 }
+
+#endif /* RETROACHIEVEMENTS */
