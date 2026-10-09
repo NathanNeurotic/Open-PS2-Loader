@@ -206,14 +206,22 @@ static void IGR_CheckInputs(void)
     {
         ee_kmode_enter();
 
-        // Check power button press
-        if ((*CDVD_R_NDIN & 0x20) && (*CDVD_R_POFF & 0x04)) {
-            // Increment button press counter
-            Power_Button.press++;
+        /* The CDVD power-off interrupt is a latched hardware condition, not
+           a new tap every time the low-priority worker samples it. If its
+           cancellation is delayed by gameplay or IOP activity, counting it
+           on every poll turns a single press into a false double-press reset.
+           Re-arm only once the status clears, preserving true double taps. */
+        {
+            int pending = (*CDVD_R_NDIN & 0x20) && (*CDVD_R_POFF & 0x04);
+            if (pending && !Power_Button.latched) {
+                if (Power_Button.press < 2)
+                    Power_Button.press++;
 
-            // Cancel poweroff to catch the second button press
-            *CDVD_R_SDIN = 0x00;
-            *CDVD_R_SCMD = 0x1B;
+                // Cancel hardware poweroff while waiting for a second press.
+                *CDVD_R_SDIN = 0x00;
+                *CDVD_R_SCMD = 0x1B;
+            }
+            Power_Button.latched = pending;
         }
 
         // Start the frame counter when power button is pressed
@@ -574,6 +582,7 @@ void Install_IGR(void)
 
         Power_Button.press = 0;
         Power_Button.vb_count = 0;
+        Power_Button.latched = 0;
         Pad_Data.pad_buf = NULL;
         Pad_Data.vb_count = 0;
         Pad_Data.combo_type = 0x00;
