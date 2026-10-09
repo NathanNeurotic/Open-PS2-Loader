@@ -10,8 +10,11 @@ import tempfile
 root = Path(__file__).resolve().parents[2]
 src = (root / "src/ranet.c").read_text()
 start = src.index("static int raHostIsExplicit(void)")
+end = src.index("\n}", start) + 2
+helper = src[start:end] + "\n"
+start = src.index("static int configured_ra_target(")
 end = src.index("/* Discover without the capability", start)
-helper = src[start:end]
+helper += src[start:end]
 sections = {
     "account browser": src[src.index("int raCaduceusPage("):src.index("static int raExpectedChunkLength(")],
     "support checks": src[src.index("int raAskPC("):src.index("void raLaunchNetworkUp(")],
