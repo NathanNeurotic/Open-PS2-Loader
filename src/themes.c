@@ -2274,6 +2274,8 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         if (favRoom) {
             if (textAlign & ALIGN_HCENTER)
                 rowX -= rowRoom / 2;
+            else if (textAlign & ALIGN_RIGHT)
+                rowX -= rowRoom;
             textAlign &= ~(ALIGN_HCENTER | ALIGN_RIGHT);
         }
         const int textX = rowX + favRoom;
