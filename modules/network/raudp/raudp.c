@@ -718,7 +718,7 @@ static int ra_snap_pending(void)
 #define RA_DISC_FAST    10                 /* attempts at 1 s intervals */
 #define RA_DISC_SLOW_US (30 * 1000 * 1000) /* then one attempt every 30 s */
 
-/* Time spent in discovery. Subtracted from the start-up hold-off. */
+/* Discovery elapsed time (retained for bounded diagnostic accounting). */
 static u32 ra_disc_us = 0;
 
 /* Broadcasts "RAP1 <own-ip> <port>" and waits for "RAO1".
@@ -1106,13 +1106,15 @@ static void ra_thread(void *arg)
 
     (void)arg;
 
+    /* Keep ALL discovery/socket activity outside early game startup.
+       Previously we tried to discover first and only then waited, so
+       the initial SMAP traffic could still collide with an IOP reset. */
+    DelayThread(RA_QUIET_US);
+
     if (!ra_discover())
         return; /* no socket: the stack is not up, stay silent */
 
     ra_frame_init();
-
-    if (ra_disc_us < RA_QUIET_US)
-        DelayThread(RA_QUIET_US - ra_disc_us);
 
     for (;;) {
         int pending = ra_snap_pending();
