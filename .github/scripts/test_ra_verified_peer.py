@@ -60,3 +60,40 @@ with tempfile.TemporaryDirectory(prefix="ra-verified-peer-") as tmp:
     path.write_text(harness)
     subprocess.run(["cc", "-std=gnu99", "-Wall", "-Werror", str(path), "-o", str(exe)], check=True)
     subprocess.run([str(exe)], check=True)
+
+# Compile the actual link-reply condition. A malformed RAO1 prefix must not
+# become a trusted destination, and a pinned peer rejects foreign sources.
+start_reply = source.index('if (got >= 8 && strncmp(rx, "RAO1 OK ", 8) == 0')
+end_reply = source.index("found = 1;", start_reply)
+condition = source[start_reply:end_reply].strip()[3:].strip()
+link_harness = r"""
+#include <assert.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+typedef uint32_t u32;
+#define INADDR_BROADCAST 0xffffffffu
+#define htonl(x) (x)
+static int accepted(const char *rx, int got, u32 target, u32 sender) {
+    struct { struct { u32 s_addr; } sin_addr; } to, from;
+    to.sin_addr.s_addr=target; from.sin_addr.s_addr=sender;
+    return @PREDICATE@;
+}
+int main(void) {
+    const char *ok="RAO1 OK test";
+    assert(accepted(ok,strlen(ok),INADDR_BROADCAST,42));
+    assert(accepted(ok,strlen(ok),42,42));
+    assert(!accepted(ok,strlen(ok),42,99));
+    assert(!accepted("RAO1 FAIL",9,INADDR_BROADCAST,42));
+    assert(!accepted("RAO1 BAD",8,42,42));
+    assert(!accepted("RAO1",4,INADDR_BROADCAST,42));
+    puts("PASS: only valid RAO1 OK replies from expected peer establish a link");
+    return 0;
+}
+""".replace("@PREDICATE@", condition)
+with tempfile.TemporaryDirectory(prefix="ra-link-peer-") as tmp:
+    src=Path(tmp)/"link.c"
+    exe=Path(tmp)/"link"
+    src.write_text(link_harness)
+    subprocess.run(["cc","-std=gnu99","-Wall","-Werror",str(src),"-o",str(exe)],check=True)
+    subprocess.run([str(exe)],check=True)
