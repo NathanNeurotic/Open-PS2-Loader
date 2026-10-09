@@ -141,6 +141,8 @@ jobs:
           persist-credentials: false
       - name: Check disc hashing, reset image and launch gates
         run: python3 .github/scripts/test_ra_disc.py
+      - name: Check RA language isolation and stable string IDs
+        run: python3 .github/scripts/test_ra_language_isolation.py
       - name: Check RA watch validation, persistent layout and EE sampling
         run: python3 .github/scripts/test_ra_watch.py
       - name: Check RA snapshot scheduling and transmission retries
