@@ -14,7 +14,7 @@
 
 int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, int slotFree)
 {
-    char serial[16], path[256];
+    char boot[16], watchKey[16], path[256];
     unsigned char ip[4], mask[4], gw[4];
     unsigned char *irx;
     struct rapops_cfg *cfg = NULL;
@@ -24,8 +24,9 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
 
     if (!gRATelemetry)
         return 0;
-    if (raVcdBootName(vcdPath, serial, sizeof(serial)) != 0 ||
-        sbLoadWatchList(watchRoot, serial) <= 0 || GetWatchCount() <= 0)
+    if (raVcdWatchKey(vcdPath, watchKey, sizeof(watchKey)) != 0 ||
+        raVcdBootName(vcdPath, boot, sizeof(boot)) != 0 ||
+        sbLoadWatchList(watchRoot, watchKey) <= 0 || GetWatchCount() <= 0)
         return 0; /* No support check/list: ordinary POPStarter launch. */
     if (!slotFree)
         return -1; /* FAT does not enforce O_EXCL: refuse the user-owned slot explicitly. */
@@ -49,7 +50,7 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
     n += snprintf(cfg->ipcfg + n, sizeof(cfg->ipcfg) - n, "%u.%u.%u.%u", mask[0], mask[1], mask[2], mask[3]) + 1;
     n += snprintf(cfg->ipcfg + n, sizeof(cfg->ipcfg) - n, "%u.%u.%u.%u", gw[0], gw[1], gw[2], gw[3]) + 1;
     cfg->ipcfg_len = n;
-    snprintf(cfg->game_id, sizeof(cfg->game_id), "%s", serial);
+    snprintf(cfg->game_id, sizeof(cfg->game_id), "%s", watchKey);
     cfg->client_mode = gRAMode == RA_MODE_CADUCEUS;
     peer = raNetPeerIP();
     if (peer) {
