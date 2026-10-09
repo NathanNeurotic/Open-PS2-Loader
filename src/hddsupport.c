@@ -413,10 +413,14 @@ int hddLoadModules(void)
 
     LOG("[HDD STARTUP DIAG] hddLoadModules entry count=%u loaded=%u\n", hddModulesLoadCount, hddModulesLoaded);
 
-    if (hddModulesLoaded)
+    // The ATA modules are resident for the lifetime of this IOP generation. A readiness
+    // probe is NOT a new DEV9 owner: all HDD entry points share the one sysInitDev9()
+    // reference acquired by the first successful load. A prior non-terminal HDD-page
+    // shutdown may have released the logical page latch, but did not stop DEV9.
+    if (hddModulesLoaded) {
+        hddModulesLoadCount = 1;
         retStatus = HDD_LOADMODULES_STATUS_ALREADYLOADED;
-
-    if (hddModulesLoadCount == 0) {
+    } else if (hddModulesLoadCount == 0) {
         // Increment the load count as soon as possible to prevent thread scheduling from allowing another thread to
         // call into here and try to double load modules.
         hddModulesLoadCount = 1;
@@ -489,9 +493,9 @@ int hddLoadModules(void)
             hddDiagBootStageEndVoid("HDD:SETTLE");
         }
     } else {
-        hddModulesLoadCount++;
-        if (!hddModulesLoaded)
-            retStatus = HDD_LOADMODULES_STATUS_BUSYLOADING;
+        // Another caller is still loading the first ATA generation. Do not acquire
+        // a reference or claim success until it publishes hddModulesLoaded.
+        retStatus = HDD_LOADMODULES_STATUS_BUSYLOADING;
     }
 
     LOG("[HDD STARTUP DIAG] hddLoadModules exit count=%u loaded=%u ret=%d bdm=%d atad=%d xhdd=%d\n",
@@ -2625,8 +2629,8 @@ static void hddShutdown(item_list_t *itemList)
         // post-deinit POPSTARTER.ELF read from the ATA-backed massN: mount -- the elf-loader then
         // returns into deinit'd OPL: the 4236edf6-class black-screen freeze (PCSX2 masks it; its
         // emulated DEV9 power-off is inert). ee_core/POPSTARTER reset the IOP right after, so the
-        // launch path needs no power-off. Note the refcount asymmetry this also softens: N
-        // hddLoadModules calls take ONE dev9 reference, but every hddShutdown used to drop it.
+        // launch path needs no power-off. hddLoadModules is now idempotent: its single
+        // logical latch pairs with the one DEV9 owner acquired on the first real load.
         if (gDeinitTerminal)
             sysShutdownDev9();
     }
