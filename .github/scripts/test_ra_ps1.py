@@ -370,6 +370,18 @@ int main(void) {
     raBadgeRefresh(&favorite,1);
     assert(raBadgeText(&favorite,0)==NULL);
 
+    /* An SMB-only PS1 watch list cannot be loaded by USB POPStarter and
+       must not trigger remote probes or a false local achievement badge. */
+    assert(unlink("mass0:/games/RA/P123456789abcde.wl")==0);
+    assert(mkdir("smb0:RA",0700)==0);
+    f=fopen("smb0:RA/P123456789abcde.wl","wb");
+    assert(f);fputs("remote",f);fclose(f);
+    favkind=FAV_KIND_VCD;
+    raBadgeRefresh(&usb,1);
+    assert(raBadgeText(&usb,0)==NULL);
+    raBadgeRefresh(&favorite,1);
+    assert(raBadgeText(&favorite,0)==NULL);
+
     view=0; strcpy(startup,"SLUS_210.65");
     f=fopen("mass0:/games/RA/SLUS_210.65.wl","wb");
     assert(f);fputs("watch",f);fclose(f);
