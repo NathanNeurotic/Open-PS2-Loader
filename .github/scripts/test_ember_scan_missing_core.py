@@ -144,7 +144,7 @@ static int fake_errno;
 @ENTRY@
 
 struct dirent { char d_name[256]; };
-typedef struct { int isGames; int hasImage; int pos; } DIR;
+typedef struct { int isGames; int hasImage; int isTomba; int pos; } DIR;
 
 static const char *coreFile;           /* the one path open() accepts; NULL = ember.elf missing */
 static int gamesOpens;                 /* does EMBER/games open at all? */
@@ -171,6 +171,7 @@ static DIR *opendir(const char *path)
     if (!strncmp(path, GAMES_PATH "/", n + 1) && strncmp(path + n + 1, "file_", 5) != 0) {
         probeDir.isGames = 0;
         probeDir.hasImage = strncmp(path + n + 1, "empty_", 6) != 0;
+        probeDir.isTomba = strcmp(path + n + 1, "Tomba!") == 0;
         probeDir.pos = 0;
         return &probeDir; /* a game folder answers its probe */
     }
@@ -184,7 +185,7 @@ static struct dirent *readdir(DIR *d)
         if (!d->hasImage || d->pos != 0)
             return NULL;
         d->pos++;
-        snprintf(probeEnt.d_name, sizeof(probeEnt.d_name), "game.cue");
+        snprintf(probeEnt.d_name, sizeof(probeEnt.d_name), "%s", d->isTomba ? "CDROM.CUE" : "game.cue");
         return &probeEnt;
     }
     if (gameNames == NULL || gameNames[d->pos] == NULL)
@@ -198,6 +199,7 @@ static int closedir(DIR *d) { (void)d; return 0; }
 
 static int fails;
 static const char *const games[] = {".", "..", "Alpha", "Beta", "empty_GroupVMC", "file_readme.txt", NULL};
+static const char *const vaporGames[] = {"Tomba!", NULL};
 
 static void expect(const char *what, const char *core, int opens, int err, int want)
 {
@@ -228,6 +230,20 @@ int main(void)
     expect("core missing, contended read: still empty, never -1", NULL, 0, EIO, 0);
     expect("core present, absent games folder is empty", core, 0, ENOENT, 0);
     expect("core present, unreadable games folder keeps the last-good list", core, 0, EIO, -1);
+
+    /* Exact USB layout reported by Vapor: mass0:/EMBER/games/Tomba!/CDROM.CUE,
+     * with an uppercase disc suffix and an exclamation mark in the folder name. */
+    coreFile = core;
+    gamesOpens = 1;
+    gamesErrno = 0;
+    gameNames = vaporGames;
+    cue_entry_t *vaporList = NULL;
+    int vaporCount = cueScanDir("mass0:/", &vaporList);
+    if (vaporCount != 1 || vaporList == NULL || strcmp(vaporList[0].name, "Tomba!")) {
+        printf("FAIL USB Ember layout Tomba!/CDROM.CUE: got %d rows\n", vaporCount);
+        fails++;
+    }
+    free(vaporList);
     return fails ? 1 : 0;
 }
 '''
