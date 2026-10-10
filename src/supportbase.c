@@ -2508,6 +2508,38 @@ void raHashLogClose(void)
 /* on the splash screen. The image's folder is not known in advance,   */
 /* so DVD is tried first, then CD, the way OPL itself lays them out.   */
 
+/* Use one result-to-notice mapping for ISO, VCD and HDL support checks.
+   Keep the existing hash-log steps so a failed transport is not mistaken
+   for a companion that ignored a request. */
+static void sbShowAskResult(int q, const char *hash, const char *info, const char *info2)
+{
+    if (q == 0) {
+        raHashStep("7-list-received");
+        guiShowRANotice(info && info[0] ? info : _l(_STR_RA_SUPPORTED),
+                        info2 && info2[0] ? info2 : _l(_STR_RA_START_TO_TRACK));
+    } else if (q == 1) {
+        raHashStep("7-pc-does-not-know-image");
+        guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
+    } else if (q == -9) {
+        raHashStep("7-caduceus-session-offline");
+        guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
+    } else if (q == -7) {
+        raHashStep("7-pc-still-identifying");
+        guiShowRANotice(_l(_STR_RA_STILL_IDENTIFYING), _l(_STR_RA_TRY_AGAIN));
+    } else if (q == -8) {
+        /* UDP-backed storage owns the NIC; nothing was sent. */
+        raHashStep("7-nic-busy-udp-transport");
+        guiShowRANotice(_l(_STR_RA_NET_BUSY), _l(_STR_RA_NET_BUSY_HASH));
+    } else if (q == -1) {
+        /* Socket creation failed locally; the PC was never contacted. */
+        raHashStep("7-no-socket-on-console");
+        guiShowRANotice(_l(_STR_RA_NO_SOCKET), _l(_STR_RA_NO_SOCKET2));
+    } else {
+        raHashStep("7-pc-did-not-answer");
+        guiShowRANotice(_l(_STR_RA_PC_NO_ANSWER), _l(_STR_RA_PC_NO_ANSWER2));
+    }
+}
+
 void sbHashGame(const char *path, const char *name, const char *ext, const char *startup, int format)
 {
     static const char *dirs[] = {"DVD", "CD", NULL};
@@ -2557,14 +2589,7 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
                 goto vcd_fail;
             q = raAskPC(hash, watchKey, path, info, sizeof(info), info2, sizeof(info2));
             raHashLogAdd(name, boot, hash);
-            if (q == 0)
-                guiShowRANotice(info[0] ? info : _l(_STR_RA_SUPPORTED), info2[0] ? info2 : _l(_STR_RA_START_TO_TRACK));
-            else if (q == 1)
-                guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
-            else if (q == -9)
-                guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
-            else
-                guiShowRANotice(_l(_STR_RA_PC_NO_ANSWER), _l(_STR_RA_PC_NO_ANSWER2));
+            sbShowAskResult(q, hash, info, info2);
         }
         goto vcd_done;
 
@@ -2609,33 +2634,7 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
             raHashStep("6-asking-pc");
             q = raAskPC(hash, startup, path, info, sizeof(info), info2, sizeof(info2));
 
-            if (q == 0) {
-                raHashStep("7-list-received");
-                guiShowRANotice(info[0] ? info : _l(_STR_RA_SUPPORTED),
-                                info2[0] ? info2 : _l(_STR_RA_START_TO_TRACK));
-            } else if (q == 1) {
-                raHashStep("7-pc-does-not-know-image");
-                guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
-            } else if (q == -9) {
-                guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
-            } else if (q == -7) {
-                raHashStep("7-pc-still-identifying");
-                guiShowRANotice(_l(_STR_RA_STILL_IDENTIFYING), _l(_STR_RA_TRY_AGAIN));
-            } else if (q == -8) {
-                /* NIC owned by a UDP transport (the settlement): the ask was
-                   refused without touching the network. The hash is already in
-                   the log, so the PC-side path to a .wl stays open. */
-                raHashStep("7-nic-busy-udp-transport");
-                guiShowRANotice(_l(_STR_RA_NET_BUSY), _l(_STR_RA_NET_BUSY_HASH));
-            } else if (q == -1) {
-                /* The console could not open a UDP socket, so nothing was
-                   ever sent -- report that, not a PC that never heard us. */
-                raHashStep("7-no-socket-on-console");
-                guiShowRANotice(_l(_STR_RA_NO_SOCKET), _l(_STR_RA_NO_SOCKET2));
-            } else {
-                raHashStep("7-pc-did-not-answer");
-                guiShowRANotice(_l(_STR_RA_PC_NO_ANSWER), _l(_STR_RA_PC_NO_ANSWER2));
-            }
+            sbShowAskResult(q, hash, info, info2);
 
             raHashSetStepLog(NULL);
             raHashLogClose();
@@ -2726,15 +2725,7 @@ static void sbHashHdlGame(const char *path, const char *name, const char *startu
     if (status == 0) {
         raHashLogAdd(name, startup, hash);
         query = raAskPC(hash, startup, path, info, sizeof(info), info2, sizeof(info2));
-        if (query == 0)
-            guiShowRANotice(info[0] ? info : _l(_STR_RA_SUPPORTED),
-                            info2[0] ? info2 : _l(_STR_RA_START_TO_TRACK));
-        else if (query == 1)
-            guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
-        else if (query == -9)
-            guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
-        else
-            guiShowRANotice(_l(_STR_RA_PC_NO_ANSWER), _l(_STR_RA_PC_NO_ANSWER2));
+        sbShowAskResult(query, hash, info, info2);
     } else {
         snprintf(result, sizeof(result), "HDL: read/map/hash error %d", status);
         raHashLogAdd(name, startup, result);
