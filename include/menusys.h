@@ -146,6 +146,10 @@ void menuRenderMenu();
 void menuRenderInfo();
 void menuRenderGameMenu();
 void menuRenderAppMenu();
+#ifdef RETROACHIEVEMENTS
+void menuRenderAchievements(void);
+void menuHandleInputAchievements(void);
+#endif
 void menuHandleInputMain();
 void menuHandleInputMenu();
 void menuHandleInputInfo();

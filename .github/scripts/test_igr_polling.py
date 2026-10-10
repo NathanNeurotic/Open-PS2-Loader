@@ -83,8 +83,19 @@ typedef unsigned long long u64;
 
 typedef struct { u16 libpad; u16 libversion; u8 *pad_buf; int vb_count; int pos_combo1; int pos_combo2;
                  int pos_state; int pos_frame; u8 combo_type; u8 prev_frame; } paddata_t;
-typedef struct { int press; int vb_count; } powerbuttondata_t;
-typedef struct { void *gp_reg; void (*func)(void *); void *stack; int stack_size; int initial_priority; } ee_thread_t;
+typedef struct { int press; int vb_count; int latched; } powerbuttondata_t;
+/* Match the layout and fields of ps2sdk's ee_thread_t, not a success-only subset. */
+typedef struct {
+    int status;
+    void (*func)(void *);
+    void *stack;
+    int stack_size;
+    void *gp_reg;
+    int initial_priority;
+    int current_priority;
+    u32 attr;
+    u32 option;
+} ee_thread_t;
 
 struct cfg { int EnableGSMOp; int GameMode; };
 static struct cfg g_cfg;
@@ -131,7 +142,9 @@ static void *_gp;
 
 /* Kernel stubs: every call is counted so the test can say exactly what ran. */
 static int nAlarm, alarmFails, nSleep, nNop, nWake, lastWake, nPrio, lastPrioThread = -1, lastPrio = -1;
-static int nResetEE, lastResetEE, nSuspend, nISuspend, nIResetEE, nIPrio, nIWake, nCreate, nStart;
+static int nResetEE, lastResetEE, nSuspend, nISuspend, nIResetEE, nIPrio, nIWake, nCreate, nStart, nDelete;
+static int createFailures, startFailures;
+static ee_thread_t lastCreatedThread;
 static int nAddIntc, lastIntcCause = -1, nEnableIntc, nRA;
 static int sleepsUntilCombo = -1, powerPressAtSleep = -1;
 static u8 padBuf[128];
@@ -176,8 +189,27 @@ static void SuspendThread(int id) { (void)id; nSuspend++; }
 static void iResetEE(u32 bits) { (void)bits; nIResetEE++; }
 static void iSuspendThread(int id) { (void)id; nISuspend++; }
 static void iChangeThreadPriority(int id, int prio) { (void)id; (void)prio; nIPrio++; }
-static int CreateThread(ee_thread_t *p) { (void)p; nCreate++; return 5; }
-static void StartThread(int id, void *arg) { (void)id; (void)arg; nStart++; }
+static int CreateThread(ee_thread_t *p)
+{
+    nCreate++;
+    lastCreatedThread = *p;
+    if (createFailures > 0) {
+        createFailures--;
+        return -1;
+    }
+    return 5;
+}
+static int StartThread(int id, void *arg)
+{
+    (void)id; (void)arg;
+    nStart++;
+    if (startFailures > 0) {
+        startFailures--;
+        return -1;
+    }
+    return 0;
+}
+static int DeleteThread(int id) { (void)id; nDelete++; return 0; }
 static int AddIntcHandler(int cause, int (*h)(int), int next) { (void)h; (void)next; nAddIntc++; lastIntcCause = cause; return 7; }
 static void EnableIntc(int cause) { (void)cause; nEnableIntc++; }
 static void ExitHandler(void) {}
@@ -204,9 +236,59 @@ static void armPad(void)
 int main(void)
 {
     (void)RA_OnVblank;
+
+    createFailures = 1;
     Install_IGR();
-    Install_IGR(); /* a second pad open must not create a second thread or handler */
-    CHECK(nCreate == 1 && nStart == 1, "install creates and starts the IGR thread exactly once");
+    CHECK(IGR_Thread_ID < 0 && nCreate == 1 && nStart == 0, "a failed CreateThread stays retryable");
+    CHECK(nAddIntc == 0, "RA must not register an interrupt without a live worker");
+
+    startFailures = 1;
+    Install_IGR();
+    CHECK(IGR_Thread_ID < 0 && nCreate == 2 && nStart == 1 && nDelete == 1,
+          "a failed StartThread deletes its dormant worker and remains retryable");
+    CHECK(nAddIntc == 0, "a failed worker never arms the RA interrupt");
+
+    Install_IGR();
+    Install_IGR(); /* a repeated pad open must not recreate the worker or handler */
+    CHECK(IGR_Thread_ID == 5 && nCreate == 3 && nStart == 2 && nDelete == 1,
+          "retry installs one worker and repeated hooks leave it alone");
+    CHECK(lastCreatedThread.status == 0 && lastCreatedThread.current_priority == 0 &&
+          lastCreatedThread.attr == 0 && lastCreatedThread.option == 0 &&
+          lastCreatedThread.initial_priority == 127,
+          "IGR CreateThread receives a fully initialized kernel structure");
+
+    armPad();
+    Power_Button.press = 1;
+    Power_Button.vb_count = 17;
+    Power_Button.latched = 1;
+    Pad_Data.combo_type = IGR_COMBO_START_SELECT;
+    Install_IGR();
+    CHECK(Pad_Data.pad_buf == padBuf && Pad_Data.combo_type == IGR_COMBO_START_SELECT &&
+          Power_Button.press == 1 && Power_Button.vb_count == 17 && Power_Button.latched == 1,
+          "repeated IGR installation preserves live input and power state");
+
+    /* The physical button IRQ may remain asserted for multiple polling frames
+       when Mechacon cancellation is delayed. Count only the first edge. */
+    g_cfg.GameMode = 0;
+    Pad_Data.pad_buf = NULL;
+    Pad_Data.combo_type = 0;
+    Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
+    ndin = 0x20; poff = 0x04; scmd = 0;
+    for (int k = 0; k < 54; ++k)
+        IGR_CheckInputs();
+    CHECK(Power_Button.press == 1 && Power_Button.latched == 1 &&
+          Pad_Data.combo_type == IGR_COMBO_R3_L3,
+          "held CDVD event requests power-off, not false double-press reset");
+    CHECK(scmd == 0x1B, "single event still issues hardware cancel");
+    poff = 0;
+    IGR_CheckInputs();
+    CHECK(Power_Button.latched == 0, "input re-arms when hardware status clears");
+    poff = 0x04;
+    IGR_CheckInputs();
+    CHECK(Power_Button.press == 2, "new event counts as second press");
+    Pad_Data.combo_type = 0;
+    Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
+    ndin = poff = scmd = 0;
 @CHECKS@
     return fails ? 1 : 0;
 }

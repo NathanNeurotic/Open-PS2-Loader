@@ -27,6 +27,7 @@ void *PlaceWatchBlock(void *at);
 unsigned int *GetWatchBlockList(void);
 struct ra_node *GetWatchBlockNodes(void);
 void *GetWatchBlockSnap(void);
+void *GetWatchBlockOverlay(void);
 
 /* One line in the launch log: what happened plus two numbers. Compiled away
    unless this is an __OPLDIAG build. */

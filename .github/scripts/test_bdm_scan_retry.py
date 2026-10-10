@@ -48,6 +48,9 @@ def function_text(signature):
 
 
 functions = function_text('static int bdmNeedsUpdate(') + function_text('static int bdmUpdateGameList(')
+if 'static int bdmRefreshGamePrefix(' in source:
+    functions = function_text('static int bdmRefreshGamePrefix(') + functions
+functions = function_text('static void bdmBuildGamePrefix(') + functions
 
 HARNESS = r'''
 #include <stdio.h>
@@ -65,11 +68,12 @@ HARNESS = r'''
 #define SFX_BD_CONNECT 1
 #define SFX_BD_DISCONNECT 2
 #define BDM_TYPE_USB 1
+#define BDM_TYPE_ATA 3
 #define BDM_TYPE_UDPBD 5
 #define BDM_DEVICE_ROOT_MAX 16
 #define _STR_BDM_PS2_FOLDERS_UNREADABLE 4242
 
-typedef struct base_game_info base_game_info_t;
+typedef struct base_game_info { char name[64]; } base_game_info_t;
 
 typedef struct
 {
@@ -95,6 +99,7 @@ typedef struct
     int bdmMissCount;
     int FoldersCreated;
     char bdmPrefix[64];
+    char bdmDeviceRoot[16];
     time_t bdmModifiedCDPrev;
     time_t bdmModifiedDVDPrev;
     int ThemesLoaded;
@@ -103,6 +108,7 @@ typedef struct
     int bdmGameCount;
     base_game_info_t *bdmPs1Games;
     int bdmPs1GameCount;
+    unsigned char bdmPs1RetryCount, bdmPs1RetryPending;
 } bdm_device_data_t;
 
 static int bdmDeviceModeStarted;
@@ -115,15 +121,18 @@ static int dirty;              /* SELECT / L3 pending */
 static int deviceResults[64];  /* what bdmUpdateDeviceData returns, pass by pass (0 after the list) */
 static int deviceResultCount, deviceCalls;
 static int scanFails = 1;      /* sbReadList: 1 = neither CD nor DVD opens (keeps -2), 0 = success */
-static int scans, messages, lastMessageError;
+static int scans, messages, lastMessageError, scanGameCount;
 static char lastMessagePath[64];
+static char gBDMPrefix[32], lastScanPrefix[64];
+static int folderResets, folderDirty;
+static void folderReset(int mode) { (void)mode; folderResets++; if (browseSub[0]) folderDirty = 1; browseSub = ""; }
 
 static int bdmEffectiveStartMode(void) { return START_MODE_AUTO; }
 static void bdmReportUnsupportedDrives(void) {}
 static int bdmTransportEnabled(int type) { (void)type; return 1; }
 static void moduleUpdateMenu(int mode, int a, int b) { (void)mode; (void)a; (void)b; }
 static int libViewConsumeDirty(int mode) { (void)mode; int d = dirty; dirty = 0; return d; }
-static int folderConsumeDirty(int mode) { (void)mode; return 0; }
+static int folderConsumeDirty(int mode) { (void)mode; int d = folderDirty; folderDirty = 0; return d; }
 static int bdmShouldQueueModuleLoad(void) { return 0; }
 static void bdmLoadBlockDeviceModules(void *arg) { (void)arg; }
 static int ioPutRequest(int type, void *data) { (void)type; (void)data; return IO_OK; }
@@ -144,18 +153,25 @@ static int sbIsSameSize(const char *prefix, int prev) { (void)prefix; return pre
 static int thmAddElements(const char *p, const char *s, int m) { (void)p; (void)s; (void)m; return 0; }
 static int lngAddLanguages(const char *p, const char *s, int m) { (void)p; (void)s; (void)m; return 0; }
 static void bdmBuildPs1Prefix(char *t, int n, int slot) { snprintf(t, n, "mass%d:/", slot); }
-static int ps1FillGameList(const char *p, base_game_info_t **g) { (void)p; (void)g; return 0; }
+static int ps1Scans, ps1Result, ps1Incomplete;
+static int ps1GameListNeedsRetry(void) { return ps1Incomplete; }
+static int ps1FillGameList(const char *p, base_game_info_t **g) { (void)p; (void)g; ps1Scans++; return ps1Result; }
 static int cueFillGameList(const char *p, base_game_info_t **g) { (void)p; (void)g; return 0; }
 static const char *folderGetSub(int mode) { (void)mode; return browseSub; }
 static int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int *fsize, int *count)
 {
-    (void)list; (void)prefix; (void)sub;
+    (void)sub;
+    snprintf(lastScanPrefix, sizeof(lastScanPrefix), "%s", prefix);
     scans++;
     if (scanFails)
         return *count; /* total failure: list, count and fsize untouched */
+    free(*list);
+    *list = scanGameCount ? calloc(scanGameCount, sizeof(**list)) : NULL;
+    if (*list)
+        snprintf((*list)[0].name, sizeof((*list)[0].name), "Game at %s", prefix);
     *fsize = -1;       /* both folders opened, no ul.cfg */
-    *count = 0;
-    return 0;
+    *count = scanGameCount;
+    return scanGameCount;
 }
 static int sbGetReadListError(void) { return 5; /* EIO */ }
 static void setErrorMessagePathCode(int id, const char *path, int error)
@@ -189,6 +205,10 @@ static void reset(void)
     scanFails = 1;
     scans = messages = lastMessageError = 0;
     lastMessagePath[0] = '\0';
+    gBDMPrefix[0] = lastScanPrefix[0] = '\0';
+    folderResets = folderDirty = 0;
+    scanGameCount = 0;
+    ps1Scans=ps1Result=ps1Incomplete=0;
 }
 
 /* One deferred update: needsUpdate, and the rebuild (itemUpdate) when it says so. */
@@ -306,6 +326,57 @@ int main(void)
     identityWaitStillPolls();
     successIsQuiet();
     subfolderAndPs1AreQuiet();
+    reset(); view=LIB_VIEW_PS1; ps1Result=-1; connectDevice();
+    for(int i=0;i<30;i++) pass();
+    CHECK(ps1Scans==3, "failed PS1 scan must stop after two retries: %d",ps1Scans);
+    dirty=1; pass(); for(int i=0;i<30;i++) pass();
+    CHECK(ps1Scans==6, "manual refresh rearms two retries: %d",ps1Scans);
+    reset(); view=LIB_VIEW_PS1; ps1Result=2; ps1Incomplete=1; connectDevice();
+    pass(); ps1Incomplete=0; pass();
+    for(int i=0;i<30;i++) pass();
+    CHECK(ps1Scans==3 && dev.bdmPs1GameCount==2, "partial scan recovers and stops: %d",ps1Scans);
+
+    reset();
+    /* An already connected ATA slot still has the prefix from its old config. Applying
+       settings clears usb_prefix, but neither identity nor the generation needs to change. */
+    snprintf(dev.bdmDeviceRoot, sizeof(dev.bdmDeviceRoot), "mass2:");
+    snprintf(dev.bdmPrefix, sizeof(dev.bdmPrefix), "mass2:OLD/");
+    dev.bdmDeviceType = BDM_TYPE_ATA;
+    dev.bdmULSizePrev = -1;
+    dev.bdmDeviceTick = BdmGeneration;
+    dev.bdmGameCount = 3;
+    dev.bdmGames = calloc(3, sizeof(*dev.bdmGames));
+    strcpy(dev.bdmGames[0].name, "Old menu name");
+    base_game_info_t *borrowedGames = dev.bdmGames;
+    dev.bdmPs1GameCount = 2;
+    owner.menuItem.visible = 1;
+    scanFails = 0;
+    scanGameCount = 1;
+    browseSub = "OLD-SUB";
+    int refresh = bdmNeedsUpdate(&list);
+    CHECK(refresh == 1 && dev.bdmGameCount == 0 && dev.bdmGames == borrowedGames &&
+          !strcmp(borrowedGames[0].name, "Old menu name"),
+          "prefix refresh must retain names until old menu rows are detached");
+    bdmUpdateGameList(&list); /* production detaches menu rows before this call */
+    CHECK(dev.bdmGames && !strcmp(dev.bdmGames[0].name, "Game at mass2:"),
+          "root scan must publish a usable game record");
+    CHECK(scans == 1 && !strcmp(lastScanPrefix, "mass2:") && dev.bdmGameCount == 1,
+          "cleared prefix: scans=%d path=%s games=%d, want one root scan and one game", scans, lastScanPrefix, dev.bdmGameCount);
+    CHECK(dev.bdmPs1GameCount == 2 && owner.menuItem.visible == 1 && folderResets == 1,
+          "prefix correction must retain the PS1 list/page and reset old browse state once");
+    for (int i = 0; i < 10; i++)
+        pass();
+    CHECK(scans == 1, "unchanged prefix added idle scans: %d", scans);
+    snprintf(gBDMPrefix, sizeof(gBDMPrefix), "NEW");
+    pass();
+    CHECK(scans == 2 && !strcmp(lastScanPrefix, "mass2:NEW/"),
+          "new prefix: scans=%d path=%s, want mass2:NEW/", scans, lastScanPrefix);
+    CHECK(dev.bdmPs1GameCount == 2, "new prefix discarded the device-root PS1 list");
+    snprintf(gBDMPrefix, sizeof(gBDMPrefix), "MISSING");
+    scanFails = 1;
+    pass();
+    CHECK(dev.bdmGames != NULL && dev.bdmGameCount == 0,
+          "failed new-prefix scan must retain allocation but publish no stale games");
     if (!failed)
         printf("bdm scan retry: all cases passed\n");
     return failed;

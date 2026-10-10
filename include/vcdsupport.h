@@ -267,4 +267,8 @@ vcd_popsnet_ensure_t vcdPreparePopstarterSmbLaunch(const char *smbPrefix);
 // Render the RetroGEM Game ID optical barcode immediately prior to a POPStarter VCD launch.
 void vcdPrepareRetroGemBarcode(const char *vcdPath);
 
+/* Shared clean-launch safety; never removes an unrecognized user module. */
+int vcdRemoveRaModule(const char *root);
+int vcdConfirmCleanLaunch(const char *root);
+
 #endif

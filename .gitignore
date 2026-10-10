@@ -18,6 +18,8 @@
 *.patch
 *.rej
 *.s
+# Authored assembly source; preserve on case-insensitive filesystems.
+!modules/network/rapops/blobs.S
 *.zip
 *.ZIP
 *.a
@@ -96,3 +98,7 @@ tmp/
 # leaves a __pycache__ behind next to them. Nothing generated belongs in the tree.
 __pycache__/
 *.pyc
+
+# IOP compiler intermediate directories
+/modules/network/rapops/obj/
+/modules/network/rapull/obj/

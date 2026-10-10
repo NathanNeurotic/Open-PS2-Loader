@@ -28,6 +28,8 @@ bugs belong on rickgaiser's tracker.
 
 ## 1. Install Neutrino
 
+RiptOPL's own installation folder and Neutrino's folder are independent. **You do not need to move RiptOPL out of `APPS/` or into the memory-card root.** Automatic memory-card lookup expects the complete Neutrino installation under `mc0:/neutrino/` or `mc1:/neutrino/`; a Neutrino folder nested inside an app folder needs an explicit full **Neutrino Path**. Setting the path selects an installation, not a game source, and does not repair a missing configuration or module.
+
 Copy Neutrino's **whole `neutrino/` folder**, not only `neutrino.elf`. RiptOPL validates the
 install before launch: `config/system.toml` (or the flat SAS-layout `system.toml`) must exist
 beside the ELF. An ELF-only/incomplete folder is skipped and the next fallback is tried.

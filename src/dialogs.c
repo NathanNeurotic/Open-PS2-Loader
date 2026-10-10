@@ -174,6 +174,22 @@ struct UIItem diaNetConfig[] = {
     // unlike the SMB block above it is not conditioned on the selected network protocol. Only
     // the menu-side check is refused under UDPBD/UDPFS, and it says so when asked. These rows
     // belong to THIS page: guiShowNetConfig reads and writes them through diaNetConfig.
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_MODE}}},
+    {UI_SPACER},
+    {UI_ENUM, NETCFG_RA_MODE, 1, 1, _STR_HINT_RA_MODE, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_HOST_IP}}},
+    {UI_SPACER},
+    {UI_INT, NETCFG_RA_HOST_IP_0, 1, 1, _STR_HINT_RA_HOST_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_RA_HOST_IP_1, 1, 1, _STR_HINT_RA_HOST_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_RA_HOST_IP_2, 1, 1, _STR_HINT_RA_HOST_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_RA_HOST_IP_3, 1, 1, _STR_HINT_RA_HOST_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_TELEMETRY}}},
     {UI_SPACER},
     {UI_BOOL, NETCFG_RA_TELEMETRY, 1, 1, _STR_HINT_RA_TELEMETRY, 0, 0, {.intvalue = {0, 0}}},

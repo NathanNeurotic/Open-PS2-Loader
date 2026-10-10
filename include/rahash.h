@@ -15,5 +15,22 @@ void raHashSetStepLog(ra_step_fn fn);
 int raHashIsoDirect(const char *isopath, const char *startup, char *out33);
 
 int raHashDisc(const char *bootPath, const char *startup, char *out33);
+/* Read-only HDLoader APA logical-sector hashing, using CDVDMAN-compatible
+   part_specs from the installed partition descriptor. */
+int raHashHdl(unsigned int start_sector, const char *startup, char *out33);
+
+int raVcdBootName(const char *vcdpath, char *boot, int boot_max);
+int raHashVcd(const char *vcdpath, char *boot, int boot_max, char *out33);
+
+/* Per-image 15-character telemetry/watch key derived from the normalized VCD path.
+   The PS1 boot executable cannot serve as an identity: multiple images can have
+   PSX.EXE or the same homebrew BOOT name. Use this for both RAQ1 and POPS frames. */
+int raVcdWatchKey(const char *vcdpath, char *out, int out_size);
+
+/* Persist and require the RetroAchievements PS1 content hash beside a VCD's
+   path-keyed .wl. A missing or mismatched guard means untracked launch, never
+   a guessed match after a file has been replaced at the same path. */
+int raVcdWatchGuardStore(const char *watchRoot, const char *watchKey, const char *hash);
+int raVcdWatchGuardMatches(const char *watchRoot, const char *watchKey, const char *hash);
 
 #endif

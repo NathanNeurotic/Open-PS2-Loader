@@ -1,6 +1,7 @@
 thbase_IMPORTS_start
 I_CreateThread
 I_StartThread
+I_DeleteThread
 I_DelayThread
 I_GetSystemTime
 I_SysClock2USec
@@ -8,6 +9,7 @@ thbase_IMPORTS_end
 
 smap_driver_IMPORTS_start
 I_SMAPSendPacket
+I_SMAPReadNotice
 smap_driver_IMPORTS_end
 
 ps2ip_IMPORTS_start
@@ -23,8 +25,10 @@ ps2ip_IMPORTS_end
 
 loadcore_IMPORTS_start
 I_RegisterLibraryEntries
+I_ReleaseLibraryEntries
 loadcore_IMPORTS_end
 
 sifman_IMPORTS_start
 I_sceSifSetDma
+I_sceSifDmaStat
 sifman_IMPORTS_end

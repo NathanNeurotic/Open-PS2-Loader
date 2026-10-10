@@ -214,6 +214,8 @@ enum CONFIG_INDEX {
 #ifdef RETROACHIEVEMENTS
 #define CONFIG_OPL_RA_TELEMETRY "ra_telemetry"
 #define CONFIG_OPL_RA_BADGES    "ra_badges"
+#define CONFIG_OPL_RA_MODE      "ra_mode"
+#define CONFIG_OPL_RA_HOST_IP   "ra_host_ip"
 #endif
 
 // Network config keys

@@ -366,6 +366,26 @@ stopping the parse. What to expect there:
 `Title`, `Developer`, `Description`, `Genre`, `Release`, `#Size` (the `#Size` value renders
 with a `MiB` suffix). Labels are auto-localized; override with `title=`.
 
+These fields are read from the selected game's CFG, not downloaded with its artwork.
+For PS2 games, put metadata in `CFG/<startup ID>.cfg` on the game source, for example
+`CFG/SLUS_212.07.cfg`. Keys are case-sensitive:
+
+```ini
+Title=Dragon Quest VIII
+Genre=Role-playing
+Developer=Level-5
+```
+
+`Release` and `Description` can be supplied in the same file. Missing or empty `Title`
+falls back to the library's game name for display without changing the CFG. Other
+missing metadata stays absent; `#Size` is supplied independently by the loader.
+Artwork appearing while metadata is blank therefore does not establish that the
+metadata CFG was found or contains those keys.
+
+Fresh configurations use 4:3 and Large coverflow center enlargement. Existing saved
+widescreen and coverflow settings take precedence. Center enlargement changes the
+coverflow cover size, not a theme's separate disc image dimensions or source detail.
+
 ### AttributeImage (badge chosen by value)
 
 A per-game **attribute** picks which glyph to draw. Where that glyph comes from depends on the theme:
