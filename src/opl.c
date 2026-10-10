@@ -519,6 +519,13 @@ static void itemExecToggleView(struct menu_item *curMenu)
     if (!libViewStageAdvance(support->mode))
         return;
 
+    // L3 changes the displayed library without changing the device generation or its ISO
+    // file stats. At the device root folderReset() leaves no dirty flag, so bdmNeedsUpdate()
+    // can reject this queued update as unchanged. That commits PS1 with an empty, never-scanned
+    // list. Force one scan of the selected view; the worker consumes this flag before its
+    // generation cache gate. No extra background polls or module reloads are needed.
+    libViewMarkDirty(support->mode);
+
     // Every cover already queued belongs to the view being discarded, and none of them will be
     // cancelled on their own: the loader's per-row cancellation keys on a row having scrolled away,
     // and here nothing scrolls -- the old rows keep being drawn until the rebuild below lands, so
