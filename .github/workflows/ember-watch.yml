@@ -3,7 +3,7 @@ name: Ember Watch
 # Keeps the bundled Ember (Gageformer's PS1 core, EMBER/ember.elf) level with its official release.
 #
 # Unlike Neutrino, Ember is COMMITTED in the repo -- in EMBER/ and in the example release kit -- so a new
-# upstream build needs a commit, not just a rebuild. Every 6 hours this compares the SHA-256 GitHub
+# upstream build needs a commit, not just a rebuild. Once a week this compares the SHA-256 GitHub
 # publishes for the latest release's ember.elf with ours. That catches both a new release and a same-tag
 # hotfix (Gageformer replaced Beta-2's ember.elf in place on 2026-09-28 with no new tag).
 #
@@ -15,7 +15,8 @@ name: Ember Watch
 
 on:
   schedule:
-    - cron: "23 */6 * * *"
+    # Mondays at 18:23 UTC (GitHub Actions scheduled times are UTC).
+    - cron: "23 18 * * 1"
   workflow_dispatch:
 
 permissions:
