@@ -81,3 +81,44 @@ with tempfile.TemporaryDirectory() as tmp:
   (path/'test.c').write_text(headers+source+body)
   subprocess.run(['cc','-std=gnu99','-Wno-pointer-to-int-cast','-I',str(root),str(path/'test.c'),'-o',str(path/'test.exe')],check=True)
   subprocess.run([str(path/'test.exe')],check=True)
+
+# Exercise the production pulse itself, including unknown and uncommitted events.
+pulse = (root / 'ee_core/src/ra_pulse.c').read_text()
+pulse = re.sub(r'^#include .*$', '', pulse, flags=re.M)
+pulse = pulse.replace('#define GS_PMODE (*(volatile u64 *)0x12000000)',
+                      'static u64 GS_PMODE;')
+pulse_prefix = r"""
+#include <assert.h>
+#include <stdio.h>
+#include <stdint.h>
+#define RETROACHIEVEMENTS 1
+typedef uint64_t u64;
+#include "modules/network/common/ra_snap.h"
+#define UNCACHED_SEG(p) (p)
+#define BGCOLND(c) ((void)(c))
+static int resets;
+static void IGR_RequestReset(void) { resets++; }
+"""
+pulse_tests = r"""
+int main(void) {
+ struct ra_event *e=RA_PulseEventBuffer();
+ e->magic=RA_EVENT_MAGIC; e->seq=1; e->commit=1; e->kind=0xFE;
+ RA_PulseOnVblank(1); assert(!ra_ovl_running);
+ e->seq=2; e->kind=RA_EVENT_MAKE_UNLOCK(25);
+ RA_PulseOnVblank(2); assert(!ra_ovl_running);
+ e->commit=2; RA_PulseOnVblank(3); assert(ra_ovl_running && ra_ovl_start==3);
+ e->seq=3; e->commit=3; e->kind=0xFE;
+ RA_PulseOnVblank(4); assert(ra_ovl_running && ra_ovl_start==3);
+ e->seq=4; e->commit=4; e->kind=RA_EVENT_MAKE_UNLOCK(50);
+ RA_PulseOnVblank(5); assert(ra_ovl_start==5);
+ RA_PulseOnVblank(65); assert(!ra_ovl_running);
+ e->seq=5; e->commit=5; e->kind=RA_EVENT_RESET;
+ RA_PulseOnVblank(66); RA_PulseOnVblank(67); assert(resets==1 && !ra_ovl_running);
+ puts("PASS: production pulse ignores unknown/torn events, restarts unlocks and preserves reset");
+}
+"""
+with tempfile.TemporaryDirectory() as tmp:
+ path=Path(tmp)
+ (path/'pulse.c').write_text(pulse_prefix+pulse+pulse_tests)
+ subprocess.run(['cc','-std=gnu99','-I',str(root),str(path/'pulse.c'),'-o',str(path/'pulse.exe')],check=True)
+ subprocess.run([str(path/'pulse.exe')],check=True)

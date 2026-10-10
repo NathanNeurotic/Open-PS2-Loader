@@ -21,7 +21,7 @@ Use a disk exposing **512-byte logical sectors**. A 512e disk has 4 KiB physical
 1. Create an MBR or GPT partition table and an exFAT volume on your PC. Use the formatter's **Default** allocation-unit size.
 2. Create `DVD` and `CD` at the volume root. Put DVD game images in `DVD/` and CD game images in `CD/`. For example, `DVD/SLUS_203.12.Game Name.iso` follows the established OPL naming format. Keep the complete image rather than splitting it for FAT32's file-size limit.
 3. In **Settings → Game Sources**, enable **BDM Devices Start Mode** and **Internal HDD (exFAT)**. The separate **HDD (APA) Start Mode** controls APA game partitions; it is not required to enumerate a plain exFAT disk.
-4. Leave **BDM Prefix Path** empty when `CD/` and `DVD/` are at the root. A prefix of `OPL` instead searches `OPL/CD/` and `OPL/DVD/`. The prefix applies to BDM sources, so check its effect on other attached devices too.
+4. Leave **BDM Prefix Path** empty when `CD/` and `DVD/` are at the root. A prefix of `OPL` instead searches `OPL/CD/` and `OPL/DVD/`. The prefix applies to PS2 game scans on BDM sources, so check its effect on other attached devices too. PS1 VCD scans ignore this prefix: keep VCDs in the device-root `POPS/` directory, not `OPL/POPS/`.
 5. Open the HDD (exFAT) BDM game list. The default startup page only chooses which list opens first; it does not move games between the APA and BDM lists. Save settings when the setup is correct.
 
 The internal exFAT HDD mounts into the shared `massN:` namespace. `mass0:` does **not** always mean USB: numbers depend on mount order. For a Neutrino custom path, the typed `ata:/neutrino/neutrino.elf` alias identifies internal ATA storage more reliably than a fixed slot number.

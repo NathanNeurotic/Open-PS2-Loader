@@ -1458,8 +1458,8 @@ static int bdmRefreshGamePrefix(item_list_t *itemList)
     // usb_prefix changes, before the generation cache can retain the old (possibly empty) list.
     // PS1 uses the device root, so only the PS2 store and its browse state belong to the old path.
     snprintf(device->bdmPrefix, sizeof(device->bdmPrefix), "%s", prefix);
-    free(device->bdmGames);
-    device->bdmGames = NULL;
+    // Menu rows still borrow names from this allocation until updateMenuFromGameList
+    // detaches them. Publish zero games now; sbReadList releases it after detachment.
     device->bdmGameCount = 0;
     device->bdmULSizePrev = -2;
     device->bdmModifiedCDPrev = device->bdmModifiedDVDPrev = 0;
