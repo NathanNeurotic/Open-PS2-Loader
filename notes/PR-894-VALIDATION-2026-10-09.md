@@ -67,3 +67,36 @@ Before further feature work or merge, finish the Korium reproduction, review the
 PR paths and review threads against the final head, and run the same-console acceptance
 sequence for BDM/HDD/Favourites and the PS1/PS2 achievement launch paths. Host tests and
 compilation alone do not establish those hardware behaviors.
+
+## Published-binary follow-up
+
+The standard `RIPTOPL.ELF` was downloaded from the current `rolling-korium` release
+and its LZMA payload inspected using the ps2-packer format. It contains the exact
+release `gfx/background.png` bytes (SHA-256
+`70398bd373ec92cf97e6991cc8db5f76b1ebfce66381b83f69c8bd5c8c698537`), as well as
+the Beta 3608 / d41785a / OFFICIALROLLING version identifiers.
+
+The release's `texPrepareClut` and palette row conversion were compiled with host
+libpng and run on that PNG. After undoing the GS CLUT index permutation, all decoded
+RGBA bytes matched an independent Pillow reference with alpha shifted into GS units.
+Both decoded SHA-256 values were
+`aef9b1b7b49dee4135f4215dc6b97d67a0ef2a2ba8efd3efc326863520c4eedc`.
+This checks host conversion, not texture transfer or GS execution.
+
+A numerical 16-bit blend/dither model shows a different output distribution for
+the two translucent passes versus one opaque pass. It is a candidate mechanism,
+not a console reproduction or proof of the photographed artifact.
+
+The `Korium background diagnostic` workflow builds two explicitly labelled
+variants from the exact released source, using the same pinned toolchain. Both
+suppress per-game background requests so saved BG settings cannot confound the
+comparison. `control` retains the two-pass release composition; `single-pass`
+restores the original opaque PNG and disables only the redundant main1 in both
+built-in layouts. Every RGB pixel is preserved. Element numbering is preserved
+with `enabled=0`, including inherited Apps/PS1/Favourites families.
+
+These are comparison artifacts, not a production fix or release. They deliberately
+do not include PR 894's feature changes. A production repair must also preserve the
+optional per-game artwork/tint behavior, which these BG-suppressed probes do not test.
+The acceptance requirement applies to every supported video mode; no particular
+mode is a prerequisite for taking the report seriously.
