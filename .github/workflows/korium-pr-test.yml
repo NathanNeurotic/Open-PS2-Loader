@@ -40,9 +40,25 @@ jobs:
 
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # Manual dispatches must build the current PR 894 head, not the
+          # branch selected in the Actions UI.
+          ref: ${{ github.event.pull_request.head.sha || 'refs/pull/894/head' }}
           fetch-depth: 0
           persist-credentials: false
+
+      - name: Validate PR 894 source provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin refs/pull/894/head
+          PR_894_HEAD=$(git rev-parse FETCH_HEAD)
+          CHECKED_OUT=$(git rev-parse HEAD)
+          if [ "$CHECKED_OUT" != "$PR_894_HEAD" ]; then
+            echo "::error::Checkout $CHECKED_OUT does not match PR 894 head $PR_894_HEAD"
+            exit 1
+          fi
+          echo "Verified PR 894 source commit: $CHECKED_OUT"
 
       - name: Overlay Korium theme onto the current PR code
         shell: bash
