@@ -1,8 +1,8 @@
 """Prepare a controlled background comparison from the exact Beta 3608 source.
 
 Both variants suppress per-game BG requests without changing saved settings. The
-single-pass variant restores the pre-6057c6c2 opaque PNG and disables only the
-duplicate main1 plate. This is diagnostic output, not a production theme fix.
+single-pass variant restores opaque background alpha and disables the duplicate
+main1 plate, retaining the released PNG/palette. This is not a production fix.
 """
 import argparse
 import hashlib
@@ -34,14 +34,21 @@ def prepare(root, variant):
         if cfg.count(block) != 1:
             raise RuntimeError("Unexpected background plate in " + str(config))
         blocks.append((config, cfg, block))
+    # Keep the released compressed PNG, palette ordering and indices identical.
+    # Change only the decoded background alpha, not the general PNG decoder.
+    textures = root / "src/textures.c"
+    texture_text = textures.read_text()
+    clut = "            png_get_tRNS(pngPtr, infoPtr, &pngTexture.trans, &pngTexture.numTrans, NULL);\n"
+    if texture_text.count(clut) != 1:
+        raise RuntimeError("Unexpected palette conversion")
     # Validate every input before modifying the isolated build checkout.
-    opaque = None
     if variant == "single-pass":
-        opaque = subprocess.check_output([
-            "git", "-C", str(root), "show", "6057c6c2^:gfx/background.png"])
+        texture_text = texture_text.replace(clut, clut +
+            "            if (texId == BACKGROUND_PICTURE)\n"
+            "                pngTexture.numTrans = 0; // Diagnostic: opaque built-in fallback only.\n")
     source.write_text(text.replace(gate, 'cache->suffix != NULL && strcmp(cache->suffix, "BG") == 0'))
-    if opaque is not None:
-        background.write_bytes(opaque)
+    if variant == "single-pass":
+        textures.write_text(texture_text)
         for config, cfg, block in blocks:
             config.write_text(cfg.replace(block, block + "\tenabled=0\n"))
     manifest = (
@@ -51,8 +58,9 @@ def prepare(root, variant):
         "Use the built-in OPL or Coverflow theme. External themes are not this comparison.\n"
         "Compare on the same console/display at the same video mode, then repeat in\n"
         "a 24-bit mode (480p or VGA) and a 16-bit mode (720p or 1080i).\n"
-        "Control: released two translucent passes. Single-pass: original opaque PNG,\n"
+        "Control: released two translucent passes. Single-pass: opaque background alpha,\n"
         "duplicate main1 disabled. Grain is retained in both; this isolates composition.\n"
+        "The released PNG bytes and palette are identical in both variants.\n"
         "No RA changes from PR 894 are included. No hardware result is claimed.\n"
     )
     (root / "KORIUM-BACKGROUND-DIAGNOSTIC.txt").write_text(manifest)

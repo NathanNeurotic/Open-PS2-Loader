@@ -91,8 +91,10 @@ The `Korium background diagnostic` workflow builds two explicitly labelled
 variants from the exact released source, using the same pinned toolchain. Both
 suppress per-game background requests so saved BG settings cannot confound the
 comparison. `control` retains the two-pass release composition; `single-pass`
-restores the original opaque PNG and disables only the redundant main1 in both
-built-in layouts. Every RGB pixel is preserved. Element numbering is preserved
+restores opaque alpha only for the built-in background and disables the redundant
+main1 in both built-in layouts. The released PNG bytes, palette ordering, indices,
+and every RGB pixel are preserved, so the PNG optimization is not another variable.
+Element numbering is preserved
 with `enabled=0`, including inherited Apps/PS1/Favourites families.
 
 These are comparison artifacts, not a production fix or release. They deliberately
