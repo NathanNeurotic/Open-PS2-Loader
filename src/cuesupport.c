@@ -263,7 +263,7 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
                 nextCapacity = CUE_MAX_ITEMS;
             cue_entry_t *grown = (cue_entry_t *)realloc(list, (size_t)nextCapacity * sizeof(cue_entry_t));
             if (grown == NULL) {
-                LOG("[CUE] out of memory growing list to %d entries for '%s'\\n", nextCapacity, gamesDir);
+                LOG("[CUE] out of memory growing list to %d entries for '%s'\n", nextCapacity, gamesDir);
                 free(list);
                 closedir(dir);
                 return -1; // OOM: preserve the caller's current PS1 list
