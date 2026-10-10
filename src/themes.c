@@ -72,11 +72,11 @@ static int nThemes = 0;
 static theme_file_t themes[THM_MAX_FILES];
 static const char **guiThemesNames = NULL;
 
-// Coverflow render-mode state (externs in themes.h; defaults match wOPL 3/30/200/0).
+// Coverflow render-mode state (externs in themes.h).
 #define COVERFLOW_PAD 1 // extra covers built off each edge, purely to fill the slide (see drawCoverFlow)
 #define COVERFLOW_MAX (5 + 2 * COVERFLOW_PAD)
 int gCoverflowCount = 3;        // 3 or 5 only (clamped on load AND at draw)
-int gCoverflowCenterScale = 30; // px added to the center cover (UI 0/15/30/45)
+int gCoverflowCenterScale = 45; // Large by default; saved UI choices still override (0/15/30/45).
 int gCoverflowAnimSpeed = 200;  // ms (UI 0/100/200/400; 0 = instant, no anim)
 int gCoverflowDimCovers = 0;    // bool
 
@@ -641,7 +641,13 @@ static void drawAttributeText(struct menu_list *menu, struct submenu_list *item,
             // force refresh
             mutableText->currentConfigId = config->uid;
             mutableText->currentValue = NULL;
-            if (configGetStr(config, mutableText->value, (const char **)&mutableText->currentValue)) {
+            configGetStr(config, mutableText->value, (const char **)&mutableText->currentValue);
+            // Metadata is optional. A missing/empty Title can still show the library name,
+            // without writing a fabricated metadata field back to the game's CFG.
+            if ((!mutableText->currentValue || !mutableText->currentValue[0]) &&
+                !strcmp(mutableText->value, "Title"))
+                configGetStr(config, CONFIG_ITEM_NAME, (const char **)&mutableText->currentValue);
+            if (mutableText->currentValue) {
                 if ((mutableText->sizingMode == SIZING_WRAP) && mutableText->currentValue) {
                     // Word-wrap a private copy, not the config's own stored string.
                     // configGetStr() hands back a pointer straight into the config

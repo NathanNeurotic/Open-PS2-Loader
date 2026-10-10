@@ -4915,7 +4915,7 @@ static void setDefaults(void)
 #endif
     gEnableArt = 1;
     gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
-    gWideScreen = 1;
+    gWideScreen = 0; // Fresh configurations use 4:3; a saved widescreen choice overrides this.
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.
     gEnableSFX = 0;
