@@ -6,19 +6,19 @@ unlock on real PlayStation 2 hardware.
 
 The console does two things: it works out **which** game an image or physical disc is (a hash), and once the game is
 running it streams the handful of memory addresses that game's achievements depend on. Everything
-else â€” talking to the RetroAchievements servers, deciding what unlocked, your login â€” happens on the
+else — talking to the RetroAchievements servers, deciding what unlocked, your login — happens on the
 PC.
 
 Based on the RetroAchievements implementation by **[hacan359 (yoba)](https://github.com/hacan359/Open-PS2-Loader/pull/1)**.
 Use the upstream **[xeRAbora PC client](https://github.com/hacan359/xerabora)** with RiptOPL's RA build. Download the required **[v0.1.0-alpha.16 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)**.
 
 RiptOPL's real-hardware stabilization was contributed by **[oMrRexD](https://github.com/oMrRexD)** through
-PRs **#702â€“#705**, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
+PRs **#702–#705**, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
 bring-up / unusable-IP fallback, and the misplaced RA settings rows.
 
 ## RA Mode: Xerabora or Caduceus
 
-In the **RA build**, open **Settings â†’ Network â†’ RA Mode** and choose **Xerabora** (the default) or **Caduceus**. Save settings to retain the choice. Old configurations without `ra_mode` keep Xerabora. The normal build has no RA mode row or telemetry code.
+In the **RA build**, open **Settings → Network → RA Mode** and choose **Xerabora** (the default) or **Caduceus**. Save settings to retain the choice. Old configurations without `ra_mode` keep Xerabora. The normal build has no RA mode row or telemetry code.
 
 This selector chooses the PC service protocol; it does not enable telemetry by itself. Keep **RA Telemetry** enabled when you want tracking. No PC application or server binaries are bundled by this change; the companion service is managed separately through PS2-Servers.
 
@@ -27,7 +27,7 @@ This selector chooses the PC service protocol; it does not enable telemetry by i
 | Xerabora | Existing xeRAbora discovery, watch-list transfer and in-game telemetry |
 | Caduceus | Signed-in session checks, compatible watch lists/telemetry, account and game achievement browsing, and in-game gold-pulse notices; the card renderer remains test-only |
 
-Caduceus adds a UDP **18197** catalog/session bridge (`CADQ2` / `CADR2`). Once a ready bridge is found, RiptOPL requests watch lists from the engine on that same PC at UDP **18194**. For local-device launches, the in-game module repeats bridge discovery **only against the configured SMB host IPv4 address** before contacting that PC's engine; a standalone Xerabora reply or a faster responder elsewhere on the LAN cannot substitute for the Caduceus bridge. Xerabora mode keeps automatic broadcast discovery. UDP **18195** is the console's telemetry/notice port, and UDP **18196** is its menu reply port. Permit these connections in the companion PC's firewall. Run one intended achievement service per host to avoid port conflicts. By default, Caduceus's pairing bridge uses the configured SMB server IPv4 address, never the fastest LAN responder. **Network â†’ RA companion IP** can override it independently of the SMB and HTTP game servers; set **0.0.0.0** to retain the legacy fallback. This host is used by Caduceus pairing, support checks, link tests, in-game discovery and POPStarter. When explicitly set, Xerabora is also probed by unicast, not broadcast. A NetBIOS-only SMB address without an IPv4 fallback requires the separate RA host setting.
+Caduceus adds a UDP **18197** catalog/session bridge (`CADQ2` / `CADR2`). Once a ready bridge is found, RiptOPL requests watch lists from the engine on that same PC at UDP **18194**. For local-device launches, the in-game module repeats bridge discovery **only against the configured SMB host IPv4 address** before contacting that PC's engine; a standalone Xerabora reply or a faster responder elsewhere on the LAN cannot substitute for the Caduceus bridge. Xerabora mode keeps automatic broadcast discovery. UDP **18195** is the console's telemetry/notice port, and UDP **18196** is its menu reply port. Permit these connections in the companion PC's firewall. Run one intended achievement service per host to avoid port conflicts. By default, Caduceus's pairing bridge uses the configured SMB server IPv4 address, never the fastest LAN responder. **Network → RA companion IP** can override it independently of the SMB and HTTP game servers; set **0.0.0.0** to retain the legacy fallback. This host is used by Caduceus pairing, support checks, link tests, in-game discovery and POPStarter. When explicitly set, Xerabora is also probed by unicast, not broadcast. A NetBIOS-only SMB address without an IPv4 fallback requires the separate RA host setting.
 
 Every tracked Caduceus launch rechecks its session. If the bridge is offline or unavailable, the game launches normally without achievement telemetry. If Caduceus reports **OFFLINE**, sign in through the companion service and retry. RiptOPL never stores your RetroAchievements password or API key. A successful bridge query only proves the session bridge answered; the subsequent watch-list transfer and game telemetry must also succeed. An unknown catalog hash is not interpreted as an offline session: the engine's watch-list result remains authoritative.
 
@@ -52,7 +52,7 @@ Caduceus unlock notices use the existing gold pulse by default. Its experimental
 ## Status
 
 **Implemented, and telemetry has run end to end on real PS2 hardware** in oMrRexD's session for
-PRs #702â€“#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
+PRs #702–#705: an SCPH-50001 with an expansion-bay network adapter, a static IP and xeRAbora
 v0.1.0-alpha.10. Launched from MMCE, Need for Speed: Underground 2 streamed 25,200 snapshots with none
 lost and unlocked an achievement with the overlay on screen; the same build also tracked the game from
 USB. That is one console, one game and a static address. DHCP, the other launch paths and the edge
@@ -62,7 +62,7 @@ as finished.
 | Part | State |
 | --- | --- |
 | `RETROACHIEVEMENTS=1` build flavour | done |
-| In-game telemetry (`raudp`, ee_core snapshots) | **hardware-tested** from MMCE and USB, static IP (#702â€“#704) |
+| In-game telemetry (`raudp`, ee_core snapshots) | **hardware-tested** from MMCE and USB, static IP (#702–#704) |
 | Watch-list loading from `<device>/RA/<serial>.wl` | done |
 | Image hashing (ISO9660 walk + MD5) | done; images on a share and on a USB stick hashed to matching values on hardware (hacan359, 2026-09-10) |
 | Menu actions: check game support, test PC link | both used on hardware: the support check's hashing by hacan359, the PC link test in #704 |
@@ -79,14 +79,14 @@ Two settings, on the **Network** settings page:
 
 | Setting | Default | Effect |
 | --- | --- | --- |
-| RetroAchievements telemetry | **Off** | The master switch. While it is off an RA build launches a game for exactly what the standard build costs â€” no in-game network stack, no `raudp`, no snapshots. |
+| RetroAchievements telemetry | **Off** | The master switch. While it is off an RA build launches a game for exactly what the standard build costs — no in-game network stack, no `raudp`, no snapshots. |
 | RetroAchievements badges | On | The `RA ` prefix in the game list and the mark over the cover. Cosmetic, and it follows the master switch: badges stay dark while telemetry is off. |
 
 Two actions on a game's own menu:
 
-* **check game support** â€” hashes the image, asks the PC client about it, and writes
+* **check game support** — hashes the image, asks the PC client about it, and writes
   `<device>/RA/<serial>.wl` if the game is tracked.
-* **test PC link** â€” confirms the console can find the client at all, without touching a game.
+* **test PC link** — confirms the console can find the client at all, without touching a game.
 
 A game the console has a watch list for shows the badge and the cover mark after the next list
 refresh. Switch telemetry on and launch it.
@@ -130,8 +130,8 @@ Telemetry lives inside OPL's own loader core, which only exists for launches OPL
 
 | Launch path | Supported |
 | --- | --- |
-| BDM â€” USB, iLink, MX4SIO, ATA/exFAT | yes |
-| ETH / SMB | wired, but **known bad upstream** â€” see below |
+| BDM — USB, iLink, MX4SIO, ATA/exFAT | yes |
+| ETH / SMB | wired, but **known bad upstream** — see below |
 | HDD (APA) | yes; installed HDLoader games now support read-only automatic hashing (hardware acceptance pending) |
 | MMCE | yes |
 | Physical PS2 disc, **RA: launch disc** | implemented; **not hardware-tested** |
@@ -147,15 +147,15 @@ nothing to take a snapshot from. This is structural, not an oversight.
 ### Do not expect a game with achievements to run from a network share
 
 A game that streams its own disc over the NIC is competing with telemetry for that NIC. This build no
-longer *reads* from the network in play on such a launch â€” `raudp` stops walking the SMAP receive ring
-and stops polling the stack, because the game's disc stream arrives through both â€” but **hacan359
+longer *reads* from the network in play on such a launch — `raudp` stops walking the SMAP receive ring
+and stops polling the stack, because the game's disc stream arrives through both — but **hacan359
 reports on hardware (2026-09-05) that this is not enough: a game with an achievement set still stops
 loading about a minute in from a share, so the send path disturbs the stream on its own.** xeRAbora's
 own documentation says the same, and names the USB stick and the original disc as the only tested ways
 to play.
 
 That defect is upstream's and ours alike; we have not reproduced or ruled it out on our own hardware.
-The hardware testing so far (#702â€“#705) launched from MMCE and USB, never from a share. Until a share
+The hardware testing so far (#702–#705) launched from MMCE and USB, never from a share. Until a share
 is tested, **keep the images you play with achievements on a local device.** The same reasoning
 applies to HTTP, which streams down the same path.
 
@@ -175,13 +175,13 @@ APA hardware validation and performance remain pending**.
 Checking a game on a share used to fail outright once a console had played that game and been
 switched off: OPL logs off from nothing on power-down, the SMB session dies with the console, and a
 cheap server never reaps the handle. From then on the server refused every NT open of that file with
-a sharing violation, so "check game support" could only report that it could not open the image â€”
+a sharing violation, so "check game support" could only report that it could not open the image —
 while the game still *booted* off it, because the in-play open uses the older command, which the same
 server grants in compatibility mode.
 
 This flavour now carries its own `smbman` (`modules/network/smbman-ra`) that tries NT create first
 and falls back to the legacy open **only** when the server says the file is held, and **only for a
-read** â€” reaching past another handle to write is not something worth asking for. If both are
+read** — reaching past another handle to write is not something worth asking for. If both are
 refused, the hash log names the image as held instead of saying nothing. hacan359 confirmed this on
 hardware on 2026-09-10: two images held open by earlier runs hashed anyway, and the hashes matched
 the ones taken from a USB stick.
@@ -192,7 +192,7 @@ when streamed from a share, per the section above.
 ## Networking
 
 Telemetry is UDP, sent by an IOP module that builds Ethernet frames by hand rather than going through
-the network stack â€” the stack's mailbox is shared with the game's own traffic, and 60 sends a second
+the network stack — the stack's mailbox is shared with the game's own traffic, and 60 sends a second
 pushed the game out of it.
 
 Because of that, **the console needs a valid IP even when the game was not launched over the
@@ -236,7 +236,7 @@ The PS1 POPStarter bridge additionally follows alpha.16. Use an alpha.16-compati
 <device root>/RA/<serial>.wl        e.g. mass0:/RA/SLUS_210.65.wl
 ```
 
-One watch list per tracked game, generated by the PC client from that game's achievement set. PS2 images use their boot serial; USB PS1 VCDs instead use a stable 15-character `P`-prefixed key derived from the normalized full VCD path, avoiding collisions between different PS1 images with the same `BOOT` executable. These PS1 lists are stored under the selected library's `RA/` prefix. After renaming, moving or replacing a VCD, run the support check again. Each new USB PS1 support check saves a matching **RA/<15-character-key>.md5** sidecar only after its corresponding **.wl** write succeeds. Tracked POPStarter launches rehash the VCD's boot executable and compare its RetroAchievements content hash to that sidecar. Old watch lists without a guard and replaced images with stale guards launch **untracked**, not with incorrect achievements. This adds an on-launch executable hash read for tracked PS1 VCDs; ordinary/untracked games are unaffected. `RA/` follows the sourceâ€™s support-file prefix, like `CHT/`. HTTP loads an existing watch list from the local settings home because the server is read-only; do not assume automatic image hashing/support detection works for a remote HTTP ISO. RiptOPL creates it along with the other library folders.
+One watch list per tracked game, generated by the PC client from that game's achievement set. PS2 images use their boot serial; USB PS1 VCDs instead use a stable 15-character `P`-prefixed key derived from the normalized full VCD path, avoiding collisions between different PS1 images with the same `BOOT` executable. These PS1 lists are stored under the selected library's `RA/` prefix. After renaming, moving or replacing a VCD, run the support check again. Each new USB PS1 support check saves a matching **RA/<15-character-key>.md5** sidecar only after its corresponding **.wl** write succeeds. Tracked POPStarter launches rehash the VCD's boot executable and compare its RetroAchievements content hash to that sidecar. Old watch lists without a guard and replaced images with stale guards launch **untracked**, not with incorrect achievements. This adds an on-launch executable hash read for tracked PS1 VCDs; ordinary/untracked games are unaffected. `RA/` follows the source’s support-file prefix, like `CHT/`. HTTP loads an existing watch list from the local settings home because the server is read-only; do not assume automatic image hashing/support detection works for a remote HTTP ISO. RiptOPL creates it along with the other library folders.
 
 Image launches with a missing watch list proceed normally without telemetry or its extra modules.
 The explicit **RA: launch disc** action instead asks you to check support first; **Launch PS2 Disc**
@@ -280,7 +280,7 @@ archive also carries **`xeRAbora.url`** (pointing directly to the paired [v0.1.0
 
 It is deliberately *not* an entry in `RIPTOPL-VARIANTS-*.zip`: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
-diagnostic bundle rather than installable payload. The default build is unaffected by all of this â€” every RA source file and
+diagnostic bundle rather than installable payload. The default build is unaffected by all of this — every RA source file and
 every call site is behind `#ifdef RETROACHIEVEMENTS`, and that is checked by comparing the two builds'
 symbol tables, loader core and embedded IOP modules. PR CI also builds the pinned
 **OFFICIALROLLING-RA** flavour and records the RA flag in its build manifest.
@@ -293,11 +293,11 @@ and both are selected by `USBD_MINI_IRX` / `SMBMAN_IRX` at the top of the Makefi
 | Module | Why | Diff from ps2sdk |
 |---|---|---|
 | `modules/network/smbman-ra` | the held-image fix above | `smb.c` (35 lines) and `smb.h` (4); every other file byte-identical to ps2sdk master |
-| `modules/usb/usbd-ra` | see below | **nothing** â€” byte-identical to ps2sdk `iop/usb/usbd` at `314d87e7` (2024-04-01); only the Makefile is ours |
+| `modules/usb/usbd-ra` | see below | **nothing** — byte-identical to ps2sdk `iop/usb/usbd` at `314d87e7` (2024-04-01); only the Makefile is ours |
 
 **The usbd swap is not a RetroAchievements feature.** ps2sdk rewrote its USB host driver on
-2024-09-04 (`b1f7ff96`: 28 files, +4446/âˆ’3336), and since then a CD-era game run off a USB stick
-loses its controller *and* its sound at the game's first IOP reboot â€” Dynasty Warriors 2 on real
+2024-09-04 (`b1f7ff96`: 28 files, +4446/−3336), and since then a CD-era game run off a USB stick
+loses its controller *and* its sound at the game's first IOP reboot — Dynasty Warriors 2 on real
 hardware, reported by hacan359 on 2026-09-10, reproducing **with official OPL as much as with this
 fork**. Swapping only that one module fixes it. `usbd_mini.irx` is not a separate source tree:
 `iop/usb/usbd_mini/Makefile` points `IOP_SRC_DIR` at `iop/usb/usbd/src` and adds `-DMINI_DRIVER`, so
@@ -308,20 +308,20 @@ every flavour gets the pre-rewrite driver. It is listed here only because this i
 came from; it is not a RetroAchievements feature and does not depend on the flag.
 
 Hardware-checked by **Zack on 2026-09-10** before that promotion landed: no noticeable USB
-regressions on the promoted build. That is the check the promotion was waiting on â€” it is a
+regressions on the promoted build. That is the check the promotion was waiting on — it is a
 no-regression result, not a confirmation that the Dynasty Warriors 2 case is cured here; that
 remains hacan359's finding on his own hardware. `backup/pre-usbd-forkwide-58fe5529` is the tree
 immediately before the swap, kept as a restore point.
 
 ## Before this is called finished
 
-Most of the list below is still open. oMrRexD's hardware session for #702â€“#705 covered the nearest
+Most of the list below is still open. oMrRexD's hardware session for #702–#705 covered the nearest
 thing to **3**, launched from MMCE rather than USB (25,200 snapshots with none lost after a cold boot
 and a straight launch; the same build also tracked the game from USB), and **13**, the unlock overlay
 over a running game; a launch with telemetry switched off sent nothing, which is part of **2**.
 Everything else still needs a PlayStation 2. Emulator testing gets you as far as: the menu boots, the
 RA entries render and navigate, the flag-off build is unchanged, and a game with no `.wl` does not
-crash. That is the ceiling â€” GS raster timing and real SMAP behaviour are not testable there.
+crash. That is the ceiling — GS raster timing and real SMAP behaviour are not testable there.
 
 Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 
@@ -329,7 +329,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 | --- | --- | --- |
 | 1 | Default build (`RETROACHIEVEMENTS=0`) | no regression on any existing path |
 | 2 | RA build, telemetry Off | behaves as the default build |
-| 3 | USB launch, valid `.wl`, telemetry On | ~60 snapshots/s for â‰¥5 min, skip/fail counters flat |
+| 3 | USB launch, valid `.wl`, telemetry On | ~60 snapshots/s for ≥5 min, skip/fail counters flat |
 | 4 | Same, watching frame rate | no perceptible impact |
 | 5 | SMB launch with telemetry | the game's own SMB stream unaffected |
 | 6 | Menu check, protocol = SMB | title + counts, `.wl` written |
@@ -355,7 +355,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 * **Telemetry requires an OPL-core launch.** BDM, ETH/SMB, HDD/APA and MMCE have this path; HTTP also loads an existing watch list from its local settings prefix. Neutrino and Ember run external ELFs, so OPL's telemetry core does not run there. USB POPStarter uses a separate IOP telemetry module. Treat HTTP/RA interoperability as unvalidated until tested.
 
 * **The badge cache belongs to the I/O thread.** `raBadgeRefresh` frees and reallocates it. Nothing
-  on the render path may read it â€” that is why a row carries `raBadged` as a plain int, resolved
+  on the render path may read it — that is why a row carries `raBadged` as a plain int, resolved
   when the row is built. Re-introducing a `raBadgeHas`-style call from a draw routine re-introduces
   a use-after-free that only shows up as a rare hang.
 * **`MSG_DONTWAIT` is `0x08` on the menu path**, from ps2sdk's `tcpip.h`. The `0x40` in SMSTCPIP
@@ -374,7 +374,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
   end of module storage (`raWorkArea` in `EECoreConfig_t`), and only for a launch that has a watch
   list with telemetry on. When #702 landed, the stack left was 13312 bytes in the default build, 3348
   with `EXTRA_FEATURES=1`, and 9984 / 10112 in the RA builds (`PADEMU=1` / `0`). The release builds
-  RA at the default `EXTRA_FEATURES=0`, which is also what the main loader ships as â€” so the RA
+  RA at the default `EXTRA_FEATURES=0`, which is also what the main loader ships as — so the RA
   archive is the shipping loader plus achievements, not a variant. Before #702, RA and
   `EXTRA_FEATURES=1` together overflowed ram84 by roughly 6.5 KB; that pairing has not been
   re-measured since.
@@ -388,13 +388,13 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 
 ## Credits
 
-* **hacan359 (yoba)** â€” the RetroAchievements design, the console implementation this port follows,
+* **hacan359 (yoba)** — the RetroAchievements design, the console implementation this port follows,
   and the PC client. Physical-disc integration follows the
   [upstream disc implementation](https://github.com/hacan359/Open-PS2-Loader/tree/cb713e686acb2fb63de20aa44b3fd4e8c59ca680).
-* **[oMrRexD](https://github.com/oMrRexD)** â€” the real-hardware RA stabilization work merged through
-  PRs #702â€“#705: ee_core stack recovery, MMCE DEV9, launch-time network readiness/fallback, and the
+* **[oMrRexD](https://github.com/oMrRexD)** — the real-hardware RA stabilization work merged through
+  PRs #702–#705: ee_core stack recovery, MMCE DEV9, launch-time network readiness/fallback, and the
   RA settings-page correction, plus the hardware investigation that exposed those failures.
-* `src/md5.c`, `include/md5.h` â€” L. Peter Deutsch, zlib licence, vendored unchanged.
+* `src/md5.c`, `include/md5.h` — L. Peter Deutsch, zlib licence, vendored unchanged.
 
 ## PS1 achievements through USB POPStarter
 
