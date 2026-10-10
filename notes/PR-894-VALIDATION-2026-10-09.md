@@ -8,9 +8,10 @@ This is an initial targeted review, not approval of the complete PR or console v
 
 The supplied photograph shows a textured background, but does not establish the running
 version, video mode, background-art setting, external theme selection, or whether the
-pattern is visible directly as well as through the camera. Beta 3608 / `d41785a6` is the
-revision asserted in the supplied earlier analysis, not independently identified from
-the photograph.
+pattern is visible directly as well as through the camera. The user subsequently confirmed
+the latest rolling release. GitHub's live `rolling-korium` tag resolves to
+`d41785a6e455637188234d9e3ad9b3a3590a24a2`, matching the release body's Beta 3608
+source identifier. This confirms the release source candidate; the video mode remains unknown.
 
 Verified against Git objects:
 
