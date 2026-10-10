@@ -17,12 +17,13 @@
 #include "include/iosupport.h"
 #include "include/mmcesupport.h"
 #include "include/discsupport.h"
+#include "include/achievements.h"
 
 static volatile int discBusy;
 
 int discCheckBusy(void)
 {
-    return discBusy || sbHashGameBusy();
+    return discBusy || sbHashGameBusy() || achievementsBusy();
 }
 
 // The watch-list format keys games by their root boot executable (up to 15 chars).
@@ -93,6 +94,8 @@ static void discCheckWorker(void)
         guiShowRANotice(_l(_STR_RA_STILL_IDENTIFYING), _l(_STR_RA_TRY_AGAIN));
     else if (result == -8)
         guiShowRANotice(_l(_STR_RA_NET_BUSY), _l(_STR_RA_NET_BUSY_HASH));
+    else if (result == -9)
+        guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
     else
         guiShowRANotice(_l(_STR_RA_PC_NO_ANSWER), _l(_STR_RA_PC_NO_ANSWER2));
 close_log:

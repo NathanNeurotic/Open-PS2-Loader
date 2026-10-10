@@ -64,7 +64,7 @@ extern int guiFrameId;
 #define GUI_SCREEN_GAME_MENU 3
 #define GUI_SCREEN_APP_MENU  4
 #ifdef RETROACHIEVEMENTS
-#define GUI_SCREEN_RA_BROWSER 5
+#define GUI_SCREEN_ACHIEVEMENTS 5
 #endif
 
 void guiSwitchScreen(int target);
@@ -233,6 +233,7 @@ void guiSetBootStatusSticky(const char *label);
 void guiSetBootStatusStickyCopy(const char *label);
 
 void guiWarning(const char *text, int count);
+void guiShowToast(const char *text);
 
 int guiConfirmVideoMode(void);
 

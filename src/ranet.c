@@ -70,6 +70,7 @@
 
 #ifdef RETROACHIEVEMENTS
 
+#include "include/rahash.h"
 #include "include/opl.h"
 #include "include/util.h"
 #include "include/ioman.h"
@@ -94,6 +95,8 @@
 #include <fcntl.h>
 #include <string.h>
 #include <time.h> /* clock(): round trip of the link test */
+
+#include "modules/network/common/ra_client.h"
 
 #define RA_PORT          18194
 #define RA_MY_PORT       18196 /* own port: the PC replies here directly, past NAT */
@@ -129,6 +132,44 @@
 
 /* Alignment is mandatory: rule 1 in the header. */
 static char g_rx[2048] __attribute__((aligned(64)));
+/* The last UDP responder is transient (and may not have passed protocol
+   validation). Only a completed watch-list exchange or a verified link
+   check can select a passive game's RA destination. */
+static u32 g_raReplyIP;
+static u32 g_raVerifiedIP;
+static int g_raVerifiedMode = -1;
+static u8 g_raVerifiedSMBHost[4];
+static int g_raVerifiedCompanionHost[4];
+
+static int raHostIsExplicit(void)
+{
+    return (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) != 0;
+}
+
+void raNetForgetPeer(void)
+{
+    g_raVerifiedIP = 0;
+    g_raVerifiedMode = -1;
+}
+
+static void raNetRememberPeer(u32 ip)
+{
+    if (ip == 0 || ip == htonl(INADDR_BROADCAST))
+        return;
+    g_raVerifiedIP = ip;
+    g_raVerifiedMode = gRAMode;
+    memcpy(g_raVerifiedSMBHost, pc_ip, sizeof(g_raVerifiedSMBHost));
+    memcpy(g_raVerifiedCompanionHost, gRAHostIp, sizeof(g_raVerifiedCompanionHost));
+}
+
+unsigned int raNetPeerIP(void)
+{
+    if (g_raVerifiedMode != gRAMode ||
+        memcmp(g_raVerifiedSMBHost, pc_ip, sizeof(g_raVerifiedSMBHost)) != 0 ||
+        memcmp(g_raVerifiedCompanionHost, gRAHostIp, sizeof(g_raVerifiedCompanionHost)) != 0)
+        return 0;
+    return g_raVerifiedIP;
+}
 static unsigned char g_wl[RA_MAX_BYTES];
 
 /* The NIC settlement (design doc, decided 2026-09-03): RA's menu check is a
@@ -173,7 +214,11 @@ static int ask(int sock, struct sockaddr_in *to, const char *req, char *out, int
             got = recvfrom(sock, out, asklen, RA_MSG_DONTWAIT, (struct sockaddr *)&from, &fromlen);
 
             if (got > 0) {
+                if (to->sin_addr.s_addr != htonl(INADDR_BROADCAST) &&
+                    from.sin_addr.s_addr != to->sin_addr.s_addr)
+                    continue;
                 out[got] = '\0';
+                g_raReplyIP = from.sin_addr.s_addr;
                 return got;
             }
 
@@ -256,10 +301,12 @@ static int open_pc_socket(char *myaddr, int sz, u8 ip[4])
     if (bind(sock, (struct sockaddr *)&me, sizeof(me)) < 0) {
         LOG("RA: bind failed\n");
         raHashStep("6x-bind-failed");
+        disconnect(sock);
+        return -1; /* Replies must reach the fixed RA_MY_PORT, not an ephemeral port. */
     }
 
-    ethGetNetConfig(ip, mask, gw);
-    if (ip[0] | ip[1] | ip[2] | ip[3])
+    memset(ip, 0, 4);
+    if (ethGetNetConfig(ip, mask, gw) >= 0 && (ip[0] | ip[1] | ip[2] | ip[3]))
         snprintf(myaddr, sz, " %d.%d.%d.%d %d", ip[0], ip[1], ip[2], ip[3], RA_MY_PORT);
 
     return sock;
@@ -273,6 +320,101 @@ static void broadcast_target(struct sockaddr_in *to)
     to->sin_addr.s_addr = htonl(INADDR_BROADCAST);
 }
 
+/* A dedicated RA host is optional. Without it, retain the existing
+   Caduceus-to-SMB host binding and Xerabora's broadcast discovery. An
+   override is a unicast destination for either mode and never changes the
+   SMB/HTTP game server or allows an arbitrary responder to replace it. */
+static int configured_ra_target(struct sockaddr_in *to, int port)
+{
+    const int *host = raHostIsExplicit() ? gRAHostIp : pc_ip;
+    int i;
+
+    if (!(host[0] | host[1] | host[2] | host[3]) ||
+        (host[0] == 255 && host[1] == 255 &&
+         host[2] == 255 && host[3] == 255))
+        return 0;
+    for (i = 0; i < 4; i++)
+        if (host[i] < 0 || host[i] > 255)
+            return 0;
+
+    memset(to, 0, sizeof(*to));
+    to->sin_family = AF_INET;
+    to->sin_port = htons(port);
+    to->sin_addr.s_addr = ((u32)host[0]) | ((u32)host[1] << 8) |
+                          ((u32)host[2] << 16) | ((u32)host[3] << 24);
+    return 1;
+}
+
+static int caduceus_target(struct sockaddr_in *to)
+{
+    return configured_ra_target(to, RA_CADUCEUS_PORT);
+}
+
+/* Discover without the capability, then send paired account requests only to
+   that bridge. WAIT retries stay pinned and never move to another PC. */
+int raCaduceusPage(const char *request, unsigned int serial, char *out, int size)
+{
+    struct sockaddr_in to;
+    char address[32], expected[32];
+    u8 ip[4];
+    int sock, attempt, got, session;
+    if (raNetNicBusy() || gRAMode != RA_MODE_CADUCEUS || !out || size < 1)
+        return -1;
+    out[0] = 0;
+    sock = open_pc_socket(address, sizeof(address), ip);
+    if (sock < 0)
+        return -1;
+    /* The account browser and game tracking use exactly the same host. */
+    if (!caduceus_target(&to)) {
+        disconnect(sock);
+        return -2;
+    }
+    got = ask(sock, &to, "CADQ2 " RA_PROBE_HASH, g_rx, sizeof(g_rx));
+    session = got > 0 ? raCaduceusSessionReply(g_rx, RA_PROBE_HASH) : -2;
+    if (session != 0) {
+        disconnect(sock);
+        if (session == -9) {
+            snprintf(out, size, "OFFLINE");
+            return 0;
+        }
+        return -2;
+    }
+    to.sin_addr.s_addr = g_raReplyIP;
+    to.sin_port = htons(18198);
+    snprintf(expected, sizeof(expected), "CADB1 %u ", serial);
+    for (attempt = 0; attempt < 40; attempt++) {
+        got = ask(sock, &to, request, g_rx, sizeof(g_rx));
+        if (got <= 0)
+            break;
+        if (strncmp(g_rx, expected, strlen(expected)))
+            continue;
+        if (!strcmp(g_rx + strlen(expected), "WAIT")) {
+            DelayThread(250000);
+            continue;
+        }
+        snprintf(out, size, "%s", g_rx + strlen(expected));
+        disconnect(sock);
+        return 0;
+    }
+    disconnect(sock);
+    return -2;
+}
+
+/* Chunk offsets use a fixed 896-byte stride. Accepting short intermediate
+   chunks leaves gaps in g_wl even when the received byte sum matches total.
+   Check the advertised chunk count and every exact payload length before
+   copying or publishing an achievement watch list. */
+static int raExpectedChunkLength(int total, int chunks, int index)
+{
+    int remaining;
+    if (total <= 0 || total > RA_MAX_BYTES ||
+        chunks != (total + RA_CHUNK - 1) / RA_CHUNK ||
+        index < 0 || index >= chunks)
+        return -1;
+    remaining = total - index * RA_CHUNK;
+    return remaining > RA_CHUNK ? RA_CHUNK : remaining;
+}
+
 int raAskPC(const char *hash, const char *serial, const char *savepath,
             char *info, int infosz, char *info2, int info2sz)
 {
@@ -283,6 +425,8 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
     int sock, got;
     int total = 0, chunks = 0, received = 0, i;
 
+    /* A failed or mismatched new check must not reuse an old peer. */
+    raNetForgetPeer();
     if (info != NULL && infosz > 0)
         info[0] = '\0';
     if (info2 != NULL && info2sz > 0)
@@ -299,6 +443,28 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
         return -1;
 
     broadcast_target(&to);
+    if (gRAMode != RA_MODE_CADUCEUS && raHostIsExplicit() &&
+        !configured_ra_target(&to, RA_PORT)) {
+        disconnect(sock);
+        return -2;
+    }
+
+    if (gRAMode == RA_MODE_CADUCEUS) {
+        int session;
+        if (!caduceus_target(&to)) {
+            disconnect(sock);
+            return -2;
+        }
+        snprintf(req, sizeof(req), "CADQ2 %s", hash);
+        got = ask(sock, &to, req, g_rx, sizeof(g_rx));
+        session = got > 0 ? raCaduceusSessionReply(g_rx, hash) : -2;
+        if (session != 0) {
+            disconnect(sock);
+            return session;
+        }
+        to.sin_addr.s_addr = g_raReplyIP;
+        to.sin_port = htons(RA_PORT);
+    }
 
     snprintf(req, sizeof(req), "RAQ1 %s %s%s", hash, serial, myaddr);
     LOG("RA: asking the PC about %s\n", hash);
@@ -394,7 +560,7 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
     }
 
     if (sscanf(g_rx + 8, "%d %d", &total, &chunks) != 2 ||
-        total <= 0 || total > RA_MAX_BYTES || chunks <= 0) {
+        raExpectedChunkLength(total, chunks, 0) < 0) {
         LOG("RA: malformed reply: %s\n", g_rx);
         disconnect(sock);
         return -3;
@@ -433,7 +599,7 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
             return -5;
         }
 
-        if (len < 0 || len > RA_CHUNK || i * RA_CHUNK + len > RA_MAX_BYTES || hdr == 0 || hdr + len > got) {
+        if (len != raExpectedChunkLength(total, chunks, i) || hdr == 0 || hdr + len > got) {
             LOG("RA: chunk %d does not fit\n", i);
             disconnect(sock);
             return -6;
@@ -454,10 +620,12 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
        on whether the file reached the medium: on a USB stick writes sit
        in the USB driver's cache and the file may appear later, or never
        if the power goes off. */
-    if (SetWatchList(g_wl, total, serial) > 0)
-        raHashStep("8-list-in-memory");
-    else
+    if (SetWatchList(g_wl, total, serial) <= 0) {
         raHashStep("8x-list-not-parsed");
+        return -6; /* Do not persist an invalid list as though support was confirmed. */
+    }
+    raNetRememberPeer(g_raReplyIP);
+    raHashStep("8-list-in-memory");
 
     /* And as a file, for future launches and so the game gets its badge
        in the list. Two copies: next to the game (the loader reads from
@@ -487,10 +655,24 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
                 continue;
             }
 
-            fwrite(g_wl, 1, (size_t)total, f);
-            fclose(f);
+            {
+                size_t written = fwrite(g_wl, 1, (size_t)total, f);
+                int closed = fclose(f);
+                if (written != (size_t)total || closed != 0) {
+                    LOG("RA: short/failed watch-list write: %s\n", file);
+                    unlink(file);
+                    continue;
+                }
+            }
             saved++;
-
+            /* Bind the VCD's per-path watch list to this exact RA content
+               hash ONLY after its file has been completely persisted. If
+               local storage refuses an update, do not authorize an older
+               on-disk watch list with a new image hash. The SMB fallback
+               gets its own guard only when that copy actually succeeds. */
+            if (serial[0] == 'P' && strlen(serial) == 15 &&
+                raVcdWatchGuardStore(where[w], serial, hash) != 0)
+                LOG("RA: VCD guard was not saved: %s\n", file);
             LOG("RA: list saved: %s (%d bytes)\n", file, total);
         }
 
@@ -525,9 +707,14 @@ void raLaunchNetworkUp(void)
     if (!gRATelemetry || GetWatchCount() <= 0)
         return;
 
-    /* UDPBD/UDPFS own the NIC and are not telemetry launch paths. */
-    if (raNetNicBusy())
+    /* UDPBD/UDPFS own the NIC. A saved watch list may already be loaded,
+       but leaving it armed would embed RA telemetry in a network-backed
+       launch despite refusing the menu network handoff. Fail open instead. */
+    if (raNetNicBusy()) {
+        raNetForgetPeer();
+        ClearWatchList();
         return;
+    }
 
     sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock >= 0) {
@@ -546,7 +733,29 @@ void raLaunchNetworkUp(void)
                  (ip[0] | ip[1] | ip[2] | ip[3]) != 0 &&
                  (!ps2_ip_use_dhcp || ethGetDHCPStatus() > 0);
 
+    if (linkUp && gRAMode == RA_MODE_CADUCEUS) {
+        struct sockaddr_in to;
+        char address[32];
+        int got, session;
+        sock = open_pc_socket(address, sizeof(address), ip);
+        if (sock >= 0 && caduceus_target(&to)) {
+            got = ask(sock, &to, RA_CADUCEUS_PROBE, g_rx, sizeof(g_rx));
+            session = got > 0 ? raCaduceusSessionReply(g_rx, RA_PROBE_HASH) : -2;
+        } else
+            session = -1;
+        if (sock >= 0)
+            disconnect(sock);
+        if (session != 0) {
+            raNetForgetPeer();
+            ClearWatchList();
+            guiWarning(_l(_STR_CAD_UNTRACKED), 6);
+            return;
+        }
+        raNetRememberPeer(g_raReplyIP);
+    }
+
     if (!linkUp) {
+        raNetForgetPeer();
         LOG("RA: network unavailable, launching without telemetry\n");
         ClearWatchList();
         guiWarning(_l(_STR_RA_NO_LINK_UNTRACKED), 6);
@@ -556,68 +765,9 @@ void raLaunchNetworkUp(void)
 /* Link test for the menu: broadcasts every 250 ms for up to three seconds.
    The reply's source address and the version in its text tell what
    answered; the round trip is measured with clock(). */
-/* Read-only Caduceus account browser endpoint, provided by PS2-Servers when
- * RetroAchievements is set to Caduceus mode. Bound the WAIT loop; never use a
- * second IOP network stack while UDPBD/UDPFS owns SMAP. This is intentionally
- * separate from RAQ1 watch-list acquisition on UDP 18194. */
-int raNetAccountPage(const char *request, unsigned int nonce, char *out, int size)
-{
-    struct sockaddr_in to;
-    char myaddr[32], expected[32];
-    u8 own_ip[4];
-    int sock, pass, attempt, got, heard;
-    if (!request || !out || size < 16)
-        return -1;
-    out[0] = '\0';
-    if (raNetNicBusy())
-        return -8;
-    sock = open_pc_socket(myaddr, sizeof(myaddr), own_ip);
-    if (sock < 0)
-        return -2;
-    snprintf(expected, sizeof(expected), "CADB1 %u ", nonce);
-    for (pass = 0; pass < 2; pass++) {
-        heard = 0;
-        memset(&to, 0, sizeof(to));
-        to.sin_family = AF_INET;
-        to.sin_port = htons(18198);
-        if (pass == 0 && (pc_ip[0] | pc_ip[1] | pc_ip[2] | pc_ip[3])) {
-            to.sin_addr.s_addr = htonl(((u32)pc_ip[0] << 24) |
-                                       ((u32)pc_ip[1] << 16) | ((u32)pc_ip[2] << 8) | pc_ip[3]);
-        } else {
-            if (pass == 0)
-                pass = 1; /* no configured host: don't broadcast twice */
-            to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-        }
-        for (attempt = 0; attempt < 8; attempt++) {
-            got = ask(sock, &to, request, g_rx, sizeof(g_rx));
-            if (got <= 0) {
-                if (!heard)
-                    break; /* configured address may be stale: try broadcast */
-                disconnect(sock);
-                return -2;
-            }
-            if (strncmp(g_rx, expected, strlen(expected)) != 0) {
-                disconnect(sock);
-                return -3; /* unrelated reply, never interpret its payload */
-            }
-            heard = 1;
-            if (strncmp(g_rx + strlen(expected), "WAIT", 4) == 0) {
-                DelayThread(200000);
-                continue;
-            }
-            snprintf(out, size, "%s", g_rx + strlen(expected));
-            disconnect(sock);
-            return 0;
-        }
-        if (heard)
-            break;
-    }
-    disconnect(sock);
-    return -2;
-}
-
 int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
 {
+    raNetForgetPeer();
     struct sockaddr_in to, from;
     socklen_t fromlen;
     char myaddr[32], req[64];
@@ -654,6 +804,32 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
     }
 
     broadcast_target(&to);
+    if (gRAMode != RA_MODE_CADUCEUS && raHostIsExplicit() &&
+        !configured_ra_target(&to, RA_PORT)) {
+        disconnect(sock);
+        snprintf(line1, sz1, "%s", _l(_STR_RA_TEST_NO_ANSWER));
+        snprintf(line2, sz2, "%s", _l(_STR_RA_TEST_NO_ANSWER2));
+        return 0;
+    }
+    if (gRAMode == RA_MODE_CADUCEUS) {
+        int session;
+        if (!caduceus_target(&to)) {
+            disconnect(sock);
+            snprintf(line1, sz1, "%s", _l(_STR_RA_TEST_NO_ANSWER));
+            snprintf(line2, sz2, "%s", _l(_STR_RA_CADUCEUS_SIGN_IN));
+            return 0;
+        }
+        got = ask(sock, &to, RA_CADUCEUS_PROBE, rx, sizeof(rx));
+        session = got > 0 ? raCaduceusSessionReply(rx, RA_PROBE_HASH) : -2;
+        if (session != 0) {
+            disconnect(sock);
+            snprintf(line1, sz1, "%s", _l(session == -9 ? _STR_RA_CADUCEUS_OFFLINE : _STR_RA_TEST_NO_ANSWER));
+            snprintf(line2, sz2, "%s", _l(_STR_RA_CADUCEUS_SIGN_IN));
+            return 0;
+        }
+        to.sin_addr.s_addr = g_raReplyIP;
+        to.sin_port = htons(RA_PORT);
+    }
     snprintf(req, sizeof(req), "RAP1%s", myaddr);
 
     t0 = clock();
@@ -670,7 +846,8 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
             /* 192: a multiple of 64 (rule 3) that leaves room for the
                terminating zero from the memset above. */
             got = recvfrom(sock, rx, sizeof(rx) - 64, RA_MSG_DONTWAIT, (struct sockaddr *)&from, &fromlen);
-            if (got >= 4 && strncmp(rx, "RAO1", 4) == 0)
+            if (got >= 8 && strncmp(rx, "RAO1 OK ", 8) == 0 &&
+                (to.sin_addr.s_addr == htonl(INADDR_BROADCAST) || from.sin_addr.s_addr == to.sin_addr.s_addr))
                 found = 1;
             else
                 DelayThread(RA_POLL_MS * 1000);
@@ -686,6 +863,7 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
         return 0;
     }
 
+    raNetRememberPeer(from.sin_addr.s_addr);
     {
         const char *ver = (got > 8 && strncmp(rx, "RAO1 OK ", 8) == 0) ? rx + 8 : "";
         unsigned int a = ntohl(from.sin_addr.s_addr);

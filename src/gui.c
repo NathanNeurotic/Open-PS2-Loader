@@ -5,13 +5,14 @@
  */
 
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#include "include/ranet.h"
+#endif
 #include "include/gui.h"
 #include "include/diag.h" // gLastDeferredTimedOut -- a bounded wait that expired means the handler never ran
 #include "include/renderman.h"
 #include "include/menusys.h"
-#ifdef RETROACHIEVEMENTS
-#include "include/ra_browser.h"
-#endif
 #include "include/fntsys.h"
 #include "include/ioman.h"
 #include "include/lang.h"
@@ -169,7 +170,7 @@ static gui_screen_handler_t screenHandlers[] = {{&menuHandleInputMain, &menuRend
                                                 {&menuHandleInputAppMenu, &menuRenderAppMenu, 1}
 #ifdef RETROACHIEVEMENTS
                                                 ,
-                                                {&raBrowserHandleInput, &raBrowserRender, 1}
+                                                {&menuHandleInputAchievements, &menuRenderAchievements, 1}
 #endif
 };
 
@@ -396,6 +397,33 @@ static void guiRenderNotifications(char *string, int y)
 
     rmDrawRect(x - 10, y, screenWidth - x, MENU_ITEM_HEIGHT + 10, gColDarker);
     fntRenderString(gTheme->fonts[0], x - 5, y + 5, ALIGN_NONE, 0, 0, string, gTheme->textColor);
+}
+
+// Feedback for a user action; independent of courtesy notification preferences.
+static char actionToast[128];
+static clock_t actionToastStart;
+
+static void guiRenderToast(void)
+{
+    if (!actionToast[0])
+        return;
+    if ((clock_t)(clock() - actionToastStart) >= 3000 * (CLOCKS_PER_SEC / 1000)) {
+        actionToast[0] = '\0';
+        return;
+    }
+    guiRenderNotifications(actionToast, gTheme->usedHeight - MENU_ITEM_HEIGHT - 20);
+}
+
+void guiShowToast(const char *text)
+{
+    snprintf(actionToast, sizeof(actionToast), "%s", text);
+    actionToastStart = clock();
+    // Present the saving message BEFORE the synchronous storage write starts.
+    guiStartFrame();
+    guiShow();
+    guiDrawOverlays();
+    guiRenderToast();
+    guiEndFrame();
 }
 
 static void guiShowNotifications(void)
@@ -1343,6 +1371,12 @@ static int guiSmbLinkChanged(const gui_smb_link_t *before)
 
 int guiShowNetConfig(void)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return guiSettingsPageResult(UIID_BTN_CANCEL);
+    }
+#endif
     size_t i;
     // What the live SMB session was built from, before this page changes anything.
     gui_smb_link_t smbBefore;
@@ -1400,6 +1434,11 @@ int guiShowNetConfig(void)
     diaSetString(diaNetConfig, NETCFG_SHARE_PASSWORD, gPCPassword);
     diaSetInt(diaNetConfig, NETCFG_ETHOPMODE, gETHOpMode);
 #ifdef RETROACHIEVEMENTS
+    static const char *raModes[] = {"Xerabora", "Caduceus", NULL};
+    diaSetEnum(diaNetConfig, NETCFG_RA_MODE, raModes);
+    diaSetInt(diaNetConfig, NETCFG_RA_MODE, gRAMode);
+    for (i = 0; i < 4; ++i)
+        diaSetInt(diaNetConfig, NETCFG_RA_HOST_IP_0 + i, gRAHostIp[i]);
     diaSetInt(diaNetConfig, NETCFG_RA_TELEMETRY, gRATelemetry);
     diaSetInt(diaNetConfig, NETCFG_RA_BADGES, gRABadges);
 #endif
@@ -1488,6 +1527,10 @@ reshow_network:
         }
         diaGetInt(diaNetConfig, NETCFG_ETHOPMODE, &gETHOpMode);
 #ifdef RETROACHIEVEMENTS
+        int previousRAMode = gRAMode;
+        diaGetInt(diaNetConfig, NETCFG_RA_MODE, &gRAMode);
+        for (i = 0; i < 4; ++i)
+            diaGetInt(diaNetConfig, NETCFG_RA_HOST_IP_0 + i, &gRAHostIp[i]);
         diaGetInt(diaNetConfig, NETCFG_RA_TELEMETRY, &gRATelemetry);
         diaGetInt(diaNetConfig, NETCFG_RA_BADGES, &gRABadges);
 #endif
@@ -1516,10 +1559,20 @@ reshow_network:
         // OK is this page's apply button. A protocol change made on Game Sources (or declined here
         // earlier) is still waiting on a restart, so OK offers it again rather than doing nothing.
         if (gNetworkProtocol == netProtocolWas && (result == NETCFG_OK || result == NETCFG_RECONNECT) &&
-            guiNetProtocolNeedsRestart())
+            guiNetProtocolNeedsRestart()) {
             guiNetProtocolOfferRestart();
+        }
 
+#ifdef RETROACHIEVEMENTS
+        /* Any applied network/RA settings invalidate the peer selected by
+           a previous menu query, without doing new discovery here. */
+        raNetForgetPeer();
+#endif
         applyConfig(-1, -1, 0);
+#ifdef RETROACHIEVEMENTS
+        if (gRAMode != previousRAMode)
+            menuReinitMainMenu();
+#endif
 
         // OK is an Apply action for the live SMB stack, not merely a RAM/config edit -- and after a
         // failed connect it is labelled Reconnect, so it reconnects even with nothing changed. Any
@@ -4460,6 +4513,8 @@ void guiMainLoop(void)
         // something the user just asked for), independent of gEnableNotifications.
         guiShowRANotices();
 #endif
+
+        guiRenderToast();
 
         // handle deferred operations
         guiHandleDeferredOps();

@@ -66,9 +66,9 @@ GSM1080P ?= 1
 #file, so run "make clean" when switching it. This bites hardest on EECoreConfig_t and
 #OPL_MODULE_ID, where a stale .o silently loads the wrong module blob.
 #
-#Only the four launch legs that go through sysLaunchLoaderElf (BDM/ETH/HDD/MMCE) can ever carry
-#telemetry -- Neutrino-core games, UDPFS and PS1/VCD hand off to an external ELF and never load
-#ee_core at all. See docs/RETROACHIEVEMENTS-INTEGRATION-PLAN.md.
+#The four launch legs through sysLaunchLoaderElf (BDM/ETH/HDD/MMCE) carry PS2
+#telemetry -- Neutrino-core games and UDPFS hand off to an external ELF and never load
+#ee_core at all. USB PS1/VCD uses rapops/rapull instead of ee_core.
 RETROACHIEVEMENTS ?= 0
 
 #Enables/disables building of an edition of OPL that will support the DTL-T10000 (SDK v2.3+)
@@ -285,10 +285,10 @@ ifeq ($(RETROACHIEVEMENTS),1)
   #          ISO9660 directly -- mounting hangs on USB past the 2 GB mark.
   # ranet:   the menu-side PC client exchange (hash -> watch list over UDP).
   # rabadge: the "tracked game" badge cache behind the list mark and cover mark.
-  FRONTEND_OBJS += md5.o rawatch.o rahash.o ranet.o rabadge.o discsupport.o ra_browser.o
+  FRONTEND_OBJS += rapopslaunch.o md5.o rawatch.o rahash.o ranet.o achievements.o rabadge.o discsupport.o
   # The in-game telemetry sender. Hand-builds Ethernet/UDP frames and calls
   # SMAPSendPacket directly, so it deliberately bypasses the menu network stack.
-  IOP_OBJS += raudp.o
+  IOP_OBJS += raudp.o rapops.o
 endif
 
 # A DEBUG build implies the field diagnostics: it already has a TTY, so withholding the on-screen
@@ -503,6 +503,8 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/network/ps2ips clean
 	echo " -raudp"
 	$(MAKE) -C modules/network/raudp clean
+	$(MAKE) -C modules/network/rapops clean
+	$(MAKE) -C modules/network/rapull clean
 	echo " -smbman-ra"
 	$(MAKE) -C modules/network/smbman-ra clean
 	echo " -usbd-ra"
@@ -879,6 +881,7 @@ $(EE_ASM_DIR)smap_udpbd.c: modules/network/smap_udpbd/smap_udpbd.irx | $(EE_ASM_
 # hardware. `rebuild` (clean+all) because this module's objects are shared with
 # nothing and a partial rebuild here is not worth the risk.
 RAUDP_DEPS := $(wildcard modules/network/raudp/*.c) $(wildcard modules/network/raudp/*.h) \
+              $(wildcard modules/network/common/*.h) \
               modules/network/raudp/imports.lst modules/network/raudp/exports.tab \
               modules/network/raudp/Makefile
 
@@ -887,6 +890,27 @@ modules/network/raudp/raudp.irx: $(RAUDP_DEPS) | modules/network/raudp
 
 $(EE_ASM_DIR)raudp.c: modules/network/raudp/raudp.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ raudp_irx
+
+# PS1 under POPS: the snapshot read from the IOP over the SIF
+RAPULL_DEPS := $(wildcard modules/network/rapull/*.c) $(wildcard modules/network/common/*.h) \
+               modules/network/rapull/imports.lst modules/network/rapull/Makefile
+
+modules/network/rapull/rapull.irx: $(RAPULL_DEPS) | modules/network/rapull
+	$(MAKE) -C modules/network/rapull rebuild
+
+# PS1 under POPS: carries DEV9, SMSUTILS, SMSTCPIP, SMAP, raudp and rapull
+RAPOPS_DEPS := $(wildcard modules/network/rapops/*.c) $(wildcard modules/network/rapops/*.h) \
+               modules/network/rapops/blobs.S $(wildcard modules/network/common/*.h) \
+               modules/network/rapops/irx_imports.h modules/network/rapops/imports.lst modules/network/rapops/Makefile \
+               modules/network/raudp/raudp.irx modules/network/SMSTCPIP/SMSTCPIP.irx \
+               modules/network/smap-ingame/smap.irx modules/network/SMSUTILS/SMSUTILS.irx \
+               modules/network/rapull/rapull.irx
+
+modules/network/rapops/rapops.irx: $(RAPOPS_DEPS) | modules/network/rapops
+	$(MAKE) -C modules/network/rapops rebuild
+
+$(EE_ASM_DIR)rapops.c: modules/network/rapops/rapops.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ rapops_irx
 
 modules/network/udpfs_smap/udpfs_smap.irx: modules/network/udpfs_smap
 	$(MAKE) -C $<

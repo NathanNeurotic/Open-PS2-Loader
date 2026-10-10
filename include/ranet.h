@@ -7,7 +7,8 @@
    does not know the image, -7 when the PC was still identifying it after
    the waiting rounds, -8 when the NIC is owned by a UDP transport and the
    ask was refused without touching the network, another negative value when
-   the PC did not answer or the transfer broke.
+   the PC did not answer or the transfer broke. -9 means the selected
+   Caduceus bridge answered but its RA session is offline.
    info (may be NULL) receives the game title, info2 (may be NULL) the
    achievement counts as the PC reported them, e.g. info "Need for Speed:
    Underground 2" and info2 "76 achievements: 3 unlocked, 10 unsupported".
@@ -27,8 +28,11 @@ void raLaunchNetworkUp(void);
 /* Broadcasts a discovery request and reports the outcome as two lines
    of text for the notice popup. Returns 1 when a PC client answered. */
 int raNetTestLink(char *line1, int sz1, char *line2, int sz2);
-/* Caduceus-compatible account progress browsing; reply has CADB1 prefix removed.
- * 0 success, -8 NIC owned by another transport, other negative network/protocol failure. */
-int raNetAccountPage(const char *request, unsigned int nonce, char *out, int size);
+
+/* Verified for the current RA mode and SMB host. An unrelated UDP response
+   never becomes the passive game's destination. */
+unsigned int raNetPeerIP(void);
+void raNetForgetPeer(void);
+int raCaduceusPage(const char *request, unsigned int serial, char *out, int size);
 
 #endif

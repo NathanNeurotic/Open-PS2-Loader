@@ -168,10 +168,11 @@ static int cueEntryIsGame(const char *devPrefix, const char *gamesDir, const str
 int cueScanDir(const char *devPrefix, cue_entry_t **outList)
 {
     char gamesDir[288];
-    cue_entry_t *list;
+    cue_entry_t *list = NULL;
     struct dirent *de;
     DIR *dir;
     int count = 0;
+    int capacity = 0;
 
     if (outList == NULL)
         return 0;
@@ -232,12 +233,10 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
         return -1;
     }
 
-    list = (cue_entry_t *)calloc(CUE_MAX_ITEMS, sizeof(cue_entry_t));
-    if (list == NULL) {
-        closedir(dir);
-        return -1; // OOM: preserve the caller's current list rather than blank it
-    }
-
+    // Do not reserve CUE_MAX_ITEMS * 192 bytes (384 KiB) for every scan, including
+    // a one-game USB stick. On a memory-constrained EE build that allocation can
+    // fail and silently leave a never-scanned PS1 page empty. Grow geometrically
+    // instead, retaining the same 2,048-game ceiling and last-good-list semantics.
     while (count < CUE_MAX_ITEMS && (de = readdir(dir)) != NULL) {
         if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
             continue;
@@ -258,6 +257,20 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
         if (!cueEntryIsGame(devPrefix, gamesDir, de))
             continue; // loose files, and folders holding nothing Ember can mount, are not games
 
+        if (count == capacity) {
+            int nextCapacity = capacity ? capacity * 2 : 8;
+            if (nextCapacity > CUE_MAX_ITEMS)
+                nextCapacity = CUE_MAX_ITEMS;
+            cue_entry_t *grown = (cue_entry_t *)realloc(list, (size_t)nextCapacity * sizeof(cue_entry_t));
+            if (grown == NULL) {
+                LOG("[CUE] out of memory growing list to %d entries for '%s'\n", nextCapacity, gamesDir);
+                free(list);
+                closedir(dir);
+                return -1; // OOM: preserve the caller's current PS1 list
+            }
+            list = grown;
+            capacity = nextCapacity;
+        }
         snprintf(list[count].name, sizeof(list[count].name), "%s", de->d_name);
         count++;
     }

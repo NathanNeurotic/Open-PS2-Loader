@@ -8,6 +8,7 @@ thbase_IMPORTS_end
 
 smap_driver_IMPORTS_start
 I_SMAPSendPacket
+I_SMAPReadNotice
 smap_driver_IMPORTS_end
 
 ps2ip_IMPORTS_start
@@ -27,4 +28,5 @@ loadcore_IMPORTS_end
 
 sifman_IMPORTS_start
 I_sceSifSetDma
+I_sceSifDmaStat
 sifman_IMPORTS_end

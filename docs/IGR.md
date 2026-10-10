@@ -32,10 +32,19 @@ The power button on the front of the console is hooked too, and does not need a 
 | Press **once** | Power off |
 | Press **twice** | Reset — the same as Start + Select |
 
-The second press has to land within **about a second** — RiptOPL waits ~50 vertical blanks after the
-first press to see whether another arrives, then acts on the count.
+The second press has to land within **about a second** — RiptOPL waits ~50 polling frames after the
+first press to see whether another arrives, then acts on the count. A single
+hardware power-off status held across several frames counts as **one** press,
+not a spurious double press.
 
-This is the fallback worth remembering when a game has stopped responding to the pad entirely.
+**A physical tap is not guaranteed on every console and transport.** On
+hardware with an active DEV9/network adapter or HDD, the front-panel event
+passes through the console's Mechacon/CDVD handling. If the event is missed,
+controller IGR can still work: the two have different input paths, and
+reset and power-off take different shutdown paths. This is a compatibility
+limit, not a reason to reset DEV9 or power-cycle the drive during a game.
+If a short tap is ignored, the console's normal press-and-hold standby
+action is the hardware fallback; avoid cutting AC power during disk activity.
 
 ---
 

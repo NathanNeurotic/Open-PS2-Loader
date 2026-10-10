@@ -2531,6 +2531,53 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
         return;
     }
 
+    if (!strcasecmp(ext, ".VCD")) {
+        char root[64], boot[16];
+        const char *colon = strchr(path, ':');
+        int n = colon ? (int)(colon - path) + 1 : 0;
+        int ret = -1;
+
+        /* Malformed paths and failed reads use the same logged, localized failure path. */
+        if (!n || n + 2 > (int)sizeof(root))
+            goto vcd_fail;
+        memcpy(root, path, n);
+        root[n++] = '/';
+        root[n] = '\0';
+        if (snprintf(iso, sizeof(iso), "%sPOPS/%s%s", root, name, ext) >= (int)sizeof(iso))
+            goto vcd_fail;
+        ret = raHashVcd(iso, boot, sizeof(boot), hash);
+        if (ret != 0)
+            goto vcd_fail;
+
+        {
+            char watchKey[16];
+            int q;
+
+            if (raVcdWatchKey(iso, watchKey, sizeof(watchKey)) != 0)
+                goto vcd_fail;
+            q = raAskPC(hash, watchKey, path, info, sizeof(info), info2, sizeof(info2));
+            raHashLogAdd(name, boot, hash);
+            if (q == 0)
+                guiShowRANotice(info[0] ? info : _l(_STR_RA_SUPPORTED), info2[0] ? info2 : _l(_STR_RA_START_TO_TRACK));
+            else if (q == 1)
+                guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
+            else if (q == -9)
+                guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
+            else
+                guiShowRANotice(_l(_STR_RA_PC_NO_ANSWER), _l(_STR_RA_PC_NO_ANSWER2));
+        }
+        goto vcd_done;
+
+    vcd_fail:
+        snprintf(last_err, sizeof(last_err), "VCD: code %d", ret);
+        raHashLogAdd(name, startup ? startup : "PS1", last_err);
+        guiShowRANotice(_l(_STR_RA_HASH_FAILED), _l(_STR_RA_HASH_FAILED2));
+    vcd_done:
+        raHashSetStepLog(NULL);
+        raHashLogClose();
+        return;
+    }
+
     for (i = 0; dirs[i] != NULL; i++) {
         int ret;
 
@@ -2569,6 +2616,8 @@ void sbHashGame(const char *path, const char *name, const char *ext, const char 
             } else if (q == 1) {
                 raHashStep("7-pc-does-not-know-image");
                 guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
+            } else if (q == -9) {
+                guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
             } else if (q == -7) {
                 raHashStep("7-pc-still-identifying");
                 guiShowRANotice(_l(_STR_RA_STILL_IDENTIFYING), _l(_STR_RA_TRY_AGAIN));
@@ -2627,7 +2676,9 @@ static char ra_hash_path[256]; /* the same length discipline as sbLoadWatchList:
 static char ra_hash_name[128];
 static char ra_hash_ext[16];
 static char ra_hash_startup[16];
-static int ra_hash_format = -1; /* GAME_FORMAT_USBLD is 0: never default to it */
+static int ra_hash_format = -1;
+static int ra_hash_hdl = 0;
+static unsigned int ra_hash_hdl_sector; /* GAME_FORMAT_USBLD is 0: never default to it */
 
 static void sbHashGameDeferredWorker(void);
 
@@ -2652,7 +2703,58 @@ int sbHashGameDeferred(const char *path, const char *name, const char *ext, cons
     snprintf(ra_hash_ext, sizeof(ra_hash_ext), "%s", ext ? ext : "");
     snprintf(ra_hash_startup, sizeof(ra_hash_startup), "%s", startup ? startup : "");
     ra_hash_format = format;
+    ra_hash_hdl = 0;
 
+    if (ioPutRequest(IO_CUSTOM_SIMPLEACTION, &sbHashGameDeferredWorker) != IO_OK) {
+        ra_hash_busy = 0;
+        return 0;
+    }
+    return 1;
+}
+
+/* The APA walker uses the exact 1024-byte HDLoader descriptor and the
+   partition map already trusted by CDVDMAN. It only performs raw reads and
+   hashes the same boot executable as the normal ISO support check. */
+static void sbHashHdlGame(const char *path, const char *name, const char *startup, unsigned int start_sector)
+{
+    char hash[33], info[96] = "", info2[96] = "", result[64];
+    int status, query;
+
+    raHashLogOpen(path);
+    raHashSetStepLog(&raHashStep);
+    status = raHashHdl(start_sector, startup, hash);
+    if (status == 0) {
+        raHashLogAdd(name, startup, hash);
+        query = raAskPC(hash, startup, path, info, sizeof(info), info2, sizeof(info2));
+        if (query == 0)
+            guiShowRANotice(info[0] ? info : _l(_STR_RA_SUPPORTED),
+                            info2[0] ? info2 : _l(_STR_RA_START_TO_TRACK));
+        else if (query == 1)
+            guiShowRANotice(_l(_STR_RA_UNKNOWN_IMAGE), hash);
+        else if (query == -9)
+            guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
+        else
+            guiShowRANotice(_l(_STR_RA_PC_NO_ANSWER), _l(_STR_RA_PC_NO_ANSWER2));
+    } else {
+        snprintf(result, sizeof(result), "HDL: read/map/hash error %d", status);
+        raHashLogAdd(name, startup, result);
+        guiShowRANotice(_l(_STR_RA_HASH_FAILED), _l(_STR_RA_HASH_FAILED2));
+    }
+    raHashSetStepLog(NULL);
+    raHashLogClose();
+}
+
+int sbHashHdlDeferred(const char *path, const char *name, const char *startup, unsigned int start_sector)
+{
+    if (ra_hash_busy || !path || !path[0] || !startup || !startup[0] || !start_sector)
+        return 0;
+
+    ra_hash_busy = 1;
+    snprintf(ra_hash_path, sizeof(ra_hash_path), "%s", path);
+    snprintf(ra_hash_name, sizeof(ra_hash_name), "%s", name ? name : "");
+    snprintf(ra_hash_startup, sizeof(ra_hash_startup), "%s", startup);
+    ra_hash_hdl_sector = start_sector;
+    ra_hash_hdl = 1;
     if (ioPutRequest(IO_CUSTOM_SIMPLEACTION, &sbHashGameDeferredWorker) != IO_OK) {
         ra_hash_busy = 0;
         return 0;
@@ -2662,7 +2764,10 @@ int sbHashGameDeferred(const char *path, const char *name, const char *ext, cons
 
 static void sbHashGameDeferredWorker(void)
 {
-    sbHashGame(ra_hash_path, ra_hash_name, ra_hash_ext, ra_hash_startup, ra_hash_format);
+    if (ra_hash_hdl)
+        sbHashHdlGame(ra_hash_path, ra_hash_name, ra_hash_startup, ra_hash_hdl_sector);
+    else
+        sbHashGame(ra_hash_path, ra_hash_name, ra_hash_ext, ra_hash_startup, ra_hash_format);
     ra_hash_busy = 0;
 }
 

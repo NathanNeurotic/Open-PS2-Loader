@@ -4,6 +4,7 @@
 #include <irx.h>
 
 #ifdef RETROACHIEVEMENTS
+#include <intrman.h>
 #include <loadcore.h>
 #include <thsemap.h>
 #endif

@@ -60,10 +60,14 @@ prefix=r'''
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include "include/md5.h"
+#include "include/hdl_layout.h"
 typedef void (*ra_step_fn)(const char *);
+static int hddReadSectors(unsigned int lba,unsigned int count,void *buffer)
+    {(void)lba;(void)count;(void)buffer;return -1;}
 typedef struct { unsigned char trycount,spindlctrl,datapattern,pad; } sceCdRMode;
 enum { SCECdErNO=0,SCECdSecS2048=0,SCECdSpinNom=1,SCECdSpinStm=2 };
 #define LOG(...) ((void)0)
@@ -153,6 +157,8 @@ enum { IO_CUSTOM_SIMPLEACTION, IO_OK, NO_EXCEPTION, IO_MODE_SELECTED_ALL };
 static int gRATelemetry, image_busy, probe_result, watch_count, queued_result=IO_OK;
 static int launched, torn_down, queue_count;
 static const char *probe_path="cdrom0:\\\\SLUS_201.74;1", *home="mc0:/OPL";
+static int browser_busy;
+static int achievementsBusy(void) {return browser_busy;}
 static int sbHashGameBusy(void) {return image_busy;}
 static int sysGetDiscBootPath(char *p,int n,int(*fn)(void)) {(void)fn;snprintf(p,n,"%s",probe_path);return probe_result;}
 static const char *configGetHomePath(void) {return home;}
@@ -189,6 +195,7 @@ int main(void) {
     memset(long_home,'x',sizeof(long_home)-1);long_home[sizeof(long_home)-1]=0;home=long_home;
     assert(discSupportPrefix(prefix,sizeof(prefix))<0);
     home=NULL;assert(discSupportPrefix(prefix,sizeof(prefix))<0);home="mc0:/OPL";
+    browser_busy=1;assert(discCheckBusy());browser_busy=0;
     image_busy=1;assert(!discCheckSupportDeferred() && queue_count==0);image_busy=0;
     queued_result=-1;assert(!discCheckSupportDeferred() && !discCheckBusy());
     queued_result=IO_OK;assert(discCheckSupportDeferred() && discCheckBusy());
@@ -233,7 +240,7 @@ static struct { int GameMode; } cfg;
 #define UNCACHED_SEG(x) (x)
 static struct { u8 *pad_buf; int pos_state,pos_frame,pos_combo1,pos_combo2;
  int libpad,vb_count,prev_frame,combo_type; } Pad_Data;
-static struct { int press,vb_count; } Power_Button;
+static struct { int press,vb_count,latched; } Power_Button;
 static u8 ndin=0x20, poff=0x04, sdin=0x55, scmd=0x55;
 #define CDVD_R_NDIN (&ndin)
 #define CDVD_R_POFF (&poff)
@@ -257,8 +264,13 @@ int main(void) {
     assert(IGR_Intc_Handler(0)==IGR_COMBO_START_SELECT); /* return combo still reaches teardown */
     cfg.GameMode=OTHER_MODE;pad[3]=IGR_COMBO_R3_L3;
     assert(IGR_Intc_Handler(0)==IGR_COMBO_R3_L3);
-    assert(sdin==0 && scmd==0x1b && Power_Button.press==1 && kernel_enters==1);
-    puts("PASS: disc power-off combo cannot suspend game threads; physical button untouched; normal mode preserved");
+    assert(sdin==0 && scmd==0x1b && Power_Button.press==1 && Power_Button.latched==1 && kernel_enters==1);
+    /* Holding the same status must not create a false double press in RA. */
+    for (int i=0;i<51;i++) IGR_CheckInputs();
+    assert(Power_Button.press==1 && Pad_Data.combo_type==IGR_COMBO_R3_L3);
+    poff=0; IGR_CheckInputs(); assert(!Power_Button.latched);
+    poff=4; IGR_CheckInputs(); assert(Power_Button.press==2);
+    puts("PASS: RA disc leaves ROM power-off untouched; sustained physical button counts once and rearms");
 }
 '''
 run('power_input',prefix+s+test)
@@ -288,6 +300,11 @@ int main(void) {
 
 s=(root/'src/supportbase.c').read_text(encoding='utf-8')
 s=s[s.index('static char ra_hash_path'):s.index('static void sbTestPCLinkWorker')]
+# Queue mechanics are the subject of this fixture; the full, real HDL hash
+# and PC exchange are tested separately, so replace just that callback.
+hdl_start=s.index('static void sbHashHdlGame(')
+hdl_end=s.index('int sbHashHdlDeferred(',hdl_start)
+s=s[:hdl_start]+s[hdl_end:]
 prefix=r'''
 #include <assert.h>
 #include <stdio.h>
@@ -296,6 +313,7 @@ static int result, requests, hashes;
 static void (*worker)(void);
 static int ioPutRequest(int kind,void (*fn)(void)) {assert(kind==IO_CUSTOM_SIMPLEACTION);requests++;worker=fn;return result;}
 static void sbHashGame(const char *p,const char*n,const char*e,const char*s,int f) {(void)p;(void)n;(void)e;(void)s;(void)f;hashes++;}
+static void sbHashHdlGame(const char *p,const char*n,const char*s,unsigned x) {(void)p;(void)n;(void)s;(void)x;hashes++;}
 '''
 run('image_queue',prefix+s+r'''
 int main(void) {
@@ -310,7 +328,13 @@ int main(void) {
     assert(!sbHashGameDeferred("p","n","iso","SLUS_201.74",1) && requests==7);
     worker();assert(!sbHashGameBusy() && hashes==1);
     assert(sbHashGameDeferred("p","n","iso","SLUS_201.74",1));
-    puts("PASS: failed image-hash submissions release busy state and allow a later request");
+    worker();assert(!sbHashGameBusy() && hashes==2);
+    assert(!sbHashHdlDeferred(NULL,"n","SLUS_201.74",100));
+    assert(!sbHashHdlDeferred("p","n","SLUS_201.74",0));
+    assert(sbHashHdlDeferred("p","n","SLUS_201.74",100));
+    assert(sbHashGameBusy() && !sbHashGameDeferred("p","n","iso","SLUS_201.74",1));
+    worker();assert(!sbHashGameBusy() && hashes==3);
+    puts("PASS: queued image/HDL support checks, serialization and failed submission recovery");
 }
 ''')
 

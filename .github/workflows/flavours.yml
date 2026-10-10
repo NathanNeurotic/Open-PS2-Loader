@@ -63,6 +63,8 @@ jobs:
         run: python3 .github/scripts/test_autolaunch_settings.py
       - name: Check Automatic Refresh never suppresses a source's first list population
         run: python3 .github/scripts/test_autorefresh_initial_population.py
+      - name: Check L3 triggers a PS1 scan from a cached USB device root
+        run: python3 .github/scripts/test_libview_l3_rescan.py
       - name: Check that background music never holds audsrv across an open-ended wait
         run: python3 .github/scripts/test_audio_threads.py
       - name: Check that background music survives a card that loses the file's descriptor
@@ -71,6 +73,8 @@ jobs:
         run: python3 .github/scripts/test_pad_repeat_clock.py
       - name: Check IGR polls without a VBLANK handler, except in RetroAchievements builds
         run: python3 .github/scripts/test_igr_polling.py
+      - name: Check repeated HDD/APA probes preserve one DEV9 owner and retry failed loads
+        run: python3 .github/scripts/test_hdd_module_lifetime.py
       - name: Check that the handoff probe only refuses a target the child cannot load
         run: python3 .github/scripts/test_handoff_probe.py
       - name: Check that a blind button press cannot keep a video mode the TV cannot show
@@ -89,6 +93,8 @@ jobs:
         run: python3 .github/scripts/test_settings_fit.py
       - name: Check Settings and its prompts follow the user's confirm button
         run: python3 .github/scripts/test_confirm_button.py
+      - name: Check language changes refresh menus when returning to English
+        run: python3 .github/scripts/test_language_switch.py
       - name: Check that a broken cheat file is never reported as a missing one
         run: python3 .github/scripts/test_cheat_load.py
       - name: Check that a -bsdfs=bd launch without a device number is refused before teardown
@@ -113,6 +119,8 @@ jobs:
         run: python3 .github/scripts/test_config_escape_roundtrip.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
+      - name: Check optional game titles fall back without changing metadata
+        run: python3 .github/scripts/test_theme_metadata.py
       - name: Check custom theme font reads start with an unknown file size
         run: python3 .github/scripts/test_custom_font_load.py
       - name: Check VMC creation can recover after failed or short writes
@@ -137,12 +145,30 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Check PS1 VCD identification, module ownership and POPS snapshot reads
+        run: python3 .github/scripts/test_ra_ps1.py
       - name: Check disc hashing, reset image and launch gates
         run: python3 .github/scripts/test_ra_disc.py
+      - name: Check RA language isolation and stable string IDs
+        run: python3 .github/scripts/test_ra_language_isolation.py
       - name: Check RA watch validation, persistent layout and EE sampling
         run: python3 .github/scripts/test_ra_watch.py
+      - name: Check RA launch resources, optional IOP module failures and production GS isolation
+        run: python3 .github/scripts/test_ra_launch_resources.py
       - name: Check RA snapshot scheduling and transmission retries
         run: python3 .github/scripts/test_ra_sender.py
+      - name: Check Caduceus in-game card bounds and event handling
+        run: python3 .github/scripts/test_caduceus_overlay.py
+      - name: Check Caduceus achievement browsing and pairing
+        run: python3 .github/scripts/test_caduceus_browser.py
+      - name: Check Xerabora and Caduceus discovery and offline sessions
+        run: python3 .github/scripts/test_ra_client_mode.py
+      - name: Check exact RA watch-list chunk boundaries and counts
+        run: python3 .github/scripts/test_ra_chunk_integrity.py
+      - name: Check passive RA host stays bound to a verified peer and current settings
+        run: python3 .github/scripts/test_ra_verified_peer.py
+      - name: Check Caduceus menu and in-game host selection are consistent
+        run: python3 .github/scripts/test_ra_caduceus_host.py
 
   bdm-host-tests:
     runs-on: ubuntu-24.04
@@ -156,6 +182,8 @@ jobs:
         run: python3 .github/scripts/test_bdm_cache.py
       - name: Check BDM partition I/O bounds and sector-size refusal
         run: python3 .github/scripts/test_bdm_partitions.py
+      - name: Test BDM ATA discovery after drive spin-up
+        run: python3 .github/scripts/test_bdm_ata_readiness.py
       - name: Check the game-list sort keeps the old order in O(n log n)
         run: python3 .github/scripts/test_menu_sort.py
       - name: Check a failed first PS2 scan runs once and names the folder
@@ -207,8 +235,11 @@ jobs:
         include:
           # --- PINNED: reproducible. Give these to testers. ---
           # ps2dev, pinned 2026-08-13.
+          # GHCR and Docker Hub are published from the same ps2dev image manifests.
+          # Keep the 2026-08-13 digest unchanged for pinned comparability; avoid
+          # anonymous Docker Hub pulls which fail on hosted runners (HTTP 429).
           - flavour: PS2DEVPINNED
-            image: ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
+            image: ghcr.io/ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             pinned: "yes (2026-08-13)"
             opldiag: "0"
@@ -220,7 +251,7 @@ jobs:
             opldiag: "0"
           # --- ROLLING: early warning. Expect these to move without us changing anything. ---
           - flavour: PS2DEVROLLING
-            image: ps2dev/ps2dev:latest
+            image: ghcr.io/ps2dev/ps2dev:latest
             digest: ""
             pinned: "no (tracks ps2dev/ps2dev:latest)"
             opldiag: "0"
@@ -237,15 +268,15 @@ jobs:
           # It is NOT a DEBUG build: no TTY link, no -g. Everything else matches its pinned twin,
           # so a result gathered here is directly comparable with one gathered on PS2DEVPINNED.
           - flavour: PS2DEVPINNED-DIAG
-            image: ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
+            image: ghcr.io/ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             pinned: "yes (2026-08-13)"
             opldiag: "1"
-          # RA is separately compiled; keep its disc core and modules covered on PRs.
-          - flavour: PS2DEVPINNED-RA
-            image: ps2dev/ps2dev@sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
-            digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
-            pinned: "yes (2026-08-13)"
+          # RA follows the official rolling toolchain used by the release app.
+          - flavour: OFFICIALROLLING-RA
+            image: ghcr.io/ps2homebrew/ps2homebrew:main
+            digest: ""
+            pinned: "no (tracks ps2homebrew:main)"
             opldiag: "0"
             ra: "1"
     runs-on: ubuntu-24.04
@@ -277,6 +308,34 @@ jobs:
 
       - name: Compile -> make clean release (${{ matrix.flavour }})
         run: make --trace clean && make --trace LOCALVERSION=${{ matrix.flavour }} OPLDIAG=${{ matrix.opldiag }} RETROACHIEVEMENTS=${{ matrix.ra || '0' }} release
+
+      - name: Verify RA isolation in linked menu and game core
+        env:
+          RA_BUILD: ${{ matrix.ra || '0' }}
+        run: |
+          if command -v mips64r5900el-ps2-elf-nm >/dev/null 2>&1; then
+            NM=mips64r5900el-ps2-elf-nm
+          else
+            NM=ee-nm
+          fi
+          "$NM" opl.elf > menu-symbols.txt
+          sed -n -E 's/^[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+([A-Za-z0-9_]+)[[:space:]]*$/ \1/p' ee_core/ee_core.map > core-symbols.txt
+          if [ "$RA_BUILD" = 1 ]; then
+            grep -q ' raCaduceusPage$' menu-symbols.txt
+            grep -q ' gRAMode$' menu-symbols.txt
+            grep -q ' raPopsPrepare$' menu-symbols.txt
+            grep -q ' rapops_irx$' menu-symbols.txt
+            grep -q ' RA_OverlayOnVblank$' core-symbols.txt
+          else
+            if grep -E ' (RA_[A-Za-z0-9_]*|ra[A-Z][A-Za-z0-9_]*|ach[A-Z][A-Za-z0-9_]*|gRAMode|bdmModeIsUSB|rapops_irx|size_rapops_irx|raudp_irx|size_raudp_irx)$' menu-symbols.txt core-symbols.txt; then
+              echo 'RA implementation leaked into a standard ELF' >&2
+              exit 1
+            fi
+            if LC_ALL=C grep -aE 'Caduceus|Xerabora|CADUCEUS.KEY' opl.elf ee_core/ee_core.elf; then
+              echo 'RA client text leaked into a standard ELF' >&2
+              exit 1
+            fi
+          fi
 
       # Written AFTER the build so the compiler probe reflects what actually compiled. Every probe is
       # `|| true`: this file is a diagnostic and must never be the reason a good build fails to ship.

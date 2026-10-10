@@ -696,7 +696,7 @@ gui_strings:
 - label: CHEAT_SELECTION
   string: Cheat Selection
 - label: HDD_HINT
-  string: Only one HDD allowed, enabling locks APA or GPT.
+  string: 'APA: HDD Games. exFAT (MBR/GPT): BDM Games. Both may be enabled.'
 - label: ERROR_SAVING_SETTINGS_TO
   string: Could not write settings to %s (error %d)
 - label: LAUNCH_PS2_DISC
@@ -1283,9 +1283,9 @@ gui_strings:
 - label: RA_NA_PS1
   string: RA tracking is not available for PS1 games
 - label: RA_NA_HDD
-  string: HDLoader games have no image file to hash
+  string: APA game information or HDD settings home unavailable
 - label: RA_NA_HDD2
-  string: Build the .wl in xeRAbora and place it in RA/ on the share
+  string: Set a valid HDD settings home and refresh before checking support
 - label: RA_TELEMETRY
   string: RetroAchievements telemetry
 - label: RA_BADGES
@@ -1659,3 +1659,74 @@ gui_strings:
   string: DNAS ID
 - label: NEUTRINO_PADEMU_WARN
   string: "Pad emulation is unavailable with Neutrino. Use a PS2 controller or a source that supports the <OPL> core."
+
+- label: RA_MODE
+  string: RA Mode
+- label: RA_HOST_IP
+  string: RA companion IP (0.0.0.0 = automatic)
+- label: HINT_RA_HOST_IP
+  string: "Optional dedicated RetroAchievements PC IPv4. Use 0.0.0.0 for legacy SMB/HTTP fallback or Xerabora discovery. Does not alter game-server settings."
+- label: HINT_RA_MODE
+  string: Choose the PC client. Xerabora is the default; Caduceus checks its signed-in session first.
+- label: RA_CADUCEUS_OFFLINE
+  string: Caduceus RA session is offline.
+- label: RA_CADUCEUS_SIGN_IN
+  string: Sign in to RetroAchievements in Caduceus, then try again.
+- label: FAV_SAVING
+  string: "Saving to Favorites..."
+- label: FAV_SAVED
+  string: "Saved to Favorites"
+- label: FAV_SAVE_FAILED
+  string: "Could not save to Favorites"
+- label: CAD_ACHIEVEMENTS
+  string: "Caduceus achievements"
+- label: CAD_VIEW_ACHIEVEMENTS
+  string: "View achievements"
+- label: CAD_USE_LIBRARY
+  string: "Browse this game through Caduceus achievements in the main menu."
+- label: CAD_HASH_UNSUPPORTED
+  string: "This format cannot be hashed. Browse the account library instead."
+- label: CAD_HEADING
+  string: "ACHIEVEMENTS"
+- label: CAD_LIBRARY
+  string: "RetroAchievements account library"
+- label: CAD_FILTER_ALL
+  string: "All"
+- label: CAD_EARNED
+  string: "Earned"
+- label: CAD_LOCKED
+  string: "Locked"
+- label: CAD_HARDCORE
+  string: "Hardcore"
+- label: CAD_PROGRESS
+  string: "%d / %d earned  |  %s"
+- label: CAD_ONE_GAME
+  string: "%d game in account"
+- label: CAD_GAMES
+  string: "%d games in account"
+- label: CAD_GAME_PROGRESS
+  string: "%d / %d achievements  |  %d hardcore"
+- label: CAD_POINTS
+  string: "%d pts  |  %s"
+- label: CAD_EMPTY_LIBRARY
+  string: "No games with progress in this account."
+- label: CAD_EMPTY_FILTER
+  string: "No achievements match this filter."
+- label: CAD_LOADING
+  string: "Loading achievements..."
+- label: CAD_PAIR
+  string: "Sign in to Caduceus and pair ART/CADUCEUS.KEY on your SMB share."
+- label: CAD_UNKNOWN_GAME
+  string: "This game is not in the Caduceus catalog. Refresh the catalog on the PC."
+- label: CAD_CONNECTION_ERROR
+  string: "Cannot query Caduceus. Check the connection, then press Select to retry."
+- label: CAD_BACK_REFRESH
+  string: "Back returns to OPL. Select refreshes this page."
+- label: CAD_LIBRARY_CONTROLS
+  string: "L1/R1: page   Confirm: open   Select: refresh"
+- label: CAD_GAME_CONTROLS
+  string: "L1/R1: page   Square: filter   Select: refresh"
+- label: CAD_BACK
+  string: "Back"
+- label: CAD_UNTRACKED
+  string: "Caduceus is not ready. Launching without achievements this time."

@@ -5,6 +5,9 @@
 */
 
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#endif
 #include "include/ioman.h"
 #include "include/launchdiag.h" // UDPBD hang-triage stage markers (gated on gLaunchDiag)
 #include "include/gui.h"
@@ -229,6 +232,8 @@ int gAutoRefresh;
 int gEnableNotifications;
 #ifdef RETROACHIEVEMENTS
 int gRATelemetry;
+int gRAMode;
+int gRAHostIp[4];
 int gRABadges;
 #endif
 int gEnableArt;
@@ -392,6 +397,12 @@ static void itemInitSupport(item_list_t *support)
 
 static void itemExecSelect(struct menu_item *curMenu)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return;
+    }
+#endif
     item_list_t *support = curMenu->userdata;
     sfxPlay(SFX_CONFIRM);
     // That confirm just armed a rumble pulse, and everything below blocks the GUI thread without
@@ -507,6 +518,13 @@ static void itemExecToggleView(struct menu_item *curMenu)
     folderReset(support->mode);
     if (!libViewStageAdvance(support->mode))
         return;
+
+    // L3 changes the displayed library without changing the device generation or its ISO
+    // file stats. At the device root folderReset() leaves no dirty flag, so bdmNeedsUpdate()
+    // can reject this queued update as unchanged. That commits PS1 with an empty, never-scanned
+    // list. Force one scan of the selected view; the worker consumes this flag before its
+    // generation cache gate. No extra background polls or module reloads are needed.
+    libViewMarkDirty(support->mode);
 
     // Every cover already queued belongs to the view being discarded, and none of them will be
     // cancelled on their own: the loader's per-row cancellation keys on a row having scrolled away,
@@ -680,8 +698,14 @@ static void itemExecFav(struct menu_item *curMenu)
             if (removeFavouriteByIdAndText(support->mode, sourceId, it->text, kind))
                 it->favourited = 0; // only clear the star once the store write succeeded
         } else {
-            if (addFavouriteItem(support->mode, sourceId, it->icon_id, it->text_id, it->text, kind))
+            guiShowToast(_l(_STR_FAV_SAVING));
+            if (addFavouriteItem(support->mode, sourceId, it->icon_id, it->text_id, it->text, kind)) {
                 it->favourited = 1; // only show the star once the store write succeeded
+                guiShowToast(_l(_STR_FAV_SAVED));
+            } else {
+                guiShowToast(_l(_STR_FAV_SAVE_FAILED));
+                return;
+            }
         }
     }
 
@@ -2829,6 +2853,26 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
 
 // Shared reader for network settings (IP / DHCP / SMB / HTTP globals). Factored out so _loadConfig
 // and miniInit stay consistent.
+static void configReadRAHost(config_set_t *configOPL)
+{
+#ifdef RETROACHIEVEMENTS
+    const char *value;
+    int a, b, c, d;
+    char extra;
+    if (configGetStr(configOPL, CONFIG_OPL_RA_HOST_IP, &value) &&
+        sscanf(value, "%d.%d.%d.%d%c", &a, &b, &c, &d, &extra) == 4 &&
+        a >= 0 && a <= 255 && b >= 0 && b <= 255 &&
+        c >= 0 && c <= 255 && d >= 0 && d <= 255) {
+        gRAHostIp[0] = a;
+        gRAHostIp[1] = b;
+        gRAHostIp[2] = c;
+        gRAHostIp[3] = d;
+    }
+#else
+    (void)configOPL;
+#endif
+}
+
 static void configReadNetworkGlobals(config_set_t *configNet)
 {
     const char *temp;
@@ -3225,6 +3269,11 @@ static void _loadConfig()
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            configReadRAHost(configOPL);
+            gRAMode = RA_MODE_XERABORA;
+            configGetInt(configOPL, CONFIG_OPL_RA_MODE, &gRAMode);
+            if (gRAMode != RA_MODE_CADUCEUS)
+                gRAMode = RA_MODE_XERABORA;
 #endif
             configGetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, &gEnableArt);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, &gEnableDiscArt);
@@ -3884,6 +3933,9 @@ static void _saveConfig()
 #ifdef RETROACHIEVEMENTS
         configSetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, gRATelemetry);
         configSetInt(configOPL, CONFIG_OPL_RA_BADGES, gRABadges);
+        configSetInt(configOPL, CONFIG_OPL_RA_MODE, gRAMode);
+        snprintf(temp, sizeof(temp), "%d.%d.%d.%d", gRAHostIp[0], gRAHostIp[1], gRAHostIp[2], gRAHostIp[3]);
+        configSetStr(configOPL, CONFIG_OPL_RA_HOST_IP, temp);
 #endif
         configSetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, gEnableArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, gEnableDiscArt);
@@ -4856,12 +4908,14 @@ static void setDefaults(void)
     gETHPrefix[0] = '\0';
     gEnableNotifications = 1;
 #ifdef RETROACHIEVEMENTS
+    gRAMode = RA_MODE_XERABORA;
+    memset(gRAHostIp, 0, sizeof(gRAHostIp));
     gRATelemetry = 0; // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
     gRABadges = 1;    // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
 #endif
     gEnableArt = 1;
     gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
-    gWideScreen = 1;
+    gWideScreen = 0; // Fresh configurations use 4:3; a saved widescreen choice overrides this.
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.
     gEnableSFX = 0;
@@ -5188,6 +5242,11 @@ static void miniInit(int mode)
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            configReadRAHost(configOPL);
+            gRAMode = RA_MODE_XERABORA;
+            configGetInt(configOPL, CONFIG_OPL_RA_MODE, &gRAMode);
+            if (gRAMode != RA_MODE_CADUCEUS)
+                gRAMode = RA_MODE_XERABORA;
 #endif
             // Honor ALL the Neutrino-launch globals on the autolaunch/argv path exactly like the
             // interactive _loadConfig -- not just the default core. An autolaunched keyless "Default"

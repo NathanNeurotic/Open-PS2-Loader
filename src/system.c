@@ -48,6 +48,7 @@
 #include "include/xparam.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rawatch.h"
+#include "include/ranet.h"
 #include "modules/network/common/ra_snap.h"
 #endif
 
@@ -2244,10 +2245,27 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     // which case ee_core sees NULL and never starts the telemetry path.
     config->raWatchList = GetWatchBlockList();
     config->raWatchCount = GetWatchCount();
+    config->raClientMode = gRAMode;
+    config->raHostPinned = (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) != 0;
     config->raSnapBytes = GetWatchBytes();
     config->raNodeList = GetWatchBlockNodes();
     config->raNodeCount = GetNodeCount();
     config->raSnapBuf = GetWatchBlockSnap();
+    config->raOverlayBuf = GetWatchBlockOverlay();
+    {
+        u32 peer = raNetPeerIP();
+        if (peer) {
+            const u8 *host = (const u8 *)&peer;
+            snprintf(config->raHost, sizeof(config->raHost), "%u.%u.%u.%u", host[0], host[1], host[2], host[3]);
+        } else if (config->raHostPinned) {
+            snprintf(config->raHost, sizeof(config->raHost), "%u.%u.%u.%u",
+                     gRAHostIp[0], gRAHostIp[1], gRAHostIp[2], gRAHostIp[3]);
+        } else if (!strcmp(mode_str, "HTTP_MODE")) {
+            snprintf(config->raHost, sizeof(config->raHost), "%u.%u.%u.%u", gHttpServerIp[0], gHttpServerIp[1], gHttpServerIp[2], gHttpServerIp[3]);
+        } else {
+            snprintf(config->raHost, sizeof(config->raHost), "%u.%u.%u.%u", pc_ip[0], pc_ip[1], pc_ip[2], pc_ip[3]);
+        }
+    }
 
     // The last point where the list is still ours: from here it goes into ee_core
     // with no feedback. A zero shows up in the launch log directly, rather than as

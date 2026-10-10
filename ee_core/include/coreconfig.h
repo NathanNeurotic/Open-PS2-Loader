@@ -78,10 +78,14 @@ struct EECoreConfig_t
     /* Persistent module-storage block, prepared by PlaceWatchBlock. */
     u32 *raWatchList;
     int raWatchCount;
+    int raClientMode;
+    int raHostPinned; /* Explicit companion IP overrides legacy broadcast. */
     int raSnapBytes;
     void *raNodeList;
     int raNodeCount;
     void *raSnapBuf;
+    void *raOverlayBuf;
+    char raHost[16];
 #endif
 };
 

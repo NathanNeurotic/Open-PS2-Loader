@@ -1,5 +1,8 @@
 #include "sys/fcntl.h"
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#endif
 #include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
@@ -413,10 +416,14 @@ int hddLoadModules(void)
 
     LOG("[HDD STARTUP DIAG] hddLoadModules entry count=%u loaded=%u\n", hddModulesLoadCount, hddModulesLoaded);
 
-    if (hddModulesLoaded)
+    // The ATA modules are resident for the lifetime of this IOP generation. A readiness
+    // probe is NOT a new DEV9 owner: all HDD entry points share the one sysInitDev9()
+    // reference acquired by the first successful load. A prior non-terminal HDD-page
+    // shutdown may have released the logical page latch, but did not stop DEV9.
+    if (hddModulesLoaded) {
+        hddModulesLoadCount = 1;
         retStatus = HDD_LOADMODULES_STATUS_ALREADYLOADED;
-
-    if (hddModulesLoadCount == 0) {
+    } else if (hddModulesLoadCount == 0) {
         // Increment the load count as soon as possible to prevent thread scheduling from allowing another thread to
         // call into here and try to double load modules.
         hddModulesLoadCount = 1;
@@ -489,9 +496,9 @@ int hddLoadModules(void)
             hddDiagBootStageEndVoid("HDD:SETTLE");
         }
     } else {
-        hddModulesLoadCount++;
-        if (!hddModulesLoaded)
-            retStatus = HDD_LOADMODULES_STATUS_BUSYLOADING;
+        // Another caller is still loading the first ATA generation. Do not acquire
+        // a reference or claim success until it publishes hddModulesLoaded.
+        retStatus = HDD_LOADMODULES_STATUS_BUSYLOADING;
     }
 
     LOG("[HDD STARTUP DIAG] hddLoadModules exit count=%u loaded=%u ret=%d bdm=%d atad=%d xhdd=%d\n",
@@ -587,7 +594,7 @@ int hddDetectNonSonyFileSystem()
     // only earn a false "table cannot be read" (402) on a healthy disk. Treat it like any GPT disk:
     // silent, APA stack never loaded, the BDM side free to mount its GPT volumes.
     if (strncmp((const char *)&pSectorData[0x200], "EFI PART", 8) == 0) {
-        LOG("hddDetectNonSonyFileSystem: found GPT partition data (GPT/APA hybrids are not supported)\n");
+        LOG("hddDetectNonSonyFileSystem: found GPT partition data (use BDM; APA stack skipped)\n");
         result = 1;
     } else if (memcmp((const char *)&pSectorData[4], "APA", 3) == 0) {
         if (hddApaHeaderValid(pSectorData)) {
@@ -1568,8 +1575,8 @@ int hddStageOplHomeSelection(int selection)
         return 0;
     }
 
-    // Use only the already-resident ATA stack. The selector is a short-lived proof, not an owner
-    // of a module reference; hddLoadModulesReady() would retain one on every stage/save cycle.
+    // Reuse the ATA stack if resident; otherwise allow a first load. Readiness probes
+    // are idempotent and do not retain additional module references on later stages/saves.
     // Do not call hddLoadSupportModules here: its normal data-home recovery may mount pfs0: and
     // create OPL folders, neither of which belongs to a source selector proof.
     // "COULD NOT CHECK" IS NOT "DOES NOT EXIST". These two arms used to return 0, the same value the
@@ -1582,7 +1589,7 @@ int hddStageOplHomeSelection(int selection)
     // guarantees they are resident when the user opens Settings, and when they are not, the check
     // can never pass -- so the row reported "not found" (before) or "busy" (after that was
     // corrected) on every single attempt, with no sequence of user actions able to fix it. A
-    // setting that cannot be changed is a worse outcome than an extra hddModulesLoadCount bump.
+    // setting that cannot be changed is worse than loading the ATA stack once.
     //
     // Affordable here specifically: this runs on the io worker behind guiHandleDeferedIO's spinner
     // with a 15 s budget, which is exactly the machinery for a load that may take a second.
@@ -2199,6 +2206,13 @@ static int hddMcemuSlots[2] = {-2, -2};
 
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return;
+    }
+#endif
+
     int i, size_irx = 0;
     int EnablePS2Logo = 0;
     int result;
@@ -2612,23 +2626,18 @@ static void hddShutdown(item_list_t *itemList)
     }
 
     if (hddModulesLoadCount > 0) {
-        hddModulesLoadCount -= 1;
-        if (hddModulesLoadCount == 0) {
-            // DEV9 will remain active if ETH is in use, so put the HDD in IDLE state.
-            // The HDD should still enter standby state after 21 minutes & 15 seconds, as per the ATAD defaults.
-            hddSetIdleImmediate();
-        }
+        // The single logical ATA owner is released once per shutdown. A non-terminal
+        // game launch must NOT idle the HDD: the selected game may still need ATA via
+        // BDM (massN:) after this cleanup, just like POPSTARTER's post-deinit ELF read.
+        // The next page entry can reuse the resident modules and the retained DEV9 owner.
+        hddModulesLoadCount = 0;
 
-        // Only shut down dev9 from here, if it was initialized from here before -- and only on a
-        // TERMINAL teardown (exit/poweroff). On the launch path this shutdown runs for every
-        // non-selected page, and powering DEV9 off here kills the ATA bus BEFORE bdmLaunchVcd's
-        // post-deinit POPSTARTER.ELF read from the ATA-backed massN: mount -- the elf-loader then
-        // returns into deinit'd OPL: the 4236edf6-class black-screen freeze (PCSX2 masks it; its
-        // emulated DEV9 power-off is inert). ee_core/POPSTARTER reset the IOP right after, so the
-        // launch path needs no power-off. Note the refcount asymmetry this also softens: N
-        // hddLoadModules calls take ONE dev9 reference, but every hddShutdown used to drop it.
-        if (gDeinitTerminal)
+        // On a real exit/poweroff, flush happened above. Issue idle before dropping our
+        // DEV9 reference; other users (ETH/UDPBD) may keep DEV9 itself powered.
+        if (gDeinitTerminal) {
+            hddSetIdleImmediate();
             sysShutdownDev9();
+        }
     }
 }
 

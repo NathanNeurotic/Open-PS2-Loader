@@ -1,4 +1,7 @@
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#endif
 #include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
@@ -920,6 +923,8 @@ static void mmceLaunchVcd(item_list_t *itemList, const char *vcdName, config_set
 
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS/%s.VCD", ps1Root, vcdName);
+    if (!vcdConfirmCleanLaunch(ps1Root))
+        return;
     vcdPrepareRetroGemBarcode(vcdFullPath);
     // Keep the MMCE game device plus any distinct custom POPSTARTER.ELF backend through handoff.
     deinitEx(sbLoaderDeinitException(vcdElf), itemList->mode, oplPath2Mode(vcdElf));
@@ -931,6 +936,13 @@ static int mmceMcemuSlots[2] = {-2, -2};
 
 void mmceLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return;
+    }
+#endif
+
     int index, compatmask = 0;
     int EnablePS2Logo = 0;
     int result;

@@ -60,7 +60,7 @@ endif
 # member under it -- so a stale obj/ here reads EECoreConfig_t through the wrong
 # offsets and loads the wrong module blob. Run make clean when switching it.
 ifeq ($(RETROACHIEVEMENTS),1)
-EE_OBJS += ra.o ra_overlay.o
+EE_OBJS += ra.o ra_overlay.o ra_pulse.o
 EE_CFLAGS += -DRETROACHIEVEMENTS
 endif
 

@@ -71,6 +71,7 @@ typedef struct
 {
     int press;
     int vb_count;
+    int latched; /* Ignore the same outstanding CDVD power-off event across polls. */
 } powerbuttondata_t;
 
 typedef struct

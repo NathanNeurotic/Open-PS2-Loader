@@ -11,7 +11,7 @@
 
 ## Test builds and save-card recovery
 
-For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves.
+For a supplied PR artifact, follow [Testing a PR or Actions build](docs/TEST-BUILDS.md). For card creation failures, consult [VMC creation and recovery](docs/VMC.md) before deleting or recreating a card containing saves. For build flavours, app placement, Browser/OSDSYS and launch-failure reports, see [Setup questions](docs/SETUP-QUESTIONS.md).
 
 ## Community Contributors
 
@@ -171,7 +171,7 @@ contains and how to pull it.
 ### Known limitations
 
 - **HTTP:** implemented and host-tested, but not yet tested on PS2 hardware. ISO only; no VMC, Neutrino or PS1. DVD9 probing is implemented but unproven. [HTTP guide](docs/HTTP.md).
-- **RetroAchievements:** a separate development package; the console integration has not been hardware-tested. It requires [xeRAbora v0.1.0-alpha.15](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.15) on a PC and OPL-core launching. The RA build includes main-menu actions to check and launch a physical PS2 disc with achievements; this path also needs hardware validation. Keep games you play with achievements on a local device — upstream reports on hardware that a game with an achievement set stops loading about a minute in from a network share. [RA guide](docs/RETROACHIEVEMENTS.md).
+- **RetroAchievements:** a separate development package with limited PS2 telemetry hardware evidence. It supports [xeRAbora v0.1.0-alpha.16](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16) or the Caduceus companion service selected in RA Mode. PS2 telemetry uses OPL-core launches; USB PS1 VCDs through POPStarter use a separate IOP reader and still require console validation. Caduceus adds a paired account/game achievement browser; production in-game notices use the pulse, while title/points card drawing remains disabled pending safe GS ownership. Companion PC software is managed separately through PS2-Servers. Physical PS2 disc launches also need hardware validation. Keep tracked games on a local device: upstream reports that games with achievement sets stop loading about a minute into network-share play. [RA guide](docs/RETROACHIEVEMENTS.md).
 - **iLink:** revision 2692 passed Ember on the tested SCPH-39001 but failed native OPL, Neutrino and POPSTARTER handoffs. The Neutrino `-qb` correction is implemented; a passing retest is still needed.
 - **Core switching is source-dependent:** SMB and HTTP use OPL; UDPFS/UDPBD use Neutrino. See the [source table](#introduction).
 
@@ -572,7 +572,7 @@ For APA, RiptOPL uses existing partitions only: a usable `hdd_partition` selecti
 `hdd0:__common/OPL/conf_hdd.cfg`, then an existing `+OPL`, then `__common/OPL/`.
 If no suitable data partition exists it fails without creating one. See [HDD](#hdd).
 
-HDDs are also able to be formatted as exFAT to avoid the 2TB limitation.  Please see below in the `HDD` section for more details on this configuration.
+An internal HDD can use GPT partitioning with exFAT to address capacity beyond MBR's conventional 2 TiB limit. exFAT alone does not remove that limit from an MBR disk. See [exFAT storage](docs/EXFAT.md) for setup and driver/hardware limitations.
 
 ### Where your files live
 
@@ -671,6 +671,8 @@ Sources**. For PS2, 48-bit LBA internal HDDs are supported. The HDD can be forma
 	- Files should be added contiguously or synchronously to avoid fragmentation. For example, drag and drop files one at a time, or ensure that files are added sequentially.
 	- When formatting drives for the exFAT filesystem, please make sure the `Allocation unit size` is set to `Default`.
 	- **PS1 games:** PS1 `*.VCD` titles in the HDD's `POPS/` folder list under the **L3** PS1 view like any other device. To boot them, use the BDMA rows on **Settings → PS Emulation Settings**. **VCD BDMA Apply on Launch** is on by default and equips the matching exFAT driver automatically; turn it off to reveal the manual **BDMA Source** / **BDMA Mode** pickers and set **BDMA Mode → HDD (exFAT)** by hand so POPSTARTER can read the exFAT volume. See **[docs/VCD.md](docs/VCD.md)**.
+
+For internal exFAT HDD setup, MBR/GPT choices, large-file benefits, fragmentation and VMC limits, and an empty-game-list checklist, read **[exFAT storage](docs/EXFAT.md)**. APA and exFAT use different game lists; enabling APA is not required for a plain exFAT disk.
 
 ## APPS
 
@@ -921,12 +923,14 @@ RiptOPL is intended to work with these maintained companion tools:
 - **[LUNA](https://github.com/dnunezx/LUNA)** by **[darkladark](https://github.com/dnunezx)** — *Lightweight Unified Neutrino Access*, a visual PS2 loader built on NHDDL and Neutrino, and our **#1 recommended alternative** if RiptOPL is more loader than you need. darkladark also contributes to RiptOPL: its Collection cover-art screen came from LUNA (#733).
 - **[RIPPS2](https://github.com/akilluminati47/RIPPS2)** by **Akilluminati47** — our daughter project: a PS2-inspired front end with a **web-theme beta** at **[akilluminati47.github.io/RIPPS2](https://akilluminati47.github.io/RIPPS2/)**. A custom OPL theme and `RIPPS2.elf` are planned next; the project is still alpha, but we recommend it as an alternative with features intended to be on par with RiptOPL.
 - **[OPL PS1 AIO Converter GUI](https://github.com/shaanhomebrew-cloud/OPL-PS1-AIO-Converter-GUI)** by **[shaan](https://github.com/shaanhomebrew-cloud)** — Windows all-in-one PS1/POPStarter preparation tool for converting BIN/CUE backups to VCDs and installing them to USB, MX4SIO, MMCE, iLink, exFAT HDD, SMB and APA internal HDD.
-- **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. Required client: **[v0.1.0-alpha.15](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.15)**. RiptOPL's RA build is paired with and requires **xeRAbora v0.1.0-alpha.15** (paired with upstream console commit f4d559a3). xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RetroAchievements-*.zip`; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by **[oMrRexD](https://github.com/oMrRexD)**, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.
+- **[xeRAbora](https://github.com/hacan359/xerabora)** by **[hacan359](https://github.com/hacan359)** — the PC client for **RetroAchievements** on real PS2 hardware. Required client: **[v0.1.0-alpha.16](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)**. The current RiptOPL RA build uses **xeRAbora v0.1.0-alpha.16** for PS1 POPStarter support (the PS2 telemetry core was synchronized with the earlier alpha.15 revision). xeRAbora runs rcheevos, talks to the RetroAchievements servers and unlocks the achievements. It also builds the per-game watch list the console needs. Shipped as a shortcut inside `RIPTOPL-RetroAchievements-*.zip`; MIT licensed. RiptOPL’s RA stabilization on real hardware was driven by **[oMrRexD](https://github.com/oMrRexD)**, whose PRs #702–#705 fixed the ee_core stack squeeze, MMCE DEV9 path, cold-launch networking and settings placement.
 - **[OPL HTTP PC server](https://github.com/Docmine17/Open-PS2-Loader-HTTP)** by **[Docmine17](https://github.com/Docmine17)** — the PC side of RiptOPL’s **HTTP** protocol: a small static HTTP server with byte-range support that serves your `games.csv` catalog and streams the ISOs themselves. RiptOPL works with it **unmodified** — no new API, no catalog conversion, no changed folder layout — with host conformance checks against the upstream server. PS2 hardware validation is still pending.
 - **[PS2RD CHT Manager](https://github.com/TheRealNextria/PS2RD-CHT-Manager)** by **[TheRealNextria](https://github.com/TheRealNextria)** — PC manager for the PS2RD `.cht` cheat files RiptOPL reads from your device's `CHT` folder. A `PS2RD-CHT-Manager.url` shortcut ships in installable packages.
 - **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)** — a PS1 emulator that runs natively on the PS2, used as RiptOPL's **second PS1 core** alongside POPSTARTER. Unlike the others this one is not just a shortcut: an `EMBER/` folder ships **inside** the release package, ready to drop onto a device. It is bundled unmodified under the Ember Public Beta Testing Licence (`EMBER/LICENSE-BETA.txt` in the package); releases: <https://github.com/Gageformer/Ember/releases>.
 - **[POPStarter](https://www.psx-place.com/resources/popstarter.683/)** by **krHACKen** — a PS1 launcher built around Sony's native **POPS** emulator for the PS2, used as RiptOPL's **primary PS1 core** alongside Ember. POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains **no Sony emulator binaries, libraries, or BIOS files**; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on **[PSX-Place](https://www.psx-place.com/resources/popstarter.683/)**.
 - **[Neutrino](https://github.com/rickgaiser/neutrino)** by **[rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular PS2 Device Emulator"*, and RiptOPL's **second PS2 loader core** alongside OPL's own. Like Ember it is not a shortcut: a ready-to-use `neutrino/` folder ships **inside** each installable ZIP, drag-and-drop to `mc?:/neutrino/`. Neutrino is deliberately **UI-agnostic** — it has no interface of its own, which is exactly what lets a front-end like RiptOPL drive it per game. Licensed **AFL-3.0**; releases: <https://github.com/rickgaiser/neutrino/releases>.
+- **[Caduceus](https://github.com/Rian6/caduceus)** and **[Caduceus OPL](https://github.com/Rian6/caduceus-opl)** by **Rian6** — the alternative RA service protocol and PS2 achievement browser/card reference. RiptOPL adapts the PS2-side code from commit `2a98a9d7361f8e33f421244bc88c318eab3bdf2f` under AFL-3.0. PC software is supplied separately.
+
 - **[PSUManager](https://git.techwritescode.dev/techwritescode/PSUManager)** by **techwritescode** — the CC0 PS2 save-container implementation used by RiptOPL release tooling to independently validate `APP_RIPTOPL.psu` and `APP_RIPTOPL-RA.psu`. The exact upstream core and license used by CI are preserved in `third_party/PSUManager/`.
 ## Acknowledgements
 
@@ -965,7 +969,7 @@ With special and sincere thanks to:
 - **bbsan2k** — for the **MMCE (Memory Card Mass Storage) protocol** that makes SD-via-memory-card
   loading through the PS2's memory-card slot possible. OPL's MMCE support builds directly on it.
 - **hacan359 (yoba)** — for **RetroAchievements on real PS2 hardware** and the
-  **[xeRAbora PC client (v0.1.0-alpha.15)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.15)** (MIT). The console identifies the
+  **[xeRAbora PC client (v0.1.0-alpha.16)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)** (MIT). The console identifies the
   game and streams the memory addresses its achievements watch; xeRAbora handles rcheevos, the
   RetroAchievements service, and login. RiptOPL implements the published wire protocol in its
   `RIPTOPL-RetroAchievements-*.zip` build, which includes a shortcut to xeRAbora.

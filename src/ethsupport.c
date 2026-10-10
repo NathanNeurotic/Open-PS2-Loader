@@ -1,4 +1,7 @@
 #include "include/opl.h"
+#ifdef RETROACHIEVEMENTS
+#include "include/achievements.h"
+#endif
 #include "include/saveicon.h"
 #include "include/lang.h"
 #include "include/gui.h"
@@ -712,6 +715,8 @@ static void ethLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
     char separator = (prefixLen > 0 && ethPrefix[prefixLen - 1] == '\\') ? '\\' : '/';
     char vcdFullPath[256];
     snprintf(vcdFullPath, sizeof(vcdFullPath), "%sPOPS%c%s.VCD", ethPrefix, separator, vcdName);
+    if (!vcdConfirmCleanLaunch(ethPrefix))
+        return;
     vcdPrepareRetroGemBarcode(vcdFullPath);
     // Keep the SMB game share plus any distinct custom POPSTARTER.ELF backend through handoff.
     deinitEx(sbLoaderDeinitException(vcdElf), itemList->mode, oplPath2Mode(vcdElf));
@@ -765,6 +770,13 @@ static int ethMcemuSlots[2] = {-2, -2};
 
 static void ethLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
+#ifdef RETROACHIEVEMENTS
+    if (achievementsBusy()) {
+        guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
+        return;
+    }
+#endif
+
     int i, compatmask;
     int EnablePS2Logo = 0;
     int result;

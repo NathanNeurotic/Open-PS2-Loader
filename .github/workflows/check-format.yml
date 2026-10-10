@@ -28,10 +28,50 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
-    - uses: DoozyX/clang-format-lint-action@v0.18.2
-      with:
-        source: '.'
-        exclude: './third_party/PSUManager'
-        extensions: 'h,c'
-        clangFormatVersion: 12
-        inplace: False
+    # The former Docker action pulled python:3.9-alpine anonymously from
+    # Docker Hub; rate limits failed CI before any source was checked.
+    # Pin the same formatter major version and run it directly on the host.
+    - name: Install clang-format 12 without Docker
+      run: |
+        python3 -m venv "$RUNNER_TEMP/format-venv"
+        "$RUNNER_TEMP/format-venv/bin/python" -m pip install --disable-pip-version-check clang-format==12.0.1
+    - name: Check tracked C and header files
+      run: |
+        python3 - <<'PY'
+        import fnmatch
+        import os
+        from pathlib import Path
+        import subprocess
+        import sys
+
+        ignore = [
+            line.removeprefix("./").rstrip("/")
+            for line in Path(".clang-format-ignore").read_text().splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        ignore.append("third_party/PSUManager")
+        files = subprocess.check_output(
+            ["git", "ls-files", "-z", "--", "*.c", "*.h"]
+        ).decode().split("\0")
+        files = [
+            path for path in files
+            if path and Path(path).is_file() and
+            not any(
+                fnmatch.fnmatch(path, rule) or path.startswith(rule + "/")
+                for rule in ignore
+            )
+        ]
+        formatter = os.path.join(os.environ["RUNNER_TEMP"], "format-venv", "bin", "clang-format")
+        failures = []
+        for offset in range(0, len(files), 80):
+            result = subprocess.run(
+                [formatter, "--dry-run", "--Werror", *files[offset:offset + 80]],
+                capture_output=True, text=True
+            )
+            if result.returncode:
+                failures.append(result.stderr or result.stdout)
+        if failures:
+            print("\n".join(failures), file=sys.stderr)
+            sys.exit(1)
+        print(f"PASS: clang-format 12 checked {len(files)} tracked files")
+        PY
