@@ -2063,7 +2063,16 @@ static void menuCheckSelectedGameSupport(void)
     item_list_t *support = selected_item->item->userdata;
     int gid = selected_item->item->current->item.id;
 
-    if (menuSelectedRowView(support) == LIB_VIEW_PS1) {
+    int rowView = menuSelectedRowView(support);
+    item_list_t sourceView;
+    if (support->mode == FAV_MODE && rowView != LIB_VIEW_PS1) {
+        support = favGetSourceItem(gid, &sourceView, &gid);
+        if (support == NULL) {
+            guiShowRANotice(_l(_STR_CAD_USE_LIBRARY), NULL);
+            return;
+        }
+    }
+    if (rowView == LIB_VIEW_PS1) {
         int sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(gid) : support->mode;
         base_game_info_t favorite;
         base_game_info_t *g = support->itemGet ? support->itemGet(support, gid) : NULL;
@@ -2082,7 +2091,7 @@ static void menuCheckSelectedGameSupport(void)
             else
                 guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
         } else
-            guiShowRANotice("PS1 achievements require a USB VCD through POPStarter", NULL);
+            guiShowRANotice(_l(_STR_PS1_RA_USB_REQUIRED), NULL);
     } else if (support->mode == UDPFS_MODE) {
         // UDPFS is Neutrino-only in this fork.
         guiShowRANotice(_l(_STR_RA_NA_UDPFS), NULL);

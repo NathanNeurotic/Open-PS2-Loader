@@ -506,6 +506,43 @@ static int ra_tx_busy(void)
     return (SMAP_EMAC3_GET(SMAP_R_EMAC3_TxMODE0) & SMAP_E3_TX_GNP_0) != 0;
 }
 
+/* Passive mode must not consume the game's RX descriptors. A bounded raw ARP
+   request lets the existing receive stack learn a separate companion's MAC. */
+static int ra_request_mac(u32 ip)
+{
+    USE_SMAP_EMAC3_REGS;
+    static u8 frame[60] __attribute__((aligned(16)));
+    u32 hi, lo;
+    int i;
+
+    if (ra_tx_busy())
+        return 0;
+    for (i = 0; i < (int)sizeof(frame); i++)
+        frame[i] = i < 6 ? 0xff : 0;
+    hi = SMAP_EMAC3_GET32(SMAP_R_EMAC3_ADDR_HI);
+    lo = SMAP_EMAC3_GET32(SMAP_R_EMAC3_ADDR_LO);
+    frame[6] = hi >> 8;
+    frame[7] = hi;
+    frame[8] = lo >> 24;
+    frame[9] = lo >> 16;
+    frame[10] = lo >> 8;
+    frame[11] = lo;
+    frame[12] = 0x08;
+    frame[13] = 0x06;
+    frame[15] = 1;    // Ethernet
+    frame[16] = 0x08; // IPv4
+    frame[18] = 6;
+    frame[19] = 4;
+    frame[21] = 1; // request
+    for (i = 0; i < 6; i++)
+        frame[22 + i] = frame[6 + i];
+    for (i = 0; i < 4; i++) {
+        frame[28 + i] = ra_src_ip >> (i * 8);
+        frame[38 + i] = ip >> (i * 8);
+    }
+    return SMAPSendPacket(frame, sizeof(frame)) >= 0;
+}
+
 /* ---- Control messages to the PC: down the raw telemetry path, not lwIP,
    which puts nothing on the wire from a running game. Headers copied from
    the telemetry frame, lengths and checksum redone. */
@@ -743,12 +780,22 @@ static u32 ra_disc_us = 0;
    Returns 1 once both the PC's IP and MAC are known, 0 only if no
    socket could be opened. There is no timeout: while the PC is silent
    the query repeats, first every second, then every 30 seconds. */
+static int ra_resolve_mac(u32 ip)
+{
+    if (etharp_lookup_mac(ip, ra_dst_mac))
+        return 1;
+    /* Routed packets use the next hop's MAC, never the remote peer's. */
+    return ra_gateway_ip != 0 && ra_netmask_ip != 0 &&
+           ((ip ^ ra_src_ip) & ra_netmask_ip) != 0 &&
+           etharp_lookup_mac(ra_gateway_ip, ra_dst_mac);
+}
+
 static int ra_discover(void)
 {
     struct sockaddr_in me, to, from;
     socklen_t fromlen;
     char req[48], rx[192];
-    int bridge_found = 0;
+    int bridge_found = 0, arp_requested = 0;
     int s, on = 1, len, tries = 0, w, got;
 
     /* Caduceus has a single configured companion host, shared with its paired
@@ -759,22 +806,26 @@ static int ra_discover(void)
         return 0;
 
     /* SMB owns the receive stack while loading/streaming the ISO. Never open
-       or poll a discovery socket in that mode. SMB traffic already resolves
-       the host (or gateway) in ARP; use that passive information for TX only.
+       or poll a discovery socket in that mode. Use the stack's ARP table,
+       requesting a missing companion/next hop once without consuming RX.
        Missing host/MAC disables telemetry rather than disturbing the game. */
     if (!ra_rx_in_game) {
         if (ra_server_ip == 0 || ra_server_ip == INADDR_BROADCAST)
             return 0;
         for (tries = 0; tries < RA_DISC_POLLS; tries++) {
-            int have_mac = etharp_lookup_mac(ra_server_ip, ra_dst_mac);
-            /* Gateway ARP is valid only when the RA peer is off-subnet. */
-            if (!have_mac && ra_gateway_ip != 0 && ra_netmask_ip != 0 &&
-                ((ra_server_ip ^ ra_src_ip) & ra_netmask_ip) != 0)
-                have_mac = etharp_lookup_mac(ra_gateway_ip, ra_dst_mac);
+            int have_mac = ra_resolve_mac(ra_server_ip);
             if (have_mac) {
                 ra_dst_ip = ra_server_ip;
                 return 1;
             }
+            u32 nextHop = ra_server_ip;
+            if (ra_netmask_ip != 0 && ((ra_server_ip ^ ra_src_ip) & ra_netmask_ip) != 0) {
+                if (ra_gateway_ip == 0)
+                    return 0;
+                nextHop = ra_gateway_ip;
+            }
+            if (!arp_requested)
+                arp_requested = ra_request_mac(nextHop);
             DelayThread(RA_DISC_POLL_US);
         }
         return 0;
@@ -855,7 +906,7 @@ static int ra_discover(void)
                    already recorded the sender's IP/MAC pair. An IP
                    without a MAC is useless: a frame with no destination
                    would vanish silently. Keep asking in that case. */
-                if (ip != 0 && ip != INADDR_BROADCAST && etharp_lookup_mac(ip, ra_dst_mac)) {
+                if (ip != 0 && ip != INADDR_BROADCAST && ra_resolve_mac(ip)) {
                     ra_dst_ip = ip;
                     ra_sock = s; /* kept open: the PC's unlock notices arrive here */
                     return 1;
@@ -1177,8 +1228,8 @@ int _shutdown(void)
 
 /* Arguments, built by ee_core (iopmgr.c). argv[1] is laid out by the
    RA_ARG_* offsets in ra_snap.h, each field optional from the left.
-   argv[2] is the own IP in dotted form (followed by netmask and gateway,
-   which this module does not need). argv[0] is the module name, inserted
+   argv[2] is the own IP in dotted form (followed by routing netmask and gateway,
+   used to resolve the next hop). argv[0] is the module name, inserted
    by the IOP loader. */
 int _start(int argc, char *argv[])
 {
@@ -1225,8 +1276,6 @@ int _start(int argc, char *argv[])
     if (ra_src_ip == 0 || ra_src_ip == INADDR_BROADCAST)
         return MODULE_RESIDENT_END;
 
-    RegisterLibraryEntries(&_exp_raudp);
-
     thread.attr = TH_C;
     thread.option = 0;
     thread.thread = ra_thread;
@@ -1237,7 +1286,15 @@ int _start(int argc, char *argv[])
     if (tid < 0)
         return MODULE_NO_RESIDENT_END;
 
-    StartThread(tid, NULL);
+    if (RegisterLibraryEntries(&_exp_raudp) < 0) {
+        DeleteThread(tid);
+        return MODULE_NO_RESIDENT_END;
+    }
+    if (StartThread(tid, NULL) < 0) {
+        ReleaseLibraryEntries(&_exp_raudp);
+        DeleteThread(tid);
+        return MODULE_NO_RESIDENT_END;
+    }
 
     return MODULE_RESIDENT_END;
 }

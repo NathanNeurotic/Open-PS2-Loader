@@ -34,8 +34,10 @@ static int start_buffer(void *irx, int arglen, const char *args)
     if (id < 0)
         return id;
 
-    if (StartModule(id, MODNAME, arglen, args, &result) < 0)
+    if (StartModule(id, MODNAME, arglen, args, &result) < 0) {
+        UnloadModule(id);
         return -1;
+    }
 
     return result;
 }
@@ -86,7 +88,8 @@ static void start_rapull(void *snap)
         args[n + i] = g_cfg.game_id[i];
     args[n + i] = '\0';
 
-    start_buffer(rp_rapull, n + i + 1, args);
+    if (start_buffer(rp_rapull, n + i + 1, args) != MODULE_RESIDENT_END)
+        FreeSysMemory(list);
 }
 
 int _start(int argc, char *argv[])
@@ -107,11 +110,12 @@ int _start(int argc, char *argv[])
     /* TODO: POPS may bring its own DEV9; whether ours then fails to load
        or replaces it is not known. SMAP needs either one. */
     start_buffer(rp_dev9, 0, NULL);
-    start_buffer(rp_smsutils, 0, NULL);
-    start_buffer(rp_smstcpip, 0, NULL);
-    start_buffer(rp_smap, g_cfg.ipcfg_len, g_cfg.ipcfg);
+    if (start_buffer(rp_smsutils, 0, NULL) != MODULE_RESIDENT_END ||
+        start_buffer(rp_smstcpip, 0, NULL) != MODULE_RESIDENT_END ||
+        start_buffer(rp_smap, g_cfg.ipcfg_len, g_cfg.ipcfg) != MODULE_RESIDENT_END)
+        return MODULE_NO_RESIDENT_END;
 
-    snap = AllocSysMemory(ALLOC_FIRST, RA_SNAP_TOTAL, NULL);
+    snap = AllocSysMemory(ALLOC_FIRST, RA_SNAP_TOTAL_FOR(g_cfg.bytes + g_cfg.node_count * RA_NODE_PAIR_BYTES), NULL);
     if (snap == NULL)
         return MODULE_NO_RESIDENT_END;
     ((volatile struct ra_snap *)snap)->magic = 0; /* raudp sends nothing until rapull writes one */
@@ -122,7 +126,7 @@ int _start(int argc, char *argv[])
     args[RA_ARG_EVENT - 1] = ',';
     hex32(&args[RA_ARG_EVENT], 0);
     args[RA_ARG_RX - 1] = ',';
-    args[RA_ARG_RX] = g_cfg.client_mode ? '3' : '1';
+    args[RA_ARG_RX] = '0' + 1 + (g_cfg.client_mode ? 2 : 0) + (g_cfg.host_pinned ? 4 : 0);
     args[RA_ARG_ID - 1] = ',';
     for (i = 0; i < RA_ARG_ID_MAX; i++)
         args[RA_ARG_ID + i] = ' ';
@@ -138,7 +142,12 @@ int _start(int argc, char *argv[])
         args[n + i] = g_cfg.ipcfg[i];
     n += i;
 
-    start_buffer(rp_raudp, n, args);
+    if (start_buffer(rp_raudp, n, args) != MODULE_RESIDENT_END) {
+        FreeSysMemory(snap);
+        return MODULE_NO_RESIDENT_END;
+    }
+    /* Once the sender starts it owns its snapshot pointer, including when the
+       optional reader cannot start. Never free memory a resident sender uses. */
     start_rapull(snap);
 
     /* the started modules live in their own memory; this frees the blobs */

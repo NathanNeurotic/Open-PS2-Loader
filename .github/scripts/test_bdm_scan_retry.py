@@ -108,6 +108,7 @@ typedef struct
     int bdmGameCount;
     base_game_info_t *bdmPs1Games;
     int bdmPs1GameCount;
+    unsigned char bdmPs1RetryCount, bdmPs1RetryPending;
 } bdm_device_data_t;
 
 static int bdmDeviceModeStarted;
@@ -152,7 +153,9 @@ static int sbIsSameSize(const char *prefix, int prev) { (void)prefix; return pre
 static int thmAddElements(const char *p, const char *s, int m) { (void)p; (void)s; (void)m; return 0; }
 static int lngAddLanguages(const char *p, const char *s, int m) { (void)p; (void)s; (void)m; return 0; }
 static void bdmBuildPs1Prefix(char *t, int n, int slot) { snprintf(t, n, "mass%d:/", slot); }
-static int ps1FillGameList(const char *p, base_game_info_t **g) { (void)p; (void)g; return 0; }
+static int ps1Scans, ps1Result, ps1Incomplete;
+static int ps1GameListNeedsRetry(void) { return ps1Incomplete; }
+static int ps1FillGameList(const char *p, base_game_info_t **g) { (void)p; (void)g; ps1Scans++; return ps1Result; }
 static int cueFillGameList(const char *p, base_game_info_t **g) { (void)p; (void)g; return 0; }
 static const char *folderGetSub(int mode) { (void)mode; return browseSub; }
 static int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int *fsize, int *count)
@@ -201,6 +204,7 @@ static void reset(void)
     gBDMPrefix[0] = lastScanPrefix[0] = '\0';
     folderResets = folderDirty = 0;
     scanGameCount = 0;
+    ps1Scans=ps1Result=ps1Incomplete=0;
 }
 
 /* One deferred update: needsUpdate, and the rebuild (itemUpdate) when it says so. */
@@ -318,6 +322,16 @@ int main(void)
     identityWaitStillPolls();
     successIsQuiet();
     subfolderAndPs1AreQuiet();
+    reset(); view=LIB_VIEW_PS1; ps1Result=-1; connectDevice();
+    for(int i=0;i<30;i++) pass();
+    CHECK(ps1Scans==3, "failed PS1 scan must stop after two retries: %d",ps1Scans);
+    dirty=1; pass(); for(int i=0;i<30;i++) pass();
+    CHECK(ps1Scans==6, "manual refresh rearms two retries: %d",ps1Scans);
+    reset(); view=LIB_VIEW_PS1; ps1Result=2; ps1Incomplete=1; connectDevice();
+    pass(); ps1Incomplete=0; pass();
+    for(int i=0;i<30;i++) pass();
+    CHECK(ps1Scans==3 && dev.bdmPs1GameCount==2, "partial scan recovers and stops: %d",ps1Scans);
+
     reset();
     /* An already connected ATA slot still has the prefix from its old config. Applying
        settings clears usb_prefix, but neither identity nor the generation needs to change. */

@@ -1,4 +1,4 @@
-"""A missing ember.elf must not hide the Ember games -- and must never fail the PS1 scan.
+"""A missing ember.elf must not hide games; explicit scan I/O failures preserve the last good list.
 
 Aislinn (October 2026) asked for a useful error when a PS1 prerequisite is missing. The silent case
 was the scan: cueScanDir returned 0 as soon as ember.elf would not open, so a missing or misnamed core
@@ -150,6 +150,7 @@ static const char *coreFile;           /* the one path open() accepts; NULL = em
 static int gamesOpens;                 /* does EMBER/games open at all? */
 static int gamesErrno;                 /* errno when it does not */
 static const char *const *gameNames;   /* its entries; "file_*" are files, "empty_*" folders hold no image */
+static int childOpenError, parentReadError, childReadError;
 static DIR gamesDir, probeDir;
 static struct dirent ent, probeEnt;    /* separate storage: a probe reads WHILE the games dir is mid-enumeration */
 #define GAMES_PATH "mass0:/EMBER/games"
@@ -169,6 +170,7 @@ static DIR *opendir(const char *path)
         return &gamesDir;
     }
     if (!strncmp(path, GAMES_PATH "/", n + 1) && strncmp(path + n + 1, "file_", 5) != 0) {
+        if (childOpenError) { errno=EIO; return NULL; }
         probeDir.isGames = 0;
         probeDir.hasImage = strncmp(path + n + 1, "empty_", 6) != 0;
         probeDir.isTomba = strcmp(path + n + 1, "Tomba!") == 0;
@@ -180,6 +182,7 @@ static DIR *opendir(const char *path)
 }
 static struct dirent *readdir(DIR *d)
 {
+    if ((d->isGames && parentReadError && d->pos >= (parentReadError==2 ? 3 : 0)) || (!d->isGames && childReadError)) { errno=EIO; return NULL; }
     if (!d->isGames) {
         /* a folder probe: the folder holds "game.cue" unless it is an empty_ folder */
         if (!d->hasImage || d->pos != 0)
@@ -216,6 +219,7 @@ static void expect(const char *what, const char *core, int opens, int err, int w
         printf("FAIL %s: the two game folders were not listed\n", what);
         fails++;
     }
+    if (want <= 0 && list != NULL) { puts("FAIL: incomplete scan published rows");fails++; }
     free(list);
 }
 
@@ -227,9 +231,14 @@ int main(void)
     expect("core MISSING still lists the game folders", NULL, 1, 0, 2);
     expect("core missing, no EMBER folder (ENOENT) is empty", NULL, 0, ENOENT, 0);
     expect("core missing, driver collapses errno: still empty, never -1", NULL, 0, EPERM, 0);
-    expect("core missing, contended read: still empty, never -1", NULL, 0, EIO, 0);
+    expect("core missing, definite I/O failure preserves list", NULL, 0, EIO, -1);
     expect("core present, absent games folder is empty", core, 0, ENOENT, 0);
     expect("core present, unreadable games folder keeps the last-good list", core, 0, EIO, -1);
+
+    childOpenError=1; expect("child open EIO",core,1,0,-1); childOpenError=0;
+    parentReadError=1; expect("parent readdir EIO",core,1,0,-1); parentReadError=0;
+    parentReadError=2; expect("parent EIO after one good game",core,1,0,-1); parentReadError=0;
+    childReadError=1; expect("child readdir EIO",core,1,0,-1); childReadError=0;
 
     /* Exact USB layout reported by Vapor: mass0:/EMBER/games/Tomba!/CDROM.CUE,
      * with an uppercase disc suffix and an exclamation mark in the folder name. */
@@ -334,4 +343,4 @@ if not failures:
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('ember scan: a missing core still lists game folders, never fails the scan; image-less folders are skipped; launch messages name the path')
+print('ember scan: missing core still lists games, legacy missing folders stay empty, explicit read errors fail safely; image-less folders are skipped; launch messages name the path')

@@ -52,6 +52,8 @@ typedef struct
     // so it can never resurrect the other view's contents. Mirrors mmceGames/mmceVcdGames.
     int bdmPs1GameCount;
     base_game_info_t *bdmPs1Games;
+    unsigned char bdmPs1RetryCount;
+    unsigned char bdmPs1RetryPending;
     char bdmDriver[32];
     int bdmDeviceType;      // Type of BDM device, see BDM_TYPE_* above
     int bdmDeviceTick;      // Used alongside BdmGeneration to tell if device data needs to be refreshed

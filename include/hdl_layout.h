@@ -1,7 +1,7 @@
 /* HDLoader game-partition header, shared by HDD enumeration and the
    read-only RetroAchievements hasher. Matches the game core's 1024-byte
-   HDL descriptor; part offsets/lengths use 2048-byte logical sectors,
-   while data_start is in raw ATA 512-byte sectors. */
+   HDL descriptor; part_offset uses 2048-byte logical sectors, part_size
+   is in bytes, and data_start is in raw ATA 512-byte sectors. */
 #ifndef HDL_LAYOUT_H
 #define HDL_LAYOUT_H
 

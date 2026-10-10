@@ -138,7 +138,7 @@ static char g_rx[2048] __attribute__((aligned(64)));
 static u32 g_raReplyIP;
 static u32 g_raVerifiedIP;
 static int g_raVerifiedMode = -1;
-static u8 g_raVerifiedSMBHost[4];
+static int g_raVerifiedSMBHost[4];
 static int g_raVerifiedCompanionHost[4];
 
 static int raHostIsExplicit(void)

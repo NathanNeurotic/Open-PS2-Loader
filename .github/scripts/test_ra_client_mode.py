@@ -5,8 +5,8 @@ import tempfile
 
 root = Path(__file__).resolve().parents[2]
 source = (root/'modules/network/raudp/raudp.c').read_text()
-start = source.index('static int ra_discover(void)\n{')
-discover = source[start:source.index('\n}', start)+2]
+start = source.index('static int ra_resolve_mac(u32 ip)\n{')
+discover = source[start:source.index('\n}', source.index('static int ra_discover(void)\n{'))+2]
 harness = r'''
 #include <assert.h>
 #include <stdint.h>
@@ -37,7 +37,8 @@ struct sockaddr_in { int sin_family; unsigned short sin_port; struct { u32 s_add
 static int ra_caduceus, ra_rx_in_game = 1, ra_sock, scenario, sent_port, bridge_sends, engine_sends, closed;
 static int ra_host_pinned;
 static u32 ra_src_ip = 1, ra_dst_ip, ra_disc_us, ra_server_ip, ra_gateway_ip, ra_netmask_ip;
-static int arp_only_gateway;
+static int arp_only_gateway, arp_requests, learn_after_request;
+static int ra_request_mac(u32 ip) { (void)ip; arp_requests++; return 1; }
 static u8 ra_dst_mac[6];
 int lwip_socket(int a,int b,int c) { return 7; }
 int lwip_setsockopt(int a,int b,int c,void*d,int e) { return 0; }
@@ -48,7 +49,7 @@ static int ticks;
 void DelayThread(int t) { if(scenario && ++ticks > 30) longjmp(deadline,1); }
 int ra_fmt_ip(char *out,u32 ip) { strcpy(out,"1.2.3.4"); return 7; }
 void ra_fmt(u8*out,unsigned int n,int len) { memcpy(out,"18195",5); }
-int etharp_lookup_mac(u32 ip,u8 *mac) { return !arp_only_gateway || ip==ra_gateway_ip; }
+int etharp_lookup_mac(u32 ip,u8 *mac) { return !arp_only_gateway || ip==ra_gateway_ip || (learn_after_request && arp_requests); }
 int lwip_sendto(int s,const char *body,int n,int flags,struct sockaddr *dest,int len) {
     struct sockaddr_in *to=(struct sockaddr_in*)dest;
     sent_port=to->sin_port;
@@ -111,6 +112,15 @@ int main(void) {
     ra_server_ip = 123; assert(ra_discover() == 1);
     ra_server_ip = 1; assert(ra_discover() == 0);
     ra_server_ip = 123; ra_netmask_ip = 0; assert(ra_discover() == 0);
+    ra_rx_in_game=1; ra_host_pinned=1; ra_server_ip=42; ra_netmask_ip=255;
+    assert(ra_discover()==1 && ra_dst_ip==42); /* Routed active RAO1 uses gateway. */
+    ra_netmask_ip=0; scenario=6; ticks=0;
+    if(!setjmp(deadline)) { ra_discover(); assert(0); }
+    assert(arp_requests>0);
+    scenario=0;ra_rx_in_game=0;ra_server_ip=42;ra_netmask_ip=0;
+    arp_requests=0;learn_after_request=1;engine_sends=bridge_sends=0;
+    assert(ra_discover()==1 && ra_dst_ip==42 && arp_requests==1);
+    assert(!engine_sends && !bridge_sends); /* Companion learned without a discovery socket. */
     puts("PASS: Xerabora broadcast, Caduceus pinned-host discovery, spoofed bridge refusal, offline and gateway guards");
 }
 '''

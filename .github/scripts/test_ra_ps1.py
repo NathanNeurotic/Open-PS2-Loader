@@ -1,6 +1,7 @@
 """Production PS1 hashing, module ownership and IOP snapshots against host fixtures."""
 from pathlib import Path
 import hashlib
+import os
 import re
 import struct
 import subprocess
@@ -13,11 +14,15 @@ with tempfile.TemporaryDirectory(prefix='ra-ps1-') as directory:
     def run(name, source, extra=()):
         path = tmp / (name + '.c')
         exe = tmp / (name + '.exe')
+        source = '#ifdef _WIN32\n#include <direct.h>\n#define mkdir(path, mode) _mkdir(path)\n#endif\n' + source
         path.write_text(source, encoding='utf-8')
         subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror',
                         '-Wno-pointer-to-int-cast', '-Wno-int-to-pointer-cast',
                         '-I', str(root), str(path), *map(str, extra), '-o', str(exe)], check=True)
-        subprocess.run([str(exe)], cwd=tmp, check=True)
+        if name == 'badge_ps1' and os.name == 'nt':
+            print('SKIP Windows: real-filesystem PS2 colon-path badge fixture requires Linux (covered in CI)')
+        else:
+            subprocess.run([str(exe)], cwd=tmp, check=True)
 
     payload = bytearray((i % 251 for i in range(2048 * 3 + 17)))
     payload[:8] = b'PS-X EXE'
@@ -191,6 +196,13 @@ int main(void) {
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#define _l(x) "test"
+#define _STR_PS1_RA_USB_REQUIRED 0
+#define _STR_PS1_RA_REMOVE_PREVIOUS 0
+#define _STR_PS1_RA_PREPARE_FAILED 0
+#define _STR_PS1_RA_CLEAN_DELETE 0
+#define _STR_PS1_RA_CLEAN_FAILED 0
+#define _STR_PS1_RA_CLEAN_CONTINUE 0
 static char vcdSep(const char *p) {(void)p;return '/';}
 static int replies[3], replypos, fail_remove;
 static int module_unlink(const char *p) {if(fail_remove) {errno=EACCES;return -1;}return unlink(p);}
@@ -235,6 +247,8 @@ int main(void) {
 #define RETROACHIEVEMENTS
 #define RA_MODE_CADUCEUS 1
 static int gRATelemetry=1, gRAMode=1, count=1, network=1;
+static int link_up=1, dhcp_ready=1, session_ready=1;
+static void raLaunchNetworkUp(void) { if (!link_up || !dhcp_ready || (gRAMode==1 && !session_ready)) count=0; }
 static int gRAHostIp[4];
 static unsigned char rapops_irx[sizeof(struct rapops_cfg)];
 static unsigned int size_rapops_irx=sizeof(rapops_irx);
@@ -283,10 +297,14 @@ int main(void) {
     network=0;assert(raPopsPrepare("","","game.vcd",1)==0);
     assert(access("POPS/MODULE_9.IRX",0)!=0); /* Offline plays without tracking. */
     network=1;
+    link_up=0;assert(raPopsPrepare("","","game.vcd",0)==0);assert(access("POPS/MODULE_9.IRX",0)<0);
+    link_up=1;count=1;dhcp_ready=0;assert(raPopsPrepare("","","game.vcd",1)==0);assert(access("POPS/MODULE_9.IRX",0)<0);
+    dhcp_ready=1;count=1;session_ready=0;assert(raPopsPrepare("","","game.vcd",1)==0);assert(access("POPS/MODULE_9.IRX",0)<0);
+    session_ready=1;count=1;gRAHostIp[0]=10;
     assert(raPopsPrepare("","","game.vcd",1)==0);
     struct rapops_cfg cfg;f=fopen("POPS/MODULE_9.IRX","rb");
     assert(fread(&cfg,1,sizeof(cfg),f)==sizeof(cfg));fclose(f);
-    assert(cfg.client_mode==1 && cfg.count==1 && cfg.bytes==4 && !strcmp(cfg.game_id,"P123456789abcde"));
+    assert(cfg.host_pinned==1 && cfg.client_mode==1 && cfg.count==1 && cfg.bytes==4 && !strcmp(cfg.game_id,"P123456789abcde"));
     assert(!strcmp(loaded_key,cfg.game_id));
     unlink("POPS/MODULE_9.IRX");
     fail_create=1;

@@ -1730,3 +1730,21 @@ gui_strings:
   string: "Back"
 - label: CAD_UNTRACKED
   string: "Caduceus is not ready. Launching without achievements this time."
+
+- label: PS1_RA_USB_REQUIRED
+  string: "PS1 achievements require a USB VCD through POPStarter"
+
+- label: PS1_RA_REMOVE_PREVIOUS
+  string: "Cannot remove the previous PS1 achievement module"
+
+- label: PS1_RA_PREPARE_FAILED
+  string: "Cannot prepare PS1 achievements. Preserve or move POPS/MODULE_9.IRX and check device write access."
+
+- label: PS1_RA_CLEAN_DELETE
+  string: "Unused RiptOPL RA module: POPS/MODULE_9.IRX. Delete for a clean launch?"
+
+- label: PS1_RA_CLEAN_FAILED
+  string: "Cannot delete the unused RA module."
+
+- label: PS1_RA_CLEAN_CONTINUE
+  string: "Continue anyway? A leftover RA module can run stale telemetry. No cancels launch."

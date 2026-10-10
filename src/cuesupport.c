@@ -152,12 +152,27 @@ static int cueEntryIsGame(const char *devPrefix, const char *gamesDir, const str
     // "smb0:\\EMBER\\games/NAME" -- mixed, and rejected by any handler that cares. Latent today
     // (no backslash device lists Ember yet) and load-bearing the moment one does.
     snprintf(probe, sizeof(probe), "%s%c%s", gamesDir, cueSep(devPrefix), de->d_name);
+    errno = 0;
     d = opendir(probe);
-    if (d == NULL)
-        return 0;
+    if (d == NULL) {
+        if (errno == 0 || errno == ENOENT || errno == ENOTDIR || errno == EPERM)
+            return 0;
+        LOG("[CUE] cannot open '%s' (errno %d)\n", probe, errno);
+        return -1;
+    }
 
-    while (!found && (sub = readdir(d)) != NULL)
+    while (!found) {
+        errno = 0;
+        sub = readdir(d);
+        if (sub == NULL) {
+            if (errno != 0) {
+                LOG("[CUE] cannot enumerate '%s' (errno %d)\n", probe, errno);
+                found = -1;
+            }
+            break;
+        }
         found = cueNameIsDiscImage(sub->d_name, (int)strlen(sub->d_name));
+    }
     closedir(d);
 
     if (!found)
@@ -196,8 +211,8 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
     //
     // A plain open() of ember.elf has none of that ambiguity, so the core decides how a games
     // directory that will not open is read. With the core present, the errno split below applies.
-    // Without it, an unopenable games directory is ALWAYS "nothing here" (0), never -1, whatever
-    // errno the driver reports -- the FifthFox guarantee above, on every driver.
+    // Without it, ENOENT and legacy collapsed errors (EPERM or no errno) mean no library.
+    // Explicit I/O/resource errors still preserve the last-good list and permit bounded recovery.
     //
     // A missing core no longer hides a games directory that DOES open (Aislinn, October 2026). It
     // used to return 0 straight away, so a missing or misnamed ember.elf made every Ember game
@@ -222,7 +237,7 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
         // here"), not a failure -- ps1FillGameList treats a failure from either half as a reason to
         // keep the whole last-good list, so getting this wrong would freeze the PS1 page of every
         // device that only uses one core. Without a core there is no library to preserve.
-        if (!coreReadable || errno == ENOENT)
+        if (errno == ENOENT || (!coreReadable && (errno == 0 || errno == EPERM)))
             return 0;
         // Anything else: the directory could not be READ (bus contended, device mid-detach). Signal
         // failure so the caller preserves its last-good list rather than blanking the page.
@@ -237,7 +252,14 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
     // a one-game USB stick. On a memory-constrained EE build that allocation can
     // fail and silently leave a never-scanned PS1 page empty. Grow geometrically
     // instead, retaining the same 2,048-game ceiling and last-good-list semantics.
-    while (count < CUE_MAX_ITEMS && (de = readdir(dir)) != NULL) {
+    while (count < CUE_MAX_ITEMS) {
+        errno = 0;
+        de = readdir(dir);
+        if (de == NULL) {
+            if (errno != 0)
+                goto scan_failed;
+            break;
+        }
         if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
             continue;
 
@@ -254,7 +276,10 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
             LOG("[CUE] skip (name > %d chars): %s\n", ISO_GAME_NAME_MAX, de->d_name);
             continue;
         }
-        if (!cueEntryIsGame(devPrefix, gamesDir, de))
+        int isGame = cueEntryIsGame(devPrefix, gamesDir, de);
+        if (isGame < 0)
+            goto scan_failed;
+        if (!isGame)
             continue; // loose files, and folders holding nothing Ember can mount, are not games
 
         if (count == capacity) {
@@ -284,6 +309,11 @@ int cueScanDir(const char *devPrefix, cue_entry_t **outList)
 
     *outList = list;
     return count;
+scan_failed:
+    LOG("[CUE] incomplete scan of '%s' (errno %d) -- keeping last-good list\n", gamesDir, errno);
+    free(list);
+    closedir(dir);
+    return -1;
 }
 
 typedef struct
@@ -818,29 +848,38 @@ int cueFillGameList(const char *devPrefix, base_game_info_t **outGames)
     return count;
 }
 
+static int ps1ScanIncomplete;
+
+int ps1GameListNeedsRetry(void)
+{
+    return ps1ScanIncomplete;
+}
+
 int ps1FillGameList(const char *devPrefix, base_game_info_t **outGames)
 {
     base_game_info_t *vcdGames = NULL, *cueGames = NULL, *merged = NULL;
     int vcdCount, cueCount, total;
 
+    ps1ScanIncomplete = 0;
     if (outGames == NULL)
         return 0;
 
     vcdCount = vcdFillGameList(devPrefix, &vcdGames);
     cueCount = cueFillGameListUnsorted(devPrefix, &cueGames);
+    ps1ScanIncomplete = vcdCount < 0 || cueCount < 0;
 
-    // ONLY BOTH halves failing means the device could not be read. This used to fail the whole scan
+    // An error plus an empty half cannot prove the device has no PS1 titles. This used to fail the whole scan
     // when EITHER half did, on the reasoning that publishing half a list looks like a user's titles
     // disappearing. That reasoning was wrong in the direction that matters: one half failing then
     // hid the OTHER half too, so a device holding a perfectly readable POPS library showed NOTHING
     // because its (absent) Ember half reported a failure. Hardware-reported on iLink.
     //
-    // Half a list beats no list. A half that failed contributes no rows this pass and is retried on
-    // the next refresh; the half that succeeded is published, because it is real.
-    if (vcdCount < 0 && cueCount < 0) {
+    // A successful nonempty half is still published. The serialized caller can query
+    // ps1GameListNeedsRetry immediately afterward to schedule bounded recovery.
+    if ((vcdCount < 0 && cueCount <= 0) || (cueCount < 0 && vcdCount <= 0)) {
         free(vcdGames);
         free(cueGames);
-        LOG("[PS1] both scans failed -- keeping last-good list\n");
+        LOG("[PS1] incomplete empty scan -- keeping last-good list\n");
         return -1;
     }
     if (vcdCount < 0) {

@@ -50,6 +50,8 @@ int favGetItemKind(int id);
 // Device prefix of the favourite's source page (where its VMC/ and CFG/ live), or NULL when the id is
 // invalid or the source has no filesystem prefix (HTTP).
 char *favGetItemPrefix(int id);
+/* Resolve a current source row without changing its page's selected view. */
+item_list_t *favGetSourceItem(int id, item_list_t *view, int *sourceId);
 
 // Source device mode of the favourite whose art-cache value (source startup / VCD name) matches,
 // or -1 if none does. Used by texcache's cacheGetEffectiveMode so MMCE idle

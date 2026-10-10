@@ -1505,6 +1505,7 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // Check for forced refresh from deleting or renaming a game.
     if (pDeviceData->ForceRefresh != 0) {
         pDeviceData->ForceRefresh = 0;
+        pDeviceData->bdmPs1RetryCount = pDeviceData->bdmPs1RetryPending = 0;
         return 1;
     }
 
@@ -1524,14 +1525,26 @@ static int bdmNeedsUpdate(item_list_t *itemList)
     // mmceNeedsUpdate checks it first). Otherwise a device already scanned this BdmGeneration -- which
     // every USB stick is, the moment its ISO list loads -- short-circuits at the gate and never
     // rescans, leaving the VCD (PS1/POPSTARTER) list permanently empty on USB/BDM while MMCE worked.
-    if (libViewConsumeDirty(itemList->mode))
+    if (libViewConsumeDirty(itemList->mode)) {
+        pDeviceData->bdmPs1RetryCount = pDeviceData->bdmPs1RetryPending = 0;
         return 1;
+    }
 
     // Folder browsing: a descend/ascend marks the mode dirty but bumps nothing the tick gate below
     // watches, so consume it here (same discipline as libViewConsumeDirty) or the deeper/shallower list
     // never rebuilds on a device already scanned this BdmGeneration.
     if (folderConsumeDirty(itemList->mode))
         return 1;
+
+    if (pDeviceData->bdmDeviceTick != BdmGeneration)
+        pDeviceData->bdmPs1RetryCount = pDeviceData->bdmPs1RetryPending = 0;
+    // At most two extra scans on the normal idle-refresh cadence. This does
+    // not bump the generation or requeue module loads; explicit refresh rearms it.
+    if (pDeviceData->bdmPs1RetryPending && pOwner != NULL && pOwner->menuItem.visible &&
+        (libListViewActive(itemList) == LIB_VIEW_PS1 || libListViewActive(itemList) == LIB_VIEW_MIXED)) {
+        pDeviceData->bdmPs1RetryPending = 0;
+        return 1;
+    }
 
     // A NEVER-SCANNED slot (-2) skips this per-generation cache, INCLUDING while its page is still
     // invisible, so bdmUpdateDeviceData keeps polling it until the page is published: a mount can
@@ -1668,6 +1681,12 @@ static int bdmUpdateGameList(item_list_t *itemList)
                     ps1FillGameList(ps1Prefix, &pDeviceData->bdmPs1Games);
         if (r >= 0) // r < 0: transient scan failure -> keep THIS view's last-good (empty if never scanned)
             pDeviceData->bdmPs1GameCount = r;
+        int incomplete = r < 0 || (pDeviceData->bdmDeviceType != BDM_TYPE_UDPBD && ps1GameListNeedsRetry());
+        pDeviceData->bdmPs1RetryPending = incomplete && pDeviceData->bdmPs1RetryCount < 2;
+        if (pDeviceData->bdmPs1RetryPending)
+            pDeviceData->bdmPs1RetryCount++;
+        else if (!incomplete)
+            pDeviceData->bdmPs1RetryCount = 0;
         result += pDeviceData->bdmPs1GameCount;
     }
     if (view == LIB_VIEW_ISO || view == LIB_VIEW_MIXED) {
@@ -1981,12 +2000,12 @@ static void bdmLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_
 #ifdef RETROACHIEVEMENTS
     int raModule = vcdRemoveRaModule(vcdPrefix);
     if (raModule == -2) {
-        guiMsgBox("Cannot remove the previous PS1 achievement module", 0, NULL);
+        guiMsgBox(_l(_STR_PS1_RA_REMOVE_PREVIOUS), 0, NULL);
         return;
     }
     if (pDeviceData->bdmDeviceType == BDM_TYPE_USB) {
         if (raPopsPrepare(vcdPrefix, pDeviceData->bdmPrefix, vcdFullPath, raModule == 0) < 0) {
-            guiMsgBox("Cannot prepare PS1 achievements. Preserve or move POPS/MODULE_9.IRX and check device write access.", 0, NULL);
+            guiMsgBox(_l(_STR_PS1_RA_PREPARE_FAILED), 0, NULL);
             return;
         }
     }

@@ -33,12 +33,13 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
     if (raHashVcd(vcdPath, boot, sizeof(boot), contentHash) != 0 ||
         !raVcdWatchGuardMatches(watchRoot, watchKey, contentHash))
         return 0; /* Missing/old guard: game boots normally, untracked. */
+    /* A stale watch list must never make an otherwise playable PS1 game
+       unlaunchable. Share PS2's link, DHCP and Caduceus session preflight. */
+    raLaunchNetworkUp();
+    if (GetWatchCount() <= 0 || ethGetNetConfig(ip, mask, gw) < 0 || !(ip[0] | ip[1] | ip[2] | ip[3]))
+        return 0;
     if (!slotFree)
         return -1; /* FAT does not enforce O_EXCL: refuse the user-owned slot explicitly. */
-    /* A stale watch list must never make an otherwise playable PS1 game
-       unlaunchable when the adapter is down or has no usable IP. */
-    if (ethGetNetConfig(ip, mask, gw) < 0 || !(ip[0] | ip[1] | ip[2] | ip[3]))
-        return 0;
     if (snprintf(path, sizeof(path), "%sPOPS/MODULE_9.IRX", root) >= (int)sizeof(path))
         return -1;
     irx = malloc(size_rapops_irx);
@@ -61,6 +62,7 @@ int raPopsPrepare(const char *root, const char *watchRoot, const char *vcdPath, 
     cfg->ipcfg_len = n;
     snprintf(cfg->game_id, sizeof(cfg->game_id), "%s", watchKey);
     cfg->client_mode = gRAMode == RA_MODE_CADUCEUS;
+    cfg->host_pinned = (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) != 0;
     peer = raNetPeerIP();
     if (peer) {
         const unsigned char *host = (const unsigned char *)&peer;

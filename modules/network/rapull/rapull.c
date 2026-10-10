@@ -339,6 +339,7 @@ static void rp_thread(void *arg)
             FreeSysMemory(rp_node_val);
         if (rp_stage)
             FreeSysMemory(rp_stage);
+        FreeSysMemory((void *)rp_list); // ownership transferred after successful startup
         ExitDeleteThread();
         return;
     }
@@ -395,7 +396,10 @@ int _start(int argc, char *argv[])
     if (tid < 0)
         return MODULE_NO_RESIDENT_END;
 
-    StartThread(tid, NULL);
+    if (StartThread(tid, NULL) < 0) {
+        DeleteThread(tid);
+        return MODULE_NO_RESIDENT_END;
+    }
 
     return MODULE_RESIDENT_END;
 }

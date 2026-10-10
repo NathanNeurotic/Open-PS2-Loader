@@ -2505,10 +2505,10 @@ int vcdConfirmCleanLaunch(const char *root)
     int status = vcdRaModuleStatus(root, 0);
     if (status == 0 || status == -1)
         return 1; /* Absent or user-owned: leave ordinary modules untouched. */
-    if (status == 1 && guiMsgBox("Unused RiptOPL RA module: POPS/MODULE_9.IRX. Delete for a clean launch?", 1, NULL)) {
+    if (status == 1 && guiMsgBox(_l(_STR_PS1_RA_CLEAN_DELETE), 1, NULL)) {
         if (vcdRemoveRaModule(root) == 0)
             return 1;
-        guiMsgBox("Cannot delete the unused RA module.", 0, NULL);
+        guiMsgBox(_l(_STR_PS1_RA_CLEAN_FAILED), 0, NULL);
     }
-    return guiMsgBox("Continue anyway? A leftover RA module can run stale telemetry. No cancels launch.", 1, NULL);
+    return guiMsgBox(_l(_STR_PS1_RA_CLEAN_CONTINUE), 1, NULL);
 }
