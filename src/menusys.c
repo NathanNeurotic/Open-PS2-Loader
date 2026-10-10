@@ -2473,7 +2473,7 @@ void menuRenderAchievements(void)
             menuCardText(36, 132, 470, 22, text, CAD_ACCENT);
             rmDrawRect(36, 120, 568, 3, CAD_BORDER);
             if (page.maximum)
-                rmDrawRect(36, 120, 568 * page.earned / page.maximum, 3, CAD_ACCENT);
+                rmDrawRect(36, 120, (int)(568LL * page.earned / page.maximum), 3, CAD_ACCENT);
         } else {
             snprintf(text, sizeof(text), page.total == 1 ? _l(_STR_CAD_ONE_GAME) : _l(_STR_CAD_GAMES), page.total);
             menuCardText(36, 132, 460, 22, text, CAD_MUTED);

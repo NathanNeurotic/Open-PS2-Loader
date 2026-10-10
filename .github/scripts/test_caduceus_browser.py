@@ -148,6 +148,30 @@ with tempfile.TemporaryDirectory() as tmp:
  subprocess.run([str(path/'network.exe')],check=True)
 
 menu=(root/'src/menusys.c').read_text()
+
+# Valid totals reach ten million; the PS2's 32-bit multiply must not overflow.
+progress = re.search(r'rmDrawRect\(36, 120, (.*), 3, CAD_ACCENT\);', menu)
+assert progress, 'achievement progress bar expression missing'
+with tempfile.TemporaryDirectory() as tmp:
+ path=Path(tmp)
+ (path/'progress.c').write_text(r'''
+#include <assert.h>
+static int width(int earned, int maximum) {
+    struct { int earned, maximum; } page = {earned, maximum};
+    return ''' + progress.group(1) + r''';
+}
+int main(void) {
+    assert(width(0, 10000000) == 0);
+    assert(width(5000000, 10000000) == 284);
+    assert(width(9999999, 10000000) == 567);
+    assert(width(10000000, 10000000) == 568);
+    assert(width(1, 3) == 189);
+}
+''')
+ subprocess.run(['cc','-std=gnu99','-O0',str(path/'progress.c'),'-o',str(path/'progress.exe')],check=True)
+ subprocess.run([str(path/'progress.exe')],check=True)
+ print('PASS: progress width at zero, fractional, near-full and ten-million totals')
+
 def function(name):
  a=menu.index('static void '+name+'(') if name=='achievementReload' else menu.index('void '+name+'(')
  b=menu.index('\n}',a)+2
