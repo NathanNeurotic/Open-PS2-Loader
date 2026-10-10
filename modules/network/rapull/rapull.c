@@ -12,12 +12,16 @@
   sends from. No code of ours runs on the EE; rapops starts this module
   with the list it got from OPL.
 
-  Whether POPS answers the request is what the first run on hardware
-  tells. So the client can tell the ways it fails apart, one snapshot
-  with zero values goes out before the first read: a frame counter
-  stuck at 1 means the EE never answered and the thread sleeps in the
-  request; a counter that grows with dma_skip means the request
-  returns an error; a counter at 0 means this module never ran.
+  The reader does not publish synthetic memory snapshots. In particular,
+  a zero-filled snapshot bearing RA_SNAP_MAGIC would be forwarded by
+  raudp as actual watched values, potentially satisfying achievement
+  conditions before any PS1 memory was read. The first valid snapshot
+  is published only after a successful EE request. A stalled initial
+  request therefore yields no game-memory payload; distinguish an
+  unresponsive EE from a module that never started through separate
+  module-startup diagnostics rather than fabricated watch values.
+  TODO: add an out-of-band startup/EE-read diagnostic that cannot be
+  mistaken by the companion for a gameplay snapshot.
   TODO: the EE writes PS1 RAM through its data cache and this reads
   RAM; the EE library writes the cache back before it sends, in the
   ps2sdk version at least. Whether a value can lag is not measured.
