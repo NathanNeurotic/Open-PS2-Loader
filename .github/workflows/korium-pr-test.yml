@@ -16,6 +16,18 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.number == 894
     runs-on: ubuntu-24.04
     container: ghcr.io/ps2homebrew/ps2homebrew@sha256:a1b1f87f09a88f64efbe11356aae47098d4d54b3b3a84f0609fa42369244e25d
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: normal
+            flavour: KORIUM-PR894
+            diag: '0'
+            artifact: RIPTOPL-KORIUM-PR894
+          - variant: diag
+            flavour: KORIUM-PR894-DIAG
+            diag: '1'
+            artifact: RIPTOPL-KORIUM-PR894-DIAG
     steps:
       - name: Install host dependencies
         run: |
@@ -56,6 +68,7 @@ jobs:
             "$PR_HEAD" "$KORIUM_SHA" "$BASE_SHA" > KORIUM-PR894-BUILD.txt
           echo 'Build overlays only Korium theme changes onto current PR implementation.' >> KORIUM-PR894-BUILD.txt
           echo 'This is a hardware test artifact, not a validated stable release.' >> KORIUM-PR894-BUILD.txt
+          echo 'Diagnostic mode: ${{ matrix.diag }} (1 = on-screen boot module stages)' >> KORIUM-PR894-BUILD.txt
           cat KORIUM-PR894-BUILD.txt
 
       - name: Build current RiptOPL with Korium theme
@@ -64,7 +77,7 @@ jobs:
           set -euo pipefail
           sh .github/scripts/install_coherent_mmce.sh
           make clean
-          make LOCALVERSION=KORIUM-PR894 RELEASE_CHANNEL=Korium-PR894 release
+          make LOCALVERSION=${{ matrix.flavour }} OPLDIAG=${{ matrix.diag }} RELEASE_CHANNEL=Korium-PR894 release
           test -s RIPTOPL.ELF
           mkdir -p korium-test
           cp RIPTOPL.ELF KORIUM-PR894-BUILD.txt korium-test/
@@ -72,7 +85,7 @@ jobs:
 
       - uses: actions/upload-artifact@v6
         with:
-          name: RIPTOPL-KORIUM-PR894
+          name: ${{ matrix.artifact }}
           path: korium-test/
           if-no-files-found: error
           retention-days: 30
