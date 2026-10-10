@@ -78,10 +78,41 @@ running it streams the handful of memory addresses that game's achievements depe
 else — talking to the RetroAchievements servers, deciding what unlocked, your login — happens on the
 PC.</p>
 <p>Based on the RetroAchievements implementation by <strong><a href="https://github.com/hacan359/Open-PS2-Loader/pull/1">hacan359 (yoba)</a></strong>.
-Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora PC client</a></strong> with RiptOPL's RA build. Download the required <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.15">v0.1.0-alpha.15 release</a></strong>.</p>
+Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora PC client</a></strong> with RiptOPL's RA build. Download the required <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16">v0.1.0-alpha.16 release</a></strong>.</p>
 <p>RiptOPL's real-hardware stabilization was contributed by <strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong> through
 PRs <strong>#702–#705</strong>, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
 bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
+<h2 id="ra-mode-xerabora-or-caduceus">RA Mode: Xerabora or Caduceus</h2>
+<p>In the <strong>RA build</strong>, open <strong>Settings → Network → RA Mode</strong> and choose <strong>Xerabora</strong> (the default) or <strong>Caduceus</strong>. Save settings to retain the choice. Old configurations without <code>ra_mode</code> keep Xerabora. The normal build has no RA mode row or telemetry code.</p>
+<p>This selector chooses the PC service protocol; it does not enable telemetry by itself. Keep <strong>RA Telemetry</strong> enabled when you want tracking. No PC application or server binaries are bundled by this change; the companion service is managed separately through PS2-Servers.</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Menu and launch behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Xerabora</td>
+<td>Existing xeRAbora discovery, watch-list transfer and in-game telemetry</td>
+</tr>
+<tr>
+<td>Caduceus</td>
+<td>Signed-in session checks, compatible watch lists/telemetry, account and game achievement browsing, and in-game gold-pulse notices; the card renderer remains test-only</td>
+</tr>
+</tbody>
+</table>
+<p>Caduceus adds a UDP <strong>18197</strong> catalog/session bridge (<code>CADQ2</code> / <code>CADR2</code>). Once a ready bridge is found, RiptOPL requests watch lists from the engine on that same PC at UDP <strong>18194</strong>. For local-device launches, the in-game module repeats bridge discovery <strong>only against the configured SMB host IPv4 address</strong> before contacting that PC's engine; a standalone Xerabora reply or a faster responder elsewhere on the LAN cannot substitute for the Caduceus bridge. Xerabora mode keeps automatic broadcast discovery. UDP <strong>18195</strong> is the console's telemetry/notice port, and UDP <strong>18196</strong> is its menu reply port. Permit these connections in the companion PC's firewall. Run one intended achievement service per host to avoid port conflicts. By default, Caduceus's pairing bridge uses the configured SMB server IPv4 address, never the fastest LAN responder. <strong>Network → RA companion IP</strong> can override it independently of the SMB and HTTP game servers; set <strong>0.0.0.0</strong> to retain the legacy fallback. This host is used by Caduceus pairing, support checks, link tests, in-game discovery and POPStarter. When explicitly set, Xerabora is also probed by unicast, not broadcast. A NetBIOS-only SMB address without an IPv4 fallback requires the separate RA host setting.</p>
+<p>Every tracked Caduceus launch rechecks its session. If the bridge is offline or unavailable, the game launches normally without achievement telemetry. If Caduceus reports <strong>OFFLINE</strong>, sign in through the companion service and retry. RiptOPL never stores your RetroAchievements password or API key. A successful bridge query only proves the session bridge answered; the subsequent watch-list transfer and game telemetry must also succeed. An unknown catalog hash is not interpreted as an offline session: the engine's watch-list result remains authoritative.</p>
+<p>The wire format follows <a href="https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts">Caduceus's bridge implementation</a>. Caduceus's bundled engine version can differ from the standalone version recommended above; protocol compatibility does not establish identical game coverage or timing. This new mode has host tests for discovery, malformed/offline replies and host selection; <strong>Caduceus end-to-end console tracking remains unverified</strong>. The Xerabora hardware results below apply only to the tested Xerabora configuration.</p>
+<p>Both modes retain the existing restrictions: external Neutrino and Ember launches do not load RiptOPL's telemetry core (USB POPStarter uses its own IOP reader), UDP storage owns the NIC and blocks menu RA queries <strong>and clears loaded telemetry before an incompatible UDP-backed launch</strong>, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. For saved watch lists launched without a fresh peer discovery, SMB/HTTP passive telemetry uses an explicitly configured RA companion IP if provided, otherwise the existing verified peer or legacy SMB/HTTP game server fallback. <strong>In passive SMB/HTTP mode a queued receive FIFO defers telemetry snapshots</strong>, leaving the disc stream's pending receive traffic ahead of achievement traffic. The send path is still hardware-unverified and may still interfere during continuous streaming. Choosing Caduceus does not bypass these guards or add hardcore support.</p>
+<h3 id="caduceus-achievement-browser-and-in-game-cards">Caduceus achievement browser and in-game cards</h3>
+<p>Choose <strong>Caduceus achievements</strong> from the main menu to browse account games and progress. Select a game to see its achievements, points, descriptions and unlock dates. <strong>L1/R1</strong> changes pages, <strong>Square</strong> cycles All / Earned / Locked / Hardcore, <strong>Select</strong> refreshes, and Back returns to the previous view. Hardcore is a filter for existing account history; it does not enable hardcore tracking.</p>
+<p>For a local ISO, <strong>View achievements</strong> in the game's menu hashes the image and opens that game's set directly. Formats that cannot be hashed on the console can still be browsed through the account library. The browser uses the I/O worker; Back remains available during network requests. Requests finish with bounded retries and cannot overwrite each other's shared state.</p>
+<p>The browser requires a configured, accessible SMB share containing <strong>ART/CADUCEUS.KEY</strong>, created by the companion service, even when games are on USB, MMCE or internal exFAT storage. The key is a 64-character pairing capability, not an RA password/API key. The service also supplies optional <strong>ART/<icon-key>_RA.png</icon-key></strong> badge images; only the visible page is cached. Permit UDP <strong>18198</strong> for browser queries. Pairing requests go only to the explicit <strong>RA companion IP</strong>, or to the configured SMB server IPv4 address when that setting is <strong>0.0.0.0</strong>, never to LAN broadcast. Restrict the share to trusted devices: the LAN protocol is unencrypted. To revoke pairing, stop the service, remove its key file and restart it.</p>
+<p>Caduceus unlock notices use the existing gold pulse by default. Its experimental card renderer can display a compact upper-right achievement title and points in controlled builds; older notices without a title show the ID. Duplicate notices are suppressed, while a richer title-bearing copy can upgrade a legacy notice. Xerabora retains its gold pulse. The new card and browser are adapted from <a href="https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f">Rian6's PS2 implementation</a>, under AFL-3.0.</p>
+<p><strong>The card renderer is disabled by default until GS transfer ownership can be proven.</strong> An idle GIF/DMA check or observed <code>DISPFB</code> write cannot guarantee that a game has finished a pending host-to-local IMAGE transfer. For controlled <em>developer-only</em> experiments, <code>RA_EXPERIMENTAL_CARD_DMA=1</code> must be set consistently in both loader and EE core. This does not create an additional release variant or a user setting. Do not enable production notification cards until safe GS transfer ownership is proven. The retained renderer uses a bounded, loader-owned packet, skips busy GIF transfers and unsupported framebuffers, and records game display writes without forcing a video mode. Normal RA builds reserve no card workspace and install no GS tracker; the optional experimental renderer reserves about 30 KiB only for Caduceus launches with a watch list. If that reservation would cross protected memory bounds, telemetry continues without the card. No host test can establish game timing or graphics compatibility. The existing network-share stability warning still applies.</p>
 <hr/>
 <h2 id="status">Status</h2>
 <p><strong>Implemented, and telemetry has run end to end on real PS2 hardware</strong> in oMrRexD's session for
@@ -138,28 +169,6 @@ as finished.</p>
 </tbody>
 </table>
 <hr/>
-<h2 id="browse-account-achievements-on-the-ps2-experimental">Browse account achievements on the PS2 (experimental)</h2>
-<p>The RA build exposes <strong>RA: Account achievements</strong> from the Start menu and
-<strong>RA: Browse account</strong> from a PS2 game's settings menu. This is an account-wide
-browser; it does <strong>not</strong> yet jump directly to the selected game's achievement set.
-L1/R1 changes pages, Confirm opens a game's achievement list, Square rotates
-All/Earned/Locked/Hardcore filters, Select retries, and Back returns.</p>
-<p>Run PS2-Servers with <strong>RetroAchievements → Caduceus</strong>, sign in via the local
-account page, and configure the <strong>same SMB games root</strong> for the console and
-the RA pairing service. The PC creates <code>ART/CADUCEUS.KEY</code> in that share;
-the console reads it from <code>smb0:</code> before requesting account progress on
-UDP <strong>18198</strong>. The key grants <em>read-only</em> account-progress access: keep
-the share private, never publish the key, and revoke it by regenerating it.
-The console never receives the password, Web API key or RA login token.</p>
-<p><strong>RA-flavour only:</strong> the default ELF, telemetry module and regular xeRAbora
-workflow are unchanged. The browser refuses to bring up SMB while UDPBD
-or UDPFS owns the NIC. Offline status cannot prevent normal game launches.
-No in-game device scan, automatic hashing or background network work is added.</p>
-<p>This first version displays text progress (game titles, earned/hardcore
-counts, points, descriptions, dates and pagination). It does not yet load
-64×64 achievement icons, localize its strings or navigate directly from
-the current game-info screen. Those remain CO2/CO3 presentation tasks.
-Physical-PS2 validation is still required for UI layout and resource ownership.</p>
 <h2 id="using-it">Using it</h2>
 <p>Two settings, on the <strong>Network</strong> settings page:</p>
 <table>
@@ -238,7 +247,7 @@ path. Disc boot, telemetry across game IOP resets and the IGR return path still 
 </tr>
 <tr>
 <td>HDD (APA)</td>
-<td>yes — but see the note below</td>
+<td>yes; installed HDLoader games now support read-only automatic hashing (hardware acceptance pending)</td>
 </tr>
 <tr>
 <td>MMCE</td>
@@ -261,12 +270,16 @@ path. Disc boot, telemetry across game IOP resets and the IGR return path still 
 <td><strong>no</strong></td>
 </tr>
 <tr>
-<td>PS1 / VCD (POPSTARTER, Ember)</td>
+<td>PS1 / USB VCD (POPStarter)</td>
+<td><strong>yes, experimental; console validation pending</strong></td>
+</tr>
+<tr>
+<td>PS1 / Ember, MMCE, APA HDD, SMB and non-USB BDM</td>
 <td><strong>no</strong></td>
 </tr>
 </tbody>
 </table>
-<p>Neutrino, UDPFS and PS1 hand the console over to an external ELF and never load OPL's core, so there is
+<p>Neutrino, UDPFS and Ember hand the console over to an external ELF and never load OPL's core, so there is
 nothing to take a snapshot from. This is structural, not an oversight.</p>
 <h3 id="do-not-expect-a-game-with-achievements-to-run-from-a-network-share">Do not expect a game with achievements to run from a network share</h3>
 <p>A game that streams its own disc over the NIC is competing with telemetry for that NIC. This build no
@@ -280,8 +293,16 @@ to play.</p>
 The hardware testing so far (#702–#705) launched from MMCE and USB, never from a share. Until a share
 is tested, <strong>keep the images you play with achievements on a local device.</strong> The same reasoning
 applies to HTTP, which streams down the same path.</p>
-<p>HDD (APA) games are stored in HDLoader format and have no image file to hash, so while a watch list
-placed by hand still loads and streams, the console cannot work out the hash for them itself.</p>
+<p><strong>HDD (APA) / HDLoader games</strong> have a new <strong>read-only automatic support check</strong>.
+The check reads the installed game's 1024-byte HDLoader descriptor, validates its
+logical-to-ATA sector map, and hashes the boot executable through the same
+ISO9660 walker as normal ISO images. It never rewrites an APA partition or
+converts the game. The resulting watch list is saved under the accessible
+HDD settings home in <code>RA/&lt;startup&gt;.wl</code>; an existing manually supplied list
+still loads. The check is deferred to the I/O worker, requires a valid HDD data
+home and ATA access, and rejects invalid or overlapping partition mappings.
+A synthetic split-partition test matches the ISO content hash, but <strong>real
+APA hardware validation and performance remain pending</strong>.</p>
 <h3 id="an-image-an-earlier-run-left-open-on-the-share-can-still-be-hashed">An image an earlier run left open on the share can still be hashed</h3>
 <p>Checking a game on a share used to fail outright once a console had played that game and been
 switched off: OPL logs off from nothing on power-down, the SMB session dies with the console, and a
@@ -314,10 +335,10 @@ achievements and the menu shows a notice. With the adapter powered and no link, 
 network driver would otherwise wait for a cable for ever and the game would never start.</p>
 <p>The PC client is found automatically: the console broadcasts a query on UDP port 18194 and the client
 answers. Nothing is stored between runs.</p>
-<p>The console integration follows <strong>xeRAbora v0.1.0-alpha.15</strong> (client
+<p>The PS2 console core follows <strong>xeRAbora v0.1.0-alpha.15</strong> (client
 <a href="https://github.com/hacan359/xerabora/commit/d36ee3a54c8769825c99756f908367b2cc2622f3"><code>d36ee3a5</code></a>,
 which pins console <a href="https://github.com/hacan359/Open-PS2-Loader/commit/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a"><code>f4d559a3</code></a>).
-Updating the external client alone does not update the telemetry code in your ELF.</p>
+The PS1 POPStarter bridge additionally follows alpha.16. Use an alpha.16-compatible companion for this RA build; updating the external client alone does not update the telemetry code in your ELF.</p>
 <ul>
 <li><strong>Larger achievement sets:</strong> up to 4,096 direct watches and 128 pointer-chain nodes, subject to the snapshot byte limit. The loader sizes the persistent module-storage block to the actual set, instead of keeping the larger tables in ee_core's limited memory.</li>
 <li><strong>Bounded telemetry cadence:</strong> up to three snapshot packets per video frame on average. Sets needing four to six parts are sampled every second frame; seven to nine parts every third frame. Smaller sets remain at one sample per frame. Packets still transmit as one snapshot batch; this is a cadence budget, not packet pacing.</li>
@@ -327,12 +348,12 @@ Updating the external client alone does not update the telemetry code in your EL
 <li><strong>PC-requested return:</strong> the client's return command takes the existing OPL IGR path. It is available only where in-game RA receive is enabled; the SMB/HTTP receive guard remains. The configured IGR return path and ordinary compatibility restrictions still apply.</li>
 <li><strong>Delivery guarantees retained:</strong> 4 ms sender polling, busy/torn snapshot retries, ~1 second keepalive, and marking the staged sequence sent only after every multipart packet succeeds.</li>
 </ul>
-<div class="callout amber"><div class="h">Important</div>Use <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.15">xeRAbora v0.1.0-alpha.15</a></strong> with this updated RA ELF. Older RiptOPL releases retain their original paired-client requirement. Host tests and successful builds do not establish console timing or game compatibility; the alpha.10 hardware report above is historical evidence, not validation of this update.</div>
+<div class="callout amber"><div class="h">Important</div>Use <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16">xeRAbora v0.1.0-alpha.16</a></strong> with this updated RA ELF. Older RiptOPL releases retain their original paired-client requirement. Host tests and successful builds do not establish console timing or game compatibility; the alpha.10 hardware report above is historical evidence, not validation of this update.</div>
 <hr/>
 <h2 id="files-on-the-card">Files on the card</h2>
 <pre><code>&lt;device root&gt;/RA/&lt;serial&gt;.wl        e.g. mass0:/RA/SLUS_210.65.wl
 </code></pre>
-<p>One watch list per tracked game, generated by the PC client from that game's achievement set. <code>RA/</code> follows the source’s support-file prefix, like <code>CHT/</code>. HTTP loads an existing watch list from the local settings home because the server is read-only; do not assume automatic image hashing/support detection works for a remote HTTP ISO. RiptOPL creates it along with the other library folders.</p>
+<p>One watch list per tracked game, generated by the PC client from that game's achievement set. PS2 images use their boot serial; USB PS1 VCDs instead use a stable 15-character <code>P</code>-prefixed key derived from the normalized full VCD path, avoiding collisions between different PS1 images with the same <code>BOOT</code> executable. These PS1 lists are stored under the selected library's <code>RA/</code> prefix. After renaming, moving or replacing a VCD, run the support check again. Each new USB PS1 support check saves a matching <strong>RA/&lt;15-character-key&gt;.md5</strong> sidecar only after its corresponding <strong>.wl</strong> write succeeds. Tracked POPStarter launches rehash the VCD's boot executable and compare its RetroAchievements content hash to that sidecar. Old watch lists without a guard and replaced images with stale guards launch <strong>untracked</strong>, not with incorrect achievements. This adds an on-launch executable hash read for tracked PS1 VCDs; ordinary/untracked games are unaffected. <code>RA/</code> follows the source’s support-file prefix, like <code>CHT/</code>. HTTP loads an existing watch list from the local settings home because the server is read-only; do not assume automatic image hashing/support detection works for a remote HTTP ISO. RiptOPL creates it along with the other library folders.</p>
 <p>Image launches with a missing watch list proceed normally without telemetry or its extra modules.
 The explicit <strong>RA: launch disc</strong> action instead asks you to check support first; <strong>Launch PS2 Disc</strong>
 remains available for a normal disc boot.</p>
@@ -382,13 +403,13 @@ labelled builds below, in the order listed. The archive keeps those labelled loa
 <p>The labelled folders are the two ps2dev builds, so they say <code>PINNED</code>/<code>ROLLING</code> where the main
 package says <code>PS2DEVPINNED</code>/<code>PS2DEVROLLING</code>. The names are kept short on purpose: a memory card file
 name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
-archive also carries <strong><code>xeRAbora.url</code></strong> (pointing directly to the paired <a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.15">v0.1.0-alpha.15 release</a>), because the loader does nothing without the PC client.</p>
+archive also carries <strong><code>xeRAbora.url</code></strong> (pointing directly to the paired <a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16">v0.1.0-alpha.16 release</a>), because the loader does nothing without the PC client.</p>
 <p>It is deliberately <em>not</em> an entry in <code>RIPTOPL-VARIANTS-*.zip</code>: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
 diagnostic bundle rather than installable payload. The default build is unaffected by all of this — every RA source file and
 every call site is behind <code>#ifdef RETROACHIEVEMENTS</code>, and that is checked by comparing the two builds'
 symbol tables, loader core and embedded IOP modules. PR CI also builds the pinned
-<strong>PS2DEVPINNED-RA</strong> flavour and records the RA flag in its build manifest.</p>
+<strong>OFFICIALROLLING-RA</strong> flavour and records the RA flag in its build manifest.</p>
 <h3 id="two-iop-modules-this-flavour-builds-instead-of-taking-from-the-sdk">Two IOP modules this flavour builds instead of taking from the SDK</h3>
 <p>Both are ps2sdk sources vendored with a marked change, the way <code>modules/network/ps2ips</code> already is,
 and both are selected by <code>USBD_MINI_IRX</code> / <code>SMBMAN_IRX</code> at the top of the Makefile.</p>
@@ -493,51 +514,56 @@ crash. That is the ceiling — GS raster timing and real SMAP behaviour are not 
 </tr>
 <tr>
 <td>10</td>
-<td>PS1/VCD entry</td>
-<td>clean refusal</td>
+<td>USB PS1/VCD entry</td>
+<td>support check, then POPStarter telemetry after the startup delay</td>
 </tr>
 <tr>
 <td>11</td>
-<td>HDD/APA entry</td>
-<td>the check refuses; a watch list still loads</td>
+<td>Ember or non-USB PS1 entry</td>
+<td>clean refusal</td>
 </tr>
 <tr>
 <td>12</td>
+<td>HDD/APA entry</td>
+<td>read-only support check maps the HDL extents; a watch list still loads</td>
+</tr>
+<tr>
+<td>13</td>
 <td>Badge + cover mark</td>
 <td>appear after refresh, correct game, correct device</td>
 </tr>
 <tr>
-<td>13</td>
+<td>14</td>
 <td>Unlock overlay</td>
 <td>gold pulse on <code>RAU1</code>, game keeps running</td>
 </tr>
 <tr>
-<td>14</td>
+<td>15</td>
 <td>IGR combo during an RA launch</td>
 <td>still resets</td>
 </tr>
 <tr>
-<td>15</td>
+<td>16</td>
 <td>MX4SIO launch with telemetry</td>
 <td>no navigation or art regression (that device has history)</td>
 </tr>
 <tr>
-<td>16</td>
+<td>17</td>
 <td>Check a physical PS2 CD/DVD, then RA launch with telemetry On</td>
 <td>correct hash/watch list, normal authentication, game and telemetry run</td>
 </tr>
 <tr>
-<td>17</td>
+<td>18</td>
 <td>Swap the disc after checking support</td>
 <td>launch reads the current disc identity and requires its own watch list</td>
 </tr>
 <tr>
-<td>18</td>
+<td>19</td>
 <td>Normal Launch PS2 Disc in both builds</td>
 <td>existing disc boot remains usable without RA</td>
 </tr>
 <tr>
-<td>19</td>
+<td>20</td>
 <td>RA disc game performs an IOP reset; then try IGR</td>
 <td>disc access and telemetry recover; IGR returns without waiting on the absent OPL CDVDMAN RPC</td>
 </tr>
@@ -547,7 +573,7 @@ crash. That is the ceiling — GS raster timing and real SMAP behaviour are not 
 <h2 id="notes-for-anyone-changing-this-code">Notes for anyone changing this code</h2>
 <ul>
 <li>
-<p><strong>Telemetry requires an OPL-core launch.</strong> BDM, ETH/SMB, HDD/APA and MMCE have this path; HTTP also loads an existing watch list from its local settings prefix. Neutrino and the PS1 cores run external ELFs, so OPL's telemetry core does not run there. Treat HTTP/RA interoperability as unvalidated until tested.</p>
+<p><strong>Telemetry requires an OPL-core launch.</strong> BDM, ETH/SMB, HDD/APA and MMCE have this path; HTTP also loads an existing watch list from its local settings prefix. Neutrino and Ember run external ELFs, so OPL's telemetry core does not run there. USB POPStarter uses a separate IOP telemetry module. Treat HTTP/RA interoperability as unvalidated until tested.</p>
 </li>
 <li>
 <p><strong>The badge cache belongs to the I/O thread.</strong> <code>raBadgeRefresh</code> frees and reallocates it. Nothing
@@ -604,6 +630,68 @@ PRs #702–#705: ee_core stack recovery, MMCE DEV9, launch-time network readines
 RA settings-page correction, plus the hardware investigation that exposed those failures.</li>
 <li><code>src/md5.c</code>, <code>include/md5.h</code> — L. Peter Deutsch, zlib licence, vendored unchanged.</li>
 </ul>
+<h2 id="ps1-achievements-through-usb-popstarter">PS1 achievements through USB POPStarter</h2>
+<p>Adapted from hacan359/Open-PS2-Loader commit <code>531aad4584d65d1779b744739b81402150c7669c</code>
+(xeRAbora alpha.16). Use the RA build and a stock <code>POPS/POPSTARTER.ELF</code>, with
+<code>.VCD</code> games in that USB device's root <code>POPS/</code> folder. RiptOPL retains its PS1
+view and mixed view, existing POPStarter resolver, and filename-based game settings.
+Choose the existing USB driver mode in Settings &gt; PS emulation: <strong>FAT32</strong> for
+FAT32, <strong>exFAT</strong> for exFAT, or <strong>Ask</strong> to choose on each launch. The exFAT driver
+pair and memory-card preparation follow the existing <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/VCD.md">VCD setup</a>.</p>
+<p>Select <strong>RA: check game support</strong> once for the USB VCD, then launch it normally.
+The support check hashes the executable named by the image's <code>SYSTEM.CNF</code>, with
+<code>PSX.EXE</code> fallback, following RetroAchievements' PS1 algorithm. Watch lists are
+stored under the existing library's <code>RA/</code> prefix. Favorites use their source
+USB device and VCD filename. Remembered menu launches use the same POPStarter path and an already checked
+watch list. The command-line BDM autolaunch entry point remains PS2-image-only. The separate Caduceus achievement browser
+opens the selected USB VCD by its content hash; unsupported PS1 sources receive an explicit notice.</p>
+<p>The loader creates <code>POPS/MODULE_9.IRX</code> only for a tracked USB launch. That module
+contains the configured network modules and PS1 watch list. POPStarter loads it
+after resetting the IOP; <code>rapull</code> reads PS1 RAM from POPS through SIF, starting
+<strong>25 seconds after launch</strong>, and <code>raudp</code> sends snapshots to the selected xeRAbora
+or Caduceus companion. Unlock notifications appear on the companion; there is
+no console gold pulse or Caduceus card for PS1. Scratchpad addresses are not
+available in this upstream reader; multi-window reads are not synchronized to
+a game frame. The PS1 watch-list and telemetry identity is a 15-character <code>P</code>-prefixed key computed from the normalized VCD path. The boot executable is only used for the PS1 image hash, not as the watch-list identity; this prevents homebrew titles sharing <code>PSX.EXE</code> from reusing each other's lists. Re-check game support after moving or renaming a VCD.</p>
+<p>A user-owned <code>MODULE_9.IRX</code> is never overwritten or deleted. For a tracked launch,
+move it yourself if you want to use the reserved telemetry slot. RiptOPL marks
+its own module and the RA build removes stale copies before later BDM POPStarter launches.
+For a standard-build BDM VCD launch, an owned leftover prompts for deletion before
+handoff. Declining deletion offers Continue anyway, with a stale-telemetry warning;
+declining that confirmation cancels the launch. A failed deletion offers the same
+choice. File-backed SMB and MMCE VCD launches use the same safety check. Unrecognized
+user modules are left alone. This shared file cleanup does not add telemetry,
+network modules, watch lists or client requirements to the standard build.
+No support list, disabled telemetry, or unavailable network launches normally
+without installing telemetry. POPS shares the PS2 launch preflight: physical link,
+usable address, completed DHCP when enabled, and a fresh Caduceus session check.
+An explicit Xerabora companion remains pinned through the POPS handoff. Routed
+active and passive peers use their gateway's MAC. Passive SMB/HTTP telemetry can
+request a missing companion/next-hop ARP entry once after the IOP reset without
+opening a socket or consuming the game's receive descriptors.
+Optional preparation failures such as unavailable
+memory, an unwritable module path, or a partially written module that can be
+fully deleted also permit a normal, untracked launch. A user-owned module still
+blocks tracked injection, and a damaged module that cannot be deleted still
+blocks handoff rather than risking a broken POPStarter startup.
+Failed PS1 memory reads do not publish fabricated
+zero snapshots or reuse a failed read as a new frame.</p>
+<p><strong>Validation gate:</strong> host fixtures and a successful ELF build do not prove POPS
+compatibility. Test the same console with USB FAT32 and exFAT: support check,
+boot, play past the 25-second delay, observe sustained memory snapshots and an
+actual unlock, exit and relaunch another title, then launch without achievements.
+Also test Favorites, remembered launches, a missing/offline companion, and an existing
+user <code>MODULE_9.IRX</code>. MMCE, APA HDD, SMB, MX4SIO and iLink PS1 telemetry remain
+unsupported here until they have a deliberate integration and hardware validation.</p>
+<p>PS1 library scanning distinguishes explicit I/O/resource errors from empty
+folders, including failures while enumerating a child game directory. An empty
+successful half plus a failed half preserves the last published PS1 list;
+a successful nonempty half can still publish. BDM schedules at most two extra
+scans on its existing idle refresh cadence after a failed/partial PS1 scan.
+SELECT/L3 or a device event rearms recovery. Legacy drivers that collapse a
+missing directory to EPERM/no errno retain the POPS-only compatibility behavior.
+This hardens discovery but does not establish the cause of Vapor's non-listing
+report. A permanently failing driver still needs a new refresh/device event.</p>
 </main>
   <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
 </div>
