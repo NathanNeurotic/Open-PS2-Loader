@@ -85,8 +85,10 @@ void RA_PulseOnVblank(unsigned int frames)
             IGR_RequestReset();
             return;
         }
-        ra_ovl_start = frames;
-        ra_ovl_running = 1;
+        if ((e->kind & RA_EVENT_KIND_MASK) == RA_EVENT_UNLOCK) {
+            ra_ovl_start = frames;
+            ra_ovl_running = 1;
+        }
     }
 
     if (!ra_ovl_running)

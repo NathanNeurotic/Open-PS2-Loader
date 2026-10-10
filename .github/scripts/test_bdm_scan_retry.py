@@ -73,7 +73,7 @@ HARNESS = r'''
 #define BDM_DEVICE_ROOT_MAX 16
 #define _STR_BDM_PS2_FOLDERS_UNREADABLE 4242
 
-typedef struct base_game_info base_game_info_t;
+typedef struct base_game_info { char name[64]; } base_game_info_t;
 
 typedef struct
 {
@@ -160,11 +160,15 @@ static int cueFillGameList(const char *p, base_game_info_t **g) { (void)p; (void
 static const char *folderGetSub(int mode) { (void)mode; return browseSub; }
 static int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int *fsize, int *count)
 {
-    (void)list; (void)sub;
+    (void)sub;
     snprintf(lastScanPrefix, sizeof(lastScanPrefix), "%s", prefix);
     scans++;
     if (scanFails)
         return *count; /* total failure: list, count and fsize untouched */
+    free(*list);
+    *list = scanGameCount ? calloc(scanGameCount, sizeof(**list)) : NULL;
+    if (*list)
+        snprintf((*list)[0].name, sizeof((*list)[0].name), "Game at %s", prefix);
     *fsize = -1;       /* both folders opened, no ul.cfg */
     *count = scanGameCount;
     return scanGameCount;
@@ -341,13 +345,21 @@ int main(void)
     dev.bdmULSizePrev = -1;
     dev.bdmDeviceTick = BdmGeneration;
     dev.bdmGameCount = 3;
-    dev.bdmGames = malloc(1);
+    dev.bdmGames = calloc(3, sizeof(*dev.bdmGames));
+    strcpy(dev.bdmGames[0].name, "Old menu name");
+    base_game_info_t *borrowedGames = dev.bdmGames;
     dev.bdmPs1GameCount = 2;
     owner.menuItem.visible = 1;
     scanFails = 0;
     scanGameCount = 1;
     browseSub = "OLD-SUB";
-    pass();
+    int refresh = bdmNeedsUpdate(&list);
+    CHECK(refresh == 1 && dev.bdmGameCount == 0 && dev.bdmGames == borrowedGames &&
+          !strcmp(borrowedGames[0].name, "Old menu name"),
+          "prefix refresh must retain names until old menu rows are detached");
+    bdmUpdateGameList(&list); /* production detaches menu rows before this call */
+    CHECK(dev.bdmGames && !strcmp(dev.bdmGames[0].name, "Game at mass2:"),
+          "root scan must publish a usable game record");
     CHECK(scans == 1 && !strcmp(lastScanPrefix, "mass2:") && dev.bdmGameCount == 1,
           "cleared prefix: scans=%d path=%s games=%d, want one root scan and one game", scans, lastScanPrefix, dev.bdmGameCount);
     CHECK(dev.bdmPs1GameCount == 2 && owner.menuItem.visible == 1 && folderResets == 1,
@@ -363,8 +375,8 @@ int main(void)
     snprintf(gBDMPrefix, sizeof(gBDMPrefix), "MISSING");
     scanFails = 1;
     pass();
-    CHECK(dev.bdmGames == NULL && dev.bdmGameCount == 0,
-          "failed new-prefix scan retained PS2 games from the previous path");
+    CHECK(dev.bdmGames != NULL && dev.bdmGameCount == 0,
+          "failed new-prefix scan must retain allocation but publish no stale games");
     if (!failed)
         printf("bdm scan retry: all cases passed\n");
     return failed;
