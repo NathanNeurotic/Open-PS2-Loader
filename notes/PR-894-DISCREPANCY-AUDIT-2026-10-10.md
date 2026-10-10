@@ -276,3 +276,32 @@ loss during the post-reset SMAP negotiation, actual companion/ARP interoperabili
 and Korium display comparison require console evidence. Preflight prevents the
 confirmed stale-link injection path; it cannot eliminate a cable pull after the
 check. These reports are not marked resolved by host tests or build success.
+
+
+## Split-review verification, 2026-10-10
+
+Reviewed the six actionable CodeRabbit comments in #901 review 5480555026
+against both the foundation checkpoint and the integrated #894 head.
+
+- Confirmed prefix-refresh lifetime bug: menu rows borrow game-name pointers.
+  Retain the allocation while publishing zero PS2 games on the worker; the
+  normal scan releases it after menu rows detach. A failed scan may retain the
+  allocation with zero published games until a later successful scan/teardown.
+  The regression now checks the borrowed name before rebuilding and a real
+  populated game record afterwards, rather than a count with a NULL list.
+- Confirmed unknown committed pulse events must not start/restart an unlock
+  flash. Filter by masked unlock kind while preserving reset and ongoing pulse
+  progression. Host coverage uses the actual production pulse with unknown,
+  uncommitted, repeated unlock and reset events.
+- Confirmed EXFAT prefix documentation omitted the device-root POPS rule.
+- Adapted pairing documentation to each branch: foundation uses configured
+  SMB IPv4; integrated code prefers explicit RA companion IP with SMB fallback.
+  Neither browser pairing path broadcasts. Applying the literal foundation
+  recommendation to the integrated code would misdocument the override.
+- Verified the SMB-peer int[4] ABI correction was already present in #894;
+  applied it to #901 too and tested invalidation on every address octet.
+
+No automated scanner diagnostic was accepted merely because it appeared in
+review output. The experimental card-width observation remains outside the
+production pulse path (card DMA is disabled), and does not justify changing
+production behavior here. Console acceptance remains separate from host tests.
