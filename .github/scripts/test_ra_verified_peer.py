@@ -27,7 +27,7 @@ typedef uint8_t u8;
 #define htonl(x) (x)
 #define RA_MODE_CADUCEUS 1
 static int gRAMode;
-static u8 pc_ip[4] = {192, 168, 1, 10};
+static int pc_ip[4] = {192, 168, 1, 10};
 """
 harness += peer
 harness += r"""
@@ -41,9 +41,10 @@ int main(void) {
     assert(raNetPeerIP()==0); /* Can't reuse a Caduceus host as Xerabora. */
     gRAMode=RA_MODE_CADUCEUS;
     assert(raNetPeerIP()==42);
-    pc_ip[3]=11;
-    assert(raNetPeerIP()==0); /* Changed SMB server invalidates selected host. */
-    pc_ip[3]=10;
+    for(int i=0;i<4;i++) {
+        pc_ip[i]++; assert(raNetPeerIP()==0); pc_ip[i]--;
+        assert(raNetPeerIP()==42);
+    } /* Every production int octet participates in cache binding. */
     raNetForgetPeer();
     assert(raNetPeerIP()==0);
     raNetRememberPeer(INADDR_BROADCAST);
