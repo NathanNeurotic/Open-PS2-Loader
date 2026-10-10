@@ -247,11 +247,14 @@ the single review surface and does not merge or publish a release.
 - I1: PS2 Favorites resolve a current source view and validated row identity
   before support checks; unavailable/stale rows receive a notice.
 - I2: POPS validates network dependency/sender starts, allocates proportional
-  snapshot capacity and releases failed reader-list allocations. Failed module
-  start unloads its buffer. RAUDP/rapull delete dormant threads after failed
+  snapshot capacity and releases failed reader-list allocations. RAUDP/rapull
+  delete dormant threads after failed
   starts; RAUDP also releases its exports. Reader setup failure releases its
   transferred list. A resident sender retains its snapshot if its reader fails,
   avoiding a dangling pointer; this is bounded to the game IOP lifetime.
+  The basic stock-POPS modload ABI is retained. A loaded module whose StartModule
+  call itself fails can remain allocated until reset; unloading requires newer
+  IOPRP exports and is not imposed on POPS for this optional cleanup.
 - I3: passive discovery sends at most one successful raw ARP request for a
   missing peer/next hop. A busy transmitter defers the request within the bounded
   poll window. The game's stack owns reception and learning; no sockets/RX

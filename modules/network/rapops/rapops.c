@@ -34,10 +34,10 @@ static int start_buffer(void *irx, int arglen, const char *args)
     if (id < 0)
         return id;
 
-    if (StartModule(id, MODNAME, arglen, args, &result) < 0) {
-        UnloadModule(id);
+    /* Keep the basic modload ABI supported by stock POPS. UnloadModule needs
+       newer IOPRP exports; a failed loaded buffer lasts only until IOP reset. */
+    if (StartModule(id, MODNAME, arglen, args, &result) < 0)
         return -1;
-    }
 
     return result;
 }

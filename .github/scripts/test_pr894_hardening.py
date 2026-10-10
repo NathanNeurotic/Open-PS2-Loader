@@ -205,7 +205,7 @@ typedef unsigned char u8;
 u8 rp_dev9[4],rp_smsutils[4],rp_smstcpip[4],rp_smap[4],rp_raudp[4],rp_rapull[4];
 static void *buffers[]={rp_dev9,rp_smsutils,rp_smstcpip,rp_smap,rp_raudp,rp_rapull};
 static void *owned[4];
-static int allocated,freed,fail_module=-1,fail_alloc=-1,sender_flags,started[6],start_error,unloaded;
+static int allocated,freed,fail_module=-1,fail_alloc=-1,sender_flags,started[6],start_error;
 static size_t snap_size;
 static void *AllocSysMemory(int a,size_t n,void *p) {
     (void)a;(void)p;if(allocated==fail_alloc)return NULL;
@@ -217,7 +217,6 @@ static void FreeSysMemory(void *p) {
     assert(0);
 }
 static int LoadModuleBuffer(void *p) { for(int i=0;i<6;i++)if(buffers[i]==p)return i;assert(0);return -1; }
-static void UnloadModule(int id) { (void)id;unloaded++; }
 static int StartModule(int id,const char *name,int n,const char *args,int *result) {
     (void)name;(void)n;started[id]++;
     if(id==4)sender_flags=args[RA_ARG_RX]-'0';
@@ -229,7 +228,7 @@ static int StartModule(int id,const char *name,int n,const char *args,int *resul
 static void reset(void) {
     for(int i=0;i<allocated;i++)free(owned[i]);
     memset(owned,0,sizeof(owned));memset(started,0,sizeof(started));
-    allocated=freed=start_error=unloaded=0;fail_module=fail_alloc=-1;
+    allocated=freed=start_error=0;fail_module=fail_alloc=-1;
     g_cfg.ipcfg_len=3;g_cfg.count=1;g_cfg.bytes=4;g_cfg.node_count=0;
 }
 int main(void) {
@@ -244,7 +243,7 @@ int main(void) {
     reset();fail_module=5;rapops_start(0,NULL);assert(allocated==2 && freed==1 && owned[0]!=NULL);
     reset();fail_alloc=0;rapops_start(0,NULL);assert(!started[4]);
     reset();fail_alloc=1;rapops_start(0,NULL);assert(started[4] && !started[5]);
-    reset();fail_module=4;start_error=1;rapops_start(0,NULL);assert(unloaded==1 && freed==1);
+    reset();fail_module=4;start_error=1;rapops_start(0,NULL);assert(freed==1 && !started[5]);
     reset();puts("PASS: POPS pinned ABI, proportional allocation, dependency/sender/reader failure ownership");
 }
 ''')
