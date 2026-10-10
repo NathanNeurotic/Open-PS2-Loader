@@ -422,9 +422,9 @@ void rmSetReflectionYOffset(int yoff)
 // (gReflectionYOff) is left as an optional fine-tune knob on top. Dormant unless a
 // caller passes reflection != 0 (only drawCoverFlow does).
 //
-// gsKit sprites are single-color, so the alpha gradient is built from N stacked strips
-// whose alpha falls off linearly to 0 with distance from the cover -- a real reflection
-// fade instead of a flat, "pasted-on second box".
+// gsKit sprites are single-color, so the reflection uses a fixed number of
+// alpha-graded strips. A quadratic falloff removes the visibly strong outer
+// edge of the mirror without increasing the GIF primitive count or footprint.
 static void rmDrawReflection(GSTEXTURE *txt, rm_quad_t *q, float bottomY, float botV)
 {
     int reflH = (bottomY - q->ul.y) / 4;
@@ -436,10 +436,14 @@ static void rmDrawReflection(GSTEXTURE *txt, rm_quad_t *q, float bottomY, float 
     gsKit_TexManager_bind(gsGlobal, txt);
 
     const int strips = 12;
-    const int topAlpha = 0x23; // gsKit modulate alpha right under the cover (reduced again, ~27% below original); fades to 0
+    const int topAlpha = 0x23; // near-cover maximum; the lower edge becomes fully transparent
     int s;
     for (s = 0; s < strips; s++) {
-        int a = topAlpha * (strips - 1 - s) / (strips - 1);
+        // Sample the fade at each strip's midpoint. Squaring the remaining
+        // distance suppresses the lower-edge mirror much faster than the
+        // previous linear ramp; midpoint sampling also softens the first band.
+        int remaining = 2 * (strips - s) - 1;
+        int a = topAlpha * remaining * remaining / (4 * strips * strips);
         if (a <= 0)
             break;
         // Strip s spans [s, s+1]/strips of the reflection height; v runs botV (waterline)

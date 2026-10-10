@@ -52,6 +52,8 @@ typedef struct
     // so it can never resurrect the other view's contents. Mirrors mmceGames/mmceVcdGames.
     int bdmPs1GameCount;
     base_game_info_t *bdmPs1Games;
+    unsigned char bdmPs1RetryCount;
+    unsigned char bdmPs1RetryPending;
     char bdmDriver[32];
     int bdmDeviceType;      // Type of BDM device, see BDM_TYPE_* above
     int bdmDeviceTick;      // Used alongside BdmGeneration to tell if device data needs to be refreshed
@@ -122,7 +124,10 @@ int bdmEnsureTypedSource(int bdmType, u32 timeoutMs);
 // reboot while the loaded IRX cannot.
 int bdmGetLoadedNetProtocol(void);
 int bdmSupportIsUDPBD(const item_list_t *support); // 1 if this support is the UDPBD block device (its games are Neutrino-only)
-int bdmModeIsUDPBD(int mode);                      // 1 if this BDM mode slot is the UDPBD block device
+#ifdef RETROACHIEVEMENTS
+int bdmModeIsUSB(int mode);
+#endif
+int bdmModeIsUDPBD(int mode); // 1 if this BDM mode slot is the UDPBD block device
 
 // Re-evaluate every BDM device's presence + page visibility on the next refresh (bumps the latch
 // generation). Call after a device-enable toggle so a latched-hidden tab re-shows without a replug.

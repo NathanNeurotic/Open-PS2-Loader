@@ -18,4 +18,7 @@
 int SMAPSendPacket(const void *data, unsigned int length);
 #define I_SMAPSendPacket DECLARE_IMPORT(4, SMAPSendPacket)
 
+int SMAPReadNotice(void *out, unsigned int capacity);
+#define I_SMAPReadNotice DECLARE_IMPORT(5, SMAPReadNotice)
+
 #endif /* __SMAP_TX_H__ */

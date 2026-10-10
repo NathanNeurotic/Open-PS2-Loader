@@ -196,6 +196,8 @@ int cueFillGameList(const char *devPrefix, base_game_info_t **outGames);
 // device class. See the note at the top of this header for why the root, and not a configurable
 // games prefix, is the right home for them.
 int ps1FillGameList(const char *devPrefix, base_game_info_t **outGames);
+/* Serialized I/O worker: query immediately after ps1FillGameList. */
+int ps1GameListNeedsRetry(void);
 
 
 #endif

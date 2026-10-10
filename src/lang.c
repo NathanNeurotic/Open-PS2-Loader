@@ -198,7 +198,7 @@ void lngEnd(void)
 
 int lngSetGuiValue(int langID)
 {
-    if (langID != -1) {
+    if (langID >= 0 && langID <= nLanguages) {
         if (guiLangID != langID) {
             bgmMute();
             if (langID != 0) {
@@ -222,6 +222,7 @@ int lngSetGuiValue(int langID)
             fntLoadDefault(NULL);
             thmSetGuiValue(thmGetGuiValue(), 1);
             bgmUnMute();
+            return 1;
         }
     }
     return 0;

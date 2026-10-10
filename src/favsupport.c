@@ -739,6 +739,15 @@ static int favOwnerHasId(item_list_t *o, int id)
     return (o != NULL && o->itemGetCount != NULL && id >= 0 && id < o->itemGetCount(o));
 }
 
+item_list_t *favGetSourceItem(int id, item_list_t *view, int *sourceId)
+{
+    item_list_t *owner = favOwnerView(id, view);
+    if (owner == NULL || sourceId == NULL ||
+        !favResolveStoredId(owner, favArray[id].id, favArray[id].text, favArray[id].kind, sourceId))
+        return NULL;
+    return owner;
+}
+
 static char *favGetItemName(item_list_t *itemList, int id)
 {
     return favValidIndex(id) ? favArray[id].text : "";

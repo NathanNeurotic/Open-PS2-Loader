@@ -71,8 +71,15 @@ def make_source(base_obj: Dict[str, Any], output_file: TextIOWrapper) -> None:
     output_file.write(STRINGS_START.format(**base_obj).lstrip())
     for string_def in base_obj['gui_strings']:
         string = string_def['string']
+        # Keep language indices identical across flavours, but do not embed
+        # achievement UI text in standard ELFs.
+        ra_only = string_def['label'].startswith(('RA_', 'HINT_RA_', 'CAD_'))
+        if ra_only:
+            output_file.write('#ifdef RETROACHIEVEMENTS\n')
         # We use JSON to quote the string because JSON strings are equivalent to C strings
         output_file.write(f'{TAB}{json.dumps(string)},\n')
+        if ra_only:
+            output_file.write('#else\n    "",\n#endif\n')
 
     output_file.write(CURLY_BRACE_END)
 

@@ -9,7 +9,7 @@ A test artifact belongs to one GitHub Actions run and commit. It is separate fro
 | OPL-PS2DEVROLLING | Moving ps2dev toolchain |
 | OPL-PS2DEVPINNED | Digest-pinned ps2dev toolchain |
 | OPL-PS2DEVPINNED-DIAG | Diagnostic build |
-| OPL-PS2DEVPINNED-RA | RetroAchievements build |
+| OPL-OFFICIALROLLING-RA | RetroAchievements build using the moving official ps2homebrew toolchain |
 
 Extract the ZIP and read BUILD-MANIFEST.txt for commit, flavour and build configuration. Launch the ELF requested in the test instructions. The rolling suffix identifies a moving toolchain; it does not prove the source commit has been published. Artifacts contain loader builds and a manifest, so retain the complete companion installation for Neutrino, Ember, POPSTARTER and artwork.
 

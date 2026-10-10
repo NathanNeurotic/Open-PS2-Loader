@@ -72,11 +72,11 @@ static int nThemes = 0;
 static theme_file_t themes[THM_MAX_FILES];
 static const char **guiThemesNames = NULL;
 
-// Coverflow render-mode state (externs in themes.h; defaults match wOPL 3/30/200/0).
+// Coverflow render-mode state (externs in themes.h).
 #define COVERFLOW_PAD 1 // extra covers built off each edge, purely to fill the slide (see drawCoverFlow)
 #define COVERFLOW_MAX (5 + 2 * COVERFLOW_PAD)
 int gCoverflowCount = 3;        // 3 or 5 only (clamped on load AND at draw)
-int gCoverflowCenterScale = 30; // px added to the center cover (UI 0/15/30/45)
+int gCoverflowCenterScale = 45; // Large by default; saved UI choices still override (0/15/30/45).
 int gCoverflowAnimSpeed = 200;  // ms (UI 0/100/200/400; 0 = instant, no anim)
 int gCoverflowDimCovers = 0;    // bool
 
@@ -641,7 +641,13 @@ static void drawAttributeText(struct menu_list *menu, struct submenu_list *item,
             // force refresh
             mutableText->currentConfigId = config->uid;
             mutableText->currentValue = NULL;
-            if (configGetStr(config, mutableText->value, (const char **)&mutableText->currentValue)) {
+            configGetStr(config, mutableText->value, (const char **)&mutableText->currentValue);
+            // Metadata is optional. A missing/empty Title can still show the library name,
+            // without writing a fabricated metadata field back to the game's CFG.
+            if ((!mutableText->currentValue || !mutableText->currentValue[0]) &&
+                !strcmp(mutableText->value, "Title"))
+                configGetStr(config, CONFIG_ITEM_NAME, (const char **)&mutableText->currentValue);
+            if (mutableText->currentValue) {
                 if ((mutableText->sizingMode == SIZING_WRAP) && mutableText->currentValue) {
                     // Word-wrap a private copy, not the config's own stored string.
                     // configGetStr() hands back a pointer straight into the config
@@ -2264,7 +2270,22 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         submenu_list_t *ps = menu->item->pagestart;
         int others = 0;
         u64 color;
-        int textEndX = 0;
+        // A fixed leading column keeps stars and titles aligned on every row.
+        const int favRoom = gFAVStartMode ? MENU_ITEM_HEIGHT + 4 : 0;
+        const int hasDecorator = itemsList->decoratorImage &&
+                                 (gEnableDiscArt || !isDiscArtCache(itemsList->decoratorImage->cache));
+        int rowX = elem->posX + (hasDecorator ? DECORATOR_SIZE : 0);
+        const int rowRoom = elem->textRoom > 0 ? elem->textRoom : elem->width;
+        short textAlign = elem->aligned;
+        if (favRoom) {
+            if (textAlign & ALIGN_HCENTER)
+                rowX -= rowRoom / 2;
+            else if (textAlign & ALIGN_RIGHT)
+                rowX -= rowRoom;
+            textAlign &= ~(ALIGN_HCENTER | ALIGN_RIGHT);
+        }
+        const int textX = rowX + favRoom;
+        const int textRoom = rowRoom > favRoom ? rowRoom - favRoom : 1;
         while (ps && (others++ < itemsList->displayedItems)) {
             if (ps == item)
                 color = gTheme->selTextColor;
@@ -2307,22 +2328,22 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                     rmDrawPixmap(&itemsList->decoratorImage->defaultTexture->source, posX, posY, elem->aligned, DECORATOR_SIZE, DECORATOR_SIZE, elem->scaled, gDefaultCol, 0);
 
                 if (elem->textRoom > 0)
-                    textEndX = fntRenderStringFit(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->textRoom, dispText, color, ps == item);
+                    fntRenderStringFit(elem->font, textX, posY, textAlign, textRoom, dispText, color, ps == item);
                 else
-                    textEndX = fntRenderString(elem->font, elem->posX + DECORATOR_SIZE, posY, elem->aligned, elem->width, elem->height, dispText, color);
+                    fntRenderString(elem->font, textX, posY, textAlign, textRoom, elem->height, dispText, color);
             } else {
                 // Decorator-less Lists use the same center-out warming above; their separate COV
                 // element draws the selected cover. No additional per-visible-row reads start here.
                 if (elem->textRoom > 0)
-                    textEndX = fntRenderStringFit(elem->font, elem->posX, posY, elem->aligned, elem->textRoom, dispText, color, ps == item);
+                    fntRenderStringFit(elem->font, textX, posY, textAlign, textRoom, dispText, color, ps == item);
                 else
-                    textEndX = fntRenderString(elem->font, elem->posX, posY, elem->aligned, elem->width, elem->height, dispText, color);
+                    fntRenderString(elem->font, textX, posY, textAlign, textRoom, elem->height, dispText, color);
             }
 
-            if (ps->item.favourited) {
+            if (favRoom && ps->item.favourited) {
                 GSTEXTURE *favTex = thmGetTexture(FAV_MARK);
                 if (favTex != NULL && favTex->Mem != NULL)
-                    rmDrawPixmap(favTex, textEndX + 4, posY, elem->aligned, MENU_ITEM_HEIGHT, MENU_ITEM_HEIGHT, elem->scaled, gDefaultCol, 0);
+                    rmDrawPixmap(favTex, rowX, posY, ALIGN_NONE, MENU_ITEM_HEIGHT, MENU_ITEM_HEIGHT, elem->scaled, gDefaultCol, 0);
             }
 
             posY += MENU_ITEM_HEIGHT;

@@ -332,6 +332,12 @@ extern int gEnableNotifications;
 // RA master switch. Off (the default) means the in-game network stack is never forced into a
 // launch, so an RA build with telemetry off costs a launch exactly what the default build does.
 extern int gRATelemetry;
+#define RA_MODE_XERABORA 0
+#define RA_MODE_CADUCEUS 1
+extern int gRAMode;
+/* Optional dedicated RA companion host; 0.0.0.0 retains legacy SMB/HTTP
+   fallback and Xerabora broadcast discovery. This never changes SMB games. */
+extern int gRAHostIp[4];
 // List badges and the cover mark. Cosmetic, and subordinate to gRATelemetry: badges advertise a
 // feature, so they stay dark while the feature is switched off.
 extern int gRABadges;

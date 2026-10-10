@@ -2458,3 +2458,57 @@ void vcdPrepareRetroGemBarcode(const char *vcdPath)
         displayRetroGemGameID(gameID, 2);
     }
 }
+
+/* Shared launch hygiene: recognize only the module installed by RiptOPL. */
+static int vcdRaModuleStatus(const char *root, int removeOwned)
+{
+    char path[256];
+    unsigned char buf[4096];
+    const char magic[] = "RIPTRA01";
+    int fd, got, matched = 0, owned = 0;
+    if (snprintf(path, sizeof(path), "%sPOPS%cMODULE_9.IRX", root, vcdSep(root)) >= (int)sizeof(path))
+        return -2;
+    fd = open(path, O_RDONLY);
+    if (fd < 0)
+        return errno == ENOENT ? 0 : -2;
+    while ((got = read(fd, buf, sizeof(buf))) > 0) {
+        for (int i = 0; i < got; i++) {
+            if (buf[i] == (unsigned char)magic[matched]) {
+                if (++matched == 8) {
+                    owned = 1;
+                    break;
+                }
+            } else {
+                matched = buf[i] == (unsigned char)magic[0] ? 1 : 0;
+            }
+        }
+        if (owned)
+            break;
+    }
+    close(fd);
+    if (got < 0)
+        return -2;
+    if (!owned)
+        return -1; /* Never delete or overwrite a user's MODULE_9.IRX. */
+    if (!removeOwned)
+        return 1;
+    return unlink(path) == 0 ? 0 : -2;
+}
+
+int vcdRemoveRaModule(const char *root)
+{
+    return vcdRaModuleStatus(root, 1);
+}
+
+int vcdConfirmCleanLaunch(const char *root)
+{
+    int status = vcdRaModuleStatus(root, 0);
+    if (status == 0 || status == -1)
+        return 1; /* Absent or user-owned: leave ordinary modules untouched. */
+    if (status == 1 && guiMsgBox(_l(_STR_PS1_RA_CLEAN_DELETE), 1, NULL)) {
+        if (vcdRemoveRaModule(root) == 0)
+            return 1;
+        guiMsgBox(_l(_STR_PS1_RA_CLEAN_FAILED), 0, NULL);
+    }
+    return guiMsgBox(_l(_STR_PS1_RA_CLEAN_CONTINUE), 1, NULL);
+}

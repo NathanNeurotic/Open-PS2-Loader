@@ -103,14 +103,15 @@ void hddVcdInvalidateCache(void);
 void hddInit(item_list_t *itemList);
 item_list_t *hddGetObject(int initOnly);
 int hddLoadModules(void);
-// Non-acquiring residency check for short-lived probes. Unlike hddLoadModulesReady(), this does
-// not increment the HDD module-use count.
+// Pure residency check: unlike hddLoadModulesReady(), never tries to load the ATA
+// stack. Both checks are non-acquiring once the modules are resident (one DEV9 owner).
 int hddModulesAreLoaded(void);
 // 1 for an APA+MBR hybrid ("APA-Jail", e.g. PSBBN Definitive): valid APA header plus a FAT/exFAT MBR
 // partition beyond the APA reserved area. Read-only two-sector probe; needs the ATA stack loaded.
 int hddIsApaMbrHybrid(void);
 
 // Load (or confirm) the ATA stack and report residency, evaluating hddLoadModules EXACTLY ONCE.
+// Once resident, repeat calls do not acquire any additional HDD or DEV9 references.
 // A function, not a macro taking the call as its argument: the earlier HDD_LOADMODULES_OK(
 // hddLoadModules()) macro double-evaluated on any non-NOERROR first result -- and with the
 // retryable-failure change, a FAILED load would have immediately re-run the whole load (second

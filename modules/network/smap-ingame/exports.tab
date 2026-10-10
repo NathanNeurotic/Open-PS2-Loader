@@ -4,6 +4,7 @@ DECLARE_EXPORT_TABLE(smap_driver, 1, 1)
 	DECLARE_EXPORT(_retonly)
 	DECLARE_EXPORT(_retonly)
 	DECLARE_EXPORT(SMAPSendPacket)
+	DECLARE_EXPORT(SMAPReadNotice)
 END_EXPORT_TABLE
 
 void _retonly(void) {}
