@@ -16,6 +16,7 @@
 #include "util.h"
 #include "syshook.h"
 #include "coreconfig.h"
+#include "reset_arg_bounds.h"
 #ifdef RETROACHIEVEMENTS
 #include "ra.h"
 #include "ra_overlay.h"
@@ -75,6 +76,10 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
     char command[RESET_ARG_MAX + 1];
 
     if (arglen > 0) {
+        if (args == NULL || arglen > RESET_ARG_MAX - EE_RESET_SUFFIX_BYTES) {
+            DPRINTF("ResetIopSpecial: invalid argument length\n");
+            return;
+        }
         strncpy(command, args, arglen);
         command[arglen] = '\0'; /* In a normal IOP reset process, the IOP reset command line will be NULL-terminated properly somewhere.
                         Since we're now taking things into our own hands, NULL terminate it here.
@@ -91,6 +96,10 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
 
     length_rounded = (size_IOPRP_img + 0xF) & ~0xF;
     pIOP_buffer = SifAllocIopHeap(length_rounded);
+    if (pIOP_buffer == NULL) {
+        DPRINTF("ResetIopSpecial: IOP allocation failed\n");
+        return; // never DMA an IOPRP image to address zero
+    }
 
     CopyToIop(IOPRP_img, length_rounded, pIOP_buffer);
 
@@ -333,9 +342,14 @@ int New_Reset_Iop(const char *arg, int arglen)
         DBGCOL(0x00A5FF, IOPMGR, "ResetIopSpecial (without args) finished!");
 
     if (arglen > 0) {
-        ResetIopSpecial(&arg[10], arglen - 10);
-        if (EnableDebug)
-            DBGCOL(0x00FFFF, IOPMGR, "ResetIopSpecial (with args) finished!");
+        int payloadLen = eeResetPayloadLength(arglen, RESET_ARG_MAX);
+        if (arg != NULL && payloadLen >= 0) {
+            ResetIopSpecial(&arg[EE_RESET_PREFIX_BYTES], payloadLen);
+            if (EnableDebug)
+                DBGCOL(0x00FFFF, IOPMGR, "ResetIopSpecial (with args) finished!");
+        } else {
+            DPRINTF("New_Reset_Iop: invalid reset packet, using default IOP reset\n");
+        }
     }
 
     if (iop_reboot_count >= 2) {
@@ -394,8 +408,9 @@ int Reset_Iop(const char *arg, int mode)
                 That caused SifSetDChain() to be run ASAP, which re-enables SIF0.
                 I don't find that a good workaround because it may result in a timing problem.    */
 
-    for (arglen = 0; arg[arglen] != '\0'; arglen++)
+    for (arglen = 0; arg != NULL && arglen < (int)sizeof(reset_pkt.arg) - 1 && arg[arglen] != '\0'; arglen++)
         reset_pkt.arg[arglen] = arg[arglen];
+    reset_pkt.arg[arglen] = '\0';
 
     reset_pkt.header.psize = sizeof reset_pkt; // dsize is not initialized (and not processed, even on the IOP).
     reset_pkt.header.cid = SIF_CMD_RESET_CMD;
