@@ -1763,3 +1763,6 @@ gui_strings:
 
 - label: POPS_UDPFS_NOT_READY
   string: "POPS UDPFS needs matching valid IPCONFIG.DAT and UDPFSCONFIG.DAT in every USB POPS folder. Configure them in POPS Network Settings."
+
+- label: HINT_POPS_UDPFS_IP
+  string: "Static PS2 IP used by the POPS UDPFS driver after its IOP reset."
