@@ -67,7 +67,7 @@ static void RA_Hex32(unsigned int v, char *out)
 static int imgdrv_offset_ioprpimg = 0;
 static int imgdrv_offset_ioprpsiz = 0;
 
-static void ResetIopSpecial(const char *args, unsigned int arglen)
+static int ResetIopSpecial(const char *args, unsigned int arglen)
 {
     USE_LOCAL_EECORE_CONFIG;
     int i;
@@ -78,7 +78,7 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
     if (arglen > 0) {
         if (args == NULL || arglen > RESET_ARG_MAX - EE_RESET_SUFFIX_BYTES) {
             DPRINTF("ResetIopSpecial: invalid argument length\n");
-            return;
+            return 0;
         }
         strncpy(command, args, arglen);
         command[arglen] = '\0'; /* In a normal IOP reset process, the IOP reset command line will be NULL-terminated properly somewhere.
@@ -98,7 +98,7 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
     pIOP_buffer = SifAllocIopHeap(length_rounded);
     if (pIOP_buffer == NULL) {
         DPRINTF("ResetIopSpecial: IOP allocation failed\n");
-        return; // never DMA an IOPRP image to address zero
+        return 0; // never DMA an IOPRP image to address zero
     }
 
     CopyToIop(IOPRP_img, length_rounded, pIOP_buffer);
@@ -308,6 +308,7 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
         }
     }
 #endif
+    return 1;
 }
 
 /*----------------------------------------------------------------*/
@@ -316,6 +317,10 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
 int New_Reset_Iop(const char *arg, int arglen)
 {
     USE_LOCAL_EECORE_CONFIG;
+    int reset_ok = 0;
+#ifdef RETROACHIEVEMENTS
+    ra_snap_iop = 0;
+#endif
     DPRINTF("New_Reset_Iop start!\n");
     if (EnableDebug)
         DBGCOL(0xFF00FF, IOPMGR, "New_Reset_Iop()");
@@ -337,14 +342,16 @@ int New_Reset_Iop(const char *arg, int arglen)
     LoadFileInit();
     sbv_patch_enable_lmb();
 
-    ResetIopSpecial(NULL, 0);
+    if (!ResetIopSpecial(NULL, 0))
+        goto reset_finished;
     if (EnableDebug)
         DBGCOL(0x00A5FF, IOPMGR, "ResetIopSpecial (without args) finished!");
 
     if (arglen > 0) {
         int payloadLen = eeResetPayloadLength(arglen, RESET_ARG_MAX);
         if (arg != NULL && payloadLen >= 0) {
-            ResetIopSpecial(&arg[EE_RESET_PREFIX_BYTES], payloadLen);
+            if (!ResetIopSpecial(&arg[EE_RESET_PREFIX_BYTES], payloadLen))
+                goto reset_finished;
             if (EnableDebug)
                 DBGCOL(0x00FFFF, IOPMGR, "ResetIopSpecial (with args) finished!");
         } else {
@@ -369,6 +376,12 @@ int New_Reset_Iop(const char *arg, int arglen)
     }
 #endif
 
+    reset_ok = 1;
+reset_finished:
+#ifdef RETROACHIEVEMENTS
+    if (!reset_ok)
+        ra_snap_iop = 0;
+#endif
     DPRINTF("Exiting services...\n");
     SifExitIopHeap();
     LoadFileExit();
@@ -377,12 +390,12 @@ int New_Reset_Iop(const char *arg, int arglen)
     DPRINTF("New_Reset_Iop complete!\n");
     // we have 4 SifSetReg calls to skip in ELF's SifResetIop, not when we use it ourselves
     if (set_reg_disabled)
-        set_reg_hook = 4;
+        set_reg_hook = reset_ok ? 4 : 0;
 
     if (EnableDebug)
         BGCOLND(0x000000);
 
-    return 1;
+    return reset_ok;
 }
 
 /*----------------------------------------------------------------------------------------*/

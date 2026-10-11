@@ -59,7 +59,11 @@ u32 New_SifSetDma(SifDmaTransfer_t *sdd, s32 len)
     disable_padOpen_hook = 1;
 
     // does IOP reset
-    New_Reset_Iop(reset_pkt->arg, reset_pkt->arglen);
+    int reset_ok = New_Reset_Iop(reset_pkt->arg, reset_pkt->arglen);
+    if (!reset_ok) {
+        disable_padOpen_hook = 0;
+        return 0;
+    }
 
 #ifdef RETROACHIEVEMENTS
     /* Mode 6 suppresses Install_IGR. Start the independent snapshot tick
@@ -88,8 +92,10 @@ void sysLoadElf(char *filename, int argc, char **argv)
     DPRINTF("t_loadElf: Resetting IOP...\n");
 
     set_reg_disabled = 0;
-    New_Reset_Iop(NULL, 0);
+    int reset_ok = New_Reset_Iop(NULL, 0);
     set_reg_disabled = 1;
+    if (!reset_ok)
+        goto load_failed;
 
     iop_reboot_count = 1;
 
@@ -137,6 +143,7 @@ void sysLoadElf(char *filename, int argc, char **argv)
         CleanExecPS2((void *)elf.epc, (void *)elf.gp, argc, argv);
     }
 
+load_failed:
     DPRINTF(" failed\n");
 
     // Error
