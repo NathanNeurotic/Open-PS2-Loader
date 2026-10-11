@@ -97,6 +97,7 @@ int sysCheckMC(void);
 /* Creation refuses overwriting any existing different-size VMC, even if invalid.
  * The explicit Delete control is the sole destructive path (after confirmation). */
 #define SYS_VMC_REPLACE_REQUIRES_DELETE (-2)
+#define SYS_VMC_CREATE_FAILED (-3)
 int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize, vmc_superblock_t *vmc_superblock);
 // Layout of the VMC whose creation was last STARTED: 1 contiguous, 0 fragmented, -1 unknown.
 // Only meaningful once genvmc reports the job finished. -1 means "this backing store cannot say"

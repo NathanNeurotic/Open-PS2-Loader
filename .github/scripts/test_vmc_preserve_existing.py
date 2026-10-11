@@ -24,6 +24,7 @@ program = r'''
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 #define O_RDONLY 1
 #define SEEK_END 2
 #define SEEK_SET 0
@@ -37,6 +38,7 @@ program = r'''
 #define S_IWOTH 0
 #define S_IXOTH 0
 #define SYS_VMC_REPLACE_REQUIRES_DELETE (-2)
+#define SYS_VMC_CREATE_FAILED (-3)
 #define LOG(...) ((void)0)
 typedef struct {
     char magic[32];
@@ -48,8 +50,12 @@ typedef struct {
 } createVMCparam_t;
 static char gVMCCreatePath[256] = {0};
 static int exists, length, opened, erased, jobs, returnsError;
+static int openError;
 static int fake_open(const char *path, int flags, ...) {
-    (void)path; (void)flags; opened++; return exists ? 3 : -1;
+    (void)path; (void)flags; opened++;
+    if (openError) {errno=openError;return -1;}
+    if (exists) return 3;
+    errno=ENOENT;return -1;
 }
 static int fake_lseek(int fd, int offset, int whence) {
     (void)fd; (void)offset; return whence == SEEK_END ? length : 0;
@@ -75,6 +81,13 @@ int main(void) {
     exists = 1; length = 8 * 1048576;
     assert(sysCheckVMC("mass0:/", "/", name, 16, NULL) == SYS_VMC_REPLACE_REQUIRES_DELETE);
     assert(erased == 0 && jobs == 0);
+    const int errors[] = {EACCES, EIO, ENOTDIR};
+    for (unsigned i=0;i<sizeof(errors)/sizeof(errors[0]);i++) {
+        openError=errors[i];
+        assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == SYS_VMC_CREATE_FAILED);
+        assert(erased==0 && jobs==0 && !gVMCCreatePath[0]);
+    }
+    openError=0;
     assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == 8 && jobs == 0);
     length = 123; // corrupted or unrecognized size is still someone's data
     assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == SYS_VMC_REPLACE_REQUIRES_DELETE);
@@ -82,6 +95,10 @@ int main(void) {
     exists = 0;
     assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == -1 && jobs == 1);
     assert(erased == 0);
+    returnsError=1;
+    assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == SYS_VMC_CREATE_FAILED);
+    assert(jobs==2 && erased==0 && !gVMCCreatePath[0]);
+    returnsError=0;
     assert(sysCheckVMC("mass0:/", "/", name, -1, NULL) == -1 && erased == 1);
     puts("PASS: VMC size changes preserve the existing card; only explicit Delete removes");
     return 0;

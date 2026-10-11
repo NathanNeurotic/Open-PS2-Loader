@@ -10,6 +10,7 @@
 
 #include <delaythread.h> // DelayThread for the bounded disc re-detect polls in sysLaunchDisc
 #include <time.h>        // clock()/CLOCKS_PER_SEC -- the disc waits are budgeted by wall clock
+#include <errno.h>
 
 // Disc-probe budgets (issue #465). All are TOTAL wall-clock caps, not per-poll ones.
 #define SYS_DISC_DETECT_MS   1000 // first "still identifying" settle
@@ -2503,6 +2504,10 @@ int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize,
                 LOG("SYSTEM refusing implicit VMC replacement: %s (%d -> %d MB)\n", path, size, createSize);
                 return SYS_VMC_REPLACE_REQUIRES_DELETE;
             }
+        } else if (createSize > 0 && errno != ENOENT) {
+            // An unreadable image may still contain saves. Only ENOENT proves
+            // that creation will not truncate an existing card.
+            return SYS_VMC_CREATE_FAILED;
         }
 
         if (createSize > 0 && createSize != size) {
@@ -2514,7 +2519,10 @@ int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize,
             createParam.VMC_blocksize = 16;
             createParam.VMC_thread_priority = 0x0f;
             createParam.VMC_card_slot = -1;
-            fileXioDevctl("genvmc:", 0xC0DE0001, (void *)&createParam, sizeof(createParam), NULL, 0);
+            if (fileXioDevctl("genvmc:", 0xC0DE0001, (void *)&createParam, sizeof(createParam), NULL, 0) < 0) {
+                gVMCCreatePath[0] = '\0';
+                return SYS_VMC_CREATE_FAILED;
+            }
         }
     }
     return size;

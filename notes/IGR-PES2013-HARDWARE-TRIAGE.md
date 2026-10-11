@@ -68,8 +68,9 @@ because console output can change scheduling and conceal the bug.
 - Standard and RA host tests, every CI ELF build, no unexpected memory growth.
 - No global thread-priority increase or IGR fallback without hardware evidence.
 
-## Merge policy
+## Runtime fix policy
 
-This document is the test plan, **not** a fix. Keep its PR in draft until real
-console evidence isolates a cause. Once verified, introduce a minimal, separately
-revertible runtime patch and review its test evidence before marking ready.
+This document is the test plan, **not** a fix. Publishing it does not establish
+a RiptOPL reproduction or resolve the reported issue. Once console evidence
+isolates a cause, introduce a minimal, separately revertible runtime patch and
+review its test evidence before including that runtime change in a release.
