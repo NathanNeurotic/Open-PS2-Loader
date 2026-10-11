@@ -7,6 +7,9 @@ for variant in ("udpfs_ioman", "udpfs_bd"):
     make = (root / variant / "Makefile").read_text()
     assert "IOP_SRC_DIR := src/" in make
     assert "udpfs_core.o" in make and "udprdma.o" in make
+    for name in ("udpfs_core.c", "udprdma.c"):
+        obj = name.removesuffix(".c") + ".o"
+        assert f"$(IOP_OBJS_DIR){obj}: ../udpfs_shared/src/{name}" in make
     assert f"-DFEATURE_{variant.upper()}" in make
     for name in ("udpfs_core.c", "udprdma.c"):
         local = root / variant / "src" / name
