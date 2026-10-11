@@ -33,7 +33,7 @@
 // BDM transport in bdmsupport.c -- but here the mount is a filesystem, not a block device.
 static char udpfsPrefix[40]; // full path to the folder that holds all the games ("udpfs:/")
 static char *udpfsBase;      // device root ("udpfs:")
-static int udpfsULSizePrev = -2;
+static int udpfsIsoScanned = 0;
 static time_t udpfsModifiedCDPrev;
 static time_t udpfsModifiedDVDPrev;
 static int udpfsGameCount = 0;
@@ -190,7 +190,7 @@ void udpfsInit(item_list_t *itemList)
     udpfsArtCaseChecked = 0;
     // The games live directly at the device root; no share/prefix to prepend (unlike SMB).
     snprintf(udpfsPrefix, sizeof(udpfsPrefix), "udpfs:/");
-    udpfsULSizePrev = -2;
+    udpfsIsoScanned = 0;
     udpfsModifiedCDPrev = 0;
     udpfsModifiedDVDPrev = 0;
     udpfsGameCount = 0;
@@ -325,7 +325,7 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
     if (libListViewActive(itemList) == LIB_VIEW_PS1)
         return !udpfsPs1Scanned;
 
-    if (udpfsULSizePrev == -2)
+    if (!udpfsIsoScanned)
         result = 1;
 
     // Only stat the mount once the ioman device is actually up -- statting "udpfs:/..." before then
@@ -350,8 +350,7 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
             result = 1;
         }
 
-        if (!sbIsSameSize(udpfsPrefix, udpfsULSizePrev))
-            result = 1;
+
     }
 
     return result;
@@ -524,10 +523,15 @@ static int udpfsUpdateGameList(item_list_t *itemList)
             udpfsPs1GameCount = r;
     }
     if (view == LIB_VIEW_ISO || view == LIB_VIEW_MIXED) {
-        if (sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), &udpfsULSizePrev, &udpfsGameCount) < 0)
+        // Neutrino launches disc images, not USBExtreme split parts. Avoid even
+        // probing ul.cfg on the network share, and never publish unlaunchable UL rows.
+        if (sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), NULL, &udpfsGameCount) < 0)
             udpfsGameCount = 0;
         else
             reached = 1;
+        // If the server was unreachable, udpfsWaitingForServer retains the retry
+        // cadence; after a reachable pass, use CD/DVD timestamps and manual refresh.
+        udpfsIsoScanned = answeredBefore;
     }
     // Only a readable CD/DVD scan proves the server answered. A share without those folders, or the PS1
     // view (whose empty result can't tell "no titles" from "no answer"), asks the server itself before
@@ -578,7 +582,7 @@ static void udpfsDeleteGame(item_list_t *itemList, int id)
     sbSetBrowseSub(folderGetSub(itemList->mode)); // delete inside the current subfolder, not the root
     id = udpfsGetSourceId(itemList, id);
     sbDelete(&udpfsGames, udpfsPrefix, "/", udpfsGameCount, id);
-    udpfsULSizePrev = -2;
+    udpfsIsoScanned = 0;
 }
 
 static void udpfsRenameGame(item_list_t *itemList, int id, char *newName)
@@ -594,7 +598,7 @@ static void udpfsRenameGame(item_list_t *itemList, int id, char *newName)
     id = udpfsGetSourceId(itemList, id);
     sbSetBrowseSub(folderGetSub(itemList->mode)); // rename inside the current subfolder, not the root
     sbRename(&udpfsGames, udpfsPrefix, "/", udpfsGameCount, id, newName);
-    udpfsULSizePrev = -2;
+    udpfsIsoScanned = 0;
 }
 
 // Defensive POPSTARTER guard. The UDPFS PS1 scanner publishes no VCD rows and the public support has

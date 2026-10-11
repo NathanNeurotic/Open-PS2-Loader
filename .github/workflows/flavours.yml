@@ -217,6 +217,8 @@ jobs:
         run: python3 .github/scripts/test_udpfs_themes.py
       - name: Check UDPFS artwork index integrity and case-sensitive ART paths
         run: python3 .github/scripts/test_udpfs_art.py
+      - name: Check UDPFS lists launchable ISO games without probing ul.cfg
+        run: python3 .github/scripts/test_udpfs_iso_only.py
 
   site-sync-host-tests:
     runs-on: ubuntu-24.04
