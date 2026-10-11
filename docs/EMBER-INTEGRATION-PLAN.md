@@ -3,8 +3,9 @@
 > **Internal engineering document.** This is an implementation plan for contributors, not user
 > documentation. For how to *use* the feature, see the [PS1 Games page](https://nathanneurotic.github.io/Open-PS2-Loader/ps1-vcd.html) and [VCD.md](VCD.md).
 
-**Status:** ordinary device PS1 pages ship both cores in one list; UDPFS and UDPBD ship an
-Ember-only PS1 list because POPSTARTER cannot restore either network transport. Ember handoffs
+**Status:** ordinary device PS1 pages and UDPFS Files ship both cores in one list.
+UDPFS Files prepares POPSTARTER VCD launches with Okeanos’s BDM-UDPFS Assault USB-first
+driver; UDPBD and UDPFS IMG remain Ember-only. See [POPS UDPFS setup](VCD.md#pops-udpfs-with-bdm-udpfs-assault). Ember handoffs
 remain hardware-unproven unless a later test report says otherwise.
 **Base commit:** `291716d3` on `rebuild/main` (2026-08-27).
 
@@ -22,7 +23,7 @@ agent should read.
 | One PS1 list, both cores | **landed** | `ps1FillGameList()`; row-kind dispatch for launch and art. Wired for BDM, MMCE, SMB, and APA/PFS HDD. |
 | SMB / ETH | **landed** | R4 resolved: the Ember helpers build paths with `cueSep()`, so the separator follows the device. |
 | APA-HDD | **landed, HARDWARE PENDING** | `__.EMBER[0-9]?` partitions, self-contained. Needed a new `KEEPIOP_EXCEPTION` — see below. |
-| UDPFS / UDPBD | **landed, HARDWARE PENDING** | Their PS1 pages call `cueFillGameList()` directly and publish Ember rows only. POPSTARTER rows are deliberately excluded. |
+| UDPFS Files / UDPBD | **landed, HARDWARE PENDING** | UDPFS Files uses the combined PS1 scanner and prepares VCD launches with the `.udpfs` BDMA pair and verified USB runtime configs. UDPBD and UDPFS IMG remain Ember-only. |
 | Favorites (OFAV v3 `kind`) | **landed** | ISO, VCD, CUE, and ELF kinds; All in One / PS2 / PS1 / ELF shelves. The compatibility filename remains `favourites.bin`. |
 | Ember settings page | **landed** | Ember Display Mode lives on PS Emulation Settings; the library remains presence-driven by each device's `EMBER/` folder. |
 
@@ -43,7 +44,7 @@ mass0:/EMBER/games/Spyro 2 (Ripto's Rage)/game.cue  (+ game.bin)
 With **PS2/PS1 Game Display** set to **Both (L3)**, press **L3** on that device page to reach the
 PS1 list. **Mixed** instead combines PS2 and PS1 rows and cycles Mixed → PS2 → PS1 with L3. Ember
 titles appear interleaved with your `.VCD` ones inside the PS1 portion, sorted together. On UDPFS
-and UDPBD, the PS1 portion contains Ember titles only. Launch one.
+Files, VCDs are included too; UDPBD and UDPFS IMG contain Ember titles only. Launch one.
 
 **2. The OPLDIAG probe (the control experiment).** An APPS entry with `boot` =
 `mass0:/EMBER/ember.elf` and `argv1` = the folder name is handed over with the keep-IOP loader in an
@@ -242,7 +243,7 @@ read reports success — never block a launch on a failed probe.
 | MMCE | `mmceN:/` |
 | SMB / ETH | the share root |
 | APA / PFS HDD | `hdd0:__.EMBER[0-9]?` — a partition of its own, mounted on `pfs0:` and **kept mounted** across the handoff. Self-contained: `EMBER/ember.elf`, `EMBER/bios.bin` and `EMBER/games/` all start at the partition root. |
-| UDPFS Files | the served filesystem root (`udpfs:`); PS1 enumeration is Ember-only |
+| UDPFS Files | the served filesystem root (`udpfs:`); uppercase `POPS/*.VCD` and Ember titles |
 | UDPFS IMG / UDPBD | the live `massN:` network block-device root; PS1 enumeration is Ember-only |
 
 #### ⛔ `__common` is NOT a library location — say what actually lives there
@@ -304,7 +305,7 @@ lists a row-aware launch/menu path.
 
 | Page | Ring |
 | --- | --- |
-| Device pages (BDM, MMCE, ETH, HDD, UDPFS) | **Both (L3):** `PS2 → PS1`; **Mixed:** `Mixed → PS2 → PS1`; locked PS2/PS1: one inert stop. UDPFS/UDPBD populate PS1 with Ember only |
+| Device pages (BDM, MMCE, ETH, HDD, UDPFS) | **Both (L3):** `PS2 → PS1`; **Mixed:** `Mixed → PS2 → PS1`; locked PS2/PS1: one inert stop. UDPFS Files includes VCDs; UDPBD and UDPFS IMG populate PS1 with Ember only |
 | Favorites | `All in One → PS2 → PS1 → ELF →` wrap |
 | Apps | **Mixed:** one inert list; **Apps / PS1ELF (L3):** `Apps → PS1ELF` using case-insensitive `[PS1]` title tagging |
 
@@ -856,7 +857,9 @@ that wrong presents an empty tab that then overwrites the real list.
 
 ### Phase 5 — Network surface (landed; hardware pending)
 
-UDPFS and UDPBD now publish Ember-only PS1 views (R5); POPSTARTER remains unavailable on both.
+UDPFS Files now publishes a combined PS1 view and prepares POPSTARTER launches using
+Okeanos’s BDM-UDPFS Assault driver, with matching runtime configs on every USB volume.
+UDPBD and UDPFS IMG remain Ember-only (see VCD.md).
 RetroGEM game-ID parity and `settings.txt` display passthrough remain separate concerns.
 
 ---

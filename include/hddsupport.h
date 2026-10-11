@@ -6,6 +6,9 @@
 
 #define HDD_MODE_UPDATE_DELAY MENU_UPD_DELAY_NOUPDATE
 
+// Read loose BDMA payloads from existing __common/POPS without moving the data home.
+int hddEquipPopstarterBdmaFromCommon(int mode, char *diag, int diagSize);
+
 #define HDL_GAME_NAME_MAX 64
 
 // APA Partition

@@ -33,7 +33,7 @@ APP_COMPANIONS = (
     "list.icn",
 )
 ART_SUFFIXES = ("BG", "COV", "COV2", "ICO", "LAB", "LGO", "SCR", "SCR2")
-BDMA_SUFFIXES = ("usbexfat", "mx4sio", "mmce", "ata", "ilink")
+BDMA_SUFFIXES = ("usbexfat", "mx4sio", "mmce", "ata", "ilink", "udpfs")
 PSU_ENTRY = struct.Struct("<HHI8sII8sI28s448s")
 PSU_DIR_MODE = 0x8027
 PSU_FILE_MODE = 0x8017
@@ -314,6 +314,7 @@ def verify(args: argparse.Namespace) -> None:
         }
         required.update(f"APPS/{args.app_name}/{name}" for name in APP_COMPANIONS)
         required.update(f"ART/{args.elf_name}_{suffix}.png" for suffix in ART_SUFFIXES)
+        required.update({"POPS/IPCONFIG.DAT", "POPS/UDPFSCONFIG.DAT"})
         required.update(f"POPS/{module}.{suffix}" for suffix in BDMA_SUFFIXES for module in ("usbd.irx", "usbhdfsd.irx"))
         if args.ra:
             required.add("xeRAbora.url")
