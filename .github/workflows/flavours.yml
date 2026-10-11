@@ -219,6 +219,8 @@ jobs:
         run: python3 .github/scripts/test_udpfs_art.py
       - name: Check UDPFS lists launchable ISO games without probing ul.cfg
         run: python3 .github/scripts/test_udpfs_iso_only.py
+      - name: Check UDPFS serializes fileXio and LOADFILE operations
+        run: python3 .github/scripts/test_udpfs_serialization.py
 
   site-sync-host-tests:
     runs-on: ubuntu-24.04

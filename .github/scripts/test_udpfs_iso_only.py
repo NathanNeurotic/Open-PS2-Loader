@@ -30,8 +30,10 @@ check("sbIsSameSize(udpfsPrefix" not in udpfs, "UDPFS must not stat ul.cfg durin
 check("udpfsULSizePrev" not in udpfs, "Remove obsolete UDPFS UL-size state")
 check("if (!udpfsIsoScanned)" in udpfs and "udpfsIsoScanned = answeredBefore;" in udpfs,
       "Preserve initial scan and unreachable-server refresh behavior")
-check(udpfs.count("udpfsIsoScanned = 0;") >= 5,
-      "Reinitialization, rename and deletion must rearm ISO scanning")
+for name in ("udpfsInit", "udpfsUpdateGameList", "udpfsDeleteGame", "udpfsRenameGame"):
+    body = re.search(r"(?:static )?(?:void|int) " + name + r"\([^\n]*\)\s*\{(.*?)(?=\n\})", udpfs, re.S)
+    check(body is not None and "udpfsIsoScanned = 0;" in body.group(1),
+          name + " must rearm ISO scanning")
 check("game->format == GAME_FORMAT_USBLD" in udpfs,
       "Keep the defensive UL launch guard for stale rows")
 
