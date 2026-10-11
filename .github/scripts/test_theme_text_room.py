@@ -236,6 +236,141 @@ for block in title_lists:
     if not re.search(r'^\twidth=DIM_INF$', block, re.M):
         failures.append('misc/theme_coverflow.cfg: the Coverflow title list must span the top (width=DIM_INF)')
 
+
+# Issue #868 / zackcage6: enabling Favorites must not shift Coverflow's centered title to
+# the left. The star is positioned relative to the rendered (possibly clipped) title rather
+# than moving its anchor. Non-centered lists keep their established fixed star column.
+if items:
+    center_branch = re.search(
+        r'if \(favRoom && \(textAlign & ALIGN_HCENTER\)\) \{(.*?)\} else if \(favRoom\) \{(.*?)\}',
+        items, re.S,
+    )
+    if center_branch is None:
+        failures.append('drawItemsList: missing separate centered and ordinary Favorites layout paths')
+    else:
+        centered, ordinary = center_branch.groups()
+        if 'textAlign &=' in centered or 'textX =' in centered or 'rowX -=' in centered:
+            failures.append('drawItemsList: centered Favorites titles may not lose their horizontal anchor')
+        if 'textRoom = rowRoom > 2 * favRoom ? rowRoom - 2 * favRoom : rowRoom;' not in centered:
+            failures.append('drawItemsList: centered title must retain symmetric text space and narrow-room fallback')
+        if 'textAlign &= ~(ALIGN_HCENTER | ALIGN_RIGHT);' not in ordinary or 'textX = rowX + favRoom;' not in ordinary:
+            failures.append('drawItemsList: non-centered lists must retain the leading star column')
+    if 'int labelWidth = rmUnScaleX(fntCalcDimensions(elem->font, dispText));' not in items or \
+       'starX = textX - labelWidth / 2 - favRoom;' not in items:
+        failures.append('drawItemsList: centered star must track the actual visible title width')
+
+# An R3 removal must show success only after the persistent store was written, including on
+# the Favorites tab itself. The failure path keeps the star and does not play a success SFX.
+opl = (root / 'src/opl.c').read_text(encoding='utf-8')
+favorites = (root / 'src/favsupport.c').read_text(encoding='utf-8')
+fav_header = (root / 'include/favsupport.h').read_text(encoding='utf-8')
+base_lang = (root / 'lng_tmpl/_base.yml').read_text(encoding='utf-8')
+if opl.count('guiShowToast(_l(_STR_FAV_REMOVED));') != 2 or \
+   opl.count('guiShowToast(_l(_STR_FAV_REMOVE_FAILED));') != 2:
+    failures.append('Favorites: R3 must toast successful and failed removals in both contexts')
+if 'if (!favRemoveByIndex(it->id)) {' not in opl or 'int favRemoveByIndex(int favIndex)' not in fav_header:
+    failures.append('Favorites: indexed removal must publish a persisted-success result')
+if not re.search(r'if \(!removeFavouriteByIdAndText\(srcMode, srcId, txt, srcKind\)\)\s*return 0;', favorites):
+    failures.append('Favorites: indexed removal must not clear the source star on a failed write')
+
+# Exercise the REAL indexed-removal function on the host with an injected persistence failure.
+# A source-order check alone would miss a refactor that clears the star along another path.
+indexed_removal = function_text(favorites, 'int favRemoveByIndex(', 'src/favsupport.c')
+FAVORITES_HARNESS = r'''
+#include <stdio.h>
+
+typedef struct { int mode, id, kind; char *text; } fav_rec_t;
+typedef struct { int favourited; } source_item_t;
+typedef struct submenu_list { source_item_t item; } submenu_list_t;
+typedef struct { int mode; } opl_io_module_t;
+
+static fav_rec_t record = { 2, 42, 1, "Sample" };
+static fav_rec_t *favArray = &record;
+static submenu_list_t source;
+static opl_io_module_t module = { 2 };
+static int writeOk, writeCalls, lookupCalls, moduleCalls, hasModule;
+
+static int favValidIndex(int idx) { return idx == 0; }
+static int favKindView(int kind) { return kind; }
+static int removeFavouriteByIdAndText(int mode, int id, const char *name, int kind)
+{
+    (void)mode; (void)id; (void)name; (void)kind;
+    writeCalls++;
+    return writeOk;
+}
+static opl_io_module_t *oplGetModule(int mode)
+{
+    (void)mode;
+    moduleCalls++;
+    return hasModule ? &module : NULL;
+}
+static submenu_list_t *favFindVisibleSource(opl_io_module_t *mod, int id,
+                                            const char *name, int kind)
+{
+    (void)mod; (void)id; (void)name; (void)kind;
+    lookupCalls++;
+    return &source;
+}
+
+@FUNCTION@
+
+static int failures;
+static void expect(const char *what, int condition)
+{
+    if (!condition) {
+        printf("FAIL: %s\n", what);
+        failures++;
+    }
+}
+int main(void)
+{
+    hasModule = 1;
+    source.item.favourited = 1;
+    writeOk = 0;
+    expect("failed write reports failure", favRemoveByIndex(0) == 0);
+    expect("failed write preserves source star", source.item.favourited == 1);
+    expect("failed write does not even look up a source", moduleCalls == 0 && lookupCalls == 0);
+    expect("failed write was attempted exactly once", writeCalls == 1);
+
+    writeOk = 1;
+    expect("successful write reports success", favRemoveByIndex(0) == 1);
+    expect("successful write clears source star", source.item.favourited == 0);
+    expect("successful write visits source once", moduleCalls == 1 && lookupCalls == 1);
+
+    source.item.favourited = 1;
+    hasModule = 0;
+    expect("missing source module does not undo committed write", favRemoveByIndex(0) == 1);
+    expect("no unrelated source star is modified", source.item.favourited == 1);
+    expect("missing module does not request a source row", lookupCalls == 1);
+
+    expect("invalid index is rejected", favRemoveByIndex(-1) == 0);
+    expect("invalid index never writes", writeCalls == 3);
+    if (!failures)
+        printf("favorites: failed write preserves star; committed write clears it; missing source and invalid index safe\n");
+    return failures ? 1 : 0;
+}
+'''
+if indexed_removal:
+    with tempfile.TemporaryDirectory() as tmp:
+        src = Path(tmp) / 'favremove.c'
+        exe = Path(tmp) / ('favremove.exe' if sys.platform == 'win32' else 'favremove')
+        src.write_text(FAVORITES_HARNESS.replace('@FUNCTION@', indexed_removal), encoding='utf-8')
+        build = subprocess.run(['gcc', '-std=gnu99', '-Wall', '-Wextra', '-Werror',
+                                '-Wno-unused-function', '-o', str(exe), str(src)],
+                               capture_output=True, text=True, check=False)
+        if build.returncode != 0:
+            failures.append('favorites failure harness did not compile:\n' + build.stderr)
+        else:
+            run = subprocess.run([str(exe)], capture_output=True, text=True, check=False)
+            sys.stdout.write(run.stdout)
+            if run.returncode != 0:
+                failures.append('favorites failed-write behavior regression')
+
+
+if 'FAV_REMOVED' not in base_lang or 'FAV_REMOVE_FAILED' not in base_lang or \
+   base_lang.index('- label: FAV_REMOVED') < base_lang.index('- label: PS1_RA_CLEAN_CONTINUE'):
+    failures.append('Favorites: removal toast IDs must be appended to preserve legacy language indices')
+
 if failures:
     for failure in failures:
         print(failure)

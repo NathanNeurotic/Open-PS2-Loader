@@ -1748,3 +1748,9 @@ gui_strings:
 
 - label: PS1_RA_CLEAN_CONTINUE
   string: "Continue anyway? A leftover RA module can run stale telemetry. No cancels launch."
+
+# Appended to preserve indices used by existing external .lng files and saved configurations.
+- label: FAV_REMOVED
+  string: "Removed from Favorites"
+- label: FAV_REMOVE_FAILED
+  string: "Could not remove from Favorites"

@@ -1097,25 +1097,29 @@ int removeFavouriteByIdAndText(int mode, int id, const char *text, int kind)
     return ok;
 }
 
-void favRemoveByIndex(int favIndex)
+int favRemoveByIndex(int favIndex)
 {
     if (!favValidIndex(favIndex))
-        return;
+        return 0;
     int srcMode = favArray[favIndex].mode;
     int srcId = favArray[favIndex].id;
     int srcKind = favArray[favIndex].kind;
     char *txt = favArray[favIndex].text;
 
-    // Clear the star on the source-list copy, then drop the record from the store. (For a VCD fav the
-    // live submenu may be the device's disc list right now -> the by-id+text find simply misses, which
-    // is fine -- the record is still removed from the store.)
+    // Commit the removal before clearing the source-list star. Previously a failed write left
+    // favourites.bin unchanged but cleared the source star, falsely claiming the game was removed.
+    if (!removeFavouriteByIdAndText(srcMode, srcId, txt, srcKind))
+        return 0;
+
+    // For a VCD favourite the live submenu may be on the disc list; a missing source row is
+    // harmless because the saved record is already gone and the next rebuild refreshes the view.
     opl_io_module_t *mod = oplGetModule(srcMode);
     if (mod != NULL) {
         submenu_list_t *src = favFindVisibleSource(mod, srcId, txt, favKindView(srcKind));
         if (src != NULL)
             src->item.favourited = 0;
     }
-    removeFavouriteByIdAndText(srcMode, srcId, txt, srcKind);
+    return 1;
 }
 
 void loadFavourites(void)
