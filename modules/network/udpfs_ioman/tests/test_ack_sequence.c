@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../src/udprdma_seq.h"
+#include "udprdma_seq.h"
 
 int main(void)
 {
@@ -9,13 +9,19 @@ int main(void)
         uint16_t sent;
         int covers;
     } cases[] = {
-        {42, 42, 1},  /* current packet */
-        {41, 42, 0},  /* delayed ACK from previous request */
-        {0, 4095, 1}, /* forward across wrap */
-        {4095, 0, 0}, /* stale across wrap */
-        {2047, 0, 1}, /* last unambiguous forward value */
-        {2048, 0, 0}, /* ambiguous half-ring */
-        {2049, 0, 0}, /* backward half */
+        {42, 42, 1},
+        {41, 42, 0},
+        {0, 4095, 1},
+        {4095, 0, 0},
+        {2047, 0, 1},
+        {2048, 0, 0},
+        {2049, 0, 0},
+        {4094, 4095, 0},
+        {0, 0, 1},
+        {4094, 0, 0},
+        {1, 4094, 1},
+        {0, 2048, 0},
+        {2048, 2049, 0},
     };
     unsigned int i;
 
