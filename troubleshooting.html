@@ -291,8 +291,7 @@ from both SDK lineages failed, so the result is not isolated to one compiler ima
 </ul>
 
 <div class="callout info"><div class="h">i UDPFS / UDPBD are Ember-only PS1 pages</div>
-No VCD rows on either network page is expected, not a failed scan. POPSTARTER cannot restore those
-connections after its IOP reset; Ember inherits the live mount, so only Ember titles are listed.
+The network-page scanner currently enumerates Ember. For POPSTARTER VCD reads over UDPFS, use <a href="ps1-vcd.html#pops-udpfs">Okeanos’s BDM-UDPFS Assault setup</a>: install the matching memory-card pair, keep other POPS files and configs on USB, and check uppercase <code>.VCD</code> paths and the server subnet. This pair does not support UDPBD. Automatic network VCD enumeration/equip is a separate integration step.
 </div>
 
 <div class="callout info"><div class="h">i Favorites always has four views</div>

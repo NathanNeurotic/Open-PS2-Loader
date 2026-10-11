@@ -125,13 +125,7 @@ PC-side server. Pick a protocol only when you have those pieces in place. Local 
 </tbody>
 </table>
 
-<div class="callout info"><div class="h">PS1 over UDP: Ember only</div>
-UDPFS and UDPBD now expose the same PS1 page as other game devices, but their scan is deliberately
-limited to <b>Ember</b> folders under <code>EMBER/games/</code>. Ember performs no IOP reset and inherits
-the live <code>udpfs:</code> or <code>massN:</code> network mount. POPSTARTER resets the IOP and cannot
-restore either transport, so <code>POPS/*.VCD</code> rows are not listed on these two pages.
-<b>Both (L3)</b> reaches this Ember-only PS1 view via L3; <b>Mixed</b> combines those Ember rows with
-PS2 titles and cycles Mixed / PS2 / PS1; <b>PS1</b> pins it directly.</div>
+<div class="callout info"><div class="h">POPS UDPFS and Ember network libraries</div>RiptOPL’s UDPFS/UDPBD pages currently enumerate Ember folders. <b>POPSTARTER can read VCDs over UDPFS</b> using <a href="https://github.com/Okeanos86/BDMAssault/releases">Okeanos’s BDM-UDPFS Assault</a>: USB is tried first, then the same VCD path is read from the server. Other POPS files remain on USB. See <a href="ps1-vcd.html#pops-udpfs">manual setup, supplied files and credits</a>. This separate driver survives POPSTARTER’s IOP reset; automatic network VCD enumeration/equip remains a separate integration step. UDPBD is outside this driver’s scope.</div>
 
 <div class="callout info"><div class="h">Apply and retry without leaving the page</div>
 Confirming <b>Network Settings</b> applies the current values and begins a new connection attempt
