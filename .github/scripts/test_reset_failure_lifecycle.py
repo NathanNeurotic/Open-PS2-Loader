@@ -88,11 +88,15 @@ int main(void) {
  for(int stage=1;stage<=2;stage++) {
   prepare(stage);
   assert(!New_Reset_Iop(arg,11));
-  assert(exits==3 && loads==0 && set_reg_hook==0);
+  assert(exits==3 && loads==0 && set_reg_hook==0 && iop_reboot_count==1);
 #ifdef RETROACHIEVEMENTS
   assert(ra_snap_iop==0);
 #endif
  }
+ prepare(1);assert(!New_Reset_Iop(arg,11));
+ fail_stage=0;special_calls=0;
+ assert(New_Reset_Iop(arg,11));
+ assert(iop_reboot_count==2 && set_reg_hook==4 && loads==1);
  prepare(0);
  assert(New_Reset_Iop(arg,11));
  assert(special_calls==2 && exits==3 && loads==1 && set_reg_hook==4);

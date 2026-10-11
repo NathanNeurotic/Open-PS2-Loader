@@ -378,6 +378,9 @@ int New_Reset_Iop(const char *arg, int arglen)
 
     reset_ok = 1;
 reset_finished:
+    // Mode 3 unhooks after the second completed OPL reset, not a failed attempt.
+    if (!reset_ok)
+        iop_reboot_count--;
 #ifdef RETROACHIEVEMENTS
     if (!reset_ok)
         ra_snap_iop = 0;
