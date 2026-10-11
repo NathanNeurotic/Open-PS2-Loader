@@ -23,6 +23,7 @@ assert "_STR_VMC_REPLACE_REQUIRES_DELETE" in ui
 program = r'''
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <assert.h>
 #include <errno.h>
 #define O_RDONLY 1
@@ -51,6 +52,20 @@ typedef struct {
 static char gVMCCreatePath[256] = {0};
 static int exists, length, opened, erased, jobs, returnsError;
 static int openError;
+static int dirOpenError, dirReadError, dirPosition;
+typedef struct {char name[256];} iox_dirent_t;
+static int fileXioDopen(const char *folder) {
+    assert(!strcmp(folder,"mass0:/VMC"));dirPosition=0;
+    return dirOpenError ? -1 : 4;
+}
+static int fileXioDread(int fd, iox_dirent_t *entry) {
+    (void)fd;
+    if (dirReadError) return -1;
+    if (dirPosition++==0) {strcpy(entry->name,"unrelated.bin");return 1;}
+    if (exists && dirPosition==2) {strcpy(entry->name,"save_0.BIN");return 1;}
+    return 0;
+}
+static int fileXioDclose(int fd) {(void)fd;return 0;}
 static int fake_open(const char *path, int flags, ...) {
     (void)path; (void)flags; opened++;
     if (openError) {errno=openError;return -1;}
@@ -93,6 +108,14 @@ int main(void) {
     assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == SYS_VMC_REPLACE_REQUIRES_DELETE);
     assert(erased == 0 && jobs == 0);
     exists = 0;
+    dirOpenError=1;
+    assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == SYS_VMC_CREATE_FAILED);
+    dirOpenError=0;dirReadError=1;
+    assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == SYS_VMC_CREATE_FAILED);
+    assert(jobs==0 && erased==0);
+    dirReadError=0;openError=4; // FatFs FR_NO_FILE, not POSIX ENOENT
+    assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == -1 && jobs==1);
+    openError=0;jobs=0;
     assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == -1 && jobs == 1);
     assert(erased == 0);
     returnsError=1;

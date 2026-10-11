@@ -10,7 +10,6 @@
 
 #include <delaythread.h> // DelayThread for the bounded disc re-detect polls in sysLaunchDisc
 #include <time.h>        // clock()/CLOCKS_PER_SEC -- the disc waits are budgeted by wall clock
-#include <errno.h>
 
 // Disc-probe budgets (issue #465). All are TOTAL wall-clock caps, not per-poll ones.
 #define SYS_DISC_DETECT_MS   1000 // first "still identifying" settle
@@ -2504,10 +2503,27 @@ int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize,
                 LOG("SYSTEM refusing implicit VMC replacement: %s (%d -> %d MB)\n", path, size, createSize);
                 return SYS_VMC_REPLACE_REQUIRES_DELETE;
             }
-        } else if (createSize > 0 && errno != ENOENT) {
-            // An unreadable image may still contain saves. Only ENOENT proves
-            // that creation will not truncate an existing card.
-            return SYS_VMC_CREATE_FAILED;
+        } else if (createSize > 0) {
+            // BDM FatFs errors are not POSIX errno values. A completed parent
+            // directory scan, rather than an open error number, proves absence.
+            char folder[256], filename[64];
+            iox_dirent_t entry;
+            int result;
+            if ((unsigned int)snprintf(folder, sizeof(folder), "%sVMC", prefix) >= sizeof(folder) ||
+                (unsigned int)snprintf(filename, sizeof(filename), "%s.bin", name) >= sizeof(filename))
+                return SYS_VMC_CREATE_FAILED;
+            int dir = fileXioDopen(folder);
+            if (dir < 0)
+                return SYS_VMC_CREATE_FAILED;
+            while ((result = fileXioDread(dir, &entry)) > 0) {
+                if (!strcasecmp(entry.name, filename)) {
+                    fileXioDclose(dir);
+                    return SYS_VMC_CREATE_FAILED;
+                }
+            }
+            fileXioDclose(dir);
+            if (result < 0)
+                return SYS_VMC_CREATE_FAILED;
         }
 
         if (createSize > 0 && createSize != size) {
