@@ -44,6 +44,7 @@ HARNESS = r'''
 #define MAX_BDM_DEVICES 10
 #define BDM_TYPE_USB 7
 static int volumes=1, renameCall, failRename, failWrite, failRestoreRename;
+static int failPark, failReturn;
 static int markedReady, manualReady;
 #define LOG(...) ((void)0)
 #define VCD_BDMA_UDPFS 6
@@ -65,6 +66,11 @@ static int hostMkdir(const char *p,int mode) {
 }
 static int hostUnlink(const char *p) { return unlink(mapped(p)); }
 static int hostRename(const char *a,const char *b) {
+ if ((failPark && strstr(b,"IPCONFIG.DAT.tmp")) ||
+     (failReturn && renameCall>=4 && strstr(a,"IPCONFIG.DAT.tmp"))) {errno=EIO;return -1;}
+ // Model USB filesystems that refuse replacement, even on POSIX hosts.
+ struct stat destination;
+ if (stat(mapped(b),&destination)==0) {errno=EEXIST;return -1;}
  if (failRestoreRename && strstr(a,"IPCONFIG.DAT.bak")) {
   failRestoreRename=0;errno=EIO;return -1;
  }
@@ -177,6 +183,24 @@ int main(void) {
  CHECK(equals("POPS/UDPFSCONFIG.DAT",oldServer));
  CHECK(equals("USB4/POPS/IPCONFIG.DAT",oldIp));
  CHECK(equals("USB4/POPS/UDPFSCONFIG.DAT",oldServer));
+ unlink("POPS/IPCONFIG.DAT.bak");
+ // A failure parking the replacement must leave live and backup untouched.
+ put("POPS/IPCONFIG.DAT",oldIp);put("POPS/UDPFSCONFIG.DAT",oldServer);
+ renameCall=0;failRename=4;failPark=1;
+ CHECK(vcdWritePopsUdpfsNet(&changed)!=0);
+ failRename=0;failPark=0;
+ CHECK(equals("POPS/IPCONFIG.DAT.bak",oldIp));
+ CHECK(equals("POPS/IPCONFIG.DAT","192.168.1.20 255.255.255.0 0.0.0.0\n"));
+ unlink("POPS/IPCONFIG.DAT.bak");
+ // If restore and returning the replacement both fail, retain both snapshots.
+ put("POPS/IPCONFIG.DAT",oldIp);put("POPS/UDPFSCONFIG.DAT",oldServer);
+ renameCall=0;failRename=4;failRestoreRename=1;
+ // Enable return failure only after forward commits have reached rollback.
+ failReturn=1;
+ CHECK(vcdWritePopsUdpfsNet(&changed)!=0);
+ failRename=0;failRestoreRename=0;failReturn=0;
+ CHECK(equals("POPS/IPCONFIG.DAT.bak",oldIp));
+ CHECK(equals("POPS/IPCONFIG.DAT.tmp","192.168.1.20 255.255.255.0 0.0.0.0\n"));
  printf("POPS UDPFS: %d config/rollback checks passed\n",checks);return 0;
 }
 '''
