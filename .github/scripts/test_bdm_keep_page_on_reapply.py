@@ -48,7 +48,7 @@ HARNESS = r'''
 
 typedef struct { int visible; } menu_item_t;
 typedef struct { menu_item_t menuItem; } opl_io_module_t;
-typedef struct { int mode; void *owner; void *priv; } item_list_t;
+typedef struct { int mode; void *owner; void *priv; int enabled; } item_list_t;
 typedef struct {
     char bdmDeviceRoot[16];
     char bdmDriver[16];
