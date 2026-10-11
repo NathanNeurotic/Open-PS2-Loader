@@ -8,7 +8,9 @@ source = (root / "src/bdmsupport.c").read_text(encoding="utf-8")
 opl = (root / "src/opl.c").read_text(encoding="utf-8")
 
 def function(signature):
-    start = source.index(signature)
+    # Match the definition, not an earlier forward declaration followed by
+    # some unrelated function body.
+    start = source.index(signature + "\n{")
     brace = source.index("{", start)
     depth = 0
     for i in range(brace, len(source)):
