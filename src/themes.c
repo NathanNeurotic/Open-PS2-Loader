@@ -2270,22 +2270,27 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         submenu_list_t *ps = menu->item->pagestart;
         int others = 0;
         u64 color;
-        // A fixed leading column keeps stars and titles aligned on every row.
+        // A fixed leading column keeps stars and titles aligned on ordinary lists. Centered
+        // lists (notably Coverflow's one-line title) must retain their theme-defined anchor:
+        // turning Favorites on must never turn ALIGN_HCENTER into a left-aligned title.
         const int favRoom = gFAVStartMode ? MENU_ITEM_HEIGHT + 4 : 0;
         const int hasDecorator = itemsList->decoratorImage &&
                                  (gEnableDiscArt || !isDiscArtCache(itemsList->decoratorImage->cache));
         int rowX = elem->posX + (hasDecorator ? DECORATOR_SIZE : 0);
         const int rowRoom = elem->textRoom > 0 ? elem->textRoom : elem->width;
         short textAlign = elem->aligned;
-        if (favRoom) {
-            if (textAlign & ALIGN_HCENTER)
-                rowX -= rowRoom / 2;
-            else if (textAlign & ALIGN_RIGHT)
+        int textX = rowX, textRoom = rowRoom;
+        if (favRoom && (textAlign & ALIGN_HCENTER)) {
+            // Equal margins for the title and optional star; the title stays centered regardless
+            // of whether THIS row is favorited, and long titles still scroll inside the room.
+            textRoom = rowRoom > 2 * favRoom ? rowRoom - 2 * favRoom : 1;
+        } else if (favRoom) {
+            if (textAlign & ALIGN_RIGHT)
                 rowX -= rowRoom;
             textAlign &= ~(ALIGN_HCENTER | ALIGN_RIGHT);
+            textX = rowX + favRoom;
+            textRoom = rowRoom > favRoom ? rowRoom - favRoom : 1;
         }
-        const int textX = rowX + favRoom;
-        const int textRoom = rowRoom > favRoom ? rowRoom - favRoom : 1;
         while (ps && (others++ < itemsList->displayedItems)) {
             if (ps == item)
                 color = gTheme->selTextColor;
@@ -2342,8 +2347,19 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
 
             if (favRoom && ps->item.favourited) {
                 GSTEXTURE *favTex = thmGetTexture(FAV_MARK);
-                if (favTex != NULL && favTex->Mem != NULL)
-                    rmDrawPixmap(favTex, rowX, posY, ALIGN_NONE, MENU_ITEM_HEIGHT, MENU_ITEM_HEIGHT, elem->scaled, gDefaultCol, 0);
+                if (favTex != NULL && favTex->Mem != NULL) {
+                    int starX = rowX;
+                    if (elem->aligned & ALIGN_HCENTER) {
+                        // Place the star immediately before the *visible* centered title, not at
+                        // the left edge of the full-width Coverflow title bar. Use the same
+                        // virtual-resolution width units as fntRenderStringFit.
+                        int labelWidth = rmUnScaleX(fntCalcDimensions(elem->font, dispText));
+                        if (labelWidth > textRoom)
+                            labelWidth = textRoom;
+                        starX = textX - labelWidth / 2 - favRoom;
+                    }
+                    rmDrawPixmap(favTex, starX, posY, ALIGN_NONE, MENU_ITEM_HEIGHT, MENU_ITEM_HEIGHT, elem->scaled, gDefaultCol, 0);
+                }
             }
 
             posY += MENU_ITEM_HEIGHT;
