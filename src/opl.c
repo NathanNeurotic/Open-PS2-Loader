@@ -678,7 +678,11 @@ static void itemExecFav(struct menu_item *curMenu)
         return;
 
     if (support->mode == FAV_MODE) {
-        favRemoveByIndex(it->id);
+        if (!favRemoveByIndex(it->id)) {
+            guiShowToast(_l(_STR_FAV_REMOVE_FAILED));
+            return;
+        }
+        guiShowToast(_l(_STR_FAV_REMOVED));
     } else {
         int kind = itemFavKind(support, it->id, it->text);
         int sourceId = libListSourceId(support, it->id);
@@ -695,8 +699,13 @@ static void itemExecFav(struct menu_item *curMenu)
         if (kind == FAV_KIND_CUE && support->itemLaunchCue == NULL)
             return;
         if (it->favourited) {
-            if (removeFavouriteByIdAndText(support->mode, sourceId, it->text, kind))
+            if (removeFavouriteByIdAndText(support->mode, sourceId, it->text, kind)) {
                 it->favourited = 0; // only clear the star once the store write succeeded
+                guiShowToast(_l(_STR_FAV_REMOVED));
+            } else {
+                guiShowToast(_l(_STR_FAV_REMOVE_FAILED));
+                return; // no success sound or reload for a failed write
+            }
         } else {
             guiShowToast(_l(_STR_FAV_SAVING));
             if (addFavouriteItem(support->mode, sourceId, it->icon_id, it->text_id, it->text, kind)) {
