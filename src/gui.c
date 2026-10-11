@@ -3661,12 +3661,12 @@ static void guiHandleOp(struct gui_update_t *item)
 
         case GUI_OP_APPEND_MENU:
             result = submenuAppendItem(item->menu.subMenu, item->submenu.icon_id, item->submenu.text, item->submenu.id, item->submenu.text_id);
-            if (result != NULL) {
-                result->item.isFolder = item->submenu.isFolder; // folder-browse row marker
+            if (result == NULL)
+                break; // OOM: preserve the old tail, cursor and wrap navigation state.
+            result->item.isFolder = item->submenu.isFolder; // folder-browse row marker
 #ifdef RETROACHIEVEMENTS
-                result->item.raBadged = item->submenu.raBadged; // RA cover mark, resolved on the I/O thread
+            result->item.raBadged = item->submenu.raBadged; // RA cover mark, resolved on the I/O thread
 #endif
-            }
             // coverflow wrap tail: submenuAppendItem always returns the new tail
             item->menu.menu->last = result;
             if (!item->menu.menu->submenu) { // first subitem in list

@@ -1100,7 +1100,9 @@ void submenuRemoveItem(submenu_list_t **submenu, int id)
             submenu_list_t *next = cur->next;
 
             if (prev)
-                prev->next = cur->next;
+                prev->next = next;
+            if (next)
+                next->prev = prev;
 
             if (*submenu == cur)
                 *submenu = next;
