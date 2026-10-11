@@ -411,7 +411,7 @@ static void guiRenderToast(void)
         actionToast[0] = '\0';
         return;
     }
-    guiRenderNotifications(actionToast, gTheme->usedHeight - MENU_ITEM_HEIGHT - 20);
+    guiRenderNotifications(actionToast, 10);
 }
 
 void guiShowToast(const char *text)

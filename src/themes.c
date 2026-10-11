@@ -2358,7 +2358,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                             labelWidth = textRoom;
                         starX = textX - labelWidth / 2 - favRoom;
                     }
-                    rmDrawPixmap(favTex, starX, posY, ALIGN_NONE, MENU_ITEM_HEIGHT, MENU_ITEM_HEIGHT, elem->scaled, gDefaultCol, 0);
+                    rmDrawPixmap(favTex, starX, posY, textAlign & ALIGN_VCENTER, MENU_ITEM_HEIGHT, MENU_ITEM_HEIGHT, elem->scaled, gDefaultCol, 0);
                 }
             }
 
