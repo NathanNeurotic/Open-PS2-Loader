@@ -1177,29 +1177,48 @@ static void cacheClearItem(cache_entry_t *item, int freeTxt)
 
 image_cache_t *cacheInitCache(int userId, const char *prefix, int isPrefixRelative, const char *suffix, int count)
 {
-    image_cache_t *cache = (image_cache_t *)malloc(sizeof(image_cache_t));
+    image_cache_t *cache;
+    int i;
+
+    // Theme-controlled counts must not wrap the allocation size or allocate no entries.
+    if (suffix == NULL || count <= 0 || (size_t)count > (size_t)-1 / sizeof(cache_entry_t))
+        return NULL;
+
+    cache = (image_cache_t *)malloc(sizeof(image_cache_t));
+    if (cache == NULL)
+        return NULL;
+    memset(cache, 0, sizeof(image_cache_t));
+
     cache->userId = userId;
     cache->count = count;
-    cache->prefix = NULL;
-    int length;
-    if (prefix) {
-        length = strlen(prefix) + 1;
-        cache->prefix = (char *)malloc(length * sizeof(char));
-        memcpy(cache->prefix, prefix, length);
+    if (prefix != NULL) {
+        cache->prefix = (char *)malloc(strlen(prefix) + 1);
+        if (cache->prefix == NULL)
+            goto allocation_failed;
+        strcpy(cache->prefix, prefix);
     }
     cache->isPrefixRelative = isPrefixRelative;
-    length = strlen(suffix) + 1;
-    cache->suffix = (char *)malloc(length * sizeof(char));
-    memcpy(cache->suffix, suffix, length);
+    cache->suffix = (char *)malloc(strlen(suffix) + 1);
+    if (cache->suffix == NULL)
+        goto allocation_failed;
+    strcpy(cache->suffix, suffix);
     cache->nextUID = 1;
-    cache->activeRequests = 0;
-    cache->content = (cache_entry_t *)malloc(count * sizeof(cache_entry_t));
 
-    int i;
+    cache->content = (cache_entry_t *)malloc((size_t)count * sizeof(cache_entry_t));
+    if (cache->content == NULL)
+        goto allocation_failed;
     for (i = 0; i < count; ++i)
         cacheClearItem(&cache->content[i], 0);
 
     return cache;
+
+allocation_failed:
+    // Nothing has been queued or uploaded yet; release only the partial constructor.
+    free(cache->content);
+    free(cache->suffix);
+    free(cache->prefix);
+    free(cache);
+    return NULL;
 }
 
 void cacheDestroyCache(image_cache_t *cache)
