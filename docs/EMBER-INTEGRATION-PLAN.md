@@ -4,7 +4,8 @@
 > documentation. For how to *use* the feature, see the [PS1 Games page](https://nathanneurotic.github.io/Open-PS2-Loader/ps1-vcd.html) and [VCD.md](VCD.md).
 
 **Status:** ordinary device PS1 pages ship both cores in one list; UDPFS and UDPBD ship an
-Ember-only PS1 list because POPSTARTER cannot restore either network transport. Ember handoffs
+Ember-only PS1 list in the current RiptOPL scanner. POPSTARTER UDPFS VCD reads are separately
+available through Okeanos’s BDM-UDPFS Assault USB-first driver; see [POPS UDPFS setup](VCD.md#pops-udpfs-with-bdm-udpfs-assault). Ember handoffs
 remain hardware-unproven unless a later test report says otherwise.
 **Base commit:** `291716d3` on `rebuild/main` (2026-08-27).
 
@@ -856,7 +857,8 @@ that wrong presents an empty tab that then overwrites the real list.
 
 ### Phase 5 — Network surface (landed; hardware pending)
 
-UDPFS and UDPBD now publish Ember-only PS1 views (R5); POPSTARTER remains unavailable on both.
+UDPFS and UDPBD now publish Ember-only PS1 views (R5); automatic POPSTARTER network-page integration remains unavailable on both. Okeanos’s separate
+BDM-UDPFS Assault driver provides manual POPSTARTER UDPFS VCD fallback (see VCD.md).
 RetroGEM game-ID parity and `settings.txt` display passthrough remain separate concerns.
 
 ---

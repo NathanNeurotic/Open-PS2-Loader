@@ -59,7 +59,12 @@ Mixed → PS2 → PS1; **PS2** and **PS1** lock one library and make L3 fully in
 it can remain one Mixed ELF list or split Apps / `[PS1]`-titled ELFs across L3. Favorites is also
 independent and always cycles **All in One → PS2 → PS1 → ELF**. Returning from Start/Settings retains
 the page the user paused on. UDPFS and UDPBD PS1 views publish Ember titles only because POPSTARTER
-cannot restore those network transports after its IOP reset. Confirming Network Settings now applies
+does not inherit those live mounts after its IOP reset. POPS UDPFS instead uses
+Okeanos’s [BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases):
+`POPS/usbd.irx.udpfs`, `POPS/usbhdfsd.irx.udpfs`, `POPS/IPCONFIG.DAT` and
+`POPS/UDPFSCONFIG.DAT` provide the manual USB-first, read-only UDPFS VCD workflow.
+See [setup and credits](docs/VCD.md#pops-udpfs-with-bdm-udpfs-assault); automatic network VCD
+enumeration/equip is a separate integration step. Confirming Network Settings now applies
 the current values and reconnects immediately; Select / Refresh retries a failed network page.
 
 `<version>` is the `ps2dev:latest` build's `git describe` (e.g. `v1.2.0-Beta-2562-c553567`); each
