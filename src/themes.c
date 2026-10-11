@@ -2283,7 +2283,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         if (favRoom && (textAlign & ALIGN_HCENTER)) {
             // Equal margins for the title and optional star; the title stays centered regardless
             // of whether THIS row is favorited, and long titles still scroll inside the room.
-            textRoom = rowRoom > 2 * favRoom ? rowRoom - 2 * favRoom : 1;
+            textRoom = rowRoom > 2 * favRoom ? rowRoom - 2 * favRoom : rowRoom;
         } else if (favRoom) {
             if (textAlign & ALIGN_RIGHT)
                 rowX -= rowRoom;
