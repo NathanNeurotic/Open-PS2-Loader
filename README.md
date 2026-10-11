@@ -367,7 +367,7 @@ This build layers several features on top of upstream OPL:
   for a `.VCD`. Files inside can be named anything; `.cue` is preferred over `.exe` over `.bin`.
   Ember writes its per-game memory cards (`MC1.vmc`, `MC2.vmc`) into that same folder, so it must be
   on writable media. Available on USB, MX4SIO, iLink, exFAT-ATA, MMCE, SMB, the internal APA/PFS
-  hard drive, UDPFS and UDPBD. The two UDP network pages list Ember only; ordinary device pages
+  hard drive, UDPFS and UDPBD. UDPFS Files also lists POPSTARTER VCDs; UDPBD and UDPFS IMG list Ember only. Ordinary device pages
   merge Ember and POPSTARTER rows.
 
   **On an internal APA/PFS drive**, where there is no filesystem root to copy a folder to, the
@@ -464,13 +464,15 @@ This build layers several features on top of upstream OPL:
   `POPS/usbhdfsd.irx.ilink`, copies them to the memory card without the `.ilink` suffix, and hands
   POPSTARTER the normal local-device `XX.` selector, but revision 2692 returned to wLaunchELF in all
   four SDK flavours. Every BDMA pair ships as loose files in
-  `POPS/`; none is embedded in `RIPTOPL.ELF`. UDPFS and UDPBD also expose a PS1 view, but those
-  network pages list **Ember titles only**: Ember inherits the live connection, while POPSTARTER's
-  normal IOP reset discards the live network mount. **POPS UDPFS** uses
-  **Okeanos’s BDM-UDPFS Assault** driver instead: USB-first, read-only VCD fallback to a UDPFS server.
-  The `.udpfs` pair and optional IP config examples are included in `POPS/`; see
-  **[manual POPS UDPFS setup](docs/VCD.md#pops-udpfs-with-bdm-udpfs-assault)**. Automatic network VCD
-  enumeration/equip is a separate integration step.
+  `POPS/`; none is embedded in `RIPTOPL.ELF`. **UDPFS Files** lists uppercase server
+  `POPS/*.VCD` alongside Ember titles and prepares POPSTARTER launches using
+  **Okeanos's BDM-UDPFS Assault** USB-first, read-only driver. Automatic BDMA equip selects
+  the `.udpfs` pair; its source may be any supported device's `POPS/`, including APA
+  `__common/POPS/`. **POPS Network Settings ? POPS UDPFS Network Settings** saves the two
+  runtime config files to every connected USB volume's `POPS/` folder. Launch requires those
+  copies to be valid and agree, since the Alpha driver reads configs from USB after its IOP
+  reset. See **[POPS UDPFS setup](docs/VCD.md#pops-udpfs-with-bdm-udpfs-assault)**.
+  The new VCD handoff awaits console validation. UDPBD and UDPFS IMG remain Ember-only.
 - **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —
   under Neutrino it greys the panels Neutrino ignores (GSM, PADEMU, OSD Language and the
   OPL-only compat modes; cheats work on both cores) and offers a structured **Neutrino Video** picker (Off / 240p / 480p /

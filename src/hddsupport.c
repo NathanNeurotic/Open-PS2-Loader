@@ -1856,6 +1856,21 @@ static int hddResolveHddPopstarter(char *elfOut, int elfLen)
 // disturbing pfs0: (which may itself hold the custom ELF or the normal OPL data home).
 // Best-effort, matching hddResolveHddPopstarter(): existing card files always win and a missing
 // __common payload never turns an otherwise-valid custom ELF into a launch failure.
+int hddEquipPopstarterBdmaFromCommon(int mode, char *diag, int diagSize)
+{
+    if (!hddLoadModulesReady())
+        return -4;
+    if (gHDDPrefix != NULL && hddGetLiveOplHomeSelection() == HDD_OPL_HOME_COMMON)
+        return vcdEquipBdmaFromPops("pfs0:/POPS/", mode, diag, diagSize);
+    // Never steal an in-use scratch mount. Mounting an already-open partition
+    // fails; the live __common data-home case above needs no second mount.
+    if (fileXioMount("pfs1:", "hdd0:__common", FIO_MT_RDONLY) != 0)
+        return -4;
+    int result = vcdEquipBdmaFromPops("pfs1:/POPS/", mode, diag, diagSize);
+    fileXioUmount("pfs1:");
+    return result;
+}
+
 static void hddInstallPopstarterMcFromCommon(void)
 {
     // The APA driver will not open a partition that is already open (getFileSlot -> -EBUSY), so when

@@ -1754,3 +1754,12 @@ gui_strings:
   string: "Removed from Favorites"
 - label: FAV_REMOVE_FAILED
   string: "Could not remove from Favorites"
+
+- label: POPS_UDPFS_SETTINGS
+  string: "POPS UDPFS Network Settings"
+
+- label: POPS_UDPFS_DISCOVERY
+  string: "Saves to every USB POPS folder. Server 0.0.0.0 uses discovery."
+
+- label: POPS_UDPFS_NOT_READY
+  string: "POPS UDPFS needs matching valid IPCONFIG.DAT and UDPFSCONFIG.DAT in every USB POPS folder. Configure them in POPS Network Settings."

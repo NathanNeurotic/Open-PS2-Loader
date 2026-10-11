@@ -1650,7 +1650,7 @@ int guiShowVcdUsbMode(void)
 static void guiSetBdmaSettings(struct UIItem *ui)
 {
     static const char *bdmaSourceStrs[] = {NULL, NULL, NULL, NULL, NULL, NULL};
-    static const char *bdmaModeStrs[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    static const char *bdmaModeStrs[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
     // Order matches enum VCD_USB_BDMA_MODE: Ask / exFAT / fat32. The two driver labels are the ones the
     // per-launch prompt already uses, so the row and the dialog it replaces read identically.
     static const char *vcdUsbBdmaStrs[] = {NULL, NULL, NULL, NULL};
@@ -1668,6 +1668,7 @@ static void guiSetBdmaSettings(struct UIItem *ui)
     bdmaModeStrs[3] = _l(_STR_BDMA_MODE_MMCE);
     bdmaModeStrs[4] = _l(_STR_BDMA_MODE_ATA);
     bdmaModeStrs[5] = _l(_STR_BDMA_MODE_ILINK);
+    bdmaModeStrs[6] = "UDPFS";
     vcdUsbBdmaStrs[0] = _l(_STR_VCD_USB_BDMA_ASK);
     vcdUsbBdmaStrs[1] = _l(_STR_VCD_USB_MODE_EXFAT);
     vcdUsbBdmaStrs[2] = _l(_STR_VCD_USB_MODE_FAT32);
@@ -1936,6 +1937,56 @@ static int guiPopsNetUpdater(int modified)
 // POPStarter -> Network Settings (VCD over SMB). The local memory-card snapshot remains the sole
 // write owner. The explicit import path only copies valid POPS/*.DAT values into the editor, so the
 // normal change-detection/Replace flow still decides whether anything is committed to an MC.
+// Read/write the driver's actual USB DAT files; never mutate SMB's MC settings.
+static void guiShowPopsUdpfsConfig(void)
+{
+    vcd_pops_udpfs_t original, cfg;
+    static char notice[128];
+    if (vcdReadPopsUdpfsNet(&original) != 0) {
+        guiMsgBox(_l(_STR_POPS_UDPFS_NOT_READY), 0, NULL);
+        return;
+    }
+    snprintf(notice, sizeof(notice), "%s%s", "All USB POPS folders",
+             original.invalid ? " (invalid)" : (!original.ipExists || !original.serverExists) ? " (incomplete)" :
+                                                                                                "");
+    diaSetLabel(diaPopsUdpfsConfig, NETCFG_POPS_NOTICE, notice);
+    for (int i = 0; i < 4; i++) {
+        diaSetInt(diaPopsUdpfsConfig, NETCFG_POPS_IP_0 + i, original.ps2Ip[i]);
+        diaSetInt(diaPopsUdpfsConfig, NETCFG_POPS_MASK_0 + i, original.mask[i]);
+        diaSetInt(diaPopsUdpfsConfig, NETCFG_POPS_GW_0 + i, original.gateway[i]);
+        diaSetInt(diaPopsUdpfsConfig, NETCFG_POPS_SMB_IP_0 + i, original.server[i]);
+    }
+    for (;;) {
+        if (diaExecuteDialog(diaPopsUdpfsConfig, -1, 1, NULL) != UIID_BTN_OK)
+            return;
+        cfg = original;
+        for (int i = 0; i < 4; i++) {
+            diaGetInt(diaPopsUdpfsConfig, NETCFG_POPS_IP_0 + i, &cfg.ps2Ip[i]);
+            diaGetInt(diaPopsUdpfsConfig, NETCFG_POPS_MASK_0 + i, &cfg.mask[i]);
+            diaGetInt(diaPopsUdpfsConfig, NETCFG_POPS_GW_0 + i, &cfg.gateway[i]);
+            diaGetInt(diaPopsUdpfsConfig, NETCFG_POPS_SMB_IP_0 + i, &cfg.server[i]);
+        }
+        if (!vcdPopsUdpfsNetValid(&cfg)) {
+            guiMsgBox(_l(_STR_POPSTARTER_NET_INVALID), 0, NULL);
+            continue;
+        }
+        if (original.ipExists && original.serverExists && !original.invalid &&
+            !memcmp(cfg.ps2Ip, original.ps2Ip, sizeof(cfg.ps2Ip)) &&
+            !memcmp(cfg.mask, original.mask, sizeof(cfg.mask)) &&
+            !memcmp(cfg.gateway, original.gateway, sizeof(cfg.gateway)) &&
+            !memcmp(cfg.server, original.server, sizeof(cfg.server)))
+            return;
+        if ((original.ipExists || original.serverExists) &&
+            diaExecuteDialog(diaPopsOverwrite, -1, 1, NULL) != POPS_OVERWRITE_REPLACE)
+            continue;
+        if (vcdWritePopsUdpfsNet(&cfg) != 0) {
+            guiMsgBox(_l(_STR_POPSTARTER_NET_ERR), 0, NULL);
+            continue;
+        }
+        return;
+    }
+}
+
 void guiShowPopsNetConfig(void)
 {
     size_t i;
@@ -1971,6 +2022,10 @@ void guiShowPopsNetConfig(void)
 
     for (;;) {
         int result = diaExecuteDialog(diaPopsNetConfig, -1, 1, &guiPopsNetUpdater);
+        if (result == NETCFG_POPS_UDPFS) {
+            guiShowPopsUdpfsConfig();
+            continue;
+        }
         if (result == NETCFG_POPS_IMPORT) {
             vcd_popsnet_t imported;
             int importResult;

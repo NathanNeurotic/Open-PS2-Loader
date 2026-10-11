@@ -221,10 +221,68 @@ struct UIItem diaNetConfig[] = {
 // IPCONFIG.DAT / SMBCONFIG.DAT contents (read on dialog open), NOT OPL's settings. Absent files
 // leave the fields blank with the notice visible; only an explicit edit or the Import button
 // changes them, and only an actual change is written back on OK (see guiShowPopsNetConfig).
+
+// UDPFS Alpha runtime configuration on USB POPS/, separate from MC SMB files.
+struct UIItem diaPopsUdpfsConfig[] = {
+    {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_POPS_UDPFS_SETTINGS}}},
+    {UI_SPLITTER},
+    {UI_LABEL, NETCFG_POPS_NOTICE, 1, 1, -1, 0, 0, {.label = {NULL, _STR_POPS_NONE_DETECTED}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_POPS_UDPFS_DISCOVERY}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_IP_ADDRESS}}},
+    {UI_SPACER},
+    {UI_INT, NETCFG_POPS_IP_0, 1, 1, _STR_HINT_POPS_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_IP_1, 1, 1, _STR_HINT_POPS_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_IP_2, 1, 1, _STR_HINT_POPS_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_IP_3, 1, 1, _STR_HINT_POPS_IP, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_MASK}}},
+    {UI_SPACER},
+    {UI_INT, NETCFG_POPS_MASK_0, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_MASK_1, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_MASK_2, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_MASK_3, 1, 1, _STR_HINT_NETMASK, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_GATEWAY}}},
+    {UI_SPACER},
+    {UI_INT, NETCFG_POPS_GW_0, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_GW_1, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_GW_2, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_GW_3, 1, 1, _STR_HINT_GATEWAY, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_ADDRESS}}},
+    {UI_SPACER},
+    {UI_INT, NETCFG_POPS_SMB_IP_0, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_SMB_IP_1, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_SMB_IP_2, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {".", -1}}},
+    {UI_INT, NETCFG_POPS_SMB_IP_3, 1, 1, -1, 0, 0, {.intvalue = {0, 0, 0, 255}}},
+    {UI_BREAK},
+
+    {UI_OK, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_OK}}},
+    {UI_TERMINATOR}};
+
 struct UIItem diaPopsNetConfig[] = {
     {UI_HEADER, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_NETCONFIG}}},
     {UI_SPLITTER},
 
+    {UI_BUTTON, NETCFG_POPS_UDPFS, 1, 1, -1, 0, 0, {.label = {NULL, _STR_POPS_UDPFS_SETTINGS}}},
+    {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_POPS_SMB_SECTION}}},
     {UI_BREAK},
 
