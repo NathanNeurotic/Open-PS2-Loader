@@ -1686,6 +1686,13 @@ static int vcdBdmaManualPairMatches(int mode)
     return 0;
 }
 
+// Network VCD handoff requires a usable marked or matching unmarked manual pair.
+// Keep the best-effort policy for all existing local POPSTARTER launches.
+int vcdBdmaLaunchReady(int mode)
+{
+    return vcdBdmaEnvironmentValid(mode) || vcdBdmaManualPairMatches(mode);
+}
+
 // Best-effort auto-equip of the device-matching BDMA driver before a VCD launch (POPSLoader's
 // ApplyBdmaMode parity), verifying environment integrity.
 //
@@ -2113,10 +2120,15 @@ int vcdWritePopsUdpfsNet(const vcd_pops_udpfs_t *cfg)
     return 0;
 rollback:
     for (int i = 0; i < files; i++) {
-        if (committed[i])
+        if (old[i]) {
+            // Restore atomically where supported. On failure, keep BOTH the live
+            // file and its original backup for recovery; never unlink live first.
+            if (rename(backup[i], paths[i]) != 0)
+                LOG("POPS UDPFS: restoration failed for %s (backup at %s)\n", paths[i], backup[i]);
+        } else if (committed[i]) {
+            // A newly created file has no previous version to preserve.
             unlink(paths[i]);
-        if (old[i])
-            rename(backup[i], paths[i]); // on failure retain .bak for manual recovery
+        }
         unlink(staged[i]);
     }
     return -3;
