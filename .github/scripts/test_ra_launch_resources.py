@@ -20,9 +20,10 @@ def function(source, signature):
 
 wanted = function(iop, "static int RA_TelemetryWanted(struct EECoreConfig_t *config)")
 hex32 = function(iop, "static void RA_Hex32(unsigned int v, char *out)")
-load_begin = iop.index("    ra_snap_iop = 0;\n    if (RA_TelemetryWanted(config)")
-load_end = iop.index("\n#endif\n}", load_begin)
-load_body = iop[load_begin:load_end]
+special_reset = function(iop, "static int ResetIopSpecial(")
+load_begin = special_reset.index("    ra_snap_iop = 0;\n    if (RA_TelemetryWanted(config)")
+load_end = special_reset.rindex("\n#endif")
+load_body = special_reset[load_begin:load_end]
 module_loader = function(mod, "int LoadOPLModule(int id, int mode, int arg_len, const char *args)")
 
 # Check that the normal RA ELF cannot accidentally reserve the card's workspace
