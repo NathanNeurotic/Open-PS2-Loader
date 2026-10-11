@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../src/udprdma_seq.h"
+#include "udprdma_seq.h"
 
 int main(void)
 {
@@ -16,6 +16,12 @@ int main(void)
         {2047, 0, 1}, /* last unambiguous forward value */
         {2048, 0, 0}, /* ambiguous half-ring */
         {2049, 0, 0}, /* backward half */
+        {4094, 4095, 0}, /* last packet is stale */
+        {0, 0, 1},       /* sequence zero */
+        {4094, 0, 0},    /* stale across wrap by two */
+        {1, 4094, 1},    /* forward across wrap by three */
+        {0, 2048, 0},   /* exactly half ring backward */
+        {2048, 2049, 0}, /* stale just below ambiguity */
     };
     unsigned int i;
 
