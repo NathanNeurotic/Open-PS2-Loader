@@ -173,7 +173,7 @@ int main(void) {
  CHECK(vcdWritePopsUdpfsNet(&changed)!=0);
  failRename=0;failRestoreRename=0;
  CHECK(equals("POPS/IPCONFIG.DAT.bak",oldIp));
- CHECK(equals("POPS/IPCONFIG.DAT","192.168.1.20 255.255.255.0 0.0.0.0\\n"));
+ CHECK(equals("POPS/IPCONFIG.DAT","192.168.1.20 255.255.255.0 0.0.0.0\n"));
  CHECK(equals("POPS/UDPFSCONFIG.DAT",oldServer));
  CHECK(equals("USB4/POPS/IPCONFIG.DAT",oldIp));
  CHECK(equals("USB4/POPS/UDPFSCONFIG.DAT",oldServer));
