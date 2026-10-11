@@ -21,11 +21,12 @@ L3-switched views, one combined list with filters, or a single locked library. T
 the same device page — with the same covers, favorites, and per-game settings — rather than extra
 device tabs.
 
-**RiptOPL’s UDPFS and UDPBD pages currently list Ember titles.** Ember keeps the mounted
-network transport alive. POPSTARTER can read VCDs over UDPFS using Okeanos’s separate
-BDM-UDPFS Assault driver and USB support files; see [POPS UDPFS setup](#pops-udpfs-with-bdm-udpfs-assault).
-That manual workflow does not yet add network VCD enumeration or automatic equip to RiptOPL.
-UDPBD remains outside this POPSTARTER driver’s scope.
+**RiptOPL’s UDPFS Files page lists Ember titles and uppercase `POPS/*.VCD` files.**
+Ember keeps the mounted network transport alive. POPSTARTER reads UDPFS VCDs through Okeanos’s
+separate BDM-UDPFS Assault driver and USB support files; see [POPS UDPFS setup](#pops-udpfs-with-bdm-udpfs-assault).
+With **BDMA Apply on Launch**, RiptOPL attempts to equip the `.udpfs` pair before VCD handoff.
+An already usable matching manual pair also works. Without a valid pair, the network VCD launch
+is stopped. UDPBD remains outside this POPSTARTER driver's scope.
 
 ## 2. Choose Both, Mixed, PS2, or PS1
 
