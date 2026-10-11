@@ -882,6 +882,8 @@ static menu_list_t *AllocMenuItem(menu_item_t *item)
     menu_list_t *it;
 
     it = malloc(sizeof(menu_list_t));
+    if (it == NULL)
+        return NULL;
 
     it->prev = NULL;
     it->next = NULL;
@@ -919,6 +921,10 @@ void menuAppendItem(menu_item_t *item)
     WaitSema(menuListSemaId);
 
     menu_list_t *newitem = AllocMenuItem(item);
+    if (newitem == NULL) {
+        SignalSema(menuListSemaId);
+        return;
+    }
     if (menu == NULL) {
         menu = newitem;
         selected_item = menu;
@@ -977,17 +983,33 @@ static void refreshMenuPosition(void)
 void submenuRebuildCache(submenu_list_t *submenu)
 {
     while (submenu) {
-        if (submenu->item.cache_id)
-            free(submenu->item.cache_id);
-        if (submenu->item.cache_uid)
-            free(submenu->item.cache_uid);
+        int *newId = NULL;
+        int *newUid = NULL;
+        int count = gTheme != NULL ? gTheme->gameCacheCount : 0;
 
-        int size = gTheme->gameCacheCount * sizeof(int);
-        submenu->item.cache_id = malloc(size);
-        memset(submenu->item.cache_id, -1, size);
-        submenu->item.cache_uid = malloc(size);
-        memset(submenu->item.cache_uid, -1, size);
+        if (count > 0 && (size_t)count <= (size_t)-1 / sizeof(int)) {
+            size_t bytes = (size_t)count * sizeof(int);
+            newId = malloc(bytes);
+            if (newId != NULL)
+                newUid = malloc(bytes);
+            if (newId != NULL && newUid != NULL) {
+                memset(newId, -1, bytes);
+                memset(newUid, -1, bytes);
+            } else {
+                // A half-allocated pair cannot be indexed safely by the renderer.
+                free(newId);
+                free(newUid);
+                newId = NULL;
+                newUid = NULL;
+            }
+        }
 
+        // Drop arrays from the previous theme size even after allocation failure:
+        // retaining them could let the new theme index beyond their old capacity.
+        free(submenu->item.cache_id);
+        free(submenu->item.cache_uid);
+        submenu->item.cache_id = newId;
+        submenu->item.cache_uid = newUid;
         submenu = submenu->next;
     }
 }
@@ -1003,6 +1025,8 @@ int menuHasRegisteredItems(void)
 static submenu_list_t *submenuAllocItem(int icon_id, char *text, int id, int text_id)
 {
     submenu_list_t *it = (submenu_list_t *)malloc(sizeof(submenu_list_t));
+    if (it == NULL)
+        return NULL;
 
     it->prev = NULL;
     it->next = NULL;
@@ -1034,6 +1058,8 @@ submenu_list_t *submenuAppendItem(submenu_list_t **submenu, int icon_id, char *t
 
     // create new item
     submenu_list_t *newitem = submenuAllocItem(icon_id, text, id, text_id);
+    if (newitem == NULL)
+        return NULL;
 
     // link
     cur->next = newitem;
@@ -1074,7 +1100,9 @@ void submenuRemoveItem(submenu_list_t **submenu, int id)
             submenu_list_t *next = cur->next;
 
             if (prev)
-                prev->next = cur->next;
+                prev->next = next;
+            if (next)
+                next->prev = prev;
 
             if (*submenu == cur)
                 *submenu = next;
@@ -1108,6 +1136,8 @@ void menuAddHint(menu_item_t *menu, int text_id, int icon_id)
 {
     // allocate a new hint item
     menu_hint_item_t *hint = malloc(sizeof(menu_hint_item_t));
+    if (hint == NULL)
+        return;
 
     hint->text_id = text_id;
     hint->icon_id = icon_id;

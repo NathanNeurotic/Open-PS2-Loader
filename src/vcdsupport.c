@@ -2121,10 +2121,15 @@ int vcdWritePopsUdpfsNet(const vcd_pops_udpfs_t *cfg)
 rollback:
     for (int i = 0; i < files; i++) {
         if (old[i]) {
-            // Restore atomically where supported. On failure, keep BOTH the live
-            // file and its original backup for recovery; never unlink live first.
-            if (rename(backup[i], paths[i]) != 0)
+            // USB rename need not replace an existing destination. Park the new
+            // copy in its now-vacant staging path before restoring the original.
+            if (committed[i] && rename(paths[i], staged[i]) != 0)
+                continue; // retain the live replacement and original backup
+            if (rename(backup[i], paths[i]) != 0) {
                 LOG("POPS UDPFS: restoration failed for %s (backup at %s)\n", paths[i], backup[i]);
+                if (committed[i] && rename(staged[i], paths[i]) != 0)
+                    continue; // retain both .tmp and .bak for manual recovery
+            }
         } else if (committed[i]) {
             // A newly created file has no previous version to preserve.
             unlink(paths[i]);

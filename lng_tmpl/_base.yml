@@ -1778,3 +1778,9 @@ gui_strings:
 
 - label: POPS_UDPFS_DRIVER_NOT_READY
   string: "POPS UDPFS needs the .udpfs driver pair installed on the memory card. Equip it manually or enable BDMA Apply on Launch."
+
+- label: VMC_REPLACE_REQUIRES_DELETE
+  string: "Changing the VMC size would erase its saved games. Back up the existing VMC and use Delete before creating a new size."
+
+- label: VMC_CREATE_FAILED
+  string: "Could not create the VMC. Check the device, connection and write access. Existing saves were not replaced."

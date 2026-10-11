@@ -425,9 +425,10 @@ int ioGetPendingRequestCount(void)
 {
     int count = 0;
 
-    struct io_request_t *req = gReqList;
-
+    // The worker can unlink/free the queue head while this thread waits for the
+    // processing semaphore. Sample it ONLY after acquiring that semaphore.
     WaitSema(gProcSemaId);
+    struct io_request_t *req = gReqList;
 
     while (req) {
         count++;
