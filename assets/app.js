@@ -144,3 +144,53 @@
     heads.forEach(function (h) { obs.observe(h); });
   }
 })();
+
+
+/* Site-wide cursor orb preference. Mobile defaults off; user choice persists. */
+(function () {
+  'use strict';
+  var key = 'ps2-cursor-orbs:' + (location.pathname.split('/').filter(Boolean)[0] || 'local');
+  var media = window.matchMedia ? window.matchMedia('(hover: none), (pointer: coarse)') : null;
+  var pref = null;
+  try { pref = localStorage.getItem(key); } catch (e) { /* private browsing */ }
+  var on = pref === 'on' || (pref !== 'off' && !(media && media.matches));
+  var listeners = [], button, header = document.querySelector('.topbar');
+  function reflect() {
+    document.documentElement.classList.toggle('cursor-orbs-disabled', !on);
+    if (button) {
+      button.textContent = 'Orbs ' + (on ? 'On' : 'Off');
+      button.setAttribute('aria-pressed', String(on));
+    }
+  }
+  function set(next, save) {
+    if (save) {
+      pref = next ? 'on' : 'off';
+      try { localStorage.setItem(key, pref); } catch (e) { /* session only */ }
+    }
+    if (next === on) return;
+    on = next;
+    reflect();
+    listeners.forEach(function (fn) { fn(on); });
+  }
+  window.ps2CursorOrbs = {
+    isEnabled: function () { return on; },
+    onChange: function (fn) { listeners.push(fn); }
+  };
+  if (header) {
+    button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'cursor-orbs-toggle';
+    button.setAttribute('aria-label', 'Cursor orb animation');
+    button.title = 'Toggle cursor orb animation';
+    button.addEventListener('click', function () { set(!on, true); });
+    header.insertBefore(button, header.querySelector('.search'));
+  }
+  reflect();
+  if (media) {
+    var change = function () {
+      if (pref !== 'on' && pref !== 'off') set(!media.matches, false);
+    };
+    if (media.addEventListener) media.addEventListener('change', change);
+    else if (media.addListener) media.addListener(change);
+  }
+})();
