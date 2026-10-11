@@ -441,7 +441,7 @@ if not failures:
     ra_checks = RA_CHECKS.replace('nIWake == 0 + nWake', 'nWake == 1')
     build_and_run('retroachievements', '#define RETROACHIEVEMENTS\n#define IGR_VBLANK_HANDLER\n',
                   common + handler + install, ra_checks)
-    build_and_run('ra_mode6', '#define RETROACHIEVEMENTS\\n', mode6, MODE6_CHECKS, MODE6_HARNESS)
+    build_and_run('ra_mode6', '#define RETROACHIEVEMENTS\n', mode6, MODE6_CHECKS, MODE6_HARNESS)
 
 if failures:
     print('\n'.join(failures))

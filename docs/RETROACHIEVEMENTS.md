@@ -16,7 +16,11 @@ RiptOPL's real-hardware stabilization was contributed by **[oMrRexD](https://git
 PRs **#702–#705**, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
 bring-up / unusable-IP fallback, and the misplaced RA settings rows.
 
-## Mode 6 (IGR disabled)\n\nWhen per-game Compatibility Mode 6 disables IGR, the RA build keeps the in-game snapshot tick through a dedicated VBLANK handler, but only when telemetry successfully initialized. It does not install an IGR worker or pad-open hooks. Achievements can still be recorded; controller IGR and client-triggered **RESET CONSOLE** are unavailable. The physical console buttons retain their normal hardware behavior. Mode 6 does not cure incompatibility with games that reject a VBLANK handler itself. This behavior follows xeRAbora alpha.17; console compatibility varies by game and launch transport.\n\n## RA Mode: Xerabora or Caduceus
+## Mode 6 (IGR disabled)
+
+When per-game Compatibility Mode 6 disables IGR, the RA build keeps the in-game snapshot tick through a dedicated VBLANK handler, but only when telemetry successfully initialized. It does not install an IGR worker or pad-open hooks. Achievements can still be recorded; controller IGR and client-triggered **RESET CONSOLE** are unavailable. The physical console buttons retain their normal hardware behavior. Mode 6 does not cure incompatibility with games that reject a VBLANK handler itself. This behavior follows xeRAbora alpha.17; console compatibility varies by game and launch transport.
+
+## RA Mode: Xerabora or Caduceus
 
 In the **RA build**, open **Settings → Network → RA Mode** and choose **Xerabora** (the default) or **Caduceus**. Save settings to retain the choice. Old configurations without `ra_mode` keep Xerabora. The normal build has no RA mode row or telemetry code.
 
