@@ -1946,9 +1946,12 @@ static void guiShowPopsUdpfsConfig(void)
         guiMsgBox(_l(_STR_POPS_UDPFS_NOT_READY), 0, NULL);
         return;
     }
-    snprintf(notice, sizeof(notice), "%s%s", _l(_STR_POPS_UDPFS_ALL_USB_FOLDERS),
-             original.invalid ? _l(_STR_POPS_UDPFS_INVALID_SUFFIX) :
-             (!original.ipExists || !original.serverExists) ? _l(_STR_POPS_UDPFS_INCOMPLETE_SUFFIX) : "");
+    const char *suffix = "";
+    if (original.invalid)
+        suffix = _l(_STR_POPS_UDPFS_INVALID_SUFFIX);
+    else if (!original.ipExists || !original.serverExists)
+        suffix = _l(_STR_POPS_UDPFS_INCOMPLETE_SUFFIX);
+    snprintf(notice, sizeof(notice), "%s%s", _l(_STR_POPS_UDPFS_ALL_USB_FOLDERS), suffix);
     diaSetLabel(diaPopsUdpfsConfig, NETCFG_POPS_NOTICE, notice);
     for (int i = 0; i < 4; i++) {
         diaSetInt(diaPopsUdpfsConfig, NETCFG_POPS_IP_0 + i, original.ps2Ip[i]);
