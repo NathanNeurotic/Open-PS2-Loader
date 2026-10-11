@@ -78,10 +78,12 @@ running it streams the handful of memory addresses that game's achievements depe
 else — talking to the RetroAchievements servers, deciding what unlocked, your login — happens on the
 PC.</p>
 <p>Based on the RetroAchievements implementation by <strong><a href="https://github.com/hacan359/Open-PS2-Loader/pull/1">hacan359 (yoba)</a></strong>.
-Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora PC client</a></strong> with RiptOPL's RA build. Download the required <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16">v0.1.0-alpha.16 release</a></strong>.</p>
+Use the upstream <strong><a href="https://github.com/hacan359/xerabora">xeRAbora PC client</a></strong> with RiptOPL's RA build. Download the required <strong><a href="https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17">v0.1.0-alpha.17 release</a></strong>.</p>
 <p>RiptOPL's real-hardware stabilization was contributed by <strong><a href="https://github.com/oMrRexD">oMrRexD</a></strong> through
 PRs <strong>#702–#705</strong>, covering the ee_core stack squeeze, MMCE DEV9 dependency, cold-launch network
 bring-up / unusable-IP fallback, and the misplaced RA settings rows.</p>
+<h2 id="mode-6-igr-disabled">Mode 6 (IGR disabled)</h2>
+<p>When per-game Compatibility Mode 6 disables IGR, the RA build keeps the in-game snapshot tick through a dedicated VBLANK handler, but only when telemetry successfully initialized. It does not install an IGR worker or pad-open hooks. Achievements can still be recorded; controller IGR and client-triggered <strong>RESET CONSOLE</strong> are unavailable. The physical console buttons retain their normal hardware behavior. Mode 6 does not cure incompatibility with games that reject a VBLANK handler itself. This behavior follows xeRAbora alpha.17; console compatibility varies by game and launch transport.</p>
 <h2 id="ra-mode-xerabora-or-caduceus">RA Mode: Xerabora or Caduceus</h2>
 <p>In the <strong>RA build</strong>, open <strong>Settings → Network → RA Mode</strong> and choose <strong>Xerabora</strong> (the default) or <strong>Caduceus</strong>. Save settings to retain the choice. Old configurations without <code>ra_mode</code> keep Xerabora. The normal build has no RA mode row or telemetry code.</p>
 <p>This selector chooses the PC service protocol; it does not enable telemetry by itself. Keep <strong>RA Telemetry</strong> enabled when you want tracking. No PC application or server binaries are bundled by this change; the companion service is managed separately through PS2-Servers.</p>
