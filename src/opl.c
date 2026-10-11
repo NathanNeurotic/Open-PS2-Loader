@@ -1004,6 +1004,8 @@ int oplPath2Mode(const char *path)
         listSupport = list_support[i].support;
         if ((listSupport != NULL) && (listSupport->itemGetPrefix != NULL)) {
             char *prefix = listSupport->itemGetPrefix(listSupport);
+            if (prefix == NULL || prefix[0] == '\0')
+                continue;
             snprintf(appsPath, sizeof(appsPath), "%sAPPS", prefix);
 
             blkdevnameend = strchr(appsPath, ':');
