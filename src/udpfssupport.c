@@ -349,8 +349,6 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
             udpfsModifiedDVDPrev = st.st_mtime;
             result = 1;
         }
-
-
     }
 
     return result;
