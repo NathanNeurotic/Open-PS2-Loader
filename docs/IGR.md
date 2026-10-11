@@ -94,8 +94,11 @@ Fewer games should need it now. IGR used to watch the pad from a **VBLANK interr
 merely registering one black-screened some games (Fatal Fury: Battle Archives Volume 2), whatever the
 handler did. It now polls the pad from its own low-priority thread, woken by a timer about once a
 frame, and registers nothing on VBLANK (official OPL #1762, ported here). The
-**RetroAchievements** loader is the exception: its per-frame memory snapshots and unlock notice must
-run inside that interrupt, so it keeps the handler, and the games it upsets still need Mode 6 there.
+**RetroAchievements** loader is the exception: its per-frame snapshots and unlock notice require a
+VBLANK interrupt. With IGR enabled, RA uses the existing combined VBLANK/IGR path. Under Mode 6,
+RA instead installs a snapshot-only handler when telemetry is active, without an IGR thread or pad
+hooks. Achievements may continue, but client-triggered reset is unavailable. Games incompatible
+with registration of any VBLANK handler may still be affected.
 
 If IGR stops responding in a game that used to answer it on an older build, report the title. A
 game that never lets a low-priority thread run would starve the polling thread; the power button
