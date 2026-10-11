@@ -630,6 +630,11 @@ static void udpfsLaunchVcd(item_list_t *itemList, const char *vcdName, config_se
     guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
     (void)vcdInstallPopstarterMc(usbRoot);
     vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_UDPFS);
+    if (!vcdBdmaLaunchReady(VCD_BDMA_UDPFS)) {
+        // Unlike local POPSTARTER, network VCDs require this exact driver family.
+        guiMsgBox(_l(_STR_POPS_UDPFS_DRIVER_NOT_READY), 0, NULL);
+        return;
+    }
     // POPS UDPFS has no RA integration yet. Do not leave our USB-only RA module
     // reading a network VCD through unsupported telemetry hooks.
     if (!vcdConfirmCleanLaunch(usbRoot))
