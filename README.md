@@ -367,7 +367,7 @@ This build layers several features on top of upstream OPL:
   for a `.VCD`. Files inside can be named anything; `.cue` is preferred over `.exe` over `.bin`.
   Ember writes its per-game memory cards (`MC1.vmc`, `MC2.vmc`) into that same folder, so it must be
   on writable media. Available on USB, MX4SIO, iLink, exFAT-ATA, MMCE, SMB, the internal APA/PFS
-  hard drive, UDPFS and UDPBD. The two UDP network pages list Ember only; ordinary device pages
+  hard drive, UDPFS and UDPBD. UDPFS Files also lists POPSTARTER VCDs; UDPBD and UDPFS IMG list Ember only. Ordinary device pages
   merge Ember and POPSTARTER rows.
 
   **On an internal APA/PFS drive**, where there is no filesystem root to copy a folder to, the
@@ -464,9 +464,15 @@ This build layers several features on top of upstream OPL:
   `POPS/usbhdfsd.irx.ilink`, copies them to the memory card without the `.ilink` suffix, and hands
   POPSTARTER the normal local-device `XX.` selector, but revision 2692 returned to wLaunchELF in all
   four SDK flavours. Every BDMA pair ships as loose files in
-  `POPS/`; none is embedded in `RIPTOPL.ELF`. UDPFS and UDPBD also expose a PS1 view, but those
-  network pages list **Ember titles only**: Ember inherits the live connection, while POPSTARTER's
-  IOP reset cannot restore either network transport. See **[docs/VCD.md](docs/VCD.md)**.
+  `POPS/`; none is embedded in `RIPTOPL.ELF`. **UDPFS Files** lists uppercase server
+  `POPS/*.VCD` alongside Ember titles and prepares POPSTARTER launches using
+  **Okeanos's BDM-UDPFS Assault** USB-first, read-only driver. Automatic BDMA equip selects
+  the `.udpfs` pair; its source may be any supported device's `POPS/`, including APA
+  `__common/POPS/`. **POPS Network Settings → POPS UDPFS Network Settings** saves the two
+  runtime config files to every connected USB volume's `POPS/` folder. Launch requires those
+  copies to be valid and agree, since the Alpha driver reads configs from USB after its IOP
+  reset. See **[POPS UDPFS setup](docs/VCD.md#pops-udpfs-with-bdm-udpfs-assault)**.
+  The new VCD handoff awaits console validation. UDPBD and UDPFS IMG remain Ember-only.
 - **Core-aware per-game settings:** the per-game screen adapts to the selected **Loader Core** —
   under Neutrino it greys the panels Neutrino ignores (GSM, PADEMU, OSD Language and the
   OPL-only compat modes; cheats work on both cores) and offers a structured **Neutrino Video** picker (Off / 240p / 480p /
@@ -927,6 +933,7 @@ RiptOPL is intended to work with these maintained companion tools:
 - **[OPL HTTP PC server](https://github.com/Docmine17/Open-PS2-Loader-HTTP)** by **[Docmine17](https://github.com/Docmine17)** — the PC side of RiptOPL’s **HTTP** protocol: a small static HTTP server with byte-range support that serves your `games.csv` catalog and streams the ISOs themselves. RiptOPL works with it **unmodified** — no new API, no catalog conversion, no changed folder layout — with host conformance checks against the upstream server. PS2 hardware validation is still pending.
 - **[PS2RD CHT Manager](https://github.com/TheRealNextria/PS2RD-CHT-Manager)** by **[TheRealNextria](https://github.com/TheRealNextria)** — PC manager for the PS2RD `.cht` cheat files RiptOPL reads from your device's `CHT` folder. A `PS2RD-CHT-Manager.url` shortcut ships in installable packages.
 - **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)** — a PS1 emulator that runs natively on the PS2, used as RiptOPL's **second PS1 core** alongside POPSTARTER. Unlike the others this one is not just a shortcut: an `EMBER/` folder ships **inside** the release package, ready to drop onto a device. It is bundled unmodified under the Ember Public Beta Testing Licence (`EMBER/LICENSE-BETA.txt` in the package); releases: <https://github.com/Gageformer/Ember/releases>.
+- **[BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** by **[Okeanos](https://github.com/Okeanos86)** — POPSTARTER-specific BDMA drivers with read-only UDPFS fallback for VCDs, based on israpps' BDM Assault.
 - **[POPStarter](https://www.psx-place.com/resources/popstarter.683/)** by **krHACKen** — a PS1 launcher built around Sony's native **POPS** emulator for the PS2, used as RiptOPL's **primary PS1 core** alongside Ember. POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains **no Sony emulator binaries, libraries, or BIOS files**; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on **[PSX-Place](https://www.psx-place.com/resources/popstarter.683/)**.
 - **[Neutrino](https://github.com/rickgaiser/neutrino)** by **[rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular PS2 Device Emulator"*, and RiptOPL's **second PS2 loader core** alongside OPL's own. Like Ember it is not a shortcut: a ready-to-use `neutrino/` folder ships **inside** each installable ZIP, drag-and-drop to `mc?:/neutrino/`. Neutrino is deliberately **UI-agnostic** — it has no interface of its own, which is exactly what lets a front-end like RiptOPL drive it per game. Licensed **AFL-3.0**; releases: <https://github.com/rickgaiser/neutrino/releases>.
 - **[PSUManager](https://git.techwritescode.dev/techwritescode/PSUManager)** by **techwritescode** — the CC0 PS2 save-container implementation used by RiptOPL release tooling to independently validate `APP_RIPTOPL.psu` and `APP_RIPTOPL-RA.psu`. The exact upstream core and license used by CI are preserved in `third_party/PSUManager/`.
@@ -982,6 +989,7 @@ With special and sincere thanks to:
   alternative to RiptOPL** for lightweight, customized Neutrino gameplay. He also contributes to
   RiptOPL directly: his [#733](https://github.com/NathanNeurotic/Open-PS2-Loader/pull/733) brings
   LUNA's Collection cover-art screen to RiptOPL's renderer. Thank you for sharing your work with us.
+- **[Okeanos](https://github.com/Okeanos86)** — for **[BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)**, bringing read-only UDPFS VCD fallback to POPSTARTER through BDMA, based on israpps’ BDM Assault.
 - **saildot4k** — for **BDMA-ATA** (exFAT internal-HDD block-device support), and the fixes,
   feedback, and oversight that shaped this fork's block-device work. A big piece of getting it right.
 - **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)** — for

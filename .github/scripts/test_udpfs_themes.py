@@ -232,7 +232,7 @@ if needs:
 update = function_body(src, "static int udpfsUpdateGameList(item_list_t *itemList)")
 if update:
     asked = update.find("answeredBefore = udpfsServerAnswers();")
-    scan = update.find("cueFillGameList(")
+    scan = update.find("ps1FillGameList(")
     if asked < 0:
         failures.append("udpfsUpdateGameList must ask the server BEFORE scanning")
     elif scan >= 0 and asked > scan:
@@ -246,7 +246,7 @@ if update:
     if "udpfsSetWaitingForServer(!answeredBefore || (!reached && !udpfsServerAnswers()));" not in update:
         failures.append("a scan that started before the server answered must keep polling")
 
-    if "if (answeredBefore && r >= 0) // only a scan that reached the server AND read the list counts\n            udpfsPs1Scanned = 1;" not in update:
+    if "if (answeredBefore && r >= 0 && !ps1GameListNeedsRetry())\n            udpfsPs1Scanned = 1;" not in update:
         failures.append("the PS1 first-scan latch must only be set by a scan that reached the server and succeeded")
 
 # A remembered PS1 page gets its first scan from UDPFS itself (as MMCE and BDM do), NOT from marking
