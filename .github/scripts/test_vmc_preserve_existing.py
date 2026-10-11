@@ -94,6 +94,17 @@ static int fake_devctl(const char *path, int command, void *args, int alen, void
 int main(void) {
     char name[] = "SAVE_0";
     exists = 1; length = 8 * 1048576;
+    char prefix[243];
+    memset(prefix, 'p', 241); prefix[241] = 0;
+    assert(sysCheckVMC(prefix, "/", name, 0, NULL) == 8); // 255 characters fit
+    int priorOpened = opened;
+    prefix[241] = 'p'; prefix[242] = 0;
+    strcpy(gVMCCreatePath, "stale");
+    assert(sysCheckVMC(prefix, "/", name, 8, NULL) == SYS_VMC_CREATE_FAILED);
+    assert(!gVMCCreatePath[0]);
+    assert(sysCheckVMC(prefix, "/", name, 0, NULL) == SYS_VMC_CREATE_FAILED);
+    assert(sysCheckVMC(prefix, "/", name, -1, NULL) == SYS_VMC_CREATE_FAILED);
+    assert(opened == priorOpened && erased == 0 && jobs == 0);
     assert(sysCheckVMC("mass0:/", "/", name, 16, NULL) == SYS_VMC_REPLACE_REQUIRES_DELETE);
     assert(erased == 0 && jobs == 0);
     const int errors[] = {EACCES, EIO, ENOTDIR};
