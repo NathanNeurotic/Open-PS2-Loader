@@ -28,6 +28,7 @@ pieces = '\n'.join(function(s) for s in (
     'static int vcdReadPopsUdpfsNetAt(',
     'static int vcdPopsUdpfsSame(', 'int vcdReadPopsUdpfsNet(',
     'int vcdWritePopsUdpfsNet(', 'int vcdPreparePopsUdpfsLaunch(',
+    'int vcdBdmaLaunchReady(',
 ))
 HARNESS = r'''
 #include <stdio.h>
@@ -42,7 +43,12 @@ HARNESS = r'''
 #endif
 #define MAX_BDM_DEVICES 10
 #define BDM_TYPE_USB 7
-static int volumes=1, renameCall, failRename, failWrite;
+static int volumes=1, renameCall, failRename, failWrite, failRestoreRename;
+static int markedReady, manualReady;
+#define LOG(...) ((void)0)
+#define VCD_BDMA_UDPFS 6
+static int vcdBdmaEnvironmentValid(int mode) {return mode==VCD_BDMA_UDPFS && markedReady;}
+static int vcdBdmaManualPairMatches(int mode) {return mode==VCD_BDMA_UDPFS && manualReady;}
 static const char *mapped(const char *p) {
  static char buffers[4][512];static int next;
  if(!strncmp(p,"mass3:/",7))return p+7;
@@ -59,6 +65,9 @@ static int hostMkdir(const char *p,int mode) {
 }
 static int hostUnlink(const char *p) { return unlink(mapped(p)); }
 static int hostRename(const char *a,const char *b) {
+ if (failRestoreRename && strstr(a,"IPCONFIG.DAT.bak")) {
+  failRestoreRename=0;errno=EIO;return -1;
+ }
  if (++renameCall==failRename) {errno=EIO;return -1;}
  return rename(mapped(a),mapped(b));
 }
@@ -83,6 +92,10 @@ static int equals(const char *name,const char *text) {char b[512]={0};FILE*f=fop
 int main(void) {
  vcd_pops_udpfs_t c, changed; char root[64];
  mkdir("POPS",0777);
+ CHECK(!vcdBdmaLaunchReady(VCD_BDMA_UDPFS));
+ markedReady=1;CHECK(vcdBdmaLaunchReady(VCD_BDMA_UDPFS));markedReady=0;
+ manualReady=1;CHECK(vcdBdmaLaunchReady(VCD_BDMA_UDPFS));manualReady=0;
+ CHECK(!vcdBdmaLaunchReady(VCD_BDMA_UDPFS));
  CHECK(vcdReadPopsUdpfsNet(&c)==0 && !c.ipExists && !c.serverExists);
  CHECK(!vcdPreparePopsUdpfsLaunch(root,sizeof(root)));
  put("POPS/IPCONFIG.DAT","\xef\xbb\xbf# comment\r\n; ignored\r\n192.168.1.10 255.255.255.0\r\n");
@@ -152,6 +165,18 @@ int main(void) {
   CHECK(equals("POPS/IPCONFIG.DAT",oldIp));CHECK(equals("POPS/UDPFSCONFIG.DAT",oldServer));
   CHECK(equals("USB4/POPS/IPCONFIG.DAT",oldIp));CHECK(equals("USB4/POPS/UDPFSCONFIG.DAT",oldServer));
  }
+ // Simulate one forward commit failing, then the first rollback restore failing.
+ // The live replacement AND original backup must survive together.
+ put("POPS/IPCONFIG.DAT",oldIp);put("POPS/UDPFSCONFIG.DAT",oldServer);
+ put("USB4/POPS/IPCONFIG.DAT",oldIp);put("USB4/POPS/UDPFSCONFIG.DAT",oldServer);
+ renameCall=0;failRename=4;failRestoreRename=1;
+ CHECK(vcdWritePopsUdpfsNet(&changed)!=0);
+ failRename=0;failRestoreRename=0;
+ CHECK(equals("POPS/IPCONFIG.DAT.bak",oldIp));
+ CHECK(equals("POPS/IPCONFIG.DAT","192.168.1.20 255.255.255.0 0.0.0.0\\n"));
+ CHECK(equals("POPS/UDPFSCONFIG.DAT",oldServer));
+ CHECK(equals("USB4/POPS/IPCONFIG.DAT",oldIp));
+ CHECK(equals("USB4/POPS/UDPFSCONFIG.DAT",oldServer));
  printf("POPS UDPFS: %d config/rollback checks passed\n",checks);return 0;
 }
 '''
@@ -166,7 +191,8 @@ udpfs = (ROOT/'src/udpfssupport.c').read_text(encoding='utf-8')
 assert 'ps1FillGameList(udpfsPrefix, &udpfsPs1Games)' in udpfs
 assert '&udpfsLaunchVcd' in udpfs
 launch = udpfs[udpfs.index('static void udpfsLaunchVcd('):udpfs.index('static void udpfsLaunchCue(')]
-assert launch.index('vcdPreparePopsUdpfsLaunch(') < launch.index('vcdEnsureBdmaForLaunch(')
+assert launch.index('vcdPreparePopsUdpfsLaunch(') < launch.index('vcdEnsureBdmaForLaunch(') < launch.index('vcdBdmaLaunchReady(') < launch.index('sysLaunchPopstarter(')
 assert 'VCD_BDMA_UDPFS' in launch and 'VCD_PREFIX_MASS' in launch
+assert 'guiMsgBox(_l(_STR_POPS_UDPFS_DRIVER_NOT_READY)' in launch
 assert '_STR_VCD_NOT_ON_NET' not in launch
 print('POPS UDPFS: combined scan, Favorites callback and launch preparation wiring passed')
