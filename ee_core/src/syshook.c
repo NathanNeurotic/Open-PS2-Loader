@@ -29,6 +29,10 @@ int padOpen_hooked = 0;
 int disable_padOpen_hook = 1;
 
 extern void *_end;
+#ifdef RETROACHIEVEMENTS
+/* Set only after the IOP snapshot buffer and RAUDP module are ready. */
+extern unsigned int ra_snap_iop;
+#endif
 
 // Global data
 u32 (*Old_SifSetDma)(SifDmaTransfer_t *sdd, s32 len);
@@ -56,6 +60,14 @@ u32 New_SifSetDma(SifDmaTransfer_t *sdd, s32 len)
 
     // does IOP reset
     New_Reset_Iop(reset_pkt->arg, reset_pkt->arglen);
+
+#ifdef RETROACHIEVEMENTS
+    /* Mode 6 suppresses Install_IGR. Start the independent snapshot tick
+       only after reset/module setup succeeds; failed or disabled telemetry
+       must not introduce a VBLANK handler into the running game. */
+    if ((g_compat_mask & COMPAT_MODE_6) && ra_snap_iop != 0)
+        Install_RA_Vblank();
+#endif
 
     disable_padOpen_hook = 0;
 

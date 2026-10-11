@@ -66,6 +66,9 @@ static powerbuttondata_t Power_Button;
 /* IGR Thread ID and interrupt handler */
 static int IGR_Thread_ID = -1;
 static int IGR_Intc_ID = -1;
+#ifdef RETROACHIEVEMENTS
+static int RA_Intc_ID = -1;
+#endif
 
 /* IGR thread stack & stack size */
 #define IGR_STACK_SIZE (4 * 1024)
@@ -329,6 +332,9 @@ void IGR_RequestReset(void)
     /* The existing IGR loop reads combo_type on its next iteration and
        runs the reset from there; this only leaves the request. A reset
        already under way is not replaced. */
+    /* Mode 6 has no IGR worker: client reset must not queue an inert combo. */
+    if (IGR_Thread_ID < 0)
+        return;
     if (Pad_Data.combo_type == 0x00)
         Pad_Data.combo_type = IGR_COMBO_START_SELECT;
 }
@@ -625,6 +631,34 @@ void Reset_Padhook(void)
     IGR_Intc_ID = -1;
     IGR_Thread_ID = -1;
 }
+
+#ifdef RETROACHIEVEMENTS
+/* Compatibility Mode 6 disables IGR, including pad and worker hooks.
+   Achievement snapshots still require a VBLANK tick. Do not install this
+   handler unless the IOP telemetry snapshot allocation actually succeeded. */
+static int RA_Intc_Handler(int cause)
+{
+    (void)cause;
+    RA_OnVblank();
+    ExitHandler();
+    return 0;
+}
+
+void Install_RA_Vblank(void)
+{
+    int handler;
+
+    if (RA_Intc_ID >= 0)
+        return;
+
+    handler = AddIntcHandler(kINTC_VBLANK_END, RA_Intc_Handler, 0);
+    if (handler < 0)
+        return; /* A failed registration must remain retryable. */
+
+    RA_Intc_ID = handler;
+    EnableIntc(kINTC_VBLANK_END);
+}
+#endif
 
 // Hook function for libpad scePadPortOpen
 static int Hook_scePadPortOpen(int port, int slot, void *addr)
