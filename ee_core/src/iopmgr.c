@@ -76,7 +76,7 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
     char command[RESET_ARG_MAX + 1];
 
     if (arglen > 0) {
-        if (args == NULL || arglen > RESET_ARG_MAX - EE_RESET_SUFFIX_BYTES) {
+        if (args == NULL || arglen > sizeof(command) - EE_RESET_SUFFIX_BYTES) {
             DPRINTF("ResetIopSpecial: invalid argument length\n");
             return 0;
         }
@@ -348,7 +348,7 @@ int New_Reset_Iop(const char *arg, int arglen)
         DBGCOL(0x00A5FF, IOPMGR, "ResetIopSpecial (without args) finished!");
 
     if (arglen > 0) {
-        int payloadLen = eeResetPayloadLength(arglen, RESET_ARG_MAX);
+        int payloadLen = eeResetPayloadLength(arglen, sizeof(((SifCmdResetData_t *)0)->arg), RESET_ARG_MAX + 1);
         if (arg != NULL && payloadLen >= 0) {
             if (!ResetIopSpecial(&arg[EE_RESET_PREFIX_BYTES], payloadLen))
                 goto reset_finished;

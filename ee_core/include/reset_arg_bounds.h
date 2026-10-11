@@ -6,11 +6,11 @@
 #define EE_RESET_PREFIX_BYTES 10
 #define EE_RESET_SUFFIX_BYTES 7
 
-static inline int eeResetPayloadLength(int packetLength, unsigned int commandCapacity)
+static inline int eeResetPayloadLength(int packetLength, unsigned int packetCapacity, unsigned int commandCapacity)
 {
     unsigned int payload;
 
-    if (packetLength < EE_RESET_PREFIX_BYTES || commandCapacity < EE_RESET_SUFFIX_BYTES)
+    if (packetLength < EE_RESET_PREFIX_BYTES || (unsigned int)packetLength > packetCapacity || commandCapacity < EE_RESET_SUFFIX_BYTES)
         return -1;
     payload = (unsigned int)(packetLength - EE_RESET_PREFIX_BYTES);
     if (payload > commandCapacity - EE_RESET_SUFFIX_BYTES)

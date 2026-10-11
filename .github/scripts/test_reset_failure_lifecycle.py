@@ -6,6 +6,13 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 manager = (ROOT / "ee_core/src/iopmgr.c").read_text(encoding="utf-8")
 hooks = (ROOT / "ee_core/src/syshook.c").read_text(encoding="utf-8")
+# The real syscall trampoline must preserve C's failure result. A C-only
+# harness misses an unconditional success written in the MIPS return slot.
+assembly = (ROOT / "ee_core/src/asm.S").read_text(encoding="utf-8")
+trampoline = assembly[assembly.index("_SifSetDma:"):assembly.index(".end    _SifSetDma")]
+after_call = trampoline[trampoline.index("jal     New_SifSetDma"):]
+assert "jr      $ra\n    nop" in after_call
+assert "$v0" not in after_call, "reset trampoline overwrites C return value"
 
 
 def function(source, signature):
@@ -21,19 +28,21 @@ program = r'''
 typedef unsigned int u32;
 typedef int s32;
 typedef struct {void *src;} SifDmaTransfer_t;
-struct _iop_reset_pkt {int arglen; char arg[80];};
+#define RESET_ARG_MAX 79
+typedef struct _iop_reset_pkt {int arglen; char arg[RESET_ARG_MAX + 1];} SifCmdResetData_t;
 typedef struct {void *epc, *gp;} t_ExecData;
 static struct {unsigned int ModStorageStart;} storage;
 #define USE_LOCAL_EECORE_CONFIG __typeof__(storage) *config = &storage; (void)config
 #define DPRINTF(...) ((void)0)
 #define DBGCOL(...) ((void)0)
 #define BGCOLND(...) ((void)0)
-#define RESET_ARG_MAX 80
 #define COMPAT_MODE_6 64
 #define PADOPEN_HOOK 0
 static int EnableDebug, iop_reboot_count, set_reg_disabled=1, set_reg_hook;
 static int g_compat_mask, padOpen_hooked, disable_padOpen_hook;
 static int special_calls, fail_stage, exits, loads, wipes, sleeps, ticks;
+static unsigned last_payload_length;
+static char last_payload[RESET_ARG_MAX + 1];
 static unsigned int ra_snap_iop;
 static int _end;
 static void SifInitRpc(int n) {(void)n;}
@@ -43,7 +52,8 @@ static void SifInitIopHeap(void) {}
 static void LoadFileInit(void) {}
 static void sbv_patch_enable_lmb(void) {}
 static int ResetIopSpecial(const char *a,unsigned int n) {
- (void)a;(void)n;
+ last_payload_length=n;
+ if (n) {assert(n<=sizeof(last_payload));memcpy(last_payload,a,n);}
  if (++special_calls==fail_stage) return 0;
  ra_snap_iop=42;return 1;
 }
@@ -87,6 +97,14 @@ int main(void) {
  assert(New_Reset_Iop(arg,11));
  assert(special_calls==2 && exits==3 && loads==1 && set_reg_hook==4);
  prepare(0);assert(New_Reset_Iop(arg,9));assert(special_calls==1);
+ char full_arg[80]; memset(full_arg,'A',sizeof(full_arg));
+ prepare(0);assert(New_Reset_Iop(full_arg,80));
+ assert(special_calls==2 && last_payload_length==70);
+ for(unsigned n=0;n<last_payload_length;n++) assert(last_payload[n]=='A');
+ for(int bad=81;bad<=83;bad++) {
+  prepare(0);assert(New_Reset_Iop(full_arg,bad));assert(special_calls==1);
+ }
+ prepare(0);assert(New_Reset_Iop(NULL,80));assert(special_calls==1);
  struct _iop_reset_pkt packet={11,"0123456789"};
  SifDmaTransfer_t dma={&packet};
  for(int stage=1;stage<=2;stage++) {

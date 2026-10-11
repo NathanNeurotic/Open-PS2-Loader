@@ -94,7 +94,7 @@ _SifSetDma:
     ld      $sp, 0x0008($sp)
 
     jr      $ra
-    addiu   $v0, $zero, 1
+    nop // preserve New_SifSetDma success/failure in v0
 
 .end    _SifSetDma
 
