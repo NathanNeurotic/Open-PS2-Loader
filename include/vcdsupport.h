@@ -166,6 +166,8 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize);
 int vcdReadBdmaMode(void);
 // Validate whether the MC environment matches the requested BDMA family (marker + complete pair signature).
 int vcdBdmaEnvironmentValid(int mode);
+// Accept a valid marked driver pair or an unmarked manually installed matching pair.
+int vcdBdmaLaunchReady(int mode);
 // Auto-equip the BDMA variant matching the game's device (source/mode) before a VCD launch.
 // BDMA prep is card preparation, never a POPSTARTER launch gate: failure toasts in passing, never blocks.
 void vcdEnsureBdmaForLaunch(int source, int mode);
