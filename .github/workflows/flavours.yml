@@ -217,13 +217,15 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           persist-credentials: false
+      - name: Check both UDPFS variants compile the same canonical transport sources
+        run: python3 .github/scripts/test_udpfs_shared_transport.py
       - name: Check cumulative ACK order and sequence wrap
         run: |
           for variant in udpfs_ioman udpfs_bd; do
             cc -std=c99 -Wall -Wextra -Werror -pedantic -Imodules/network/$variant/src modules/network/udpfs_ioman/tests/test_ack_sequence.c -o /tmp/test_udpfs_ack_$variant
             /tmp/test_udpfs_ack_$variant
-            test "$(grep -c 'if (udprdma_ack_covers(' modules/network/$variant/src/udprdma.c)" -eq 2
           done
+          test "$(grep -c 'if (udprdma_ack_covers(' modules/network/udpfs_shared/src/udprdma.c)" -eq 2
           cmp modules/network/udpfs_ioman/src/udprdma_seq.h modules/network/udpfs_bd/src/udprdma_seq.h
       - name: Check UDPFS themes are registered only after the server answers
         run: python3 .github/scripts/test_udpfs_themes.py
