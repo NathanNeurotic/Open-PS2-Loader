@@ -1766,3 +1766,15 @@ gui_strings:
 
 - label: HINT_POPS_UDPFS_IP
   string: "Static PS2 IP used by the POPS UDPFS driver after its IOP reset."
+
+- label: POPS_UDPFS_ALL_USB_FOLDERS
+  string: "All USB POPS folders"
+
+- label: POPS_UDPFS_INVALID_SUFFIX
+  string: " (invalid)"
+
+- label: POPS_UDPFS_INCOMPLETE_SUFFIX
+  string: " (incomplete)"
+
+- label: POPS_UDPFS_DRIVER_NOT_READY
+  string: "POPS UDPFS needs the .udpfs driver pair installed on the memory card. Equip it manually or enable BDMA Apply on Launch."
