@@ -6,6 +6,10 @@ root = ROOT / "modules" / "network"
 for variant in ("udpfs_ioman", "udpfs_bd"):
     make = (root / variant / "Makefile").read_text()
     assert "IOP_SRC_DIR := src/" in make
+    # GNU Make defaults to the first explicit target. Do not let incremental
+    # object dependencies precede "all" and silently skip the .irx link.
+    assert make.index("all:: $(IOP_BIN)") < make.index("$(IOP_OBJS_DIR)udpfs_core.o:")
+    assert make.index("all:: $(IOP_BIN)") < make.index("$(IOP_OBJS_DIR)udprdma.o:")
     assert "udpfs_core.o" in make and "udprdma.o" in make
     for name in ("udpfs_core.c", "udprdma.c"):
         obj = name.removesuffix(".c") + ".o"
