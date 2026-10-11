@@ -112,7 +112,7 @@ multi-disc setups, and memory-card storage — see the
 list with filters, or one locked library. They remain views of the same device page — with the same
 covers, favorites, and per-game settings — rather than separate device tabs.</p>
 
-<div class="callout info"><div class="h">POPS UDPFS and Ember network libraries</div>RiptOPL’s UDPFS/UDPBD pages currently enumerate Ember folders. <b>POPSTARTER can read VCDs over UDPFS</b> using <a href="https://github.com/Okeanos86/BDMAssault/releases">Okeanos’s BDM-UDPFS Assault</a>: USB is tried first, then the same VCD path is read from the server. Other POPS files remain on USB. See <a href="ps1-vcd.html#pops-udpfs">manual setup, supplied files and credits</a>. This separate driver survives POPSTARTER’s IOP reset; automatic network VCD enumeration/equip remains a separate integration step. UDPBD is outside this driver’s scope.</div>
+<div class="callout info"><div class="h">POPS UDPFS and Ember network libraries</div><b>UDPFS Files</b> now lists uppercase <code>POPS/*.VCD</code> alongside Ember titles and prepares POPSTARTER launches with <a href="https://github.com/Okeanos86/BDMAssault/releases">Okeanos's BDM-UDPFS Assault</a>. POPS UDPFS Network Settings writes matching runtime configs to every connected USB volume; automatic BDMA equip installs the UDPFS driver pair on the memory card. See <a href="ps1-vcd.html#pops-udpfs">setup, supplied files and credits</a>. The new VCD handoff awaits console validation. UDPBD and UDPFS IMG remain Ember-only.</div>
 
 <h2 id="default-game-view">PS2/PS1 Game Display</h2>
 
@@ -291,13 +291,34 @@ adds <strong>read-only UDPFS fallback</strong> to POPSTARTER's USB driver. USB i
 is absent there, the driver requests the same path from the UDPFS server after POPSTARTER's
 IOP reset. This is a POPSTARTER driver, separate from Neutrino's PS2 UDPFS loader.</p>
 <p>The included <code>POPS/</code> folder supplies these four files:</p>
-<table><thead><tr><th>Included file</th><th>Installation / purpose</th></tr></thead><tbody>
-<tr><td><code>usbd.irx.udpfs</code></td><td>Copy to <code>mc?:/POPSTARTER/usbd.irx</code>, removing <code>.udpfs</code></td></tr>
-<tr><td><code>usbhdfsd.irx.udpfs</code></td><td>Copy to <code>mc?:/POPSTARTER/usbhdfsd.irx</code>, removing <code>.udpfs</code></td></tr>
-<tr><td><code>IPCONFIG.DAT</code></td><td>Optional USB <code>mass:/POPS/IPCONFIG.DAT</code>: PS2 IP, netmask, optional gateway</td></tr>
-<tr><td><code>UDPFSCONFIG.DAT</code></td><td>Optional USB <code>mass:/POPS/UDPFSCONFIG.DAT</code>: UDPFS server IP</td></tr>
-</tbody></table>
-<p>Keep <code>POPSTARTER.ELF</code>, your own <code>POPS_IOX.PAK</code>, and all other required POPS files on USB.
+<table>
+<thead>
+<tr>
+<th>Included file</th>
+<th>Installation / purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>usbd.irx.udpfs</code></td>
+<td>Copy to <code>mc?:/POPSTARTER/usbd.irx</code>, removing <code>.udpfs</code></td>
+</tr>
+<tr>
+<td><code>usbhdfsd.irx.udpfs</code></td>
+<td>Copy to <code>mc?:/POPSTARTER/usbhdfsd.irx</code>, removing <code>.udpfs</code></td>
+</tr>
+<tr>
+<td><code>IPCONFIG.DAT</code></td>
+<td>USB <code>mass:/POPS/IPCONFIG.DAT</code>: PS2 IP, netmask, optional gateway</td>
+</tr>
+<tr>
+<td><code>UDPFSCONFIG.DAT</code></td>
+<td>USB <code>mass:/POPS/UDPFSCONFIG.DAT</code>: UDPFS server IP; empty file enables discovery</td>
+</tr>
+</tbody>
+</table>
+<p>Keep your own <code>POPS_IOX.PAK</code> and other runtime POPS files on USB. The driver pair can be
+sourced from <code>POPS/</code> on any supported device, including APA HDD <code>__common/POPS/</code>.
 On the server, place the VCD at the matching path relative to the shared root, for example
 <code>POPS/SLUS_011.56.VCD</code>; the driver also accepts <code>POPS0/</code> through <code>POPS9/</code>. Use uppercase
 <code>.VCD</code>. Only VCD reads fall back to the network; other files and writes stay on USB.
@@ -308,18 +329,27 @@ Without a valid IP config, the driver uses PS2 <code>192.168.1.10/24</code>; wit
 server address it uses broadcast discovery. The server must be on the PS2's subnet: the
 driver does not route through the gateway. These files are read from USB, not from the
 memory card and not from RiptOPL's saved network settings.</p>
-<p><strong>Manual setup:</strong> back up any existing memory-card driver pair before installing this pair.
-Turn <strong>VCD BDMA Apply on Launch</strong> off to prevent an automatic local-driver equip from replacing
-it. This documents POPSTARTER's UDPFS driver workflow; RiptOPL's UDPFS page still enumerates
-Ember titles, and a UDPFS BDMA picker / automatic VCD handoff is a separate integration step.
-Use a POPSTARTER launcher configured for the matching VCD path; simply installing these files
-does not add VCD rows to RiptOPL's network page. UDPBD is a different protocol and does not gain
-POPS support from this pair.</p>
+<p><strong>RiptOPL setup:</strong> open <strong>POPS Network Settings → POPS UDPFS Network Settings</strong> and enter
+your PS2 IP, netmask and server IP. Server <code>0.0.0.0</code> selects broadcast discovery. Saving writes
+both files to <strong>every connected USB volume's <code>POPS/</code> folder</strong>, with replacement confirmation
+for existing files. This editor is separate from the SMB memory-card configuration.</p>
+<p>The <strong>UDPFS Files</strong> PS1/Mixed view now lists uppercase <code>POPS/*.VCD</code> alongside Ember titles.
+Launching a VCD there, or from Favorites, checks the USB config pair on every connected USB
+volume and requires matching valid values before proceeding. This explicit check is an interim
+requirement because the Alpha IRX reads runtime configs from USB <code>mass:/POPS/</code>; upstream
+itself permits missing files and falls back to defaults. Installing support files on another
+device does not change that runtime USB requirement.</p>
+<p>With <strong>VCD BDMA Apply on Launch</strong> enabled, RiptOPL equips the <code>.udpfs</code> pair on the memory
+card and hands POPSTARTER its usual <code>mass:/POPS/XX.&lt;name&gt;.ELF</code> selector. With automatic
+equip disabled, select <strong>BDMA Mode → UDPFS</strong> and equip the pair manually. Existing BDMA
+equip failures remain best-effort warnings, so inspect the installed pair if a launch fails.
+USB VCDs take precedence over the server when both contain the same path. UDPBD and UDPFS
+IMG remain Ember-only. The new RiptOPL VCD handoff is implemented and host-tested; physical
+console validation is still pending, and POPS UDPFS RetroAchievements integration is unavailable.</p>
 <p>Credit goes to <strong>Okeanos</strong> for BDM-UDPFS Assault, <strong>israpps</strong> for the original BDM Assault,
 <strong>krHACKen</strong> for POPSTARTER, <strong>rickgaiser</strong> for Neutrino/UDPFS/UDPRDMA, <strong>pcm720</strong> for <code>udpfsd</code>,
 and the <strong>PS2SDK contributors</strong>. The upstream release is <strong>Alpha</strong>. Its license and third-party
 notices accompany the drivers in <code>POPS/UDPFS-NOTICES/</code>.</p>
-
 <h2 id="bdma">exFAT support — the BDMA equip</h2>
 
 <p>POPSTARTER's stock driver handles ordinary USB FAT32. USB exFAT and the MX4SIO, MMCE, ATA and
