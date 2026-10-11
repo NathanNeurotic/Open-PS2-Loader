@@ -468,7 +468,7 @@ This build layers several features on top of upstream OPL:
   `POPS/*.VCD` alongside Ember titles and prepares POPSTARTER launches using
   **Okeanos's BDM-UDPFS Assault** USB-first, read-only driver. Automatic BDMA equip selects
   the `.udpfs` pair; its source may be any supported device's `POPS/`, including APA
-  `__common/POPS/`. **POPS Network Settings ? POPS UDPFS Network Settings** saves the two
+  `__common/POPS/`. **POPS Network Settings → POPS UDPFS Network Settings** saves the two
   runtime config files to every connected USB volume's `POPS/` folder. Launch requires those
   copies to be valid and agree, since the Alpha driver reads configs from USB after its IOP
   reset. See **[POPS UDPFS setup](docs/VCD.md#pops-udpfs-with-bdm-udpfs-assault)**.
