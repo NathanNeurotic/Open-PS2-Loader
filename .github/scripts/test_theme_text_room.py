@@ -236,6 +236,46 @@ for block in title_lists:
     if not re.search(r'^\twidth=DIM_INF$', block, re.M):
         failures.append('misc/theme_coverflow.cfg: the Coverflow title list must span the top (width=DIM_INF)')
 
+
+# Issue #868 / zackcage6: enabling Favorites must not shift Coverflow's centered title to
+# the left. The star is positioned relative to the rendered (possibly clipped) title rather
+# than moving its anchor. Non-centered lists keep their established fixed star column.
+if items:
+    center_branch = re.search(
+        r'if \\(favRoom && \\(textAlign & ALIGN_HCENTER\\)\\) \\{(.*?)\\} else if \\(favRoom\\) \\{(.*?)\\}',
+        items, re.S,
+    )
+    if center_branch is None:
+        failures.append('drawItemsList: missing separate centered and ordinary Favorites layout paths')
+    else:
+        centered, ordinary = center_branch.groups()
+        if 'textAlign &=' in centered or 'textX =' in centered or 'rowX -=' in centered:
+            failures.append('drawItemsList: centered Favorites titles may not lose their horizontal anchor')
+        if 'textRoom = rowRoom > 2 * favRoom ? rowRoom - 2 * favRoom : rowRoom;' not in centered:
+            failures.append('drawItemsList: centered title must retain symmetric text space and narrow-room fallback')
+        if 'textAlign &= ~(ALIGN_HCENTER | ALIGN_RIGHT);' not in ordinary or 'textX = rowX + favRoom;' not in ordinary:
+            failures.append('drawItemsList: non-centered lists must retain the leading star column')
+    if 'int labelWidth = rmUnScaleX(fntCalcDimensions(elem->font, dispText));' not in items or \\
+       'starX = textX - labelWidth / 2 - favRoom;' not in items:
+        failures.append('drawItemsList: centered star must track the actual visible title width')
+
+# An R3 removal must show success only after the persistent store was written, including on
+# the Favorites tab itself. The failure path keeps the star and does not play a success SFX.
+opl = (root / 'src/opl.c').read_text(encoding='utf-8')
+favorites = (root / 'src/favsupport.c').read_text(encoding='utf-8')
+fav_header = (root / 'include/favsupport.h').read_text(encoding='utf-8')
+base_lang = (root / 'lng_tmpl/_base.yml').read_text(encoding='utf-8')
+if opl.count('guiShowToast(_l(_STR_FAV_REMOVED));') != 2 or \\
+   opl.count('guiShowToast(_l(_STR_FAV_REMOVE_FAILED));') != 2:
+    failures.append('Favorites: R3 must toast successful and failed removals in both contexts')
+if 'if (!favRemoveByIndex(it->id)) {' not in opl or 'int favRemoveByIndex(int favIndex)' not in fav_header:
+    failures.append('Favorites: indexed removal must publish a persisted-success result')
+if not re.search(r'if \\(!removeFavouriteByIdAndText\\(srcMode, srcId, txt, srcKind\\)\\)\\s*return 0;', favorites):
+    failures.append('Favorites: indexed removal must not clear the source star on a failed write')
+if 'FAV_REMOVED' not in base_lang or 'FAV_REMOVE_FAILED' not in base_lang or \\
+   base_lang.index('- label: FAV_REMOVED') < base_lang.index('- label: PS1_RA_CLEAN_CONTINUE'):
+    failures.append('Favorites: removal toast IDs must be appended to preserve legacy language indices')
+
 if failures:
     for failure in failures:
         print(failure)
