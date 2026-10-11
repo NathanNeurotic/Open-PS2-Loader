@@ -1,9 +1,7 @@
 /* PS2 OSDSYS cursor orbs -- loaded on every page after app.js (moved out of index.html's inline
    script so the animation is not front-page only). Creates #ps2-orbs itself when a page has none. */
 (function () {
-  // Deliberately animates for everyone, prefers-reduced-motion included: the owner's call (09-28),
-  // since Windows reports reduced motion whenever "Animation effects" is off, which hid the orbs
-  // from people who never asked for less motion on this site.
+  // Follows the site-wide cursor preference, with touch devices defaulting off.
 
   // One canvas per page. index.html used to carry it (and this whole script) inline, so the orbs
   // only ever ran on the front page; every page now loads this file after app.js.
@@ -23,6 +21,7 @@
   var dpr = window.devicePixelRatio || 1;
 
   function resize() {
+    if (!window.ps2CursorOrbs.isEnabled()) return;
     dpr = window.devicePixelRatio || 1;
     width = window.innerWidth;
     height = window.innerHeight;
@@ -87,8 +86,11 @@
   // Trailing stardust particles emitted as cursor sweeps
   var particles = [];
   var lastTime = performance.now();
+  var frameId = 0;
 
   function tick(now) {
+    frameId = 0;
+    if (!window.ps2CursorOrbs.isEnabled()) return;
     var dt = Math.min((now - lastTime) / 1000, 0.05);
     lastTime = now;
     // Everything below was tuned per 60 Hz frame; f scales it so 120/144 Hz screens move the same.
@@ -269,8 +271,23 @@
       }
     }
 
-    requestAnimationFrame(tick);
+    frameId = requestAnimationFrame(tick);
   }
 
-  requestAnimationFrame(tick);
+  function setOrbAnimation(on) {
+    if (on) {
+      resize();
+      lastTime = performance.now();
+      if (!frameId) frameId = requestAnimationFrame(tick);
+    } else {
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = 0;
+      canvas.width = 0;
+      canvas.height = 0;
+      particles.length = 0;
+      orbStates.forEach(function (state) { state.history.length = 0; });
+    }
+  }
+  window.ps2CursorOrbs.onChange(setOrbAnimation);
+  setOrbAnimation(window.ps2CursorOrbs.isEnabled());
 })();
