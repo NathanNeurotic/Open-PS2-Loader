@@ -147,20 +147,20 @@ moves those games' saves off the physical memory card.</div>
 <thead><tr><th>Field</th><th>What it does</th></tr></thead>
 <tbody>
 <tr><td><b>Name</b></td><td>The base filename (no extension). OPL pre-fills a suggested name derived from the game's title ID; you can change it to any name you like. A name can be up to 31 characters.</td></tr>
-<tr><td><b>Size</b></td><td>Dropdown: <code>8 Mb</code> / <code>16 Mb</code> / <code>32 Mb</code> / <code>64 Mb</code>. This is the size that will be written when you create or modify the file. If a file already exists at the correct size it is shown as valid; if the file exists but the size does not match it is shown as invalid.</td></tr>
-<tr><td><b>Status</b></td><td>Read-only. One of: <b>VMC file exists.</b> (valid, ready to use), <b>Invalid VMC file, size is incorrect.</b> (file found but wrong size — must be resized or a new file created), or <b>VMC file needs to be created.</b> (no file found at that name yet).</td></tr>
+<tr><td><b>Size</b></td><td>Dropdown: <code>8 Mb</code> / <code>16 Mb</code> / <code>32 Mb</code> / <code>64 Mb</code>. This is the size used when creating a new file. Existing images cannot be resized implicitly. If a file already exists at the correct size it is shown as valid; if the file exists but the size does not match it is shown as invalid.</td></tr>
+<tr><td><b>Status</b></td><td>Read-only. One of: <b>VMC file exists.</b> (valid, ready to use), <b>Invalid VMC file, size is incorrect.</b> (file found but wrong size — back up the image before explicitly deleting and replacing it), or <b>VMC file needs to be created.</b> (no file found at that name yet).</td></tr>
 <tr><td><b>Progress</b></td><td>A 0–100% progress bar that fills while a VMC is being created or reformatted. It is driven by the IOP <code>genvmc</code> module in real time.</td></tr>
-<tr><td><b>Create / Modify / Abort / OK</b></td><td>The primary action button. Its label changes based on state: <b>Create</b> (no file yet), <b>Modify</b> (a valid VMC file already exists — reformats only if you change the size before pressing it), <b>Abort</b> (creation in progress — cancels it), or <b>OK</b> (creation complete — dismisses the dialog).</td></tr>
+<tr><td><b>Create / Modify / Abort / OK</b></td><td>The primary action button. Its label changes based on state: <b>Create</b> (no file yet), <b>Modify</b> (an existing VMC; changing its size is refused to preserve saves), <b>Abort</b> (creation in progress — cancels it), or <b>OK</b> (creation complete — dismisses the dialog).</td></tr>
 <tr><td><b>Delete</b></td><td>Permanently deletes the VMC image file from the drive after a confirmation prompt. Only visible when a file exists.</td></tr>
 </tbody>
 </table>
 
-<div class="callout info"><div class="h">Reformat warning</div>
-If you change the <b>Size</b> of an already-existing VMC image and press <b>Modify</b>, OPL will reformat the file. The UI shows the warning <em>"Changing the size will reformat the VMC."</em> This wipes all saves stored in that image. Back up any saves you need before resizing.
+<div class="callout info"><div class="h">Existing saves are protected</div>
+If you change the <b>Size</b> of an existing VMC image and press <b>Modify</b>, RiptOPL refuses replacement and leaves the image untouched. Back up the existing <code>VMC/&lt;name&gt;.bin</code>, then use the explicitly confirmed <b>Delete</b> action before creating a card of another size. An existing image with an invalid size is protected too. This does not expand a card while preserving its saves.
 </div>
 
 <h2 id="creation-process">How image creation works</h2>
-<p>When you press <b>Create</b> (or <b>Modify</b>), OPL loads the <code>genvmc</code> IOP module and hands it the target path and size. The module formats the image in the background, writing a valid PS2 Memory Card superblock and cluster structure. The Progress bar updates live while this happens. Creation of an 8 MB VMC typically takes a few seconds on USB; larger sizes take proportionally longer.</p>
+<p>When you create a new image, OPL loads the <code>genvmc</code> IOP module and hands it the target path and size. The module formats the image in the background, writing a valid PS2 Memory Card superblock and cluster structure. The Progress bar updates live while this happens. Creation of an 8 MB VMC typically takes a few seconds on USB; larger sizes take proportionally longer.</p>
 <p>Once the progress bar reaches 100% the button label changes to <b>OK</b>. Pressing OK confirms the new or updated VMC and returns you to the VMC slot picker.</p>
 
 <h2 id="creation-recovery">Recover from a failed VMC creation</h2>
