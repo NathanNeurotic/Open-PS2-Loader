@@ -218,7 +218,7 @@ answers. Nothing is stored between runs.
 The PS2 console core follows **xeRAbora v0.1.0-alpha.15** (client
 [`d36ee3a5`](https://github.com/hacan359/xerabora/commit/d36ee3a54c8769825c99756f908367b2cc2622f3),
 which pins console [`f4d559a3`](https://github.com/hacan359/Open-PS2-Loader/commit/f4d559a38f510bf644ac0f3f23431f15f6c9dc3a)).
-The PS1 POPStarter bridge additionally follows alpha.16. Use an alpha.16-compatible companion for this RA build; updating the external client alone does not update the telemetry code in your ELF.
+The PS1 POPStarter bridge additionally follows alpha.16, and the Mode 6 snapshot handling follows alpha.17. Use the alpha.17 companion required above for this RA build; updating the external client alone does not update the telemetry code in your ELF.
 
 - **Larger achievement sets:** up to 4,096 direct watches and 128 pointer-chain nodes, subject to the snapshot byte limit. The loader sizes the persistent module-storage block to the actual set, instead of keeping the larger tables in ee_core's limited memory.
 - **Bounded telemetry cadence:** up to three snapshot packets per video frame on average. Sets needing four to six parts are sampled every second frame; seven to nine parts every third frame. Smaller sets remain at one sample per frame. Packets still transmit as one snapshot batch; this is a cadence budget, not packet pacing.
