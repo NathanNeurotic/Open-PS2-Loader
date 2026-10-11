@@ -670,7 +670,9 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
     // current list rather than blanking it. newlist is NULL here; nothing to publish or leak.
     if (cdRet < 0 && dvdRet < 0 && fd < 0) {
         free(newlist);
-        return *gamecount; // *list / *gamecount / *fsize untouched -> last-good list stays on screen
+        // ISO-only callers need an explicit failure so they can retry without
+        // dropping the existing list. Keep other devices' old return semantics.
+        return fsize == NULL ? -1 : *gamecount; // caller-owned list/count unchanged
     }
 
     // Success or genuinely-empty: publish the freshly-built list (frees the previous one). Guard on

@@ -20,6 +20,8 @@ check("if (atRoot && fsize != NULL)" in support, "Common scanner must gate ul.cf
 check(bool(re.search(r"if\s*\(fsize\s*!=\s*NULL\)\s*\*fsize\s*=\s*newfsize", support)),
       "Common scanner must not dereference a NULL fsize")
 check("fsize=NULL for ISO-only" in header, "Opt-out must be documented")
+check("return fsize == NULL ? -1 : *gamecount;" in support,
+      "ISO-only total read failures must retain cached games and request retry")
 
 # Neutrino-backed UDPFS should never probe or publish USBExtreme split games.
 check(bool(re.search(r"sbReadList\(&udpfsGames,\s*udpfsPrefix,\s*folderGetSub\(itemList->mode\),\s*NULL,\s*&udpfsGameCount\)", udpfs)),
@@ -28,7 +30,7 @@ check("sbIsSameSize(udpfsPrefix" not in udpfs, "UDPFS must not stat ul.cfg durin
 check("udpfsULSizePrev" not in udpfs, "Remove obsolete UDPFS UL-size state")
 check("if (!udpfsIsoScanned)" in udpfs and "udpfsIsoScanned = answeredBefore;" in udpfs,
       "Preserve initial scan and unreachable-server refresh behavior")
-check(udpfs.count("udpfsIsoScanned = 0;") >= 4,
+check(udpfs.count("udpfsIsoScanned = 0;") >= 5,
       "Reinitialization, rename and deletion must rearm ISO scanning")
 check("game->format == GAME_FORMAT_USBLD" in udpfs,
       "Keep the defensive UL launch guard for stale rows")
@@ -37,7 +39,7 @@ check("game->format == GAME_FORMAT_USBLD" in udpfs,
 check("int sbReadList(base_game_info_t **list" in support,
       "Shared scanner signature must remain unchanged")
 for device, body in other_devices.items():
-    check(bool(re.search(r"sbReadList\([^;]*&\w*ULSizePrev", body)),
+    check(bool(re.search(r"sbReadList\([^;]*&(?:\w+->)?\w*ULSizePrev", body)),
           f"{device} must retain UL-format discovery")
 
 print("PASS: UDPFS ISO-only scan and other-device UL isolation")

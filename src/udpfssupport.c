@@ -525,13 +525,15 @@ static int udpfsUpdateGameList(item_list_t *itemList)
     if (view == LIB_VIEW_ISO || view == LIB_VIEW_MIXED) {
         // Neutrino launches disc images, not USBExtreme split parts. Avoid even
         // probing ul.cfg on the network share, and never publish unlaunchable UL rows.
-        if (sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), NULL, &udpfsGameCount) < 0)
-            udpfsGameCount = 0;
-        else
+        if (sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), NULL, &udpfsGameCount) < 0) {
+            // A failed CD/DVD scan is not an empty library. Keep the last-good
+            // games and retry on the regular idle refresh until a folder opens.
+            udpfsIsoScanned = 0;
+        } else {
             reached = 1;
-        // If the server was unreachable, udpfsWaitingForServer retains the retry
-        // cadence; after a reachable pass, use CD/DVD timestamps and manual refresh.
-        udpfsIsoScanned = answeredBefore;
+            // An offline first pass is retried by udpfsWaitingForServer.
+            udpfsIsoScanned = answeredBefore;
+        }
     }
     // Only a readable CD/DVD scan proves the server answered. A share without those folders, or the PS1
     // view (whose empty result can't tell "no titles" from "no answer"), asks the server itself before
