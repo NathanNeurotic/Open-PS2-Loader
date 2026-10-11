@@ -48,7 +48,8 @@ int sbCreateSemaphore(void);
 // sub = current browse subpath below CD/DVD ("" at root); NULL opts the caller OUT of folder rows
 // (ETH/SMB). On a TOTAL device-read failure the caller's list is left untouched (last-good list);
 // GAME_FORMAT_FOLDER rows, and the ul.cfg (USBLD) leg -- a device-root-only concept -- is skipped
-// inside subfolders.
+// inside subfolders. Pass fsize=NULL for ISO-only scanning: never probe ul.cfg and
+// do not write a UL-size cache value (used by UDPFS, whose Neutrino backend cannot launch UL).
 int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int *fsize, int *gamecount);
 // errno of the last CD/DVD folder the latest sbReadList could not open (0 = both opened).
 int sbGetReadListError(void);

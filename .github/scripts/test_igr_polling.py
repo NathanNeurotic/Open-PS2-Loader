@@ -4,7 +4,7 @@ Merely registering a VBLANK_END interrupt handler black-screens some games (Fata
 Archives Volume 2). Standard builds now poll the pad from the IGR thread, woken about once a frame by
 an alarm, and stop the game themselves from thread context. RetroAchievements builds keep the
 handler: RA_OnVblank's snapshot DMA (isceSifSetDma) and unlock overlay are interrupt-context code
-that must run every frame.
+that must run every frame. Mode 6 instead has a snapshot-only handler with no IGR worker.
 
 This compiles the real padhook.c functions twice -- standard and RA -- against kernel stubs and
 checks: who registers what at install, that a combo or the power button is detected the same way on
@@ -49,6 +49,11 @@ polling = ''.join(function_text(sig) for sig in (
 ))
 handler = function_text('static int IGR_Intc_Handler(')
 install = function_text('void Install_IGR(')
+mode6 = ''.join(function_text(sig) for sig in (
+    'static int RA_Intc_Handler(',
+    'void Install_RA_Vblank(',
+    'void IGR_RequestReset(',
+))
 
 
 def host_safe(text):
@@ -357,8 +362,64 @@ RA_CHECKS = r'''
 '''
 
 
-def build_and_run(name, defines, code, checks):
-    program = defines + HARNESS.replace('@CODE@', host_safe(code)).replace('@CHECKS@', checks)
+MODE6_HARNESS = r'''
+#include <stdio.h>
+typedef unsigned char u8;
+#define kINTC_VBLANK_END 3
+#define IGR_COMBO_START_SELECT 0xF6
+typedef struct { u8 combo_type; } paddata_t;
+static paddata_t Pad_Data;
+static int IGR_Thread_ID = -1, RA_Intc_ID = -1;
+static int nAddIntc, nEnableIntc, nRA, lastIntcCause, failRegistration = 1;
+static int AddIntcHandler(int cause, int (*h)(int), int next)
+{
+    (void)h; (void)next;
+    nAddIntc++;
+    lastIntcCause = cause;
+    if (failRegistration) {
+        failRegistration = 0;
+        return -1;
+    }
+    return 7;
+}
+static void EnableIntc(int cause) { (void)cause; nEnableIntc++; }
+static void RA_OnVblank(void) { nRA++; }
+static void ExitHandler(void) {}
+@CODE@
+static int fails;
+#define CHECK(cond, msg) do { if (!(cond)) { printf("FAIL %s\\n", msg); fails++; } } while (0)
+int main(void)
+{
+@CHECKS@
+    return fails ? 1 : 0;
+}
+'''
+
+MODE6_CHECKS = r'''
+    CHECK(IGR_Thread_ID == -1 && RA_Intc_ID == -1,
+          "Mode 6 begins without an IGR worker or RA interrupt");
+    Install_RA_Vblank();
+    CHECK(nAddIntc == 1 && nEnableIntc == 0 && RA_Intc_ID == -1,
+          "a failed RA handler registration enables no interrupt and remains retryable");
+    Install_RA_Vblank();
+    Install_RA_Vblank();
+    CHECK(nAddIntc == 2 && nEnableIntc == 1 && RA_Intc_ID == 7 &&
+          lastIntcCause == kINTC_VBLANK_END,
+          "RA-only VBLANK handler installs once after retry");
+    RA_Intc_Handler(0);
+    CHECK(nRA == 1 && IGR_Thread_ID == -1 && Pad_Data.combo_type == 0,
+          "Mode 6 handler takes a snapshot without invoking IGR input or shutdown");
+    IGR_RequestReset();
+    CHECK(Pad_Data.combo_type == 0,
+          "client reset cannot arm an absent IGR worker in Mode 6");
+    IGR_Thread_ID = 5;
+    IGR_RequestReset();
+    CHECK(Pad_Data.combo_type == IGR_COMBO_START_SELECT,
+          "normal IGR worker still accepts client reset");
+'''
+
+def build_and_run(name, defines, code, checks, harness=HARNESS):
+    program = defines + harness.replace('@CODE@', host_safe(code)).replace('@CHECKS@', checks)
     with tempfile.TemporaryDirectory() as tmp:
         src = Path(tmp) / (name + '.c')
         exe = Path(tmp) / (name + ('.exe' if sys.platform == 'win32' else ''))
@@ -380,8 +441,9 @@ if not failures:
     ra_checks = RA_CHECKS.replace('nIWake == 0 + nWake', 'nWake == 1')
     build_and_run('retroachievements', '#define RETROACHIEVEMENTS\n#define IGR_VBLANK_HANDLER\n',
                   common + handler + install, ra_checks)
+    build_and_run('ra_mode6', '#define RETROACHIEVEMENTS\n', mode6, MODE6_CHECKS, MODE6_HARNESS)
 
 if failures:
     print('\n'.join(failures))
     sys.exit(1)
-print('IGR: standard builds poll without VBLANK_END; RA builds keep the handler; one shutdown path each')
+print('IGR: standard polling, combined RA/IGR and Mode 6 snapshot-only handlers passed')

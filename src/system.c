@@ -2496,12 +2496,16 @@ int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize,
 
             close(fd);
 
-            if (createSize && (createSize != size))
-                unlink(path);
+            if (createSize > 0 && createSize != size) {
+                /* Never destroy a VMC containing saves to resize/recreate it.
+                 * genvmc opens O_TRUNC asynchronously and can fail later;
+                 * explicit Delete (which has UI confirmation) is required. */
+                LOG("SYSTEM refusing implicit VMC replacement: %s (%d -> %d MB)\n", path, size, createSize);
+                return SYS_VMC_REPLACE_REQUIRES_DELETE;
+            }
         }
 
-
-        if (createSize && (createSize != size)) {
+        if (createSize > 0 && createSize != size) {
             createVMCparam_t createParam;
             // Remember what is being built so the GUI can ask about its layout when genvmc finishes.
             snprintf(gVMCCreatePath, sizeof(gVMCCreatePath), "%s", path);

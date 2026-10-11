@@ -85,7 +85,7 @@ HARNESS = r'''
 #define O_TRUNC 0x400
 #define SEEK_SET 0
 #define SEEK_END 2
-enum { VCD_BDMA_FAT32 = 0, VCD_BDMA_USBEXFAT, VCD_BDMA_MX4SIO, VCD_BDMA_MMCE, VCD_BDMA_ATA, VCD_BDMA_ILINK, VCD_BDMA_MODE_COUNT };
+enum { VCD_BDMA_FAT32 = 0, VCD_BDMA_USBEXFAT, VCD_BDMA_MX4SIO, VCD_BDMA_MMCE, VCD_BDMA_ATA, VCD_BDMA_ILINK, VCD_BDMA_UDPFS, VCD_BDMA_MODE_COUNT };
 static char gCustomSettingsPath[64];
 static char gBootDir[256], gBootElfName[64];
 static volatile int gLastSaveErrno;
@@ -353,7 +353,7 @@ for reader in ('int vcdReadBdmaMode(', 'int vcdBdmaEnvironmentValid(', 'static i
     body = function(vcd, reader)
     if 'vcdResolvePopstarterMc(' in body or 'vcdFindPopstarterMc(' not in body:
         failures.append('vcdsupport.c %s: a read must find the folder, never create it' % reader)
-equip = function(vcd, 'int vcdEquipBdma(')
+equip = function(vcd, 'static int vcdEquipBdmaFrom(')
 first_find, not_found = equip.find('vcdFindPopstarterMc(mcDir, sizeof(mcDir))'), equip.find('return -4;')
 create, stamp, stage = (equip.find('vcdResolvePopstarterMc(mcDir, sizeof(mcDir))'), equip.find('vcdStampPopstarterIcons(mcDir, srcDir);'),
                         equip.find('vcdSafeCopyFile(src0, tmp0)'))

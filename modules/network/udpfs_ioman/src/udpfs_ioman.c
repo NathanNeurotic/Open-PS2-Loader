@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <thbase.h>
+#include <thsemap.h>
 
 #include "main.h"
 #include "udpfs_core.h"
@@ -28,6 +29,7 @@ typedef struct
 
 static udpfs_fd_t g_fds[UDPFS_MAX_HANDLES];
 static int g_udpfs_wd_tid = 0; /* lazy-connect / reconnect watchdog thread id */
+static int g_udpfs_sema = -1;
 
 
 /*
@@ -91,8 +93,10 @@ static int udpfs_watchdog(void *arg)
 {
     (void)arg;
     while (1) {
+        WaitSema(g_udpfs_sema);
         if (!udpfs_core_is_connected())
             udpfs_core_init();
+        SignalSema(g_udpfs_sema);
         DelayThread(1000000); /* 1s */
     }
     return 0;
@@ -102,8 +106,15 @@ static int udpfs_init_dev(iomanX_iop_device_t *d)
 {
     int i;
     iop_thread_t thinfo;
+    iop_sema_t sema = {0};
 
     M_DEBUG("%s()\n", __FUNCTION__);
+
+    sema.initial = 1;
+    sema.max = 1;
+    g_udpfs_sema = CreateSema(&sema);
+    if (g_udpfs_sema < 0)
+        return g_udpfs_sema;
 
     /* Initialize FD table */
     for (i = 0; i < UDPFS_MAX_HANDLES; i++)
@@ -133,8 +144,21 @@ static int udpfs_init_dev(iomanX_iop_device_t *d)
 
 static int udpfs_deinit_dev(iomanX_iop_device_t *d)
 {
+    int ret = WaitSema(g_udpfs_sema);
+    if (ret < 0)
+        return ret;
     M_DEBUG("%s()\n", __FUNCTION__);
+    /* Holding the lock proves the watchdog is outside discovery. Stop it before
+     * destroying the socket or semaphore it would otherwise reuse next tick. */
+    if (g_udpfs_wd_tid > 0) {
+        TerminateThread(g_udpfs_wd_tid);
+        DeleteThread(g_udpfs_wd_tid);
+        g_udpfs_wd_tid = 0;
+    }
     udpfs_core_exit();
+    SignalSema(g_udpfs_sema);
+    DeleteSema(g_udpfs_sema);
+    g_udpfs_sema = -1;
     return 0;
 }
 
@@ -389,6 +413,40 @@ static int udpfs_ioctl2(iomanX_iop_file_t *f, int cmd, void *data, unsigned int 
     return -EIO;
 }
 
+/* fileXio and LOADFILE have separate RPC threads. Serialize the entire operation,
+ * including FD allocation and request construction: the core owns one socket,
+ * request/reply buffers and receive destination. Locking only send/recv is too
+ * late. Keep the interrupt handler unlocked so it can complete the active read.
+ * The watchdog uses this same lock so discovery cannot reset an active request.
+ * Wrap table entries rather than helpers: dclose/lseek call close/lseek64 and
+ * would deadlock if both layers acquired this non-recursive semaphore. */
+#define UDPFS_LOCKED(type, name, params, args) \
+    static type name##_locked params           \
+    {                                          \
+        type result;                           \
+        int ret = WaitSema(g_udpfs_sema);      \
+        if (ret < 0)                           \
+            return ret;                        \
+        result = name args;                    \
+        SignalSema(g_udpfs_sema);              \
+        return result;                         \
+    }
+
+UDPFS_LOCKED(int, udpfs_open, (iomanX_iop_file_t * f, const char *name, int flags, int mode), (f, name, flags, mode))
+UDPFS_LOCKED(int, udpfs_close, (iomanX_iop_file_t * f), (f))
+UDPFS_LOCKED(int, udpfs_read, (iomanX_iop_file_t * f, void *buffer, int size), (f, buffer, size))
+UDPFS_LOCKED(int, udpfs_write, (iomanX_iop_file_t * f, void *buffer, int size), (f, buffer, size))
+UDPFS_LOCKED(int, udpfs_lseek, (iomanX_iop_file_t * f, int offset, int whence), (f, offset, whence))
+UDPFS_LOCKED(s64, udpfs_lseek64, (iomanX_iop_file_t * f, s64 offset, int whence), (f, offset, whence))
+UDPFS_LOCKED(int, udpfs_remove, (iomanX_iop_file_t * f, const char *name), (f, name))
+UDPFS_LOCKED(int, udpfs_mkdir, (iomanX_iop_file_t * f, const char *path, int mode), (f, path, mode))
+UDPFS_LOCKED(int, udpfs_rmdir, (iomanX_iop_file_t * f, const char *path), (f, path))
+UDPFS_LOCKED(int, udpfs_dopen, (iomanX_iop_file_t * f, const char *path), (f, path))
+UDPFS_LOCKED(int, udpfs_dclose, (iomanX_iop_file_t * f), (f))
+UDPFS_LOCKED(int, udpfs_dread, (iomanX_iop_file_t * f, iox_dirent_t *dirent), (f, dirent))
+UDPFS_LOCKED(int, udpfs_getstat, (iomanX_iop_file_t * f, const char *name, iox_stat_t *stat), (f, name, stat))
+UDPFS_LOCKED(int, udpfs_ioctl2, (iomanX_iop_file_t * f, int cmd, void *data, unsigned int datalen, void *rdata, unsigned int rdatalen), (f, cmd, data, datalen, rdata, rdatalen))
+#undef UDPFS_LOCKED
 
 /*
  * Device ops table
@@ -397,19 +455,19 @@ static iomanX_iop_device_ops_t udpfs_device_ops = {
     udpfs_init_dev,
     udpfs_deinit_dev,
     udpfs_format,
-    udpfs_open,
-    udpfs_close,
-    udpfs_read,
-    udpfs_write,
-    udpfs_lseek,
+    udpfs_open_locked,
+    udpfs_close_locked,
+    udpfs_read_locked,
+    udpfs_write_locked,
+    udpfs_lseek_locked,
     udpfs_ioctl,
-    udpfs_remove,
-    udpfs_mkdir,
-    udpfs_rmdir,
-    udpfs_dopen,
-    udpfs_dclose,
-    udpfs_dread,
-    udpfs_getstat,
+    udpfs_remove_locked,
+    udpfs_mkdir_locked,
+    udpfs_rmdir_locked,
+    udpfs_dopen_locked,
+    udpfs_dclose_locked,
+    udpfs_dread_locked,
+    udpfs_getstat_locked,
     udpfs_chstat,
     /* Extended ops */
     udpfs_rename,
@@ -417,11 +475,11 @@ static iomanX_iop_device_ops_t udpfs_device_ops = {
     udpfs_sync,
     udpfs_mount,
     udpfs_umount,
-    udpfs_lseek64,
+    udpfs_lseek64_locked,
     udpfs_devctl,
     udpfs_symlink,
     udpfs_readlink,
-    udpfs_ioctl2};
+    udpfs_ioctl2_locked};
 
 static const char udpfs_name[] = "udpfs";
 static iomanX_iop_device_t udpfs_device = {
@@ -440,7 +498,5 @@ int udpfs_init(void)
     M_DEBUG("UDPFS over UDPRDMA by Maximus32\n");
 
     /* Register iomanX device */
-    AddDrv(&udpfs_device);
-
-    return 0;
+    return AddDrv(&udpfs_device);
 }

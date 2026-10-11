@@ -25,6 +25,8 @@ void Remove_Padhook(void);
 void Reset_Padhook(void);
 void IGR_Exit(s32 exit_code);
 #ifdef RETROACHIEVEMENTS
+/* Mode 6 keeps only the achievement snapshot VBLANK handler, never IGR. */
+void Install_RA_Vblank(void);
 void IGR_RequestReset(void);
 #endif
 

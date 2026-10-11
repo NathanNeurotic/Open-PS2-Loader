@@ -83,6 +83,8 @@ jobs:
         run: python3 .github/scripts/test_save_icons.py
       - name: Check PS1 VMC save icons and reject damaged cards
         run: python3 .github/scripts/test_ps1_save_icons.py
+      - name: Check POPS UDPFS config validation and USB save rollback
+        run: python3 .github/scripts/test_pops_udpfs.py
       - name: Check unsupported MMCE ioctls cannot report VMC fragmentation
         run: python3 .github/scripts/test_vmc_contiguity.py
       - name: Check Back on a Settings page keeps its edits and only a real change reconnects SMB
@@ -125,6 +127,8 @@ jobs:
         run: python3 .github/scripts/test_custom_font_load.py
       - name: Check VMC creation can recover after failed or short writes
         run: python3 .github/scripts/test_genvmc_recovery.py
+      - name: Check VMC resizing cannot erase an existing image implicitly
+        run: python3 .github/scripts/test_vmc_preserve_existing.py
       - name: Check Create VMC on First Launch creates, reuses, skips and reports correctly
         run: python3 .github/scripts/test_auto_create_vmc.py
 
@@ -198,6 +202,8 @@ jobs:
         run: python3 .github/scripts/test_io_queue_trims.py
       - name: Check the selected cover is read first and an abandoned background is aborted (#772)
         run: python3 .github/scripts/test_art_queue_order.py
+      - name: Check image cache constructor recovers from allocation failures
+        run: python3 .github/scripts/test_cache_allocation.py
       - name: Check Ember settings are only written once changed in RiptOPL
         run: python3 .github/scripts/test_ember_settings.py
       - name: Check a missing Ember core still lists its games and never fails the PS1 scan
@@ -211,12 +217,20 @@ jobs:
           persist-credentials: false
       - name: Check cumulative ACK order and sequence wrap
         run: |
-          cc -std=c99 -Wall -Wextra -Werror -pedantic modules/network/udpfs_ioman/tests/test_ack_sequence.c -o /tmp/test_udpfs_ack
-          /tmp/test_udpfs_ack
+          for variant in udpfs_ioman udpfs_bd; do
+            cc -std=c99 -Wall -Wextra -Werror -pedantic -Imodules/network/$variant/src modules/network/udpfs_ioman/tests/test_ack_sequence.c -o /tmp/test_udpfs_ack_$variant
+            /tmp/test_udpfs_ack_$variant
+            test "$(grep -c 'if (udprdma_ack_covers(' modules/network/$variant/src/udprdma.c)" -eq 2
+          done
+          cmp modules/network/udpfs_ioman/src/udprdma_seq.h modules/network/udpfs_bd/src/udprdma_seq.h
       - name: Check UDPFS themes are registered only after the server answers
         run: python3 .github/scripts/test_udpfs_themes.py
       - name: Check UDPFS artwork index integrity and case-sensitive ART paths
         run: python3 .github/scripts/test_udpfs_art.py
+      - name: Check UDPFS lists launchable ISO games without probing ul.cfg
+        run: python3 .github/scripts/test_udpfs_iso_only.py
+      - name: Check UDPFS serializes fileXio and LOADFILE operations
+        run: python3 .github/scripts/test_udpfs_serialization.py
 
   site-sync-host-tests:
     runs-on: ubuntu-24.04

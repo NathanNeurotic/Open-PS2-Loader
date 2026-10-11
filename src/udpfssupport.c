@@ -4,8 +4,9 @@
 #include "include/gui.h"
 #include "include/supportbase.h"
 #include "include/udpfssupport.h"
-#include "include/cuesupport.h" // Ember-only PS1 view: POPSTARTER cannot restore udpfs: after reset
-#include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
+#include "include/cuesupport.h"
+#include "include/vcdsupport.h"
+#include "include/libview.h" // libViewActive / libListViewActive -- which list this page shows
 #include "include/folderbrowse.h"
 #include "include/util.h"
 #include "include/renderman.h"
@@ -33,7 +34,7 @@
 // BDM transport in bdmsupport.c -- but here the mount is a filesystem, not a block device.
 static char udpfsPrefix[40]; // full path to the folder that holds all the games ("udpfs:/")
 static char *udpfsBase;      // device root ("udpfs:")
-static int udpfsULSizePrev = -2;
+static int udpfsIsoScanned = 0;
 static time_t udpfsModifiedCDPrev;
 static time_t udpfsModifiedDVDPrev;
 static int udpfsGameCount = 0;
@@ -190,7 +191,7 @@ void udpfsInit(item_list_t *itemList)
     udpfsArtCaseChecked = 0;
     // The games live directly at the device root; no share/prefix to prepend (unlike SMB).
     snprintf(udpfsPrefix, sizeof(udpfsPrefix), "udpfs:/");
-    udpfsULSizePrev = -2;
+    udpfsIsoScanned = 0;
     udpfsModifiedCDPrev = 0;
     udpfsModifiedDVDPrev = 0;
     udpfsGameCount = 0;
@@ -325,7 +326,7 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
     if (libListViewActive(itemList) == LIB_VIEW_PS1)
         return !udpfsPs1Scanned;
 
-    if (udpfsULSizePrev == -2)
+    if (!udpfsIsoScanned)
         result = 1;
 
     // Only stat the mount once the ioman device is actually up -- statting "udpfs:/..." before then
@@ -349,9 +350,6 @@ static int udpfsNeedsUpdate(item_list_t *itemList)
             udpfsModifiedDVDPrev = st.st_mtime;
             result = 1;
         }
-
-        if (!sbIsSameSize(udpfsPrefix, udpfsULSizePrev))
-            result = 1;
     }
 
     return result;
@@ -515,19 +513,25 @@ static int udpfsUpdateGameList(item_list_t *itemList)
         udpfsDiscoverThemes();
 
     if (view == LIB_VIEW_PS1 || view == LIB_VIEW_MIXED) {
-        // UDPFS can keep Ember's inherited IOP/mount alive, but POPSTARTER resets the IOP and has no
-        // udpfs: driver to restore. Publish ONLY Ember rows so every title on this page can launch.
-        int r = cueFillGameList(udpfsPrefix, &udpfsPs1Games);
-        if (answeredBefore && r >= 0) // only a scan that reached the server AND read the list counts
+        // POPSTARTER uses the UDPFS BDMA pair after reset; Ember inherits this mount.
+        int r = ps1FillGameList(udpfsPrefix, &udpfsPs1Games);
+        if (answeredBefore && r >= 0 && !ps1GameListNeedsRetry())
             udpfsPs1Scanned = 1;
         if (r >= 0) // r < 0: transient scan failure -> preserve the last-good list
             udpfsPs1GameCount = r;
     }
     if (view == LIB_VIEW_ISO || view == LIB_VIEW_MIXED) {
-        if (sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), &udpfsULSizePrev, &udpfsGameCount) < 0)
-            udpfsGameCount = 0;
-        else
+        // Neutrino launches disc images, not USBExtreme split parts. Avoid even
+        // probing ul.cfg on the network share, and never publish unlaunchable UL rows.
+        if (sbReadList(&udpfsGames, udpfsPrefix, folderGetSub(itemList->mode), NULL, &udpfsGameCount) < 0) {
+            // A failed CD/DVD scan is not an empty library. Keep the last-good
+            // games and retry on the regular idle refresh until a folder opens.
+            udpfsIsoScanned = 0;
+        } else {
             reached = 1;
+            // An offline first pass is retried by udpfsWaitingForServer.
+            udpfsIsoScanned = answeredBefore;
+        }
     }
     // Only a readable CD/DVD scan proves the server answered. A share without those folders, or the PS1
     // view (whose empty result can't tell "no titles" from "no answer"), asks the server itself before
@@ -578,7 +582,7 @@ static void udpfsDeleteGame(item_list_t *itemList, int id)
     sbSetBrowseSub(folderGetSub(itemList->mode)); // delete inside the current subfolder, not the root
     id = udpfsGetSourceId(itemList, id);
     sbDelete(&udpfsGames, udpfsPrefix, "/", udpfsGameCount, id);
-    udpfsULSizePrev = -2;
+    udpfsIsoScanned = 0;
 }
 
 static void udpfsRenameGame(item_list_t *itemList, int id, char *newName)
@@ -594,17 +598,51 @@ static void udpfsRenameGame(item_list_t *itemList, int id, char *newName)
     id = udpfsGetSourceId(itemList, id);
     sbSetBrowseSub(folderGetSub(itemList->mode)); // rename inside the current subfolder, not the root
     sbRename(&udpfsGames, udpfsPrefix, "/", udpfsGameCount, id, newName);
-    udpfsULSizePrev = -2;
+    udpfsIsoScanned = 0;
 }
 
-// Defensive POPSTARTER guard. The UDPFS PS1 scanner publishes no VCD rows and the public support has
-// no itemLaunchVcd hook, so this is reachable only from stale/corrupt state during an in-view launch.
+// One handoff for the UDPFS page and Favorites. The Alpha driver reads its runtime
+// config and non-VCD dependencies on USB, but driver sources remain device-aware.
 static void udpfsLaunchVcd(item_list_t *itemList, const char *vcdName, config_set_t *configSet)
 {
-    (void)itemList;
-    (void)vcdName;
+    char usbRoot[64], elf[256], selector[320], vcdPath[320];
     (void)configSet;
-    guiMsgBox(_l(_STR_VCD_NOT_ON_NET), 0, NULL);
+    if (vcdName == NULL || vcdName[0] == '\0' || !strcasecmp(vcdName, "POPSTARTER"))
+        return;
+    if (!vcdPreparePopsUdpfsLaunch(usbRoot, sizeof(usbRoot))) {
+        guiMsgBox(_l(_STR_POPS_UDPFS_NOT_READY), 0, NULL);
+        return;
+    }
+    // Linux servers are case-sensitive and this IRX only accepts uppercase .VCD.
+    snprintf(vcdPath, sizeof(vcdPath), "%sPOPS/%s.VCD", udpfsPrefix, vcdName);
+    int fd = open(vcdPath, O_RDONLY);
+    if (fd < 0) {
+        guiMsgBoxMissing(_l(_STR_ERR_FILE_INVALID), vcdPath);
+        return;
+    }
+    close(fd);
+    if (!vcdResolvePopstarter(udpfsPrefix, elf, sizeof(elf)) &&
+        !vcdResolvePopstarter(usbRoot, elf, sizeof(elf))) {
+        vcdDescribePopstarterLookup(usbRoot, elf, sizeof(elf));
+        guiMsgBoxMissing(_l(_STR_POPSTARTER_NOT_FOUND), elf);
+        return;
+    }
+    guiRenderTextScreen(_l(_STR_PLEASE_WAIT));
+    (void)vcdInstallPopstarterMc(usbRoot);
+    vcdEnsureBdmaForLaunch(VCD_BDMA_SRC_USB, VCD_BDMA_UDPFS);
+    if (!vcdBdmaLaunchReady(VCD_BDMA_UDPFS)) {
+        // Unlike local POPSTARTER, network VCDs require this exact driver family.
+        guiMsgBox(_l(_STR_POPS_UDPFS_DRIVER_NOT_READY), 0, NULL);
+        return;
+    }
+    // POPS UDPFS has no RA integration yet. Do not leave our USB-only RA module
+    // reading a network VCD through unsupported telemetry hooks.
+    if (!vcdConfirmCleanLaunch(usbRoot))
+        return;
+    vcdBuildSelector(udpfsPrefix, VCD_PREFIX_MASS, vcdName, selector, sizeof(selector));
+    vcdPrepareRetroGemBarcode(vcdPath);
+    deinitEx(sbLoaderDeinitException(elf), itemList->mode, oplPath2Mode(elf));
+    sysLaunchPopstarter(elf, selector);
 }
 
 // Ember over UDPFS. Ember performs no IOP reset, so it inherits the live udpfs: filesystem and can
@@ -665,8 +703,7 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
         return;
     sbSetBrowseSub(folderGetSub(itemList->mode));
 
-    // PS1 view: UDPFS publishes Ember rows only. Keep the POPSTARTER guard as a defensive fallback
-    // for stale or corrupt row state.
+    // Dispatch the mixed PS1 library by the selected row's core.
     if (game != NULL && (udpfsGetItemView(itemList, id) == LIB_VIEW_PS1)) {
         if (cueIsCueEntry(game))
             udpfsLaunchCue(itemList, game->name, configSet);
@@ -888,5 +925,5 @@ static item_list_t udpfsGameList = {
     UDPFS_MODE, 1, 0, 0, MENU_MIN_INACTIVE_FRAMES, UDPFS_MODE_UPDATE_DELAY, NULL, NULL, &udpfsGetTextId, &udpfsGetPrefix, &udpfsInit, &udpfsNeedsUpdate,
     &udpfsUpdateGameList, &udpfsGetGameCount, &udpfsGetGame, &udpfsGetGameName, &udpfsGetGameNameLength, &udpfsGetGameStartup, &udpfsDeleteGame, &udpfsRenameGame,
     &udpfsLaunchGame, &udpfsGetConfig, &udpfsGetImage, &udpfsCleanUp, &udpfsShutdown, &udpfsCheckVMC, &udpfsGetIconId,
-    /* itemLaunchVcd */ NULL, /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &udpfsLaunchCue,
+    &udpfsLaunchVcd, /* viewOverride */ 0, /* itemGetArtArchivePath */ NULL, &udpfsLaunchCue,
     &udpfsGetItemView, &udpfsGetSourceId, &udpfsSaveCueSettings, &udpfsGetPs1SaveDir};

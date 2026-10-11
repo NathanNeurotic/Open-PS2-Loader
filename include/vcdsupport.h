@@ -141,6 +141,7 @@ enum {
     VCD_BDMA_MMCE,      // MMCE exFAT
     VCD_BDMA_ATA,       // internal ATA HDD exFAT (BDMAssault)
     VCD_BDMA_ILINK,     // iLink / IEEE 1394 (appended so persisted mode values stay stable)
+    VCD_BDMA_UDPFS,     // POPSTARTER USB driver with read-only UDPFS VCD fallback
     VCD_BDMA_MODE_COUNT
 };
 // "BDMA SOURCE": which device holds the user-provided variant files in its POPS/ folder. The equip
@@ -165,6 +166,8 @@ int vcdEquipBdma(int source, int mode, char *diag, int diagSize);
 int vcdReadBdmaMode(void);
 // Validate whether the MC environment matches the requested BDMA family (marker + complete pair signature).
 int vcdBdmaEnvironmentValid(int mode);
+// Accept a valid marked driver pair or an unmarked manually installed matching pair.
+int vcdBdmaLaunchReady(int mode);
 // Auto-equip the BDMA variant matching the game's device (source/mode) before a VCD launch.
 // BDMA prep is card preparation, never a POPSTARTER launch gate: failure toasts in passing, never blocks.
 void vcdEnsureBdmaForLaunch(int source, int mode);
@@ -221,6 +224,21 @@ typedef struct
 // exists-flags 0, ipDhcp 1), not an error. Invalid file contents set ipInvalid/smbInvalid and
 // remain user-editable. Returns 0, or -3 on a genuine mid-read IO error.
 int vcdReadPopstarterNet(vcd_popsnet_t *out);
+// Explicit readable POPS folder (including a temporarily mounted APA __common).
+int vcdEquipBdmaFromPops(const char *popsDir, int mode, char *diag, int diagSize);
+
+// Interim BDM-UDPFS Assault configuration: the IRXs may come from any POPS source,
+// but this release reads these two DAT files only from USB mass:/POPS/ after reset.
+typedef struct
+{
+    int ps2Ip[4], mask[4], gateway[4], server[4]; // server 0.0.0.0 = broadcast discovery
+    int ipExists, serverExists, invalid;
+    char home[96];
+} vcd_pops_udpfs_t;
+int vcdReadPopsUdpfsNet(vcd_pops_udpfs_t *out);
+int vcdPopsUdpfsNetValid(const vcd_pops_udpfs_t *cfg);
+int vcdWritePopsUdpfsNet(const vcd_pops_udpfs_t *cfg);
+int vcdPreparePopsUdpfsLaunch(char *usbRoot, int rootSize);
 
 typedef enum {
     VCD_POPSNET_SMB_IMPORT_OK = 0,

@@ -572,7 +572,9 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
 
     // count and process games in ul.cfg -- a device-ROOT concept (USBLD split games live at the
     // library root); never present or scanned inside a browse subfolder.
-    if (atRoot) {
+    // A NULL fsize opts out of USBExtreme/UL discovery (UDPFS uses Neutrino,
+    // which has no UL launch path). Other devices retain the original scan.
+    if (atRoot && fsize != NULL) {
         snprintf(path, sizeof(path), "%sul.cfg", prefix);
         fd = openFile(path, O_RDONLY);
     }
@@ -668,7 +670,9 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
     // current list rather than blanking it. newlist is NULL here; nothing to publish or leak.
     if (cdRet < 0 && dvdRet < 0 && fd < 0) {
         free(newlist);
-        return *gamecount; // *list / *gamecount / *fsize untouched -> last-good list stays on screen
+        // ISO-only callers need an explicit failure so they can retry without
+        // dropping the existing list. Keep other devices' old return semantics.
+        return fsize == NULL ? -1 : *gamecount; // caller-owned list/count unchanged
     }
 
     // Success or genuinely-empty: publish the freshly-built list (frees the previous one). Guard on
@@ -677,7 +681,8 @@ int sbReadList(base_game_info_t **list, const char *prefix, const char *sub, int
     const int published = (newlist != NULL && total > 0) ? total : 0;
     free(*list);
     *list = newlist;
-    *fsize = newfsize;
+    if (fsize != NULL)
+        *fsize = newfsize;
     *gamecount = published;
 
     return published;
