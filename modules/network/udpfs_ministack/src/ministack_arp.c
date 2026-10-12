@@ -95,6 +95,17 @@ static void arp_send_request(uint32_t ip)
     eth_packet_send_ll((eth_packet_t *)&req, sizeof(arp_header_t), NULL, 0);
 }
 
+/*
+ * Gratuitous ARP: an ARP request for our own address. Every host that already
+ * caches our IP replaces the MAC it holds with ours (RFC 826 merge), so a server
+ * PC whose ARP cache points the PS2's address at another device -- a stale entry
+ * or a second device using the same address -- sends its replies here again.
+ */
+void arp_announce(void)
+{
+    arp_send_request(ms_ip_get_ip());
+}
+
 int arp_resolve(uint32_t ip, uint8_t mac[6])
 {
     int retry;
