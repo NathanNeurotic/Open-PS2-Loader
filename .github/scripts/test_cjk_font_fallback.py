@@ -30,6 +30,7 @@ assert '"font_CJK.ttf"' in language and '"font_Japanese.ttf"' in language
 harness = r"""
 #include <assert.h>
 #include <stdint.h>
+#include <stddef.h>
 #define FNT_DEFAULT 0
 #define FNT_MAX_COUNT 16
 typedef struct { int isValid; void *face; } font_t;
