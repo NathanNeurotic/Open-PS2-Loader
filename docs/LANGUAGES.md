@@ -85,6 +85,31 @@ language exists upstream as `lng_src/<Language>.yml`; to ship it, add its name t
 - **Fork strings.** A language with no `lng_fork/<Language>.yml` (Galician and Serbian today) shows
   the fork's own strings in English until someone adds that file.
 
+## Optional Japanese/CJK game-title font
+
+The full [Unicode Game Titles setup and troubleshooting guide](UNICODE-GAME-TITLES.md) explains enabling the feature, the difference from `LNG/` language fonts, supported names, and limitations.
+
+
+RiptOPL already decodes UTF-8 in the text renderer. If a Japanese ISO or VCD
+filename renders as missing glyphs while the UI is in English, put an
+appropriately licensed **TrueType or OpenType font** that contains the needed
+Japanese glyphs in the same directory as `settings_riptopl.cfg`, named
+`font_CJK.ttf` or `font_CJK.otf`. `font_Japanese.ttf` and
+`font_Japanese.otf` are also accepted as fallbacks.
+
+Restart RiptOPL after adding the file. It is read **once at startup**, not
+from the game list or while scrolling. This is a *fallback*: the currently
+selected interface language and theme fonts retain their glyphs and style.
+The existing per-language `font_<Language>.ttf` behavior is unchanged.
+
+**PS2 memory:** use a compact, subsetted font that covers the game-title
+characters you need. Unsubsetted CJK font families can consume many megabytes
+of the PS2's 32 MiB RAM; an absent/unloadable fallback leaves the normal font
+in use. The current glyph atlas is bounded (four 256×256 pages per font), so
+extremely large distinct-character libraries can exhaust the atlas. Font
+fallback does not convert Shift-JIS filenames; game names must be valid UTF-8
+on the storage device.
+
 ## Building just the languages
 
 ```sh
