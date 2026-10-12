@@ -70,6 +70,19 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             pack.standard_asset([{"name": names[0]}])
 
+    def test_standard_release_never_builds_or_stages_ra(self):
+        root = pack.ROOT
+        rolling = (root / ".github/workflows/rolling-release.yml").read_text()
+        extras = (root / ".github/scripts/build_rolling_extras.sh").read_text()
+        for text in (rolling, extras):
+            self.assertNotIn("RETROACHIEVEMENTS=1", text)
+            self.assertNotIn("package_orbit_neutrino.py", text)
+            self.assertNotIn("rolling/ra", text)
+        workflow = (root / ".github/workflows/ra-release.yml").read_text()
+        self.assertIn("theme: [inceBtion, Korium]", workflow)
+        self.assertIn("github.event_name != 'pull_request'", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
+
     def test_missing_theme_or_changed_binary_refuses(self):
         self.builds()
         elf = self.folder / "inceBtion-OFFICIALROLLING/pademu1.ELF"

@@ -109,7 +109,7 @@ Choose the current development build or a preserved snapshot:
 | Channel | What it is |
 | --- | --- |
 | **[Rolling (Latest)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling)** | Updated from `rebuild/main` by successful publishing runs. A full, non-pre-release GitHub release that remains a **development build**, with compatibility depending on the game and hardware. |
-| **[RetroAchievements ? both themes](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)** | Separate experimental release with inceBtion and Korium kits, ELF updates and PSU saves. It never replaces standard Rolling as Latest. |
+| **[RetroAchievements (both themes)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)** | Separate experimental release with inceBtion and Korium kits, ELF updates and PSU saves. It never replaces standard Rolling as Latest. |
 | **[Current Fan Favorite Build](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite)** | A preserved development snapshot selected after positive user feedback. Use it as a fixed comparison point; it is not a universal compatibility guarantee. |
 
 Download the **normal installable package**, `RIPTOPL-<version>.zip`. Separate archives serve

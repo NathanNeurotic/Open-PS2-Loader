@@ -317,6 +317,13 @@ def ra_release_links(html: str, releases: bool = False) -> str:
                           lambda _: "<tr>" + row + "</tr>", html, count=1, flags=re.S)
         html = html.replace('Its name never changes (the same goes for <code>RIPTOPL-RA.ELF</code> below), so',
                             'Its name never changes, so')
+        html = re.sub(
+            r'<div class="callout info"><div class="h">At most two loose ELFs, everything else in archives</div>.*?</div>',
+            '<div class="callout info"><div class="h">Separate standard and RA downloads</div>'
+            'Standard releases retain <code>RIPTOPL.ELF</code>, their app-only PSU and install archives. '
+            'The dedicated RA release retains one ELF update and PSU per theme, both full kits, '
+            'its source snapshot, provenance and checksums. DualSense comparison loaders remain '
+            'in the standard VARIANTS archive.</div>', html, count=1, flags=re.S)
         # Remaining references describe the installed filename, not a public asset.
         html = html.replace(f"{base}/download/rolling/RIPTOPL-RA.ELF",
                             f"{base}/tag/rolling-ra")

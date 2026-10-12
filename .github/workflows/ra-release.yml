@@ -167,7 +167,9 @@ jobs:
             make --trace RETROACHIEVEMENTS=1 EXTRA_FEATURES=0 PADEMU="$PAD" LOCALVERSION="$SDK-RA-$THEME" RELEASE_CHANNEL="RA-$THEME"
             test -s RIPTOPL.ELF
             test "$(wc -c < RIPTOPL.ELF)" -le 6291456
-            mips64r5900el-ps2-elf-nm opl.elf > ra-build/symbols.txt
+            NM=mips64r5900el-ps2-elf-nm
+            command -v "$NM" >/dev/null 2>&1 || NM=ee-nm
+            "$NM" opl.elf > ra-build/symbols.txt
             grep -q ' sysNeutrinoPrepareRA$' ra-build/symbols.txt
             cp RIPTOPL.ELF "ra-build/pademu$PAD.ELF"
           done
