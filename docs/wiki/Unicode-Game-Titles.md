@@ -1,4 +1,4 @@
-# Unicode / Japanese Game Titles (wiki-ready)
+# Unicode / Japanese Game Titles
 
 **RiptOPL supports optional Unicode/CJK fallback for game-name rendering.** You can leave the interface in English and still display Japanese game names, provided their filenames are valid UTF-8 and you supply a font that contains the required characters.
 
@@ -15,3 +15,5 @@ Example: `mc0:/APPS/APP_RIPTOPL/font_CJK.ttf` beside `mc0:/APPS/APP_RIPTOPL/sett
 This does not change the game's filename, launch ID, or artwork identity. It does not convert Shift-JIS to UTF-8, translate titles automatically, or use per-game CFG `Title` as a game-list override (tracked in [#918](https://github.com/NathanNeurotic/Open-PS2-Loader/issues/918)). Large, unsubsetted CJK fonts use significant PS2 RAM and the glyph atlas has a limited capacity.
 
 Full setup, limitations and troubleshooting: [Unicode Game Titles guide](https://nathanneurotic.github.io/Open-PS2-Loader/unicode-titles.html) / [source reference](https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/UNICODE-GAME-TITLES.md).
+
+PR #917 [tested build artifact (OFFICIALROLLING)](https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/38251591567/artifacts/11747219931) (GitHub sign-in may be required; artifacts expire). [Merged setup website](https://nathanneurotic.github.io/Open-PS2-Loader/unicode-titles.html).
