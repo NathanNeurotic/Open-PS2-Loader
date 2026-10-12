@@ -28,6 +28,8 @@ typedef struct
 int arp_add_entry(uint32_t ip, const uint8_t mac[6]);
 int arp_lookup(uint32_t ip, uint8_t mac[6]);
 void arp_announce(void);
+/** 1 when another device has claimed our IP (its MAC copied to mac, which may be NULL), else 0. */
+int arp_ip_conflict(uint8_t mac[6]);
 int arp_resolve(uint32_t ip, uint8_t mac[6]);
 int handle_rx_arp(const uint8_t *hdr);
 

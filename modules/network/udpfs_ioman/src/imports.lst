@@ -2,6 +2,7 @@ mstack_IMPORTS_start
 I_udp_bind
 I_udp_packet_init
 I_udp_packet_send_ll
+I_arp_ip_conflict
 mstack_IMPORTS_end
 
 smap_IMPORTS_start

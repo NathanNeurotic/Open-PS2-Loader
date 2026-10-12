@@ -21,6 +21,7 @@ static const char *reply = "OK\tG\t0\t1\t0\t0\t0\tUser\tLibrary\n42\t10\t2\t1\t2
 static int sbHashGameBusy(void) { return 0; }
 static int discCheckBusy(void) { return 0; }
 static int raNetNicBusy(void) { return nic_busy; }
+static int raNetNicReserved(void) { return nic_busy; }
 static int ethEnsureSMBShareConnected(void) { return 1; }
 static const char *ethGetSMBPrefix(void) { return "smb0:Games/"; }
 static int open(const char *path, int flags) { assert(!strcmp(path,"smb0:Games/ART/CADUCEUS.KEY")); return 1; }
@@ -108,6 +109,7 @@ static int gRAMode=1, scenario, calls, queries, closed;
 static unsigned g_raReplyIP;
 static char g_rx[2048];
 static int raNetNicBusy(void) {return 0;}
+static int raNetNicReserved(void) {return 0;}
 static int open_pc_socket(char *a,int size,u8 *ip) {return 7;}
 static void disconnect(int s) {closed++;}
 static void DelayThread(int us) {}

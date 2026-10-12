@@ -41,6 +41,8 @@ LOCAL CHANGES vs upstream (re-apply after re-vendoring):
     spending a retry and resending. (Upstream's check is always true and compiles away, so the
     release IRX accepts any ACK; our 09-20 real check resent on stale ACKs and dropped sessions
     on lossy links.) Host test: udpfs_shared/tests/test_udprdma_session.c.
+  - udpfs_ioman.c: devctl UDPFS_DEVCTL_IP_CONFLICT (0x55460001) answers the ministack's
+    arp_ip_conflict() without network traffic or the UDPFS lock; imports.lst imports it (slot 7).
   - mprintf.h copied from neutrino iop/common/ (smap/udpfs pull it from -I../common upstream;
     ministack ships its own).
   - src/*.c and src/*.h reformatted with the repo clang-format (CI-format-check lints every

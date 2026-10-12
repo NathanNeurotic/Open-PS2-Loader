@@ -1794,3 +1794,7 @@ gui_strings:
 # ORBIT external runtime handoff is confined to the RA edition.
 - label: RA_NEUTRINO_UNTRACKED
   string: "Neutrino RA is unavailable for this launch. Check the RA runtime, companion IP and saved watch list. Launching without achievements."
+
+# UDPFS: another device answered ARP for this PS2's IP (followed by the IP and that device's MAC).
+- label: UDPFS_IP_CONFLICT
+  string: "Another device on your network is using this PS2's IP address, so the UDPFS server's replies go to it. Set a different PS2 IP in Network Settings."

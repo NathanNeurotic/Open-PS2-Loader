@@ -10,8 +10,22 @@ on:
       standard_run:
         description: Successful rebuild/main Rolling Release run ID (blank selects latest)
         type: string
+  # PR previews only for changes to RA packaging/publishing. RA source changes are already built on
+  # every PR by flavours.yml (OFFICIALROLLING-RA); six extra loader builds per unrelated PR, or a
+  # fork PR waiting on approval, buy nothing. Publication still follows every Rolling run.
   pull_request:
     branches: [rebuild/main]
+    paths:
+      - .github/workflows/ra-release.yml
+      - .github/workflows/rolling-release.yml
+      - .github/scripts/package_ra_release.py
+      - .github/scripts/package_orbit_neutrino.py
+      - .github/scripts/publish_ra_release.py
+      - .github/scripts/package_release_app.py
+      - .github/scripts/normalize_release_notes.py
+      - .github/scripts/install_coherent_mmce.sh
+      - third_party/orbit-neutrino/**
+      - pc/xeRAbora.url
 
 permissions:
   contents: read
