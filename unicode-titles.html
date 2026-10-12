@@ -1,0 +1,133 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Japanese &amp; Unicode Game Titles · RiptOPL Docs</title>
+<meta name="description" content="Use optional CJK Unicode font fallback for Japanese game names in RiptOPL while keeping English menus. Activation steps, builds and limitations.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="unicode-titles.html" class="active"><span class="icon icon-languages"></span>Japanese / Unicode Titles</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+<h1>Japanese &amp; Unicode Game Titles</h1>
+<p class="lead">RiptOPL supports displaying Japanese and other Unicode game names encoded in UTF-8 without switching from English menus. Install an optional CJK fallback font in your settings folder, then restart.</p>
+<div class="callout info"><div class="h">Supported in RiptOPL builds with CJK fallback</div>
+<p>The interface or theme font stays in place. RiptOPL only uses a separate Unicode font for missing characters. This feature was introduced in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/917">PR #917</a>. No custom font is shipped in the ELF and there is no settings toggle.</p>
+</div>
+<h2 id="activate">How to activate it</h2>
+<ol>
+<li>Use a RiptOPL build containing <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/917">Unicode fallback support</a>; an older ELF will not load the optional font.</li>
+<li>Obtain a properly licensed Japanese/CJK-capable <strong>TTF or OTF</strong> font. Prefer a compact font subset to avoid exhausting PS2 RAM.</li>
+<li>Name it <code>font_CJK.ttf</code> (recommended), <code>font_CJK.otf</code>, <code>font_Japanese.ttf</code>, or <code>font_Japanese.otf</code>. The names are tried in this order.</li>
+<li>Place it <strong>directly beside your active <code>settings_riptopl.cfg</code></strong>, <em>not just in <code>LNG/</code></em>. If you cannot find the settings file, save RiptOPL settings first.</li>
+<li>Fully exit and restart RiptOPL. Loading is automatic at startup; no language or font toggle is required.</li>
+<li>Ensure game filenames actually contain valid <strong>UTF-8</strong> text. Unicode fallback does not convert legacy Shift-JIS encoding.</li>
+</ol>
+<h3 id="example">Example files</h3>
+<pre>mc0:/APPS/APP_RIPTOPL/
+  RIPTOPL.ELF
+  settings_riptopl.cfg
+  font_CJK.ttf</pre>
+<p>The folder above is an example only. Your active settings home may be elsewhere, including the other memory card, USB, or HDD. Always use the directory where <code>settings_riptopl.cfg</code> is saved for that installation.</p>
+<h2 id="language-font">Two different Japanese font paths</h2>
+<table><thead><tr><th>Font</th><th>Purpose</th></tr></thead><tbody>
+<tr><td><code>&lt;settings home&gt;/font_CJK.ttf</code></td><td>Unicode glyph fallback in game names with English or other menus (also works with custom themes).</td></tr>
+<tr><td><code>LNG/font_Japanese.ttf</code> beside <code>LNG/lang_Japanese.lng</code></td><td>Japanese <em>interface language</em> font, used when Japanese is selected in Settings → Interface → Language.</td></tr>
+</tbody></table>
+<p>If you have a suitable Japanese font in the <a href="languages.html">language pack</a>, you can copy it into the settings directory under the name <code>font_CJK.ttf</code> if the font's license permits. Leave the original language font in <code>LNG/</code>.</p>
+<h2 id="capabilities">What is supported, and what is not</h2>
+<ul>
+<li>Mixed Latin and Japanese characters in game titles, and missing glyphs that your own theme font does not provide.</li>
+<li>The game's startup ID, filename, Favorites identity, VMC, artwork mapping, storage-driver path and launch behavior remain unchanged.</li>
+<li>Automatic translation and Shift-JIS filename conversion are <strong>not</strong> included.</li>
+<li>Per-game <code>CFG/&lt;game-id&gt;.cfg</code> <code>Title</code> metadata is available to themed info screens, but <strong>does not yet override the game-list row</strong>. The display-only override is tracked in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues/918">issue #918</a>; do not overwrite <code>#Name</code> to force a translation.</li>
+</ul>
+<h2 id="artifact">Compatible build / test artifact</h2>
+<p>Download <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/38248974769/artifacts/11747501263"><strong>OPL-OFFICIALROLLING</strong> from the PR #917 Actions run</a> (GitHub sign-in may be required). This is a compiled ELF ZIP with a build manifest, <strong>not a CJK-font bundle</strong>. Artifacts expire. You can also check <a href="releases.html">Releases</a> for builds containing the merged implementation. Hardware verification remains separate from successful CI. Back up your known-good ELF, settings and saves before updating.</p>
+<h2 id="troubleshoot">Troubleshooting</h2>
+<table><thead><tr><th>Symptom</th><th>Check</th></tr></thead><tbody>
+<tr><td>Japanese text displays as blank boxes</td><td>Verify font glyph coverage, the exact filename, its location beside the active settings file, and a complete restart.</td></tr>
+<tr><td>Japanese menus work but English menus still show boxes in games</td><td>The font in <code>LNG/</code> belongs to the Japanese translation. A second font copy belongs in the settings home.</td></tr>
+<tr><td>Characters are garbled</td><td>The filename may be Shift-JIS or another encoding; font fallback requires valid UTF-8 input.</td></tr>
+<tr><td>Only some Kanji display</td><td>Check the font's supported character set and the finite glyph texture atlas.</td></tr>
+<tr><td>Game-list name ignores a per-game CFG Title field</td><td>Tracked in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues/918">issue #918</a>; not the same feature.</td></tr>
+</tbody></table>
+<div class="callout amber"><div class="h">PS2 memory / performance</div>
+<p>The PS2 has 32 MiB of EE RAM. Full Japanese/CJK fonts can consume many megabytes. Use smaller appropriately licensed subsets where possible. The font renderer has four 256×256 glyph atlas pages per font; very large collections of distinct visible glyphs can exceed that budget. The font is loaded only once at startup, not during list scrolling.</p></div>
+<p>Source reference: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/UNICODE-GAME-TITLES.md">full documentation</a> · <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/wiki/Unicode-Game-Titles.md">wiki-ready page</a> · <a href="languages.html">interface languages</a>.</p>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>

@@ -58,6 +58,7 @@
     <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
     <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
     <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="unicode-titles.html"><span class="icon icon-languages"></span>Japanese / Unicode Titles</a>
     <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
     <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
     <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
@@ -220,6 +221,7 @@ DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</div>
 <p>For an <b>official rolling toolchain</b> test, choose <code>OPL-OFFICIALROLLING</code>. <code>OPL-OFFICIALPINNED</code> is the separate pinned official toolchain; <code>OPL-PS2DEVROLLING</code> uses the moving ps2dev toolchain. The word rolling in the artifact name identifies the toolchain, not proof that the commit has been published in the rolling release.</p>
 <p>Extract the ZIP and read <code>BUILD-MANIFEST.txt</code> for the source commit, flavour and build configuration. Launch the supplied ELF requested in the test instructions. These artifacts contain loader builds and their manifest; keep a complete installed package for companion cores, modules and artwork. Report the exact commit and flavour alongside the console, device, filesystem, core and changed settings.</p>
 
+<p>Japanese/Unicode game-name fallback is available in compatible builds using a user-supplied <code>font_CJK.ttf</code> beside <code>settings_riptopl.cfg</code>. See <a href="unicode-titles.html">Unicode font setup</a> for the PR #917 build artifact and activation steps.</p>
 <h2 id="four-flavours">Four toolchain flavours, ordered for testing</h2>
 
 <p>Every release attempts four labelled flavours of the same RiptOPL source, in this recommended order:</p>
