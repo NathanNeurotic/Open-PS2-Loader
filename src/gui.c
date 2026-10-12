@@ -1235,6 +1235,13 @@ static int netConfigUpdater(int modified)
         isSMB = netProto == 0;
         isHTTP = netProto == 3;
         isUdp = netProto == 1 || netProto == 2;
+#ifdef RETROACHIEVEMENTS
+        int raMode, raTelemetry;
+        diaGetInt(diaNetConfig, NETCFG_RA_MODE, &raMode);
+        diaGetInt(diaNetConfig, NETCFG_RA_TELEMETRY, &raTelemetry);
+        diaSetEnabled(diaNetConfig, NETCFG_RA_EXPERIMENTAL_CARDS,
+                      raMode == RA_MODE_CADUCEUS && raTelemetry);
+#endif
 
         // Preserve UDPFS Access across in-dialog switches. A forced UDPBD IMG
         // never overwrites a user-selected UDPFS Files (or explicit IMG).
@@ -1441,6 +1448,7 @@ int guiShowNetConfig(void)
         diaSetInt(diaNetConfig, NETCFG_RA_HOST_IP_0 + i, gRAHostIp[i]);
     diaSetInt(diaNetConfig, NETCFG_RA_TELEMETRY, gRATelemetry);
     diaSetInt(diaNetConfig, NETCFG_RA_BADGES, gRABadges);
+    diaSetInt(diaNetConfig, NETCFG_RA_EXPERIMENTAL_CARDS, gRAExperimentalCards);
 #endif
 
     // Protocol rows, seeded from the authoritative gNetworkProtocol.
@@ -1533,6 +1541,7 @@ reshow_network:
             diaGetInt(diaNetConfig, NETCFG_RA_HOST_IP_0 + i, &gRAHostIp[i]);
         diaGetInt(diaNetConfig, NETCFG_RA_TELEMETRY, &gRATelemetry);
         diaGetInt(diaNetConfig, NETCFG_RA_BADGES, &gRABadges);
+        diaGetInt(diaNetConfig, NETCFG_RA_EXPERIMENTAL_CARDS, &gRAExperimentalCards);
 #endif
 
         diaGetInt(diaNetConfig, NETCFG_SHARE_PORT, &gPCPort);

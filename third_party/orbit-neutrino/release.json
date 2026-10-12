@@ -1,0 +1,9 @@
+{
+  "repository": "danielnuld/ps2-launcher",
+  "tag": "v1.0.2",
+  "source_commit": "7a88a6a5fdc935001d977497460716762edef404",
+  "asset": "ORBIT-v1.0.2.zip",
+  "sha256": "a5cf88e2f27d3745b01c93d6d691b162972749b35452a38461046a02b3f178a5",
+  "snapshot_bytes_max": 1216,
+  "pointer_chains": false
+}

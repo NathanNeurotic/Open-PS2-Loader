@@ -35,13 +35,19 @@ static char gWatchStartup[16];
 static u32 *gBlockList;
 static struct ra_node *gBlockNodes;
 static void *gBlockSnap, *gBlockOverlay;
-static int gRAMode;
+static int gRAMode, gRAExperimentalCards;
+static uintptr_t ps2_host_base;
+static unsigned ps2_base=0x01000000;
+static u32 ps2_addr(const void *p) { return ps2_base+(uintptr_t)p-ps2_host_base; }
 #define RA_MODE_CADUCEUS 1
 static void raLaunchNote(const char *s, int a, int b) {(void)s; (void)a; (void)b;}
 '''
 loader = '\n'.join(function(watch, n) for n in (
     'CheckEntries', 'TakeNodes', 'ClearWatchList', 'SetWatchList', 'align64',
     'PlaceWatchBlock', 'GetWatchBlockList', 'GetWatchBlockNodes', 'GetWatchBlockSnap'))
+
+# Map host pointers to PS2 physical addresses for the placement fence.
+loader=loader.replace('(u32)at','ps2_addr(at)').replace('(u32)snap','ps2_addr(snap)')
 
 ee_body = ee[ee.index('#define RA_START_DELAY'):ee.rindex('#endif')]
 ee_body = ee_body.replace(function(ee, 'ra_ticks'),
@@ -66,7 +72,7 @@ static int isceSifSetDma(SifDmaTransfer_t *dma, int n) {
 static void RA_OverlayOnVblank(unsigned n) {(void)n;}
 '''
 tests = r'''
-static u8 block[40000] __attribute__((aligned(64)));
+static u8 block[100000] __attribute__((aligned(64)));
 static u32 packet[4 + RA_WATCH_MAX];
 static void list(unsigned count, unsigned width) {
     struct ra_watch_file *h = (void *)packet;
@@ -84,12 +90,25 @@ static void prepare(void) {
     RA_SetupWatchList(); ra_snap_dma_id = 0; ra_frames = RA_START_DELAY;
 }
 int main(void) {
+    ps2_host_base=(uintptr_t)block;
     assert(sizeof(struct ra_snap) == 64);
     list(4096, 1);
     assert(SetWatchList(packet, sizeof(packet), "SLUS_210.65") == 4096);
     gRAMode = RA_MODE_CADUCEUS;
     void *end = PlaceWatchBlock(block + 1);
-    assert(gBlockOverlay == NULL); /* Caduceus keeps only the safe gold pulse. */
+    assert(gBlockOverlay == NULL); /* default-Off Caduceus uses the pulse */
+    gRAExperimentalCards=1;
+    void *cardEnd=PlaceWatchBlock(block+1);
+    assert(gBlockOverlay && (u8 *)cardEnd-(u8 *)end==30848);
+    assert(((uintptr_t)gBlockOverlay & 63)==0);
+    gRAMode=0; PlaceWatchBlock(block+1); assert(!gBlockOverlay);
+    gRAMode=RA_MODE_CADUCEUS;
+    ps2_base=0x02000000-25000; PlaceWatchBlock(block+1);
+    assert(!gBlockOverlay && gBlockList && gBlockSnap);
+    ps2_base=0x00100000-25000; PlaceWatchBlock(block+1);
+    assert(!gBlockOverlay && gBlockList && gBlockSnap);
+    ps2_base=0x01000000; gRAExperimentalCards=0;
+    end=PlaceWatchBlock(block+1);
     assert(end <= (void *)(block + sizeof(block)) && ((uintptr_t)end & 63) == 0);
     assert(((uintptr_t)gBlockList & 63) == 0 && ((uintptr_t)gBlockSnap & 63) == 0);
     assert((u8 *)gBlockSnap >= (u8 *)(gBlockList + 4096));

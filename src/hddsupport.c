@@ -2157,6 +2157,9 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
     // Backing out stays in the menu; an autolaunch never reaches that question.
     if (sbNeutrinoLoadCheats(gHDDPrefix, game->startup, configSet, neutrinoPath, neutrinoExtraArgs) < 0)
         return gAutoLaunchGame == NULL ? 1 : 0;
+#ifdef RETROACHIEVEMENTS
+    sysNeutrinoPrepareRA(gHDDPrefix, game->startup, "apa", neutrinoPath, neutrinoExtraArgs);
+#endif
     if (sysNeutrinoArgsPreflight("apa", apaPart, game->startup, compatMode, gPS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, NULL) < 0)
         return gAutoLaunchGame == NULL ? 1 : 0; // autolaunch needs the native path to own its teardown
 

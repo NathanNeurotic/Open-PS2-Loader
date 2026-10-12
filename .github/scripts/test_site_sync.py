@@ -20,6 +20,19 @@ def page(body: str) -> str:
     return f"<!doctype html><html><head><title>t</title></head><body>{NAV}\n  <main class=\"content\">\n{body}\n</main>\n<footer>f</footer></body></html>"
 
 
+class RAReleaseLinksTests(unittest.TestCase):
+    def test_old_downloads_become_two_theme_links_and_remain_idempotent(self):
+        old = page('<table><tr><td><code>RIPTOPL-RA.ELF</code></td><td>old</td></tr>'
+                   '<tr><td><code>RIPTOPL-RetroAchievements-*.zip</code></td><td>old</td></tr></table>')
+        updated = site_sync.ra_release_links(old, releases=True)
+        self.assertEqual(updated, site_sync.ra_release_links(updated, releases=True))
+        for theme in ("inceBtion", "Korium"):
+            self.assertIn(f"download/rolling-ra/RIPTOPL-RA-{theme}.ELF", updated)
+            self.assertIn(f"RIPTOPL-RetroAchievements-{theme}-", updated)
+        self.assertNotIn("download/rolling/RIPTOPL-RA", updated)
+        self.assertEqual(updated.count('id="ra-release-channel"'), 1)
+
+
 GUIDE = page("""<h1>Guide</h1>
 <p class="lead">Lead <code>text</code> here.</p>
 <h2 id="one">One</h2>

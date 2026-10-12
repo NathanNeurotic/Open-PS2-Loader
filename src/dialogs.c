@@ -199,6 +199,11 @@ struct UIItem diaNetConfig[] = {
     {UI_SPACER},
     {UI_BOOL, NETCFG_RA_BADGES, 1, 1, _STR_HINT_RA_BADGES, 0, 0, {.intvalue = {1, 0}}},
     {UI_BREAK},
+
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_RA_EXPERIMENTAL_CARDS}}},
+    {UI_SPACER},
+    {UI_BOOL, NETCFG_RA_EXPERIMENTAL_CARDS, 1, 1, _STR_HINT_RA_EXPERIMENTAL_CARDS, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
 #endif
 
     // POPSTARTER owns its own IPCONFIG.DAT / SMBCONFIG.DAT editor. Keep its entry beside the
