@@ -16,6 +16,7 @@
 #include "util.h"
 #include "syshook.h"
 #include "coreconfig.h"
+#include "reset_arg_bounds.h"
 #ifdef RETROACHIEVEMENTS
 #include "ra.h"
 #include "ra_overlay.h"
@@ -66,7 +67,7 @@ static void RA_Hex32(unsigned int v, char *out)
 static int imgdrv_offset_ioprpimg = 0;
 static int imgdrv_offset_ioprpsiz = 0;
 
-static void ResetIopSpecial(const char *args, unsigned int arglen)
+static int ResetIopSpecial(const char *args, unsigned int arglen)
 {
     USE_LOCAL_EECORE_CONFIG;
     int i;
@@ -75,6 +76,10 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
     char command[RESET_ARG_MAX + 1];
 
     if (arglen > 0) {
+        if (args == NULL || arglen > sizeof(command) - EE_RESET_SUFFIX_BYTES) {
+            DPRINTF("ResetIopSpecial: invalid argument length\n");
+            return 0;
+        }
         strncpy(command, args, arglen);
         command[arglen] = '\0'; /* In a normal IOP reset process, the IOP reset command line will be NULL-terminated properly somewhere.
                         Since we're now taking things into our own hands, NULL terminate it here.
@@ -91,6 +96,10 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
 
     length_rounded = (size_IOPRP_img + 0xF) & ~0xF;
     pIOP_buffer = SifAllocIopHeap(length_rounded);
+    if (pIOP_buffer == NULL) {
+        DPRINTF("ResetIopSpecial: IOP allocation failed\n");
+        return 0; // never DMA an IOPRP image to address zero
+    }
 
     CopyToIop(IOPRP_img, length_rounded, pIOP_buffer);
 
@@ -299,6 +308,7 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
         }
     }
 #endif
+    return 1;
 }
 
 /*----------------------------------------------------------------*/
@@ -307,6 +317,10 @@ static void ResetIopSpecial(const char *args, unsigned int arglen)
 int New_Reset_Iop(const char *arg, int arglen)
 {
     USE_LOCAL_EECORE_CONFIG;
+    int reset_ok = 0;
+#ifdef RETROACHIEVEMENTS
+    ra_snap_iop = 0;
+#endif
     DPRINTF("New_Reset_Iop start!\n");
     if (EnableDebug)
         DBGCOL(0xFF00FF, IOPMGR, "New_Reset_Iop()");
@@ -328,14 +342,21 @@ int New_Reset_Iop(const char *arg, int arglen)
     LoadFileInit();
     sbv_patch_enable_lmb();
 
-    ResetIopSpecial(NULL, 0);
+    if (!ResetIopSpecial(NULL, 0))
+        goto reset_finished;
     if (EnableDebug)
         DBGCOL(0x00A5FF, IOPMGR, "ResetIopSpecial (without args) finished!");
 
     if (arglen > 0) {
-        ResetIopSpecial(&arg[10], arglen - 10);
-        if (EnableDebug)
-            DBGCOL(0x00FFFF, IOPMGR, "ResetIopSpecial (with args) finished!");
+        int payloadLen = eeResetPayloadLength(arglen, sizeof(((SifCmdResetData_t *)0)->arg), RESET_ARG_MAX + 1);
+        if (arg != NULL && payloadLen >= 0) {
+            if (!ResetIopSpecial(&arg[EE_RESET_PREFIX_BYTES], payloadLen))
+                goto reset_finished;
+            if (EnableDebug)
+                DBGCOL(0x00FFFF, IOPMGR, "ResetIopSpecial (with args) finished!");
+        } else {
+            DPRINTF("New_Reset_Iop: invalid reset packet, using default IOP reset\n");
+        }
     }
 
     if (iop_reboot_count >= 2) {
@@ -355,6 +376,15 @@ int New_Reset_Iop(const char *arg, int arglen)
     }
 #endif
 
+    reset_ok = 1;
+reset_finished:
+    // Mode 3 unhooks after the second completed OPL reset, not a failed attempt.
+    if (!reset_ok)
+        iop_reboot_count--;
+#ifdef RETROACHIEVEMENTS
+    if (!reset_ok)
+        ra_snap_iop = 0;
+#endif
     DPRINTF("Exiting services...\n");
     SifExitIopHeap();
     LoadFileExit();
@@ -363,12 +393,12 @@ int New_Reset_Iop(const char *arg, int arglen)
     DPRINTF("New_Reset_Iop complete!\n");
     // we have 4 SifSetReg calls to skip in ELF's SifResetIop, not when we use it ourselves
     if (set_reg_disabled)
-        set_reg_hook = 4;
+        set_reg_hook = reset_ok ? 4 : 0;
 
     if (EnableDebug)
         BGCOLND(0x000000);
 
-    return 1;
+    return reset_ok;
 }
 
 /*----------------------------------------------------------------------------------------*/
@@ -379,8 +409,6 @@ int Reset_Iop(const char *arg, int mode)
     static SifCmdResetData_t reset_pkt __attribute__((aligned(64)));
     struct t_SifDmaTransfer dmat;
     int arglen;
-
-    _iop_reboot_count++; // increment reboot counter to allow RPC clients to detect unbinding!
 
     /*    SifStopDma();        For the sake of IGR (Which uses this function), don't disable SIF0 (IOP -> EE)
                 because some games will be still spamming DMA transfers across SIF0 when IGR is invoked.
@@ -394,8 +422,13 @@ int Reset_Iop(const char *arg, int mode)
                 That caused SifSetDChain() to be run ASAP, which re-enables SIF0.
                 I don't find that a good workaround because it may result in a timing problem.    */
 
-    for (arglen = 0; arg[arglen] != '\0'; arglen++)
+    for (arglen = 0; arg != NULL && arglen < (int)sizeof(reset_pkt.arg) - 1 && arg[arglen] != '\0'; arglen++)
         reset_pkt.arg[arglen] = arg[arglen];
+    if (arg != NULL && arg[arglen] != '\0')
+        return 0; // never submit a truncated reset command
+    reset_pkt.arg[arglen] = '\0';
+
+    _iop_reboot_count++; // increment reboot counter to allow RPC clients to detect unbinding!
 
     reset_pkt.header.psize = sizeof reset_pkt; // dsize is not initialized (and not processed, even on the IOP).
     reset_pkt.header.cid = SIF_CMD_RESET_CMD;
