@@ -179,9 +179,7 @@ int lngAddLanguages(char *path, const char *separator, int mode)
 // Do not bundle a large unlicensed font in the ELF or open it during rendering.
 static void lngInitFallbackFont(void)
 {
-    static const char *const fontNames[] = {
-        "font_CJK.ttf", "font_CJK.otf", "font_Japanese.ttf", "font_Japanese.otf"
-    };
+    static const char *const fontNames[] = {"font_CJK.ttf", "font_CJK.otf", "font_Japanese.ttf", "font_Japanese.otf"};
     const char *home = configGetHomePath();
     if (home == NULL || home[0] == '\0')
         return;
