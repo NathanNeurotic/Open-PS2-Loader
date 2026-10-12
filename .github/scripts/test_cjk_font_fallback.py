@@ -13,6 +13,8 @@ import tempfile
 root = pathlib.Path(__file__).resolve().parents[2]
 font = (root / "src/fntsys.c").read_text(encoding="utf-8")
 language = (root / "src/lang.c").read_text(encoding="utf-8")
+opl = (root / "src/opl.c").read_text(encoding="utf-8")
+lang_header = (root / "include/lang.h").read_text(encoding="utf-8")
 header = (root / "include/fntsys.h").read_text(encoding="utf-8")
 start = "    // Select a second face only for characters missing from the active font."
 end = "    // calc page id and in-page index from glyph id"
@@ -22,7 +24,10 @@ assert "FT_Get_Char_Index(font->face, gid) == 0" in selection
 assert "FT_Get_Char_Index(fonts[fallbackFontID].face, gid) != 0" in selection
 assert "int fntLoadFallback(char *path)" in font
 assert "int fntLoadFallback(char *path);" in header
-assert "lngInitFallbackFont();" in language
+assert "void lngInitFallbackFont(void);" in lang_header
+assert "    lngInitFallbackFont();" not in language
+normal_init = opl.split("static void init(void)", 1)[1].split("static void deferredInit(void)", 1)[0]
+assert normal_init.index("lngInitFallbackFont();") > normal_init.index("_loadConfig();")
 assert "configGetHomePath()" in language
 assert "fntLoadDefault(NULL);" in language  # Existing UI-language reset retained.
 assert '"font_CJK.ttf"' in language and '"font_Japanese.ttf"' in language
