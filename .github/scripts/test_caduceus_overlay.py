@@ -44,8 +44,10 @@ int main(void) {
  assert(RA_OverlayEventBuffer()==pulse_buffer);
  RA_OverlayOnVblank(1);assert(pulses==1);
  g_ee_core_config.raClientMode=1;
- struct ra_event *event=RA_OverlayEventBuffer();
+ assert(RA_OverlayEventBuffer()==pulse_buffer); /* opt-out / no room */
  RA_OverlaySetPacketBuffer(packet+64);
+ struct ra_event *event=RA_OverlayEventBuffer();
+ assert(event!=(struct ra_event *)pulse_buffer);
  memset(packet,0xCD,sizeof(packet));
  GSMSourceGSRegs.pmode=1;
  GSMSourceGSRegs.dispfb1=(10ull<<9);
@@ -82,6 +84,8 @@ int main(void) {
  RA_OverlayOnVblank(219);assert(resets==2 && ra_ovl_seen==4);
  RA_OverlayOnVblank(220);assert(resets==3 && ra_ovl_seen==5);
  RA_OverlaySetPacketBuffer(NULL);assert(!draw_card());
+ assert(RA_OverlayEventBuffer()==pulse_buffer);
+ RA_OverlayOnVblank(221);assert(pulses==2);
  puts("PASS: card bounds, sliced rasterization, GIF state refusal, CT32/CT16 packet lengths, torn events, reset and Xerabora dispatch");
 }
 """
@@ -99,7 +103,8 @@ with tempfile.TemporaryDirectory() as tmp:
  path=Path(tmp)
  for name, headers, body in [
   ('experimental',prefix,tests),
-  ('production',prefix.replace('#define RA_EXPERIMENTAL_CARD_DMA 1\n',''),fallback_tests),
+  ('opt_out',prefix,fallback_tests),
+  ('compile_disabled',prefix.replace('#define RA_EXPERIMENTAL_CARD_DMA 1','#define RA_EXPERIMENTAL_CARD_DMA 0'),fallback_tests),
  ]:
   (path/'test.c').write_text(headers+source+body)
   subprocess.run(['cc','-std=gnu99','-Wno-pointer-to-int-cast','-I',str(root),str(path/'test.c'),'-o',str(path/'test.exe')],check=True)

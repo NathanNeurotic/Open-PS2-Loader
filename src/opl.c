@@ -235,6 +235,7 @@ int gRATelemetry;
 int gRAMode;
 int gRAHostIp[4];
 int gRABadges;
+int gRAExperimentalCards;
 #endif
 int gEnableArt;
 int gEnableDiscArt;
@@ -2862,8 +2863,17 @@ static void configReadNeutrinoGlobals(config_set_t *configOPL)
     }
 }
 
-// Shared reader for network settings (IP / DHCP / SMB / HTTP globals). Factored out so _loadConfig
-// and miniInit stay consistent.
+// Shared RA readers keep interactive reload and command-line autolaunch consistent.
+#ifdef RETROACHIEVEMENTS
+static void configReadRAExperimentalCards(config_set_t *configOPL)
+{
+    /* Missing/old configs must never inherit a previous opt-in on reload. */
+    gRAExperimentalCards = 0;
+    configGetInt(configOPL, CONFIG_OPL_RA_EXPERIMENTAL_CARDS, &gRAExperimentalCards);
+    gRAExperimentalCards = (gRAExperimentalCards == 1);
+}
+#endif
+
 static void configReadRAHost(config_set_t *configOPL)
 {
 #ifdef RETROACHIEVEMENTS
@@ -2884,6 +2894,7 @@ static void configReadRAHost(config_set_t *configOPL)
 #endif
 }
 
+// Shared reader for network settings (IP / DHCP / SMB / HTTP globals).
 static void configReadNetworkGlobals(config_set_t *configNet)
 {
     const char *temp;
@@ -3280,6 +3291,7 @@ static void _loadConfig()
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            configReadRAExperimentalCards(configOPL);
             configReadRAHost(configOPL);
             gRAMode = RA_MODE_XERABORA;
             configGetInt(configOPL, CONFIG_OPL_RA_MODE, &gRAMode);
@@ -3944,6 +3956,7 @@ static void _saveConfig()
 #ifdef RETROACHIEVEMENTS
         configSetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, gRATelemetry);
         configSetInt(configOPL, CONFIG_OPL_RA_BADGES, gRABadges);
+        configSetInt(configOPL, CONFIG_OPL_RA_EXPERIMENTAL_CARDS, gRAExperimentalCards);
         configSetInt(configOPL, CONFIG_OPL_RA_MODE, gRAMode);
         snprintf(temp, sizeof(temp), "%d.%d.%d.%d", gRAHostIp[0], gRAHostIp[1], gRAHostIp[2], gRAHostIp[3]);
         configSetStr(configOPL, CONFIG_OPL_RA_HOST_IP, temp);
@@ -4923,6 +4936,7 @@ static void setDefaults(void)
     memset(gRAHostIp, 0, sizeof(gRAHostIp));
     gRATelemetry = 0; // opt in: telemetry puts SMAP on the NIC in every launch that has a .wl
     gRABadges = 1;    // free once telemetry is on -- raBadgeRefresh runs on the I/O thread
+    gRAExperimentalCards = 0;
 #endif
     gEnableArt = 1;
     gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
@@ -5253,6 +5267,7 @@ static void miniInit(int mode)
 #ifdef RETROACHIEVEMENTS
             configGetInt(configOPL, CONFIG_OPL_RA_TELEMETRY, &gRATelemetry);
             configGetInt(configOPL, CONFIG_OPL_RA_BADGES, &gRABadges);
+            configReadRAExperimentalCards(configOPL);
             configReadRAHost(configOPL);
             gRAMode = RA_MODE_XERABORA;
             configGetInt(configOPL, CONFIG_OPL_RA_MODE, &gRAMode);

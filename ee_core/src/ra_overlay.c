@@ -35,8 +35,8 @@
 #define RA_PACKET_HEADER_QW 6
 #define RA_PACKET_BYTES     (RA_PACKET_HEADER_QW * 16 + RA_CARD_W * RA_CARD_H * 4)
 /* Neither an idle GIF channel nor a DISPFB write proves the game has
-   completed its pending IMAGE transfer. Disable this unsynchronized DMA
-   path by default; allow opt-in only for controlled renderer experiments. */
+   completed its pending IMAGE transfer. The default-Off runtime opt-in
+   reaches this path only when the loader reserved a card packet. */
 /* The GS privileged display registers are write-only/unreliable to read back
    on retail hardware. GSM already has a write breakpoint that records every
    value a game sends there. RA enables that tracker in pass-through mode when
@@ -365,7 +365,7 @@ void *RA_OverlayEventBuffer(void)
     struct ra_event *e = (struct ra_event *)UNCACHED_SEG(&ra_ovl_event);
     e->magic = e->seq = e->kind = e->arg = e->commit = 0;
     ra_ovl_seen = 0;
-    if (g_ee_core_config.raClientMode == 0 || !RA_EXPERIMENTAL_CARD_DMA)
+    if (g_ee_core_config.raClientMode == 0 || !RA_EXPERIMENTAL_CARD_DMA || ra_pkt == NULL)
         return RA_PulseEventBuffer();
     return &ra_ovl_event;
 }
@@ -373,7 +373,7 @@ void RA_OverlayOnVblank(unsigned int frames)
 {
     const volatile struct ra_event *e = (const volatile struct ra_event *)UNCACHED_SEG(&ra_ovl_event);
     unsigned int kind;
-    if (g_ee_core_config.raClientMode == 0 || !RA_EXPERIMENTAL_CARD_DMA) {
+    if (g_ee_core_config.raClientMode == 0 || !RA_EXPERIMENTAL_CARD_DMA || ra_pkt == NULL) {
         RA_PulseOnVblank(frames);
         return;
     }

@@ -184,9 +184,9 @@ void *PlaceWatchBlock(void *at)
     gBlockSnap = snap;
     snap += RA_SNAP_TOTAL_FOR(gWatchBytes + gNodeCount * RA_NODE_PAIR_BYTES);
     snap = align64(snap);
-    /* The Caduceus runtime selector is independent of the experimental card. */
+    /* Reserve card storage only for this explicit Caduceus opt-in. */
 #if RA_EXPERIMENTAL_CARD_DMA
-    if (gRAMode == RA_MODE_CADUCEUS) {
+    if (gRAMode == RA_MODE_CADUCEUS && gRAExperimentalCards == 1) {
         const unsigned int packetBytes = (6 * 16 + 192 * 40 * 4 + 63) & ~63;
         unsigned int limit = (u32)at < 0x00100000 ? 0x00100000 : 0x02000000;
         if ((u32)snap <= limit && packetBytes <= limit - (u32)snap) {

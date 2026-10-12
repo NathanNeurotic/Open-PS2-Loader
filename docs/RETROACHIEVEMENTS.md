@@ -29,7 +29,7 @@ This selector chooses the PC service protocol; it does not enable telemetry by i
 | Mode | Menu and launch behavior |
 |---|---|
 | Xerabora | Existing xeRAbora discovery, watch-list transfer and in-game telemetry |
-| Caduceus | Signed-in session checks, compatible watch lists/telemetry, account and game achievement browsing, and in-game gold-pulse notices; the card renderer remains test-only |
+| Caduceus | Signed-in session checks, compatible watch lists/telemetry, account and game achievement browsing, and in-game gold-pulse notices by default; experimental title/points cards are an explicit opt-in |
 
 Caduceus adds a UDP **18197** catalog/session bridge (`CADQ2` / `CADR2`). Once a ready bridge is found, RiptOPL requests watch lists from the engine on that same PC at UDP **18194**. For local-device launches, the in-game module repeats bridge discovery **only against the configured SMB host IPv4 address** before contacting that PC's engine; a standalone Xerabora reply or a faster responder elsewhere on the LAN cannot substitute for the Caduceus bridge. Xerabora mode keeps automatic broadcast discovery. UDP **18195** is the console's telemetry/notice port, and UDP **18196** is its menu reply port. Permit these connections in the companion PC's firewall. Run one intended achievement service per host to avoid port conflicts. By default, Caduceus's pairing bridge uses the configured SMB server IPv4 address, never the fastest LAN responder. **Network → RA companion IP** can override it independently of the SMB and HTTP game servers; set **0.0.0.0** to retain the legacy fallback. This host is used by Caduceus pairing, support checks, link tests, in-game discovery and POPStarter. When explicitly set, Xerabora is also probed by unicast, not broadcast. A NetBIOS-only SMB address without an IPv4 fallback requires the separate RA host setting.
 
@@ -47,9 +47,13 @@ For a local ISO, **View achievements** in the game's menu hashes the image and o
 
 The browser requires a configured, accessible SMB share containing **ART/CADUCEUS.KEY**, created by the companion service, even when games are on USB, MMCE or internal exFAT storage. The key is a 64-character pairing capability, not an RA password/API key. The service also supplies optional **ART/<icon-key>_RA.png** badge images; only the visible page is cached. Permit UDP **18198** for browser queries. Pairing requests go only to the explicit **RA companion IP**, or to the configured SMB server IPv4 address when that setting is **0.0.0.0**, never to LAN broadcast. Restrict the share to trusted devices: the LAN protocol is unencrypted. To revoke pairing, stop the service, remove its key file and restart it.
 
-Caduceus unlock notices use the existing gold pulse by default. Its experimental card renderer can display a compact upper-right achievement title and points in controlled builds; older notices without a title show the ID. Duplicate notices are suppressed, while a richer title-bearing copy can upgrade a legacy notice. Xerabora retains its gold pulse. The new card and browser are adapted from [Rian6's PS2 implementation](https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f), under AFL-3.0.
+Caduceus unlock notices use the existing gold pulse by default. Its experimental card renderer can display a compact upper-right achievement title and points when explicitly enabled; older notices without a title show the ID. Duplicate notices are suppressed, while a richer title-bearing copy can upgrade a legacy notice. Xerabora retains its gold pulse. The new card and browser are adapted from [Rian6's PS2 implementation](https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f), under AFL-3.0.
 
-**The card renderer is disabled by default until GS transfer ownership can be proven.** An idle GIF/DMA check or observed `DISPFB` write cannot guarantee that a game has finished a pending host-to-local IMAGE transfer. For controlled *developer-only* experiments, `RA_EXPERIMENTAL_CARD_DMA=1` must be set consistently in both loader and EE core. This does not create an additional release variant or a user setting. Do not enable production notification cards until safe GS transfer ownership is proven. The retained renderer uses a bounded, loader-owned packet, skips busy GIF transfers and unsupported framebuffers, and records game display writes without forcing a video mode. Normal RA builds reserve no card workspace and install no GS tracker; the optional experimental renderer reserves about 30 KiB only for Caduceus launches with a watch list. If that reservation would cross protected memory bounds, telemetry continues without the card. No host test can establish game timing or graphics compatibility. The existing network-share stability warning still applies.
+**Caduceus experimental cards defaults to Off.** In the RA build, open **Settings > Network**, select **RA Mode: Caduceus**, enable telemetry, and enable **Caduceus experimental cards** only if you accept possible flicker or game freezes. Save settings and launch a tracked PS2 game with the OPL core. The choice takes effect on the next launch and is saved as `ra_experimental_cards=1`; old configurations without that key remain Off. Xerabora always uses the gold pulse, and POPStarter PS1 unlocks remain companion-only.
+
+This is the upstream-style IMAGE renderer with additional event and GIF-state checks, not a proven safe GS ownership scheme. An idle GIF/DMA check or observed `DISPFB` write cannot guarantee that the game has finished or preserved a pending image transfer. If a game flickers or freezes with cards enabled, disable the setting before relaunching. The setting help also states this risk.
+
+With cards Off, launches reserve no card workspace and install no extra GS tracker. An opted-in tracked Caduceus launch reserves about 30 KiB in protected module storage and observes display-register writes without forcing a video mode. If there is insufficient room, unlock and reset events fall back to the existing pulse handler. The renderer skips blocked GIF states and unsupported framebuffers, but these guards do not prove graphics compatibility; a card may not appear for an unsupported display. Current-build console card rendering and real unlock acceptance remain unverified. The existing network-share stability warning still applies.
 
 ---
 
@@ -105,12 +109,13 @@ region/dump or an unsupported set; it does not establish that the storage source
 is unsupported. Caduceus users select that service's mode and complete its sign-in
 and pairing requirements described above instead of running competing services.
 
-Two settings, on the **Network** settings page:
+The telemetry and notification settings are on the **Network** settings page:
 
 | Setting | Default | Effect |
 | --- | --- | --- |
 | RetroAchievements telemetry | **Off** | The master switch. While it is off an RA build launches a game for exactly what the standard build costs — no in-game network stack, no `raudp`, no snapshots. |
 | RetroAchievements badges | On | The `RA ` prefix in the game list and the mark over the cover. Cosmetic, and it follows the master switch: badges stay dark while telemetry is off. |
+| Caduceus experimental cards | **Off** | Optional title/points cards for tracked Caduceus PS2 OPL launches. May flicker or freeze games; unavailable with Xerabora or telemetry Off. |
 
 Two actions on a game's own menu:
 

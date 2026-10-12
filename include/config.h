@@ -212,10 +212,11 @@ enum CONFIG_INDEX {
 // RetroAchievements keys. Placed AFTER the block above, not inside it: an #ifdef in the middle
 // of a run of #defines splits clang-format's alignment group and reflows every line above it.
 #ifdef RETROACHIEVEMENTS
-#define CONFIG_OPL_RA_TELEMETRY "ra_telemetry"
-#define CONFIG_OPL_RA_BADGES    "ra_badges"
-#define CONFIG_OPL_RA_MODE      "ra_mode"
-#define CONFIG_OPL_RA_HOST_IP   "ra_host_ip"
+#define CONFIG_OPL_RA_TELEMETRY          "ra_telemetry"
+#define CONFIG_OPL_RA_BADGES             "ra_badges"
+#define CONFIG_OPL_RA_EXPERIMENTAL_CARDS "ra_experimental_cards"
+#define CONFIG_OPL_RA_MODE               "ra_mode"
+#define CONFIG_OPL_RA_HOST_IP            "ra_host_ip"
 #endif
 
 // Network config keys
