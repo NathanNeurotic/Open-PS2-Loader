@@ -1674,7 +1674,10 @@ void sysNeutrinoPrepareRA(const char *prefix, const char *startup, const char *d
 
     sysNeutrinoRAArg[0] = '\0';
     sysNeutrinoRAStartup[0] = '\0';
-    if (!gRATelemetry || gRAMode != RA_MODE_XERABORA || prefix == NULL || startup == NULL || driver == NULL || neutrinoPath == NULL)
+    // Both modes: Caduceus adds a session bridge, but its in-game telemetry IS xeRAbora's wire protocol,
+    // sent to the engine on the Caduceus PC (ra_client.h). Pointed at that host, ORBIT's agent serves it.
+    if (!gRATelemetry || (gRAMode != RA_MODE_XERABORA && gRAMode != RA_MODE_CADUCEUS) || prefix == NULL ||
+        startup == NULL || driver == NULL || neutrinoPath == NULL)
         return;
     // A game without a saved watch list has nothing to track: launch quietly, before any runtime check
     // could warn about it.
@@ -1711,9 +1714,12 @@ void sysNeutrinoPrepareRA(const char *prefix, const char *startup, const char *d
         goto untracked;
     close(fd);
 
-    // Released raagent v1.0.2 emits one packet and does not resolve chain tails.
-    // Do not present partial or silently absent telemetry as a supported launch.
-    if (GetNodeCount() != 0 || GetWatchBytes() > 1216)
+    // ORBIT's raagent sends each snapshot in ONE packet and skips anything larger, so a set whose direct
+    // values exceed it cannot be tracked at all. It reads only the direct entries: a pointer-chain tail is
+    // ignored, exactly as the protocol defines for an agent without chain support (xeRAbora PROTOCOL.md),
+    // so the set's direct achievements track and its chain-based ones do not -- ORBIT's own behaviour.
+    // The file written below carries the direct entries only.
+    if (GetWatchBytes() > 1216)
         goto untracked;
     networkGame = !strcmp(driver, "udpfs") || !strcmp(driver, "udp") || !strcmp(driver, "udpbd") || !strcmp(driver, "udpfsbd");
     if (networkGame) {
@@ -1722,9 +1728,15 @@ void sysNeutrinoPrepareRA(const char *prefix, const char *startup, const char *d
         for (int i = 0; i < 4; i++)
             ip[i] = ps2_ip[i];
     } else {
-        // This may raise the menu network only when no UDP transport owns it.
+        // A resident UDP transport owns the NIC: raLaunchNetworkUp would drop the list without a word.
+        if (raNetNicBusy())
+            goto untracked;
+        // Raises the menu network and, in Caduceus mode, rechecks the session (the bridge becomes the
+        // verified peer). When it clears the list it has already said why: no second notice.
         raLaunchNetworkUp();
-        if (GetWatchCount() <= 0 || ethGetNetConfig(ip, mask, gateway) < 0)
+        if (GetWatchCount() <= 0)
+            return;
+        if (ethGetNetConfig(ip, mask, gateway) < 0)
             goto untracked;
     }
     if (!(ip[0] | ip[1] | ip[2] | ip[3]))

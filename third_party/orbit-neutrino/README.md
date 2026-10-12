@@ -16,8 +16,11 @@ label. The RA kit keeps the folder name neutrino/ for RA setups; the label marks
 as the RA build's Neutrino (v1.8.0 base, no Neutrino cheats) so it is not mistaken
 for the standard kit's runtime.
 
-v1.0.2 supports direct watch entries with at most 1,216 snapshot bytes. Pointer
-chains and larger lists must remain untracked with this runtime. It speaks the
-xeRAbora protocol; Caduceus compatibility and console unlock cards are not claimed.
+v1.0.2 sends each snapshot in one packet: sets whose direct values exceed 1,216
+bytes stay untracked. It reads the direct entries only, so a pointer-chain tail is
+ignored (xeRAbora PROTOCOL.md) and chain-based achievements do not unlock; the
+handoff passes direct entries only. It speaks the xeRAbora wire protocol, which is
+also what Caduceus's engine receives, so both RA modes use it. Console unlock
+cards are not claimed.
 Do not automatically replace this pin when a new release appears. The matching
 watch workflow reports upstream changes for a compatibility review.
