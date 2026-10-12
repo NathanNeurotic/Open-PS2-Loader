@@ -7,6 +7,7 @@ DECLARE_EXPORT_TABLE(mstack, 1, 0)
     DECLARE_EXPORT(udp_bind)
     DECLARE_EXPORT(udp_packet_init)
     DECLARE_EXPORT(udp_packet_send_ll)
+    DECLARE_EXPORT(arp_ip_conflict) /* slot 7: appended, so slots 4-6 importers are unaffected */
 END_EXPORT_TABLE
 
 void _retonly(){};

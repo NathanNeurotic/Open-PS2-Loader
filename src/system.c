@@ -177,7 +177,7 @@ exit:
 static SifCmdHandlerData_t OplSifCmdbuffer[OPL_SIF_CMD_BUFF_SIZE];
 static unsigned char dev9Initialized = 0, dev9Loaded = 0, dev9InitCount = 0;
 
-void sysInitDev9(void)
+int sysInitDev9(void)
 {
     if (!dev9Initialized) {
         LOG("[DEV9]:\n");
@@ -199,6 +199,7 @@ void sysInitDev9(void)
     // Refcount every caller regardless, so each sysInitDev9 still pairs with its sysShutdownDev9.
     // On a failed load dev9Loaded stays 0, so the power-off at count 0 is correctly skipped.
     dev9InitCount++;
+    return dev9Loaded;
 }
 
 void sysShutdownDev9(void)

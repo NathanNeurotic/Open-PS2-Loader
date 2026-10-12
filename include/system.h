@@ -10,7 +10,8 @@
 
 unsigned int USBA_crc32(const char *string);
 int sysGetDiscID(char *discID);
-void sysInitDev9(void);
+// Takes a DEV9 reference (pair with sysShutdownDev9) and returns 1 when DEV9 is loaded and usable.
+int sysInitDev9(void);
 void sysShutdownDev9(void);
 void sysReset(int modload_mask);
 void sysExecExit(void);

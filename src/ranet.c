@@ -183,6 +183,17 @@ int raNetNicBusy(void)
     return bdmIsUDPBDLoaded() || udpfsGetModulesLoaded();
 }
 
+/* The menu-side form. gNetworkProtocol is the user's intent: a UDP transport
+   that simply has not loaded yet (its page not visited this boot) still owns
+   the NIC. Raising SMB for an RA menu action first would claim it, and the
+   UDP loader refuses on top of SMB until the next boot. The launch path keeps
+   raNetNicBusy: the game's IOP reset frees the NIC either way. */
+int raNetNicReserved(void)
+{
+    return raNetNicBusy() || gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
+           gNetworkProtocol == NET_PROTO_UDPBD;
+}
+
 /* Waits for a reply, resending the request. Returns the length or -1.
    The socket is non-blocking; SO_RCVTIMEO is not to be trusted on this
    stack. */
@@ -358,7 +369,7 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
     char address[32], expected[32];
     u8 ip[4];
     int sock, attempt, got, session;
-    if (raNetNicBusy() || gRAMode != RA_MODE_CADUCEUS || !out || size < 1)
+    if (raNetNicReserved() || gRAMode != RA_MODE_CADUCEUS || !out || size < 1)
         return -1;
     out[0] = 0;
     sock = open_pc_socket(address, sizeof(address), ip);
@@ -432,7 +443,7 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
     if (info2 != NULL && info2sz > 0)
         info2[0] = '\0';
 
-    if (raNetNicBusy()) {
+    if (raNetNicReserved()) {
         LOG("RA: NIC is owned by a UDP transport, not asking the PC\n");
         raHashStep("6-nic-busy-udp-transport");
         return -8;
@@ -781,7 +792,7 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
     clock_t t0, deadline;
     unsigned int ms;
 
-    if (raNetNicBusy()) {
+    if (raNetNicReserved()) {
         snprintf(line1, sz1, "%s", _l(_STR_RA_NET_BUSY));
         snprintf(line2, sz2, "%s", _l(_STR_RA_NET_BUSY2));
         return 0;

@@ -15,6 +15,12 @@
 
 #include "main.h"
 #include "udpfs_core.h"
+#include "ministack_arp.h" /* arp_ip_conflict */
+
+/* Loader query, value shared with src/udpfssupport.c: has another device claimed this PS2's IP?
+   Answers from the ministack's ARP record without touching the network or the UDPFS lock.
+   buf (>= 6 bytes, optional) receives that device's MAC. Returns 1 or 0. */
+#define UDPFS_DEVCTL_IP_CONFLICT 0x55460001
 
 
 #define UDPFS_MAX_HANDLES 8
@@ -389,6 +395,8 @@ static int udpfs_umount(iomanX_iop_file_t *f, const char *fsname)
 
 static int udpfs_devctl(iomanX_iop_file_t *f, const char *name, int cmd, void *arg, unsigned int arglen, void *buf, unsigned int buflen)
 {
+    if (cmd == UDPFS_DEVCTL_IP_CONFLICT)
+        return arp_ip_conflict((buf != NULL && buflen >= 6) ? (uint8_t *)buf : NULL);
     return -EIO;
 }
 

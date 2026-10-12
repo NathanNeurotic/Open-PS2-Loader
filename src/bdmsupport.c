@@ -721,10 +721,14 @@ int bdmEnsureNetworkSourceModules(int protocol, u32 timeoutMs)
         if (!same)
             return 0;
     } else {
-        sysInitDev9();
+        int dev9Ready = sysInitDev9();
         snprintf(ipArg, sizeof(ipArg), "ip=%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
 
-        if (protocol == NET_BOOT_UDPFS) {
+        if (!dev9Ready) {
+            // No adapter: never load SMAP. The reference is released below (no NIC was claimed).
+            LOG("BDMSUPPORT: DEV9 failed to initialize -- not loading the network block chain\n");
+            result = -1;
+        } else if (protocol == NET_BOOT_UDPFS) {
             result = bdmLoadOptionalModule("UDPFS_SMAP", &udpfs_smap_irx, size_udpfs_smap_irx);
             if (result >= 0) {
                 udpbdNicClaimed = 1;
@@ -1160,9 +1164,12 @@ static void bdmLoadBlockDeviceModules(void)
         const char *networkStage = gNetBootProtocol == NET_BOOT_UDPFS ? "UDPFS-BD chain" : "UDPBD";
 
         bdmDiagBootStageBegin(networkStage);
-        sysInitDev9();
+        int dev9Ready = sysInitDev9();
         snprintf(ipArg, sizeof(ipArg), "ip=%d.%d.%d.%d", ps2_ip[0], ps2_ip[1], ps2_ip[2], ps2_ip[3]);
-        if (gNetBootProtocol == NET_BOOT_UDPFS) {
+        if (!dev9Ready) {
+            // No adapter: never load SMAP. networkResult stays -1 and the reference is released below.
+            LOG("BDMSUPPORT: DEV9 failed to initialize -- not loading %s\n", networkStage);
+        } else if (gNetBootProtocol == NET_BOOT_UDPFS) {
             // UDPFS: a 3-IRX chain loaded in dependency order -- smap (exports to ministack + bd), then
             // ministack (gets the ip= arg, exports to bd), then udpfs_bd (registers the "udp" BDM device).
             networkResult = bdmDiagLoadOptionalModule("UDPFS_SMAP", "UDPFS_SMAP", &udpfs_smap_irx, size_udpfs_smap_irx);
