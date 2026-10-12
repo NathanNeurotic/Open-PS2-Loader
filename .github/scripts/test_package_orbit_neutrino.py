@@ -78,6 +78,13 @@ class PackageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "destination"):
             packer.stage(self.archive(), self.root, self.pin)
 
+    def test_generated_credit_templates_include_runtime(self):
+        template = (packer.ROOT / ".github/workflows/docs-sync.yml").read_text(encoding="utf-8")
+        markdown, html = template.split("html_section =", 1)
+        for content in (markdown, html):
+            self.assertIn("ORBIT Neutrino RA runtime", content)
+            self.assertIn("neutrino/ORBIT-RA.json", content)
+
     def test_watcher_matches_standard_schedule(self):
         root = packer.ROOT
         import re
