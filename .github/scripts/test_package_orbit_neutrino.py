@@ -20,6 +20,8 @@ class PackageTests(unittest.TestCase):
         self.destination = self.root / "neutrino"
         self.destination.mkdir()
         (self.destination / "stock").write_bytes(b"preserve on failure")
+        (self.destination / "config").mkdir()
+        (self.destination / "config/bsd-udpfsbd.toml").write_bytes(b"private block transport")
         self.pin = json.loads(packer.PIN.read_text())
 
     def archive(self, missing=None, extra=None, loader=b"ELF -ra=<file>"):
@@ -42,7 +44,6 @@ class PackageTests(unittest.TestCase):
 
     def test_stages_runtime_only_and_preserves_private_config(self):
         config = self.destination / "config/bsd-udpfsbd.toml"
-        config.parent.mkdir()
         config.write_bytes(b"private block transport")
         packer.stage(self.archive(), self.destination, self.pin)
         self.assertEqual(config.read_bytes(), b"private block transport")
@@ -50,6 +51,12 @@ class PackageTests(unittest.TestCase):
         self.assertFalse((self.destination / "orbit.elf").exists())
         self.assertTrue((self.destination / "modules/raagent.irx").is_file())
         self.assertEqual(json.loads((self.destination / "ORBIT-RA.json").read_text()), self.pin)
+
+    def test_missing_private_config_refuses_before_mutation(self):
+        (self.destination / "config/bsd-udpfsbd.toml").unlink()
+        with self.assertRaisesRegex(ValueError, "missing required"):
+            packer.stage(self.archive(), self.destination, self.pin)
+        self.assertTrue((self.destination / "stock").exists())
 
     def test_digest_mismatch_preserves_existing_install(self):
         archive = self.archive()

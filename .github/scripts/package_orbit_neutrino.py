@@ -37,15 +37,16 @@ def stage(archive: Path, destination: Path, pin: dict) -> None:
             raise ValueError("ORBIT loader lacks the expected RA handoff")
     # Validate everything before modifying the package. Preserve our UDPFS block config.
     extra = destination / "config/bsd-udpfsbd.toml"
-    udpfsbd = extra.read_bytes() if extra.exists() else None
+    if not extra.is_file():
+        raise ValueError("missing required config/bsd-udpfsbd.toml before ORBIT staging")
+    udpfsbd = extra.read_bytes()
     if destination.exists():
         shutil.rmtree(destination)
     for name, data in payload.items():
         target = destination / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
-    if udpfsbd is not None:
-        extra.write_bytes(udpfsbd)
+    extra.write_bytes(udpfsbd)
     (destination / "ORBIT-RA.json").write_text(json.dumps(pin, indent=2) + "\n", encoding="utf-8")
     (destination / "ORBIT-RA.txt").write_text(
         "RiptOPL ORBIT RA handoff v1\n"

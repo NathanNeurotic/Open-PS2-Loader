@@ -174,7 +174,7 @@ path. Disc boot, telemetry across game IOP resets and the IGR return path still 
 
 ## Which launch paths can work
 
-Telemetry lives inside OPL's own loader core, which only exists for launches OPL performs itself.
+OPL-core launches use RiptOPL's embedded telemetry. The RA kit's ORBIT Neutrino runtime and USB POPStarter use their own agents, with the separate limitations documented above.
 
 | Launch path | Supported |
 | --- | --- |
@@ -184,13 +184,12 @@ Telemetry lives inside OPL's own loader core, which only exists for launches OPL
 | MMCE | yes |
 | Physical PS2 disc, **RA: launch disc** | implemented; **not hardware-tested** |
 | HTTP | local watch-list loading is wired into OPL-core launch; combined HTTP/RA operation is not hardware-validated, and it shares the ETH/SMB risk below |
-| Neutrino core (`$CoreLoader`) | **no** |
-| UDPFS | **no** |
+| Neutrino core (`$CoreLoader`) | RA kit ORBIT runtime: Xerabora/direct watches <=1,216 bytes; current-build console acceptance pending |
+| UDPFS / UDPBD | RA kit ORBIT runtime: saved watch/companion identity and static IP required; first-time UDP identification outstanding |
 | PS1 / USB VCD (POPStarter) | **yes, experimental; console validation pending** |
 | PS1 / Ember, MMCE, APA HDD, SMB and non-USB BDM | **no** |
 
-Neutrino, UDPFS and Ember hand the console over to an external ELF and never load OPL's core, so there is
-nothing to take a snapshot from. This is structural, not an oversight.
+Neutrino and Ember hand the console over to an external ELF and never load OPL's core. The RA kit supplies ORBIT's external agent for compatible Neutrino launches; ordinary Neutrino and Ember have no achievement snapshot agent.
 
 ### Do not expect a game with achievements to run from a network share
 
@@ -400,7 +399,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 
 ## Notes for anyone changing this code
 
-* **Telemetry requires an OPL-core launch.** BDM, ETH/SMB, HDD/APA and MMCE have this path; HTTP also loads an existing watch list from its local settings prefix. Neutrino and Ember run external ELFs, so OPL's telemetry core does not run there. USB POPStarter uses a separate IOP telemetry module. Treat HTTP/RA interoperability as unvalidated until tested.
+* **Each loader has its own telemetry path.** BDM, ETH/SMB, HDD/APA and MMCE support the OPL-core agent; HTTP loads an existing watch list from its local settings prefix. The RA kit adds ORBIT's external Neutrino agent under the documented Xerabora/direct-watch limits. USB POPStarter uses a separate IOP module. Ordinary Neutrino and Ember remain untracked. Treat HTTP/RA interoperability and the new ORBIT handoff as unvalidated until tested.
 
 * **The badge cache belongs to the I/O thread.** `raBadgeRefresh` frees and reallocates it. Nothing
   on the render path may read it — that is why a row carries `raBadged` as a plain int, resolved
