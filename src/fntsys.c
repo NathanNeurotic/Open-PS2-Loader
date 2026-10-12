@@ -191,8 +191,11 @@ static int fntPrepareGlyphCachePage(font_t *font, int pageid)
     if (font->glyphCache[pageid])
         return 1;
 
-    // allocate the page
+    // A user-supplied CJK font can leave EE RAM scarce. If allocating the
+    // page fails, the slot remains NULL; the caller skips this glyph safely.
     font->glyphCache[pageid] = malloc(sizeof(fnt_glyph_cache_entry_t) * GLYPH_CACHE_PAGE_SIZE);
+    if (font->glyphCache[pageid] == NULL)
+        return 0;
 
     int i;
     for (i = 0; i < GLYPH_CACHE_PAGE_SIZE; ++i) {
