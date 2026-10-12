@@ -23,6 +23,15 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def standard_asset(assets):
+    names = [asset["name"] for asset in assets
+             if re.fullmatch(r"RIPTOPL-v?[0-9][A-Za-z0-9._+-]*\.zip", asset["name"])
+             and not asset["name"].endswith("-src.zip")]
+    if len(names) != 1:
+        raise ValueError(f"expected one standard install kit, found {names}")
+    return names[0]
+
+
 def extract(archive, destination):
     with zipfile.ZipFile(archive) as source:
         seen = set()

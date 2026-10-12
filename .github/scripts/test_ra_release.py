@@ -63,6 +63,13 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "different theme"):
             pack.validate_builds(self.folder, self.sha, self.korium)
 
+    def test_bootstrap_selects_install_kit_instead_of_source_or_ra_archive(self):
+        names = ["RIPTOPL-v1.2.0-Beta-3841-src.zip", "RIPTOPL-v1.2.0-Beta-3841.zip",
+                 "RIPTOPL-RetroAchievements-v1.2.0-Beta-3841.zip", "RIPTOPL-DEBUG-v1.zip"]
+        self.assertEqual(pack.standard_asset([{"name": name} for name in names]), names[1])
+        with self.assertRaises(ValueError):
+            pack.standard_asset([{"name": names[0]}])
+
     def test_missing_theme_or_changed_binary_refuses(self):
         self.builds()
         elf = self.folder / "inceBtion-OFFICIALROLLING/pademu1.ELF"

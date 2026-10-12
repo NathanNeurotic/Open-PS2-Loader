@@ -65,11 +65,10 @@ jobs:
             mkdir -p shared
             gh release view rolling --repo "$GITHUB_REPOSITORY" --json assets > bootstrap.json
             ASSET=$(python3 - <<'PY'
-          import json, re
-          names = [a["name"] for a in json.load(open("bootstrap.json"))["assets"]
-                   if re.fullmatch(r"RIPTOPL-v?[0-9][A-Za-z0-9._+-]*\.zip", a["name"])]
-          assert len(names) == 1, names
-          print(names[0])
+          import json, sys
+          sys.path.insert(0, ".github/scripts")
+          from package_ra_release import standard_asset
+          print(standard_asset(json.load(open("bootstrap.json"))["assets"]))
           PY
             )
             gh release download rolling --repo "$GITHUB_REPOSITORY" --pattern "$ASSET" --dir shared
