@@ -54,6 +54,19 @@ def stage(archive: Path, destination: Path, pin: dict) -> None:
         "and xeRAbora's protocol by hacan359. AFL-3.0; see LICENSE.\n"
         f"Source: https://github.com/{pin['repository']}/tree/{pin['source_commit']}/third_party/neutrino-igr\n"
         "Pinned release and archive SHA-256: see ORBIT-RA.json.\n", encoding="utf-8")
+    # Plain label for people browsing the card or drive: this neutrino/ is the RA build's, not the
+    # standard kit's. Same folder name on purpose -- RA tools and setups expect neutrino/.
+    (destination / "RA-EDITION-NEUTRINO.txt").write_text(
+        "THIS neutrino/ FOLDER BELONGS TO THE RIPTOPL RETROACHIEVEMENTS EDITION.\n"
+        "\n"
+        f"It is ORBIT's RA-Neutrino {pin['tag']}: Neutrino v1.8.0 with the achievement agent\n"
+        "(raagent.irx), unmodified from the pinned release. It is NOT the standard RiptOPL\n"
+        "Neutrino. Do not mix the two kits' neutrino/ folders: keep this one with the RA\n"
+        "loader (APPS/APP_RIPTOPL-RA) and the standard one with the standard loader.\n"
+        "\n"
+        "In the RA edition every Neutrino launch uses this runtime, so upstream changes made\n"
+        "after Neutrino v1.8.0 (including Neutrino cheats) are not available here. Use the\n"
+        "standard RiptOPL kit for those.\n", encoding="utf-8")
 
 
 def main():

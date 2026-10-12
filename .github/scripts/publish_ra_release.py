@@ -5,15 +5,27 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 import tempfile
+import time
 from pathlib import Path
 
 TAG = "rolling-ra"
 THEMES = ("inceBtion", "Korium")
+# GitHub's release API intermittently answers 5xx (a 500 once cost the standard release its loose ELF
+# mid-publish, #855). Every call below is safe to repeat, so retry before giving up.
+RETRY_DELAYS = (5, 15)
 
 
 def gh(*args):
-    return subprocess.check_output(["gh", *args], text=True).strip()
+    for delay in (*RETRY_DELAYS, None):
+        try:
+            return subprocess.check_output(["gh", *args], text=True).strip()
+        except subprocess.CalledProcessError:
+            if delay is None:
+                raise
+            print(f"gh {args[0]} {args[1] if len(args) > 1 else ''} failed; retrying in {delay}s", file=sys.stderr)
+            time.sleep(delay)
 
 
 def validate(folder):
@@ -73,7 +85,12 @@ def publish(folder, notes, repository):
                 # Keep the previous full kits and tag; cleanup is only after success.
                 raise
             for name in sorted(previous - {asset.name for asset in assets}):
-                gh("release", "delete-asset", TAG, name, "--repo", repository, "--yes")
+                # The complete new set is already published. A stale extra file left by a failed delete
+                # is harmless and the next publication removes it; it must not skip the tag update.
+                try:
+                    gh("release", "delete-asset", TAG, name, "--repo", repository, "--yes")
+                except subprocess.CalledProcessError:
+                    print(f"warning: could not delete stale asset {name}", file=sys.stderr)
         else:
             # Draft first: users cannot see a partial first publication.
             gh("release", "create", TAG, *map(str, assets), "--repo", repository,

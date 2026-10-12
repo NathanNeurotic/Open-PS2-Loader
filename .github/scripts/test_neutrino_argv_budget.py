@@ -57,6 +57,7 @@ harness = r'''
 #define LAUNCHDIAG_REFUSE_CORE_ARGV 2
 #define _STR_NEUTRINO_LAUNCH_ARGS_OVERFLOW 7
 #define _STR_NEUTRINO_ARGS_CONFIRM 8
+#define _STR_RA_NEUTRINO_UNTRACKED 9
 #define NEUTRINO_VMC_SLOTS 2
 typedef struct { char arg[NEUTRINO_VMC_SLOTS][160]; } neutrino_vmc_args_t;
 
@@ -280,6 +281,40 @@ int main(void)
                             "mass0:/neutrino/neutrino.elf", "", 0, 0, 0, 0, NULL, 0) != 0) failures++;
     for (int i = 0; i < lastArgc; i++)
         if (!strncmp(lastArgs[i], "-ra=", 4) || !strcmp(lastArgs[i], "-cfg=ript-ra")) failures++;
+
+    /* A launch that fits on its own but not with the RA handoff's two arguments goes ahead untracked:
+       the preflight drops the handoff and warns instead of refusing the game. */
+    char fill[64] = "";
+    int fits = -1;
+    sysNeutrinoRAArg[0] = '\0';
+    for (int n = 0; n < 14; n++) {
+        snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", fill);
+        if (sysNeutrinoArgsPreflight("usb", "mass0:/DVD/a.iso", "SLUS_123.45", 0, 0,
+                                     "mass0:/neutrino/neutrino.elf", "", 0, 0, 0, 0, NULL) != 0)
+            break;
+        fits = n;
+        strcat(fill, "-x ");
+    }
+    if (fits < 0) {
+        puts("FAIL no plain launch fits the budget");
+        failures++;
+    } else {
+        fill[fits * 3] = '\0';
+        snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", fill);
+        snprintf(sysNeutrinoRAArg, sizeof(sysNeutrinoRAArg), "-ra=mass0:/neutrino/config/ript-ra.wl");
+        snprintf(sysNeutrinoRAStartup, sizeof(sysNeutrinoRAStartup), "SLUS_123.45");
+        lastWarning = 0;
+        int pre = sysNeutrinoArgsPreflight("usb", "mass0:/DVD/a.iso", "SLUS_123.45", 0, 0,
+                                           "mass0:/neutrino/neutrino.elf", "", 0, 0, 0, 0, NULL);
+        if (pre != 0 || lastWarning != _STR_RA_NEUTRINO_UNTRACKED || sysNeutrinoRAArg[0] != '\0') {
+            printf("FAIL RA overflow must launch untracked: result=%d warning=%d ra=%s\n", pre, lastWarning, sysNeutrinoRAArg);
+            failures++;
+        }
+        sysRunNeutrinoLaunch("usb", "mass0:/DVD/a.iso", "SLUS_123.45", 0, 0, "mass0:/neutrino/neutrino.elf", "", 0, 0, 0, 0, NULL, 0);
+        for (int i = 0; i < lastArgc; i++)
+            if (!strncmp(lastArgs[i], "-ra=", 4) || !strcmp(lastArgs[i], "-cfg=ript-ra")) failures++;
+    }
+    gNeutrinoArgs[0] = 0;
 #endif
     return failures ? 1 : 0;
 }

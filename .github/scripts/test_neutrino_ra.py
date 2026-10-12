@@ -100,6 +100,9 @@ int main(void) {
     bytes=1217;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);bytes=5;
     nodes=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);nodes=0;
     missingMarker=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);missingMarker=0;
+    /* A game with no watch list launches quietly, even where the RA runtime is absent. */
+    missingMarker=1;warning=0;sysNeutrinoPrepareRA("mmce1:/Games/","SLUS_999.99","usb","mmce1:/neutrino/neutrino.elf","");
+    assert(!sysNeutrinoRAArg[0] && !warning);missingMarker=0;
     badMarker=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);badMarker=0;
     ps2_ip_use_dhcp=1;prepare("udpfs", "");assert(!sysNeutrinoRAArg[0] && !writes && !networkCalls);ps2_ip_use_dhcp=0;
     failWrite=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && warning);failWrite=0;

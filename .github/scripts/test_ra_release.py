@@ -121,6 +121,25 @@ class ReleaseTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "preview"):
             publisher.validate(self.folder)
 
+    def test_gh_retries_transient_failures_then_gives_up(self):
+        calls = []
+
+        def flaky(command, text):
+            calls.append(command)
+            if len(calls) < 3:
+                raise subprocess.CalledProcessError(1, command)
+            return "ok\n"
+
+        with patch.object(publisher.subprocess, "check_output", side_effect=flaky), \
+                patch.object(publisher.time, "sleep") as sleep:
+            self.assertEqual(publisher.gh("release", "view", "rolling-ra"), "ok")
+        self.assertEqual(len(calls), 3)
+        self.assertEqual([c.args[0] for c in sleep.call_args_list], list(publisher.RETRY_DELAYS))
+        failing = subprocess.CalledProcessError(1, "gh")
+        with patch.object(publisher.subprocess, "check_output", side_effect=failing), \
+                patch.object(publisher.time, "sleep"), self.assertRaises(subprocess.CalledProcessError):
+            publisher.gh("release", "upload", "rolling-ra", "x")
+
     def test_mid_upload_failure_restores_all_fixed_names_and_keeps_old_kits(self):
         self.assets()
         fixed = ["RIPTOPL-RA-inceBtion.ELF", "RIPTOPL-RA-Korium.ELF", "RA-RELEASE.json"]

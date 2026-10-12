@@ -1675,6 +1675,10 @@ void sysNeutrinoPrepareRA(const char *prefix, const char *startup, const char *d
     sysNeutrinoRAStartup[0] = '\0';
     if (!gRATelemetry || gRAMode != RA_MODE_XERABORA || prefix == NULL || startup == NULL || driver == NULL || neutrinoPath == NULL)
         return;
+    // A game without a saved watch list has nothing to track: launch quietly, before any runtime check
+    // could warn about it.
+    if (sbReadWatchList(prefix, startup) <= 0)
+        return;
     // Match the effective -cwd, including user overrides, rather than assuming USB.
     if (!neutrinoArgActiveValue(extraArgs, "-cwd=", dir, sizeof(dir))) {
         const char *slash = sysLastPathSeparator(neutrinoPath);
@@ -1706,8 +1710,6 @@ void sysNeutrinoPrepareRA(const char *prefix, const char *startup, const char *d
         goto untracked;
     close(fd);
 
-    if (sbReadWatchList(prefix, startup) <= 0)
-        return;
     // Released raagent v1.0.2 emits one packet and does not resolve chain tails.
     // Do not present partial or silently absent telemetry as a supported launch.
     if (GetNodeCount() != 0 || GetWatchBytes() > 1216)
@@ -2187,6 +2189,18 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
 int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
 {
     int result = sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1);
+#ifdef RETROACHIEVEMENTS
+    // The RA handoff's two arguments must never cost the player the game: when they push the argv over
+    // the launch budget, drop them and launch without achievements instead of refusing.
+    if (result < 0 && result != NEUTRINO_LAUNCH_DECLINED && sysNeutrinoRAArg[0] != '\0' && startup != NULL &&
+        !strcmp(startup, sysNeutrinoRAStartup)) {
+        LOG("[RA] handoff arguments exceed the launch budget for %s; launching untracked\n", startup);
+        sysNeutrinoRAArg[0] = '\0';
+        sysNeutrinoRAStartup[0] = '\0';
+        guiWarning(_l(_STR_RA_NEUTRINO_UNTRACKED), 6);
+        result = sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1);
+    }
+#endif
     if (result == NEUTRINO_LAUNCH_DECLINED)
         return -1; // Back on the argument preview: stay in the menu, nothing to warn about
     if (result < 0) {

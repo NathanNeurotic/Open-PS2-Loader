@@ -11,7 +11,10 @@ bundled or linked into RiptOPL.
 
 The packer verifies the complete upstream ZIP digest and extracts only neutrino/.
 Ordinary packages retain the official upstream runtime. Only the RA package may
-contain raagent.irx and the ORBIT-RA provenance marker.
+contain raagent.irx, the ORBIT-RA provenance marker and the RA-EDITION-NEUTRINO.txt
+label. The RA kit keeps the folder name neutrino/ for RA setups; the label marks it
+as the RA build's Neutrino (v1.8.0 base, no Neutrino cheats) so it is not mistaken
+for the standard kit's runtime.
 
 v1.0.2 supports direct watch entries with at most 1,216 snapshot bytes. Pointer
 chains and larger lists must remain untracked with this runtime. It speaks the

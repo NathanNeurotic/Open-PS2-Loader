@@ -51,6 +51,10 @@ class PackageTests(unittest.TestCase):
         self.assertFalse((self.destination / "orbit.elf").exists())
         self.assertTrue((self.destination / "modules/raagent.irx").is_file())
         self.assertEqual(json.loads((self.destination / "ORBIT-RA.json").read_text()), self.pin)
+        label = (self.destination / "RA-EDITION-NEUTRINO.txt").read_text()
+        self.assertIn("RETROACHIEVEMENTS EDITION", label)
+        self.assertIn("NOT the standard RiptOPL", label)
+        self.assertIn("Neutrino v1.8.0", label)
 
     def test_missing_private_config_refuses_before_mutation(self):
         (self.destination / "config/bsd-udpfsbd.toml").unlink()

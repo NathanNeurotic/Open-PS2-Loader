@@ -318,9 +318,11 @@ def verify(args: argparse.Namespace) -> None:
         required.update(f"POPS/{module}.{suffix}" for suffix in BDMA_SUFFIXES for module in ("usbd.irx", "usbhdfsd.irx"))
         if args.ra:
             required.add("xeRAbora.url")
-            required.update({"neutrino/ORBIT-RA.json", "neutrino/ORBIT-RA.txt", "neutrino/LICENSE",
+            required.update({"neutrino/ORBIT-RA.json", "neutrino/ORBIT-RA.txt", "neutrino/RA-EDITION-NEUTRINO.txt",
+                             "neutrino/LICENSE",
                              "neutrino/modules/ee_core.elf", "neutrino/modules/raagent.irx"})
-        elif any("raagent" in name.lower() or "/ORBIT-RA." in name for name in names):
+        elif any("raagent" in name.lower() or "/ORBIT-RA." in name or "/RA-EDITION-NEUTRINO." in name
+                 for name in names):
             raise ValueError("ordinary package contains the ORBIT RA runtime")
         required.update(f"POPS/POPSTARTER VERSIONS/{version}/POPSTARTER.ELF" for version in (
             "MAIN", "DEBUG", "USBDELAY", "USBDELAY_DEBUG", "USBDELAY_LONGER_DEBUG"
