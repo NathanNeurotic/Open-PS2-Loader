@@ -1125,7 +1125,7 @@ static void ra_drain_rx(void)
                 ra_rxfrm[36] == (RA_SRC_PORT >> 8) &&
                 ra_rxfrm[37] == (RA_SRC_PORT & 0xFF)) {
                 up = (((int)ra_rxfrm[38] << 8) | ra_rxfrm[39]) - RA_UDP_HLEN;
-                if (up > 0 && RA_HDR_LEN + up < (int)sizeof(ra_rxfrm)) {
+                if (up > 0 && RA_HDR_LEN + up <= len && RA_HDR_LEN + up < (int)sizeof(ra_rxfrm)) {
                     char *pay = (char *)&ra_rxfrm[RA_HDR_LEN];
 
                     pay[up] = '\0';

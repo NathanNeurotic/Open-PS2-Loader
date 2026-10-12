@@ -171,7 +171,7 @@ contains and how to pull it.
 ### Known limitations
 
 - **HTTP:** implemented and host-tested, but not yet tested on PS2 hardware. ISO only; no VMC, Neutrino or PS1. DVD9 probing is implemented but unproven. [HTTP guide](docs/HTTP.md).
-- **RetroAchievements:** a separate development package with limited PS2 telemetry hardware evidence. It supports [xeRAbora v0.1.0-alpha.16](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16) or the Caduceus companion service selected in RA Mode. PS2 telemetry uses OPL-core launches; USB PS1 VCDs through POPStarter use a separate IOP reader and still require console validation. Caduceus adds a paired account/game achievement browser; production in-game notices use the pulse, while title/points card drawing remains disabled pending safe GS ownership. Companion PC software is managed separately through PS2-Servers. Physical PS2 disc launches also need hardware validation. Keep tracked games on a local device: upstream reports that games with achievement sets stop loading about a minute into network-share play. [RA guide](docs/RETROACHIEVEMENTS.md).
+- **RetroAchievements:** a separate development package with limited PS2 telemetry hardware evidence. It supports [xeRAbora v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17) or the Caduceus companion service selected in RA Mode. PS2 telemetry uses OPL-core launches; USB PS1 VCDs through POPStarter use a separate IOP reader and still require console validation. Caduceus adds a paired account/game achievement browser; production in-game notices use the pulse, while title/points card drawing remains disabled pending safe GS ownership. Companion PC software is managed separately through PS2-Servers. Physical PS2 disc launches also need hardware validation. Keep tracked games on a local device: upstream reports that games with achievement sets stop loading about a minute into network-share play. [RA guide](docs/RETROACHIEVEMENTS.md).
 - **iLink:** revision 2692 passed Ember on the tested SCPH-39001 but failed native OPL, Neutrino and POPSTARTER handoffs. The Neutrino `-qb` correction is implemented; a passing retest is still needed.
 - **Core switching is source-dependent:** SMB and HTTP use OPL; UDPFS/UDPBD use Neutrino. See the [source table](#introduction).
 
@@ -974,7 +974,7 @@ With special and sincere thanks to:
 - **bbsan2k** — for the **MMCE (Memory Card Mass Storage) protocol** that makes SD-via-memory-card
   loading through the PS2's memory-card slot possible. OPL's MMCE support builds directly on it.
 - **hacan359 (yoba)** — for **RetroAchievements on real PS2 hardware** and the
-  **[xeRAbora PC client (v0.1.0-alpha.16)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)** (MIT). The console identifies the
+  **[xeRAbora PC client (v0.1.0-alpha.17)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)** (MIT). The console identifies the
   game and streams the memory addresses its achievements watch; xeRAbora handles rcheevos, the
   RetroAchievements service, and login. RiptOPL implements the published wire protocol in its
   `RIPTOPL-RetroAchievements-*.zip` build, which includes a shortcut to xeRAbora.

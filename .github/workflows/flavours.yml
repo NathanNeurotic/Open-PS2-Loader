@@ -167,6 +167,8 @@ jobs:
         run: python3 .github/scripts/test_ra_launch_resources.py
       - name: Check RA snapshot scheduling and transmission retries
         run: python3 .github/scripts/test_ra_sender.py
+      - name: Check raw RA notices cannot consume stale frame tails
+        run: python3 .github/scripts/test_ra_receive_frame.py
       - name: Check Caduceus in-game card bounds and event handling
         run: python3 .github/scripts/test_caduceus_overlay.py
       - name: Check Caduceus achievement browsing and pairing

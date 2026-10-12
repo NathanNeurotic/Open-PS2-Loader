@@ -79,6 +79,32 @@ as finished.
 
 ## Using it
 
+### First tracked game
+
+1. Start **RIPTOPL-RA.ELF** from the RetroAchievements package. The standard ELF
+   has no achievement telemetry or companion requirement.
+2. Run **xeRAbora alpha.17** on the companion PC and sign into your
+   RetroAchievements account in its Settings page. Keep the client running.
+   Account login enables unlock submission; the Web API key supplies account/library data.
+3. In RiptOPL **Settings > Network**, select **RA Mode: Xerabora**, enable
+   **RetroAchievements telemetry**, and save settings. Telemetry defaults to Off.
+   Give the PS2 usable network settings and connect it to the same LAN as the PC.
+   Set **RA companion IP** to that PC's IPv4 address to target it explicitly.
+4. For an initial PS2 image test, use USB or MMCE and select **OPL** explicitly
+   as the game's loader/core. An inherited Neutrino default does not load this
+   telemetry core. Other implemented paths and their validation status are below.
+5. Open the game's menu and run **RA: test PC connection**, then **RA: check game
+   support**. The first establishes reachability; the second obtains the watch list.
+   Allow xeRAbora through the PC firewall, including inbound UDP 18194.
+6. Launch after a successful support check. Verify the companion's LIVE view
+   receives snapshots; a list badge alone does not prove in-game telemetry.
+
+Repeat the support check for each image you want to track. A missing watch list
+starts an ordinary, untracked game. An unknown hash can indicate a different
+region/dump or an unsupported set; it does not establish that the storage source
+is unsupported. Caduceus users select that service's mode and complete its sign-in
+and pairing requirements described above instead of running competing services.
+
 Two settings, on the **Network** settings page:
 
 | Setting | Default | Effect |
@@ -229,7 +255,7 @@ The PS1 POPStarter bridge additionally follows alpha.16, and the Mode 6 snapshot
 - **Delivery guarantees retained:** 4 ms sender polling, busy/torn snapshot retries, ~1 second keepalive, and marking the staged sequence sent only after every multipart packet succeeds.
 
 > [!IMPORTANT]
-> Use **[xeRAbora v0.1.0-alpha.16](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)** with this updated RA ELF. Older RiptOPL releases retain their original paired-client requirement. Host tests and successful builds do not establish console timing or game compatibility; the alpha.10 hardware report above is historical evidence, not validation of this update.
+> Use **[xeRAbora v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)** with this updated RA ELF. Older RiptOPL releases retain their original paired-client requirement. Host tests and successful builds do not establish console timing or game compatibility; the alpha.10 hardware report above is historical evidence, not validation of this update.
 
 
 ---
@@ -280,7 +306,7 @@ labelled builds below, in the order listed. The archive keeps those labelled loa
 The labelled folders are the two ps2dev builds, so they say `PINNED`/`ROLLING` where the main
 package says `PS2DEVPINNED`/`PS2DEVROLLING`. The names are kept short on purpose: a memory card file
 name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
-archive also carries **`xeRAbora.url`** (pointing directly to the paired [v0.1.0-alpha.16 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)), because the loader does nothing without the PC client.
+archive also carries **`xeRAbora.url`** (pointing directly to the paired [v0.1.0-alpha.17 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)), because the loader does nothing without the PC client.
 
 It is deliberately *not* an entry in `RIPTOPL-VARIANTS-*.zip`: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
