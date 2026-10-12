@@ -410,8 +410,6 @@ int Reset_Iop(const char *arg, int mode)
     struct t_SifDmaTransfer dmat;
     int arglen;
 
-    _iop_reboot_count++; // increment reboot counter to allow RPC clients to detect unbinding!
-
     /*    SifStopDma();        For the sake of IGR (Which uses this function), don't disable SIF0 (IOP -> EE)
                 because some games will be still spamming DMA transfers across SIF0 when IGR is invoked.
                 SCE documents that DMA transfers should be stopped before IOP resets, but has neglected
@@ -426,7 +424,11 @@ int Reset_Iop(const char *arg, int mode)
 
     for (arglen = 0; arg != NULL && arglen < (int)sizeof(reset_pkt.arg) - 1 && arg[arglen] != '\0'; arglen++)
         reset_pkt.arg[arglen] = arg[arglen];
+    if (arg != NULL && arg[arglen] != '\0')
+        return 0; // never submit a truncated reset command
     reset_pkt.arg[arglen] = '\0';
+
+    _iop_reboot_count++; // increment reboot counter to allow RPC clients to detect unbinding!
 
     reset_pkt.header.psize = sizeof reset_pkt; // dsize is not initialized (and not processed, even on the IOP).
     reset_pkt.header.cid = SIF_CMD_RESET_CMD;
