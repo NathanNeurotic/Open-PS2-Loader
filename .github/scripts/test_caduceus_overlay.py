@@ -31,6 +31,7 @@ static int race_mode;
 static void mock_after_snapshot(struct ra_event *copy, volatile struct ra_event *live) {
  if (race_mode==1) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_RESET; }
  if (race_mode==2) copy->commit=0; /* DMA finished after a torn copy */
+ if (race_mode==3) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_MAKE_UNLOCK(10); copy->seq=live->seq; copy->commit=live->commit; }
  race_mode=0;
 }
 """
@@ -83,6 +84,9 @@ int main(void) {
  event->seq=5;event->commit=5;race_mode=2;
  RA_OverlayOnVblank(219);assert(resets==2 && ra_ovl_seen==4);
  RA_OverlayOnVblank(220);assert(resets==3 && ra_ovl_seen==5);
+ event->seq=6;event->commit=6;event->kind=RA_EVENT_RESET;race_mode=3;
+ RA_OverlayOnVblank(221);assert(resets==3 && ra_ovl_seen==5);
+ RA_OverlayOnVblank(222);assert(resets==3 && ra_ovl_seen==7);
  RA_OverlaySetPacketBuffer(NULL);assert(!draw_card());
  assert(RA_OverlayEventBuffer()==pulse_buffer);
  RA_OverlayOnVblank(221);assert(pulses==2);
@@ -130,6 +134,7 @@ static int race_mode;
 static void mock_after_snapshot(struct ra_event *copy, volatile struct ra_event *live) {
  if (race_mode==1) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_RESET; }
  if (race_mode==2) copy->commit=0;
+ if (race_mode==3) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_MAKE_UNLOCK(10); copy->seq=live->seq; copy->commit=live->commit; }
  race_mode=0;
 }
 """
@@ -156,6 +161,9 @@ int main(void) {
  e->seq=8; e->commit=8; race_mode=2;
  RA_PulseOnVblank(70); assert(resets==2 && ra_ovl_seen==7);
  RA_PulseOnVblank(71); assert(resets==3 && ra_ovl_seen==8);
+ e->seq=9;e->commit=9;e->kind=RA_EVENT_RESET;race_mode=3;
+ RA_PulseOnVblank(72);assert(resets==3 && ra_ovl_seen==8);
+ RA_PulseOnVblank(73);assert(resets==3 && ra_ovl_seen==10 && ra_ovl_start==73);
  puts("PASS: production pulse ignores unknown/torn events, restarts unlocks and preserves reset");
 }
 """
