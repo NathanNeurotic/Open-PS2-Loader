@@ -5108,6 +5108,10 @@ static void init(void)
         LOG("--- SKIPPING OPL CONFIG LOADING\n");
         applyConfig(-1, -1, 0);
     }
+    // _loadConfig may move the settings home away from the initial boot folder.
+    // Resolve the optional title font only NOW, from the final settings owner.
+    // No filesystem probes occur later on the rendering or game-list paths.
+    lngInitFallbackFont();
     guiSetBootStatus(_l(_STR_BOOT_READY));
     guiRenderGreetingScreen();
     gBootInProgress = 0;

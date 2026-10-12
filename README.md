@@ -67,7 +67,7 @@ Review the LICENSE file for further details.<br><br>
 
 > **What is RiptOPL?** A downstream fork of Open PS2 Loader with a built-in cover-art **Coverflow** theme (default), a **Favorites** tab, per-game **Neutrino** external-core launching, a reorganized category **settings layout**, DualSense support, and ready-to-use opinionated defaults. Its settings live in their own **`settings_riptopl.cfg`** to keep its master settings separate from official OPL and wOPL. Other files, including network and per-game settings, can still be shared. Favorites import from uOPL/wOPL is **one-way**: the next save writes RiptOPL’s own format to `favourites.bin`. See [Where your files live](#where-your-files-live). See **[This Fork's Additions](#this-forks-additions)**. For the canonical project, use [ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader).
 
-> 📖 **Full documentation & guides:** **<https://nathanneurotic.github.io/Open-PS2-Loader/>** — searchable setup and reference guides covering storage backends, the Neutrino core, PS1/VCD, the Theme Engine (with worked examples and an annotated sample theme), a full settings reference, and troubleshooting.
+> 📖 **Full documentation & guides:** **<https://nathanneurotic.github.io/Open-PS2-Loader/>** — searchable setup and reference guides covering storage backends, the Neutrino core, PS1/VCD, the Theme Engine (with worked examples and an annotated sample theme), a full settings reference, and troubleshooting. For Japanese game names with English menus, see [Optional Unicode/CJK font fallback](docs/UNICODE-GAME-TITLES.md) (copy a suitable `font_CJK.ttf` beside `settings_riptopl.cfg` and restart).
 
 > 🌙 **Our #1 recommended alternative: [LUNA](https://github.com/dnunezx/LUNA) by [darkladark](https://github.com/dnunezx).** *Lightweight Unified Neutrino Access* is a visual loader built on NHDDL and Neutrino for **lightweight, customized Neutrino gameplay**. If RiptOPL is more loader than you need, start there. darkladark also contributes to RiptOPL itself; see [Acknowledgements](#acknowledgements).
 
@@ -77,7 +77,7 @@ Review the LICENSE file for further details.<br><br>
 [Features](#major-features-overview) · [Fork additions](#this-forks-additions) ·
 [PS1](#ps1-games-two-cores-one-list) · [HTTP](docs/HTTP.md) · [RetroAchievements](docs/RETROACHIEVEMENTS.md) ·
 [Controls & IGR](#controls-and-in-game-reset) · [GSM](docs/GSM.md) · [PADEMU](docs/PADEMU.md) ·
-[Interface](docs/INTERFACE.md) · [Apps](#apps) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
+[Interface](docs/INTERFACE.md) · [Japanese/Unicode game titles](docs/UNICODE-GAME-TITLES.md) · [Apps](#apps) · [Files and folders](#how-to-use) · [USB/MMCE/MX4SIO/iLink](#usbmmcemx4sioilink) ·
 [SMB](#smb) · [HDD](#hdd) · [APPS](#apps) · [Cheats](#cheats) · [NBD](#nbd-server) ·
 [ZSO](#zso-format) · [PS3 BC](#ps3-bc) · [Troubleshooting](#frequent-issues) ·
 [Companion tools](#external-tools--services) · [Credits](#acknowledgements)
