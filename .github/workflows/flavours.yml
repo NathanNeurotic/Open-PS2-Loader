@@ -129,6 +129,8 @@ jobs:
         run: python3 .github/scripts/test_theme_metadata.py
       - name: Check custom theme font reads start with an unknown file size
         run: python3 .github/scripts/test_custom_font_load.py
+      - name: Check UTF-8 CJK fallback uses only missing glyphs
+        run: python3 .github/scripts/test_cjk_font_fallback.py
       - name: Check VMC creation can recover after failed or short writes
         run: python3 .github/scripts/test_genvmc_recovery.py
       - name: Check VMC resizing cannot erase an existing image implicitly

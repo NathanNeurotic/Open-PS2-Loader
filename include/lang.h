@@ -18,6 +18,8 @@ typedef struct
 
 int lngAddLanguages(char *path, const char *separator, int mode);
 void lngInit(void);
+/** Load the optional Unicode fallback after settings home relocation is resolved. */
+void lngInitFallbackFont(void);
 char *lngGetValue(void);
 void lngEnd(void);
 

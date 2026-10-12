@@ -86,6 +86,11 @@ typedef struct
 /// Array of font definitions
 static font_t fonts[FNT_MAX_COUNT];
 
+// Optional Unicode fallback stays in its own slot. Language/theme fonts still
+// select the typography; this slot supplies only glyphs their FT_Face lacks.
+// Loaded once from the settings home before the GUI starts rendering.
+static int fallbackFontID = FNT_ERROR;
+
 /* ONE LOCK FOR ALL FONT STATE, HELD FOR THE WHOLE OPERATION.
 
    The slots, their FreeType faces, the glyph caches and atlases, and the render scratch globals
@@ -186,8 +191,11 @@ static int fntPrepareGlyphCachePage(font_t *font, int pageid)
     if (font->glyphCache[pageid])
         return 1;
 
-    // allocate the page
+    // A user-supplied CJK font can leave EE RAM scarce. If allocating the
+    // page fails, the slot remains NULL; the caller skips this glyph safely.
     font->glyphCache[pageid] = malloc(sizeof(fnt_glyph_cache_entry_t) * GLYPH_CACHE_PAGE_SIZE);
+    if (font->glyphCache[pageid] == NULL)
+        return 0;
 
     int i;
     for (i = 0; i < GLYPH_CACHE_PAGE_SIZE; ++i) {
@@ -327,6 +335,7 @@ void fntInit()
     int i = 0;
     for (; i < FNT_MAX_COUNT; ++i)
         fntInitSlot(&fonts[i]);
+    fallbackFontID = FNT_ERROR;
 
     fntLoadDefault(NULL);
 }
@@ -354,6 +363,27 @@ int fntLoadFile(char *path, int fontSize)
         free(buffer);
 
     return result;
+}
+
+// Keep this font independent of language and theme switching. Missing optional
+// font files are harmless: fntLoadFile leaves the current default untouched.
+int fntLoadFallback(char *path)
+{
+    if (path == NULL)
+        return FNT_ERROR;
+
+    // Called during language initialization, before theme files are admitted.
+    if (fallbackFontID != FNT_ERROR)
+        return 0;
+
+    int id = fntLoadFile(path, FNTSYS_DEFAULT_SIZE);
+    if (id == FNT_ERROR)
+        return FNT_ERROR;
+
+    fntLock();
+    fallbackFontID = id;
+    fntUnlock();
+    return 0;
 }
 
 int fntLoadDefault(char *path)
@@ -387,6 +417,7 @@ void fntEnd()
     fntLock();
     for (id = 0; id < FNT_MAX_COUNT; ++id)
         fntDeleteSlot(&fonts[id]);
+    fallbackFontID = FNT_ERROR;
     fntUnlock();
 
     // deinit freetype system
@@ -443,6 +474,16 @@ static int fntGlyphAtlasPlace(font_t *font, fnt_glyph_cache_entry_t *glyph)
 /** Internal method. Makes sure the bitmap data for particular character are pre-rendered to the glyph cache */
 static fnt_glyph_cache_entry_t *fntCacheGlyph(font_t *font, uint32_t gid)
 {
+    // Select a second face only for characters missing from the active font.
+    // The font mutex is held by every caller, including measurement. No I/O
+    // and no font switching occurs on the frame-rendering path.
+    if (gid >= 0x80 && fallbackFontID > FNT_DEFAULT &&
+        fallbackFontID < FNT_MAX_COUNT && font != &fonts[fallbackFontID] &&
+        fonts[fallbackFontID].isValid && fonts[fallbackFontID].face != NULL &&
+        font->face != NULL && FT_Get_Char_Index(font->face, gid) == 0 &&
+        FT_Get_Char_Index(fonts[fallbackFontID].face, gid) != 0)
+        font = &fonts[fallbackFontID];
+
     // calc page id and in-page index from glyph id
     int pageid = gid / GLYPH_CACHE_PAGE_SIZE;
     int idx = gid % GLYPH_CACHE_PAGE_SIZE;

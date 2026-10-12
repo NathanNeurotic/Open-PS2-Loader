@@ -3,7 +3,7 @@
 Menu behaviours that are configured from *Settings* but need more than a one-line description:
 folder browsing, the parental lock, and the audio system.
 
-For the button map, see [CONTROLS.md](CONTROLS.md).
+For the button map, see [CONTROLS.md](CONTROLS.md). For UTF-8 Japanese and other Unicode game names with English menus, see [Unicode Game Titles](UNICODE-GAME-TITLES.md): place an optional `font_CJK.ttf` alongside `settings_riptopl.cfg` and restart; there is no UI toggle.
 
 ---
 
