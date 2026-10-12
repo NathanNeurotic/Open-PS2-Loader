@@ -18,7 +18,10 @@
 #define GIF_D2_MADR         (*(volatile u32 *)0x1000A010)
 #define GIF_D2_QWC          (*(volatile u32 *)0x1000A020)
 #define GIF_STAT            (*(volatile u32 *)0x10003020)
-#define RA_GIF_BUSY         ((7u << 6) | (1u << 9) | (3u << 10) | (31u << 24))
+/* EE User's Manual 7.3: masked/paused or interrupted PATH3 is not idle.
+   DIR also excludes a GS-to-EE download. This is only a refusal filter;
+   it does not establish ownership of the GS's image-transfer registers. */
+#define RA_GIF_BUSY         (3u | (1u << 3) | (1u << 5) | (7u << 6) | (1u << 9) | (3u << 10) | (1u << 12) | (31u << 24))
 #define GS_REG_BITBLTBUF    0x50
 #define GS_REG_TRXPOS       0x51
 #define GS_REG_TRXREG       0x52

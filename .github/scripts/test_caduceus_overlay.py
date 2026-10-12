@@ -60,6 +60,15 @@ int main(void) {
  for(int i=0;i<64;i++) assert(packet[i]==0xCD);
  for(unsigned i=64+30816;i<sizeof(packet);i++) assert(packet[i]==0xCD);
  assert(syncs>=10);
+ /* An empty FIFO is insufficient: refuse masked, paused, interrupted and
+    reverse-direction transfers as well as queued/active paths. */
+ GIF_D2_CHCR=0;
+ const unsigned blocked_bits[]={0,1,3,5,6,7,8,9,10,11,12,24,25,26,27,28};
+ for(unsigned b=0;b<sizeof(blocked_bits)/sizeof(blocked_bits[0]);b++) {
+  GIF_STAT=1u<<blocked_bits[b];GIF_D2_QWC=0;
+  assert(draw_card()==1 && GIF_D2_QWC==0 && GIF_D2_CHCR==0);
+ }
+ GIF_STAT=0;assert(draw_card()==1 && GIF_D2_QWC==1926 && GIF_D2_CHCR==0x101);
  GIF_D2_CHCR=0;GSMSourceGSRegs.dispfb1=(10ull<<9)|(2ull<<15);
  for(unsigned f=14;f<24;f++) { GIF_D2_CHCR=0;RA_OverlayOnVblank(f); }
  assert(GIF_D2_QWC==966);
@@ -73,7 +82,7 @@ int main(void) {
  RA_OverlayOnVblank(219);assert(resets==2 && ra_ovl_seen==4);
  RA_OverlayOnVblank(220);assert(resets==3 && ra_ovl_seen==5);
  RA_OverlaySetPacketBuffer(NULL);assert(!draw_card());
- puts("PASS: card bounds, sliced rasterization, GIF busy guard, CT32/CT16 packet lengths, torn events, reset and Xerabora dispatch");
+ puts("PASS: card bounds, sliced rasterization, GIF state refusal, CT32/CT16 packet lengths, torn events, reset and Xerabora dispatch");
 }
 """
 fallback_tests=r"""
