@@ -13,5 +13,10 @@ Local discovery fix: udp_packet_send_ll() sends a gratuitous ARP (arp_announce()
 for our own IP) before every broadcast from a bound socket -- in practice the UDPRDMA DISCOVERY.
 The server answers DISCOVERY with a unicast INFORM; if its ARP cache maps the PS2's IP to another
 MAC (stale entry, or a second device on the same address) the INFORM never arrives and the PS2
-rediscovers forever. udptty's unbound (port 0) console broadcasts are not announced. No export
-table change. Host test: ../udpfs_shared/tests/test_ministack_announce.c.
+rediscovers forever. udptty's unbound (port 0) console broadcasts are not announced. Host test:
+../udpfs_shared/tests/test_ministack_announce.c.
+
+Local IP-conflict record: handle_rx_arp() notes another MAC claiming our IP (typically the reply to
+that announce) and never caches our own IP. arp_ip_conflict() reports it and is APPENDED to the
+export table as slot 7 (slots 4-6 unchanged, so udpfs_bd is unaffected). udpfs_ioman answers a
+devctl with it so RiptOPL can tell the user. Host test: ../udpfs_shared/tests/test_ministack_conflict.c.

@@ -14,6 +14,12 @@ typedef struct
 #define MS_ARP_ENTRIES 8
 arp_entry_t arp_table[MS_ARP_ENTRIES];
 
+// Another device answering for our IP: the reply to our own gratuitous ARP (arp_announce) or its own
+// ARP traffic. A server PC that cached that device's MAC delivers every reply to it, so the PS2 waits
+// forever. Recorded here, read by the loader through arp_ip_conflict() to tell the user.
+static int arp_conflict;
+static uint8_t arp_conflict_mac[6];
+
 
 int arp_add_entry(uint32_t ip, const uint8_t mac[6])
 {
@@ -106,6 +112,19 @@ void arp_announce(void)
     arp_send_request(ms_ip_get_ip());
 }
 
+int arp_ip_conflict(uint8_t mac[6])
+{
+    int i;
+
+    if (!arp_conflict)
+        return 0;
+    if (mac != NULL) {
+        for (i = 0; i < 6; i++)
+            mac[i] = arp_conflict_mac[i];
+    }
+    return 1;
+}
+
 int arp_resolve(uint32_t ip, uint8_t mac[6])
 {
     int retry;
@@ -126,6 +145,21 @@ int handle_rx_arp(const uint8_t *hdr)
 {
     const arp_packet_t *req = (const arp_packet_t *)hdr;
     static arp_packet_t reply;
+
+    if (ntohl(req->arp.sender_ip) != 0 && ntohl(req->arp.sender_ip) == ms_ip_get_ip()) {
+        uint8_t mine[6];
+        int i, same = 1;
+
+        SMAPGetMACAddress(mine);
+        for (i = 0; i < 6; i++)
+            same &= req->arp.sender_mac[i] == mine[i];
+        if (!same) {
+            for (i = 0; i < 6; i++)
+                arp_conflict_mac[i] = req->arp.sender_mac[i];
+            arp_conflict = 1;
+        }
+        return -1; // never cache an entry for our own address
+    }
 
     // Learn sender's MAC/IP from any ARP packet
     if (ntohl(req->arp.sender_ip) != 0)

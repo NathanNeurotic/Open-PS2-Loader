@@ -918,26 +918,32 @@ modules/network/rapops/rapops.irx: $(RAPOPS_DEPS) | modules/network/rapops
 $(EE_ASM_DIR)rapops.c: modules/network/rapops/rapops.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ rapops_irx
 
-modules/network/udpfs_smap/udpfs_smap.irx: modules/network/udpfs_smap
-	$(MAKE) -C $<
+# The UDPFS chain (modules/network/udpfs_*): always enter the sub-makes, like bdm-submake, so an
+# edited source or header -- including the shared transport in udpfs_shared/ -- rebuilds the IRX.
+# A directory prerequisite only changes when a file is added or removed, never when one is edited.
+.PHONY: udpfs-submake
+udpfs-submake:
+
+modules/network/udpfs_smap/udpfs_smap.irx: udpfs-submake
+	$(MAKE) -C modules/network/udpfs_smap
 
 $(EE_ASM_DIR)udpfs_smap.c: modules/network/udpfs_smap/udpfs_smap.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-modules/network/udpfs_ministack/udpfs_ministack.irx: modules/network/udpfs_ministack
-	$(MAKE) -C $<
+modules/network/udpfs_ministack/udpfs_ministack.irx: udpfs-submake
+	$(MAKE) -C modules/network/udpfs_ministack
 
 $(EE_ASM_DIR)udpfs_ministack.c: modules/network/udpfs_ministack/udpfs_ministack.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-modules/network/udpfs_bd/udpfs_bd.irx: modules/network/udpfs_bd
-	$(MAKE) -C $<
+modules/network/udpfs_bd/udpfs_bd.irx: udpfs-submake
+	$(MAKE) -C modules/network/udpfs_bd
 
 $(EE_ASM_DIR)udpfs_bd.c: modules/network/udpfs_bd/udpfs_bd.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
-modules/network/udpfs_ioman/udpfs_ioman.irx: modules/network/udpfs_ioman
-	$(MAKE) -C $<
+modules/network/udpfs_ioman/udpfs_ioman.irx: udpfs-submake
+	$(MAKE) -C modules/network/udpfs_ioman
 
 $(EE_ASM_DIR)udpfs_ioman.c: modules/network/udpfs_ioman/udpfs_ioman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx

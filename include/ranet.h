@@ -22,6 +22,11 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
    refuse with a notice instead. */
 int raNetNicBusy(void);
 
+/* raNetNicBusy, or the selected network protocol is a UDP transport that has
+   not loaded yet. Menu-side RA actions use this: raising SMB first would claim
+   the one NIC and leave UDPFS/UDPBD unable to load until the next boot. */
+int raNetNicReserved(void);
+
 /* Brings the menu network up for a telemetry launch (see ranet.c). */
 void raLaunchNetworkUp(void);
 

@@ -382,6 +382,20 @@ effect** (OPL shows the usual restart-to-apply notice).
 > **Hardware note:** the UDPRDMA path (both Files and Image) is validated on emulator only so far —
 > real-PS2 confirmation is pending.
 
+### When the network game list stays empty
+
+- **Server restarted or connection dropped:** UDPFS reconnects on its own and starts a fresh
+  session, so the list returns without rebooting the PS2.
+- **Another device using the PS2's IP:** before each discovery the PS2 announces its IP. If another
+  device answers for that same address, the server's replies go to it and the list stays empty;
+  RiptOPL then shows a notice with the IP and the other device's MAC address. Pick a free PS2 IP in
+  **Network Settings** (an address outside your router's DHCP range is safest).
+- **RetroAchievements build:** while UDPFS or UDPBD is the selected protocol, RA menu actions (support
+  check, achievements browser, link test) report the network as busy instead of starting SMB, which
+  would otherwise take the network adapter until the next boot.
+- **Network adapter not detected:** if DEV9 fails to start, RiptOPL loads no network driver and
+  tries again the next time the page refreshes.
+
 ## 5. Core-aware per-game settings
 
 The per-game settings adapt to the **Loader Core** chosen for that title, so you only see

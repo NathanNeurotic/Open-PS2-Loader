@@ -161,6 +161,8 @@ jobs:
           persist-credentials: false
       - name: Check Neutrino RA handoff, network ownership and watch limits
         run: python3 .github/scripts/test_neutrino_ra.py
+      - name: Check RA menu actions leave a selected UDP transport's NIC alone
+        run: python3 .github/scripts/test_ra_nic_reserved.py
       - name: Check PS1 VCD identification, module ownership and POPS snapshot reads
         run: python3 .github/scripts/test_ra_ps1.py
       - name: Check PS1 scan recovery, launch readiness and optional IOP startup failures
@@ -255,6 +257,13 @@ jobs:
             cc -std=gnu99 -Wall -Wextra -Wno-unused-parameter -Werror -I$N/udpfs_shared/tests/stubs -I$N/$variant/src -I$N/$variant/include -I$N/udpfs_ministack/include -I$N/udpfs_smap/include $N/udpfs_shared/tests/test_udprdma_session.c -o /tmp/test_udprdma_session_$variant
             /tmp/test_udprdma_session_$variant
           done
+      - name: Check another device claiming the PS2's IP is detected and reported
+        run: |
+          N=modules/network
+          cc -std=gnu99 -Wall -Wextra -Wno-unused-parameter -Werror -I$N/udpfs_shared/tests/stubs -I$N/udpfs_ministack/include -I$N/udpfs_smap/include $N/udpfs_shared/tests/test_ministack_conflict.c -o /tmp/test_ministack_conflict
+          /tmp/test_ministack_conflict
+      - name: Check DEV9-gated UDP chains, UDPFS sub-make dependencies and the IP-conflict notice
+        run: python3 .github/scripts/test_udpfs_network_hardening.py
       - name: Check UDPFS discovery announces the PS2's IP before the server replies
         run: |
           N=modules/network

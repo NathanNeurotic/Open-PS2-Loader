@@ -16,5 +16,10 @@ $(IOP_OBJS_DIR)udprdma.o: ../udpfs_shared/src/udprdma.c
 clean::
 	rm -f -r $(IOP_BIN) $(IOP_OBJS_DIR)
 
+# Makefile.iopglobal tracks no header dependencies: rebuild every object when a header it can
+# include (or this Makefile) changes, so an incremental build never links a stale IRX.
+UDPFS_OBJ_DEPS := $(wildcard include/*.h) $(wildcard src/*.h) $(wildcard ../udpfs_smap/include/*.h) $(wildcard ../udpfs_ministack/include/*.h) Makefile
+$(addprefix $(IOP_OBJS_DIR),$(IOP_OBJS)): $(UDPFS_OBJ_DEPS)
+
 include $(PS2SDK)/samples/Makefile.pref
 include $(PS2SDK)/samples/Makefile.iopglobal

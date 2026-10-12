@@ -123,7 +123,7 @@ static void loadPage(void)
     result.state = ACH_ERROR;
     char key[68], keyPath[256], hash[33];
     int fd, length;
-    if (raNetNicBusy() || !ethEnsureSMBShareConnected()) {
+    if (raNetNicReserved() || !ethEnsureSMBShareConnected()) {
         result.state = ACH_OFFLINE;
         goto done;
     }
