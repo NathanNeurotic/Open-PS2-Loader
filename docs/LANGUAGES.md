@@ -87,6 +87,9 @@ language exists upstream as `lng_src/<Language>.yml`; to ship it, add its name t
 
 ## Optional Japanese/CJK game-title font
 
+The full [Unicode Game Titles setup and troubleshooting guide](UNICODE-GAME-TITLES.md) explains enabling the feature, the difference from `LNG/` language fonts, supported names, and limitations.
+
+
 RiptOPL already decodes UTF-8 in the text renderer. If a Japanese ISO or VCD
 filename renders as missing glyphs while the UI is in English, put an
 appropriately licensed **TrueType or OpenType font** that contains the needed
