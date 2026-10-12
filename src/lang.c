@@ -177,7 +177,7 @@ int lngAddLanguages(char *path, const char *separator, int mode)
 // An optional CJK font belongs to the settings home, NOT the selected UI
 // language. The English UI must still be able to show Japanese game filenames.
 // Do not bundle a large unlicensed font in the ELF or open it during rendering.
-static void lngInitFallbackFont(void)
+void lngInitFallbackFont(void)
 {
     static const char *const fontNames[] = {"font_CJK.ttf", "font_CJK.otf", "font_Japanese.ttf", "font_Japanese.otf"};
     const char *home = configGetHomePath();
@@ -199,7 +199,6 @@ static void lngInitFallbackFont(void)
 void lngInit(void)
 {
     fntInit();
-    lngInitFallbackFont();
 
     lngAddLanguages(gBaseMCDir, "/", -1);
 }
