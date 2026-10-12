@@ -8,3 +8,10 @@ and _retonly is defined AFTER the export table in src/exports.tab, so iopfixup d
 _retonly as a value-0 .text symbol. Same fix as udpfs_smap / smap_udpbd (commit 2139bcde). The
 export table stays POPULATED -- udpfs_bd imports its udp_* functions -- so it must NOT be emptied.
 Keep both on re-vendor.
+
+Local discovery fix: udp_packet_send_ll() sends a gratuitous ARP (arp_announce(), an ARP request
+for our own IP) before every broadcast from a bound socket -- in practice the UDPRDMA DISCOVERY.
+The server answers DISCOVERY with a unicast INFORM; if its ARP cache maps the PS2's IP to another
+MAC (stale entry, or a second device on the same address) the INFORM never arrives and the PS2
+rediscovers forever. udptty's unbound (port 0) console broadcasts are not announced. No export
+table change. Host test: ../udpfs_shared/tests/test_ministack_announce.c.

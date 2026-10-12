@@ -1,4 +1,5 @@
 #include "ministack_udp.h"
+#include "ministack_arp.h"
 #include "smap.h"
 
 #include <stdio.h>
@@ -34,6 +35,14 @@ udp_socket_t *udp_bind(uint16_t port_src, udp_port_handler handler, void *handle
 
 int udp_packet_send_ll(udp_socket_t *socket, udp_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize)
 {
+    // A broadcast from a bound socket is a UDPRDMA DISCOVERY: the server answers it with a unicast
+    // INFORM, so make sure its ARP cache maps our IP to this PS2 first. udptty broadcasts console
+    // output from an unbound socket (port 0) and is not announced.
+    if (socket->port_src != 0 &&
+        pkt->ip.addr_dst.addr[0] == 0xff && pkt->ip.addr_dst.addr[1] == 0xff &&
+        pkt->ip.addr_dst.addr[2] == 0xff && pkt->ip.addr_dst.addr[3] == 0xff)
+        arp_announce();
+
     pkt->udp.port_src = htons(socket->port_src);
     pkt->udp.len = htons(sizeof(udp_header_t) + pktdatasize + datasize);
     pkt->udp.csum = 0; // not needed

@@ -38,6 +38,10 @@ core = (shared / "udpfs_core.c").read_text()
 transport = (shared / "udprdma.c").read_text()
 assert "int udprdma_send(" in transport
 assert "int udprdma_send_ll(" in transport
-assert transport.count("if (udprdma_ack_covers(") == 2
+# Both send paths wait through the one ACK helper; it is the only ACK-coverage decision.
+assert transport.count("if (udprdma_ack_covers(") == 1
+assert transport.count("covered = _wait_ack(socket, sent_seq_nr);") == 2
+# A (re)discover restarts the session's sequence state.
+assert transport.count("_reset_session(socket);") == 1
 assert "udpfs_core_init(" in core
 print("PASS: filesystem and block UDPFS builds use identical canonical transport sources")
