@@ -19,6 +19,10 @@ void fntEnd();
  * @return font slot id (negative value means error happened) */
 int fntLoadFile(char *path, int fontSize);
 
+/** Optional glyph fallback for the built-in, translated and themed fonts.
+ * Call before the GUI starts; does not replace the selected font. */
+int fntLoadFallback(char *path);
+
 /** Reloads the default font */
 int fntLoadDefault(char *path);
 
