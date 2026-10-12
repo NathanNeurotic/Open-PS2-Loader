@@ -491,6 +491,6 @@ Rules that follow from Neutrino's design (verified against `rickgaiser/neutrino`
 
 ## RetroAchievements edition runtime
 
-The full RA install kit bundles the pinned ORBIT v1.0.2 Neutrino runtime by Daniel / danielnuld (AFL-3.0), based on Neutrino by Maximus32 and xeRAbora protocol work by hacan359. Standard kits keep ordinary upstream Neutrino. Copy the complete runtime folder, including its license and ORBIT-RA provenance files, to your chosen supported device. An RA ELF update alone does not install it.
+Both theme kits in the [dedicated RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra) bundle the pinned ORBIT v1.0.2 Neutrino runtime by Daniel / danielnuld (AFL-3.0), based on Neutrino by Maximus32 and xeRAbora protocol work by hacan359. Standard kits keep ordinary upstream Neutrino. Copy the complete runtime folder, including its license and ORBIT-RA provenance files, to your chosen supported device. An RA ELF update alone does not install it.
 
 The adapter supports Xerabora, direct watch lists of at most 1,216 bytes, and writable configuration storage. UDP storage reuses its existing network stack and currently needs static addressing, a saved watch list and a companion profile that already knows the image. Caduceus and console unlock notices are not supplied by this runtime. See the [RA setup and validation limits](RETROACHIEVEMENTS.md#neutrino-in-the-ra-edition).

@@ -93,7 +93,7 @@ compiled into any published main ELF (`EXTRA_FEATURES ?= 0`); they ship in the
 DualSense / DualShock 5 (USB) support is available prebuilt in the `RIPTOPL-VARIANTS-*.zip`
 bundle, or build your own with `make DUALSENSE=1`.
 
-**RetroAchievements** ships as its own complete package, `RIPTOPL-RetroAchievements-*.zip` (or build it with
+**RetroAchievements** has its own [single release channel](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra), containing both **inceBtion** and **Korium** themes. Choose `RIPTOPL-RetroAchievements-inceBtion-<version>.zip` or `RIPTOPL-RetroAchievements-Korium-<version>.zip` (or build it with
 `make RETROACHIEVEMENTS=1`). It is laid out like the main archive — same `POPS/`, `EMBER/`,
 `neutrino/` and shortcuts — with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/` files and
 `APP_RIPTOPL-RA.psu` in place of the standard app, plus a shortcut to
@@ -109,6 +109,7 @@ Choose the current development build or a preserved snapshot:
 | Channel | What it is |
 | --- | --- |
 | **[Rolling (Latest)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling)** | Updated from `rebuild/main` by successful publishing runs. A full, non-pre-release GitHub release that remains a **development build**, with compatibility depending on the game and hardware. |
+| **[RetroAchievements ? both themes](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)** | Separate experimental release with inceBtion and Korium kits, ELF updates and PSU saves. It never replaces standard Rolling as Latest. |
 | **[Current Fan Favorite Build](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite)** | A preserved development snapshot selected after positive user feedback. Use it as a fixed comparison point; it is not a universal compatibility guarantee. |
 
 Download the **normal installable package**, `RIPTOPL-<version>.zip`. Separate archives serve
@@ -127,12 +128,17 @@ Neutrino bundle is unavailable.
 `RIPTOPL.ELF`, for exactly that case: download it and overwrite the `RIPTOPL.ELF` you already have. Its name never changes, so
 <https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF> is a
 permanent link. It is the `-OFFICIALROLLING` flavour, and it is not a first install — the bare loader
-does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files. `RIPTOPL-RA.ELF`
-(<https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL-RA.ELF>) does the
-same for the RetroAchievements app: replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with it. Both are
-copied from `-OFFICIALROLLING` builds, so a run in which that build failed publishes neither; update
-from the matching package then. Apart from those two files, GitHub does not publish bare loader ELFs
-or separate checksum/SDK manifests in the normalized asset set.
+does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files.
+
+The [RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)
+offers `RIPTOPL-RA-inceBtion.ELF` and `RIPTOPL-RA-Korium.ELF`. Rename the selected update to
+`RIPTOPL-RA.ELF` when replacing `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`. Its standalone saves are
+`APP_RIPTOPL-RA-inceBtion.psu` and `APP_RIPTOPL-RA-Korium.psu`. Both import into `APP_RIPTOPL-RA`;
+installing the other theme replaces that app. Each full kit includes the same pinned ORBIT runtime.
+Standard Rolling and Korium releases contain standard builds only. Historical tagged downloads remain
+available. RA publication requires both themes from one source revision; failure preserves the previous
+RA release without blocking standard publication.
+
 The workflow can also publish `v*` tags, but no such stable release is currently offered here.
 
 

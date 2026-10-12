@@ -16,6 +16,15 @@ def description(name):
         "APP_RIPTOPL.psu": "Standard app for memory-card import; app files only.",
         "APP_RIPTOPL-RA.psu": "RetroAchievements app for memory-card import; app files only.",
     }
+    for theme in ("inceBtion", "Korium"):
+        if name == f"RIPTOPL-RA-{theme}.ELF":
+            return f"RetroAchievements {theme} loader update; rename to RIPTOPL-RA.ELF when replacing the installed app."
+        if name == f"APP_RIPTOPL-RA-{theme}.psu":
+            return f"RetroAchievements {theme} memory-card app; shared folders require the full kit."
+    if name == "RA-RELEASE.json":
+        return "Exact source revisions, theme patch digest, ORBIT runtime pin and asset hashes."
+    if name == "SHA256SUMS.txt":
+        return "SHA-256 checksums for the complete two-theme release."
     if name in fixed:
         return fixed[name]
     if name.endswith("-src.zip"):
@@ -36,7 +45,7 @@ def description(name):
 def staged_asset(name):
     # Match normalization's cleanup; don't advertise temporary build uploads.
     return not (
-        (name.endswith(".ELF") and name not in ("RIPTOPL.ELF", "RIPTOPL-RA.ELF"))
+        (name.endswith(".ELF") and name not in ("RIPTOPL.ELF", "RIPTOPL-RA.ELF", "RIPTOPL-RA-inceBtion.ELF", "RIPTOPL-RA-Korium.ELF"))
         or "MANIFEST" in name
         or name in ("SHA256SUMS.txt", "DETAILED_CHANGELOG")
     )
@@ -79,10 +88,12 @@ def changelog(revision, base):
 def render(assets, tag, revision, repository, server, version, neutrino, readme):
     base = f"{server.rstrip('/')}/{repository}"
     sha, changes = changelog(revision, base)
-    edition = "Rolling (Korium)" if tag == "rolling-korium" else "Rolling" if tag == "rolling" else tag
+    edition = "RetroAchievements (inceBtion & Korium)" if tag == "rolling-ra" else "Rolling (Korium)" if tag == "rolling-korium" else "Rolling" if tag == "rolling" else tag
     label = "Development build. " if tag.startswith("rolling") else ""
     if tag == "rolling-korium":
         label += "Korium Komblete built-in theme. "
+    if tag == "rolling-ra":
+        label += "Experimental opt-in release. Both themes use the same RiptOPL revision and pinned ORBIT runtime. Choose one full theme kit; their app paths are shared, so installing the other replaces the theme. "
     header = f"**RiptOPL {edition}** — {label}[{sha[:8]}]({base}/commit/{sha})"
     if version:
         header += f" · `{version}`"
@@ -134,7 +145,7 @@ def main():
         match = re.search(r"`(v[^`\n]+)`", body)
         version = version or (match[1] if match else "")
     else:
-        assets = [p.name for p in args.assets_dir.iterdir() if p.is_file() and staged_asset(p.name)]
+        assets = [p.name for p in args.assets_dir.iterdir() if p.is_file() and (args.tag == "rolling-ra" or staged_asset(p.name))]
         if not neutrino:
             parser.error("--neutrino-version is required for a new build")
     print(render(assets, args.tag, args.revision, args.repository, args.server,

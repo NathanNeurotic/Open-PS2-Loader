@@ -133,6 +133,25 @@ class ReleaseNotesTests(unittest.TestCase):
             notes.main()
         self.assertEqual(self.render(), output.getvalue())
 
+    def test_ra_channel_advertises_both_themes_and_the_checksum_manifest(self):
+        staged = self.root / "ra-assets"
+        staged.mkdir()
+        names = ["RA-RELEASE.json", "SHA256SUMS.txt"]
+        for theme in ("inceBtion", "Korium"):
+            names.extend((f"RIPTOPL-RA-{theme}.ELF", f"APP_RIPTOPL-RA-{theme}.psu",
+                          f"RIPTOPL-RetroAchievements-{theme}-test.zip"))
+        for name in names:
+            (staged / name).touch()
+        output = io.StringIO()
+        with patch.object(sys, "argv", [str(SCRIPT), "--assets-dir", str(staged),
+                                      "--tag", "rolling-ra", "--revision", "refs/tags/v-test",
+                                      "--repository", "owner/repo", "--neutrino-version", "ORBIT-v1.0.2"]), contextlib.redirect_stdout(output):
+            notes.main()
+        for name in names:
+            self.assertIn(f"[{name}]", output.getvalue())
+        self.assertIn("Experimental opt-in release", output.getvalue())
+        self.assertNotIn("/download/rolling/", output.getvalue())
+
     def test_missing_assets_or_history_fails_instead_of_silent_changelog_loss(self):
         with self.assertRaises(ValueError):
             self.render(assets=[])

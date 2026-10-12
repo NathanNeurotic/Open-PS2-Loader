@@ -322,7 +322,7 @@ jobs:
     # compiles in (ghcr.io/ps2homebrew/ps2homebrew:main) -- a separate SDK lineage from
     # ps2dev/ps2dev, so hardware reports can split toolchain effects from RiptOPL code.
     # Best-effort by design (continue-on-error): main ELF + a named DS5 loader + the
-    # OFFICIALROLLING RetroAchievements PADEMU1 loader. No full variants/debug matrix here;
+    # OFFICIALROLLING standard loader. No full variants/debug matrix here;
     # a failure must never block the required ps2dev flavour from publishing.
     continue-on-error: true
     container: ghcr.io/ps2homebrew/ps2homebrew:main
@@ -389,27 +389,6 @@ jobs:
             fi
           else
             echo "WARN: OFFICIALROLLING DUALSENSE=1 build failed; skipping DS5 asset this run" >&2
-          fi
-
-      - name: Build + stage RetroAchievements loader (OFFICIALROLLING)
-        # This is the RA source for the stable RIPTOPL-RA.ELF download and, when available,
-        # the ready-to-install APPS/APP_RIPTOPL-RA app/PSU. PADEMU=1 matches the normal
-        # release default. Keep it best-effort like the rest of the official moving flavour.
-        run: |
-          set -eu
-          mkdir -p rolling/ra
-          if make --trace clean && rm -f RIPTOPL.ELF opl.elf && \
-             make --trace RETROACHIEVEMENTS=1 PADEMU=1 LOCALVERSION=OFFICIALROLLING && \
-             [ -s RIPTOPL.ELF ]; then
-            RA_BYTES="$(wc -c < RIPTOPL.ELF)"
-            if [ "$RA_BYTES" -gt 6291456 ]; then
-              echo "WARN: OFFICIALROLLING RA loader is ${RA_BYTES} bytes (looks unpacked); skipping it." >&2
-            else
-              cp -f RIPTOPL.ELF rolling/ra/RIPTOPL-ra-pademu1-OFFICIALROLLING.ELF
-              echo "Staged OFFICIALROLLING RA PADEMU1 loader (${RA_BYTES} bytes)."
-            fi
-          else
-            echo "WARN: OFFICIALROLLING RetroAchievements PADEMU1 build failed; skipping RA asset this run." >&2
           fi
 
       - name: Upload officialsdk rolling assets
@@ -949,164 +928,36 @@ jobs:
             exit 1
           fi
 
-      - name: Pack the RIPTOPL RA package zip
+      # RA consumes this immutable run artifact, never a floating release ZIP.
+      # Its own workflow builds and publishes both themes independently.
+      - name: Record standard kit provenance for the RA workflow
+        continue-on-error: true
         run: |
-          set -eu
-          # RetroAchievements ships as its OWN installable archive, shaped like the main package
-          # zip above -- same POPS/, EMBER/, neutrino/ and PC-tool shortcuts, just a different
-          # loader. Two reasons it is not simply an entry in VARIANTS:
-          #   * VARIANTS is ~120 MB of every build permutation. "Download 120 MB and know which of
-          #     sixteen ELFs to pick" is not a way to offer somebody a feature.
-          #   * the MEGA step below excludes VARIANTS and DEBUG as diagnostic bundles, so anything
-          #     shipped there is never permanently archived.
-          # RA is opt-in: missing builds omit the RA ZIP, while a malformed staged build fails
-          # packaging instead of publishing an unusable app or PSU.
-          PKG=riptopl_pkg
-          REL="${ASSET_VERSION:-rolling}"
-          # xeRAbora, hacan359's PC client. The RA loader does nothing on its own -- the console
-          # streams memory to this and it does the talking to RetroAchievements -- so the package
-          # that ships the loader has to say where to get it. Shortcut only, like every other
-          # PC-side tool: link the maintained thing, never vendor a copy. Asserted rather than
-          # best-effort for the same reason as the Ember licence: a package that omits it hands
-          # somebody a loader with no way to use it.
-          test -f pc/xeRAbora.url
-          cp -f pc/xeRAbora.url "$PKG/xeRAbora.url"
-          if [ ! -d rolling/ra ] || [ -z "$(ls -A rolling/ra 2>/dev/null)" ]; then
-            echo "No RA builds present; skipping the RetroAchievements zip."
-          else
-            # The ordinary ZIP above is already complete. Replace this staging
-            # runtime ONLY for the RA ZIP; standard packages keep upstream Neutrino.
-            python3 .github/scripts/package_orbit_neutrino.py --destination "$PKG/neutrino"
-            # PADEMU ?= 1 is the Makefile default, so the pademu1 build is the one that matches the
-            # main package's loader and takes the plain flavour folder name. The pademu0 build sits
-            # beside it as -nopademu, mirroring how the main zip labels its flavours by folder.
-            #
-            # The alternate folders stay named ROLLING/PINNED for the two ps2dev RA builds because
-            # the longer SDK labels push -nopademu past the 31-character memory-card name limit.
-            # OFFICIALROLLING PADEMU1 is the preferred ready app and standalone ELF, not another
-            # labelled alternate folder, so APPS/APP_RIPTOPL-RA remains the clean install target.
-            case "$GITHUB_REF" in
-              refs/tags/v*) RELEASE_CHANNEL=Tagged ;;
-              *) RELEASE_CHANNEL=Rolling ;;
-            esac
-            RA_STAGED=no
-            [ -s rolling/ra/RIPTOPL-ra-pademu1-OFFICIALROLLING.ELF ] && RA_STAGED=yes
-            for sdk in PS2DEVROLLING PS2DEVPINNED; do
-              case "$sdk" in
-                PS2DEVROLLING) RA_LABEL=ROLLING ;;
-                PS2DEVPINNED) RA_LABEL=PINNED ;;
-              esac
-              for pad in 1 0; do
-                SRC="rolling/ra/RIPTOPL-ra-pademu${pad}-${sdk}.ELF"
-                [ -f "$SRC" ] || continue
-                # The RA loader must be PACKED, like the one in the main package. It shipped raw for
-                # a while because build_rolling_extras.sh passed NOT_PACKED=1 to this flavour along
-                # with the diagnostic ones: 12.2 MB against the main package's 1.46 MB, which does
-                # not fit on an 8 MB memory card at all -- and nothing complained, because an
-                # oversized ELF is still a valid ELF. Assert the size instead of trusting the flag.
-                # The packed loader is ~1.5 MB, so 6 MB leaves room to grow and still catches a raw
-                # opl.elf by a wide margin.
-                RA_BYTES="$(wc -c < "$SRC")"
-                if [ "$RA_BYTES" -gt 6291456 ]; then
-                  echo "ERROR: RA loader $SRC is ${RA_BYTES} bytes -- that is an UNPACKED build." >&2
-                  echo "       It would not fit a memory card. Check NOT_PACKED in build_rolling_extras.sh." >&2
-                  exit 1
-                fi
-                if [ "$pad" = "1" ]; then DEST_NAME="APP_RIPTOPL-RA-${RA_LABEL}"; else DEST_NAME="APP_RIPTOPL-RA-${RA_LABEL}-nopademu"; fi
-                if [ "${#DEST_NAME}" -gt 31 ]; then
-                  echo "ERROR: RA folder $DEST_NAME is ${#DEST_NAME} characters; memory card names stop at 31." >&2
-                  exit 1
-                fi
-                python3 .github/scripts/package_release_app.py stage \
-                  --package "$PKG" --source-elf "$SRC" \
-                  --app-name "$DEST_NAME" --elf-name RIPTOPL-RA.ELF \
-                  --title '[APP] Open PS2 Loader: RiptOPL RA' --pbt-title '[APP] RiptOPL RA' \
-                  --version "${ASSET_VERSION:-rolling}" --flavour "${RA_LABEL} PADEMU${pad}" \
-                  --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support'
-                # Only the selected APPS/APP_RIPTOPL-RA gets a standalone PSU. The labelled
-                # alternatives still carry the full direct-app metadata set inside APPS/ and use
-                # the RA-specific RIPTOPL-RA.ELF filename so every RA folder shares the same artwork.
-                rm -f "$PKG/${DEST_NAME}.psu"
-                RA_STAGED=yes
-              done
-            done
-            if [ "$RA_STAGED" = "no" ]; then
-              echo "WARN: rolling/ra held no recognisable ELF names; skipping the RetroAchievements zip." >&2
-            else
-              # Prefer OFFICIALROLLING PADEMU1 for the installable app so it matches the requested
-              # stable RA ELF. The existing ps2dev RA builds remain labelled fallbacks in the archive.
-              RA_INSTALL_SRC=""
-              RA_INSTALL_FLAVOUR=""
-              # Keep the installable RA app aligned with the requested standalone RA download:
-              # OFFICIALROLLING PADEMU1 first, then the existing ps2dev fallbacks.
-              for spec in \
-                'OFFICIALROLLING:1:OFFICIALROLLING PADEMU1' \
-                'PS2DEVPINNED:1:PINNED PADEMU1' \
-                'PS2DEVROLLING:1:ROLLING PADEMU1' \
-                'PS2DEVPINNED:0:PINNED PADEMU0' \
-                'PS2DEVROLLING:0:ROLLING PADEMU0'; do
-                sdk="${spec%%:*}"
-                remaining="${spec#*:}"
-                pad="${remaining%%:*}"
-                candidate="rolling/ra/RIPTOPL-ra-pademu${pad}-${sdk}.ELF"
-                if [ -s "$candidate" ]; then
-                  RA_INSTALL_SRC="$candidate"
-                  RA_INSTALL_FLAVOUR="${remaining#*:}"
-                  break
-                fi
-              done
-              if [ -z "$RA_INSTALL_SRC" ]; then
-                echo 'ERROR: RA builds were staged but none is usable for the installable app' >&2
-                exit 1
-              fi
-              python3 .github/scripts/package_release_app.py stage \
-                --package "$PKG" --source-elf "$RA_INSTALL_SRC" \
-                --app-name APP_RIPTOPL-RA --elf-name RIPTOPL-RA.ELF \
-                --title '[APP] Open PS2 Loader: RiptOPL RA' --pbt-title '[APP] RiptOPL RA' \
-                --version "${ASSET_VERSION:-rolling}" --flavour "$RA_INSTALL_FLAVOUR" \
-                --channel "$RELEASE_CHANNEL" --description 'Open PS2 Loader with RetroAchievements support'
-              "$RUNNER_TEMP/verify-psu" "$PKG/APP_RIPTOPL-RA.psu" "$PKG/APPS/APP_RIPTOPL-RA"
-              cp -f "$PKG/APP_RIPTOPL-RA.psu" rolling/APP_RIPTOPL-RA.psu
-              echo "Published standalone PSU: APP_RIPTOPL-RA.psu"
-              RA_OFFICIAL_SRC="rolling/ra/RIPTOPL-ra-pademu1-OFFICIALROLLING.ELF"
-              if [ -s "$RA_OFFICIAL_SRC" ]; then
-                cp -f "$RA_OFFICIAL_SRC" rolling/RIPTOPL-RA.ELF
-                echo "Standalone RA loader: RIPTOPL-RA.ELF == OFFICIALROLLING PADEMU1"
-              else
-                echo "WARN: OFFICIALROLLING RA loader missing; release ships without RIPTOPL-RA.ELF" >&2
-              fi
-              # The DOWNLOAD is named in full for a new user. The APP_RIPTOPL-RA-* folders inside keep
-              # the short RA name, for the memory card limit described above.
-              RA_ZIP="RIPTOPL-RetroAchievements-${REL}.zip"
-              (
-                cd "$PKG"
-                # Same payload as the main package, RA loader in place of the standard one. POPS,
-                # EMBER and the shortcuts are already staged and asserted by the step above, so a
-                # broken bundle has failed the build long before here.
-                zip -r -X "../rolling/${RA_ZIP}" APPS/APP_RIPTOPL-RA ART/RIPTOPL-RA.ELF_*.png APP_RIPTOPL-RA.psu POPS EMBER neutrino xeRAbora.url PS2-Servers.url android-udpfs-server.url OrbitPS2-Manager.url OPL-PS1-AIO-Converter-GUI.url PS2RD-CHT-Manager.url >/dev/null
-                for d in APPS/APP_RIPTOPL-RA-*; do
-                  [ -d "$d" ] && zip -r -X "../rolling/${RA_ZIP}" "$d" >/dev/null
-                done
-              )
-              echo "Built rolling/${RA_ZIP}:"
-              unzip -l "rolling/${RA_ZIP}"
-              python3 .github/scripts/package_release_app.py verify \
-                --zip "rolling/${RA_ZIP}" --source-elf "$RA_INSTALL_SRC" \
-                --app-name APP_RIPTOPL-RA --elf-name RIPTOPL-RA.ELF --ra
-              if ! unzip -p "rolling/${RA_ZIP}" neutrino/config/bsd-udpfsbd.toml | cmp -s neutrino/bsd-udpfsbd.toml -; then
-                echo "ERROR: final RetroAchievements package is missing or changed neutrino/config/bsd-udpfsbd.toml." >&2
-                exit 1
-              fi
-            fi
-          fi
-          # Remove the loose dir either way so the final 'gh release upload rolling/*' stays
-          # file-only -- the same contract the VARIANTS/DEBUG step keeps.
-          rm -rf rolling/ra 2>/dev/null || true
+          mkdir -p ra-shared-input
+          cp "rolling/RIPTOPL-${ASSET_VERSION}.zip" ra-shared-input/standard.zip
+          python3 - <<'PYCODE'
+          import hashlib, json, os
+          from pathlib import Path
+          kit = Path("ra-shared-input/standard.zip")
+          Path("ra-shared-input/INPUT.json").write_text(json.dumps({
+              "revision": os.environ["GITHUB_SHA"],
+              "version": os.environ["ASSET_VERSION"],
+              "sha256": hashlib.sha256(kit.read_bytes()).hexdigest(),
+          }, indent=2) + "\n")
+          PYCODE
+      - name: Preserve shared kit for the independent RA release
+        continue-on-error: true
+        uses: actions/upload-artifact@v6
+        with:
+          name: standard-release-kit
+          path: ra-shared-input/
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Compute SHA256 checksums
         run: |
           set -eu
-          # Run only after the standard/RA standalone ELFs and PSUs have been staged, so the
+          # Run only after the standard standalone ELF and PSU have been staged, so the
           # permanent archive manifest covers every independently downloadable binary/install file
           # as well as the exact source snapshot. release-normalize.yml later removes the floating
           # checksum file from the public GitHub asset list.

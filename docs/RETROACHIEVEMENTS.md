@@ -301,24 +301,36 @@ make clean && make RETROACHIEVEMENTS=1 release
 enumeration shared between the menu and the loader core, and make cannot see that a stale object file
 is now wrong.
 
-The rolling release publishes the flavour as its own archive, **`RIPTOPL-RetroAchievements-*.zip`**, built to the
-same shape as the main package: `POPS/`, `EMBER/`, `neutrino/` and the PC-tool shortcuts, with
-`APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/RIPTOPL-RA.ELF_*.png` artwork, and
-`APP_RIPTOPL-RA.psu`. The PSU contains only the direct files of `APP_RIPTOPL-RA`; import it with a
-PS2 save manager for a memory-card installation, then copy the other folders separately.
+The dedicated [RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)
+publishes **both inceBtion and Korium** together, from one RiptOPL source revision. Choose one:
 
-The ready app `APPS/APP_RIPTOPL-RA/` uses the official-toolchain build (`OFFICIALROLLING`,
-`PADEMU=1`) when that build succeeded, the same loader the release then also publishes on its own as
-`RIPTOPL-RA.ELF`. A run without it publishes no `RIPTOPL-RA.ELF`, and the ready app falls back to the
-labelled builds below, in the order listed. The archive keeps those labelled loader folders under
-`APPS/` for comparing builds:
+| Theme | Full kit | ELF update | Memory-card save |
+| --- | --- | --- | --- |
+| inceBtion | `RIPTOPL-RetroAchievements-inceBtion-<version>.zip` | `RIPTOPL-RA-inceBtion.ELF` | `APP_RIPTOPL-RA-inceBtion.psu` |
+| Korium | `RIPTOPL-RetroAchievements-Korium-<version>.zip` | `RIPTOPL-RA-Korium.ELF` | `APP_RIPTOPL-RA-Korium.psu` |
 
-| Folder | Build |
+Each full kit includes `POPS/`, `EMBER/`, the pinned ORBIT `neutrino/` runtime, companion shortcuts,
+matching artwork, `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` and `APP_RIPTOPL-RA.psu`.
+Both themes keep these internal app paths for existing shortcuts. Installing the other theme replaces
+the app; rename a theme-labelled loose ELF to `RIPTOPL-RA.ELF` when updating it. PSU imports contain
+only the app; copy the shared folders separately. The ready app and loose ELF use `OFFICIALROLLING`
+with `PADEMU=1`. A missing theme or failed required build prevents RA publication altogether.
+
+The labelled comparison apps inside **each** theme kit retain both ps2dev toolchains:
+
+| App | Build |
 | --- | --- |
-| `APPS/APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` (the ready app's first fallback). Start here for build comparisons. |
-| `APPS/APP_RIPTOPL-RA-ROLLING/` | `ps2dev:latest`, `PADEMU=1` |
+| `APPS/APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` |
+| `APPS/APP_RIPTOPL-RA-ROLLING/` | Moving ps2dev toolchain, `PADEMU=1` |
 | `APPS/APP_RIPTOPL-RA-PINNED-nopademu/` | Pinned ps2dev toolchain, `PADEMU=0` |
-| `APPS/APP_RIPTOPL-RA-ROLLING-nopademu/` | `ps2dev:latest`, `PADEMU=0` |
+| `APPS/APP_RIPTOPL-RA-ROLLING-nopademu/` | Moving ps2dev toolchain, `PADEMU=0` |
+
+`RA-RELEASE.json` records the common code revision, frozen Korium theme revision, theme patch digest,
+ORBIT pin and every download's SHA-256. The source snapshot includes the shared source and the exact
+Korium patch as `RA-Korium-theme.patch`. `RA-BUILD.json` in each kit records its theme and build inputs.
+PR artifacts are previews and cannot be published. The release is experimental and never becomes
+GitHub Latest. Standard Rolling and standard Korium no longer publish RA assets; their builds and
+stock Neutrino remain independent. Existing historical tagged releases are retained.
 
 The labelled folders are the two ps2dev builds, so they say `PINNED`/`ROLLING` where the main
 package says `PS2DEVPINNED`/`PS2DEVROLLING`. The names are kept short on purpose: a memory card file
