@@ -376,7 +376,8 @@ void RA_OverlayOnVblank(unsigned int frames)
     }
     if (e->magic == RA_EVENT_MAGIC && e->seq != ra_ovl_seen && e->commit == e->seq) {
         struct ra_event notice = *e;
-        if (e->seq != notice.seq || e->commit != notice.seq)
+        if (notice.magic != RA_EVENT_MAGIC || notice.commit != notice.seq ||
+            e->seq != notice.seq || e->commit != notice.seq)
             return;
         kind = notice.kind & RA_EVENT_KIND_MASK;
         ra_ovl_seen = notice.seq;

@@ -27,7 +27,15 @@ static void IGR_RequestReset(void) { resets++; }
 static char pulse_buffer[128];
 static void *RA_PulseEventBuffer(void) { return pulse_buffer; }
 static void RA_PulseOnVblank(unsigned frame) { pulses++; }
+static int race_mode;
+static void mock_after_snapshot(struct ra_event *copy, volatile struct ra_event *live) {
+ if (race_mode==1) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_RESET; }
+ if (race_mode==2) copy->commit=0; /* DMA finished after a torn copy */
+ race_mode=0;
+}
 """
+source=source.replace('struct ra_event notice = *e;',
+ 'struct ra_event notice = *e; mock_after_snapshot(&notice, (volatile struct ra_event *)e);')
 tests=r"""
 struct ra_gs_source_regs GSMSourceGSRegs;
 static unsigned char packet[30848+128] __attribute__((aligned(64)));
@@ -58,6 +66,12 @@ int main(void) {
  RA_OverlayOnVblank(214);assert(!ra_ovl_running);
  event->seq=2;event->commit=2;event->kind=RA_EVENT_RESET;RA_OverlayOnVblank(215);assert(resets==1);
  RA_OverlayOnVblank(216);assert(resets==1);
+ event->seq=3;event->commit=3;event->kind=RA_EVENT_RESET;race_mode=1;
+ RA_OverlayOnVblank(217);assert(resets==1 && ra_ovl_seen==2);
+ RA_OverlayOnVblank(218);assert(resets==2 && ra_ovl_seen==4);
+ event->seq=5;event->commit=5;race_mode=2;
+ RA_OverlayOnVblank(219);assert(resets==2 && ra_ovl_seen==4);
+ RA_OverlayOnVblank(220);assert(resets==3 && ra_ovl_seen==5);
  RA_OverlaySetPacketBuffer(NULL);assert(!draw_card());
  puts("PASS: card bounds, sliced rasterization, GIF busy guard, CT32/CT16 packet lengths, torn events, reset and Xerabora dispatch");
 }
@@ -98,7 +112,15 @@ typedef uint64_t u64;
 #define BGCOLND(c) ((void)(c))
 static int resets;
 static void IGR_RequestReset(void) { resets++; }
+static int race_mode;
+static void mock_after_snapshot(struct ra_event *copy, volatile struct ra_event *live) {
+ if (race_mode==1) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_RESET; }
+ if (race_mode==2) copy->commit=0;
+ race_mode=0;
+}
 """
+pulse=pulse.replace('struct ra_event notice = *e;',
+ 'struct ra_event notice = *e; mock_after_snapshot(&notice, (volatile struct ra_event *)e);')
 pulse_tests = r"""
 int main(void) {
  struct ra_event *e=RA_PulseEventBuffer();
@@ -114,6 +136,12 @@ int main(void) {
  RA_PulseOnVblank(65); assert(!ra_ovl_running);
  e->seq=5; e->commit=5; e->kind=RA_EVENT_RESET;
  RA_PulseOnVblank(66); RA_PulseOnVblank(67); assert(resets==1 && !ra_ovl_running);
+ e->seq=6; e->commit=6; e->kind=RA_EVENT_MAKE_UNLOCK(10); race_mode=1;
+ RA_PulseOnVblank(68); assert(resets==1 && !ra_ovl_running && ra_ovl_seen==5);
+ RA_PulseOnVblank(69); assert(resets==2 && ra_ovl_seen==7);
+ e->seq=8; e->commit=8; race_mode=2;
+ RA_PulseOnVblank(70); assert(resets==2 && ra_ovl_seen==7);
+ RA_PulseOnVblank(71); assert(resets==3 && ra_ovl_seen==8);
  puts("PASS: production pulse ignores unknown/torn events, restarts unlocks and preserves reset");
 }
 """
