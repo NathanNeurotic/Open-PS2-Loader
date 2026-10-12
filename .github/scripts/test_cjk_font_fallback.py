@@ -77,4 +77,61 @@ with tempfile.TemporaryDirectory(prefix="cjk-font-test-") as td:
         check=True,
     )
     subprocess.run([str(binary)], check=True)
-print("PASS: CJK fallback is opt-in, font-preserving and selected only for missing Unicode glyphs")
+
+    # Exercise the actual fntPrepareGlyphCachePage function with its second
+    # allocation forced to fail. The cache must remain retryable, not crash.
+    cache_function = re.search(
+        r"^static int fntPrepareGlyphCachePage\(font_t \*font, int pageid\)\n\{.*?^\}",
+        font, flags=re.M | re.S,
+    )
+    assert cache_function is not None
+    page_source = cache_function.group().replace(
+        "font->glyphCache[pageid] = malloc(",
+        "font->glyphCache[pageid] = controlled_malloc(",
+    )
+    cache_harness = r"""
+#include <assert.h>
+#include <stdlib.h>
+#include <stddef.h>
+typedef struct {
+    int isValid;
+    void *atlas;
+    void *allocation;
+} fnt_glyph_cache_entry_t;
+typedef struct {
+    fnt_glyph_cache_entry_t **glyphCache;
+    int cacheMaxPageID;
+} font_t;
+#define GLYPH_CACHE_PAGE_SIZE 256
+static int fail_malloc = 1;
+static void *controlled_malloc(size_t size)
+{
+    return fail_malloc ? NULL : malloc(size);
+}
+""" + page_source + r"""
+int main(void)
+{
+    font_t font = {NULL, -1};
+    assert(fntPrepareGlyphCachePage(&font, 0) == 0);
+    assert(font.glyphCache != NULL);
+    assert(font.glyphCache[0] == NULL);
+    fail_malloc = 0;
+    assert(fntPrepareGlyphCachePage(&font, 0) == 1);
+    assert(font.glyphCache[0] != NULL);
+    assert(font.glyphCache[0][0].isValid == 0);
+    assert(fntPrepareGlyphCachePage(&font, 0) == 1);
+    free(font.glyphCache[0]);
+    free(font.glyphCache);
+    return 0;
+}
+"""
+    cache_src = pathlib.Path(td) / "cache-oom.c"
+    cache_bin = pathlib.Path(td) / "cache-oom"
+    cache_src.write_text(cache_harness, encoding="utf-8")
+    subprocess.run(
+        ["cc", "-std=c99", "-Wall", "-Wextra", "-Werror", "-Wno-sign-compare",
+         "-o", str(cache_bin), str(cache_src)],
+        check=True,
+    )
+    subprocess.run([str(cache_bin)], check=True)
+print("PASS: CJK fallback selection and glyph-page allocation failure recovery")
