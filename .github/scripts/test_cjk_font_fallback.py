@@ -32,12 +32,13 @@ harness = r"""
 #include <stdint.h>
 #define FNT_DEFAULT 0
 #define FNT_MAX_COUNT 16
-typedef struct { int isValid, face; } font_t;
+typedef struct { int isValid; void *face; } font_t;
 static font_t fonts[FNT_MAX_COUNT];
 static int fallbackFontID = -1;
 /* Fake font: 1 = Latin + Japanese; 2 = Japanese + Greek; 3 = Latin. */
-static int FT_Get_Char_Index(int face, uint32_t cp)
+static int FT_Get_Char_Index(void *ptr, uint32_t cp)
 {
+    int face = (int)(intptr_t)ptr;
     if (face == 1) return cp == 0x3042 || cp == 'A';
     if (face == 2) return cp == 0x3042 || cp == 0x03A9;
     if (face == 3) return cp == 'A';
@@ -50,14 +51,14 @@ static font_t *resolve(font_t *font, uint32_t gid)
 }
 int main(void)
 {
-    fonts[0] = (font_t){1, 3}; /* Default Latin UI font. */
-    fonts[1] = (font_t){1, 2}; /* Optional fallback. */
+    fonts[0] = (font_t){1, (void *)(intptr_t)3}; /* Default Latin UI font. */
+    fonts[1] = (font_t){1, (void *)(intptr_t)2}; /* Optional fallback. */
     fallbackFontID = 1;
     assert(resolve(&fonts[0], 0x3042) == &fonts[1]); /* Japanese. */
     assert(resolve(&fonts[0], 0x03A9) == &fonts[1]); /* Greek. */
     assert(resolve(&fonts[0], 'A') == &fonts[0]); /* Never steal ASCII. */
     assert(resolve(&fonts[1], 0x3042) == &fonts[1]); /* No recursion. */
-    fonts[2] = (font_t){1, 1};
+    fonts[2] = (font_t){1, (void *)(intptr_t)1};
     assert(resolve(&fonts[2], 0x3042) == &fonts[2]); /* Keep active face. */
     fonts[1].isValid = 0;
     assert(resolve(&fonts[0], 0x3042) == &fonts[0]); /* Safe if unavailable. */
