@@ -265,6 +265,71 @@ def dump_index(entries: list[dict]) -> str:
 # ------------------------------------------------------------------------------------------------
 
 
+def ra_release_links(html: str, releases: bool = False) -> str:
+    """Keep RA downloads together in their dedicated two-theme channel."""
+    base = "https://github.com/NathanNeurotic/Open-PS2-Loader/releases"
+    callout = (
+        '<section class="callout info" id="ra-release-channel"><div class="h">RetroAchievements downloads</div>'
+        f'<p>The <a href="{base}/tag/rolling-ra">single experimental RetroAchievements release</a> '
+        'offers both <b>inceBtion</b> and <b>Korium</b> themes. Choose one complete theme kit. '
+        'Both use the same RiptOPL source revision and pinned ORBIT runtime. '
+        'Standard Rolling and Korium downloads contain standard builds only. '
+        'Installing the other RA theme replaces the same <code>APP_RIPTOPL-RA</code> app. '
+        'See the <a href="retroachievements.html">RA setup guide and compatibility limits</a>.</p></section>'
+    )
+    pattern = r'<section\b[^>]*\bid="ra-release-channel"[^>]*>.*?</section>'
+    if re.search(pattern, html, re.S):
+        html = re.sub(pattern, lambda _: callout, html, count=1, flags=re.S)
+    else:
+        html, count = re.subn(r'(<main\b[^>]*>)', lambda match: match[1] + "\n" + callout,
+                             html, count=1)
+        if count != 1:
+            raise ValueError("site page is missing main content for RA release links")
+    if releases:
+        # Replace complete old download rows; retain unrelated curated page text.
+        rows = {
+            "RIPTOPL-RA.ELF": (
+                '<td><code>RIPTOPL-RA-inceBtion.ELF</code>, <code>RIPTOPL-RA-Korium.ELF</code></td>'
+                '<td>Theme-specific RetroAchievements updates: '
+                f'<a href="{base}/download/rolling-ra/RIPTOPL-RA-inceBtion.ELF">inceBtion ELF</a> or '
+                f'<a href="{base}/download/rolling-ra/RIPTOPL-RA-Korium.ELF">Korium ELF</a>. '
+                'Rename the selected download to <code>RIPTOPL-RA.ELF</code> when replacing '
+                '<code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code>. Full kits install the runtime.</td>'
+            ),
+            "APP_RIPTOPL.psu": (
+                '<td><code>APP_RIPTOPL.psu</code>; RA theme saves</td><td>Standard app-only '
+                f'save from Rolling. The <a href="{base}/tag/rolling-ra">RA release</a> has '
+                '<code>APP_RIPTOPL-RA-inceBtion.psu</code> and <code>APP_RIPTOPL-RA-Korium.psu</code>. '
+                'Both RA saves import into <code>APP_RIPTOPL-RA</code>; copy shared folders from '
+                'the matching full kit separately.</td>'
+            ),
+            "RIPTOPL-RetroAchievements-*.zip": (
+                '<td><code>RIPTOPL-RetroAchievements-inceBtion-&lt;version&gt;.zip</code><br>'
+                '<code>RIPTOPL-RetroAchievements-Korium-&lt;version&gt;.zip</code></td>'
+                f'<td>Both full theme kits in <a href="{base}/tag/rolling-ra">one RA release</a>. '
+                'Each includes the ready official-toolchain app, ps2dev comparison apps, artwork, '
+                'PSU, POPS, Ember, pinned ORBIT Neutrino and companion links. '
+                'Experimental: review the <a href="retroachievements.html">setup and limits</a>.</td>'
+            ),
+        }
+        for key, row in rows.items():
+            html = re.sub(r'<tr>\s*<td><code>' + re.escape(key) + r'</code>.*?</tr>',
+                          lambda _: "<tr>" + row + "</tr>", html, count=1, flags=re.S)
+        html = html.replace('Its name never changes (the same goes for <code>RIPTOPL-RA.ELF</code> below), so',
+                            'Its name never changes, so')
+        html = re.sub(
+            r'<div class="callout info"><div class="h">At most two loose ELFs, everything else in archives</div>.*?</div>',
+            '<div class="callout info"><div class="h">Separate standard and RA downloads</div>'
+            'Standard releases retain <code>RIPTOPL.ELF</code>, their app-only PSU and install archives. '
+            'The dedicated RA release retains one ELF update and PSU per theme, both full kits, '
+            'its source snapshot, provenance and checksums. DualSense comparison loaders remain '
+            'in the standard VARIANTS archive.</div>', html, count=1, flags=re.S)
+        # Remaining references describe the installed filename, not a public asset.
+        html = html.replace(f"{base}/download/rolling/RIPTOPL-RA.ELF",
+                            f"{base}/tag/rolling-ra")
+    return html
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--site", required=True, type=Path, help="gh-pages checkout")
@@ -273,6 +338,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     stale, pending = [], {}
+    for name in ("index.html", "releases.html"):
+        page = args.site / name
+        if not page.exists():
+            continue  # Minimal test/documentation sites need not include download pages.
+        before = page.read_text(encoding="utf-8")
+        after = ra_release_links(before, releases=name == "releases.html")
+        if after != before:
+            stale.append(name)
+            pending[name] = after
+            if not args.check:
+                page.write_text(after, encoding="utf-8")
     if args.ra_md is not None:
         page = args.site / RA_PAGE
         before = page.read_text(encoding="utf-8")

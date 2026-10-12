@@ -79,13 +79,20 @@ void RA_PulseOnVblank(unsigned int frames)
     /* A new event restarts the flash, even mid-flash: two unlocks close
        together read as two pulses, not one long one. A reset event goes
        to the IGR road instead and draws nothing. */
-    if (e->magic == RA_EVENT_MAGIC && e->seq != ra_ovl_seen && e->commit == e->seq) {
-        ra_ovl_seen = e->seq;
-        if ((e->kind & RA_EVENT_KIND_MASK) == RA_EVENT_RESET) {
+    unsigned int generation = e->seq;
+    if (e->magic == RA_EVENT_MAGIC && generation != ra_ovl_seen && e->commit == generation) {
+        struct ra_event notice = *e;
+        /* SIF DMA can replace the event while it is being copied. Act only
+           on a complete snapshot, never a kind from the following event. */
+        if (notice.magic != RA_EVENT_MAGIC || notice.seq != generation || notice.commit != generation ||
+            e->seq != generation || e->commit != generation)
+            return;
+        ra_ovl_seen = notice.seq;
+        if ((notice.kind & RA_EVENT_KIND_MASK) == RA_EVENT_RESET) {
             IGR_RequestReset();
             return;
         }
-        if ((e->kind & RA_EVENT_KIND_MASK) == RA_EVENT_UNLOCK) {
+        if ((notice.kind & RA_EVENT_KIND_MASK) == RA_EVENT_UNLOCK) {
             ra_ovl_start = frames;
             ra_ovl_running = 1;
         }

@@ -27,7 +27,16 @@ static void IGR_RequestReset(void) { resets++; }
 static char pulse_buffer[128];
 static void *RA_PulseEventBuffer(void) { return pulse_buffer; }
 static void RA_PulseOnVblank(unsigned frame) { pulses++; }
+static int race_mode;
+static void mock_after_snapshot(struct ra_event *copy, volatile struct ra_event *live) {
+ if (race_mode==1) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_RESET; }
+ if (race_mode==2) copy->commit=0; /* DMA finished after a torn copy */
+ if (race_mode==3) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_MAKE_UNLOCK(10); copy->seq=live->seq; copy->commit=live->commit; }
+ race_mode=0;
+}
 """
+source=source.replace('struct ra_event notice = *e;',
+ 'struct ra_event notice = *e; mock_after_snapshot(&notice, (volatile struct ra_event *)e);')
 tests=r"""
 struct ra_gs_source_regs GSMSourceGSRegs;
 static unsigned char packet[30848+128] __attribute__((aligned(64)));
@@ -36,8 +45,10 @@ int main(void) {
  assert(RA_OverlayEventBuffer()==pulse_buffer);
  RA_OverlayOnVblank(1);assert(pulses==1);
  g_ee_core_config.raClientMode=1;
- struct ra_event *event=RA_OverlayEventBuffer();
+ assert(RA_OverlayEventBuffer()==pulse_buffer); /* opt-out / no room */
  RA_OverlaySetPacketBuffer(packet+64);
+ struct ra_event *event=RA_OverlayEventBuffer();
+ assert(event!=(struct ra_event *)pulse_buffer);
  memset(packet,0xCD,sizeof(packet));
  GSMSourceGSRegs.pmode=1;
  GSMSourceGSRegs.dispfb1=(10ull<<9);
@@ -52,14 +63,34 @@ int main(void) {
  for(int i=0;i<64;i++) assert(packet[i]==0xCD);
  for(unsigned i=64+30816;i<sizeof(packet);i++) assert(packet[i]==0xCD);
  assert(syncs>=10);
+ /* An empty FIFO is insufficient: refuse masked, paused, interrupted and
+    reverse-direction transfers as well as queued/active paths. */
+ GIF_D2_CHCR=0;
+ const unsigned blocked_bits[]={0,1,3,5,6,7,8,9,10,11,12,24,25,26,27,28};
+ for(unsigned b=0;b<sizeof(blocked_bits)/sizeof(blocked_bits[0]);b++) {
+  GIF_STAT=1u<<blocked_bits[b];GIF_D2_QWC=0;
+  assert(draw_card()==1 && GIF_D2_QWC==0 && GIF_D2_CHCR==0);
+ }
+ GIF_STAT=0;assert(draw_card()==1 && GIF_D2_QWC==1926 && GIF_D2_CHCR==0x101);
  GIF_D2_CHCR=0;GSMSourceGSRegs.dispfb1=(10ull<<9)|(2ull<<15);
  for(unsigned f=14;f<24;f++) { GIF_D2_CHCR=0;RA_OverlayOnVblank(f); }
  assert(GIF_D2_QWC==966);
  RA_OverlayOnVblank(214);assert(!ra_ovl_running);
  event->seq=2;event->commit=2;event->kind=RA_EVENT_RESET;RA_OverlayOnVblank(215);assert(resets==1);
  RA_OverlayOnVblank(216);assert(resets==1);
+ event->seq=3;event->commit=3;event->kind=RA_EVENT_RESET;race_mode=1;
+ RA_OverlayOnVblank(217);assert(resets==1 && ra_ovl_seen==2);
+ RA_OverlayOnVblank(218);assert(resets==2 && ra_ovl_seen==4);
+ event->seq=5;event->commit=5;race_mode=2;
+ RA_OverlayOnVblank(219);assert(resets==2 && ra_ovl_seen==4);
+ RA_OverlayOnVblank(220);assert(resets==3 && ra_ovl_seen==5);
+ event->seq=6;event->commit=6;event->kind=RA_EVENT_RESET;race_mode=3;
+ RA_OverlayOnVblank(221);assert(resets==3 && ra_ovl_seen==5);
+ RA_OverlayOnVblank(222);assert(resets==3 && ra_ovl_seen==7);
  RA_OverlaySetPacketBuffer(NULL);assert(!draw_card());
- puts("PASS: card bounds, sliced rasterization, GIF busy guard, CT32/CT16 packet lengths, torn events, reset and Xerabora dispatch");
+ assert(RA_OverlayEventBuffer()==pulse_buffer);
+ RA_OverlayOnVblank(221);assert(pulses==2);
+ puts("PASS: card bounds, sliced rasterization, GIF state refusal, CT32/CT16 packet lengths, torn events, reset and Xerabora dispatch");
 }
 """
 fallback_tests=r"""
@@ -76,7 +107,8 @@ with tempfile.TemporaryDirectory() as tmp:
  path=Path(tmp)
  for name, headers, body in [
   ('experimental',prefix,tests),
-  ('production',prefix.replace('#define RA_EXPERIMENTAL_CARD_DMA 1\n',''),fallback_tests),
+  ('opt_out',prefix,fallback_tests),
+  ('compile_disabled',prefix.replace('#define RA_EXPERIMENTAL_CARD_DMA 1','#define RA_EXPERIMENTAL_CARD_DMA 0'),fallback_tests),
  ]:
   (path/'test.c').write_text(headers+source+body)
   subprocess.run(['cc','-std=gnu99','-Wno-pointer-to-int-cast','-I',str(root),str(path/'test.c'),'-o',str(path/'test.exe')],check=True)
@@ -98,7 +130,16 @@ typedef uint64_t u64;
 #define BGCOLND(c) ((void)(c))
 static int resets;
 static void IGR_RequestReset(void) { resets++; }
+static int race_mode;
+static void mock_after_snapshot(struct ra_event *copy, volatile struct ra_event *live) {
+ if (race_mode==1) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_RESET; }
+ if (race_mode==2) copy->commit=0;
+ if (race_mode==3) { live->seq++; live->commit=live->seq; live->kind=RA_EVENT_MAKE_UNLOCK(10); copy->seq=live->seq; copy->commit=live->commit; }
+ race_mode=0;
+}
 """
+pulse=pulse.replace('struct ra_event notice = *e;',
+ 'struct ra_event notice = *e; mock_after_snapshot(&notice, (volatile struct ra_event *)e);')
 pulse_tests = r"""
 int main(void) {
  struct ra_event *e=RA_PulseEventBuffer();
@@ -114,6 +155,15 @@ int main(void) {
  RA_PulseOnVblank(65); assert(!ra_ovl_running);
  e->seq=5; e->commit=5; e->kind=RA_EVENT_RESET;
  RA_PulseOnVblank(66); RA_PulseOnVblank(67); assert(resets==1 && !ra_ovl_running);
+ e->seq=6; e->commit=6; e->kind=RA_EVENT_MAKE_UNLOCK(10); race_mode=1;
+ RA_PulseOnVblank(68); assert(resets==1 && !ra_ovl_running && ra_ovl_seen==5);
+ RA_PulseOnVblank(69); assert(resets==2 && ra_ovl_seen==7);
+ e->seq=8; e->commit=8; race_mode=2;
+ RA_PulseOnVblank(70); assert(resets==2 && ra_ovl_seen==7);
+ RA_PulseOnVblank(71); assert(resets==3 && ra_ovl_seen==8);
+ e->seq=9;e->commit=9;e->kind=RA_EVENT_RESET;race_mode=3;
+ RA_PulseOnVblank(72);assert(resets==3 && ra_ovl_seen==8);
+ RA_PulseOnVblank(73);assert(resets==3 && ra_ovl_seen==10 && ra_ovl_start==73);
  puts("PASS: production pulse ignores unknown/torn events, restarts unlocks and preserves reset");
 }
 """

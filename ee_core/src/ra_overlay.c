@@ -18,7 +18,10 @@
 #define GIF_D2_MADR         (*(volatile u32 *)0x1000A010)
 #define GIF_D2_QWC          (*(volatile u32 *)0x1000A020)
 #define GIF_STAT            (*(volatile u32 *)0x10003020)
-#define RA_GIF_BUSY         ((7u << 6) | (1u << 9) | (3u << 10) | (31u << 24))
+/* EE User's Manual 7.3: masked/paused or interrupted PATH3 is not idle.
+   DIR also excludes a GS-to-EE download. This is only a refusal filter;
+   it does not establish ownership of the GS's image-transfer registers. */
+#define RA_GIF_BUSY         (3u | (1u << 3) | (1u << 5) | (7u << 6) | (1u << 9) | (3u << 10) | (1u << 12) | (31u << 24))
 #define GS_REG_BITBLTBUF    0x50
 #define GS_REG_TRXPOS       0x51
 #define GS_REG_TRXREG       0x52
@@ -32,8 +35,8 @@
 #define RA_PACKET_HEADER_QW 6
 #define RA_PACKET_BYTES     (RA_PACKET_HEADER_QW * 16 + RA_CARD_W * RA_CARD_H * 4)
 /* Neither an idle GIF channel nor a DISPFB write proves the game has
-   completed its pending IMAGE transfer. Disable this unsynchronized DMA
-   path by default; allow opt-in only for controlled renderer experiments. */
+   completed its pending IMAGE transfer. The default-Off runtime opt-in
+   reaches this path only when the loader reserved a card packet. */
 /* The GS privileged display registers are write-only/unreliable to read back
    on retail hardware. GSM already has a write breakpoint that records every
    value a game sends there. RA enables that tracker in pass-through mode when
@@ -362,7 +365,7 @@ void *RA_OverlayEventBuffer(void)
     struct ra_event *e = (struct ra_event *)UNCACHED_SEG(&ra_ovl_event);
     e->magic = e->seq = e->kind = e->arg = e->commit = 0;
     ra_ovl_seen = 0;
-    if (g_ee_core_config.raClientMode == 0 || !RA_EXPERIMENTAL_CARD_DMA)
+    if (g_ee_core_config.raClientMode == 0 || !RA_EXPERIMENTAL_CARD_DMA || ra_pkt == NULL)
         return RA_PulseEventBuffer();
     return &ra_ovl_event;
 }
@@ -370,13 +373,15 @@ void RA_OverlayOnVblank(unsigned int frames)
 {
     const volatile struct ra_event *e = (const volatile struct ra_event *)UNCACHED_SEG(&ra_ovl_event);
     unsigned int kind;
-    if (g_ee_core_config.raClientMode == 0 || !RA_EXPERIMENTAL_CARD_DMA) {
+    if (g_ee_core_config.raClientMode == 0 || !RA_EXPERIMENTAL_CARD_DMA || ra_pkt == NULL) {
         RA_PulseOnVblank(frames);
         return;
     }
-    if (e->magic == RA_EVENT_MAGIC && e->seq != ra_ovl_seen && e->commit == e->seq) {
+    unsigned int generation = e->seq;
+    if (e->magic == RA_EVENT_MAGIC && generation != ra_ovl_seen && e->commit == generation) {
         struct ra_event notice = *e;
-        if (e->seq != notice.seq || e->commit != notice.seq)
+        if (notice.magic != RA_EVENT_MAGIC || notice.seq != generation || notice.commit != generation ||
+            e->seq != generation || e->commit != generation)
             return;
         kind = notice.kind & RA_EVENT_KIND_MASK;
         ra_ovl_seen = notice.seq;

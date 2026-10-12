@@ -26,11 +26,10 @@ load_end = special_reset.rindex("\n#endif")
 load_body = special_reset[load_begin:load_end]
 module_loader = function(mod, "int LoadOPLModule(int id, int mode, int arg_len, const char *args)")
 
-# Check that the normal RA ELF cannot accidentally reserve the card's workspace
-# or install its extra GS write breakpoint, even with Caduceus selected.
-assert "#define RA_EXPERIMENTAL_CARD_DMA 0" in (root / "include/ra_features.h").read_text()
+# Runtime opt-in is required before reserving card storage or installing
+# the observational GS tracker. Compile-time availability alone is insufficient.
 for path, guard in [
-    ("src/rawatch.c", "#if RA_EXPERIMENTAL_CARD_DMA\n    if (gRAMode == RA_MODE_CADUCEUS)"),
+    ("src/rawatch.c", "#if RA_EXPERIMENTAL_CARD_DMA\n    if (gRAMode == RA_MODE_CADUCEUS && gRAExperimentalCards == 1)"),
     ("ee_core/src/main.c", "#if defined(RETROACHIEVEMENTS) && RA_EXPERIMENTAL_CARD_DMA\n    if (!config->EnableGSMOp"),
     ("ee_core/src/padhook.c", "#if defined(RETROACHIEVEMENTS) && RA_EXPERIMENTAL_CARD_DMA\n        else if (config->raOverlayBuf)"),
 ]:

@@ -29,7 +29,7 @@ This selector chooses the PC service protocol; it does not enable telemetry by i
 | Mode | Menu and launch behavior |
 |---|---|
 | Xerabora | Existing xeRAbora discovery, watch-list transfer and in-game telemetry |
-| Caduceus | Signed-in session checks, compatible watch lists/telemetry, account and game achievement browsing, and in-game gold-pulse notices; the card renderer remains test-only |
+| Caduceus | Signed-in session checks, compatible watch lists/telemetry, account and game achievement browsing, and in-game gold-pulse notices by default; experimental title/points cards are an explicit opt-in |
 
 Caduceus adds a UDP **18197** catalog/session bridge (`CADQ2` / `CADR2`). Once a ready bridge is found, RiptOPL requests watch lists from the engine on that same PC at UDP **18194**. For local-device launches, the in-game module repeats bridge discovery **only against the configured SMB host IPv4 address** before contacting that PC's engine; a standalone Xerabora reply or a faster responder elsewhere on the LAN cannot substitute for the Caduceus bridge. Xerabora mode keeps automatic broadcast discovery. UDP **18195** is the console's telemetry/notice port, and UDP **18196** is its menu reply port. Permit these connections in the companion PC's firewall. Run one intended achievement service per host to avoid port conflicts. By default, Caduceus's pairing bridge uses the configured SMB server IPv4 address, never the fastest LAN responder. **Network → RA companion IP** can override it independently of the SMB and HTTP game servers; set **0.0.0.0** to retain the legacy fallback. This host is used by Caduceus pairing, support checks, link tests, in-game discovery and POPStarter. When explicitly set, Xerabora is also probed by unicast, not broadcast. A NetBIOS-only SMB address without an IPv4 fallback requires the separate RA host setting.
 
@@ -37,7 +37,23 @@ Every tracked Caduceus launch rechecks its session. If the bridge is offline or 
 
 The wire format follows [Caduceus's bridge implementation](https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts). Caduceus's bundled engine version can differ from the standalone version recommended above; protocol compatibility does not establish identical game coverage or timing. This new mode has host tests for discovery, malformed/offline replies and host selection; **Caduceus end-to-end console tracking remains unverified**. The Xerabora hardware results below apply only to the tested Xerabora configuration.
 
-Both modes retain the existing restrictions: external Neutrino and Ember launches do not load RiptOPL's telemetry core (USB POPStarter uses its own IOP reader), UDP storage owns the NIC and blocks menu RA queries **and clears loaded telemetry before an incompatible UDP-backed launch**, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. For saved watch lists launched without a fresh peer discovery, SMB/HTTP passive telemetry uses an explicitly configured RA companion IP if provided, otherwise the existing verified peer or legacy SMB/HTTP game server fallback. **In passive SMB/HTTP mode a queued receive FIFO defers telemetry snapshots**, leaving the disc stream's pending receive traffic ahead of achievement traffic. The send path is still hardware-unverified and may still interfere during continuous streaming. Choosing Caduceus does not bypass these guards or add hardcore support.
+Both modes retain the existing restrictions: Ember and ordinary/custom Neutrino launches do not load RiptOPL's telemetry core (USB POPStarter uses its own IOP reader), UDP storage owns the NIC and blocks menu RA queries **and clears loaded telemetry before an incompatible UDP-backed launch**, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. For saved watch lists launched without a fresh peer discovery, SMB/HTTP passive telemetry uses an explicitly configured RA companion IP if provided, otherwise the existing verified peer or legacy SMB/HTTP game server fallback. **In passive SMB/HTTP mode a queued receive FIFO defers telemetry snapshots**, leaving the disc stream's pending receive traffic ahead of achievement traffic. The send path is still hardware-unverified and may still interfere during continuous streaming. Choosing Caduceus does not bypass these guards or add hardcore support.
+
+### Neutrino in the RA edition
+
+The full RetroAchievements kit includes the existing **[ORBIT v1.0.2 Neutrino runtime](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2)** by **Daniel / danielnuld**, based on Neutrino by **Maximus32** and the achievement protocol by **hacan359 / xeRAbora**. Its AFL-3.0 license, exact source commit and archive SHA-256 ship beside the runtime. Standard builds and install kits retain ordinary upstream Neutrino. An ELF-only update does not install the external runtime; copy the RA kit's complete `neutrino/` folder to your chosen supported device.
+
+The RA kit's `neutrino/` is ORBIT's **RA-Neutrino**, labelled by `neutrino/RA-EDITION-NEUTRINO.txt`. It keeps the usual folder name so RA setups find it, but it is **not** the standard kit's Neutrino: ORBIT v1.0.2 is built on **Neutrino v1.8.0**, so in the RA edition every Neutrino launch, tracked or not, uses that base and lacks later upstream changes, including Neutrino cheat support. Use the standard kit for Neutrino cheats. Keep each kit's `neutrino/` with its own loader rather than mixing them.
+
+Select **RA Mode: Xerabora**, enable telemetry and set **RA companion IP** to the signed-in xeRAbora PC. ORBIT is a loader runtime, so it does not need a third RA protocol mode. Run **RA: check game support** for a local image or APA install to identify that exact image and save `RA/<serial>.wl` under its support-file prefix. xeRAbora alpha.17 persists the serial-to-hash mapping in its own configuration; keep that mapping with the companion profile. A watch list copied from another PC does not identify the game to a fresh profile. Recheck support after replacing an image, especially another revision with the same serial.
+
+On launch, RiptOPL writes `ript-ra.wl` and `ript-ra.toml` into the selected Neutrino configuration directory, honoring its effective `-cwd` and chaining the user's `-cfg` and generated cheat configuration (the v1.8.0-based runtime has no cheat engine, so the codes do not apply). That directory must be writable and remain accessible to Neutrino. The runtime can reside on any supported mounted device; a raw `hdd0:` partition path is not a filesystem directory. RiptOPL adds the RA arguments only after preparation succeeds and validates the full launch argument budget before teardown. A game without a saved watch list launches without a notice. If the two RA arguments would push the launch past Neutrino's 256-byte budget, the game launches without achievements and shows the untracked notice instead of being refused.
+
+The pinned agent accepts **direct watch entries totaling at most 1,216 snapshot bytes**. Pointer chains, larger lists, an unavailable runtime/companion address, or failed configuration writes leave the launch untracked. **Caduceus, console unlock cards/pulses and remote reset are not provided by this external runtime.** Neutrino's own IGR behavior remains governed by its settings, independently of the OPL-core Mode 6 behavior above.
+
+UDPFS/UDPBD launches reuse the runtime's storage network stack; the adapter does not load a second SMAP/ministack or open menu RA sockets. These launches currently require a **static PS2 IP**, an explicit companion address (or a previously verified peer), and a saved watch list plus a matching serial/hash mapping already known by that companion. Prepare the support check on an accessible local copy of the **same image** before using UDP storage; first-time UDP game identification is still outstanding. This is an integration candidate with host-test coverage, not current-build physical-console acceptance. ORBIT's published console results establish upstream evidence only. Test game I/O, telemetry, reconnects, IGR and both runtime locations before treating this handoff as release-validated.
+
+The ORBIT runtime watch uses the same schedule as the ordinary Neutrino watch: **05:41 UTC on the 1st, 11th and 21st of each month**. It opens or updates one compatibility-review issue when the release tag or archive digest changes. It does not automatically replace the reviewed pin.
 
 ### Caduceus achievement browser and in-game cards
 
@@ -47,9 +63,13 @@ For a local ISO, **View achievements** in the game's menu hashes the image and o
 
 The browser requires a configured, accessible SMB share containing **ART/CADUCEUS.KEY**, created by the companion service, even when games are on USB, MMCE or internal exFAT storage. The key is a 64-character pairing capability, not an RA password/API key. The service also supplies optional **ART/<icon-key>_RA.png** badge images; only the visible page is cached. Permit UDP **18198** for browser queries. Pairing requests go only to the explicit **RA companion IP**, or to the configured SMB server IPv4 address when that setting is **0.0.0.0**, never to LAN broadcast. Restrict the share to trusted devices: the LAN protocol is unencrypted. To revoke pairing, stop the service, remove its key file and restart it.
 
-Caduceus unlock notices use the existing gold pulse by default. Its experimental card renderer can display a compact upper-right achievement title and points in controlled builds; older notices without a title show the ID. Duplicate notices are suppressed, while a richer title-bearing copy can upgrade a legacy notice. Xerabora retains its gold pulse. The new card and browser are adapted from [Rian6's PS2 implementation](https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f), under AFL-3.0.
+Caduceus unlock notices use the existing gold pulse by default. Its experimental card renderer can display a compact upper-right achievement title and points when explicitly enabled; older notices without a title show the ID. Duplicate notices are suppressed, while a richer title-bearing copy can upgrade a legacy notice. Xerabora retains its gold pulse. The new card and browser are adapted from [Rian6's PS2 implementation](https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f), under AFL-3.0.
 
-**The card renderer is disabled by default until GS transfer ownership can be proven.** An idle GIF/DMA check or observed `DISPFB` write cannot guarantee that a game has finished a pending host-to-local IMAGE transfer. For controlled *developer-only* experiments, `RA_EXPERIMENTAL_CARD_DMA=1` must be set consistently in both loader and EE core. This does not create an additional release variant or a user setting. Do not enable production notification cards until safe GS transfer ownership is proven. The retained renderer uses a bounded, loader-owned packet, skips busy GIF transfers and unsupported framebuffers, and records game display writes without forcing a video mode. Normal RA builds reserve no card workspace and install no GS tracker; the optional experimental renderer reserves about 30 KiB only for Caduceus launches with a watch list. If that reservation would cross protected memory bounds, telemetry continues without the card. No host test can establish game timing or graphics compatibility. The existing network-share stability warning still applies.
+**Caduceus experimental cards defaults to Off.** In the RA build, open **Settings > Network**, select **RA Mode: Caduceus**, enable telemetry, and enable **Caduceus experimental cards** only if you accept possible flicker or game freezes. Save settings and launch a tracked PS2 game with the OPL core. The choice takes effect on the next launch and is saved as `ra_experimental_cards=1`; old configurations without that key remain Off. Xerabora always uses the gold pulse, and POPStarter PS1 unlocks remain companion-only.
+
+This is the upstream-style IMAGE renderer with additional event and GIF-state checks, not a proven safe GS ownership scheme. An idle GIF/DMA check or observed `DISPFB` write cannot guarantee that the game has finished or preserved a pending image transfer. If a game flickers or freezes with cards enabled, disable the setting before relaunching. The setting help also states this risk.
+
+With cards Off, launches reserve no card workspace and install no extra GS tracker. An opted-in tracked Caduceus launch reserves about 30 KiB in protected module storage and observes display-register writes without forcing a video mode. If there is insufficient room, unlock and reset events fall back to the existing pulse handler. The renderer skips blocked GIF states and unsupported framebuffers, but these guards do not prove graphics compatibility; a card may not appear for an unsupported display. Current-build console card rendering and real unlock acceptance remain unverified. The existing network-share stability warning still applies.
 
 ---
 
@@ -79,12 +99,38 @@ as finished.
 
 ## Using it
 
-Two settings, on the **Network** settings page:
+### First tracked game
+
+1. Start **RIPTOPL-RA.ELF** from the RetroAchievements package. The standard ELF
+   has no achievement telemetry or companion requirement.
+2. Run **xeRAbora alpha.17** on the companion PC and sign into your
+   RetroAchievements account in its Settings page. Keep the client running.
+   Account login enables unlock submission; the Web API key supplies account/library data.
+3. In RiptOPL **Settings > Network**, select **RA Mode: Xerabora**, enable
+   **RetroAchievements telemetry**, and save settings. Telemetry defaults to Off.
+   Give the PS2 usable network settings and connect it to the same LAN as the PC.
+   Set **RA companion IP** to that PC's IPv4 address to target it explicitly.
+4. For an initial PS2 image test, use USB or MMCE and select **OPL** explicitly
+   as the game's loader/core for the existing OPL telemetry path. The RA kit's ORBIT Neutrino path has the separate requirements above. Other implemented paths and their validation status are below.
+5. Open the game's menu and run **RA: test PC connection**, then **RA: check game
+   support**. The first establishes reachability; the second obtains the watch list.
+   Allow xeRAbora through the PC firewall, including inbound UDP 18194.
+6. Launch after a successful support check. Verify the companion's LIVE view
+   receives snapshots; a list badge alone does not prove in-game telemetry.
+
+Repeat the support check for each image you want to track. A missing watch list
+starts an ordinary, untracked game. An unknown hash can indicate a different
+region/dump or an unsupported set; it does not establish that the storage source
+is unsupported. Caduceus users select that service's mode and complete its sign-in
+and pairing requirements described above instead of running competing services.
+
+The telemetry and notification settings are on the **Network** settings page:
 
 | Setting | Default | Effect |
 | --- | --- | --- |
 | RetroAchievements telemetry | **Off** | The master switch. While it is off an RA build launches a game for exactly what the standard build costs — no in-game network stack, no `raudp`, no snapshots. |
 | RetroAchievements badges | On | The `RA ` prefix in the game list and the mark over the cover. Cosmetic, and it follows the master switch: badges stay dark while telemetry is off. |
+| Caduceus experimental cards | **Off** | Optional title/points cards for tracked Caduceus PS2 OPL launches. May flicker or freeze games; unavailable with Xerabora or telemetry Off. |
 
 Two actions on a game's own menu:
 
@@ -130,7 +176,7 @@ path. Disc boot, telemetry across game IOP resets and the IGR return path still 
 
 ## Which launch paths can work
 
-Telemetry lives inside OPL's own loader core, which only exists for launches OPL performs itself.
+OPL-core launches use RiptOPL's embedded telemetry. The RA kit's ORBIT Neutrino runtime and USB POPStarter use their own agents, with the separate limitations documented above.
 
 | Launch path | Supported |
 | --- | --- |
@@ -140,13 +186,12 @@ Telemetry lives inside OPL's own loader core, which only exists for launches OPL
 | MMCE | yes |
 | Physical PS2 disc, **RA: launch disc** | implemented; **not hardware-tested** |
 | HTTP | local watch-list loading is wired into OPL-core launch; combined HTTP/RA operation is not hardware-validated, and it shares the ETH/SMB risk below |
-| Neutrino core (`$CoreLoader`) | **no** |
-| UDPFS | **no** |
+| Neutrino core (`$CoreLoader`) | RA kit ORBIT runtime: Xerabora/direct watches <=1,216 bytes; current-build console acceptance pending |
+| UDPFS / UDPBD | RA kit ORBIT runtime: saved watch/companion identity and static IP required; first-time UDP identification outstanding |
 | PS1 / USB VCD (POPStarter) | **yes, experimental; console validation pending** |
 | PS1 / Ember, MMCE, APA HDD, SMB and non-USB BDM | **no** |
 
-Neutrino, UDPFS and Ember hand the console over to an external ELF and never load OPL's core, so there is
-nothing to take a snapshot from. This is structural, not an oversight.
+Neutrino and Ember hand the console over to an external ELF and never load OPL's core. The RA kit supplies ORBIT's external agent for compatible Neutrino launches; ordinary Neutrino and Ember have no achievement snapshot agent.
 
 ### Do not expect a game with achievements to run from a network share
 
@@ -229,7 +274,7 @@ The PS1 POPStarter bridge additionally follows alpha.16, and the Mode 6 snapshot
 - **Delivery guarantees retained:** 4 ms sender polling, busy/torn snapshot retries, ~1 second keepalive, and marking the staged sequence sent only after every multipart packet succeeds.
 
 > [!IMPORTANT]
-> Use **[xeRAbora v0.1.0-alpha.16](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)** with this updated RA ELF. Older RiptOPL releases retain their original paired-client requirement. Host tests and successful builds do not establish console timing or game compatibility; the alpha.10 hardware report above is historical evidence, not validation of this update.
+> Use **[xeRAbora v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)** with this updated RA ELF. Older RiptOPL releases retain their original paired-client requirement. Host tests and successful builds do not establish console timing or game compatibility; the alpha.10 hardware report above is historical evidence, not validation of this update.
 
 
 ---
@@ -258,29 +303,41 @@ make clean && make RETROACHIEVEMENTS=1 release
 enumeration shared between the menu and the loader core, and make cannot see that a stale object file
 is now wrong.
 
-The rolling release publishes the flavour as its own archive, **`RIPTOPL-RetroAchievements-*.zip`**, built to the
-same shape as the main package: `POPS/`, `EMBER/`, `neutrino/` and the PC-tool shortcuts, with
-`APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/RIPTOPL-RA.ELF_*.png` artwork, and
-`APP_RIPTOPL-RA.psu`. The PSU contains only the direct files of `APP_RIPTOPL-RA`; import it with a
-PS2 save manager for a memory-card installation, then copy the other folders separately.
+The dedicated [RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)
+publishes **both inceBtion and Korium** together, from one RiptOPL source revision. Choose one:
 
-The ready app `APPS/APP_RIPTOPL-RA/` uses the official-toolchain build (`OFFICIALROLLING`,
-`PADEMU=1`) when that build succeeded, the same loader the release then also publishes on its own as
-`RIPTOPL-RA.ELF`. A run without it publishes no `RIPTOPL-RA.ELF`, and the ready app falls back to the
-labelled builds below, in the order listed. The archive keeps those labelled loader folders under
-`APPS/` for comparing builds:
+| Theme | Full kit | ELF update | Memory-card save |
+| --- | --- | --- | --- |
+| inceBtion | `RIPTOPL-RetroAchievements-inceBtion-<version>.zip` | `RIPTOPL-RA-inceBtion.ELF` | `APP_RIPTOPL-RA-inceBtion.psu` |
+| Korium | `RIPTOPL-RetroAchievements-Korium-<version>.zip` | `RIPTOPL-RA-Korium.ELF` | `APP_RIPTOPL-RA-Korium.psu` |
 
-| Folder | Build |
+Each full kit includes `POPS/`, `EMBER/`, the pinned ORBIT `neutrino/` runtime, companion shortcuts,
+matching artwork, `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` and `APP_RIPTOPL-RA.psu`.
+Both themes keep these internal app paths for existing shortcuts. Installing the other theme replaces
+the app; rename a theme-labelled loose ELF to `RIPTOPL-RA.ELF` when updating it. PSU imports contain
+only the app; copy the shared folders separately. The ready app and loose ELF use `OFFICIALROLLING`
+with `PADEMU=1`. A missing theme or failed required build prevents RA publication altogether.
+
+The labelled comparison apps inside **each** theme kit retain both ps2dev toolchains:
+
+| App | Build |
 | --- | --- |
-| `APPS/APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` (the ready app's first fallback). Start here for build comparisons. |
-| `APPS/APP_RIPTOPL-RA-ROLLING/` | `ps2dev:latest`, `PADEMU=1` |
+| `APPS/APP_RIPTOPL-RA-PINNED/` | Pinned ps2dev toolchain, `PADEMU=1` |
+| `APPS/APP_RIPTOPL-RA-ROLLING/` | Moving ps2dev toolchain, `PADEMU=1` |
 | `APPS/APP_RIPTOPL-RA-PINNED-nopademu/` | Pinned ps2dev toolchain, `PADEMU=0` |
-| `APPS/APP_RIPTOPL-RA-ROLLING-nopademu/` | `ps2dev:latest`, `PADEMU=0` |
+| `APPS/APP_RIPTOPL-RA-ROLLING-nopademu/` | Moving ps2dev toolchain, `PADEMU=0` |
+
+`RA-RELEASE.json` records the common code revision, frozen Korium theme revision, theme patch digest,
+ORBIT pin and every download's SHA-256. The source snapshot includes the shared source and the exact
+Korium patch as `RA-Korium-theme.patch`. `RA-BUILD.json` in each kit records its theme and build inputs.
+PR artifacts are previews and cannot be published. The release is experimental and never becomes
+GitHub Latest. Standard Rolling and standard Korium no longer publish RA assets; their builds and
+stock Neutrino remain independent. Existing historical tagged releases are retained.
 
 The labelled folders are the two ps2dev builds, so they say `PINNED`/`ROLLING` where the main
 package says `PS2DEVPINNED`/`PS2DEVROLLING`. The names are kept short on purpose: a memory card file
 name stops at 31 characters, and the release workflow fails rather than ship a longer one. The
-archive also carries **`xeRAbora.url`** (pointing directly to the paired [v0.1.0-alpha.16 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)), because the loader does nothing without the PC client.
+archive also carries **`xeRAbora.url`** (pointing directly to the paired [v0.1.0-alpha.17 release](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)), because the loader does nothing without the PC client.
 
 It is deliberately *not* an entry in `RIPTOPL-VARIANTS-*.zip`: that archive is a ~120 MB bag of every
 build permutation, and the release workflow excludes it from the permanent MEGA archive as a
@@ -339,7 +396,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 | 6 | Menu check, protocol = SMB | title + counts, `.wl` written |
 | 7 | Menu check, protocol = Off | RA raises the stack, same result |
 | 8 | Menu check, protocol = UDPBD / UDPFS | clean refusal + hash written to `RA/hashes.txt`, no wedge |
-| 9 | Neutrino-core game | clean refusal, no hash attempt |
+| 9 | Local Neutrino-core game | support check hashes the image; RA kit handoff obeys direct-watch limits |
 | 10 | USB PS1/VCD entry | support check, then POPStarter telemetry after the startup delay |
 | 11 | Ember or non-USB PS1 entry | clean refusal |
 | 12 | HDD/APA entry | read-only support check maps the HDL extents; a watch list still loads |
@@ -356,7 +413,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 
 ## Notes for anyone changing this code
 
-* **Telemetry requires an OPL-core launch.** BDM, ETH/SMB, HDD/APA and MMCE have this path; HTTP also loads an existing watch list from its local settings prefix. Neutrino and Ember run external ELFs, so OPL's telemetry core does not run there. USB POPStarter uses a separate IOP telemetry module. Treat HTTP/RA interoperability as unvalidated until tested.
+* **Each loader has its own telemetry path.** BDM, ETH/SMB, HDD/APA and MMCE support the OPL-core agent; HTTP loads an existing watch list from its local settings prefix. The RA kit adds ORBIT's external Neutrino agent under the documented Xerabora/direct-watch limits. USB POPStarter uses a separate IOP module. Ordinary Neutrino and Ember remain untracked. Treat HTTP/RA interoperability and the new ORBIT handoff as unvalidated until tested.
 
 * **The badge cache belongs to the I/O thread.** `raBadgeRefresh` frees and reallocates it. Nothing
   on the render path may read it — that is why a row carries `raBadged` as a plain int, resolved

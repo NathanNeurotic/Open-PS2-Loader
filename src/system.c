@@ -48,6 +48,7 @@
 #include "include/xparam.h"
 #ifdef RETROACHIEVEMENTS
 #include "include/rawatch.h"
+#include "include/supportbase.h"
 #include "include/ranet.h"
 #include "modules/network/common/ra_snap.h"
 #endif
@@ -1643,6 +1644,156 @@ int sysNeutrinoHandCheats(const char *startup, const char *neutrinoPath, const c
     return 0;
 }
 
+#ifdef RETROACHIEVEMENTS
+// ORBIT's released runtime speaks xeRAbora. This state never enters ordinary builds.
+static char sysNeutrinoRAArg[336], sysNeutrinoRAStartup[32];
+
+static int sysNeutrinoRAWrite(const char *path, const void *data, int size)
+{
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd < 0)
+        return -1;
+    int written = write(fd, data, size);
+    int closed = close(fd);
+    if (written != size || closed < 0) {
+        unlink(path);
+        return -1;
+    }
+    return 0;
+}
+
+void sysNeutrinoPrepareRA(const char *prefix, const char *startup, const char *driver, const char *neutrinoPath, const char *extraArgs)
+{
+    char dir[256], config[320], watch[320], marker[300], userCfg[64], text[1024];
+    unsigned char ip[4], mask[4], gateway[4], peer[4];
+    unsigned int verified;
+    int fd, len, networkGame;
+    struct ra_watch_file header;
+    void *file;
+
+    sysNeutrinoRAArg[0] = '\0';
+    sysNeutrinoRAStartup[0] = '\0';
+    if (!gRATelemetry || gRAMode != RA_MODE_XERABORA || prefix == NULL || startup == NULL || driver == NULL || neutrinoPath == NULL)
+        return;
+    // A game without a saved watch list has nothing to track: launch quietly, before any runtime check
+    // could warn about it.
+    if (sbReadWatchList(prefix, startup) <= 0)
+        return;
+    // Match the effective -cwd, including user overrides, rather than assuming USB.
+    if (!neutrinoArgActiveValue(extraArgs, "-cwd=", dir, sizeof(dir))) {
+        const char *slash = sysLastPathSeparator(neutrinoPath);
+        if (slash == NULL || slash - neutrinoPath + 1 >= (int)sizeof(dir))
+            goto untracked;
+        snprintf(dir, sizeof(dir), "%.*s", (int)(slash - neutrinoPath) + 1, neutrinoPath);
+    }
+    len = strlen(dir);
+    if (len == 0 || len + 1 >= (int)sizeof(dir) || strchr(dir, '\\') != NULL || strchr(dir, '"') != NULL ||
+        (!strncmp(dir, "hdd", 3) && dir[3] >= '0' && dir[3] <= '9' && dir[4] == ':'))
+        goto untracked;
+    if (dir[len - 1] != '/' && dir[len - 1] != ':') {
+        dir[len++] = '/';
+        dir[len] = '\0';
+    }
+    // Only the pinned RA package carries this capability marker. Stock/custom runtimes
+    // continue launching normally; we never send them unknown -ra options.
+    snprintf(marker, sizeof(marker), "%sORBIT-RA.txt", dir);
+    fd = open(marker, O_RDONLY);
+    if (fd < 0)
+        goto untracked;
+    len = read(fd, text, 40);
+    close(fd);
+    if (len < 26 || memcmp(text, "RiptOPL ORBIT RA handoff v1\n", 26))
+        goto untracked;
+    snprintf(marker, sizeof(marker), "%smodules/raagent.irx", dir);
+    fd = open(marker, O_RDONLY);
+    if (fd < 0)
+        goto untracked;
+    close(fd);
+
+    // Released raagent v1.0.2 emits one packet and does not resolve chain tails.
+    // Do not present partial or silently absent telemetry as a supported launch.
+    if (GetNodeCount() != 0 || GetWatchBytes() > 1216)
+        goto untracked;
+    networkGame = !strcmp(driver, "udpfs") || !strcmp(driver, "udp") || !strcmp(driver, "udpbd") || !strcmp(driver, "udpfsbd");
+    if (networkGame) {
+        if (ps2_ip_use_dhcp)
+            goto untracked;
+        for (int i = 0; i < 4; i++)
+            ip[i] = ps2_ip[i];
+    } else {
+        // This may raise the menu network only when no UDP transport owns it.
+        raLaunchNetworkUp();
+        if (GetWatchCount() <= 0 || ethGetNetConfig(ip, mask, gateway) < 0)
+            goto untracked;
+    }
+    if (!(ip[0] | ip[1] | ip[2] | ip[3]))
+        goto untracked;
+    if (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) {
+        for (int i = 0; i < 4; i++)
+            peer[i] = gRAHostIp[i];
+    } else {
+        verified = raNetPeerIP();
+        memcpy(peer, &verified, sizeof(peer)); // socket address, already in network byte order
+    }
+    if (!(peer[0] | peer[1] | peer[2] | peer[3]) || peer[0] >= 224 || peer[0] == 127)
+        goto untracked;
+    if (sysNeutrinoCheatPath(neutrinoPath, extraArgs, config, sizeof(config)) < 0)
+        goto untracked;
+    char *base = strrchr(config, '/');
+    if (base == NULL)
+        goto untracked;
+    base[1] = '\0';
+    if (snprintf(watch, sizeof(watch), "%sript-ra.wl", config) >= (int)sizeof(watch))
+        goto untracked;
+    header.magic = RA_WATCH_MAGIC;
+    header.version = RA_WATCH_VERSION;
+    header.count = GetWatchCount();
+    header.bytes = GetWatchBytes();
+    len = sizeof(header) + header.count * sizeof(unsigned int);
+    file = malloc(len);
+    if (file == NULL)
+        goto untracked;
+    memcpy(file, &header, sizeof(header));
+    memcpy((unsigned char *)file + sizeof(header), GetWatchList(), header.count * sizeof(unsigned int));
+    int result = sysNeutrinoRAWrite(watch, file, len);
+    free(file);
+    if (result < 0)
+        goto untracked;
+    if (sysNeutrinoCheatArg[0] && !strcmp(sysNeutrinoCheatStartup, startup))
+        snprintf(userCfg, sizeof(userCfg), "%s", NEUTRINO_CHEAT_CFG);
+    else if (!neutrinoArgActiveValue(extraArgs, "-cfg=", userCfg, sizeof(userCfg)))
+        userCfg[0] = '\0';
+    if (!sysNeutrinoCfgNameSafe(userCfg) || !strcmp(userCfg, "ript-ra"))
+        goto untracked;
+    len = snprintf(text, sizeof(text), "# RiptOPL RA-only adapter for ORBIT Neutrino v1.0.2\nname = \"RiptOPL RA\"\ndepends = [");
+    if (!networkGame)
+        len += snprintf(text + len, sizeof(text) - len, "\"i_dev9_hidden\"");
+    if (userCfg[0])
+        len += snprintf(text + len, sizeof(text) - len, "%s\"%s\"", networkGame ? "" : ", ", userCfg);
+    len += snprintf(text + len, sizeof(text) - len, "]\n");
+    if (!networkGame)
+        len += snprintf(text + len, sizeof(text) - len,
+                        "[[module]]\nfile = \"smap.irx\"\nenv = [\"EE\"]\n"
+                        "[[module]]\nfile = \"ministack.irx\"\nargs = [\"ip=%u.%u.%u.%u\"]\nenv = [\"EE\"]\n",
+                        ip[0], ip[1], ip[2], ip[3]);
+    len += snprintf(text + len, sizeof(text) - len,
+                    "[[module]]\nfile = \"raagent.irx\"\nargs = [\"srv=%u.%u.%u.%u\", \"me=%u.%u.%u.%u\"]\nenv = [\"EE\"]\nload_order = 30\n",
+                    peer[0], peer[1], peer[2], peer[3], ip[0], ip[1], ip[2], ip[3]);
+    if (len >= (int)sizeof(text) || strlen(config) + strlen("ript-ra.toml") >= sizeof(config))
+        goto untracked;
+    strcat(config, "ript-ra.toml");
+    if (sysNeutrinoRAWrite(config, text, len) < 0)
+        goto untracked;
+    snprintf(sysNeutrinoRAArg, sizeof(sysNeutrinoRAArg), "-ra=%s", watch);
+    snprintf(sysNeutrinoRAStartup, sizeof(sysNeutrinoRAStartup), "%s", startup);
+    return;
+untracked:
+    LOG("[RA] ORBIT Neutrino handoff unavailable for %s; launch remains untracked\n", startup);
+    guiWarning(_l(_STR_RA_NEUTRINO_UNTRACKED), 6);
+}
+#endif
+
+
 void sysNeutrinoWarnPadEmu(config_set_t *configSet)
 {
 #ifdef PADEMU
@@ -1981,6 +2132,14 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
     // last -- is ours, which loads theirs through `depends`. Only for the game the file was written for.
     if (sysNeutrinoCheatArg[0] != '\0' && startup != NULL && !strcmp(startup, sysNeutrinoCheatStartup) && argc < argvMax)
         argv[argc++] = sysNeutrinoCheatArg;
+#ifdef RETROACHIEVEMENTS
+    if (sysNeutrinoRAArg[0] && startup != NULL && !strcmp(startup, sysNeutrinoRAStartup)) {
+        if (argc + 2 > argvMax)
+            return -1;
+        argv[argc++] = "-cfg=ript-ra";
+        argv[argc++] = sysNeutrinoRAArg;
+    }
+#endif
     if ((globalBreak || gameBreak) && argc < argvMax)
         argv[argc++] = "--b";
     argc = appendArgTokens(argv, argc, argvMax, globalArgsBuf, sizeof(globalArgsBuf), gNeutrinoArgs, 1, &globalBreak);
@@ -2030,6 +2189,18 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
 int sysNeutrinoArgsPreflight(const char *driver, const char *path, const char *startup, int compatmask, int EnablePS2Logo, const char *neutrinoPath, const char *extraArgs, int neutrinoVideo, int neutrinoGsmComp, int neutrinoBsdfs, int bdDevNr, const neutrino_vmc_args_t *vmcArgs)
 {
     int result = sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1);
+#ifdef RETROACHIEVEMENTS
+    // The RA handoff's two arguments must never cost the player the game: when they push the argv over
+    // the launch budget, drop them and launch without achievements instead of refusing.
+    if (result < 0 && result != NEUTRINO_LAUNCH_DECLINED && sysNeutrinoRAArg[0] != '\0' && startup != NULL &&
+        !strcmp(startup, sysNeutrinoRAStartup)) {
+        LOG("[RA] handoff arguments exceed the launch budget for %s; launching untracked\n", startup);
+        sysNeutrinoRAArg[0] = '\0';
+        sysNeutrinoRAStartup[0] = '\0';
+        guiWarning(_l(_STR_RA_NEUTRINO_UNTRACKED), 6);
+        result = sysRunNeutrinoLaunch(driver, path, startup, compatmask, EnablePS2Logo, neutrinoPath, extraArgs, neutrinoVideo, neutrinoGsmComp, neutrinoBsdfs, bdDevNr, vmcArgs, 1);
+    }
+#endif
     if (result == NEUTRINO_LAUNCH_DECLINED)
         return -1; // Back on the argument preview: stay in the menu, nothing to warn about
     if (result < 0) {

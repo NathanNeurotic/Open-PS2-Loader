@@ -93,7 +93,7 @@ compiled into any published main ELF (`EXTRA_FEATURES ?= 0`); they ship in the
 DualSense / DualShock 5 (USB) support is available prebuilt in the `RIPTOPL-VARIANTS-*.zip`
 bundle, or build your own with `make DUALSENSE=1`.
 
-**RetroAchievements** ships as its own complete package, `RIPTOPL-RetroAchievements-*.zip` (or build it with
+**RetroAchievements** has its own [single release channel](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra), containing both **inceBtion** and **Korium** themes. Choose `RIPTOPL-RetroAchievements-inceBtion-<version>.zip` or `RIPTOPL-RetroAchievements-Korium-<version>.zip` (or build it with
 `make RETROACHIEVEMENTS=1`). It is laid out like the main archive — same `POPS/`, `EMBER/`,
 `neutrino/` and shortcuts — with `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`, matching `ART/` files and
 `APP_RIPTOPL-RA.psu` in place of the standard app, plus a shortcut to
@@ -109,6 +109,7 @@ Choose the current development build or a preserved snapshot:
 | Channel | What it is |
 | --- | --- |
 | **[Rolling (Latest)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling)** | Updated from `rebuild/main` by successful publishing runs. A full, non-pre-release GitHub release that remains a **development build**, with compatibility depending on the game and hardware. |
+| **[RetroAchievements (both themes)](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)** | Separate experimental release with inceBtion and Korium kits, ELF updates and PSU saves. It never replaces standard Rolling as Latest. |
 | **[Current Fan Favorite Build](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite)** | A preserved development snapshot selected after positive user feedback. Use it as a fixed comparison point; it is not a universal compatibility guarantee. |
 
 Download the **normal installable package**, `RIPTOPL-<version>.zip`. Separate archives serve
@@ -127,12 +128,17 @@ Neutrino bundle is unavailable.
 `RIPTOPL.ELF`, for exactly that case: download it and overwrite the `RIPTOPL.ELF` you already have. Its name never changes, so
 <https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF> is a
 permanent link. It is the `-OFFICIALROLLING` flavour, and it is not a first install — the bare loader
-does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files. `RIPTOPL-RA.ELF`
-(<https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL-RA.ELF>) does the
-same for the RetroAchievements app: replace `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF` with it. Both are
-copied from `-OFFICIALROLLING` builds, so a run in which that build failed publishes neither; update
-from the matching package then. Apart from those two files, GitHub does not publish bare loader ELFs
-or separate checksum/SDK manifests in the normalized asset set.
+does not bring `POPS/`, `EMBER/`, `neutrino/` or the language files.
+
+The [RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra)
+offers `RIPTOPL-RA-inceBtion.ELF` and `RIPTOPL-RA-Korium.ELF`. Rename the selected update to
+`RIPTOPL-RA.ELF` when replacing `APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF`. Its standalone saves are
+`APP_RIPTOPL-RA-inceBtion.psu` and `APP_RIPTOPL-RA-Korium.psu`. Both import into `APP_RIPTOPL-RA`;
+installing the other theme replaces that app. Each full kit includes the same pinned ORBIT runtime.
+Standard Rolling and Korium releases contain standard builds only. Historical tagged downloads remain
+available. RA publication requires both themes from one source revision; failure preserves the previous
+RA release without blocking standard publication.
+
 The workflow can also publish `v*` tags, but no such stable release is currently offered here.
 
 
@@ -171,7 +177,7 @@ contains and how to pull it.
 ### Known limitations
 
 - **HTTP:** implemented and host-tested, but not yet tested on PS2 hardware. ISO only; no VMC, Neutrino or PS1. DVD9 probing is implemented but unproven. [HTTP guide](docs/HTTP.md).
-- **RetroAchievements:** a separate development package with limited PS2 telemetry hardware evidence. It supports [xeRAbora v0.1.0-alpha.16](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16) or the Caduceus companion service selected in RA Mode. PS2 telemetry uses OPL-core launches; USB PS1 VCDs through POPStarter use a separate IOP reader and still require console validation. Caduceus adds a paired account/game achievement browser; production in-game notices use the pulse, while title/points card drawing remains disabled pending safe GS ownership. Companion PC software is managed separately through PS2-Servers. Physical PS2 disc launches also need hardware validation. Keep tracked games on a local device: upstream reports that games with achievement sets stop loading about a minute into network-share play. [RA guide](docs/RETROACHIEVEMENTS.md).
+- **RetroAchievements:** a separate development package with limited PS2 telemetry hardware evidence. It supports [xeRAbora v0.1.0-alpha.17](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17) or the Caduceus companion service selected in RA Mode. PS2 telemetry uses OPL-core launches; USB PS1 VCDs through POPStarter use a separate IOP reader and still require console validation. Caduceus adds a paired account/game achievement browser; in-game notices use the pulse by default. Settings > Network offers default-Off Caduceus experimental title/points cards for tracked PS2 OPL launches; they may flicker or freeze games because safe GS ownership is unresolved. Companion PC software is managed separately through PS2-Servers. Physical PS2 disc launches also need hardware validation. Keep tracked games on a local device: upstream reports that games with achievement sets stop loading about a minute into network-share play. [RA guide](docs/RETROACHIEVEMENTS.md).
 - **iLink:** revision 2692 passed Ember on the tested SCPH-39001 but failed native OPL, Neutrino and POPSTARTER handoffs. The Neutrino `-qb` correction is implemented; a passing retest is still needed.
 - **Core switching is source-dependent:** SMB and HTTP use OPL; UDPFS/UDPBD use Neutrino. See the [source table](#introduction).
 
@@ -935,6 +941,7 @@ RiptOPL is intended to work with these maintained companion tools:
 - **[Ember](https://github.com/Gageformer/Ember)** by **[Gageformer](https://github.com/Gageformer)** — a PS1 emulator that runs natively on the PS2, used as RiptOPL's **second PS1 core** alongside POPSTARTER. Unlike the others this one is not just a shortcut: an `EMBER/` folder ships **inside** the release package, ready to drop onto a device. It is bundled unmodified under the Ember Public Beta Testing Licence (`EMBER/LICENSE-BETA.txt` in the package); releases: <https://github.com/Gageformer/Ember/releases>.
 - **[BDM-UDPFS Assault](https://github.com/Okeanos86/BDMAssault/releases)** by **[Okeanos](https://github.com/Okeanos86)** — POPSTARTER-specific BDMA drivers with read-only UDPFS fallback for VCDs, based on israpps' BDM Assault.
 - **[POPStarter](https://www.psx-place.com/resources/popstarter.683/)** by **krHACKen** — a PS1 launcher built around Sony's native **POPS** emulator for the PS2, used as RiptOPL's **primary PS1 core** alongside Ember. POPStarter provides the compatibility and launch layer for running PS1 VCDs from USB, MX4SIO, MMCE, iLink, internal HDD, and SMB; RiptOPL's iLink handoff is wired but still awaiting a passing hardware retest. The official POPStarter r13 package contains **no Sony emulator binaries, libraries, or BIOS files**; those components must be supplied separately by the user. Official download, documentation, compatibility information, and releases are maintained on **[PSX-Place](https://www.psx-place.com/resources/popstarter.683/)**.
+- **[ORBIT Neutrino RA runtime](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2)** by **[Daniel (danielnuld)](https://github.com/danielnuld)** — the existing RA-capable Neutrino runtime, bundled only in the RetroAchievements kit. Based on Neutrino by Maximus32 and xeRAbora protocol work by hacan359; AFL-3.0. The exact release, archive digest and source commit ship in `neutrino/ORBIT-RA.json`. Standard kits retain ordinary upstream Neutrino.
 - **[Neutrino](https://github.com/rickgaiser/neutrino)** by **[rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular PS2 Device Emulator"*, and RiptOPL's **second PS2 loader core** alongside OPL's own. Like Ember it is not a shortcut: a ready-to-use `neutrino/` folder ships **inside** each installable ZIP, drag-and-drop to `mc?:/neutrino/`. Neutrino is deliberately **UI-agnostic** — it has no interface of its own, which is exactly what lets a front-end like RiptOPL drive it per game. Licensed **AFL-3.0**; releases: <https://github.com/rickgaiser/neutrino/releases>.
 - **[PSUManager](https://git.techwritescode.dev/techwritescode/PSUManager)** by **techwritescode** — the CC0 PS2 save-container implementation used by RiptOPL release tooling to independently validate `APP_RIPTOPL.psu` and `APP_RIPTOPL-RA.psu`. The exact upstream core and license used by CI are preserved in `third_party/PSUManager/`.
 - **[RIPPS2](https://github.com/akilluminati47/RIPPS2)** by **Akilluminati47** is our daughter project: a PS2-inspired front end with a **[web-theme beta](https://akilluminati47.github.io/RIPPS2/)**. A custom OPL theme and `RIPPS2.elf` are planned next; the project is still alpha, but we recommend it as an alternative with features intended to be on par with RiptOPL. Coming next: **ps2build with a C++ edition**, in collaboration with **[techwritescode](https://git.techwritescode.dev/techwritescode/PSUManager)**.
@@ -976,7 +983,7 @@ With special and sincere thanks to:
 - **bbsan2k** — for the **MMCE (Memory Card Mass Storage) protocol** that makes SD-via-memory-card
   loading through the PS2's memory-card slot possible. OPL's MMCE support builds directly on it.
 - **hacan359 (yoba)** — for **RetroAchievements on real PS2 hardware** and the
-  **[xeRAbora PC client (v0.1.0-alpha.16)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.16)** (MIT). The console identifies the
+  **[xeRAbora PC client (v0.1.0-alpha.17)](https://github.com/hacan359/xerabora/releases/tag/v0.1.0-alpha.17)** (MIT). The console identifies the
   game and streams the memory addresses its achievements watch; xeRAbora handles rcheevos, the
   RetroAchievements service, and login. RiptOPL implements the published wire protocol in its
   `RIPTOPL-RetroAchievements-*.zip` build, which includes a shortcut to xeRAbora.

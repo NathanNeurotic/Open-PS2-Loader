@@ -1784,3 +1784,13 @@ gui_strings:
 
 - label: VMC_CREATE_FAILED
   string: "Could not create the VMC. Check the device, connection and write access. Existing saves were not replaced."
+
+- label: RA_EXPERIMENTAL_CARDS
+  string: "Caduceus experimental cards"
+
+- label: HINT_RA_EXPERIMENTAL_CARDS
+  string: "Experimental PS2 in-game achievement cards. May flicker or freeze games. Caduceus only; Off uses the gold pulse. Takes effect on the next game launch."
+
+# ORBIT external runtime handoff is confined to the RA edition.
+- label: RA_NEUTRINO_UNTRACKED
+  string: "Neutrino RA is unavailable for this launch. Check the RA runtime, companion IP and saved watch list. Launching without achievements."
