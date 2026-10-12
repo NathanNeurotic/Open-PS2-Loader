@@ -33,6 +33,14 @@ LOCAL CHANGES vs upstream (re-apply after re-vendoring):
     src/ tree is shared verbatim with udpfs_bd (same udprdma/udpfs_core/main.c/imports.lst,
     which are already multi-variant via FEATURE_UDPFS_* #ifdefs); only udpfs_ioman.c differs
     from udpfs_bd.c, and the Makefile flag + IOP_BIN + MODNAME select the variant.
+  - udprdma.c (udpfs_shared/src, both variants): a successful (re)discover restarts TX/RX
+    sequence state at 0. Upstream connects once, so it never carried a dead session's numbers
+    into a new one; with our watchdog it did, and a server that reset its session on DISCOVERY
+    (PS2-Servers, or any server restart) NACKed every request -> timeout -> rediscover, forever.
+  - udprdma.c: a stale ACK keeps waiting for the covering ACK on the same timer instead of
+    spending a retry and resending. (Upstream's check is always true and compiles away, so the
+    release IRX accepts any ACK; our 09-20 real check resent on stale ACKs and dropped sessions
+    on lossy links.) Host test: udpfs_shared/tests/test_udprdma_session.c.
   - mprintf.h copied from neutrino iop/common/ (smap/udpfs pull it from -I../common upstream;
     ministack ships its own).
   - src/*.c and src/*.h reformatted with the repo clang-format (CI-format-check lints every
