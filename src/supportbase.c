@@ -2426,7 +2426,7 @@ void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, neut
   deliberately quiet and its result is advisory. Returns the entry count, or
   negative when there is no usable list.
 */
-int sbLoadWatchList(const char *path, const char *file)
+int sbReadWatchList(const char *path, const char *file)
 {
     static const char *wlExt[] = {"wl", "WL"};
     unsigned int ext;
@@ -2447,9 +2447,14 @@ int sbLoadWatchList(const char *path, const char *file)
 
     if (result < 0)
         LOG("RA: no watch list for %s under %sRA/\n", file, path);
-    else
-        raLaunchNetworkUp(); // the in-game DEV9 driver needs the adapter already up
+    return result;
+}
 
+int sbLoadWatchList(const char *path, const char *file)
+{
+    int result = sbReadWatchList(path, file);
+    if (result >= 0)
+        raLaunchNetworkUp();
     return result;
 }
 

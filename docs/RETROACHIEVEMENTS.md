@@ -37,7 +37,21 @@ Every tracked Caduceus launch rechecks its session. If the bridge is offline or 
 
 The wire format follows [Caduceus's bridge implementation](https://github.com/Rian6/caduceus/blob/311f4eabc4ddaad649cbd0d60859f27d0ffcbbfc/electron/caduceus-ra-bridge.ts). Caduceus's bundled engine version can differ from the standalone version recommended above; protocol compatibility does not establish identical game coverage or timing. This new mode has host tests for discovery, malformed/offline replies and host selection; **Caduceus end-to-end console tracking remains unverified**. The Xerabora hardware results below apply only to the tested Xerabora configuration.
 
-Both modes retain the existing restrictions: external Neutrino and Ember launches do not load RiptOPL's telemetry core (USB POPStarter uses its own IOP reader), UDP storage owns the NIC and blocks menu RA queries **and clears loaded telemetry before an incompatible UDP-backed launch**, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. For saved watch lists launched without a fresh peer discovery, SMB/HTTP passive telemetry uses an explicitly configured RA companion IP if provided, otherwise the existing verified peer or legacy SMB/HTTP game server fallback. **In passive SMB/HTTP mode a queued receive FIFO defers telemetry snapshots**, leaving the disc stream's pending receive traffic ahead of achievement traffic. The send path is still hardware-unverified and may still interfere during continuous streaming. Choosing Caduceus does not bypass these guards or add hardcore support.
+Both modes retain the existing restrictions: Ember and ordinary/custom Neutrino launches do not load RiptOPL's telemetry core (USB POPStarter uses its own IOP reader), UDP storage owns the NIC and blocks menu RA queries **and clears loaded telemetry before an incompatible UDP-backed launch**, and SMB/HTTP never let RA drain the game's receive descriptors or poll its sockets. In those modes RA observes notices already received by the normal SMAP driver and uses the known host's ARP entry for transmission. Missing host/MAC disables telemetry rather than disturbing game I/O. For saved watch lists launched without a fresh peer discovery, SMB/HTTP passive telemetry uses an explicitly configured RA companion IP if provided, otherwise the existing verified peer or legacy SMB/HTTP game server fallback. **In passive SMB/HTTP mode a queued receive FIFO defers telemetry snapshots**, leaving the disc stream's pending receive traffic ahead of achievement traffic. The send path is still hardware-unverified and may still interfere during continuous streaming. Choosing Caduceus does not bypass these guards or add hardcore support.
+
+### Neutrino in the RA edition
+
+The full RetroAchievements kit includes the existing **[ORBIT v1.0.2 Neutrino runtime](https://github.com/danielnuld/ps2-launcher/releases/tag/v1.0.2)** by **Daniel / danielnuld**, based on Neutrino by **Maximus32** and the achievement protocol by **hacan359 / xeRAbora**. Its AFL-3.0 license, exact source commit and archive SHA-256 ship beside the runtime. Standard builds and install kits retain ordinary upstream Neutrino. An ELF-only update does not install the external runtime; copy the RA kit's complete `neutrino/` folder to your chosen supported device.
+
+Select **RA Mode: Xerabora**, enable telemetry and set **RA companion IP** to the signed-in xeRAbora PC. ORBIT is a loader runtime, so it does not need a third RA protocol mode. Run **RA: check game support** for a local image or APA install to identify that exact image and save `RA/<serial>.wl` under its support-file prefix. xeRAbora alpha.17 persists the serial-to-hash mapping in its own configuration; keep that mapping with the companion profile. A watch list copied from another PC does not identify the game to a fresh profile. Recheck support after replacing an image, especially another revision with the same serial.
+
+On launch, RiptOPL writes `ript-ra.wl` and `ript-ra.toml` into the selected Neutrino configuration directory, honoring its effective `-cwd` and chaining the user's `-cfg` and generated cheat configuration. That directory must be writable and remain accessible to Neutrino. The runtime can reside on any supported mounted device; a raw `hdd0:` partition path is not a filesystem directory. RiptOPL adds the RA arguments only after preparation succeeds and validates the full launch argument budget before teardown.
+
+The pinned agent accepts **direct watch entries totaling at most 1,216 snapshot bytes**. Pointer chains, larger lists, an unavailable runtime/companion address, or failed configuration writes leave the launch untracked. **Caduceus, console unlock cards/pulses and remote reset are not provided by this external runtime.** Neutrino's own IGR behavior remains governed by its settings, independently of the OPL-core Mode 6 behavior above.
+
+UDPFS/UDPBD launches reuse the runtime's storage network stack; the adapter does not load a second SMAP/ministack or open menu RA sockets. These launches currently require a **static PS2 IP**, an explicit companion address (or a previously verified peer), and a saved watch list plus a matching serial/hash mapping already known by that companion. Prepare the support check on an accessible local copy of the **same image** before using UDP storage; first-time UDP game identification is still outstanding. This is an integration candidate with host-test coverage, not current-build physical-console acceptance. ORBIT's published console results establish upstream evidence only. Test game I/O, telemetry, reconnects, IGR and both runtime locations before treating this handoff as release-validated.
+
+The ORBIT runtime watch uses the same schedule as the ordinary Neutrino watch: **05:41 UTC on the 1st, 11th and 21st of each month**. It opens or updates one compatibility-review issue when the release tag or archive digest changes. It does not automatically replace the reviewed pin.
 
 ### Caduceus achievement browser and in-game cards
 
@@ -95,8 +109,7 @@ as finished.
    Give the PS2 usable network settings and connect it to the same LAN as the PC.
    Set **RA companion IP** to that PC's IPv4 address to target it explicitly.
 4. For an initial PS2 image test, use USB or MMCE and select **OPL** explicitly
-   as the game's loader/core. An inherited Neutrino default does not load this
-   telemetry core. Other implemented paths and their validation status are below.
+   as the game's loader/core for the existing OPL telemetry path. The RA kit's ORBIT Neutrino path has the separate requirements above. Other implemented paths and their validation status are below.
 5. Open the game's menu and run **RA: test PC connection**, then **RA: check game
    support**. The first establishes reachability; the second obtains the watch list.
    Allow xeRAbora through the PC firewall, including inbound UDP 18194.
@@ -370,7 +383,7 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 | 6 | Menu check, protocol = SMB | title + counts, `.wl` written |
 | 7 | Menu check, protocol = Off | RA raises the stack, same result |
 | 8 | Menu check, protocol = UDPBD / UDPFS | clean refusal + hash written to `RA/hashes.txt`, no wedge |
-| 9 | Neutrino-core game | clean refusal, no hash attempt |
+| 9 | Local Neutrino-core game | support check hashes the image; RA kit handoff obeys direct-watch limits |
 | 10 | USB PS1/VCD entry | support check, then POPStarter telemetry after the startup delay |
 | 11 | Ember or non-USB PS1 entry | clean refusal |
 | 12 | HDD/APA entry | read-only support check maps the HDL extents; a watch list still loads |

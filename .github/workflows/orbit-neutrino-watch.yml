@@ -1,0 +1,52 @@
+name: ORBIT Neutrino RA Watch
+
+on:
+  schedule:
+    # Same schedule as neutrino-watch.yml. New runtimes need compatibility review.
+    - cron: "41 5 1,11,21 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: orbit-neutrino-watch
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check the RA runtime pin against ORBIT's release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/danielnuld/ps2-launcher/releases/latest > "$RUNNER_TEMP/orbit-release.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          pin = json.loads(Path('third_party/orbit-neutrino/release.json').read_text())
+          release = json.loads((Path(os.environ['RUNNER_TEMP']) / 'orbit-release.json').read_text())
+          assets = [a for a in release['assets'] if a['name'].startswith('ORBIT-') and a['name'].endswith('.zip')]
+          changed = release['tag_name'] != pin['tag'] or not any(a.get('digest') == 'sha256:' + pin['sha256'] for a in assets)
+          (Path(os.environ['RUNNER_TEMP']) / 'orbit-changed').write_text('1' if changed else '0')
+          (Path(os.environ['RUNNER_TEMP']) / 'orbit-update.md').write_text(
+              'An upstream ORBIT release differs from our pinned RA-only Neutrino runtime.\n\n'
+              + 'Pinned: ' + pin['tag'] + '\nLatest: ' + release['tag_name'] + '\n\n'
+              + release['html_url'] + '\n\n'
+              + 'Review the archive digest, runtime handoff, snapshot/pointer-chain limits, network module '
+              + 'ordering, IGR and ordinary-package isolation before updating third_party/orbit-neutrino/release.json. '
+              + 'Do not replace the ordinary upstream Neutrino bundle.\n')
+          PY
+          if [ "$(cat "$RUNNER_TEMP/orbit-changed")" = 1 ]; then
+            existing="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search '"ORBIT Neutrino RA runtime update" in:title' --json number --jq '.[0].number // empty')"
+            if [ -n "$existing" ]; then
+              gh issue edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/orbit-update.md"
+            else
+              gh issue create --repo "$GITHUB_REPOSITORY" --title 'ORBIT Neutrino RA runtime update' --body-file "$RUNNER_TEMP/orbit-update.md"
+            fi
+          fi

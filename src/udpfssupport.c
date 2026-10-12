@@ -808,6 +808,9 @@ static void udpfsLaunchGame(item_list_t *itemList, int id, config_set_t *configS
     // Cheats: loaded above (sbLoadCheats) and handed to Neutrino here. Backing out stays in the menu.
     if (sysNeutrinoHandCheats(game->startup, neutrinoPath, neutrinoExtraArgs) < 0)
         return;
+#ifdef RETROACHIEVEMENTS
+    sysNeutrinoPrepareRA(udpfsPrefix, game->startup, "udpfs", neutrinoPath, neutrinoExtraArgs);
+#endif
     if (sysNeutrinoArgsPreflight("udpfs", partname, game->startup, compatmask, EnablePS2Logo, neutrinoPath, neutrinoExtraArgs, neutrinoVideo, neutrinoGsmComp, 0, -1, &neutrinoVmc) < 0)
         return;
 

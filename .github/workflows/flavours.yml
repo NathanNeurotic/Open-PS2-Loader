@@ -144,6 +144,8 @@ jobs:
           persist-credentials: false
       - name: Check compact release notes and changelog
         run: python3 .github/scripts/test_release_notes.py
+      - name: Check pinned ORBIT extraction and RA package isolation
+        run: python3 .github/scripts/test_package_orbit_neutrino.py
       - name: Check a rolling publish never leaves the release missing files when GitHub fails mid-way
         run: python3 .github/scripts/test_rolling_publish_order.py
 
@@ -153,6 +155,8 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Check Neutrino RA handoff, network ownership and watch limits
+        run: python3 .github/scripts/test_neutrino_ra.py
       - name: Check PS1 VCD identification, module ownership and POPS snapshot reads
         run: python3 .github/scripts/test_ra_ps1.py
       - name: Check PS1 scan recovery, launch readiness and optional IOP startup failures
@@ -356,15 +360,16 @@ jobs:
             grep -q ' raCaduceusPage$' menu-symbols.txt
             grep -q ' gRAMode$' menu-symbols.txt
             grep -q ' gRAExperimentalCards$' menu-symbols.txt
+            grep -q ' sysNeutrinoPrepareRA$' menu-symbols.txt
             grep -q ' raPopsPrepare$' menu-symbols.txt
             grep -q ' rapops_irx$' menu-symbols.txt
             grep -q ' RA_OverlayOnVblank$' core-symbols.txt
           else
-            if grep -E ' (RA_[A-Za-z0-9_]*|ra[A-Z][A-Za-z0-9_]*|ach[A-Z][A-Za-z0-9_]*|gRA[A-Za-z0-9_]*|bdmModeIsUSB|rapops_irx|size_rapops_irx|raudp_irx|size_raudp_irx)$' menu-symbols.txt core-symbols.txt; then
+            if grep -E ' (RA_[A-Za-z0-9_]*|ra[A-Z][A-Za-z0-9_]*|ach[A-Z][A-Za-z0-9_]*|gRA[A-Za-z0-9_]*|bdmModeIsUSB|rapops_irx|size_rapops_irx|raudp_irx|size_raudp_irx|sysNeutrinoPrepareRA|sysNeutrinoRA[A-Za-z0-9_]*)$' menu-symbols.txt core-symbols.txt; then
               echo 'RA implementation leaked into a standard ELF' >&2
               exit 1
             fi
-            if LC_ALL=C grep -aE 'Caduceus|Xerabora|CADUCEUS.KEY' opl.elf ee_core/ee_core.elf; then
+            if LC_ALL=C grep -aE 'Caduceus|Xerabora|CADUCEUS.KEY|ORBIT-RA|ript-ra' opl.elf ee_core/ee_core.elf; then
               echo 'RA client text leaked into a standard ELF' >&2
               exit 1
             fi

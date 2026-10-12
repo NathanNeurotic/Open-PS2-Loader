@@ -21,7 +21,7 @@ def description(name):
     if name.endswith("-src.zip"):
         return "Source code snapshot."
     for prefix, text in (
-        ("RIPTOPL-RetroAchievements-", "Full RetroAchievements kit: loader, artwork, PSU and shared cores; requires xeRAbora v0.1.0-alpha.17."),
+        ("RIPTOPL-RetroAchievements-", "Full RetroAchievements kit: loader, artwork, PSU, POPStarter, Ember and pinned ORBIT Neutrino v1.0.2 (RA-only); requires xeRAbora v0.1.0-alpha.17."),
         ("RIPTOPL-RA-", "RetroAchievements package."),
         ("RIPTOPL-VARIANTS-", "Alternative loaders with extra features, controller emulation and DualSense support."),
         ("RIPTOPL-DEBUG-", "Debug loaders for troubleshooting."),

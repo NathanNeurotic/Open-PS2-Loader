@@ -974,6 +974,9 @@ jobs:
           if [ ! -d rolling/ra ] || [ -z "$(ls -A rolling/ra 2>/dev/null)" ]; then
             echo "No RA builds present; skipping the RetroAchievements zip."
           else
+            # The ordinary ZIP above is already complete. Replace this staging
+            # runtime ONLY for the RA ZIP; standard packages keep upstream Neutrino.
+            python3 .github/scripts/package_orbit_neutrino.py --destination "$PKG/neutrino"
             # PADEMU ?= 1 is the Makefile default, so the pademu1 build is the one that matches the
             # main package's loader and takes the plain flavour folder name. The pademu0 build sits
             # beside it as -nopademu, mirroring how the main zip labels its flavours by folder.

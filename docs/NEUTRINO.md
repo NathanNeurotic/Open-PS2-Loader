@@ -488,3 +488,9 @@ Rules that follow from Neutrino's design (verified against `rickgaiser/neutrino`
   and the advertised card geometry is hardcoded (8192 pages ≈ first 4 MB of the image addressed)
   rather than read from the card file. Both are Neutrino-side behaviors, not OPL's; prefer slot 1
   and 8 MB cards for predictable results.
+
+## RetroAchievements edition runtime
+
+The full RA install kit bundles the pinned ORBIT v1.0.2 Neutrino runtime by Daniel / danielnuld (AFL-3.0), based on Neutrino by Maximus32 and xeRAbora protocol work by hacan359. Standard kits keep ordinary upstream Neutrino. Copy the complete runtime folder, including its license and ORBIT-RA provenance files, to your chosen supported device. An RA ELF update alone does not install it.
+
+The adapter supports Xerabora, direct watch lists of at most 1,216 bytes, and writable configuration storage. UDP storage reuses its existing network stack and currently needs static addressing, a saved watch list and a companion profile that already knows the image. Caduceus and console unlock notices are not supplied by this runtime. See the [RA setup and validation limits](RETROACHIEVEMENTS.md#neutrino-in-the-ra-edition).

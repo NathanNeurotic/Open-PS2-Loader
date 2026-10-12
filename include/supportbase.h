@@ -149,6 +149,8 @@ void sbBuildVmcNeutrinoArgs(config_set_t *configSet, const char *vmcPrefix, neut
 // RA: load this game's watch list from <path>RA/<file>.wl. Mirrors sbLoadCheats'
 // shape (256-byte path, both extension cases). A missing list is not an error.
 int sbLoadWatchList(const char *path, const char *file);
+/* Reads without raising a competing network stack (external ORBIT runtime). */
+int sbReadWatchList(const char *path, const char *file);
 
 // RA: the hash log, <path>RA/hashes.txt. Open before hashing, close after:
 // raHashStep and ranet.c drop their crumbs into whatever log is open.

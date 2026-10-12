@@ -104,4 +104,9 @@ int sysCheckVMC(const char *prefix, const char *sep, char *name, int createSize,
 // (mmce, APA/pfs, SMB, udpfs) and must be treated as silence -- never as a pass or a failure.
 int sysVMCContiguity(void);
 
+#ifdef RETROACHIEVEMENTS
+/* Prepare ORBIT's external-runtime handoff before argv preflight and teardown. */
+void sysNeutrinoPrepareRA(const char *prefix, const char *startup, const char *driver, const char *neutrinoPath, const char *extraArgs);
+#endif
+
 #endif
