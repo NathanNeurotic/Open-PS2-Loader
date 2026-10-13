@@ -15,6 +15,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "include/opl.h"
 #include "include/iosupport.h"
@@ -196,11 +197,13 @@ static fav_raw_t *favReadWoplFile(int fd, int *outCount)
 
 // Read + bounds-check the whole file into a heap array of raw records. Returns NULL (and
 // *outCount = 0) on any error/corruption. Caller frees the array.
-static fav_raw_t *favReadFile(int *outCount)
+/* Reads one favourites file. *complete is 1 only for an OFAV file whose every announced record was
+   read (an empty list counts); a file cut short still yields the records it has, with *complete 0.
+   allowImport lets a header-less file be imported as a uOPL/wOPL list (favourites.bin only). */
+static fav_raw_t *favReadPath(const char *path, int *outCount, int *complete, int allowImport)
 {
-    char path[256];
     *outCount = 0;
-    favGetFilePath(path, sizeof(path));
+    *complete = 0;
 
     int fd = open(path, O_RDONLY);
     if (fd < 0)
@@ -210,6 +213,10 @@ static fav_raw_t *favReadFile(int *outCount)
     u16 ver = 0, cnt = 0;
     int hdrOk = rdU32(fd, &magic) && rdU16(fd, &ver) && rdU16(fd, &cnt);
     if (!hdrOk || magic != FAV_MAGIC) {
+        if (!allowImport) {
+            close(fd);
+            return NULL;
+        }
         // No OFAV header -> this may be a uOPL/wOPL favourites.bin in the shared OPL dir.
         // Rewind and import it read-only so favourites carry over from those builds.
         LOG("FAV: no OFAV header (magic=%08x) -- attempting uOPL/wOPL import\n", (unsigned)magic);
@@ -230,6 +237,7 @@ static fav_raw_t *favReadFile(int *outCount)
     }
     if (cnt == 0) {
         close(fd);
+        *complete = 1; // a saved empty list
         return NULL;
     }
     if (cnt > FAV_MAX_ITEMS)
@@ -278,12 +286,31 @@ static fav_raw_t *favReadFile(int *outCount)
     }
     close(fd);
 
+    *complete = got == (int)cnt;
     if (got == 0) {
         free(recs);
         return NULL;
     }
     *outCount = got;
     return recs;
+}
+
+static fav_raw_t *favReadFile(int *outCount)
+{
+    char path[256], staged[264];
+    fav_raw_t *recs;
+    int complete;
+
+    favGetFilePath(path, sizeof(path));
+    // A complete favourites.bin.new means the last save's in-place rewrite did not finish (the
+    // writer removes .new once favourites.bin is whole): it holds the list the user asked for. A
+    // .new cut short means saving stopped while staging, so favourites.bin is still intact.
+    snprintf(staged, sizeof(staged), "%s.new", path);
+    recs = favReadPath(staged, outCount, &complete, 0);
+    if (complete)
+        return recs;
+    free(recs);
+    return favReadPath(path, outCount, &complete, 1);
 }
 
 // Little-endian scalar appenders for the in-memory image favWriteFile builds.
@@ -301,6 +328,41 @@ static void bufU32(u8 *b, int *o, u32 v)
     b[(*o)++] = (u8)((v >> 24) & 0xff);
 }
 
+static int favWriteErrno; // errno of the last favWriteWhole failure (ENOSPC = device full)
+
+/* Writes all of buf: partial writes accumulate, and no progress is a failure. */
+static int favWriteAll(int fd, const u8 *buf, int len)
+{
+    int done = 0, n;
+
+    while (done < len) {
+        n = write(fd, buf + done, len - done);
+        if (n <= 0) {
+            favWriteErrno = n < 0 ? errno : EIO;
+            return 0;
+        }
+        done += n;
+    }
+    return 1;
+}
+
+/* Replaces path's contents with buf. 1 only if every byte was written AND the close succeeded. */
+static int favWriteWhole(const char *path, const u8 *buf, int len)
+{
+    int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666), ok;
+
+    if (fd < 0) {
+        favWriteErrno = errno;
+        return 0;
+    }
+    ok = favWriteAll(fd, buf, len);
+    if (close(fd) < 0 && ok) {
+        favWriteErrno = errno;
+        ok = 0;
+    }
+    return ok;
+}
+
 /* Write a raw-record array back out (explicit scalar fields; pointers never persisted).
 
    SERIALISE FIRST, THEN WRITE ONCE. This used to emit the file field by field: three writes for
@@ -310,12 +372,11 @@ static void bufU32(u8 *b, int *o, u32 v)
    the problem; the syscall count was.
 
    The image is sized from the actual text lengths rather than FAV_MAX_ITEMS * FAV_TEXT_MAX, so a
-   normal library allocates a few KB instead of 140. */
-static int favWriteFile(fav_raw_t *recs, int count)
+   normal library allocates a few KB instead of 140. Returns the malloc'd image (NULL when out of
+   memory) and its length in *len. */
+static u8 *favBuildImage(const fav_raw_t *recs, int count, int *len)
 {
-    char path[256];
     int i, off = 0, size = 8; // header: magic(4) + version(2) + count(2)
-    int written, fd;
     u8 *img;
 
     if (count > FAV_MAX_ITEMS)
@@ -331,7 +392,7 @@ static int favWriteFile(fav_raw_t *recs, int count)
     img = (u8 *)malloc(size);
     if (img == NULL) {
         LOG("FAV write: cannot allocate %d byte image\n", size);
-        return 0;
+        return NULL;
     }
 
     bufU32(img, &off, FAV_MAGIC);
@@ -352,23 +413,91 @@ static int favWriteFile(fav_raw_t *recs, int count)
         off += tlen;
     }
 
-    // Open as late as possible. O_TRUNC empties the file the instant it succeeds, so anything that
-    // can fail belongs above it -- otherwise a failure here trades a good list for an empty one.
+    *len = off;
+    return img;
+}
+
+/* A complete favourites.bin.new is left only by a save whose in-place rewrite failed, so it is the
+   one complete list on the device. Put it back into favourites.bin before staging over it: staging
+   truncates .new, and a failure there would otherwise lose the list. 1 when there is nothing to
+   restore or it was restored; 0 when restoring failed (.new is left as it was). */
+static int favRestoreStaged(const char *path, const char *staged)
+{
+    int count, complete, len, ok;
+    fav_raw_t *recs = favReadPath(staged, &count, &complete, 0);
+    u8 *img;
+
+    if (!complete) {
+        free(recs);
+        return 1;
+    }
+    img = favBuildImage(recs, count, &len);
+    free(recs);
+    if (img == NULL)
+        return 0;
+    ok = favWriteWhole(path, img, len);
+    free(img);
+    if (!ok)
+        LOG("FAV write: cannot restore %s from %s, keeping it\n", path, staged);
+    return ok;
+}
+
+/* Size of path in bytes, or -1 when it cannot be opened. */
+static int favFileSize(const char *path)
+{
+    int fd = open(path, O_RDONLY), size;
+
+    if (fd < 0)
+        return -1;
+    size = lseek(fd, 0, SEEK_END);
+    close(fd);
+    return size;
+}
+
+static int favWriteFile(fav_raw_t *recs, int count)
+{
+    char path[256], staged[264];
+    int off, ok;
+    u8 *img;
+
+    // Never a moment without one complete list. The new list goes to favourites.bin.new first; if
+    // that fails, favourites.bin was never touched. Then favourites.bin is rewritten in place (the mc
+    // device has no rename, so no swap); if THAT fails, the complete .new survives and favReadFile
+    // takes it. Only a fully written favourites.bin removes .new.
     favGetFilePath(path, sizeof(path));
-    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-    if (fd < 0) {
-        LOG("FAV write open failed: %s\n", path);
+    snprintf(staged, sizeof(staged), "%s.new", path);
+    if (!favRestoreStaged(path, staged))
+        return 0;
+    img = favBuildImage(recs, count, &off);
+    if (img == NULL)
+        return 0;
+    if (!favWriteWhole(staged, img, off)) {
+        int full = favWriteErrno == ENOSPC, held;
+
+        remove(staged);
+        // A full device (a full memory card is common) has no room for the second copy. An in-place
+        // rewrite that stays inside the clusters favourites.bin already holds -- 1 KB on mc, the
+        // smallest -- needs none: that is how saving worked before staging. Any other failure, or a
+        // list that outgrows those clusters, is refused instead: the in-place rewrite could stop
+        // after its truncate and lose the list.
+        held = full ? favFileSize(path) : -1;
+        if (held > 0 && off <= ((held + 1023) & ~1023)) {
+            ok = favWriteWhole(path, img, off);
+            free(img);
+            LOG("FAV write: device full, rewrote %s in place: %s\n", path, ok ? "ok" : "failed");
+            return ok;
+        }
+        LOG("FAV write: staging %s failed (errno %d), favourites unchanged\n", staged, favWriteErrno);
         free(img);
         return 0;
     }
-    written = write(fd, img, off);
-    close(fd);
+    ok = favWriteWhole(path, img, off);
     free(img);
-
-    if (written != off) {
-        LOG("FAV write incomplete: %d of %d bytes\n", written, off);
+    if (!ok) {
+        LOG("FAV write: %s incomplete, the saved list is kept in %s\n", path, staged);
         return 0;
     }
+    remove(staged);
     return 1;
 }
 

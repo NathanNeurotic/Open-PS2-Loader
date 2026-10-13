@@ -60,7 +60,7 @@ HARNESS = r'''
 
 enum { BDM_MODE = 0, ETH_MODE, HDD_MODE, APP_MODE, FAV_MODE, HTTP_MODE, MMCE_MODE };
 enum { LIB_VIEW_PS2 = 0, LIB_VIEW_PS1 };
-enum { _STR_AUTO_VMC_CREATING = 1, _STR_AUTO_VMC_FAILED, _STR_VMC_FRAGMENTED_ON_CREATE };
+enum { _STR_AUTO_VMC_CREATING = 1, _STR_AUTO_VMC_FAILED, _STR_VMC_FRAGMENTED_ON_CREATE, _STR_AUTO_VMC_INVALID, _STR_AUTO_VMC_STILL_RUNNING };
 #define CONFIG_ITEM_CORE_LOADER "$CoreLoader"
 #define LOG(...) ((void)0)
 struct UIItem;
@@ -78,7 +78,7 @@ static int gAutoCreateVmc = 1, gDefaultCoreLoader, guiActive = 1, rowView, favSo
 static int cfgCore = -1, cfgDisabled;
 static char cfgVmc[32];
 static int fileExists, checkCalls, createSize, renders, saves, lastMsg, msgs, cancelAtPoll = -1, fragmented;
-static int jobPolls, jobDoneAfter = 3, jobError, jobNeverEnds, aborts, polls;
+static int jobPolls, jobDoneAfter = 3, jobError, jobNeverEnds, aborts, polls, jobActive, wedged;
 static char createdName[32];
 
 static int guiIsActive(void) { return guiActive; }
@@ -92,14 +92,24 @@ static const char *getGroupIdForTitleId(const char *t) { return strcmp(t, "SLUS_
 static int fileXioDevctl(const char *dev, int cmd, void *a, int al, void *b, int bl)
 {
     (void)dev; (void)a; (void)al; (void)bl;
-    if (cmd == 0xC0DE0002) { aborts++; jobNeverEnds = 0; jobDoneAfter = 0; return 0; }
+    if (cmd == 0xC0DE0002) { aborts++; if (!wedged) { jobNeverEnds = 0; jobDoneAfter = 0; } return 0; }
     if (cmd == 0xC0DE0003) {
         statusVMCparam_t *s = (statusVMCparam_t *)b;
+        if (!jobActive) { /* genvmc idle: no job of ours (or anyone's) yet */
+            s->VMC_status = 0;
+            s->VMC_error = 0;
+            return 0;
+        }
         polls++;
         jobPolls++;
         s->VMC_progress = jobPolls * 30 > 100 ? 100 : jobPolls * 30;
         s->VMC_status = (jobNeverEnds || jobPolls < jobDoneAfter) ? 1 : 0;
         s->VMC_error = s->VMC_status ? 0 : jobError;
+        if (!s->VMC_status) {
+            jobActive = 0;
+            if (!jobError && !aborts)
+                fileExists = 1; /* the finished job left an 8 MB card behind */
+        }
         return 0;
     }
     return -1;
@@ -123,7 +133,8 @@ static int checkVMC(item_list_t *l, char *name, int size)
     createSize = size;
     snprintf(createdName, sizeof(createdName), "%s", name);
     jobPolls = 0;
-    return 0;
+    jobActive = 1;
+    return -1; /* sysCheckVMC's contract: -1 (the probe's "absent") means genvmc accepted the job */
 }
 
 @DEFINES@
@@ -138,7 +149,7 @@ static void reset(void)
 {
     gAutoCreateVmc = 1; gDefaultCoreLoader = 0; guiActive = 1; rowView = LIB_VIEW_PS2; favSource = BDM_MODE;
     cfgCore = -1; cfgDisabled = 0; cfgVmc[0] = 0; fileExists = 0; checkCalls = 0; createSize = 0;
-    renders = saves = lastMsg = msgs = aborts = polls = jobPolls = jobError = jobNeverEnds = fragmented = 0;
+    renders = saves = lastMsg = msgs = aborts = polls = jobPolls = jobError = jobNeverEnds = fragmented = jobActive = wedged = 0;
     jobDoneAfter = 3; cancelAtPoll = -1; createdName[0] = 0; dev.mode = BDM_MODE;
 }
 
@@ -200,9 +211,13 @@ int main(void)
     CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 0 && aborts == 1 && !cfgVmc[0] && !saves,
           "Back aborts genvmc and stays in the menu");
 
-    reset(); jobNeverEnds = 1;
-    CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && aborts == 1 && lastMsg == _STR_AUTO_VMC_FAILED && !cfgVmc[0],
-          "a genvmc job that never finishes is aborted and reported, not waited on forever");
+    reset(); jobDoneAfter = 120 * 60 + 50;
+    CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 1 && aborts == 0 && !strcmp(cfgVmc, "SLUS_GROUP_0"),
+          "a slow but working job is waited for, past two minutes: leaving early let the next launch orphan a partial card");
+
+    reset(); jobNeverEnds = 1; wedged = 1; cancelAtPoll = 2;
+    CHECK(guiGameAutoCreateVmc(&dev, 0, &cfg) == 0 && aborts == 1 && lastMsg == _STR_AUTO_VMC_STILL_RUNNING && !cfgVmc[0],
+          "after Back, a job that never winds down (wedged device) is not waited on forever: the menu stays, nothing is assigned");
     return fails ? 1 : 0;
 }
 '''
