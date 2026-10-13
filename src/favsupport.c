@@ -363,12 +363,11 @@ static int favWriteWhole(const char *path, const u8 *buf, int len)
    the problem; the syscall count was.
 
    The image is sized from the actual text lengths rather than FAV_MAX_ITEMS * FAV_TEXT_MAX, so a
-   normal library allocates a few KB instead of 140. */
-static int favWriteFile(fav_raw_t *recs, int count)
+   normal library allocates a few KB instead of 140. Returns the malloc'd image (NULL when out of
+   memory) and its length in *len. */
+static u8 *favBuildImage(const fav_raw_t *recs, int count, int *len)
 {
-    char path[256], staged[264];
     int i, off = 0, size = 8; // header: magic(4) + version(2) + count(2)
-    int ok;
     u8 *img;
 
     if (count > FAV_MAX_ITEMS)
@@ -384,7 +383,7 @@ static int favWriteFile(fav_raw_t *recs, int count)
     img = (u8 *)malloc(size);
     if (img == NULL) {
         LOG("FAV write: cannot allocate %d byte image\n", size);
-        return 0;
+        return NULL;
     }
 
     bufU32(img, &off, FAV_MAGIC);
@@ -405,12 +404,52 @@ static int favWriteFile(fav_raw_t *recs, int count)
         off += tlen;
     }
 
+    *len = off;
+    return img;
+}
+
+/* A complete favourites.bin.new is left only by a save whose in-place rewrite failed, so it is the
+   one complete list on the device. Put it back into favourites.bin before staging over it: staging
+   truncates .new, and a failure there would otherwise lose the list. 1 when there is nothing to
+   restore or it was restored; 0 when restoring failed (.new is left as it was). */
+static int favRestoreStaged(const char *path, const char *staged)
+{
+    int count, complete, len, ok;
+    fav_raw_t *recs = favReadPath(staged, &count, &complete, 0);
+    u8 *img;
+
+    if (!complete) {
+        free(recs);
+        return 1;
+    }
+    img = favBuildImage(recs, count, &len);
+    free(recs);
+    if (img == NULL)
+        return 0;
+    ok = favWriteWhole(path, img, len);
+    free(img);
+    if (!ok)
+        LOG("FAV write: cannot restore %s from %s, keeping it\n", path, staged);
+    return ok;
+}
+
+static int favWriteFile(fav_raw_t *recs, int count)
+{
+    char path[256], staged[264];
+    int off, ok;
+    u8 *img;
+
     // Never a moment without one complete list. The new list goes to favourites.bin.new first; if
     // that fails, favourites.bin was never touched. Then favourites.bin is rewritten in place (the mc
     // device has no rename, so no swap); if THAT fails, the complete .new survives and favReadFile
     // takes it. Only a fully written favourites.bin removes .new.
     favGetFilePath(path, sizeof(path));
     snprintf(staged, sizeof(staged), "%s.new", path);
+    if (!favRestoreStaged(path, staged))
+        return 0;
+    img = favBuildImage(recs, count, &off);
+    if (img == NULL)
+        return 0;
     if (!favWriteWhole(staged, img, off)) {
         LOG("FAV write: staging %s failed, favourites unchanged\n", staged);
         remove(staged);

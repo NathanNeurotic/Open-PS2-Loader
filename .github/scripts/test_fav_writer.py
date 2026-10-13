@@ -24,7 +24,8 @@ def function(signature):
 
 names = ["static int rdBytes(", "static int rdU16(", "static int rdU32(", "static fav_raw_t *favReadPath(",
          "static fav_raw_t *favReadFile(", "static void bufU16(", "static void bufU32(",
-         "static int favWriteAll(", "static int favWriteWhole(", "static int favWriteFile("]
+         "static int favWriteAll(", "static int favWriteWhole(", "static u8 *favBuildImage(",
+         "static int favRestoreStaged(", "static int favWriteFile("]
 source = "\n".join(function(n) if not n.startswith("static int rdBytes(") else
                    fav[fav.index(n):fav.index("\n", fav.index(n)) + 1] for n in names)
 
@@ -163,6 +164,22 @@ int main(void)
     assert(favWriteFile(recs, 3) == 0);
     writesBeforeFail = -1;
     assert(lookup("mc0:OPL/favourites.bin", 0)->len == 0);
+    assert(load(first) == 3 && !strcmp(first, "Wanted 0"));
+
+    /* retry_cannot_restore: the complete .new is the only complete list. A save that cannot even
+       put it back into favourites.bin must leave it alone, not truncate it while staging. */
+    make(2, "Lost");
+    writesBeforeFail = 0;
+    assert(favWriteFile(recs, 2) == 0);
+    writesBeforeFail = -1;
+    assert(load(first) == 3 && !strcmp(first, "Wanted 0"));
+
+    /* retry_staging_fails: the complete .new goes back into favourites.bin first, so a staging
+       failure afterwards still leaves the last complete list */
+    writesBeforeFail = 1; /* the restore is written whole, then staging the new list fails */
+    assert(favWriteFile(recs, 2) == 0);
+    writesBeforeFail = -1;
+    assert(lookup("mc0:OPL/favourites.bin.new", 0) == NULL);
     assert(load(first) == 3 && !strcmp(first, "Wanted 0"));
 
     /* the next successful save cleans up the staging copy */
