@@ -38,7 +38,7 @@ names = ["static int rdBytes(", "static int rdU16(", "static int rdU32(", "stati
          "static void bufU32(", "static int favWriteAll(", "static int favWriteWhole(",
          "static u8 *favBuildImage(", "static int favRestoreStaged(", "static int favFileSize(",
          "static int favWriteFile("]
-source = (line("static int favWriteErrno;") + line("static int favStagedOnly") + line("#define WOPL_FAV_STRUCT_SIZE") +
+source = (line("static int favWriteErrno;") + line("static int favStagedOnly") + line("static int favLoadError") + line("#define WOPL_FAV_STRUCT_SIZE") +
           line("#define FAV_FILE_MAX") + stream_type() + "\n".join(function(n) for n in names))
 
 harness = r'''
@@ -118,7 +118,8 @@ static int write(int fd, const void *buf, int n)
     return n;
 }
 static int close(int fd) { fsCalls++; fds[fd].f = NULL; return closes++ == failCloseOn ? -1 : 0; }
-static int lseek(int fd, int off, int whence) { fsCalls++; fds[fd].pos = whence == SEEK_END ? fds[fd].f->len + off : off; return fds[fd].pos; }
+static int failLseek;
+static int lseek(int fd, int off, int whence) { fsCalls++; if (failLseek) return -1; fds[fd].pos = whence == SEEK_END ? fds[fd].f->len + off : off; return fds[fd].pos; }
 static int fs_remove(const char *name) { fsCalls++; mfile_t *f = lookup(name, 0); if (!f) return -1; f->exists = 0; freeClusters += f->alloc; f->alloc = 0; return 0; }
 #define remove fs_remove
 static void favGetFilePath(char *out, int size) { snprintf(out, size, "mc0:OPL/favourites.bin"); }
@@ -143,7 +144,7 @@ static int load(char *first)
     free(got);
     return count;
 }
-static void reset(void) { memset(files, 0, sizeof(files)); writeCap = -1; writesBeforeFail = -1; failCloseOn = -1; closes = 0; failOpenName = NULL; freeClusters = 1 << 20; }
+static void reset(void) { memset(files, 0, sizeof(files)); writeCap = -1; writesBeforeFail = -1; failCloseOn = -1; closes = 0; failOpenName = NULL; freeClusters = 1 << 20; failLseek = 0; favStagedOnly = -1; }
 static void makeLong(int n, char c)
 {
     for (int i = 0; i < n; i++) {
@@ -319,10 +320,42 @@ int main(void)
         assert(load(first) == 3 && !strcmp(first, "Pc 0"));
     }
 
+    /* unreadable_is_not_empty: a favourites.bin that exists but cannot be read is flagged, so
+       add/remove refuse to save a one-item list over it; absent or empty is not flagged */
+    reset();
+    make(2, "Old");
+    assert(favWriteFile(recs, 2) == 1);
+    failLseek = 1;
+    assert(load(first) == 0 && favReadUnreadable == 1);
+    failLseek = 0;
+    assert(load(first) == 2 && favReadUnreadable == 0);
+    reset();
+    assert(load(first) == 0 && favReadUnreadable == 0);
+
+    /* rewrite_open_fails: favourites.bin was never touched, so a later save that skips the read
+       must not put the failed save's list back from .new */
+    reset();
+    make(2, "Old");
+    assert(favWriteFile(recs, 2) == 1);
+    make(3, "Failed");
+    failOpenName = "mc0:OPL/favourites.bin";
+    assert(favWriteFile(recs, 3) == 0);
+    failOpenName = NULL;
+    make(1, "Next");
+    writesBeforeFail = 1; /* a wrong restore would spend this write copying "Failed" back */
+    assert(favWriteFile(recs, 1) == 0);
+    writesBeforeFail = -1;
+    /* nothing was restored: the one write staged "Next" whole, the rewrite then stopped, and .new
+       stands in with the list just asked for -- never the earlier save the user saw fail */
+    assert(load(first) == 1 && !strcmp(first, "Next 0"));
+
     puts("ok");
     return 0;
 }
 '''
+
+for fn in ("int addFavouriteItem(", "int removeFavouriteByIdAndText("):
+    assert "favReadUnreadable" in function(fn), fn + " must refuse to save over a list it could not read"
 
 with tempfile.TemporaryDirectory() as tmp:
     src = Path(tmp) / "fav.c"

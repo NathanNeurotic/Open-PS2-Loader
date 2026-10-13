@@ -353,6 +353,12 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     if (coreLoader == 2)
         coreLoader = gDefaultCoreLoader;
+    // Some sources launch one way whatever the settings say (as the compatibility dialog shows):
+    // UDPFS and UDPBD only through Neutrino, SMB only through the native core.
+    if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
+        coreLoader = 1;
+    else if (sourceMode == ETH_MODE)
+        coreLoader = 0;
     if (sourceMode == HDD_MODE && coreLoader == 1)
         return 1;
 

@@ -58,7 +58,7 @@ HARNESS = r'''
 #include <stdio.h>
 #include <string.h>
 
-enum { BDM_MODE = 0, ETH_MODE, HDD_MODE, APP_MODE, FAV_MODE, HTTP_MODE, MMCE_MODE };
+enum { BDM_MODE = 0, ETH_MODE, HDD_MODE, APP_MODE, FAV_MODE, HTTP_MODE, MMCE_MODE, UDPFS_MODE };
 enum { LIB_VIEW_PS2 = 0, LIB_VIEW_PS1 };
 enum { _STR_AUTO_VMC_CREATING = 1, _STR_AUTO_VMC_FAILED, _STR_VMC_FRAGMENTED_ON_CREATE, _STR_AUTO_VMC_INVALID, _STR_AUTO_VMC_STILL_RUNNING };
 #define CONFIG_ITEM_CORE_LOADER "$CoreLoader"
@@ -84,6 +84,9 @@ static char createdName[32];
 static int guiIsActive(void) { return guiActive; }
 static int libListRowView(item_list_t *l, int id) { (void)l; (void)id; return rowView; }
 static int favGetItemSourceMode(int id) { (void)id; return favSource; }
+static int udpbdSupport;
+static int bdmSupportIsUDPBD(const item_list_t *s) { (void)s; return udpbdSupport; }
+static int bdmModeIsUDPBD(int m) { (void)m; return 0; }
 static int configGetInt(config_set_t *c, const char *k, int *v) { (void)c; (void)k; if (cfgCore < 0) return 0; *v = cfgCore; return 1; }
 static void configGetVMC(config_set_t *c, char *v, int n, int slot) { (void)c; (void)slot; snprintf(v, n, "%s", cfgVmc); }
 static void configGetVMCDisable(config_set_t *c, int slot, int *d) { (void)c; (void)slot; *d = cfgDisabled; }
