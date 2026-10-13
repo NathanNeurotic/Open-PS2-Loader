@@ -353,6 +353,12 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     if (coreLoader == 2)
         coreLoader = gDefaultCoreLoader;
+    // Some sources launch one way whatever the settings say (as the compatibility dialog shows):
+    // UDPFS and UDPBD only through Neutrino, SMB only through the native core.
+    if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
+        coreLoader = 1;
+    else if (sourceMode == ETH_MODE)
+        coreLoader = 0;
     if (sourceMode == HDD_MODE && coreLoader == 1)
         return 1;
 
@@ -383,7 +389,12 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     // or -1 when there is none. Only a valid card is used as it is; an invalid or unreadable one is
     // never replaced and never assigned -- it may hold saves.
     probe = support->itemCheckVMC(support, vmc, 0);
-    if (probe == 0 || (probe < 0 && probe != -1)) {
+    // 0 = the file is there but its size is not a whole number of MB. Neutrino gets the card as it
+    // is (no size check on that path), so the game's own card is assigned as it always was; the
+    // native loader refuses such a card at launch, so there it is reported instead.
+    if (probe == 0 && coreLoader == 1)
+        LOG("GUIGAME auto VMC %s: odd-size card, assigned as is for Neutrino\n", vmc);
+    else if (probe == 0 || (probe < 0 && probe != -1)) {
         LOG("GUIGAME auto VMC %s: existing image not usable (%d), not assigned\n", vmc, probe);
         guiMsgBox(_l(_STR_AUTO_VMC_INVALID), 0, NULL);
         return 1;
