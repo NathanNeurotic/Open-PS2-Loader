@@ -178,7 +178,7 @@ jobs:
 
       # After the external-tools commit, so the search index sees the block it just rewrote. A
       # separate commit, because it says what changed rather than riding on "sync external tools".
-      - name: Regenerate the search index and RetroAchievements page
+      - name: Regenerate the search index, RetroAchievements page and RA download links
         shell: bash
         run: |
           set -euo pipefail
@@ -194,7 +194,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add retroachievements.html data/search-index.json
+          # Stage EVERY page site_sync.py writes. It also rewrites the RA download rows in index.html and
+          # releases.html (ra_release_links); staging only the two files below threw those away each run,
+          # so the site and the generated wiki kept advertising RA downloads on the standard release.
+          git add retroachievements.html data/search-index.json index.html releases.html
           if git diff --cached --quiet; then
             echo "Search index and RetroAchievements page already up to date."
             exit 0

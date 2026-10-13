@@ -171,5 +171,20 @@ class SiteSyncTests(unittest.TestCase):
         self.assertEqual(self.run_sync("--check"), 0, "a second run must find nothing to change")
 
 
+class DocsSyncWorkflowTest(unittest.TestCase):
+    def test_commit_stages_every_page_site_sync_writes(self):
+        import re
+
+        root = Path(__file__).resolve().parents[2]
+        workflow = (root / ".github/workflows/docs-sync.yml").read_text(encoding="utf-8")
+        script = (root / ".github/scripts/site_sync.py").read_text(encoding="utf-8")
+        written = re.findall(r'"([a-z0-9-]+\.html)"', re.search(r"for name in \(([^)]*)\):", script).group(1))
+        commit = workflow[workflow.index("Commit regenerated site files"):]
+        staged = re.search(r"git add ([^\n]*)", commit).group(1).split()
+        self.assertTrue(written, "site_sync.py page list not found")
+        for name in written + ["retroachievements.html", "data/search-index.json"]:
+            self.assertIn(name, staged, f"docs-sync.yml regenerates {name} but does not stage it")
+
+
 if __name__ == "__main__":
     unittest.main()
