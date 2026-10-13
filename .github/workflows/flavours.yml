@@ -271,6 +271,11 @@ jobs:
           N=modules/network
           cc -std=gnu99 -Wall -Wextra -Wno-unused-parameter -Werror -I$N/udpfs_shared/tests/stubs -I$N/udpfs_ministack/include -I$N/udpfs_smap/include $N/udpfs_shared/tests/test_ministack_announce.c -o /tmp/test_ministack_announce
           /tmp/test_ministack_announce
+      - name: Check the mstack UDP exchange device the RA support check uses under UDPFS
+        run: |
+          N=modules/network
+          cc -std=gnu99 -Wall -Wextra -Wno-unused-parameter -Werror -I$N/udpfs_shared/tests/stubs -I$N/udpfs_ministack/include -I$N/udpfs_ministack/src -I$N/udpfs_smap/include $N/udpfs_shared/tests/test_ministack_xchg.c -o /tmp/test_ministack_xchg
+          /tmp/test_ministack_xchg
       - name: Check UDPFS themes are registered only after the server answers
         run: python3 .github/scripts/test_udpfs_themes.py
       - name: Check UDPFS artwork index integrity and case-sensitive ART paths
