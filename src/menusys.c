@@ -30,6 +30,7 @@
 #include "include/folderbrowse.h" // menuFolderResetLeaving -- leave a device page at its folder root
 #include "include/vcdsupport.h"   // VCD launches never use Neutrino
 #include "include/libview.h"      // libViewActive / libListViewActive -- which list this page shows
+#include "include/cfgtitle.h"     // cfgTitleDisplayName: optional CFG Title shown for a row (#918)
 #include "include/bdmsupport.h"   // bdmSupportIsUDPBD() -- UDPBD games are Neutrino-only
 #include <assert.h>
 #include <delaythread.h>
@@ -1191,8 +1192,8 @@ static int submenuSortCompare(submenu_list_t *a, submenu_list_t *b, item_list_t 
     txt1 = submenuItemGetText(&a->item);
     txt2 = submenuItemGetText(&b->item);
     if (!a->item.isFolder) {
-        txt1 = vcdDisplayNameForRow(support, a->item.id, txt1);
-        txt2 = vcdDisplayNameForRow(support, b->item.id, txt2);
+        txt1 = cfgTitleDisplayName(support, a->item.id, txt1);
+        txt2 = cfgTitleDisplayName(support, b->item.id, txt2);
     }
     return strcasecmp(txt1, txt2);
 }
@@ -2030,7 +2031,10 @@ void menuRenderGameMenu()
     int cp = 0; // current position
 
     // game title
-    fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0, selected_item->item->current->item.text, gTheme->selTextColor);
+    fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0,
+                    cfgTitleDisplayName((item_list_t *)selected_item->item->userdata, selected_item->item->current->item.id,
+                                        selected_item->item->current->item.text),
+                    gTheme->selTextColor);
 
     // config source
     char *cfgSource = gameConfigSource();
@@ -2301,7 +2305,10 @@ void menuRenderAppMenu()
     int cp = 0; // current position
 
     // app title
-    fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0, selected_item->item->current->item.text, gTheme->selTextColor);
+    fntRenderString(gTheme->fonts[0], 320, 20, ALIGN_CENTER, 0, 0,
+                    cfgTitleDisplayName((item_list_t *)selected_item->item->userdata, selected_item->item->current->item.id,
+                                        selected_item->item->current->item.text),
+                    gTheme->selTextColor);
 
     // A PS1 row opens this smaller menu, not the PS2 VMC editor. Say why the missing PS2 control
     // is intentional without claiming that Ember and POPSTARTER store their cards identically.

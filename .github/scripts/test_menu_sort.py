@@ -89,6 +89,11 @@ static const char *vcdDisplayNameForRow(item_list_t *itemList, int id, const cha
         return text;
     return strlen(text) > 12 && text[4] == '_' && text[8] == '.' && text[11] == '.' ? text + 12 : text;
 }
+/* Optional CFG Titles (#918) are off here: the display name is the PS1-aware name above. */
+static const char *cfgTitleDisplayName(item_list_t *itemList, int id, const char *text)
+{
+    return vcdDisplayNameForRow(itemList, id, text);
+}
 
 @FUNCTIONS@
 

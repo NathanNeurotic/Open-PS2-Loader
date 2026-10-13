@@ -15,6 +15,7 @@
 #include "include/libview.h"    // libViewActive / libListViewActive -- which list this page shows
 #include "include/saveicon.h"   // SaveIcon: the selected game's 3D save icon
 #include "include/cuesupport.h"
+#include "include/cfgtitle.h" // optional CFG Title shown for a row (#918)
 #ifdef RETROACHIEVEMENTS
 #include "include/rabadge.h" // RA: mark over the cover
 #endif
@@ -2298,7 +2299,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
                 color = elem->color;
 
             const char *dispText = ps->item.isFolder ? submenuItemGetText(&ps->item) :
-                                                       vcdDisplayNameForRow(list, ps->item.id, submenuItemGetText(&ps->item));
+                                                       cfgTitleDisplayName(list, ps->item.id, submenuItemGetText(&ps->item));
             char folderBuf[256];
             if (ps->item.isFolder) {
                 snprintf(folderBuf, sizeof(folderBuf), "%s/", dispText);

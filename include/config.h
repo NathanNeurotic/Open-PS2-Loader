@@ -109,7 +109,8 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_WIDESCREEN                 "wide_screen"
 #define CONFIG_OPL_DEFAULT_GAME_VIEW          "default_game_view"
 #define CONFIG_OPL_APPS_DISPLAY               "apps_display"
-#define CONFIG_OPL_GAME_TYPE_LABELS           "game_type_labels" // show [PS1]/[PS2] prefixes in game lists; default off
+#define CONFIG_OPL_GAME_TYPE_LABELS           "game_type_labels"    // show [PS1]/[PS2] prefixes in game lists; default off
+#define CONFIG_OPL_CFG_TITLES                 "cfg_titles_in_lists" // show each game's CFG Title in game lists (#918); default off
 // Remembered L3 position, one character per IO mode -- see libViewStoreToConfig in src/libview.c.
 // Two keys because the Both/Favorites/APPS ring and the device Mixed ring keep separate positions.
 // These live in the LAST set, beside "last_played": both are browse position rather than settings,
