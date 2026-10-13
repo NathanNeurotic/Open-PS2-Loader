@@ -27,9 +27,13 @@ static int sbHashGameBusy(void) { return 0; }
 static int discCheckBusy(void) { return 0; }
 static int raNetNicBusy(void) { return nic_busy; }
 static int raNetNicReserved(void) { return nic_busy; }
-static int ethEnsureSMBShareConnected(void) { return 1; }
+enum { NET_PROTO_OFF, NET_PROTO_SMB, NET_PROTO_UDPFS, NET_PROTO_UDPFSBD, NET_PROTO_UDPBD, NET_PROTO_HTTP };
+static int gNetworkProtocol = NET_PROTO_OFF, udpfs_loaded, smb_up = 1, smb_calls;
+static const char *expect_key = "smb0:Games/ART/CADUCEUS.KEY";
+static int udpfsGetModulesLoaded(void) { return udpfs_loaded; }
+static int ethEnsureSMBShareConnected(void) { smb_calls++; return smb_up; }
 static const char *ethGetSMBPrefix(void) { return "smb0:Games/"; }
-static int open(const char *path, int flags) { assert(!strcmp(path,"smb0:Games/ART/CADUCEUS.KEY")); return 1; }
+static int open(const char *path, int flags) { assert(!strcmp(path,expect_key)); return 1; }
 static int read(int fd, void *out, int size) { int n=file_length<size?file_length:size; memcpy(out,key_data,n); return n; }
 static int close(int fd) { return 0; }
 static int ioPutRequest(int type, void (*fn)(void)) { worker=fn; return queue_fail?-1:0; }
@@ -76,7 +80,19 @@ int main(void) {
  assert(hashed_vcd==1 && hashed==1 && strstr(received," A 0 0 cccccccccccccccccccccccccccccccc "));
  assert(!achievementsRequestVcd(""));
  nic_busy=1;assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_OFFLINE);
- puts("PASS: browser parser, empty fields, malformed data, pairing bounds, worker isolation, ISO target and network failure");
+ /* UDPFS Files owns the NIC: key (and badges) come from the share it serves, never SMB. */
+ gNetworkProtocol=NET_PROTO_UDPFS;udpfs_loaded=1;expect_key="udpfs:/ART/CADUCEUS.KEY";smb_calls=0;
+ assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_READY && !smb_calls);
+ assert(!strcmp(cadSharePrefix(),"udpfs:/"));
+ udpfs_loaded=0;assert(!cadSharePrefix());
+ assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_OFFLINE && !smb_calls);
+ gNetworkProtocol=NET_PROTO_UDPFSBD;udpfs_loaded=1;assert(!cadSharePrefix()); /* IMG: the share is a disk image */
+ gNetworkProtocol=NET_PROTO_UDPBD;assert(!cadSharePrefix());
+ assert(!smb_calls);
+ gNetworkProtocol=NET_PROTO_SMB;nic_busy=0;expect_key="smb0:Games/ART/CADUCEUS.KEY";
+ assert(!strcmp(cadSharePrefix(),"smb0:Games/"));
+ smb_up=0;assert(!cadSharePrefix());smb_up=1;
+ puts("PASS: browser parser, empty fields, malformed data, pairing bounds, worker isolation, ISO target, network failure and UDPFS share");
 }
 """
 with tempfile.TemporaryDirectory() as tmp:
@@ -115,8 +131,9 @@ static unsigned g_raReplyIP;
 static char g_rx[2048];
 static int raNetNicBusy(void) {return 0;}
 static int raNetNicReserved(void) {return 0;}
-static int open_pc_socket(char *a,int size,u8 *ip) {return 7;}
-static void disconnect(int s) {closed++;}
+#define RA_LINK_BUSY (-8)
+static int open_pc_link(char *a,int size,u8 *ip) {return 7;}
+static void close_pc_link(int s) {closed++;}
 static void DelayThread(int us) {}
 static int ask(int s,struct sockaddr_in *to,const char *req,char *out,int max) {
  calls++;
@@ -155,6 +172,11 @@ with tempfile.TemporaryDirectory() as tmp:
  subprocess.run([str(path/'network.exe')],check=True)
 
 menu=(root/'src/menusys.c').read_text()
+
+# Badge images come from the same share as the key: UDPFS Files' when it owns the NIC.
+icon=menu[menu.index('static GSTEXTURE *achievementIcon('):]
+icon=icon[:icon.index('\n}\n')]
+assert 'gNetworkProtocol == NET_PROTO_UDPFS ? udpfsGetObject(0) : ethGetObject(0)' in icon
 
 # Valid totals reach ten million; the PS2's 32-bit multiply must not overflow.
 progress = re.search(r'rmDrawRect\(36, 120, (.*), 3, CAD_ACCENT\);', menu)

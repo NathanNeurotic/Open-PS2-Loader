@@ -85,6 +85,24 @@ int main(void)
     check("our own IP is never cached as a neighbour", arp_lookup(OUR_IP, mac) != 0);
     check("a NULL MAC buffer is allowed", arp_ip_conflict(NULL) == 1);
 
+    /* A full table: LAN chatter does not displace entries, but a host talking to US does (the
+       RA companion answering the PS2's ARP request, or asking for the PS2 itself). */
+    {
+        static const uint8_t chatter_mac[6] = {0x02, 0, 0, 0, 0, 0x01};
+        static const uint8_t companion_mac[6] = {0x02, 0, 0, 0, 0, 0x77};
+        int i;
+
+        for (i = 0; i < 12; i++)
+            deliver(1, chatter_mac, IP_ADDR(192, 168, 1, 100 + i), IP_ADDR(192, 168, 1, 1));
+        check("chatter fills the table but cannot displace", arp_lookup(IP_ADDR(192, 168, 1, 111), mac) != 0);
+        deliver(2, companion_mac, IP_ADDR(192, 168, 1, 77), OUR_IP);
+        check("a reply addressed to us is learned on a full table",
+              arp_lookup(IP_ADDR(192, 168, 1, 77), mac) == 0 && !memcmp(mac, companion_mac, 6));
+        deliver(1, companion_mac, IP_ADDR(192, 168, 1, 78), OUR_IP);
+        check("a host asking for us is learned on a full table", arp_lookup(IP_ADDR(192, 168, 1, 78), mac) == 0);
+        check("the newest entries do not evict each other", arp_lookup(IP_ADDR(192, 168, 1, 77), mac) == 0);
+    }
+
     if (failures) {
         fprintf(stderr, "%d check(s) failed\n", failures);
         return 1;

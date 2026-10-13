@@ -77,6 +77,9 @@ static int sbHashGameBusy(void) { return 0; }
 static int discCheckBusy(void) { return 0; }
 static int raNetNicReserved(void) { return 0; }
 static int ethEnsureSMBShareConnected(void) { assert(!"Xerabora mode never needs the SMB share"); return 0; }
+enum { NET_PROTO_OFF, NET_PROTO_SMB, NET_PROTO_UDPFS };
+static int gNetworkProtocol = NET_PROTO_OFF;
+static int udpfsGetModulesLoaded(void) { assert(!"Xerabora mode never needs the UDPFS share"); return 0; }
 static const char *ethGetSMBPrefix(void) { return ""; }
 static int open(const char *p, int f) { (void)p; (void)f; assert(!"no CADUCEUS.KEY in Xerabora mode"); return -1; }
 static int read(int fd, void *o, int n) { (void)fd; (void)o; (void)n; return -1; }
