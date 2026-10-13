@@ -443,21 +443,22 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
     char address[32], expected[32];
     u8 ip[4];
     int sock, attempt, got, session;
-    if (raNetNicReserved() || gRAMode != RA_MODE_CADUCEUS || !out || size < 1)
+    if (gRAMode != RA_MODE_CADUCEUS || !out || size < 1)
         return -1;
     out[0] = 0;
-    sock = open_pc_socket(address, sizeof(address), ip);
+    /* A socket, or mstack: while UDPFS owns the NIC; RA_LINK_BUSY is < 0. */
+    sock = open_pc_link(address, sizeof(address), ip);
     if (sock < 0)
         return -1;
     /* The account browser and game tracking use exactly the same host. */
     if (!caduceus_target(&to)) {
-        disconnect(sock);
+        close_pc_link(sock);
         return -2;
     }
     got = ask(sock, &to, "CADQ2 " RA_PROBE_HASH, g_rx, sizeof(g_rx));
     session = got > 0 ? raCaduceusSessionReply(g_rx, RA_PROBE_HASH) : -2;
     if (session != 0) {
-        disconnect(sock);
+        close_pc_link(sock);
         if (session == -9) {
             snprintf(out, size, "OFFLINE");
             return 0;
@@ -478,10 +479,10 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
             continue;
         }
         snprintf(out, size, "%s", g_rx + strlen(expected));
-        disconnect(sock);
+        close_pc_link(sock);
         return 0;
     }
-    disconnect(sock);
+    close_pc_link(sock);
     return -2;
 }
 

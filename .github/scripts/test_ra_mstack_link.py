@@ -31,6 +31,7 @@ source = "\n".join(body(sig) for sig in (
     "static int ask(",
     "static int open_pc_link(",
     "static void close_pc_link(",
+    "int raCaduceusPage(",
 ))
 
 harness = r'''
@@ -38,6 +39,7 @@ harness = r'''
 #include <stdio.h>
 #include <string.h>
 #include "modules/network/udpfs_ministack/include/mstack_xchg.h"
+#include "modules/network/common/ra_client.h"
 typedef unsigned int u32;
 typedef unsigned char u8;
 typedef int socklen_t;
@@ -66,6 +68,11 @@ static void disconnect(int s) { assert(s == 5); closes++; }
 static int sendto(int s, const char *b, int n, int f, struct sockaddr *a, int l) { (void)s; (void)b; (void)f; (void)a; (void)l; sends++; return n; }
 static int recvfrom(int s, char *b, int n, int f, struct sockaddr *a, socklen_t *l) { (void)s; (void)b; (void)n; (void)f; (void)a; (void)l; recvs++; return -1; }
 static void DelayThread(int us) { (void)us; }
+#define RA_MODE_CADUCEUS 1
+static int gRAMode = RA_MODE_CADUCEUS;
+static char g_rx[2048];
+static int caduceus_target(struct sockaddr_in *to) { memset(to, 0, sizeof(*to)); to->sin_port = htons(RA_CADUCEUS_PORT); to->sin_addr.s_addr = 0x1401a8c0u; return 1; }
+static int ports[16];
 /* Scripted mstack: device. Each UDP_XCHG call takes the next scripted reply (src 0 = timeout). */
 static int xchgs, script_n;
 static u32 script_src[16];
@@ -81,6 +88,8 @@ static int fileXioDevctl(const char *name, int cmd, void *arg, unsigned int argl
     assert(cmd == MSTACK_DEVCTL_UDP_XCHG && buflen >= sizeof(mstack_xchg_reply_t));
     memcpy(&last_req, arg, arglen);
     last_arglen = arglen;
+    if (xchgs < 16)
+        ports[xchgs] = last_req.dst_port;
     int i = xchgs++;
     if (i >= script_n || script_src[i] == 0)
         return -116; /* -ETIMEDOUT */
@@ -168,6 +177,16 @@ int main(void)
     assert(ask(RA_LINK_MSTACK, &to, "RAG1 x", out, 64) == 63);
     assert(out[63] == 0 && out[64] == 0x5A);
 
+    /* caduceus_page_over_mstack: probe on 18197, then the paired request on 18198 */
+    reset(); reserved = 1; probe = 1; script_n = 2;
+    script_src[0] = IP20; script_text[0] = "CADR2 " RA_PROBE_HASH " READY UNKNOWN"; script_len[0] = 0;
+    script_src[1] = IP20; script_text[1] = "CADB1 7 OK\tG"; script_len[1] = 0;
+    assert(raCaduceusPage("CADA1 7 G 0 0 0 secret", 7, out, sizeof(out)) == 0);
+    assert(ports[0] == RA_CADUCEUS_PORT && ports[1] == 18198 && xchgs == 2);
+    assert(!memcmp(last_req.data, "CADA1 7 G 0 0 0 secret", 22));
+    assert(!strcmp(out, "OK\tG") && sends == 0 && closes == 1);
+    reserved = 0;
+
     puts("ok");
     return 0;
 }
@@ -188,6 +207,10 @@ for signature in ("int raAskPC(", "int raNetTestLink("):
     assert "disconnect(sock)" not in fn, signature
 assert "sendto(" not in body("int raNetTestLink("), "the RAP1 link test still has its own socket loop"
 assert "raNetNicReserved()" in body("static int open_pc_link(")
+# The Caduceus browser's UDP pages follow the link too (its key comes from the UDPFS share).
+cad = body("int raCaduceusPage(")
+assert "open_pc_link(" in cad and "open_pc_socket(" not in cad and "disconnect(sock)" not in cad
+assert "raNetNicReserved()" not in cad[:cad.index("open_pc_link(")]
 # The browsers' TCP paths need lwIP: they keep refusing while the NIC is reserved.
 assert "raNetNicReserved()" in until("int raNetXeraboraIdentify(", "open_pc_socket(")
 assert "raNetNicReserved()" in until("int raNetHttpGet(", "socket(")
