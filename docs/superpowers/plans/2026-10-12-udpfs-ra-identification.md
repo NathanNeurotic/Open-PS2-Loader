@@ -21,7 +21,10 @@
 - Language labels are append-only (`lng_tmpl/_base.yml`). Keep `_STR_RA_NA_UDPFS` defined even though it loses its caller.
 - clang-format 12 on every touched C file; every CI check line must pass.
 
-**Resolved spec ambiguity.** The spec lists `raCaduceusPage` (pairing) and the #926 identify call as getting the new path. Both feed browsers whose next step needs SMB (Caduceus key) or TCP HTTP (xeRAbora `/game`), and the ministack has neither. So `raCaduceusPage` and `raNetXeraboraIdentify` **keep their `raNetNicReserved()` refusal** in this plan. The browsers under UDPFS remain a known, documented gap; a half-working page would be worse than the clear notice.
+**Resolved spec ambiguity (amended 10-13 with Nathan).**
+- The **Caduceus** browser gets its data over UDP 18198, and only its pairing key file comes from SMB. Under UDPFS **Files**, Task 4 reads the key and badges from `udpfs:/ART/` and sends the requests through `mstack:`.
+- The **Xerabora** browser needs TCP (xeRAbora HTTP `/game`, and HTTPS), which the ministack doesn't have. So `raNetXeraboraIdentify` and `raNetHttpGet` keep their `raNetNicReserved()` refusal, and that gap is documented.
+- UDPFS **IMG** (`massN:` is a disk image, not the companion's folder) keeps the browser refusal.
 
 ## Review Focus
 
@@ -139,7 +142,7 @@
   - Every `disconnect(sock)` in `raAskPC` becomes `close_pc_link(sock)`.
   - In `raNetTestLink`, make the same change, and replace the raw `sendto`/`recvfrom` RAP1 loop with `ask()` plus a check for the `"RAO1 OK "` prefix, keeping the 3 s deadline and the `ms` measurement.
   - The Caduceus `CADQ2` probe in `raNetTestLink` already uses `ask()`.
-  - `raCaduceusPage`, `raNetXeraboraIdentify`, `raNetHttpGet` and `raLaunchNetworkUp` stay unchanged (see Global Constraints).
+  - `raCaduceusPage` changes in Task 4. `raNetXeraboraIdentify`, `raNetHttpGet` and `raLaunchNetworkUp` stay unchanged (see Global Constraints).
 
 - [ ] **Step 1: Write the failing test** `test_ra_mstack_link.py`
 
@@ -164,7 +167,7 @@
   Python assertions:
   - `raAskPC` and `raNetTestLink` contain `open_pc_link(` and no `open_pc_socket(`;
   - `raNetTestLink` contains no `sendto(`;
-  - `raCaduceusPage` and `raNetXeraboraIdentify` still start with a `raNetNicReserved()` refusal.
+  - `raNetXeraboraIdentify` and `raNetHttpGet` still start with a `raNetNicReserved()` refusal.
 
 - [ ] **Step 2: Run it and confirm it fails**
 
@@ -229,4 +232,62 @@
   ```bash
   git add src/menusys.c .github/scripts/test_ra_udpfs_check.py .github/workflows/flavours.yml docs
   git commit -m "feat(ra): RA support check on UDPFS Files and IMG games"
+  ```
+
+---
+
+### Task 4: Caduceus achievement browser under UDPFS Files
+
+**Files:**
+- Modify: `src/ranet.c`, `raCaduceusPage` (~line 366): replace the `raNetNicReserved()` part of the early refusal and `open_pc_socket` with `open_pc_link`, so `RA_LINK_BUSY` or a link failure returns -1. Every `disconnect(sock)` becomes `close_pc_link(sock)`. The `gRAMode`/`out` checks stay.
+- Modify: `src/achievements.c`, `loadPage()` Caduceus branch (~line 511): the key prefix comes from a new helper instead of `ethEnsureSMBShareConnected()`/`ethGetSMBPrefix()`.
+- Modify: `src/menusys.c`, `achievementIcon()` (~line 2466): the image provider is `udpfsGetObject(0)` under UDPFS Files, else `ethGetObject(0)`. The `"ART"`/`"RA"` cache stays.
+- Modify: `src/menusys.c` state message: `ACH_OFFLINE` in Caduceus mode under UDPFS Files uses the new `_STR_CAD_PAIR_UDPFS`.
+- Modify: `lng_tmpl/_base.yml`: append `CAD_PAIR_UDPFS`: "Cannot reach Caduceus. Pair ART/CADUCEUS.KEY in the folder PS2-Servers shares, and set the RA companion IP."
+- Modify: `.github/scripts/test_ra_mstack_link.py` and `.github/scripts/test_caduceus_browser.py`
+- Modify: `docs/RETROACHIEVEMENTS.md`:
+  - The Caduceus browser paragraph (line ~70) now also accepts the UDPFS Files share folder for `ART/CADUCEUS.KEY` and badges.
+  - Pairing still goes only to the explicit RA companion IP, or to the SMB server IP when that is 0.0.0.0, so UDPFS users set the RA companion IP.
+  - Also state that the Xerabora browser and UDPFS IMG can't open the browser during a UDPFS session.
+
+**Interfaces:**
+- Consumes: Task 2's `open_pc_link`, `close_pc_link`, `RA_LINK_BUSY`, `RA_LINK_MSTACK`.
+- Produces (in `achievements.c`):
+  - `static const char *cadSharePrefix(void)`:
+    - `gNetworkProtocol == NET_PROTO_UDPFS` → `udpfsGetObject(0)->itemGetPrefix(…)` (`"udpfs:/"`), or NULL if the object is missing;
+    - else `raNetNicReserved()` → NULL;
+    - else `ethEnsureSMBShareConnected() ? ethGetSMBPrefix() : NULL`.
+
+    NULL → `ACH_OFFLINE`, as today. A missing key file on `udpfs:` also gives `ACH_OFFLINE` through the existing `open` failure path.
+- Unchanged: the target rule (`caduceus_target` → explicit RA companion IP, else `pc_ip`; never broadcast), the 64-hex key validation, the key wipe, and the `CADB1` serial check.
+
+- [ ] **Step 1: Write the failing tests.**
+  - `test_ra_mstack_link.py`:
+    - `raCaduceusPage` contains `open_pc_link(` and no `open_pc_socket(`;
+    - its first `if` no longer contains `raNetNicReserved()`;
+    - C case `caduceus_page_over_mstack`: compile `raCaduceusPage` with the Task 2 stubs, plus `caduceus_target` returning .20 and `raCaduceusSessionReply` returning 0. The devctl sees `CADQ2 …` to port 18197 first, then the request to port **18198**. The scripted reply `CADB1 7 …` lands in `out`.
+  - `test_caduceus_browser.py`, a harness case for `cadSharePrefix` with stubbed `gNetworkProtocol`, `udpfsGetObject`, `raNetNicReserved` and `ethEnsureSMBShareConnected`:
+    - UDPFS → `"udpfs:/"`, and the SMB function is never called;
+    - UDPFSBD → NULL;
+    - UDPBD → NULL;
+    - SMB connected → SMB prefix;
+    - SMB down → NULL.
+  - A static check that `loadPage`'s Caduceus branch builds `keyPath` from `cadSharePrefix()`, and that `achievementIcon` names `udpfsGetObject(0)` under `NET_PROTO_UDPFS`.
+
+- [ ] **Step 2: Run them and confirm they fail**
+
+  Run: `python3 .github/scripts/test_ra_mstack_link.py; python3 .github/scripts/test_caduceus_browser.py`
+  Expected: both FAIL ("raCaduceusPage still opens a socket", "cadSharePrefix not found").
+
+- [ ] **Step 3: Implement the `raCaduceusPage` link, `cadSharePrefix`, the icon provider, the message and the label. Update the docs.**
+
+- [ ] **Step 4: Run the RA suite (Task 3 Step 4 command plus `test_caduceus_browser`) and confirm it passes**
+
+  Expected: all PASS.
+
+- [ ] **Step 5: Commit**
+
+  ```bash
+  git add src/ranet.c src/achievements.c src/menusys.c lng_tmpl/_base.yml .github/scripts docs
+  git commit -m "feat(ra): Caduceus achievement browser under UDPFS Files"
   ```
