@@ -196,25 +196,23 @@ static int mc_getmcrtime(sceMcStDateTime *time)
 //--------------------------------------------------------------
 static int mc_writecluster(int fd, int cluster, void *buf, int dup)
 {
-    register int r, size;
+    register int r, size, aborted;
     MCDevInfo *mcdi = (MCDevInfo *)&devinfo;
 
+    // The lock covers reading the flag only, never the write: a device that stalls in write() must
+    // not leave an abort (which holds genvmc_io_sema) waiting on this semaphore and freeze STATUS.
     WaitSema(genvmc_abort_sema);
-
-    if (genvmc_abort) {
-        SignalSema(genvmc_abort_sema);
-        return -2;
-    } else {
-        lseek(fd, cluster * mcdi->cluster_size, SEEK_SET);
-        size = mcdi->cluster_size * dup;
-        r = write(fd, buf, size);
-        if (r != size) {
-            SignalSema(genvmc_abort_sema);
-            return -1;
-        }
-    }
-
+    aborted = genvmc_abort;
     SignalSema(genvmc_abort_sema);
+
+    if (aborted)
+        return -2;
+
+    lseek(fd, cluster * mcdi->cluster_size, SEEK_SET);
+    size = mcdi->cluster_size * dup;
+    r = write(fd, buf, size);
+    if (r != size)
+        return -1;
 
     return 0;
 }

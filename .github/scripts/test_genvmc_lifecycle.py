@@ -14,6 +14,8 @@ source = (root / "modules/vmc/genvmc/genvmc.c").read_text(encoding="utf-8")
 state_start = source.index("static int genvmc_io_sema")
 state = source[state_start:source.index("\n//----", state_start)]
 body = source[source.index("static int genvmc_init(iop_device_t *dev)\n{"):source.index("int _start(")]
+writer_start = source.index("static int mc_writecluster(")
+writer = source[writer_start:source.index("\n}\n", writer_start) + 3]
 
 program = r'''
 #include <errno.h>
@@ -78,18 +80,36 @@ void ExitDeleteThread(void) { exited++; }
 
 @STATE@
 
+/* ---- the real cluster writer, over a device whose write can stall ---- */
+#define SEEK_SET 0
+typedef struct { int cluster_size; } MCDevInfo;
+static MCDevInfo devinfo = {512};
+static int abortInsideWrite;
+static int genvmc_devctl(iop_file_t *f, const char *name, int cmd, void *args, unsigned int arglen, void *buf, unsigned int buflen);
+int lseek(int fd, int offset, int whence) { (void)fd; (void)whence; return offset; }
+int write(int fd, void *buf, int count)
+{
+    (void)fd; (void)buf;
+    if (abortInsideWrite) /* the device stalls in write(); the user presses Abort meanwhile */
+        genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_ABORT, NULL, 0, NULL, 0);
+    return count;
+}
+@WRITER@
+
 /* ---- the job itself ---- */
 static int formatResult, formats, removes, removeSawBusy, abortDuringFormat;
 static char formatName[1024], removedName[1024];
-static int genvmc_devctl(iop_file_t *f, const char *name, int cmd, void *args, unsigned int arglen, void *buf, unsigned int buflen);
 static int vmc_mcformat(char *filename, int size_kb, int blocksize, int *progress, char *msg)
 {
+    static char cluster[1024];
     (void)size_kb; (void)blocksize; (void)msg;
     formats++;
     strcpy(formatName, filename);
     *progress = 50;
     if (abortDuringFormat) /* another thread cancels while the card is being written */
         genvmc_devctl(NULL, "genvmc:", GENVMC_DEVCTL_ABORT, NULL, 0, NULL, 0);
+    if (abortInsideWrite && mc_writecluster(3, 0, cluster, 1) == 0 && mc_writecluster(3, 1, cluster, 1) == -2)
+        return -1000; /* the next cluster sees the abort, as the real formatter does */
     return genvmc_abort ? -1000 : formatResult;
 }
 static int vmc_mccopy(char *filename, int slot, int *progress, char *msg)
@@ -118,7 +138,7 @@ static void reset(void)
     pendingEntry = NULL;
     pendingArg = NULL;
     created = deleted = exited = createResult = startResult = lastThid = 0;
-    formatResult = formats = removes = removeSawBusy = abortDuringFormat = 0;
+    formatResult = formats = removes = removeSawBusy = abortDuringFormat = abortInsideWrite = 0;
     formatName[0] = removedName[0] = '\0';
     genvmc_init(NULL);
 }
@@ -190,7 +210,7 @@ int main(void)
 
     SCENARIO("overlapping_create_rejected") {
         CHECK(create(&a, "mass:VMC/A.bin") == 0, "first create accepted");
-        CHECK(create(&b, "mass:VMC/B.bin") < 0, "a second create while the first is pending is refused");
+        CHECK(create(&b, "mass:VMC/B.bin") == -EBUSY, "a second create while the first is pending is refused as busy");
         CHECK(created == 1, "no second worker thread is made");
         runWorker();
         CHECK(strcmp(formatName, "mass:VMC/A.bin") == 0 && formats == 1, "only the first job runs");
@@ -212,6 +232,14 @@ int main(void)
         runWorker();
         CHECK(removes == 1 && strcmp(removedName, "mass:VMC/A.bin") == 0, "the aborted partial file is removed");
         CHECK(removeSawBusy, "status stays busy until the partial file is removed");
+        CHECK(status().VMC_status == GENVMC_STAT_AVAIL && status().VMC_error == -1000, "then reads aborted and available");
+    }
+
+    SCENARIO("abort_while_write_stalls") {
+        CHECK(create(&a, "mass:VMC/A.bin") == 0, "create accepted");
+        abortInsideWrite = 1;
+        runWorker();
+        CHECK(removes == 1 && removeSawBusy, "the abort lands, the partial file is removed while still busy");
         CHECK(status().VMC_status == GENVMC_STAT_AVAIL && status().VMC_error == -1000, "then reads aborted and available");
     }
 
@@ -255,7 +283,7 @@ int main(void)
     printf("genvmc lifecycle: owned job, busy on accept, no overlap, non-blocking abort, idle after cleanup\n");
     return 0;
 }
-'''.replace("@STATE@", state).replace("@BODY@", body)
+'''.replace("@STATE@", state).replace("@WRITER@", writer).replace("@BODY@", body)
 
 with tempfile.TemporaryDirectory() as directory:
     cfile, exe = Path(directory) / "test.c", Path(directory) / "test"
