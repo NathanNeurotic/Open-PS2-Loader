@@ -1844,3 +1844,11 @@ gui_strings:
 
 - label: HINT_CFG_TITLES
   string: "Shows the Title from each game's CFG instead of its file name, and sorts by it. Reads every CFG when a list refreshes, so lists load slower. Display only."
+
+# Automatic VMC: a VMC file with the game's name exists but is not a valid card (#935).
+- label: AUTO_VMC_INVALID
+  string: "This game's VMC file exists but is not a valid memory card, so it was not used or replaced. The game starts without one; check it in the VMC menu."
+
+# Automatic VMC: the card is still being created after the wait; the menu stays (#935).
+- label: AUTO_VMC_STILL_RUNNING
+  string: "This game's VMC is still being created. Launch the game again in a moment."
