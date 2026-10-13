@@ -10,6 +10,7 @@
 #include "include/ethsupport.h"
 #include "include/discsupport.h"
 #include "include/rahash.h"
+#include "include/udpfssupport.h" /* udpfsGetModulesLoaded: the UDPFS share */
 static volatile int busy;
 static achievement_page_t result;
 static char request[180];
@@ -497,18 +498,32 @@ void achievementsForget(void)
     xeraStale = 1; /* read by the I/O thread on the next request */
 }
 
+/* The share that holds ART/CADUCEUS.KEY and the badge images: the folder
+   PS2-Servers serves while UDPFS Files owns the NIC (its pages travel over
+   the mstack: link), else the SMB share. NULL = none reachable: UDPFS IMG
+   serves a disk image, and UDPBD has no share at all. */
+static const char *cadSharePrefix(void)
+{
+    if (gNetworkProtocol == NET_PROTO_UDPFS)
+        return udpfsGetModulesLoaded() ? "udpfs:/" : NULL;
+    if (raNetNicReserved())
+        return NULL;
+    return ethEnsureSMBShareConnected() ? ethGetSMBPrefix() : NULL;
+}
+
 static void loadPage(void)
 {
     static char response[1024];
     memset(&result, 0, sizeof(result));
     result.state = ACH_ERROR;
     char key[68], keyPath[256], hash[33];
+    const char *share;
     int fd, length;
     if (gRAMode == RA_MODE_XERABORA) {
         loadXerabora();
         goto done;
     }
-    if (raNetNicReserved() || !ethEnsureSMBShareConnected()) {
+    if ((share = cadSharePrefix()) == NULL) {
         result.state = ACH_OFFLINE;
         goto done;
     }
@@ -521,7 +536,7 @@ static void loadPage(void)
             goto done;
         snprintf(request, sizeof(request), "CADA1 %u A 0 0 %s", serial, hash);
     }
-    snprintf(keyPath, sizeof(keyPath), "%sART/CADUCEUS.KEY", ethGetSMBPrefix());
+    snprintf(keyPath, sizeof(keyPath), "%sART/CADUCEUS.KEY", share);
     fd = open(keyPath, O_RDONLY);
     length = fd >= 0 ? read(fd, key, sizeof(key) - 1) : -1;
     if (fd >= 0)

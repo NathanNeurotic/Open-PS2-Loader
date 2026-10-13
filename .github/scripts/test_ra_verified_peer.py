@@ -14,7 +14,16 @@ end = source.index("static unsigned char g_wl[RA_MAX_BYTES];", start)
 peer = source[start:end]
 assert "raNetForgetPeer();" in source[source.index("int raAskPC("):source.index("    if (raNetNicBusy())",source.index("int raAskPC("))]
 assert "raNetRememberPeer(g_raReplyIP);" in source
-assert "raNetRememberPeer(from.sin_addr.s_addr);" in source
+# The link test remembers the peer ask() accepted; ask() owns the source check on both links.
+def function(signature):
+    fn = source[source.index(signature):]
+    return fn[:fn.index("\n}\n")]
+
+
+testlink = function("int raNetTestLink(")
+assert testlink.count("raNetRememberPeer(g_raReplyIP);") == 1 and "from.sin_addr" not in testlink
+assert "from.sin_addr.s_addr != to->sin_addr.s_addr" in function("static int ask(int sock")
+assert "g_xreply.src_ip != to->sin_addr.s_addr" in function("static int ask_mstack(")
 assert "raNetForgetPeer();" in (root/"src/gui.c").read_text()
 launch = source[source.index("void raLaunchNetworkUp("):source.index("int raNetTestLink(")]
 busy_guard = launch[launch.index("if (raNetNicBusy())"):launch.index("sock = socket(")]
@@ -74,7 +83,8 @@ with tempfile.TemporaryDirectory(prefix="ra-verified-peer-") as tmp:
     subprocess.run([str(exe)], check=True)
 
 # Compile the actual link-reply condition. A malformed RAO1 prefix must not
-# become a trusted destination, and a pinned peer rejects foreign sources.
+# become a trusted destination. (Foreign sources never reach it: ask() drops
+# them on both links, checked above and in test_ra_mstack_link.py.)
 start_reply = source.index('if (got >= 8 && strncmp(rx, "RAO1 OK ", 8) == 0')
 end_reply = source.index("found = 1;", start_reply)
 condition = source[start_reply:end_reply].strip()[3:].strip()
@@ -87,19 +97,17 @@ typedef uint32_t u32;
 #define INADDR_BROADCAST 0xffffffffu
 #define htonl(x) (x)
 static int accepted(const char *rx, int got, u32 target, u32 sender) {
-    struct { struct { u32 s_addr; } sin_addr; } to, from;
-    to.sin_addr.s_addr=target; from.sin_addr.s_addr=sender;
+    (void)target; (void)sender;
     return @PREDICATE@;
 }
 int main(void) {
     const char *ok="RAO1 OK test";
     assert(accepted(ok,strlen(ok),INADDR_BROADCAST,42));
     assert(accepted(ok,strlen(ok),42,42));
-    assert(!accepted(ok,strlen(ok),42,99));
     assert(!accepted("RAO1 FAIL",9,INADDR_BROADCAST,42));
     assert(!accepted("RAO1 BAD",8,42,42));
     assert(!accepted("RAO1",4,INADDR_BROADCAST,42));
-    puts("PASS: only valid RAO1 OK replies from expected peer establish a link");
+    puts("PASS: only valid RAO1 OK replies establish a link");
     return 0;
 }
 """.replace("@PREDICATE@", condition)

@@ -21,6 +21,7 @@
 #include "include/discsupport.h"
 #include "include/achievements.h"
 #include "include/ethsupport.h"
+#include "include/udpfssupport.h"
 #endif
 #include "include/ioman.h"
 #include "include/sound.h"
@@ -2119,9 +2120,6 @@ static void menuCheckSelectedGameSupport(void)
                 guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
         } else
             guiShowRANotice(_l(_STR_PS1_RA_USB_REQUIRED), NULL);
-    } else if (support->mode == UDPFS_MODE) {
-        // UDPFS is Neutrino-only in this fork.
-        guiShowRANotice(_l(_STR_RA_NA_UDPFS), NULL);
     } else if (support->mode == HDD_MODE) {
         /* HDLoader's game descriptor maps logical ISO9660 sectors across APA
            extents. Hash that mapping read-only on the I/O worker, never by
@@ -2467,7 +2465,8 @@ static GSTEXTURE *achievementIcon(int row, const char *key)
 {
     if (!key[0])
         return NULL;
-    item_list_t *provider = ethGetObject(0);
+    /* The same share as ART/CADUCEUS.KEY (achievements.c, cadSharePrefix). */
+    item_list_t *provider = gNetworkProtocol == NET_PROTO_UDPFS ? udpfsGetObject(0) : ethGetObject(0);
     if (!provider)
         return NULL;
     if (!achIcons)
@@ -2545,7 +2544,9 @@ void menuRenderAchievements(void)
     } else {
         int xera = gRAMode == RA_MODE_XERABORA;
         const char *message = page.state == ACH_LOADING     ? _l(_STR_CAD_LOADING) :
-                              page.state == ACH_OFFLINE     ? _l(xera ? _STR_XERA_OPEN_NETWORK : _STR_CAD_PAIR) :
+                              page.state == ACH_OFFLINE     ? _l(xera                                ? _STR_XERA_OPEN_NETWORK :
+                                                                 gNetworkProtocol == NET_PROTO_UDPFS ? _STR_CAD_PAIR_UDPFS :
+                                                                                                       _STR_CAD_PAIR) :
                               page.state == ACH_UNSUPPORTED ? _l(xera ? _STR_XERA_UNKNOWN_GAME : _STR_CAD_UNKNOWN_GAME) :
                               page.state == ACH_NOT_PLAYED  ? _l(_STR_XERA_NOT_PLAYED) :
                                                               _l(xera ? _STR_XERA_CONNECTION_ERROR : _STR_CAD_CONNECTION_ERROR);

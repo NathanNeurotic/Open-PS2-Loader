@@ -51,7 +51,7 @@ On launch, RiptOPL writes `ript-ra.wl` and `ript-ra.toml` into the selected Neut
 
 The pinned agent sends each snapshot in one packet, so a set whose **direct values exceed 1,216 bytes** cannot be tracked and launches without achievements, as it does under ORBIT. Sets with **pointer chains** are tracked the way ORBIT tracks them: the agent reads the direct entries and ignores the chain tail, as xeRAbora's protocol defines for an agent without chain support, so achievements that depend on a chain do not unlock on Neutrino launches while the rest of the set does. An unavailable runtime/companion address or failed configuration writes leave the launch untracked. **Console unlock cards/pulses and remote reset are not provided by this external runtime**; unlocks appear on the companion. Neutrino's own IGR behavior remains governed by its settings, independently of the OPL-core Mode 6 behavior above.
 
-UDPFS/UDPBD launches reuse the runtime's storage network stack; the adapter does not load a second SMAP/ministack or open menu RA sockets. These launches currently require a **static PS2 IP**, an explicit companion address (or a previously verified peer), and a saved watch list plus a matching serial/hash mapping already known by that companion. Prepare the support check on an accessible local copy of the **same image** before using UDP storage; first-time UDP game identification is still outstanding. This is an integration candidate with host-test coverage, not current-build physical-console acceptance. ORBIT's published console results establish upstream evidence only. Test game I/O, telemetry, reconnects, IGR and both runtime locations before treating this handoff as release-validated.
+UDPFS/UDPBD launches reuse the runtime's storage network stack; the adapter does not load a second SMAP/ministack or open menu RA sockets. These launches currently require a **static PS2 IP**, an explicit companion address (or a previously verified peer), and a saved watch list plus a matching serial/hash mapping already known by that companion. On **UDPFS** (Files and IMG) the support check now runs from the menu like on USB: RiptOPL sends its requests through the UDPFS network module itself, so the first check of a game no longer needs a local copy. The watch list is saved in `RA/` on the share, so PS2-Servers must not be started read-only. Classic **UDPBD** still cannot run the check; prepare it on a local copy of the **same image**. This is an integration candidate with host-test coverage, not current-build physical-console acceptance. ORBIT's published console results establish upstream evidence only. Test game I/O, telemetry, reconnects, IGR and both runtime locations before treating this handoff as release-validated.
 
 The ORBIT runtime watch uses the same schedule as the ordinary Neutrino watch: **05:41 UTC on the 1st, 11th and 21st of each month**. It opens or updates one compatibility-review issue when the release tag or archive digest changes. It does not automatically replace the reviewed pin.
 
@@ -61,13 +61,15 @@ In **RA Mode: Xerabora**, choose **RetroAchievements library (xeRAbora)** from t
 
 From a game card, RiptOPL hashes the image, asks xeRAbora for its title and matches it in your account library. ORBIT looks the game up with RetroAchievements' HTTPS API, which RiptOPL's menu cannot reach, so a game you have **never played** shows its title and achievement count with a note to play it once; after that its full list appears. xeRAbora reports unlock dates but not per-achievement hardcore status, so the Hardcore filter shows hardcore totals only in the library view. Achievement badge images are not downloaded in this mode.
 
+This browser needs TCP to reach xeRAbora's interface, which the UDPFS network module does not have, so it cannot open while **UDPFS** (Files or IMG) or **UDPBD** is the network protocol. The support check itself still works on UDPFS.
+
 ### Caduceus achievement browser and in-game cards
 
 Choose **Caduceus achievements** from the main menu to browse account games and progress. Select a game to see its achievements, points, descriptions and unlock dates. **L1/R1** changes pages, **Square** cycles All / Earned / Locked / Hardcore, **Select** refreshes, and Back returns to the previous view. Hardcore is a filter for existing account history; it does not enable hardcore tracking.
 
 For a local ISO, **View achievements** in the game's menu hashes the image and opens that game's set directly. Formats that cannot be hashed on the console can still be browsed through the account library. The browser uses the I/O worker; Back remains available during network requests. Requests finish with bounded retries and cannot overwrite each other's shared state.
 
-The browser requires a configured, accessible SMB share containing **ART/CADUCEUS.KEY**, created by the companion service, even when games are on USB, MMCE or internal exFAT storage. The key is a 64-character pairing capability, not an RA password/API key. The service also supplies optional **ART/<icon-key>_RA.png** badge images; only the visible page is cached. Permit UDP **18198** for browser queries. Pairing requests go only to the explicit **RA companion IP**, or to the configured SMB server IPv4 address when that setting is **0.0.0.0**, never to LAN broadcast. Restrict the share to trusted devices: the LAN protocol is unencrypted. To revoke pairing, stop the service, remove its key file and restart it.
+The browser requires a configured, accessible SMB share containing **ART/CADUCEUS.KEY**, created by the companion service, even when games are on USB, MMCE or internal exFAT storage. When **UDPFS Files** is the network protocol, the browser reads the key and badges from `ART/` in the folder PS2-Servers shares instead, and sends its requests through the UDPFS network module; point the companion's key at that folder and set the **RA companion IP**. UDPFS IMG and UDPBD cannot open the browser. The key is a 64-character pairing capability, not an RA password/API key. The service also supplies optional **ART/<icon-key>_RA.png** badge images; only the visible page is cached. Permit UDP **18198** for browser queries. Pairing requests go only to the explicit **RA companion IP**, or to the configured SMB server IPv4 address when that setting is **0.0.0.0**, never to LAN broadcast. Restrict the share to trusted devices: the LAN protocol is unencrypted. To revoke pairing, stop the service, remove its key file and restart it.
 
 Caduceus unlock notices use the existing gold pulse by default. Its experimental card renderer can display a compact upper-right achievement title and points when explicitly enabled; older notices without a title show the ID. Duplicate notices are suppressed, while a richer title-bearing copy can upgrade a legacy notice. Xerabora retains its gold pulse. The new card and browser are adapted from [Rian6's PS2 implementation](https://github.com/Rian6/caduceus-opl/tree/2a98a9d7361f8e33f421244bc88c318eab3bdf2f), under AFL-3.0.
 
@@ -163,8 +165,9 @@ Disc watch lists and hash logs use `RA/` inside the active settings folder: for 
 `mc0:/OPL/RA/SLUS_201.74.wl` and `mc0:/OPL/RA/hashes.txt`. The settings device must remain available
 through the support check and launch preparation. RiptOPL also keeps the returned list in
 memory for the current session, so a failed file save does not discard that result.
-If the menu is using UDPBD or UDPFS, switch that network protocol off before asking the PC client
-for support; it cannot take over their network stack. A previously saved watch list can still be used.
+If the menu is using UDPBD, switch that network protocol off before asking the PC client for
+support; it cannot take over that network stack. With UDPFS the check runs through the UDPFS network
+module instead. A previously saved watch list can still be used.
 
 **Launch PS2 Disc** keeps the existing normal disc boot path. Use it when you want to launch
 without achievements, including when the PC has no watch list for that game.
@@ -193,7 +196,7 @@ OPL-core launches use RiptOPL's embedded telemetry. The RA kit's ORBIT Neutrino 
 | Physical PS2 disc, **RA: launch disc** | implemented; **not hardware-tested** |
 | HTTP | local watch-list loading is wired into OPL-core launch; combined HTTP/RA operation is not hardware-validated, and it shares the ETH/SMB risk below |
 | Neutrino core (`$CoreLoader`) | RA kit ORBIT runtime: Xerabora or Caduceus; direct values <=1,216 bytes, chain-based achievements excluded; current-build console acceptance pending |
-| UDPFS / UDPBD | RA kit ORBIT runtime: saved watch/companion identity and static IP required; first-time UDP identification outstanding |
+| UDPFS / UDPBD | RA kit ORBIT runtime: saved watch/companion identity and static IP required; UDPFS games can be checked from the menu, UDPBD games need a local copy checked first |
 | PS1 / USB VCD (POPStarter) | **yes, experimental; console validation pending** |
 | PS1 / Ember, MMCE, APA HDD, SMB and non-USB BDM | **no** |
 
@@ -401,7 +404,8 @@ Hand testers a **run-pinned nightly.link build**, never a bare artifact link.
 | 5 | SMB launch with telemetry | the game's own SMB stream unaffected |
 | 6 | Menu check, protocol = SMB | title + counts, `.wl` written |
 | 7 | Menu check, protocol = Off | RA raises the stack, same result |
-| 8 | Menu check, protocol = UDPBD / UDPFS | clean refusal + hash written to `RA/hashes.txt`, no wedge |
+| 8 | Menu check, protocol = UDPBD | clean refusal + hash written to `RA/hashes.txt`, no wedge |
+| 8b | Menu check, protocol = UDPFS (Files and IMG), both RA modes | title + counts, `.wl` written to the share's `RA/`; next launch tracked |
 | 9 | Local Neutrino-core game | support check hashes the image; RA kit handoff obeys direct-watch limits |
 | 10 | USB PS1/VCD entry | support check, then POPStarter telemetry after the startup delay |
 | 11 | Ember or non-USB PS1 entry | clean refusal |

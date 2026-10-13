@@ -1817,3 +1817,11 @@ gui_strings:
 
 - label: XERA_CONNECTION_ERROR
   string: "Cannot read the list from xeRAbora. Press Select to retry."
+
+# RA Caduceus mode: achievement browser while UDPFS Files owns the network adapter.
+- label: CAD_PAIR_UDPFS
+  string: "Cannot reach Caduceus. Pair ART/CADUCEUS.KEY in the folder PS2-Servers shares, and set the RA companion IP."
+
+# RA support check: the PC confirmed the game but no watch-list copy could be written.
+- label: RA_WL_NOT_SAVED
+  string: "Could not save the watch list. Make sure the game's device or share is writable, then check again."

@@ -9,6 +9,8 @@
 #include "ministack_ip.h"
 #include "udptty.h"
 
+int mstack_xchg_init(void); /* ministack_xchg.c: the mstack: UDP exchange device */
+
 IRX_ID(MODNAME, 0x1, 0x0);
 
 extern struct irx_export_table _exp_mstack;
@@ -57,6 +59,7 @@ int _start(int argc, char *argv[])
     }
 
     udptty_init();
+    mstack_xchg_init();
 
     if (RegisterLibraryEntries(&_exp_mstack) != 0) {
         M_DEBUG("module already loaded\n");
