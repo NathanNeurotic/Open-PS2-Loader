@@ -131,16 +131,17 @@ int main(void)
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
     assert(assigned == 0 && submits == 1);
 
-    /* formatter_busy: another job is running, so ours is not submitted and nothing is assigned */
+    /* formatter_busy: another job is running -- ours is not submitted, nothing is assigned, and the
+       menu stays: a launch now would reset the IOP under the running job and orphan a partial card */
     reset(-1, -1, 8);
     busyBefore = 1;
-    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 0);
     assert(assigned == 0 && submits == 0 && msgs == 1);
 
     /* pending_job_is_not_a_card: a full-size file a running job is still formatting is not assigned */
     reset(8, -1, 8);
     busyBefore = 1;
-    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 0);
     assert(assigned == 0 && submits == 0 && probes == 0);
 
     /* accepted_and_confirmed: created, re-probed at the requested size, assigned */
@@ -166,11 +167,20 @@ int main(void)
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 0);
     assert(assigned == 0 && aborts == 1);
 
-    /* unconfirmed_timeout: the job never finishes -- stay in the menu, leave the formatter running */
+    /* slow_job_is_waited_for: no deadline on a working job (slow MMCE/SMB) -- leaving early let the
+       next launch reset the IOP mid-format and orphan a broken card; Back is the way out */
+    reset(-1, -1, 8);
+    finishAfter = 120 * 60 + 50;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 1 && aborts == 0);
+
+    /* cancelled_job_never_winds_down: the device is wedged, so after Back the wait is bounded --
+       stay in the menu and say it is still running */
     reset(-1, -1, 8);
     finishAfter = 1 << 30;
+    cancelAt = 2;
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 0);
-    assert(assigned == 0 && aborts == 0 && msgs == 1);
+    assert(assigned == 0 && aborts == 1 && msgs == 1);
 
     /* identity_changed: a refresh moved another game onto the row during the wait */
     reset(-1, -1, 8);
