@@ -29,7 +29,7 @@ harness = r'''
 #include <string.h>
 #define SYS_VMC_REPLACE_REQUIRES_DELETE (-2)
 #define SYS_VMC_CREATE_FAILED (-3)
-enum { BDM_MODE, ETH_MODE, HDD_MODE, HTTP_MODE, APP_MODE, FAV_MODE };
+enum { BDM_MODE, ETH_MODE, HDD_MODE, HTTP_MODE, APP_MODE, FAV_MODE, UDPFS_MODE };
 enum { LIB_VIEW_ISO, LIB_VIEW_PS1 };
 enum { _STR_AUTO_VMC_CREATING, _STR_AUTO_VMC_FAILED, _STR_VMC_FRAGMENTED_ON_CREATE, _STR_AUTO_VMC_INVALID, _STR_AUTO_VMC_STILL_RUNNING };
 #define CONFIG_ITEM_CORE_LOADER "$CoreLoader"
@@ -50,6 +50,9 @@ static char startupBuf[32];
 static int guiIsActive(void) { return 1; }
 static int libListRowView(item_list_t *l, int id) { (void)l; (void)id; return LIB_VIEW_ISO; }
 static int favGetItemSourceMode(int id) { (void)id; return BDM_MODE; }
+static int udpbdSupport;
+static int bdmSupportIsUDPBD(const item_list_t *s) { (void)s; return udpbdSupport; }
+static int bdmModeIsUDPBD(int m) { (void)m; return 0; }
 static int configGetInt(config_set_t *c, const char *k, int *v) { (void)c; (void)k; (void)v; return 0; }
 static int configGetVMC(config_set_t *c, char *out, int size, int slot) { (void)c; (void)size; (void)slot; out[0] = 0; return 0; }
 static int configGetVMCDisable(config_set_t *c, int slot, int *v) { (void)c; (void)slot; *v = 0; return 0; }
@@ -103,6 +106,7 @@ static void reset(int probe, int submit, int reprobe)
     probeResult = probe; submitResult = submit; reprobeResult = reprobe;
     probes = submits = aborts = saves = assigned = msgs = frame = statusPolls = 0;
     cancelAt = -1; busyBefore = 0; finishAfter = 3; jobError = 0;
+    list.mode = BDM_MODE; udpbdSupport = 0; gDefaultCoreLoader = 0;
     strcpy(startupNow, "SLUS_123.45");
     assignedName[0] = 0;
 }
@@ -122,6 +126,39 @@ int main(void)
     reset(SYS_VMC_CREATE_FAILED, -1, 8);
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
     assert(assigned == 0 && submits == 0);
+
+    /* neutrino_odd_size_card: Neutrino takes the file as it is (no size check on that path), so the
+       game's own card is assigned as before -- never replaced, nothing created, no message */
+    reset(0, -1, 8);
+    gDefaultCoreLoader = 1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 1 && saves == 1 && submits == 0 && msgs == 0 && !strcmp(assignedName, "SLUS_123.45_0"));
+
+    /* neutrino_unreadable_card: a probe that could not read the file is still never assigned */
+    reset(SYS_VMC_CREATE_FAILED, -1, 8);
+    gDefaultCoreLoader = 1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 0 && submits == 0 && msgs == 1);
+    gDefaultCoreLoader = 0;
+
+    /* udpfs_odd_size_card: UDPFS always launches through Neutrino, whatever the global default */
+    reset(0, -1, 8);
+    list.mode = UDPFS_MODE;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 1 && submits == 0 && msgs == 0);
+
+    /* udpbd_odd_size_card: so does the UDPBD block device */
+    reset(0, -1, 8);
+    udpbdSupport = 1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 1 && submits == 0 && msgs == 0);
+
+    /* smb_odd_size_card_under_neutrino_default: SMB always launches native, which refuses the card */
+    reset(0, -1, 8);
+    list.mode = ETH_MODE;
+    gDefaultCoreLoader = 1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 0 && msgs == 1);
 
     /* create_rejected: a failed submission is never assigned, and the stale formatter status is not read as success */
     reset(-1, SYS_VMC_CREATE_FAILED, -1);

@@ -87,20 +87,36 @@ static void favGetFilePath(char *out, int outSize)
 
 // ---- explicit little-endian scalar IO (never raw-struct) ----------------------
 
-static int rdBytes(int fd, void *buf, int n) { return read(fd, buf, n) == n; }
+// The whole file is loaded once and parsed from memory: on the mc device every read() is an IOP
+// round trip, and reading field by field cost ~7 of them per favourite -- on every add and remove,
+// which re-read the list before saving it.
+typedef struct
+{
+    const u8 *p;
+    int len, pos;
+} fav_stream_t;
 
-static int rdU16(int fd, u16 *v)
+static int rdBytes(fav_stream_t *s, void *buf, int n)
+{
+    if (n < 0 || s->len - s->pos < n)
+        return 0;
+    memcpy(buf, s->p + s->pos, n);
+    s->pos += n;
+    return 1;
+}
+
+static int rdU16(fav_stream_t *s, u16 *v)
 {
     u8 b[2];
-    if (!rdBytes(fd, b, 2))
+    if (!rdBytes(s, b, 2))
         return 0;
     *v = (u16)(b[0] | (b[1] << 8));
     return 1;
 }
-static int rdU32(int fd, u32 *v)
+static int rdU32(fav_stream_t *s, u32 *v)
 {
     u8 b[4];
-    if (!rdBytes(fd, b, 4))
+    if (!rdBytes(s, b, 4))
         return 0;
     *v = (u32)b[0] | ((u32)b[1] << 8) | ((u32)b[2] << 16) | ((u32)b[3] << 24);
     return 1;
@@ -154,7 +170,7 @@ static int favMapWoplMode(int m)
 // our own writes use the hardened OFAV format -- so this is a one-way carry-over that lets
 // favourites set in those builds appear in RiptOPL. Returns NULL on empty/corrupt input.
 #define WOPL_FAV_STRUCT_SIZE 32 // sizeof(submenu_item_t) on the EE: 8 x 4-byte fields
-static fav_raw_t *favReadWoplFile(int fd, int *outCount)
+static fav_raw_t *favReadWoplFile(fav_stream_t *s, int *outCount)
 {
     *outCount = 0;
     fav_raw_t *recs = (fav_raw_t *)calloc(FAV_MAX_ITEMS, sizeof(fav_raw_t));
@@ -166,18 +182,18 @@ static fav_raw_t *favReadWoplFile(int fd, int *outCount)
         u8 st[WOPL_FAV_STRUCT_SIZE];
         u32 tlen = 0;
         u16 mode = 0;
-        if (!rdBytes(fd, st, WOPL_FAV_STRUCT_SIZE))
+        if (!rdBytes(s, st, WOPL_FAV_STRUCT_SIZE))
             break; // clean EOF (or short tail) -> stop, keep what we have
-        if (!rdU32(fd, &tlen))
+        if (!rdU32(s, &tlen))
             break;
         if (tlen == 0 || tlen > FAV_TEXT_MAX) {
             LOG("FAV import: bad text_len=%u (not uOPL/wOPL format?), aborting\n", (unsigned)tlen);
             break; // desync / foreign struct size / corruption -> stop
         }
-        if (!rdBytes(fd, recs[got].text, tlen))
+        if (!rdBytes(s, recs[got].text, tlen))
             break;
         recs[got].text[tlen - 1] = '\0'; // tlen includes the NUL; force-terminate
-        if (!rdU16(fd, &mode))
+        if (!rdU16(s, &mode))
             break;
         recs[got].icon_id = rdS32le(st + 0);
         recs[got].text_id = rdS32le(st + 8);
@@ -200,29 +216,71 @@ static fav_raw_t *favReadWoplFile(int fd, int *outCount)
 /* Reads one favourites file. *complete is 1 only for an OFAV file whose every announced record was
    read (an empty list counts); a file cut short still yields the records it has, with *complete 0.
    allowImport lets a header-less file be imported as a uOPL/wOPL list (favourites.bin only). */
+// Largest file worth reading: FAV_MAX_ITEMS records of the bigger (uOPL/wOPL) layout.
+#define FAV_FILE_MAX (8 + FAV_MAX_ITEMS * (WOPL_FAV_STRUCT_SIZE + 4 + FAV_TEXT_MAX + 2))
+
+// favLoadError: the last favLoadFile found the file but could not read it whole. favReadUnreadable:
+// the last favReadFile came back with no usable list from a favourites.bin that exists -- add and
+// remove must not save over it (a one-item list would replace the user's whole list).
+static int favLoadError, favReadUnreadable;
+
+/* Loads up to FAV_FILE_MAX bytes of path in one go. NULL when it cannot be opened or is empty. */
+static u8 *favLoadFile(const char *path, int *len)
+{
+    int fd = open(path, O_RDONLY), size, got = 0, n;
+    u8 *buf = NULL;
+
+    favLoadError = 0;
+    *len = 0;
+    if (fd < 0)
+        return NULL;
+    size = lseek(fd, 0, SEEK_END);
+    if (size > FAV_FILE_MAX)
+        size = FAV_FILE_MAX; // records past the cap are never used anyway
+    if (size > 0 && lseek(fd, 0, SEEK_SET) == 0 && (buf = (u8 *)malloc(size)) != NULL) {
+        while (got < size && (n = read(fd, buf + got, size - got)) > 0)
+            got += n;
+    }
+    close(fd);
+    if (size != 0 && got != size) // there, but a seek, the allocation or a read failed
+        favLoadError = 1;
+    if (got == 0) {
+        free(buf);
+        return NULL;
+    }
+    *len = got;
+    return buf;
+}
+
 static fav_raw_t *favReadPath(const char *path, int *outCount, int *complete, int allowImport)
 {
+    fav_stream_t st;
+    u8 *buf;
+
     *outCount = 0;
     *complete = 0;
 
-    int fd = open(path, O_RDONLY);
-    if (fd < 0)
+    buf = favLoadFile(path, &st.len);
+    if (buf == NULL)
         return NULL;
+    st.p = buf;
+    st.pos = 0;
 
     u32 magic = 0;
     u16 ver = 0, cnt = 0;
-    int hdrOk = rdU32(fd, &magic) && rdU16(fd, &ver) && rdU16(fd, &cnt);
+    int hdrOk = rdU32(&st, &magic) && rdU16(&st, &ver) && rdU16(&st, &cnt);
     if (!hdrOk || magic != FAV_MAGIC) {
         if (!allowImport) {
-            close(fd);
+            free(buf);
             return NULL;
         }
         // No OFAV header -> this may be a uOPL/wOPL favourites.bin in the shared OPL dir.
         // Rewind and import it read-only so favourites carry over from those builds.
         LOG("FAV: no OFAV header (magic=%08x) -- attempting uOPL/wOPL import\n", (unsigned)magic);
-        lseek(fd, 0, SEEK_SET);
-        fav_raw_t *imported = favReadWoplFile(fd, outCount);
-        close(fd);
+        st.pos = 0;
+        fav_raw_t *imported = favReadWoplFile(&st, outCount);
+        free(buf);
+        *complete = *outCount > 0; // an imported list is a whole list
         return imported;
     }
     // Range-checked against FAV_VERSION rather than listing versions. The enumerated form let the
@@ -232,11 +290,11 @@ static fav_raw_t *favReadPath(const char *path, int *outCount, int *complete, in
     // user's real list. Bumping the version must never again require remembering to edit this line.
     if (ver < 1 || ver > FAV_VERSION) {
         LOG("FAV reject: unsupported OFAV version %d\n", ver);
-        close(fd);
+        free(buf);
         return NULL;
     }
     if (cnt == 0) {
-        close(fd);
+        free(buf);
         *complete = 1; // a saved empty list
         return NULL;
     }
@@ -245,7 +303,7 @@ static fav_raw_t *favReadPath(const char *path, int *outCount, int *complete, in
 
     fav_raw_t *recs = (fav_raw_t *)calloc(cnt, sizeof(fav_raw_t));
     if (recs == NULL) {
-        close(fd);
+        free(buf);
         return NULL;
     }
 
@@ -254,17 +312,17 @@ static fav_raw_t *favReadPath(const char *path, int *outCount, int *complete, in
         u16 mode = 0, tlen = 0;
         u32 id = 0, icon = 0, tid = 0;
         u8 kindByte = 0;
-        if (!rdU16(fd, &mode) || !rdU32(fd, &id) || !rdU32(fd, &icon) || !rdU32(fd, &tid))
+        if (!rdU16(&st, &mode) || !rdU32(&st, &id) || !rdU32(&st, &icon) || !rdU32(&st, &tid))
             break; // short read -> stop, keep what we have
-        if (ver >= 2 && !rdBytes(fd, &kindByte, 1))
+        if (ver >= 2 && !rdBytes(&st, &kindByte, 1))
             break; // v2/v3 records carry a per-record byte between text_id and text_len
-        if (!rdU16(fd, &tlen))
+        if (!rdU16(&st, &tlen))
             break;
         if (tlen == 0 || tlen > FAV_TEXT_MAX) {
             LOG("FAV bad text_len=%d, aborting parse\n", tlen);
             break; // cannot resync past an unknown-length field -> stop
         }
-        if (!rdBytes(fd, recs[got].text, tlen))
+        if (!rdBytes(&st, recs[got].text, tlen))
             break;                       // short read on text -> stop
         recs[got].text[tlen - 1] = '\0'; // tlen includes the NUL; force-terminate
         recs[got].mode = (int)mode;
@@ -284,7 +342,7 @@ static fav_raw_t *favReadPath(const char *path, int *outCount, int *complete, in
             recs[got].kind = ((int)mode == APP_MODE) ? FAV_KIND_ELF : FAV_KIND_ISO;
         got++;
     }
-    close(fd);
+    free(buf);
 
     *complete = got == (int)cnt;
     if (got == 0) {
@@ -295,22 +353,37 @@ static fav_raw_t *favReadPath(const char *path, int *outCount, int *complete, in
     return recs;
 }
 
+// What the last read found: 1 = only favourites.bin.new held a complete list (a save must put it
+// back before staging over it), 0 = favourites.bin is the list, -1 = not read yet.
+static int favStagedOnly = -1;
+
 static fav_raw_t *favReadFile(int *outCount)
 {
     char path[256], staged[264];
-    fav_raw_t *recs;
-    int complete;
+    fav_raw_t *recs, *stagedRecs;
+    int complete, stagedCount, mainUnreadable;
 
     favGetFilePath(path, sizeof(path));
-    // A complete favourites.bin.new means the last save's in-place rewrite did not finish (the
-    // writer removes .new once favourites.bin is whole): it holds the list the user asked for. A
-    // .new cut short means saving stopped while staging, so favourites.bin is still intact.
-    snprintf(staged, sizeof(staged), "%s.new", path);
-    recs = favReadPath(staged, outCount, &complete, 0);
+    // A complete favourites.bin is the list -- including one edited on a PC. favourites.bin.new only
+    // stands in when favourites.bin itself is cut short: a save's in-place rewrite stopped part way,
+    // and .new (written whole just before) holds the list the user asked for.
+    recs = favReadPath(path, outCount, &complete, 1);
+    mainUnreadable = favLoadError;
+    favStagedOnly = 0;
+    favReadUnreadable = 0;
     if (complete)
         return recs;
-    free(recs);
-    return favReadPath(path, outCount, &complete, 1);
+    snprintf(staged, sizeof(staged), "%s.new", path);
+    stagedRecs = favReadPath(staged, &stagedCount, &complete, 0);
+    if (complete) {
+        free(recs);
+        favStagedOnly = 1;
+        *outCount = stagedCount;
+        return stagedRecs;
+    }
+    free(stagedRecs);
+    favReadUnreadable = mainUnreadable;
+    return recs;
 }
 
 // Little-endian scalar appenders for the in-memory image favWriteFile builds.
@@ -424,9 +497,14 @@ static u8 *favBuildImage(const fav_raw_t *recs, int count, int *len)
 static int favRestoreStaged(const char *path, const char *staged)
 {
     int count, complete, len, ok;
-    fav_raw_t *recs = favReadPath(staged, &count, &complete, 0);
+    fav_raw_t *recs;
     u8 *img;
 
+    if (favStagedOnly < 0) // nothing read yet this session: find out which file holds the list
+        free(favReadFile(&count));
+    if (favStagedOnly == 0)
+        return 1;
+    recs = favReadPath(staged, &count, &complete, 0);
     if (!complete) {
         free(recs);
         return 1;
@@ -439,6 +517,8 @@ static int favRestoreStaged(const char *path, const char *staged)
     free(img);
     if (!ok)
         LOG("FAV write: cannot restore %s from %s, keeping it\n", path, staged);
+    else
+        favStagedOnly = 0;
     return ok;
 }
 
@@ -495,9 +575,11 @@ static int favWriteFile(fav_raw_t *recs, int count)
     free(img);
     if (!ok) {
         LOG("FAV write: %s incomplete, the saved list is kept in %s\n", path, staged);
+        favStagedOnly = -1; // unknown: if open failed, favourites.bin was never touched; re-read first
         return 0;
     }
     remove(staged);
+    favStagedOnly = 0;
     return 1;
 }
 
@@ -1166,6 +1248,11 @@ int addFavouriteItem(int mode, int id, int icon_id, int text_id, const char *tex
 
     int count = 0;
     fav_raw_t *recs = favReadFile(&count); // may be NULL (empty / new file)
+    if (favReadUnreadable) {
+        LOG("FAV add: favourites could not be read, not saving over them\n");
+        free(recs);
+        return 0;
+    }
 
     // Already present (same mode + id + text + kind) -> treat as success (the star stays set).
     // Use favModesMatch so a BDM favourite that moved slots (e.g. BDM_MODE -> BDM_MODE1) is
@@ -1211,6 +1298,11 @@ int removeFavouriteByIdAndText(int mode, int id, const char *text, int kind)
     fav_raw_t *recs = favReadFile(&count);
     if (recs == NULL)
         return 0;
+    if (favReadUnreadable) { // a partial read: saving the survivors would drop the unread rest
+        LOG("FAV remove: favourites could not be read whole, not saving over them\n");
+        free(recs);
+        return 0;
+    }
 
     int survivors = 0;
     for (int i = 0; i < count; i++) {
