@@ -22,12 +22,24 @@ def function(signature):
     return fav[start:fav.index("\n}\n", start) + 3]
 
 
-names = ["static int favWriteErrno;", "static int rdBytes(", "static int rdU16(", "static int rdU32(", "static fav_raw_t *favReadPath(",
-         "static fav_raw_t *favReadFile(", "static void bufU16(", "static void bufU32(",
-         "static int favWriteAll(", "static int favWriteWhole(", "static u8 *favBuildImage(",
-         "static int favRestoreStaged(", "static int favFileSize(", "static int favWriteFile("]
-source = "\n".join(function(n) if not (n.startswith("static int rdBytes(") or n.startswith("static int favWriteErrno;")) else
-                   fav[fav.index(n):fav.index("\n", fav.index(n)) + 1] for n in names)
+def line(prefix):
+    start = fav.index(prefix)
+    return fav[start:fav.index("\n", start) + 1]
+
+
+def stream_type():
+    end = fav.index("} fav_stream_t;")
+    return fav[fav.rindex("typedef struct", 0, end):end] + "} fav_stream_t;\n"
+
+
+names = ["static int rdBytes(", "static int rdU16(", "static int rdU32(", "static int rdS32le(",
+         "static int favMapWoplMode(", "static fav_raw_t *favReadWoplFile(", "static u8 *favLoadFile(",
+         "static fav_raw_t *favReadPath(", "static fav_raw_t *favReadFile(", "static void bufU16(",
+         "static void bufU32(", "static int favWriteAll(", "static int favWriteWhole(",
+         "static u8 *favBuildImage(", "static int favRestoreStaged(", "static int favFileSize(",
+         "static int favWriteFile("]
+source = (line("static int favWriteErrno;") + line("static int favStagedOnly") + line("#define WOPL_FAV_STRUCT_SIZE") +
+          line("#define FAV_FILE_MAX") + stream_type() + "\n".join(function(n) for n in names))
 
 harness = r'''
 #include <assert.h>
@@ -50,7 +62,7 @@ typedef unsigned int u32;
 #define FAV_MAGIC 0x4641464F
 #define FAV_VERSION 3
 enum { FAV_KIND_ISO, FAV_KIND_VCD, FAV_KIND_CUE, FAV_KIND_ELF };
-enum { APP_MODE = 7 };
+enum { ETH_MODE = 8, HDD_MODE, APP_MODE, MMCE_MODE, FAV_MODE };
 typedef struct { int mode, id, icon_id, text_id, kind; char text[FAV_TEXT_MAX]; } fav_raw_t;
 
 /* In-memory filesystem: two files at most, plus fault injection. Space is counted in 1 KB clusters
@@ -59,7 +71,7 @@ typedef struct { int mode, id, icon_id, text_id, kind; char text[FAV_TEXT_MAX]; 
 typedef struct { char name[64]; u8 data[8192]; int len, exists, alloc; } mfile_t;
 static mfile_t files[4];
 static struct { mfile_t *f; int pos; } fds[8];
-static int writeCap = -1, writesBeforeFail = -1, failCloseOn = -1, closes, freeClusters = 1 << 20;
+static int writeCap = -1, writesBeforeFail = -1, failCloseOn = -1, closes, freeClusters = 1 << 20, fsCalls;
 static const char *failOpenName;
 static mfile_t *lookup(const char *name, int create)
 {
@@ -71,6 +83,7 @@ static mfile_t *lookup(const char *name, int create)
 static int open(const char *name, int flags, ...)
 {
     mfile_t *f;
+    fsCalls++;
     if (failOpenName && !strcmp(name, failOpenName) && (flags & O_WRONLY)) return -1;
     f = lookup(name, (flags & O_CREAT) != 0);
     if (!f) return -1;
@@ -81,6 +94,7 @@ static int open(const char *name, int flags, ...)
 static int read(int fd, void *buf, int n)
 {
     mfile_t *f = fds[fd].f;
+    fsCalls++;
     int left = f->len - fds[fd].pos, take = n < left ? n : left;
     if (take < 0) take = 0;
     memcpy(buf, f->data + fds[fd].pos, take);
@@ -91,6 +105,7 @@ static int write(int fd, const void *buf, int n)
 {
     mfile_t *f = fds[fd].f;
     int need;
+    fsCalls++;
     if (writesBeforeFail == 0) { errno = EIO; return -1; }
     if (writesBeforeFail > 0) writesBeforeFail--;
     if (writeCap >= 0 && n > writeCap) n = writeCap;   /* partial writes */
@@ -102,16 +117,15 @@ static int write(int fd, const void *buf, int n)
     if (fds[fd].pos > f->len) f->len = fds[fd].pos;
     return n;
 }
-static int close(int fd) { fds[fd].f = NULL; return closes++ == failCloseOn ? -1 : 0; }
-static int lseek(int fd, int off, int whence) { fds[fd].pos = whence == SEEK_END ? fds[fd].f->len + off : off; return fds[fd].pos; }
-static int fs_remove(const char *name) { mfile_t *f = lookup(name, 0); if (!f) return -1; f->exists = 0; freeClusters += f->alloc; f->alloc = 0; return 0; }
+static int close(int fd) { fsCalls++; fds[fd].f = NULL; return closes++ == failCloseOn ? -1 : 0; }
+static int lseek(int fd, int off, int whence) { fsCalls++; fds[fd].pos = whence == SEEK_END ? fds[fd].f->len + off : off; return fds[fd].pos; }
+static int fs_remove(const char *name) { fsCalls++; mfile_t *f = lookup(name, 0); if (!f) return -1; f->exists = 0; freeClusters += f->alloc; f->alloc = 0; return 0; }
 #define remove fs_remove
 static void favGetFilePath(char *out, int size) { snprintf(out, size, "mc0:OPL/favourites.bin"); }
-static fav_raw_t *favReadWoplFile(int fd, int *count) { (void)fd; *count = 0; return NULL; }
 '''
 
 tests = r'''
-static fav_raw_t recs[8];
+static fav_raw_t recs[64];
 static void make(int n, const char *prefix)
 {
     for (int i = 0; i < n; i++) {
@@ -249,6 +263,61 @@ int main(void)
     assert(favWriteFile(recs, 1) == 0);
     writesBeforeFail = -1;
     assert(load(first) == 2 && !strcmp(first, "Old 0"));
+
+    /* wopl_import: a header-less uOPL/wOPL favourites.bin still imports through the one-read path */
+    {
+        mfile_t *m;
+        int o = 0, i;
+        reset();
+        m = lookup("mc0:OPL/favourites.bin", 1);
+        for (i = 0; i < 2; i++) {
+            const char *t = i ? "Second" : "First";
+            int tl = (int)strlen(t) + 1;
+            memset(m->data + o, 0, 32);
+            m->data[o + 12] = (u8)(30 + i); /* id */
+            o += 32;
+            m->data[o] = (u8)tl; m->data[o + 1] = m->data[o + 2] = m->data[o + 3] = 0;
+            o += 4;
+            memcpy(m->data + o, t, tl);
+            o += tl;
+            m->data[o] = 5; m->data[o + 1] = 0; /* their ETH */
+            o += 2;
+        }
+        m->len = o;
+        assert(load(first) == 2 && !strcmp(first, "First"));
+    }
+
+    /* load_is_few_calls: the whole file comes in one read, not one read per field (40 favourites
+       used to cost ~280 calls on every add/remove, which re-reads the list first) */
+    reset();
+    make(40, "Game");
+    assert(favWriteFile(recs, 40) == 1);
+    fsCalls = 0;
+    assert(load(first) == 40 && !strcmp(first, "Game 0"));
+    assert(fsCalls <= 6);
+
+    /* save_is_few_calls: after a load, a save is stage + rewrite + clean up, nothing else */
+    fsCalls = 0;
+    assert(favWriteFile(recs, 40) == 1);
+    assert(fsCalls <= 7);
+
+    /* complete_main_wins: a complete favourites.bin (e.g. edited on a PC) is never overridden by a
+       leftover .new -- .new only stands in when favourites.bin itself is cut short */
+    {
+        static u8 old[8192];
+        int oldLen;
+        reset();
+        make(2, "Old");
+        assert(favWriteFile(recs, 2) == 1);
+        oldLen = lookup("mc0:OPL/favourites.bin", 0)->len;
+        memcpy(old, lookup("mc0:OPL/favourites.bin", 0)->data, oldLen);
+        make(3, "Pc");
+        assert(favWriteFile(recs, 3) == 1);
+        mfile_t *n = lookup("mc0:OPL/favourites.bin.new", 1); /* a complete leftover */
+        memcpy(n->data, old, oldLen);
+        n->len = oldLen;
+        assert(load(first) == 3 && !strcmp(first, "Pc 0"));
+    }
 
     puts("ok");
     return 0;
