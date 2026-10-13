@@ -20,6 +20,7 @@
 #ifdef RETROACHIEVEMENTS
 #include "include/discsupport.h"
 #include "include/achievements.h"
+#include "include/ranet.h"
 #include "include/ethsupport.h"
 #include "include/udpfssupport.h"
 #endif
@@ -2544,9 +2545,11 @@ void menuRenderAchievements(void)
     } else {
         int xera = gRAMode == RA_MODE_XERABORA;
         const char *message = page.state == ACH_LOADING     ? _l(_STR_CAD_LOADING) :
-                              page.state == ACH_OFFLINE     ? _l(xera                                ? _STR_XERA_OPEN_NETWORK :
-                                                                 gNetworkProtocol == NET_PROTO_UDPFS ? _STR_CAD_PAIR_UDPFS :
-                                                                                                       _STR_CAD_PAIR) :
+                              page.state == ACH_OFFLINE     ? _l(xera                                  ? _STR_XERA_OPEN_NETWORK :
+                                                                 raNetUdpfsNotLoaded()                 ? _STR_RA_UDPFS_LOAD_FIRST :
+                                                                 gNetworkProtocol == NET_PROTO_UDPFS   ? _STR_CAD_PAIR_UDPFS :
+                                                                 gNetworkProtocol == NET_PROTO_UDPFSBD ? _STR_CAD_UDPFS_IMG :
+                                                                                                         _STR_CAD_PAIR) :
                               page.state == ACH_UNSUPPORTED ? _l(xera ? _STR_XERA_UNKNOWN_GAME : _STR_CAD_UNKNOWN_GAME) :
                               page.state == ACH_NOT_PLAYED  ? _l(_STR_XERA_NOT_PLAYED) :
                                                               _l(xera ? _STR_XERA_CONNECTION_ERROR : _STR_CAD_CONNECTION_ERROR);

@@ -37,4 +37,6 @@ save = ask[ask.index("if (saved == 0)"):]
 assert "_STR_RA_WL_NOT_SAVED" in save[:save.index("}")], "an unsaved watch list is reported as success"
 assert "- label: RA_WL_NOT_SAVED" in base
 assert base.rstrip().endswith('"') and base.index("- label: RA_WL_NOT_SAVED") > base.index("- label: CAD_PAIR_UDPFS")
+assert base.index("- label: RA_UDPFS_LOAD_FIRST") > base.index("- label: RA_WL_NOT_SAVED")
+assert base.index("- label: CAD_UDPFS_IMG") > base.index("- label: RA_WL_NOT_SAVED")
 print("PASS: an unsaved watch list is reported")
