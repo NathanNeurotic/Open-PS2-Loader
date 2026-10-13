@@ -40,13 +40,21 @@ void udp_packet_init(udp_packet_t *pkt, uint32_t ip_dst, uint16_t port_dst)
     sent_port = port_dst;
 }
 
+/* Models the real transmit path: ip_packet_send_ll hands smap_transmit the 42-byte ETH+IP+UDP
+   header plus pktdatasize bytes as "header", then data. SMAP's CopyToFIFO writes whole 32-bit
+   words, so the header is rounded up to a word in the TX FIFO while the frame length stays exact:
+   whatever the rounding pulled in goes on the wire, and the frame's tail is cut by as much. */
 int udp_packet_send_ll(udp_socket_t *socket, udp_packet_t *pkt, uint16_t pktdatasize, const void *data, uint16_t datasize)
 {
+    static uint8_t fifo[2048];
+    unsigned int header = 42 + pktdatasize, rounded = (header + 3) & ~3u, wire = header + datasize;
+
     assert(socket == &bound_socket);
-    assert(pktdatasize == 0); /* the 2-byte align field must not go on the wire */
-    (void)pkt;
-    memcpy(sent_data, data, datasize);
-    sent_len = datasize;
+    memcpy(fifo, pkt, rounded);
+    if (datasize)
+        memcpy(fifo + rounded, data, datasize);
+    sent_len = (int)wire - 42;
+    memcpy(sent_data, fifo + 42, sent_len);
     sends++;
     return 0;
 }
@@ -170,6 +178,17 @@ int main(void)
     assert(out.reply.src_ip == nip(192, 168, 1, 20));
     assert(sent_len == 22 && memcmp(sent_data, "RAQ1 abc 1.2.3.4 18196", 22) == 0);
     assert(sent_ip == IP_ADDR(192, 168, 1, 20) && sent_port == 18194);
+
+    /* odd lengths go on the wire exactly */
+    for (int n = 1; n <= 8; n++) {
+        static const char text[] = "RAP1 192.168.1.10 18196";
+        char req[16];
+        memcpy(req, text, n);
+        req[n] = 0;
+        script_count = 0;
+        exchange(nip(192, 168, 1, 20), 18194, 1, req);
+        assert(sent_len == n && memcmp(sent_data, req, n) == 0);
+    }
 
     /* bind_once (with the roundtrip above and two more below) */
     assert(binds == 1 && bound_port == 18196);

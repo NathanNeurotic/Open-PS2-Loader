@@ -11,6 +11,7 @@
  * needs no kernel objects and shares no lock with UDPFS traffic.
  */
 #include <errno.h>
+#include <stddef.h>
 #include <iomanX.h>
 #include <string.h>
 #include <thbase.h>
@@ -20,7 +21,16 @@
 #include "smap.h"
 
 static udp_socket_t *xchg_socket;
-static udp_packet_t xchg_pkt;
+/* The request is sent as part of the header, starting at the 2-byte align field: SMAP's
+   CopyToFIFO writes whole words, so a 42-byte header followed by separate data would put the
+   align bytes on the wire and cut the request's tail (udptty and udprdma keep the header a
+   multiple of 4 for the same reason). Copying also keeps the fileXio RPC buffer away from the
+   FIFO's word loads and DMA. */
+static struct
+{
+    udp_packet_t h;
+    uint8_t more[MSTACK_XCHG_REQ_MAX];
+} __attribute__((aligned(64))) xchg_tx;
 
 static volatile int xchg_waiting, xchg_got;
 static volatile uint32_t xchg_want_ip; /* network byte order; 0xFFFFFFFF = broadcast, any source */
@@ -79,8 +89,10 @@ int mstack_xchg(const mstack_xchg_req_t *req, mstack_xchg_reply_t *reply)
     xchg_want_ip = req->dst_ip;
     xchg_waiting = 1; /* armed before sending: the answer can beat the send's return */
 
-    udp_packet_init(&xchg_pkt, ntohl(req->dst_ip), req->dst_port);
-    udp_packet_send_ll(xchg_socket, &xchg_pkt, 0, req->data, req->len);
+    udp_packet_init(&xchg_tx.h, ntohl(req->dst_ip), req->dst_port);
+    /* through the whole struct, so no compiler reads it as an overflow of the 2-byte field */
+    memcpy((uint8_t *)&xchg_tx + offsetof(udp_packet_t, align), req->data, req->len);
+    udp_packet_send(xchg_socket, &xchg_tx.h, req->len);
 
     for (waited = 0; !xchg_got && waited < req->timeout_ms; waited++)
         DelayThread(1000);
