@@ -123,6 +123,20 @@ int main(void)
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
     assert(assigned == 0 && submits == 0);
 
+    /* neutrino_odd_size_card: Neutrino takes the file as it is (no size check on that path), so the
+       game's own card is assigned as before -- never replaced, nothing created, no message */
+    reset(0, -1, 8);
+    gDefaultCoreLoader = 1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 1 && saves == 1 && submits == 0 && msgs == 0 && !strcmp(assignedName, "SLUS_123.45_0"));
+
+    /* neutrino_unreadable_card: a probe that could not read the file is still never assigned */
+    reset(SYS_VMC_CREATE_FAILED, -1, 8);
+    gDefaultCoreLoader = 1;
+    assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
+    assert(assigned == 0 && submits == 0 && msgs == 1);
+    gDefaultCoreLoader = 0;
+
     /* create_rejected: a failed submission is never assigned, and the stale formatter status is not read as success */
     reset(-1, SYS_VMC_CREATE_FAILED, -1);
     assert(guiGameAutoCreateVmc(&list, 0, &cfg) == 1);
