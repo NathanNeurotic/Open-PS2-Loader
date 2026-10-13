@@ -139,6 +139,8 @@ jobs:
         run: python3 .github/scripts/test_cfg_titles.py
       - name: Check VMC creation can recover after failed or short writes
         run: python3 .github/scripts/test_genvmc_recovery.py
+      - name: Check genvmc owns one job, never overlaps, and cancels without blocking
+        run: python3 .github/scripts/test_genvmc_lifecycle.py
       - name: Check VMC resizing cannot erase an existing image implicitly
         run: python3 .github/scripts/test_vmc_preserve_existing.py
       - name: Check Create VMC on First Launch creates, reuses, skips and reports correctly

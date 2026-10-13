@@ -123,11 +123,13 @@ static MCDevInfo devinfo __attribute__((aligned(16)));
 static u8 cluster_buf[(BLOCKKB * 1024) + 16] __attribute__((aligned(16)));
 
 static int genvmc_io_sema = -1;
-static int genvmc_thread_sema = -1;
 static int genvmc_abort_sema = -1;
-static int genvmc_abort_finished_sema = -1;
 
 static int genvmc_abort = 0;
+
+// The one job genvmc runs, in its own copy. The create devctl's argument is fileXio's RPC buffer,
+// which the next request overwrites while the job is still running.
+static createVMCparam_t genvmc_job;
 
 static statusVMCparam_t genvmc_stats;
 
@@ -194,25 +196,23 @@ static int mc_getmcrtime(sceMcStDateTime *time)
 //--------------------------------------------------------------
 static int mc_writecluster(int fd, int cluster, void *buf, int dup)
 {
-    register int r, size;
+    register int r, size, aborted;
     MCDevInfo *mcdi = (MCDevInfo *)&devinfo;
 
+    // The lock covers reading the flag only, never the write: a device that stalls in write() must
+    // not leave an abort (which holds genvmc_io_sema) waiting on this semaphore and freeze STATUS.
     WaitSema(genvmc_abort_sema);
-
-    if (genvmc_abort) {
-        SignalSema(genvmc_abort_sema);
-        return -2;
-    } else {
-        lseek(fd, cluster * mcdi->cluster_size, SEEK_SET);
-        size = mcdi->cluster_size * dup;
-        r = write(fd, buf, size);
-        if (r != size) {
-            SignalSema(genvmc_abort_sema);
-            return -1;
-        }
-    }
-
+    aborted = genvmc_abort;
     SignalSema(genvmc_abort_sema);
+
+    if (aborted)
+        return -2;
+
+    lseek(fd, cluster * mcdi->cluster_size, SEEK_SET);
+    size = mcdi->cluster_size * dup;
+    r = write(fd, buf, size);
+    if (r != size)
+        return -1;
 
     return 0;
 }
@@ -535,7 +535,6 @@ static int genvmc_dummy(void)
 static int genvmc_init(iop_device_t *dev)
 {
     genvmc_io_sema = CreateMutex(IOP_MUTEX_UNLOCKED);
-    genvmc_thread_sema = CreateMutex(IOP_MUTEX_UNLOCKED);
     genvmc_abort_sema = CreateMutex(IOP_MUTEX_UNLOCKED);
 
     return 0;
@@ -545,7 +544,6 @@ static int genvmc_init(iop_device_t *dev)
 static int genvmc_deinit(iop_device_t *dev)
 {
     DeleteSema(genvmc_io_sema);
-    DeleteSema(genvmc_thread_sema);
     DeleteSema(genvmc_abort_sema);
 
     return 0;
@@ -555,9 +553,67 @@ static int genvmc_deinit(iop_device_t *dev)
 static void VMC_create_thread(void *args)
 {
     register int r;
-    createVMCparam_t *param = (createVMCparam_t *)args;
+    int aborted;
+    createVMCparam_t *param = &genvmc_job;
 
-    WaitSema(genvmc_thread_sema);
+    (void)args;
+
+    // Cancelled before it was scheduled: nothing has been opened, so nothing is removed below.
+    WaitSema(genvmc_abort_sema);
+    aborted = genvmc_abort;
+    SignalSema(genvmc_abort_sema);
+
+    if (aborted)
+        r = -1000;
+    else if (param->VMC_card_slot == -1)
+        r = vmc_mcformat(param->VMC_filename, param->VMC_size_mb * 1024, param->VMC_blocksize, &genvmc_stats.VMC_progress, genvmc_stats.VMC_msg);
+    else
+        r = vmc_mccopy(param->VMC_filename, param->VMC_card_slot, &genvmc_stats.VMC_progress, genvmc_stats.VMC_msg);
+
+    // Any failure after the open leaves a truncated, half-written card behind. Remove it before
+    // reporting, or the next look finds "a VMC by that name" and uses a broken one (Create VMC on
+    // First Launch reuses an existing file rather than overwrite it). Nothing is removed for the
+    // failures that come BEFORE the open -- vmc_mccopy's source-card checks (-98 no card, -99
+    // unreadable, -100 not formatted) and the open itself (-101): the name may belong to a VMC
+    // this job never touched.
+    if (r < 0 && !aborted && r != -98 && r != -99 && r != -100 && r != -101)
+        remove(param->VMC_filename);
+
+    // The result is published last, once the file is in its final state (a removed partial
+    // included): callers read STATUS for completion, so "available" must never show while the job
+    // still owns the file. After this the worker touches nothing a new job uses.
+    WaitSema(genvmc_io_sema);
+    genvmc_stats.VMC_error = r < 0 ? r : 0;
+    if (r == -1000)
+        strcpy(genvmc_stats.VMC_msg, "VMC file creation aborted");
+    else if (r < 0)
+        strcpy(genvmc_stats.VMC_msg, "Failed to format VMC file");
+    else {
+        genvmc_stats.VMC_progress = 100;
+        strcpy(genvmc_stats.VMC_msg, "VMC file created");
+    }
+    genvmc_stats.VMC_status = GENVMC_STAT_AVAIL;
+    SignalSema(genvmc_io_sema);
+
+    ExitDeleteThread();
+}
+
+//--------------------------------------------------------------
+// Runs under genvmc_io_sema. genvmc builds one card at a time: the job is reserved (and reads busy)
+// before its thread is scheduled, and a request while one is pending is refused, not queued.
+static int vmc_create(const createVMCparam_t *param)
+{
+    DPRINTF("%s: vmc_create() filename=%s size_MB=%d blocksize=%d th_priority=0x%02x slot=%d\n", MODNAME,
+            param->VMC_filename, param->VMC_size_mb, param->VMC_blocksize, param->VMC_thread_priority, param->VMC_card_slot);
+
+    register int r, thid;
+    iop_thread_t thread_param;
+
+    if (genvmc_stats.VMC_status == GENVMC_STAT_BUSY)
+        return -EBUSY;
+
+    memcpy(&genvmc_job, param, sizeof(genvmc_job));
+    genvmc_job.VMC_filename[sizeof(genvmc_job.VMC_filename) - 1] = '\0';
 
     WaitSema(genvmc_abort_sema);
     genvmc_abort = 0;
@@ -568,83 +624,48 @@ static void VMC_create_thread(void *args)
     genvmc_stats.VMC_progress = 0;
     strcpy(genvmc_stats.VMC_msg, "Initializing...");
 
-    if (param->VMC_card_slot == -1)
-        r = vmc_mcformat(param->VMC_filename, param->VMC_size_mb * 1024, param->VMC_blocksize, &genvmc_stats.VMC_progress, genvmc_stats.VMC_msg);
-    else
-        r = vmc_mccopy(param->VMC_filename, param->VMC_card_slot, &genvmc_stats.VMC_progress, genvmc_stats.VMC_msg);
-
-    if (r < 0) {
-        // Any failure after the open leaves a truncated, half-written card behind. Remove it before
-        // reporting, or the next look finds "a VMC by that name" and uses a broken one (Create VMC on
-        // First Launch reuses an existing file rather than overwrite it). Nothing is removed for the
-        // failures that come BEFORE the open -- vmc_mccopy's source-card checks (-98 no card, -99
-        // unreadable, -100 not formatted) and the open itself (-101): the name may belong to a VMC
-        // this job never touched.
-        if (r != -98 && r != -99 && r != -100 && r != -101)
-            remove(param->VMC_filename);
-        genvmc_stats.VMC_status = GENVMC_STAT_AVAIL;
-        genvmc_stats.VMC_error = r;
-
-        if (r == -1000) { // user abort
-            strcpy(genvmc_stats.VMC_msg, "VMC file creation aborted");
-            SignalSema(genvmc_abort_finished_sema);
-        } else
-            strcpy(genvmc_stats.VMC_msg, "Failed to format VMC file");
-
-        goto exit;
-    }
-
-    genvmc_stats.VMC_status = GENVMC_STAT_AVAIL;
-    genvmc_stats.VMC_error = 0;
-    genvmc_stats.VMC_progress = 100;
-    strcpy(genvmc_stats.VMC_msg, "VMC file created");
-
-exit:
-    SignalSema(genvmc_thread_sema);
-    ExitDeleteThread();
-}
-
-//--------------------------------------------------------------
-static int vmc_create(createVMCparam_t *param)
-{
-    DPRINTF("%s: vmc_create() filename=%s size_MB=%d blocksize=%d th_priority=0x%02x slot=%d\n", MODNAME,
-            param->VMC_filename, param->VMC_size_mb, param->VMC_blocksize, param->VMC_thread_priority, param->VMC_card_slot);
-
-    register int r, thid;
-    iop_thread_t thread_param;
-
     thread_param.attr = TH_C;
     thread_param.option = 0;
     thread_param.thread = (void *)VMC_create_thread;
     thread_param.stacksize = 0x2000;
-    thread_param.priority = (param->VMC_thread_priority < 0x0f) ? 0x0f : param->VMC_thread_priority;
+    thread_param.priority = (genvmc_job.VMC_thread_priority < 0x0f) ? 0x0f : genvmc_job.VMC_thread_priority;
 
     // creating VMC create thread
     thid = CreateThread(&thread_param);
-    if (thid < 0)
-        return -1;
+    if (thid < 0) {
+        r = -1;
+        goto fail;
+    }
 
     // starting VMC create thread
-    r = StartThread(thid, (void *)param);
-    if (r < 0)
-        return -2;
+    if (StartThread(thid, NULL) < 0) {
+        DeleteThread(thid);
+        r = -2;
+        goto fail;
+    }
 
     return 0;
+
+fail: // nothing was scheduled: back to idle, so the request can be retried
+    genvmc_stats.VMC_error = r;
+    strcpy(genvmc_stats.VMC_msg, "Failed to start VMC creation");
+    genvmc_stats.VMC_status = GENVMC_STAT_AVAIL;
+    return r;
 }
 
 //--------------------------------------------------------------
+// Asks the running job to stop and returns at once; nothing here waits on the worker. Completion is
+// read from STATUS, which turns available only after the job has removed its partial file. Repeated
+// or late aborts are harmless: when no job is running nothing is flagged, and every new job starts
+// with the flag clear.
 static int vmc_abort(void)
 {
-    WaitSema(genvmc_abort_sema);
-
     DPRINTF("%s: vmc_abort()\n", MODNAME);
 
-    genvmc_abort = 1;
+    WaitSema(genvmc_abort_sema);
+    if (genvmc_stats.VMC_status == GENVMC_STAT_BUSY)
+        genvmc_abort = 1;
     SignalSema(genvmc_abort_sema);
-
-    genvmc_abort_finished_sema = CreateMutex(IOP_MUTEX_LOCKED);
-    WaitSema(genvmc_abort_finished_sema);
-    DeleteSema(genvmc_abort_finished_sema);
 
     return 0;
 }
@@ -672,8 +693,12 @@ static int genvmc_devctl(iop_file_t *f, const char *name, int cmd, void *args, u
 
         // VMC file creation request command
         case GENVMC_DEVCTL_CREATE_VMC:
-            r = vmc_create((createVMCparam_t *)args);
-            if (r < 0)
+            if (args == NULL || arglen < sizeof(createVMCparam_t)) {
+                r = -EINVAL;
+                break;
+            }
+            r = vmc_create((const createVMCparam_t *)args);
+            if (r < 0 && r != -EBUSY)
                 r = -EIO;
             break;
 
