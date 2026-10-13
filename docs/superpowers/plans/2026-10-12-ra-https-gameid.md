@@ -70,8 +70,8 @@
   - `third_party/mbedtls/README.md` names `3.6.7`, a 64-hex SHA-256 and `Apache-2.0`;
   - `LICENSE` exists, and `library/psa_crypto_driver_wrappers_no_static.c` exists (proof that the release archive was used, not the tag);
   - the README contains the exact sentence `Used under the Apache-2.0 licence.`, and every `library/*.c` has an `SPDX-License-Identifier` line that includes `Apache-2.0`;
-  - every `mbedtls` and `ratls_root_` line in `Makefile` sits between an `ifeq ($(RETROACHIEVEMENTS),1)` and its `endif` (scan the line ranges);
-  - all six DER files exist, and each SHA-256 equals the fingerprint written in `third_party/ca-roots/README.md`;
+  - every `Makefile` line matching `mbedtls|ratls_root_|ratls|MBEDTLS_DIR` **case-insensitively** (so `-DMBEDTLS_CONFIG_FILE`, `-I$(MBEDTLS_DIR)…`, the object lists and the `BIN2C` rules all count) sits between an `ifeq ($(RETROACHIEVEMENTS),1)` and its `endif` (scan the line ranges, nested conditionals included);
+  - all six DER files exist, and each SHA-256 equals an **issuer-published fingerprint pinned in the test source itself** (a dict of six values, copied from pki.goog and letsencrypt.org when vendoring); the README must list the same values, but the README alone never satisfies the check;
   - `riptopl_mbedtls_config.h` defines `MBEDTLS_SSL_PROTO_TLS1_3`, `MBEDTLS_SSL_PROTO_TLS1_2`, `MBEDTLS_ENTROPY_HARDWARE_ALT` and `MBEDTLS_PLATFORM_TIME_ALT`, and does **not** define `MBEDTLS_SSL_SRV_C`, `MBEDTLS_FS_IO` or `MBEDTLS_SSL_RENEGOTIATION`.
 
 - [ ] **Step 2: Run it and confirm it fails**
@@ -131,7 +131,7 @@
   long long raTlsRtcToUtc(int year, int month, int day, int hour, int minute, int second); /* inputs already decoded from BCD; RTC zone → UTC */
   ```
 - `raTlsRequest` behaviour decisions:
-  - `io->now_utc() < 0` → `RATLS_ERR_CLOCK` before any `send`.
+  - `int raTlsClockOk(long long (*now_utc)(void))` (portable, in `ratls.c`) returns 0 when the clock is unset. `raHttpsGet` calls it **first, before `gethostbyname`**, and returns `RATLS_ERR_CLOCK`; the host driver calls it before connecting, the same way. `raTlsRequest` also refuses with `RATLS_ERR_CLOCK` before any `send`, as a second guard.
   - Error mapping:
     - certificate verify flags ≠ 0 → `RATLS_ERR_CERT`, logged with `mbedtls_x509_crt_verify_info`;
     - `MBEDTLS_ERR_SSL_TIMEOUT` → `RATLS_ERR_TIMEOUT`;
@@ -159,7 +159,8 @@
   - `wrong_host`: leaf for `other.test` → `RATLS_ERR_CERT` (-4).
   - `expired`: expired leaf → -4.
   - `untrusted_root`: the anchor list holds only an unrelated CA → -4.
-  - `clock_unset`: `now_utc` returns -1 → -2, and the server saw **no** connection bytes.
+  - `clock_unset`: `now_utc` returns -1 → -2, and the server **accepted no connection at all**. A Python static check also asserts that `raTlsClockOk(` precedes `gethostbyname(` in `raHttpsGet`.
+  - `drbg_distinct`: seed and draw 32 bytes twice in one process and once in a second process run → all three outputs differ (spec §3 entropy test).
   - `stall_deadline`: the server accepts and sends nothing, with a 1000 ms driver deadline → -6 within 1500 ms.
   - `http_404`: status 404 → -5.
   - `anchors_parse`: all six real DERs from `third_party/ca-roots` parse with `mbedtls_x509_crt_parse_der`.
@@ -175,7 +176,7 @@
 - [ ] **Step 4: Run the test and confirm it passes**
 
   Run: `python3 .github/scripts/test_ratls_host.py`
-  Expected: `PASS: ratls 13/13`.
+  Expected: `PASS: ratls 14/14`.
 
 - [ ] **Step 5: CI.** Add the host test to `flavours.yml`, plus the RA symbol check `grep -q ' mbedtls_ssl_handshake$' menu-symbols.txt` and `grep -q ' raHttpsGet$' menu-symbols.txt`. Confirm that the RA and standard ELF builds both pass, and record the RA `opl.elf` size delta from the CI size print.
 

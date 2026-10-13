@@ -60,7 +60,10 @@ static int xchg_rx_handler(udp_socket_t *socket, void *arg, const uint8_t *hdr, 
         return -1;
 
     udplen = ntohs(pkt->udp.len);
-    if (udplen < sizeof(udp_header_t))
+    /* The UDP length must fit the IP packet that carries it, or the FIFO read below would run
+       past this frame into stale data or the next frame. */
+    if (udplen < sizeof(udp_header_t) || ntohs(pkt->ip.len) < sizeof(ip_header_t) ||
+        udplen > ntohs(pkt->ip.len) - sizeof(ip_header_t))
         return -1;
     len = udplen - sizeof(udp_header_t);
     if (len > MSTACK_XCHG_REPLY_MAX)

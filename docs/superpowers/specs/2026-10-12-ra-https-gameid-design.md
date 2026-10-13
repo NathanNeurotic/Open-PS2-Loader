@@ -17,9 +17,12 @@ never worse than #926 alone.
 
 ## Decisions already made
 
-- **Library: mbedTLS** (Mbed-TLS/mbedtls, Apache-2.0), taken from its authoritative upstream at a
-  pinned LTS tag (3.6.x). It has no GPL code, so RiptOPL stays AFL-3.0. It supports TLS 1.3 like
-  ORBIT's wolfSSL, plus TLS 1.2.
+- **Library: mbedTLS** (Mbed-TLS/mbedtls, Apache-2.0), taken from its authoritative upstream as
+  the **release archive `mbedtls-3.6.7.tar.bz2`** (3.6 LTS), not the git tag: only the archive
+  carries the generated sources (for example `library/psa_crypto_driver_wrappers_no_static.c`).
+  Its SHA-256 is checked against the release notes and recorded in `third_party/mbedtls/README.md`.
+  It has no GPL code, so RiptOPL stays AFL-3.0. It supports TLS 1.3 like ORBIT's wolfSSL, plus
+  TLS 1.2.
 - **RA builds only.** All of this compiles under `RETROACHIEVEMENTS=1`. The standard and Korium
   editions don't change, consistent with "releases differ only by theme and RA features".
 
@@ -46,24 +49,42 @@ never worse than #926 alone.
 - It's built as an EE static library linked only into RA builds. The ELF growth gets measured in
   the plan (expected about 150–250 KB packed-size headroom; the menu ELF isn't in `ram84`).
 
-### 2. Trust anchors (`src/ratls_roots.c`)
+### 2. Trust anchors (`third_party/ca-roots/*.der`)
 - Embed DER for **GTS Root R1–R4**, so a key-type rotation at Google doesn't break the lookup,
   and **ISRG Root X1/X2**, so a CA move to Let's Encrypt doesn't either.
-- Each one is documented with fingerprint and expiry. A host test checks they parse, and that the
-  live chain shape documented above validates against them.
+- The DER files live in `third_party/ca-roots/`. The Makefile turns each one into
+  `ratls_root_<name>.c` with `BIN2C` at build time (symbols `ratls_root_<name>` and
+  `size_ratls_root_<name>`, RA builds only). There is no hand-written roots source file.
+- Each one is documented with fingerprint and expiry. The vendor test pins the issuer-published
+  SHA-256 fingerprints in its own source, so a wrong DER can't pass alongside a matching README.
+  A host test checks they parse, and that the live chain shape documented above validates
+  against them.
 
-### 3. Time and entropy (`src/ratls.c`)
+### 3. Time and entropy (`src/ratls_ps2.c`)
 - **Time:** certificate validity is checked against `sceCdReadClock`, converted to UTC. If the
-  clock is clearly unset (year before 2025), the lookup fails closed and the browser uses the #926
-  fallback with a "set the console clock" note. Certificates are never accepted unchecked.
+  clock is clearly unset (year before 2025), the lookup fails closed **before any DNS lookup or
+  TCP connection**, and the browser uses the #926 fallback with a "set the console clock" note.
+  Certificates are never accepted unchecked.
 - **Entropy:** the CTR_DRBG is seeded from every non-deterministic source available: the EE
   COP0 cycle counter sampled around network and pad events, the IOP timer, the CDVD clock, and
-  network arrival timing. Mixing happens through mbedTLS's entropy accumulator. The spec records
-  that the PS2 has no hardware RNG; this matches what PS2 TLS clients (ORBIT, curl ports) do.
+  network arrival timing. Mixing happens through mbedTLS's entropy accumulator. The PS2 has no
+  hardware RNG; this matches what PS2 TLS clients (ORBIT, curl ports) do.
+- **Entropy budget:** each sample is credited conservatively at **1 bit**: the low bits of the
+  294.912 MHz COP0 count read before and after a thread switch (`DelayThread`), which jitter with
+  interrupt and DMA timing. The source runs until **≥ 512 samples** are collected, so the seed
+  carries at least 256 bits by that estimate, before `psa_crypto_init()` completes. mbedTLS's
+  default reseed interval applies, and every new lookup session reseeds with fresh samples.
+- **What a weak seed would cost:** the request is a public GET with no credentials. An attacker
+  who could predict the client's ephemeral ECDHE key could read or alter that one exchange, so at
+  worst the browser shows the wrong game's list; certificate verification is unaffected.
+- **Test:** a host test seeds twice in one process, and once in each of two processes, and asserts
+  all three DRBG outputs differ. The console check repeats the lookup after a reboot.
 
-### 4. HTTPS transport (`src/ratls.c`)
-- `raHttpsGet(host, path, buf, max, &len)`: DNS via `gethostbyname`, TCP connect, then mbedTLS
-  over BIO callbacks.
+### 4. HTTPS transport (`src/ratls.c` portable, `src/ratls_ps2.c` platform)
+- `src/ratls.c` holds only the portable part: one TLS session plus the HTTP GET over caller-supplied
+  send/receive/clock callbacks, so host tests build it without PS2 headers.
+- `raHttpsGet(host, path, buf, max, &len)` lives in `src/ratls_ps2.c`: clock check first, then DNS
+  via `gethostbyname`, TCP connect, and the portable session over BIO callbacks.
 - Reads use lwIP's per-call `MSG_DONTWAIT` in 64-byte-aligned chunks with an overall deadline, the
   same rules as #926's `raNetHttpGet`, since `fcntl(O_NONBLOCK)` has no effect on this stack.
 - SNI and hostname verification are always on.

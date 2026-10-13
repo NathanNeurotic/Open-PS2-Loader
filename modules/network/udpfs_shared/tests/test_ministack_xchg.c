@@ -87,6 +87,7 @@ typedef struct
     uint8_t src[4];
     const char *text;
     int udp_payload; /* 0 = strlen(text) */
+    int ip_payload;  /* 0 = consistent with the UDP length */
 } script_t;
 
 static script_t script[4];
@@ -101,6 +102,7 @@ static int deliver(const script_t *s)
     memcpy(pkt->ip.addr_src.addr, s->src, 4);
     pkt->udp.port_dst = htons(MSTACK_XCHG_PORT);
     pkt->udp.len = htons((uint16_t)(sizeof(udp_header_t) + payload));
+    pkt->ip.len = htons((uint16_t)(sizeof(ip_header_t) + (s->ip_payload ? s->ip_payload : (int)sizeof(udp_header_t) + payload)));
     if (s->udp_payload) {
         for (int i = 0; i < payload && 42 + i < (int)sizeof(frame); i++)
             frame[42 + i] = (uint8_t)('a' + i % 26);
@@ -170,6 +172,7 @@ static void reply_at(int idx, int at, int a, int b, int c, int d, const char *te
     script[idx].src[3] = (uint8_t)d;
     script[idx].text = text;
     script[idx].udp_payload = payload;
+    script[idx].ip_payload = 0;
 }
 
 int main(void)
@@ -250,6 +253,14 @@ int main(void)
         rc = exchange(nip(192, 168, 1, 99), 18194, 250, "RAQ1 x");
         assert(rc == -EHOSTUNREACH && sends == before && delays == 0);
     }
+
+    /* udp_length_beyond_ip: a datagram claiming more than its IP packet carries is dropped
+       instead of reading past the frame in the FIFO */
+    script_count = 1;
+    reply_at(0, 1, 192, 168, 1, 20, "", 1000);
+    script[0].ip_payload = 8 + 10;
+    rc = exchange(nip(192, 168, 1, 20), 18194, 20, "RAQ1 x");
+    assert(rc == -ETIMEDOUT);
 
     /* bad_args */
     {
