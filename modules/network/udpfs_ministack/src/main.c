@@ -59,12 +59,14 @@ int _start(int argc, char *argv[])
     }
 
     udptty_init();
-    mstack_xchg_init();
 
     if (RegisterLibraryEntries(&_exp_mstack) != 0) {
         M_DEBUG("module already loaded\n");
         return MODULE_NO_RESIDENT_END;
     }
+
+    /* Only once resident: a second load's memory is freed, and "mstack" must not point into it. */
+    mstack_xchg_init();
 
     return MODULE_RESIDENT_END;
 }

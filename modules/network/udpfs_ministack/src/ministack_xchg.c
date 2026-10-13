@@ -128,6 +128,17 @@ static int xchg_devctl(iomanX_iop_file_t *f, const char *name, int cmd, void *ar
     (void)name;
     if (cmd == MSTACK_DEVCTL_VERSION)
         return MSTACK_XCHG_VERSION;
+    if (cmd == MSTACK_DEVCTL_GET_IP) {
+        uint32_t ip = ms_ip_get_ip();
+        uint8_t *out = (uint8_t *)buf;
+        if (out == NULL || buflen < 4)
+            return -EINVAL;
+        out[0] = ip >> 24;
+        out[1] = ip >> 16;
+        out[2] = ip >> 8;
+        out[3] = ip;
+        return 4;
+    }
     if (cmd != MSTACK_DEVCTL_UDP_XCHG || req == NULL || arglen < MSTACK_XCHG_REQ_HDR ||
         req->len > MSTACK_XCHG_REQ_MAX || arglen < MSTACK_XCHG_REQ_HDR + req->len ||
         buf == NULL || buflen < sizeof(mstack_xchg_reply_t))

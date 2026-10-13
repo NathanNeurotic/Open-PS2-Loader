@@ -59,7 +59,7 @@ static unsigned short ntohs(unsigned short v) { return htons(v); }
 static u32 g_raReplyIP;
 static mstack_xchg_req_t g_xreq;
 static mstack_xchg_reply_t g_xreply;
-static int reserved, sends, recvs, closes, ethinits, probe = 1;
+static int reserved, sends, recvs, closes, ethinits, probe = 1, get_ip_ok = 1;
 int ps2_ip[4] = {192, 168, 1, 10};
 static int raNetNicReserved(void) { return reserved; }
 static int open_pc_socket(char *myaddr, int sz, u8 ip[4]) { (void)ip; snprintf(myaddr, sz, " 10.0.0.2 18196"); return 5; }
@@ -85,6 +85,14 @@ static int fileXioDevctl(const char *name, int cmd, void *arg, unsigned int argl
     assert(!strcmp(name, "mstack:"));
     if (cmd == MSTACK_DEVCTL_VERSION)
         return probe;
+    if (cmd == MSTACK_DEVCTL_GET_IP) {
+        static const unsigned char real[4] = {10, 0, 0, 9};
+        assert(buf != NULL && buflen >= 4);
+        if (!get_ip_ok)
+            return -22;
+        memcpy(buf, real, 4);
+        return 4;
+    }
     assert(cmd == MSTACK_DEVCTL_UDP_XCHG && buflen >= sizeof(mstack_xchg_reply_t));
     memcpy(&last_req, arg, arglen);
     last_arglen = arglen;
@@ -132,8 +140,13 @@ int main(void)
     reset(); reserved = 1; probe = 1;
     link = open_pc_link(myaddr, sizeof(myaddr), ip);
     assert(link == RA_LINK_MSTACK);
-    assert(!strcmp(myaddr, " 192.168.1.10 18196"));
-    assert(ip[0] == 192 && ip[1] == 168 && ip[2] == 1 && ip[3] == 10);
+    /* The PC replies to the address the ministack really owns, not a since-edited setting. */
+    assert(!strcmp(myaddr, " 10.0.0.9 18196"));
+    assert(ip[0] == 10 && ip[1] == 0 && ip[2] == 0 && ip[3] == 9);
+    get_ip_ok = 0;
+    assert(open_pc_link(myaddr, sizeof(myaddr), ip) == RA_LINK_MSTACK);
+    assert(!strcmp(myaddr, " 192.168.1.10 18196")); /* older driver: fall back to ps2_ip */
+    get_ip_ok = 1;
     script_n = 1; script_src[0] = IP20; script_text[0] = "RAA1 OK 5"; script_len[0] = 0;
     assert(ask(link, &to, "RAQ1 abc 192.168.1.10 18196", out, sizeof(out)) == 9);
     assert(!strcmp(out, "RAA1 OK 5") && g_raReplyIP == IP20);
@@ -218,4 +231,16 @@ assert "raNetNicReserved()" in until("int raNetHttpGet(", "socket(")
 # fileXio user in src/ does); the RA build fails otherwise.
 include = ranet.index("#include <fileXio_rpc.h>")
 assert "#define NEWLIB_PORT_AWARE" in ranet[:include], "fileXio_rpc.h included without NEWLIB_PORT_AWARE"
+# The device registers only once the module stays resident: a second load returns
+# NO_RESIDENT_END and its memory is freed, so "mstack" must not point into it.
+main_c = (ROOT / "modules/network/udpfs_ministack/src/main.c").read_text(encoding="utf-8")
+assert main_c.index("mstack_xchg_init();") > main_c.index("RegisterLibraryEntries(&_exp_mstack)")
+
+# "Network busy" with a UDPFS transport selected but not loaded yet says what to do.
+assert "_STR_RA_UDPFS_LOAD_FIRST" in body("int raNetTestLink(")
+for name in ("src/supportbase.c", "src/discsupport.c"):
+    text = (ROOT / name).read_text(encoding="utf-8")
+    assert "raNetUdpfsNotLoaded() ? _STR_RA_UDPFS_LOAD_FIRST : _STR_RA_NET_BUSY_HASH" in text, name
+helper = body("int raNetUdpfsNotLoaded(void)")
+assert "NET_PROTO_UDPFS" in helper and "NET_PROTO_UDPFSBD" in helper and "!raNetNicBusy()" in helper
 print("PASS: RA requests use mstack: while UDPFS owns the NIC, sockets otherwise, same retries and filtering")
