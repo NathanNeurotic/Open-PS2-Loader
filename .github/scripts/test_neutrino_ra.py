@@ -31,12 +31,14 @@ harness = r'''
 #include "modules/network/common/ra_watch.h"
 #define NEUTRINO_CHEAT_CFG "riptopl-cheats"
 #define RA_MODE_XERABORA 0
+#define RA_MODE_CADUCEUS 1
 #define _STR_RA_NEUTRINO_UNTRACKED 1
 #define LOG(...) ((void)0)
 static char gNeutrinoArgs[256], sysNeutrinoCheatArg[24], sysNeutrinoCheatStartup[32];
 static char sysNeutrinoRAArg[336], sysNeutrinoRAStartup[32];
 static int gRATelemetry=1, gRAMode, gRAHostIp[4]={192,168,1,2}, ps2_ip[4]={192,168,1,10}, ps2_ip_use_dhcp;
 static int count=2, bytes=5, nodes, warning, networkCalls, writes, missingMarker, badMarker, failWrite, failClose;
+static int nicBusy, sessionFail; /* a resident UDP transport; a Caduceus bridge reporting OFFLINE */
 static unsigned int entries[2]={RA_WATCH_PACK(0x100000,4),RA_WATCH_PACK(0x100004,1)};
 static char cfg[2048], watch[128], lastPath[512];
 static int cfgLen, watchLen;
@@ -66,9 +68,10 @@ static int fake_unlink(const char *path) { (void)path;return 0; }
 static int sbReadWatchList(const char *prefix,const char *startup) { assert(prefix); return strcmp(startup,"SLUS_123.45") ? 0 : count; }
 static int GetWatchCount(void){return count;}
 static int GetWatchBytes(void){return bytes;}
-static int GetNodeCount(void){return nodes;}
 static unsigned int *GetWatchList(void){return entries;}
-static void raLaunchNetworkUp(void){networkCalls++;}
+static int raNetNicBusy(void){return nicBusy;}
+/* The production raLaunchNetworkUp clears the list and shows its own notice on a failed session. */
+static void raLaunchNetworkUp(void){networkCalls++; if(sessionFail) count=0;}
 static int ethGetNetConfig(unsigned char *ip,unsigned char *mask,unsigned char *gateway) {
     (void)mask;(void)gateway;for(int i=0;i<4;i++)ip[i]=ps2_ip[i];return 0;
 }
@@ -98,7 +101,12 @@ int main(void) {
     prepare("usb", "-cfg=mine");assert(strstr(cfg,"riptopl-cheats"));
     sysNeutrinoCheatArg[0]=0;
     bytes=1217;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);bytes=5;
-    nodes=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);nodes=0;
+    /* Pointer chains: ORBIT's agent reads the direct entries and ignores a chain tail (xeRAbora
+       PROTOCOL.md), so the set is tracked -- direct achievements only -- and no tail is written. */
+    nodes=1;prepare("usb", "");assert(sysNeutrinoRAArg[0] && writes==2 && !warning);
+    memcpy(&h,watch,sizeof(h));assert(h.count==2 && h.bytes==5 && watchLen==(int)sizeof(h)+8);nodes=0;
+    /* A resident UDP transport owns the NIC: untracked with the notice, without raising the network. */
+    nicBusy=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning && !networkCalls);nicBusy=0;
     missingMarker=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && warning);missingMarker=0;
     /* A game with no watch list launches quietly, even where the RA runtime is absent. */
     missingMarker=1;warning=0;sysNeutrinoPrepareRA("mmce1:/Games/","SLUS_999.99","usb","mmce1:/neutrino/neutrino.elf","");
@@ -112,7 +120,14 @@ int main(void) {
     gRAHostIp[0]=0;gRAHostIp[1]=0;gRAHostIp[2]=0;gRAHostIp[3]=0;
     prepare("udpfs", "");assert(!sysNeutrinoRAArg[0] && warning);gRAHostIp[0]=192;gRAHostIp[1]=168;gRAHostIp[2]=1;gRAHostIp[3]=2;
     gRATelemetry=0;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && !warning && !networkCalls);gRATelemetry=1;
-    gRAMode=1;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && !warning);
+    gRAMode=RA_MODE_CADUCEUS;prepare("usb", "");
+    assert(sysNeutrinoRAArg[0] && networkCalls==1 && writes==2 && !warning);
+    assert(strstr(cfg,"srv=192.168.1.2") && strstr(cfg,"raagent.irx"));
+    prepare("udpfs", "");assert(sysNeutrinoRAArg[0] && networkCalls==0);
+    sessionFail=1;prepare("usb", "");
+    assert(!sysNeutrinoRAArg[0] && !writes && !warning); /* raLaunchNetworkUp already gave the notice */
+    sessionFail=0;count=2;
+    gRAMode=2;prepare("usb", "");assert(!sysNeutrinoRAArg[0] && !writes && !warning); /* unknown mode */
     puts("ORBIT handoff: device paths, network ownership, config/cheats, watch limits and failures passed");
     return 0;
 }
