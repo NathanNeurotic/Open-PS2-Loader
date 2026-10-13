@@ -78,7 +78,10 @@ check("the scan only queues the notice", "guiWarning" not in conflict and "udpfs
 check("the notice is shown once", "udpfsIpConflictWarned = 1;" in conflict)
 check("the GUI frame hook shows it", "udpfsShowPendingNotice();" in body(read("src/opl.c"), "static void menuUpdateHook()"))
 base = read("lng_tmpl/_base.yml")
-check("the conflict label is appended last", base.rstrip().splitlines()[-2].strip() == "- label: UDPFS_IP_CONFLICT")
+# Append-only language file: the label sits after every label that existed before it (positional
+# .lng files), whatever is appended later.
+check("the conflict label was appended after the existing labels",
+      base.index("- label: RA_NEUTRINO_UNTRACKED") < base.index("- label: UDPFS_IP_CONFLICT"))
 
 # --- RA release previews ---
 ra = read(".github/workflows/ra-release.yml")

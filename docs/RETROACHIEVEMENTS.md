@@ -55,6 +55,12 @@ UDPFS/UDPBD launches reuse the runtime's storage network stack; the adapter does
 
 The ORBIT runtime watch uses the same schedule as the ordinary Neutrino watch: **05:41 UTC on the 1st, 11th and 21st of each month**. It opens or updates one compatibility-review issue when the release tag or archive digest changes. It does not automatically replace the reviewed pin.
 
+### Xerabora achievement browser
+
+In **RA Mode: Xerabora**, choose **RetroAchievements library (xeRAbora)** from the main menu, or **View achievements** on a game, to see the account's played games and each game's achievements, points, descriptions and unlock dates, with the same **L1/R1** pages, **Square** All / Earned / Locked / Hardcore filter and **Select** refresh as the Caduceus browser. The data comes from the xeRAbora PC's own interface (port **18280**), as in ORBIT: turn on **OPEN TO THE NETWORK** in xeRAbora's settings and allow `xerabora.exe` through the PC's firewall. RiptOPL finds the PC through the **RA companion IP**, a verified peer, or discovery.
+
+From a game card, RiptOPL hashes the image, asks xeRAbora for its title and matches it in your account library. ORBIT looks the game up with RetroAchievements' HTTPS API, which RiptOPL's menu cannot reach, so a game you have **never played** shows its title and achievement count with a note to play it once; after that its full list appears. xeRAbora reports unlock dates but not per-achievement hardcore status, so the Hardcore filter shows hardcore totals only in the library view. Achievement badge images are not downloaded in this mode.
+
 ### Caduceus achievement browser and in-game cards
 
 Choose **Caduceus achievements** from the main menu to browse account games and progress. Select a game to see its achievements, points, descriptions and unlock dates. **L1/R1** changes pages, **Square** cycles All / Earned / Locked / Hardcore, **Select** refreshes, and Back returns to the previous view. Hardcore is a filter for existing account history; it does not enable hardcore tracking.

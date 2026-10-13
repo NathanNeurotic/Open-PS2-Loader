@@ -1798,3 +1798,22 @@ gui_strings:
 # UDPFS: another device answered ARP for this PS2's IP (followed by the IP and that device's MAC).
 - label: UDPFS_IP_CONFLICT
   string: "Another device on your network is using this PS2's IP address, so the UDPFS server's replies go to it. Set a different PS2 IP in Network Settings."
+
+# RA Xerabora mode: achievement browser fed by the xeRAbora PC (ORBIT parity).
+- label: XERA_ACHIEVEMENTS
+  string: "RetroAchievements library (xeRAbora)"
+
+- label: XERA_USE_LIBRARY
+  string: "Browse this game through the RetroAchievements library in the main menu."
+
+- label: XERA_OPEN_NETWORK
+  string: "Cannot reach xeRAbora. Turn on OPEN TO THE NETWORK in its settings, check the RA companion IP and the PC firewall."
+
+- label: XERA_UNKNOWN_GAME
+  string: "xeRAbora does not know this image. Run RA check game support first."
+
+- label: XERA_NOT_PLAYED
+  string: "Not in your RetroAchievements library yet. Play it once with achievements, then press Select."
+
+- label: XERA_CONNECTION_ERROR
+  string: "Cannot read the list from xeRAbora. Press Select to retry."

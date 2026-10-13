@@ -27,6 +27,18 @@ int raNetNicBusy(void);
    the one NIC and leave UDPFS/UDPBD unable to load until the next boot. */
 int raNetNicReserved(void);
 
+/* Xerabora-mode achievement browser. raNetXeraboraIdentify finds the
+   xeRAbora PC (explicit RA companion IP, verified peer, or RAP1 broadcast;
+   host in network byte order) and, when hash is not NULL, asks RAQ1 for the
+   image's title and achievement count. 0 = known, 1 = unknown image, -8 =
+   wrong mode or the NIC is reserved, other negatives = no answer.
+   raNetHttpGet fetches host:port/path over HTTP/1.0 into buf and returns the
+   body offset (status 200), with the body length in *length, or a negative
+   value; a document larger than buf or cut off by the timeout is refused. */
+int raNetXeraboraIdentify(const char *hash, const char *serial, unsigned int *host,
+                          char *title, int titlesz, int *count);
+int raNetHttpGet(unsigned int host, int port, const char *path, char *buf, int max, int *length);
+
 /* Brings the menu network up for a telemetry launch (see ranet.c). */
 void raLaunchNetworkUp(void);
 
