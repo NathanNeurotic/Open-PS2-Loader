@@ -53,6 +53,7 @@
 #include "include/cheatman.h"
 #include "include/sound.h"
 #include "include/xparam.h"
+#include "include/cfgtitle.h" // optional CFG Titles in the game lists (#918)
 
 #define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h> // fileXioDopen/fileXioIoctl2/fileXioDclose used by BDM autolaunch
@@ -192,6 +193,7 @@ int gNeutrinoShowArgs;       // default-off: show the composed Neutrino argv and
 int gDefaultGameView;
 int gAppsDisplay;
 int gGameTypeLabels;
+int gCfgTitlesInLists;
 int gEmberDisplay;
 int gEmberTiming;
 int gEmberDither;
@@ -1299,6 +1301,10 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
     raBadgeRefresh(mdl->support, count);
 #endif
 
+    // Optional CFG Titles (#918): drop the old list's titles before its rows are replaced, so a new row
+    // never borrows the title of the old row with the same index. They are read again below.
+    cfgTitleForget(mdl->support);
+
     // Folder browsing: while inside a subfolder, show the breadcrumb ("Device: RPGs/SNES") as the page
     // title. folderGetSub() points at persistent static state, so the char* stays valid. At the device
     // root the device name set above stands. Only one device is ever inside a folder at a time (the
@@ -1380,6 +1386,20 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
         }
     }
 
+    if (viewTransition) {
+        // All rows for the committed view are now queued. The GUI may show none, some, or all of them
+        // on its next drain, but it can no longer expose a row backed by the discarded view. Do not
+        // clear a transition staged after this rebuild began; its own queued pass still has to run.
+        // (Before the CFG Title pass below, so an L3 flip is never held for it.)
+        libViewFinishPending(mdl->support->mode);
+    }
+
+    // Optional CFG Titles (#918, off by default): with the rows already on screen under their file
+    // names, read each game's CFG Title once, here on the I/O thread; the sort queued next then orders
+    // the list by what it shows. Display only: the row text stays the game's own name, which rename,
+    // Favorites, art and launching key on.
+    cfgTitleRefresh(mdl->support, count);
+
     if (gAutosort) {
         gup = guiOpCreate(GUI_OP_SORT);
         if (gup) { // OOM: an unsorted list beats dereferencing NULL, same as the append loop above
@@ -1387,13 +1407,6 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
             gup->menu.subMenu = &mdl->subMenu;
             guiDeferUpdate(gup);
         }
-    }
-
-    if (viewTransition) {
-        // All rows for the committed view are now queued. The GUI may show none, some, or all of them
-        // on its next drain, but it can no longer expose a row backed by the discarded view. Do not
-        // clear a transition staged after this rebuild began; its own queued pass still has to run.
-        libViewFinishPending(mdl->support->mode);
     }
 }
 
@@ -3400,6 +3413,8 @@ static void _loadConfig()
                 gAppsDisplay = APPS_DISPLAY_MIXED;
             configGetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, &gGameTypeLabels);
             gGameTypeLabels = gGameTypeLabels ? 1 : 0;
+            configGetInt(configOPL, CONFIG_OPL_CFG_TITLES, &gCfgTitlesInLists);
+            gCfgTitlesInLists = gCfgTitlesInLists ? 1 : 0;
             // Where the user left each L3 page last session. Read from the LAST set (the same
             // configReadMulti above filled it), but sequenced HERE, after the two display settings
             // above: the restore validates every remembered position against what its mode can
@@ -4007,6 +4022,7 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_DEFAULT_GAME_VIEW, gDefaultGameView);
         configSetInt(configOPL, CONFIG_OPL_APPS_DISPLAY, gAppsDisplay);
         configSetInt(configOPL, CONFIG_OPL_GAME_TYPE_LABELS, gGameTypeLabels);
+        configSetInt(configOPL, CONFIG_OPL_CFG_TITLES, gCfgTitlesInLists);
         configSetStr(configOPL, CONFIG_OPL_POPSTARTER_PATH, gPopstarterPath);
         emberSaveSettings(configOPL);
         configSetInt(configOPL, CONFIG_OPL_POPSTARTER_DEVICE, gPopstarterDevice);
@@ -4984,7 +5000,8 @@ static void setDefaults(void)
     gNeutrinoShowArgs = 0;
     gDefaultGameView = GAME_VIEW_BOTH;
     gAppsDisplay = APPS_DISPLAY_MIXED;
-    gGameTypeLabels = 0; // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
+    gGameTypeLabels = 0;   // CosmicScale: labels are useful in mixed libraries, but opt-in rather than visual noise
+    gCfgTitlesInLists = 0; // #918: reading every CFG per list rebuild slows SMB/MMCE/MX4SIO; opt-in only
     gPopstarterDevice = POPS_DEV_DEFAULT;
     gPopstarterPath[0] = '\0';
     gPopstarterRetroGemGameID = 1;
