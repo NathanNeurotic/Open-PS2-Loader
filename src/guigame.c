@@ -331,14 +331,14 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, char *VMCName, int
 // with no writable side (HTTP), and APA under Neutrino, which has no VMC at all. A failed creation
 // says so and the game starts without a card, as before. Back during creation stops it and stays in
 // the menu. Returns 1 to go on with the launch, 0 to stay in the menu.
-#define AUTO_VMC_SIZE_MB    8
-#define AUTO_VMC_MAX_FRAMES (120 * 60) // two minutes of status polls before giving up on genvmc
+#define AUTO_VMC_SIZE_MB       8
+#define AUTO_VMC_CANCEL_FRAMES (10 * 60) // after Back: how long a cancelled job gets to wind down
 int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
 {
     statusVMCparam_t status;
-    char vmc[32], assigned[32], progress[96];
-    char *startup;
-    int disabled = 0, coreLoader, sourceMode, frames, aborted = 0;
+    char vmc[32], assigned[32], progress[96], startup[64];
+    const char *now;
+    int disabled = 0, coreLoader, sourceMode, frames, aborted = 0, probe;
 
     if (!gAutoCreateVmc || support == NULL || configSet == NULL || support->itemCheckVMC == NULL ||
         support->itemGetStartup == NULL || !guiIsActive())
@@ -362,29 +362,59 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     if (assigned[0] != '\0' || disabled)
         return 1;
 
-    startup = support->itemGetStartup(support, id);
-    if (startup == NULL || startup[0] == '\0')
+    // A copy: the modal wait below lets a source refresh free and rebuild the row's storage.
+    now = support->itemGetStartup(support, id);
+    if (now == NULL || now[0] == '\0')
         return 1;
+    snprintf(startup, sizeof(startup), "%s", now);
     snprintf(vmc, sizeof(vmc), "%s_%d", getGroupIdForTitleId(startup), 0);
 
-    if (support->itemCheckVMC(support, vmc, 0) == -1) {
-        support->itemCheckVMC(support, vmc, AUTO_VMC_SIZE_MB);
+    // genvmc runs one job. While one is still going, a full-size image may be a card it has not
+    // finished formatting, and its status is not ours to read: neither use nor create a card now.
+    // Stay in the menu: a launch resets the IOP under the running job and leaves a partial card.
+    memset(&status, 0, sizeof(status));
+    if (fileXioDevctl("genvmc:", 0xC0DE0003, NULL, 0, (void *)&status, sizeof(status)) == 0 && status.VMC_status != 0) {
+        LOG("GUIGAME auto VMC %s: formatter busy with another job\n", vmc);
+        guiMsgBox(_l(_STR_AUTO_VMC_STILL_RUNNING), 0, NULL);
+        return 0;
+    }
+
+    // The probe (size 0) answers the card's size in MB, 0 for an image that is not a valid card,
+    // or -1 when there is none. Only a valid card is used as it is; an invalid or unreadable one is
+    // never replaced and never assigned -- it may hold saves.
+    probe = support->itemCheckVMC(support, vmc, 0);
+    if (probe == 0 || (probe < 0 && probe != -1)) {
+        LOG("GUIGAME auto VMC %s: existing image not usable (%d), not assigned\n", vmc, probe);
+        guiMsgBox(_l(_STR_AUTO_VMC_INVALID), 0, NULL);
+        return 1;
+    }
+    if (probe == -1) {
+        // A create request answers -1 (the probe's "absent") when genvmc accepted the job; anything
+        // else (SYS_VMC_REPLACE_REQUIRES_DELETE, SYS_VMC_CREATE_FAILED) means no job was started.
+        if (support->itemCheckVMC(support, vmc, AUTO_VMC_SIZE_MB) != -1) {
+            LOG("GUIGAME auto VMC %s: create request rejected\n", vmc);
+            guiMsgBox(_l(_STR_AUTO_VMC_FAILED), 0, NULL);
+            return 1;
+        }
 
         memset(&status, 0, sizeof(status));
         status.VMC_status = 1;
+        // No deadline on a working job: a slow device (MMCE, SMB) can take minutes, and leaving early
+        // lets the next launch reset the IOP mid-format and orphan a broken card. Back cancels; only a
+        // cancelled job that never winds down (a wedged device) ends the wait.
         for (frames = 0; status.VMC_status != 0; frames++) {
-            if (frames >= AUTO_VMC_MAX_FRAMES) {
-                fileXioDevctl("genvmc:", 0xC0DE0002, NULL, 0, NULL, 0);
-                status.VMC_error = -1;
-                break;
+            if (aborted && frames - aborted >= AUTO_VMC_CANCEL_FRAMES) {
+                LOG("GUIGAME auto VMC %s: cancelled job still running\n", vmc);
+                guiMsgBox(_l(_STR_AUTO_VMC_STILL_RUNNING), 0, NULL);
+                return 0;
             }
             if (fileXioDevctl("genvmc:", 0xC0DE0003, NULL, 0, (void *)&status, sizeof(status)) != 0)
-                status.VMC_status = 1; // no answer yet; keep polling until the cap above
+                status.VMC_status = 1; // no answer yet; keep polling
 
             readPads();
             if (!aborted && getKeyOn(guiCancelKey())) {
                 fileXioDevctl("genvmc:", 0xC0DE0002, NULL, 0, NULL, 0); // genvmc removes the partial file
-                aborted = 1;
+                aborted = frames + 1;                                   // the frame Back was pressed (never 0)
             }
 
             snprintf(progress, sizeof(progress), "%s %d%%", _l(_STR_AUTO_VMC_CREATING), status.VMC_progress);
@@ -393,7 +423,8 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
 
         if (aborted)
             return 0;
-        if (status.VMC_error != 0) {
+        // Success must be this card, now on the device at the requested size -- not a stale status.
+        if (status.VMC_error != 0 || support->itemCheckVMC(support, vmc, 0) != AUTO_VMC_SIZE_MB) {
             LOG("GUIGAME auto VMC %s failed: %d\n", vmc, status.VMC_error);
             guiMsgBox(_l(_STR_AUTO_VMC_FAILED), 0, NULL);
             return 1;
@@ -403,6 +434,12 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
             guiMsgBox(_l(_STR_VMC_FRAGMENTED_ON_CREATE), 0, NULL);
     }
 
+    // The wait yields to source refreshes: assign only if the row still holds the same game.
+    now = support->itemGetStartup(support, id);
+    if (now == NULL || strcmp(now, startup) != 0) {
+        LOG("GUIGAME auto VMC %s: the game moved during the wait, not assigned\n", vmc);
+        return 1;
+    }
     configSetVMC(configSet, vmc, 0);
     menuSaveConfig(); // the normal CFG error message covers a failed write; the launch goes on
     return 1;
