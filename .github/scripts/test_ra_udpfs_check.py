@@ -27,3 +27,14 @@ assert "&udpfsGetGame," in udpfs and "&udpfsGetPrefix," in udpfs
 assert "- label: RA_NA_UDPFS" in base
 
 print("PASS: the RA support check hashes UDPFS games through the generic branch")
+
+# A watch list that reached memory but could not be saved (read-only share) must not be shown as
+# plain success: the launch reads the file. raAskPC puts the notice's second line in info2.
+ranet = (ROOT / "src/ranet.c").read_text(encoding="utf-8")
+ask = ranet[ranet.index("int raAskPC("):]
+ask = ask[:ask.index("\n}\n")]
+save = ask[ask.index("if (saved == 0)"):]
+assert "_STR_RA_WL_NOT_SAVED" in save[:save.index("}")], "an unsaved watch list is reported as success"
+assert "- label: RA_WL_NOT_SAVED" in base
+assert base.rstrip().endswith('"') and base.index("- label: RA_WL_NOT_SAVED") > base.index("- label: CAD_PAIR_UDPFS")
+print("PASS: an unsaved watch list is reported")

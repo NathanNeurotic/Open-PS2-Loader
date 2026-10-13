@@ -763,8 +763,14 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
             LOG("RA: list saved: %s (%d bytes)\n", file, total);
         }
 
-        if (saved == 0)
+        /* A launch reads the file, not this session's memory: say so instead
+           of "start the game to track it" (a read-only UDPFS share, a full
+           card). The result stays 0 -- the PC did confirm the game. */
+        if (saved == 0) {
             raHashStep("9x-file-not-written");
+            if (info2 != NULL && info2sz > 0)
+                snprintf(info2, info2sz, "%s", _l(_STR_RA_WL_NOT_SAVED));
+        }
     }
 
     return 0;
