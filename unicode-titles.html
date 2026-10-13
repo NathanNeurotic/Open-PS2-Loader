@@ -101,8 +101,18 @@
 <li>Mixed Latin and Japanese characters in game titles, and missing glyphs that your own theme font does not provide.</li>
 <li>The game's startup ID, filename, Favorites identity, VMC, artwork mapping, storage-driver path and launch behavior remain unchanged.</li>
 <li>Automatic translation and Shift-JIS filename conversion are <strong>not</strong> included.</li>
-<li>Per-game <code>CFG/&lt;game-id&gt;.cfg</code> <code>Title</code> metadata is available to themed info screens, but <strong>does not yet override the game-list row</strong>. The display-only override is tracked in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues/918">issue #918</a>; do not overwrite <code>#Name</code> to force a translation.</li>
+<li>Per-game <code>CFG/&lt;game-id&gt;.cfg</code> <code>Title</code> metadata is available to themed info screens, and replaces the game-list row only when <a href="#cfg-titles">Show CFG Titles in Game Lists</a> is on. Do not overwrite <code>#Name</code> to force a translation.</li>
 </ul>
+<h2 id="cfg-titles">Show CFG Titles in Game Lists (optional)</h2>
+<p><b>Settings &rarr; Interface &rarr; Show CFG Titles in Game Lists</b> (off by default) makes each game row show the <code>Title=</code> line from that game's CFG, such as a Japanese title written by OPL Manager, instead of its file name. With <b>Sort Games Alphabetically</b> on (the default), lists sort by what they show.</p>
+<ul>
+<li><strong>Display only.</strong> The file name stays the game's identity: renaming, Favorites, cover art, per-game settings and launching keep using it. Rows without a usable <code>Title</code> (missing, empty, not valid UTF-8, or containing control characters) show the file name. Titles are kept up to 127 bytes, cut on a character boundary.</li>
+<li><strong>Japanese titles need a font</strong>: the optional <code>font_CJK.ttf</code> above, or the Japanese interface language, exactly like a Japanese file name.</li>
+<li><strong>Renaming keeps the title.</strong> A PS2 game's CFG is keyed by its game ID, so a renamed game keeps its title. A PS1 (VCD) game's CFG is keyed by its file name, so renaming it leaves the old CFG, and its title, behind.</li>
+<li><strong>Slower list loads.</strong> Every list refresh reads every game's CFG once in the background. Rows appear with their file names first, then switch to their titles and re-sort. That is why the setting is off by default: on SMB, MMCE and MX4SIO a large library takes noticeably longer to settle.</li>
+<li>Folders and the Apps list are not affected. Turning the setting on or off rebuilds the game lists.</li>
+</ul>
+
 <h2 id="artifact">Compatible build / test artifact</h2>
 <p>Download <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/actions/runs/38251591567/artifacts/11747219931"><strong>OPL-OFFICIALROLLING</strong> from the PR #917 Actions run</a> (GitHub sign-in may be required). This is a compiled ELF ZIP with a build manifest, <strong>not a CJK-font bundle</strong>. Artifacts expire. You can also check <a href="releases.html">Releases</a> for builds containing the merged implementation. Hardware verification remains separate from successful CI. Back up your known-good ELF, settings and saves before updating.</p>
 <h2 id="troubleshoot">Troubleshooting</h2>
@@ -111,7 +121,7 @@
 <tr><td>Japanese menus work but English menus still show boxes in games</td><td>The font in <code>LNG/</code> belongs to the Japanese translation. A second font copy belongs in the settings home.</td></tr>
 <tr><td>Characters are garbled</td><td>The filename may be Shift-JIS or another encoding; font fallback requires valid UTF-8 input.</td></tr>
 <tr><td>Only some Kanji display</td><td>Check the font's supported character set and the finite glyph texture atlas.</td></tr>
-<tr><td>Game-list name ignores a per-game CFG Title field</td><td>Tracked in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/issues/918">issue #918</a>; not the same feature.</td></tr>
+<tr><td>Game-list name ignores a per-game CFG Title field</td><td>Turn on <a href="#cfg-titles">Show CFG Titles in Game Lists</a> (off by default). The CFG must contain a <code>Title=</code> line in UTF-8.</td></tr>
 </tbody></table>
 <div class="callout amber"><div class="h">PS2 memory / performance</div>
 <p>The PS2 has 32 MiB of EE RAM. Full Japanese/CJK fonts can consume many megabytes. Use smaller appropriately licensed subsets where possible. The font renderer has four 256×256 glyph atlas pages per font; very large collections of distinct visible glyphs can exceed that budget. The font is loaded only once at startup, not during list scrolling.</p></div>
