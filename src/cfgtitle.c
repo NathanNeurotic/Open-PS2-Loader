@@ -17,8 +17,8 @@
   a frame never sees it half built or freed.
 */
 
+#include "include/opl.h" // first: the PS2 types every other header needs
 #include "include/cfgtitle.h"
-#include "include/opl.h"
 #include "include/config.h"
 #include "include/gui.h"
 #include "include/vcdsupport.h"
