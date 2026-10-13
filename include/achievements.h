@@ -31,4 +31,8 @@ int achievementsRequestVcd(const char *path);
 int achievementsParseXerabora(char kind, const char *json, int length);
 void achievementsXeraboraPage(achievement_page_t *out, char kind, int page, int filter);
 void achievementsForget(void);
+/* retroachievements.org's {"Success":true,"GameID":N}: N (>= 0), or -1. */
+int achievementsParseGameId(const char *json, int length);
+/* 1 when the last game-ID lookup could not run because the console clock is unset. */
+int achievementsClockUnset(void);
 #endif

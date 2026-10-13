@@ -291,7 +291,8 @@ ifeq ($(RETROACHIEVEMENTS),1)
   #          ISO9660 directly -- mounting hangs on USB past the 2 GB mark.
   # ranet:   the menu-side PC client exchange (hash -> watch list over UDP).
   # rabadge: the "tracked game" badge cache behind the list mark and cover mark.
-  FRONTEND_OBJS += rapopslaunch.o md5.o rawatch.o rahash.o ranet.o achievements.o rabadge.o discsupport.o
+  # ratls:   the verified HTTPS game-ID lookup (portable TLS + HTTP, and its PS2 platform half).
+  FRONTEND_OBJS += rapopslaunch.o md5.o rawatch.o rahash.o ranet.o achievements.o rabadge.o discsupport.o ratls.o ratls_ps2.o
   # The in-game telemetry sender. Hand-builds Ethernet/UDP frames and calls
   # SMAPSendPacket directly, so it deliberately bypasses the menu network stack.
   IOP_OBJS += raudp.o rapops.o
@@ -375,6 +376,18 @@ EE_CFLAGS += -Wno-format-truncation -Wno-stringop-truncation
 EE_CFLAGS += -MMD -MP
 EE_OBJS += $(FRONTEND_OBJS) $(GFX_OBJS) $(AUDIO_OBJS) $(MISC_OBJS) $(EECORE_OBJS) $(IOP_OBJS)
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
+
+# mbedTLS 3.6.7 (third_party/mbedtls, used under Apache-2.0) and the six CA roots it trusts:
+# TLS for the RA edition's HTTPS game-ID lookup (ORBIT parity). RA builds only -- the standard
+# and Korium ELFs must not contain it (checked in CI and by test_mbedtls_vendor.py).
+ifeq ($(RETROACHIEVEMENTS),1)
+  MBEDTLS_DIR = third_party/mbedtls
+  EE_INCS += -I$(MBEDTLS_DIR)/include -I$(MBEDTLS_DIR)
+  EE_CFLAGS += -DMBEDTLS_CONFIG_FILE=\"riptopl_mbedtls_config.h\"
+  MBEDTLS_OBJS = $(patsubst $(MBEDTLS_DIR)/library/%.c,$(EE_OBJS_DIR)mbedtls/%.o,$(wildcard $(MBEDTLS_DIR)/library/*.c))
+  RATLS_ROOTS = gtsr1 gtsr2 gtsr3 gtsr4 isrgrootx1 isrgrootx2
+  EE_OBJS += $(MBEDTLS_OBJS) $(RATLS_ROOTS:%=$(EE_OBJS_DIR)ratls_root_%.o)
+endif
 EE_DEPS = $($(filter %.o,$(EE_OBJS)):%.o=%.d)
 
 # To help linking getting rid off unused functions and data
@@ -1190,6 +1203,20 @@ $(EE_OBJS_DIR)%.o: $(EE_ASM_DIR)%.c | $(EE_OBJS_DIR)
 
 $(PNG_ASSETS:%=$(EE_ASM_DIR)%_png.c): $(EE_ASM_DIR)%_png.c: $(PNG_ASSETS_DIR)%.png | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(@:$(EE_ASM_DIR)%.c=%)
+
+ifeq ($(RETROACHIEVEMENTS),1)
+# Vendored mbedTLS: its own object directory, upstream sources untouched.
+$(EE_OBJS_DIR)mbedtls/%.o: $(MBEDTLS_DIR)/library/%.c | $(EE_OBJS_DIR)
+	@mkdir -p $(@D)
+	$(EE_CC) $(EE_CFLAGS) $(EE_INCS) -c $< -o $@
+
+# Trust anchors (third_party/ca-roots): ratls_root_<name> / size_ratls_root_<name>.
+$(EE_ASM_DIR)ratls_root_%.c: third_party/ca-roots/%.der | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ ratls_root_$*
+
+$(EE_ASM_DIR)ratls_root_isrgrootx2.c: third_party/ca-roots/isrg-root-x2.der | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ ratls_root_isrgrootx2
+endif
 
 endif
 

@@ -8,3 +8,4 @@
 ./modules/network/smbman-ra
 ./modules/usb/usbd-ra
 ./modules/bdmassault
+./third_party/mbedtls

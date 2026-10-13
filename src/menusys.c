@@ -2551,7 +2551,7 @@ void menuRenderAchievements(void)
                                                                  gNetworkProtocol == NET_PROTO_UDPFSBD ? _STR_CAD_UDPFS_IMG :
                                                                                                          _STR_CAD_PAIR) :
                               page.state == ACH_UNSUPPORTED ? _l(xera ? _STR_XERA_UNKNOWN_GAME : _STR_CAD_UNKNOWN_GAME) :
-                              page.state == ACH_NOT_PLAYED  ? _l(_STR_XERA_NOT_PLAYED) :
+                              page.state == ACH_NOT_PLAYED  ? _l(achievementsClockUnset() ? _STR_XERA_SET_CLOCK : _STR_XERA_NOT_PLAYED) :
                                                               _l(xera ? _STR_XERA_CONNECTION_ERROR : _STR_CAD_CONNECTION_ERROR);
         menuCardText(48, 188, 535, 110, message, CAD_TEXT);
         menuCardText(48, 315, 535, 40, _l(_STR_CAD_BACK_REFRESH), CAD_MUTED);

@@ -115,6 +115,13 @@ Bundled third-party software, shipped in the release package and NOT part of Rip
     settings-page placement. Landed through PRs #702, #703, #704 and #705 after
     hardware testing on a real PS2, with careful separation from normal builds.
 
+  - Mbed TLS, by the Mbed TLS project   https://github.com/Mbed-TLS/mbedtls
+    TLS 1.3/1.2 for the RetroAchievements edition's HTTPS game lookup on
+    retroachievements.org, the same lookup ORBIT performs. Vendored unmodified
+    from the 3.6.7 release archive (third_party/mbedtls) and used under the
+    Apache-2.0 licence; the upstream GPL option is not used. Shipped in the RA
+    package as LICENSE-MBEDTLS.txt; not compiled into standard or Korium builds.
+
   - POPStarter, by krHACKen          https://www.psx-place.com/resources/popstarter.683/
     A PS1 launcher built around Sony's native POPS emulator for the PS2, used as
     RiptOPL's primary PS1 core alongside Ember. POPStarter provides the
