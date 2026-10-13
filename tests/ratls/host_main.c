@@ -79,10 +79,23 @@ static long long now_utc(void)
     return (long long)time(NULL);
 }
 
+/* Wall-clock milliseconds: clock() is CPU time on Linux and would never reach a deadline while
+   waiting. */
+static long long wall_ms(void)
+{
+#ifdef _WIN32
+    return (long long)GetTickCount64();
+#else
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (long long)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+#endif
+}
+
 typedef struct
 {
     sock_t sock;
-    clock_t deadline;
+    long long deadline;
 } bio_t;
 
 static int bio_send(void *ctx, const unsigned char *buf, size_t len)
@@ -97,7 +110,7 @@ static int bio_recv(void *ctx, unsigned char *buf, size_t len)
     bio_t *bio = ctx;
     for (;;) {
         struct pollfd p;
-        long left = (long)((bio->deadline - clock()) * 1000 / CLOCKS_PER_SEC);
+        long left = (long)(bio->deadline - wall_ms());
         if (left <= 0)
             return MBEDTLS_ERR_SSL_TIMEOUT;
         p.fd = bio->sock;
@@ -178,7 +191,7 @@ static int cmd_get(int argc, char **argv)
         printf("rc=%d\n", RATLS_ERR_NET);
         return 0;
     }
-    bio.deadline = clock() + (clock_t)deadline_ms * CLOCKS_PER_SEC / 1000;
+    bio.deadline = wall_ms() + deadline_ms;
     io.send = bio_send;
     io.recv = bio_recv;
     io.ctx = &bio;

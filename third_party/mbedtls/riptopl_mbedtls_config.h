@@ -78,5 +78,8 @@
 #define MBEDTLS_X509_CRT_PARSE_C
 #define MBEDTLS_X509_CHECK_KEY_USAGE
 #define MBEDTLS_X509_CHECK_EXTENDED_KEY_USAGE
+/* The PS2 libc defines AF_INET6 but has no inet_pton(): use mbedTLS's own
+   parser for IP-address names in certificates (x509_crt.c). */
+#define MBEDTLS_TEST_SW_INET_PTON
 
 #endif /* RIPTOPL_MBEDTLS_CONFIG_H */
