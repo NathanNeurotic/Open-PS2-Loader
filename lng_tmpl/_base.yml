@@ -1833,3 +1833,10 @@ gui_strings:
 # RA Caduceus browser: UDPFS IMG has no shared folder for ART/CADUCEUS.KEY.
 - label: CAD_UDPFS_IMG
   string: "The Caduceus browser needs SMB or UDPFS Files: UDPFS IMG has no shared folder for its key."
+
+# Interface: optional per-game CFG Title in the game lists (#918), off by default.
+- label: CFG_TITLES
+  string: Show CFG Titles in Game Lists
+
+- label: HINT_CFG_TITLES
+  string: "Shows the Title from each game's CFG instead of its file name, and sorts by it. Reads every CFG when a list refreshes, so lists load slower. Display only."

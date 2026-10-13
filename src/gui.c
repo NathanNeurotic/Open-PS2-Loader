@@ -1133,6 +1133,7 @@ reshow_ui:
     diaSetInt(diaUIConfig, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(diaUIConfig, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
+    diaSetInt(diaUIConfig, UICFG_CFG_TITLES, gCfgTitlesInLists);
     diaSetVisible(diaUIConfig, UICFG_COVERFLOW_BUTTON, gTheme->coverflow != NULL);
     guiSetGameViewPicker(diaUIConfig);
     guiSetAppsViewPicker(diaUIConfig);
@@ -1174,7 +1175,10 @@ reshow_ui:
         diaGetInt(diaUIConfig, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(diaUIConfig, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
-        int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
+        int previousCfgTitles = gCfgTitlesInLists;
+        diaGetInt(diaUIConfig, UICFG_CFG_TITLES, &gCfgTitlesInLists);
+        // CFG Titles are read during a list rebuild, so a flip rebuilds the game lists (like a view change).
+        int gameViewChanged = guiReadGameViewPicker(diaUIConfig) || previousCfgTitles != gCfgTitlesInLists;
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
 
@@ -3004,6 +3008,7 @@ static int guiSettingsShowInterface(void)
     diaSetInt(ui, UICFG_AUTOREFRESH, gAutoRefresh);
     diaSetInt(ui, UICFG_NOTIFICATIONS, gEnableNotifications);
     diaSetInt(ui, UICFG_GAME_TYPE_LABELS, gGameTypeLabels);
+    diaSetInt(ui, UICFG_CFG_TITLES, gCfgTitlesInLists);
     // Keep the editor reachable even when the current theme has no active Coverflow view; users
     // need to be able to configure it before enabling or switching to a Coverflow-capable theme.
     diaSetVisible(ui, UICFG_COVERFLOW_BUTTON, 1);
@@ -3049,7 +3054,12 @@ reshow_interface:
         diaGetInt(ui, UICFG_AUTOREFRESH, &gAutoRefresh);
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
-        gameViewChanged = guiReadGameViewPicker(ui);
+        {
+            // CFG Titles are read during a list rebuild, so a flip rebuilds the game lists.
+            int previousCfgTitles = gCfgTitlesInLists;
+            diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
+            gameViewChanged = guiReadGameViewPicker(ui) || previousCfgTitles != gCfgTitlesInLists;
+        }
         appsViewChanged = guiReadAppsViewPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);

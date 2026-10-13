@@ -26,6 +26,14 @@ The example is illustrative. Your installation may use another path, including a
 
 The `RIPTOPL-LANGS` ZIP contains translated `.lng` files and matching fonts such as `LNG/font_Japanese.ttf`. Those fonts support the **Japanese UI language** when that language is selected in **Settings → Interface → Language**. A fallback font in the settings home is different: it works while **English remains selected**, and also while a custom theme is active. You can copy a suitable, appropriately licensed font from a language pack into the settings home and rename it `font_CJK.ttf`; the copy does not replace your language pack.
 
+### Show CFG Titles in Game Lists (optional)
+
+**Settings → Interface → Show CFG Titles in Game Lists** (off by default) makes each game row show the `Title=` line from that game's CFG, such as a Japanese title written by OPL Manager, instead of its file name. Lists then sort by what they show.
+
+- **Display only.** The file name stays the game's identity: renaming, Favorites, cover art, per-game settings and launching all keep using it. Rows without a usable `Title` (missing, empty, not valid UTF-8, or containing control characters) show the file name. Titles longer than the row are cut on a character boundary.
+- **Slower list loads.** With the setting on, every list refresh reads every game's CFG once, on the background I/O thread. That is what lets the list sort by title, and it is why the setting is off by default: on SMB, MMCE and MX4SIO a large library refreshes noticeably slower.
+- Folders and the Apps list are not affected. Turning the setting on or off rebuilds the game lists.
+
 ### What it supports
 
 - UTF-8 titles on ISO/ZSO/VCD game lists and other text already supplied to RiptOPL's Unicode renderer, with mixed English/Japanese characters.
@@ -35,7 +43,7 @@ The `RIPTOPL-LANGS` ZIP contains translated `.lng` files and matching fonts such
 ### Current limits
 
 - This does **not** translate game names automatically or convert Shift-JIS / legacy code-page filenames into UTF-8.
-- Per-game `CFG/<game-id>.cfg` `Title` metadata can already appear as **theme AttributeText**, but it **does not override the game-list row**. Display-only overrides are tracked separately in [issue #918](https://github.com/NathanNeurotic/Open-PS2-Loader/issues/918). **Do not modify `#Name` to force a translation**; it is device-derived metadata tied to game identity.
+- Per-game `CFG/<game-id>.cfg` `Title` metadata appears as **theme AttributeText**. It replaces the game-list row only when **Show CFG Titles in Game Lists** is on (see below). **Do not modify `#Name` to force a translation**; it is device-derived metadata tied to game identity.
 - The optional font consumes PS2 EE RAM; very large Japanese fonts may exhaust memory. Prefer a font subset covering characters in your collection. Font glyph caches are capped at four 256×256 texture atlas pages **per font**, so very large libraries with many unique glyphs can exceed the cache capacity.
 - The font is loaded only on startup, not per frame. Adding or changing it requires a full restart.
 - Builds and host tests do not substitute for hardware testing; keep a backup known-good ELF, settings and save cards before updating.
