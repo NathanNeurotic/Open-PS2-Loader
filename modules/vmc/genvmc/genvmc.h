@@ -17,7 +17,7 @@
 
 // helpers for DEVCTL commands
 typedef struct
-{ // size = 1036
+{ // size = 1040
     char VMC_filename[1024];
     int VMC_size_mb;
     int VMC_blocksize;
