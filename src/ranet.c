@@ -890,4 +890,158 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
     return 1;
 }
 
+/* ---- xeRAbora achievement browser (Xerabora mode) ------------------------
+   ORBIT parity: ORBIT lists a game's achievements with the player's progress
+   from the xeRAbora PC's own HTTP interface (port 18280: /library, /game?id=N).
+   xeRAbora answers other devices only after OPEN TO THE NETWORK in its
+   settings. RiptOPL has no HTTPS, so where ORBIT asks retroachievements.org
+   for the game ID, the title from RAQ1 is matched against /library instead. */
+
+/* RAQ1 with the WAIT rounds; on "RAA1 OK" the reply stays in g_rx.
+   0 = known, 1 = RAA1 NO, -2 = silent, -7 = still identifying. */
+static int raq_ask(int sock, struct sockaddr_in *to, const char *req)
+{
+    int got = ask(sock, to, req, g_rx, sizeof(g_rx)), w;
+
+    for (w = 0; got > 0 && w < RA_WAIT_ROUNDS && strncmp(g_rx, "RAA1 WAIT", 9) == 0; w++) {
+        DelayThread(RA_WAIT_PAUSE_MS * 1000);
+        got = ask(sock, to, req, g_rx, sizeof(g_rx));
+    }
+    if (got <= 0)
+        return -2;
+    if (strncmp(g_rx, "RAA1 WAIT", 9) == 0)
+        return -7;
+    return strncmp(g_rx, "RAA1 OK ", 8) == 0 ? 0 : 1;
+}
+
+/* The PC that answers xeRAbora requests: the explicit RA companion IP, the
+   verified peer, else a RAP1 broadcast. Network byte order; 0 = none. */
+static u32 xerabora_host(int sock, const char *myaddr)
+{
+    struct sockaddr_in to;
+    char req[48];
+    u32 ip = raNetPeerIP();
+
+    if (raHostIsExplicit())
+        return configured_ra_target(&to, RA_PORT) ? to.sin_addr.s_addr : 0;
+    if (ip != 0)
+        return ip;
+    broadcast_target(&to);
+    snprintf(req, sizeof(req), "RAP1%s", myaddr);
+    if (ask(sock, &to, req, g_rx, sizeof(g_rx)) > 0 && strncmp(g_rx, "RAO1", 4) == 0) {
+        raNetRememberPeer(g_raReplyIP);
+        return g_raReplyIP;
+    }
+    return 0;
+}
+
+int raNetXeraboraIdentify(const char *hash, const char *serial, unsigned int *host,
+                          char *title, int titlesz, int *count)
+{
+    struct sockaddr_in to;
+    char req[96], myaddr[32], *name;
+    u8 ip[4];
+    int sock, result, bytes = 0, chunks = 0, nach = 0, n1, n2, pos = 0, len;
+
+    *host = 0;
+    title[0] = '\0';
+    *count = 0;
+    if (gRAMode != RA_MODE_XERABORA || raNetNicReserved())
+        return -8;
+    sock = open_pc_socket(myaddr, sizeof(myaddr), ip);
+    if (sock < 0)
+        return -1;
+    if (myaddr[0] == '\0' || (*host = xerabora_host(sock, myaddr)) == 0) {
+        disconnect(sock);
+        return -2;
+    }
+    memset(&to, 0, sizeof(to));
+    to.sin_family = AF_INET;
+    to.sin_port = htons(RA_PORT);
+    to.sin_addr.s_addr = *host;
+    if (hash == NULL) { /* host only: the account library needs no image */
+        disconnect(sock);
+        return 0;
+    }
+    snprintf(req, sizeof(req), "RAQ1 %s %s%s", hash, serial, myaddr);
+    result = raq_ask(sock, &to, req);
+    disconnect(sock);
+    if (result != 0)
+        return result;
+    /* Same shapes raAskPC accepts: five numbers (newer clients) or three, then the title. */
+    if (sscanf(g_rx + 8, "%d %d %d %d %d %n", &bytes, &chunks, &nach, &n1, &n2, &pos) != 5) {
+        pos = 0;
+        sscanf(g_rx + 8, "%d %d %d %n", &bytes, &chunks, &nach, &pos);
+    }
+    name = g_rx + 8 + pos;
+    len = (int)strlen(name);
+    while (len > 0 && name[len - 1] == ' ')
+        name[--len] = '\0';
+    snprintf(title, titlesz, "%s", name);
+    *count = nach;
+    return 0;
+}
+
+/* HTTP/1.0 GET of path from host:port into buf. Returns the body offset
+   (status 200) or a negative value. Reads use lwIP's per-call MSG_DONTWAIT
+   in 64-byte-aligned chunks (the rules above); the whole exchange is bounded
+   by RA_HTTP_MS so a stalled PC cannot hold the I/O thread indefinitely. */
+#define RA_HTTP_MS 8000
+int raNetHttpGet(unsigned int host, int port, const char *path, char *buf, int max, int *length)
+{
+    static char chunk[960] __attribute__((aligned(64)));
+    struct sockaddr_in to;
+    char req[160];
+    char *body;
+    clock_t deadline;
+    int sock, got, len = 0, status, closed = 0;
+
+    *length = 0;
+    if (host == 0 || max < 64 || raNetNicReserved())
+        return -1;
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0)
+        return -1;
+    memset(&to, 0, sizeof(to));
+    to.sin_family = AF_INET;
+    to.sin_port = htons(port);
+    to.sin_addr.s_addr = host;
+    if (connect(sock, (struct sockaddr *)&to, sizeof(to)) < 0) {
+        disconnect(sock);
+        return -2;
+    }
+    snprintf(req, sizeof(req), "GET %s HTTP/1.0\r\nHost: %d.%d.%d.%d\r\nConnection: close\r\n\r\n", path,
+             host & 0xff, (host >> 8) & 0xff, (host >> 16) & 0xff, (host >> 24) & 0xff);
+    if (send(sock, req, strlen(req), 0) != (int)strlen(req)) {
+        disconnect(sock);
+        return -3;
+    }
+    deadline = clock() + (clock_t)RA_HTTP_MS * CLOCKS_PER_SEC / 1000;
+    while (len < max - 1 && clock() < deadline) {
+        int room = max - 1 - len;
+        got = recv(sock, chunk, room < (int)sizeof(chunk) ? room : (int)sizeof(chunk), RA_MSG_DONTWAIT);
+        if (got == 0) {
+            closed = 1; /* the PC closed: complete */
+            break;
+        }
+        if (got < 0) {
+            DelayThread(RA_POLL_MS * 1000);
+            continue;
+        }
+        memcpy(buf + len, chunk, got);
+        len += got;
+    }
+    disconnect(sock);
+    buf[len] = '\0';
+    if (len >= max - 1 || !closed)
+        return -4; /* larger than the buffer, or cut off by the deadline: never parse a partial document */
+    if (sscanf(buf, "HTTP/%*d.%*d %d", &status) != 1 || status != 200)
+        return -5;
+    body = strstr(buf, "\r\n\r\n");
+    if (body == NULL)
+        return -5;
+    *length = len - (int)(body + 4 - buf);
+    return (int)(body + 4 - buf);
+}
+
 #endif /* RETROACHIEVEMENTS */

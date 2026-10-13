@@ -14,6 +14,11 @@ prefix = r"""
 #define IO_OK 0
 #define IO_CUSTOM_SIMPLEACTION 1
 #define O_RDONLY 0
+#define RA_MODE_XERABORA 0
+#define RA_MODE_CADUCEUS 1
+static int gRAMode = RA_MODE_CADUCEUS;
+static int raNetXeraboraIdentify(const char *h, const char *s, unsigned *host, char *t, int n, int *c) { assert(!"Caduceus mode never asks xeRAbora"); return -1; }
+static int raNetHttpGet(unsigned host, int port, const char *path, char *buf, int max, int *len) { assert(!"Caduceus mode never fetches over HTTP"); return -1; }
 static void (*worker)(void);
 static int queue_fail, nic_busy, file_length = 64, network_fail, hashed, hashed_vcd;
 static char key_data[80], received[200];
@@ -200,6 +205,7 @@ static void menuInitMainMenu(void) {}
 static void sfxPlay(int effect) {}
 static int achievementsRequestImage(const char *p,const char *s) {retries++;return 1;}
 static int achievementsRequestVcd(const char *p) {retries+=10;return 1;}
+void achievementsForget(void) {}
 """.replace('static void achievementsSnapshot','void achievementsSnapshot').replace('static int achievementsBusy','int achievementsBusy').replace('static int achievementsRequestImage','int achievementsRequestImage').replace('static int achievementsRequestVcd','int achievementsRequestVcd')
 uicheck=r"""
 int main(void) {

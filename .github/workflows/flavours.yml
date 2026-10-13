@@ -185,6 +185,8 @@ jobs:
         run: python3 .github/scripts/test_ra_cards_setting.py
       - name: Check Caduceus achievement browsing and pairing
         run: python3 .github/scripts/test_caduceus_browser.py
+      - name: Check the Xerabora-mode achievement browser and its HTTP client
+        run: python3 .github/scripts/test_ra_xerabora_browser.py
       - name: Check Xerabora and Caduceus discovery and offline sessions
         run: python3 .github/scripts/test_ra_client_mode.py
       - name: Check exact RA watch-list chunk boundaries and counts

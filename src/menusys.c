@@ -692,8 +692,7 @@ static void menuInitMainMenu(void)
     // initialize the menu
     submenuAppendItem(&mainMenu, -1, NULL, MENU_LAUNCH_PS2_DISC, _STR_LAUNCH_PS2_DISC);
 #ifdef RETROACHIEVEMENTS
-    if (gRAMode == RA_MODE_CADUCEUS)
-        submenuAppendItem(&mainMenu, -1, _l(_STR_CAD_ACHIEVEMENTS), MENU_RA_ACHIEVEMENTS, -1);
+    submenuAppendItem(&mainMenu, -1, _l(gRAMode == RA_MODE_CADUCEUS ? _STR_CAD_ACHIEVEMENTS : _STR_XERA_ACHIEVEMENTS), MENU_RA_ACHIEVEMENTS, -1);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_CHECK, _STR_RA_DISC_CHECK);
     submenuAppendItem(&mainMenu, -1, NULL, MENU_RA_DISC_LAUNCH, _STR_RA_DISC_LAUNCH);
 #endif
@@ -741,8 +740,7 @@ void menuInitGameMenu(item_list_t *support)
 #ifdef RETROACHIEVEMENTS
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
     submenuAppendItem(&gameMenu, -1, NULL, GAME_RA_TEST, _STR_RA_TEST_LINK);
-    if (gRAMode == RA_MODE_CADUCEUS)
-        submenuAppendItem(&gameMenu, -1, _l(_STR_CAD_VIEW_ACHIEVEMENTS), GAME_RA_ACHIEVEMENTS, -1);
+    submenuAppendItem(&gameMenu, -1, _l(_STR_CAD_VIEW_ACHIEVEMENTS), GAME_RA_ACHIEVEMENTS, -1);
 #endif
 
     gameMenuCurrent = gameMenu;
@@ -777,8 +775,7 @@ void menuInitVcdMenu(int isEmber)
     if (!isEmber) {
         submenuAppendItem(&appMenu, -1, NULL, GAME_RA_CHECK, _STR_RA_CHECK_GAME);
         submenuAppendItem(&appMenu, -1, NULL, GAME_RA_TEST, _STR_RA_TEST_LINK);
-        if (gRAMode == RA_MODE_CADUCEUS)
-            submenuAppendItem(&appMenu, -1, _l(_STR_CAD_VIEW_ACHIEVEMENTS), GAME_RA_ACHIEVEMENTS, -1);
+        submenuAppendItem(&appMenu, -1, _l(_STR_CAD_VIEW_ACHIEVEMENTS), GAME_RA_ACHIEVEMENTS, -1);
     }
 #endif
 
@@ -2098,7 +2095,7 @@ static void menuCheckSelectedGameSupport(void)
     if (support->mode == FAV_MODE && rowView != LIB_VIEW_PS1) {
         support = favGetSourceItem(gid, &sourceView, &gid);
         if (support == NULL) {
-            guiShowRANotice(_l(_STR_CAD_USE_LIBRARY), NULL);
+            guiShowRANotice(_l(gRAMode == RA_MODE_CADUCEUS ? _STR_CAD_USE_LIBRARY : _STR_XERA_USE_LIBRARY), NULL);
             return;
         }
     }
@@ -2191,7 +2188,7 @@ void menuHandleInputGameMenu()
             int gid = selected_item->item->current->item.id;
             if (menuSelectedRowView(support) == LIB_VIEW_PS1 || support->mode == HDD_MODE ||
                 !support->itemGet || !support->itemGetPrefix) {
-                guiShowRANotice(_l(_STR_CAD_USE_LIBRARY), NULL);
+                guiShowRANotice(_l(gRAMode == RA_MODE_CADUCEUS ? _STR_CAD_USE_LIBRARY : _STR_XERA_USE_LIBRARY), NULL);
             } else {
                 base_game_info_t *g = support->itemGet(support, gid);
                 const char *prefix = support->itemGetPrefix(support);
@@ -2334,8 +2331,7 @@ static void menuOpenSelectedVcdAchievements(void)
     char path[256];
     int gid, mode, rootLen;
 
-    if (gRAMode != RA_MODE_CADUCEUS || selected_item == NULL ||
-        selected_item->item == NULL || selected_item->item->current == NULL)
+    if (selected_item == NULL || selected_item->item == NULL || selected_item->item->current == NULL)
         return;
     support = selected_item->item->userdata;
     if (support == NULL)
@@ -2547,10 +2543,12 @@ void menuRenderAchievements(void)
         } else
             menuCardText(36, 195, 555, 60, achKind == 'G' ? _l(_STR_CAD_EMPTY_LIBRARY) : _l(_STR_CAD_EMPTY_FILTER), CAD_MUTED);
     } else {
+        int xera = gRAMode == RA_MODE_XERABORA;
         const char *message = page.state == ACH_LOADING     ? _l(_STR_CAD_LOADING) :
-                              page.state == ACH_OFFLINE     ? _l(_STR_CAD_PAIR) :
-                              page.state == ACH_UNSUPPORTED ? _l(_STR_CAD_UNKNOWN_GAME) :
-                                                              _l(_STR_CAD_CONNECTION_ERROR);
+                              page.state == ACH_OFFLINE     ? _l(xera ? _STR_XERA_OPEN_NETWORK : _STR_CAD_PAIR) :
+                              page.state == ACH_UNSUPPORTED ? _l(xera ? _STR_XERA_UNKNOWN_GAME : _STR_CAD_UNKNOWN_GAME) :
+                              page.state == ACH_NOT_PLAYED  ? _l(_STR_XERA_NOT_PLAYED) :
+                                                              _l(xera ? _STR_XERA_CONNECTION_ERROR : _STR_CAD_CONNECTION_ERROR);
         menuCardText(48, 188, 535, 110, message, CAD_TEXT);
         menuCardText(48, 315, 535, 40, _l(_STR_CAD_BACK_REFRESH), CAD_MUTED);
     }
@@ -2595,6 +2593,7 @@ void menuHandleInputAchievements(void)
                 achievementsRequestImage(achImagePath, achImageStartup);
             return;
         }
+        achievementsForget();
         achievementReload();
         return;
     }
