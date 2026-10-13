@@ -98,7 +98,8 @@
 
 #include "modules/network/common/ra_client.h"
 #include "modules/network/udpfs_ministack/include/mstack_xchg.h" /* the mstack: link */
-#include <fileXio_rpc.h>                                         /* fileXioDevctl */
+#define NEWLIB_PORT_AWARE
+#include <fileXio_rpc.h> /* fileXioDevctl */
 
 #define RA_PORT          18194
 #define RA_MY_PORT       18196 /* own port: the PC replies here directly, past NAT */

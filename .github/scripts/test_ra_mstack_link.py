@@ -214,4 +214,8 @@ assert "raNetNicReserved()" not in cad[:cad.index("open_pc_link(")]
 # The browsers' TCP paths need lwIP: they keep refusing while the NIC is reserved.
 assert "raNetNicReserved()" in until("int raNetXeraboraIdentify(", "open_pc_socket(")
 assert "raNetNicReserved()" in until("int raNetHttpGet(", "socket(")
+# ps2sdk's newlib port refuses fileXio headers unless the file opts in first (as every other
+# fileXio user in src/ does); the RA build fails otherwise.
+include = ranet.index("#include <fileXio_rpc.h>")
+assert "#define NEWLIB_PORT_AWARE" in ranet[:include], "fileXio_rpc.h included without NEWLIB_PORT_AWARE"
 print("PASS: RA requests use mstack: while UDPFS owns the NIC, sockets otherwise, same retries and filtering")
