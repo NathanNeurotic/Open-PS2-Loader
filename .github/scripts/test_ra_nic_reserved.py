@@ -54,10 +54,17 @@ with tempfile.TemporaryDirectory() as tmp:
     subprocess.run([str(exe)], check=True, capture_output=True)
 
 # Menu-side actions use the reserved check; the launch path keeps the loaded-only check.
-for signature in ("int raCaduceusPage(", "int raAskPC(", "int raNetTestLink("):
+# The support check and link test decide through open_pc_link (socket, mstack: or "busy").
+for signature in ("int raCaduceusPage(",):
     fn = ranet[ranet.index(signature):]
     fn = fn[:fn.index("open_pc_socket(")]
     assert "raNetNicReserved()" in fn and "raNetNicBusy()" not in fn, signature
+link = body(ranet, "static int open_pc_link(")
+assert "raNetNicReserved()" in link and "raNetNicBusy()" not in link
+for signature in ("int raAskPC(", "int raNetTestLink("):
+    fn = ranet[ranet.index(signature):]
+    fn = fn[:fn.index("open_pc_link(")]
+    assert "raNetNicBusy()" not in fn, signature
 launch = body(ranet, "void raLaunchNetworkUp(void)")
 assert "raNetNicBusy()" in launch and "raNetNicReserved()" not in launch
 assert re.search(r"raNetNicReserved\(\)\s*\|\|\s*!ethEnsureSMBShareConnected\(\)", achievements)

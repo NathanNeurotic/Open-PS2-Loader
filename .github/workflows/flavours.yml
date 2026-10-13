@@ -163,6 +163,8 @@ jobs:
         run: python3 .github/scripts/test_neutrino_ra.py
       - name: Check RA menu actions leave a selected UDP transport's NIC alone
         run: python3 .github/scripts/test_ra_nic_reserved.py
+      - name: Check RA menu requests use the mstack link while UDPFS owns the NIC
+        run: python3 .github/scripts/test_ra_mstack_link.py
       - name: Check PS1 VCD identification, module ownership and POPS snapshot reads
         run: python3 .github/scripts/test_ra_ps1.py
       - name: Check PS1 scan recovery, launch readiness and optional IOP startup failures
