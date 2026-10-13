@@ -2539,7 +2539,7 @@ static void sbShowAskResult(int q, const char *hash, const char *info, const cha
     } else if (q == -8) {
         /* UDP-backed storage owns the NIC; nothing was sent. */
         raHashStep("7-nic-busy-udp-transport");
-        guiShowRANotice(_l(_STR_RA_NET_BUSY), _l(_STR_RA_NET_BUSY_HASH));
+        guiShowRANotice(_l(_STR_RA_NET_BUSY), _l(raNetUdpfsNotLoaded() ? _STR_RA_UDPFS_LOAD_FIRST : _STR_RA_NET_BUSY_HASH));
     } else if (q == -1) {
         /* Socket creation failed locally; the PC was never contacted. */
         raHashStep("7-no-socket-on-console");

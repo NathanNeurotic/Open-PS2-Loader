@@ -191,6 +191,13 @@ int raNetNicBusy(void)
    the NIC. Raising SMB for an RA menu action first would claim it, and the
    UDP loader refuses on top of SMB until the next boot. The launch path keeps
    raNetNicBusy: the game's IOP reset frees the NIC either way. */
+/* A UDPFS transport is selected but its chain has not loaded yet (its page not
+   opened this boot), so there is no mstack: link to ask through. */
+int raNetUdpfsNotLoaded(void)
+{
+    return (gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD) && !raNetNicBusy();
+}
+
 int raNetNicReserved(void)
 {
     return raNetNicBusy() || gNetworkProtocol == NET_PROTO_UDPFS || gNetworkProtocol == NET_PROTO_UDPFSBD ||
@@ -384,10 +391,19 @@ static int open_pc_link(char *myaddr, int sz, u8 ip[4])
 
     if (!raNetNicReserved())
         return open_pc_socket(myaddr, sz, ip);
+    static u8 own[64] __attribute__((aligned(64)));
+
     if (fileXioDevctl(MSTACK_XCHG_DEVICE, MSTACK_DEVCTL_VERSION, NULL, 0, NULL, 0) != MSTACK_XCHG_VERSION)
         return RA_LINK_BUSY;
-    for (i = 0; i < 4; i++)
-        ip[i] = (u8)ps2_ip[i];
+    /* The address the ministack was loaded with: the chain loads once per boot, so a PS2 IP
+       edited since then is not the one the PC must reply to. An older driver falls back. */
+    if (fileXioDevctl(MSTACK_XCHG_DEVICE, MSTACK_DEVCTL_GET_IP, NULL, 0, own, 4) == 4) {
+        for (i = 0; i < 4; i++)
+            ip[i] = own[i];
+    } else {
+        for (i = 0; i < 4; i++)
+            ip[i] = (u8)ps2_ip[i];
+    }
     snprintf(myaddr, sz, " %d.%d.%d.%d %d", ip[0], ip[1], ip[2], ip[3], RA_MY_PORT);
     return RA_LINK_MSTACK;
 }
@@ -877,7 +893,7 @@ int raNetTestLink(char *line1, int sz1, char *line2, int sz2)
     sock = open_pc_link(myaddr, sizeof(myaddr), ip);
     if (sock == RA_LINK_BUSY) {
         snprintf(line1, sz1, "%s", _l(_STR_RA_NET_BUSY));
-        snprintf(line2, sz2, "%s", _l(_STR_RA_NET_BUSY2));
+        snprintf(line2, sz2, "%s", _l(raNetUdpfsNotLoaded() ? _STR_RA_UDPFS_LOAD_FIRST : _STR_RA_NET_BUSY2));
         return 0;
     }
     if (sock < 0) {

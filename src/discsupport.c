@@ -93,7 +93,7 @@ static void discCheckWorker(void)
     else if (result == -7)
         guiShowRANotice(_l(_STR_RA_STILL_IDENTIFYING), _l(_STR_RA_TRY_AGAIN));
     else if (result == -8)
-        guiShowRANotice(_l(_STR_RA_NET_BUSY), _l(_STR_RA_NET_BUSY_HASH));
+        guiShowRANotice(_l(_STR_RA_NET_BUSY), _l(raNetUdpfsNotLoaded() ? _STR_RA_UDPFS_LOAD_FIRST : _STR_RA_NET_BUSY_HASH));
     else if (result == -9)
         guiShowRANotice(_l(_STR_RA_CADUCEUS_OFFLINE), _l(_STR_RA_CADUCEUS_SIGN_IN));
     else

@@ -628,6 +628,12 @@ static void loadPage(void)
     }
     snprintf(keyPath, sizeof(keyPath), "%sART/CADUCEUS.KEY", share);
     fd = open(keyPath, O_RDONLY);
+    if (fd < 0 && !strcmp(share, "udpfs:/")) {
+        /* A case-sensitive UDPFS server may hold the folder as art/ (udpfssupport probes both
+           for cover art the same way). */
+        snprintf(keyPath, sizeof(keyPath), "%sart/CADUCEUS.KEY", share);
+        fd = open(keyPath, O_RDONLY);
+    }
     length = fd >= 0 ? read(fd, key, sizeof(key) - 1) : -1;
     if (fd >= 0)
         close(fd);

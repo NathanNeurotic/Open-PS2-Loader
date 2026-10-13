@@ -1826,6 +1826,14 @@ gui_strings:
 - label: RA_WL_NOT_SAVED
   string: "Could not save the watch list. Make sure the game's device or share is writable, then check again."
 
+# RA: a UDPFS protocol is selected but its network module has not loaded yet.
+- label: RA_UDPFS_LOAD_FIRST
+  string: "Open the UDPFS page once so its network module loads, then try again."
+
+# RA Caduceus browser: UDPFS IMG has no shared folder for ART/CADUCEUS.KEY.
+- label: CAD_UDPFS_IMG
+  string: "The Caduceus browser needs SMB or UDPFS Files: UDPFS IMG has no shared folder for its key."
+
 # RA Xerabora browser: the HTTPS game-ID lookup needs the console clock.
 - label: XERA_SET_CLOCK
   string: "Not in your RetroAchievements library yet. Set the console clock in the system settings to see its full list, or play it once with achievements."

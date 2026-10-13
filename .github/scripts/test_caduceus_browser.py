@@ -35,7 +35,8 @@ static const char *expect_key = "smb0:Games/ART/CADUCEUS.KEY";
 static int udpfsGetModulesLoaded(void) { return udpfs_loaded; }
 static int ethEnsureSMBShareConnected(void) { smb_calls++; return smb_up; }
 static const char *ethGetSMBPrefix(void) { return "smb0:Games/"; }
-static int open(const char *path, int flags) { assert(!strcmp(path,expect_key)); return 1; }
+static const char *missing_key;
+static int open(const char *path, int flags) { if (missing_key && !strcmp(path,missing_key)) return -1; assert(!strcmp(path,expect_key)); return 1; }
 static int read(int fd, void *out, int size) { int n=file_length<size?file_length:size; memcpy(out,key_data,n); return n; }
 static int close(int fd) { return 0; }
 static int ioPutRequest(int type, void (*fn)(void)) { worker=fn; return queue_fail?-1:0; }
@@ -86,6 +87,10 @@ int main(void) {
  gNetworkProtocol=NET_PROTO_UDPFS;udpfs_loaded=1;expect_key="udpfs:/ART/CADUCEUS.KEY";smb_calls=0;
  assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_READY && !smb_calls);
  assert(!strcmp(cadSharePrefix(),"udpfs:/"));
+ /* A case-sensitive server with a lowercase art/ folder still finds the key. */
+ missing_key="udpfs:/ART/CADUCEUS.KEY";expect_key="udpfs:/art/CADUCEUS.KEY";
+ assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_READY);
+ missing_key=NULL;expect_key="udpfs:/ART/CADUCEUS.KEY";
  udpfs_loaded=0;assert(!cadSharePrefix());
  assert(achievementsRequest('G',0,0,"0"));worker();achievementsSnapshot(&page);assert(page.state==ACH_OFFLINE && !smb_calls);
  gNetworkProtocol=NET_PROTO_UDPFSBD;udpfs_loaded=1;assert(!cadSharePrefix()); /* IMG: the share is a disk image */
@@ -179,6 +184,9 @@ menu=(root/'src/menusys.c').read_text()
 icon=menu[menu.index('static GSTEXTURE *achievementIcon('):]
 icon=icon[:icon.index('\n}\n')]
 assert 'gNetworkProtocol == NET_PROTO_UDPFS ? udpfsGetObject(0) : ethGetObject(0)' in icon
+# Offline under a UDPFS protocol names the real cause.
+offline = menu[menu.index('page.state == ACH_OFFLINE'):menu.index('page.state == ACH_UNSUPPORTED')]
+assert '_STR_RA_UDPFS_LOAD_FIRST' in offline and '_STR_CAD_UDPFS_IMG' in offline
 
 # Valid totals reach ten million; the PS2's 32-bit multiply must not overflow.
 progress = re.search(r'rmDrawRect\(36, 120, (.*), 3, CAD_ACCENT\);', menu)
