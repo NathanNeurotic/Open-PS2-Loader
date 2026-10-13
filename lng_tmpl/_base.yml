@@ -1833,3 +1833,7 @@ gui_strings:
 # RA Caduceus browser: UDPFS IMG has no shared folder for ART/CADUCEUS.KEY.
 - label: CAD_UDPFS_IMG
   string: "The Caduceus browser needs SMB or UDPFS Files: UDPFS IMG has no shared folder for its key."
+
+# RA Xerabora browser: the HTTPS game-ID lookup needs the console clock.
+- label: XERA_SET_CLOCK
+  string: "Not in your RetroAchievements library yet. Set the console clock in the system settings to see its full list, or play it once with achievements."
