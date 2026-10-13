@@ -2119,9 +2119,6 @@ static void menuCheckSelectedGameSupport(void)
                 guiShowRANotice(_l(_STR_RA_CHECK_RUNNING), NULL);
         } else
             guiShowRANotice(_l(_STR_PS1_RA_USB_REQUIRED), NULL);
-    } else if (support->mode == UDPFS_MODE) {
-        // UDPFS is Neutrino-only in this fork.
-        guiShowRANotice(_l(_STR_RA_NA_UDPFS), NULL);
     } else if (support->mode == HDD_MODE) {
         /* HDLoader's game descriptor maps logical ISO9660 sectors across APA
            extents. Hash that mapping read-only on the I/O worker, never by
