@@ -10,7 +10,11 @@
    (itemGetConfig) and keep the valid ones for display; off, drop any kept titles. */
 void cfgTitleRefresh(item_list_t *support, int count);
 
-/* The kept title for a row, or NULL. GUI thread (under the frame lock). */
+/* I/O thread, before a rebuild queues its rows: drop the old table so a new row never shows a title
+   that belonged to the old list's row of the same index. */
+void cfgTitleForget(item_list_t *support);
+
+/* The kept title for a row, or NULL (always NULL while the setting is off). GUI thread. */
 const char *cfgTitleForRow(item_list_t *support, int id);
 
 /* What a game row shows and sorts by: its CFG title when one is kept, else the existing display

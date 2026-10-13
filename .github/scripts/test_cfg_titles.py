@@ -46,6 +46,12 @@ static void guiLock(void) { locks++; }
 static void guiUnlock(void) { unlocks++; }
 static int folderModeSupported(int mode) { return mode == BDM_MODE; }
 static const char *vcdDisplayNameForRow(item_list_t *l, int id, const char *text) { (void)l; (void)id; return text; }
+static int favSource[8];
+static int favGetItemSourceMode(int id) { return favSource[id]; }
+#ifdef RETROACHIEVEMENTS
+static const char *badges[8];
+static const char *raBadgeText(item_list_t *l, int id) { (void)l; return badges[id]; }
+#endif
 static void *testMalloc(size_t n) { if (mallocs++ == mallocFailAt) return NULL; return malloc(n); }
 #define malloc testMalloc
 '''
@@ -92,11 +98,56 @@ int main(void)
     assert(cfgTitleClean("ファイナルファンタジーファイナルファンタジーファイナルファンタジー", clean, sizeof(clean)));
     assert(strlen(clean) < CFG_TITLE_MAX && (strlen(clean) % 3) == 0); /* whole 3-byte characters */
     assert(cfgTitleClean("Ok", clean, sizeof(clean)) && !strcmp(clean, "Ok"));
+    /* strict UTF-8: overlong, surrogate, beyond U+10FFFF and C1 controls fall back. */
+    assert(!cfgTitleClean("\xe0\x80\x80", clean, sizeof(clean)));
+    assert(!cfgTitleClean("\xed\xa0\x80", clean, sizeof(clean)));
+    assert(!cfgTitleClean("\xf4\x90\x80\x80", clean, sizeof(clean)));
+    assert(!cfgTitleClean("\xf0\x80\x80\x80", clean, sizeof(clean)));
+    assert(!cfgTitleClean("a\xc2\x85" "b", clean, sizeof(clean)));
+    assert(cfgTitleClean("Caf\xc3\xa9", clean, sizeof(clean)));
+
+    /* off_is_immediate: switching off shows file names at once, before any rebuild. */
+    gCfgTitlesInLists = 0;
+    assert(cfgTitleForRow(&bdm, 0) == NULL);
+    assert(!strcmp(cfgTitleDisplayName(&bdm, 0, names[0]), "Dragon Quest VIII"));
+    gCfgTitlesInLists = 1;
+    assert(cfgTitleForRow(&bdm, 0) != NULL);
+
+    /* forget: a rebuild drops the old table before new rows appear (no stale-index titles). */
+    cfgTitleForget(&bdm);
+    assert(cfgTitleForRow(&bdm, 0) == NULL);
+    assert(cfgTitleForRow(NULL, 0) == NULL);
 
     /* turned_off_clears: switching off drops the titles on the next rebuild. */
     gCfgTitlesInLists = 0;
     cfgTitleRefresh(&bdm, 4);
     assert(cfgTitleForRow(&bdm, 0) == NULL);
+
+    /* fav_apps_skipped: a Favorite whose source is the Apps tab is an app, never titled. */
+    {
+        item_list_t fav = {FAV_MODE, getName, getGame, getConfig};
+        gCfgTitlesInLists = 1;
+        favSource[0] = APP_MODE;
+        favSource[1] = BDM_MODE;
+        configReads = 0;
+        cfgTitleRefresh(&fav, 2);
+        assert(configReads == 1 && cfgTitleForRow(&fav, 0) == NULL && cfgTitleForRow(&fav, 1) != NULL);
+        gCfgTitlesInLists = 0;
+        cfgTitleRefresh(&fav, 2);
+    }
+
+#ifdef RETROACHIEVEMENTS
+    /* ra_badge_prefix: a tracked game keeps its badge in front of the title. */
+    gCfgTitlesInLists = 1;
+    badges[0] = "RA Dragon Quest VIII";
+    badges[1] = "RA something else";
+    titles[1] = "Kingdom Hearts";
+    cfgTitleRefresh(&bdm, 2);
+    assert(!strcmp(cfgTitleForRow(&bdm, 0), "RA ドラゴンクエストVIII"));
+    assert(!strcmp(cfgTitleForRow(&bdm, 1), "Kingdom Hearts")); /* badge does not end with the name */
+    gCfgTitlesInLists = 0;
+    cfgTitleRefresh(&bdm, 2);
+#endif
 
     /* alloc_failure: no table means names, never a crash. */
     gCfgTitlesInLists = 1;
@@ -114,16 +165,20 @@ int main(void)
 
 with tempfile.TemporaryDirectory() as tmp:
     src = Path(tmp) / "titles.c"
-    exe = Path(tmp) / "titles.exe"
     src.write_text(harness + source + tests, encoding="utf-8")
-    subprocess.run(["cc", "-std=gnu99", "-Wall", "-Werror", "-Wno-unused-function", str(src), "-o", str(exe)], check=True)
-    subprocess.run([str(exe)], check=True)
+    for flags in ([], ["-DRETROACHIEVEMENTS"]):  # standard and RA builds (badge prefix)
+        exe = Path(tmp) / ("titles%s.exe" % ("_ra" if flags else ""))
+        subprocess.run(["cc", "-std=gnu99", "-Wall", "-Werror", "-Wno-unused-function", *flags, str(src), "-o", str(exe)], check=True)
+        subprocess.run([str(exe)], check=True)
 
 # Wiring: refresh after each scan; rows and sorting draw through the display name; off by default.
 opl = (ROOT / "src/opl.c").read_text(encoding="utf-8")
 update = opl[opl.index("static void updateMenuFromGameList("):]
 update = update[:update.index("\n}\n")]
-assert update.index("itemUpdate(mdl->support)") < update.index("cfgTitleRefresh(mdl->support, count);")
+# Rows appear with file names at once; the CFG pass runs after them and the sort follows it.
+assert update.index("itemUpdate(mdl->support)") < update.index("cfgTitleForget(mdl->support);") < update.index("guiDeferUpdate(gup);")
+assert update.index("guiDeferUpdate(gup);") < update.index("cfgTitleRefresh(mdl->support, count);") < update.index("GUI_OP_SORT")
+assert update.index("libViewFinishPending(") < update.index("cfgTitleRefresh(mdl->support, count);")
 assert "gup->submenu.text = mdl->support->itemGetName(mdl->support, i);" in update  # identity unchanged
 menusys = (ROOT / "src/menusys.c").read_text(encoding="utf-8")
 sort = menusys[menusys.index("static int submenuSortCompare("):]
@@ -138,6 +193,12 @@ dialogs = (ROOT / "src/dialogs.c").read_text(encoding="utf-8")
 assert "UICFG_CFG_TITLES, 1, 1, _STR_HINT_CFG_TITLES" in dialogs
 gui = (ROOT / "src/gui.c").read_text(encoding="utf-8")
 assert gui.count("diaGetInt(diaUIConfig, UICFG_CFG_TITLES") + gui.count("diaGetInt(ui, UICFG_CFG_TITLES") == 2
+# A flip must rebuild every game list: mark the pages dirty (each NeedsUpdate consumes it) and
+# queue HTTP too, which oplQueueLibraryDeviceUpdates leaves out.
+refresh = gui[gui.index("static void guiRefreshCfgTitles(void)"):]
+refresh = refresh[:refresh.index("\n}\n")]
+assert "libViewMarkAllDirty();" in refresh and "guiRefreshGameViews();" in refresh and "httpGetObject(0)" in refresh
+assert gui.count("guiRefreshCfgTitles();") == 2
 base = (ROOT / "lng_tmpl/_base.yml").read_text(encoding="utf-8")
 assert base.index("- label: CFG_TITLES") > base.index("- label: CAD_UDPFS_IMG")
 print("PASS: CFG titles in game lists are opt-in, display-only and read once per rebuild")

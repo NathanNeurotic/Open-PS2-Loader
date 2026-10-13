@@ -1084,6 +1084,19 @@ static void guiRefreshGameViews(void)
     loadFavourites();
 }
 
+// CFG Titles (#918) are read during a list rebuild, so a flip must rebuild every game list. Mark the
+// pages dirty (each device's NeedsUpdate consumes it; queueing alone would be answered "unchanged")
+// and queue HTTP as well, which oplQueueLibraryDeviceUpdates leaves out (it has no PS1 view).
+static void guiRefreshCfgTitles(void)
+{
+    item_list_t *http = httpGetObject(0);
+
+    libViewMarkAllDirty();
+    guiRefreshGameViews();
+    if (http != NULL && http->enabled)
+        ioPutRequest(IO_MENU_UPDATE_DEFFERED, &http->mode);
+}
+
 static void guiRefreshAppsView(void)
 {
     item_list_t *apps = appGetObject(0);
@@ -1177,8 +1190,8 @@ reshow_ui:
         diaGetInt(diaUIConfig, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         int previousCfgTitles = gCfgTitlesInLists;
         diaGetInt(diaUIConfig, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-        // CFG Titles are read during a list rebuild, so a flip rebuilds the game lists (like a view change).
-        int gameViewChanged = guiReadGameViewPicker(diaUIConfig) || previousCfgTitles != gCfgTitlesInLists;
+        int cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists;
+        int gameViewChanged = guiReadGameViewPicker(diaUIConfig);
         int appsViewChanged = guiReadAppsViewPicker(diaUIConfig);
         diaGetInt(diaUIConfig, UICFG_VMODE, &gVMode);
 
@@ -1186,7 +1199,9 @@ reshow_ui:
             bgmStop();
 
         applyConfig(themeID, langID, 1);
-        if (gameViewChanged) {
+        if (cfgTitlesChanged) {
+            guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
+        } else if (gameViewChanged) {
             // applyConfig(..., skipDeviceRefresh=1) deliberately avoids device scans. Queue after it
             // returns so HDD (which has no automatic refresh) cannot retain PS2 rows while rendering
             // uses the new VCD view, without racing the theme/menu bookkeeping above.
@@ -2983,6 +2998,7 @@ static int guiSettingsShowInterface(void)
     const char **langNamesSnap = NULL;
     int themeID, langID, previousTheme, previousVMode, result;
     int gameViewChanged = 0;
+    int cfgTitlesChanged = 0;
     int appsViewChanged = 0;
 
     if (ui == NULL)
@@ -3055,11 +3071,11 @@ reshow_interface:
         diaGetInt(ui, UICFG_NOTIFICATIONS, &gEnableNotifications);
         diaGetInt(ui, UICFG_GAME_TYPE_LABELS, &gGameTypeLabels);
         {
-            // CFG Titles are read during a list rebuild, so a flip rebuilds the game lists.
             int previousCfgTitles = gCfgTitlesInLists;
             diaGetInt(ui, UICFG_CFG_TITLES, &gCfgTitlesInLists);
-            gameViewChanged = guiReadGameViewPicker(ui) || previousCfgTitles != gCfgTitlesInLists;
+            cfgTitlesChanged = previousCfgTitles != gCfgTitlesInLists;
         }
+        gameViewChanged = guiReadGameViewPicker(ui);
         appsViewChanged = guiReadAppsViewPicker(ui);
         diaGetInt(ui, UICFG_VMODE, &gVMode);
         diaGetInt(ui, UICFG_WIDESCREEN, &gWideScreen);
@@ -3075,7 +3091,9 @@ reshow_interface:
         if (previousTheme != themeID && isBgmPlaying())
             bgmStop();
         applyConfig(themeID, langID, 1);
-        if (gameViewChanged) {
+        if (cfgTitlesChanged) {
+            guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
+        } else if (gameViewChanged) {
             guiRefreshGameViews();
         }
         if (appsViewChanged)

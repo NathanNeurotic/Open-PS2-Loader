@@ -28,10 +28,12 @@ The `RIPTOPL-LANGS` ZIP contains translated `.lng` files and matching fonts such
 
 ### Show CFG Titles in Game Lists (optional)
 
-**Settings → Interface → Show CFG Titles in Game Lists** (off by default) makes each game row show the `Title=` line from that game's CFG, such as a Japanese title written by OPL Manager, instead of its file name. Lists then sort by what they show.
+**Settings → Interface → Show CFG Titles in Game Lists** (off by default) makes each game row show the `Title=` line from that game's CFG, such as a Japanese title written by OPL Manager, instead of its file name. With **Sort Games Alphabetically** on (the default), lists sort by what they show.
 
-- **Display only.** The file name stays the game's identity: renaming, Favorites, cover art, per-game settings and launching all keep using it. Rows without a usable `Title` (missing, empty, not valid UTF-8, or containing control characters) show the file name. Titles longer than the row are cut on a character boundary.
-- **Slower list loads.** With the setting on, every list refresh reads every game's CFG once, on the background I/O thread. That is what lets the list sort by title, and it is why the setting is off by default: on SMB, MMCE and MX4SIO a large library refreshes noticeably slower.
+- **Display only.** The file name stays the game's identity: renaming, Favorites, cover art, per-game settings and launching all keep using it. Rows without a usable `Title` (missing, empty, not valid UTF-8, or containing control characters) show the file name. Titles are kept up to 127 bytes, cut on a character boundary; the row fits or scrolls them like any name.
+- **Japanese titles need a font.** A title in Japanese needs the optional `font_CJK.ttf` described above (or the Japanese interface language), exactly like a Japanese file name; without one its characters show as boxes.
+- **Renaming keeps the title.** A PS2 game's CFG is keyed by its game ID, so after a rename the row still shows the same title. A PS1 (VCD) game's CFG is keyed by its file name, so renaming it leaves its old CFG, and its title, behind.
+- **Slower list loads.** With the setting on, every list refresh reads every game's CFG once, on the background I/O thread. The rows appear with their file names first and switch to their titles (and re-sort) when the pass finishes. That pass is why the setting is off by default: on SMB, MMCE and MX4SIO a large library takes noticeably longer to settle, and cover art loads after it.
 - Folders and the Apps list are not affected. Turning the setting on or off rebuilds the game lists.
 
 ### What it supports
