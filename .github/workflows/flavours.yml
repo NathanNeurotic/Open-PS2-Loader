@@ -410,6 +410,8 @@ jobs:
             grep -q ' gRAExperimentalCards$' menu-symbols.txt
             grep -q ' sysNeutrinoPrepareRA$' menu-symbols.txt
             grep -q ' raPopsPrepare$' menu-symbols.txt
+            grep -q ' raHttpsGet$' menu-symbols.txt
+            grep -q ' mbedtls_ssl_handshake$' menu-symbols.txt
             grep -q ' rapops_irx$' menu-symbols.txt
             grep -q ' RA_OverlayOnVblank$' core-symbols.txt
           else

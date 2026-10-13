@@ -105,6 +105,8 @@ def package(args):
             for psu in kit.glob("*.psu"):
                 psu.unlink()
             shutil.copyfile(ROOT / "pc/xeRAbora.url", kit / "xeRAbora.url")
+            # The RA ELFs link mbedTLS (Apache-2.0): its licence travels with every RA kit.
+            shutil.copyfile(ROOT / "third_party/mbedtls/LICENSE", kit / "LICENSE-MBEDTLS.txt")
             orbit.stage(archive, kit / "neutrino", pin)
             for sdk in SDKS:
                 for pad in ([1] if sdk == "OFFICIALROLLING" else [0, 1]):

@@ -1825,3 +1825,7 @@ gui_strings:
 # RA support check: the PC confirmed the game but no watch-list copy could be written.
 - label: RA_WL_NOT_SAVED
   string: "Could not save the watch list. Make sure the game's device or share is writable, then check again."
+
+# RA Xerabora browser: the HTTPS game-ID lookup needs the console clock.
+- label: XERA_SET_CLOCK
+  string: "Could not look this game up online: set the console clock in the system settings. Showing your library instead."

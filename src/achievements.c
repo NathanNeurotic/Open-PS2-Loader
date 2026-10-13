@@ -11,6 +11,7 @@
 #include "include/discsupport.h"
 #include "include/rahash.h"
 #include "include/udpfssupport.h" /* udpfsGetModulesLoaded: the UDPFS share */
+#include "include/ratls.h"        /* raHttpsGet: the ORBIT-style game-ID lookup */
 static volatile int busy;
 static achievement_page_t result;
 static char request[180];
@@ -442,6 +443,66 @@ static int xeraFindGame(const char *title)
     return 0;
 }
 
+typedef struct
+{
+    int success, id;
+} gameid_parse_t;
+
+static void gameIdMember(const char *key, const char *v, const char *e, void *ctx)
+{
+    gameid_parse_t *g = ctx;
+    char *end;
+    long n;
+
+    if (!strcmp(key, "Success"))
+        g->success = e - v >= 4 && !strncmp(v, "true", 4);
+    else if (!strcmp(key, "GameID") && v < e && *v >= '0' && *v <= '9') {
+        n = strtol(v, &end, 10);
+        if (end > v && end <= e && n >= 0 && n <= 100000000)
+            g->id = (int)n;
+    }
+}
+
+int achievementsParseGameId(const char *json, int length)
+{
+    gameid_parse_t g = {0, -1};
+
+    if (json == NULL || length <= 0 || !jsonObject(json, json + length, gameIdMember, &g))
+        return -1;
+    return g.success ? g.id : -1;
+}
+
+/* Set when the last HTTPS lookup could not run because the console clock is
+   unset; the browser then says so (read by the GUI, written here). */
+static volatile int xeraClockNote;
+
+int achievementsClockUnset(void)
+{
+    return xeraClockNote;
+}
+
+/* ORBIT's lookup: retroachievements.org's public connect API maps an image
+   hash to its game ID. >= 0 = the ID (0 = unknown to RetroAchievements),
+   < 0 = no answer (no internet, TLS or certificate failure, unset clock). */
+static int raHttpsGameId(const char *hash)
+{
+    static char doc[2048];
+    char path[64];
+    int body, length;
+
+    xeraClockNote = 0;
+    if (hash == NULL || strlen(hash) != 32 || strspn(hash, "0123456789abcdef") != 32)
+        return -1; /* never put anything but a hash into the request line */
+    snprintf(path, sizeof(path), "/dorequest.php?r=gameid&m=%s", hash);
+    body = raHttpsGet("retroachievements.org", path, doc, sizeof(doc), &length);
+    if (body < 0) {
+        if (body == RATLS_ERR_CLOCK)
+            xeraClockNote = 1;
+        return -1;
+    }
+    return achievementsParseGameId(doc + body, length - body);
+}
+
 static void loadXerabora(void)
 {
     char hash[33], boot[16], title[57];
@@ -452,6 +513,25 @@ static void loadXerabora(void)
         if (imageIsVcd ? raHashVcd(imagePath, boot, sizeof(boot), hash) != 0 :
                          raHashIsoDirect(imagePath, imageStartup, hash) != 0)
             return; /* ACH_ERROR */
+        /* The xeRAbora PC serves the list either way: find it first (this
+           also brings the network up). */
+        if (raNetXeraboraIdentify(NULL, NULL, &host, title, sizeof(title), &count) != 0) {
+            result.state = ACH_OFFLINE;
+            return;
+        }
+        /* ORBIT's path: the game ID from retroachievements.org by hash, so a
+           game never played still shows its whole list. */
+        if ((id = raHttpsGameId(hash)) == 0) {
+            result.state = ACH_UNSUPPORTED;
+            return;
+        }
+        if (id > 0) {
+            requestKind = 'A';
+            requestPage = 0;
+            requestFilter = 0;
+            goto fetch;
+        }
+        /* No internet (or no clock): #926's match by title in the library. */
         rc = raNetXeraboraIdentify(hash, imageIsVcd ? boot : imageStartup, &host, title, sizeof(title), &count);
         if (rc == 1) {
             result.state = ACH_UNSUPPORTED;
@@ -486,6 +566,7 @@ static void loadXerabora(void)
         if (requestKind == 'A' && id <= 0)
             return; /* ACH_ERROR */
     }
+fetch:
     if ((rc = xeraFetch(host, requestKind, id)) != 1) {
         result.state = xeraState(rc);
         return;

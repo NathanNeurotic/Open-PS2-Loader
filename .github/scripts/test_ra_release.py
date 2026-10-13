@@ -182,5 +182,15 @@ class ReleaseTests(unittest.TestCase):
         self.assertTrue(all("--latest=false" in call for call in calls if call[:2] == ("release", "edit")))
 
 
+class MbedtlsLicenceShippingTest(unittest.TestCase):
+    def test_ra_kit_ships_the_apache_licence_and_ordinary_kits_refuse_it(self):
+        root = Path(__file__).resolve().parents[2]
+        ra = (root / ".github/scripts/package_ra_release.py").read_text(encoding="utf-8")
+        app = (root / ".github/scripts/package_release_app.py").read_text(encoding="utf-8")
+        self.assertIn('shutil.copyfile(ROOT / "third_party/mbedtls/LICENSE", kit / "LICENSE-MBEDTLS.txt")', ra)
+        self.assertIn('required.add("LICENSE-MBEDTLS.txt")', app)
+        self.assertIn('"LICENSE-MBEDTLS.txt" in names', app)
+
+
 if __name__ == "__main__":
     unittest.main()
