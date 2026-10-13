@@ -55,6 +55,20 @@ int arp_add_entry(uint32_t ip, const uint8_t mac[6])
     return -1;
 }
 
+/* A full table keeps what it has against LAN chatter, but a host talking to the PS2 itself (a
+   reply to our request, or a request for our address) takes the oldest-replaced slot: without it,
+   eight unrelated ARP senders lock out every later peer, such as an RA companion PC. */
+static void arp_replace_entry(uint32_t ip, const uint8_t mac[6])
+{
+    static int victim;
+    int i;
+
+    arp_table[victim].ip = ip;
+    for (i = 0; i < 6; i++)
+        arp_table[victim].mac[i] = mac[i];
+    victim = (victim + 1) % MS_ARP_ENTRIES;
+}
+
 int arp_lookup(uint32_t ip, uint8_t mac[6])
 {
     int i;
@@ -161,9 +175,11 @@ int handle_rx_arp(const uint8_t *hdr)
         return -1; // never cache an entry for our own address
     }
 
-    // Learn sender's MAC/IP from any ARP packet
-    if (ntohl(req->arp.sender_ip) != 0)
-        arp_add_entry(ntohl(req->arp.sender_ip), req->arp.sender_mac);
+    // Learn sender's MAC/IP from any ARP packet; one addressed to us may displace an old entry
+    if (ntohl(req->arp.sender_ip) != 0 &&
+        arp_add_entry(ntohl(req->arp.sender_ip), req->arp.sender_mac) != 0 &&
+        ntohl(req->arp.target_ip) == ms_ip_get_ip())
+        arp_replace_entry(ntohl(req->arp.sender_ip), req->arp.sender_mac);
 
     if (ntohs(req->arp.oper) == 1 && ntohl(req->arp.target_ip) == ms_ip_get_ip()) {
         reply.eth.addr_dst[0] = req->arp.sender_mac[0];

@@ -17,6 +17,7 @@
 #include <thbase.h>
 
 #include "mstack_xchg.h"
+#include "ministack_arp.h"
 #include "ministack_udp.h"
 #include "smap.h"
 
@@ -83,6 +84,14 @@ int mstack_xchg(const mstack_xchg_req_t *req, mstack_xchg_reply_t *reply)
         xchg_socket = udp_bind(MSTACK_XCHG_PORT, xchg_rx_handler, NULL);
         if (xchg_socket == NULL)
             return -ENOMEM;
+    }
+
+    /* Resolve first: the send path ignores an ARP failure and would put the frame on whatever
+       MAC the header last held. */
+    if (req->dst_ip != XCHG_ANY_SOURCE) {
+        uint8_t mac[6];
+        if (arp_resolve(ntohl(req->dst_ip), mac) != 0)
+            return -EHOSTUNREACH;
     }
 
     xchg_got = 0;

@@ -59,6 +59,16 @@ int udp_packet_send_ll(udp_socket_t *socket, udp_packet_t *pkt, uint16_t pktdata
     return 0;
 }
 
+/* ARP: 192.168.1.99 never answers. Broadcasts must not be resolved at all. */
+static int arp_calls;
+int arp_resolve(uint32_t ip, uint8_t mac[6])
+{
+    assert(ip != 0xFFFFFFFF);
+    arp_calls++;
+    memset(mac, 0x11, 6);
+    return ip == IP_ADDR(192, 168, 1, 99) ? -1 : 0;
+}
+
 /* The frame currently "in the FIFO", as the SMAP RX path would see it. */
 static uint8_t frame[2048];
 
@@ -232,6 +242,14 @@ int main(void)
     assert(out.reply.data[0] == 'a' && out.reply.data[MSTACK_XCHG_REPLY_MAX - 1] == (uint8_t)('a' + (MSTACK_XCHG_REPLY_MAX - 1) % 26));
     for (unsigned i = 0; i < sizeof(out.guard); i++)
         assert(out.guard[i] == 0x5A);
+
+    /* unreachable_unicast: ARP fails -> no frame to a stale or zero MAC, no wait */
+    {
+        int before = sends;
+        script_count = 0;
+        rc = exchange(nip(192, 168, 1, 99), 18194, 250, "RAQ1 x");
+        assert(rc == -EHOSTUNREACH && sends == before && delays == 0);
+    }
 
     /* bad_args */
     {
