@@ -12,6 +12,7 @@
 #define MSTACK_XCHG_DEVICE     "mstack:"
 #define MSTACK_DEVCTL_VERSION  0x4D530000 /* returns MSTACK_XCHG_VERSION */
 #define MSTACK_DEVCTL_UDP_XCHG 0x4D530001
+#define MSTACK_DEVCTL_GET_IP   0x4D530002 /* buf <- the ministack's own IPv4, 4 bytes, network order */
 #define MSTACK_XCHG_VERSION    1
 #define MSTACK_XCHG_PORT       18196 /* RA_MY_PORT: the PC replies to the port written in the request */
 #define MSTACK_XCHG_REQ_MAX    256

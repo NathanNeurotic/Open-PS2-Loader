@@ -121,6 +121,11 @@ int DelayThread(int usec)
     return 0;
 }
 
+uint32_t ms_ip_get_ip(void)
+{
+    return IP_ADDR(192, 168, 1, 10);
+}
+
 int AddDrv(iomanX_iop_device_t *device)
 {
     (void)device;
@@ -261,6 +266,16 @@ int main(void)
     script[0].ip_payload = 8 + 10;
     rc = exchange(nip(192, 168, 1, 20), 18194, 20, "RAQ1 x");
     assert(rc == -ETIMEDOUT);
+
+    /* get_ip: the address the ministack was really loaded with, network byte order */
+    {
+        uint8_t ip[8];
+        memset(ip, 0, sizeof(ip));
+        assert(xchg_devctl(NULL, "", MSTACK_DEVCTL_GET_IP, NULL, 0, ip, 4) == 4);
+        assert(ip[0] == 192 && ip[1] == 168 && ip[2] == 1 && ip[3] == 10);
+        assert(xchg_devctl(NULL, "", MSTACK_DEVCTL_GET_IP, NULL, 0, ip, 3) == -EINVAL);
+        assert(xchg_devctl(NULL, "", MSTACK_DEVCTL_GET_IP, NULL, 0, NULL, 4) == -EINVAL);
+    }
 
     /* bad_args */
     {

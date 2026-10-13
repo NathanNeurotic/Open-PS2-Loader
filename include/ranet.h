@@ -26,6 +26,7 @@ int raNetNicBusy(void);
    not loaded yet. Menu-side RA actions use this: raising SMB first would claim
    the one NIC and leave UDPFS/UDPBD unable to load until the next boot. */
 int raNetNicReserved(void);
+int raNetUdpfsNotLoaded(void); /* a UDPFS transport is selected but not loaded yet */
 
 /* Xerabora-mode achievement browser. raNetXeraboraIdentify finds the
    xeRAbora PC (explicit RA companion IP, verified peer, or RAP1 broadcast;
