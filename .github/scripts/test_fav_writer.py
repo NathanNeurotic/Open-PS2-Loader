@@ -22,15 +22,16 @@ def function(signature):
     return fav[start:fav.index("\n}\n", start) + 3]
 
 
-names = ["static int rdBytes(", "static int rdU16(", "static int rdU32(", "static fav_raw_t *favReadPath(",
+names = ["static int favWriteErrno;", "static int rdBytes(", "static int rdU16(", "static int rdU32(", "static fav_raw_t *favReadPath(",
          "static fav_raw_t *favReadFile(", "static void bufU16(", "static void bufU32(",
          "static int favWriteAll(", "static int favWriteWhole(", "static u8 *favBuildImage(",
-         "static int favRestoreStaged(", "static int favWriteFile("]
-source = "\n".join(function(n) if not n.startswith("static int rdBytes(") else
+         "static int favRestoreStaged(", "static int favFileSize(", "static int favWriteFile("]
+source = "\n".join(function(n) if not (n.startswith("static int rdBytes(") or n.startswith("static int favWriteErrno;")) else
                    fav[fav.index(n):fav.index("\n", fav.index(n)) + 1] for n in names)
 
 harness = r'''
 #include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +43,7 @@ typedef unsigned int u32;
 #define O_CREAT 0x100
 #define O_TRUNC 0x200
 #define SEEK_SET 0
+#define SEEK_END 2
 #define LOG(...) ((void)0)
 #define FAV_TEXT_MAX 256
 #define FAV_MAX_ITEMS 512
@@ -51,11 +53,13 @@ enum { FAV_KIND_ISO, FAV_KIND_VCD, FAV_KIND_CUE, FAV_KIND_ELF };
 enum { APP_MODE = 7 };
 typedef struct { int mode, id, icon_id, text_id, kind; char text[FAV_TEXT_MAX]; } fav_raw_t;
 
-/* In-memory filesystem: two files at most, plus fault injection. */
-typedef struct { char name[64]; u8 data[8192]; int len, exists; } mfile_t;
+/* In-memory filesystem: two files at most, plus fault injection. Space is counted in 1 KB clusters
+   (the mc device's size): truncating frees a file's clusters, growing it takes free ones, and a write
+   that needs more than are free fails with ENOSPC, as mcman reports a full card. */
+typedef struct { char name[64]; u8 data[8192]; int len, exists, alloc; } mfile_t;
 static mfile_t files[4];
 static struct { mfile_t *f; int pos; } fds[8];
-static int writeCap = -1, writesBeforeFail = -1, failCloseOn = -1, closes;
+static int writeCap = -1, writesBeforeFail = -1, failCloseOn = -1, closes, freeClusters = 1 << 20;
 static const char *failOpenName;
 static mfile_t *lookup(const char *name, int create)
 {
@@ -70,7 +74,7 @@ static int open(const char *name, int flags, ...)
     if (failOpenName && !strcmp(name, failOpenName) && (flags & O_WRONLY)) return -1;
     f = lookup(name, (flags & O_CREAT) != 0);
     if (!f) return -1;
-    if (flags & O_TRUNC) f->len = 0;
+    if (flags & O_TRUNC) { f->len = 0; freeClusters += f->alloc; f->alloc = 0; }
     for (int i = 0; i < 8; i++) if (!fds[i].f) { fds[i].f = f; fds[i].pos = 0; return i; }
     return -1;
 }
@@ -86,24 +90,28 @@ static int read(int fd, void *buf, int n)
 static int write(int fd, const void *buf, int n)
 {
     mfile_t *f = fds[fd].f;
-    if (writesBeforeFail == 0) return -1;
+    int need;
+    if (writesBeforeFail == 0) { errno = EIO; return -1; }
     if (writesBeforeFail > 0) writesBeforeFail--;
     if (writeCap >= 0 && n > writeCap) n = writeCap;   /* partial writes */
+    need = (fds[fd].pos + n + 1023) / 1024 - f->alloc;
+    if (need > freeClusters) { errno = ENOSPC; return -1; }
+    if (need > 0) { freeClusters -= need; f->alloc += need; }
     memcpy(f->data + fds[fd].pos, buf, n);
     fds[fd].pos += n;
     if (fds[fd].pos > f->len) f->len = fds[fd].pos;
     return n;
 }
 static int close(int fd) { fds[fd].f = NULL; return closes++ == failCloseOn ? -1 : 0; }
-static int lseek(int fd, int off, int whence) { (void)whence; fds[fd].pos = off; return off; }
-static int fs_remove(const char *name) { mfile_t *f = lookup(name, 0); if (!f) return -1; f->exists = 0; return 0; }
+static int lseek(int fd, int off, int whence) { fds[fd].pos = whence == SEEK_END ? fds[fd].f->len + off : off; return fds[fd].pos; }
+static int fs_remove(const char *name) { mfile_t *f = lookup(name, 0); if (!f) return -1; f->exists = 0; freeClusters += f->alloc; f->alloc = 0; return 0; }
 #define remove fs_remove
 static void favGetFilePath(char *out, int size) { snprintf(out, size, "mc0:OPL/favourites.bin"); }
 static fav_raw_t *favReadWoplFile(int fd, int *count) { (void)fd; *count = 0; return NULL; }
 '''
 
 tests = r'''
-static fav_raw_t recs[3];
+static fav_raw_t recs[8];
 static void make(int n, const char *prefix)
 {
     for (int i = 0; i < n; i++) {
@@ -121,7 +129,15 @@ static int load(char *first)
     free(got);
     return count;
 }
-static void reset(void) { memset(files, 0, sizeof(files)); writeCap = -1; writesBeforeFail = -1; failCloseOn = -1; closes = 0; failOpenName = NULL; }
+static void reset(void) { memset(files, 0, sizeof(files)); writeCap = -1; writesBeforeFail = -1; failCloseOn = -1; closes = 0; failOpenName = NULL; freeClusters = 1 << 20; }
+static void makeLong(int n, char c)
+{
+    for (int i = 0; i < n; i++) {
+        memset(&recs[i], 0, sizeof(recs[i]));
+        recs[i].mode = 1; recs[i].id = i;
+        memset(recs[i].text, c, 250);
+    }
+}
 int main(void)
 {
     char first[64];
@@ -205,6 +221,34 @@ int main(void)
     assert(favWriteFile(recs, 0) == 0);
     writesBeforeFail = -1;
     assert(load(first) == 0);
+
+    /* full_card_save_that_fits: no room to stage a second copy, but the new list fits in the
+       clusters favourites.bin already holds -- saved in place, as before staging existed */
+    reset();
+    make(2, "Old");
+    assert(favWriteFile(recs, 2) == 1);
+    freeClusters = 0;
+    make(3, "New");
+    assert(favWriteFile(recs, 3) == 1);
+    assert(load(first) == 3 && !strcmp(first, "New 0"));
+    assert(lookup("mc0:OPL/favourites.bin.new", 0) == NULL);
+
+    /* full_card_list_outgrows_its_clusters: an in-place rewrite could run out of room after the
+       truncate, so the save is refused and the previous list stays whole */
+    makeLong(5, 'L'); /* > 1 KB */
+    assert(favWriteFile(recs, 5) == 0);
+    assert(load(first) == 3 && !strcmp(first, "New 0"));
+
+    /* failing_device_is_not_full: a staging error other than no-space never falls back to the
+       in-place rewrite -- that is the truncation #936 removed */
+    reset();
+    make(2, "Old");
+    assert(favWriteFile(recs, 2) == 1);
+    make(1, "Small");
+    writesBeforeFail = 0;
+    assert(favWriteFile(recs, 1) == 0);
+    writesBeforeFail = -1;
+    assert(load(first) == 2 && !strcmp(first, "Old 0"));
 
     puts("ok");
     return 0;

@@ -15,6 +15,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "include/opl.h"
 #include "include/iosupport.h"
@@ -327,6 +328,8 @@ static void bufU32(u8 *b, int *o, u32 v)
     b[(*o)++] = (u8)((v >> 24) & 0xff);
 }
 
+static int favWriteErrno; // errno of the last favWriteWhole failure (ENOSPC = device full)
+
 /* Writes all of buf: partial writes accumulate, and no progress is a failure. */
 static int favWriteAll(int fd, const u8 *buf, int len)
 {
@@ -334,8 +337,10 @@ static int favWriteAll(int fd, const u8 *buf, int len)
 
     while (done < len) {
         n = write(fd, buf + done, len - done);
-        if (n <= 0)
+        if (n <= 0) {
+            favWriteErrno = n < 0 ? errno : EIO;
             return 0;
+        }
         done += n;
     }
     return 1;
@@ -346,11 +351,15 @@ static int favWriteWhole(const char *path, const u8 *buf, int len)
 {
     int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666), ok;
 
-    if (fd < 0)
+    if (fd < 0) {
+        favWriteErrno = errno;
         return 0;
+    }
     ok = favWriteAll(fd, buf, len);
-    if (close(fd) < 0)
+    if (close(fd) < 0 && ok) {
+        favWriteErrno = errno;
         ok = 0;
+    }
     return ok;
 }
 
@@ -433,6 +442,18 @@ static int favRestoreStaged(const char *path, const char *staged)
     return ok;
 }
 
+/* Size of path in bytes, or -1 when it cannot be opened. */
+static int favFileSize(const char *path)
+{
+    int fd = open(path, O_RDONLY), size;
+
+    if (fd < 0)
+        return -1;
+    size = lseek(fd, 0, SEEK_END);
+    close(fd);
+    return size;
+}
+
 static int favWriteFile(fav_raw_t *recs, int count)
 {
     char path[256], staged[264];
@@ -451,8 +472,22 @@ static int favWriteFile(fav_raw_t *recs, int count)
     if (img == NULL)
         return 0;
     if (!favWriteWhole(staged, img, off)) {
-        LOG("FAV write: staging %s failed, favourites unchanged\n", staged);
+        int full = favWriteErrno == ENOSPC, held;
+
         remove(staged);
+        // A full device (a full memory card is common) has no room for the second copy. An in-place
+        // rewrite that stays inside the clusters favourites.bin already holds -- 1 KB on mc, the
+        // smallest -- needs none: that is how saving worked before staging. Any other failure, or a
+        // list that outgrows those clusters, is refused instead: the in-place rewrite could stop
+        // after its truncate and lose the list.
+        held = full ? favFileSize(path) : -1;
+        if (held > 0 && off <= ((held + 1023) & ~1023)) {
+            ok = favWriteWhole(path, img, off);
+            free(img);
+            LOG("FAV write: device full, rewrote %s in place: %s\n", path, ok ? "ok" : "failed");
+            return ok;
+        }
+        LOG("FAV write: staging %s failed (errno %d), favourites unchanged\n", staged, favWriteErrno);
         free(img);
         return 0;
     }
