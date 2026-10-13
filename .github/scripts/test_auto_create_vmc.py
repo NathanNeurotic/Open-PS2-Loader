@@ -46,9 +46,9 @@ if 'curMenu->current->item.id != launchId' in select:
 
 # A failed creation must not leave a half-written card behind: a later launch would reuse it.
 genvmc = (root / 'modules/vmc/genvmc/genvmc.c').read_text(encoding='utf-8').replace('\r\n', '\n')
-failed = genvmc[genvmc.index('    if (r < 0) {', genvmc.index('vmc_mcformat(param->VMC_filename')):]
-failed = failed[:failed.index('goto exit;')]
-cleanup = failed.find('if (r != -98 && r != -99 && r != -100 && r != -101)\n            remove(param->VMC_filename);')
+failed = genvmc[genvmc.index('vmc_mcformat(param->VMC_filename'):]
+failed = failed[:failed.index('ExitDeleteThread();')]
+cleanup = failed.find('if (r < 0 && !aborted && r != -98 && r != -99 && r != -100 && r != -101)\n        remove(param->VMC_filename);')
 report = failed.find('genvmc_stats.VMC_status = GENVMC_STAT_AVAIL;')
 if not (0 <= cleanup < report):
     failures.append('genvmc.c: every failure after the open -- never one before it (-98..-101) -- must remove the '
