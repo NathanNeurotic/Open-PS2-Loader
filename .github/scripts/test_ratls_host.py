@@ -36,6 +36,11 @@ _ps2 = (ROOT / "src/ratls_ps2.c").read_text(encoding="utf-8")
 _get = _ps2[_ps2.index("int raHttpsGet("):]
 assert _get.index("raTlsClockOk(") < _get.index("gethostbyname(") < _get.index("connect("), "clock check must precede DNS"
 assert "raNetNicReserved()" in _get[:_get.index("gethostbyname(")]
+# clock() is a 32-bit microsecond counter on the EE: the budget is elapsed time from before DNS,
+# never an absolute deadline, and never RATLS_DEADLINE_MS * CLOCKS_PER_SEC (8e9 overflows).
+assert "(clock_t)(clock() - start) >= (clock_t)RATLS_DEADLINE_MS * (CLOCKS_PER_SEC / 1000)" in _ps2
+assert "> bio->deadline" not in _ps2 and "RATLS_DEADLINE_MS * CLOCKS_PER_SEC" not in _ps2
+assert _get.index("clock_t start = clock();") < _get.index("gethostbyname(")
 
 
 def check(name, ok, detail=""):

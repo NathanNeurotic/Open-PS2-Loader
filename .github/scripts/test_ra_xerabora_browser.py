@@ -215,6 +215,17 @@ int main(void)
     httpsRc = RATLS_ERR_NET;
     assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
     assert(p.state == ACH_NOT_PLAYED && !strcmp(p.title, "Never Played Game") && !xeraClockNote);
+    /* unreachable_once_per_session: no internet costs one attempt, not one per game card ... */
+    {
+        int calls = httpsCalls;
+        assert(achievementsRequestImage("mass0:DVD/Y.iso", "SLUS_000.02")); worker(); achievementsSnapshot(&p);
+        assert(p.state == ACH_NOT_PLAYED && httpsCalls == calls);
+        httpsRc = RATLS_ERR_TIMEOUT;
+        achievementsForget(); /* ... until Select asks again */
+        assert(achievementsRequestImage("mass0:DVD/Y.iso", "SLUS_000.02")); worker();
+        assert(httpsCalls == calls + 1);
+        achievementsForget();
+    }
     /* clock_unset_notes: fallback taken, and the browser says to set the clock. */
     httpsRc = RATLS_ERR_CLOCK;
     assert(achievementsRequestImage("mass0:DVD/X.iso", "SLUS_000.01")); worker(); achievementsSnapshot(&p);
@@ -328,6 +339,20 @@ print("PASS: Xerabora achievement browser")
 
 # The browser's messages name an unset clock when the HTTPS lookup could not run.
 menu = (root / "src/menusys.c").read_text(encoding="utf-8")
-assert "achievementsClockUnset() ? _STR_XERA_SET_CLOCK" in menu
+assert "achievementsClockUnset() ? _STR_XERA_SET_CLOCK : _STR_XERA_NOT_PLAYED" in menu
+unsupported = menu[menu.index("page.state == ACH_UNSUPPORTED ?"):menu.index("page.state == ACH_NOT_PLAYED")]
+assert "SET_CLOCK" not in unsupported, "an unsupported game is not a clock problem"
+base_yml = (root / "lng_tmpl/_base.yml").read_text(encoding="utf-8")
+clock_text = base_yml[base_yml.index("- label: XERA_SET_CLOCK"):]
+clock_text = clock_text[:clock_text.index("\n\n") if "\n\n" in clock_text else len(clock_text)]
+assert "Showing your library" not in clock_text and "library yet" in clock_text and "clock" in clock_text
 assert "- label: XERA_SET_CLOCK" in (root / "lng_tmpl/_base.yml").read_text(encoding="utf-8")
 print("PASS: HTTPS game-ID messages")
+
+# clock() is a 32-bit microsecond counter on the EE: RA_HTTP_MS * CLOCKS_PER_SEC overflows (8 s
+# became ~3.7 s) and an absolute deadline breaks at the wrap. raNetHttpGet compares elapsed time.
+http_get = network[network.index("int raNetHttpGet("):]
+http_get = http_get[:http_get.index("\n}\n")]
+assert "RA_HTTP_MS * CLOCKS_PER_SEC /" not in http_get and "clock_t deadline" not in http_get
+assert "(clock_t)(clock() - start) < (clock_t)RA_HTTP_MS * (CLOCKS_PER_SEC / 1000)" in http_get
+print("PASS: raNetHttpGet budget is wrap-safe elapsed time")

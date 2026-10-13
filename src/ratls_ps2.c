@@ -101,8 +101,15 @@ int mbedtls_hardware_poll(void *data, unsigned char *out, size_t len, size_t *ol
 typedef struct
 {
     int sock;
-    clock_t deadline;
+    clock_t start; /* the budget runs from before DNS */
 } ratls_bio_t;
+
+/* clock() is a 32-bit microsecond counter here: compare elapsed time, which survives the wrap,
+   and keep the product small (milliseconds times a full CLOCKS_PER_SEC would overflow). */
+static int ratlsExpired(clock_t start)
+{
+    return (clock_t)(clock() - start) >= (clock_t)RATLS_DEADLINE_MS * (CLOCKS_PER_SEC / 1000);
+}
 
 static int bioSend(void *ctx, const unsigned char *buf, size_t len)
 {
@@ -121,7 +128,7 @@ static int bioRecv(void *ctx, unsigned char *buf, size_t len)
 
     for (;;) {
         int got;
-        if (clock() > bio->deadline)
+        if (ratlsExpired(bio->start))
             return MBEDTLS_ERR_SSL_TIMEOUT;
         got = recv(bio->sock, chunk, len < sizeof(chunk) ? len : sizeof(chunk), RATLS_MSG_DONTWAIT);
         if (got == 0)
@@ -142,6 +149,7 @@ int raHttpsGet(const char *host, const char *path, char *buf, int max, int *leng
     ratls_bio_t bio;
     ratls_io_t io;
     int rc;
+    clock_t start = clock();
 
     if (length != NULL)
         *length = 0;
@@ -178,7 +186,11 @@ int raHttpsGet(const char *host, const char *path, char *buf, int max, int *leng
         disconnect(bio.sock);
         return RATLS_ERR_NET;
     }
-    bio.deadline = clock() + (clock_t)RATLS_DEADLINE_MS * CLOCKS_PER_SEC / 1000;
+    bio.start = start;
+    if (ratlsExpired(start)) { /* DNS and connect already used the budget */
+        disconnect(bio.sock);
+        return RATLS_ERR_TIMEOUT;
+    }
     io.send = bioSend;
     io.recv = bioRecv;
     io.ctx = &bio;

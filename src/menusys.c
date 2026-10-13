@@ -2547,9 +2547,7 @@ void menuRenderAchievements(void)
                               page.state == ACH_OFFLINE     ? _l(xera                                ? _STR_XERA_OPEN_NETWORK :
                                                                  gNetworkProtocol == NET_PROTO_UDPFS ? _STR_CAD_PAIR_UDPFS :
                                                                                                        _STR_CAD_PAIR) :
-                              page.state == ACH_UNSUPPORTED ? _l(!xera                    ? _STR_CAD_UNKNOWN_GAME :
-                                                                 achievementsClockUnset() ? _STR_XERA_SET_CLOCK :
-                                                                                            _STR_XERA_UNKNOWN_GAME) :
+                              page.state == ACH_UNSUPPORTED ? _l(xera ? _STR_XERA_UNKNOWN_GAME : _STR_CAD_UNKNOWN_GAME) :
                               page.state == ACH_NOT_PLAYED  ? _l(achievementsClockUnset() ? _STR_XERA_SET_CLOCK : _STR_XERA_NOT_PLAYED) :
                                                               _l(xera ? _STR_XERA_CONNECTION_ERROR : _STR_CAD_CONNECTION_ERROR);
         menuCardText(48, 188, 535, 110, message, CAD_TEXT);

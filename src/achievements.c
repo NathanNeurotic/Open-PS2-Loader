@@ -475,6 +475,10 @@ int achievementsParseGameId(const char *json, int length)
 /* Set when the last HTTPS lookup could not run because the console clock is
    unset; the browser then says so (read by the GUI, written here). */
 static volatile int xeraClockNote;
+/* No internet (DNS, connect or the deadline failed): one attempt per session, so a console
+   without a route to retroachievements.org does not wait at every game card. Select
+   (achievementsForget) tries again. */
+static int xeraHttpsUnreachable;
 
 int achievementsClockUnset(void)
 {
@@ -493,11 +497,15 @@ static int raHttpsGameId(const char *hash)
     xeraClockNote = 0;
     if (hash == NULL || strlen(hash) != 32 || strspn(hash, "0123456789abcdef") != 32)
         return -1; /* never put anything but a hash into the request line */
+    if (xeraHttpsUnreachable)
+        return -1;
     snprintf(path, sizeof(path), "/dorequest.php?r=gameid&m=%s", hash);
     body = raHttpsGet("retroachievements.org", path, doc, sizeof(doc), &length);
     if (body < 0) {
         if (body == RATLS_ERR_CLOCK)
             xeraClockNote = 1;
+        if (body == RATLS_ERR_NET || body == RATLS_ERR_TIMEOUT)
+            xeraHttpsUnreachable = 1;
         return -1;
     }
     return achievementsParseGameId(doc + body, length - body);
@@ -576,7 +584,8 @@ fetch:
 
 void achievementsForget(void)
 {
-    xeraStale = 1; /* read by the I/O thread on the next request */
+    xeraStale = 1;            /* read by the I/O thread on the next request */
+    xeraHttpsUnreachable = 0; /* and Select retries the online lookup */
 }
 
 /* The share that holds ART/CADUCEUS.KEY and the badge images: the folder
