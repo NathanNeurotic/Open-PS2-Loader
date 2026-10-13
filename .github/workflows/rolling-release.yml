@@ -1242,6 +1242,12 @@ jobs:
 
       - name: Upload archive and regular ELFs in all 4 flavours to MEGA
         if: (github.ref == 'refs/heads/rebuild/main' || github.ref == 'refs/heads/test/korium-audit-remediation') && env.USERNAME != '' && env.PASSWORD != ''
+        # The release is already published above; this archive is a mirror. It normally takes seconds,
+        # but on 2026-10-13 it hung for 40+ minutes with no limit, and because Normalize Release Assets
+        # and the RA release wait for this whole run to SUCCEED, both rolling releases sat with their raw
+        # unpacked asset set. Bounded, and a MEGA failure no longer fails the release run.
+        timeout-minutes: 10
+        continue-on-error: true
         # Pinned to a full commit SHA rather than @master: this third-party action runs with the
         # MEGA credentials, so freeze it to a reviewed snapshot instead of trusting whatever is on
         # its master branch at build time. bf698c6 == the action's v1.4.0 release == the master HEAD

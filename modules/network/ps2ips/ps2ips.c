@@ -579,7 +579,8 @@ static void do_gethostbyname( void *rpcBuffer, int size )
 		resPtr->result = 0;
 		resPtr->hostent.h_addrtype = ret->h_addrtype;
 		resPtr->hostent.h_length = ret->h_length;
-		memcpy(&resPtr->hostent.h_addr, &ret->h_addr_list[0], sizeof(resPtr->hostent.h_addr));
+		/* h_addr_list[0] POINTS AT the address (lwIP); copying &h_addr_list[0] sent the pointer. */
+		memcpy(&resPtr->hostent.h_addr, ret->h_addr_list[0], sizeof(resPtr->hostent.h_addr));
 	}else{
 		resPtr->result = -1;
 	}

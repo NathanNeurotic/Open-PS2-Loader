@@ -1083,7 +1083,7 @@ int raNetHttpGet(unsigned int host, int port, const char *path, char *buf, int m
     struct sockaddr_in to;
     char req[160];
     char *body;
-    clock_t deadline;
+    clock_t start;
     int sock, got, len = 0, status, closed = 0;
 
     *length = 0;
@@ -1106,8 +1106,10 @@ int raNetHttpGet(unsigned int host, int port, const char *path, char *buf, int m
         disconnect(sock);
         return -3;
     }
-    deadline = clock() + (clock_t)RA_HTTP_MS * CLOCKS_PER_SEC / 1000;
-    while (len < max - 1 && clock() < deadline) {
+    /* Elapsed time: clock() is a 32-bit microsecond counter, so an absolute deadline breaks at
+       the wrap and RA_HTTP_MS times a full CLOCKS_PER_SEC overflows. */
+    start = clock();
+    while (len < max - 1 && (clock_t)(clock() - start) < (clock_t)RA_HTTP_MS * (CLOCKS_PER_SEC / 1000)) {
         int room = max - 1 - len;
         got = recv(sock, chunk, room < (int)sizeof(chunk) ? room : (int)sizeof(chunk), RA_MSG_DONTWAIT);
         if (got == 0) {
