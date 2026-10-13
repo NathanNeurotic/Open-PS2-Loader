@@ -70,6 +70,7 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
+<section class="callout info" id="ra-release-channel"><div class="h">RetroAchievements downloads</div><p>The <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra">single experimental RetroAchievements release</a> offers both <b>inceBtion</b> and <b>Korium</b> themes. Choose one complete theme kit. Both use the same RiptOPL source revision and pinned ORBIT runtime. Standard Rolling and Korium downloads contain standard builds only. Installing the other RA theme replaces the same <code>APP_RIPTOPL-RA</code> app. See the <a href="retroachievements.html">RA setup guide and compatibility limits</a>.</p></section>
 <h1>Releases</h1>
 <p class="lead">Choose <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling">Rolling</a> for current development or <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/current-fan-favorite">Current Fan Favorite Build</a> for a preserved development snapshot. The publishing branch is <code>rebuild/main</code>; neither choice guarantees compatibility with every setup.</p>
 
@@ -138,7 +139,7 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   <td><code>RIPTOPL.ELF</code></td>
   <td><b>The loader on its own, for updating an install you already have.</b> Download it and
   overwrite your existing <code>RIPTOPL.ELF</code> — no archive to unpack, nothing else to copy.
-  Its name never changes (the same goes for <code>RIPTOPL-RA.ELF</code> below), so
+  Its name never changes, so
   <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL.ELF">the
   download link</a> is permanent. It is the <code>-OFFICIALROLLING</code> flavour, and there is only
   one of these on purpose: four would put the "which do I pick?" question back in front of the
@@ -148,22 +149,8 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   take a pinned folder from the package instead. Best-effort, like the flavour it is copied from: if
   that build fails the release ships without it.</td>
 </tr>
-<tr>
-  <td><code>RIPTOPL-RA.ELF</code></td>
-  <td><b>The RetroAchievements loader on its own</b>, for updating an RA install: replace
-  <code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code> with it.
-  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling/RIPTOPL-RA.ELF">Its
-  link</a> never changes either. It is the <code>-OFFICIALROLLING</code> <code>PADEMU=1</code> RA build,
-  the same one the RA package's ready app uses. Best-effort: if that build fails, the release ships
-  without it.</td>
-</tr>
-<tr>
-  <td><code>APP_RIPTOPL.psu</code>, <code>APP_RIPTOPL-RA.psu</code></td>
-  <td>The two packages' ready apps as standalone memory-card saves, for installing the app straight
-  onto a card with a PS2 save manager. Each holds only its app folder's own files, not
-  <code>POPS/</code>, <code>EMBER/</code> or <code>neutrino/</code>. <code>APP_RIPTOPL-RA.psu</code> is
-  published whenever the RA package is.</td>
-</tr>
+<tr><td><code>RIPTOPL-RA-inceBtion.ELF</code>, <code>RIPTOPL-RA-Korium.ELF</code></td><td>Theme-specific RetroAchievements updates: <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-ra/RIPTOPL-RA-inceBtion.ELF">inceBtion ELF</a> or <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/download/rolling-ra/RIPTOPL-RA-Korium.ELF">Korium ELF</a>. Rename the selected download to <code>RIPTOPL-RA.ELF</code> when replacing <code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code>. Full kits install the runtime.</td></tr>
+<tr><td><code>APP_RIPTOPL.psu</code>; RA theme saves</td><td>Standard app-only save from Rolling. The <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra">RA release</a> has <code>APP_RIPTOPL-RA-inceBtion.psu</code> and <code>APP_RIPTOPL-RA-Korium.psu</code>. Both RA saves import into <code>APP_RIPTOPL-RA</code>; copy shared folders from the matching full kit separately.</td></tr>
 <tr>
   <td><code>RIPTOPL-&lt;version&gt;-src.zip</code></td>
   <td>Source snapshot of the exact built commit — you can rebuild this precise revision later.</td>
@@ -172,20 +159,7 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
   <td><code>RIPTOPL-LANGS-*.zip</code></td>
   <td>Extra UI language files (<code>.lng</code> files and non-Latin fonts not embedded in the ELF). Copy into your OPL folder alongside the ELF.</td>
 </tr>
-<tr>
-  <td><code>RIPTOPL-RetroAchievements-*.zip</code></td>
-  <td><b>RetroAchievements</b> build, as a complete package: the same <code>POPS/</code>,
-  <code>EMBER/</code>, <code>neutrino/</code> and PC-tool shortcuts as the main archive, with a ready
-  RA app, <code>APPS/APP_RIPTOPL-RA/RIPTOPL-RA.ELF</code> (the <code>-OFFICIALROLLING</code>
-  <code>PADEMU=1</code> build when available), its artwork and <code>APP_RIPTOPL-RA.psu</code> in place
-  of the standard app, labelled <code>APPS/APP_RIPTOPL-RA-PINNED/</code> and
-  <code>APPS/APP_RIPTOPL-RA-ROLLING/</code> ps2dev loader folders (and a <code>-nopademu</code> build of
-  each) for comparisons, plus <code>xeRAbora.url</code> for the PC client the feature talks to. Take
-  this one <i>instead of</i> the main archive if you want achievements. <b>A development build</b>:
-  telemetry has run on one real console, launched from MMCE and USB, but most launch paths are still
-  untested on hardware. See
-  <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/RETROACHIEVEMENTS.md">docs/RETROACHIEVEMENTS.md</a>.</td>
-</tr>
+<tr><td><code>RIPTOPL-RetroAchievements-inceBtion-&lt;version&gt;.zip</code><br><code>RIPTOPL-RetroAchievements-Korium-&lt;version&gt;.zip</code></td><td>Both full theme kits in <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra">one RA release</a>. Each includes the ready official-toolchain app, ps2dev comparison apps, artwork, PSU, POPS, Ember, pinned ORBIT Neutrino and companion links. Experimental: review the <a href="retroachievements.html">setup and limits</a>.</td></tr>
 <tr>
   <td><code>RIPTOPL-VARIANTS-*.zip</code></td>
   <td>The full <code>EXTRA_FEATURES</code> × <code>PADEMU</code> × <code>DUALSENSE</code> matrix for the
@@ -207,13 +181,7 @@ as pre-releases; a bare <code>v*</code> tag produces a full curated release with
 (for example <code>v1.2.0-Beta-2915-da28622</code>), is in the release notes header and on the
 loader's About screen.</p>
 
-<div class="callout info"><div class="h">At most two loose ELFs, everything else in archives</div>
-The normalizer keeps at most two floating loaders, the stable-named <code>RIPTOPL.ELF</code> and
-<code>RIPTOPL-RA.ELF</code> update downloads (each only when its <code>-OFFICIALROLLING</code> build
-succeeded), beside the standalone <code>.psu</code> saves, and
-deliberately removes every other floating ELF, checksum list, detailed changelog, and SDK/IRX
-manifest from the GitHub asset list. The other standard loaders are inside the unified package;
-DualSense loaders are inside <code>RIPTOPL-VARIANTS-*.zip</code>.</div>
+<div class="callout info"><div class="h">Separate standard and RA downloads</div>Standard releases retain <code>RIPTOPL.ELF</code>, their app-only PSU and install archives. The dedicated RA release retains one ELF update and PSU per theme, both full kits, its source snapshot, provenance and checksums. DualSense comparison loaders remain in the standard VARIANTS archive.</div>
 
 <span id="two-toolchains"></span>
 <h2 id="test-artifacts">Download a PR or Actions test build</h2>
