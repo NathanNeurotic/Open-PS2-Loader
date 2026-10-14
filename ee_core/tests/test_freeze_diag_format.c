@@ -108,6 +108,19 @@ int main(void)
     CHECK(contains("vmc_busy=1 vmc_busy_op=write vmc_busy_lba=4242 vmc_busy_ms=2000"), "stalled VMC op");
     CHECK(contains("hint=a memory card (VMC) write started 2000 ms ago and never returned"), "stalled-VMC hint");
 
+    // A stall longer than one 32-bit tick wrap (~116 s): 200 s exactly.
+    base_report(&r);
+    r.iop.busy = 1;
+    r.iop.busy_start_hi = 0;
+    r.iop.busy_start_lo = 0;
+    {
+        unsigned long long now = 200ull * FREEZE_DIAG_IOP_TICKS_PER_MS * 1000ull;
+        r.iop.now_hi = (unsigned int)(now >> 32);
+        r.iop.now_lo = (unsigned int)now;
+    }
+    freeze_diag_format(&r, "b", out, sizeof(out));
+    CHECK(contains("busy_ms=200000"), "duration beyond the low-word wrap");
+
     // Failed reads, no stall.
     base_report(&r);
     r.iop.read_errors = 3;

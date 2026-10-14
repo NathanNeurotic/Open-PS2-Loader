@@ -3,7 +3,7 @@
     FreezeDiag_Begin     combo seen, IGR thread at priority 0, game threads not yet suspended
     FreezeDiag_FetchAndShutdown  replaces oplIGRShutdown(0): fetches the IOP's record, then sends
                                  the shutdown with a deadline (skipped if the IOP did not answer)
-    FreezeDiag_Write     after the IGR IOP reboot; writes mc0:/RIPTFRZ.TXT (mc1 as fallback)
+    FreezeDiag_Write     after the IGR IOP reboot; freezediag.irx writes mc0:/RIPTFRZ.TXT
 */
 
 #ifndef FREEZE_DIAG_CORE_H

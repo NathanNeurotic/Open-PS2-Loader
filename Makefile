@@ -312,8 +312,11 @@ ifeq ($(INGAMEDIAG),1)
     $(error INGAMEDIAG=1 is not supported with RETROACHIEVEMENTS=1)
   endif
   # The build string goes into the report itself, so a report always names the ELF it came from.
-  EECORE_EXTRA_FLAGS += INGAMEDIAG=1 FREEZEDIAG_BUILD=$(OPL_VERSION)
+  # The menu registers freezediag.irx in module storage; ee_core loads it after the IGR reboot.
+  EE_CFLAGS += -DINGAMEDIAG
+  EECORE_EXTRA_FLAGS += INGAMEDIAG=1
   CDVDMAN_DIAG_FLAGS = INGAMEDIAG=1
+  IOP_OBJS += freezediag.o
 endif
 
 ifeq ($(DEBUG),1)
@@ -466,6 +469,7 @@ clean:	download_lwNBD
 	$(MAKE) -C modules/iopcore/cdvdfsv clean
 	echo " -resetspu"
 	$(MAKE) -C modules/iopcore/resetspu clean
+	$(MAKE) -C modules/iopcore/freezediag clean
 	echo "  -patches"
 	echo "   -iremsnd"
 	$(MAKE) -C modules/iopcore/patches/iremsndpatch clean
@@ -719,6 +723,13 @@ modules/iopcore/resetspu/resetspu.irx: modules/iopcore/resetspu
 	$(MAKE) -C $<
 
 $(EE_ASM_DIR)resetspu.c: modules/iopcore/resetspu/resetspu.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ $(*F)_irx
+
+# The build string goes into the freeze report, so a report always names the ELF it came from.
+modules/iopcore/freezediag/freezediag.irx: modules/iopcore/freezediag
+	$(MAKE) FREEZEDIAG_BUILD=$(OPL_VERSION) -C $<
+
+$(EE_ASM_DIR)freezediag.c: modules/iopcore/freezediag/freezediag.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/mcemu/bdm_mcemu.irx: modules/mcemu

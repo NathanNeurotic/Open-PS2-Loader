@@ -9,9 +9,6 @@
   Nothing here exists in other builds: the whole file is only compiled with INGAMEDIAG=1.
 */
 
-// The report goes through the IOP's ioman (fio), as IGS does: ee_core has no newlib file layer.
-#define NEWLIB_PORT_AWARE
-
 #include "ee_core.h"
 #include "coreconfig.h"
 #include "iopmgr.h"
@@ -20,13 +17,9 @@
 #include "freeze_diag_report.h"
 #include "cd_igr_rpc.h"
 
-#include <fileio.h>
-#include <io_common.h>
 #include <iopcontrol.h>
-
-#ifndef FREEZEDIAG_BUILD
-#define FREEZEDIAG_BUILD "unknown"
-#endif
+#include "modules.h"
+#include "util.h"
 
 #define IGR_RPC_SERVER 0x80000598
 
@@ -35,15 +28,10 @@
 // How long to wait for the IOP before declaring it stuck.
 #define FREEZE_DIAG_IOP_BUDGET_MS 2000
 
-// The text is built in game memory: by the time it is written the game is finished, and ee_core
-// has no room for a 4 KB buffer. IGR has re-initialised the TLB before FreezeDiag_Write runs.
-#define FREEZE_DIAG_TEXT     ((char *)0x01E00000)
-#define FREEZE_DIAG_TEXT_CAP 4096
-
 unsigned int g_freeze_diag_polls;
 unsigned int g_freeze_diag_reset_failures;
 
-static freeze_diag_report_t report;
+static freeze_diag_report_t report __attribute__((aligned(64)));
 static int report_armed;
 
 static freeze_diag_iop_t iop_rx __attribute__((aligned(64)));
@@ -199,24 +187,17 @@ void FreezeDiag_FetchAndShutdown(void)
     shutdown_with_deadline();
 }
 
-static int write_report(const char *path, const char *text, int len)
-{
-    int fd, written;
-
-    fd = fioOpen(path, FIO_O_WRONLY | FIO_O_CREAT | FIO_O_TRUNC);
-    if (fd < 0)
-        return 0;
-    written = fioWrite(fd, text, len);
-    fioClose(fd);
-    return written == len;
-}
-
-// Runs after the IGR IOP reboot, with SIF RPC, the IOP heap and LOADFILE up. Writes the report
-// with the console's own memory card drivers (as IGS does), then reboots the IOP again so the
-// rest of IGR starts from the same clean IOP it always had.
+// Runs after the IGR IOP reboot, with SIF RPC, the IOP heap and LOADFILE up. ee_core has no room
+// for a formatter or the EE file client, so it copies the raw record to the IOP and loads
+// freezediag.irx, which formats it and writes mc0:/RIPTFRZ.TXT with the ROM card driver (MCMAN,
+// as IGS uses). Then the IOP is rebooted again so the rest of IGR starts from a clean IOP.
 void FreezeDiag_Write(void)
 {
-    int len;
+    static const char hex[] = "0123456789ABCDEF";
+    unsigned int size = (sizeof(report) + 15) & ~15;
+    char arg[9];
+    void *iop;
+    int i;
 
     if (!report_armed)
         return;
@@ -225,11 +206,17 @@ void FreezeDiag_Write(void)
     LoadModule("rom0:SIO2MAN", 0, NULL);
     LoadModule("rom0:MCMAN", 0, NULL);
 
-    len = freeze_diag_format(&report, FREEZEDIAG_BUILD, FREEZE_DIAG_TEXT, FREEZE_DIAG_TEXT_CAP);
-    if (!write_report("mc0:/RIPTFRZ.TXT", FREEZE_DIAG_TEXT, len))
-        write_report("mc1:/RIPTFRZ.TXT", FREEZE_DIAG_TEXT, len);
+    iop = SifAllocIopHeap(size);
+    if (iop != NULL) {
+        FlushCache(0); // CopyToIop DMAs from memory, not from the cache
+        CopyToIop(&report, size, iop);
+        for (i = 0; i < 8; i++)
+            arg[i] = hex[((u32)iop >> (28 - 4 * i)) & 0xF];
+        arg[8] = '\0';
+        LoadOPLModule(OPL_MODULE_ID_FREEZEDIAG, 0, sizeof(arg), arg);
+        SifFreeIopHeap(iop);
+    }
 
-    fioExit();
     SifExitIopHeap();
     LoadFileExit();
     SifExitRpc();

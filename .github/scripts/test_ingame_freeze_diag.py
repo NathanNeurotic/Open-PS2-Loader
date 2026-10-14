@@ -66,8 +66,8 @@ for rel in [
         FAILURES.append("report code outside #ifdef INGAMEDIAG: " + line)
 
 ee_make = read("ee_core/Makefile")
-check(re.search(r"ifeq \(\$\(INGAMEDIAG\),1\)\nEE_OBJS \+= freeze_diag\.o freeze_diag_format\.o\n", ee_make) is not None,
-      "ee_core builds freeze_diag objects only under INGAMEDIAG")
+check(re.search(r"ifeq \(\$\(INGAMEDIAG\),1\)\nEE_OBJS \+= freeze_diag\.o\n", ee_make) is not None,
+      "ee_core builds freeze_diag.o only under INGAMEDIAG (formatting and file I/O live in freezediag.irx)")
 for rel in ["modules/iopcore/cdvdman/Makefile", "modules/iopcore/cdvdfsv/Makefile"]:
     check(re.search(r"ifeq \(\$\(INGAMEDIAG\),1\)\nIOP_CFLAGS \+= -DINGAMEDIAG\n", read(rel)) is not None,
           f"{rel} defines INGAMEDIAG only when asked")
@@ -80,7 +80,9 @@ cdvdman_rules = re.findall(r"\t\$\(MAKE\) \$\(CDVDMAN_PS2LOGO_FLAGS\)[^\n]*USE_[
 check(len(cdvdman_rules) == 7, f"seven CDVDMAN variant rules found (got {len(cdvdman_rules)})")
 check(all("$(CDVDMAN_DIAG_FLAGS)" in r for r in cdvdman_rules), "every CDVDMAN variant receives the diag flag")
 check("\t$(MAKE) $(CDVDMAN_DIAG_FLAGS) -C $<" in top, "CDVDFSV receives the diag flag")
-check("EECORE_EXTRA_FLAGS += INGAMEDIAG=1 FREEZEDIAG_BUILD=$(OPL_VERSION)" in top, "ee_core gets the flag and the build string")
+check("EECORE_EXTRA_FLAGS += INGAMEDIAG=1" in top, "ee_core gets the flag")
+check("IOP_OBJS += freezediag.o" in top, "the menu embeds freezediag.irx only in the flavour")
+check("\t$(MAKE) FREEZEDIAG_BUILD=$(OPL_VERSION) -C $<" in top, "the report names the build it came from")
 
 # 2. IGR ordering in padhook.c.
 pad = read("ee_core/src/padhook.c")
@@ -123,12 +125,23 @@ check(re.search(r"SifCallRpc\(&igr_cd, 1, SIF_RPC_M_NOWAIT", sd) is not None, "t
 check("= 0; // 0 = shut down, do not power off" in sd, "the shutdown asks for the same thing as oplIGRShutdown(0)")
 check(core.count("budget_spent(start)") >= 3, "the bind retry loop also has a deadline")
 w = core[core.index("void FreezeDiag_Write(void)"):]
-check(w.index("LoadModule(\"rom0:MCMAN\"") < w.index("freeze_diag_format(") < w.index("Reset_Iop(\"\", 0)"),
-      "write with ROM MCMAN, then reboot the IOP so IGR continues from a clean IOP")
-for path in re.findall(r'"(mc[01]:/[^"]+)"', core):
+check(w.index("LoadModule(\"rom0:MCMAN\"") < w.index("FlushCache(0)") < w.index("CopyToIop(") < w.index("LoadOPLModule(OPL_MODULE_ID_FREEZEDIAG") < w.index("Reset_Iop(\"\", 0)"),
+      "ROM MCMAN, cache flushed before the DMA, record handed to freezediag.irx, then a clean IOP reboot")
+check("fio" not in core and "freeze_diag_format(" not in core, "ee_core carries no file client or formatter (stack budget)")
+irx = read("modules/iopcore/freezediag/freezediag.c")
+for path in re.findall(r'"(mc[01]:/[^"]+)"', irx):
     name = path.split(":/", 1)[1]
     check("/" not in name and len(name) <= 31, f"report path {path} fits a memory card name")
-check("FIO_O_WRONLY | FIO_O_CREAT | FIO_O_TRUNC" in core, "ioman flags, not newlib's O_* values")
+check("O_WRONLY | O_CREAT | O_TRUNC" in irx, "IOP ioman flags")
+check("freeze_diag_format(" in irx, "the IRX uses the host-tested formatter")
+fmt = read("ee_core/src/freeze_diag_format.c")
+check("long long" not in fmt, "the formatter needs no 64-bit division (IOP has none)")
+mods = read("ee_core/include/modules.h")
+check(re.search(r"#ifdef INGAMEDIAG\n(?:\s*//[^\n]*\n)*\s*OPL_MODULE_ID_FREEZEDIAG,\n#endif\n\n\s*OPL_MODULE_ID_COUNT", mods) is not None,
+      "the module ID is appended last, only in the flavour")
+sysc = read("src/system.c")
+check(re.search(r"#ifdef INGAMEDIAG\n(?:\s*//[^\n]*\n)*\s*irxptr_tab\[modcount\]\.info = size_freezediag_irx", sysc) is not None,
+      "the menu registers freezediag.irx only in the flavour")
 
 # 4. Shared constants.
 opl_h = read("modules/iopcore/common/cdvdman_opl.h")

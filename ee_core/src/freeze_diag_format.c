@@ -59,12 +59,16 @@ static void put_field(fd_buf_t *b, const char *name, unsigned int v)
 // Milliseconds from start to now, both IOP clock values split into hi/lo words.
 static unsigned int elapsed_ms(unsigned int start_hi, unsigned int start_lo, unsigned int now_hi, unsigned int now_lo)
 {
-    unsigned long long start = ((unsigned long long)start_hi << 32) | start_lo;
-    unsigned long long now = ((unsigned long long)now_hi << 32) | now_lo;
+    // 32-bit only: this also runs in the IOP report writer, which has no 64-bit division.
+    // One wrap of the low word (2^32 ticks) is 116508 ms.
+    unsigned int hi, lo;
 
-    if (now <= start)
+    if (now_hi < start_hi || (now_hi == start_hi && now_lo <= start_lo))
         return 0;
-    return (unsigned int)((now - start) / FREEZE_DIAG_IOP_TICKS_PER_MS);
+    lo = now_lo - start_lo;
+    hi = now_hi - start_hi - (now_lo < start_lo ? 1 : 0);
+    // 2^32 = 116508 * 36864 + 16384, so carry each wrap's 16384 leftover ticks exactly.
+    return hi * 116508u + lo / FREEZE_DIAG_IOP_TICKS_PER_MS + (lo % FREEZE_DIAG_IOP_TICKS_PER_MS + hi * 16384u) / FREEZE_DIAG_IOP_TICKS_PER_MS;
 }
 
 static const char *thread_status_name(unsigned int status)
