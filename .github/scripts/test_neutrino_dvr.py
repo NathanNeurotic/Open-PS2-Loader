@@ -22,3 +22,5 @@ assert 'hddPs2GameCount()' in hdd
 assert 'hddDvrCleanUp();' in hdd
 print("DESR DVR source integration checks passed (not a hardware/build test)")
 assert 'guiLock();' in hdd and 'hddDvrPublish(candidate, count);' in hdd
+assert 'if (game->partition_name[0]' in hdd
+assert 'copy = *entry;' in hdd

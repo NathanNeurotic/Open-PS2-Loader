@@ -2464,7 +2464,12 @@ static int hddMcemuSlots[2] = {-2, -2};
  */
 static void hddLaunchDvrIso(int id, config_set_t *configSet)
 {
+    hdd_dvr_iso_t copy;
+    guiLock();
     hdd_dvr_iso_t *entry = hddActiveDvr(id);
+    if (entry != NULL)
+        copy = *entry;
+    guiUnlock();
     if (!entry)
         return;
     const char *neutrinoPath = sbResolveNeutrinoPath(gHDDPrefix);
@@ -2472,13 +2477,13 @@ static void hddLaunchDvrIso(int id, config_set_t *configSet)
         guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
         return;
     }
-    char dvdPath[sizeof(entry->path)];
-    char startup[sizeof(entry->game.startup)];
+    char dvdPath[sizeof(copy.path)];
+    char startup[sizeof(copy.game.startup)];
     char args[256] = "";
     int video = gNeutrinoVideoDefault, gsmComp = gNeutrinoGsmCompDefault;
     int compat = sbGetCompatModes(configSet);
-    snprintf(dvdPath, sizeof(dvdPath), "%s", entry->path);
-    snprintf(startup, sizeof(startup), "%s", entry->game.startup);
+    snprintf(dvdPath, sizeof(dvdPath), "%s", copy.path);
+    snprintf(startup, sizeof(startup), "%s", copy.game.startup);
     configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, args, sizeof(args));
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &video);
     configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &gsmComp);
@@ -2549,8 +2554,16 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         game = hddActiveHdl(id);
         if (game == &hddEmptyHdl)
             return; // stale/invalid id -> nothing to launch
-    } else
+    } else {
         game = gAutoLaunchGame;
+        // An ISO row cannot ever be used as a raw HDL APA partition. The
+        // automatic loader currently carries only HDL game metadata, not
+        // the DVRP mount identity: fail safely until DESR auto-boot is tested.
+        if (game->partition_name[0] == '\0') {
+            LOG("[DVR] auto launch requires a proven APA/HDL partition; refusing\n");
+            return;
+        }
+    }
 
     // D8: Neutrino core gets its own lean path FIRST -- everything below is native-core prep it
     // neither needs nor should be able to die on (see hddTryNeutrinoLaunch).
@@ -2783,8 +2796,13 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
     }
 
     int hddId = hddGetSourceId(itemList, id);
+    hdl_game_info_t snapshot;
+    guiLock();
     hdd_dvr_iso_t *dvr = hddActiveDvr(hddId);
-    hdl_game_info_t *game = dvr ? &dvr->game : hddActiveHdl(hddId);
+    if (dvr != NULL)
+        snapshot = dvr->game;
+    guiUnlock();
+    hdl_game_info_t *game = dvr ? &snapshot : hddActiveHdl(hddId);
 
     if (gHDDPrefix != NULL) {
         snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, game->startup);

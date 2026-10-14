@@ -54,3 +54,7 @@ of testing this RiptOPL integration.
 The GUI's bundled initialization modules come from PS2SDK (`dvrdrv.irx` and
 `dvrfile.irx`) and are independent of pcm720's custom Neutrino modules.
 Credit: ps2dev / PS2SDK, wLaunchELF DVR support, pcm720's bsd-dvr branch.
+
+Automatic launch from remembered DVR entries remains disabled until the
+DVRP partition identity survives that path safely. Manually select the game
+in the HDD tab during experimental testing.
