@@ -26,6 +26,17 @@ def check(cond, what):
 TOKEN = re.compile(r"freeze_diag|FreezeDiag|FREEZE_DIAG|CDSC_GET_FREEZE_DIAG")
 
 
+def positive_diag_guard(line):
+    return re.fullmatch(r"#ifdef\s+INGAMEDIAG|#(?:if|elif)\s+defined\s*(?:\(\s*INGAMEDIAG\s*\)|INGAMEDIAG)", line) is not None
+
+
+assert positive_diag_guard("#ifdef INGAMEDIAG")
+assert positive_diag_guard("#elif defined(INGAMEDIAG)")
+assert not positive_diag_guard("#ifndef INGAMEDIAG")
+assert not positive_diag_guard("#if !defined(INGAMEDIAG)")
+assert not positive_diag_guard("#if defined(INGAMEDIAG) || OTHER")
+
+
 def unguarded_lines(rel):
     """Lines that mention the report outside any #if/#ifdef naming INGAMEDIAG."""
     stack = []
@@ -33,11 +44,11 @@ def unguarded_lines(rel):
     for number, line in enumerate(read(rel).split("\n"), 1):
         s = line.strip()
         if s.startswith("#if"):
-            stack.append("INGAMEDIAG" in s)
+            stack.append(positive_diag_guard(s))
             continue
         if s.startswith("#elif"):
             if stack:
-                stack[-1] = "INGAMEDIAG" in s
+                stack[-1] = positive_diag_guard(s)
             continue
         if s.startswith("#else"):
             if stack:
@@ -110,7 +121,7 @@ check(i_lmb < i_write < i_spu, "the report is written after the IGR IOP reboot, 
 core = read("ee_core/src/freeze_diag.c")
 check("SifBindRpc(&igr_cd, IGR_RPC_SERVER, SIF_RPC_M_NOWAIT)" in core, "the bind does not block on a stuck IOP")
 check(re.search(r"SifCallRpc\([^;]*SIF_RPC_M_NOWAIT", core) is not None, "the call does not block on a stuck IOP")
-for match in re.finditer(r"while \(SifCheckStatRpc\(&igr_cd\)\) \{(.*?)\n    \}", core, re.S):
+for match in re.finditer(r"while \(SifCheckStatRpc\(&(?:igr_cd|shutdown_cd)\)\) \{(.*?)\n    \}", core, re.S):
     check("budget_spent(start)" in match.group(1), "every RPC wait has a deadline")
 check(len(re.findall(r"while \(SifCheckStatRpc", core)) == 3, "three RPC waits (bind, record, shutdown), all bounded")
 fas = core[core.index("void FreezeDiag_FetchAndShutdown(void)"):]
@@ -118,10 +129,10 @@ fas = fas[:fas.index("\n}\n")]
 check(re.search(r"if \(!report_armed\) \{\n\s*oplIGRShutdown\(0\);\n\s*return;", fas) is not None,
       "without a report to take (IGS, power-off) the shutdown is exactly oplIGRShutdown(0)")
 check(fas.index("fetch_iop()") < fas.index("shutdown_with_deadline()"), "the record is fetched before the shutdown changes the IOP")
-check("FREEZE_DIAG_SHUTDOWN_SKIPPED" in fas, "no shutdown is sent to an IOP that did not answer")
+check("FREEZE_DIAG_SHUTDOWN_SKIPPED" in fas, "bind failure skips shutdown")
 sd = core[core.index("static void shutdown_with_deadline(void)"):]
 sd = sd[:sd.index("\n}\n")]
-check(re.search(r"SifCallRpc\(&igr_cd, 1, SIF_RPC_M_NOWAIT", sd) is not None, "the shutdown is RPC function 1, sent without blocking")
+check(re.search(r"SifCallRpc\(&shutdown_cd, 1, SIF_RPC_M_NOWAIT", sd) is not None, "the shutdown is RPC function 1, sent without blocking")
 check("= 0; // 0 = shut down, do not power off" in sd, "the shutdown asks for the same thing as oplIGRShutdown(0)")
 check(core.count("budget_spent(start)") >= 3, "the bind retry loop also has a deadline")
 w = core[core.index("void FreezeDiag_Write(void)"):]

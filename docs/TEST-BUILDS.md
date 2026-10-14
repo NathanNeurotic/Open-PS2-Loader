@@ -34,8 +34,9 @@ The file records the game's threads at the moment of the combo, the last disc re
 that started and never finished, memory card (VMC) activity, and whether the I/O processor still
 answered. Its `hint=` line says which of those looks stuck.
 
-If the combo does nothing at all, report that: it means the main CPU itself is stuck, which is a
-result too. Compatibility Mode 6 turns IGR off, so it also turns this report off. The flavour is
+If the combo does nothing, report that and confirm Compatibility Mode 6 was off. An unresponsive
+combo alone does not establish a main-CPU freeze: IGR can be disabled or fail to detect input.
+Compatibility Mode 6 turns IGR off, so it also turns this report off. The flavour is
 otherwise a normal OFFICIALROLLING build; it is not combined with RetroAchievements.
 
 ## RetroAchievements theme release previews

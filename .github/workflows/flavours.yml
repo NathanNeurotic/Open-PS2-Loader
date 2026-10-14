@@ -431,8 +431,8 @@ jobs:
           if [ "$INGAMEDIAG_BUILD" = 1 ]; then
             grep -q ' FreezeDiag_Begin$' core-symbols.txt
             grep -q ' FreezeDiag_Write$' core-symbols.txt
-            grep -q ' freeze_diag_format$' core-symbols.txt
-            LC_ALL=C grep -aq 'RIPTFRZ.TXT' ee_core/ee_core.elf
+            test -s modules/iopcore/freezediag/freezediag.irx
+            LC_ALL=C grep -aq 'RIPTFRZ.TXT' modules/iopcore/freezediag/freezediag.irx
           elif grep -E ' (FreezeDiag_[A-Za-z0-9_]*|freeze_diag_[A-Za-z0-9_]*|g_freeze_diag[A-Za-z0-9_]*)$' core-symbols.txt || LC_ALL=C grep -aq 'RIPTFRZ' ee_core/ee_core.elf; then
             echo 'freeze report leaked into a build without INGAMEDIAG' >&2
             exit 1

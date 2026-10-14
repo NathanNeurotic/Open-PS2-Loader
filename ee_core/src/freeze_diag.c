@@ -4,7 +4,7 @@
   When a game freezes, the player presses the IGR combo. If the IGR thread still gets to run,
   this records what the console was doing -- the game's threads, the IOP's disc and VMC
   activity -- and writes it to the memory card as plain text, then lets IGR exit as usual.
-  If the combo does nothing, the EE itself is stuck, and that is the finding.
+  An unresponsive combo must be reported separately; it does not prove an EE freeze.
 
   Nothing here exists in other builds: the whole file is only compiled with INGAMEDIAG=1.
 */
@@ -36,6 +36,8 @@ static int report_armed;
 
 static freeze_diag_iop_t iop_rx __attribute__((aligned(64)));
 static SifRpcClientData_t igr_cd __attribute__((aligned(64)));
+static SifRpcClientData_t shutdown_cd __attribute__((aligned(64)));
+static s32 shutdown_arg __attribute__((aligned(64)));
 static s32 rpc_arg __attribute__((aligned(64)));
 
 static inline u32 ee_ticks(void)
@@ -154,13 +156,15 @@ static void shutdown_with_deadline(void)
 {
     u32 start = ee_ticks();
 
+    // Keep a timed-out report request on its own client and buffers.
+    shutdown_cd.server = igr_cd.server;
     FlushCache(0);
-    *(s32 *)UNCACHED_SEG(&rpc_arg) = 0; // 0 = shut down, do not power off
-    if (SifCallRpc(&igr_cd, 1, SIF_RPC_M_NOWAIT | SIF_RPC_M_NOWBDC, &rpc_arg, sizeof(rpc_arg), NULL, 0, NULL, NULL) < 0) {
+    *(s32 *)UNCACHED_SEG(&shutdown_arg) = 0; // 0 = shut down, do not power off
+    if (SifCallRpc(&shutdown_cd, 1, SIF_RPC_M_NOWAIT | SIF_RPC_M_NOWBDC, &shutdown_arg, sizeof(shutdown_arg), NULL, 0, NULL, NULL) < 0) {
         report.shutdown_status = FREEZE_DIAG_SHUTDOWN_TIMEOUT;
         return;
     }
-    while (SifCheckStatRpc(&igr_cd)) {
+    while (SifCheckStatRpc(&shutdown_cd)) {
         if (budget_spent(start)) {
             report.shutdown_status = FREEZE_DIAG_SHUTDOWN_TIMEOUT;
             return;
@@ -179,8 +183,9 @@ void FreezeDiag_FetchAndShutdown(void)
         return;
     }
 
-    if (!fetch_iop()) {
-        // The shutdown RPC goes to the same IOP that just did not answer.
+    fetch_iop();
+    if (report.iop_status == FREEZE_DIAG_IOP_NO_BIND) {
+        // No server was bound; a shutdown call cannot be issued.
         report.shutdown_status = FREEZE_DIAG_SHUTDOWN_SKIPPED;
         return;
     }
