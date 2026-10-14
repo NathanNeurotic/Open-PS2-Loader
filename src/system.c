@@ -1225,6 +1225,10 @@ static const char *getDeviceName(const char *driver)
         return "ata";
     if (!strcmp(driver, "apa"))
         return "apa";
+    // DESR PSX DVR filesystem is NOT ordinary APA/ATA: pcm720/neutrino bsd-dvr
+    // provides a fileid backend with its own module chain and PSX-mode transition.
+    if (!strcmp(driver, "dvr"))
+        return "dvr";
     if (!strcmp(driver, "mmce"))
         return "mmce";
     if (!strcmp(driver, "udp"))
@@ -1381,7 +1385,7 @@ static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, con
             p = end;
         }
     }
-    if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs"))
+    if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "dvr"))
         return 0;
     if (typed)
         return value;
@@ -1850,6 +1854,27 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
         return -1;
     }
 
+    // DVR Neutrino must switch to PSX mode and reset into its DVR load environment.
+    // Quick Boot would skip that transition, leaving dvrdrv/dvrfile unavailable.
+    // Do not silently ignore custom flags: refuse before tearing down the GUI.
+    if (!strcmp(deviceName, "dvr")) {
+        int rom = open("rom0:PSXVER", O_RDONLY);
+        if (rom < 0) {
+            LOG("[NEUTRINO] DVR preflight: rom0:PSXVER missing; not a DESR\n");
+            guiWarning(_l(_STR_NEUTRINO_DEV_UNSUPPORTED), 6);
+            return -1;
+        }
+        close(rom);
+        if (neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") ||
+            neutrinoArgHasActiveFlag(extraArgs, "-qb") ||
+            neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsdfs=") ||
+            neutrinoArgHasActiveFlag(extraArgs, "-bsdfs=") || neutrinoBsdfs != 0) {
+            LOG("[NEUTRINO] DVR preflight: -qb or -bsdfs is incompatible with DVR filesystem handoff\n");
+            guiWarning(_l(_STR_NEUTRINO_DEV_UNSUPPORTED), 6);
+            return -1;
+        }
+    }
+
     // -bsdfs=bd names the raw bdm device "<driver><devNr>p0". A mount that never reported its device
     // number cannot be named, and guessing 0 opens the WRONG device when two share a driver (a second
     // stick is usb1). ATA is exempt: one synthetic device, always 0 -- the native leg's device-number
@@ -1946,7 +1971,7 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
     // per-game Neutrino args still passes through the tokenizer untouched.
     if (EnablePS2Logo &&
         (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") ||
-         !strcmp(deviceName, "udpbd"))) {
+         !strcmp(deviceName, "udpbd") || !strcmp(deviceName, "dvr"))) {
         LOG("[NEUTRINO] -logo suppressed on %s (issue #56 class: PS2LOGO pass reboots the IOP)\n", deviceName);
         EnablePS2Logo = 0;
     }

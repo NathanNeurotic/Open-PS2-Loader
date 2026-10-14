@@ -138,7 +138,7 @@ paths are no longer limited to 31 characters.
 |---|---|---|
 | USB / MX4SIO / internal ATA (BDM) | ✅ | ✅ `-mcN=massN:…VMC/<name>.bin` |
 | iLink / IEEE 1394 (**FAT PS2 models only**) | ⚠️ supported and wired; the post-2692 build adds quick boot for RiptOPL's inherited-stack handoff, pending hardware retest | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; the overall iLink launch is pending retest |
-| Internal HDD (APA → HDL) | ✅ | ❌ **games boot, VMC is dropped with a warning** — Neutrino has no APA/pfs backing store to open the `.bin` from (NHDDL's HDL backend has the same no-VMC rule). The OPL core honors the same VMC normally. |
+| PSX DESR DVR PFS (`dvr_pfs0:`; pcm720 `bsd-dvr` development branch) | ⚠️ experimental external backend only; RiptOPL game discovery not yet integrated | ⚠️ unverified; do not assume VMC |\n| Internal HDD (APA → HDL) | ✅ | ❌ **games boot, VMC is dropped with a warning** — Neutrino has no APA/pfs backing store to open the `.bin` from (NHDDL's HDL backend has the same no-VMC rule). The OPL core honors the same VMC normally. |
 | MMCE | ✅ | ✅ `-mcN=mmceN:/…VMC/<name>.bin` |
 | UDPFS (network boot — Files or Image) | ✅ **required** — no OPL core, Neutrino only (see §4) | ✅ `-mcN=udpfs:/VMC/<name>.bin` — the PC server must **not** run read-only, or saves fail |
 | UDPBD (network boot — served disk image) | ✅ **required** — no OPL core, Neutrino only (see §4). Hardware-confirmed 2026-09-26: Kingdom Hearts on PS2-Servers, with every Neutrino setting at its default (neutrino.elf found inside the served image, no per-game filesystem or args) | ⚠️ `-mcN=massN:…VMC/<name>.bin` is emitted; not yet tested on hardware |
@@ -165,7 +165,7 @@ settings:
 
 | Auto argument | When |
 |---|---|
-| `-bsd=<usb\|ilink\|mx4sio\|ata\|mmce\|udpfs\|udpfsbd\|udpbd>` | always (the storage backend). APA HDD maps to `ata` (+ `-bsdfs=hdl`), so no separate `apa` token is ever emitted. OPL emits this unconditionally for every backend, including `udpfs` — nightly Neutrino builds that auto-detect the backend simply ignore the explicit token, so there is no version split on OPL's side |
+| `-bsd=<usb\|ilink\|mx4sio\|ata\|mmce\|udpfs\|udpfsbd\|udpbd\|dvr>` | always (the storage backend). APA HDD maps to `ata` (+ `-bsdfs=hdl`), so no separate `apa` token is ever emitted. OPL emits this unconditionally for every backend, including `udpfs` — nightly Neutrino builds that auto-detect the backend simply ignore the explicit token, so there is no version split on OPL's side |
 | `-bsdfs=hdl` | internal HDD (APA) only |
 | `-bsdfs=<exfat\|hdl\|bd>` | only if the per-game **Neutrino Filesystem** picker (Compatibility screen) is set off Auto; block-backed devices only (never mmce/udpfs — no filesystem layer there). `hdl`/`bd` also reshape `-dvd` to `hdl:`/`bdfs:`. A hand-typed `-bsdfs=` in the args wins over the picker (per-game args over global ones, last one wins) and reshapes `-dvd` the same way; a hand-typed `-dvd=` wins if it is forwarded (a long argument list can drop it). `bd` names the drive as `<driver><N>p0` (a second USB stick is `usb1p0`), using the device number the drive reported; if it never reported one, the launch is refused while the menu is still up, not guessed as device 0 -- whether `bd` came from the picker or was typed, and even beside a typed `-dvd=` (a long argument list can drop it). ATA is exempt (one device, always 0) |
 | `-dvd=<path>` / `-dvd=hdl:<partition>` | always (the game image/partition) |
@@ -508,3 +508,13 @@ Rules that follow from Neutrino's design (verified against `rickgaiser/neutrino`
 Both theme kits in the [dedicated RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra) bundle the pinned ORBIT v1.0.2 Neutrino runtime by Daniel / danielnuld (AFL-3.0), based on Neutrino by Maximus32 and xeRAbora protocol work by hacan359. Standard kits keep ordinary upstream Neutrino. Copy the complete runtime folder, including its license and ORBIT-RA provenance files, to your chosen supported device. An RA ELF update alone does not install it.
 
 The adapter supports both RA modes (Xerabora, and Caduceus through its engine), watch lists whose direct values fit 1,216 bytes (pointer-chain achievements excluded, as in ORBIT), and writable configuration storage. UDP storage reuses its existing network stack and currently needs static addressing, a saved watch list and a companion profile that already knows the image. Console unlock notices are not supplied by this runtime. See the [RA setup and validation limits](RETROACHIEVEMENTS.md#neutrino-in-the-ra-edition).
+
+## Experimental PSX DESR DVR PFS backend (not yet a game source)
+
+`pcm720/neutrino` maintains a separate [`bsd-dvr` branch](https://github.com/pcm720/neutrino/tree/bsd-dvr) with `bsd-dvr.toml`, `dvrdrv.irx`, `dvrfile.irx`, and `dvrfile_fhi.irx`. This is not included in the normal `master` distribution; the standard RiptOPL Neutrino bundle is **not** a DVR backend.
+
+The backend expects `-bsd=dvr -dvd=dvr_pfs0:/GAME.iso`. Its loader **switches the DESR into PSX mode** before entering the load environment. Unlike USB/UDPFS handoffs, a DVR launch must **not** use `-qb`: Quick Boot skips this mode transition. `-bsdfs` is likewise not applicable to this filesystem backend. RiptOPL's argument builder now recognizes the reserved `dvr` driver token, refuses incompatible options in its preflight and suppresses the global PS2-logo toggle; no normal storage backend changes behavior.
+
+**Important:** This stage alone does not discover or list DVR games. RiptOPL must separately initialize the DESR-only DVRP stack, enumerate `dvr_hdd0:` and mount allowed partitions such as `dvr_hdd0:__xcontents` read-only, before any selectable DVR game can use the new argument route. The regular HDD tab enumerates `hdd0:` HDLoader entries, **not** DVR images. No user should flash firmware, format, or migrate partitions to enable this feature. The completed launcher and real-console verification are pending.
+
+Implementation references: [Launchstation's DVR stack](https://github.com/NathanNeurotic/Launchstation/blob/master/src/init.c) and [pcm720's DVR Neutrino diff](https://github.com/pcm720/neutrino/compare/master...bsd-dvr).
