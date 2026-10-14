@@ -28,8 +28,8 @@
 
 #include <hdd-ioctl.h>
 #include <delaythread.h> // DelayThread for the post-ATAD settle in hddLoadModules
-#include <speedregs.h>  // SPD_CAPS_DVR: hardware-gated DVRP initialization
-#include <libcdvd.h>    // sceCdNoticeGameStart on PSX DESR
+#include <speedregs.h> // SPD_CAPS_DVR: hardware-gated DVRP initialization
+#include <libcdvd.h>   // sceCdNoticeGameStart on PSX DESR
 
 #define OPL_HDD_MODE_PS2LOGO_OFFSET 0x17F8
 
@@ -237,11 +237,11 @@ static int hddDvrEnsureDrivers(void)
         return 1;
     if (hddDvrDriverTried || !hddDvrHardwarePresent())
         return 0;
-    hddDvrDriverTried = 1;
     if (!hddLoadModulesReady()) {
         LOG("[DVR] ATA/DEV9 modules unavailable; DVR namespace not probed\n");
-        return 0;
+        return 0; // a transient ATA readiness failure can retry next refresh
     }
+    hddDvrDriverTried = 1;
     if (sysLoadModuleBuffer(&dvrdrv_irx, size_dvrdrv_irx, 0, NULL) != 0) {
         LOG("[DVR] dvrdrv.irx failed to start\n");
         return 0;
