@@ -40,6 +40,7 @@ functions = ''.join(function_text(sig) for sig in (
     'static int appendArgTokens(',
     'static int neutrinoArgHasActiveFlag(',
     'static int neutrinoEffectiveBsdfs(',
+    'static const char *sysLastPathSeparator(',
     'int sysNeutrinoPreflight(',
 ))
 
@@ -61,12 +62,15 @@ if 'sysNeutrinoPreflight(bdmCurrentDriver, neutrinoPath, neutrinoBsdfs, neutrino
 HARNESS = r'''
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #define LOG(...) ((void)0)
 #define NET_BOOT_UDPFS 2
 #define _STR_NEUTRINO_DEV_UNSUPPORTED 1
 #define _STR_NEUTRINO_TOML_SYNC_FAILED 2
 #define _STR_NEUTRINO_BD_NO_DEVICE_NUMBER 3
+#define _STR_NEUTRINO_NOT_FOUND 4
 
 static char gNeutrinoArgs[256];
 static int lastWarning;

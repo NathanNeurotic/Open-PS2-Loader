@@ -256,6 +256,19 @@ static int hddDvrEnsureDrivers(void)
     return 1;
 }
 
+/* Publishing under the GUI lock follows the existing HDL/VCD list contract.
+ * A refresh may free the prior array while the menu is reading its rows. */
+static void hddDvrPublish(hdd_dvr_iso_t *next, int count)
+{
+    hdd_dvr_iso_t *old;
+    guiLock();
+    old = hddDvrGames;
+    hddDvrGames = next;
+    hddDvrGameCount = count;
+    free(old);
+    guiUnlock();
+}
+
 static int hddDvrIsIsoName(const char *name)
 {
     size_t len = strlen(name);
@@ -301,6 +314,7 @@ static int hddDvrCollectDir(const char *dir, int media, hdd_dvr_iso_t *out, int 
     if (fd < 0)
         return -1; /* unreadable is not a proven-empty directory */
     while ((n = fileXioDread(fd, &entry)) > 0) {
+        entry.name[sizeof(entry.name) - 1] = '\0';
         if (!hddDvrIsIsoName(entry.name))
             continue;
         if (count >= HDD_DVR_MAX_ISOS) {
@@ -343,12 +357,8 @@ static void hddDvrScan(void)
     if (!hddDvrEnsureDrivers())
         return;
     probe = fileXioDopen("dvr_hdd0:");
-    if (probe < 0) {
-        free(hddDvrGames);
-        hddDvrGames = NULL;
-        hddDvrGameCount = 0;
-        return;
-    }
+    if (probe < 0)
+        return; // a transient DVRP error must not invalidate the last-good menu
     fileXioDclose(probe);
     candidate = calloc(HDD_DVR_MAX_ISOS, sizeof(*candidate));
     if (candidate == NULL)
@@ -381,9 +391,7 @@ static void hddDvrScan(void)
         }
     }
     if (available > 0) {
-        free(hddDvrGames);
-        hddDvrGames = candidate;
-        hddDvrGameCount = count;
+        hddDvrPublish(candidate, count);
         LOG("[DVR] read-only scan: %d ISO(s), %d/%d readable directories\n", count, available, scanned);
     } else
         free(candidate); /* unavailable/transient read failure: retain last-good list */
@@ -404,9 +412,7 @@ static hdd_dvr_iso_t *hddActiveDvr(int id)
 
 static void hddDvrCleanUp(void)
 {
-    free(hddDvrGames);
-    hddDvrGames = NULL;
-    hddDvrGameCount = 0;
+    hddDvrPublish(NULL, 0);
     for (int i = 0; i < 2; i++) {
         if (hddDvrMounted[i]) {
             fileXioUmount(i ? "dvr_pfs1:" : "dvr_pfs0:");
