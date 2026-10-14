@@ -1758,16 +1758,12 @@ struct UIItem diaAbout[] = {
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"darkladark - techwritescode (PSUManager) - ... and the anonymous ...", -1}}},
     {UI_BREAK},
 
-    {UI_BREAK},
-
     // Quality Assurance
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {NULL, _STR_QANDA}}},
     {UI_BREAK},
 
     {UI_SPACER},
-    // Fork hardware testers share the existing QA rows because this About dialog cannot scroll.
-    // Comma separators recover enough width for Vapor without adding a row; the first line remains
-    // exactly 70 characters, the same proven maximum as the previous hyphen-separated row.
+    // Keep QA names on short rows in the non-scrolling About dialog.
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"algol, Berion, Blade1984, El_Patas, EP, gledson999, jolek, lee4, Vapor", -1}}},
     {UI_BREAK},
 
@@ -1775,6 +1771,8 @@ struct UIItem diaAbout[] = {
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"LocalH, RandQalan, ShaolinAssassin, yoshi314, zero35, zackcage6", -1}}},
     {UI_BREAK},
 
+    {UI_SPACER},
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Akilluminati47, eliminator", -1}}},
     {UI_BREAK},
 
     // Network update
@@ -1785,24 +1783,13 @@ struct UIItem diaAbout[] = {
     {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"icyson55", -1}}},
     {UI_BREAK},
 
-    // Financial Support (RiptOPL fork)
-    {UI_BREAK},
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {NULL, _STR_FINANCIAL_SUPPORT}}},
-    {UI_BREAK},
-
-    {UI_SPACER},
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"Akilluminati47", -1}}},
-    {UI_BREAK},
-
     // Build Options
-    {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_BUILD_DETAILS}}},
     {UI_SPACER},
     {UI_LABEL, ABOUT_BUILD_DETAILS, 1, 1, -1, 0, 0, {.label = {NULL, -1}}},
     {UI_BREAK},
 
     // Support details
-    {UI_BREAK},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {NULL, _STR_FORUM_DETAILS}}},
     {UI_SPACER},
     {UI_LABEL, 0, 1, 1, -1, 0, 0, {.label = {"psx-place.com", -1}}},
