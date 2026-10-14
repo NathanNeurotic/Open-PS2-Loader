@@ -1225,6 +1225,8 @@ static const char *getDeviceName(const char *driver)
         return "ata";
     if (!strcmp(driver, "apa"))
         return "apa";
+    if (!strcmp(driver, "dvr"))
+        return "dvr";
     if (!strcmp(driver, "mmce"))
         return "mmce";
     if (!strcmp(driver, "udp"))
@@ -1381,7 +1383,7 @@ static int neutrinoEffectiveBsdfs(const char *deviceName, int neutrinoBsdfs, con
             p = end;
         }
     }
-    if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs"))
+    if (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "dvr"))
         return 0;
     if (typed)
         return value;
@@ -1863,6 +1865,17 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
         return -1;
     }
 
+    // The DVR backend is a filesystem (dvr_pfsN:), never a block-device
+    // filesystem override. It must use the PSX-mode reset in pcm720's bsd-dvr
+    // branch: callers must not inject -qb, which skips that transition.
+    if (!strcmp(deviceName, "dvr")) {
+        if (neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") || neutrinoArgHasActiveFlag(extraArgs, "-qb")) {
+            LOG("[NEUTRINO] DVR: -qb would bypass the required PSX-mode transition\n");
+            guiWarning(_l(_STR_NEUTRINO_DEV_UNSUPPORTED), 6);
+            return -1;
+        }
+    }
+
     // Network transports: sync the bsd toml ip= NOW, while the toml's device is mounted and a
     // failure can still be reported (see sysSyncNeutrinoUdpfsToml for the abort conditions).
     if (!strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") || !strcmp(deviceName, "udpbd")) {
@@ -1946,7 +1959,7 @@ static int sysRunNeutrinoLaunch(const char *driver, const char *path, const char
     // per-game Neutrino args still passes through the tokenizer untouched.
     if (EnablePS2Logo &&
         (!strcmp(deviceName, "mmce") || !strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") ||
-         !strcmp(deviceName, "udpbd"))) {
+         !strcmp(deviceName, "udpbd") || !strcmp(deviceName, "dvr"))) {
         LOG("[NEUTRINO] -logo suppressed on %s (issue #56 class: PS2LOGO pass reboots the IOP)\n", deviceName);
         EnablePS2Logo = 0;
     }
