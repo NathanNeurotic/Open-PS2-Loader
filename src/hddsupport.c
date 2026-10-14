@@ -28,8 +28,8 @@
 
 #include <hdd-ioctl.h>
 #include <delaythread.h> // DelayThread for the post-ATAD settle in hddLoadModules
-#include <speedregs.h> // SPD_CAPS_DVR: hardware-gated DVRP initialization
-#include <libcdvd.h>   // sceCdNoticeGameStart on PSX DESR
+#include <speedregs.h>
+#include <libcdvd.h>
 
 #define OPL_HDD_MODE_PS2LOGO_OFFSET 0x17F8
 
