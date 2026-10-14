@@ -136,4 +136,32 @@ extern unsigned char sync_flag;
 extern unsigned char cdvdman_cdinited;
 extern u32 mediaLsnCount;
 
+#ifdef INGAMEDIAG
+// In-game freeze report (INGAMEDIAG flavour): see ../common/freeze_diag.h.
+#include "freeze_diag.h"
+
+extern freeze_diag_iop_t g_freeze_diag;
+
+// VMC sector I/O exported to MCEMU. A call that never returns stays marked busy in the report.
+static inline void freeze_diag_vmc_begin(unsigned int op, unsigned int lba)
+{
+    iop_sys_clock_t now;
+
+    GetSystemTime(&now);
+    g_freeze_diag.vmc_ops++;
+    g_freeze_diag.vmc_last_op = op;
+    g_freeze_diag.vmc_last_lba = lba;
+    g_freeze_diag.vmc_busy_op = op;
+    g_freeze_diag.vmc_busy_lba = lba;
+    g_freeze_diag.vmc_busy_start_hi = now.hi;
+    g_freeze_diag.vmc_busy_start_lo = now.lo;
+    g_freeze_diag.vmc_busy = 1;
+}
+
+static inline void freeze_diag_vmc_end(void)
+{
+    g_freeze_diag.vmc_busy = 0;
+}
+#endif
+
 #endif

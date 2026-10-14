@@ -5,6 +5,9 @@
 */
 
 #include "cdvdfsv-internal.h"
+#ifdef INGAMEDIAG
+#include "freeze_diag.h"
+#endif
 
 #define MODNAME "cdvd_ee_driver"
 IRX_ID(MODNAME, 2, 2);
@@ -222,6 +225,18 @@ static void *cbrpc_S596(int fno, void *buf, int size)
 static void *cbrpc_shutdown(int fno, void *buf, int size)
 {
     int value;
+
+#ifdef INGAMEDIAG
+    // In-game freeze report (INGAMEDIAG flavour): answer with CDVDMAN's record. The EE asks
+    // before it resets the IOP; the SIF sends the caller's receive size from the returned address.
+    if (fno == FREEZE_DIAG_RPC_FNO) {
+        static freeze_diag_iop_t none __attribute__((aligned(16))); // all zero: the EE sees a bad record
+        int record = 0;
+
+        sceCdSC(CDSC_GET_FREEZE_DIAG, &record);
+        return record != 0 ? (void *)record : (void *)&none;
+    }
+#endif
 
     if (fno == 1) {
         //Terminate operations.

@@ -87,6 +87,11 @@ DECI2_DEBUG ?= 0
 # release ELF can be handed to a tester and still report WHERE it wedged. The strings it emits are
 # untranslated developer text by design -- that is why they must never be in a plain release.
 OPLDIAG ?= 0
+# In-game freeze report (the FREEZEDIAG flavour). When a game freezes, the IGR combo saves what the
+# console was doing -- the game's threads, the IOP's disc and VMC activity -- to mc0:/RIPTFRZ.TXT
+# before exiting. Reaches ee_core, CDVDMAN and CDVDFSV only; the menu is unchanged. Not combined
+# with RETROACHIEVEMENTS: RA builds run IGR from VBLANK, which this does not hook.
+INGAMEDIAG ?= 0
 #How the TTY will reach developer: 'UDP', 'PPC_UART'.
 TTY_APPROACH ?= UDP
 
@@ -300,6 +305,15 @@ endif
 
 ifeq ($(OPLDIAG),1)
   EE_CFLAGS += -D__OPLDIAG
+endif
+
+ifeq ($(INGAMEDIAG),1)
+  ifeq ($(RETROACHIEVEMENTS),1)
+    $(error INGAMEDIAG=1 is not supported with RETROACHIEVEMENTS=1)
+  endif
+  # The build string goes into the report itself, so a report always names the ELF it came from.
+  EECORE_EXTRA_FLAGS += INGAMEDIAG=1 FREEZEDIAG_BUILD=$(OPL_VERSION)
+  CDVDMAN_DIAG_FLAGS = INGAMEDIAG=1
 endif
 
 ifeq ($(DEBUG),1)
@@ -625,25 +639,25 @@ CDVDMAN_RA_FLAGS = USE_DEV9=1
 endif
 
 modules/iopcore/cdvdman/bdm_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_RA_FLAGS) USE_BDM=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) $(CDVDMAN_RA_FLAGS) USE_BDM=1 -C $< all
 
 $(EE_ASM_DIR)bdm_cdvdman.c: modules/iopcore/cdvdman/bdm_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/iopcore/cdvdman/bdm_ata_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_BDM_ATA=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_BDM_ATA=1 -C $< all
 
 $(EE_ASM_DIR)bdm_ata_cdvdman.c: modules/iopcore/cdvdman/bdm_ata_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ bdm_ata_cdvdman_irx
 
 modules/iopcore/cdvdman/mmce_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_RA_FLAGS) USE_MMCE=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) $(CDVDMAN_RA_FLAGS) USE_MMCE=1 -C $< all
 
 $(EE_ASM_DIR)mmce_cdvdman.c: modules/iopcore/cdvdman/mmce_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/iopcore/cdvdman/smb_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_SMB=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_SMB=1 -C $< all
 
 $(EE_ASM_DIR)smb_cdvdman.c: modules/iopcore/cdvdman/smb_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
@@ -654,25 +668,25 @@ $(EE_ASM_DIR)smb_cdvdman.c: modules/iopcore/cdvdman/smb_cdvdman.irx | $(EE_ASM_D
 http-submake:
 
 modules/iopcore/cdvdman/http_cdvdman.irx: modules/iopcore/cdvdman http-submake
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_HTTP=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_HTTP=1 -C $< all
 
 $(EE_ASM_DIR)http_cdvdman.c: modules/iopcore/cdvdman/http_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/iopcore/cdvdman/hdd_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_HDD=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_HDD=1 -C $< all
 
 $(EE_ASM_DIR)hdd_cdvdman.c: modules/iopcore/cdvdman/hdd_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/iopcore/cdvdman/hdd_hdpro_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) USE_HDPRO=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DEBUG_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_HDPRO=1 -C $< all
 
 $(EE_ASM_DIR)hdd_hdpro_cdvdman.c: modules/iopcore/cdvdman/hdd_hdpro_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
 
 modules/iopcore/cdvdfsv/cdvdfsv.irx: modules/iopcore/cdvdfsv
-	$(MAKE) -C $<
+	$(MAKE) $(CDVDMAN_DIAG_FLAGS) -C $<
 
 $(EE_ASM_DIR)cdvdfsv.c: modules/iopcore/cdvdfsv/cdvdfsv.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
