@@ -9,6 +9,9 @@
   Nothing here exists in other builds: the whole file is only compiled with INGAMEDIAG=1.
 */
 
+// The report goes through the IOP's ioman (fio), as IGS does: ee_core has no newlib file layer.
+#define NEWLIB_PORT_AWARE
+
 #include "ee_core.h"
 #include "coreconfig.h"
 #include "iopmgr.h"
