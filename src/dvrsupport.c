@@ -26,11 +26,12 @@
 #include <strings.h>
 #include <unistd.h>
 
-#define DVR_GAME_LIMIT 256
+#define DVR_GAME_LIMIT         256
 #define DVR_PARTITION_NAME_MAX 32
-#define DVR_FILENAME_MAX 161
+#define DVR_FILENAME_MAX       161
 
-typedef struct {
+typedef struct
+{
     base_game_info_t game;
     char imagePath[256];
 } dvr_game_t;
@@ -69,8 +70,7 @@ static int dvrValidPartition(const char *name)
         return 0;
     for (i = 0; name[i]; i++) {
         char c = name[i];
-        if (i >= DVR_PARTITION_NAME_MAX || c == '/' || c == '\\' || c == ':'
-            || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
+        if (i >= DVR_PARTITION_NAME_MAX || c == '/' || c == '\\' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
             return 0;
     }
     return i > 0 && strcmp(name, ".") != 0 && strcmp(name, "..") != 0;
@@ -275,8 +275,7 @@ static int dvrUpdate(item_list_t *list)
         return dvrGameCount; /* preserve last known list on temporary failure */
 
     root = dvrScanDirectory("dvr_pfs0:/", &next, &count);
-    if (root != 0 || dvrScanDirectory("dvr_pfs0:/DVD/", &next, &count) == -2
-        || dvrScanDirectory("dvr_pfs0:/CD/", &next, &count) == -2) {
+    if (root != 0 || dvrScanDirectory("dvr_pfs0:/DVD/", &next, &count) == -2 || dvrScanDirectory("dvr_pfs0:/CD/", &next, &count) == -2) {
         free(next);
         LOG("[DVR] refresh incomplete; retaining %d previously found games\n", dvrGameCount);
         return dvrGameCount;
@@ -288,7 +287,11 @@ static int dvrUpdate(item_list_t *list)
     return count;
 }
 
-static int dvrCount(item_list_t *list) { (void)list; return dvrGameCount; }
+static int dvrCount(item_list_t *list)
+{
+    (void)list;
+    return dvrGameCount;
+}
 static void *dvrGet(item_list_t *list, int id)
 {
     (void)list;
@@ -299,15 +302,32 @@ static char *dvrName(item_list_t *list, int id)
     base_game_info_t *g = dvrGet(list, id);
     return g ? g->name : NULL;
 }
-static int dvrNameLength(item_list_t *list, int id) { (void)list; (void)id; return ISO_GAME_NAME_MAX + 1; }
+static int dvrNameLength(item_list_t *list, int id)
+{
+    (void)list;
+    (void)id;
+    return ISO_GAME_NAME_MAX + 1;
+}
 static char *dvrStartup(item_list_t *list, int id)
 {
     base_game_info_t *g = dvrGet(list, id);
     return g ? g->startup : NULL;
 }
-static char *dvrGetPrefix(item_list_t *list) { (void)list; return dvrPrefix; }
-static int dvrText(item_list_t *list) { (void)list; return _STR_HDD_GAMES; }
-static int dvrIcon(item_list_t *list) { (void)list; return HDD_ICON; }
+static char *dvrGetPrefix(item_list_t *list)
+{
+    (void)list;
+    return dvrPrefix;
+}
+static int dvrText(item_list_t *list)
+{
+    (void)list;
+    return _STR_HDD_GAMES;
+}
+static int dvrIcon(item_list_t *list)
+{
+    (void)list;
+    return HDD_ICON;
+}
 
 static config_set_t *dvrGetConfig(item_list_t *list, int id)
 {
@@ -337,10 +357,7 @@ static int dvrNeutrinoComplete(const char *elf)
 {
     const char *sep;
     char file[320];
-    static const char *needed[] = {
-        "config/bsd-dvr.toml", "modules/dvrdrv.irx",
-        "modules/dvrfile.irx", "modules/dvrfile_fhi.irx"
-    };
+    static const char *needed[] = {"config/bsd-dvr.toml", "modules/dvrdrv.irx", "modules/dvrfile.irx", "modules/dvrfile_fhi.irx"};
     unsigned int i;
     if (!elf || !(sep = strrchr(elf, '/')))
         return 0;
@@ -407,7 +424,9 @@ static void dvrClean(item_list_t *list, int exception)
 static void dvrShutdown(item_list_t *list) { dvrClean(list, 0); }
 static int dvrVmc(item_list_t *list, char *name, int createSize)
 {
-    (void)list; (void)name; (void)createSize;
+    (void)list;
+    (void)name;
+    (void)createSize;
     return -1; /* No DVR VMC support is claimed. */
 }
 item_list_t *dvrGetObject(int initOnly)
@@ -422,5 +441,4 @@ static item_list_t dvrGameList = {
     MENU_UPD_DELAY_NOUPDATE, NULL, NULL, &dvrText, &dvrGetPrefix, &dvrInit,
     &dvrNeedsUpdate, &dvrUpdate, &dvrCount, &dvrGet, &dvrName, &dvrNameLength,
     &dvrStartup, NULL, NULL, &dvrLaunch, &dvrGetConfig, &dvrGetImage,
-    &dvrClean, &dvrShutdown, &dvrVmc, &dvrIcon
-};
+    &dvrClean, &dvrShutdown, &dvrVmc, &dvrIcon};

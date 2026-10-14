@@ -24,7 +24,7 @@ enum IO_MODES {
     UDPFS_MODE, // reserved (item 6); appended last so existing mode values don't shift
     HTTP_MODE,  // games.csv catalog + byte-range ISO reads; appended for the same reason
 #ifdef DVRP
-    DVR_MODE,   // experimental DESR DVR PFS source; appended, existing mode indices unchanged
+    DVR_MODE,  // experimental DESR DVR PFS source; appended, existing mode indices unchanged
 #endif
 
     MODE_COUNT
