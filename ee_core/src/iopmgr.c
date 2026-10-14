@@ -17,6 +17,9 @@
 #include "syshook.h"
 #include "coreconfig.h"
 #include "reset_arg_bounds.h"
+#ifdef INGAMEDIAG
+#include "freeze_diag_core.h"
+#endif
 #ifdef RETROACHIEVEMENTS
 #include "ra.h"
 #include "ra_overlay.h"
@@ -381,6 +384,10 @@ reset_finished:
     // Mode 3 unhooks after the second completed OPL reset, not a failed attempt.
     if (!reset_ok)
         iop_reboot_count--;
+#ifdef INGAMEDIAG
+    if (!reset_ok)
+        g_freeze_diag_reset_failures++;
+#endif
 #ifdef RETROACHIEVEMENTS
     if (!reset_ok)
         ra_snap_iop = 0;

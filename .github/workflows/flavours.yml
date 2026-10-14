@@ -73,6 +73,12 @@ jobs:
         run: python3 .github/scripts/test_pad_repeat_clock.py
       - name: Check IGR polls without a VBLANK handler, except in RetroAchievements builds
         run: python3 .github/scripts/test_igr_polling.py
+      - name: Check the in-game freeze report stays in its flavour and cannot hang IGR
+        run: python3 .github/scripts/test_ingame_freeze_diag.py
+      - name: Check the in-game freeze report text
+        run: |
+          cc -std=gnu99 -Wall -Wextra -Werror -Iee_core/include ee_core/tests/test_freeze_diag_format.c ee_core/src/freeze_diag_format.c -o /tmp/test_freeze_diag_format
+          /tmp/test_freeze_diag_format
       - name: Check IOP reset command bounds and payload offsets
         run: python3 .github/scripts/test_reset_arg_bounds.py
       - name: Check IOP reset failure cleanup and caller gates
@@ -368,6 +374,18 @@ jobs:
             digest: sha256:8fba50ecc2229acd7f8da63d34302f12939b7d4fa6848dda1e6a0ce083321a11
             pinned: "yes (2026-08-13)"
             opldiag: "1"
+          # --- FREEZE REPORT: OFFICIALROLLING (the toolchain the release app uses) built with
+          # INGAMEDIAG=1. When a game freezes, the IGR combo (L1+L2+R1+R2+Start+Select) saves what
+          # the console was doing -- the game's threads, the IOP's disc and VMC activity -- to
+          # mc0:/RIPTFRZ.TXT, then exits as usual. If the combo does nothing, the EE itself is stuck.
+          # Hand it out when a tester reports in-game freezes. Compatibility Mode 6 turns IGR off,
+          # and with it the report.
+          - flavour: OFFICIALROLLING-FREEZEDIAG
+            image: ghcr.io/ps2homebrew/ps2homebrew:main
+            digest: ""
+            pinned: "no (tracks ps2homebrew:main)"
+            opldiag: "0"
+            ingamediag: "1"
           # RA follows the official rolling toolchain used by the release app.
           - flavour: OFFICIALROLLING-RA
             image: ghcr.io/ps2homebrew/ps2homebrew:main
@@ -403,7 +421,22 @@ jobs:
         run: sh .github/scripts/install_coherent_mmce.sh
 
       - name: Compile -> make clean release (${{ matrix.flavour }})
-        run: make --trace clean && make --trace LOCALVERSION=${{ matrix.flavour }} OPLDIAG=${{ matrix.opldiag }} RETROACHIEVEMENTS=${{ matrix.ra || '0' }} release
+        run: make --trace clean && make --trace LOCALVERSION=${{ matrix.flavour }} OPLDIAG=${{ matrix.opldiag }} RETROACHIEVEMENTS=${{ matrix.ra || '0' }} INGAMEDIAG=${{ matrix.ingamediag || '0' }} release
+
+      - name: Verify the freeze report exists only in its flavour
+        env:
+          INGAMEDIAG_BUILD: ${{ matrix.ingamediag || '0' }}
+        run: |
+          sed -n -E 's/^[[:space:]]+0x[0-9a-fA-F]+[[:space:]]+([A-Za-z0-9_]+)[[:space:]]*$/ \1/p' ee_core/ee_core.map > core-symbols.txt
+          if [ "$INGAMEDIAG_BUILD" = 1 ]; then
+            grep -q ' FreezeDiag_Begin$' core-symbols.txt
+            grep -q ' FreezeDiag_Write$' core-symbols.txt
+            test -s modules/iopcore/freezediag/freezediag.irx
+            LC_ALL=C grep -aq 'RIPTFRZ.TXT' modules/iopcore/freezediag/freezediag.irx
+          elif grep -E ' (FreezeDiag_[A-Za-z0-9_]*|freeze_diag_[A-Za-z0-9_]*|g_freeze_diag[A-Za-z0-9_]*)$' core-symbols.txt || LC_ALL=C grep -aq 'RIPTFRZ' ee_core/ee_core.elf; then
+            echo 'freeze report leaked into a build without INGAMEDIAG' >&2
+            exit 1
+          fi
 
       - name: Verify RA isolation in linked menu and game core
         env:
@@ -451,6 +484,7 @@ jobs:
             echo "pinned:       ${{ matrix.pinned }}"
             echo "retroachievements: ${{ matrix.ra || '0' }}"
             echo "opldiag:      ${{ matrix.opldiag }}"
+            echo "ingamediag:   ${{ matrix.ingamediag || '0' }}"
             echo "image:        ${{ matrix.image }}"
             echo "digest:       ${{ matrix.digest }}"
             echo "built (UTC):  $(date -u '+%Y-%m-%d %H:%M:%S')"

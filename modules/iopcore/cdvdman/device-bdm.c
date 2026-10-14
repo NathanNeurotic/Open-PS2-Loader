@@ -233,7 +233,13 @@ void bdm_readSector(u64 lba, unsigned short int nsectors, unsigned char *buffer)
     DPRINTF("%s\n", __func__);
 
     WaitSema(bdm_io_sema);
+#ifdef INGAMEDIAG
+    freeze_diag_vmc_begin(FREEZE_DIAG_VMC_READ, (unsigned int)lba);
+#endif
     g_bd->read(g_bd, lba, buffer, nsectors);
+#ifdef INGAMEDIAG
+    freeze_diag_vmc_end();
+#endif
     SignalSema(bdm_io_sema);
 }
 
@@ -242,6 +248,12 @@ void bdm_writeSector(u64 lba, unsigned short int nsectors, const unsigned char *
     DPRINTF("%s\n", __func__);
 
     WaitSema(bdm_io_sema);
+#ifdef INGAMEDIAG
+    freeze_diag_vmc_begin(FREEZE_DIAG_VMC_WRITE, (unsigned int)lba);
+#endif
     g_bd->write(g_bd, lba, buffer, nsectors);
+#ifdef INGAMEDIAG
+    freeze_diag_vmc_end();
+#endif
     SignalSema(bdm_io_sema);
 }

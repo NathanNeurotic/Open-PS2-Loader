@@ -1,0 +1,10 @@
+ioman_IMPORTS_start
+I_open
+I_close
+I_write
+ioman_IMPORTS_end
+
+sysmem_IMPORTS_start
+I_AllocSysMemory
+I_FreeSysMemory
+sysmem_IMPORTS_end

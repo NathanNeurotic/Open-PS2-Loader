@@ -28,6 +28,46 @@ extern struct irx_export_table _exp_dev9;
 int DeviceReadSectorsCached(u64 sector, void *buffer, unsigned int count);
 int (*DeviceReadSectorsPtr)(u64 sector, void *buffer, unsigned int count) = &DeviceReadSectors;
 
+#ifdef INGAMEDIAG
+// In-game freeze report (INGAMEDIAG flavour): handed to the EE through sceCdSC(CDSC_GET_FREEZE_DIAG).
+freeze_diag_iop_t g_freeze_diag __attribute__((aligned(16))) = {FREEZE_DIAG_MAGIC, FREEZE_DIAG_VERSION};
+
+static void freeze_diag_read_begin(u32 lsn, unsigned int sectors)
+{
+    iop_sys_clock_t now;
+
+    GetSystemTime(&now);
+    g_freeze_diag.busy_lsn = lsn;
+    g_freeze_diag.busy_sectors = sectors;
+    g_freeze_diag.busy_start_hi = now.hi;
+    g_freeze_diag.busy_start_lo = now.lo;
+    g_freeze_diag.busy = 1;
+}
+
+static void freeze_diag_read_end(int err)
+{
+    iop_sys_clock_t now;
+    u32 ticks_hi, ticks_lo, ms;
+
+    GetSystemTime(&now);
+    g_freeze_diag.busy = 0;
+
+    // 64-bit difference by hand, so the IOP build needs no 64-bit division.
+    ticks_lo = now.lo - g_freeze_diag.busy_start_lo;
+    ticks_hi = now.hi - g_freeze_diag.busy_start_hi - (now.lo < g_freeze_diag.busy_start_lo ? 1 : 0);
+    ms = ticks_hi != 0 ? 0xFFFFFFFF : ticks_lo / FREEZE_DIAG_IOP_TICKS_PER_MS;
+    if (ms > g_freeze_diag.max_read_ms)
+        g_freeze_diag.max_read_ms = ms;
+    if (ms >= 1000)
+        g_freeze_diag.slow_reads++;
+
+    if (err != SCECdErNO) {
+        g_freeze_diag.read_errors++;
+        g_freeze_diag.last_err = err;
+    }
+}
+#endif
+
 // internal functions prototypes
 static void oplShutdown(int poff);
 static int cdvdman_writeSCmd(u8 cmd, const void *in, u16 in_size, void *out, u16 out_size);
@@ -263,12 +303,21 @@ static int cdvdman_read_sectors(u32 lsn, unsigned int sectors, void *buf)
 
     DPRINTF("cdvdman_read lsn=%lu sectors=%u buf=%p\n", lsn, sectors, buf);
 
+#ifdef INGAMEDIAG
+    g_freeze_diag.reads++;
+    g_freeze_diag.last_lsn = lsn;
+    g_freeze_diag.last_sectors = sectors;
+#endif
+
     if (mediaLsnCount) {
 
         // If lsn to read is already bigger error already.
         if (lsn >= mediaLsnCount) {
             DPRINTF("cdvdman_read eom lsn=%d sectors=%d leftsectors=%d MaxLsn=%d \n", lsn, sectors, mediaLsnCount - lsn, mediaLsnCount);
             cdvdman_stat.err = SCECdErIPI;
+#ifdef INGAMEDIAG
+            g_freeze_diag.eom_hits++;
+#endif
             return 1;
         }
 
@@ -276,6 +325,9 @@ static int cdvdman_read_sectors(u32 lsn, unsigned int sectors, void *buf)
         if ((lsn + sectors) > mediaLsnCount) {
             DPRINTF("cdvdman_read eom lsn=%d sectors=%d leftsectors=%d MaxLsn=%d \n", lsn, sectors, mediaLsnCount - lsn, mediaLsnCount);
             endOfMedia = 1;
+#ifdef INGAMEDIAG
+            g_freeze_diag.eom_hits++;
+#endif
             // Limit how much sectors we can read.
             sectors = mediaLsnCount - lsn;
         }
@@ -307,7 +359,13 @@ static int cdvdman_read_sectors(u32 lsn, unsigned int sectors, void *buf)
             SetAlarm(&TargetTime, &cdvdemu_read_end_cb, NULL);
         }
 
+#ifdef INGAMEDIAG
+        freeze_diag_read_begin(lsn, SectorsToRead);
+#endif
         cdvdman_stat.err = DeviceReadSectorsPtr(lsn, ptr, SectorsToRead);
+#ifdef INGAMEDIAG
+        freeze_diag_read_end(cdvdman_stat.err);
+#endif
         if (cdvdman_stat.err != SCECdErNO) {
             if (cdvdman_settings.common.flags & IOPCORE_COMPAT_ACCU_READS)
                 CancelAlarm(&cdvdemu_read_end_cb, NULL);
@@ -603,6 +661,19 @@ int sceCdSC(int code, int *param)
             oplShutdown(*param);
             result = 1;
             break;
+#ifdef INGAMEDIAG
+        case CDSC_GET_FREEZE_DIAG: {
+            iop_sys_clock_t now;
+
+            GetSystemTime(&now);
+            g_freeze_diag.now_hi = now.hi;
+            g_freeze_diag.now_lo = now.lo;
+            g_freeze_diag.media_lsn_count = mediaLsnCount;
+            *param = (int)&g_freeze_diag;
+            result = 1;
+            break;
+        }
+#endif
         default:
             DPRINTF("sceCdSC unknown, code=0x%X param=0x%X \n", code, *param);
             result = 1; // dummy result
