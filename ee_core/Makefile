@@ -64,6 +64,13 @@ EE_OBJS += ra.o ra_overlay.o ra_pulse.o
 EE_CFLAGS += -DRETROACHIEVEMENTS
 endif
 
+# In-game freeze report, forwarded from the top Makefile's INGAMEDIAG=1 (the FREEZEDIAG flavour).
+# Run make clean when switching it: padhook.o and iopmgr.o change with it.
+ifeq ($(INGAMEDIAG),1)
+EE_OBJS += freeze_diag.o
+EE_CFLAGS += -DINGAMEDIAG
+endif
+
 EE_OBJS := $(EE_OBJS:%=$(EE_OBJS_DIR)%)
 
 EE_LDFLAGS = -nostartfiles -nostdlib -Tlinkfile -L$(PS2SDK)/ee/lib -s -Wl,-Map,$(MAPFILE)

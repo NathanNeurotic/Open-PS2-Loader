@@ -72,6 +72,11 @@ endif
 
 IOP_INCS += -I../common
 
+# In-game freeze report (top Makefile INGAMEDIAG=1, the FREEZEDIAG flavour). Run make clean when switching it.
+ifeq ($(INGAMEDIAG),1)
+IOP_CFLAGS += -DINGAMEDIAG
+endif
+
 ifeq ($(IOPCORE_DEBUG),1)
 IOP_CFLAGS += -D__IOPCORE_DEBUG
 endif

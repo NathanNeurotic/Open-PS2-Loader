@@ -113,6 +113,9 @@ IMPORT_BIN2C(ps2ip_irx);
 IMPORT_BIN2C(ps2link_irx);
 
 IMPORT_BIN2C(resetspu_irx);
+#ifdef INGAMEDIAG
+IMPORT_BIN2C(freezediag_irx);
+#endif
 
 IMPORT_BIN2C(sio2man_irx);
 

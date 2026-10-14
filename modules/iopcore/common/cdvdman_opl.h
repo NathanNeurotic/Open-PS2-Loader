@@ -73,5 +73,6 @@ enum CDIOC_CODE {
 #define CDSC_GET_VERSION      0xFFFFFFF7 //Get CDVDMAN version.
 #define CDSC_SET_ERROR        0xFFFFFFFE //Used by CDVDFSV and CDVDSTM to set the error code (Typically READCF*).
 #define CDSC_OPL_SHUTDOWN     0x00000001 //Shutdown OPL
+#define CDSC_GET_FREEZE_DIAG  0xFFFFFFEF //INGAMEDIAG flavour only: get the in-game freeze record (freeze_diag.h).
 
 #endif

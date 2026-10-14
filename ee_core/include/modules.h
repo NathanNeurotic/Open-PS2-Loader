@@ -52,6 +52,11 @@ enum OPL_MODULE_ID {
     OPL_MODULE_ID_SMSUTILS,
 #endif
 
+#ifdef INGAMEDIAG
+    // In-game freeze report writer (INGAMEDIAG flavour). Appended for the same reason as above.
+    OPL_MODULE_ID_FREEZEDIAG,
+#endif
+
     OPL_MODULE_ID_COUNT
 };
 

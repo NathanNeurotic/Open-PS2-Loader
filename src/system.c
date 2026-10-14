@@ -868,6 +868,11 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
     irxptr_tab[modcount++].ptr = (void *)&imgdrv_irx;
     irxptr_tab[modcount].info = size_resetspu_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_RESETSPU);
     irxptr_tab[modcount++].ptr = (void *)&resetspu_irx;
+#ifdef INGAMEDIAG
+    // In-game freeze report writer, loaded by IGR after a freeze (INGAMEDIAG flavour).
+    irxptr_tab[modcount].info = size_freezediag_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_FREEZEDIAG);
+    irxptr_tab[modcount++].ptr = (void *)&freezediag_irx;
+#endif
 
 #ifdef PADEMU
 #define PADEMU_ARG || gEnablePadEmu
