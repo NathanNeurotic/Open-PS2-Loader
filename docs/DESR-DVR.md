@@ -19,11 +19,12 @@ already available DVRP filesystem. It probes `dvr_hdd0:` and scans the roots,
 DESR data partitions *read-only* if the DVR namespace exists and they are not
 already mounted. It does not create, rename, format or delete DVR content.
 
-**This is NOT full out-of-box DESR support yet.** RiptOPL currently does not
-bootstrap the DVRP modules into the GUI after its normal IOP reset / PSX-mode
-switch. Consequently a normal installation may show no DVR entries even though
-the disk holds ISOs. Driver initialization and hardware validation are still
-required before this capability can be called supported.
+**Hardware validation is still required.** RiptOPL checks the DESR DVR capability
+bit (SPD_CAPS_DVR) and, only on that hardware, loads the SDK DVRP driver modules
+after the regular DEV9/ATA stack. This follows the established wLaunchELF module
+initialization order and never flashes firmware. The actual module/partition
+behavior is not verified on a real DESR yet; ISO discovery and launching may
+still fail pending DESR testing. Normal PS2 hardware never starts those drivers.
 
 Only the external pcm720 `bsd-dvr` Neutrino implementation can launch these ISO
 rows. The regular bundled Neutrino typically does not contain DVR modules.
@@ -39,14 +40,17 @@ memory card, and DVR-side write support are **not** claimed.
 
 ### Next hardware-dependent steps
 
-1. Detect DESR hardware and explicitly initialize the DVRP drivers in PSX mode
-   without disrupting the already active GUI/APA clients.
-2. Confirm how `dvr_hdd0:` and the `__xcontents` / `__xdata` mount points are
-   exposed on DESR-5000 and DESR-7000 families and never mount over a user's data.
-3. Validate actual ISO enumeration, Neutrino module availability and the PSX
-   transition with a DESR tester.
+1. Confirm DVR capability and SDK DVR driver initialization on actual DESR-5000
+   and DESR-7000 hardware, including cold boots, repeat boots, and clean exit.
+2. Confirm `dvr_hdd0:` partition labels and read-only `dvr_pfsN:` mounts for
+   both hardware families. No writes, deletions, format or firmware changes.
+3. Verify the external pcm720 `bsd-dvr` Neutrino handoff and PSX-mode transition.
 4. Confirm game-ID extraction from `SYSTEM.CNF` for non-ID ISO filenames and
-   provide any additional DVR-only settings if the hardware tests demand them.
+   provide any additional DVR-only settings if hardware demands them.
 
 **Firmware modification is not a prerequisite.** Do not flash DVRPwned as part
 of testing this RiptOPL integration.
+
+The GUI's bundled initialization modules come from PS2SDK (`dvrdrv.irx` and
+`dvrfile.irx`) and are independent of pcm720's custom Neutrino modules.
+Credit: ps2dev / PS2SDK, wLaunchELF DVR support, pcm720's bsd-dvr branch.

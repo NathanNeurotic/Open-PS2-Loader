@@ -28,6 +28,8 @@
 
 #include <hdd-ioctl.h>
 #include <delaythread.h> // DelayThread for the post-ATAD settle in hddLoadModules
+#include <speedregs.h>  // SPD_CAPS_DVR: hardware-gated DVRP initialization
+#include <libcdvd.h>    // sceCdNoticeGameStart on PSX DESR
 
 #define OPL_HDD_MODE_PS2LOGO_OFFSET 0x17F8
 
@@ -210,6 +212,49 @@ typedef struct
 static hdd_dvr_iso_t *hddDvrGames = NULL;
 static int hddDvrGameCount = 0;
 static unsigned char hddDvrMounted[2] = {0, 0};
+static unsigned char hddDvrDriverTried = 0;
+static unsigned char hddDvrDriverReady = 0;
+
+/* Read the hardware capability bit, not the console name or a guessed ROMVER.
+ * The DVRP exists only on Sony PSX DESR hardware; normal PS2 HDDs skip this
+ * branch without loading a module, probing a partition or changing IOP state.
+ */
+static int hddDvrHardwarePresent(void)
+{
+    USE_SPD_REGS;
+    return (SPD_REG16(SPD_R_REV_3) & SPD_CAPS_DVR) != 0;
+}
+
+/* Same safe module ordering used by wLaunchELF's load_ps2dvr():
+ * existing DEV9/ATAD stack, then dvrdrv, then dvrfile. The bundled SDK
+ * dvrfile is used by the GUI only to enumerate files; external Neutrino
+ * carries pcm720's modified dvrfile plus dvrfile_fhi for the actual game.
+ * No DVRP firmware flash or modification is involved.
+ */
+static int hddDvrEnsureDrivers(void)
+{
+    if (hddDvrDriverReady)
+        return 1;
+    if (hddDvrDriverTried || !hddDvrHardwarePresent())
+        return 0;
+    hddDvrDriverTried = 1;
+    if (!hddLoadModulesReady()) {
+        LOG("[DVR] ATA/DEV9 modules unavailable; DVR namespace not probed\n");
+        return 0;
+    }
+    if (sysLoadModuleBuffer(&dvrdrv_irx, size_dvrdrv_irx, 0, NULL) != 0) {
+        LOG("[DVR] dvrdrv.irx failed to start\n");
+        return 0;
+    }
+    if (sysLoadModuleBuffer(&dvrfile_irx, size_dvrfile_irx, 0, NULL) != 0) {
+        LOG("[DVR] dvrfile.irx failed to start\n");
+        return 0;
+    }
+    sceCdNoticeGameStart(0, NULL);
+    hddDvrDriverReady = 1;
+    LOG("[DVR] DVRP filesystem drivers initialized (DESR capability detected)\n");
+    return 1;
+}
 
 static int hddDvrIsIsoName(const char *name)
 {
@@ -294,7 +339,10 @@ static void hddDvrScan(void)
     static const char *const subdirs[] = {"/", "/DVD", "/CD"};
     hdd_dvr_iso_t *candidate;
     int scanned = 0, count = 0, available = 0;
-    int probe = fileXioDopen("dvr_hdd0:");
+    int probe;
+    if (!hddDvrEnsureDrivers())
+        return;
+    probe = fileXioDopen("dvr_hdd0:");
     if (probe < 0) {
         free(hddDvrGames);
         hddDvrGames = NULL;

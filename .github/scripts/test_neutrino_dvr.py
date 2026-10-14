@@ -12,6 +12,9 @@ assert 'sysNeutrinoPreflight("dvr"' in hdd
 assert 'sysLaunchNeutrino("dvr"' in hdd
 assert 'hddDvrScan();' in hdd
 assert 'dvrfile_fhi.irx' in system
+assert 'SPD_CAPS_DVR' in hdd
+assert 'sysLoadModuleBuffer(&dvrdrv_irx' in hdd
+assert 'sysLoadModuleBuffer(&dvrfile_irx' in hdd
 assert 'result == -2 || result == -3' in hdd
 assert 'dir[strlen(dir) - 1]' in hdd
 assert 'fileXioMount(roots[part], src, FIO_MT_RDONLY)' in hdd
