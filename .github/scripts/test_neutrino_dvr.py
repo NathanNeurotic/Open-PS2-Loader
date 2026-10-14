@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Source contract for the reserved DESR DVR Neutrino handoff.
 
-This is a host-side guard. It does not assert that RiptOPL can enumerate DVR games,
-nor substitute for an actual PSX DESR hardware test.
+This checks argument preflight only; game enumeration is covered by a separate
+static contract and still requires real DESR build/hardware validation.
 """
 from pathlib import Path
 
@@ -22,5 +22,5 @@ require('neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsdfs=")')
 require('!strcmp(deviceName, "dvr")')
 require('!strcmp(deviceName, "udpfs") || !strcmp(deviceName, "dvr")')
 require('bsd-dvr', d)
-require('not yet a game source', d)
-print("PASS: reserved DESR DVR Neutrino backend preflight; discovery is not yet integrated")
+require('game source (DVRP=1)', d)
+print("PASS: reserved DESR DVR Neutrino preflight (source inspection only)")

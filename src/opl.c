@@ -38,6 +38,9 @@
 #include "include/udpfssupport.h"
 #include "include/httpsupport.h"
 #include "include/hddsupport.h"
+#ifdef DVRP
+#include "include/dvrsupport.h"
+#endif
 #include "include/appsupport.h"
 #include "include/favsupport.h"
 #include "include/folderbrowse.h" // folderDepth -- favourites suppression inside subfolders
@@ -169,6 +172,10 @@ int gNetworkStartup;
 int gHDDSpindown;
 int gBDMStartMode;
 int gHDDStartMode;
+#ifdef DVRP
+int gDVRStartMode;
+char gDVRPartition[33];
+#endif
 int gETHStartMode;
 int gAPPStartMode;
 int gMMCEStartMode;
@@ -774,6 +781,12 @@ static void initMenuForListSupport(opl_io_module_t *mod)
     mod->menuItem.icon_id = mod->support->itemIconId(mod->support);
     mod->menuItem.text = NULL;
     mod->menuItem.text_id = mod->support->itemTextId(mod->support);
+#ifdef DVRP
+    if (mod->support->mode == DVR_MODE) {
+        mod->menuItem.text = "PSX DVR";
+        mod->menuItem.text_id = -1;
+    }
+#endif
     mod->menuItem.visible = 1;
 
     mod->menuItem.userdata = mod->support;
@@ -838,6 +851,10 @@ void initSupport(item_list_t *itemList, int mode, int force_reinit)
         startMode = gETHStartMode;
     else if (mode == HDD_MODE)
         startMode = gHDDStartMode;
+#ifdef DVRP
+    else if (mode == DVR_MODE)
+        startMode = dvrIsAvailable() ? gDVRStartMode : START_MODE_DISABLED;
+#endif
     else if (mode == APP_MODE)
         startMode = gAPPStartMode;
     else if (mode == FAV_MODE)
@@ -930,6 +947,9 @@ static void initAllSupport(int force_reinit)
     if (gBootInProgress)
         guiRenderGreetingScreen();
     initSupport(hddGetObject(0), HDD_MODE, force_reinit);
+#ifdef DVRP
+    initSupport(dvrGetObject(0), DVR_MODE, force_reinit);
+#endif
     initSupport(appGetObject(0), APP_MODE, force_reinit);
     initSupport(favGetObject(0), FAV_MODE, force_reinit);
 
@@ -1290,6 +1310,12 @@ static void updateMenuFromGameList(opl_io_module_t *mdl)
     // refresh device icon and text (for bdm)
     mdl->menuItem.icon_id = mdl->support->itemIconId(mdl->support);
     mdl->menuItem.text_id = mdl->support->itemTextId(mdl->support);
+#ifdef DVRP
+    if (mdl->support->mode == DVR_MODE) {
+        mdl->menuItem.text = "PSX DVR";
+        mdl->menuItem.text_id = -1;
+    }
+#endif
 
     // read the new game list
     struct gui_update_t *gup = NULL;
@@ -3377,6 +3403,12 @@ static void _loadConfig()
                 gAutoStartLastPlayed = 0;
             configGetInt(configOPL, CONFIG_OPL_BDM_MODE, &gBDMStartMode);
             configGetInt(configOPL, CONFIG_OPL_HDD_MODE, &gHDDStartMode);
+#ifdef DVRP
+            configGetInt(configOPL, CONFIG_OPL_DVR_MODE, &gDVRStartMode);
+            configGetStrCopy(configOPL, CONFIG_OPL_DVR_PARTITION, gDVRPartition, sizeof(gDVRPartition));
+            if (gDVRStartMode < START_MODE_DISABLED || gDVRStartMode > START_MODE_AUTO)
+                gDVRStartMode = START_MODE_DISABLED;
+#endif
             // resolveBootDirToMass runs before this read. A stored Disabled value must not undo
             // the AUTO fallback for an APA/PFS boot that already mounted and served OPL itself.
             if (gBootHomeApa && gHDDStartMode == START_MODE_DISABLED)
@@ -4003,6 +4035,10 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_AUTOSTART_LAST, gAutoStartLastPlayed);
         configSetInt(configOPL, CONFIG_OPL_BDM_MODE, gBDMStartMode);
         configSetInt(configOPL, CONFIG_OPL_HDD_MODE, gHDDStartMode);
+#ifdef DVRP
+        configSetInt(configOPL, CONFIG_OPL_DVR_MODE, gDVRStartMode);
+        configSetStr(configOPL, CONFIG_OPL_DVR_PARTITION, gDVRPartition);
+#endif
         configSetInt(configOPL, CONFIG_OPL_ETH_MODE, gETHStartMode);
         configSetInt(configOPL, CONFIG_OPL_APP_MODE, gAPPStartMode);
         configSetStr(configOPL, CONFIG_OPL_MMCE_PREFIX, gMMCEPrefix);
@@ -4975,6 +5011,10 @@ static void setDefaults(void)
 
     gBDMStartMode = START_MODE_DISABLED;
     gHDDStartMode = START_MODE_DISABLED;
+#ifdef DVRP
+    gDVRStartMode = START_MODE_DISABLED;
+    strcpy(gDVRPartition, "__xcontents");
+#endif
     gETHStartMode = START_MODE_DISABLED;
     gAPPStartMode = START_MODE_DISABLED;
     gMMCEStartMode = START_MODE_DISABLED;

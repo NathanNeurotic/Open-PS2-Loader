@@ -853,6 +853,11 @@ void guiShowDeviceConfig(void)
     diaSetEnum(diaDeviceConfig, CFG_DEFDEVICE, deviceNames);
     diaSetEnum(diaDeviceConfig, CFG_BDMMODE, deviceModes);
     diaSetEnum(diaDeviceConfig, CFG_HDDMODE, deviceModes);
+#ifdef DVRP
+    diaSetEnum(diaDeviceConfig, CFG_DVRMODE, deviceModes);
+    diaSetInt(diaDeviceConfig, CFG_DVRMODE, gDVRStartMode);
+    diaSetString(diaDeviceConfig, CFG_DVRPARTITION, gDVRPartition);
+#endif
     diaSetEnum(diaDeviceConfig, CFG_APPMODE, deviceModes);
     diaSetEnum(diaDeviceConfig, CFG_FAVMODE, deviceModes);
 
@@ -893,6 +898,10 @@ reshow_device:
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(diaDeviceConfig, CFG_BDMMODE, &gBDMStartMode);
         diaGetInt(diaDeviceConfig, CFG_HDDMODE, &gHDDStartMode);
+#ifdef DVRP
+        diaGetInt(diaDeviceConfig, CFG_DVRMODE, &gDVRStartMode);
+        diaGetString(diaDeviceConfig, CFG_DVRPARTITION, gDVRPartition, sizeof(gDVRPartition));
+#endif
         diaGetInt(diaDeviceConfig, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(diaDeviceConfig, CFG_MMCEMODE, &gMMCEStartMode);
         diaGetInt(diaDeviceConfig, CFG_FAVMODE, &gFAVStartMode);
@@ -2890,6 +2899,11 @@ static int guiSettingsShowSources(void)
     diaSetEnum(ui, CFG_DEFDEVICE, deviceNames);
     diaSetEnum(ui, CFG_BDMMODE, deviceModes);
     diaSetEnum(ui, CFG_HDDMODE, deviceModes);
+#ifdef DVRP
+    diaSetEnum(ui, CFG_DVRMODE, deviceModes);
+    diaSetInt(ui, CFG_DVRMODE, gDVRStartMode);
+    diaSetString(ui, CFG_DVRPARTITION, gDVRPartition);
+#endif
     diaSetEnum(ui, CFG_APPMODE, deviceModes);
     diaSetEnum(ui, CFG_FAVMODE, deviceModes);
     deviceModeIndex = guiIoModeToDeviceType(gDefaultDevice);
@@ -2930,6 +2944,10 @@ reshow_sources:
         gDefaultDevice = guiDeviceTypeToIoMode(deviceModeIndex);
         diaGetInt(ui, CFG_BDMMODE, &gBDMStartMode);
         diaGetInt(ui, CFG_HDDMODE, &gHDDStartMode);
+#ifdef DVRP
+        diaGetInt(ui, CFG_DVRMODE, &gDVRStartMode);
+        diaGetString(ui, CFG_DVRPARTITION, gDVRPartition, sizeof(gDVRPartition));
+#endif
         diaGetInt(ui, CFG_APPMODE, &gAPPStartMode);
         diaGetInt(ui, CFG_MMCEMODE, &gMMCEStartMode);
         diaGetInt(ui, CFG_FAVMODE, &gFAVStartMode);

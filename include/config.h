@@ -168,6 +168,8 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_AUTOSTART_LAST       "autostart_last"
 #define CONFIG_OPL_BDM_MODE             "usb_mode" // Leave this "usb" for compatibility
 #define CONFIG_OPL_HDD_MODE             "hdd_mode"
+#define CONFIG_OPL_DVR_MODE             "dvr_mode"
+#define CONFIG_OPL_DVR_PARTITION        "dvr_partition"
 #define CONFIG_OPL_ETH_MODE             "eth_mode"
 #define CONFIG_OPL_APP_MODE             "app_mode"
 #define CONFIG_OPL_FAV_MODE             "fav_mode"

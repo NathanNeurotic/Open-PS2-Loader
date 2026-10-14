@@ -31,6 +31,10 @@ IMPORT_BIN2C(cleareffects_irx);
 IMPORT_BIN2C(deci2_img);
 
 IMPORT_BIN2C(drvtif_irx);
+#ifdef DVRP
+IMPORT_BIN2C(dvrdrv_irx);
+IMPORT_BIN2C(dvrfile_irx);
+#endif
 
 IMPORT_BIN2C(drvtif_ingame_irx);
 

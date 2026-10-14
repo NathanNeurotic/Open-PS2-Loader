@@ -904,6 +904,10 @@ static int menuDevicePageRank(const menu_item_t *item)
         return 1;
     if (support->mode == HDD_MODE)
         return 2;
+#ifdef DVRP
+    if (support->mode == DVR_MODE)
+        return 2;
+#endif
     if (support->mode == ETH_MODE || support->mode == UDPFS_MODE || support->mode == HTTP_MODE)
         return 3;
     if (support->mode == APP_MODE)

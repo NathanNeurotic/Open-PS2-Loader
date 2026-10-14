@@ -349,6 +349,10 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(id) : support->mode;
     if (sourceMode == HTTP_MODE)
         return 1;
+#ifdef DVRP
+    if (sourceMode == DVR_MODE)
+        return 1; /* read-only DVR Neutrino backend has no validated VMC path */
+#endif
     coreLoader = gDefaultCoreLoader;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     if (coreLoader == 2)
@@ -1223,6 +1227,9 @@ static int bsdfsDeviceCapable = 1;
 // row greyed for a VCD game even when the global default core is Neutrino (the locked "Default" row
 // would otherwise resolve to the global and un-grey them).
 static int coreNeverNeutrino = 0;
+#ifdef DVRP
+static int coreForcedDvr = 0; // DVR PFS games always boot external Neutrino
+#endif
 
 // Appended "Default" (follow the global) enum indices for the per-game Neutrino Video / GSM-comp
 // pickers: values 0..5 / 0..3 persist 1:1 (system.c gsmVideoTokens); "Default" removes the key so
@@ -1287,6 +1294,10 @@ static void guiGameSetCoreAwareState(void)
     // iff explicitly Neutrino, OR "Default" while the global gDefaultCoreLoader is Neutrino -- so the
     // Neutrino-only rows grey correctly even when the game defers its core to the global setting.
     neutrino = (coreChoice == 1) || (coreChoice == 2 && gDefaultCoreLoader == 1);
+#ifdef DVRP
+    if (coreForcedDvr)
+        neutrino = 1;
+#endif
     if (coreNeverNeutrino)
         neutrino = 0; // VCD (POPSTARTER-only): keep all Neutrino-only rows greyed regardless of the global
     diaGetInt(diaCompatConfig, COMPAT_NEUTRINO_VIDEO, &neutrinoVideo);
@@ -1372,6 +1383,9 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     // Neutrino-only row greyed even under a Neutrino global default (guiGameSetCoreAwareState reads
     // this). SMB likewise: ethsupport has no Neutrino launch leg, the effective core is always <OPL>.
     coreNeverNeutrino = (support != NULL && ((libViewActive(support->mode) == LIB_VIEW_PS1) || support->mode == ETH_MODE || sourceMode == HTTP_MODE));
+#ifdef DVRP
+    coreForcedDvr = sourceMode == DVR_MODE;
+#endif
 
     // UDPFS (Files and IMG) and UDPBD have no OPL core backend -- they always launch via Neutrino.
     // Lock the selector to Neutrino so the screen matches; sourceMode catches UDPFS Files (and a
@@ -1391,6 +1405,11 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
         // honesty for keys set elsewhere (e.g. via Favourites) is the toast in ethLaunchGame.
         diaSetInt(diaCompatConfig, COMPAT_LOADER, 2);
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
+#ifdef DVRP
+    } else if (sourceMode == DVR_MODE) {
+        diaSetInt(diaCompatConfig, COMPAT_LOADER, 1);
+        diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
+#endif
     } else if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode)) {
         diaSetInt(diaCompatConfig, COMPAT_LOADER, 1);
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);

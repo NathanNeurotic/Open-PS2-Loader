@@ -141,6 +141,10 @@ extern int gHDDSpindown;
 /// Refer to enum START_MODE within iosupport.h
 extern int gBDMStartMode;
 extern int gHDDStartMode;
+#ifdef DVRP
+extern int gDVRStartMode;
+extern char gDVRPartition[33];
+#endif
 extern int gETHStartMode;
 extern int gAPPStartMode;
 extern int gMMCEStartMode;

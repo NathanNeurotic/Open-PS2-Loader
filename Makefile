@@ -71,6 +71,10 @@ GSM1080P ?= 1
 #ee_core at all. USB PS1/VCD uses rapops/rapull instead of ee_core.
 RETROACHIEVEMENTS ?= 0
 
+# Experimental DESR DVRP source; Off by default for existing releases.
+# make clean && make DVRP=1 requires PS2SDK dvrdrv.irx and dvrfile.irx.
+DVRP ?= 0
+
 #Enables/disables building of an edition of OPL that will support the DTL-T10000 (SDK v2.3+)
 DTL_T10000 ?= 0
 
@@ -151,6 +155,12 @@ IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o usbhdfsd.o bdmevent.o \
 		bdm_mcemu.o mmce_mcemu.o hdd_mcemu.o smb_mcemu.o \
 		iremsndpatch.o apemodpatch.o f2techioppatch.o cleareffects.o resetspu.o \
 		libsd.o audsrv.o
+
+ifeq ($(DVRP),1)
+  FRONTEND_OBJS += dvrsupport.o
+  IOP_OBJS += dvrdrv.o dvrfile.o
+  EE_CFLAGS += -DDVRP
+endif
 
 EECORE_OBJS = ee_core.o ioprp.o util.o \
 		udnl.o imgdrv.o eesync.o \
@@ -882,6 +892,14 @@ modules/bdmevent/bdmevent.irx: modules/bdmevent
 
 $(EE_ASM_DIR)bdmevent.c: modules/bdmevent/bdmevent.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx
+
+ifeq ($(DVRP),1)
+$(EE_ASM_DIR)dvrdrv.c: $(PS2SDK)/iop/irx/dvrdrv.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ dvrdrv_irx
+
+$(EE_ASM_DIR)dvrfile.c: $(PS2SDK)/iop/irx/dvrfile.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ dvrfile_irx
+endif
 
 $(EE_ASM_DIR)ps2dev9.c: $(PS2SDK)/iop/irx/ps2dev9.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ $(*F)_irx

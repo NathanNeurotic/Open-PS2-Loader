@@ -437,6 +437,16 @@ struct UIItem diaDeviceConfig[] = {
     {UI_SPACER},
     {UI_ENUM, CFG_HDDMODE, 1, 1, _STR_HDD_HINT, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+#ifdef DVRP
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"PSX DVR (DESR) Start Mode", -1}}},
+    {UI_SPACER},
+    {UI_ENUM, CFG_DVRMODE, 1, 1, _STR_HDD_HINT, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      DVR ISO partition", -1}}},
+    {UI_SPACER},
+    {UI_STRING, CFG_DVRPARTITION, 1, 1, _STR_HDD_HINT, 0, 0, {.stringvalue = {"__xcontents", "__xcontents", NULL}}},
+    {UI_BREAK},
+#endif
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"MMCE Start Mode", -1}}},
     {UI_SPACER},
