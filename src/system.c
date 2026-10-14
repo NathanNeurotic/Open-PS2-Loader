@@ -1876,6 +1876,49 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
         }
     }
 
+
+    // Unlike regular installations, pcm720's bsd-dvr branch ships these
+    // mandatory modules. Refuse the handoff while still in the GUI if they
+    // are missing: the standard bundled Neutrino cannot start DVR games.
+    if (!strcmp(deviceName, "dvr")) {
+        const char *slash = sysLastPathSeparator(neutrinoPath);
+        char fullPath[336];
+        static const char *const modules[] = {"dvrdrv.irx", "dvrfile.irx", "dvrfile_fhi.irx"};
+        int dirLen, fd, i;
+        if (slash == NULL)
+            return -1;
+        dirLen = (int)(slash - neutrinoPath);
+        if (snprintf(fullPath, sizeof(fullPath), "%.*s%cconfig%cbsd-dvr.toml",
+                     dirLen, neutrinoPath, *slash, *slash) >= (int)sizeof(fullPath))
+            return -1;
+        fd = open(fullPath, O_RDONLY);
+        if (fd < 0) {
+            snprintf(fullPath, sizeof(fullPath), "%.*s%cbsd-dvr.toml", dirLen, neutrinoPath, *slash);
+            fd = open(fullPath, O_RDONLY);
+        }
+        if (fd < 0) {
+            LOG("[NEUTRINO] DVR: missing bsd-dvr.toml for %s\n", neutrinoPath);
+            guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+            return -1;
+        }
+        close(fd);
+        for (i = 0; i < 3; i++) {
+            int n = snprintf(fullPath, sizeof(fullPath), "%.*s%cmodules%c%s",
+                             dirLen, neutrinoPath, *slash, *slash, modules[i]);
+            if (n < 0 || n >= (int)sizeof(fullPath)) {
+                guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+                return -1;
+            }
+            fd = open(fullPath, O_RDONLY);
+            if (fd < 0) {
+                LOG("[NEUTRINO] DVR: missing required module %s\n", modules[i]);
+                guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+                return -1;
+            }
+            close(fd);
+        }
+    }
+
     // Network transports: sync the bsd toml ip= NOW, while the toml's device is mounted and a
     // failure can still be reported (see sysSyncNeutrinoUdpfsToml for the abort conditions).
     if (!strcmp(deviceName, "udpfs") || !strcmp(deviceName, "udpfsbd") || !strcmp(deviceName, "udpbd")) {

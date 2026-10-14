@@ -202,7 +202,8 @@ static hdl_games_list_t hddGames;
  * DESR boot compatibility before that initialization has been validated.
  */
 #define HDD_DVR_MAX_ISOS 128
-typedef struct {
+typedef struct
+{
     hdl_game_info_t game; /* same menu metadata layout as other HDD PS2 rows */
     char path[224];       /* complete dvr_pfsN:/... path for -dvd */
 } hdd_dvr_iso_t;
@@ -221,20 +222,25 @@ static void hddDvrNameToStartup(const char *name, char *out, int outSize)
 {
     unsigned int hash = 2166136261u;
     const unsigned char *p;
-    int valid = strlen(name) >= 11 && name[4] == '_' && name[8] == '.';
+    const char *basename = strrchr(name, '/');
+    if (basename != NULL)
+        basename++;
+    else
+        basename = name;
+    int valid = strlen(basename) >= 11 && basename[4] == '_' && basename[8] == '.';
     if (valid) {
         for (int i = 0; i < 11; i++) {
             if (i == 4 || i == 8)
                 continue;
-            if ((i < 4 && !((name[i] >= 'A' && name[i] <= 'Z') || (name[i] >= '0' && name[i] <= '9'))) ||
-                (i > 4 && (name[i] < '0' || name[i] > '9'))) {
+            if ((i < 4 && !((basename[i] >= 'A' && basename[i] <= 'Z') || (basename[i] >= '0' && basename[i] <= '9'))) ||
+                (i > 4 && (basename[i] < '0' || basename[i] > '9'))) {
                 valid = 0;
                 break;
             }
         }
     }
     if (valid) {
-        snprintf(out, outSize, "%.*s", 11, name);
+        snprintf(out, outSize, "%.*s", 11, basename);
         return;
     }
     for (p = (const unsigned char *)name; *p; p++)
@@ -258,7 +264,8 @@ static int hddDvrCollectDir(const char *dir, int media, hdd_dvr_iso_t *out, int 
             return -2;
         }
         char path[sizeof(out[0].path)];
-        int len = snprintf(path, sizeof(path), "%s/%s", dir, entry.name);
+        int len = snprintf(path, sizeof(path), "%s%s%s", dir,
+                           dir[strlen(dir) - 1] == '/' ? "" : "/", entry.name);
         if (len <= 0 || len >= (int)sizeof(path)) {
             fileXioDclose(fd);
             return -2; /* never launch a truncated path */
@@ -271,13 +278,13 @@ static int hddDvrCollectDir(const char *dir, int media, hdd_dvr_iso_t *out, int 
             titleLen = sizeof(dst->game.name) - 1;
         memcpy(dst->game.name, entry.name, titleLen);
         dst->game.name[titleLen] = '\0';
-        hddDvrNameToStartup(entry.name, dst->game.startup, sizeof(dst->game.startup));
+        hddDvrNameToStartup(path, dst->game.startup, sizeof(dst->game.startup));
         dst->game.disctype = media;
         dst->game.total_size_in_kb = (u32)((((u64)entry.stat.hisize << 32) | entry.stat.size) >> 10);
         count++;
     }
     fileXioDclose(fd);
-    return n < 0 ? -1 : count;
+    return n < 0 ? -3 : count;
 }
 
 /* Updates only after a complete read. Never touches the HDL cache or its array. */
@@ -314,9 +321,9 @@ static void hddDvrScan(void)
             int result;
             snprintf(dir, sizeof(dir), "%s%s", root, subdirs[sub]);
             result = hddDvrCollectDir(dir, sub == 2 ? SCECdPS2CD : SCECdPS2DVD, candidate, count);
-            if (result == -2) {
+            if (result == -2 || result == -3) {
                 free(candidate);
-                return; /* do not silently hide an overflowed library */
+                return; /* truncated library or failed read: preserve last-good list */
             }
             if (result >= 0) {
                 available++;
@@ -1553,7 +1560,8 @@ static int hddUpdateGameList(item_list_t *itemList)
     hddFreeHDLGamelist(&cachedGames);
     hddFreeHDLGamelist(&hddGamesNew);
     hddForceUpdate = 1; // Subsequent refresh operations will cause the HDD to be scanned.
-    hddDvrScan(); // independent read-only DVR namespace; never part of the HDL games.bin cache
+    // Independent read-only DVR namespace; never part of the HDL games.bin cache.
+    hddDvrScan();
 
     return view == LIB_VIEW_MIXED ? hddPs2GameCount() + hddVcdGameCount : hddPs2GameCount();
 }
@@ -1561,8 +1569,11 @@ static int hddUpdateGameList(item_list_t *itemList)
 static int hddGetGameCount(item_list_t *itemList)
 {
     int view = libListViewActive(itemList);
-    return view == LIB_VIEW_MIXED ? hddPs2GameCount() + hddVcdGameCount :
-           view == LIB_VIEW_PS1   ? hddVcdGameCount : hddPs2GameCount();
+    if (view == LIB_VIEW_MIXED)
+        return hddPs2GameCount() + hddVcdGameCount;
+    if (view == LIB_VIEW_PS1)
+        return hddVcdGameCount;
+    return hddPs2GameCount();
 }
 
 static int hddGetItemView(item_list_t *itemList, int id)
