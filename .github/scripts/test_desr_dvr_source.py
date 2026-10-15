@@ -23,7 +23,7 @@ assert "DVRP ?= 0" in make
 assert "ifeq ($(DVRP),1)" in make
 assert "FRONTEND_OBJS += dvrsupport.o" in make
 assert "dvrdrv.irx" in make and "dvrfile.irx" in make
-assert re.search(r"HTTP_MODE,[^\n]*\n#ifdef DVRP\s+DVR_MODE,", modes)
+assert re.search(r"HTTP_MODE,[^\n]*\n#ifdef DVRP[\s\S]{0,150}DVR_MODE,", modes)
 
 assert 'open("rom0:PSXVER", O_RDONLY)' in dvr
 assert 'fileXioDopen("dvr_hdd0:")' in dvr
@@ -37,6 +37,14 @@ assert '"config/bsd-dvr.toml"' in dvr
 assert '"modules/dvrfile_fhi.irx"' in dvr
 assert 'sysNeutrinoArgsPreflight("dvr", image' in dvr
 assert 'sysLaunchNeutrino("dvr", image' in dvr
+assert "hddInspectSupportHome();" not in dvr
+assert "hddLoadModulesReady()" not in dvr
+assert "sysInitDev9()" in dvr and "sysShutdownDev9()" in dvr
+assert "dvrKeepMountOnHandoff = 1" in dvr
+assert "dvrPfsOwned && !dvrKeepMountOnHandoff" in dvr
+assert "dvrMountedPartition, gDVRPartition" in dvr
+assert "if (id >= dvrGameCount || !dvrGames)" in dvr
+assert 'if (!strncasecmp(dvrConfigPrefix, "dvr_pfs", 7)' in dvr
 assert "fileXioFormat(" not in dvr
 assert "O_CREAT" not in dvr
 assert "fileXioWrite(" not in dvr
