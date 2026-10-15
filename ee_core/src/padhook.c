@@ -163,7 +163,10 @@ static void IGR_CheckInputs(void)
 {
     USE_LOCAL_EECORE_CONFIG;
     u8 pad_pos_state, pad_pos_frame, pad_pos_combo1, pad_pos_combo2;
+    int intr = DI();
 
+    // The polling worker can be preempted by a game thread resetting the IOP or
+    // reopening its pad. Keep the pointer, layout and reads in one short snapshot.
     if (Pad_Data.pad_buf != NULL) {
         // Copy values via the uncached segment, to bypass the cache.
         pad_pos_state = ((u8 *)UNCACHED_SEG(Pad_Data.pad_buf))[Pad_Data.pos_state];
@@ -200,6 +203,9 @@ static void IGR_CheckInputs(void)
             }
         }
     }
+
+    if (intr)
+        EI();
 
 #ifdef RETROACHIEVEMENTS
     // ROM CDVDMAN has no OPL shutdown RPC. Ignore the power-off combo before
@@ -575,12 +581,26 @@ static int IGR_Intc_Handler(int cause)
 }
 #endif
 
+// An IOP reset invalidates the old libpad DMA buffer, even when the EE worker
+// survives. Do not read that memory until the game opens its pad again. Keep
+// pending reset requests and physical power-button state independent of it.
+void Invalidate_PadBuffer(void)
+{
+    int intr = DI();
+
+    Pad_Data.pad_buf = NULL;
+    Pad_Data.vb_count = 0;
+    Pad_Data.prev_frame = 0;
+    padOpen_hooked = 0;
+
+    if (intr)
+        EI();
+}
+
 // Install_IGR() must be run first.
 static void Set_libpad_Params(void *addr)
 {
-    DI();
-
-    Pad_Data.pad_buf = addr;
+    int intr = DI();
 
     // Set positions of pad data and pad state in buffer
     if (Pad_Data.libpad == IGR_LIBPAD) {
@@ -602,7 +622,12 @@ static void Set_libpad_Params(void *addr)
         Pad_Data.pos_frame = 124;
     }
 
-    EI();
+    Pad_Data.vb_count = 0;
+    Pad_Data.prev_frame = 0;
+    Pad_Data.pad_buf = addr;
+
+    if (intr)
+        EI();
 }
 
 // Install IGR thread, and Pad interrupt handler
