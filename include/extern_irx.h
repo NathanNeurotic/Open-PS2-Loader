@@ -34,6 +34,10 @@ IMPORT_BIN2C(drvtif_irx);
 
 IMPORT_BIN2C(drvtif_ingame_irx);
 
+IMPORT_BIN2C(dvrdrv_irx);
+
+IMPORT_BIN2C(dvrfile_irx);
+
 IMPORT_BIN2C(ds34bt_irx);
 
 IMPORT_BIN2C(ds34usb_irx);

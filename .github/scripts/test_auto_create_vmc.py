@@ -37,7 +37,7 @@ if not (0 <= call < flash < launch):
 capture = select.find('snprintf(gameIdStartup, sizeof(gameIdStartup), "%s", startup);')
 gate = select.find("if (gameIdStartup[0] != '\\0') {")
 retake = select.find('launchId = curMenu->current->item.id;', call)
-compare = select.find('if (startup == NULL || strcmp(startup, gameIdStartup) != 0)', call)
+compare = select.find('int sameGame = startup != NULL && strcmp(startup, gameIdStartup) == 0;', call)
 if not (0 <= capture < gate < call < retake < compare < flash):
     failures.append('opl.c itemExecSelect: capture the startup id, then -- only for a row that has one -- create the '
                     'VMC, re-take launchId from the current row and require the same non-empty startup id')
@@ -56,6 +56,7 @@ if not (0 <= cleanup < report):
 
 HARNESS = r'''
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 enum { BDM_MODE = 0, ETH_MODE, HDD_MODE, APP_MODE, FAV_MODE, HTTP_MODE, MMCE_MODE, UDPFS_MODE };
@@ -126,7 +127,11 @@ static int guiMsgBox(const char *t, int accept, struct UIItem *ui) { (void)accep
 static int sysVMCContiguity(void) { return fragmented ? 0 : 1; }
 static int menuSaveConfig(void) { saves++; return 1; }
 
-static char *getStartup(item_list_t *l, int id) { (void)l; (void)id; static char s[] = "SLUS_212.34"; return s; }
+static char rowStartup[32];
+static int guiLocked;
+static void guiLock(void) { if (guiLocked) abort(); guiLocked = 1; }
+static void guiUnlock(void) { if (!guiLocked) abort(); guiLocked = 0; memset(rowStartup, 0x5a, sizeof(rowStartup) - 1); }
+static char *getStartup(item_list_t *l, int id) { (void)l; (void)id; if (!guiLocked) abort(); snprintf(rowStartup, sizeof(rowStartup), "%s", "SLUS_212.34"); return rowStartup; }
 static int checkVMC(item_list_t *l, char *name, int size)
 {
     (void)l;
