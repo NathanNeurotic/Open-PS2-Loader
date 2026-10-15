@@ -15,7 +15,7 @@ def function(signature):
 
 types = source[source.index('#define HDD_DVR_MAX_ISOS'):source.index('/* Read the hardware capability')]
 functions = '\n'.join(function(signature) for signature in (
-    'static void hddDvrPublish(', 'static int hddDvrIsIsoName(',
+    'static int hddDvrEnsureDrivers(', 'static void hddDvrPublish(', 'static int hddDvrIsIsoName(',
     'static void hddDvrNameToStartup(', 'static int hddDvrCollectDir(',
     'static void hddDvrScan(', 'static void hddDvrCleanUp(',
 ))
@@ -38,7 +38,16 @@ static void guiLock(void) {}
 static void guiUnlock(void) {}
 static int drivers = 1, failedOpen = -1, failedRead = -1, oversized, entryCount = 1;
 static int positions[6], unmounts, failedUnmount = -1;
-static int hddDvrEnsureDrivers(void) {return drivers;}
+static int ataReady = 1, failDrv, failFile, drvCalls, fileCalls, notices;
+static int dvrdrv_irx, dvrfile_irx, size_dvrdrv_irx, size_dvrfile_irx;
+static int hddDvrHardwarePresent(void) {return drivers;}
+static int hddLoadModulesReady(void) {return ataReady;}
+static int sysLoadModuleBuffer(void *module, int size, int argc, char *argv) {
+    (void)size;(void)argc;(void)argv;
+    if (module == &dvrdrv_irx) {drvCalls++;return failDrv ? -2 : 0;}
+    assert(module == &dvrfile_irx);fileCalls++;return failFile ? -2 : 0;
+}
+static void sceCdNoticeGameStart(int mode, void *arg) {(void)mode;(void)arg;notices++;}
 static int fileXioDopen(const char *path) {
     const char *colon;
     int part, sub;
@@ -72,8 +81,17 @@ static int fileXioUmount(const char *path) {
 @TYPES@
 @FUNCTIONS@
 int main(void) {
-    drivers = 0;hddDvrScan();assert(!hddDvrGames && !hddDvrGameCount);
-    drivers = 1;hddDvrScan();assert(hddDvrGameCount == 1);
+    drivers = 0;hddDvrScan();assert(!hddDvrGames && !hddDvrGameCount && !drvCalls && !fileCalls);
+    drivers = 1;ataReady = 0;hddDvrScan();assert(!drvCalls && !fileCalls);
+    ataReady = 1;failDrv = 1;hddDvrScan();hddDvrScan();
+    assert(drvCalls == 1 && !fileCalls && !hddDvrDriverReady);
+    /* Simulate a fresh GUI process after a failed base-driver start. */
+    hddDvrDriverTried = 0;drvCalls = 0;failDrv = 0;failFile = 1;
+    hddDvrScan();assert(drvCalls == 1 && fileCalls == 1 && !hddDvrDriverReady);
+    failFile = 0;hddDvrScan();
+    assert(drvCalls == 1 && fileCalls == 2 && hddDvrDriverReady && notices == 1);
+    hddDvrScan();assert(drvCalls == 1 && fileCalls == 2 && notices == 1);
+    assert(hddDvrGameCount == 1);
     assert(!strcmp(hddDvrGames[0].path, "dvr_pfs0:/DVD/SLUS_211.34.RE4.iso"));
     assert(!strcmp(hddDvrGames[0].game.startup, "SLUS_211.34"));
     hdd_dvr_iso_t *lastGood = hddDvrGames;

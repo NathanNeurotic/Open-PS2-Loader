@@ -1871,7 +1871,7 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
     if (!strcmp(deviceName, "dvr")) {
         if (neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") || neutrinoArgHasActiveFlag(extraArgs, "-qb")) {
             LOG("[NEUTRINO] DVR: -qb would bypass the required PSX-mode transition\n");
-            guiWarning(_l(_STR_NEUTRINO_DEV_UNSUPPORTED), 6);
+            guiWarning(_l(_STR_NEUTRINO_DVR_QUICKBOOT), 6);
             return -1;
         }
     }
@@ -1898,7 +1898,7 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
         }
         if (fd < 0) {
             LOG("[NEUTRINO] DVR: missing bsd-dvr.toml for %s\n", neutrinoPath);
-            guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+            guiMsgBoxMissing(_l(_STR_NEUTRINO_DVR_FILE_MISSING), fullPath);
             return -1;
         }
         close(fd);
@@ -1906,13 +1906,13 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
             int n = snprintf(fullPath, sizeof(fullPath), "%.*s%cmodules%c%s",
                              dirLen, neutrinoPath, *slash, *slash, modules[i]);
             if (n < 0 || n >= (int)sizeof(fullPath)) {
-                guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+                guiMsgBoxMissing(_l(_STR_NEUTRINO_DVR_FILE_MISSING), fullPath);
                 return -1;
             }
             fd = open(fullPath, O_RDONLY);
             if (fd < 0) {
                 LOG("[NEUTRINO] DVR: missing required module %s\n", modules[i]);
-                guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+                guiMsgBoxMissing(_l(_STR_NEUTRINO_DVR_FILE_MISSING), fullPath);
                 return -1;
             }
             close(fd);

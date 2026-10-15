@@ -213,6 +213,7 @@ static hdd_dvr_iso_t *hddDvrGames = NULL;
 static int hddDvrGameCount = 0;
 static unsigned char hddDvrMounted[2] = {0, 0};
 static unsigned char hddDvrDriverTried = 0;
+static unsigned char hddDvrDrvLoaded = 0;
 static unsigned char hddDvrDriverReady = 0;
 static unsigned char hddDvrReadableDirs = 0;
 
@@ -236,16 +237,21 @@ static int hddDvrEnsureDrivers(void)
 {
     if (hddDvrDriverReady)
         return 1;
-    if (hddDvrDriverTried || !hddDvrHardwarePresent())
+    if (!hddDvrHardwarePresent())
         return 0;
     if (!hddLoadModulesReady()) {
         LOG("[DVR] ATA/DEV9 modules unavailable; DVR namespace not probed\n");
         return 0; // a transient ATA readiness failure can retry next refresh
     }
-    hddDvrDriverTried = 1;
-    if (sysLoadModuleBuffer(&dvrdrv_irx, size_dvrdrv_irx, 0, NULL) != 0) {
-        LOG("[DVR] dvrdrv.irx failed to start\n");
-        return 0;
+    if (!hddDvrDrvLoaded) {
+        if (hddDvrDriverTried)
+            return 0;
+        hddDvrDriverTried = 1;
+        if (sysLoadModuleBuffer(&dvrdrv_irx, size_dvrdrv_irx, 0, NULL) != 0) {
+            LOG("[DVR] dvrdrv.irx failed to start\n");
+            return 0;
+        }
+        hddDvrDrvLoaded = 1;
     }
     if (sysLoadModuleBuffer(&dvrfile_irx, size_dvrfile_irx, 0, NULL) != 0) {
         LOG("[DVR] dvrfile.irx failed to start\n");

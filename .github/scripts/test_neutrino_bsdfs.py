@@ -71,11 +71,14 @@ HARNESS = r'''
 #define _STR_NEUTRINO_TOML_SYNC_FAILED 2
 #define _STR_NEUTRINO_BD_NO_DEVICE_NUMBER 3
 #define _STR_NEUTRINO_NOT_FOUND 4
+#define _STR_NEUTRINO_DVR_QUICKBOOT 5
+#define _STR_NEUTRINO_DVR_FILE_MISSING 6
 
 static char gNeutrinoArgs[256];
 static int lastWarning;
 static int bdmGetLoadedNetProtocol(void) { return 0; }
 static const char *_l(int id) { lastWarning = id; return ""; }
+static void guiMsgBoxMissing(const char *msg, const char *path) { (void)msg; (void)path; }
 static void guiWarning(const char *msg, int secs) { (void)msg; (void)secs; }
 static int sysSyncNeutrinoUdpfsToml(const char *path, const char *dev) { (void)path; (void)dev; return 0; }
 
@@ -126,6 +129,11 @@ int main(void)
     scenario("-dvd= after --b is the game's",            "usb",  0,   "",             "-bsdfs=bd --b -dvd=bdfs:usb1p0", -1, 1, 3);
     scenario("global -dvd= is still refused",            "usb",  0,   "-dvd=bdfs:usb1p0", "-bsdfs=bd",   -1,   1, 3);
     scenario("typed -dvd= with a known number proceeds", "usb",  0,   "",             "-bsdfs=bd -dvd=bdfs:usb1p0",  1, 0, 0);
+
+    scenario("DVR global quickboot is actionable",          "dvr", 0, "-qb", NULL, -1, 1, 5);
+    scenario("DVR per-game quickboot is actionable",        "dvr", 0, "", "-qb", -1, 1, 5);
+    scenario("DVR incomplete install names missing file",   "dvr", 0, "", NULL, -1, 1, 6);
+    scenario("DVR game-side quickboot is not a loader flag", "dvr", 0, "--b -qb", NULL, -1, 1, 6);
 
     /* The value sysLaunchNeutrino shapes -dvd from and emits as its own -bsdfs=. */
     snprintf(gNeutrinoArgs, sizeof(gNeutrinoArgs), "%s", "");
@@ -203,4 +211,4 @@ if failures:
     for failure in failures:
         print(' - ' + failure)
     sys.exit(1)
-print('neutrino bsdfs: 28 preflight scenarios + 8 argv checks OK (bd without device number refused before teardown; per-game options survive global --b)')
+print('neutrino bsdfs: 32 preflight scenarios + 8 argv checks OK (bd without device number refused before teardown; per-game options survive global --b)')
