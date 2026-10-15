@@ -175,7 +175,7 @@ When you enable a device mode in OPL settings and exit back to the game list, OP
 <div class="steps">
   <div class="step">
     <h3>Launch RIPTOPL.ELF</h3>
-    <p>Boot through FMCB, FHDB, or your chosen launcher. On a fresh install you land on the <b>start menu</b> — no game-list tabs exist yet, because every device ships off. Enable a device and its tab appears, rendered by the Coverflow theme (RiptOPL's built-in cover-art carousel) once you have games in the right folders.</p>
+    <p>Boot through FMCB, FHDB, or your chosen launcher. Fresh settings use the built-in <code>&lt;OPL&gt;</code> theme, a <b>4:3</b> menu and <b>Auto</b> video mode. Device start modes begin Off; enable a source and its tab appears once games are found. Boot-device discovery can enable access to the loader's own files. Existing settings can also be discovered outside the new installation folder.</p>
   </div>
   <div class="step">
     <h3>Enable your device</h3>
@@ -187,17 +187,21 @@ When you enable a device mode in OPL settings and exit back to the game list, OP
   </div>
   <div class="step">
     <h3>Launch a game</h3>
-    <p>Back on the main list, your games appear under the device tabs. Highlight a title and press <b>Cross</b> (or <b>Circle</b> for Japanese-layout controllers — the confirm button follows standard OPL behavior and is configurable). The game boots via OPL's built-in core by default. To use Neutrino instead, open <b>Game Settings → Loader Core → Neutrino</b> for that title. See <a href="per-game-settings.html">Per-game Settings</a>.</p>
+    <p>Back on the main list, your games appear under the device tabs. Highlight a title and use the on-screen confirm button (<b>Circle</b> with fresh settings; configurable). The game boots via OPL's built-in core by default. To use Neutrino instead, open <b>Game Settings → Loader Core → Neutrino</b> for that title. See <a href="per-game-settings.html">Per-game Settings</a>.</p>
   </div>
 </div>
 
-<h2 id="opinionated-defaults">Opinionated defaults</h2>
-<p>Unlike upstream OPL — which ships with most features off and expects you to enable them — RiptOPL boots with a set of opinionated defaults that are on from the very first launch, before you have saved any settings. You can change any of them under <b>Settings</b> at any time.</p>
+<h2 id="opinionated-defaults">Fresh-start defaults</h2>
+<p>These values apply when no saved master configuration is loaded. An ELF update preserves saved choices,
+and a clean installation folder can still discover a configuration on another device. RiptOPL reads
+<code>settings_riptopl.cfg</code> and can migrate <code>conf_riptopl.cfg</code>. You do not need to delete
+settings or saves to change the presentation: select <b>Widescreen: On</b> and <b>Theme: &lt;Coverflow&gt;</b>
+under <b>Settings → Interface</b> if wanted, apply, then save. These choices are independent; Coverflow works in 4:3 too.</p>
 
 <table data-sortable>
 <thead><tr><th>Setting</th><th>Default</th><th>Where to change</th></tr></thead>
 <tbody>
-<tr><td>Widescreen (16:9)</td><td>ON</td><td>Interface</td></tr>
+<tr><td>Widescreen (16:9)</td><td>OFF (4:3 menu)</td><td>Interface</td></tr>
 <tr><td>Cover Art</td><td>ON</td><td>Interface → Artwork Settings</td></tr>
 <tr><td>Notifications (popups)</td><td>ON</td><td>Interface</td></tr>
 <tr><td>PS2 Logo</td><td>ON</td><td>Game Launching</td></tr>
@@ -207,9 +211,10 @@ When you enable a device mode in OPL settings and exit back to the game list, OP
 <tr><td>USB, iLink, MX4SIO, Internal HDD (exFAT)</td><td>OFF</td><td>Game Sources</td></tr>
 <tr><td>Every start mode (HDD, MMCE, BDM devices, network, Apps, Favorites)</td><td>Off</td><td>Game Sources</td></tr>
 <tr><td>Video mode</td><td>Auto (0)</td><td>Interface (menu only)</td></tr>
-<tr><td>Theme</td><td>&lt;Coverflow&gt; (built-in)</td><td>Interface</td></tr>
+<tr><td>Theme</td><td>&lt;OPL&gt; (built-in); Coverflow optional</td><td>Interface</td></tr>
+<tr><td>Confirm button</td><td>Circle (configurable)</td><td>General &amp; System</td></tr>
 <tr><td>Write Operations (rename, delete, VMC creation)</td><td>ON</td><td>General &amp; System</td></tr>
-<tr><td>Show GameID Barcode (Pixel FX)</td><td>On (POPSTARTER only)</td><td>Interface</td></tr>
+<tr><td>Show GameID Barcode (Pixel FX)</td><td>OFF</td><td>Interface</td></tr>
 <tr><td>Network Connectivity</td><td>Off</td><td>Game Sources</td></tr>
 </tbody>
 </table>
@@ -270,7 +275,7 @@ the path.</p>
 <p>The suffix says which image it is — <code>_COV</code> is the cover, <code>_SCR</code> and
 <code>_SCR2</code> are screenshots, <code>_BG</code> a background, <code>_ICO</code> an icon. Which of them a
 given theme actually draws is up to that theme; see <a href="themes.html">Theme Engine</a> for authoring, and
-<a href="coverflow.html">Coverflow</a> for what the default theme uses.</p>
+<a href="coverflow.html">Coverflow</a> for the optional built-in carousel.</p>
 
 <div class="callout info"><div class="h">Many small files can be slow to open</div>
 On a slow device a folder of loose images costs one file open per cover. <b>Cover Art .tar Archive</b>

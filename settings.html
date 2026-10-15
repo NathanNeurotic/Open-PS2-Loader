@@ -306,7 +306,7 @@ settings or saving the whole configuration.</div>
 <tr><td>Show [PS1]/[PS2] Labels</td><td>Off / On</td><td>Starts each disc-game row with <code>[PS1]</code> or <code>[PS2]</code>, which helps in the <em>Mixed</em> view. Off by default. Display only: names, sorting, renames and favourites are unchanged, and app and folder rows are never labelled.</td></tr>
 <tr><td>Show CFG Titles in Game Lists</td><td>Off / On</td><td>Shows the <code>Title=</code> line from each game's CFG instead of its file name, and sorts by it. Off by default: every list refresh then reads every game's CFG, so large SMB, MMCE and MX4SIO libraries load slower. Display only: renames, favourites, art and launching keep the file name. See <a href="unicode-titles.html#cfg-titles">Unicode game titles</a>.</td></tr>
 <tr><td>Video Mode</td><td>Auto / PAL / NTSC / &hellip;</td><td>Output mode for the <b>menu</b>. <em>Auto</em> follows the console. The two <em>FLICKER-FREE</em> entries at the end of the list send the same 480i/576i signal but read both fields from the same lines, so thin lines and font edges stop strobing on a CRT &mdash; at the cost of half the vertical detail. After a change, <b>hold</b> Accept to keep the new mode; a tap does nothing, and Back or 10 seconds restores the old one (see <a href="controls.html#keep-video-mode">Keeping a new video mode</a>). Games use GSM instead; see <a href="gsm.html">GSM Video Modes</a>.</td></tr>
-<tr><td>Theme</td><td><em>installed themes</em></td><td>Active theme. The default is <em>Coverflow</em>. Themes are read from <code>THM/</code> on each device. See <a href="themes.html">Theme Engine</a>.</td></tr>
+<tr><td>Theme</td><td><em>built-in and installed themes</em></td><td>A fresh configuration starts with <code>&lt;OPL&gt;</code>. Select the optional <code>&lt;Coverflow&gt;</code> carousel here, then apply and save. Saved theme choices override the default. External themes are read from <code>THM/</code> on each device. See <a href="themes.html">Theme Engine</a>.</td></tr>
 <tr><td>Coverflow Settings</td><td>[sub-screen]</td><td>See <a href="#coverflow-settings">Coverflow Settings</a>.</td></tr>
 <tr><td>Artwork Settings</td><td>[sub-screen]</td><td>See <a href="#artwork-settings">Artwork Settings</a>.</td></tr>
 <tr><td>Colors</td><td>[sub-screen]</td><td>See <a href="#colors-settings">Colors</a>.</td></tr>
@@ -315,7 +315,7 @@ settings or saving the whole configuration.</div>
 <tr><td>Notifications</td><td>Off / On</td><td>Brief on-screen notices when a config, theme or language file loads, or a partition mounts. On by default.</td></tr>
 <tr><td>Sort Games Alphabetically</td><td>Off / On</td><td>Sorts game lists by title. Off lists games in the order they are found. On by default.</td></tr>
 <tr><td>Automatic Refresh</td><td>Off / On</td><td>Re-scans for newly connected devices and adds their games without a manual refresh. Off by default.</td></tr>
-<tr><td>Widescreen</td><td>Off / On</td><td>Draws the menu for a 16:9 screen. On by default in RiptOPL.</td></tr>
+<tr><td>Widescreen</td><td>Off / On</td><td>Draws the menu for a 16:9 screen when On. Fresh configurations start Off (4:3); saved choices override this. Selecting Coverflow does not enable widescreen.</td></tr>
 <tr><td>H-POS</td><td>&minus;300&ndash;300</td><td>Horizontal screen offset.</td></tr>
 <tr><td>V-POS</td><td>&minus;300&ndash;300</td><td>Vertical screen offset.</td></tr>
 <tr><td>Overscan</td><td>0&ndash;100</td><td>Shrinks the drawn area inward to compensate for overscan.</td></tr>
