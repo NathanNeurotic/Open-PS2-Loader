@@ -215,7 +215,7 @@ field. Now in both the README section and the new page.
   (**one `ART/` folder, only the key varies**) with the PS2 / VCD / Ember / app keys side by side, the
   suffix set, and the `.tar` archive toggle. It links rather than restates: `themes.html` already
   documents the `pattern=` suffix system for theme authors, `ps1-vcd.html` the PS1 keys, and
-  `coverflow.html` the default theme's usage.
+  `coverflow.html` the optional built-in carousel's usage.
   *Correction to the original audit:* the suffix set is **not fixed by the loader** — a theme's
   `GameImage` element declares its own `pattern=`. `COV` and `BG` are what the built-in themes use.
 * **Animated boot logo.** Still only inside `themes.html`. Low value to split out; left as-is.
