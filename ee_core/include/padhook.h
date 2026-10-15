@@ -21,6 +21,7 @@
 
 int Install_PadOpen_Hook(u32 mem_start, u32 mem_end, int mode);
 void Install_IGR(void);
+void Invalidate_PadBuffer(void);
 void Remove_Padhook(void);
 void Reset_Padhook(void);
 void IGR_Exit(s32 exit_code);

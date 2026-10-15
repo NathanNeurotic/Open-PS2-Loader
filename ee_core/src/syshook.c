@@ -48,6 +48,11 @@ void (*Old_GetOsdConfigParam)(ConfigParam *osdconfig);
 /*----------------------------------------------------------------------------------------*/
 u32 New_SifSetDma(SifDmaTransfer_t *sdd, s32 len)
 {
+    // A reset destroys the pad DMA producer. Retaining its pointer lets IGR
+    // interpret reused game memory as buttons during and after the reboot.
+    disable_padOpen_hook = 1;
+    Invalidate_PadBuffer();
+
     // Hook padOpen function to install In Game Reset
     if (!(g_compat_mask & COMPAT_MODE_6) && padOpen_hooked == 0) {
         Install_IGR();
@@ -55,8 +60,6 @@ u32 New_SifSetDma(SifDmaTransfer_t *sdd, s32 len)
     }
 
     struct _iop_reset_pkt *reset_pkt = (struct _iop_reset_pkt *)sdd->src;
-
-    disable_padOpen_hook = 1;
 
     // does IOP reset
     int reset_ok = New_Reset_Iop(reset_pkt->arg, reset_pkt->arglen);

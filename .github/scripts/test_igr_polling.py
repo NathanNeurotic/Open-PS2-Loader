@@ -40,6 +40,8 @@ if handler_at < 0 or guard_at < 0 or source.find('#endif', guard_at) < handler_a
     failures.append('padhook.c: IGR_Intc_Handler must sit inside #ifdef IGR_VBLANK_HANDLER')
 
 common = ''.join(function_text(sig) for sig in (
+    'void Invalidate_PadBuffer(',
+    'static void Set_libpad_Params(',
     'static void IGR_CheckInputs(',
     'static void IGR_StopDmaAndGs(',
 ))
@@ -84,7 +86,14 @@ typedef unsigned long long u64;
 #define IGR_COMBO_START_SELECT 0xF6
 #define IGR_COMBO_R3_L3 0xF9
 #define IGR_COMBO_UP 0xEF
-#define UNCACHED_SEG(x) (x)
+static int intrEnabled = 1, unprotectedReads;
+static int DI(void) { int previous = intrEnabled; intrEnabled = 0; return previous; }
+static void EI(void) { intrEnabled = 1; }
+static void *checkedUncached(void *ptr) {
+    if (intrEnabled) unprotectedReads++;
+    return ptr;
+}
+#define UNCACHED_SEG(x) checkedUncached(x)
 
 typedef struct { u16 libpad; u16 libversion; u8 *pad_buf; int vb_count; int pos_combo1; int pos_combo2;
                  int pos_state; int pos_frame; u8 combo_type; u8 prev_frame; } paddata_t;
@@ -271,6 +280,48 @@ int main(void)
     CHECK(Pad_Data.pad_buf == padBuf && Pad_Data.combo_type == IGR_COMBO_START_SELECT &&
           Power_Button.press == 1 && Power_Button.vb_count == 17 && Power_Button.latched == 1,
           "repeated IGR installation preserves live input and power state");
+
+    /* IOP reboot leaves an EE worker alive but ends the pad buffer's lifetime.
+       Reused memory can look exactly like a stable pad holding the reset combo. */
+    Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
+    Pad_Data.combo_type = 0;
+    Pad_Data.vb_count = 7;
+    Pad_Data.prev_frame = 44;
+    padBuf[112] = IGR_PAD_STABLE_V1;
+    padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
+    padBuf[2] = IGR_COMBO_START_SELECT;
+    Invalidate_PadBuffer();
+    CHECK(Pad_Data.pad_buf == NULL && Pad_Data.vb_count == 0 && Pad_Data.prev_frame == 0 && !padOpen_hooked,
+          "IOP reset discards the old pad buffer and its liveness history");
+    IGR_CheckInputs();
+    CHECK(Pad_Data.combo_type == 0 && IGR_Thread_ID == 5,
+          "reused old pad memory cannot reset the game; the worker survives");
+
+    Power_Button.press = 1;
+    Power_Button.vb_count = 17;
+    Power_Button.latched = 1;
+    Pad_Data.combo_type = IGR_COMBO_START_SELECT;
+    intrEnabled = 0;
+    Invalidate_PadBuffer();
+    CHECK(!intrEnabled && Pad_Data.combo_type == IGR_COMBO_START_SELECT &&
+          Power_Button.press == 1 && Power_Button.vb_count == 17 && Power_Button.latched == 1,
+          "invalidation preserves disabled interrupts and pending reset/power state");
+    Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
+    Pad_Data.combo_type = 0;
+    Set_libpad_Params(padBuf);
+    CHECK(!intrEnabled && Pad_Data.pad_buf == padBuf && Pad_Data.pos_state == 112,
+          "pad reopen publishes its buffer without enabling disabled interrupts");
+    IGR_CheckInputs();
+    CHECK(!intrEnabled && Pad_Data.combo_type == IGR_COMBO_START_SELECT && unprotectedReads == 0,
+          "a reopened pad detects real input with an atomic buffer snapshot");
+    intrEnabled = 1;
+    Invalidate_PadBuffer();
+    CHECK(intrEnabled, "invalidation restores interrupts when they were enabled");
+    Set_libpad_Params(padBuf);
+    Pad_Data.combo_type = 0;
+    IGR_CheckInputs();
+    CHECK(intrEnabled && unprotectedReads == 0 && Pad_Data.combo_type == IGR_COMBO_START_SELECT,
+          "thread-context polling protects reads and restores enabled interrupts");
 
     /* The physical button IRQ may remain asserted for multiple polling frames
        when Mechacon cancellation is delayed. Count only the first edge. */
