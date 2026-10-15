@@ -507,6 +507,19 @@ int raCaduceusPage(const char *request, unsigned int serial, char *out, int size
    chunks leaves gaps in g_wl even when the received byte sum matches total.
    Check the advertised chunk count and every exact payload length before
    copying or publishing an achievement watch list. */
+/* The payload is binary: consume exactly one delimiter, never scanf whitespace. */
+static int raParseChunkHeader(const char *reply, int got, int *idx, int *len, int *hdr)
+{
+    int end = 0;
+
+    *hdr = 0;
+    if (sscanf(reply, "RAC1 %d %d%n", idx, len, &end) != 2 ||
+        end <= 0 || end >= got || reply[end] != ' ')
+        return 0;
+    *hdr = end + 1;
+    return 1;
+}
+
 static int raExpectedChunkLength(int total, int chunks, int index)
 {
     int remaining;
@@ -693,7 +706,7 @@ int raAskPC(const char *hash, const char *serial, const char *savepath,
                          if idx happens to equal i the guard below passes, and the length
                          check that follows evaluates `len < 0` BEFORE it reaches `hdr == 0`. */
             hdr = 0;
-            if (sscanf(g_rx, "RAC1 %d %d %n", &idx, &len, &hdr) >= 2 && idx == i)
+            if (raParseChunkHeader(g_rx, got, &idx, &len, &hdr) && idx == i)
                 break;
         }
 

@@ -36,7 +36,7 @@ names = ["static int rdBytes(", "static int rdU16(", "static int rdU32(", "stati
          "static int favMapWoplMode(", "static fav_raw_t *favReadWoplFile(", "static u8 *favLoadFile(",
          "static fav_raw_t *favReadPath(", "static fav_raw_t *favReadFile(", "static void bufU16(",
          "static void bufU32(", "static int favWriteAll(", "static int favWriteWhole(",
-         "static u8 *favBuildImage(", "static int favRestoreStaged(", "static int favFileSize(",
+         "static u8 *favBuildImage(", "static int favRestoreStaged(",
          "static int favWriteFile("]
 source = (line("static int favWriteErrno;") + line("static int favStagedOnly") + line("static int favLoadError") + line("#define WOPL_FAV_STRUCT_SIZE") +
           line("#define FAV_FILE_MAX") + stream_type() + "\n".join(function(n) for n in names))
@@ -71,6 +71,7 @@ typedef struct { int mode, id, icon_id, text_id, kind; char text[FAV_TEXT_MAX]; 
 typedef struct { char name[64]; u8 data[8192]; int len, exists, alloc; } mfile_t;
 static mfile_t files[4];
 static struct { mfile_t *f; int pos; } fds[8];
+static const char *failWriteName;
 static int writeCap = -1, writesBeforeFail = -1, failCloseOn = -1, closes, freeClusters = 1 << 20, fsCalls;
 static const char *failOpenName;
 static mfile_t *lookup(const char *name, int create)
@@ -106,6 +107,7 @@ static int write(int fd, const void *buf, int n)
     mfile_t *f = fds[fd].f;
     int need;
     fsCalls++;
+    if (failWriteName && !strcmp(f->name, failWriteName)) { errno = EIO; return -1; }
     if (writesBeforeFail == 0) { errno = EIO; return -1; }
     if (writesBeforeFail > 0) writesBeforeFail--;
     if (writeCap >= 0 && n > writeCap) n = writeCap;   /* partial writes */
@@ -144,7 +146,7 @@ static int load(char *first)
     free(got);
     return count;
 }
-static void reset(void) { memset(files, 0, sizeof(files)); writeCap = -1; writesBeforeFail = -1; failCloseOn = -1; closes = 0; failOpenName = NULL; freeClusters = 1 << 20; failLseek = 0; favStagedOnly = -1; }
+static void reset(void) { failWriteName = NULL; memset(files, 0, sizeof(files)); writeCap = -1; writesBeforeFail = -1; failCloseOn = -1; closes = 0; failOpenName = NULL; freeClusters = 1 << 20; failLseek = 0; favStagedOnly = -1; }
 static void makeLong(int n, char c)
 {
     for (int i = 0; i < n; i++) {
@@ -237,22 +239,29 @@ int main(void)
     writesBeforeFail = -1;
     assert(load(first) == 0);
 
-    /* full_card_save_that_fits: no room to stage a second copy, but the new list fits in the
-       clusters favourites.bin already holds -- saved in place, as before staging existed */
+    /* full_card_save_that_fits: no room to stage a second copy: refuse even when the new list
+       fits the existing allocation, preserving the complete old image */
     reset();
     make(2, "Old");
     assert(favWriteFile(recs, 2) == 1);
     freeClusters = 0;
     make(3, "New");
-    assert(favWriteFile(recs, 3) == 1);
-    assert(load(first) == 3 && !strcmp(first, "New 0"));
+    assert(favWriteFile(recs, 3) == 0);
+    assert(load(first) == 2 && !strcmp(first, "Old 0"));
     assert(lookup("mc0:OPL/favourites.bin.new", 0) == NULL);
 
     /* full_card_list_outgrows_its_clusters: an in-place rewrite could run out of room after the
        truncate, so the save is refused and the previous list stays whole */
     makeLong(5, 'L'); /* > 1 KB */
     assert(favWriteFile(recs, 5) == 0);
-    assert(load(first) == 3 && !strcmp(first, "New 0"));
+    assert(load(first) == 2 && !strcmp(first, "Old 0"));
+
+    /* ENOSPC followed by a primary write failure must never touch the last complete copy. */
+    failWriteName = "mc0:OPL/favourites.bin";
+    make(3, "Requested");
+    assert(favWriteFile(recs, 3) == 0);
+    failWriteName = NULL;
+    assert(load(first) == 2 && !strcmp(first, "Old 0"));
 
     /* failing_device_is_not_full: a staging error other than no-space never falls back to the
        in-place rewrite -- that is the truncation #936 removed */

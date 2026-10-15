@@ -51,7 +51,7 @@ typedef struct {
 } createVMCparam_t;
 static char gVMCCreatePath[256] = {0};
 static int exists, length, opened, erased, jobs, returnsError;
-static int openError;
+static int openError, badHeader, shortHeader;
 static int dirOpenError, dirReadError, dirPosition;
 typedef struct {char name[256];} iox_dirent_t;
 static int fileXioDopen(const char *folder) {
@@ -76,7 +76,14 @@ static int fake_lseek(int fd, int offset, int whence) {
     (void)fd; (void)offset; return whence == SEEK_END ? length : 0;
 }
 static int fake_read(int fd, void *buf, int count) {
-    (void)fd; memset(buf, 0, count); return count;
+    (void)fd; memset(buf, 0, count);
+    if (!badHeader) {
+        vmc_superblock_t *sb = buf;
+        memcpy(sb->magic, "Sony PS2 Memory Card Format", 27);
+        sb->mc_type=2; sb->page_size=512; sb->pages_per_cluster=2;
+        sb->clusters_per_card=length/1024;
+    }
+    return shortHeader ? count-1 : count;
 }
 static int fake_close(int fd) { (void)fd; return 0; }
 static int fake_unlink(const char *path) { (void)path; erased++; return 0; }
@@ -115,6 +122,14 @@ int main(void) {
     }
     openError=0;
     assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == 8 && jobs == 0);
+    // A failed format can leave a full-size zero image, including after restart or failed cleanup.
+    badHeader=1;
+    assert(sysCheckVMC("mass0:/", "/", name, 0, NULL) == SYS_VMC_CREATE_FAILED);
+    assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == SYS_VMC_REPLACE_REQUIRES_DELETE);
+    assert(erased==0 && jobs==0);
+    badHeader=0;shortHeader=1;
+    assert(sysCheckVMC("mass0:/", "/", name, 0, NULL) == SYS_VMC_CREATE_FAILED);
+    shortHeader=0;
     length = 123; // corrupted or unrecognized size is still someone's data
     assert(sysCheckVMC("mass0:/", "/", name, 8, NULL) == SYS_VMC_REPLACE_REQUIRES_DELETE);
     assert(erased == 0 && jobs == 0);
