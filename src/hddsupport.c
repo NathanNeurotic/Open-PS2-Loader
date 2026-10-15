@@ -426,8 +426,10 @@ static void hddDvrCleanUp(int keepMounts)
         return;
     for (int i = 0; i < 2; i++) {
         if (hddDvrMounted[i]) {
-            fileXioUmount(i ? "dvr_pfs1:" : "dvr_pfs0:");
-            hddDvrMounted[i] = 0;
+            if (fileXioUmount(i ? "dvr_pfs1:" : "dvr_pfs0:") >= 0)
+                hddDvrMounted[i] = 0;
+            else
+                LOG("[DVR] unmount failed for partition %d; retain ownership for retry\n", i);
         }
     }
 }

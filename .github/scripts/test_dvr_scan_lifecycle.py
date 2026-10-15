@@ -37,7 +37,7 @@ typedef struct { char name[256]; struct {u32 hisize, size;} stat; } iox_dirent_t
 static void guiLock(void) {}
 static void guiUnlock(void) {}
 static int drivers = 1, failedOpen = -1, failedRead = -1, oversized, entryCount = 1;
-static int positions[6], unmounts;
+static int positions[6], unmounts, failedUnmount = -1;
 static int hddDvrEnsureDrivers(void) {return drivers;}
 static int fileXioDopen(const char *path) {
     const char *colon;
@@ -65,7 +65,10 @@ static int fileXioDclose(int fd) {(void)fd;return 0;}
 static int fileXioMount(const char *dst, const char *src, int mode) {
     (void)dst;(void)src;assert(mode == FIO_MT_RDONLY);return 0;
 }
-static int fileXioUmount(const char *path) {(void)path;unmounts++;return 0;}
+static int fileXioUmount(const char *path) {
+    unmounts++;
+    return ((strncmp(path, "dvr_pfs1:", 9) == 0) == failedUnmount) ? -5 : 0;
+}
 @TYPES@
 @FUNCTIONS@
 int main(void) {
@@ -83,8 +86,11 @@ int main(void) {
     hddDvrCleanUp(1);
     assert(!hddDvrGames && !hddDvrGameCount && !unmounts);
     assert(hddDvrMounted[0] && hddDvrMounted[1]);
-    hddDvrCleanUp(0);assert(unmounts == 2 && !hddDvrMounted[0] && !hddDvrMounted[1]);
-    hddDvrCleanUp(0);assert(unmounts == 2);
+    failedUnmount = 1;
+    hddDvrCleanUp(0);assert(unmounts == 2 && !hddDvrMounted[0] && hddDvrMounted[1]);
+    failedUnmount = -1;
+    hddDvrCleanUp(0);assert(unmounts == 3 && !hddDvrMounted[1]);
+    hddDvrCleanUp(0);assert(unmounts == 3);
     puts("PASS: DVR scan publication, partial-open/read failures, overflow and mount handoff");
 }
 '''.replace('@TYPES@', types).replace('@FUNCTIONS@', functions)
