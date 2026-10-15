@@ -1,0 +1,36 @@
+/* Page-scoped fork-gap audit and alphabetical source directory. */
+#fork-gap-audit .fork-gap-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin:20px 0; }
+#fork-gap-audit .fork-gap-metric { padding:15px 18px; background:rgba(0,18,44,.7); border:1px solid var(--line2); border-radius:8px; }
+#fork-gap-audit .fork-gap-metric strong { display:block; font-size:27px; color:var(--ink-bright); font-variant-numeric:tabular-nums; }
+#fork-gap-audit .fork-gap-metric span { display:block; color:var(--ink2); font-size:12px; line-height:1.5; margin-top:4px; }
+#fork-gap-audit .fork-gap-nav { display:flex; flex-wrap:wrap; gap:8px; margin:16px 0 22px; }
+#fork-gap-audit .fork-gap-nav a, #fork-gap-audit .directory-alpha a { display:inline-block; padding:7px 10px; border:1px solid var(--line2); background:rgba(0,20,52,.6); border-radius:5px; font-size:12px; font-weight:700; text-decoration:none; }
+#fork-gap-audit .fork-gap-nav a:hover, #fork-gap-audit .directory-alpha a:hover { background:var(--panel-hover); }
+#fork-gap-audit .fork-gap-controls { display:flex; flex-wrap:wrap; align-items:end; gap:12px; margin:18px 0 9px; }
+#fork-gap-audit .fork-gap-controls label { display:flex; flex-direction:column; min-width:180px; flex:1 1 220px; font-size:12px; color:var(--ink2); gap:5px; }
+#fork-gap-audit .fork-gap-controls input, #fork-gap-audit .fork-gap-controls select { border:1px solid var(--line2); border-radius:5px; background:#06162f; color:var(--ink-bright); font:inherit; font-size:14px; min-height:40px; padding:9px 11px; width:100%; }
+#fork-gap-audit .fork-gap-controls :is(input,select):focus-visible { outline:2px solid var(--ps-cyan); outline-offset:2px; }
+#fork-gap-audit .fork-gap-count { font-size:12px; color:var(--ink2); margin:2px 0 9px; }
+#fork-gap-audit .directory-alpha { display:flex; gap:5px; flex-wrap:wrap; margin:10px 0 13px; }
+#fork-gap-audit .directory-alpha a { min-width:28px; text-align:center; padding:6px; }
+#fork-gap-audit .fork-gap-state { white-space:nowrap; font-size:11px; font-weight:700; }
+#fork-gap-audit .fork-gap-state[data-state="shipped"] { color:#66e8bd; }
+#fork-gap-audit .fork-gap-state[data-state="partial"] { color:#fbbf76; }
+#fork-gap-audit .fork-gap-state[data-state="historical"] { color:#aab8cf; }
+#fork-gap-audit .fork-gap-state[data-state="tracked"] { color:#84cbff; }
+#fork-gap-audit .fork-gap-state[data-state="candidate"] { color:#deccff; }
+#fork-gap-audit .directory-tag { display:inline-block; border:1px solid var(--line); padding:3px 6px; border-radius:4px; color:var(--ink2); font-size:11px; white-space:nowrap; }
+#fork-gap-audit tr[hidden], #fork-gap-audit [hidden] { display:none !important; }
+#fork-gap-audit .fork-gap-note { font-size:13px; line-height:1.65; color:var(--ink2); }
+#fork-gap-audit .fork-gap-section { scroll-margin-top:86px; }
+#fork-gap-audit .directory-table td:first-child { min-width:185px; }
+#fork-gap-audit .directory-table td:nth-child(2) { min-width:125px; }
+#fork-gap-audit .directory-table td:nth-child(3) { min-width:135px; }
+#fork-gap-audit .directory-table td:last-child { min-width:280px; }
+@media (max-width:680px) {
+  #fork-gap-audit .fork-gap-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #fork-gap-audit .fork-gap-metric { padding:11px 12px; }
+  #fork-gap-audit .fork-gap-metric strong { font-size:22px; }
+  #fork-gap-audit .fork-gap-controls { gap:8px; }
+  #fork-gap-audit .fork-gap-controls label { min-width:140px; flex-basis:160px; }
+}
