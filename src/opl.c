@@ -425,13 +425,17 @@ static void itemExecSelect(struct menu_item *curMenu)
                     return;
                 }
                 config_set_t *configSet = menuLoadConfig();
-                if (curMenu->current == NULL)
+                guiLock();
+                if (curMenu->current == NULL) {
+                    guiUnlock();
                     return; // a deferred source refresh replaced the row while config IO was pending
+                }
                 int launchId = curMenu->current->item.id;
                 char gameIdStartup[128] = {0};
                 char *startup = support->itemGetStartup(support, launchId);
                 if (startup != NULL)
                     snprintf(gameIdStartup, sizeof(gameIdStartup), "%s", startup);
+                guiUnlock(); // startup points into storage a refresh may replace
                 // Create VMC on First Launch. It can run for seconds (genvmc) and saves the config
                 // through deferred IO, and a source refresh in that window renumbers the rows. A row id
                 // is only a list index, so a different game can land on the same one: match the game
@@ -441,11 +445,16 @@ static void itemExecSelect(struct menu_item *curMenu)
                 if (gameIdStartup[0] != '\0') {
                     if (!guiGameAutoCreateVmc(support, launchId, configSet))
                         return;
-                    if (curMenu->current == NULL || curMenu->current->item.isFolder)
+                    guiLock();
+                    if (curMenu->current == NULL || curMenu->current->item.isFolder) {
+                        guiUnlock();
                         return;
+                    }
                     launchId = curMenu->current->item.id;
                     startup = support->itemGetStartup(support, launchId);
-                    if (startup == NULL || strcmp(startup, gameIdStartup) != 0)
+                    int sameGame = startup != NULL && strcmp(startup, gameIdStartup) == 0;
+                    guiUnlock();
+                    if (!sameGame)
                         return;
                 }
                 // Native PS2/app launches can identify from their startup token. PS1 disc-image rows

@@ -28,6 +28,8 @@
 
 #include <hdd-ioctl.h>
 #include <delaythread.h> // DelayThread for the post-ATAD settle in hddLoadModules
+#include <speedregs.h>
+#include <libcdvd.h>
 
 #define OPL_HDD_MODE_PS2LOGO_OFFSET 0x17F8
 
@@ -189,6 +191,255 @@ static void hddClearRecoveredErrors(void)
 
 static char *hddPrefix = "pfs0:";
 static hdl_games_list_t hddGames;
+
+/*
+ * DESR DVR ISO view. A DESR's dvr_hdd0:/dvr_pfsN: belongs to the DVRP and
+ * is NOT the normal hdd0: HDL partition namespace. Only use read-only directory
+ * operations, and never create or format a DVR partition. When the PSX DVR
+ * driver has not been initialized, this path is inert on ordinary PS2 models.
+ *
+ * TODO (DESR hardware gate): load DVRP modules after switching to PSX mode
+ * without destroying the GUI's other IOP clients. The read-only scanner below
+ * works only when those namespaces are already available. Do not claim general
+ * DESR boot compatibility before that initialization has been validated.
+ */
+#define HDD_DVR_MAX_ISOS 128
+typedef struct
+{
+    hdl_game_info_t game; /* same menu metadata layout as other HDD PS2 rows */
+    char path[224];       /* complete dvr_pfsN:/... path for -dvd */
+} hdd_dvr_iso_t;
+static hdd_dvr_iso_t *hddDvrGames = NULL;
+static int hddDvrGameCount = 0;
+static unsigned char hddDvrMounted[2] = {0, 0};
+static unsigned char hddDvrDriverTried = 0;
+static unsigned char hddDvrDrvLoaded = 0;
+static unsigned char hddDvrDriverReady = 0;
+static unsigned char hddDvrReadableDirs = 0;
+
+/* Read the hardware capability bit, not the console name or a guessed ROMVER.
+ * The DVRP exists only on Sony PSX DESR hardware; normal PS2 HDDs skip this
+ * branch without loading a module, probing a partition or changing IOP state.
+ */
+static int hddDvrHardwarePresent(void)
+{
+    USE_SPD_REGS;
+    return (SPD_REG16(SPD_R_REV_3) & SPD_CAPS_DVR) != 0;
+}
+
+/* Same safe module ordering used by wLaunchELF's load_ps2dvr():
+ * existing DEV9/ATAD stack, then dvrdrv, then dvrfile. The bundled SDK
+ * dvrfile is used by the GUI only to enumerate files; external Neutrino
+ * carries pcm720's modified dvrfile plus dvrfile_fhi for the actual game.
+ * No DVRP firmware flash or modification is involved.
+ */
+static int hddDvrEnsureDrivers(void)
+{
+    if (hddDvrDriverReady)
+        return 1;
+    if (!hddDvrHardwarePresent())
+        return 0;
+    if (!hddLoadModulesReady()) {
+        LOG("[DVR] ATA/DEV9 modules unavailable; DVR namespace not probed\n");
+        return 0; // a transient ATA readiness failure can retry next refresh
+    }
+    if (!hddDvrDrvLoaded) {
+        if (hddDvrDriverTried)
+            return 0;
+        hddDvrDriverTried = 1;
+        if (sysLoadModuleBuffer(&dvrdrv_irx, size_dvrdrv_irx, 0, NULL) != 0) {
+            LOG("[DVR] dvrdrv.irx failed to start\n");
+            return 0;
+        }
+        hddDvrDrvLoaded = 1;
+    }
+    if (sysLoadModuleBuffer(&dvrfile_irx, size_dvrfile_irx, 0, NULL) != 0) {
+        LOG("[DVR] dvrfile.irx failed to start\n");
+        return 0;
+    }
+    sceCdNoticeGameStart(0, NULL);
+    hddDvrDriverReady = 1;
+    LOG("[DVR] DVRP filesystem drivers initialized (DESR capability detected)\n");
+    return 1;
+}
+
+/* Publishing under the GUI lock follows the existing HDL/VCD list contract.
+ * A refresh may free the prior array while the menu is reading its rows. */
+static void hddDvrPublish(hdd_dvr_iso_t *next, int count)
+{
+    hdd_dvr_iso_t *old;
+    guiLock();
+    old = hddDvrGames;
+    hddDvrGames = next;
+    hddDvrGameCount = count;
+    free(old);
+    guiUnlock();
+}
+
+static int hddDvrIsIsoName(const char *name)
+{
+    size_t len = strlen(name);
+    return len > 4 && strcasecmp(name + len - 4, ".iso") == 0;
+}
+
+/* Stable fallback key for ISOs without a conventional game-ID filename. */
+static void hddDvrNameToStartup(const char *name, char *out, int outSize)
+{
+    unsigned int hash = 2166136261u;
+    const unsigned char *p;
+    const char *basename = strrchr(name, '/');
+    if (basename != NULL)
+        basename++;
+    else
+        basename = name;
+    int valid = strlen(basename) >= 11 && basename[4] == '_' && basename[8] == '.';
+    if (valid) {
+        for (int i = 0; i < 11; i++) {
+            if (i == 4 || i == 8)
+                continue;
+            if ((i < 4 && !((basename[i] >= 'A' && basename[i] <= 'Z') || (basename[i] >= '0' && basename[i] <= '9'))) ||
+                (i > 4 && (basename[i] < '0' || basename[i] > '9'))) {
+                valid = 0;
+                break;
+            }
+        }
+    }
+    if (valid) {
+        snprintf(out, outSize, "%.*s", 11, basename);
+        return;
+    }
+    for (p = (const unsigned char *)name; *p; p++)
+        hash = (hash ^ *p) * 16777619u;
+    snprintf(out, outSize, "DVR_%07X", hash & 0x0FFFFFFFu);
+}
+
+static int hddDvrCollectDir(const char *dir, int media, hdd_dvr_iso_t *out, int count)
+{
+    iox_dirent_t entry;
+    int fd = fileXioDopen(dir);
+    int n;
+    if (fd < 0)
+        return -1; /* unreadable is not a proven-empty directory */
+    while ((n = fileXioDread(fd, &entry)) > 0) {
+        entry.name[sizeof(entry.name) - 1] = '\0';
+        if (!hddDvrIsIsoName(entry.name))
+            continue;
+        if (count >= HDD_DVR_MAX_ISOS) {
+            LOG("[DVR] scan capped at %d ISO files (no partial publish)\n", HDD_DVR_MAX_ISOS);
+            fileXioDclose(fd);
+            return -2;
+        }
+        char path[sizeof(out[0].path)];
+        int len = snprintf(path, sizeof(path), "%s%s%s", dir,
+                           dir[strlen(dir) - 1] == '/' ? "" : "/", entry.name);
+        if (len <= 0 || len >= (int)sizeof(path)) {
+            fileXioDclose(fd);
+            return -2; /* never launch a truncated path */
+        }
+        hdd_dvr_iso_t *dst = &out[count];
+        memset(dst, 0, sizeof(*dst));
+        snprintf(dst->path, sizeof(dst->path), "%s", path);
+        size_t titleLen = strlen(entry.name) - 4;
+        if (titleLen >= sizeof(dst->game.name))
+            titleLen = sizeof(dst->game.name) - 1;
+        memcpy(dst->game.name, entry.name, titleLen);
+        dst->game.name[titleLen] = '\0';
+        hddDvrNameToStartup(path, dst->game.startup, sizeof(dst->game.startup));
+        dst->game.disctype = media;
+        dst->game.total_size_in_kb = (u32)((((u64)entry.stat.hisize << 32) | entry.stat.size) >> 10);
+        count++;
+    }
+    fileXioDclose(fd);
+    return n < 0 ? -3 : count;
+}
+
+/* Updates only after a complete read. Never touches the HDL cache or its array. */
+static void hddDvrScan(void)
+{
+    static const char *const roots[] = {"dvr_pfs0:", "dvr_pfs1:"};
+    static const char *const subdirs[] = {"/", "/DVD", "/CD"};
+    hdd_dvr_iso_t *candidate;
+    int scanned = 0, count = 0, available = 0;
+    unsigned char readableDirs = 0;
+    int probe;
+    if (!hddDvrEnsureDrivers())
+        return;
+    probe = fileXioDopen("dvr_hdd0:");
+    if (probe < 0)
+        return; // a transient DVRP error must not invalidate the last-good menu
+    fileXioDclose(probe);
+    candidate = calloc(HDD_DVR_MAX_ISOS, sizeof(*candidate));
+    if (candidate == NULL)
+        return; /* preserve last good list on allocation failure */
+
+    for (int part = 0; part < 2; part++) {
+        char root[32], src[40];
+        int fd = fileXioDopen(roots[part]);
+        if (fd < 0) {
+            snprintf(src, sizeof(src), "dvr_hdd0:%s", part ? "__xdata" : "__xcontents");
+            if (fileXioMount(roots[part], src, FIO_MT_RDONLY) == 0)
+                hddDvrMounted[part] = 1;
+        } else
+            fileXioDclose(fd);
+        snprintf(root, sizeof(root), "%s", roots[part]);
+        for (int sub = 0; sub < 3; sub++) {
+            char dir[40];
+            int result;
+            snprintf(dir, sizeof(dir), "%s%s", root, subdirs[sub]);
+            result = hddDvrCollectDir(dir, sub == 2 ? SCECdPS2CD : SCECdPS2DVD, candidate, count);
+            if (result == -2 || result == -3 ||
+                (result < 0 && (hddDvrReadableDirs & (1 << (part * 3 + sub))))) {
+                free(candidate);
+                return; /* truncated library or failed read: preserve last-good list */
+            }
+            if (result >= 0) {
+                readableDirs |= 1 << (part * 3 + sub);
+                available++;
+                count = result;
+            }
+            scanned++;
+        }
+    }
+    if (available > 0) {
+        hddDvrPublish(candidate, count);
+        hddDvrReadableDirs = readableDirs;
+        LOG("[DVR] read-only scan: %d ISO(s), %d/%d readable directories\n", count, available, scanned);
+    } else
+        free(candidate); /* unavailable/transient read failure: retain last-good list */
+}
+
+static int hddPs2GameCount(void)
+{
+    return (int)hddGames.count + hddDvrGameCount;
+}
+
+static hdd_dvr_iso_t *hddActiveDvr(int id)
+{
+    id -= (int)hddGames.count;
+    if (hddDvrGames == NULL || id < 0 || id >= hddDvrGameCount)
+        return NULL;
+    return &hddDvrGames[id];
+}
+
+static void hddDvrCleanUp(int keepMounts)
+{
+    hddDvrPublish(NULL, 0);
+    hddDvrReadableDirs = 0;
+    // Neutrino resets the IOP, but DVRP owns these mounts and its file handles.
+    // Its LE phase opens the image using the supplied dvr_pfsN: path. Unmounting
+    // here removes that namespace before it can obtain its persistent handle.
+    if (keepMounts)
+        return;
+    for (int i = 0; i < 2; i++) {
+        if (hddDvrMounted[i]) {
+            if (fileXioUmount(i ? "dvr_pfs1:" : "dvr_pfs0:") >= 0)
+                hddDvrMounted[i] = 0;
+            else
+                LOG("[DVR] unmount failed for partition %d; retain ownership for retry\n", i);
+        }
+    }
+}
+
 
 // How long the HDD VCD launch waits for the art worker to let go before it remounts pfs0: under it.
 // Milliseconds (cacheCancelPendingImageLoadsTimed sleeps via DelayThread(1000), NOT util.c's delay(),
@@ -1382,29 +1633,33 @@ static int hddUpdateGameList(item_list_t *itemList)
     hddFreeHDLGamelist(&cachedGames);
     hddFreeHDLGamelist(&hddGamesNew);
     hddForceUpdate = 1; // Subsequent refresh operations will cause the HDD to be scanned.
+    // Independent read-only DVR namespace; never part of the HDL games.bin cache.
+    hddDvrScan();
 
-    return view == LIB_VIEW_MIXED ? (int)hddGames.count + hddVcdGameCount : (int)hddGames.count;
+    return view == LIB_VIEW_MIXED ? hddPs2GameCount() + hddVcdGameCount : hddPs2GameCount();
 }
 
 static int hddGetGameCount(item_list_t *itemList)
 {
     int view = libListViewActive(itemList);
-    return view == LIB_VIEW_MIXED ? (int)hddGames.count + hddVcdGameCount :
-           view == LIB_VIEW_PS1   ? hddVcdGameCount :
-                                    (int)hddGames.count;
+    if (view == LIB_VIEW_MIXED)
+        return hddPs2GameCount() + hddVcdGameCount;
+    if (view == LIB_VIEW_PS1)
+        return hddVcdGameCount;
+    return hddPs2GameCount();
 }
 
 static int hddGetItemView(item_list_t *itemList, int id)
 {
     int view = libListViewActive(itemList);
     if (view == LIB_VIEW_MIXED)
-        return id >= 0 && id < (int)hddGames.count ? LIB_VIEW_ISO : LIB_VIEW_PS1;
+        return id >= 0 && id < hddPs2GameCount() ? LIB_VIEW_ISO : LIB_VIEW_PS1;
     return view;
 }
 
 static int hddGetSourceId(item_list_t *itemList, int id)
 {
-    return libListViewActive(itemList) == LIB_VIEW_MIXED && id >= (int)hddGames.count ? id - (int)hddGames.count : id;
+    return libListViewActive(itemList) == LIB_VIEW_MIXED && id >= hddPs2GameCount() ? id - hddPs2GameCount() : id;
 }
 
 // Split-store guard (Codex/Fable audit), mirroring mmceActiveGame. L3 stages its destination until
@@ -1431,14 +1686,14 @@ static void *hddGetGame(item_list_t *itemList, int id)
 {
     int ps1 = hddGetItemView(itemList, id) == LIB_VIEW_PS1;
     id = hddGetSourceId(itemList, id);
-    return ps1 ? (void *)hddActiveVcd(id) : (void *)hddActiveHdl(id);
+    return ps1 ? (void *)hddActiveVcd(id) : (id >= (int)hddGames.count && hddActiveDvr(id) ? (void *)&hddActiveDvr(id)->game : (void *)hddActiveHdl(id));
 }
 
 static char *hddGetGameName(item_list_t *itemList, int id)
 {
     int ps1 = hddGetItemView(itemList, id) == LIB_VIEW_PS1;
     id = hddGetSourceId(itemList, id);
-    return ps1 ? hddActiveVcd(id)->name : hddActiveHdl(id)->name;
+    return ps1 ? hddActiveVcd(id)->name : (id >= (int)hddGames.count && hddActiveDvr(id) ? hddActiveDvr(id)->game.name : hddActiveHdl(id)->name);
 }
 
 static int hddGetGameNameLength(item_list_t *itemList, int id)
@@ -1451,7 +1706,7 @@ static char *hddGetGameStartup(item_list_t *itemList, int id)
     // VCD view keys per-game CFG/art off the VCD filename (game->name), not a disc id.
     int ps1 = hddGetItemView(itemList, id) == LIB_VIEW_PS1;
     id = hddGetSourceId(itemList, id);
-    return ps1 ? hddActiveVcd(id)->name : hddActiveHdl(id)->startup;
+    return ps1 ? hddActiveVcd(id)->name : (id >= (int)hddGames.count && hddActiveDvr(id) ? hddActiveDvr(id)->game.startup : hddActiveHdl(id)->startup);
 }
 
 // Settings probes use pfs1:, never pfs0:. The latter is the persistent OPL data-home mount and
@@ -2222,6 +2477,45 @@ static int hddTryNeutrinoLaunch(hdl_game_info_t *game, config_set_t *configSet)
 // Where this image's two VMC slots live (sbMcemuSlotWord): searched on the first launch only.
 static int hddMcemuSlots[2] = {-2, -2};
 
+
+/* DVR ISO rows must NEVER fall through to the APA/raw-HDLoader launch path.
+ * No substitute OPL core exists: the external pcm720 bsd-dvr Neutrino is required.
+ */
+static void hddLaunchDvrIso(int id, config_set_t *configSet)
+{
+    hdd_dvr_iso_t copy;
+    guiLock();
+    hdd_dvr_iso_t *entry = hddActiveDvr(id);
+    if (entry != NULL)
+        copy = *entry;
+    guiUnlock();
+    if (!entry)
+        return;
+    const char *neutrinoPath = sbResolveNeutrinoPath(gHDDPrefix);
+    if (!neutrinoPath) {
+        guiWarning(_l(_STR_NEUTRINO_NOT_FOUND), 6);
+        return;
+    }
+    char dvdPath[sizeof(copy.path)];
+    char startup[sizeof(copy.game.startup)];
+    char args[256] = "";
+    int video = gNeutrinoVideoDefault, gsmComp = gNeutrinoGsmCompDefault;
+    int compat = sbGetCompatModes(configSet);
+    snprintf(dvdPath, sizeof(dvdPath), "%s", copy.path);
+    snprintf(startup, sizeof(startup), "%s", copy.game.startup);
+    configGetStrCopy(configSet, CONFIG_ITEM_NEUTRINO_ARGS, args, sizeof(args));
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_VIDEO, &video);
+    configGetInt(configSet, CONFIG_ITEM_NEUTRINO_GSMCOMP, &gsmComp);
+    if (sysNeutrinoPreflight("dvr", neutrinoPath, 0, args, -1) < 0)
+        return;
+    if (sysNeutrinoArgsPreflight("dvr", dvdPath, startup, compat, 0, neutrinoPath, args, video, gsmComp, 0, -1, NULL) < 0)
+        return;
+    mmceSendGameID(startup, neutrinoPath, 0);
+    int mode = oplPath2Mode(neutrinoPath);
+    deinitEx(sbNeutrinoDeinitException(neutrinoPath) | KEEP_DVR_MOUNTS_EXCEPTION, HDD_MODE, mode);
+    sysLaunchNeutrino("dvr", dvdPath, startup, compat, 0, neutrinoPath, args, video, gsmComp, 0, -1, NULL);
+}
+
 void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 {
 #ifdef RETROACHIEVEMENTS
@@ -2269,12 +2563,26 @@ void hddLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         return;
     }
 
+    if (gAutoLaunchGame == NULL && id >= (int)hddGames.count && id < hddPs2GameCount() &&
+        hddGetItemView(itemList, id) == LIB_VIEW_ISO) {
+        hddLaunchDvrIso(id, configSet);
+        return;
+    }
+
     if (gAutoLaunchGame == NULL) {
         game = hddActiveHdl(id);
         if (game == &hddEmptyHdl)
             return; // stale/invalid id -> nothing to launch
-    } else
+    } else {
         game = gAutoLaunchGame;
+        // An ISO row cannot ever be used as a raw HDL APA partition. The
+        // automatic loader currently carries only HDL game metadata, not
+        // the DVRP mount identity: fail safely until DESR auto-boot is tested.
+        if (game->partition_name[0] == '\0') {
+            LOG("[DVR] auto launch requires a proven APA/HDL partition; refusing\n");
+            return;
+        }
+    }
 
     // D8: Neutrino core gets its own lean path FIRST -- everything below is native-core prep it
     // neither needs nor should be able to die on (see hddTryNeutrinoLaunch).
@@ -2506,7 +2814,14 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
         return config;
     }
 
-    hdl_game_info_t *game = hddActiveHdl(hddGetSourceId(itemList, id));
+    int hddId = hddGetSourceId(itemList, id);
+    hdl_game_info_t snapshot;
+    guiLock();
+    hdd_dvr_iso_t *dvr = hddActiveDvr(hddId);
+    if (dvr != NULL)
+        snapshot = dvr->game;
+    guiUnlock();
+    hdl_game_info_t *game = dvr ? &snapshot : hddActiveHdl(hddId);
 
     if (gHDDPrefix != NULL) {
         snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, game->startup);
@@ -2521,7 +2836,7 @@ static config_set_t *hddGetConfig(item_list_t *itemList, int id)
 
     configSetStr(config, CONFIG_ITEM_NAME, game->name);
     configSetInt(config, CONFIG_ITEM_SIZE, game->total_size_in_kb >> 10);
-    configSetStr(config, CONFIG_ITEM_FORMAT, "HDL");
+    configSetStr(config, CONFIG_ITEM_FORMAT, dvr ? "ISO" : "HDL");
     sbSetDiscAttributes(config, 0, game->disctype == SCECdPS2CD);
     configSetStr(config, CONFIG_ITEM_STARTUP, game->startup);
 
@@ -2574,6 +2889,7 @@ static void hddCleanUp(item_list_t *itemList, int exception)
         if (hddGameList.enabled) {
             hddFreeHDLGamelist(&hddGames);
             hddFreeVcdGameList();
+            hddDvrCleanUp(1); // never unmount beneath an abandoned reader
         }
         return;
     }
@@ -2581,6 +2897,7 @@ static void hddCleanUp(item_list_t *itemList, int exception)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
+        hddDvrCleanUp(exception & (KEEP_DVR_MOUNTS_EXCEPTION | KEEPIOP_EXCEPTION));
 
         // pfs1: is a scratch slot used by HDD scans/settings and historically gets torn down even
         // when pfs0: is deliberately spared. Do not broaden UNMOUNT_EXCEPTION to pfs1: -- Apps and
@@ -2623,6 +2940,7 @@ static void hddShutdown(item_list_t *itemList)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
+        hddDvrCleanUp(0);
         fileXioUmount("pfs1:");
         fileXioUmount(hddPrefix);
     }

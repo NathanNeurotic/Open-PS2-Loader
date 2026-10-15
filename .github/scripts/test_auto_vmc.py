@@ -26,6 +26,7 @@ function = guigame[start:end]
 harness = r'''
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #define SYS_VMC_REPLACE_REQUIRES_DELETE (-2)
 #define SYS_VMC_CREATE_FAILED (-3)
@@ -68,9 +69,13 @@ static int checkVMC(item_list_t *l, char *name, int size)
     return submitResult;
 }
 static int flipAfterSubmit;
+static int guiLocked;
+static void guiLock(void) { if (guiLocked) abort(); guiLocked = 1; }
+static void guiUnlock(void) { if (!guiLocked) abort(); guiLocked = 0; memset(startupBuf, 0x5a, sizeof(startupBuf) - 1); }
 static char *getStartup(item_list_t *l, int id)
 {
     (void)l; (void)id;
+    assert(guiLocked);
     snprintf(startupBuf, sizeof(startupBuf), "%s", flipAfterSubmit && submits > 0 ? "SLUS_999.99" : startupNow);
     return startupBuf;
 }

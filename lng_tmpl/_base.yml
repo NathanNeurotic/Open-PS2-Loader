@@ -1852,3 +1852,8 @@ gui_strings:
 # Automatic VMC: the card is still being created after the wait; the menu stays (#935).
 - label: AUTO_VMC_STILL_RUNNING
   string: "This game's VMC is still being created. Launch the game again in a moment."
+
+- label: NEUTRINO_DVR_QUICKBOOT
+  string: "DVR launch requires the PSX-mode transition. Remove -qb from global and per-game Neutrino arguments."
+- label: NEUTRINO_DVR_FILE_MISSING
+  string: "DVR Neutrino installation is incomplete. Missing required file:"

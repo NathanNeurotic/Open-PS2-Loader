@@ -26,6 +26,18 @@ customized Neutrino gameplay), **NHDDL**, **XEB+ Plugin**, **RETROLauncher**, **
 Report *launching* problems here — building the arguments and handing off are ours. Genuine Neutrino
 bugs belong on rickgaiser's tracker.
 
+### PSX DESR DVR filesystem (experimental)
+
+RiptOPL can detect the DESR DVRP hardware capability and enumerate ISO files
+from the DVR-side `dvr_pfs0:` / `dvr_pfs1:` filesystems using read-only
+mounts. For launching, **pcm720's separate [bsd-dvr Neutrino branch](https://github.com/pcm720/neutrino/tree/bsd-dvr)**
+is required: normal bundled Neutrino does not contain its DVR modules. Select
+the full DVR Neutrino installation under **Neutrino Path**. RiptOPL emits
+`-bsd=dvr` and `-dvd=dvr_pfsN:/path.iso`, without `-qb` (which would
+skip the required PSX-mode transition). This is unverified on DESR hardware
+and is not yet included in the official supported-device matrix. See
+[DESR-DVR.md](DESR-DVR.md) for precise implementation scope, safety and tests.
+
 ## 1. Install Neutrino
 
 RiptOPL's own installation folder and Neutrino's folder are independent. **You do not need to move RiptOPL out of `APPS/` or into the memory-card root.** Automatic memory-card lookup expects the complete Neutrino installation under `mc0:/neutrino/` or `mc1:/neutrino/`; a Neutrino folder nested inside an app folder needs an explicit full **Neutrino Path**. Setting the path selects an installation, not a game source, and does not repair a missing configuration or module.
