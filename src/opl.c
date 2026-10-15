@@ -4338,8 +4338,15 @@ void applyConfig(int themeID, int langID, int skipDeviceRefresh)
     // the row back to Apps before the value was ever written to the config: the whole feature was
     // dead with its picker entry, its enum value and its config key all present. Data half without
     // the code half, again.
+#ifdef DVRP
+    if (gDefaultDevice < 0 || (gDefaultDevice > FAV_MODE && gDefaultDevice != DVR_MODE))
+        gDefaultDevice = MMCE_MODE;
+    if (gDefaultDevice == DVR_MODE && (!gDVRStartMode || !dvrIsAvailable()))
+        gDefaultDevice = APP_MODE;
+#else
     if (gDefaultDevice < 0 || gDefaultDevice > FAV_MODE)
         gDefaultDevice = MMCE_MODE;
+#endif
     // Favourites is a valid startup page only while the FAV tab is enabled; otherwise a stale
     // choice would boot into a hidden tab with no way back to a visible one.
     if (gDefaultDevice == FAV_MODE && !gFAVStartMode)

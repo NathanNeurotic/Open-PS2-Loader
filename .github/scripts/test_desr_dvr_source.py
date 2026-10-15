@@ -52,5 +52,6 @@ assert 'if (!strcmp(driver, "dvr"))' in system
 assert 'neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb")' in system
 assert 'neutrinoArgHasActiveFlag(extraArgs, "-bsd=")' in system
 assert 'neutrinoArgHasActiveFlag(extraArgs, "-dvd=")' in system
+assert 'neutrinoArgHasActiveFlag(extraArgs, "-logo")' in system
 assert "not hardware-validated" in docs
 print("PASS: experimental DESR DVR source contract (source inspection only)")

@@ -1867,13 +1867,15 @@ int sysNeutrinoPreflight(const char *driver, const char *neutrinoPath, int neutr
         close(rom);
         if (neutrinoArgHasActiveFlag(gNeutrinoArgs, "-qb") ||
             neutrinoArgHasActiveFlag(extraArgs, "-qb") ||
+            neutrinoArgHasActiveFlag(gNeutrinoArgs, "-logo") ||
+            neutrinoArgHasActiveFlag(extraArgs, "-logo") ||
             neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsdfs=") ||
             neutrinoArgHasActiveFlag(extraArgs, "-bsdfs=") ||
             neutrinoArgHasActiveFlag(gNeutrinoArgs, "-bsd=") ||
             neutrinoArgHasActiveFlag(extraArgs, "-bsd=") ||
             neutrinoArgHasActiveFlag(gNeutrinoArgs, "-dvd=") ||
             neutrinoArgHasActiveFlag(extraArgs, "-dvd=") || neutrinoBsdfs != 0) {
-            LOG("[NEUTRINO] DVR preflight: -qb or -bsdfs is incompatible with DVR filesystem handoff\n");
+            LOG("[NEUTRINO] DVR preflight: conflicting -qb/-logo/-bsdfs/-bsd/-dvd override\n");
             guiWarning(_l(_STR_NEUTRINO_DEV_UNSUPPORTED), 6);
             return -1;
         }

@@ -40,6 +40,8 @@ static dvr_game_t *dvrGames;
 static int dvrGameCount;
 static int dvrDrvLoaded;
 static int dvrFileLoaded;
+static int dvrDev9Owned;
+static int dvrKeepMountOnHandoff;
 static int dvrPfsOwned;
 static char dvrMountedPartition[DVR_PARTITION_NAME_MAX + 1];
 static int dvrReady;
@@ -86,13 +88,19 @@ static int dvrLoadModules(void)
         return 0;
     }
     /*
-     * The Launchstation DVRP loader has the standard HDD stack in memory first,
-     * followed by dvrdrv and dvrfile. Inspect the existing PS2 APA home without
-     * creating a partition or folder; never format/write/alter the DVR disk.
+     * pcm720/neutrino bsd-dvr requires DEV9 + dvrdrv + dvrfile, NOT PS2HDD,
+     * PS2FS or an APA home. Probe neither the DVR disk's APA table nor its
+     * configuration partition: those are unrelated to the DVRP filesystem.
+     * The traditional HDD initialization can modify non-APA media.
      */
-    if (!hddLoadModulesReady())
-        return 0;
-    hddInspectSupportHome();
+    if (!dvrDev9Owned) {
+        if (!sysInitDev9()) {
+            sysShutdownDev9(); /* sysInitDev9 acquires a ref even on failure */
+            LOG("[DVR] DEV9 could not start; DVRP source unavailable\n");
+            return 0;
+        }
+        dvrDev9Owned = 1;
+    }
     if (!dvrDrvLoaded) {
         if (sysLoadModuleBuffer(&dvrdrv_irx, size_dvrdrv_irx, 0, NULL) < 0) {
             LOG("[DVR] cannot load PS2SDK dvrdrv.irx\n");
@@ -132,6 +140,12 @@ static int dvrMountReadOnly(void)
         fileXioUmount(dvrPrefix);
         dvrPfsOwned = 0;
         dvrMountedPartition[0] = '\0';
+        /* A selected partition change invalidates row IDs and image paths.
+         * Preserve neither stale covers nor launch candidates from the old
+         * mount when a new partition fails its scan. */
+        free(dvrGames);
+        dvrGames = NULL;
+        dvrGameCount = 0;
     }
     if (!dvrPfsOwned) {
         snprintf(partition, sizeof(partition), "dvr_hdd0:%s", gDVRPartition);
@@ -254,7 +268,12 @@ static void dvrInit(item_list_t *list)
     (void)list;
     dvrGameList.enabled = 1;
     dvrGameList.delay = gArtDelay;
-    snprintf(dvrConfigPrefix, sizeof(dvrConfigPrefix), "%s", configGetHomePath());
+    const char *home = configGetHomePath();
+    snprintf(dvrConfigPrefix, sizeof(dvrConfigPrefix), "%s", home ? home : "");
+    /* Never use the DVR device itself as a writable CFG or ART home, even
+     * if an unusual boot/config override resolved to a DVRP path. */
+    if (!strncasecmp(dvrConfigPrefix, "dvr_pfs", 7) || !strncasecmp(dvrConfigPrefix, "dvr_hdd", 7))
+        snprintf(dvrConfigPrefix, sizeof(dvrConfigPrefix), "mc0:/OPL/");
     size_t n = strlen(dvrConfigPrefix);
     if (n && n < sizeof(dvrConfigPrefix) - 2 && dvrConfigPrefix[n - 1] != '/')
         strcat(dvrConfigPrefix, "/");
@@ -361,6 +380,12 @@ static int dvrNeutrinoComplete(const char *elf)
     unsigned int i;
     if (!elf || !(sep = strrchr(elf, '/')))
         return 0;
+    /*
+     * The external loader must not reside in the DVR mount whose ownership
+     * changes across Neutrino's PSX-mode transition. Prefer mc:/ or mass:/.
+     */
+    if (!strncasecmp(elf, "dvr_pfs", 7) || !strncasecmp(elf, "dvr_hdd", 7))
+        return 0;
     for (i = 0; i < sizeof(needed) / sizeof(needed[0]); i++) {
         int fd;
         int n = snprintf(file, sizeof(file), "%.*s%s", (int)(sep - elf) + 1, elf, needed[i]);
@@ -384,6 +409,10 @@ static void dvrLaunch(item_list_t *list, int id, config_set_t *cfg)
     (void)list;
     if (id < 0 || id >= dvrGameCount || !dvrGames || !cfg || !dvrIsDesr() || !dvrMountReadOnly())
         return;
+    /* dvrMountReadOnly may invalidate all rows when the user changed DVR
+     * partition in settings. Do not dereference the previously selected ID. */
+    if (id >= dvrGameCount || !dvrGames)
+        return;
     resolved = sbResolveNeutrinoPath(dvrPrefix);
     if (!resolved || !dvrNeutrinoComplete(resolved)) {
         guiMsgBox("DESR DVR requires pcm720's complete bsd-dvr Neutrino installation (ELF, config and modules).", 0, NULL);
@@ -404,6 +433,14 @@ static void dvrLaunch(item_list_t *list, int id, config_set_t *cfg)
     /* The DVR branch restarts the IOP into PSX mode. No -qb, no OPL-core
      * DVD path, and no unverified VMC/RA backend dependencies. */
     mmceSendGameID(startup, elf, 0);
+    /*
+     * CRITICAL: pcm720's dvrfile FHI opens the ISO after Neutrino resets
+     * into its Load Environment. Unmounting here closes the DVRP-side PFS
+     * namespace before Neutrino has opened the image. Keep ONLY our own
+     * explicitly selected mount alive across this handoff; the next IOP
+     * generation is managed by Neutrino itself.
+     */
+    dvrKeepMountOnHandoff = 1;
     deinitEx(sbNeutrinoDeinitException(elf), DVR_MODE, oplPath2Mode(elf));
     sysLaunchNeutrino("dvr", image, startup, compat, 0, elf, extra, video, gsm, 0, -1, NULL);
 }
@@ -415,13 +452,21 @@ static void dvrClean(item_list_t *list, int exception)
     free(dvrGames);
     dvrGames = NULL;
     dvrGameCount = 0;
-    if (dvrPfsOwned) {
+    if (dvrPfsOwned && !dvrKeepMountOnHandoff) {
         fileXioUmount(dvrPrefix);
         dvrPfsOwned = 0;
         dvrMountedPartition[0] = '\0';
     }
 }
-static void dvrShutdown(item_list_t *list) { dvrClean(list, 0); }
+static void dvrShutdown(item_list_t *list)
+{
+    dvrClean(list, 0);
+    dvrReady = 0;
+    if (dvrDev9Owned) {
+        sysShutdownDev9();
+        dvrDev9Owned = 0;
+    }
+}
 static int dvrVmc(item_list_t *list, char *name, int createSize)
 {
     (void)list;

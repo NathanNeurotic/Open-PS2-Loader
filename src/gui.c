@@ -570,6 +570,10 @@ int guiDeviceTypeToIoMode(int deviceType)
         return APP_MODE;
     else if (deviceType == 5)
         return FAV_MODE;
+#ifdef DVRP
+    else if (deviceType == 6)
+        return DVR_MODE;
+#endif
     else
         return APP_MODE; // safe fallback for unexpected indices: Apps is always present, FAV may be disabled
 }
@@ -588,6 +592,10 @@ int guiIoModeToDeviceType(int ioMode)
         return 4;
     if (ioMode == FAV_MODE)
         return 5;
+#ifdef DVRP
+    if (ioMode == DVR_MODE)
+        return 6;
+#endif
 
     return 0;
 }
@@ -845,7 +853,11 @@ static int guiDeviceConfigUpdater(int modified)
 
 void guiShowDeviceConfig(void)
 {
+#ifdef DVRP
+    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), "PSX DVR", NULL};
+#else
     const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
+#endif
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
     static const char *hddOplHomes[] = {"__common/OPL/", "+OPL/", NULL};
 
@@ -2886,7 +2898,11 @@ static int guiSettingsSourcesUpdater(int modified)
 static int guiSettingsShowSources(void)
 {
     const struct UIItem *parts[] = {diaDeviceConfig};
+#ifdef DVRP
+    const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), "PSX DVR", NULL};
+#else
     const char *deviceNames[] = {_l(_STR_BDM_GAMES), _l(_STR_MMCE), _l(_STR_HDD_GAMES), _l(_STR_NET_GAMES), _l(_STR_APPS), _l(_STR_FAV), NULL};
+#endif
     const char *deviceModes[] = {_l(_STR_OFF), _l(_STR_MANUAL), _l(_STR_AUTO), NULL};
     static const char *hddOplHomes[] = {"__common/OPL/", "+OPL/", NULL};
     struct UIItem *ui = guiSettingsCompose(parts, 1, NULL, 0, -1, 0);
