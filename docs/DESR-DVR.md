@@ -38,6 +38,16 @@ last valid list after unreadable scans, and rejects truncated paths. Ordinary
 APA/HDL game cache files are never modified by DVR discovery. PS1 VCD, virtual
 memory card, and DVR-side write support are **not** claimed.
 
+Refresh also preserves the last complete list if a directory that was previously
+readable cannot be reopened. Missing optional directories on the initial scan do
+not prevent discovery. A successful empty scan may clear the list.
+
+The DVR Neutrino handoff leaves DVRP mounts in place: its load environment opens
+the ISO and obtains a persistent DVR-side file handle after the IOP reboot.
+Ordinary cleanup unmounts only DVR filesystems mounted by RiptOPL; a keep-IOP
+handoff or an abandoned artwork reader retains them. This follows the reference
+backend's ownership contract, but still requires DESR hardware validation.
+
 ### Next hardware-dependent steps
 
 1. Confirm DVR capability and SDK DVR driver initialization on actual DESR-5000

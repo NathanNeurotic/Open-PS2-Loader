@@ -113,6 +113,8 @@ jobs:
         run: python3 .github/scripts/test_neutrino_bsdfs.py
       - name: Check PSX DVR Neutrino discovery and safety gates
         run: python3 .github/scripts/test_neutrino_dvr.py
+      - name: Check DVR refresh and Neutrino mount handoff
+        run: python3 .github/scripts/test_dvr_scan_lifecycle.py
       - name: Check Neutrino argument editing preserves full values and rejects overlong saves
         run: python3 .github/scripts/test_neutrino_args_editor.py
       - name: Check Neutrino launch arguments fit before teardown without dropping tokens

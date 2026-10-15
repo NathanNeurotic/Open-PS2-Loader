@@ -19,7 +19,8 @@ assert 'result == -2 || result == -3' in hdd
 assert 'dir[strlen(dir) - 1]' in hdd
 assert 'fileXioMount(roots[part], src, FIO_MT_RDONLY)' in hdd
 assert 'hddPs2GameCount()' in hdd
-assert 'hddDvrCleanUp();' in hdd
+assert 'hddDvrCleanUp(0);' in hdd
+assert 'KEEP_DVR_MOUNTS_EXCEPTION' in hdd
 print("DESR DVR source integration checks passed (not a hardware/build test)")
 assert 'guiLock();' in hdd and 'hddDvrPublish(candidate, count);' in hdd
 assert 'if (game->partition_name[0]' in hdd

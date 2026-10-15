@@ -214,6 +214,7 @@ static int hddDvrGameCount = 0;
 static unsigned char hddDvrMounted[2] = {0, 0};
 static unsigned char hddDvrDriverTried = 0;
 static unsigned char hddDvrDriverReady = 0;
+static unsigned char hddDvrReadableDirs = 0;
 
 /* Read the hardware capability bit, not the console name or a guessed ROMVER.
  * The DVRP exists only on Sony PSX DESR hardware; normal PS2 HDDs skip this
@@ -353,6 +354,7 @@ static void hddDvrScan(void)
     static const char *const subdirs[] = {"/", "/DVD", "/CD"};
     hdd_dvr_iso_t *candidate;
     int scanned = 0, count = 0, available = 0;
+    unsigned char readableDirs = 0;
     int probe;
     if (!hddDvrEnsureDrivers())
         return;
@@ -379,11 +381,13 @@ static void hddDvrScan(void)
             int result;
             snprintf(dir, sizeof(dir), "%s%s", root, subdirs[sub]);
             result = hddDvrCollectDir(dir, sub == 2 ? SCECdPS2CD : SCECdPS2DVD, candidate, count);
-            if (result == -2 || result == -3) {
+            if (result == -2 || result == -3 ||
+                (result < 0 && (hddDvrReadableDirs & (1 << (part * 3 + sub))))) {
                 free(candidate);
                 return; /* truncated library or failed read: preserve last-good list */
             }
             if (result >= 0) {
+                readableDirs |= 1 << (part * 3 + sub);
                 available++;
                 count = result;
             }
@@ -392,6 +396,7 @@ static void hddDvrScan(void)
     }
     if (available > 0) {
         hddDvrPublish(candidate, count);
+        hddDvrReadableDirs = readableDirs;
         LOG("[DVR] read-only scan: %d ISO(s), %d/%d readable directories\n", count, available, scanned);
     } else
         free(candidate); /* unavailable/transient read failure: retain last-good list */
@@ -410,9 +415,15 @@ static hdd_dvr_iso_t *hddActiveDvr(int id)
     return &hddDvrGames[id];
 }
 
-static void hddDvrCleanUp(void)
+static void hddDvrCleanUp(int keepMounts)
 {
     hddDvrPublish(NULL, 0);
+    hddDvrReadableDirs = 0;
+    // Neutrino resets the IOP, but DVRP owns these mounts and its file handles.
+    // Its LE phase opens the image using the supplied dvr_pfsN: path. Unmounting
+    // here removes that namespace before it can obtain its persistent handle.
+    if (keepMounts)
+        return;
     for (int i = 0; i < 2; i++) {
         if (hddDvrMounted[i]) {
             fileXioUmount(i ? "dvr_pfs1:" : "dvr_pfs0:");
@@ -2493,7 +2504,7 @@ static void hddLaunchDvrIso(int id, config_set_t *configSet)
         return;
     mmceSendGameID(startup, neutrinoPath, 0);
     int mode = oplPath2Mode(neutrinoPath);
-    deinitEx(sbNeutrinoDeinitException(neutrinoPath), HDD_MODE, mode);
+    deinitEx(sbNeutrinoDeinitException(neutrinoPath) | KEEP_DVR_MOUNTS_EXCEPTION, HDD_MODE, mode);
     sysLaunchNeutrino("dvr", dvdPath, startup, compat, 0, neutrinoPath, args, video, gsmComp, 0, -1, NULL);
 }
 
@@ -2870,7 +2881,7 @@ static void hddCleanUp(item_list_t *itemList, int exception)
         if (hddGameList.enabled) {
             hddFreeHDLGamelist(&hddGames);
             hddFreeVcdGameList();
-            hddDvrCleanUp();
+            hddDvrCleanUp(1); // never unmount beneath an abandoned reader
         }
         return;
     }
@@ -2878,7 +2889,7 @@ static void hddCleanUp(item_list_t *itemList, int exception)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
-        hddDvrCleanUp();
+        hddDvrCleanUp(exception & (KEEP_DVR_MOUNTS_EXCEPTION | KEEPIOP_EXCEPTION));
 
         // pfs1: is a scratch slot used by HDD scans/settings and historically gets torn down even
         // when pfs0: is deliberately spared. Do not broaden UNMOUNT_EXCEPTION to pfs1: -- Apps and
@@ -2921,7 +2932,7 @@ static void hddShutdown(item_list_t *itemList)
     if (hddGameList.enabled) {
         hddFreeHDLGamelist(&hddGames);
         hddFreeVcdGameList();
-        hddDvrCleanUp();
+        hddDvrCleanUp(0);
         fileXioUmount("pfs1:");
         fileXioUmount(hddPrefix);
     }

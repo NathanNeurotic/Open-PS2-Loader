@@ -86,6 +86,8 @@ enum ERROR_CODE {
 // Keep this narrower than KEEPIOP_EXCEPTION so PFS-hosted Neutrino/POPSTARTER retain the same pad
 // teardown as those loaders on every other backend.
 #define KEEP_PFS_FDS_EXCEPTION 0x08
+// DVRP mounts outlive an IOP reboot; the DVR Neutrino opens its image after it.
+#define KEEP_DVR_MOUNTS_EXCEPTION 0x10
 
 #define MODE_FLAG_NO_COMPAT  0x01 // no compat support
 #define MODE_FLAG_COMPAT_DMA 0x02 // Supports DMA compat flags
