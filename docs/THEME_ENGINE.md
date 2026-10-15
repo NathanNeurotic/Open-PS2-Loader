@@ -11,6 +11,11 @@ value token, and built-in asset name the engine understands, including this fork
 - OPL also ships two built-in themes you can study as references: the default `<OPL>` theme
   and this fork's `<Coverflow>` theme.
 
+A fresh configuration starts with `<OPL>`, a 4:3 menu and Auto video mode.
+Select `<Coverflow>` and, if wanted, Widescreen under **Settings → Interface**,
+then apply and save. Saved theme and display choices remain in effect after an
+ELF update. See [Fresh-start defaults](DEFAULTS.md).
+
 > Quick mental model: a theme is a flat list of **elements**, each positioned on a virtual
 > **640×480** canvas. OPL scales that canvas to the real screen, and (with `scaled=1`)
 > corrects for widescreen and the PS2's non-square pixels automatically.
