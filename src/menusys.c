@@ -1438,6 +1438,7 @@ static void menuPrevV()
 
 static void menuNextPage()
 {
+    submenu_list_t *previous = selected_item->item->current;
     submenu_list_t *cur = selected_item->item->pagestart;
     int displayed = ((items_list_t *)gTheme->itemsList->extended)->displayedItems;
 
@@ -1465,10 +1466,14 @@ static void menuNextPage()
         // last game and stayed there (#729).
         menuFirstPage();
     }
+    // Page keys share the D-pad carousel animation, including end-to-start wrap.
+    if (gTheme->coverflow && previous != selected_item->item->current)
+        thmTriggerCoverflowAnim(1);
 }
 
 static void menuPrevPage()
 {
+    submenu_list_t *previous = selected_item->item->current;
     submenu_list_t *cur = selected_item->item->pagestart;
 
     if (cur && cur->prev) {
@@ -1483,6 +1488,8 @@ static void menuPrevPage()
     } else { // wrap to end
         menuLastPage();
     }
+    if (gTheme->coverflow && previous != selected_item->item->current)
+        thmTriggerCoverflowAnim(-1);
 }
 
 void menuSetSelectedItem(menu_item_t *item)
