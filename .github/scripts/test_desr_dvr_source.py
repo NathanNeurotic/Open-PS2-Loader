@@ -46,6 +46,10 @@ assert "dvrMountedPartition, gDVRPartition" in dvr
 assert "if (id >= dvrGameCount || !dvrGames)" in dvr
 assert 'if (!strncasecmp(dvrConfigPrefix, "dvr_pfs", 7)' in dvr
 assert "fileXioFormat(" not in dvr
+assert "#define NEWLIB_PORT_AWARE" in dvr
+assert '#include "include/ioman.h"' in dvr
+assert 'sourceMode == DVR_MODE' in game
+assert "DESR DVR Neutrino cannot use VMC images" in game
 assert "O_CREAT" not in dvr
 assert "fileXioWrite(" not in dvr
 assert "flash" not in dvr.lower().replace("firmware", "")

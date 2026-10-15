@@ -11,6 +11,7 @@
 #include "include/supportbase.h"
 #include "include/system.h"
 #include "include/extern_irx.h"
+#include "include/ioman.h" // LOG uses the common, release-safe output macro.
 #include "include/menusys.h"
 #include "include/lang.h"
 #include "include/gui.h"
@@ -18,6 +19,7 @@
 #include "include/texcache.h"
 #include "include/textures.h"
 #include "include/util.h"
+#define NEWLIB_PORT_AWARE
 #include <fileXio_rpc.h>
 #include <io_common.h>
 #include <stdio.h>

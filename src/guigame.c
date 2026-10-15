@@ -471,6 +471,12 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
     int sourceMode = support == NULL           ? -1 :
                      support->mode == FAV_MODE ? favGetItemSourceMode(id) :
                                                  support->mode;
+#ifdef DVRP
+    if (sourceMode == DVR_MODE) {
+        guiMsgBox("DESR DVR Neutrino cannot use VMC images. Use a physical memory card.", 0, NULL);
+        return;
+    }
+#endif
     if (sourceMode == HTTP_MODE) {
         guiMsgBox(_l(_STR_HTTP_NO_VMC), 0, NULL);
         return;
