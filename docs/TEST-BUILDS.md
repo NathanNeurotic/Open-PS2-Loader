@@ -47,3 +47,13 @@ manifest. Its six compile jobs cover both themes across official moving, ps2dev 
 pinned toolchains. PR previews use the current PR source with shared files from a successful standard
 release; they are explicitly marked as previews and cannot publish. Production requires same-revision
 shared files and builds. This supplements the ordinary flavour CI; neither is physical-console acceptance.
+
+## Favorites and automatic VMC failure recovery
+
+If a Favorites edit cannot stage a complete replacement, including when the device is full,
+the edit fails and the existing list is preserved. Free space before retrying.
+
+Automatic VMC probing checks the superblock of whole-MB images before assigning them.
+A full-size image left by failed formatting is not treated as a usable card solely because
+its length matches. Invalid existing files are preserved and require explicit user action;
+odd-size Neutrino cards retain their existing handling.
