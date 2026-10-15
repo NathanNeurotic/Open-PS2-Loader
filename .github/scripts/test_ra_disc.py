@@ -250,6 +250,8 @@ static int padOpen_hooked, snapshots, kernel_enters;
 static void RA_OnVblank(void) {snapshots++;}
 static void ee_kmode_enter(void) {kernel_enters++;}
 static void ee_kmode_exit(void) {}
+static int DI(void) {return 0;} /* IGR handler already runs with interrupts disabled. */
+static void EI(void) {assert(0);}
 '''
 test=r'''
 int main(void) {

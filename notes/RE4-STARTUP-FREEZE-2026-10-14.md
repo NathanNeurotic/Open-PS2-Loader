@@ -40,3 +40,40 @@ A [PSX-Place support discussion](https://www.psx-place.com/threads/my-ps2-freeze
 The earlier separately reported online/in-game freeze was discussed with **internal exFAT**, the **native OPL core**, and possibly **DNAS-related cheats**. The new Resident Evil 4 screenshot says cheats off and is at game startup, but **does not establish identical storage or core settings**. Keep these two cases distinct unless a controlled reproduction shows a common underlying cause.
 
 No source fix or real-console reproduction is claimed here. The documented compatibility observation is not a current RiptOPL test.
+
+## Follow-up and pad-lifetime repair candidate
+
+The screenshots supplied in the repair task identify the same reporter, V3ditata.
+Their earlier report names internal exFAT and ISO games. A subsequent matrix on
+`3941-Korium-dba97ff-OFFICIALROLLING` reports working play with Mode 6 on, with
+either cheat setting, and crashes with Mode 6 off, also with either cheat setting.
+The latest screenshot supplies SCPH-39001, `SLUS_211.34`, no visible response to
+the reset combo, and **VMC off** (the reporter uses an MMCE card). This does not
+independently establish the current game source, exact diagnostic ELF, or when
+the pink screen appeared relative to the reset attempt.
+
+Source inspection found a pad-buffer lifetime gap: `Install_IGR` preserves live
+state on repeated installation, but `New_SifSetDma` did not invalidate that state
+before rebooting the IOP. The old libpad DMA producer ends at reboot; the EE
+worker can retain its pointer and interpret subsequently reused memory as input.
+The polling reader also lacked protection against preemption between its pointer
+check and reads, while pad installation updates that pointer and its offsets.
+
+The candidate invalidates pad tracking before each intercepted IOP reset, rearms
+pad-hook discovery, and protects the short input snapshot with interrupt-state
+preservation. Pad reopen publishes its layout and buffer atomically and restarts
+its liveness counters. Pending IGR requests, the worker and physical power-button
+state remain intact. It does not force Mode 6, change worker priority, or restore
+a VBLANK IGR handler in standard builds.
+
+Host regressions exercise reused memory containing a fake reset combo, pad
+reacquisition, pending-state and interrupt-state preservation, and invalidation
+before successful/failed resets in both standard and RA configurations.
+These establish the source defect and repair behavior, **not that this defect
+caused the tester's RE4 freeze**.
+
+Console gate: same image, save, source and settings; cheats/VMC/Mode 6 off;
+repeat startup and Mercenaries stage selection, sustained play, then deliberate
+IGR. Check another title that resets its IOP, plus the standard and RA paths.
+Keep the existing Mode 6 workaround available until this candidate is accepted
+on the affected console. No hardware pass is claimed.
