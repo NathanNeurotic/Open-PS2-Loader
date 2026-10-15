@@ -522,18 +522,6 @@ static int favRestoreStaged(const char *path, const char *staged)
     return ok;
 }
 
-/* Size of path in bytes, or -1 when it cannot be opened. */
-static int favFileSize(const char *path)
-{
-    int fd = open(path, O_RDONLY), size;
-
-    if (fd < 0)
-        return -1;
-    size = lseek(fd, 0, SEEK_END);
-    close(fd);
-    return size;
-}
-
 static int favWriteFile(fav_raw_t *recs, int count)
 {
     char path[256], staged[264];
@@ -552,21 +540,8 @@ static int favWriteFile(fav_raw_t *recs, int count)
     if (img == NULL)
         return 0;
     if (!favWriteWhole(staged, img, off)) {
-        int full = favWriteErrno == ENOSPC, held;
-
         remove(staged);
-        // A full device (a full memory card is common) has no room for the second copy. An in-place
-        // rewrite that stays inside the clusters favourites.bin already holds -- 1 KB on mc, the
-        // smallest -- needs none: that is how saving worked before staging. Any other failure, or a
-        // list that outgrows those clusters, is refused instead: the in-place rewrite could stop
-        // after its truncate and lose the list.
-        held = full ? favFileSize(path) : -1;
-        if (held > 0 && off <= ((held + 1023) & ~1023)) {
-            ok = favWriteWhole(path, img, off);
-            free(img);
-            LOG("FAV write: device full, rewrote %s in place: %s\n", path, ok ? "ok" : "failed");
-            return ok;
-        }
+        // Without a complete staged copy, even a same-size rewrite can lose the old list.
         LOG("FAV write: staging %s failed (errno %d), favourites unchanged\n", staged, favWriteErrno);
         free(img);
         return 0;
