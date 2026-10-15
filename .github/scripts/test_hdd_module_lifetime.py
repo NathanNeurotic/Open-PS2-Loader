@@ -79,6 +79,8 @@ static int sysLoadModuleBuffer(void *p, int len, int argc, char *argv)
 static void DelayThread(int us) { (void)us; }
 static void hddFreeHDLGamelist(void *p) { (void)p; }
 static void hddFreeVcdGameList(void) {}
+/* DESR DVR teardown is independent of the ATA lifetime under test. */
+static void hddDvrCleanUp(int keepMounts) {(void)keepMounts;}
 static int fileXioUmount(const char *p) { (void)p; return 0; }
 static int fileXioDevctl(const char *p, int cmd, void *in, int inlen, void *out, int outlen)
 {

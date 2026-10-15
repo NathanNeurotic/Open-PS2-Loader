@@ -230,9 +230,15 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, char *VMCName, int
         if (validate)
             return 1; // nothing to validate if no user input
 
+        guiLock();
         char *startup = support->itemGetStartup(support, id);
+        if (startup == NULL || startup[0] == '\0') {
+            guiUnlock();
+            return 1;
+        }
         const char *vmcTitle = getGroupIdForTitleId(startup);
         snprintf(vmc, sizeof(vmc), "%s_%d", vmcTitle, slot);
+        guiUnlock();
     }
 
     vmc_refresh = 0;
@@ -369,10 +375,14 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
         return 1;
 
     // A copy: the modal wait below lets a source refresh free and rebuild the row's storage.
+    guiLock();
     now = support->itemGetStartup(support, id);
-    if (now == NULL || now[0] == '\0')
+    if (now == NULL || now[0] == '\0') {
+        guiUnlock();
         return 1;
+    }
     snprintf(startup, sizeof(startup), "%s", now);
+    guiUnlock();
     snprintf(vmc, sizeof(vmc), "%s_%d", getGroupIdForTitleId(startup), 0);
 
     // genvmc runs one job. While one is still going, a full-size image may be a card it has not
@@ -446,8 +456,11 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     }
 
     // The wait yields to source refreshes: assign only if the row still holds the same game.
+    guiLock();
     now = support->itemGetStartup(support, id);
-    if (now == NULL || strcmp(now, startup) != 0) {
+    int sameGame = now != NULL && strcmp(now, startup) == 0;
+    guiUnlock();
+    if (!sameGame) {
         LOG("GUIGAME auto VMC %s: the game moved during the wait, not assigned\n", vmc);
         return 1;
     }
