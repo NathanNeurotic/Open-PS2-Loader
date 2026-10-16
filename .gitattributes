@@ -70,3 +70,6 @@ misc/*.sys binary
 *.PDF  diff=astextplain
 *.rtf  diff=astextplain
 *.RTF  diff=astextplain
+
+# The standard Neutrino license is hashed and shipped as exact upstream LF bytes.
+third_party/neutrino/LICENSE text eol=lf

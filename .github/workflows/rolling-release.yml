@@ -680,7 +680,7 @@ jobs:
           #                                      Ships WITHOUT a PS1 BIOS: bios.bin is copyrighted and
           #                                      user-supplied, and the placeholder filename in the folder
           #                                      says so. Peer of POPS/ -- both go to the device ROOT.
-          #   neutrino/                       -- the official latest Neutrino core (rickgaiser/neutrino), extracted for drag-and-drop.
+          #   neutrino/                       -- the pinned standard Neutrino core with UDPFS ACK repair, extracted for drag-and-drop.
           #   APPS/APP_RIPTOPL/               -- ready-to-install app, with artwork in ART/.
           #   APP_RIPTOPL.psu                 -- memory-card save containing only direct app files.
           #   PS2-Servers.url                 -- link to the UDPFS / SMB / UDPBD all-in-one PC server.
@@ -821,63 +821,13 @@ jobs:
           cp -f pc/OPL-PS1-AIO-Converter-GUI.url "$PKG/OPL-PS1-AIO-Converter-GUI.url"
           test -f pc/PS2RD-CHT-Manager.url
           cp -f pc/PS2RD-CHT-Manager.url "$PKG/PS2RD-CHT-Manager.url"
-          # neutrino/ (package folder) -- the official latest pre-release of the Neutrino core,
-          # EXTRACTED into a plain folder so the user just drag-and-drops it onto the card (no
-          # zip-in-zip). Both installable ZIPs require it; a failed fetch fails packaging. The archive
-          # root holds neutrino.elf + config/ + modules/, so the neutrino/ folder copies straight to
-          # mc?:/neutrino/. RiptOPL adds ONLY config/bsd-udpfsbd.toml (UDPFS); else the official build.
-          # This file is fork-private -- upstream Neutrino will not supply it -- so fail loudly if a
-          # refactor ever drops the source payload instead of publishing an IMG-mode-broken package.
-          if [ ! -s neutrino/bsd-udpfsbd.toml ]; then
-            echo "ERROR: fork-private neutrino/bsd-udpfsbd.toml is missing or empty; refusing to package." >&2
-            exit 1
-          fi
-          NEUTRINO_VER=""
-          NEUTRINO_ARCHIVE=""
-          for attempt in 1 2 3; do
-            if gh release download latest --repo rickgaiser/neutrino --dir "$PKG" --pattern '*.7z' --clobber 2>/dev/null; then
-              NEUTRINO_ARCHIVE="$(cd "$PKG" && ls neutrino_*.7z 2>/dev/null | head -n1)"
-              [ -n "$NEUTRINO_ARCHIVE" ] && break
-            fi
-            [ "$attempt" = 3 ] || sleep 5
-          done
-          if [ -n "$NEUTRINO_ARCHIVE" ]; then
-            NEUTRINO_VER="$(printf '%s' "$NEUTRINO_ARCHIVE" | sed -e 's/^neutrino_//' -e 's/\.7z$//')"
-            if [ -z "$NEUTRINO_VER" ]; then
-              echo "ERROR: downloaded Neutrino archive has no version in its filename" >&2
-              exit 1
-            fi
-            echo "Bundled neutrino: $NEUTRINO_ARCHIVE"
-            SEVENZ="$(command -v 7z || command -v 7za || true)"
-            if [ -z "$SEVENZ" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full && SEVENZ="$(command -v 7z || command -v 7za)"; fi
-            NEUT_ABS="$(cd "$PKG" && pwd)/$NEUTRINO_ARCHIVE"
-            # Extract into $PKG/neutrino/ and drop the raw .7z. Neutrino ships udpfs_bd.irx but no
-            # built-in -bsd token for it; RiptOPL launches UDPFS via -bsd=udpfsbd, so add that config
-            # next to the others in config/. Require neutrino.elf at the folder root.
-            if [ -n "$SEVENZ" ] && "$SEVENZ" x -y -o"$PKG/neutrino" "$NEUT_ABS" >/dev/null && [ -s "$PKG/neutrino/neutrino.elf" ]; then
-              mkdir -p "$PKG/neutrino/config" && cp neutrino/bsd-udpfsbd.toml "$PKG/neutrino/config/bsd-udpfsbd.toml"
-              if [ ! -s "$PKG/neutrino/config/bsd-udpfsbd.toml" ] || ! cmp -s neutrino/bsd-udpfsbd.toml "$PKG/neutrino/config/bsd-udpfsbd.toml"; then
-                echo "ERROR: fork-private bsd-udpfsbd.toml did not reach the staged Neutrino config unchanged." >&2
-                exit 1
-              fi
-              rm -f "$NEUT_ABS"
-              echo "Extracted Neutrino into $PKG/neutrino (added config/bsd-udpfsbd.toml for UDPFS)."
-              # UDPFS Files mode launches with stock -bsd=udpfs, which needs Neutrino's own
-              # config/bsd-udpfs.toml + udpfs modules. The bundle is a MOVING target re-fetched
-              # every publish -- assert the dependency so an upstream re-layout is caught here,
-              # not as a mystery black screen on hardware.
-              if [ ! -s "$PKG/neutrino/config/bsd-udpfs.toml" ]; then
-                echo "ERROR: bundled Neutrino has no config/bsd-udpfs.toml for UDPFS Files mode" >&2
-                exit 1
-              fi
-            else
-              echo "ERROR: could not extract a usable Neutrino (no neutrino.elf at archive root)" >&2
-              exit 1
-            fi
-          else
-            echo "ERROR: could not fetch Neutrino after three attempts; refusing an incomplete installable ZIP" >&2
-            exit 1
-          fi
+          # Standard runtime is pinned to the upstream base plus the UDPFS stale-ACK repair.
+          # Never silently replace it with an unreviewed upstream archive at publish time.
+          SEVENZ="$(command -v 7z || command -v 7za || true)"
+          if [ -z "$SEVENZ" ]; then sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full && SEVENZ="$(command -v 7z || command -v 7za)"; fi
+          python3 .github/scripts/package_standard_neutrino.py \
+            --destination "$PKG/neutrino" --sevenzip "$SEVENZ"
+          NEUTRINO_VER="$(python3 -c 'import json; print(json.load(open("third_party/neutrino/release.json"))["version"])')"
           echo "NEUTRINO_VER=${NEUTRINO_VER}" >> "$GITHUB_ENV"
           INSTALL_ELF="$OFFICIAL_ELF"
           INSTALL_FLAVOUR=OFFICIALROLLING
