@@ -91,6 +91,22 @@ console check must identify the actual loaded runtime; another unchanged ELF
 would not exercise this repair. No additional tester run is requested by this
 investigation, and console acceptance remains pending.
 
+## Server compatibility workaround
+
+PS2-Servers PR #240 separately accommodates the delayed DATA/ACK trigger while
+keeping official Neutrino unmodified: it acknowledges requests with control
+packets, omits ACK from reply payloads, and re-ACKs a retried request in both
+send waits. Actual-source host replay passes for bulk reads and single-packet
+RPC replies, including loss of the separate request ACK. The full UDPFS host
+suite (96 tests) passes. This is the first path being pursued for the tester.
+
+A delayed standalone ACK remains a counterexample for the unmodified client;
+the server cannot reconstruct a request it never received. The complete client
+repair handles that case too. The standard bundle PR remains draft as the
+fallback while the server workaround receives review and current-head CI.
+Official Neutrino upstream is read only for comparison; no upstream PR, issue
+or comment is opened.
+
 ## Reproduction
 
 Check out the pinned official/fixed Neutrino and server revisions listed above,

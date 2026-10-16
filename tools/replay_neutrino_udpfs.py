@@ -13,6 +13,7 @@ import struct
 import subprocess
 import sys
 import threading
+import time
 import types
 from pathlib import Path
 
@@ -21,7 +22,10 @@ parser.add_argument("--official-source", type=Path, required=True)
 parser.add_argument("--fixed-source", type=Path, required=True)
 parser.add_argument("--stable-source", type=Path)
 parser.add_argument("--server-source", type=Path, required=True)
-parser.add_argument("--server-before", default="c04106c")
+parser.add_argument("--server-before", default="HEAD^")
+parser.add_argument("--stale-control", action="store_true")
+parser.add_argument("--drop-request-ack", action="store_true")
+parser.add_argument("--rpc", action="store_true")
 parser.add_argument("--output", type=Path, required=True)
 args = parser.parse_args()
 OUT = args.output.resolve()
@@ -66,6 +70,8 @@ typedef struct {uint16_t port_src; uint8_t a[6];} udp_header_t;
 typedef struct {int unused;} udp_packet_t;
 typedef int iop_sys_clock_t;
 static uint32_t bits;
+static double (*clock_now)(void);
+static double alarm_deadline;
 static uint8_t fifo[2048];
 static void (*wire_send)(const void*,int);
 static void (*wire_wait)(int);
@@ -80,8 +86,8 @@ static int WaitEventFlag(int f,uint32_t mask,int mode,uint32_t*out){
  return 0;
 }
 static void USec2SysClock(uint32_t us,iop_sys_clock_t*c){*c=us;}
-static int SetAlarm(iop_sys_clock_t*c,unsigned int(*cb)(void*),void*a){return 0;}
-static int CancelAlarm(unsigned int(*cb)(void*),void*a){return 0;}
+static int SetAlarm(iop_sys_clock_t*c,unsigned int(*cb)(void*),void*a){alarm_deadline=clock_now()+0.3;return 0;}
+static int CancelAlarm(unsigned int(*cb)(void*),void*a){alarm_deadline=0;return 0;}
 static void smap_fifo_read(int offset,void*target,int size){memcpy(target,fifo+offset,size);}
 static int udp_packet_send(udp_socket_t*s,udp_packet_t*p,int size){wire_send((uint8_t*)p+42,size);return 0;}
 static int udp_packet_send_ll(udp_socket_t*s,udp_packet_t*p,int hsize,const void*data,int size){
@@ -99,6 +105,8 @@ void replay_init(void(*send)(const void*,int),void(*wait)(int),int tx,int rx){
 }
 void replay_deliver(const void*packet,int len){memset(fifo,0,sizeof(fifo));memcpy(fifo+42,packet,len);_ist(NULL,&test_socket,fifo,44);}
 void replay_timeout(void){bits|=EF_TIMEOUT;}
+void replay_set_clock(double(*clock)(void)){clock_now=clock;}
+double replay_remaining(void){return alarm_deadline-clock_now();}
 int replay_read(void*buffer,int size,void*result,int scatter){
  uint8_t req[16]={0x20};
  udprdma_set_rx_app_header(&test_socket,result,8);
@@ -186,15 +194,47 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
     accepted = []
     controls = []
     errors = []
+    request_ack_dropped = [False]
+
+    def server_send(packet, addr):
+        header = srv.DataHeader.unpack(packet[2:6])
+        if (
+            args.drop_request_ack
+            and header.flags & srv.DataFlags.ACK
+            and not header.data_byte_count
+            and not header.hdr_word_count
+            and not request_ack_dropped[0]
+        ):
+            request_ack_dropped[0] = True
+            return
+        responses.put(packet)
+
+    # Generate the previous packet with the production sender, before applying
+    # the separate fault that loses the next request's control ACK.
     server._sendto = lambda packet, addr: responses.put(packet)
+    sess.tx_seq_nr = (rx - 1) & 4095
+    if args.stale_control:
+        server._send_ack(ADDR, is_ack=True)
+    else:
+        server._send_data_packet(ADDR, b"OLD!", fin=True)
+    prior_reply = responses.get_nowait()
+    reply_has_ack = bool(
+        srv.DataHeader.unpack(prior_reply[2:6]).flags & srv.DataFlags.ACK
+    )
+    sess.tx_seq_nr = rx
+    sess.tx_buffer = []
+    server._sendto = server_send
     server._print_event = events.append
-    expected = bytes(i % 251 for i in range(16384))
+    expected = bytes(i % 251 for i in range(32 if args.rpc else 16384))
 
     def bread(addr, payload):
         accepted.append(srv.Header.unpack(current[0]).seq_nr)
-        server._send_raw_data_with_header(
-            addr, struct.pack("<BBBBi", 0x11, 0, 0, 0, len(expected)), expected
-        )
+        if args.rpc:
+            server._send_data(addr, expected)
+        else:
+            server._send_raw_data_with_header(
+                addr, struct.pack("<BBBBi", 0x11, 0, 0, 0, len(expected)), expected
+            )
 
     # Only file I/O is replaced by deterministic bytes; wire sender and waits are production.
     server._handle_bread = bread
@@ -226,18 +266,7 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
             packet = packet[:6] + bytes([srv.MsgType.BREAD_REQ]) + packet[7:]
             if len(attempts) == 1:
                 if stale:
-                    old = (
-                        srv.Header(
-                            packet_type=srv.PacketType.DATA, seq_nr=(rx - 1) & 4095
-                        ).pack()
-                        + srv.DataHeader(
-                            seq_nr_ack=(tx - 1) & 4095,
-                            flags=srv.DataFlags.ACK | srv.DataFlags.FIN,
-                            hdr_word_count=0,
-                            data_byte_count=4,
-                        ).pack()
-                        + b"OLD!"
-                    )
+                    old = prior_reply
                     for _ in range(6):
                         responses.put(old)
                 if drop:
@@ -248,8 +277,12 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
 
     def wait(mask):
         while True:
+            remaining = lib.replay_remaining()
+            if remaining <= 0:
+                lib.replay_timeout()
+                return
             try:
-                packet = responses.get(timeout=0.3)
+                packet = responses.get(timeout=remaining)
             except queue.Empty:
                 lib.replay_timeout()
                 return
@@ -259,6 +292,10 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
             if lib.replay_bits() & mask:
                 return
 
+    CLOCK = ct.CFUNCTYPE(ct.c_double)
+    clock_callback = CLOCK(time.monotonic)
+    lib.replay_set_clock(clock_callback)
+    lib.replay_remaining.restype = ct.c_double
     SEND = ct.CFUNCTYPE(None, ct.c_void_p, ct.c_int)
     WAIT = ct.CFUNCTYPE(None, ct.c_int)
     scb = SEND(send)
@@ -266,9 +303,9 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
     lib.replay_init(scb, wcb, tx, rx)
     thread = threading.Thread(target=worker, daemon=True)
     thread.start()
-    buffer = ct.create_string_buffer(16384)
+    buffer = ct.create_string_buffer(len(expected))
     result = ct.create_string_buffer(8)
-    ret = lib.replay_read(buffer, 16384, result, int(scatter))
+    ret = lib.replay_read(buffer, len(expected), result, int(scatter))
     stop = srv.Header(packet_type=srv.PacketType.DISCOVERY, seq_nr=0).pack() + bytes(4)
     sess.queue.put((stop, ADDR, "data"))
     sess.queue.put(None)
@@ -276,8 +313,9 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
     assert not thread.is_alive(), "server worker failed to terminate"
     assert not errors, errors
     return {
+        "previous_packet_had_ack": reply_has_ack,
         "returned": ret,
-        "bytes_match": buffer.raw[:16384] == expected,
+        "bytes_match": buffer.raw[: len(expected)] == expected,
         "connected": bool(lib.replay_connected()),
         "request_attempts": attempts,
         "requests_accepted": accepted,
@@ -316,8 +354,8 @@ if __name__ == "__main__":
     for name, folder in clients:
         lib = build(name, folder.resolve() / "iop/udpfs/src")
         for server_name, server_module in [
-            ("before236", previous_server),
-            ("after236", current_server),
+            ("before", previous_server),
+            ("after", current_server),
         ]:
             srv = server_module
             for scatter in [False, True]:
@@ -331,7 +369,12 @@ if __name__ == "__main__":
                         key = f"{name}/{server_name}/{'send_ll' if scatter else 'send'}/{tx}-{rx}/{scenario}"
                         result = run(lib, drop, stale, scatter, tx, rx)
                         results[key] = result
-                        should_fail = name in ("official", "stable") and drop and stale
+                        should_fail = (
+                            name in ("official", "stable")
+                            and drop
+                            and stale
+                            and result["previous_packet_had_ack"]
+                        )
                         if should_fail:
                             assert (
                                 result["returned"] == -1
@@ -341,7 +384,7 @@ if __name__ == "__main__":
                             ), (key, result)
                         else:
                             assert (
-                                result["returned"] == 16384
+                                result["returned"] == (32 if args.rpc else 16384)
                                 and result["bytes_match"]
                                 and result["connected"]
                             ), (key, result)

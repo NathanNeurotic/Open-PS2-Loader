@@ -45,7 +45,11 @@ jobs:
             --stable-source replay-sources/stable \
             --fixed-source replay-sources/fixed \
             --server-source replay-sources/server \
-            --output build/transport-replay
+            --server-before c04106c16f563e5f808474ee40bfaac7728249c6 --output build/transport-replay
+          python3 tools/replay_neutrino_udpfs.py --stale-control \
+            --official-source replay-sources/official --stable-source replay-sources/stable \
+            --fixed-source replay-sources/fixed --server-source replay-sources/server \
+            --server-before c04106c16f563e5f808474ee40bfaac7728249c6 --output build/transport-replay-control
           python3 .github/scripts/test_standard_neutrino_bundle.py
       - name: Stage the actual digest-verified runtime
         run: |
@@ -58,4 +62,6 @@ jobs:
         if: always()
         with:
           name: udpfs-transport-replay
-          path: build/transport-replay/transport-replay-results.json
+          path: |
+            build/transport-replay/transport-replay-results.json
+            build/transport-replay-control/transport-replay-results.json
