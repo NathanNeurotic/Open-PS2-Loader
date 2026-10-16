@@ -315,3 +315,5 @@ translations:
   VIEW_APPS: Zobrazeny aplikace
   EMBER_DISPLAY: Režim zobrazení Ember
   HINT_EMBER_DISPLAY: Výstupní režim, který Ember používá pro hry PS1. 240p nebo 480p se zapíše do souboru settings.txt ve složce EMBER spouštěného zařízení. Výchozí toto nastavení zase odstraní, a spolu s ním i soubor, pokud v něm nic dalšího nebylo.
+  LOGOART: "Loga her"
+  HINT_LOGOART: "Zobrazí logo hry (<ID>_LGO), pokud jej téma používá. Vypnutí skryje i výchozí obrázek; obaly, obrázky disků a pozadí zůstanou beze změny."
