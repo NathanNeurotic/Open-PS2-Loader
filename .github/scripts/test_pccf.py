@@ -81,7 +81,7 @@ static int bdmIsUDPBDLoaded(void) {return 0;}
 static int netModulesLoaded, netResidentProtocol, gNetworkStartup, shutdownCalls;
 static int netman_irx, size_netman_irx, smsutils_irx, size_smsutils_irx, smap_irx, size_smap_irx;
 static int ps2ip_irx, size_ps2ip_irx, ps2ips_irx, size_ps2ips_irx, httpclient_irx, size_httpclient_irx;
-static void sysShutdownDev9(void) {shutdownCalls++;}
+static void sysShutdownDev9(void) {shutdownCalls++;if(dev9InitCount>0)dev9InitCount--;}
 static void NetManInit(void) {}
 static void netApplyNetIFConfig(void) {}
 static int HttpInit(void) {return 0;}
