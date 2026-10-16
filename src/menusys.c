@@ -453,6 +453,12 @@ static void _menuSaveConfig()
     // pointers. In a release build all three calls are no-ops; a diagnostic build is the one we hand
     // to a tester, and it has to measure the save rather than itself.
     WaitSema(menuSemaId);
+    if (itemConfig == NULL) {
+        actionStatus = 0;
+        menuSaveResult = 0;
+        SignalSema(menuSemaId);
+        return;
+    }
     bdmCaptureConfigWriteDiag(itemConfigList, itemConfig, &diag);
     SignalSema(menuSemaId);
 
@@ -2318,6 +2324,10 @@ void menuHandleInputGameMenu()
             else
                 guiGameShowOSDLanguageConfig(0);
         } else if (menuID == GAME_SAVE_CHANGES) {
+            if (itemConfig == NULL) {
+                guiMsgBox(_l(_STR_ERROR_SAVING_SETTINGS), 0, NULL);
+                break;
+            }
             int changed = guiGameSaveConfig(itemConfig, selected_item->item->userdata);
             if (changed < 0)
                 return; // Denied lock removal must not write either configuration or report success.

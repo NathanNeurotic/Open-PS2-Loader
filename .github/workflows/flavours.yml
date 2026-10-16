@@ -71,6 +71,8 @@ jobs:
         run: python3 .github/scripts/test_bgm_source.py
       - name: Check that a held button keeps repeating across the tick-counter wrap
         run: python3 .github/scripts/test_pad_repeat_clock.py
+      - name: Check masked pattern scan bounds and rejection of short ranges
+        run: python3 .github/scripts/test_pad_pattern_bounds.py short
       - name: Check IGR polls without a VBLANK handler, except in RetroAchievements builds
         run: python3 .github/scripts/test_igr_polling.py
       - name: Check the in-game freeze report stays in its flavour and cannot hang IGR
@@ -133,6 +135,8 @@ jobs:
         run: python3 .github/scripts/test_net_protocol_pick.py
       - name: Check quoted config values survive repeated save and reload
         run: python3 .github/scripts/test_config_escape_roundtrip.py
+      - name: Check config allocation failures handle NULL safely without dereferencing
+        run: python3 .github/scripts/test_config_null_allocation.py
       - name: Check that long theme text stops at the next element and scrolls instead of overlapping
         run: python3 .github/scripts/test_theme_text_room.py
       - name: Check optional game titles fall back without changing metadata

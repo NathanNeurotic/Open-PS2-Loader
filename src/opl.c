@@ -779,9 +779,12 @@ static void itemExecTriangle(struct menu_item *curMenu)
 
         if (!(flags & MODE_FLAG_NO_COMPAT)) {
             if (menuCheckParentalLock() == 0) {
+                config_set_t *configSet = gameMenuLoadConfig(NULL);
+                if (configSet == NULL)
+                    return;
                 menuInitGameMenu(support);
                 guiSwitchScreen(GUI_SCREEN_GAME_MENU);
-                guiGameLoadConfig(support, gameMenuLoadConfig(NULL));
+                guiGameLoadConfig(support, configSet);
             }
         } else {
             if (menuCheckParentalLock() == 0 && gEnableWrite) {
@@ -5441,7 +5444,6 @@ static void autoLaunchHDDGame(char *argv[])
     if (gHDDPrefix != NULL && gHDDPrefix[0] != '\0') {
         snprintf(path, sizeof(path), "%sCFG/%s.cfg", gHDDPrefix, gAutoLaunchGame->startup);
         configSet = configAlloc(0, NULL, path);
-        configRead(configSet);
     } else {
         // HDL autolaunch does not require a persistent config/art PFS home. Keep the launch alive
         // with defaults only; never format a NULL prefix into a bogus path.
@@ -5453,6 +5455,7 @@ static void autoLaunchHDDGame(char *argv[])
         miniDeinit(NULL);
         return;
     }
+    configRead(configSet);
     // A menu launch gets #Startup from hddGetConfig; this config came straight from the CFG file, which
     // never stores '#' keys. sbGetCompatModes needs it to find a title's default compatibility modes.
     configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchGame->startup);

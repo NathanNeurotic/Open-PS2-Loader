@@ -1199,6 +1199,8 @@ config_set_t *sbPopulateConfig(base_game_info_t *game, const char *prefix, const
 
     snprintf(path, sizeof(path), "%sCFG%s%s.cfg", prefix, sep, cfgKey);
     config_set_t *config = configAlloc(0, NULL, path);
+    if (config == NULL)
+        return NULL;
     int configLoaded = configRead(config); // Does not matter if the config file could be loaded or not.
 
     // Compatibility only: filename remains the VCD identity, but an existing disc-ID config may be
