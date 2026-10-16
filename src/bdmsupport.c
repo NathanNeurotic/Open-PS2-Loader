@@ -44,6 +44,8 @@ static int iLinkManModLoaded = 0;
 static int ieee1394ModLoaded = 0;
 static int mx4sioModLoaded = 0;
 static int pccfModLoaded;
+static volatile unsigned int pccfProbeGeneration = 1;
+static unsigned int pccfAttemptGeneration;
 static int hddModLoaded = 0;
 static int udpbdModLoaded = 0;
 static int udpbdNicClaimed = 0; // first SMAP module loaded, even if later block modules fail
@@ -901,6 +903,14 @@ static void bdmDiagFlushPendingIopState(item_list_t *itemList)
 // the user applies Game Sources, so a BDM page that was force-hidden while its enable flag read 0
 // (e.g. an exFAT ATA tab, or a UDPBD tab) re-shows as soon as the device is re-enabled and present --
 // without needing a physical replug.
+void bdmRequestPccfProbe(void)
+{
+    // A separate generation prevents hotplug/automatic refresh from retrying hardware init.
+    // A request during an in-flight attempt remains pending for the next worker pass.
+    pccfProbeGeneration++;
+    bdmForceDeviceRefresh();
+}
+
 void bdmForceDeviceRefresh(void)
 {
 #ifdef __DEBUG
@@ -1097,7 +1107,7 @@ static int bdmShouldQueueModuleLoad(void)
         return 1;
     if (gEnableMX4SIO && !mx4sioModLoaded)
         return 1;
-    if (gEnablePCCF && !pccfModLoaded)
+    if (gEnablePCCF && !pccfModLoaded && pccfAttemptGeneration != pccfProbeGeneration)
         return 1;
     if (gEnableBdmHDD && !hddModLoaded)
         return 1;
@@ -1137,6 +1147,21 @@ int bdmModeIsPCCF(int mode)
     return data != NULL && data->bdmDeviceType == BDM_TYPE_PCCF;
 }
 
+static void bdmLoadPccfModule(void)
+{
+    if (gEnablePCCF && !pccfModLoaded && pccfAttemptGeneration != pccfProbeGeneration) {
+        pccfAttemptGeneration = pccfProbeGeneration;
+        if (bdmPccfCandidate() && sysTryClaimPccf()) {
+            if (bdmLoadOptionalModule("PCCF_BD", &pccf_bd_irx, size_pccf_bd_irx) >= 0)
+                pccfModLoaded = 1;
+            else
+                sysReleasePccf();
+        }
+        if (!pccfModLoaded)
+            setErrorMessage(_STR_PCCF_UNAVAILABLE);
+    }
+}
+
 static void bdmLoadBlockDeviceModules(void)
 {
     // Boot-step localizer: this runs on the IO thread and can wedge on a real drive with no timeout,
@@ -1173,16 +1198,7 @@ static void bdmLoadBlockDeviceModules(void)
             mx4sioModLoaded = 1;
     }
 
-    if (gEnablePCCF && !pccfModLoaded) {
-        if (bdmPccfCandidate() && sysTryClaimPccf()) {
-            if (bdmLoadOptionalModule("PCCF_BD", &pccf_bd_irx, size_pccf_bd_irx) >= 0)
-                pccfModLoaded = 1;
-            else
-                sysReleasePccf();
-        }
-        if (!pccfModLoaded)
-            setErrorMessage(_STR_PCCF_UNAVAILABLE);
-    }
+    bdmLoadPccfModule();
 
     if (gEnableBdmHDD && !hddModLoaded) {
         // Load dev9 and atad device drivers.

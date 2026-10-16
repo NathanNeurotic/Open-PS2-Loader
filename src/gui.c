@@ -902,7 +902,10 @@ reshow_device:
         diaGetInt(diaDeviceConfig, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(diaDeviceConfig, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(diaDeviceConfig, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
+        int oldEnablePCCF = gEnablePCCF;
         diaGetInt(diaDeviceConfig, CFG_ENABLEPCCF, &gEnablePCCF);
+        if (oldEnablePCCF != gEnablePCCF)
+            bdmRequestPccfProbe();
         diaGetInt(diaDeviceConfig, CFG_ENABLEDVR, &gEnableDVR);
         diaGetInt(diaDeviceConfig, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
 
@@ -2942,7 +2945,10 @@ reshow_sources:
         diaGetInt(ui, CFG_ENABLEUSB, &gEnableUSB);
         diaGetInt(ui, CFG_ENABLEILK, &gEnableILK);
         diaGetInt(ui, CFG_ENABLEMX4SIO, &gEnableMX4SIO);
+        int oldEnablePCCF = gEnablePCCF;
         diaGetInt(ui, CFG_ENABLEPCCF, &gEnablePCCF);
+        if (oldEnablePCCF != gEnablePCCF)
+            bdmRequestPccfProbe();
         diaGetInt(ui, CFG_ENABLEDVR, &gEnableDVR);
         diaGetInt(ui, CFG_ENABLEBDMHDD, &gEnableBdmHDD);
         guiSourcesNetRowsRead(ui);

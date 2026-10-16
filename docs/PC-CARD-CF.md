@@ -51,3 +51,5 @@ The CF driver and transfer tests are adapted from mihhru/PS2CF 1.0, pinned at
 9b6ed3702b59a87512426952e003125a5b4f0e3c. The driver keeps its original component
 notices and PS2SDK AFL-2.0 license. PS2CF's OPL work is AFL-3.0. This integration
 imports no firmware, FMCB card images, game data or GPL mymc tooling.
+
+Failed CF detection is attempted once per explicit request. Changing the CF toggle or using Refresh on a BDM page permits another attempt; unrelated hotplug events do not. NBD cannot run while CF owns the PC CARD slot. Restart OPL with CF disabled to use the PC CARD network adapter. An IOP reset alone does not release CF bus ownership.

@@ -13,10 +13,20 @@ def function(source, signature):
     return source[start:source.index('\n}', start) + 2]
 
 ownership = '\n'.join(function(system, name) for name in (
-    'int sysTryClaimPccf(', 'void sysReleasePccf(', 'int sysInitDev9('))
+    'int sysTryClaimPccf(', 'int sysIsPccfOwned(', 'void sysReleasePccf(', 'int sysInitDev9('))
 candidate = function(bdm, 'static int bdmPccfCandidate(')
 shutdown = function((root / 'modules/iopcore/cdvdman/device-bdm.c').read_text(), 'void DeviceDeinit(')
-harness = r'''
+# Reset must never infer hardware power-off from a software reboot.
+assert 'sysPccfOwned = 0' not in function(system, 'void sysReset(')
+opl = (root / 'src/opl.c').read_text(encoding='utf-8')
+nbd = function(opl, 'static int loadLwnbdSvr(')
+assert nbd.index('ioHasPendingRequests()') < nbd.index('if (sysIsPccfOwned())') < nbd.index('*teardownStarted = 1;')
+assert 'ioBlockOps(0);' in nbd[nbd.index('if (sysIsPccfOwned())'):nbd.index('*teardownStarted = 1;')]
+probe = function(bdm, 'static void bdmLoadPccfModule(')
+request = function(bdm, 'void bdmRequestPccfProbe(')
+queue = function(bdm, 'static int bdmShouldQueueModuleLoad(')
+network = function((root / 'src/netsupport.c').read_text(encoding='utf-8'), 'static int netLoadModules(')
+harness = r''' 
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -32,12 +42,40 @@ static int sysLoadModuleBuffer(void *p,int n,int argc,char *argv) {
     (void)p;(void)n;(void)argc;(void)argv;assert(locked);loadCalls++;return loadFailure ? -2 : 0;
 }
 @OWNERSHIP@
+static int gEnablePCCF = 1, pccfModLoaded, pccf_bd_irx, size_pccf_bd_irx, probeLoads, probeFailure = 1, errors;
+static unsigned int pccfProbeGeneration = 1, pccfAttemptGeneration, BdmGeneration;
+#define _STR_PCCF_UNAVAILABLE 1
+static int bdmLoadOptionalModule(const char *name,void *p,int size) {
+    (void)name;(void)p;(void)size;probeLoads++;return probeFailure ? -1 : 0;
+}
+static void setErrorMessage(int id) {(void)id;errors++;}
+static void bdmForceDeviceRefresh(void) {BdmGeneration++;}
+@REQUEST@
 static const char *rom;
 static int psx;
 static int open(const char *path,int flags) {(void)flags;return !strcmp(path,"rom0:ROMVER") ? 1 : psx ? 2 : -1;}
 static int read(int fd,void *p,int n) {(void)fd;int len=(int)strlen(rom);if(len>n)len=n;memcpy(p,rom,len);return len;}
 static void close(int fd) {(void)fd;}
 @CANDIDATE@
+@PROBE@
+static int gEnableUSB, iUSBModLoaded, gEnableILK, iLinkModLoaded, gEnableMX4SIO, mx4sioModLoaded;
+static int gEnableBdmHDD, hddModLoaded, gEnableUDPBD, udpbdNicClaimed;
+static int ethGetModulesLoaded(void) {return 0;}
+static int udpfsGetModulesLoaded(void) {return 0;}
+static int bdmIsUDPBDLoaded(void) {return 0;}
+@QUEUE@
+#define NET_PROTO_HTTP 2
+#define ERROR_ETH_MODULE_NETIF_FAILURE 99
+static int netModulesLoaded, netResidentProtocol, gNetworkStartup, shutdownCalls;
+static int netman_irx, size_netman_irx, smsutils_irx, size_smsutils_irx, smap_irx, size_smap_irx;
+static int ps2ip_irx, size_ps2ip_irx, ps2ips_irx, size_ps2ips_irx, httpclient_irx, size_httpclient_irx;
+static void sysShutdownDev9(void) {shutdownCalls++;}
+static void NetManInit(void) {}
+static void netApplyNetIFConfig(void) {}
+static int HttpInit(void) {return 0;}
+static int HttpIsInitialized(void) {return 1;}
+static void ps2ip_init(void) {}
+@NETWORK@
 #define USE_PCCF
 #define DPRINTF(...) ((void)0)
 static int bdm_io_sema, stops;
@@ -48,7 +86,8 @@ static int stop_cf(struct block_device *bd) {(void)bd;assert(locked);stops++;ret
 int main(int argc,char **argv) {
     assert(argc==4);rom=argv[1];psx=atoi(argv[2]);
     assert(bdmPccfCandidate()==atoi(argv[3]));
-    assert(sysTryClaimPccf() && !locked);
+    assert(sysTryClaimPccf() && !locked && sysIsPccfOwned());
+    assert(netLoadModules(1)==-1 && !netModulesLoaded && !loadCalls && shutdownCalls==1);
     assert(!sysTryClaimPccf() && !sysInitDev9() && !loadCalls && !dev9InitCount && !locked);
     sysReleasePccf();assert(sysInitDev9() && loadCalls==1 && dev9InitCount==1 && !locked);
     assert(!sysTryClaimPccf());
@@ -56,6 +95,20 @@ int main(int argc,char **argv) {
     dev9Loaded=dev9Initialized=0;loadFailure=1;
     assert(!sysInitDev9() && dev9InitCount==1 && !sysTryClaimPccf());
     dev9InitCount=0;assert(sysTryClaimPccf());sysReleasePccf();
+    assert(!sysIsPccfOwned());
+    assert(bdmShouldQueueModuleLoad());
+    bdmLoadPccfModule();
+    assert(!pccfModLoaded && errors==1 && !sysIsPccfOwned());
+    int firstLoads=probeLoads;
+    for (int i=0;i<30;i++) {BdmGeneration++;assert(!bdmShouldQueueModuleLoad());bdmLoadPccfModule();}
+    assert(probeLoads==firstLoads && errors==1);
+    bdmRequestPccfProbe();assert(bdmShouldQueueModuleLoad());bdmLoadPccfModule();
+    assert(errors==2 && probeLoads==firstLoads*2);
+    probeFailure=0;bdmRequestPccfProbe();bdmLoadPccfModule();
+    if (atoi(argv[3])) {
+        assert(pccfModLoaded && sysIsPccfOwned());
+        bdmRequestPccfProbe();bdmLoadPccfModule();assert(probeLoads==firstLoads*3);
+    } else {assert(!pccfModLoaded && !probeLoads && errors==3);}
     struct block_device cf = {stop_cf};
     DeviceDeinit();assert(!stops && !locked);
     g_bd=&cf;DeviceDeinit();assert(stops==1 && g_bd==NULL && !locked);
@@ -69,7 +122,7 @@ int main(int argc,char **argv) {
     mbr[454]=1;mbr[461]=0xff;assert(!pccf_mbr_valid(mbr,10000));
     puts("PASS: ROM eligibility, exclusive CF/DEV9 ownership and MBR bounds");
 }
-'''.replace('@OWNERSHIP@', ownership).replace('@CANDIDATE@', candidate).replace('@SHUTDOWN@', shutdown)
+'''.replace('@OWNERSHIP@', ownership).replace('@CANDIDATE@', candidate).replace('@SHUTDOWN@', shutdown).replace('@PROBE@', probe).replace('@REQUEST@', request).replace('@QUEUE@', queue).replace('@NETWORK@', network)
 with tempfile.TemporaryDirectory() as directory:
     temp = Path(directory)
     compiler = os.environ.get('CC', 'gcc')

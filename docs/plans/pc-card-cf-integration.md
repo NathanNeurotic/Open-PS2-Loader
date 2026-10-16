@@ -3,7 +3,7 @@
 **Status:** Runtime prototype implemented; target build/review and console acceptance in progress. **Scope:** Native CompactFlash PC CARD as a distinct BDM game-storage backend within RiptOPL. **Target base:** `rebuild/main`.
 
 ## Purpose and non-goals
-Plan-only draft PR for native CompactFlash/SD-to-CF access via the *original PS2 PC CARD slot*, based on [mihhru/PS2CF 1.0](https://github.com/mihhru/PS2CF). Other agents should add **implementation commits to this same branch/PR**, updating this checklist as evidence accumulates. **No production code is implemented by this initial commit**. No firmware changes, memory-card image installation, FMCB packaging, blanket storage replacement, or existing save modification are in scope.
+Implementation PR for native CompactFlash/SD-to-CF access via the *original PS2 PC CARD slot*, based on [mihhru/PS2CF 1.0](https://github.com/mihhru/PS2CF). Other agents should add **implementation commits to this same branch/PR**, updating this checklist as evidence accumulates. No firmware changes, memory-card image installation, FMCB packaging, blanket storage replacement, or existing save modification are in scope.
 
 Target hardware: SCPH-10000 (PS2CF hardware tested), SCPH-15000 / SCPH-18000 (targeted but unconfirmed separately). Exclude expansion-bay PS2, Slim, and DESR unless separate hardware evidence establishes compatibility. CF/ATA through a compatible PCMCIA Type II adapter, optionally MicroSD via SD-to-CF bridge. Supported storage filesystem goal: MBR FAT32/exFAT, ordinary OPL/launcher file semantics. Hardware/bridge/card combinations remain unverified until independently tested.
 
@@ -62,5 +62,5 @@ Target hardware: SCPH-10000 (PS2CF hardware tested), SCPH-15000 / SCPH-18000 (ta
 - Implemented serialized CF/DEV9 ownership, read-only game driver, CF-only CDVD device binding, bounded MBR validation, explicit game handoff, and IGR shutdown release.
 - Integrated CF BDM classification/list/title paths, native mode dispatch and embedded IOP modules. CF PS1, VMC, Neutrino, live RA telemetry and network-debug game paths are excluded.
 - Host regressions pass for transfer bounds, removal, ATA/LBA48, conservative profiles, ownership, eligible/ineligible ROMs, MBR bounds and idempotent IGR release. Windows host runs did not use sanitizers; Linux CI enables ASan/UBSan.
-- All seven target variants and applicable host/format CI jobs passed in CI run 38839463475.
+- All seven target variants and applicable host/format CI jobs passed in CI run 38841755196 (head `160349551bbad52c7cd640dfb1dfcc016ee50bdf`); subsequent review fixes require a fresh build.
 - CodeRabbit review requested; stage O6 remains open pending physical console validation.

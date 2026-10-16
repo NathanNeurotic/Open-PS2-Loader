@@ -193,6 +193,17 @@ int sysTryClaimPccf(void)
     return claimed;
 }
 
+int sysIsPccfOwned(void)
+{
+    int owned;
+    if (sysDev9BusLock < 0)
+        return 0;
+    WaitSema(sysDev9BusLock);
+    owned = sysPccfOwned;
+    SignalSema(sysDev9BusLock);
+    return owned;
+}
+
 void sysReleasePccf(void)
 {
     if (sysDev9BusLock < 0)
@@ -300,7 +311,8 @@ void sysReset(int modload_mask)
     dev9Initialized = 0;
     dev9Loaded = 0;
     dev9InitCount = 0;
-    sysPccfOwned = 0;
+    // An IOP reset does not prove the PC CARD power registers were restored.
+    // Retain CF ownership until an explicit release; NBD refuses teardown while owned.
     while (!SifIopSync())
         ;
 

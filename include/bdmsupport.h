@@ -134,6 +134,7 @@ int bdmModeIsUDPBD(int mode); // 1 if this BDM mode slot is the UDPBD block devi
 // Re-evaluate every BDM device's presence + page visibility on the next refresh (bumps the latch
 // generation). Call after a device-enable toggle so a latched-hidden tab re-shows without a replug.
 void bdmForceDeviceRefresh(void);
+void bdmRequestPccfProbe(void);
 // Effective BDM start mode: floors to AUTO while a BDM network transport (UDPBD/UDPFSBD) is the
 // selected protocol so its hotplug tab can exist; never modifies/persists the saved gBDMStartMode.
 int bdmEffectiveStartMode(void);

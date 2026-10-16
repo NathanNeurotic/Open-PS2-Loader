@@ -489,6 +489,8 @@ static void itemExecRefresh(struct menu_item *curMenu)
     item_list_t *support = curMenu->userdata;
 
     if (support && support->enabled) {
+        if (support->mode >= BDM_MODE && support->mode <= BDM_MODE_LAST)
+            bdmRequestPccfProbe();
         // FAV has no device to rescan: loadFavourites() re-reads favourites.bin and schedules its
         // own rebuild. HDD's VCD view is intentionally cached across ordinary L3 flips, so an
         // explicit user Refresh must invalidate that cache before posting the deferred update.
@@ -4521,6 +4523,13 @@ static int loadLwnbdSvr(int *teardownStarted)
      */
     ioBlockOpsTimed(1, LWNBD_IO_DRAIN_TICKS);
     if (ioHasPendingRequests()) {
+        ioBlockOps(0);
+        return -1;
+    }
+
+    // The IO worker is drained and blocked, so CF cannot claim the slot between
+    // this check and teardown. NBD needs the mutually exclusive PC CARD NIC.
+    if (sysIsPccfOwned()) {
         ioBlockOps(0);
         return -1;
     }
