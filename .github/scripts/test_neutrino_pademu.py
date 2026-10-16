@@ -72,6 +72,8 @@ static int menuSelectedRowView(item_list_t *s) { (void)s; return view; }
 static int favGetItemSourceMode(int id) { (void)id; return favMode; }
 static int bdmModeIsUDPBD(int mode) { return mode == BDM_MODE && udpbd; }
 static int bdmSupportIsUDPBD(void *s) { return bdmModeIsUDPBD(((item_list_t *)s)->mode); }
+static int pccf;
+static int bdmModeIsPCCF(int mode) { return mode == BDM_MODE && pccf; }
 @WARNING@
 @CORE@
 int main(void) {
@@ -98,12 +100,15 @@ int main(void) {
                 for (int choice=-1; choice<2; choice++) {
                     game.core_present=choice>=0; game.core=choice;
                     for (udpbd=0; udpbd<2; udpbd++) {
-                        view=0;
-                        int expected=choice<0 ? defaultCore : choice;
-                        if (mode==ETH_MODE || mode==HTTP_MODE) expected=0;
-                        if (mode==UDPFS_MODE || (mode==BDM_MODE && udpbd)) expected=1;
-                        assert(gameMenuCoreIsNeutrino()==expected);
-                        view=LIB_VIEW_PS1; assert(gameMenuCoreIsNeutrino()==0);
+                        for (pccf=0; pccf<2; pccf++) {
+                            if (udpbd && pccf) continue;
+                            view=0;
+                            int expected=choice<0 ? defaultCore : choice;
+                            if (mode==ETH_MODE || mode==HTTP_MODE || (mode==BDM_MODE && pccf)) expected=0;
+                            if (mode==UDPFS_MODE || (mode==BDM_MODE && udpbd)) expected=1;
+                            assert(gameMenuCoreIsNeutrino()==expected);
+                            view=LIB_VIEW_PS1; assert(gameMenuCoreIsNeutrino()==0);
+                        }
                     }
                 }
             }
