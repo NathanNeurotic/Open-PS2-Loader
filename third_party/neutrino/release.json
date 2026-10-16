@@ -9,6 +9,6 @@
   "upstream_commit": "7be8de2798c99af433c91993e021746a54d6800d",
   "upstream_asset": "neutrino_v1.8.0-61-g7be8de2.7z",
   "license": "AFL-3.0",
-  "license_sha256": "c8831edb0b33506ae5fd5c17cd7baae97fe6401e8ad4e5e2a150cd05e4c3f511",
+  "license_sha256": "65b4868007fb11b77aebc617ede4dd61d0806feb13e8e8c2c387640af7843746",
   "changes": "Reject stale UDPFS ACKs in both send paths, ignore stale bursts while keeping the original timeout, and preserve an alarm firing during ACK processing; includes actual-source host tests and CI."
 }
