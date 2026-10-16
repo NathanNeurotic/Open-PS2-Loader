@@ -1202,7 +1202,11 @@ static config_set_t *appGetConfig(item_list_t *itemList, int id)
 
     if (appsList[id].legacy) {
         struct config_value_t *cur = appGetConfigValue(id);
+        if (cur == NULL)
+            return NULL;
         config = oplGetLegacyAppsInfo(appGetELFName(cur->val));
+        if (config == NULL)
+            return NULL;
         configRead(config);
 
         configSetStr(config, CONFIG_ITEM_NAME, appGetELFName(cur->val));
@@ -1221,6 +1225,8 @@ static config_set_t *appGetConfig(item_list_t *itemList, int id)
         snprintf(path, sizeof(path), "%s/%s", appsList[id].path, APP_TITLE_CONFIG_FILE);
 
         config = configAlloc(0, NULL, path);
+        if (config == NULL)
+            return NULL;
         configRead(config); // Does not matter if the config file could be loaded or not.
 
         configSetStr(config, CONFIG_ITEM_NAME, appsList[id].boot);

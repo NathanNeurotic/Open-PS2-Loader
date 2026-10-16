@@ -1108,6 +1108,8 @@ static int configReadFileBuffer(file_buffer_t *fileBuffer, config_set_t *configS
 int configReadBuffer(config_set_t *configSet, const void *buffer, int size)
 {
     int ret;
+    if (configSet == NULL)
+        return 0;
     file_buffer_t *fileBuffer = openFileBufferBuffer(0, buffer, size);
     if (!fileBuffer) {
         configSet->modified = 0;
@@ -1325,11 +1327,14 @@ int configRead(config_set_t *configSet)
     int fromOfficial = 0;
     int fromCarryOver = 0;
 
-    if (configSet != NULL && configSet->type == CONFIG_OPL) {
+    if (configSet == NULL)
+        return 0;
+
+    if (configSet->type == CONFIG_OPL) {
         configOplOfficialSeed = 0;
         configOplCarryOver = 0;
     }
-    if (configSet != NULL && configPathIsRawApa(configSet->filename)) {
+    if (configPathIsRawApa(configSet->filename)) {
         LOG("CONFIG refusing raw APA read path %s; use a mounted pfsN: path\n", configSet->filename);
         return 0;
     }
@@ -1427,6 +1432,9 @@ int configRead(config_set_t *configSet)
 
 int configWrite(config_set_t *configSet)
 {
+    if (configSet == NULL)
+        return 0;
+
     // A config can be re-homed after it was read (legacy migration, missing-config recovery,
     // boot-home self-migration). configMove/configSetMove intentionally preserve the in-memory
     // values and their modified flag, so an unchanged set may now point at a destination file that
@@ -1629,11 +1637,16 @@ int configWrite(config_set_t *configSet)
 
 int configGetStat(config_set_t *configSet, iox_stat_t *stat)
 {
+    if (configSet == NULL || stat == NULL || configSet->filename == NULL || configSet->filename[0] == '\0')
+        return 0;
     return (fileXioGetStat(configSet->filename, stat) >= 0 ? 1 : 0);
 }
 
 void configClear(config_set_t *configSet)
 {
+    if (configSet == NULL)
+        return;
+
     while (configSet->head) {
         struct config_value_t *cur = configSet->head;
         configSet->head = cur->next;
