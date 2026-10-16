@@ -315,3 +315,5 @@ translations:
   VIEW_APPS: Exibindo aplicativos
   EMBER_DISPLAY: Modo de vídeo do Ember
   HINT_EMBER_DISPLAY: Modo de saída que o Ember usa para jogos de PS1. 240p ou 480p é gravado no settings.txt da pasta EMBER do dispositivo iniciado. Padrão remove essa configuração, e também o arquivo se ele não tiver mais nada.
+  LOGOART: "Logos dos jogos"
+  HINT_LOGOART: "Mostra o logo do jogo (<ID>_LGO) quando o tema o utiliza. Desativar também oculta a imagem padrão, sem alterar capas, discos ou planos de fundo."
