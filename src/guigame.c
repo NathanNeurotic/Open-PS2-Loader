@@ -1444,6 +1444,18 @@ reshow_compat:
 }
 
 // sets variables without writing to users cfg file.. follow up with menuSaveConfig() to write
+static int guiGamePrepareParentalLock(config_set_t *configSet)
+{
+    int parentalLock = 0, storedLock = 0;
+    diaGetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, &parentalLock);
+    if (!parentalLock)
+        return 1;
+    if (!configSetInt(configSet, CONFIG_ITEM_PARENTAL_LOCK, 1) ||
+        !configGetInt(configSet, CONFIG_ITEM_PARENTAL_LOCK, &storedLock) || storedLock != 1)
+        return 0;
+    return 1;
+}
+
 static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
 {
     int i;
@@ -1629,16 +1641,6 @@ static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
             configRemoveKey(configSet, CONFIG_ITEM_NEUTRINO_BSDFS);
     }
 
-    // Per-game lock is independent of global compatibility settings.
-    int parentalLock = 0;
-    diaGetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, &parentalLock);
-    if (parentalLock) {
-        result = configSetInt(configSet, CONFIG_ITEM_PARENTAL_LOCK, 1);
-        if (!menuIsParentalLockPasswordSet())
-            guiMsgBox(_l(_STR_PARENLOCK_GAME_NO_PASSWORD), 0, NULL);
-    } else
-        configRemoveKey(configSet, CONFIG_ITEM_PARENTAL_LOCK);
-
     /// VMC ///
     configSetVMC(configSet, vmc1, 0);
     configSetVMC(configSet, vmc2, 1);
@@ -1658,7 +1660,14 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     // Authorize removal before any live/global configuration is changed.
     if (!parentalLock && menuCheckGameParentalLock(configSet) != 0)
         return -1;
-    return guiGameApplyConfig(configSet, support);
+    if (!guiGamePrepareParentalLock(configSet))
+        return -1;
+    if (!parentalLock)
+        configRemoveKey(configSet, CONFIG_ITEM_PARENTAL_LOCK);
+    else if (!menuIsParentalLockPasswordSet())
+        guiMsgBox(_l(_STR_PARENLOCK_GAME_NO_PASSWORD), 0, NULL);
+    int changed = guiGameApplyConfig(configSet, support);
+    return parentalLock ? 1 : changed;
 }
 
 void guiGameRemoveGlobalSettings(config_set_t *configGame)
@@ -1756,9 +1765,17 @@ void guiGameTestSettings(int id, item_list_t *support, config_set_t *configSet)
     config_set_t *testConfig = configClone(configSet);
     if (testConfig == NULL)
         return; // Testing must never modify the live configuration, including on allocation failure.
+    // Prepare and authorize a new lock before applying any global-source edits.
+    if (!guiGamePrepareParentalLock(testConfig) || (!wasLocked && menuCheckGameParentalLock(testConfig) != 0)) {
+        configFree(testConfig);
+        return;
+    }
+    int parentalLock = 0;
+    diaGetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, &parentalLock);
+    if (!parentalLock)
+        configRemoveKey(testConfig, CONFIG_ITEM_PARENTAL_LOCK);
     guiGameApplyConfig(testConfig, support);
-    if (wasLocked || menuCheckGameParentalLock(testConfig) == 0)
-        support->itemLaunch(support, id, testConfig);
+    support->itemLaunch(support, id, testConfig);
     configFree(testConfig);
 }
 

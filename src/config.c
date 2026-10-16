@@ -239,21 +239,19 @@ static struct config_value_t *allocConfigItem(const char *key, const char *val)
 }
 
 /// Low level key addition. Does not check for uniqueness.
-static void addConfigValue(config_set_t *configSet, const char *key, const char *val)
+static int addConfigValue(config_set_t *configSet, const char *key, const char *val)
 {
     if (!configSet)
-        return;
-
-    if (!configSet->tail) {
-        configSet->head = allocConfigItem(key, val);
-        configSet->tail = configSet->head;
-    } else {
-        struct config_value_t *it = allocConfigItem(key, val);
-        if (it != NULL) {
-            configSet->tail->next = it;
-            configSet->tail = it;
-        }
-    }
+        return 0;
+    struct config_value_t *it = allocConfigItem(key, val);
+    if (it == NULL)
+        return 0;
+    if (configSet->tail)
+        configSet->tail->next = it;
+    else
+        configSet->head = it;
+    configSet->tail = it;
+    return 1;
 }
 
 static struct config_value_t *getConfigItemForName(config_set_t *configSet, const char *name)
@@ -513,7 +511,8 @@ int configSetStr(config_set_t *configSet, const char *key, const char *value)
                 configSet->modified = 1;
         }
     } else {
-        addConfigValue(configSet, key, value);
+        if (!addConfigValue(configSet, key, value))
+            return 0;
         if (key[0] != '#')
             configSet->modified = 1;
     }
