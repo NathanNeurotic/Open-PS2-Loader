@@ -177,14 +177,15 @@ static void IGR_CheckInputs(void)
         // First check pad state
         if (((Pad_Data.libpad == IGR_LIBPAD) && (pad_pos_state == IGR_PAD_STABLE_V1)) ||
             ((Pad_Data.libpad == IGR_LIBPAD2) && (pad_pos_state == IGR_PAD_STABLE_V2))) {
-            // Check if pad buffer is still alive with pad data frame counter
-            // If pad frame change save it, otherwise tell to syshook to re-install padOpen hook
+            // Check if pad buffer is still alive with pad data frame counter.
+            // Once PadOpen is patched in the game ELF, that patch stays in RAM
+            // for the life of the ELF; temporary pauses in pad polling during
+            // menus, prompts or loading screens must never clear padOpen_hooked
+            // and trigger a full 31 MB live-RAM rescan on the next CreateThread.
             if (Pad_Data.vb_count++ >= 10) {
                 if (pad_pos_frame != Pad_Data.prev_frame) {
                     padOpen_hooked = 1;
                     Pad_Data.prev_frame = pad_pos_frame;
-                } else {
-                    padOpen_hooked = 0;
                 }
                 Pad_Data.vb_count = 0;
             }
@@ -204,9 +205,6 @@ static void IGR_CheckInputs(void)
         }
     }
 
-    if (intr)
-        EI();
-
 #ifdef RETROACHIEVEMENTS
     // ROM CDVDMAN has no OPL shutdown RPC. Ignore the power-off combo before
     // suspending game threads, and leave the physical power button to the ROM.
@@ -216,6 +214,7 @@ static void IGR_CheckInputs(void)
     } else
 #endif
     {
+        // Keep interrupts disabled while KSU=0 on the user-mode worker stack.
         ee_kmode_enter();
 
         /* The CDVD power-off interrupt is a latched hardware condition, not
@@ -249,6 +248,9 @@ static void IGR_CheckInputs(void)
 
         ee_kmode_exit();
     }
+
+    if (intr)
+        EI();
 }
 
 // Stop every DMA channel except SIF0-2 and reset the GS. While ExecPS2() would also do some of this
@@ -583,7 +585,8 @@ static int IGR_Intc_Handler(int cause)
 
 // An IOP reset invalidates the old libpad DMA buffer, even when the EE worker
 // survives. Do not read that memory until the game opens its pad again. Keep
-// pending reset requests and physical power-button state independent of it.
+// pending reset requests, physical power-button state, and the already-installed
+// EE PadOpen patch status independent of it.
 void Invalidate_PadBuffer(void)
 {
     int intr = DI();
@@ -591,7 +594,6 @@ void Invalidate_PadBuffer(void)
     Pad_Data.pad_buf = NULL;
     Pad_Data.vb_count = 0;
     Pad_Data.prev_frame = 0;
-    padOpen_hooked = 0;
 
     if (intr)
         EI();
@@ -732,6 +734,7 @@ static int Hook_scePadPortOpen(int port, int slot, void *addr)
     // Install IGR with libpad1 parameters
     if (port == 0 && slot == 0) {
         DPRINTF("IGR: Hook_scePadPortOpen - installing IGR...\n");
+        padOpen_hooked = 1;
         Install_IGR();
         Set_libpad_Params(addr);
     }
@@ -753,6 +756,7 @@ static int Hook_scePad2CreateSocket(pad2socketparam_t *SocketParam, void *addr)
 
     // Install IGR with libpad2 parameters
     if ((SocketParam == NULL) || (SocketParam->port == 0 && SocketParam->slot == 0)) {
+        padOpen_hooked = 1;
         Install_IGR();
         Set_libpad_Params(addr);
     }
@@ -910,6 +914,11 @@ int Install_PadOpen_Hook(u32 mem_start, u32 mem_end, int mode)
             DPRINTF("IGR: job done exiting...\n");
             break;
         }
+    }
+
+    if (patched) {
+        iFlushCache(0);
+        iFlushCache(2);
     }
 
     // Done

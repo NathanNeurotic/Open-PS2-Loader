@@ -241,6 +241,9 @@ static struct config_value_t *allocConfigItem(const char *key, const char *val)
 /// Low level key addition. Does not check for uniqueness.
 static void addConfigValue(config_set_t *configSet, const char *key, const char *val)
 {
+    if (!configSet)
+        return;
+
     if (!configSet->tail) {
         configSet->head = allocConfigItem(key, val);
         configSet->tail = configSet->head;
@@ -255,6 +258,9 @@ static void addConfigValue(config_set_t *configSet, const char *key, const char 
 
 static struct config_value_t *getConfigItemForName(config_set_t *configSet, const char *name)
 {
+    if (!configSet || !name)
+        return NULL;
+
     struct config_value_t *val = configSet->head;
 
     while (val) {
@@ -433,6 +439,9 @@ config_set_t *configAlloc(int type, config_set_t *configSet, char *fileName)
 
 void configMove(config_set_t *configSet, const char *fileName)
 {
+    if (!configSet || !fileName)
+        return;
+
     int length = strlen(fileName) + 1;
     // Use a temporary so a failed realloc doesn't clobber (and leak) the old pointer
     char *tmp = realloc(configSet->filename, length);
@@ -491,7 +500,7 @@ config_set_t *configGetByType(int type)
 
 int configSetStr(config_set_t *configSet, const char *key, const char *value)
 {
-    if (!configKeyValidate(key))
+    if (!configSet || !key || !value || !configKeyValidate(key))
         return 0;
 
     struct config_value_t *it = getConfigItemForName(configSet, key);
@@ -515,7 +524,7 @@ int configSetStr(config_set_t *configSet, const char *key, const char *value)
 // sets the value to point to the value str in the config. Do not overwrite - it will overwrite the string in config
 int configGetStr(config_set_t *configSet, const char *key, const char **value)
 {
-    if (!configKeyValidate(key))
+    if (!configSet || !key || !value || !configKeyValidate(key))
         return 0;
 
     struct config_value_t *it = getConfigItemForName(configSet, key);
@@ -578,7 +587,7 @@ int configGetColor(config_set_t *configSet, const char *key, unsigned char *colo
 
 int configRemoveKey(config_set_t *configSet, const char *key)
 {
-    if (!configKeyValidate(key))
+    if (!configSet || !key || !configKeyValidate(key))
         return 0;
 
     struct config_value_t *val = configSet->head;
@@ -611,6 +620,9 @@ int configRemoveKey(config_set_t *configSet, const char *key)
 
 void configMerge(config_set_t *dest, const config_set_t *source)
 {
+    if (!dest || !source)
+        return;
+
     struct config_value_t *val;
 
     for (val = source->head; val != NULL; val = val->next) {
