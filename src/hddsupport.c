@@ -693,6 +693,7 @@ int hddLoadModules(void)
         if (!dev9Ready) {
             sysShutdownDev9();
             hddModulesLoadCount = 0;
+            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
             return HDD_LOADMODULES_STATUS_ERROR;
         }
 

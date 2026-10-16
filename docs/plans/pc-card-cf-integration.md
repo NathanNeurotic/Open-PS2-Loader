@@ -64,3 +64,7 @@ Target hardware: SCPH-10000 (PS2CF hardware tested), SCPH-15000 / SCPH-18000 (ta
 - Host regressions pass for transfer bounds, removal, ATA/LBA48, conservative profiles, ownership, eligible/ineligible ROMs, MBR bounds and idempotent IGR release. Windows host runs did not use sanitizers; Linux CI enables ASan/UBSan.
 - All seven target variants and applicable host/format CI jobs passed in CI run 38841755196 (head `160349551bbad52c7cd640dfb1dfcc016ee50bdf`); subsequent review fixes require a fresh build.
 - CodeRabbit review requested; stage O6 remains open pending physical console validation.
+
+### Review follow-up: game import isolation
+
+The CF game core now supplies hardware-inert DEV9 1.9 and ATAD 1.3 export tables and intercepts their module loads. Import ordinals remain available, but DMA and ATA operations fail with unavailable-device results. The real DEV9 driver is excluded; combining it with PCCF is a build error. This prevents game module loads from taking the CF bus away from pccf_bd. Focused host tests cover export ordinals, unchanged Ethernet buffers, suppressed callbacks and disabled/already-loaded probe requests. Real-console acceptance remains outstanding.

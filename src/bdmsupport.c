@@ -905,6 +905,8 @@ static void bdmDiagFlushPendingIopState(item_list_t *itemList)
 // without needing a physical replug.
 void bdmRequestPccfProbe(void)
 {
+    if (!gEnablePCCF || pccfModLoaded)
+        return;
     // A separate generation prevents hotplug/automatic refresh from retrying hardware init.
     // A request during an in-flight attempt remains pending for the next worker pass.
     pccfProbeGeneration++;

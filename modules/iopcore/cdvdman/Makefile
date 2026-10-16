@@ -63,7 +63,7 @@ endif
 ifeq ($(USE_PCCF),1)
 IOP_BIN = pccf_cdvdman.irx
 IOP_OBJS_DIR = obj.pccf/
-IOP_OBJS += device-bdm.o
+IOP_OBJS += device-bdm.o dev9-pccf.o
 IOP_CFLAGS += -DBDM_DRIVER -DUSE_PCCF
 IOP_LIBS += -L$(PS2SDK)/iop/lib -lbdm
 endif
@@ -90,6 +90,9 @@ IOP_CFLAGS += -D__IOPCORE_DEBUG
 endif
 
 ifeq ($(USE_DEV9),1)
+ifeq ($(USE_PCCF),1)
+$(error PCCF cannot share the real DEV9 driver)
+endif
 IOP_OBJS += dev9.o
 IOP_CFLAGS += -D__USE_DEV9
 endif

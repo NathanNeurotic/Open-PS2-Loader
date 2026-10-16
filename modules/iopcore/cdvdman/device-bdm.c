@@ -24,8 +24,11 @@ static int bdm_io_sema;
 
 extern struct irx_export_table _exp_bdm;
 
-#ifdef USE_BDM_ATA
+#if defined(USE_BDM_ATA) || defined(USE_PCCF)
 extern struct irx_export_table _exp_atad;
+#endif
+#ifdef USE_PCCF
+extern struct irx_export_table _exp_dev9;
 #endif
 
 #ifdef USE_BDM_ATA
@@ -138,6 +141,11 @@ void DeviceInit(void)
     bdm_io_sema = CreateSema(&smp);
 
     RegisterLibraryEntries(&_exp_bdm);
+#ifdef USE_PCCF
+    // Hardware-inert game imports; only pccf_bd owns the card bus.
+    RegisterLibraryEntries(&_exp_dev9);
+    RegisterLibraryEntries(&_exp_atad);
+#endif
 
 #ifdef USE_BDM_ATA
     RegisterLibraryEntries(&_exp_atad);

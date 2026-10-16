@@ -126,11 +126,17 @@ int main(int argc,char **argv) {
         assert(bdmShouldQueueModuleLoad()); /* a request during a failed attempt is not lost */
         bdmLoadPccfModule();assert(!bdmShouldQueueModuleLoad());
     }
+    unsigned int beforeProbe=pccfProbeGeneration, beforeRefresh=BdmGeneration;
+    gEnablePCCF=0;bdmRequestPccfProbe();
+    assert(pccfProbeGeneration==beforeProbe && BdmGeneration==beforeRefresh);
+    gEnablePCCF=1;
     int beforeSuccess=probeLoads;
     probeFailure=0;bdmRequestPccfProbe();bdmLoadPccfModule();
     if (atoi(argv[3])) {
         assert(pccfModLoaded && sysIsPccfOwned());
+        beforeProbe=pccfProbeGeneration;beforeRefresh=BdmGeneration;
         bdmRequestPccfProbe();bdmLoadPccfModule();assert(probeLoads==beforeSuccess+1);
+        assert(pccfProbeGeneration==beforeProbe && BdmGeneration==beforeRefresh);
     } else {assert(!pccfModLoaded && !probeLoads && errors==3);}
     struct block_device cf = {stop_cf};
     DeviceDeinit();assert(!stops && !locked);
@@ -167,3 +173,41 @@ with tempfile.TemporaryDirectory() as directory:
         else:
             subprocess.run([str(binary)], check=True, timeout=20)
 print('PASS: CF low-level and integration host regressions; hardware unverified')
+
+# Compile the production stubs and exercise their import ordinals as MIPS callers
+# would: surplus arguments must remain ignored and no output/callback is touched.
+with tempfile.TemporaryDirectory() as directory:
+    temp = Path(directory)
+    source = temp / 'imports.c'
+    source.write_text(r"""
+#include <assert.h>
+#include "modules/iopcore/cdvdman/dev9-pccf.c"
+static int called;
+static void callback(void) { called++; }
+int main(void) {
+    int (*dev9)() = pccfDev9Unavailable;
+    int (*ata)() = pccfAtaUnavailable;
+    unsigned short ethernet[3] = {1,2,3};
+    assert(dev9(ethernet)==-1 && ethernet[0]==1 && ethernet[2]==3);
+    assert(dev9(0,callback)==-1 && !called);
+    assert(dev9(0,ethernet,4,0)==-1);
+    assert(pccfAtaInit(0)==0);
+    assert(ata(0,ethernet,0,1,0)==-505);
+    return 0;
+}
+""", encoding='utf-8')
+    binary = temp / 'imports.exe'
+    subprocess.run([os.environ.get('CC', 'gcc'), '-std=gnu99', '-Wall', '-Wextra', '-Werror',
+                    '-I'+str(root), '-I'+str(root/'tests/pccf/stubs'), str(source), '-o', str(binary)], check=True)
+    subprocess.run([str(binary)], check=True, timeout=10)
+    export_text = root / 'modules/iopcore/cdvdman/exports.tab'
+    preprocessed = subprocess.check_output([os.environ.get('CC', 'gcc'), '-E', '-P', '-x', 'c',
+                                          '-DUSE_PCCF', str(export_text)], text=True)
+    import re
+    tables = dict(re.findall(r'DECLARE_EXPORT_TABLE\((\w+),[^)]*\)(.*?)END_EXPORT_TABLE', preprocessed, re.S))
+    dev9 = re.findall(r'DECLARE_EXPORT\((\w+)\)', tables['dev9'])
+    ata = re.findall(r'DECLARE_EXPORT\((\w+)\)', tables['atad'])
+    assert len(dev9)==14 and all(dev9[i]=='pccfDev9Unavailable' for i in (5,9,11))
+    assert len(ata)==19 and ata[4]=='pccfAtaInit' and set(ata[5:])=={'pccfAtaUnavailable'}
+    assert 'dev9d_init' not in preprocessed and 'sceAtaDmaTransfer' not in preprocessed
+print('PASS: CF hardware-inert DEV9/ATAD exports and ordinal ABI')
