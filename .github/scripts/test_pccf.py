@@ -26,7 +26,7 @@ probe = function(bdm, 'static void bdmLoadPccfModule(')
 request = function(bdm, 'void bdmRequestPccfProbe(')
 queue = function(bdm, 'static int bdmShouldQueueModuleLoad(')
 network = function((root / 'src/netsupport.c').read_text(encoding='utf-8'), 'static int netLoadModules(')
-harness = r''' 
+harness = r'''
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
@@ -44,9 +44,13 @@ static int sysLoadModuleBuffer(void *p,int n,int argc,char *argv) {
 @OWNERSHIP@
 static int gEnablePCCF = 1, pccfModLoaded, pccf_bd_irx, size_pccf_bd_irx, probeLoads, probeFailure = 1, errors;
 static unsigned int pccfProbeGeneration = 1, pccfAttemptGeneration, BdmGeneration;
+static int requestDuringProbe;
+static void bdmRequestPccfProbe(void);
 #define _STR_PCCF_UNAVAILABLE 1
 static int bdmLoadOptionalModule(const char *name,void *p,int size) {
-    (void)name;(void)p;(void)size;probeLoads++;return probeFailure ? -1 : 0;
+    (void)name;(void)p;(void)size;probeLoads++;
+    if (requestDuringProbe) {requestDuringProbe=0;bdmRequestPccfProbe();}
+    return probeFailure ? -1 : 0;
 }
 static void setErrorMessage(int id) {(void)id;errors++;}
 static void bdmForceDeviceRefresh(void) {BdmGeneration++;}
@@ -104,10 +108,16 @@ int main(int argc,char **argv) {
     assert(probeLoads==firstLoads && errors==1);
     bdmRequestPccfProbe();assert(bdmShouldQueueModuleLoad());bdmLoadPccfModule();
     assert(errors==2 && probeLoads==firstLoads*2);
+    if (atoi(argv[3])) {
+        requestDuringProbe=1;bdmRequestPccfProbe();bdmLoadPccfModule();
+        assert(bdmShouldQueueModuleLoad()); /* a request during a failed attempt is not lost */
+        bdmLoadPccfModule();assert(!bdmShouldQueueModuleLoad());
+    }
+    int beforeSuccess=probeLoads;
     probeFailure=0;bdmRequestPccfProbe();bdmLoadPccfModule();
     if (atoi(argv[3])) {
         assert(pccfModLoaded && sysIsPccfOwned());
-        bdmRequestPccfProbe();bdmLoadPccfModule();assert(probeLoads==firstLoads*3);
+        bdmRequestPccfProbe();bdmLoadPccfModule();assert(probeLoads==beforeSuccess+1);
     } else {assert(!pccfModLoaded && !probeLoads && errors==3);}
     struct block_device cf = {stop_cf};
     DeviceDeinit();assert(!stops && !locked);
