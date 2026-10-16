@@ -62,6 +62,11 @@ int pccf_ata_read(pccf_ata_t *a, unsigned int l, unsigned int n, unsigned char *
 }
 int main(void)
 {
+    char *owned[] = {"pccf_game", "owned"};
+    char *foreign[] = {"pccf_game", "foreign"};
+    assert(pccf_owned_handoff(2, owned));
+    assert(!pccf_owned_handoff(1, owned) && !pccf_owned_handoff(2, foreign));
+
     static unsigned char buf[130 * 512 + 2];
     unsigned int i;
     io_lock = 3;

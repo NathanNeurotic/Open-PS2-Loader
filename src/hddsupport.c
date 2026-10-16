@@ -683,8 +683,13 @@ int hddLoadModules(void)
 
         // DEV9 must be loaded, as HDD.IRX depends on it. Even if not required by the I/F (i.e. HDPro)
         hddDiagBootStageBegin("HDD:DEV9");
-        sysInitDev9();
+        int dev9Ready = sysInitDev9();
         hddDiagBootStageEndVoid("HDD:DEV9");
+        if (!dev9Ready) {
+            sysShutdownDev9();
+            hddModulesLoadCount = 0;
+            return HDD_LOADMODULES_STATUS_ERROR;
+        }
 
         // try to detect HD Pro Kit (not the connected HDD),
         // if detected it loads the specific ATAD module

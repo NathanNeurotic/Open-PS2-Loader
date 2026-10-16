@@ -63,7 +63,7 @@ static int hddGames, bdm_irx, hdpro_atad_irx, hdpro_irx, ps2atad_irx, xhdd_irx;
 static int size_bdm_irx, size_hdpro_atad_irx, size_hdpro_irx, size_ps2atad_irx, size_xhdd_irx;
 
 static int initDev9, shutdownDev9, idleOps, flushOps, loadCalls, failAtad;
-static void sysInitDev9(void) { initDev9++; }
+static int sysInitDev9(void) { initDev9++; return 1; }
 static void sysShutdownDev9(void) { shutdownDev9++; }
 static int hddCheckHDProKit(void) { return 0; }
 static int sysLoadModuleBuffer(void *p, int len, int argc, char *argv)

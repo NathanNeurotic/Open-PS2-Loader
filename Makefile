@@ -1316,6 +1316,6 @@ $(EE_ASM_DIR)pccf_bd.c: modules/pccf/pccf_bd.irx | $(EE_ASM_DIR)
 $(EE_ASM_DIR)pccf_game.c: modules/pccf/pccf_game.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ pccf_game_irx
 modules/iopcore/cdvdman/pccf_cdvdman.irx: modules/iopcore/cdvdman
-	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) USE_PCCF=1 -C $< all
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_PCCF=1 -C $< all
 $(EE_ASM_DIR)pccf_cdvdman.c: modules/iopcore/cdvdman/pccf_cdvdman.irx | $(EE_ASM_DIR)
 	$(BIN2C) $< $@ pccf_cdvdman_irx

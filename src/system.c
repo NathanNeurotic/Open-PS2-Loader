@@ -182,6 +182,8 @@ static unsigned char dev9Initialized = 0, dev9Loaded = 0, dev9InitCount = 0;
 int sysTryClaimPccf(void)
 {
     int claimed = 0;
+    if (sysDev9BusLock < 0)
+        return 0;
     WaitSema(sysDev9BusLock);
     if (!dev9Initialized && !dev9Loaded && dev9InitCount == 0 && !sysPccfOwned) {
         sysPccfOwned = 1;
@@ -193,6 +195,8 @@ int sysTryClaimPccf(void)
 
 void sysReleasePccf(void)
 {
+    if (sysDev9BusLock < 0)
+        return;
     WaitSema(sysDev9BusLock);
     sysPccfOwned = 0;
     SignalSema(sysDev9BusLock);
@@ -200,6 +204,8 @@ void sysReleasePccf(void)
 
 int sysInitDev9(void)
 {
+    if (sysDev9BusLock < 0)
+        return 0;
     WaitSema(sysDev9BusLock);
     if (sysPccfOwned) {
         SignalSema(sysDev9BusLock);

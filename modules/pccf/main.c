@@ -94,6 +94,18 @@ static int cf_stop(struct block_device *bd)
     return 0;
 }
 
+static int pccf_owned_handoff(int argc, char **argv)
+{
+#ifdef GAME_DRIVER
+    // LOADFILE inserts the module name at argv[0].
+    return argc == 2 && argv && argv[1] && !strcmp(argv[1], "owned");
+#else
+    (void)argc;
+    (void)argv;
+    return 0;
+#endif
+}
+
 int _start(int argc, char **argv)
 {
     iop_sema_t sema;
@@ -106,17 +118,15 @@ int _start(int argc, char **argv)
     io_lock = CreateSema(&sema);
     if (io_lock < 0)
         return MODULE_NO_RESIDENT_END;
-        /* Only the game loader carries an explicit handoff from our own menu source.
+    /* Only the game loader carries an explicit handoff from our own menu source.
        The integrated GUI never reclaims a powered PC CARD owned by another driver. */
-#ifdef GAME_DRIVER
-    if (argc == 1 && argv && argv[0] && !strcmp(argv[0], "owned") &&
+    if (pccf_owned_handoff(argc, argv) &&
         (*(volatile u16 *)0xbf80146e & 0xf0) == 0x20 &&
         *(volatile u16 *)0xbf801474 == 0 && *(volatile u16 *)0xbf80146c != 0) {
         *(volatile u16 *)0xbf80147e = 1;
         *(volatile u16 *)0xbf80146c = 0;
         DelayThread(100000);
     }
-#endif
     rc = pccf_hw_start(&ata);
     if (rc) {
         DeleteSema(io_lock);

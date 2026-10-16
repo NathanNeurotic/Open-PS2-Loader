@@ -92,7 +92,7 @@ static int bdm_matches_launch_device(const struct block_device *bd)
 void bdm_connect_bd(struct block_device *bd)
 {
 #ifdef USE_PCCF
-    if (bd == NULL || bd->name == NULL || strcmp(bd->name, "cf") != 0 || bd->parNr != 0 || bd->sectorSize != 512)
+    if (bd == NULL || bd->name == NULL || (bd->name[0] != 'c' || bd->name[1] != 'f' || bd->name[2] != '\0') || bd->parNr != 0 || bd->sectorSize != 512)
         return;
 #endif
     DPRINTF("connecting device %s%dp%d\n", bd->name, bd->devNr, bd->parNr);
