@@ -315,3 +315,5 @@ translations:
   VIEW_APPS: Visar appar
   EMBER_DISPLAY: Ember-bildläge
   HINT_EMBER_DISPLAY: Utmatningsläget som Ember använder för PS1-spel. 240p eller 480p skrivs till settings.txt i EMBER-mappen på enheten som startas. Standard tar bort inställningen igen, och även filen om den inte innehöll något annat.
+  LOGOART: "Spellogotyper"
+  HINT_LOGOART: "Visar spelets logotyp (<ID>_LGO) när temat använder den. Avstängt döljer även standardbilden utan att påverka omslag, skivbilder eller bakgrunder."

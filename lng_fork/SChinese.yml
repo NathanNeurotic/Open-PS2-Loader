@@ -315,3 +315,5 @@ translations:
   VIEW_APPS: 正在显示应用
   EMBER_DISPLAY: Ember 显示模式
   HINT_EMBER_DISPLAY: Ember 用于 PS1 游戏的输出模式。选择 240p 或 480p 会写入所启动设备 EMBER 目录下的 settings.txt。默认会再次移除该设置；若文件中没有其他内容，文件也会一并删除。
+  LOGOART: "游戏徽标"
+  HINT_LOGOART: "显示主题使用的游戏徽标 (<ID>_LGO)。关闭后也会隐藏默认图片，不影响封面、光盘图或背景。"
