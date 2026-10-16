@@ -227,6 +227,8 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
     server._print_event = events.append
     expected = bytes(i % 251 for i in range(32 if args.rpc else 16384))
 
+    current = [None]
+
     def bread(addr, payload):
         accepted.append(srv.Header.unpack(current[0]).seq_nr)
         if args.rpc:
@@ -240,7 +242,6 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
     server._handle_bread = bread
     # Route any request type to BREAD fixture without changing transport handling.
     original = server._handle_data
-    current = [None]
 
     def worker():
         server._local.session = sess

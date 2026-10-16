@@ -29,7 +29,9 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       NEUTRINO_REPO: rickgaiser/neutrino
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - name: Check upstream and the reviewed standard runtime pin
         run: |
           set -eu
@@ -38,6 +40,10 @@ jobs:
           NEU="$(python3 -c 'import json; print(json.load(open("third_party/neutrino/release.json"))["version"])')"
           UPSTREAM="$(gh release view latest --repo "$NEUTRINO_REPO" --json assets \
             --jq '.assets[].name' | grep -E '^neutrino_.*\.7z$' | head -n1)"
+          if [ -z "$UPSTREAM" ]; then
+            echo "Could not read the upstream Neutrino archive name; no pin comparison was made." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
           if [ "$UPSTREAM" != "$EXPECTED" ]; then
             echo "Upstream Neutrino changed: $EXPECTED -> $UPSTREAM. Review the UDPFS repair before updating $PIN." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 1
