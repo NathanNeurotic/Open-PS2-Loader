@@ -5604,8 +5604,14 @@ static void autoLaunchBDMGame(char *argv[])
 
 
     configSet = configAlloc(0, NULL, path);
-    if (configSet == NULL)
+    if (configSet == NULL) {
+        free(gAutoLaunchDeviceData);
+        gAutoLaunchDeviceData = NULL;
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        miniDeinit(NULL);
         return;
+    }
     configRead(configSet);
     // A menu launch gets #Startup from sbPopulateConfig; this config came straight from the CFG file, which
     // never stores '#' keys. sbGetCompatModes needs it to find a title's default compatibility modes.

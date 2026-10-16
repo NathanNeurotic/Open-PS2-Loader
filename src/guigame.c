@@ -1666,7 +1666,8 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
         configRemoveKey(configSet, CONFIG_ITEM_PARENTAL_LOCK);
     else if (!menuIsParentalLockPasswordSet())
         guiMsgBox(_l(_STR_PARENLOCK_GAME_NO_PASSWORD), 0, NULL);
-    return guiGameApplyConfig(configSet, support);
+    int changed = guiGameApplyConfig(configSet, support);
+    return parentalLock ? 1 : changed;
 }
 
 void guiGameRemoveGlobalSettings(config_set_t *configGame)
