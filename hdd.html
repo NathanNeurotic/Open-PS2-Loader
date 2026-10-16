@@ -38,6 +38,8 @@
     <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
     <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
     <a href="hdd.html" class="active"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
     <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
     <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
@@ -69,6 +71,7 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
+<div class="callout info" id="specialized-storage"><div class="h">Specialized Sony hardware</div><p><a href="psx-dvr.html"><b>PSX DESR DVR support</b></a> is a separate experimental read-only ISO path, merged in PR #947 but awaiting real DVR tests. <a href="pc-card-cf.html"><b>PC CARD CompactFlash</b></a> for Japanese SCPH-10000/15000/18000 consoles is still being reviewed in PR #955. Neither feature changes the standard APA/exFAT workflows documented below.</p></div>
 <h1>Internal HDD (APA &amp; exFAT)</h1>
 <p class="lead">RiptOPL supports two completely different ways to use the PS2's internal ATA/IDE hard drive: the traditional
 <b>APA/PFS partition scheme</b> (HDLoader format, used by HDL-Dump and virtually all legacy tools), and the modern

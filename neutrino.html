@@ -38,6 +38,8 @@
     <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
     <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
     <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
     <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
     <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
     <h4>Features</h4>
@@ -69,6 +71,7 @@
     <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
   </nav>
   <main class="content">
+<div class="callout info"><div class="h">PSX DVR requires a separate Neutrino installation</div><p>The <a href="psx-dvr.html">DESR DVR ISO feature</a> cannot use ordinary bundled Neutrino; it requires pcm720's complete <a href="https://github.com/pcm720/neutrino/tree/bsd-dvr"><code>bsd-dvr</code> backend</a>, configured through Neutrino Path. This experimental flow remains awaiting real DESR console testing.</p></div>
 <h1>Neutrino Core</h1>
 <p><b>RiptOPL may remain inside APPS/.</b> Its installation folder is independent of Neutrino. Automatic card lookup expects the complete Neutrino installation at <code>mc0:/neutrino/</code> or <code>mc1:/neutrino/</code>. If Neutrino is nested in another app folder, set its full ELF path explicitly; keep its configuration and modules alongside it.</p>
 
