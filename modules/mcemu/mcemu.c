@@ -14,6 +14,25 @@ static void hookSio2man25_1(Sio2Packet *sd);
 static void hookSio2man25_2(Sio2Packet *sd);
 static void hookSio2man51_1(Sio2Packet *sd);
 static void hookSio2man51_2(Sio2Packet *sd);
+static void Sio2McEmu_1(Sio2Packet *sd);
+static void Sio2McEmu_2(Sio2Packet *sd);
+static int sio2TransferVersion;
+
+static void sio2McUnlock(int ver)
+{
+    psio2_transfer_reset[ver]();
+}
+
+static void sio2McLock(int ver)
+{
+    psio2_mc_transfer_init[ver]();
+    // Publish only after the matching initializer has acquired SIO2's transfer lock.
+    sio2TransferVersion = ver;
+}
+
+static void hookSio2McInit_1(void) { sio2McLock(0); }
+static void hookSio2McInit_2(void) { sio2McLock(1); }
+
 
 #ifdef PADEMU
 void no_pademu(Sio2Packet *sd, Sio2McProc sio2proc)
@@ -144,7 +163,7 @@ void InstallSio2manHook(void *exp, int ver)
         entry == (ver ? hookSio2man51_2 : hookSio2man51_1))
         return;
 
-    psio2_mc_transfer_init[ver] = GetExportEntry(exp, 24);
+    psio2_mc_transfer_init[ver] = HookExportEntry(exp, 24, ver ? hookSio2McInit_2 : hookSio2McInit_1);
     psio2_transfer_reset[ver] = GetExportEntry(exp, 26);
 
     /* hooking SIO2MAN entry #25 (used by MCMAN and old PADMAN) */
@@ -319,7 +338,7 @@ int hookRegisterLibraryEntires(iop_library_t *lib)
 /* Hook for SIO2MAN V1 entry #25 */
 static void hookSio2man25_1(Sio2Packet *sd)
 {
-    hookSio2man(sd, pSio2man25[0]);
+    hookSio2man(sd, pSio2man25[0], 0);
 }
 //------------------------------
 // endfunc
@@ -327,7 +346,7 @@ static void hookSio2man25_1(Sio2Packet *sd)
 /* Hook for SIO2MAN V2 entry #25 */
 static void hookSio2man25_2(Sio2Packet *sd)
 {
-    hookSio2man(sd, pSio2man25[1]);
+    hookSio2man(sd, pSio2man25[1], 1);
 }
 //------------------------------
 // endfunc
@@ -335,7 +354,7 @@ static void hookSio2man25_2(Sio2Packet *sd)
 /* Hook for SIO2MAN V1 entry #49 */
 static void hookSio2man51_1(Sio2Packet *sd)
 {
-    hookSio2man(sd, pSio2man51[0]);
+    hookSio2man(sd, pSio2man51[0], 0);
 }
 //------------------------------
 // endfunc
@@ -343,13 +362,16 @@ static void hookSio2man51_1(Sio2Packet *sd)
 /* Hook for SIO2MAN V2 entry #51 */
 static void hookSio2man51_2(Sio2Packet *sd)
 {
-    hookSio2man(sd, pSio2man51[1]);
+    hookSio2man(sd, pSio2man51[1], 1);
 }
 //------------------------------
 // endfunc
 //---------------------------------------------------------------------------
 /* SIO2MAN generic hook routine */
-void hookSio2man(Sio2Packet *sd, Sio2McProc sio2proc)
+static void Sio2McEmu_1(Sio2Packet *sd) { Sio2McEmu(sd, 0); }
+static void Sio2McEmu_2(Sio2Packet *sd) { Sio2McEmu(sd, 1); }
+
+void hookSio2man(Sio2Packet *sd, Sio2McProc sio2proc, int ver)
 {
     register u32 ctrl;
 
@@ -376,7 +398,7 @@ void hookSio2man(Sio2Packet *sd, Sio2McProc sio2proc)
 
         /* checking SIO2 command code */
         if (ctrl == 0x81)
-            sio2proc = Sio2McEmu;
+            sio2proc = ver ? Sio2McEmu_2 : Sio2McEmu_1;
     }
 
 /* calling original SIO2MAN routine */
@@ -408,6 +430,7 @@ int hookSecrAuthCard(int port, int slot, int cnum)
 #define SIO2STAT (*(volatile u32 *)(0xbf80826c))
 #define SIO2CMD  ((volatile u32 *)(0xbf808200))
 static Sio2Packet *temp_packet = NULL;
+static int temp_packet_version;
 static int skip_sema_wait = 0;
 
 int hookDmac_request(u32 channel, void *addr, u32 size, u32 count, int dir)
@@ -423,6 +446,7 @@ int hookDmac_request(u32 channel, void *addr, u32 size, u32 count, int dir)
         case 11: // sio2in
             // may have to copy the dma buffer, but isn't a problem right now
             temp_packet = _SysAlloc(sizeof(Sio2Packet));
+            temp_packet_version = sio2TransferVersion;
             temp_packet->wrmaddr = addr;
             temp_packet->wrwords = size;
             temp_packet->wrcount = count;
@@ -438,7 +462,7 @@ int hookDmac_request(u32 channel, void *addr, u32 size, u32 count, int dir)
             for (i = 0; i < 16; i++)
                 temp_packet->ctrl[i] = SIO2CMD[i];
             DPRINTF("hookDmac_request ctrl0 = %lX, cmd0 = %X, wrcount = %ld\n", temp_packet->ctrl[0], ((u8 *)temp_packet->wrmaddr)[1], temp_packet->wrcount);
-            Sio2McEmu(temp_packet);
+            Sio2McEmu(temp_packet, temp_packet_version);
             SIO2CTRL |= 0x40; // reset it, pcsx2 suggests it's reset after every write
             _SysFree(temp_packet);
             temp_packet = NULL;
@@ -501,13 +525,13 @@ u32 *hookSio2man67()
 }
 
 /* SIO2 Command handler */
-void Sio2McEmu(Sio2Packet *sd)
+void Sio2McEmu(Sio2Packet *sd, int ver)
 {
     /*
      * Unlock SIO2 access for MX4SIO
      * NOTE: we are assuming MC's are only accessed when LOCKED
      */
-    (psio2_transfer_reset[1] ? psio2_transfer_reset[1] : psio2_transfer_reset[0])();
+    sio2McUnlock(ver);
 
     if ((sd->ctrl[0] & 0xF0) == 0x70) {
         register u32 ddi, *pctl, result, length;
@@ -646,7 +670,7 @@ void Sio2McEmu(Sio2Packet *sd)
      * Lock SIO2 access again as the user expects it
      * NOTE: we are assuming MC's are only accessed when LOCKED
      */
-    (psio2_mc_transfer_init[1] ? psio2_mc_transfer_init[1] : psio2_mc_transfer_init[0])();
+    sio2McLock(ver);
 }
 //------------------------------
 // endfunc

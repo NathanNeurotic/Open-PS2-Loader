@@ -148,11 +148,11 @@ typedef void (*Sio2McProc)(Sio2Packet *arg);
 typedef void (*Sio2McProc2)();
 
 int DummySecrAuthCard(int port, int slot, int cnum);
-void Sio2McEmu(Sio2Packet *sd);
+void Sio2McEmu(Sio2Packet *sd, int ver);
 
 int hookSecrAuthCard(int port, int slot, int cnum);
 u32 *hookSio2man67();
-void hookSio2man(Sio2Packet *sd, Sio2McProc sio2proc);
+void hookSio2man(Sio2Packet *sd, Sio2McProc sio2proc, int ver);
 int hookRegisterLibraryEntires(iop_library_t *lib);
 
 void InstallSecrmanHook(void *exp);
