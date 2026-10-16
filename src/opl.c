@@ -4756,6 +4756,9 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     // block all io ops, wait for the ones still running to finish (BOUNDED -- see the note above)
     ioBlockOpsTimed(1, gDeinitTerminal ? EXIT_IO_DRAIN_TICKS : LAUNCH_IO_DRAIN_TICKS);
 
+    // Drain is finished; now fade the status screen to black before device/GS teardown.
+    guiFadeOutForHandoff(_l(_STR_PLEASE_WAIT));
+
     // JOIN the art worker before anything unmounts a device under it. Its RESULT IS LOAD-BEARING and
     // used to be thrown away: a 0 means a thread is still inside a device read, and the teardown
     // below is about to unmount that device and close its descriptors.
@@ -4836,6 +4839,9 @@ void deinit(int exception, int modeSelected)
 
     // block all io ops, wait for the ones still running to finish (BOUNDED -- see the note above)
     ioBlockOpsTimed(1, gDeinitTerminal ? EXIT_IO_DRAIN_TICKS : LAUNCH_IO_DRAIN_TICKS);
+
+    // Drain is finished; now fade the status screen to black before device/GS teardown.
+    guiFadeOutForHandoff(_l(_STR_PLEASE_WAIT));
 
     // JOIN the art worker before anything unmounts a device under it. Its RESULT IS LOAD-BEARING and
     // used to be thrown away: a 0 means a thread is still inside a device read, and the teardown
