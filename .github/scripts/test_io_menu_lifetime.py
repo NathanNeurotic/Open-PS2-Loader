@@ -113,7 +113,7 @@ cfg_src = (root / "src/config.c").read_text(encoding="utf-8")
 cfg_fns = "\n".join(body(cfg_src, sig) for sig in (
     "static int configKeyValidate(",
     "static struct config_value_t *allocConfigItem(",
-    "static void addConfigValue(",
+    "static int addConfigValue(",
     "static struct config_value_t *getConfigItemForName(",
     "int configSetStr(",
     "int configGetStr(",

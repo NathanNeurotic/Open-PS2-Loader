@@ -36,14 +36,16 @@ enum CONFIG_INDEX {
 #define CONFIG_SOURCE_DLOAD   2 // Legacy downloaded-defaults marker; retained so old per-game configs still identify/display correctly.
 
 // Items for per-game config files.
-#define CONFIG_ITEM_NAME             "#Name"
-#define CONFIG_ITEM_LONGNAME         "#LongName"
-#define CONFIG_ITEM_SIZE             "#Size"
-#define CONFIG_ITEM_FORMAT           "#Format"
-#define CONFIG_ITEM_MEDIA            "#Media"
-#define CONFIG_ITEM_SYSTEM           "#System"   // console axis (PS1/PS2); #Media stays the disc axis (CD/DVD) -- FR #49
-#define CONFIG_ITEM_DISCTYPE         "#DiscType" // combined console+media token (PS1CD/PS2CD/PS2DVD) so one AttributeImage glyph distinguishes PS1-CD from PS2-CD (both report #Media=CD) -- issue #49
-#define CONFIG_ITEM_STARTUP          "#Startup"
+#define CONFIG_ITEM_NAME          "#Name"
+#define CONFIG_ITEM_LONGNAME      "#LongName"
+#define CONFIG_ITEM_SIZE          "#Size"
+#define CONFIG_ITEM_FORMAT        "#Format"
+#define CONFIG_ITEM_MEDIA         "#Media"
+#define CONFIG_ITEM_SYSTEM        "#System"   // console axis (PS1/PS2); #Media stays the disc axis (CD/DVD) -- FR #49
+#define CONFIG_ITEM_DISCTYPE      "#DiscType" // combined console+media token (PS1CD/PS2CD/PS2DVD) so one AttributeImage glyph distinguishes PS1-CD from PS2-CD (both report #Media=CD) -- issue #49
+#define CONFIG_ITEM_STARTUP       "#Startup"
+#define CONFIG_ITEM_PARENTAL_LOCK "$ParentalLock"
+
 #define CONFIG_ITEM_ALTSTARTUP       "$AltStartup"
 #define CONFIG_ITEM_VMC              "$VMC"
 #define CONFIG_ITEM_VMC_DISABLE      "$VMCDisable" // per-slot ("$VMCDisable_0"/"_1"): launch WITHOUT this slot's VMC while keeping its card name configured (Neutrino -mc path only)

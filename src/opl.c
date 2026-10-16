@@ -428,6 +428,8 @@ static void itemExecSelect(struct menu_item *curMenu)
                     return;
                 }
                 config_set_t *configSet = menuLoadConfig();
+                if (configSet == NULL)
+                    return;
                 guiLock();
                 if (curMenu->current == NULL) {
                     guiUnlock();
@@ -439,6 +441,18 @@ static void itemExecSelect(struct menu_item *curMenu)
                 if (startup != NULL)
                     snprintf(gameIdStartup, sizeof(gameIdStartup), "%s", startup);
                 guiUnlock(); // startup points into storage a refresh may replace
+                if (menuCheckGameParentalLock(configSet) != 0)
+                    return;
+                if (gameIdStartup[0] != '\0') {
+                    guiLock();
+                    startup = curMenu->current != NULL && !curMenu->current->item.isFolder ? support->itemGetStartup(support, curMenu->current->item.id) : NULL;
+                    int sameGame = startup != NULL && strcmp(startup, gameIdStartup) == 0;
+                    if (sameGame)
+                        launchId = curMenu->current->item.id;
+                    guiUnlock();
+                    if (!sameGame)
+                        return;
+                }
                 // Create VMC on First Launch. It can run for seconds (genvmc) and saves the config
                 // through deferred IO, and a source refresh in that window renumbers the rows. A row id
                 // is only a list index, so a different game can land on the same one: match the game
@@ -4757,6 +4771,9 @@ void deinitEx(int exception, int modeSelected, int modeSelected2)
     // block all io ops, wait for the ones still running to finish (BOUNDED -- see the note above)
     ioBlockOpsTimed(1, gDeinitTerminal ? EXIT_IO_DRAIN_TICKS : LAUNCH_IO_DRAIN_TICKS);
 
+    // Drain is finished; now fade the status screen to black before device/GS teardown.
+    guiFadeOutForHandoff(_l(_STR_PLEASE_WAIT));
+
     // JOIN the art worker before anything unmounts a device under it. Its RESULT IS LOAD-BEARING and
     // used to be thrown away: a 0 means a thread is still inside a device read, and the teardown
     // below is about to unmount that device and close its descriptors.
@@ -4837,6 +4854,9 @@ void deinit(int exception, int modeSelected)
 
     // block all io ops, wait for the ones still running to finish (BOUNDED -- see the note above)
     ioBlockOpsTimed(1, gDeinitTerminal ? EXIT_IO_DRAIN_TICKS : LAUNCH_IO_DRAIN_TICKS);
+
+    // Drain is finished; now fade the status screen to black before device/GS teardown.
+    guiFadeOutForHandoff(_l(_STR_PLEASE_WAIT));
 
     // JOIN the art worker before anything unmounts a device under it. Its RESULT IS LOAD-BEARING and
     // used to be thrown away: a 0 means a thread is still inside a device read, and the teardown
@@ -5445,7 +5465,9 @@ static void autoLaunchHDDGame(char *argv[])
     // never stores '#' keys. sbGetCompatModes needs it to find a title's default compatibility modes.
     configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchGame->startup);
 
-    hddLaunchGame(NULL, -1, configSet);
+    // The mini session has no password UI. A locked shortcut returns to the menu.
+    if (!menuGameRequiresParentalLock(configSet))
+        hddLaunchGame(NULL, -1, configSet);
 
     // Only reached when the launch was refused. hddLaunchGame tears the mini session down only on the
     // way to a handoff, so finish it here: main() then boots the menu, which must not inherit a live
@@ -5605,13 +5627,22 @@ static void autoLaunchBDMGame(char *argv[])
 
 
     configSet = configAlloc(0, NULL, path);
+    if (configSet == NULL) {
+        free(gAutoLaunchDeviceData);
+        gAutoLaunchDeviceData = NULL;
+        free(gAutoLaunchBDMGame);
+        gAutoLaunchBDMGame = NULL;
+        miniDeinit(NULL);
+        return;
+    }
     configRead(configSet);
     // A menu launch gets #Startup from sbPopulateConfig; this config came straight from the CFG file, which
     // never stores '#' keys. sbGetCompatModes needs it to find a title's default compatibility modes.
     if (configSet != NULL)
         configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchBDMGame->startup);
 
-    bdmLaunchGame(NULL, -1, configSet);
+    if (!menuGameRequiresParentalLock(configSet))
+        bdmLaunchGame(NULL, -1, configSet);
 
     // Only reached when the launch was refused (missing ISO, fragmented image, unusable device).
     // bdmLaunchGame tears the mini session down only on the way to a handoff; a Neutrino abort that

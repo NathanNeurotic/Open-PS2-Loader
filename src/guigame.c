@@ -1449,7 +1449,19 @@ reshow_compat:
 }
 
 // sets variables without writing to users cfg file.. follow up with menuSaveConfig() to write
-int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
+static int guiGamePrepareParentalLock(config_set_t *configSet)
+{
+    int parentalLock = 0, storedLock = 0;
+    diaGetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, &parentalLock);
+    if (!parentalLock)
+        return 1;
+    if (!configSetInt(configSet, CONFIG_ITEM_PARENTAL_LOCK, 1) ||
+        !configGetInt(configSet, CONFIG_ITEM_PARENTAL_LOCK, &storedLock) || storedLock != 1)
+        return 0;
+    return 1;
+}
+
+static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
 {
     int i;
     int result = 0;
@@ -1646,6 +1658,23 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     return result;
 }
 
+int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
+{
+    int parentalLock = 0;
+    diaGetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, &parentalLock);
+    // Authorize removal before any live/global configuration is changed.
+    if (!parentalLock && menuCheckGameParentalLock(configSet) != 0)
+        return -1;
+    if (!guiGamePrepareParentalLock(configSet))
+        return -1;
+    if (!parentalLock)
+        configRemoveKey(configSet, CONFIG_ITEM_PARENTAL_LOCK);
+    else if (!menuIsParentalLockPasswordSet())
+        guiMsgBox(_l(_STR_PARENLOCK_GAME_NO_PASSWORD), 0, NULL);
+    int changed = guiGameApplyConfig(configSet, support);
+    return parentalLock ? 1 : changed;
+}
+
 void guiGameRemoveGlobalSettings(config_set_t *configGame)
 {
     if (menuCheckParentalLock() == 0) {
@@ -1678,13 +1707,14 @@ void guiGameRemoveGlobalSettings(config_set_t *configGame)
 
 void guiGameRemoveSettings(config_set_t *configSet)
 {
-    if (menuCheckParentalLock() == 0) {
+    if ((menuGameRequiresParentalLock(configSet) ? menuCheckGameParentalLock(configSet) : menuCheckParentalLock()) == 0) {
         configRemoveKey(configSet, CONFIG_ITEM_CONFIGSOURCE);
         configRemoveKey(configSet, CONFIG_ITEM_DMA);
         configRemoveKey(configSet, CONFIG_ITEM_CORE_LOADER);
         configRemoveKey(configSet, CONFIG_ITEM_COMPAT);
         configRemoveKey(configSet, CONFIG_ITEM_DNAS);
         configRemoveKey(configSet, CONFIG_ITEM_ALTSTARTUP);
+        configRemoveKey(configSet, CONFIG_ITEM_PARENTAL_LOCK);
 
         // GSM
         configRemoveKey(configSet, CONFIG_ITEM_GSMSOURCE);
@@ -1733,14 +1763,23 @@ void guiGameTestSettings(int id, item_list_t *support, config_set_t *configSet)
     // itemLaunch only returns on a launch FAILURE; on success it tears OPL down / reboots, so the
     // clone is freed only on the return (failure) path. Per-game keys go to the clone; the few
     // GLOBAL-source settings still touch the in-RAM global config, matching pre-existing behavior.
+    // Authorize the stored lock before applying an unsaved change that could turn it off.
+    int wasLocked = menuGameRequiresParentalLock(configSet);
+    if (menuCheckGameParentalLock(configSet) != 0)
+        return;
     config_set_t *testConfig = configClone(configSet);
-    if (testConfig == NULL) {
-        // Out of memory: fall back to the original behavior rather than refusing to test.
-        guiGameSaveConfig(configSet, support);
-        support->itemLaunch(support, id, configSet);
+    if (testConfig == NULL)
+        return; // Testing must never modify the live configuration, including on allocation failure.
+    // Prepare and authorize a new lock before applying any global-source edits.
+    if (!guiGamePrepareParentalLock(testConfig) || (!wasLocked && menuCheckGameParentalLock(testConfig) != 0)) {
+        configFree(testConfig);
         return;
     }
-    guiGameSaveConfig(testConfig, support);
+    int parentalLock = 0;
+    diaGetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, &parentalLock);
+    if (!parentalLock)
+        configRemoveKey(testConfig, CONFIG_ITEM_PARENTAL_LOCK);
+    guiGameApplyConfig(testConfig, support);
     support->itemLaunch(support, id, testConfig);
     configFree(testConfig);
 }
@@ -2075,6 +2114,10 @@ void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
     altStartup[0] = '\0';
     configGetStrCopy(configSet, CONFIG_ITEM_ALTSTARTUP, altStartup, sizeof(altStartup));
     diaSetString(diaCompatConfig, COMPAT_ALTSTARTUP, altStartup);
+    int parentalLock = 0;
+    configGetInt(configSet, CONFIG_ITEM_PARENTAL_LOCK, &parentalLock);
+    diaSetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, parentalLock ? 1 : 0);
+
 
     // Per-game Neutrino args live in the neutrinoArgs buffer, edited via the structured sub-screen
     // opened by the COMPAT_NEUTRINO_ARGS button. The dialog item is a UI_BUTTON (no stringvalue), so
