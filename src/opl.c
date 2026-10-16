@@ -426,6 +426,8 @@ static void itemExecSelect(struct menu_item *curMenu)
                     return;
                 }
                 config_set_t *configSet = menuLoadConfig();
+                if (configSet == NULL)
+                    return;
                 guiLock();
                 if (curMenu->current == NULL) {
                     guiUnlock();
@@ -5602,6 +5604,8 @@ static void autoLaunchBDMGame(char *argv[])
 
 
     configSet = configAlloc(0, NULL, path);
+    if (configSet == NULL)
+        return;
     configRead(configSet);
     // A menu launch gets #Startup from sbPopulateConfig; this config came straight from the CFG file, which
     // never stores '#' keys. sbGetCompatModes needs it to find a title's default compatibility modes.

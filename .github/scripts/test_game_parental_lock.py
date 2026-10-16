@@ -23,6 +23,7 @@ helpers = '\n'.join(function(menu, sig) for sig in (
     'static int menuPromptParentalLockPassword(', 'int menuCheckParentalLock(',
     'int menuGameRequiresParentalLock(', 'int menuCheckGameParentalLock('))
 select = function(opl, 'static void itemExecSelect(')
+assert select.index('if (configSet == NULL)') < select.index('menuCheckGameParentalLock(configSet)')
 assert select.index('menuCheckGameParentalLock(configSet)') < select.index('guiGameAutoCreateVmc(') < select.index('support->itemLaunch(')
 assert 'strcmp(startup, gameIdStartup) == 0' in select[select.index('menuCheckGameParentalLock('):select.index('guiGameAutoCreateVmc(')]
 for name, launch in [('autoLaunchHDDGame', 'hddLaunchGame'), ('autoLaunchBDMGame', 'bdmLaunchGame')]:
@@ -52,15 +53,17 @@ harness = r"""
 #define _STR_PARENLOCK_ENTER_PASSWORD_TITLE 3
 #define _STR_PARENLOCK_DISABLE_WARNING 4
 #define _STR_PARENLOCK_PASSWORD_INCORRECT 5
+#define _STR_PARENLOCK_GAME_NO_PASSWORD 6
 #define _l(x) (x)
 typedef struct {int locked;char password[64];} config_set_t;
 static config_set_t global, cloned;
-static int parentalLockCheckEnabled=1, prompts, accept=1, notices, saved, launches, edits, frees, failClone, editLock;
+static int parentalLockCheckEnabled=1, prompts, accept=1, notices, saved, launches, edits, frees, failClone, editLock, failInsert;
 static const char *answer;
 static config_set_t *configGetByType(int type) {assert(type==CONFIG_OPL);return &global;}
 static int configGetStr(config_set_t *c,int key,const char **out) {assert(key==1);*out=c->password;return 1;}
 static int configGetInt(config_set_t *c,int key,int *out) {assert(key==2);*out=c->locked;return 1;}
-static void configRemoveKey(config_set_t *c,int key) {assert(key==1);c->password[0]=0;}
+static void configRemoveKey(config_set_t *c,int key) {if(key==2)c->locked=0;else {assert(key==1);c->password[0]=0;}}
+static int configSetInt(config_set_t *c,int key,int value) {assert(key==2);if(failInsert)return 0;c->locked=value;return 1;}
 static int diaShowKeyb(char *out,int size,int hidden,int title) {
     assert(size==64 && hidden && title==3);prompts++;snprintf(out,size,"%s",answer);return accept;
 }
@@ -73,12 +76,13 @@ static void configFree(config_set_t *c) {assert(c==&cloned);frees++;}
 static int guiGameApplyConfig(config_set_t *c,item_list_t *s) {(void)s;edits++;c->locked=editLock;return 1;}
 static void launch(item_list_t *s,int id,config_set_t *c) {(void)s;(void)c;assert(id==7);launches++;}
 static void diaGetInt(int dialog,int key,int *out) {assert(dialog==1&&key==3);*out=editLock;}
+@PREPARE@
 @SAVE_CONFIG@
 @TEST_LAUNCH@
 static void reset(void) {
     memset(&global,0,sizeof(global));strcpy(global.password,"secret");
     answer="secret";accept=1;parentalLockCheckEnabled=1;
-    prompts=notices=saved=launches=edits=frees=failClone=editLock=0;
+    prompts=notices=saved=launches=edits=frees=failClone=editLock=failInsert=0;
 }
 int main(void) {
     config_set_t locked={1,""},unlocked={0,""};item_list_t support={launch};
@@ -97,7 +101,7 @@ int main(void) {
     reset();editLock=0;guiGameTestSettings(7,&support,&locked);
     assert(launches==1 && prompts==1 && edits==1 && frees==1 && locked.locked==1);
     reset();editLock=1;accept=0;guiGameTestSettings(7,&support,&unlocked);
-    assert(!launches && prompts==1 && frees==1 && unlocked.locked==0);
+    assert(!launches && !edits && prompts==1 && frees==1 && unlocked.locked==0);
     reset();editLock=1;guiGameTestSettings(7,&support,&unlocked);
     assert(launches==1 && prompts==1 && unlocked.locked==0);
     reset();failClone=1;editLock=0;accept=0;guiGameTestSettings(7,&support,&locked);
@@ -114,11 +118,14 @@ int main(void) {
     assert(locked.locked==0 && edits==1 && prompts==1);locked.locked=1;
     reset();editLock=1;assert(guiGameSaveConfig(&locked,&support)>0);
     assert(locked.locked==1 && edits==1 && prompts==0);
+    reset();failInsert=1;editLock=1;assert(guiGameSaveConfig(&unlocked,&support)<0);
+    assert(!edits && !unlocked.locked);
+    guiGameTestSettings(7,&support,&unlocked);assert(!edits && !launches);
     reset();global.password[0]=0;assert(!menuGameRequiresParentalLock(&locked));
     assert(!menuCheckGameParentalLock(&locked) && !prompts);
     puts("PASS: repeated prompts, cancel/wrong/master passwords, test edits and autolaunch guards");
 }
-""".replace('@HELPERS@', helpers).replace('@SAVE_CONFIG@', function(game, 'int guiGameSaveConfig(')).replace('@TEST_LAUNCH@', function(game, 'void guiGameTestSettings('))
+""".replace('@PREPARE@', function(game, 'static int guiGamePrepareParentalLock(')).replace('@HELPERS@', helpers).replace('@SAVE_CONFIG@', function(game, 'int guiGameSaveConfig(')).replace('@TEST_LAUNCH@', function(game, 'void guiGameTestSettings('))
 with tempfile.TemporaryDirectory() as directory:
     path = Path(directory) / 'parental.c'
     path.write_text(harness,encoding='utf-8')
@@ -128,3 +135,36 @@ with tempfile.TemporaryDirectory() as directory:
         flags += ['-fsanitize=address,undefined','-fno-omit-frame-pointer','-fno-pie','-no-pie']
     subprocess.run([os.environ.get('CC','gcc'),*flags,str(path),'-o',str(binary)],check=True)
     subprocess.run([str(binary)],check=True,timeout=10)
+
+config = (root / 'src/config.c').read_text(encoding='utf-8')
+allocation = r"""
+#include <assert.h>
+#include <string.h>
+#define CONFIG_KEY_NAME_LEN 32
+#define CONFIG_KEY_VALUE_LEN 64
+struct config_value_t {char key[32],val[64];struct config_value_t *next;};
+typedef struct {struct config_value_t *head,*tail;int modified;} config_set_t;
+static struct config_value_t item;
+static int fail=1;
+static int configKeyValidate(const char *key) {(void)key;return 1;}
+static struct config_value_t *allocConfigItem(const char *key,const char *val) {
+ if(fail) { return 0; }
+ memset(&item,0,sizeof(item));strcpy(item.key,key);strcpy(item.val,val);return &item;
+}
+@FUNCTIONS@
+int main(void) {
+ config_set_t c={0};
+ assert(!configSetStr(&c,"$ParentalLock","1") && !c.head && !c.tail && !c.modified);
+ fail=0;assert(configSetStr(&c,"$ParentalLock","1") && c.head==&item && c.tail==&item && c.modified);
+ c.modified=0;fail=1;assert(!configSetStr(&c,"another","1") && c.tail==&item && !item.next && !c.modified);
+ assert(configSetStr(&c,"$ParentalLock","0") && !strcmp(item.val,"0"));
+ return 0;
+}
+""".replace('@FUNCTIONS@','\n'.join(function(config,sig) for sig in (
+ 'static int addConfigValue(', 'static struct config_value_t *getConfigItemForName(', 'int configSetStr(')))
+with tempfile.TemporaryDirectory() as directory:
+    source=Path(directory)/'allocation.c';source.write_text(allocation,encoding='utf-8')
+    binary=source.with_suffix('.exe')
+    subprocess.run([os.environ.get('CC','gcc'),'-std=gnu99','-Wall','-Werror',str(source),'-o',str(binary)],check=True)
+    subprocess.run([str(binary)],check=True,timeout=10)
+print('PASS: production config insertion fails without mutating list or modified flag')
