@@ -897,6 +897,11 @@ struct UIItem diaArtworkConfig[] = {
     {UI_BOOL, UICFG_ENABLE_DISCART, 1, 1, _STR_HINT_DISCART, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
 
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {NULL, _STR_LOGOART}}},
+    {UI_SPACER},
+    {UI_BOOL, UICFG_ENABLE_LOGOART, 1, 1, _STR_HINT_LOGOART, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"Background Art", -1}}},
     {UI_SPACER},
     {UI_BOOL, UICFG_ENABLE_BGART, 1, 1, _STR_HINT_BGART, 0, 0, {.intvalue = {0, 0}}},

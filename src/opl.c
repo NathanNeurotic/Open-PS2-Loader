@@ -243,6 +243,7 @@ int gRAExperimentalCards;
 #endif
 int gEnableArt;
 int gEnableDiscArt;
+int gEnableLogoArt;
 int gWideScreen;
 int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 int gXOff;
@@ -3329,6 +3330,7 @@ static void _loadConfig()
 #endif
             configGetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, &gEnableArt);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, &gEnableDiscArt);
+            configGetInt(configOPL, CONFIG_OPL_ENABLE_LOGOART, &gEnableLogoArt);
             configGetInt(configOPL, CONFIG_OPL_WIDESCREEN, &gWideScreen);
 
             if (getKeyPressed(KEY_TRIANGLE) && getKeyPressed(KEY_CROSS)) {
@@ -3996,6 +3998,7 @@ static void _saveConfig()
 #endif
         configSetInt(configOPL, CONFIG_OPL_ENABLE_COVERART, gEnableArt);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_DISCART, gEnableDiscArt);
+        configSetInt(configOPL, CONFIG_OPL_ENABLE_LOGOART, gEnableLogoArt);
         configSetInt(configOPL, CONFIG_OPL_WIDESCREEN, gWideScreen);
         configSetInt(configOPL, CONFIG_OPL_VMODE, gVMode);
         configSetInt(configOPL, CONFIG_OPL_XOFF, gXOff);
@@ -4983,6 +4986,7 @@ static void setDefaults(void)
 #endif
     gEnableArt = 1;
     gEnableDiscArt = 1; // preserve existing ItemIcon/ICO behavior unless the user disables it
+    gEnableLogoArt = 1; // preserve existing LGO artwork unless the user disables it
     gWideScreen = 0;    // Fresh configurations use 4:3; a saved widescreen choice overrides this.
     // Audio starts silent, like stock OPL (tester feedback 10-06: "disable the music and squeak").
     // Saved configs keep their own choice; the Audio page turns each one on live.

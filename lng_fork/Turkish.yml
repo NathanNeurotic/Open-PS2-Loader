@@ -315,3 +315,5 @@ translations:
   VIEW_APPS: Uygulamalar gösteriliyor
   EMBER_DISPLAY: Ember görüntü modu
   HINT_EMBER_DISPLAY: "Ember'ın PS1 oyunları için kullandığı çıkış modu. 240p veya 480p, başlatılan aygıtın EMBER klasöründeki settings.txt dosyasına yazılır. Varsayılan bu ayarı yeniden kaldırır; dosyada başka bir şey yoksa dosyayı da siler."
+  LOGOART: "Oyun Logoları"
+  HINT_LOGOART: "Tema kullanıyorsa oyun logosunu (<ID>_LGO) gösterir. Kapatmak varsayılan görüntüyü de gizler; kapaklar, disk görselleri ve arka planlar etkilenmez."

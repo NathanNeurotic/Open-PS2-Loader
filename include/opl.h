@@ -348,6 +348,7 @@ extern int gRAExperimentalCards;
 #endif
 extern int gEnableArt;
 extern int gEnableDiscArt; // ItemIcon/ICO disc artwork; independent of cover art
+extern int gEnableLogoArt; // Per-game LGO logo artwork; independent of cover/disc/background
 extern int gWideScreen;
 extern int gVMode; // 0 - Auto, 1 - PAL, 2 - NTSC
 extern int gXOff;
