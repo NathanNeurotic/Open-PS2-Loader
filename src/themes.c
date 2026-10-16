@@ -1008,11 +1008,14 @@ static void initStaticImage(const char *themePath, config_set_t *themeConfig, th
 
 // GameImage ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ItemIcon is backed by the ICO art suffix. Treat it as disc artwork independently from COV so
-// users can keep covers/backgrounds while hiding the large disc image used by some themes.
-static int isDiscArtCache(const image_cache_t *cache)
+// Check cache suffixes, not element names: a disabled art type must hide
+// the entire themed element, including default images and overlays.
+static int isHiddenArtworkCache(const image_cache_t *cache)
 {
-    return cache != NULL && cache->suffix != NULL && strcmp(cache->suffix, "ICO") == 0;
+    if (cache == NULL || cache->suffix == NULL)
+        return 0;
+    return (!gEnableDiscArt && strcmp(cache->suffix, "ICO") == 0) ||
+           (!gEnableLogoArt && strcmp(cache->suffix, "LGO") == 0);
 }
 
 static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, struct submenu_item *item, int isPriority)
@@ -1026,7 +1029,7 @@ static GSTEXTURE *getGameImageTextureEx(image_cache_t *cache, void *support, str
     if (cache == NULL || cache->userId < 0 || item->cache_id == NULL || item->cache_uid == NULL)
         return NULL;
 
-    if (!gEnableDiscArt && isDiscArtCache(cache))
+    if (isHiddenArtworkCache(cache))
         return NULL;
 
     if (gTheme == NULL || cache->userId >= gTheme->gameCacheCount)
@@ -1066,7 +1069,7 @@ static GSTEXTURE *getGameImageCached(image_cache_t *cache, struct submenu_item *
     if (cache == NULL || cache->userId < 0 || item->cache_id == NULL || item->cache_uid == NULL)
         return NULL;
 
-    if (!gEnableDiscArt && isDiscArtCache(cache))
+    if (isHiddenArtworkCache(cache))
         return NULL;
 
     if (gTheme == NULL || cache->userId >= gTheme->gameCacheCount)
@@ -1275,7 +1278,7 @@ static void drawGameImage(struct menu_list *menu, struct submenu_list *item, con
 
         // A disabled disc element must disappear completely, including its theme-supplied default
         // texture/overlay. Merely blocking the ICO file read would otherwise leave the placeholder.
-        if (!gEnableDiscArt && isDiscArtCache(gameImage->cache))
+        if (isHiddenArtworkCache(gameImage->cache))
             return;
 
         // A per-game BACKGROUND must never be REQUESTED before the cover. This function draws both,
@@ -1798,7 +1801,7 @@ static void drawCoverFlow(struct menu_list *menu, struct submenu_list *item, con
         // only the cache + overlay are redirected; frame-inset math uses THIS cover's own dims.
         theme_element_t *coverElem = thmGetElemForItem(menu, covers[i], elem);
         mutable_image_t *cimg = (mutable_image_t *)coverElem->extended;
-        if (!cimg)
+        if (!cimg || isHiddenArtworkCache(cimg->cache))
             continue;
         int csw = (coverElem->width > 0) ? coverElem->width : 1;   // div-guard
         int csh = (coverElem->height > 0) ? coverElem->height : 1; // div-guard
@@ -2213,7 +2216,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         // Favourites and VCD all pass through this one scheduler.
         image_cache_t *selectedCache = NULL;
         if (itemsList->decoratorImage != NULL && !item->item.isFolder &&
-            (gEnableDiscArt || !isDiscArtCache(itemsList->decoratorImage->cache))) {
+            !isHiddenArtworkCache(itemsList->decoratorImage->cache)) {
             selectedCache = itemsList->decoratorImage->cache;
             getGameImageTextureEx(selectedCache, menu->item->userdata, &item->item, 1);
         } else if (itemsList->coverElem != NULL && !item->item.isFolder) {
@@ -2276,7 +2279,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
         // turning Favorites on must never turn ALIGN_HCENTER into a left-aligned title.
         const int favRoom = gFAVStartMode ? MENU_ITEM_HEIGHT + 4 : 0;
         const int hasDecorator = itemsList->decoratorImage &&
-                                 (gEnableDiscArt || !isDiscArtCache(itemsList->decoratorImage->cache));
+                                 !isHiddenArtworkCache(itemsList->decoratorImage->cache);
         int rowX = elem->posX + (hasDecorator ? DECORATOR_SIZE : 0);
         const int rowRoom = elem->textRoom > 0 ? elem->textRoom : elem->width;
         short textAlign = elem->aligned;
@@ -2319,7 +2322,7 @@ static void drawItemsList(struct menu_list *menu, struct submenu_list *item, con
             }
 
             if (itemsList->decoratorImage &&
-                (gEnableDiscArt || !isDiscArtCache(itemsList->decoratorImage->cache))) {
+                !isHiddenArtworkCache(itemsList->decoratorImage->cache)) {
                 GSTEXTURE *itemIconTex = NULL;
 
                 if (!ps->item.isFolder) {

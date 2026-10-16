@@ -2337,6 +2337,7 @@ void guiShowArtworkConfig(void)
 {
     diaSetInt(diaArtworkConfig, UICFG_COVERART, gEnableArt);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_DISCART, gEnableDiscArt);
+    diaSetInt(diaArtworkConfig, UICFG_ENABLE_LOGOART, gEnableLogoArt);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_BGART, gEnableBGArt);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_SAVE_ICONS, gEnableSaveIcons);
     diaSetInt(diaArtworkConfig, UICFG_ENABLE_ART_TAR, gEnableArtTar);
@@ -2347,6 +2348,7 @@ void guiShowArtworkConfig(void)
     if (ret) {
         diaGetInt(diaArtworkConfig, UICFG_COVERART, &gEnableArt);
         diaGetInt(diaArtworkConfig, UICFG_ENABLE_DISCART, &gEnableDiscArt);
+        diaGetInt(diaArtworkConfig, UICFG_ENABLE_LOGOART, &gEnableLogoArt);
         diaGetInt(diaArtworkConfig, UICFG_ENABLE_BGART, &gEnableBGArt);
         diaGetInt(diaArtworkConfig, UICFG_ENABLE_SAVE_ICONS, &gEnableSaveIcons);
         if (!gEnableSaveIcons)
