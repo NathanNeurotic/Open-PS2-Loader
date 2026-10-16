@@ -39,6 +39,18 @@ guard_at = source.rfind('#ifdef IGR_VBLANK_HANDLER', 0, handler_at)
 if handler_at < 0 or guard_at < 0 or source.find('#endif', guard_at) < handler_at:
     failures.append('padhook.c: IGR_Intc_Handler must sit inside #ifdef IGR_VBLANK_HANDLER')
 
+asm_source = (root / 'ee_core/src/asm.S').read_text(encoding='utf-8').replace('\r\n', '\n')
+for hook_name in ('_SifSetDma', 'Hook_ExecPS2', 'Hook_CreateThread'):
+    block = asm_source[asm_source.index(hook_name + ':'):asm_source.index('.end    ' + hook_name)]
+    if 'la      $gp, _gp' not in block:
+        failures.append('asm.S: %s must load _gp before calling C functions' % hook_name)
+    if hook_name in ('_SifSetDma', 'Hook_CreateThread') and ('sd      $gp,' not in block or 'ld      $gp,' not in block):
+        failures.append('asm.S: %s must save and restore caller $gp' % hook_name)
+
+install_hook = function_text('int Install_PadOpen_Hook(')
+if 'iFlushCache(0);' not in install_hook or 'iFlushCache(2);' not in install_hook:
+    failures.append('padhook.c: Install_PadOpen_Hook must flush data and instruction caches after patching')
+
 common = ''.join(function_text(sig) for sig in (
     'void Invalidate_PadBuffer(',
     'static void Set_libpad_Params(',
@@ -143,8 +155,9 @@ static volatile u8 ndin, poff, sdin, scmd;
 #define CDVD_R_POFF (&poff)
 #define CDVD_R_SDIN (&sdin)
 #define CDVD_R_SCMD (&scmd)
-static void ee_kmode_enter(void) {}
-static void ee_kmode_exit(void) {}
+static int unprotectedKmode;
+static void ee_kmode_enter(void) { if (intrEnabled) unprotectedKmode++; }
+static void ee_kmode_exit(void) { if (intrEnabled) unprotectedKmode++; }
 
 static int padOpen_hooked;
 static paddata_t Pad_Data;
@@ -281,6 +294,19 @@ int main(void)
           Power_Button.press == 1 && Power_Button.vb_count == 17 && Power_Button.latched == 1,
           "repeated IGR installation preserves live input and power state");
 
+    armPad();
+    padBuf[112] = IGR_PAD_STABLE_V1;
+    padBuf[88] = 1;
+    Pad_Data.prev_frame = 0;
+    Pad_Data.vb_count = 10;
+    IGR_CheckInputs();
+    CHECK(padOpen_hooked == 1 && Pad_Data.prev_frame == 1 && Pad_Data.vb_count == 0,
+          "advancing pad frame counter marks padOpen_hooked");
+    Pad_Data.vb_count = 10;
+    IGR_CheckInputs();
+    CHECK(padOpen_hooked == 1 && Pad_Data.prev_frame == 1 && Pad_Data.vb_count == 0,
+          "pausing pad polling during prompts or loads does not clear padOpen_hooked");
+
     /* IOP reboot leaves an EE worker alive but ends the pad buffer's lifetime.
        Reused memory can look exactly like a stable pad holding the reset combo. */
     Power_Button.press = Power_Button.vb_count = Power_Button.latched = 0;
@@ -291,8 +317,9 @@ int main(void)
     padBuf[3] = IGR_COMBO_R1_L1_R2_L2;
     padBuf[2] = IGR_COMBO_START_SELECT;
     Invalidate_PadBuffer();
-    CHECK(Pad_Data.pad_buf == NULL && Pad_Data.vb_count == 0 && Pad_Data.prev_frame == 0 && !padOpen_hooked,
-          "IOP reset discards the old pad buffer and its liveness history");
+    CHECK(Pad_Data.pad_buf == NULL && Pad_Data.vb_count == 0 && Pad_Data.prev_frame == 0 && padOpen_hooked == 1,
+          "IOP reset discards the old pad buffer without forcing a live-RAM PadOpen rescan");
+    padOpen_hooked = 0;
     IGR_CheckInputs();
     CHECK(Pad_Data.combo_type == 0 && IGR_Thread_ID == 5,
           "reused old pad memory cannot reset the game; the worker survives");
@@ -312,7 +339,7 @@ int main(void)
     CHECK(!intrEnabled && Pad_Data.pad_buf == padBuf && Pad_Data.pos_state == 112,
           "pad reopen publishes its buffer without enabling disabled interrupts");
     IGR_CheckInputs();
-    CHECK(!intrEnabled && Pad_Data.combo_type == IGR_COMBO_START_SELECT && unprotectedReads == 0,
+    CHECK(!intrEnabled && Pad_Data.combo_type == IGR_COMBO_START_SELECT && unprotectedReads == 0 && unprotectedKmode == 0,
           "a reopened pad detects real input with an atomic buffer snapshot");
     intrEnabled = 1;
     Invalidate_PadBuffer();
@@ -320,8 +347,8 @@ int main(void)
     Set_libpad_Params(padBuf);
     Pad_Data.combo_type = 0;
     IGR_CheckInputs();
-    CHECK(intrEnabled && unprotectedReads == 0 && Pad_Data.combo_type == IGR_COMBO_START_SELECT,
-          "thread-context polling protects reads and restores enabled interrupts");
+    CHECK(intrEnabled && unprotectedReads == 0 && unprotectedKmode == 0 && Pad_Data.combo_type == IGR_COMBO_START_SELECT,
+          "thread-context polling protects reads and kmode window and restores enabled interrupts");
 
     /* The physical button IRQ may remain asserted for multiple polling frames
        when Mechacon cancellation is delayed. Count only the first edge. */

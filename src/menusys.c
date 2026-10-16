@@ -101,6 +101,8 @@ static config_set_t *itemConfig;
 // list, so (id == id) across two tabs is not the same game/config. This also lets X/Triangle safely
 // reuse the browse-prefetched config instead of forcing a second device read.
 static item_list_t *itemConfigList;
+static unsigned char itemConfigWorkerPending;
+static unsigned int itemConfigGeneration;
 // One Info/#Size worker at a time, with a latest-wins target. Repeated enter/back/enter on the
 // SAME row does not queue duplicate CFG+stat reads; moving to another row while one is active replaces
 // the requested target and the worker loops to that newest row before releasing its latch.
@@ -279,38 +281,47 @@ static void _menuLoadConfig()
 // as _menuResolveInfoSize below.
 static void _menuLoadConfigAsync()
 {
-    item_list_t *list = NULL;
-    config_set_t *loadedConfig = NULL;
-    int configId = -1;
+    for (;;) {
+        item_list_t *list = NULL;
+        config_set_t *loadedConfig = NULL;
+        int configId = -1;
+        unsigned int generation = 0;
 
-    WaitSema(menuSemaId);
-    if (itemConfig == NULL && selected_item != NULL && selected_item->item != NULL && itemConfigId >= 0) {
-        list = selected_item->item->userdata;
-        configId = itemConfigId;
+        WaitSema(menuSemaId);
+        if (itemConfig == NULL && selected_item != NULL && selected_item->item != NULL && itemConfigId >= 0) {
+            list = selected_item->item->userdata;
+            configId = itemConfigId;
+        }
+        generation = itemConfigGeneration;
+        SignalSema(menuSemaId);
+
+        if (list != NULL && configId >= 0) {
+            loadedConfig = list->itemGetConfig(list, configId);
+
+            // Publish only if this is still what the menu wants. The id alone is NOT enough: ids are
+            // per-list indices, so a tab switch mid-read yields the same number from a different device --
+            // re-check the owning list too, or device A's per-game config lands on device B's row.
+            WaitSema(menuSemaId);
+            if (loadedConfig != NULL && itemConfig == NULL && itemConfigGeneration == generation &&
+                itemConfigId == configId && itemConfigList == list &&
+                selected_item != NULL && selected_item->item != NULL && selected_item->item->userdata == list) {
+                itemConfig = loadedConfig;
+                loadedConfig = NULL;
+            }
+            SignalSema(menuSemaId);
+
+            if (loadedConfig != NULL)
+                configFree(loadedConfig); // lost the race -- drop it, never publish another row's config
+        }
+
+        WaitSema(menuSemaId);
+        if (itemConfigGeneration == generation) {
+            itemConfigWorkerPending = 0;
+            SignalSema(menuSemaId);
+            return;
+        }
+        SignalSema(menuSemaId);
     }
-    SignalSema(menuSemaId);
-
-    // Nothing wanted (already cached, or the id was invalidated while this request sat in the
-    // queue). Deliberately does NOT touch actionStatus: this variant is only ever queued when no
-    // waiter exists, and a dialog that armed one in the meantime queues its own _menuLoadConfig.
-    if (list == NULL)
-        return;
-
-    loadedConfig = list->itemGetConfig(list, configId);
-
-    // Publish only if this is still exactly what the menu wants. The id alone is NOT enough: ids are
-    // per-list indices, so a tab switch mid-read yields the same number from a different device --
-    // re-check the owning list too, or device A's per-game config lands on device B's row.
-    WaitSema(menuSemaId);
-    if (loadedConfig != NULL && itemConfig == NULL && itemConfigId == configId && itemConfigList == list &&
-        selected_item != NULL && selected_item->item != NULL && selected_item->item->userdata == list) {
-        itemConfig = loadedConfig;
-        loadedConfig = NULL;
-    }
-    SignalSema(menuSemaId);
-
-    if (loadedConfig != NULL)
-        configFree(loadedConfig); // lost the race -- drop it, never publish another row's config
 }
 
 // Opening the info screen needs #Size, which the scroll-time config load deliberately skips.
@@ -489,13 +500,20 @@ static void _menuRequestConfig()
             itemConfig = NULL;
         }
         item_list_t *list = selected_item->item->userdata;
-        if (itemConfigId == -1 || guiInactiveFrames >= list->delay) {
+        if (waiterPending || itemConfigId == -1 || guiInactiveFrames >= list->delay) {
             itemConfigId = selected_item->item->current->item.id;
             itemConfigList = list;
-            shouldQueueLoad = 1;
+            itemConfigGeneration++;
+            if (waiterPending) {
+                shouldQueueLoad = 1;
+            } else if (!itemConfigWorkerPending) {
+                itemConfigWorkerPending = 1;
+                shouldQueueLoad = 1;
+            }
         } else
             actionStatus = 0; // still settling: nothing queued, so release the waiter now
     } else if (itemConfig == NULL && actionStatus != 0) {
+        itemConfigGeneration++;
         shouldQueueLoad = 1; // right row, but its config never landed -- ask again
     } else
         actionStatus = 0;
@@ -505,6 +523,8 @@ static void _menuRequestConfig()
     // Queue OUTSIDE the sema: both load variants take it too.
     if (shouldQueueLoad && ioPutRequest(IO_CUSTOM_SIMPLEACTION, waiterPending ? (void *)&_menuLoadConfig : (void *)&_menuLoadConfigAsync) != IO_OK) {
         WaitSema(menuSemaId);
+        if (!waiterPending)
+            itemConfigWorkerPending = 0;
         if (itemConfig == NULL) {
             itemConfigId = -1; // let the next pass retry rather than caching a row that never loaded
             itemConfigList = NULL;
@@ -512,20 +532,6 @@ static void _menuRequestConfig()
         actionStatus = 0;
         SignalSema(menuSemaId);
     }
-}
-
-static config_set_t *menuGetCachedCurrentConfig(void)
-{
-    config_set_t *cached = NULL;
-
-    WaitSema(menuSemaId);
-    if (itemConfig != NULL && selected_item != NULL && selected_item->item != NULL &&
-        selected_item->item->current != NULL && itemConfigId == selected_item->item->current->item.id &&
-        itemConfigList == selected_item->item->userdata)
-        cached = itemConfig;
-    SignalSema(menuSemaId);
-
-    return cached;
 }
 
 config_set_t *menuLoadConfig()
@@ -552,6 +558,7 @@ config_set_t *menuLoadConfig()
             }
             itemConfigId = configId;
             itemConfigList = list;
+            itemConfigGeneration++;
         }
     } else {
         if (itemConfig != NULL) {
@@ -560,6 +567,7 @@ config_set_t *menuLoadConfig()
         }
         itemConfigId = -1;
         itemConfigList = NULL;
+        itemConfigGeneration++;
     }
     actionStatus = 0;
     SignalSema(menuSemaId);
@@ -570,10 +578,16 @@ config_set_t *menuLoadConfig()
     // Launch owns the storage path now. Drop speculative art before any launch I/O or cached return.
     // A zero wait requests cancellation but never kills or waits on an in-flight fileXio/SIO2 RPC;
     // that transaction is allowed to finish cleanly while no new queued art can get in front.
-    if (list->mode == MMCE_MODE)
-        (void)cacheAbortMmceImageLoadsTimed(0);
-    else
-        (void)cacheCancelPendingImageLoadsTimed(0);
+    {
+        int sourceMode = list->mode == FAV_MODE ? favGetItemSourceMode(configId) : list->mode;
+        if (sourceMode == MMCE_MODE) {
+            (void)cacheAbortMmceImageLoadsTimed(0);
+            if (list->mode == FAV_MODE)
+                (void)cacheCancelPendingImageLoadsTimed(0);
+        } else {
+            (void)cacheCancelPendingImageLoadsTimed(0);
+        }
+    }
 
     if (result != NULL)
         return result;
@@ -600,13 +614,9 @@ config_set_t *menuLoadConfig()
 // we don't want a pop up when transitioning to or refreshing Game Menu gui.
 config_set_t *gameMenuLoadConfig(struct UIItem *ui)
 {
-    config_set_t *cached = menuGetCachedCurrentConfig();
-    if (cached != NULL)
-        return cached; // same fast path, without showing a fake loading phase
-
-    actionStatus = 1;
-    guiGameHandleDeferedIO(&actionStatus, ui, IO_CUSTOM_SIMPLEACTION, &_menuRequestConfig);
-    return itemConfig;
+    (void)ui;
+    padRumbleFlush();
+    return menuLoadConfig();
 }
 
 int menuSaveConfig()
@@ -1684,20 +1694,27 @@ void menuHandleInputMenu()
 }
 
 // May this list be asked for per-game config right now? Keeps automatic metadata off the active
-// scroll for the two modes where fetching it is expensive: APPS reads a config per app, and MMCE
-// talks to the memory-card bus that also carries the pad. master's predicate.
+// scroll so holding Up/Down does not open CFG/<game>.cfg for every intermediate row, and enforces
+// the longer MMCE settle window whenever the row lives on the memory-card bus (including Favourites).
 #define MENU_APP_CONFIG_IDLE_FRAMES  1
 #define MENU_MMCE_CONFIG_IDLE_FRAMES 3
 
 static int menuCanRequestItemConfig(item_list_t *list)
 {
-    if (list != NULL && list->mode == APP_MODE)
+    int mode = list != NULL ? list->mode : -1;
+
+    if (mode == FAV_MODE && selected_item != NULL && selected_item->item != NULL &&
+        selected_item->item->current != NULL) {
+        mode = favGetItemSourceMode(selected_item->item->current->item.id);
+    }
+
+    if (mode == APP_MODE)
         return guiInactiveFrames >= MENU_APP_CONFIG_IDLE_FRAMES;
 
-    if (list != NULL && list->mode == MMCE_MODE)
+    if (mode == MMCE_MODE)
         return guiInactiveFrames >= MENU_MMCE_CONFIG_IDLE_FRAMES;
 
-    return 1;
+    return guiInactiveFrames >= MENU_APP_CONFIG_IDLE_FRAMES;
 }
 
 static int menuSelectedRowView(item_list_t *list)
