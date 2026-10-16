@@ -213,6 +213,8 @@ void guiGameHandleDeferedIO(int *ptr, struct UIItem *ui, int type, void *data);
 /** Renders a single frame with a specified message on the screen
  */
 void guiRenderTextScreen(const char *message);
+/* VBLANK-paced status fade, called only after the launch I/O drain. */
+void guiFadeOutForHandoff(const char *message);
 
 /** Display the visual GameID barcode (CosmicScale scheme) for Pixel FX / RetroGEM / PS2Digital
  *  HDMI auto-profiles. No-op unless gApplyGameID is set. Call just before launching a game.
