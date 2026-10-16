@@ -315,3 +315,5 @@ translations:
   VIEW_APPS: Menampilkan aplikasi
   EMBER_DISPLAY: Mode tampilan Ember
   HINT_EMBER_DISPLAY: Mode keluaran yang dipakai Ember untuk gim PS1. 240p atau 480p ditulis ke settings.txt di folder EMBER pada perangkat yang diluncurkan. Bawaan menghapus pengaturan itu lagi, berikut berkasnya jika tidak berisi apa pun selain itu.
+  LOGOART: "Logo Game"
+  HINT_LOGOART: "Menampilkan logo game (<ID>_LGO) saat digunakan oleh tema. Mematikannya juga menyembunyikan gambar bawaan tanpa mengubah sampul, gambar cakram, atau latar belakang."

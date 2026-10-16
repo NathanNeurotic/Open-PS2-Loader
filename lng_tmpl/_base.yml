@@ -1858,6 +1858,12 @@ gui_strings:
 - label: NEUTRINO_DVR_FILE_MISSING
   string: "DVR Neutrino installation is incomplete. Missing required file:"
 
+# Per-game logo artwork is independent of ICO disc artwork and boot logo.
+- label: LOGOART
+  string: "Logo Artwork"
+- label: HINT_LOGOART
+  string: "Shows a game's logo (<ID>_LGO) when the theme uses it. Off also hides its default image, but keeps covers, disc art and backgrounds."
+
 - label: PARENLOCK_GAME
   string: Parental Lock
 - label: PARENLOCK_GAME_HINT
