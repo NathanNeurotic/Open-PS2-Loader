@@ -105,7 +105,8 @@ int main(int argc,char **argv) {
     assert(bdmPccfCandidate()==atoi(argv[3]));
     assert(sysTryClaimPccf() && !locked && sysIsPccfOwned());
     assert(netLoadModules(1)==-1 && !netModulesLoaded && !loadCalls && shutdownCalls==1);
-    assert(!sysTryClaimPccf() && !sysInitDev9() && !loadCalls && !dev9InitCount && !locked);
+    assert(!sysTryClaimPccf() && !sysInitDev9() && !loadCalls && dev9InitCount==1 && !locked);
+    dev9InitCount--; /* paired failed-init shutdown */
     sysReleasePccf();assert(sysInitDev9() && loadCalls==1 && dev9InitCount==1 && !locked);
     assert(!sysTryClaimPccf());
     dev9InitCount=0;assert(!sysTryClaimPccf()); /* resident DEV9 still owns the bus */

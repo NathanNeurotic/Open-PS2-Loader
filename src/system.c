@@ -219,6 +219,9 @@ int sysInitDev9(void)
         return 0;
     WaitSema(sysDev9BusLock);
     if (sysPccfOwned) {
+        // Callers pair even failed initialization with shutdown. Balance that
+        // reference without touching hardware owned by the CF driver.
+        dev9InitCount++;
         SignalSema(sysDev9BusLock);
         return 0;
     }
