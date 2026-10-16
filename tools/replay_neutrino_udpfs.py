@@ -19,6 +19,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--official-source", type=Path, required=True)
 parser.add_argument("--fixed-source", type=Path, required=True)
+parser.add_argument("--stable-source", type=Path)
 parser.add_argument("--server-source", type=Path, required=True)
 parser.add_argument("--server-before", default="c04106c")
 parser.add_argument("--output", type=Path, required=True)
@@ -155,7 +156,9 @@ def build(name, source):
         encoding="utf-8",
     )
     subprocess.run(
-        ["gcc", "-shared", "-O0", "-g", "-o", str(dll), str(c)], check=True, timeout=60
+        ["gcc", "-shared", "-fPIC", "-O0", "-g", "-o", str(dll), str(c)],
+        check=True,
+        timeout=60,
     )
     lib = ct.CDLL(str(dll))
     lib.replay_read.argtypes = [ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_int]
@@ -235,7 +238,8 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
                         ).pack()
                         + b"OLD!"
                     )
-                    responses.put(old)
+                    for _ in range(6):
+                        responses.put(old)
                 if drop:
                     return
         else:
@@ -265,6 +269,8 @@ def run(lib, drop=False, stale=False, scatter=False, tx=57, rx=653):
     buffer = ct.create_string_buffer(16384)
     result = ct.create_string_buffer(8)
     ret = lib.replay_read(buffer, 16384, result, int(scatter))
+    stop = srv.Header(packet_type=srv.PacketType.DISCOVERY, seq_nr=0).pack() + bytes(4)
+    sess.queue.put((stop, ADDR, "data"))
     sess.queue.put(None)
     thread.join(3)
     assert not thread.is_alive(), "server worker failed to terminate"
@@ -301,10 +307,13 @@ if __name__ == "__main__":
     previous_server = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = previous_server
     spec.loader.exec_module(previous_server)
-    for name, folder in [
+    clients = [
         ("official", args.official_source),
         ("fixed", args.fixed_source),
-    ]:
+    ]
+    if args.stable_source:
+        clients.append(("stable", args.stable_source))
+    for name, folder in clients:
         lib = build(name, folder.resolve() / "iop/udpfs/src")
         for server_name, server_module in [
             ("before236", previous_server),
@@ -322,7 +331,7 @@ if __name__ == "__main__":
                         key = f"{name}/{server_name}/{'send_ll' if scatter else 'send'}/{tx}-{rx}/{scenario}"
                         result = run(lib, drop, stale, scatter, tx, rx)
                         results[key] = result
-                        should_fail = name == "official" and drop and stale
+                        should_fail = name in ("official", "stable") and drop and stale
                         if should_fail:
                             assert (
                                 result["returned"] == -1

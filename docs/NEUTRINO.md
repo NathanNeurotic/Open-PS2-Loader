@@ -11,10 +11,12 @@ boot better under Neutrino, or for users who prefer Neutrino's loader and its la
 **Neutrino is created by [rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular
 PS2 Device Emulator"*. Home: <https://github.com/rickgaiser/neutrino>.
 
-The standard RiptOPL kit bundles **Neutrino v1.8.0-66-ga7b6736**, built from
+The standard RiptOPL kit bundles **Neutrino v1.8.0-67-ge6f1392**, built from
 upstream `7be8de2798c99af433c91993e021746a54d6800d` plus Ripto's UDPFS stale-ACK
 repair. Both send paths now reject ACKs for older requests, so a delayed packet
 cannot make the client stop retrying a request that the server never received.
+Stale packets also leave the original timeout active, rather than consuming
+the retry budget.
 This is a confirmed transport defect with a host fault-injection reproduction;
 it is not yet console confirmation of the reported Tekken Tag black screen.
 

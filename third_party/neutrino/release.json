@@ -1,14 +1,14 @@
 {
   "repository": "NathanNeurotic/neutrino",
-  "tag": "latest",
-  "asset": "neutrino_v1.8.0-66-ga7b6736.7z",
-  "version": "v1.8.0-66-ga7b6736",
-  "sha256": "4610e13588fca230d842815a3285bf15ed7f98069d5ebafe743a391d55cf961e",
-  "source_commit": "a7b673648254942e11315c9006c4c7bb776e58a1",
+  "tag": "udpfs-ack-e6f1392",
+  "asset": "neutrino_v1.8.0-67-ge6f1392.7z",
+  "version": "v1.8.0-67-ge6f1392",
+  "sha256": "22d3304f7a9e4d79826ef90fd6233deacea900eab5752d58fbd65734d3cc0ff8",
+  "source_commit": "e6f139240e3e64beb34807d2e9ba90a9def80ae6",
   "upstream_repository": "rickgaiser/neutrino",
   "upstream_commit": "7be8de2798c99af433c91993e021746a54d6800d",
   "upstream_asset": "neutrino_v1.8.0-61-g7be8de2.7z",
   "license": "AFL-3.0",
   "license_sha256": "c8831edb0b33506ae5fd5c17cd7baae97fe6401e8ad4e5e2a150cd05e4c3f511",
-  "changes": "Reject stale UDPFS ACKs using the 12-bit half-ring comparison in both send paths; add shared predicate, host tests and CI."
+  "changes": "Reject stale UDPFS ACKs in both send paths, ignore stale bursts while keeping the original timeout, and preserve an alarm firing during ACK processing; includes actual-source host tests and CI."
 }

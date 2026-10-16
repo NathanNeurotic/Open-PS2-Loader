@@ -24,8 +24,13 @@ jobs:
           path: replay-sources/official
       - uses: actions/checkout@v4
         with:
+          repository: rickgaiser/neutrino
+          ref: f12b4f51b5112928eb06e29fd91511251c0b29f1
+          path: replay-sources/stable
+      - uses: actions/checkout@v4
+        with:
           repository: NathanNeurotic/neutrino
-          ref: a7b673648254942e11315c9006c4c7bb776e58a1
+          ref: e6f139240e3e64beb34807d2e9ba90a9def80ae6
           path: replay-sources/fixed
       - uses: actions/checkout@v4
         with:
@@ -37,6 +42,7 @@ jobs:
         run: |
           python3 tools/replay_neutrino_udpfs.py \
             --official-source replay-sources/official \
+            --stable-source replay-sources/stable \
             --fixed-source replay-sources/fixed \
             --server-source replay-sources/server \
             --output build/transport-replay
