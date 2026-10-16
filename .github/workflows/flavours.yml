@@ -245,6 +245,8 @@ jobs:
         run: python3 .github/scripts/test_bdm_cache.py
       - name: Check CF transfer safety, bus ownership and native handoff
         run: python3 .github/scripts/test_pccf.py
+      - name: Check VMC and PADEMU SIO2MAN version and alias isolation
+        run: python3 .github/scripts/test_sio2man_hooks.py
       - name: Check BDM partition I/O bounds and sector-size refusal
         run: python3 .github/scripts/test_bdm_partitions.py
       - name: Check BDM allocation failure cannot publish an uninitialized slot

@@ -211,6 +211,9 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
     }
 #endif
 
+    // Optional except for MX4SIO; the menu packs it for VMC/PADEMU too.
+    int sio2manLoaded = LoadOPLModule(OPL_MODULE_ID_SIO2MAN, 0, 0, NULL);
+
     switch (config->GameMode) {
         case BDM_CF_MODE:
             LoadOPLModule(OPL_MODULE_ID_PCCF, 0, 6, "owned");
@@ -252,7 +255,7 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
             break;
         case BDM_M4S_MODE:
             // mx4sio_bd requires PS2SDK's sio2man. Do not start it if that dependency failed.
-            if (LoadOPLModule(OPL_MODULE_ID_SIO2MAN, 0, 0, NULL) > 0)
+            if (sio2manLoaded > 0)
                 LoadOPLModule(OPL_MODULE_ID_MX4SIOBD, 0, 0, NULL);
             break;
         case BDM_HDD_MODE:

@@ -947,12 +947,13 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
         irxptr_tab[modcount].info = size_IEEE1394_bd_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_ILINKBD);
         irxptr_tab[modcount++].ptr = (void *)&IEEE1394_bd_irx;
     }
-    if (modules & CORE_IRX_MX4SIO) {
-        // mx4sio_bd requires PS2SDK's sio2man after the game-side IOP reset. Without it the block
-        // device never comes up in-game and the launch hangs. Keep these adjacent and ordered;
-        // ee_core loads them in the same order.
+    // VMC and PADEMU also need an initial SDK SIO2MAN table to hook after reset.
+    // Keep one copy and preserve the existing module ID across every transport.
+    if ((modules & (CORE_IRX_MX4SIO | CORE_IRX_VMC)) PADEMU_ARG) {
         irxptr_tab[modcount].info = size_sio2man_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_SIO2MAN);
         irxptr_tab[modcount++].ptr = (void *)&sio2man_irx;
+    }
+    if (modules & CORE_IRX_MX4SIO) {
         irxptr_tab[modcount].info = size_mx4sio_bd_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_MX4SIOBD);
         irxptr_tab[modcount++].ptr = (void *)&mx4sio_bd_irx;
     }
