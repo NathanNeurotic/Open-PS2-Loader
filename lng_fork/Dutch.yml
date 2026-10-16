@@ -315,3 +315,5 @@ translations:
   VIEW_APPS: Apps worden getoond
   EMBER_DISPLAY: Ember-beeldmodus
   HINT_EMBER_DISPLAY: Uitvoermodus die Ember voor PS1-spellen gebruikt. 240p of 480p wordt naar settings.txt in de EMBER-map van het gestarte apparaat geschreven. Standaard verwijdert die instelling weer, en ook het bestand als er verder niets in stond.
+  LOGOART: "Spellogo's"
+  HINT_LOGOART: "Toont het spellogo (<ID>_LGO) als het thema dit gebruikt. Uitschakelen verbergt ook de standaardafbeelding; hoezen, schijfafbeeldingen en achtergronden blijven zichtbaar."
