@@ -1,0 +1,106 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PSX DVR (DESR) Game Loading · RiptOPL Docs</title>
+<meta name="description" content="Experimental PSX DESR DVR ISO loading, setup, limitations and contributor credits.">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<meta property="og:site_name" content="RiptOPL Docs">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://nathanneurotic.github.io/Open-PS2-Loader/assets/riptopl.png">
+<link rel="stylesheet" href="assets/style.css">
+</head><body data-base="">
+<header class="topbar">
+  <button class="menu-btn" aria-label="Menu">☰</button>
+  <a class="brand" href="index.html">
+    <span class="psbtns"><i class="tri">&#9651;</i><i class="cir">&#9711;</i><i class="cro">&#10005;</i><i class="squ">&#9633;</i></span>
+    RiptOPL <small>DOCS</small></a>
+    <div class="topbar-actions">
+    <a class="topbar-btn primary" href="releases.html" title="Downloads &amp; Releases"><span class="icon icon-releases"></span>Downloads</a>
+    <a class="topbar-btn" href="https://github.com/NathanNeurotic/Open-PS2-Loader" target="_blank" rel="noopener" title="GitHub Repository"><span class="icon icon-github"></span>GitHub</a>
+  </div>
+  <div class="search">
+    <span class="ico"></span>
+    <input id="q" type="search" placeholder="Search devices, themes, Neutrino, settings…  ( / )" autocomplete="off">
+    <kbd>/</kbd>
+    <div id="results"></div>
+  </div>
+</header>
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-brand-sub">PLAYSTATION 2 // RIPTOPL</div>
+    <a href="index.html"><span class="icon icon-home"></span>Home</a>
+    <h4>Start</h4>
+    <a href="getting-started.html"><span class="icon icon-start"></span>Getting Started</a>
+    <a href="install.html"><span class="icon icon-install"></span>Install &amp; First Boot</a>
+    <h4>Game sources</h4>
+    <a href="usb.html"><span class="icon icon-usb"></span>USB / MX4SIO / iLink</a>
+    <a href="mmce.html"><span class="icon icon-mmce"></span>MMCE</a>
+    <a href="smb.html"><span class="icon icon-smb"></span>SMB (network share)</a>
+    <a href="hdd.html"><span class="icon icon-hdd"></span>Internal HDD (APA &amp; exFAT)</a>
+    <a href="psx-dvr.html" class="active"><span class="icon icon-hdd"></span>PSX DVR (DESR)</a>
+    <a href="pc-card-cf.html"><span class="icon icon-hdd"></span>PC CARD CompactFlash</a>
+    <a href="network-boot.html"><span class="icon icon-netboot"></span>Network Boot (UDPBD/UDPFS)</a>
+    <a href="http.html"><span class="icon icon-http"></span>HTTP</a>
+    <h4>Features</h4>
+    <a href="ps1-vcd.html"><span class="icon icon-ps1"></span>PS1 Games</a>
+    <a href="neutrino.html"><span class="icon icon-neutrino"></span>Neutrino Core</a>
+    <a href="coverflow.html"><span class="icon icon-coverflow"></span>Coverflow</a>
+    <a href="favourites.html"><span class="icon icon-favorites"></span>Favorites</a>
+    <a href="apps.html"><span class="icon icon-apps"></span>Apps</a>
+    <a href="per-game-settings.html"><span class="icon icon-settings-pergame"></span>Per-game Settings</a>
+    <a href="gsm.html"><span class="icon icon-gsm"></span>GSM Video Modes</a>
+    <a href="igr.html"><span class="icon icon-igr"></span>In-Game Reset</a>
+    <a href="vmc.html"><span class="icon icon-vmc"></span>VMC</a>
+    <a href="cheats.html"><span class="icon icon-cheats"></span>Cheats</a>
+    <a href="retroachievements.html"><span class="icon icon-ra"></span>RetroAchievements</a>
+    <h4>Theme Engine</h4>
+    <a href="themes.html"><span class="icon icon-themes"></span>Theme Engine</a>
+    <h4>Reference</h4>
+    <a href="settings.html"><span class="icon icon-settings"></span>Settings Reference</a>
+    <a href="controls.html"><span class="icon icon-controls"></span>Controls</a>
+    <a href="languages.html"><span class="icon icon-languages"></span>Languages</a>
+    <a href="pademu.html"><span class="icon icon-pademu"></span>PADEMU</a>
+    <a href="nbd.html"><span class="icon icon-nbd"></span>NBD Server</a>
+    <a href="zso.html"><span class="icon icon-zso"></span>ZSO Format</a>
+    <a href="ps3-bc.html"><span class="icon icon-ps3"></span>PS3 BC</a>
+    <a href="releases.html"><span class="icon icon-releases"></span>Releases</a>
+    <a href="fork-gaps.html"><span class="icon icon-fork-gaps"></span>Fork Feature Gaps <span class="nav-badge">AUDIT</span></a>
+    <a href="troubleshooting.html"><span class="icon icon-troubleshoot"></span>Troubleshooting</a>
+    <a href="credits.html"><span class="icon icon-credits"></span>Credits &amp; Sources</a>
+    <a href="https://nathanneurotic.github.io/POPSLoader/"><span class="icon icon-book"></span>POPStarter docs ↗</a>
+  </nav>
+  <main class="content">
+
+<h1>PSX DVR (DESR) Game Loading</h1>
+<p class="lead">RiptOPL contains an <b>experimental, read-only ISO discovery path</b> for Sony's PSX DESR digital video recorders. PS2 game launches are handed to a <b>separately installed DVR-capable Neutrino</b>. This is not ordinary PlayStation 2 internal HDD loading.</p>
+<div class="callout amber"><div class="h">Merged implementation; hardware testing pending</div><p><a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/947">PR #947</a> was merged into <code>rebuild/main</code>. Host tests verify integration behavior, but actual DESR-5000 and DESR-7000 cold boot, discovery, launching and return-to-menu behavior remain <b>unverified</b>. Do not format or modify a recorder's disk to test this feature.</p></div>
+<h2 id="hardware">Hardware and DVR storage</h2>
+<p>RiptOPL checks the DVR capability bit <code>SPD_CAPS_DVR</code> before initializing SDK DVRP drivers. On ordinary PS2s it skips this path. The DVR's <code>dvr_hdd0:</code>, <code>dvr_pfs0:</code> and <code>dvr_pfs1:</code> namespaces are separate from normal <code>hdd0:</code> APA/HDLoader games. The scanner searches the DVR data-partition roots, <code>DVD/</code>, and <code>CD/</code> for ISO files; mounts are read-only.</p>
+<h2 id="setup">Experimental setup</h2>
+<div class="steps"><div class="step"><h3>Start with a DESR and a current RiptOPL build</h3><p>Use a build containing merged PR #947. Enable the ordinary HDD game source so its HDD tab is available. The DVR scanner requires the hardware capability check to pass.</p></div>
+<div class="step"><h3>Install the complete DVR-enabled Neutrino</h3><p>Get <a href="https://github.com/pcm720/neutrino/tree/bsd-dvr">pcm720's <code>bsd-dvr</code> branch</a>. Keep its <code>neutrino.elf</code>, <code>bsd-dvr.toml</code> and all required DVR drivers together, including <code>dvrdrv.irx</code>, <code>dvrfile.irx</code> and <code>dvrfile_fhi.irx</code>. The regular Neutrino bundled with RiptOPL generally does not include this backend.</p></div>
+<div class="step"><h3>Set Neutrino Path and launch</h3><p>Select that external <code>neutrino.elf</code> in RiptOPL's <b>Neutrino Path</b> setting. Refresh the HDD list; select a discovered DVR ISO manually. The handoff uses <code>-bsd=dvr -dvd=dvr_pfsN:/path/file.iso</code>. Do <b>not</b> pass <code>-qb</code>, which bypasses the required PSX-mode transition.</p></div></div>
+<div class="callout info"><div class="h">Separate toggle in unmerged PR #955</div><p>On <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/pull/955">PR #955</a> builds only, also enable <b>DESR DVR ISOs (experimental)</b> in Game Sources. It is off by default and requires the HDD source. This additional switch <b>is not yet on rebuild/main</b> and cannot bypass the DESR hardware check.</p></div>
+<h2 id="limits">Current limitations</h2>
+<ul><li>Read-only discovery: no partition creation, formatting, renaming, deletion or DVR-side writes.</li><li>128-title scan limit; overlong paths rejected. Previously valid lists survive unreadable scans.</li><li>Only pcm720's DVR-capable external Neutrino can launch these entries. No embedded OPL HDD-core fallback.</li><li>No claimed PS1 VCD, DVR virtual memory cards, DVR write support or automatic launch of remembered DVR entries.</li><li>Pending physical testing: DESR partition identity, initial/repeated boot, game-ID extraction, module startup and successful Neutrino handoff.</li></ul>
+<h2 id="credits">Credits and further reference</h2>
+<p>Thanks to <a href="https://github.com/pcm720/neutrino/tree/bsd-dvr"><b>pcm720</b></a> for the DVR Neutrino backend, <a href="https://github.com/ps2dev/ps2sdk"><b>ps2dev / PS2SDK contributors</b></a> for DVRP modules, and <a href="https://github.com/saildot4k/wLaunchELF_R3Z"><b>wLaunchELF_R3Z and its LaunchELF predecessors</b></a> for DVR device-init precedent. See <a href="credits.html#dvr-tool">DVR and DTL credits</a> and the <a href="https://github.com/NathanNeurotic/Open-PS2-Loader/blob/rebuild/main/docs/DESR-DVR.md">implementation notes</a>.</p>
+<p>Sony's <b>DTL-T10000 development TOOL</b> units are a different hardware family. DTL-oriented OPL/wOPL variants are valuable work, but should <b>not</b> be mistaken for DESR DVR support.</p>
+<h2 id="testing">Responsible testing</h2><p>Report DESR model, firmware, RiptOPL SHA, Neutrino <code>bsd-dvr</code> revision, driver-start results, mounted partition labels, ISO path and cold/repeated-launch outcome. Protect the recorder's original disk; RiptOPL does not require flashing DVRPwned firmware.</p>
+<div class="grid"><a class="tile" href="hdd.html"><span class="icon icon-hdd"></span><b>Internal HDD</b><span>Standard PS2 APA/PFS and exFAT</span></a><a class="tile" href="pc-card-cf.html"><span class="icon icon-hdd"></span><b>PC CARD CompactFlash</b><span>Different early-console backend in PR #955</span></a></div>
+</main>
+  <aside class="toc"><div class="toc-h">On this page</div><nav id="toc-nav"></nav></aside>
+</div>
+<footer>
+  <p><b>RiptOPL Documentation</b> — for the opinionated Open PS2 Loader fork. Built on, and grateful to, the
+  <a href="https://github.com/ps2homebrew">ps2homebrew</a> team and the wider OPL family — see
+  <a href="credits.html">Credits &amp; Sources</a>. For the canonical project, see
+  <a href="https://github.com/ps2homebrew/Open-PS2-Loader">ps2homebrew/Open-PS2-Loader</a>.</p>
+  <p class="prov-inline">RiptOPL is a downstream fork, not the canonical project. POPSTARTER uses Sony's POPS; Ember is a separate emulator. Sony's POPS is
+  <b>not</b> distributed here. PS1/POPSTARTER deep reference: the sister
+  <a href="https://nathanneurotic.github.io/POPSLoader/">POPStarter docs</a>.</p>
+</footer>
+<script src="assets/app.js"></script>
+<script src="assets/orbs.js"></script>
+</body></html>
