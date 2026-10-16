@@ -235,3 +235,5 @@ If you want the canonical, actively-maintained project, it lives at
 https://github.com/ps2homebrew/Open-PS2-Loader - please support it. This fork is a
 downstream labor of love, not a replacement, and it exists only because that
 upstream work is open for everyone to learn from.
+
+PC CARD CompactFlash integration: mihhru / PS2CF 1.0 (driver and transfer tests).

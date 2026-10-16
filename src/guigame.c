@@ -353,7 +353,7 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
         return 1;
 
     sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(id) : support->mode;
-    if (sourceMode == HTTP_MODE)
+    if (sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))
         return 1;
     coreLoader = gDefaultCoreLoader;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);

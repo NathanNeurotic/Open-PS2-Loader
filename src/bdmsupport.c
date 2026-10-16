@@ -43,6 +43,7 @@ static int iLinkModLoaded = 0;
 static int iLinkManModLoaded = 0;
 static int ieee1394ModLoaded = 0;
 static int mx4sioModLoaded = 0;
+static int pccfModLoaded;
 static int hddModLoaded = 0;
 static int udpbdModLoaded = 0;
 static int udpbdNicClaimed = 0; // first SMAP module loaded, even if later block modules fail
@@ -133,6 +134,8 @@ static int bdmDetermineDeviceType(const char *driverName)
     if (bdmDriverIsUDPBD(driverName))
         return BDM_TYPE_UDPBD;
 
+    if (driverName != NULL && !strcmp(driverName, "cf"))
+        return BDM_TYPE_PCCF;
     return BDM_TYPE_UNKNOWN;
 }
 
@@ -146,6 +149,8 @@ static const char *bdmDeviceTypeName(int type)
             return "iLink";
         case BDM_TYPE_SDC:
             return "MX4SIO";
+        case BDM_TYPE_PCCF:
+            return "PC CARD CF";
         case BDM_TYPE_ATA:
             return "ATA";
         case BDM_TYPE_UDPBD:
@@ -338,6 +343,8 @@ static const char *bdmTypedRootStem(int type)
             return "ilink";
         case BDM_TYPE_SDC:
             return "mx4sio";
+        case BDM_TYPE_PCCF:
+            return "cf";
         case BDM_TYPE_ATA:
             return "ata";
         default:
@@ -1090,12 +1097,44 @@ static int bdmShouldQueueModuleLoad(void)
         return 1;
     if (gEnableMX4SIO && !mx4sioModLoaded)
         return 1;
+    if (gEnablePCCF && !pccfModLoaded)
+        return 1;
     if (gEnableBdmHDD && !hddModLoaded)
         return 1;
     if (gEnableUDPBD && !udpbdNicClaimed && !ethGetModulesLoaded() && !udpfsGetModulesLoaded())
         return 1; // mirror the load gate -- if the SMB or udpfs-filesystem NIC is up, the block chain can't load
 
     return 0;
+}
+
+/* ROM version is eligibility only; the IOP driver still validates revision,
+   idle/present card, CIS, ATA capacity, and the mounted filesystem. */
+static int bdmPccfCandidate(void)
+{
+    static int eligible = -1;
+    if (eligible < 0) {
+        char romver[16] = {0};
+        int fd = open("rom0:ROMVER", O_RDONLY);
+        int size = fd >= 0 ? read(fd, romver, sizeof(romver) - 1) : -1;
+        if (fd >= 0)
+            close(fd);
+        eligible = size >= 6 && romver[4] == 'J' &&
+                   (!strncmp(romver, "0100", 4) || !strncmp(romver, "0101", 4) || !strncmp(romver, "0120", 4));
+        fd = open("rom0:PSXVER", O_RDONLY);
+        if (fd >= 0) {
+            close(fd);
+            eligible = 0;
+        }
+    }
+    return eligible;
+}
+
+int bdmModeIsPCCF(int mode)
+{
+    if (mode < BDM_MODE || mode > BDM_MODE_LAST)
+        return 0;
+    bdm_device_data_t *data = bdmDeviceList[mode - BDM_MODE].priv;
+    return data != NULL && data->bdmDeviceType == BDM_TYPE_PCCF;
 }
 
 static void bdmLoadBlockDeviceModules(void)
@@ -1109,7 +1148,7 @@ static void bdmLoadBlockDeviceModules(void)
 
     // Snapshot, compared after the loads below. See the refresh at the end of this function for why
     // a transport enabled from Settings needed a "double tap" before its tab appeared.
-    int modsWere = iUSBModLoaded + iLinkModLoaded + mx4sioModLoaded + hddModLoaded + udpbdModLoaded;
+    int modsWere = iUSBModLoaded + iLinkModLoaded + mx4sioModLoaded + hddModLoaded + udpbdModLoaded + pccfModLoaded;
 
     // Retry a synchronous bdmLoadCoreModules failure via the generation/worker path. Gated on the
     // setting for the same reason as the core load above: an off source must not become resident.
@@ -1132,6 +1171,17 @@ static void bdmLoadBlockDeviceModules(void)
         // Load MX4SIO Block Device drivers
         if (bdmDiagLoadOptionalModule("MX4SIO", "MX4SIO_BD", &mx4sio_bd_irx, size_mx4sio_bd_irx) >= 0)
             mx4sioModLoaded = 1;
+    }
+
+    if (gEnablePCCF && !pccfModLoaded) {
+        if (bdmPccfCandidate() && sysTryClaimPccf()) {
+            if (bdmLoadOptionalModule("PCCF_BD", &pccf_bd_irx, size_pccf_bd_irx) >= 0)
+                pccfModLoaded = 1;
+            else
+                sysReleasePccf();
+        }
+        if (!pccfModLoaded)
+            setErrorMessage(_STR_PCCF_UNAVAILABLE);
     }
 
     if (gEnableBdmHDD && !hddModLoaded) {
@@ -1204,7 +1254,7 @@ static void bdmLoadBlockDeviceModules(void)
             sysShutdownDev9();
     }
 
-    int modsNow = iUSBModLoaded + iLinkModLoaded + mx4sioModLoaded + hddModLoaded + udpbdModLoaded;
+    int modsNow = iUSBModLoaded + iLinkModLoaded + mx4sioModLoaded + hddModLoaded + udpbdModLoaded + pccfModLoaded;
 
     // BOOT PASS BUMPS NOTHING. On the first call every enabled transport loads for the first time, so
     // the comparison below is guaranteed true -- and bdmInitDevicesData is about to publish all of
@@ -1430,7 +1480,7 @@ static void bdmInit(item_list_t *itemList)
 // the UDPFS_MODE derivation; the user's saved gBDMStartMode is never modified or persisted.
 int bdmEffectiveStartMode(void)
 {
-    if (gEnableUDPBD && gBDMStartMode != START_MODE_AUTO)
+    if ((gEnableUDPBD || gEnablePCCF) && gBDMStartMode != START_MODE_AUTO)
         return START_MODE_AUTO;
     return gBDMStartMode;
 }
@@ -1446,6 +1496,8 @@ static int bdmTransportEnabled(int bdmDeviceType)
             return gEnableILK ? 1 : 0;
         case BDM_TYPE_SDC:
             return gEnableMX4SIO ? 1 : 0;
+        case BDM_TYPE_PCCF:
+            return gEnablePCCF ? 1 : 0;
         case BDM_TYPE_ATA:
             return gEnableBdmHDD ? 1 : 0;
         case BDM_TYPE_UDPBD:
@@ -1682,7 +1734,7 @@ static int bdmUpdateGameList(item_list_t *itemList)
     // bdmGames, so a VCD scan reporting failure (r < 0) left the ISO list published under the VCD
     // view -- the L3 toggle then "never changed the list" (Nathan, HW, ATA/HDD_BD), and a device with
     // no POPS folder hit that on every single toggle.
-    if (view == LIB_VIEW_PS1 || view == LIB_VIEW_MIXED) {
+    if (pDeviceData->bdmDeviceType != BDM_TYPE_PCCF && (view == LIB_VIEW_PS1 || view == LIB_VIEW_MIXED)) {
         char ps1Prefix[BDM_DEVICE_ROOT_MAX + 2];
         bdmBuildPs1Prefix(ps1Prefix, sizeof(ps1Prefix), itemList->mode); // device root, NOT gBDMPrefix
         // Ordinary BDM devices merge both cores. UDPBD deliberately publishes Ember ONLY:
@@ -2098,6 +2150,8 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, const neutrino_vmc_args_
 // 0 = proceed with the native launch (core is OPL, or Neutrino unavailable on a non-udp device).
 static int bdmTryNeutrinoLaunch(item_list_t *itemList, base_game_info_t *game, bdm_device_data_t *pDeviceData, config_set_t *configSet)
 {
+    if (pDeviceData->bdmDeviceType == BDM_TYPE_PCCF)
+        return 0;                        // Native CF driver only; external Neutrino cannot restore this transport.
     int coreLoader = gDefaultCoreLoader; // no per-game $CoreLoader key -> follow the global default core
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
     // UDPBD/UDPFS have no embedded cdvdman backend -- the "udp" BDM device can ONLY boot via
@@ -2272,6 +2326,21 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
         game = gAutoLaunchBDMGame;
     }
 
+    if (pDeviceData->bdmDeviceType == BDM_TYPE_PCCF) {
+#ifdef __INGAME_DEBUG
+        guiMsgBox(_l(_STR_PCCF_UNSUPPORTED_GAME), 0, NULL);
+        return; // Network/DECI2 game-debug builds cannot own the CF bus.
+#endif
+        char vmc[32];
+        for (int slot = 0; slot < 2; slot++) {
+            configGetVMC(configSet, vmc, sizeof(vmc), slot);
+            if (vmc[0]) {
+                guiMsgBox(_l(_STR_PCCF_UNSUPPORTED_GAME), 0, NULL);
+                return;
+            }
+        }
+    }
+
     // Folder browsing: a folder row is never launchable (the dispatch descends instead of reaching
     // here); guard defensively. Otherwise pin the path composers to the current subfolder so a game
     // inside it resolves to <prefix>CD|DVD/<sub>/<name>.
@@ -2323,7 +2392,8 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     // so this should be unreachable. It is here to make "should" cost a message box instead of a dead
     // console -- and it also closes the udp hole the Neutrino helper's own comment warns about.
     if (!bdmDriverIsUSB(pDeviceData->bdmDriver) && !bdmDriverIsIlink(pDeviceData->bdmDriver) &&
-        !bdmDriverIsMx4sio(pDeviceData->bdmDriver) && !bdmDriverIsATA(pDeviceData->bdmDriver)) {
+        !bdmDriverIsMx4sio(pDeviceData->bdmDriver) && !bdmDriverIsATA(pDeviceData->bdmDriver) &&
+        pDeviceData->bdmDeviceType != BDM_TYPE_PCCF) {
         LOG("BDMSUPPORT launch aborted: device %d has no natively launchable driver token ('%s')\n",
             itemList != NULL ? itemList->mode : -1, pDeviceData->bdmDriver);
         if (gAutoLaunchBDMGame == NULL)
@@ -2360,7 +2430,7 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     bdm_vmc_infos_t bdm_vmc_infos;
     vmc_superblock_t vmc_superblock;
 
-    for (vmc_id = 0; vmc_id < 2; vmc_id++) {
+    for (vmc_id = 0; vmc_id < 2 && pDeviceData->bdmDeviceType != BDM_TYPE_PCCF; vmc_id++) {
         memset(&bdm_vmc_infos, 0, sizeof(bdm_vmc_infos_t));
         configGetVMC(configSet, vmc_name, sizeof(vmc_name), vmc_id);
         if (vmc_name[0]) {
@@ -2430,7 +2500,10 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
 
     void *irx = NULL;
     int irx_size = 0;
-    if (bdmDriverIsATA(pDeviceData->bdmDriver)) {
+    if (pDeviceData->bdmDeviceType == BDM_TYPE_PCCF) {
+        irx = &pccf_cdvdman_irx;
+        irx_size = size_pccf_cdvdman_irx;
+    } else if (bdmDriverIsATA(pDeviceData->bdmDriver)) {
         irx = &bdm_ata_cdvdman_irx;
         irx_size = size_bdm_ata_cdvdman_irx;
     } else {
@@ -2626,7 +2699,10 @@ void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet)
     }
 
     LOG("bdm pre sysLaunchLoaderElf\n");
-    if (bdmDriverIsUSB(bdmCurrentDriver)) {
+    if (!strcmp(bdmCurrentDriver, "cf")) {
+        settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_DEV9 | FAKE_MODULE_FLAG_ATAD;
+        sysLaunchLoaderElf(filename, "BDM_CF_MODE", irx_size, irx, 0, NULL, EnablePS2Logo, compatmask);
+    } else if (bdmDriverIsUSB(bdmCurrentDriver)) {
         settings->common.fakemodule_flags |= FAKE_MODULE_FLAG_USBD;
         sysLaunchLoaderElf(filename, "BDM_USB_MODE", irx_size, irx, size_mcemu_irx, bdm_mcemu_irx, EnablePS2Logo, compatmask);
     } else if (bdmDriverIsIlink(bdmCurrentDriver)) {
@@ -2686,6 +2762,8 @@ static int bdmGetTextId(item_list_t *itemList)
         mode = _STR_MX4SIO_GAMES;
     else if (bdmDriverIsATA(pDeviceData->bdmDriver))
         mode = _STR_HDD_GAMES;
+    else if (pDeviceData->bdmDeviceType == BDM_TYPE_PCCF)
+        mode = _STR_PCCF_GAMES;
     else if (bdmDriverIsUDPBD(pDeviceData->bdmDriver))
         mode = (bdmGetLoadedNetProtocol() == NET_BOOT_UDPFS) ? _STR_UDPFSBD_GAMES : _STR_UDPBD_GAMES; // BLOCK: UDPFSBD vs UDPBD (the udpfs FILESYSTEM tab is _STR_UDPFS_GAMES, a separate device); mirror bdmGetIconId
 
@@ -2769,6 +2847,8 @@ static void bdmShutdown(item_list_t *itemList)
 static int bdmCheckVMC(item_list_t *itemList, char *name, int createSize)
 {
     bdm_device_data_t *pDeviceData = (bdm_device_data_t *)itemList->priv;
+    if (pDeviceData != NULL && pDeviceData->bdmDeviceType == BDM_TYPE_PCCF)
+        return SYS_VMC_CREATE_FAILED;
     return pDeviceData != NULL ? sysCheckVMC(pDeviceData->bdmPrefix, "/", name, createSize, NULL) : -1;
 }
 

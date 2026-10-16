@@ -222,6 +222,8 @@ volatile int gLastSaveErrno = 0;
 // error the caller would otherwise report against the target path is meaningless.
 volatile int gLastDeferredTimedOut = 0;
 int gEnableMX4SIO;
+int gEnablePCCF;
+int gEnableDVR;
 int gEnableBdmHDD;
 int gEnableUDPBD;
 int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived from gNetworkProtocol)
@@ -3532,6 +3534,8 @@ static void _loadConfig()
             gCoverflowDimCovers = gCoverflowDimCovers ? 1 : 0;
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, &gEnableILK);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
+            configGetInt(configOPL, CONFIG_OPL_ENABLE_PCCF, &gEnablePCCF);
+            configGetInt(configOPL, CONFIG_OPL_ENABLE_DVR, &gEnableDVR);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, &gEnableBdmHDD);
             int udpbdKeyPresent = configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
             configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
@@ -4062,6 +4066,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_DIM, gCoverflowDimCovers);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, gEnableILK);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, gEnableMX4SIO);
+        configSetInt(configOPL, CONFIG_OPL_ENABLE_PCCF, gEnablePCCF);
+        configSetInt(configOPL, CONFIG_OPL_ENABLE_DVR, gEnableDVR);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, gEnableUDPBD);
         configSetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, gNetBootProtocol);
@@ -5055,6 +5061,8 @@ static void setDefaults(void)
     gDefaultPlasBlendColor[2] = RIPTOPL_PLASMA_BLEND_B;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
+    gEnablePCCF = 0;
+    gEnableDVR = 0;
     gEnableBdmHDD = 0;
     gEnableUDPBD = 0;                  // the UDPBD BLOCK device stays opt-in
     gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)

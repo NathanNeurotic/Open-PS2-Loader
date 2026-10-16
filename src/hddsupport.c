@@ -235,9 +235,11 @@ static int hddDvrHardwarePresent(void)
  */
 static int hddDvrEnsureDrivers(void)
 {
+    if (!gEnableDVR)
+        return 0;
     if (hddDvrDriverReady)
         return 1;
-    if (!hddDvrHardwarePresent())
+    if (!gEnableDVR || !hddDvrHardwarePresent())
         return 0;
     if (!hddLoadModulesReady()) {
         LOG("[DVR] ATA/DEV9 modules unavailable; DVR namespace not probed\n");

@@ -38,6 +38,7 @@ static void guiLock(void) {}
 static void guiUnlock(void) {}
 static int drivers = 1, failedOpen = -1, failedRead = -1, oversized, entryCount = 1;
 static int positions[6], unmounts, failedUnmount = -1;
+static int gEnableDVR = 1;
 static int ataReady = 1, failDrv, failFile, drvCalls, fileCalls, notices;
 static int dvrdrv_irx, dvrfile_irx, size_dvrdrv_irx, size_dvrfile_irx;
 static int hddDvrHardwarePresent(void) {return drivers;}
@@ -81,6 +82,7 @@ static int fileXioUmount(const char *path) {
 @TYPES@
 @FUNCTIONS@
 int main(void) {
+    gEnableDVR = 0;hddDvrScan();assert(!drvCalls && !fileCalls);gEnableDVR = 1;
     drivers = 0;hddDvrScan();assert(!hddDvrGames && !hddDvrGameCount && !drvCalls && !fileCalls);
     drivers = 1;ataReady = 0;hddDvrScan();assert(!drvCalls && !fileCalls);
     ataReady = 1;failDrv = 1;hddDvrScan();hddDvrScan();

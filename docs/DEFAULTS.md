@@ -47,3 +47,5 @@ Implementation references: `setDefaults()` and saved-setting loading in
 in [src/themes.c](../src/themes.c). Coverflow tuning defaults are three covers,
 Large center scale (45), 200 ms animation, and side-cover dimming off; they take
 effect when a theme uses the Coverflow renderer.
+
+Experimental PC CARD CF and DESR DVR ISO discovery both default to **Off**. Enable them explicitly in Game Sources; hardware checks still apply. See [PC CARD CF](PC-CARD-CF.md) and [DESR DVR](DESR-DVR.md).

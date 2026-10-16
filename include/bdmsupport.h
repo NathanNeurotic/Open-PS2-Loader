@@ -26,6 +26,7 @@ typedef struct
 #define BDM_TYPE_SDC     2
 #define BDM_TYPE_ATA     3
 #define BDM_TYPE_UDPBD   4
+#define BDM_TYPE_PCCF    5
 
 // Network-backed BDM devices (UDPBD/UDPFS) open over the wire, so a single failed presence poll is
 // usually a transient stall, not a real removal. Debounce: hide a NETWORK page only after this many
@@ -72,6 +73,7 @@ typedef struct
 } bdm_device_data_t;
 
 void bdmLoadModules(void);
+int bdmModeIsPCCF(int mode);
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet);
 
 void bdmInitSemaphore();

@@ -1,6 +1,6 @@
 # Plan: early PS2 PC CARD CompactFlash support (RiptOPL)
 
-**Status:** Planning / agent handoff. **Scope:** Native CompactFlash PC CARD as a distinct BDM game-storage backend within RiptOPL. **Target base:** `rebuild/main`.
+**Status:** Runtime prototype implemented; target build/review and console acceptance in progress. **Scope:** Native CompactFlash PC CARD as a distinct BDM game-storage backend within RiptOPL. **Target base:** `rebuild/main`.
 
 ## Purpose and non-goals
 Plan-only draft PR for native CompactFlash/SD-to-CF access via the *original PS2 PC CARD slot*, based on [mihhru/PS2CF 1.0](https://github.com/mihhru/PS2CF). Other agents should add **implementation commits to this same branch/PR**, updating this checklist as evidence accumulates. **No production code is implemented by this initial commit**. No firmware changes, memory-card image installation, FMCB packaging, blanket storage replacement, or existing save modification are in scope.
@@ -54,3 +54,12 @@ Target hardware: SCPH-10000 (PS2CF hardware tested), SCPH-15000 / SCPH-18000 (ta
 - [ ] O7: Update documentation, capabilities, credits, and compatibility table. Preserve existing single-PR consolidation practice: this is the one CF PR, not many small follow-on PRs.
 
 **Merge gate:** no regressions to existing loader sources, no unconditional DEV9 suppression, no false RA/VMC claims, no driver theft, reproducible builds, documented real-console validation, and review of interaction with any concurrent consolidated regression PRs (including #894 when applicable).
+
+## Runtime implementation progress (2026-10-15)
+
+- Imported the pinned PS2CF PIO/ATA driver and three production transfer tests, retaining component licenses.
+- Added off-by-default CF and DVR source toggles; ROM eligibility never replaces APA or proves card presence.
+- Implemented serialized CF/DEV9 ownership, read-only game driver, CF-only CDVD device binding, bounded MBR validation, explicit game handoff, and IGR shutdown release.
+- Integrated CF BDM classification/list/title paths, native mode dispatch and embedded IOP modules. CF PS1, VMC, Neutrino, live RA telemetry and network-debug game paths are excluded.
+- Host regressions pass for transfer bounds, removal, ATA/LBA48, conservative profiles, ownership, eligible/ineligible ROMs, MBR bounds and idempotent IGR release. Windows host runs did not use sanitizers; Linux CI enables ASan/UBSan.
+- Target builds and CodeRabbit review are pending. No RiptOPL CF console, >4-GiB filesystem integration, or cross-device hardware results are claimed. O5/O6 and full O4 interaction acceptance remain open.

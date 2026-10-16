@@ -1057,3 +1057,5 @@ If you want the canonical, actively-maintained project, it lives at
 **[ps2homebrew/Open-PS2-Loader](https://github.com/ps2homebrew/Open-PS2-Loader)** — please
 support it. This fork is a downstream labor of love, not a replacement, and it exists only
 because that upstream work is open for everyone to learn from.
+
+Experimental early-model PC CARD CompactFlash support and opt-in DESR DVR discovery: see [hardware requirements and limits](docs/PC-CARD-CF.md). Both source toggles default to off; RiptOPL console acceptance remains outstanding. CF driver credit: mihhru / PS2CF.

@@ -91,6 +91,10 @@ static int bdm_matches_launch_device(const struct block_device *bd)
 
 void bdm_connect_bd(struct block_device *bd)
 {
+#ifdef USE_PCCF
+    if (bd == NULL || bd->name == NULL || strcmp(bd->name, "cf") != 0 || bd->parNr != 0 || bd->sectorSize != 512)
+        return;
+#endif
     DPRINTF("connecting device %s%dp%d\n", bd->name, bd->devNr, bd->parNr);
 
     if (g_bd == NULL && bdm_matches_launch_device(bd)) {
@@ -146,6 +150,18 @@ void DeviceInit(void)
 void DeviceDeinit(void)
 {
     DPRINTF("%s\n", __func__);
+#ifdef USE_PCCF
+    // IGR's shutdown RPC runs before the IOP reset. Release our powered card
+    // here so the next GUI can probe it without taking over a foreign owner.
+    if (g_bd != NULL) {
+        WaitSema(bdm_io_sema);
+        if (g_bd != NULL) {
+            g_bd->stop(g_bd);
+            g_bd = NULL;
+        }
+        SignalSema(bdm_io_sema);
+    }
+#endif
 }
 
 int DeviceReady(void)

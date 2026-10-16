@@ -284,6 +284,8 @@ extern int gEnableFolderNav; // folder browsing in game lists (item 34)
 extern unsigned char gDefaultPlasBlendColor[3];
 extern int gEnableILK;
 extern int gEnableMX4SIO;
+extern int gEnablePCCF;
+extern int gEnableDVR;
 extern int gEnableBdmHDD;
 extern int gEnableUDPBD; // UDPBD network block device (smap_udpbd); NIC-exclusive with the SMB/ETH stack
 // Network-boot transport chosen when gEnableUDPBD is on. Both register the "udp" BDM token and are
