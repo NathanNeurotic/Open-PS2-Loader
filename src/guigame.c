@@ -1660,6 +1660,9 @@ static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
 
 int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
 {
+    if (configSet == NULL)
+        return -1;
+
     int parentalLock = 0;
     diaGetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, &parentalLock);
     // Authorize removal before any live/global configuration is changed.
@@ -1707,6 +1710,9 @@ void guiGameRemoveGlobalSettings(config_set_t *configGame)
 
 void guiGameRemoveSettings(config_set_t *configSet)
 {
+    if (configSet == NULL)
+        return;
+
     if ((menuGameRequiresParentalLock(configSet) ? menuCheckGameParentalLock(configSet) : menuCheckParentalLock()) == 0) {
         configRemoveKey(configSet, CONFIG_ITEM_CONFIGSOURCE);
         configRemoveKey(configSet, CONFIG_ITEM_DMA);
@@ -2069,7 +2075,12 @@ static void guiGameLoadOSDLanguageConfig(config_set_t *configSet, config_set_t *
 void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)
 {
     int i;
-    config_set_t *configGame = configGetByType(CONFIG_GAME);
+    config_set_t *configGame;
+
+    if (configSet == NULL)
+        return;
+
+    configGame = configGetByType(CONFIG_GAME);
 
     configSource[0] = '\0';
     configSourceID = CONFIG_SOURCE_DEFAULT;
