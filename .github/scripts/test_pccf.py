@@ -26,6 +26,7 @@ probe = function(bdm, 'static void bdmLoadPccfModule(')
 request = function(bdm, 'void bdmRequestPccfProbe(')
 queue = function(bdm, 'static int bdmShouldQueueModuleLoad(')
 network = function((root / 'src/netsupport.c').read_text(encoding='utf-8'), 'static int netLoadModules(')
+publication = function(bdm, 'static int bdmStartModeAllowsDevice(')
 harness = r'''
 #include <assert.h>
 #include <string.h>
@@ -54,6 +55,13 @@ static int bdmLoadOptionalModule(const char *name,void *p,int size) {
 }
 static void setErrorMessage(int id) {(void)id;errors++;}
 static void bdmForceDeviceRefresh(void) {BdmGeneration++;}
+#define START_MODE_DISABLED 0
+#define BDM_TYPE_USB 0
+#define BDM_TYPE_ATA 3
+#define BDM_TYPE_UDPBD 4
+#define BDM_TYPE_PCCF 5
+static int gBDMStartMode;
+@PUBLICATION@
 @REQUEST@
 static const char *rom;
 static int psx;
@@ -89,6 +97,11 @@ static int stop_cf(struct block_device *bd) {(void)bd;assert(locked);stops++;ret
 @SHUTDOWN@
 int main(int argc,char **argv) {
     assert(argc==4);rom=argv[1];psx=atoi(argv[2]);
+    assert(bdmStartModeAllowsDevice(BDM_TYPE_PCCF));
+    assert(bdmStartModeAllowsDevice(BDM_TYPE_UDPBD));
+    assert(!bdmStartModeAllowsDevice(BDM_TYPE_USB) && !bdmStartModeAllowsDevice(BDM_TYPE_ATA));
+    gEnablePCCF=0;assert(!bdmStartModeAllowsDevice(BDM_TYPE_PCCF));gEnablePCCF=1;
+    gBDMStartMode=2;assert(bdmStartModeAllowsDevice(BDM_TYPE_USB));gBDMStartMode=0;
     assert(bdmPccfCandidate()==atoi(argv[3]));
     assert(sysTryClaimPccf() && !locked && sysIsPccfOwned());
     assert(netLoadModules(1)==-1 && !netModulesLoaded && !loadCalls && shutdownCalls==1);
@@ -132,7 +145,7 @@ int main(int argc,char **argv) {
     mbr[454]=1;mbr[461]=0xff;assert(!pccf_mbr_valid(mbr,10000));
     puts("PASS: ROM eligibility, exclusive CF/DEV9 ownership and MBR bounds");
 }
-'''.replace('@OWNERSHIP@', ownership).replace('@CANDIDATE@', candidate).replace('@SHUTDOWN@', shutdown).replace('@PROBE@', probe).replace('@REQUEST@', request).replace('@QUEUE@', queue).replace('@NETWORK@', network)
+'''.replace('@OWNERSHIP@', ownership).replace('@CANDIDATE@', candidate).replace('@SHUTDOWN@', shutdown).replace('@PROBE@', probe).replace('@REQUEST@', request).replace('@QUEUE@', queue).replace('@NETWORK@', network).replace('@PUBLICATION@', publication)
 with tempfile.TemporaryDirectory() as directory:
     temp = Path(directory)
     compiler = os.environ.get('CC', 'gcc')

@@ -1139,6 +1139,12 @@ static int bdmPccfCandidate(void)
     return eligible;
 }
 
+static int bdmStartModeAllowsDevice(int type)
+{
+    return gBDMStartMode != START_MODE_DISABLED || type == BDM_TYPE_UDPBD ||
+           (type == BDM_TYPE_PCCF && gEnablePCCF);
+}
+
 int bdmModeIsPCCF(int mode)
 {
     if (mode < BDM_MODE || mode > BDM_MODE_LAST)
@@ -3199,13 +3205,10 @@ int bdmUpdateDeviceData(item_list_t *itemList)
             return 0;
         }
 
-        // An EXPLICIT BDM = Off is only overridden by the UDPBD floor (bdmEffectiveStartMode) so
-        // the selected UDPBD protocol can publish ITS tab -- every other transport's page stays
-        // hidden exactly as the user asked (their sticks would otherwise resurface with the dialog
-        // still showing "Off").
-        if (gBDMStartMode == START_MODE_DISABLED && pDeviceData->bdmDeviceType != BDM_TYPE_UDPBD) {
-            LOG("bdmUpdateDeviceData: device %d withheld -- BDM is explicitly Off (UDPBD floor active)\n",
-                itemList->mode);
+        // CF and UDPBD can raise the effective start mode without changing saved BDM=Off.
+        // Exempt only those sources; unrelated transports must remain hidden.
+        if (!bdmStartModeAllowsDevice(pDeviceData->bdmDeviceType)) {
+            LOG("bdmUpdateDeviceData: device %d withheld -- BDM is explicitly Off\n", itemList->mode);
             fileXioDclose(dir);
             return 0;
         }
