@@ -1,0 +1,55 @@
+name: UDPFS transport replay
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - tools/replay_neutrino_udpfs.py
+      - third_party/neutrino/**
+      - .github/scripts/package_standard_neutrino.py
+      - .github/scripts/test_standard_neutrino_bundle.py
+      - .github/workflows/udpfs-transport-replay.yml
+      - .github/workflows/rolling-release.yml
+permissions:
+  contents: read
+jobs:
+  replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: rickgaiser/neutrino
+          ref: 7be8de2798c99af433c91993e021746a54d6800d
+          path: replay-sources/official
+      - uses: actions/checkout@v4
+        with:
+          repository: NathanNeurotic/neutrino
+          ref: a7b673648254942e11315c9006c4c7bb776e58a1
+          path: replay-sources/fixed
+      - uses: actions/checkout@v4
+        with:
+          repository: NathanNeurotic/PS2-Servers
+          ref: b1238edf2900fa40fd5fe6a440f6851ebdc4ea6d
+          fetch-depth: 2
+          path: replay-sources/server
+      - name: Reproduce the stale-ACK failure and verify the repaired client
+        run: |
+          python3 tools/replay_neutrino_udpfs.py \
+            --official-source replay-sources/official \
+            --fixed-source replay-sources/fixed \
+            --server-source replay-sources/server \
+            --output build/transport-replay
+          python3 .github/scripts/test_standard_neutrino_bundle.py
+      - name: Stage the actual digest-verified runtime
+        run: |
+          python3 .github/scripts/package_standard_neutrino.py --destination build/repaired-runtime/neutrino
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neutrino-udpfs-ack-repair
+          path: build/repaired-runtime/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: udpfs-transport-replay
+          path: build/transport-replay/transport-replay-results.json

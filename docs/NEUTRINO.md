@@ -11,11 +11,22 @@ boot better under Neutrino, or for users who prefer Neutrino's loader and its la
 **Neutrino is created by [rickgaiser](https://github.com/rickgaiser)** — a *"Small, Fast and Modular
 PS2 Device Emulator"*. Home: <https://github.com/rickgaiser/neutrino>.
 
-The RiptOPL release package
-normally bundles the official latest build, re-fetched from upstream at publish time (a failed download/extraction can omit it; check the release notes), under Neutrino's
-**AFL-3.0** licence. We add exactly one file to that folder — `config/bsd-udpfsbd.toml`, because
-Neutrino ships `udpfs_bd.irx` without a matching `-bsd` token and RiptOPL launches UDPFS as
-`-bsd=udpfsbd`. Nothing of rickgaiser's is altered or removed.
+The standard RiptOPL kit bundles **Neutrino v1.8.0-66-ga7b6736**, built from
+upstream `7be8de2798c99af433c91993e021746a54d6800d` plus Ripto's UDPFS stale-ACK
+repair. Both send paths now reject ACKs for older requests, so a delayed packet
+cannot make the client stop retrying a request that the server never received.
+This is a confirmed transport defect with a host fault-injection reproduction;
+it is not yet console confirmation of the reported Tekken Tag black screen.
+
+The complete archive is pinned by SHA-256 in `third_party/neutrino/release.json`.
+The installed folder includes its AFL-3.0 license and `RIPTOPL-STANDARD.json`
+with source commits and module hashes. RiptOPL also adds `config/bsd-udpfsbd.toml`
+for UDPFS block-device mode. A missing, changed or incomplete runtime fails
+packaging. Upstream updates require reviewing and updating this pin; the watcher
+cannot silently replace the repaired client.
+
+**Copy the complete `neutrino/` folder when updating.** Updating only the
+RiptOPL ELF leaves an externally installed Neutrino runtime unchanged.
 
 Neutrino is deliberately **UI-agnostic**: it has no interface of its own, and that is exactly what
 makes a front-end like this one possible. RiptOPL is one of several — **[LUNA](https://github.com/dnunezx/LUNA)**
@@ -517,6 +528,6 @@ Rules that follow from Neutrino's design (verified against `rickgaiser/neutrino`
 
 ## RetroAchievements edition runtime
 
-Both theme kits in the [dedicated RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra) bundle the pinned ORBIT v1.0.2 Neutrino runtime by Daniel / danielnuld (AFL-3.0), based on Neutrino by Maximus32 and xeRAbora protocol work by hacan359. Standard kits keep ordinary upstream Neutrino. Copy the complete runtime folder, including its license and ORBIT-RA provenance files, to your chosen supported device. An RA ELF update alone does not install it.
+Both theme kits in the [dedicated RetroAchievements release](https://github.com/NathanNeurotic/Open-PS2-Loader/releases/tag/rolling-ra) bundle the pinned ORBIT v1.0.2 Neutrino runtime by Daniel / danielnuld (AFL-3.0), based on Neutrino by Maximus32 and xeRAbora protocol work by hacan359. Standard kits use the separately pinned Neutrino runtime with the UDPFS stale-ACK repair. Copy the complete runtime folder, including its license and ORBIT-RA provenance files, to your chosen supported device. An RA ELF update alone does not install it.
 
 The adapter supports both RA modes (Xerabora, and Caduceus through its engine), watch lists whose direct values fit 1,216 bytes (pointer-chain achievements excluded, as in ORBIT), and writable configuration storage. UDP storage reuses its existing network stack and currently needs static addressing, a saved watch list and a companion profile that already knows the image. Console unlock notices are not supplied by this runtime. See the [RA setup and validation limits](RETROACHIEVEMENTS.md#neutrino-in-the-ra-edition).
