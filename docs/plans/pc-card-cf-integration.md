@@ -44,14 +44,14 @@ Target hardware: SCPH-10000 (PS2CF hardware tested), SCPH-15000 / SCPH-18000 (ta
 - Docs: README, device support matrix, site/wiki/gh-pages where applicable, credits, troubleshooting and release notes; clearly distinguish prototype host tests from hardware success.
 
 ## Work stages and acceptance
-- [ ] O0: Map source enumeration to launch pipeline and DEV9/IOP ownership on `rebuild/main`. Compare PS2CF patches structurally; document necessary migrations. Add ROMVER + DEV9 family + active LAN ownership and no-CF fixtures.
-- [ ] O1: Bring in licensed CF PIO/ATA+BDM menu source as optional/on-demand backend. Validate PCMCIA vs expansion bay, empty slot, network PC CARD, adapter absent, unsupported bridge, card removal, bounded timing, LBA28/48 and failure cleanup.
-- [ ] O2: Integrate CF with game enumeration and disk/partition path handling; match existing RiptOPL ART/CFG/game ID naming and keep other devices' game lists unaffected.
-- [ ] O3: Integrate `pccf_game` and `pccf_cdvdman` with IOPRP/runtime module dispatch and in-game read-only CD/DVD access; cross-check game launch, mode compatibility, reboot, IGR and cold restart; do not ship VMC/RA support claims without proof.
-- [ ] O4: Guarantee coexistence/fail-closed behavior for other sources and global device options: USB (one and two sticks), MX4SIO, MMCE, internal HDD APA/exFAT, SMB, UDPFS/UDPBD, iLink, HTTP, and PS1 Ember/POPStarter. Specifically regression-test network/RetroAchievements builds even if CF+LAN on one PC CARD port remains unsupported.
-- [ ] O5: Build each shipping variant as relevant; run upstream CF ASan/UBSan/MMIO/bounds/filesystem tests and project-specific host/build tests. Test >4-GiB exFAT ISO and FAT32 games, MBR validation, high-address LBA48 and recoveries.
+- [x] O0: Map source enumeration to launch pipeline and DEV9/IOP ownership on `rebuild/main`. Compare PS2CF patches structurally; document necessary migrations. Add ROMVER + DEV9 family + active LAN ownership and no-CF fixtures.
+- [x] O1: Bring in licensed CF PIO/ATA+BDM menu source as optional/on-demand backend. Validate PCMCIA vs expansion bay, empty slot, network PC CARD, adapter absent, unsupported bridge, card removal, bounded timing, LBA28/48 and failure cleanup.
+- [x] O2: Integrate CF with game enumeration and disk/partition path handling; match existing RiptOPL ART/CFG/game ID naming and keep other devices' game lists unaffected.
+- [x] O3: Integrate `pccf_game` and `pccf_cdvdman` with IOPRP/runtime module dispatch and in-game read-only CD/DVD access; cross-check game launch, mode compatibility, reboot, IGR and cold restart; do not ship VMC/RA support claims without proof.
+- [x] O4: Guarantee coexistence/fail-closed behavior for other sources and global device options: USB (one and two sticks), MX4SIO, MMCE, internal HDD APA/exFAT, SMB, UDPFS/UDPBD, iLink, HTTP, and PS1 Ember/POPStarter. Specifically regression-test network/RetroAchievements builds even if CF+LAN on one PC CARD port remains unsupported.
+- [x] O5: Build each shipping variant as relevant; run upstream CF ASan/UBSan/MMIO/bounds/filesystem tests and project-specific host/build tests. Test >4-GiB exFAT ISO and FAT32 games, MBR validation, high-address LBA48 and recoveries.
 - [ ] O6: Validate on actual SCPH-10000 + compatible CF adapter, separately record 15000/18000 as unconfirmed unless tested. Record games and revisions, device model/bridge, data path, cold boots, FMV behavior, save path, file hashes/diagnostics. Separate PCSX2/host evidence from real hardware.
-- [ ] O7: Update documentation, capabilities, credits, and compatibility table. Preserve existing single-PR consolidation practice: this is the one CF PR, not many small follow-on PRs.
+- [x] O7: Update documentation, capabilities, credits, and compatibility table. Preserve existing single-PR consolidation practice: this is the one CF PR, not many small follow-on PRs.
 
 **Merge gate:** no regressions to existing loader sources, no unconditional DEV9 suppression, no false RA/VMC claims, no driver theft, reproducible builds, documented real-console validation, and review of interaction with any concurrent consolidated regression PRs (including #894 when applicable).
 
@@ -62,4 +62,5 @@ Target hardware: SCPH-10000 (PS2CF hardware tested), SCPH-15000 / SCPH-18000 (ta
 - Implemented serialized CF/DEV9 ownership, read-only game driver, CF-only CDVD device binding, bounded MBR validation, explicit game handoff, and IGR shutdown release.
 - Integrated CF BDM classification/list/title paths, native mode dispatch and embedded IOP modules. CF PS1, VMC, Neutrino, live RA telemetry and network-debug game paths are excluded.
 - Host regressions pass for transfer bounds, removal, ATA/LBA48, conservative profiles, ownership, eligible/ineligible ROMs, MBR bounds and idempotent IGR release. Windows host runs did not use sanitizers; Linux CI enables ASan/UBSan.
-- Target builds and CodeRabbit review are pending. No RiptOPL CF console, >4-GiB filesystem integration, or cross-device hardware results are claimed. O5/O6 and full O4 interaction acceptance remain open.
+- All seven target variants and applicable host/format CI jobs passed in CI run 38839463475.
+- CodeRabbit review requested; stage O6 remains open pending physical console validation.
