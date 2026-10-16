@@ -253,6 +253,7 @@ enum UI_ITEMS {
 
     COMPAT_DMA = 100,
     COMPAT_ALTSTARTUP,
+    COMPAT_PARENTAL_LOCK,
     COMPAT_GAMEID,
     // Retired Download Defaults button slot. Preserve later per-game dialog IDs.
     COMPAT_RETIRED_DOWNLOAD_DEFAULTS,

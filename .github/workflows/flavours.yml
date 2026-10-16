@@ -243,6 +243,8 @@ jobs:
         run: python3 .github/scripts/test_iso_cache.py
       - name: Check the BDM block cache never returns stale data on a failed refill
         run: python3 .github/scripts/test_bdm_cache.py
+      - name: Check per-game parental lock and test/autolaunch paths
+        run: python3 .github/scripts/test_game_parental_lock.py
       - name: Check BDM partition I/O bounds and sector-size refusal
         run: python3 .github/scripts/test_bdm_partitions.py
       - name: Check BDM allocation failure cannot publish an uninitialized slot

@@ -182,5 +182,8 @@ void menuRemoveHints(menu_item_t *menu);
 
 int menuSetParentalLockCheckState(int enabled);
 int menuCheckParentalLock(void);
+int menuIsParentalLockPasswordSet(void);
+int menuGameRequiresParentalLock(config_set_t *configSet);
+int menuCheckGameParentalLock(config_set_t *configSet);
 
 #endif

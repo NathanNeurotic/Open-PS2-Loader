@@ -1569,41 +1569,93 @@ int menuSetParentalLockCheckState(int enabled)
     return wasEnabled;
 }
 
+// Returns the configured parental lock password, or NULL if the parental lock is not set up.
+static const char *menuGetParentalLockPassword(void)
+{
+    const char *parentalLockPassword;
+    config_set_t *configOPL = configGetByType(CONFIG_OPL);
+
+    if (configGetStr(configOPL, CONFIG_OPL_PARENTAL_LOCK_PWD, &parentalLockPassword) && (parentalLockPassword[0] != '\0'))
+        return parentalLockPassword;
+
+    return NULL;
+}
+
+int menuIsParentalLockPasswordSet(void)
+{
+    return menuGetParentalLockPassword() != NULL;
+}
+
+// Prompts for the parental lock password. Returns 0 if access was granted, EACCES otherwise.
+static int menuPromptParentalLockPassword(const char *parentalLockPassword)
+{
+    char password[CONFIG_KEY_VALUE_LEN];
+    int result;
+
+    password[0] = '\0';
+    if (diaShowKeyb(password, CONFIG_KEY_VALUE_LEN, 1, _l(_STR_PARENLOCK_ENTER_PASSWORD_TITLE))) {
+        if (strncmp(parentalLockPassword, password, CONFIG_KEY_VALUE_LEN) == 0) {
+            result = 0;
+        } else if (strncmp(OPL_PARENTAL_LOCK_MASTER_PASS, password, CONFIG_KEY_VALUE_LEN) == 0) {
+            guiMsgBox(_l(_STR_PARENLOCK_DISABLE_WARNING), 0, NULL);
+
+            configRemoveKey(configGetByType(CONFIG_OPL), CONFIG_OPL_PARENTAL_LOCK_PWD);
+            saveConfig(CONFIG_OPL, 1);
+
+            result = 0;
+        } else {
+            guiMsgBox(_l(_STR_PARENLOCK_PASSWORD_INCORRECT), 0, NULL);
+            result = EACCES;
+        }
+    } else // User aborted.
+        result = EACCES;
+
+    return result;
+}
+
 int menuCheckParentalLock(void)
 {
     const char *parentalLockPassword;
-    char password[CONFIG_KEY_VALUE_LEN];
     int result;
 
     result = 0; // Default to unlocked.
     if (parentalLockCheckEnabled) {
-        config_set_t *configOPL = configGetByType(CONFIG_OPL);
-
         // Prompt for password, only if one was set.
-        if (configGetStr(configOPL, CONFIG_OPL_PARENTAL_LOCK_PWD, &parentalLockPassword) && (parentalLockPassword[0] != '\0')) {
-            password[0] = '\0';
-            if (diaShowKeyb(password, CONFIG_KEY_VALUE_LEN, 1, _l(_STR_PARENLOCK_ENTER_PASSWORD_TITLE))) {
-                if (strncmp(parentalLockPassword, password, CONFIG_KEY_VALUE_LEN) == 0) {
-                    result = 0;
-                    parentalLockCheckEnabled = 0; // Stop asking for the password.
-                } else if (strncmp(OPL_PARENTAL_LOCK_MASTER_PASS, password, CONFIG_KEY_VALUE_LEN) == 0) {
-                    guiMsgBox(_l(_STR_PARENLOCK_DISABLE_WARNING), 0, NULL);
-
-                    configRemoveKey(configOPL, CONFIG_OPL_PARENTAL_LOCK_PWD);
-                    saveConfig(CONFIG_OPL, 1);
-
-                    result = 0;
-                    parentalLockCheckEnabled = 0; // Stop asking for the password.
-                } else {
-                    guiMsgBox(_l(_STR_PARENLOCK_PASSWORD_INCORRECT), 0, NULL);
-                    result = EACCES;
-                }
-            } else // User aborted.
-                result = EACCES;
+        parentalLockPassword = menuGetParentalLockPassword();
+        if (parentalLockPassword != NULL) {
+            result = menuPromptParentalLockPassword(parentalLockPassword);
+            if (result == 0)
+                parentalLockCheckEnabled = 0; // Stop asking for the password.
         }
     }
 
     return result;
+}
+
+int menuGameRequiresParentalLock(config_set_t *configSet)
+{
+    int locked = 0;
+    if (configSet != NULL)
+        configGetInt(configSet, CONFIG_ITEM_PARENTAL_LOCK, &locked);
+    return locked != 0 && menuIsParentalLockPasswordSet();
+}
+
+int menuCheckGameParentalLock(config_set_t *configSet)
+{
+    const char *parentalLockPassword;
+    int locked = 0;
+
+    if (configSet != NULL)
+        configGetInt(configSet, CONFIG_ITEM_PARENTAL_LOCK, &locked);
+    if (!locked)
+        return 0;
+
+    parentalLockPassword = menuGetParentalLockPassword();
+    if (parentalLockPassword == NULL)
+        return 0; // No password configured, so there is nothing to enforce.
+
+    // A locked game always asks for the password, even if the settings menus were unlocked earlier in this session.
+    return menuPromptParentalLockPassword(parentalLockPassword);
 }
 
 void menuHandleInputMenu()
@@ -2275,6 +2327,7 @@ void menuHandleInputGameMenu()
             // by the async "error writing settings!" toast -- the exact contradiction Andrew
             // reported. On failure the error toast already names the path and errno; don't also
             // lie that it saved.
+            menuSetParentalLockCheckState(1);
             if (okItem && okGame)
                 guiMsgBox(_l(_STR_GAME_SETTINGS_SAVED), 0, NULL);
             guiGameLoadConfig(selected_item->item->userdata, gameMenuLoadConfig(NULL));
@@ -2282,6 +2335,7 @@ void menuHandleInputGameMenu()
             guiGameTestSettings(selected_item->item->current->item.id, selected_item->item->userdata, itemConfig);
         } else if (menuID == GAME_REMOVE_CHANGES) {
             if (guiGameShowRemoveSettings(itemConfig, configGetByType(CONFIG_GAME))) {
+                menuSetParentalLockCheckState(1);
                 guiGameLoadConfig(selected_item->item->userdata, gameMenuLoadConfig(NULL));
             }
         } else if (menuID == GAME_RENAME_GAME) {
