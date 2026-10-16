@@ -1198,6 +1198,8 @@ reshow_ui:
         if (previousTheme != themeID && isBgmPlaying())
             bgmStop();
 
+        if (previousVMode != gVMode)
+            guiFadeCurrentScreenToBlack();
         applyConfig(themeID, langID, 1);
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
@@ -3092,6 +3094,8 @@ reshow_interface:
 
         if (previousTheme != themeID && isBgmPlaying())
             bgmStop();
+        if (previousVMode != gVMode)
+            guiFadeCurrentScreenToBlack();
         applyConfig(themeID, langID, 1);
         if (cfgTitlesChanged) {
             guiRefreshCfgTitles(); // rebuilds every game list, which also covers a view change
@@ -5009,6 +5013,22 @@ void guiGameHandleDeferedIO(int *ptr, struct UIItem *ui, int type, void *data)
  * touch the game core, device/IOP lifetime or launch arguments. The long IO
  * drain remains visible as "Please Wait"; only its completion starts the fade.
  * No guiShow(): menu/art state may be changing during shutdown. */
+
+/* User-initiated TV-mode switch. Draw each outgoing frame against the old
+ * GS mode, then let applyConfig reinitialize its framebuffers. This entry
+ * point is intentionally NOT called from the renderer or the IO worker. */
+void guiFadeCurrentScreenToBlack(void)
+{
+    int frame;
+    for (frame = 1; frame <= 8; ++frame) {
+        guiStartFrame();
+        guiShow();
+        rmDrawRect(0, 0, screenWidth, screenHeight,
+                   GS_SETREG_RGBA(0, 0, 0, (frame * 0x80) / 8));
+        guiEndFrame();
+    }
+}
+
 void guiFadeOutForHandoff(const char *message)
 {
     int frame;
