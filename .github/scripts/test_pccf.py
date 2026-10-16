@@ -211,3 +211,6 @@ int main(void) {
     assert len(ata)==19 and ata[4]=='pccfAtaInit' and set(ata[5:])=={'pccfAtaUnavailable'}
     assert 'dev9d_init' not in preprocessed and 'sceAtaDmaTransfer' not in preprocessed
 print('PASS: CF hardware-inert DEV9/ATAD exports and ordinal ABI')
+
+refresh = function((root / "src/opl.c").read_text(encoding="utf-8"), "static void itemExecRefresh(")
+assert "if (bdmModeIsPCCF(support->mode))\n            bdmRequestPccfProbe();" in refresh
