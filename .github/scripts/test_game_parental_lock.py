@@ -32,6 +32,9 @@ for name, launch in [('autoLaunchHDDGame', 'hddLaunchGame'), ('autoLaunchBDMGame
 # Favorites retain the selected game's config when forwarding to its owner.
 fav = function((root / 'src/favsupport.c').read_text(encoding='utf-8'), 'static void favLaunchItem(')
 assert 'o->itemLaunch(o, favArray[id].id, configSet);' in fav
+save_branch = menu[menu.index('} else if (menuID == GAME_SAVE_CHANGES)'):menu.index('} else if (menuID == GAME_TEST_CHANGES)')]
+assert save_branch.index('if (changed < 0)') < save_branch.index('menuSaveConfig()')
+assert 'menuGameRequiresParentalLock(configSet) ? menuCheckGameParentalLock(configSet)' in function(game, 'void guiGameRemoveSettings(')
 main_input = function(menu, 'void menuHandleInputMain(')
 assert 'DisableCron == 0' in main_input and 'DisableCron = 1;' in main_input
 harness = r"""
@@ -43,6 +46,8 @@ harness = r"""
 #define CONFIG_KEY_VALUE_LEN 64
 #define CONFIG_OPL_PARENTAL_LOCK_PWD 1
 #define CONFIG_ITEM_PARENTAL_LOCK 2
+#define COMPAT_PARENTAL_LOCK 3
+#define diaCompatConfig 1
 #define OPL_PARENTAL_LOCK_MASTER_PASS "989765"
 #define _STR_PARENLOCK_ENTER_PASSWORD_TITLE 3
 #define _STR_PARENLOCK_DISABLE_WARNING 4
@@ -65,8 +70,10 @@ static void saveConfig(int type,int flags) {assert(type==1 && flags==1);saved++;
 typedef struct item_list {void (*itemLaunch)(struct item_list *,int,config_set_t *);} item_list_t;
 static config_set_t *configClone(config_set_t *c) {if(failClone)return NULL;cloned=*c;return &cloned;}
 static void configFree(config_set_t *c) {assert(c==&cloned);frees++;}
-static int guiGameSaveConfig(config_set_t *c,item_list_t *s) {(void)s;edits++;c->locked=editLock;return 1;}
+static int guiGameApplyConfig(config_set_t *c,item_list_t *s) {(void)s;edits++;c->locked=editLock;return 1;}
 static void launch(item_list_t *s,int id,config_set_t *c) {(void)s;(void)c;assert(id==7);launches++;}
+static void diaGetInt(int dialog,int key,int *out) {assert(dialog==1&&key==3);*out=editLock;}
+@SAVE_CONFIG@
 @TEST_LAUNCH@
 static void reset(void) {
     memset(&global,0,sizeof(global));strcpy(global.password,"secret");
@@ -95,11 +102,23 @@ int main(void) {
     assert(launches==1 && prompts==1 && unlocked.locked==0);
     reset();failClone=1;editLock=0;accept=0;guiGameTestSettings(7,&support,&locked);
     assert(!launches && !edits && locked.locked==1);
+    reset();failClone=1;editLock=0;guiGameTestSettings(7,&support,&locked);
+    assert(!launches && !edits && locked.locked==1 && prompts==1);
+    reset();failClone=1;editLock=1;guiGameTestSettings(7,&support,&unlocked);
+    assert(!launches && !edits && unlocked.locked==0);
+    reset();answer="wrong";editLock=0;assert(guiGameSaveConfig(&locked,&support)<0);
+    assert(locked.locked==1 && edits==0 && prompts==1);
+    reset();accept=0;editLock=0;assert(guiGameSaveConfig(&locked,&support)<0);
+    assert(locked.locked==1 && edits==0);
+    reset();editLock=0;assert(guiGameSaveConfig(&locked,&support)>0);
+    assert(locked.locked==0 && edits==1 && prompts==1);locked.locked=1;
+    reset();editLock=1;assert(guiGameSaveConfig(&locked,&support)>0);
+    assert(locked.locked==1 && edits==1 && prompts==0);
     reset();global.password[0]=0;assert(!menuGameRequiresParentalLock(&locked));
     assert(!menuCheckGameParentalLock(&locked) && !prompts);
     puts("PASS: repeated prompts, cancel/wrong/master passwords, test edits and autolaunch guards");
 }
-""".replace('@HELPERS@', helpers).replace('@TEST_LAUNCH@', function(game, 'void guiGameTestSettings('))
+""".replace('@HELPERS@', helpers).replace('@SAVE_CONFIG@', function(game, 'int guiGameSaveConfig(')).replace('@TEST_LAUNCH@', function(game, 'void guiGameTestSettings('))
 with tempfile.TemporaryDirectory() as directory:
     path = Path(directory) / 'parental.c'
     path.write_text(harness,encoding='utf-8')

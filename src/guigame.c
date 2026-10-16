@@ -1444,7 +1444,7 @@ reshow_compat:
 }
 
 // sets variables without writing to users cfg file.. follow up with menuSaveConfig() to write
-int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
+static int guiGameApplyConfig(config_set_t *configSet, item_list_t *support)
 {
     int i;
     int result = 0;
@@ -1651,6 +1651,16 @@ int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
     return result;
 }
 
+int guiGameSaveConfig(config_set_t *configSet, item_list_t *support)
+{
+    int parentalLock = 0;
+    diaGetInt(diaCompatConfig, COMPAT_PARENTAL_LOCK, &parentalLock);
+    // Authorize removal before any live/global configuration is changed.
+    if (!parentalLock && menuCheckGameParentalLock(configSet) != 0)
+        return -1;
+    return guiGameApplyConfig(configSet, support);
+}
+
 void guiGameRemoveGlobalSettings(config_set_t *configGame)
 {
     if (menuCheckParentalLock() == 0) {
@@ -1683,7 +1693,7 @@ void guiGameRemoveGlobalSettings(config_set_t *configGame)
 
 void guiGameRemoveSettings(config_set_t *configSet)
 {
-    if (menuCheckParentalLock() == 0) {
+    if ((menuGameRequiresParentalLock(configSet) ? menuCheckGameParentalLock(configSet) : menuCheckParentalLock()) == 0) {
         configRemoveKey(configSet, CONFIG_ITEM_CONFIGSOURCE);
         configRemoveKey(configSet, CONFIG_ITEM_DMA);
         configRemoveKey(configSet, CONFIG_ITEM_CORE_LOADER);
@@ -1744,14 +1754,9 @@ void guiGameTestSettings(int id, item_list_t *support, config_set_t *configSet)
     if (menuCheckGameParentalLock(configSet) != 0)
         return;
     config_set_t *testConfig = configClone(configSet);
-    if (testConfig == NULL) {
-        // Out of memory: fall back to the original behavior rather than refusing to test.
-        guiGameSaveConfig(configSet, support);
-        if (wasLocked || menuCheckGameParentalLock(configSet) == 0)
-            support->itemLaunch(support, id, configSet);
-        return;
-    }
-    guiGameSaveConfig(testConfig, support);
+    if (testConfig == NULL)
+        return; // Testing must never modify the live configuration, including on allocation failure.
+    guiGameApplyConfig(testConfig, support);
     if (wasLocked || menuCheckGameParentalLock(testConfig) == 0)
         support->itemLaunch(support, id, testConfig);
     configFree(testConfig);

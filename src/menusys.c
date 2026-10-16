@@ -2318,7 +2318,10 @@ void menuHandleInputGameMenu()
             else
                 guiGameShowOSDLanguageConfig(0);
         } else if (menuID == GAME_SAVE_CHANGES) {
-            if (guiGameSaveConfig(itemConfig, selected_item->item->userdata))
+            int changed = guiGameSaveConfig(itemConfig, selected_item->item->userdata);
+            if (changed < 0)
+                return; // Denied lock removal must not write either configuration or report success.
+            if (changed)
                 configSetInt(itemConfig, CONFIG_ITEM_CONFIGSOURCE, CONFIG_SOURCE_USER);
             int okItem = menuSaveConfig();           // per-game CFG/<id>.cfg (itemConfig)
             int okGame = saveConfig(CONFIG_GAME, 0); // the global game config set
