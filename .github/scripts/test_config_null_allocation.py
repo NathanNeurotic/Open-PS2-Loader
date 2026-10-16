@@ -50,7 +50,7 @@ assert "void guiGameLoadConfig(item_list_t *support, config_set_t *configSet)\n{
 # Check menusys.c NULL guards in _menuSaveConfig and GAME_SAVE_CHANGES
 assert "WaitSema(menuSemaId);\n    if (itemConfig == NULL) {\n        actionStatus = 0;\n        menuSaveResult = 0;\n        SignalSema(menuSemaId);\n        return;\n    }" in menusys_c
 save_branch = menusys_c[menusys_c.index("} else if (menuID == GAME_SAVE_CHANGES)"):menusys_c.index("} else if (menuID == GAME_TEST_CHANGES)")]
-assert "if (itemConfig == NULL) {\n                guiMsgBox(_l(_STR_ERROR_SAVING_SETTINGS), 0, NULL);\n                break;\n            }" in save_branch
+assert "if (itemConfig == NULL) {\n                guiMsgBox(_l(_STR_ERROR_SAVING_SETTINGS), 0, NULL);\n                return;\n            }" in save_branch
 
 # Check appsupport.c NULL checks in appGetConfig
 app_idx = appsupport_c.index("config_set_t *appGetConfig(item_list_t *itemList, int id)")
