@@ -5004,6 +5004,26 @@ void guiGameHandleDeferedIO(int *ptr, struct UIItem *ui, int type, void *data)
     }
 }
 
+
+/* Fade the final status frame out just before renderer teardown. This does not
+ * touch the game core, device/IOP lifetime or launch arguments. The long IO
+ * drain remains visible as "Please Wait"; only its completion starts the fade.
+ * No guiShow(): menu/art state may be changing during shutdown. */
+void guiFadeOutForHandoff(const char *message)
+{
+    int frame;
+    for (frame = 1; frame <= 8; ++frame) {
+        guiStartFrame();
+        rmDrawRect(0, 0, screenWidth, screenHeight, gColBlack);
+        fntRenderString(gTheme->fonts[0], screenWidth >> 1,
+                        gTheme->usedHeight >> 1, ALIGN_CENTER, 0, 0,
+                        message, gTheme->textColor);
+        rmDrawRect(0, 0, screenWidth, screenHeight,
+                   GS_SETREG_RGBA(0, 0, 0, (frame * 0x80) / 8));
+        guiEndFrame();
+    }
+}
+
 void guiRenderTextScreen(const char *message)
 {
     guiStartFrame();
