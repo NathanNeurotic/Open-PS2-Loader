@@ -437,6 +437,18 @@ static void itemExecSelect(struct menu_item *curMenu)
                 if (startup != NULL)
                     snprintf(gameIdStartup, sizeof(gameIdStartup), "%s", startup);
                 guiUnlock(); // startup points into storage a refresh may replace
+                if (menuCheckGameParentalLock(configSet) != 0)
+                    return;
+                if (gameIdStartup[0] != '\0') {
+                    guiLock();
+                    startup = curMenu->current != NULL && !curMenu->current->item.isFolder ? support->itemGetStartup(support, curMenu->current->item.id) : NULL;
+                    int sameGame = startup != NULL && strcmp(startup, gameIdStartup) == 0;
+                    if (sameGame)
+                        launchId = curMenu->current->item.id;
+                    guiUnlock();
+                    if (!sameGame)
+                        return;
+                }
                 // Create VMC on First Launch. It can run for seconds (genvmc) and saves the config
                 // through deferred IO, and a source refresh in that window renumbers the rows. A row id
                 // is only a list index, so a different game can land on the same one: match the game
@@ -5437,7 +5449,9 @@ static void autoLaunchHDDGame(char *argv[])
     // never stores '#' keys. sbGetCompatModes needs it to find a title's default compatibility modes.
     configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchGame->startup);
 
-    hddLaunchGame(NULL, -1, configSet);
+    // The mini session has no password UI. A locked shortcut returns to the menu.
+    if (!menuGameRequiresParentalLock(configSet))
+        hddLaunchGame(NULL, -1, configSet);
 
     // Only reached when the launch was refused. hddLaunchGame tears the mini session down only on the
     // way to a handoff, so finish it here: main() then boots the menu, which must not inherit a live
@@ -5603,7 +5617,8 @@ static void autoLaunchBDMGame(char *argv[])
     if (configSet != NULL)
         configSetStr(configSet, CONFIG_ITEM_STARTUP, gAutoLaunchBDMGame->startup);
 
-    bdmLaunchGame(NULL, -1, configSet);
+    if (!menuGameRequiresParentalLock(configSet))
+        bdmLaunchGame(NULL, -1, configSet);
 
     // Only reached when the launch was refused (missing ISO, fragmented image, unusable device).
     // bdmLaunchGame tears the mini session down only on the way to a handoff; a Neutrino abort that
