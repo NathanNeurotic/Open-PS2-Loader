@@ -31,6 +31,7 @@
 .text
 
 .extern _end
+.extern _gp
 
 /* libkernel */
 .extern memset
@@ -83,13 +84,17 @@ _SifSetDma:
     /* change the stack pointer */
     la      $sp, _end
 
-    /* call New_SifSetDma, preserving ra and a2 registers values */
-    addiu   $sp, $sp, -0x10
+    /* call New_SifSetDma, preserving ra, a2 (sp) and gp registers values */
+    addiu   $sp, $sp, -0x20
     sd      $ra, 0x0000($sp)
-    jal     New_SifSetDma
     sd      $a2, 0x0008($sp)
+    sd      $gp, 0x0010($sp)
+    la      $gp, _gp
+    jal     New_SifSetDma
+    nop
 
-    /* restore sp and ra registers */
+    /* restore gp, sp and ra registers */
+    ld      $gp, 0x0010($sp)
     ld      $ra, 0x0000($sp)
     ld      $sp, 0x0008($sp)
 
@@ -265,8 +270,9 @@ Hook_ExecPS2:
     /* save original stack pointer */
     daddu   $s4, $sp, $zero
 
-    /* change the stack pointer */
+    /* change the stack pointer and load ee_core's gp */
     la      $sp, _end
+    la      $gp, _gp
 
     /* call Reset_Padhook to indicate that ExecPS2 will be run. */
     jal     Reset_Padhook
@@ -324,16 +330,25 @@ Hook_CreateThread:
     bne     $v0, $zero, 2f
 1:
     /* save original stack pointer */
-    daddu   $a1, $sp, $zero
+    daddu   $v0, $sp, $zero
 
     /* change the stack pointer */
     la      $sp, _end
 
-    /* preserves ra, a1 (sp) and a0 registers values */
-    addiu   $sp, $sp, -0x20
+    /* preserve caller registers and gp across C function call */
+    addiu   $sp, $sp, -0x60
     sd      $ra, 0x0000($sp)
-    sd      $a1, 0x0008($sp)
+    sd      $v0, 0x0008($sp)
     sd      $a0, 0x0010($sp)
+    sd      $a1, 0x0018($sp)
+    sd      $a2, 0x0020($sp)
+    sd      $a3, 0x0028($sp)
+    sd      $t0, 0x0030($sp)
+    sd      $t1, 0x0038($sp)
+    sd      $t2, 0x0040($sp)
+    sd      $t3, 0x0048($sp)
+    sd      $gp, 0x0050($sp)
+    la      $gp, _gp
 
     /* call Install_PadOpen_Hook */
     lui     $a0, 0x0010
@@ -343,7 +358,15 @@ Hook_CreateThread:
     la      $v1, padOpen_hooked
     sw      $v0, 0x0000($v1)
 
-    /* restore a0, sp and ra registers */
+    /* restore caller registers, gp, sp and ra */
+    ld      $gp, 0x0050($sp)
+    ld      $t3, 0x0048($sp)
+    ld      $t2, 0x0040($sp)
+    ld      $t1, 0x0038($sp)
+    ld      $t0, 0x0030($sp)
+    ld      $a3, 0x0028($sp)
+    ld      $a2, 0x0020($sp)
+    ld      $a1, 0x0018($sp)
     ld      $a0, 0x0010($sp)
     ld      $ra, 0x0000($sp)
     ld      $sp, 0x0008($sp)
