@@ -239,7 +239,7 @@ static int hddDvrEnsureDrivers(void)
         return 0;
     if (hddDvrDriverReady)
         return 1;
-    if (!gEnableDVR || !hddDvrHardwarePresent())
+    if (!hddDvrHardwarePresent())
         return 0;
     if (!hddLoadModulesReady()) {
         LOG("[DVR] ATA/DEV9 modules unavailable; DVR namespace not probed\n");
@@ -364,6 +364,11 @@ static void hddDvrScan(void)
     int scanned = 0, count = 0, available = 0;
     unsigned char readableDirs = 0;
     int probe;
+    if (!gEnableDVR) {
+        hddDvrPublish(NULL, 0);
+        hddDvrReadableDirs = 0;
+        return; // Withdraw rows without unmounting beneath outstanding readers.
+    }
     if (!hddDvrEnsureDrivers())
         return;
     probe = fileXioDopen("dvr_hdd0:");

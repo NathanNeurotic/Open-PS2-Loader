@@ -102,6 +102,10 @@ int main(void) {
     failedRead = -1;oversized = 1;hddDvrScan();assert(hddDvrGames == lastGood);
     oversized = 0;entryCount = HDD_DVR_MAX_ISOS + 1;hddDvrScan();assert(hddDvrGames == lastGood);
     entryCount = 0;hddDvrScan();assert(hddDvrGameCount == 0); /* proven empty may replace old list */
+    entryCount = 1;hddDvrScan();assert(hddDvrGameCount == 1);
+    gEnableDVR = 0;hddDvrScan();assert(!hddDvrGames && !hddDvrGameCount);
+    assert(drvCalls == 1 && fileCalls == 2);
+    gEnableDVR = 1;entryCount = 0;hddDvrScan();
     hddDvrMounted[0] = hddDvrMounted[1] = 1;
     hddDvrCleanUp(1);
     assert(!hddDvrGames && !hddDvrGameCount && !unmounts);

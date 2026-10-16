@@ -2534,11 +2534,11 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     config->raWatchCount = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetWatchCount();
     config->raClientMode = gRAMode;
     config->raHostPinned = (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) != 0;
-    config->raSnapBytes = GetWatchBytes();
-    config->raNodeList = GetWatchBlockNodes();
+    config->raSnapBytes = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetWatchBytes();
+    config->raNodeList = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockNodes();
     config->raNodeCount = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetNodeCount();
-    config->raSnapBuf = GetWatchBlockSnap();
-    config->raOverlayBuf = GetWatchBlockOverlay();
+    config->raSnapBuf = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockSnap();
+    config->raOverlayBuf = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockOverlay();
     {
         u32 peer = raNetPeerIP();
         if (peer) {
