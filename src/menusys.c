@@ -2326,7 +2326,7 @@ void menuHandleInputGameMenu()
         } else if (menuID == GAME_SAVE_CHANGES) {
             if (itemConfig == NULL) {
                 guiMsgBox(_l(_STR_ERROR_SAVING_SETTINGS), 0, NULL);
-                break;
+                return;
             }
             int changed = guiGameSaveConfig(itemConfig, selected_item->item->userdata);
             if (changed < 0)
