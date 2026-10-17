@@ -87,6 +87,7 @@ static int libListRowView(item_list_t *l, int id) { (void)l; (void)id; return ro
 static int favGetItemSourceMode(int id) { (void)id; return favSource; }
 static int udpbdSupport;
 static int bdmSupportIsUDPBD(const item_list_t *s) { (void)s; return udpbdSupport; }
+static int bdmModeIsPCCF(int m) { (void)m; return 0; }
 static int bdmModeIsUDPBD(int m) { (void)m; return 0; }
 static int configGetInt(config_set_t *c, const char *k, int *v) { (void)c; (void)k; if (cfgCore < 0) return 0; *v = cfgCore; return 1; }
 static void configGetVMC(config_set_t *c, char *v, int n, int slot) { (void)c; (void)slot; snprintf(v, n, "%s", cfgVmc); }

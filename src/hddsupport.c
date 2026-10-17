@@ -235,6 +235,8 @@ static int hddDvrHardwarePresent(void)
  */
 static int hddDvrEnsureDrivers(void)
 {
+    if (!gEnableDVR)
+        return 0;
     if (hddDvrDriverReady)
         return 1;
     if (!hddDvrHardwarePresent())
@@ -362,6 +364,11 @@ static void hddDvrScan(void)
     int scanned = 0, count = 0, available = 0;
     unsigned char readableDirs = 0;
     int probe;
+    if (!gEnableDVR) {
+        hddDvrPublish(NULL, 0);
+        hddDvrReadableDirs = 0;
+        return; // Withdraw rows without unmounting beneath outstanding readers.
+    }
     if (!hddDvrEnsureDrivers())
         return;
     probe = fileXioDopen("dvr_hdd0:");
@@ -681,8 +688,14 @@ int hddLoadModules(void)
 
         // DEV9 must be loaded, as HDD.IRX depends on it. Even if not required by the I/F (i.e. HDPro)
         hddDiagBootStageBegin("HDD:DEV9");
-        sysInitDev9();
+        int dev9Ready = sysInitDev9();
         hddDiagBootStageEndVoid("HDD:DEV9");
+        if (!dev9Ready) {
+            sysShutdownDev9();
+            hddModulesLoadCount = 0;
+            setErrorMessageWithCode(_STR_HDD_NOT_CONNECTED_ERROR, ERROR_HDD_IF_NOT_DETECTED);
+            return HDD_LOADMODULES_STATUS_ERROR;
+        }
 
         // try to detect HD Pro Kit (not the connected HDD),
         // if detected it loads the specific ATAD module

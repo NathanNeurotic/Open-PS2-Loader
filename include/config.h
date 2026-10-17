@@ -188,6 +188,8 @@ enum CONFIG_INDEX {
 #define CONFIG_OPL_MMCE_PACING_MIGR     "mmce_pacing_migrated"
 #define CONFIG_OPL_ENABLE_USB           "enable_usb"
 #define CONFIG_OPL_ENABLE_ILINK         "enable_ilink"
+#define CONFIG_OPL_ENABLE_DVR           "enable_dvr"
+#define CONFIG_OPL_ENABLE_PCCF          "enable_pccf"
 #define CONFIG_OPL_ENABLE_MX4SIO        "enable_mx4sio"
 #define CONFIG_OPL_ENABLE_BDMHDD        "enable_bdm_hdd"
 #define CONFIG_OPL_ENABLE_UDPBD         "enable_udpbd"

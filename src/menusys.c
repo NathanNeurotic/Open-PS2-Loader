@@ -2152,7 +2152,7 @@ static int gameMenuCoreIsNeutrino(void)
         item_list_t *support = (item_list_t *)selected_item->item->userdata;
         if (support != NULL) {
             int sourceMode = support->mode == FAV_MODE ? (selected_item->item->current != NULL ? favGetItemSourceMode(selected_item->item->current->item.id) : -1) : support->mode;
-            if (menuSelectedRowView(support) == LIB_VIEW_PS1 || sourceMode == ETH_MODE || sourceMode == HTTP_MODE)
+            if (menuSelectedRowView(support) == LIB_VIEW_PS1 || sourceMode == ETH_MODE || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))
                 return 0;
             if (sourceMode == UDPFS_MODE || bdmModeIsUDPBD(sourceMode))
                 return 1;
@@ -2186,6 +2186,10 @@ static void menuCheckSelectedGameSupport(void)
             guiShowRANotice(_l(gRAMode == RA_MODE_CADUCEUS ? _STR_CAD_USE_LIBRARY : _STR_XERA_USE_LIBRARY), NULL);
             return;
         }
+    }
+    if (bdmModeIsPCCF(support->mode)) {
+        guiShowRANotice(_l(_STR_PCCF_UNSUPPORTED_GAME), NULL);
+        return;
     }
     if (rowView == LIB_VIEW_PS1) {
         int sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(gid) : support->mode;

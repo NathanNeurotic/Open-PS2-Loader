@@ -57,7 +57,9 @@ enum OPL_MODULE_ID {
     OPL_MODULE_ID_FREEZEDIAG,
 #endif
 
+    OPL_MODULE_ID_PCCF = 60,
     OPL_MODULE_ID_COUNT
+
 };
 
 typedef struct

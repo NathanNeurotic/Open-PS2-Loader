@@ -77,6 +77,8 @@ int LoadModule(const char *path, int arg_len, const char *args)
 /*----------------------------------------------------------------------------------------*/
 /* Load an irx module from path without waiting.                                          */
 /*----------------------------------------------------------------------------------------*/
+static int moduleStartResult;
+
 int LoadMemModule(int mode, void *modptr, unsigned int modsize, int arg_len, const char *args)
 {
     SifDmaTransfer_t sifdma;
@@ -126,6 +128,7 @@ int LoadMemModule(int mode, void *modptr, unsigned int modsize, int arg_len, con
     if (!(mode & SIF_RPC_M_NOWAIT))
         SifFreeIopHeap(iopmem);
 
+    moduleStartResult = arg.q.modres;
     return arg.p.result;
 }
 
@@ -155,7 +158,13 @@ int LoadOPLModule(int id, int mode, int arg_len, const char *args)
 
     if ((result = GetOPLModInfo(id, &pointer, &size)) == 0) {
         if (size > 0) {
+            moduleStartResult = -1;
             result = LoadMemModule(mode, pointer, size, arg_len, args);
+            if (id == OPL_MODULE_ID_PCCF && (result < 0 || moduleStartResult != 0)) {
+                DBGCOL_BLNK(1, 0x0000FF, true, MODMGR, "CF transport failed to reinitialize");
+                while (1)
+                    ;
+            }
             if (result < 1) { // El_isra: only check for MODLOAD errors for simplicity
                 if (EnableDebug) {
                     DBGCOL(0x00FFDC, MODMGR, "IRX loading error (from MODLOAD)");

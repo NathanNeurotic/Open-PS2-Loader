@@ -76,7 +76,7 @@ static int fileXioDevctl(const char *path, int cmd, void *arg, unsigned int alen
     iop_file_t fd = {0}; devctl_calls++;
     return xhddDevctl(&fd, path, cmd, arg, alen, buf, blen);
 }
-static void sysInitDev9(void) { dev9_refs++; }
+static int sysInitDev9(void) { dev9_refs++; return 1; }
 static void sysShutdownDev9(void) { dev9_refs--; }
 static void hddDiagBootStageBegin(const char *s) { }
 static void hddDiagBootStageEnd(const char *s, int r) { }

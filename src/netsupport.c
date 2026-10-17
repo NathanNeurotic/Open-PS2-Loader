@@ -168,10 +168,14 @@ static int netLoadModules(int protocol)
     }
 
     if (!netModulesLoaded) {
+        // Do not load SMAP or latch residency when CF owns the PC CARD bus.
+        if (!sysInitDev9()) {
+            sysShutdownDev9();
+            gNetworkStartup = ERROR_ETH_MODULE_NETIF_FAILURE;
+            return -1;
+        }
         netModulesLoaded = 1;
         netResidentProtocol = protocol;
-
-        sysInitDev9();
 
         LOG("[NETMAN]:\n");
         if (sysLoadModuleBuffer(&netman_irx, size_netman_irx, 0, NULL) >= 0) {

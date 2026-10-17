@@ -57,7 +57,7 @@ enum FAKE_MODULE_ID {
 };
 
 static struct FakeModule modulefake_list[] = {
-#ifdef __USE_DEV9
+#if defined(__USE_DEV9) || defined(USE_PCCF)
     {"DEV9.IRX", "dev9", FAKE_MODULE_ID_DEV9, FAKE_MODULE_FLAG_DEV9, 0x0208, 0},
 #endif
     // Faked dynamically for BDM-USB and PADEMU
@@ -66,7 +66,7 @@ static struct FakeModule modulefake_list[] = {
     {"SMAP.IRX", "INET_SMAP_driver", FAKE_MODULE_ID_SMAP, FAKE_MODULE_FLAG_SMAP, 0x0219, 2},
     {"ENT_SMAP.IRX", "ent_smap", FAKE_MODULE_ID_SMAP, FAKE_MODULE_FLAG_SMAP, 0x021f, 2},
 #endif
-#if defined(HDD_DRIVER) || defined(USE_BDM_ATA)
+#if defined(HDD_DRIVER) || defined(USE_BDM_ATA) || defined(USE_PCCF)
     {"ATAD.IRX", "atad_driver", FAKE_MODULE_ID_ATAD, FAKE_MODULE_FLAG_ATAD, 0x0207, 0},
 #endif
     {"CDVDSTM.IRX", "cdvd_st_driver", FAKE_MODULE_ID_CDVDSTM, FAKE_MODULE_FLAG_CDVDSTM, 0x0202, 2},
