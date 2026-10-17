@@ -219,6 +219,26 @@ static int guiGameVMCUpdater(int modified)
     return 0;
 }
 
+static int guiGameResolveEffectiveCore(item_list_t *support, int id)
+{
+    int core = gDefaultCoreLoader;
+    int sourceMode = support == NULL           ? -1 :
+                     support->mode == FAV_MODE ? favGetItemSourceMode(id) :
+                                                 support->mode;
+    if (support != NULL && support->itemGetConfig != NULL) {
+        config_set_t *configSet = support->itemGetConfig(support, id);
+        if (configSet != NULL)
+            configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &core);
+    }
+    if (core == 2)
+        core = gDefaultCoreLoader;
+    if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
+        core = 1;
+    else if (sourceMode == ETH_MODE || bdmModeIsPCCF(sourceMode) || (support != NULL && libListRowView(support, id) == LIB_VIEW_PS1))
+        core = 0;
+    return core;
+}
+
 static int guiGameShowVMCConfig(int id, item_list_t *support, char *VMCName, int slot, int validate)
 {
     int result = validate ? VMC_BUTTON_CREATE : 0;
@@ -291,7 +311,8 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, char *VMCName, int
                 // blaming "fragmented" for an out-of-space would point at the wrong fix.
                 if (vmc_check_layout) {
                     vmc_check_layout = 0;
-                    if ((coreLoader == 2 ? gDefaultCoreLoader : coreLoader) != 1 &&
+                    coreLoader = guiGameResolveEffectiveCore(support, id);
+                    if (coreLoader != 1 &&
                         vmc_status.VMC_error == 0 && sysVMCContiguity() == 0)
                         guiMsgBox(_l(_STR_VMC_FRAGMENTED_ON_CREATE), 0, diaVMC);
                 }
@@ -488,6 +509,8 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
         guiMsgBox(_l(_STR_PCCF_UNSUPPORTED_GAME), 0, NULL);
         return;
     }
+
+    coreLoader = guiGameResolveEffectiveCore(support, id);
 
     // show dialog
     do {
