@@ -537,6 +537,9 @@ int readFileBuffer(file_buffer_t *fileBuffer, char **outBuf)
 
 void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)
 {
+    if (size <= 0)
+        return;
+
     fileBuffer->totalQueued += size; // see util.h -- tracks whether the complete write is still buffered
     if (fileBuffer->available && fileBuffer->available + size > fileBuffer->size) {
         errno = 0;
@@ -547,7 +550,7 @@ void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)
         fileBuffer->available = 0;
     }
 
-    if (size > fileBuffer->size) {
+    if ((unsigned int)size > fileBuffer->size) {
         errno = 0;
         int written = write(fileBuffer->fd, inBuf, size);
         if (written != size && !fileBuffer->writeError)
