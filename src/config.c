@@ -1537,13 +1537,14 @@ int configWrite(config_set_t *configSet)
                 }
             }
 
-            // Capture the exact bytes about to be flushed, for the read-back verify below. The capture
-            // is COMPLETE only when nothing was flushed early (totalQueued == available) -- true for
-            // every real config (< 4 KB buffer). On a partial capture the rescue is skipped entirely;
-            // it never guesses.
+            // Only MMCE/BDM devices can use read-back verification after a failed
+            // close. MC and PFS deliberately skip it, so avoid allocating and
+            // copying a buffer they would never consult (especially on low memory).
+            // A capture is complete only if the entire config is still buffered.
             char *intended = NULL;
             unsigned int intendedLen = 0;
-            if (fileBuffer->available > 0 && fileBuffer->totalQueued == fileBuffer->available) {
+            if (!singleOpenDevice && strncmp(configSet->filename, "pfs", 3) != 0 &&
+                fileBuffer->available > 0 && fileBuffer->totalQueued == fileBuffer->available) {
                 intended = (char *)malloc(fileBuffer->available);
                 if (intended != NULL) {
                     memcpy(intended, fileBuffer->buffer, fileBuffer->available);
