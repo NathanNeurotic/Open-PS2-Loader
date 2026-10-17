@@ -27,7 +27,7 @@ typedef struct
     unsigned int available;
     char *lastPtr;
     short allocResult;
-    int writeError;           // sticky flag: set when any buffered write()/close() fails; returned by closeFileBuffer
+    int writeError;           // first buffered write errno (EIO for short writes), propagated by closeFileBuffer
     unsigned int totalQueued; // total bytes ever handed to writeFileBuffer; when == available at close
                               // time, the WHOLE content still sits in buffer (no intermediate flush) --
                               // configWrite's read-back verify uses that to capture the intended bytes
@@ -37,8 +37,8 @@ file_buffer_t *openFileBufferBuffer(short allocResult, const void *buffer, unsig
 file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned int size);
 int readFileBuffer(file_buffer_t *readContext, char **outBuf);
 void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size);
-// Returns 0 on success, -1 if any write()/close() during the buffered write failed (short write,
-// wedged device, ...). Read-mode buffers always return 0. Callers that don't care may ignore it.
+// Returns 0 on success, -1 with errno from the first failed write or close (EIO for a
+// short write). Read-mode buffers return -1 only on close failure.
 int closeFileBuffer(file_buffer_t *fileBuffer);
 
 int max(int a, int b);
