@@ -47,6 +47,7 @@ harness = r"""
 #define ETH_MODE 3
 #define HTTP_MODE 4
 #define OPL_MODULE_ID_RAUDP 111
+#define OPL_MODULE_ID_PCCF 60
 #define MODMGR 0
 #define BGCOLND(...) ((void)0)
 #define DBGCOL(...) ((void)0)
@@ -58,6 +59,7 @@ typedef struct EECoreConfig_t {
     char GameID[16], raHost[16];
     int GameMode, raClientMode, raHostPinned;
 } EECoreConfig_t;
+static int moduleStartResult;
 static int EnableDebug, module_result, module_calls, allocations, frees, fail_alloc;
 static unsigned last_size, ra_snap_iop;
 static char last_args[256], g_ipconfig[IPCONFIG_MAX_LEN];

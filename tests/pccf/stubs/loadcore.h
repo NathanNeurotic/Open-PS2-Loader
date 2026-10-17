@@ -1,0 +1,2 @@
+#define MODULE_RESIDENT_END    0
+#define MODULE_NO_RESIDENT_END 1

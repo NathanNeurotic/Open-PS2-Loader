@@ -353,7 +353,7 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
         return 1;
 
     sourceMode = support->mode == FAV_MODE ? favGetItemSourceMode(id) : support->mode;
-    if (sourceMode == HTTP_MODE)
+    if (sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))
         return 1;
     coreLoader = gDefaultCoreLoader;
     configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &coreLoader);
@@ -482,6 +482,10 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
                                                  support->mode;
     if (sourceMode == HTTP_MODE) {
         guiMsgBox(_l(_STR_HTTP_NO_VMC), 0, NULL);
+        return;
+    }
+    if (bdmModeIsPCCF(sourceMode)) {
+        guiMsgBox(_l(_STR_PCCF_UNSUPPORTED_GAME), 0, NULL);
         return;
     }
 
@@ -1384,7 +1388,8 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
     // VCD games launch through POPSTARTER only, so the Loader Core is inert for them -- keep every
     // Neutrino-only row greyed even under a Neutrino global default (guiGameSetCoreAwareState reads
     // this). SMB likewise: ethsupport has no Neutrino launch leg, the effective core is always <OPL>.
-    coreNeverNeutrino = (support != NULL && ((libViewActive(support->mode) == LIB_VIEW_PS1) || support->mode == ETH_MODE || sourceMode == HTTP_MODE));
+    // CF is also native-core only: external Neutrino cannot restore the CF bus.
+    coreNeverNeutrino = (support != NULL && ((libViewActive(support->mode) == LIB_VIEW_PS1) || support->mode == ETH_MODE || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode)));
 
     // UDPFS (Files and IMG) and UDPBD have no OPL core backend -- they always launch via Neutrino.
     // Lock the selector to Neutrino so the screen matches; sourceMode catches UDPFS Files (and a
@@ -1397,10 +1402,10 @@ void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configS
         // could run under a different core.
         diaSetInt(diaCompatConfig, COMPAT_LOADER, 2);
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);
-    } else if (support != NULL && (support->mode == ETH_MODE || sourceMode == HTTP_MODE)) {
-        // SMB has no Neutrino launch leg (ethsupport never builds Neutrino args) -- the effective
-        // core is ALWAYS <OPL>. Pin the row to the inert "Default" (index 2: saving removes any
-        // stale $CoreLoader key, self-healing old Neutrino selections) and lock it. Launch-time
+    } else if (support != NULL && (support->mode == ETH_MODE || sourceMode == HTTP_MODE || bdmModeIsPCCF(sourceMode))) {
+        // SMB and CF have no Neutrino launch leg (external Neutrino cannot restore the CF bus) --
+        // the effective core is ALWAYS <OPL>. Pin the row to the inert "Default" (index 2: saving
+        // removes any stale $CoreLoader key, self-healing old Neutrino selections) and lock it. Launch-time
         // honesty for keys set elsewhere (e.g. via Favourites) is the toast in ethLaunchGame.
         diaSetInt(diaCompatConfig, COMPAT_LOADER, 2);
         diaSetEnabled(diaCompatConfig, COMPAT_LOADER, 0);

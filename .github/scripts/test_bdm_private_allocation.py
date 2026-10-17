@@ -41,6 +41,8 @@ harness = r'''
 #define START_MODE_MANUAL 1
 #define START_MODE_AUTO 2
 #define BDM_TYPE_UNKNOWN -1
+#define BDM_TYPE_PCCF 5
+#define SYS_VMC_CREATE_FAILED 99
 #define LOG(...) ((void)0)
 typedef struct item_list {
     int mode, enabled, delay;

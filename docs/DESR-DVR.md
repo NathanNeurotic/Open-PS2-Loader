@@ -13,6 +13,9 @@ RiptOPL distinguishes **standard `hdd0:` APA/HDLoader games** from the DVRP-mana
 
 ## Current integration boundary
 
+Enable **DESR DVR ISOs (experimental)** in Game Sources, along with the HDD source.
+The DVR switch defaults to off and does not bypass hardware detection.
+
 The HDD tab has an **experimental read-only scanner** for ISO files under the
 already available DVRP filesystem. It probes `dvr_hdd0:` and scans the roots,
 `DVD/`, and `CD/` under `dvr_pfs0:` and `dvr_pfs1:`. It mounts the two known

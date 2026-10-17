@@ -222,6 +222,8 @@ volatile int gLastSaveErrno = 0;
 // error the caller would otherwise report against the target path is meaningless.
 volatile int gLastDeferredTimedOut = 0;
 int gEnableMX4SIO;
+int gEnablePCCF;
+int gEnableDVR;
 int gEnableBdmHDD;
 int gEnableUDPBD;
 int gNetBootProtocol; // NET_BOOT_UDPBD | NET_BOOT_UDPFS (legacy shadow, derived from gNetworkProtocol)
@@ -502,6 +504,8 @@ static void itemExecRefresh(struct menu_item *curMenu)
     item_list_t *support = curMenu->userdata;
 
     if (support && support->enabled) {
+        if (bdmModeIsPCCF(support->mode))
+            bdmRequestPccfProbe();
         // FAV has no device to rescan: loadFavourites() re-reads favourites.bin and schedules its
         // own rebuild. HDD's VCD view is intentionally cached across ordinary L3 flips, so an
         // explicit user Refresh must invalidate that cache before posting the deferred update.
@@ -3551,6 +3555,8 @@ static void _loadConfig()
             gCoverflowDimCovers = gCoverflowDimCovers ? 1 : 0;
             configGetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, &gEnableILK);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, &gEnableMX4SIO);
+            configGetInt(configOPL, CONFIG_OPL_ENABLE_PCCF, &gEnablePCCF);
+            configGetInt(configOPL, CONFIG_OPL_ENABLE_DVR, &gEnableDVR);
             configGetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, &gEnableBdmHDD);
             int udpbdKeyPresent = configGetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, &gEnableUDPBD);
             configGetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, &gNetBootProtocol);
@@ -4082,6 +4088,8 @@ static void _saveConfig()
         configSetInt(configOPL, CONFIG_OPL_COVERFLOW_DIM, gCoverflowDimCovers);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_ILINK, gEnableILK);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_MX4SIO, gEnableMX4SIO);
+        configSetInt(configOPL, CONFIG_OPL_ENABLE_PCCF, gEnablePCCF);
+        configSetInt(configOPL, CONFIG_OPL_ENABLE_DVR, gEnableDVR);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_BDMHDD, gEnableBdmHDD);
         configSetInt(configOPL, CONFIG_OPL_ENABLE_UDPBD, gEnableUDPBD);
         configSetInt(configOPL, CONFIG_OPL_NET_BOOT_PROTOCOL, gNetBootProtocol);
@@ -4535,6 +4543,13 @@ static int loadLwnbdSvr(int *teardownStarted)
      */
     ioBlockOpsTimed(1, LWNBD_IO_DRAIN_TICKS);
     if (ioHasPendingRequests()) {
+        ioBlockOps(0);
+        return -1;
+    }
+
+    // The IO worker is drained and blocked, so CF cannot claim the slot between
+    // this check and teardown. NBD needs the mutually exclusive PC CARD NIC.
+    if (sysIsPccfOwned()) {
         ioBlockOps(0);
         return -1;
     }
@@ -5082,6 +5097,8 @@ static void setDefaults(void)
     gDefaultPlasBlendColor[2] = RIPTOPL_PLASMA_BLEND_B;
     gEnableILK = 0;
     gEnableMX4SIO = 0;
+    gEnablePCCF = 0;
+    gEnableDVR = 0;
     gEnableBdmHDD = 0;
     gEnableUDPBD = 0;                  // the UDPBD BLOCK device stays opt-in
     gNetBootProtocol = NET_BOOT_UDPBD; // default transport when network boot is enabled (back-compat)

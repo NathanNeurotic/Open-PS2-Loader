@@ -469,6 +469,14 @@ struct UIItem diaDeviceConfig[] = {
     {UI_SPACER},
     {UI_BOOL, CFG_ENABLEMX4SIO, 1, 1, _STR_HINT_ENABLE_MX4SIO, 0, 0, {.intvalue = {0, 0}}},
     {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      PC CARD CF (experimental)", -1}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_ENABLEPCCF, 1, 1, _STR_HINT_ENABLE_PCCF, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
+    {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      DESR DVR ISOs (experimental)", -1}}},
+    {UI_SPACER},
+    {UI_BOOL, CFG_ENABLEDVR, 1, 1, _STR_HINT_ENABLE_DVR, 0, 0, {.intvalue = {0, 0}}},
+    {UI_BREAK},
 
     {UI_LABEL, 0, 1, 1, -1, -40, 0, {.label = {"      iLink", -1}}},
     {UI_SPACER},
@@ -1764,7 +1772,7 @@ struct UIItem diaAbout[] = {
     // adding a row to this non-scrolling dialog. darkladark (LUNA, #733) shares this row, the only
     // one with room: at the default 17px font, "darkladark (LUNA)" would run past the right edge
     // in 4:3 SD modes, so CREDITS and README carry his LUNA credit.
-    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"darkladark - techwritescode (PSUManager) - ... and the anonymous ...", -1}}},
+    {UI_LABEL, 0, 1, 1, -1, 0, 15, {.label = {"darkladark - mihhru (PS2CF) - techwritescode (PSUManager)", -1}}},
     {UI_BREAK},
 
     // Quality Assurance

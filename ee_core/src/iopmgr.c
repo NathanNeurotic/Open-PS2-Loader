@@ -215,6 +215,9 @@ static int ResetIopSpecial(const char *args, unsigned int arglen)
     int sio2manLoaded = LoadOPLModule(OPL_MODULE_ID_SIO2MAN, 0, 0, NULL);
 
     switch (config->GameMode) {
+        case BDM_CF_MODE:
+            LoadOPLModule(OPL_MODULE_ID_PCCF, 0, 6, "owned");
+            break;
         case BDM_USB_MODE:
             LoadOPLModule(OPL_MODULE_ID_USBMASSBD, 0, 0, NULL);
             break;

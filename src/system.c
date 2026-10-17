@@ -84,6 +84,8 @@ extern unsigned int size_eesync_irx;
 #define MAX_MODULES 64
 static void *g_sysLoadedModBuffer[MAX_MODULES];
 static s32 sysLoadModuleLock = -1;
+static s32 sysDev9BusLock = -1;
+static int sysPccfOwned;
 
 #define ELF_MAGIC   0x464c457f
 #define ELF_PT_LOAD 1
@@ -177,8 +179,52 @@ exit:
 static SifCmdHandlerData_t OplSifCmdbuffer[OPL_SIF_CMD_BUFF_SIZE];
 static unsigned char dev9Initialized = 0, dev9Loaded = 0, dev9InitCount = 0;
 
+int sysTryClaimPccf(void)
+{
+    int claimed = 0;
+    if (sysDev9BusLock < 0)
+        return 0;
+    WaitSema(sysDev9BusLock);
+    if (!dev9Initialized && !dev9Loaded && dev9InitCount == 0 && !sysPccfOwned) {
+        sysPccfOwned = 1;
+        claimed = 1;
+    }
+    SignalSema(sysDev9BusLock);
+    return claimed;
+}
+
+int sysIsPccfOwned(void)
+{
+    int owned;
+    if (sysDev9BusLock < 0)
+        return 0;
+    WaitSema(sysDev9BusLock);
+    owned = sysPccfOwned;
+    SignalSema(sysDev9BusLock);
+    return owned;
+}
+
+void sysReleasePccf(void)
+{
+    if (sysDev9BusLock < 0)
+        return;
+    WaitSema(sysDev9BusLock);
+    sysPccfOwned = 0;
+    SignalSema(sysDev9BusLock);
+}
+
 int sysInitDev9(void)
 {
+    if (sysDev9BusLock < 0)
+        return 0;
+    WaitSema(sysDev9BusLock);
+    if (sysPccfOwned) {
+        // Callers pair even failed initialization with shutdown. Balance that
+        // reference without touching hardware owned by the CF driver.
+        dev9InitCount++;
+        SignalSema(sysDev9BusLock);
+        return 0;
+    }
     if (!dev9Initialized) {
         LOG("[DEV9]:\n");
         // DEV9.IRX must have loaded AND returned RESIDENT END for the adapter to be usable.
@@ -199,6 +245,7 @@ int sysInitDev9(void)
     // Refcount every caller regardless, so each sysInitDev9 still pairs with its sysShutdownDev9.
     // On a failed load dev9Loaded stays 0, so the power-off at count 0 is correctly skipped.
     dev9InitCount++;
+    SignalSema(sysDev9BusLock);
     return dev9Loaded;
 }
 
@@ -267,6 +314,8 @@ void sysReset(int modload_mask)
     dev9Initialized = 0;
     dev9Loaded = 0;
     dev9InitCount = 0;
+    // An IOP reset does not prove the PC CARD power registers were restored.
+    // Retain CF ownership until an explicit release; NBD refuses teardown while owned.
     while (!SifIopSync())
         ;
 
@@ -284,6 +333,7 @@ void sysReset(int modload_mask)
 
     if (sysLoadModuleLock < 0) {
         sysLoadModuleLock = sbCreateSemaphore();
+        sysDev9BusLock = sbCreateSemaphore();
     }
 
     // clears modules list
@@ -718,6 +768,7 @@ int sysLaunchDisc(int (*progress)(void))
 #define CORE_IRX_ILINK  0x80
 #define CORE_IRX_MX4SIO 0x100
 #define CORE_IRX_MMCE   0x200
+#define CORE_IRX_PCCF   0x400
 
 typedef struct
 {
@@ -804,6 +855,8 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
         modules |= CORE_IRX_ILINK;
     else if (!strcmp(mode_str, "BDM_M4S_MODE"))
         modules |= CORE_IRX_MX4SIO;
+    else if (!strcmp(mode_str, "BDM_CF_MODE"))
+        modules |= CORE_IRX_PCCF;
     else if (!strcmp(mode_str, "BDM_ATA_MODE"))
         modules |= CORE_IRX_HDD;
     else if (!strcmp(mode_str, "ETH_MODE"))
@@ -830,7 +883,7 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
       GetWatchCount() is authoritative here because the launch legs have already
       run sbLoadWatchList() by this point; no list means nothing to send.
     */
-    if (gRATelemetry && GetWatchCount() > 0)
+    if (strcmp(mode_str, "BDM_CF_MODE") && gRATelemetry && GetWatchCount() > 0)
         modules |= CORE_IRX_ETH;
 #endif
 
@@ -886,6 +939,10 @@ static unsigned int sendIrxKernelRAM(const char *startup, const char *mode_str, 
     if (modules & CORE_IRX_USB) {
         irxptr_tab[modcount].info = size_usbmass_bd_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_USBMASSBD);
         irxptr_tab[modcount++].ptr = (void *)&usbmass_bd_irx;
+    }
+    if (modules & CORE_IRX_PCCF) {
+        irxptr_tab[modcount].info = size_pccf_game_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_PCCF);
+        irxptr_tab[modcount++].ptr = (void *)&pccf_game_irx;
     }
     if (modules & CORE_IRX_ILINK) {
         irxptr_tab[modcount].info = size_iLinkman_irx | SET_OPL_MOD_ID(OPL_MODULE_ID_ILINK);
@@ -2406,7 +2463,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 #else
     const int discMode = 0;
 #endif
-    if (!discMode)
+    if (!discMode && strcmp(mode_str, "BDM_CF_MODE"))
         modules |= CORE_IRX_VMC;
 
     LOG("SYSTEM LaunchLoaderElf loading modules\n");
@@ -2414,7 +2471,7 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
 
     ModuleStorageEnd = (void *)((u8 *)ModuleStorage + ModuleStorageSize);
 #ifdef RETROACHIEVEMENTS
-    if (gRATelemetry && GetWatchCount() > 0)
+    if (strcmp(mode_str, "BDM_CF_MODE") && gRATelemetry && GetWatchCount() > 0)
         ModuleStorageEnd = PlaceWatchBlock(ModuleStorageEnd);
 #endif
 
@@ -2489,15 +2546,15 @@ void sysLaunchLoaderElf(const char *filename, const char *mode_str, int size_cdv
     // RetroAchievements: the watch list for this game, already loaded by the launch
     // leg. It may legitimately be absent -- the game simply is not tracked -- in
     // which case ee_core sees NULL and never starts the telemetry path.
-    config->raWatchList = GetWatchBlockList();
-    config->raWatchCount = GetWatchCount();
+    config->raWatchList = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockList();
+    config->raWatchCount = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetWatchCount();
     config->raClientMode = gRAMode;
     config->raHostPinned = (gRAHostIp[0] | gRAHostIp[1] | gRAHostIp[2] | gRAHostIp[3]) != 0;
-    config->raSnapBytes = GetWatchBytes();
-    config->raNodeList = GetWatchBlockNodes();
-    config->raNodeCount = GetNodeCount();
-    config->raSnapBuf = GetWatchBlockSnap();
-    config->raOverlayBuf = GetWatchBlockOverlay();
+    config->raSnapBytes = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetWatchBytes();
+    config->raNodeList = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockNodes();
+    config->raNodeCount = !strcmp(mode_str, "BDM_CF_MODE") ? 0 : GetNodeCount();
+    config->raSnapBuf = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockSnap();
+    config->raOverlayBuf = !strcmp(mode_str, "BDM_CF_MODE") ? NULL : GetWatchBlockOverlay();
     {
         u32 peer = raNetPeerIP();
         if (peer) {

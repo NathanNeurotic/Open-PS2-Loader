@@ -77,6 +77,7 @@ enum GAME_MODE {
 #ifdef RETROACHIEVEMENTS
     DISC_MODE,
 #endif
+    BDM_CF_MODE = 32,
 };
 
 extern int EnableDebug;

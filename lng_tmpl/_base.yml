@@ -1870,3 +1870,15 @@ gui_strings:
   string: Require the parental lock password to start this game.
 - label: PARENLOCK_GAME_NO_PASSWORD
   string: Set a parental lock password, or this game will not be locked.
+
+- label: HINT_ENABLE_PCCF
+  string: "Early Japanese PS2 PC CARD CompactFlash. Native PS2 games only; CF needs exclusive PC CARD access. Restart to release it."
+- label: PCCF_GAMES
+  string: "PC CARD CF Games"
+- label: PCCF_UNAVAILABLE
+  string: "CF unavailable: requires an early Japanese PC CARD PS2, a compatible card, and no active DEV9/HDD/network driver."
+- label: PCCF_UNSUPPORTED_GAME
+  string: "CF currently supports native PS2 games only. CF VMC, PS1 loading and network achievements are unavailable."
+
+- label: HINT_ENABLE_DVR
+  string: "Experimental DESR DVR ISO discovery. Requires HDD source enabled; game launch needs external DVR-capable Neutrino."

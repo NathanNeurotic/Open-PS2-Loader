@@ -143,7 +143,7 @@ FRONTEND_OBJS = pad.o xparam.o fntsys.o renderman.o menusys.o OSDHistory.o syste
 		appsupport.o mmcesupport.o artindex.o vcdsupport.o cuesupport.o libview.o retrogem.o folderbrowse.o gui.o guigame.o vmc_groups.o textures.o opl.o atlas.o nbns.o httpclient.o gsm.o cheatman.o cheatconfig.o sound.o ps2cnf.o tar.o saveicon.o cfgtitle.o
 
 IOP_OBJS =	iomanx.o filexio.o ps2fs.o usbd.o usbhdfsd.o bdmevent.o dvrdrv.o dvrfile.o \
-		bdm.o bdmfs_fatfs.o usbmass_bd.o iLinkman.o IEEE1394_bd.o mx4sio_bd.o \
+		pccf_bd.o pccf_game.o pccf_cdvdman.o bdm.o bdmfs_fatfs.o usbmass_bd.o iLinkman.o IEEE1394_bd.o mx4sio_bd.o \
 		ps2atad.o hdpro_atad.o poweroff.o ps2hdd.o xhdd.o genvmc.o lwnbdsvr.o \
 		ps2dev9.o smsutils.o ps2ip.o smap.o smap_udpbd.o udpfs_smap.o udpfs_ministack.o udpfs_bd.o udpfs_ioman.o isofs.o nbns-iop.o \
 		sio2man.o padman.o mcman.o mcserv.o mmceman.o mmcedrv.o mmceigr.o \
@@ -458,6 +458,9 @@ clean:	download_lwNBD
 	echo " -imgdrv"
 	$(MAKE) -C modules/iopcore/imgdrv clean
 	echo " -cdvdman"
+	$(MAKE) -C modules/pccf clean
+	$(MAKE) -C modules/pccf GAME_DRIVER=1 clean
+	$(MAKE) -C modules/iopcore/cdvdman USE_PCCF=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_BDM=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_BDM_ATA=1 clean
 	$(MAKE) -C modules/iopcore/cdvdman USE_MMCE=1 clean
@@ -1301,3 +1304,18 @@ include $(PS2SDK)/samples/Makefile.eeglobal
 endif
 
 -include $(EE_DEPS)
+
+# PC CARD CF: separate menu/game drivers, preserving each variant's objects.
+PCCF_SOURCES := $(wildcard modules/pccf/*.c modules/pccf/*.h modules/pccf/*.inc modules/pccf/*.lst) modules/pccf/Makefile
+modules/pccf/pccf_bd.irx: $(PCCF_SOURCES)
+	$(MAKE) -C modules/pccf all
+modules/pccf/pccf_game.irx: $(PCCF_SOURCES)
+	$(MAKE) -C modules/pccf GAME_DRIVER=1 all
+$(EE_ASM_DIR)pccf_bd.c: modules/pccf/pccf_bd.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ pccf_bd_irx
+$(EE_ASM_DIR)pccf_game.c: modules/pccf/pccf_game.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ pccf_game_irx
+modules/iopcore/cdvdman/pccf_cdvdman.irx: modules/iopcore/cdvdman
+	$(MAKE) $(CDVDMAN_PS2LOGO_FLAGS) $(CDVDMAN_DIAG_FLAGS) USE_PCCF=1 -C $< all
+$(EE_ASM_DIR)pccf_cdvdman.c: modules/iopcore/cdvdman/pccf_cdvdman.irx | $(EE_ASM_DIR)
+	$(BIN2C) $< $@ pccf_cdvdman_irx

@@ -26,6 +26,7 @@ typedef struct
 #define BDM_TYPE_SDC     2
 #define BDM_TYPE_ATA     3
 #define BDM_TYPE_UDPBD   4
+#define BDM_TYPE_PCCF    5
 
 // Network-backed BDM devices (UDPBD/UDPFS) open over the wire, so a single failed presence poll is
 // usually a transient stall, not a real removal. Debounce: hide a NETWORK page only after this many
@@ -72,6 +73,7 @@ typedef struct
 } bdm_device_data_t;
 
 void bdmLoadModules(void);
+int bdmModeIsPCCF(int mode);
 void bdmLaunchGame(item_list_t *itemList, int id, config_set_t *configSet);
 
 void bdmInitSemaphore();
@@ -132,6 +134,7 @@ int bdmModeIsUDPBD(int mode); // 1 if this BDM mode slot is the UDPBD block devi
 // Re-evaluate every BDM device's presence + page visibility on the next refresh (bumps the latch
 // generation). Call after a device-enable toggle so a latched-hidden tab re-shows without a replug.
 void bdmForceDeviceRefresh(void);
+void bdmRequestPccfProbe(void);
 // Effective BDM start mode: floors to AUTO while a BDM network transport (UDPBD/UDPFSBD) is the
 // selected protocol so its hotplug tab can exist; never modifies/persists the saved gBDMStartMode.
 int bdmEffectiveStartMode(void);
