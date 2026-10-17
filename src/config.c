@@ -1602,40 +1602,24 @@ int configWrite(config_set_t *configSet)
         }
 
         if (!ok) {
-            // A failed write may leave a shorter file or equal-length damaged contents.
-            // Only restore when the actual on-disk bytes differ from the snapshot; an
-            // untouched file must not be truncated a second time. The MC path deliberately
-            // avoids extra descriptors and never enters this snapshot-based recovery.
+            // The save failed -- either openFileBuffer failed AFTER openFile's O_TRUNC emptied the
+            // file (OOM on the buffer alloc), or the flush itself failed post-truncate. Restore the
+            // original bytes ONLY if the file is actually damaged now (shorter than the snapshot): a
+            // plain open-failure leaves the file intact, and O_TRUNC+rewriting an intact file could
+            // itself corrupt it on a second failure. Keep modified=1 so a later save retries, and
+            // return 0 so saveConfig shows "Error saving settings" instead of a false "Saved".
             if (original != NULL) {
                 int cfd = openFile(configSet->filename, O_RDONLY);
-                int intact = cfd >= 0 && getFileSize(cfd) == originalLen;
-                if (intact) {
-                    char chunk[512];
-                    for (int at = 0; at < originalLen; at += sizeof(chunk)) {
-                        int count = originalLen - at;
-                        if (count > (int)sizeof(chunk))
-                            count = sizeof(chunk);
-                        if (read(cfd, chunk, count) != count ||
-                            memcmp(chunk, original + at, count) != 0) {
-                            intact = 0;
-                            break;
-                        }
-                    }
-                }
+                int curLen = (cfd >= 0) ? getFileSize(cfd) : 0; // unreadable/gone -> treat as damaged
                 if (cfd >= 0)
                     close(cfd);
-                if (!intact) {
+                if (curLen < originalLen) {
                     int wfd = openFile(configSet->filename, O_WRONLY | O_CREAT | O_TRUNC);
                     if (wfd >= 0) {
-                        int written = write(wfd, original, originalLen);
-                        int closeResult = close(wfd);
-                        if (written == originalLen && closeResult == 0)
-                            LOG("CONFIG write to %s FAILED -- restored %d original bytes\n", configSet->filename, originalLen);
-                        else
-                            LOG("CONFIG write to %s FAILED -- restore incomplete (%d of %d)\n", configSet->filename, written, originalLen);
-                    } else {
-                        LOG("CONFIG write to %s FAILED -- could not open restore destination\n", configSet->filename);
+                        write(wfd, original, originalLen);
+                        close(wfd);
                     }
+                    LOG("CONFIG write to %s FAILED -- restored %d original bytes\n", configSet->filename, originalLen);
                 }
             } else {
                 LOG("CONFIG write to %s FAILED (no snapshot to restore)\n", configSet->filename);
