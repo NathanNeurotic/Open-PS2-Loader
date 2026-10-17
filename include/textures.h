@@ -48,8 +48,8 @@ enum INTERNAL_TEXTURE {
     COVER_DEFAULT,
     DISC_DEFAULT,
     SCREEN_DEFAULT,
-    INCEBTION_PICTURE,
-    IP_PICTURE,
+    BACKGROUND_PICTURE,      // built-in theme's main-page background (was INCEBTION_PICTURE)
+    BACKGROUND_INFO_PICTURE, // built-in theme's info-page background (was IP_PICTURE)
     COVERAPP_DEFAULT,
     MISSING_PICTURE,
     NO_DEVICE_PICTURE,
@@ -120,6 +120,16 @@ enum INTERNAL_TEXTURE {
     UDPFS_ICON,
     L1_ICON, // Settings peer-page navigation hint
     R1_ICON, // Settings peer-page navigation hint
+    // Korium Komblete's per-console cover furniture: the PS2 family keeps CASE_OVERLAY/DISC_DEFAULT,
+    // the VCD (PS1) family gets its own jewel-case frame and black disc.
+    CASE_PS1,
+    DISC_PS1,
+    // Players count glyphs. Reachable the same way Rating_* is: the per-game cfg carries the
+    // "<display>/<asset>" form, so "Players" + "2" resolves to Players_2 (themes.c thmAttributeTexId).
+    PLAYERS_1,
+    PLAYERS_2,
+    PLAYERS_3,
+    PLAYERS_4,
 #ifdef RETROACHIEVEMENTS
     // RA mark over a tracked game's cover (theme override "ra_mark"). Appended last:
     // texId is positional.
