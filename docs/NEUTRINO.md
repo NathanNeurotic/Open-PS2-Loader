@@ -464,23 +464,18 @@ Args field and Neutrino Video picker are greyed (never read on the OPL path).
 
 ### Cheats under Neutrino
 
-Neutrino runs PS2RD cheat codes (rickgaiser/neutrino `0469cc3`, in the Neutrino build RiptOPL
-ships; Neutrino v1.8.0 itself predates it). Nothing changes for you: the same **Cheat Settings**,
-the same `CHT/<startup>.cht` (or `CHT/cht.tar`) file and the same **Select Game Cheats** picker
-work for a Neutrino game exactly as for an OPL-core one, and the picks you make are remembered per
-game for both cores.
+Neutrino runs PS2RD cheat codes (upstream commit `0469cc31`). You use the same **Cheat Settings**, the same `CHT/<startup>.cht` (or `CHT/cht.tar`) file, and the same **Select Game Cheats** picker as the OPL core. Selections persist per game across both cores.
 
-How the codes reach Neutrino: at launch RiptOPL writes the enabled codes to
-**`riptopl-cheats.toml`** in Neutrino's own config folder (`neutrino/config/`, or the `neutrino/`
-folder itself for a flat install, or the `-cwd=` you forward) and adds `-cfg=riptopl-cheats` to the
-launch. The file is rewritten for every Neutrino launch with cheats on and is safe to delete.
+At launch, RiptOPL writes the enabled codes to **`riptopl-cheats.toml`** in Neutrino's config directory (`neutrino/config/`, or flat `neutrino/`, or your forwarded `-cwd=`) and appends `-cfg=riptopl-cheats` to the launch arguments. The file is rewritten on each launch with cheats enabled and is safe to delete.
 
-- A `-cfg=` you forward in your own Neutrino args still loads: Neutrino keeps only the last `-cfg`,
-  which is RiptOPL's, and that file loads yours through `depends`.
-- Every cheat switched off means no file and no `-cfg` at all.
-- If the Neutrino folder can't take the file (a read-only share, a full card), RiptOPL asks before
-  launching without cheats. An autolaunch, with no one to ask, launches without them.
-- **Show Launch Arguments** shows the `-cfg=riptopl-cheats` among the rest.
+Requirements for cheats to apply under Neutrino:
+
+- **Neutrino runtime version:** Cheats require the post-v1.8.0 development build (`v1.8.0-61-g7be8de2` or newer) bundled in standard RiptOPL rolling-release downloads. Official standalone Neutrino `v1.8.0` predates cheat support in its `ee_core.elf`. If you use an external `v1.8.0` install or the RetroAchievements (RA) edition (which pins ORBIT `v1.0.2` based on `v1.8.0`), codes do not apply.
+- **Mastercode (`90xxxxxx`) hook:** Neutrino's PS2RD engine hooks into `SetupThread` through a `90xxxxxx` code. The `.cht` file must contain a valid `90` mastercode. Files with only an `F0xxxxxx` code or raw memory writes (`20xxxxxx`) lack a hook target. In that case, `ee_core` skips hook installation and cheats do not execute.
+- **Cheat toggle:** Cheats must be toggled On in Game Settings or Global Settings.
+- **User `-cfg` forwarding:** A custom `-cfg=` passed in your Neutrino arguments continues to load. Neutrino keeps the final `-cfg` (RiptOPL's), and RiptOPL chains yours via `depends`.
+- **Read-only storage:** If RiptOPL cannot write `riptopl-cheats.toml` (such as a read-only share or full card), it prompts before launching without cheats. Autolaunches proceed without cheats.
+- **Launch argument inspection:** Enable **Show Launch Arguments** in Neutrino Defaults to verify that `-cfg=riptopl-cheats` is passed to the runtime.
 
 ### VMC under Neutrino — how it actually works
 
