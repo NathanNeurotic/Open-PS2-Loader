@@ -237,3 +237,243 @@ with tempfile.TemporaryDirectory() as folder:
     subprocess.run([cc, "-std=gnu99", "-Wall", "-Wextra", "-Werror",
                     str(source), "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True, timeout=10)
+
+
+# Exercise the complete production configWrite() function, not just its helpers.
+# A corrupt write can retain the previous file length; size-only rollback
+# checks must fail this fixture even though their buffered-I/O tests pass.
+CONFIG_WRITE_HARNESS = r"""
+#include <assert.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define O_RDONLY 0
+#define O_WRONLY 1
+#define O_CREAT 2
+#define O_TRUNC 4
+#define CFG_FMT_LIBCONFIG 1
+#define CONFIG_MAX_RESTORE_BYTES (256 * 1024)
+#define LOG(...) ((void)0)
+
+typedef struct config_value_t {
+    char key[32];
+    char val[64];
+    struct config_value_t *next;
+} config_value_t;
+
+typedef struct {
+    char *filename;
+    int modified;
+    int format;
+    config_value_t *head;
+} config_set_t;
+
+typedef struct { int unused; } iox_stat_t;
+
+typedef struct {
+    int fd;
+    char *buffer;
+    unsigned int size;
+    unsigned int available;
+    unsigned int totalQueued;
+} file_buffer_t;
+
+static char disk[256];
+static int disk_length, read_position, write_position;
+static int read_opens, truncate_opens, write_calls;
+static int corrupt_first_write, fail_next_truncate_open;
+static int gLastSaveErrno;
+
+static void reset_disk(void)
+{
+    memset(disk, 0, sizeof(disk));
+    memcpy(disk, "key=OLD\n", 8);
+    disk_length = 8;
+    read_position = write_position = 0;
+    read_opens = truncate_opens = write_calls = 0;
+    corrupt_first_write = fail_next_truncate_open = gLastSaveErrno = 0;
+}
+
+static int fake_open(char *path, int flags)
+{
+    (void)path;
+    if (flags & O_TRUNC) {
+        truncate_opens++;
+        if (fail_next_truncate_open) {
+            fail_next_truncate_open = 0;
+            errno = ENXIO;
+            return -1;
+        }
+        disk_length = 0;
+        write_position = 0;
+    } else if (flags == O_RDONLY) {
+        read_opens++;
+        read_position = 0;
+    }
+    return 3;
+}
+
+static int fake_size(int fd)
+{
+    (void)fd;
+    return disk_length;
+}
+
+static int fake_read(int fd, void *out, unsigned int count)
+{
+    (void)fd;
+    if (count > (unsigned int)(disk_length - read_position))
+        count = (unsigned int)(disk_length - read_position);
+    memcpy(out, disk + read_position, count);
+    read_position += (int)count;
+    return (int)count;
+}
+
+static int fake_write(int fd, const void *in, unsigned int count)
+{
+    (void)fd;
+    write_calls++;
+    assert(count <= sizeof(disk) - (unsigned int)write_position);
+    if (corrupt_first_write && write_calls == 1) {
+        // A driver can modify all bytes, then report an I/O failure.
+        // Corrupt the content but preserve its ORIGINAL length exactly.
+        assert(count == 8);
+        memcpy(disk, "key=BAD\n", 8);
+        disk_length = 8;
+        write_position = 8;
+        errno = ENXIO;
+        return -1;
+    }
+    memcpy(disk + write_position, in, count);
+    write_position += (int)count;
+    if (disk_length < write_position)
+        disk_length = write_position;
+    return (int)count;
+}
+
+static int fake_close(int fd)
+{
+    (void)fd;
+    return 0;
+}
+
+static int fileXioGetStat(const char *path, iox_stat_t *stat)
+{
+    (void)path;
+    (void)stat;
+    return -1;
+}
+
+static int configPathIsRawApa(const char *path)
+{
+    (void)path;
+    return 0;
+}
+
+static void bgmMute(void) {}
+static void bgmUnMute(void) {}
+
+// The buffered helpers are independently compiled and fault-injected above.
+// Mock them here so the test directly exercises the extracted configWrite().
+static file_buffer_t *openFileBuffer(char *path, int mode, short allocResult, unsigned int size)
+{
+    (void)allocResult;
+    int fd = fake_open(path, mode);
+    if (fd < 0)
+        return NULL;
+    file_buffer_t *result = malloc(sizeof(*result));
+    assert(result != NULL);
+    result->buffer = malloc(size);
+    assert(result->buffer != NULL);
+    result->fd = fd;
+    result->size = size;
+    result->available = result->totalQueued = 0;
+    return result;
+}
+
+static void writeFileBuffer(file_buffer_t *file, char *value, int count)
+{
+    assert(count >= 0 && (unsigned int)count <= file->size - file->available);
+    memcpy(file->buffer + file->available, value, (size_t)count);
+    file->available += (unsigned int)count;
+    file->totalQueued += (unsigned int)count;
+}
+
+static int closeFileBuffer(file_buffer_t *file)
+{
+    int n = fake_write(file->fd, file->buffer, file->available);
+    int saved_errno = errno;
+    int closed = fake_close(file->fd);
+    free(file->buffer);
+    free(file);
+    if (n < 0 || closed < 0) {
+        errno = n < 0 ? saved_errno : EIO;
+        return -1;
+    }
+    if (n != 8) {
+        errno = EIO;
+        return -1;
+    }
+    return 0;
+}
+
+static void cfgWriteLibconfig(file_buffer_t *file, config_set_t *config)
+{
+    (void)file;
+    (void)config;
+    assert(0 && "fixture must use legacy key=value format");
+}
+
+#define openFile fake_open
+#define getFileSize fake_size
+#define read fake_read
+#define write fake_write
+#define close fake_close
+@CONFIG_WRITE@
+
+int main(void)
+{
+    config_value_t entry = {"key", "NEW", NULL};
+    config_set_t set = {"mass0:/settings.cfg", 1, 0, &entry};
+
+    reset_disk();
+    corrupt_first_write = 1;
+    assert(configWrite(&set) == 0);
+    assert(set.modified == 1 && gLastSaveErrno == ENXIO);
+    assert(disk_length == 8 && memcmp(disk, "key=OLD\n", 8) == 0);
+    assert(truncate_opens == 2 && write_calls == 2); // failed save + recovery
+    assert(read_opens >= 3); // snapshot, intended verify, equal-size byte comparison
+
+    // A failed OPEN leaves the original untouched: do not truncate it again.
+    reset_disk();
+    set.modified = 1;
+    fail_next_truncate_open = 1;
+    assert(configWrite(&set) == 0);
+    assert(set.modified == 1 && gLastSaveErrno == ENXIO);
+    assert(disk_length == 8 && memcmp(disk, "key=OLD\n", 8) == 0);
+    assert(truncate_opens == 1 && write_calls == 0);
+
+    // Preserve the MC single-open policy: no snapshot or restoration reads.
+    reset_disk();
+    set.filename = "mc0:/OPL/settings.cfg";
+    set.modified = 1;
+    corrupt_first_write = 1;
+    assert(configWrite(&set) == 0);
+    assert(set.modified == 1 && gLastSaveErrno == ENXIO);
+    assert(read_opens == 0 && truncate_opens == 1 && write_calls == 1);
+
+    puts("PASS: production configWrite restores equal-length corruption and preserves MC single-open policy");
+    return 0;
+}
+"""
+
+config_write_code = CONFIG_WRITE_HARNESS.replace("@CONFIG_WRITE@", save)
+with tempfile.TemporaryDirectory() as folder:
+    source = Path(folder) / "config_write_equal_length.c"
+    binary = Path(folder) / ("config_write_equal_length.exe" if os.name == "nt" else "config_write_equal_length")
+    source.write_text(config_write_code, encoding="utf-8")
+    subprocess.run([os.environ.get("CC", "gcc"), "-std=gnu99",
+                    "-Wall", "-Wextra", "-Werror", str(source), "-o", str(binary)], check=True)
+    subprocess.run([str(binary)], check=True, timeout=10)
