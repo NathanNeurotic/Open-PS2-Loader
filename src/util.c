@@ -308,7 +308,16 @@ void *readFile(char *path, int align, int *size)
 
     int fd = openFile(path, O_RDONLY);
     if (fd >= 0) {
-        unsigned int realSize = getFileSize(fd);
+        // lseek can fail on an unavailable device. Never cast -1 to an
+        // enormous unsigned allocation size, or leave its descriptor open.
+        int realSize = getFileSize(fd);
+        if (realSize < 0) {
+            int savedErrno = errno != 0 ? errno : EIO;
+            close(fd);
+            *size = 0;
+            errno = savedErrno;
+            return NULL;
+        }
 
         if ((*size > 0) && (*size != realSize)) {
             LOG("UTIL Invalid filesize, expected: %d, got: %d\n", *size, realSize);
@@ -323,7 +332,9 @@ void *readFile(char *path, int align, int *size)
 
         if (!buffer) {
             LOG("UTIL ReadFile: Failed allocation of %d bytes", realSize);
+            close(fd);
             *size = 0;
+            errno = ENOMEM;
         } else {
             int rd = read(fd, buffer, realSize);
             close(fd);
