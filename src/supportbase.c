@@ -801,6 +801,10 @@ static const struct
     int compatModes;
 } sbTitleCompatDefaults[] = {
     {"SLES_511.14", COMPAT_MODE_1}, // Pro Evolution Soccer 2 (Europe): streamed audio breaks without Accurate Reads (upstream OPL #1686)
+    {"SLUS_212.42", COMPAT_MODE_2}, // Beat Down: Fists of Vengeance (USA): hangs after "Now Loading" without Synchronous Reads (#831)
+    {"SLES_535.58", COMPAT_MODE_2}, // Beat Down: Fists of Vengeance (Europe): hangs after "Now Loading" without Synchronous Reads (#831)
+    {"SLPM_660.94", COMPAT_MODE_2}, // Beat Down: Fists of Vengeance (Japan): hangs after "Now Loading" without Synchronous Reads (#831)
+    {"SLKA_253.13", COMPAT_MODE_2}, // Beat Down: Fists of Vengeance (Korea): hangs after "Now Loading" without Synchronous Reads (#831)
 };
 
 int sbTitleCompatDefault(config_set_t *configSet)
