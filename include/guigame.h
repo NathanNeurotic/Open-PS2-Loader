@@ -17,7 +17,7 @@ int guiGameAltStartupNameHandler(char *text, int maxLen);
 char *gameConfigSource(void);
 
 int guiGameVmcNameHandler(char *text, int maxLen);
-void guiGameShowVMCMenu(int id, item_list_t *support);
+void guiGameShowVMCMenu(int id, item_list_t *support, config_set_t *configSet);
 // Create VMC on First Launch: 1 = go on with the launch, 0 = the user backed out of the creation.
 int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet);
 void guiGameShowCompatConfig(int id, item_list_t *support, config_set_t *configSet);

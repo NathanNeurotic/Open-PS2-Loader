@@ -2309,7 +2309,7 @@ void menuHandleInputGameMenu()
             else
                 guiGameShowGSConfig(0);
         } else if (menuID == GAME_VMC_SETTINGS) {
-            guiGameShowVMCMenu(selected_item->item->current->item.id, selected_item->item->userdata);
+            guiGameShowVMCMenu(selected_item->item->current->item.id, selected_item->item->userdata, itemConfig);
 #ifdef PADEMU
         } else if (menuID == GAME_PADEMU_SETTINGS) {
             if (gameMenuCoreIsNeutrino())

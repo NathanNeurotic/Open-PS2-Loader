@@ -2157,8 +2157,13 @@ static int bdmNeutrinoFragBudgetOk(const char *isoPath, neutrino_vmc_args_t *vmc
 
         // If the ISO itself fits within the budget, but VMCs pushed it over:
         if (isoFrags <= NEUTRINO_BDM_MAX_FRAGS && (vmcFrags[0] > 0 || vmcFrags[1] > 0)) {
+            int only = -1;
+            for (i = 0; i < NEUTRINO_VMC_SLOTS; i++)
+                if (vmcFrags[i] > 0 && total - vmcFrags[i] <= NEUTRINO_BDM_MAX_FRAGS &&
+                    (only < 0 || vmcFrags[i] < vmcFrags[only]))
+                    only = i;
             for (i = 0; i < NEUTRINO_VMC_SLOTS && total > NEUTRINO_BDM_MAX_FRAGS; i++) {
-                if (vmcFrags[i] > 0) {
+                if (vmcFrags[i] > 0 && (only < 0 || i == only)) {
                     char vmcName[32];
                     const char *slash = strrchr(vmcPaths[i], '/');
                     const char *dot = strrchr(vmcPaths[i], '.');
