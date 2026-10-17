@@ -219,17 +219,14 @@ static int guiGameVMCUpdater(int modified)
     return 0;
 }
 
-static int guiGameResolveEffectiveCore(item_list_t *support, int id)
+static int guiGameResolveEffectiveCore(config_set_t *configSet, item_list_t *support, int id)
 {
     int core = gDefaultCoreLoader;
     int sourceMode = support == NULL           ? -1 :
                      support->mode == FAV_MODE ? favGetItemSourceMode(id) :
                                                  support->mode;
-    if (support != NULL && support->itemGetConfig != NULL) {
-        config_set_t *configSet = support->itemGetConfig(support, id);
-        if (configSet != NULL)
-            configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &core);
-    }
+    if (configSet != NULL)
+        configGetInt(configSet, CONFIG_ITEM_CORE_LOADER, &core);
     if (core == 2)
         core = gDefaultCoreLoader;
     if (sourceMode == UDPFS_MODE || bdmSupportIsUDPBD(support) || bdmModeIsUDPBD(sourceMode))
@@ -239,7 +236,7 @@ static int guiGameResolveEffectiveCore(item_list_t *support, int id)
     return core;
 }
 
-static int guiGameShowVMCConfig(int id, item_list_t *support, char *VMCName, int slot, int validate)
+static int guiGameShowVMCConfig(int id, item_list_t *support, config_set_t *configSet, char *VMCName, int slot, int validate)
 {
     int result = validate ? VMC_BUTTON_CREATE : 0;
     char vmc[32];
@@ -311,7 +308,7 @@ static int guiGameShowVMCConfig(int id, item_list_t *support, char *VMCName, int
                 // blaming "fragmented" for an out-of-space would point at the wrong fix.
                 if (vmc_check_layout) {
                     vmc_check_layout = 0;
-                    coreLoader = guiGameResolveEffectiveCore(support, id);
+                    coreLoader = guiGameResolveEffectiveCore(configSet, support, id);
                     if (coreLoader != 1 &&
                         vmc_status.VMC_error == 0 && sysVMCContiguity() == 0)
                         guiMsgBox(_l(_STR_VMC_FRAGMENTED_ON_CREATE), 0, diaVMC);
@@ -490,7 +487,7 @@ int guiGameAutoCreateVmc(item_list_t *support, int id, config_set_t *configSet)
     return 1;
 }
 
-void guiGameShowVMCMenu(int id, item_list_t *support)
+void guiGameShowVMCMenu(int id, item_list_t *support, config_set_t *configSet)
 {
     int result = -1;
 
@@ -510,7 +507,7 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
         return;
     }
 
-    coreLoader = guiGameResolveEffectiveCore(support, id);
+    coreLoader = guiGameResolveEffectiveCore(configSet, support, id);
 
     // show dialog
     do {
@@ -534,12 +531,12 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
         diaGetInt(diaVMCConfig, COMPAT_VMC2_DISABLE, &vmc2Disabled);
         if (result == COMPAT_VMC1_DEFINE) {
             if (menuCheckParentalLock() == 0) {
-                if (guiGameShowVMCConfig(id, support, vmc1, 0, 0))
+                if (guiGameShowVMCConfig(id, support, configSet, vmc1, 0, 0))
                     diaGetString(diaVMC, VMC_NAME, vmc1, sizeof(vmc1));
             }
         } else if (result == COMPAT_VMC2_DEFINE) {
             if (menuCheckParentalLock() == 0) {
-                if (guiGameShowVMCConfig(id, support, vmc2, 1, 0))
+                if (guiGameShowVMCConfig(id, support, configSet, vmc2, 1, 0))
                     diaGetString(diaVMC, VMC_NAME, vmc2, sizeof(vmc2));
             }
         } else if (result == COMPAT_VMC1_ACTION) {
@@ -559,8 +556,8 @@ void guiGameShowVMCMenu(int id, item_list_t *support)
         }
     } while (result >= COMPAT_NOEXIT);
 
-    guiGameShowVMCConfig(id, support, vmc1, 0, 1);
-    guiGameShowVMCConfig(id, support, vmc2, 1, 1);
+    guiGameShowVMCConfig(id, support, configSet, vmc1, 0, 1);
+    guiGameShowVMCConfig(id, support, configSet, vmc2, 1, 1);
 }
 
 // GSM
