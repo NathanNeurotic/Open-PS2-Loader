@@ -1630,11 +1630,11 @@ int configWrite(config_set_t *configSet)
                         int written = write(wfd, original, originalLen);
                         int closeResult = close(wfd);
                         if (written == originalLen && closeResult == 0)
-                            LOG("CONFIG write to %s FAILED -- restored %d original bytes\\n", configSet->filename, originalLen);
+                            LOG("CONFIG write to %s FAILED -- restored %d original bytes\n", configSet->filename, originalLen);
                         else
-                            LOG("CONFIG write to %s FAILED -- restore incomplete (%d of %d)\\n", configSet->filename, written, originalLen);
+                            LOG("CONFIG write to %s FAILED -- restore incomplete (%d of %d)\n", configSet->filename, written, originalLen);
                     } else {
-                        LOG("CONFIG write to %s FAILED -- could not open restore destination\\n", configSet->filename);
+                        LOG("CONFIG write to %s FAILED -- could not open restore destination\n", configSet->filename);
                     }
                 }
             } else {
