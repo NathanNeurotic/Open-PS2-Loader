@@ -363,29 +363,42 @@ file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned
 {
     file_buffer_t *fileBuffer;
     unsigned char bom[3];
-    int fd;
+    int fd = -1;
+    const int truncates = (mode & O_TRUNC) != 0;
 
-    // O_TRUNC takes effect in openFile. Allocate BOTH buffers first: an OOM after
-    // opening would otherwise erase the previous configuration without writing a byte.
+    // Non-truncating opens keep the old behavior: do not allocate buffers for
+    // missing files. O_TRUNC must wait until BOTH allocations succeed.
+    if (!truncates) {
+        fd = openFile(fpath, mode);
+        if (fd < 0)
+            return NULL;
+    }
+
     fileBuffer = (file_buffer_t *)malloc(sizeof(file_buffer_t));
     if (fileBuffer == NULL) {
+        if (fd >= 0)
+            close(fd);
         errno = ENOMEM;
         return NULL;
     }
-    fileBuffer->buffer = (char *)malloc(size * sizeof(char));
+    fileBuffer->buffer = (char *)malloc(size);
     if (fileBuffer->buffer == NULL) {
         free(fileBuffer);
+        if (fd >= 0)
+            close(fd);
         errno = ENOMEM;
         return NULL;
     }
 
-    fd = openFile(fpath, mode);
-    if (fd < 0) {
-        int savedErrno = errno != 0 ? errno : EIO;
-        free(fileBuffer->buffer);
-        free(fileBuffer);
-        errno = savedErrno;
-        return NULL;
+    if (truncates) {
+        fd = openFile(fpath, mode);
+        if (fd < 0) {
+            int savedErrno = errno != 0 ? errno : EIO;
+            free(fileBuffer->buffer);
+            free(fileBuffer);
+            errno = savedErrno;
+            return NULL;
+        }
     }
 
     fileBuffer->size = size;
