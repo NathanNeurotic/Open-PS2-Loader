@@ -360,41 +360,51 @@ int listDir(char *path, const char *separator, int maxElem,
 /* size will be the maximum line size possible */
 file_buffer_t *openFileBuffer(char *fpath, int mode, short allocResult, unsigned int size)
 {
-    file_buffer_t *fileBuffer = NULL;
+    file_buffer_t *fileBuffer;
     unsigned char bom[3];
+    int fd;
 
-    int fd = openFile(fpath, mode);
-    if (fd >= 0) {
-        fileBuffer = (file_buffer_t *)malloc(sizeof(file_buffer_t));
-        if (fileBuffer == NULL) {
-            close(fd);
-            return NULL;
-        }
-        fileBuffer->buffer = (char *)malloc(size * sizeof(char));
-        if (fileBuffer->buffer == NULL) {
-            free(fileBuffer);
-            close(fd);
-            return NULL;
-        }
-        fileBuffer->size = size;
-        fileBuffer->available = 0;
-        if (mode == O_RDONLY) {
-            fileBuffer->lastPtr = NULL;
-
-            // Check for and skip the UTF-8 BOM sequence.
-            if ((read(fd, bom, sizeof(bom)) != 3) ||
-                (bom[0] != 0xEF || bom[1] != 0xBB || bom[2] != 0xBF)) {
-                // Not BOM, so rewind.
-                lseek(fd, 0, SEEK_SET);
-            }
-        } else
-            fileBuffer->lastPtr = fileBuffer->buffer;
-        fileBuffer->allocResult = allocResult;
-        fileBuffer->fd = fd;
-        fileBuffer->mode = mode;
-        fileBuffer->writeError = 0;
-        fileBuffer->totalQueued = 0;
+    // O_TRUNC takes effect in openFile. Allocate BOTH buffers first: an OOM after
+    // opening would otherwise erase the previous configuration without writing a byte.
+    fileBuffer = (file_buffer_t *)malloc(sizeof(file_buffer_t));
+    if (fileBuffer == NULL) {
+        errno = ENOMEM;
+        return NULL;
     }
+    fileBuffer->buffer = (char *)malloc(size * sizeof(char));
+    if (fileBuffer->buffer == NULL) {
+        free(fileBuffer);
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    fd = openFile(fpath, mode);
+    if (fd < 0) {
+        int savedErrno = errno != 0 ? errno : EIO;
+        free(fileBuffer->buffer);
+        free(fileBuffer);
+        errno = savedErrno;
+        return NULL;
+    }
+
+    fileBuffer->size = size;
+    fileBuffer->available = 0;
+    if (mode == O_RDONLY) {
+        fileBuffer->lastPtr = NULL;
+
+        // Check for and skip the UTF-8 BOM sequence.
+        if ((read(fd, bom, sizeof(bom)) != 3) ||
+            (bom[0] != 0xEF || bom[1] != 0xBB || bom[2] != 0xBF)) {
+            // Not BOM, so rewind.
+            lseek(fd, 0, SEEK_SET);
+        }
+    } else
+        fileBuffer->lastPtr = fileBuffer->buffer;
+    fileBuffer->allocResult = allocResult;
+    fileBuffer->fd = fd;
+    fileBuffer->mode = mode;
+    fileBuffer->writeError = 0;
+    fileBuffer->totalQueued = 0;
 
     return fileBuffer;
 }
@@ -526,46 +536,55 @@ int readFileBuffer(file_buffer_t *fileBuffer, char **outBuf)
 
 void writeFileBuffer(file_buffer_t *fileBuffer, char *inBuf, int size)
 {
-    fileBuffer->totalQueued += size; // see util.h -- lets configWrite know whether buffer still holds ALL content
-    // LOG("writeFileBuffer avail: %d size: %d\n", fileBuffer->available, size);
+    fileBuffer->totalQueued += size; // see util.h -- tracks whether the complete write is still buffered
     if (fileBuffer->available && fileBuffer->available + size > fileBuffer->size) {
-        // LOG("writeFileBuffer flushing: %d\n", fileBuffer->available);
-        if (write(fileBuffer->fd, fileBuffer->buffer, fileBuffer->available) != (int)fileBuffer->available)
-            fileBuffer->writeError = 1; // short write / wedged device -- surfaced by closeFileBuffer
+        errno = 0;
+        int written = write(fileBuffer->fd, fileBuffer->buffer, fileBuffer->available);
+        if (written != (int)fileBuffer->available && !fileBuffer->writeError)
+            fileBuffer->writeError = (written < 0 && errno != 0) ? errno : EIO;
         fileBuffer->lastPtr = fileBuffer->buffer;
         fileBuffer->available = 0;
     }
 
     if (size > fileBuffer->size) {
-        // LOG("writeFileBuffer direct write: %d\n", size);
-        if (write(fileBuffer->fd, inBuf, size) != size)
-            fileBuffer->writeError = 1;
+        errno = 0;
+        int written = write(fileBuffer->fd, inBuf, size);
+        if (written != size && !fileBuffer->writeError)
+            fileBuffer->writeError = (written < 0 && errno != 0) ? errno : EIO;
     } else {
         memcpy(fileBuffer->lastPtr, inBuf, size);
         fileBuffer->lastPtr += size;
         fileBuffer->available += size;
-
-        // LOG("writeFileBuffer lastPrt: %d\n", (fileBuffer->lastPtr - fileBuffer->buffer));
     }
 }
 
 int closeFileBuffer(file_buffer_t *fileBuffer)
 {
-    if (fileBuffer == NULL)
-        return -1; // defensive: current callers null-check first, but never deref a null buffer
+    if (fileBuffer == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    // Keep the FIRST failed write's errno: a successful close must not replace it,
+    // and a short POSITIVE write does not necessarily set errno at all.
     int err = fileBuffer->writeError;
     if (fileBuffer->fd >= 0) {
         if (fileBuffer->mode != O_RDONLY && fileBuffer->available) {
-            // LOG("writeFileBuffer final write: %d\n", fileBuffer->available);
-            if (write(fileBuffer->fd, fileBuffer->buffer, fileBuffer->available) != (int)fileBuffer->available)
-                err = 1;
+            errno = 0;
+            int written = write(fileBuffer->fd, fileBuffer->buffer, fileBuffer->available);
+            if (written != (int)fileBuffer->available && !err)
+                err = (written < 0 && errno != 0) ? errno : EIO;
         }
-        if (close(fileBuffer->fd) < 0)
-            err = 1;
+        if (close(fileBuffer->fd) < 0 && !err)
+            err = errno != 0 ? errno : EIO;
     }
     free(fileBuffer->buffer);
     free(fileBuffer);
-    return err ? -1 : 0;
+    if (err != 0) {
+        errno = err;
+        return -1;
+    }
+    return 0;
 }
 
 // a simple maximum of two
